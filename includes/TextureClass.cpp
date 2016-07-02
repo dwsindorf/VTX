@@ -1,0 +1,405 @@
+// TextureClass.cpp
+
+#include "TextureClass.h"
+#include "ImageMgr.h"
+#include "NoiseClass.h"
+#include "TerrainNode.h"
+#include "TerrainClass.h"
+#include "GLSLMgr.h"
+#include "GLSLVars.h"
+#include "Effects.h"
+#include "RenderOptions.h"
+
+#include <math.h>
+
+extern double Theta, Phi;
+
+#define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
+#define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
+
+//************************************************************
+// Class Texture
+//************************************************************
+
+int Texture::num_attrs=0;
+int Texture::num_coords=0;
+
+//-------------------------------------------------------------
+// Texture::Texture() Constructor
+//-------------------------------------------------------------
+Texture::Texture(Image *i, int l, TNode *e)
+{
+	options=l;
+    timage=i;
+    type=GL_TEXTURE_2D;
+	expr=e;
+	id[0]=id[1]=0;
+	scale=1;
+	tvalue=svalue=0;
+	texamp=1;
+	bumpamp=0;
+	bias=0;
+	valid=false;
+	orders=1;
+	orders_delta=2.0;
+	orders_atten=1.0;
+	tex_active=(options & NTEX)?false:true;
+	bump_active=(options & BUMP)?true:false;
+	enabled=true;
+	s_data=false;
+	a_data=false;
+	bump_damp=0.0;
+	tid=0;
+}
+
+//-------------------------------------------------------------
+// Texture::~Texture() Destructor
+//-------------------------------------------------------------
+Texture::~Texture()
+{
+	del();
+}
+
+//-------------------------------------------------------------
+// Texture::reset() reset for shader pass
+//-------------------------------------------------------------
+void Texture::reset() {
+	num_attrs=num_coords=0;
+}
+
+//-------------------------------------------------------------
+// Texture::image() return pointer to Image object
+//-------------------------------------------------------------
+Image *Texture::image()
+{
+ 	return timage;
+}
+
+//-------------------------------------------------------------
+// Texture::pixels() return pointer to image data
+//-------------------------------------------------------------
+const void *Texture::pixels()
+{
+	return image()->data;
+}
+
+//-------------------------------------------------------------
+// Texture::del() free resources
+//-------------------------------------------------------------
+void Texture::del() {
+	if(id[0]>0)
+		glDeleteTextures(2, &id[0]);
+	id[0]=id[1]=0;
+	valid = false;
+}
+
+//-------------------------------------------------------------
+// Texture::texCoords() set texture coordinates in OGL passes
+//-------------------------------------------------------------
+void Texture::texCoords(int tchnl)
+{
+    double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
+    if(t1d()){
+		glMultiTexCoord2d(tchnl,s*sc+bias,0.0);
+		return;
+	}
+    sv=s*sc-0.5;
+	tv=a*t*sc;
+#ifdef TEXFLOOR
+	sf=svalue*sc-0.5;
+	sf=FLOOR(sf);
+#endif
+#ifdef TEXFLOOR
+	tf=a*tvalue*sc;
+	tf=FLOOR(tf);
+#ifdef FIX_T0
+	if(tv>0 && tf<-1)
+		tv-=a*2*sc;
+	else if(tv<0 && tf>=0)
+		tv+=a*2*sc;
+#endif
+#endif
+	glMultiTexCoord2d(tchnl,tv-tf,sv-sf);
+}
+
+//-------------------------------------------------------------
+// Texture::bumpCoords() set texture coordinates for bumpmap
+//  - called from Raster.cpp for OGL bump mapping only
+//-------------------------------------------------------------
+void Texture::bumpCoords(int tchnl,double x, double y)
+{
+    double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
+    if(t1d()){
+		glMultiTexCoord2d(tchnl,s*sc+bias+x,0.0);
+		return;
+	}
+    sv=s*sc-0.5;
+	tv=a*t*sc;
+#ifdef TEXFLOOR
+	sf=svalue*sc-0.5;
+	sf=FLOOR(sf);
+#endif
+#ifdef TEXFLOOR
+	tf=a*tvalue*sc;
+	tf=FLOOR(tf);
+#ifdef FIX_T0
+	if(tv>0 && tf<-1)
+		tv-=a*2*sc;
+	else if(tv<0 && tf>0)
+		tv+=a*2*sc;
+#endif
+#endif
+	glMultiTexCoord2d(tchnl,tv-tf+x,sv-sf+y);
+}
+
+//-------------------------------------------------------------
+// Texture::eval() evaluate TNtexture string
+//-------------------------------------------------------------
+void Texture::eval()
+{
+	expr->eval();
+}
+
+//-------------------------------------------------------------
+// Texture::set_state() set texture OGL state
+//-------------------------------------------------------------
+void Texture::set_state() {
+	float fLargest=1.0f;
+	glEnable(GL_TEXTURE_2D);
+	if(Raster.filter_aniso())
+		//fLargest=8;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+	//cout << "Anisotopic filtering level: "<<fLargest<<endl;
+	//cout << "Anisotopic filtering : "<<Raster.filter_aniso()<<endl;
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, style());
+	glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, TheScene->tex_mip);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+	if(t2d()){
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	}
+	else{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (options & BORDER) ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, intrp());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, intrp());
+
+}
+
+//-------------------------------------------------------------
+// Texture::begin() create/bind texture image
+//-------------------------------------------------------------
+void Texture::begin() {
+	glEnable(GL_TEXTURE_2D);
+	if(!valid || Render.invalid_textures()) {
+		if (id[0]>0)
+			glDeleteTextures(2, (GLuint*)&id);
+		glGenTextures(1, &id[0]); // Generate a unique texture ID
+		glBindTexture(GL_TEXTURE_2D, id[0]);
+		set_state();
+
+		int w=width();
+		int h=height();
+		bool rgba_image=(image()->gltype()==GL_RGBA)?true:false;
+		bool alpha_image=image()->alpha();
+		int rgb_step=rgba_image?4:3;
+
+		unsigned char* data=(unsigned char*)malloc(h*w*4);
+		unsigned char* rgb=(unsigned char*)pixels(); // original image date
+
+		// build texture image for Shader and OGL usage
+
+		//bool shader_pass=(Raster.render_type()==SHADER_TEXS)?true:false;
+		bool shader_pass=Render.draw_shaded()?true:false;
+		double alpha=shader_pass?1.0:texamp;
+
+		bool norm=normalize();
+		double amin=255;
+		double amax=0;
+		//bool set_alpha=shader_pass || alpha_enabled();
+		bool auto_alpha= alpha_enabled();
+		bool set_alpha=shader_pass || alpha_image;
+		//cout << " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		for (int i = 0; i < h; i++){
+			for (int j = 0; j< w ; j++) {
+			    unsigned char ac=255;
+			    int index=i*w+j;
+			    int rgb_index=index*rgb_step;
+			    data[index*4+0]=rgb[rgb_index+0];
+			    data[index*4+1]=rgb[rgb_index+1];
+			    data[index*4+2]=rgb[rgb_index+2];
+			    if(set_alpha){
+					if(alpha_image)
+						ac=rgb[rgb_index+3];
+					else
+						ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
+					double aval=ac*alpha;
+					aval=aval>255?255:aval;
+					amin=aval<amin?aval:amin;
+					amax=aval>amax?aval:amax;
+					data[index*4+3]=(unsigned char)(aval);
+			    }
+			    else
+			    	data[index*4+3]=255;
+			}
+		}
+		if((amin==0 && amax==255) || amax==amin)
+			norm=false;
+		if(norm && set_alpha){
+			double a=255/(amax-amin);
+			double b=-a*amin;
+			//cout << "min:"<< amin << " max:"<< amax<< endl;
+			for (int i = 0; i < h; i++){
+				for (int j = 0; j< w ; j++) {
+					int index=i*w+j;
+					double aval=data[index*4+3];
+					data[index*4+3]=(unsigned char)(a*aval+b);
+				}
+			}
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		// build bump texture image for OGL legacy bumpmap usage
+
+		if(bump_active && !Render.draw_shaded()){
+			glGenTextures(1, &id[1]); // Generate a unique texture ID
+			glBindTexture(GL_TEXTURE_2D, id[1]);
+			set_state();
+			for (int i = 0; i < h; i++){
+				for (int j = 0; j< w ; j++) {
+				    unsigned char ac=255;
+					int index=i*w+j;
+				    int rgb_index=index*rgb_step;
+					if(alpha_image)
+						ac=rgb[rgb_index+3];
+					else{
+						ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
+					}
+					data[index*4+0]=data[index*4+1]=data[index*4+2]=ac;
+					data[index*4+3]=255;
+				}
+			}
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+		FREE(data);
+		valid=true;
+	}
+	if(Raster.bumps())
+		glBindTexture(GL_TEXTURE_2D, id[1]);
+	else
+		glBindTexture(GL_TEXTURE_2D, id[0]);
+}
+
+//-------------------------------------------------------------
+// Texture::end() end of texture usage call
+//-------------------------------------------------------------
+void Texture::end()
+{
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_1D, 0);
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_TEXTURE_2D);
+}
+
+//-------------------------------------------------------------
+// Texture::initProgram() set shader #defines for texture
+// - called BEFORE shader program is created-info.logf
+//-------------------------------------------------------------
+bool Texture::initProgram(){
+	if(!tex_active && !bump_active)
+		return false;
+	if(!Render.textures() && !Render.bumps())
+		return false;
+	if(!enabled)
+		return false;
+	char defs[1024];
+	defs[0]=0;
+	int tid=TerrainProperties::tid;
+	if(tex_active && Render.textures())
+		sprintf(defs+strlen(defs),"#define T%d\n",tid);
+	if(orders>1)
+		sprintf(defs+strlen(defs),"#define M%d\n",tid);
+	if(expr)
+		expr->initProgram();
+
+	if(bump_active && Render.bumps()){
+		sprintf(defs+strlen(defs),"#define B%d\n",tid);
+	}
+	strcat(GLSLMgr::defString,defs);
+	return true;
+}
+
+//-------------------------------------------------------------
+// Texture::setProgram() set shader uniform variables
+// - called AFTER shader program is created
+//-------------------------------------------------------------
+bool Texture::setProgram(){
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program)
+		return false;
+	if(!tex_active&&!bump_active)
+		return false;
+	if(!enabled)
+		return false;
+
+	//int tid=num_tids;
+	int texid=TerrainProperties::tid;
+	tid=texid;
+	//cout << "Texture::setProgram tid:"<< tid << " texid:"<< texid<<endl;
+	glActiveTexture(GL_TEXTURE0+texid);
+	begin();
+
+	GLSLVarMgr vars;
+
+	char str[256];
+
+	float delta=width()>height()?width():height();
+	double tex_ampl=(tex_active && Render.textures()) ? texamp:0.0;
+	double bump_ampl=(Render.bumps() && bump_active) ? 3.0*bumpamp:0.0;
+
+	float ts= scale;
+	float orders_bump=1.0/delta;
+	//float logf = log2(ts)+log2(orders_delta)-1+0.5*log2(height())+TheScene->freq_mip;
+	float dlogf=log2(orders_delta);
+	float logf = log2(ts)+dlogf-1+0.5*log2(height());
+
+	TerrainProperties *tp=TerrainData::tp;
+	double bumpmin=1e-5;
+	double minscale=32;
+	if(tp){
+		for(int i=0;i<tp->noise.size;i++){
+			TNnoise* noise=tp->noise[i];
+			minscale=minscale<noise->scale?minscale:noise->scale;
+		}
+	}
+
+	// adjust bump delta using lowest order scale
+	double bumpdelta=pow(10,-(0.25*minscale+3.5-2*TheScene->bump_mip));
+	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
+	double tex_bias=t2d()?bias:0;
+ 	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
+
+ 	//cout << "bumpdelta:"<<bumpdelta<<endl;
+ 	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
+	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
+	sprintf(str,"tex2d[%d].bumpamp",tid);  		glUniform1fARB(glGetUniformLocationARB(program,str),bump_ampl);
+	sprintf(str,"tex2d[%d].bump_delta",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),(float)bumpdelta);
+	sprintf(str,"tex2d[%d].bump_damp",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),bump_damp);
+	sprintf(str,"tex2d[%d].orders",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),orders);
+	sprintf(str,"tex2d[%d].scale",tid);    		glUniform1fARB(glGetUniformLocationARB(program,str),scale);
+	sprintf(str,"tex2d[%d].bias",tid); 			glUniform1fARB(glGetUniformLocationARB(program,str),tex_bias);
+	sprintf(str,"tex2d[%d].orders_delta",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_delta);
+	sprintf(str,"tex2d[%d].orders_bump",tid);	glUniform1fARB(glGetUniformLocationARB(program,str),orders_bump);
+	sprintf(str,"tex2d[%d].orders_atten",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_atten);
+	sprintf(str,"tex2d[%d].logf",tid);          glUniform1fARB(glGetUniformLocationARB(program,str),logf);
+	sprintf(str,"tex2d[%d].dlogf",tid);         glUniform1fARB(glGetUniformLocationARB(program,str),dlogf);
+
+	vars.setProgram(program);
+	vars.loadVars();
+	glActiveTexture(GL_TEXTURE0);
+	return true;
+}

@@ -1,0 +1,22 @@
+/* XPM */
+static char *vtx_view_image_xpm[]={
+"16 15 4 1",
+"b c #008080",
+". c #00ffff",
+"# c #ffffff",
+"a c #ffff00",
+"aaaaaaaaaaaaaaaa",
+"aaaaaaaaaaaaaaaa",
+"aa............aa",
+"aa............aa",
+"aa............aa",
+"aa............aa",
+"aa............aa",
+"aa.bb.........aa",
+"aabbbb........aa",
+"aabbbbb..bb...aa",
+"aabbbbbbbbbbbbaa",
+"aabbbbbbbbbbbbaa",
+"aabbbbbbbbbbbbaa",
+"aaaaaaaaaaaaaaaa",
+"aaaaaaaaaaaaaaaa"};

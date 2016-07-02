@@ -1,0 +1,111 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=26.7422;
+		theta=241.772;
+		height=15386.5 ft;
+		gndlvl=-20001 ft;
+		time=5499;
+		heading=50;
+		tilt=-15;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=7060.4 ft;
+		gndlvl=-19606.7 ft;
+		heading=15;
+		tilt=-10;
+		angle=-25;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.5,0.01) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1,0.82);
+					name="Sol";
+					specular=Color(1,1,1);
+					Surface{
+						m1=noise(UNS,3,10,0.4,0.5);
+						m2=noise(NABS|UNS,8,10,0.5,0.5);
+						m3=clamp(m1*m2,0,1);
+						terrain=Color(1,1-0.3*m3,0.9-m3);
+					}
+					Corona(8.11) {
+						color1=Color(1,1,0.8,0.8);
+						color2=Color(1,1,0.7);
+					}
+				}
+				Planet(0.0015,36) {
+					ambient=Color(1,1,1,0.06);
+					day=58.65;
+					name="Mercury";
+					resolution=3.31426;
+					shadow=Color(0,0,0,0.95);
+					shine=7.09884;
+					specular=Color(1,1,1,0.86);
+					sunset=0.01;
+					water.albedo=0.73;
+					year=87.97;
+					albedo=0.73;
+					image("cracks2",INVT,256,256,noise(RIDGED,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.992,0.773,0.004));
+					Surface{
+						md=noise(UNS|RO1,1,5,0.5,0.2,1.98732);
+						mz=md+0.2*noise(RIDGED,11,4,0.5,0.5,1.98732);
+						mc=1-0.7*md;
+						terrain=Z(craters(4,0.2,0.05,1,1,1,0.8)
+								mz)+
+								Texture("cracks2",BUMP|NTEX,99.99,1.16984,1,4,10,2.20752,1,0)+
+								Texture("saturn3",BORDER|LINEAR|S,PHI+BMPHT+noise(FS,10,6,0,0,2.2),0.25,0.9818,-0.0308,-0.6792,1,1.86152,1,0);
+					}
+					Moon(0.001,0.00375) {
+						ambient=Color(1,0.98,0,0);
+						day=11;
+						diffuse=Color(1,1,1,0.66);
+						emission=Color(0.95,0.97,0.96,0);
+						name="Luna";
+						phase=231;
+						shine=20;
+						specular=Color(1,1,1,0.89);
+						sunset=0.621998;
+						year=17;
+						twilight.value=0;
+						image("craters",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+						bands("mercury",128,0,0.6,RAND,Color(1,0.875,0.275,0.475),
+							Color(1,0.6,0,0.475),
+							Color(0.675,0.4,0,0.475),
+							Color(1,0.875,0.275,0.475));
+						Surface{
+							terrain=
+									Texture("craters",BUMP|NTEX,5.2918,-0.54544,1,0,6,3)+
+									Texture("mercury",LINEAR|S,BMPHT+0.01*noise(3,5,0),1,1.46668,0.47272,3.87696,1,2);
+						}
+					}
+				}
+			}
+		}
+	}
+}

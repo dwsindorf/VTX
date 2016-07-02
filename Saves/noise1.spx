@@ -1,0 +1,74 @@
+Scene() {
+	drawmode=1;
+	View{
+		view=ORBITAL;
+		phi=0.301475;
+		theta=-132.173;
+		height=0.00151256;
+		time=1.18276e+006;
+		heading=90;
+		pitch=-90;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		theta=-272.51;
+	}
+	View{
+		height=0.00179014;
+	}
+	View{
+		phi=0.301475;
+		height=0.00163057;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.001,40) {
+					day=24;
+					diffuse=Color(1,1,1,0.52);
+					resolution=4;
+					shine=10;
+					specular=Color(1,1,1,0.83);
+					year=100;
+					albedo=1;
+					bands("saturn2",ACHNL|NORM,128,0.37736,0.56604,Color(0.941,0.941,0.941,0.565),Color(0.502,1,0.502),
+						Color(0.675,0.4,0),
+						Color(1,0.875,0.275),
+						Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.996,0.773,0.004));
+					Surface{
+						terrain=
+								Texture("saturn2",LINEAR|S,noise(SQR|UNS,1,5,0,0,2.1)+noise(FS|SQR|UNS,5,15),0.9999,1.3212,1.05456,0,1,2);
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,26 @@
+#ifndef IMAGEWINDOW_H_
+#define IMAGEWINDOW_H_
+#ifndef WX_PRECOMP
+#include "wx/wx.h"
+#endif
+
+class VtxImageWindow : public wxPanel
+
+{
+	DECLARE_CLASS(VtxImageWindow)
+
+protected:
+	wxString m_name;
+public:
+	VtxImageWindow(wxWindow* parent,
+			wxWindowID id,
+			const wxPoint& pos = wxDefaultPosition,
+			const wxSize& size = wxDefaultSize,
+			long style = 0,
+			const wxString& name = "");
+
+	void setImage(wxString );
+	void OnPaint(wxPaintEvent& event);
+	DECLARE_EVENT_TABLE()
+};
+#endif /*IMAGEWINDOW_H_*/

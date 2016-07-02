@@ -1,0 +1,60 @@
+Scene() {
+	drawmode=1;
+	drawmode=1;
+	View{
+		view=ORBITAL;
+		phi=13.8353;
+		theta=1.59987;
+		height=2.54194;
+		time=609280;
+		heading=90;
+		pitch=-90;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.5,0.01) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1,0.82);
+					name="Sol";
+					specular=Color(1,1,1);
+					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.467,0,0),
+						Color(0.294,0.016,0.071),
+						Color(0.137,0.024,0.188),
+						Color(0.027,0.02,0.141),
+						Color(0.008,0,0));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|S,noise(RIDGED|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
+					}
+					Corona(8.86371) {
+						color1=Color(1,1,0.98);
+						color2=Color(1,0.68,0);
+						gradient=1;
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,27 @@
+Notes for Eclipse (Indigo) Ubuntu (12.04) WxWidgets 2.9.4
+Problems:
+1. Can't find header files (e.g. <stdio.h>) in txt editor views
+  - Set C/C++ build tool chain editor to Linux GCC
+  - Enable "automatic discovery of paths and symbols" in  C/C++->discovery options
+2. Undefined methods (e.g. printf)
+  There seems to be a bug in this version of CDT
+  Work-around
+  - in  C/C++->discovery options "compiler invocation arguments"
+    change: -E -P -v -dD ${plugin_state_location}/specs.cpp
+    to: -E -P -v -dD ${plugin_state_location}/specs.cpp $> ~/dummyfile
+  - and in entry for "load build output from file"
+    enter: ~/dummyfile
+  - force rebuild of indexer
+    change something, then press "apply"
+  - Undefined errors should stop showing up in "problems" and test files
+  - Restoring "compiler invocation arguments" and "load build output from file"
+    to original values does not undo fix (something is getting cached)
+3. Undefined wxWidgets header files
+  - Need to add path to /usr/local/include/wx-2.9 to "paths and symbols" (all builds and lanquages)
+4. Undefined wxWidgets symbols
+  - Go to wxWidges build directory
+    e.g. /opt/wxWidgets/wxWidgets-2.9.4/release
+  - search for file "setup.h"
+    e.g. /opt/wxWidgets/wxWidgets-2.9.4/release/lib/wx/include/gtk3-unicode-static-2.9/wx
+  - cp setup.h to wxWidgets install wx include directory 
+    e.g. /usr/local/include/wx-2.9/wx

@@ -1,0 +1,40 @@
+11/29/2011
+
+I. GPU geometry
+
+1. fix HT calculation for viewpoint to account for GPU geometry
+  - Unless noise is "abs" -HT terrain results in underground view
+2. Add GPU geometry to HDR shader (zvals)
+3. Add GPU geometry to shadows shader
+
+II. Normals
+1. Matching Vertex noise (point) and pixel noise (texture) maps
+   high resolution bumpmap lighting onto low resolution geometry
+   - makes vertex terrain look as good as GPU generated terrain
+     with the same noise functions
+   - render/adapt speed (Dell 3500 dual-zeon 2.5 GHz CPU, quadro fx 580 GPU)
+     o vertex+bumps 8 FPS
+     o geom+bumps   0.6 FPS
+   - Can this be automated somehow?
+III. Terrain
+1. Fractals
+  - Can itterative shader passes using RTT and Geometry shader be
+    used to generate fractal terrain or images ?
+2. Erosion
+  - continue vertex study using neighbor transport model
+    Images:
+    o pass 1 render using noise function and save intensity as ht field
+    o pass 2 read ht field texture and use gradients to generate 
+      deposition images
+    o pass 3 generate new ht field image from deposition and previous
+      ht field image
+    o repeat 1-3 until convergence (no signifigant change in ht field)
+    Terrain:
+    In adapt pass:
+    o pass 1 use vertex based method for large scale features (RTT)
+    o pass 2 create ht map using z-buffer data and xy image coodinates
+    o pass 3-n repeat from pass 2 of image method until convergence
+    In render pass
+    o apply eroded image as bump-map texture 
+     
+    

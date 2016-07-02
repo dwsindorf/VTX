@@ -1,0 +1,157 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-30.3194;
+		theta=351.107;
+		height=6 ft;
+		gndlvl=6926.49 ft;
+		time=865522;
+		heading=95;
+		tilt=-10;
+		angle=5;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		gndlvl=6928.51 ft;
+		heading=85;
+		tilt=-5;
+		angle=15;
+	}
+	View{
+		height=6.01952 ft;
+		gndlvl=6344.39 ft;
+	}
+	View{
+		height=6.52797 ft;
+		gndlvl=6343.11 ft;
+	}
+	View{
+		heading=125;
+	}
+	View{
+		height=6 ft;
+		gndlvl=6344.39 ft;
+		heading=85;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,80) {
+					ambient=Color(1,1,1,0.13);
+					day=24;
+					fog.color=Color(1,1,0.96);
+					fog.max=4259.2 ft;
+					fog.min=0 ft;
+					fog.value=1;
+					fog.vmax=5740.8 ft;
+					fog.vmin=5000 ft;
+					shadow=Color(0.03,0.03,0.09,0.8);
+					shine=1.95572;
+					specular=Color(1,1,1,0.22);
+					year=100;
+					image("ridges",INVT,256,256,noise(ERODED|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,128,0.16666,0.572549,Color(0,0,0,0.573),Color(0.024,0.224,0.102),
+						Color(0.2,0.4,0.075),
+						Color(0.275,0.475,0),
+						Color(0.522,0.322,0.02,0.463),
+						Color(0.275,0.251,0.2),
+						Color(0.275,0.224,0.024),
+						Color(0.224,0.173,0.063),
+						Color(0.573,0.573,0.573),
+						Color(0.6,0.573,0.522,0.663),
+						Color(0.275,0.275,0.275,0.463));
+					Surface{
+						terrain=fog(noise(UNS,3,2,1,0.5,2,1,1,0,0))
+								snow(-1.6,1,1,0.19,0.73,0.5)
+								Z(noise(RIDGED|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))+
+								Texture("ridges",BUMP,1164.1,0.88888,1,0,10,2.2,0.96296,0)+
+								Texture("Shist1",BUMP,16384,-0.6,2,0,4,2,1,0)+
+								Texture("bricks",A|BUMP,2*HT,65536,-0.4,1.14816,0,6.33328,2.11112,1,0)+
+								Texture("DirtPebbles",A|BUMP,2*HT,143382,0.5,2,0,6.33328,2.11112,1,0)+
+								Texture("alpine2",BORDER|S,HT-0.2*BMPHT+noise(NABS|NEG|RO1,5.1,5,1,0.5,2.05,1,1,0,0),1,0.62964,0.97296,0.37728,1,2,1,0)+
+								Texture("GrassField",A|BUMP,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037);
+					}
+					Sky(0.00419081) {
+						color=Color(0,0.58,0.89,0.97);
+						density=0;
+						haze.color=Color(1,1,1,0.96);
+						haze.grad=0.32432;
+						haze.height=0.66;
+						haze.value=0.956863;
+						specular=Color(1,1,1);
+						twilight=Color(0.68,0.04,0.04);
+						twilight.max=0.491615;
+						twilight.min=-0.598654;
+					}
+					Clouds(0.00407746) {
+						ambient=Color(1,1,1,0.35);
+						crot=1;
+						day=0.3;
+						diffuse=Color(1,1,1,0.42);
+						emission=Color(1,1,1,0.07);
+						name="Cirrus";
+						resolution=2;
+						tilt=-5;
+						Surface{
+							terrain=Color(1,1,1,noise(FS,3.8,9,0.77,0.5,2,0.68,0,0,0));
+						}
+					}
+					Moon(0.001,0.1) {
+						day=11;
+						name="Luna";
+						phase=100;
+						year=17;
+						Surface{
+							terrain=craters(ID4,4,0.3,0.2,0.9)
+									Z(0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
+						}
+					}
+					Clouds(0.004002) {
+						ambient=Color(1,1,1,0.6);
+						crot=1;
+						day=0.5;
+						diffuse=Color(1,1,1,0.47);
+						diffusion=0.2096;
+						emission=Color(1,1,1,0.16);
+						name="Cumulus";
+						resolution=2;
+						rot_phase=121.932;
+						shine=77.7857;
+						specular=Color(1,1,1,0);
+						Surface{
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0))+Color(1+4*HT,RED,RED,1);
+						}
+					}
+				}
+			}
+		}
+	}
+}

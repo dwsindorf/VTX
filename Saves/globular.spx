@@ -1,0 +1,84 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=30.8592;
+		height=10000 ly;
+		time=65278;
+		heading=90;
+		pitch=-90;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1;
+	}
+	View{
+		phi=90;
+		height=18000 ly;
+	}
+	View{
+		phi=20;
+		theta=7.23881e-12;
+	}
+	View{
+		phi=25;
+		theta=6.72175e-12;
+	}
+	View{
+		phi=35;
+		theta=5.68817e-12;
+	}
+	Universe {
+		Galaxy(20000) {
+			center.radius=0;
+			color.bias=0.7;
+			compression=0.5;
+			density=0.5;
+			diffusion=3;
+			gradient=1.8;
+			name="Uncharted";
+			noise.amplitude=0;
+			noise.cutoff=0.1;
+			noise.vertical=0;
+			radius=0.6;
+			radius.inner=0.6;
+			radius.outer=0.6;
+			scatter=4;
+			twist.radius=1;
+			twist.rotation=0;
+			noise.expr=noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.000,0.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.678),
+				Color(1.000,1.000,0.957)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					day=24;
+					diffuse=Color(1,1,1,0.58);
+					year=100;
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					Surface{
+						terrain=Z(50*noise(RIDGED,1,12,0.5,0.5,2))+
+								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,105 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-29.5383;
+		theta=350.164;
+		height=5419.26 ft;
+		gndlvl=-738.333 ft;
+		time=85454;
+		heading=-50;
+		tilt=-15;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=5722.63 ft;
+		gndlvl=-1041.7 ft;
+	}
+	View{
+		phi=-29.5417;
+		theta=350.161;
+		height=4197.04 ft;
+		gndlvl=-31.4995 ft;
+		heading=-75;
+	}
+	View{
+		phi=-29.5483;
+		theta=350.163;
+		height=15.5461 miles;
+		gndlvl=919.767 ft;
+		tilt=-40;
+		angle=5;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					ambient=Color(1,1,1,0.09);
+					day=24;
+					diffuse=Color(1,1,1,0.91);
+					shadow=Color(0,0,0.19,0.8);
+					shine=2.91188;
+					specular=Color(1,1,1,0.17);
+					year=100;
+					image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					bands("saturn",NORM,64,0.5,0.3,RAND,Color(1,0.9,0.3),
+						Color(1,0.6,0),
+						Color(0.7,0.4,0),
+						Color(1,0.9,0.3));
+					Surface{
+						terrain=Z(noise(NABS,8,4,0.35,0.95,2.1,1,0.1))+
+								Texture("eroded",NTEX,10000,2,0.2788,0,1,2)+
+								Texture("saturn",S,HT,1,1.3818,2,0,1,2);
+					}
+					Sky(0.00419081) {
+						color=Color(0,0.58,0.89,0.97);
+						density=0;
+						haze.height=0.66;
+						haze.value=0.4;
+						specular=Color(1,1,1);
+					}
+					Clouds(0.00407746) {
+						Surface{
+							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
+						}
+					}
+					Moon(0.001,0.1) {
+						day=11;
+						name="Luna";
+						phase=100;
+						year=17;
+						Surface{
+							terrain=craters(ID4,4,0.3,0.2,0.9)
+									Z(0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
+						}
+					}
+				}
+			}
+		}
+	}
+}

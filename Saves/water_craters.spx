@@ -1,0 +1,113 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=20.2808;
+		theta=16.9712;
+		height=5235.83 ft;
+		gndlvl=-1618.84 ft;
+		time=472179;
+		tilt=-15;
+		speed=586570;
+		viewobj=Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		height=5235.73 ft;
+		gndlvl=-1618.74 ft;
+	}
+	Galaxy(20000) {
+		origin=Point(4000,0,0);
+		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		color.expr=1*DENSITY;
+		color.list=Colors(
+			Color(0.502,0.000,0.251),
+			Color(0.000,0.000,1.000),
+			Color(0.000,0.722,1.000),
+			Color(0.502,1.000,1.000),
+			Color(1.000,0.282,0.000),
+			Color(1.000,0.702,0.200),
+			Color(1.000,1.000,0.400),
+			Color(1.000,1.000,0.702)
+			);
+		System(1) {
+			Star(1,0) {
+				diffuse=Color(1,1,1);
+				emission=Color(1,1,1);
+				specular=Color(1,1,1);
+				Corona(5.1) {
+					color1=Color(1,1,0.8,0.5);
+					color2=Color(1,1,0.6,0.7);
+				}
+			}
+			Planet(0.01,50) {
+				day=1;
+				shadow=Color(0,0,0,0.43);
+				tilt=10;
+				year=300;
+				bands("grad",64,0.5,Color(0.9,0.8,0.7),0.2,RAND);
+				Surface{
+					p=noise(3,17);
+					m1=noise(RIDGED,8,4);
+					m2=noise(RIDGED|UNS,13,2);
+					terrain=Z(0.5*m1+0.02*m2)+
+							Texture("grad",S,(1+0.1*p*PHI)*(2*PHI+0.01*p));
+				}
+				Ring(0.013,0.008) {
+					albedo=0.8;
+					specular=Color(1,1,1,0.8);
+					rcolor1=Color(0.5,0.5,0.8,0.7);
+					bands("rings",64,0.3,0.5,RAND,Color(0.5,0.5,0.8,0.7));
+					Surface{
+						terrain=
+								Texture("rings",S,2*PHI);
+					}
+				}
+				Moon(0.001,0.03) {
+					albedo=0.89;
+					ambient=Color(1,1,1,0.08);
+					color=Color(0.9,0.7,0.1);
+					day=11;
+					fog.max=5000 ft;
+					fog.min=1000 ft;
+					fog.vmax=2000 ft;
+					shadow=Color(0,0,0,0.61);
+					shine=2.22729;
+					specular=Color(1,1,1);
+					water.albedo=0.91;
+					water.clarity=248.752 ft;
+					water.color1=Color(0.5,0.5,0,0.73);
+					water.color2=Color(0,0.13,0.22);
+					water.level=-1620 ft;
+					water.shine=9;
+					year=11;
+					haze.color=Color(0.7,0.5,1);
+					haze.max=6e-05;
+					haze.min=2e-05;
+					haze.value=1;
+					image("mars1",256,256,Color(0.2+noise(ERODED|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));
+					Surface{
+						m1=noise(UNS,1,5,0.47,0.4,2)+0.71;
+						m2=0.5*noise(ERODED,8,16,0.2,0.5);
+						terrain=fog(1-1.2*noise(UNS,8,3,1))
+								water(0.001*noise(RIDGED|NLOD,15,6,0.33,0.5,2.1))
+								craters(ID1,2,0.001,0.2,1,0.8,1,1,1,0.4,0.1)
+								craters(3,0.1,0.25,1,0.8,1,0.3)
+								Z(m2)+Color(0.75+noise(UNS,2,5,1,0.5,2),RED,RED,1)+
+								Texture("mars1",BUMP,3.21519,0.66664,1.30908,0,10,2);
+					}
+					Sky(0.00103) {
+						color=Color(0.4,0.8,1,0.93);
+						haze.color=Color(1,1,0.71);
+						haze.height=0.6;
+						haze.max=13.573 miles;
+						haze.min=0.0189 miles;
+						haze.value=1;
+						specular=Color(1,1,1);
+						twilight=Color(0.5,0,0.25);
+						twilight.max=0.2691;
+						twilight.min=-0.2691;
+					}
+				}
+			}
+		}
+	}
+}
