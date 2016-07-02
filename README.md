@@ -19,4 +19,3 @@ Some screenshots of previously generated scenes are available in the Images sub-
 NOTE: This README is just an initial check-in and will be amended in the future
       to include instructions for building and running the program. 
 
-

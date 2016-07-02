@@ -1,0 +1,39 @@
+#define SPRITES
+#define FGSTARS
+#define INSIDE
+#define INSIDE_SKY
+#ifndef _UTILS_H
+#define _UTILS_H
+// ########## begin utils.h #########################
+float lerp(float x, float xmin, float xmax, float ymin, float ymax){
+	x=x<xmin?xmin:x;
+	x=x>xmax?xmax:x;
+	float a=(ymax-ymin)/(xmax-xmin);
+	float b=ymin-a*xmin;
+	float y=a*x+b;
+	return y;
+}
+// ########## end  utils.h #########################
+#endif
+
+varying vec4 Color;
+
+//uniform float pointsize;
+
+varying float distance;
+
+void main(void) {
+	gl_Position = ftransform();
+	Color=gl_Color;
+#ifndef FGSTARS
+	vec4 position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	distance=0.2e-4*sqrt(length(position));
+	//float size=pointsize*min(distance,6.0);
+#ifdef INSIDE
+	//size*=3;
+	//Color.a=1.2*Color.a/distance;
+#endif
+	//gl_PointSize=size;
+#endif
+}
+
