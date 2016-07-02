@@ -8,4 +8,5 @@ jpeglib
 jni
 Archive
 *.debug
+*.o
 
