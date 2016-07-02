@@ -1,0 +1,93 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=30.0581;
+		theta=30.1969;
+		height=380.265 ft;
+		gndlvl=1487.01 ft;
+		time=51516;
+		heading=-25;
+		tilt=-15;
+		fov=35;
+		speed=586570;
+		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	Galaxy(10000) {
+		origin=Point(2000,0,0);
+		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		color.expr=1*DENSITY;
+		color.list=Colors(
+			Color(0.502,0.000,0.251),
+			Color(0.000,0.000,1.000),
+			Color(0.000,0.722,1.000),
+			Color(0.502,1.000,1.000),
+			Color(1.000,0.275,0.000),
+			Color(1.000,0.702,0.200),
+			Color(1.000,1.000,0.400),
+			Color(1.000,1.000,0.702)
+			);
+		System(1) {
+			Star(0.3,0) {
+				color=Color(1,1,0.89);
+				diffuse=Color(1,1,1);
+				emission=Color(1,1,1,0.49);
+				specular=Color(1,1,1);
+				year=2;
+				Surface{
+					terrain=Color(1,1,0)-Color(0,1,1)*noise(8,4);
+				}
+				Corona(1.59128) {
+					color1=Color(1,1,0.89,0.95);
+					color2=Color(0.04,0.97,0.55);
+				}
+			}
+			Planet(0.005,20) {
+				ambient=Color(1,1,1,0.08);
+				day=1;
+				fog.color=Color(1,0.96,0.7);
+				fog.max=2866.62 ft;
+				fog.min=422.22 ft;
+				fog.value=1;
+				fog.vmax=1166.6 ft;
+				fog.vmin=500 ft;
+				phase=180;
+				shadow=Color(0,0,0.1,0.6);
+				shine=4.58785;
+				specular=Color(1,1,1,0.57);
+				tilt=10;
+				year=17;
+				albedo=0.25;
+				haze.color=Color(1,1,0.62);
+				haze.height=0.34;
+				haze.max=5e-005;
+				haze.min=5e-006;
+				haze.value=1;
+				image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+				bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
+					Color(0.58,0.024,0.024));
+				Surface{
+					m1=0.1*noise(6,3);
+					m2=noise(RIDGED|SCALE,11,8,0.5,0.5,2)+m1;
+					m3=0.1*noise(10,3,0.6);
+					c1=craters(ID1|MAXHT,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
+					m2;
+					terrain=fog(1.5*noise(UNS,11,5,1,0.5,2))
+							Z(0.5*c1)+
+							Texture("craters3",BUMP|NTEX,1279.18,1.39624,1,0,11.8682,2.13208,1,0)+
+							Texture("lava",S,HT+2*BMPHT,0.5,2,1,0.67696,1,2,1,0);
+				}
+				Sky(0.00511133) {
+					color=Color(0.5,0.69,1);
+					density=0.35;
+					haze.grad=0.18;
+					haze.value=0.376471;
+					shine=1;
+					specular=Color(1,1,1);
+					twilight=Color(1,0,0);
+					twilight.max=0.389507;
+					twilight.min=-0.290507;
+				}
+			}
+		}
+	}
+}

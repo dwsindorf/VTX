@@ -1,0 +1,87 @@
+#define LMODE 0
+#define NLIGHTS 1
+#define BACK
+#define HAZE
+#define COLOR
+#define NTEXS 0
+#define NBUMPS 0
+#define NVALS 0
+//#version 120
+// ########## begin attributes.def #########################
+
+#define AT0 attributes[0].x
+#define AT1 attributes[0].y
+#define AT2 attributes[0].z
+#define AT3 attributes[0].w
+#define AT4 attributes[1].x
+#define AT5 attributes[1].y
+#define AT6 attributes[1].z
+#define AT7 attributes[1].w
+
+varying vec4 attributes[2];
+
+// ########## end attributes.def #########################
+#define CS0 gl_TexCoord[0].xy
+#define CS1 gl_TexCoord[0].zw
+#define CS2 gl_TexCoord[1].xy
+#define CS3 gl_TexCoord[1].zw
+#define CS4 gl_TexCoord[2].xy
+#define CS5 gl_TexCoord[2].zw
+#define CS6 gl_TexCoord[3].xy
+#define CS7 gl_TexCoord[3].zw
+#define CS8 gl_TexCoord[4].xy
+#define CS9 gl_TexCoord[4].zw
+#define CS10 gl_TexCoord[5].xy
+#define CS11 gl_TexCoord[5].zw
+#define CS12 gl_TexCoord[6].xy
+#define CS13 gl_TexCoord[6].zw
+#define CS14 gl_TexCoord[7].xy
+#define CS15 gl_TexCoord[7].zw
+// ########## begin attributes.vert #########################
+attribute vec4 CommonAttributes;
+attribute vec4 TextureAttributes;  // TextureAttributes.xy contains 2d components of vertex tangent
+
+#if NVALS >0
+attribute vec4 Position2;
+attribute vec4 Position1;
+#endif
+attribute vec4 Attributes3;
+attribute vec4 Attributes4;
+
+// ########## end attributes.vert #########################
+
+varying vec4 EyeDirection_G;
+varying vec4 Normal_G;
+varying vec4 Constants_G;
+varying vec4 Factors;
+varying vec4 Color_G;
+
+// converts input vertices from model space to screen space
+// and passes them to the geometry shader which creates a
+// screen space rectangle (billboard)
+
+void main(void) {
+	//gl_Position = gl_Vertex;
+
+	vec4 vertex=vec4(gl_Vertex.xyz,1.0);
+	EyeDirection_G=-(gl_ModelViewMatrix * vertex);
+
+	// convert to screen space
+	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
+	vec3 ps = proj.xyz/proj.w;
+
+	gl_Position = vec4(ps,1);
+
+	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
+
+#ifdef COLOR
+	Color_G=gl_Color;
+#endif
+
+	Constants_G=CommonAttributes;
+
+	Factors=TextureAttributes;
+
+}
+
+

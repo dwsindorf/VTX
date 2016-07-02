@@ -1,0 +1,1132 @@
+#################
+#
+# MODULE	$Id$
+#
+#################
+#################
+# 'make' build parameters
+#################
+MAKEFILE      = Makefile
+THIS	      = glut
+#################
+# Compiler parameters
+#################
+# passed in by build target in $(OBJDIR)/Makefile
+######################
+INCS          = -I../ -I../includes  -I../res -I$(WXWIN)/art
+OPTLVL        = 
+GFLAGS        = 
+CFLAGS		  = -g
+CC            = g++
+OBJDIR        =
+#################
+# Program parameters
+#################
+SRC_FILES        = \
+			 ImageWindow.cpp \
+			 VtxBandsTabs.cpp \
+			 VtxCloudsTabs.cpp \
+			 VtxColorTabs.cpp \
+			 VtxControls.cpp \
+			 VtxCoronaTabs.cpp \
+			 VtxCratersFunct.cpp \
+			 VtxDefaultTabs.cpp \
+			 VtxExprEdit.cpp \
+			 VtxFogTabs.cpp \
+             VtxFrame.cpp \
+			 VtxFunctDialog.cpp \
+			 VtxFunctMgr.cpp \
+             VtxGlossTabs.cpp \
+			 VtxImageDialog.cpp \
+			 VtxImageMgr.cpp \
+			 VtxImageTabs.cpp \
+			 VtxLayerTabs.cpp \
+             VtxMain.cpp \
+			 VtxMapTabs.cpp \
+			 VtxMoonTabs.cpp \
+			 VtxNoiseFunct.cpp \
+ 			 VtxPlanetTabs.cpp \
+			 VtxPointTabs.cpp \
+			 VtxRingTabs.cpp \
+			 VtxRocksTabs.cpp \
+             VtxScene.cpp \
+             VtxSceneDialog.cpp \
+             VtxSceneTabs.cpp \
+             VtxStarTabs.cpp \
+             VtxSkyTabs.cpp \
+             VtxSurfaceTabs.cpp \
+             VtxTabsMgr.cpp \
+             VtxTexTabs.cpp \
+             VtxWaterTabs.cpp
+
+OBJS= $(SRC_FILES:%.cpp=$(OBJDIR)/%.o)
+
+COMPILE.cc    = $(CC) $(INCS) `wx-config --cxxflags` -DWXWIN $(CFLAGS) -c
+#################
+# Target Rules
+#################
+
+build:	      $(OBJS)  $(OBJDIR)/GLglue.o
+
+$(OBJDIR)/%.o: %.cpp
+	$(COMPILE.cc) -o $(@) $(@F:%.o=%.cpp)
+
+$(OBJDIR)/GLglue.o:       ../includes/GLglue.cpp
+			  $(COMPILE.cc)  -o $(@) ../includes/GLglue.cpp
+
+clean:;		   @rm -fr *.o
+showenv:;      @echo WXLIBS = `wx-config --libs --gl_libs`;
+			   @echo WXFLGS = `wx-config --cxxflags`
+depends:;	
+				makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/null; \
+                 makedepend -a  -Y./ -I../includes $(SRC_FILES) -p"../Release/" 2>/dev/null; \
+                 rm -f tmp; \
+                 for file in $(SRC_FILES); do \
+		              echo "../Debug/$$file.o:	$$file" >> tmp; \
+	             done; \
+                 for file in $(SRC_FILES); do \
+		              echo "../Release/$$file.o:	$$file" >> tmp; \
+	             done; \
+	             cat tmp >> Makefile; \
+	             rm tmp;
+                 
+
+#################
+# dependencies
+#################
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+../Debug/ImageWindow.o: VtxImageWindow.h ../includes/ImageMgr.h
+../Debug/ImageWindow.o: ../includes/GLheaders.h ../includes/GLee.h
+../Debug/ImageWindow.o: ../includes/defs.h ../includes/ColorClass.h
+../Debug/ImageWindow.o: ../includes/ListClass.h
+../Debug/VtxBandsTabs.o: VtxImageDialog.h VtxControls.h
+../Debug/VtxBandsTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxBandsTabs.o: ../includes/GLee.h VtxImageTabs.h
+../Debug/VtxBandsTabs.o: ../includes/ImageClass.h ../includes/TerrainMgr.h
+../Debug/VtxBandsTabs.o: ../includes/NoiseClass.h ../includes/PointClass.h
+../Debug/VtxBandsTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxBandsTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxBandsTabs.o: ../includes/GLglue.h ../includes/ImageMgr.h
+../Debug/VtxBandsTabs.o: ../includes/TerrainNode.h ../includes/TerrainData.h
+../Debug/VtxBandsTabs.o: ../includes/NodeIF.h VtxImageWindow.h VtxBandsTabs.h
+../Debug/VtxBandsTabs.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxBandsTabs.o: ../includes/ObjectClass.h ../includes/OrbitalClass.h
+../Debug/VtxBandsTabs.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Debug/VtxBandsTabs.o: ../includes/Util.h ../includes/MatrixClass.h
+../Debug/VtxBandsTabs.o: ../includes/matrix.h ../includes/TrackBall.h
+../Debug/VtxBandsTabs.o: ../includes/ModelClass.h ../includes/FileUtil.h
+../Debug/VtxBandsTabs.o: ../includes/RenderOptions.h
+../Debug/VtxCloudsTabs.o: VtxCloudsTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxCloudsTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxCloudsTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxCloudsTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxCloudsTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxCloudsTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxCloudsTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxCloudsTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxCloudsTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxCloudsTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxCloudsTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxCloudsTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxCloudsTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxCloudsTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxCloudsTabs.o: ../includes/UniverseModel.h
+../Debug/VtxColorTabs.o: VtxColorTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxColorTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxColorTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxColorTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxColorTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxColorTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxColorTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxColorTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxColorTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxColorTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxColorTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxColorTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxColorTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxColorTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxColorTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Debug/VtxColorTabs.o: ../includes/FileUtil.h
+../Debug/VtxControls.o: VtxControls.h ../includes/ColorClass.h
+../Debug/VtxControls.o: ../includes/GLheaders.h ../includes/GLee.h
+../Debug/VtxControls.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxControls.o: ../includes/PointClass.h ../includes/defs.h
+../Debug/VtxControls.o: ../includes/ListClass.h ../includes/TextureClass.h
+../Debug/VtxControls.o: ../includes/GLSupport.h ../includes/GLglue.h
+../Debug/VtxControls.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxControls.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Debug/VtxControls.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxControls.o: ../includes/ObjectClass.h ../includes/OrbitalClass.h
+../Debug/VtxControls.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Debug/VtxControls.o: ../includes/Util.h ../includes/MatrixClass.h
+../Debug/VtxControls.o: ../includes/matrix.h ../includes/TrackBall.h
+../Debug/VtxControls.o: ../includes/ModelClass.h
+../Debug/VtxCoronaTabs.o: VtxCoronaTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxCoronaTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxCoronaTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxCoronaTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxCoronaTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxCoronaTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxCoronaTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxCoronaTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxCoronaTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxCoronaTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxCoronaTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxCoronaTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxCoronaTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxCoronaTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxCoronaTabs.o: ../includes/UniverseModel.h
+../Debug/VtxCratersFunct.o: VtxCratersFunct.h VtxFunctMgr.h VtxExprEdit.h
+../Debug/VtxDefaultTabs.o: VtxDefaultTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxDefaultTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxDefaultTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxDefaultTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxDefaultTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxDefaultTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxDefaultTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxDefaultTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxDefaultTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxDefaultTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxDefaultTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxDefaultTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxDefaultTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxDefaultTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxDefaultTabs.o: ../includes/RenderOptions.h ../includes/GLSLMgr.h
+../Debug/VtxDefaultTabs.o: ../includes/GLSLProgram.h ../includes/GLSLVars.h
+../Debug/VtxDefaultTabs.o: ../includes/FrameBuffer.h
+../Debug/VtxDefaultTabs.o: ../includes/RenderBuffer.h VtxExprEdit.h
+../Debug/VtxExprEdit.o: VtxExprEdit.h VtxScene.h VtxFunctDialog.h
+../Debug/VtxExprEdit.o: VtxFunctMgr.h ../includes/UniverseModel.h
+../Debug/VtxExprEdit.o: ../includes/ModelClass.h ../includes/ListClass.h
+../Debug/VtxExprEdit.o: ../includes/defs.h ../includes/NodeIF.h
+../Debug/VtxFogTabs.o: VtxFogTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxFogTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxFogTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxFogTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxFogTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxFogTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxFogTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxFogTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxFogTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxFogTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxFogTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxFogTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxFogTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxFogTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxFogTabs.o: ../includes/TerrainClass.h
+../Debug/VtxFrame.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Debug/VtxFrame.o: ../includes/GLee.h VtxFrame.h VtxMain.h VtxScene.h
+../Debug/VtxFrame.o: ../includes/FileUtil.h ../includes/ListClass.h
+../Debug/VtxFrame.o: ../includes/defs.h ../includes/KeyIF.h
+../Debug/VtxFrame.o: ../includes/ViewClass.h ../includes/LightClass.h
+../Debug/VtxFrame.o: ../includes/ColorClass.h ../includes/PointClass.h
+../Debug/VtxFrame.o: ../includes/ObjectClass.h ../includes/NodeIF.h
+../Debug/VtxFrame.o: ../includes/Util.h ../includes/MatrixClass.h
+../Debug/VtxFrame.o: ../includes/matrix.h ../includes/TrackBall.h
+../Debug/VtxFunctDialog.o: VtxFunctDialog.h VtxFunctMgr.h VtxExprEdit.h
+../Debug/VtxFunctDialog.o: VtxControls.h ../includes/ColorClass.h
+../Debug/VtxFunctDialog.o: ../includes/GLheaders.h ../includes/GLee.h
+../Debug/VtxFunctDialog.o: VtxNoiseFunct.h VtxCratersFunct.h
+../Debug/VtxFunctDialog.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxFunctDialog.o: ../includes/PointClass.h ../includes/defs.h
+../Debug/VtxFunctDialog.o: ../includes/ListClass.h ../includes/ObjectClass.h
+../Debug/VtxFunctDialog.o: ../includes/GLglue.h ../includes/NodeIF.h
+../Debug/VtxFunctDialog.o: ../includes/OrbitalClass.h
+../Debug/VtxFunctDialog.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxFunctDialog.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxFunctDialog.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxFunctDialog.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxFunctDialog.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxFunctDialog.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxFunctDialog.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxFunctDialog.o: ../includes/UniverseModel.h
+../Debug/VtxFunctMgr.o: VtxFunctMgr.h VtxExprEdit.h
+../Debug/VtxGlossTabs.o: VtxGlossTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxGlossTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxGlossTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxGlossTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxGlossTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxGlossTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxGlossTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxGlossTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxGlossTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxGlossTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxGlossTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxGlossTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxGlossTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxGlossTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxGlossTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Debug/VtxImageDialog.o: VtxImageDialog.h VtxControls.h
+../Debug/VtxImageDialog.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxImageDialog.o: ../includes/GLee.h VtxImageTabs.h
+../Debug/VtxImageDialog.o: ../includes/ImageClass.h ../includes/TerrainMgr.h
+../Debug/VtxImageDialog.o: ../includes/NoiseClass.h ../includes/PointClass.h
+../Debug/VtxImageDialog.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxImageDialog.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxImageDialog.o: ../includes/GLglue.h ../includes/ImageMgr.h
+../Debug/VtxImageDialog.o: ../includes/TerrainNode.h
+../Debug/VtxImageDialog.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Debug/VtxImageDialog.o: VtxImageWindow.h VtxBandsTabs.h
+../Debug/VtxImageDialog.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxImageDialog.o: ../includes/ObjectClass.h
+../Debug/VtxImageDialog.o: ../includes/OrbitalClass.h ../includes/Renderer.h
+../Debug/VtxImageDialog.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxImageDialog.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxImageDialog.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxImageDialog.o: ../includes/UniverseModel.h
+../Debug/VtxImageMgr.o: ../includes/GLheaders.h ../includes/GLee.h
+../Debug/VtxImageMgr.o: VtxImageMgr.h
+../Debug/VtxImageTabs.o: VtxImageDialog.h VtxControls.h
+../Debug/VtxImageTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxImageTabs.o: ../includes/GLee.h VtxImageTabs.h
+../Debug/VtxImageTabs.o: ../includes/ImageClass.h ../includes/TerrainMgr.h
+../Debug/VtxImageTabs.o: ../includes/NoiseClass.h ../includes/PointClass.h
+../Debug/VtxImageTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxImageTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxImageTabs.o: ../includes/GLglue.h ../includes/ImageMgr.h
+../Debug/VtxImageTabs.o: ../includes/TerrainNode.h ../includes/TerrainData.h
+../Debug/VtxImageTabs.o: ../includes/NodeIF.h VtxImageWindow.h VtxBandsTabs.h
+../Debug/VtxImageTabs.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxImageTabs.o: ../includes/ObjectClass.h ../includes/OrbitalClass.h
+../Debug/VtxImageTabs.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Debug/VtxImageTabs.o: ../includes/Util.h ../includes/MatrixClass.h
+../Debug/VtxImageTabs.o: ../includes/matrix.h ../includes/TrackBall.h
+../Debug/VtxImageTabs.o: ../includes/ModelClass.h ../includes/FileUtil.h
+../Debug/VtxImageTabs.o: ../includes/RenderOptions.h
+../Debug/VtxLayerTabs.o: VtxLayerTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxLayerTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxLayerTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxLayerTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxLayerTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxLayerTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxLayerTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxLayerTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxLayerTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxLayerTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxLayerTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxLayerTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxLayerTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxLayerTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxLayerTabs.o: ../includes/Layers.h
+../Debug/VtxMain.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Debug/VtxMain.o: ../includes/GLee.h VtxMain.h VtxFrame.h VtxScene.h
+../Debug/VtxMain.o: ../includes/FileUtil.h ../includes/ListClass.h
+../Debug/VtxMain.o: ../includes/defs.h
+../Debug/VtxMapTabs.o: VtxMapTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxMapTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxMapTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxMapTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxMapTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxMapTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxMapTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxMapTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxMapTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxMapTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxMapTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxMapTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxMapTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxMapTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxMapTabs.o: ../includes/Layers.h
+../Debug/VtxMoonTabs.o: VtxMoonTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxMoonTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxMoonTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxMoonTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxMoonTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxMoonTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxMoonTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxMoonTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxMoonTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxMoonTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxMoonTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxMoonTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxMoonTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxMoonTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxMoonTabs.o: ../includes/UniverseModel.h
+../Debug/VtxNoiseFunct.o: VtxNoiseFunct.h VtxFunctMgr.h VtxExprEdit.h
+../Debug/VtxPlanetTabs.o: VtxPlanetTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxPlanetTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxPlanetTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxPlanetTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxPlanetTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxPlanetTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxPlanetTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxPlanetTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxPlanetTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxPlanetTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxPlanetTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxPlanetTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxPlanetTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxPlanetTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxPlanetTabs.o: ../includes/UniverseModel.h
+../Debug/VtxPointTabs.o: VtxPointTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxPointTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxPointTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxPointTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxPointTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxPointTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxPointTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxPointTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxPointTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxPointTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxPointTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxPointTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxPointTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxPointTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxPointTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Debug/VtxPointTabs.o: ../includes/FileUtil.h
+../Debug/VtxRingTabs.o: VtxRingTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxRingTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxRingTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxRingTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxRingTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxRingTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxRingTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxRingTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxRingTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxRingTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxRingTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxRingTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxRingTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxRingTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxRingTabs.o: ../includes/UniverseModel.h
+../Debug/VtxRocksTabs.o: VtxRocksTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxRocksTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxRocksTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxRocksTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxRocksTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxRocksTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxRocksTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxRocksTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxRocksTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxRocksTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxRocksTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxRocksTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxRocksTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxRocksTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxRocksTabs.o: ../includes/Rocks.h ../includes/Placements.h
+../Debug/VtxScene.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Debug/VtxScene.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxScene.o: ../includes/LightClass.h ../includes/ColorClass.h
+../Debug/VtxScene.o: ../includes/PointClass.h ../includes/defs.h
+../Debug/VtxScene.o: ../includes/ListClass.h ../includes/ObjectClass.h
+../Debug/VtxScene.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxScene.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxScene.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxScene.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxScene.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxScene.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxScene.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxScene.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxScene.o: ../includes/UniverseModel.h ../includes/TerrainClass.h
+../Debug/VtxScene.o: ../includes/RenderOptions.h ../includes/AdaptOptions.h
+../Debug/VtxScene.o: ../includes/Raster.h ../includes/KeyIF.h
+../Debug/VtxScene.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Debug/VtxScene.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Debug/VtxScene.o: ../includes/RenderBuffer.h ../includes/FileUtil.h
+../Debug/VtxScene.o: VtxScene.h ../includes/Bitmap.h ../includes/FrameClass.h
+../Debug/VtxScene.o: VtxSceneDialog.h VtxControls.h VtxTabsMgr.h
+../Debug/VtxScene.o: VtxImageDialog.h VtxImageTabs.h ../includes/ImageClass.h
+../Debug/VtxScene.o: VtxImageWindow.h VtxBandsTabs.h VtxFunctDialog.h
+../Debug/VtxScene.o: VtxFunctMgr.h VtxExprEdit.h VtxImageMgr.h
+../Debug/VtxSceneDialog.o: VtxSceneDialog.h VtxControls.h
+../Debug/VtxSceneDialog.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxSceneDialog.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxSceneDialog.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxSceneDialog.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxSceneDialog.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxSceneDialog.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxSceneDialog.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxSceneDialog.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxSceneDialog.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxSceneDialog.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxSceneDialog.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxSceneDialog.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxSceneDialog.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxSceneDialog.o: VtxTabsMgr.h ../includes/UniverseModel.h
+../Debug/VtxSceneDialog.o: VtxSceneTabs.h ../includes/RenderOptions.h
+../Debug/VtxSceneDialog.o: ../includes/Raster.h VtxPlanetTabs.h VtxMoonTabs.h
+../Debug/VtxSceneDialog.o: VtxStarTabs.h VtxCoronaTabs.h VtxTexTabs.h
+../Debug/VtxSceneDialog.o: ../includes/ImageClass.h VtxDefaultTabs.h
+../Debug/VtxSceneDialog.o: VtxCloudsTabs.h VtxColorTabs.h
+../Debug/VtxSceneDialog.o: ../includes/TerrainClass.h VtxSkyTabs.h
+../Debug/VtxSceneDialog.o: VtxPointTabs.h VtxGlossTabs.h VtxLayerTabs.h
+../Debug/VtxSceneDialog.o: ../includes/Layers.h VtxMapTabs.h VtxFogTabs.h
+../Debug/VtxSceneDialog.o: VtxWaterTabs.h VtxSurfaceTabs.h VtxRocksTabs.h
+../Debug/VtxSceneDialog.o: ../includes/Rocks.h ../includes/Placements.h
+../Debug/VtxSceneDialog.o: VtxRingTabs.h
+../Debug/VtxSceneTabs.o: VtxSceneTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxSceneTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxSceneTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxSceneTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxSceneTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxSceneTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxSceneTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxSceneTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxSceneTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxSceneTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxSceneTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxSceneTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxSceneTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxSceneTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxSceneTabs.o: ../includes/RenderOptions.h ../includes/Raster.h
+../Debug/VtxSceneTabs.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Debug/VtxSceneTabs.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Debug/VtxSceneTabs.o: ../includes/RenderBuffer.h
+../Debug/VtxStarTabs.o: VtxStarTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxStarTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxStarTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxStarTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxStarTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxStarTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxStarTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxStarTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxStarTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxStarTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxStarTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxStarTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxStarTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxStarTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxSkyTabs.o: VtxSkyTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxSkyTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxSkyTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxSkyTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxSkyTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxSkyTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxSkyTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxSkyTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxSkyTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxSkyTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxSkyTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxSkyTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxSkyTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxSkyTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxSkyTabs.o: ../includes/RenderOptions.h VtxSceneDialog.h
+../Debug/VtxSurfaceTabs.o: VtxSurfaceTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxSurfaceTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxSurfaceTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxSurfaceTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxSurfaceTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxSurfaceTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxSurfaceTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxSurfaceTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxSurfaceTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxSurfaceTabs.o: ../includes/RenderOptions.h ../includes/GLSLMgr.h
+../Debug/VtxSurfaceTabs.o: ../includes/GLSLProgram.h ../includes/GLSLVars.h
+../Debug/VtxSurfaceTabs.o: ../includes/FrameBuffer.h
+../Debug/VtxSurfaceTabs.o: ../includes/RenderBuffer.h
+../Debug/VtxTabsMgr.o: VtxTabsMgr.h VtxControls.h ../includes/ColorClass.h
+../Debug/VtxTabsMgr.o: ../includes/GLheaders.h ../includes/GLee.h
+../Debug/VtxTabsMgr.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Debug/VtxTabsMgr.o: ../includes/PointClass.h ../includes/defs.h
+../Debug/VtxTabsMgr.o: ../includes/ListClass.h ../includes/ObjectClass.h
+../Debug/VtxTabsMgr.o: ../includes/GLglue.h ../includes/NodeIF.h
+../Debug/VtxTabsMgr.o: ../includes/OrbitalClass.h ../includes/TerrainMgr.h
+../Debug/VtxTabsMgr.o: ../includes/NoiseClass.h ../includes/TextureClass.h
+../Debug/VtxTabsMgr.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Debug/VtxTabsMgr.o: ../includes/TerrainNode.h ../includes/TerrainData.h
+../Debug/VtxTabsMgr.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Debug/VtxTabsMgr.o: ../includes/Util.h ../includes/MatrixClass.h
+../Debug/VtxTabsMgr.o: ../includes/matrix.h ../includes/TrackBall.h
+../Debug/VtxTabsMgr.o: ../includes/ModelClass.h VtxSceneDialog.h
+../Debug/VtxTexTabs.o: VtxTexTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxTexTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxTexTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxTexTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxTexTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxTexTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxTexTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxTexTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxTexTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxTexTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxTexTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxTexTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxTexTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxTexTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxTexTabs.o: ../includes/ImageClass.h VtxSceneDialog.h
+../Debug/VtxTexTabs.o: VtxImageDialog.h VtxImageTabs.h VtxImageWindow.h
+../Debug/VtxTexTabs.o: VtxBandsTabs.h ../includes/FileUtil.h
+../Debug/VtxWaterTabs.o: VtxWaterTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxWaterTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Debug/VtxWaterTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Debug/VtxWaterTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Debug/VtxWaterTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Debug/VtxWaterTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Debug/VtxWaterTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Debug/VtxWaterTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Debug/VtxWaterTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Debug/VtxWaterTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Debug/VtxWaterTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Debug/VtxWaterTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Debug/VtxWaterTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Debug/VtxWaterTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Debug/VtxWaterTabs.o: ../includes/TerrainClass.h
+
+../Release/ImageWindow.o: VtxImageWindow.h ../includes/ImageMgr.h
+../Release/ImageWindow.o: ../includes/GLheaders.h ../includes/GLee.h
+../Release/ImageWindow.o: ../includes/defs.h ../includes/ColorClass.h
+../Release/ImageWindow.o: ../includes/ListClass.h
+../Release/VtxBandsTabs.o: VtxImageDialog.h VtxControls.h
+../Release/VtxBandsTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxBandsTabs.o: ../includes/GLee.h VtxImageTabs.h
+../Release/VtxBandsTabs.o: ../includes/ImageClass.h ../includes/TerrainMgr.h
+../Release/VtxBandsTabs.o: ../includes/NoiseClass.h ../includes/PointClass.h
+../Release/VtxBandsTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxBandsTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxBandsTabs.o: ../includes/GLglue.h ../includes/ImageMgr.h
+../Release/VtxBandsTabs.o: ../includes/TerrainNode.h
+../Release/VtxBandsTabs.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Release/VtxBandsTabs.o: VtxImageWindow.h VtxBandsTabs.h
+../Release/VtxBandsTabs.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Release/VtxBandsTabs.o: ../includes/ObjectClass.h
+../Release/VtxBandsTabs.o: ../includes/OrbitalClass.h ../includes/Renderer.h
+../Release/VtxBandsTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxBandsTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxBandsTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxBandsTabs.o: ../includes/FileUtil.h ../includes/RenderOptions.h
+../Release/VtxCloudsTabs.o: VtxCloudsTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxCloudsTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxCloudsTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxCloudsTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxCloudsTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxCloudsTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxCloudsTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxCloudsTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxCloudsTabs.o: ../includes/TextureClass.h
+../Release/VtxCloudsTabs.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxCloudsTabs.o: ../includes/TerrainNode.h
+../Release/VtxCloudsTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxCloudsTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxCloudsTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxCloudsTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxCloudsTabs.o: ../includes/UniverseModel.h
+../Release/VtxColorTabs.o: VtxColorTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxColorTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxColorTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxColorTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxColorTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxColorTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxColorTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxColorTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxColorTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxColorTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxColorTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxColorTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxColorTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxColorTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxColorTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Release/VtxColorTabs.o: ../includes/FileUtil.h
+../Release/VtxControls.o: VtxControls.h ../includes/ColorClass.h
+../Release/VtxControls.o: ../includes/GLheaders.h ../includes/GLee.h
+../Release/VtxControls.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxControls.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxControls.o: ../includes/ListClass.h ../includes/TextureClass.h
+../Release/VtxControls.o: ../includes/GLSupport.h ../includes/GLglue.h
+../Release/VtxControls.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxControls.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Release/VtxControls.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Release/VtxControls.o: ../includes/ObjectClass.h
+../Release/VtxControls.o: ../includes/OrbitalClass.h ../includes/Renderer.h
+../Release/VtxControls.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxControls.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxControls.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxCoronaTabs.o: VtxCoronaTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxCoronaTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxCoronaTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxCoronaTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxCoronaTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxCoronaTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxCoronaTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxCoronaTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxCoronaTabs.o: ../includes/TextureClass.h
+../Release/VtxCoronaTabs.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxCoronaTabs.o: ../includes/TerrainNode.h
+../Release/VtxCoronaTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxCoronaTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxCoronaTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxCoronaTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxCoronaTabs.o: ../includes/UniverseModel.h
+../Release/VtxCratersFunct.o: VtxCratersFunct.h VtxFunctMgr.h VtxExprEdit.h
+../Release/VtxDefaultTabs.o: VtxDefaultTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxDefaultTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxDefaultTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxDefaultTabs.o: ../includes/LightClass.h
+../Release/VtxDefaultTabs.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxDefaultTabs.o: ../includes/ListClass.h
+../Release/VtxDefaultTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxDefaultTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxDefaultTabs.o: ../includes/TerrainMgr.h
+../Release/VtxDefaultTabs.o: ../includes/NoiseClass.h
+../Release/VtxDefaultTabs.o: ../includes/TextureClass.h
+../Release/VtxDefaultTabs.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxDefaultTabs.o: ../includes/TerrainNode.h
+../Release/VtxDefaultTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxDefaultTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxDefaultTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxDefaultTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxDefaultTabs.o: ../includes/RenderOptions.h
+../Release/VtxDefaultTabs.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Release/VtxDefaultTabs.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Release/VtxDefaultTabs.o: ../includes/RenderBuffer.h VtxExprEdit.h
+../Release/VtxExprEdit.o: VtxExprEdit.h VtxScene.h VtxFunctDialog.h
+../Release/VtxExprEdit.o: VtxFunctMgr.h ../includes/UniverseModel.h
+../Release/VtxExprEdit.o: ../includes/ModelClass.h ../includes/ListClass.h
+../Release/VtxExprEdit.o: ../includes/defs.h ../includes/NodeIF.h
+../Release/VtxFogTabs.o: VtxFogTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxFogTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxFogTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxFogTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxFogTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxFogTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxFogTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxFogTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxFogTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxFogTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxFogTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxFogTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxFogTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxFogTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxFogTabs.o: ../includes/TerrainClass.h
+../Release/VtxFrame.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Release/VtxFrame.o: ../includes/GLee.h VtxFrame.h VtxMain.h VtxScene.h
+../Release/VtxFrame.o: ../includes/FileUtil.h ../includes/ListClass.h
+../Release/VtxFrame.o: ../includes/defs.h ../includes/KeyIF.h
+../Release/VtxFrame.o: ../includes/ViewClass.h ../includes/LightClass.h
+../Release/VtxFrame.o: ../includes/ColorClass.h ../includes/PointClass.h
+../Release/VtxFrame.o: ../includes/ObjectClass.h ../includes/NodeIF.h
+../Release/VtxFrame.o: ../includes/Util.h ../includes/MatrixClass.h
+../Release/VtxFrame.o: ../includes/matrix.h ../includes/TrackBall.h
+../Release/VtxFunctDialog.o: VtxFunctDialog.h VtxFunctMgr.h VtxExprEdit.h
+../Release/VtxFunctDialog.o: VtxControls.h ../includes/ColorClass.h
+../Release/VtxFunctDialog.o: ../includes/GLheaders.h ../includes/GLee.h
+../Release/VtxFunctDialog.o: VtxNoiseFunct.h VtxCratersFunct.h
+../Release/VtxFunctDialog.o: ../includes/SceneClass.h
+../Release/VtxFunctDialog.o: ../includes/LightClass.h
+../Release/VtxFunctDialog.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxFunctDialog.o: ../includes/ListClass.h
+../Release/VtxFunctDialog.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxFunctDialog.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxFunctDialog.o: ../includes/TerrainMgr.h
+../Release/VtxFunctDialog.o: ../includes/NoiseClass.h
+../Release/VtxFunctDialog.o: ../includes/TextureClass.h
+../Release/VtxFunctDialog.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxFunctDialog.o: ../includes/TerrainNode.h
+../Release/VtxFunctDialog.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxFunctDialog.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxFunctDialog.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxFunctDialog.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxFunctDialog.o: ../includes/UniverseModel.h
+../Release/VtxFunctMgr.o: VtxFunctMgr.h VtxExprEdit.h
+../Release/VtxGlossTabs.o: VtxGlossTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxGlossTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxGlossTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxGlossTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxGlossTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxGlossTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxGlossTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxGlossTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxGlossTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxGlossTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxGlossTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxGlossTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxGlossTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxGlossTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxGlossTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Release/VtxImageDialog.o: VtxImageDialog.h VtxControls.h
+../Release/VtxImageDialog.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxImageDialog.o: ../includes/GLee.h VtxImageTabs.h
+../Release/VtxImageDialog.o: ../includes/ImageClass.h
+../Release/VtxImageDialog.o: ../includes/TerrainMgr.h
+../Release/VtxImageDialog.o: ../includes/NoiseClass.h
+../Release/VtxImageDialog.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxImageDialog.o: ../includes/ListClass.h
+../Release/VtxImageDialog.o: ../includes/TextureClass.h
+../Release/VtxImageDialog.o: ../includes/GLSupport.h ../includes/GLglue.h
+../Release/VtxImageDialog.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxImageDialog.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Release/VtxImageDialog.o: VtxImageWindow.h VtxBandsTabs.h
+../Release/VtxImageDialog.o: ../includes/SceneClass.h
+../Release/VtxImageDialog.o: ../includes/LightClass.h
+../Release/VtxImageDialog.o: ../includes/ObjectClass.h
+../Release/VtxImageDialog.o: ../includes/OrbitalClass.h
+../Release/VtxImageDialog.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Release/VtxImageDialog.o: ../includes/Util.h ../includes/MatrixClass.h
+../Release/VtxImageDialog.o: ../includes/matrix.h ../includes/TrackBall.h
+../Release/VtxImageDialog.o: ../includes/ModelClass.h
+../Release/VtxImageDialog.o: ../includes/UniverseModel.h
+../Release/VtxImageMgr.o: ../includes/GLheaders.h ../includes/GLee.h
+../Release/VtxImageMgr.o: VtxImageMgr.h
+../Release/VtxImageTabs.o: VtxImageDialog.h VtxControls.h
+../Release/VtxImageTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxImageTabs.o: ../includes/GLee.h VtxImageTabs.h
+../Release/VtxImageTabs.o: ../includes/ImageClass.h ../includes/TerrainMgr.h
+../Release/VtxImageTabs.o: ../includes/NoiseClass.h ../includes/PointClass.h
+../Release/VtxImageTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxImageTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxImageTabs.o: ../includes/GLglue.h ../includes/ImageMgr.h
+../Release/VtxImageTabs.o: ../includes/TerrainNode.h
+../Release/VtxImageTabs.o: ../includes/TerrainData.h ../includes/NodeIF.h
+../Release/VtxImageTabs.o: VtxImageWindow.h VtxBandsTabs.h
+../Release/VtxImageTabs.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Release/VtxImageTabs.o: ../includes/ObjectClass.h
+../Release/VtxImageTabs.o: ../includes/OrbitalClass.h ../includes/Renderer.h
+../Release/VtxImageTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxImageTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxImageTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxImageTabs.o: ../includes/FileUtil.h ../includes/RenderOptions.h
+../Release/VtxLayerTabs.o: VtxLayerTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxLayerTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxLayerTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxLayerTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxLayerTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxLayerTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxLayerTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxLayerTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxLayerTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxLayerTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxLayerTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxLayerTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxLayerTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxLayerTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxLayerTabs.o: ../includes/Layers.h
+../Release/VtxMain.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Release/VtxMain.o: ../includes/GLee.h VtxMain.h VtxFrame.h VtxScene.h
+../Release/VtxMain.o: ../includes/FileUtil.h ../includes/ListClass.h
+../Release/VtxMain.o: ../includes/defs.h
+../Release/VtxMapTabs.o: VtxMapTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxMapTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxMapTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxMapTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxMapTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxMapTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxMapTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxMapTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxMapTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxMapTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxMapTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxMapTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxMapTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxMapTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxMapTabs.o: ../includes/Layers.h
+../Release/VtxMoonTabs.o: VtxMoonTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxMoonTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxMoonTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxMoonTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxMoonTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxMoonTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxMoonTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxMoonTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxMoonTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxMoonTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxMoonTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxMoonTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxMoonTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxMoonTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxMoonTabs.o: ../includes/UniverseModel.h
+../Release/VtxNoiseFunct.o: VtxNoiseFunct.h VtxFunctMgr.h VtxExprEdit.h
+../Release/VtxPlanetTabs.o: VtxPlanetTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxPlanetTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxPlanetTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxPlanetTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxPlanetTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxPlanetTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxPlanetTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxPlanetTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxPlanetTabs.o: ../includes/TextureClass.h
+../Release/VtxPlanetTabs.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxPlanetTabs.o: ../includes/TerrainNode.h
+../Release/VtxPlanetTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxPlanetTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxPlanetTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxPlanetTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxPlanetTabs.o: ../includes/UniverseModel.h
+../Release/VtxPointTabs.o: VtxPointTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxPointTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxPointTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxPointTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxPointTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxPointTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxPointTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxPointTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxPointTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxPointTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxPointTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxPointTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxPointTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxPointTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxPointTabs.o: ../includes/TerrainClass.h VtxSceneDialog.h
+../Release/VtxPointTabs.o: ../includes/FileUtil.h
+../Release/VtxRingTabs.o: VtxRingTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxRingTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxRingTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxRingTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxRingTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxRingTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxRingTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxRingTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxRingTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxRingTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxRingTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxRingTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxRingTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxRingTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxRingTabs.o: ../includes/UniverseModel.h
+../Release/VtxRocksTabs.o: VtxRocksTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxRocksTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxRocksTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxRocksTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxRocksTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxRocksTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxRocksTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxRocksTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxRocksTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxRocksTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxRocksTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxRocksTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxRocksTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxRocksTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxRocksTabs.o: ../includes/Rocks.h ../includes/Placements.h
+../Release/VtxScene.o: ../includes/GLglue.h ../includes/GLheaders.h
+../Release/VtxScene.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxScene.o: ../includes/LightClass.h ../includes/ColorClass.h
+../Release/VtxScene.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxScene.o: ../includes/ListClass.h ../includes/ObjectClass.h
+../Release/VtxScene.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxScene.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxScene.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxScene.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxScene.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxScene.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxScene.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxScene.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxScene.o: ../includes/UniverseModel.h ../includes/TerrainClass.h
+../Release/VtxScene.o: ../includes/RenderOptions.h ../includes/AdaptOptions.h
+../Release/VtxScene.o: ../includes/Raster.h ../includes/KeyIF.h
+../Release/VtxScene.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Release/VtxScene.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Release/VtxScene.o: ../includes/RenderBuffer.h ../includes/FileUtil.h
+../Release/VtxScene.o: VtxScene.h ../includes/Bitmap.h
+../Release/VtxScene.o: ../includes/FrameClass.h VtxSceneDialog.h
+../Release/VtxScene.o: VtxControls.h VtxTabsMgr.h VtxImageDialog.h
+../Release/VtxScene.o: VtxImageTabs.h ../includes/ImageClass.h
+../Release/VtxScene.o: VtxImageWindow.h VtxBandsTabs.h VtxFunctDialog.h
+../Release/VtxScene.o: VtxFunctMgr.h VtxExprEdit.h VtxImageMgr.h
+../Release/VtxSceneDialog.o: VtxSceneDialog.h VtxControls.h
+../Release/VtxSceneDialog.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxSceneDialog.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxSceneDialog.o: ../includes/LightClass.h
+../Release/VtxSceneDialog.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxSceneDialog.o: ../includes/ListClass.h
+../Release/VtxSceneDialog.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxSceneDialog.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxSceneDialog.o: ../includes/TerrainMgr.h
+../Release/VtxSceneDialog.o: ../includes/NoiseClass.h
+../Release/VtxSceneDialog.o: ../includes/TextureClass.h
+../Release/VtxSceneDialog.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxSceneDialog.o: ../includes/TerrainNode.h
+../Release/VtxSceneDialog.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxSceneDialog.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxSceneDialog.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxSceneDialog.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxSceneDialog.o: VtxTabsMgr.h ../includes/UniverseModel.h
+../Release/VtxSceneDialog.o: VtxSceneTabs.h ../includes/RenderOptions.h
+../Release/VtxSceneDialog.o: ../includes/Raster.h VtxPlanetTabs.h
+../Release/VtxSceneDialog.o: VtxMoonTabs.h VtxStarTabs.h VtxCoronaTabs.h
+../Release/VtxSceneDialog.o: VtxTexTabs.h ../includes/ImageClass.h
+../Release/VtxSceneDialog.o: VtxDefaultTabs.h VtxCloudsTabs.h VtxColorTabs.h
+../Release/VtxSceneDialog.o: ../includes/TerrainClass.h VtxSkyTabs.h
+../Release/VtxSceneDialog.o: VtxPointTabs.h VtxGlossTabs.h VtxLayerTabs.h
+../Release/VtxSceneDialog.o: ../includes/Layers.h VtxMapTabs.h VtxFogTabs.h
+../Release/VtxSceneDialog.o: VtxWaterTabs.h VtxSurfaceTabs.h VtxRocksTabs.h
+../Release/VtxSceneDialog.o: ../includes/Rocks.h ../includes/Placements.h
+../Release/VtxSceneDialog.o: VtxRingTabs.h
+../Release/VtxSceneTabs.o: VtxSceneTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxSceneTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxSceneTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxSceneTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxSceneTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxSceneTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxSceneTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxSceneTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxSceneTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxSceneTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxSceneTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxSceneTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxSceneTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxSceneTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxSceneTabs.o: ../includes/RenderOptions.h ../includes/Raster.h
+../Release/VtxSceneTabs.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Release/VtxSceneTabs.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Release/VtxSceneTabs.o: ../includes/RenderBuffer.h
+../Release/VtxStarTabs.o: VtxStarTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxStarTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxStarTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxStarTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxStarTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxStarTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxStarTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxStarTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxStarTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxStarTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxStarTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxStarTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxStarTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxStarTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxSkyTabs.o: VtxSkyTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxSkyTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxSkyTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxSkyTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxSkyTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxSkyTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxSkyTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxSkyTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxSkyTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxSkyTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxSkyTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxSkyTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxSkyTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxSkyTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxSkyTabs.o: ../includes/RenderOptions.h VtxSceneDialog.h
+../Release/VtxSurfaceTabs.o: VtxSurfaceTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxSurfaceTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxSurfaceTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxSurfaceTabs.o: ../includes/LightClass.h
+../Release/VtxSurfaceTabs.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxSurfaceTabs.o: ../includes/ListClass.h
+../Release/VtxSurfaceTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxSurfaceTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxSurfaceTabs.o: ../includes/TerrainMgr.h
+../Release/VtxSurfaceTabs.o: ../includes/NoiseClass.h
+../Release/VtxSurfaceTabs.o: ../includes/TextureClass.h
+../Release/VtxSurfaceTabs.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxSurfaceTabs.o: ../includes/TerrainNode.h
+../Release/VtxSurfaceTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxSurfaceTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxSurfaceTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxSurfaceTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxSurfaceTabs.o: ../includes/RenderOptions.h
+../Release/VtxSurfaceTabs.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
+../Release/VtxSurfaceTabs.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
+../Release/VtxSurfaceTabs.o: ../includes/RenderBuffer.h
+../Release/VtxTabsMgr.o: VtxTabsMgr.h VtxControls.h ../includes/ColorClass.h
+../Release/VtxTabsMgr.o: ../includes/GLheaders.h ../includes/GLee.h
+../Release/VtxTabsMgr.o: ../includes/SceneClass.h ../includes/LightClass.h
+../Release/VtxTabsMgr.o: ../includes/PointClass.h ../includes/defs.h
+../Release/VtxTabsMgr.o: ../includes/ListClass.h ../includes/ObjectClass.h
+../Release/VtxTabsMgr.o: ../includes/GLglue.h ../includes/NodeIF.h
+../Release/VtxTabsMgr.o: ../includes/OrbitalClass.h ../includes/TerrainMgr.h
+../Release/VtxTabsMgr.o: ../includes/NoiseClass.h ../includes/TextureClass.h
+../Release/VtxTabsMgr.o: ../includes/GLSupport.h ../includes/ImageMgr.h
+../Release/VtxTabsMgr.o: ../includes/TerrainNode.h ../includes/TerrainData.h
+../Release/VtxTabsMgr.o: ../includes/Renderer.h ../includes/ViewClass.h
+../Release/VtxTabsMgr.o: ../includes/Util.h ../includes/MatrixClass.h
+../Release/VtxTabsMgr.o: ../includes/matrix.h ../includes/TrackBall.h
+../Release/VtxTabsMgr.o: ../includes/ModelClass.h VtxSceneDialog.h
+../Release/VtxTexTabs.o: VtxTexTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxTexTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxTexTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxTexTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxTexTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxTexTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxTexTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxTexTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxTexTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxTexTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxTexTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxTexTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxTexTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxTexTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxTexTabs.o: ../includes/ImageClass.h VtxSceneDialog.h
+../Release/VtxTexTabs.o: VtxImageDialog.h VtxImageTabs.h VtxImageWindow.h
+../Release/VtxTexTabs.o: VtxBandsTabs.h ../includes/FileUtil.h
+../Release/VtxWaterTabs.o: VtxWaterTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxWaterTabs.o: ../includes/ColorClass.h ../includes/GLheaders.h
+../Release/VtxWaterTabs.o: ../includes/GLee.h ../includes/SceneClass.h
+../Release/VtxWaterTabs.o: ../includes/LightClass.h ../includes/PointClass.h
+../Release/VtxWaterTabs.o: ../includes/defs.h ../includes/ListClass.h
+../Release/VtxWaterTabs.o: ../includes/ObjectClass.h ../includes/GLglue.h
+../Release/VtxWaterTabs.o: ../includes/NodeIF.h ../includes/OrbitalClass.h
+../Release/VtxWaterTabs.o: ../includes/TerrainMgr.h ../includes/NoiseClass.h
+../Release/VtxWaterTabs.o: ../includes/TextureClass.h ../includes/GLSupport.h
+../Release/VtxWaterTabs.o: ../includes/ImageMgr.h ../includes/TerrainNode.h
+../Release/VtxWaterTabs.o: ../includes/TerrainData.h ../includes/Renderer.h
+../Release/VtxWaterTabs.o: ../includes/ViewClass.h ../includes/Util.h
+../Release/VtxWaterTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
+../Release/VtxWaterTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
+../Release/VtxWaterTabs.o: ../includes/TerrainClass.h
+../Debug/ImageWindow.cpp.o:	ImageWindow.cpp
+../Debug/VtxBandsTabs.cpp.o:	VtxBandsTabs.cpp
+../Debug/VtxCloudsTabs.cpp.o:	VtxCloudsTabs.cpp
+../Debug/VtxColorTabs.cpp.o:	VtxColorTabs.cpp
+../Debug/VtxControls.cpp.o:	VtxControls.cpp
+../Debug/VtxCoronaTabs.cpp.o:	VtxCoronaTabs.cpp
+../Debug/VtxCratersFunct.cpp.o:	VtxCratersFunct.cpp
+../Debug/VtxDefaultTabs.cpp.o:	VtxDefaultTabs.cpp
+../Debug/VtxExprEdit.cpp.o:	VtxExprEdit.cpp
+../Debug/VtxFogTabs.cpp.o:	VtxFogTabs.cpp
+../Debug/VtxFrame.cpp.o:	VtxFrame.cpp
+../Debug/VtxFunctDialog.cpp.o:	VtxFunctDialog.cpp
+../Debug/VtxFunctMgr.cpp.o:	VtxFunctMgr.cpp
+../Debug/VtxGlossTabs.cpp.o:	VtxGlossTabs.cpp
+../Debug/VtxImageDialog.cpp.o:	VtxImageDialog.cpp
+../Debug/VtxImageMgr.cpp.o:	VtxImageMgr.cpp
+../Debug/VtxImageTabs.cpp.o:	VtxImageTabs.cpp
+../Debug/VtxLayerTabs.cpp.o:	VtxLayerTabs.cpp
+../Debug/VtxMain.cpp.o:	VtxMain.cpp
+../Debug/VtxMapTabs.cpp.o:	VtxMapTabs.cpp
+../Debug/VtxMoonTabs.cpp.o:	VtxMoonTabs.cpp
+../Debug/VtxNoiseFunct.cpp.o:	VtxNoiseFunct.cpp
+../Debug/VtxPlanetTabs.cpp.o:	VtxPlanetTabs.cpp
+../Debug/VtxPointTabs.cpp.o:	VtxPointTabs.cpp
+../Debug/VtxRingTabs.cpp.o:	VtxRingTabs.cpp
+../Debug/VtxRocksTabs.cpp.o:	VtxRocksTabs.cpp
+../Debug/VtxScene.cpp.o:	VtxScene.cpp
+../Debug/VtxSceneDialog.cpp.o:	VtxSceneDialog.cpp
+../Debug/VtxSceneTabs.cpp.o:	VtxSceneTabs.cpp
+../Debug/VtxStarTabs.cpp.o:	VtxStarTabs.cpp
+../Debug/VtxSkyTabs.cpp.o:	VtxSkyTabs.cpp
+../Debug/VtxSurfaceTabs.cpp.o:	VtxSurfaceTabs.cpp
+../Debug/VtxTabsMgr.cpp.o:	VtxTabsMgr.cpp
+../Debug/VtxTexTabs.cpp.o:	VtxTexTabs.cpp
+../Debug/VtxWaterTabs.cpp.o:	VtxWaterTabs.cpp
+../Release/ImageWindow.cpp.o:	ImageWindow.cpp
+../Release/VtxBandsTabs.cpp.o:	VtxBandsTabs.cpp
+../Release/VtxCloudsTabs.cpp.o:	VtxCloudsTabs.cpp
+../Release/VtxColorTabs.cpp.o:	VtxColorTabs.cpp
+../Release/VtxControls.cpp.o:	VtxControls.cpp
+../Release/VtxCoronaTabs.cpp.o:	VtxCoronaTabs.cpp
+../Release/VtxCratersFunct.cpp.o:	VtxCratersFunct.cpp
+../Release/VtxDefaultTabs.cpp.o:	VtxDefaultTabs.cpp
+../Release/VtxExprEdit.cpp.o:	VtxExprEdit.cpp
+../Release/VtxFogTabs.cpp.o:	VtxFogTabs.cpp
+../Release/VtxFrame.cpp.o:	VtxFrame.cpp
+../Release/VtxFunctDialog.cpp.o:	VtxFunctDialog.cpp
+../Release/VtxFunctMgr.cpp.o:	VtxFunctMgr.cpp
+../Release/VtxGlossTabs.cpp.o:	VtxGlossTabs.cpp
+../Release/VtxImageDialog.cpp.o:	VtxImageDialog.cpp
+../Release/VtxImageMgr.cpp.o:	VtxImageMgr.cpp
+../Release/VtxImageTabs.cpp.o:	VtxImageTabs.cpp
+../Release/VtxLayerTabs.cpp.o:	VtxLayerTabs.cpp
+../Release/VtxMain.cpp.o:	VtxMain.cpp
+../Release/VtxMapTabs.cpp.o:	VtxMapTabs.cpp
+../Release/VtxMoonTabs.cpp.o:	VtxMoonTabs.cpp
+../Release/VtxNoiseFunct.cpp.o:	VtxNoiseFunct.cpp
+../Release/VtxPlanetTabs.cpp.o:	VtxPlanetTabs.cpp
+../Release/VtxPointTabs.cpp.o:	VtxPointTabs.cpp
+../Release/VtxRingTabs.cpp.o:	VtxRingTabs.cpp
+../Release/VtxRocksTabs.cpp.o:	VtxRocksTabs.cpp
+../Release/VtxScene.cpp.o:	VtxScene.cpp
+../Release/VtxSceneDialog.cpp.o:	VtxSceneDialog.cpp
+../Release/VtxSceneTabs.cpp.o:	VtxSceneTabs.cpp
+../Release/VtxStarTabs.cpp.o:	VtxStarTabs.cpp
+../Release/VtxSkyTabs.cpp.o:	VtxSkyTabs.cpp
+../Release/VtxSurfaceTabs.cpp.o:	VtxSurfaceTabs.cpp
+../Release/VtxTabsMgr.cpp.o:	VtxTabsMgr.cpp
+../Release/VtxTexTabs.cpp.o:	VtxTexTabs.cpp
+../Release/VtxWaterTabs.cpp.o:	VtxWaterTabs.cpp

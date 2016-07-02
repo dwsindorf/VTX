@@ -1,0 +1,114 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-8.3606;
+		theta=358.726;
+		height=0.00604486;
+		gndlvl=-242501 ft;
+		time=65278;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.00604561;
+		gndlvl=-246464 ft;
+	}
+	View{
+		theta=340.219;
+		height=0.00635215;
+		gndlvl=109.155 ft;
+	}
+	View{
+		height=0.00863459;
+		gndlvl=-674.774 ft;
+	}
+	View{
+		height=0.00655774;
+	}
+	View{
+		theta=340.239;
+		height=0.00655839;
+		gndlvl=-4088.61 ft;
+	}
+	View{
+		theta=146.74;
+		height=0.00655877;
+		gndlvl=-6106.07 ft;
+	}
+	View{
+		theta=66.1412;
+		height=0.00655956;
+		gndlvl=-10299.3 ft;
+	}
+	View{
+		phi=3.73899;
+		theta=54.0428;
+		height=0.0065599;
+		gndlvl=-12048.6 ft;
+	}
+	View{
+		phi=-0.268884;
+		theta=-26.5876;
+		height=0.0065579;
+		gndlvl=-1512.46 ft;
+	}
+	View{
+		phi=-0.288884;
+		height=0.00655839;
+		gndlvl=-4088.61 ft;
+	}
+	View{
+		theta=51.9847;
+		height=0.00977914;
+		gndlvl=-11700.1 ft;
+		time=66197;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					day=24;
+					resolution=4;
+					shine=22.9391;
+					specular=Color(1,1,1,0.96);
+					year=100;
+					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
+						Color(0.173,0,0.055),
+						Color(0.075,0.02,0.02));
+					Surface{
+						terrain=Z(noise(RIDGED,1,12,0.5,0.5,2))+
+								Texture("yellow-black",BORDER|BUMP|S,twist(-EQU*0.3*(1+noise(FS,3.8,9.2,1,0.36,2,0.25,1,1,0)),noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)),0.827317,0.001,0.98632,2.64144,1,2,1,0);
+					}
+				}
+			}
+		}
+	}
+}

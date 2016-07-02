@@ -1,0 +1,687 @@
+
+#include "VtxSceneTabs.h"
+#include <GLSLMgr.h>
+
+//########################### VtxSceneTabs Class ########################
+
+#define LINE_HEIGHT 30
+#define LINE_WIDTH TABS_WIDTH-TABS_BORDER
+#define SLIDER1 100
+
+// define all resource ids here
+enum {
+	OBJ_DELETE,
+    ID_DRAWTYPE,
+    ID_QUALITY,
+    ID_LMODE,
+    ID_ANIMATE,
+    ID_TIME_SLDR,
+    ID_TIME_TEXT,
+    ID_RATE_SLDR,
+    ID_RATE_TEXT,
+    ID_FOV_SLDR,
+    ID_FOV_TEXT,
+    ID_LOD_SLDR,
+    ID_LOD_TEXT,
+    ID_FILTER_MODE,
+    ID_AVE_ENABLE,
+    ID_FRONT_ENABLE,
+    ID_AA_ENABLE,
+    ID_COLOR_SLDR,
+    ID_COLOR_TEXT,
+    ID_SHOW_MASK,
+    ID_HDR,
+    ID_ANISO,
+    ID_NORMAL_SLDR,
+    ID_NORMAL_TEXT,
+    ID_HDRMIN_SLDR,
+    ID_HDRMIN_TEXT,
+    ID_HDRMAX_SLDR,
+    ID_HDRMAX_TEXT,
+    ID_TIME_SCALE,
+    ID_RATE_SCALE,
+    ID_TEX_MIP_SLDR,
+    ID_TEX_MIP_TEXT,
+    ID_COLOR_MIP_SLDR,
+    ID_COLOR_MIP_TEXT,
+    ID_BUMP_MIP_SLDR,
+    ID_BUMP_MIP_TEXT,
+    ID_FREQ_MIP_SLDR,
+    ID_FREQ_MIP_TEXT,
+    ID_SHADOWS,
+    ID_SHADOW_BLUR_SLDR,
+    ID_SHADOW_BLUR_TEXT,
+    ID_SHADOW_RES_SLDR,
+    ID_SHADOW_RES_TEXT,
+    ID_SHADOW_FOV_SLDR,
+    ID_SHADOW_FOV_TEXT,
+    ID_SHADOW_DOV_SLDR,
+    ID_SHADOW_DOV_TEXT,
+    ID_GEOMETRY,
+    ID_ADAPT_OCCLUSION,
+    ID_ADAPT_CURVATURE,
+    ID_ADAPT_BACKFACING,
+    ID_ADAPT_CLIPPED,
+
+};
+
+IMPLEMENT_CLASS(VtxSceneTabs, wxNotebook )
+
+BEGIN_EVENT_TABLE(VtxSceneTabs, wxNotebook)
+
+EVT_CHECKBOX(ID_ANIMATE,VtxSceneTabs::OnAnimate)
+EVT_UPDATE_UI(ID_ANIMATE, VtxSceneTabs::OnUpdateAnimate)
+
+EVT_RADIOBOX(ID_DRAWTYPE, VtxSceneTabs::OnDrawMode)
+EVT_UPDATE_UI(ID_DRAWTYPE, VtxSceneTabs::OnUpdateDrawMode)
+
+EVT_RADIOBOX(ID_QUALITY, VtxSceneTabs::OnQuality)
+EVT_UPDATE_UI(ID_QUALITY, VtxSceneTabs::OnUpdateQuality)
+
+EVT_RADIOBOX(ID_LMODE, VtxSceneTabs::OnLightMode)
+EVT_UPDATE_UI(ID_LMODE, VtxSceneTabs::OnUpdateLightMode)
+
+EVT_COMMAND_SCROLL_THUMBRELEASE(ID_TIME_SLDR,VtxSceneTabs::OnEndTimeSlider)
+EVT_COMMAND_SCROLL(ID_TIME_SLDR,VtxSceneTabs::OnTimeSlider)
+EVT_TEXT_ENTER(ID_TIME_TEXT,VtxSceneTabs::OnTimeText)
+//EVT_UPDATE_UI(ID_TIME_SLDR, VtxSceneTabs::OnUpdateTime)
+
+EVT_COMMAND_SCROLL_THUMBRELEASE(ID_RATE_SLDR,VtxSceneTabs::OnEndRateSlider)
+EVT_COMMAND_SCROLL(ID_RATE_SLDR,VtxSceneTabs::OnRateSlider)
+EVT_TEXT_ENTER(ID_RATE_TEXT,VtxSceneTabs::OnRateText)
+
+EVT_COMMAND_SCROLL_THUMBRELEASE(ID_FOV_SLDR,VtxSceneTabs::OnEndFOVSlider)
+EVT_COMMAND_SCROLL(ID_FOV_SLDR,VtxSceneTabs::OnFOVSlider)
+EVT_TEXT_ENTER(ID_FOV_TEXT,VtxSceneTabs::OnFOVText)
+
+EVT_COMMAND_SCROLL_THUMBRELEASE(ID_LOD_SLDR,VtxSceneTabs::OnEndLODSlider)
+EVT_COMMAND_SCROLL(ID_LOD_SLDR,VtxSceneTabs::OnLODSlider)
+EVT_TEXT_ENTER(ID_LOD_TEXT,VtxSceneTabs::OnLODText)
+EVT_UPDATE_UI(ID_LOD_SLDR, VtxSceneTabs::OnUpdateLOD)
+
+EVT_CHECKBOX(ID_AA_ENABLE,VtxSceneTabs::OnAAEnable)
+EVT_UPDATE_UI(ID_AA_ENABLE, VtxSceneTabs::OnUpdateAAEnable)
+
+EVT_CHECKBOX(ID_AVE_ENABLE,VtxSceneTabs::OnAveEnable)
+EVT_UPDATE_UI(ID_AVE_ENABLE, VtxSceneTabs::OnUpdateAveEnable)
+
+EVT_CHECKBOX(ID_GEOMETRY,VtxSceneTabs::OnGeometry)
+EVT_UPDATE_UI(ID_GEOMETRY, VtxSceneTabs::OnUpdateGeometry)
+
+EVT_CHECKBOX(ID_ANISO,VtxSceneTabs::OnAniso)
+EVT_UPDATE_UI(ID_ANISO, VtxSceneTabs::OnUpdateAniso)
+
+EVT_CHECKBOX(ID_FRONT_ENABLE,VtxSceneTabs::OnFrontEnable)
+EVT_UPDATE_UI(ID_FRONT_ENABLE, VtxSceneTabs::OnUpdateFrontEnable)
+
+EVT_CHECKBOX(ID_SHOW_MASK,VtxSceneTabs::OnShowMask)
+EVT_UPDATE_UI(ID_SHOW_MASK, VtxSceneTabs::OnUpdateShowMask)
+
+EVT_CHECKBOX(ID_HDR,VtxSceneTabs::OnHDR)
+EVT_UPDATE_UI(ID_HDR, VtxSceneTabs::OnUpdateHDR)
+
+EVT_CHECKBOX(ID_SHADOWS,VtxSceneTabs::OnShadows)
+EVT_UPDATE_UI(ID_SHADOWS, VtxSceneTabs::OnUpdateShadows)
+
+EVT_CHECKBOX(ID_ADAPT_OCCLUSION,VtxSceneTabs::OnOcclusion)
+EVT_UPDATE_UI(ID_ADAPT_OCCLUSION, VtxSceneTabs::OnUpdateOcclusion)
+EVT_CHECKBOX(ID_ADAPT_CURVATURE,VtxSceneTabs::OnCurvature)
+EVT_CHECKBOX(ID_ADAPT_BACKFACING,VtxSceneTabs::OnBackfacing)
+EVT_CHECKBOX(ID_ADAPT_CLIPPED,VtxSceneTabs::OnClipped)
+
+EVT_COMMAND_SCROLL(ID_COLOR_SLDR,VtxSceneTabs::OnColorAmpSlider)
+EVT_TEXT_ENTER(ID_COLOR_TEXT,VtxSceneTabs::OnColorAmpText)
+
+EVT_COMMAND_SCROLL(ID_NORMAL_SLDR,VtxSceneTabs::OnNormalAmpSlider)
+EVT_TEXT_ENTER(ID_NORMAL_TEXT,VtxSceneTabs::OnNormalAmpText)
+
+SET_SLIDER_EVENTS(HDRMIN,VtxSceneTabs,HDRMin)
+SET_SLIDER_EVENTS(HDRMAX,VtxSceneTabs,HDRMax)
+SET_SLIDER_EVENTS(SHADOW_BLUR,VtxSceneTabs,ShadowBlur)
+SET_SLIDER_EVENTS(SHADOW_RES,VtxSceneTabs,ShadowRes)
+
+EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSceneTabs::OnAddItem)
+EVT_MENU(OBJ_DELETE,VtxSceneTabs::OnDelete)
+
+EVT_CHOICE(ID_TIME_SCALE, VtxSceneTabs::OnTimeScale)
+
+EVT_CHOICE(ID_RATE_SCALE, VtxSceneTabs::OnRateScale)
+
+SET_SLIDER_EVENTS(TEX_MIP,VtxSceneTabs,TexMip)
+SET_SLIDER_EVENTS(COLOR_MIP,VtxSceneTabs,ColorMip)
+SET_SLIDER_EVENTS(BUMP_MIP,VtxSceneTabs,BumpMip)
+SET_SLIDER_EVENTS(FREQ_MIP,VtxSceneTabs,FreqMip)
+SET_SLIDER_EVENTS(SHADOW_FOV,VtxSceneTabs,ShadowFov)
+SET_SLIDER_EVENTS(SHADOW_DOV,VtxSceneTabs,ShadowDov)
+
+END_EVENT_TABLE()
+
+VtxSceneTabs::VtxSceneTabs(wxWindow* parent,
+		wxWindowID id,
+		const wxPoint& pos,
+		const wxSize& size ,
+		long style,
+		const wxString& name)
+		: VtxTabsMgr(parent, id, pos, size,  style,name)
+{
+	Create(parent, id, pos,size, style, name);
+}
+
+bool VtxSceneTabs::Create(wxWindow* parent,
+	wxWindowID id,
+	const wxPoint& pos,
+	const wxSize& size ,
+	long style,
+	const wxString& name)
+{
+    if (!VtxTabsMgr::Create(parent, id, pos, size,  style,name))
+        return false;
+
+	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
+	changing=true;
+    AddDisplayTab(page);
+    AddPage(page,wxT("Display"),true);
+
+    page=new wxPanel(this,wxID_ANY);
+    AddAdaptTab(page);
+    AddPage(page,wxT("Adapt"),false);
+
+    page=new wxPanel(this,wxID_ANY);
+    AddRenderTab(page);
+    AddPage(page,wxT("Render"),false);
+
+    page=new wxPanel(this,wxID_ANY);
+    AddFilterTab(page);
+    AddPage(page,wxT("Filter"),false);
+
+    changing=false;
+    return true;
+}
+void VtxSceneTabs::AddFilterTab(wxWindow *panel){
+
+    // A top-level sizer
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    // A second box sizer to give more space around the controls
+
+    wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+    wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Filter Options"));
+
+	m_ave_check=new wxCheckBox(panel, ID_AVE_ENABLE, "AveNorms");
+	m_ave_check->SetToolTip("Average normals at each vertex");
+	check_options->Add(m_ave_check,0,wxALIGN_LEFT|wxALL,1);
+
+	m_front_check=new wxCheckBox(panel, ID_FRONT_ENABLE, "FrontOnly");
+	m_front_check->SetToolTip("Discard backfacing normals");
+	check_options->Add(m_front_check,0,wxALIGN_LEFT|wxALL,1);
+
+	m_aniso=new wxCheckBox(panel, ID_ANISO, "Aniso");
+	m_aniso->SetToolTip("Anisotropic texture filtering");
+	check_options->Add(m_aniso,0,wxALIGN_LEFT|wxALL,1);
+
+	m_aa_check=new wxCheckBox(panel, ID_AA_ENABLE, "Edges");
+	m_aa_check->SetToolTip("Apply image filter");
+	check_options->Add(m_aa_check,0,wxALIGN_LEFT|wxALL,1);
+
+	m_show_check=new wxCheckBox(panel, ID_SHOW_MASK, "Show Mask");
+	m_show_check->SetToolTip("Show image filter");
+	check_options->Add(m_show_check,0,wxALIGN_LEFT|wxALL,1);
+
+    boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
+    check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+    wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Edges"));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ColorAmpSlider=new SliderCtrl(panel,ID_COLOR_SLDR,"Color",LABEL2,VALUE2,SLIDER2);
+	ColorAmpSlider->setRange(0.0,1.0);
+	ColorAmpSlider->slider->SetToolTip("Color change contribution to filter");
+	hline->Add(ColorAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+    NormalAmpSlider=new SliderCtrl(panel,ID_NORMAL_SLDR,"Normal",LABEL2,VALUE2,SLIDER2);
+    NormalAmpSlider->setRange(0.0,1.0);
+    NormalAmpSlider->slider->SetToolTip("Normal change contribution to filter");
+    hline->Add(NormalAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+    ampl_controls->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+    boxSizer->Add(ampl_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* mip_bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Textures"));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	TexMipSlider=new SliderCtrl(panel,ID_TEX_MIP_SLDR,"MIP",LABEL2,VALUE2,SLIDER2);
+	TexMipSlider->setRange(-1,1.0);
+	TexMipSlider->setValue(0.0);
+	hline->Add(TexMipSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	FreqMipSlider=new SliderCtrl(panel,ID_FREQ_MIP_SLDR,"Freq",LABEL2,VALUE2,SLIDER2);
+	FreqMipSlider->setRange(-1,1.0);
+	FreqMipSlider->setValue(0.0);
+	hline->Add(FreqMipSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	//hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	mip_bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ColorMipSlider=new SliderCtrl(panel,ID_COLOR_MIP_SLDR,"Color",LABEL2,VALUE2,SLIDER2);
+	ColorMipSlider->setRange(-1,1.0);
+	ColorMipSlider->setValue(0.0);
+
+	hline->Add(ColorMipSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	BumpMipSlider=new SliderCtrl(panel,ID_BUMP_MIP_SLDR,"Bump",LABEL2,VALUE2,SLIDER2);
+	//BumpMipSlider->setRange(0,5e-1,0.0,1.0);
+	BumpMipSlider->setRange(-1.0,1.0);
+	BumpMipSlider->setValue(0.0);
+	hline->Add(BumpMipSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	//hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	mip_bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(mip_bias, 0, wxALIGN_LEFT|wxALL,0);
+
+}
+
+void VtxSceneTabs::AddRenderTab(wxWindow *panel){
+
+    // A top-level sizer
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    // A second box sizer to give more space around the controls
+
+    wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+    wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Render Options"));
+	m_hdr=new wxCheckBox(panel, ID_HDR, "HDR");
+	m_hdr->SetToolTip("Enable High dynamic range");
+	check_options->Add(m_hdr,0,wxALIGN_LEFT|wxALL,1);
+
+	m_shadows=new wxCheckBox(panel, ID_SHADOWS, "Shadows");
+	m_shadows->SetToolTip("Enable shadows");
+	check_options->Add(m_shadows,0,wxALIGN_LEFT|wxALL,1);
+
+	m_geometry=new wxCheckBox(panel, ID_GEOMETRY, "Geometry");
+	m_geometry->SetToolTip("Enable render pass geometry (tesselation)");
+	check_options->Add(m_geometry,0,wxALIGN_LEFT|wxALL,1);
+
+    boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
+    check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+	wxStaticBoxSizer* hdr_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("High Dynamic Range"));
+
+	HDRMinSlider=new SliderCtrl(panel,ID_HDRMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
+	HDRMinSlider->setRange(0.0,1.0);
+	HDRMinSlider->slider->SetToolTip("Increase range in dark areas");
+
+	hdr_controls->Add(HDRMinSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	HDRMaxSlider=new SliderCtrl(panel,ID_HDRMAX_SLDR,"Max",LABEL2,VALUE2,SLIDER2);
+	HDRMaxSlider->setRange(0.0,5.0);
+	HDRMaxSlider->slider->SetToolTip("Decreases range in light areas");
+
+	hdr_controls->Add(HDRMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hdr_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* shadow_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Shadows"));
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ShadowBlurSlider=new SliderCtrl(panel,ID_SHADOW_BLUR_SLDR,"Blur",LABEL2,VALUE2,SLIDER2);
+	ShadowBlurSlider->setRange(0.25,8.0);
+	ShadowBlurSlider->slider->SetToolTip("Soften Shadow Edges");
+
+	hline->Add(ShadowBlurSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	ShadowResSlider=new SliderCtrl(panel,ID_SHADOW_RES_SLDR,"Views",LABEL2,VALUE2,SLIDER2);
+	ShadowResSlider->setRange(1,10);
+	ShadowResSlider->slider->SetToolTip("Number of Light source views");
+	ShadowResSlider->format=wxString("%0.0f");
+
+	hline->Add(ShadowResSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ShadowFovSlider=new SliderCtrl(panel,ID_SHADOW_FOV_SLDR,"FOV",LABEL2,VALUE2,SLIDER2);
+	ShadowFovSlider->setRange(0.5,1.5);
+	ShadowFovSlider->slider->SetToolTip("Light source field of view");
+
+	hline->Add(ShadowFovSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	ShadowDovSlider=new SliderCtrl(panel,ID_SHADOW_DOV_SLDR,"DOV",LABEL2,VALUE2,SLIDER2);
+	ShadowDovSlider->setRange(0.5,1.5);
+	ShadowDovSlider->slider->SetToolTip("Light source depth of view");
+
+	hline->Add(ShadowDovSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(shadow_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+}
+
+void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
+
+    // A top-level sizer
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    // A second box sizer to give more space around the controls
+
+    wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+	wxBoxSizer* detail_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Detail"));
+
+	LODSlider=new SliderCtrl(panel,ID_LOD_SLDR,"CellSize",LABEL, VALUE,SLIDER);
+	LODSlider->setRange(1,10);
+
+	detail_ctrls->Add(LODSlider->getSizer());
+	//LODSlider->setRange(20,75);
+
+	detail_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(detail_ctrls, 0, wxALIGN_LEFT|wxALL,0);
+
+    wxString qmodes[]={"Draft","Normal","High","Photo"};
+    quality=new wxRadioBox(panel,ID_QUALITY,wxT("Quality"),wxPoint(-1,-1),wxSize(TABS_WIDTH-TABS_BORDER,-1),4,
+    		qmodes,4,wxRA_SPECIFY_COLS);
+
+    boxSizer->Add(quality, 0, wxALIGN_LEFT|wxALL,0);
+
+    wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Adapt Tests"));
+    m_occlusion=new wxCheckBox(panel, ID_ADAPT_OCCLUSION, "Occlusion");
+    m_occlusion->SetToolTip("Decrease resolution in occluded areas");
+	check_options->Add(m_occlusion,0,wxALIGN_LEFT|wxALL,1);
+
+	m_clip=new wxCheckBox(panel, ID_ADAPT_CLIPPED, "Clipping");
+	m_clip->SetToolTip("Decrease resolution in off-screen areas");
+	check_options->Add(m_clip,0,wxALIGN_LEFT|wxALL,1);
+
+	m_backface=new wxCheckBox(panel, ID_ADAPT_BACKFACING, "Backfacing");
+	m_backface->SetToolTip("Decrease resolution in backfacing sides");
+	check_options->Add(m_backface,0,wxALIGN_LEFT|wxALL,1);
+
+	m_curvature=new wxCheckBox(panel, ID_ADAPT_CURVATURE, "Curvature");
+	m_curvature->SetToolTip("Decrease resolution in smooth areas");
+	check_options->Add(m_curvature,0,wxALIGN_LEFT|wxALL,1);
+
+    boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
+    check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+
+}
+
+void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
+
+    // A top-level sizer
+
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    // A second box sizer to give more space around the controls
+
+    wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+	wxBoxSizer* time_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Animation"));
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	TimeSlider=new SliderCtrl(panel,ID_TIME_SLDR,"Time",LABEL, VALUE,200);
+	TimeSlider->setRange(1,10);
+
+	wxString exps[]={"x1","x10","x100","x1000","x10^4","x10^5","x10^6","x10^7"};
+	m_time_scale=new wxChoice(panel, ID_TIME_SCALE, wxDefaultPosition,wxSize(80,-1),8, exps);
+
+	m_time_scale->SetSelection(1);
+
+	hline->Add(TimeSlider->getSizer());
+	hline->Add(m_time_scale);
+
+
+	time_ctrls->Add(hline);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	m_rate_scale=new wxChoice(panel, ID_RATE_SCALE, wxDefaultPosition,wxSize(80,-1),8, exps);
+
+
+	RateSlider=new SliderCtrl(panel,ID_RATE_SLDR,"Rate",LABEL, VALUE,200);
+	RateSlider->setRange(1,10);
+
+	hline->Add(RateSlider->getSizer());
+	hline->Add(m_rate_scale);
+
+	time_ctrls->Add(hline);
+	time_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(time_ctrls, 0, wxALIGN_LEFT|wxALL,0);
+
+	wxBoxSizer* view_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("View"));
+
+	FOVSlider=new SliderCtrl(panel,ID_FOV_SLDR,"FOV",LABEL, VALUE,SLIDER);
+
+	view_ctrls->Add(FOVSlider->getSizer());
+	FOVSlider->setRange(20,75);
+
+	boxSizer->Add(view_ctrls, 0, wxALIGN_LEFT|wxALL,0);
+	view_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+    wxString dmodes[]={"Points","lines","Solid"};
+    drawmode=new wxRadioBox(panel,ID_DRAWTYPE,wxT("Draw Mode"),wxPoint(-1,-1),wxSize(TABS_WIDTH/2,50),3,
+    		dmodes,3,wxRA_SPECIFY_COLS);
+
+    hline->Add(drawmode, 0, wxALIGN_LEFT|wxALL,0);
+
+    wxString lmodes[]={"OGL","Phong","Mixed"};
+    lightmode=new wxRadioBox(panel,ID_LMODE,wxT("Lighting Model"),wxPoint(-1,-1),wxSize(TABS_WIDTH/2,50),3,
+    		lmodes,3,wxRA_SPECIFY_COLS);
+
+    hline->Add(lightmode, 0, wxALIGN_LEFT|wxALL,0);
+
+    boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+}
+
+int VtxSceneTabs::showMenu(bool expanded){
+	menu_action=TABS_NONE;
+	wxMenu menu;
+
+	if(!expanded && !object()->isEmpty())
+		return menu_action;
+
+	wxMenu *addmenu=getAddMenu(object());
+
+	if(addmenu){
+		menu.AppendSubMenu(addmenu,"Add");
+		PopupMenu(&menu);
+	}
+	return menu_action;
+}
+
+void VtxSceneTabs::OnDrawMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	if(mode==0)
+		Render.show_points();
+	else if(mode==1)
+		Render.show_lines();
+	else
+		Render.show_shaded();
+	TheScene->set_changed_render();
+}
+
+void VtxSceneTabs::OnAAEnable(wxCommandEvent& event){
+    Render.set_dealias(!Render.dealias());
+	TheScene->set_changed_render();
+}
+
+void VtxSceneTabs::OnFrontEnable(wxCommandEvent& event){
+	Raster.set_clean_edges(!Raster.clean_edges());
+	TheScene->set_changed_detail();
+}
+
+void VtxSceneTabs::OnAveEnable(wxCommandEvent& event){
+	Render.set_avenorms(!Render.avenorms());
+	TheScene->set_changed_detail();
+}
+void VtxSceneTabs::OnUpdateDrawMode(wxUpdateUIEvent& event){
+	if(Render.draw_points())
+		drawmode->SetSelection(0);
+	else if(Render.draw_lines())
+		drawmode->SetSelection(1);
+	else
+		drawmode->SetSelection(2);
+}
+
+void VtxSceneTabs::OnLightMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	Render.set_light_mode(mode);
+	TheScene->set_changed_render();
+}
+void VtxSceneTabs::OnUpdateLightMode(wxUpdateUIEvent& event){
+	int mode=Render.light_mode();
+	lightmode->SetSelection(mode);
+}
+
+void VtxSceneTabs::OnQuality(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	TheScene->set_quality(mode);
+}
+void VtxSceneTabs::OnUpdateQuality(wxUpdateUIEvent& event){
+	int mode=TheScene->quality;
+	quality->SetSelection(mode);
+}
+
+void VtxSceneTabs::setObjAttributes(){
+	Scene *obj=object();
+	obj->tex_mip=TexMipSlider->getValue();
+	obj->color_mip=ColorMipSlider->getValue();
+	obj->bump_mip=BumpMipSlider->getValue();
+	obj->freq_mip=FreqMipSlider->getValue();
+	TheScene->set_changed_render();
+}
+void VtxSceneTabs::updateControls(){
+	if(changing)
+		return;
+	Scene *obj=object();
+	getTime();
+	getRate();
+	TexMipSlider->setValue(obj->tex_mip);
+	ColorMipSlider->setValue(obj->color_mip);
+	BumpMipSlider->setValue(obj->bump_mip);
+	FreqMipSlider->setValue(obj->freq_mip);
+	FOVSlider->setValue(obj->fov);
+	LODSlider->setValue(obj->cellsize);
+	updateSlider(ColorAmpSlider,Raster.filter_color_ampl);
+	updateSlider(NormalAmpSlider,Raster.filter_normal_ampl);
+	updateSlider(HDRMinSlider,Raster.hdr_min);
+	updateSlider(HDRMaxSlider,Raster.hdr_max);
+	m_aa_check->SetValue(Render.dealias());
+	m_show_check->SetValue(Raster.filter_show());
+	m_ave_check->SetValue(Render.avenorms());
+	m_hdr->SetValue(Raster.hdr());
+	m_shadows->SetValue(Raster.shadows());
+	m_geometry->SetValue(Render.geometry());
+
+	m_occlusion->SetValue(Adapt.overlap_test());
+	m_clip->SetValue(Adapt.clip_test());
+	m_backface->SetValue(Adapt.back_test());
+	m_curvature->SetValue(Adapt.curve_test());
+
+	updateSlider(ShadowBlurSlider,Raster.shadow_blur);
+	updateSlider(ShadowResSlider,Raster.shadow_vsteps);
+	updateSlider(ShadowFovSlider,Raster.shadow_fov);
+	updateSlider(ShadowDovSlider,Raster.shadow_dov);
+}
+void VtxSceneTabs::OnTimeScale(wxCommandEvent& event){
+	if(TheScene->motion()) changing=true;
+	setTime();
+	changing=false;
+
+}
+void VtxSceneTabs::OnRateScale(wxCommandEvent& event){
+	setRate();
+}
+void VtxSceneTabs::OnUpdateTime(wxUpdateUIEvent& event){
+	//if(!changing&& TheScene->autotm()){
+	if(!changing){
+		getTime();
+	}
+}
+void VtxSceneTabs::OnUpdateLOD(wxUpdateUIEvent& event){
+	if(!changing)
+		LODSlider->setValue(TheScene->cellsize);
+}
+
+void VtxSceneTabs::OnTimeSlider(wxScrollEvent& event){
+	if(TheScene->motion()) changing=true;
+	TimeSlider->setValueFromSlider();
+	setTime();
+	//changing=false;
+	//TimeSlider->setValueFromSlider();
+}
+
+void VtxSceneTabs::OnEndTimeSlider(wxScrollEvent& event){
+	setTime();
+	changing=false;
+}
+void VtxSceneTabs::OnTimeText(wxCommandEvent& event){
+	if(TheScene->motion()) changing=true;
+	TimeSlider->setValueFromText();
+	setTime();
+	//changing=false;
+}
+
+void VtxSceneTabs::getTime(){
+//	if(!TheScene->autotm())
+//		return;
+	changing=true;
+	double time=object()->time;
+	double exp=floor(log10(time));
+	double rem=time/pow(10,exp);
+	m_time_scale->SetSelection((int)exp);
+	TimeSlider->setValue(rem);
+	changing=false;
+}
+
+void VtxSceneTabs::setTime(){
+	double rem=TimeSlider->getValue();
+	double exp=m_time_scale->GetSelection();
+	double time=rem*pow(10,exp);
+	TheScene->set_time(time);
+	TheScene->set_changed_time();
+	TheScene->set_changed_render();
+}
+
+void VtxSceneTabs::getRate(){
+	if(!TheScene->autotm()){
+		double rate=object()->delt;
+		double exp=floor(log10(rate));
+		double rem=rate/pow(10,exp);
+		m_rate_scale->SetSelection((int)exp);
+		RateSlider->setValue(rem);
+	}
+}
+
+void VtxSceneTabs::setRate(){
+	double rem=RateSlider->getValue();
+	double exp=m_rate_scale->GetSelection();
+	double rate=rem*pow(10,exp);
+	TheScene->delt=rate;
+	TheScene->set_changed_render();
+}
+

@@ -1,0 +1,23 @@
+/* XPM */
+static char *vtx_move_select_xpm[]={
+"16 16 4 1",
+". c #0000ff",
+"b c #008080",
+"# c #ffff00",
+"a c #ffffff",
+"................",
+"...........##...",
+"..........#aa#..",
+"bbbb......#aa#..",
+"bbbbbbb....##...",
+"bbbbbbbbb.......",
+"bbbbbbbbbb......",
+"bbbbbbbbbbb.....",
+"bbbbabbbbbbb....",
+"bbbbabbbbbbbb...",
+"bbbbabbbbbbbbb..",
+"baaaaaaabbbbbb..",
+"bbbbabbbbbbbbb..",
+"bbbbabbbbbbbbbb.",
+"bbbbabbbbbbbbbb.",
+"bbbbbbbbbbbbbbb."};

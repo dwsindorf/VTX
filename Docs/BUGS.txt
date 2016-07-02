@@ -1,0 +1,6 @@
+11/4/2010
+1. Enable flag doesn't affect whether or not or how layers get drawn
+2. If terrain contains PX,PY layers render/adapt times are extremely long if object is not viewobj
+   -fixed
+3. In "h" off case get holes in triangle mesh
+4. Far off orbital views of clouds and sky show z-depth precision artifacts

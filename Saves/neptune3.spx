@@ -1,0 +1,67 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=8.55672;
+		theta=185.877;
+		height=0.00668252;
+		gndlvl=-6051.24 ft;
+		time=115147;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		theta=193.998;
+		gndlvl=-6087.62 ft;
+	}
+	View{
+		phi=8.57672;
+		height=0.00668214;
+		gndlvl=-4088.61 ft;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					day=24;
+					resolution=0.1;
+					shine=9.88486;
+					specular=Color(1,1,1,0);
+					year=100;
+					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
+					Surface{
+						terrain=Z(noise(RIDGED,1,12,0.5,0.5,2))+
+								Texture("neptune",BORDER|S,twist(0.2,noise(ERODED|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,1.29232,-2,2.33968,1,2,1,0);
+					}
+				}
+			}
+		}
+	}
+}

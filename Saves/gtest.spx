@@ -1,0 +1,863 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=7.55533;
+		theta=312.774;
+		height=45.626 ft;
+		gndlvl=10535.5 ft;
+		time=83490.4;
+		heading=-80;
+		tilt=-15;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=148.903 ft;
+		gndlvl=10543.7 ft;
+		tilt=-5;
+	}
+	View{
+		height=335.957 ft;
+		gndlvl=10544.5 ft;
+		time=83504;
+		tilt=10;
+	}
+	View{
+		height=380.662 ft;
+	}
+	View{
+		time=83520.4;
+	}
+	View{
+		height=41.5883 ft;
+		gndlvl=10518.5 ft;
+		time=83753.2;
+		heading=-60;
+		angle=-10;
+	}
+	View{
+		height=15.5451 ft;
+		gndlvl=10544.5 ft;
+	}
+	View{
+		height=15.5019 ft;
+		tilt=0;
+	}
+	View{
+		height=14.0626 ft;
+		gndlvl=10545.9 ft;
+	}
+	View{
+		height=7.76228 ft;
+		gndlvl=10544.5 ft;
+		time=83800.4;
+		tilt=-5;
+		angle=0;
+	}
+	View{
+		height=6.57589 ft;
+		gndlvl=10545.9 ft;
+		time=89175.2;
+		delt=20;
+		heading=205;
+		tilt=10;
+		angle=-75;
+	}
+	View{
+		height=6.44312 ft;
+		heading=320;
+	}
+	View{
+		height=15350.4 ft;
+		gndlvl=10359.7 ft;
+		time=96693.2;
+		heading=310;
+		tilt=-10;
+		angle=-115;
+	}
+	View{
+		phi=7.54761;
+		theta=312.415;
+		height=1335.25 ft;
+		gndlvl=10272 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=773.691 ft;
+		gndlvl=10501.4 ft;
+		time=72947.8;
+	}
+	View{
+		phi=7.54271;
+		theta=312.422;
+		height=45.2573 ft;
+		gndlvl=10560 ft;
+	}
+	View{
+		height=20.7473 ft;
+		time=70346.8;
+		heading=115;
+		tilt=-20;
+		angle=-65;
+	}
+	View{
+		height=28.2485 ft;
+		gndlvl=10559.2 ft;
+		time=70408.8;
+	}
+	View{
+		height=27.4485 ft;
+		gndlvl=10560 ft;
+		time=71656.8;
+		tilt=5;
+	}
+	View{
+		time=72196.8;
+	}
+	View{
+		phi=7.53506;
+		theta=312.425;
+		height=15678.2 ft;
+		gndlvl=10469 ft;
+		time=61481.8;
+		heading=15;
+		tilt=-25;
+		angle=-280;
+	}
+	View{
+		phi=7.64099;
+		theta=312.393;
+		height=469.781 ft;
+		gndlvl=5951.29 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=180.442 ft;
+		gndlvl=6040.93 ft;
+		heading=125;
+	}
+	View{
+		phi=7.64064;
+		height=78.4103 ft;
+		gndlvl=6136.51 ft;
+		time=65225.8;
+		heading=90;
+		angle=-5;
+	}
+	View{
+		height=10.5569 ft;
+		gndlvl=6128.83 ft;
+	}
+	View{
+		height=33.5361 ft;
+	}
+	View{
+		height=10.8848 ft;
+	}
+	View{
+		height=25.4254 ft;
+		gndlvl=6127.55 ft;
+	}
+	View{
+		height=1994.19 ft;
+		gndlvl=6664.31 ft;
+		tilt=-30;
+		angle=-20;
+	}
+	View{
+		height=3294.27 ft;
+		gndlvl=6615.4 ft;
+		heading=245;
+		tilt=-5;
+		angle=0;
+	}
+	View{
+		height=6986.38 ft;
+		gndlvl=6782.58 ft;
+		heading=65;
+		tilt=-30;
+		angle=-10;
+	}
+	View{
+		height=232.296 ft;
+		gndlvl=6136.51 ft;
+		heading=15;
+		tilt=-20;
+		angle=80;
+	}
+	View{
+		height=6126.14 ft;
+		gndlvl=6752.61 ft;
+		time=67779.8;
+		heading=120;
+	}
+	View{
+		time=68769.8;
+	}
+	View{
+		height=6794.52 ft;
+		time=69711.8;
+	}
+	View{
+		height=450.285 ft;
+		gndlvl=6165.5 ft;
+		heading=5;
+	}
+	View{
+		height=744.807 ft;
+		gndlvl=6304.93 ft;
+	}
+	View{
+		height=239.843 ft;
+	}
+	View{
+		height=242.137 ft;
+		gndlvl=6165.5 ft;
+	}
+	View{
+		height=66.4848 miles;
+		gndlvl=8733.26 ft;
+	}
+	View{
+		height=2211.37 ft;
+		gndlvl=8100.93 ft;
+	}
+	View{
+		height=4955.05 ft;
+		gndlvl=6165.5 ft;
+	}
+	View{
+		height=28.4311 miles;
+		gndlvl=9830.74 ft;
+	}
+	View{
+		height=12.8933 miles;
+		gndlvl=8100.93 ft;
+	}
+	View{
+		height=391.768 ft;
+		gndlvl=6165.5 ft;
+		heading=60;
+	}
+	View{
+		height=25.3337 ft;
+		gndlvl=6131.39 ft;
+		heading=-10;
+	}
+	View{
+		height=45.3556 ft;
+	}
+	View{
+		height=22.5536 ft;
+		gndlvl=6571.05 ft;
+		time=70327.8;
+		tilt=-10;
+		angle=75;
+	}
+	View{
+		height=7.09743 ft;
+		gndlvl=6131.39 ft;
+	}
+	View{
+		height=9.52532 ft;
+		gndlvl=6125.11 ft;
+		tilt=-40;
+	}
+	View{
+		height=9.62415 ft;
+		gndlvl=6123.22 ft;
+		tilt=-10;
+		angle=85;
+	}
+	View{
+		height=199.98 ft;
+		gndlvl=6131.39 ft;
+		heading=105;
+		tilt=-20;
+		angle=80;
+	}
+	View{
+		height=12.0804 ft;
+		gndlvl=6128.83 ft;
+		tilt=10;
+		angle=85;
+	}
+	View{
+		phi=7.64087;
+		height=20.6838 ft;
+		gndlvl=6092.59 ft;
+		time=72635.8;
+		heading=180;
+		tilt=5;
+		angle=90;
+	}
+	View{
+		height=124.452 ft;
+		gndlvl=6116.05 ft;
+		tilt=-25;
+		angle=-45;
+	}
+	View{
+		height=32.6777 ft;
+		tilt=20;
+	}
+	View{
+		height=570.038 ft;
+		gndlvl=6571.05 ft;
+		heading=110;
+		tilt=-5;
+		angle=-50;
+	}
+	View{
+		height=48.8535 ft;
+		gndlvl=6116.05 ft;
+		heading=15;
+		tilt=-15;
+		angle=-70;
+	}
+	View{
+		height=40.6437 ft;
+		tilt=-20;
+	}
+	View{
+		height=15.0118 ft;
+		gndlvl=6113.51 ft;
+	}
+	View{
+		height=24.3741 ft;
+		time=75207.8;
+		tilt=5;
+		angle=-225;
+	}
+	View{
+		height=12.7489 ft;
+		heading=-35;
+		tilt=-10;
+	}
+	View{
+		height=27.1577 ft;
+		tilt=-35;
+		angle=-300;
+	}
+	View{
+		height=6.87174 ft;
+	}
+	View{
+		height=7.4507 ft;
+		gndlvl=6110.89 ft;
+		heading=40;
+	}
+	View{
+		height=491.005 ft;
+		gndlvl=6116.05 ft;
+		tilt=-30;
+	}
+	View{
+		height=1407.26 ft;
+		gndlvl=6304.93 ft;
+		tilt=10;
+	}
+	View{
+		height=101.209 ft;
+		gndlvl=6116.05 ft;
+		tilt=0;
+		angle=-290;
+	}
+	View{
+		height=46.7184 ft;
+		heading=-25;
+		tilt=-25;
+	}
+	View{
+		height=476.67 ft;
+		gndlvl=6165.5 ft;
+		tilt=15;
+		angle=-275;
+	}
+	View{
+		height=199.26 ft;
+		gndlvl=6144.84 ft;
+		tilt=-25;
+	}
+	View{
+		height=2020.36 ft;
+		gndlvl=6304.93 ft;
+		tilt=-20;
+	}
+	View{
+		height=939.711 ft;
+		gndlvl=6571.05 ft;
+		time=75589.8;
+		tilt=5;
+		angle=-280;
+	}
+	View{
+		height=1601.6 ft;
+		gndlvl=6304.93 ft;
+		tilt=10;
+		angle=-25;
+	}
+	View{
+		height=7562.23 ft;
+		gndlvl=8344.86 ft;
+		tilt=-5;
+		angle=-60;
+	}
+	View{
+		height=11893 ft;
+	}
+	View{
+		height=3317.85 ft;
+		gndlvl=6664.31 ft;
+	}
+	View{
+		height=7874.17 ft;
+		gndlvl=6816.18 ft;
+	}
+	View{
+		height=1012.74 ft;
+		gndlvl=6304.93 ft;
+	}
+	View{
+		height=2053.67 ft;
+		gndlvl=6752.61 ft;
+	}
+	View{
+		height=4343.71 ft;
+		gndlvl=6304.93 ft;
+		tilt=-50;
+	}
+	View{
+		height=1140.55 ft;
+		gndlvl=6165.5 ft;
+		tilt=-15;
+	}
+	View{
+		height=163.992 ft;
+		gndlvl=6116.05 ft;
+	}
+	View{
+		height=805.599 ft;
+	}
+	View{
+		height=1345.43 ft;
+		gndlvl=6304.93 ft;
+		tilt=-60;
+		angle=60;
+	}
+	View{
+		height=229.605 ft;
+		gndlvl=6116.05 ft;
+	}
+	View{
+		height=229.6 ft;
+		tilt=-35;
+		angle=65;
+	}
+	View{
+		height=3102.48 ft;
+		gndlvl=6664.31 ft;
+		tilt=-30;
+	}
+	View{
+		height=8968.1 ft;
+		gndlvl=8278.99 ft;
+		tilt=-10;
+		angle=70;
+	}
+	View{
+		phi=7.67395;
+		theta=312.429;
+		height=207.286 ft;
+		gndlvl=10469 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=56.8574 ft;
+		gndlvl=10559.7 ft;
+	}
+	View{
+		height=9.77207 ft;
+		gndlvl=10560 ft;
+	}
+	View{
+		height=151.691 ft;
+	}
+	View{
+		height=7.92813 ft;
+	}
+	View{
+		height=91.4559 ft;
+		tilt=-35;
+		angle=-20;
+	}
+	View{
+		tilt=-5;
+	}
+	View{
+		height=9.59288 ft;
+	}
+	View{
+		height=6.45935 ft;
+	}
+	View{
+		height=1623.99 ft;
+		gndlvl=10543.9 ft;
+	}
+	View{
+		height=195.297 ft;
+		gndlvl=10549.7 ft;
+	}
+	View{
+		height=38.2987 ft;
+		gndlvl=10560 ft;
+	}
+	View{
+		height=13.6527 ft;
+	}
+	View{
+		height=33.6341 ft;
+		angle=-25;
+	}
+	View{
+		height=50.8983 ft;
+	}
+	View{
+		height=6.03632 ft;
+		heading=-10;
+	}
+	View{
+		height=6 ft;
+		time=77847.8;
+		heading=125;
+		tilt=-20;
+		angle=-90;
+	}
+	View{
+		time=81193.8;
+		heading=175;
+		tilt=-45;
+	}
+	View{
+		heading=115;
+		tilt=-25;
+		angle=-95;
+	}
+	View{
+		tilt=-5;
+	}
+	View{
+		height=6.00638 ft;
+	}
+	View{
+		height=6 ft;
+	}
+	View{
+		height=6.15818 ft;
+		tilt=0;
+		angle=-100;
+	}
+	View{
+		height=6.01926 ft;
+		tilt=-20;
+	}
+	View{
+		height=7.63702 ft;
+		tilt=-15;
+		angle=-120;
+	}
+	View{
+		height=2347.74 ft;
+		gndlvl=10507.1 ft;
+		heading=-185;
+	}
+	View{
+		height=20677.5 ft;
+		gndlvl=10375.4 ft;
+		heading=55;
+		angle=-145;
+	}
+	View{
+		height=3631.47 ft;
+		gndlvl=10469 ft;
+		tilt=0;
+		angle=-240;
+	}
+	View{
+		height=16.3028 miles;
+		gndlvl=9636.13 ft;
+		tilt=-10;
+	}
+	View{
+		height=44702.9 ft;
+		gndlvl=10191.5 ft;
+		tilt=-40;
+		angle=-245;
+	}
+	View{
+		height=2112.35 ft;
+		gndlvl=10549.6 ft;
+	}
+	View{
+		height=302.454 ft;
+		gndlvl=10560 ft;
+		heading=220;
+	}
+	View{
+		height=715.579 ft;
+		gndlvl=10531 ft;
+		time=81255.8;
+		heading=165;
+		tilt=-30;
+		angle=25;
+	}
+	View{
+		height=9105.14 ft;
+	}
+	View{
+		height=247.844 ft;
+		gndlvl=10560 ft;
+		tilt=-35;
+		angle=30;
+	}
+	View{
+		height=142.073 ft;
+	}
+	View{
+		height=3174.58 ft;
+		gndlvl=10531 ft;
+	}
+	View{
+		height=6038.75 ft;
+		gndlvl=10516.6 ft;
+	}
+	View{
+		height=1047.58 ft;
+		gndlvl=10528.5 ft;
+	}
+	View{
+		height=1209.8 ft;
+		gndlvl=10540.3 ft;
+		time=82661.8;
+		heading=250;
+		tilt=-15;
+		angle=35;
+	}
+	View{
+		height=124.967 ft;
+		gndlvl=10560 ft;
+		heading=315;
+	}
+	View{
+		height=91.4171 ft;
+		heading=270;
+		angle=30;
+	}
+	View{
+		height=198.847 ft;
+		heading=230;
+	}
+	View{
+		height=12.0977 ft;
+	}
+	View{
+		height=7.42991 ft;
+	}
+	View{
+		height=6.17029 ft;
+		tilt=-10;
+		angle=25;
+	}
+	View{
+		height=48.4257 ft;
+		tilt=-40;
+		angle=20;
+	}
+	View{
+		height=6.40258 ft;
+	}
+	View{
+		height=50.2311 ft;
+		tilt=-65;
+	}
+	View{
+		height=11.1362 miles;
+	}
+	View{
+		height=11313 ft;
+		gndlvl=10469 ft;
+	}
+	View{
+		height=9024.05 ft;
+		gndlvl=10381.4 ft;
+		tilt=-30;
+		angle=-25;
+	}
+	View{
+		height=56.3192 ft;
+		gndlvl=10560 ft;
+		tilt=-10;
+	}
+	View{
+		height=27.6777 ft;
+		heading=55;
+		tilt=-25;
+	}
+	View{
+		height=8.15151 ft;
+	}
+	View{
+		height=12629.6 ft;
+		gndlvl=10375.4 ft;
+		tilt=-15;
+		angle=-15;
+	}
+	View{
+		height=2192.49 ft;
+		gndlvl=10381.4 ft;
+	}
+	View{
+		height=2563.31 ft;
+		gndlvl=10469 ft;
+	}
+	View{
+		height=293.118 ft;
+		gndlvl=10549.7 ft;
+	}
+	View{
+		height=464.339 ft;
+		gndlvl=10549.6 ft;
+	}
+	View{
+		height=15.4484 ft;
+		gndlvl=10560 ft;
+		heading=165;
+	}
+	View{
+		height=62.065 ft;
+		time=85251.8;
+		heading=190;
+	}
+	View{
+		height=37.5366 ft;
+	}
+	View{
+		height=15.1085 ft;
+	}
+	View{
+		time=85895.8;
+	}
+	View{
+		height=6.012 ft;
+		heading=195;
+	}
+	View{
+		height=47.4724 ft;
+		heading=125;
+		tilt=-20;
+		angle=-30;
+	}
+	View{
+		height=13.7911 ft;
+		time=86765.8;
+		heading=200;
+		tilt=-25;
+	}
+	View{
+		height=49.3933 ft;
+		time=88529.8;
+		heading=175;
+		tilt=-20;
+		angle=-95;
+	}
+	View{
+		height=52.3478 ft;
+	}
+	View{
+		height=64.6653 ft;
+	}
+	View{
+		height=7376.22 ft;
+		gndlvl=10381.4 ft;
+	}
+	View{
+		height=6226.11 ft;
+	}
+	View{
+		height=396.753 ft;
+		gndlvl=10549.6 ft;
+	}
+	View{
+		height=45.1866 ft;
+		gndlvl=10560 ft;
+	}
+	View{
+		height=138.245 ft;
+		heading=200;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(0.98,0.92,0.79);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(0.98,0.95,0.77,0.95);
+						color2=Color(0.97,0.67,0.03);
+					}
+				}
+				Planet(0.004,100) {
+					day=24;
+					diffuse=Color(1,1,1,0.48);
+					resolution=4;
+					shadow=Color(0,0,0,0.68);
+					specular=Color(1,1,1,0.76);
+					year=100;
+					image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.992,0.773,0.004));
+					Surface{
+						terrain=
+								Texture("eroded",BUMP|NTEX,6912.54,1.42032,1,0,10.3062,2,0.91836)+
+								Texture("saturn3",S,0.1*BMPHT+HT,1,1.30436,1,0,1,2,1)+Z(noise(SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(FS|SCALE,20,3.7,1,0.5,2,1,1,0,0));
+					}
+					Sky(0.0041029) {
+						color=Color(0.82,0.98,0.98);
+						density=0.2;
+						haze.color=Color(1,0.96,0.6);
+						haze.grad=0.43288;
+						haze.value=1;
+						night.color=Color(0,0.31,1,0);
+						shine=2.92377;
+						specular=Color(1,1,1);
+						twilight=Color(0.33,0,1);
+						twilight.max=0.379151;
+						twilight.min=-0.446273;
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,96 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=7.61198;
+		theta=312.076;
+		height=355.712 ft;
+		time=67414.6;
+		heading=85;
+		tilt=-20;
+		angle=-5;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=792.876 ft;
+	}
+	View{
+		height=69.0718 ft;
+		heading=110;
+		tilt=-15;
+	}
+	View{
+		height=679.003 ft;
+		gndlvl=2042.62 ft;
+		heading=240;
+		angle=-15;
+	}
+	View{
+		phi=7.53636;
+		theta=312.033;
+		height=259.94 ft;
+		gndlvl=3302.32 ft;
+		time=94826.8;
+		heading=215;
+		tilt=-10;
+		angle=-25;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(0.98,0.92,0.79);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(0.98,0.95,0.77,0.95);
+						color2=Color(0.97,0.67,0.03);
+					}
+				}
+				Planet(0.004,100) {
+					day=24;
+					resolution=4;
+					shadow=Color(0,0,0,0.35);
+					shine=60.1858;
+					specular=Color(1,1,1);
+					year=100;
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					Surface{
+						terrain=Z(noise(FS|NABS|UNS,12,4,-1,0.4,2,0.31,1,0.17,0))+
+								Texture("jupiter",BUMP|S,noise(FS|NABS|SCALE,12,4.6,-1,0.44,2,0.06,1,0,0)+noise(FS|NABS|SCALE,15,8.1,-1,0.48,2,0.04,1,0.15,0),422.264,0.07408,1.1852,0,1,2,1,0);
+					}
+					Sky(0.0041029) {
+						color=Color(0.82,0.98,0.98);
+						density=0.2;
+						haze.color=Color(1,0.96,0.6);
+						haze.grad=0.2027;
+						haze.value=1;
+						night.color=Color(0,0.31,1,0);
+						shine=2.92377;
+						specular=Color(1,1,1);
+						twilight=Color(0.33,0,1);
+						twilight.max=0.379151;
+						twilight.min=-0.446273;
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,6 @@
+Thumbs.db
+*.debug
+set_tex.frag
+set_tex.vert
+textures.h
+set_attributes.vert

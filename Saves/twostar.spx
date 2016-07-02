@@ -1,0 +1,214 @@
+Scene() {
+	drawmode=1;
+	View{
+		view=SURFACE;
+		phi=27.0007;
+		theta=248.95;
+		height=32965.4 ft;
+		gndlvl=2833.15 ft;
+		time=7.24276e+006;
+		heading=-225;
+		tilt=-20;
+		angle=55;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		phi=27.006;
+		theta=248.945;
+		height=31976.4 ft;
+		time=7.24305e+006;
+		angle=60;
+	}
+	View{
+		height=28976 ft;
+		gndlvl=2777.46 ft;
+		tilt=-10;
+		angle=45;
+	}
+	View{
+		height=29084.5 ft;
+		gndlvl=2668.98 ft;
+		time=60983.2;
+		heading=-220;
+		tilt=-5;
+	}
+	View{
+		phi=26.7926;
+		theta=249.18;
+		height=24931.6 ft;
+		gndlvl=2643.33 ft;
+		time=62543.8;
+		heading=-235;
+		angle=50;
+	}
+	View{
+		height=31712.3 ft;
+		time=47976.4;
+		heading=-225;
+	}
+	View{
+		height=25445.7 ft;
+		time=47456.2;
+		heading=-240;
+		tilt=0;
+		angle=55;
+	}
+	View{
+		height=25091.7 ft;
+		gndlvl=2800.2 ft;
+		time=49537;
+		heading=-235;
+		tilt=-5;
+	}
+	View{
+		time=470000;
+		delt=2000;
+	}
+	View{
+		time=46936;
+	}
+	View{
+		height=48129.5 ft;
+		gndlvl=2643.33 ft;
+	}
+	View{
+		phi=26.8562;
+		theta=249.271;
+		height=22099.5 ft;
+		gndlvl=2441.59 ft;
+		tilt=0;
+		angle=65;
+	}
+	View{
+		phi=26.9165;
+		theta=248.593;
+		height=882.019 ft;
+		gndlvl=3437.98 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=10614.2 ft;
+		gndlvl=3444.74 ft;
+		heading=-185;
+		tilt=0;
+	}
+	View{
+		height=13183.7 ft;
+		gndlvl=875.265 ft;
+	}
+	View{
+		time=44855.2;
+	}
+	View{
+		time=46936;
+	}
+	View{
+		height=7318.15 ft;
+		gndlvl=3449.49 ft;
+	}
+	View{
+		height=16.8652 miles;
+		gndlvl=3356.8 ft;
+		time=48336;
+		tilt=-10;
+	}
+	View{
+		phi=26.8494;
+		theta=248.837;
+		height=10798.7 ft;
+		gndlvl=2715.11 ft;
+		time=47000;
+		heading=-210;
+		tilt=0;
+		angle=15;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.03397,10) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(0.5,1,1);
+					emission=Color(0,1,1);
+					name="BlueStar";
+					phase=156.226;
+					rot_phase=135.85;
+					specular=Color(0.77,1,1);
+					year=30;
+					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|S,noise(RIDGED|FS,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),1,1.09432,1.05456,1.88672,1,2,1,0);
+					}
+					Corona(12.9137) {
+						color1=Color(0.5,1,1);
+						color2=Color(0,0,1);
+						gradient=1;
+					}
+				}
+				Star(2,20) {
+					diffuse=Color(1,0.5,0.25);
+					emission=Color(1,1,0.5);
+					name="RedStar";
+					phase=169.812;
+					specular=Color(1,0.5,0.25);
+					year=75.48;
+					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|S,noise(RIDGED|FS,0.9,8.2,0.43,0.19,2.19,1,1,0,-1.3),1,0.90568,1.05456,2.03776,1,1.98112,1,0);
+					}
+					Corona(14.3606) {
+						color1=Color(1,0.67,0);
+						color2=Color(0.71,0.1,0.01);
+						gradient=0.71244;
+					}
+				}
+				Planet(0.0015,40) {
+					day=58.65;
+					name="Mercury";
+					phase=95.0976;
+					shadow=Color(0,0,0);
+					shine=14.8055;
+					specular=Color(1,1,1,0.26);
+					sunset=0.01;
+					year=87.97;
+					albedo=0.73;
+					image("ridges",INVT,256,256,noise(ERODED|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
+						Color(0.502,0.502,0.502),
+						Color(0.063,0.063,0.063),
+						Color(0.502,0.502,0.502));
+					Surface{
+						terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
+								noise(UNS|RO1,1,5,0.5,0.2))+
+								Texture("ridges",BUMP|NTEX,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
+								Texture("craters3",BUMP|NTEX|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
+								Texture("Shist1",BORDER|BUMP,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+
+								Texture("mercury",BORDER|LINEAR|S,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,82 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-30.2571;
+		theta=350.901;
+		height=121.539 ft;
+		gndlvl=2970.27 ft;
+		time=57804;
+		heading=-75;
+		tilt=-10;
+		angle=5;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					ambient=Color(1,1,1,0.25);
+					day=24;
+					diffuse=Color(1,1,1,0.47);
+					resolution=1.83718;
+					shadow=Color(0,0,0.19,0.8);
+					shine=1.36355;
+					specular=Color(1,1,1,0.45);
+					year=100;
+					haze.height=0.66;
+					haze.value=0.4;
+					image("cracks2",INVT,256,256,noise(RIDGED,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					bands("jupiter",256,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					Surface{
+						terrain=Z(noise(NABS,8,12,0.35,0.95,2.1))+
+								Texture("cracks2",BUMP|NTEX,91.36,-0.95952,1,0,10,2.91784)+
+								Texture("jupiter",BORDER|BUMP|LINEAR|S,0.2*HT+0.2*noise(SS,6,9,1,0.5,2)+2e-05*noise(FS,21,5)+0.01*BMPHT,15.538,0.49696,1.30636,-1.1,4,2);
+					}
+					Sky(0.00419081) {
+						color=Color(0,0.58,0.89,0.97);
+						density=0;
+						haze.color=Color(1,1,0.88);
+						haze.grad=0.9;
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						specular=Color(1,1,1);
+					}
+					Clouds(0.00407746) {
+						emission=Color(1,1,1,0.3);
+						specular=Color(1,1,1);
+						Surface{
+							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));
+						}
+					}
+				}
+			}
+		}
+	}
+}
