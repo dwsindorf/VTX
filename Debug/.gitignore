@@ -1,3 +1,4 @@
-/gmon.out
-/.cvsignore
-/vtx.exe
+*.d
+*.exe
+*.o
+

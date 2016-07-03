@@ -293,7 +293,8 @@ int read_JPEG_file (char * filename, GLubyte **image, int &width, int &height, i
 GLubyte *readJpegFile(char *path,int &width, int &height, int &comps){
 	GLubyte *pxls=0;
 	
-	return read_JPEG_file (path, pxls, width, height, comps);
+	read_JPEG_file (path, &pxls, width, height, comps);
+	return pxls;
 }
 
 #endif

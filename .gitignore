@@ -8,5 +8,9 @@ jpeglib
 jni
 Archive
 *.debug
-*.o
+*.*.debug
+*.o!fi
+*.d
+*.exe
+
 

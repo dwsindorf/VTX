@@ -76,6 +76,7 @@ protected:
 public:
     int nodeflags;
     NodeIF() { nodeflags=0;}
+    virtual ~NodeIF() {}
 	void clrNodeFlags()	 		{ BIT_OFF(nodeflags,NODE_FLAGS); }
 	void clrAllFlags()	 		{ nodeflags=0; }
 	int  valid()				{ return (nodeflags & NODE_INVAL)?0:1;}

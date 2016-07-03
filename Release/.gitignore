@@ -1,3 +1,5 @@
-/vtx.exe.bak
-/.cvsignore
-/vtx.exe
+*.cvsignore
+/*.d
+*.exe
+*.o
+
