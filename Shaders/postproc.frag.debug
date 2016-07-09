@@ -1,5 +1,4 @@
 #define HDR
-#define TWOPASS
 #define EDGES
 #define FILTER2
 #ifndef _UTILS_H

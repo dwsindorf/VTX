@@ -49,7 +49,6 @@
 varying vec4 attributes[2];
 
 // ########## end attributes.def #########################
-
 #define CS0 gl_TexCoord[0].xy
 #define CS1 gl_TexCoord[0].zw
 #define CS2 gl_TexCoord[1].xy
@@ -66,7 +65,6 @@ varying vec4 attributes[2];
 #define CS13 gl_TexCoord[6].zw
 #define CS14 gl_TexCoord[7].xy
 #define CS15 gl_TexCoord[7].zw
-
 // ########## begin attributes.vert #########################
 attribute vec4 CommonAttributes;
 attribute vec4 TextureAttributes;  // TextureAttributes.xy contains 2d components of vertex tangent
@@ -79,7 +77,6 @@ attribute vec4 Attributes3;
 attribute vec4 Attributes4;
 
 // ########## end attributes.vert #########################
-
 #ifndef _COMMON_H
 #define _COMMON_H
 // ########## begin common.h #########################
@@ -143,7 +140,6 @@ float ALPHA=1.0;
 #endif
 
 
-
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
@@ -169,7 +165,6 @@ void main(void) {
 #endif
 	Constants=CommonAttributes;
 // ########## end set_common.vert #########################
-
 
 #ifdef TX0
     CS0=gl_MultiTexCoord0.xy;
@@ -219,7 +214,6 @@ void main(void) {
 #ifdef TX15
     CS15=gl_MultiTexCoord15.xy;
 #endif
-
 #ifdef A0
     AT0 = Attributes3.x;
 #endif
@@ -244,7 +238,6 @@ void main(void) {
 #ifdef A7
     AT7 = Attributes4.w;
 #endif
-
 
 }
 

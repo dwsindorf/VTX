@@ -32,6 +32,7 @@ class VtxScene: public wxGLCanvas
     void update_status();
     void dragAction();
     void showFPS();
+    wxGLContext* m_glRC;
 public:
     VtxScene(wxWindow *parent, wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
@@ -39,6 +40,8 @@ public:
         const wxString& name = wxT("VtxScene"));
 
     ~VtxScene();
+
+    void SetCurrent();
 
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);

@@ -213,7 +213,9 @@ void VtxColorTabs::restoreLastExpr(){
 
 void VtxColorTabs::setColorFromExpr(){
 	wxString expr=getExpr();
-	TNcolor *tnode=(TNcolor*)TheScene->parse_node(expr.ToAscii());
+	//TNcolor *tnode=(TNcolor*)TheScene->parse_node(expr.ToAscii());
+	TNcolor *tnode=(TNcolor*)TheScene->parse_node((char *)expr.ToAscii());
+
 	if(tnode){
 		TNarg &args=*((TNarg *)tnode->right);
 		args[0]->eval();

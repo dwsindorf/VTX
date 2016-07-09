@@ -1,0 +1,587 @@
+  Tools for cross-platform applications development
+
+I. Eclipse 
+
+  Eclipse is an open-source Java-based software IDE that runs on any
+  platform that supports the Java virtual machine. (e.g. Unix/Linux/Mac/Windows).
+  It can be used to develop Java applications "as is" or C/C++ 
+  applications after downloading the CDT plugin (see below)
+  
+  A. Environment variables
+  
+   1. Add environment variables in the following dialogs    
+   - Windows->Preferences.. Make->New Make Project->Environment
+     for projects that use explicit makefiles
+   - Windows->Preferences.. Make->Managed Build->Environment
+     for projects that use eclipse managed builds
+   
+   2. To map Environment variables into makefile variables
+   - In the "Environment" dialog press "New" (variable).
+   - fill in the "name" field with the makefile variable name (e.g. PATH).
+   - press the "variables" button in "New variable" dialog.
+   - choose "env_var" from drop down list.
+   - fill in "argument" field in variables dialog with the name of
+     the system environment variable (e.g. PATH).
+   - exit variables dialog. "value" field in "New variable" dialog
+     should now read (e.g.): ${env_var:PATH}.
+   - exit "New variable" dialog.
+       
+   3. To activate new variables in existing makefile projects:
+   - open Project->C++ Make project->Environment
+   - press "restore defaults" button
+   - all project environment variables will be set to those specified
+     in the Make->New Make Project->Environment dialog
+
+    --- Linux specific -----
+   1.  "Select" shows no system variables (??) so need to create a minimum
+     set using "New". Create the following:
+     
+     DISPLAY    :0.0        
+       - get "unable to connect to DISPLAY :0.0 error" if absent     
+     PATH        .:/export/home/jdk1.5.0_06/jre/bin:/usr/bin:/bin
+       - get dynamic linker errors (e.g. libjogl.so) if absent
+     
+    --- Windows specific ------
+   1. In Environment dialogs, "Select" lists Windows variables specified
+      using "My Computer"->properties->advanced->"environment variables"
+      
+      For java support, select or add as "New" the following:
+      PATH add C:\Program Files\Java\jdk1.5.0_06\bin              
+      
+  B. Running and Debugging
+  
+    --- Linux specific -----
+    1. Attaching a CDT Debugger to a library file from a JNI java gdb thread 
+       doesn't seem to work. (get unknown symbols)
+       
+    --- Windows specific ------
+
+    1. Unrecognized executable for Debug and Run from Eclipse
+   
+      When converting a "Managed" C++ into a Standard C++ project or starting
+      with a standard C++ project Eclipse selects an "Elf Parser" in the
+      project->properties->Binary parser dialog tab.
+      
+      The ".exe" file built will not be a recognized as executable for Debug and
+      Run purposes in Eclipse even though it can be run from a console window 
+      (or double clicking on the file from the Navigator view)
+      
+      To generate a "debuggable" executable select "PE Windows Parser" in
+      the Binary parser dialog tab.
+      
+    2. Basic file and Directory access problems
+     
+      Using Unix file library functions or "::System" calls (e.g ::System("pwd>tmp")
+      calls to get directory information can cause a number of problems:
+      
+       - path names returned are cygwin style (e.g. /cygdrive/c/...) and cause
+         failure for "fopen" etc. which expect windows names (e.g. "C:\..")       
+       - can get a kernel panic and crash (in ntdll.dll)
+       
+       On windows systems it's possible to use MSDN library functions
+       (in kernel32.lib) instead (e.g. use GetCurrentDirectory to get
+       a char* path to the current working directory) 
+       
+       A link to a list of useful functions:
+       http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/fs/
+             directory_management_functions.asp
+             
+       -  include <windows.h> to get prototype definitions for these functions
+
+II. CDT
+
+   CDT is a open-source "plugin" for Eclipse that can be used for C/C++ application
+   development. Start at one of the links given below and follow the download and 
+   install instructions.
+   
+   A. Resources
+     1. http://www.eclipse.org/cdt/
+     2. http://wiki.eclipse.org/index.php/CDT
+   
+   Update site (from Eclipse)  
+     http://download.eclipse.org/tools/cdt/releases/eclipse3.1
+   
+III. Cygwin 
+
+  Cygwin is an open-source project that targets only Windows platforms (NT,XP)
+  It can be used to install a variety of Unix tools on a Windows host. 
+  (gcc,make etc). It is similar to "sfu", which is supplied and supported
+  by Microsoft but contains many more features and services.
+   
+  A. Resources
+  1. cygwin home page   
+     http://www.cygwin.com
+       
+  B. Install/compile/run issues  
+     
+  1. Problem with undefined gl references for gl
+   - The default search path from cygwin starts with
+       /usr/include/GL ..
+   - But the headers in /usr/include/GL are wrong !
+   - Best idea is probably to establish a private GL directory 
+     that has the correct headers (e.g. $GLIBS: ../workspace/headers/GL)
+   - In Makefile add -I$(GLIBS) to compile flags
+    
+     --- windows ----
+   - Copy glext.h, wglext.h to $GLIBS from:
+     C:\program Files\Microsoft Visual Studio\include\GL   
+   - Copy gl.h & glu.h from C:\cygwin\usr\include\win32api\GL   
+   - For "glut" the following headers also need to be copied from
+     C:\cygwin\usr\include\GL: (glut.h, freeglut.h, freeglut_*.h)
+  
+   2. Compile and Linker flags 
+      -mno-cygwin               uses only non cygwin dlls so app will run on 
+                                systems that don't have cygwin installed
+      -W1,--add-stdcall-alias   without this, get AWT unsatisfied link errors
+                                for java code that includes native methods
+                                
+      note: need to add -mno-cygwin to BOTH compile and link steps to avoid
+            undefined run time references for "stdout" uses etc.
+        
+IV. JAVA/JNI/(JOGL)
+
+    A cross platform GUI can be generated using Java as a front end and
+    a native application built as a library and connected to Java 
+    though the Java JNI interface. (Vnmrj is an example of this)
+    
+    The native library can also include the windowing environment (e.g.
+    XWIN,glut,opengl).
+    
+    JOGL is an opensource library that can be used to connect a 
+    native opengl-based windowing environment to Java in a platform 
+    independent way. It also allows the use of opengl calls made directly 
+    from Java to draw into canvas objects.
+    
+    --- Linux specific -----
+    --- Windows specific -----
+  
+  1. JNI: javah not in the default path
+   - Need to add C:\Program Files\Java\jdk1.5.0_06\bin to PATH environment
+     variable for javah calls from a makefile
+
+  2. Problem with java linker paths
+    - The jogl files need to be placed in the "jre" directory tree that
+     the Java install.exe script originally created.
+     By default this will be:
+        C:\Program Files\Java\jre1.5.0_06
+     put jogl.jar in:
+        C:\Program Files\Java\jre1.5.0_06\lib\ext
+     put jogl.dll, jogl_awt.dll jogl_cg.dll in:
+        C:\Program Files\Java\jre1.5.0_06\bin
+   - putting these files in the jdk directory tree doesn't work
+     (get "NoClassDefFoundError" when java is started from a makefile
+     or shell). However, if running from Eclipse (as a Java project)
+     there is a way to select a different jre path (e.g. the sdk
+     install directory)
+ 
+  3. Compile problem with windows JNI system include files
+    - jdk1.5 has a new header file and directory that is used to define basic
+      types in jni such as jint, jlong etc. The file is called
+      jni_md.h and for Linux is in $JAVA_HOME/include/linux and
+      $JAVA_HOME/include/win32 for windows .
+    - jni_md.h is included indirectly from the line  include <jni.h>
+      added at the top of the jni header files built by javah.
+    - There is no problem for Linux but for windows the order in which
+      includes are accessed apparently lacks a definition for __int64
+      at the time that the symbol is used in the typedef for jlong in
+      jni_md.h. This causes a flood of undefined reference errors that
+      prevent the jni code from compiling.
+    - There are several suggestions on the Internet that address this
+      problem most involving defining __int64 in jni_md.h inside of  ifdef
+      segments. None of these worked well (symbol redefinition problems)
+    - However, adding " include <basetsd.h>" to the top of jni_md.h
+      seems to be a viable solution to the problem.
+      
+   4. Environment variables for Makefile targets
+    - "java" is a Windows application so uses Windows search paths
+      for classpath, java.library.path etc. 
+    - for other targets (e.g. those that invoke g++) cygwin environment
+      variable and search paths are used.
+
+V. QT
+
+     QT is a proprietary graphics widget library supplied by Trollteck.
+     There are both open source and a commercial versions available.
+     The open source one is free but the licensee agreement stipulates that
+     it can only be used to develop applications under the GPL agreement. 
+     This means that even if only a potion of an application's code uses QT 
+     all of the source code must be made public. The commercial version can be
+     used to generate proprietary applications but the fee is fairly steep 
+     ($2-3k per user). Also it looks like to get opengl you have to buy the 
+     more expensive "enterprise" edition (I don't know what that costs)
+     
+     I've installed the open source version of QT on Linux and built and
+     run a few of the sample applications without encountering any major 
+     problems. However, because of the licensing issues raised above I 
+     wouldn't recommend this solution.
+     
+VI.  wxWidgets
+
+     wxWidgets is a free open-source C++ toolset that can be used to generate
+     a cross-platform GUI. It also contains many other non-graphics tools 
+     that can be used for developing common code that runs on different
+     targets. There are no licence requirements to use this toolset
+     to build commercial applications.
+     
+     It can be built and run on Linux/Mac/Windows/Unix systems.
+     
+   A. Resources
+     1. wxwidgets home page (contains links to docs/downloads etc):   
+       http://www.wxwidgets.org/
+    2. links to installation notes (linux)
+       http://www.cours.polymtl.ca/roboop/docs/GLroboop/install/node3.html
+    3. links to installation notes (windows)
+       http://www.bzzt.net/~wxwidgets/icpp_wx1.html      
+
+   B. Install/build instructions
+     --- Linux specific -----
+     
+    1. get and unpack the latest wxWidgets tar file for linux from the 
+       wwWidgets home/downloads page (untarring will create a directory
+       called wxWidgets-2.6.2).
+        
+    2. Create an environment variable, "WXWIN" that points to this
+       directory 
+     - in ~/.cshrc add: setenv WXWIN /export/home/wxWidgets-2.6.2)
+     
+    3. Create the make files using "configure" and build and install the 
+       xwWidget libraries.         
+       add --disable-shared for static (.a) libraries      
+       (dynamic (.so) libraries are build by default)
+        
+     > cd $WXWIN
+     > mkdir release
+     > cd release
+     > ../configure --with-gtk --with-opengl --disable-shared 
+     > make
+     > make install (as root)
+     
+     Also needed on Linux to build graphics libs statically..
+     
+     ../configure --with-gtk  --with-opengl --disable-shared
+     --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin 
+     --with-zlib=builtin --with-expat=builtin
+     
+    --- Windows specific (using cygwin) ------
+     
+     1. get and run the latest wxWidgets ".exe" install file for windows
+      - e.g. builds C:/wxWidgets-2.6.2 directory when run (1/19/06) 
+     2. create environment variable "WXWIN" that points to this directory
+      - e.g. using "My Computer"->properties.. add new global env. variable
+        WXWIN C:/wxWidgets-2.6.2         
+
+     3. open a cygwin terminal and build/install the libraries
+
+     example build: object needs installed cygwin and wxWidget dlls: 
+     
+     > cd $WXWIN
+     > mkdir release
+     > cd release
+     > [CC=..] ../configure --with-msw --with-opengl --disable-precomp-headers 
+     > make
+     > make install
+     
+    notes: 
+     1. If "--no-precomp-headers" is not included in the ../configure
+        call, errors will abort the "make" build
+     2. add --disable-shared for static (.lib) libraries. Default is
+        for dynamic (.dll) libraries
+     3. [CC=..] 
+        include CC='gcc -mno-cygwin' CXX='g++ -mno-cygwin' before
+        ../configure to generate a binary that doesn't require the 
+        cygwin libraries in order to run.
+
+     e.g. CC='gcc -mno-cygwin' CXX='g++ -mno-cygwin' ../configure ..
+
+      note: also need to add -Wl,--add-stdcall-alias to linker flags
+     
+      4. full windows configure line .. 
+      
+     CC='gcc -mno-cygwin' CXX='g++ -mno-cygwin' ../configure --with-msw --with-opengl --disable-precomp-headers --disable-shared
+     
+   --- Windows specific (using Visual 6.0)  ------
+   
+     1. Get and run the latest wxWidgets ".exe" install file for windows
+        as described above.
+        
+     2. Use the file browser to open the "msw" directory in C:/wxWidgets-2.6.2
+        /build. double-click "ws.dsw" to open up the build project in vs6.0.
+        
+     3. Open the "Batch Build.." dialog from the "Build" menu.
+     
+     4. Uncheck all entries. Recheck only the build type(s) wanted for each
+        library (e.g. for static release libs check the "Win32Release" boxes).
+        
+     5. press build or build-all in the dialog.
+      
+     notes:
+      
+     1. wxWidgets libraries built using vs cannot be used in combination
+        with programs compiled using gcc. They compile okay but the linker
+        complains about missing functions. The problem is probably due to 
+        the use of precompiled headers in vc but not gcc.
+  
+    NOTES:  
+    1. To create debuggable (but slower) libraries create a "debug" 
+       subdirectory in $WXWIN, cd to it and add following to configure
+       arguments:  --enable-debug and --enable-debug_gdb
+       
+    2. On Windows, I ran into problems after I tried to build and install both
+       static and dynamic wxWidgets libraries from the same base directory.
+       When I compiled one of the samples the Makefile generated a dynamically
+       linked executable that produced unsatisfied link errors when run.
+       There probably is a way to pass flags that tell the compiler and linker 
+       which libraries to use but I decided to just get rid of the dynamics,
+       and rebuild the static libraries. (An alternative is to build the
+       dynamic libraries in a separate directory tree - e.g. release-dynamic)  
+
+   Makefile details
+   -----------------------
+   
+   1. When the wxWidgets libraries are built a script file called "wx-config" 
+      is created in each build directory.  wx-config can be used to generate 
+      appropriate compile and load flags for different targets (linux,windows) 
+      and build configurations (release,debug,static,etc.)
+      
+      The only thing that needs to be done to use these scripts is to add
+      $(WXWIN)/build_dir to the projects PATH variable.
+      
+      In the Makefile a compile target would look like:
+      $(OBJS):;  g++ -g `wx-config --cxxflags` -c -o $(@) $(@F:%.o=%.cpp)
+      
+      and a build target (with opengl):
+      program:;   $(CC) -o $(PROGRAM) $(OBJS) `wx-config --libs --gl_libs`;
+   
+  **** 4/17/07 Additional Problems on Windows
+      system configuration
+      ----------------------
+      wxWidgets 2.8.3
+      windows XP (64 bit cpu)
+      cygwin latest version (4/17/07)
+      Dell Latitude D620 (laptop)
+   
+      1. ../configure fails for nocygwin target
+     
+       o setup:
+       - Installed cygwin and wxWidgets(2.8) in C:
+       - defined $WXWIN -> C:wxWidgets-2.8.3
+       - cd $WXWIN
+       - mkdir release_nocygwin
+       - cd release_nocygwin
+       - CC='gcc -mno-cygwin' CXX='g++ -mno-cygwin' ../configure 
+         --with-msw --with-opengl --disable-precomp-headers --disable-shared
+       
+       o ../configure runs okay until it calls ../src/expat/configure which 
+          aborts because of syntax errors.
+       o problem traced to dos formatted files in ../src/expat directory
+       o solution was to run "dos2unix" on the following files in expat:
+         configure,conftools/config.sub,conftools/config.guess
+
+      2. Make failure
+     
+       o The System had both cygwin and sfu installed and sfu was included
+         earlier in the Path environment variable. This caused make to fail
+         when envoked from a cygwin command prompt.
+         
+       o solution was to place C:\cygwin\bin before C:\SFU\common in Path
+       
+      3. make build failure
+      
+       o wxWidgets-2.8 apparently needs to have the wx build directory 
+         explicitly defined in "Path" whereas in the previous version (2.6) it 
+         was okay to just include "$WXWIN"
+       o solution was to add $WXWIN/release_nocygwin to Path
+       
+        - not sure if this fix will work for multiple congurations (e.g. debug)
+
+      4. "Source not found"  when debugging from Eclipse
+
+        This problem is caused by a bug in the version of gdb installed
+        with this Cygwin release (It has something to do with a path mapping
+        problem)
+        
+        The following is a workaround found in a net search:
+
+        ...
+        In the case of Cygwin, if the "source not found" page appears, 
+        the path mapping needs to be created. This is an issue with latest cygwin gdb.
+
+         1. Click on the "Edit source lookup" button in the editor, or right click on 
+            the launch node in Debug View and select "Edit source lookup"
+         2. Click on the "Add..." button
+         3. Select "Path Mapping" and click OK.
+         4. Select the new "Path Mapping" source container and click the "Edit..." button.
+         5. Once again, click the "Add..." button to create a mapping.
+         6. Enter the path to map from. Look at the stack frame label in Debug view, 
+            if the filename is something like "/cygdrive/c/workspace/hello/hello.c", 
+            enter the path to the first real directory "/cygdrive/c/workspace".
+         7. Enter the correct path to the directory entered above, in the file system. 
+            In example above, it would be "C:\workspace".
+         8. Click OK three times and you'll be back in Kansas.... ehm Debug view that is.
+         9. If the source doesn't show up right away, try stepping once. 
+
+         Note: It is also possible to edit a preference setting which will apply this source 
+             path mapping to every new launch.  See Window->Preferences->C/C++->Debug.
+
+         Example: If workspace is in "My Documents" (user=deans)
+         
+         map from: \cygdrive\c\Documents and Settings\deans\My Documents\workspace
+         map to:   C:\Documents and Settings\deans\My Documents\workspace
+    
+    **** 8/19/09 Additional Problems on Windows XP (cygwin toolchain, wxWidgets 2.8.10)
+    
+     A. build problems
+       1. Ran configure using "full windows configure line .." shown in notes (4) above.
+          (no obvious problems)
+       2. But on "make" got errors when building jpeg library complaining about "no rule
+          for ../release/lib/include/msw-ansi-release-2.8/wx/setup.h"
+          
+          - browsing to ../release/lib/include found 1 directory called msw-ansi-release-static-2.8
+          - changed name to "msw-ansi-release-2.8", but then got errors for "msw-ansi-release-static-2.8"
+            not found.
+          - fixed by copying msw-ansi-release-2.8 to msw-ansi-release-static-2.8 (new directory).
+            
+     B. run problems
+       1. Could build and run wx-gears from Eclipse but vtx hangs on startup (needed to kill
+          with task manager)
+          
+          - fixed by removing "wxSafeYield" line from VtxMain.cpp
+
+   **** 12/5/10 Additional Problems on windows-7 64-bit (cygwin 1.7 toolchain, )
+    A. wxWidgets 2.9.1 build problems
+       1. downloaded and expanded wxWidgets files from ".exe" source
+          - configure fails for "tiff" because of missing "contrib" directory
+          - googled that problem was reported and fix moved to 2.9.2 (but not yet released)
+       2. downloaded and expanded wxWidgets files from ".tar" source
+          - contains src/tiff/contrib directory
+          - configure fails because can't find "size_t"
+       3. copied src/tiff/contrib directory from "tar" to "exe" build area
+          - configure suceeds in exe build
+          - but make fails (wxNull.. not defined ?)
+          - same problem on XP (but 2.9.1 installed ok on Linux)
+       4. downloaded tar bundle for last stable release (wxWidgets 2.8.11)
+          - configure,make and install suceeded
+    B. Eclipse configuration issues (helios 64 bit)
+       1. problem removing environment variables set in Windows->preferences->C++->build
+          - Once defined, values for variables could be changed but if deleted the
+            variables reappeared again when Eclipse is restarted.
+          - needed to open .metadata/.plugins/org.eclipse.core.runtime/.settings/org.eclipse.cdt.core
+            and remove all references to deleted variables manually.
+       2. There may be a problem for Eclipse using cygwin toolchain from cygwin 1.7 install.
+          - While tying to fix other issues which may not be related found link stating that windows CDT
+            registry files are not correctly setup for eclipse so that it doesn't recognize cygwin as
+            a toolchain.
+          - copied and ran a ".reg" file supplied in the link (named cygwin.reg) which added
+            some files to the registry but need to retest to see if that made any difference
+            since for wx-gears and vtx at least no tool chain is selected anyway.
+    C. run problems vtx on old laptop (NV110M GPU) on windows-7
+       1. excessive flicker in graphics window
+          - need to turn off buffer flipping to fix but no option available in Nvidia control panel
+          - moving "SwapBuffers" into need_update case in SceneClass::render fixes problem here but
+            for newer laptop (and Linux) results in dirty areas not getting redrawn correctly
+            even when "flipping" is enabled.
+       2. Using GL_RGBA32F_ARB in GLSLMgr::initFrameBuffer() results in very slow render speeds
+         - looks like this causes shader to run in emulation mode
+         - using GL_RGBA16F_ARB restores hardware acceleration
+         - any way to figure out if a particular texture mode is supported on graphics card ?
+       3. needed to disable "SPRITES" define in galaxy fragment shader in order to prevent link(3) error
+
+   **** 7/5/16 Additional Problems on windows 10 (CYGWIN_NT-10.0 dean-PC 2.5.2(0.297/5/3) 2016-06-23 14:29 x86_64 Cygwin)
+     A. Building latest wxWidgets (3.1.1) fails
+       1. Build errors
+          - Incompatable argument types in "volume.cpp"
+          - configure output says :  "OpenGL support: no" which could be a problem later
+       2. Add support for minGW cross compiler in cygwin64
+          - In cygwin-downloads-64 exec setup-x86_64.exe (double-click from file browser)
+          - Select "Install from Internet"
+          - search for "mingw64-i686-gcc-g++"
+          - select "mingw64-i686-gcc-core" and "mingw64-i686-gcc-g++" and continue with cygwin install
+       3. Checkout latest wxWidgets from github
+          - Open gitbash shell
+          - > git clone https://github.com/wxWidgets/wxWidgets
+          - cd wxWidgets
+            o on 7/5/16 master is the same as v3.1.1
+            o to checkout this branch in the future:
+              > git checkout tags/v3.1.1 -b v3.1.1
+       4. Use cross-compiler to build wxWidgets
+          - > mkdir release && cd release
+          - > ../configure --with-msw --with-opengl --disable-precomp-headers --disable-shared  --host=i686-w64-mingw32 --build=i686-pc-cygwin
+            o configure output still says :  "OpenGL support: no"
+          - > make -j6
+     B. Missing dynamic libraries when running samples
+       1.  Build sample
+         - > cd samples/minimal
+         - > make
+       2. run it
+         -> ./minimal.exe
+         error while loading shared libraries: ?: cannot open shared object file: No such file or directory
+       3. missing dlls in ldd
+         - > ldd minimal.exe
+	        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
+	        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x771c0000)
+	        wow64.dll => /cygdrive/c/WINDOWS/system32/wow64.dll (0x76be0000)
+	        wow64win.dll => /cygdrive/c/WINDOWS/system32/wow64win.dll (0x76c40000)
+	        ??? => ??? (0x120000)
+	        KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
+	        ??? => ??? (0x120000)
+	        ??? => ??? (0xd30000)
+	        wow64cpu.dll => /cygdrive/c/WINDOWS/system32/wow64cpu.dll (0x76c30000)
+	        KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
+	        KERNELBASE.dll => /cygdrive/c/WINDOWS/SYSTEM32/KERNELBASE.dll (0x74870000)
+	        ADVAPI32.dll => /cygdrive/c/WINDOWS/SYSTEM32/ADVAPI32.dll (0x76f60000)
+	        msvcrt.dll => /cygdrive/c/WINDOWS/SYSTEM32/msvcrt.dll (0x747b0000)
+       4. When trying to run minimal.exe from windows file browser get popup error
+         - The program can't start because libstdc++-6.dll is missing ...
+       5. Recombiled for 64 bit target (--host=x86_64-w64-mingw32)
+         - ../configure --with-msw --disable-shared  --host=x86_64-w64-mingw32 --build=i686-pc-cygwin --enable-monolithic --with-opengl --disable-precomp-headers
+       6. rebuilt "minimal" and now get track_down errors from cygcheck
+	       $ cygcheck ./minimal.exe
+			C:\Users\dean\wxWidgets\release\samples\minimal\minimal.exe
+			  C:\WINDOWS\system32\ADVAPI32.dll
+				...
+			  C:\WINDOWS\system32\VERSION.dll
+			  C:\WINDOWS\system32\WINSPOOL.DRV
+			    C:\WINDOWS\system32\bcrypt.dll
+			cygcheck: track_down: could not find libgcc_s_seh-1.dll		
+			cygcheck: track_down: could not find libstdc++-6.dll
+		7. Added the following to LDFLAGES in Makefileand rebuilt: -static-libstdc++ -static-libgcc
+		   - cygcheck no longer has track_down errors
+		   - ldd ./minimal.exe
+		        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
+		        KERNEL32.DLL => /cygdrive/c/WINDOWS/system32/KERNEL32.DLL (0x7ffcc50f0000)
+		        KERNELBASE.dll => /cygdrive/c/WINDOWS/system32/KERNELBASE.dll (0x7ffcc2590000)
+		        ADVAPI32.dll => /cygdrive/c/WINDOWS/system32/ADVAPI32.dll (0x7ffcc3700000)
+		        msvcrt.dll => /cygdrive/c/WINDOWS/system32/msvcrt.dll (0x7ffcc2be0000)
+	    8. ./minimal.exe now runs and shows GUI
+	      - About popup says:
+	        "Welcome to wxWidgits 3.1.1"
+	        "Running under Windows 10 (build 10586), 64-bit edition
+	    9. Fixed all configure generated Makefiles to insert -static-libstdc++ -static-libgcc in linker step
+	     - LDFLAGS='-static-libstdc++ -static-libgcc' ../configure ....
+	C. VTX Compile details using Eclipse (Windows 10, wxWidgets 3.1.1, cygwin64)
+	  1.Set up new build configuration in eclipse (e.g. WX3.1) 
+	    - Select project in tree
+	    - <menu>project->build configurations ..->Manage --> New Configuration (clone from Release)
+	  2. Set environment variables for C/C++ Build -> Environment
+	   Windows:
+	     CYGWIN_HOME   C:\cygwin64
+	     PATH          ${CYGWIN_HOME}/bin; ...
+	     PLATWORM      WIN7
+	     WXWIN         C:\Users\dean\wxWidgets\release	     
+	     _WIN32
+	     UNICODE
+	  3.settings Cygwin C++ Compiler command line pattern
+	     ${COMMAND}  `wx-config --cxxflags`  ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}
+	      - can add this only to wx directory if desired
+	  4. settings Cygwin C++ Linker command line pattern
+	   	 ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `wx-config --libs  --gl_libs` 
+	   
+	     
+	     
+	     
+	      
+	        
+		   
+       
+           
+

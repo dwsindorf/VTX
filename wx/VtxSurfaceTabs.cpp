@@ -181,7 +181,13 @@ void VtxSurfaceTabs::setVarExpr()
 {
 	TerrainMgr *mgr=getMgr();
 
-    if(!mgr|| m_list->IsEmpty())
+    if(!mgr)
+    	return;
+#if wxCHECK_VERSION(3, 0, 0)
+    if(m_list->IsListEmpty())
+#else
+    if(m_list->IsEmpty())
+#endif
     	return;
     wxString name = m_list->GetStringSelection();
 	wxString expr = m_expr->GetValue();
@@ -225,7 +231,11 @@ void VtxSurfaceTabs::deleteVar()
 	int i = m_list->GetSelection();
 	if(i != wxNOT_FOUND){
 		m_list->Delete(i);
+#if wxCHECK_VERSION(3, 0, 0)
+		if(!m_list->IsListEmpty())
+#else
 		if(!m_list->IsEmpty())
+#endif
 			m_list->SetSelection(0);
 	}
 	invalidateObject();

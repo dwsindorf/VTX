@@ -1,7 +1,7 @@
 
 #################
 #################
-MAKEFILE       = Makefile
+MAKEFILE       = Makefile.org
 THIS	       = Release
 #SHELL         = /bin/tcsh
 INCLUDES      = ../includes 

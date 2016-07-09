@@ -1,5 +1,5 @@
 #define LMODE 0
-#define NLIGHTS 1
+#define NLIGHTS 0
 #ifndef _UTILS_H
 #define _UTILS_H
 // ########## begin utils.h #########################

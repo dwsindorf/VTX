@@ -24,8 +24,11 @@
 #include "VtxFrame.h"
 #include "FileUtil.h"
 
-
+#if wxCHECK_VERSION(3, 0, 0)
+static char *sargs[256];
+#else
 static wxChar *sargs[256];
+#endif
 static int  nargs=0; 
 static int repeat_rate=10;
 

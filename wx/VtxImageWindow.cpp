@@ -40,7 +40,6 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 		int w=img->width;
 		unsigned char*pixels = (unsigned char*)img->data;
 
-		wxEffects effects;
 		if(img->gltype()==GL_RGBA){
 		    //unsigned char*alpha = (unsigned char*)malloc( h*w*1 );
 		    unsigned char*rgb=(unsigned char*)malloc( h*w*3 );
@@ -55,12 +54,22 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 		    wxImage wim(w,h,rgb,false);
 		    //wim.SetAlpha(alpha,false);
 			wxBitmap bmp(wim,-1);
+#if wxCHECK_VERSION(3, 0, 0)
+			dc.DrawBitmap(bmp, 0, 0, false);
+#else
+			wxEffects effects;
 			effects.TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+#endif
 		}
 		else{
 			wxImage wim(w,h,pixels,true);
 			wxBitmap bmp(wim,-1);
+#if wxCHECK_VERSION(3, 0, 0)
+			dc.DrawBitmap(bmp, 0, 0, false);
+#else
+			wxEffects effects;
 			effects.TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+#endif
 		}
 	}
  }

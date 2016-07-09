@@ -99,8 +99,13 @@ static int last_cnt=0;
 //-------------------------------------------------------------
 VtxScene::VtxScene(wxWindow *parent, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name)
-    : wxGLCanvas(parent, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE,
-    name,attributeList)
+#if wxCHECK_VERSION(3, 0, 0)
+: wxGLCanvas(parent, id, attributeList, pos, size, style|wxFULL_REPAINT_ON_RESIZE,
+    name)
+#else
+: wxGLCanvas(parent, id, pos, size, style|wxFULL_REPAINT_ON_RESIZE,
+name,attributeList)
+#endif
 {
     TheScene=0;
     draw_cnt=0;
@@ -111,6 +116,7 @@ VtxScene::VtxScene(wxWindow *parent, wxWindowID id,
     frames=0;
     t0=0;
     vtxScene=this;
+    m_glRC = new wxGLContext(this);
 }
 
 //-------------------------------------------------------------
@@ -132,6 +138,7 @@ VtxScene::~VtxScene()
         delete TheScene;
         TheScene=0;
     }
+    delete m_glRC;
 }
 
 //-------------------------------------------------------------
@@ -275,6 +282,7 @@ void VtxScene::setMoveType(int move_type){
 		TheView->set_mode(MOVE);
 
 }
+
 //-------------------------------------------------------------
 // VtxScene::getMoveType() set move type
 //-------------------------------------------------------------
@@ -695,14 +703,14 @@ void VtxScene::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 void VtxScene::OnSize(wxSizeEvent& event)
 {
     // this is also necessary to update the context on some platforms
-    wxGLCanvas::OnSize(event);
+ //   wxGLCanvas::OnSize(event);
 
     // set GL viewport (not called by wxGLCanvas::OnSize on all platforms...)
     int w, h;
     GetClientSize(&w, &h);
 
 #ifndef __WXMOTIF__
-    if ( GetContext() )
+//    if ( GetContext() )
 #endif
     {
         SetCurrent();
@@ -964,4 +972,12 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     if(scene_rendered)
          update_status();
     ::wxSetWorkingDirectory(cwd);
+}
+
+void VtxScene::SetCurrent() {
+#if wxCHECK_VERSION(3, 0, 0)
+	wxGLCanvas::SetCurrent(*m_glRC);
+#else
+	wxGLCanvas::SetCurrent();
+#endif
 }
