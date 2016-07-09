@@ -21,6 +21,7 @@ public:
 
 	void setImage(wxString );
 	void OnPaint(wxPaintEvent& event);
+	bool TileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);
 	DECLARE_EVENT_TABLE()
 };
 #endif /*IMAGEWINDOW_H_*/

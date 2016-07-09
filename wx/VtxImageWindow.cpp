@@ -54,22 +54,31 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 		    wxImage wim(w,h,rgb,false);
 		    //wim.SetAlpha(alpha,false);
 			wxBitmap bmp(wim,-1);
-#if wxCHECK_VERSION(3, 0, 0)
-			dc.DrawBitmap(bmp, 0, 0, false);
-#else
-			wxEffects effects;
-			effects.TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
-#endif
+			TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
 		}
 		else{
 			wxImage wim(w,h,pixels,true);
 			wxBitmap bmp(wim,-1);
-#if wxCHECK_VERSION(3, 0, 0)
-			dc.DrawBitmap(bmp, 0, 0, false);
-#else
-			wxEffects effects;
-			effects.TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
-#endif
+			TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
 		}
 	}
  }
+
+bool VtxImageWindow::TileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap)
+{
+    int w = bitmap.GetWidth();
+    int h = bitmap.GetHeight();
+
+    wxMemoryDC dcMem;
+
+    dcMem.SelectObjectAsSource(bitmap);
+
+    int i, j;
+    for (i = rect.x; i < rect.x + rect.width; i += w)
+    {
+        for (j = rect.y; j < rect.y + rect.height; j+= h)
+            dc.Blit(i, j, bitmap.GetWidth(), bitmap.GetHeight(), & dcMem, 0, 0);
+    }
+    dcMem.SelectObject(wxNullBitmap);
+    return true;
+}

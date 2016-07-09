@@ -3,7 +3,3 @@
 *.exe
 *.o
 
-/includes/
-/wx/
-/parsers/
-/sources.mk

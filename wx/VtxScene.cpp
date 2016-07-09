@@ -116,7 +116,7 @@ name,attributeList)
     frames=0;
     t0=0;
     vtxScene=this;
-    m_glRC = new wxGLContext(this);
+    m_glRC = NULL;//new wxGLContext(this);
 }
 
 //-------------------------------------------------------------
@@ -138,6 +138,7 @@ VtxScene::~VtxScene()
         delete TheScene;
         TheScene=0;
     }
+    if(m_glRC)
     delete m_glRC;
 }
 
@@ -590,7 +591,6 @@ void VtxScene::make_scene()
 	//glewExperimental = GL_TRUE;
 	glewInit();
 #endif
-
     SetCurrent();
 
     GetClientSize(&width, &height);
@@ -703,22 +703,23 @@ void VtxScene::OnEraseBackground(wxEraseEvent& WXUNUSED(event))
 void VtxScene::OnSize(wxSizeEvent& event)
 {
     // this is also necessary to update the context on some platforms
- //   wxGLCanvas::OnSize(event);
+   // wxGLCanvas::OnSize(event);
+    if(!IsShown())  return;
 
     // set GL viewport (not called by wxGLCanvas::OnSize on all platforms...)
-    int w, h;
-    GetClientSize(&w, &h);
 
 #ifndef __WXMOTIF__
-//    if ( GetContext() )
+    if ( GetContext() )
 #endif
     {
-        SetCurrent();
+    	int w, h;
+    	GetClientSize(&w, &h);
+        width=w;
+        height=h;
 #ifdef DEBUG_SCENE
     cout << "VtxScene::resizeGL("<<w<<","<<h<<")" <<endl;
 #endif
-        width=w;
-        height=h;
+        SetCurrent();
         aspect=(double)w/(double)h;
         glViewport(0, 0, (GLint) w, (GLint) h);
         if(TheScene){
@@ -931,16 +932,26 @@ void VtxScene::dragAction(){
     dragging=false;
 
 }
+
 //-------------------------------------------------------------
 // VtxScene::OnPaint() repaint needed event handler
 //-------------------------------------------------------------
 void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 {
-    if(!TheScene) return;
+    if(!IsShown())
+    	return;
+    if(!GetContext())
+		m_glRC=new wxGLContext(this);
+
+	//if(!m_glRC)
+	//	m_glRC=new wxGLContext(this);
+    if(!TheScene)
+    	return;
+
     wxPaintDC dc(this);
-//#ifndef __WXMOTIF__
-//    if (!GetContext()) return;
-//#endif
+#ifndef __WXMOTIF__
+   // if (!GetContext()) return;
+#endif
 #ifdef DEBUG_SCENE
     cout << "VtxScene::OnPaint()" <<endl;
 #endif
@@ -975,9 +986,16 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 }
 
 void VtxScene::SetCurrent() {
+    if(!IsShown())
+    	return;
+    if(!GetContext())
+    	 cout << "VtxScene::Error SetCurrent called before context initialized"<< endl;
 #if wxCHECK_VERSION(3, 0, 0)
 	wxGLCanvas::SetCurrent(*m_glRC);
 #else
 	wxGLCanvas::SetCurrent();
 #endif
+}
+wxGLContext *VtxScene::GetContext(){
+	return m_glRC;
 }

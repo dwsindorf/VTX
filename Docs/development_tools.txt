@@ -486,11 +486,10 @@ VI.  wxWidgets
          - any way to figure out if a particular texture mode is supported on graphics card ?
        3. needed to disable "SPRITES" define in galaxy fragment shader in order to prevent link(3) error
 
-   **** 7/5/16 Additional Problems on windows 10 (CYGWIN_NT-10.0 dean-PC 2.5.2(0.297/5/3) 2016-06-23 14:29 x86_64 Cygwin)
-     A. Building latest wxWidgets (3.1.1) fails
+   **** 7/5/16 wxWidgets 3.1 on windows 10 (Cygwin64)
+     A. Building latest wxWidgets (3.1.1) fails with cygwin64 g++
        1. Build errors
           - Incompatable argument types in "volume.cpp"
-          - configure output says :  "OpenGL support: no" which could be a problem later
        2. Add support for minGW cross compiler in cygwin64
           - In cygwin-downloads-64 exec setup-x86_64.exe (double-click from file browser)
           - Select "Install from Internet"
@@ -506,7 +505,6 @@ VI.  wxWidgets
        4. Use cross-compiler to build wxWidgets
           - > mkdir release && cd release
           - > ../configure --with-msw --with-opengl --disable-precomp-headers --disable-shared  --host=i686-w64-mingw32 --build=i686-pc-cygwin
-            o configure output still says :  "OpenGL support: no"
           - > make -j6
      B. Missing dynamic libraries when running samples
        1.  Build sample
@@ -517,71 +515,166 @@ VI.  wxWidgets
          error while loading shared libraries: ?: cannot open shared object file: No such file or directory
        3. missing dlls in ldd
          - > ldd minimal.exe
-	        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
-	        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x771c0000)
-	        wow64.dll => /cygdrive/c/WINDOWS/system32/wow64.dll (0x76be0000)
-	        wow64win.dll => /cygdrive/c/WINDOWS/system32/wow64win.dll (0x76c40000)
-	        ??? => ??? (0x120000)
-	        KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
-	        ??? => ??? (0x120000)
-	        ??? => ??? (0xd30000)
-	        wow64cpu.dll => /cygdrive/c/WINDOWS/system32/wow64cpu.dll (0x76c30000)
-	        KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
-	        KERNELBASE.dll => /cygdrive/c/WINDOWS/SYSTEM32/KERNELBASE.dll (0x74870000)
-	        ADVAPI32.dll => /cygdrive/c/WINDOWS/SYSTEM32/ADVAPI32.dll (0x76f60000)
-	        msvcrt.dll => /cygdrive/c/WINDOWS/SYSTEM32/msvcrt.dll (0x747b0000)
+            ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
+            ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x771c0000)
+            wow64.dll => /cygdrive/c/WINDOWS/system32/wow64.dll (0x76be0000)
+            wow64win.dll => /cygdrive/c/WINDOWS/system32/wow64win.dll (0x76c40000)
+            ??? => ??? (0x120000)
+            KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
+            ??? => ??? (0x120000)
+            ??? => ??? (0xd30000)
+            wow64cpu.dll => /cygdrive/c/WINDOWS/system32/wow64cpu.dll (0x76c30000)
+            KERNEL32.DLL => /cygdrive/c/WINDOWS/SYSTEM32/KERNEL32.DLL (0x74b20000)
+            KERNELBASE.dll => /cygdrive/c/WINDOWS/SYSTEM32/KERNELBASE.dll (0x74870000)
+            ADVAPI32.dll => /cygdrive/c/WINDOWS/SYSTEM32/ADVAPI32.dll (0x76f60000)
+            msvcrt.dll => /cygdrive/c/WINDOWS/SYSTEM32/msvcrt.dll (0x747b0000)
        4. When trying to run minimal.exe from windows file browser get popup error
          - The program can't start because libstdc++-6.dll is missing ...
        5. Recombiled for 64 bit target (--host=x86_64-w64-mingw32)
          - ../configure --with-msw --disable-shared  --host=x86_64-w64-mingw32 --build=i686-pc-cygwin --enable-monolithic --with-opengl --disable-precomp-headers
        6. rebuilt "minimal" and now get track_down errors from cygcheck
-	       $ cygcheck ./minimal.exe
-			C:\Users\dean\wxWidgets\release\samples\minimal\minimal.exe
-			  C:\WINDOWS\system32\ADVAPI32.dll
-				...
-			  C:\WINDOWS\system32\VERSION.dll
-			  C:\WINDOWS\system32\WINSPOOL.DRV
-			    C:\WINDOWS\system32\bcrypt.dll
-			cygcheck: track_down: could not find libgcc_s_seh-1.dll		
-			cygcheck: track_down: could not find libstdc++-6.dll
-		7. Added the following to LDFLAGES in Makefileand rebuilt: -static-libstdc++ -static-libgcc
-		   - cygcheck no longer has track_down errors
-		   - ldd ./minimal.exe
-		        ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
-		        KERNEL32.DLL => /cygdrive/c/WINDOWS/system32/KERNEL32.DLL (0x7ffcc50f0000)
-		        KERNELBASE.dll => /cygdrive/c/WINDOWS/system32/KERNELBASE.dll (0x7ffcc2590000)
-		        ADVAPI32.dll => /cygdrive/c/WINDOWS/system32/ADVAPI32.dll (0x7ffcc3700000)
-		        msvcrt.dll => /cygdrive/c/WINDOWS/system32/msvcrt.dll (0x7ffcc2be0000)
-	    8. ./minimal.exe now runs and shows GUI
-	      - About popup says:
-	        "Welcome to wxWidgits 3.1.1"
-	        "Running under Windows 10 (build 10586), 64-bit edition
-	    9. Fixed all configure generated Makefiles to insert -static-libstdc++ -static-libgcc in linker step
-	     - LDFLAGS='-static-libstdc++ -static-libgcc' ../configure ....
-	C. VTX Compile details using Eclipse (Windows 10, wxWidgets 3.1.1, cygwin64)
-	  1.Set up new build configuration in eclipse (e.g. WX3.1) 
-	    - Select project in tree
-	    - <menu>project->build configurations ..->Manage --> New Configuration (clone from Release)
-	  2. Set environment variables for C/C++ Build -> Environment
-	   Windows:
-	     CYGWIN_HOME   C:\cygwin64
-	     PATH          ${CYGWIN_HOME}/bin; ...
-	     PLATWORM      WIN7
-	     WXWIN         C:\Users\dean\wxWidgets\release	     
-	     _WIN32
-	     UNICODE
-	  3.settings Cygwin C++ Compiler command line pattern
-	     ${COMMAND}  `wx-config --cxxflags`  ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}
-	      - can add this only to wx directory if desired
-	  4. settings Cygwin C++ Linker command line pattern
-	   	 ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `wx-config --libs  --gl_libs` 
-	   
-	     
-	     
-	     
-	      
-	        
-		   
+           $ cygcheck ./minimal.exe
+            C:\Users\dean\wxWidgets\release\samples\minimal\minimal.exe
+              C:\WINDOWS\system32\ADVAPI32.dll
+                ...
+              C:\WINDOWS\system32\VERSION.dll
+              C:\WINDOWS\system32\WINSPOOL.DRV
+                C:\WINDOWS\system32\bcrypt.dll
+            cygcheck: track_down: could not find libgcc_s_seh-1.dll        
+            cygcheck: track_down: could not find libstdc++-6.dll
+        7. Added the following to LDFLAGES in Makefileand rebuilt: -static-libstdc++ -static-libgcc
+           - cygcheck no longer has track_down errors
+           - ldd ./minimal.exe
+                ntdll.dll => /cygdrive/c/WINDOWS/SYSTEM32/ntdll.dll (0x7ffcc56f0000)
+                KERNEL32.DLL => /cygdrive/c/WINDOWS/system32/KERNEL32.DLL (0x7ffcc50f0000)
+                KERNELBASE.dll => /cygdrive/c/WINDOWS/system32/KERNELBASE.dll (0x7ffcc2590000)
+                ADVAPI32.dll => /cygdrive/c/WINDOWS/system32/ADVAPI32.dll (0x7ffcc3700000)
+                msvcrt.dll => /cygdrive/c/WINDOWS/system32/msvcrt.dll (0x7ffcc2be0000)
+        8. ./minimal.exe now runs and shows GUI
+          - About popup says:
+            "Welcome to wxWidgits 3.1.1"
+            "Running under Windows 10 (build 10586), 64-bit edition
+        9. Fixed all configure generated Makefiles to insert -static-libstdc++ -static-libgcc in linker step
+         - LDFLAGS='-static-libstdc++ -static-libgcc' ../configure ....
+        10. Fixed wxString errors
+         - added configure flag: --disable-unicode
+    C. VTX Compile details using Eclipse (Windows 10, wxWidgets 3.1.1, cygwin64)
+      1.Set up new build configuration in eclipse (e.g. WX3.1) 
+        - Select project in tree
+        - <menu>project->build configurations ..->Manage --> New Configuration (clone from Release)
+      2. Set environment variables for C/C++ Build -> Environment
+         # CYGWIN_HOME   C:\cygwin64
+         PATH          C:\cygwin64/bin; ...
+         PLATWORM      WIN7
+         WXWIDGETS     C:\Users\dean\wxWidgets\release         
+         GCCFLAGS     -D_WIN32
+         WXCOMPILER    x86_64-w64-mingw32-g++
+       Linux
+         PATH          C:\cygwin64/bin; ...
+         PLATWORM      LINUX
+         WXWIDGETS     /home/dean/wxWidgets/release         
+         COMPILER      g++
+         
+   **** 7/9/16 wxWidgits 3.1 on Ubuntu
+     A. Building latest wxWidgets (3.1.1 - 6/8/16) on Ubuntu
+       1 Checkout wxWidgets from github
+         $ cd
+         $ git clone https://github.com/wxWidgets/wxWidgets
+         $ cd wxWidgets
+       2.configure
+         $ mkdir release && cd release
+         $ ../configure --with-gtk  --with-opengl --disable-shared --with-libjpeg=builtin --with-libpng=builtin --with-regex=builtin --with-libtiff=builtin --with-zlib=builtin --with-expat=builtin --disable-unicode
+       3. build (fails)
+         $make -j8
+             In file included from ../src/gtk/toolbar.cpp:18:0:
+            ../src/gtk/toolbar.cpp: In member function ‘virtual void wxToolBarTool::SetLabel(const wxString&)’:
+            ../include/wx/gtk/private.h:83:48: error: ‘m_font’ was not declared in this scope
+                 #define wxGTK_CONV(s) wxGTK_CONV_FONT((s), m_font)
+                                                            ^
+            ../include/wx/gtk/private.h:85:59: note: in definition of macro ‘wxGTK_CONV_FONT’
+                 #define wxGTK_CONV_FONT(s, font) wxConvertToGTK((s), (font))
+                                                                       ^
+            ../src/gtk/toolbar.cpp:337:39: note: in expansion of macro ‘wxGTK_CONV’
+                                           wxGTK_CONV(newLabel));
+       4. fixed bug in source
+           - Tracked down error to bug introduced on 6/17/2016 Artur Wieczorek <artwik@wp.pl>
+            +            gtk_tool_button_set_label(GTK_TOOL_BUTTON(m_item),
+            +                    wxGTK_CONV(newLabel));
+           - changed ../src/gtk/toolbar.cpp:337:39 to:
+            +                   newLabel);
+       5. build (good)
+          $ make j8
+         - build now completes after code fix
+     B VTX Eclipse setup (wxWidgets 3.1.1 Ubuntu 14.04)
+      1. in .profile set exports
+         export PLATWORM=LINUX
+         export WXWIDGETS="/home/dean/wxWidgets/release"     
+         export WXCOMPILER=g++
+         export GCCFLAGS=""
+         
+   **** 7/9/16 wxWidgits 3.1 on Ubuntu and windows (common issues)
+     A. Eclipse Set-up Release configuration (C++ Build/Environment)
+      1. import environment variables
+         GCCFLAGS 
+         WXWIDGETS
+         WXCOMPILER
+      2. set PATH
+         ${WXWIDGETS}[;:]..
+     B. Eclipse Set-up Release configuration  (C++ Build/Settings)
+      1. In Tool Settings Command field for C++ Compiler and Linker enter ${WXCOMPILER)
+      2. In settings C++ Compiler command line pattern
+         ${COMMAND}  `wx-config --cxxflags`  ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}
+          - can add this only to wx directory -> properties if desired
+      3. In settings C++ Linker command line pattern
+         ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `wx-config --libs  --gl_libs`
+      4. removed X11 from Linker libraries (not needed)
+     C. Code changes for wxWidgets 3.1
+      1. fix for SetCurrent() and GetContext() not defined in wxCanvas class (deprecated)
+        modes to wxScene
+        - Added wxGLContext* m_glRC;       
+        - Added void SetCurrent() function
+           void VtxScene::SetCurrent() {
+            if(!IsShown())
+                return;
+            if(!GetContext())
+                 cout << "VtxScene::Error SetCurrent called before context initialized"<< endl;
+            #if wxCHECK_VERSION(3, 0, 0)
+                wxGLCanvas::SetCurrent(*m_glRC);
+            #else
+                wxGLCanvas::SetCurrent();
+            #endif
+          }         
+        - Added void GetContext() function
+          wxGLContext *VtxScene::GetContext(){
+              return m_glRC;
+          }       
+      2. Fix to remove BoxSizer alert popup 
+          In /wx/VtxSceneDialog.cpp line 110 changed:
+          -    topSizer->Add(rightSizer,0,wxALIGN_RIGHT|wxALL,0);
+          +    topSizer->Add(rightSizer,0,wxALL,0);
+      3. fix for startup error: wxWidgets assert ""xid"" failed in SetCurrent(): window must be shown 
+        - problem related to SetCurrent being used before gl environment is ready
+        - changed where m_glRC if initialized from wxScene contructor to OnPaint function
+          at top of call added:
+            if(!GetContext())
+               m_glRC=new wxGLContext(this);
+      4. fix for wxEffects being eliminated from wxWidgets code source
+       - Used in wx/VtxImageWindow.cpp effects.TileBitmap)
+       - found original wxEffects TileBitmap  function source code usinf web search
+       - copied code into VtxImageWindow.cpp as a public function
+        
+      
+      
+        
+         
+    
+       
+         
+         
+         
+          
+            
+           
        
            
 

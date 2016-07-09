@@ -42,6 +42,7 @@ public:
     ~VtxScene();
 
     void SetCurrent();
+    wxGLContext *GetContext();
 
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);
