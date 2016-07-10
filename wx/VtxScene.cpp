@@ -116,7 +116,8 @@ name,attributeList)
     frames=0;
     t0=0;
     vtxScene=this;
-    SetContext();
+    m_glRC=NULL;
+    //SetContext();
 }
 
 //-------------------------------------------------------------
@@ -939,7 +940,9 @@ void VtxScene::dragAction(){
 //-------------------------------------------------------------
 void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 {
-    if(!IsShown())
+    if(!GetContext())
+    	SetContext();
+     if(!IsShown())
     	return;
      if(!TheScene)
     	return;
@@ -947,8 +950,9 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     cout << "VtxScene::OnPaint()" <<endl;
 #endif
     kif.get_state(state);
-     if(state & CMD_QUIT)
+    if(state & CMD_QUIT)
          return;
+
     SetCurrent();
   	if(dragging)
   		dragAction();
