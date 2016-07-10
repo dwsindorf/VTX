@@ -153,7 +153,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 
     topSizer->SetSizeHints(this);
 
-    Centre();
+   // Centre();
 
     position=GetScreenPosition();
     //Move(position.x+size.GetWidth(),position.y+100);

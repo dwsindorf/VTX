@@ -972,6 +972,7 @@
 			<resource resourceType="PROJECT" workspacePath="/VTX"/>
 		</configuration>
 		<configuration configurationName="WX3Ubuntu"/>
+		<configuration configurationName="WINDOWS"/>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/VTX"/>
 		</configuration>
