@@ -567,13 +567,9 @@ VI.  wxWidgets
          PATH          C:\cygwin64/bin; ...
          PLATWORM      WIN7
          WXWIDGETS     C:\Users\dean\wxWidgets\release         
-         GCCFLAGS     -D_WIN32
+         GCCBUILD     -D_WIN32
          WXCOMPILER    x86_64-w64-mingw32-g++
-       Linux
-         PATH          C:\cygwin64/bin; ...
-         PLATWORM      LINUX
-         WXWIDGETS     /home/dean/wxWidgets/release         
-         COMPILER      g++
+         WXPATH        C:\cygwin64\bin;%WXWIDGETS%
          
    **** 7/9/16 wxWidgits 3.1 on Ubuntu
      A. Building latest wxWidgets (3.1.1 - 6/8/16) on Ubuntu
@@ -610,7 +606,8 @@ VI.  wxWidgets
          export PLATWORM=LINUX
          export WXWIDGETS="/home/dean/wxWidgets/release"     
          export WXCOMPILER=g++
-         export GCCFLAGS=""
+         export WXPATH=$WXWIDGETS:/bin:/usr/bin:/usr/local/bin
+         export GCCBUILD=""
          
    **** 7/9/16 wxWidgits 3.1 on Ubuntu and windows (common issues)
      A. Eclipse Set-up Release configuration (C++ Build/Environment)
@@ -628,6 +625,7 @@ VI.  wxWidgets
       3. In settings C++ Linker command line pattern
          ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `wx-config --libs  --gl_libs`
       4. removed X11 from Linker libraries (not needed)
+      
      C. Code changes for wxWidgets 3.1
       1. fix for SetCurrent() and GetContext() not defined in wxCanvas class (deprecated)
         modes to wxScene

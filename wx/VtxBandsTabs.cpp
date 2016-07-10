@@ -261,7 +261,7 @@ void VtxBandsTabs::Invalidate(){
 // - delete denied if image is being used by a Texture
 //-------------------------------------------------------------
 bool VtxBandsTabs::canDelete()  {
-	Image *img=images.find(m_name.ToAscii());
+	Image *img=images.find((char*)m_name.ToAscii());
 	if(!img || (img && !img->accessed()))
 		return true;
 	return false;
@@ -286,7 +286,7 @@ bool VtxBandsTabs::canRevert(){
 		return false;
 	if(!isModified())
 		return false;
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *is=revert_list->inlist(name);
 	if(is)
 		return true;
@@ -297,7 +297,7 @@ bool VtxBandsTabs::canRevert(){
 // VtxBandsTabs::setModified() set modified flag
 //-------------------------------------------------------------
 void VtxBandsTabs::setModified(bool b){
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *is=image_list->inlist(name);
 	if(is){
 		if(b)
@@ -316,7 +316,7 @@ void VtxBandsTabs::setModified(bool b){
 bool VtxBandsTabs::isModified()  {
 	if(!image_list)
 		return false;
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *is=image_list->inlist(name);
 	if(is && (is->info&CHANGED))
 		return true;
@@ -664,7 +664,7 @@ void VtxBandsTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	makeImageList();
-	displayImage(m_name.ToAscii());
+	displayImage((char*)m_name.ToAscii());
 }
 
 //-------------------------------------------------------------
@@ -688,7 +688,7 @@ void VtxBandsTabs::OnFileEdit(wxCommandEvent& event){
 	if(index != wxNOT_FOUND){
 		m_file_menu->SetSelection(index);
 		m_name=m_file_menu->GetStringSelection();
-		displayImage(m_name.ToAscii());
+		displayImage((char*)m_name.ToAscii());
 	}
 	else{
 		wxString istr=getImageString(name); // new name
@@ -699,7 +699,7 @@ void VtxBandsTabs::OnFileEdit(wxCommandEvent& event){
 			return;
 		n->init();
 		delete n;
-		Image *img=images.find(name.ToAscii());
+		Image *img=images.find((char*)name.ToAscii());
 		if(img){
 			img->set_newimg(1);
 			m_name=name;
@@ -722,7 +722,7 @@ void VtxBandsTabs::OnChanged(wxCommandEvent& event){
 //-------------------------------------------------------------
 void VtxBandsTabs::OnFileSelect(wxCommandEvent& event){
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
@@ -732,7 +732,7 @@ void VtxBandsTabs::OnFileSelect(wxCommandEvent& event){
 void VtxBandsTabs::setSelection(wxString name){
 	m_file_menu->SetStringSelection(name);
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
@@ -748,7 +748,7 @@ void VtxBandsTabs::OnImageSize(wxCommandEvent& event){
 // VtxBandsTabs::Save() handler for Save button press event
 //-------------------------------------------------------------
 void VtxBandsTabs::Save(){
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *isc=image_list->inlist(name);
 	if(!isc)
 		return;
@@ -770,7 +770,7 @@ void VtxBandsTabs::Save(){
 void VtxBandsTabs::Revert(){
 	if(!revert_list)
 		return;
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *is=revert_list->inlist(name);
 	if(is && is->istring){
 		makeNewImage(name, is->istring);
@@ -787,10 +787,10 @@ void VtxBandsTabs::Revert(){
 //-------------------------------------------------------------
 void VtxBandsTabs::Delete(){
 	if(canDelete()){
-		images.removeAll(m_name.ToAscii());
+		images.removeAll((char*)m_name.ToAscii());
 		m_name="";
 		makeImageList();
-		displayImage(m_name.ToAscii());
+		displayImage((char*)m_name.ToAscii());
 		imageDialog->UpdateControls();
 	}
 }

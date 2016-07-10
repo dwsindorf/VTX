@@ -113,7 +113,7 @@ bool VtxApp::OnInit()
         filename=wxString(name);
     }
     
-    vs->clear_canvas(filename);
+   // vs->clear_canvas(filename);
     vs->SetFocus();
     //printf("long=%d int=%d\n",sizeof(long),sizeof(int));
     frame->start_timer(repeat_rate); // the first tick builds the "scene" object

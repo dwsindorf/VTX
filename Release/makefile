@@ -45,14 +45,14 @@ all: vtx.exe
 # Tool invocations
 vtx.exe: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "vtx.exe" $(OBJS) $(USER_OBJS) $(LIBS)  `wx-config --libs  --gl_libs`
+	@echo 'Invoking: Cygwin C++ Linker'
+	x86_64-w64-mingw32-g++  -o "vtx.exe" $(OBJS) $(USER_OBJS) $(LIBS)  `wx-config --libs  --gl_libs`
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(C_UPPER_DEPS)$(CXX_DEPS)$(OBJS)$(CPP_DEPS)$(C_DEPS) vtx.exe
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS) vtx.exe
 	-@echo ' '
 
 .PHONY: all clean dependents

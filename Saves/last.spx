@@ -17,10 +17,6 @@ Scene() {
 		gndlvl=25304.5 ft;
 	}
 	View{
-		phi=-30.8097;
-		theta=350.966;
-		height=8179.5 ft;
-		gndlvl=22878.6 ft;
 		time=50631.8;
 	}
 	Universe {

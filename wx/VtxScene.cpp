@@ -116,7 +116,7 @@ name,attributeList)
     frames=0;
     t0=0;
     vtxScene=this;
-    m_glRC = NULL;//new wxGLContext(this);
+    SetContext();
 }
 
 //-------------------------------------------------------------
@@ -139,7 +139,7 @@ VtxScene::~VtxScene()
         TheScene=0;
     }
     if(m_glRC)
-    delete m_glRC;
+        delete m_glRC;
 }
 
 //-------------------------------------------------------------
@@ -704,7 +704,8 @@ void VtxScene::OnSize(wxSizeEvent& event)
 {
     // this is also necessary to update the context on some platforms
    // wxGLCanvas::OnSize(event);
-    if(!IsShown())  return;
+    if(!IsShown())
+    	return;
 
     // set GL viewport (not called by wxGLCanvas::OnSize on all platforms...)
 
@@ -940,22 +941,12 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 {
     if(!IsShown())
     	return;
-    if(!GetContext())
-		m_glRC=new wxGLContext(this);
-
-	//if(!m_glRC)
-	//	m_glRC=new wxGLContext(this);
-    if(!TheScene)
+     if(!TheScene)
     	return;
-
-    wxPaintDC dc(this);
-#ifndef __WXMOTIF__
-   // if (!GetContext()) return;
-#endif
 #ifdef DEBUG_SCENE
     cout << "VtxScene::OnPaint()" <<endl;
 #endif
-     kif.get_state(state);
+    kif.get_state(state);
      if(state & CMD_QUIT)
          return;
     SetCurrent();
@@ -999,3 +990,9 @@ void VtxScene::SetCurrent() {
 wxGLContext *VtxScene::GetContext(){
 	return m_glRC;
 }
+void VtxScene::SetContext(){
+	if(m_glRC)
+		delete m_glRC;
+    m_glRC = new wxGLContext(this);
+}
+
