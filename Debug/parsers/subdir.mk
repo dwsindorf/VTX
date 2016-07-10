@@ -20,7 +20,7 @@ CPP_DEPS += \
 parsers/%.o: ../parsers/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -DGLEW -DWXWIN -DGLEW_STATIC -I"C:\Users\dean\workspace\vtx\includes" -I"C:\Users\dean\workspace\vtx\Resources" -O0 -g3 -w -c -fmessage-length=0 -fpermissive -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	g++ -DGLEW -DWXWIN -DGLEW_STATIC -I"/home/dean/workspace/VTX/includes" -I"/home/dean/workspace/VTX/Resources" -I"../`wx-config --cxxflags`" -I"/home/dean/wxWidgets/release/includes" -O0 -g3 -w -c -fmessage-length=0 -fpermissive -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

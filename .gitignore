@@ -9,14 +9,10 @@ jni
 Archive
 *.debug
 *.*.debug
-*.o!fi
+*.o
 *.d
 *.exe
+Release
+Debug
+LINUX
 
-
-/Release Windows/
-/ReleaseWindows/
-/WX3.1/
-/WX3 Debug/
-/WX3Debug/
-/ReleaseWin/

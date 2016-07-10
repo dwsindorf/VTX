@@ -45,6 +45,9 @@ CPP_SRCS += \
 ../wx/VtxTexTabs.cpp \
 ../wx/VtxWaterTabs.cpp 
 
+O_SRCS += \
+../wx/VtxBandsTabs.o 
+
 OBJS += \
 ./wx/VtxBandsTabs.o \
 ./wx/VtxCloudsTabs.o \
@@ -134,7 +137,7 @@ CPP_DEPS += \
 wx/%.o: ../wx/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -DGLEW -DWXWIN -DGLEW_STATIC -I"C:\Users\dean\workspace\vtx\includes" -I"C:\Users\dean\workspace\vtx\Resources" -O0 -g3 -w -c -fmessage-length=0 `wx-config --cxxflags` -DWXWIN -fpermissive -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	g++ -DGLEW -DWXWIN -DGLEW_STATIC -I"/home/dean/workspace/VTX/includes" -I"/home/dean/workspace/VTX/Resources" -I"../`wx-config --cxxflags`" -I"/home/dean/wxWidgets/release/includes" -I"/home/dean/wxWidgets/release/include" -I"C:\Users\dean\wxWidgets\include" -O0 -g3 -w -c -fmessage-length=0 `wx-config --cxxflags` -DWXWIN -fpermissive -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
