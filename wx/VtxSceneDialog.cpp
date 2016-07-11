@@ -109,11 +109,13 @@ bool VtxSceneDialog::Create( wxWindow* parent,
     leftSizer->SetMinSize(wxSize(TREE_WIDTH,DLG_HEIGHT));
     rightSizer->SetMinSize(wxSize(PAGE_WIDTH,DLG_HEIGHT));
 
-    topSizer->Add(leftSizer,0,wxALIGN_LEFT|wxALL,0);
-    topSizer->Add(rightSizer,0,wxALL,0);
+    topSizer->Add(leftSizer,0,wxALL|wxFIXED_MINSIZE ,0);
+    topSizer->Add(rightSizer,0,wxALL|wxFIXED_MINSIZE ,0);
 
     treepanel=new wxTreeCtrl(this,ID_TREE,wxPoint(0,0),wxSize(TREE_WIDTH,TABS_HEIGHT),
 	wxTR_HAS_BUTTONS|wxTR_SINGLE);
+
+    leftSizer->Add(treepanel,0,wxALL|wxFIXED_MINSIZE);
     // note: couldn't get any VtxTabsMgr constructor except the one with the following arguments
     //       to work (get either a system crash on exit or compilation failures).
 #define SET_TABS_OBJECT(ENUM,CLASS) \
@@ -153,7 +155,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 
     topSizer->SetSizeHints(this);
 
-   // Centre();
+   Centre();
 
     position=GetScreenPosition();
     //Move(position.x+size.GetWidth(),position.y+100);
@@ -176,7 +178,7 @@ void VtxSceneDialog::addTabs(){
 	}
 	if(tabs.find(TN_SCENE) != tabs.end()){
 		tabs[TN_SCENE]->Show(true);
-		rightSizer->Add(tabs[TN_SCENE],0,wxALIGN_LEFT|wxALL);
+		rightSizer->Add(tabs[TN_SCENE],0,wxALIGN_RIGHT|wxALL|wxFIXED_MINSIZE);
 	}
 }
 void VtxSceneDialog::setTitle(){

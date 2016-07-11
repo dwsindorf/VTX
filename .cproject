@@ -30,6 +30,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;../`wx-config --cxxflags`&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1977179947" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GLEW"/>
@@ -45,6 +46,7 @@
 								<option id="gnu.c.compiler.option.include.paths.1867529024" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../`wx-config --cxxflags`&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1934777280" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -63,6 +65,7 @@
 								<option id="gnu.both.asm.option.include.paths.934655792" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../`wx-config --cxxflags`&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1620595193" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -173,6 +176,7 @@
 							<tool command="as" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.tool.gnu.assembler.cygwin.base.1359572225" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.base">
 								<option id="gnu.both.asm.option.include.paths.807854530" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1480494075" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -183,6 +187,7 @@
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS)/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1457967866" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="WXWIN"/>
@@ -198,6 +203,7 @@
 							<tool command="${WXCOMPILER}" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.108509939" name="Cygwin C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base">
 								<option id="gnu.c.compiler.option.include.paths.1235048335" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/include&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.2135722968" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.1196529399" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
@@ -298,6 +304,7 @@
 							<tool errorParsers="org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.tool.gnu.assembler.cygwin.base.1306175334" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.base">
 								<option id="gnu.both.asm.option.include.paths.15164220" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1699964608" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -323,6 +330,7 @@
 							<tool command="${WXCOMPILER}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.83398722" name="Cygwin C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base">
 								<option id="gnu.c.compiler.option.include.paths.290302906" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/include&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.801809377" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.1077447865" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
@@ -379,6 +387,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.base.558206649" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.base">
 								<option id="gnu.both.asm.option.include.paths.797020738" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.445808235" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -388,6 +397,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.521635163" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="WXWIN"/>
@@ -409,6 +419,7 @@
 								<option id="gnu.c.compiler.option.debugging.level.1458908789" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1264767995" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.c.compiler.option.misc.other.110473853" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c ${GCCBUILD}  -fmessage-length=0" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.423122462" superClass="cdt.managedbuild.tool.gnu.c.compiler.input.cygwin"/>
@@ -515,6 +526,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1700915263" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="${PLATFORM}"/>
@@ -622,9 +634,10 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1458734200" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.844761218" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1860360625" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
+									<listOptionValue builtIn="false" value="&quot;${HOME}/wxWidgets/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.782276293" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GLEW"/>
@@ -642,6 +655,7 @@
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.11526461" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1974033918" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.c.compiler.option.dialect.std.1092897107" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.479603998" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -659,8 +673,9 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.233932375" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.669817090" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;../`wx-config --cxxflags`&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../`wx-config --cxxflags`&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.2109623466" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -768,6 +783,7 @@
 							<tool command="as" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.tool.gnu.assembler.cygwin.base.866986249" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.base">
 								<option id="gnu.both.asm.option.include.paths.1550918797" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.974816617" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -778,6 +794,7 @@
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS)/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Resources}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/includes}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.51503712" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="WXWIN"/>
@@ -793,6 +810,7 @@
 							<tool command="${WXCOMPILER}" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.958338413" name="Cygwin C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base">
 								<option id="gnu.c.compiler.option.include.paths.1176008457" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/include&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.1434740341" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.116459626" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
@@ -893,6 +911,7 @@
 							<tool errorParsers="org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.tool.gnu.assembler.cygwin.base.1281860267" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.base">
 								<option id="gnu.both.asm.option.include.paths.316831568" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;../${WXWIDGETS}/includes&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1394599221" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -918,6 +937,7 @@
 							<tool command="${WXCOMPILER}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.1110427414" name="Cygwin C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.base">
 								<option id="gnu.c.compiler.option.include.paths.590701699" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${WXWIDGETS}/include&quot;"/>
+									<listOptionValue builtIn="false" value="/home/dean/wxWidgets/release/lib/wx/include/gtk2-ansi-static-3.1"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.488660550" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.535104731" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
@@ -1014,19 +1034,40 @@
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.base.1776966171;cdt.managedbuild.tool.gnu.c.compiler.input.1896553918">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911;cdt.managedbuild.config.gnu.exe.debug.155739911.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.2084543658;cdt.managedbuild.tool.gnu.c.compiler.input.1934777280">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911;cdt.managedbuild.config.gnu.exe.debug.155739911.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.2084543658;cdt.managedbuild.tool.gnu.c.compiler.input.1934777280">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237;cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.220794577;cdt.managedbuild.tool.gnu.cpp.compiler.input.116759728">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.469255913;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.432702388">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.195170946;cdt.managedbuild.tool.gnu.c.compiler.input.1005557174">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.108509939;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.738409441">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1925519647;cdt.managedbuild.config.gnu.exe.release.356777836.1925519647.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.667047281;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.680583599">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.1553742444;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.406177734">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911;cdt.managedbuild.config.gnu.exe.debug.155739911.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.251851111;cdt.managedbuild.tool.gnu.cpp.compiler.input.717461241">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1281806753;cdt.managedbuild.config.gnu.exe.release.356777836.1281806753.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.2089706954;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1615535147">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.base.1776966171;cdt.managedbuild.tool.gnu.c.compiler.input.1896553918">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237;cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.314474216;cdt.managedbuild.tool.gnu.c.compiler.input.479603998">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.195170946;cdt.managedbuild.tool.gnu.c.compiler.input.1005557174">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1925519647;cdt.managedbuild.config.gnu.exe.release.356777836.1925519647.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.958338413;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.1206583293">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1233866698;cdt.managedbuild.tool.gnu.cpp.compiler.input.1412566278">
@@ -1036,9 +1077,6 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.base.2120037469;cdt.managedbuild.tool.gnu.cpp.compiler.input.1221473999">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1281806753;cdt.managedbuild.config.gnu.exe.release.356777836.1281806753.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.2089706954;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1615535147">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1281806753;cdt.managedbuild.config.gnu.exe.release.356777836.1281806753.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.237811115;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.423122462">
