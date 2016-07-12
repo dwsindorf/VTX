@@ -13,7 +13,7 @@ THIS	    = ../parsers
 
 LEX         = flex
 YACC        = bison -y
-OBJDIR      =
+OBJDIR      = .
 INCLUDES    =  ../includes
 
 PPFLAGS     = -w -DYYDEBUG -DYY_ALWAYS_INTERACTIVE=1
