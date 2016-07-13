@@ -62,6 +62,7 @@ $(OBJDIR)/sx_l.o: $(OBJDIR)/yytopp $(PARSERS)/sx.l
 #################
 # dependencies
 #################
+$(OBJDIR)/sx_y.h: $(PARSERS)/sx.y
 $(OBJDIR)/yytopp: $(PARSERS)/yytopp.l
 $(OBJDIR)/sx_l.o: $(PARSERS)/sx.l
 $(OBJDIR)/sx_y.o: $(PARSERS)/sx.y

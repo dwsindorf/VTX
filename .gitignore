@@ -12,9 +12,14 @@ Archive
 *.o
 *.d
 *.exe
-Release
-Debug
+*.output
+Release/*.c
+Release/*.cpp
+Release/*.h
+yytopp
+Debug/*.c
+Debug/*.cpp
+Debug/*.h
 LINUX
-
 /WINDOWS/
 /WX3.1/
