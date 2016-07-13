@@ -94,6 +94,7 @@ bool VtxImageDialog::Create( wxWindow* parent,
     Centre();
 	//m_tabs->Show(true);
 
+    SetBackgroundColour(m_tabs->GetBackgroundColour());
 
     position=GetScreenPosition();
     Move(position.x+size.GetWidth()+150,position.y);

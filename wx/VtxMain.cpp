@@ -95,15 +95,7 @@ bool VtxApp::OnInit()
     frame->SetClientSize(w,h);
     
     frame->Show(true);
-     
-    // wait until gl context stabilizes.
-    // there seems to be a bug in wxWidgets where the first
-    // call to OnPaint fails to do any gl drawing
-    
-    //wxSafeYield();
-    //wxPaintDC dc(vs);
-    vs->SetCurrent();
- 
+
     set_fixed_font(); // set fixed font for opengl text
     
     wxString  filename("Startup Scene");
@@ -112,9 +104,9 @@ bool VtxApp::OnInit()
     	File.getFileName(infile,name);
         filename=wxString(name);
     }
-    
-    vs->clear_canvas(filename);
-    vs->SetFocus();
+    vs->SetSceneName(filename);
+    vs->Refresh();
+
     //printf("long=%d int=%d\n",sizeof(long),sizeof(int));
     frame->start_timer(repeat_rate); // the first tick builds the "scene" object
     return true;

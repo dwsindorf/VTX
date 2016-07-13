@@ -33,6 +33,9 @@ class VtxScene: public wxGLCanvas
     void dragAction();
     void showFPS();
     wxGLContext* m_glRC;
+    wxString  scene_name;
+    void clear_canvas();
+
 public:
     VtxScene(wxWindow *parent, wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
@@ -43,6 +46,7 @@ public:
 
     void SetCurrent();
     void SetContext();
+    void SetSceneName(wxString name) { scene_name=name;}
     wxGLContext *GetContext();
 
     void OnPaint(wxPaintEvent& event);
@@ -56,7 +60,6 @@ public:
     void OnKey(wxKeyEvent& event);
 
     void center_text(wxString& msg, const wxString &cname,int size,int style);
-    void clear_canvas(wxString& msg);
     void timer_tick();
     void open_scene(char *);
     void save_scene(char *);

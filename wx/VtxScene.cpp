@@ -397,13 +397,12 @@ int VtxScene::can_move_select()
 //-------------------------------------------------------------
 // VtxScene::clear_canvas() clear and print a message in center of canvas
 //-------------------------------------------------------------
-void VtxScene::clear_canvas(wxString& filename)
+void VtxScene::clear_canvas()
 {
     wxPaintDC dc(this);
     wxString  msg("Building ");
-    msg+=filename;
+    msg+=scene_name;
     msg+=" ...";
-
     dc.SetBackground(*wxBLACK_BRUSH);
     dc.Clear();
     center_text(msg,"YELLOW",15,wxFONTSTYLE_SLANT);
@@ -940,8 +939,11 @@ void VtxScene::dragAction(){
 //-------------------------------------------------------------
 void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 {
-    if(!GetContext())
+    if(!GetContext()){
     	SetContext();
+        SetCurrent();
+        clear_canvas();
+     }
      if(!IsShown())
     	return;
      if(!TheScene)
