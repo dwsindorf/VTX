@@ -425,6 +425,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		case FN_INFO:
  			print_strings=print_strings?0:1;
 			break;
+        case FN_NCOL:
+            Render.set_colors(SNODES);
+            TheScene->set_changed_render();
+            break;
 		case FN_VIEW:
 			TheScene->scan_right();
 			break;

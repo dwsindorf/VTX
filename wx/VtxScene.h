@@ -92,6 +92,7 @@ public:
     void setargs(int n,char **v){argc=n;argv=v;}
     void setMoveType(int move_type);
     int getMoveType();
+    bool SwapBuffers();
 private:
     DECLARE_EVENT_TABLE()
 };

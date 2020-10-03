@@ -6,3 +6,5 @@
 /wx/
 /includes/
 /parsers/
+/makefile
+/sources.mk

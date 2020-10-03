@@ -40,7 +40,7 @@ Scene() {
 		view=SURFACE;
 		phi=8.4375;
 		theta=342.422;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=4607.05 ft;
 		heading=0;
 		pitch=0;
@@ -92,10 +92,12 @@ Scene() {
 		angle=0;
 	}
 	View{
-		height=481.722 ft;
-		gndlvl=4620.48 ft;
-		tilt=-5;
-		angle=5;
+		phi=8.40248;
+		theta=343.842;
+		height=846.886 ft;
+		gndlvl=4606.16 ft;
+		heading=10;
+		tilt=0;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -170,7 +172,7 @@ Scene() {
 									Texture("saturn",S,PHI,0.9999,1.50304,1,0,1,2);
 						}
 					}
-					Moon(0.002,0.1) {
+					Moon(0.002,0.068) {
 						ambient=Color(1,1,1,0.17);
 						day=11;
 						diffuse=Color(1,1,1,0.51);

@@ -271,7 +271,7 @@ void TNfractal::valueString(char *s)
 {
     TNfunc *func=expr?expr:this;
 	setStart(s);
-    if(CurrentScope->tokens() && token)
+    if(CurrentScope->tokens() && token[0])
         strcat(s,token);
     else{
 		func->propertyString(s);

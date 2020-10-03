@@ -15,6 +15,7 @@ enum {
 	ID_ADD_NOISE,
 	ID_ADD_CRATERS,
 	ID_ADD_FRACTAL,
+    ID_ADD_ERODE,
 };
 
 //************************************************************
@@ -30,6 +31,8 @@ EVT_MENU(ID_EDIT_ITEM,VtxExprEdit::OnEditItem)
 EVT_MENU(ID_ADD_NOISE,VtxExprEdit::OnAddItem)
 EVT_MENU(ID_ADD_CRATERS,VtxExprEdit::OnAddItem)
 EVT_MENU(ID_ADD_FRACTAL,VtxExprEdit::OnAddItem)
+EVT_MENU(ID_ADD_ERODE,VtxExprEdit::OnAddItem)
+
 
 END_EVENT_TABLE()
 
@@ -149,6 +152,7 @@ void VtxExprEdit::exprToSymbols(){
 	TNode *n=(TNode*)TheScene->parse_node(buff);
 	if(!n)
 		return;
+
 	Scope *old_scope=CurrentScope;
 	Scope scope;
 	CurrentScope=&scope;
@@ -159,6 +163,8 @@ void VtxExprEdit::exprToSymbols(){
 	int noise=1;
 	int fractal=1;
 	int craters=1;
+    int erodes=1;
+
 
 	symbols.clear();
 	TNode *tn=0;
@@ -172,7 +178,7 @@ void VtxExprEdit::exprToSymbols(){
 		symb[0]=0;
 		switch(tn->typeValue()){
 		case ID_NOISE:
-			sprintf(symb,"Noise%d",noise++);
+			sprintf(symb,"Noise%d()",noise++);
 			break;
 		case ID_FCHNL:
 			sprintf(symb,"Fractal%d()",fractal++);
@@ -180,6 +186,9 @@ void VtxExprEdit::exprToSymbols(){
 		case ID_CRATERS:
 			sprintf(symb,"Craters%d()",craters++);
 			break;
+        case ID_ERODE:
+            sprintf(symb,"Erode%d()",erodes++);
+            break;
 		}
 		if(symb[0]){
 			value[0]=0;
@@ -193,6 +202,7 @@ void VtxExprEdit::exprToSymbols(){
 	scope.set_tokens(1);
 	buff[0]=0;
 	n->valueString(buff);  // extract token string
+
 	symbol_expr=wxString(buff).Trim();
 	scope.set_tokens(0);
 	showing_symbols=true;
@@ -284,6 +294,9 @@ wxString VtxExprEdit::getShaderString(){
 		sprintf(tmp1,"Craters%d()",i+1);
 		sprintf(tmp2,"0");
 		str.Replace(wxString(tmp1),wxString(tmp2),true);
+        sprintf(tmp1,"Erode%d()",i+1);
+        sprintf(tmp2,"0");
+        str.Replace(wxString(tmp1),wxString(tmp2),true);
 	}
 	return str.Trim();
 }
@@ -326,6 +339,7 @@ wxString VtxExprEdit::getPrototype(int type){
 	case TN_NOISE:
 	case TN_FCHNL:
 	case TN_CRATERS:
+    case TN_ERODE:
 		if(TheScene->getPrototype(0,type,prototype))
 			return wxString(prototype).Trim();
 		break;
@@ -349,6 +363,7 @@ void VtxExprEdit::OnRightMouse(wxMouseEvent& event){
 		submenu->Append(ID_ADD_NOISE,wxT("Noise"));
 		submenu->Append(ID_ADD_FRACTAL,wxT("Fractal"));
 		submenu->Append(ID_ADD_CRATERS,wxT("Craters"));
+        submenu->Append(ID_ADD_ERODE,wxT("Erode"));
 		menu.AppendSubMenu(submenu, "Add ..");
 	}
 	PopupMenu(&menu);
@@ -405,6 +420,8 @@ void VtxExprEdit::OnTabKey(wxKeyEvent& event) {
 		alias=getPrototype(TN_CRATERS);
 	else if (token.StartsWith("f"))
 		alias=getPrototype(TN_FCHNL);
+    else if (token.StartsWith("e"))
+        alias=getPrototype(TN_ERODE);
 	if(alias.IsEmpty())
 		return;
 	di=end.Find(token);
@@ -437,6 +454,9 @@ void VtxExprEdit::OnAddItem(wxCommandEvent& event){
 	case ID_ADD_FRACTAL:
 		str=getPrototype(TN_FCHNL);
 		break;
+    case ID_ADD_ERODE:
+        str=getPrototype(TN_ERODE);
+        break;
 	}
 	wxString expr=GetValue();
 	int pt=GetInsertionPoint();

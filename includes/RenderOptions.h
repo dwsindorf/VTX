@@ -60,7 +60,8 @@ enum{  //colors
 	LNODES			= 0x04,
 	ENODES			= 0x05,
 	MNODES			= 0x06,
-	RNODES			= 0x07
+	RNODES			= 0x07,
+    SNODES          = 0x08
 	};
 
 enum{  //fogsel

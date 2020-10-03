@@ -348,6 +348,9 @@ public:
     double delp()                   { return data.Y();}
 
     double density()                { return data.density();}
+    double sediment()               { return data.sediment();}
+    double rock()                   { return data.rock();}
+
     int type()                      { return data.type(); }
     int fog()                       { return data.has_density()||(cdata && cdata->has_density());}
     int dual_terrain()              { return data.two_pass()|| (cdata && cdata->two_pass());}

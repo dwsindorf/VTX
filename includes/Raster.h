@@ -353,6 +353,10 @@ public:
 										  resize_idtbl((int)(idsize*1.25));
 									  idtbl[dcnt++]=n;
 									}
+	MapNode *get_data(int id)		{ if(valid_id(id))
+										return idtbl[id];
+									  return 0;
+									}
 	int   set_id()					{ return idcnt=dcnt;}
 	int   first_id()				{ return 1;}
 	int   last_id()					{ return idcnt;}

@@ -269,7 +269,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.water()||td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))
-	    ne++;
+	    ne=2;
 	if(td.get_flag(DVALUE)){
 	    //ne=1;
 		density=td.s;

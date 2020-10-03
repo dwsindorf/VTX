@@ -7,6 +7,7 @@
 #include "TerrainClass.h"
 #include "TerrainData.h"
 #include "AdaptOptions.h"
+#include "Effects.h"
 
 //**************** extern API area ************************
 
@@ -1069,7 +1070,9 @@ void StarNode::select()
 	Point vmax;
 	if(brightest(vmax)){
  		//glPointSize(2.0f*fgscale);
- 		glLoadName((long)this);
+		int id=Raster.set_id();
+		Raster.set_data((MapNode*)this);
+		glLoadName(id);
 		glBegin(GL_POINTS);
 		glVertex3dv((double*)(&vmax));
 		glEnd();

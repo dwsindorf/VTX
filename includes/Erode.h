@@ -23,9 +23,10 @@ public:
 //************************************************************
 class TNerode : public TNfunc
 {
-	int options;
 	void optionString(char *);
 public:
+    int options;
+
 	TNerode(int t, TNode *l, TNode *r);
 	void eval();
 	int typeValue()			{ return ID_ERODE;}

@@ -460,10 +460,10 @@ class TNfunc : public TNbinary
 {
 protected:
     char name_str[64];
-    char *token;
+    char token[64];
 	TNfunc  *expr;
 public:
-	TNfunc(TNode *l, TNode *r) :  TNbinary(l,r) {token=0;expr=0;name_str[0]=0;}
+	TNfunc(TNode *l, TNode *r) :  TNbinary(l,r) {token[0]=0;expr=0;name_str[0]=0;}
 	~TNfunc();
 	virtual bool hasChildren();
 	virtual int getChildren(LinkedList<NodeIF*>&l);
@@ -483,7 +483,7 @@ public:
 	virtual NodeIF *addChild(NodeIF *c);
 	virtual int linkable()      		    { return 1;}
 	virtual void addToken(LinkedList<TNode*>&l);
-	virtual void setToken(char *t)          { token=t;}
+	virtual void setToken(char *t)          { strcpy(token,t);}
 	virtual char *getToken()			    { return token;}
 	virtual void applyExpr();
 	virtual void clearExpr();

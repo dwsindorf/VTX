@@ -5,6 +5,7 @@
 #include "VtxNoiseFunct.h"
 #include "VtxCratersFunct.h"
 #include "VtxFractalFunct.h"
+#include "VtxErodeFunct.h"
 
 #include "SceneClass.h"
 #include "UniverseModel.h"
@@ -117,6 +118,7 @@ bool VtxFunctDialog::Create( wxWindow* parent,
     functs[ID_CRATERS]=new VtxCratersFunct(this,wxID_ANY,wxPoint(0,0),wxSize(PAGE_WIDTH,TABS_HEIGHT));
     functs[ID_FCHNL]=new VtxFractalFunct(this,wxID_ANY,wxPoint(0,0),wxSize(PAGE_WIDTH,TABS_HEIGHT));
     functs[ID_NOISE]=new VtxNoiseFunct(this,wxID_ANY,wxPoint(0,0),wxSize(PAGE_WIDTH,TABS_HEIGHT));
+    functs[ID_ERODE]=new VtxErodeFunct(this,wxID_ANY,wxPoint(0,0),wxSize(PAGE_WIDTH,TABS_HEIGHT));
 
     controlsSizer->Add(functs[ID_NOEDIT],0,wxALIGN_LEFT|wxALL);
 

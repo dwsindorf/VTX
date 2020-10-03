@@ -220,6 +220,11 @@ Scene::Scene(Model *m)
 	TheScene=this;
 	TheView=this;
 
+	playback_rate=20;   // movie playback(frames/sec)
+	redraw_rate=20;     // normal refresh(frames/sec)
+	animate_rate=20;    // animation refresh(frames/sec)
+	refresh_rate=redraw_rate;
+
 	exprs.parent=&vars;
 	strcpy(filename,"Startup.spx");
 	strcpy(moviename,dflt_movie_name);
@@ -285,6 +290,7 @@ bool Scene::setProgram(){
 	vars.newFloatVar("colormip",4*colormip);
  	vars.setProgram(GLSLMgr::programHandle());
 	vars.loadVars();
+	return true;
 }
 
 //-------------------------------------------------------------
@@ -1685,9 +1691,13 @@ void Scene::select()
         }
 	}
 	set_select_object();
+	Raster.reset_idtbl();
+
 	bgpass=BG1;
 	pass_group();
-	focusobj=(ObjectNode*)select_pass();
+	// for orbitals will be id of ObjectNode* in Raster.idtbl
+	int id=(int)select_pass();
+	focusobj=(ObjectNode*)Raster.get_data(id);
 
 	if(focusobj){
 	    if(focusobj==viewobj){
@@ -1706,6 +1716,8 @@ void Scene::select()
 	//if(local_view())
 	//	return;
 	bgpass=BGFAR;
+	// star pass
+	Raster.reset_idtbl();
 
 	set_select_object();
 	scale(minz, size);
@@ -1717,9 +1729,11 @@ void Scene::select()
 	if(passlist.size){
 		focusobj=(ObjectNode*)passlist.first();
 		set_select_node();
-		obj=select_pass();
-		if(obj)
+		id=(int)select_pass();
+		obj=(ObjectNode*)Raster.get_data(id);
+		if(obj){
 			selm=focusobj->get_focus(obj);
+		}
 		else
 			focusobj=0;
 	}
@@ -1940,12 +1954,11 @@ void Scene::adapt()
 //-------------------------------------------------------------
 // Scene::render() render the scene
 //-------------------------------------------------------------
-#if defined(WIN32) || defined(WIN7)
+//#if defined(WIN32) || defined(WIN7)
    bool swap_on_update=true;
-#else
-   bool swap_on_update=false;
-#endif
-
+//#else
+//   bool swap_on_update=false;
+//#endif
 void Scene::render()
 {
     scene_rendered=0;
@@ -2057,8 +2070,6 @@ void Scene::render()
 	}
 	if(!swap_on_update) // swap on refresh
 		swap_buffers();
-
-	//glDisable(GL_LIGHTING);
 
 	clr_eyeref();
 	if(autotm())

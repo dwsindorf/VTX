@@ -2,7 +2,7 @@
 #include "GLSupport.h"
 #include <stdio.h>
 
-//#define SHOW_ALL_EXTENSIONS // get a printout of all supported extensions
+#define SHOW_ALL_EXTENSIONS // get a printout of all supported extensions
 
 int GLSupport::ARB_multitexture_supported=0;
 int GLSupport::ARB_texture_cube_map_supported=0;

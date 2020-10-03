@@ -765,6 +765,7 @@ void Map::render_select()
 	glFlush();
 
 	reset();
+	Raster.reset_idtbl();
 	/*
 	glShadeModel(GL_FLAT);
 	glDisable(GL_LIGHTING);

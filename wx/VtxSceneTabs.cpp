@@ -618,9 +618,8 @@ void VtxSceneTabs::OnRateScale(wxCommandEvent& event){
 }
 void VtxSceneTabs::OnUpdateTime(wxUpdateUIEvent& event){
 	//if(!changing&& TheScene->autotm()){
-	if(!changing){
+	if(!changing)
 		getTime();
-	}
 }
 void VtxSceneTabs::OnUpdateLOD(wxUpdateUIEvent& event){
 	if(!changing)

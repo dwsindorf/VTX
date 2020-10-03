@@ -358,11 +358,11 @@ void VtxFrame::make_tbar1()
 
     INIT_TB1_BMP(vtx_autotm);
     m_tbar1->AddTool(IDM_VIEW_AUTOTM, _T("Animate time"),
-        toolBarBitmaps[TB1_vtx_autotm], _T("Enable time animation"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_autotm], _T("Time animation"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_automv);
     m_tbar1->AddTool(IDM_VIEW_AUTOMV, _T("Animate motion"),
-        toolBarBitmaps[TB1_vtx_automv], _T("Enable forward motion animation"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_automv], _T("Motion animation"), wxITEM_CHECK);
 
     m_tbar1->AddSeparator();
 
@@ -464,7 +464,7 @@ void VtxFrame::OnSurface(wxCommandEvent& WXUNUSED(event))
 //-------------------------------------------------------------
 void VtxFrame::OnAutotm(wxCommandEvent& WXUNUSED(event))
 {
-    m_canvas->set_autotm(!m_canvas->autotm());
+   m_canvas->set_autotm(!m_canvas->autotm());
 }
 //-------------------------------------------------------------
 // VtxFrame::OnAutomv() animate motion
@@ -589,8 +589,8 @@ void VtxFrame::OnSceneOpen(wxCommandEvent& WXUNUSED(event))
     char dir[256];
     filename[0]=0;
  	m_canvas->suspend();
-	File.getFilePath(m_last_scene.ToAscii(),dir);
-	File.getFileName(m_last_scene.ToAscii(),filename);
+	File.getFilePath((char*)m_last_scene.ToAscii(),dir);
+	File.getFileName((char*)m_last_scene.ToAscii(),filename);
 
     wxString ext("*");
     ext+=FileUtil::ext;
@@ -617,7 +617,7 @@ void VtxFrame::OnSceneOpen(wxCommandEvent& WXUNUSED(event))
         cout << "  Filename:  " << filename << endl;
         cout << "  Ext:       " << ext << endl;
 #endif
-        m_canvas->open_scene(m_last_scene.ToAscii());
+        m_canvas->open_scene((char*)m_last_scene.ToAscii());
     }
     m_tbar1->ToggleTool(IDM_FILE_SCENE_OPEN, false);
     m_canvas->unsuspend();
@@ -635,8 +635,8 @@ void VtxFrame::OnSceneSave(wxCommandEvent& WXUNUSED(event))
     char dir[256];
     filename[0]=0;
  	m_canvas->suspend();
-	File.getFilePath(m_last_scene.ToAscii(),dir);
-	File.getFileName(m_last_scene.ToAscii(), filename);
+	File.getFilePath((char*)m_last_scene.ToAscii(),dir);
+	File.getFileName((char*)m_last_scene.ToAscii(), filename);
 
     wxString ext("*");
     ext+=FileUtil::ext;
@@ -661,7 +661,7 @@ void VtxFrame::OnSceneSave(wxCommandEvent& WXUNUSED(event))
         cout << "  Ext:       " << ext << endl;
 #endif
         m_last_scene=dialog.GetDirectory()+FileUtil::separator+filename+".spx";
-        m_canvas->save_scene(m_last_scene.ToAscii());
+        m_canvas->save_scene((char*)m_last_scene.ToAscii());
     }
     m_tbar1->ToggleTool(IDM_FILE_SCENE_SAVE, false);
     m_canvas->unsuspend();
@@ -678,8 +678,8 @@ void VtxFrame::OnImageOpen(wxCommandEvent& WXUNUSED(event) )
     m_timer.Stop();
 
  	m_canvas->suspend();
-	File.getFilePath(m_last_image.ToAscii(),dir);
-	File.getFileName(m_last_image.ToAscii(),filename);
+	File.getFilePath((char*)m_last_image.ToAscii(),dir);
+	File.getFileName((char*)m_last_image.ToAscii(),filename);
 
     wxFileDialog dialog
                  (
@@ -706,7 +706,7 @@ void VtxFrame::OnImageOpen(wxCommandEvent& WXUNUSED(event) )
         cout << "  Filename:  " << filename << endl;
         cout << "  Ext:       " << ext << endl;
 #endif
-        m_canvas->view_image(m_last_image.ToAscii(),m_last_itype);
+        m_canvas->view_image((char*)m_last_image.ToAscii(),m_last_itype);
     }
     ::wxMilliSleep(300);
     m_canvas->SwapBuffers();
@@ -805,14 +805,18 @@ void VtxFrame::OnUpdateSelect(wxUpdateUIEvent& event)
 //-------------------------------------------------------------
 void VtxFrame::OnUpdateAutotm(wxUpdateUIEvent& event)
 {
-    event.Check(m_canvas->autotm());
+   // causes "can't check item" error in wxWidgets 3.1
+   //   line 710 src/gtk/menu.cpp getKind() returns invalid type
+   //   instead of wxITEM_CHECK
+   // event.Check(m_canvas->autotm());
 }
 //-------------------------------------------------------------
 // VtxFrame::OnUpdateAutomv() update automv gui
 //-------------------------------------------------------------
 void VtxFrame::OnUpdateAutomv(wxUpdateUIEvent& event)
 {
-    event.Check(m_canvas->automv());
+	// also causes "can't check item" error in wxWidgets 3.1
+    //event.Check(m_canvas->automv());
 }
 
 //-------------------------------------------------------------

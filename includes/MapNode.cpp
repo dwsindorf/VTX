@@ -1790,7 +1790,10 @@ void MapNode::render_vertex()
 	if(!rnode || !dnode)
 	    return;
 	if(TheScene->select_node()){
-		glLoadName((long)(this));
+		//glLoadName((long)(this));
+		idb.l=Raster.set_id();
+		Raster.set_data(this);
+		glLoadName(idb.l);
 	}
 
 	MapData *d;
@@ -1816,116 +1819,139 @@ void MapNode::render_vertex()
 //-------------------------------------------------------------
 // MapNode::Tcolor() test color for output
 //-------------------------------------------------------------
-Color MapNode::Tcolor(MapData *d)
-{
-	Color c=BLACK;
+Color MapNode::Tcolor(MapData *d) {
+    Color c = BLACK;
 
-	double a=c.alpha();
-	switch(Render.colors()){
-	case CSIZE:						// '1'
-		c=Adapt.tcolor(alevel());
-		break;
+    double a = c.alpha();
+    switch (Render.colors()) {
+    case CSIZE:						// '1'
+        c = Adapt.tcolor(alevel());
+        break;
 
-	case CNODES:					// '2'
-		{
-			double depth;
-			double size=cell_size();
-			int ext=10;
-			depth=TheScene->vpoint.distance(DPOINT(this));
+    case CNODES:					// '2'
+    {
+        double depth;
+        double size = cell_size();
+        int ext = 10;
+        depth = TheScene->vpoint.distance(DPOINT(this));
 
-			if(depth>0)
-				ext=(int)(TheScene->wscale*(size/depth)); // perspective scaling
+        if (depth > 0)
+            ext = (int) (TheScene->wscale * (size / depth)); // perspective scaling
 
-			c=Adapt.tcolor(ext);
-		}
-		break;
+        c = Adapt.tcolor(ext);
+    }
+        break;
 
-	case VNODES:                  	// '3'
-		if(partvis())
-			c=Color(1,1,0);
-		else if(hidden())
-			c=Color(0,0,1);
-		else if(invisible()&&rnode && dnode)
-			c=Color(1,0,0);
-		else
-			c=Color(1,1,1);
-		break;
+    case VNODES:                  	// '3'
+        if (partvis())
+            c = Color(1, 1, 0);
+        else if (hidden())
+            c = Color(0, 0, 1);
+        else if (invisible() && rnode && dnode)
+            c = Color(1, 0, 0);
+        else
+            c = Color(1, 1, 1);
+        break;
 
-	case LNODES:                  	// '4'
-		if(Raster.surface==2)
-			c=Color(0,0,1);
-		else {
-			c=sctbl[d->type()&0xf];
-			if(dual_terrain())
-				c=c.darken(0.2);
-			if(has_water())
-				c=c.blend(Color(0,0,1),0.25);
-		}
-		break;
+    case LNODES:                  	// '4'
+        if (Raster.surface == 2)
+            c = Color(0, 0, 1);
+        else {
+            c = sctbl[d->type() & 0xf];
+            if (dual_terrain())
+                c = c.darken(0.2);
+            if (has_water())
+                c = c.blend(Color(0, 0, 1), 0.25);
+        }
+        break;
 
-	case ENODES:					// '5'
-		if(Raster.surface==2)
-			c=Color(0,0,1);
-		else {
-			if(dual_terrain()){
-				if(d && d->water())
-					d=d->data2();
-				if(!d)
-					c=Color(0,0,1);
-				else if(d->next_surface()){
-					if(!d->next_surface())
-					   c=Color(1,0,0);
-					else
-					   c=Color(0,0,1);
-				}
-				else
-					c=Color(0,1,0);
-			}
-			else
-				c=Color(1,1,1);
-			if(has_water())
-				c=c.blend(Color(0,0,1),0.25);
-			if(margin())
-				c=c.blend(Color(1,0,0),0.5);
-		}
-		break;
-	case MNODES:                  	// '6'
-		{
-			Point *np=0;
-			MapData *md;
-			if(cdata)
-				md=cdata;
-		    else
-				md=&data;
-			np=pnt_normal(md);
+    case ENODES:					// '5'
+        if (Raster.surface == 2)
+            c = Color(0, 0, 1);
+        else {
+            if (dual_terrain()) {
+                if (d && d->water())
+                    d = d->data2();
+                if (!d)
+                    c = Color(0, 0, 1);
+                else if (d->next_surface()) {
+                    if (!d->next_surface())
+                        c = Color(1, 0, 0);
+                    else
+                        c = Color(0, 0, 1);
+                } else
+                    c = Color(0, 1, 0);
+            } else
+                c = Color(1, 1, 1);
+            if (has_water())
+                c = c.blend(Color(0, 0, 1), 0.25);
+            if (margin())
+                c = c.blend(Color(1, 0, 0), 0.5);
+        }
+        break;
+    case MNODES:                  	// '6'
+    {
+        Point *np = 0;
+        MapData *md;
+        if (cdata)
+            md = cdata;
+        else
+            md = &data;
+        np = pnt_normal(md);
 
-			c=Color(1,1,1);
-			if(!np)
-				 c=Color(0,1,0);
-			else {
-				 Point norm=np->normalize();
-				 Point vp=TheScene->vpoint-md->mpoint();
-				 vp=vp.normalize();
-				 double dp=norm.dot(vp);
+        c = Color(1, 1, 1);
+        if (!np)
+            c = Color(0, 1, 0);
+        else {
+            Point norm = np->normalize();
+            Point vp = TheScene->vpoint - md->mpoint();
+            vp = vp.normalize();
+            double dp = norm.dot(vp);
 
-				 if(dp<0){
-					 if(cdata)
-						 c=Color(0,0,1);
-					 else
-						 c=Color(1,0,0);
-				 }
-			}
-		}
-		break;
-	case RNODES:
-		{
-		int lvl=(int)(elevel()*0.5-18);               	// '7'
-		c=Adapt.tcolor(lvl);
-		}
-		break;
-	}
-	c.set_alpha(a);
-	return c;
+            if (dp < 0) {
+                if (cdata)
+                    c = Color(0, 0, 1);
+                else
+                    c = Color(1, 0, 0);
+            }
+        }
+    }
+        break;
+    case RNODES: {
+        //extern double eslope();
+        double s = 2*sediment();
+        c = Color(1, 1, 1);
+        //c = c.blend(Color(1, 0, 0), s);
+        if (s > 0)
+            c = c.blend(Color(0, 0, 1), s);
+        else
+            c = c.blend(Color(1, 0, 0), -s);
+    }
+        break;
+    case SNODES: {
+        Point *np = 0;
+        MapData *md;
+        if (cdata)
+            md = cdata;
+        else
+            md = &data;
+        np = pnt_normal(md);
+
+        c = Color(1, 1, 1);
+        if (!np)
+            c = Color(0, 1, 0);
+        else {
+            Point norm = np->normalize();
+            Point vp = md->mpoint();
+            vp = vp.normalize();
+            double dp = 1-norm.dot(vp);
+            c = c.blend(Color(1, 0, 0), 2*dp);
+        }
+    }
+        break;
+    }
+    c.set_alpha(a);
+    return c;
 }
 
 //-------------------------------------------------------------

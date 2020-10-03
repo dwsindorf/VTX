@@ -467,7 +467,7 @@ TNplacements::TNplacements(int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b
 		BIT_OFF(type,PID);
 		BIT_ON(type,id);
 	}
-	token=0;
+	token[0]=0;
     mgr=0;
 }
 
@@ -502,7 +502,7 @@ void TNplacements::reset()
 //-------------------------------------------------------------
 void TNplacements::valueString(char *s)
 {
-	if(CurrentScope->tokens() && token){
+	if(CurrentScope->tokens() && token[0]){
 		setStart(s);
         strcat(s,token);
 		setEnd(s);

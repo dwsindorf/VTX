@@ -8,6 +8,7 @@ Scene() {
 		time=24812.8;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -59,6 +60,10 @@ Scene() {
 		theta=179.019;
 		height=0.00485328;
 		gndlvl=17928.5 ft;
+	}
+	View{
+		height=0.00873005;
+		gndlvl=1806.8 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -116,6 +121,7 @@ Scene() {
 								Z(0.1*noise(ERODED,11,4,0.5,0.5))+Color(noise(UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
 					}
 					Clouds(0.0031) {
+						crot=1;
 						day=30;
 						diffuse=Color(1,1,1,0.59);
 						resolution=4;
@@ -127,7 +133,8 @@ Scene() {
 							Color(0.141,0,0));
 						Surface{
 							terrain=clouds()
-									Texture("yellow-white",BORDER|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS|NABS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.630077,1.23288,1.00608,0.27392,1,2,1);
+									
+									Texture("yellow-white",BORDER|BUMP|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);
 						}
 					}
 				}

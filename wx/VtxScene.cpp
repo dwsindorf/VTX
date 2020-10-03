@@ -632,7 +632,7 @@ void VtxScene::make_scene()
     char path[256];
     if(infile.Length()>0){
         char name[256];
-        File.getFileName(infile.ToAscii(),name);
+        File.getFileName((char*)infile.ToAscii(),name);
         strcat(name,FileUtil::ext);
         File.makeFilePath(File.saves,name,path);
     }
@@ -730,6 +730,12 @@ void VtxScene::OnSize(wxSizeEvent& event)
      }
 }
 
+bool  VtxScene::SwapBuffers(){
+	//glDrawBuffer(GL_FRONT);
+    //glReadBuffer(GL_BACK);
+    //glCopyPixels(0,0,width,height,GL_COLOR);
+	wxGLCanvas::SwapBuffers();
+}
 //-------------------------------------------------------------
 // VtxScene::OnKey() key-press event handler
 //-------------------------------------------------------------

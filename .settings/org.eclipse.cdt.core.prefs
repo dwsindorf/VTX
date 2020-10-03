@@ -161,5 +161,8 @@ environment/project/cdt.managedbuild.config.gnu.exe.release.356777836.784119773/
 environment/project/cdt.managedbuild.config.gnu.exe.release.356777836.784119773/WXWIN/value=C\:/wxWidgets-2.8.11
 environment/project/cdt.managedbuild.config.gnu.exe.release.356777836.784119773/append=true
 environment/project/cdt.managedbuild.config.gnu.exe.release.356777836.784119773/appendContributed=true
+environment/project/cdt.managedbuild.config.gnu.exe.release.356777836/__WXGTK__/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.release.356777836/__WXGTK__/operation=append
+environment/project/cdt.managedbuild.config.gnu.exe.release.356777836/__WXGTK__/value=
 environment/project/cdt.managedbuild.config.gnu.exe.release.356777836/append=true
 environment/project/cdt.managedbuild.config.gnu.exe.release.356777836/appendContributed=true

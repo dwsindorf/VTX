@@ -1635,8 +1635,11 @@ int Spheroid::cycles()		{ return map?map->cycles:0;}
 Point Spheroid::get_focus(void *v)
 {
     if(v){
-        MapNode *n=(MapNode *)v;
-        return Point(n->theta(),n->phi(),n->height());
+        int id=(int)v;
+        if(Raster.valid_id(id)){
+            MapNode *n=Raster.get_data(id);
+            return Point(n->theta(),n->phi(),n->height());
+        }
     }
     return Object3D::get_focus(v);
 }
@@ -1990,11 +1993,17 @@ void Spheroid::select()
 		set_tilt();
 		set_rotation();
 		TheScene->set_matrix(this);
-		if(TheScene->select_object())
-		    glLoadName((long)this);
-		terrain.init_render();
-		terrain.set_eval_mode(0);
-		map->render_select();  // use fastest render (nothing drawn)
+		if(TheScene->select_object()){
+			int id=Raster.set_id();
+			Raster.set_data((MapNode*)this);
+			glLoadName(id);
+			map->render_zvals();  // use fastest render (nothing drawn)
+		}
+		else{
+			terrain.init_render();
+			terrain.set_eval_mode(0);
+			map->render_select();  // use fastest render (nothing drawn)
+		}
 		TheScene->popMatrix();
 	}
 	Orbital::select(); // select children

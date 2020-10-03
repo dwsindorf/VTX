@@ -323,7 +323,7 @@ TNcraters::~TNcraters()
 //-------------------------------------------------------------
 void TNcraters::valueString(char *s)
 {
-	if(CurrentScope->tokens() && token){
+	if(CurrentScope->tokens() && token[0]){
 		setStart(s);
         strcat(s,token);
 		setEnd(s);

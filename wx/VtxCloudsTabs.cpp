@@ -440,7 +440,7 @@ void VtxCloudsTabs::setObjAttributes(){
 
 	//cout << str << endl;
 
-	tnode->setExpr((char*)str.ToAscii());
+	tnode->setExpr((char*)(str.mb_str()));
 	if(tnode->getExprNode()==0)
 		update_needed=true;
 	else{

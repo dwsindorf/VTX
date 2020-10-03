@@ -8,8 +8,13 @@ Scene() {
 		time=0;
 		heading=-170;
 		tilt=-15;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=434.864 ft;
+		gndlvl=2359.87 ft;
 	}
 	Universe {
 		Galaxy(20000) {

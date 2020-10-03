@@ -1,94 +1,43 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=26.6373;
-		theta=288.133;
-		height=0.00720219;
-		gndlvl=3137.94 ft;
+		phi=10.4041;
+		theta=249.953;
+		height=0.0072;
+		gndlvl=16531.6 ft;
 		time=95554.2;
 		heading=90;
 		pitch=-90;
-		fov=41.1541;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		phi=28.0624;
-		theta=295.243;
-		height=0.00120564;
-		gndlvl=16923.4 ft;
+		phi=9.755;
+		theta=264.788;
+		height=266.563 miles;
+		gndlvl=11520 ft;
 	}
 	View{
 		view=SURFACE;
-		phi=29.1797;
-		theta=294.258;
-		height=52800 ft;
-		gndlvl=19403.6 ft;
+		phi=8.59131;
+		theta=264.88;
+		height=14721.4 ft;
+		gndlvl=3755.45 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
 	}
 	View{
-		height=52578.3 ft;
-		gndlvl=19508.8 ft;
-		heading=-35;
+		height=88.5716 miles;
+		gndlvl=3819.25 ft;
+		heading=20;
 	}
 	View{
-		phi=28.5425;
-		theta=294.862;
-		height=2838.26 ft;
-		gndlvl=9468.08 ft;
-	}
-	View{
-		height=69.1551 miles;
-		gndlvl=9467.1 ft;
-		heading=-140;
-		angle=-5;
-	}
-	View{
-		view=ORBITAL;
-		phi=27.9712;
-		theta=295.499;
-		height=0.0054;
-		gndlvl=15100.7 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		phi=27.9714;
-		height=696.41 miles;
-		gndlvl=15276.7 ft;
-	}
-	View{
-		view=SURFACE;
-		phi=28.5645;
-		theta=299.355;
-		height=38946.9 ft;
-		gndlvl=4031.11 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=19129 ft;
-		gndlvl=4481.25 ft;
-	}
-	View{
-		phi=28.6523;
-		theta=299.63;
-		height=20868.8 ft;
-		gndlvl=2741.4 ft;
-	}
-	View{
-		height=2037.56 ft;
-		gndlvl=2812.41 ft;
-		heading=-30;
-	}
-	View{
-		height=4351.23 ft;
-		gndlvl=2819.8 ft;
+		phi=11.9531;
+		theta=270.483;
+		height=88.6927 miles;
+		gndlvl=3180.2 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -134,7 +83,6 @@ Scene() {
 					fog.value=0.94902;
 					fog.vmax=1200 ft;
 					fog.vmin=1000 ft;
-					hscale=0.0003;
 					name="Earth";
 					phase=50;
 					shadow=Color(0,0,0,0.6);
@@ -196,7 +144,7 @@ Scene() {
 						env=0.3*(1+0.5*noise(SQR|UNS,15,3,0.3,0.1))*(1+0.5*LAT)*(1+0.2*SLOPE);
 						terrain=fog(noise(SQR|UNS,8,5,0.5)*(1-DEPTH))
 								water(noise(RIDGED|SCALE,22,3.2,0.7,0.5,2,0.1,1,0.59,0))
-								snow(-3,1,1,0.88,0.9,0.38)
+								snow(-1.7,1,1,0.88,0.9,0.38)
 								map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,2)
 								layer("shore",MORPH,0,0.5-0.3*noise(RO1,3,7,0.4,0.2))
 									[rocks(ID2,2,0.0001,0.73,0.43,0.2,0.3,0.5,noise(ERODED,1,8,0,0.3,2.1,0.8,-0.15,1,0))[
@@ -234,12 +182,12 @@ Scene() {
 									+
 									Texture("lava",CLAMP|S,(0.1+HT)*env+BMPHT+noise(2.8,2,1,0.5,2,1,1,0,0),0.25,1,1,0,1,2,1)]
 								layer("fractal",MORPH,0.14,0.2-0.4*noise(RO3,3,7,0.3,0.1),0.35,0)
-									[Z(fractal(SQR|SS,12,10,0.2,2.7,2.5,1.9,1,0.4)noise(NLOD|UNS,10,4,0,1,2.2,0.81,1,0,0))
+									[Z(fractal(SQR|SS,12,10,0.18,2,2.5,1.7,1,0.28)noise(NLOD|UNS,10,4,0,1,2.2,0.81,1,0,0))
 									+gloss(0.5641,0.99998)
 									+
-									Texture("eroded",BUMP|NTEX|S,1,32.2226,-1,1,1,8,2.8,0.94444,0)+
+									Texture("eroded",BUMP|NTEX|S,1,32,-1,1,1,8,2.8,0.94444)+
 									Texture("Shist1",BUMP,16384,0.97296,1.43244,0,9.88912,2.92592,0.72222)+
-									Texture("alpine",BORDER|CLAMP|S,(0.2+HT)*env+0.4*BMPHT,2,1.07408,0,0.2,1,2,1,0)+Color(0.976471,0.713725,0.47451,1)
+									Texture("alpine",BORDER|CLAMP|S,(0.2+HT)*env+0.3*BMPHT,1,0.97296,1,0,1,2,1)+Color(0.980392,0.741176,0.478431,1)
 									]
 								layer("dessert",MESH,0,0.05,0.42,0)
 									[Z(0.1*noise(RIDGED|UNS,12,10,0.07,0.31,2.44,0.59,1,0,0))
@@ -280,7 +228,7 @@ Scene() {
 					Sky(0.00379296) {
 						color=Color(0.67,1,1,0.95);
 						density=0.44444;
-						haze.grad=0.21622;
+						haze.grad=0.43244;
 						haze.value=0.627451;
 						night.color=Color(0,0,0);
 						resolution=2.05558;
@@ -296,8 +244,8 @@ Scene() {
 						phase=100;
 						year=17;
 						Surface{
-							terrain=
-									Z(craters(ID4,4,0.3,0.2,0.9)0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
+							terrain=craters(ID4,4,0.3,0.2,0.9)
+									Z(0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
 						}
 					}
 				}

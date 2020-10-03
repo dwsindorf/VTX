@@ -29,8 +29,8 @@ void main(void) {
 #ifdef NCC
 	v1= Vertex1.xyz;
     v2= Vertex2.xyz;
-    vec4 ncolor=NCC;
- 	color =ncolor+color;
+    //vec4 ncolor=NOISE_COLOR(NCC);
+ 	//color =ncolor+color;
 #endif
 
 #if NTEXS >0

@@ -18,7 +18,7 @@
 // __LP64__         on 64 bit systems link data is packed
 //                - this is a system #define (do not override)
 //---------------------------------------------------------------------
-//#define D64
+#define D64
 //#define DP_DIMS
 #define DPTEXTURES
 //---------------------------------------------------------------------
@@ -61,8 +61,8 @@ const double    INV2PI=0.5/PI;
 		     	lastz=sqrt(dt*dt+dp*dp); \
 		     } \
 	     } \
-	     v=lastz; \
     } \
+    v=lastz; \
  }
 
 class MapData;
@@ -503,7 +503,8 @@ public:
 	void setColor(Color c)		{ if(flags.s.colors)  data[CSTART].ul=c.pack();}
 #endif
 	Color  color()				{ return flags.s.colors?Color(data[CSTART].ul):WHITE;}
-	double Ht()					{ return Z()+sediment();}
+	//double Ht()					{ return Z()+sediment();}
+    double Ht()                 { return Z();}
 
 	MapData(uint t, uint p);
 	MapData(MapData *p);
