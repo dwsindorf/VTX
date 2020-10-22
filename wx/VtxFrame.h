@@ -57,6 +57,8 @@ public:
     void OnUpdateObjsDlg(wxUpdateUIEvent& event);
     void OnImageDlg(wxCommandEvent& event);
     void OnUpdateImageDlg(wxUpdateUIEvent& event);
+    void OnMovieDlg(wxCommandEvent& event);
+    void OnUpdateMovieDlg(wxUpdateUIEvent& event);
 
 //#if wxUSE_GLCANVAS
     void SetCanvas( VtxScene *canvas ) { m_canvas = canvas; }

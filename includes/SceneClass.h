@@ -182,6 +182,8 @@ public:
 	int function()              { return vmode & FUNCTION;}
 	void set_function(int i)    { BIT_OFF(vmode,FUNCTION);BIT_ON(vmode,i);}
 
+	void record_movie_from_path();
+
 
 	void jpeg_save(char *);
 	void jpeg_show(char *);
@@ -322,7 +324,11 @@ public:
 	void movie_record_video();
 	void movie_interpolate();
 	void movie_open();
+	void movie_open(char *path);
+
 	void movie_save();
+	void movie_save(char *path);
+
 	void movie_add();
 
 	void movie_clip();

@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <GLSLMgr.h>
 
+#define JPEG
 
 #ifdef JPEG
   extern void writeJpegFile(char *,double d);
@@ -693,7 +694,7 @@ void Scene::movie_add()
 void Scene::movie_clip()
 {
     movie->clip();
-    set_frame(movie->last());
+    set_frame(movie->first());
     set_moved();
 }
 //-------------------------------------------------------------
@@ -945,28 +946,19 @@ void Scene::delete_frames()
 	File.addToPath(dir,moviename);
 	File.deleteDirectoryFiles(dir,(char*)"*.jpg");
 	frame_index=0;
+	frame_files.free();
 }
 
 //-------------------------------------------------------------
 // Scene::movie_save() save a movie (flight path)
 //-------------------------------------------------------------
-void Scene::movie_save()
+void Scene::movie_save(char *path)
 {
-    if(!movie->size())
-        return;
-    char path[MAXSTR];
-	char fn[MAXSTR];
-
-    if(!make_movie_dir(path,moviename))
-        return;
-
-	sprintf(fn,"%s.spx",moviename);
-	File.addToPath(path,fn);
     FILE *fp=fopen(path,"wb");
     if(!fp)
         return;
 
-	ViewFrame *last_view=movie->at();
+	ViewFrame *last_view=movie->first();
 
 	fprintf(fp,"Scene() {\n");
 	inc_tabs();
@@ -992,16 +984,30 @@ void Scene::movie_save()
 }
 
 //-------------------------------------------------------------
-// Scene::movie_open() open a movie (flight path)
+// Scene::movie_save() save a movie (flight path)
 //-------------------------------------------------------------
-void Scene::movie_open()
+void Scene::movie_save()
 {
-	char path[MAXSTR];
-	if(!make_movie_dir(path,moviename))
-	    return;
+    if(!movie->size())
+        return;
+    char path[MAXSTR];
 	char fn[MAXSTR];
+
+    if(!make_movie_dir(path,moviename))
+        return;
+
 	sprintf(fn,"%s.spx",moviename);
 	File.addToPath(path,fn);
+
+	movie_save(path);
+
+}
+
+//-------------------------------------------------------------
+// Scene::movie_open() open a movie path
+//-------------------------------------------------------------
+void Scene::movie_open(char *path)
+{
 	if(!File.fileExists(path)){
 	    printf("could not open path file %s\n",path);
 	    return;
@@ -1029,6 +1035,8 @@ void Scene::movie_open()
 	set_frame(frame);
 	views->add(this);
 
+	scene_objects=total_objs();
+
 	status=stat;
 
 	set_changed_detail();
@@ -1054,12 +1062,30 @@ void Scene::movie_open()
 	locate_objs();
 	auto_stride();
 	clr_automv();
+	clr_autotm();
 	objects->visitAll(&Object3D::init);
 	clr_changed_view();
 	clr_moved();
 	set_changed_detail();
 	get_movie_frames();
 	frame_index=0;
+
+	//movie_rewind();
+}
+
+//-------------------------------------------------------------
+// Scene::movie_open() open a default movie path
+//-------------------------------------------------------------
+void Scene::movie_open()
+{
+	char path[MAXSTR];
+	if(!make_movie_dir(path,moviename))
+	    return;
+	char fn[MAXSTR];
+	sprintf(fn,"%s.spx",moviename);
+	File.addToPath(path,fn);
+
+	movie_open(path);
 }
 
 //-------------------------------------------------------------
@@ -1479,17 +1505,9 @@ void Scene::views_mark()
 //-------------------------------------------------------------
 int Scene::has_movie_path()
 {
-	LinkedList<ModelSym*>list;
-	char dir[256];
-	char path[256];
-	make_movie_dir(dir);
-	sprintf(path,"%s%s%s",dir,File.separator,moviename);
-
-	File.getFileNameList(path,"*.spx",list);
-	if(list.size==0)
-		return 0;
-	list.free();
-	return 1;
+	if(movie && movie->size()>1)
+		return 1;
+	return 0;
 }
 
 //-------------------------------------------------------------
@@ -1545,11 +1563,27 @@ void Scene::set_frame(ViewFrame *v)
 		radius=viewobj->radius()+elevation;
 		clr_moved();
 		set_changed_detail();
-		printf("view radius %g ht %g gndlvl %g\n",
-		   (radius-viewobj->radius())/FEET,height/FEET,gndlvl/FEET);
+		set_changed_time();
+		//set_moved();
+		printf("view radius %g ht %g gndlvl %g time:%g\n",
+		   (radius-viewobj->radius())/FEET,height/FEET,gndlvl/FEET,v->time);
     }
 	else
 		set_changed_detail();
+}
+//-------------------------------------------------------------
+// Scene::record_movie_from_path() make image files from path
+//-------------------------------------------------------------
+void Scene::record_movie_from_path() {
+	if(movie->size()==0)
+		movie_open();
+	else{
+		movie_rewind();
+		movie_save();
+	}
+	set_intrp(1);
+	movie_record_video();
+	movie_play();
 }
 
 //-------------------------------------------------------------
@@ -1881,12 +1915,14 @@ void Scene::animate()
 		    		}
 		    	}
 		    	inter_index++;
+		    	ftime=time;
 	        }
 	        else{
 	        	if(movie->atend())
 	        		stop();
 		    	movie->incr();
        			set_frame(movie->at());
+       			ftime=time;
        		}
        		return;
 	    }
@@ -1954,11 +1990,11 @@ void Scene::adapt()
 //-------------------------------------------------------------
 // Scene::render() render the scene
 //-------------------------------------------------------------
-//#if defined(WIN32) || defined(WIN7)
+#if defined(WIN32) || defined(WIN7)
    bool swap_on_update=true;
-//#else
-//   bool swap_on_update=false;
-//#endif
+#else
+   bool swap_on_update=false;
+#endif
 void Scene::render()
 {
     scene_rendered=0;
@@ -2066,7 +2102,6 @@ void Scene::render()
     	auto_stride();
         if(swap_on_update)
 	       swap_buffers();
-
 	}
 	if(!swap_on_update) // swap on refresh
 		swap_buffers();
@@ -2758,12 +2793,12 @@ void Scene::show_mode_info()
             draw_string(MENU_COLOR," 2: record");
             draw_string(MENU_COLOR," 3: rewind");
             draw_string(MENU_COLOR," 4: play");
-            draw_string(MENU_COLOR," 5: save(%s)",moviename);
-            draw_string(MENU_COLOR," 6: load(%s)",moviename);
+            draw_string(MENU_COLOR," 5: save");
+            draw_string(MENU_COLOR," 6: load");
             draw_string(MENU_COLOR,"------ movie -------");
             draw_string(MENU_COLOR," 7: record (from path)");
             draw_string(MENU_COLOR," 8: record (live)");
-            draw_string(MENU_COLOR," 9: play");
+            draw_string(MENU_COLOR," 9: test");
         }
         if(recording())
             draw_string(RECD_COLOR,"Movie<%s> status: Recording path %d",moviename,i);
@@ -2824,3 +2859,4 @@ void Scene::show_mode_info()
         break;
     }
 }
+

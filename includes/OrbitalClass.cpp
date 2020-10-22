@@ -2217,7 +2217,7 @@ void Spheroid::init_view()
 	TheScene->minh=6*FEET;
 	TheScene->maxr=2*size;
 	TheScene->hstride=1;
-	TheScene->vstride=0.5;
+	TheScene->vstride=0.02;
 
 	if(TheScene->changed_file())  // exit for open
 	    return;

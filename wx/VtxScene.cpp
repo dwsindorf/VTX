@@ -30,11 +30,14 @@
 #include "FrameClass.h"
 #include <objectdlg.xpm>
 #include <image_dialog.xpm>
+#include <vtx_movie.xpm>
 
 
 #include "VtxSceneDialog.h"
 #include "VtxImageDialog.h"
 #include "VtxFunctDialog.h"
+#include "VtxMovieDialog.h"
+
 #include "VtxImageMgr.h"
 #include <wx/defs.h>
 
@@ -65,8 +68,10 @@ VtxSceneDialog *sceneDialog=0;
 VtxImageDialog *imageDialog=0;
 VtxFunctDialog *functDialog=0;
 VtxFunctDialog *noiseDialog=0;
+VtxMovieDialog *movieDialog=0;
 
 VtxScene       *vtxScene=0;
+
 
 BEGIN_EVENT_TABLE(VtxScene, wxGLCanvas)
     EVT_CHAR(VtxScene::OnKey)
@@ -134,6 +139,8 @@ VtxScene::~VtxScene()
 		delete functDialog;
 	if(noiseDialog)
 		delete noiseDialog;
+	if(movieDialog)
+		delete movieDialog;
 
     if(TheScene){
         delete TheScene;
@@ -178,6 +185,25 @@ bool VtxScene::image_dialog_showing()
 {
 	if(imageDialog)
 		return imageDialog->IsShown();
+	return false;
+}
+
+//-------------------------------------------------------------
+// VtxScene::show_movie_dialog()
+//-------------------------------------------------------------
+void VtxScene::show_movie_dialog()
+{
+	if(movieDialog)
+		movieDialog->Show(movieDialog->IsShown()?false:true);
+}
+
+//-------------------------------------------------------------
+// VtxScene::movie_dialog_showing()
+//-------------------------------------------------------------
+bool VtxScene::movie_dialog_showing()
+{
+	if(movieDialog)
+		return movieDialog->IsShown();
 	return false;
 }
 
@@ -558,6 +584,19 @@ void VtxScene::view_image(char *path,int type)
     }
 }
 
+
+//-------------------------------------------------------------
+// VtxScene::rebuild_all() rebuild all UI elements
+//-------------------------------------------------------------
+void VtxScene::rebuild_all() {
+    functDialog->clear();
+    noiseDialog->clear();
+    sceneDialog->rebuildObjectTree();
+    imageDialog->Invalidate();
+    movieDialog->Invalidate();
+    rebuild();
+}
+
 //-------------------------------------------------------------
 // VtxScene::open_scene() open & build scene object
 //-------------------------------------------------------------
@@ -569,10 +608,7 @@ void VtxScene::open_scene(char *path)
     //Adapt.set_maxcycles(50);
 
     TheScene->open(path);
-    functDialog->clear();
-    noiseDialog->clear();
-    sceneDialog->rebuildObjectTree();
-    imageDialog->Invalidate();
+    rebuild_all();
 }
 
 //-------------------------------------------------------------
@@ -619,6 +655,11 @@ void VtxScene::make_scene()
     	imageDialog=new VtxImageDialog(this);
     	imageDialog->SetIcon(wxIcon(image_dialog_xpm));
     }
+    if(!movieDialog){
+    	movieDialog=new VtxMovieDialog(this);
+    	movieDialog->SetIcon(wxIcon(vtx_movie_xpm));
+    }
+
     if(!functDialog){
     	functDialog=new VtxFunctDialog(this);
     }
@@ -658,9 +699,8 @@ void VtxScene::make_scene()
 
     sceneDialog->rebuildObjectTree();
     imageDialog->Invalidate();
-
+    movieDialog->Invalidate();
 	stopwatch.Start();
-
 }
 
 
@@ -731,9 +771,6 @@ void VtxScene::OnSize(wxSizeEvent& event)
 }
 
 bool  VtxScene::SwapBuffers(){
-	//glDrawBuffer(GL_FRONT);
-    //glReadBuffer(GL_BACK);
-    //glCopyPixels(0,0,width,height,GL_COLOR);
 	wxGLCanvas::SwapBuffers();
 }
 //-------------------------------------------------------------
@@ -751,6 +788,7 @@ void VtxScene::OnKey( wxKeyEvent& event )
 	else
 		set_key(key);
 }
+
 //-------------------------------------------------------------
 // VtxScene::OnMiddleDown() middle-mouse event handler
 //-------------------------------------------------------------
@@ -828,7 +866,6 @@ void VtxScene::OnMouseMove(wxMouseEvent& event )
 			else
 				mouse_dir = RIGHT;
 		}
-
 		mouse_x = x;
 		mouse_y = y;
 	}
@@ -965,14 +1002,14 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
   	if(dragging)
   		dragAction();
 
-    if(vkey){
-    	if(vkey==WXK_TAB)
-    		show_scene_dialog();
-    	else
-    		kif.set_key(state,(unsigned)vkey);
-    }
-    vkey=0;
-
+	if (vkey) {
+		if (vkey == WXK_TAB)
+			show_scene_dialog();
+		else
+			kif.set_key(state, (unsigned) vkey);
+		if(!motionKeypressed((wxKeyCode)vkey))
+			vkey = 0;
+	}
     wxString cwd=::wxGetCwd();
 
     ::wxSetWorkingDirectory("../Shaders");
@@ -999,6 +1036,19 @@ void VtxScene::SetCurrent() {
 	wxGLCanvas::SetCurrent();
 #endif
 }
+
+bool VtxScene::motionKeypressed(wxKeyCode key) {
+	bool keystate=wxGetKeyState(key);
+	if(wxGetKeyState(WXK_LEFT) ||wxGetKeyState(WXK_RIGHT)){
+		return true;
+	}
+	if(!keystate)
+		return false;
+	if(key==KEY_UP ||  key==KEY_DOWN)
+		return true;
+	return false;
+}
+
 wxGLContext *VtxScene::GetContext(){
 	return m_glRC;
 }

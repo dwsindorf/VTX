@@ -156,7 +156,7 @@ public:
                                   _fog=1.0;
                                   _blend=0.5;
                                   _darken=0.5;
-                                  _image_quality=90.0;
+                                  _image_quality=95.0;
                                   flags.mode=SHOW_SHADER;
                                   flags.showface=FRONT;
                                   flags.markers=SHOW_REFS;

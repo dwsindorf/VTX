@@ -72,7 +72,7 @@ public:
     ViewFrame *incr() 				{ return frames++;}
     ViewFrame *decr()				{ return frames--;}
     ViewFrame *pop()				{ return frames.pop();}
-   int index()						{ return frames.index();}
+    int index()						{ return frames.index();}
     ViewFrame *lerp(ViewFrame *f1, ViewFrame *f2, double f);
 	void save(FILE *fp,ViewFrame*);
 	void save(FILE *fp,View *v,ViewFrame*);

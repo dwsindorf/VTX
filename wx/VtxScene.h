@@ -35,6 +35,7 @@ class VtxScene: public wxGLCanvas
     wxGLContext* m_glRC;
     wxString  scene_name;
     void clear_canvas();
+    bool motionKeypressed(wxKeyCode key);
 
 public:
     VtxScene(wxWindow *parent, wxWindowID id = wxID_ANY,
@@ -76,6 +77,8 @@ public:
     int  automv();
     void clear_views();
     void rebuild();
+    void rebuild_all();
+
     void reset_view();
     void set_surface_view();
     void set_orbital_view();
@@ -84,6 +87,9 @@ public:
     bool scene_dialog_showing();
     void show_image_dialog();
     bool image_dialog_showing();
+    void show_movie_dialog();
+    bool movie_dialog_showing();
+
     void show_funct_dialog();
     bool funct_dialog_showing();
     void set_fkey_help(int);

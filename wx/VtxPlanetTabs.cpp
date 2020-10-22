@@ -294,5 +294,5 @@ void VtxPlanetTabs::updateControls(){
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider,obj->diffuse);
 	updateColor(ShadowSlider,obj->shadow_color);
-	object_name->SetValue(object_node->node->nodeName());
+	//object_name->SetValue(object_node->node->nodeName());
 }

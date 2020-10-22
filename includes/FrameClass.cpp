@@ -172,7 +172,7 @@ void ViewFrame::save(FILE *fp,FrameMgr *mgr)
 	case GLOBAL:
 		fprintf(fp,"%sview=GLOBAL;\n",tabs);
 		if(point.length()>LY)
-			fprintf(fp,"%sorigin=Point(%g ly,%g ly %g ly);\n",
+			fprintf(fp,"%sorigin=Point(%g ly,%g ly, %g ly);\n",
 				    tabs,point.x/LY, point.y/LY, point.z/LY);
 		else 
 			fprintf(fp,"%sorigin=Point(%g ,%g,%g);\n",
@@ -261,7 +261,7 @@ void ViewFrame::save(FILE *fp,View *v,FrameMgr *mgr)
 	case GLOBAL:
 	    if(point != v->spoint){
 		if(point.length()>LY)
-			sprintf(tmp+strlen(tmp),"%sorigin=Point(%g ly,%g ly %g ly);\n",
+			sprintf(tmp+strlen(tmp),"%sorigin=Point(%g ly,%g ly, %g ly);\n",
 				    tabs,point.x/LY, point.y/LY, point.z/LY);
 		else 
 			sprintf(tmp+strlen(tmp),"%sorigin=Point(%g ,%g,%g);\n",
@@ -401,9 +401,9 @@ void FrameMgr::clip()
 {
 	if(frames.size<1 || frames.atend())
 		return;
-	ViewFrame *v=frames.first();
+	ViewFrame *v;
 	ViewFrame *f=frames.at();
-	
+	//frames.se();
 	frames++;
 	while((v=frames.pop())>0){
 		if(v==frames.first() || v==f)

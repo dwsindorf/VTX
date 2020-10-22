@@ -883,7 +883,9 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 		return 0;
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
-	submenu->Append(TABS_ADD|i++,"Default");
+//	submenu->Append(TABS_ADD|i++,"Empty");
+	submenu->Append(TABS_ADD|i++,"Random");
+
 	submenu->AppendSeparator();
 	flist.ss();
 	while((fsym=flist++)>0){

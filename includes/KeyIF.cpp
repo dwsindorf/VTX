@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <iostream>
 
+
+
 using std::cout;
 using std::endl;
 
@@ -407,16 +409,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 			TheScene->scan_left();
 			break;
 		case FN_MOVIE:  // record live move
-			if(TheScene->movie->size()==0)
-				TheScene->movie_open();
-			else{
-				TheScene->movie_rewind();
-				TheScene->movie_save();
-			}
-			TheScene->set_intrp(1);
-			TheScene->movie_record_video();
-			TheScene->movie_play();
-			break;
+			TheScene->record_movie_from_path();
 		}
 		break;
 
@@ -812,3 +805,4 @@ void KeyIF::set_key(unsigned &state,unsigned key)
 		standard_key(state, key);
 	get_state(state);
 }
+

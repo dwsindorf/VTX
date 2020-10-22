@@ -12,7 +12,9 @@ class ModelSym;
 #endif
 enum {
    FILE_JPG = 0,
-   FILE_BMP = 1
+   FILE_BMP = 1,
+   FILE_MP4 = 2,
+   FILE_AVI = 3
 };
 
 class FileUtil

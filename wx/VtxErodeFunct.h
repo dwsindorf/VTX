@@ -9,7 +9,7 @@ class VtxErodeFunct : public VtxFunctMgr
 	DECLARE_CLASS(VtxErodeFunct)
 protected:
 	void AddControlsTab(wxWindow *panel);
-	SliderCtrl *StartSlider;
+	//SliderCtrl *StartSlider;
 	ExprSliderCtrl *FillAmplSlider;
 	ExprSliderCtrl *FillLevelSlider;
 	ExprSliderCtrl *FillMarginSlider;
@@ -39,7 +39,7 @@ public:
 				const wxString& name = wxNotebookNameStr);
 
 	~VtxErodeFunct(){
-		delete StartSlider;
+		//delete StartSlider;
 		delete FillAmplSlider;
 		delete FillLevelSlider;
 		delete FillMarginSlider;
@@ -49,7 +49,7 @@ public:
 		delete SlopeMaxSlider;
 		delete SlopeDropSlider;
 	}
-	DEFINE_SLIDER_EVENTS(Start)
+	//DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(FillAmpl)
 	DEFINE_SLIDER_EVENTS(FillLevel)
 	DEFINE_SLIDER_EVENTS(FillMargin)
@@ -57,7 +57,6 @@ public:
 
 	DEFINE_SLIDER_EVENTS(SlopeAmpl)
     DEFINE_SLIDER_EVENTS(SlopeMin)
-
 	DEFINE_SLIDER_EVENTS(SlopeMax)
 	DEFINE_SLIDER_EVENTS(SlopeDrop)
 

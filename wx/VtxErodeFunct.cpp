@@ -46,7 +46,7 @@ BEGIN_EVENT_TABLE(VtxErodeFunct, wxNotebook)
 EVT_CHECKBOX(ID_SQR,VtxErodeFunct::OnChangeEvent)
 EVT_CHECKBOX(ID_SS,VtxErodeFunct::OnChangeEvent)
 
-SET_SLIDER_EVENTS(START,VtxErodeFunct,Start)
+//SET_SLIDER_EVENTS(START,VtxErodeFunct,Start)
 SET_SLIDER_EVENTS(FILL_AMPL,VtxErodeFunct,FillAmpl)
 SET_SLIDER_EVENTS(FILL_TRANS,VtxErodeFunct,FillTransport)
 

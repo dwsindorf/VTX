@@ -107,7 +107,7 @@ void View::reset()
 	eye=Point(0,0,1);
 	normal=Point(0,1,0);
 	center=Point(0,0,1);
-	angle_change=5.0;
+	angle_change=1.0;
 	fov=dflt_fov;
 	view_step=2.0;
 	zoom=vstride=hstride=1;
@@ -1266,7 +1266,6 @@ void View::move_left()
 		theta+=d*cos(RPD*h);
 		phi+=d*sin(RPD*h);
 		adjust_view();
-
 	}
 	set_forward();
 	set_changed_position();
@@ -1357,7 +1356,8 @@ void View::auto_delh()
 
 void View::reset_stride()
 {
-    vstride=hstride=1;
+    hstride=2.0;
+    vstride=0.02;
     gstride=0.1*LY;
     auto_delv();
     auto_delh();

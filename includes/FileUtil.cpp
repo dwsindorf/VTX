@@ -630,7 +630,7 @@ int FileUtil::deleteDirectoryFiles(char *path,char *type)
     if((file_stat.st_mode & S_IFMT)==S_IFDIR){
      	printf("deleting (files) in %s\n",path);
     	char tmp[256];
-    	sprintf(tmp,"rm %s/%s",path,type);
+    	sprintf(tmp,"rm -f %s/%s",path,type);
     	::system(tmp);
     }
 	return 1;
@@ -651,7 +651,7 @@ int FileUtil::deleteDirectory(char *path)
     if((file_stat.st_mode & S_IFMT)==S_IFDIR){
      	printf("deleting (dir) %s\n",path);
     	char tmp[256];
-    	sprintf(tmp,"rm %s/*.*",path);
+    	sprintf(tmp,"rm -f %s/*.*",path);
     	::system(tmp);
     	sprintf(tmp,"rmdir %s",path);
     	::system(tmp);

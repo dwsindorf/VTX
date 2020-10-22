@@ -31,6 +31,7 @@
 #include <vtx_automv.xpm>
 #include <vtx_question.xpm>
 #include <vtx_small_icon.xpm>
+#include <vtx_movie.xpm>
 //#include <eyemove.xpm>
 //#include <modelmove.xpm>
 //#include <resetmove.xpm>
@@ -102,6 +103,7 @@ enum {
       IDM_HELP_FKEYS    = 200,
     IDM_VIEW_OBJSDLG    = 350,
     IDM_VIEW_IMAGEDLG   = 351,
+    IDM_VIEW_MOVIEDLG   = 352,
     IDM_HELP_ABOUT      = 400
 };
 
@@ -148,6 +150,8 @@ BEGIN_EVENT_TABLE(VtxFrame, wxFrame)
 	EVT_UPDATE_UI(IDM_VIEW_OBJSDLG,VtxFrame::OnUpdateObjsDlg)
 	EVT_MENU(IDM_VIEW_IMAGEDLG,VtxFrame::OnImageDlg)
 	EVT_UPDATE_UI(IDM_VIEW_IMAGEDLG,VtxFrame::OnUpdateImageDlg)
+	EVT_MENU(IDM_VIEW_MOVIEDLG,VtxFrame::OnMovieDlg)
+	EVT_UPDATE_UI(IDM_VIEW_MOVIEDLG,VtxFrame::OnUpdateMovieDlg)
 
 
  END_EVENT_TABLE()
@@ -181,7 +185,7 @@ VtxFrame::VtxFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
     make_menubar();
     vtxframe=this;
 }
-static int repeat_rate=10;
+static int repeat_rate=20;
 //-------------------------------------------------------------
 // VtxFrame::start_timer() start the refresh counter
 //-------------------------------------------------------------
@@ -290,6 +294,7 @@ void VtxFrame::make_tbar1()
         TB1_filesave,
         TB1_vtx_image,
         TB1_vtx_view_image,
+        TB1_vtx_movie,
         TB1_undo,
         TB1_redo,
         TB1_vtx_move_orbit,
@@ -377,6 +382,11 @@ void VtxFrame::make_tbar1()
     INIT_TB1_BMP(image_dialog);
     m_tbar1->AddTool(IDM_VIEW_IMAGEDLG, _T("Image Editor"),
         toolBarBitmaps[TB1_image_dialog], _T("Open Image Editor"), wxITEM_CHECK);
+
+    INIT_TB1_BMP(vtx_movie);
+    m_tbar1->AddTool(IDM_VIEW_MOVIEDLG, _T("Movie"),
+        toolBarBitmaps[TB1_vtx_movie], _T("Edit Movie"), wxITEM_CHECK);
+
 
     m_tbar1->Realize();
 }
@@ -808,7 +818,7 @@ void VtxFrame::OnUpdateAutotm(wxUpdateUIEvent& event)
    // causes "can't check item" error in wxWidgets 3.1
    //   line 710 src/gtk/menu.cpp getKind() returns invalid type
    //   instead of wxITEM_CHECK
-   // event.Check(m_canvas->autotm());
+    event.Check(m_canvas->autotm());
 }
 //-------------------------------------------------------------
 // VtxFrame::OnUpdateAutomv() update automv gui
@@ -816,7 +826,7 @@ void VtxFrame::OnUpdateAutotm(wxUpdateUIEvent& event)
 void VtxFrame::OnUpdateAutomv(wxUpdateUIEvent& event)
 {
 	// also causes "can't check item" error in wxWidgets 3.1
-    //event.Check(m_canvas->automv());
+    event.Check(m_canvas->automv());
 }
 
 //-------------------------------------------------------------
@@ -849,6 +859,22 @@ void VtxFrame::OnImageDlg(wxCommandEvent& WXUNUSED(event))
 void VtxFrame::OnUpdateImageDlg(wxUpdateUIEvent& event)
 {
 	event.Check(m_canvas->image_dialog_showing());
+}
+
+//-------------------------------------------------------------
+// VtxFrame::OnMovieDlg()
+//-------------------------------------------------------------
+void VtxFrame::OnMovieDlg(wxCommandEvent& WXUNUSED(event))
+{
+	m_canvas->show_movie_dialog();
+}
+
+//-------------------------------------------------------------
+// VtxFrame::OnUpdateMovieDlg()
+//-------------------------------------------------------------
+void VtxFrame::OnUpdateMovieDlg(wxUpdateUIEvent& event)
+{
+	event.Check(m_canvas->movie_dialog_showing());
 }
 
 //-------------------------------------------------------------
