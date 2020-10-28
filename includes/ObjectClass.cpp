@@ -109,7 +109,7 @@ double  Object3D::far_height()
 }
 
 //-------------------------------------------------------------
-// Object3D::max_height() 	return ht uncertainty
+// Object3D::max_height() 	return ht range as fraction of size
 //-------------------------------------------------------------
 double  Object3D::max_height()
 {

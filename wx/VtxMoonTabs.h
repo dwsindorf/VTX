@@ -3,9 +3,8 @@
 
 #include "VtxTabsMgr.h"
 
-class VtxMoonTabs : public VtxTabsMgr
-{
-	DECLARE_CLASS(VtxMoonTabs)
+class VtxMoonTabs: public VtxTabsMgr {
+DECLARE_CLASS(VtxMoonTabs)
 protected:
 	SliderCtrl *CellSizeSlider;
 	SliderCtrl *SizeSlider;
@@ -16,6 +15,8 @@ protected:
 	SliderCtrl *DaySlider;
 	SliderCtrl *RotPhaseSlider;
 	SliderCtrl *YearSlider;
+	SliderCtrl *SymmetrySlider;
+	SliderCtrl *HscaleSlider;
 
 	SliderCtrl *ShineSlider;
 	ColorSlider *AmbientSlider;
@@ -26,20 +27,13 @@ protected:
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
-	Moon *object() 		{ return ((Moon*)(object_node->node));}
-	double parentSize(){
-		return ((Planet*)(object()->getParent()))->size;
-	}
 
 public:
-	VtxMoonTabs(wxWindow* parent,
-			wxWindowID id,
-			const wxPoint& pos = wxDefaultPosition,
-			const wxSize& size = wxDefaultSize,
-			long style = 0,
-			const wxString& name = wxNotebookNameStr);
+	VtxMoonTabs(wxWindow *parent, wxWindowID id, const wxPoint &pos =
+			wxDefaultPosition, const wxSize &size = wxDefaultSize, long style =
+			0, const wxString &name = wxNotebookNameStr);
 
-	~VtxMoonTabs(){
+	~VtxMoonTabs() {
 		delete CellSizeSlider;
 		delete SizeSlider;
 		delete TiltSlider;
@@ -55,72 +49,102 @@ public:
 		delete EmissionSlider;
 		delete DiffuseSlider;
 		delete ShadowSlider;
+		delete SymmetrySlider;
+		delete HscaleSlider;
 	}
-	bool Create(wxWindow* parent,
-				wxWindowID id,
-				const wxPoint& pos = wxDefaultPosition,
-				const wxSize& size = wxDefaultSize,
-				long style = 0,
-				const wxString& name = wxNotebookNameStr);
+	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
+			wxDefaultPosition, const wxSize &size = wxDefaultSize, long style =
+			0, const wxString &name = wxNotebookNameStr);
 
 	int showMenu(bool);
+
+	Planetoid* object() {
+		return ((Planetoid*) (object_node->node));
+	}
+
 	void updateControls();
+	void OnEndSizeSlider(wxScrollEvent &event) {
+		SizeSlider->setValueFromSlider();
+		Planetoid *obj = object();
+		double val = SizeSlider->getValue() * MILES;
+		obj->size = val;
+		TheView->set_changed_detail();
+		TheScene->rebuild_all();
+	}
+	void OnSizeSlider(wxScrollEvent &event) {
+		SizeSlider->setValueFromSlider();
+	}
+	void OnSizeText(wxCommandEvent &event) {
+		SizeSlider->setValueFromText();
+		double val = SizeSlider->getValue() * MILES;
+		object()->size = val;
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
 
-    void OnEndSizeSlider(wxScrollEvent& event){
-    	SizeSlider->setValueFromSlider();
-    	Planetoid *obj=object();
-        double val=SizeSlider->getValue()*MILES;
-        obj->size=val;
-        obj->invalidate();
-        TheView->set_changed_detail();
-        TheScene->rebuild();
-    }
-    void OnSizeSlider(wxScrollEvent& event){
-    	SizeSlider->setValueFromSlider();
-    }
-    void OnSizeText(wxCommandEvent& event){
-    	SizeSlider->setValueFromText();
-    	double val=SizeSlider->getValue()*MILES;
-        object()->size=val;
-        object()->invalidate();
-        TheView->set_changed_detail();
-        TheScene->rebuild();
-    }
+	void OnEndSymmetrySlider(wxScrollEvent &event) {
+		SymmetrySlider->setValueFromSlider();
+		Planetoid *obj = object();
+		double val = SymmetrySlider->getValue();
+		obj->symmetry = val;
+		TheView->set_changed_detail();
+		TheScene->rebuild_all();
+	}
+	void OnSymmetrySlider(wxScrollEvent &event) {
+		SymmetrySlider->setValueFromSlider();
+	}
+	void OnSymmetryText(wxCommandEvent &event) {
+		SymmetrySlider->setValueFromText();
+		Planetoid *obj = object();
+		double val = SymmetrySlider->getValue();
+		obj->symmetry = val;
+		TheView->set_changed_detail();
+		TheScene->rebuild_all();
+	}
+	void OnEndHscaleSlider(wxScrollEvent &event) {
+		HscaleSlider->setValueFromSlider();
+		Planetoid *obj = object();
+		double val = HscaleSlider->getValue();
+		obj->hscale = val * MILES / obj->size;
+		obj->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
+	void OnHscaleSlider(wxScrollEvent &event) {
+		HscaleSlider->setValueFromSlider();
+	}
+	void OnHscaleText(wxCommandEvent &event) {
+		HscaleSlider->setValueFromText();
+		Planetoid *obj = object();
+		double val = HscaleSlider->getValue();
+		object()->hscale = val * MILES / obj->size;
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
 
-    void OnEndCellSizeSlider(wxScrollEvent& event){
-    	Spheroid *obj=object();
-    	OnSliderValue(CellSizeSlider, obj->detail);
-        obj->invalidate();
-        TheView->set_changed_detail();
-        TheScene->rebuild();
-    }
-    void OnCellSizeSlider(wxScrollEvent& event){
-    	CellSizeSlider->setValueFromSlider();
-    }
-    void OnCellSizeText(wxCommandEvent& event){
-    	Spheroid *obj=object();
-    	OnSliderText(CellSizeSlider, obj->detail);
-        obj->invalidate();
-        TheView->set_changed_detail();
-        TheScene->rebuild();
-    }
+	void OnEndCellSizeSlider(wxScrollEvent &event) {
+		Spheroid *obj = object();
+		OnSliderValue(CellSizeSlider, obj->detail);
+		obj->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
+	void OnCellSizeSlider(wxScrollEvent &event) {
+		CellSizeSlider->setValueFromSlider();
+	}
+	void OnCellSizeText(wxCommandEvent &event) {
+		Spheroid *obj = object();
+		OnSliderText(CellSizeSlider, obj->detail);
+		obj->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
 
-    void OnEndOrbitRadiusSlider(wxScrollEvent& event){
-    	double val;
-    	OnSliderValue(OrbitRadiusSlider, val);
-    	object()->orbit_radius=val*parentSize();
-    }
-    void OnOrbitRadiusSlider(wxScrollEvent& event){
-    	OrbitRadiusSlider->setValueFromSlider();
-    }
-    void OnOrbitRadiusText(wxCommandEvent& event){
-       	double val;
-    	OnSliderText(OrbitRadiusSlider, val);
-       	object()->orbit_radius=val*parentSize();
-    }
-
-    DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
-    DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
+	DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius)
+	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
+	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
 	DEFINE_SLIDER_VAR_EVENTS(Tilt,object()->tilt)
 	DEFINE_SLIDER_VAR_EVENTS(Day,object()->day)
 	DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
@@ -132,10 +156,10 @@ public:
 	DEFINE_COLOR_VAR_EVENTS(Emission,object()->emission)
 	DEFINE_COLOR_VAR_EVENTS(Shadow,object()->shadow_color)
 
-    void OnViewObj(wxCommandEvent& event);
-    void OnUpdateViewObj(wxUpdateUIEvent& event);
+	void OnViewObj(wxCommandEvent &event);
+	void OnUpdateViewObj(wxUpdateUIEvent &event);
 
-	DECLARE_EVENT_TABLE()
+DECLARE_EVENT_TABLE()
 };
 
 #endif /*MOON_TABS_H*/

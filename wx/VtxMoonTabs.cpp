@@ -13,9 +13,13 @@ enum{
 	ID_NAME_TEXT,
     ID_CELLSIZE_SLDR,
     ID_CELLSIZE_TEXT,
-
     ID_RADIUS_SLDR,
     ID_RADIUS_TEXT,
+	ID_HSCALE_SLDR,
+	ID_HSCALE_TEXT,
+	ID_SYMMETRY_SLDR,
+	ID_SYMMETRY_TEXT,
+
     ID_ORBIT_RADIUS_SLDR,
     ID_ORBIT_RADIUS_TEXT,
     ID_ORBIT_PHASE_SLDR,
@@ -60,6 +64,9 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxMoonTabs::OnNameText)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxMoonTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxMoonTabs,Size)
+SET_SLIDER_EVENTS(HSCALE,VtxMoonTabs,Hscale)
+SET_SLIDER_EVENTS(SYMMETRY,VtxMoonTabs,Symmetry)
+
 SET_SLIDER_EVENTS(TILT,VtxMoonTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxMoonTabs,Day)
 SET_SLIDER_EVENTS(YEAR,VtxMoonTabs,Year)
@@ -176,6 +183,21 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
+	HscaleSlider = new SliderCtrl(panel, ID_HSCALE_SLDR, "Ht(mls)", LABEL2B,
+			VALUE2, SLIDER2);
+	HscaleSlider->setRange(0, 200);
+	HscaleSlider->setValue(12);
+
+	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	SymmetrySlider = new SliderCtrl(panel, ID_SYMMETRY_SLDR, "Sym", LABEL2S,
+			VALUE2, SLIDER2);
+	SymmetrySlider->setRange(0.1, 2.0);
+	SymmetrySlider->setValue(1.0);
+	hline->Add(SymmetrySlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	DaySlider=new SliderCtrl(panel,ID_DAY_SLDR,"Day(hrs)",LABEL2B, VALUE2,SLIDER2);
 	DaySlider->setRange(0,200);
@@ -197,8 +219,8 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	OrbitRadiusSlider=new SliderCtrl(panel,ID_ORBIT_RADIUS_SLDR,"Radius",LABEL2B, VALUE2,SLIDER2);
-	OrbitRadiusSlider->setRange(1,100);
+	OrbitRadiusSlider=new SliderCtrl(panel,ID_ORBIT_RADIUS_SLDR,"Radius(x1e3)",LABEL2B, VALUE2,SLIDER2);
+	OrbitRadiusSlider->setRange(1,200);
 	OrbitRadiusSlider->setValue(1);
 
 	hline->Add(OrbitRadiusSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -275,7 +297,7 @@ void VtxMoonTabs::updateControls(){
 	Moon *obj=object();
 	updateSlider(SizeSlider,obj->size/MILES);
 	updateSlider(CellSizeSlider,obj->detail);
-	updateSlider(OrbitRadiusSlider,obj->orbit_radius/parentSize());
+	updateSlider(OrbitRadiusSlider,obj->orbit_radius/1000/MILES);
 	updateSlider(OrbitPhaseSlider,obj->orbit_phase);
 	updateSlider(OrbitTiltSlider,obj->orbit_skew);
 	updateSlider(TiltSlider,obj->tilt);
@@ -283,6 +305,9 @@ void VtxMoonTabs::updateControls(){
 	updateSlider(DaySlider,obj->day);
 	updateSlider(YearSlider,obj->year);
 	updateSlider(ShineSlider,obj->shine);
+	updateSlider(HscaleSlider, obj->hscale *obj->size/ MILES);
+	updateSlider(SymmetrySlider, obj->symmetry);
+
 	updateColor(AmbientSlider,obj->ambient);
 	updateColor(EmissionSlider,obj->emission);
 	updateColor(SpecularSlider, obj->specular);

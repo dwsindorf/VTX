@@ -798,9 +798,9 @@ void MapNode::test_backfacing()
 		set_backfacing(CBF);
 }
 
-#define VCLIP     // enable viewobj clip  test
-#define PCLIP     // enable parent sphere clip  test
-#define ZCLIP     // enable dmax clip  test
+//#define VCLIP     // enable viewobj clip  test
+//#define PCLIP     // enable parent sphere clip  test
+//#define ZCLIP     // enable dmax clip  test
 //-------------------------------------------------------------
 // MapNode::clipchk()	return 1 if vertex is clipped by the current
 //						view window, else return 0
@@ -827,14 +827,14 @@ int MapNode::clipchk(Point pnt)
 	y=p.my(TheScene->projMatrix)/z;
     if(y < -t || y >t)
         return 1;
+
     t*=TheScene->aspect;
 	x=p.mx(TheScene->projMatrix)/z;
     if(x < -t|| x >t)
         return 1;
 
-	dist=TheScene->epoint.distance(p);
-
 #ifdef ZCLIP
+	dist=TheScene->epoint.distance(p);
 	if(TheMap->dmax>0&& dist>TheMap->dmax+esize)
         return 1;
 #endif
@@ -1022,7 +1022,7 @@ void MapNode::vischk()
 	    // tag node as clipped only is all surfaces
 	    // are clipped.
 		MapData *d=data.surface1();
-		bool clp=true;
+		bool clp=false;
 		while(d){
 			Point p=d->point();
 			if(!clipchk(p)){

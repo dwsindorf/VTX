@@ -25,26 +25,26 @@
 #define TABS_HEIGHT 320
 #endif
 #ifndef TABS_WIDTH
-#define TABS_WIDTH 420
+#define TABS_WIDTH 460
 #endif
-#define LABEL    60
+#define LABEL    70
 #ifndef LABEL2
-#define LABEL2   60
+#define LABEL2   70
 #endif
 #ifndef LABEL2B
 #define LABEL2B  LABEL2+15
 #endif
 #define LABEL2S  LABEL2-15
 
-#define VALUE    40
-#define VALUE2   40
-#define SLIDER   260
-#define CBOX1    40
+#define VALUE    50
+#define VALUE2   50
+#define SLIDER   270
+#define CBOX1    50
 #define CSLIDER  SLIDER-CBOX1
-#define VALUE3   30
-#define CBOX3    30
-#define SLIDER2  80
-#define CSLIDER2 100-CBOX3
+#define VALUE3   40
+#define CBOX3    40
+#define SLIDER2  90
+#define CSLIDER2 110-CBOX3
 
 #define DEFINE_SLIDER_EVENTS(NAME) \
     void OnEnd##NAME##Slider(wxScrollEvent& event){ \
@@ -147,10 +147,7 @@ enum{
 	TABS_ID_MASK 			= 0x00FF,
 	TABS_ACTION_MASK 		= 0xFF00,
 	TABS_NONE               = 0x0000,
-	TABS_ADD    			= 0x0100,
-	TABS_ADD_CHILD  		= 0x0100,
-	TABS_ADD_SIBLING  		= 0x0300,
-	TABS_INSERT_CHILD  		= 0x0500,
+	TABS_ADD    			= 0x0300,
 	TABS_OPEN  				= 0x0800,
 
 	TABS_DELETE  			= 0x0800,

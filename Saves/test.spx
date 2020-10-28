@@ -1,27 +1,32 @@
 Scene() {
-	drawmode=1;
 	View{
 		view=SURFACE;
-		phi=27.0923;
-		theta=248.607;
-		height=662.486 ft;
-		gndlvl=5335.27 ft;
-		time=6.8153e+06;
-		heading=-180;
+		phi=14.7546;
+		theta=35.0574;
+		height=34.2977 miles;
+		gndlvl=-318512 ft;
+		time=65278;
 		tilt=-5;
-		angle=5;
+		angle=2;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=460.341 ft;
-		gndlvl=5537.42 ft;
+		height=6 ft;
+		gndlvl=0 ft;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
 	}
 	Universe {
 		Galaxy(20000) {
-			name="Milky Way";
-			origin=Point(20000,0,0);
+			name="Uncharted";
 			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
@@ -29,56 +34,50 @@ Scene() {
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
 				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
+				Color(1.000,0.278,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				name="Solor";
-				origin=Point(-2000,0,0);
-				Star(1.5,0.01) {
-					color=Color(1,1,0.8);
-					day=100;
+				Star(0.5,0) {
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1,0.82);
-					name="Sol";
+					emission=Color(1,1,1);
 					specular=Color(1,1,1);
-					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
-					Surface{
-						terrain=
-								Texture("star1",BORDER|S,noise(RIDGED|FS,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),1,1.3212,1.05456,2.3,1,2,1,0);
-					}
-					Corona(8.86371) {
-						color1=Color(1,1,0.98);
-						color2=Color(0.97,0.83,0.4);
-						gradient=1;
+					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.0015,36) {
-					ambient=Color(0.94,0.95,0.95,0);
-					day=58.65;
-					diffuse=Color(0.87,0.89,0.99);
-					name="Mercury";
-					shadow=Color(0,0,0,0.95);
-					shine=8.77663;
-					specular=Color(1,0.96,0.86);
-					sunset=0.01;
-					year=87.97;
-					albedo=0.73;
-					image("ridges",INVT|NORM,256,256,noise(ERODED|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
-					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
-						Color(0.502,0.502,0.502),
-						Color(0.063,0.063,0.063),
-						Color(0.502,0.502,0.502));
+				Planet(0.004,40) {
+					day=24;
+					symmetry=0.9;
+					diffuse=Color(1,1,1,0.58);
+					hscale=0.025;
+					specular=Color(1,1,1,0.15);
+					tilt=5.8032;
+					water.albedo=0.37096;
+					water.clarity=812.068 ft;
+					water.color1=Color(0,1,1,0.29);
+					water.level=-300000 ft;
+					water.shine=27.42;
+					year=100;
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
-								noise(UNS|RO1,1,5,0.5,0.2))+
-								Texture("ridges",BUMP|NTEX,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
-								Texture("craters3",BUMP|NTEX|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
-								Texture("Shist1",BORDER|BUMP,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+
-								Texture("mercury",BORDER|LINEAR|S,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);
+						terrain=water(0)
+								Z(noise(RIDGED,1,12,0.5,0.5,2))+
+								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
+					}
+					Sky(0.00413565) {
+						color=Color(0,0.9,0.9);
+						symmetry=0.9;
+						density=0.43548;
+						name="Sky";
+						resolution=1.62904;
+						specular=Color(1,1,1);
 					}
 				}
 			}

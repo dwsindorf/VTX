@@ -603,7 +603,7 @@ void Scene::open(char *fn)
 
     ViewFrame *frame;
     frame=views->first();
-	if(!frame->vobj && viewobj)
+	if(frame && !frame->vobj && viewobj)
 	    frame->vobj=(ObjectNode*)views->getViewExpr(viewobj);
 	views->getObjects();
 	frame=views->se();
@@ -2302,6 +2302,7 @@ void Scene::render_objects()
 	if(viewobj)
 		viewobj->init_render();
 	info_enabled=Render.display(OBJINFO);
+
 	for(bgpass=BGMAX;bgpass>=FGMAX;bgpass--){
 	 	pass_group();
 		if(passobjs()){
@@ -2310,7 +2311,7 @@ void Scene::render_objects()
 			//cout << bgpass << endl;
 			render_bgpass();
 			//if(bgpass>FGMAX && TheScene->inside_sky())
-				if(bgpass>FGMAX && !Raster.farview())
+			if(bgpass>FGMAX && !Raster.farview())
 				clear_zbuffer();
 			pass_reset();
 		}

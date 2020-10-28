@@ -342,6 +342,7 @@ class Star : public Spheroid
 public:
 
 	Star(Orbital *m, double s, double r);
+	~Star();
 
 	void map_color(MapData*, Color&);
 	void set_lights();
@@ -365,8 +366,11 @@ class Shell : public Spheroid
 public:
 	Shell(Orbital *m);
 	Shell(Orbital *m, double s);
+	~Shell();
 	const char *name()			{ return "Shell";}
 	int  type()					{ return ID_SHELL;}
+	double ht;
+	//virtual void init();
     virtual void render_object();
     virtual void adapt_object();
 	virtual void set_geometry();
@@ -400,6 +404,7 @@ public:
 	double     haze_zfar;
 
 	Sky(Orbital *m, double s);
+	~Sky();
 	const char *name()			{ return "Sky";}
 	int  type()					{ return ID_SKY;}
 	void init_render();
@@ -427,6 +432,7 @@ public:
 	Color      color1;
 	Color      color2;
 	Corona(Orbital *m, double s);
+	~Corona();
 	const char *name()			{ return "Corona";}
 	int  type()					{ return ID_CORONA;}
 	void map_color(MapData*,Color&);
@@ -503,6 +509,7 @@ public:
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);
+	~Planetoid();
 	const char *name()			{ return "Planetoid";}
 	int  type()					{ return ID_PLANET;}
 	virtual void set_lighting();
@@ -528,6 +535,8 @@ class Planet : public Planetoid
 {
 public:
 	Planet(Orbital *m, double s, double r);
+	~Planet();
+
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
 };
@@ -539,6 +548,8 @@ class Moon : public Planetoid
 {
 public:
 	Moon(Planet *m, double s, double r);
+	~Moon();
+
 	const char *name()			{ return "Moon";}
 	int  type()					{ return ID_MOON;}
 };
@@ -552,6 +563,8 @@ public:
 	double width;
 	double inner_radius;
 	Ring(Planet *m, double s, double r);
+	~Ring();
+
 	void set_tilt();
 	const char *name()			{ return "Ring";}
 	int  type()					{ return ID_RING;}

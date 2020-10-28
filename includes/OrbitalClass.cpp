@@ -28,7 +28,9 @@ extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
 extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double scale);
-//#define DEBUG_OBJS
+#define DEBUG_OBJS
+#define DEBUG_BASE_OBJS
+
 //#define DEBUG_SAVE  // show name on save
 
 #define CSET(name,value,test) exprs.set_var(name,value,value!=test)
@@ -1589,8 +1591,8 @@ Spheroid::Spheroid(Orbital *m, double s) :
 	terrain.parent=&exprs;   // Scope parent
 	terrain.setParent(this); // NodeIF parent
 	exprs.setParent(this);
-#ifdef DEBUG_OBJS
-	printf("Spheroid\n");
+#ifdef DEBUG_BASE_OBJS
+	//printf("    Spheroid\n");
 #endif
 }
 Spheroid::Spheroid(Orbital *m, double s, double r) :
@@ -1604,7 +1606,7 @@ Spheroid::Spheroid(Orbital *m, double s, double r) :
 	terrain.parent=&exprs;   // Scope parent
 	terrain.setParent(this); // NodeIF parent
 	exprs.setParent(this);
-#ifdef DEBUG_OBJS
+#ifdef DEBUG_BASE_OBJS
 	printf("Spheroid\n");
 #endif
 	set_clip_children();
@@ -1615,8 +1617,8 @@ Spheroid::~Spheroid()
 	if(map)
 		delete map;
 	map=0;
-#ifdef DEBUG_OBJS
-	printf("~Spheroid\n");
+#ifdef DEBUG_BASE_OBJS
+	printf("    ~Spheroid\n");
 #endif
 }
 TNode *Spheroid::add_expr(int t, char *s, TNode *r)
@@ -2128,6 +2130,7 @@ double Spheroid::height(double t, double p)
 void Spheroid::set_geometry()
 {
 	map->radius=size;
+	map->symmetry=symmetry;
 	Hscale=map->hscale=hscale;
 	Gscale=1/hscale/size;
 	Rscale=size*hscale;
@@ -2309,6 +2312,12 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 	printf("Star\n");
 #endif
 	shadows_exclude();
+}
+Star::~Star()
+{
+#ifdef DEBUG_OBJS
+	printf("~Star\n");
+#endif
 }
 
 //-------------------------------------------------------------
@@ -2520,14 +2529,21 @@ int Star::render_pass()
 Planetoid::Planetoid(Orbital *m, double s, double r) :
 	Spheroid(m,s,r)
 {
+	//hscale=0.004;
 	water_color1=def_water_color1;
 	water_color2=def_water_color2;
 	fog_color=def_fog_color;
 	water_specular=def_water_specular;
 	water_shine=def_water_shine;
 
-#ifdef DEBUG_OBJS
+#ifdef DEBUG_BASE_OBJS
 	printf("Planetoid\n");
+#endif
+}
+Planetoid::~Planetoid()
+{
+#ifdef DEBUG_BASE_OBJS
+	printf("  ~Planetoid\n");
 #endif
 }
 
@@ -3076,6 +3092,12 @@ Planet::Planet(Orbital *m, double s, double r) : Planetoid(m,s,r)
 	printf("Planet\n");
 #endif
 }
+Planet::~Planet()
+{
+#ifdef DEBUG_OBJS
+	printf("~Planet\n");
+#endif
+}
 
 //************************************************************
 // Moon class
@@ -3086,16 +3108,25 @@ Moon::Moon(Planet *m, double s, double r) : Planetoid(m,s,r)
 	printf("Moon\n");
 #endif
 }
+Moon::~Moon()
+{
+#ifdef DEBUG_OBJS
+	printf("~Moon\n");
+#endif
+}
+
 //************************************************************
 // Shell class
 //************************************************************
 Shell::Shell(Orbital *m) : Spheroid(m,0.0,0.0)
 {
-#ifdef DEBUG_OBJS
+#ifdef DEBUG_BASE_OBJS
 	printf("Shell\n");
 #endif
-    if(m)
+    if(m){
         size=m->size;
+        symmetry=((Spheroid*)m)->symmetry;
+    }
 	set_geometry();
 	select_exclude();
 	shadows_exclude();
@@ -3103,13 +3134,21 @@ Shell::Shell(Orbital *m) : Spheroid(m,0.0,0.0)
 }
 Shell::Shell(Orbital *m, double s) : Spheroid(m,s,0.0)
 {
-#ifdef DEBUG_OBJS
+#ifdef DEBUG_BASE_OBJS
 	printf("Shell\n");
 #endif
+	ht=s-m->size;
+	symmetry=((Spheroid*)m)->symmetry;
 	set_geometry();
 	select_exclude();
 	shadows_exclude();
 	set_cargs(1);
+}
+Shell::~Shell()
+{
+#ifdef DEBUG_BASE_OBJS
+	printf("  ~Shell\n");
+#endif
 }
 
 //-------------------------------------------------------------
@@ -3160,6 +3199,16 @@ void Shell::adapt_object()
 void Shell::set_geometry()
 {
 	Spheroid::set_geometry();
+	Object3D *parent=getParent();
+	if(parent){
+		double dht=size-parent->size;
+		if(dht!=ht){
+			size=parent->size+ht;
+			map->size=size;
+		}
+		symmetry=((Spheroid*)parent)->symmetry;
+		map->symmetry=symmetry;
+	}
 	map->frontface=GL_BACK;
 	map->lighting=0;
 	map->set_transparant(1);
@@ -3173,11 +3222,12 @@ int  Shell::scale(double &zn, double &zf)
     int t=Object3D::scale(zn,zf);
 
     // calculate distance to sky, tangent to horizon
+    // TODO:need to calc max_height from parent's terrain z min/max
 
 	double s=TheScene->epoint.distance(point);
 	if(parent){
 		double a=0,b=0,r,h;
-		h=2*parent->max_height();
+		h=5*parent->max_height();
 		r=(1-h)*parent->size;
 		if(s>r)
 			a=sqrt(s*s-r*r);
@@ -3245,6 +3295,12 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 	haze_color=def_haze_color;
 	density=0.01;
 	detail=2;
+}
+Sky::~Sky()
+{
+#ifdef DEBUG_OBJS
+	printf("~Sky\n");
+#endif
 }
 
 //-------------------------------------------------------------
@@ -3396,7 +3452,7 @@ void Sky::set_ref()
 		day=((Orbital*)parent)->day;
 	}
 	Spheroid::set_ref();
-	day=tilt=0;
+	//day=tilt=0;
 }
 
 
@@ -3764,6 +3820,9 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 }
 CloudLayer::~CloudLayer()
 {
+#ifdef DEBUG_OBJS
+	printf("~CloudLayer\n");
+#endif
 }
 
 
@@ -4501,6 +4560,13 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	//inner_radius=m->size;
 	inner_radius=0;
 }
+Corona::~Corona()
+{
+#ifdef DEBUG_OBJS
+	printf("~Corona\n");
+#endif
+}
+
 
 //-------------------------------------------------------------
 // Corona::get_vars() reserve interactive variables
@@ -4778,6 +4844,12 @@ Ring::Ring(Planet *m, double s, double r) : Spheroid(m,s)
 	select_exclude();
 	fg_include();
 	detail=3;
+}
+Ring::~Ring()
+{
+#ifdef DEBUG_OBJS
+	printf("~Ring\n");
+#endif
 }
 
 //-------------------------------------------------------------
