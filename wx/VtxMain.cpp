@@ -83,9 +83,15 @@ bool VtxApp::OnInit()
         	//sargs[nargs++]=(wxChar*)argv[i].wx_str();
         }	
     }
+    wxString  filename("");
+	if(infile){
+		char name[64];
+		File.getFileName(infile,name);
+		filename=wxString(name);
+	}
+
     // Create the main frame window
-    VtxFrame *frame = new VtxFrame(NULL, wxT("VTX"),
-        wxPoint(10,10), wxSize(w, h));
+    VtxFrame *frame = new VtxFrame(NULL, filename, wxPoint(10,10), wxSize(w, h));
 
 	VtxScene *vs=new VtxScene(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSUNKEN_BORDER);
     frame->SetCanvas(vs);
@@ -98,12 +104,7 @@ bool VtxApp::OnInit()
 
     set_fixed_font(); // set fixed font for opengl text
     
-    wxString  filename("Startup Scene");
-    if(infile){
-    	char name[64];
-    	File.getFileName(infile,name);
-        filename=wxString(name);
-    }
+
     vs->SetSceneName(filename);
     vs->Refresh();
 

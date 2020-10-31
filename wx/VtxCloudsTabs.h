@@ -9,7 +9,7 @@ class VtxCloudsTabs : public VtxTabsMgr
 protected:
 
 	SliderCtrl *CellSizeSlider;
-	SliderCtrl *SizeSlider;
+	SliderCtrl *HeightSlider;
 	SliderCtrl *TiltSlider;
 	SliderCtrl *DaySlider;
 	SliderCtrl *RotPhaseSlider;
@@ -47,6 +47,11 @@ protected:
 	void getObjAttributes();
 	void setObjAttributes();
 
+	void invalidateObject() {
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
 
 public:
 	VtxCloudsTabs(wxWindow* parent,
@@ -66,22 +71,23 @@ public:
 	int showMenu(bool);
 	void updateControls();
 
-    void OnEndSizeSlider(wxScrollEvent& event){
+    void OnHeightSlider(wxScrollEvent& event){
     	double val;
-    	OnSliderValue(SizeSlider, val);
-    	object()->size=MILES*val+parentSize();
-        object()->invalidate();
-        TheScene->rebuild();
+    	OnSliderValue(HeightSlider, val);
+    	object()->ht=MILES*val;
+    	object()->size=object()->ht+parentSize();
+    	invalidateObject();
+    	TheView->set_changed_detail();
+    	TheScene->rebuild();
     }
-    void OnSizeSlider(wxScrollEvent& event){
-    	SizeSlider->setValueFromSlider();
-    }
-    void OnSizeText(wxCommandEvent& event){
+    void OnHeightText(wxCommandEvent& event){
     	double val;
-    	OnSliderText(SizeSlider, val);
-    	object()->size=MILES*val+parentSize();
-        object()->invalidate();
-        TheScene->rebuild();
+    	OnSliderText(HeightSlider, val);
+    	object()->ht=MILES*val;
+    	object()->size=object()->ht+parentSize();
+    	invalidateObject();
+    	TheView->set_changed_detail();
+    	TheScene->rebuild();
     }
 
     void OnEndCellSizeSlider(wxScrollEvent& event){

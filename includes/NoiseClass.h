@@ -244,6 +244,7 @@ public:
 	static double theta;
 	static double phi;
 	static double shift;
+	static double rseed;
 	static int nfact;
 
 	Noise();

@@ -44,7 +44,7 @@
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
-
+#define TEST
 // define all resource ids here
 enum {
 	ID_OK               = 0,
@@ -249,10 +249,25 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 
 	char sbuff[1024];
 	ModelSym* sym=0;
+	bool rand_flag=false;
 	if((menu_action & TABS_ADD) || (menu_action & TABS_OPEN)){
+		bool rand=false;
 		char sbuff[1024];
-		if(menu_action & TABS_ADD)
+
+		if(menu_action & TABS_ADD){
 			sym=add_list[menu_id];
+
+			wxString name(sym->name());
+			if(!sym->isFile() && name == "<Random>"){
+				LinkedList<ModelSym*>flist;
+				TheScene->model->getFileList(sym->value,flist);
+				int start=menu_id + 1;
+				int end=start+flist.size;
+				menu_id = start + ( std::rand() % ( end - start));
+				sym=add_list[menu_id];
+				rand_flag=true;
+			}
+		}
 		else
 			sym=open_list[menu_id];
 		if(sym){
@@ -289,6 +304,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		break;
 	case TABS_ADD:
 		if(newobj){
+			newobj->setRandom(rand_flag);
 			newobj=addToTree(newobj,id);
 			TheScene->regroup();
 	        obj->invalidate();
@@ -768,10 +784,10 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 
 	if(n==node){
 		selectedId=parent;
-		//cout << node->typeName();
-		//if(strlen(tnode->label()))
-		//	cout <<"<"<<tnode->label() <<">";
-		//cout<<endl;
+//		cout << node->typeName();
+//		if(strlen(tnode->label()))
+//			cout <<"<"<<tnode->label() <<">";
+//		cout<<endl;
 		treepanel->SelectItem(selectedId);
 		treepanel->EnsureVisible(selectedId);
 		return;
@@ -883,11 +899,13 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 		return 0;
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
-	//submenu->Append(TABS_ADD|i++,"Empty");
-	submenu->Append(TABS_ADD|i++,"Random");
+	submenu->Append(TABS_ADD|i++,"Simple");
 
 	submenu->AppendSeparator();
 	flist.ss();
+
+	add_list.add(new ModelSym("<Random>",sym->value));
+	submenu->Append(TABS_ADD|i++,"<Random>");
 	while((fsym=flist++)>0){
 		add_list.add(fsym);
 		submenu->Append(TABS_ADD|i++,fsym->name());

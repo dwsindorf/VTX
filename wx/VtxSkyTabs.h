@@ -69,13 +69,15 @@ public:
     void OnHeightSlider(wxScrollEvent& event){
     	double val;
     	OnSliderValue(HeightSlider, val);
-    	object()->size=MILES*val+parentSize();
+    	object()->ht=MILES*val;
+    	object()->size=object()->ht+parentSize();
     	invalidateObject();
     }
     void OnHeightText(wxCommandEvent& event){
     	double val;
     	OnSliderText(HeightSlider, val);
-    	object()->size=MILES*val+parentSize();
+    	object()->ht=MILES*val;
+    	object()->size=object()->ht+parentSize();
     	invalidateObject();
     }
     void OnEndCellSizeSlider(wxScrollEvent& event){

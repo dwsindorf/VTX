@@ -24,9 +24,10 @@ enum {
 
 // bits that control runtime behavior
 enum {
+	RTM_RANDOM      = 0x00100000,
 	RTM_DISABLED    = 0x00200000,
 	RTM_ANIMATE     = 0x00400000,
-	RTM_FLAGS       = 0x00600000
+	RTM_FLAGS       = 0x00700000
 };
 
 
@@ -95,6 +96,8 @@ public:
 	void setShowing(bool b)     { if(b) clrFlag(NODE_HIDE); else setFlag(NODE_HIDE); }
 	bool isShowing()			{ return getFlag(NODE_HIDE) ? false:true;}
 
+	bool isRandom()             { return getFlag(RTM_RANDOM) ? false:true;}
+	void setRandom(bool b)      { if(b) clrFlag(RTM_RANDOM); else setFlag(RTM_RANDOM); }
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}
 	virtual bool isEnabled()           { return getFlag(RTM_DISABLED) ? false:true;}

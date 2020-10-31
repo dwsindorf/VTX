@@ -29,7 +29,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double scale);
 #define DEBUG_OBJS
-#define DEBUG_BASE_OBJS
+//#define DEBUG_BASE_OBJS
 
 //#define DEBUG_SAVE  // show name on save
 
@@ -128,6 +128,7 @@ void Orbital::set_defaults()
 	albedo=DEFAULT_ALBEDO;
 	shine=DEFAULT_SHINE;
 	sunset=0.2;
+	rseed=0;
 	Gscale=1;
 }
 
@@ -368,6 +369,7 @@ void Orbital::get_vars()
 	}
 	VGET("shine",shine,DEFAULT_SHINE);
 	VGET("sunset",sunset,0.2);
+	VGET("rseed",rseed,0.0);
 }
 
 //-------------------------------------------------------------
@@ -392,7 +394,9 @@ void Orbital::set_vars()
 	CSET("diffuse",diffuse,Color(1,1,1,1));
 	//VSET("albedo",albedo,DEFAULT_ALBEDO);
 	VSET("shine",shine,DEFAULT_SHINE);
-	VSET("sunset",sunset,0.2);}
+	VSET("sunset",sunset,0.2);
+	VSET("rseed",rseed,0.0);
+}
 
 //-------------------------------------------------------------
 // Orbital::save() 	archiving routine
@@ -2325,7 +2329,7 @@ Star::~Star()
 //-------------------------------------------------------------
 void Star::get_vars()
 {
-	Orbital::get_vars();
+	Spheroid::get_vars();
 	if(exprs.get_local("emission",Td))
 		emission=Td.c;
 	else
@@ -2345,7 +2349,7 @@ void Star::get_vars()
 //-------------------------------------------------------------
 void Star::set_vars()
 {
-    Orbital::set_vars();
+	Spheroid::set_vars();
     CSET("specular",specular,Color(1.0,1.0,0.9,1.0));
     CSET("diffuse",diffuse,Color(1.0,1.0,0.9,1.0));
     CSET("emission",emission,Color(1.0,1.0,0.9,1.0));
@@ -2944,7 +2948,7 @@ void Planetoid::adapt_object()
 	//if(TheScene->viewobj==this && !TheScene->view->changed_model())
 //		map->render_zvals(); // set parant occlusion mask in zbuffer
 	//map->set_render_ftob();
-
+	TheNoise.rseed=rseed;
     Spheroid::adapt_object();
 }
 
@@ -3137,8 +3141,10 @@ Shell::Shell(Orbital *m, double s) : Spheroid(m,s,0.0)
 #ifdef DEBUG_BASE_OBJS
 	printf("Shell\n");
 #endif
-	ht=s-m->size;
-	symmetry=((Spheroid*)m)->symmetry;
+	if(m){
+		ht=s-m->size;
+		symmetry=((Spheroid*)m)->symmetry;
+	}
 	set_geometry();
 	select_exclude();
 	shadows_exclude();
@@ -3204,11 +3210,13 @@ void Shell::set_geometry()
 		double dht=size-parent->size;
 		if(dht!=ht){
 			size=parent->size+ht;
-			map->size=size;
 		}
 		symmetry=((Spheroid*)parent)->symmetry;
 		map->symmetry=symmetry;
+		map->radius=size;
 	}
+	else
+		cout<<"NO PARENT"<<endl;
 	map->frontface=GL_BACK;
 	map->lighting=0;
 	map->set_transparant(1);

@@ -21,8 +21,8 @@ enum{
     ID_CELLSIZE_SLDR,
     ID_CELLSIZE_TEXT,
 
-    ID_RADIUS_SLDR,
-    ID_RADIUS_TEXT,
+    ID_HEIGHT_SLDR,
+    ID_HEIGHT_TEXT,
     ID_TILT_SLDR,
     ID_TILT_TEXT,
     ID_ROT_PHASE_SLDR,
@@ -73,7 +73,9 @@ BEGIN_EVENT_TABLE(VtxCloudsTabs, wxNotebook)
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxCloudsTabs::OnNameText)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxCloudsTabs,CellSize)
-SET_SLIDER_EVENTS(RADIUS,VtxCloudsTabs,Size)
+EVT_COMMAND_SCROLL(ID_HEIGHT_SLDR,VtxCloudsTabs::OnHeightSlider)
+EVT_TEXT_ENTER(ID_HEIGHT_TEXT,VtxCloudsTabs::OnHeightText)
+
 SET_SLIDER_EVENTS(TILT,VtxCloudsTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxCloudsTabs,Day)
 SET_SLIDER_EVENTS(ROT_PHASE,VtxCloudsTabs,RotPhase)
@@ -118,7 +120,7 @@ VtxCloudsTabs::VtxCloudsTabs(wxWindow* parent,
 VtxCloudsTabs::~VtxCloudsTabs(){
 
 	delete CellSizeSlider;
-	delete SizeSlider;
+	delete HeightSlider;
 	delete TiltSlider;
 	delete DaySlider;
 	delete RotPhaseSlider;
@@ -207,11 +209,11 @@ void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
     object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
     hline= new wxBoxSizer(wxHORIZONTAL);
 
-    SizeSlider=new SliderCtrl(panel,ID_RADIUS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
-	SizeSlider->setRange(10,100);
-	SizeSlider->setValue(20);
-	SizeSlider->slider->SetToolTip("Layer Height (Miles)");
-	hline->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+    HeightSlider=new SliderCtrl(panel,ID_HEIGHT_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
+	HeightSlider->setRange(10,100);
+	HeightSlider->setValue(20);
+	HeightSlider->slider->SetToolTip("Layer Height (Miles)");
+	hline->Add(HeightSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	TiltSlider=new SliderCtrl(panel,ID_TILT_SLDR,"Tilt",LABEL2S, VALUE2,SLIDER2);
 	TiltSlider->setRange(0,360);
@@ -380,7 +382,7 @@ void VtxCloudsTabs::getObjAttributes(){
 
 	double val=(obj->size-parentSize())/MILES;
 	updateSlider(CellSizeSlider,obj->detail);
-	updateSlider(SizeSlider,val);
+	updateSlider(HeightSlider,val);
 	updateSlider(TiltSlider,obj->tilt);
 	updateSlider(RotPhaseSlider,obj->rot_phase);
 	updateSlider(DaySlider,obj->day);
@@ -433,6 +435,8 @@ void VtxCloudsTabs::getObjAttributes(){
 void VtxCloudsTabs::setObjAttributes(){
 	update_needed=true;
 	TNclouds *tnode=object()->getClouds();
+	if(!tnode)
+		return;
 
 	object()->invalidate();
 

@@ -362,7 +362,7 @@ double Noise::dflt_L=2.0;
 double Noise::dflt_H=0.5;
 double Noise::min_order=0;
 double Noise::max_order=32;
-
+double Noise::rseed=0;
 double Noise::offset=0.5;
 double Noise::scale=0.5;
 double Noise::aspect=1;
@@ -669,15 +669,15 @@ double Noise::value(int i)
 double Noise::eval(int type,int n, double *args)
 {
     domain=type & ROFF;
-    if(domain){
-		shift=offsets[domain];
+    if(domain || rseed){
+		shift=offsets[domain]+rseed;
 	    POINT[0]=P0[0]+shift;
 	    POINT[1]=P0[1]+shift;
 	    POINT[2]=P0[2]+shift;
 	    POINT[3]=P0[3]+shift;
 	}
 	else
-		shift=0;
+		shift=rseed;
  	double val=0;
 	switch(type&NTYPES){
 	case GRADIENT:

@@ -55,6 +55,7 @@ protected:
     char name_str[maxstr];
 public:
 	ExprMgr exprs;
+	double rseed;
 	double rot_angle;
 	double orbit_angle;
 	double rot_phase;

@@ -159,9 +159,9 @@ BEGIN_EVENT_TABLE(VtxFrame, wxFrame)
 //-------------------------------------------------------------
 // VtxFrame::VtxFrame() constructor
 //-------------------------------------------------------------
-VtxFrame::VtxFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
+VtxFrame::VtxFrame(wxFrame *frame, const wxString& filename, const wxPoint& pos,
     const wxSize& size, long style)
-    : wxFrame(frame, wxID_ANY, title, pos, size, style)
+    : wxFrame(frame, wxID_ANY, filename, pos, size, style)
     , m_timer(this, TIMER_ID)
 {
 	::wxInitAllImageHandlers();
@@ -178,8 +178,11 @@ VtxFrame::VtxFrame(wxFrame *frame, const wxString& title, const wxPoint& pos,
     File.makeFilePath(File.images,"snapshot",path);
     m_last_image=wxString(path);
     m_last_itype=FILE_JPG;
-    path[0]=0;
-    File.makeFilePath(File.saves,"untitled",path);
+    wxString infile("untitled");
+    if(filename!="")
+    	infile=filename;
+    SetTitle("VTX-"+infile);
+    File.makeFilePath(File.saves,(char*)infile.ToAscii(),path);
     m_last_scene=wxString(path);
     make_tbar1();
     make_menubar();

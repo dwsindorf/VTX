@@ -1,28 +1,20 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=14.7546;
-		theta=35.0574;
-		height=34.2977 miles;
-		gndlvl=-318512 ft;
+		view=ORBITAL;
+		phi=-8.3606;
+		theta=358.726;
+		height=0.00604561;
+		gndlvl=-246464 ft;
 		time=65278;
-		tilt=-5;
-		angle=2;
+		heading=90;
+		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=6 ft;
-		gndlvl=0 ft;
-	}
-	View{
-		view=ORBITAL;
 		height=0.008;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
+		gndlvl=-142756 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -34,7 +26,7 @@ Scene() {
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
 				Color(0.502,1.000,1.000),
-				Color(1.000,0.278,0.000),
+				Color(1.000,0.282,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
@@ -43,10 +35,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -54,30 +46,29 @@ Scene() {
 				}
 				Planet(0.004,40) {
 					day=24;
-					symmetry=0.9;
 					diffuse=Color(1,1,1,0.58);
-					hscale=0.025;
-					specular=Color(1,1,1,0.15);
-					tilt=5.8032;
-					water.albedo=0.37096;
-					water.clarity=812.068 ft;
-					water.color1=Color(0,1,1,0.29);
-					water.level=-300000 ft;
-					water.shine=27.42;
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=water(0)
-								Z(noise(RIDGED,1,12,0.5,0.5,2))+
+						terrain=Z(50*noise(RIDGED,1,12,0.5,0.5,2))+
 								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
 					}
-					Sky(0.00413565) {
+					Sky(0.00410245) {
 						color=Color(0,0.9,0.9);
-						symmetry=0.9;
-						density=0.43548;
+						day=24;
+						density=0.2;
 						name="Sky";
-						resolution=1.62904;
+						rseed=0.641133;
 						specular=Color(1,1,1);
+					}
+					Clouds(0.00406245) {
+						crot=1;
+						name="Clouds";
+						rseed=0.641133;
+						Surface{
+							terrain=clouds()
+									Color(1,1,1,noise(1,5));
+						}
 					}
 				}
 			}

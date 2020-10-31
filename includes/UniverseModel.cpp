@@ -113,12 +113,15 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 	case TN_CORONA:
 		((Corona*)child)->size=psize*6;
 		((Corona*)child)->size*=1+0.25*SRand();
+		((Corona*)child)->ht=((Corona*)child)->size-psize;
 		break;
 	case TN_CLOUDS:
 		((CloudLayer*)child)->size=psize*(1+0.01*(1+Rand()));
+		((CloudLayer*)child)->ht=((CloudLayer*)child)->size-psize;
 		break;
 	case TN_SKY:
 		((Sky*)child)->size=psize*(1+0.02*(1+0.5*Rand()));
+		((Sky*)child)->ht=((Sky*)child)->size-psize;
 		break;
 	case TN_MOON:
 		((Moon*)child)->size=0.05*psize*(1+0.5*SRand());
@@ -130,6 +133,10 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		((Ring*)child)->inner_radius=1.20*psize*(1+0.25*Rand());
 		((Ring*)child)->set_geometry();
 		break;
+	}
+	if(child){
+		if(((Orbital*)child)->isRandom())
+			((Orbital*)child)->rseed=Rand();
 	}
 	return 1;
 }
