@@ -134,8 +134,8 @@ int FileUtil::fileExists(char *dir,char *fn)
 // FileUtil::read a file
 //-------------------------------------------------------------
 FILE *FileUtil::readFile(char *dir, char *fn){
-    char path[256];
-    char base[256];
+    char path[MAXSTR];
+    char base[MAXSTR];
     getBaseDirectory(base);
     sprintf(path,"%s/%s/%s",base,dir,fn);
     return fopen(path, "rb");
@@ -145,7 +145,7 @@ FILE *FileUtil::readFile(char *dir, char *fn){
 // FileUtil::write a  file
 //-------------------------------------------------------------
 void FileUtil::makeFilePath(char *dir, char *fn, char *path){
-    char base[256];
+    char base[MAXSTR];
     getBaseDirectory(base);
     makeSubDirectory(base,dir,path);
     if(fn)
@@ -156,7 +156,7 @@ void FileUtil::makeFilePath(char *dir, char *fn, char *path){
 // FileUtil::write a  file
 //-------------------------------------------------------------
 FILE *FileUtil::writeFile(char *dir, char *fn){
-    char path[256];
+    char path[MAXSTR];
     makeFilePath(dir,fn,path);
     return fopen(path, "wb");
 }
@@ -342,7 +342,7 @@ int FileUtil::fileExists(char *f)
 //-------------------------------------------------------------
 void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 {
-	char path[256];
+	char path[MAXSTR];
 	struct _finddata_t c_file;
     long hFile;
 	sprintf(path,"%s%s%s",dir,separator,"*");
@@ -367,8 +367,8 @@ void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&list)
 {
 	char cdir[MAXSTR];
-	char name[256];
-	char path[256];
+	char name[MAXSTR];
+	char path[MAXSTR];
 	GetCurrentDirectory(MAXSTR,cdir);
 	::SetCurrentDirectory(dir);
 	WIN32_FIND_DATA data;
@@ -409,7 +409,7 @@ int FileUtil::deleteDirectoryFiles(char *path)
 //-------------------------------------------------------------
 int FileUtil::deleteDirectoryFiles(char *dir,char *xt)
 {
-    char path[256];
+    char path[MAXSTR];
 	char ext[16];
 	if(xt[0]=='*')
 		strcpy(ext,xt+1);
@@ -447,14 +447,14 @@ int FileUtil::deleteDirectory(char *path)
 
 void FileUtil::getCurrentDirectory(char *dir)
 {
-    static char cdir[256];
+    static char cdir[MAXSTR];
     static int init=1;
     cdir[0]=0;
     if(init){
 	    ::system("pwd>tmp");
 	    FILE *fp;
 	     if((fp = fopen("tmp", "rb")) != NULL){
-		    fgets(cdir,256,fp);
+		    fgets(cdir,MAXSTR,fp);
 		    fclose(fp);
 	    }
 	    ::system("rm tmp");
@@ -467,7 +467,7 @@ bool FileUtil::setCurrentDirectory(char *dir)
 {
     if(!fileExists(dir))
         return false;
- 	char buff[256];
+ 	char buff[MAXSTR];
  	sprintf(buff,"cd %s",dir);
 	::system(buff);
 	return true;
@@ -476,7 +476,7 @@ bool FileUtil::setCurrentDirectory(char *dir)
 void FileUtil::getBaseDirectory(char *dir)
 {
     // assume that base dir=../ from sx executable
-	static char tmp[256]={0};
+	static char tmp[MAXSTR]={0};
     static int init=1;
     if(init){
 		getCurrentDirectory(tmp);
@@ -497,7 +497,7 @@ int FileUtil::getSubDirectory(char *pdir, char *sdir, char *buff)
 void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 {
 
-	char path[256];
+	char path[MAXSTR];
 
     DIR *dirp;
     struct dirent *dp;
@@ -539,7 +539,7 @@ void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&li
 	}
 	//errno=0; // reset before calling readdir
 	while((pfile=readdir(pdir))>0) {
-	    char name[256];
+	    char name[MAXSTR];
     	strcpy(name,pfile->d_name);
     	if(strstr(name,"_alpha")!=NULL)
     		continue;
@@ -548,7 +548,7 @@ void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&li
     	if(iname){
     	    char *fext=strtok(NULL,".");
     	    if(fext && !strcmp(fext,sext)){
-    			char path[256];
+    			char path[MAXSTR];
     			sprintf(path,"%s%s%s",dir,separator,pfile->d_name);
     		    sorted.add(new ModelSym(name,path));
     		}
@@ -571,7 +571,7 @@ int FileUtil::makeSubDirectory(char *pdir, char *sdir,char *path)
     sprintf(path,"%s%s%s",pdir,separator,sdir);
     if(fileExists(path))
         return 1;
- 	char buff[256];
+ 	char buff[MAXSTR];
  	sprintf(buff,"mkdir %s",path);
 	::system(buff);
 	return fileExists(path);
@@ -586,7 +586,7 @@ int FileUtil::moveFile(char *p, char *f)
 		return 0;
 	if(!fileExists(f))
 		return 0;
-	char tmp[256];
+	char tmp[MAXSTR];
     sprintf(tmp,"mv %s %s",p,f);
 	::system(tmp);
 
@@ -599,7 +599,7 @@ int FileUtil::moveFile(char *p, char *f)
 int FileUtil::deleteFile(char *s)
 {
     if(fileExists(s)){
-    	char tmp[256];
+    	char tmp[MAXSTR];
     	sprintf(tmp,"rm %s",s);
 		::system(tmp);
 		return 1;
@@ -629,7 +629,7 @@ int FileUtil::deleteDirectoryFiles(char *path,char *type)
     }
     if((file_stat.st_mode & S_IFMT)==S_IFDIR){
      	printf("deleting (files) in %s\n",path);
-    	char tmp[256];
+    	char tmp[MAXSTR];
     	sprintf(tmp,"rm -f %s/%s",path,type);
     	::system(tmp);
     }
@@ -650,7 +650,7 @@ int FileUtil::deleteDirectory(char *path)
     }
     if((file_stat.st_mode & S_IFMT)==S_IFDIR){
      	printf("deleting (dir) %s\n",path);
-    	char tmp[256];
+    	char tmp[MAXSTR];
     	sprintf(tmp,"rm -f %s/*.*",path);
     	::system(tmp);
     	sprintf(tmp,"rmdir %s",path);

@@ -57,6 +57,7 @@ enum standard_keys{
 	KEY_MARK_VIEW       = '=',
 	KEY_UNDO_MOVE       = 'z',
 	KEY_CLEAR_VIEWS     = 'Z',
+	KEY_RAND_SEED       = 'I',
 
 	KEY_CMND_YYDEBUG   	= 'y',
 	KEY_CMND_QUIT 	 	= 'q',

@@ -34,7 +34,7 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 
     wxSize sz = GetSize();
 
-	Image *img=images.load(m_name.ToAscii(),BMP|JPG);
+	Image *img=images.load((char*)m_name.ToAscii(),BMP|JPG);
 	if(img !=0){
 		int h=img->height;
 		int w=img->width;

@@ -17,11 +17,15 @@ protected:
 	void changeVarName();
 	void setVarExpr();
 	void getObjAttributes();
+	bool varExists(wxString s);
 
 	TerrainMgr *getMgr();
 
 	wxComboBox *m_list;
 	ExprTextCtrl   *m_expr;
+	wxButton	*m_newvar;
+	wxButton	*m_rmvar;
+	wxButton	*m_savevar;
 	int last_selection;
 	wxString m_varname;
 	NodeIF *object() 	{ return object_node->node;}
@@ -59,6 +63,10 @@ public:
     void OnExprEdit(wxCommandEvent& event){
     	setVarExpr();
     }
+    void OnNewVar(wxCommandEvent& event);
+    void OnRmVar(wxCommandEvent& event);
+    void OnSaveVar(wxCommandEvent& event);
+    void OnUpdateBtns(wxUpdateUIEvent &event);
 
 	DECLARE_EVENT_TABLE()
 };

@@ -1,10 +1,10 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-8.3606;
-		theta=358.726;
-		height=0.00604561;
-		gndlvl=-246464 ft;
+		phi=34.4531;
+		theta=6.32812;
+		height=0.00802952;
+		gndlvl=-162207 ft;
 		time=65278;
 		heading=90;
 		pitch=-90;
@@ -13,8 +13,8 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.008;
-		gndlvl=-142756 ft;
+		height=0.00803362;
+		gndlvl=-183839 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -26,7 +26,7 @@ Scene() {
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
 				Color(0.502,1.000,1.000),
-				Color(1.000,0.282,0.000),
+				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
@@ -47,28 +47,34 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
+					hscale=0.00100695;
 					year=100;
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					bands("jupiter",ACHNL,64,0.2,1,Color(1,0.298,0.098),Color(1,0.898,0.498),
+						Color(1,1,1),
+						Color(1,1,1));
 					Surface{
-						terrain=Z(50*noise(RIDGED,1,12,0.5,0.5,2))+
-								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
+						terrain=Z(noise(RIDGED,1,22.3,0.45,0.39,2.05,1,1,0,0))+Color(noise(FS,0,14.2,1,0.5,2,2,0.55,0,-0.1),1,1,1)+
+								Texture("jupiter",BUMP|S,HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1,1.5,0.88896,1,2,1,0);
 					}
-					Sky(0.00410245) {
-						color=Color(0,0.9,0.9);
+					Clouds(0.00406125) {
+						crot=1;
+						hscale=0.05;
+						name="Clouds";
+						resolution=2.00002;
+						rseed=0.621691;
+						Surface{
+							terrain=clouds()
+									Color(1,1,1,noise(FS|NABS,1,7.2,1,0.5,2,1,1,0,0.5));
+						}
+					}
+					Sky(0.00411292) {
+						color=Color(0.52,1,1);
 						day=24;
 						density=0.2;
 						name="Sky";
-						rseed=0.641133;
+						resolution=4;
+						rseed=0.660193;
 						specular=Color(1,1,1);
-					}
-					Clouds(0.00406245) {
-						crot=1;
-						name="Clouds";
-						rseed=0.641133;
-						Surface{
-							terrain=clouds()
-									Color(1,1,1,noise(1,5));
-						}
 					}
 				}
 			}

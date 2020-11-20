@@ -1,5 +1,7 @@
 
 #include "VtxStarTabs.h"
+#include "VtxSceneDialog.h"
+
 
 //########################### ObjectAddMenu Class ########################
 enum{
@@ -7,7 +9,6 @@ enum{
 	OBJ_SHOW,
 	OBJ_VIEWOBJ,
 	OBJ_DELETE,
-	OBJ_SAVE,
 
 	ID_NAME_TEXT,
     ID_CELLSIZE_SLDR,
@@ -63,13 +64,14 @@ SET_COLOR_EVENTS(DIFFUSE,VtxStarTabs,Diffuse)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxStarTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxStarTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxStarTabs::OnSave)
 
 EVT_MENU(OBJ_SHOW,VtxStarTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxStarTabs::OnUpdateEnable)
 
 EVT_MENU(OBJ_VIEWOBJ,VtxStarTabs::OnViewObj)
 EVT_UPDATE_UI(OBJ_VIEWOBJ,VtxStarTabs::OnUpdateViewObj)
+
+SET_FILE_EVENTS(VtxStarTabs)
 
 END_EVENT_TABLE()
 
@@ -93,7 +95,6 @@ int VtxStarTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu((NodeIF*)object());
 
@@ -101,6 +102,8 @@ int VtxStarTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }

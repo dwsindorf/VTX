@@ -15,6 +15,7 @@ protected:
 	static bool initialized;
 	static void initialize();
 public:
+	static int seed;
 	static double noise4(double vec[]);
 	static double noise3(double vec[]);
 	static double noise2(double vec[]);

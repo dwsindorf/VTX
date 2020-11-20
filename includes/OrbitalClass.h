@@ -86,6 +86,9 @@ public:
 	virtual void setName(char *c);
 	virtual char *getName();
 
+    virtual bool randomize();
+    virtual bool canRandomize() { return true;}
+
 	virtual void locate();
 	virtual void set_tilt();
 	virtual void set_rotation();
@@ -357,6 +360,7 @@ public:
 	int render_pass();
 	int adapt_pass();
     void render();
+
 };
 
 //************************************************************
@@ -455,11 +459,13 @@ public:
 class CloudLayer : public Shell
 {
 protected:
-	static GLuint sprites_image;
-	void setSpritesTexture();
+	GLuint sprites_image;
+	char sprites_file[256];
+	GLuint sprites_dim;
 	TNclouds *clouds;
 
 public:
+	static char *dflt_sprites_file;
 	double     cmin;
 	double     cmax;
 	double     smax;
@@ -486,6 +492,15 @@ public:
 	bool threeD();
 	TNclouds *getClouds() { return clouds;}
 	bool force_adapt();
+	void setSpritesTexture();
+	char *getSpritesFile()       { return sprites_file;}
+	void setSpritesFile(char *s) { strcpy(sprites_file,s);}
+	void setSpritesDim(GLuint d) { sprites_dim=d;}
+	GLuint getSpritesDim()       { return sprites_dim;}
+	void setSpritesFile(char *s,GLuint dim);
+	char *getSpritesFile(GLuint &dim);
+	void getSpritesFilePath(char *);
+	void getSpritesDir(int dim,char *);
 };
 
 //************************************************************

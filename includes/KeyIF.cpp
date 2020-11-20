@@ -112,7 +112,9 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		cout << "test4="<<test4<<endl;
         TheScene->set_changed_detail();
 		break;
-
+	case KEY_RAND_SEED:
+		TheScene->setRandomSeed();
+		 break;
     case KEY_RASTER_SHADOW_MAP:
     	//Raster.shadow_test=Raster.shadow_test?0:1;
     	if(Raster.shadow_test==0)

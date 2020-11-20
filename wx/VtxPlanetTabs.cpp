@@ -1,12 +1,13 @@
 #include "VtxPlanetTabs.h"
 #include "UniverseModel.h"
+#include "VtxSceneDialog.h"
 
 //########################### ObjectAddMenu Class ########################
 enum {
 	OBJ_SHOW,
 	OBJ_VIEWOBJ,
 	OBJ_DELETE,
-	OBJ_SAVE,
+//	OBJ_SAVE,
 
 	ID_NAME_TEXT,
 	ID_CELLSIZE_SLDR,
@@ -84,13 +85,17 @@ SET_COLOR_EVENTS(SHADOW,VtxPlanetTabs,Shadow)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxPlanetTabs::OnAddItem)
 
 EVT_MENU(OBJ_DELETE,VtxPlanetTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxPlanetTabs::OnSave)
+//EVT_MENU(OBJ_SAVE,VtxPlanetTabs::OnSave)
+//EVT_MENU(OBJ_RANDOMIZE,VtxPlanetTabs::OnRandomize)
 
 EVT_MENU(OBJ_SHOW,VtxPlanetTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxPlanetTabs::OnUpdateEnable)
 
+
 EVT_MENU(OBJ_VIEWOBJ,VtxPlanetTabs::OnViewObj)
 EVT_UPDATE_UI(OBJ_VIEWOBJ,VtxPlanetTabs::OnUpdateViewObj)
+
+SET_FILE_EVENTS(VtxPlanetTabs)
 
 END_EVENT_TABLE()
 
@@ -109,8 +114,8 @@ int VtxPlanetTabs::showMenu(bool expanded) {
 	menu.AppendCheckItem(OBJ_VIEWOBJ, wxT("Set View"));
 	menu.AppendCheckItem(OBJ_SHOW, wxT("Show"));
 	menu.AppendSeparator();
+
 	menu.Append(OBJ_DELETE, wxT("Delete"));
-	menu.Append(OBJ_SAVE, wxT("Save.."));
 
 	wxMenu *addmenu = getAddMenu(object());
 
@@ -118,6 +123,8 @@ int VtxPlanetTabs::showMenu(bool expanded) {
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu, "Add");
 	}
+
+	sceneDialog->AddFileMenu(menu,object_node->node);
 	PopupMenu(&menu);
 	return menu_action;
 }
@@ -184,8 +191,8 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	HscaleSlider = new SliderCtrl(panel, ID_HSCALE_SLDR, "Ht(mls)", LABEL2B,
 			VALUE2, SLIDER2);
-	HscaleSlider->setRange(0, 200);
-	HscaleSlider->setValue(12);
+	HscaleSlider->setRange(0, 10);
+	HscaleSlider->setValue(2.5);
 
 	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 

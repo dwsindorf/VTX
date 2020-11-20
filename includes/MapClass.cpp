@@ -1116,6 +1116,7 @@ void Map::render_shaded()
 		else {
 		    RENDERLIST(SHADER_LISTS,tid,render());
 		}
+
 		Render.show_shaded();
 		reset_texs();
 	}

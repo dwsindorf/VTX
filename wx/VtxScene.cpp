@@ -23,6 +23,7 @@
 #include "Effects.h"
 #include "KeyIF.h"
 #include "GLSLMgr.h"
+#include "Perlin.h"
 
 #include "FileUtil.h"
 #include "VtxScene.h"
@@ -644,6 +645,7 @@ void VtxScene::make_scene()
     glViewport(0, 0, (GLint) width, (GLint) height);
 
     TheScene=new Scene(new UniverseModel());
+    Perlin::seed=1;
 	GLSLMgr::initGL(width,height);
     TheScene->resize(width,height);
     TheScene->init();

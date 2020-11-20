@@ -139,6 +139,7 @@
 
 #define SET_FILE_EVENTS(CLASS) \
 	    EVT_MENU(TABS_SAVE,CLASS::OnSave) \
+		EVT_MENU(TABS_RANDOMIZE,CLASS::OnRandomize) \
 		EVT_MENU_RANGE(TABS_REPLACE,TABS_REPLACE+TABS_MAX_IDS,CLASS::OnOpen) \
 		EVT_MENU_RANGE(TABS_REMOVE,TABS_REMOVE+TABS_MAX_IDS,CLASS::OnRemove) \
 
@@ -147,15 +148,14 @@ enum{
 	TABS_ID_MASK 			= 0x00FF,
 	TABS_ACTION_MASK 		= 0xFF00,
 	TABS_NONE               = 0x0000,
-	TABS_ADD    			= 0x0300,
-	TABS_OPEN  				= 0x0800,
-
+	TABS_ADD    			= 0x0200,
 	TABS_DELETE  			= 0x0800,
 	TABS_SAVE  				= 0x1000,
-	TABS_REPLACE  			= 0x1800,
-	TABS_REMOVE  			= 0x2000,
-	TABS_ENABLE   			= 0x3000,
-	TABS_VIEWOBJ  			= 0x4000,
+	TABS_RANDOMIZE  		= 0x2000,
+	TABS_REPLACE  			= 0x3000,
+	TABS_REMOVE  			= 0x4000,
+	TABS_ENABLE   			= 0x5000,
+	TABS_VIEWOBJ  			= 0x6000,
 };
 
 WX_DEFINE_ARRAY_PTR(wxCheckBox*, CheckBoxList);
@@ -166,6 +166,7 @@ class VtxTabsMgr : public wxNotebook
 protected:
 	TreeNode *object_node;
 	TextCtrl *object_name;
+
 	StaticTextCtrl *object_type;
 
 	bool update_needed;
@@ -240,6 +241,9 @@ protected:
     virtual void OnDelete(wxCommandEvent& event){
      	menu_action=TABS_DELETE;
     }
+    virtual void OnRandomize(wxCommandEvent& event){
+     	menu_action=TABS_RANDOMIZE;
+    }
     virtual void OnSave(wxCommandEvent& event){
      	menu_action=TABS_SAVE;
     }
@@ -282,7 +286,7 @@ public:
      	menu_action=event.GetId();
     }
     virtual void OnRemove(wxCommandEvent& event){
-     	menu_action=TABS_REMOVE;
+     	menu_action=event.GetId();
     }
 	//DECLARE_EVENT_TABLE()
 

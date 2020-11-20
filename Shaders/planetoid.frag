@@ -151,12 +151,11 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 void main(void) {
 #ifdef COLOR
 	vec4 color=Color;
-	bump=vec3(0.0);
 #else
 	vec4 color=vec4(1.0);
 #endif
     vec3 normal=normalize(Normal.xyz);
-    bump=vec3(0.0);
+    bump=vec3(0.0); 
 #ifdef NCC
 	NOISE_COLOR(NCC);
 #endif

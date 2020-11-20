@@ -135,6 +135,7 @@ public:
 	double		build_time;
 	int    	cells;		// total # cells in scene
 	int    	cycles;		// total adapt cycles
+	double     rseed;
 	Scene(Model *m);
 	~Scene();
 	void set_focus_object(int i){ self=i;set_changed_render();}
@@ -218,6 +219,8 @@ public:
     void *select_pass();
 	void wrect(int,int,int,int);
 	void reset_view();
+	void setSeed(double s);
+	void setRandomSeed();
 
 	// Model methods
 

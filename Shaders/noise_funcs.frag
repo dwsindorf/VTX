@@ -74,7 +74,7 @@ float corialis(float a){
 	return 0.0;
 }
 
-#define twist(a,b) corialis(a)+b+reset()
+#define twist(a,b) (corialis(a)+b+reset())
 
 // multi-order procedural 3d noise
 
@@ -107,24 +107,11 @@ vec4 Noise(int index) {
 	float clip=info.clamp*VMAX;
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
-		/*
-		if(df>1)
-			nvec=noise3D(v2*f);
-		else
-		nvec=noise3D(v1*f);
-		*/
-	    //if(df>=1)
-	    //    nvec=noise3D(v2*f);
-	   // else if(df<0.25)
-	   //     nvec=noise3D(v1*f);
-	   // else{
-	        float m=smoothstep(0.1,1.75,df);
-	        vec4 P1=noise3D(v1*f);
-	        vec4 P2=noise3D(v2*f);
-	        nvec=mix(P1,P2,m);
-	   // }
-	    
-        //nvec=noise3D(f);
+        float m=smoothstep(0.1,1.75,df);
+        vec4 P1=noise3D(v1*f);
+        vec4 P2=noise3D(v2*f);
+        nvec=mix(P1,P2,m);
+
 		nvec.yzw*=f;
 		if(nvec.x>clip+0.1*nvec.x){
 			nvec.x=clip+0.1*nvec.x;
@@ -163,7 +150,7 @@ vec4 Noise(int index) {
 		    break;
 		weight*=nvec.x*gain+info.bias;
 		weight=clamp(weight,0.0,1.0);
-	}
+	} // end for
 	if(rem>0.0)
 		result=last_val+rem*val;
 	if(info.sqr){
@@ -179,6 +166,12 @@ vec4 Noise(int index) {
 	result.x+=noise_fade*info.offset;
 	return result;	
 }
+
+float Noise1D(int i) {
+	vec4 v = Noise(i);
+	return v.x;
+}
+
 #ifdef _BUMPS_
 #ifdef VNOISE
 #define SET_NOISE(func) \

@@ -1,4 +1,5 @@
 Scene() {
+	//rseed=0.16;
 	View{
 		view=SURFACE;
 		phi=-30.7905;

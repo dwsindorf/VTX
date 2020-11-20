@@ -2,11 +2,23 @@
 #include "VtxCloudsTabs.h"
 #include "UniverseModel.h"
 #include "TerrainClass.h"
+#include "FileUtil.h"
+#include "VtxSceneDialog.h"
+
+#include <wx/dir.h>
+
 
 #undef SLIDER2
 #undef LABEL
-#define LABEL   70
-#define SLIDER2 90
+#undef LABEL1
+
+#define LABEL   80
+#define LABEL1   55
+
+#define SLIDER2 100
+#define BTNWIDTH 75
+#define BTNSIZE wxSize(BTNWIDTH,30)
+
 
 //########################### ObjectAddMenu Class ########################
 enum{
@@ -62,6 +74,11 @@ enum{
     ID_DIFFUSION_SLDR,
     ID_DIFFUSION_TEXT,
 
+	ID_SPRITES_FILE,
+	ID_FILELIST,
+
+	ID_SPRITES_DIM,
+
 };
 
 //########################### VtxCloudsTabs Class ########################
@@ -72,10 +89,10 @@ BEGIN_EVENT_TABLE(VtxCloudsTabs, wxNotebook)
 
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxCloudsTabs::OnNameText)
 
-SET_SLIDER_EVENTS(CELLSIZE,VtxCloudsTabs,CellSize)
 EVT_COMMAND_SCROLL(ID_HEIGHT_SLDR,VtxCloudsTabs::OnHeightSlider)
 EVT_TEXT_ENTER(ID_HEIGHT_TEXT,VtxCloudsTabs::OnHeightText)
 
+SET_SLIDER_EVENTS(CELLSIZE,VtxCloudsTabs,CellSize)
 SET_SLIDER_EVENTS(TILT,VtxCloudsTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxCloudsTabs,Day)
 SET_SLIDER_EVENTS(ROT_PHASE,VtxCloudsTabs,RotPhase)
@@ -89,12 +106,17 @@ SET_COLOR_EVENTS(DIFFUSE,VtxCloudsTabs,Diffuse)
 
 EVT_TEXT_ENTER(ID_TOP_EXPR,VtxCloudsTabs::OnChangedExpr)
 EVT_TEXT_ENTER(ID_BOTTOM_EXPR,VtxCloudsTabs::OnChangedExpr)
-EVT_TEXT_ENTER(ID_TYPE_EXPR,VtxCloudsTabs::OnChangedExpr)
+EVT_TEXT_ENTER(ID_TYPE_EXPR,VtxCloudsTabs::OnChangedTypeExpr)
+
+EVT_TEXT_ENTER(ID_SPRITES_FILE,VtxCloudsTabs::OnChangedFile)
 
 SET_SLIDER_EVENTS(CMIN,VtxCloudsTabs,Cmin)
 SET_SLIDER_EVENTS(CMAX,VtxCloudsTabs,Cmax)
 SET_SLIDER_EVENTS(SMAX,VtxCloudsTabs,Smax)
 SET_SLIDER_EVENTS(CROT,VtxCloudsTabs,Crot)
+
+EVT_CHOICE(ID_SPRITES_DIM,VtxCloudsTabs::OnDimSelect)
+EVT_CHOICE(ID_FILELIST,VtxCloudsTabs::OnChangedFile)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxCloudsTabs::OnAddItem)
 EVT_MENU(OBJ_SAVE,VtxCloudsTabs::OnSave)
@@ -103,6 +125,8 @@ EVT_MENU(OBJ_SHOW,VtxCloudsTabs::OnEnable)
 EVT_MENU(OBJ_DELETE,VtxCloudsTabs::OnDelete)
 
 EVT_UPDATE_UI(OBJ_SHOW,VtxCloudsTabs::OnUpdateEnable)
+
+SET_FILE_EVENTS(VtxCloudsTabs)
 
 END_EVENT_TABLE()
 
@@ -158,6 +182,8 @@ int VtxCloudsTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }
@@ -171,7 +197,10 @@ bool VtxCloudsTabs::Create(wxWindow* parent,
 {
     if (!VtxTabsMgr::Create(parent, id, pos, size,  style,name))
         return false;
-
+    image_path="";
+    changed_cell_expr=true;
+    image_dim=0;
+    image_name="";
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
     AddObjectTab(page);
     AddPage(page,wxT("Object"),true);
@@ -182,12 +211,21 @@ bool VtxCloudsTabs::Create(wxWindow* parent,
 
     page=new wxPanel(this,wxID_ANY);
     AddGeometryTab(page);
-    AddPage(page,wxT("Volume"),false);
     geometry_page=page;
 
+    page=new wxPanel(this,wxID_ANY);
+    AddImagesTab(page);
+    sprites_page=page;
 
+    add3DTabs();
     return true;
 }
+
+void VtxCloudsTabs::add3DTabs(){
+    AddPage(geometry_page,wxT("Volume"),false);
+    AddPage(sprites_page,wxT("Images"),false);
+}
+
 void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(topSizer);
@@ -202,7 +240,7 @@ void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
 	hline->AddSpacer(5);
 
 	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",LABEL2S, VALUE2,SLIDER2);
-	CellSizeSlider->setRange(1,4);
+	CellSizeSlider->setRange(1,8);
 	CellSizeSlider->setValue(1);
 	CellSizeSlider->slider->SetToolTip("Grid Size");
 	hline->Add(CellSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -256,9 +294,9 @@ void VtxCloudsTabs::AddLightingTab(wxWindow *panel){
 
 	wxStaticBoxSizer* color_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Color"));
 
-    DiffusionSlider=new SliderCtrl(panel,ID_DIFFUSION_SLDR,"Saturation",LABEL, VALUE,SLIDER);
-    DiffusionSlider->setRange(0,1);
-    color_cntrls->Add(DiffusionSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+//    DiffusionSlider=new SliderCtrl(panel,ID_DIFFUSION_SLDR,"Saturation",LABEL, VALUE,SLIDER);
+//    DiffusionSlider->setRange(0,1);
+//    color_cntrls->Add(DiffusionSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
 	ShineSlider=new SliderCtrl(panel,ID_SHINE_SLDR,"Shine",LABEL, VALUE,SLIDER);
     ShineSlider->setRange(0.25,100);
@@ -284,38 +322,34 @@ void VtxCloudsTabs::AddGeometryTab(wxWindow *panel){
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
-	wxStaticBoxSizer* shape_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Shape"));
+	wxStaticBoxSizer* shape_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("3D Shape"));
 
 	top_expr = new ExprTextCtrl(panel,ID_TOP_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
 	bottom_expr = new ExprTextCtrl(panel,ID_BOTTOM_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
-	type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
+	//type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
 
     wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	hline->Add(new wxStaticText(panel, -1, "Top", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(new wxStaticText(panel, -1, "Top", wxDefaultPosition, wxSize(60,-1)),0,wxALIGN_LEFT|wxALL,0);
 	hline->Add(top_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
-	hline->Add(new wxStaticText(panel, -1, "Bottom", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(new wxStaticText(panel, -1, "Bottom", wxDefaultPosition, wxSize(60,-1)),0,wxALIGN_LEFT|wxALL,0);
 	hline->Add(bottom_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
-	hline = new wxBoxSizer(wxHORIZONTAL);
-	hline->Add(new wxStaticText(panel, -1, "Type", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
-	hline->Add(type_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(shape_cntrls,0,wxALIGN_LEFT|wxALL,0);
 
-	wxStaticBoxSizer* size_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Sprites"));
+	wxStaticBoxSizer* size_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Sprite Properties"));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	NumSpritesSlider=new SliderCtrl(panel,ID_NUM_SPRITES_SLDR,"Num",40, 50,SLIDER2);
+	NumSpritesSlider=new SliderCtrl(panel,ID_NUM_SPRITES_SLDR,"Number",LABEL1, VALUE,SLIDER2);
 	NumSpritesSlider->setRange(1,8);
 	NumSpritesSlider->slider->SetToolTip("Number of Sprites per vertex");
     hline->Add(NumSpritesSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
-    SmaxSlider=new SliderCtrl(panel,ID_SMAX_SLDR,"Ext",40, 50,SLIDER2);
+    SmaxSlider=new SliderCtrl(panel,ID_SMAX_SLDR,"Extent",LABEL1, VALUE,SLIDER2);
     SmaxSlider->setRange(0,8);
     SmaxSlider->slider->SetToolTip("Minimum Extent");
     hline->Add(SmaxSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
@@ -324,33 +358,179 @@ void VtxCloudsTabs::AddGeometryTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-    CminSlider=new SliderCtrl(panel,ID_CMIN_SLDR,"Size",40, 50,SLIDER2);
+    CminSlider=new SliderCtrl(panel,ID_CMIN_SLDR,"Size",LABEL1, VALUE,SLIDER2);
     CminSlider->setRange(1,128);
     CminSlider->slider->SetToolTip("Minimum Point Size");
     hline->Add(CminSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
-    CmaxSlider=new SliderCtrl(panel,ID_CMAX_SLDR,"Range",40, 50,SLIDER2);
+    CmaxSlider=new SliderCtrl(panel,ID_CMAX_SLDR,"Range",LABEL1, VALUE,SLIDER2);
     CmaxSlider->setRange(1,4);
     CmaxSlider->slider->SetToolTip("Point Size Range");
     hline->Add(CmaxSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
     size_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
-    boxSizer->Add(size_cntrls,0,wxALIGN_LEFT|wxALL,0);
+    hline = new wxBoxSizer(wxHORIZONTAL);
 
-	wxStaticBoxSizer* rot_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Sprite Rotation"));
-
-	CrotSlider=new SliderCtrl(panel,ID_CROT_SLDR,"Angle",40, 50,TABS_WIDTH-130);
+	CrotSlider=new SliderCtrl(panel,ID_CROT_SLDR,"Angle",LABEL1,VALUE,SLIDER2);
 	CrotSlider->setRange(0,1,0,360);
 	CrotSlider->slider->SetToolTip("Random Rotation Angle");
-	rot_cntrls->Add(CrotSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	//rot_cntrls->Add(CrotSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	hline->Add(CrotSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
-	boxSizer->Add(rot_cntrls,0,wxALIGN_LEFT|wxALL,0);
+	DiffusionSlider=new SliderCtrl(panel,ID_DIFFUSION_SLDR,"Darken",LABEL1, VALUE,SLIDER2);
+	DiffusionSlider->setRange(0,2);
+	DiffusionSlider->slider->SetToolTip("Darken with thickness");
 
+	hline->Add(DiffusionSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	size_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	//color_cntrls->Add(DiffusionSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+
+	boxSizer->Add(size_cntrls,0,wxALIGN_LEFT|wxALL,0);
+	//boxSizer->Add(rot_cntrls,0,wxALIGN_LEFT|wxALL,0);
+
+}
+
+void VtxCloudsTabs::AddImagesTab(wxWindow *panel){
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+    wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+
+	wxStaticBoxSizer* image_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Sprites"));
+    wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	wxStaticText *lbl=new wxStaticText(panel,-1,"File",wxDefaultPosition,wxSize(25,-1));
+	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 8);
+	//hline->AddSpacer(5);
+
+    choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    choices->SetSelection(0);
+
+	hline->Add(choices,0,wxALIGN_LEFT|wxALL,2);
+
+
+	wxString offsets[]={"1x","4x","9x","16x","25x"};
+
+	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
+	sprites_dim->SetSelection(3);
+	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
+
+	lbl=new wxStaticText(panel,-1,"Cell",wxDefaultPosition,wxSize(25,-1));
+	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 8);
+
+	type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
+	hline->Add(type_expr->getSizer(),0,wxALIGN_LEFT|wxALL,2);
+
+	image_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	image_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(200,200));
+	hline->Add(image_window, 0, wxALIGN_LEFT|wxALL, 0);
+	cell_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(200,200));
+	hline->AddSpacer(10);
+
+	hline->Add(cell_window, 0, wxALIGN_LEFT|wxALL, 0);
+	image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Images"));
+	image_sizer->Add(hline, 0, wxALIGN_LEFT|wxALL,2);
+	boxSizer->Add(image_sizer,0,wxALIGN_LEFT|wxALL,0);
+}
+
+void  VtxCloudsTabs::invalidateObject() {
+	setObjAttributes();
+	object()->invalidate();
+	TheView->set_changed_detail();
+	TheScene->rebuild();
+}
+void VtxCloudsTabs::OnChangedTypeExpr(wxCommandEvent& event){
+    changed_cell_expr=true;
+	invalidateObject();
 }
 
 void VtxCloudsTabs::OnChangedExpr(wxCommandEvent& event){
 	invalidateObject();
+}
+
+void VtxCloudsTabs::OnChangedFile(wxCommandEvent& event){
+	invalidateObject();
+}
+
+void VtxCloudsTabs::OnDimSelect(wxCommandEvent& event){
+	int dim=sprites_dim->GetSelection();
+	dim+=1;
+	makeFileList(dim,(char*)image_name.ToAscii());
+	invalidateObject();
+}
+
+void VtxCloudsTabs::setTypePanel(){
+	if(image_window->imageOk()&&changed_cell_expr){
+		GLuint dim=sprites_dim->GetSelection()+1;
+		TNclouds *tnode=object()->getClouds();
+		double args[6];
+		getargs((TNarg*)tnode->left,args,3);
+		int cell = (int)args[2];
+		int max_cell=dim*dim-1;
+		cell=cell>max_cell?max_cell:cell;
+		cell=cell<0?0:cell;
+		int y=cell/dim;
+		int x=cell-y*dim;
+		cout<<"cell:"<<cell<<" x:"<<x<<" y:"<<y<<endl;
+
+		wxRect r(x,y,dim,dim);
+		//cell_window->setName((char*)image_path.ToAscii());
+		cell_window->setSubImage(r);
+		cell_window->scaleImage();
+		cout<<"setting type panel:"<<cell_window->getName()<<endl;
+
+		changed_cell_expr=false;
+	}
+}
+
+void VtxCloudsTabs::setImagePanel(){
+	char sdir[256];
+	object()->getSpritesFilePath(sdir);
+	strcat(sdir,".bmp");
+	wxString path(sdir);
+	if(sdir!=image_path){
+		image_window->setScaledImage(sdir);
+		cell_window->setName((char*)path.ToAscii());
+		cout<<"setting image panel:"<<sdir<<endl;
+		changed_cell_expr=true;
+		image_path=sdir;
+	}
+}
+
+void VtxCloudsTabs::makeFileList(int dim,char * name){
+	char sdir[256];
+
+	object()->getSpritesDir(dim,sdir);
+
+ 	wxDir dir(sdir);
+ 	if ( !dir.IsOpened() )
+ 	{
+ 	    // deal with the error here - wxDir would already log an error message
+ 	    // explaining the exact reason of the failure
+ 	    return;
+ 	}
+ 	if(dim != image_dim){
+		files.Clear();
+		wxString filename;
+		bool cont = dir.GetFirst(&filename);
+		while ( cont ) {
+			filename=filename.Before('.');
+			files.Add(filename);
+			cont = dir.GetNext(&filename);
+		}
+		files.Sort();
+		choices->Clear();
+		choices->Append(files);
+		choices->SetSelection(0);
+		image_dim=dim;
+ 	}
+ 	image_name=name;
+ 	setObjAttributes();
 }
 
 //-------------------------------------------------------------
@@ -427,6 +607,15 @@ void VtxCloudsTabs::getObjAttributes(){
 	top_expr->SetValue(top);
 	bottom_expr->SetValue(bottom);
 	type_expr->SetValue(type);
+	uint dim=0;
+	char* sprites_file=obj->getSpritesFile(dim);
+
+	sprites_dim->SetSelection(dim-1);
+	makeFileList(dim,sprites_file);
+	cout<<"file:"<<sprites_file<<" dim:"<<dim<<endl;
+	choices->SetStringSelection(sprites_file);
+	setImagePanel();
+	setTypePanel();
 }
 
 //-------------------------------------------------------------
@@ -440,16 +629,27 @@ void VtxCloudsTabs::setObjAttributes(){
 
 	object()->invalidate();
 
-	wxString str=getCloudsExpr();
+	wxString str=choices->GetStringSelection();
+	GLuint dim=sprites_dim->GetSelection();
+	dim+=1;
+	if(str!=wxEmptyString){
+		object()->setSpritesFile((char*)str.ToAscii(), dim);
+		setImagePanel();
+		setTypePanel();
+	}
 
-	//cout << str << endl;
+	str=getCloudsExpr();
 
-	tnode->setExpr((char*)(str.mb_str()));
+	cout << str << endl;
+
+	tnode->setExpr((char*)(str.ToAscii()));
+
 	if(tnode->getExprNode()==0)
 		update_needed=true;
 	else{
 		update_needed=false;
 		tnode->applyExpr();
+		tnode->eval();
         TheView->set_changed_detail();
         TheScene->rebuild();
 	}
@@ -461,11 +661,17 @@ void VtxCloudsTabs::setObjAttributes(){
 void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
 	int pages=GetPageCount();
+	//geometry_page->Enable(obj->threeD());
+	//sprites_page->Enable(obj->threeD());
+
 	if(obj->threeD()){
-		if(pages==2)
+		if(pages==2){
 			InsertPage(2,geometry_page,"Volume",false,-1);
+			InsertPage(3,sprites_page,"Images",false,-1);
+		}
 	}
-	else if(pages==3){
+	else if(pages==4){
+		RemovePage(2);
 		RemovePage(2);
 	}
 	if(update_needed){

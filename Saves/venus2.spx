@@ -103,7 +103,7 @@ Scene() {
 						specular=Color(1,1,1,0.1);
 						albedo=0.1;
 						Surface{
-							terrain=clouds()Color(twist(0.2,noise(ERODED|FS|UNS,0.5,5.1,0.15,0.36,2.13,0.55,0.21,0,0)),0.8*RED,0.3*RED,1);
+							terrain=Color(twist(0.2,noise(ERODED|FS|UNS,0.5,5.1,0.15,0.36,2.13,0.55,0.21,0,0)),0.8*RED,0.3*RED,1);
 						}
 					}
 				}

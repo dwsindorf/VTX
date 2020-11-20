@@ -2,6 +2,8 @@
 #include "ColorClass.h"
 #include "Perlin.h"
 #include "Util.h"
+#include <ctime>
+
 
 #include <math.h>
 
@@ -94,6 +96,17 @@ void setRandSeed(int seed)
 	idum=seed;
 	iff=0;
 }
+//-------------------------------------------------------------
+// getRandSeed()	    return a non-psuedo random value
+//-------------------------------------------------------------
+double getRandValue()
+{
+	time_t ttime = std::time(0);
+	tm *local_time = localtime(&ttime);
+	double seed=Rand()+local_time->tm_min/60.0+local_time->tm_sec/60.0;
+	return seed;
+}
+
 const int M  = 714025;
 const int IA = 1366;
 const int IC = 150889;

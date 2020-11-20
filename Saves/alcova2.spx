@@ -38,6 +38,10 @@ Scene() {
 		time=23005;
 		heading=60;
 	}
+	View{
+		height=38.3537 ft;
+		gndlvl=2015.66 ft;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
@@ -116,12 +120,14 @@ Scene() {
 				}
 				Sky(0.00103) {
 					color=Color(0.62,0.78,0.93);
+					day=5;
 					haze.color=Color(0.7,0.6,1);
 					haze.grad=0.34286;
 					haze.max=5.6818 miles;
 					haze.value=1;
 					shine=1;
 					specular=Color(1,1,1);
+					tilt=10;
 				}
 			}
 		}

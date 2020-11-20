@@ -23,14 +23,9 @@ void main(void) {
 	vec4 color=vec4(1.0);
 #endif
 	bump=vec3(0.0);
-
     vec3 normal=normalize(Normal.xyz);
-
 #ifdef NCC
-	v1= Vertex1.xyz;
-    v2= Vertex2.xyz;
-    //vec4 ncolor=NOISE_COLOR(NCC);
- 	//color =ncolor+color;
+	NOISE_COLOR(NCC);
 #endif
 
 #if NTEXS >0

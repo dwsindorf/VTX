@@ -1,6 +1,7 @@
 
 #include "VtxMoonTabs.h"
 #include "UniverseModel.h"
+#include "VtxSceneDialog.h"
 
 //########################### ObjectAddMenu Class ########################
 enum{
@@ -8,7 +9,6 @@ enum{
 	OBJ_SHOW,
 	OBJ_VIEWOBJ,
 	OBJ_DELETE,
-	OBJ_SAVE,
 
 	ID_NAME_TEXT,
     ID_CELLSIZE_SLDR,
@@ -84,13 +84,14 @@ SET_COLOR_EVENTS(SHADOW,VtxMoonTabs,Shadow)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxMoonTabs::OnAddItem)
 
 EVT_MENU(OBJ_DELETE,VtxMoonTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxMoonTabs::OnSave)
 
 EVT_MENU(OBJ_SHOW,VtxMoonTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxMoonTabs::OnUpdateEnable)
 
 EVT_MENU(OBJ_VIEWOBJ,VtxMoonTabs::OnViewObj)
 EVT_UPDATE_UI(OBJ_VIEWOBJ,VtxMoonTabs::OnUpdateViewObj)
+
+SET_FILE_EVENTS(VtxMoonTabs)
 
 END_EVENT_TABLE()
 
@@ -114,7 +115,6 @@ int VtxMoonTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
 	menu.AppendSeparator();
 	NodeIF *obj=object();
 
@@ -122,6 +122,9 @@ int VtxMoonTabs::showMenu(bool expanded){
 
 	if(addmenu)
 		menu.AppendSubMenu(addmenu,"Add");
+
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }

@@ -229,7 +229,6 @@ FColor Triangle::color(){
 	return c;
 }
 
-
 //************************************************************
 // MapNode class
 //************************************************************
@@ -798,9 +797,9 @@ void MapNode::test_backfacing()
 		set_backfacing(CBF);
 }
 
-//#define VCLIP     // enable viewobj clip  test
-//#define PCLIP     // enable parent sphere clip  test
-//#define ZCLIP     // enable dmax clip  test
+#define VCLIP     // enable viewobj clip  test
+#define PCLIP     // enable parent sphere clip  test
+#define ZCLIP     // enable dmax clip  test
 //-------------------------------------------------------------
 // MapNode::clipchk()	return 1 if vertex is clipped by the current
 //						view window, else return 0

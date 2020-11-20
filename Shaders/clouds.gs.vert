@@ -15,7 +15,6 @@ varying vec4 Color_G;
 
 void main(void) {
 	//gl_Position = gl_Vertex;
-
 	vec4 vertex=vec4(gl_Vertex.xyz,1.0);
 	EyeDirection_G=-(gl_ModelViewMatrix * vertex);
 
@@ -24,7 +23,6 @@ void main(void) {
 	vec3 ps = proj.xyz/proj.w;
 
 	gl_Position = vec4(ps,1);
-
 	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
 
 #ifdef COLOR

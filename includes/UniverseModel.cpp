@@ -136,7 +136,7 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 	}
 	if(child){
 		if(((Orbital*)child)->isRandom())
-			((Orbital*)child)->rseed=Rand();
+			((Orbital*)child)->rseed=getRandValue();
 	}
 	return 1;
 }

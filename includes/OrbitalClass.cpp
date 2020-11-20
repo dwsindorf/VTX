@@ -28,7 +28,7 @@ extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
 extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double scale);
-#define DEBUG_OBJS
+//#define DEBUG_OBJS
 //#define DEBUG_BASE_OBJS
 
 //#define DEBUG_SAVE  // show name on save
@@ -71,6 +71,8 @@ static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
+static double	def_hscale=5e-4;
+
 
 //************************************************************
 // Orbital class
@@ -397,6 +399,18 @@ void Orbital::set_vars()
 	VSET("sunset",sunset,0.2);
 	VSET("rseed",rseed,0.0);
 }
+
+//-------------------------------------------------------------
+// Orbital::randomize() randomize noise seed
+//-------------------------------------------------------------
+bool Orbital::randomize()
+{
+	if(!canRandomize())
+		return false;
+	rseed=getRandValue();
+	invalidate();
+	return true;
+ }
 
 //-------------------------------------------------------------
 // Orbital::save() 	archiving routine
@@ -1902,6 +1916,7 @@ void Spheroid::set_vars()
 
     CSET("shadow",shadow_color,def_shadow_color);
 	VSET("symmetry",symmetry,def_symmetry);
+	VSET("hscale",hscale,def_hscale);
 }
 
 //-------------------------------------------------------------
@@ -2948,7 +2963,7 @@ void Planetoid::adapt_object()
 	//if(TheScene->viewobj==this && !TheScene->view->changed_model())
 //		map->render_zvals(); // set parant occlusion mask in zbuffer
 	//map->set_render_ftob();
-	TheNoise.rseed=rseed;
+	TheNoise.rseed=rseed+TheScene->rseed;
     Spheroid::adapt_object();
 }
 
@@ -3235,7 +3250,7 @@ int  Shell::scale(double &zn, double &zf)
 	double s=TheScene->epoint.distance(point);
 	if(parent){
 		double a=0,b=0,r,h;
-		h=5*parent->max_height();
+		h=2*parent->max_height();
 		r=(1-h)*parent->size;
 		if(s>r)
 			a=sqrt(s*s-r*r);
@@ -3245,6 +3260,7 @@ int  Shell::scale(double &zn, double &zf)
 		double zmax=s+size*(1+max_height());
 		zf=zf>zmax?zmax:zf;
 	}
+	//zf*=2;
 	map->dmin=zn;
 	map->dmax=zf;
 	setvis(t);
@@ -3787,30 +3803,16 @@ void Sky::map_color(MapData*d,Color &c)
 #define TOP    1
 #define BOTTOM 2
 
-//#define WRITE_CLOUD_DATA
-//#define CLOUD_DATA_COMPILED_IN
-//#define CLOUDS9
 #define ROT_IN_SHADER
 
-#ifdef CLOUD_DATA_COMPILED_IN
-#define CLOUD_SPRITES_SIZE 1024
-extern unsigned char cloud_sprites[CLOUD_SPRITES_SIZE*CLOUD_SPRITES_SIZE];
-#endif
+#define CLOUD_SPRITE_FILE "CloudSprites3"
 
-#ifdef CLOUDS9
-#define CLOUD_SPRITE_FILE "CloudSprites9-2"
-#define CLOUD_MAX 8
-#define CLOUD_ROWS 3
-
-#else
-//#define CLOUD_SPRITE_FILE "CloudSprites16"
-#define CLOUD_SPRITE_FILE "CloudSprites"
 #define CLOUD_MAX 15.1
 #define CLOUD_ROWS 4
-#endif
 
-GLuint CloudLayer::sprites_image=0;
+//GLuint CloudLayer::sprites_image=0;
 
+char *CloudLayer::dflt_sprites_file="CloudSprites";
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 {
 #ifdef DEBUG_OBJS
@@ -3825,14 +3827,18 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	cmax=4;
 	smax=2;
 	crot=1;
+	sprites_dim=4;
+	sprites_file[0]=0;
+	sprites_image=0;
 }
 CloudLayer::~CloudLayer()
 {
 #ifdef DEBUG_OBJS
 	printf("~CloudLayer\n");
 #endif
+	if(sprites_image>0)
+		glDeleteTextures(1,&sprites_image);
 }
-
 
 //-------------------------------------------------------------
 // CloudLayer::adapt_pass() select for scene pass
@@ -3923,6 +3929,12 @@ void CloudLayer::get_vars()
 	VGET("crot",crot,1);
 	VGET("num_sprites",num_sprites,1);
 	VGET("diffusion",diffusion,0.25);
+	VGET("sprites_dim",sprites_dim,4);
+
+	if(exprs.get_local("sprites_file",Td))
+		strncpy(sprites_file,Td.string,256);
+	else
+		strncpy(sprites_file,dflt_sprites_file,256);
 }
 
 //-------------------------------------------------------------
@@ -3937,44 +3949,75 @@ void CloudLayer::set_vars()
 	VSET("crot",crot,0.5);
 	VSET("num_sprites",num_sprites,1);
 	VSET("diffusion",diffusion,0.25);
+	VSET("sprites_dim",sprites_dim,4);
+
+	exprs.set_var("sprites_file",sprites_file,sprites_file[0]!=0);
+}
+
+void CloudLayer::setSpritesFile(char *s,GLuint dim)
+{
+	if(strcmp(s,sprites_file)!=0 || (dim!=sprites_dim)){
+		if(sprites_image>0)
+			glDeleteTextures(1,&sprites_image);
+
+		sprites_image=0;
+		strcpy(sprites_file,s);
+		sprites_dim=dim;
+	}
+}
+char *CloudLayer::getSpritesFile(GLuint &dim){
+	dim=sprites_dim;
+	return sprites_file;
+}
+
+void CloudLayer::getSpritesDir(int dim,char*dir){
+	char base[256];
+	char dimdir[32];
+  	File.getBaseDirectory(base);
+  	switch(dim){
+  	case 1: strcpy(dimdir,"1x"); break;
+  	case 2: strcpy(dimdir,"4x"); break;
+  	case 3: strcpy(dimdir,"9x"); break;
+  	default:
+  	case 4: strcpy(dimdir,"16x"); break;
+  	}
+ 	sprintf(dir,"%s/Resources/Sprites/Clouds/%s",base,dimdir);
+}
+
+void CloudLayer::getSpritesFilePath(char *dir){
+	char base[256];
+	char dimdir[32];
+  	File.getBaseDirectory(base);
+  	switch(sprites_dim){
+  	case 1: strcpy(dimdir,"1x"); break;
+  	case 2: strcpy(dimdir,"4x"); break;
+  	case 3: strcpy(dimdir,"9x"); break;
+  	default:
+  	case 4: strcpy(dimdir,"16x"); break;
+  	}
+ 	sprintf(dir,"%s/Resources/Sprites/Clouds/%s/%s",base,dimdir,sprites_file);
 }
 
 //-------------------------------------------------------------
 // CloudLayer::setSpritesTexture() set point sprite image texture
 // Generates a texture image from a bitmap file or compiled data
-// Build instructions
-// A. compiled in texture data
-//   1. place sprite file in ../Resources directory
-//   2. uncomment #define WRITE_CLOUD_DATA at top of this section
-//   3. recompile and run (generates cloud_data.cpp in includes)
-//   4. comment out #define WRITE_CLOUD_DATA at top of this section
-//   5. uncomment #define CLOUD_DATA_COMPILED_IN at top of this section
-//   6. recompile
-// B. run time texture read
-//   1. place sprite file in ../Resources directory
-//
 //-------------------------------------------------------------
 void CloudLayer::setSpritesTexture(){
 	if(sprites_image>0)
 		return;
-	int height,width;
-#ifdef CLOUD_DATA_COMPILED_IN
-	height=width=CLOUD_SPRITES_SIZE;
-	unsigned char *pixels=cloud_sprites;
-#else
-	char base[256];
-	char dir[256];
-  	File.getBaseDirectory(base);
-//  	if(test1==1)
-//  		sprintf(dir,"%s/Resources/%s",base,"CloudSprites16");
-//  	else
-  		sprintf(dir,"%s/Resources/%s",base,"CloudSprites");
 
-	Image *image = images.open(CLOUD_SPRITE_FILE,dir);
-	if (!image)
+	char dir[256];
+	getSpritesFilePath(dir);
+
+	cout<<"building cloud sprites texture :"<<dir<<" "<<sprites_dim<<endl;
+
+	Image *image = images.open(sprites_file,dir);
+	if (!image){
+		cout<<"could not open image file:"<<sprites_file<<endl;
 		return;
-	height = image->height;
-	width = image->width;
+	}
+	int height = image->height;
+	int width = image->width;
 	unsigned char *pixels = (unsigned char*) malloc(height * width);
 	unsigned char* rgb = (unsigned char*) image->data;
 	for (int i = 0,index=0; i < height; i++) {
@@ -3985,28 +4028,7 @@ void CloudLayer::setSpritesTexture(){
 			index++;
 		}
 	}
-#endif
 
-#ifdef WRITE_CLOUD_DATA
-	sprintf(dir,"%s/includes/cloud_data.cpp",base);
-	cout << dir << endl;
-
-	FILE *fp=fopen(dir,"wb");
-	if(!fp){
-		cout << "could not write cloud data file" << endl;
-	    return;
-	}
-	fprintf(fp,"unsigned char cloud_sprites[]={\n");
-
-	for(int i=0,index=0;i<height*32;i++){
-		for (int j = 0; j < width/32; j++){
-			fprintf(fp,"%3d,",pixels[index++]);
-		}
-		fprintf(fp,"\n");
-	}
-	fprintf(fp,"};\n");
-	fclose(fp);
-#endif
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glGenTextures(1, &sprites_image); // Generate a unique texture ID
 	glBindTexture(GL_TEXTURE_2D, sprites_image);
@@ -4018,10 +4040,6 @@ void CloudLayer::setSpritesTexture(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width,
 			height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-#ifdef WRITE_CLOUD_DATA
-	delete image;
-	::free(pixels);
-#endif
 }
 
 //-------------------------------------------------------------
@@ -4030,15 +4048,6 @@ void CloudLayer::setSpritesTexture(){
 void CloudLayer::set_ref()
 {
 	animate();
-//	if(orbit_skew)
-//		TheScene->rotate(orbit_skew,1.0,0.0,0.0);
-//	if(orbit_angle)
-//		TheScene->rotate(orbit_angle,0.0,1.0,0.0);
-//	if(orbit_radius)
-//		TheScene->translate(0,0,orbit_radius);
-
-//	Spheroid::set_ref();
-//	day=tilt=0;
 }
 
 //-------------------------------------------------------------
@@ -4086,7 +4095,6 @@ void CloudLayer::render()
 				setPointSprites(false);
 				break;
 		    }
-			Shell::render_object();
 		}
 		else{
 			setPointSprites(false);
@@ -4097,8 +4105,8 @@ void CloudLayer::render()
 				map->frontface=GL_BACK;
 			else //if(outside())
 				map->frontface=GL_FRONT;
-			Shell::render_object();
 		}
+		Shell::render_object();
 		map->frontface=GL_FRONT;
 		TheScene->popMatrix();
 		//Render.set_draw_nvis(0);
@@ -4191,8 +4199,8 @@ bool CloudLayer::setProgram(){
 	Point center=p.mm(TheScene->viewMatrix);
 	vars.newFloatVec("center",center.x,center.y,center.z);
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
-	vars.newFloatVar("ROWS",CLOUD_ROWS);
-	vars.newFloatVar("INVROWS",1.0/CLOUD_ROWS);
+	vars.newFloatVar("ROWS",sprites_dim);
+	vars.newFloatVar("INVROWS",1.0/sprites_dim);
 
 	//UniformBool *backfacing=vars.newBoolVar("backfacing",0);
 	Point cp=TheScene->vpoint;
@@ -4252,6 +4260,7 @@ bool CloudLayer::setProgram(){
 	double resolution= sqrt(map->resolution/16);
 
 	if(v3d){
+		glEnable(GL_BLEND);
 		map->frontface=GL_BACK;
 		glDisable(GL_CULL_FACE);
 		float pts=cmin;// max=64;
@@ -4332,14 +4341,15 @@ bool CloudLayer::setProgram(){
 
 				double ht=m.length()-gndlvl;
 				double depth = TheScene->vpoint.distance(m);
-				d=clamp(d,0,CLOUD_MAX);
+				d=clamp(d,0,sprites_dim*sprites_dim-0.9);
 				double zht=triangle->height();
 				double transmission=clamp(1+diffusion*50*zht,0,1);
 				//transmission=transmission<0?0:transmission;
 				//ransmission=transmission>1?1:transmission;
-				c=c*transmission;
+				double a=c.alpha();
+				c=c*transmission; // * operator doesn't preserve alpha (sets it to 1.0)
 				c=c.clamp();
-				glColor4d(c.red(), c.green(), c.blue(), c.alpha());
+				glColor4d(c.red(), c.green(), c.blue(), a*transmission);
 				glNormal3dv(v.values());
 
 				double ts=sqrt(2.0)*pts/TheView->viewport[3];
@@ -4380,7 +4390,7 @@ bool CloudLayer::setProgram(){
 						double ra=2*PI*(i/ns+0.2*r2);
 						double rr=0.25*ts*(1+0.1*r3);
 						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, ts,ra,rr);
-						glVertex3d(p.x,p.y,p.z);
+						glVertex3d(p.x,p.y,0.1*p.z);
 					}
 					break;
 				case 3: // OGL triangles (no shader)

@@ -2,11 +2,15 @@
 #define CLOUDSTABS_H_
 
 #include "VtxTabsMgr.h"
+#include <wx/bitmap.h>
+#include "VtxBitmapPanel.h"
 
 class VtxCloudsTabs : public VtxTabsMgr
 {
 	DECLARE_CLASS(VtxCloudsTabs)
 protected:
+	//TextCtrl *sprites_file;
+	wxChoice *sprites_dim;
 
 	SliderCtrl *CellSizeSlider;
 	SliderCtrl *HeightSlider;
@@ -33,25 +37,46 @@ protected:
 	SliderCtrl *DiffusionSlider;
 
 	wxNotebookPage *geometry_page;
+	wxNotebookPage *sprites_page;
+
+	wxArrayString files;
+	wxChoice *choices;
+
+	VtxBitmapPanel *image_window;
+	wxStaticBoxSizer *image_sizer;
+	wxString image_path;
+	VtxBitmapPanel *cell_window;
+
+	bool changed_cell_expr;
+	uint image_dim;
+	wxString image_name;
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
 	void AddGeometryTab(wxWindow *panel);
+	void AddImagesTab(wxWindow *panel);
+	void add3DTabs();
+
 	CloudLayer *object() 		{ return ((CloudLayer*)(object_node->node));}
 	double parentSize(){
 		return ((Planet*)(object()->getParent()))->size;
 	}
     void OnChangedExpr(wxCommandEvent& event);
+    void OnChangedTypeExpr(wxCommandEvent& event);
+
+    void OnChangedFile(wxCommandEvent& event);
+    void OnFileSelect(wxCommandEvent& event);
+    void OnDimSelect(wxCommandEvent& event);
+
+    void makeFileList(int,char*);
 	wxString getCloudsExpr();
 	void setCloudsExpr();
 	void getObjAttributes();
 	void setObjAttributes();
+	void setImagePanel();
+	void invalidateObject();
+	void setTypePanel();
 
-	void invalidateObject() {
-		object()->invalidate();
-		TheView->set_changed_detail();
-		TheScene->rebuild();
-	}
 
 public:
 	VtxCloudsTabs(wxWindow* parent,
@@ -91,7 +116,7 @@ public:
     }
 
     void OnEndCellSizeSlider(wxScrollEvent& event){
-    	Spheroid *obj=object();
+    	CloudLayer *obj=object();
     	OnSliderValue(CellSizeSlider, obj->detail);
         obj->invalidate();
         TheView->set_changed_detail();
@@ -101,7 +126,7 @@ public:
     	CellSizeSlider->setValueFromSlider();
     }
     void OnCellSizeText(wxCommandEvent& event){
-    	Spheroid *obj=object();
+    	CloudLayer *obj=object();
     	OnSliderText(CellSizeSlider, obj->detail);
         obj->invalidate();
         TheView->set_changed_detail();

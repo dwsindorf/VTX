@@ -21,13 +21,16 @@ enum {
 	TN_ALL          = TN_FLAGS|TN_TYPES
 };
 
+// bits that control randomization behavior
+enum {
+	RND_RANDOMIZE   = 0x00100000, // need to randomize construction
+};
 
 // bits that control runtime behavior
 enum {
-	RTM_RANDOM      = 0x00100000,
 	RTM_DISABLED    = 0x00200000,
 	RTM_ANIMATE     = 0x00400000,
-	RTM_FLAGS       = 0x00700000
+	RTM_FLAGS       = RTM_DISABLED|RTM_ANIMATE
 };
 
 
@@ -96,8 +99,11 @@ public:
 	void setShowing(bool b)     { if(b) clrFlag(NODE_HIDE); else setFlag(NODE_HIDE); }
 	bool isShowing()			{ return getFlag(NODE_HIDE) ? false:true;}
 
-	bool isRandom()             { return getFlag(RTM_RANDOM) ? false:true;}
-	void setRandom(bool b)      { if(b) clrFlag(RTM_RANDOM); else setFlag(RTM_RANDOM); }
+	bool isRandom()             { return getFlag(RND_RANDOMIZE) ? false:true;}
+	void setRandom(bool b)      { if(b) clrFlag(RND_RANDOMIZE); else setFlag(RND_RANDOMIZE); }
+	virtual bool canRandomize() { return false;}
+	virtual bool randomize()    { return false;}
+
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}
 	virtual bool isEnabled()           { return getFlag(RTM_DISABLED) ? false:true;}

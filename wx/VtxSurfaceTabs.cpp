@@ -2,27 +2,39 @@
 #include "VtxSurfaceTabs.h"
 #include "RenderOptions.h"
 #include "VtxSceneDialog.h"
+#include "VtxTabsMgr.h"
 
 //########################### VtxSurfaceTabs Class ########################
 
 // define all resource ids here
 enum {
-	ID_SAVE,
 	ID_VARLIST,
 	ID_VAREXPR,
+	ID_NEWVAR,
+	ID_RMVAR,
+	ID_SAVEVAR,
+
 };
 
 #define LIST_WIDTH 80
+#define BTNWIDTH 75
+#define BTNSIZE wxSize(BTNWIDTH,30)
+
 
 IMPLEMENT_CLASS(VtxSurfaceTabs, wxNotebook )
+
 
 BEGIN_EVENT_TABLE(VtxSurfaceTabs, wxNotebook)
 EVT_MENU(TABS_ENABLE,VtxSurfaceTabs::OnEnable)
 
 EVT_COMBOBOX(ID_VARLIST,VtxSurfaceTabs::OnVarSelect)
-EVT_TEXT_ENTER(ID_VARLIST,VtxSurfaceTabs::OnChangeVarName)
+//EVT_TEXT_ENTER(ID_VARLIST,VtxSurfaceTabs::OnChangeVarName)
 EVT_TEXT_ENTER(ID_VAREXPR,VtxSurfaceTabs::OnExprEdit)
-//EVT_MENU(ID_SAVE,VtxSurfaceTabs::OnSave)
+EVT_BUTTON(ID_NEWVAR,VtxSurfaceTabs::OnNewVar)
+EVT_BUTTON(ID_RMVAR,VtxSurfaceTabs::OnRmVar)
+EVT_BUTTON(ID_SAVEVAR,VtxSurfaceTabs::OnSaveVar)
+EVT_UPDATE_UI(ID_RMVAR,  VtxSurfaceTabs::OnUpdateBtns)
+EVT_UPDATE_UI(ID_SAVEVAR,  VtxSurfaceTabs::OnUpdateBtns)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSurfaceTabs::OnAddItem)
 
@@ -63,7 +75,6 @@ int VtxSurfaceTabs::showMenu(bool expanded){
 	menu_action=TABS_NONE;
 	wxMenu menu;
 
-
 	wxMenu *addmenu=getAddMenu(object());
 
 	if(addmenu){
@@ -71,7 +82,6 @@ int VtxSurfaceTabs::showMenu(bool expanded){
 	}
 	sceneDialog->AddFileMenu(menu,object_node->node);
 
-	//menu.Append(ID_SAVE,wxT("Save.."));
 	PopupMenu(&menu);
 	return menu_action;
 }
@@ -92,13 +102,68 @@ void VtxSurfaceTabs::AddDisplayTab(wxWindow *panel){
     m_list=new wxComboBox(panel,ID_VARLIST,"",
     			wxDefaultPosition,wxSize(LIST_WIDTH,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
     hline->Add(m_list,0,wxALIGN_LEFT|wxALL,0);
-
     m_expr=new ExprTextCtrl(panel,ID_VAREXPR,"",0,TABS_WIDTH-TABS_BORDER-LIST_WIDTH);
-
     hline->Add(m_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
     variables->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+    hline = new wxBoxSizer(wxHORIZONTAL);
+
+ 	m_newvar=new wxButton(panel,ID_NEWVAR,"New",wxDefaultPosition,BTNSIZE);
+ 	m_rmvar=new wxButton(panel,ID_RMVAR,"Delete",wxDefaultPosition,BTNSIZE);
+ 	m_savevar=new wxButton(panel,ID_SAVEVAR,"Save",wxDefaultPosition,BTNSIZE);
+ 	hline->Add(m_newvar,0,wxALIGN_LEFT|wxALL,0);
+ 	hline->Add(m_rmvar,0,wxALIGN_LEFT|wxALL,0);
+ 	hline->Add(m_savevar,0,wxALIGN_LEFT|wxALL,0);
+
+ 	variables->Add(hline, 0, wxALIGN_LEFT|wxALL, 0);
+
     variables->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
     boxSizer->Add(variables, 0, wxALIGN_LEFT|wxALL, 0);
+
+}
+void VtxSurfaceTabs::OnUpdateBtns(wxUpdateUIEvent &event) {
+	m_rmvar->Enable(!m_list->IsListEmpty());
+	m_savevar->Enable(!m_list->IsListEmpty());
+}
+
+void VtxSurfaceTabs::OnNewVar(wxCommandEvent &event) {
+	TerrainMgr *mgr=getMgr();
+	if(!mgr)
+		 return;
+	m_varname="x";
+	int i=1;
+	while (varExists(m_varname) && i<20){
+		if(m_varname.Length()>1)
+		   m_varname.Truncate(1);
+		m_varname+=wxString::Format(wxT("%i"),i++);
+	}
+	cout << "new var:" << m_varname<< endl;
+
+	m_expr->SetValue("0");
+	TNvar *obj=mgr->setVar((char*)m_varname.ToAscii(),(char*)m_expr->GetValue().ToAscii());
+	if(!obj){ // expr bad
+		cout<<"bad expression"<<endl;
+		return;
+	}
+
+	i=m_list->Append(m_varname);
+	update_needed=true;
+	mgr->setVarIndex(i);
+	m_list->SetSelection(i);
+	m_varname=m_list->GetStringSelection();
+	invalidateObject();
+	getObjAttributes();
+
+}
+
+void VtxSurfaceTabs::OnRmVar(wxCommandEvent &event) {
+	deleteVar();
+}
+
+void VtxSurfaceTabs::OnSaveVar(wxCommandEvent &event) {
+	cout<<"save var"<<endl;
+	setVarExpr();
 }
 
 //-------------------------------------------------------------
@@ -168,7 +233,7 @@ void VtxSurfaceTabs::getVarExpr()
 	wxString name = m_list->GetStringSelection();
 	char buff[1024];
 	buff[0]=0;
-    if(mgr->getVarExpr(name.ToAscii(),buff)){
+    if(mgr->getVarExpr((char*)name.ToAscii(),buff)){
     	mgr->setVarIndex(m_list->GetSelection());
      	m_expr->SetValue(buff);
     }
@@ -183,22 +248,20 @@ void VtxSurfaceTabs::setVarExpr()
 
     if(!mgr)
     	return;
-#if wxCHECK_VERSION(3, 0, 0)
     if(m_list->IsListEmpty())
-#else
-    if(m_list->IsEmpty())
-#endif
     	return;
     wxString name = m_list->GetStringSelection();
 	wxString expr = m_expr->GetValue();
     if(expr.IsEmpty())
     	deleteVar();
     else{
-    	//cout << "VtxSurfaceTabs::setVarExpr:" << expr << endl;
-		mgr->setVarExpr(name.ToAscii(),expr.ToAscii());
+    	cout << "VtxSurfaceTabs::setVarExpr:" << expr << endl;
+		mgr->setVarExpr((char*)name.ToAscii(),(char*)expr.ToAscii());
 		mgr->applyVarExprs();
-		invalidateObject();
     }
+	update_needed=true;
+	invalidateObject();
+	getObjAttributes();
 }
 
 //-------------------------------------------------------------
@@ -206,6 +269,7 @@ void VtxSurfaceTabs::setVarExpr()
 //-------------------------------------------------------------
 void VtxSurfaceTabs::changeVarName()
 {
+	cout <<"changeVarName"<<endl;
 	wxString name = m_list->GetValue();
 	if(name.IsEmpty())
 		deleteVar();
@@ -218,27 +282,49 @@ void VtxSurfaceTabs::changeVarName()
 //-------------------------------------------------------------
 void VtxSurfaceTabs::deleteVar()
 {
-	cout << "delete var:" << m_varname<< endl;
 	TerrainMgr *mgr=getMgr();
 
 	if(!mgr)
 	    return;
+	cout << "delete var:" << m_varname<< endl;
 
-	TNvar *vnode=mgr->removeVar(m_varname.ToAscii());
+	TNvar *vnode=mgr->removeVar((char*)m_varname.ToAscii());
 	if(vnode)
 		delete vnode;
 
 	int i = m_list->GetSelection();
-	if(i != wxNOT_FOUND){
-		m_list->Delete(i);
-#if wxCHECK_VERSION(3, 0, 0)
-		if(!m_list->IsListEmpty())
-#else
-		if(!m_list->IsEmpty())
-#endif
-			m_list->SetSelection(0);
+	if(i==wxNOT_FOUND)
+		return;
+
+	m_list->Delete(i);
+	if(m_list->IsListEmpty()){
+		m_expr->SetValue("");
+		m_varname="";
+		m_list->Clear();
 	}
+	else{
+		m_list->SetSelection(0);
+		getVarExpr();
+	}
+
+	update_needed=true;
 	invalidateObject();
+	getObjAttributes();
+}
+
+//-------------------------------------------------------------
+// varExists::varExists() returb true if var exists
+//-------------------------------------------------------------
+bool VtxSurfaceTabs::varExists(wxString s){
+	TerrainMgr *mgr=getMgr();
+	if(!mgr)
+	    return false;
+	TNvar *obj;
+	obj=mgr->getVar((char*)s.ToAscii());
+	if(obj)
+		return true; // var exists
+
+	return false;
 }
 //-------------------------------------------------------------
 // VtxSurfaceTabs::newVar() create new variable
@@ -252,14 +338,14 @@ void VtxSurfaceTabs::newVar()
 	    return;
 
 	TNvar *obj;
-	obj=mgr->getVar(name.ToAscii());
+	obj=mgr->getVar((char*)name.ToAscii());
 	if(obj){
 		return; // var exists
 	}
 
 	wxString expr = m_expr->GetValue();
 
-	obj=mgr->setVar(name.ToAscii(),expr.ToAscii());
+	obj=mgr->setVar((char*)name.ToAscii(),(char*)expr.ToAscii());
 	if(!obj) // expr bad
 		return;
 

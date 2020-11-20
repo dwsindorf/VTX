@@ -26,6 +26,8 @@ extern double Random(double,double,double,double);
 extern double SRand();
 extern double Rand();
 extern int IntRand();
+extern void setRandSeed(int);
+extern double getRandValue();
 
 const double fmx=(double)(1<<28);
 

@@ -235,6 +235,7 @@ Scene::Scene(Model *m)
 	movie=0;
 	status=0;
 	vmode=VLOG;
+	rseed=0;
 }
 
 Scene::~Scene()
@@ -272,6 +273,25 @@ int Scene::setPrototype(NodeIF *n, NodeIF *s){
 	return model->setPrototype(n,s);
 }
 
+
+//-------------------------------------------------------------
+// Scene::setSeed() set a random seed
+//-------------------------------------------------------------
+void Scene::setSeed(double s)
+{
+	rseed=s;
+	add_expr("rseed",rseed);
+    cout << "Random Seed=" << rseed << endl;
+}
+//-------------------------------------------------------------
+// Scene::make() build the startup scene
+//-------------------------------------------------------------
+void Scene::setRandomSeed()
+{
+	double seed=getRandValue();
+	setSeed(seed);
+}
+
 //-------------------------------------------------------------
 // Scene::setProgram() set shader variables
 //-------------------------------------------------------------
@@ -301,6 +321,11 @@ void Scene::add_expr(char *s, TNode *r)
 {
 	TNode  *n=exprs.add_expr(s,r);
 	exprs.eval_node(n);
+	if(strcmp(s,"rseed")==0){ // from file parser
+		cout<<"new rseed:"<<s<<endl;
+		n->eval();
+		rseed=S0.s;
+	}
 }
 
 double Scene::get_expr(char *s){
@@ -1340,6 +1365,7 @@ void Scene::change_view(int v)
 			focusobj=0;
 			return;
 		}
+		focusobj->init_view();
 	    set_changed_object();
 	    set_changed_position();
 	    focusobj->move_focus(selm);

@@ -44,6 +44,7 @@ static double G1[B + B + 2];
 
 
 bool Perlin::initialized=false;
+int Perlin::seed=1;
 
 int Perlin::noiseDim(){
 	return B;
@@ -267,7 +268,7 @@ void Perlin::initialize()
 	if(initialized)
 		return;
 	
-	setRandSeed(1);
+	setRandSeed(seed);
 
 	for (i = 0 ; i < B ; i++) {
         double dp=2;

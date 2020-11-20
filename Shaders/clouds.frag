@@ -59,13 +59,13 @@ void main(void) {
 #endif
 
 #ifdef NCC
+#ifdef V3D
 	v1= Vertex1.xyz;
     v2= Vertex2.xyz;
     vec4 ncolor=NCC;
-#ifdef V3D
  	color =ncolor*color;
 #else
- 	color =ncolor+color;
+    NOISE_COLOR(NCC)
 #endif
 #endif
 

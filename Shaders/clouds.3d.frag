@@ -17,6 +17,12 @@ void main(void) {
 #else
 	vec4 color=vec4(1.0);
 #endif
+#ifdef NCC
+	NOISE_COLOR(NCC);
+#endif
+	//if(color.a>0.99)
+	//	color=vec4(0,1,0,1);
+
     vec3 normal=normalize(Normal.xyz);
 
     vec2 l_uv=INVROWS*(gl_TexCoord[0].xy);
@@ -24,6 +30,8 @@ void main(void) {
 	vec4 texcol=texture2D(sprites,l_uv);
 	if(textures)
 		color.a*=texcol.a;
+	if(color.a<0)
+	    color.a=0;
     if(lighting)
     	color.rgb=setLighting(color.rgb,normal);
 

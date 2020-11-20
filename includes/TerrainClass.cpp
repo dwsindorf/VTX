@@ -445,6 +445,7 @@ bool TNcolor::initProgram(){
 	CurrentScope->set_shader(1);
 	TNarg *arg=(TNarg*)right;
 	Td.clr_flag(SNOISEFLAG);
+	Td.set_flag(NOISE1D);
 	arg->eval();
 	arg->valueString(red); // red
 	arg=arg->next();
@@ -473,6 +474,7 @@ bool TNcolor::initProgram(){
 	strcat(GLSLMgr::defString,defs);
 	CurrentScope->set_shader(0);
 	defs[0]=0;
+	Td.clr_flag(NOISE1D);
 
 	return true;
 }
@@ -948,12 +950,12 @@ void TNnoise::valueString(char *s)
 	else if(CurrentScope->shader()){
 		char tmp[64];
 		if(id>=0){
-			sprintf(tmp,"Noise(%d)",id);
+			if(Td.get_flag(NOISE1D))
+				sprintf(tmp,"Noise1D(%d)",id);
+			else
+				sprintf(tmp,"Noise(%d)",id);
 			strcat(s,tmp);
 		}
-		//else
-		//	strcat(s,"1");
-
 		return;
 	}
 	char opts[64];
@@ -1550,6 +1552,8 @@ static void findPoint(NodeIF *obj)
 bool TNclouds::threeD()
 {
 	s_point=0;
+	if(!right)
+		return false;
 	right->visitNode(findPoint);
     if(s_point==0){
      	right->eval();
@@ -1619,6 +1623,7 @@ void TNclouds::eval()
 		S0.set_flag(HIDDEN);
 
 	Height=S0.p.z;
+
 	right->eval();
 	top.copy(S0);
 	top.c.set_alpha(S0.c.alpha());
