@@ -201,7 +201,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"snow(1,0.7,1,1,1)\n");
 		break;
 	case TN_CLOUD:
-		sprintf(tmp,"clouds()\n");
+		sprintf(tmp,"clouds(0.1,-0.1,0)\n");
 		break;
 	case TN_FCHNL:
 		sprintf(tmp,"fractal(SS|SQR,8,10,0.1)\n");
@@ -452,9 +452,9 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(!obj->hasChild(ID_GLOSS))
 			list.add(getObjectSymbol(TN_GLOSS));
 		list.add(getObjectSymbol(TN_TEXTURE));
-		if(obj->hasChild(ID_CLOUD)){
+		if(obj->getParent()->getFlag(TN_TYPES)==TN_CLOUDS)
 			break;
-		}
+
 		if(!obj->hasChild(ID_FOG))
 			list.add(getObjectSymbol(TN_FOG));
 		if(!obj->hasChild(ID_WATER))
@@ -464,11 +464,6 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(!obj->hasChild(ID_MAP))
 			list.add(getObjectSymbol(TN_MAP));
 		list.add(getObjectSymbol(TN_ROCKS));
-	//	list.add(getObjectSymbol(TN_BASE));
-	//	list.add(getObjectSymbol(TN_COMP));
-	//	list.add(getObjectSymbol(TN_CRATERS));
-	//	list.add(getObjectSymbol(TN_FCHNL));
-	//	list.add(getObjectSymbol(TN_ERODE));
 		break;
 	case TN_TEXTURE:
 		list.add(getObjectSymbol(TN_TEXTURE));
@@ -1111,8 +1106,7 @@ char UniverseModel::default_model[]=""
 "					Color(0.502,0.251,0),\n"
 "					Color(0.141,0,0));\n"
 "				Surface{\n"
-"					terrain=clouds()\n"
-"							Texture(\"yellow-white\",BORDER|BUMP|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);\n"
+"					terrain=Texture(\"yellow-white\",BORDER|BUMP|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);\n"
 "				}\n"
 "			}\n"
 "		}\n"

@@ -54,7 +54,8 @@ enum  {
 	BORDER      = 0x00000800, 	// border flag (GL_CLAMP)
 	TEX         = 0x00000000,   // default
 	BUMP	    = 0x00001000, 	// bump map flag
-	NTEX        = 0x00002000,   // texture turned off
+	HMAP   	    = 0x00002000,
+	NTEX        = 0x00004000,   // texture turned off
 	RGBA        = 0x00010000, 	// generate texture alpha from intensity
 	SEXPR       = 0x00020000, 	// S expression in argument list
 	AEXPR       = 0x00040000, 	// T expression in argument list
@@ -73,11 +74,15 @@ enum  {
 	JPG     	= 0x08000000,
 	BANDS   	= 0x10000000,
 	IMAGE   	= 0x20000000,
-	ITYPES 		= BANDS|IMAGE,
 	SPX     	= 0x40000000,
+	IMPORT   	= 0x80000000,
+	MAP   	    = 0x80000002,
 	IMOPTS 		= 0xff000000,
 	IOPTS 	    = TXOPTS|INOPTS,
-	ALLI    	= BMP|JPG|BANDS|IMAGE|BUMP|TEX|SPX|T1D|T2D
+	IFTYPE 		= BUMP|TEX|SPX,
+	SPXTYPE 	= BANDS|IMAGE,
+	IMTYPE 	    = IMPORT|MAP,
+	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|TEX|T1D|T2D
 
 };
 
@@ -194,6 +199,7 @@ public:
 	~ImageReader();
 
 	int getFileInfo(char *f);
+	int getFileInfo(char *f,char *dir);
 	void hashName(char *f, int &m, char *fn);
 	void unhashName(char *f, int &m, char *fn);
 	ImageSym *getImageInfo(char *f);

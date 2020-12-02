@@ -20,9 +20,6 @@
 #include "VtxBandsTabs.h"
 #include "SceneClass.h"
 
-#define TYPE_BANDS 0
-#define TYPE_IMAGE 1
-#define TYPE_IMPORT 2
 
 #define DLG_HEIGHT (380)
 #define DLG_WIDTH  (440)
@@ -31,6 +28,13 @@
 #define TABS_WIDTH  (DLG_WIDTH-20)
 #define TABS_HEIGHT (DLG_HEIGHT-50)
 #endif
+enum {
+	TYPE_1D=0,
+	TYPE_2D=1,
+	TYPE_IMPORT=2,
+	TYPE_MAP=3
+};
+
 class VtxImageDialog : public wxFrame
 {
 	DECLARE_CLASS(VtxImageDialog)
@@ -38,9 +42,10 @@ class VtxImageDialog : public wxFrame
 	wxPoint position;
 
 	wxNotebook   *m_tabs;
-	VtxImageTabs *m_image_tabs;
-	VtxBandsTabs *m_bands_tabs;
-	VtxImportTabs *m_import_tabs;
+	VtxImageTabs *m_2D_tabs;
+	VtxBandsTabs *m_1D_tabs;
+	VtxImportTabs *m_img_tabs;
+	VtxImportTabs *m_map_tabs;
 
 	wxButton *m_save;
 	wxButton *m_revert;

@@ -18,6 +18,8 @@
 #define LABEL1 40
 #define VALUE1 50
 #define SLIDER1 100
+#undef LABEL2
+#define LABEL2 60
 
 //########################### VtxTexTabs Class ########################
 enum{
@@ -32,6 +34,7 @@ enum{
     ID_TEXCOLOR,
     ID_SHOW_BANDS,
     ID_SHOW_IMAGE,
+    ID_SHOW_MAP,
     ID_SHOW_IMPORT,
     ID_AMP_EXPR,
     ID_ALPHA_EXPR,
@@ -94,6 +97,7 @@ EVT_CHOICE(ID_FILELIST,VtxTexTabs::OnFileSelect)
 EVT_RADIOBUTTON(ID_SHOW_BANDS, VtxTexTabs::OnShowBands)
 EVT_RADIOBUTTON(ID_SHOW_IMAGE, VtxTexTabs::OnShowImage)
 EVT_RADIOBUTTON(ID_SHOW_IMPORT, VtxTexTabs::OnShowImport)
+EVT_RADIOBUTTON(ID_SHOW_MAP, VtxTexTabs::OnShowMap)
 
 EVT_BUTTON(ID_SHOW_IMAGE_EDIT, VtxTexTabs::OnImageEdit)
 
@@ -122,7 +126,7 @@ bool VtxTexTabs::Create(wxWindow* parent,
         return false;
     choices=0;
     m_type=0;
-    m_image_type=TYPE_BANDS;
+    m_image_type=TYPE_1D;
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
 	AddImageTab(page);
     AddPage(page,wxT("Image"),true);
@@ -133,9 +137,10 @@ bool VtxTexTabs::Create(wxWindow* parent,
 
     //images.makeImagelist();
 	m_name="";
-	saveState(TYPE_BANDS);
-	saveState(TYPE_IMAGE);
+	saveState(TYPE_1D);
+	saveState(TYPE_2D);
 	saveState(TYPE_IMPORT);
+	saveState(TYPE_MAP);
 
     return true;
 }
@@ -173,7 +178,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 
 	wxStaticBoxSizer* image_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Image"));
 
-	choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(100,-1));
+	choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(120,-1));
 	choices->SetSelection(0);
 	image_controls->Add(choices,0,wxALIGN_LEFT|wxALL,2);
 
@@ -183,18 +188,57 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	m_edit_button=new wxBitmapButton(panel,ID_SHOW_IMAGE_EDIT,bmp,wxDefaultPosition,wxSize(28,28));
 	image_controls->Add(m_edit_button,0,wxALIGN_LEFT|wxALL,0);
 
-	m_bands_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
-	m_image_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
-	m_import_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Bitmaps"),wxDefaultPosition,wxDefaultSize);
+	m_1D_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
+	m_2D_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
+	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Img"),wxDefaultPosition,wxDefaultSize);
+	m_map_button=new wxRadioButton(panel,ID_SHOW_MAP,wxT("Map"),wxDefaultPosition,wxDefaultSize);
 
-	image_controls->Add(m_bands_button,0,wxALIGN_LEFT|wxALL,0);
-	image_controls->Add(m_image_button,0,wxALIGN_LEFT|wxALL,0);
-	image_controls->Add(m_import_button,0,wxALIGN_LEFT|wxALL,0);
+
+	image_controls->Add(m_1D_button,0,wxALIGN_LEFT|wxALL,0);
+	image_controls->Add(m_2D_button,0,wxALIGN_LEFT|wxALL,0);
+	image_controls->Add(m_img_button,0,wxALIGN_LEFT|wxALL,0);
+	image_controls->Add(m_map_button,0,wxALIGN_LEFT|wxALL,0);
 
 	image_controls->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT));
 
 
 	boxSizer->Add(image_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+    // line 4 Color
+
+	wxStaticBoxSizer* color_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Color"));
+	m_tex_check=new wxCheckBox(panel, ID_TEXCOLOR, "");
+	m_tex_check->SetValue(true);
+	color_controls->Add(m_tex_check,0,wxALIGN_LEFT|wxALL,4);
+
+	AlphaSlider=new SliderCtrl(panel,ID_ALPHA_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
+	AlphaSlider->setRange(0,2.0);
+	AlphaSlider->setValue(1.0);
+
+	color_controls->Add(AlphaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	//color_controls->SetMinSize(wxSize(205,BOX_HEIGHT));
+
+	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	BiasSlider->setRange(-4.0,4.0);
+	BiasSlider->setValue(0.0);
+	color_controls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(color_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* bump_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Bump"));
+	m_bump_check=new wxCheckBox(panel, ID_TEXBUMP, "");
+	bump_controls->Add(m_bump_check,0,wxALIGN_LEFT|wxALL,4);
+
+	BumpAmpSlider=new SliderCtrl(panel,ID_BUMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
+	BumpAmpSlider->setRange(-8,8);
+	BumpAmpSlider->setValue(1.0);
+	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Xfer",LABEL2,VALUE2,SLIDER2);
+	BumpDampSlider->setRange(1,0,0,1);
+	BumpDampSlider->setValue(1.0);
+	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 
     // line 2 start-offset
 
@@ -213,6 +257,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 
 	hline->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
+
 	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
 	overlays->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -233,44 +278,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	
 	boxSizer->Add(overlays, 0, wxALIGN_LEFT|wxALL,0);
 
-    // line 4 Color
 
-	wxStaticBoxSizer* color_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Color"));
-	m_tex_check=new wxCheckBox(panel, ID_TEXCOLOR, "");
-	m_tex_check->SetValue(true);
-	color_controls->Add(m_tex_check,0,wxALIGN_LEFT|wxALL,4);
-
-	AlphaSlider=new SliderCtrl(panel,ID_ALPHA_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	AlphaSlider->setRange(0,2.0);
-	AlphaSlider->setValue(1.0);
-
-	color_controls->Add(AlphaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	//color_controls->SetMinSize(wxSize(205,BOX_HEIGHT));
-
-	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Bias",LABEL1,VALUE2,SLIDER2);
-	BiasSlider->setRange(-4.0,4.0);
-	BiasSlider->setValue(0.0);
-	color_controls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	boxSizer->Add(color_controls, 0, wxALIGN_LEFT|wxALL,0);
-	//bias_controls->SetMinSize(wxSize(LINE_WIDTH-EXPR_WIDTH,BOX_HEIGHT));
-
-	//hline->Add(color_controls,0,wxALIGN_LEFT|wxALL,0);
-
-	wxStaticBoxSizer* bump_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Bump"));
-	m_bump_check=new wxCheckBox(panel, ID_TEXBUMP, "");
-	bump_controls->Add(m_bump_check,0,wxALIGN_LEFT|wxALL,4);
-
-	BumpAmpSlider=new SliderCtrl(panel,ID_BUMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	BumpAmpSlider->setRange(-2,2);
-	BumpAmpSlider->setValue(1.0);
-	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"In",LABEL1,VALUE2,SLIDER2);
-	BumpDampSlider->setRange(1,0,0,1);
-	BumpDampSlider->setValue(1.0);
-	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxTexTabs::AddFilterTab(wxWindow *panel) {
@@ -285,7 +293,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	//wxStaticBoxSizer* texmode = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Interpolation"));
 
     wxString lmodes[]={"Nearest","Linear","Mip"};
-    interp_mode=new wxRadioBox(panel,ID_INTERP,wxT("Interpolation"),wxPoint(-1,-1),wxSize(200, 44),3,
+    interp_mode=new wxRadioBox(panel,ID_INTERP,wxT("Interpolation"),wxPoint(-1,-1),wxSize(220, 44),3,
     		lmodes,3,wxRA_SPECIFY_COLS);
     interp_mode->SetSelection(2);
     hline->Add(interp_mode, 0, wxALIGN_LEFT | wxALL, 0);
@@ -302,7 +310,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Distortion"));
+	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Mapping"));
 	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",0,LINE_WIDTH);
 
 	ampl_controls->Add(m_amp_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -320,14 +328,17 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 void VtxTexTabs::makeFileList(){
 	int info=0;
 	switch(m_image_type){
-	case TYPE_BANDS:
+	case TYPE_1D:
 		info=BANDS|SPX;
 		break;
-	case TYPE_IMAGE:
+	case TYPE_2D:
 		info=IMAGE|SPX;
 		break;
 	case TYPE_IMPORT:
-		info=0;
+		info=IMPORT;
+		break;
+	case TYPE_MAP:
+		info=MAP;
 		break;
 	}
     images.makeImagelist();
@@ -343,7 +354,9 @@ void VtxTexTabs::makeFileList(){
 	}
     files.Sort();
 	choices->Clear();
+
 	choices->Append(files);
+	choices->SetColumns(5);
 
 	int index=files.Index(m_name);
 	if(index== wxNOT_FOUND)
@@ -355,7 +368,9 @@ void VtxTexTabs::OnFileSelect(wxCommandEvent& event){
 	int i=choices->GetCurrentSelection();
     m_name=files[i];
     set_image();
-    sceneDialog->setNodeName((const char*)m_name.ToAscii());
+    if(imageDialog->IsShown())
+    	imageDialog->Show(m_name,m_image_type);
+    sceneDialog->setNodeName((char*)m_name.ToAscii());
     setObjAttributes();
     TheView->set_changed_render();
 }
@@ -398,58 +413,24 @@ void VtxTexTabs::restoreState(int which){
 	set_image();
 }
 
+void VtxTexTabs::OnShowImport(wxCommandEvent& event){
+	get_files(TYPE_IMPORT);
+}
+void VtxTexTabs::OnShowMap(wxCommandEvent& event){
+	get_files(TYPE_MAP);
+}
+
 void VtxTexTabs::OnShowBands(wxCommandEvent& event){
-	wxString file=state[TYPE_IMAGE].file;
-	saveState(TYPE_IMAGE);
-	state[TYPE_IMAGE].file=file;
-	file=state[TYPE_IMPORT].file;
-	state[TYPE_IMPORT].file=file;
-	m_image_type=TYPE_BANDS;
-	restoreState(m_image_type);
-	makeFileList();
-	int id=choices->FindString(m_name);
-	if(id==wxNOT_FOUND)
-		id=0;
-	choices->SetSelection(id);
-    m_name=files[id];
-    set_image();
-    sceneDialog->setNodeName((const char*)m_name.ToAscii());
-    object()->invalidate();
-    texture()->invalidate();
-    //getObjAttributes();
-    setObjAttributes();
-    TheView->set_changed_detail();
+	get_files(TYPE_1D);
 }
 void VtxTexTabs::OnShowImage(wxCommandEvent& event){
-	saveState(m_image_type); // save last image type state
-	if(m_image_type==TYPE_BANDS)
-		restoreState(TYPE_IMAGE);	   // restore 2d-properties
-	else
-		m_name=state[TYPE_IMAGE].file; // just get last selection
-
-	m_image_type=TYPE_IMAGE;
-	makeFileList();
-	int id=choices->FindString(m_name);
-	if(id==wxNOT_FOUND)
-		id=0;
-	choices->SetSelection(id);
-    m_name=files[id];
-    set_image();
-    sceneDialog->setNodeName((const char*)m_name.ToAscii());
-    object()->invalidate();
-    texture()->invalidate();
-    //getObjAttributes();
-    setObjAttributes();
-    TheView->set_changed_detail();
+	get_files(TYPE_2D);
 }
 
-void VtxTexTabs::OnShowImport(wxCommandEvent& event){
+void VtxTexTabs::get_files(int type){
 	saveState(m_image_type);
-	if(m_image_type==TYPE_BANDS)
-		restoreState(TYPE_IMPORT);	   // restore 2d-properties
-	else
-		m_name=state[TYPE_IMPORT].file; // just get last selection
-	m_image_type=TYPE_IMPORT;
+	restoreState(type);
+	m_image_type=type;
 	makeFileList();
 	int id=choices->FindString(m_name);
 	if(id==wxNOT_FOUND)
@@ -460,14 +441,14 @@ void VtxTexTabs::OnShowImport(wxCommandEvent& event){
 	else
 		m_name=files[id];
     set_image();
-    sceneDialog->setNodeName((const char*)m_name.ToAscii());
+    sceneDialog->setNodeName((char*)m_name.ToAscii());
     object()->invalidate();
     texture()->invalidate();
-    //getObjAttributes();
     setObjAttributes();
     TheView->set_changed_detail();
     TheScene->rebuild();
 }
+
 
 void VtxTexTabs::OnTextEnter(wxCommandEvent& event){
 	invalidateObject();
@@ -477,13 +458,12 @@ void VtxTexTabs::OnImageEdit(wxCommandEvent& event){
 	imageDialog->Show(m_name,m_image_type);
 }
 
-
 //-------------------------------------------------------------
 // VtxTexTabs::set_image() show selected image
 //-------------------------------------------------------------
 void VtxTexTabs::set_image(){
 	if(!choices->IsEmpty()){
-		m_image_window->setImage(m_name);
+		m_image_window->setImage(m_name,VtxImageWindow::TILE);
 		if(imageDialog->IsShown())
 			imageDialog->Show(m_name,m_image_type);
 	}
@@ -758,23 +738,34 @@ void VtxTexTabs::getObjAttributes(){
 	}
 	if(m_type & SPX){
 		if(m_type&BANDS){
-			m_image_type=TYPE_BANDS;
-			m_import_button->SetValue(false);
-			m_bands_button->SetValue(true);
-			m_image_button->SetValue(false);
+			m_image_type=TYPE_1D;
+			m_img_button->SetValue(false);
+			m_map_button->SetValue(false);
+			m_1D_button->SetValue(true);
+			m_2D_button->SetValue(false);
 		}
 		else if(m_type&IMAGE){
-			m_import_button->SetValue(false);
-			m_bands_button->SetValue(false);
-			m_image_button->SetValue(true);
-			m_image_type=TYPE_IMAGE;
+			m_img_button->SetValue(false);
+			m_1D_button->SetValue(false);
+			m_2D_button->SetValue(true);
+			m_map_button->SetValue(false);
+			m_image_type=TYPE_2D;
 		}
 	}
+	else if(m_type & MAP){
+		m_1D_button->SetValue(false);
+		m_2D_button->SetValue(false);
+		m_img_button->SetValue(false);
+		m_map_button->SetValue(false);
+		m_image_type=TYPE_MAP;
+	}
 	else{
-		m_bands_button->SetValue(false);
-		m_image_button->SetValue(false);
-		m_import_button->SetValue(true);
+		m_1D_button->SetValue(false);
+		m_2D_button->SetValue(false);
+		m_img_button->SetValue(true);
+		m_map_button->SetValue(false);
 		m_image_type=TYPE_IMPORT;
+
 	}
 	set_start(args[i++]);
 
@@ -795,7 +786,7 @@ void VtxTexTabs::getObjAttributes(){
 	m_tex_check->SetValue(tnode->texActive());
 	m_bump_check->SetValue(tnode->bumpActive());
 	makeFileList();
-	m_image_window->setImage(m_name);
+	m_image_window->setImage(m_name,VtxImageWindow::TILE);
 	saveState(m_image_type);
 	update_needed=false;
 

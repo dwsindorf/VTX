@@ -113,11 +113,11 @@ void VtxPointTabs::updateControls(){
 //-------------------------------------------------------------
 void VtxPointTabs::setObjAttributes(){
 	update_needed=true;
-	char p[1024]="";
+	char p[1024];
 	TNpoint *tnode=object();
-	char x[1024]={0};
-	char y[1024]={0};
-	char z[1024]={0};
+	char x[1024];
+	char y[1024];
+	char z[1024];
 	strcpy(x,m_x_expr->GetValue().ToAscii());
 	strcpy(y,m_y_expr->GetValue().ToAscii());
 	strcpy(z,m_z_expr->GetValue().ToAscii());
@@ -125,6 +125,7 @@ void VtxPointTabs::setObjAttributes(){
 		sprintf(p,"Point(%s,%s,%s)\n",x,y,z);
 	else
 		sprintf(p,"Z(%s)\n",z);
+	cout<<p<<endl;
 	tnode->setExpr(p);
 	if(tnode->getExprNode()==0)
 		update_needed=true;

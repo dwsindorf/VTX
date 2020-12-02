@@ -7,8 +7,8 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-//#define DEBUG_IMAGES
-//#define DEBUG_TEXS
+#define DEBUG_IMAGES
+#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

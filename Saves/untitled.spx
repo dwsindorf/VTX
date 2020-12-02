@@ -12,6 +12,68 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
+	View{
+		time=50578.2;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=1.86437e+06 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-26.0156;
+		theta=28.8281;
+		height=52800 ft;
+		gndlvl=6154.65 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=11.539 miles;
+		gndlvl=12797.8 ft;
+	}
+	View{
+		theta=30.3223;
+		height=4999.53 ft;
+		gndlvl=23735.3 ft;
+	}
+	View{
+		height=9892.22 ft;
+		gndlvl=23928.7 ft;
+		tilt=-7;
+		angle=-1;
+	}
+	View{
+		phi=-25.7959;
+		theta=31.8054;
+		height=5005.22 ft;
+		gndlvl=23989.2 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=4817.28 ft;
+		gndlvl=24463.5 ft;
+		tilt=-4;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=1.86437e+06 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		height=0.00834962;
+		gndlvl=18355 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -84,15 +146,15 @@ Scene() {
 						crot=1;
 						emission=Color(1,1,1,0.3);
 						hscale=0.05;
+						resolution=8;
 						specular=Color(1,1,1);
-						sprites_file="CloudSprites.bmp";
 						Surface{
 							terrain=Color(1,1,1,twist(-0.1,noise(RIDGED|FS,0,11.1,0.45,0.5,2.02,1,1,0,1)));
 						}
 					}
 					Clouds(0.0040629) {
 						ambient=Color(1,1,1,0.6);
-						cmin=2.76276;
+						cmin=22.1658;
 						crot=1;
 						day=0.5;
 						diffuse=Color(1,1,1,0.47);
@@ -100,19 +162,16 @@ Scene() {
 						emission=Color(1,1,1,0.16);
 						hscale=0.05;
 						name="Cumulus";
-						num_sprites=1.29162;
 						resolution=2;
 						rot_phase=121.932;
 						rseed=1.38657;
 						shine=77.7857;
-						smax=2.55552;
+						smax=4.44448;
 						specular=Color(1,1,1,0);
-						sprites_dim=1;
-						sprites_file="cloud-image-0";
 						Surface{
 							x=noise(RIDGED|UNS,0,4.9,1,1,2,1,1,0,0);
-							terrain=clouds(HT,-0.1*HT,(1-x)*CIRRUS+x*10)
-									Z(0.1*noise(SQR,5,12,-0.1,0.5,2,1,1,0,0))+Color(1,1,1,noise(0,2,0,0.5,2,1,1,0,0));
+							terrain=clouds(0.1,-0.1,(1-x)*CIRRUS+x*10)
+									Z(noise(SQR,3.6,12,-0.1,0.5,2,1,1,0,0))+Color(1,1,1,noise(FS,5.6,13.8,1,0.5,2,1,1,0,0));
 						}
 					}
 				}

@@ -11,11 +11,15 @@
 #undef SLIDER2
 #undef LABEL
 #undef LABEL1
+#undef LABEL2
+#undef LABEL2S
 
-#define LABEL   80
+#define LABEL   70
 #define LABEL1   55
+#define LABEL2   50
+#define LABEL2S   45
 
-#define SLIDER2 100
+#define SLIDER2 120
 #define BTNWIDTH 75
 #define BTNSIZE wxSize(BTNWIDTH,30)
 
@@ -78,6 +82,7 @@ enum{
 	ID_FILELIST,
 
 	ID_SPRITES_DIM,
+	ID_CLOUDS_DIM,
 
 };
 
@@ -116,6 +121,8 @@ SET_SLIDER_EVENTS(SMAX,VtxCloudsTabs,Smax)
 SET_SLIDER_EVENTS(CROT,VtxCloudsTabs,Crot)
 
 EVT_CHOICE(ID_SPRITES_DIM,VtxCloudsTabs::OnDimSelect)
+EVT_CHOICE(ID_CLOUDS_DIM,VtxCloudsTabs::OnCloudsDimSelect)
+
 EVT_CHOICE(ID_FILELIST,VtxCloudsTabs::OnChangedFile)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxCloudsTabs::OnAddItem)
@@ -235,15 +242,24 @@ void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
 
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Orbital"));
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2,VALUE2+SLIDER2);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2,VALUE2+SLIDER2-40);
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	wxString dims[]={"2D","3D"};
+
+	clouds_dim=new wxChoice(panel, ID_CLOUDS_DIM, wxDefaultPosition,wxSize(50,-1),2, dims);
+	clouds_dim->SetSelection(0);
+	hline->Add(clouds_dim,0,wxALIGN_LEFT|wxALL,0);
+
 	hline->AddSpacer(5);
 
-	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",LABEL2S, VALUE2,SLIDER2);
+	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",35, VALUE2,SLIDER2);
 	CellSizeSlider->setRange(1,8);
 	CellSizeSlider->setValue(1);
 	CellSizeSlider->slider->SetToolTip("Grid Size");
 	hline->Add(CellSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+
     object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
     hline= new wxBoxSizer(wxHORIZONTAL);
 
@@ -349,9 +365,9 @@ void VtxCloudsTabs::AddGeometryTab(wxWindow *panel){
 	NumSpritesSlider->slider->SetToolTip("Number of Sprites per vertex");
     hline->Add(NumSpritesSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
-    SmaxSlider=new SliderCtrl(panel,ID_SMAX_SLDR,"Extent",LABEL1, VALUE,SLIDER2);
-    SmaxSlider->setRange(0,8);
-    SmaxSlider->slider->SetToolTip("Minimum Extent");
+    SmaxSlider=new SliderCtrl(panel,ID_SMAX_SLDR,"Scatter",LABEL1, VALUE,SLIDER2);
+    SmaxSlider->setRange(0,32);
+    SmaxSlider->slider->SetToolTip("Random Radius");
     hline->Add(SmaxSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
     size_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
@@ -464,6 +480,39 @@ void VtxCloudsTabs::OnDimSelect(wxCommandEvent& event){
 	invalidateObject();
 }
 
+void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
+	GLuint dim=clouds_dim->GetSelection();
+	TNclouds *tnode=object()->getClouds();
+	switch(dim){
+	case 0: // 2D selected
+		if(tnode){
+			cout<< "3D->2D"<<endl;
+			object()->deleteClouds();
+			object()->invalidate();
+			TheView->set_changed_detail();
+
+			//TheScene->rebuild_all();
+		}
+		break;
+	case 1: // 3d selected
+		if(!tnode){
+			cout<< "2D->3D"<<endl;
+			wxString str=getCloudsExpr();
+			TNclouds *clouds=(TNclouds*)TheScene->parse_node((char*)str.ToAscii());
+			if(clouds !=NULL){
+				object()->setClouds(clouds);
+				TheView->set_changed_detail();
+				TheScene->rebuild_all();
+				update_needed=true;
+				getObjAttributes();
+				sceneDialog->replaceSelected(object());
+			}
+		}
+		break;
+	}
+	updateControls();
+}
+
 void VtxCloudsTabs::setTypePanel(){
 	if(image_window->imageOk()&&changed_cell_expr){
 		GLuint dim=sprites_dim->GetSelection()+1;
@@ -537,9 +586,9 @@ void VtxCloudsTabs::makeFileList(int dim,char * name){
 // VtxCloudsTabs::getCloudsExpr() return clouds value string
 //-------------------------------------------------------------
 wxString VtxCloudsTabs::getCloudsExpr(){
-	char top[128]="HT";
-	char bottom[128]="-0.25*HT";
-	char type[128]="1.0+10.0*HT";
+	char top[128]="0.1";
+	char bottom[128]="-0.1";
+	char type[128]="0";
 
 	if(strlen(top_expr->GetValue().ToAscii()))
 		strcpy(top,top_expr->GetValue().ToAscii());
@@ -584,6 +633,8 @@ void VtxCloudsTabs::getObjAttributes(){
 
 	update_needed=false;
 
+	clouds_dim->SetSelection(obj->threeD()?1:0);
+
 	TNclouds *tnode=obj->getClouds();
 	if(!tnode)
 		return;
@@ -610,6 +661,7 @@ void VtxCloudsTabs::getObjAttributes(){
 	uint dim=0;
 	char* sprites_file=obj->getSpritesFile(dim);
 
+
 	sprites_dim->SetSelection(dim-1);
 	makeFileList(dim,sprites_file);
 	cout<<"file:"<<sprites_file<<" dim:"<<dim<<endl;
@@ -624,21 +676,15 @@ void VtxCloudsTabs::getObjAttributes(){
 void VtxCloudsTabs::setObjAttributes(){
 	update_needed=true;
 	TNclouds *tnode=object()->getClouds();
-	if(!tnode)
+	if(!tnode){
+		cout << "NO CLOUDS" << endl;
 		return;
+	}
 
 	object()->invalidate();
 
-	wxString str=choices->GetStringSelection();
-	GLuint dim=sprites_dim->GetSelection();
-	dim+=1;
-	if(str!=wxEmptyString){
-		object()->setSpritesFile((char*)str.ToAscii(), dim);
-		setImagePanel();
-		setTypePanel();
-	}
 
-	str=getCloudsExpr();
+	wxString str=getCloudsExpr();
 
 	cout << str << endl;
 
@@ -653,6 +699,15 @@ void VtxCloudsTabs::setObjAttributes(){
         TheView->set_changed_detail();
         TheScene->rebuild();
 	}
+	str=choices->GetStringSelection();
+	GLuint dim=sprites_dim->GetSelection();
+	dim+=1;
+	if(str!=wxEmptyString){
+		object()->setSpritesFile((char*)str.ToAscii(), dim);
+		setImagePanel();
+		setTypePanel();
+	}
+
 }
 
 //-------------------------------------------------------------
@@ -661,8 +716,6 @@ void VtxCloudsTabs::setObjAttributes(){
 void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
 	int pages=GetPageCount();
-	//geometry_page->Enable(obj->threeD());
-	//sprites_page->Enable(obj->threeD());
 
 	if(obj->threeD()){
 		if(pages==2){

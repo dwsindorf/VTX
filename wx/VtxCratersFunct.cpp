@@ -12,7 +12,9 @@
 #define LINE_HEIGHT 30
 
 #define VALUE1 60
-#define LABEL1 40
+#define LABEL1 50
+#undef LABEL2
+#define LABEL2 55
 
 // define all resource ids here
 enum {

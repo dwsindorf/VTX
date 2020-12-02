@@ -21,7 +21,7 @@ extern double Rand();
 extern double Hscale;
 extern double Red,Green,Blue,Alpha,Theta,Phi;
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
@@ -145,6 +145,10 @@ void ImageSym::print()
     int m=0;
     images.unhashName(name(),m,tmp);
     printf("%-10s",tmp);
+    if(info&IMTYPE==MAP)
+        printf("%-5s","MAP");
+    if(info&IMTYPE==IMPORT)
+        printf("%-5s","IMPORT");
     if(info&SPX){
         printf("%-5s","SPX");
         if(info&BANDS)
@@ -588,26 +592,53 @@ void ImageReader::clear_flags()
 //-------------------------------------------------------------
 // ImageReader::getFileInfo   get file info
 //-------------------------------------------------------------
-int ImageReader::getFileInfo(char *name)
+int ImageReader::getFileInfo(char *name, char *dir)
 {
     char path[512];
-    char dir[512];
     int info=0;
 
-   	getImagePath(name,dir);
-
-	sprintf(path,"%s%s",dir,File.ext);
+	sprintf(path,"%s%s.spx",dir,name);
 	if(File.fileExists(path))
 		info|=SPX;
 
-	sprintf(path,"%s.bmp",dir);
+	sprintf(path,"%s%s.bmp",dir,name);
 	if(File.fileExists(path))
 		info|=BMP;
 
-	sprintf(path,"%s.jpg",dir);
+	sprintf(path,"%s%s.jpg",dir,name);
 	if(File.fileExists(path))
 		info|=JPG;
+	//if(info)
+	//	cout<<path<<endl;
+	return info;
+}
 
+//-------------------------------------------------------------
+// ImageReader::getFileInfo   get file info
+//-------------------------------------------------------------
+int ImageReader::getFileInfo(char *name)
+{
+    char dir[512];
+    char base[512];
+    int info=0;
+
+  	File.getBaseDirectory(base);
+	sprintf(dir,"%s%sBitmaps%s",base,File.separator,File.separator);
+
+   	//getImagePath(name,dir); // Bitmaps
+   	info=getFileInfo(name,dir);
+   	if(info)
+   		return info;
+	sprintf(dir,"%s%sTextures%sImages%s",base,File.separator,File.separator,File.separator);
+	info=getFileInfo(name,dir);
+   	if(info){
+   		info |=IMPORT;
+   		return info;
+   	}
+	sprintf(dir,"%s%sTextures%sMaps%s",base,File.separator,File.separator,File.separator);
+	info=getFileInfo(name,dir);
+	if(info)
+		info|=MAP;
 	return info;
 }
 
@@ -649,22 +680,37 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 	for(int i=0;i<images.size;i++){
 		is=images[i];
 	    int info=is->info;
-	    int imode=mode&(IMAGE|BANDS);
+	    int spx_type=mode&(SPXTYPE);
+
 	    int dmode=mode&(T1D|T2D);
-	    int smode=mode&(SPX);
+	    int is_spx=mode&(SPX);
 
-		if(smode && !(info & SPX)){
+		if(is_spx && !(info & SPX)){
 			continue;
 		}
-		if(!smode && (info & SPX)){
+		if(!is_spx && (info & SPX)){
 			continue;
 		}
+		switch(mode&SPXTYPE){
+		case IMAGE:
+			if((info&SPXTYPE) != IMAGE)
+				continue;
+			break;
+		case BANDS:
+			if((info&SPXTYPE) != BANDS)
+				continue;
+			break;
+		}
+		switch(mode&IMTYPE){
+		case MAP:
+			if((info&IMTYPE) != MAP)
+				continue;
+			break;
+		case IMPORT:
+			if((info&IMTYPE) != IMPORT)
+				continue;
+			break;
 
-		if(imode && imode != (IMAGE|BANDS)){
-			if((mode & IMAGE) && !(info & IMAGE))
-				continue;
-			if((mode & BANDS) && !(info & BANDS))
-				continue;
 		}
 		if(dmode && dmode != (T1D|T2D)){
 			if((mode & T1D) && !(info & T1D))
@@ -680,7 +726,11 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			if(is->image->changed())
 				BIT_ON(is->info,CHANGED);
 		}
-		list.add(new ImageSym(is));
+		ImageSym *nis=new ImageSym(is);
+#ifdef DEBUG_IMAGES
+		printf("adding image:%-25s 0x%-8X\n",nis->name(),nis->info);
+#endif
+		list.add(nis);
 	}
 }
 
@@ -749,7 +799,7 @@ void ImageReader::makeImagelist()
 
     if(init){
 		char base[256];
-		char sdir[MAXSTR];
+		char sdir[512];
 
 		LinkedList<ModelSym*>flist;
 		ModelSym* sym;
@@ -761,11 +811,9 @@ void ImageReader::makeImagelist()
 
 		sprintf(sdir,"%s%sBitmaps",base,File.separator);
 		File.getFileNameList(sdir,"*.spx",flist);
-		sprintf(sdir,"%s%sTextures",base,File.separator);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
 		flist.ss();
-		cout << "images.size:"<<images.size<<" flist.size:"<< flist.size << endl;
 		while((sym=flist++)>0){
 			if(!images.inlist(sym->name())){
 				is=getImageInfo(sym->name());
@@ -773,6 +821,31 @@ void ImageReader::makeImagelist()
 				images.sort();
 			}
 		}
+		flist.free();
+		sprintf(sdir,"%s%sTextures%sImages",base,File.separator,File.separator);
+		File.getFileNameList(sdir,"*.bmp",flist);
+		File.getFileNameList(sdir,"*.jpg",flist);
+		flist.ss();
+		while((sym=flist++)>0){
+			if(!images.inlist(sym->name())){
+				is=getImageInfo(sym->name());
+				images.add(is);
+				images.sort();
+			}
+		}
+		flist.free();
+		sprintf(sdir,"%s%sTextures%sMaps",base,File.separator,File.separator);
+		File.getFileNameList(sdir,"*.bmp",flist);
+		File.getFileNameList(sdir,"*.jpg",flist);
+		flist.ss();
+		while((sym=flist++)>0){
+			if(!images.inlist(sym->name())){
+				is=getImageInfo(sym->name());
+				images.add(is);
+				images.sort();
+			}
+		}
+		cout << "images.size:"<<images.size<< endl;
 		flist.free();
 		init=0;
 	}
@@ -962,8 +1035,8 @@ char *ImageReader::readSpxFile(char *name)
 //-------------------------------------------------------------
 Image *ImageReader::open(char *name)
 {
-	char dir[256];
-	char base[256];
+	char dir[512];
+	char base[512];
   	File.getBaseDirectory(base);
   	char *d=File.separator;
 	sprintf(dir,"%s%sBitmaps%s%s",base,d,d,name);
@@ -971,8 +1044,17 @@ Image *ImageReader::open(char *name)
 	Image *image=open(name, dir);
 	if(image)
 		return image;
-	sprintf(dir,"%s%sTextures%s%s",base,d,d,name);
-	return open(name, dir);
+	sprintf(dir,"%s%sTextures%sImages%s%s",base,d,d,d,name);
+	cout<<dir<<endl;
+	image=open(name, dir);
+	if(image)
+		return image;
+	sprintf(dir,"%s%sTextures%sMaps%s%s",base,d,d,d,name);
+	image=open(name, dir);
+	if(image)
+		return image;
+
+	return 0;
 }
 
 //-------------------------------------------------------------

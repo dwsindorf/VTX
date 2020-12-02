@@ -17,9 +17,6 @@
 #include "OrbitalClass.h"
 #include "UniverseModel.h"
 
-//#define TYPE_IMAGE 0
-//#define TYPE_BANDS 1
-
 // define all resource ids here
 enum {
 	ID_OK,
@@ -69,7 +66,7 @@ bool VtxImageDialog::Create( wxWindow* parent,
     		pos, size,  wxDEFAULT_FRAME_STYLE & ~ (wxRESIZE_BORDER | wxMAXIMIZE_BOX)))
         return false;
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-    m_type=TYPE_BANDS;
+    m_type=TYPE_1D;
 	wxBoxSizer* buttons = new wxBoxSizer(wxHORIZONTAL);
     m_save = new wxButton(this,ID_SAVE,"Save",wxDefaultPosition,BTNSIZE);
     m_revert = new wxButton(this,ID_REVERT,"Revert",wxDefaultPosition,BTNSIZE);
@@ -79,20 +76,22 @@ bool VtxImageDialog::Create( wxWindow* parent,
     buttons->Add(m_delete, 0, wxALIGN_LEFT|wxALL,0);
 
     m_tabs=new wxNotebook(this,ID_SWITCH,wxPoint(0,0),wxSize(DLG_WIDTH,DLG_HEIGHT));
-	m_image_tabs=new VtxImageTabs(m_tabs,wxID_ANY);
-    m_import_tabs=new VtxImportTabs(m_tabs,wxID_ANY);
-    m_bands_tabs=new VtxBandsTabs(m_tabs,wxID_ANY);
- 	m_tabs->AddPage(m_bands_tabs,wxT("1D"),true);
- 	m_tabs->AddPage(m_image_tabs,wxT("2D"),false);
- 	m_tabs->AddPage(m_import_tabs,wxT("Bitmaps"),false);
-	topSizer->Add(m_tabs,0,wxALIGN_LEFT|wxALL);
+    m_1D_tabs=new VtxBandsTabs(m_tabs,wxID_ANY);
+	m_2D_tabs=new VtxImageTabs(m_tabs,wxID_ANY);
+    m_img_tabs=new VtxImportTabs(m_tabs,IMPORT,wxID_ANY);
+    m_map_tabs=new VtxImportTabs(m_tabs,MAP,wxID_ANY);
 
+ 	m_tabs->AddPage(m_1D_tabs,wxT("1D"),true);
+ 	m_tabs->AddPage(m_2D_tabs,wxT("2D"),false);
+ 	m_tabs->AddPage(m_img_tabs,wxT("Img"),false);
+ 	m_tabs->AddPage(m_map_tabs,wxT("Map"),false);
+
+	topSizer->Add(m_tabs,0,wxALIGN_LEFT|wxALL);
 
     topSizer->Add(buttons,0,wxALIGN_LEFT|wxALL);
     SetSizerAndFit(topSizer);
 
     Centre();
-	//m_tabs->Show(true);
 
     SetBackgroundColour(m_tabs->GetBackgroundColour());
 
@@ -109,9 +108,10 @@ void VtxImageDialog::setTitle(){
 }
 bool VtxImageDialog::Show(const bool b){
 	if(b){
-		m_image_tabs->updateControls();
-		m_bands_tabs->updateControls();
-		m_import_tabs->updateControls();
+		m_2D_tabs->updateControls();
+		m_1D_tabs->updateControls();
+		m_img_tabs->updateControls();
+		m_map_tabs->updateControls();
 		UpdateControls();
 	}
 	return wxFrame::Show(b);
@@ -121,23 +121,28 @@ bool VtxImageDialog::Show(wxString name, int type){
 	m_type=type;
 	m_tabs->SetSelection(m_type);
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_image_tabs->setSelection(name);
+	case TYPE_2D:
+		m_2D_tabs->setSelection(name);
 		break;
-	case TYPE_BANDS:
-		m_bands_tabs->setSelection(name);
+	case TYPE_1D:
+		m_1D_tabs->setSelection(name);
 		break;
 	case TYPE_IMPORT:
-		m_import_tabs->setSelection(name);
+		m_img_tabs->setSelection(name);
+		break;
+	case TYPE_MAP:
+		m_map_tabs->setSelection(name);
 		break;
 	}
 	return Show(true);
 }
 
 void VtxImageDialog::Invalidate(){
-	m_image_tabs->Invalidate();
-	m_bands_tabs->Invalidate();
-	m_import_tabs->Invalidate();
+	m_2D_tabs->Invalidate();
+	m_1D_tabs->Invalidate();
+	m_img_tabs->Invalidate();
+	m_map_tabs->Invalidate();
+
 }
 
 void VtxImageDialog::OnOk(wxCommandEvent& event){
@@ -146,80 +151,100 @@ void VtxImageDialog::OnOk(wxCommandEvent& event){
 void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 	m_type=event.GetSelection();
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_revert->Enable(m_image_tabs->canRevert());
-		m_delete->Enable(m_image_tabs->canDelete());
-		m_save->Enable(m_image_tabs->canSave());
+	case TYPE_2D:
+		m_revert->Enable(m_2D_tabs->canRevert());
+		m_delete->Enable(m_2D_tabs->canDelete());
+		m_save->Enable(m_2D_tabs->canSave());
 		break;
-	case TYPE_BANDS:
-		m_revert->Enable(m_bands_tabs->canRevert());
-		m_delete->Enable(m_bands_tabs->canDelete());
-		m_save->Enable(m_bands_tabs->canSave());
+	case TYPE_1D:
+		m_revert->Enable(m_1D_tabs->canRevert());
+		m_delete->Enable(m_1D_tabs->canDelete());
+		m_save->Enable(m_1D_tabs->canSave());
 		break;
 	case TYPE_IMPORT:
-		m_revert->Enable(m_import_tabs->canRevert());
-		m_delete->Enable(m_import_tabs->canDelete());
-		m_save->Enable(m_import_tabs->canSave());
+		m_revert->Enable(m_img_tabs->canRevert());
+		m_delete->Enable(m_img_tabs->canDelete());
+		m_save->Enable(m_img_tabs->canSave());
+		break;
+	case TYPE_MAP:
+		m_revert->Enable(m_map_tabs->canRevert());
+		m_delete->Enable(m_map_tabs->canDelete());
+		m_save->Enable(m_map_tabs->canSave());
 		break;
 	}
 
 }
 void VtxImageDialog::OnSave(wxCommandEvent &event){
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_image_tabs->Save();
+	case TYPE_2D:
+		m_2D_tabs->Save();
 		break;
-	case TYPE_BANDS:
-		m_bands_tabs->Save();
+	case TYPE_1D:
+		m_1D_tabs->Save();
 		break;
 	case TYPE_IMPORT:
-		m_import_tabs->Save();
+		m_img_tabs->Save();
+		break;
+	case TYPE_MAP:
+		m_map_tabs->Save();
 		break;
 	}
 }
 void VtxImageDialog::OnRevert(wxCommandEvent &event){
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_image_tabs->Revert();
+	case TYPE_2D:
+		m_2D_tabs->Revert();
 		break;
-	case TYPE_BANDS:
-		m_bands_tabs->Revert();
+	case TYPE_1D:
+		m_1D_tabs->Revert();
 		break;
 	case TYPE_IMPORT:
-		m_import_tabs->Revert();
+		m_img_tabs->Revert();
+		break;
+	case TYPE_MAP:
+		m_map_tabs->Revert();
 		break;
 	}
 }
 void VtxImageDialog::OnDelete(wxCommandEvent &event){
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_image_tabs->Delete();
+	case TYPE_2D:
+		m_2D_tabs->Delete();
 		break;
-	case TYPE_BANDS:
-		m_bands_tabs->Delete();
+	case TYPE_1D:
+		m_1D_tabs->Delete();
 		break;
 	case TYPE_IMPORT:
-		m_import_tabs->Delete();
+		m_img_tabs->Delete();
+		break;
+	case TYPE_MAP:
+		m_map_tabs->Delete();
 		break;
 	}
 }
 void VtxImageDialog::UpdateControls(){
 	switch(m_type){
-	case TYPE_IMAGE:
-		m_revert->Enable(m_image_tabs->canRevert());
-		m_delete->Enable(m_image_tabs->canDelete());
-		m_save->Enable(m_image_tabs->canSave());
+	case TYPE_2D:
+		m_revert->Enable(m_2D_tabs->canRevert());
+		m_delete->Enable(m_2D_tabs->canDelete());
+		m_save->Enable(m_2D_tabs->canSave());
 		break;
-	case TYPE_BANDS:
-		m_revert->Enable(m_bands_tabs->canRevert());
-		m_delete->Enable(m_bands_tabs->canDelete());
-		m_save->Enable(m_bands_tabs->canSave());
+	case TYPE_1D:
+		m_revert->Enable(m_1D_tabs->canRevert());
+		m_delete->Enable(m_1D_tabs->canDelete());
+		m_save->Enable(m_1D_tabs->canSave());
 		break;
 	case TYPE_IMPORT:
-		m_revert->Enable(m_import_tabs->canRevert());
-		m_delete->Enable(m_import_tabs->canDelete());
-		m_save->Enable(m_import_tabs->canSave());
+		m_revert->Enable(m_img_tabs->canRevert());
+		m_delete->Enable(m_img_tabs->canDelete());
+		m_save->Enable(m_img_tabs->canSave());
 		break;
+	case TYPE_MAP:
+		m_revert->Enable(m_map_tabs->canRevert());
+		m_delete->Enable(m_map_tabs->canDelete());
+		m_save->Enable(m_map_tabs->canSave());
+		break;
+
 	}
 	Refresh();
 }

@@ -21,10 +21,12 @@ VtxImageWindow::VtxImageWindow(wxWindow* parent,
 		: wxPanel(parent, id, pos, size,  style, name)
 {
 	m_name="";
+	option=TILE;
 }
 
-void VtxImageWindow::setImage(wxString name){
+void VtxImageWindow::setImage(wxString name,int opt){
 	m_name=name;
+	option=opt;
 	Refresh();
 }
 
@@ -54,12 +56,18 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 		    wxImage wim(w,h,rgb,false);
 		    //wim.SetAlpha(alpha,false);
 			wxBitmap bmp(wim,-1);
-			TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+			if(option==TILE)
+			    TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+			else
+				ScaleBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
 		}
 		else{
 			wxImage wim(w,h,pixels,true);
 			wxBitmap bmp(wim,-1);
-			TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+			if(option==TILE)
+			    TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
+			else
+				ScaleBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);
 		}
 	}
  }
@@ -80,5 +88,29 @@ bool VtxImageWindow::TileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bi
             dc.Blit(i, j, bitmap.GetWidth(), bitmap.GetHeight(), & dcMem, 0, 0);
     }
     dcMem.SelectObject(wxNullBitmap);
+    return true;
+}
+
+bool VtxImageWindow::ScaleBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap)
+{
+	wxSize sz = GetSize();
+	wxImage img=bitmap.ConvertToImage().Rescale(sz.x, sz.y);
+	bitmap=wxBitmap(img);
+	dc.DrawBitmap( bitmap, 0, 0, true );
+
+//    int w = bitmap.GetWidth();
+//    int h = bitmap.GetHeight();
+//
+//    wxMemoryDC dcMem;
+//
+//    dcMem.SelectObjectAsSource(bitmap);
+//
+//    int i, j;
+//    for (i = rect.x; i < rect.x + rect.width; i += w)
+//    {
+//        for (j = rect.y; j < rect.y + rect.height; j+= h)
+//            dc.Blit(i, j, bitmap.GetWidth(), bitmap.GetHeight(), & dcMem, 0, 0);
+//    }
+//    dcMem.SelectObject(wxNullBitmap);
     return true;
 }

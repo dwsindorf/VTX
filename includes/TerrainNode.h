@@ -187,16 +187,16 @@ public:
 class TNvector : public TNunary
 {
 protected:
-    char *token;
+    char token[256];
     TNvector *expr;
 public:
-	TNvector(TNode *r) : TNunary(r) {token=0;expr=0;}
+	TNvector(TNode *r) : TNunary(r) {token[0]=0;expr=0;}
 	virtual ~TNvector();
 	virtual bool hasChildren()						{ return false; }
 	virtual int getChildren(LinkedList<NodeIF*>&l)  { return 0; }
 	virtual void valueString(char *);
 	virtual NodeIF* getValue()			{ return this;}
-	virtual void setToken(char *t)      { token=t;}
+	virtual void setToken(char *t)      { strcpy(token,t);}
 	virtual char *getToken()			{ return token;}
 	virtual void applyExpr();
 	virtual void clearExpr();

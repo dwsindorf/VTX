@@ -38,7 +38,7 @@ void KeyIF::get_state(unsigned &state)
 	BIT_SET(state,AUTOMV,TheScene->view->automv());
 }
 
-extern int test1;
+extern int clouds_mode;
 extern int test2;
 extern int test3;
 extern int test4;

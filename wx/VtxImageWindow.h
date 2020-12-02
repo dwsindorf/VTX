@@ -11,7 +11,11 @@ class VtxImageWindow : public wxPanel
 
 protected:
 	wxString m_name;
+	int option;
 public:
+	enum {
+		TILE,SCALE
+	};
 	VtxImageWindow(wxWindow* parent,
 			wxWindowID id,
 			const wxPoint& pos = wxDefaultPosition,
@@ -19,9 +23,11 @@ public:
 			long style = 0,
 			const wxString& name = "");
 
-	void setImage(wxString );
+	void setImage(wxString,int option );
 	void OnPaint(wxPaintEvent& event);
 	bool TileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);
+	bool ScaleBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);
+
 	DECLARE_EVENT_TABLE()
 };
 #endif /*IMAGEWINDOW_H_*/

@@ -174,10 +174,10 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 
 	// Shape: line 1
 
-	m_sqr=new wxCheckBox(panel, ID_SQR, "Square");
+	m_sqr=new wxCheckBox(panel, ID_SQR, "Sqr");
 	shape_cntrls->Add(m_sqr, 0, wxALIGN_LEFT|wxALL,2);
 
-	m_neg=new wxCheckBox(panel, ID_NEG, "Invert");
+	m_neg=new wxCheckBox(panel, ID_NEG, "Invt");
 	shape_cntrls->Add(m_neg, 0, wxALIGN_LEFT|wxALL,2);
 
 	m_uns=new wxCheckBox(panel, ID_UNS, "Uns");
@@ -242,8 +242,10 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 // VtxNoiseFunct::setFunction() set controls from string
 //-------------------------------------------------------------
 void VtxNoiseFunct::setFunction(wxString f){
+	if(f.IsEmpty())
+		return;
 
-	TNnoise *tn=(TNnoise*)TheScene->parse_node(f.ToAscii());
+	TNnoise *tn=(TNnoise*)TheScene->parse_node((char*)f.ToAscii());
 	if(!tn)
 		return;
 

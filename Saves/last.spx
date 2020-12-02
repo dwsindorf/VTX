@@ -1,19 +1,57 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=-42.2309;
-		theta=29.5312;
-		height=51572.2 ft;
-		gndlvl=17324.6 ft;
-		time=50577.4;
-		tilt=3;
-		angle=-15;
+		view=ORBITAL;
+		phi=22.5;
+		theta=42.1875;
+		height=249.942 miles;
+		gndlvl=-3666.47 ft;
+		time=803788;
+		heading=90;
+		pitch=-90;
 		fov=35;
 		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		height=249.927 miles;
+		gndlvl=-3588.09 ft;
+	}
+	View{
+		phi=5;
+		theta=0;
+		height=0.008;
+		gndlvl=0 ft;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		time=50578.2;
+		theta=46.6919;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		theta=0;
+		height=249.942 miles;
+		gndlvl=-3262.8 ft;
+	}
+	View{
+		view=SURFACE;
+		phi=11.25;
+		theta=343.125;
+		height=13684.8 ft;
+		gndlvl=-4691.62 ft;
+		time=842401;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		theta=346.641;
+		height=435.638 ft;
+		gndlvl=-4554.24 ft;
+	}
+	View{
+		height=435.517 ft;
+		gndlvl=-4554.12 ft;
+		tilt=-10;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -43,81 +81,53 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
-					ambient=Color(0.49,0.49,1,0.05);
+				Planet(0.004,100) {
 					day=24;
-					shadow=Color(0,0,0.19,0.58);
-					shine=6.24298;
-					specular=Color(1,1,1,0.07);
+					resolution=4;
+					shine=100;
+					specular=Color(1,1,1,0);
 					year=100;
-					haze.height=0.66;
-					haze.value=0.4;
-					image("cracks2",INVT,256,256,noise(RIDGED,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
-						Color(0.2,0.4,0.094),
-						Color(0.294,0.494,0),
-						Color(0.549,0.322,0.02),
-						Color(0.294,0.251,0.2),
-						Color(0.275,0.247,0.027),
-						Color(0.243,0.196,0.063),
-						Color(0.584,0.584,0.584),
-						Color(0.6,0.588,0.549),
-						Color(0.286,0.278,0.278),
-						Color(1,1,1));
+					albedo=1;
 					Surface{
-						terrain=Z(noise(NABS,8,14.1,0,1,2.1,2,0.11,0,-0.3))+
-								Texture("cracks2",BUMP|NTEX,556.879,-0.95888,1,0.2264,10,2.78464,1)+
-								Texture("Shist1",BUMP,16384,-1.69808,1,0,4.16992,1.90568,1,0)+
-								Texture("DirtPebbles",BUMP|NTEX,331696,-1.32072,1,0,6.43408,2.13208,1,0)+
-								Texture("alpine",BORDER|LINEAR|S,HT-SLOPE+0.2*BMPHT,0.9999,1.283,2,-3.69808,1,1.73848,1,0);
+						terrain=Color(1,0.992157,0.764706,1)+
+								Texture("gasgiant",BORDER,1,2,-0.95656,4,1,2,0.5,0);
 					}
-					Sky(0.00418944) {
-						color=Color(0,0.58,0.89,0.97);
+					Sky(0.00414184) {
+						color=Color(0.65,0.88,0.99);
 						day=24;
-						density=0.38096;
-						haze.color=Color(1,1,0.88);
-						haze.grad=0.49316;
-						haze.height=0.52;
-						haze.max=15.085 miles;
+						density=0.4717;
+						haze.color=Color(0.98,0.93,0.66);
 						haze.value=1;
-						shine=0.217207;
+						night.color=Color(0,0,0);
 						specular=Color(1,1,1);
+						twilight=Color(0.58,0,0.42);
+						twilight.max=0.383052;
+						twilight.min=-1;
 					}
 					Clouds(0.0040629) {
+						ambient=Color(1,1,1,0.35);
 						crot=1;
-						emission=Color(1,1,1,0.3);
+						diffuse=Color(1,1,1,0.59);
+						diffusion=0;
 						hscale=0.05;
-						resolution=8;
-						rseed=1.50324;
+						shine=0.678925;
 						specular=Color(1,1,1);
-						sprites_file="CloudSprites";
 						Surface{
-							terrain=Color(1,1,1,twist(-0.1,noise(RIDGED|FS,0,11.1,0.45,0.5,2.02,1,1,0,1)));
+							terrain=
+									Texture("4k_ceres_fictional",BORDER,1,2,0.52056,0.37728,1,2,0.49056,0);
 						}
 					}
-					Clouds(0.0040629) {
-						ambient=Color(1,1,1,0.6);
-						cmin=2.76276;
-						crot=1;
-						day=0.5;
-						diffuse=Color(1,1,1,0.47);
-						diffusion=0.2096;
-						emission=Color(1,1,1,0.16);
-						hscale=0.05;
-						name="Cumulus";
-						num_sprites=1.29162;
-						resolution=2;
-						rot_phase=121.932;
-						rseed=1.38657;
-						shine=77.7857;
-						smax=2.55552;
-						specular=Color(1,1,1,0);
-						sprites_dim=2;
-						sprites_file="WispyCloudsx4";
+					Moon(0.000124971,0.25) {
+						day=24;
+						hscale=0.0222132;
+						name="Moon";
+						phase=334.004;
+						resolution=4;
+						rseed=2.41294;
+						year=30;
 						Surface{
-							x=noise(RIDGED|UNS,0,4.9,1,1,2,1,1,0,0);
-							terrain=clouds(HT,-0.1*HT,(1-x)*CIRRUS+x*10)
-									Z(0.1*noise(SQR,5,12,-0.1,0.5,2,1,1,0,0))+Color(1,1,1,noise(0,2,0,0.5,2,1,1,0,0));
+							terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.4,1,0,0)+craters(ID3,1,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
+									Texture("MoonMapHiRes",BORDER|BUMP,1,1,2,0,1,2,0.5,0);
 						}
 					}
 				}

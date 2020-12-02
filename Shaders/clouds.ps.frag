@@ -1,9 +1,15 @@
 
 #include "clouds.lighting.frag"
+#if NVALS >0
+#include "noise_funcs.frag"
+#endif
+
 //########## 3D noise section #########################
 
 uniform sampler2D sprites;
 uniform float ROWS;
+uniform float INVROWS;
+
 uniform bool textures;
 
 varying vec4 CloudVars;
@@ -27,12 +33,12 @@ vec2 sprite(float index){
 	vec2 st_rotated = vec2(dot(st_centered,mat01),dot(st_centered,mat02));
 	l_uv = st_rotated * 0.5 + 0.5;
 
-    int y=index/ROWS;
-    int x=index-ROWS*y;
+    float y=index*INVROWS;
+    float x=index-ROWS*y;
 	// offset to sprite top-left corner in image
 	vec2 pt3=l_uv+vec2(x,y);
 
-	return pt3/ROWS;
+	return pt3*INVROWS;
 }
 
 // ########## main section #########################
@@ -42,13 +48,20 @@ void main(void) {
 #else
 	vec4 color=vec4(1.0);
 #endif
-    vec3 normal=normalize(Normal.xyz);
+#ifdef NCC
+	NOISE_COLOR(NCC);
+#endif
 
+    vec3 normal=normalize(Normal.xyz);
+    
     vec2 l_uv=sprite(CloudVars.z);
 	vec4 texcol=texture2D(sprites,l_uv);
-	if(textures)
+	if(textures){
 		color.a*=texcol.a;
-
+		//color.rgb*=1/256.0;
+		}
+	if(color.a<0)
+	    color.a=0;
     if(lighting)
     	color.rgb=setLighting(color.rgb,normal);
 	gl_FragData[0]=color;

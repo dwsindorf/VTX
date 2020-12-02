@@ -404,7 +404,7 @@ void VtxBandsTabs::setObjAttributes(){
 		return;
 	n->init();
 	delete n;
-	m_image_window->setImage(m_name.ToAscii());
+	m_image_window->setImage(m_name.ToAscii(),m_image_window->TILE);
 	update_needed=false;
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();
@@ -653,7 +653,7 @@ void VtxBandsTabs::displayImage(char *name){
 	m_random_mix_check->SetValue(random_mix);
 	setControlsFromColors();
 	m_alpha_check->SetValue(alpha());
-	m_image_window->setImage(wxString(name));
+	m_image_window->setImage(wxString(name),m_image_window->TILE);
  	delete inode;
 
 }

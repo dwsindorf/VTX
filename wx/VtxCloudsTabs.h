@@ -11,6 +11,7 @@ class VtxCloudsTabs : public VtxTabsMgr
 protected:
 	//TextCtrl *sprites_file;
 	wxChoice *sprites_dim;
+	wxChoice *clouds_dim;
 
 	SliderCtrl *CellSizeSlider;
 	SliderCtrl *HeightSlider;
@@ -67,6 +68,7 @@ protected:
     void OnChangedFile(wxCommandEvent& event);
     void OnFileSelect(wxCommandEvent& event);
     void OnDimSelect(wxCommandEvent& event);
+    void OnCloudsDimSelect(wxCommandEvent& event);
 
     void makeFileList(int,char*);
 	wxString getCloudsExpr();

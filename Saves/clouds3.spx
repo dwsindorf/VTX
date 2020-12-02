@@ -97,8 +97,7 @@ Scene() {
 						name="2D";
 						specular=Color(1,1,1,0);
 						Surface{
-							terrain=clouds()
-									Color(1,1,1,noise(ERODED|FS,3.1,11.3,1,0.5,2,1,1,0,0));
+							terrain=Color(1,1,1,noise(ERODED|FS,3.1,11.3,1,0.5,2,1,1,0,0));
 						}
 					}
 					Sky(0.0041029) {

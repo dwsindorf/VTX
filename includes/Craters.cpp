@@ -128,7 +128,7 @@ void CraterMgr::reset()
 //   -  each call to CraterMgr may result in several calls to
 //      Crater::set_terrain as craters from multiple passes and neighbors
 //      are evaluated.
-//   -  each time a Crater::set_terrain call is is made a CraterData
+//   -  each time a Crater::set_terrain call is made a CraterData
 //      object (cdata[ccnt++]) is initialized with crater ht, impact
 //      and base data and a unique identifier value (hid).
 //   -  at the end of the terrain stack eval pass the list of ccnt

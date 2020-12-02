@@ -25,7 +25,7 @@
 #define TABS_HEIGHT 320
 #endif
 #ifndef TABS_WIDTH
-#define TABS_WIDTH 460
+#define TABS_WIDTH 470
 #endif
 #define LABEL    70
 #ifndef LABEL2
@@ -95,7 +95,7 @@
 	    NAME##Slider->setValueFromText(); \
      	invalidateRender(); \
     	TheView->set_changed_render(); \
-	} \
+	}
 
 #define DEFINE_SLIDER_VAR_EVENTS(NAME,VAR) \
     void OnEnd##NAME##Slider(wxScrollEvent& event){ \

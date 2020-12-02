@@ -1902,17 +1902,19 @@ Color MapNode::Tcolor(MapData *d) {
         if (!np)
             c = Color(0, 1, 0);
         else {
-            Point norm = np->normalize();
+            Point norm = md->mpoint().normalize();
             Point vp = TheScene->vpoint - md->mpoint();
             vp = vp.normalize();
             double dp = norm.dot(vp);
+            dp=dp<0?0:dp;
+            c = Color(dp, 0, 0);
 
-            if (dp < 0) {
-                if (cdata)
-                    c = Color(0, 0, 1);
-                else
-                    c = Color(1, 0, 0);
-            }
+//            if (dp < 0) {
+//                if (cdata)
+//                    c = Color(0, 0, 1);
+//                else
+//                    c = Color(1, 0, 0);
+//            }
         }
     }
         break;

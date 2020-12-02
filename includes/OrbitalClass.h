@@ -491,6 +491,10 @@ public:
 	int scale(double&n, double&f);
 	bool threeD();
 	TNclouds *getClouds() { return clouds;}
+	void setClouds(TNclouds *c);
+	void deleteClouds();
+
+
 	bool force_adapt();
 	void setSpritesTexture();
 	char *getSpritesFile()       { return sprites_file;}

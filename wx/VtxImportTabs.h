@@ -28,6 +28,7 @@ protected:
 	void getObjAttributes();
 	void setObjAttributes();
 
+	int type;
 	wxComboBox *m_file_menu;
 	wxString m_name;
 	VtxImageWindow *m_image_window;
@@ -38,6 +39,7 @@ protected:
 
 public:
 	VtxImportTabs(wxWindow* parent,
+			const int type,
 			wxWindowID id,
 			const wxPoint& pos = wxDefaultPosition,
 			const wxSize& size = wxDefaultSize,

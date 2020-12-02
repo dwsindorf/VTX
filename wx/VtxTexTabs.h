@@ -70,7 +70,7 @@ protected:
 	wxArrayString files;
 	wxChoice *choices;
 
-	tex_state state[3];
+	tex_state state[4];
 
 	int m_image_type;
 	bool m_invert;
@@ -92,9 +92,11 @@ protected:
 	ExprTextCtrl *m_alpha_expr;
 
 	wxBitmapButton *m_edit_button;
-	wxRadioButton *m_image_button;
-	wxRadioButton *m_bands_button;
-	wxRadioButton *m_import_button;
+	wxRadioButton *m_2D_button;
+	wxRadioButton *m_1D_button;
+	wxRadioButton *m_img_button;
+	wxRadioButton *m_map_button;
+
 	wxCheckBox *m_tex_check;
 	wxCheckBox *m_bump_check;
 	wxRadioBox *interp_mode;
@@ -113,6 +115,7 @@ protected:
 	void set_orders_atten(TNode *node);
 	void set_damp(TNode *node);
 	void set_image();
+	void get_files(int);
 
 public:
 	VtxTexTabs(wxWindow* parent,
@@ -160,6 +163,7 @@ public:
     void OnShowBands(wxCommandEvent& event);
     void OnShowImage(wxCommandEvent& event);
     void OnShowImport(wxCommandEvent& event);
+    void OnShowMap(wxCommandEvent& event);
     void OnImageEdit(wxCommandEvent& event);
 	DECLARE_EVENT_TABLE()
 };

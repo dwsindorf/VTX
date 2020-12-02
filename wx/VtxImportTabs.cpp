@@ -39,6 +39,7 @@ EVT_RADIOBOX(ID_SHOW_MODE, VtxImportTabs::OnShowMode)
 END_EVENT_TABLE()
 
 VtxImportTabs::VtxImportTabs(wxWindow* parent,
+		int typ,
 		wxWindowID id,
 		const wxPoint& pos,
 		const wxSize& size ,
@@ -46,11 +47,13 @@ VtxImportTabs::VtxImportTabs(wxWindow* parent,
 		const wxString& name)
 		: wxPanel(parent, id, pos, size,  style,name)
 {
+	image_list=0;
+	m_name="";
+	type=typ;
 	AddImageTab(this);
     //images.makeImagelist();
 	update_needed=true;
-	image_list=0;
-	m_name="";
+
 }
 
 void VtxImportTabs::AddImageTab(wxPanel *panel){
@@ -63,23 +66,25 @@ void VtxImportTabs::AddImageTab(wxPanel *panel){
 	wxStaticBoxSizer* fileio = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("File"));
 
 	m_file_menu=new wxComboBox(panel,ID_FILELIST,"",
-			wxDefaultPosition,wxSize(130,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
+			wxDefaultPosition,wxSize(200,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER|wxTE_READONLY);
+	//m_file_menu->SetColumns(5);
 
 	fileio->Add(m_file_menu,0,wxALIGN_LEFT|wxALL,0);
 
 	m_image_width=new wxTextCtrl(panel, ID_IMAGE_WIDTH, "",wxDefaultPosition,wxSize(60,-1),wxTE_READONLY);
+	//m_image_width->Enable(false);
 
 	fileio->Add(m_image_width,0,wxALIGN_LEFT|wxALL,0);
 
 	fileio->Add(new wxStaticText(panel, -1, " X ", wxDefaultPosition, wxSize(20,-1)),0,wxALIGN_LEFT|wxALL,5);
 
 	m_image_height=new wxTextCtrl(panel, ID_IMAGE_HEIGHT,"", wxDefaultPosition,wxSize(60,-1),wxTE_READONLY);
+	//m_image_height->Enable(false);
 
 	fileio->Add(m_image_height,0,wxALIGN_LEFT|wxALL,0);
 
 	fileio->SetMinSize(wxSize(TABS_WIDTH,-1));
 	boxSizer->Add(fileio, 0, wxALIGN_LEFT|wxALL,0);
-
 
 	wxStaticBoxSizer* image_display = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Image"));
 	m_image_window = new VtxImageWindow(this,wxID_ANY,wxDefaultPosition,wxSize(TABS_WIDTH-TABS_BORDER,256));
@@ -112,7 +117,8 @@ void VtxImportTabs::makeImageList(){
     images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
-	images.getImageInfo(0, list);
+	printf("VtxImportTabs::makeImageList() 0x%-8X\n",type);
+	images.getImageInfo(type, list);
 	freeImageList();
 	image_list=new NameList<ImageSym*>(list);
 	image_list->ss();
@@ -120,9 +126,7 @@ void VtxImportTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)>0){
-		//int smode=m_showmode->GetSelection();
-		//if(smode==0 || is->info&(INUSE|NEWIMG))
-			m_file_menu->Append(is->name());
+		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
 	if(index== wxNOT_FOUND){
@@ -157,7 +161,7 @@ void VtxImportTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	makeImageList();
-	displayImage(m_name.ToAscii());
+	displayImage((char*)m_name.ToAscii());
 }
 
 //-------------------------------------------------------------
@@ -175,7 +179,11 @@ void VtxImportTabs::displayImage(char *name){
 	}
 	if(!is)
 		return;
-	m_image_window->setImage(wxString(name));
+	if(type==IMPORT)
+		m_image_window->setImage(wxString(name),VtxImageWindow::TILE);
+	else
+		m_image_window->setImage(wxString(name),VtxImageWindow::SCALE);
+
 	Image *img=images.load(name,BMP|JPG);
 	char buff[64];
 	sprintf(buff,"%d",img->width);
@@ -189,27 +197,27 @@ void VtxImportTabs::displayImage(char *name){
 // VtxImportTabs::setObjAttributes() when switched out
 //-------------------------------------------------------------
 void VtxImportTabs::setObjAttributes(){
-	m_image_window->setImage(m_name.ToAscii());
+	m_image_window->setImage(m_name.ToAscii(),VtxImageWindow::TILE);
 	update_needed=false;
 	imageDialog->UpdateControls();
 }
 
 void VtxImportTabs::OnShowMode(wxCommandEvent& event){
 	makeImageList();
-	displayImage(m_name.ToAscii());
+	displayImage((char*)m_name.ToAscii());
 }
 
 
 void VtxImportTabs::OnFileSelect(wxCommandEvent& event){
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
 void VtxImportTabs::setSelection(wxString name){
 	m_file_menu->SetStringSelection(name);
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
@@ -218,7 +226,7 @@ void VtxImportTabs::setSelection(wxString name){
 // - delete denied if image is being used by a Texture
 //-------------------------------------------------------------
 bool VtxImportTabs::canDelete()  {
-	Image *img=images.find(m_name.ToAscii());
+	Image *img=images.find((char*)m_name.ToAscii());
 	if(!img || (img && !img->accessed()))
 		return true;
 	return false;
@@ -226,10 +234,10 @@ bool VtxImportTabs::canDelete()  {
 
 void VtxImportTabs::Delete(){
 	if(canDelete()){
-		images.removeAll(m_name.ToAscii());
+		images.removeAll((char*)m_name.ToAscii());
 		m_name="";
 		makeImageList();
-		displayImage(m_name.ToAscii());
+		displayImage((char*)m_name.ToAscii());
 		imageDialog->UpdateControls();
 	}
 }

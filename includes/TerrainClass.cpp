@@ -1583,7 +1583,7 @@ void TNclouds::eval()
 	right->visitNode(findPoint);
     if(s_point==0){
     	right->eval();
-    	return;
+    	//return;
     }
     if(CurrentScope->rpass()){
     	INIT;

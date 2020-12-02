@@ -15,11 +15,8 @@ uniform float ROWS;
 
 void main(void) {
 	int i;
-	float ta=Factors[0].x;
-	float ts=Factors[0].y;
-
-//	float tx=Factors[0].z;
-//	float ty=Factors[0].w;
+	float ta=Factors[0].x;  // angle
+	float ts=Factors[0].y;  // offset
 
 	Normal=Normal_G[0];
 	Constants=Constants_G[0];

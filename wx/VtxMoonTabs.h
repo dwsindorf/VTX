@@ -142,7 +142,23 @@ public:
 		TheScene->rebuild();
 	}
 
-	DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius)
+	void OnEndOrbitRadiusSlider(wxScrollEvent &event) {
+		Spheroid *obj = object();
+		double val = OrbitRadiusSlider->getValue();
+		obj->orbit_radius = val * 1000* MILES;
+		TheView->set_changed_render();
+	}
+	void OnOrbitRadiusSlider(wxScrollEvent &event) {
+		OrbitRadiusSlider->setValueFromSlider();
+	}
+	void OnOrbitRadiusText(wxCommandEvent &event) {
+		Spheroid *obj = object();
+		double val = OrbitRadiusSlider->getValue();
+		obj->orbit_radius = val * 1000 * MILES;
+		TheView->set_changed_render();
+	}
+
+	//DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius,1000)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
 	DEFINE_SLIDER_VAR_EVENTS(Tilt,object()->tilt)

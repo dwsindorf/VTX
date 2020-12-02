@@ -305,7 +305,7 @@ void VtxImageTabs::displayImage(char *name){
 	char vals[512]="";
 	vnode->valueString(vals);
 	m_image_expr->SetValue(vals);
-	m_image_window->setImage(wxString(name));
+	m_image_window->setImage(wxString(name),VtxImageWindow::TILE);
 	delete inode;
 }
 
@@ -361,7 +361,7 @@ void VtxImageTabs::setObjAttributes(){
 		return;
 	n->init();
 	delete n;
-	m_image_window->setImage(m_name.ToAscii());
+	m_image_window->setImage(m_name.ToAscii(),VtxImageWindow::TILE);
 	update_needed=false;
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();

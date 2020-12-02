@@ -14,7 +14,8 @@
 
 //#define GEOMETRY_TEST
 //#define WRITE_STAR_DATA
-int test1=2; // use geometry shader for 3d clouds
+
+
 int test2=0;
 int test3=0;
 int test4=0;
@@ -3805,12 +3806,15 @@ void Sky::map_color(MapData*d,Color &c)
 
 #define ROT_IN_SHADER
 
-#define CLOUD_SPRITE_FILE "CloudSprites3"
-
 #define CLOUD_MAX 15.1
 #define CLOUD_ROWS 4
 
-//GLuint CloudLayer::sprites_image=0;
+#define CLOUDS_BILLBOARDS  0
+#define CLOUDS_POINTS      1
+#define CLOUDS_GS_SHADER   2 // use geometry shader for 3d clouds
+#define CLOUDS_NO_SHADER   3
+
+int clouds_mode=CLOUDS_GS_SHADER;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
@@ -3951,7 +3955,7 @@ void CloudLayer::set_vars()
 	VSET("diffusion",diffusion,0.25);
 	VSET("sprites_dim",sprites_dim,4);
 
-	exprs.set_var("sprites_file",sprites_file,sprites_file[0]!=0);
+	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
 }
 
 void CloudLayer::setSpritesFile(char *s,GLuint dim)
@@ -4081,17 +4085,17 @@ void CloudLayer::render()
 			Raster.surface=1;
 		    Raster.set_all();
 		    map->make_current();
-		    switch(test1){
-		    case 0:
-		    case 2:
+		    switch(clouds_mode){
+		    case CLOUDS_BILLBOARDS:
+		    case CLOUDS_GS_SHADER:
 				setPointSprites(false);
 				setSpritesTexture();
 				break;
-		    case 1:
+		    case CLOUDS_POINTS:
 				setPointSprites(true);
 				setSpritesTexture();
 				break;
-		    case 3:
+		    case CLOUDS_NO_SHADER:
 				setPointSprites(false);
 				break;
 		    }
@@ -4215,18 +4219,18 @@ bool CloudLayer::setProgram(){
 
 	set_wscale();
 	if(v3d){
-		switch(test1){
-		case 0:
+		switch(clouds_mode){
+		case CLOUDS_BILLBOARDS:
 			glBindTexture(GL_TEXTURE_2D, sprites_image);
 			vars.newIntVar("sprites",0);
 			GLSLMgr::loadProgram("clouds.bb.vert","clouds.3d.frag");
 			break;
-		case 1:
+		case CLOUDS_POINTS:
 			glBindTexture(GL_TEXTURE_2D, sprites_image);
 			vars.newIntVar("sprites",0);
 			GLSLMgr::loadProgram("clouds.ps.vert","clouds.ps.frag");
 			break;
-		case 2:
+		case CLOUDS_GS_SHADER:
 			glBindTexture(GL_TEXTURE_2D, sprites_image);
 			vars.newIntVar("sprites",0);
 			GLSLMgr::input_type=GL_POINTS;
@@ -4234,7 +4238,7 @@ bool CloudLayer::setProgram(){
 			GLSLMgr::max_output=4;
 			GLSLMgr::loadProgram("clouds.gs.vert","clouds.3d.frag","clouds.geom");
 			break;
-		case 3:
+		case CLOUDS_NO_SHADER:
 			GLSLMgr::loadProgram("clouds.test.vert","clouds.test.frag");
 			break;
 		}
@@ -4274,17 +4278,17 @@ bool CloudLayer::setProgram(){
 			map->callLists[SHADER_LISTS][1]=glGenLists(1);
 			glNewList(map->callLists[SHADER_LISTS][1], GL_COMPILE);
 			//cout << "new list 3d clouds  ["<<SHADER_LISTS<<"]["<<1<<"] id:"<<map->callLists[SHADER_LISTS][1]<<endl;
-			switch(test1){
-			case 0:
+			switch(clouds_mode){
+			case CLOUDS_BILLBOARDS:
 				break;
-			case 1:
+			case CLOUDS_POINTS:
 				glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 				glBegin(GL_POINTS);
 				break;
-			case 2:
+			case CLOUDS_GS_SHADER:
 				glBegin(GL_POINTS);
 				break;
-			case 3:
+			case CLOUDS_NO_SHADER:
 				glBegin(GL_TRIANGLES);
 				break;
 			}
@@ -4305,12 +4309,6 @@ bool CloudLayer::setProgram(){
 				FColor c=triangle->color();
 				Point p=triangle->vertex();
 				Point m=triangle->center();
-
-	//			backfacing->set(v.dot(vp)>0?0:1);
-	//			backfacing->load();
-				//if(sky)
-				//map_color(triangle->d1,mc);
-
 				double ext=triangle->extent();
 				double rsize=ext/TheView->viewport[3];
 				double tsize=smax*ext;
@@ -4325,40 +4323,58 @@ bool CloudLayer::setProgram(){
 				double y=crot>0.5?0.5+RAND(1):0.5; // random reflection
 				double z=0.5+RAND(2); // random point size
 				double d=triangle->density(); // sprite type
-				double max=lerp(thickness,0,0.1,0.25,1); // reduce size at top-bottom surface boundary
+				double max=lerp(thickness,0,0.1,0.25,1); // increase detail at top-bottom surface boundary
 				pts=lerp(z*resolution*max,0,1,cmin,cmin*(1+cmax));
-				pts=pts<tsize?tsize:pts;
+
+				//pts=pts<tsize?tsize:pts;
 				Point viewdir = p.mm(TheScene->viewMatrix);
 				viewdir=viewdir.normalize();
-				double dpv=viewdir.dot(ec);
-				//double dp=lerp(dpv, dpmin, 1,0.2,1.0);
-				double dp=lerp(dpv, dpmax, dpmin,0.1,1.0);
-				double mx=maxext*dp;
-				if(pts>mx){
-					//c=Color(dp,dp,dp);
-					pts=mx;
-				}
 
-				double ht=m.length()-gndlvl;
-				double depth = TheScene->vpoint.distance(m);
+				// for orbital view decrease size of clouds near horizon
+				Point vn=v-p;                           // line from normal (unit-less) to vertex
+	            Point norm =vn.normalize();
+	            Point vp = TheScene->vpoint - p;        // line from eye to vertex
+	            vp = vp.normalize();
+	            double dpv = norm.dot(vp);              // in surface views max for side of clouds facing eye
+	            if(dpv<0)
+	            	continue;
+	            Point dm=TheScene->vpoint - m;          // line from eye to vertex
+	            m=m.normalize();                        // line from vertex to planet center
+	            dm=dm.normalize();
+	            double dpm=dm.dot(m);                   // in orbital view dp = 0 at horizon 1 directly below
+
+				double mx=maxext*dpv;
+				if(pts>mx)
+					pts=mx;
+
+				double ht=TheScene->height;
+				double depth=ht-parent->size;
+				double dht=ht/depth;                    // eye ht as fraction of planet radius
+
+				double maxs=lerp(dht,0,2,smax,dpm);     // reduces scatter at planet horizon in orbital view
+				double scatter=lerp(dpv,0,1,0.0,maxs);  //
+
+				//c=Color(scatter/maxs,0,1-scatter/maxs);
+
+				ht=m.length()-gndlvl;
+				depth = TheScene->vpoint.distance(m);
 				d=clamp(d,0,sprites_dim*sprites_dim-0.9);
 				double zht=triangle->height();
 				double transmission=clamp(1+diffusion*50*zht,0,1);
-				//transmission=transmission<0?0:transmission;
-				//ransmission=transmission>1?1:transmission;
+
 				double a=c.alpha();
-				c=c*transmission; // * operator doesn't preserve alpha (sets it to 1.0)
+				c=c*transmission; // note: Color * operator doesn't preserve alpha (sets it to 1.0)
 				c=c.clamp();
 				glColor4d(c.red(), c.green(), c.blue(), a*transmission);
 				glNormal3dv(v.values());
 
-				double ts=sqrt(2.0)*pts/TheView->viewport[3];
+				double ts=sqrt(2.0)*pts/TheView->viewport[3];  // center offset
 
 				glVertexAttrib4d(GLSLMgr::CommonID, ht, depth,transmission, d); // Constants
 
-				switch(test1){
-				case 0: // billboards
-					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, ts,0,0);
+				switch(clouds_mode){
+				case CLOUDS_BILLBOARDS: // billboards
+					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, scatter*ts,0,0);
 					glBegin(GL_TRIANGLE_FAN);
 					for(int i=0;i<4;i++)
 						glVertex4d(p.x,p.y,p.z,(double)i);
@@ -4369,42 +4385,42 @@ bool CloudLayer::setProgram(){
 						double r3=0.5+RAND(i+3+2*ns);
 						double ra=2*PI*(i/ns+0.2*r2);
 						double rr=rsize*(1+0.3*r3);
-						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, ts,ra,rr);
+						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, scatter*ts,ra,scatter*rr);
 						glBegin(GL_TRIANGLE_FAN); // big overhead: glBegin called for each point
 						for(int j=0;j<4;j++)
 							glVertex4d(p.x,p.y,p.z,(double)j);
 						glEnd();
 					}
 					break;
-				case 1: // point-sprites (non directional)
+				case CLOUDS_POINTS: // point-sprites (non directional)
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, d, angle*2*PI, pts, y);
 					glVertex3dv(p.values());
 					break;
-				case 2: // geometry shader
-					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, ts,0,0);
+				case CLOUDS_GS_SHADER: // geometry shader
+					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, scatter*ts,0,0);
 					glVertex3d(p.x,p.y,p.z);
 					for(int i=0;i<ns-1;i++){
 						double r1=0.5+RAND(i+3);
 						double r2=0.5+RAND(i+3+ns);
 						double r3=0.5+RAND(i+3+2*ns);
-						double ra=2*PI*(i/ns+0.2*r2);
-						double rr=0.25*ts*(1+0.1*r3);
-						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, ts,ra,rr);
-						glVertex3d(p.x,p.y,0.1*p.z);
+						double ra=2*PI*(i/ns+r2);
+						double rr=rsize*(1+0.3*r3);
+						//double rr=0.5*ts*(1+r3);
+						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, scatter*ts,ra,scatter*rr);
+						glVertex3d(p.x,p.y,p.z);
 					}
 					break;
-				case 3: // OGL triangles (no shader)
+				case CLOUDS_NO_SHADER: // OGL triangles (no shader)
 					glVertex3dv(triangle->d1->point().values());
 					glVertex3dv(triangle->d2->point().values());
 					glVertex3dv(triangle->d3->point().values());
 					break;
 				}
 			}
-			//cout<< n<<" "<< tcnt1<<" "<<(double)tcnt1/n<< endl;
-			switch(test1){
-			case 1:
-			case 2:
-			case 3:
+			switch(clouds_mode){
+			case CLOUDS_BILLBOARDS:
+				break;
+			default:
 				glEnd(); // all but billboards render all primitives in single glBegin loop
 				break;
 			}
@@ -4429,9 +4445,51 @@ bool CloudLayer::setProgram(){
 //-------------------------------------------------------------
 bool CloudLayer::threeD()
 {
-	if(clouds && clouds->threeD())
+	if(clouds/*&& clouds->threeD()*/)
 		return true;
 	return false;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::setClouds() set clouds expression
+//-------------------------------------------------------------
+void CloudLayer::setClouds(TNclouds *c){
+	char t[512];
+	t[0]=0;
+	c->valueString(t);
+	TNode *root=terrain.get_root();
+	root->valueString(t);
+	if(clouds){
+		delete clouds;
+		clouds=0;
+	}
+	TNclouds *nc=(TNclouds*)TheScene->parse_node(t);
+	terrain.set_root(nc);
+	terrain.init();
+	TerrainData::add_TNclouds(nc);
+	clouds = nc;
+	t[0]=0;
+	root->valueString(t);
+	cout<<t<<endl;
+	invalidate();
+}
+
+//-------------------------------------------------------------
+// CloudLayer::deleteClouds() delete clouds expression
+//-------------------------------------------------------------
+void CloudLayer::deleteClouds(){
+	if(clouds){
+		char t[512];
+		t[0]=0;
+		NodeIF *n=clouds->getParent();
+		clouds->removeNode();
+		n->valueString(t);
+		cout<<t<<endl;
+		delete clouds;
+	}
+	clouds=0;
+	TerrainData::add_TNclouds(clouds);
+	invalidate();
 }
 
 //-------------------------------------------------------------

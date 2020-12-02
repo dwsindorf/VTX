@@ -7,6 +7,9 @@
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
+uniform float INVROWS;
+uniform float ROWS;
+
 varying vec4 CloudVars;
 
 void main(void) {
@@ -14,7 +17,9 @@ void main(void) {
 	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 
+#ifdef COLOR
 	Color=gl_Color;
+#endif
 
 	Constants=CommonAttributes;
 

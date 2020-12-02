@@ -132,9 +132,7 @@ Scene() {
 							Color(0.502,0.251,0),
 							Color(0.141,0,0));
 						Surface{
-							terrain=clouds()
-									
-									Texture("yellow-white",BORDER|BUMP|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);
+							terrain=Texture("yellow-white",BORDER|BUMP|S,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);
 						}
 					}
 				}

@@ -20,9 +20,6 @@ void main(void) {
 #ifdef NCC
 	NOISE_COLOR(NCC);
 #endif
-	//if(color.a>0.99)
-	//	color=vec4(0,1,0,1);
-
     vec3 normal=normalize(Normal.xyz);
 
     vec2 l_uv=INVROWS*(gl_TexCoord[0].xy);
