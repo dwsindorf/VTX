@@ -17,41 +17,9 @@ Scene() {
 		gndlvl=-3588.09 ft;
 	}
 	View{
-		phi=5;
-		theta=0;
-		height=0.008;
-		gndlvl=0 ft;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		theta=46.6919;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		theta=0;
-		height=249.942 miles;
-		gndlvl=-3262.8 ft;
-	}
-	View{
-		view=SURFACE;
-		phi=11.25;
-		theta=343.125;
-		height=13684.8 ft;
-		gndlvl=-4691.62 ft;
-		time=842401;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		theta=346.641;
-		height=435.638 ft;
-		gndlvl=-4554.24 ft;
-	}
-	View{
-		height=435.517 ft;
-		gndlvl=-4554.12 ft;
-		tilt=-10;
+		theta=106.617;
+		height=293.597 miles;
+		gndlvl=-687.059 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -82,15 +50,16 @@ Scene() {
 					}
 				}
 				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.04);
 					day=24;
 					resolution=4;
-					shine=100;
-					specular=Color(1,1,1,0);
+					shine=19.8509;
+					specular=Color(1,1,1,0.77);
 					year=100;
 					albedo=1;
 					Surface{
 						terrain=Color(1,0.992157,0.764706,1)+
-								Texture("gasgiant",BORDER,1,2,-0.95656,4,1,2,0.5,0);
+								Texture("earth4k",BORDER,1,2,-0.95656,0,1,2,0.5);
 					}
 					Sky(0.00414184) {
 						color=Color(0.65,0.88,0.99);
@@ -105,7 +74,7 @@ Scene() {
 						twilight.min=-1;
 					}
 					Clouds(0.0040629) {
-						ambient=Color(1,1,1,0.35);
+						ambient=Color(1,1,1,0.16);
 						crot=1;
 						diffuse=Color(1,1,1,0.59);
 						diffusion=0;
@@ -114,20 +83,20 @@ Scene() {
 						specular=Color(1,1,1);
 						Surface{
 							terrain=
-									Texture("4k_ceres_fictional",BORDER,1,2,0.52056,0.37728,1,2,0.49056,0);
+									Texture("earth_clouds",BORDER,1,2,0.52056,0.37728,1,2,0.49056);
 						}
 					}
 					Moon(0.000124971,0.25) {
 						day=24;
 						hscale=0.0222132;
-						name="Moon";
+						name="LunaMap";
 						phase=334.004;
 						resolution=4;
 						rseed=2.41294;
 						year=30;
 						Surface{
 							terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.4,1,0,0)+craters(ID3,1,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
-									Texture("MoonMapHiRes",BORDER|BUMP,1,1,2,0,1,2,0.5,0);
+									Texture("luna",BUMP,1,3.55552,2,0,1,2,0.5,1);
 						}
 					}
 				}

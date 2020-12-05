@@ -56,6 +56,7 @@ protected:
     	TheScene->rebuild();
     }
     void invalidateTexture(){
+    	if(texture())
         texture()->invalidate();
     	TheView->set_changed_detail();
     	TheScene->rebuild();

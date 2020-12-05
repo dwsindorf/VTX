@@ -32,6 +32,7 @@ static LongSym iopts[]={
 	{"NORM",	NORM},
 	{"REPEAT",  REPEAT},
 	{"BUMP",	BUMP},
+	{"HMAP",	HMAP},
 	{"TEX",		TEX},
 	{"DECAL",	DECAL},
 	{"LINEAR",	INTERP},
@@ -677,8 +678,8 @@ void TNtexture::eval()
         return;
 	if(getFlag(NODE_BAD))
 	    return;
-	if(texture==0 || texture->image()==0)
-		init();
+	//if(texture==0 || texture->image()==0)
+	//	init();
 
 	if(texture==0 || texture->image()==0){
 	    setFlag(NODE_BAD);
@@ -829,7 +830,7 @@ bool TNtexture::initProgram(){
 	char nstr[512];
 	nstr[0]=0;
 	defs[0]=0;
-	if(!texture->enabled)
+	if(texture==0 || !texture->enabled)
 		return false;
 
 	int id=texture->tid;

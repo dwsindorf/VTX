@@ -133,7 +133,7 @@ bool VtxTexTabs::Create(wxWindow* parent,
 
     page=new wxPanel(this,wxID_ANY);
     AddFilterTab(page);
-    AddPage(page,wxT("Properties"),false);
+    AddPage(page,wxT("Advanced"),false);
 
     //images.makeImagelist();
 	m_name="";
@@ -190,7 +190,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 
 	m_1D_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
 	m_2D_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
-	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Img"),wxDefaultPosition,wxDefaultSize);
+	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Tex"),wxDefaultPosition,wxDefaultSize);
 	m_map_button=new wxRadioButton(panel,ID_SHOW_MAP,wxT("Map"),wxDefaultPosition,wxDefaultSize);
 
 
@@ -234,49 +234,13 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	BumpAmpSlider->setValue(1.0);
 	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Xfer",LABEL2,VALUE2,SLIDER2);
+	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
 	BumpDampSlider->setRange(1,0,0,1);
 	BumpDampSlider->setValue(1.0);
 	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 
-    // line 2 start-offset
 
-	wxStaticBoxSizer* overlays = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Orders"));
-
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	
-	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL2,VALUE2,SLIDER2);
-	StartSlider->setRange(-1,24,0,25);
-
-	hline->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
-	OrdersSlider=new SliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL2, VALUE2,SLIDER2);
-	OrdersSlider->setRange(1,25);
-	OrdersSlider->setValue(1.0);
-
-	hline->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
-
-	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-	overlays->Add(hline,0,wxALIGN_LEFT|wxALL,0);
-
-	hline = new wxBoxSizer(wxHORIZONTAL);
-	
-	OrdersAttenSlider=new SliderCtrl(panel,ID_ORDERS_ATTEN_SLDR,"DelA",LABEL2,VALUE2,SLIDER2);
-	OrdersAttenSlider->setRange(0.0,1.0);
-	OrdersAttenSlider->setValue(0.5);
-	hline->Add(OrdersAttenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	OrdersDeltaSlider=new SliderCtrl(panel,ID_ORDERS_DELTA_SLDR,"DelF",LABEL2,VALUE2,SLIDER2);
-	OrdersDeltaSlider->setRange(1.0,5.0);
-	OrdersDeltaSlider->setValue(2.0);
-	hline->Add(OrdersDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-	overlays->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-	
-	boxSizer->Add(overlays, 0, wxALIGN_LEFT|wxALL,0);
 
 
 }
@@ -322,6 +286,43 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	alpha_controls->Add(m_alpha_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(alpha_controls, 0, wxALIGN_LEFT|wxALL,0);
+    // line 2 start-offset
+
+	wxStaticBoxSizer* overlays = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Orders"));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL2,VALUE2,SLIDER2);
+	StartSlider->setRange(-1,24,0,25);
+
+	hline->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	OrdersSlider=new SliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL2, VALUE2,SLIDER2);
+	OrdersSlider->setRange(1,25);
+	OrdersSlider->setValue(1.0);
+
+	hline->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+
+	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	overlays->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	OrdersAttenSlider=new SliderCtrl(panel,ID_ORDERS_ATTEN_SLDR,"Ampl",LABEL2,VALUE2,SLIDER2);
+	OrdersAttenSlider->setRange(0.0,1.0);
+	OrdersAttenSlider->setValue(0.5);
+	hline->Add(OrdersAttenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	OrdersDeltaSlider=new SliderCtrl(panel,ID_ORDERS_DELTA_SLDR,"Freq",LABEL2,VALUE2,SLIDER2);
+	OrdersDeltaSlider->setRange(1.0,5.0);
+	OrdersDeltaSlider->setValue(2.0);
+	hline->Add(OrdersDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	overlays->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(overlays, 0, wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -443,12 +444,12 @@ void VtxTexTabs::get_files(int type){
     set_image();
     sceneDialog->setNodeName((char*)m_name.ToAscii());
     object()->invalidate();
-    texture()->invalidate();
+    if(texture())
+    	texture()->invalidate();
     setObjAttributes();
     TheView->set_changed_detail();
     TheScene->rebuild();
 }
-
 
 void VtxTexTabs::OnTextEnter(wxCommandEvent& event){
 	invalidateObject();
@@ -463,7 +464,10 @@ void VtxTexTabs::OnImageEdit(wxCommandEvent& event){
 //-------------------------------------------------------------
 void VtxTexTabs::set_image(){
 	if(!choices->IsEmpty()){
-		m_image_window->setImage(m_name,VtxImageWindow::TILE);
+		if(m_image_type==TYPE_MAP)
+			m_image_window->setImage(m_name,VtxImageWindow::SCALE);
+		else
+			m_image_window->setImage(m_name,VtxImageWindow::TILE);
 		if(imageDialog->IsShown())
 			imageDialog->Show(m_name,m_image_type);
 	}
@@ -664,7 +668,7 @@ void VtxTexTabs::setObjAttributes(){
 		restoreState(m_image_type);
 		update_needed=true;
 	}
-	else{
+	else if(tnode->texture){
 		// this call will replace texture so need to reset properties
 		tnode->applyExpr();
 		Texture *tex=tnode->texture;
@@ -679,7 +683,8 @@ void VtxTexTabs::setObjAttributes(){
 		tex->bump_damp=damp;
 		tex->invalidate();
 	}
-	invalidateTexture();
+	//if(texture())
+		invalidateTexture();
 }
 //-------------------------------------------------------------
 // VtxTexTabs::getObjAttributes() when switched in
@@ -693,7 +698,7 @@ void VtxTexTabs::getObjAttributes(){
 	if(expr)
 		tnode=expr;
 
-	if(tex->t1d())
+	if(tex && tex->t1d())
 		BIT_ON(tnode->opts,SEXPR);
 	int opts=tnode->opts;
 
@@ -756,7 +761,7 @@ void VtxTexTabs::getObjAttributes(){
 		m_1D_button->SetValue(false);
 		m_2D_button->SetValue(false);
 		m_img_button->SetValue(false);
-		m_map_button->SetValue(false);
+		m_map_button->SetValue(true);
 		m_image_type=TYPE_MAP;
 	}
 	else{

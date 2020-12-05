@@ -142,7 +142,6 @@ void VtxImageDialog::Invalidate(){
 	m_1D_tabs->Invalidate();
 	m_img_tabs->Invalidate();
 	m_map_tabs->Invalidate();
-
 }
 
 void VtxImageDialog::OnOk(wxCommandEvent& event){
@@ -244,7 +243,6 @@ void VtxImageDialog::UpdateControls(){
 		m_delete->Enable(m_map_tabs->canDelete());
 		m_save->Enable(m_map_tabs->canSave());
 		break;
-
 	}
 	Refresh();
 }

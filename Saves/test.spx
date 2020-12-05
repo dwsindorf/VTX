@@ -91,7 +91,7 @@ Scene() {
 						year=30;
 						Surface{
 							terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.4,1,0,0)+craters(ID3,1,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
-									Texture("MoonDiffuse",BORDER,1,2,-0.95656,0,1,2,0.5,0);
+									Texture("luna",BUMP,1,1.33344,2,0,1,2,0.5,1);
 						}
 					}
 				}
