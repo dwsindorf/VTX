@@ -255,7 +255,8 @@ typedef struct mpdata {
 	unsigned int  tstart	: 4;	// texture data start
 	unsigned int  normal	: 1;	// normal flag
 	unsigned int  hidden	: 1;	// hidden flag
-	unsigned int  unused	: 8;	// unassigned
+	unsigned int  hmaps	    : 1;	// hmap flag
+	unsigned int  unused	: 7;	// unassigned
 } mpdata;
 
 
@@ -326,6 +327,7 @@ public:
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
 	void setBumpmaps(int n)		{ flags.s.bumpmaps=n;}
+	void setHmaps(int n)		{ flags.s.hmaps=n;}
 	void setLinks(int n)		{ flags.s.links=n;}
 	int type()  				{ return flags.s.type; }
 	int dtype()  				{ return flags.s.type==WATER?data2()->type():type(); }

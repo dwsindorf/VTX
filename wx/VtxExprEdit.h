@@ -22,9 +22,12 @@ class VtxExprEdit : public wxTextCtrl
 
 	bool selectedToken(wxString &);
 	bool showing_symbols;
+	bool failed_expr;
 public:
 	wxString value_expr;
 	wxString symbol_expr;
+	wxString last_good_value_expr;
+	wxString last_good_symbol_expr;
 
 	SymbolHash symbols;
 

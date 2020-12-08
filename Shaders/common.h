@@ -33,6 +33,8 @@ uniform float colormip;
 uniform float freqmip;
 
 #define HT Constants.x
+#define FHT Constants.x
+
 #define DEPTH Constants.y
 #define PHI Constants.z
 

@@ -55,7 +55,12 @@ enum{
     ID_ORDERS_ATTEN_TEXT,
     ID_DAMP_SLDR,
     ID_DAMP_TEXT,
-    ID_SHOW_IMAGE_EDIT,
+    ID_HMAP,
+    ID_HMAP_AMP_SLDR,
+    ID_HMAP_AMP_TEXT,
+    ID_HMAP_BIAS_SLDR,
+    ID_HMAP_BIAS_TEXT,
+   ID_SHOW_IMAGE_EDIT,
 };
 
 
@@ -82,10 +87,14 @@ EVT_CHECKBOX(ID_NORMALIZE,VtxTexTabs::OnTexChanged)
 
 EVT_CHECKBOX(ID_TEXCOLOR,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_TEXBUMP,VtxTexTabs::OnTexChanged)
+EVT_CHECKBOX(ID_HMAP,VtxTexTabs::OnTexChanged)
 
 SET_SLIDER_EVENTS(START,VtxTexTabs,Start)
 SET_SLIDER_EVENTS(ALPHA,VtxTexTabs,Alpha)
 SET_SLIDER_EVENTS(BUMP,VtxTexTabs,BumpAmp)
+SET_SLIDER_EVENTS(HMAP_AMP,VtxTexTabs,HmapAmp)
+SET_SLIDER_EVENTS(HMAP_BIAS,VtxTexTabs,HmapBias)
+
 SET_SLIDER_EVENTS(BIAS,VtxTexTabs,Bias)
 SET_SLIDER_EVENTS(ORDERS,VtxTexTabs,Orders)
 SET_SLIDER_EVENTS(ORDERS_DELTA,VtxTexTabs,OrdersDelta)
@@ -241,7 +250,21 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 
 
+	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HMap"));
+	m_hmap_check=new wxCheckBox(panel, ID_HMAP, "");
+	hmap_controls->Add(m_hmap_check,0,wxALIGN_LEFT|wxALL,4);
 
+	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
+	HmapAmpSlider->setRange(-8,8);
+	HmapAmpSlider->setValue(1.0);
+	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	HmapBiasSlider=new SliderCtrl(panel,ID_HMAP_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	HmapBiasSlider->setRange(1,0,0,1);
+	HmapBiasSlider->setValue(1.0);
+	hmap_controls->Add(HmapBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(hmap_controls, 0, wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -393,6 +416,9 @@ void VtxTexTabs::saveState(int which){
 	state[which].orders_delta=OrdersDeltaSlider->getValue();
 	state[which].orders_atten=OrdersAttenSlider->getValue();
 	state[which].bump_damp=BumpDampSlider->getValue();
+	state[which].hmap=HmapAmpSlider->getValue();
+	state[which].hmap_bias=HmapBiasSlider->getValue();
+	state[which].hmap_enable=m_hmap_check->GetValue();
 }
 void VtxTexTabs::restoreState(int which){
 	m_name=state[which].file;
@@ -411,6 +437,9 @@ void VtxTexTabs::restoreState(int which){
 	OrdersDeltaSlider->setValue(state[which].orders_delta);
 	OrdersAttenSlider->setValue(state[which].orders_atten);
 	BumpDampSlider->setValue(state[which].bump_damp);
+	HmapAmpSlider->setValue(state[which].hmap);
+	HmapBiasSlider->setValue(state[which].hmap_bias);
+	m_hmap_check->SetValue(state[which].hmap_enable);
 	set_image();
 }
 
@@ -525,6 +554,31 @@ void VtxTexTabs::set_bias(TNode *node)
 }
 
 //-------------------------------------------------------------
+// VtxTexTabs::set_hmap() set bump expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_hmap(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(HmapAmpSlider,S0.s);
+	}
+	else
+		updateSlider(HmapAmpSlider,1.0);
+}
+//-------------------------------------------------------------
+// VtxTexTabs::set_hmap() set bump expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_hmap_bias(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(HmapBiasSlider,S0.s);
+	}
+	else
+		updateSlider(HmapBiasSlider,1.0);
+}
+
+//-------------------------------------------------------------
 // VtxTexTabs::set_start() set start
 //-------------------------------------------------------------
 void VtxTexTabs::set_start(TNode *node)
@@ -625,6 +679,10 @@ void VtxTexTabs::setObjAttributes(){
 		BIT_OFF(opts,BUMP);
 	else
 		BIT_ON(opts,BUMP);
+	if(!m_hmap_check->GetValue())
+		BIT_OFF(opts,HMAP);
+	else
+		BIT_ON(opts,HMAP);
 
 	BIT_OFF(opts,SEXPR);
 	BIT_OFF(opts,AEXPR);
@@ -648,6 +706,8 @@ void VtxTexTabs::setObjAttributes(){
 	
     double ampl=AlphaSlider->getValue();
     double bump=BumpAmpSlider->getValue();
+    double hmap=HmapAmpSlider->getValue();
+    double hmap_bias=HmapBiasSlider->getValue();
     double bias=BiasSlider->getValue();
     double orders=OrdersSlider->getValue();
     double orders_delta=OrdersDeltaSlider->getValue();
@@ -659,7 +719,11 @@ void VtxTexTabs::setObjAttributes(){
     else
     	sprintf(p+strlen(p),"%g,%g,%g,%g",scale,ampl,bump,bias);
 
-     sprintf(p+strlen(p),",%g,%g,%g,%g)\n",orders,orders_delta,orders_atten,damp);
+    sprintf(p+strlen(p),",%g,%g,%g,%g",orders,orders_delta,orders_atten,damp);
+
+    if(opts & HMAP)
+    	sprintf(p+strlen(p),",%g,%g",hmap,hmap_bias);
+    sprintf(p+strlen(p),")\n");
 
 	tnode->setExpr(p);
 
@@ -672,16 +736,18 @@ void VtxTexTabs::setObjAttributes(){
 		// this call will replace texture so need to reset properties
 		tnode->applyExpr();
 		Texture *tex=tnode->texture;
-		tnode->opts=opts;
-		tex->scale=scale;
-		tex->bumpamp=bump;
-		tex->texamp=ampl;
-		tex->bias=bias;
-		tex->orders=orders;
-		tex->orders_delta=orders_delta;
-		tex->orders_atten=orders_atten;
-		tex->bump_damp=damp;
-		tex->invalidate();
+		if(tex){
+			tnode->opts=opts;
+			tex->scale=scale;
+			tex->bumpamp=bump;
+			tex->texamp=ampl;
+			tex->bias=bias;
+			tex->orders=orders;
+			tex->orders_delta=orders_delta;
+			tex->orders_atten=orders_atten;
+			tex->bump_damp=damp;
+			tex->invalidate();
+		}
 	}
 	//if(texture())
 		invalidateTexture();
@@ -787,9 +853,15 @@ void VtxTexTabs::getObjAttributes(){
 	set_orders_delta(args[i++]);
 	set_orders_atten(args[i++]);
 	set_damp(args[i++]);
+	if(opts & HMAP){
+		set_hmap(args[i++]);
+		set_hmap_bias(args[i++]);
+	}
 
 	m_tex_check->SetValue(tnode->texActive());
 	m_bump_check->SetValue(tnode->bumpActive());
+	m_hmap_check->SetValue(tnode->hmapActive());
+
 	makeFileList();
 	m_image_window->setImage(m_name,VtxImageWindow::TILE);
 	saveState(m_image_type);

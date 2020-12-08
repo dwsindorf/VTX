@@ -191,7 +191,7 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	HscaleSlider = new SliderCtrl(panel, ID_HSCALE_SLDR, "Ht(mls)", LABEL2B,
 			VALUE2, SLIDER2);
-	HscaleSlider->setRange(0, 10);
+	HscaleSlider->setRange(0.1, 20);
 	HscaleSlider->setValue(2.5);
 
 	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);

@@ -25,7 +25,7 @@ void  Slider::setValue(TNode  *arg){
 }
 
 void Slider::setValueFromString(wxString s){
-	char p[256]="";
+	char p[512]="";
 	strcpy(p,s.ToAscii());
 	if(strlen(p)>0){
 		TNode *tnode=(TNode*)TheScene->parse_node(p);
@@ -95,7 +95,8 @@ void ExprSliderCtrl::setValue(TNode  *arg){
 //************************************************************
 
 void ExprTextCtrl::SetValue(TNode  *arg){
-	char p[256]="";
+	char p[512];
+	p[0]=0;
 	arg->valueString(p);
 	SetValue(p);
 }

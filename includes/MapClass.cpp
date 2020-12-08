@@ -59,7 +59,7 @@ extern void     init_tables();
 Map            *TheMap = 0;
 double          Rscale, Gscale, Pscale, Hscale;
 double          ptable[PLVLS];
-extern double 	Theta, Phi, Height;
+extern double 	Theta, Phi, Height,MinHt,MaxHt;
 extern Point	MapPt;
 extern int 		test2;
 
@@ -1641,6 +1641,8 @@ void Map::make_visbox()
 			tcount++; \
 			tcreated+=created; \
 			tdeleted+=deleted; \
+			MaxHt=hmax>MaxHt?hmax:MaxHt;\
+			MinHt=hmin<MinHt?hmin:MinHt;\
 			if(created || deleted) {  \
 			    clr_vchecked(); \
 			    if(vnodes>=vmin) {\
@@ -1708,6 +1710,8 @@ void Map::adapt()
 		minext=lim;
 		set_resolution();
 		npole->visit(&MapNode::clr_flags);
+		MaxHt=-lim;
+		MinHt=lim;
 
 		if(TheScene->view->changed_detail())
 			npole->visit_all(&MapNode::clr_ccheck);
@@ -1729,6 +1733,7 @@ void Map::adapt()
 			}
 			ADAPT_CYCLE; // squares pass
 			ADAPT_CYCLE; // diamonds pass
+
 			if(Adapt.show_steps())
 			    break;
 		}
@@ -1763,7 +1768,9 @@ void Map::adapt()
 		else {
 			triangles.free();
 		}
+
 	}
+
 	if(need_adapt())
 		Adapt.set_more_cycles(1);
 	if(TheScene->viewobj==object){

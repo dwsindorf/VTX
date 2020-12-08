@@ -171,7 +171,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"Sky(0.1){color=Color(0,0.9,0.9);density=0.2;}\n");
 		break;
 	case TN_CLOUDS:
-		sprintf(tmp,"Clouds(0.01){Surface{terrain=clouds()Color(1,1,1,noise(1,5));\n}}\n");
+		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
 		break;
 	case TN_RING:
 		sprintf(tmp,"Ring(1.5,0.2){Surface{terrain=Texture(\"rings\",S,PHI,1.0,1.7);\n}}\n");

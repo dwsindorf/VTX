@@ -599,7 +599,6 @@ MapLink *MapNode::split()
 
 	if(cdata==0){
 		CD4;
-
 		cdata=new MapData(t,p);
 		init_map_data(cdata);
 		dec_alevel();

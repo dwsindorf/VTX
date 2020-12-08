@@ -20,6 +20,8 @@ protected:
 	ExprSliderCtrl *RimSlider;
 	ExprSliderCtrl *FloorSlider;
 	ExprSliderCtrl *CenterSlider;
+	ExprSliderCtrl *OffsetSlider;
+
 	ExprSliderCtrl *VNoiseSlider;
 	ExprSliderCtrl *RNoiseSlider;
 	wxChoice *m_scale_exp;
@@ -67,6 +69,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Center)
 	DEFINE_SLIDER_EVENTS(RNoise)
 	DEFINE_SLIDER_EVENTS(VNoise)
+	DEFINE_SLIDER_EVENTS(Offset)
 
     void OnChangeEvent(wxCommandEvent& event){
     	getFunction();

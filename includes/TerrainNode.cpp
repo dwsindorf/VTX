@@ -47,6 +47,17 @@ int getargs(TNode *args, double *array, int max)
 	return n;
 }
 
+int numargs(TNode *args)
+{
+	int n=0;
+	TNarg *arg=(TNarg*)args;
+	while(arg){
+		n++;
+		arg=arg->next();
+	}
+	return n;
+}
+
 static 	        TerrainData Td;
 const double PIX2=PI*2;
 

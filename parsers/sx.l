@@ -296,9 +296,11 @@ static void setline(char *text)
 void sx_error(char *msg,...)
 {
 	extern void DisplayErrorMessage(const char *format,...);
+    extern void reset_parser();
+	
 
 	va_list             xp;
-	char				ermsg[256];
+	char				ermsg[512];
 
 	ermsg[0]=0;
 	
@@ -311,6 +313,8 @@ void sx_error(char *msg,...)
 	DisplayErrorMessage("%s %s\n",ermsg,yytext);
 	
 	SX_errors++;
+	reset_parser();
+	YY_FLUSH_BUFFER;
 }
 
 /* =========================================================================

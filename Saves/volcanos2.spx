@@ -1,75 +1,16 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=30.0581;
-		theta=30.1969;
-		height=380.265 ft;
-		gndlvl=1487.01 ft;
-		time=51516;
-		heading=-25;
-		tilt=-15;
-		fov=35;
-		speed=586570;
-		viewobj=Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=32.3816 ft;
-		gndlvl=1571.62 ft;
-		heading=-85;
-	}
-	View{
-		phi=30.0579;
-		height=20 ft;
-		gndlvl=1581.66 ft;
-	}
-	View{
-		phi=30.0578;
-		theta=30.1971;
-		height=24.2494 ft;
-		gndlvl=1583.6 ft;
-		heading=-40;
-	}
-	View{
-		phi=30.0577;
-		theta=30.1973;
-		height=20 ft;
-		gndlvl=1565.44 ft;
-	}
-	View{
-		height=77.8822 ft;
-		gndlvl=1568.97 ft;
-	}
-	View{
 		phi=30.057;
 		theta=30.1981;
-		height=20 ft;
-		gndlvl=1600.94 ft;
-	}
-	View{
-		height=18.8697 ft;
-		gndlvl=1602.07 ft;
-		tilt=-5;
-	}
-	View{
-		height=460.337 ft;
-		gndlvl=1611.03 ft;
-		heading=-335;
-		tilt=-20;
-	}
-	View{
-		height=141.986 ft;
-		gndlvl=1603.48 ft;
-		tilt=-15;
-	}
-	View{
-		heading=-325;
-	}
-	View{
-		height=119.522 ft;
-		gndlvl=1606.7 ft;
+		height=220.569 ft;
+		gndlvl=1625.33 ft;
 		time=5005.72;
 		heading=35;
 		tilt=-10;
+		fov=35;
+		speed=586570;
+		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -138,11 +79,13 @@ Scene() {
 				}
 				Sky(0.00511133) {
 					color=Color(0.5,0.69,1);
+					day=1;
 					density=0.35;
 					haze.grad=0.38356;
 					haze.value=0.376471;
 					shine=1;
 					specular=Color(1,1,1);
+					tilt=10;
 					twilight=Color(1,0,0);
 					twilight.max=0.389507;
 					twilight.min=-0.290507;
@@ -151,6 +94,7 @@ Scene() {
 					ambient=Color(1,1,1,0.61);
 					crot=1;
 					diffuse=Color(1,1,1,0.42);
+					hscale=0.05;
 					name="Clouds2D-1";
 					Surface{
 						terrain=Color(1,1,1,noise(FS,4.4,9,1,0.5,2,1,0,0,-2));
@@ -163,6 +107,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.28);
 					diffusion=0.96104;
 					emission=Color(1,1,1,0.04);
+					hscale=0.05;
 					name="Clouds3D-1";
 					num_sprites=1.57372;
 					resolution=2;

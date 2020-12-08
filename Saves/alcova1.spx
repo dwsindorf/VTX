@@ -73,7 +73,7 @@ Scene() {
 				water.clarity=48.952 ft;
 				water.color1=Color(0.68,0.94,0.93,0.54);
 				water.color2=Color(0,0.3,0.3);
-				water.level=2300 ft;
+				water.level=1388.8 ft;
 				year=30;
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
@@ -85,7 +85,7 @@ Scene() {
 					ripples=0.0002*noise(20,2);
 					m1=3*noise(SQR|UNS,8,6,0.5,0.1,2.1);
 					m3=noise(8,6,0.5,0.5,2);
-					z1=fractal(SQR|SS,14,14,0.04,3,2.6,0.11,1,1)m1;
+					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.39,0.39,1,0.27,0.18)m1;
 					terrain=fog(2*noise(8,5))
 							water(0.0002*noise(20,2))
 							Z(0.5*z1)+
@@ -95,6 +95,7 @@ Scene() {
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);
+					day=5;
 					density=1;
 					haze.color=Color(0.7,0.6,1);
 					haze.grad=0.22858;
@@ -102,6 +103,7 @@ Scene() {
 					haze.value=1;
 					shine=1;
 					specular=Color(1,1,1);
+					tilt=10;
 					twilight=Color(0,0.47,1);
 				}
 			}

@@ -43,6 +43,7 @@ VtxExprEdit::VtxExprEdit(wxWindow* parent,wxWindowID id,const wxSize& size) :
 {
 	showing_symbols=false;
 	insertion=0;
+	failed_expr=false;
 }
 
 //-------------------------------------------------------------
@@ -148,11 +149,15 @@ void VtxExprEdit::exprToSymbols(){
 		return;
 	}
 	sprintf(buff,"%s\n",(const char*)expr.ToAscii());
-
 	TNode *n=(TNode*)TheScene->parse_node(buff);
-	if(!n)
+	if(!n){
+		cout<<"exprToSymbols failed:"<<buff<<endl;
+		failed_expr=true;
+		value_expr=last_good_value_expr;
+		symbol_expr=last_good_symbol_expr;
+		SetValue(symbol_expr);
 		return;
-
+	}
 	Scope *old_scope=CurrentScope;
 	Scope scope;
 	CurrentScope=&scope;
@@ -208,6 +213,11 @@ void VtxExprEdit::exprToSymbols(){
 	showing_symbols=true;
 	delete n;
 	CurrentScope=old_scope;
+	if(failed_expr)
+		failed_expr=false;
+
+	last_good_value_expr=value_expr;
+	last_good_symbol_expr=symbol_expr;
 }
 //-------------------------------------------------------------
 // VtxExprEdit::showExprString() show value_expr
@@ -228,8 +238,8 @@ void VtxExprEdit::showSymbolString(){
 //-------------------------------------------------------------
 void VtxExprEdit::setExprString(wxString str){
 	value_expr=str;
+	//cout << "VtxExprEdit::setExprString:"<< str.ToAscii()<< endl;
 	exprToSymbols();
-	//cout << "VtxExprEdit::setExprString:"<< str<< endl;
 	if(VtxFunctDialog::show_symbols){
 		showing_symbols=true;
 		showSymbolString();
@@ -245,6 +255,8 @@ void VtxExprEdit::setExprString(wxString str){
 // - called by VtxFunctDialog when show tokens check changes
 //-------------------------------------------------------------
 void VtxExprEdit::update(){
+	//cout<<"VtxExprEdit::update():"<<GetValue()<<endl;
+
 	if(VtxFunctDialog::show_symbols){
 		if(!showing_symbols){
 			value_expr=GetValue();
@@ -399,34 +411,37 @@ void VtxExprEdit::OnSingleClick(wxMouseEvent& event){
 void VtxExprEdit::OnTabKey(wxKeyEvent& event) {
 	int key=event.GetKeyCode();
 
-	if (key != 9) {
+	if (key != WXK_TAB) {
 		event.Skip(); // not a tab key
 		if(key=='n'||key=='c'||key=='f')
 			insertion=GetInsertionPoint();
-		return;
+		if(key !=WXK_RETURN)
+			return;
 	}
 	wxString expr=GetValue();
 	wxString start=expr.Mid(0, insertion);
 	wxString end=expr.Mid(insertion);
 	wxStringTokenizer tkz(end, wxT("*/+- =,()[]"), wxTOKEN_STRTOK);
-	if (!tkz.HasMoreTokens())
-		return;
-	wxString token = tkz.GetNextToken();
-	wxString alias;
 	int di=0;
-	if (token.StartsWith("n"))
-		alias=getPrototype(TN_NOISE);
-	else if (token.StartsWith("c"))
-		alias=getPrototype(TN_CRATERS);
-	else if (token.StartsWith("f"))
-		alias=getPrototype(TN_FCHNL);
-    else if (token.StartsWith("e"))
-        alias=getPrototype(TN_ERODE);
-	if(alias.IsEmpty())
-		return;
-	di=end.Find(token);
-	end.Replace(token, alias, false);
-	expr=start+end;
+	if (tkz.HasMoreTokens()){
+		wxString token = tkz.GetNextToken();
+		wxString alias;
+		if (token.StartsWith("n"))
+			alias=getPrototype(TN_NOISE);
+		else if (token.StartsWith("c"))
+			alias=getPrototype(TN_CRATERS);
+		else if (token.StartsWith("f"))
+			alias=getPrototype(TN_FCHNL);
+		else if (token.StartsWith("e"))
+			alias=getPrototype(TN_ERODE);
+		if(!alias.IsEmpty()){
+			di=end.Find(token);
+			end.Replace(token, alias, false);
+			expr=start+end;
+		}
+	}
+	//cout<<"OnTabKey:"<<key<<" "<<expr<<endl;
+
 	if (showing_symbols) {
 		symbol_expr=expr;
 		symbolsToExpr();

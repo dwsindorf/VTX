@@ -7,8 +7,8 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-#define DEBUG_IMAGES
-#define DEBUG_TEXS
+//#define DEBUG_IMAGES
+//#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -85,10 +85,16 @@ bool TNinode::texActive(){
 	return (opts &NTEX)?false:true;
 }
 //-------------------------------------------------------------
-// TNinode::bumpActive() enable color in texture
+// TNinode::bumpActive() return enable bump in texture
 //-------------------------------------------------------------
 bool TNinode::bumpActive(){
 	return (opts &BUMP)?true:false;
+}
+//-------------------------------------------------------------
+// TNinode::hmapActive() return enable hmap in texture
+//-------------------------------------------------------------
+bool TNinode::hmapActive(){
+	return (opts &HMAP)?true:false;
 }
 
 //-------------------------------------------------------------
@@ -109,6 +115,16 @@ void TNinode::setBumpActive(bool b){
 	else
 		BIT_ON(opts,BUMP);
 }
+//-------------------------------------------------------------
+// TNinode::setHmapActive() enable hmap in texture
+//-------------------------------------------------------------
+void TNinode::setHmapActive(bool b){
+	if(!b)
+		BIT_OFF(opts,HMAP);
+	else
+		BIT_ON(opts,HMAP);
+}
+
 //-------------------------------------------------------------
 // TNinode::valueString() node value substring
 //-------------------------------------------------------------

@@ -39,8 +39,10 @@ public:
 	virtual int t1d()          { return opts&T1D;}
 	virtual bool texActive();
 	virtual bool bumpActive();
+	virtual bool hmapActive();
 	virtual void setTexActive(bool);
 	virtual void setBumpActive(bool);
+	virtual void setHmapActive(bool);
 	virtual char *nodeName()  { return name;}
 
 };

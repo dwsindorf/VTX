@@ -83,16 +83,13 @@ Scene() {
 					haze.max=6e-05;
 					haze.min=2e-05;
 					haze.value=1;
-					image("mars1",256,256,Color(0.2+noise(ERODED|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));
 					Surface{
 						m1=noise(UNS,1,5,0.47,0.4,2)+0.71;
 						m2=0.5*noise(ERODED,8,16,0.2,0.5);
 						terrain=fog(1-1.2*noise(UNS,8,3,1))
 								water(0.001*noise(RIDGED|NLOD,15,6,0.33,0.5,2.1))
-								craters(ID1,2,0.001,0.2,1,0.8,1,1,1,0.4,0.1)
-								craters(3,0.1,0.25,1,0.8,1,0.3)
-								Z(m2)+Color(0.75+noise(UNS,2,5,1,0.5,2),RED,RED,1)+
-								Texture("mars1",BUMP,3.21519,0.66664,1.30908,0,10,2);
+								Z(m2+craters(3,0.1,0.25,1,0.8,1,0.3))+Color(0.75+noise(UNS,2,5,1,0.5,2),RED,RED,1)+
+								Texture("mars",BUMP,3.21519,0.66664,1.30908,0,10,2);
 					}
 					Sky(0.00103) {
 						color=Color(0.4,0.8,1,0.93);

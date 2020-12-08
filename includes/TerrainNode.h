@@ -526,5 +526,7 @@ public:
 
 extern int getargs(TNode *args, double *array, int max);
 extern int getargs(TNode *args, TerrainData *array, int max);
+extern int numargs(TNode *args);
+
 #endif
 

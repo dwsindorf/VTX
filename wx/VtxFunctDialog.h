@@ -8,8 +8,8 @@ class TNode;
 
 WX_DECLARE_HASH_MAP( int, VtxFunctMgr*, wxIntegerHash, wxIntegerEqual, VtxFunctMgrHash );
 
-#define DLG_HEIGHT (380)
-#define DLG_WIDTH  (460)
+#define DLG_HEIGHT (400)
+#define DLG_WIDTH  (470)
 #define TABS_BORDER 10
 #ifndef TABS_WIDTH
 #define TABS_WIDTH  (DLG_WIDTH-20)

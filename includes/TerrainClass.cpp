@@ -30,7 +30,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -96,6 +96,9 @@ static double SeaLevel=0,WaterDepth=0,WaterHeight=0;
 
 enum  {	 // NOTE: must keep same order as in gtypes[] below
 	ZHT,
+	MAXHT,
+	MINHT,
+	FHT,
 	BMPHT,
 	THETA,
 	PHI,
@@ -141,6 +144,9 @@ enum {		// CTypes cloud options
 
 static LongSym gtypes[]={
 	{"HT",			ZHT},
+	{"MAXHT",		MAXHT},
+	{"MINHT",		MINHT},
+	{"FHT",		    FHT},
 	{"BMPHT",		BMPHT},
 	{"THETA",		THETA},
 	{"PHI",			PHI},
@@ -249,6 +255,15 @@ void TNglobal::eval()
 {
 	INIT;
 	switch(gtype){
+	case MAXHT:
+		S0.s=MaxHt;
+		break;
+	case MINHT:
+		S0.s=MinHt;
+		break;
+	case FHT:
+		S0.s=FHt=(Height-MinHt)/(MaxHt-MinHt);
+		break;
 	case ZHT:
 		if(CurrentScope->texture())
 			S0.set_inactive();

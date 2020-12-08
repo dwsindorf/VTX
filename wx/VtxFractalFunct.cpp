@@ -35,6 +35,10 @@ enum {
     ID_LIMIT_TEXT,
     ID_BIAS_SLDR,
     ID_BIAS_TEXT,
+    ID_HMAX_SLDR,
+    ID_HMAX_TEXT,
+    ID_HVAL_SLDR,
+    ID_HVAL_TEXT,
 };
 
 IMPLEMENT_CLASS(VtxFractalFunct, wxNotebook )
@@ -52,6 +56,8 @@ SET_SLIDER_EVENTS(SLOPE,VtxFractalFunct,Slope)
 SET_SLIDER_EVENTS(CLIP,VtxFractalFunct,Clip)
 SET_SLIDER_EVENTS(LIMIT,VtxFractalFunct,Limit)
 SET_SLIDER_EVENTS(BIAS,VtxFractalFunct,Bias)
+SET_SLIDER_EVENTS(HMAX,VtxFractalFunct,HtMax)
+SET_SLIDER_EVENTS(HVAL,VtxFractalFunct,HtVal)
 
 END_EVENT_TABLE()
 
@@ -122,10 +128,10 @@ void VtxFractalFunct::AddControlsTab(wxWindow *panel){
 
 	boxSizer->Add(deposition,0,wxALIGN_LEFT|wxALL,0);
 
-    wxBoxSizer *slope = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Slope"));
+    wxBoxSizer *slope = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Slope Bias"));
 
     wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	SlopeSlider=new ExprSliderCtrl(panel,ID_SLOPE_SLDR,"Bias1",LABEL2, VALUE1,SLIDER2);
+	SlopeSlider=new ExprSliderCtrl(panel,ID_SLOPE_SLDR,"Magn",LABEL2, VALUE1,SLIDER2);
 	SlopeSlider->setRange(0,3);
 	SlopeSlider->setValue(0.0);
 
@@ -141,12 +147,12 @@ void VtxFractalFunct::AddControlsTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	LimitSlider=new ExprSliderCtrl(panel,ID_LIMIT_SLDR,"Thresh",LABEL2, VALUE1,SLIDER2);
-	LimitSlider->setRange(0,3.0);
+	LimitSlider->setRange(0,1.0);
 	LimitSlider->setValue(0.0);
 
 	hline->Add(LimitSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	BiasSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Bias2",LABEL1, VALUE1,SLIDER2);
+	BiasSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Mult",LABEL1, VALUE1,SLIDER2);
 	BiasSlider->setRange(0.0,1.0);
 	hline->Add(BiasSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
@@ -155,6 +161,23 @@ void VtxFractalFunct::AddControlsTab(wxWindow *panel){
 	slope->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(slope,0,wxALIGN_LEFT|wxALL,0);
+
+    wxBoxSizer *htctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Elevation Bias"));
+    hline = new wxBoxSizer(wxHORIZONTAL);
+    HtMaxSlider=new ExprSliderCtrl(panel,ID_HMAX_SLDR,"Max",LABEL2, VALUE1,SLIDER2);
+    HtMaxSlider->setRange(0,1.0);
+    HtMaxSlider->setValue(1.0);
+    hline->Add(HtMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+    HtValSlider=new ExprSliderCtrl(panel,ID_HVAL_SLDR,"Val",LABEL1, VALUE1,SLIDER2);
+    HtValSlider->setRange(0,1.0);
+    HtValSlider->setValue(1.0);
+    hline->Add(HtValSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+    htctrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+    boxSizer->Add(htctrls,0,wxALIGN_LEFT|wxALL,0);
+
     wxBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Options"));
 
 	m_sqr=new wxCheckBox(panel, ID_SQR, "Square");
@@ -170,7 +193,6 @@ void VtxFractalFunct::AddControlsTab(wxWindow *panel){
 }
 
 void VtxFractalFunct::setFunction(wxString f){
-	//cout << f << endl;
 	TNfractal *tc=(TNfractal*)TheScene->parse_node(f.ToAscii());
 	if(!tc)
 		return;
@@ -179,7 +201,7 @@ void VtxFractalFunct::setFunction(wxString f){
 
 	m_sqr->SetValue((type & SQR)?true:false);
 	m_ss->SetValue((type & SS)?true:false);
-
+	nargs=numargs((TNarg *)tc->left);
 	TNarg &args=*((TNarg *)tc->left);
 
 	StartSlider->setValue(args[0]);
@@ -215,9 +237,20 @@ void VtxFractalFunct::setFunction(wxString f){
 
 	a=args[7];
 	if(a)
-		BiasSlider->setValue(a);  // tbias
+		BiasSlider->setValue(a);  // thresh bias
 	else
-		BiasSlider->setValue(2.0);
+		BiasSlider->setValue(1.0);
+	a=args[8];
+	if(a)
+		HtMaxSlider->setValue(a);  // htmax
+	else
+		HtMaxSlider->setValue(1.0);
+	a=args[9];
+	if(a)
+		HtValSlider->setValue(a);  // htbias
+	else
+		HtValSlider->setValue(1.0);
+
 	delete tc;
 
 }
@@ -250,7 +283,9 @@ void VtxFractalFunct::getFunction(){
 	s+=ClipSlider->getText()+",";
 	s+=ErodeSlider->getText()+",";
 	s+=LimitSlider->getText()+",";
-	s+=BiasSlider->getText();
+	s+=BiasSlider->getText()+",";;
+	s+=HtMaxSlider->getText()+",";
+	s+=HtValSlider->getText();
 	s+=")";
 
 	TNfractal *tn=(TNfractal*)TheScene->parse_node(s.ToAscii());

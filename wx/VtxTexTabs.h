@@ -18,6 +18,8 @@ typedef struct tex_state {
 	double start;
 	double alpha;
 	double bump;
+	double hmap_bias;
+	double hmap;
 	double bias;
 	double bump_orders;
 	double bump_damp;
@@ -31,6 +33,7 @@ typedef struct tex_state {
 	uint alpha_enable   : 1;
 	uint tex_enable   	: 1;
 	uint bump_enable   	: 1;
+	uint hmap_enable   	: 1;
 
 } tex_state;
 class VtxTexTabs : public VtxTabsMgr
@@ -84,6 +87,9 @@ protected:
 	SliderCtrl *AlphaSlider;
 	SliderCtrl *BumpAmpSlider;
 	SliderCtrl *BumpDampSlider;
+	SliderCtrl *HmapAmpSlider;
+	SliderCtrl *HmapBiasSlider;
+
 	SliderCtrl *BiasSlider;
 	SliderCtrl *OrdersDeltaSlider;
 	SliderCtrl *OrdersAttenSlider;
@@ -100,6 +106,8 @@ protected:
 
 	wxCheckBox *m_tex_check;
 	wxCheckBox *m_bump_check;
+	wxCheckBox *m_hmap_check;
+
 	wxRadioBox *interp_mode;
 
 	wxCheckBox *m_clamp_check;
@@ -111,6 +119,8 @@ protected:
 	void set_ampl(TNode *node);
 	void set_bump(TNode *node);
 	void set_bias(TNode *node);
+	void set_hmap(TNode *node);
+	void set_hmap_bias(TNode *node);
 	void set_orders(TNode *node);
 	void set_orders_delta(TNode *node);
 	void set_orders_atten(TNode *node);
@@ -159,6 +169,8 @@ public:
 	DEFINE_SLIDER_EVENTS(OrdersAtten)
 	DEFINE_SLIDER_EVENTS(BumpAmp)
 	DEFINE_SLIDER_EVENTS(BumpDamp)
+	DEFINE_SLIDER_EVENTS(HmapAmp)
+	DEFINE_SLIDER_EVENTS(HmapBias)
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowBands(wxCommandEvent& event);

@@ -4470,7 +4470,7 @@ void CloudLayer::setClouds(TNclouds *c){
 	clouds = nc;
 	t[0]=0;
 	root->valueString(t);
-	cout<<t<<endl;
+	//cout<<t<<endl;
 	invalidate();
 }
 
@@ -4484,7 +4484,7 @@ void CloudLayer::deleteClouds(){
 		NodeIF *n=clouds->getParent();
 		clouds->removeNode();
 		n->valueString(t);
-		cout<<t<<endl;
+		//cout<<t<<endl;
 		delete clouds;
 	}
 	clouds=0;

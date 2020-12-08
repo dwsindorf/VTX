@@ -49,11 +49,16 @@ public:
 	double  orders_atten;
 	double  orders;
 
+	double hmap_amp;
+	double hmap_bias;
+
 	static double mipbias;
 
 	bool enabled;
 	bool tex_active;
 	bool bump_active;
+	bool hmap_active;
+
 	bool coords_active;
 
 	bool s_data;

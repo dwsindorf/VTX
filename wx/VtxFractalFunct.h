@@ -17,8 +17,12 @@ protected:
 	ExprSliderCtrl *ClipSlider;
 	ExprSliderCtrl *LimitSlider;
 	ExprSliderCtrl *BiasSlider;
+	ExprSliderCtrl *HtMaxSlider;
+	ExprSliderCtrl *HtValSlider;
 	wxCheckBox *m_sqr;
 	wxCheckBox *m_ss;
+
+	int nargs;
 
 public:
 	VtxFractalFunct(wxWindow* parent,
@@ -44,6 +48,9 @@ public:
 		delete ClipSlider;
 		delete LimitSlider;
 		delete BiasSlider;
+		delete HtMaxSlider;
+		delete HtValSlider;
+
 	}
 	DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(Orders)
@@ -53,6 +60,8 @@ public:
 	DEFINE_SLIDER_EVENTS(Clip)
 	DEFINE_SLIDER_EVENTS(Limit)
 	DEFINE_SLIDER_EVENTS(Bias)
+	DEFINE_SLIDER_EVENTS(HtMax)
+	DEFINE_SLIDER_EVENTS(HtVal)
 
     void OnChangeEvent(wxCommandEvent& event){
     	getFunction();

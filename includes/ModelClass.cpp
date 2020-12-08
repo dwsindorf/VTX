@@ -288,7 +288,7 @@ NodeIF *Model::parse_node(NodeIF *parent,char *s){
 	    return 0;
 	fprintf(fp,s);
 	fclose(fp);
-    char path[256];
+    char path[512];
 
     File.getBaseDirectory(path);
     File.addToPath(path,File.system);

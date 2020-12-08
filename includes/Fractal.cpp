@@ -58,8 +58,10 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 //	3	 sbias	0.0   slope bias (exaggerates areas of high slope)
 //	4	 smax	4.0   slope max (truncates max slope used for bias)
 //	5	 sdrop	0.0   slope drop (exaggerates steepness)
-//	6	 thresh	1.0   switch to tbias if slope greater than thresh
-//	7	 tbias	2.0   bias=sbias*tbias if slope>thresh
+//	6	 thresh	1.0   multiply by tbias if slope < than thresh
+//	7	 tbias	1.0   low slope multiplier (damping factor)
+//	8	 hmax	1.0   ht(fractional) for mode switch
+//	9	 hval	1.0   multiplier to apply if ht > hmax
 //
 //-------------------------------------------------------------
 void TNfractal::eval()
@@ -107,7 +109,11 @@ void TNfractal::eval()
 	double smax=n>4?args[4]:4.0;
 	double sdrop=n>5?args[5]:0.0;
 	double thresh=n>6?args[6]:1.0;
-	double tbias=n>7?args[7]:1.0;
+	double tbias=n>7?args[7]:0.0;
+	double hmax=n>8?args[9]:1.0;
+	double hval=n>9?args[10]:1.0;
+
+	extern double FHt,MinHt,MaxHt;
 
 	unsigned int level=(int)Td.level;
     if(Adapt.lod()){
@@ -223,12 +229,17 @@ void TNfractal::eval()
 			slope=sfact*fractal_slope;
 			if(options & SQR)
 				slope=slope*slope;
-			if(slope>thresh)
-				slope*=tbias;
 			slope=smallest(slope,smax);
+
+			if(slope<=(thresh*smax))
+				slope*=tbias;
+
+			double fbias=0.2;
+			double fht=(base-MinHt)/(MaxHt-MinHt);
+			slope*=rampstep(fht,0,hmax,1,hval);
+
 			delta=sfact*ampl*rand1*slope*sbias;
 			if(sdrop)
-				//drop=sfact*rand2*sdrop*slope;
 				drop=sfact*rand2*sdrop*slope*sbias;
 			f+=t*(delta-drop);
 		}

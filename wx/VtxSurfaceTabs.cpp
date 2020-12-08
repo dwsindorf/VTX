@@ -255,7 +255,6 @@ void VtxSurfaceTabs::setVarExpr()
     if(expr.IsEmpty())
     	deleteVar();
     else{
-    	cout << "VtxSurfaceTabs::setVarExpr:" << expr << endl;
 		mgr->setVarExpr((char*)name.ToAscii(),(char*)expr.ToAscii());
 		mgr->applyVarExprs();
     }

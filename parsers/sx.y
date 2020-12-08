@@ -69,11 +69,15 @@ void set_node(NodeIF *node){
     argi=0;
 }
 
-
 void clrorbs(){
 	orbi=0;
 	OrbitalStack[0]=0;
 	lastarg=0;
+}
+
+void reset_parser(){
+	set_node(0);
+	clrorbs();
 }
 
 void set_orbital(Orbital *orb){

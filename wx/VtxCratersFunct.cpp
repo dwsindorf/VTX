@@ -11,7 +11,7 @@
 #define LINE_WIDTH BOX_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 30
 
-#define VALUE1 60
+#define VALUE1 50
 #define LABEL1 50
 #undef LABEL2
 #define LABEL2 55
@@ -44,6 +44,8 @@ enum {
     ID_FLOOR_TEXT,
     ID_CNTR_SLDR,
     ID_CNTR_TEXT,
+    ID_BIAS_SLDR,
+    ID_BIAS_TEXT,
     ID_VNOISE_SLDR,
     ID_VNOISE_TEXT,
     ID_RNOISE_SLDR,
@@ -66,6 +68,7 @@ SET_SLIDER_EVENTS(FLOOR,VtxCratersFunct,Floor)
 SET_SLIDER_EVENTS(CNTR,VtxCratersFunct,Center)
 SET_SLIDER_EVENTS(RNOISE,VtxCratersFunct,RNoise)
 SET_SLIDER_EVENTS(VNOISE,VtxCratersFunct,VNoise)
+SET_SLIDER_EVENTS(BIAS,VtxCratersFunct,Offset)
 
 EVT_CHOICE(ID_SCALE_MULT, VtxCratersFunct::OnChangeEvent)
 EVT_CHOICE(ID_SEED, VtxCratersFunct::OnChangeEvent)
@@ -153,9 +156,9 @@ void VtxCratersFunct::AddCratersTab(wxWindow *panel){
 
 	size->Add(ScaleSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	wxString exps[]={"100","10","1","0.1","0.01","0.001","0.0001","0.00001","0.000001"};
-	m_scale_exp=new wxChoice(panel, ID_SCALE_MULT, wxDefaultPosition,wxSize(70,-1),9, exps);
-	m_scale_exp->SetSelection(5);
+	wxString exps[]={"100","10","1","0.1","0.01","10-3","10-4","10-5","10-6"};
+	m_scale_exp=new wxChoice(panel, ID_SCALE_MULT, wxDefaultPosition,wxSize(60,-1),9, exps);
+	m_scale_exp->SetSelection(4);
 	size->Add(new wxStaticText(panel,-1,"X"), 0, wxALIGN_LEFT|wxALL, 4);
 	size->Add(m_scale_exp, 0, wxALIGN_LEFT|wxALL, 3);
 
@@ -242,15 +245,17 @@ void VtxCratersFunct::AddShapeTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-
-	CenterSlider=new ExprSliderCtrl(panel,ID_CNTR_SLDR,"Center Cone",LABEL+20, VALUE1,SLIDER);
+	CenterSlider=new ExprSliderCtrl(panel,ID_CNTR_SLDR,"Center",LABEL1, VALUE1,SLIDER2);
 	CenterSlider->setRange(0.0,1.0);
 	hline->Add(CenterSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	OffsetSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Base",LABEL1, VALUE1,SLIDER2);
+	OffsetSlider->setRange(0.0,50);
+	hline->Add(OffsetSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	geometry->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(geometry,0,wxALIGN_LEFT|wxALL,0);
-
 
 }
 void VtxCratersFunct::setFunction(wxString f){
@@ -348,6 +353,11 @@ void VtxCratersFunct::setFunction(wxString f){
 		CenterSlider->setValue(a);
 	else
 		CenterSlider->setValue(mgr->ctr);
+	a=args[13];
+	if(a)
+		OffsetSlider->setValue(a);
+	else
+		OffsetSlider->setValue(mgr->offset);
 
 	delete tc;
 
@@ -398,7 +408,9 @@ void VtxCratersFunct::getFunction(){
 	s+=DropSlider->getText()+",";
 	s+=RimSlider->getText()+",";
 	s+=FloorSlider->getText()+",";
-	s+=CenterSlider->getText();
+	s+=CenterSlider->getText()+",";
+	s+=OffsetSlider->getText();
+
 
 	s+=")";
 	//cout << s << endl;

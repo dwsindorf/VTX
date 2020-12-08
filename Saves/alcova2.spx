@@ -42,6 +42,10 @@ Scene() {
 		height=38.3537 ft;
 		gndlvl=2015.66 ft;
 	}
+	View{
+		height=365.865 ft;
+		gndlvl=2284.94 ft;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
@@ -93,7 +97,7 @@ Scene() {
 				water.clarity=50 ft;
 				water.color1=Color(0.82,0.81,1);
 				water.color2=Color(0,0.3,0.3);
-				water.level=1100 ft;
+				water.level=1388.8 ft;
 				year=30;
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
@@ -111,7 +115,7 @@ Scene() {
 					ripples=0.0002*noise(20,2);
 					m1=3*noise(SQR|UNS,8,6,0.5,0.1,2.1);
 					m3=noise(8,6,0.5,0.5,2);
-					z1=fractal(SQR|SS,14,14,0.04,3,2.6,0.11,1,1)m1;
+					z1=fractal(SQR|SS,14,14,0.05,3,2.37,0.13,1,1,1,0.47,0.29)m1;
 					terrain=fog(2*noise(8,5))
 							water(ripples)
 							Z(0.5*z1)+

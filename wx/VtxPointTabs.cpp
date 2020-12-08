@@ -125,8 +125,9 @@ void VtxPointTabs::setObjAttributes(){
 		sprintf(p,"Point(%s,%s,%s)\n",x,y,z);
 	else
 		sprintf(p,"Z(%s)\n",z);
-	cout<<p<<endl;
+	//cout<<"VtxPointTabs::setObjAttributes:"<<p<<endl;
 	tnode->setExpr(p);
+
 	if(tnode->getExprNode()==0)
 		update_needed=true;
 	else{

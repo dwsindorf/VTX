@@ -34,6 +34,7 @@ public:
 	double  ctr;
 	double  rise;
 	double  drop;
+	double  offset;
 		
 	Placement *make(Point4DL&,int);
 

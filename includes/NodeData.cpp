@@ -296,13 +296,17 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	setTextures(tp->textures.size?1:0);
 	int nbumps=0;
+	int nmaps=0;
+
 	for(int i=0;i<tp->textures.size;i++){
 		Texture *tx=tp->textures[i];
-		if(tx->bump_active){
+		if(tx->bump_active)
 			nbumps++;
-		}
+		if(tx->hmap_active)
+			nmaps++;
 	}
 	setBumpmaps(nbumps?1:0);
+	setHmaps(nmaps?1:0);
 
 	if(td.cvalid())
 		nc=1;

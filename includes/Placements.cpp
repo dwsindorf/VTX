@@ -72,7 +72,6 @@ static LongSym popts[]={
 	{"MAXB",		MAXB},
 	{"NPROJ",		NPROJ},
 	{"CNORM",		CNORM},
-	{"CNORM",		CNORM},
 	{"NNBRS",		NNBRS}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
@@ -589,7 +588,8 @@ void TNplacements::eval()
 		    mgr->density=S0.s;
 		}
 	}
-	MaxSize=mgr->maxsize/Hscale;
+	//MaxSize=mgr->maxsize/Hscale;
+	MaxSize=mgr->maxsize;
 	if(!mgr->ntest())
 	    MaxSize+=4;
 

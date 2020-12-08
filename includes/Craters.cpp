@@ -75,6 +75,7 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
 	drop=1.0;
 	rise=0.5;
 	impact=0.8;
+	offset=0;
 	ampl=1;
  	noise_vertical=1;
   	noise_radial=1;
@@ -225,7 +226,8 @@ void Crater::set_terrain(PlacementMgr &pmgr)
 
 	CraterMgr &mgr=(CraterMgr&)pmgr;
 
-	scale=0.05*mgr.ampl*radius/Hscale;
+	scale=100*mgr.ampl*radius;
+	//scale=0.05*mgr.ampl*radius/Hscale;
 	rise=scale*mgr.rise;
 	drop=-scale*mgr.drop;
 
@@ -481,7 +483,7 @@ void TNcraters::eval()
 	TNarg *a=args.index(8);
 
 	if(a){                // geometry exprs
-		int n=getargs(a,arg,5);
+		int n=getargs(a,arg,6);
 		if(n>0) cmgr->rise=arg[0];        // rise factor
 		if(n>1) cmgr->drop=arg[1];        // drop factor
 		if(n>2){
@@ -495,6 +497,8 @@ void TNcraters::eval()
 		}
 		if(n>4)
 			cmgr->ctr=arg[4];             // center peak radius
+		if(n>5)
+			cmgr->offset=arg[5];          // ht bias
 	}
 	cmgr->reset();
 
@@ -526,6 +530,7 @@ void TNcraters::eval()
 		else if(S0.svalid())
 			hb=S0.s;
 	}
+    hb+=cmgr->offset;
 
     INIT;
     double ht=0;
@@ -548,17 +553,20 @@ void TNcraters::eval()
  	    ht=h1+ht*impact;
     ht+=h2+hb;
     if(type & CNORM || images.building()){
-        double ampl=0.025*cmax/Hscale;
-        ht=(ht+ampl*cmgr->drop)/(ampl*cmgr->rise+ampl*cmgr->drop);
+        //double ampl=0.025*cmax/Hscale;
+       double ampl=0.025*cmax;
+       ht=(ht+ampl*cmgr->drop)/(ampl*cmgr->rise+ampl*cmgr->drop);
     }
 	//else
 	//	ht*=cmgr->ampl;
-	if(S0.pvalid())
-		Height=S0.p.z=ht;
+	if(S0.pvalid()){
+		S0.p.z=ht;
+		S0.set_pvalid();
+	}
 	else{
-		Height=S0.s=ht;
+		S0.s=ht;
 		S0.set_svalid();
 	}
-	S0.set_pvalid();
 	S0.clr_constant();
+
 }

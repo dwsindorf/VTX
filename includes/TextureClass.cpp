@@ -45,6 +45,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	orders_atten=1.0;
 	tex_active=(options & NTEX)?false:true;
 	bump_active=(options & BUMP)?true:false;
+	hmap_active=(options & HMAP)?true:false;
 	enabled=true;
 	s_data=false;
 	a_data=false;
@@ -194,10 +195,11 @@ void Texture::set_state() {
 //-------------------------------------------------------------
 void Texture::begin() {
 	glEnable(GL_TEXTURE_2D);
+	int tid=0;
 	if(!valid || Render.invalid_textures()) {
-		if (id[0]>0)
+		if (id[tid]>0)
 			glDeleteTextures(2, (GLuint*)&id);
-		glGenTextures(1, &id[0]); // Generate a unique texture ID
+		glGenTextures(1, &id[tid]); // Generate a unique texture ID
 		glBindTexture(GL_TEXTURE_2D, id[0]);
 		set_state();
 
@@ -266,7 +268,7 @@ void Texture::begin() {
 		// build bump texture image for OGL legacy bumpmap usage
 
 		if(bump_active && !Render.draw_shaded()){
-			glGenTextures(1, &id[1]); // Generate a unique texture ID
+			glGenTextures(1, &id[++tid]); // Generate a unique texture ID
 			glBindTexture(GL_TEXTURE_2D, id[1]);
 			set_state();
 			for (int i = 0; i < h; i++){
