@@ -9,7 +9,7 @@
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
-extern double  Rscale, Gscale, Pscale, Height;
+extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt;
 extern double  zslope();
 extern int test_flag;
 
@@ -341,6 +341,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(ne>0)
 			TheMap->set_erosion(1);
 	}
+	double h=Ht();
 	a=TSTART;
 
 	for(i=0;i<tp->textures.size;i++){
@@ -354,15 +355,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		else if(tex->a_data)
 			setTexture(tex->s,a);
 	}
+	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
+	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;
 
 	set_type(td.type());
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
-	double h=Ht();
-	if(h>TheMap->hmax)
-		TheMap->hmax=h;
-	if(h<TheMap->hmin)
-		TheMap->hmin=h;
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
 #endif

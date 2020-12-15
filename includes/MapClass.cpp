@@ -251,6 +251,7 @@ Map::Map(double r)
 	hscale=5e-4;  // translates local hts to scene dimensions
 	hmax=-lim;
 	hmin=lim;
+	hrange=0;
 	last=current=0;
 	frontface=GL_FRONT;
 	lighting=1;
@@ -517,6 +518,10 @@ void Map::make()
 
 	spole=d;
 	last=0;
+	MaxHt=-lim;
+	MinHt=lim;
+	hmax=MaxHt;
+	hmin=MinHt;
 }
 
 //-------------------------------------------------------------
@@ -1240,6 +1245,9 @@ void Map::render_texs(){
 		// otherwise object will be transparant
 
 		int aflag=texture && texture->alpha_enabled() && !transparant();
+
+        //cout<<" Map::render_texs:"<<stexs<<endl;
+
 		if(aflag)
 			set_textures(0);
 		else
@@ -1633,6 +1641,7 @@ void Map::make_visbox()
 			npole->visit(&MapNode::set_tests); \
 			cycles++; \
 			npole->adapt(); \
+			find_limits();\
 			created=mcreated-created; \
 			deleted=mdeleted-deleted; \
 			pcount++; \
@@ -1641,8 +1650,6 @@ void Map::make_visbox()
 			tcount++; \
 			tcreated+=created; \
 			tdeleted+=deleted; \
-			MaxHt=hmax>MaxHt?hmax:MaxHt;\
-			MinHt=hmin<MinHt?hmin:MinHt;\
 			if(created || deleted) {  \
 			    clr_vchecked(); \
 			    if(vnodes>=vmin) {\
@@ -1664,10 +1671,12 @@ void Map::adapt()
 	int converged=1;
 	make_current();
 	int max_cycles=Adapt.maxcycles();
+
 	//if(TheScene->automv())
 	//	max_cycles=9;
    if( Adapt.never())
 	   return;
+
 	mcreated=mdeleted=mcount=cycles=0;
 	if(!npole)
 		make();
@@ -1710,8 +1719,8 @@ void Map::adapt()
 		minext=lim;
 		set_resolution();
 		npole->visit(&MapNode::clr_flags);
-		MaxHt=-lim;
-		MinHt=lim;
+		hmax=-lim;
+		hmin=lim;
 
 		if(TheScene->view->changed_detail())
 			npole->visit_all(&MapNode::clr_ccheck);
@@ -1754,8 +1763,6 @@ void Map::adapt()
 		    npole->visit(&MapNode::pvischk);
 		// TODO: read depth buffer and find zn, zf
         if(idtest && object==TheScene->viewobj){
-        	//double minz,maxz;
-        	//cout<< "Adapt ";
         	Raster.getLimits(zn,zf);
         }
 		if(object->allows_selection()||idtest)
@@ -1770,7 +1777,6 @@ void Map::adapt()
 		}
 
 	}
-
 	if(need_adapt())
 		Adapt.set_more_cycles(1);
 	if(TheScene->viewobj==object){
@@ -1778,6 +1784,7 @@ void Map::adapt()
 		TheScene->cycles=mcount;
 		Raster.set_twopass(waterpass());
 		Raster.set_fogpass(fog());
+		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
 	}
 	if(Render.display(MAPINFO) || Render.display(NODEINFO)){
 		mcycles=mcount;
@@ -1790,8 +1797,18 @@ void Map::adapt()
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
 	}
-}
+	find_limits();
 
+}
+//-------------------------------------------------------------
+// Map::find_limits()	get ht min and max
+//-------------------------------------------------------------
+void Map::find_limits(){
+	npole->visit(&MapNode::find_limits);
+	hrange=hmax-hmin;
+	//if(TheScene->viewobj==object)
+	//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
+}
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility
 //-------------------------------------------------------------
@@ -1838,6 +1855,7 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	last=parent;
 	a=new MapNode(parent, t, p);
 	Td.clr_flag(FNOREC);
+
 
 	object->set_surface(Td);
 

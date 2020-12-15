@@ -3,23 +3,18 @@ Scene() {
 		view=SURFACE;
 		phi=-0.0798689;
 		theta=90.6092;
-		height=258.825 ft;
-		gndlvl=1709.2 ft;
+		height=544.424 ft;
+		gndlvl=2656.41 ft;
 		time=5800;
-		heading=30;
+		heading=25;
 		tilt=-15;
 		fov=35;
 		speed=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=178.221 ft;
-		gndlvl=1709.18 ft;
-	}
-	View{
-		height=544.424 ft;
-		gndlvl=2656.41 ft;
-		heading=25;
+		height=631.706 ft;
+		gndlvl=2569.13 ft;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -61,9 +56,10 @@ Scene() {
 				ambient=Color(1,1,1,0.05);
 				day=5;
 				diffuse=Color(1,1,1,0.7);
+				fog.max=1000 ft;
 				fog.min=100 ft;
 				fog.value=1;
-				fog.vmax=1300 ft;
+				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				shadow=Color(0,0,0.1,0.7);
 				shine=10;
@@ -83,15 +79,15 @@ Scene() {
 				bands("bands1",128,0.2,Color(0.8,0.7,0.2),0.4,RAND);
 				Surface{
 					ripples=0.0002*noise(20,2);
-					m1=3*noise(SQR|UNS,8,6,0.5,0.1,2.1);
+					m1=3*noise(SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
-					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.39,0.39,1,0.27,0.18)m1;
+					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.68,0.13,0.35,0.52)m1;
 					terrain=fog(2*noise(8,5))
 							water(0.0002*noise(20,2))
 							Z(0.5*z1)+
-							Texture("cracks2",BUMP|NTEX,9999,-0.3,1,0,10,2.29232,1,0,-0.5492)+
-							Texture("bmap1",BUMP|NTEX|S,HT,5.65685,0.41512,1.0788,0,1,2,0,0)+
-							Texture("bands1",S,HT+0.2*m3+0.05*BMPHT,1,1.50304,2,0,1,2);
+							Texture("cracks2",BUMP|NTEX,9999,-0.2,1,0,10,2.29232,1,0)+
+							Texture("bmap1",BUMP|NTEX|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0)+
+							Texture("bands1",S,HT+0.2*m3+0.05*BMPHT,1,1.38888,2,0,1,2,1,0);
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);

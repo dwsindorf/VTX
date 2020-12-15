@@ -195,7 +195,7 @@ public:
 	double	radius;
 	double	smax,smin;		// cell size limits
 	double	dmax,dmin;		// distance limits
-	double	hscale,hmin,hmax;
+	double	hscale,hmin,hmax,hrange;
 	double  resolution;
 	double  gmax;		// color gradient diff threshold
 	double  cmax;		// curvature threshold (sharp)
@@ -220,6 +220,7 @@ public:
 	void            visit_all(void (MapNode::*f) ());
 	void            visit_all(void (*f) (MapNode *));
 	void            make();
+	void            find_limits();
 	void            free();
 	void            render();
 	void            render_lines();

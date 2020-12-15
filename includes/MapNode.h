@@ -305,7 +305,7 @@ public:
                             }
     void clr_aflags()       { info.aflags=0; }
     void clr_cchecks();
-
+    void find_limits();
 
     // cellsize level functions
 #define NMOVE(r,u) \

@@ -100,6 +100,8 @@ public:
 	void texCoords(int);
 	void bumpCoords(int,double s,double t);
 	void texCoords(int,double s,double t);
+	void getTexCoords(double& s, double & t);
+	double getTexAmpl(int mode);
 	void eval();
 
 	void enable()			{ glEnable(type); }

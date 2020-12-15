@@ -1,10 +1,10 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-0.0798689;
-		theta=90.6092;
-		height=2014.73 ft;
-		gndlvl=580.195 ft;
+		phi=-0.076561;
+		theta=90.6149;
+		height=8949.17 ft;
+		gndlvl=1466.86 ft;
 		time=5800;
 		heading=30;
 		tilt=-15;
@@ -13,54 +13,8 @@ Scene() {
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=1451.17 ft;
-		gndlvl=1143.76 ft;
-	}
-	View{
-		height=643.737 ft;
-		gndlvl=1430.44 ft;
-	}
-	View{
-		height=13408.1 ft;
-		gndlvl=378.275 ft;
-	}
-	View{
-		height=9489.64 ft;
-		gndlvl=533.861 ft;
-	}
-	View{
-		height=9590.72 ft;
-		gndlvl=479.354 ft;
-	}
-	View{
-		height=13389.3 ft;
-		gndlvl=572.048 ft;
-	}
-	View{
-		height=5645.45 ft;
-		gndlvl=598.842 ft;
-	}
-	View{
-		height=237.826 ft;
-		gndlvl=305.157 ft;
-	}
-	View{
-		phi=-0.076561;
-		theta=90.6149;
-		height=21.2436 ft;
-		gndlvl=395.228 ft;
-	}
-	View{
-		height=21163.1 ft;
-		gndlvl=392.208 ft;
-	}
-	View{
-		height=6207.92 ft;
-		gndlvl=1526.84 ft;
-	}
-	View{
-		height=8949.17 ft;
-		gndlvl=1466.86 ft;
+		height=8620.54 ft;
+		gndlvl=1795.49 ft;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -114,12 +68,13 @@ Scene() {
 				bands("lava2",ACHNL,256,0.37778,0.53334,Color(0.925,0.616,0.122,0.533),Color(0.055,0.035,0.035),
 					Color(0.596,0,0));
 				Surface{
-					terrain=Z(fractal(SQR|SS,12,13.3,1.73,2,2.3,1.2,1,0.24)noise(NLOD|UNS,10,4,0,1,2.2,1,1,0,0))+
+					terrain=Z(fractal(SQR|SS,13,13.3,1.73,0.82,1.79,1,1,1,0.2,0.05)noise(NLOD|UNS,10,4,0,1,2.2,1,1,0,0))+
 							Texture("cracks2",BUMP|NTEX,515.34,-0.2,1,0,8,2.35384,1)+
 							Texture("lava2",LINEAR|S,BMPHT,0.039074,2,2,2.4,1,1.73848,1);
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);
+					day=5;
 					density=1;
 					haze.color=Color(0.99,0.98,0.89);
 					haze.grad=0.43636;
@@ -127,6 +82,7 @@ Scene() {
 					haze.value=1;
 					shine=1;
 					specular=Color(1,1,1);
+					tilt=10;
 					twilight=Color(0,0.47,1);
 				}
 			}

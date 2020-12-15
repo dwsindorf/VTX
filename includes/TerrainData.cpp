@@ -104,6 +104,8 @@ double TerrainData::clarity=100*FEET;
 double TerrainData::rock=0;
 double TerrainData::depth=0;
 double TerrainData::extent=0;
+double TerrainData::texht=0;
+
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;

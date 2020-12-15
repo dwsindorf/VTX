@@ -2190,6 +2190,9 @@ void Spheroid::init()
 //-------------------------------------------------------------
 double  Spheroid::max_height()
 {
+    //cout<<"hrange:"<< TheMap->hrange<<" hscale:"<<hscale<<endl;
+    if(TheMap->hrange)
+    	return TheMap->hrange*hscale;
     return hscale;
 }
 
@@ -3251,7 +3254,7 @@ int  Shell::scale(double &zn, double &zf)
 	double s=TheScene->epoint.distance(point);
 	if(parent){
 		double a=0,b=0,r,h;
-		h=2*parent->max_height();
+		h=parent->max_height();
 		r=(1-h)*parent->size;
 		if(s>r)
 			a=sqrt(s*s-r*r);

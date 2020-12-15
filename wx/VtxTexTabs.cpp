@@ -80,14 +80,14 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxTexTabs::OnAddItem)
 EVT_MENU(OBJ_SHOW,VtxTexTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW, VtxTexTabs::OnUpdateEnable)
 
-EVT_RADIOBOX(ID_INTERP, VtxTexTabs::OnTexChanged)
+EVT_RADIOBOX(ID_INTERP, VtxTexTabs::OnModeChanged)
 
 EVT_CHECKBOX(ID_CLAMP,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_NORMALIZE,VtxTexTabs::OnTexChanged)
 
 EVT_CHECKBOX(ID_TEXCOLOR,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_TEXBUMP,VtxTexTabs::OnTexChanged)
-EVT_CHECKBOX(ID_HMAP,VtxTexTabs::OnTexChanged)
+EVT_CHECKBOX(ID_HMAP,VtxTexTabs::OnHmapChanged)
 
 SET_SLIDER_EVENTS(START,VtxTexTabs,Start)
 SET_SLIDER_EVENTS(ALPHA,VtxTexTabs,Alpha)
@@ -244,8 +244,8 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
-	BumpDampSlider->setRange(1,0,0,1);
-	BumpDampSlider->setValue(1.0);
+	BumpDampSlider->setRange(0,1,0,1);
+	BumpDampSlider->setValue(0.0);
 	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -255,13 +255,13 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	hmap_controls->Add(m_hmap_check,0,wxALIGN_LEFT|wxALL,4);
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-8,8);
+	HmapAmpSlider->setRange(-1,1);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	HmapBiasSlider=new SliderCtrl(panel,ID_HMAP_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
-	HmapBiasSlider->setRange(1,0,0,1);
-	HmapBiasSlider->setValue(1.0);
+	HmapBiasSlider->setRange(-1,1);
+	HmapBiasSlider->setValue(0.0);
 	hmap_controls->Add(HmapBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(hmap_controls, 0, wxALIGN_LEFT|wxALL,0);
@@ -746,6 +746,9 @@ void VtxTexTabs::setObjAttributes(){
 			tex->orders_delta=orders_delta;
 			tex->orders_atten=orders_atten;
 			tex->bump_damp=damp;
+			tex->hmap_amp=hmap;
+			tex->hmap_bias=hmap_bias;
+
 			tex->invalidate();
 		}
 	}

@@ -1,41 +1,163 @@
 Scene() {
 	View{
+		view=SURFACE;
+		phi=59.0625;
+		theta=102.656;
+		height=13486.4 ft;
+		gndlvl=1736.76 ft;
+		time=803788;
+		tilt=-15;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		height=23483.4 ft;
+		gndlvl=5101.47 ft;
+		tilt=-24;
+		angle=-10;
+	}
+	View{
+		phi=53.9845;
+		theta=106.679;
+		height=44165.2 ft;
+		gndlvl=6602.64 ft;
+		heading=-56;
+		tilt=-33;
+	}
+	View{
+		height=32729.5 ft;
+		tilt=-29;
+		angle=-11;
+	}
+	View{
+		phi=49.5923;
+		theta=108.303;
+		height=667.308 ft;
+		gndlvl=1943.82 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=6391.03 ft;
+		gndlvl=1426.17 ft;
+		angle=-12;
+	}
+	View{
+		height=6625.9 ft;
+		gndlvl=2409.7 ft;
+	}
+	View{
 		view=ORBITAL;
-		phi=28.6523;
-		theta=276.33;
-		height=0.0071999;
-		gndlvl=997.157 ft;
-		time=95554.2;
+		height=249.942 miles;
+		gndlvl=6602.64 ft;
 		heading=90;
 		pitch=-90;
-		fov=41.1541;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+		tilt=0;
+		angle=0;
 	}
 	View{
 		view=SURFACE;
-		phi=45;
-		theta=275.625;
-		height=52800 ft;
-		gndlvl=9167.59 ft;
+		phi=54.4922;
+		theta=117.422;
+		height=13303.4 ft;
+		gndlvl=5463.82 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
 	}
 	View{
-		height=40673.7 ft;
-		gndlvl=20685.3 ft;
+		phi=55.5029;
+		theta=131.045;
+		height=946.015 ft;
+		gndlvl=5567.35 ft;
 	}
 	View{
-		phi=44.978;
-		theta=276.037;
-		height=1132.11 ft;
-		gndlvl=6077.83 ft;
+		height=24614.2 ft;
+		gndlvl=6085 ft;
+		heading=127;
+		tilt=-30;
+		angle=-5;
+	}
+	View{
+		view=ORBITAL;
+		height=249.942 miles;
+		gndlvl=6602.64 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		theta=135.312;
+		pitch=-89;
+	}
+	View{
+		view=SURFACE;
+		phi=40.7812;
+		theta=132.188;
+		height=13608.2 ft;
+		gndlvl=-799.713 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=35158.6 ft;
+		gndlvl=2.64 ft;
+		tilt=-51;
+		angle=-22;
+	}
+	View{
+		view=ORBITAL;
+		height=249.942 miles;
+		gndlvl=6602.64 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		height=229.473 miles;
+		gndlvl=2047.54 ft;
+	}
+	View{
+		phi=39.9441;
+		height=228.61 miles;
+		gndlvl=6602.64 ft;
+	}
+	View{
+		view=SURFACE;
+		phi=45;
+		theta=142.031;
+		height=12252.1 ft;
+		gndlvl=1684.99 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=10893 ft;
+		gndlvl=2668.52 ft;
+	}
+	View{
+		height=50 ft;
+		gndlvl=-1938.54 ft;
+	}
+	View{
+		phi=44.9993;
+		theta=142.037;
+		height=937.765 ft;
+		gndlvl=1736.76 ft;
+		heading=-9;
+	}
+	View{
+		height=6291.18 ft;
+		gndlvl=2979.11 ft;
 	}
 	Universe {
 		Galaxy(20000) {
-			name="Milky Way";
-			origin=Point(20000,0,0);
+			name="Uncharted";
 			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
@@ -49,223 +171,40 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				name="Solor";
-				origin=Point(-2000,0,0);
-				Star(1.5,0.01) {
-					color=Color(1,1,0.8);
-					day=100;
+				Star(0.5,0) {
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1,0.53);
-					name="Sol";
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
-					Surface{
-						mc=clamp(noise(UNS,3,10,0.4,0.5)*noise(NABS|UNS,8,10,0.5,0.5),0,1);
-						terrain=Color(1,1-0.3*mc,0.9-mc);
-					}
-					Corona(8.11) {
-						color1=Color(1,1,0.8,0.8);
-						color2=Color(1,1,0.7);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.0036,85) {
-					ambient=Color(1,1,1,0.09);
-					day=23.934;
-					emission=Color(1,1,1,0.01);
-					fog.max=1200 ft;
-					fog.min=100 ft;
-					fog.value=0.94902;
-					fog.vmax=1200 ft;
-					fog.vmin=1000 ft;
-					hscale=0.0003;
-					name="Earth";
-					phase=50;
-					shadow=Color(0,0,0,0.6);
-					shine=18.0634;
-					specular=Color(1,1,1,0.76);
-					tilt=23.45;
-					water.albedo=1;
-					water.clarity=381.799 ft;
-					water.color1=Color(0,0.79,1);
-					water.color2=Color(0,0.07,0.27);
-					water.level=1000 ft;
-					water.shine=15;
-					year=365.26;
-					haze.color=Color(1,0.9,0.8);
-					haze.max=0.0001;
-					haze.min=5e-05;
-					haze.value=1;
-					water.reflectivity=0.7;
-					bands("lava2",ACHNL,256,0.37778,0.53334,Color(0.925,0.616,0.122,0.533),Color(0.055,0.035,0.035),
-						Color(0.596,0,0));
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-					image("ridges2",256,256,noise(RIDGED|UNS,1,5,0.19,0.1,2,1,-0.26,1,0));
-					bands("tidal",ACHNL|CLAMP,64,0.14814,0.219608,RAND,Color(0,0.294,0.094),
-						Color(0.2,0.4,0.094,0.694),
-						Color(0.294,0.494,0,0.694),
-						Color(0.4,0.494,0,0.694),
-						Color(0.4,0.4,0.094,0.694),
-						Color(0.2,0.294,0.294,0.694),
-						Color(0.294,0.4,0.2,0.694),
-						Color(0.957,0.706,0.42,0.694),
-						Color(0.953,0.757,0.173,0));
-					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("lava",64,0.1,0.2,Color(0.1,0.1,0.2,0.4),Color(0.1,0.1,0.1,0.5));
-					image("eroded",BUMP|NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
-					bands("alpine",ACHNL|CLAMP,64,0.14814,0.22222,RAND,Color(0,0.298,0.098),
-						Color(0.2,0.4,0.098,0.698),
-						Color(0.298,0.498,0,0.698),
-						Color(0.4,0.498,0,0.698),
-						Color(0.4,0.4,0.098,0.698),
-						Color(0.2,0.298,0.298,0.698),
-						Color(0.298,0.4,0.2,0.698),
-						Color(0.957,0.706,0.42,0.698),
-						Color(0.953,0.757,0.173,0));
-					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
-						Color(0.302,0.082,0.082));
-					image("ridges",INVT,256,256,noise(ERODED|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
-					image("cracks2",INVT,256,256,noise(RIDGED,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("alpine2",ACHNL|CLAMP|NORM,64,0.1,0.54902,Color(0,0,0,0.549),Color(0.024,0.224,0.102,0.078),
-						Color(0.2,0.4,0.075,0.529),
-						Color(0.275,0.475,0),
-						Color(0.529,0.322,0.02),
-						Color(0.275,0.251,0.2),
-						Color(0.275,0.227,0.024),
-						Color(0.224,0.176,0.063),
-						Color(0.573,0.573,0.573),
-						Color(0.6,0.573,0.529),
-						Color(0.275,0.275,0.275));
+				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.04);
+					day=24;
+					resolution=4;
+					shine=19.8509;
+					specular=Color(1,1,1,0.77);
+					year=100;
+					albedo=1;
 					Surface{
-						env=0.3*(1+0.5*noise(SQR|UNS,15,3,0.3,0.1))*(1+0.5*LAT)*(1+0.2*SLOPE);
-						terrain=fog(noise(SQR|UNS,8,5,0.5)*(1-DEPTH))
-								water(noise(RIDGED|SCALE,22,3.2,0.7,0.5,2,0.1,1,0.59,0))
-								snow(-3.7,0.1,1,0.88,0.9,0.38)
-								map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,2)
-								layer("shore",MORPH,0,0.5-0.3*noise(RO1,3,7,0.4,0.2))
-									[rocks(ID2,2,0.0001,0.73,0.43,0.2,0.3,0.5,noise(ERODED,1,8,0,0.3,2.1,0.8,-0.15,1,0))[
-									Texture("eroded",BUMP|NTEX,131072,1.28648,1,0,6,2,1)+
-									Texture("bricks",BUMP,524288,1.78376,1.4054,0,3,2.92592,0.72222)+
-									Texture("lava2",NORM|S,0.1*BMPHT,0.0625,1.10812,1,0,1,2,1)+gloss(1,0.91652)
-									+Color(0.447059,0.301961,0.278431,1)
-									]
-									Z(0.2*noise(RIDGED|UNS,12,12.6,-1,0.5,2,0.3,1,0,0))
-									+
-									Texture("ridges",BUMP|NTEX,4096,0.75672,2,0,9,2.48152,1)+
-									Texture("jupiter",S,HT+BMPHT,1,1,1,0,1,2,1)+Color(0.843137,0.898039,0.698039,1)
-									]
-								layer("mudflats",MESH,0,0.1-0.4*noise(RO2,2,8,0.2,0.1),0.35,0)
-									[Z(0.2*noise(RIDGED|UNS,6,18,0.5,0.5))
-									+Color(0.501961,0.968627,0.411765,1)
-									+
-									Texture("drywash",BUMP,1024,1,0.97296,0,10,2.92592,0.72222)+
-									Texture("ridges2",BUMP|NTEX,131072,0.8108,2,0,6,2.48152,1)+
-									Texture("tidal",CLAMP|NORM|S,0.5*BMPHT+noise(RIDGED,2.3,3.7,1,0.5,2,1,1,0.09,0),0.25,1.45944,0.70272,0.6,1,2,1,0.5556,0,0,-1)+gloss(0.65384,2.24993)
-									]
-								layer("craters",MORPH,0,0.1+0.2*noise(RO3,3,7,0.3,0.1))
-									[Z(craters(ID3,3,0.004,0.2,1,1,1,0.5,0.5,5,0.1,0.2,0,0))
-									+
-									Texture("craters3",BUMP|NTEX,612.897,1.29728,1,0,10,2.77776,1)+
-									Texture("watery3",S,HT+BMPHT,4096,1.5946,1,0,4.99984,2,1)+
-									Texture("Lava1",S,SLOPE,8192,1.70272,1,0,4.99984,2,1)+Color(noise(1,15,0.3,0.1)+0.2*noise(RO2,2,8,0.2,0.1)+0.2,RED,RED)
-									+gloss(1.5,1.66649)
-									]
-								layer("tilted",MESH,0,0.2-0.5*noise(RO1,3,7,0.4,0.2),0.35,0)
-									[Point(0.6*noise(SQR|RO2,9,12,0.5,0.4,2,1,1,0,0),0,0.4*noise(RIDGED,8,14,0.2,0.5)+0.7*PX)
-									+gloss(0.7094,0.5)
-									+
-									Texture("ridges",BUMP|NTEX|S,1,4096,1.08112,1,1,5.8888,2.1852,0.94444)+Color(1,1-0.5*abs(2*PX),GREEN-0.3)
-									+
-									Texture("lava",CLAMP|S,(0.1+HT)*env+BMPHT+noise(2.8,2,1,0.5,2,1,1,0,0),0.25,1,1,0,1,2,1)]
-								layer("fractal",MORPH,0.14,0.2-0.4*noise(RO3,3,7,0.3,0.1),0.35,0)
-									[Z(fractal(SQR|SS,12,10,0.2,2.7,1.89,1.9,0.47,0.94,1,0.61)noise(NLOD|UNS,10,4,0,1,2.2,0.81,1,0,0))
-									+gloss(0.5641,0.99998)
-									+
-									Texture("eroded",BUMP|NTEX|S,1,32.2226,-1,1,1,8,2.8,0.94444,0)+
-									Texture("Shist1",BUMP,16384,0.97296,1.43244,0,9.88912,2.92592,0.72222)+
-									Texture("alpine",BORDER|CLAMP|S,(0.2+HT)*env+0.4*BMPHT,2,1.07408,0,0.2,1,2,1,0)+Color(0.976471,0.713725,0.47451,1)
-									]
-								layer("dessert",MESH,0,0.05,0.42,0)
-									[Z(0.1*noise(RIDGED|UNS,12,10,0.07,0.31,2.44,0.59,1,0,0))
-									+gloss(0.53418,0.5)
-									+
-									Texture("ridges",BUMP|NTEX,4096,-1,2,0,8,2.3,0.85186)+
-									Texture("Sand",BUMP|S,noise(3,2,1,0.5,2,1,1,0,0.2),16384,0.1,1.48648,0,5,2.6,1)+
-									Texture("dessert",CLAMP|S,0.5*noise(UNS,5.6,2,1,0.5,2,1,1,0,0)+0.1*BMPHT,1,0.62164,1,0,1,2,1)+Color(0.980392,0.921569,0.556863,1)
-									]
-								layer("alpine",MORPH,0.1)
-									[Z(noise(NABS,8,14.1,0,1,2.1,2,0.11,0,0))
-									+gloss(0.83334,0.74999)
-									+
-									Texture("ridges",BUMP|NTEX,24.7525,1.03704,1,0,8.1112,2,0.68518,0)+
-									Texture("cracks2",BUMP|NTEX,556.879,1.03704,1,0.2264,10,2.48152,0.83334,0)+
-									Texture("Shist1",BUMP,11006,0.70272,2,0,1,2.55552,0.5)+
-									Texture("alpine2",BORDER|S,HT-SLOPE+0.2*BMPHT,0.25,1,2,-0.48,1,1.73848,1,1)+Color(0.00784314,0.34902,0.00784314,1)
-									]
-								;
+						terrain=Color(1,0.992157,0.764706,1);
 					}
-					Clouds(0.00362) {
-						ambient=Color(1,1,1,0.18);
-						crot=1;
-						day=3.7504;
-						diffusion=0.41026;
-						emission=Color(1,1,1,0.1);
-						hscale=0.05;
-						resolution=4;
-						rot_phase=81.288;
-						shine=11.3342;
-						specular=Color(1,1,1);
-						tilt=10;
-						albedo=0.8;
+					Moon(0.000124971,0.25) {
+						day=24;
+						hscale=0.00400093;
+						name="Moon";
+						phase=334.004;
+						rseed=2.41294;
+						year=30;
+						image("cracks",INVT,256,512,noise(RIDGED,1,5,0.3));
 						Surface{
-							density=noise(NXY,2,10,0.9,0.2,2,1-LAT-0.1*noise(2,9,1,1,2));
-							terrain=Color(1,RED,RED,twist(0.15,noise(ERODED|FS,1,9.9,0.44,0.17,2.17,2,0.81,0.67,-0.1)));
-						}
-					}
-					Sky(0.0038) {
-						color=Color(0.67,1,1);
-						day=23.934;
-						density=0.42858;
-						haze.grad=0.39024;
-						haze.value=0.627451;
-						night.color=Color(0,0,0);
-						resolution=4;
-						specular=Color(1,1,1);
-						tilt=23.45;
-						twilight=Color(0.9,0.3,0.7);
-						twilight.max=1;
-						twilight.min=-1;
-						albedo=0.6;
-					}
-					Moon(0.001,0.1) {
-						day=11;
-						name="Luna";
-						phase=100;
-						year=17;
-						Surface{
-							terrain=Z(craters(ID4,4,0.3,0.2,0.9)
-									0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(noise(NABS|NEG|UNS,1.6,10.3,-0.9,0.31,2,1,1,0,1.7)+0.02*PZ,RED,RED,1);
-						}
-					}
-					Clouds(0.00361706) {
-						ambient=Color(1,1,1,0.6);
-						cmin=4.73634;
-						crot=1;
-						day=0.5;
-						diffuse=Color(1,1,1,0.47);
-						diffusion=0.2096;
-						emission=Color(1,1,1,0.16);
-						hscale=0.05;
-						name="Cumulus";
-						num_sprites=4;
-						resolution=4;
-						rot_phase=121.932;
-						rseed=0.403061;
-						shine=77.7857;
-						smax=14.7302;
-						specular=Color(1,1,1,0);
-						sprites_file="CloudSprites3";
-						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
-									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0))+Color(1,1,1,noise(3,11.5,1,0.5,2,1,1,0,0.1));
+							terrain=Z(0.001)+
+									Texture("cracks",BORDER|HMAP|LINEAR|NORM,1,2,1,0,1,2,1,0,5,0);
 						}
 					}
 				}

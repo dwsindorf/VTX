@@ -62,6 +62,7 @@ enum {
 	NOISE1D     = 0x00008000,    // shader 1D noise
 	HIDDEN      = 0x00010000,    // invisible node
 	COMPLEX     = 0x00020000,    // complex expression
+	HMPASS      = 0x00040000,    // requires htmap texture pass
 };
 
 enum {   //Terrain and NodeData type flags
@@ -123,6 +124,8 @@ public:
     static double       extent;     // cell size extent (pixels)
 	static TNclouds    *clouds;
 	static TerrainData  lower;   	// lower surface level
+	static double       texht;	    // height map texture
+
 
 	static Array<TerrainProperties*>properties;
 
@@ -208,6 +211,7 @@ public:
 		tindex=0;
 		image=0;
 		clouds=0;
+		texht=0;
 	}
 	void init(){
 		reset();

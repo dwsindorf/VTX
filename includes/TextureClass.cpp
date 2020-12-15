@@ -95,13 +95,23 @@ void Texture::del() {
 }
 
 //-------------------------------------------------------------
-// Texture::texCoords() set texture coordinates in OGL passes
+// Texture::getTexCoords() return amplitude of color at current index
 //-------------------------------------------------------------
-void Texture::texCoords(int tchnl)
-{
-    double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
-    if(t1d()){
-		glMultiTexCoord2d(tchnl,s*sc+bias,0.0);
+double Texture::getTexAmpl(int mode){
+	double x,y;
+	getTexCoords(x,y);
+	Color c=timage->color(mode, x+1,y);
+	return c.intensity();
+
+}
+//-------------------------------------------------------------
+// Texture::getTexCoords() return texture lookup coordinates
+//-------------------------------------------------------------
+void Texture::getTexCoords(double &x, double &y){
+	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
+	if(t1d()){
+		x=s*sc+bias;
+		y=0;
 		return;
 	}
     sv=s*sc-0.5;
@@ -109,8 +119,6 @@ void Texture::texCoords(int tchnl)
 #ifdef TEXFLOOR
 	sf=svalue*sc-0.5;
 	sf=FLOOR(sf);
-#endif
-#ifdef TEXFLOOR
 	tf=a*tvalue*sc;
 	tf=FLOOR(tf);
 #ifdef FIX_T0
@@ -120,7 +128,18 @@ void Texture::texCoords(int tchnl)
 		tv+=a*2*sc;
 #endif
 #endif
-	glMultiTexCoord2d(tchnl,tv-tf,sv-sf);
+	x=tv-tf; // width lookuo
+	y=sv-sf; // tx=s-0.5+1
+}
+
+//-------------------------------------------------------------
+// Texture::texCoords() set texture coordinates in OGL passes
+//-------------------------------------------------------------
+void Texture::texCoords(int tchnl)
+{
+	double sv=0,tv=0;
+	getTexCoords(sv,tv);
+	glMultiTexCoord2d(tchnl,sv,tv);
 }
 
 //-------------------------------------------------------------
@@ -129,28 +148,12 @@ void Texture::texCoords(int tchnl)
 //-------------------------------------------------------------
 void Texture::bumpCoords(int tchnl,double x, double y)
 {
-    double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
-    if(t1d()){
-		glMultiTexCoord2d(tchnl,s*sc+bias+x,0.0);
-		return;
-	}
-    sv=s*sc-0.5;
-	tv=a*t*sc;
-#ifdef TEXFLOOR
-	sf=svalue*sc-0.5;
-	sf=FLOOR(sf);
-#endif
-#ifdef TEXFLOOR
-	tf=a*tvalue*sc;
-	tf=FLOOR(tf);
-#ifdef FIX_T0
-	if(tv>0 && tf<-1)
-		tv-=a*2*sc;
-	else if(tv<0 && tf>0)
-		tv+=a*2*sc;
-#endif
-#endif
-	glMultiTexCoord2d(tchnl,tv-tf+x,sv-sf+y);
+	double sv=0,tv=0;
+	getTexCoords(sv,tv);
+	if(t1d())
+		glMultiTexCoord2d(tchnl,sv+x,0);
+	else
+		glMultiTexCoord2d(tchnl,sv+x,tv+y);
 }
 
 //-------------------------------------------------------------

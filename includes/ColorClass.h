@@ -209,6 +209,7 @@ public:
 	double contrast(Color c);
 	Color mix(Color c,double t);
 	Color contrast_color(Color fg,double ampl);
+	Color color()               { return Color(red(),blue(),green(),1.0);}
 };
 
 //************************************************************

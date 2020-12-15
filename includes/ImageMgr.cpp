@@ -21,7 +21,7 @@ extern double Rand();
 extern double Hscale;
 extern double Red,Green,Blue,Alpha,Theta,Phi;
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
@@ -520,22 +520,83 @@ Image *Image::clone()
 }
 
 //-------------------------------------------------------------
-// Image::color()      return interpolated color
+// Image::color()      get pixel Color
 //-------------------------------------------------------------
-Color Image::color(int opt, double s)
+Color Image::p2c(int indx){
+	if(indx<0 || indx>=size())
+		return Color();
+ 	if(type()==RGB_DATA && comps()==3){
+ 		RGBColor c=*((RGBColor*)data+indx);
+ 		Color col=Color(c.red(),c.green(),c.blue(),1);
+ 		return col;
+	}
+ 	if(type()==RGBA_DATA && comps()==4){
+ 		Color c=*((Color*)data+indx);
+ 		Color col=Color(c.red(),c.green(),c.blue(),1);
+ 		return col;
+ 	}
+ 	return Color();
+ }
+
+//-------------------------------------------------------------
+// Image::color()      return interpolated color (1d)
+//-------------------------------------------------------------
+Color Image::color(int opts, double s)
 {
-	Color *c=(Color*)data;
     int n1,n2,m=width-1;
     s=clamp(s,0,1);
     n1=(int)(s*m);
 
     if(n1>=m)
-        return c[m];
+        return p2c(m);
     n2=n1+1;
 
     double f=s*m-n1;
 
-    return c[n1].blend(c[n2],f);
+    return p2c(n1).blend(p2c(n2),f);
+}
+
+//-------------------------------------------------------------
+// Image::color()      return interpolated color (2d)
+//-------------------------------------------------------------
+Color Image::color(int opts, double x, double y)
+{
+	x=fmod(x,1);
+	y=fmod(y,1);
+    double w=width,h=height;
+	double row=y*h;
+	double col=x*w;
+	double f1=col-floor(col);
+	double f2=row-floor(row);
+	//double f2=fmod(y*h,1.0);
+	//double f1=fmod(x*w,1.0);
+
+	//y+=(0.5-f2)*ss;
+	//x+=(0.5-f1)*ts;
+    double r1=floor(y*height);
+    double c1=floor(x*width);
+
+	int tl=r1*width+c1;
+    if(opts==GL_NEAREST)
+    	return p2c(tl);
+	double r2=r1+1;
+	double c2=c1+1;
+	r2=r2>h?0:r2;
+	c2=c2>w?0:c2;
+	int tr=r1*width+c2;
+	int bl=r2*width+c1;
+	int br=r2*width+c2;
+
+	Color col1,col2,col3,col4,mix1,mix2;
+	col1=p2c(tl);
+	col2=p2c(tr);
+	col3=p2c(bl);
+	col4=p2c(br);
+
+	mix1=col1.blend(col2,f1); // base row midpoint
+	mix2=col3.blend(col4,f1); // previous row midpoint
+
+	return mix1.blend(mix2,f2);
 }
 
 //************************************************************

@@ -1388,6 +1388,8 @@ void TerrainMgr::eval()
 	else
 		set_zcpass();
 
+	int mode=passmode();
+
 	exprs.ss();
 
 	Td.reset();
@@ -1398,7 +1400,14 @@ void TerrainMgr::eval()
 	Td.reset();
 	if(!root || !root->right)
 	    return;
+	if(hmpass()){
+		set_hpass();
+		root->right->eval();
+	}
+	set_passmode(mode);
 	root->right->eval();
+	Td.p.z+=Td.texht;
+	S0.p.z+=Td.texht;
 	Height=S0.p.z;
 	PX=S0.p.x;
 	PY=S0.p.y;
@@ -1466,6 +1475,8 @@ void TerrainMgr::init()
 	set_first(1);
 
 	int htflag=0;
+	int hmflag=0;
+
 
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
@@ -1487,14 +1498,15 @@ void TerrainMgr::init()
 	if(root)
 		root->init();
 
+	if(Td.get_flag(HMPASS))
+	   hmflag=1;
 	if(Td.get_flag(HT2PASS))
 	   htflag=1;
     set_twopass(htflag);
+    set_hmpass(hmflag);
+
 	set_init_mode(0);
 	set_eval_mode(1);
-
-	//init_render();
-	//set_eval_mode(0);
 }
 //-------------------------------------------------------------
 // TerrainMgr::init_render() 		evaluate nodes

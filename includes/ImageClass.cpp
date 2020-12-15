@@ -7,8 +7,8 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-//#define DEBUG_IMAGES
-//#define DEBUG_TEXS
+#define DEBUG_IMAGES
+#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -668,7 +668,6 @@ void TNtexture::init()
     if(texture==0)
 	    texture=new Texture(timage,opts,this);
     timage->set_accessed(true);
-
 	if(texture->t1d()){
 		BIT_ON(opts,SEXPR);
 	}
@@ -677,6 +676,9 @@ void TNtexture::init()
 	}
 	if(opts & AEXPR){
 		texture->a_data=true;
+	}
+	if(opts & HMAP){
+		Td.set_flag(HMPASS);
 	}
 }
 
@@ -694,9 +696,9 @@ void TNtexture::eval()
         return;
 	if(getFlag(NODE_BAD))
 	    return;
-	//if(texture==0 || texture->image()==0)
-	//	init();
-
+	if(CurrentScope->hpass() && !hmapActive()) {
+		return;
+	}
 	if(texture==0 || texture->image()==0){
 	    setFlag(NODE_BAD);
 		return;
@@ -706,12 +708,13 @@ void TNtexture::eval()
 		texture->enabled=false;
 		return;
 	}
-	if((!texture->tex_active || !Render.textures())&&(!texture->bump_active || !Render.bumps())){
+    int pass=CurrentScope->passmode();
+	if(!CurrentScope->hpass() && (!texActive() || !Render.textures())&&(!bumpActive() || !Render.bumps())){
 		S0.clr_svalid();
 		texture->enabled=false;
 		return;
 	}
-	if(CurrentScope->rpass()){
+	if(CurrentScope->rpass() && (bumpActive()||texActive())){
 		int nid=TerrainData::tp->noise.size;
 		Td.add_texture(texture);
 		if(right)
@@ -730,9 +733,9 @@ void TNtexture::eval()
 	double s=0,t=0,f=1,a=1,b=0,bias=0;
 	double orders=1,orders_delta=2.0,orders_atten=1.0;
 	double bumpdamp=0;
+	double hmval=0,hmbias=0;;
+
 	int i = 0;
-	//if(texture->t1d())
-	//	BIT_ON(opts,SEXPR);
 
 	if(opts & SEXPR){
 		texture->s_data=true;
@@ -763,21 +766,24 @@ void TNtexture::eval()
 		orders_atten=arg[i++];
 	if(i<n)
 		bumpdamp=arg[i++];
+	if(i<n)
+		hmval=arg[i++];
+	if(i<n)
+		hmbias=arg[i++];
+
+	if(CurrentScope->hpass() && hmapActive() && hmval==0)
+		return;
 
 	double c1=0.5/texture->width();
 	double c2=1-c1;
 	if(opts & CLAMP){
 		if(s>c2) s=c2;
 		if(s<c1) s=c1;
-//		if(texture->t2d()){
-//			if(t>c2) t=c2;
-//			if(t<c1) t=c1;
-//		}
 	}
 	texture->scale=f;
 	texture->s=s;
 	texture->t=t;
-	if(opts & BUMP){
+	if(bumpActive()){
 	    texture->bumpamp=a;
 	    texture->texamp=b;
 	}
@@ -791,8 +797,32 @@ void TNtexture::eval()
     texture->orders_atten=orders_atten;
     texture->orders_delta=orders_delta;
     texture->bump_damp=bumpdamp;
+    texture->hmap_amp=hmval;
 
 	S0.clr_svalid();
+#define TEST
+#ifdef TEST
+	if(CurrentScope->hpass()){
+		extern double Phi,Theta;
+		double phi = Phi / 180;
+		double theta = Theta / 180.0 - 1;
+ 		texture->s=phi;
+		texture->t=theta;
+		texture->svalue=0;
+		texture->tvalue=0;
+
+		//texture->s=0;
+
+//		if(texture->t2d()){
+//			texture->s=phi;
+//			texture->t=theta;
+//		}
+		int mode=texture->intrp();
+		double v=texture->getTexAmpl(mode)-0.5;
+		double z=v*texture->hmap_amp+texture->hmap_bias;
+		TerrainData::texht+=z;
+	}
+#endif
 }
 
 #define SEXPR 1

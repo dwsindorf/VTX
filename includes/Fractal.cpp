@@ -92,6 +92,10 @@ void TNfractal::eval()
 		else
 			base=S0.s;
 	}
+	if(Td.texht){
+		S0.set_pvalid();
+		base+=Td.texht;
+	}
 
 	double slope,delta,t,f,drop=0;
 	double t1,t2;
@@ -110,8 +114,8 @@ void TNfractal::eval()
 	double sdrop=n>5?args[5]:0.0;
 	double thresh=n>6?args[6]:1.0;
 	double tbias=n>7?args[7]:0.0;
-	double hmax=n>8?args[9]:1.0;
-	double hval=n>9?args[10]:1.0;
+	double hmax=n>8?args[8]:1.0;
+	double hval=n>9?args[9]:1.0;
 
 	extern double FHt,MinHt,MaxHt;
 

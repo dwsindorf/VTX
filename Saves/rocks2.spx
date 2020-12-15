@@ -1,22 +1,63 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-24.5737;
-		theta=3.67262;
-		height=15978.8 ft;
-		gndlvl=1000.9 ft;
-		time=1;
+		phi=-24.3649;
+		theta=4.50989;
+		height=1059.36 ft;
+		gndlvl=4722.06 ft;
+		time=51043.6;
 		tilt=-15;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=6838.28 ft;
-		gndlvl=789.482 ft;
+		theta=4.45887;
+		height=12252.3 ft;
+		gndlvl=54367 ft;
 	}
 	View{
-		height=5944.81 ft;
-		gndlvl=779.75 ft;
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=16427.7 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-41.4844;
+		theta=354.375;
+		height=52800 ft;
+		gndlvl=12837.1 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=11.4567 miles;
+		gndlvl=12891.5 ft;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=16427.7 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-42.8906;
+		height=52800 ft;
+		gndlvl=14944 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=51187.4 ft;
+		gndlvl=15007.4 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -46,27 +87,27 @@ Scene() {
 				Planet(0.004,66.9993) {
 					day=24;
 					diffuse=Color(1,1,1,0.42);
+					hscale=0.000625;
 					phase=104.076;
 					shine=6.48785;
 					specular=Color(1,1,1,0.5);
 					year=100;
 					image("cracks2",INVT,256,256,noise(RIDGED,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
 					image("texture1",128,128,Color(noise(NABS|NEG|UNS,2,5,1,1.1,2),noise(1,5,1,0.5,2),noise(RIDGED|UNS,2,7,0.5,0.5,2),0.74));
-					image("mars1",256,256,Color(0.2+noise(ERODED|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));
 					Surface{
-						terrain=map(noise(1,5))
+						terrain=map(noise(1,5,1,0.5,2,1,1,0,0),0.13,0.3)
 								layer(MORPH,0.1,0.34,0.35,0)
-									[rocks(ID2,2,0.0032,0.73,1,0.13,0.25,1,noise(ERODED,0,6,0.5,0.5,2,0.18,1,0,0))[Z(0)
+									[rocks(ID2,2,0.038,1,1,0.13,0.17,1,noise(ERODED,0,8.4,0.5,0.5,2,0.17,1,0,0))[Z(0)
 									+Color(0.796078,0.796078,0.992157)
 									+
 									Texture("cracks2",BUMP|NTEX,653.78,-1.50688,1.69696,1,9,2,0.84932)+
 									Texture("texture1",358.883,2,-1.12328,-1.04112,1,2,0.84932)]
-									Z(0.1*noise(NABS|NEG,9,5.6,0.5,0.5,2,0.49,0))
+									Z(noise(NABS|NEG,9,5.6,0.5,0.5,2,0.1,0,0,0))
 									+
-									Texture("mars1",BUMP,999.9,2,1.12728,0,4,2)]
-								layer(MORPH,0.1)
+									Texture("BrownStone",BUMP,1105.9,2.44448,1.58332,0,9.66688,2,0.5,1)]
+								layer(MORPH,0.2,0.31,0.23,0.15)
 									[Color(1,0.64,0.21,1)
-									+Z(1*fractal(SQR|SS,11,30,0.57,0,2,0,1))
+									+Z(fractal(SQR|SS,13,14.9,2.42,0.87,1,0.73,0.82,0.47,0.15,0.52)noise(8.1,4.1,0.13,0.5,2,0.79,1,0,0))
 									]
 								;
 					}

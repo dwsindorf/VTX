@@ -245,8 +245,11 @@ void TNconst::save(FILE *f)
 void TNglobal::init()
 {
 	switch(gtype){
+	case FHT:
+		Td.set_flag(HT2PASS);
+		break;
 	case ZHT:
-		if(!Render.draw_shaded())
+		//if(!Render.draw_shaded())
 			Td.set_flag(HT2PASS);
 		break;
 	}
@@ -263,6 +266,7 @@ void TNglobal::eval()
 		break;
 	case FHT:
 		S0.s=FHt=(Height-MinHt)/(MaxHt-MinHt);
+		S0.s=clamp(S0.s,0,1);
 		break;
 	case ZHT:
 		if(CurrentScope->texture())
@@ -440,7 +444,7 @@ void TNglobal::valueString(char *s)
 //-------------------------------------------------------------
 void TNcolor::init(){
 	right->init();
-	//Td.set_flag(COLORFLAG);
+	//Td.set_flag(HT2PASS);
 }
 const char *TNcolor::symbol(){
 	return "Color";
@@ -500,6 +504,8 @@ void TNcolor::eval()
 {
 	INIT;
     if(CurrentScope->zpass())
+        return;
+    if(CurrentScope->hpass())
         return;
 	TNarg *arg=(TNarg*)right;
     if(CurrentScope->rpass()){
@@ -664,6 +670,8 @@ Color  TNclist::color(double s)
 //-------------------------------------------------------------
 void TNdensity::eval()
 {
+	if(CurrentScope->hpass())
+		return;
 	if(CurrentScope->zpass()){
 		TNvector::eval();
 		S0.density=S0.s;
@@ -678,6 +686,8 @@ void TNdensity::eval()
 //-------------------------------------------------------------
 void TNpoint::eval()
 {
+	if(CurrentScope->hpass())
+		return;
 	INIT;
     Px=Py=Pz=0;
 	TNarg *arg=(TNarg*)right;
@@ -1334,6 +1344,9 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 //-------------------------------------------------------------
 void TNfog::eval()
 {
+	if(CurrentScope->hpass())
+		return;
+
 	S0.density=0.0;
 	//SINIT
 
@@ -1499,9 +1512,8 @@ bool TNsnow::initProgram(){
 //-------------------------------------------------------------
 void TNsnow::eval()
 {
-//    if(CurrentScope->init_mode())
-//        return;
-
+	if(CurrentScope->hpass())
+		return;
 	if(!texture || !right)
 		return;
 	if(!isEnabled()||!Render.textures())
@@ -1592,6 +1604,9 @@ void TNclouds::eval()
 {
 	static TerrainData top;
 	static TerrainData bottom;
+	if(CurrentScope->hpass())
+		return;
+
 	if(!right)
 		return; // nothing to do
 	s_point=0;

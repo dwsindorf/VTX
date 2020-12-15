@@ -714,6 +714,19 @@ void MapNode::recalc2()
 }
 
 //-------------------------------------------------------------
+// MapNode::find_limits()	find min max ht
+//-------------------------------------------------------------
+void MapNode::find_limits()
+{
+	extern double MinHt,MaxHt;
+	double z=data.Z();
+	MinHt=z<MinHt?z:MinHt;
+	MaxHt=z>MaxHt?z:MaxHt;
+	TheMap->hmax=MaxHt;
+	TheMap->hmin=MinHt;
+}
+
+//-------------------------------------------------------------
 // MapNode::test_backfacing()	test if cell is back facing
 //-------------------------------------------------------------
 void MapNode::test_backfacing()
@@ -852,6 +865,7 @@ int MapNode::clipchk(Point pnt)
     // test for intersection with viewobj
 
     if(vobj && vobj->allows_selection()){
+
         h=10*vobj->getMap()->hscale;
 //        Object3D *obj=TheMap->object;
 //        double zf=vobj->getMap()->dmax; // add contribution from radius of parent
@@ -1974,7 +1988,7 @@ void MapNode::Vcolor(MapData *dd)
 
 	if(Render.colors())
 		c=Tcolor(d);
-	if(TheMap->textures() && d->textures() && d->type()==TheMap->tid)
+	if(TheMap->textures() && d->textures())
 		d->apply_texture();
 	if(c.hasAlpha())
 		glColor4d(c.red(),c.green(),c.blue(),c.alpha());

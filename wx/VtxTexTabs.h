@@ -161,6 +161,66 @@ public:
     void OnTexChanged(wxCommandEvent& event){
 		setObjAttributes();
     }
+    void OnModeChanged(wxCommandEvent& event){
+    	bool hm=m_hmap_check->GetValue();
+    	if(hm){
+    		texture()->invalidate();
+    		invalidateObject();
+    	}
+    	else
+    		setObjAttributes();
+    }
+    void OnHmapChanged(wxCommandEvent& event){
+		bool hm=m_hmap_check->GetValue();
+		texture()->hmap_active=hm;
+		texture()->invalidate();
+		invalidateObject();
+    }
+
+	void OnEndHmapAmpSlider(wxScrollEvent &event) {
+		HmapAmpSlider->setValueFromSlider();
+		double val = HmapAmpSlider->getValue();
+		bool hm=m_hmap_check->GetValue();
+		texture()->hmap_amp=val;
+		texture()->invalidate();
+		if(hm)
+			invalidateObject();
+	}
+	void OnHmapAmpSlider(wxScrollEvent &event) {
+		HmapAmpSlider->setValueFromSlider();
+	}
+	void OnHmapAmpText(wxCommandEvent &event) {
+		HmapAmpSlider->setValueFromText();
+		double val = HmapAmpSlider->getValue();
+		texture()->hmap_amp=val;
+		bool hm=m_hmap_check->GetValue();
+		texture()->invalidate();
+		if(hm)
+			invalidateObject();
+	}
+	void OnEndHmapBiasSlider(wxScrollEvent &event) {
+		HmapBiasSlider->setValueFromSlider();
+		double val = HmapBiasSlider->getValue();
+		texture()->hmap_bias=val;
+		texture()->invalidate();
+		bool hm=m_hmap_check->GetValue();
+		if(hm)
+			invalidateObject();
+
+	}
+	void OnHmapBiasSlider(wxScrollEvent &event) {
+		HmapBiasSlider->setValueFromSlider();
+	}
+	void OnHmapBiasText(wxCommandEvent &event) {
+		HmapBiasSlider->setValueFromText();
+		double val = HmapBiasSlider->getValue();
+		texture()->hmap_bias=val;
+		texture()->invalidate();
+		bool hm=m_hmap_check->GetValue();
+		if(hm)
+			invalidateObject();
+	}
+
 	DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(Bias)
 	DEFINE_SLIDER_EVENTS(Alpha)
@@ -169,8 +229,6 @@ public:
 	DEFINE_SLIDER_EVENTS(OrdersAtten)
 	DEFINE_SLIDER_EVENTS(BumpAmp)
 	DEFINE_SLIDER_EVENTS(BumpDamp)
-	DEFINE_SLIDER_EVENTS(HmapAmp)
-	DEFINE_SLIDER_EVENTS(HmapBias)
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowBands(wxCommandEvent& event);

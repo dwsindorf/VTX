@@ -153,9 +153,11 @@ public:
 	void addAlphaToImage(GLubyte *a);
 
 	double aspect()         { return (double)height/(double)width;}
+	int size()              { return height*width;}
 
 	Color color(int,double);
 	Color color(int,double,double);
+	Color p2c(int index);
 
 	Image *clone();
 };

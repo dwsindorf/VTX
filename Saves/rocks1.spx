@@ -12,6 +12,11 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
+	View{
+		height=1736.14 ft;
+		gndlvl=-1288.99 ft;
+		tilt=3;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Milky Way";
@@ -120,6 +125,7 @@ Scene() {
 					}
 					Sky(0.003686) {
 						color=Color(0.67,1,1);
+						day=1;
 						density=0.23334;
 						haze.color=Color(1,1,0.73);
 						haze.grad=0.26666;
@@ -128,6 +134,7 @@ Scene() {
 						night.color=Color(0,0,0);
 						shine=1;
 						specular=Color(1,1,1);
+						tilt=23.45;
 						twilight=Color(1,0,0);
 						twilight.max=0.372993;
 					}
