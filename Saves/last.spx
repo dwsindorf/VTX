@@ -155,6 +155,10 @@ Scene() {
 		height=6291.18 ft;
 		gndlvl=2979.11 ft;
 	}
+	View{
+		height=6363.96 ft;
+		gndlvl=3030.88 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
