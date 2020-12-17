@@ -800,29 +800,30 @@ void TNtexture::eval()
     texture->hmap_amp=hmval;
 
 	S0.clr_svalid();
-#define TEST
-#ifdef TEST
 	if(CurrentScope->hpass()){
 		extern double Phi,Theta;
 		double phi = Phi / 180;
 		double theta = Theta / 180.0 - 1;
- 		texture->s=phi;
-		texture->t=theta;
+ 		texture->s+=phi;
+		texture->t+=theta;
 		texture->svalue=0;
 		texture->tvalue=0;
 
-		//texture->s=0;
-
-//		if(texture->t2d()){
-//			texture->s=phi;
-//			texture->t=theta;
-//		}
 		int mode=texture->intrp();
-		double v=texture->getTexAmpl(mode)-0.5;
-		double z=v*texture->hmap_amp+texture->hmap_bias;
-		TerrainData::texht+=z;
+
+		double scale=texture->scale;
+		double amp=texture->hmap_amp;
+		double z=0;
+		for(int i=0;i<(int)texture->orders;i++){
+			double v=texture->getTexAmpl(mode)-0.5;
+			z+=v*amp;
+			amp*=orders_atten;
+			texture->scale*=texture->orders_delta;
+		}
+		texture->scale=scale;
+
+		TerrainData::texht+=z+texture->hmap_bias;
 	}
-#endif
 }
 
 #define SEXPR 1

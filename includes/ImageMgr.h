@@ -155,8 +155,9 @@ public:
 	double aspect()         { return (double)height/(double)width;}
 	int size()              { return height*width;}
 
-	Color color(int,double);
-	Color color(int,double,double);
+	FColor color(int,double); //1d
+	FColor color(int,double,double);  //2d
+
 	Color p2c(int index);
 
 	Image *clone();

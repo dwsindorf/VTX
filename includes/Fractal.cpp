@@ -93,7 +93,7 @@ void TNfractal::eval()
 			base=S0.s;
 	}
 	if(Td.texht){
-		S0.set_pvalid();
+		//S0.set_pvalid();
 		base+=Td.texht;
 	}
 

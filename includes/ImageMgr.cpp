@@ -523,8 +523,9 @@ Image *Image::clone()
 // Image::color()      get pixel Color
 //-------------------------------------------------------------
 Color Image::p2c(int indx){
-	if(indx<0 || indx>=size())
-		return Color();
+	int max=size()-1;
+	if(indx<0 || indx>max)
+		return Color(1,1,1);
  	if(type()==RGB_DATA && comps()==3){
  		RGBColor c=*((RGBColor*)data+indx);
  		Color col=Color(c.red(),c.green(),c.blue(),1);
@@ -541,38 +542,37 @@ Color Image::p2c(int indx){
 //-------------------------------------------------------------
 // Image::color()      return interpolated color (1d)
 //-------------------------------------------------------------
-Color Image::color(int opts, double s)
+FColor Image::color(int opts, double s)
 {
-    int n1,n2,m=width-1;
-    s=clamp(s,0,1);
-    n1=(int)(s*m);
-
-    if(n1>=m)
-        return p2c(m);
-    n2=n1+1;
-
-    double f=s*m-n1;
-
-    return p2c(n1).blend(p2c(n2),f);
+    s=fmod(s,1);
+    double col=s*width;
+    int n1=floor(col);
+    double f=col-floor(col);
+    int n2=n1+1;
+    FColor col1=p2c(n1);
+    FColor col2=p2c(n2);
+    return col1.mix(col2,f);
 }
 
 //-------------------------------------------------------------
-// Image::color()      return interpolated color (2d)
+// Image::color() return interpolated image color (2d)
+// 1) using Color causes step like artifacts for some reason
+//    - difference in blend/mix functions ?
+// 2) result is flat-sided because of linear interpolation in box only
+//   - might be able to improve using 3 or 4 point smoothing function
+//     from adjacent box pixels
 //-------------------------------------------------------------
-Color Image::color(int opts, double x, double y)
+FColor Image::color(int opts, double x, double y)
 {
-	x=fmod(x,1);
-	y=fmod(y,1);
+	x=fmod(x,1.0);
+	y=fmod(y,1.0);
+	y=y<0?1+y:y;
     double w=width,h=height;
 	double row=y*h;
 	double col=x*w;
 	double f1=col-floor(col);
 	double f2=row-floor(row);
-	//double f2=fmod(y*h,1.0);
-	//double f1=fmod(x*w,1.0);
 
-	//y+=(0.5-f2)*ss;
-	//x+=(0.5-f1)*ts;
     double r1=floor(y*height);
     double c1=floor(x*width);
 
@@ -581,22 +581,25 @@ Color Image::color(int opts, double x, double y)
     	return p2c(tl);
 	double r2=r1+1;
 	double c2=c1+1;
-	r2=r2>h?0:r2;
-	c2=c2>w?0:c2;
+
+	r2=r2>=height?0:r2;
+	c2=c2>=width?0:c2;
+
 	int tr=r1*width+c2;
 	int bl=r2*width+c1;
 	int br=r2*width+c2;
 
-	Color col1,col2,col3,col4,mix1,mix2;
+	FColor col1,col2,col3,col4,mix1,mix2,mix3;
 	col1=p2c(tl);
 	col2=p2c(tr);
 	col3=p2c(bl);
 	col4=p2c(br);
 
-	mix1=col1.blend(col2,f1); // base row midpoint
-	mix2=col3.blend(col4,f1); // previous row midpoint
+	mix1=col1.mix(col2,f1); // base row midpoint
+	mix2=col3.mix(col4,f1); // previous row midpoint
+	mix3=mix1.mix(mix2,f2);
 
-	return mix1.blend(mix2,f2);
+	return mix3;
 }
 
 //************************************************************

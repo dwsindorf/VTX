@@ -1949,6 +1949,26 @@ Color MapNode::Tcolor(MapData *d) {
             md = cdata;
         else
             md = &data;
+
+        Texture *tex=TheMap->tp->textures[0];
+        if(tex){
+     		double phi = md->phi() / 180;
+    		double theta = md->theta() / 180.0 - 1;
+     		tex->s=phi;
+    		tex->t=theta;
+    		tex->svalue=0;
+    		tex->tvalue=0;
+    		tex->scale=1;
+
+
+        	double x,y;
+        	tex->getTexCoords(x,y);
+        	int mode=tex->intrp();
+        	FColor fc=tex->timage->color(mode, x+1,y);
+        	fc=fc.grayscale();
+        	c=Color(fc.red(),c.green(),c.blue(),1.0);
+        }
+/*
         np = pnt_normal(md);
 
         c = Color(1, 1, 1);
@@ -1961,6 +1981,7 @@ Color MapNode::Tcolor(MapData *d) {
             double dp = 1-norm.dot(vp);
             c = c.blend(Color(1, 0, 0), 2*dp);
         }
+*/
     }
         break;
     }
@@ -1988,7 +2009,7 @@ void MapNode::Vcolor(MapData *dd)
 
 	if(Render.colors())
 		c=Tcolor(d);
-	if(TheMap->textures() && d->textures())
+	else if(TheMap->textures() && d->textures())
 		d->apply_texture();
 	if(c.hasAlpha())
 		glColor4d(c.red(),c.green(),c.blue(),c.alpha());

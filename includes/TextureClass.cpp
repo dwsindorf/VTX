@@ -100,9 +100,10 @@ void Texture::del() {
 double Texture::getTexAmpl(int mode){
 	double x,y;
 	getTexCoords(x,y);
-	Color c=timage->color(mode, x+1,y);
+	x+=1;
+	//printf("x:%-10g y:%-10g fm:%-10g ym:%-10g\n",x,y,fmod(x,1),fmod(y,1));
+	FColor c=timage->color(mode, x,y);
 	return c.intensity();
-
 }
 //-------------------------------------------------------------
 // Texture::getTexCoords() return texture lookup coordinates
@@ -128,7 +129,7 @@ void Texture::getTexCoords(double &x, double &y){
 		tv+=a*2*sc;
 #endif
 #endif
-	x=tv-tf; // width lookuo
+	x=tv-tf; // width lookup
 	y=sv-sf; // tx=s-0.5+1
 }
 
@@ -265,7 +266,6 @@ void Texture::begin() {
 				}
 			}
 		}
-
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 		// build bump texture image for OGL legacy bumpmap usage
@@ -295,8 +295,9 @@ void Texture::begin() {
 	}
 	if(Raster.bumps())
 		glBindTexture(GL_TEXTURE_2D, id[1]);
-	else
+	else{
 		glBindTexture(GL_TEXTURE_2D, id[0]);
+	}
 }
 
 //-------------------------------------------------------------

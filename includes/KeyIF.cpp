@@ -482,11 +482,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_RENDER_SOLID:
 		if(Render.draw_shaded())
 			Render.push();
-		//Render.set_lighting(false);
 		Render.set_fog(false);
 		Render.set_haze(false);
-		//Render.set_textures(false);
-		//Render.set_bumps(false);
 		TheScene->set_changed_render();
 		Render.show_solid();
 		break;

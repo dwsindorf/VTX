@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include "ColorClass.h"
+#include "Util.h"
 
 //#include "NoiseClass.h"
 
@@ -107,11 +108,10 @@ void  Color::floatArray(float *f)
 
 Color Color::blend(Color c, double f)
 {	Color tmp;
-	f=::clamp(f,0,1.0);
-	tmp.set_red(f*c.red()+(1-f)*red());
-	tmp.set_green(f*c.green()+(1-f)*green());
-	tmp.set_blue(f*c.blue()+(1-f)*blue());
-	tmp.set_alpha(f*c.alpha()+(1-f)*alpha());
+    tmp.cd.c.r=lerp(f,0.0,1.0,cd.c.r,c.cd.c.r);
+    tmp.cd.c.g=lerp(f,0.0,1.0,cd.c.g,c.cd.c.g);
+    tmp.cd.c.b=lerp(f,0.0,1.0,cd.c.b,c.cd.c.b);
+    tmp.cd.c.a=lerp(f,0.0,1.0,cd.c.a,c.cd.c.a);
 	return tmp;
 }
 Color Color::lighten(double f)

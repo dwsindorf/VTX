@@ -1248,12 +1248,12 @@ void Map::render_texs(){
 
         //cout<<" Map::render_texs:"<<stexs<<endl;
 
-		if(aflag)
+		if(aflag || Render.colors())
 			set_textures(0);
 		else
 			set_textures(Render.textures());
 
-		if(!aflag && texture && Render.textures()){
+		if(!aflag && textures() && texture && Render.textures()){
 			total_rpasses++;
 		    texture->begin();
 			npole->render();

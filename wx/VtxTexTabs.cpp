@@ -297,13 +297,13 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Mapping"));
+	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("S distortion"));
 	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",0,LINE_WIDTH);
 
 	ampl_controls->Add(m_amp_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(ampl_controls, 0, wxALIGN_LEFT|wxALL,0);
 
-	wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Opacity"));
+	wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("T distortion or Alpha"));
 	m_alpha_expr = new ExprTextCtrl(panel,ID_ALPHA_EXPR,"",0,LINE_WIDTH);
 
 	alpha_controls->Add(m_alpha_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -395,8 +395,14 @@ void VtxTexTabs::OnFileSelect(wxCommandEvent& event){
     if(imageDialog->IsShown())
     	imageDialog->Show(m_name,m_image_type);
     sceneDialog->setNodeName((char*)m_name.ToAscii());
-    setObjAttributes();
-    TheView->set_changed_render();
+    if(m_hmap_check->GetValue()){
+		texture()->invalidate();
+		invalidateObject();
+    }
+    else{
+        setObjAttributes();
+    	TheView->set_changed_render();
+    }
 }
 
 void VtxTexTabs::saveState(int which){
@@ -459,7 +465,9 @@ void VtxTexTabs::OnShowImage(wxCommandEvent& event){
 
 void VtxTexTabs::get_files(int type){
 	saveState(m_image_type);
+	bool oldhmap=m_hmap_check->GetValue();
 	restoreState(type);
+	bool newhmap=m_hmap_check->GetValue();
 	m_image_type=type;
 	makeFileList();
 	int id=choices->FindString(m_name);
@@ -476,6 +484,9 @@ void VtxTexTabs::get_files(int type){
     if(texture())
     	texture()->invalidate();
     setObjAttributes();
+    if(oldhmap!=newhmap){
+      	object()->invalidate();
+    }
     TheView->set_changed_detail();
     TheScene->rebuild();
 }
@@ -752,8 +763,15 @@ void VtxTexTabs::setObjAttributes(){
 			tex->invalidate();
 		}
 	}
+	invalidateTexture();
+
+	if(opts & HMAP){
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
+
 	//if(texture())
-		invalidateTexture();
 }
 //-------------------------------------------------------------
 // VtxTexTabs::getObjAttributes() when switched in
