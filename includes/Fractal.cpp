@@ -108,14 +108,14 @@ void TNfractal::eval()
 
 	unsigned int begin=(unsigned int)(2.0*args[0]);
 	unsigned int orders=(unsigned int)(2.0*args[1]);
-	double ampl=n>2?args[2]:0.0;
-	double sbias=n>3?args[3]:0.0;
-	double smax=n>4?args[4]:4.0;
-	double sdrop=n>5?args[5]:0.0;
-	double thresh=n>6?args[6]:1.0;
+	double ampl=n>2?args[2]:0.1;
+	double sbias=n>3?args[3]:0.2;
+	double smax=n>4?args[4]:2.0;
+	double sdrop=n>5?args[5]:0.1;
+	double thresh=n>6?args[6]:0.0;
 	double tbias=n>7?args[7]:0.0;
 	double hmax=n>8?args[8]:1.0;
-	double hval=n>9?args[9]:1.0;
+	double hval=n>9?args[9]:0.0;
 
 	extern double FHt,MinHt,MaxHt;
 

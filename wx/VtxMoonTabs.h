@@ -106,7 +106,7 @@ public:
 		HscaleSlider->setValueFromSlider();
 		Planetoid *obj = object();
 		double val = HscaleSlider->getValue();
-		obj->hscale = val * MILES / obj->size;
+		obj->hscale = val * 1000*MILES;
 		obj->invalidate();
 		TheView->set_changed_detail();
 		TheScene->rebuild();
@@ -118,7 +118,7 @@ public:
 		HscaleSlider->setValueFromText();
 		Planetoid *obj = object();
 		double val = HscaleSlider->getValue();
-		object()->hscale = val * MILES / obj->size;
+		object()->hscale = val * 1000*MILES;
 		object()->invalidate();
 		TheView->set_changed_detail();
 		TheScene->rebuild();

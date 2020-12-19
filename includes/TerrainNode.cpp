@@ -434,7 +434,8 @@ void TNvector::applyExpr()
         DFREE(right);
         right=expr->right;
 		expr->right=0;
-        right->setParent(this);
+		if(right)
+			right->setParent(this);
 		delete expr;
         expr=0;
     }

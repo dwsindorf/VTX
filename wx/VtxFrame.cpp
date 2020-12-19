@@ -236,6 +236,7 @@ void VtxFrame::make_menubar()
     menu = new wxMenu;
     menu->Append(IDM_EDIT_UNDO, wxT("Undo &Z"));
     menu->Append(IDM_EDIT_REDO, wxT("Redo &Y"));
+    menu->Append(IDM_VIEW_REBUILD, wxT("Rebuild\tSHIFT-R"));
     menubar->Append(menu, wxT("&Edit"));
 
     // view menu
@@ -245,7 +246,6 @@ void VtxFrame::make_menubar()
                               _T("Show/Hide the toolbar"));
     menu->Check(IDM_VIEW_SHOW_TB1,true);
     menu->Append(IDM_VIEW_CLEAR_ALL, wxT("Clear History"));
-    menu->Append(IDM_VIEW_REBUILD, wxT("Rebuild\tSHIFT-R"));
     menu->AppendSeparator();
     submenu = new wxMenu;
     menu->Append(IDM_VIEW_MOVETO, wxT("Move to"), submenu);

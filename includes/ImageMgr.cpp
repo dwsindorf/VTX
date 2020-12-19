@@ -672,8 +672,9 @@ int ImageReader::getFileInfo(char *name, char *dir)
 	sprintf(path,"%s%s.jpg",dir,name);
 	if(File.fileExists(path))
 		info|=JPG;
-	//if(info)
-	//	cout<<path<<endl;
+	sprintf(path,"%s%s.jpeg",dir,name);
+	if(File.fileExists(path))
+		info|=JPG;
 	return info;
 }
 
@@ -827,6 +828,8 @@ void ImageReader::remove(char *fn)
 	File.deleteFile(path);
  	sprintf(path,"%s.jpg",fn);
 	File.deleteFile(path);
+ 	sprintf(path,"%s.jpeg",fn);
+	File.deleteFile(path);
  	sprintf(path,"%s_alpha.jpg",fn);
 	File.deleteFile(path);
 }
@@ -877,6 +880,8 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.spx",flist);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
+		File.getFileNameList(sdir,"*.jpeg",flist);
+
 		flist.ss();
 		while((sym=flist++)>0){
 			if(!images.inlist(sym->name())){
@@ -889,6 +894,8 @@ void ImageReader::makeImagelist()
 		sprintf(sdir,"%s%sTextures%sImages",base,File.separator,File.separator);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
+		File.getFileNameList(sdir,"*.jpeg",flist);
+
 		flist.ss();
 		while((sym=flist++)>0){
 			if(!images.inlist(sym->name())){
@@ -901,6 +908,8 @@ void ImageReader::makeImagelist()
 		sprintf(sdir,"%s%sTextures%sMaps",base,File.separator,File.separator);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
+		File.getFileNameList(sdir,"*.jpeg",flist);
+
 		flist.ss();
 		while((sym=flist++)>0){
 			if(!images.inlist(sym->name())){
@@ -1147,8 +1156,13 @@ Image *ImageReader::openJpgFile(char *name,char *path)
  	sprintf(cpath,"%s.jpg",path);
 
  	FILE *fp=fopen(cpath, "rb");
-	if (fp == NULL)
-	    return 0;
+	if (fp == NULL){
+		sprintf(cpath,"%s.jpeg",path);
+		fp=fopen(cpath, "rb");
+		if (fp == NULL)
+		    return 0;
+	}
+
 	fclose(fp);
 
 	int width=0;

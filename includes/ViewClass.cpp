@@ -1335,7 +1335,7 @@ void View::auto_delv()
 		else
 		*/
 		//cout << "r/m:"<<radius/minr<< " exp:"<< (1-exp(-(radius-minr)/minr))/FEET << endl;
-			delv=zoom*vstride*((1.0-exp(-(radius-minr)/minr))+minh);
+			delv=zoom*vstride*((1.0-exp(-(radius-minr)/minr)))+minh;
 			if(radius<minr){
 				radius = minr;
 				delv = 0;

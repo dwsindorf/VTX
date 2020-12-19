@@ -308,7 +308,7 @@ void VtxMoonTabs::updateControls(){
 	updateSlider(DaySlider,obj->day);
 	updateSlider(YearSlider,obj->year);
 	updateSlider(ShineSlider,obj->shine);
-	updateSlider(HscaleSlider, obj->hscale *obj->size/ MILES);
+	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
 	updateSlider(SymmetrySlider, obj->symmetry);
 
 	updateColor(AmbientSlider,obj->ambient);

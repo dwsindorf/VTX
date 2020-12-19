@@ -212,34 +212,34 @@ void VtxFractalFunct::setFunction(wxString f){
 	if(a)
 		BuildSlider->setValue(a); // ampl
 	else
-		BuildSlider->setValue(0.0);
+		BuildSlider->setValue(0.1);
 	a=args[3];
 	if(a)
 		SlopeSlider->setValue(a); // sbias
 	else
-		SlopeSlider->setValue(0.0);
+		SlopeSlider->setValue(0.2);
 	a=args[4];
 	if(a)
 		ClipSlider->setValue(a);  // smax
 	else
-		ClipSlider->setValue(4.0);
+		ClipSlider->setValue(2.0);
 	a=args[5];
 	if(a)
 		ErodeSlider->setValue(a); // sdrop
 	else
-		ErodeSlider->setValue(0.0);
+		ErodeSlider->setValue(0.1);
 
 	a=args[6];
 	if(a)
 		LimitSlider->setValue(a); // thresh
 	else
-		LimitSlider->setValue(1.0);
+		LimitSlider->setValue(0.0);
 
 	a=args[7];
 	if(a)
 		BiasSlider->setValue(a);  // thresh bias
 	else
-		BiasSlider->setValue(1.0);
+		BiasSlider->setValue(0.0);
 	a=args[8];
 	if(a)
 		HtMaxSlider->setValue(a);  // htmax
@@ -249,7 +249,7 @@ void VtxFractalFunct::setFunction(wxString f){
 	if(a)
 		HtValSlider->setValue(a);  // htbias
 	else
-		HtValSlider->setValue(1.0);
+		HtValSlider->setValue(0.0);
 
 	delete tc;
 

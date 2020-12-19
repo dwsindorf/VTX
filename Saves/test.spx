@@ -1,217 +1,52 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=46.9445;
-		theta=93.114;
-		height=4208.03 ft;
-		gndlvl=-302.772 ft;
-		time=803788;
-		heading=-47;
-		tilt=-19;
-		angle=13;
+		view=ORBITAL;
+		phi=-6.12801;
+		theta=109.044;
+		height=0.00467162;
+		gndlvl=789.931 ft;
+		time=53021.8;
+		heading=90;
+		pitch=-90;
 		fov=35;
 		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		phi=46.9361;
-		theta=93.1173;
-		height=159.101 ft;
-		gndlvl=176.872 ft;
-		time=41154.4;
-		heading=-108;
-		tilt=-12;
-		angle=4;
-	}
-	View{
-		phi=46.8304;
-		theta=93.0205;
-		height=2842.56 ft;
-		gndlvl=223.794 ft;
-		heading=-146;
-		tilt=-19;
-		angle=35;
-	}
-	View{
-		phi=44.1211;
-		theta=92.8125;
-		height=329.281 ft;
-		gndlvl=429.528 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=2916.72 ft;
-		gndlvl=461.755 ft;
-		time=37198;
-		heading=-157;
-	}
-	View{
-		height=3236.19 ft;
-		gndlvl=528.528 ft;
-		tilt=-19;
-		angle=95;
-	}
-	View{
-		phi=43.4619;
-		theta=93.0981;
-		height=102.7 ft;
-		gndlvl=116.028 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		phi=43.4532;
-		theta=93.0514;
-		height=1520.15 ft;
-		gndlvl=99.5279 ft;
-		heading=-173;
-		angle=-75;
-	}
-	View{
-		phi=43.4526;
-		theta=93.0498;
-		height=1108.48 ft;
-		gndlvl=391.869 ft;
-		heading=-161;
-	}
-	View{
-		phi=43.5828;
-		theta=92.84;
-		height=40.6103 ft;
-		angle=0;
-	}
-	View{
-		height=43.4615 ft;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=9293.99 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
+		theta=109.947;
+		height=0.00468557;
+		gndlvl=-72862.4 ft;
 	}
 	View{
 		view=SURFACE;
-		phi=43.5937;
-		theta=107.578;
-		height=13403.8 ft;
-		gndlvl=6927.3 ft;
+		phi=-11.9531;
+		theta=106.172;
+		height=52800 ft;
+		gndlvl=-85952.7 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
 	}
 	View{
-		phi=43.5874;
-		theta=107.549;
-		height=4341.26 ft;
-		gndlvl=10242.4 ft;
-		time=57473.2;
-		heading=9;
-		tilt=-21;
-		angle=50;
-	}
-	View{
-		view=ORBITAL;
-		phi=44.1211;
-		theta=107.765;
-		height=187.457 miles;
-		gndlvl=6927.3 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		view=SURFACE;
-		phi=46.4062;
-		theta=115.312;
-		height=9789.76 ft;
-		gndlvl=24859.9 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=7080.73 ft;
-		tilt=-19;
-		angle=-62;
-	}
-	View{
-		phi=46.2611;
-		theta=115.535;
-		height=22981.9 ft;
-		gndlvl=9221.16 ft;
-		heading=-34;
-		tilt=-13;
-	}
-	View{
-		phi=39.0234;
-		theta=114.17;
-		height=918.199 ft;
-		gndlvl=6199.09 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=3760.75 ft;
-		gndlvl=3711.63 ft;
-		tilt=-18;
+		phi=-11.995;
+		theta=106.059;
+		height=118.171 miles;
+		gndlvl=-67452.5 ft;
+		heading=11;
+		tilt=-28;
 		angle=-1;
 	}
 	View{
-		phi=38.5071;
-		theta=114.994;
-		height=115.328 ft;
-		gndlvl=4477.75 ft;
+		phi=-10.6348;
+		theta=110.588;
+		height=10687.9 ft;
+		gndlvl=-53956.1 ft;
 		tilt=-15;
 		angle=0;
 	}
 	View{
-		phi=38.5166;
-		theta=114.993;
-		height=10933 ft;
-		heading=-71;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=-10527.1 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		view=SURFACE;
-		phi=43.5937;
-		theta=94.2188;
-		height=13412.7 ft;
-		gndlvl=9737.05 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=11422.9 ft;
-		gndlvl=10551.6 ft;
-		tilt=-24;
-		angle=-11;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=-21164.1 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		phi=28.6236;
-		theta=97.5803;
-		height=245.938 miles;
-		gndlvl=-21.9055 ft;
+		height=12840.8 ft;
+		tilt=-9;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -241,29 +76,19 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,100) {
+				Planet(0.002,100) {
 					ambient=Color(1,1,1,0.04);
 					day=24;
-					hscale=0.00113054;
-					resolution=4;
-					shine=19.8509;
-					specular=Color(1,1,1,0.77);
+					diffuse=Color(1,1,1,0.85);
+					hscale=0.0136431;
+					shine=5.56269;
+					specular=Color(1,1,1,0.27);
+					tilt=10;
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=Color(1,0.992157,0.764706,1);
-					}
-					Moon(0.000124971,0.25) {
-						day=24;
-						hscale=0.00800186;
-						name="Moon";
-						phase=334.004;
-						rseed=2.41294;
-						year=30;
-						Surface{
-							terrain=Z(fractal(SQR|SS,13.3,2,0.58,0.58,2.71,1.06,1,1,1,1)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0))+
-									Texture("luna",BUMP|HMAP,1,1,2,0,1,2,0.5,0,0.1,0);
-						}
+						terrain=Z(0)+
+								Texture("mars_hmap",HMAP|NTEX,1,2,1,0,1,2,0.5,0,1,-0.36112);
 					}
 				}
 			}

@@ -204,7 +204,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"clouds(0.1,-0.1,0)\n");
 		break;
 	case TN_FCHNL:
-		sprintf(tmp,"fractal(SS|SQR,8,10,0.1)\n");
+		sprintf(tmp,"fractal(SS|SQR,14,3,0.1,0.1)\n");
 		break;
 	case TN_ERODE:
 		sprintf(tmp,"erode(4,6,1)\n");
@@ -228,7 +228,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"Density(noise(3,6))\n");
 		break;
 	case TN_NOISE:
-		sprintf(tmp,"noise(3,2)\n");
+		sprintf(tmp,"noise(SCALE,5,2)\n");
 		break;
 	}
 	return tmp[0]?1:0;

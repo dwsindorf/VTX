@@ -249,8 +249,8 @@ void VtxCratersFunct::AddShapeTab(wxWindow *panel){
 	CenterSlider->setRange(0.0,1.0);
 	hline->Add(CenterSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
-	OffsetSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Base",LABEL1, VALUE1,SLIDER2);
-	OffsetSlider->setRange(0.0,50);
+	OffsetSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Offset",LABEL1, VALUE1,SLIDER2);
+	OffsetSlider->setRange(-1,1);
 	hline->Add(OffsetSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	geometry->Add(hline,0,wxALIGN_LEFT|wxALL,0);

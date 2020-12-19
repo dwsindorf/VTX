@@ -695,18 +695,24 @@ void TNpoint::eval()
     	snoise=0;
     	Td.clr_flag(SNOISEFLAG);
     }
-	arg->eval();
-	if(!arg->next())
-		Pz=S0.s;
-	else{
-		Px=S0.s;
-		arg=arg->next();
+    if(arg){
 		arg->eval();
-		Py=S0.s;
-		arg=arg->next();
-		arg->eval();
-		Pz=S0.s;
-	}
+		if(!arg->next())
+			Pz=S0.s;
+		else{
+			Px=S0.s;
+			arg=arg->next();
+			if(arg){
+				arg->eval();
+				Py=S0.s;
+				arg=arg->next();
+				if(arg){
+					arg->eval();
+					Pz=S0.s;
+				}
+			}
+		}
+    }
 	if(CurrentScope->rpass() && Td.get_flag(SNOISEFLAG)){
 		TerrainProperties *tp=TerrainData::tp;
 		TerrainData::add_TNpoint(this);
@@ -1512,8 +1518,10 @@ bool TNsnow::initProgram(){
 //-------------------------------------------------------------
 void TNsnow::eval()
 {
-	if(CurrentScope->hpass())
+	if(right && CurrentScope->hpass()){
+		right->eval();
 		return;
+	}
 	if(!texture || !right)
 		return;
 	if(!isEnabled()||!Render.textures())
