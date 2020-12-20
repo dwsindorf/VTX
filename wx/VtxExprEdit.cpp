@@ -280,7 +280,11 @@ void VtxExprEdit::update(){
 //-------------------------------------------------------------
 wxString VtxExprEdit::getExprString(){
 	if(showing_symbols){
-		symbol_expr=GetValue();
+		if(symbol_expr.IsEmpty() && !value_expr.IsEmpty()){
+			exprToSymbols();
+		}
+		else
+			symbol_expr=GetValue();
 		symbolsToExpr();
 	}
 	else

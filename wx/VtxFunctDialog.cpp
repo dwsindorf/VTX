@@ -158,8 +158,10 @@ void VtxFunctDialog::getFunct(wxString val){
 }
 bool VtxFunctDialog::setFunct(wxString token, wxString val){
 	TNode *tn=(TNode*)TheScene->parse_node(val.ToAscii());
-	if(!tn)
+	if(!tn){
+		cout << "function expression parse failed : "<< val.ToAscii() << endl;
 		return false;
+	}
 	int t=tn->typeValue();
 	if(functs.find(t) == functs.end()){
 		cout << "dialog for id : "<< t << " not yet supported" <<endl;

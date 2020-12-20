@@ -78,8 +78,8 @@ Scene() {
 						mc=1-0.7*md;
 						terrain=Z(craters(4,0.2,0.05,1,1,1,0.8)
 								mz)+
-								Texture("cracks2",BUMP|NTEX,99.99,1.16984,1,4,10,2.20752,1,0)+
-								Texture("saturn3",BORDER|LINEAR|S,PHI+BMPHT+noise(FS,10,6,0,0,2.2),0.25,0.9818,-0.0308,-0.6792,1,1.86152,1,0);
+								Texture("cracks2",BUMP,99.99,1.16984,1,4,10,2.20752,1,0)+
+								Texture("saturn3",BORDER|TEX|LINEAR|S,PHI+BMPHT+noise(FS,10,6,0,0,2.2),0.25,0.9818,-0.0308,-0.6792,1,1.86152,1,0);
 					}
 					Moon(0.001,0.00375) {
 						ambient=Color(1,0.98,0,0);
@@ -100,8 +100,8 @@ Scene() {
 							Color(1,0.875,0.275,0.475));
 						Surface{
 							terrain=
-									Texture("craters",BUMP|NTEX,5.2918,-0.54544,1,0,6,3)+
-									Texture("mercury",LINEAR|S,BMPHT+0.01*noise(3,5,0),1,1.46668,0.47272,3.87696,1,2);
+									Texture("craters",BUMP,5.2918,-0.54544,1,0,6,3)+
+									Texture("mercury",LINEAR|S|TEX,BMPHT+0.01*noise(3,5,0),1,1.46668,0.47272,3.87696,1,2);
 						}
 					}
 				}

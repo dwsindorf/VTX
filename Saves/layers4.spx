@@ -563,36 +563,36 @@ Scene() {
 								layer("lavahills",MESH,0,noise(RO1,5.6,2,-1,0.5,2,0.3,1,0,0),0.04,noise(10.2,8.6,1,0.5,2.22,1,1,0,0))
 									[Z(noise(NABS,8,12,0.35,0.95,2.1))
 									+
-									Texture("watery3",BUMP|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
-									Texture("alpine2",A|S,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
-									Texture("yellow-black",A|BORDER|LINEAR|NORM|S,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0)]
+									Texture("watery3",BUMP|TEX|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
+									Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
+									Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0)]
 								layer("snow2",MORPH,0.57,noise(RO2,0,2,1,0.5,2,1,1,0,0),0.01,noise(10.2,8.6,1,0.5,2,1,1,0,0))
 									[Z(noise(RIDGED|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))
 									+
-									Texture("ridges",BUMP,1164.1,0.88888,1,0,10,2.2,0.96296,0)+
-									Texture("Shist1",BUMP,16384,-0.6,2,0,4,2,1,0)+
-									Texture("bricks",A|BUMP,2*HT,65536,-0.4,1.14816,0,6.33328,2.11112,1,0)+
-									Texture("DirtPebbles",A|BUMP,2*HT,143382,0.5,2,0,6.33328,2.11112,1,0)+
-									Texture("alpine2",BORDER|S,HT-0.2*BMPHT+noise(NABS|NEG|RO1,5.1,5,1,0.5,2.05,1,1,0,0),1,0.62964,0.97296,-0.44448,1,2,1,0)+
-									Texture("GrassField",A|BUMP,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037)]
+									Texture("ridges",BUMP|TEX,1164.1,0.88888,1,0,10,2.2,0.96296,0)+
+									Texture("Shist1",BUMP|TEX,16384,-0.6,2,0,4,2,1,0)+
+									Texture("bricks",A|BUMP|TEX,2*HT,65536,-0.4,1.14816,0,6.33328,2.11112,1,0)+
+									Texture("DirtPebbles",A|BUMP|TEX,2*HT,143382,0.5,2,0,6.33328,2.11112,1,0)+
+									Texture("alpine2",BORDER|S|TEX,HT-0.2*BMPHT+noise(NABS|NEG|RO1,5.1,5,1,0.5,2.05,1,1,0,0),1,0.62964,0.97296,-0.44448,1,2,1,0)+
+									Texture("GrassField",A|BUMP|TEX,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037)]
 								layer("volcanos2",MORPH,0.15,0.1,0,0.04)
-									[Z(0.5*craters(ID1|MAXHT,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
+									[Z(0.5*craters(ID1,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
 									noise(RIDGED|SCALE,11,8,0.5,0.5,2)+0.1*noise(6,3))
 									+
-									Texture("coldlava",BUMP,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
-									Texture("deep_fire",BUMP,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
-									Texture("bricks",BUMP,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
-									Texture("lava",BORDER|S,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0)]
+									Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
+									Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
+									Texture("bricks",BUMP|TEX,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
+									Texture("lava",BORDER|S|TEX,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0)]
 								layer("burning hills",MESH,0,0.1,0,0)
 									[Z(noise(NABS,8,12,0.35,0.95,2.1))
 									+
-									Texture("Shist1",A|BUMP,HT+0.5,93.5068,2,1,0,8.1112,2.1852,0.9074,0)+
-									Texture("DirtPebbles",A|BUMP,HT+0.4,3992.29,2,1,0,8.1112,2.1852,0.9074,0)+
-									Texture("drywash",A|BUMP|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),1-HT,922.241,2,2,0,6.88672,2,1,0)+
-									Texture("DirtPebbles",A|BUMP,-2*HT,172472,0.71696,0.86792,0,4.16992,2.13208,1,0)+
-									Texture("alpine2",A|S,0.2*BMPHT+HT,1-10*SLOPE-HT,0.5,0.90568,1,-1.43392,1,3,1,0)+
-									Texture("GrassField",A|BUMP,1-HT,172472,0.79248,0.8302,0,2.3584,3.03776,0.92452,0.66038)+
-									Texture("yellow-black",A|BORDER|LINEAR|NORM|S,BMPHT,HT+0.5,0.5,2,1,1.92592,1,2,1,0)]
+									Texture("Shist1",A|BUMP|TEX,HT+0.5,93.5068,2,1,0,8.1112,2.1852,0.9074,0)+
+									Texture("DirtPebbles",A|BUMP|TEX,HT+0.4,3992.29,2,1,0,8.1112,2.1852,0.9074,0)+
+									Texture("drywash",A|BUMP|TEX|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),1-HT,922.241,2,2,0,6.88672,2,1,0)+
+									Texture("DirtPebbles",A|BUMP|TEX,-2*HT,172472,0.71696,0.86792,0,4.16992,2.13208,1,0)+
+									Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.5,0.90568,1,-1.43392,1,3,1,0)+
+									Texture("GrassField",A|BUMP|TEX,1-HT,172472,0.79248,0.8302,0,2.3584,3.03776,0.92452,0.66038)+
+									Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,1.92592,1,2,1,0)]
 								;
 					}
 					Sky(0.00419081) {

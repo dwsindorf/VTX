@@ -132,8 +132,7 @@ typedef struct scopedata {
 	unsigned int  preview  : 1;	// scope mode
 	unsigned int  changed  : 1;	// scope mode
 	unsigned int  twopass  : 1;	// height pass needed
-	unsigned int  hmpass   : 1;	// height pass needed
-	unsigned int  htpass   : 3;	// height pass
+	unsigned int  htpass   : 2;	// height pass
 } scopedata;
 
 
@@ -162,14 +161,10 @@ public:
 	void set_twopass(int c)	    { flags.twopass=c;}
 	int twopass()				{ return flags.twopass;}
 
-	void set_hmpass(int c)	    { flags.hmpass=c;}
-	int hmpass()				{ return flags.hmpass;}
-
 	void set_zcpass()	        { flags.htpass=0;}
 	void set_zpass()	        { flags.htpass=1;}
 	void set_cpass()	        { flags.htpass=2;}
 	void set_rpass()	        { flags.htpass=3;}
-	void set_hpass()	        { flags.htpass=4;}
 
 	int passmode()				{ return flags.htpass;}
 	void set_passmode(int m)     { flags.htpass=m;}
@@ -177,7 +172,6 @@ public:
 	int zpass()				    { return flags.htpass==1;}
 	int cpass()				    { return flags.htpass==2;}
 	int rpass()				    { return flags.htpass==3;}
-	int hpass()				    { return flags.htpass==4;}
 
 	void set_init_mode(int c)	{ flags.init=c;}
 	int init_mode()			    { return flags.init;}

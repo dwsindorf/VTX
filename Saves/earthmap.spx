@@ -10,6 +10,10 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
+	View{
+		theta=9.29576e-27;
+		height=0.00793046;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -48,7 +52,7 @@ Scene() {
 					albedo=1;
 					Surface{
 						terrain=Color(1,0.992157,0.764706,1)+
-								Texture("earth",BORDER,1,2,-0.95656,0,1,2,0.5);
+								Texture("earth",BORDER|TEX,1,2,-0.95656,0,1,2,0.5,0);
 					}
 					Sky(0.00414184) {
 						color=Color(0.65,0.88,0.99);
@@ -72,7 +76,7 @@ Scene() {
 						specular=Color(1,1,1);
 						Surface{
 							terrain=
-									Texture("earth_clouds",BORDER,1,2,0.52056,0.37728,1,2,0.49056);
+									Texture("earth_clouds",BORDER|TEX,1,2,0.52056,0.37728,1,2,0.49056,0);
 						}
 					}
 					Moon(0.000124971,0.00461245) {

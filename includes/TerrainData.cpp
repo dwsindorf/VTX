@@ -127,8 +127,6 @@ void TerrainData::add_texture(Texture *t)
 
 	else{
 		for(int i=ID0;i<properties.size;i++){
-//			tp=properties[i];
-//			tp->textures.add(t);
 			properties[i]->textures.add(t);
 		}
 	}

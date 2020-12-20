@@ -215,8 +215,8 @@ void TNmap::eval()
 {
 	TNlayer *layer=(TNlayer*)right;
 	int i;
-	if(CurrentScope->hpass())
-		return;
+	//if(CurrentScope->hpass())
+	//	return;
 	if(layer && CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);

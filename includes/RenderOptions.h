@@ -108,6 +108,7 @@ enum{ // flags
 	RAYTRACE		= 0x00004000,
 	MULTITEXS		= 0x00008000,
 	GEOMETRY		= 0x00010000,
+	HMAPS		    = 0x00020000,
 	DEFAULTS        = SMOOTH
 					|LIGHTSHADING
 					|HAZE
@@ -123,6 +124,7 @@ enum{ // flags
 					|AVENORMS
 					|DEALIAS
 					|GEOMETRY
+					|HMAPS
 	};
 
 	flagsdata	flags;
@@ -242,6 +244,9 @@ public:
 
 	int  textures()				{ return renderflags & TEXTURES?1:0;}
 	void set_textures(int c)	{ BIT_SET(renderflags,TEXTURES,c);}
+
+	int  hmaps()				{ return renderflags & HMAPS?1:0;}
+	void set_hmaps(int c)	    { BIT_SET(renderflags,HMAPS,c);}
 
 	void set_smooth_shading(int c){ BIT_SET(renderflags,SMOOTH,c);}
 	int  smooth_shading()		{ return renderflags & SMOOTH?1:0;}

@@ -297,13 +297,13 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("S distortion"));
+	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("S mapping "));
 	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",0,LINE_WIDTH);
 
 	ampl_controls->Add(m_amp_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(ampl_controls, 0, wxALIGN_LEFT|wxALL,0);
 
-	wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("T distortion or Alpha"));
+	wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("T mapping or Alpha"));
 	m_alpha_expr = new ExprTextCtrl(panel,ID_ALPHA_EXPR,"",0,LINE_WIDTH);
 
 	alpha_controls->Add(m_alpha_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -682,10 +682,10 @@ void VtxTexTabs::setObjAttributes(){
 		BIT_ON(opts,NORM);
 	else
 		BIT_OFF(opts,NORM);
-	if(!m_tex_check->GetValue())
-		BIT_ON(opts,NTEX);
+	if(m_tex_check->GetValue())
+		BIT_ON(opts,TEX);
 	else
-		BIT_OFF(opts,NTEX);
+		BIT_OFF(opts,TEX);
 	if(!m_bump_check->GetValue())
 		BIT_OFF(opts,BUMP);
 	else
@@ -819,12 +819,12 @@ void VtxTexTabs::getObjAttributes(){
 	m_amp_expr->SetValue("");
 	m_alpha_expr->SetValue("");
 	if(opts & SEXPR){
-		char p[128]={0};
+		char p[256]={0};
 		args[i++]->valueString(p);
 		m_amp_expr->SetValue(wxString(p));
 	}
 	if(opts & AEXPR){
-		char p[128]={0};
+		char p[256]={0};
 		args[i++]->valueString(p);
 		m_alpha_expr->SetValue(wxString(p));
 	}
@@ -844,7 +844,7 @@ void VtxTexTabs::getObjAttributes(){
 			m_image_type=TYPE_2D;
 		}
 	}
-	else if(m_type & MAP){
+	else if((m_type & IMTYPE) == MAP){
 		m_1D_button->SetValue(false);
 		m_2D_button->SetValue(false);
 		m_img_button->SetValue(false);

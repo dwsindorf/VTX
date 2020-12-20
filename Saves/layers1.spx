@@ -8,6 +8,7 @@ Scene() {
 		time=-7024.8;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -79,25 +80,25 @@ Scene() {
 								layer(MORPH,0,0.2)
 									[Z(0.2*z1)
 									+
-									Texture("strata1",S,HT+0.2*m1)+Color(0.7,0.7,0)
+									Texture("strata1",S|TEX,HT+0.2*m1,1,1,1,0,1,2,1,0)+Color(0.7,0.7,0)
 									+gloss(0)
 									]
 								layer(MORPH,0,0.1-0.2*l2,0.2)
 									[Z(0.2*z2)
 									+Color(0,0.5,0.5)
 									+
-									Texture("strata2",S,HT*10)+gloss(1,10)
+									Texture("strata2",S|TEX,HT*10,1,1,1,0,1,2,1,0)+gloss(1,10)
 									]
 								layer(MORPH,0,0.1,0.2)
 									[Z(0.3*z3)
 									+
-									Texture("strata3",S,HT+0.2*m1)+Color(0.7,0.7,0.7)
+									Texture("strata3",S|TEX,HT+0.2*m1,1,1,1,0,1,2,1,0)+Color(0.7,0.7,0.7)
 									+gloss(0)
 									]
 								layer(MORPH,0)
 									[Z(0.5*z4)
 									+
-									Texture("strata4",S,HT+0.2*m1)+Color(0.7,0,0)
+									Texture("strata4",S|TEX,HT+0.2*m1,1,1,1,0,1,2,1,0)+Color(0.7,0,0)
 									+gloss(1,0.25)
 									]
 								;

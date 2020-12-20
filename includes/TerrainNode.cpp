@@ -383,7 +383,7 @@ void TNvector::valueString(char *s)
 	TNvector *vector=expr?expr:this;
 	setStart(s);
 	Td.set_flag(COMPLEX);
-	if(CurrentScope->tokens() && token)
+	if(CurrentScope->tokens() && token && strlen(token)>0)
 		strcat(s,token);
 	else{
 		sprintf(s+strlen(s),"%s(",symbol());

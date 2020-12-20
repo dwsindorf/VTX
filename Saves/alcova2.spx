@@ -119,8 +119,8 @@ Scene() {
 					terrain=fog(2*noise(8,5))
 							water(ripples)
 							Z(0.5*z1)+
-							Texture("eroded",BUMP|NTEX,7368.59,-1.00608,0.20608,0,5.07568,4.13848,1)+
-							Texture("alpine",BORDER|S,BMPHT+0.2*noise(9,3,1,0.5,2,1,1,0,0)+4*HT*(1-SLOPE),0.9999,0.96968,0.0364,-1.16928,1,2,1);
+							Texture("eroded",BUMP,7368.59,-1.00608,0.20608,0,5.07568,4.13848,1,0)+
+							Texture("alpine",BORDER|S|TEX,BMPHT+0.2*noise(9,3,1,0.5,2,1,1,0,0)+4*HT*(1-SLOPE),0.9999,0.96968,0.0364,-1.16928,1,2,1,0);
 				}
 				Sky(0.00103) {
 					color=Color(0.62,0.78,0.93);

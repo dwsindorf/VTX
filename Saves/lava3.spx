@@ -13,9 +13,6 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
-	View{
-		height=390.025 ft;
-	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -35,10 +32,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -58,15 +55,16 @@ Scene() {
 						Color(1,0,0));
 					Surface{
 						terrain=Z(noise(NABS,8,12,0.35,0.95,2.1))+Color(0.529412,0.521569,0.521569,1)+
-								Texture("Lava1",NORM,3407.5,2,0.2,0,8.83696,2.22448,1)+
-								Texture("cracks2",BUMP|NTEX,999.9,2,2,0,10,3.27696,1)+
-								Texture("lava",S,HT+noise(7,5,1,0.5,2,0.1,1,0,0)+BMPHT,0.125,1,0.9576,-3.51024,1,2,1);
+								Texture("Lava1",NORM|TEX,3407.5,2,0.2,0,8.83696,2.22448,1)+
+								Texture("cracks2",BUMP,999.9,2,2,0,10,3.27696,1)+
+								Texture("lava",S|TEX,HT+noise(7,5,1,0.5,2,0.1,1,0,0)+BMPHT,0.125,1,0.9576,-3.51024,1,2,1);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
 						haze.color=Color(0.98,0.96,1);
-						haze.grad=0.22858;
+						haze.grad=0.4878;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
@@ -74,8 +72,10 @@ Scene() {
 					}
 					Clouds(0.00407746) {
 						ambient=Color(1,1,1,0.41);
+						crot=1;
 						diffuse=Color(0.98,0.89,0.89);
 						emission=Color(1,0.84,0.84,0.22);
+						hscale=0.05;
 						specular=Color(1,0.98,0.69);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

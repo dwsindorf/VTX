@@ -45,7 +45,6 @@ Scene() {
 	}
 	View{
 		phi=7.56668;
-		theta=312.752;
 		height=990.802 ft;
 		gndlvl=-7817.02 ft;
 		heading=160;
@@ -71,10 +70,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
@@ -89,15 +88,17 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=
-								Texture("cratery",BUMP,3407.5,-0.4348,0.98552,0,10.3062,2,1,0,0,0.10204,-1)+
-								Texture("Shist1",65536,1.5942,0.02896,0,2.46928,2,0.30612)+
-								Texture("bricks",BUMP,131072,1.1304,2,0,2.46928,2,0.61224)+Z(noise(RIDGED,9,7,0.1,0.6));
+								Texture("BrownStone",BUMP|TEX,48.4022,-0.4348,0.98552,0,8.33344,1.66664,1,0)+
+								Texture("Shist1",BUMP|TEX,65536,0.02896,1.5942,0,2.46928,2,0.30612,0)+
+								Texture("bricks",BUMP|TEX,131072,1.1304,2,0,2.46928,2,0.61224,0)+Z(noise(RIDGED,9,7,0.1,0.6));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
+						crot=1;
 						day=24;
 						diffuse=Color(1,1,0.5,0.47);
 						emission=Color(1,1,1,0.04);
+						hscale=0.05;
 						resolution=2;
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
@@ -108,7 +109,9 @@ Scene() {
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
+						day=24;
 						density=0.2;
+						haze.color=Color(1,1,1,0.83);
 						haze.grad=0.8644;
 						night.color=Color(0,0.31,1,0);
 						shine=0.630849;

@@ -144,8 +144,8 @@ enum {		// CTypes cloud options
 
 static LongSym gtypes[]={
 	{"HT",			ZHT},
-	{"MAXHT",		MAXHT},
-	{"MINHT",		MINHT},
+	{"MXHT",		MAXHT},
+	{"MNHT",		MINHT},
 	{"FHT",		    FHT},
 	{"BMPHT",		BMPHT},
 	{"THETA",		THETA},
@@ -503,11 +503,9 @@ bool TNcolor::initProgram(){
 void TNcolor::eval()
 {
 	INIT;
-    if(CurrentScope->zpass())
-        return;
-    if(CurrentScope->hpass())
-        return;
-	TNarg *arg=(TNarg*)right;
+//    if(CurrentScope->zpass())
+//        return;
+ 	TNarg *arg=(TNarg*)right;
     if(CurrentScope->rpass()){
     	Td.clr_flag(SNOISEFLAG);
     	//right->init();
@@ -670,8 +668,6 @@ Color  TNclist::color(double s)
 //-------------------------------------------------------------
 void TNdensity::eval()
 {
-	if(CurrentScope->hpass())
-		return;
 	if(CurrentScope->zpass()){
 		TNvector::eval();
 		S0.density=S0.s;
@@ -686,8 +682,6 @@ void TNdensity::eval()
 //-------------------------------------------------------------
 void TNpoint::eval()
 {
-	if(CurrentScope->hpass())
-		return;
 	INIT;
     Px=Py=Pz=0;
 	TNarg *arg=(TNarg*)right;
@@ -1350,8 +1344,6 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 //-------------------------------------------------------------
 void TNfog::eval()
 {
-	if(CurrentScope->hpass())
-		return;
 
 	S0.density=0.0;
 	//SINIT
@@ -1461,7 +1453,7 @@ void TNsnow::init()
 		}
 		if(!image)
 			return;
-	    texture=new Texture(image,BORDER|CLAMP,this);
+	    texture=new Texture(image,BORDER|CLAMP|TEX,this);
 	    texture->orders=1;
 	    //texture->bump_damp=0.7;
 	    //texture->color_mip=-2;
@@ -1506,7 +1498,7 @@ bool TNsnow::initProgram(){
 	if(bmpht>0)
 		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
 	sprintf(defs+strlen(defs),"\n");
-	//cout << "TNsnow :"<<defs << endl;
+	cout << "TNsnow :"<<defs << endl;
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);
@@ -1518,10 +1510,6 @@ bool TNsnow::initProgram(){
 //-------------------------------------------------------------
 void TNsnow::eval()
 {
-	if(right && CurrentScope->hpass()){
-		right->eval();
-		return;
-	}
 	if(!texture || !right)
 		return;
 	if(!isEnabled()||!Render.textures())
@@ -1612,8 +1600,6 @@ void TNclouds::eval()
 {
 	static TerrainData top;
 	static TerrainData bottom;
-	if(CurrentScope->hpass())
-		return;
 
 	if(!right)
 		return; // nothing to do

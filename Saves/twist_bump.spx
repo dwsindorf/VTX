@@ -8,6 +8,7 @@ Scene() {
 		time=65278;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -62,7 +63,7 @@ Scene() {
 		view=SURFACE;
 		phi=-5.625;
 		theta=16.875;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-4417.52 ft;
 		heading=0;
 		pitch=0;
@@ -109,10 +110,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -133,7 +134,7 @@ Scene() {
 						Color(1,0.875,0.275,0.475));
 					Surface{
 						terrain=Z(noise(RIDGED,1,12,0.5,0.5,2))+
-								Texture("mercury",BUMP|LINEAR|S,twist(-0.3,noise(ERODED|UNS,0,4,0,0.47,2,1,1,1,0)+noise(FS|NABS,2.8,13.8,0,0.8,2,0.2,0,1,0)),0.57072,0.03,1.23076,-0.0616,1,2,1,-0.5556,0.01597,0.2,0.33334);
+								Texture("mercury",BUMP|LINEAR|S|TEX,twist(-0.3,noise(ERODED|UNS,0,4,0,0.47,2,1,1,1,0)+noise(FS|NABS,2.8,13.8,0,0.8,2,0.2,0,1,0)),0.57072,0.03,1.23076,-0.0616,1,2,1,-0.5556);
 					}
 				}
 			}

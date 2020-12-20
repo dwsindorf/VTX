@@ -72,10 +72,10 @@ Scene() {
 					m2;
 					terrain=fog(1.5*noise(UNS,11,5,1,0.5,2))
 							Z(0.5*c1)+
-							Texture("coldlava",BUMP,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
-							Texture("deep_fire",BUMP,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
-							Texture("bricks",BUMP,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
-							Texture("lava",BORDER|S,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0);
+							Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
+							Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
+							Texture("bricks",BUMP|TEX,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
+							Texture("lava",BORDER|S|TEX,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0);
 				}
 				Sky(0.00511133) {
 					color=Color(0.5,0.69,1);

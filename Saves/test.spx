@@ -87,8 +87,7 @@ Scene() {
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=Z(0)+
-								Texture("mars_hmap",HMAP|NTEX,1,2,1,0,1,2,0.5,0,1,-0.36112);
+						terrain=Texture("mars_hmap",HMAP,1,2,1,0,1,2,0.5,0,1,-0.36112);
 					}
 				}
 			}

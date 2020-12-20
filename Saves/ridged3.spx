@@ -77,8 +77,8 @@ Scene() {
 					Surface{
 						terrain=Z(noise(RIDGED|SS2,9,11,0.24,1.1,2.1))+
 								Texture("ridges",BUMP,43.2279,-0.86792,1.35756,0.51,10,2,1,0)+
-								Texture("saturn",S,HT,1,1.24848,1,0,1,2)+
-								Texture("grass",S,noise(RO1,10,8,1,0.5,2),1,1.1394,1,0,1,2)+Color(noise(NEG|SQR,15,10,0.7,0.1,2.1)+0.39,RED,RED*0.37,1);
+								Texture("saturn",S|TEX,HT,1,1.24848,1,0,1,2)+
+								Texture("grass",S|TEX,noise(RO1,10,8,1,0.5,2),1,1.1394,1,0,1,2)+Color(noise(NEG|SQR,15,10,0.7,0.1,2.1)+0.39,RED,RED*0.37,1);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);

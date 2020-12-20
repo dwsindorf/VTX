@@ -124,7 +124,7 @@ Scene() {
 					Surface{
 						terrain=Z(noise(SCALE|SQR,9.7,7.2,0.68,0.5,2,0.1,1,0,0)+fractal(SQR|SS,13,4.5,0.19,0.02,2.03,1.35,1,1,1,1)noise(SCALE,15.7,8.4,1,0.5,2,0.18,1,0,0))+
 								Texture("mars",1,2,1,0,1,2,0.5,0)+
-								Texture("mars_hmap",HMAP|NTEX,1,2,1,0,1,2,0.5,0,1,-0.27776);
+								Texture("mars_hmap",HMAP|TEX,1,2,1,0,1,2,0.5,0,1,-0.27776);
 					}
 				}
 			}

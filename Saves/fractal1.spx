@@ -69,8 +69,8 @@ Scene() {
 					Color(0.596,0,0));
 				Surface{
 					terrain=Z(fractal(SQR|SS,13,13.3,1.73,0.82,1.79,1,1,1,0.2,0.05)noise(NLOD|UNS,10,4,0,1,2.2,1,1,0,0))+
-							Texture("cracks2",BUMP|NTEX,515.34,-0.2,1,0,8,2.35384,1)+
-							Texture("lava2",LINEAR|S,BMPHT,0.039074,2,2,2.4,1,1.73848,1);
+							Texture("cracks2",BUMP,515.34,-0.2,1,0,8,2.35384,1,0)+
+							Texture("lava2",LINEAR|S|TEX,BMPHT,0.039074,2,2,2.4,1,1.73848,1,0);
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);

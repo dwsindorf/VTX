@@ -44,10 +44,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
@@ -65,10 +65,10 @@ Scene() {
 						Color(0.596,0,0));
 					Surface{
 						terrain=
-								Texture("Shist1",BUMP,2211.79,0.51848,2,0,2.46928,2,0.30612,0)+
-								Texture("bricks",BUMP,20911.4,-0.8148,2,0,6,2,0.61224,0)+
+								Texture("Shist1",BUMP|TEX,2211.79,0.51848,2,0,2.46928,2,0.30612,0)+
+								Texture("bricks",BUMP|TEX,20911.4,-0.8148,2,0,6,2,0.61224,0)+
 								Texture("craters3",BUMP,65536,0.3704,0.94596,0,4,2,0.5,0)+
-								Texture("lava2",BORDER|S,0.2*HT+noise(RIDGED|FS,6.5,3.7,-0.07,0.5,2.1,0.2,1,0,0)+0.1*BMPHT,0.5,0.62164,1.51352,0.59264,1,2,1,5)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)craters(ID1,4,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2));
+								Texture("lava2",BORDER|S|TEX,0.2*HT+noise(RIDGED|FS,6.5,3.7,-0.07,0.5,2.1,0.2,1,0,0)+0.1*BMPHT,0.5,0.62164,1.51352,0.59264,1,2,1,5)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)craters(ID1,4,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -76,6 +76,7 @@ Scene() {
 						day=24;
 						diffuse=Color(1,1,0.5,0.47);
 						emission=Color(1,1,1,0.04);
+						hscale=0.05;
 						resolution=2;
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
@@ -86,6 +87,7 @@ Scene() {
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
+						day=24;
 						density=0.2;
 						haze.grad=0.8644;
 						night.color=Color(0,0.31,1,0);

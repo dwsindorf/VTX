@@ -68,10 +68,10 @@ Scene() {
 						Color(1,1,1));
 					Surface{
 						terrain=Z(noise(NABS,8,14.1,0,1,2.1,2,0.11,0,-0.3))+
-								Texture("cracks2",BUMP|NTEX,556.879,-0.95888,1,0.2264,10,2.78464,1)+
+								Texture("cracks2",BUMP,556.879,-0.95888,1,0.2264,10,2.78464,1)+
 								Texture("Shist1",BUMP,16384,-1.69808,1,0,4.16992,1.90568,1,0)+
-								Texture("DirtPebbles",BUMP|NTEX,331696,-1.32072,1,0,6.43408,2.13208,1,0)+
-								Texture("alpine",BORDER|LINEAR|S,HT-SLOPE+0.2*BMPHT,0.9999,1.283,2,-3.69808,1,1.73848,1,0);
+								Texture("DirtPebbles",BUMP|TEX,331696,-1.32072,1,0,6.43408,2.13208,1,0)+
+								Texture("alpine",BORDER|LINEAR|S|TEX,HT-SLOPE+0.2*BMPHT,0.9999,1.283,2,-3.69808,1,1.73848,1,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);

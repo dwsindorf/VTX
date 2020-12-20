@@ -1,11 +1,11 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=22.5;
-		theta=42.1875;
+		phi=-14.7656;
+		theta=92.1094;
 		height=249.942 miles;
-		gndlvl=-3666.47 ft;
-		time=803788;
+		gndlvl=-190.764 ft;
+		time=57473.2;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -13,14 +13,8 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
-		height=249.927 miles;
-		gndlvl=-3588.09 ft;
-	}
-	View{
-		phi=20.7718;
-		theta=88.8463;
-		height=257.912 miles;
-		gndlvl=35.7177 ft;
+		height=249.882 miles;
+		gndlvl=125.473 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -53,51 +47,27 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.04);
 					day=24;
+					hscale=0.00113054;
 					resolution=4;
 					shine=19.8509;
 					specular=Color(1,1,1,0.77);
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=Color(1,0.992157,0.764706,1)+
-								Texture("earth",BORDER,1,2,-0.95656,0,1,2,0.5);
-					}
-					Sky(0.00414184) {
-						color=Color(0.65,0.88,0.99);
-						day=24;
-						density=0.4717;
-						haze.color=Color(0.98,0.93,0.66);
-						haze.value=1;
-						night.color=Color(0,0,0);
-						specular=Color(1,1,1);
-						twilight=Color(0.58,0,0.42);
-						twilight.max=0.383052;
-						twilight.min=-1;
-					}
-					Clouds(0.0040629) {
-						ambient=Color(1,1,1,0.16);
-						crot=1;
-						diffuse=Color(1,1,1,0.59);
-						diffusion=0;
-						hscale=0.05;
-						shine=0.678925;
-						specular=Color(1,1,1);
-						Surface{
-							terrain=
-									Texture("earth_clouds",BORDER,1,2,0.52056,0.37728,1,2,0.49056);
-						}
+						terrain=Color(1,0.992157,0.764706,1);
 					}
 					Moon(0.000124971,0.25) {
 						day=24;
-						hscale=0.000800186;
+						hscale=0.0056013;
 						name="Moon";
 						phase=334.004;
-						resolution=4;
 						rseed=2.41294;
 						year=30;
 						Surface{
-							terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.4,1,0,0)+craters(ID3,1,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
-									Texture("luna",BUMP|HMAP|TEX,1,3.33344,1.77776,0,1,2,0.5,1,1,1);
+							terrain=Z(craters(ID2,5,0.0009999,0.24,0.13,0.06,0.01,0.31,1,0,3.9,0.8,0.47,0.31,0.1)
+									fractal(SQR|SS,12.9,6,0.1,0.4,2.71,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0))+
+									Texture("coldlava",BUMP|NORM,12275.5,-0.88896,2,0,3,2,0.5,0)+
+									Texture("luna",BUMP|HMAP,1,2,2,0,1,2,0.5,0,0.1,0);
 						}
 					}
 				}

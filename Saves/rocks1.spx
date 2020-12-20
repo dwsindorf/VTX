@@ -95,14 +95,14 @@ Scene() {
 								map(mp,-0.5,0.98)
 								layer(MORPH,0,0.2,0.1)
 									[rocks(ID2,2,0.0001,0.73,1,0.13,0.23,1,noise(ERODED,0,6,0.5,0.5,2,0.17,1,0,0))[
-									Texture("craters",BORDER|BUMP|NTEX,9999,1.36968,0.76364,0,5,2)+Z(b1)
+									Texture("craters",BORDER|BUMP|TEX,9999,1.36968,0.76364,0,5,2)+Z(b1)
 									+
 									Texture("lava2",S,BMPHT,1,1.0788,1,0,2,2)+gloss(0.16364,1.44536)
 									+Color(0.713725,0.717647,0.717647)
 									]
 									Z(0.2*z1+b1)
 									+
-									Texture("ridges",BUMP|NTEX,10000,-0.81216,1.34544,0,3,3)+Color(0.756863,0.698039,0)
+									Texture("ridges",BUMP|TEX,10000,-0.81216,1.34544,0,3,3)+Color(0.756863,0.698039,0)
 									+gloss(0.17576,0.61817)
 									]
 								layer(MORPH,0,0.1,0.1)
@@ -113,7 +113,7 @@ Scene() {
 									]
 									Z(0.5*z2+b2)
 									+
-									Texture("ridges",BUMP|NTEX,4322.79,-1.6364,1.34544,0,8,3)+gloss(0.22424,0.5)
+									Texture("ridges",BUMP|TEX,4322.79,-1.6364,1.34544,0,8,3)+gloss(0.22424,0.5)
 									+
 									Texture("mercury",BORDER|LINEAR|S,HT+0.1*BMPHT,0.1,1.43032,-2,0.6,1,2)]
 								layer(MORPH,0,0.1,0.1,0)

@@ -1118,7 +1118,6 @@ Image *ImageReader::open(char *name)
 	if(image)
 		return image;
 	sprintf(dir,"%s%sTextures%sImages%s%s",base,d,d,d,name);
-	cout<<dir<<endl;
 	image=open(name, dir);
 	if(image)
 		return image;

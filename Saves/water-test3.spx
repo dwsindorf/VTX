@@ -131,7 +131,7 @@ Scene() {
 									[rocks(ID2,2,0.0012,0.73,1,0.13,0.25,1,noise(ERODED,0,6,0.5,0.5,2,0.18,1,0,0))[Color(0.5,0.5,1,1)
 									+
 									Texture("texture1",99.99,1.24848,1.17576,0,2,2)+
-									Texture("cracks2",BUMP|NTEX,999.9,-0.90912,1.2,1,6,2)+Z(b1)
+									Texture("cracks2",BUMP|TEX,999.9,-0.90912,1.2,1,6,2)+Z(b1)
 									]
 									Z(z1)
 									+Color(1,1,0.7,1)
@@ -141,7 +141,7 @@ Scene() {
 								layer(MORPH,0,0.3,0.1)
 									[rocks(ID1,2,0.0001,0.5,0.9,0.2,0.2+b2,1,noise(0,2,1,0.5,2,0.45,1,0,0))[Color(0.5,0.5,0.5)
 									+
-									Texture("cracks",BUMP|NTEX,9999,-1.00608,1.40608,0,8,2)+
+									Texture("cracks",BUMP|TEX,9999,-1.00608,1.40608,0,8,2)+
 									Texture("alpine",S,BMPHT,1,1,0,0,1,2)+Z(b2)
 									]
 									Color(1,0.64,0.21,1)

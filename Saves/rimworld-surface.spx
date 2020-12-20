@@ -55,7 +55,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=81.5625;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=14838.6 ft;
 		heading=0;
 		pitch=0;
@@ -82,21 +82,67 @@ Scene() {
 		height=0.00478023;
 		gndlvl=20.5487 ft;
 	}
+	View{
+		view=SURFACE;
+		phi=16.875;
+		theta=84.375;
+		height=52800 ft;
+		gndlvl=2450.05 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=52783 ft;
+		gndlvl=2467.03 ft;
+		tilt=-8;
+		angle=1;
+	}
+	View{
+		height=45212.9 ft;
+		gndlvl=7177.8 ft;
+		heading=162;
+		tilt=-1;
+	}
+	View{
+		heading=236;
+	}
+	View{
+		heading=355;
+	}
+	View{
+		height=42137.8 ft;
+		heading=174;
+	}
+	View{
+		theta=81.3428;
+		height=2744.53 ft;
+		gndlvl=458.977 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=31049.6 ft;
+		gndlvl=455.933 ft;
+		time=3571.48;
+		tilt=-2;
+		angle=2;
+	}
 	Universe {
-		Galaxy(9994.1) {
+		Galaxy(10000) {
 			density=1.1;
 			diffusion=0.19;
 			gradient=0.9;
 			noise.cutoff=0.29;
 			noise.vertical=0.15;
-			origin=Point(8000,0,0);
-			pitch=-45;
+			origin=Point(-4000,0,6000);
+			pitch=152.309;
 			scatter=1.8;
 			tilt=30;
 			color.list=Colors(
 				Color(1.000,0.000,0.000),
-				Color(0.027,0.514,1.000),
-				Color(0.027,0.914,1.000),
+				Color(0.024,0.514,1.000),
+				Color(0.024,0.914,1.000),
 				Color(0.016,0.565,1.000),
 				Color(0.016,0.565,1.000),
 				Color(1.000,1.000,0.600),
@@ -106,18 +152,18 @@ Scene() {
 			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
 			color.expr=DENSITY;
 		}
-		Galaxy(20000) {
+		Galaxy(5000) {
 			color.middle=Color(0.8,0,0);
 			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
-				Color(0.282,0.000,0.000),
+				Color(0.275,0.000,0.000),
 				Color(0.000,0.000,1.000),
 				Color(0.000,1.000,1.000),
 				Color(1.000,0.000,0.000),
-				Color(1.000,0.482,0.000),
+				Color(1.000,0.475,0.000),
 				Color(1.000,1.000,0.000),
-				Color(1.000,1.000,0.682),
+				Color(1.000,1.000,0.675),
 				Color(1.000,1.000,1.000)
 				);
 			System(1000) {
@@ -136,6 +182,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.91);
 					hscale=0.00120564;
 					phase=320;
+					rot_phase=116.618;
 					shine=16.4793;
 					specular=Color(1,1,1,0.22);
 					year=30;

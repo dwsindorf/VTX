@@ -9,6 +9,7 @@ Scene() {
 		time=609280;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
 	}
@@ -46,7 +47,7 @@ Scene() {
 						Color(0.008,0,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S,noise(RIDGED|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
+								Texture("star1",BORDER|S|TEX,noise(RIDGED|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2,1,0);
 					}
 					Corona(8.86371) {
 						color1=Color(1,1,0.98);

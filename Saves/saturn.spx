@@ -166,8 +166,8 @@ Scene() {
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=
-								Texture("jupiter",BUMP|S,2*PHI+0.02*noise(FS|NABS|SCALE,0,11.4,-0.17,0.55,2,0.62,-0.02,1,0),0.5,-0.86792,2,0,1,2,1,0)+
-								Texture("jupitermap",BUMP,1,-1.24528,1.32076,0,1,2,0.5,0);
+								Texture("jupiter",BUMP|S|TEX,2*PHI+0.02*noise(FS|NABS|SCALE,0,11.4,-0.17,0.55,2,0.62,-0.02,1,0),0.5,-0.86792,2,0,1,2,1,0)+
+								Texture("jupitermap",BUMP|TEX,1,-1.24528,1.32076,0,1,2,0.5,0);
 					}
 					Ring(0.0377788,0.00700468) {
 						emission=Color(1,1,1,0.56);
@@ -178,7 +178,7 @@ Scene() {
 							Color(1,0.9,0.3));
 						Surface{
 							terrain=
-									Texture("saturn",S,PHI,0.9999,1.50304,1,0,1,2);
+									Texture("saturn",S|TEX,PHI,0.9999,1.50304,1,0,1,2);
 						}
 					}
 					Ring(0.0477608,0.024749) {
@@ -188,7 +188,7 @@ Scene() {
 							Color(1,1,0.3,0.5));
 						Surface{
 							terrain=
-									Texture("rings",S,PHI,0.9999,1.7212,1,0,1,2);
+									Texture("rings",S|TEX,PHI,0.9999,1.7212,1,0,1,2);
 						}
 					}
 					Moon(0.00383586,0.085) {
@@ -203,7 +203,7 @@ Scene() {
 						year=30;
 						Surface{
 							terrain=
-									Texture("europamap",BORDER|LINEAR,0.5,2,1,0,1,2,0.5,1);
+									Texture("europamap",BORDER|LINEAR|TEX,0.5,2,1,0,1,2,0.5,1);
 						}
 					}
 				}

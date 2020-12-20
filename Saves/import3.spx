@@ -54,10 +54,10 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=Color(0.1+noise(NABS|UNS|RO1,5.2,6,1,0.38,2.2,1,1,0,0),0.5*RED,0,1)+
-								Texture("drywash",BUMP,1024,0.84928,1.45204,0,5,2.20752,0.75472,0,0,-0.39624)+
-								Texture("Shist1",BUMP,34986.2,0.90408,2,0,2.81152,2,1)+
-								Texture("crusty2",BUMP,129357,0.19176,1.58904,0,1.1,2,1)+
-								Texture("bricks",NORM|S,noise(SQR,16,4.2,1,0.5,2,1,1,0,0.5),179422,1.61644,2,0.52832,3.26416,2,1)+Z(noise(RIDGED,9,7,0.1,0.6));
+								Texture("drywash",BUMP|TEX,1024,0.84928,1.45204,0,5,2.20752,0.75472,0,0,-0.39624)+
+								Texture("Shist1",BUMP|TEX,34986.2,0.90408,2,0,2.81152,2,1)+
+								Texture("crusty2",BUMP|TEX,129357,0.19176,1.58904,0,1.1,2,1)+
+								Texture("bricks",NORM|S|TEX,noise(SQR,16,4.2,1,0.5,2,1,1,0,0.5),179422,1.61644,2,0.52832,3.26416,2,1)+Z(noise(RIDGED,9,7,0.1,0.6));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);

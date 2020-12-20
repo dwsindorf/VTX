@@ -40,10 +40,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -58,7 +58,7 @@ Scene() {
 					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
 						terrain=Z(noise(RIDGED,1,12,0.5,0.5,2))+
-								Texture("neptune",BORDER|S,twist(0.2,noise(ERODED|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,1.29232,-2,2.33968,1,2,1,0);
+								Texture("neptune",BORDER|S|TEX,twist(0.2,noise(ERODED|UNS|FS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,1.29232,-2,2.33968,1,2,1,0);
 					}
 				}
 			}

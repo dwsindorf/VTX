@@ -60,10 +60,10 @@ Scene() {
 						Color(0.075,0.02,0.02));
 					Surface{
 						terrain=rocks(4,0.9999,0.5,0.63,0,0.29,-1,noise(NABS,0,7.9,1,0.8,2,0.18,1,0,0))[gloss(0.86666,5.34536)+
-								Texture("craters",BUMP|NTEX,1,1.26152,1,0,4,2,1)+
+								Texture("craters",BUMP|TEX,1,1.26152,1,0,4,2,1)+
 								Texture("lava2",S,noise(FS,3,2,1,0.5,2,0.29,1,0,0)+BMPHT,0.039074,0.92308,1,0,1,2,1)]
 								gloss(1,2.74562)+Z(0)+
-								Texture("craters2",BUMP|NTEX,10,-2,2,0,6,2,0.73846,0,0,-1)+
+								Texture("craters2",BUMP|TEX,10,-2,2,0,6,2,0.73846,0,0,-1)+
 								Texture("yellow-black",BORDER|S,BMPHT,0.543021,0.92308,1,1.29232,1,2,1);
 					}
 				}

@@ -100,7 +100,7 @@ Scene() {
 					c1=fractal(SQR|SS,15.3,13.8,0.19,0.19,3,0.97,0.81,0,0.27,0)craters(ID1,1,0.002,0.25,1,1,1,0,0,10,3,0.42,0.24,0,0.6)
 					m2;
 					terrain=Z(0.5*c1)+
-							Texture("yellow-black",BORDER|S,FHT,1,2,1,0,1,2,1,0);
+							Texture("yellow-black",BORDER|S|TEX,FHT,1,2,1,0,1,2,1,0);
 				}
 				Sky(0.00511133) {
 					color=Color(0.5,0.69,1);

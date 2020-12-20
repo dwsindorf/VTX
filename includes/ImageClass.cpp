@@ -7,8 +7,8 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-#define DEBUG_IMAGES
-#define DEBUG_TEXS
+//#define DEBUG_IMAGES
+//#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -41,7 +41,6 @@ static LongSym iopts[]={
 	{"BLEND",	BLEND},
 	{"REPLACE",	REPLACE},
 	{"BORDER",	BORDER},
-	{"NTEX",	NTEX},
 	{"S",		SEXPR},
 	{"A",		AEXPR},
 };
@@ -82,7 +81,7 @@ TNinode::~TNinode()
 // TNinode::texActive() return enable color in texture
 //-------------------------------------------------------------
 bool TNinode::texActive(){
-	return (opts &NTEX)?false:true;
+	return (opts &TEX)?true:false;
 }
 //-------------------------------------------------------------
 // TNinode::bumpActive() return enable bump in texture
@@ -102,9 +101,9 @@ bool TNinode::hmapActive(){
 //-------------------------------------------------------------
 void TNinode::setTexActive(bool b){
 	if(!b)
-		BIT_ON(opts,NTEX);
+		BIT_OFF(opts,TEX);
 	else
-		BIT_OFF(opts,NTEX);
+		BIT_ON(opts,TEX);
 }
 //-------------------------------------------------------------
 // TNinode::setBumpActive() enable bumpmap in texture
@@ -677,9 +676,6 @@ void TNtexture::init()
 	if(opts & AEXPR){
 		texture->a_data=true;
 	}
-	if(opts & HMAP){
-		Td.set_flag(HMPASS);
-	}
 }
 
 //-------------------------------------------------------------
@@ -692,13 +688,10 @@ void TNtexture::eval()
 {
  	SINIT;
 	S0.set_flag(TEXFLAG);
-    if(CurrentScope->zpass() )
+    if(CurrentScope->zpass() && !hmapActive())
         return;
 	if(getFlag(NODE_BAD))
 	    return;
-	if(CurrentScope->hpass() && !hmapActive()) {
-		return;
-	}
 	if(texture==0 || texture->image()==0){
 	    setFlag(NODE_BAD);
 		return;
@@ -709,7 +702,7 @@ void TNtexture::eval()
 		return;
 	}
     int pass=CurrentScope->passmode();
-	if(!CurrentScope->hpass() && (!texActive() || !Render.textures())&&(!bumpActive() || !Render.bumps())){
+	if((!texActive() || !Render.textures())&&(!bumpActive() || !Render.bumps())&&(!hmapActive() || !Render.hmaps())){
 		S0.clr_svalid();
 		texture->enabled=false;
 		return;
@@ -771,7 +764,7 @@ void TNtexture::eval()
 	if(i<n)
 		hmbias=arg[i++];
 
-	if(CurrentScope->hpass() && hmapActive() && hmval==0)
+	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
 	double c1=0.5/texture->width();
@@ -800,7 +793,7 @@ void TNtexture::eval()
     texture->hmap_amp=hmval;
 
 	S0.clr_svalid();
-	if(CurrentScope->hpass()){
+	if(hmapActive() && hmval!=0){
 		extern double Phi,Theta;
 		double phi = Phi / 180;
 		double theta = Theta / 180.0 - 1;
@@ -878,6 +871,8 @@ bool TNtexture::initProgram(){
 	nstr[0]=0;
 	defs[0]=0;
 	if(texture==0 || !texture->enabled)
+		return false;
+	if(!texture->tex_active && ! texture->bump_active)
 		return false;
 
 	int id=texture->tid;

@@ -46,10 +46,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
@@ -73,13 +73,14 @@ Scene() {
 					Surface{
 						terrain=
 								Texture("ridges",BUMP,4096,1.23288,1,0,10.9624,2,1)+
-								Texture("alpine",BORDER|S,noise(NABS,10.7,5.4,0.46,0.2,2,0.65,1,0,1.2)+HT+0.1*BMPHT,1,0.86956,1,-0.0816,1,2,1,0)+Z(noise(RIDGED,9,13.2,0.1,0.72,2,1,0.25,1,0));
+								Texture("alpine",BORDER|S|TEX,noise(NABS,10.7,5.4,0.46,0.2,2,0.65,1,0,1.2)+HT+0.1*BMPHT,1,0.86956,1,-0.0816,1,2,1,0)+Z(noise(RIDGED,9,13.2,0.1,0.72,2,1,0.25,1,0));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.33);
 						crot=1;
 						diffuse=Color(1,1,1,0.91);
 						diffusion=0.53276;
+						hscale=0.05;
 						name="3D";
 						resolution=2.40814;
 						shine=24.4493;
@@ -94,6 +95,7 @@ Scene() {
 						ambient=Color(1,0.98,0.71,0.91);
 						crot=1;
 						diffuse=Color(1,1,1,0.43);
+						hscale=0.05;
 						name="2D";
 						specular=Color(1,1,1,0);
 						Surface{
@@ -102,6 +104,7 @@ Scene() {
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.9,0.9);
+						day=24;
 						density=0.2;
 						haze.color=Color(1,1,1,0.52);
 						haze.value=0.517647;

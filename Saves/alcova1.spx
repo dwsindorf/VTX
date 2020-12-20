@@ -56,7 +56,6 @@ Scene() {
 				ambient=Color(1,1,1,0.05);
 				day=5;
 				diffuse=Color(1,1,1,0.7);
-				fog.max=1000 ft;
 				fog.min=100 ft;
 				fog.value=1;
 				fog.vmax=2000 ft;
@@ -85,9 +84,9 @@ Scene() {
 					terrain=fog(2*noise(8,5))
 							water(0.0002*noise(20,2))
 							Z(0.5*z1)+
-							Texture("cracks2",BUMP|NTEX,9999,-0.2,1,0,10,2.29232,1,0)+
-							Texture("bmap1",BUMP|NTEX|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0)+
-							Texture("bands1",S,HT+0.2*m3+0.05*BMPHT,1,1.38888,2,0,1,2,1,0);
+							Texture("cracks2",BUMP,9999,-0.2,1,0,10,2.29232,1,0)+
+							Texture("bmap1",BUMP|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0)+
+							Texture("bands1",S|TEX,HT+0.2*m3+0.05*BMPHT,1,1.38888,2,0,1,2,1,0);
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);

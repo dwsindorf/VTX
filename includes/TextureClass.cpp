@@ -43,7 +43,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	orders=1;
 	orders_delta=2.0;
 	orders_atten=1.0;
-	tex_active=(options & NTEX)?false:true;
+	tex_active=(options & TEX)?true:false;
 	bump_active=(options & BUMP)?true:false;
 	hmap_active=(options & HMAP)?true:false;
 	enabled=true;

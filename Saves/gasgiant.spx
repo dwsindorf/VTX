@@ -27,7 +27,6 @@ Scene() {
 		height=0.00899557;
 	}
 	View{
-		phi=14.3288;
 		height=0.0104634;
 	}
 	Universe {
@@ -40,7 +39,7 @@ Scene() {
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
 				Color(0.502,1.000,1.000),
-				Color(1.000,0.278,0.000),
+				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
@@ -49,10 +48,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -68,7 +67,7 @@ Scene() {
 					albedo=1;
 					Surface{
 						terrain=
-								Texture("gasgiant",BUMP,1,0.49272,2,0,2.95936,2,0.67346);
+								Texture("gasgiant",BUMP|TEX,1,0.49272,2,0,2.95936,2,0.67346,0);
 					}
 				}
 			}

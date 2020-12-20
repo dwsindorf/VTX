@@ -52,10 +52,9 @@ enum  {
 	INTRP_MASK  = MMAP|NEAREST|INTERP, 	// interp mask
 	REPEAT      = 0x00000000, 	// wrap options
 	BORDER      = 0x00000800, 	// border flag (GL_CLAMP)
-	TEX         = 0x00000000,   // default
-	BUMP	    = 0x00001000, 	// bump map flag
-	HMAP   	    = 0x00002000,
-	NTEX        = 0x00004000,   // texture turned off
+	TEX         = 0x00001000,   // default
+	BUMP	    = 0x00002000, 	// bump map flag
+	HMAP   	    = 0x00004000,
 	RGBA        = 0x00010000, 	// generate texture alpha from intensity
 	SEXPR       = 0x00020000, 	// S expression in argument list
 	AEXPR       = 0x00040000, 	// T expression in argument list
@@ -79,10 +78,10 @@ enum  {
 	MAP   	    = 0x80000002,
 	IMOPTS 		= 0xff000000,
 	IOPTS 	    = TXOPTS|INOPTS,
-	IFTYPE 		= BUMP|TEX|SPX,
+	IFTYPE 		= BUMP|TEX|HMAP|SPX,
 	SPXTYPE 	= BANDS|IMAGE,
 	IMTYPE 	    = IMPORT|MAP,
-	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|HMAP|TEX|T1D|T2D
+	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|T1D|T2D
 
 };
 

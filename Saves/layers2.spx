@@ -82,7 +82,7 @@ Scene() {
 								layer(MORPH,0.57,0.233,0.08,0.23)
 									[Z(0.2*noise(RIDGED|UNS,9,6,0.4,0.5))
 									+
-									Texture("cracks2",NTEX,1,1.09092,1.05456,0,10,3)+Color(0.7,0.7,0)
+									Texture("cracks2",BUMP,1,1.09092,1.05456,0,10,3)+Color(0.7,0.7,0)
 									+gloss(0.46666,4.28183)
 									]
 								layer(MESH,0,0.1-0.2*noise(RO1,2,5),0.22,0)
@@ -94,14 +94,14 @@ Scene() {
 								layer(MESH,0,0.08,0.22,0)
 									[Z(0.3*z3)
 									+
-									Texture("craters2",BUMP|NTEX,9.999,1.61216,1.09092,0,10,3)+Color(0.7,0.7,0.7)
+									Texture("craters2",BUMP,9.999,1.61216,1.09092,0,10,3)+Color(0.7,0.7,0.7)
 									+gloss(0.81212,7.47281)
 									]
 								layer(MESH,0,0.02,0.081,0)
 									[Z(0.3*noise(RIDGED|UNS|RO2,6,12,0.5,0.1))
 									+
-									Texture("saturn2",S,HT+noise(BP|FS,4,4,0,0.3,3),1,1.27272,2,-1.29232,1,1.98464)+
-									Texture("lava2",BUMP|S,noise(RIDGED|FS|SCALE,17,11.4,0,0.87,2.2,0.3,1,1,0),48.2152,0.15,1.8082,0.55392,1,1.98464,0.50684,0,-0.2)+Color(0.529412,0,0)
+									Texture("saturn2",S|TEX,FHT,1,1.27272,2,-1.29232,1,1.98464,1,0)+
+									Texture("lava2",BUMP|S|TEX,noise(RIDGED|FS|SCALE,17,11.4,0,0.87,2.2,0.3,1,1,0),48.2152,0.15,1.8082,0.55392,1,1.98464,0.50684,0,-0.2)+Color(0.529412,0,0)
 									+gloss(1,5.46353)
 									]
 								;

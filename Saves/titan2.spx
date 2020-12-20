@@ -66,7 +66,7 @@ Scene() {
 						Color(1,0.9,0.3));
 					Surface{
 						terrain=
-								Texture("saturn",S,2*PHI+0.01*noise(3,17),0.9999,1.0788,1,0,1,2);
+								Texture("saturn",S|TEX,2*PHI+0.01*noise(3,17),0.9999,1.0788,1,0,1,2);
 					}
 					Ring(0.06,0.01) {
 						emission=Color(1,1,1,0.8);
@@ -74,7 +74,7 @@ Scene() {
 							Color(1,1,0.3,0.5));
 						Surface{
 							terrain=
-									Texture("rings",S,PHI,0.9999,1.7212,1,0,1,2);
+									Texture("rings",S|TEX,PHI,0.9999,1.7212,1,0,1,2);
 						}
 					}
 					Ring(0.045,0.013) {
@@ -85,7 +85,7 @@ Scene() {
 							Color(1,0.9,0.3));
 						Surface{
 							terrain=
-									Texture("saturn",S,PHI,0.9999,1.50304,1,0,1,2);
+									Texture("saturn",S|TEX,PHI,0.9999,1.50304,1,0,1,2);
 						}
 					}
 					Moon(0.002,0.1) {
@@ -113,9 +113,9 @@ Scene() {
 						Surface{
 							terrain=water(0.005*noise(SCALE|SQR|UNS,14,6,0.5,0.1,2.1))
 									Z(0.7*fractal(SS,12.5,8.7,0.4,2.52,3,0.35,1,1,0.89,1)craters(ID7,2,0.1,0.1,1,0.9,0.8,1,1,0.5,1,0.8,0.6,0.2)+noise(RIDGED,3.2,12.1,1,0.37,2.56,0.65,0.07,0.52,-0.5))+
-									Texture("cracks2",BUMP|NTEX,5065.54,0.86064,0.74192,0,10,2,1,0)+
-									Texture("cracks2",BUMP|NTEX,2896.31,1.5484,1.29032,0,7.5808,2.22584,1,0)+
-									Texture("saturn",S,0.5*HT+noise(8,7,0.6)+BMPHT,0.874482,1.57576,0.98184,-3.2616,2.54848,1.58064,1,0);
+									Texture("cracks2",BUMP,5065.54,0.86064,0.74192,0,10,2,1,0)+
+									Texture("cracks2",BUMP,2896.31,1.5484,1.29032,0,7.5808,2.22584,1,0)+
+									Texture("saturn",S|TEX,0.5*HT+noise(8,7,0.6)+BMPHT,0.874482,1.57576,0.98184,-3.2616,2.54848,1.58064,1,0);
 						}
 						Clouds(0.00201625) {
 							ambient=Color(1,1,1,0.18);

@@ -20,6 +20,7 @@ Scene() {
 		gndlvl=-7927.88 ft;
 		pitch=-90;
 		tilt=0;
+		speed=586570;
 	}
 	View{
 		phi=7.56692;
@@ -28,6 +29,7 @@ Scene() {
 		pitch=0;
 		tilt=-15;
 		angle=0;
+		speed=586570;
 	}
 	View{
 		height=911.142 ft;
@@ -35,6 +37,7 @@ Scene() {
 		heading=215;
 		tilt=5;
 		angle=-5;
+		speed=586570;
 	}
 	View{
 		height=32.5221 ft;
@@ -42,11 +45,13 @@ Scene() {
 		heading=250;
 		tilt=-5;
 		angle=10;
+		speed=586570;
 	}
 	View{
 		height=49.3517 ft;
 		gndlvl=2144.28 ft;
 		heading=260;
+		speed=586570;
 	}
 	View{
 		phi=7.5662;
@@ -54,17 +59,20 @@ Scene() {
 		gndlvl=2150.17 ft;
 		tilt=-15;
 		angle=0;
+		speed=586570;
 	}
 	View{
 		height=27450.4 ft;
 		gndlvl=1295.38 ft;
 		tilt=-5;
 		angle=5;
+		speed=586570;
 	}
 	View{
 		height=3666.98 ft;
 		gndlvl=7586.74 ft;
 		heading=285;
+		speed=586570;
 	}
 	View{
 		phi=7.55602;
@@ -73,6 +81,7 @@ Scene() {
 		gndlvl=10112.4 ft;
 		tilt=-15;
 		angle=0;
+		speed=586570;
 	}
 	View{
 		phi=7.41504;
@@ -82,13 +91,11 @@ Scene() {
 		heading=275;
 		tilt=-5;
 		angle=-5;
-		speed=9165.15;
 	}
 	View{
 		height=3981.98 ft;
 		gndlvl=10035.9 ft;
 		tilt=-15;
-		speed=9165.15;
 	}
 	View{
 		phi=7.36874;
@@ -96,7 +103,6 @@ Scene() {
 		height=204.648 ft;
 		gndlvl=8742.13 ft;
 		angle=0;
-		speed=9165.15;
 	}
 	View{
 		height=21.8692 ft;
@@ -104,7 +110,10 @@ Scene() {
 		time=92852.8;
 		heading=305;
 		tilt=-5;
-		speed=9165.15;
+		speed=586570;
+	}
+	View{
+		speed=586570;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -125,10 +134,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
@@ -150,10 +159,10 @@ Scene() {
 					Surface{
 						terrain=fog(1)
 								
-								Texture("Shist1",BUMP,15170.7,1.02704,2,0,8.1112,2,0.30612)+
-								Texture("craters3",BUMP,7984.58,-1.08112,0.94596,0,6.77776,2.70368,0.35186)+
-								Texture("bricks",BUMP,131072,-2,2,0,6,2,0.61224)+
-								Texture("jupiter",BORDER|BUMP|S,HT+noise(RIDGED,8.8,1.9,1,0.5,2,1,1,0,0),1,0.8108,0.72972,0.59264,1,2,1)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)noise(NABS,8.3,4.1,1,0.44,2.06,1,0.07,1,0));
+								Texture("Shist1",BUMP|TEX,15170.7,1.02704,2,0,8.1112,2,0.30612,0)+
+								Texture("craters3",BUMP,7984.58,-1.08112,0.94596,0,6.77776,2.70368,0.35186,0)+
+								Texture("bricks",BUMP|TEX,131072,0.44448,2,0,6,2,0.61224,0)+
+								Texture("jupiter",BORDER|BUMP|S|TEX,HT+noise(RIDGED,8.8,1.9,1,0.5,2,1,1,0,0),1,0.8108,0.44444,-0.33328,1,2,1,0)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)noise(NABS,8.3,4.1,1,0.44,2.06,1,0.07,1,0));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -161,6 +170,7 @@ Scene() {
 						day=24;
 						diffuse=Color(1,1,0.5,0.47);
 						emission=Color(1,1,1,0.04);
+						hscale=0.05;
 						resolution=2;
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
@@ -171,9 +181,11 @@ Scene() {
 					}
 					Sky(0.0041029) {
 						color=Color(0.74,0.98,0.79);
+						day=24;
 						density=0.2;
 						haze.color=Color(0.98,0.96,0.76);
 						haze.grad=0.8644;
+						haze.value=1;
 						night.color=Color(0,0.31,1,0);
 						shine=0.630849;
 						specular=Color(1,1,1);

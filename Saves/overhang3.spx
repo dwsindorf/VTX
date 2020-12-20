@@ -83,8 +83,8 @@ Scene() {
 					m2=noise(SQR|RO1,8,14,0.3,0.5,2.1);
 					terrain=fog(2*noise(SQR|UNS,8,5,0.5))
 							Point(2*m2,0,m1+m2)+
-							Texture("craters",BORDER|BUMP|NTEX,584.56,1.05456,1,0.8,8,1.61536)+
-							Texture("cracks2",BORDER|BUMP|NTEX,9999,2,1,0.8,10,3.46152)+
+							Texture("craters",BORDER|BUMP|TEX,584.56,1.05456,1,0.8,8,1.61536)+
+							Texture("cracks2",BORDER|BUMP|TEX,9999,2,1,0.8,10,3.46152)+
 							Texture("mercury",BORDER|S,HT+0.1*BMPHT,0.9999,1.3212,0.6424,0,1,2);
 				}
 				Clouds(0.00101) {

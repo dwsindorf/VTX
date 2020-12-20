@@ -7,6 +7,7 @@ Scene() {
 		time=1;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -15,7 +16,6 @@ Scene() {
 		gndlvl=22720.3 ft;
 	}
 	View{
-		phi=-20.4197;
 		theta=-0.0944104;
 		height=0.00699184;
 		gndlvl=0 ft;
@@ -58,7 +58,7 @@ Scene() {
 						Color(0.992,0.773,0.004));
 					Surface{
 						terrain=rocks(ID13,2,0.721885,0.96,0.8,0.21,0.3,1,noise(0,2))[
-								Texture("saturn3",BUMP|S,noise(FS|NABS|NEG,2.8,4.6,0,0.5,2,1,0.21,0.98,0),0.309569,0.01,1,0,1,2,1,0,0.0198323)];
+								Texture("saturn3",BUMP|S|TEX,noise(FS|NABS|NEG,2.8,4.6,0,0.5,2,1,0.21,0.98,0),0.309569,0.01,1,0,1,2,1,0)];
 					}
 				}
 			}

@@ -26,6 +26,10 @@ Scene() {
 		heading=240;
 		angle=-15;
 	}
+	View{
+		height=679.008 ft;
+		gndlvl=2042.62 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -45,10 +49,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
@@ -64,10 +68,11 @@ Scene() {
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=Z(noise(NABS|UNS,12,4,-1,0.4,2,0.31,1,0,0))+
-								Texture("jupiter",BUMP|S,noise(FS|NABS|SCALE,12,4,-1,0.2,2,0.01,1,0.01,0)+noise(FS|NABS|SCALE,15,8.1,-1,0.48,2,0.11,1,0,0),1.30949,0.07408,1,0,1,2,1,0);
+								Texture("jupiter",BUMP|S|TEX,noise(FS|NABS|SCALE,12,4,-1,0.2,2,0.01,1,0.01,0)+noise(FS|NABS|SCALE,15,8.1,-1,0.48,2,0.11,1,0,0),1.30949,0.07408,1,0,1,2,1,0);
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
+						day=24;
 						density=0.2;
 						haze.color=Color(1,0.96,0.6,0.02);
 						haze.value=0.0196078;

@@ -9,8 +9,13 @@ Scene() {
 		heading=-75;
 		tilt=-10;
 		angle=5;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=820.529 ft;
+		gndlvl=2271.28 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -31,10 +36,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -55,11 +60,12 @@ Scene() {
 					bands("jupiter",256,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=Z(noise(NABS,8,12,0.35,0.95,2.1))+
-								Texture("cracks2",BUMP|NTEX,91.36,-0.95952,1,0,10,2.91784)+
-								Texture("jupiter",BORDER|BUMP|LINEAR|S,0.2*HT+0.2*noise(SS,6,9,1,0.5,2)+2e-05*noise(FS,21,5)+0.01*BMPHT,15.538,0.49696,1.30636,-1.1,4,2);
+								Texture("cracks2",BUMP,48.4022,-0.95952,1,0,10,2.91784,1,0)+
+								Texture("jupiter",BORDER|BUMP|LINEAR|S|TEX,0.2*HT+0.2*noise(SS,6,9,1,0.5,2)+2e-05*noise(FS,21,5)+0.01*BMPHT,1.30949,0.49696,1.30636,-1.1,4,2,1,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
 						haze.grad=0.9;
@@ -69,7 +75,9 @@ Scene() {
 						specular=Color(1,1,1);
 					}
 					Clouds(0.00407746) {
+						crot=1;
 						emission=Color(1,1,1,0.3);
+						hscale=0.05;
 						specular=Color(1,1,1);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

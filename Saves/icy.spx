@@ -84,7 +84,7 @@ Scene() {
 		view=SURFACE;
 		phi=-4.21875;
 		theta=122.344;
-		height=10 miles;
+		height=52800 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
@@ -114,6 +114,9 @@ Scene() {
 		theta=215.032;
 		height=0.0176367;
 	}
+	View{
+		height=0.0163748;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -133,10 +136,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -149,7 +152,7 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=
-								Texture("deep_fire",BUMP|S,noise(SCALE|SQR|UNS|RO1,0,2.4,1,1,2.13,0.08,1,0,0),0.5,1.47168,2,0,12.3208,1.90568,0.86792,0)+
+								Texture("icy",BUMP|S|TEX,noise(SCALE|SQR|UNS|RO1,0,2.4,1,1,2.13,0.08,1,0,0),0.5,1.47168,2,0,12.3208,1.90568,0.86792,0)+
 								Texture("icy1",BUMP,0.5,0.64152,2,0,1,1,0.86792,0.01886);
 					}
 				}

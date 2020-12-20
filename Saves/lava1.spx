@@ -82,10 +82,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -104,14 +104,15 @@ Scene() {
 						Color(0.596,0,0));
 					Surface{
 						terrain=Z(noise(NABS,8,12,0.35,0.95,2.1))+Color(0.529412,0.521569,0.521569,1)+
-								Texture("bricks",BORDER|BUMP|NORM,512,2,2,0,13.4445,2,1,0.37038)+
-								Texture("lava2",BORDER|S,2*BMPHT,2.48802,0.5926,1.40744,1.92592,1,2,1,0);
+								Texture("bricks",BORDER|BUMP|NORM|TEX,512,2,2,0,13.4445,2,1,0.37038)+
+								Texture("lava2",BORDER|S|TEX,2*BMPHT,2.48802,0.5926,1.40744,1.92592,1,2,1,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
-						haze.color=Color(0.98,0.96,1);
-						haze.grad=0.32432;
+						haze.color=Color(0.98,0.96,1,0.9);
+						haze.grad=0.7439;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
@@ -122,6 +123,7 @@ Scene() {
 						crot=1;
 						diffuse=Color(0.98,0.89,0.89);
 						emission=Color(1,0.84,0.84,0.22);
+						hscale=0.05;
 						specular=Color(1,0.98,0.69);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

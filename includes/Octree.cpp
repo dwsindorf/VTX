@@ -797,7 +797,6 @@ DensityTree::~DensityTree()
 //-------------------------------------------------------------
 int DensityTree::inside()
 {
-//	Point gp=TheScene->gpoint+TheScene->spoint-origin;
 	Point gp=TheScene->gpoint-origin;
 	if(test_surface(gp)>=0)
 		return 1;
@@ -816,13 +815,9 @@ void DensityTree::scale()
 
 	if(sdist>=0){
 		vtype=INSIDE;
-		//z1=LY;
-		//z2=size;
 	}
 	else{
 		vtype=OUTSIDE;
-		//z1=-sdist;
-		//z2=gdist+size;
 	}
 	z1=sdist/size;
 }
@@ -1145,7 +1140,8 @@ void StarNode::render()
 	Radius=mpt.distance(galaxy->origin)/galaxy->size;
 
     // render bg stars
-	if(TheScene->viewtype!=SURFACE && galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
+	//if(TheScene->viewtype!=SURFACE && galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
+	if( galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
 		Color c=WHITE;
 		Density=Td.density=dns;
 		Td.p=v*octree->nscale;

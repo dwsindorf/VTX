@@ -144,7 +144,7 @@ undebug:;   rm ../Shaders/*.debug
 #################
 jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CLASSPATH) VtxMain
 
-#test:;         ./vtx.exe --m alpine.spx
+#test:;         ./vtx.exe --m snowy.spx
 #test:;         ./vtx.exe --m  last.spx
 test:;         ./vtx.exe --m  test.spx
 #test:;         ./vtx.exe --m 
