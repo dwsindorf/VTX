@@ -103,7 +103,7 @@ static int last_cnt=0;
 //-------------------------------------------------------------
 // VtxScene::VtxScene() constructor
 //-------------------------------------------------------------
-VtxScene::VtxScene(wxWindow *parent, wxWindowID id,
+VtxScene::VtxScene(wxString file, wxWindow *parent, wxWindowID id,
     const wxPoint& pos, const wxSize& size, long style, const wxString& name)
 #if wxCHECK_VERSION(3, 0, 0)
 : wxGLCanvas(parent, id, attributeList, pos, size, style|wxFULL_REPAINT_ON_RESIZE,
@@ -123,6 +123,7 @@ name,attributeList)
     t0=0;
     vtxScene=this;
     m_glRC=NULL;
+    infile=file;
     //SetContext();
 }
 
@@ -617,7 +618,7 @@ void VtxScene::open_scene(char *path)
 //-------------------------------------------------------------
 void VtxScene::make_scene()
 {
-    wxString infile;
+    //wxString infile;
     char sargs[256];
     int  nargs=0;
     int i;
@@ -631,16 +632,18 @@ void VtxScene::make_scene()
     SetCurrent();
 
     GetClientSize(&width, &height);
+    bool make_default=false;
 
     for (i = 1; i < argc; i++) {
         if (argv[i][0]=='-'){
             switch(argv[i][1]){
+            case KEY_DEFAULT:
+            	make_default=true;
+            	break;
             default:
                 sargs[nargs++]=argv[i][1];
             }
         }
-        else
-            infile=wxString(argv[i]);
     }
     glViewport(0, 0, (GLint) width, (GLint) height);
 
@@ -669,8 +672,8 @@ void VtxScene::make_scene()
     	noiseDialog=new VtxFunctDialog(this);
     }
 	//Render.invalidate_textures();
-
-    TheScene->make(); // create Default scene
+    if(make_default)
+    	TheScene->make(); // create Default scene
 
     char path[256];
     if(infile.Length()>0){

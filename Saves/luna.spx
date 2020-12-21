@@ -1,20 +1,16 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-14.7656;
-		theta=92.1094;
-		height=249.942 miles;
-		gndlvl=-190.764 ft;
-		time=57473.2;
+		phi=-6.41373;
+		theta=120.115;
+		height=249.924 miles;
+		gndlvl=-94.0504 ft;
+		time=49560.4;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		height=249.882 miles;
-		gndlvl=125.473 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -64,10 +60,10 @@ Scene() {
 						rseed=2.41294;
 						year=30;
 						Surface{
-							terrain=Z(craters(ID2,5,0.0009999,0.24,0.13,0.06,0.01,0.31,1,0,3.9,0.8,0.47,0.31,0.1)
-									fractal(SQR|SS,12.9,6,0.1,0.4,2.71,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0))+
-									Texture("coldlava",BUMP|NORM,12275.5,-0.88896,2,0,3,2,0.5,0)+
-									Texture("luna",BUMP|HMAP,1,2,2,0,1,2,0.5,0,0.1,0);
+							terrain=
+									Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.1,0)+
+									Texture("coldlava",BUMP|NORM|TEX,2277.13,-0.88896,0.69444,0,7.66672,1.94448,0.48612,0)+Z(craters(ID2,5,0.0009999,0.24,0.13,0.06,0.01,0.31,1,0,3.9,0.8,0.47,0.31,0.1)
+									fractal(SQR|SS,12.9,6,0.1,0.4,2.71,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
 						}
 					}
 				}

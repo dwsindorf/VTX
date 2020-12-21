@@ -805,12 +805,13 @@ void TNtexture::eval()
 		int mode=texture->intrp();
 
 		double scale=texture->scale;
-		double amp=texture->hmap_amp;
+		double amp0=texture->hmap_amp/scale;
+		double amp=amp0;
 		double z=0;
 		for(int i=0;i<(int)texture->orders;i++){
 			double v=texture->getTexAmpl(mode)-0.5;
 			z+=v*amp;
-			amp*=orders_atten;
+			amp*=texture->orders_atten;
 			texture->scale*=texture->orders_delta;
 		}
 		texture->scale=scale;

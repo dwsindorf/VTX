@@ -426,7 +426,7 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 		dst->set_expanded();
 	else
 		dst->set_collapsed();
-
+	TheScene->model->setActionMode(Model::DROPPING);
 	TheScene->model->getAddList(dst,list);
 	list.ss();
 	ModelSym *sym=0;
@@ -442,7 +442,7 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 		}
 	}
 	if(type){
-		//cout << "Ok to drop " << sstr << " at " << dstr << endl;
+		cout << "Ok to drop " << sstr << " at " << dstr << endl;
 		char path[256];
 	    File.getBaseDirectory(path);
 	    File.addToPath(path,File.system);
@@ -971,6 +971,7 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 	LinkedList<ModelSym*> dlist;
 	add_list.free();
+	TheScene->model->setActionMode(Model::ADDING);
 	TheScene->model->getAddList(obj,dlist);
 	add_list.ss();
 	dlist.ss();

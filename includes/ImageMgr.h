@@ -156,8 +156,20 @@ public:
 
 	FColor color(int,double); //1d
 	FColor color(int,double,double);  //2d
+	double value(int,double,double);  //2d
+
+	double lerp(double s, double e, double t){return s+(e-s)*t;}
+	double blerp(double c00, double c10, double c01, double c11, double tx, double ty){
+	    return lerp(lerp(c00, c10, tx), lerp(c01, c11, tx), ty);
+	}
+ 	double cubic( double v0, double v1, double v2, double v3, double frac);
+
+	double p2v(int index);
+	double p2v(double r, double c);
+
 
 	Color p2c(int index);
+	Color p2c(double r, double c);
 
 	Image *clone();
 };

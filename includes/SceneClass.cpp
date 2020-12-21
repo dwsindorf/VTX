@@ -1189,15 +1189,6 @@ void Scene::make()
 	fp=fopen(path, "wb");
 	model->make(fp);
 	fclose(fp);
-//	File.makeFilePath(File.saves,(char*)"Startup.spx",path);
-//	fp=fopen(path, "rb");
-//	if(!fp){
-//		fp=fopen(path, "wb");
-//		model->make(fp);
-//		strcpy(filename,"Startup.spx");
-//		fclose(fp);
-//	}
-//	open(path);
 }
 
 //-------------------------------------------------------------
@@ -1262,7 +1253,6 @@ void Scene::eval_view()
 	if(vars.get_local("speed",data)){
 		speed=data.s;
 		vstride=gstride=speed;
-		//gstride=speed;
 	}
 	ViewFrame *frame;
 	if(mopen())
@@ -1272,7 +1262,6 @@ void Scene::eval_view()
 		if(vars.get_local("message",data))
 			frame->log_message(data.string);
 	}
-	//frame->print_position();
 
 	vars.free();
 }

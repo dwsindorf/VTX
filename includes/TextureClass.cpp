@@ -102,8 +102,11 @@ double Texture::getTexAmpl(int mode){
 	getTexCoords(x,y);
 	x+=1;
 	//printf("x:%-10g y:%-10g fm:%-10g ym:%-10g\n",x,y,fmod(x,1),fmod(y,1));
-	FColor c=timage->color(mode, x,y);
-	return c.intensity();
+	//FColor c=timage->color(mode, x,y);
+	//return c.intensity();
+	//FColor c=timage->color(mode, x,y);
+	return timage->value(mode, x,y);
+
 }
 //-------------------------------------------------------------
 // Texture::getTexCoords() return texture lookup coordinates

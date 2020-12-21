@@ -80,6 +80,7 @@ static char             lastline[MAXSXLINE+1];
 static LongSym keytbl[]={ 
 	{"Scene",		YY_SCENE},
 	{"System",		YY_SYSTEM},
+	{"Group",	    YY_GROUP},
 	{"Star",		YY_STAR},
 	{"Corona",		YY_CORONA},
 	{"Planet",		YY_PLANET},

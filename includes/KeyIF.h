@@ -47,6 +47,8 @@ enum standard_keys{
     KEY_TEST3           = '@',
     KEY_TEST4           = '#',
 
+	KEY_DEFAULT         = 'Q',
+
 	KEY_UP    		    = 'u',
 	KEY_DOWN  			= 'd',
 	KEY_MOVE_SELECT     = 'M',

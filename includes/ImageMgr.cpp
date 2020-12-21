@@ -520,26 +520,6 @@ Image *Image::clone()
 }
 
 //-------------------------------------------------------------
-// Image::color()      get pixel Color
-//-------------------------------------------------------------
-Color Image::p2c(int indx){
-	int max=size()-1;
-	if(indx<0 || indx>max)
-		return Color(1,1,1);
- 	if(type()==RGB_DATA && comps()==3){
- 		RGBColor c=*((RGBColor*)data+indx);
- 		Color col=Color(c.red(),c.green(),c.blue(),1);
- 		return col;
-	}
- 	if(type()==RGBA_DATA && comps()==4){
- 		Color c=*((Color*)data+indx);
- 		Color col=Color(c.red(),c.green(),c.blue(),1);
- 		return col;
- 	}
- 	return Color();
- }
-
-//-------------------------------------------------------------
 // Image::color()      return interpolated color (1d)
 //-------------------------------------------------------------
 FColor Image::color(int opts, double s)
@@ -554,6 +534,125 @@ FColor Image::color(int opts, double s)
     return col1.mix(col2,f);
 }
 
+
+//-------------------------------------------------------------
+// Image::color()      get nearest pixel Color
+//-------------------------------------------------------------
+double Image::p2v(int indx){
+ 	if(type()==RGB_DATA && comps()==3){
+ 		RGBColor c=*((RGBColor*)data+indx);
+ 		return c.intensity();
+	}
+ 	if(type()==RGBA_DATA && comps()==4){
+ 		Color c=*((Color*)data+indx);
+ 		return c.intensity();
+ 	}
+ 	return 0.0;
+
+}
+
+//-------------------------------------------------------------
+// Image::color()      get pixel Color
+//-------------------------------------------------------------
+Color Image::p2c(int indx){
+ 	if(type()==RGB_DATA && comps()==3){
+ 		RGBColor c=*((RGBColor*)data+indx);
+ 		Color col=Color(c.red(),c.green(),c.blue(),1);
+ 		return col;
+	}
+ 	if(type()==RGBA_DATA && comps()==4){
+ 		Color c=*((Color*)data+indx);
+ 		Color col=Color(c.red(),c.green(),c.blue(),1);
+ 		return col;
+ 	}
+ 	return Color();
+ }
+
+
+//-------------------------------------------------------------
+// Image::color()      get nearest pixel amplitude
+//-------------------------------------------------------------
+double Image::p2v(double x, double y){
+    double r=floor(y*height);
+    double c=floor(x*width);
+  	c=c>=width?c-width:c;
+	r=r>=height?r-height:r;
+	c=c<0?width+c:c;
+	r=r<0?height+r:r;
+
+    double indx=r*width+c;
+	return p2v(indx);
+}
+
+//-------------------------------------------------------------
+// Image::color()      get nearest pixel Color
+//-------------------------------------------------------------
+Color  Image::p2c(double x, double y){
+    double r=floor(y*height);
+    double c=floor(x*width);
+  	c=c>=width?c-width:c;
+	r=r>=height?r-height:r;
+	c=c<0?width+c:c;
+	r=r<0?height+r:r;
+
+    double indx=r*width+c;
+	return p2c(indx);
+}
+
+//-------------------------------------------------------------
+// Image::color() return interpolated image color (2d)
+// 1) using Color causes step like artifacts for some reason
+//    - difference in blend/mix functions ?
+// 2) result is flat-sided because of linear interpolation in box only
+//   - might be able to improve using 3 or 4 point smoothing function
+//     from adjacent box pixels
+//-------------------------------------------------------------
+double Image::value(int opts, double x, double y)
+{
+	x=fmod(x,1.0);
+	y=fmod(y,1.0);
+
+    if(opts==GL_NEAREST)
+    	return p2v(x,y);
+
+    // linear interpolation
+
+	double dw=1.0/width,dh=1.0/height; //  pixel step
+	double row=y*height;
+	double col=x*width;
+	double f1=col-floor(col);
+	double f2=row-floor(row);
+
+	if(opts==GL_LINEAR)
+		return blerp(p2v(x,y),p2v(x+dw,y),p2v(x,y+dh),p2v(x+dw,y+dh),f1,f2);
+
+	// bi-cubic interpolation (3rd order polynomial)
+
+#define pval(i,j) p2v(x+dw*i,y+dh*j)
+//#define FORWARD
+#ifdef FORWARD // interpolate using only forward pixels
+	double x1 = cubic(pval(0,0), pval(1,0), pval(2,0), pval(3,0), f1 );
+	double x2 = cubic(pval(0,1), pval(1,1), pval(2,1), pval(3,1), f1 );
+	double x3 = cubic(pval(0,2), pval(1,2), pval(2,2), pval(3,2), f1 );
+	double x4 = cubic(pval(0,3), pval(1,3), pval(2,3), pval(3,3), f1 );
+#else // interpolate using backwards pixels
+	double x1 = cubic(pval(-1,-1), pval(0,-1), pval(1,-1), pval(2,-1), f1 );
+	double x2 = cubic(pval(-1,0), pval(0,0), pval(1,0), pval(2,0), f1 );
+	double x3 = cubic(pval(-1,1), pval(0,1), pval(1,1), pval(2,1), f1 );
+	double x4 = cubic(pval(-1,2), pval(0,2), pval(1,2), pval(2,2), f1 );
+#endif
+	double y1 = cubic( x1, x2, x3, x4, f2 );
+	return y1;
+}
+
+double Image::cubic(double v0, double v1, double v2, double v3, double frac){
+	double A = 0.5 * (v3 - v0) + 1.5 * (v1 - v2);
+	double B = 0.5 * (v0 + v2) - v1 - A;
+	double C = 0.5 * (v2 - v0);
+	double D = v1;
+    return ((A * frac + B) * frac + C) * frac + D;
+}
+
 //-------------------------------------------------------------
 // Image::color() return interpolated image color (2d)
 // 1) using Color causes step like artifacts for some reason
@@ -566,38 +665,24 @@ FColor Image::color(int opts, double x, double y)
 {
 	x=fmod(x,1.0);
 	y=fmod(y,1.0);
-	y=y<0?1+y:y;
-    double w=width,h=height;
-	double row=y*h;
-	double col=x*w;
+
+	double dw=1.0/width,dh=1.0/height; //  pixel step
+	double row=y*height;
+	double col=x*width;
 	double f1=col-floor(col);
 	double f2=row-floor(row);
 
-    double r1=floor(y*height);
-    double c1=floor(x*width);
-
-	int tl=r1*width+c1;
     if(opts==GL_NEAREST)
-    	return p2c(tl);
-	double r2=r1+1;
-	double c2=c1+1;
+    	return p2c(x,y);
 
-	r2=r2>=height?0:r2;
-	c2=c2>=width?0:c2;
+	FColor col1=p2c(x,y);
+	FColor col2=p2c(x+dw,y);
+	FColor col3=p2c(x,y+dh);
+	FColor col4=p2c(x+dw,y+dh);
 
-	int tr=r1*width+c2;
-	int bl=r2*width+c1;
-	int br=r2*width+c2;
-
-	FColor col1,col2,col3,col4,mix1,mix2,mix3;
-	col1=p2c(tl);
-	col2=p2c(tr);
-	col3=p2c(bl);
-	col4=p2c(br);
-
-	mix1=col1.mix(col2,f1); // base row midpoint
-	mix2=col3.mix(col4,f1); // previous row midpoint
-	mix3=mix1.mix(mix2,f2);
+	FColor mix1=col1.mix(col2,f1); // base row midpoint
+	FColor mix2=col3.mix(col4,f1); // previous row midpoint
+	FColor mix3=mix1.mix(mix2,f2);
 
 	return mix3;
 }

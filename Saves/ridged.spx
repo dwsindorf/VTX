@@ -8,6 +8,7 @@ Scene() {
 		time=85454;
 		heading=-50;
 		tilt=-15;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -30,6 +31,14 @@ Scene() {
 		tilt=-40;
 		angle=5;
 	}
+	View{
+		phi=-29.5337;
+		theta=350.159;
+		height=9936.38 ft;
+		gndlvl=2602.75 ft;
+		tilt=-8;
+		angle=6;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -49,10 +58,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -72,18 +81,24 @@ Scene() {
 						Color(0.7,0.4,0),
 						Color(1,0.9,0.3));
 					Surface{
-						terrain=Z(noise(NABS,8,4,0.35,0.95,2.1,1,0.1))+
+						terrain=Z(noise(NABS,8,9.5,0.35,0.95,2.1,1,0.1,0,0))+
 								Texture("eroded",TEX,10000,2,0.2788,0,1,2)+
-								Texture("saturn",S,HT,1,1.3818,2,0,1,2);
+								Texture("saturn",S|TEX,HT,1,1.3818,2,0,1,2,1,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
+						haze.grad=0.56098;
 						haze.height=0.66;
 						haze.value=0.4;
+						resolution=4;
 						specular=Color(1,1,1);
 					}
 					Clouds(0.00407746) {
+						crot=1;
+						hscale=0.05;
+						resolution=4;
 						Surface{
 							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
 						}

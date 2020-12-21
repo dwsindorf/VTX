@@ -21,7 +21,7 @@ Scene() {
 		view=SURFACE;
 		phi=-11.9531;
 		theta=106.172;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-85952.7 ft;
 		heading=0;
 		pitch=0;
@@ -47,6 +47,75 @@ Scene() {
 	View{
 		height=12840.8 ft;
 		tilt=-9;
+	}
+	View{
+		phi=-10.7537;
+		theta=110.452;
+		height=25.6546 miles;
+		gndlvl=-53391.1 ft;
+		heading=40;
+		tilt=-33;
+		angle=4;
+	}
+	View{
+		phi=-10.5908;
+		theta=111.061;
+		height=1754.11 ft;
+		gndlvl=-48941.3 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=8611.27 ft;
+		gndlvl=-48825.1 ft;
+		tilt=-1;
+	}
+	View{
+		height=9828.73 ft;
+		gndlvl=-49268.7 ft;
+		tilt=-4;
+		angle=-2;
+	}
+	View{
+		height=43620 ft;
+		gndlvl=-95229 ft;
+	}
+	View{
+		phi=-10.4041;
+		theta=111.429;
+		height=804.318 ft;
+		gndlvl=-77576.3 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		phi=-10.4044;
+		theta=111.428;
+		height=1982.09 ft;
+		gndlvl=-77735.3 ft;
+		heading=39;
+		tilt=4;
+		angle=-7;
+	}
+	View{
+		height=6526.03 ft;
+		gndlvl=-79810.8 ft;
+		heading=31;
+		tilt=0;
+		angle=-4;
+	}
+	View{
+		height=4047.56 ft;
+		gndlvl=-78266 ft;
+		tilt=3;
+		angle=-7;
+	}
+	View{
+		height=41.221 miles;
+		gndlvl=-173494 ft;
+		heading=21;
+		tilt=-23;
+		angle=-64;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -87,7 +156,10 @@ Scene() {
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=Texture("mars_hmap",HMAP,1,2,1,0,1,2,0.5,0,1,-0.36112);
+						terrain=
+								Texture("mars",TEX,1,2,1,0,1,2,0.5,0)+
+								Texture("mars_hmap",HMAP,1,2,1,0,1,2,0.5,0,1,-0.36112)+
+								Texture("drywash",HMAP|TEX,38.0546,1.11112,1,0,3,2,0.36112,0,0.72224,0)+Z(fractal(SQR|SS,13.3,3,0.1,0.1,1.26,0.24,0,0,1,0));
 					}
 				}
 			}

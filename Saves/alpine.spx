@@ -1,5 +1,4 @@
 Scene() {
-	//rseed=0.16;
 	View{
 		view=SURFACE;
 		phi=-30.7905;
@@ -16,6 +15,14 @@ Scene() {
 	View{
 		height=6358.56 ft;
 		gndlvl=25304.5 ft;
+	}
+	View{
+		phi=-30.7946;
+		theta=350.959;
+		height=9608.83 ft;
+		gndlvl=22054.2 ft;
+		time=50648.8;
+		tilt=-14;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -36,10 +43,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -75,6 +82,7 @@ Scene() {
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
 						haze.grad=0.49316;
@@ -87,6 +95,8 @@ Scene() {
 					Clouds(0.00407746) {
 						crot=1;
 						emission=Color(1,1,1,0.3);
+						hscale=0.05;
+						resolution=6;
 						specular=Color(1,1,1);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

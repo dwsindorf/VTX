@@ -34,11 +34,12 @@ class VtxScene: public wxGLCanvas
     void showFPS();
     wxGLContext* m_glRC;
     wxString  scene_name;
+    wxString infile;
     void clear_canvas();
     bool motionKeypressed(wxKeyCode key);
 
 public:
-    VtxScene(wxWindow *parent, wxWindowID id = wxID_ANY,
+    VtxScene(wxString file, wxWindow *parent, wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize, long style = 0,
         const wxString& name = wxT("VtxScene"));

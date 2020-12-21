@@ -677,8 +677,8 @@ void VtxCloudsTabs::setObjAttributes(){
 	update_needed=true;
 	TNclouds *tnode=object()->getClouds();
 	if(!tnode){
-		cout << "NO CLOUDS" << endl;
-		return;
+		//cout << "NO CLOUDS" << endl;
+		return; // 2d
 	}
 
 	object()->invalidate();

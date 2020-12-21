@@ -96,6 +96,12 @@ class Model
 {
 protected:
 public:
+	enum {
+		ADDING,DROPPING
+	};
+	int actionmode;
+	void setActionMode(int m) { actionmode=m;}
+	int getActionMode()       {return actionmode;}
     int countNodes(TreeNode *);
 	TreeNode *getNode(TreeNode *,NodeIF *);
     void visit(TreeNode *root, void (*func)(TreeNode *));

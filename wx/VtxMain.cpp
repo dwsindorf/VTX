@@ -36,10 +36,11 @@ static int repeat_rate=10;
 // `Main program' equivalent, creating windows and returning main app frame
 bool VtxApp::OnInit()
 {
-	char *infile=0;
+	//char *infile=0;
     int h=MED_H;
     int w=MED_W;
     nargs=0;
+    wxString infile;
     for(int i=0;i<argc;i++){	
        if (argv[i][0]=='-' && argv[i][1]=='-'){
     	    char token=(char)argv[i][2];
@@ -71,29 +72,27 @@ bool VtxApp::OnInit()
                 break;
             default:
                 sargs[nargs++]=argv[i];
-               // sargs[nargs++]=(wxChar*)argv[i].wx_str();
                 break;
             }
         }
         else{
         	if(i>0 && argv[i][0]!='-')
-        		//infile=(char*)argv[i].wx_str();
-        	    infile=(char*)argv[i];
+        		infile=wxString((char*)argv[i]);
         	sargs[nargs++]=argv[i];
-        	//sargs[nargs++]=(wxChar*)argv[i].wx_str();
         }	
     }
-    wxString  filename("");
-	if(infile){
-		char name[64];
-		File.getFileName(infile,name);
-		filename=wxString(name);
+	if(infile.IsEmpty()){
+		infile=wxString("Default");
 	}
+
+	char name[64];
+	File.getFileName((char*)infile.ToAscii(),name);
+	wxString filename=wxString(name);
 
     // Create the main frame window
     VtxFrame *frame = new VtxFrame(NULL, filename, wxPoint(10,10), wxSize(w, h));
 
-	VtxScene *vs=new VtxScene(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSUNKEN_BORDER);
+	VtxScene *vs=new VtxScene(infile, frame, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSUNKEN_BORDER);
     frame->SetCanvas(vs);
     vs->setargs(nargs,sargs);
     h+=FRAME_BORDER;
