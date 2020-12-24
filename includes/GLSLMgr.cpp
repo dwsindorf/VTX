@@ -399,7 +399,7 @@ void GLSLMgr::initGL(int w, int h){
 	//cout << glsl_version << endl;
 
 	if(gls_version<=MINGLSLVERSION || FORCEMINGLVERSION){
-		strcat(verString,"#version 120\n");
+		strcat(verString,"#version 130\n");
 		strcat(extString1,"#extension GL_ARB_texture_rectangle : enable\n");
 		if(GLSupport::geometry_shader())
 			strcat(extString2,"#extension GL_EXT_geometry_shader4 : enable\n");

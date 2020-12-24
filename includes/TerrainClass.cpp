@@ -1157,7 +1157,7 @@ bool TNnoise::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 
-	//cout << nfreq << " " << H << " fact:" << pow(nfreq,-H) << " delta:" << pow(L,-H) <<endl;
+	cout << "info freq:"<< nfreq<<" L:"<<L<<" H:" << H << " fact:" << pow(nfreq,-H) << " delta:" << pow(L,-H) <<endl;
 	//cout << "amp:"<<ampl*ma<<" offset:"<<mb+offset<<" delta:"<<bumpdelta*nfreq<<endl;
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
@@ -1166,7 +1166,7 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].bias",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),bias);
 	sprintf(str,"nvars[%d].H",nid);         glUniform1fARB(glGetUniformLocationARB(program,str),H);
 	sprintf(str,"nvars[%d].L",nid);         glUniform1fARB(glGetUniformLocationARB(program,str),L);
-	sprintf(str,"nvars[%d].smooth",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),smooth);
+	sprintf(str,"nvars[%d].smoothing",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),smooth);
 	sprintf(str,"nvars[%d].clamp",nid);     glUniform1fARB(glGetUniformLocationARB(program,str),clamp);
 	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma);
 	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb+offset);

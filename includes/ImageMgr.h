@@ -55,6 +55,7 @@ enum  {
 	TEX         = 0x00001000,   // default
 	BUMP	    = 0x00002000, 	// bump map flag
 	HMAP   	    = 0x00004000,
+	RANDOMIZE   = 0x00008000,   // random flip
 	RGBA        = 0x00010000, 	// generate texture alpha from intensity
 	SEXPR       = 0x00020000, 	// S expression in argument list
 	AEXPR       = 0x00040000, 	// T expression in argument list

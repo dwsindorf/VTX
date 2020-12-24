@@ -30,6 +30,7 @@ typedef struct tex_state {
 	uint   interp_state;
 	uint clamp   		: 1;
 	uint norm   		: 1;
+	uint randomize   	: 1;
 	uint alpha_enable   : 1;
 	uint tex_enable   	: 1;
 	uint bump_enable   	: 1;
@@ -112,6 +113,7 @@ protected:
 
 	wxCheckBox *m_clamp_check;
 	wxCheckBox *m_norm_check;
+	wxCheckBox *m_rand_check;
 
 	void getObjAttributes();
 	void setObjAttributes();

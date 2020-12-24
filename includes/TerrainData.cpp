@@ -283,14 +283,24 @@ void TerrainProperties::initProgram(){
 		if(textures[i]->bump_active && Render.bumps())
 		    bumps++;
 	}
+	int rand=0;
+	for(tid=0;tid<textures.size;tid++){
+		if(textures[tid]->randomized())
+			rand=1;
+	}
+	int nvals=noise.size+rand;
 	sprintf(defs+strlen(defs),"#define NTEXS %d\n#define NBUMPS %d\n#define NVALS %d\n",
-			textures.size,bumps,noise.size);
+			textures.size,bumps,nvals);
 
 	if(noise.size && is_complex())
 		sprintf(defs+strlen(defs),"#define CPX\n");
+	if(rand)
+		sprintf(defs+strlen(defs),"#define NOTILE\n");
 	strcat(GLSLMgr::defString,defs);
 	Texture::reset();
 	for(tid=0;tid<textures.size;tid++){
+		if(textures[tid]->randomized())
+			rand=true;
 		textures[tid]->initProgram();
 	}
 	if(tncolor)

@@ -3,6 +3,7 @@
 #include "attributes.h"
 #include "textures.h"
 
+
 struct tex2d_info {
 	float bumpamp;
 	float texamp;
@@ -16,9 +17,23 @@ struct tex2d_info {
 	float logf;    		 // scale factor
 	float dlogf;         // delta scale factor
 	float orders; 		 // number of orders to add
+	bool  randomize;    // randomized texture
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
+
+
+#include "tile_funcs.frag"
+
+vec4 textureTile(int id, in vec2 uv , float mm)
+{
+#ifdef NOTILE
+   if(tex2d[id].randomize)
+       return textureNoTile(id, samplers2d[id], uv,mm);
+#endif
+   return texture(samplers2d[id], uv,mm);
+}
+
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0
 #define SET_ATTRIB(ATTR) \
@@ -44,7 +59,7 @@ uniform sampler2D samplers2d[NTEXS];
 
 #define APPLY_TEX \
     offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
-	tval=texture2D(samplers2d[tid], coords+offset,texmip); \
+	tval=textureTile(tid,coords+offset,texmip); \
 	alpha = tex2d[tid].texamp; \
 	cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
 
@@ -55,8 +70,8 @@ uniform sampler2D samplers2d[NTEXS];
 	orders_bump=tex2d[tid].orders_bump; \
 	ds=vec2(s+orders_bump,t)+offset; \
 	dt=vec2(s,t+orders_bump)+offset; \
-	tc2.x=texture2D(samplers2d[tid],ds,texmip).a-tval.a; \
-	tc2.y=texture2D(samplers2d[tid],dt,texmip).a-tval.a; \
+	tc2.x=textureTile(tid,ds,texmip).a-tval.a; \
+	tc2.y=textureTile(tid,dt,texmip).a-tval.a; \
 	tc=vec3(tc2, 0.0); \
     last_bump=bump; \
     last_bmpht=bmpht; \
@@ -69,7 +84,7 @@ uniform sampler2D samplers2d[NTEXS];
 #define NEXT_ORDER \
 	orders_delta /= tex2d[tid].orders_delta; \
     coords *= tex2d[tid].orders_delta; \
-    tval=texture2D(samplers2d[tid], coords+offset,texmip); \
+    tval=textureTile(tid,coords+offset,texmip); \
     alpha*=tex2d[tid].texamp; \
 	cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0); \
 	amplitude *=tex2d[tid].orders_atten; \
@@ -92,13 +107,13 @@ uniform sampler2D samplers2d[NTEXS];
 
 #define APPLY_TEX \
     offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
-	tval=texture2D(samplers2d[tid], coords+offset,texmip); \
+	tval=textureTile(tid,coords+offset,texmip); \
 	cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
 
 #define NEXT_ORDER \
 	orders_delta /= tex2d[tid].orders_delta; \
     coords *= tex2d[tid].orders_delta; \
-    tval=texture2D(samplers2d[tid], coords+offset,texmip); \
+    tval=textureTile(tid,coords+offset,texmip); \
     alpha*=tex2d[tid].texamp; \
 	cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0); \
 
@@ -148,7 +163,8 @@ uniform sampler2D samplers2d[NTEXS];
 	float last_bmpht; \
     vec3 last_bump=vec3(0.0); \
 	amplitude = 1.0; \
-	g=0.0;
+	g=0.0; 	
+	
 
 #define BUMP_VARS \
  	vec2 tc2; \

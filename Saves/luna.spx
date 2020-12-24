@@ -12,6 +12,113 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
+	View{
+		view=SURFACE;
+		phi=-13.3594;
+		theta=130.781;
+		height=13443.4 ft;
+		gndlvl=-137.453 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=50 ft;
+		gndlvl=-190.764 ft;
+	}
+	View{
+		height=139.087 ft;
+		gndlvl=-134.397 ft;
+	}
+	View{
+		phi=-13.3614;
+		theta=130.833;
+		height=20.8996 ft;
+		gndlvl=-116.208 ft;
+	}
+	View{
+		theta=130.829;
+		height=108.796 ft;
+		gndlvl=-115.012 ft;
+		heading=1;
+		tilt=-17;
+		angle=-13;
+	}
+	View{
+		view=ORBITAL;
+		phi=-13.3626;
+		theta=130.85;
+		height=187.457 miles;
+		gndlvl=-120.594 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-21.0938;
+		theta=131.484;
+		height=10009.1 ft;
+		gndlvl=-37.2317 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-21.0961;
+		theta=131.485;
+		heading=12;
+	}
+	View{
+		phi=-19.0723;
+		theta=137.549;
+		height=722.92 ft;
+		gndlvl=-167.609 ft;
+	}
+	View{
+		phi=-19.0699;
+		theta=137.56;
+		height=684.651 ft;
+		gndlvl=-129.34 ft;
+	}
+	View{
+		phi=-18.457;
+		theta=138.911;
+		height=178.493 ft;
+		gndlvl=-44.7956 ft;
+	}
+	View{
+		height=1154.65 ft;
+		gndlvl=-40.416 ft;
+	}
+	View{
+		phi=-17.688;
+		theta=140.361;
+		height=197.203 ft;
+		gndlvl=82.2632 ft;
+	}
+	View{
+		phi=-17.688;
+		theta=140.361;
+		height=287.321 ft;
+		gndlvl=74.1384 ft;
+		heading=59;
+	}
+	View{
+		view=ORBITAL;
+		phi=-17.6221;
+		theta=140.408;
+		height=187.457 miles;
+		gndlvl=75.0388 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		height=249.942 miles;
+		gndlvl=-190.764 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -62,8 +169,8 @@ Scene() {
 						Surface{
 							terrain=
 									Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.1,0)+
-									Texture("coldlava",BUMP|NORM|TEX,2277.13,-0.88896,0.69444,0,7.66672,1.94448,0.48612,0)+Z(craters(ID2,5,0.0009999,0.24,0.13,0.06,0.01,0.31,1,0,3.9,0.8,0.47,0.31,0.1)
-									fractal(SQR|SS,12.9,6,0.1,0.4,2.71,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
+									Texture("coldlava",BUMP|NORM|TEX,2277.13,-0.44448,0.47224,0,7.66672,1.94448,0.48612,0)+Z(craters(ID2,6,0.0009999,0.31,0.04,0.03,0.13,0.73,1,4.2,3.9,0.8,0.47,0.31,-0.03)
+									fractal(SQR|SS,13,6,0.1,0.4,1.31,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
 						}
 					}
 				}

@@ -21,7 +21,7 @@ extern double Rand();
 extern double Hscale;
 extern double Red,Green,Blue,Alpha,Theta,Phi;
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
@@ -878,7 +878,7 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		}
 		ImageSym *nis=new ImageSym(is);
 #ifdef DEBUG_IMAGES
-		printf("adding image:%-25s 0x%-8X\n",nis->name(),nis->info);
+		printf("adding image info for:%-25s 0x%-8X\n",nis->name(),nis->info);
 #endif
 		list.add(nis);
 	}

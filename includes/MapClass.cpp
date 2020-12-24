@@ -468,7 +468,6 @@ double Map::height(double t, double p)
 //-------------------------------------------------------------
 void Map::reset()
 {
-	//glShadeModel(GL_FLAT);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_DITHER);
 	glDisable(GL_BLEND);
@@ -568,14 +567,11 @@ void Map::render()
 		render_solid();
 	else if(Render.draw_shaded())
 		render_shaded();
-	//render_surface();
 
 	if(TheScene->test_view()||TheScene->light_view()){
 	    if(TheScene->bounds==&vbounds)
 	    	render_bounds();
 	}
-	//glActiveTexture(GL_TEXTURE0);
-	//glDisable(GL_TEXTURE_2D);
 }
 
 //-------------------------------------------------------------

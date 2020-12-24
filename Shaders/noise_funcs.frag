@@ -38,7 +38,7 @@ struct noise_info {
 	float bias;
 	float ampl;
 	float offset;
-	float smooth;
+	float smoothing;
 	float clamp;
 	float logf;
 	float ma;
@@ -101,7 +101,7 @@ vec4 Noise(int index) {
 	int n=int(octaves);
 	float rem=octaves-float(n);
 	n=rem>0.0?n+1:n;
-	float rmin=info.smooth*VMAX;
+	float rmin=info.smoothing*VMAX;
 	if(!info.absval)
 		rmin *=2.0;
 	float clip=info.clamp*VMAX;

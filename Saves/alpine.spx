@@ -1,28 +1,19 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-30.7905;
-		theta=350.957;
-		height=7311.86 ft;
-		gndlvl=6488.17 ft;
-		time=50577.4;
-		heading=-65;
-		tilt=-15;
-		fov=35;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=6358.56 ft;
-		gndlvl=25304.5 ft;
-	}
-	View{
 		phi=-30.7946;
 		theta=350.959;
 		height=9608.83 ft;
 		gndlvl=22054.2 ft;
 		time=50648.8;
+		heading=-65;
 		tilt=-14;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=9608.8 ft;
 	}
 	Universe {
 		Galaxy(20000) {

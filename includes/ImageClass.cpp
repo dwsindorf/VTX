@@ -43,6 +43,8 @@ static LongSym iopts[]={
 	{"BORDER",	BORDER},
 	{"S",		SEXPR},
 	{"A",		AEXPR},
+	{"RANDOMIZE",	RANDOMIZE},
+
 };
 NameList<LongSym*> IOpts(iopts,sizeof(iopts)/sizeof(LongSym));
 
@@ -791,6 +793,8 @@ void TNtexture::eval()
     texture->orders_delta=orders_delta;
     texture->bump_damp=bumpdamp;
     texture->hmap_amp=hmval;
+    texture->hmap_bias=hmbias;
+
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
@@ -815,8 +819,9 @@ void TNtexture::eval()
 			texture->scale*=texture->orders_delta;
 		}
 		texture->scale=scale;
-
 		TerrainData::texht+=z+texture->hmap_bias;
+		//cout<<"hmap:"<<Td.texht<<endl;
+
 	}
 }
 

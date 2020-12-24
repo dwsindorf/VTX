@@ -43,6 +43,8 @@ Texture::Texture(Image *i, int l, TNode *e)
 	orders=1;
 	orders_delta=2.0;
 	orders_atten=1.0;
+	hmap_amp=0;
+	hmap_bias=0;
 	tex_active=(options & TEX)?true:false;
 	bump_active=(options & BUMP)?true:false;
 	hmap_active=(options & HMAP)?true:false;
@@ -102,9 +104,6 @@ double Texture::getTexAmpl(int mode){
 	getTexCoords(x,y);
 	x+=1;
 	//printf("x:%-10g y:%-10g fm:%-10g ym:%-10g\n",x,y,fmod(x,1),fmod(y,1));
-	//FColor c=timage->color(mode, x,y);
-	//return c.intensity();
-	//FColor c=timage->color(mode, x,y);
 	return timage->value(mode, x,y);
 
 }
@@ -204,6 +203,7 @@ void Texture::begin() {
 	glEnable(GL_TEXTURE_2D);
 	int tid=0;
 	if(!valid || Render.invalid_textures()) {
+		//cout<<"Texture::begin()"<<endl;
 		if (id[tid]>0)
 			glDeleteTextures(2, (GLuint*)&id);
 		glGenTextures(1, &id[tid]); // Generate a unique texture ID
@@ -406,6 +406,7 @@ bool Texture::setProgram(){
 	sprintf(str,"tex2d[%d].orders_atten",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_atten);
 	sprintf(str,"tex2d[%d].logf",tid);          glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	sprintf(str,"tex2d[%d].dlogf",tid);         glUniform1fARB(glGetUniformLocationARB(program,str),dlogf);
+	sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
 
 	vars.setProgram(program);
 	vars.loadVars();

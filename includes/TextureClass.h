@@ -83,6 +83,7 @@ public:
 							  else
 								 return GL_LINEAR_MIPMAP_LINEAR;
 							}
+	bool randomized()        { return (options & RANDOMIZE)?true:false;}
 	int wrap()				{ return options & BORDER ? GL_CLAMP_TO_EDGE:GL_REPEAT;}
 	int t1d()				{ return (width()==1 || height()==1)?1:0;}
 	int t2d()				{ return (width()>1 && height()>1)?1:0;}
