@@ -1,15 +1,18 @@
 #ifdef NOTILE
 float sum( vec4 v ) { return v.x+v.y+v.z; }
-// note: needs shader version 130 to compile (for textureGrad)
-// ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
-// modified "Technique 3" to use perlin noise texture lookup for random index
+// notes: 1) needs shader version 130 to compile (for textureGrad)
+//        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
+//           modified "Technique 3" to use perlin noise texture lookup for random index
+//        3) impacts rendering speed by ~2-3x (slower)
 vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
 {
-    v1= Vertex1.xyz;
+    v1= Vertex1.xyz;  // needed for noise3D to work
     v2= Vertex2.xyz;
  
-    float scale =tex2d[id].scale;
-    vec4 P1=noise3D(v1*scale);
+    float scale =0.7123*tex2d[id].scale;
+    // noise lookup (speed loss is here) 
+    // better performance using fixed random noise texture ?
+    vec4 P1=noise3D(Vertex1.xyz*scale); 
     
     // compute index    
     float index = P1.x*8.0;

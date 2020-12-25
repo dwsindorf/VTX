@@ -464,7 +464,7 @@ void Scene::show_info(int which)
 		if(svisits && show_visits)
 			sprintf(b,"V: %2.1f (%2.1f)",svisits/1000.0,100.0*shits/svisits);
 		else
-			sprintf(b,"A:%-2.1f R:%-2.1f N:%-2.0f C:%-2d",adapt_time,render_time,0.001*cells,cycles);
+			sprintf(b,"A:%-3.1f R:%-3.1f N:%-2.0f C:%-2d",adapt_time*1000,render_time*1000,0.001*cells,cycles);
 		set_info("%s",b);
 		break;
 	}
@@ -2100,9 +2100,9 @@ void Scene::render()
     	render_time=(double)(clock() - start)/CLOCKS_PER_SEC;
     	render_time-=adapt_time;
     	adapt_time+=build_time;
-//#ifdef DEBUG_TIMING
-//        show_info(INFO_TIME);
-//#endif
+#ifdef DEBUG_TIMING
+        show_info(INFO_TIME);
+#endif
     	build_time=0;
 		exec_finishers();
 		output_strings();

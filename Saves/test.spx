@@ -19,6 +19,36 @@ Scene() {
 		phi=-2.84746;
 		height=0.00143072;
 	}
+	View{
+		phi=1.07547;
+		theta=31.3712;
+		height=884.223 miles;
+		pitch=-63;
+	}
+	View{
+		view=SURFACE;
+		phi=12.6562;
+		theta=32.6953;
+		height=10 miles;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		theta=32.7273;
+		height=94.9535 miles;
+		tilt=-20;
+		angle=-4;
+	}
+	View{
+		theta=35.8147;
+		height=43.317 miles;
+		tilt=-25;
+		angle=-7;
+	}
+	View{
+		theta=39.5584;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -58,9 +88,8 @@ Scene() {
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=//Color(1,1,1,noise(FS|NLOD|UNS,5,1,1,0.5,2,1,1,0,0))+
-						Z(noise(NABS|SCALE,8,14.1,0,1,2.1,0,0.11,0,-0.3))+
-								Texture("drywash",BLEND|BUMP|DECAL|NORM|RANDOMIZE|REPLACE|TEX,16,6.44448,2,4,1,2,0.36112,0);
+						terrain=Z()+Color(1,1,1,noise(FS|SCALE,5,2,1,0.5,2,1,1,0,0))+
+								Texture("drywash",BLEND|BUMP|DECAL|NORM|RANDOMIZE|REPLACE|TEX,261.017,5.11104,2,4,1,2,0.36112,0);
 					}
 				}
 			}

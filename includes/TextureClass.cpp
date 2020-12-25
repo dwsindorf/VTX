@@ -373,8 +373,11 @@ bool Texture::setProgram(){
 	float ts= scale;
 	float orders_bump=1.0/delta;
 	//float logf = log2(ts)+log2(orders_delta)-1+0.5*log2(height())+TheScene->freq_mip;
-	float dlogf=log2(orders_delta);
-	float logf = log2(ts)+dlogf-1+0.5*log2(height());
+
+
+	float dlogf=log2(orders_delta); //
+	float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
+	float logf = log2(ts)+dlogf+hlog; // reduces tex max_orders set in MapNode::Svertex
 
 	TerrainProperties *tp=TerrainData::tp;
 	double bumpmin=1e-5;
@@ -392,7 +395,7 @@ bool Texture::setProgram(){
 	double tex_bias=t2d()?bias:0;
  	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
- 	//cout << "bumpdelta:"<<bumpdelta<<endl;
+  	//cout << "bumpdelta:"<<bumpdelta<<endl;
  	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
 	sprintf(str,"tex2d[%d].bumpamp",tid);  		glUniform1fARB(glGetUniformLocationARB(program,str),bump_ampl);

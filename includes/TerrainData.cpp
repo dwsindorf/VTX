@@ -298,12 +298,13 @@ void TerrainProperties::initProgram(){
 		sprintf(defs+strlen(defs),"#define NOTILE\n");
 	strcat(GLSLMgr::defString,defs);
 	Texture::reset();
+
 	for(tid=0;tid<textures.size;tid++){
 		if(textures[tid]->randomized())
 			rand=true;
 		textures[tid]->initProgram();
 	}
-	if(tncolor)
+	if(tncolor && tncolor->isEnabled())
 		tncolor->initProgram();
 	if(tnpoint)
 		tnpoint->initProgram();

@@ -482,14 +482,14 @@ void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-    wxString dmodes[]={"Points","lines","Solid"};
-    drawmode=new wxRadioBox(panel,ID_DRAWTYPE,wxT("Draw Mode"),wxPoint(-1,-1),wxSize(TABS_WIDTH/2,50),3,
-    		dmodes,3,wxRA_SPECIFY_COLS);
+    wxString dmodes[]={"Points","lines","Solid","Shaded"};
+    drawmode=new wxRadioBox(panel,ID_DRAWTYPE,wxT("Draw Mode"),wxPoint(-1,-1),wxSize(-1,50),4,
+    		dmodes,4,wxRA_SPECIFY_COLS);
 
     hline->Add(drawmode, 0, wxALIGN_LEFT|wxALL,0);
 
-    wxString lmodes[]={"OGL","Phong","Mixed"};
-    lightmode=new wxRadioBox(panel,ID_LMODE,wxT("Lighting Model"),wxPoint(-1,-1),wxSize(TABS_WIDTH/2,50),3,
+    wxString lmodes[]={"OGL","Phong","Mix"};
+    lightmode=new wxRadioBox(panel,ID_LMODE,wxT("Lighting Model"),wxPoint(-1,-1),wxSize(-1,50),3,
     		lmodes,3,wxRA_SPECIFY_COLS);
 
     hline->Add(lightmode, 0, wxALIGN_LEFT|wxALL,0);
@@ -519,6 +519,8 @@ void VtxSceneTabs::OnDrawMode(wxCommandEvent& event){
 		Render.show_points();
 	else if(mode==1)
 		Render.show_lines();
+	else if(mode==2)
+		Render.show_solid();
 	else
 		Render.show_shaded();
 	TheScene->set_changed_render();
@@ -543,8 +545,10 @@ void VtxSceneTabs::OnUpdateDrawMode(wxUpdateUIEvent& event){
 		drawmode->SetSelection(0);
 	else if(Render.draw_lines())
 		drawmode->SetSelection(1);
-	else
+	else  if(Render.draw_solid())
 		drawmode->SetSelection(2);
+	else
+		drawmode->SetSelection(3);
 }
 
 void VtxSceneTabs::OnLightMode(wxCommandEvent& event){

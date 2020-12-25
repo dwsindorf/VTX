@@ -265,13 +265,13 @@ void VtxFrame::make_menubar()
        submenu->Append(IDM_VIEW_SIZE_PAN, wxT("Panoramic"));
     submenu = new wxMenu;
     menu->Append(IDM_VIEW_WSIZE, wxT("Scene Quality"), submenu);
-       submenu->Append(IDM_VIEW_LOD_LOW,  wxT("    Low\tSHIFT-D"));
-       submenu->Append(IDM_VIEW_LOD_MED,  wxT(" Medium\tSHIFT-C"));
-       submenu->Append(IDM_VIEW_LOD_HIGH, wxT("   High\tSHIFT-B"));
-       submenu->Append(IDM_VIEW_LOD_BEST, wxT("   Best\tSHIFT-A"));
+       submenu->Append(IDM_VIEW_LOD_LOW,  wxT("      Low\tSHIFT-D"));
+       submenu->Append(IDM_VIEW_LOD_MED,  wxT("   Medium\tSHIFT-C"));
+       submenu->Append(IDM_VIEW_LOD_HIGH, wxT("     High\tSHIFT-B"));
+       submenu->Append(IDM_VIEW_LOD_BEST, wxT("Very High\tSHIFT-A"));
        submenu->AppendSeparator();
-       submenu->Append(IDM_VIEW_LOD_MORE,  wxT("More Cells\t]"));
-       submenu->Append(IDM_VIEW_LOD_LESS,  wxT("Less Cells\t["));
+       submenu->Append(IDM_VIEW_LOD_MORE,  wxT("More Detail\t]"));
+       submenu->Append(IDM_VIEW_LOD_LESS,  wxT("Less Detail\t["));
 
     menubar->Append(menu, wxT("&View"));
 

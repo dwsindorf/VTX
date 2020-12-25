@@ -149,6 +149,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 
 // ########## main section #########################
 void main(void) {
+
 #ifdef COLOR
 	vec4 color=Color;
 #else

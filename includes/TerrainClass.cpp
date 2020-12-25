@@ -454,6 +454,7 @@ const char *TNcolor::symbol(){
 // TNcolor::initProgram() set shader defines
 //-------------------------------------------------------------
 bool TNcolor::initProgram(){
+
 	//char nstr[256];
 	char defs[256];
 	char red[256]={0};
@@ -502,6 +503,11 @@ bool TNcolor::initProgram(){
 //-------------------------------------------------------------
 void TNcolor::eval()
 {
+	if(!isEnabled()){
+		if((TNarg*)left)
+			((TNarg*)left)->eval();
+		return;
+	}
 	INIT;
 //    if(CurrentScope->zpass())
 //        return;
@@ -1157,8 +1163,7 @@ bool TNnoise::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 
-	cout << "info freq:"<< nfreq<<" L:"<<L<<" H:" << H << " fact:" << pow(nfreq,-H) << " delta:" << pow(L,-H) <<endl;
-	//cout << "amp:"<<ampl*ma<<" offset:"<<mb+offset<<" delta:"<<bumpdelta*nfreq<<endl;
+	//cout << "info freq:"<< nfreq<<" L:"<<L<<" H:" << H << " fact:" << pow(nfreq,-H) << " delta:" << pow(L,-H) <<endl;
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
 	sprintf(str,"nvars[%d].freq",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),nfreq);
@@ -1176,7 +1181,6 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].absval",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),absval);
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
-
 	vars.setProgram(program);
 	vars.loadVars();
 	return true;
