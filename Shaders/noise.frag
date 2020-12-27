@@ -18,10 +18,95 @@ uniform sampler2D permTexture;
 // The numbers above are 1/256 and 0.5/256, change accordingly
 // if you change the code to use another texture size.
 
+const mat2 myt = mat2(.12121212, .13131313, -.13131313, .12121212);
+const vec2 mys = vec2(1e4, 1e6);
+
+vec2 rhash(vec2 uv) {
+  uv *= myt;
+  uv *= mys;
+  return fract(fract(uv / mys) * uv);
+}
+
+vec3 hash(vec3 p) {
+  return fract(
+      sin(vec3(dot(p, vec3(1.0, 57.0, 113.0)), dot(p, vec3(57.0, 113.0, 1.0)),
+               dot(p, vec3(113.0, 1.0, 57.0)))) *
+      43758.5453);
+}
+
+float voronoi2d(const in vec2 point) {
+  vec2 p = floor(point);
+  vec2 f = fract(point);
+  float res = 0.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 b = vec2(i, j);
+      vec2 r = vec2(b) - f + rhash(p + b);
+      res += 1. / pow(dot(r, r), 8.);
+    }
+  }
+  return pow(1. / res, 0.0625);
+}
+
+vec4 voronoi3d(const in vec3 x) {
+  vec3 p = floor(x);
+  vec3 f = fract(x);
+
+  float id = 0.0;
+  vec2 res = vec2(100.0);
+  for (int k = -1; k <= 1; k++) {
+    for (int j = -1; j <= 1; j++) {
+      for (int i = -1; i <= 1; i++) {
+        vec3 b = vec3(float(i), float(j), float(k));
+        vec3 r = vec3(b) - f + hash(p + b);
+        float d = dot(r, r);
+
+        float cond = max(sign(res.x - d), 0.0);
+        float nCond = 1.0 - cond;
+
+        float cond2 = nCond * max(sign(res.y - d), 0.0);
+        float nCond2 = 1.0 - cond2;
+
+        id = (dot(p + b, vec3(1.0, 57.0, 113.0)) * cond) + (id * nCond);
+        res = vec2(d, res.x) * cond + res * nCond;
+
+        res.y = cond2 * d + nCond2 * res.y;
+      }
+    }
+  }
+  
+  return vec4(2*(sqrt(res)-0.5),abs(id),0);
+}
 #define fade(t) t*t*t*(t*(t*6.0-15.0)+10.0)
+float random (in vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))
+                 * 43758.5453123);
+}
+// fast psuedo-noise lookup
+float fnoise (in vec2 st){
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+
+    // Four corners in 2D of a tile
+    float a = random(i);
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+
+    // Smooth Interpolation
+
+    // Cubic Hermine Curve.  Same as SmoothStep()
+    vec2 u = f*f*(3.0-2.0*f);
+    // u = smoothstep(0.,1.,f);
+
+    // Mix 4 coorners percentages
+    return mix(a, b, u.x) +
+            (c - a)* u.y * (1.0 - u.x) +
+            (d - b) * u.x * u.y;
+}
 
 // returns classic Perlin noise and derivatives using a 2D texture
-
 vec4 noise3D(vec3 P){
     vec4 vout=vec4(0.0);
     vec3 Pi = ONE*(floor(P));

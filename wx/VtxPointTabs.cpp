@@ -142,21 +142,19 @@ void VtxPointTabs::getObjAttributes(){
 	//if(!update_needed)
 	//	return;
 	TNpoint *tnode=object();
-
-	char x[1024]={0};
-	char y[1024]={0};
-	char z[1024]={0};
-
-	TNarg &args=*((TNarg *)tnode->right);
-	INIT;
-	if(!args[1]&& !args[2])
-		args[0]->valueString(z);
-	else{
-		args[0]->valueString(x);
-		args[1]->valueString(y);
-		args[2]->valueString(z);
-
-	}
+	char x[512]={0};
+	char y[512]={0};
+	char z[512]={0};
+    if(tnode->right){
+		TNarg &args=*((TNarg *)tnode->right);
+		INIT;
+		if(args[0])
+			args[0]->valueString(z);
+		if(args[1])
+			args[1]->valueString(y);
+		if(args[2])
+			args[2]->valueString(x);
+    }
 	m_x_expr->SetValue(x);
 	m_y_expr->SetValue(y);
 	m_z_expr->SetValue(z);

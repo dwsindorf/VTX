@@ -1,4 +1,33 @@
 #ifdef NOTILE
+
+// without this call de-aliasing textures (tile_funcs) take big performance drop (4-5x)
+vec4 warmup(){
+   // notes:
+   // 1) brittle code: everything seems to be needed here
+   // 2) this somehow must fool the ogl compiler into doing something more efficiently
+   // 3) seems to affect performance more in "adapt" pass than render pass
+
+	v1= Vertex1.xyz; // required for mapping to work
+    v2= Vertex2.xyz;
+
+	vec4 result=vec4(0.0);
+	vec4 val,nvec;
+	
+	float weight=0.0;
+ 
+	for(int i=0;i<2;i++) {
+        vec4 P1=noise3D(v1*2);
+        vec4 P2=noise3D(v2*2);
+        nvec=mix(P1,P2,0.5);
+		val=nvec*weight;
+		result += val;
+		if(weight<=0.0) // will always exit here on first loop pass
+		    break;
+		weight*=nvec.x; // but this is still needed to fix problem (!)
+	} 
+	return result;	
+}
+
 float sum( vec4 v ) { return v.x+v.y+v.z; }
 // notes: 1) needs shader version 130 to compile (for textureGrad)
 //        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
@@ -6,16 +35,16 @@ float sum( vec4 v ) { return v.x+v.y+v.z; }
 //        3) impacts rendering speed by ~2-3x (slower)
 vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
 {
-    v1= Vertex1.xyz;  // needed for noise3D to work
-    v2= Vertex2.xyz;
  
     float scale =0.7123*tex2d[id].scale;
-    // noise lookup (speed loss is here) 
-    // better performance using fixed random noise texture ?
-    vec4 P1=noise3D(Vertex1.xyz*scale); 
+    vec3 P=v1*scale;
+    float r=voronoi2d(P.xy);
+    //float r=noise3D(P).x; 
+     //float r= fnoise(P.xy);
     
     // compute index    
-    float index = P1.x*8.0;
+    //float index = P1.x*8.0;
+    float index =r*8.0;
     float i = floor( index );
     float f = fract( index );
 

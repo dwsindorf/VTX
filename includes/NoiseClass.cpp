@@ -159,7 +159,7 @@ int IntRand()
 //-------------------------------------------------------------
 //RandSum()	return sum of octaves (random noise)
 //-------------------------------------------------------------
-double RandSum(int nargs, double *args)
+static double RandSum(int nargs, double *args)
 {
 	static double iy,ir[98];
 	static int flag=0,id=1;
@@ -246,15 +246,6 @@ double Random(double x)
 {
 	return rands[PERM(x+lastn)];
 }
-
-double Noise3(Point v)
-{
-	return Perlin::noise3(&v.x);
-}
-double Noise2(Point v)
-{
-	return Perlin::noise2(&v.x);
-}
 //-------------------------------------------------------------
 // spline()	   spine curve function
 //-------------------------------------------------------------
@@ -330,6 +321,7 @@ double  spline(double x, int n, double *v)
 	}
 }
 
+
 //************************************************************
 // Class NoiseFactor
 //************************************************************
@@ -385,6 +377,7 @@ double Noise::shift=0;
 int Noise::nfact=0;
 int Noise::_mode=0;
 int Noise::flags=0;
+int Noise::_ntype=GRADIENT;
 
 Noise::Noise()
 {
@@ -639,9 +632,15 @@ double Noise::value(int i)
 	if(!init_flag)
 		init();
 	double freq;
+	int type=ntype();
+
 	if(mode()==MINMAX){
 	    freq=factors[nfact]->freqs[i];
-	    return Perlin::noise1(norm_value*freq+norm_offset);
+	    double fv=norm_value*freq+norm_offset;
+	    if(type==VERONOI)
+	    	return Voronoi1(fv);
+	    else
+	        return Noise1(fv);
 	}
 	int m=1<<i;
 	double v[4];
@@ -659,13 +658,22 @@ double Noise::value(int i)
 		v[0]=POINT[0]*freq;
 		v[1]=POINT[1]*freq;
 		v[2]=POINT[2]*freq;
-		if(noise4D()){
-			v[3]=POINT[3]*freq;
-			VALUE(i)=Perlin::noise4(v);
+		if(type==VERONOI){
+			if(noise4D()){
+				v[3]=POINT[3]*freq;
+				VALUE(i)=Voronoi4D(v);
+			}
+			else
+				VALUE(i)=Voronoi3D(v);
 		}
 		else {
-			VALUE(i)=Perlin::noise3(v);
-	    }
+			if(noise4D()){
+				v[3]=POINT[3]*freq;
+				VALUE(i)=Noise4(v);
+			}
+			else
+				VALUE(i)=Noise3(v);
+		}
 #ifdef NOISE_CACHE
     }
 #ifdef DEBUG_NOISE_VISITS
@@ -692,12 +700,16 @@ double Noise::eval(int type,int n, double *args)
 	else
 		shift=rseed;
  	double val=0;
+ 	set_ntype(type&NTYPES);
 	switch(type&NTYPES){
 	case GRADIENT:
 		val=gradient(type,n,args);
 		break;
 	case RANDOM:
 		val=random(type,n,args);
+		break;
+	case VERONOI:
+		val=veronoi(type,n,args);
 		break;
 	}
     if(type & ROFF)
@@ -887,6 +899,150 @@ double Noise::gradient(int type, int nargs, double *args)
 	if(type & NEG)
 	    result=-result;
 	return result;
+}
+static double myt[4]={0.12121212, 0.13131313, -0.13131313, 0.12121212};
+static Point2D mys(1e4, 1e6);
+static Point2D rhashv(Point2D uv) {
+  Point2D p2=uv.mm4(myt);
+  p2 = p2*mys;
+  Point2D p3=p2.fract();
+  p3=p3*p2;
+  return p3.fract();
+}
+double Voronoi2D(double *x) {
+  Point2D point(x);
+  Point2D p = point.floor();
+  Point2D f = point.fract();
+  double res = 0.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      Point2D b = Point2D(i, j);
+      Point2D r = b- f + rhashv(p + b);
+      double d=pow(r.dot(r),8.0);
+      res += 1.0 / d;
+    }
+  }
+  return pow(1.0 / res, 0.0625);
+}
+double Noise::Voronoi1(double x){
+	double p[2]={x,x};
+	return Voronoi2D(p);
+}
+static Point hp3(1.0, 57.0, 113.0);
+
+static Point hashv3(Point p) {
+	static double hv=43758.5453;
+	static Point hp1(113.0, 1.0, 57.0);
+	static Point hp2(57.0, 113.0, 1.0);
+
+	double d1=sin(p.dot(hp1)*hv);
+	double d2=sin(p.dot(hp2)*hv);
+	double d3=sin(p.dot(hp3)*hv);
+	Point p4= Point(d3,d2,d1);
+	return p4.fract();
+}
+
+#define MAX(a,b) (a)>(b)?(a):(b)
+#define SIGN(x) (x)<0?-1:1
+
+double  Noise::Voronoi3D(double *pnt) {
+	double result = 0;
+	Point x=Point(pnt);
+	Point p = x.floor();
+	Point f = x.fract();
+	double r=100;
+	double id = 0.0;
+	Point2D res(r);
+	for (int k = -1; k <= 1; k++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1; i++) {
+				Point b = Point(double(i), double(j), double(k));
+				Point r = Point(b) - f + hashv3(p + b);
+				double d = r.dot(r);
+
+				double cond = MAX(SIGN(res.x - d), 0.0);
+				double nCond = 1.0 - cond;
+
+				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
+				double nCond2 = 1.0 - cond2;
+				Point p1 = p + b;
+				double d1 = p1.dot(hp3);
+				id = (d1 * cond) + (id * nCond);
+				res = Point2D(d, res.x) * cond + res * nCond;
+				res.y = cond2 * d + nCond2 * res.y;
+			}
+		}
+	}
+	double rx=sqrt(res.x);
+	double ry=sqrt(res.y);
+	double rz=fabs(id);
+	return 2*(rx-0.5);
+	//return Point(rx,ry,rz);
+}
+
+static Point4D hp4(1.0, 57.0, 113.0);
+
+static Point4D hashv4(Point4D p) {
+static double hv=43758.5453;
+static Point4D hp1(113.0, 1.0, 57.0, 33.0);
+static Point4D hp2(33.0, 113.0, 1.0, 57.0);
+static Point4D hp3(57.0, 33.0,113.0, 1.0);
+	double d1=sin(p.dot(hp1)*hv);
+	double d2=sin(p.dot(hp2)*hv);
+	double d3=sin(p.dot(hp3)*hv);
+	double d4=sin(p.dot(hp4)*hv);
+	Point4D p4= Point4D(d4,d3,d2,d1);
+	return p4.fract();
+}
+
+double Noise::Voronoi4D(double *pnt) {
+	double result = 0;
+	Point4D x = Point4D(pnt);
+	Point4D p = x.floor();
+	Point4D f = x.fract();
+	double r=100;
+	double id = 0.0;
+	Point res(r);
+	for (int k = -1; k <= 1; k++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1; i++) {
+				for (int l = -1; l<= 1; l++) {
+					Point4D b = Point4D(double(i), double(j), double(k), double(l));
+					Point4D r = Point4D(b) - f + hashv4(p + b);
+					double d = r.dot(r);
+
+					double cond = MAX(SIGN(res.x - d), 0.0);
+					double nCond = 1.0 - cond;
+
+					double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
+					double nCond2 = 1.0 - cond2;
+
+					double cond3 = nCond2 * MAX(SIGN(res.z - d), 0.0);
+					double nCond3 = 1.0 - cond3;
+
+					Point4D p1 = p + b;
+					double d1 = p1.dot(hp4);
+					id = (d1 * cond) + (id * nCond);
+					res = Point(d, res.x, res.y) * cond + res * nCond;
+					res.y = cond2 * d + nCond2 * res.y;
+					res.z = cond3 * d + nCond3 * res.z;
+				}
+			}
+		}
+	}
+	double rx=sqrt(res.x);
+	double ry=sqrt(res.y);
+	double rz=sqrt(res.z);
+	double rw=fabs(id);
+	return 2*(rx-0.5);
+	//return Point(rx,ry,rz);
+}
+//-------------------------------------------------------------
+// Noise::random()	return sum of octaves (random noise)
+//-------------------------------------------------------------
+double Noise::veronoi(int options,int nargs, double *args)
+{
+	return gradient(options,nargs, args);
 }
 
 //-------------------------------------------------------------

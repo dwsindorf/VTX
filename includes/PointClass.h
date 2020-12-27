@@ -13,6 +13,9 @@ public:
 	double x,y,z;
 
 	Point()						{	x=y=z=0.0;}
+	Point(double *v)			{	x=v[0];y=v[1];z=v[2];}
+	Point(double a)				{	x=y=z=a;}
+
 	Point(double a,double b,double c)
 	                            {	x=a;
 									y=b;
@@ -40,6 +43,8 @@ public:
 								}
 	Point normalize()           { return (*this)/length();}
 	Point floor()               { return Point(::floor(x),::floor(y),::floor(z));}
+	Point fract()               { Point p=floor(); return *this-p;}
+
 	Point trunc()               { return Point(::trunc(x),::trunc(y),::trunc(z));}
 	Point absval()              { return Point(::fabs(x),::fabs(y),::fabs(z));}
 	Point normal(Point p2,Point p3);
@@ -64,6 +69,57 @@ public:
 	int intersect_sphere(Point, Point, double r, double &, double &);
 };
 
+class Point2D
+{
+public:
+	double x,y;
+
+	Point2D()						{	x=y=0.0;}
+	Point2D(double *v)			{	x=v[0];y=v[1];}
+
+	Point2D(double a)				{	x=y=a;}
+	Point2D(double a,double b)
+	                            {	x=a;
+									y=b;
+								}
+	Point2D(Point p)
+	                            {	x=p.x;
+									y=p.y;
+								}
+	Point2D operator+(Point2D p)	{ return Point2D(x+p.x,y+p.y);}
+	Point2D operator+(double s)	{ return Point2D(x+s,y+s);}
+	Point2D operator-(Point2D p)	{ return Point2D(x-p.x,y-p.y);}
+	Point2D operator-(double s)	{ return Point2D(x-s,y-s);}
+	Point2D operator*(Point2D p)	{ return Point2D(x*p.x,y*p.y);}
+	Point2D operator*(double s)	{ return Point2D(x*s,y*s);}
+	Point2D operator/(Point2D p)	{ return Point2D(x/p.x,y/p.y);}
+	Point2D operator/(double s)	{ return Point2D(x/s,y/s);}
+	int operator==(Point2D&p)		{ return DEQ(x,p.x)&&DEQ(y,p.y);}
+	int operator!=(Point2D&p)		{ return !(*this==p);}
+	double operator[](int i)	{ return i==0?x:y;}
+	double dot(Point2D&p)			{ return (x*p.x+y*p.y);}
+	double length()				    { return sqrt(x*x+y*y);}
+	double magnitude()			{ return x*x+y*y;}
+
+	Point2D normalize()           { return (*this)/length();}
+	Point2D floor()               { return Point2D(::floor(x),::floor(y));}
+	Point2D fract()                { Point2D p=floor(); return *this-p;}
+
+	Point2D trunc()               { return Point2D(::trunc(x),::trunc(y));}
+	Point2D absval()              { return Point2D(::fabs(x),::fabs(y));}
+	Point2D normal(Point p2,Point p3);
+	void print();
+	double *values()            {  return &x;}
+	double maxval()             {  return x>y?x:y;}
+	double minval()             {  return x<y?x:y;}
+	Point2D  mm4(double *m){
+		Point2D p;
+		p.x=(x*m[0]+y*m[2]);
+		p.y=(x*m[1]+y*m[3]);
+		return p;
+	}
+};
+
 class Point4DL
 {
 public:
@@ -85,6 +141,8 @@ public:
 	double x,y,z,w;
 
 	Point4D()						{	x=y=z=w=0.0;}
+	Point4D(double *v)			{	x=v[0];y=v[1];z=v[2];w=v[3];}
+
 	Point4D(double a,double b,double c)
 								{	x=a;
 									y=b;
@@ -129,6 +187,11 @@ public:
 	Point4D absval()                { return Point4D(::fabs(x),::fabs(y),::fabs(z),::fabs(w));}
 	double maxval()                 { double f=x>y?x:y;f=f>z?f:z;return f>w?f:w;}
 	double minval()                 { double f=x<y?x:y;f=f<z?f:z;return f<w?f:w;}
+	Point4D floor()                 { return Point4D(::floor(x),::floor(y),::floor(z),::floor(w));}
+	Point4D fract()                 { Point4D p=floor(); return *this-p;}
+	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
+
+
 	void print();
 };
 

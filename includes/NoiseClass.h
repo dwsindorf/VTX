@@ -5,7 +5,7 @@
 
 #include "PointClass.h"
 #include "ListClass.h"
-//#include "Perlin.h"
+#include "Perlin.h"
 
 const int PERMSIZE=1024*32;
 //const int PERMSIZE=1024*64;
@@ -59,7 +59,6 @@ enum {		// distortion opcodes
 };
 
 enum {		// NTypes
-	GRADIENT = 0x00000000,
 
 	RO1      = 0x00000001,
 	RO2      = 0x00000002,
@@ -68,8 +67,9 @@ enum {		// NTypes
 	RO5      = 0x00000005,
 	ROFF     = 0x00000007,
 
+	GRADIENT = 0x00000000,
 	RANDOM   = 0x00000100,
-	RANSUM   = 0x00000200,
+	VERONOI  = 0x00000200,
 	NTYPES   = 0x00000300,
 
 	UNS      = 0x00001000,
@@ -224,6 +224,8 @@ class Noise
 protected:
 	static int flags;
 	static int _mode;
+	static int _ntype;
+
 	static NoiseFactor *factors[MAXNFACTORS];
 
    enum {
@@ -231,6 +233,14 @@ protected:
     };
     static double gradient(int options, int n, double *s);
     static double random(int options,int n, double *s);
+    static double veronoi(int options,int n, double *s);
+    static double Noise1(double v) { return Perlin::noise1(v);}
+    static double Noise4(double *v){ return Perlin::noise4(v);}
+    static double Noise3(double *v){return Perlin::noise3(v);}
+    static double Noise2(double *v){return Perlin::noise2(v);}
+    static double Voronoi1(double x);
+    static double Voronoi3D(double *pnt);
+    static double Voronoi4D(double *pnt);
     static void   init();
 
 public:
@@ -249,6 +259,7 @@ public:
 	static double rseed;
 	static int nfact;
 
+
 	Noise();
 	~Noise();
 	static void set3D()  	{ BIT_OFF(flags,PT4D);}
@@ -258,6 +269,8 @@ public:
 
 	static void set_mode(int i)	{ _mode=i;}
 	static int mode()           { return _mode;}
+	static void set_ntype(int i)	{ _ntype=i;}
+	static int ntype()           { return _ntype;}
 
 	static void push(Point &p);
 	static void push(Point4D &p);

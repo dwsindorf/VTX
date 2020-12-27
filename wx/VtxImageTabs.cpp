@@ -357,8 +357,10 @@ void VtxImageTabs::setObjAttributes(){
 	strcpy(buff,istr.ToAscii());
 	//cout << buff << endl;
 	TNinode *n=(TNinode*)TheScene->parse_node(buff);
-	if(!n)
+	if(!n){
+		cout <<"error parsing expr:"<<buff<<endl;
 		return;
+	}
 	n->init();
 	delete n;
 	m_image_window->setImage(m_name.ToAscii(),VtxImageWindow::TILE);

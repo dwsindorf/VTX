@@ -9,6 +9,7 @@ class VtxNoiseFunct : public VtxFunctMgr
 
 protected:
 	void AddControlsTab(wxWindow *panel);
+	void AddTypeTab(wxWindow *panel);
 	wxString getTypeStr();
 	void setTypeControls(int type);
 	SliderCtrl *StartSlider;
@@ -30,6 +31,7 @@ protected:
 	wxCheckBox *m_scale;
 	wxCheckBox *m_lod;
 	wxCheckBox *m_abs;
+	wxRadioBox *m_noisetype;
 
 public:
 	VtxNoiseFunct(wxWindow* parent,

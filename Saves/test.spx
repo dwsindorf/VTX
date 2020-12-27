@@ -1,53 +1,56 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=-4.29102;
-		theta=30.9556;
-		height=0.00349105;
-		gndlvl=-43734.3 ft;
+		view=SURFACE;
+		phi=12.6562;
+		theta=57.0725;
+		height=24.4864 miles;
+		gndlvl=13488.1 ft;
 		time=50648.8;
-		heading=90;
-		pitch=-90;
+		pitch=-1;
+		tilt=-38;
+		angle=-5;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.00264343;
+		height=26.0619 miles;
+		gndlvl=5169.33 ft;
+		tilt=-22;
 	}
 	View{
-		phi=-2.84746;
-		height=0.00143072;
+		view=ORBITAL;
+		height=0.004;
+		gndlvl=4061.39 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
 	}
 	View{
-		phi=1.07547;
-		theta=31.3712;
-		height=884.223 miles;
-		pitch=-63;
+		height=0.00371634;
+		gndlvl=41547 ft;
 	}
 	View{
-		view=SURFACE;
-		phi=12.6562;
-		theta=32.6953;
-		height=10 miles;
-		heading=0;
-		pitch=0;
-		tilt=-15;
+		phi=12.0082;
+		theta=75.3533;
+		height=0.00376555;
+		gndlvl=77417.5 ft;
+		pitch=-91;
 	}
 	View{
-		theta=32.7273;
-		height=94.9535 miles;
-		tilt=-20;
-		angle=-4;
+		phi=12.0081;
+		height=0.00376534;
 	}
 	View{
-		theta=35.8147;
-		height=43.317 miles;
-		tilt=-25;
-		angle=-7;
+		phi=11.9935;
+		height=0.00373151;
 	}
 	View{
-		theta=39.5584;
+		phi=12.1365;
+		height=0.00386329;
+		gndlvl=268431 ft;
+		pitch=-92;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -87,9 +90,10 @@ Scene() {
 					tilt=10;
 					year=100;
 					albedo=1;
+					image("veronoi",NORM,256,256,noise(VERONOI|NLOD,2,1,1,0.5,2,0.77,1,0,1));
 					Surface{
-						terrain=Z()+Color(1,1,1,noise(FS|SCALE,5,2,1,0.5,2,1,1,0,0))+
-								Texture("drywash",BLEND|BUMP|DECAL|NORM|RANDOMIZE|REPLACE|TEX,261.017,5.11104,2,4,1,2,0.36112,0);
+						terrain=Z(noise(VERONOI|NLOD|UNS,4,1,1,0.5,2,1,1,0,0))+
+								Texture("veronoi",BLEND|TILE|REPLACE|TEX,4,2,1,0,1,2,0.5,0);
 					}
 				}
 			}

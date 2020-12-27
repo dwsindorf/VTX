@@ -45,6 +45,7 @@ char tmps[256];
 // noise symbols
 
 static LongSym ntypes[]={
+	{"VERONOI",	    VERONOI},
 	{"GRADIENT",	GRADIENT},
 	{"HOMOGE",		GRADIENT},
 	{"HETERO",		GRADIENT},
@@ -1089,19 +1090,6 @@ void TNnoise::eval()
 #endif
 		}
 	}
-/*
-    if(args[1]>0){
-	    f=TheNoise.eval(type,n,args);
-    	f=ma*f-mb;
-    }
-    if(n>5)
-    	ampl=args[5];
-    if(n>8){
-     	offset=args[8];
-    }
-    f=f*ampl+offset;
-	S0.s=f;
-*/
 
     if(n>5)
     	ampl=args[5];
@@ -1142,6 +1130,7 @@ bool TNnoise::setProgram(){
 	bool invert = (type & NEG)?true:false;
 	bool absval = (type & NABS)?true:false;
 	bool uns = (type & UNS)?true:false;
+	bool vnoise=(type & VERONOI)?true:false;
 
 	int nid=id;//TerrainProperties::nid;
 
@@ -1180,6 +1169,7 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].invert",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),invert);
 	sprintf(str,"nvars[%d].absval",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),absval);
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
+	sprintf(str,"nvars[%d].vnoise",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	vars.setProgram(program);
 	vars.loadVars();

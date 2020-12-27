@@ -279,8 +279,6 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
-	//wxStaticBoxSizer* texmode = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Interpolation"));
-
     wxString lmodes[]={"Nearest","Linear","Mip"};
     interp_mode=new wxRadioBox(panel,ID_INTERP,wxT("Interpolation"),wxPoint(-1,-1),wxSize(220, 44),3,
     		lmodes,3,wxRA_SPECIFY_COLS);

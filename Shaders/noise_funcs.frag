@@ -47,6 +47,8 @@ struct noise_info {
 	bool invert;
 	bool absval;
 	bool uns;
+	bool vnoise;
+	
 };
 
 uniform noise_info nvars[NVALS];
@@ -76,8 +78,8 @@ float corialis(float a){
 
 #define twist(a,b) (corialis(a)+b+reset())
 
-// multi-order procedural 3d noise
 
+// multi-order procedural 3d noise
 vec4 Noise(int index) {
 	noise_info info=nvars[index];
 
@@ -91,7 +93,7 @@ vec4 Noise(int index) {
 	float fact=info.fact;
 	vec4 result=vec4(0.0);
 	vec4 last_val=vec4(0.0);
-	vec4 val,nvec;
+	vec4 val,nvec,P1,P2;
 	
 	float f=info.freq;
 	float gain=1.0-info.bias;
@@ -108,8 +110,14 @@ vec4 Noise(int index) {
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
-        vec4 P1=noise3D(v1*f);
-        vec4 P2=noise3D(v2*f);
+        if(info.vnoise){
+        	P1=voronoi3d(v1*f);
+	        P2=voronoi3d(v2*f);
+        }
+        else{
+	        P1=noise3D(v1*f);
+	        P2=noise3D(v2*f);
+        }
         nvec=mix(P1,P2,m);
 
 		nvec.yzw*=f;

@@ -7,6 +7,12 @@
 #define BOX_WIDTH TABS_WIDTH
 #define LINE_WIDTH BOX_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 30
+#undef SLIDER2
+#undef LABEL2
+
+#define SLIDER2  100
+#define LABEL2   60
+
 
 enum {
 	ID_START_SLDR,
@@ -37,6 +43,7 @@ enum {
 	ID_NORM,
 	ID_SCALE,
 	ID_LOD,
+	ID_TYPE
 };
 
 IMPLEMENT_CLASS(VtxNoiseFunct, wxNotebook )
@@ -53,6 +60,7 @@ EVT_CHECKBOX(ID_ABS,VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_DOMAIN, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MAPPING, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MODE, VtxNoiseFunct::OnChangeEvent)
+EVT_RADIOBOX(ID_TYPE, VtxNoiseFunct::OnChangeEvent)
 
 SET_SLIDER_EVENTS(ROUND,VtxNoiseFunct,Round)
 SET_SLIDER_EVENTS(OFFSET,VtxNoiseFunct,Offset)
@@ -91,6 +99,10 @@ bool VtxNoiseFunct::Create(wxWindow* parent,
 
 	AddControlsTab(page);
     AddPage(page,wxT("Noise"),true);
+    page=new wxPanel(this,wxID_ANY);
+    AddTypeTab(page);
+    AddPage(page,wxT("Advanced"),false);
+
 
     Show(false);
 
@@ -149,21 +161,9 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 
 	HomogSlider=new SliderCtrl(panel,ID_HOMOG_SLDR,"Homog",LABEL2, VALUE2,SLIDER2);
 	HomogSlider->setRange(-1,1);
-
 	hline->Add(HomogSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	wxStaticText *lbl=new wxStaticText(panel,-1,"Domain",wxDefaultPosition,wxSize(LABEL2,-1));
-	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 4);
 
-	wxString offsets[]={"0","1","2","3","4","5"};
 
-	m_domain=new wxChoice(panel, ID_DOMAIN, wxDefaultPosition,wxSize(LABEL2-5,-1),6, offsets);
-	m_domain->SetSelection(0);
-	hline->Add(m_domain,0,wxALIGN_LEFT|wxALL,0);
-
-	wxString mode[]={"Vertex","Pixel"};
-	m_mode=new wxChoice(panel, ID_MODE, wxDefaultPosition,wxSize(90,-1),2, mode);
-	m_mode->SetSelection(0);
-	hline->Add(m_mode,0,wxALIGN_LEFT|wxALL,0);
 
 	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
 	orders_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
@@ -238,6 +238,41 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 
 }
 
+void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
+
+	wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
+	panel->SetSizer(boxSizer);
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+    wxString lmodes[]={"Perlin","Veronoi","Random"};
+    m_noisetype=new wxRadioBox(panel,ID_TYPE,wxT("Type"),wxPoint(-1,-1),wxSize(-1, 50),3,
+   		lmodes,3,wxRA_SPECIFY_COLS);
+    m_noisetype->SetSelection(0);
+
+    hline->Add(m_noisetype,0,wxALIGN_LEFT|wxALL,5);
+
+	wxBoxSizer* noise_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Noise"));
+
+
+	wxStaticText *lbl=new wxStaticText(panel,-1,"Domain",wxDefaultPosition,wxSize(-1,-1));
+	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop,5);
+
+	wxString offsets[]={"0","1","2","3","4","5"};
+
+	m_domain=new wxChoice(panel, ID_DOMAIN, wxDefaultPosition,wxSize(45,-1),6, offsets);
+	m_domain->SetSelection(0);
+	noise_cntrls->Add(m_domain,0,wxALIGN_LEFT|wxALL,0);
+
+	wxString mode[]={"Vertex","Pixel"};
+	m_mode=new wxChoice(panel, ID_MODE, wxDefaultPosition,wxSize(90,-1),2, mode);
+	m_mode->SetSelection(0);
+	noise_cntrls->Add(m_mode,0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxTop,5);
+
+
+   boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+}
 //-------------------------------------------------------------
 // VtxNoiseFunct::setFunction() set controls from string
 //-------------------------------------------------------------
@@ -324,6 +359,17 @@ void VtxNoiseFunct::setTypeControls(int type)
 	}
 	else
 		m_mode->SetSelection(0);
+	int ntype=type & NTYPES;
+	switch(ntype){
+	case VERONOI:
+		m_noisetype->SetSelection(1);
+		break;
+	case RANDOM:
+		m_noisetype->SetSelection(2);
+		break;
+	default:
+		m_noisetype->SetSelection(0);
+	}
 }
 
 //-------------------------------------------------------------
@@ -356,6 +402,11 @@ wxString VtxNoiseFunct::getTypeStr()
 	case 5: n+="|RO5"; break;
 	}
 
+	int type=m_noisetype->GetSelection();
+	switch(type){
+	case 1:n+="|VERONOI"; break;
+	case 2:n+="|RANDOM"; break;
+	}
 	int mode=m_mode->GetSelection();
 	switch(mode){
 	case 1: n+="|FS"; break;
@@ -383,6 +434,7 @@ void VtxNoiseFunct::getFunction(){
 
 	TNnoise *tn=(TNnoise*)TheScene->parse_node(s.ToAscii());
 	if(!tn){
+		cout<<"parser error:"<<s.ToAscii()<<endl;
 		return;
 	}
 	char buff[256];

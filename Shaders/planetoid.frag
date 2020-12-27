@@ -1,7 +1,6 @@
 // ########## begin planetoid.frag #########################
 //#extension GL_ARB_gpu_shader_fp64 : enable
-#define DBLSTEST
-//#version 130
+//#define DBLSTEST
 //#define COLOR
 #include "common.h"
 #include "utils.h"
@@ -149,7 +148,9 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 
 // ########## main section #########################
 void main(void) {
-
+#ifdef NOTILE
+    warmup();
+#endif
 #ifdef COLOR
 	vec4 color=Color;
 #else
