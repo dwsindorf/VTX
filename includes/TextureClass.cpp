@@ -42,7 +42,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	valid=false;
 	orders=1;
 	orders_delta=2.0;
-	orders_atten=1.0;
+	orders_atten=0.5;
 	hmap_amp=0;
 	hmap_bias=0;
 	tex_active=(options & TEX)?true:false;

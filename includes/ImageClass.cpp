@@ -820,8 +820,6 @@ void TNtexture::eval()
 		}
 		texture->scale=scale;
 		TerrainData::texht+=z+texture->hmap_bias;
-		//cout<<"hmap:"<<Td.texht<<endl;
-
 	}
 }
 

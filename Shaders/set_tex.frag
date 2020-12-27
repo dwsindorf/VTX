@@ -21,10 +21,10 @@ INIT_TEX(0,C0)
 #ifdef X0
     SET_TEX(X0)
 #endif
-    APPLY_TEX
 #ifdef M0
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T0
     SET_COLOR
 #endif
@@ -50,10 +50,10 @@ INIT_TEX(1,C1)
 #ifdef X1
     SET_TEX(X1)
 #endif
-    APPLY_TEX
 #ifdef M1
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T1
     SET_COLOR
 #endif
@@ -79,10 +79,10 @@ INIT_TEX(2,C2)
 #ifdef X2
     SET_TEX(X2)
 #endif
-    APPLY_TEX
 #ifdef M2
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T2
     SET_COLOR
 #endif
@@ -108,10 +108,10 @@ INIT_TEX(3,C3)
 #ifdef X3
     SET_TEX(X3)
 #endif
-    APPLY_TEX
 #ifdef M3
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T3
     SET_COLOR
 #endif
@@ -137,10 +137,10 @@ INIT_TEX(4,C4)
 #ifdef X4
     SET_TEX(X4)
 #endif
-    APPLY_TEX
 #ifdef M4
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T4
     SET_COLOR
 #endif
@@ -166,10 +166,10 @@ INIT_TEX(5,C5)
 #ifdef X5
     SET_TEX(X5)
 #endif
-    APPLY_TEX
 #ifdef M5
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T5
     SET_COLOR
 #endif
@@ -195,10 +195,10 @@ INIT_TEX(6,C6)
 #ifdef X6
     SET_TEX(X6)
 #endif
-    APPLY_TEX
 #ifdef M6
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T6
     SET_COLOR
 #endif
@@ -224,10 +224,10 @@ INIT_TEX(7,C7)
 #ifdef X7
     SET_TEX(X7)
 #endif
-    APPLY_TEX
 #ifdef M7
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T7
     SET_COLOR
 #endif
@@ -248,10 +248,10 @@ INIT_TEX(8,C8)
 #ifdef X8
     SET_TEX(X8)
 #endif
-    APPLY_TEX
 #ifdef M8
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T8
     SET_COLOR
 #endif
@@ -272,10 +272,10 @@ INIT_TEX(9,C9)
 #ifdef X9
     SET_TEX(X9)
 #endif
-    APPLY_TEX
 #ifdef M9
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T9
     SET_COLOR
 #endif
@@ -296,10 +296,10 @@ INIT_TEX(10,C10)
 #ifdef X10
     SET_TEX(X10)
 #endif
-    APPLY_TEX
 #ifdef M10
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T10
     SET_COLOR
 #endif
@@ -320,10 +320,10 @@ INIT_TEX(11,C11)
 #ifdef X11
     SET_TEX(X11)
 #endif
-    APPLY_TEX
 #ifdef M11
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T11
     SET_COLOR
 #endif
@@ -344,10 +344,10 @@ INIT_TEX(12,C12)
 #ifdef X12
     SET_TEX(X12)
 #endif
-    APPLY_TEX
 #ifdef M12
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T12
     SET_COLOR
 #endif
@@ -368,10 +368,10 @@ INIT_TEX(13,C13)
 #ifdef X13
     SET_TEX(X13)
 #endif
-    APPLY_TEX
 #ifdef M13
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T13
     SET_COLOR
 #endif
@@ -392,10 +392,10 @@ INIT_TEX(14,C14)
 #ifdef X14
     SET_TEX(X14)
 #endif
-    APPLY_TEX
 #ifdef M14
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T14
     SET_COLOR
 #endif
@@ -416,10 +416,10 @@ INIT_TEX(15,C15)
 #ifdef X15
     SET_TEX(X15)
 #endif
-    APPLY_TEX
 #ifdef M15
     BGN_ORDERS
 #endif
+    APPLY_TEX
 #ifdef T15
     SET_COLOR
 #endif

@@ -168,10 +168,10 @@ void GLSLMgr::makeTexDefsFile(){
 		fprintf(fp,"#ifdef X%d\n",i);
 		fprintf(fp,"    SET_TEX(X%d)\n",i);
 		fprintf(fp,"#endif\n");
-		fprintf(fp,"    APPLY_TEX\n");
 		fprintf(fp,"#ifdef M%d\n",i);
 		fprintf(fp,"    BGN_ORDERS\n");
 		fprintf(fp,"#endif\n");
+		fprintf(fp,"    APPLY_TEX\n");
 		fprintf(fp,"#ifdef T%d\n",i);
 		fprintf(fp,"    SET_COLOR\n");
 		fprintf(fp,"#endif\n");

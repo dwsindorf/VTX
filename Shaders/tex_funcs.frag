@@ -51,7 +51,10 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	last_bump=bump; \
 	last_bmpht=bmpht; \
 	bump_ampl = tex2d[i].bumpamp; \
-    bump_delta=tex2d[i].bump_delta; 
+    bump_delta=tex2d[i].bump_delta;
+    
+#define SET_TEX(X) \
+	coords.x += tex2d[tid].scale*(X);  // optional offset
 
 #define BGN_ORDERS \
 	tex_orders=min(tex2d[tid].orders, Tangent.w-logf-freqmip+0.5); \
@@ -59,11 +62,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	tex_rem=tex_orders-float(tex_n); \
 	tex_n=tex_rem>0.0?tex_n+1:tex_n; \
 	orders_delta=1.0; \
-	for(int i=0;i<tex_n;i++) {
-	
-#define SET_TEX(X) \
-		coords.x += tex2d[tid].scale*(X);
-		
+	for(int i=0;i<tex_n;i++) {		
 #define APPLY_TEX \
 		tval=textureTile(tid,coords,texmip); \
 		cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
@@ -93,7 +92,6 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #define NEXT_ORDER \
 		orders_delta /= tex2d[tid].orders_delta; \
 	    coords *= tex2d[tid].orders_delta; \
-	    tval=textureTile(tid,coords,texmip); \
 		amplitude *=tex2d[tid].orders_atten; \
 		logf+=dlogf;
 

@@ -52,6 +52,10 @@ Scene() {
 		gndlvl=268431 ft;
 		pitch=-92;
 	}
+	View{
+		phi=12.3401;
+		height=0.00410243;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -93,7 +97,7 @@ Scene() {
 					image("veronoi",NORM,256,256,noise(VERONOI|NLOD,2,1,1,0.5,2,0.77,1,0,1));
 					Surface{
 						terrain=Z(noise(VERONOI|NLOD|UNS,4,1,1,0.5,2,1,1,0,0))+
-								Texture("veronoi",BLEND|TILE|REPLACE|TEX,4,2,1,0,1,2,0.5,0);
+								Texture("veronoi",BLEND|DECAL|REPLACE|TEX,0.5,2,1,2,3,2,0.40278,0);
 					}
 				}
 			}
