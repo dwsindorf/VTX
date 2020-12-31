@@ -95,7 +95,7 @@ Scene() {
 					Color(0.075,0.02,0.02));
 				Surface{
 					m1=0.1*noise(6,3);
-					m2=noise(RIDGED|SCALE,11,8,0.5,0.5,2)+m1;
+					m2=noise(NABS|SQR|SCALE,11,8,0.5,0.5,2)+m1;
 					m3=0.1*noise(10,3,0.6);
 					c1=fractal(SQR|SS,15.3,13.8,0.19,0.19,3,0.97,0.81,0,0.27,0)craters(ID1,1,0.002,0.25,1,1,1,0,0,10,3,0.42,0.24,0,0.6)
 					m2;
@@ -140,7 +140,7 @@ Scene() {
 					shine=77.7857;
 					specular=Color(1,1,1,0);
 					Surface{
-						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
 								Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 					}
 				}

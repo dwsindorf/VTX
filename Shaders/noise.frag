@@ -74,7 +74,7 @@ vec4 voronoi3d(const in vec3 x) {
       }
     }
   }
-  
+
   return vec4(2*(sqrt(res)-0.5),abs(id),0);
 }
 #define fade(t) t*t*t*(t*(t*6.0-15.0)+10.0)

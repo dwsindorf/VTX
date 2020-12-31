@@ -162,7 +162,7 @@ Scene() {
 								Texture("Shist1",BUMP|TEX,15170.7,1.02704,2,0,8.1112,2,0.30612,0)+
 								Texture("craters3",BUMP,7984.58,-1.08112,0.94596,0,6.77776,2.70368,0.35186,0)+
 								Texture("bricks",BUMP|TEX,131072,0.44448,2,0,6,2,0.61224,0)+
-								Texture("jupiter",BORDER|BUMP|S|TEX,HT+noise(RIDGED,8.8,1.9,1,0.5,2,1,1,0,0),1,0.8108,0.44444,-0.33328,1,2,1,0)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)noise(NABS,8.3,4.1,1,0.44,2.06,1,0.07,1,0));
+								Texture("jupiter",BORDER|BUMP|S|TEX,HT+noise(NABS|SQR,8.8,1.9,1,0.5,2,1,1,0,0),1,0.8108,0.44444,-0.33328,1,2,1,0)+Z(fractal(SQR|SS,16,12.2,1.06,0.05,3,2.36,3,0.45)noise(NABS,8.3,4.1,1,0.44,2.06,1,0.07,1,0));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -175,7 +175,7 @@ Scene() {
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
 									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 						}
 					}

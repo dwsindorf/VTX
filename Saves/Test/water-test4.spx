@@ -205,7 +205,7 @@ Scene() {
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				wl=water.level*GTOL;
-				image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+				image("eroded",NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
 				bands("alpine2",ACHNL|CLAMP|NORM,64,0.1,0.54902,Color(0,0,0,0.549),Color(0.024,0.224,0.102,0.078),
 					Color(0.2,0.4,0.075,0.529),
 					Color(0.275,0.475,0),

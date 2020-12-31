@@ -65,7 +65,7 @@ Scene() {
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(50*noise(RIDGED,1,12,0.5,0.5,2))+
+						terrain=Z(50*noise(NABS|SQR,1,12,0.5,0.5,2))+
 								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
 					}
 				}

@@ -289,10 +289,10 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	m_clamp_check=new wxCheckBox(panel, ID_CLAMP, "Clamp");
 	texmap->Add(m_clamp_check, 0, wxALIGN_LEFT|wxALL,0);
 
-	m_norm_check=new wxCheckBox(panel, ID_NORMALIZE, "Normal");
+	m_norm_check=new wxCheckBox(panel, ID_NORMALIZE, "Normalize");
 	texmap->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,0);
 
-	m_rand_check=new wxCheckBox(panel, ID_NORMALIZE, "Random");
+	m_rand_check=new wxCheckBox(panel, ID_NORMALIZE, "AA");
 	texmap->Add(m_rand_check, 0, wxALIGN_LEFT|wxALL,0);
 
     wxSize size=interp_mode->GetMinSize();

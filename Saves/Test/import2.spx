@@ -90,7 +90,7 @@ Scene() {
 						terrain=
 								Texture("BrownStone",BUMP|TEX,48.4022,-0.4348,0.98552,0,8.33344,1.66664,1,0)+
 								Texture("Shist1",BUMP|TEX,65536,0.02896,1.5942,0,2.46928,2,0.30612,0)+
-								Texture("bricks",BUMP|TEX,131072,1.1304,2,0,2.46928,2,0.61224,0)+Z(noise(RIDGED,9,7,0.1,0.6));
+								Texture("bricks",BUMP|TEX,131072,1.1304,2,0,2.46928,2,0.61224,0)+Z(noise(NABS|SQR,9,7,0.1,0.6));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -103,7 +103,7 @@ Scene() {
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
 									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 						}
 					}

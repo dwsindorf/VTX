@@ -838,7 +838,7 @@ Scene() {
 					shadow=Color(0,0,0,0.68);
 					specular=Color(1,1,1,0.76);
 					year=100;
-					image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					image("eroded",NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
 						Color(0.992,0.773,0.004));

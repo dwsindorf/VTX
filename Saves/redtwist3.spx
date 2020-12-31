@@ -97,8 +97,8 @@ Scene() {
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=Z(noise(RIDGED|FS,1,12,0.5,0.5,2,1,1,0,0))+
-								Texture("yellow-black",BUMP|S|TEX,twist(-0.3,noise(ERODED|UNS,0,5,0,0.47,1.87,0.54,0,0,0)+noise(FS|NABS,2.8,5,1,0.6,2,0.13,0.13,0,0)),0.5,-0.03,2,0,3.00016,1.66664,1,0);
+						terrain=Z(noise(NABS|SQR|FS,1,12,0.5,0.5,2,1,1,0,0))+
+								Texture("yellow-black",BUMP|S|TEX,twist(-0.3,noise(NABS|SQR|NEG|UNS,0,5,0,0.47,1.87,0.54,0,0,0)+noise(FS|NABS,2.8,5,1,0.6,2,0.13,0.13,0,0)),0.5,-0.03,2,0,3.00016,1.66664,1,0);
 					}
 				}
 			}

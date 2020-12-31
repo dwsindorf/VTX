@@ -80,15 +80,13 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
     hline->Add(m_file_menu,0,wxALIGN_LEFT|wxALL,0);
 
 	wxString sizes[]={"1","2","4","8","16","32","64","128","256","512","1024"};
-	m_image_width=new wxChoice(panel, ID_IMAGE_WIDTH, wxDefaultPosition,wxSize(60,-1),11, sizes);
-	m_image_width->SetSelection(7);
-
-	hline->Add(m_image_width,0,wxALIGN_LEFT|wxALL,0);
-
 	m_image_height=new wxChoice(panel, ID_IMAGE_HEIGHT, wxDefaultPosition,wxSize(60,-1),11, sizes);
 	m_image_height->SetSelection(7);
-
 	hline->Add(m_image_height,0,wxALIGN_LEFT|wxALL,0);
+
+	m_image_width=new wxChoice(panel, ID_IMAGE_WIDTH, wxDefaultPosition,wxSize(60,-1),11, sizes);
+	m_image_width->SetSelection(7);
+	hline->Add(m_image_width,0,wxALIGN_LEFT|wxALL,0);
 
 	hline->AddSpacer(2);
 
@@ -240,7 +238,7 @@ void VtxImageTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	makeImageList();
-	displayImage(m_name.ToAscii());
+	displayImage((char*)m_name.ToAscii());
 }
 
 //-------------------------------------------------------------
@@ -280,12 +278,24 @@ void VtxImageTabs::displayImage(char *name){
     	return;
 	TNimage *inode=(TNimage*)n;
 	int opts=inode->opts;
-	switch(opts&IMAP){
+	int map_type=opts&IMAP;
+	int display_mode=VtxImageWindow::TILE;
+	switch(map_type){
 		default:
-		case TILE:m_image_map->SetSelection(0);break;
-		case PMAP:m_image_map->SetSelection(1);break;
-		case SMAP:m_image_map->SetSelection(2);break;
-		case CMAP:m_image_map->SetSelection(3);break;
+		case TILE:
+			m_image_map->SetSelection(0);
+		break;
+		case PMAP:
+			m_image_map->SetSelection(1);
+			break;
+		case SMAP:
+			m_image_map->SetSelection(2);
+			display_mode=VtxImageWindow::SCALE;
+			break;
+		case CMAP:
+			m_image_map->SetSelection(3);
+			display_mode=VtxImageWindow::SCALE;
+			break;
 	}
     m_norm_check->SetValue((opts&NORM)?true:false);
     m_invert_check->SetValue((opts&INVT)?true:false);
@@ -299,13 +309,13 @@ void VtxImageTabs::displayImage(char *name){
 	m_image_height->SetSelection((int)log2((int)S0.s));
 	arg=arg->next();
 	TNode *vnode=arg->left;
-
 	vnode->init();
 	vnode->eval();
 	char vals[512]="";
 	vnode->valueString(vals);
 	m_image_expr->SetValue(vals);
-	m_image_window->setImage(wxString(name),VtxImageWindow::TILE);
+
+	m_image_window->setImage(wxString(name),display_mode);
 	delete inode;
 }
 
@@ -362,8 +372,13 @@ void VtxImageTabs::setObjAttributes(){
 		return;
 	}
 	n->init();
+	TNimage *inode=(TNimage*)n;
+	int opts=inode->opts;
+	int map_type=opts&IMAP;
+	int display_mode=map_type==SMAP?VtxImageWindow::SCALE:VtxImageWindow::TILE;
 	delete n;
-	m_image_window->setImage(m_name.ToAscii(),VtxImageWindow::TILE);
+
+	m_image_window->setImage(m_name.ToAscii(),display_mode);
 	update_needed=false;
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();
@@ -412,7 +427,7 @@ void VtxImageTabs::OnFileEdit(wxCommandEvent& event){
 	if(index != wxNOT_FOUND){
 		m_file_menu->SetSelection(index);
 		m_name=m_file_menu->GetStringSelection();
-		displayImage(m_name.ToAscii());
+		displayImage((char*)m_name.ToAscii());
 	}
 	else{
 		wxString istr=getImageString(name); // new name
@@ -423,7 +438,7 @@ void VtxImageTabs::OnFileEdit(wxCommandEvent& event){
 			return;
 		n->init();
 		delete n;
-		Image *img=images.find(name.ToAscii());
+		Image *img=images.find((char*)name.ToAscii());
 		if(img){
 			img->set_newimg(1);
 			m_name=name;
@@ -439,14 +454,14 @@ void VtxImageTabs::OnChanged(wxCommandEvent& event){
 
 void VtxImageTabs::OnFileSelect(wxCommandEvent& event){
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
 void VtxImageTabs::setSelection(wxString name){
 	m_file_menu->SetStringSelection(name);
 	m_name=m_file_menu->GetStringSelection();
-    displayImage(m_name.ToAscii());
+    displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
@@ -475,7 +490,7 @@ void VtxImageTabs::Save(){
 void VtxImageTabs::Revert(){
 	if(!revert_list)
 		return;
-	char *name=m_name.ToAscii();
+	char *name=(char*)m_name.ToAscii();
 	ImageSym *is=revert_list->inlist(name);
 	if(is && is->istring){
 		makeNewImage(name, is->istring);
@@ -488,7 +503,7 @@ void VtxImageTabs::Revert(){
 }
 
 bool VtxImageTabs::canDelete()  {
-	Image *img=images.find(m_name.ToAscii());
+	Image *img=images.find((char*)m_name.ToAscii());
 	if(!img || (img && !img->accessed())){
 		return true;
 	}
@@ -512,10 +527,10 @@ bool VtxImageTabs::canRevert(){
 }
 void VtxImageTabs::Delete(){
 	if(canDelete()){
-		images.removeAll(m_name.ToAscii());
+		images.removeAll((char*)m_name.ToAscii());
 		m_name="";
 		makeImageList();
-		displayImage(m_name.ToAscii());
+		displayImage((char*)m_name.ToAscii());
 		imageDialog->UpdateControls();
 	}
 }

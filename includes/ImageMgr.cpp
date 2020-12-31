@@ -276,7 +276,8 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 		break;
 	case SMAP:       // spherical mapping
 	    dx=360.0/w;
-		dy=360.0/h;
+		dy=180.0/h;
+		b=0;
 		break;
 	case CMAP:	      // cylindrical mapping (tiles in x)
 		TheNoise.set4D();
@@ -309,7 +310,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 		for(x=x1,i=0;i<w;i++,x+=dx){
 			switch(mtype){
 			case SMAP:
-				pt=Point(x,y,rh);
+				pt=Point(x,y+90,rh);
 				pt=pt.rectangular();
 				vx=pt.x;
 				vy=pt.y;
@@ -427,7 +428,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	else if(!cimage && norm){
 	    double ma=1;
 	    double mb=0;
-	    printf("min %g max %g\n",mx,mn);
+	   // printf("min %g max %g\n",mx,mn);
 	    if(mx != mn){
 			ma=1/(mx-mn);
 			mb=mn*ma;

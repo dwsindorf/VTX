@@ -68,13 +68,13 @@ Scene() {
 					Surface{
 						mp=noise(1,12,0.3,0.2);
 						l2=noise(RO1,2,5);
-						mr1=noise(RIDGED|UNS|RO1,8,10,0.2,0.4);
-						mr2=noise(ERODED|UNS|RO2,8,12,0.2,0.4);
+						mr1=noise(NABS|SQR|UNS|RO1,8,10,0.2,0.4);
+						mr2=noise(NABS|SQR|NEG|UNS|RO2,8,12,0.2,0.4);
 						mrp=clamp(2*noise(UNS,6,7,0.3),0,1);
-						z1=noise(RIDGED|UNS,9,6,0.4,0.5);
-						z2=noise(RIDGED|UNS,6,6,0.5,0.5);
+						z1=noise(NABS|SQR|UNS,9,6,0.4,0.5);
+						z2=noise(NABS|SQR|UNS,6,6,0.5,0.5);
 						z3=2*mr2*(1-mrp)+mr1*mrp-0.9+mrp;
-						z4=noise(RIDGED|UNS|RO2,6,12,0.5,0.1);
+						z4=noise(NABS|SQR|UNS|RO2,6,12,0.5,0.1);
 						m1=noise(3,2);
 						terrain=map(mp,0,1,0.2)
 								layer(MORPH,0,0.2)

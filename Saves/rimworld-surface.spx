@@ -201,7 +201,7 @@ Scene() {
 					Surface{
 						mp=noise(0,10,1);
 						m2=noise(UNS,5.2,7,1,0.5,2,1,1,0,0);
-						m3=noise(RIDGED,9,15,0.5,0.6);
+						m3=noise(NABS|SQR,9,15,0.5,0.6);
 						terrain=map(mp,-0.3,0.5)
 								layer(MORPH,0,0.4)
 									[Z(0.2*m3)

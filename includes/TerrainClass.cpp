@@ -1,6 +1,7 @@
 
 #include "TerrainData.h"
 #include "TerrainClass.h"
+#include "ImageClass.h"
 #include "ImageMgr.h"
 #include "TextureClass.h"
 #include "MapNode.h"
@@ -45,14 +46,8 @@ char tmps[256];
 // noise symbols
 
 static LongSym ntypes[]={
-	{"VERONOI",	    VERONOI},
+	{"VORONOI",	    VORONOI},
 	{"GRADIENT",	GRADIENT},
-	{"HOMOGE",		GRADIENT},
-	{"HETERO",		GRADIENT},
-	{"HYBRID",		GRADIENT},
-	{"ERODED",	    ERODED},
-	{"RIDGED",	    RIDGED},
-	{"RANDOM",		RANDOM}
 };
 NameList<LongSym*> NTypes(ntypes,sizeof(ntypes)/sizeof(LongSym));
 
@@ -930,21 +925,17 @@ void TNnoise::optionString(char *c)
     c[0]=0;
     if(type==0)
         return;
-	int nopt=type&(NOPTS|0xf0);
 	int ntype=type&NTYPES;
+	int nopt=type&(NOPTS|0xf0);
+
 	int i;
 	int mask=0;
-	if((type & ERODED)==ERODED){
-		strcpy(c,"ERODED");
-		mask=ERODED;
-	}
-	else if((type & RIDGED)==RIDGED){
-		strcpy(c,"RIDGED");
-		mask=RIDGED;
-	}
-	else if(ntype) {
+	// get noise type
+	if(!ntype) // default
+		strcpy(c,"GRADIENT");
+	else{
 		for(i=0;i<NTypes.size;i++){
-		    if(ntype==NTypes[i]->value){
+			if(ntype==NTypes[i]->value){
 				strcpy(c,NTypes[i]->name());
 				break;
 			}
@@ -1130,7 +1121,7 @@ bool TNnoise::setProgram(){
 	bool invert = (type & NEG)?true:false;
 	bool absval = (type & NABS)?true:false;
 	bool uns = (type & UNS)?true:false;
-	bool vnoise=(type & VERONOI)?true:false;
+	bool vnoise=(type & VORONOI)?true:false;
 
 	int nid=id;//TerrainProperties::nid;
 
@@ -1424,7 +1415,6 @@ TNsnow::TNsnow(TNode *l, TNode *r) : TNfunc(l,r) {
 TNsnow::~TNsnow()
 {
 	DFREE(texture);
-	DFREE(image);
 }
 
 //-------------------------------------------------------------
@@ -1435,22 +1425,28 @@ void TNsnow::init()
 #define NALPHA 4
 	if(!texture){
 		if(!image){
-			Color *color=0;
-			MALLOC(2*NALPHA,Color,color);
-			int i=0,j;
-			for(j=0;j<NALPHA;j++)
-				color[i++]=Color(1,1,1,0);
-			for(j=0;j<NALPHA;j++)
-				color[i++]=Color(1,1,1,1);
-			image=new Image(color,2*NALPHA,1);
-		    image->set_alpha(1);
+			image=images.load("snow",BMP|JPG);
+			if(!image){
+				Color *color=0;
+				MALLOC(2*NALPHA,Color,color);
+				int i=0,j;
+				for(j=0;j<NALPHA;j++)
+					color[i++]=Color(1,1,1,0);
+				for(j=0;j<NALPHA;j++)
+					color[i++]=Color(1,1,1,1);
+				image=new Image(color,2*NALPHA,1);
+				image->set_alpha(1);
+				images.save("snow",image);
+				cout <<"building Snow Image"<<endl;
+			}
+			else
+				cout <<"loading Snow Image"<<endl;
 		}
 		if(!image)
 			return;
-	    texture=new Texture(image,BORDER|CLAMP|TEX,this);
+		int opts=BORDER|CLAMP|TEX;
+	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
-	    //texture->bump_damp=0.7;
-	    //texture->color_mip=-2;
 	    texture->scale=1;
 	    texture->bump_active=true;
 	    texture->s_data=true;
@@ -1492,7 +1488,7 @@ bool TNsnow::initProgram(){
 	if(bmpht>0)
 		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
 	sprintf(defs+strlen(defs),"\n");
-	cout << "TNsnow :"<<defs << endl;
+	//cout << "TNsnow :"<<defs << endl;
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);

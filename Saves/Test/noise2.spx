@@ -61,7 +61,7 @@ Scene() {
 						Color(1,1,1));
 					Surface{
 						terrain=
-								Texture("grad",BORDER|BUMP|TEX|S,noise(RIDGED|BP|FS,0,7.3,1,1,2,0.27,1,0,0.09),0.9999,0.27696,2,-1.04608,1,3.27696,1,0,0.0564489)+
+								Texture("grad",BORDER|BUMP|TEX|S,noise(NABS|SQR|BP|FS,0,7.3,1,1,2,0.27,1,0,0.09),0.9999,0.27696,2,-1.04608,1,3.27696,1,0,0.0564489)+
 								Texture("alpine",S,BMPHT,0.9999,1.24848,0.52304,0,1,2,1);
 					}
 				}

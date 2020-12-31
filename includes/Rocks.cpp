@@ -13,7 +13,7 @@
 extern double Hscale, Drop, MaxSize;
 extern double ptable[];
 
-static const char *def_rnoise_expr="noise(HOMOGE,0,2)\n";
+static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 static RockMgr s_rm(FINAL); // static finalizer

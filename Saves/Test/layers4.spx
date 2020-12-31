@@ -538,7 +538,7 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					image("ridges",INVT,256,256,noise(ERODED|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("ridges",INVT,256,256,noise(NABS|SQR|NEG|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
 						Color(0.58,0.024,0.024));
 					bands("alpine2",ACHNL|CLAMP|NORM,64,0.1,0.552941,Color(0,0,0,0.553),Color(0.027,0.239,0.102),
@@ -567,7 +567,7 @@ Scene() {
 									Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
 									Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0)]
 								layer("snow2",MORPH,0.57,noise(RO2,0,2,1,0.5,2,1,1,0,0),0.01,noise(10.2,8.6,1,0.5,2,1,1,0,0))
-									[Z(noise(RIDGED|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))
+									[Z(noise(NABS|SQR|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))
 									+
 									Texture("ridges",BUMP|TEX,1164.1,0.88888,1,0,10,2.2,0.96296,0)+
 									Texture("Shist1",BUMP|TEX,16384,-0.6,2,0,4,2,1,0)+
@@ -577,7 +577,7 @@ Scene() {
 									Texture("GrassField",A|BUMP|TEX,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037)]
 								layer("volcanos2",MORPH,0.15,0.1,0,0.04)
 									[Z(0.5*craters(ID1,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
-									noise(RIDGED|SCALE,11,8,0.5,0.5,2)+0.1*noise(6,3))
+									noise(NABS|SQR|SCALE,11,8,0.5,0.5,2)+0.1*noise(6,3))
 									+
 									Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
 									Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+

@@ -127,7 +127,7 @@ Scene() {
 					Color(0,0.251,0,0.451),
 					Color(0.992,0.773,0.004));
 				Surface{
-					m1=noise(ERODED,8,14,0.2,0.5,2.1);
+					m1=noise(NABS|SQR|NEG,8,14,0.2,0.5,2.1);
 					m2=noise(SQR|RO1,8,14,0.3,0.5,2.1);
 					terrain=fog(2*noise(SQR|UNS,8,5,0.5))
 							Point(2*m2,0,m1+m2)+

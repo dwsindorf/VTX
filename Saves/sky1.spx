@@ -74,7 +74,7 @@ Scene() {
 						specular=Color(1,1,1,0);
 						sunset=0.154005;
 						year=17;
-						image("test2",NORM,256,256,Color(0,0,noise(UNS,1,5,0.3,0.5)+0.8*noise(RIDGED,1,5,0.3),BLUE));
+						image("test2",NORM,256,256,Color(0,0,noise(UNS,1,5,0.3,0.5)+0.8*noise(NABS|SQR,1,5,0.3),BLUE));
 						Surface{
 							terrain=
 									Texture("test2",BUMP|TEX,1,-0.2788,1.05456,0,1,2);

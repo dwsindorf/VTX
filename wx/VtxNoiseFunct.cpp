@@ -98,7 +98,7 @@ bool VtxNoiseFunct::Create(wxWindow* parent,
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
 
 	AddControlsTab(page);
-    AddPage(page,wxT("Noise"),true);
+    AddPage(page,wxT("Multi-Noise"),true);
     page=new wxPanel(this,wxID_ANY);
     AddTypeTab(page);
     AddPage(page,wxT("Advanced"),false);
@@ -162,7 +162,6 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 	HomogSlider=new SliderCtrl(panel,ID_HOMOG_SLDR,"Homog",LABEL2, VALUE2,SLIDER2);
 	HomogSlider->setRange(-1,1);
 	hline->Add(HomogSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
 
 
 	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
@@ -245,33 +244,34 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
-    wxString lmodes[]={"Perlin","Veronoi","Random"};
-    m_noisetype=new wxRadioBox(panel,ID_TYPE,wxT("Type"),wxPoint(-1,-1),wxSize(-1, 50),3,
-   		lmodes,3,wxRA_SPECIFY_COLS);
+    wxString lmodes[]={"Perlin","Voronoi"};
+    m_noisetype=new wxRadioBox(panel,ID_TYPE,wxT("Type"),wxPoint(-1,-1),wxSize(-1, 50),2,
+   		lmodes,2,wxRA_SPECIFY_COLS);
     m_noisetype->SetSelection(0);
 
     hline->Add(m_noisetype,0,wxALIGN_LEFT|wxALL,5);
 
 	wxBoxSizer* noise_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Noise"));
 
-
-	wxStaticText *lbl=new wxStaticText(panel,-1,"Domain",wxDefaultPosition,wxSize(-1,-1));
-	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop,5);
+	wxStaticText *lbl=new wxStaticText(panel,-1,"RSeed",wxDefaultPosition,wxSize(-1,-1));
+	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop|wxLEFT,5);
 
 	wxString offsets[]={"0","1","2","3","4","5"};
 
 	m_domain=new wxChoice(panel, ID_DOMAIN, wxDefaultPosition,wxSize(45,-1),6, offsets);
 	m_domain->SetSelection(0);
-	noise_cntrls->Add(m_domain,0,wxALIGN_LEFT|wxALL,0);
+	noise_cntrls->Add(m_domain,0,wxALIGN_LEFT|wxLEFT,5);
+
+	lbl=new wxStaticText(panel,-1,"RMode",wxDefaultPosition,wxSize(-1,-1));
+	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop|wxLEFT,5);
 
 	wxString mode[]={"Vertex","Pixel"};
 	m_mode=new wxChoice(panel, ID_MODE, wxDefaultPosition,wxSize(90,-1),2, mode);
 	m_mode->SetSelection(0);
-	noise_cntrls->Add(m_mode,0,wxALIGN_LEFT|wxALL,0);
-	hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxTop,5);
+	noise_cntrls->Add(m_mode,0,wxALIGN_LEFT|wxLEFT,5);
+	hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxALL,5);
 
-
-   boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+    boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 }
 //-------------------------------------------------------------
 // VtxNoiseFunct::setFunction() set controls from string
@@ -361,11 +361,8 @@ void VtxNoiseFunct::setTypeControls(int type)
 		m_mode->SetSelection(0);
 	int ntype=type & NTYPES;
 	switch(ntype){
-	case VERONOI:
+	case VORONOI:
 		m_noisetype->SetSelection(1);
-		break;
-	case RANDOM:
-		m_noisetype->SetSelection(2);
 		break;
 	default:
 		m_noisetype->SetSelection(0);
@@ -377,7 +374,16 @@ void VtxNoiseFunct::setTypeControls(int type)
 //-------------------------------------------------------------
 wxString VtxNoiseFunct::getTypeStr()
 {
-	wxString n="GRADIENT";
+	wxString n="";
+	int type=m_noisetype->GetSelection();
+	switch(type){
+	default:
+		n="GRADIENT";
+		break;
+	case 1:
+		n="VORONOI";
+		break;
+	}
 	if(m_uns->GetValue())
 		n+="|UNS";
 	if(m_sqr->GetValue())
@@ -402,15 +408,9 @@ wxString VtxNoiseFunct::getTypeStr()
 	case 5: n+="|RO5"; break;
 	}
 
-	int type=m_noisetype->GetSelection();
-	switch(type){
-	case 1:n+="|VERONOI"; break;
-	case 2:n+="|RANDOM"; break;
-	}
 	int mode=m_mode->GetSelection();
 	switch(mode){
 	case 1: n+="|FS"; break;
-	//case 2: n+="|FS|BP"; break;
 	}
 	return n;
 }
@@ -432,7 +432,7 @@ void VtxNoiseFunct::getFunction(){
 	s+=OffsetSlider->getText();
 	s+=")";
 
-	TNnoise *tn=(TNnoise*)TheScene->parse_node(s.ToAscii());
+	TNnoise *tn=(TNnoise*)TheScene->parse_node((char*)s.ToAscii());
 	if(!tn){
 		cout<<"parser error:"<<s.ToAscii()<<endl;
 		return;

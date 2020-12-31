@@ -56,8 +56,8 @@ Scene() {
 				bands("grad",64,0.5,Color(0.9,0.8,0.7),0.2,RAND);
 				Surface{
 					p=noise(3,17);
-					m1=noise(RIDGED,8,4);
-					m2=noise(RIDGED|UNS,13,2);
+					m1=noise(NABS|SQR,8,4);
+					m2=noise(NABS|SQR|UNS,13,2);
 					terrain=Z(0.5*m1+0.02*m2)+
 							Texture("grad",S|TEX,(1+0.1*p*PHI)*(2*PHI+0.01*p));
 				}
@@ -95,12 +95,12 @@ Scene() {
 					haze.max=6e-05;
 					haze.min=2e-05;
 					haze.value=1;
-					image("mars1",256,256,Color(0.3+noise(RIDGED|UNS,0,9,0.96,0.5,2.1,1,1,0,0),0.5*RED,0.2*RED,RED));
+					image("mars1",256,256,Color(0.3+noise(NABS|SQR|UNS,0,9,0.96,0.5,2.1,1,1,0,0),0.5*RED,0.2*RED,RED));
 					Surface{
 						m1=noise(UNS,1,5,0.47,0.4,2)+0.71;
-						m2=0.5*noise(ERODED,8,16,0.2,0.5);
+						m2=0.5*noise(NABS|SQR|NEG,8,16,0.2,0.5);
 						terrain=fog(1-1.2*noise(UNS,8,3,1))
-								water(0.01*noise(RIDGED|NLOD,15,6,0.33,0.5,2.1))
+								water(0.01*noise(NABS|SQR|NLOD,15,6,0.33,0.5,2.1))
 								Z(m2+craters(3,0.1,0.25,1,0.8,1,0.3))+Color(0.75+noise(UNS,2,5,1,0.5,2,1,1,0,0),RED,RED,1)+
 								Texture("mars1",BUMP|NORM|TEX,7.05918,0.66664,2,3,10,2,1,0);
 					}

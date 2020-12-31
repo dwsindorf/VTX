@@ -75,7 +75,7 @@ Scene() {
 					shine=2.91188;
 					specular=Color(1,1,1,0.17);
 					year=100;
-					image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					image("eroded",NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
 					bands("saturn",NORM,64,0.5,0.3,RAND,Color(1,0.9,0.3),
 						Color(1,0.6,0),
 						Color(0.7,0.4,0),

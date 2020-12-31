@@ -122,14 +122,14 @@ Scene() {
 					shine=2.38066;
 					specular=Color(1,0.9,0.65,0.14);
 					year=100;
-					image("eroded",BUMP|NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					image("eroded",BUMP|NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
 					bands("jupiter",256,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=
 								Texture("eroded",BUMP,9095.9,1,1,0,9.604,2,0.50944,0)+
 								Texture("BrownStone",TEX,1,1,1,0,1,2,0.5,0)+
 								Texture("bricks",TEX,131072,2,0.566,0,1.90576,2,0.6415,0)+
-								Texture("jupiter",BORDER|S|TEX,HT+noise(RIDGED,8.8,1.9,1,0.5,2,1,1,0,0),0.5,0.72972,0.59456,0.59264,1,2,1,0)+Z(fractal(SQR|SS,16,10.1,1.06,0.05,3,2.36,1,0.45)noise(NABS,8.3,3,1,0.44,2.06,1,1,0,0));
+								Texture("jupiter",BORDER|S|TEX,HT+noise(NABS|SQR,8.8,1.9,1,0.5,2,1,1,0,0),0.5,0.72972,0.59456,0.59264,1,2,1,0)+Z(fractal(SQR|SS,16,10.1,1.06,0.05,3,2.36,1,0.45)noise(NABS,8.3,3,1,0.44,2.06,1,1,0,0));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -142,7 +142,7 @@ Scene() {
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
 									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 						}
 					}

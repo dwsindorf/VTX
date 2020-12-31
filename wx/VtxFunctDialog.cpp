@@ -157,7 +157,7 @@ void VtxFunctDialog::getFunct(wxString val){
 
 }
 bool VtxFunctDialog::setFunct(wxString token, wxString val){
-	TNode *tn=(TNode*)TheScene->parse_node(val.ToAscii());
+	TNode *tn=(TNode*)TheScene->parse_node((char*)val.ToAscii());
 	if(!tn){
 		cout << "function expression parse failed : "<< val.ToAscii() << endl;
 		return false;

@@ -99,7 +99,7 @@ Scene() {
 						Color(0.008,0,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S,noise(RIDGED|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
+								Texture("star1",BORDER|S,noise(NABS|SQR|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
 					}
 					Corona(8.11) {
 						color1=Color(1,1,0.8,0.8);
@@ -118,7 +118,7 @@ Scene() {
 					albedo=0.1;
 					Surface{
 						terrain=craters(ID1,2,0.1,0.1,1,1,0.8)
-								Z(0.1*noise(ERODED,11,4,0.5,0.5))+Color(noise(UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
+								Z(0.1*noise(NABS|SQR|NEG,11,4,0.5,0.5))+Color(noise(UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
 					}
 					Clouds(0.0031) {
 						crot=1;
@@ -134,7 +134,7 @@ Scene() {
 							Color(0.141,0,0));
 						Surface{
 							terrain=
-									Texture("yellow-white",BORDER|BUMP|S|TEX,twist(-0.3,noise(ERODED|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);
+									Texture("yellow-white",BORDER|BUMP|S|TEX,twist(-0.3,noise(NABS|SQR|NEG|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);
 						}
 					}
 				}

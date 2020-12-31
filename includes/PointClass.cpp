@@ -2,7 +2,7 @@
 
 #include "PointClass.h"
 #include "defs.h"
-
+#define SINE_LUT
 //#define FULLSINE
 
 const double TWOPI=2.0*PI;
@@ -25,9 +25,11 @@ static int sin_lut_flag=0;
 //make_lut	build the sine look-up table (one time only)
 //-------------------------------------------------------------
 
-static void make_lut()
+void make_lut()
 {
 
+	if(sin_lut_flag)
+		return;
 	int i;
 	double 		scale;
 
@@ -45,6 +47,8 @@ static void make_lut()
 
 double lsin(double t)
 {
+	t= t - TWOPI * floor( t / TWOPI );
+
 	double r;
 #ifdef FULLSINE
 	l=t*SINE_LUT_STEP;

@@ -55,7 +55,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.48);
 					specular=Color(1,1,1,0.76);
 					year=100;
-					image("eroded",NORM,256,256,noise(ERODED|UNS,1,5,0.6,0.1));
+					image("eroded",NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
 						Color(0.992,0.773,0.004));
@@ -76,7 +76,7 @@ Scene() {
 						shine=77.7857;
 						specular=Color(1,1,1,0);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(RIDGED,9,4,0.1,0.6)),2+60*HT)
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
 									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 						}
 					}

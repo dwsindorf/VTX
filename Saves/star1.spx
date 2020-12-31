@@ -47,7 +47,7 @@ Scene() {
 						Color(0.008,0,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S|TEX,noise(RIDGED|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2,1,0);
+								Texture("star1",BORDER|S|TEX,noise(NABS|SQR|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2,1,0);
 					}
 					Corona(8.86371) {
 						color1=Color(1,1,0.98);

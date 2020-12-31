@@ -36,8 +36,8 @@ static double  aht;
 static double  bht;
 
 static CraterMgr s_cm(FINAL);    // static finalizer
-static const char *def_rnoise_expr="noise(HOMOGE,0,12,0.5,0.4,1.9873215)\n";
-static const char *def_vnoise_expr="noise(RIDGED|NEG,1,10,0.4,0.5,1.9873215)\n";
+static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
+static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG,1,10,0.4,0.5,1.9873215)\n";
 //************************************************************
 // classes Crater, CraterMgr
 //************************************************************

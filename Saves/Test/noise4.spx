@@ -245,7 +245,7 @@ Scene() {
 						Color(0.996,0.773,0.004));
 					Surface{
 						terrain=
-								Texture("saturn2",BORDER|BUMP|LINEAR|S,noise(RIDGED|FS|SCALE|UNS,18,10,0,0.89,2.2,0.78,-0.36,0,0),17493.1,0.1,2,0.18464,1,2.28304,1,0);
+								Texture("saturn2",BORDER|BUMP|LINEAR|S,noise(NABS|SQR|FS|SCALE|UNS,18,10,0,0.89,2.2,0.78,-0.36,0,0),17493.1,0.1,2,0.18464,1,2.28304,1,0);
 					}
 				}
 			}
