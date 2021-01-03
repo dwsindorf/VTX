@@ -1,4 +1,6 @@
 #include "NoiseClass.h"
+#include "NoiseFuncs.h"
+
 #include "ColorClass.h"
 #include "Perlin.h"
 #include "Util.h"
@@ -12,7 +14,9 @@ extern double lsin(double g);
 //#define NOISE_CACHE
 //#define LONGLONG // slower but allows freqs>2e9
 
-#define DEBUG_NOISE_VISITS
+//#define DEBUG_NOISE_CACHE
+#define DEBUG_NOISE_EVAL
+
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
 
@@ -22,6 +26,9 @@ extern double lsin(double g);
 int noise_hits=0;
 int noise_misses=0;
 int noise_visits=0;
+int gradient_visits=0;
+double gradient_time=0;
+double gradient_time_per_octave=0;
 
 Noise TheNoise;
 int	  RandSeed=1;
@@ -506,6 +513,53 @@ void  Noise::clearCache(){
 
 }
 //-------------------------------------------------------------
+//void reset()
+//-------------------------------------------------------------
+void  Noise::resetStats(){
+	noise_hits=0;
+	noise_misses=0;
+	noise_visits=0;
+	gradient_visits=0;
+	gradient_time=0;
+	gradient_time_per_octave=0;
+}
+//-------------------------------------------------------------
+//void showStats()
+//-------------------------------------------------------------
+void  Noise::showStats(){
+	char buff[256];
+#ifdef DEBUG_NOISE_EVAL
+	int n=gradient_visits;
+	double gtm=gradient_time;
+	double gtmp=gradient_time_per_octave;
+	char tstr[256];
+	if(noise3D())
+		sprintf(tstr,"3D ");
+	else
+		sprintf(tstr,"4D ");
+	switch(ntype()){
+	    case VORONOI:
+	    	strcat(tstr,"Voronoi");
+	    	break;
+	    case SIMPLEX:
+	    	strcat(tstr,"Simplex");
+	    	break;
+	    case GRADIENT:
+	    default:
+	    	strcat(tstr,"Perlin");
+	}
+	sprintf(buff,"%s MultiNoise calls:%d calc tm:%2.1f us per octave:%2.1f ave octaves:%2.2f",
+			tstr,n,1e6*gtm/n,1e6*gtmp/n,gtm/gtmp);
+	cout<<buff<<endl;
+#endif
+#ifdef DEBUG_NOISE_CACHE
+	sprintf(buff,"Noise calls:%d cache hits:%d percent:%2.1f",
+			noise_visits,noise_hits,(100.0*noise_hits)/noise_visits);
+	cout<<buff<<endl;
+
+#endif
+}
+//-------------------------------------------------------------
 // double factor(int i) return noise value
 //-------------------------------------------------------------
 double Noise::factor(int i)
@@ -647,14 +701,18 @@ double Noise::value(int i)
 	if(mode()==MINMAX){
 	    freq=factors[nfact]->freqs[i];
 	    double fv=norm_value*freq+norm_offset;
-	    if(type==VORONOI)
+	    switch(type){
+	    case VORONOI:
 	    	return Voronoi1D(fv);
-	    else
-	        return Noise1(fv);
+	    case SIMPLEX:
+	    	return Simplex1D(fv);
+	    default:
+	        return Noise1D(fv);
+	    }
 	}
 	int m=1<<i;
 	double v[4];
-#ifdef DEBUG_NOISE_VISITS
+#ifdef DEBUG_NOISE_CACHE
 	noise_visits++;
 #endif
 #ifdef NOISE_CACHE
@@ -668,25 +726,36 @@ double Noise::value(int i)
 		v[0]=POINT[0]*freq;
 		v[1]=POINT[1]*freq;
 		v[2]=POINT[2]*freq;
-		if(type==VORONOI){
-			if(noise4D()){
-				v[3]=POINT[3]*freq;
+		if(noise4D()){
+			v[3]=POINT[3]*freq;
+			switch(type){
+			case VORONOI:
 				VALUE(i)=Voronoi4D(v);
+				break;
+			case SIMPLEX:
+				VALUE(i)=Simplex4D(v);
+				break;
+			case GRADIENT:
+			default:
+				VALUE(i)=Noise4D(v);
 			}
-			else
-				VALUE(i)=Voronoi3D(v);
 		}
-		else {
-			if(noise4D()){
-				v[3]=POINT[3]*freq;
-				VALUE(i)=Noise4(v);
+		else{
+			switch(type){
+			case VORONOI:
+				VALUE(i)=Voronoi3D(v);
+				break;
+			case SIMPLEX:
+				VALUE(i)=Simplex3D(v);
+				break;
+			case GRADIENT:
+			default:
+				VALUE(i)=Noise3D(v);
 			}
-			else
-				VALUE(i)=Noise3(v);
 		}
 #ifdef NOISE_CACHE
     }
-#ifdef DEBUG_NOISE_VISITS
+#ifdef DEBUG_NOISE_CACHE
 	else
 	    noise_hits++;
 #endif
@@ -700,8 +769,9 @@ double Noise::value(int i)
 double Noise::eval(int type,int n, double *args)
 {
     domain=type & ROFF;
+    int nt=ntype();
     if(domain || rseed){
-		shift=offsets[domain]+rseed;
+		shift=offsets[domain];
 	    POINT[0]=P0[0]+shift;
 	    POINT[1]=P0[1]+shift;
 	    POINT[2]=P0[2]+shift;
@@ -711,15 +781,7 @@ double Noise::eval(int type,int n, double *args)
 		shift=rseed;
  	double val=0;
  	set_ntype(type&NTYPES);
-	switch(ntype()){
-	default: // 0
-	case GRADIENT:
-		val=gradient(type,n,args);
-		break;
-	case VORONOI:
-		val=voronoi(type,n,args);
-		break;
-	}
+	val=multinoise(type,n,args);
     if(type & ROFF)
     	domain=0;
 	return val;
@@ -803,11 +865,14 @@ void Noise::distort(int type,double distortion){
 //-------------------------------------------------------------
 // Noise::gradient()	return sum of octaves (fBm noise)
 //-------------------------------------------------------------
-double Noise::gradient(int type, int nargs, double *args)
+double Noise::multinoise(int type, int nargs, double *args)
 {
 	const double VMAX=0.5;
 	if(!init_flag)
 		init();
+#ifdef DEBUG_NOISE_EVAL
+	double start_time=clock();
+#endif
 
 	double H=dflt_H;
 	double L=dflt_L;
@@ -905,14 +970,21 @@ double Noise::gradient(int type, int nargs, double *args)
 	}
 	if(type & NEG)
 	    result=-result;
+#ifdef DEBUG_NOISE_EVAL
+    double tm=(double)(clock() - start_time)/CLOCKS_PER_SEC;
+    gradient_time += tm;
+    gradient_time_per_octave += tm/(i-start);
+    gradient_visits++;
+#endif
+
 	return result;
 }
 //-------------------------------------------------------------
 // Noise::Voronoi1D() used only to determine min max values of function
 //-------------------------------------------------------------
 double Noise::Voronoi1D(double x){
-	double p[3]={x,x,x};
-	return Voronoi3D(p);
+	double p[2]={x,x};
+	return Voronoi2D(p);
 }
 
 Point2D rhashv(Point2D uv) {
@@ -949,8 +1021,6 @@ static double hv=43758.5453;
 	p.y=m.y*v.x+m.x*v.y+m.z*v.z; \
 	p.z=m.z*v.x+m.y*v.y+m.x*v.z;
 
-//static Point h3p1(113.0, 1.0, 57.0);
-//static Point h3p2(57.0, 113.0, 1.0);
 static Point h3p3(1.0, 57.0, 113.0);
 Point hashv3(Point p) {
 	Point4D p1;
@@ -959,10 +1029,6 @@ Point hashv3(Point p) {
 	double d1=lsin(p1.x);
 	double d2=lsin(p1.y);
 	double d3=lsin(p1.z);
-
-	//double d1=sin(p.dot(h3p1)*hv);
-	//double d2=sin(p.dot(h3p2)*hv);
-	//double d3=sin(p.dot(h3p3)*hv);
 	Point p4= Point(d3,d2,d1);
 	return p4.fract();
 }
@@ -1100,14 +1166,32 @@ double Voronoi4(double *pnt) {
 double Noise::Voronoi4D(double *pnt){
 	return Voronoi4(pnt);
 }
+
 //-------------------------------------------------------------
-// Noise::random()	return sum of octaves (random noise)
+// Noise::Simplex1D() 1D Simplex noise
 //-------------------------------------------------------------
-double Noise::voronoi(int type,int nargs, double *args)
-{
-	return gradient(type,nargs, args);
+double Noise::Simplex1D(double x){
+	return SimplexNoise::noise(x);
+}
+//-------------------------------------------------------------
+// Noise::Simplex3D() 3D Simplex noise
+//-------------------------------------------------------------
+double Noise::Simplex3D(double *d){
+	return SimplexNoise::noise(d[0],d[1],d[2]);
+}
+//-------------------------------------------------------------
+// Noise::Simplex3D() 4D Simplex noise
+//-------------------------------------------------------------
+double Noise::Simplex4D(double *d){
+	return SimplexNoise::noise(d[0],d[1],d[2],d[3]);
 }
 
+//-------------------------------------------------------------
+// Noise::Simplex2D() 2D Simplex noise
+//-------------------------------------------------------------
+double Noise::Simplex2D(double *d){
+	return SimplexNoise::noise(d[0],d[1]);
+}
 //-------------------------------------------------------------
 // Noise::random()	return sum of octaves (random noise)
 //-------------------------------------------------------------

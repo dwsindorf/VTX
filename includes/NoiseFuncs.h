@@ -8,8 +8,8 @@ protected:
 public:
 	static int grad3[][3];
 	static int grad4[32][4];
-	static int p[256];
-	static int perm[512];
+	//static int p[256];
+	static int perm[256];
 
 	NoiseFunc();
 	

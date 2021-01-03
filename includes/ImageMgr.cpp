@@ -214,6 +214,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	FColor  fmax(-lim,-lim,-lim);
 	FColor  fmin(lim,lim,lim);
 
+	Noise::resetStats();
 	set_alpha_image(0);
 
 	int lod=Adapt.lod();
@@ -266,7 +267,6 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	int mtype=opts & IMAP;
 	//if(mtype==0)
 	//    mtype=TILE;
-
 	switch(mtype){
 	default:
 	case PMAP:        // planar mapping (decal)
@@ -280,7 +280,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 		b=0;
 		break;
 	case CMAP:	      // cylindrical mapping (tiles in x)
-		TheNoise.set4D();
+		//TheNoise.set4D();
 	    dx=360.0/w;
 		dy=2*PI*rh/h;
 		y1=-PI*rh;
@@ -444,7 +444,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 			}
 		}
 	}
-
+	Noise::showStats();
 	TheNoise.set3D();
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;

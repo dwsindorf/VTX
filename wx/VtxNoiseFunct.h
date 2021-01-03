@@ -24,6 +24,7 @@ protected:
 	wxChoice   *m_domain;
 	wxChoice   *m_map;
 	wxChoice   *m_mode;
+	wxChoice   *m_noisetype;
 	wxCheckBox *m_uns;
 	wxCheckBox *m_sqr;
 	wxCheckBox *m_neg;
@@ -31,7 +32,6 @@ protected:
 	wxCheckBox *m_scale;
 	wxCheckBox *m_lod;
 	wxCheckBox *m_abs;
-	wxRadioBox *m_noisetype;
 
 public:
 	VtxNoiseFunct(wxWindow* parent,

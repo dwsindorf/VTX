@@ -5,9 +5,10 @@ Scene() {
 		phi=0.301475;
 		theta=-132.173;
 		height=0.00151256;
-		time=1.18276e+006;
+		time=1.18276e+06;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -18,13 +19,15 @@ Scene() {
 		height=0.00179014;
 	}
 	View{
-		phi=0.301475;
 		height=0.00163057;
+	}
+	View{
+		height=0.00174445;
 	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -40,10 +43,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -65,7 +68,7 @@ Scene() {
 						Color(0.996,0.773,0.004));
 					Surface{
 						terrain=
-								Texture("saturn2",LINEAR|S,noise(SQR|UNS,1,5,0,0,2.1)+noise(FS|SQR|UNS,5,15),0.9999,1.3212,1.05456,0,1,2);
+								Texture("saturn2",LINEAR|S|TEX,noise(GRADIENT|SQR|UNS,1,5,0,0,2.1)+noise(GRADIENT|FS|SQR|UNS,5,15),0.9999,1.94444,1.05456,0,1,2,1,0);
 					}
 				}
 			}

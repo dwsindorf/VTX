@@ -81,6 +81,8 @@ int *Perlin::permTable(){
 
 double Perlin::noise1(double arg)
 {
+	//double v[3]={arg,arg,arg};
+
 	int bx0, bx1;
 	double rx0, rx1, sx, t, u, v, vec[1];
 
@@ -92,8 +94,9 @@ double Perlin::noise1(double arg)
 
 	u = rx0 * G3[ P[ bx0 ] ][0];
 	v = rx1 * G3[ P[ bx1 ] ][0];
-
 	return norm_factor*lerp(sx, u, v);
+
+	//return noise3(v);
 }
 
 double Perlin::noise2(double vec[2])
@@ -256,7 +259,7 @@ double Perlin::noise4(double vec[4])
 	d = lerp(sy, a, b);
 
 	f = lerp(sz, c, d);
-
+    double result=norm_factor*lerp(sw, e, f);
 	return norm_factor*lerp(sw, e, f);
 }
 

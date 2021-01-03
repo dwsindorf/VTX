@@ -60,6 +60,7 @@ enum {		// distortion opcodes
 
 enum {		// NTypes
 
+	RO0      = 0x00000000, // default
 	RO1      = 0x00000001,
 	RO2      = 0x00000002,
 	RO3      = 0x00000003,
@@ -67,9 +68,10 @@ enum {		// NTypes
 	RO5      = 0x00000005,
 	ROFF     = 0x00000007,
 
-	GRADIENT = 0x00000100,
+	GRADIENT = 0x00000100, //default
 	VORONOI  = 0x00000200,
-	NTYPES    = GRADIENT|VORONOI,
+	SIMPLEX  = 0x00000300,
+	NTYPES   = 0x00000300,
 
 	UNS      = 0x00001000,
 	SQR      = 0x00002000,
@@ -84,7 +86,7 @@ enum {		// NTypes
 	NOREC    = 0x01000000,
 	NLOD     = 0x02000000,
 	NNORM    = 0x04000000,
-	FMODE    = V2|V4|VR,
+	FMODE    = V2|V4|VR,    // fractal test method
 
 	FS       = 0x08000000,  // shader noise
 	TX       = 0x10000000,  // 3D tex
@@ -228,17 +230,20 @@ protected:
        PT4D     = 0x01
     };
     static void   init();
-    static double gradient(int options, int n, double *s);
+    static double multinoise(int options, int n, double *s);
     static double random(int options,int n, double *s);
-    static double voronoi(int options,int n, double *s);
-    static double Noise1(double v) { return Perlin::noise1(v);}
-    static double Noise4(double *v){ return Perlin::noise4(v);}
-    static double Noise3(double *v){return Perlin::noise3(v);}
-    static double Noise2(double *v){return Perlin::noise2(v);}
+    static double Noise1D(double v) { return Perlin::noise1(v);}
+    static double Noise2D(double *v){return Perlin::noise2(v);}
+    static double Noise3D(double *v){return Perlin::noise3(v);}
+    static double Noise4D(double *v){ return Perlin::noise4(v);}
     static double Voronoi1D(double x);
     static double Voronoi2D(double *pnt);
     static double Voronoi3D(double *pnt);
     static double Voronoi4D(double *pnt);
+    static double Simplex1D(double x);
+    static double Simplex2D(double *pnt);
+    static double Simplex3D(double *pnt);
+    static double Simplex4D(double *pnt);
 
 public:
  	static double dflt_L;
@@ -287,6 +292,8 @@ public:
     static void get_minmax(double &v1, double &v2,int options,int n, double *s);
     static void distort(int type,double ampl);
     static void clearCache();
+    static void resetStats();
+    static void showStats();
 };
 
 #endif

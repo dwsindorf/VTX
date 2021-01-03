@@ -193,7 +193,7 @@ void VtxFractalFunct::AddControlsTab(wxWindow *panel){
 }
 
 void VtxFractalFunct::setFunction(wxString f){
-	TNfractal *tc=(TNfractal*)TheScene->parse_node(f.ToAscii());
+	TNfractal *tc=(TNfractal*)TheScene->parse_node((char*)f.ToAscii());
 	if(!tc)
 		return;
 

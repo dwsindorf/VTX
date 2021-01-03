@@ -60,7 +60,7 @@ EVT_CHECKBOX(ID_ABS,VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_DOMAIN, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MAPPING, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MODE, VtxNoiseFunct::OnChangeEvent)
-EVT_RADIOBOX(ID_TYPE, VtxNoiseFunct::OnChangeEvent)
+EVT_CHOICE(ID_TYPE, VtxNoiseFunct::OnChangeEvent)
 
 SET_SLIDER_EVENTS(ROUND,VtxNoiseFunct,Round)
 SET_SLIDER_EVENTS(OFFSET,VtxNoiseFunct,Offset)
@@ -244,12 +244,6 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
-    wxString lmodes[]={"Perlin","Voronoi"};
-    m_noisetype=new wxRadioBox(panel,ID_TYPE,wxT("Type"),wxPoint(-1,-1),wxSize(-1, 50),2,
-   		lmodes,2,wxRA_SPECIFY_COLS);
-    m_noisetype->SetSelection(0);
-
-    hline->Add(m_noisetype,0,wxALIGN_LEFT|wxALL,5);
 
 	wxBoxSizer* noise_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Noise"));
 
@@ -260,7 +254,7 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
 
 	m_domain=new wxChoice(panel, ID_DOMAIN, wxDefaultPosition,wxSize(45,-1),6, offsets);
 	m_domain->SetSelection(0);
-	noise_cntrls->Add(m_domain,0,wxALIGN_LEFT|wxLEFT,5);
+	noise_cntrls->Add(m_domain,0,wxALIGN_LEFT|wxALL,5);
 
 	lbl=new wxStaticText(panel,-1,"RMode",wxDefaultPosition,wxSize(-1,-1));
 	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop|wxLEFT,5);
@@ -268,7 +262,18 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
 	wxString mode[]={"Vertex","Pixel"};
 	m_mode=new wxChoice(panel, ID_MODE, wxDefaultPosition,wxSize(90,-1),2, mode);
 	m_mode->SetSelection(0);
-	noise_cntrls->Add(m_mode,0,wxALIGN_LEFT|wxLEFT,5);
+	noise_cntrls->Add(m_mode,0,wxALIGN_LEFT|wxALL,5);
+
+	lbl=new wxStaticText(panel,-1,"Type",wxDefaultPosition,wxSize(-1,-1));
+	noise_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxTop|wxLEFT,5);
+
+    wxString lmodes[]={"Perlin","Voronoi","Simplex"};
+    //m_noisetype=new wxRadioBox(panel,ID_TYPE,wxT("Type"),wxPoint(-1,-1),wxSize(-1, 50),2,
+   	//	lmodes,2,wxRA_SPECIFY_COLS);
+    m_noisetype=new wxChoice(panel, ID_TYPE, wxDefaultPosition,wxSize(-1,-1),3, lmodes);
+    m_noisetype->SetSelection(0);
+    noise_cntrls->Add(m_noisetype,0,wxALIGN_LEFT|wxALL,5);
+
 	hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxALL,5);
 
     boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
@@ -361,9 +366,13 @@ void VtxNoiseFunct::setTypeControls(int type)
 		m_mode->SetSelection(0);
 	int ntype=type & NTYPES;
 	switch(ntype){
+	case SIMPLEX:
+		m_noisetype->SetSelection(2);
+		break;
 	case VORONOI:
 		m_noisetype->SetSelection(1);
 		break;
+	case GRADIENT:
 	default:
 		m_noisetype->SetSelection(0);
 	}
@@ -382,6 +391,9 @@ wxString VtxNoiseFunct::getTypeStr()
 		break;
 	case 1:
 		n="VORONOI";
+		break;
+	case 2:
+		n="SIMPLEX";
 		break;
 	}
 	if(m_uns->GetValue())

@@ -292,7 +292,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	m_norm_check=new wxCheckBox(panel, ID_NORMALIZE, "Normalize");
 	texmap->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,0);
 
-	m_rand_check=new wxCheckBox(panel, ID_NORMALIZE, "AA");
+	m_rand_check=new wxCheckBox(panel, ID_NORMALIZE, "Dealias");
 	texmap->Add(m_rand_check, 0, wxALIGN_LEFT|wxALL,0);
 
     wxSize size=interp_mode->GetMinSize();

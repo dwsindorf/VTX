@@ -37,8 +37,7 @@ int show_visits=0;
 double mark_start=0;
 double mark_stop=0;
 
-//#define DEBUG_TIMING
-//#define TIME_INIT
+#define DEBUG_TIMING
 #define VERIFY_OPEN
 
 extern int hits,visits;
@@ -56,6 +55,7 @@ extern int recalced,tcreated, tdeleted, tcount;
 const char *dflt_movie_name="movie";
 
 int scene_rendered=0;
+static double timing_start=0;
 
 
 //********* functions called from GLglue.cpp (GLUT) ************
@@ -464,7 +464,7 @@ void Scene::show_info(int which)
 		if(svisits && show_visits)
 			sprintf(b,"V: %2.1f (%2.1f)",svisits/1000.0,100.0*shits/svisits);
 		else
-			sprintf(b,"A:%-3.1f R:%-3.1f N:%-2.0f C:%-2d",adapt_time*1000,render_time*1000,0.001*cells,cycles);
+			sprintf(b,"A:%-3.0f R:%-3.0f N:%-2.0f C:%-2d",adapt_time*1000,render_time*1000,0.001*cells,cycles);
 		set_info("%s",b);
 		break;
 	}
@@ -618,9 +618,10 @@ void Scene::save(FILE *fp)
 //-------------------------------------------------------------
 void Scene::open(char *fn)
 {
-	double start=clock();
+	timing_start=clock();
 	int stat=status;
 	images.clear_flags();
+	Noise::resetStats();
 
 	reset();
 	init_for_open();
@@ -679,10 +680,6 @@ void Scene::open(char *fn)
 	File.makeFilePath(File.system,(char*)"verify.spx",path);
     save(path);
 #endif
-    build_time=(double)(clock() - start)/CLOCKS_PER_SEC;
-#ifdef DEBUG_TIMING
-    printf("build tm: %-2.1f\n",build_time);
-#endif
 	clr_changed_view();
 	clr_moved();
 	set_changed_detail();
@@ -690,12 +687,16 @@ void Scene::open(char *fn)
 	GLSLMgr::clearTexs();
 	views_mark();
 
+
 }
 
 //-------------------------------------------------------------
 // Scene::rebuild_all() rebuild
 //-------------------------------------------------------------
 void Scene::rebuild_all(){
+	//Noise::resetStats();
+	//timing_start=clock();
+
 	extern void init_test_params();
 	init_test_params();
 	init_for_rebuild();
@@ -2101,6 +2102,12 @@ void Scene::render()
     	render_time-=adapt_time;
     	adapt_time+=build_time;
 #ifdef DEBUG_TIMING
+    	if(timing_start){
+			build_time=(double)(clock() - timing_start)/CLOCKS_PER_SEC;
+			printf("build tm: %-2.1f\n",build_time);
+			Noise::showStats();
+			timing_start=0;
+    	}
         show_info(INFO_TIME);
 #endif
     	build_time=0;

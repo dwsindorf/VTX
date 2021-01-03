@@ -7,7 +7,7 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 //#define DEBUG_TEXS
 
 #ifdef _DEBUG
@@ -538,13 +538,17 @@ void TNimage::init()
 		}
 	}
 #ifdef DEBUG_IMAGES
-		printf("%-20s BUILDING %d X %d IMAGE %s\n","TNimage",w,h,name);
-#endif
+	Noise::resetStats();
+	printf("%-20s BUILDING %d X %d IMAGE %s\n","TNimage",w,h,name);
 	im=new Image(opts,h,w,rh,rw,value);
-	images.save(name,im,this);
-	image=images.load(name,this);
 	double build_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 	cout<< "image build time:"<<build_time<<endl;
+	Noise::showStats();
+#else
+	im=new Image(opts,h,w,rh,rw,value);
+#endif
+	images.save(name,im,this);
+	image=images.load(name,this);
 
 }
 

@@ -48,6 +48,7 @@ char tmps[256];
 static LongSym ntypes[]={
 	{"VORONOI",	    VORONOI},
 	{"GRADIENT",	GRADIENT},
+	{"SIMPLEX",	    SIMPLEX},
 };
 NameList<LongSym*> NTypes(ntypes,sizeof(ntypes)/sizeof(LongSym));
 

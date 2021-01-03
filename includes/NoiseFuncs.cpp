@@ -15,7 +15,9 @@ int NoiseFunc::initialized=false;
 
 NoiseFunc::NoiseFunc(){}
 
-int NoiseFunc::perm[512];
+#define FLOOR(x) (x)>0 ? (int)(x) : (int)((x)-1);
+
+//int NoiseFunc::p[256];
 
 /* Stefan Gustavson:
    These are Ken Perlin's proposed gradients for 3D noise. I kept them for
@@ -46,7 +48,7 @@ int NoiseFunc::grad4[32][4]=
 	{	1,1,1,0}, {1,1,-1,0}, {1,-1,1,0}, {1,-1,-1,0},
 	{	-1,1,1,0}, {-1,1,-1,0}, {-1,-1,1,0}, {-1,-1,-1,0}};
 
-int NoiseFunc::p[] = {151,160,137,91,90,15,
+int NoiseFunc::perm[256] = {151,160,137,91,90,15,
 131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
 190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
 88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
@@ -75,9 +77,6 @@ void *NoiseFunc::makePermTexureImage() {
 			offset = (j*n+i)*4;
 			value = pn[(pn[i]+j)&0xff]&0xff;
 			k=(i+j)&0xff; // keep same gradient vectors vertically and horizontally
-//			pixels[offset] = grad3[value & 0x0F][0] * 64 + 64; // Gradient x
-//			pixels[offset+1] = grad3[value & 0x0F][1] * 64 + 64; // Gradient y
-//			pixels[offset+2] = grad3[value & 0x0F][2] * 64 + 64; // Gradient z
 		    pixels[offset] = gn[k*3]* 128 + 128; // Gradient x
 			pixels[offset+1] = gn[k*3+1]* 128 + 128; // Gradient y
 			pixels[offset+2] = gn[k*3+2]* 128 + 128; // Gradient z
@@ -117,7 +116,7 @@ char *NoiseFunc::makeGradTexureImage() {
 	for (i = 0; i<256; i++) {
 		for (j = 0; j<256; j++) {
 			int offset = (i*256+j)*4;
-			char value = p[(j+p[i]) & 0xFF];
+			char value = perm[(j+perm[i]) & 0xFF];
 			pixels[offset] = grad4[value & 0x1F][0] * 64 + 64; // Gradient x
 			pixels[offset+1] = grad4[value & 0x1F][1] * 64 + 64; // Gradient y
 			pixels[offset+2] = grad4[value & 0x1F][2] * 64 + 64; // Gradient z
@@ -345,7 +344,7 @@ void ClassicNoise::noisedv(double *vout, double a, double b, double c )
 }
 
 double ClassicNoise::noise(double x, double y, double z, double w){
-	return 0.0;
+	return 0.0; // WIP
 }
 
 //########### SimplexNoise class ################################
@@ -365,19 +364,23 @@ int SimplexNoise::simplex[][4] = {
 SimplexNoise::SimplexNoise() : NoiseFunc() {
 }
 
+static inline uint8_t phash(int32_t i) {
+    return NoiseFunc::perm[static_cast<uint8_t>(i)];
+}
+
 // 1D simplex noise
 double SimplexNoise::noise(double xin){
-	return 0;
+	return SimplexNoise::noise(xin, xin) ;
 }
 // 2D simplex noise
 double SimplexNoise::noise(double xin, double yin) {
 	double n0, n1, n2; // Noise contributions from the three corners
 	// Skew the input space to determine which simplex cell we're in
-	double F2 = 0.5*(sqrt(3.0)-1.0);
+	const double F2 = 0.5*(sqrt(3.0)-1.0);
 	double s = (xin+yin)*F2; // Hairy factor for 2D
 	int i = fastfloor(xin+s);
 	int j = fastfloor(yin+s);
-	double G2 = (3.0-sqrt(3.0))/6.0;
+	const double G2 = (3.0-sqrt(3.0))/6.0;
 	double t = (i+j)*G2;
 	double X0 = i-t; // Unskew the cell origin back to (x,y) space
 	double Y0 = j-t;
@@ -398,9 +401,9 @@ double SimplexNoise::noise(double xin, double yin) {
 	// Work out the hashed gradient indices of the three simplex corners
 	int ii = i & 255;
 	int jj = j & 255;
-	int gi0 = perm[ii+perm[jj]] % 12;
-	int gi1 = perm[ii+i1+perm[jj+j1]] % 12;
-	int gi2 = perm[ii+1+perm[jj+1]] % 12;
+	int gi0 = phash(ii+phash(jj)) % 12;
+	int gi1 = phash(ii+i1+phash(jj+j1)) % 12;
+	int gi2 = phash(ii+1+phash(jj+1)) % 12;
 	// Calculate the contribution from the three corners
 	double t0 = 0.5 - x0*x0-y0*y0;
 	if(t0<0) n0 = 0.0;
@@ -425,37 +428,43 @@ double SimplexNoise::noise(double xin, double yin) {
 	return 70.0 * (n0 + n1 + n2);
 }
 // 3D simplex noise
-double SimplexNoise::noise(double xin, double yin, double zin) {
+double SimplexNoise::noise(double x, double y, double z) {
 	double n0, n1, n2, n3; // Noise contributions from the four corners
 	// Skew the input space to determine which simplex cell we're in
-	double F3 = 1.0/3.0;
-	double s = (xin+yin+zin)*F3; // Very nice and simple skew factor for 3D
-	int i = fastfloor(xin+s);
-	int j = fastfloor(yin+s);
-	int k = fastfloor(zin+s);
-	double G3 = 1.0/6.0; // Very nice and simple unskew factor, too
+	const double F3 = 1.0/3.0;
+	double s = (x+y+z)*F3; // Very nice and simple skew factor for 3D
+	int i = FLOOR(x+s);
+	int j = FLOOR(y+s);
+	int k = FLOOR(z+s);
+	const double G3 = 1.0/6.0; // Very nice and simple unskew factor, too
 	double t = (i+j+k)*G3;
 	double X0 = i-t; // Unskew the cell origin back to (x,y,z) space
 	double Y0 = j-t;
 	double Z0 = k-t;
-	double x0 = xin-X0; // The x,y,z distances from the cell origin
-	double y0 = yin-Y0;
-	double z0 = zin-Z0;
+	double x0 = x-X0; // The x,y,z distances from the cell origin
+	double y0 = y-Y0;
+	double z0 = z-Z0;
 	// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
 	// Determine which simplex we are in.
 	int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
 	int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
-	if(x0>=y0) {
-		if(y0>=z0)
-		{	i1=1; j1=0; k1=0; i2=1; j2=1; k2=0;} // X Y Z order
-		else if(x0>=z0) {i1=1; j1=0; k1=0; i2=1; j2=0; k2=1;} // X Z Y order
-		else {i1=0; j1=0; k1=1; i2=1; j2=0; k2=1;} // Z X Y order
-	}
-	else { // x0<y0
-		if(y0<z0) {i1=0; j1=0; k1=1; i2=0; j2=1; k2=1;} // Z Y X order
-		else if(x0<z0) {i1=0; j1=1; k1=0; i2=0; j2=1; k2=1;} // Y Z X order
-		else {i1=0; j1=1; k1=0; i2=1; j2=1; k2=0;} // Y X Z order
-	}
+	   if (x0 >= y0) {
+	        if (y0 >= z0) {
+	            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; // X Y Z order
+	        } else if (x0 >= z0) {
+	            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; // X Z Y order
+	        } else {
+	            i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; // Z X Y order
+	        }
+	    } else { // x0<y0
+	        if (y0 < z0) {
+	            i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; // Z Y X order
+	        } else if (x0 < z0) {
+	            i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; // Y Z X order
+	        } else {
+	            i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; // Y X Z order
+	        }
+	    }
 	// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
 	// a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
 	// a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
@@ -473,10 +482,11 @@ double SimplexNoise::noise(double xin, double yin, double zin) {
 	int ii = i & 255;
 	int jj = j & 255;
 	int kk = k & 255;
-	int gi0 = perm[ii+perm[jj+perm[kk]]] % 12;
-	int gi1 = perm[ii+i1+perm[jj+j1+perm[kk+k1]]] % 12;
-	int gi2 = perm[ii+i2+perm[jj+j2+perm[kk+k2]]] % 12;
-	int gi3 = perm[ii+1+perm[jj+1+perm[kk+1]]] % 12;
+
+	int gi0 = phash(ii+phash(jj+phash(kk))) % 12;
+	int gi1 = phash(ii+i1+phash(jj+j1+phash(kk+k1))) % 12;
+	int gi2 = phash(ii+i2+phash(jj+j2+phash(kk+k2))) % 12;
+	int gi3 = phash(ii+1+phash(jj+1+phash(kk+1))) % 12;
 	// Calculate the contribution from the four corners
 	double t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
 	if(t0<0) n0 = 0.0;
@@ -502,22 +512,26 @@ double SimplexNoise::noise(double xin, double yin, double zin) {
 		t3 *= t3;
 		n3 = t3 * t3 * dot(grad3[gi3], x3, y3, z3);
 	}
+
 	// Add contributions from each corner to get the noise value.
 	// The result is scaled to stay just inside [-1,1]
+
 	return 32.0*(n0 + n1 + n2 + n3);
 }
+
+
 // 4D simplex noise
 double SimplexNoise::noise(double x, double y, double z, double w) {
 	// The skewing and unskewing factors are hairy again for the 4D case
-	double F4 = (sqrt(5.0)-1.0)/4.0;
-	double G4 = (5.0-sqrt(5.0))/20.0;
+	const double F4 = (sqrt(5.0)-1.0)/4.0;
+	const double G4 = (5.0-sqrt(5.0))/20.0;
 	double n0, n1, n2, n3, n4; // Noise contributions from the five corners
 	// Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
 	double s = (x + y + z + w) * F4; // Factor for 4D skewing
-	int i = fastfloor(x + s);
-	int j = fastfloor(y + s);
-	int k = fastfloor(z + s);
-	int l = fastfloor(w + s);
+	int i = FLOOR(x + s);
+	int j = FLOOR(y + s);
+	int k = FLOOR(z + s);
+	int l = FLOOR(w + s);
 	double t = (i + j + k + l) * G4; // Factor for 4D unskewing
 	double X0 = i - t; // Unskew the cell origin back to (x,y,z,w) space
 	double Y0 = j - t;
@@ -531,7 +545,7 @@ double SimplexNoise::noise(double x, double y, double z, double w) {
 	// To find out which of the 24 possible simplices we're in, we need to
 	// determine the magnitude ordering of x0, y0, z0 and w0.
 	// The method below is a good way of finding the ordering of x,y,z,w and
-	// then find the correct traversal order for the simplex we�re in.
+	// then find the correct traversal order for the simplex we are in.
 	// First, six pair-wise comparisons are performed between each possible pair
 	// of the four coordinates, and the results are used to add up binary bits
 	// for an integer index.
@@ -586,43 +600,55 @@ double SimplexNoise::noise(double x, double y, double z, double w) {
 	int jj = j & 255;
 	int kk = k & 255;
 	int ll = l & 255;
-	int gi0 = perm[ii+perm[jj+perm[kk+perm[ll]]]] % 32;
-	int gi1 = perm[ii+i1+perm[jj+j1+perm[kk+k1+perm[ll+l1]]]] % 32;
-	int gi2 = perm[ii+i2+perm[jj+j2+perm[kk+k2+perm[ll+l2]]]] % 32;
-	int gi3 = perm[ii+i3+perm[jj+j3+perm[kk+k3+perm[ll+l3]]]] % 32;
-	int gi4 = perm[ii+1+perm[jj+1+perm[kk+1+perm[ll+1]]]] % 32;
+
+	int gi0 = phash(ii+phash(jj+phash(kk+phash(ll)))) % 32;
+	int gi1 = phash(ii+i1+phash(jj+j1+phash(kk+k1+phash(ll+l1)))) % 32;
+	int gi2 = phash(ii+i2+phash(jj+j2+phash(kk+k2+phash(ll+l2)))) % 32;
+	int gi3 = phash(ii+i3+phash(jj+j3+phash(kk+k3+phash(ll+l3)))) % 32;
+	int gi4 = phash(ii+1+phash(jj+1+phash(kk+1+phash(ll+1)))) % 32;
+
+#define DOT4(g,x,y,z,w) (g[0]*x + g[1]*y + g[2]*z + g[3]*w)
+
 	// Calculate the contribution from the five corners
 	double t0 = 0.6 - x0*x0 - y0*y0 - z0*z0 - w0*w0;
-	if(t0<0) n0 = 0.0;
+	if(t0<0)
+		n0 = 0.0;
 	else {
 		t0 *= t0;
-		n0 = t0 * t0 * dot(grad4[gi0], x0, y0, z0, w0);
+		n0 = t0 * t0 * DOT4(grad4[gi0], x0, y0, z0, w0);
 	}
 	double t1 = 0.6 - x1*x1 - y1*y1 - z1*z1 - w1*w1;
-	if(t1<0) n1 = 0.0;
+	if(t1<0)
+		n1 = 0.0;
 	else {
 		t1 *= t1;
-		n1 = t1 * t1 * dot(grad4[gi1], x1, y1, z1, w1);
+		n1 = t1 * t1 * DOT4(grad4[gi1], x1, y1, z1, w1);
 	}
 	double t2 = 0.6 - x2*x2 - y2*y2 - z2*z2 - w2*w2;
-	if(t2<0) n2 = 0.0;
+	if(t2<0)
+		n2 = 0.0;
 	else {
 		t2 *= t2;
-		n2 = t2 * t2 * dot(grad4[gi2], x2, y2, z2, w2);
+		n2 = t2 * t2 * DOT4(grad4[gi2], x2, y2, z2, w2);
 	}
 	double t3 = 0.6 - x3*x3 - y3*y3 - z3*z3 - w3*w3;
-	if(t3<0) n3 = 0.0;
+	if(t3<0)
+		n3 = 0.0;
 	else {
 		t3 *= t3;
-		n3 = t3 * t3 * dot(grad4[gi3], x3, y3, z3, w3);
+		n3 = t3 * t3 * DOT4(grad4[gi3], x3, y3, z3, w3);
 	}
 	double t4 = 0.6 - x4*x4 - y4*y4 - z4*z4 - w4*w4;
-	if(t4<0) n4 = 0.0;
+	double dp=0;
+	if(t4<0)
+		n4 = 0.0;
 	else {
 		t4 *= t4;
-		n4 = t4 * t4 * dot(grad4[gi4], x4, y4, z4, w4);
+		dp=DOT4(grad4[gi4], x4, y4, z4, w4);
+		n4 = t4 * t4 * dp;
 	}
+
 	// Sum up and scale the result to cover the range [-1,1]
-	return 27.0 * (n0 + n1 + n2 + n3 + n4);
+	return 27.0* (n0 + n1 + n2 + n3 + n4);
 }
 

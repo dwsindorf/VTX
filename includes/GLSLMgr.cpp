@@ -18,7 +18,7 @@ extern Point MapPt;
 #define FBOWRITE "fbo_write"
 
 #define MINGLSLVERSION  120
-//#define SIMPLEX_NOISE
+#define SIMPLEX_NOISE
 #define DEBUG_SHADERS
 //#define DEBUG_FBO
 //#define FBO_DEPTH
