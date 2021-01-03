@@ -1,6 +1,8 @@
 // Perlin and Simplex noise functions
 // Author: Stefan Gustavson (stegu@itn.liu.se) 2004, 2005
 #include <NoiseFuncs.h>
+#include <PointClass.h>
+
 #include <Perlin.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,7 +149,7 @@ char *NoiseFunc::makeNoise3DTexureImage(int size) {
 				double x=fmod(i*delta+0.5,mod);
 				double y=fmod(j*delta+0.5,mod);
 				double z=fmod(k*delta+0.5,mod);
-				pixels[offset] = (char)(127.5*(ClassicNoise::noise(x,y,z)+1.0));
+				pixels[offset] = (char)(127.5*(Classic::noise(x,y,z)+1.0));
 			}
 		}
 	}
@@ -174,7 +176,7 @@ void *NoiseFunc::makeNoise3DVectorTexureImage(int size) {
 				double x=fmod(i*delta+0.5,mod);
 				double y=fmod(j*delta+0.5,mod);
 				double z=fmod(k*delta+0.5,mod);
-				ClassicNoise::noisedv(v,x,y,z);
+				Classic::noisedv(v,x,y,z);
 				for (l = 0; l<4; l++,offset++)
 					pixels[offset] = (char)(127.5*(v[l]+1.0));
 			}
@@ -185,15 +187,15 @@ void *NoiseFunc::makeNoise3DVectorTexureImage(int size) {
 
 //###########   ClassicNoise class ################################
 
-ClassicNoise::ClassicNoise() : NoiseFunc() {
+Classic::Classic() : NoiseFunc() {
 }
-double ClassicNoise::noise(double x){
+double Classic::noise(double x){
 	return 0;
 }
-double ClassicNoise::noise(double x, double y){
+double Classic::noise(double x, double y){
 	return 0;
 }
-double ClassicNoise::noise(double a, double b, double c) {
+double Classic::noise(double a, double b, double c) {
 	// Find unit grid cell containing point
 	double x,y,z;
 	int X,Y,Z;
@@ -257,7 +259,7 @@ double ClassicNoise::noise(double a, double b, double c) {
 }
 
 
-void ClassicNoise::noisedv(double *vout, double a, double b, double c )
+void Classic::noisedv(double *vout, double a, double b, double c )
 {
 	// Find unit grid cell containing point
 	double x,y,z;
@@ -343,7 +345,7 @@ void ClassicNoise::noisedv(double *vout, double a, double b, double c )
 
 }
 
-double ClassicNoise::noise(double x, double y, double z, double w){
+double Classic::noise(double x, double y, double z, double w){
 	return 0.0; // WIP
 }
 
@@ -351,7 +353,7 @@ double ClassicNoise::noise(double x, double y, double z, double w){
 
 // A lookup table to traverse the simplex around a given point in 4D.
 // Details can be found where this table is used, in the 4D noise method.
-int SimplexNoise::simplex[][4] = {
+int Simplex::simplex[][4] = {
 	{	0,1,2,3}, {0,1,3,2}, {0,0,0,0}, {0,2,3,1}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {1,2,3,0},
 	{	0,2,1,3}, {0,0,0,0}, {0,3,1,2}, {0,3,2,1}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {1,3,2,0},
 	{	0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0},
@@ -361,19 +363,16 @@ int SimplexNoise::simplex[][4] = {
 	{	2,0,1,3}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {3,0,1,2}, {3,0,2,1}, {0,0,0,0}, {3,1,2,0},
 	{	2,1,0,3}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {3,1,0,2}, {0,0,0,0}, {3,2,0,1}, {3,2,1,0}};
 
-SimplexNoise::SimplexNoise() : NoiseFunc() {
+Simplex::Simplex() : NoiseFunc() {
 }
 
-static inline uint8_t phash(int32_t i) {
-    return NoiseFunc::perm[static_cast<uint8_t>(i)];
-}
 
 // 1D simplex noise
-double SimplexNoise::noise(double xin){
-	return SimplexNoise::noise(xin, xin) ;
+double Simplex::noise(double xin){
+	return Simplex::noise(xin, xin) ;
 }
 // 2D simplex noise
-double SimplexNoise::noise(double xin, double yin) {
+double Simplex::noise(double xin, double yin) {
 	double n0, n1, n2; // Noise contributions from the three corners
 	// Skew the input space to determine which simplex cell we're in
 	const double F2 = 0.5*(sqrt(3.0)-1.0);
@@ -428,7 +427,7 @@ double SimplexNoise::noise(double xin, double yin) {
 	return 70.0 * (n0 + n1 + n2);
 }
 // 3D simplex noise
-double SimplexNoise::noise(double x, double y, double z) {
+double Simplex::noise(double x, double y, double z) {
 	double n0, n1, n2, n3; // Noise contributions from the four corners
 	// Skew the input space to determine which simplex cell we're in
 	const double F3 = 1.0/3.0;
@@ -521,7 +520,7 @@ double SimplexNoise::noise(double x, double y, double z) {
 
 
 // 4D simplex noise
-double SimplexNoise::noise(double x, double y, double z, double w) {
+double Simplex::noise(double x, double y, double z, double w) {
 	// The skewing and unskewing factors are hairy again for the 4D case
 	const double F4 = (sqrt(5.0)-1.0)/4.0;
 	const double G4 = (5.0-sqrt(5.0))/20.0;
@@ -652,3 +651,155 @@ double SimplexNoise::noise(double x, double y, double z, double w) {
 	return 27.0* (n0 + n1 + n2 + n3 + n4);
 }
 
+
+//########### Voronoi Noise class ################################
+
+extern void make_lut();
+extern double lsin(double g);
+#define MAX(a,b) (a)>(b)?(a):(b)
+#define SIGN(x) (x)<0?-1:1
+
+//-------------------------------------------------------------
+// Noise::Voronoi2D() 1d Voronoi noise
+//-------------------------------------------------------------
+double Voronoi::noise(double x) {
+	return noise(x,x);
+}
+
+Point2D rhashv(Point2D uv) {
+	static double myt[4] = { 0.12121212, 0.13131313, -0.13131313, 0.12121212 };
+	static Point2D mys(1e4, 1e6);
+	Point2D p2 = uv.mm4(myt);
+	p2 = p2 * mys;
+	Point2D p3 = p2.fract();
+	p3 = p3 * p2;
+	return p3.fract();
+}
+
+//-------------------------------------------------------------
+// Noise::Voronoi2D() 1d Voronoi noise
+//-------------------------------------------------------------
+double Voronoi::noise(double x, double y) {
+  Point2D point(x,y);
+  Point2D p = point.floor();
+  Point2D f = point.fract();
+  double res = 0.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      Point2D b = Point2D(i, j);
+      Point2D r = b- f + rhashv(p + b);
+      double d=pow(r.magnitude(),8.0);
+      res += 1.0 / d;
+    }
+  }
+  return pow(1.0 / res, 0.0625);
+}
+
+static double hv=43758.5453;
+#define pvmul3(v, m, p) \
+	p.x=m.x*v.x+m.z*v.y+m.y*v.z; \
+	p.y=m.y*v.x+m.x*v.y+m.z*v.z; \
+	p.z=m.z*v.x+m.y*v.y+m.x*v.z;
+
+inline Point hashv3(Point p) {
+static const Point h3p3(1.0, 57.0, 113.0);
+	Point p1;
+	pvmul3(p, h3p3, p1);
+	p1=p1*hv;
+	double d1=lsin(p1.x);
+	double d2=lsin(p1.y);
+	double d3=lsin(p1.z);
+	Point p4= Point(d3,d2,d1);
+	return p4.fract();
+}
+
+//-------------------------------------------------------------
+// Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
+//-------------------------------------------------------------
+double  Voronoi::noise(double x, double y, double z) {
+	make_lut();
+
+	static double rmin=2,rmax=-3;
+	double result = 0;
+	Point pnt=Point(x,y,z);
+	Point p = pnt.floor();
+	Point f = pnt.fract();
+	double r=100;
+	Point2D res(r);
+	for (int k = -1; k <= 1; k++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1; i++) {
+				Point b = Point(double(i), double(j), double(k));
+				Point r = Point(b) - f + hashv3(p + b);
+				double d =r.magnitude();
+
+				double cond = MAX(SIGN(res.x - d), 0.0);
+				double nCond = 1.0 - cond;
+
+				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
+				double nCond2 = 1.0 - cond2;
+				Point p1 = p + b;
+				res = Point2D(d, res.x) * cond + res * nCond;
+				res.y = cond2 * d + nCond2 * res.y;
+			}
+		}
+	}
+	return res.x;
+}
+
+//-------------------------------------------------------------
+// Noise::Voronoi4D() 4d Voronoi noise (for seamless image generation)
+//-------------------------------------------------------------
+#define pvmul4(v, m, p) \
+	p.x=m.x*v.x+m.w*v.y+m.z*v.z+m.y*v.w; \
+	p.y=m.y*v.x+m.z*v.y+m.w*v.z+m.z*v.w; \
+	p.z=m.z*v.x+m.y*v.y+m.x*v.z+m.w*v.w; \
+	p.w=m.w*v.x+m.z*v.y+m.y*v.z+m.x*v.w;
+
+inline Point4D hashv4(Point4D p) {
+static const Point4D h4p4(1.0, 57.0, 33.0, 113.0);
+	Point4D p1;
+	pvmul4(p, h4p4, p1);
+	p1=p1*hv;
+	double d1=lsin(p1.x);
+	double d2=lsin(p1.y);
+	double d3=lsin(p1.z);
+	double d4=lsin(p1.w);
+	Point4D p4= Point4D(d4,d3,d2,d1);
+	return p4.fract();
+}
+
+double Voronoi::noise(double x, double y, double z, double w) {
+	make_lut();
+	double result = 0;
+	Point4D pnt = Point4D(x,y,z,w);
+	Point4D p = pnt.floor();
+	Point4D f = pnt.fract();
+	double r=100;
+	double id = 0.0;
+	Point res(r);
+	for (int k = -1; k <= 1; k++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1; i++) {
+				for (int l = -1; l<= 1; l++) {
+					Point4D b = Point4D(double(i), double(j), double(k), double(l));
+					Point4D r = Point4D(b) - f + hashv4(p + b);
+					double d = r.magnitude();
+
+					double cond = MAX(SIGN(res.x - d), 0.0);
+					double nCond = 1.0 - cond;
+
+					double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
+					double nCond2 = 1.0 - cond2;
+
+					double cond3 = nCond2 * MAX(SIGN(res.z - d), 0.0);
+					double nCond3 = 1.0 - cond3;
+					res = Point(d, res.x, res.y) * cond + res * nCond;
+					res.y = cond2 * d + nCond2 * res.y;
+					res.z = cond3 * d + nCond3 * res.z;
+				}
+			}
+		}
+	}
+	return res.x;
+}

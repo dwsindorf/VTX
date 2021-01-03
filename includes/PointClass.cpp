@@ -2,8 +2,8 @@
 
 #include "PointClass.h"
 #include "defs.h"
-#define SINE_LUT
-//#define FULLSINE
+//#define SINE_LUT
+#define FULLSINE
 
 const double TWOPI=2.0*PI;
 const double PIBY2=PI/2.0;
@@ -17,19 +17,17 @@ const int   SINE_LUT_SIZE=65536/2;
 const double SINE_LUT_STEP=SINE_LUT_SIZE/PI;
 #endif
 
-#ifdef SINE_LUT
 static double lut[SINE_LUT_SIZE+1];
 static int sin_lut_flag=0;
 
 //-------------------------------------------------------------
 //make_lut	build the sine look-up table (one time only)
 //-------------------------------------------------------------
-
 void make_lut()
 {
-
 	if(sin_lut_flag)
 		return;
+	cout << "building sin LUT"<<endl;
 	int i;
 	double 		scale;
 
@@ -44,18 +42,18 @@ void make_lut()
 //-------------------------------------------------------------
 // lsin(): sin lut approximation to sin()
 //-------------------------------------------------------------
-
 double lsin(double t)
 {
 	t= t - TWOPI * floor( t / TWOPI );
 
 	double r;
+	int l;
+
 #ifdef FULLSINE
 	l=t*SINE_LUT_STEP;
 	r=t*SINE_LUT_STEP-l;
 	return lut[l]*(1.0-r)+lut[l+1]*r;
 #else // HALFSINE
-	int l;
 	if( t < 0)
 		t=t+TWOPI;
 	if( t>=PI){
@@ -74,11 +72,12 @@ double lsin(double t)
 //-------------------------------------------------------------
 // lcos(): sin lut approximation to cos()
 //-------------------------------------------------------------
-
 double lcos(double t)
 {
+	t= t - TWOPI * floor( t / TWOPI );
+
 #ifdef FULLSINE
-	return t > TPIBY2 ? lsin(t-TPIBY2) : lsin(t+PIBY2);
+	return t > TWOPI ? lsin(t-TWOPI) : lsin(t+PIBY2);
 #else // HALFSINE
 	double f;
 	f=t+PIBY2;
@@ -87,12 +86,9 @@ double lcos(double t)
 	return lsin(f);
 #endif
 }
-
+#ifdef SINE_LUT
 #define sin lsin
 #define cos lcos
-#else
-double lsin(double t) { return sin(t);}
-double lcos(double t) { return cos(t);}
 #endif
 
 //************************************************************

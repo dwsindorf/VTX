@@ -260,6 +260,7 @@ public:
 	static double shift;
 	static double rseed;
 	static int nfact;
+	static double start_time;
 
 
 	Noise();

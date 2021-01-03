@@ -200,7 +200,7 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 
 	// Amplitude
 
-	wxBoxSizer* ampl_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Amplitude"));
+	wxBoxSizer* ampl_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Signal"));
 
 	AmplSlider=new SliderCtrl(panel,ID_AMPL_SLDR,"Gain",LABEL2, VALUE2,SLIDER2);
 	AmplSlider->setRange(0,1);

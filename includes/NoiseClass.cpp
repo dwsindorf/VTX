@@ -7,8 +7,6 @@
 #include <ctime>
 #include <math.h>
 
-extern void make_lut();
-extern double lsin(double g);
 
 //#define OLDPERLIN
 //#define NOISE_CACHE
@@ -20,8 +18,6 @@ extern double lsin(double g);
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
 
-#define MAX(a,b) (a)>(b)?(a):(b)
-#define SIGN(x) (x)<0?-1:1
 
 int noise_hits=0;
 int noise_misses=0;
@@ -240,6 +236,19 @@ double Random(double x, double y, double z)
 //-------------------------------------------------------------
 // Random()	return random number
 //-------------------------------------------------------------
+Point Random(Point pnt)
+{
+	int n;
+	Point p=pnt*43758.5453;
+	p.x=PERM(p.x);
+	p.y=PERM(p.y);
+	p.z=PERM(p.z);
+	return p;
+}
+
+//-------------------------------------------------------------
+// Random()	return random number
+//-------------------------------------------------------------
 double Random(double x, double y)
 {
 	int n;
@@ -337,13 +346,15 @@ double  spline(double x, int n, double *v)
 // Class NoiseFactor
 //************************************************************
 class NoiseFactor {
-public:
-    int             maxorder;
 	double 			H;
 	double 			L;
+public:
+    int             maxorder;
 	double 			exps[NOISESIZE];
 	double 			freqs[NOISESIZE];
+	bool equal(double h, double l) { return (H==h) && (l==L);}
 	NoiseFactor(double h, double l);
+
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -385,6 +396,7 @@ double Noise::aspect=1;
 double Noise::theta=0;
 double Noise::phi=0;
 double Noise::shift=0;
+double Noise::start_time=0;
 int Noise::nfact=0;
 int Noise::_mode=0;
 int Noise::flags=0;
@@ -481,7 +493,7 @@ void Noise::pop()
 int Noise::set_factors(double h,double l)
 {
     nfact=NFACTORMASK&(int)(h*101+l*23);
-    if(!factors[nfact] || factors[nfact]->H !=h || factors[nfact]->L !=l){
+    if(!factors[nfact] || !factors[nfact]->equal(h,l)){
         if(factors[nfact])
             delete factors[nfact];
         factors[nfact]=new NoiseFactor(h,l);
@@ -522,6 +534,7 @@ void  Noise::resetStats(){
 	gradient_visits=0;
 	gradient_time=0;
 	gradient_time_per_octave=0;
+	start_time=clock();
 }
 //-------------------------------------------------------------
 //void showStats()
@@ -529,6 +542,8 @@ void  Noise::resetStats(){
 void  Noise::showStats(){
 	char buff[256];
 #ifdef DEBUG_NOISE_EVAL
+	double build_time=(double)(clock() - start_time)/CLOCKS_PER_SEC;
+
 	int n=gradient_visits;
 	double gtm=gradient_time;
 	double gtmp=gradient_time_per_octave;
@@ -548,8 +563,8 @@ void  Noise::showStats(){
 	    default:
 	    	strcat(tstr,"Perlin");
 	}
-	sprintf(buff,"%s MultiNoise calls:%d calc tm:%2.1f us per octave:%2.1f ave octaves:%2.2f",
-			tstr,n,1e6*gtm/n,1e6*gtmp/n,gtm/gtmp);
+	sprintf(buff,"%s MultiNoise calls:%d time total:%2.1f s per call:%2.1f u per octave:%2.1f u",
+			tstr,n,build_time,1e6*gtm/n,1e6*gtmp/n);
 	cout<<buff<<endl;
 #endif
 #ifdef DEBUG_NOISE_CACHE
@@ -879,7 +894,7 @@ double Noise::multinoise(int type, int nargs, double *args)
 
     double result,signal,weight,bias,gain,val=0,fact;
 
-	bias=nargs>2?args[2]:1.0;
+	bias=nargs>2?args[2]:1.0;  // homogeneity
 
     if(nargs>3)
     	H=args[3];
@@ -976,222 +991,63 @@ double Noise::multinoise(int type, int nargs, double *args)
     gradient_time_per_octave += tm/(i-start);
     gradient_visits++;
 #endif
-
 	return result;
 }
+
+
 //-------------------------------------------------------------
 // Noise::Voronoi1D() used only to determine min max values of function
 //-------------------------------------------------------------
 double Noise::Voronoi1D(double x){
-	double p[2]={x,x};
-	return Voronoi2D(p);
+	return Voronoi::noise(x);
 }
 
-Point2D rhashv(Point2D uv) {
-	static double myt[4] = { 0.12121212, 0.13131313, -0.13131313, 0.12121212 };
-	static Point2D mys(1e4, 1e6);
-	Point2D p2 = uv.mm4(myt);
-	p2 = p2 * mys;
-	Point2D p3 = p2.fract();
-	p3 = p3 * p2;
-	return p3.fract();
-}
 //-------------------------------------------------------------
 // Noise::Voronoi2D() 2d Voronoi noise
 //-------------------------------------------------------------
-double Noise::Voronoi2D(double *x) {
-  Point2D point(x);
-  Point2D p = point.floor();
-  Point2D f = point.fract();
-  double res = 0.0;
-  for (int j = -1; j <= 1; j++) {
-    for (int i = -1; i <= 1; i++) {
-      Point2D b = Point2D(i, j);
-      Point2D r = b- f + rhashv(p + b);
-      double d=pow(r.magnitude(),8.0);
-      res += 1.0 / d;
-    }
-  }
-  return pow(1.0 / res, 0.0625);
+double Noise::Voronoi2D(double *d) {
+	return Voronoi::noise(d[0],d[1]);
 }
 
-static double hv=43758.5453;
-#define pvmul3(v, m, p) \
-	p.x=m.x*v.x+m.z*v.y+m.y*v.z; \
-	p.y=m.y*v.x+m.x*v.y+m.z*v.z; \
-	p.z=m.z*v.x+m.y*v.y+m.x*v.z;
-
-static Point h3p3(1.0, 57.0, 113.0);
-Point hashv3(Point p) {
-	Point4D p1;
-	pvmul3(p, h3p3, p1);
-	p1=p1*hv;
-	double d1=lsin(p1.x);
-	double d2=lsin(p1.y);
-	double d3=lsin(p1.z);
-	Point p4= Point(d3,d2,d1);
-	return p4.fract();
-}
-
-//-------------------------------------------------------------
-// Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
-//-------------------------------------------------------------
-#ifdef RET_3DPNT
-Point  Voronoi3(double *pnt) {
-#else
-double  Voronoi3(double *pnt) {
-#endif
-	static double rmin=2,rmax=-3;
-	double result = 0;
-	Point x=Point(pnt);
-	Point p = x.floor();
-	Point f = x.fract();
-	double r=100;
-	double id = 0.0;
-	Point2D res(r);
-	for (int k = -1; k <= 1; k++) {
-		for (int j = -1; j <= 1; j++) {
-			for (int i = -1; i <= 1; i++) {
-				Point b = Point(double(i), double(j), double(k));
-				Point r = Point(b) - f + hashv3(p + b);
-				double d =r.magnitude();
-
-				double cond = MAX(SIGN(res.x - d), 0.0);
-				double nCond = 1.0 - cond;
-
-				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
-				double nCond2 = 1.0 - cond2;
-				Point p1 = p + b;
-				double d1 = p1.dot(h3p3);
-#ifdef RET_3DPNT
-				id = (d1 * cond) + (id * nCond);
-#endif
-				res = Point2D(d, res.x) * cond + res * nCond;
-				res.y = cond2 * d + nCond2 * res.y;
-			}
-		}
-	}
-#ifdef RET_3DPNT
-	double rx=res.x;
-	double ry=sqrt(res.y);
-	double rz=fabs(id);
-	return Point(rx,ry,rz);
-#else
-	return res.x;
-#endif
-}
 //-------------------------------------------------------------
 // Noise::Voronoi3D() 3d Voronoi noise
 //-------------------------------------------------------------
-double Noise::Voronoi3D(double *pnt){
-	return Voronoi3(pnt);
+double Noise::Voronoi3D(double *d){
+	return Voronoi::noise(d[0],d[1],d[2]);
 }
 
-//-------------------------------------------------------------
-// Noise::Voronoi4D() 4d Voronoi noise (for seamless image generation)
-//-------------------------------------------------------------
-static Point4D h4p4(1.0, 57.0, 33.0, 113.0);
-#define pvmul4(v, m, p) \
-	p.x=m.x*v.x+m.w*v.y+m.z*v.z+m.y*v.w; \
-	p.y=m.y*v.x+m.z*v.y+m.w*v.z+m.z*v.w; \
-	p.z=m.z*v.x+m.y*v.y+m.x*v.z+m.w*v.w; \
-	p.w=m.w*v.x+m.z*v.y+m.y*v.z+m.x*v.w;
-
-Point4D hashv4(Point4D p) {
-	Point4D p1;
-	pvmul4(p, h4p4, p1);
-	p1=p1*hv;
-	double d1=lsin(p1.x);
-	double d2=lsin(p1.y);
-	double d3=lsin(p1.z);
-	double d4=lsin(p1.w);
-	Point4D p4= Point4D(d4,d3,d2,d1);
-	return p4.fract();
-}
-
-#ifdef RET_4DPNT
-Point4D Voronoi4(double *pnt){
-#else
-double Voronoi4(double *pnt) {
-#endif
-	make_lut();
-	double result = 0;
-	Point4D x = Point4D(pnt);
-	Point4D p = x.floor();
-	Point4D f = x.fract();
-	double r=100;
-	double id = 0.0;
-	Point res(r);
-	for (int k = -1; k <= 1; k++) {
-		for (int j = -1; j <= 1; j++) {
-			for (int i = -1; i <= 1; i++) {
-				for (int l = -1; l<= 1; l++) {
-					Point4D b = Point4D(double(i), double(j), double(k), double(l));
-					Point4D r = Point4D(b) - f + hashv4(p + b);
-					double d = r.magnitude();
-
-					double cond = MAX(SIGN(res.x - d), 0.0);
-					double nCond = 1.0 - cond;
-
-					double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
-					double nCond2 = 1.0 - cond2;
-
-					double cond3 = nCond2 * MAX(SIGN(res.z - d), 0.0);
-					double nCond3 = 1.0 - cond3;
-#ifdef RET_4DPNT
-					Point4D p1 = p + b;
-				    double d1 = p1.dot(h4p4);
-					id = (d1 * cond) + (id * nCond);
-#endif
-					res = Point(d, res.x, res.y) * cond + res * nCond;
-					res.y = cond2 * d + nCond2 * res.y;
-					res.z = cond3 * d + nCond3 * res.z;
-				}
-			}
-		}
-	}
-#ifdef RET_4DPNT
-	double rx=sqrt(res.x);
-	double ry=sqrt(res.y);
-	double rz=sqrt(res.z);
-	double rw=fabs(id);
-	return Point4D(rx,ry,rz,rw);
-#else
-	return res.x;
-#endif
-}
 //-------------------------------------------------------------
 // Noise::Voronoi4D() 4d Voronoi noise
 //-------------------------------------------------------------
-double Noise::Voronoi4D(double *pnt){
-	return Voronoi4(pnt);
+double Noise::Voronoi4D(double *d){
+	return Voronoi::noise(d[0],d[1],d[2],d[3]);
 }
 
 //-------------------------------------------------------------
 // Noise::Simplex1D() 1D Simplex noise
 //-------------------------------------------------------------
 double Noise::Simplex1D(double x){
-	return SimplexNoise::noise(x);
+	return Simplex::noise(x);
+}
+//-------------------------------------------------------------
+// Noise::Simplex2D() 2D Simplex noise
+//-------------------------------------------------------------
+double Noise::Simplex2D(double *d){
+	return Simplex::noise(d[0],d[1]);
 }
 //-------------------------------------------------------------
 // Noise::Simplex3D() 3D Simplex noise
 //-------------------------------------------------------------
 double Noise::Simplex3D(double *d){
-	return SimplexNoise::noise(d[0],d[1],d[2]);
+	return Simplex::noise(d[0],d[1],d[2]);
 }
 //-------------------------------------------------------------
 // Noise::Simplex3D() 4D Simplex noise
 //-------------------------------------------------------------
 double Noise::Simplex4D(double *d){
-	return SimplexNoise::noise(d[0],d[1],d[2],d[3]);
+	return Simplex::noise(d[0],d[1],d[2],d[3]);
 }
 
-//-------------------------------------------------------------
-// Noise::Simplex2D() 2D Simplex noise
-//-------------------------------------------------------------
-double Noise::Simplex2D(double *d){
-	return SimplexNoise::noise(d[0],d[1]);
-}
 //-------------------------------------------------------------
 // Noise::random()	return sum of octaves (random noise)
 //-------------------------------------------------------------
