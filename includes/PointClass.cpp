@@ -5,7 +5,9 @@
 //#define SINE_LUT
 #define FULLSINE
 
-const double TWOPI=2.0*PI;
+double TWOPI=2.0*PI;
+double INV2PI=1.0/TWOPI;
+
 const double PIBY2=PI/2.0;
 const double DTOR=TWOPI/360.0;
 
@@ -44,8 +46,7 @@ void make_lut()
 //-------------------------------------------------------------
 double lsin(double t)
 {
-	t= t - TWOPI * floor( t / TWOPI );
-
+	t= t - TWOPI * (int)( t * INV2PI);
 	double r;
 	int l;
 
@@ -74,7 +75,7 @@ double lsin(double t)
 //-------------------------------------------------------------
 double lcos(double t)
 {
-	t= t - TWOPI * floor( t / TWOPI );
+	t= t - TWOPI * (int)( t * INV2PI);
 
 #ifdef FULLSINE
 	return t > TWOPI ? lsin(t-TWOPI) : lsin(t+PIBY2);
@@ -141,6 +142,14 @@ Point Point::spherical()
 //-------------------------------------------------------------
 void Point::print()
 {
+	print("");
+}
+
+//-------------------------------------------------------------
+// Point::print()	 print value
+//-------------------------------------------------------------
+void Point::print(char *m)
+{
     double px=x;
     double py=y;
     double pz=z;
@@ -153,7 +162,7 @@ void Point::print()
         r=1;
         s="ly";
     }
-	printf("%-15g %-15g %-15g %s\n",round(px,r),round(py,r),round(pz,r),s);
+	printf("%s%-15g %-15g %-15g %s\n",m,round(px,r),round(py,r),round(pz,r),s);
 }
 
 //-------------------------------------------------------------

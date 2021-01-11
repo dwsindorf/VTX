@@ -33,6 +33,8 @@ protected:
 	wxCheckBox *m_lod;
 	wxCheckBox *m_abs;
 
+	TNnoise *noise;
+
 public:
 	VtxNoiseFunct(wxWindow* parent,
 			wxWindowID id,
@@ -61,9 +63,7 @@ public:
 	void setFunction(wxString);
 	void getFunction();
 
-    void OnChangeEvent(wxCommandEvent& event){
-    	getFunction();
-    }
+    void OnChangeEvent(wxCommandEvent& event);
 
 	DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(Orders)

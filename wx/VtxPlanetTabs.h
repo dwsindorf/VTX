@@ -116,7 +116,7 @@ public:
 		HscaleSlider->setValueFromText();
 		Planetoid *obj = object();
 		double val = HscaleSlider->getValue();
-		object()->hscale = val * 1000/MILES;
+		object()->hscale = val * 1000*MILES;
 		object()->invalidate();
 		TheView->set_changed_detail();
 		TheScene->rebuild();

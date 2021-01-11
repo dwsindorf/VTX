@@ -1,14 +1,13 @@
-#version 120
+//#version 120
 // notes:
 // 1. first shader in pipeline
 // 2. output to geometry shader
 
-#if NVALS >0
 attribute vec4 Position2;
 attribute vec4 Position1;
+
 varying vec4 Vertex1_G;
 varying vec4 Vertex2_G;
-#endif
 
 #ifdef COLOR
 varying vec4 Color_G;
@@ -18,10 +17,6 @@ void main(void) {
 #ifdef COLOR
 	Color_G=gl_Color;
 #endif
-	
-#if NVALS >0
 	Vertex1_G=Position1;
 	Vertex2_G=Position2;
-#endif
-	
 }

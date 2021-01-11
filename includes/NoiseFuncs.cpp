@@ -1,7 +1,7 @@
 // Perlin and Simplex noise functions
 // Author: Stefan Gustavson (stegu@itn.liu.se) 2004, 2005
 #include <NoiseFuncs.h>
-#include <PointClass.h>
+
 
 #include <Perlin.h>
 #include <stdio.h>
@@ -187,8 +187,6 @@ void *NoiseFunc::makeNoise3DVectorTexureImage(int size) {
 
 //###########   ClassicNoise class ################################
 
-Classic::Classic() : NoiseFunc() {
-}
 double Classic::noise(double x){
 	return 0;
 }
@@ -363,9 +361,23 @@ int Simplex::simplex[][4] = {
 	{	2,0,1,3}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {3,0,1,2}, {3,0,2,1}, {0,0,0,0}, {3,1,2,0},
 	{	2,1,0,3}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {3,1,0,2}, {0,0,0,0}, {3,2,0,1}, {3,2,1,0}};
 
-Simplex::Simplex() : NoiseFunc() {
-}
 
+// 1D simplex noise
+double Simplex::minmax(double v){
+	double result= noise(v,0.123*v,3.15*v);
+	//#define TEST
+	#ifdef TEST
+		static double min=1000,max=-1000;
+		static int cnt=0;
+		if(result<min || result>max){
+			min=result<min?result:min;
+			max=result>max?result:max;
+			cout<<"Simplex["<<cnt <<"] min:"<<min<<" max:"<<max <<" range:"<<max-min<<endl;
+		}
+		cnt++;
+	#endif
+		return result;
+}
 
 // 1D simplex noise
 double Simplex::noise(double xin){
@@ -514,8 +526,21 @@ double Simplex::noise(double x, double y, double z) {
 
 	// Add contributions from each corner to get the noise value.
 	// The result is scaled to stay just inside [-1,1]
+	double result= 16.77*(n0 + n1 + n2 + n3);
+	//#define TEST2
+	#ifdef TEST2
+		static double min=1000,max=-1000;
+		static int cnt=0;
+		if(result<min || result>max){
+			min=result<min?result:min;
+			max=result>max?result:max;
+			cout<<"Simplex["<<cnt <<"] min:"<<min<<" max:"<<max <<" range:"<<max-min<<endl;
+		}
+		cnt++;
+	#endif
+		return result;
 
-	return 32.0*(n0 + n1 + n2 + n3);
+	//return 16.77*(n0 + n1 + n2 + n3);
 }
 
 
@@ -658,6 +683,28 @@ extern void make_lut();
 extern double lsin(double g);
 #define MAX(a,b) (a)>(b)?(a):(b)
 #define SIGN(x) (x)<0?-1:1
+double Voronoi::rval=100.0;
+double Voronoi::hval=43758.5453;
+Point4D Voronoi::hpnt(1.0*hval, 57.0*hval, 113.0*hval, 33.0*hval);
+
+//-------------------------------------------------------------
+// Noise::Voronoi2D() 1d Voronoi noise
+//-------------------------------------------------------------
+double Voronoi::minmax(double v) {
+	double result= noise(v,0.123*v,3.15*v);
+	//#define TEST
+	#ifdef TEST
+		static double min=1000,max=-1000;
+		static int cnt=0;
+		if(result<min || result>max){
+			min=result<min?result:min;
+			max=result>max?result:max;
+			cout<<"Voronoi["<<cnt <<"] min:"<<min<<" max:"<<max <<" range:"<<max-min<<endl;
+		}
+		cnt++;
+	#endif
+	return result;
+}
 
 //-------------------------------------------------------------
 // Noise::Voronoi2D() 1d Voronoi noise
@@ -695,21 +742,18 @@ double Voronoi::noise(double x, double y) {
   return pow(1.0 / res, 0.0625);
 }
 
-static double hv=43758.5453;
-#define pvmul3(v, m, p) \
-	p.x=m.x*v.x+m.z*v.y+m.y*v.z; \
-	p.y=m.y*v.x+m.x*v.y+m.z*v.z; \
-	p.z=m.z*v.x+m.y*v.y+m.x*v.z;
+#define pvmul3(p, m, p1) \
+	p1.x=m.x*p.x+m.y*p.y+m.z*p.z; \
+	p1.y=m.y*p.x+m.z*p.y+m.x*p.z; \
+	p1.z=m.z*p.x+m.x*p.y+m.y*p.z;
 
-inline Point hashv3(Point p) {
-static const Point h3p3(1.0, 57.0, 113.0);
+inline Point Voronoi::hashv3(Point p) {
 	Point p1;
-	pvmul3(p, h3p3, p1);
-	p1=p1*hv;
-	double d1=lsin(p1.x);
-	double d2=lsin(p1.y);
-	double d3=lsin(p1.z);
-	Point p4= Point(d3,d2,d1);
+	pvmul3(p, hpnt, p1);
+	double d1=sin(p1.x);
+	double d2=sin(p1.y);
+	double d3=sin(p1.z);
+	Point p4= Point(d1,d2,d3);
 	return p4.fract();
 }
 
@@ -717,15 +761,11 @@ static const Point h3p3(1.0, 57.0, 113.0);
 // Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
 //-------------------------------------------------------------
 double  Voronoi::noise(double x, double y, double z) {
-	make_lut();
-
-	static double rmin=2,rmax=-3;
-	double result = 0;
+	//make_lut();
 	Point pnt=Point(x,y,z);
 	Point p = pnt.floor();
 	Point f = pnt.fract();
-	double r=100;
-	Point2D res(r);
+	Point2D res(rval);
 	for (int k = -1; k <= 1; k++) {
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
@@ -738,13 +778,12 @@ double  Voronoi::noise(double x, double y, double z) {
 
 				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
 				double nCond2 = 1.0 - cond2;
-				Point p1 = p + b;
 				res = Point2D(d, res.x) * cond + res * nCond;
 				res.y = cond2 * d + nCond2 * res.y;
 			}
 		}
 	}
-	return res.x;
+	return res.x-0.5;
 }
 
 //-------------------------------------------------------------
@@ -756,11 +795,9 @@ double  Voronoi::noise(double x, double y, double z) {
 	p.z=m.z*v.x+m.y*v.y+m.x*v.z+m.w*v.w; \
 	p.w=m.w*v.x+m.z*v.y+m.y*v.z+m.x*v.w;
 
-inline Point4D hashv4(Point4D p) {
-static const Point4D h4p4(1.0, 57.0, 33.0, 113.0);
+inline Point4D Voronoi::hashv4(Point4D p) {
 	Point4D p1;
-	pvmul4(p, h4p4, p1);
-	p1=p1*hv;
+	pvmul4(p, hpnt, p1);
 	double d1=lsin(p1.x);
 	double d2=lsin(p1.y);
 	double d3=lsin(p1.z);
@@ -775,15 +812,13 @@ double Voronoi::noise(double x, double y, double z, double w) {
 	Point4D pnt = Point4D(x,y,z,w);
 	Point4D p = pnt.floor();
 	Point4D f = pnt.fract();
-	double r=100;
-	double id = 0.0;
-	Point res(r);
+	Point res(rval);
 	for (int k = -1; k <= 1; k++) {
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
 				for (int l = -1; l<= 1; l++) {
 					Point4D b = Point4D(double(i), double(j), double(k), double(l));
-					Point4D r = Point4D(b) - f + hashv4(p + b);
+					Point4D r = Point4D(b) - f  + hashv4(p + b);
 					double d = r.magnitude();
 
 					double cond = MAX(SIGN(res.x - d), 0.0);

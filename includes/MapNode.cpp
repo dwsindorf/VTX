@@ -18,6 +18,7 @@ extern Point MapPt;
 //}
 //#define USE_GL_POLYGON
 
+extern double INV2PI;
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 // uncomment to get indicated behavior
@@ -866,7 +867,7 @@ int MapNode::clipchk(Point pnt)
 
     if(vobj && vobj->allows_selection()){
 
-        h=10*vobj->getMap()->hscale;
+        h=2*vobj->getMap()->hscale;
 //        Object3D *obj=TheMap->object;
 //        double zf=vobj->getMap()->dmax; // add contribution from radius of parent
 //        double s=obj->size;
@@ -2068,8 +2069,8 @@ void MapNode::IDvertex(MapData*d)
 	Point pm=d->mpoint();
 	pm=pm.normalize();
 	pm=pm*0.5+0.5;
-	GLSLMgr::setVertexAttributes(pm,0);
 	Point p=d->point();
+	GLSLMgr::setVertexAttributes(pm,0);
 	glVertex3dv((double*)(&p));
 }
 

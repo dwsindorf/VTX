@@ -103,7 +103,7 @@ bool VtxNoiseFunct::Create(wxWindow* parent,
     AddTypeTab(page);
     AddPage(page,wxT("Advanced"),false);
 
-
+    noise=0;
     Show(false);
 
     return true;
@@ -278,6 +278,13 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
 
     boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 }
+
+void VtxNoiseFunct::OnChangeEvent(wxCommandEvent& event){
+	getFunction();
+	if(noise)
+		noise->clr_normalized();
+}
+
 //-------------------------------------------------------------
 // VtxNoiseFunct::setFunction() set controls from string
 //-------------------------------------------------------------
@@ -444,14 +451,14 @@ void VtxNoiseFunct::getFunction(){
 	s+=OffsetSlider->getText();
 	s+=")";
 
-	TNnoise *tn=(TNnoise*)TheScene->parse_node((char*)s.ToAscii());
-	if(!tn){
+	noise=(TNnoise*)TheScene->parse_node((char*)s.ToAscii());
+	if(!noise){
 		cout<<"parser error:"<<s.ToAscii()<<endl;
 		return;
 	}
 	char buff[256];
 	buff[0]=0;
-	tn->valueString(buff);
+	noise->valueString(buff);
 	s = wxString(buff);
 
 	noiseDialog->getFunct(s);

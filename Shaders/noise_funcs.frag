@@ -7,6 +7,10 @@ vec3 v2;
 vec3 v3;
 vec3 df;
 
+#define GRADIENT 1
+#define VORONOI  2
+#define SIMPLEX  3
+
 #ifdef N3D
 // classic Perlin noise using a 3D texture 
 #define FSCALE 0.03125
@@ -47,7 +51,7 @@ struct noise_info {
 	bool invert;
 	bool absval;
 	bool uns;
-	bool vnoise;
+	int vnoise;
 	
 };
 
@@ -106,25 +110,28 @@ vec4 Noise(int index) {
 	float rmin=info.smoothing*VMAX;
 	if(!info.absval)
 		rmin *=2.0;
-	float clip=info.clamp*VMAX;
+	float clip=2*info.clamp*VMAX;
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
-        if(info.vnoise){
+        switch(info.vnoise){
+        case SIMPLEX:
+        	P1=simplex3d(v1*f);
+	        P2=simplex3d(v2*f);
+	        break;
+        case VORONOI:
         	P1=voronoi3d(v1*f);
 	        P2=voronoi3d(v2*f);
-        }
-        else{
+	        break;
+        case GRADIENT:
+        default:
 	        P1=noise3D(v1*f);
 	        P2=noise3D(v2*f);
         }
         nvec=mix(P1,P2,m);
-
+        nvec.x=nvec.x>clip?clip:nvec.x;
 		nvec.yzw*=f;
-		if(nvec.x>clip+0.1*nvec.x){
-			nvec.x=clip+0.1*nvec.x;
-			nvec.yzw*=0.1;
-		}		
+		
 		f*=info.L;
 		if(info.absval) {
 			if(nvec.x<0.0)

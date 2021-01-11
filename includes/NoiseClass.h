@@ -92,7 +92,8 @@ enum {		// NTypes
 	TX       = 0x10000000,  // 3D tex
 	BP       = 0x20000000,  // bump map
 
-	FTYPE    = 0xf0000000,  // 3D tex
+	T3D      = 0x40000000,  // 3D tex
+	GEOM     = 0x80000000,  // geopmetry shader
 
 	NOPTS    = 0xfffff000,
 };
@@ -223,29 +224,33 @@ protected:
 	static int flags;
 	static int _mode;
 	static int _ntype;
-
 	static NoiseFactor *factors[MAXNFACTORS];
 
    enum {
        PT4D     = 0x01
     };
     static void   init();
+
     static double multinoise(int options, int n, double *s);
     static double random(int options,int n, double *s);
-    static double Noise1D(double v) { return Perlin::noise1(v);}
-    static double Noise2D(double *v){return Perlin::noise2(v);}
-    static double Noise3D(double *v){return Perlin::noise3(v);}
-    static double Noise4D(double *v){ return Perlin::noise4(v);}
+    static double NoiseMinMax(double v);
+    static double Noise1D(double v);
+    static double Noise2D(double *v);
+    static double Noise3D(double *v);
+    static double Noise4D(double *v);
+    static double VoronoiMinMax(double v);
     static double Voronoi1D(double x);
     static double Voronoi2D(double *pnt);
     static double Voronoi3D(double *pnt);
     static double Voronoi4D(double *pnt);
+    static double SimplexMinMax(double v);
     static double Simplex1D(double x);
     static double Simplex2D(double *pnt);
     static double Simplex3D(double *pnt);
     static double Simplex4D(double *pnt);
 
 public:
+
  	static double dflt_L;
 	static double dflt_H;
 	static double max_order;
@@ -292,7 +297,7 @@ public:
     static int set_factors(double h,double l);
     static void get_minmax(double &v1, double &v2,int options,int n, double *s);
     static void distort(int type,double ampl);
-    static void clearCache();
+    static void resetLimits();
     static void resetStats();
     static void showStats();
 };

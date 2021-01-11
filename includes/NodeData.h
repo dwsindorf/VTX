@@ -26,7 +26,6 @@
 //#define HASH_POINTS
 //#define HASH_NORMALS
 
-const double    INV2PI=0.5/PI;
 
 #define CELLSLOPE(x,v) { \
     static double lastz=0; \

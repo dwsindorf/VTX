@@ -15,6 +15,7 @@ static 			TerrainData Td;
 #define largest(x,y)  x>y?x:y
 
 extern double   ptable[];
+extern const double INV2PI;
 const unsigned int  MAXLVLS=63;
 
 //-------------------------------------------------------------

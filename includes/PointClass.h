@@ -6,7 +6,6 @@
 #include "defs.h"
 #define RNDERR 1e-12
 #define DEQ(x,y) (fabs((x)-(y))<RNDERR)
-
 class Point
 {
 public:
@@ -51,6 +50,8 @@ public:
 	Point rectangular();
 	Point spherical();
 	void print();
+	void print(char *m);
+
 	Point  mm(double *m){
 		Point p;
 		p.x=(x*m[0]+y*m[4]+z*m[8]+m[12]);
@@ -189,6 +190,7 @@ public:
 	double minval()                 { double f=x<y?x:y;f=f<z?f:z;return f<w?f:w;}
 	Point4D floor()                 { return Point4D(::floor(x),::floor(y),::floor(z),::floor(w));}
 	Point4D fract()                 { Point4D p=floor(); return *this-p;}
+
 	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
 
 

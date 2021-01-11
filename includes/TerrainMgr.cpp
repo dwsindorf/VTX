@@ -206,8 +206,8 @@ void TNvar::valueString(char *s)
         	if(n)
             	n->valueString(s);
         }
-		else
-			sprintf(s+strlen(s),_name);
+		//else
+		//	sprintf(s+strlen(s),_name);
     }
     else{
 		if(right){
@@ -216,8 +216,8 @@ void TNvar::valueString(char *s)
 		    else
 			    right->valueString(s);
 		}
-		else
-			sprintf(s+strlen(s),_name);
+		//else
+		//	sprintf(s+strlen(s),_name);
 	}
 	setEnd(s);
 }
@@ -707,7 +707,10 @@ int ExprMgr::getVarExpr(char *n,char *s)
         exp->valueString(s);
         return 1;
     }
-    return 0;
+    else{
+    	s[0]=0;
+    	return 0;
+	}
 }
 
 //-------------------------------------------------------------
@@ -967,9 +970,9 @@ TNinode *ExprMgr::get_image(char *s, int m)
 //-------------------------------------------------------------
 TNvar *ExprMgr::setVar(char *s, char *arg){
   	char *vn;
-    NodeIF *r=TheScene->parse_node(arg);
-    if(!r)
-        return 0;
+  	NodeIF *r=0;
+  	if(strlen(arg))
+  		r=TheScene->parse_node(arg);
     TNvar *var=0;
 	TerrainSym *ts=vars.inlist(s);
   	if (!ts){
@@ -982,7 +985,8 @@ TNvar *ExprMgr::setVar(char *s, char *arg){
 	    if(var->right)
 		    delete var->right;
 	    var->right=(TNode*)r;
-	    var->right->setParent(var);
+	    if(r)
+	    	var->right->setParent(var);
 	}
 	return var;
 }

@@ -4,15 +4,12 @@
 // 3. output to fragment shader
 // 
 
-//#version 120
-//#extension GL_EXT_geometry_shader4 : enable
-
 #include "utils.h"
 #ifdef COLOR
 varying in vec4 Color_G[];
 varying out vec4 Color;
 #endif
-#if NVALS >0
+
 varying in vec4 Vertex1_G[];
 varying in vec4 Vertex2_G[];
 varying out vec4 Vertex1;
@@ -20,22 +17,15 @@ varying out vec4 Vertex2;
 
 #define PI		3.14159265359
 
-uniform int tessLevel;
 uniform vec3 pv;
 uniform float freqmip;
 
-float logf=0;
-float nbamp=0;
 vec4 gv=vec4(0);
-float amplitude = 1.0;
-vec3 bump;
 float g=0;
-float b=0;
-bool newcell=false;
 
-#define GEOM
-
+#if NVALS >0
 #include "noise_funcs.frag"
+#endif
 
 //######################################################
 
@@ -66,14 +56,14 @@ void ProduceVertex(int i){
 	gl_Position=gl_ModelViewProjectionMatrix * p;	
 	EmitVertex();
 }
-#endif
+
 
 void main(void) {
 #ifdef COLOR
 	Color = Color_G[0]; // id mapped into color at pivot vertex
 #endif
 #if TESSLVL >0	
-	int numLayers = 1 << TESSLVL;
+	int numLayers = TESSLVL;
 	float dt = 1.0 / float( numLayers );
 	float t_top = 1.0;
 	for( int it = 0; it < numLayers; it++ ){

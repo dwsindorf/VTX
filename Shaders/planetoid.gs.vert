@@ -23,11 +23,8 @@ varying vec4 Attributes_G[2];
 
 void main(void) {
 	EyeDirection_G=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
-	//gl_Position = ftransform();
-	//gl_Position=gl_ModelViewProjectionMatrix * gl_Vertex;
 	gl_Position=gl_Vertex;
 	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
-	//Normal_G.xyz = gl_Normal.xyz;
 
 #ifdef COLOR
 	Color_G=gl_Color;

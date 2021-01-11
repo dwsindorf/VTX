@@ -124,9 +124,9 @@ else
 		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];
 	EmitVertex();
 }
-
+// #vertexes = (tessLevel+1)*(tessLevel+2)
 void main(void) {
-	int numLayers = 1 << tessLevel;
+	int numLayers = tessLevel;
 	float dt = 1.0 / float( numLayers );
 	float t_top = 1.0;
 	

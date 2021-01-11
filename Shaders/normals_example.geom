@@ -1,4 +1,4 @@
-#version 120 
+//#version 120 
 #extension GL_EXT_geometry_shader4 : enable
 
 vec3 NormalFromTriangleVertices(vec3 triangleVertices[3])

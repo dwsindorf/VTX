@@ -75,13 +75,7 @@ vec2 ds_mul (vec2 dsa, float b)
 	return dsc;
 }
 */
-/*
-#ifndef CPX
-#ifdef _BUMPS_
-#define VNOISE
-#endif
-#endif
-*/
+
 /*
  * To create offsets of one texel and one half texel in the
  * texture lookup, we need to know the texture image size.

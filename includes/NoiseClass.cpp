@@ -45,8 +45,6 @@ int lastn=0;
 static int state=0;
 static int domain=0;
 static double norm_value,norm_offset;
-const double norm_factor=0.77;  // adjust for value range
-const double TWOPI=2.0*PI;
 
 typedef struct State {
 	double vec[4];
@@ -521,7 +519,7 @@ Point4D Noise::get_point()
 //-------------------------------------------------------------
 //void clearCache()
 //-------------------------------------------------------------
-void  Noise::clearCache(){
+void  Noise::resetLimits(){
 
 }
 //-------------------------------------------------------------
@@ -656,15 +654,16 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
 		mb=1-v2*ma; // this should be correct
 		//mb=v1*ma+1;
     }
+    double exp=0;
     if(type & SCALE){
-        double exp=amplitude((int)args[0]);
+        exp=amplitude((int)args[0]);
         ma*=exp;
         mb*=exp;
     }
 #ifdef DEBUG_MINMAX
     double tm=(double)(clock() - start)/CLOCKS_PER_SEC;
     limits_time+=tm;
-    cout<<"min:"<<v1<<" max:"<<v2<<" tm:"<<tm<<endl;
+    cout<<"min:"<<v1<<" max:"<<v2<<" exp:"<<exp<<" ma:"<<ma<<" mb:"<<mb<<endl;
 #endif
     v1=ma;
     v2=mb;
@@ -718,11 +717,11 @@ double Noise::value(int i)
 	    double fv=norm_value*freq+norm_offset;
 	    switch(type){
 	    case VORONOI:
-	    	return Voronoi1D(fv);
+	    	return VoronoiMinMax(fv);
 	    case SIMPLEX:
-	    	return Simplex1D(fv);
+	    	return SimplexMinMax(fv);
 	    default:
-	        return Noise1D(fv);
+	        return NoiseMinMax(fv);
 	    }
 	}
 	int m=1<<i;
@@ -932,7 +931,7 @@ double Noise::multinoise(int type, int nargs, double *args)
 
     bool nabs=type & NABS;
 	double clip=nargs>6?args[6]:1.0;
-	clip*=VMAX;
+	clip*=2*VMAX;
 	double x,rmin=0;
     if(nargs>7){
     	rmin=args[7]*VMAX;
@@ -995,6 +994,28 @@ double Noise::multinoise(int type, int nargs, double *args)
 }
 
 
+double Noise::NoiseMinMax(double v) {
+	return Perlin::minmax(v);
+}
+double Noise::Noise1D(double v) {
+	return Perlin::noise1(v);
+}
+double Noise::Noise2D(double *v){
+	return Perlin::noise2(v);}
+double Noise::Noise3D(double *v){
+	return Perlin::noise3(v);
+}
+double Noise::Noise4D(double *v){
+	return Perlin::noise4(v);
+}
+
+//-------------------------------------------------------------
+// Noise::Voronoi1D() used only to determine min max values of function
+//-------------------------------------------------------------
+double Noise::VoronoiMinMax(double x){
+	return Voronoi::minmax(x);
+}
+
 //-------------------------------------------------------------
 // Noise::Voronoi1D() used only to determine min max values of function
 //-------------------------------------------------------------
@@ -1021,6 +1042,13 @@ double Noise::Voronoi3D(double *d){
 //-------------------------------------------------------------
 double Noise::Voronoi4D(double *d){
 	return Voronoi::noise(d[0],d[1],d[2],d[3]);
+}
+
+//-------------------------------------------------------------
+// Noise::SimplexMinMax() used only to determine min max values of function
+//-------------------------------------------------------------
+double Noise::SimplexMinMax(double x){
+	return Simplex::minmax(x);
 }
 
 //-------------------------------------------------------------

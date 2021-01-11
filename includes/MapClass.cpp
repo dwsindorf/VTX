@@ -576,6 +576,7 @@ void Map::render()
 
 //-------------------------------------------------------------
 // Map::render_raster()	render raster image
+// TODO: Make this work for geometry program generated terrain
 //-------------------------------------------------------------
 void Map::render_raster()
 {
@@ -612,6 +613,9 @@ void Map::render_raster()
 			Td.tp=tp;
 			if(!visid(tid))
 				continue;
+			if(tp->has_geometry())
+				setProgram();
+
 			RENDERLIST(RASTER_LISTS,tid,render_vertex());
 		}
 	}
@@ -619,6 +623,9 @@ void Map::render_raster()
 	if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
 		Raster.surface = 2;
 		tid = 0;
+		//if(tp->has_geometry())
+		//	setProgram();
+
 		RENDERLIST(RASTER_LISTS,tid,render_vertex());
 	}
 	//glFlush();
@@ -937,23 +944,26 @@ bool Map::setProgram(){
 	//	return false;
 	if(TheScene->viewobj != object)
 		return false;
-	//if(!end_adapt())
-	//	return false;
+//#define USE_SHADER_ONLY_FOR_GEOM
+#ifdef USE_SHADER_ONLY_FOR_GEOM
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
 		return false;
+#endif
 
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	GLSLMgr::max_output=24;
+	tesslevel=1;  //  0=single triangle mode
+	GLSLMgr::max_output=(tesslevel+1)*(tesslevel+3);
+
 	if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 
-	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define CPX\n");
 	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
 	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
-
-	tp->tnpoint->snoise->initProgram();
-	tp->tnpoint->initProgram();
+	if(tp->tnpoint){
+		tp->tnpoint->snoise->initProgram();
+		tp->tnpoint->initProgram();
+	}
 
 	GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
 	GLhandleARB program=GLSLMgr::programHandle();
@@ -961,8 +971,10 @@ bool Map::setProgram(){
 		return false;
 
 	GLSLMgr::setProgram();
-	tp->tnpoint->snoise->setProgram();
-	tp->tnpoint->setProgram();
+	if(tp->tnpoint){
+		tp->tnpoint->snoise->setProgram();
+		tp->tnpoint->setProgram();
+	}
 
 	GLSLMgr::setFBORenderPass();
 
@@ -974,6 +986,7 @@ bool Map::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	TheScene->setProgram();
+	set_resolution();
 	return true;
 }
 
@@ -1012,7 +1025,8 @@ void Map::render_ids()
 	Raster.set_all();
 
 	Raster.surface=1;
-	tesslevel=0;
+	//set_resolution();
+	//tesslevel=0; // use single triangle for id geom shader
 	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
@@ -1034,7 +1048,7 @@ void Map::render_ids()
 	Raster.set_idmode(0);
 	Render.set_mode(mode);
 	Raster.surface=1;
-	tesslevel=2;
+	//set_resolution();
 	GLSLMgr::endRender();
 
 }

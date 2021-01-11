@@ -326,6 +326,7 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	glVertexAttrib4d(GLSLMgr::position1ID, pm.x, pm.y, pm.z, max_orders);
 #endif
 	glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
+
 }
 
 //-------------------------------------------------------------
@@ -422,6 +423,11 @@ void GLSLMgr::initGL(int w, int h){
 	int maxVaryingFloats;
 	glGetIntegerv (GL_MAX_VARYING_FLOATS_ARB, &maxVaryingFloats );
 	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
+	GLint maxGeomVertices;
+	glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &maxGeomVertices );
+	printf("max geometry output vetices = %d\n",maxGeomVertices);
+
+	//gl_MaxGeometryOutputVertices
 
 	makeTexDefsFile();
 	vars.newFloatVar("fmax",pow(2.0,14.0));
@@ -686,6 +692,8 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 
 	if(!program->linked && !program->errors){
 		if(geom){
+		    cout<<"GLSLMgr::max_output:"<<GLSLMgr::max_output<<endl;
+
 			glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
 			glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
 			glProgramParameteriEXT(program->program,GL_GEOMETRY_OUTPUT_TYPE_EXT,output_type);

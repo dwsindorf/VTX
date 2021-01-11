@@ -714,6 +714,7 @@ void TNpoint::eval()
 		TerrainProperties *tp=TerrainData::tp;
 		TerrainData::add_TNpoint(this);
 		snoise=tp->noise.at();
+		snoise->type|=GEOM;
 	}
 	S0.p=Point(Px,Py,Pz);
 	S0.set_pvalid();
@@ -1064,7 +1065,7 @@ void TNnoise::eval()
 		set_normalized();
     }
     if(type & FS){
-     	scale=args[0];
+     	scale=args[0]; // start level
     	S0.s=0;
     	return; // pixel shader noise
     }
@@ -1122,7 +1123,7 @@ bool TNnoise::setProgram(){
 	bool invert = (type & NEG)?true:false;
 	bool absval = (type & NABS)?true:false;
 	bool uns = (type & UNS)?true:false;
-	bool vnoise=(type & VORONOI)?true:false;
+	int vnoise=(type & NTYPES)>>8; // GRADient=0, VORONai=1, SIMPLEX=2
 
 	int nid=id;//TerrainProperties::nid;
 
@@ -1144,7 +1145,11 @@ bool TNnoise::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 
-	//cout << "info freq:"<< nfreq<<" L:"<<L<<" H:" << H << " fact:" << pow(nfreq,-H) << " delta:" << pow(L,-H) <<endl;
+	double geom_scale=1;
+
+	if(TheMap && (type & GEOM))
+		geom_scale=TheMap->hscale*500;
+
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
 	sprintf(str,"nvars[%d].freq",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),nfreq);
@@ -1154,14 +1159,13 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].L",nid);         glUniform1fARB(glGetUniformLocationARB(program,str),L);
 	sprintf(str,"nvars[%d].smoothing",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),smooth);
 	sprintf(str,"nvars[%d].clamp",nid);     glUniform1fARB(glGetUniformLocationARB(program,str),clamp);
-	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma);
-	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb+offset);
-	//sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),-ampl*mb+offset);
+	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma*geom_scale);
+	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb*geom_scale+offset);
 	sprintf(str,"nvars[%d].sqr",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),sqr);
 	sprintf(str,"nvars[%d].invert",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),invert);
 	sprintf(str,"nvars[%d].absval",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),absval);
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
-	sprintf(str,"nvars[%d].vnoise",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
+	sprintf(str,"nvars[%d].vnoise",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	vars.setProgram(program);
 	vars.loadVars();

@@ -1,6 +1,7 @@
 #ifndef NOISEFUNCS_H_
 #define NOISEFUNCS_H_
 #include <defs.h>
+#include <PointClass.h>
 
 class NoiseFunc {
 protected:
@@ -55,7 +56,6 @@ public:
 	static  double dfade(double u) {
 		return  30.0*u*u*(u*(u-2.0)+1.0);
 	}
-	Classic();
 	static double noise(double x); // 1D
 	static double noise(double x, double y); // 2D
 	static double noise(double x, double y, double z); // 3D
@@ -69,7 +69,7 @@ class Simplex: public NoiseFunc
 public:
 	static int simplex[][4];
 	
-	Simplex();
+	static double minmax(double x); // 1D
 	static double noise(double x); // 1D
 	static double noise(double x, double y); // 2D
 	static double noise(double x, double y, double z); // 3D
@@ -79,9 +79,15 @@ public:
 
 class Voronoi: public NoiseFunc
 {
-public:
+	static Point hashv3(Point p);
+	static Point4D hashv4(Point4D p);
+	static Point4D hpnt;
 
-	//VeronoiNoise();
+public:
+    static double rval;
+    static double hval;
+
+	static double minmax(double x); // 1D
 	static double noise(double x); // 1D
 	static double noise(double x, double y); // 2D
 	static double noise(double x, double y, double z); // 3D

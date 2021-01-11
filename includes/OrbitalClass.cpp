@@ -2638,12 +2638,24 @@ bool Planetoid::setProgram(){
 	//GLSLMgr::init3DNoiseTexture();
 	tp->initProgram();
 	set_wscale();
+	int tl=1; // tesslevel
 	if(Render.geometry() && tp->has_geometry()){
 		GLSLMgr::input_type=GL_TRIANGLES;
-		//GLSLMgr::input_type=GL_TRIANGLES_ADJACENCY_EXT; // doesn't work for triangle fans in glBegin
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		GLSLMgr::max_output=24;
+		double resolution=TheMap->resolution;
+		// for geometry increase vertexes for lower quality settings
+		//  - generate fewer at high resolutions where triangles are smaller
+		//  - number of vertexes/triangle produced = (tesslevel+1)*(tesslevel+3)
+		//  - at high res (tesslevel=1 3 vertexes) at low res (tesslevel=5 48 vertexes )
+		// for some reason tesslevel>5 can result in holes
+		//  - looks like some vertexes not being produced
+		//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
+
+		tl=floor(lerp(resolution,0.0,20,0,5)+0.5);
+		tl=tl<1?1:tl;
+	    GLSLMgr::max_output=(tl+1)*(tl+3);
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
+		//cout<<"Planetoid tesslevel:"<<tl<<" max_outout:"<< GLSLMgr::max_output<<" resolution:"<<resolution<<endl;
 	}
 	else{
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
@@ -2670,8 +2682,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("hdr_min",Raster.hdr_min);
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
-	vars.newIntVar("tessLevel",Map::tesslevel);
-	//vars.newIntVar("tessLevel",0);
+	vars.newIntVar("tessLevel",tl);
 	Point pv=TheScene->xpoint;
 	//pv=pv.mm(TheScene->viewMatrix);
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);

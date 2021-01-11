@@ -244,7 +244,7 @@ RasterMgr::RasterMgr()
 
 	// HDR parameters
 
-	hdr_min=0.5;
+	hdr_min=0.35;
 	hdr_max=1.8;
 
 	// water parameters
@@ -2068,7 +2068,7 @@ void RasterMgr::init_render()
 	do_haze=Render.haze()&& hazepass()&& TheScene->inside_sky();
 	do_edges=Render.dealias()||filter_show();
 	do_fog=do_haze|do_vfog;
-	do_image=do_water||do_fog||do_edges||do_edges;
+	do_image=do_water||do_fog||do_edges;
 }
 //-------------------------------------------------------------
 // RasterMgr::render()	pixel image rasterization

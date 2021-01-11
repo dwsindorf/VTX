@@ -1,117 +1,19 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=7.73437;
-		theta=312.188;
-		height=248.014 ft;
-		time=85517.2;
-		heading=220;
-		tilt=-25;
+		phi=7.5943;
+		theta=312.026;
+		height=1716.95 ft;
+		time=58902.4;
+		tilt=-15;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
-	View{
-		height=1231.28 ft;
-	}
-	View{
-		height=6566.03 ft;
-		time=85881.2;
-		tilt=-15;
-		angle=5;
-	}
-	View{
-		height=4254.38 ft;
-		gndlvl=46.5193 ft;
-	}
-	View{
-		height=26.4446 miles;
-		gndlvl=0 ft;
-	}
-	View{
-		height=6014.52 ft;
-	}
-	View{
-		phi=7.57952;
-		theta=312.003;
-		height=14442.4 ft;
-		time=85915;
-		tilt=-30;
-	}
-	View{
-		height=10834.5 ft;
-	}
-	View{
-		time=85961.6;
-	}
-	View{
-		phi=7.58748;
-		theta=312.008;
-		height=14483.8 ft;
-		gndlvl=259.361 ft;
-		time=86524.8;
-		heading=240;
-		tilt=-90;
-		angle=-10;
-	}
-	View{
-		height=9388.62 ft;
-		gndlvl=0 ft;
-	}
-	View{
-		tilt=-15;
-	}
-	View{
-		height=258.8 ft;
-		gndlvl=-0.745878 ft;
-	}
-	View{
-		height=258.054 ft;
-		gndlvl=0 ft;
-		time=76069;
-		heading=285;
-	}
-	View{
-		height=384.092 ft;
-	}
-	View{
-		height=289.564 ft;
-		time=76069.8;
-	}
-	View{
-		height=7886.1 ft;
-		time=58902.4;
-		heading=10;
-	}
-	View{
-		height=4272.52 ft;
-		heading=15;
-	}
-	View{
-		height=3043.76 ft;
-	}
-	View{
-		height=1357.12 ft;
-		gndlvl=476.912 ft;
-	}
-	View{
-		phi=7.5943;
-		theta=312.026;
-		height=88.1988 ft;
-		gndlvl=0 ft;
-		angle=0;
-	}
-	View{
-		height=3166.74 ft;
-	}
-	View{
-		height=1716.95 ft;
-		heading=0;
-	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -148,7 +50,8 @@ Scene() {
 						Color(0.992,0.773,0.004));
 					Surface{
 						terrain=
-								Texture("saturn3",S|TEX,HT+noise(FS|NABS|NLOD|SCALE,12,5,-1,0.5,2,5,1,0,0),0.5,2,1,0.88896,1,2,1,0)+Z(noise(FS|NABS|NLOD|SCALE,12,5,-1,0.5,2,5,1,0,0));
+								Texture("saturn3",S|TEX,HT+noise(GRADIENT|FS|NABS|NLOD|SCALE,12,5,-1,0.5,2,5,1,0,0),0.5,2,1,0.88896,1,2,1,0)+
+								Z(noise(GRADIENT|FS|NABS|NLOD|SCALE,12,5,-1,0.5,2,5,1,0,0));
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);

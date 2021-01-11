@@ -128,30 +128,32 @@ void VtxSurfaceTabs::OnUpdateBtns(wxUpdateUIEvent &event) {
 }
 
 void VtxSurfaceTabs::OnNewVar(wxCommandEvent &event) {
+	wxString name = m_list->GetValue();
+	if(varExists(name)){
+		cout << name << "is already a variable"<<endl;
+		return;
+	}
+
+	m_varname=name;
 	TerrainMgr *mgr=getMgr();
 	if(!mgr)
 		 return;
-	m_varname="x";
-	int i=1;
-	while (varExists(m_varname) && i<20){
-		if(m_varname.Length()>1)
-		   m_varname.Truncate(1);
-		m_varname+=wxString::Format(wxT("%i"),i++);
-	}
-	cout << "new var:" << m_varname<< endl;
 
-	m_expr->SetValue("0");
+	cout << "new var:" << m_varname<< endl;
+    if(m_expr->GetValue().IsEmpty())
+    	m_expr->SetValue("0");
 	TNvar *obj=mgr->setVar((char*)m_varname.ToAscii(),(char*)m_expr->GetValue().ToAscii());
 	if(!obj){ // expr bad
 		cout<<"bad expression"<<endl;
 		return;
 	}
 
-	i=m_list->Append(m_varname);
-	update_needed=true;
+	int i=m_list->Append(m_varname);
+	//update_needed=true;
 	mgr->setVarIndex(i);
 	m_list->SetSelection(i);
 	m_varname=m_list->GetStringSelection();
+	update_needed=true;
 	invalidateObject();
 	getObjAttributes();
 
@@ -252,9 +254,9 @@ void VtxSurfaceTabs::setVarExpr()
     	return;
     wxString name = m_list->GetStringSelection();
 	wxString expr = m_expr->GetValue();
-    if(expr.IsEmpty())
-    	deleteVar();
-    else{
+    if(!expr.IsEmpty()){
+    //	deleteVar();
+   //else{
 		mgr->setVarExpr((char*)name.ToAscii(),(char*)expr.ToAscii());
 		mgr->applyVarExprs();
     }

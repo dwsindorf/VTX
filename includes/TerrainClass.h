@@ -186,6 +186,8 @@ public:
 	int norm() 			        { return flags & TNN_NORM;}
 	int normalized()            { return flags & TNN_NORMALIZED;}
 	void set_normalized()       { BIT_ON(flags,TNN_NORMALIZED);}
+	void clr_normalized()       { BIT_OFF(flags,TNN_NORMALIZED);}
+
 	int typeValue()			    { return ID_NOISE;}
 	const char *typeName ()		{ return "noise";}
 	void valueString(char *);
