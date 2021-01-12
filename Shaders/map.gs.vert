@@ -1,4 +1,4 @@
-//#version 120
+
 // notes:
 // 1. first shader in pipeline
 // 2. output to geometry shader

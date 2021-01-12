@@ -35,7 +35,7 @@ extern int setRandSeed(int);
 #endif
 
 
-const double norm_factor=1.0;  // adjust for value range
+const double norm_factor=1.0;//0.77;  // adjust for value range
 static int P[B + B + 2];
 static double G4[4*B + 4*B + 8];
 static double G3[B + B + 2][3];
@@ -47,21 +47,7 @@ bool Perlin::initialized=false;
 int Perlin::seed=1;
 
 double   Perlin::minmax(double v){
-	double vec[3]={v,0.123*v,3.15*v};
-	//double result= noise3(vec);
-	double result=noise1(v);
-//#define TEST
-#ifdef TEST
-	static double min=1000,max=-1000;
-	static int cnt=0;
-	if(result<min || result>max){
-		min=result<min?result:min;
-		max=result>max?result:max;
-		cout<<"Perlin["<<cnt <<"] min:"<<min<<" max:"<<max <<" range:"<<max-min<<endl;
-	}
-	cnt++;
-#endif
-	return result;
+	return noise1(v);
 }
 
 int Perlin::noiseDim(){
@@ -108,8 +94,6 @@ static inline double clamp(double x, double l, double m)
 
 double Perlin::noise1(double arg)
 {
-	//double v[3]={arg,arg,arg};
-
 	int bx0, bx1;
 	double rx0, rx1, sx, t, u, v, vec[1];
 
@@ -122,11 +106,7 @@ double Perlin::noise1(double arg)
 	u = rx0 * G3[ P[ bx0 ] ][0];
 	v = rx1 * G3[ P[ bx1 ] ][0];
 
-    double result=norm_factor*lerp(sx, u, v);
-
-	return result;
-
-	//return noise3(v);
+	return norm_factor*lerp(sx, u, v);
 }
 
 double Perlin::noise2(double vec[2])
@@ -207,7 +187,7 @@ double Perlin::noise3(double vec[3])
 	n_xy[1] = lerp(sy, n_x[1], n_x[3]);  // n_xy.y
 
 	n_xyz=lerp(sz, n_xy[0], n_xy[1]);
-	n_xyz=clamp(n_xyz, -0.5,0.5);
+
 	return norm_factor*n_xyz;
 }
 // 4D noise (extrapolated from noise3)
@@ -289,7 +269,7 @@ double Perlin::noise4(double vec[4])
 	d = lerp(sy, a, b);
 
 	f = lerp(sz, c, d);
-    double result=norm_factor*lerp(sw, e, f);
+
 	return norm_factor*lerp(sw, e, f);
 }
 

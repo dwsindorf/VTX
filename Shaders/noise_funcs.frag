@@ -110,7 +110,7 @@ vec4 Noise(int index) {
 	float rmin=info.smoothing*VMAX;
 	if(!info.absval)
 		rmin *=2.0;
-	float clip=2*info.clamp*VMAX;
+	float clip=info.clamp*VMAX;
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
@@ -129,9 +129,12 @@ vec4 Noise(int index) {
 	        P2=noise3D(v2*f);
         }
         nvec=mix(P1,P2,m);
-        nvec.x=nvec.x>clip?clip:nvec.x;
+
 		nvec.yzw*=f;
-		
+		if(nvec.x>clip+0.1*nvec.x){
+			nvec.x=clip+0.1*nvec.x;
+			nvec.yzw*=0.1;
+		}		
 		f*=info.L;
 		if(info.absval) {
 			if(nvec.x<0.0)

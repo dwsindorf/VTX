@@ -1,4 +1,4 @@
-//#version 120
+
 #ifdef COLOR
 varying vec4 Color;
 #endif

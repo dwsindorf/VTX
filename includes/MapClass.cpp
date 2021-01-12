@@ -613,9 +613,6 @@ void Map::render_raster()
 			Td.tp=tp;
 			if(!visid(tid))
 				continue;
-			if(tp->has_geometry())
-				setProgram();
-
 			RENDERLIST(RASTER_LISTS,tid,render_vertex());
 		}
 	}
@@ -623,9 +620,6 @@ void Map::render_raster()
 	if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
 		Raster.surface = 2;
 		tid = 0;
-		//if(tp->has_geometry())
-		//	setProgram();
-
 		RENDERLIST(RASTER_LISTS,tid,render_vertex());
 	}
 	//glFlush();
@@ -938,34 +932,40 @@ void Map::render_solid()
 
 //-------------------------------------------------------------
 // Map::setProgram() set shader program for ids render pass
+//#define USE_SHADER_ONLY_FOR_GEOM
+//#define GEOM_SHADER
 //-------------------------------------------------------------
 bool Map::setProgram(){
-	//if(test2)
-	//	return false;
 	if(TheScene->viewobj != object)
 		return false;
-//#define USE_SHADER_ONLY_FOR_GEOM
+	bool geom=tp->has_geometry() && tp->tnpoint;
 #ifdef USE_SHADER_ONLY_FOR_GEOM
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
 		return false;
 #endif
-
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	tesslevel=1;  //  0=single triangle mode
-	GLSLMgr::max_output=(tesslevel+1)*(tesslevel+3);
 
-	if(Render.draw_ids())
+	//if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
-
+#ifdef GEOM_SHADER
+	tesslevel=0;  //  0=single triangle mode
+	GLSLMgr::max_output=(tesslevel+1)*(tesslevel+3);
 	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
-	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
+#endif
 	if(tp->tnpoint){
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
 		tp->tnpoint->snoise->initProgram();
 		tp->tnpoint->initProgram();
 	}
+	else
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS 0\n");
 
+#ifdef GEOM_SHADER
 	GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
+#else
+	GLSLMgr::loadProgram("map.vert","map.frag");
+#endif
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;

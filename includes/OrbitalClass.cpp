@@ -1902,8 +1902,11 @@ void Spheroid::get_vars()
 
 	if(exprs.get_local("hscale",Td)){
 	    hscale=Td.s;///size;
-		map->hscale=hscale;
 	}
+	else
+		hscale=def_hscale;
+	map->hscale=hscale;
+
 	VGET("symmetry",symmetry,def_symmetry);
 	map->symmetry=symmetry;
 }

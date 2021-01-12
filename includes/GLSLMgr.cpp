@@ -299,16 +299,6 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	glVertexAttrib4f(GLSLMgr::position2ID, vec2[1][0], vec2[1][1], vec2[1][2], depth);      // low part
 	return;
 #endif
-	// grid-align vertexes to noise perm table repeat interval
-	// - repeats basic patterns at some domain interval
-	// - but no artifacts at domain intersections
-	// constraints:
-	//  - minimum noise frequency = 256 * 256 (only high noise frequencies supported)
-	//  - noise L must be an integer (all orders must be multiple powers)
-	//Point pm = pp;//.normalize();
-	//pm=pm+0.5;
-	//if (position2ID < 0)
-	//	return;
 	Point pv = MapPt.normalize(); // pivot point in triangle render loop projected onto unit sphere
 	pv = pv * 0.5 + 0.5; // make axis signs all positive (0..1)
 	Point pf = pm; // passed in with 0..1 values as for pv
@@ -319,14 +309,8 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	// remove integer part to increase dynamic range of residuals
 	pf = pf - pv; // remaining values 0..1 (but scaled * NSCALE)
 	pf=pf/NSCALE; // restore original global scale
-#ifdef DBLS_TEST2
-	pv=pv/NSCALE;
-	glVertexAttrib4d(GLSLMgr::position1ID, pv.x, pv.y, pv.z, max_orders);
-#else
 	glVertexAttrib4d(GLSLMgr::position1ID, pm.x, pm.y, pm.z, max_orders);
-#endif
 	glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
-
 }
 
 //-------------------------------------------------------------
