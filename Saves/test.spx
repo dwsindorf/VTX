@@ -1,88 +1,25 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=-36.5625;
-		theta=356.629;
-		height=11.3647 miles;
-		time=50648.8;
-		tilt=-10;
-		angle=-21;
+		view=ORBITAL;
+		phi=8.55672;
+		theta=185.877;
+		height=0.00668252;
+		gndlvl=-6051.24 ft;
+		time=115147;
+		heading=90;
+		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=86.1487 miles;
-		tilt=-22;
-		angle=-20;
+		theta=193.998;
+		gndlvl=-6087.62 ft;
 	}
 	View{
-		height=78.8398 miles;
-	}
-	View{
-		phi=-37.5732;
-		theta=0.483398;
-		height=7382.83 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		theta=0.487042;
-		height=14.0776 miles;
-	}
-	View{
-		tilt=-17;
-		angle=-12;
-	}
-	View{
-		height=34557.1 ft;
-		tilt=-13;
-		angle=-10;
-	}
-	View{
-		phi=-37.6282;
-		theta=0.994263;
-		height=839.44 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=16718.9 ft;
-		time=70823.8;
-	}
-	View{
-		height=15719.3 ft;
-		tilt=-12;
-		angle=-1;
-	}
-	View{
-		height=14483 ft;
-		tilt=-13;
-		angle=-4;
-	}
-	View{
-		theta=1.01483;
-	}
-	View{
-		height=13313.7 ft;
-	}
-	View{
-		theta=1.0766;
-	}
-	View{
-		height=34614.9 ft;
-		gndlvl=-12040.8 ft;
-		tilt=-9;
-		angle=-14;
-	}
-	View{
-		height=22225.2 ft;
-		gndlvl=0 ft;
-	}
-	View{
-		theta=1.15663;
-		height=34235.4 ft;
-		gndlvl=-12010.2 ft;
+		phi=8.57672;
+		height=0.00668214;
+		gndlvl=-4088.61 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -112,31 +49,16 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.002,100) {
-					ambient=Color(1,1,1,0.04);
+				Planet(0.004,40) {
 					day=24;
-					diffuse=Color(1,1,1,0.85);
-					hscale=0.02;
-					resolution=2;
-					shine=5.56269;
-					specular=Color(1,1,1,0.27);
-					tilt=10;
+					resolution=0.1;
+					shine=9.88486;
+					specular=Color(1,1,1,0);
 					year=100;
-					albedo=1;
+					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS|SCALE|SQR,8,4,-1,0.5,2,0.52,1,0,0));
-					}
-					Sky(0.00205145) {
-						color=Color(0,0.9,0.9);
-						day=24;
-						density=0.2;
-						haze.color=Color(1,0.92,0.36);
-						haze.grad=0.2439;
-						haze.value=1;
-						name="Sky";
-						rseed=1.80324;
-						specular=Color(1,1,1);
-						tilt=10;
+						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
+								Texture("neptune",BORDER|S|TEX,twist(0.2,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,1.29232,-2,2.33968,1,2,1,0);
 					}
 				}
 			}

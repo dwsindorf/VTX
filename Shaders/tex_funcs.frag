@@ -62,9 +62,12 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	tex_rem=tex_orders-float(tex_n); \
 	tex_n=tex_rem>0.0?tex_n+1:tex_n; \
 	orders_delta=1.0; \
-	for(int i=0;i<tex_n;i++) {		
+	for(int i=0;i<tex_n;i++) {	
+		
 #define APPLY_TEX \
-		tval=textureTile(tid,coords,texmip); \
+	    offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
+		tval=textureTile(tid,coords+offset,texmip); \
+		alpha = tex2d[tid].texamp; \
 		cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
 		
 #define SET_COLOR \

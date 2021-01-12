@@ -304,7 +304,7 @@ void TerrainProperties::initProgram(){
 			rand=true;
 		textures[tid]->initProgram();
 	}
-	if(tncolor && tncolor->isEnabled())
+	if(tncolor)
 		tncolor->initProgram();
 	if(tnpoint)
 		tnpoint->initProgram();
