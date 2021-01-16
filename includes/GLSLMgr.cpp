@@ -20,7 +20,7 @@ extern Point MapPt;
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
-//#define DEBUG_FBO
+#define DEBUG_FBO
 //#define FBO_DEPTH
 #define FORCEMINGLVERSION true
 #define PERLIN_1D_TEX
@@ -62,7 +62,9 @@ int 			GLSLMgr::unused_tex_units=0;
 
 int 			GLSLMgr::input_type=GL_POINTS;
 int 			GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-int 			GLSLMgr::max_output=4;
+int 			GLSLMgr::max_output=1;
+int 			GLSLMgr::tesslevel=0;
+
 
 static bool using_fbo=false;
 
@@ -633,7 +635,15 @@ bool GLSLMgr::loadProgram(char *vshader,char *fshader,char *gshader){
 	buildProgram(vshader,fshader,gshader);
 	return true;
 }
-
+//-------------------------------------------------------------
+// GLSLMgr::setMaxOutput() set max vertexs in geometry shader
+//-------------------------------------------------------------
+void GLSLMgr::setTessLevel(int n){
+	max_output=(n+1)*(n+3);
+	if(n != tesslevel)
+		cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
+	tesslevel=n;
+}
 //-------------------------------------------------------------
 // GLSLMgr::buildProgram() set active shader program
 //-------------------------------------------------------------
@@ -673,15 +683,13 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 
 	if(!program->compiled && !program->errors)
 		compile();
+	if(geom && !program->errors){
+		glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
+		glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
+		glProgramParameteriEXT(program->program,GL_GEOMETRY_OUTPUT_TYPE_EXT,output_type);
+	}
 
 	if(!program->linked && !program->errors){
-		if(geom){
-		    cout<<"GLSLMgr::max_output:"<<GLSLMgr::max_output<<endl;
-
-			glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
-			glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
-			glProgramParameteriEXT(program->program,GL_GEOMETRY_OUTPUT_TYPE_EXT,output_type);
-		}
 		link();
 	}
 	if(program->errors){
@@ -796,7 +804,7 @@ void GLSLMgr::setFBORenderPass(){
 		vars.setValue(FBOREAD,false);
 
 #ifdef DEBUG_FBO
-	cout << "GLSLMgr::setFBORenderPass("<< using_fbo << ")"<<endl;
+	cout << "GLSLMgr::setFBORenderPass("<< Raster.surface << ")"<<endl;
 #endif
 }
 void GLSLMgr::setFBOReadPass(){
@@ -808,7 +816,7 @@ void GLSLMgr::setFBOReadPass(){
 	vars.setValue(FBOWRITE,false);
 	vars.setValue(FBOREAD,true);
 #ifdef DEBUG_FBO
-	cout << "GLSLMgr::setFBOReadPass("<<using_fbo<<")"<< endl;
+	cout << "GLSLMgr::setFBOReadPass("<<Raster.surface<<")"<< endl;
 #endif
 }
 
@@ -840,7 +848,7 @@ void GLSLMgr::setFBOWritePass(){
 	vars.setValue(FBOWRITE,true);
 	vars.setValue(FBOREAD,false);
 #ifdef DEBUG_FBO
-	cout << "GLSLMgr::setFBOWritePass("<<using_fbo<<")"<< endl;
+	cout << "GLSLMgr::setFBOWritePass("<<Raster.surface<<")"<< endl;
 #endif
 }
 void GLSLMgr::setFBOReadWritePass(){
@@ -858,7 +866,7 @@ void GLSLMgr::setFBOReadWritePass(){
 	vars.setValue(FBOWRITE,true);
 	vars.setValue(FBOREAD,true);
 #ifdef DEBUG_FBO
-	cout << "GLSLMgr::setFBOReadWritePass("<<using_fbo<<")"<< endl;
+	cout << "GLSLMgr::setFBOReadWritePass("<<Raster.surface<<")"<< endl;
 #endif
 }
 

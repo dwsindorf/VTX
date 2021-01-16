@@ -982,7 +982,8 @@ void RasterMgr::getLimits(double &zn, double &zf)
 	zn=1.0/(ws2*zn+ws1);
 	zf=1.0/(ws2*zf+ws1);
 #ifdef DEBUG_LIMITS
-	cout <<"RasterMgr::getLimits zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
+	cout <<"Scene  zn:"<<z1/FEET<<" zf:"<<z2/FEET<<endl;
+	cout <<"Raster zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 #endif
 
 }
@@ -1095,6 +1096,12 @@ void RasterMgr::vertex(MapNode *node)
 	switch(render_type()){
 	case SHADERS:
 		{
+			Point pm=d->mpoint();
+			pm=pm.normalize();
+			pm=pm*0.5+0.5;
+			Point p=d->point();
+			GLSLMgr::setVertexAttributes(pm,0);
+
 			double type=0,vfog=0;
 			if(do_vfog){
 				double ht=d->height();
@@ -2059,7 +2066,7 @@ void RasterMgr::manageBuffers()
 void RasterMgr::init_render()
 {
 	do_hdr=hdr();
-	do_water=Render.show_water() && twopass() && TheScene->inside_sky();
+	do_water=Render.show_water();// && twopass()// && TheScene->inside_sky();
 	do_depth=do_water && water_depth();
 	do_reflect=do_water && (reflections() || water_modulation());
 	do_shadows=Lights.size && shadows();

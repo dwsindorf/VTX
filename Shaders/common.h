@@ -26,6 +26,8 @@ vec3 bump;
 float g=0.0;
 float b=0.0;
 bool newcell=false;
+uniform vec3 pv;
+
 
 uniform float texmip;
 uniform float bumpmip;

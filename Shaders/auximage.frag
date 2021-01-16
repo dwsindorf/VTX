@@ -3,6 +3,7 @@ varying vec4 Color;
 varying vec4 Params;
 varying vec4 EyeDirection;
 varying vec4 Normal;
+in float type;
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -26,6 +27,9 @@ uniform float dpm;
 uniform float cmix;
 uniform float ws1;
 uniform float ws2;
+uniform float zn;
+uniform float zf;
+
 uniform vec4 Shadow;
 
 uniform float feet;
@@ -68,6 +72,7 @@ void main(void) {
 #else
 	float shadow_diffuse=1.0;
 	float shadow_specular=1.0;
+	
 #endif
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
@@ -105,14 +110,18 @@ void main(void) {
 	}
 	float reflect1=dot(normal,eye); // reflection angle
 #ifdef WATER
-	float z=fcolor2.b;
+	float z=fcolor2.b;  // bottom depth
 	float z2=1.0/(ws2*z+ws1);
 	float z1=1.0/(ws2*depth+ws1);
-	float dz=(z2-z1);
+	//float dz=(z2-z1);
+	
+	float dz=(depth-z)/(z*depth+z+depth+1)/ws1; // approx ws1 ~ -ws2
 	dz=dz<0.0?0.0:dz;
 	float f=lerp(dz,0.0,clarity,0.0,1.0);
 
 	vec3 DepthColor=WaterDepth.rgb*horizon;
+	//	vec3 DepthColor=vec3(0,1,1);
+	
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
 
 	float dpr=0.5*water_dpr;
@@ -131,12 +140,16 @@ void main(void) {
 	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
 	
 	color=clamp(color,0.0,1.0);
-
-	gl_FragData[0] = vec4(color,1.0);
+    
+    //gl_FragData[0] = vec4(color,1.0);
+    
+	gl_FragData[0] =vec4(color,1.0);
 #else
-	gl_FragData[0] = fcolor1;
+ 	gl_FragData[0] = fcolor1;
 #endif
 	gl_FragData[0].a=ambient;
-	gl_FragData[1] = vec4(Params.r,Params.g,depth,reflect1);
+	gl_FragData[1] = vec4(Params.r,Params.g,depth,reflect1);  // vfog, type
+	
+	//gl_FragData[1] = vec4(fcolor2.r,fcolor2.g,fcolor2.b,fcolor2.a); // HT+g, dist 
 }
 

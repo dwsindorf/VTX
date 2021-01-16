@@ -858,7 +858,7 @@ void View::translate(Point &p)
 //-------------------------------------------------------------
 void View::project()
 {
-	perspective(fov, aspect, znear, zfar, eye, center, normal);
+	perspective(fov, aspect,znear, zfar, eye, center, normal);
 }
 
 //-------------------------------------------------------------

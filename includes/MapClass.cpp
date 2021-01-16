@@ -94,7 +94,7 @@ static void show_terrain_info()
 	}
 }
 
-//#define DEBUG_INFO
+#define DEBUG_INFO
 static void map_info(MapNode *n)
 {
 	total_nodes++;
@@ -225,7 +225,6 @@ double cell_size(int i)
 LinkedList<Triangle*> Map::triangle_list;
 bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
-int Map::tesslevel=2;
 Map::Map(double r)
 {
 	static int init_flag=1;
@@ -239,6 +238,7 @@ Map::Map(double r)
 	dmin=0;
 	dmax=0;
 	texture=0;
+	tesslevel=1;
 
 	Point pt(0,0,1);
 	pt=pt.rectangular(); // initialize sin lut
@@ -605,9 +605,12 @@ void Map::render_raster()
 	set_colors(0);
 
 	npole->init_render();
+	cout << "Map::render_raster:"<<Raster.surface<<" waterpass:"<<waterpass()<<" top::"<<Raster.top()<<endl;
 
 	if(Raster.surface==1 || Raster.top()){
 		Raster.surface=1;
+		cout << "Map::render_raster terrain"<<endl;
+
 		for(tid=ID0;tid<tids;tid++){
 			tp=Td.properties[tid];
 			Td.tp=tp;
@@ -618,6 +621,7 @@ void Map::render_raster()
 	}
 
 	if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
+		cout << "Map::render_raster water"<<endl;
 		Raster.surface = 2;
 		tid = 0;
 		RENDERLIST(RASTER_LISTS,tid,render_vertex());
@@ -931,9 +935,61 @@ void Map::render_solid()
 }
 
 //-------------------------------------------------------------
+// Map::tessLevel set geometry (number of vertexes generated)
+//-------------------------------------------------------------
+int Map::tessLevel(){
+	double resolution=TheMap->resolution;
+	// increase vertexes for lower quality settings
+	//  - generate fewer at high resolutions where triangles are smaller
+	//  - number of vertexes/triangle produced = (tesslevel+1)*(tesslevel+3)
+	//  - at highest res (tesslevel=1 3 vertexes) at lowest res (tesslevel=5 48 vertexes )
+	// note: for some reason tesslevel>5 can result in holes
+	//  - looks like some vertexes not being produced
+	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
+
+	tesslevel=floor(lerp(resolution,0.0,15,0,5)+0.5);
+	tesslevel=tesslevel<1?1:tesslevel;
+	GLSLMgr::setTessLevel(tesslevel);
+	return tesslevel;
+}
+
+bool  Map::setGeometryDefs(){
+	if(hasGeometry()){
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
+		tp->tnpoint->snoise->initProgram();
+		tp->tnpoint->initProgram();
+		return true;
+	}
+	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS 0\n");
+	return false;
+}
+
+bool  Map::setGeometryPrgm(){
+	if(!hasGeometry())
+		return false;
+	if(tp->tnpoint){
+		bool ok=tp->tnpoint->snoise->setProgram();
+		if(!ok)
+			return false;
+		ok=tp->tnpoint->setProgram();
+		if(!ok)
+			return false;
+	}
+	//GLSLMgr::setFBORenderPass();
+	return true;
+}
+
+bool  Map::hasGeometry(){
+	bool geom=tp->has_geometry() && tp->tnpoint;
+	return geom;
+}
+
+//-------------------------------------------------------------
 // Map::setProgram() set shader program for ids render pass
-//#define USE_SHADER_ONLY_FOR_GEOM
-//#define GEOM_SHADER
+// - only called for drawing id colors
+// - only shader based vertex noise allowed
+// #define USE_SHADER_ONLY_FOR_GEOM // can use plain OGL if no pixel z noise
+ //#define GEOM_SHADER   // optional add extra vertices
 //-------------------------------------------------------------
 bool Map::setProgram(){
 	if(TheScene->viewobj != object)
@@ -946,20 +1002,13 @@ bool Map::setProgram(){
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	//if(Render.draw_ids())
+	if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
-	tesslevel=0;  //  0=single triangle mode
-	GLSLMgr::max_output=(tesslevel+1)*(tesslevel+3);
+	tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
 	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
 #endif
-	if(tp->tnpoint){
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
-		tp->tnpoint->snoise->initProgram();
-		tp->tnpoint->initProgram();
-	}
-	else
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS 0\n");
+	setGeometryDefs();
 
 #ifdef GEOM_SHADER
 	GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
@@ -971,9 +1020,9 @@ bool Map::setProgram(){
 		return false;
 
 	GLSLMgr::setProgram();
-	if(tp->tnpoint){
-		tp->tnpoint->snoise->setProgram();
-		tp->tnpoint->setProgram();
+
+	if(hasGeometry() && !setGeometryPrgm()){
+		cout <<"Error Setting Map program"<<endl;
 	}
 
 	GLSLMgr::setFBORenderPass();
@@ -1091,52 +1140,56 @@ void Map::render_shaded()
 	Render.show_shaded();
 
 	glColor4d(1,1,1,1);
+    // render non-water terrain
+	if(!waterpass() || !Render.show_water()){
+		Raster.surface=1;
+		Raster.set_all();
+		set_textures(1);
 
-	Raster.surface=1;
-    Raster.set_all();
-	set_textures(1);
+		npole->init_render();
+		Lights.setAmbient(Td.ambient);
+		Lights.setDiffuse(Td.diffuse);
 
-	npole->init_render();
-	Lights.setAmbient(Td.ambient);
-	Lights.setDiffuse(Td.diffuse);
+		for(int i=0;i<tids-1;i++){
+			tid=i+ID0;
+			tp=Td.properties[tid];
+			Td.tp=tp;
+			if(!visid(tid) || !tp)
+				continue;
+			total_tpasses++;
+			texpass=0;
+			double shine=Td.shine;
+			Color specular=Td.specular;
+			Lights.mixSpecular(specular);
 
-	for(int i=0;i<tids-1;i++){
-		tid=i+ID0;
-		tp=Td.properties[tid];
-		Td.tp=tp;
-	    if(!visid(tid) || !tp)
-	        continue;
-		total_tpasses++;
-        texpass=0;
-	    double shine=Td.shine;
-		Color specular=Td.specular;
-		Lights.mixSpecular(specular);
+			Lights.setShininess(shine*tp->shine);
+			specular.set_alpha(specular.alpha()*tp->albedo);
+			Lights.mixSpecular(specular);
+			if(tp->glow.alpha())
+				Lights.setEmission(tp->glow);
+			else
+				Lights.setEmission(Td.emission);
+			glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
+			if(!object->setProgram())
+				continue;
 
- 		Lights.setShininess(shine*tp->shine);
-		specular.set_alpha(specular.alpha()*tp->albedo);
-		Lights.mixSpecular(specular);
-		if(tp->glow.alpha())
-			Lights.setEmission(tp->glow);
-		else
-			Lights.setEmission(Td.emission);
-		glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
-		if(!object->setProgram())
-			continue;
+			texture=0;
+			total_rpasses++;
+			if(render_triangles()){
+				RENDER_TRIANGLES(SHADER_LISTS,tid);
+			}
+			else {
+				RENDERLIST(SHADER_LISTS,tid,render());
+			}
 
-		texture=0;
-		total_rpasses++;
-		if(render_triangles()){
-			RENDER_TRIANGLES(SHADER_LISTS,tid);
+			Render.show_shaded();
+			reset_texs();
 		}
-		else {
-		    RENDERLIST(SHADER_LISTS,tid,render());
-		}
-
-		Render.show_shaded();
-		reset_texs();
 	}
 
-	if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
+	//if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
+	// render water surface
+	if(waterpass() && Render.show_water()){
 		tid=WATER;
 		tp=Td.properties[tid];
 		Td.tp=tp;
@@ -1164,14 +1217,6 @@ void Map::render_shaded()
 	Render.show_shaded();
 	GLSLMgr::endRender();
 	glPopAttrib();
-
-//	if(TheScene->viewobj==object){
-//    	double minz,maxz;
-//    	cout<< "Render ";
-//    	Raster.getLimits(minz,maxz);
-//	}
-	//cout << "Map::render time:"<< (clock()-d0)/CLOCKS_PER_SEC << " ms" <<endl;
-
 }
 //-------------------------------------------------------------
 // Map::render_water()	render water (surface mode)
@@ -1606,7 +1651,7 @@ void Map::make_visbox()
 		//if(TheScene->viewobj==object)
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=0.5*rbounds.zn;
-		vbounds.zf=1.1*rbounds.zf;
+		vbounds.zf=1.5*rbounds.zf;
 
 		// quick fix for zf clipped by water surface :
 		// make sure zf-zn >= max water transparency depth
@@ -1731,6 +1776,9 @@ void Map::adapt()
 		npole->visit(&MapNode::clr_flags);
 		hmax=-lim;
 		hmin=lim;
+		Raster.set_all();
+		get_info();
+
 
 		if(TheScene->view->changed_detail())
 			npole->visit_all(&MapNode::clr_ccheck);
@@ -1920,6 +1968,7 @@ void  Map::set_resolution()
 // Map::get_info() get visibility, texture etc. info from node tree
 //-------------------------------------------------------------
 static int eflag=0;
+static Map* map;
 
 static void node_info(MapNode *n)
 {
@@ -1932,27 +1981,28 @@ static void node_info(MapNode *n)
 	}
 
 	eflag=0;
-
 	if(!n->partvis() && !n->visible())
 	    return;
-	int lid=d->dtype();
 
-	if(wflag){
-	    TheMap->set_waterpass(1);
-		TheMap->idcnts[WATER]++;
+	if(wflag && (Raster.surface&2)){
+	    map->set_waterpass(1);
+		map->idcnts[WATER]++;
+		if(Raster.surface==2)
+			return;
 	}
-	TheMap->idcnts[lid]++;
+	int lid=d->dtype();
+	map->idcnts[lid]++;
 
-	if(lid+1>TheMap->tids)
-	   TheMap->tids=lid+1;
+	if(lid+1>map->tids)
+	   map->tids=lid+1;
 
 	if(n->fog())
-		TheMap->set_fog(1);
+		map->set_fog(1);
 
 	if(d->textures())
-		TheMap->set_vistexs(1);
+		map->set_vistexs(1);
 	if(d->bumpmaps())
-		TheMap->set_visbumps(1);
+		map->set_visbumps(1);
 }
 
 void  Map::get_info()
@@ -1963,15 +2013,13 @@ void  Map::get_info()
 	set_visbumps(0);
 	set_vistexs(0);
 
+    map=this;
 	for(i=0;i<Td.properties.size;i++){
 		idcnts[i]=0;
 	}
 	vnodes=0;
 	tids=0;
 	npole->visit(node_info);
-//	for(int i=0;i<LISTTYPES;i++){
-//		numLists[i] = tids-1;
-//	}
 
 #ifdef DEBUG_INFO
 	for(i=0;i<tids;i++){

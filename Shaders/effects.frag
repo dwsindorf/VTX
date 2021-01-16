@@ -134,7 +134,7 @@ void main(void) {
 		color=mix(color,Haze.rgb*AMBIENT,h);
 #endif
  	}
-	gl_FragData[0]=vec4(color,1.0);
+	gl_FragData[0]=fcolor1;//vec4(color,1.0);
     gl_FragData[1]=fcolor2;
 }
 
