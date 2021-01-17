@@ -34,7 +34,7 @@ void ProduceVertex(float s, float t){
 #else
 void ProduceVertex(int i){
 #endif
-    //float amp=1.0e-6; // need to use ht scale factor
+    float amp=1.0e-6; // need to use ht scale factor
 #if TESSLVL >0	
 	Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 	Vertex2=s*(Vertex2_G[2]-Vertex2_G[0]) + t*(Vertex2_G[1]-Vertex2_G[0])+Vertex2_G[0];
@@ -44,9 +44,16 @@ void ProduceVertex(int i){
 	Vertex2=Vertex2_G[i];	
 	vec4 p=gl_PositionIn[i];
 #endif	
+    // displace using noise function
 #ifdef NPZ
-	SET_ZNOISE(NPZ);
+	g=0;
+	SET_NOISE(NPZ);
+	g*=2.0; // seems to align scaling better with per vertex ht
 #endif
+	vec3 v=p.xyz+pv;  // move from eye to model reference
+	v=normalize(v)*g; // displace along vector from vertex to object center
+	p.xyz+=amp*v;	
+	gl_Position=gl_ModelViewProjectionMatrix * p;	
 	EmitVertex();
 }
 

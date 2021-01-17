@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-#define DEBUG_EFFECTS
+//#define DEBUG_EFFECTS
 enum {RENDERPGM,EFFECTSPGM,POSTPROCPGM,SHADOWPGM,SHADOWPGM2,TESTPGM};
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW","SHADOW2","TEST"};
 // Effects supported (using shaders)
@@ -137,7 +137,6 @@ void EffectsMgr::setProgram(int type){
 	bool effects=do_vfog||do_haze||do_water;
 	Color c;
 	Point p;
-	Point pv=TheScene->xpoint;
 	double zn=TheScene->znear;
 	double zf=TheScene->zfar;
 	double ws1=1/zn;
@@ -203,23 +202,18 @@ void EffectsMgr::setProgram(int type){
 		break;
 
 	case RENDERPGM:
-		GLSLMgr::setDefString(defs);
-#define GEOM_TEST
-#ifdef GEOM_TEST
-		if(TheMap && TheMap->hasGeometry())
-			TheMap->setGeometryDefs();
-#endif
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 		if(do_water && surface==2){
-			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define WATER\n");
+			sprintf(defs+strlen(defs),"#define WATER\n");
 			if(shadows())
-				sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define SHADOWS\n");
+				sprintf(defs+strlen(defs),"#define SHADOWS\n");
 		}
-
-		//GLSLMgr::setDefString(defs);
+		if(TheScene->inside_sky())
+			sprintf(defs+strlen(defs),"#define SKY\n");
+		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("auximage.vert","auximage.frag");
 		c=water_color2; // depth color
-		vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue());
+		vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue(),c.alpha());
 		c=water_color1;
 		vars.newFloatVec("WaterTop",c.red(),c.green(),c.blue(),c.alpha());
 		c=sky_color;
@@ -234,9 +228,6 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("twilite_max",twilite_max);
 		vars.newFloatVar("twilite_dph",twilite_dph);
 		vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_value);
-		if(TheMap && TheMap->hasGeometry())
-		    vars.newFloatVec("pv",pv.x,pv.y,pv.z);
-
 		break;
 
 	case EFFECTSPGM:
@@ -328,7 +319,6 @@ void EffectsMgr::setProgram(int type){
 	vars.newFloatVar("zn",TheScene->znear);
 	vars.newFloatVar("feet",FEET);
 	vars.newFloatVar("fov",TheScene->fov*RPD);
-	vars.newBoolVar("lighting",Render.lighting());
 
 	// Render Program variables
 
@@ -339,21 +329,11 @@ void EffectsMgr::setProgram(int type){
 		cout << "could not load program"<<endl;
 		return;
 	}
-
-	//GLSLMgr::CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
-	GLSLMgr::setProgram();
+	GLSLMgr::CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
 
  	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::loadVars();
-#ifdef GEOM_TEST
-	if(type==RENDERPGM && TheMap && TheMap->hasGeometry()){
-		bool ok=TheMap->setGeometryPrgm();
-		if(!ok)
-			cout <<"Error setting geometry program"<<endl;
-	}
-#endif
-
 }
 
 //-------------------------------------------------------------
@@ -366,7 +346,6 @@ void EffectsMgr::apply(){
 		GLSLMgr::beginRender();
 	    // pass 1 : load auximage shaders. write depth etc. to FBO2
 		GLSLMgr::pass=0;
-
 		//GLSLMgr::setFBOWritePass();
 		TheScene->set_frontside();
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -374,16 +353,13 @@ void EffectsMgr::apply(){
 
 		surface=1;
 		if(do_water){
+			set_show_water(1);
 			surface=2;
-			GLSLMgr::setFBOWritePass();
-			Map* map=TheScene->viewobj->getMap();
-			if(map)
-				map->get_info();
+
 			//set_all();
 			setProgram(RENDERPGM);
 			render_image(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();
-			//surface=2;
 			Lights.setSpecular(water_specular);
 			Lights.setShininess(water_shine);
 			Color ambient=((Planetoid*)TheScene->viewobj)->ambient;
@@ -391,6 +367,9 @@ void EffectsMgr::apply(){
 			Lights.setAmbient(ambient);
 			Lights.setDiffuse(diffuse);
 			glColor4d(1,0,0,1);
+			set_show_water(0);
+			surface=1;
+
 		}
 		//setProgram(RENDERPGM); // render water if do_water or land in not
 		//render_image();
@@ -489,9 +468,9 @@ void EffectsMgr::render_shadows(){
 	GLenum mrt2[] = {GL_COLOR_ATTACHMENT2_EXT,GL_COLOR_ATTACHMENT3_EXT};
 	GLSLMgr::setFBOWritePass();
 	glDrawBuffers(1,mrt2);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GLSLMgr::clrBuffers();
 	glDrawBuffers(1,mrt1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GLSLMgr::clrBuffers();
 
 	for(i=start;i<end;i++){
 		set_light(i);
@@ -513,7 +492,8 @@ void EffectsMgr::render_shadows(){
 			glViewport(0,0,shadowMapWidth,shadowMapHeight);
 
 			Render.set_back();
-			glClear(GL_DEPTH_BUFFER_BIT);
+			GLSLMgr::clrDepthBuffer();
+
 
 			set_light_view();
 		    glPolygonOffset(2.0f, 1.0f);

@@ -178,14 +178,11 @@ void main(void) {
     	color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
     }
 #endif    
-    //if (fbo_write){
-		float fg=gl_FragCoord.z<1?1:0;
-		vec3 eye = normalize(EyeDirection.xyz);
-		float reflect1=dot(normal,eye); // reflection angle
-		
-		gl_FragData[1]=vec4(illumination,Constants.g,gl_FragCoord.z,reflect1);
-		//gl_FragData[1]=vec4(illumination,Constants.g,gl_FragCoord.z,reflect1);
-		
+    float depth=gl_FragCoord.z;
+	//if (fbo_write){
+		vec4 data2=vec4(1.0);
+		data2.r=illumination;
+		gl_FragData[1]=vec4(illumination,0.0,depth,1.0);
 		gl_FragData[2]=vec4(0.0,0.0,0.0,1.0);
 	//}
 #ifdef HAZE

@@ -72,7 +72,6 @@ protected:
 	void render_water();
 	void make_triangle_lists();
 	void clearLists();
-	int tesslevel;
 
 public:
 
@@ -93,6 +92,7 @@ public:
 
 	static bool use_call_lists;
 	static bool use_triangle_lists;
+	static int tesslevel;
 
 	void enablelists(bool s);
 
@@ -251,10 +251,6 @@ public:
 	void 			invalidate_normals();
 	void 			validate_normals();
 	bool 			setProgram();
-	int             tessLevel();
-	bool            setGeometryDefs();
-	bool            setGeometryPrgm();
-	bool            hasGeometry();
 
 };
 

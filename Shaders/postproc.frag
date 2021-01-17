@@ -143,9 +143,7 @@ void main(void) {
 #else
 	gl_FragData[0].rgb=color;
 #endif
-    gl_FragData[0].a = 1.0;
-    float dz=texture2DRect(FLAGS, gl_FragCoord.xy).a;
-    
-    //gl_FragData[0].rgb=vec3(dz,0,0);
+    gl_FragData[0].a = 1.0;	
+    //gl_FragData[0].rgb=vec3(dd,0,0);
 }
 
