@@ -179,12 +179,12 @@ void main(void) {
     }
 #endif    
     float depth=gl_FragCoord.z;
-	//if (fbo_write){
-		vec4 data2=vec4(1.0);
-		data2.r=illumination;
-		gl_FragData[1]=vec4(illumination,0.0,depth,1.0);
-		gl_FragData[2]=vec4(0.0,0.0,0.0,1.0);
-	//}
+    vec3 eye = normalize(EyeDirection.xyz);
+    float reflect1=dot(normal,eye); // reflection angle
+	gl_FragData[1]=vec4(Constants.g,reflect1,depth,illumination);
+	//gl_FragData[1]=vec4(illumination,Constants.g,depth,reflect1);
+	gl_FragData[2]=vec4(0.0,0.0,0.0,1.0);
+	
 #ifdef HAZE
 	float d=min(DEPTH/haze_zfar,1.0);
 	float h = Haze.a*pow(d,1.5*haze_grad);

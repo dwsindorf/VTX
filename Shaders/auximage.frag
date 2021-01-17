@@ -30,7 +30,6 @@ uniform vec4 Shadow;
 
 uniform float feet;
 
-#define DEPTH fcolor2.b
 //
 //Lighting model
 //
@@ -38,8 +37,6 @@ uniform float feet;
 void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // data texture
-
-	float depth=gl_FragCoord.z;
 
 	float ambient = 0.0;
 	float specular = 0.0;
@@ -100,18 +97,20 @@ void main(void) {
 #endif
 		specular    = pow(max(sdp,0.0), gl_FrontMaterial.shininess);
 		Specular    = gl_LightSource[i].specular.rgb*specular*shadow_specular;
-		//}
 #endif
 	}
-	float reflect1=dot(normal,eye); // reflection angle
 #ifdef WATER
+	float reflect1=dot(normal,eye); // reflection angle
+	float depth=gl_FragCoord.z;
 	float z=fcolor2.b;
 	float z2=1.0/(ws2*z+ws1);
 	float z1=1.0/(ws2*depth+ws1);
 	float dz=(z2-z1);
+	
+	//float dz=ws1*(depth-z);
 	dz=dz<0.0?0.0:dz;
 	float f=lerp(dz,0.0,clarity,0.0,1.0);
-
+	float type=Params.g;
 #ifdef SKY
 	vec3 DepthColor=WaterDepth.rgb*horizon;
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
@@ -132,12 +131,15 @@ void main(void) {
 #else
     vec3 color=mix(fcolor1.rgb,WaterDepth.rgb,f); // add depth color
 #endif	
-	//color=clamp(color,0.0,1.0);
+	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
-#else
+#else // no water
+	float reflect1 = fcolor2.g;
+	float type=fcolor2.r;
+	float depth=fcolor2.b;
 	gl_FragData[0] = fcolor1;
 #endif
 	gl_FragData[0].a=ambient;
-	gl_FragData[1] = vec4(Params.r,Params.g,depth,reflect1);
+	gl_FragData[1] = vec4(fcolor2.r,type,reflect1,depth);
 }
 

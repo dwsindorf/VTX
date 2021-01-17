@@ -355,6 +355,7 @@ void EffectsMgr::apply(){
 		if(do_water){
 			set_show_water(1);
 			surface=2;
+			glDisable(GL_BLEND);
 
 			//set_all();
 			setProgram(RENDERPGM);

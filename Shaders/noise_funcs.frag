@@ -236,6 +236,15 @@ float Noise1D(int i) {
  	g=gv.x;
 #endif
 
+#define SET_ZNOISE(func) \
+    float amp=1.0e-6; \
+    SET_NOISE(NPZ); \
+    g*=4.0; \
+  	vec3 v=p.xyz+pv; \
+	v=normalize(v)*g; \
+	p.xyz+=amp*v;	\
+	gl_Position=gl_ModelViewProjectionMatrix * p
+
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
     v2= Vertex2.xyz; \

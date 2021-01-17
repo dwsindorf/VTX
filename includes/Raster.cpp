@@ -251,7 +251,7 @@ RasterMgr::RasterMgr()
 
 	water_color1=Color(0,1,1,0.1);
 	water_color2=Color(0,0.1,0.5,1);
-	water_clarity=2000*FEET;
+	water_clarity=200*FEET;
 	water_reflect=0.95;
 	water_mix=0.8;
 	water_specular=1;
