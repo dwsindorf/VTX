@@ -2312,7 +2312,7 @@ void Scene::render_objects()
 		project();
 		locate_objs();
 		objects->visit(&Object3D::render);
-		GLSLMgr::clrDepthBuffer();
+		clear_zbuffer();
 	}
 	pass_init();
 	bgpass=0;
@@ -2334,7 +2334,7 @@ void Scene::render_objects()
 			render_bgpass();
 			//if(bgpass>FGMAX && TheScene->inside_sky())
 			if(bgpass>FGMAX && !Raster.farview())
-				GLSLMgr::clrDepthBuffer();
+				clear_zbuffer();
 			pass_reset();
 		}
 	}
@@ -2469,7 +2469,7 @@ void Scene::setview_test()
 //-------------------------------------------------------------
 void Scene::render_light_view()
 {
-	GLSLMgr::clrBuffers();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	if(Raster.last_light())
 		Raster.set_light(Lights.size-1);
 	else

@@ -810,9 +810,9 @@ void MapNode::test_backfacing()
 		set_backfacing(CBF);
 }
 
-//#define VCLIP     // enable viewobj clip  test
+#define VCLIP     // enable viewobj clip  test
 #define PCLIP     // enable parent sphere clip  test
-//#define ZCLIP     // enable dmax clip  test
+#define ZCLIP     // enable dmax clip  test
 //-------------------------------------------------------------
 // MapNode::clipchk()	return 1 if vertex is clipped by the current
 //						view window, else return 0
@@ -2175,9 +2175,9 @@ void MapNode::Svertex(MapData*dn) {
 	double ht=d->Z();
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
-	double g=d->type()+1.5;
+	double g=(d->type()+1)/255.0;
 	if (GLSLMgr::CommonID >= 0)
-		glVertexAttrib4d(GLSLMgr::CommonID, ht, g, phi, 0);
+		glVertexAttrib4d(GLSLMgr::CommonID, ht, depth, phi, 0);
 	Point pm=d->mpoint();
 	pm=pm.normalize();
 	pm=pm*0.5+0.5;
@@ -2232,8 +2232,6 @@ void MapNode::Svertex(MapData*dn) {
 			glVertexAttrib4d(GLSLMgr::attributes3ID, A[0], A[1], A[2], A[3]);
 		if(GLSLMgr::attributes4ID >= 0 && num_attribs>0)
 			glVertexAttrib4d(GLSLMgr::attributes4ID, A[4], A[5], A[6], A[7]);
-
-		double type=0,vfog=0;
 	}
 	glVertex3dv((double*)(&pt));
 }

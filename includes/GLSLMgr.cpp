@@ -21,8 +21,6 @@ extern Point MapPt;
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
 //#define DEBUG_FBO
-//#define DEBUG_CLR
-
 //#define FBO_DEPTH
 #define FORCEMINGLVERSION true
 #define PERLIN_1D_TEX
@@ -764,26 +762,6 @@ void GLSLMgr::endRender(){
 	glUseProgramObjectARB(0);
 }
 
-void GLSLMgr::clrDepthBuffer(){
-	glClear(GL_DEPTH_BUFFER_BIT);
-#ifdef DEBUG_CLR
-	cout << "GLSLMgr::clrDepthBuffer"<<endl;
-#endif
-
-}
-void GLSLMgr::clrColorBuffer(){
-	glClear(GL_COLOR_BUFFER_BIT);
-#ifdef DEBUG_CLR
-	cout << "GLSLMgr::clrColorBuffer"<<endl;
-#endif
-}
-void GLSLMgr::clrBuffers(){
-	glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-#ifdef DEBUG_CLR
-	cout << "GLSLMgr::clrBuffers"<<endl;
-#endif
-}
-
 //-------------------------------------------------------------
 // GLSLMgr::clearTexs() clear texture bindings
 //-------------------------------------------------------------
@@ -841,8 +819,7 @@ void GLSLMgr::setFBOReset(){
 	cout << "GLSLMgr::setFBOReset()"<<endl;
 #endif
 	glClearColor(0,0,0,0);
-	clrBuffers();
-
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); // enable transparency
 	pass=0;

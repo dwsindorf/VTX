@@ -4,6 +4,9 @@
 // 3. output to fragment shader
 // 
 
+//#version 120
+//#extension GL_EXT_geometry_shader4 : enable
+
 #include "utils.h"
 
 float logf=0;
@@ -16,6 +19,10 @@ float b=0;
 bool newcell=false;
 
 #define GEOM
+
+//#ifdef TEST4
+//#define N3D
+//#endif
 
 #define _BUMPS_
 
@@ -64,27 +71,38 @@ varying out vec4 Constants;
 uniform int  tessLevel;
 uniform vec3 center;
 uniform vec3 pv;
-
 varying out vec4 attributes[2];
 
 void ProduceVertex(float s, float t){
+    float amp=1.0e-6; // Seems about right but need to use ht scale factor
 #if NVALS >0
 	Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 	Vertex2=s*(Vertex2_G[2]-Vertex2_G[0]) + t*(Vertex2_G[1]-Vertex2_G[0])+Vertex2_G[0];
 #endif
+	vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 	// ---- Alternative calculation from gl_PositionIn ------------
 	//Vertex1.xyz=normalize(p.xyz+pv); 
 	//Vertex1.xyz=Vertex1.xyz*0.5+0.5;
+	vec3 bump;
 	vec4 normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];  // ave normal
-	vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
+	float g1=0;
 #ifdef NPZ
-    SET_ZNOISE(NPZ);	
-    HT+=g;
-#endif	
-	if (lighting)
-		normal.xyz=normalize(normal.xyz-2*gl_NormalMatrix *df);	
-	Normal.xyz=normalize(normal.xyz);
+	SET_NOISE(NPZ);
+	g1=2.0*g; // seems to align scaling better with per vertex ht
+	g=0;
+#endif
+	if (lighting){
+		normal.xyz=normalize(normal.xyz-gl_NormalMatrix *df);
+	}
 	
+	Normal.xyz=normalize(normal.xyz);
+	vec3 v=p.xyz+pv;  // move from eye to model reference
+	v=normalize(v)*g1; // displace along vector from vertex to object center
+	p.xyz+=amp*v;
+	
+	gl_Position=gl_ModelViewProjectionMatrix * p;
+	
+	//EyeDirection=-(gl_ModelViewMatrix * p);
 	EyeDirection=s*(EyeDirection_G[2]-EyeDirection_G[0])+t*(EyeDirection_G[1]-EyeDirection_G[0])+EyeDirection_G[0];
 	
 #ifdef COLOR
@@ -99,6 +117,9 @@ else
 		gl_TexCoord[i]=s*(gl_TexCoordIn[2][i]-gl_TexCoordIn[0][i])+t*(gl_TexCoordIn[1][i]-gl_TexCoordIn[0][i])+gl_TexCoordIn[0][i];
 #endif
 	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
+#ifdef NPZ
+	HT+=g1;
+#endif
 	for(int i=0;i<2;i++)
 		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];
 	EmitVertex();

@@ -101,11 +101,6 @@ public:
 	static void clrDefString();
 	static void setVerString(char *);
 	static void setProgram();
-	static void clrDepthBuffer();
-	static void clrColorBuffer();
-	static void clrBuffers();
-
-
 
 	static void setFBOReset();
 	static void setFBORenderPass();

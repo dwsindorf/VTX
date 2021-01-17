@@ -322,9 +322,32 @@ void Renderer::erase()
  				 (float)backcolor.green(),
  				 (float)backcolor.blue(),
  				 1.0f);
-	GLSLMgr::clrBuffers();
-
+ 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f,0.0f,1.0f);
+}
+
+//-------------------------------------------------------------
+// Renderer::clear_zbuffer()  reset z buffer
+//-------------------------------------------------------------
+void Renderer::clear_zbuffer()
+{
+ 	glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+//-------------------------------------------------------------
+// Renderer::clear_pixels()  reset z buffer
+//-------------------------------------------------------------
+void Renderer::clear_pixels()
+{
+ 	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+//-------------------------------------------------------------
+// Renderer::clear_pixels()  reset z buffer
+//-------------------------------------------------------------
+void Renderer::clear_buffers()
+{
+ 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 //-------------------------------------------------------------

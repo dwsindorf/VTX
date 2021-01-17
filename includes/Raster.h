@@ -56,7 +56,7 @@ protected:
 		WATERDEPTH		= 0x00000002,
 		WATERMOD		= 0x00000004,
 		WATERSHOW		= 0x00000008,
-		WDEFAULTS       = REFLECTIONS|WATERDEPTH|WATERMOD,
+		WDEFAULTS       = REFLECTIONS|WATERDEPTH|WATERMOD|WATERSHOW,
 
 		HAZE			= 0x00000010,
 		FOG				= 0x00000020,
@@ -332,8 +332,8 @@ public:
 	void set_accumulate(int i)      { flags.accum=i;}
 	int accumulate()				{ return flags.accum;}
 
-	void set_waterpass(int i)         { flags.twopass=i;}
-	int waterpass()				    { return flags.twopass;}
+	void set_twopass(int i)         { flags.twopass=i;}
+	int twopass()				    { return flags.twopass;}
 
 	void set_fogpass(int i)         { flags.fogpass=i;}
 	int fogpass()				    { return flags.fogpass;}

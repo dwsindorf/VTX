@@ -14,7 +14,6 @@ static bool debug_call_lists=false;
 
 
 #define DEBUG_TRIANGLES 0
-//#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -607,10 +606,7 @@ void Map::render_raster()
 
 	npole->init_render();
 
-	if(Raster.surface==1 || !waterpass() || !Raster.show_water()){
-#ifdef DEBUG_RENDER
-		cout<< "Map::render_raster - LAND"<<endl;
-#endif
+	if(Raster.surface==1 || Raster.top()){
 		Raster.surface=1;
 		for(tid=ID0;tid<tids;tid++){
 			tp=Td.properties[tid];
@@ -621,11 +617,7 @@ void Map::render_raster()
 		}
 	}
 
-	//if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
-	if (Raster.surface == 2  && waterpass() && Raster.show_water()) {
-#ifdef DEBUG_RENDER
-		cout<< "Map::render_raster - WATER"<<endl;
-#endif
+	if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
 		Raster.surface = 2;
 		tid = 0;
 		RENDERLIST(RASTER_LISTS,tid,render_vertex());
@@ -1065,6 +1057,11 @@ void Map::render_ids()
 //-------------------------------------------------------------
 void Map::render_shaded()
 {
+//	if(TheScene->viewobj==object){
+//		if(tids>1)
+//			render_zvals();
+//	}
+	//double d0=clock();
 
 	GLSLMgr::beginRender();
 	glPushAttrib(GL_CURRENT_BIT);
@@ -1102,52 +1099,44 @@ void Map::render_shaded()
 	npole->init_render();
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
-	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-#ifdef DEBUG_RENDER
-		cout <<"Map::render_shaded - LAND"<<endl;
-#endif
-		for(int i=0;i<tids-1;i++){
-			tid=i+ID0;
-			tp=Td.properties[tid];
-			Td.tp=tp;
-			if(!visid(tid) || !tp)
-				continue;
-			total_tpasses++;
-			texpass=0;
-			double shine=Td.shine;
-			Color specular=Td.specular;
-			Lights.mixSpecular(specular);
 
-			Lights.setShininess(shine*tp->shine);
-			specular.set_alpha(specular.alpha()*tp->albedo);
-			Lights.mixSpecular(specular);
-			if(tp->glow.alpha())
-				Lights.setEmission(tp->glow);
-			else
-				Lights.setEmission(Td.emission);
-			glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
-			if(!object->setProgram())
-				continue;
+	for(int i=0;i<tids-1;i++){
+		tid=i+ID0;
+		tp=Td.properties[tid];
+		Td.tp=tp;
+	    if(!visid(tid) || !tp)
+	        continue;
+		total_tpasses++;
+        texpass=0;
+	    double shine=Td.shine;
+		Color specular=Td.specular;
+		Lights.mixSpecular(specular);
 
-			texture=0;
-			total_rpasses++;
-			if(render_triangles()){
-				RENDER_TRIANGLES(SHADER_LISTS,tid);
-			}
-			else {
-				RENDERLIST(SHADER_LISTS,tid,render());
-			}
+ 		Lights.setShininess(shine*tp->shine);
+		specular.set_alpha(specular.alpha()*tp->albedo);
+		Lights.mixSpecular(specular);
+		if(tp->glow.alpha())
+			Lights.setEmission(tp->glow);
+		else
+			Lights.setEmission(Td.emission);
+		glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
+		if(!object->setProgram())
+			continue;
 
-			Render.show_shaded();
-			reset_texs();
+		texture=0;
+		total_rpasses++;
+		if(render_triangles()){
+			RENDER_TRIANGLES(SHADER_LISTS,tid);
 		}
+		else {
+		    RENDERLIST(SHADER_LISTS,tid,render());
+		}
+
+		Render.show_shaded();
+		reset_texs();
 	}
 
-	//if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
-	if(waterpass() && Raster.show_water() && Render.show_water()){
-#ifdef DEBUG_RENDER
-		cout <<" Map::render_shaded - WATER"<<endl;
-#endif
+	if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
 		tid=WATER;
 		tp=Td.properties[tid];
 		Td.tp=tp;
@@ -1803,7 +1792,7 @@ void Map::adapt()
 	if(TheScene->viewobj==object){
 		TheScene->cycles+=mcount;
 		TheScene->cycles=mcount;
-		Raster.set_waterpass(waterpass());
+		Raster.set_twopass(waterpass());
 		Raster.set_fogpass(fog());
 		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
 	}
@@ -1931,7 +1920,6 @@ void  Map::set_resolution()
 // Map::get_info() get visibility, texture etc. info from node tree
 //-------------------------------------------------------------
 static int eflag=0;
-static Map *map=0;
 
 static void node_info(MapNode *n)
 {
@@ -1944,26 +1932,27 @@ static void node_info(MapNode *n)
 	}
 
 	eflag=0;
+
 	if(!n->partvis() && !n->visible())
 	    return;
+	int lid=d->dtype();
 
 	if(wflag){
 	    TheMap->set_waterpass(1);
 		TheMap->idcnts[WATER]++;
 	}
-	int lid=d->dtype();
-	map->idcnts[lid]++;
+	TheMap->idcnts[lid]++;
 
-	if(lid+1>map->tids)
-	   map->tids=lid+1;
+	if(lid+1>TheMap->tids)
+	   TheMap->tids=lid+1;
 
 	if(n->fog())
-		map->set_fog(1);
+		TheMap->set_fog(1);
 
 	if(d->textures())
-		map->set_vistexs(1);
+		TheMap->set_vistexs(1);
 	if(d->bumpmaps())
-		map->set_visbumps(1);
+		TheMap->set_visbumps(1);
 }
 
 void  Map::get_info()
@@ -1973,7 +1962,6 @@ void  Map::get_info()
 	set_fog(0);
 	set_visbumps(0);
 	set_vistexs(0);
-	map=this;
 
 	for(i=0;i<Td.properties.size;i++){
 		idcnts[i]=0;
@@ -1981,6 +1969,10 @@ void  Map::get_info()
 	vnodes=0;
 	tids=0;
 	npole->visit(node_info);
+//	for(int i=0;i<LISTTYPES;i++){
+//		numLists[i] = tids-1;
+//	}
+
 #ifdef DEBUG_INFO
 	for(i=0;i<tids;i++){
 	    if(idcnts[i]!=0)

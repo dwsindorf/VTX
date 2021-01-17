@@ -8,7 +8,6 @@ Scene() {
 		time=53437.2;
 		heading=-45;
 		tilt=-15;
-		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
@@ -16,10 +15,13 @@ Scene() {
 		height=2224.93 ft;
 		gndlvl=1401.4 ft;
 	}
+	View{
+		height=2224.93 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -35,10 +37,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
-					symmetry=0.95;
 					light=Color(1,1,1);
+					shadow=Color(0,0,0);
+					symmetry=0.95;
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -64,13 +66,12 @@ Scene() {
 						Color(0.4,0.5,0,0.7),
 						Color(0.4,0.5,0,0));
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
-								Texture("saturn",BUMP|S|TEX,HT,2,1,1.22224,0,1,2,1,0)+
-								Texture("alpine",S|TEX,HT+0.042*srand()*noise(7,5,1,0.5,2)+0.3,3,0.88888,1,0,1,2,1,0);
+						terrain=Z(noise(NABS,8,12,0.35,0.95,2.1))+
+								Texture("saturn",S,HT,2,1.29696,1,0,1,2)+
+								Texture("alpine",S,HT+0.042*srand()*noise(7,5,1,0.5,2)+0.3,3,1.1394,1,0,1,2);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
-						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
 						haze.grad=0.28572;
@@ -80,7 +81,6 @@ Scene() {
 						specular=Color(1,1,1);
 					}
 					Clouds(0.00407746) {
-						crot=1;
 						Surface{
 							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
 						}

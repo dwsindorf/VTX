@@ -231,7 +231,7 @@ RasterMgr::RasterMgr()
 	set_options(DEFAULTS);
 	set_idmode(0);
 	set_accumulate(0);
-	set_waterpass(0);
+	set_twopass(0);
 	set_bumptexs(0);
 	set_fogpass(0);
 	set_shadows_mode(0);
@@ -363,7 +363,7 @@ void RasterMgr::set_defaults()
 //-------------------------------------------------------------
 void RasterMgr::reset()
 {
-	set_waterpass(0);
+	set_twopass(0);
 	set_fogpass(0);
 	set_hazepass(0);
 	set_bumps(0);
@@ -716,7 +716,7 @@ void RasterMgr::shadow_view()
 	image=ibuffs[lindex];
 	//int li=light_index()-3*lindex;
 
-	GLSLMgr::clrDepthBuffer();
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	//set_top();
 	//surface=1;
@@ -2059,7 +2059,7 @@ void RasterMgr::manageBuffers()
 void RasterMgr::init_render()
 {
 	do_hdr=hdr();
-	do_water=Render.show_water() && waterpass();// && TheScene->inside_sky();
+	do_water=Render.show_water() && twopass() && TheScene->inside_sky();
 	do_depth=do_water && water_depth();
 	do_reflect=do_water && (reflections() || water_modulation());
 	do_shadows=Lights.size && shadows();
@@ -2104,7 +2104,7 @@ void RasterMgr::render()
 		TheScene->render_raster();
 		getAuxImage(1); // specular color
 		Map::use_call_lists=tmp;
-		GLSLMgr::clrBuffers();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	else if(do_image){
 	    surface=1;
@@ -2112,7 +2112,7 @@ void RasterMgr::render()
 		render_image();
 		getAuxImage(0);
 		getZbuf(0);
-		GLSLMgr::clrBuffers();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	set_render_type(0);
 	surface=1;
@@ -2159,7 +2159,7 @@ void RasterMgr::renderBgShadows(){
 	render_shading();    // create dot-product image
 	getZbuf(0);
 	render_shadows();    // create shadow image
-	GLSLMgr::clrBuffers();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 void RasterMgr::applyBgShadows(){
 	setView();
@@ -2176,5 +2176,5 @@ void RasterMgr::renderFgShadows(){
 	set_farview(0);
 	render_shadows();
     set_accumulate(0);
-	GLSLMgr::clrBuffers();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
