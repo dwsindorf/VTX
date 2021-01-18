@@ -152,6 +152,7 @@ public:
 		OrbitRadiusSlider->setValueFromSlider();
 	}
 	void OnOrbitRadiusText(wxCommandEvent &event) {
+		OrbitRadiusSlider->setValueFromText();
 		Spheroid *obj = object();
 		double val = OrbitRadiusSlider->getValue();
 		obj->orbit_radius = val * 1000 * MILES;

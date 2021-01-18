@@ -26,6 +26,8 @@ vec3 bump;
 float g=0.0;
 float b=0.0;
 bool newcell=false;
+uniform vec3 pv;
+
 
 uniform float texmip;
 uniform float bumpmip;
@@ -35,7 +37,7 @@ uniform float freqmip;
 #define HT Constants.x
 #define FHT Constants.x
 
-#define DEPTH Constants.y
+//#define DEPTH Constants.y
 #define PHI Constants.z
 
 #define PI		3.14159265359

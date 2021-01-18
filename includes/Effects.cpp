@@ -208,10 +208,12 @@ void EffectsMgr::setProgram(int type){
 			if(shadows())
 				sprintf(defs+strlen(defs),"#define SHADOWS\n");
 		}
+		if(TheScene->inside_sky())
+			sprintf(defs+strlen(defs),"#define SKY\n");
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("auximage.vert","auximage.frag");
 		c=water_color2; // depth color
-		vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue());
+		vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue(),c.alpha());
 		c=water_color1;
 		vars.newFloatVec("WaterTop",c.red(),c.green(),c.blue(),c.alpha());
 		c=sky_color;
@@ -276,8 +278,8 @@ void EffectsMgr::setProgram(int type){
 	    }
 		if(do_hdr)
 			sprintf(defs+strlen(defs),"#define HDR\n");
-		if(effects && (do_edges||do_hdr))
-			sprintf(defs+strlen(defs),"#define TWOPASS\n");
+		//if(effects && (do_edges||do_hdr))
+		//	sprintf(defs+strlen(defs),"#define TWOPASS\n");
     	if(Raster.filter_show())
     		sprintf(defs+strlen(defs),"#define SHOW\n");
 		if(do_edges){
@@ -344,18 +346,21 @@ void EffectsMgr::apply(){
 		GLSLMgr::beginRender();
 	    // pass 1 : load auximage shaders. write depth etc. to FBO2
 		GLSLMgr::pass=0;
-		GLSLMgr::setFBOWritePass();
+		//GLSLMgr::setFBOWritePass();
 		TheScene->set_frontside();
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
+		//glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
 
 		surface=1;
 		if(do_water){
-			set_all();
+			set_show_water(1);
+			surface=2;
+			glDisable(GL_BLEND);
+
+			//set_all();
 			setProgram(RENDERPGM);
 			render_image(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();
-			surface=2;
 			Lights.setSpecular(water_specular);
 			Lights.setShininess(water_shine);
 			Color ambient=((Planetoid*)TheScene->viewobj)->ambient;
@@ -363,9 +368,12 @@ void EffectsMgr::apply(){
 			Lights.setAmbient(ambient);
 			Lights.setDiffuse(diffuse);
 			glColor4d(1,0,0,1);
+			set_show_water(0);
+			surface=1;
+
 		}
-		setProgram(RENDERPGM); // render water if do_water or land in not
-		render_image();
+		//setProgram(RENDERPGM); // render water if do_water or land in not
+		//render_image();
 
 	    // following passes use full screen render (2 triangles)
 		//glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
@@ -374,6 +382,7 @@ void EffectsMgr::apply(){
 		bool effects=do_vfog||do_haze||do_water;
 
 		GLSLMgr::renderToFrameBuffer=true;// for read pass set output to FB
+		effects=0;
 		if(effects && (do_edges||do_hdr)){
 			// get artifacts when reading and writing to same draw buffers in two-pass render
 			// - need to "pong-pong" between buffer objects
@@ -461,9 +470,9 @@ void EffectsMgr::render_shadows(){
 	GLenum mrt2[] = {GL_COLOR_ATTACHMENT2_EXT,GL_COLOR_ATTACHMENT3_EXT};
 	GLSLMgr::setFBOWritePass();
 	glDrawBuffers(1,mrt2);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GLSLMgr::clrBuffers();
 	glDrawBuffers(1,mrt1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GLSLMgr::clrBuffers();
 
 	for(i=start;i<end;i++){
 		set_light(i);
@@ -485,7 +494,8 @@ void EffectsMgr::render_shadows(){
 			glViewport(0,0,shadowMapWidth,shadowMapHeight);
 
 			Render.set_back();
-			glClear(GL_DEPTH_BUFFER_BIT);
+			GLSLMgr::clrDepthBuffer();
+
 
 			set_light_view();
 		    glPolygonOffset(2.0f, 1.0f);

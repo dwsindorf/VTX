@@ -223,7 +223,7 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	OrbitRadiusSlider=new SliderCtrl(panel,ID_ORBIT_RADIUS_SLDR,"Radius(x1e3)",LABEL2B, VALUE2,SLIDER2);
-	OrbitRadiusSlider->setRange(1,1000);
+	OrbitRadiusSlider->setRange(1,100);
 	OrbitRadiusSlider->setValue(1);
 
 	hline->Add(OrbitRadiusSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

@@ -116,7 +116,7 @@ void main(void) {
 	color.rgb=mix(color.rgb,haze.rgb*illumination,h);
 #endif
 
-	if (fbo_read) {
+	//if (fbo_read) {
 		vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 		vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
 		float shine_thru=fcolor2.r;
@@ -131,12 +131,8 @@ void main(void) {
 		a = color.a*(1.0-shine_thru*(1.0-h)*(1.0-density)); // moons: enhance shine-thru of day side
 		a=clamp(a,0.0,1.0);
 		color.rgb= mix(fcolor1.rgb,color.rgb,a);
-	}
+	//}
 	gl_FragData[0]=color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
-	
-	//gl_FragData[1]=vec4(0);
-	//gl_FragData[1]=vec4(0,0,0,1);
-	//gl_FragData[2]=vec4(0,0,0,1);
 }
 

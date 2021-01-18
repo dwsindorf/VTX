@@ -178,12 +178,15 @@ void main(void) {
     	color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
     }
 #endif    
-	//if (fbo_write){
-		vec4 data2=vec4(1.0);
-		data2.r=illumination;
-		gl_FragData[1]=vec4(illumination,0.0,0.0,1.0);
-		gl_FragData[2]=vec4(0.0,0.0,0.0,1.0);
-	//}
+    float depth=gl_FragCoord.z;
+    vec3 eye = normalize(EyeDirection.xyz);
+    float reflect1=dot(normal,eye); // reflection angle
+#ifdef VIEWOBJ
+	gl_FragData[1]=vec4(Constants.g,depth,reflect1,1.0);
+#else  // moons
+	gl_FragData[1]=vec4(illumination,0.0,0.0,1.0);
+#endif
+	
 #ifdef HAZE
 	float d=min(DEPTH/haze_zfar,1.0);
 	float h = Haze.a*pow(d,1.5*haze_grad);

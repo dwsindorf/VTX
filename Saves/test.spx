@@ -67,6 +67,12 @@ Scene() {
 	View{
 		height=13643.1 ft;
 	}
+	View{
+		height=8207.57 ft;
+	}
+	View{
+		height=8637.55 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -103,25 +109,14 @@ Scene() {
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
+					water.clarity=5000 ft;
 					year=100;
 					albedo=1;
 					Surface{
 						terrain=water(0)
 								Z(noise(GRADIENT|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}
-					Sky(0.00205145) {
-						color=Color(0,0.9,0.9);
-						day=24;
-						density=0.2;
-						haze.color=Color(1,0.85,0.31);
-						haze.grad=0.45122;
-						haze.value=1;
-						name="Sky";
-						rseed=1.65324;
-						specular=Color(1,1,1);
-						tilt=10;
-					}
-					Moon(0.000787456,0.00242554) {
+					Moon(0.000787456,0.004) {
 						day=13.888;
 						hscale=0.0001;
 						name="Moon";
@@ -133,6 +128,17 @@ Scene() {
 							terrain=
 									Texture("BrownStone",TEX,1,2,1,0,1,2,0.5,0);
 						}
+					}
+					Sky(0.00212083) {
+						color=Color(0,0.9,0.9);
+						day=24;
+						density=0.2;
+						haze.color=Color(1,1,1,0.09);
+						haze.value=0.0862745;
+						name="Sky";
+						rseed=1.24113;
+						specular=Color(1,1,1);
+						tilt=10;
 					}
 				}
 			}

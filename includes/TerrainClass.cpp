@@ -749,6 +749,7 @@ bool TNpoint::setProgram(){
 
 	vars.setProgram(program);
 	vars.loadVars();
+	return true;
 }
 
 //-------------------------------------------------------------

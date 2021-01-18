@@ -37,8 +37,8 @@ uniform vec4 Shadow;
 
 #define VFOG    fcolor2.r
 #define TYPE    fcolor2.g
-#define DEPTH   fcolor2.b
-#define RDP     fcolor2.a
+#define DEPTH   fcolor2.a
+#define RDP     fcolor2.b
 
 #define AMBIENT fcolor1.a
 

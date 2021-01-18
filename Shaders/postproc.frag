@@ -30,13 +30,8 @@ uniform vec2 tc_offset[25];
 #define BIG_KERNEL
 #endif
 
-#ifdef TWOPASS
-#define IMAGE FBOTex3
-#define FLAGS FBOTex4
-#else
 #define IMAGE FBOTex1
 #define FLAGS FBOTex2
-#endif
 
 uniform float color_ampl;
 uniform float normal_ampl;
@@ -71,7 +66,7 @@ void main(void) {
 	vec3 pixel[9];
 	float nmask[9];
 	float smask[9];
-    float surface=texture2DRect(FLAGS, gl_FragCoord.xy).g;
+    float surface=texture2DRect(FLAGS, gl_FragCoord.xy).r;
     float z=texture2DRect(FLAGS, gl_FragCoord.xy).b;
     float surface_sum=0.0;
     vec4 flags;
@@ -144,6 +139,6 @@ void main(void) {
 	gl_FragData[0].rgb=color;
 #endif
     gl_FragData[0].a = 1.0;	
-    //gl_FragData[0].rgb=vec3(dd,0,0);
+    //gl_FragData[0].rgb=vec3(z,0,0);
 }
 

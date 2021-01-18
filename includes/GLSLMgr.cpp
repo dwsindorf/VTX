@@ -20,7 +20,9 @@ extern Point MapPt;
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
-//#define DEBUG_FBO
+#define DEBUG_FBO
+//#define DEBUG_CLR
+
 //#define FBO_DEPTH
 #define FORCEMINGLVERSION true
 #define PERLIN_1D_TEX
@@ -466,7 +468,7 @@ void GLSLMgr::initFrameBuffer()
 	}
 
 	GLenum mrt[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
-	glDrawBuffers(2,mrt);
+	glDrawBuffers(3,mrt);
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 	if(status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		cout << "frameBuffer not valid" << endl;
@@ -762,14 +764,55 @@ void GLSLMgr::endRender(){
 	glUseProgramObjectARB(0);
 }
 
+void GLSLMgr::clrDepthBuffer(){
+	glClear(GL_DEPTH_BUFFER_BIT);
+#ifdef DEBUG_CLR
+	cout << "GLSLMgr::clrDepthBuffer"<<endl;
+#endif
+
+}
+void GLSLMgr::clrColorBuffer(){
+	glClear(GL_COLOR_BUFFER_BIT);
+#ifdef DEBUG_CLR
+	cout << "GLSLMgr::clrColorBuffer"<<endl;
+#endif
+}
+void GLSLMgr::clrBuffers(){
+	glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+
+#ifdef DEBUG_CLR
+	cout << "GLSLMgr::clrBuffers"<<endl;
+#endif
+}
+
+
+void GLSLMgr::clrBuffers(int i){
+
+}
+
+void GLSLMgr::clrFBODepthBuffers(){
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
+	float v0[1]={1.0};
+	glClearBufferfv(GL_DEPTH,0,v0);
+
+}
+void GLSLMgr::clrFBOColorBuffer(int i){
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
+#ifdef DEBUG_FBO
+	cout << "GLSLMgr::clrBuffer("<<i<<")"<<endl;
+#endif
+	//glClear(GL_COLOR_BUFFER_BIT);
+	float v1[4]={0,0,0,0};
+	glClearBufferfv(GL_COLOR,i,v1);
+}
+
 //-------------------------------------------------------------
 // GLSLMgr::clearTexs() clear texture bindings
 //-------------------------------------------------------------
 void GLSLMgr::clearTexs(){
-//	if(using_fbo){
-//		//cout << "CLEAR TEXS CALLED FOR FBO"<< endl;
-//		return;
-//	}
+#ifdef DEBUG_CLR
+	cout << "GLSLMgr::clearTexs"<<endl;
+#endif
 	for(int i=0;i<8;i++){
 	 	glActiveTexture(GL_TEXTURE0+i);
 	 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -789,11 +832,8 @@ void GLSLMgr::setFBORenderPass(){
 		glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT);
 		using_fbo=false;
 	}
-//	else if(using_fbo){
-//		vars.setValue(FBOWRITE,true);
-//	}
-		vars.setValue(FBOWRITE,false);
-		vars.setValue(FBOREAD,false);
+	vars.setValue(FBOWRITE,false);
+	vars.setValue(FBOREAD,false);
 
 #ifdef DEBUG_FBO
 	cout << "GLSLMgr::setFBORenderPass("<< using_fbo << ")"<<endl;
@@ -819,7 +859,14 @@ void GLSLMgr::setFBOReset(){
 	cout << "GLSLMgr::setFBOReset()"<<endl;
 #endif
 	glClearColor(0,0,0,0);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	//clrBuffers();
+	float v0[1]={1.0};
+	float v1[4]={0,0,0,0};
+	glClearBufferfv(GL_DEPTH,0,v0);
+	for(int i=0;i<NUMFBOTEXS;i++){
+		glClearBufferfv(GL_COLOR,i,v1);
+	}
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); // enable transparency
 	pass=0;

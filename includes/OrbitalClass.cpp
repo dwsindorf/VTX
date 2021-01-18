@@ -2620,6 +2620,9 @@ bool Planetoid::setProgram(){
 	    sprintf(defs+strlen(defs),"#define TEST3 %d\n",test3);
 	if(test2)
 	    sprintf(defs+strlen(defs),"#define TEST2 %d\n",test2);
+	if(TheScene->viewobj==this)
+	    sprintf(defs+strlen(defs),"#define VIEWOBJ\n");
+
 	TerrainProperties *tp=map->tp;
 	double twilite_min=-0.3;
 	double twilite_max=0.4;
@@ -2696,7 +2699,7 @@ bool Planetoid::setProgram(){
 		if(TheScene->viewobj==this)
 			GLSLMgr::setFBORenderPass();
 		else
-			GLSLMgr::setFBOReadWritePass();
+			GLSLMgr::setFBOWritePass();
 	}
 	else{
 		//GLSLMgr::pass=0;
@@ -2797,9 +2800,9 @@ int Planetoid::shadow_pass()
 	else if(type()==ID_MOON){
 		Planetoid *parent=(Planetoid*)getParent();
 		if(TheScene->viewobj==parent){
-			if(TheScene->radius>0.5*orbit_radius)
-				select_pass(FGS);
-			else
+			//if(TheScene->radius>0.5*orbit_radius)
+			//	select_pass(FGS);
+			//else
 				select_pass(BGS);
 			//cout << "radius:"<<orbit_radius<<" Scene radius:"<<TheScene->radius<<endl;
 		}
@@ -3009,6 +3012,7 @@ void Planetoid::render_object()
 		c=water_color2;
 		Raster.modulate(c);
 		Raster.water_color2=c;
+		//cout<<"Render planet:"<<name()<<endl;
 		Spheroid::render_object();
 	}
 }
@@ -3413,7 +3417,7 @@ int Sky::render_pass()
 //	}
 //	else {
 	    if(near_group())
-			clear_pass(FG1);
+			clear_pass(BG1);
 		else
 			clear_pass(BG2);
 	//}
@@ -3526,7 +3530,7 @@ void Sky::adapt_object()
 //-------------------------------------------------------------
 void Sky::init_render()
 {
-	if(/*inside() && */parent && parent==TheScene->viewobj){
+	if(parent && parent==TheScene->viewobj){
 		Raster.haze_grad=haze_grad;
 		Point lp=Lights[0]->point.mm(TheScene->invViewMatrix);
 		lp=lp.normalize();
@@ -3617,7 +3621,7 @@ bool Sky::setProgram(){
 	if(TheScene->backside()||inside()){
 		if(inside()){
 			GLSLMgr::pass=0;
-			GLSLMgr::setFBOReadPass();
+			GLSLMgr::setFBOWritePass();
 		}
 		GLSLMgr::loadProgram("sky.vert","sky.back.frag");
 	}

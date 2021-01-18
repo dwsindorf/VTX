@@ -60,9 +60,6 @@ public:
 	~Renderer();
 
 	void erase();
-	void clear_zbuffer();
-	void clear_pixels();
-	void clear_buffers();
 	void show_points();
 	void show_lines();
 	void show_solid();
