@@ -16,6 +16,11 @@ Scene() {
 		height=409.324 ft;
 		gndlvl=1588.68 ft;
 	}
+	View{
+		height=750.768 ft;
+		tilt=-20;
+		angle=2;
+	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
@@ -49,11 +54,11 @@ Scene() {
 				ambient=Color(1,1,1,0.08);
 				day=1;
 				fog.color=Color(1,0.96,0.7);
-				fog.max=2866.62 ft;
-				fog.min=422.22 ft;
+				fog.max=916.74 ft;
+				fog.min=83.34 ft;
 				fog.value=1;
-				fog.vmax=1166.6 ft;
-				fog.vmin=500 ft;
+				fog.vmax=555.6 ft;
+				fog.vmin=-138.8 ft;
 				phase=180;
 				shadow=Color(0,0,0.1,0.6);
 				shine=4.58785;

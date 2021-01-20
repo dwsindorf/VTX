@@ -541,6 +541,12 @@ void ObjectMgr::save(FILE *fp)
 		obj->save(fp);
 }
 
+Object3D*  ObjectMgr::set(Object3D *v){
+	int found=list.setptr(v);
+	if(!found)
+		return 0;
+	return list.at();
+}
 //-------------------------------------------------------------
 // ObjectMgr::visit() visit all objects & apply Object3D::function
 //-------------------------------------------------------------

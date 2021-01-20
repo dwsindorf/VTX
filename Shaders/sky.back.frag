@@ -119,7 +119,7 @@ void main(void) {
 	//if (fbo_read) {
 		vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 		vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
-		float shine_thru=fcolor2.r;
+		float shine_thru=fcolor2.g;
 		shine_thru=clamp(shine_thru,0.0,1.0);
 
 		// reduce opacity of sky in front of luminous objects

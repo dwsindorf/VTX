@@ -272,7 +272,7 @@ RasterMgr::RasterMgr()
 	fog_color=Color(1,1,1);
 	fog_value=0;
 	fog_vmin=0;
-	fog_vmax=10000*FEET;
+	fog_vmax=1000*FEET;
 	fog_min=10*FEET;
 	fog_max=100*FEET;
 
@@ -1096,19 +1096,17 @@ void RasterMgr::vertex(MapNode *node)
 	case SHADERS:
 		{
 			double type=0,vfog=0;
-			if(do_vfog){
-				double ht=d->height();
-				vfog=d->density()*rampstep(fog_vmin,fog_vmax,d->height(),1,0);
-			}
-				//vfog=d->density()*rampstep(fog_vmin,fog_vmax,d->Ht(),1,0);
+			double ht=1000*FEET*d->Z()/TheMap->hscale;
 			if(TheMap->object==TheScene->viewobj)
 				type = (d->type()+1.5); // note: for water floor(g)=1;
 			Point *norm=node->normal(d);
 			if(norm)
 				glNormal3dv(norm->values());
 
+			double phi = d->phi() / 180;
+
 			if (GLSLMgr::CommonID >= 0) // b:reflect a:diffuse calculated in shader
-				glVertexAttrib4d(GLSLMgr::CommonID, vfog, type, 0, 0);
+				glVertexAttrib4d(GLSLMgr::CommonID, ht, type, d->density(), phi);
 		}
 		break;
 	case NORMALS:

@@ -17,6 +17,7 @@ uniform float haze_ampl;
 uniform vec4 Fog;
 uniform float fog_zfar;
 uniform float fog_znear;
+
 uniform float fog_ampl;
 
 uniform float reflection;
@@ -35,9 +36,9 @@ uniform vec4 Shadow;
 
 //#undef RAYTRACE
 
-#define VFOG    fcolor2.r
-#define TYPE    fcolor2.g
-#define DEPTH   fcolor2.a
+#define VFOG    fcolor2.a
+#define TYPE    fcolor2.r
+#define DEPTH   fcolor2.g
 #define RDP     fcolor2.b
 
 #define AMBIENT fcolor1.a
@@ -46,6 +47,7 @@ void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // image
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
 	vec3 color = fcolor1.rgb;
+	
 #ifdef SHADOW_TEST
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
 	return;
@@ -81,22 +83,25 @@ void main(void) {
 			y=gl_FragCoord.y+1.0;
 			float astep=dv*fov;
 			float theta=PI-2.0*acos(RDP);
+			int last_water=0;
 			for(int i=0;i<steps;i++){
 				float alpha=astep*i;
 				float beta=theta-alpha;
-				float z=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).b;
-				if(z==0){ // first hit = sky
-					float z2=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i+2)).b;
+				float t=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).r;
+				if(t>1.5 || t< 0.5)
+				    last_water=i;
+				if(t==0){ // first hit = sky
+					float z2=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i+2)).r;
 					if(z2!=0) //2nd hit !=sky (hole?)
-						continue; // try next higher pixel
+						continue; // try next higher pixel if 2 hits in a row we're done
+					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+2*last_water)).rgb; // pick a point same distance above horizon
 					break;
 				}
-				float zb=1.0/(ws2*z+ws1); // zbuffer depth at y
+				float z=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).g;
+				float zb=1.0/(ws2*z+ws1);// zbuffer depth at y
 				float zr=z1*(cos(alpha)+sin(alpha)/tan(beta)); // depth of reflected ray at y
-				//float dz=zb-zr;
-				//if(dz<0){
 				float dz=zb/zr;
-				if(dz<0.999){//#define USE_FBO
+				if(dz<0.999){
 					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+i)).rgb;
 					break;
 				}
@@ -135,6 +140,7 @@ void main(void) {
 #endif
  	}
 	gl_FragData[0]=vec4(color,1.0);
+	
     gl_FragData[1]=fcolor2;
 }
 

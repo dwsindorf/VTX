@@ -2681,6 +2681,11 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("sky_alpha",sky_alpha);
     vars.newFloatVar("haze_zfar",haze_zfar);
     vars.newFloatVar("haze_grad",haze_grad);
+	vars.newFloatVar("fog_vmin",fog_vmin);
+	vars.newFloatVar("fog_vmax",fog_vmax);
+	vars.newFloatVar("zf",TheScene->zfar);
+	vars.newFloatVar("zn",TheScene->znear);
+
     vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 
 	vars.newFloatVar("twilite_min",twilite_min);
@@ -2870,6 +2875,7 @@ void Planetoid::render()
 		moons.ss();
 		while((obj=moons++)>0){
 		    TheScene->pushMatrix();
+		    //cout<< "render moon"<<endl;
 			obj->render();
 		    TheScene->popMatrix();
 		}
@@ -2965,6 +2971,8 @@ void Planetoid::init_render()
 		Raster.fog_value=fog_value;
 		Raster.fog_color=c;
 	}
+	else
+		Raster.fog_value=0;
 }
 
 //-------------------------------------------------------------
@@ -5057,11 +5065,21 @@ bool Ring::setProgram(){
 	//vars.newFloatVar("emission",emission.alpha());
 	vars.newFloatVec("Emission",emission.red(),emission.green(),emission.blue(),emission.alpha());
 	vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_color.alpha());
+	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
+
+	double twilite_min=-0.3;
+	double twilite_max=0.4;
+	double twilite_dph=0;
+
+	vars.newFloatVar("twilite_min",twilite_min);
+	vars.newFloatVar("twilite_max",twilite_max);
+	vars.newFloatVar("twilite_dph",twilite_dph);
+	vars.newBoolVar("lighting",Render.lighting());
 
 	tp->setProgram();
 
 	if(TheScene->inside_sky()||Raster.do_shaders)
-		GLSLMgr::setFBOReadWritePass();
+		GLSLMgr::setFBOWritePass();
 	else
 		GLSLMgr::setFBORenderPass();
 

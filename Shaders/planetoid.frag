@@ -33,6 +33,13 @@ uniform float hdr_max;
 
 uniform float haze_grad;
 uniform float haze_zfar;
+uniform float fog_vmin;
+uniform float fog_vmax;
+uniform float zf;
+uniform float zn;
+
+
+
 uniform vec4 Haze;
 
 uniform float sky_alpha;
@@ -182,17 +189,14 @@ void main(void) {
     vec3 eye = normalize(EyeDirection.xyz);
     float reflect1=dot(normal,eye); // reflection angle
 #ifdef VIEWOBJ
-	gl_FragData[1]=vec4(Constants.g,depth,reflect1,1.0);
-#else  // moons
-	gl_FragData[1]=vec4(illumination,0.0,0.0,1.0);
-#endif
-	
-#ifdef HAZE
-	float d=min(DEPTH/haze_zfar,1.0);
-	float h = Haze.a*pow(d,1.5*haze_grad);
-	color.rgb=mix(color.rgb,Haze.rgb*illumination,h);
-#endif
+    float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
+	gl_FragData[1]=vec4(Constants.g,depth,reflect1,vfog);
 	gl_FragData[0] = color;
+	//gl_FragData[0] = vec4(vfog,0,0,1);
+#else  // moons
+	gl_FragData[1]=vec4(0,illumination,0.0,0.0);
+	gl_FragData[0] = color;
+#endif
 
 }
 // ########## end planetoid.frag #########################

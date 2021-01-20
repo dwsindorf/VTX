@@ -2351,7 +2351,9 @@ void Scene::render_raster()
 	Render.set_markers(0);
     Render.show_raster();
 	set_buffers_mode();
-    //TheScene->viewobj->render_object();
+	//viewobj->render();
+	pass_reset();
+	viewobj->set_selected();
 	objects->visit(&Object3D::render);
 
 	Render.set_mode(rsave);

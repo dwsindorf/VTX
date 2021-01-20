@@ -14,7 +14,7 @@ static bool debug_call_lists=false;
 
 
 #define DEBUG_TRIANGLES 0
-#define DEBUG_RENDER
+//#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -534,7 +534,8 @@ void Map::render()
 	if(TheScene->buffers_mode()){
 		if(Render.draw_zvals())
 			render_zvals();
-		else if(Render.draw_raster())
+		//else if(Render.draw_raster())
+		else if(Render.draw_raster() && (object==TheScene->viewobj))
 			render_raster();
 		else if(Render.draw_normals())
 			render_normals();
@@ -1087,7 +1088,7 @@ void Map::render_shaded()
 		glPolygonMode(GL_FRONT,GL_FILL);
 		glPolygonMode(GL_BACK,GL_FILL);
 	}
-	glEnable(GL_BLEND);
+	glDisable(GL_BLEND);
 
 	if(object->allows_selection() && Render.draw_bounds())
 	    render_bounds();

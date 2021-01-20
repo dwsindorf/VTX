@@ -63,6 +63,7 @@ Scene() {
 				}
 				Ring(0.013,0.008) {
 					specular=Color(1,1,1,0.8);
+					emission=Color(1,1,1,0.5);
 					albedo=0.8;
 					rcolor1=Color(0.5,0.5,0.8,0.7);
 					bands("rings",64,0.3,0.5,RAND,Color(0.5,0.5,0.8,0.7));

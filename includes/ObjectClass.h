@@ -309,6 +309,7 @@ public:
 	Object3D*  first()				{	return list.first();}
 	Object3D*  last()			    {	return list.last();}
 	Object3D*  next()				{	return list++;}
+	Object3D*  set(Object3D *v);
 	void visit(void  (Object3D::*func)());
 	void visit(void  (*f)(Object3D*));
 	void visitAll(void  (Object3D::*func)());

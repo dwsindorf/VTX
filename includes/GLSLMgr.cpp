@@ -20,7 +20,7 @@ extern Point MapPt;
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
-#define DEBUG_FBO
+//#define DEBUG_FBO
 //#define DEBUG_CLR
 
 //#define FBO_DEPTH
@@ -861,7 +861,7 @@ void GLSLMgr::setFBOReset(){
 	glClearColor(0,0,0,0);
 	//clrBuffers();
 	float v0[1]={1.0};
-	float v1[4]={0,0,0,0};
+	float v1[4]={0,0,0,1};
 	glClearBufferfv(GL_DEPTH,0,v0);
 	for(int i=0;i<NUMFBOTEXS;i++){
 		glClearBufferfv(GL_COLOR,i,v1);
@@ -881,7 +881,7 @@ void GLSLMgr::setFBOReset(){
 void GLSLMgr::setFBOWritePass(){
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
 	glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT);
-
+	glDisable(GL_BLEND);
 	//glBindTexture(GL_TEXTURE_2D, 0);
 	using_fbo=true;
 	vars.setValue(FBOWRITE,true);

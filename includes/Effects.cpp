@@ -124,7 +124,7 @@ void EffectsMgr::render() {
 	else if(do_shaders){
 		GLSLMgr::setFBOReset();
 		GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
-		glEnable(GL_BLEND);
+		//glEnable(GL_BLEND);
 	}
 }
 //-------------------------------------------------------------
@@ -259,8 +259,6 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("haze_ampl",hf);
 		c=fog_color;
 		vars.newFloatVec("Fog",c.red(),c.green(),c.blue(),c.alpha());
-		vars.newFloatVar("fog_znear",fog_min);
-		vars.newFloatVar("fog_zfar",fog_max);
 		vars.newFloatVar("fog_ampl",vf);
 		vars.newFloatVar("reflection",water_color1.alpha());
 		vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
@@ -310,7 +308,8 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("hdr_max",hdr_max);
 		break;
 	}
-
+	vars.newFloatVar("fog_znear",10*fog_min);
+	vars.newFloatVar("fog_zfar",10*fog_max);
 	vars.newFloatVar("ws1",ws1);
 	vars.newFloatVar("ws2",ws2);
 	vars.newFloatVar("dh",1.0/vport[2]);
@@ -319,6 +318,8 @@ void EffectsMgr::setProgram(int type){
 	vars.newFloatVar("zn",TheScene->znear);
 	vars.newFloatVar("feet",FEET);
 	vars.newFloatVar("fov",TheScene->fov*RPD);
+	vars.newFloatVar("fog_vmin",fog_vmin);
+	vars.newFloatVar("fog_vmax",fog_vmax);
 
 	// Render Program variables
 
@@ -350,13 +351,12 @@ void EffectsMgr::apply(){
 		TheScene->set_frontside();
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
-
+		//glDisable(GL_BLEND);
 		surface=1;
 		if(do_water){
 			set_show_water(1);
 			surface=2;
 			glDisable(GL_BLEND);
-
 			//set_all();
 			setProgram(RENDERPGM);
 			render_image(); // render land surface note: calls glDisable(GL_BLEND)
@@ -382,19 +382,18 @@ void EffectsMgr::apply(){
 		bool effects=do_vfog||do_haze||do_water;
 
 		GLSLMgr::renderToFrameBuffer=true;// for read pass set output to FB
-		effects=0;
-		if(effects && (do_edges||do_hdr)){
+		if(effects /*&& (do_edges||do_hdr)*/){
 			// get artifacts when reading and writing to same draw buffers in two-pass render
 			// - need to "pong-pong" between buffer objects
 			// - write to buffers 3&4 in effects pass (maps to FBOTex3 & FBOTex4)
 			// - in postproc pass read image and flags from FBOTex3 & FBOTex4 and write out image to buffer 0
 			GLSLMgr::setFBOWritePass();
-		    GLenum mrt1[] = {GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
-			glDrawBuffers(2,mrt1);
+		    //GLenum mrt1[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
+			//glDrawBuffers(2,mrt1);
 			setProgram(EFFECTSPGM);
 			GLSLMgr::drawFrameBuffer();
-		    GLenum mrt2[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT}; // restores default case
-			glDrawBuffers(2,mrt2);
+		    //GLenum mrt2[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT}; // restores default case
+			//glDrawBuffers(2,mrt2);
 			GLSLMgr::setFBOReadPass();
 			setProgram(POSTPROCPGM);
 			GLSLMgr::drawFrameBuffer();

@@ -1,6 +1,10 @@
 #include "utils.h"
+
+#define HT Constants.x
+#define DENSITY Constants.z
+
 varying vec4 Color;
-varying vec4 Params;
+varying vec4 Constants;
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
@@ -27,6 +31,8 @@ uniform float cmix;
 uniform float ws1;
 uniform float ws2;
 uniform vec4 Shadow;
+uniform float fog_vmin;
+uniform float fog_vmax;
 
 uniform float feet;
 
@@ -110,7 +116,7 @@ void main(void) {
 	//float dz=ws1*(depth-z);
 	dz=dz<0.0?0.0:dz;
 	float f=lerp(dz,0.0,clarity,0.0,1.0);
-	float type=Params.r;
+	float type=Constants.g;
 #ifdef SKY
 	vec3 DepthColor=WaterDepth.rgb*horizon;
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
@@ -133,13 +139,18 @@ void main(void) {
 #endif	
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
+	float ht=HT+0.001*fcolor2.a;	
+	
+	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 #else // no water
 	float reflect1 = fcolor2.b;
 	float type=fcolor2.r;
 	float depth=fcolor2.g;
+	float vfog=fcolor2.a;
 	gl_FragData[0] = fcolor1;
 #endif
-	gl_FragData[0].a=ambient;
-	gl_FragData[1] = vec4(type,depth,reflect1,1.0);
+	gl_FragData[0].a=1;
+	//gl_FragData[0] = vec4(ht,0,0,1.0);
+	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
 }
 

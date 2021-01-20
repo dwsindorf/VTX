@@ -37,8 +37,9 @@ uniform float freqmip;
 #define HT Constants.x
 #define FHT Constants.x
 
-//#define DEPTH Constants.y
-#define PHI Constants.z
+#define DENSITY Constants.z
+#define DEPTH Constants.y
+#define PHI Constants.a
 
 #define PI		3.14159265359
 #define RT2		1.414213562373

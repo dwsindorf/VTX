@@ -112,13 +112,14 @@ void main(void) {
     for (int k = 0; k < 9; k++){ 
        delc+=pixel[k]-ctr;
     }
-    float c=length(delc);
+    float c=2*length(delc);  // color diff in adjacent pixels
 #ifdef HDR
 #ifndef BIG_KERNEL
 	float kernelLuminance = dot(ave, vec3(0.5, 0.5, 0.3));
 #else
 	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.5, 0.5, 0.3));
-#endif
+#endif    //gl_FragData[0].rgb=vec3(z,0,0);
+
 	float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
 	
 	exposure=lerp(surface_sum,0.0,9.0,1.0,exposure);
@@ -137,8 +138,9 @@ void main(void) {
 #endif
 #else
 	gl_FragData[0].rgb=color;
+	gl_FragData[0].rgb=vec3(fcolor2.a,0,0);
+	
 #endif
     gl_FragData[0].a = 1.0;	
-    //gl_FragData[0].rgb=vec3(z,0,0);
 }
 
