@@ -55,7 +55,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=81.5625;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=14838.6 ft;
 		heading=0;
 		pitch=0;
@@ -86,7 +86,7 @@ Scene() {
 		view=SURFACE;
 		phi=16.875;
 		theta=84.375;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=2450.05 ft;
 		heading=0;
 		pitch=0;
@@ -128,6 +128,13 @@ Scene() {
 		tilt=-2;
 		angle=2;
 	}
+	View{
+		height=30297.4 ft;
+		gndlvl=587.584 ft;
+		time=3472.48;
+		tilt=2;
+		angle=1;
+	}
 	Universe {
 		Galaxy(10000) {
 			density=1.1;
@@ -149,12 +156,12 @@ Scene() {
 				Color(1.000,1.000,0.800),
 				Color(1.000,1.000,1.000)
 				);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 		}
 		Galaxy(5000) {
 			color.middle=Color(0.8,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
 				Color(0.275,0.000,0.000),
@@ -177,13 +184,13 @@ Scene() {
 					}
 				}
 				Planet(0.001,30) {
-					ambient=Color(1,1,1,0.02);
+					ambient=Color(1,1,1,0.16);
 					day=1;
-					diffuse=Color(1,1,1,0.91);
 					hscale=0.00120564;
 					phase=320;
 					rot_phase=116.618;
-					shine=16.4793;
+					shadow=Color(0,0,0,0.67);
+					shine=45.3749;
 					specular=Color(1,1,1,0.22);
 					year=30;
 					albedo=0.4;
@@ -200,18 +207,31 @@ Scene() {
 						Color(0.302,0.082,0.082));
 					Surface{
 						mp=noise(0,10,1);
-						m2=noise(UNS,5.2,7,1,0.5,2,1,1,0,0);
-						m3=noise(NABS|SQR,9,15,0.5,0.6);
+						m2=noise(GRADIENT|UNS,5.2,7,1,0.5,2,1,1,0,0);
+						m3=noise(GRADIENT|NABS|SQR,9,15,0.5,0.6);
 						terrain=map(mp,-0.3,0.5)
 								layer(MORPH,0,0.4)
 									[Z(0.2*m3)
 									+
-									Texture("alpine",BORDER|S|TEX,HT+m2,0.5,2,1,0.11104,1,2,1,0)]
+									Texture("alpine",BORDER|S|TEX,HT,0.5,2,1,0.11104,1,2,1,0)]
 								layer(MORPH,0)
 									[Z(craters(2,0.1,0.1,0.8))
 									+
-									Texture("dessert",LINEAR|NORM|S|TEX,2*FHT+0.2*m3,0.5,2,1,0,1,2,1,0)]
+									Texture("dessert",LINEAR|NORM|S|TEX,2*FHT,0.5,2,1,0,1,2,1,0)]
 								;
+					}
+					Sky(0.0022) {
+						color=Color(0,0.8,0.9);
+						day=1;
+						density=0;
+						halo.color=Color(1,1,1,0);
+						name="Sky";
+						night.color=Color(0,0,0);
+						rseed=0.693607;
+						specular=Color(1,1,1);
+						twilight=Color(0,0,0,0);
+						twilight.max=1;
+						twilight.min=-1;
 					}
 				}
 			}

@@ -77,7 +77,6 @@ Scene() {
 					Clouds(0.00407746) {
 						crot=1;
 						emission=Color(1,1,1,0.3);
-						hscale=0.05;
 						specular=Color(1,1,1);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

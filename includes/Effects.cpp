@@ -308,8 +308,10 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("hdr_max",hdr_max);
 		break;
 	}
-	vars.newFloatVar("fog_znear",10*fog_min);
-	vars.newFloatVar("fog_zfar",10*fog_max);
+	vars.newFloatVar("fog_znear",fog_min);
+	vars.newFloatVar("fog_zfar",fog_max);
+	vars.newFloatVar("fog_vmin",fog_vmin);
+	vars.newFloatVar("fog_vmax",fog_vmax);
 	vars.newFloatVar("ws1",ws1);
 	vars.newFloatVar("ws2",ws2);
 	vars.newFloatVar("dh",1.0/vport[2]);
@@ -318,8 +320,6 @@ void EffectsMgr::setProgram(int type){
 	vars.newFloatVar("zn",TheScene->znear);
 	vars.newFloatVar("feet",FEET);
 	vars.newFloatVar("fov",TheScene->fov*RPD);
-	vars.newFloatVar("fog_vmin",fog_vmin);
-	vars.newFloatVar("fog_vmax",fog_vmax);
 
 	// Render Program variables
 

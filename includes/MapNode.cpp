@@ -10,7 +10,7 @@
 #include "matrix.h"
 #include "Perlin.h"
 
-extern double Theta, Phi, Height;
+extern double Theta, Phi, Height,Rscale;
 extern Point MapPt;
 
 //static double noise3(double vec[3]){
@@ -2172,13 +2172,12 @@ void MapNode::Svertex(MapData*dn) {
 	double dfactor=0.5*GLSLMgr::wscale/depth;
 
 	double max_orders =log2(dfactor);
-	double ht=1000*FEET*d->Z()/TheMap->hscale;
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
 	double g=d->type()+1.5;
 
-
-	double vfog=d->density()*rampstep(Raster.fog_vmin,Raster.fog_vmax,ht,1,0);
+	double ht=d->Z()*Rscale;  // global units (MM)
+	static int cnt=0;
 
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;

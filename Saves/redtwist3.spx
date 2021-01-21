@@ -60,10 +60,13 @@ Scene() {
 		height=0.00734707;
 		gndlvl=0 ft;
 	}
+	View{
+		height=0.00649047;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -97,8 +100,8 @@ Scene() {
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=Z(noise(NABS|SQR|FS,1,12,0.5,0.5,2,1,1,0,0))+
-								Texture("yellow-black",BUMP|S|TEX,twist(-0.3,noise(NABS|SQR|NEG|UNS,0,5,0,0.47,1.87,0.54,0,0,0)+noise(FS|NABS,2.8,5,1,0.6,2,0.13,0.13,0,0)),0.5,-0.03,2,0,3.00016,1.66664,1,0);
+						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2,1,1,0,0))+
+								Texture("yellow-black",BUMP|S|TEX,twist(-0.3,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,0,0.47,1.87,0.54,0,0,0)+noise(GRADIENT|FS|NABS,2.8,5,1,0.6,2,0.13,0.13,0,0)),0.5,-0.03,2,0,3.00016,1.66664,1,0);
 					}
 				}
 			}

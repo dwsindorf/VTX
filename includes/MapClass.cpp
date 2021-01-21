@@ -58,7 +58,7 @@ extern void     set_info(char *c,...);
 extern void     init_tables();
 
 Map            *TheMap = 0;
-double          Rscale, Gscale, Pscale, Hscale;
+double          Rscale, Gscale, Pscale, Hscale,Fscale;
 double          ptable[PLVLS];
 extern double 	Theta, Phi, Height,MinHt,MaxHt;
 extern Point	MapPt;
@@ -392,6 +392,8 @@ void Map::make_current()
 	TheMap=this;
 	Hscale=hscale;
 	Rscale=radius*hscale; // for scaling proportional to size
+	Fscale=1000*hscale; // for scaling independent of size
+
 	Gscale=1/Rscale;
 	Pscale=DPR*atan(hscale);
 }
@@ -1144,8 +1146,9 @@ void Map::render_shaded()
 		}
 	}
 
+	bool show_water=waterpass() &&  Render.show_water() && (TheScene->viewtype!=SURFACE || Raster.show_water());
 	//if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
-	if(waterpass() && Raster.show_water() && Render.show_water()){
+	if(show_water){
 #ifdef DEBUG_RENDER
 		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
 #endif

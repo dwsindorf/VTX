@@ -19,7 +19,7 @@ extern double Rand();
 extern int  RandSeed;
 extern void Srand(int);
 extern int hits,visits;
-extern double Theta, Phi;
+extern double Theta, Phi,Rscale;
 extern Point MapPt;
 
 const double maxdp=0.5;
@@ -1096,7 +1096,6 @@ void RasterMgr::vertex(MapNode *node)
 	case SHADERS:
 		{
 			double type=0,vfog=0;
-			double ht=1000*FEET*d->Z()/TheMap->hscale;
 			if(TheMap->object==TheScene->viewobj)
 				type = (d->type()+1.5); // note: for water floor(g)=1;
 			Point *norm=node->normal(d);
@@ -1104,6 +1103,7 @@ void RasterMgr::vertex(MapNode *node)
 				glNormal3dv(norm->values());
 
 			double phi = d->phi() / 180;
+			double ht=d->Z()*Rscale;
 
 			if (GLSLMgr::CommonID >= 0) // b:reflect a:diffuse calculated in shader
 				glVertexAttrib4d(GLSLMgr::CommonID, ht, type, d->density(), phi);
@@ -2057,12 +2057,12 @@ void RasterMgr::manageBuffers()
 void RasterMgr::init_render()
 {
 	do_hdr=hdr();
-	do_water=Render.show_water() && waterpass();// && TheScene->inside_sky();
+	do_water=Render.show_water() && waterpass() && (TheScene->viewtype==SURFACE);
 	do_depth=do_water && water_depth();
 	do_reflect=do_water && (reflections() || water_modulation());
 	do_shadows=Lights.size && shadows();
 	do_bumps=Render.bumps() && bumptexs();
-	do_vfog=Render.fog() && fogpass()&& TheScene->inside_sky();
+	do_vfog=Render.fog() && fogpass()&&(TheScene->viewtype==SURFACE);
 	do_haze=Render.haze()&& hazepass()&& TheScene->inside_sky();
 	do_edges=Render.dealias()||filter_show();
 	do_fog=do_haze|do_vfog;

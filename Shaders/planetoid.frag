@@ -35,10 +35,6 @@ uniform float haze_grad;
 uniform float haze_zfar;
 uniform float fog_vmin;
 uniform float fog_vmax;
-uniform float zf;
-uniform float zn;
-
-
 
 uniform vec4 Haze;
 

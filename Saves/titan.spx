@@ -210,7 +210,6 @@ Scene() {
 							ambient=Color(1,1,1,0.41);
 							crot=1;
 							day=10;
-							hscale=0.05;
 							shine=23.5064;
 							specular=Color(1,1,1);
 							tilt=-8;

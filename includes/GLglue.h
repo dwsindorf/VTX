@@ -37,7 +37,7 @@ enum {
     SMALL_W = 480,  SMALL_H = 360, 
     MED_W   = 640,  MED_H   = 480, 
     BIG_W   = 800,  BIG_H   = 600,
-    PAN_W   = 800,  PAN_H   = 400,
+    PAN_W   = 1600,  PAN_H   = 800,
     WIDE_W  = 1200, WIDE_H  = 600,
 };
 #define FRAME_BORDER 6

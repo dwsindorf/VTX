@@ -123,7 +123,6 @@ Scene() {
 						crot=1;
 						diffuse=Color(0.98,0.89,0.89);
 						emission=Color(1,0.84,0.84,0.22);
-						hscale=0.05;
 						specular=Color(1,0.98,0.69);
 						Surface{
 							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));

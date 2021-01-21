@@ -332,7 +332,6 @@ Scene() {
 					Clouds(0.00407746) {
 						crot=1;
 						day=-1.5872;
-						hscale=0.05;
 						Surface{
 							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
 						}

@@ -24,7 +24,7 @@ int test5=0;
 #include "star_data.h"
 #endif
 
-extern double Gscale,Hscale,Rscale;
+extern double Gscale,Hscale,Rscale,Fscale;
 extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
@@ -2157,6 +2157,8 @@ void Spheroid::set_geometry()
 	Hscale=map->hscale=hscale;
 	Gscale=1/hscale/size;
 	Rscale=size*hscale;
+	Fscale=2000*hscale;
+
 }
 
 //-------------------------------------------------------------
@@ -2683,8 +2685,8 @@ bool Planetoid::setProgram(){
     vars.newFloatVar("haze_grad",haze_grad);
 	vars.newFloatVar("fog_vmin",fog_vmin);
 	vars.newFloatVar("fog_vmax",fog_vmax);
-	vars.newFloatVar("zf",TheScene->zfar);
-	vars.newFloatVar("zn",TheScene->znear);
+	vars.newFloatVar("fog_znear",fog_min);
+	vars.newFloatVar("fog_zfar",fog_max);
 
     vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 
@@ -3425,7 +3427,7 @@ int Sky::render_pass()
 //	}
 //	else {
 	    if(near_group())
-			clear_pass(BG1);
+			clear_pass(FG1);
 		else
 			clear_pass(BG2);
 	//}
