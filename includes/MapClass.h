@@ -251,6 +251,10 @@ public:
 	void 			invalidate_normals();
 	void 			validate_normals();
 	bool 			setProgram();
+	int             tessLevel();
+	bool            setGeometryDefs();
+	bool            setGeometryPrgm();
+	bool            hasGeometry();
 
 };
 

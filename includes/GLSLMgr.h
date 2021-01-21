@@ -40,6 +40,8 @@ public:
 	static int input_type;
 	static int output_type;
 	static int max_output;
+	static int tesslevel;
+
 	static double gls_version;
 	GLSLMgr();
 	~GLSLMgr();
@@ -59,6 +61,7 @@ public:
 	static void beginRender();
 	static void endRender();
 	static void clearTexs();
+	static void setTessLevel(int n);
 
 	static UniformBool fboRead;
 	static UniformBool fboWrite;

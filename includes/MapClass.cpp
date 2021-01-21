@@ -58,7 +58,7 @@ extern void     set_info(char *c,...);
 extern void     init_tables();
 
 Map            *TheMap = 0;
-double          Rscale, Gscale, Pscale, Hscale,Fscale;
+double          Rscale, Gscale, Pscale, Hscale;
 double          ptable[PLVLS];
 extern double 	Theta, Phi, Height,MinHt,MaxHt;
 extern Point	MapPt;
@@ -392,8 +392,6 @@ void Map::make_current()
 	TheMap=this;
 	Hscale=hscale;
 	Rscale=radius*hscale; // for scaling proportional to size
-	Fscale=1000*hscale; // for scaling independent of size
-
 	Gscale=1/Rscale;
 	Pscale=DPR*atan(hscale);
 }
@@ -942,9 +940,61 @@ void Map::render_solid()
 }
 
 //-------------------------------------------------------------
+// Map::tessLevel set geometry (number of vertexes generated)
+//-------------------------------------------------------------
+int Map::tessLevel(){
+	double resolution=TheMap->resolution;
+	// increase vertexes for lower quality settings
+	//  - generate fewer at high resolutions where triangles are smaller
+	//  - number of vertexes/triangle produced = (tesslevel+1)*(tesslevel+3)
+	//  - at highest res (tesslevel=1 3 vertexes) at lowest res (tesslevel=5 48 vertexes )
+	// note: for some reason tesslevel>5 can result in holes
+	//  - looks like some vertexes not being produced
+	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
+
+	tesslevel=floor(lerp(resolution,0.0,15,0,5)+0.5);
+	tesslevel=tesslevel<1?1:tesslevel;
+	GLSLMgr::setTessLevel(tesslevel);
+	return tesslevel;
+}
+
+bool  Map::setGeometryDefs(){
+	if(hasGeometry()){
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
+		tp->tnpoint->snoise->initProgram();
+		tp->tnpoint->initProgram();
+		return true;
+	}
+	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS 0\n");
+	return false;
+}
+
+bool  Map::setGeometryPrgm(){
+	if(!hasGeometry())
+		return false;
+	if(tp->tnpoint){
+		bool ok=tp->tnpoint->snoise->setProgram();
+		if(!ok)
+			return false;
+		ok=tp->tnpoint->setProgram();
+		if(!ok)
+			return false;
+	}
+	//GLSLMgr::setFBORenderPass();
+	return true;
+}
+
+bool  Map::hasGeometry(){
+	bool geom=tp->has_geometry() && tp->tnpoint;
+	return geom;
+}
+
+//-------------------------------------------------------------
 // Map::setProgram() set shader program for ids render pass
-//#define USE_SHADER_ONLY_FOR_GEOM
-//#define GEOM_SHADER
+// - only called for drawing id colors
+// - only shader based vertex noise allowed
+// #define USE_SHADER_ONLY_FOR_GEOM // can use plain OGL if no pixel z noise
+ //#define GEOM_SHADER   // optional add extra vertices
 //-------------------------------------------------------------
 bool Map::setProgram(){
 	if(TheScene->viewobj != object)
@@ -957,20 +1007,13 @@ bool Map::setProgram(){
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	//if(Render.draw_ids())
+	if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
-	tesslevel=0;  //  0=single triangle mode
-	GLSLMgr::max_output=(tesslevel+1)*(tesslevel+3);
+	tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
 	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
 #endif
-	if(tp->tnpoint){
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
-		tp->tnpoint->snoise->initProgram();
-		tp->tnpoint->initProgram();
-	}
-	else
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS 0\n");
+	setGeometryDefs();
 
 #ifdef GEOM_SHADER
 	GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
@@ -982,9 +1025,9 @@ bool Map::setProgram(){
 		return false;
 
 	GLSLMgr::setProgram();
-	if(tp->tnpoint){
-		tp->tnpoint->snoise->setProgram();
-		tp->tnpoint->setProgram();
+
+	if(hasGeometry() && !setGeometryPrgm()){
+		cout <<"Error Setting Map program"<<endl;
 	}
 
 	GLSLMgr::setFBORenderPass();

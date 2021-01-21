@@ -94,7 +94,6 @@ Scene() {
 					ambient=Color(1,1,1,0.61);
 					crot=1;
 					diffuse=Color(1,1,1,0.42);
-					hscale=0.05;
 					name="Clouds2D-1";
 					Surface{
 						terrain=Color(1,1,1,noise(FS,4.4,9,1,0.5,2,1,0,0,-2));

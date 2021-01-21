@@ -24,7 +24,7 @@ int test5=0;
 #include "star_data.h"
 #endif
 
-extern double Gscale,Hscale,Rscale,Fscale;
+extern double Gscale,Hscale,Rscale;
 extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
@@ -2157,8 +2157,6 @@ void Spheroid::set_geometry()
 	Hscale=map->hscale=hscale;
 	Gscale=1/hscale/size;
 	Rscale=size*hscale;
-	Fscale=2000*hscale;
-
 }
 
 //-------------------------------------------------------------
