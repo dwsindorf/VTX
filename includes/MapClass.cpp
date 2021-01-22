@@ -533,12 +533,12 @@ void Map::render()
 	make_current();
 	if(TheScene->buffers_mode()){
 		if(Render.draw_zvals())
-			render_zvals();
+			shadow_zvals();
 		//else if(Render.draw_raster())
 		else if(Render.draw_raster() && (object==TheScene->viewobj))
 			render_raster();
 		else if(Render.draw_normals())
-			render_normals();
+			shadow_normals();
 		return;
 	}
 
@@ -637,7 +637,7 @@ void Map::render_raster()
 // Map::render_raster()	render raster image
 //      - called by Effects::render_shadows()
 //-------------------------------------------------------------
-void Map::render_normals()
+void Map::shadow_normals()
 {
 	make_current();
 
@@ -667,7 +667,19 @@ void Map::render_normals()
 	set_colors(0);
 	Render.pushmode(SHOW_NORMALS);
 	npole->init_render();
+	Raster.surface=3;
+	// note: Raster.surface=3 selects top surface (maybe water or land)
+	//       if geometry present ok to skip separate water pass
+	//       (assumes that water doesn't have geometry)
+	for(tid=ID0;tid<Td.properties.size;tid++){
+		tp=Td.properties[tid];
+		Td.tp=tp;
+		Raster.setProgram(Raster.SHADOWPGM1);
+		//setProgram();
+	    npole->render_vertex();
+	}
 
+	/*
 	Raster.surface=1;
 	for(tid=ID0;tid<tids;tid++){
 		tp=Td.properties[tid];
@@ -684,6 +696,7 @@ void Map::render_normals()
 		//RENDERLIST(NORMAL_LISTS,tid,render_vertex());
 		 npole->render_vertex();
 	}
+	*/
 	Render.popmode();
 	//glFlush();
 }
@@ -691,7 +704,7 @@ void Map::render_normals()
 //-------------------------------------------------------------
 // Map::render_zvals()	render without color to validate z buffer
 //-------------------------------------------------------------
-void Map::render_zvals()
+void Map::shadow_zvals()
 {
 	make_current();
 
@@ -733,23 +746,16 @@ void Map::render_zvals()
 	Render.pushmode(SHOW_ZVALS);
 	npole->init_render();
 	texture=0;
-	Raster.surface=1;
-
-	for(tid=ID0;tid<tids;tid++){
+	Raster.surface=3;
+	// note: Raster.surface=3 selects top surface (maybe water or land)
+	//       if geometry present ok to skip separate water pass
+	//       (assumes that water doesn't have geometry)
+	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
-	    if(!visid(tid))
-	        continue;
-	     RENDERLIST(ZVAL_LISTS,tid,render_vertex());
-	     //npole->render_vertex();
+		Raster.setProgram(Raster.SHADOW_ZVALS);
+	    npole->render_vertex();
 	}
-	texture=0;
-	if(waterpass()){
-		Raster.surface=2;  // water pass
-		tid=0;
-		RENDERLIST(ZVAL_LISTS,tid,render_vertex());
-		//npole->render_vertex();
-    }
 
 	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
@@ -1098,11 +1104,7 @@ void Map::render_ids()
 
 	Raster.set_all();
 
-	//set_resolution();
-
 	Raster.surface=3;
-	object->set_surface(Td);
-	int start=S0.get_flag(WATERFLAG)?WATER:ID0;
 	// note: Raster.surface=3 selects top surface (maybe water or land)
 	//       if geometry present ok to skip separate water pass
 	//       (assumes that water doesn't have geometry)

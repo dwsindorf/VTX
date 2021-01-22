@@ -14,6 +14,7 @@ class EffectsMgr : public RasterMgr
 	GLuint shadow_map_width;
 	void enableShadowMap(bool b);
 public:
+
 	GLuint shadow_map_ratio;
 	void create_jitter_lookup(int size, int samples_u, int samples_v);
 	void initShadowTexture();

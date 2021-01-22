@@ -117,6 +117,8 @@ protected:
 	int ftype;
 
 public:
+	enum {RENDERPGM,EFFECTSPGM,POSTPROCPGM,SHADOWPGM1,SHADOWPGM2,SHADOW_ZVALS};
+
 	static GLdouble vpmat[16];
 	static GLdouble sproj[16];
 	static GLdouble smat[16];

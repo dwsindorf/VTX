@@ -19,8 +19,7 @@ EffectsMgr Raster;	// one and only global object
 #define SMAPTEXID   1
 #define JMAPTEXID   2
 //#define DEBUG_EFFECTS
-enum {RENDERPGM,EFFECTSPGM,POSTPROCPGM,SHADOWPGM1,SHADOWPGM2,SHADOWPGM3};
-static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOWS1","SHADOWS2","SHADOWS3"};
+static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOWS1","SHADOWS2","SHADOW_ZVALS"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
 //  2. vfog (vertical)
@@ -147,17 +146,21 @@ void EffectsMgr::setProgram(int type){
 	double attn=rampstep(0,0.75,f,1,0);
 	double vf=fog_value*Render.fog_value()*attn;
 	double hf=haze_value*Render.haze_value()*attn;
+	GLSLMgr::clrDefString();
 
 #ifdef DEBUG_EFFECTS
 	   cout << "loading program:"<<pgmnames[type]<<endl;
 #endif
 	char defs[512]="";
 	switch(type){
-	case SHADOWPGM3:
+	case SHADOW_ZVALS:
+		if(TheMap){
+			TheMap->setGeometryDefs();
+		}
 		//if(shadows())
 		//	sprintf(defs,"#define SHADOWS\n");
-		GLSLMgr::setDefString(defs);
-		GLSLMgr::loadProgram("shadows3.vert","shadows3.frag");
+		//GLSLMgr::setDefString(defs);
+		GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
 		break;
 
 	case SHADOWPGM2:
@@ -174,6 +177,9 @@ void EffectsMgr::setProgram(int type){
 		//	sprintf(defs+strlen(defs),"#define LDRTEST\n");
 
 		GLSLMgr::setDefString(defs);
+		if(TheMap)
+			TheMap->setGeometryDefs();
+
 		GLSLMgr::loadProgram("shadows1.vert","shadows1.frag");
 		vars.newFloatArray("smat",smat,16);
 		vars.newIntVar("ShadowMap",SMAPTEXID);
@@ -185,6 +191,8 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("zmin",s_zmin);
 		vars.newFloatVar("shadow_intensity",shadow_intensity);
 		vars.newIntVar("light_index",light_index());
+		Point pv=TheScene->xpoint;
+		//vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 
 		if(shadow_proj)
 			vars.newFloatVar("fwidth",shadow_blur*0.1);
@@ -498,7 +506,6 @@ void EffectsMgr::render_shadows(){
 			set_light_view();
 		    glPolygonOffset(2.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-            setProgram(SHADOWPGM3);
 			TheScene->render_zvals();
 			glDisable(GL_POLYGON_OFFSET_FILL);
 
@@ -512,7 +519,7 @@ void EffectsMgr::render_shadows(){
 			GLSLMgr::setFBOWritePass();
 			enableShadowMap(true);
 
-			setProgram(SHADOWPGM1);
+			//setProgram(SHADOWPGM1);
 			glDrawBuffers(1,mrt1);
 
 			TheScene->render_normals();

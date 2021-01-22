@@ -2022,7 +2022,7 @@ void Spheroid::select()
 			int id=Raster.set_id();
 			Raster.set_data((MapNode*)this);
 			glLoadName(id);
-			map->render_zvals();  // use fastest render (nothing drawn)
+			map->shadow_zvals();  // use fastest render (nothing drawn)
 		}
 		else{
 			terrain.init_render();
@@ -3000,7 +3000,7 @@ void Planetoid::render_object()
 		map->set_mask(1);
 		Color c=Raster.blend_color;
 	    glColor4d(c.red(),c.green(),c.blue(),1);
-		map->render_zvals();
+		map->shadow_zvals();
 	    map->set_mask(0);
 	}
 	else{
