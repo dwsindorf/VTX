@@ -285,13 +285,13 @@ void GLSLMgr::makeTexDefsFile(){
 void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	if (position1ID < 0 /*&& position2ID<0*/)
 		return;
-#define NSCALE 1024.0 // used for noise shader
 	double dfactor=0.5*wscale/depth;
 	float max_orders =log2(dfactor);
 	// passing in vertex as doubles doesn't work (even if supported by GPU)
 	// because varying doubles (e.g. dvec3) aren't interpolated in fragment shader (flat shading only)
-//#define DBLS_TEST2
+
 #ifdef DBLS_TEST
+#define NSCALE 1024.0 // used for noise shader
 	float vec2[2][3];
 	double *pt=(double*)(&pm);
 	for(int i=0;i<3;i++){
@@ -302,7 +302,6 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	glVertexAttrib4f(GLSLMgr::position1ID, vec2[0][0], vec2[0][1], vec2[0][2], max_orders); // high part
 	glVertexAttrib4f(GLSLMgr::position2ID, vec2[1][0], vec2[1][1], vec2[1][2], depth);      // low part
 	return;
-#endif
 	Point pv = MapPt.normalize(); // pivot point in triangle render loop projected onto unit sphere
 	pv = pv * 0.5 + 0.5; // make axis signs all positive (0..1)
 	Point pf = pm; // passed in with 0..1 values as for pv
@@ -313,8 +312,9 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	// remove integer part to increase dynamic range of residuals
 	pf = pf - pv; // remaining values 0..1 (but scaled * NSCALE)
 	pf=pf/NSCALE; // restore original global scale
+    glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
+#endif
 	glVertexAttrib4d(GLSLMgr::position1ID, pm.x, pm.y, pm.z, max_orders);
-	//glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
 }
 
 //-------------------------------------------------------------

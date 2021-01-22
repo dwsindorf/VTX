@@ -578,7 +578,7 @@ void Map::render()
 
 //-------------------------------------------------------------
 // Map::render_raster()	render raster image
-// TODO: Make this work for geometry program generated terrain
+//     - Only called when water requires a separate pass (auximage shader)
 //-------------------------------------------------------------
 void Map::render_raster()
 {
@@ -622,7 +622,6 @@ void Map::render_raster()
 		}
 	}
 
-	//if ((Raster.surface == 2 || Raster.top()) && waterpass()) {
 	if (Raster.surface == 2  && waterpass() && Raster.show_water()) {
 #ifdef DEBUG_RENDER
 		cout<< "Map::render_raster - WATER "<<object->name()<<endl;
@@ -636,6 +635,7 @@ void Map::render_raster()
 
 //-------------------------------------------------------------
 // Map::render_raster()	render raster image
+//      - called by Effects::render_shadows()
 //-------------------------------------------------------------
 void Map::render_normals()
 {
@@ -650,6 +650,7 @@ void Map::render_normals()
 	else
 		glCullFace(GL_FRONT);
 	glShadeModel(GL_SMOOTH);
+
 	if(Raster.render_type()!=0)
 		glDisable(GL_LIGHTING);
 	else
@@ -673,14 +674,15 @@ void Map::render_normals()
 		Td.tp=tp;
 		if(!visid(tid))
 			continue;
-		RENDERLIST(NORMAL_LISTS,tid,render_vertex());
-		 //npole->render_vertex();
+		//RENDERLIST(NORMAL_LISTS,tid,render_vertex());
+		 npole->render_vertex();
 	}
 	if (waterpass()) {
 		Raster.surface = 2;
 		tid = 0;
-		RENDERLIST(NORMAL_LISTS,tid,render_vertex());
-		 //npole->render_vertex();
+		//setProgram();
+		//RENDERLIST(NORMAL_LISTS,tid,render_vertex());
+		 npole->render_vertex();
 	}
 	Render.popmode();
 	//glFlush();
@@ -699,8 +701,8 @@ void Map::render_zvals()
 //	    glDrawBuffer(GL_NONE); // this doesn't work in windows
 //#endif
 	int cmask[4];
-	glGetIntegerv(GL_COLOR_WRITEMASK,cmask);
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glGetIntegerv(GL_COLOR_WRITEMASK,cmask); // get original color mask (usually all true)
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable writing to color buffer
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
@@ -731,29 +733,26 @@ void Map::render_zvals()
 	Render.pushmode(SHOW_ZVALS);
 	npole->init_render();
 	texture=0;
-	Raster.surface=3;
+	Raster.surface=1;
 
-	for(tid=0;tid<tids;tid++){
+	for(tid=ID0;tid<tids;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 	    if(!visid(tid))
 	        continue;
-	     setProgram();
 	     RENDERLIST(ZVAL_LISTS,tid,render_vertex());
 	     //npole->render_vertex();
 	}
-/*
 	texture=0;
 	if(waterpass()){
 		Raster.surface=2;  // water pass
 		tid=0;
-		setProgram();
 		RENDERLIST(ZVAL_LISTS,tid,render_vertex());
 		//npole->render_vertex();
     }
-*/
+
 	//glFlush();
-	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]);
+	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
 	Render.popmode();
 //	glDrawBuffer(GL_BACK);
 //#ifdef WINDOWS
@@ -1009,6 +1008,7 @@ bool  Map::hasGeometry(){
 bool Map::setProgram(){
 	if(TheScene->viewobj != object)
 		return false;
+	GLSLMgr::clrDefString();
 	bool geom=tp->has_geometry() && tp->tnpoint;
 #ifdef USE_SHADER_ONLY_FOR_GEOM
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
@@ -1817,8 +1817,8 @@ void Map::adapt()
 			if(!fixed_grid()){
 			    int vn=vnodes;
 			    if(idtest)
-			    	GLSLMgr::clrBuffers();
-//cout<<"adapt:"<<cycles<<endl;
+			    	glClear(GL_DEPTH_BUFFER_BIT);
+
 			    vischk(idtest);
 				dv=vnodes-vn;
 				dv=dv<0?-dv:dv;
@@ -1841,7 +1841,8 @@ void Map::adapt()
 		    clr_need_adapt();
 		set_end_adapt(1);
 	    if(idtest)
-	    	GLSLMgr::clrBuffers();
+	    	glClear(GL_DEPTH_BUFFER_BIT);
+
 		vischk(idtest);
         if(!Adapt.edges() || !idtest)
 		    npole->visit(&MapNode::pvischk);

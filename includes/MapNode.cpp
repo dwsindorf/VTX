@@ -2058,24 +2058,24 @@ void MapNode::vertex(MapData*d)
 }
 
 //-------------------------------------------------------------
-// MapNode::IDvertex()	 for ID capture
+// MapNode::IDvertex()	 for ID, normals or zbuffer
 //-------------------------------------------------------------
 void MapNode::IDvertex(MapData*d)
 {
 	d=surface_data(d);
 	if(!d)
 		return;
-	//set_mchecked();
-	//idb.l=Raster.set_id();
-	//Raster.set_data(this);
-	//glColor3ub(idb.c.red,idb.c.green,idb.c.blue);
-	//double depth = TheScene->vpoint.distance(d->mpoint());
+
 	Point pm=d->mpoint();
-	pm=pm.normalize();
+	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
 	Point p=d->point();
+
+	// set pm to Vertex1 in shaders
+	// - pm contains just the (rectangularized) phi&theta values of the point
+
 	GLSLMgr::setVertexAttributes(pm,0);
-	glVertex3dv((double*)(&p));
+	glVertex3dv((double*)(&p));  // contains Z() (global scale)
 }
 
 //-------------------------------------------------------------
