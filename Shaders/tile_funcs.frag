@@ -7,23 +7,19 @@ vec4 warmup(){
    // 2) this somehow must fool the ogl compiler into doing something more efficiently
    // 3) seems to affect performance more in "adapt" pass than render pass
 
-	v1= Vertex1.xyz; // required for mapping to work
-    v2= Vertex2.xyz;
-
+	v1= Vertex1.xyz; // required for mapping to wor
 	vec4 result=vec4(0.0);
-	vec4 val,nvec;
+	vec4 val;
 	
 	float weight=0.0;
  
 	for(int i=0;i<2;i++) {
         vec4 P1=noise3D(v1*2);
-        vec4 P2=noise3D(v2*2);
-        nvec=mix(P1,P2,0.5);
-		val=nvec*weight;
+		val=P1;//nvec*weight;
 		result += val;
 		if(weight<=0.0) // will always exit here on first loop pass
 		    break;
-		weight*=nvec.x; // but this is still needed to fix problem (!)
+		weight*=val.x; // but this is still needed to fix problem (!)
 	} 
 	return result;	
 }

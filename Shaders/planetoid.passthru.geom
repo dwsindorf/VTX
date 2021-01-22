@@ -30,7 +30,6 @@ varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
 #if NVALS >0
 varying in vec4 Vertex1_G[];
-varying in vec4 Vertex2_G[];
 #endif
 #if NTEXS >0
 varying in vec4 Tangent_G[];
@@ -46,7 +45,6 @@ varying out vec4 EyeDirection;
 varying out vec4 Constants;
 #if NVALS >0
 varying out vec4 Vertex1;
-varying out vec4 Vertex2;
 #endif
 #if NTEXS >0
 varying out vec4 Tangent;
@@ -72,7 +70,6 @@ void main(void) {
 
 #if NVALS >0
 		Vertex1=Vertex1_G[i];
-		Vertex2=Vertex1_G[i];
 #endif
 		Constants=Constants_G[i];
 

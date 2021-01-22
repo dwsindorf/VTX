@@ -61,7 +61,6 @@ void main(void) {
 #ifdef NCC
 #ifdef V3D
 	v1= Vertex1.xyz;
-    v2= Vertex2.xyz;
     vec4 ncolor=NCC;
  	color =ncolor*color;
 #else

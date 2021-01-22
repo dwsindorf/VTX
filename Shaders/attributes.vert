@@ -3,7 +3,6 @@ attribute vec4 CommonAttributes;
 attribute vec4 TextureAttributes;  // TextureAttributes.xy contains 2d components of vertex tangent
 
 #if NVALS >0
-attribute vec4 Position2;
 attribute vec4 Position1;
 #endif
 attribute vec4 Attributes3;

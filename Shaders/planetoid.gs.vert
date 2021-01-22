@@ -9,7 +9,6 @@
 // modified from common.h 
 #if NVALS >0
 varying vec4 Vertex1_G;
-varying vec4 Vertex2_G;
 #endif
 #if NTEXS >0
 varying vec4 Tangent_G;
@@ -36,7 +35,6 @@ void main(void) {
 
 #if NVALS >0
 	Vertex1_G=Position1;
-	Vertex2_G=Position2;
 #endif
 	Constants_G=CommonAttributes;
 	

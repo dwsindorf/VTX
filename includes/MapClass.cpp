@@ -738,17 +738,17 @@ void Map::render_zvals()
 		Td.tp=tp;
 	    if(!visid(tid))
 	        continue;
-	    //setProgram();
-	    //RENDERLIST(ZVAL_LISTS,tid,render_vertex());
-	     npole->render_vertex();
+	     setProgram();
+	     RENDERLIST(ZVAL_LISTS,tid,render_vertex());
+	     //npole->render_vertex();
 	}
 	texture=0;
 	if(waterpass()){
 		Raster.surface=2;  // water pass
 		tid=0;
-		//setProgram();
-		//RENDERLIST(ZVAL_LISTS,tid,render_vertex());
-		npole->render_vertex();
+		setProgram();
+		RENDERLIST(ZVAL_LISTS,tid,render_vertex());
+		//npole->render_vertex();
     }
 
 	//glFlush();
@@ -952,7 +952,7 @@ int Map::tessLevel(){
 	//  - looks like some vertexes not being produced
 	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
 
-	tesslevel=floor(lerp(resolution,0.0,15,0,4)+0.5);
+	tesslevel=floor(lerp(resolution,0.0,15,0,5)+0.5);
 	tesslevel=tesslevel<1?1:tesslevel;
 	GLSLMgr::setTessLevel(tesslevel);
 	return tesslevel;
@@ -1003,7 +1003,7 @@ bool  Map::hasGeometry(){
 // - only called for drawing id colors
 // - only shader based vertex noise allowed
  //#define USE_SHADER_ONLY_FOR_GEOM // can use plain OGL if no pixel z noise
- //#define GEOM_SHADER   // optional add extra vertices
+ #define GEOM_SHADER   // optional add extra vertices
 //-------------------------------------------------------------
 bool Map::setProgram(){
 	if(TheScene->viewobj != object)
@@ -1013,13 +1013,13 @@ bool Map::setProgram(){
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
 		return false;
 #endif
-	GLSLMgr::input_type=GL_TRIANGLES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
 	if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
 	if(geom){
+		GLSLMgr::input_type=GL_TRIANGLES;
+		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 		tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
 		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
 	}
@@ -1094,14 +1094,31 @@ void Map::render_ids()
 	texture=0;
 	npole->init_render();
 
+
 	Raster.set_all();
 
-	for(tid=0;tid<Td.properties.size;tid++){
+	//set_resolution();
+	//tesslevel=0; // use single triangle for id geom shader
+	Raster.surface=3;
+	object->set_surface(Td);
+	int start=S0.get_flag(WATERFLAG)?WATER:ID0;
+	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
 	    npole->render_ids();
 	}
+	/*
+	if(S0.get_flag(WATERFLAG)){
+		Raster.surface=2;
+		tid=WATER;
+		tp=Td.properties[tid];
+		Td.tp=tp;
+		setProgram();
+		npole->render_ids();
+    }
+    */
+
 	glFinish();
 	glFlush();
 	Raster.read_ids();
@@ -1806,8 +1823,8 @@ void Map::adapt()
 			if(!fixed_grid()){
 			    int vn=vnodes;
 			    if(idtest)
-			    	glClear(GL_DEPTH_BUFFER_BIT);
-
+			    	GLSLMgr::clrBuffers();
+//cout<<"adapt:"<<cycles<<endl;
 			    vischk(idtest);
 				dv=vnodes-vn;
 				dv=dv<0?-dv:dv;
@@ -1830,8 +1847,7 @@ void Map::adapt()
 		    clr_need_adapt();
 		set_end_adapt(1);
 	    if(idtest)
-	    	glClear(GL_DEPTH_BUFFER_BIT);
-
+	    	GLSLMgr::clrBuffers();
 		vischk(idtest);
         if(!Adapt.edges() || !idtest)
 		    npole->visit(&MapNode::pvischk);

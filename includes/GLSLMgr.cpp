@@ -283,7 +283,7 @@ void GLSLMgr::makeTexDefsFile(){
 // GLSLMgr::setVertexAttributes() set shader position attributes
 //-------------------------------------------------------------
 void GLSLMgr::setVertexAttributes(Point pm,double depth) {
-	if (position1ID < 0 && position2ID<0)
+	if (position1ID < 0 /*&& position2ID<0*/)
 		return;
 #define NSCALE 1024.0 // used for noise shader
 	double dfactor=0.5*wscale/depth;
@@ -314,7 +314,7 @@ void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	pf = pf - pv; // remaining values 0..1 (but scaled * NSCALE)
 	pf=pf/NSCALE; // restore original global scale
 	glVertexAttrib4d(GLSLMgr::position1ID, pm.x, pm.y, pm.z, max_orders);
-	glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
+	//glVertexAttrib4d(GLSLMgr::position2ID, pf.x, pf.y, pf.z, depth);
 }
 
 //-------------------------------------------------------------
@@ -724,7 +724,7 @@ void GLSLMgr::setProgram(){
  	CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
-	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
+	//position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
 }

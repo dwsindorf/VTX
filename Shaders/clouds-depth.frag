@@ -74,7 +74,6 @@ void main(void) {
 		dd=clamp(dd,0.0,1.0);
 #ifdef SCATTER
 		v1= Vertex1.xyz;
-	    v2= Vertex2.xyz;
 	    density=SCATTER;
 	    smax=density*1.0e-5;
 	    density=clamp(density,0.0,1.0);

@@ -3,7 +3,6 @@ uniform sampler3D noise3DTexture;
 uniform float fmax;
 
 vec3 v1;
-vec3 v2;
 vec3 v3;
 vec3 df;
 
@@ -117,18 +116,15 @@ vec4 Noise(int index) {
         switch(info.vnoise){
         case SIMPLEX:
         	P1=simplex3d(v1*f);
-	        P2=simplex3d(v2*f);
 	        break;
         case VORONOI:
         	P1=voronoi3d(v1*f);
-	        P2=voronoi3d(v2*f);
 	        break;
         case GRADIENT:
         default:
 	        P1=noise3D(v1*f);
-	        P2=noise3D(v2*f);
         }
-        nvec=mix(P1,P2,m);
+        nvec=P1;
 
 		nvec.yzw*=f;
 		if(nvec.x>clip+0.1*nvec.x){
@@ -194,7 +190,6 @@ float Noise1D(int i) {
 #ifdef VNOISE
 #define SET_NOISE(func) \
 	v1= Vertex1.xyz; \
-    v2= Vertex2.xyz; \
  	gv = func; \
  	g=gv.x; \
  	if(lighting) { \
@@ -205,7 +200,6 @@ float Noise1D(int i) {
 #else
 #define SET_NOISE(func) \
 	v1= Vertex1.xyz; \
-    v2= Vertex2.xyz; \
  	gv = func; \
  	g= gv.x; \
  	if(lighting) { \
@@ -213,15 +207,12 @@ float Noise1D(int i) {
 		nbamp = 0.1*noise_fade*bump_ampl/delta; \
 		b = g; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
-		v2 = vec3(Vertex2.x+delta,Vertex2.y,Vertex2.z);  \
  		gv = func; \
 		df.x =gv.x; \
 		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
-		v2 = vec3(Vertex2.x,Vertex2.y+delta,Vertex2.z); \
  		gv = func; \
 		df.y =gv.x; \
 		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
-		v2 = vec3(Vertex2.x,Vertex2.y,Vertex2.z+delta); \
  		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(b,b,b))*(nbamp); \
@@ -231,7 +222,6 @@ float Noise1D(int i) {
 #else
 #define SET_NOISE(func) \
 	v1= Vertex1.xyz; \
-    v2= Vertex2.xyz; \
  	gv = func; \
  	g=gv.x;
 #endif
@@ -247,7 +237,6 @@ float Noise1D(int i) {
 
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
-    v2= Vertex2.xyz; \
     vec4 ncolor=func; \
  	color =ncolor+color;
 

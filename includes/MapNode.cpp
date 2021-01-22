@@ -303,6 +303,9 @@ MapData * MapNode::surface_data(MapData *m)
 	MapData *d=m;
     if(!d)
         return 0;
+    if(Raster.surface==3){
+    	return d;
+    }
     if(Raster.surface==1){
         if(d->water())
             d=d->data2();

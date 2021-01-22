@@ -25,9 +25,7 @@ varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
 #if NVALS >0
 varying in vec4 Vertex1_G[];
-varying in vec4 Vertex2_G[];
 varying out vec4 Vertex1;
-varying out vec4 Vertex2;
 #endif
 #if NTEXS >0
 varying in vec4 Tangent_G[];
@@ -70,7 +68,6 @@ varying out vec4 attributes[2];
 void ProduceVertex(float s, float t){
 #if NVALS >0
 	Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
-	Vertex2=s*(Vertex2_G[2]-Vertex2_G[0]) + t*(Vertex2_G[1]-Vertex2_G[0])+Vertex2_G[0];
 #endif
 	// ---- Alternative calculation from gl_PositionIn ------------
 	//Vertex1.xyz=normalize(p.xyz+pv); 
