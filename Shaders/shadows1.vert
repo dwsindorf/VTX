@@ -23,9 +23,9 @@ void main(void) {
 #else
     gl_Position=ftransform();
 #endif
-    vec4 VertexPosition=(gl_ModelViewMatrix * gl_Vertex);
+    vec4 VertexPosition=(gl_ModelViewMatrix * p);
     ShadowCoord=smat * VertexPosition;
-	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex);
+	EyeDirection=-(gl_ModelViewMatrix * p);
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 }
 

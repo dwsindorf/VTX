@@ -2040,6 +2040,7 @@ void MapNode::vertex(MapData*d)
 	d=surface_data(d);
 	if(!d)
 		return;
+
 #ifdef DEBUG_EROSION
 	Point p;
 	if(TheScene->render_mode() && Render.showsed()){
@@ -2058,6 +2059,22 @@ void MapNode::vertex(MapData*d)
 }
 
 //-------------------------------------------------------------
+// MapNode::setVertexAttributes() set up cor shader noise
+//-------------------------------------------------------------
+void MapNode::setVertexAttributes(MapData*d){
+	if(!d)
+		return;
+	Point pm=d->mpoint();
+	pm=pm.normalize();  // this gets rid of the Z() component
+	pm=pm*0.5+0.5;
+	// set pm to Vertex1 in shaders
+	// - pm contains just the (rectangularized) phi&theta values of the point
+
+	GLSLMgr::setVertexAttributes(pm,0);
+
+}
+
+//-------------------------------------------------------------
 // MapNode::IDvertex()	 for ID, normals or zbuffer
 //-------------------------------------------------------------
 void MapNode::IDvertex(MapData*d)
@@ -2065,16 +2082,10 @@ void MapNode::IDvertex(MapData*d)
 	d=surface_data(d);
 	if(!d)
 		return;
-
-	Point pm=d->mpoint();
-	pm=pm.normalize();  // this gets rid of the Z() component
-	pm=pm*0.5+0.5;
 	Point p=d->point();
 
-	// set pm to Vertex1 in shaders
-	// - pm contains just the (rectangularized) phi&theta values of the point
+	setVertexAttributes(d);
 
-	GLSLMgr::setVertexAttributes(pm,0);
 	glVertex3dv((double*)(&p));  // contains Z() (global scale)
 }
 
@@ -2117,6 +2128,9 @@ void MapNode::vertexCN(MapData*d)
 //-------------------------------------------------------------
 void MapNode::vertexN(MapData*d)
 {
+
+	setVertexAttributes(surface_data(d));
+
 	Point *p=normal(d);
 	if(p){
 		glNormal3dv((double*)p);

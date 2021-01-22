@@ -161,6 +161,8 @@ void EffectsMgr::setProgram(int type){
 		//	sprintf(defs,"#define SHADOWS\n");
 		//GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
+		GLSLMgr::setProgram();
+		//GLSLMgr::setFBOWritePass();
 		break;
 
 	case SHADOWPGM2:
@@ -181,6 +183,8 @@ void EffectsMgr::setProgram(int type){
 			TheMap->setGeometryDefs();
 
 		GLSLMgr::loadProgram("shadows1.vert","shadows1.frag");
+		GLSLMgr::setProgram();
+
 		vars.newFloatArray("smat",smat,16);
 		vars.newIntVar("ShadowMap",SMAPTEXID);
 		vars.newIntVar("JitterMap",JMAPTEXID);
@@ -191,8 +195,9 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("zmin",s_zmin);
 		vars.newFloatVar("shadow_intensity",shadow_intensity);
 		vars.newIntVar("light_index",light_index());
-		Point pv=TheScene->xpoint;
-		//vars.newFloatVec("pv",pv.x,pv.y,pv.z);
+
+		p=TheScene->xpoint;
+		vars.newFloatVec("pv",p.x,p.y,p.z);
 
 		if(shadow_proj)
 			vars.newFloatVar("fwidth",shadow_blur*0.1);
@@ -206,7 +211,6 @@ void EffectsMgr::setProgram(int type){
 		vars.newIntVar("view",shadow_vcnt);
 		vars.newIntVar("views",shadow_vsteps);
 		vars.newIntVar("shadow_test",shadow_test);
-
 		break;
 
 	case RENDERPGM:
@@ -343,6 +347,7 @@ void EffectsMgr::setProgram(int type){
  	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::loadVars();
+	TheScene->setProgram();
 }
 
 //-------------------------------------------------------------
@@ -355,7 +360,6 @@ void EffectsMgr::apply(){
 		GLSLMgr::beginRender();
 	    // pass 1 : load auximage shaders. write depth etc. to FBO2
 		GLSLMgr::pass=0;
-		//GLSLMgr::setFBOWritePass();
 		TheScene->set_frontside();
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
@@ -380,11 +384,8 @@ void EffectsMgr::apply(){
 			surface=1;
 
 		}
-		//setProgram(RENDERPGM); // render water if do_water or land in not
-		//render_image();
 
 	    // following passes use full screen render (2 triangles)
-		//glClear(GL_DEPTH_BUFFER_BIT); // note: color buffer has scene image
 
 		surface=1;
 		bool effects=do_vfog||do_haze||do_water;

@@ -138,6 +138,7 @@ public:
     void Svertex()				 { Svertex(&data);}
     void Svertex(MapData*);
     void remove();
+    void setVertexAttributes(MapData*d);
 
     MapLink *split();
     void    sizechk();

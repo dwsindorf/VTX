@@ -708,6 +708,7 @@ void Map::shadow_zvals()
 {
 	make_current();
 
+	GLSLMgr::beginRender();
 	//glFlush();
 //#ifndef WINDOWS
 //    if(!mask())
