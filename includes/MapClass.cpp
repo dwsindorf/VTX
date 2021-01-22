@@ -952,12 +952,15 @@ int Map::tessLevel(){
 	//  - looks like some vertexes not being produced
 	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
 
-	tesslevel=floor(lerp(resolution,0.0,15,0,5)+0.5);
+	tesslevel=floor(lerp(resolution,0.0,15,0,4)+0.5);
 	tesslevel=tesslevel<1?1:tesslevel;
 	GLSLMgr::setTessLevel(tesslevel);
 	return tesslevel;
 }
 
+//-------------------------------------------------------------
+// Map::setGeometryDefs #defines for geometry shaders
+//-------------------------------------------------------------
 bool  Map::setGeometryDefs(){
 	if(hasGeometry()){
 		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define NVALS %d\n",tp->noise.size);
@@ -969,6 +972,9 @@ bool  Map::setGeometryDefs(){
 	return false;
 }
 
+//-------------------------------------------------------------
+// Map::setGeometryPrgm set shader for render_ids
+//-------------------------------------------------------------
 bool  Map::setGeometryPrgm(){
 	if(!hasGeometry())
 		return false;
@@ -984,6 +990,9 @@ bool  Map::setGeometryPrgm(){
 	return true;
 }
 
+//-------------------------------------------------------------
+// Map::hasGeometry return true if terrain has geometry
+//-------------------------------------------------------------
 bool  Map::hasGeometry(){
 	bool geom=tp->has_geometry() && tp->tnpoint;
 	return geom;
@@ -993,7 +1002,7 @@ bool  Map::hasGeometry(){
 // Map::setProgram() set shader program for ids render pass
 // - only called for drawing id colors
 // - only shader based vertex noise allowed
-// #define USE_SHADER_ONLY_FOR_GEOM // can use plain OGL if no pixel z noise
+ //#define USE_SHADER_ONLY_FOR_GEOM // can use plain OGL if no pixel z noise
  //#define GEOM_SHADER   // optional add extra vertices
 //-------------------------------------------------------------
 bool Map::setProgram(){
@@ -1010,16 +1019,22 @@ bool Map::setProgram(){
 	if(Render.draw_ids())
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
-	tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
-	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
+	if(geom){
+		tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
+	}
 #endif
 	setGeometryDefs();
 
 #ifdef GEOM_SHADER
-	GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
+	if(geom)
+		GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
+	else
+		GLSLMgr::loadProgram("map.vert","map.frag");
 #else
 	GLSLMgr::loadProgram("map.vert","map.frag");
 #endif
+
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
@@ -1036,6 +1051,9 @@ bool Map::setProgram(){
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	vars.newIntVar("tessLevel",tesslevel);
+	vars.newFloatVar("rscale",Rscale/5);
+
+	//cout<<Rscale<<endl;
 
 	vars.setProgram(program);
 	vars.loadVars();
@@ -1078,24 +1096,12 @@ void Map::render_ids()
 
 	Raster.set_all();
 
-	Raster.surface=1;
-	//set_resolution();
-	//tesslevel=0; // use single triangle for id geom shader
-	for(tid=ID0;tid<Td.properties.size;tid++){
+	for(tid=0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
 	    npole->render_ids();
 	}
-	if(S0.get_flag(WATERFLAG)){
-		Raster.surface=2;
-		tid=WATER;
-		tp=Td.properties[tid];
-		Td.tp=tp;
-		setProgram();
-		npole->render_ids();
-    }
-
 	glFinish();
 	glFlush();
 	Raster.read_ids();
@@ -1664,7 +1670,7 @@ void Map::make_visbox()
 		//if(TheScene->viewobj==object)
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=0.5*rbounds.zn;
-		vbounds.zf=1.1*rbounds.zf;
+		vbounds.zf=1.5*rbounds.zf;
 
 		// quick fix for zf clipped by water surface :
 		// make sure zf-zn >= max water transparency depth

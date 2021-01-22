@@ -2648,20 +2648,8 @@ bool Planetoid::setProgram(){
 	if(Render.geometry() && tp->has_geometry()){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		double resolution=TheMap->resolution;
-		// for geometry increase vertexes for lower quality settings
-		//  - generate fewer at high resolutions where triangles are smaller
-		//  - number of vertexes/triangle produced = (tesslevel+1)*(tesslevel+3)
-		//  - at high res (tesslevel=1 3 vertexes) at low res (tesslevel=5 48 vertexes )
-		// for some reason tesslevel>5 can result in holes
-		//  - looks like some vertexes not being produced
-		//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
-
-		tl=floor(lerp(resolution,0.0,20,0,5)+0.5);
-		tl=tl<1?1:tl;
-	    GLSLMgr::max_output=(tl+1)*(tl+3);
+        tl=TheMap->tessLevel();
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
-		//cout<<"Planetoid tesslevel:"<<tl<<" max_outout:"<< GLSLMgr::max_output<<" resolution:"<<resolution<<endl;
 	}
 	else{
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
@@ -2697,6 +2685,10 @@ bool Planetoid::setProgram(){
 	Point pv=TheScene->xpoint;
 	//pv=pv.mm(TheScene->viewMatrix);
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
+	vars.newFloatVar("rscale",4e-6);
+//cout<<Rscale<<endl;
+
+
 	//pv.print();
 
 	tp->setProgram();
@@ -4264,7 +4256,8 @@ bool CloudLayer::setProgram(){
 			vars.newIntVar("sprites",0);
 			GLSLMgr::input_type=GL_POINTS;
 			GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-			GLSLMgr::max_output=4;
+			GLSLMgr::tesslevel=0;
+			GLSLMgr::max_output=4;  // special case
 			GLSLMgr::loadProgram("clouds.gs.vert","clouds.3d.frag","clouds.geom");
 			break;
 		case CLOUDS_NO_SHADER:
