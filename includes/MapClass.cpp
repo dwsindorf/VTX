@@ -731,9 +731,9 @@ void Map::render_zvals()
 	Render.pushmode(SHOW_ZVALS);
 	npole->init_render();
 	texture=0;
-	Raster.surface=1;
+	Raster.surface=3;
 
-	for(tid=ID0;tid<tids;tid++){
+	for(tid=0;tid<tids;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 	    if(!visid(tid))
@@ -742,6 +742,7 @@ void Map::render_zvals()
 	     RENDERLIST(ZVAL_LISTS,tid,render_vertex());
 	     //npole->render_vertex();
 	}
+/*
 	texture=0;
 	if(waterpass()){
 		Raster.surface=2;  // water pass
@@ -750,7 +751,7 @@ void Map::render_zvals()
 		RENDERLIST(ZVAL_LISTS,tid,render_vertex());
 		//npole->render_vertex();
     }
-
+*/
 	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]);
 	Render.popmode();
@@ -1098,26 +1099,19 @@ void Map::render_ids()
 	Raster.set_all();
 
 	//set_resolution();
-	//tesslevel=0; // use single triangle for id geom shader
+
 	Raster.surface=3;
 	object->set_surface(Td);
 	int start=S0.get_flag(WATERFLAG)?WATER:ID0;
+	// note: Raster.surface=3 selects top surface (maybe water or land)
+	//       if geometry present ok to skip separate water pass
+	//       (assumes that water doesn't have geometry)
 	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
 	    npole->render_ids();
 	}
-	/*
-	if(S0.get_flag(WATERFLAG)){
-		Raster.surface=2;
-		tid=WATER;
-		tp=Td.properties[tid];
-		Td.tp=tp;
-		setProgram();
-		npole->render_ids();
-    }
-    */
 
 	glFinish();
 	glFlush();
