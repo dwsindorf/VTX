@@ -674,8 +674,7 @@ void Map::shadow_normals()
 	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
-		Raster.setProgram(Raster.SHADOWPGM1);
-		//setProgram();
+		Raster.setProgram(Raster.SHADOWS_NORMALS);
 	    npole->render_vertex();
 	}
 
@@ -1053,7 +1052,7 @@ bool Map::setProgram(){
 		cout <<"Error Setting Map program"<<endl;
 	}
 
-	GLSLMgr::setFBORenderPass();
+	//GLSLMgr::setFBORenderPass();
 
 	GLSLVarMgr vars;
 	Point pv=TheScene->xpoint;
@@ -1076,17 +1075,13 @@ bool Map::setProgram(){
 void Map::render_ids()
 {
 	GLSLMgr::beginRender();
-	//glEnable(GL_DEPTH_TEST);
-	//glDepthMask(GL_TRUE);
 
 	npole->visit(&MapNode::clr_flags);
 	Raster.set_idmode(1);
 	int mode=Render.mode();
 	Render.show_ids();
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
 	glFlush();
-	//reset();
+
 	glPolygonMode(GL_FRONT,GL_FILL);
 	glPolygonMode(GL_BACK,GL_FILL);
 	glEnable(GL_CULL_FACE);
@@ -1122,7 +1117,7 @@ void Map::render_ids()
 	Raster.set_idmode(0);
 	Render.set_mode(mode);
 	Raster.surface=1;
-	//set_resolution();
+
 	GLSLMgr::endRender();
 
 }

@@ -246,8 +246,8 @@ public:
 	void render_objects();
 	void render_bgpass();
 	void render_shadows();
-	void render_zvals();
-	void render_normals();
+	void shadows_zvals();
+	void shadows_normals();
 	void render_raster();
 	void render_image();
 	void set_lights();

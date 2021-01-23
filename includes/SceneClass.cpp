@@ -2365,7 +2365,7 @@ void Scene::render_raster()
 //-------------------------------------------------------------
 // Scene::render_zvals()	render to validate zbuffer
 //-------------------------------------------------------------
-void Scene::render_zvals()
+void Scene::shadows_zvals()
 {
 	Raster.set_draw_nvis(1);
 	int rsave=Render.mode();
@@ -2385,7 +2385,7 @@ void Scene::render_zvals()
 //-------------------------------------------------------------
 // Scene::render_normals()	render normals only
 //-------------------------------------------------------------
-void Scene::render_normals()
+void Scene::shadows_normals()
 {
 	Raster.set_draw_nvis(1);
 	int rsave=Render.mode();

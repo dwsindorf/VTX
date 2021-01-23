@@ -19,7 +19,7 @@ EffectsMgr Raster;	// one and only global object
 #define SMAPTEXID   1
 #define JMAPTEXID   2
 //#define DEBUG_EFFECTS
-static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOWS1","SHADOWS2","SHADOW_ZVALS"};
+static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS_NORMALS","SHADOWS_FINISH"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
 //  2. vfog (vertical)
@@ -162,15 +162,14 @@ void EffectsMgr::setProgram(int type){
 		//GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
 		GLSLMgr::setProgram();
-		//GLSLMgr::setFBOWritePass();
 		break;
 
-	case SHADOWPGM2:
+	case SHADOWS_FINISH:
 		GLSLMgr::setDefString(defs);
-		GLSLMgr::loadProgram("shadows2.vert","shadows2.frag");
+		GLSLMgr::loadProgram("shadows_finish.vert","shadows_finish.frag");
 		break;
 
-	case SHADOWPGM1:
+	case SHADOWS_NORMALS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
 		if(shadow_test>0)
@@ -182,7 +181,7 @@ void EffectsMgr::setProgram(int type){
 		if(TheMap)
 			TheMap->setGeometryDefs();
 
-		GLSLMgr::loadProgram("shadows1.vert","shadows1.frag");
+		GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
 		GLSLMgr::setProgram();
 
 		vars.newFloatArray("smat",smat,16);
@@ -507,7 +506,7 @@ void EffectsMgr::render_shadows(){
 			set_light_view();
 		    glPolygonOffset(2.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-			TheScene->render_zvals();
+			TheScene->shadows_zvals();
 			glDisable(GL_POLYGON_OFFSET_FILL);
 
 			// 2. render depth from eye (using shadows shader)
@@ -523,14 +522,14 @@ void EffectsMgr::render_shadows(){
 			//setProgram(SHADOWPGM1);
 			glDrawBuffers(1,mrt1);
 
-			TheScene->render_normals();
+			TheScene->shadows_normals();
 			//glEnable(GL_DEPTH_TEST);
 			// 3. copy shadow view intensity to accumulation buffer
 			//    FBOTex1->FBOTex3
 
 			glDrawBuffers(1,mrt2);
 			enableShadowMap(false);
-			setProgram(SHADOWPGM2);
+			setProgram(SHADOWS_FINISH);
 			GLSLMgr::drawFrameBuffer();
 
 			next_view();
