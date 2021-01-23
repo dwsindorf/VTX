@@ -1097,6 +1097,15 @@ void TNnoise::eval()
 
 }
 
+// debug routine to print out shader noise value
+static void printFvar(GLhandleARB program,char *v,int nid){
+	char str[256];
+	sprintf(str,"nvars[%d].%s",nid,v);
+	float d[1]={0};
+	int loc=glGetUniformLocationARB(program,str);
+	glGetUniformfv(program,loc,d);
+	printf("%-20s %-10g\n",str,d[0]);
+}
 //-------------------------------------------------------------
 // TNnoise::setProgram() set shader uniform variables
 // - called AFTER shader program is created
@@ -1168,6 +1177,25 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
 	sprintf(str,"nvars[%d].vnoise",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
+//#define TEST
+#ifdef TEST
+	printf("\n");
+	printFvar(program,"freq",nid);
+	printFvar(program,"orders",nid);
+	/*
+	printFvar(program,"fact",nid);
+	printFvar(program,"delta",nid);
+
+	printFvar(program,"bias",nid);
+	printFvar(program,"H",nid);
+	printFvar(program,"L",nid);
+	printFvar(program,"smoothing",nid);
+	printFvar(program,"clamp",nid);
+	printFvar(program,"ampl",nid);
+	printFvar(program,"offset",nid);
+	printFvar(program,"delta",nid);
+*/
+#endif
 	vars.setProgram(program);
 	vars.loadVars();
 	return true;

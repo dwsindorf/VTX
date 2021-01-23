@@ -81,7 +81,6 @@ EffectsMgr::EffectsMgr(){
 	shadow_map_height=0;
 	shadow_map_width=0;
 	shadow_proj=false;
-	shadow_test=0;
 }
 EffectsMgr::~EffectsMgr(){
 	if(shadowMapFBO>0)
@@ -154,35 +153,29 @@ void EffectsMgr::setProgram(int type){
 	char defs[512]="";
 	switch(type){
 	case SHADOW_ZVALS:
-		if(TheMap){
+		if(TheMap && TheMap->hasGeometry()){
 			TheMap->setGeometryDefs();
-		}
-		//if(shadows())
-		//	sprintf(defs,"#define SHADOWS\n");
-		//GLSLMgr::setDefString(defs);
-		GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
-		GLSLMgr::setProgram();
-		break;
-
-	case SHADOWS_FINISH:
-		GLSLMgr::setDefString(defs);
-		GLSLMgr::loadProgram("shadows_finish.vert","shadows_finish.frag");
+		    GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
+		    TheMap->setGeometryPrgm();
+	    }
+		else
+		    GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
 		break;
 
 	case SHADOWS_NORMALS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
-		if(shadow_test>0)
+		if(debug_shadows() && shadow_test>0)
 			sprintf(defs+strlen(defs),"#define SHADOW_TEST\n");
-		//if(!farview())
-		//	sprintf(defs+strlen(defs),"#define LDRTEST\n");
 
 		GLSLMgr::setDefString(defs);
-		if(TheMap)
+		if(TheMap && TheMap->hasGeometry()){
 			TheMap->setGeometryDefs();
-
-		GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
-		GLSLMgr::setProgram();
+		    GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
+		    TheMap->setGeometryPrgm();
+	    }
+		else
+		    GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
 
 		vars.newFloatArray("smat",smat,16);
 		vars.newIntVar("ShadowMap",SMAPTEXID);
@@ -194,9 +187,7 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("zmin",s_zmin);
 		vars.newFloatVar("shadow_intensity",shadow_intensity);
 		vars.newIntVar("light_index",light_index());
-
-		p=TheScene->xpoint;
-		vars.newFloatVec("pv",p.x,p.y,p.z);
+		vars.newBoolVar("lighting",true);
 
 		if(shadow_proj)
 			vars.newFloatVar("fwidth",shadow_blur*0.1);
@@ -211,6 +202,12 @@ void EffectsMgr::setProgram(int type){
 		vars.newIntVar("views",shadow_vsteps);
 		vars.newIntVar("shadow_test",shadow_test);
 		break;
+
+	case SHADOWS_FINISH:
+		GLSLMgr::setDefString(defs);
+		GLSLMgr::loadProgram("shadows_finish.vert","shadows_finish.frag");
+		break;
+
 
 	case RENDERPGM:
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
@@ -255,7 +252,7 @@ void EffectsMgr::setProgram(int type){
 			}
 		}
 		if(shadows()){
-			if(shadow_test>0)
+			if(shadow_test>0 && debug_shadows())
 				sprintf(defs+strlen(defs),"#define SHADOW_TEST\n");
 			else
 				sprintf(defs+strlen(defs),"#define SHADOWS\n");
@@ -331,6 +328,8 @@ void EffectsMgr::setProgram(int type){
 	vars.newFloatVar("zn",TheScene->znear);
 	vars.newFloatVar("feet",FEET);
 	vars.newFloatVar("fov",TheScene->fov*RPD);
+	p=TheScene->xpoint;
+	vars.newFloatVec("pv",p.x,p.y,p.z);
 
 	// Render Program variables
 
@@ -341,11 +340,13 @@ void EffectsMgr::setProgram(int type){
 		cout << "could not load program"<<endl;
 		return;
 	}
-	GLSLMgr::CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
+	if(GLSLMgr::CommonID >= 0)
+		GLSLMgr::CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
 
  	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::loadVars();
+	GLSLMgr::setProgram();
 	TheScene->setProgram();
 }
 
@@ -406,7 +407,7 @@ void EffectsMgr::apply(){
 			setProgram(POSTPROCPGM);
 			GLSLMgr::drawFrameBuffer();
 		}
-		else if(effects||(shadows()&&shadow_test)){
+		else if(effects||(shadows()&&shadow_test&&debug_shadows())){
 			GLSLMgr::setFBOReadPass();
 			setProgram(EFFECTSPGM);
 			GLSLMgr::drawFrameBuffer();
@@ -487,7 +488,6 @@ void EffectsMgr::render_shadows(){
 			continue;
 		shadow_intensity=Lights.intensityFraction(light(),TheScene->shadowobj->point);
 		//cout << shadow_intensity << endl;
-
 		init_view();
 		j=0;
 		while(more_views()){
@@ -497,13 +497,15 @@ void EffectsMgr::render_shadows(){
 
 			glBindFramebuffer(GL_FRAMEBUFFER_EXT,shadowMapFBO); //Rendering offscreen
 
-			//glUseProgramObjectARB(0); //Using the fixed pipeline to render to the depth buffer
+			glUseProgramObjectARB(0); //Using the fixed pipeline to render to the depth buffer
 			glViewport(0,0,shadowMapWidth,shadowMapHeight);
 
 			Render.set_back();
+
 			GLSLMgr::clrDepthBuffer();
 
 			set_light_view();
+
 		    glPolygonOffset(2.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
 			TheScene->shadows_zvals();
@@ -519,7 +521,6 @@ void EffectsMgr::render_shadows(){
 			GLSLMgr::setFBOWritePass();
 			enableShadowMap(true);
 
-			//setProgram(SHADOWPGM1);
 			glDrawBuffers(1,mrt1);
 
 			TheScene->shadows_normals();

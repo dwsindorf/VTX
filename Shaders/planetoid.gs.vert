@@ -14,15 +14,13 @@ varying vec4 Vertex1_G;
 varying vec4 Tangent_G;
 #endif
 
-varying vec4 EyeDirection_G;
 varying vec4 Normal_G;
 varying vec4 Constants_G;
 varying vec4 Color_G;
 varying vec4 Attributes_G[2];
 
 void main(void) {
-	EyeDirection_G=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
-	gl_Position=gl_Vertex;
+	gl_Position=gl_Vertex;  // default array created gl_PrimitiveID = gl_PrimitiveIDIn[];
 	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
 
 #ifdef COLOR

@@ -2478,7 +2478,7 @@ void Scene::render_light_view()
 		Raster.set_light(0);
 	if(changed_model() || !Raster.more_views())
 		Raster.init_view();
-	cout << "light view:"<<Raster.shadow_vcnt<<endl;
+	//cout << "light view:"<<Raster.shadow_vcnt<<endl;
 	Raster.set_light_view();
 	objects->visit(&Object3D::render);
 

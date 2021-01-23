@@ -56,6 +56,25 @@ Scene() {
 		height=8522.82 ft;
 		angle=-18;
 	}
+	View{
+		height=17896.1 ft;
+		gndlvl=-9373.28 ft;
+		time=48077.2;
+		heading=27;
+	}
+	View{
+		height=16831.6 ft;
+	}
+	View{
+		time=62417.8;
+	}
+	View{
+		height=32589.1 ft;
+		gndlvl=0 ft;
+		time=50055.4;
+		tilt=-12;
+		angle=-15;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -96,15 +115,6 @@ Scene() {
 					albedo=1;
 					Surface{
 						terrain=Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
-					}
-					Sky(0.00205145) {
-						color=Color(0,0.9,0.9);
-						day=24;
-						density=0.2;
-						name="Sky";
-						rseed=1.58657;
-						specular=Color(1,1,1);
-						tilt=10;
 					}
 				}
 			}

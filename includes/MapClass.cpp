@@ -677,27 +677,7 @@ void Map::shadow_normals()
 		Raster.setProgram(Raster.SHADOWS_NORMALS);
 	    npole->render_vertex();
 	}
-
-	/*
-	Raster.surface=1;
-	for(tid=ID0;tid<tids;tid++){
-		tp=Td.properties[tid];
-		Td.tp=tp;
-		if(!visid(tid))
-			continue;
-		//RENDERLIST(NORMAL_LISTS,tid,render_vertex());
-		 npole->render_vertex();
-	}
-	if (waterpass()) {
-		Raster.surface = 2;
-		tid = 0;
-		//setProgram();
-		//RENDERLIST(NORMAL_LISTS,tid,render_vertex());
-		 npole->render_vertex();
-	}
-	*/
 	Render.popmode();
-	//glFlush();
 }
 
 //-------------------------------------------------------------
@@ -707,7 +687,7 @@ void Map::shadow_zvals()
 {
 	make_current();
 
-	GLSLMgr::beginRender();
+	//GLSLMgr::beginRender();
 	//glFlush();
 //#ifndef WINDOWS
 //    if(!mask())
@@ -757,7 +737,7 @@ void Map::shadow_zvals()
 	    npole->render_vertex();
 	}
 
-	//glFlush();
+	glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
 	Render.popmode();
 //	glDrawBuffer(GL_BACK);

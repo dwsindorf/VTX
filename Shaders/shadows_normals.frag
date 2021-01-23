@@ -139,6 +139,11 @@ void main(void) {
     	gl_FragData[0]=vec4(shadow,fview,fview,1);
     else if(shadow_test==2)
     	gl_FragData[0]=vec4(shadow,flag1,fview,1);
+    else if(shadow_test==3){
+    float depth=gl_FragCoord.z*gl_FragCoord.z;
+     	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
+    	gl_FragData[0]=vec4(depth,depth,0,1);
+    }
     else
 #endif
 		gl_FragData[0]=vec4(shadow,0,fview,1);

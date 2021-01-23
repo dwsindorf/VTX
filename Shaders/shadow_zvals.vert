@@ -8,11 +8,11 @@ attribute vec4 Position1;
 #endif
 
 void main(void) {
+    vec4 p=gl_Vertex;
 #if NVALS >0
     Vertex1=Position1;
    
 #ifdef NPZ
-    vec4 p=gl_Vertex;
     SET_ZNOISE(NPZ);
 #endif
 #else

@@ -81,7 +81,12 @@ float corialis(float a){
 
 #define twist(a,b) (corialis(a)+b+reset())
 
-
+float ntest(int index){
+  noise_info info=nvars[index];
+  float f=nvars[index].freq;
+  vec4 P1=noise3D(v1*f);
+  return P1.x;
+}
 // multi-order procedural 3d noise
 vec4 Noise(int index) {
 	noise_info info=nvars[index];

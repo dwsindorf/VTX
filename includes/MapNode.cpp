@@ -2063,13 +2063,18 @@ void MapNode::vertex(MapData*d)
 void MapNode::setVertexAttributes(MapData*d){
 	if(!d)
 		return;
+	double depth = TheScene->vpoint.distance(d->mpoint());
+
 	Point pm=d->mpoint();
 	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
 	// set pm to Vertex1 in shaders
 	// - pm contains just the (rectangularized) phi&theta values of the point
 
-	GLSLMgr::setVertexAttributes(pm,0);
+	GLSLMgr::input_type=GL_TRIANGLES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+
+	GLSLMgr::setVertexAttributes(pm,depth);
 
 }
 
@@ -2127,7 +2132,6 @@ void MapNode::vertexCN(MapData*d)
 //-------------------------------------------------------------
 void MapNode::vertexN(MapData*d)
 {
-
 	setVertexAttributes(surface_data(d));
 
 	Point *p=normal(d);
@@ -2200,11 +2204,8 @@ void MapNode::Svertex(MapData*dn) {
 		g = 0;
 	if (GLSLMgr::CommonID >= 0)
 		glVertexAttrib4d(GLSLMgr::CommonID, ht, g,d->density(), phi);
-	Point pm=d->mpoint();
-	pm=pm.normalize();
-	pm=pm*0.5+0.5;
 
-	GLSLMgr::setVertexAttributes(pm,depth);
+	setVertexAttributes(d);
 
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){

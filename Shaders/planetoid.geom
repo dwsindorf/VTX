@@ -20,7 +20,6 @@ bool newcell=false;
 #define _BUMPS_
 
 varying in vec4 Normal_G[];
-varying in vec4 EyeDirection_G[];
 varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
 #if NVALS >0
@@ -82,7 +81,7 @@ void ProduceVertex(float s, float t){
 		normal.xyz=normalize(normal.xyz-2*gl_NormalMatrix *df);	
 	Normal.xyz=normalize(normal.xyz);
 	
-	EyeDirection=s*(EyeDirection_G[2]-EyeDirection_G[0])+t*(EyeDirection_G[1]-EyeDirection_G[0])+EyeDirection_G[0];
+	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
 #ifdef COLOR
 if(newcell)

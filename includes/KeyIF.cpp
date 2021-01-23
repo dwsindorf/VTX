@@ -117,10 +117,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		 break;
     case KEY_RASTER_SHADOW_MAP:
     	//Raster.shadow_test=Raster.shadow_test?0:1;
-    	if(Raster.shadow_test==0)
-    		Raster.shadow_test=1;
+    	if(Raster.debug_shadows()==0)
+    		Raster.set_debug_shadows(1);
      	else
-     		Raster.shadow_test=0;
+     		Raster.set_debug_shadows(0);
     	cout << "shadow mode="<<Raster.shadow_test<<endl;
         TheScene->set_changed_render();
 

@@ -76,6 +76,8 @@ protected:
 		DOHDR	        = 0x00010000,
 		USE_SHADERS	    = 0x00020000,
 		DRAW_LINES	    = 0x00040000,
+		DEBUG_SHADOWS	= 0x00100000,
+
 		SDEFAULTS       = DPTEST|SOFT_EDGES|BGSHADOWS|MAX_VIEW,
 		NEEDS_AUXBUF    = REFLECTIONS|FOG,
 		NEEDS_PIXBUF    = DOSHADOWS|WATERDEPTH|REFLECTIONS|HAZE|FOG|WATERMOD,
@@ -287,6 +289,9 @@ public:
 
 	int  use_shaders()				{ return options & USE_SHADERS?1:0;}
 	void set_use_shaders(int c)		{ BIT_SET(options,USE_SHADERS,c);}
+
+	int  debug_shadows()			{ return options & DEBUG_SHADOWS?1:0;}
+	void set_debug_shadows(int c)	{ BIT_SET(options,DEBUG_SHADOWS,c);}
 
 	int  textures()				    { return options & RASTTEXS?1:0;}
 	void set_textures(int c)		{ BIT_SET(options,RASTTEXS,c);}
