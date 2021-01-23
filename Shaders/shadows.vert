@@ -1,0 +1,15 @@
+varying vec4 ShadowCoord;
+
+varying vec4 Normal;
+varying vec4 EyeDirection;
+
+uniform mat4 smat;
+
+void main(void) {
+    vec4 VertexPosition=(gl_ModelViewMatrix * gl_Vertex);
+    ShadowCoord=smat * VertexPosition;
+	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex);
+	Normal.xyz = gl_NormalMatrix * gl_Normal;
+	gl_Position = ftransform();	
+}
+
