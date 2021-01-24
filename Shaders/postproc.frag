@@ -138,7 +138,6 @@ void main(void) {
 #endif
 #else
 	gl_FragData[0].rgb=color;
-	gl_FragData[0].rgb=vec3(fcolor2.a,0,0);
 	
 #endif
     gl_FragData[0].a = 1.0;	

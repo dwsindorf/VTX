@@ -284,8 +284,6 @@ void EffectsMgr::setProgram(int type){
 	    }
 		if(do_hdr)
 			sprintf(defs+strlen(defs),"#define HDR\n");
-		//if(effects && (do_edges||do_hdr))
-		//	sprintf(defs+strlen(defs),"#define TWOPASS\n");
     	if(Raster.filter_show())
     		sprintf(defs+strlen(defs),"#define SHOW\n");
 		if(do_edges){
@@ -444,9 +442,6 @@ void EffectsMgr::render_shadows(){
 	int shadowMapHeight = shadow_map_height * shadow_map_ratio;
 	double nscale;
 	int cnt=0,i,start,end,j;
-	//double views=shadow_vsteps;
-
-	//shadow_vsteps=1.0;
 
 	if(jitterTextureId==0)
 		create_jitter_lookup(JITTER_SIZE, 8, 8);	// 8 'estimation' samples, 64 total samples
@@ -473,6 +468,9 @@ void EffectsMgr::render_shadows(){
 
 	bool tmp=Map::use_call_lists;
 	//Map::use_call_lists=false;
+	glUseProgramObjectARB(0); //Using the fixed pipeline to render to the depth buffer
+
+	GLSLMgr::clrBuffers();
 
 	GLenum mrt1[] = {GL_COLOR_ATTACHMENT0_EXT,GL_COLOR_ATTACHMENT1_EXT};
 	GLenum mrt2[] = {GL_COLOR_ATTACHMENT2_EXT,GL_COLOR_ATTACHMENT3_EXT};
@@ -490,6 +488,8 @@ void EffectsMgr::render_shadows(){
 		//cout << shadow_intensity << endl;
 		init_view();
 		j=0;
+		//glEnable(GL_DEPTH_TEST);
+
 		while(more_views()){
 			//GLSLMgr::setFBOWritePass();
 			// set light POV
@@ -500,15 +500,17 @@ void EffectsMgr::render_shadows(){
 			glUseProgramObjectARB(0); //Using the fixed pipeline to render to the depth buffer
 			glViewport(0,0,shadowMapWidth,shadowMapHeight);
 
+			//enableShadowMap(false);
 			Render.set_back();
-
 			GLSLMgr::clrDepthBuffer();
 
 			set_light_view();
 
 		    glPolygonOffset(2.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
+
 			TheScene->shadows_zvals();
+
 			glDisable(GL_POLYGON_OFFSET_FILL);
 
 			// 2. render depth from eye (using shadows shader)
@@ -519,16 +521,18 @@ void EffectsMgr::render_shadows(){
 			TheScene->project();
 
 			GLSLMgr::setFBOWritePass();
+
 			enableShadowMap(true);
 
 			glDrawBuffers(1,mrt1);
 
 			TheScene->shadows_normals();
-			//glEnable(GL_DEPTH_TEST);
+
 			// 3. copy shadow view intensity to accumulation buffer
 			//    FBOTex1->FBOTex3
 
 			glDrawBuffers(1,mrt2);
+
 			enableShadowMap(false);
 			setProgram(SHADOWS_FINISH);
 			GLSLMgr::drawFrameBuffer();
@@ -547,7 +551,7 @@ void EffectsMgr::render_shadows(){
 	//glEnable(GL_BLEND);
 
 	//shadow_vsteps=views;
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	GLSLMgr::clrBuffers();
 	Map::use_call_lists=tmp;
 	//set_shadows_mode(0);
 

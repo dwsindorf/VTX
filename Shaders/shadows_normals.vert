@@ -26,7 +26,7 @@ void main(void) {
 #ifdef NPZ
     SET_ZNOISE(NPZ);
     df=gv.yzw;
-    Normal.xyz=normalize(Normal.xyz-0.1*gl_NormalMatrix *df);
+    Normal.xyz=normalize(Normal.xyz-0.2*gl_NormalMatrix *df);
 #endif
     vec4 VertexPosition=(gl_ModelViewMatrix * p);
     ShadowCoord=smat * VertexPosition;

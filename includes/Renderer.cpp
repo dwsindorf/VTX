@@ -318,6 +318,7 @@ void Renderer::reset_view()
 //-------------------------------------------------------------
 void Renderer::erase()
 {
+	GLSLMgr::clrFBODepthBuffers();
  	glClearColor((float)backcolor.red(),
  				 (float)backcolor.green(),
  				 (float)backcolor.blue(),

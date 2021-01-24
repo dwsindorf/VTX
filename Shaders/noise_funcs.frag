@@ -81,12 +81,6 @@ float corialis(float a){
 
 #define twist(a,b) (corialis(a)+b+reset())
 
-float ntest(int index){
-  noise_info info=nvars[index];
-  float f=nvars[index].freq;
-  vec4 P1=noise3D(v1*f);
-  return P1.x;
-}
 // multi-order procedural 3d noise
 vec4 Noise(int index) {
 	noise_info info=nvars[index];
@@ -140,7 +134,7 @@ vec4 Noise(int index) {
 		if(info.absval) {
 			if(nvec.x<0.0)
 			    nvec=-nvec;
-			if(rmin>0.0 && nvec.x<=rmin){
+			if(rmin>0.0 && nvec.x<rmin){
 		    	x=nvec.x/rmin;
 			    y=DCURVE1(x);
 			    nvec.yzw*=y;
@@ -153,7 +147,7 @@ vec4 Noise(int index) {
 		}
 		else{
 			nvec.x=VMAX+nvec.x;
-		    if(rmin>0.0 && nvec.x<=rmin){
+		    if(rmin>0.0 && nvec.x<rmin){
 		    	x=nvec.x/rmin;
 			    y=DCURVE1(x);
 			    nvec.yzw*=y;
@@ -179,10 +173,13 @@ vec4 Noise(int index) {
 		else
 		    result.x*=abs(result.x);
 	}
+	float offset=noise_fade*info.offset;
+	//if(info.absval)
+	//	offset+=VMAX;
 	if(info.invert)
 		result=-result;
 	result*=noise_fade*info.ampl;
-	result.x+=noise_fade*info.offset;
+	result.x+=offset;
 	return result;	
 }
 

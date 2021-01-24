@@ -802,6 +802,7 @@ void GLSLMgr::clrFBODepthBuffers(){
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
 	float v0[1]={1.0};
 	glClearBufferfv(GL_DEPTH,0,v0);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 }
 void GLSLMgr::clrFBOColorBuffer(int i){

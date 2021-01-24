@@ -58,6 +58,7 @@ void main(void) {
 #ifdef HAZE
 		float d=lerp(depth,0.0,haze_zfar,0.0,1.0);
 		float h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
+		
 #endif
 #ifdef WATER
 		if(TYPE<1.8){ // TYPE=1 for water

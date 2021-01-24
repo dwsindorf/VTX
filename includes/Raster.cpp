@@ -2085,7 +2085,6 @@ void RasterMgr::render()
 		render_image();
 		getAuxImage(0);
 		getZbuf(1);  // terrain surface
-
 		surface=2;
 		render_image();
 		getAuxImage(0);
