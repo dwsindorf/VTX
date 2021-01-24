@@ -2794,7 +2794,7 @@ int Planetoid::shadow_pass()
 		return 0;
 	if(TheScene->viewobj==this)
 		select_pass(FGS);
-	else if(type()==ID_MOON){
+	else if(type()==ID_MOON || type()==ID_PLANET){
 		Planetoid *parent=(Planetoid*)getParent();
 		if(TheScene->viewobj==parent){
 			//if(TheScene->radius>0.5*orbit_radius)

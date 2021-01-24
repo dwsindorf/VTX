@@ -53,31 +53,7 @@ Scene() {
 		angle=-17;
 	}
 	View{
-		height=8326.87 ft;
-	}
-	View{
-		phi=-37.7106;
-		theta=1.33759;
-		height=330.739 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=2436.17 ft;
-		heading=9;
-	}
-	View{
-		height=20463.4 ft;
-		heading=28;
-	}
-	View{
-		height=28819.3 ft;
-		time=44615.8;
-		tilt=-17;
-		angle=6;
-	}
-	View{
-		height=37687 ft;
+		height=9070.62 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -108,19 +84,27 @@ Scene() {
 					}
 				}
 				Planet(0.002,100) {
-					ambient=Color(1,1,1,0.07);
+					ambient=Color(1,1,1,0.04);
 					day=24;
 					diffuse=Color(1,1,1,0.85);
-					hscale=0.005;
-					shadow=Color(0,0,0);
-					shine=7.77115;
-					specular=Color(1,1,1,0.8);
+					hscale=0.02;
+					shine=5.56269;
+					specular=Color(1,1,1,0.27);
 					tilt=10;
 					year=100;
 					albedo=1;
 					Surface{
 						terrain=water(0)
-								Z(noise(GRADIENT|FS|NABS|SCALE,8.2,6.3,-0.73,0.2,2,1,2,0,0));
+								Z(noise(GRADIENT|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+					}
+					Sky(0.00205145) {
+						color=Color(0,0.9,0.9);
+						day=24;
+						density=0.2;
+						name="Sky";
+						rseed=1.58657;
+						specular=Color(1,1,1);
+						tilt=10;
 					}
 				}
 			}

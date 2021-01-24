@@ -13,6 +13,11 @@
 extern double Theta, Phi, Height,Rscale;
 extern Point MapPt;
 
+
+#define VCLIP     // enable viewobj clip  test
+#define PCLIP     // enable parent sphere clip  test
+#define ZCLIP     // enable dmax clip  test
+
 //static double noise3(double vec[3]){
 //	return Perlin::noise3(vec);
 //}
@@ -812,10 +817,6 @@ void MapNode::test_backfacing()
 	if((front&&(dp>=0)) || (!front && (dp<0)))
 		set_backfacing(CBF);
 }
-
-#define VCLIP     // enable viewobj clip  test
-#define PCLIP     // enable parent sphere clip  test
-#define ZCLIP     // enable dmax clip  test
 //-------------------------------------------------------------
 // MapNode::clipchk()	return 1 if vertex is clipped by the current
 //						view window, else return 0
