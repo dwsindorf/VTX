@@ -4,7 +4,11 @@
 
 #if NVALS >0
 attribute vec4 Position1;
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
+#endif
+
+#ifdef TESSLVL
+#include "geometry_funcs.h"
 #endif
 
 void main(void) {

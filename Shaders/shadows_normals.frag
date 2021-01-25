@@ -132,8 +132,8 @@ void main(void) {
 		size-=1;
 		shadow /= size*size ;
 #endif
-		float dp=lerp(LdotN,-0.3,0,0.0,1);
-		shadow*=dp;
+		//float dp=lerp(LdotN,-0.3,0,0.0,1);
+		//shadow*=dp;
 		shadow=clamp(shadow,0.0,1.0);
 #ifdef LDRTEST
 	}

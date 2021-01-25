@@ -92,7 +92,7 @@ Scene() {
 					albedo=1;
 					Surface{
 						terrain=water(0)
-								Z(noise(GRADIENT|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+								Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}
 					Sky(0.00205145) {
 						color=Color(0,0.9,0.9);

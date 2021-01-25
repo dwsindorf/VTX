@@ -191,6 +191,7 @@ public:
 	double  gndlvl;   // ground ht above "sea level"
 	int     color_bits;
 	double  cellsize;	// cell size multiplier
+	double  tesslevel;	// cell size multiplier
 	double	resolution; // cell size multiplier
 	int     detail_direction;
 	double  time;		// current time

@@ -1,7 +1,7 @@
 
 #include "clouds.lighting.frag"
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
 
 //########## 3D noise section #########################

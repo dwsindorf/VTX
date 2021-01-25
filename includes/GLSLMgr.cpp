@@ -727,6 +727,7 @@ void GLSLMgr::setProgram(){
 	//position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
+
 }
 
 //-------------------------------------------------------------

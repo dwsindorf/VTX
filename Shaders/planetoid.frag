@@ -138,9 +138,10 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 //########## 3D noise section #########################
 
 #define _BUMPS_
+#define _NORMALS
 
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
 
 // ########## Texture section #########################

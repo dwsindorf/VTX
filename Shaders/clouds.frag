@@ -3,7 +3,7 @@
 // ########## begin clouds.frag #########################
 
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
 uniform sampler2D sprites;
 varying vec4 CloudVars;

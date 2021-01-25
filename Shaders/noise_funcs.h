@@ -1,4 +1,5 @@
-// ########## begin noise_funcs.frag #########################
+
+// ########## begin noise_funcs.h #########################
 uniform sampler3D noise3DTexture;
 uniform float fmax;
 
@@ -24,7 +25,7 @@ float noise3D(vec3 p) {
 #endif
 #else
 #define FSCALE 1.0
-#include "noise.frag"
+#include "noise.h"
 #endif
 
 #define GCURVE1(t) (0.5*t*t*(3.0-t))
@@ -55,6 +56,7 @@ struct noise_info {
 };
 
 uniform noise_info nvars[NVALS];
+uniform float rscale;
 
 #define VMAX 0.5
 
@@ -228,14 +230,41 @@ float Noise1D(int i) {
  	g=gv.x;
 #endif
 
+#ifdef _NORMALS_
 #define SET_ZNOISE(func) \
-    float amp=1.0e-6; \
-    SET_NOISE(NPZ); \
-    g*=4.0; \
+	v1= Vertex1.xyz; \
+ 	gv = func; \
+ 	g= gv.x; \
+ 	if(lighting) { \
+ 	    float delta=1e-5; \
+ 	    float nbamp = 5e-4/delta; \
+		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
+ 		gv = func; \
+		df.x =gv.x; \
+		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
+ 		gv = func; \
+		df.y =gv.x; \
+		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
+ 		gv = func; \
+		df.z =gv.x; \
+		df = (df-vec3(g,g,g))*(nbamp); \
+    } \
   	vec3 v=p.xyz+pv; \
 	v=normalize(v)*g; \
-	p.xyz+=amp*v;	\
+	p.xyz+=v;	\
+	gl_Position=gl_ModelViewProjectionMatrix * p; \
+	vec3 normal=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
+	Normal.xyz=normalize(normal.xyz);
+#else
+#define SET_ZNOISE(func) \
+	v1= Vertex1.xyz; \
+ 	gv = func; \
+ 	g=gv.x; \
+ 	vec3 v=p.xyz+pv; \
+	v=normalize(v)*g; \
+	p.xyz+=v;	\
 	gl_Position=gl_ModelViewProjectionMatrix * p
+#endif
 
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
@@ -250,4 +279,4 @@ float Noise1D(int i) {
     noise_fade=0.0; \
 	gv=vec4(0.0);
 
-// ########## end noise_funcs.frag #########################
+// ########## end noise_funcs.h #########################

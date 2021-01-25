@@ -4,7 +4,7 @@
 #define _BUMPS_
 
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
 
 // ########## Texture section #########################

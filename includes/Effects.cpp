@@ -160,6 +160,8 @@ void EffectsMgr::setProgram(int type){
 	    }
 		else
 		    GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
+		vars.newBoolVar("lighting",false);
+
 		break;
 
 	case SHADOWS_NORMALS:

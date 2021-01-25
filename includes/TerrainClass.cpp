@@ -1158,7 +1158,8 @@ bool TNnoise::setProgram(){
 	double geom_scale=1;
 
 	if(TheMap && (type & GEOM))
-		geom_scale=TheMap->hscale*500;
+	//	geom_scale=TheMap->hscale*500;
+	    geom_scale=Rscale;
 
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
@@ -1196,6 +1197,8 @@ bool TNnoise::setProgram(){
 	printFvar(program,"delta",nid);
 */
 #endif
+	vars.newFloatVar("rscale",Rscale);
+
 	vars.setProgram(program);
 	vars.loadVars();
 	return true;

@@ -226,7 +226,9 @@ double cell_size(int i)
 LinkedList<Triangle*> Map::triangle_list;
 bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
-int Map::tesslevel=2;
+int Map::tesslevel=4;
+int Map::maxtesslevel=5;
+
 Map::Map(double r)
 {
 	static int init_flag=1;
@@ -935,8 +937,9 @@ int Map::tessLevel(){
 	//  - looks like some vertexes not being produced
 	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
 
-	tesslevel=floor(lerp(resolution,0.0,15,0,5)+0.5);
+	//tesslevel=4;//floor(lerp(resolution,0.0,15,0,5)+0.5);
 	tesslevel=tesslevel<1?1:tesslevel;
+	tesslevel>maxtesslevel?maxtesslevel:tesslevel;
 	GLSLMgr::setTessLevel(tesslevel);
 	return tesslevel;
 }
@@ -1035,7 +1038,6 @@ bool Map::setProgram(){
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	vars.newIntVar("tessLevel",tesslevel);
-	vars.newFloatVar("rscale",Rscale/5);
 
 	//cout<<Rscale<<endl;
 

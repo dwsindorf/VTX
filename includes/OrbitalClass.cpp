@@ -2608,6 +2608,8 @@ void Planetoid::get_vars()
 // Planetoid::setProgram() set shader program;
 //-------------------------------------------------------------
 bool Planetoid::setProgram(){
+	TerrainProperties *tp=map->tp;
+
 	char defs[512]="";
 	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	if(Raster.shadows()&&(Raster.farview()||TheScene->viewobj==this))
@@ -2622,8 +2624,10 @@ bool Planetoid::setProgram(){
 	    sprintf(defs+strlen(defs),"#define TEST2 %d\n",test2);
 	if(TheScene->viewobj==this)
 	    sprintf(defs+strlen(defs),"#define VIEWOBJ\n");
+	if(Render.geometry() && tp->has_geometry())
+		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",Map::tesslevel);
 
-	TerrainProperties *tp=map->tp;
+
 	double twilite_min=-0.3;
 	double twilite_max=0.4;
 	double twilite_dph=0;
@@ -2648,7 +2652,8 @@ bool Planetoid::setProgram(){
 	if(Render.geometry() && tp->has_geometry()){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-        tl=TheMap->tessLevel();
+		//TheMap->setGeometryDefs();
+       // tl=TheMap->tessLevel();
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
 	}
 	else{
@@ -2681,7 +2686,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("hdr_min",Raster.hdr_min);
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
-	vars.newIntVar("tessLevel",tl);
+	//vars.newIntVar("tessLevel",tl);
 	Point pv=TheScene->xpoint;
 	//pv=pv.mm(TheScene->viewMatrix);
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);

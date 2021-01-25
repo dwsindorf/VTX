@@ -30,6 +30,8 @@ protected:
 	SliderCtrl *RateSlider;
 	SliderCtrl *FOVSlider;
 	SliderCtrl *LODSlider;
+	SliderCtrl *GeomSlider;
+
 	wxRadioBox *drawmode;
 	wxRadioBox *lightmode;
 	wxRadioBox *filtermode;
@@ -42,7 +44,7 @@ protected:
 	wxCheckBox *m_hdr;
 	wxCheckBox *m_aniso;
 	wxCheckBox *m_shadows;
-	wxCheckBox *m_geometry;
+	wxCheckBox *m_water;
 
 	wxCheckBox *m_occlusion;
 	wxCheckBox *m_clip;
@@ -57,6 +59,8 @@ protected:
 	SliderCtrl *ShadowResSlider;
 	SliderCtrl *ShadowFovSlider;
 	SliderCtrl *ShadowDovSlider;
+
+	wxChoice   *m_tesslevel;
 
 
 public:
@@ -99,6 +103,7 @@ public:
 	void getTime();
 	void setRate();
 	void getRate();
+	void OnTesslevel(wxCommandEvent& event);
     void OnDrawMode(wxCommandEvent& event);
     void OnUpdateDrawMode(wxUpdateUIEvent& event);
 
@@ -180,8 +185,8 @@ public:
     void OnUpdateShowMask(wxUpdateUIEvent& event) {
     	event.Check(Raster.filter_show());
     }
-    void OnUpdateGeometry(wxUpdateUIEvent& event) {
-    	event.Check(Render.geometry());
+    void OnUpdateWater(wxUpdateUIEvent& event) {
+    	event.Check(Render.show_water());
     }
     void OnUpdateHDR(wxUpdateUIEvent& event) {
     	event.Check(Raster.hdr());
@@ -224,13 +229,9 @@ public:
         Raster.set_shadows(event.IsChecked());
      	TheScene->set_changed_render();
     }
-    void OnGeometry(wxCommandEvent& event){
-        Render.set_geometry(event.IsChecked());
-        if(event.IsChecked())
-        	cout << "Geometry shader enabled"<<endl;
-        else
-        	cout << "Geometry shader disabled"<<endl;
-     	TheScene->set_changed_render();
+    void OnWater(wxCommandEvent& event){
+        Render.set_water_show(event.IsChecked());
+      	TheScene->set_changed_render();
     }
     void OnAniso(wxCommandEvent& event){
         Raster.set_filter_aniso(event.IsChecked());
@@ -270,6 +271,7 @@ public:
     DEFINE_SLIDER_VAR_EVENTS(HDRMin,Raster.hdr_min)
     DEFINE_SLIDER_VAR_EVENTS(ShadowFov,Raster.shadow_fov)
     DEFINE_SLIDER_VAR_EVENTS(ShadowDov,Raster.shadow_dov)
+
 
 	DEFINE_SLIDER_EVENTS(ColorMip)
 	DEFINE_SLIDER_EVENTS(TexMip)

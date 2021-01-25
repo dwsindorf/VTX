@@ -18,6 +18,7 @@ bool newcell=false;
 #define GEOM
 
 #define _BUMPS_
+#define _NORMALS_
 
 varying in vec4 Normal_G[];
 varying in vec4 Constants_G[];
@@ -46,8 +47,13 @@ float delta=0;
 #define RT2		1.414213562373
 
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
+
+#ifdef TESSLVL
+#include "geometry_funcs.h"
+#endif
+
 //######################################################
 
 varying in vec4 Attributes_G[][2];
@@ -58,7 +64,6 @@ varying out vec4 Normal;
 varying out vec4 EyeDirection;
 varying out vec4 Constants;
 
-uniform int  tessLevel;
 uniform vec3 center;
 uniform vec3 pv;
 
@@ -71,16 +76,12 @@ void ProduceVertex(float s, float t){
 	// ---- Alternative calculation from gl_PositionIn ------------
 	//Vertex1.xyz=normalize(p.xyz+pv); 
 	//Vertex1.xyz=Vertex1.xyz*0.5+0.5;
-	vec4 normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];  // ave normal
+	Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];  // ave normal
 	vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 #ifdef NPZ
     SET_ZNOISE(NPZ);	
     HT+=g;
-#endif	
-	if (lighting)
-		normal.xyz=normalize(normal.xyz-2*gl_NormalMatrix *df);	
-	Normal.xyz=normalize(normal.xyz);
-	
+#endif		
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
 #ifdef COLOR
@@ -99,32 +100,14 @@ else
 		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];
 	EmitVertex();
 }
-// #vertexes = (tessLevel+1)*(tessLevel+2)
+
 void main(void) {
-	int numLayers = tessLevel;
-	float dt = 1.0 / float( numLayers );
-	float t_top = 1.0;
-	
-	for( int it = 0; it < numLayers; it++ ){
-		float t_bot = t_top - dt;
-		float smax_top = 1.0 - t_top;
-		float smax_bot = 1.0 - t_bot;
-		int nums = it + 1;
-		float ds_top = smax_top / float(nums - 1 );
-		float ds_bot = smax_bot / float(nums);
-		float s_top = 0.0;
-		float s_bot = 0.0;
-		int j=0;
-		for( int is = 0; is < nums; is++ ,j++)
-		{
-			ProduceVertex(s_bot, t_bot);
-			ProduceVertex(s_top, t_top);
-			s_top += ds_top;
-			s_bot += ds_bot;
-		}
-		ProduceVertex(s_bot, t_bot);
-		EndPrimitive();
-		t_top = t_bot;
-		t_bot -= dt;
-	}
+#if TESSLVL >0	
+	PRODUCE_VERTICES;
+#else
+	ProduceVertex(0);
+	ProduceVertex(1);
+	ProduceVertex(2);
+#endif
+
 }

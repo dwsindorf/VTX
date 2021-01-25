@@ -93,6 +93,8 @@ public:
 	static bool use_call_lists;
 	static bool use_triangle_lists;
 	static int tesslevel;
+	static int maxtesslevel;
+
 
 	void enablelists(bool s);
 

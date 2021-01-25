@@ -21,7 +21,7 @@ uniform bool top;
 //########## 3D noise section #########################
 
 #if NVALS >0
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
 #endif
 
 // ########## Texture section #########################

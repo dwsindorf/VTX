@@ -1,9 +1,15 @@
 #include "utils.h"
 #include "common.h"
 
+//#define _NORMALS
+
 #if NVALS >0
 attribute vec4 Position1;
-#include "noise_funcs.frag"
+#include "noise_funcs.h"
+#endif
+
+#ifdef TESSLVL
+#include "geometry_funcs.h"
 #endif
 
 varying vec4 ShadowCoord;
@@ -20,13 +26,11 @@ void main(void) {
     
 #if NVALS >0
     Vertex1=Position1; 
-    //Vertex1.xyz=normalize(p.xyz+pv); 
-	//Vertex1.xyz=Vertex1.xyz*0.5+0.5;
     
 #ifdef NPZ
     SET_ZNOISE(NPZ);
     df=gv.yzw;
-    Normal.xyz=normalize(Normal.xyz-0.2*gl_NormalMatrix *df);
+    //Normal.xyz=normalize(Normal.xyz-5e5*gl_NormalMatrix *df);
 #endif
     vec4 VertexPosition=(gl_ModelViewMatrix * p);
     ShadowCoord=smat * VertexPosition;

@@ -42,7 +42,7 @@ vec4 setLighting(vec4 BaseColor, vec3 n) {
    return BaseColor;
 }
 #if NVALS >0
-#include "noise_funcs.frag"Color.a
+#include "noise_funcs.h"
 #endif
 
 // ########## Texture section #########################

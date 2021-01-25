@@ -1,8 +1,9 @@
-// ########## begin noise.frag #########################
+// ########## begin noise.h #########################
 
 uniform sampler2D permTexture;
 uniform sampler2D gradTexture;
 
+//#define VNOISE
 
 /*
  * To create offsets of one texel and one half texel in the
@@ -285,4 +286,4 @@ vec4 voronoi3d(const in vec3 x) {
 
   return vec4(2*(res-0.5),0,0);
 }
-// ########## end noise.frag #########################
+// ########## end noise.h #########################

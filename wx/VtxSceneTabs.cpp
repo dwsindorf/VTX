@@ -1,5 +1,6 @@
 
 #include "VtxSceneTabs.h"
+#include "MapClass.h"
 #include <GLSLMgr.h>
 
 //########################### VtxSceneTabs Class ########################
@@ -23,6 +24,7 @@ enum {
     ID_FOV_TEXT,
     ID_LOD_SLDR,
     ID_LOD_TEXT,
+    ID_TESSLEVEL,
     ID_FILTER_MODE,
     ID_AVE_ENABLE,
     ID_FRONT_ENABLE,
@@ -57,7 +59,7 @@ enum {
     ID_SHADOW_FOV_TEXT,
     ID_SHADOW_DOV_SLDR,
     ID_SHADOW_DOV_TEXT,
-    ID_GEOMETRY,
+    ID_SHOW_WATER,
     ID_ADAPT_OCCLUSION,
     ID_ADAPT_CURVATURE,
     ID_ADAPT_BACKFACING,
@@ -105,8 +107,8 @@ EVT_UPDATE_UI(ID_AA_ENABLE, VtxSceneTabs::OnUpdateAAEnable)
 EVT_CHECKBOX(ID_AVE_ENABLE,VtxSceneTabs::OnAveEnable)
 EVT_UPDATE_UI(ID_AVE_ENABLE, VtxSceneTabs::OnUpdateAveEnable)
 
-EVT_CHECKBOX(ID_GEOMETRY,VtxSceneTabs::OnGeometry)
-EVT_UPDATE_UI(ID_GEOMETRY, VtxSceneTabs::OnUpdateGeometry)
+EVT_CHECKBOX(ID_WATER,VtxSceneTabs::OnWater)
+EVT_UPDATE_UI(ID_WATER, VtxSceneTabs::OnUpdateWater)
 
 EVT_CHECKBOX(ID_ANISO,VtxSceneTabs::OnAniso)
 EVT_UPDATE_UI(ID_ANISO, VtxSceneTabs::OnUpdateAniso)
@@ -146,6 +148,9 @@ EVT_MENU(OBJ_DELETE,VtxSceneTabs::OnDelete)
 EVT_CHOICE(ID_TIME_SCALE, VtxSceneTabs::OnTimeScale)
 
 EVT_CHOICE(ID_RATE_SCALE, VtxSceneTabs::OnRateScale)
+
+EVT_CHOICE(ID_TESSLEVEL, VtxSceneTabs::OnTesslevel)
+
 
 SET_SLIDER_EVENTS(TEX_MIP,VtxSceneTabs,TexMip)
 SET_SLIDER_EVENTS(COLOR_MIP,VtxSceneTabs,ColorMip)
@@ -312,9 +317,9 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	m_shadows->SetToolTip("Enable shadows");
 	check_options->Add(m_shadows,0,wxALIGN_LEFT|wxALL,1);
 
-	m_geometry=new wxCheckBox(panel, ID_GEOMETRY, "Geometry");
-	m_geometry->SetToolTip("Enable render pass geometry (tesselation)");
-	check_options->Add(m_geometry,0,wxALIGN_LEFT|wxALL,1);
+	m_water=new wxCheckBox(panel, ID_SHOW_WATER, "Water");
+	m_water->SetToolTip("Enable water");
+	check_options->Add(m_water,0,wxALIGN_LEFT|wxALL,1);
 
     boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
     check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
@@ -385,13 +390,23 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
     wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
 
-	wxBoxSizer* detail_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Detail"));
+	wxBoxSizer* detail_ctrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Detail"));
 
-	LODSlider=new SliderCtrl(panel,ID_LOD_SLDR,"CellSize",LABEL, VALUE,SLIDER);
+	LODSlider=new SliderCtrl(panel,ID_LOD_SLDR,"CellSize",LABEL, VALUE,170);
 	LODSlider->setRange(1,10);
 
-	detail_ctrls->Add(LODSlider->getSizer());
+	detail_ctrls->Add(LODSlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
 	//LODSlider->setRange(20,75);
+
+	wxStaticText *lbl=new wxStaticText(panel,-1,"Geometry Level",wxDefaultPosition,wxSize(-1,-1));
+	detail_ctrls->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,5);
+
+	wxString offsets[]={"1","2","3","4","5","6"};
+
+	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(-1,-1),Map::maxtesslevel, offsets);
+	m_tesslevel->SetSelection(0);
+
+	detail_ctrls->Add(m_tesslevel,0,wxALIGN_LEFT|wxALL,5);
 
 	detail_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(detail_ctrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -421,8 +436,6 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
     boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
     check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-
-
 }
 
 void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
@@ -569,6 +582,10 @@ void VtxSceneTabs::OnUpdateQuality(wxUpdateUIEvent& event){
 	int mode=TheScene->quality;
 	quality->SetSelection(mode);
 }
+void VtxSceneTabs::OnTesslevel(wxCommandEvent& event){
+	Map::tesslevel=m_tesslevel->GetSelection()+1;
+	TheScene->set_changed_render();
+}
 
 void VtxSceneTabs::setObjAttributes(){
 	Scene *obj=object();
@@ -576,6 +593,8 @@ void VtxSceneTabs::setObjAttributes(){
 	obj->color_mip=ColorMipSlider->getValue();
 	obj->bump_mip=BumpMipSlider->getValue();
 	obj->freq_mip=FreqMipSlider->getValue();
+	Map::tesslevel=m_tesslevel->GetSelection()+1;
+
 	TheScene->set_changed_render();
 }
 void VtxSceneTabs::updateControls(){
@@ -599,7 +618,8 @@ void VtxSceneTabs::updateControls(){
 	m_ave_check->SetValue(Render.avenorms());
 	m_hdr->SetValue(Raster.hdr());
 	m_shadows->SetValue(Raster.shadows());
-	m_geometry->SetValue(Render.geometry());
+	m_water->SetValue(Render.show_water());
+	m_tesslevel->SetSelection(Map::tesslevel-1);
 
 	m_occlusion->SetValue(Adapt.overlap_test());
 	m_clip->SetValue(Adapt.clip_test());
