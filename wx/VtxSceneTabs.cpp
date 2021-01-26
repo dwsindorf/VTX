@@ -583,7 +583,7 @@ void VtxSceneTabs::OnUpdateQuality(wxUpdateUIEvent& event){
 	quality->SetSelection(mode);
 }
 void VtxSceneTabs::OnTesslevel(wxCommandEvent& event){
-	Map::tesslevel=m_tesslevel->GetSelection()+1;
+	Map::setTessLevel(m_tesslevel->GetSelection()+1);
 	TheScene->set_changed_render();
 }
 
@@ -593,7 +593,7 @@ void VtxSceneTabs::setObjAttributes(){
 	obj->color_mip=ColorMipSlider->getValue();
 	obj->bump_mip=BumpMipSlider->getValue();
 	obj->freq_mip=FreqMipSlider->getValue();
-	Map::tesslevel=m_tesslevel->GetSelection()+1;
+	Map::setTessLevel(m_tesslevel->GetSelection()+1);
 
 	TheScene->set_changed_render();
 }
@@ -619,7 +619,7 @@ void VtxSceneTabs::updateControls(){
 	m_hdr->SetValue(Raster.hdr());
 	m_shadows->SetValue(Raster.shadows());
 	m_water->SetValue(Render.show_water());
-	m_tesslevel->SetSelection(Map::tesslevel-1);
+	m_tesslevel->SetSelection(Map::tessLevel()-1);
 
 	m_occlusion->SetValue(Adapt.overlap_test());
 	m_clip->SetValue(Adapt.clip_test());

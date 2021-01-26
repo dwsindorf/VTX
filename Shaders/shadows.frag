@@ -44,6 +44,13 @@ uniform int light_index;
 #endif
 
 void main(void) {
+#ifdef SHADOW_TEST
+   if(shadow_test==3){
+        float d=gl_FragCoord.z;
+        gl_FragData[0]=vec4(pow(d,2),0,0,1);
+        return;
+    }
+#endif
  	float shadow = 0.0;
 	float x,y;
 	int i,j;
@@ -80,8 +87,10 @@ void main(void) {
 	else{
 #endif
 	    flag2=0;
+#ifdef _NORMALS_
 		vec3 normal  = normalize(Normal.xyz);
 		float LdotN  = dot(light,normal);
+#endif
 #ifdef JITTER
 	    vec3 jcoord=vec3(gl_FragCoord.xy,0);
 #ifdef JITTER_TEST
@@ -125,8 +134,10 @@ void main(void) {
 		size-=1;
 		shadow /= size*size ;
 #endif
+#ifdef _NORMALS_
 		float dp=lerp(LdotN,-0.3,0,0.0,1);
 		shadow*=dp;
+#endif
 		shadow=clamp(shadow,0.0,1.0);
 #ifdef LDRTEST
 	}
@@ -141,7 +152,7 @@ void main(void) {
     	gl_FragData[0]=vec4(shadow,flag1,fview,1);
     else
 #endif
-		gl_FragData[0]=vec4(shadow,0,fview,1);
+	   gl_FragData[0]=vec4(shadow,0,fview,1);
     	   
 }
 

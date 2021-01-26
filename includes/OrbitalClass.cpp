@@ -2625,7 +2625,7 @@ bool Planetoid::setProgram(){
 	if(TheScene->viewobj==this)
 	    sprintf(defs+strlen(defs),"#define VIEWOBJ\n");
 	if(Render.geometry() && tp->has_geometry())
-		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",Map::tesslevel);
+		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",Map::tessLevel());
 
 
 	double twilite_min=-0.3;

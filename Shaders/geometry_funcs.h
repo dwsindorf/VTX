@@ -31,7 +31,7 @@
  	gv = func; \
  	g= gv.x; \
  	if(lighting) { \
- 	    float delta=1e-5; \
+ 	    float delta=2e-6; \
  	    float nbamp = 5e-4/delta; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
  		gv = func; \

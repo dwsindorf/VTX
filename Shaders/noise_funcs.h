@@ -230,42 +230,6 @@ float Noise1D(int i) {
  	g=gv.x;
 #endif
 
-#ifdef _NORMALS_
-#define SET_ZNOISE(func) \
-	v1= Vertex1.xyz; \
- 	gv = func; \
- 	g= gv.x; \
- 	if(lighting) { \
- 	    float delta=1e-5; \
- 	    float nbamp = 5e-4/delta; \
-		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
- 		gv = func; \
-		df.x =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
- 		gv = func; \
-		df.y =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
- 		gv = func; \
-		df.z =gv.x; \
-		df = (df-vec3(g,g,g))*(nbamp); \
-    } \
-  	vec3 v=p.xyz+pv; \
-	v=normalize(v)*g; \
-	p.xyz+=v;	\
-	gl_Position=gl_ModelViewProjectionMatrix * p; \
-	vec3 normal=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
-	Normal.xyz=normalize(normal.xyz);
-#else
-#define SET_ZNOISE(func) \
-	v1= Vertex1.xyz; \
- 	gv = func; \
- 	g=gv.x; \
- 	vec3 v=p.xyz+pv; \
-	v=normalize(v)*g; \
-	p.xyz+=v;	\
-	gl_Position=gl_ModelViewProjectionMatrix * p
-#endif
-
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
     vec4 ncolor=func; \

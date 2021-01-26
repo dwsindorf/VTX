@@ -63,6 +63,8 @@ protected:
 	MapNode *current;
 	int mcount,mcreated,mdeleted;
 
+	static int tesslevel;
+
 	unsigned int grid_;
 	void render_ids_();
 	void reset();
@@ -92,7 +94,6 @@ public:
 
 	static bool use_call_lists;
 	static bool use_triangle_lists;
-	static int tesslevel;
 	static int maxtesslevel;
 
 
@@ -253,7 +254,8 @@ public:
 	void 			invalidate_normals();
 	void 			validate_normals();
 	bool 			setProgram();
-	int             tessLevel();
+	static int      tessLevel();
+	static int      setTessLevel(int n);
 	bool            setGeometryDefs();
 	bool            setGeometryPrgm();
 	bool            hasGeometry();

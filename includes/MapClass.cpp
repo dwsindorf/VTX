@@ -676,7 +676,10 @@ void Map::shadow_normals()
 	for(tid=start;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
-		Raster.setProgram(Raster.SHADOWS_NORMALS);
+		if(!visid(tid))
+			continue;
+
+		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
 	}
 	Render.popmode();
@@ -733,6 +736,9 @@ void Map::shadow_zvals()
 	for(tid=start;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
+		if(!visid(tid))
+			continue;
+
 		Raster.setProgram(Raster.SHADOW_ZVALS);
 	    npole->render_vertex();
 	}
@@ -928,16 +934,19 @@ void Map::render_solid()
 // Map::tessLevel set geometry (number of vertexes generated)
 //-------------------------------------------------------------
 int Map::tessLevel(){
-	double resolution=TheMap->resolution;
-	// increase vertexes for lower quality settings
-	//  - generate fewer at high resolutions where triangles are smaller
-	//  - number of vertexes/triangle produced = (tesslevel+1)*(tesslevel+3)
-	//  - at highest res (tesslevel=1 3 vertexes) at lowest res (tesslevel=5 48 vertexes )
 	// note: for some reason tesslevel>5 can result in holes
 	//  - looks like some vertexes not being produced
 	//  - can depend on whether texture, color etc also present (max varying vecs exceeded?)
+	tesslevel=tesslevel<1?1:tesslevel;
+	tesslevel>maxtesslevel?maxtesslevel:tesslevel;
+	return tesslevel;
+}
 
-	//tesslevel=4;//floor(lerp(resolution,0.0,15,0,5)+0.5);
+//-------------------------------------------------------------
+// Map::tessLevel set geometry (number of vertexes generated)
+//-------------------------------------------------------------
+int Map::setTessLevel(int n){
+	tesslevel=n;
 	tesslevel=tesslevel<1?1:tesslevel;
 	tesslevel>maxtesslevel?maxtesslevel:tesslevel;
 	GLSLMgr::setTessLevel(tesslevel);

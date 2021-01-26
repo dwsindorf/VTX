@@ -5,6 +5,7 @@
 #include <GLSLMgr.h>
 #include <Effects.h>
 #include "FileUtil.h"
+#include "MapClass.h"
 
 extern Point MapPt;
 
@@ -428,6 +429,7 @@ void GLSLMgr::initGL(int w, int h){
 #ifdef SIMPLEX_NOISE
 	initGradTexture();
 #endif
+	setTessLevel(Map::tessLevel());
 }
 
 //-------------------------------------------------------------
@@ -686,6 +688,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	if(!program->compiled && !program->errors)
 		compile();
 	if(geom && !program->errors){
+		//cout<<"GLSLMgr - setting tesslevel:"<<tesslevel<<" max_outputs:"<<max_output<<endl;
 		glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_OUTPUT_TYPE_EXT,output_type);

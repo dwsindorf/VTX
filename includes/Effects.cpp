@@ -19,7 +19,7 @@ EffectsMgr Raster;	// one and only global object
 #define SMAPTEXID   1
 #define JMAPTEXID   2
 //#define DEBUG_EFFECTS
-static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS_NORMALS","SHADOWS_FINISH"};
+static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
 //  2. vfog (vertical)
@@ -154,17 +154,18 @@ void EffectsMgr::setProgram(int type){
 	switch(type){
 	case SHADOW_ZVALS:
 		if(TheMap && TheMap->hasGeometry()){
+			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
-		    GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
+		    GLSLMgr::loadProgram("shadows.gs.vert","shadows_zvals.frag","shadows_zvals.geom");
 		    TheMap->setGeometryPrgm();
 	    }
 		else
-		    GLSLMgr::loadProgram("shadow_zvals.vert","shadow_zvals.frag");
+		    GLSLMgr::loadProgram("shadows_zvals.vert","shadows_zvals.frag");
 		vars.newBoolVar("lighting",false);
 
 		break;
 
-	case SHADOWS_NORMALS:
+	case SHADOWS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
 		if(debug_shadows() && shadow_test>0)
@@ -172,12 +173,17 @@ void EffectsMgr::setProgram(int type){
 
 		GLSLMgr::setDefString(defs);
 		if(TheMap && TheMap->hasGeometry()){
+			int tesslvl=Map::tessLevel();
+			//sprintf(GLSLMgr::defString,"#define TESSLVL %d\n",Map::tessLevel());
+			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslvl);
+			GLSLMgr::setTessLevel(tesslvl);
 			TheMap->setGeometryDefs();
-		    GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
+			GLSLMgr::loadProgram("shadows.gs.vert","shadows.frag","shadows.geom");
+		    //GLSLMgr::loadProgram("shadows.vert","shadows.frag");
 		    TheMap->setGeometryPrgm();
 	    }
 		else
-		    GLSLMgr::loadProgram("shadows_normals.vert","shadows_normals.frag");
+		    GLSLMgr::loadProgram("shadows.vert","shadows.frag");
 
 		vars.newFloatArray("smat",smat,16);
 		vars.newIntVar("ShadowMap",SMAPTEXID);
@@ -469,7 +475,7 @@ void EffectsMgr::render_shadows(){
 	double shad_scale=shadow_value*shadow_darkness;
 
 	bool tmp=Map::use_call_lists;
-	//Map::use_call_lists=false;
+	Map::use_call_lists=false;
 	glUseProgramObjectARB(0); //Using the fixed pipeline to render to the depth buffer
 
 	GLSLMgr::clrBuffers();
@@ -555,6 +561,7 @@ void EffectsMgr::render_shadows(){
 	//shadow_vsteps=views;
 	GLSLMgr::clrBuffers();
 	Map::use_call_lists=tmp;
+	GLSLMgr::setTessLevel(Map::tessLevel());
 	//set_shadows_mode(0);
 
 	// use shadow intensity data from FBO3 in later passes
