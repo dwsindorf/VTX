@@ -1896,14 +1896,27 @@ void Map::adapt()
 	find_limits();
 
 }
+
+static void water_test(MapNode *n)
+{
+	MapData *d=&n->data;
+	while(d){
+		if(d->water()){
+			TheMap->set_waterpass(1);
+		}
+		d=d->data2();
+	}
+}
+
 //-------------------------------------------------------------
 // Map::find_limits()	get ht min and max
 //-------------------------------------------------------------
 void Map::find_limits(){
 	npole->visit(&MapNode::find_limits);
+	//npole->visit(&water_test);
 	hrange=hmax-hmin;
 	//if(TheScene->viewobj==object)
-	//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
+	//   cout<<"tid:"<<tid<<" cycles:"<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<" water:"<<waterpass()<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility
@@ -2006,19 +2019,7 @@ void  Map::set_resolution()
 // Map::get_info() get visibility, texture etc. info from node tree
 //-------------------------------------------------------------
 static int eflag=0;
-static Map *map=0;
-static void water_test(MapNode *n)
-{
-	MapData *d=&n->data;
 
-	int wflag=0;
-	while(d){
-		if(d->water()){
-			TheMap->set_waterpass(1);
-		}
-		d=d->data2();
-	}
-}
 static void node_info(MapNode *n)
 {
 	MapData *d=&n->data;

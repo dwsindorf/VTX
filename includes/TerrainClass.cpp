@@ -1242,9 +1242,14 @@ void TNwater::eval()
 
 	if(right)
 		right->eval();
-	dz=SeaLevel-S0.p.z;  // water-terrain
-	WaterDepth=dz<0?0:dz;
-	WaterHeight=dz/Gscale;
+	dz=(SeaLevel-S0.p.z);  // water-terrain
+	// FIXME - HACK S0.p.z always zero if ONLY geometry noise is present
+	//       - this work work if both real and geometry terrain exist
+	if(Td.get_flag(SNOISEFLAG)) // shader noise
+		dz=fabs(dz); // otherwise water not rendered if sealevel <0
+	double dw=fabs(dz);
+	WaterDepth=dw;
+	WaterHeight=dw/Gscale;
 
 	double cmix=WaterDepth/Gscale;
 	double f=rampstep(0,2*Raster.water_clarity,cmix,1,0);
@@ -1262,7 +1267,7 @@ void TNwater::eval()
 	// S0 = terrain surface
 
 	S0.clr_flag(INMARGIN);
-    if(dz>=0){  // terrain is below water
+    if(dz>0){  // terrain is below water
 		if(S0.datacnt<MAX_TDATA)
 			S0.datacnt++;
 	    for(int i=1;i<S0.datacnt;i++){

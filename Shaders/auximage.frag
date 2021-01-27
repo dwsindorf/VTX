@@ -107,8 +107,8 @@ void main(void) {
 	}
 #ifdef WATER
 	float reflect1=dot(normal,eye); // reflection angle
-	float depth=gl_FragCoord.z;
-	float z=fcolor2.g;
+	float depth=gl_FragCoord.z; // water
+	float z=fcolor2.g;  // land
 	float z2=1.0/(ws2*z+ws1);
 	float z1=1.0/(ws2*depth+ws1);
 	float dz=(z2-z1);
@@ -139,9 +139,9 @@ void main(void) {
 #endif	
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
-	float ht=HT+0.001*fcolor2.a;	
+	float ht=HT+0.001*fcolor2.a;	// add a touch of underwater terrain
 	
-	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
+	float vfog=DENSITY*lerp(ht,fog_vmin,fog_vmax,1,0);
 #else // no water
 	float reflect1 = fcolor2.b;
 	float type=fcolor2.r;
@@ -150,7 +150,7 @@ void main(void) {
 	gl_FragData[0] = fcolor1;
 #endif
 	gl_FragData[0].a=1;
-	//gl_FragData[0] = vec4(ht,0,0,1.0);
+	//gl_FragData[0] = vec4(z,0,0,1.0);
 	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
 }
 

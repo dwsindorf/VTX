@@ -92,6 +92,7 @@ Scene() {
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
+					water.level=-1 ft;
 					year=100;
 					albedo=1;
 					Surface{
