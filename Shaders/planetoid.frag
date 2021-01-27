@@ -24,6 +24,7 @@ uniform sampler2DRect FBOTex4;
 uniform float hdr_min;
 uniform float hdr_max;
 
+varying vec4 data;
 
 // ########## Lighting section #########################
 
@@ -186,7 +187,7 @@ void main(void) {
     vec3 eye = normalize(EyeDirection.xyz);
     float reflect1=dot(normal,eye); // reflection angle
 #ifdef VIEWOBJ
-    float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
+    float vfog=DENSITY*lerp(HT+data.x,fog_vmin,fog_vmax,1,0);
 	gl_FragData[1]=vec4(Constants.g,depth,reflect1,vfog);
 	gl_FragData[0] = color;
 	//gl_FragData[0] = vec4(vfog,0,0,1);

@@ -67,9 +67,13 @@ varying out vec4 Constants;
 uniform vec3 center;
 uniform vec3 pv;
 
+varying vec4 data;
+
 varying out vec4 attributes[2];
 
 void ProduceVertex(float s, float t){
+	data=vec4(0,0,0,1);
+	g=0;
 #if NVALS >0
 	Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 #endif
@@ -79,9 +83,10 @@ void ProduceVertex(float s, float t){
 	Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];  // ave normal
 	vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 #ifdef NPZ
-    SET_ZNOISE(NPZ);	
-    HT+=g;
-#endif		
+    SET_ZNOISE(NPZ);
+   // data.x=g;
+#endif
+    data.x=g; // water not included
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
 #ifdef COLOR

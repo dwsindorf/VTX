@@ -139,9 +139,9 @@ void main(void) {
 #endif	
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
-	float ht=HT+0.001*fcolor2.a;	// add a touch of underwater terrain
+	float ht=HT+fcolor2.a;
 	
-	float vfog=DENSITY*lerp(ht,fog_vmin,fog_vmax,1,0);
+	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 #else // no water
 	float reflect1 = fcolor2.b;
 	float type=fcolor2.r;
