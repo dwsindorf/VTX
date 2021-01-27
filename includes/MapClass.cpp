@@ -1032,7 +1032,6 @@ bool Map::setProgram(){
 #endif
 
 	if(Render.draw_ids())
-		cout<<"Map::setProgram tid:"<<tid<<" cycle:"<<cycles<<" water:"<<waterpass()<< endl;
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
 	if(geom){
@@ -1110,21 +1109,22 @@ void Map::render_ids()
 
 	Raster.set_all();
 
-	Raster.surface=3; // terrain only
+	Raster.surface=1; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
 	    npole->render_ids();
 	}
-//	if(Raster.show_water()/* && (cycles<4 || waterpass()) */){
-//		tid=WATER;
-//		tp=Td.properties[tid];
-//		Td.tp=tp;
-//		Raster.surface=2;  // water pass
-//		setProgram();
-//		npole->render_vertex();
-//	}
+	if(S0.get_flag(WATERFLAG)){
+		Raster.surface=2;
+		tid=WATER;
+		tp=Td.properties[tid];
+		Td.tp=tp;
+		setProgram();
+		npole->render_ids();
+    }
+
 	glFinish();
 	glFlush();
 	Raster.read_ids();

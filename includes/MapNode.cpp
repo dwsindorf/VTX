@@ -306,12 +306,6 @@ void MapNode::Rvertex(MapData*d)     { info.cdata=1;Raster.vertex(this);}
 MapData * MapNode::surface_data(MapData *m)
 {
 	MapData *d=m;
-    if(!d)
-        return 0;
-    if(Raster.surface==3){
-    	return d;
-    }
-    else
     if(Raster.surface==1){
         if(d->water())
             d=d->data2();

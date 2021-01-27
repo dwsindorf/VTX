@@ -53,9 +53,8 @@ Scene() {
 		angle=-17;
 	}
 	View{
-		height=8881.61 ft;
-		tilt=-10;
-		angle=-14;
+		height=9354.27 ft;
+		time=48572.2;
 	}
 	Universe {
 		Galaxy(20000) {
