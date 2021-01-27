@@ -3,8 +3,8 @@ Scene() {
 		view=ORBITAL;
 		phi=-17.6063;
 		theta=141.985;
-		height=249.907 miles;
-		gndlvl=-8.19865 ft;
+		height=249.911 miles;
+		gndlvl=-29.8317 ft;
 		time=49560.4;
 		heading=90;
 		pitch=-90;
@@ -13,13 +13,13 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
-		height=249.911 miles;
-		gndlvl=-29.8317 ft;
+		height=249.912 miles;
+		gndlvl=-34.1647 ft;
 	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -57,17 +57,22 @@ Scene() {
 						terrain=Color(1,0.992157,0.764706,1);
 					}
 					Moon(0.000124971,0.25) {
+						ambient=Color(1,1,1,0.03);
 						day=24;
+						emission=Color(1,1,1,0.04);
 						hscale=0.0056013;
 						name="Moon";
 						phase=334.004;
 						rseed=2.41294;
+						shadow=Color(0,0,0,0.93);
+						shine=3.02106;
+						specular=Color(1,1,1,0.61);
 						year=30;
 						Surface{
 							terrain=
 									Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.1,0)+
 									Texture("coldlava",BUMP|NORM|TEX,2277.13,-0.44448,0.47224,0,7.66672,1.94448,0.48612,0)+Z(craters(ID2,6,0.0009999,0.31,0.04,0.03,0.13,0.73,1,4.2,3.9,0.8,0.47,0.31,0)
-									fractal(SQR|SS,13,6,0.1,0.4,1.31,0.24,1,1,0.63,0)noise(SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
+									fractal(SQR|SS,13,6,0.1,0.4,1.31,0.24,1,1,0.63,0)noise(GRADIENT|SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
 						}
 					}
 				}

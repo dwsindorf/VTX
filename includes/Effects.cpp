@@ -105,7 +105,6 @@ void EffectsMgr::init_render()
 	do_shaders=Render.draw_shaded()?do_shaders:false;
 
 	if(old_mode !=do_shaders){
-	   cout << "Raster Shaders="<<do_shaders<<endl;
 	   TheScene->set_changed_render();
 	}
 }
@@ -173,13 +172,9 @@ void EffectsMgr::setProgram(int type){
 
 		GLSLMgr::setDefString(defs);
 		if(TheMap && TheMap->hasGeometry()){
-			int tesslvl=Map::tessLevel();
-			//sprintf(GLSLMgr::defString,"#define TESSLVL %d\n",Map::tessLevel());
-			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslvl);
-			GLSLMgr::setTessLevel(tesslvl);
+			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
 			GLSLMgr::loadProgram("shadows.gs.vert","shadows.frag","shadows.geom");
-		    //GLSLMgr::loadProgram("shadows.vert","shadows.frag");
 		    TheMap->setGeometryPrgm();
 	    }
 		else
@@ -377,7 +372,7 @@ void EffectsMgr::apply(){
 			glDisable(GL_BLEND);
 			//set_all();
 			setProgram(RENDERPGM);
-			render_image(); // render land surface note: calls glDisable(GL_BLEND)
+			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();
 			Lights.setSpecular(water_specular);
 			Lights.setShininess(water_shine);
@@ -514,7 +509,7 @@ void EffectsMgr::render_shadows(){
 
 			set_light_view();
 
-		    glPolygonOffset(2.0f, 1.0f);
+		    glPolygonOffset(4.0f, 2.0f); // increased from 2,1 reduced artifacts
 			glEnable(GL_POLYGON_OFFSET_FILL);
 
 			TheScene->shadows_zvals();

@@ -29,11 +29,10 @@ float g=0;
 
 #if NVALS >0
 #include "noise_funcs.h"
-#endif
 #ifdef TESSLVL
 #include "geometry_funcs.h"
 #endif
-
+#endif
 //######################################################
 
 #if TESSLVL >0

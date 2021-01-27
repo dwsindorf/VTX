@@ -12,7 +12,7 @@
 #include "TerrainClass.h"
 static bool debug_call_lists=false;
 
-
+static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
@@ -670,18 +670,25 @@ void Map::shadow_normals()
 	set_colors(0);
 	Render.pushmode(SHOW_NORMALS);
 	npole->init_render();
-	Raster.surface=3;
-	bool show_water=waterpass() &&  Render.show_water();
-	int start=show_water?WATER:ID0;
-	for(tid=start;tid<Td.properties.size;tid++){
+
+    // note: important to draw water first so zbuffer will be set to
+	//       prevent rendering shadows below water surface
+	if(waterpass() && Render.show_water()){
+		tid=WATER;
+		Raster.surface=2;  // water pass
+		Raster.setProgram(Raster.SHADOWS);
+		npole->render_vertex();
+    }
+	for(tid=ID0;tid<tids;tid++){
+	    Raster.surface=1;
 		tp=Td.properties[tid];
 		Td.tp=tp;
-		if(!visid(tid))
-			continue;
-
+	    if(!visid(tid))
+	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
 	}
+
 	Render.popmode();
 }
 
@@ -730,18 +737,22 @@ void Map::shadow_zvals()
 	Render.pushmode(SHOW_ZVALS);
 	npole->init_render();
 	texture=0;
-	Raster.surface=3;
-	bool show_water=waterpass() &&  Render.show_water();
-	int start=show_water?WATER:ID0;
-	for(tid=start;tid<Td.properties.size;tid++){
+
+	Raster.surface=1;
+	for(tid=ID0;tid<tids;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
-		if(!visid(tid))
-			continue;
-
-		Raster.setProgram(Raster.SHADOW_ZVALS);
+	    if(!visid(tid))
+	        continue;
+	    Raster.setProgram(Raster.SHADOW_ZVALS);
 	    npole->render_vertex();
 	}
+	if(waterpass() && Render.show_water() ){
+		tid=WATER;
+		Raster.surface=2;  // water pass
+		Raster.setProgram(Raster.SHADOW_ZVALS);
+		npole->render_vertex();
+    }
 
 	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
@@ -813,6 +824,7 @@ void Map::render_select()
 	    npole->render_vertex();
 	}
 	if(waterpass() && Render.show_water()){
+		tid=WATER;
 		Raster.surface=2;  // water pass
 		npole->render_vertex();
     }
@@ -989,6 +1001,9 @@ bool  Map::setGeometryPrgm(){
 // Map::hasGeometry return true if terrain has geometry
 //-------------------------------------------------------------
 bool  Map::hasGeometry(){
+	tp=Td.properties[tid];
+	if(!tp)
+		return false;
 	bool geom=tp->has_geometry() && tp->tnpoint;
 	return geom;
 }
@@ -1003,7 +1018,13 @@ bool  Map::hasGeometry(){
 bool Map::setProgram(){
 	if(TheScene->viewobj != object)
 		return false;
+	tp=Td.properties[tid];
+	if(!tp){
+		cout<<"Map::setProgram tp=0"<<endl;
+		return false;
+	}
 	GLSLMgr::clrDefString();
+
 	bool geom=tp->has_geometry() && tp->tnpoint;
 #ifdef USE_SHADER_ONLY_FOR_GEOM
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
@@ -1011,6 +1032,7 @@ bool Map::setProgram(){
 #endif
 
 	if(Render.draw_ids())
+		cout<<"Map::setProgram tid:"<<tid<<" cycle:"<<cycles<<" water:"<<waterpass()<< endl;
 		sprintf(GLSLMgr::defString,"#define COLOR\n");
 #ifdef GEOM_SHADER
 	if(geom){
@@ -1059,6 +1081,7 @@ bool Map::setProgram(){
 
 //-------------------------------------------------------------
 // Map::render_ids()	render using id psuedo-colors
+// note: this call is made for each adapt pass
 //-------------------------------------------------------------
 void Map::render_ids()
 {
@@ -1085,20 +1108,23 @@ void Map::render_ids()
 	texture=0;
 	npole->init_render();
 
-
 	Raster.set_all();
 
-	Raster.surface=3;
-	// note: Raster.surface=3 selects top surface (maybe water or land)
-	//       if geometry present ok to skip separate water pass
-	//       (assumes that water doesn't have geometry)
+	Raster.surface=3; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
 	    npole->render_ids();
 	}
-
+//	if(Raster.show_water()/* && (cycles<4 || waterpass()) */){
+//		tid=WATER;
+//		tp=Td.properties[tid];
+//		Td.tp=tp;
+//		Raster.surface=2;  // water pass
+//		setProgram();
+//		npole->render_vertex();
+//	}
 	glFinish();
 	glFlush();
 	Raster.read_ids();
@@ -1193,7 +1219,6 @@ void Map::render_shaded()
 	}
 
 	bool show_water=waterpass() &&  Render.show_water() && (TheScene->viewtype!=SURFACE || Raster.show_water());
-	//if(!TheScene->inside_sky()&& waterpass() && Render.show_water()){
 	if(show_water){
 #ifdef DEBUG_RENDER
 		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
@@ -1853,7 +1878,7 @@ void Map::adapt()
 	if(TheScene->viewobj==object){
 		TheScene->cycles+=mcount;
 		TheScene->cycles=mcount;
-		Raster.set_waterpass(waterpass());
+		Raster.set_waterpass(waterpass() && Render.show_water());
 		Raster.set_fogpass(fog());
 		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
 	}
@@ -1982,7 +2007,18 @@ void  Map::set_resolution()
 //-------------------------------------------------------------
 static int eflag=0;
 static Map *map=0;
+static void water_test(MapNode *n)
+{
+	MapData *d=&n->data;
 
+	int wflag=0;
+	while(d){
+		if(d->water()){
+			TheMap->set_waterpass(1);
+		}
+		d=d->data2();
+	}
+}
 static void node_info(MapNode *n)
 {
 	MapData *d=&n->data;
@@ -1994,7 +2030,7 @@ static void node_info(MapNode *n)
 	}
 
 	eflag=0;
-	if(!n->partvis() && !n->visible())
+	if(!Raster.draw_nvis() && !n->partvis() && !n->visible())
 	    return;
 
 	if(wflag){
@@ -2002,18 +2038,18 @@ static void node_info(MapNode *n)
 		TheMap->idcnts[WATER]++;
 	}
 	int lid=d->dtype();
-	map->idcnts[lid]++;
+	TheMap->idcnts[lid]++;
 
-	if(lid+1>map->tids)
-	   map->tids=lid+1;
+	if(lid+1>TheMap->tids)
+		TheMap->tids=lid+1;
 
 	if(n->fog())
-		map->set_fog(1);
+		TheMap->set_fog(1);
 
 	if(d->textures())
-		map->set_vistexs(1);
+		TheMap->set_vistexs(1);
 	if(d->bumpmaps())
-		map->set_visbumps(1);
+		TheMap->set_visbumps(1);
 }
 
 void  Map::get_info()
@@ -2023,7 +2059,6 @@ void  Map::get_info()
 	set_fog(0);
 	set_visbumps(0);
 	set_vistexs(0);
-	map=this;
 
 	for(i=0;i<Td.properties.size;i++){
 		idcnts[i]=0;
@@ -2061,7 +2096,7 @@ int Map::render_triangles()  {
 #ifdef WATER_AVES
 #define TID_START (TheMap->waterpass()?WATER:ID0)
 #else
-#define TID_START ID0;
+#define TID_START ID0
 #endif
 
 inline void validate_norm(MapData *nd){

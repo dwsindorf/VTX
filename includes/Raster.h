@@ -418,7 +418,7 @@ public:
 	void drawPixels();
 
 	void render_shading();
-	void render_image();
+	void render_auximage();
 
 	virtual void vertex(MapNode *);
 	virtual void render();

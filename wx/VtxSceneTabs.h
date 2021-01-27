@@ -221,6 +221,11 @@ public:
             Raster.set_filter_show(1);
      	TheScene->set_changed_render();
     }
+    void OnShowWater(wxCommandEvent& event){
+    	Render.set_water_show(!Render.show_water());
+       	TheScene->set_changed_render();
+    }
+
     void OnHDR(wxCommandEvent& event){
         Raster.set_hdr(event.IsChecked());
      	TheScene->set_changed_render();

@@ -53,13 +53,9 @@ Scene() {
 		angle=-17;
 	}
 	View{
-		height=8884.34 ft;
-		time=70829.2;
-		tilt=-9;
-	}
-	View{
-		height=10893.4 ft;
-		time=82693;
+		height=8881.61 ft;
+		tilt=-10;
+		angle=-14;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -100,7 +96,8 @@ Scene() {
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+						terrain=water(0)
+								Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}
 					Sky(0.00205145) {
 						color=Color(0,0.9,0.9);

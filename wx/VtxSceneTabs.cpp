@@ -119,6 +119,8 @@ EVT_UPDATE_UI(ID_FRONT_ENABLE, VtxSceneTabs::OnUpdateFrontEnable)
 EVT_CHECKBOX(ID_SHOW_MASK,VtxSceneTabs::OnShowMask)
 EVT_UPDATE_UI(ID_SHOW_MASK, VtxSceneTabs::OnUpdateShowMask)
 
+EVT_CHECKBOX(ID_SHOW_WATER,VtxSceneTabs::OnShowWater)
+
 EVT_CHECKBOX(ID_HDR,VtxSceneTabs::OnHDR)
 EVT_UPDATE_UI(ID_HDR, VtxSceneTabs::OnUpdateHDR)
 

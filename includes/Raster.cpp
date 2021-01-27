@@ -1065,7 +1065,7 @@ void RasterMgr::render_shading()
 //-------------------------------------------------------------
 // RasterMgr::render_image() render auximage
 //-------------------------------------------------------------
-void RasterMgr::render_image()
+void RasterMgr::render_auximage()
 {
     set_draw_nvis(1);
 	TheScene->render_raster();
@@ -2082,11 +2082,11 @@ void RasterMgr::render()
 		set_all();
 	    surface=1;
 		set_render_type(AUXIMAGE);
-		render_image();
+		render_auximage();
 		getAuxImage(0);
 		getZbuf(1);  // terrain surface
 		surface=2;
-		render_image();
+		render_auximage();
 		getAuxImage(0);
 		getZbuf(0); // water surface
 		Lights.setSpecular(water_specular);
@@ -2106,7 +2106,7 @@ void RasterMgr::render()
 	else if(do_image){
 	    surface=1;
 		set_render_type(AUXIMAGE);
-		render_image();
+		render_auximage();
 		getAuxImage(0);
 		getZbuf(0);
 		GLSLMgr::clrBuffers();

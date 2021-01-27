@@ -311,7 +311,8 @@ MapData * MapNode::surface_data(MapData *m)
     if(Raster.surface==3){
     	return d;
     }
-    else if(Raster.surface==1){
+    else
+    if(Raster.surface==1){
         if(d->water())
             d=d->data2();
         while(d && d->type()!=TheMap->tid)
