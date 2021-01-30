@@ -2651,9 +2651,8 @@ bool Planetoid::setProgram(){
 	int tl=1; // tesslevel
 	if(Render.geometry() && tp->has_geometry()){
 		GLSLMgr::input_type=GL_TRIANGLES;
+		//GLSLMgr::output_type=GL_TRIANGLE_STRIP_ADJACENCY; // this also works without any code changes
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		//TheMap->setGeometryDefs();
-       // tl=TheMap->tessLevel();
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
 	}
 	else{

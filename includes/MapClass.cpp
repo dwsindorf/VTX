@@ -1037,8 +1037,11 @@ bool Map::setProgram(){
 	if(geom){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		tesslevel=tessLevel();  //  0=single triangle mode 1: adds 1 extra triangle
+		tesslevel=tessLevel();
+		int dsize=(tesslevel+1)*(tesslevel+2)/2;
+		//sprintf(GLSLMgr::defString,"#version 440\n");
 		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
+		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define DSIZE %d\n",dsize);
 	}
 #endif
 	setGeometryDefs();

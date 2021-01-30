@@ -145,17 +145,28 @@ unsigned char* GLSLProgram::readShaderFile(char *defines, char *filename) {
 
 	int buffsize=strlen(defines)+bytesinfile+1;
 	char *buffer = (char*)malloc(buffsize);
+	int start_index=0;
+	int n=0;
 
-	strcpy(buffer,defines);
-	int bytesread = fread(buffer+strlen(defines), 1, bytesinfile, file);
-	buffer[bytesread+strlen(defines)] = 0; // Terminate the string with 0
+	char *fbuffer=(char*)malloc(bytesinfile+1);
+	int bytesread = fread(fbuffer, 1, bytesinfile, file);// file text
 	fclose(file);
 
+	n=getline(fbuffer); // read first line (n chars)
+	if(strncmp("#version",fbuffer,8)==0){
+	   start_index=n;
+	   strncpy(buffer,fbuffer,start_index);
+	}
+	strcpy(buffer+start_index,defines);
+	strncat(buffer,fbuffer+start_index,bytesinfile-start_index);
+	buffer[bytesread+strlen(defines)] = 0; // Terminate the string with 0
+	::free(fbuffer);
+
 #ifdef EXPAND_INCLUDES // Expand all #includes
-	char *lptr=buffer+strlen(defines);
+	char *lptr=buffer+strlen(defines)+start_index;
 	char *start=buffer;
-	int n=0;
-	int count=strlen(defines);
+	n=0;
+	int count=strlen(defines)+start_index;
 	while((n=getline(buffer+count))>0){
 		char name[256];
 		lptr=buffer+count;

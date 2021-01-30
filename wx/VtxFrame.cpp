@@ -677,6 +677,9 @@ void VtxFrame::OnSceneSave(wxCommandEvent& WXUNUSED(event))
         m_canvas->save_scene((char*)m_last_scene.ToAscii());
     }
     m_tbar1->ToggleTool(IDM_FILE_SCENE_SAVE, false);
+    wxString vtx("VTX-");
+    vtx=vtx+filename;
+    SetTitle(vtx);
     m_canvas->unsuspend();
 }
 

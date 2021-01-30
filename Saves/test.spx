@@ -60,6 +60,14 @@ Scene() {
 	View{
 		height=9156.73 ft;
 	}
+	View{
+		height=9248.32 ft;
+		gndlvl=1 ft;
+	}
+	View{
+		height=9440.09 ft;
+		gndlvl=0 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -92,10 +100,12 @@ Scene() {
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					diffuse=Color(1,1,1,0.85);
-					fog.color=Color(0.98,0.02,0.02);
-					fog.max=10010 ft;
+					fog.color=Color(1,0.24,0.24);
+					fog.max=3430.6 ft;
+					fog.min=375 ft;
 					fog.value=1;
-					fog.vmax=3333.4 ft;
+					fog.vmax=1805.6 ft;
+					fog.vmin=-1527.8 ft;
 					hscale=0.02;
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
@@ -104,7 +114,7 @@ Scene() {
 					year=100;
 					albedo=1;
 					Surface{
-						terrain=fog(1)
+						terrain=fog(noise(GRADIENT,8.2,3.9,1,0.5,2.24,1,1,0,0))
 								water(0)
 								Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}

@@ -358,10 +358,124 @@ void GLSLMgr::drawFrameBuffer(){
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 }
+
+
+
+//Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
+static void test_geometry(int tesslevel){
+	int triangle=1;
+	double dt = 1.0 / double( tesslevel );
+	double t_top = 1.0;
+	int j=0;
+	double f0=0,s=0,t;
+	int v=0;
+	int numv=tesslevel*(tesslevel+1);
+	int ntop=0,nbot=1;
+	for( int it = 0; it < tesslevel; it++ ){
+		double t_bot = t_top - dt;
+		double smax_top = 1.0 - t_top;
+		double smax_bot = 1.0 - t_bot;
+		int nums = it + 1;\
+		double ds_top = smax_top / double(nums - 1 );
+		double ds_bot = smax_bot / double(nums);
+		double s_top = 0.0;
+		double s_bot = 0.0;
+
+		for( int is = 0; is < nums; is++ )
+		{
+			t=s_bot;s=t_bot;
+			v=nbot+is;
+            printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
+
+			v=ntop+is;
+			t=s_top;s=t_top,f0=-t-s+1;
+
+			printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
+			s_top += ds_top;
+			s_bot += ds_bot;
+		}
+		v=nbot+nums;
+		ntop=nbot;
+		nbot+=nums+1;
+		t=s_bot;s=t_bot,f0=-t-s+1;
+		printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,f0,t);
+		t_top = t_bot;
+		t_bot -= dt;
+	}
+}
+
+static void test_indexes(int tesslevel){
+	int triangle=1;
+	int index=0;
+	int numr=tesslevel+1;
+	int numv=tesslevel*(tesslevel+1);
+	double V0=0, V2=numv-1,V1=V2-tesslevel;
+
+	for( int row = 0; row <= tesslevel; row++ ){
+		int nums = row+1 ;
+		printf("\nROW %d :",row);
+		for( int is = 0; is < nums; is++ )
+		{
+			printf(" %d ",index++);
+		}
+	}
+	printf("\n");
+}
+
+static double test_data[50][3];
+
+static void test_lookup(int tesslevel){
+	int j=0;
+	double s=0,t;
+	int v=0;
+	int ntop=0,nbot=1;
+	for( int it = 0; it < tesslevel; it++ ){
+		int nums = it + 1;\
+		for( int is = 0; is < nums; is++ )
+		{
+			v=nbot+is;
+			s=test_data[v][0];
+			t=test_data[v][1];
+            printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
+			v=ntop+is;
+			s=test_data[v][0];
+			t=test_data[v][1];
+			printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
+		}
+		v=nbot+nums;
+		ntop=nbot;
+		nbot+=nums+1;
+		s=test_data[v][0];
+		t=test_data[v][1];
+		printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
+	}
+}
+static void test_process(int tesslevel){
+	int index=0;
+	int numr=tesslevel+1;
+	int numv=tesslevel*(tesslevel+1);
+	double s=1,t=0;
+	double df=1.0/tesslevel;
+
+	for( int row = 0; row <= tesslevel; row++,s-=df){
+		int nums = row+1 ;
+		t=0;
+		for( int is = 0; is < nums; is++,t+=df)
+		{
+			test_data[index][0]=s;
+			test_data[index][1]=t;
+			index++;
+		}
+	}
+}
+
 //-------------------------------------------------------------
 // GLSLMgr::InitGL() initialize openGL environment
 //-------------------------------------------------------------
 void GLSLMgr::initGL(int w, int h){
+	//test_geometry(4);
+	test_process(4);
+	test_lookup(4);
 
 	GLSupport::gl_init();
 
@@ -389,7 +503,7 @@ void GLSLMgr::initGL(int w, int h){
 	//cout << glsl_version << endl;
 
 	if(gls_version<=MINGLSLVERSION || FORCEMINGLVERSION){
-		strcat(verString,"#version 130\n");
+		//strcat(verString,"#version 130\n");
 		strcat(extString1,"#extension GL_ARB_texture_rectangle : enable\n");
 		if(GLSupport::geometry_shader())
 			strcat(extString2,"#extension GL_EXT_geometry_shader4 : enable\n");
@@ -655,7 +769,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	static char tmp[4096];
 	bool first=false;
 	bool geom=strlen(gshader)>0?true:false;
-	sprintf(tmp,"%s %s %s",defString,vshader,fshader);
+	sprintf(tmp," %s%s %s",defString,vshader,fshader);
 	if(geom)
 		sprintf(tmp+strlen(tmp)," %s",gshader);
 
@@ -727,7 +841,7 @@ void GLSLMgr::setProgram(){
  	CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
-	//position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
+	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
 
@@ -795,11 +909,6 @@ void GLSLMgr::clrBuffers(){
 #ifdef DEBUG_CLR
 	cout << "GLSLMgr::clrBuffers"<<endl;
 #endif
-}
-
-
-void GLSLMgr::clrBuffers(int i){
-
 }
 
 void GLSLMgr::clrFBODepthBuffers(){
