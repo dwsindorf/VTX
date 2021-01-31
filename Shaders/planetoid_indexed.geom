@@ -1,0 +1,147 @@
+#version 430 compatibility 
+#extension GL_EXT_geometry_shader4 : enable
+
+// notes:
+// 1. second shader in pipeline
+// 2. input from vertex shader
+// 3. output to fragment shader
+// 
+
+#include "utils.h"
+
+float logf=0;
+float nbamp=0;
+vec4 gv=vec4(0);
+float amplitude = 1.0;
+vec3 bump;
+float g=0;
+float b=0;
+bool newcell=false;
+
+#define GEOM
+
+#define _BUMPS_
+
+varying in vec4 Normal_G[];
+varying in vec4 Constants_G[];
+varying in vec4 Color_G[];
+#if NVALS >0
+varying in vec4 Vertex1_G[];
+varying out vec4 Vertex1;
+#endif
+#if NTEXS >0
+varying in vec4 Tangent_G[];
+varying out vec4 Tangent;
+#endif
+
+#define HT Constants.x
+
+//########## 3D noise section #########################
+uniform float freqmip=0;
+uniform float bump_delta;
+uniform float bump_ampl;
+uniform bool lighting;
+
+
+float delta=0;
+
+#define PI		3.14159265359
+#define RT2		1.414213562373
+
+#if NVALS >0
+#include "noise_funcs.h"
+#endif
+
+#ifdef TESSLVL
+#include "geometry_funcs.h"
+#endif
+
+//######################################################
+
+varying in vec4 Attributes_G[][2];
+
+// forward to fragment shader 
+varying out vec4 Color;
+varying out vec4 Normal;
+varying out vec4 EyeDirection;
+varying out vec4 Constants;
+
+uniform vec3 center;
+uniform vec3 pv;
+
+varying vec4 data;
+
+varying out vec4 attributes[2];
+
+const int DSIZE=(TESSLVL+1)*(TESSLVL+2)/2;
+vec4 vdata[DSIZE][4];
+
+void ProduceVertex(int i){
+	Vertex1=vdata[i][0];
+	vec4 p=vdata[i][1];
+	gl_Position=gl_ModelViewProjectionMatrix * p;
+    float s=vdata[i][2].x;
+    float t=vdata[i][2].y;
+    g=vdata[i][2].z;
+	data=vec4(0,0,0,1);
+    data.x=g;
+    Normal=vdata[i][3];
+	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
+	
+#ifdef COLOR
+if(newcell)
+    Color=vec4(1,0,0,1);
+else
+	Color=s*(Color_G[2]-Color_G[0]) + t*(Color_G[1]-Color_G[0])+Color_G[0];
+#endif
+#if NTEXS >0
+	Tangent=s*(Tangent_G[2]-Tangent_G[0])+t*(Tangent_G[1]-Tangent_G[0])+Tangent_G[0];
+	for(int i=0;i<NTEXS;i++)	
+		gl_TexCoord[i]=s*(gl_TexCoordIn[2][i]-gl_TexCoordIn[0][i])+t*(gl_TexCoordIn[1][i]-gl_TexCoordIn[0][i])+gl_TexCoordIn[0][i];
+#endif
+	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
+	for(int i=0;i<2;i++)
+		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];
+	EmitVertex();
+}
+
+// new scheme uses lut to fetch data from vertexes used more than once
+// - reduces number noise calculations from 24 to 15 for tesslvl=4
+// TODO: calculate normals using cross product vs noise lookup
+//
+void main(void) {
+	float t=1;
+	float del=1.0/TESSLVL;
+	for(int it = 0,index=0; it <= TESSLVL; it++,t-=del){
+		int nums = it+1 ;
+		float s=0;
+		for(int is = 0; is < nums; is++,s+=del) {
+		    Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
+			vdata[index][0]=Vertex1;		    
+			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
+			Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];
+			SET_ZNOISE(NPZ);
+			vdata[index][3]=Normal;
+			vdata[index][1]=p;
+			vdata[index][2].x=s;
+		    vdata[index][2].y=t;
+		    vdata[index][2].z=g;
+			index++;
+		}
+	}
+    for(int it = 0,index=0,ntop=0,nbot=1; it < TESSLVL; it++ ){\
+		int nums = it + 1; \
+		for( int is = 0; is < nums; is++ ) { \
+		   index=nbot+is; \
+		   ProduceVertex(index); \
+		   index=ntop+is; \
+		   ProduceVertex(index); \
+		} \
+		index=nbot+nums; \
+		ProduceVertex(index); \
+		EndPrimitive(); \
+		ntop=nbot; \
+		nbot+=nums+1; \
+	}
+
+}

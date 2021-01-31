@@ -1038,7 +1038,7 @@ bool Map::setProgram(){
 	if(geom){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
+		sprintf(defs+strlen(defs),"#define NLIGHTS 0\n");
 		tesslevel=tessLevel();
 		int dsize=(tesslevel+1)*(tesslevel+2)/2;
 		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",tesslevel);
@@ -1049,7 +1049,7 @@ bool Map::setProgram(){
 
 #ifdef GEOM_SHADER
 	if(geom){
-		GLSLMgr::loadProgram("map.gs.vert","map.frag","map_test.geom");
+		GLSLMgr::loadProgram("map.gs.vert","map.frag","map_indexed.geom");
 		//GLSLMgr::loadProgram("map_430.vert","map.frag");
 	}
 	else{

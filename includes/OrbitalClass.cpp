@@ -2657,7 +2657,7 @@ bool Planetoid::setProgram(){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		//GLSLMgr::output_type=GL_TRIANGLE_STRIP_ADJACENCY; // this also works without any code changes
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_test.geom");
+		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_indexed.geom");
 	}
 	else{
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
