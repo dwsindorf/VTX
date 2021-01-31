@@ -18,8 +18,6 @@ varying vec4 Normal;
 vec4 gv=vec4(0);
 float g=0;
 
-//#define _NORMALS_
-
 #if NVALS >0
 #include "noise_funcs.h"
 #endif
@@ -44,6 +42,7 @@ void ProduceVertex(int i){
     // displace using noise function
 #ifdef NPZ
 	SET_ZNOISE(NPZ);
+	gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
 	EmitVertex();
 }

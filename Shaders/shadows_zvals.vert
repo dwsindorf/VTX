@@ -16,6 +16,7 @@ void main(void) {
    
 #ifdef NPZ
     SET_ZNOISE(NPZ);
+    gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
 #else
     gl_Position=ftransform();

@@ -356,7 +356,7 @@ void View::setMatrix()
 	if(far_pass() && spherical())
 	    vpoint=gpoint.mm(invViewMatrix);
 
-	// lost track of what all the above matrixs are for
+	// lost track of what all the above matrixs are forModelViewProjMatrix
 	// the following code captures the active ogl model-proj matrix
 	// (point->screen) and it's inverse (screen->point) just prior
 	// to adapt and render calls for all objects

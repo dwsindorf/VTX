@@ -29,6 +29,7 @@ void main(void) {
     
 #ifdef NPZ
     SET_ZNOISE(NPZ);
+    gl_Position=gl_ModelViewProjectionMatrix * p;
     df=gv.yzw;
 #endif
     vec4 VertexPosition=(gl_ModelViewMatrix * p);

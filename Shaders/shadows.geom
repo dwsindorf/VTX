@@ -25,8 +25,6 @@ uniform mat4 smat;
 vec4 gv=vec4(0);
 float g=0;
 
-//#define _NORMALS_
-
 #if NVALS >0
 #include "noise_funcs.h"
 #ifdef TESSLVL
@@ -50,6 +48,7 @@ void ProduceVertex(int i){
     // displace using noise function
 #ifdef NPZ
 	SET_ZNOISE(NPZ);
+	gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
     vec4 VertexPosition=(gl_ModelViewMatrix * p);
     ShadowCoord=smat * VertexPosition;

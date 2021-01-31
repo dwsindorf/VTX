@@ -190,7 +190,7 @@ float Noise1D(int i) {
 	return v.x;
 }
 
-#ifdef _BUMPS_
+#if NLIGHTS  >0
 #ifdef VNOISE
 #define SET_NOISE(func) \
 	v1= Vertex1.xyz; \
@@ -206,7 +206,7 @@ float Noise1D(int i) {
 	v1= Vertex1.xyz; \
  	gv = func; \
  	g= gv.x; \
- 	if(lighting) { \
+    { \
  	    float delta=bump_delta; \
 		nbamp = 0.1*noise_fade*bump_ampl/delta; \
 		b = g; \
@@ -222,6 +222,7 @@ float Noise1D(int i) {
 		df = (df-vec3(b,b,b))*(nbamp); \
 		bump = bump + amplitude*df; \
     }
+
 #endif
 #else
 #define SET_NOISE(func) \

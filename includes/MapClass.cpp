@@ -1030,27 +1030,31 @@ bool Map::setProgram(){
 	if(!Render.geometry() || !tp->has_geometry() || !tp->tnpoint)
 		return false;
 #endif
+	char defs[512]="";
 
 	if(Render.draw_ids())
-		sprintf(GLSLMgr::defString,"#define COLOR\n");
+		sprintf(defs,"#define COLOR\n");
 #ifdef GEOM_SHADER
 	if(geom){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
 		tesslevel=tessLevel();
 		int dsize=(tesslevel+1)*(tesslevel+2)/2;
-		//sprintf(GLSLMgr::defString,"#version 440\n");
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",tesslevel);
-		sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define DSIZE %d\n",dsize);
+		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",tesslevel);
 	}
 #endif
+	GLSLMgr::setDefString(defs);
 	setGeometryDefs();
 
 #ifdef GEOM_SHADER
-	if(geom)
-		GLSLMgr::loadProgram("map.gs.vert","map.frag","map.geom");
-	else
+	if(geom){
+		GLSLMgr::loadProgram("map.gs.vert","map.frag","map_test.geom");
+		//GLSLMgr::loadProgram("map_430.vert","map.frag");
+	}
+	else{
 		GLSLMgr::loadProgram("map.vert","map.frag");
+	}
 #else
 	GLSLMgr::loadProgram("map.vert","map.frag");
 #endif

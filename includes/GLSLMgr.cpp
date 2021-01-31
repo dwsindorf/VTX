@@ -41,6 +41,7 @@ GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
 GLint 			GLSLMgr::position1ID=-1;
 GLint 			GLSLMgr::position2ID=-1;
+GLint 			GLSLMgr::modelViewProjMat=-1;
 
 GLuint          GLSLMgr::noise3DTextureID=0;
 GLuint          GLSLMgr::permTextureID=0;
@@ -367,7 +368,7 @@ static void test_geometry(int tesslevel){
 	double dt = 1.0 / double( tesslevel );
 	double t_top = 1.0;
 	int j=0;
-	double f0=0,s=0,t;
+	double s=0,t=0;
 	int v=0;
 	int numv=tesslevel*(tesslevel+1);
 	int ntop=0,nbot=1;
@@ -388,7 +389,7 @@ static void test_geometry(int tesslevel){
             printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
 
 			v=ntop+is;
-			t=s_top;s=t_top,f0=-t-s+1;
+			t=s_top;s=t_top;
 
 			printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
 			s_top += ds_top;
@@ -397,8 +398,8 @@ static void test_geometry(int tesslevel){
 		v=nbot+nums;
 		ntop=nbot;
 		nbot+=nums+1;
-		t=s_bot;s=t_bot,f0=-t-s+1;
-		printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,f0,t);
+		t=s_bot;s=t_bot;
+		printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
 		t_top = t_bot;
 		t_bot -= dt;
 	}
@@ -450,7 +451,7 @@ static void test_lookup(int tesslevel){
 		printf("%-3d %-3d s:%-1.2f t:%-1.2f\n",j++,v,s,t);
 	}
 }
-static void test_process(int tesslevel){
+static int test_process(int tesslevel){
 	int index=0;
 	int numr=tesslevel+1;
 	int numv=tesslevel*(tesslevel+1);
@@ -467,6 +468,7 @@ static void test_process(int tesslevel){
 			index++;
 		}
 	}
+	return index;
 }
 
 //-------------------------------------------------------------
@@ -474,7 +476,8 @@ static void test_process(int tesslevel){
 //-------------------------------------------------------------
 void GLSLMgr::initGL(int w, int h){
 	//test_geometry(4);
-	test_process(4);
+	int n=test_process(4);
+	cout<<n<<endl;
 	test_lookup(4);
 
 	GLSupport::gl_init();
@@ -769,7 +772,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	static char tmp[4096];
 	bool first=false;
 	bool geom=strlen(gshader)>0?true:false;
-	sprintf(tmp," %s%s %s",defString,vshader,fshader);
+	sprintf(tmp,"%s %s %s",defString,vshader,fshader);
 	if(geom)
 		sprintf(tmp+strlen(tmp)," %s",gshader);
 
@@ -777,6 +780,8 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	position1ID=-1;
 	position2ID=-1;
 	TexCoordsID=-1;
+	modelViewProjMat=-1;
+
 	CommonID=-1;
 	program=shaders.inlist(tmp);
 
@@ -845,6 +850,7 @@ void GLSLMgr::setProgram(){
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
 
+
 }
 
 //-------------------------------------------------------------
@@ -862,6 +868,9 @@ void GLSLMgr::loadVars(){
 	GLint loc = glGetUniformLocation(handle, "screen"); // height
 	if(loc>=0)
 		glUniform2f(loc,1.0/(float)v[2],1.0/(float)v[3]);
+	loc = glGetUniformLocation(handle, "modelViewProjectionMat"); // height
+	if(loc>=0)
+		glUniformMatrix4dv(loc, 1, GL_FALSE, TheScene->ModelViewProjMatrix.values());
 	vars.loadProgram();
 	vars.loadVars();
 }

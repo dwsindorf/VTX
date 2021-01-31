@@ -2060,8 +2060,8 @@ void RasterMgr::init_render()
 	do_water=Render.show_water() && waterpass() && (TheScene->viewtype==SURFACE);
 	do_depth=do_water && water_depth();
 	do_reflect=do_water && (reflections() || water_modulation());
-	do_shadows=Lights.size && shadows();
-	do_bumps=Render.bumps() && bumptexs();
+	do_shadows=Lights.size && shadows() && Render.lighting();
+	do_bumps=Render.bumps() && bumptexs() && Render.lighting();
 	do_vfog=Render.fog() && fogpass()&&(TheScene->viewtype==SURFACE);
 	do_haze=Render.haze()&& hazepass()&& TheScene->inside_sky();
 	do_edges=Render.dealias()||filter_show();

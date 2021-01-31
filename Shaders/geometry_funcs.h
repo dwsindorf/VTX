@@ -25,31 +25,46 @@
 		t_top = t_bot;\
 		t_bot -= dt;\
 	}
-#ifdef _NORMALS_
+
+#define PRODUCE_INDEXED_VERTICES \
+	for(int it = 0,index=0,ntop=0,nbot=1; it < TESSLVL; it++ ){\
+		int nums = it + 1; \
+		for( int is = 0; is < nums; is++ ) { \
+		   index=nbot+is; \
+		   ProduceVertex(index); \
+		   index=ntop+is; \
+		   ProduceVertex(index); \
+		} \
+		index=nbot+nums; \
+		ProduceVertex(index); \
+		EndPrimitive(); \
+		ntop=nbot; \
+		nbot+=nums+1; \
+	}
+
+#if NLIGHTS >0
 #define SET_ZNOISE(func) \
 	v1= Vertex1.xyz; \
  	gv = func; \
  	g= gv.x; \
- 	if(lighting) { \
- 	    float delta=2e-6; \
- 	    float nbamp = 5e-4/delta; \
+ 	vec3 v=p.xyz+pv; \
+	v=normalize(v)*g; \
+	p.xyz+=v; \
+    { \
+		float delta=1e-5; \
+		float nbamp = 5e-4/delta; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
- 		gv = func; \
+		gv = func; \
 		df.x =gv.x; \
 		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
- 		gv = func; \
+		gv = func; \
 		df.y =gv.x; \
 		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
- 		gv = func; \
+		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*(nbamp); \
-    } \
-  	vec3 v=p.xyz+pv; \
-	v=normalize(v)*g; \
-	p.xyz+=v;	\
-	gl_Position=gl_ModelViewProjectionMatrix * p; \
-	vec3 normal=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
-	Normal.xyz=normalize(normal.xyz);
+	    Normal.xyz=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
+	}
 #else
 #define SET_ZNOISE(func) \
 	v1= Vertex1.xyz; \
@@ -57,8 +72,7 @@
  	g=gv.x; \
  	vec3 v=p.xyz+pv; \
 	v=normalize(v)*g; \
-	p.xyz+=v;	\
-	gl_Position=gl_ModelViewProjectionMatrix * p
+	p.xyz+=v;
 #endif
 
 #define NOISE_COLOR(func) \

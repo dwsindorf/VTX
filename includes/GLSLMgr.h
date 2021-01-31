@@ -85,6 +85,7 @@ public:
 	static GLint attributes4ID;
 	static GLint position1ID;
 	static GLint position2ID;
+	static GLint modelViewProjMat;
 
 	static int pass;
 	static void initGL(int w, int h);

@@ -16,9 +16,7 @@ float b=0;
 bool newcell=false;
 
 #define GEOM
-
 #define _BUMPS_
-#define _NORMALS_
 
 varying in vec4 Normal_G[];
 varying in vec4 Constants_G[];
@@ -84,7 +82,7 @@ void ProduceVertex(float s, float t){
 	vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 #ifdef NPZ
     SET_ZNOISE(NPZ);
-   // data.x=g;
+    gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
     data.x=g; // water not included
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation

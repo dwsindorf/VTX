@@ -201,11 +201,11 @@ bool GLSLProgram::buildShader(int id, char *defs, char* file) {
 	GLint shaderCompiled;
 	const char *shaderStrings[4];
 	unsigned char *shaderAssembly = readShaderFile(defs,file);
-	shaderStrings[0] = (char*)GLSLMgr::verString;
-	shaderStrings[1] = (char*)GLSLMgr::extString1;
-	shaderStrings[2] = (char*)GLSLMgr::extString2;
-	shaderStrings[3] = (char*)shaderAssembly;
-	glShaderSourceARB(id, 4, shaderStrings, NULL);
+	//shaderStrings[0] = (char*)GLSLMgr::verString;
+	//shaderStrings[1] = (char*)GLSLMgr::extString1;
+	//shaderStrings[2] = (char*)GLSLMgr::extString2;
+	shaderStrings[0] = (char*)shaderAssembly;
+	glShaderSourceARB(id, 1, shaderStrings, NULL);
 
 	glCompileShaderARB(id);
 #ifdef DEBUG_SHADER_FILES

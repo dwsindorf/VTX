@@ -2611,7 +2611,11 @@ bool Planetoid::setProgram(){
 	TerrainProperties *tp=map->tp;
 
 	char defs[512]="";
-	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+	if(Render.lighting())
+		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+	else
+		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
+
 	if(Raster.shadows()&&(Raster.farview()||TheScene->viewobj==this))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	if(Raster.hdr())
@@ -2653,7 +2657,7 @@ bool Planetoid::setProgram(){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		//GLSLMgr::output_type=GL_TRIANGLE_STRIP_ADJACENCY; // this also works without any code changes
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
+		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_test.geom");
 	}
 	else{
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
