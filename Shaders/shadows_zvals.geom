@@ -41,7 +41,7 @@ void ProduceVertex(int i){
 #endif	
     // displace using noise function
 #ifdef NPZ
-	SET_ZNOISE(NPZ);
+	CALC_ZNOISE(NPZ);
 	gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
 	EmitVertex();

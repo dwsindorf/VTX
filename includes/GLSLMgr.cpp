@@ -476,9 +476,9 @@ static int test_process(int tesslevel){
 //-------------------------------------------------------------
 void GLSLMgr::initGL(int w, int h){
 	//test_geometry(4);
-	int n=test_process(4);
-	cout<<n<<endl;
-	test_lookup(4);
+	//int n=test_process(4);
+	//cout<<n<<endl;
+	//test_lookup(4);
 
 	GLSupport::gl_init();
 

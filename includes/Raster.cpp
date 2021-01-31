@@ -329,8 +329,6 @@ RasterMgr::RasterMgr()
 	}
 	idsize=idcnt=dcnt=0;
 	idtbl=0;
-	//set_clean_edges(0);
-
 }
 
 RasterMgr::~RasterMgr()

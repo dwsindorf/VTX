@@ -291,17 +291,19 @@ void EffectsMgr::setProgram(int type){
     		sprintf(defs+strlen(defs),"#define SHOW\n");
 		if(do_edges){
 			sprintf(defs+strlen(defs),"#define EDGES\n");
-			switch(filter_type()){
-			case FILTER_TYPE1:
-				sprintf(defs+strlen(defs),"#define FILTER1\n");
-				break;
-			case FILTER_TYPE2:
-				sprintf(defs+strlen(defs),"#define FILTER2\n");
-				break;
-			default:
-				sprintf(defs+strlen(defs),"#define FILTER3\n");
-				break;
-			}
+			if(filter_big())
+				sprintf(defs+strlen(defs),"#define BIG_KERNEL\n");
+//			switch(filter_type()){
+//			case FILTER_TYPE1:
+//				sprintf(defs+strlen(defs),"#define FILTER1\n");
+//				break;
+//			case FILTER_TYPE2:
+//				sprintf(defs+strlen(defs),"#define FILTER2\n");
+//				break;
+//			default:
+//				sprintf(defs+strlen(defs),"#define FILTER3\n");
+//				break;
+//			}
 		}
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("postproc.vert","postproc.frag");

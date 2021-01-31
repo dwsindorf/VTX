@@ -26,10 +26,6 @@ uniform vec2 tc_offset[25];
 //   -2  12 -2
 //   -1 -2  -1
 
-#ifdef FILTER1 
-#define BIG_KERNEL
-#endif
-
 #define IMAGE FBOTex1
 #define FLAGS FBOTex2
 
@@ -84,7 +80,7 @@ void main(void) {
             pixel[i] = texture2DRect(IMAGE, gl_FragCoord.xy + tc_offset[l]).rgb;
 #endif
 	        flags=texture2DRect(FLAGS, gl_FragCoord.xy + tc_offset[l]);
-	        nmask[i] = flags.a;        // dot(normal-eye)
+	        nmask[i] = flags.b;        // dot(normal-eye)
 	        smask[i] = flags.g;        // type flag
 	        surface_sum += flags.g>0.1?1:0;  // type flag
 	    }
@@ -118,7 +114,7 @@ void main(void) {
 	float kernelLuminance = dot(ave, vec3(0.5, 0.5, 0.3));
 #else
 	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.5, 0.5, 0.3));
-#endif    //gl_FragData[0].rgb=vec3(z,0,0);
+#endif
 
 	float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
 	
@@ -140,6 +136,8 @@ void main(void) {
 	gl_FragData[0].rgb=color;
 	
 #endif
-    gl_FragData[0].a = 1.0;	
+    gl_FragData[0].a = 1.0;
+    //gl_FragData[0]=vec4(z,0,0,1.0);	
+
 }
 

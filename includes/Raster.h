@@ -35,9 +35,10 @@ enum{
 	FILTER_SHOW     = 0x0080,
 	FILTER_DEPTH    = 0x0100,
 	FILTER_NORM     = 0x0200,
-	FILTER_CLEAN    = 0x0400,
 	FILTER_ANISO    = 0x0800,
-	FILTER_DEFAULTS = FILTER_TYPE2|FILTER_EDGES|FILTER_NORM|FILTER_CLEAN|FILTER_ANISO
+	FILTER_BIG      = 0x1000,
+
+	FILTER_DEFAULTS = FILTER_TYPE2|FILTER_EDGES|FILTER_NORM|FILTER_ANISO
 };
 
 class RasterMgr
@@ -136,10 +137,10 @@ public:
 	void set_filter_type(int i)		{ BIT_OFF(ftype,FILTER_TYPE);ftype|=i;}
 	void set_filter_edges(int i)	{ BIT_SET(ftype,FILTER_EDGES,i);}
 	int filter_edges()				{ return (ftype&FILTER_EDGES)?1:0;}
-	void set_clean_edges(int i)		{ BIT_SET(ftype,FILTER_CLEAN,i);}
-	int clean_edges()				{ return (ftype&FILTER_CLEAN)?1:0;}
 	void set_filter_bg(int i)		{ BIT_SET(ftype,FILTER_BG,i);}
 	int filter_bg()					{ return (ftype&FILTER_BG)?1:0;}
+	void set_filter_big(int i)		{ BIT_SET(ftype,FILTER_BIG,i);}
+	int filter_big()				{ return (ftype&FILTER_BIG)?1:0;}
 	void set_filter_stretch(int i)	{ BIT_SET(ftype,FILTER_STRETCH,i);}
 	int filter_stretch()			{ return (ftype&FILTER_STRETCH)?1:0;}
 	void set_filter_aniso(int i)	{ BIT_SET(ftype,FILTER_ANISO,i);}

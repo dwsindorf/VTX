@@ -27,12 +27,12 @@ enum {
     ID_TESSLEVEL,
     ID_FILTER_MODE,
     ID_AVE_ENABLE,
-    ID_FRONT_ENABLE,
     ID_AA_ENABLE,
     ID_COLOR_SLDR,
     ID_COLOR_TEXT,
     ID_SHOW_MASK,
     ID_HDR,
+	ID_BIG_KERNEL,
     ID_ANISO,
     ID_NORMAL_SLDR,
     ID_NORMAL_TEXT,
@@ -107,14 +107,13 @@ EVT_UPDATE_UI(ID_AA_ENABLE, VtxSceneTabs::OnUpdateAAEnable)
 EVT_CHECKBOX(ID_AVE_ENABLE,VtxSceneTabs::OnAveEnable)
 EVT_UPDATE_UI(ID_AVE_ENABLE, VtxSceneTabs::OnUpdateAveEnable)
 
+EVT_CHECKBOX(ID_BIG_KERNEL,VtxSceneTabs::OnBigEnable)
+
 EVT_CHECKBOX(ID_WATER,VtxSceneTabs::OnWater)
 EVT_UPDATE_UI(ID_WATER, VtxSceneTabs::OnUpdateWater)
 
 EVT_CHECKBOX(ID_ANISO,VtxSceneTabs::OnAniso)
 EVT_UPDATE_UI(ID_ANISO, VtxSceneTabs::OnUpdateAniso)
-
-EVT_CHECKBOX(ID_FRONT_ENABLE,VtxSceneTabs::OnFrontEnable)
-EVT_UPDATE_UI(ID_FRONT_ENABLE, VtxSceneTabs::OnUpdateFrontEnable)
 
 EVT_CHECKBOX(ID_SHOW_MASK,VtxSceneTabs::OnShowMask)
 EVT_UPDATE_UI(ID_SHOW_MASK, VtxSceneTabs::OnUpdateShowMask)
@@ -224,10 +223,6 @@ void VtxSceneTabs::AddFilterTab(wxWindow *panel){
 	m_ave_check->SetToolTip("Average normals at each vertex");
 	check_options->Add(m_ave_check,0,wxALIGN_LEFT|wxALL,1);
 
-	m_front_check=new wxCheckBox(panel, ID_FRONT_ENABLE, "FrontOnly");
-	m_front_check->SetToolTip("Discard backfacing normals");
-	check_options->Add(m_front_check,0,wxALIGN_LEFT|wxALL,1);
-
 	m_aniso=new wxCheckBox(panel, ID_ANISO, "Aniso");
 	m_aniso->SetToolTip("Anisotropic texture filtering");
 	check_options->Add(m_aniso,0,wxALIGN_LEFT|wxALL,1);
@@ -235,6 +230,10 @@ void VtxSceneTabs::AddFilterTab(wxWindow *panel){
 	m_aa_check=new wxCheckBox(panel, ID_AA_ENABLE, "Edges");
 	m_aa_check->SetToolTip("Apply image filter");
 	check_options->Add(m_aa_check,0,wxALIGN_LEFT|wxALL,1);
+
+	m_big=new wxCheckBox(panel, ID_BIG_KERNEL, "Big Kernel");
+	m_big->SetToolTip("use large filter kernel");
+	check_options->Add(m_big,0,wxALIGN_LEFT|wxALL,1);
 
 	m_show_check=new wxCheckBox(panel, ID_SHOW_MASK, "Show Mask");
 	m_show_check->SetToolTip("Show image filter");
@@ -546,9 +545,9 @@ void VtxSceneTabs::OnAAEnable(wxCommandEvent& event){
 	TheScene->set_changed_render();
 }
 
-void VtxSceneTabs::OnFrontEnable(wxCommandEvent& event){
-	Raster.set_clean_edges(!Raster.clean_edges());
-	TheScene->set_changed_detail();
+void VtxSceneTabs::OnBigEnable(wxCommandEvent& event){
+    Raster.set_filter_big(!Raster.filter_big());
+	TheScene->set_changed_render();
 }
 
 void VtxSceneTabs::OnAveEnable(wxCommandEvent& event){
@@ -622,6 +621,7 @@ void VtxSceneTabs::updateControls(){
 	m_shadows->SetValue(Raster.shadows());
 	m_water->SetValue(Render.show_water());
 	m_tesslevel->SetSelection(Map::tessLevel()-1);
+	m_big->SetValue(Raster.filter_big());
 
 	m_occlusion->SetValue(Adapt.overlap_test());
 	m_clip->SetValue(Adapt.clip_test());

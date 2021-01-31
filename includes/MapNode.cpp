@@ -2098,17 +2098,8 @@ Point *MapNode::normal(MapData*d)
 
 	if(Render.avenorms())
 		p=ave_normal(d);
-	//else
-	if(p==0)
+	else
 		p=pnt_normal(d);
-	if(p && Raster.clean_edges()  && TheMap->frontface==GL_FRONT){
-     	MapData *md=surface_data(d);
-     	if(md){
-			Point vp=TheScene->vpoint-md->mpoint();
-			if(p->dot(vp)<=0.0)
-				p=0;
-     	}
-    }
 	return p;
 }
 //-------------------------------------------------------------

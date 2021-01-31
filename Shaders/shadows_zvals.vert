@@ -15,7 +15,7 @@ void main(void) {
     Vertex1=Position1;
    
 #ifdef NPZ
-    SET_ZNOISE(NPZ);
+    CALC_ZNOISE(NPZ);
     gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
 #else

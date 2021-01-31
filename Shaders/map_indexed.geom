@@ -16,9 +16,7 @@ varying out vec4 Color;
 uniform mat4 modelViewProjectionMat;
 
 varying in vec4 Vertex1_G[];
-varying out vec4 Vertex1;
-
-#define PI		3.14159265359
+vec4 Vertex1;
 
 uniform vec3 pv;
 uniform float freqmip;
@@ -49,7 +47,6 @@ void main(void) {
 #endif
     int index=0;
 	float t=1;
-	int numr=TESSLVL+1;
 	float del=1.0/TESSLVL;
 	for(int it = 0; it <= TESSLVL; it++,t-=del){
 		int nums = it+1 ;
@@ -57,24 +54,10 @@ void main(void) {
 		for(int is = 0; is < nums; is++,s+=del) {
 		    Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
-			SET_ZNOISE(NPZ);
+			CALC_ZNOISE(NPZ);
 			vdata[index]=gl_ModelViewProjectionMatrix * p;
 			index++;
 		}
 	}
-    for(int it = 0,index=0,ntop=0,nbot=1; it < TESSLVL; it++ ){\
-		int nums = it + 1; \
-		for( int is = 0; is < nums; is++ ) { \
-		   index=nbot+is; \
-		   ProduceVertex(index); \
-		   index=ntop+is; \
-		   ProduceVertex(index); \
-		} \
-		index=nbot+nums; \
-		ProduceVertex(index); \
-		EndPrimitive(); \
-		ntop=nbot; \
-		nbot+=nums+1; \
-	}
-
+    PRODUCE_INDEXED_VERTICES;
 }

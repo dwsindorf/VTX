@@ -2657,7 +2657,7 @@ bool Planetoid::setProgram(){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		//GLSLMgr::output_type=GL_TRIANGLE_STRIP_ADJACENCY; // this also works without any code changes
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_indexed.geom");
+		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid.geom");
 	}
 	else{
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
@@ -4099,9 +4099,6 @@ void CloudLayer::render()
 	if(included()){
 		map->lighting=1;
 		glDepthMask(GL_FALSE);
-		//Render.set_draw_nvis(1);
-		//bool edges=Raster.clean_edges();
-		//Raster.set_clean_edges(0);
 
 		TheScene->pushMatrix();
 		set_tilt();
@@ -4142,8 +4139,6 @@ void CloudLayer::render()
 		Shell::render_object();
 		map->frontface=GL_FRONT;
 		TheScene->popMatrix();
-		//Render.set_draw_nvis(0);
-		//Raster.set_clean_edges(edges);
 		glDepthMask(GL_TRUE);
 	}
 }

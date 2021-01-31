@@ -42,15 +42,17 @@
 		nbot+=nums+1; \
 	}
 
-#if NLIGHTS >0
-#define SET_ZNOISE(func) \
+#define CALC_ZNOISE(func) \
 	v1= Vertex1.xyz; \
  	gv = func; \
- 	g= gv.x; \
+ 	g=gv.x; \
  	vec3 v=p.xyz+pv; \
 	v=normalize(v)*g; \
-	p.xyz+=v; \
+	p.xyz+=v;
+
+#define CALC_ZNORMAL(func) \
     { \
+	    Normal.xyz=(Normal.xyz); \
 		float delta=1e-5; \
 		float nbamp = 5e-4/delta; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
@@ -64,16 +66,7 @@
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*(nbamp); \
 	    Normal.xyz=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
-	}
-#else
-#define SET_ZNOISE(func) \
-	v1= Vertex1.xyz; \
- 	gv = func; \
- 	g=gv.x; \
- 	vec3 v=p.xyz+pv; \
-	v=normalize(v)*g; \
-	p.xyz+=v;
-#endif
+	} \
 
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \

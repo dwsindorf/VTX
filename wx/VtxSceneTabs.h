@@ -38,11 +38,12 @@ protected:
 	wxRadioBox *quality;
 
 	wxCheckBox *m_ave_check;
-	wxCheckBox *m_front_check;
 	wxCheckBox *m_aa_check;
 	wxCheckBox *m_show_check;
 	wxCheckBox *m_hdr;
+	wxCheckBox *m_big;
 	wxCheckBox *m_aniso;
+
 	wxCheckBox *m_shadows;
 	wxCheckBox *m_water;
 
@@ -179,9 +180,6 @@ public:
     void OnUpdateAveEnable(wxUpdateUIEvent& event) {
     	event.Check(Render.avenorms());
     }
-    void OnUpdateFrontEnable(wxUpdateUIEvent& event) {
-    	event.Check(Raster.clean_edges());
-    }
     void OnUpdateShowMask(wxUpdateUIEvent& event) {
     	event.Check(Raster.filter_show());
     }
@@ -199,7 +197,8 @@ public:
     }
     void OnAAEnable(wxCommandEvent& event);
     void OnAveEnable(wxCommandEvent& event);
-    void OnFrontEnable(wxCommandEvent& event);
+
+    void OnBigEnable(wxCommandEvent& event);
 
     void OnColorAmpSlider(wxScrollEvent& event){
     	OnSliderValue(ColorAmpSlider, Raster.filter_color_ampl);

@@ -2244,8 +2244,6 @@ void Map::make_triangle_lists() {
 		while ((triangle = triangle_list++)>0) {
 			if(!triangle->visible)
 				continue;
-			if(Raster.clean_edges() && triangle->backfacing)
-				continue;
 			Point c = triangle->d1->point();
 			Point norm = c.normal(triangle->d2->point(), triangle->d3->point());
 			triangle->d1->add_normal(norm);

@@ -7,6 +7,9 @@ vec3 v1;
 vec3 v3;
 vec3 df;
 
+#ifndef PI
+#define PI		3.14159265359
+#endif
 #define GRADIENT 1
 #define VORONOI  2
 #define SIMPLEX  3
