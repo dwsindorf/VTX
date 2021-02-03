@@ -21,6 +21,7 @@ void main(void) {
 #endif
 #ifdef COLOR
 	Color=gl_Color;
+	Color.a=0.0;
 #endif
 
 }

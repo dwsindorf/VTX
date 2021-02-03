@@ -8,10 +8,10 @@
 // 
 
 #include "utils.h"
-#ifdef COLOR
+
 varying in vec4 Color_G[];
 varying out vec4 Color;
-#endif
+varying out vec4 Data;
 
 uniform mat4 modelViewProjectionMat;
 
@@ -20,6 +20,8 @@ vec4 Vertex1;
 
 uniform vec3 pv;
 uniform float freqmip;
+uniform float MinHt;
+uniform float MaxHt;
 
 vec4 gv=vec4(0);
 float g=0;
@@ -59,5 +61,6 @@ void main(void) {
 			index++;
 		}
 	}
+	Color.a=1e6*g;
     PRODUCE_INDEXED_VERTICES;
 }

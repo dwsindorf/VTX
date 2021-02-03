@@ -1778,7 +1778,7 @@ void MapNode::render_ids()
 	set_mchecked();
 	idb.l=Raster.set_id();
 	Raster.set_data(this);
-	glColor3ub(idb.c.red,idb.c.green,idb.c.blue);
+	glColor4ub(idb.c.red,idb.c.green,idb.c.blue,0);
 
 #ifdef USE_GL_POLYGON
 	glBegin(GL_POLYGON);

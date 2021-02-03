@@ -96,6 +96,7 @@ static int attributeList[] = {
     WX_GL_MIN_ACCUM_RED,8,
     WX_GL_MIN_ACCUM_GREEN,8,
     WX_GL_MIN_ACCUM_BLUE,8,
+    WX_GL_MIN_ALPHA,8,
     0
 };
 wxStopWatch VtxScene::stopwatch;

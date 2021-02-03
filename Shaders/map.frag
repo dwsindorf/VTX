@@ -1,10 +1,10 @@
 
-#ifdef COLOR
+
 varying vec4 Color;
-#endif
+varying vec4 Data;
+
 // ########## main section #########################
 void main(void) {
-#ifdef COLOR
 	gl_FragData[0] = Color;
-#endif
+	gl_FragData[1] = Data;
 }

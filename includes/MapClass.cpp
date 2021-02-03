@@ -1091,7 +1091,10 @@ bool Map::setProgram(){
 //-------------------------------------------------------------
 void Map::render_ids()
 {
-	GLSLMgr::beginRender();
+	GLSLMgr::setFBOReset();
+	GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
+
+	GLSLMgr::setFBOWritePass();
 
 	npole->visit(&MapNode::clr_flags);
 	Raster.set_idmode(1);
@@ -1102,6 +1105,9 @@ void Map::render_ids()
 	glPolygonMode(GL_FRONT,GL_FILL);
 	glPolygonMode(GL_BACK,GL_FILL);
 	glEnable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+	glDisable(GL_POLYGON_SMOOTH);
+
 	if(frontface==GL_FRONT)
 		glCullFace(GL_BACK);
 	else if(frontface==GL_BACK)
@@ -1139,7 +1145,7 @@ void Map::render_ids()
 	Render.set_mode(mode);
 	Raster.surface=1;
 
-	GLSLMgr::endRender();
+	//GLSLMgr::endRender();
 
 }
 //-------------------------------------------------------------

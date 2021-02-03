@@ -153,6 +153,7 @@ public:
     MapLink *link;
     MapData *cdata;
     MapData data;    // point, color data
+    Point gdata;
     MapNode(MapNode *, uint, uint);
     MapNode(MapNode *, MapData *);
     ~MapNode();

@@ -46,6 +46,7 @@ static int			colsize=0;
 class ShadowFlags;
 
 static int zvalid=0;
+static GLfloat		*gdata=0;		// geometry data
 static GLfloat		*zbuf1=0;		// eye zbuffer
 static GLfloat		*zbuf2=0;		// shadow zbuffer
 static GLubyte		*pixels=0;		// eye pixel buffer
@@ -335,6 +336,8 @@ RasterMgr::~RasterMgr()
 {
 	FREE(idtbl);
 	FREE(pixels);
+	FREE(gdata);
+
 	for(int i=0;i<nibuffs;i++){
 		FREE(ibuffs[i]);
 	}
@@ -904,10 +907,14 @@ void RasterMgr::setVisibleIDs()
 	int n = TheScene->viewport[2] * TheScene->viewport[3];
 
 	idb.l=0;
-	while(i<3*(n-1)){
+	int cnt=0;
+	while(i<4*(n-1)){
 		idb.c.red=pixels[i];
 		idb.c.green=pixels[i+1];
 		idb.c.blue=pixels[i+2];
+		idb.c.alpha=0;
+
+		float gval=gdata[cnt++];
 
 		if(invalid_id(idb.l))
             errs++;
@@ -917,7 +924,7 @@ void RasterMgr::setVisibleIDs()
 				idtbl[idb.l]->clr_masked();
 			}
 		}
-		i=i+3;
+		i=i+4;
 	}
     if(errs && raster_init){
         DisplayErrorMessage("%d illegal map id errors in viewport w:%d h:%d",
@@ -932,11 +939,12 @@ void RasterMgr::setVisibleIDs()
 MapNode *RasterMgr::pixelID(int x,int y)
 {
 	static idu idb;
-	int i = 3*(y*(TheScene->viewport[3]-1)+x);
+	int i = 4*(y*(TheScene->viewport[3]-1)+x);
 	idb.l=0;
 	idb.c.red=pixels[i];
 	idb.c.green=pixels[i+1];
 	idb.c.blue=pixels[i+2];
+	idb.c.alpha=pixels[i+3];
     //printf("d %d i %d  t %d\n",dcnt,i,idb.l);
 	if(idb.l==0 || idb.l>dcnt)
 		return 0;
@@ -950,8 +958,16 @@ void RasterMgr::read_ids()
 {
 	glFinish();
 	glFlush();
+	GLSLMgr::setFBOReadPass();
+	glActiveTextureARB(GL_TEXTURE0);  // read frame buffer
+
 	glReadPixels(0, 0, TheScene->viewport[2],TheScene->viewport[3],
-	               GL_RGB, GL_UNSIGNED_BYTE,pixels);
+	               GL_RGBA, GL_UNSIGNED_BYTE,pixels);
+	//glActiveTextureARB(GL_TEXTURE1);  // enable to read from fbo texture 1
+	glReadPixels(0, 0, TheScene->viewport[2],TheScene->viewport[3],
+		               GL_ALPHA, GL_FLOAT,gdata);
+	glActiveTextureARB(GL_TEXTURE0);
+	glUseProgramObjectARB(0);
 }
 
 //#define DEBUG_LIMITS
@@ -1020,7 +1036,7 @@ void RasterMgr::getPixels()
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	//if(!pixels_valid)
-		glReadPixels(0, 0, vport[2],vport[3],GL_RGB, GL_UNSIGNED_BYTE,pixels);
+		glReadPixels(0, 0, vport[2],vport[3],GL_RGBA, GL_UNSIGNED_BYTE,pixels);
 	//glEnable(GL_DEPTH_TEST);
 	pixels_valid=1;
 }
@@ -1030,7 +1046,7 @@ void RasterMgr::getPixels()
 //-------------------------------------------------------------
 void RasterMgr::drawPixels()
 {
-	glDrawPixels(vport[2],vport[3],GL_RGB, GL_UNSIGNED_BYTE,pixels);
+	glDrawPixels(vport[2],vport[3],GL_RGBA, GL_UNSIGNED_BYTE,pixels);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -1255,7 +1271,7 @@ void RasterMgr::applyShadows()
 				continue;
 			f1=clamp(sflags[n].total(),0,1);
 			if(f1){
-				c=pixels+n*3;
+				c=pixels+n*4;
 				f2=1.0-f1;
 //				c[0]=(GLubyte)(255);
 //				c[1]=(GLubyte)(0);
@@ -1294,7 +1310,7 @@ void RasterMgr::applyFilter()
 	if(filter_show())
 		show_filter_mask();
 	glDisable(GL_DEPTH_TEST);
-	glDrawPixels(vport[2],vport[3],GL_RGB, GL_UNSIGNED_BYTE,pixels);
+	glDrawPixels(vport[2],vport[3],GL_RGBA, GL_UNSIGNED_BYTE,pixels);
 	//glClear(GL_DEPTH_BUFFER_BIT);
 }
 
@@ -1308,7 +1324,7 @@ void RasterMgr::show_filter_mask()
 	image=ibuffs[0];
 	int n=vport[3]*vport[2];
 	for(i=0;i<n-1;i++){
-		k=i*3;
+		k=i*4;
 		GLubyte b=image[k+1]&FMAX;
 		if(image[k+1]&FZDIFF){
 			int r=pixels[k+2]+b*2;
@@ -1476,7 +1492,7 @@ void RasterMgr::pointFilter()
 
 	for(y=0,n=0;y<vport[3];y++){			// rows (y)
 		for(x=0;x<vport[2]-1;x++,n++){		// cols (x)
-			k=3*n;
+			k=4*n;
 			GLubyte b=image[k+1]&FMAX;
 			if(b==0)
 				continue;
@@ -1521,7 +1537,7 @@ void RasterMgr::boxFilter()
 			f2 = f1*fb;
 			f3 = f2/1.41;
 
-			p0=pixels+3*n;
+			p0=pixels+4*n;
 			p1=p0+3; // right
 			p2=p0+3*vport[2]; // up
 			p3=p2+3; // up-right
@@ -1537,7 +1553,7 @@ void RasterMgr::boxFilter()
 		f2=BF*b;
 		f1=1-f2;
 
-		p0=pixels+3*n;
+		p0=pixels+4*n;
 		p1=p0+3;
 		for(i=0;i<3;i++)
 			p0[i]=(GLubyte)(f2*p1[i]+f1*p0[i]);
@@ -1560,7 +1576,7 @@ void RasterMgr::circleFilter()
 			GLubyte b=image[3*n+1]&FMAX;
 			if(!b)
 				continue;
-			p0=pixels+3*n;
+			p0=pixels+4*n;
 			p1=p0-3;
 			p3=p0+3;
 			p4=p0+3*vport[2];
@@ -1708,7 +1724,7 @@ void RasterMgr::applyWaterdepth()
 	double af=rampstep(0,TheScene->maxht,TheScene->height,1,0);
 	for(k=0,i=0;i<vport[3];i++){	// rows (y)
 		for(j=0;j<vport[2];j++,k++){	// cols (x)
-			if(!(image[k*3+1] & FWATER))
+			if(!(image[k*4+1] & FWATER))
 				continue;
 			z2=zbuf1[k];
 			if(z2==0||z2==1||zbuf2[k]==1)
@@ -1717,7 +1733,7 @@ void RasterMgr::applyWaterdepth()
 			double dp=image[k*3]*BS;
 			if(dp==0)
 				continue;
-			c=pixels+k*3;
+			c=pixels+k*4;
 			if(do_depth){
 				z1=1/(ws2*zbuf2[k]+ws1);
 				dz=(z1-z2);
@@ -1729,7 +1745,7 @@ void RasterMgr::applyWaterdepth()
 				c[1]=(GLubyte)(f1*c[1]+f2*m[1]);
 				c[2]=(GLubyte)(f1*c[2]+f2*m[2]);
 			}
-			GLubyte *b=lighting+k*3;
+			GLubyte *b=lighting+k*4;
 			int s=c[0]+b[0];
 			c[0]=s>255?255:s;
 			s=c[1]+b[1];
@@ -1946,6 +1962,7 @@ void RasterMgr::manageBuffers()
 
 	if(!need_pixels || n>npixels){
 		FREE(pixels);
+		FREE(gdata);
 	}
 
 	int need_image=0;
@@ -2003,8 +2020,10 @@ void RasterMgr::manageBuffers()
 			alloc_idtbl(n);
 	}
 
-	if(!pixels && need_pixels)
-		MALLOC((3*n),GLubyte,pixels);
+	if(!pixels && need_pixels){
+		MALLOC((4*n),GLubyte,pixels);
+		MALLOC(n,GLfloat,gdata);
+	}
 
 	for(i=0;i<ni;i++){
 	    if(!ibuffs[i]){
@@ -2018,14 +2037,7 @@ void RasterMgr::manageBuffers()
 	int need_zbuf2=0;
 	int need_sflags=0;
 	if(!Render.draw_shaded()){
-//		need_zbuf1=shadows()
-//			   || Render.show_water()
-//			   || (Render.fog() && fog())
-//			   || (Render.dealias()&&(filter_edges()||!filter_bg()))
-//			   ;
-		need_zbuf2=shadows()
-			   || Render.show_water()
-			   ;
+		need_zbuf2=shadows()|| Render.show_water();
 		need_sflags=shadows();
 	}
 

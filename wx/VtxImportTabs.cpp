@@ -117,7 +117,6 @@ void VtxImportTabs::makeImageList(){
     images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
-	printf("VtxImportTabs::makeImageList() 0x%-8X\n",type);
 	images.getImageInfo(type, list);
 	freeImageList();
 	image_list=new NameList<ImageSym*>(list);
