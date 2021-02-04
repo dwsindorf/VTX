@@ -900,6 +900,7 @@ void RasterMgr::reset_idtbl()
 //-------------------------------------------------------------
 void RasterMgr::setVisibleIDs()
 {
+
 	int i=0;
     int errs=0;
 	static idu      idb;
@@ -909,13 +910,12 @@ void RasterMgr::setVisibleIDs()
 	idb.l=0;
 	int cnt=0;
 	while(i<4*(n-1)){
-		idb.c.red=pixels[i];
-		idb.c.green=pixels[i+1];
-		idb.c.blue=pixels[i+2];
+		idb.c.red=roundf(gdata[i]*255);
+		idb.c.green=roundf(gdata[i+1]*255);
+		idb.c.blue=roundf(gdata[i+2]*255);
+		float gval=gdata[i+3];
+
 		idb.c.alpha=0;
-
-		float gval=gdata[cnt++];
-
 		if(invalid_id(idb.l))
             errs++;
 		else if(idb.l>0){
@@ -941,10 +941,10 @@ MapNode *RasterMgr::pixelID(int x,int y)
 	static idu idb;
 	int i = 4*(y*(TheScene->viewport[3]-1)+x);
 	idb.l=0;
-	idb.c.red=pixels[i];
-	idb.c.green=pixels[i+1];
-	idb.c.blue=pixels[i+2];
-	idb.c.alpha=pixels[i+3];
+	idb.c.red=roundf(gdata[i]*255);
+	idb.c.green=roundf(gdata[i+1]*255);
+	idb.c.blue=roundf(gdata[i+2]*255);
+	idb.c.alpha=0;
     //printf("d %d i %d  t %d\n",dcnt,i,idb.l);
 	if(idb.l==0 || idb.l>dcnt)
 		return 0;
@@ -960,12 +960,9 @@ void RasterMgr::read_ids()
 	glFlush();
 	GLSLMgr::setFBOReadPass();
 	glActiveTextureARB(GL_TEXTURE0);  // read frame buffer
-
-	glReadPixels(0, 0, TheScene->viewport[2],TheScene->viewport[3],
-	               GL_RGBA, GL_UNSIGNED_BYTE,pixels);
 	//glActiveTextureARB(GL_TEXTURE1);  // enable to read from fbo texture 1
 	glReadPixels(0, 0, TheScene->viewport[2],TheScene->viewport[3],
-		               GL_ALPHA, GL_FLOAT,gdata);
+			GL_RGBA, GL_FLOAT,gdata);
 	glActiveTextureARB(GL_TEXTURE0);
 	glUseProgramObjectARB(0);
 }
@@ -1650,7 +1647,7 @@ void RasterMgr::applyFog()
 			//if(z>=1)
 			if(z==0 || z==1)
 				continue;
-			c=pixels+k*3;
+			c=pixels+k*4;
 			if(do_vfog){
 				f1=image[k*3+2]*rampstep(z1v,z2v,z,0,vf);
 				f2=(1-f1);
@@ -1842,7 +1839,7 @@ void RasterMgr::applyReflections()
 			}
 			if(j>0)
 				aflg=1;
-			c=pixels+k*3;
+			c=pixels+k*4;
 			if(rflag){  // color modulation + reflection
 				double dpr=dp*2.0;
 				rmod=rampstep(0,1.5*water_dpr,dpr,water_reflect,0);
@@ -1889,7 +1886,7 @@ void RasterMgr::applyReflections()
 						n=dn;
 					}
 				}
-				p=pixels+3*n;
+				p=pixels+4*n;
 				mix=rampstep(0.25*water_dpr,water_dpm,dp,water_mix*attn,0);
 				cmod=(1-rmod)*saturation*mflag;
 				mix*=mix;
@@ -1915,7 +1912,7 @@ void RasterMgr::applyReflections()
 				wCol++;
 			}
 			if(aflg){
-				p=pixels+3*(k-1);
+				p=pixels+4*(k-1);
 				c[0]=(GLubyte)(0.5*c[0]+0.5*p[0]);
 				c[1]=(GLubyte)(0.5*c[1]+0.5*p[1]);
 				c[2]=(GLubyte)(0.5*c[2]+0.5*p[2]);
@@ -2022,7 +2019,7 @@ void RasterMgr::manageBuffers()
 
 	if(!pixels && need_pixels){
 		MALLOC((4*n),GLubyte,pixels);
-		MALLOC(n,GLfloat,gdata);
+		MALLOC((4*n),GLfloat,gdata);
 	}
 
 	for(i=0;i<ni;i++){
