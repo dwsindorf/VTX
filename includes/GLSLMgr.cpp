@@ -24,7 +24,6 @@ extern Point MapPt;
 //#define DEBUG_FBO
 //#define DEBUG_CLR
 
-//#define FBO_DEPTH
 #define FORCEMINGLVERSION true
 #define PERLIN_1D_TEX
 static char *TEXNAME[6]={"FBOTex1","FBOTex2","FBOTex3","FBOTex4","FBOTex5","FBOTex6"};
@@ -921,6 +920,9 @@ void GLSLMgr::clrBuffers(){
 }
 
 void GLSLMgr::clrFBODepthBuffers(){
+#ifdef DEBUG_FBO
+	cout << "GLSLMgr::clrFBODepthBuffers()"<<endl;
+#endif
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
 	float v0[1]={1.0};
 	glClearBufferfv(GL_DEPTH,0,v0);

@@ -228,6 +228,8 @@ public:
 	int	   shadow_edge_min;
 	int	   shadow_edge_width;
 	int	   shadow_vcnt;
+	int	   shadow_count;
+
 	int    shadow_test;
 	bool   shadow_proj;
 

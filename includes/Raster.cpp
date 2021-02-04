@@ -280,6 +280,8 @@ RasterMgr::RasterMgr()
 	// shadow parameters
 
 	shadow_vcnt=0;
+	shadow_count=0;
+
 	shadow_darkness=1.0;
 	shadow_randval=0.1;
 	shadow_zmin=0.15;
@@ -443,6 +445,7 @@ int RasterMgr::next_view()
 	if(single_view())
 		shadow_vleft=shadow_vmax;
 	shadow_vcnt++;
+	shadow_count++;
 	return shadow_vcnt;
 }
 
@@ -501,12 +504,17 @@ void RasterMgr::init_shadows()
 	glDisable(GL_TEXTURE_1D);
 	glDisable(GL_BLEND);
 }
-//-------------------------------------------------------------
+//------------------------------------------------------------
 // void RasterMgr::set_light_view()	 called at start of each view
 // TODO: need better light view algorithm
 //-------------------------------------------------------------
 void RasterMgr::set_light_view()
 {
+	glDisable(GL_BLEND);
+	glDisable(GL_FOG);
+	GLSLMgr::clrBuffers();
+	//cout<<"RasterMgr::set_light_view:"<<shadow_vcnt<<endl;
+
 	double w,h,r,d,a,zn,zf,s,x,y,f,z;
     Point c,e,n,cv,l,cl;
 	double ymax=2*shadow_vsize;

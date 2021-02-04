@@ -1145,7 +1145,7 @@ void Map::render_ids()
 	Render.set_mode(mode);
 	Raster.surface=1;
 
-	//GLSLMgr::endRender();
+	GLSLMgr::endRender();
 
 }
 //-------------------------------------------------------------

@@ -99,13 +99,12 @@ void EffectsMgr::init_render()
 	bool old_mode=do_shaders;
 	RasterMgr::init_render();
 	do_shaders=do_vfog||do_haze||do_water||do_edges||do_hdr;
-	if(TheScene->light_view()|| TheScene->test_view())
+	if(TheScene->light_view()|| TheScene->test_view() || !Render.draw_shaded())
 		do_shaders=false;
-	//do_shaders=use_shaders()?do_shaders:false;
-	do_shaders=Render.draw_shaded()?do_shaders:false;
 
 	if(old_mode !=do_shaders){
 	   TheScene->set_changed_render();
+	   Raster.shadow_count=0;
 	}
 }
 
