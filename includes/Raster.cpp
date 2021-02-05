@@ -512,8 +512,7 @@ void RasterMgr::set_light_view()
 {
 	glDisable(GL_BLEND);
 	glDisable(GL_FOG);
-	GLSLMgr::clrBuffers();
-	cout<<"RasterMgr::set_light_view:"<<shadow_vcnt<<endl;
+	//cout<<"RasterMgr::set_light_view:"<<shadow_vcnt<<endl;
 
 	double w,h,r,d,a,zn,zf,s,x,y,f,z;
     Point c,e,n,cv,l,cl;

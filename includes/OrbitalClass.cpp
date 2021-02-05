@@ -2616,7 +2616,7 @@ bool Planetoid::setProgram(){
 	else
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
 
-	if(Raster.shadows()&&(Raster.farview()||TheScene->viewobj==this))
+	if(!TheScene->light_view()&& !TheScene->test_view() && Raster.shadows()&&(Raster.farview()||TheScene->viewobj==this))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");

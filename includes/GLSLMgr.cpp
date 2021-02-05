@@ -991,7 +991,7 @@ void GLSLMgr::setFBOReset(){
 #ifdef DEBUG_FBO
 	cout << "GLSLMgr::setFBOReset()"<<endl;
 #endif
-	glClearColor(0,0,0,0);
+	glClearColor(0,0,0,1);
 	//clrBuffers();
 	float v0[1]={1.0};
 	float v1[4]={0,0,0,1};

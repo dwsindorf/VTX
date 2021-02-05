@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-#define DEBUG_EFFECTS
+//#define DEBUG_EFFECTS
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
@@ -99,8 +99,12 @@ void EffectsMgr::init_render()
 	bool old_mode=do_shaders;
 	RasterMgr::init_render();
 	do_shaders=do_vfog||do_haze||do_water||do_edges||do_hdr;
-	if(TheScene->light_view()|| TheScene->test_view() || !Render.draw_shaded())
+	if(!Render.draw_shaded())
 		do_shaders=false;
+	if(TheScene->light_view()|| TheScene->test_view()){
+		do_shaders=true;
+		do_shadows=do_water=do_haze=do_fog=false;
+	}
 
 	if(old_mode !=do_shaders){
 	   TheScene->set_changed_render();

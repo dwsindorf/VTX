@@ -2196,7 +2196,7 @@ void Scene::render_shadows()
     //if(ht<height)
     //    single_pass=1;
 
-    int bgs=Raster.shadows() && Raster.bgshadows();
+    int bgs=Raster.shadows() && Raster.bgshadows() && !light_view() && !test_view();
 
     locate_objs();
 	set_lights();
@@ -2207,6 +2207,7 @@ void Scene::render_shadows()
 		shadow_group(2);
 		setview_test();
 		render_bgpass();
+		Raster.apply();
 		return;
 	}
 
@@ -2228,7 +2229,6 @@ void Scene::render_shadows()
 		Raster.set_farview(1);
 		Raster.setView();
 	    if(single_pass && light_view()){
-		    Raster.set_light_view();
 		    render_light_view();
 		    cpoint=p;
 		    return;
@@ -2274,13 +2274,14 @@ void Scene::render_shadows()
 			}
 		}
  		Raster.init_render();
-		if(light_view()){
-			Raster.set_light_view();
+  		if(light_view() && viewobj){
+			viewobj->set_selected();
 			render_light_view();
+			Raster.apply();
 		    return;
 		}
 		project();
-		if(Raster.shadows())
+		if(Raster.shadows() && !test_view())
 			Raster.renderFgShadows();
 
 		project();
@@ -2471,8 +2472,6 @@ void Scene::setview_test()
 //-------------------------------------------------------------
 void Scene::render_light_view()
 {
-	Raster.render();
-	GLSLMgr::clrBuffers();
 
 	if(Raster.last_light())
 		Raster.set_light(Lights.size-1);
@@ -2481,7 +2480,13 @@ void Scene::render_light_view()
 	if(changed_model() || !Raster.more_views() || Raster.shadow_count==0)
 		Raster.init_view();
 	//cout << "light view:"<<Raster.shadow_vcnt<<endl;
+
+	Raster.render();
+	if (Render.draw_shaded())
+		GLSLMgr::setFBOWritePass();
+    glDisable(GL_BLEND);
 	Raster.set_light_view();
+
 	objects->visit(&Object3D::render);
 
 	Raster.next_view();
