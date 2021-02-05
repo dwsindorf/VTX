@@ -59,9 +59,10 @@ enum {
 	WATERFLAG   = 0x00001000,    // terrain has water
 	COLORFLAG   = 0x00002000,    // terrain has color
 	SNOISEFLAG  = 0x00004000,    // shader noise
-	NOISE1D     = 0x00008000,    // shader 1D noise
-	HIDDEN      = 0x00010000,    // invisible node
-	COMPLEX     = 0x00020000,    // complex expression
+	GNOISEFLAG  = 0x00008000,    // shader noise
+	NOISE1D     = 0x00010000,     // shader 1D noise
+	HIDDEN      = 0x00020000,    // invisible node
+	COMPLEX     = 0x00040000,    // complex expression
 };
 
 enum {   //Terrain and NodeData type flags

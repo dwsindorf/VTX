@@ -929,6 +929,8 @@ void RasterMgr::setVisibleIDs()
 			if(!idtbl[idb.l]->visible()){
 				TheMap->vnodes++;
 				idtbl[idb.l]->clr_masked();
+				//if(gval)
+				//	idtbl[idb.l]->setHt(gval);
 			}
 		}
 		i=i+4;

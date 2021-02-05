@@ -46,8 +46,7 @@
 	v1= Vertex1.xyz; \
  	gv = func; \
  	g=gv.x; \
- 	vec3 v=p.xyz+pv; \
-	v=normalize(v)*g; \
+	vec3 v=normalize(pv)*g; \
 	p.xyz+=v;
 
 #define CALC_ZNORMAL(func) \

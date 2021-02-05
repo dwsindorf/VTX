@@ -1,29 +1,56 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-29.5379;
-		theta=350.164;
-		height=530.265 ft;
-		gndlvl=3096.07 ft;
-		time=53437.2;
-		heading=-45;
-		tilt=-15;
+		phi=-37.6282;
+		theta=1.15663;
+		height=34235.4 ft;
+		gndlvl=-12010.2 ft;
+		time=70823.8;
+		tilt=-9;
+		angle=-14;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=2224.93 ft;
-		gndlvl=1401.4 ft;
+		height=22225.2 ft;
+		gndlvl=0 ft;
 	}
 	View{
-		time=48077.2;
+		height=14876.1 ft;
+		gndlvl=6182.44 ft;
 	}
 	View{
-		height=2998.17 ft;
-		gndlvl=628.161 ft;
+		height=14181.4 ft;
+		gndlvl=0 ft;
+		tilt=-12;
+		angle=-18;
+	}
+	View{
+		height=16332.1 ft;
+	}
+	View{
+		height=16489.9 ft;
+	}
+	View{
+		height=36361.9 ft;
+	}
+	View{
+		height=13058.3 ft;
 		tilt=-11;
-		angle=1;
+		angle=-29;
+	}
+	View{
+		height=10706.8 ft;
+		angle=-26;
+	}
+	View{
+		height=9857.32 ft;
+	}
+	View{
+		height=9165.17 ft;
+		tilt=-7;
+		angle=-17;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -53,32 +80,28 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.002,100) {
 					ambient=Color(1,1,1,0.04);
 					day=24;
-					emission=Color(1,1,1,0.02);
-					shadow=Color(0,0,0.19,0.82);
-					specular=Color(1,1,1,0.71);
+					diffuse=Color(1,1,1,0.85);
+					hscale=0.02;
+					shine=5.56269;
+					specular=Color(1,1,1,0.27);
+					tilt=10;
 					year=100;
-					haze.height=0.66;
-					haze.value=0.4;
-					bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
-						Color(1,0.6,0),
-						Color(0.7,0.4,0),
-						Color(1,0.9,0.3));
-					bands("alpine",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),
-						Color(0.2,0.4,0.1,0.7),
-						Color(0.3,0.5,0,0.7),
-						Color(0.4,0.5,0,0.7),
-						Color(0.4,0.4,0.1,0.7),
-						Color(0.2,0.3,0.3,0.7),
-						Color(0.3,0.4,0.2,0.7),
-						Color(0.4,0.5,0,0.7),
-						Color(0.4,0.5,0,0));
+					albedo=1;
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
-								Texture("saturn",BUMP|S|TEX,HT,2,1,1.22224,0,1,2,1,0)+
-								Texture("alpine",S|TEX,HT+0.042*srand()*noise(7,5,1,0.5,2)+0.3,3,0.88888,1,0,1,2,1,0);
+						terrain=water(0)
+								Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+					}
+					Sky(0.00205145) {
+						color=Color(0,0.9,0.9);
+						day=24;
+						density=0.2;
+						name="Sky";
+						rseed=1.58657;
+						specular=Color(1,1,1);
+						tilt=10;
 					}
 				}
 			}

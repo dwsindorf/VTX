@@ -179,6 +179,13 @@ void  MapData::invalidate()
 //-------------------------------------------------------------
 // MapData::point()	return rectangular point from theta,phi,height
 //-------------------------------------------------------------
+Point  MapData::gpoint()
+{
+	return Point(0,0,GZ());
+}
+//-------------------------------------------------------------
+// MapData::point()	return rectangular point from theta,phi,height
+//-------------------------------------------------------------
 Point  MapData::point()
 {
 #ifdef HASH_POINTS
@@ -254,10 +261,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int nc=0;
 	int nf=0;
 	int ne=0;
+	int ng=0;
 	int frac=0;
 	int i;
 	int a,b;
 	double density=0;
+	double gdata=0;
 
 	MapData *s2=0;
 
@@ -279,6 +288,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		nf=1;
 		density=td.density;
 	}
+	if(td.get_flag(GNOISEFLAG))
+		gdata=1;
 
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
@@ -317,13 +328,14 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	else if(td.p.z != 0.0)
 	    nd=1;
 
+	setGvals(gdata);
 	setDims(nd);
 	setColors(nc);
 	set_has_density(nf);
 	setEvals(ne);
 	setFchnls(frac);
 
-	int n=nc+nd+ne+nf+frac+links();
+	int n=nc+nd+ne+nf+frac+gdata+links();
 	a=tp->tsize();
 	setMemory(n,a);
 
@@ -341,6 +353,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(ne>0)
 			TheMap->set_erosion(1);
 	}
+	setGZ(0.0);
 	double h=Ht();
 	a=TSTART;
 
@@ -362,10 +375,20 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
 #ifndef HASH_POINTS
-	point_=TheMap->point(theta(),phi(),h);
+    setHt(h);
+	//point_=TheMap->point(theta(),phi(),h);
 #endif
 }
 
+void MapData::setHt(double z){
+	static int cnt=0;
+	point_=TheMap->point(theta(),phi(),z);
+	if(z && cnt%1000==0){
+	  cout <<z<<endl;
+	}
+	cnt++;
+
+}
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)
 //-------------------------------------------------------------

@@ -687,6 +687,8 @@ void TNpoint::eval()
 {
 	INIT;
     Px=Py=Pz=0;
+	Td.clr_flag(SNOISEFLAG|GNOISEFLAG);
+
 	TNarg *arg=(TNarg*)right;
     if(CurrentScope->rpass()){
     	snoise=0;
@@ -715,6 +717,9 @@ void TNpoint::eval()
 		TerrainData::add_TNpoint(this);
 		snoise=tp->noise.at();
 		snoise->type|=GEOM;
+	}
+	if(CurrentScope->eval_mode() && Td.get_flag(SNOISEFLAG)){
+		Td.set_flag(GNOISEFLAG);
 	}
 	S0.p=Point(Px,Py,Pz);
 	S0.set_pvalid();

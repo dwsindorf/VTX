@@ -153,7 +153,6 @@ public:
     MapLink *link;
     MapData *cdata;
     MapData data;    // point, color data
-    Point gdata;
     MapNode(MapNode *, uint, uint);
     MapNode(MapNode *, MapData *);
     ~MapNode();
@@ -352,6 +351,8 @@ public:
     double density()                { return data.density();}
     double sediment()               { return data.sediment();}
     double rock()                   { return data.rock();}
+
+    void setHt(double f)            { data.setHt(f); }
 
     int type()                      { return data.type(); }
     int fog()                       { return data.has_density()||(cdata && cdata->has_density());}

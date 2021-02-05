@@ -61,6 +61,6 @@ void main(void) {
 			index++;
 		}
 	}
-	Color.a=1e6*g;
+	Color.a=g;
     PRODUCE_INDEXED_VERTICES;
 }
