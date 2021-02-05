@@ -81,7 +81,6 @@ void ProduceVertex(float s, float t){
     CALC_ZNORMAL(NPZ);
     gl_Position=gl_ModelViewProjectionMatrix * p;
 #endif
-    HT+=g; // water not included
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
 #ifdef COLOR
@@ -95,7 +94,8 @@ else
 	for(int i=0;i<NTEXS;i++)	
 		gl_TexCoord[i]=s*(gl_TexCoordIn[2][i]-gl_TexCoordIn[0][i])+t*(gl_TexCoordIn[1][i]-gl_TexCoordIn[0][i])+gl_TexCoordIn[0][i];
 #endif
-	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
+	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];
+	HT+=g; // water not included
 	for(int i=0;i<2;i++)
 		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];
 	EmitVertex();

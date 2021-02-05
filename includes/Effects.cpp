@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-//#define DEBUG_EFFECTS
+#define DEBUG_EFFECTS
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
@@ -117,7 +117,7 @@ void EffectsMgr::render() {
 	if (!Render.draw_shaded()){  //  if using shaders all done in apply call
 		RasterMgr::render();
 	}
-	else if(do_shaders){
+	else {
 		GLSLMgr::setFBOReset();
 		GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
 		//glEnable(GL_BLEND);

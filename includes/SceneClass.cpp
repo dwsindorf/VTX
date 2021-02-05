@@ -2471,7 +2471,9 @@ void Scene::setview_test()
 //-------------------------------------------------------------
 void Scene::render_light_view()
 {
+	Raster.render();
 	GLSLMgr::clrBuffers();
+
 	if(Raster.last_light())
 		Raster.set_light(Lights.size-1);
 	else
