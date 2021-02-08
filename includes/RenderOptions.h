@@ -49,8 +49,10 @@ enum{
 	SHOW_IDS		= 0x0020,
 	SHOW_NORMALS	= 0x0040,
 	SHOW_RASTER		= 0x0080,
+	SHOW_SZVALS		= 0x0100,
+
 	SHOW_FRONT		= SHOW_SOLID|SHOW_POINTS|SHOW_LINES|SHOW_SHADER,
-	SHOW_BUFFER		= SHOW_ZVALS|SHOW_IDS|SHOW_RASTER|SHOW_NORMALS
+	SHOW_BUFFER		= SHOW_ZVALS|SHOW_IDS|SHOW_RASTER|SHOW_NORMALS|SHOW_SZVALS
 	};
 
 enum{  //colors
@@ -312,6 +314,7 @@ public:
 	void show_lines()			{ flags.mode=SHOW_LINES;}
 	void show_solid()			{ flags.mode=SHOW_SOLID;}
 	void show_zvals()			{ flags.mode=SHOW_ZVALS;}
+	void show_szvals()			{ flags.mode=SHOW_SZVALS;}
 	void show_ids()				{ flags.mode=SHOW_IDS;}
 	void show_raster()			{ flags.mode=SHOW_RASTER;}
 	void show_normals()			{ flags.mode=SHOW_NORMALS;}
@@ -320,6 +323,8 @@ public:
 	int  draw_solid()			{ return flags.mode==SHOW_SOLID?1:0;}
 	int  draw_points()			{ return flags.mode==SHOW_POINTS?1:0;}
 	int  draw_zvals()			{ return flags.mode==SHOW_ZVALS?1:0;}
+	int  draw_szvals()			{ return flags.mode==SHOW_SZVALS?1:0;}
+
 	int  draw_ids()				{ return flags.mode==SHOW_IDS?1:0;}
 	int  draw_raster()			{ return flags.mode==SHOW_RASTER?1:0;}
 	int  draw_shaded()			{ return flags.mode==SHOW_SHADER?1:0;}

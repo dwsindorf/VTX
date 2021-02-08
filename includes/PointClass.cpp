@@ -162,7 +162,7 @@ void Point::print(char *m)
         r=1;
         s="ly";
     }
-	printf("%s%-15g %-15g %-15g %s\n",m,round(px,r),round(py,r),round(pz,r),s);
+	printf("%s%-15g %-15g %-4.1f %s\n",m,round(px,r),round(py,r),pz,s);
 }
 
 //-------------------------------------------------------------

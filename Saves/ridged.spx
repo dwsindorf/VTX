@@ -1,48 +1,26 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-29.5383;
-		theta=350.164;
-		height=5419.26 ft;
-		gndlvl=-738.333 ft;
+		phi=-29.5337;
+		theta=350.159;
+		height=9936.38 ft;
+		gndlvl=2602.75 ft;
 		time=85454;
-		heading=-50;
-		tilt=-15;
+		heading=-75;
+		tilt=-8;
+		angle=6;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=5722.63 ft;
-		gndlvl=-1041.7 ft;
-	}
-	View{
-		phi=-29.5417;
-		theta=350.161;
-		height=4197.04 ft;
-		gndlvl=-31.4995 ft;
-		heading=-75;
-	}
-	View{
-		phi=-29.5483;
-		theta=350.163;
-		height=15.5461 miles;
-		gndlvl=919.767 ft;
-		tilt=-40;
-		angle=5;
-	}
-	View{
-		phi=-29.5337;
-		theta=350.159;
-		height=9936.38 ft;
-		gndlvl=2602.75 ft;
-		tilt=-8;
-		angle=6;
+		height=15888.2 ft;
+		gndlvl=5205.49 ft;
 	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -71,17 +49,18 @@ Scene() {
 					ambient=Color(1,1,1,0.09);
 					day=24;
 					diffuse=Color(1,1,1,0.91);
+					hscale=0.001;
 					shadow=Color(0,0,0.19,0.8);
 					shine=2.91188;
 					specular=Color(1,1,1,0.17);
 					year=100;
-					image("eroded",NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));
+					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
 					bands("saturn",NORM,64,0.5,0.3,RAND,Color(1,0.9,0.3),
 						Color(1,0.6,0),
 						Color(0.7,0.4,0),
 						Color(1,0.9,0.3));
 					Surface{
-						terrain=Z(noise(NABS,8,9.5,0.35,0.95,2.1,1,0.1,0,0))+
+						terrain=Z(noise(GRADIENT|NABS,8,9.5,0.35,0.95,2.1,1,0.1,0,0))+
 								Texture("eroded",TEX,10000,2,0.2788,0,1,2)+
 								Texture("saturn",S|TEX,HT,1,1.3818,2,0,1,2,1,0);
 					}
@@ -109,7 +88,7 @@ Scene() {
 						year=17;
 						Surface{
 							terrain=craters(ID4,4,0.3,0.2,0.9)
-									Z(0.5*noise(UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
+									Z(0.5*noise(GRADIENT|UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);
 						}
 					}
 				}

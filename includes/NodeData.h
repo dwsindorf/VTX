@@ -330,6 +330,7 @@ public:
 	void setFchnls(int n)		{ flags.s.fractal=n;}
 	void setEvals(int n)		{ flags.s.evals=n;}
 	void setGvals(int n)		{ flags.s.gvals=n;}
+	bool has_geometry()         { return flags.s.gvals?true:false;}
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
@@ -534,7 +535,7 @@ public:
 	uint lphi()					    { return lp.lvalue();}
 
 	double height();
-	double max_height()				{ return Z();}
+	double max_height()				{ return Z()+GZ();}
 	double tbase()					{ return lt.dvalue();}
 	double pbase()					{ return lp.dvalue();}
 

@@ -929,8 +929,8 @@ void RasterMgr::setVisibleIDs()
 			if(!idtbl[idb.l]->visible()){
 				TheMap->vnodes++;
 				idtbl[idb.l]->clr_masked();
-				//if(gval)
-				//	idtbl[idb.l]->setHt(gval);
+				if(gval)
+					idtbl[idb.l]->setGZ(gval);
 			}
 		}
 		i=i+4;
@@ -944,11 +944,14 @@ void RasterMgr::setVisibleIDs()
 
 //-------------------------------------------------------------
 // RasterMgr::pixelID()	map ids from pixels
+// note: y is inverted
 //-------------------------------------------------------------
 MapNode *RasterMgr::pixelID(int x,int y)
 {
+	if(!gdata)
+		return 0;
 	static idu idb;
-	int i = 4*(y*(TheScene->viewport[3]-1)+x);
+	int i = 4*((TheScene->viewport[3]-y)*(TheScene->viewport[2])+x);
 	idb.l=0;
 	idb.c.red=roundf(gdata[i]*255);
 	idb.c.green=roundf(gdata[i+1]*255);

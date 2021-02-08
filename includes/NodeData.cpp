@@ -181,7 +181,13 @@ void  MapData::invalidate()
 //-------------------------------------------------------------
 Point  MapData::gpoint()
 {
-	return Point(0,0,GZ());
+	if(has_geometry()){
+	   Point p=TheMap->point(theta(),phi(),max_height());
+		if(TheScene->eyeref())
+			return p-TheScene->xpoint;
+		return p;
+	}
+	return point();
 }
 //-------------------------------------------------------------
 // MapData::point()	return rectangular point from theta,phi,height
@@ -225,7 +231,7 @@ Point  MapData::mpoint()
 // MapData::height()		return ht of node (global units)
 //-------------------------------------------------------------
 double MapData::height(){
-    return Ht()*Rscale;
+    return max_height()*Rscale;
 }
 
 //-------------------------------------------------------------
@@ -375,19 +381,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
 #ifndef HASH_POINTS
-    setHt(h);
-	//point_=TheMap->point(theta(),phi(),h);
+	point_=TheMap->point(theta(),phi(),h);
 #endif
-}
-
-void MapData::setHt(double z){
-	static int cnt=0;
-	point_=TheMap->point(theta(),phi(),z);
-	if(z && cnt%1000==0){
-	  cout <<z<<endl;
-	}
-	cnt++;
-
 }
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)

@@ -54,7 +54,7 @@ double zslope()
 		return 0;
 	static double s=0;
 	if(!Td.get_flag(SFIRST)){
-	    CELLSLOPE(Ht(),s);
+	    CELLSLOPE(max_height(),s);
     	s*=TheMap->hscale*INV2PI;
 		Td.set_flag(SFIRST);
     }
@@ -723,7 +723,7 @@ void MapNode::recalc2()
 void MapNode::find_limits()
 {
 	extern double MinHt,MaxHt;
-	double z=data.Z();
+	double z=data.max_height();
 	MinHt=z<MinHt?z:MinHt;
 	MaxHt=z>MaxHt?z:MaxHt;
 	TheMap->hmax=MaxHt;
@@ -993,7 +993,7 @@ void MapNode::set_tests()
 		while(d){
 			d=d->next_surface();
 			if(d && d->dims()>1){
-				double mx=TheScene->epoint.distance(d->point());
+				double mx=TheScene->epoint.distance(d->gpoint());
 				depth=mx<depth?mx:depth;
 			}
 		}
@@ -1036,7 +1036,7 @@ void MapNode::vischk()
 		MapData *d=data.surface1();
 		bool clp=false;
 		while(d){
-			Point p=d->point();
+			Point p=d->gpoint();
 			if(!clipchk(p)){
 				clp=false;
 				break;;
@@ -1609,7 +1609,7 @@ void MapNode::init_render()
 		Dmid=&MapNode::IDvertex;
 		Cmid=&MapNode::IDvertex;
 	}
-	else if(Render.draw_zvals()){
+	else if(Render.draw_zvals() || Render.draw_szvals()){
 		Cstart=&MapNode::IDvertex;
 		Dstart=&MapNode::IDvertex;
 		Dmid=&MapNode::IDvertex;
@@ -1802,7 +1802,6 @@ void MapNode::render_vertex()
 	if(!rnode || !dnode)
 	    return;
 	if(TheScene->select_node()){
-		//glLoadName((long)(this));
 		idb.l=Raster.set_id();
 		Raster.set_data(this);
 		glLoadName(idb.l);

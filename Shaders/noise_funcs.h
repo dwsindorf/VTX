@@ -48,8 +48,7 @@ struct noise_info {
 	float smoothing;
 	float clamp;
 	float logf;
-	float ma;
-	float mb;
+	float scale;
 	bool sqr;
 	bool invert;
 	bool absval;

@@ -235,7 +235,7 @@ public:
 	void            render_refs();
 	void            render_surface();
 	void            render_raster();
-	void            shadow_zvals();
+	void            render_zvals();
 	void            shadow_normals();
 	void            render_triangle_list();
 	void            render_select();

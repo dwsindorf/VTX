@@ -351,7 +351,7 @@ MapNode *Map::locate(double t, double p)
 //-------------------------------------------------------------
 double hts;
 void heights(MapNode *n){
-	double h=n->data.Ht();
+	double h=n->data.max_height();
 	if(h>hts)
 		hts=h;
 }
@@ -361,9 +361,9 @@ double Map::elevation(double t, double p)
 
 	MapNode *n=npole->locate(t,p);
 	if(n->cdata)
-		hts=n->cdata->Ht();
+		hts=n->cdata->max_height();
 	else
-		hts=n->data.Ht();
+		hts=n->data.max_height();
 
 	n->CWcycle(heights);
 	return Rscale*hts;
@@ -534,9 +534,8 @@ void Map::render()
 	reset();
 	make_current();
 	if(TheScene->buffers_mode()){
-		if(Render.draw_zvals())
-			shadow_zvals();
-		//else if(Render.draw_raster())
+		if(Render.draw_zvals()||Render.draw_szvals())
+			render_zvals();
 		else if(Render.draw_raster() && (object==TheScene->viewobj))
 			render_raster();
 		else if(Render.draw_normals())
@@ -695,7 +694,7 @@ void Map::shadow_normals()
 //-------------------------------------------------------------
 // Map::render_zvals()	render without color to validate z buffer
 //-------------------------------------------------------------
-void Map::shadow_zvals()
+void Map::render_zvals()
 {
 	make_current();
 
@@ -734,8 +733,8 @@ void Map::shadow_zvals()
 	set_textures(0);
 	set_lighting(0);
 	set_colors(0);
-	Render.pushmode(SHOW_ZVALS);
-	npole->init_render();
+	//Render.pushmode(SHOW_ZVALS);
+	npole->init_render(); // sets vertex type
 	texture=0;
 
 	Raster.surface=1;
@@ -744,19 +743,21 @@ void Map::shadow_zvals()
 		Td.tp=tp;
 	    if(!visid(tid))
 	        continue;
-	    Raster.setProgram(Raster.SHADOW_ZVALS);
+	    if(Render.draw_szvals())
+	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 	    npole->render_vertex();
 	}
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
 		Raster.surface=2;  // water pass
-		Raster.setProgram(Raster.SHADOW_ZVALS);
+	    if(Render.draw_szvals())
+	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 		npole->render_vertex();
     }
 
 	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
-	Render.popmode();
+	//Render.popmode();
 //	glDrawBuffer(GL_BACK);
 //#ifdef WINDOWS
 //    if(!mask())
@@ -779,18 +780,10 @@ void Map::render_select()
 
 	reset();
 	Raster.reset_idtbl();
-	/*
-	glShadeModel(GL_FLAT);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_DITHER);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_BLEND);
-	glDisable(GL_FOG);
-*/
 	glDisable(GL_BLEND);
 	set_textures(0);
 	set_lighting(0);
+
 
 	double ext=TheScene->wscale*radius/TheScene->vpoint.length();
 
@@ -1075,8 +1068,7 @@ bool Map::setProgram(){
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	vars.newIntVar("tessLevel",tesslevel);
-
-	//cout<<Rscale<<endl;
+	vars.newFloatVar("rscale",Rscale);
 
 	vars.setProgram(program);
 	vars.loadVars();
@@ -1785,7 +1777,6 @@ void Map::adapt()
 	//	max_cycles=9;
    if( Adapt.never())
 	   return;
-
 	mcreated=mdeleted=mcount=cycles=0;
 	if(!npole)
 		make();
@@ -1818,6 +1809,7 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
+
 	if(ADAPT_NEEDED  || TheScene->changed_render())
 		clearLists();
     if(!test2)
@@ -2003,8 +1995,8 @@ MapNode *Map::makenode(MapNode *parent, double t, double p)
 Point  Map::point(double t, double p, double r)
 {
     if(symmetry==1)
-		return Point(t,p,radius+Rscale*r).rectangular();
-    Point pt=Point(t,p,radius+Rscale*r).rectangular();
+		return Point(t,p,radius+radius*hscale*r).rectangular();
+    Point pt=Point(t,p,radius+radius*hscale*r).rectangular();
     pt.y*=symmetry;
 	return pt;
 }

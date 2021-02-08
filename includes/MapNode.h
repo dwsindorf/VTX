@@ -352,7 +352,7 @@ public:
     double sediment()               { return data.sediment();}
     double rock()                   { return data.rock();}
 
-    void setHt(double f)            { data.setHt(f); }
+    void setGZ(double f)            { data.setGZ(f); }
 
     int type()                      { return data.type(); }
     int fog()                       { return data.has_density()||(cdata && cdata->has_density());}

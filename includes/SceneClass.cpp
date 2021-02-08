@@ -13,6 +13,7 @@
 #include "FileUtil.h"
 #include "FrameClass.h"
 #include "TerrainClass.h"
+#include "MapNode.h"
 #include "KeyIF.h"
 #include <math.h>
 #include <stdio.h>
@@ -1716,6 +1717,7 @@ void Scene::select(int x, int y)
     selx=x;
     sely=y;
     self=1;
+    selp=Point2D(x,y);
 }
 
 //-------------------------------------------------------------
@@ -1730,14 +1732,26 @@ void Scene::select()
 	void *obj=0;
 
 	if(surface_view()){
+		if(Raster.idvalues()){
+		    viewobj->set_geometry();
+			MapNode *n=Raster.pixelID(selx,sely);
+			if(n){
+				selobj=focusobj=viewobj;
+				selm=Point(n->theta(),n->phi(),n->height());
+				Point temp=Point(selm.x,selm.y,selm.z/FEET);
+		        //cout << selm.z/FEET<<endl;
+		        return;
+			}
+		}
 	    bgpass=FG0;
 	    set_select_node();
 	    pass_group();
+
 	    obj=select_pass();
         if(obj){
-            selobj=focusobj=viewobj;
-            selm=viewobj->get_focus(obj);
-            return;
+           selobj=focusobj=viewobj;
+           selm=viewobj->get_focus(obj);
+           return;
         }
 	}
 	set_select_object();
@@ -2373,7 +2387,7 @@ void Scene::shadows_zvals()
 	int msave=Render.markers();
 	Render.set_markers(0);
 
-	Render.show_zvals();
+	Render.show_szvals();
 	set_buffers_mode();
 
 	objects->visit(&Object3D::render);

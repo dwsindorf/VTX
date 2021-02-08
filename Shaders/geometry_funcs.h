@@ -46,7 +46,7 @@
 	v1= Vertex1.xyz; \
  	gv = func; \
  	g=gv.x; \
-	vec3 v=normalize(pv)*g; \
+	vec3 v=normalize(pv)*(g*rscale); \
 	p.xyz+=v;
 
 #define CALC_ZNORMAL(func) \
@@ -64,7 +64,7 @@
 		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*(nbamp); \
-	    Normal.xyz=normalize(Normal.xyz-2e5*gl_NormalMatrix *df); \
+	    Normal.xyz=normalize(Normal.xyz-10*gl_NormalMatrix *df); \
 	} \
 
 #define NOISE_COLOR(func) \

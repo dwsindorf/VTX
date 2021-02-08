@@ -1160,11 +1160,6 @@ bool TNnoise::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 
-	double geom_scale=1;
-
-	if(TheMap && (type & GEOM))
-	//	geom_scale=TheMap->hscale*500;
-	    geom_scale=Rscale;
 
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
@@ -1175,14 +1170,15 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].L",nid);         glUniform1fARB(glGetUniformLocationARB(program,str),L);
 	sprintf(str,"nvars[%d].smoothing",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),smooth);
 	sprintf(str,"nvars[%d].clamp",nid);     glUniform1fARB(glGetUniformLocationARB(program,str),clamp);
-	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma*geom_scale);
-	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb*geom_scale+offset);
+	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma);
+	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb+offset);
 	sprintf(str,"nvars[%d].sqr",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),sqr);
 	sprintf(str,"nvars[%d].invert",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),invert);
 	sprintf(str,"nvars[%d].absval",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),absval);
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
 	sprintf(str,"nvars[%d].vnoise",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
+
 //#define TEST
 #ifdef TEST
 	printf("\n");
@@ -1272,7 +1268,7 @@ void TNwater::eval()
 	// S0 = terrain surface
 
 	S0.clr_flag(INMARGIN);
-    if(dz>0){  // terrain is below water
+    if(dz>=0){  // terrain is below water
 		if(S0.datacnt<MAX_TDATA)
 			S0.datacnt++;
 	    for(int i=1;i<S0.datacnt;i++){

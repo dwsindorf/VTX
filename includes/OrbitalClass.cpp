@@ -1905,7 +1905,7 @@ void Spheroid::get_vars()
 	}
 	else
 		hscale=def_hscale;
-	map->hscale=hscale;
+	//map->hscale=hscale;
 
 	VGET("symmetry",symmetry,def_symmetry);
 	map->symmetry=symmetry;
@@ -2015,6 +2015,7 @@ void Spheroid::select()
 	set_ref();
 	if(included()){
 		TheScene->pushMatrix();
+
 		set_tilt();
 		set_rotation();
 		TheScene->set_matrix(this);
@@ -2022,7 +2023,7 @@ void Spheroid::select()
 			int id=Raster.set_id();
 			Raster.set_data((MapNode*)this);
 			glLoadName(id);
-			map->shadow_zvals();  // use fastest render (nothing drawn)
+			map->render_zvals();  // use fastest render (nothing drawn)
 		}
 		else{
 			terrain.init_render();
@@ -2154,7 +2155,8 @@ void Spheroid::set_geometry()
 {
 	map->radius=size;
 	map->symmetry=symmetry;
-	Hscale=map->hscale=hscale;
+	map->hscale=hscale;
+	Hscale=hscale;
 	Gscale=1/hscale/size;
 	Rscale=size*hscale;
 }
@@ -2185,6 +2187,7 @@ void Spheroid::init()
 	terrain.init();
 	terrain.init_render();
 	terrain.set_eval_mode(0);
+
 	map->make();
 }
 
@@ -2689,15 +2692,8 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("hdr_min",Raster.hdr_min);
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
-	//vars.newIntVar("tessLevel",tl);
 	Point pv=TheScene->xpoint;
-	//pv=pv.mm(TheScene->viewMatrix);
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
-	vars.newFloatVar("rscale",4e-6);
-//cout<<Rscale<<endl;
-
-
-	//pv.print();
 
 	tp->setProgram();
 	if(TheScene->inside_sky()){
@@ -3008,7 +3004,7 @@ void Planetoid::render_object()
 		map->set_mask(1);
 		Color c=Raster.blend_color;
 	    glColor4d(c.red(),c.green(),c.blue(),1);
-		map->shadow_zvals();
+		map->render_zvals();
 	    map->set_mask(0);
 	}
 	else{

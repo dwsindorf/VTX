@@ -107,6 +107,8 @@ protected:
 
 public:
 	Point       selm;
+	Point2D     selp;
+
 	NameList<NameSym*>frame_files;
 	char        filename[256];
 	char        moviename[256];
