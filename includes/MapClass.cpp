@@ -1899,7 +1899,6 @@ void Map::adapt()
 		show_terrain_info();
 	}
 	find_limits();
-
 }
 
 static void water_test(MapNode *n)

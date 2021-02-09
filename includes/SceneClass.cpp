@@ -1739,7 +1739,6 @@ void Scene::select()
 				selobj=focusobj=viewobj;
 				selm=Point(n->theta(),n->phi(),n->height());
 				Point temp=Point(selm.x,selm.y,selm.z/FEET);
-		        //cout << selm.z/FEET<<endl;
 		        return;
 			}
 		}

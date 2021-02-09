@@ -1246,7 +1246,9 @@ void TNwater::eval()
 	dz=(SeaLevel-S0.p.z);  // water-terrain
 	// FIXME - HACK S0.p.z always zero if ONLY geometry noise is present
 	//       - this work work if both real and geometry terrain exist
-	if(Td.get_flag(SNOISEFLAG)) // shader noise
+    bool geom=Td.get_flag(SNOISEFLAG);
+
+	if(geom) // shader noise
 		dz=fabs(dz); // otherwise water not rendered if sealevel <0
 	double dw=fabs(dz);
 	WaterDepth=dw;
@@ -1266,9 +1268,8 @@ void TNwater::eval()
 	//	return;
 
 	// S0 = terrain surface
-
 	S0.clr_flag(INMARGIN);
-    if(dz>=0){  // terrain is below water
+    if(dz>=0 || geom){  // terrain is below water
 		if(S0.datacnt<MAX_TDATA)
 			S0.datacnt++;
 	    for(int i=1;i<S0.datacnt;i++){
@@ -1280,7 +1281,7 @@ void TNwater::eval()
 		S0.data[0]=&s2;
 		S0.copy(water);
 		//if(dz<m)
-	    if(f<1)
+	    if(f<1 && !geom)
 			S0.set_flag(INMARGIN);
 	 }
 	 else {    // terrain is above water with water as surface 2
@@ -1293,17 +1294,6 @@ void TNwater::eval()
 				break;
 	    	}
 		 }
-		 /*
-		 if(water.p.x||S0.p.x||water.p.y||S0.p.y){
-	    	double dx=fabs(water.p.x-S0.p.x);
-	    	double dy=fabs(water.p.y-S0.p.y);
-	    	double dmax=dx>dy?dx:dy;
-	    	if(fabs(dz)<0.5*dmax){
-		      	S0.data[S0.datacnt++]=&water;
-        		return;
-	        }
-	    }
-		*/
 	 }
 }
 //-------------------------------------------------------------

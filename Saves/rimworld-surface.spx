@@ -135,17 +135,67 @@ Scene() {
 		tilt=2;
 		angle=1;
 	}
+	View{
+		tilt=-2;
+		angle=6;
+	}
+	View{
+		height=27380.2 ft;
+		tilt=-7;
+		angle=-12;
+	}
+	View{
+		height=12266 ft;
+		gndlvl=486.038 ft;
+		heading=181;
+		tilt=-6;
+		angle=-45;
+	}
+	View{
+		height=17805.7 ft;
+		heading=230;
+		tilt=0;
+		angle=-48;
+	}
+	View{
+		height=25518.6 ft;
+		gndlvl=-782.423 ft;
+		tilt=-9;
+		angle=-65;
+	}
+	View{
+		phi=17.343;
+		theta=81.606;
+		height=26585.3 ft;
+		gndlvl=240.502 ft;
+		heading=242;
+		tilt=-6;
+		angle=-56;
+	}
+	View{
+		height=33420.9 ft;
+		gndlvl=335.532 ft;
+		tilt=-3;
+		angle=-66;
+	}
 	Universe {
-		Galaxy(10000) {
+		Galaxy(9000) {
+			color.bias=1.13888;
 			density=1.1;
 			diffusion=0.19;
+			far.distance=5.77621e+08;
+			far.size=0.8333;
 			gradient=0.9;
+			near.size=1.3889;
 			noise.cutoff=0.29;
 			noise.vertical=0.15;
+			nova.density=0.05556;
+			nova.size=3.6111;
 			origin=Point(-4000,0,6000);
 			pitch=152.309;
 			scatter=1.8;
 			tilt=30;
+			variability=1.52081;
 			color.list=Colors(
 				Color(1.000,0.000,0.000),
 				Color(0.024,0.514,1.000),
@@ -157,7 +207,7 @@ Scene() {
 				Color(1.000,1.000,1.000)
 				);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-			color.expr=DENSITY;
+			color.expr=DENSITY+noise(GRADIENT|NABS|SCALE,4.6,2,-0.98,0.5,2,1,1,0,0);
 		}
 		Galaxy(5000) {
 			color.middle=Color(0.8,0,0);
@@ -183,10 +233,10 @@ Scene() {
 						terrain=Color(1,1,0)-Color(0,1,1)*noise(8,4);
 					}
 				}
-				Planet(0.001,30) {
+				Planet(0.0015,30) {
 					ambient=Color(1,1,1,0.16);
 					day=1;
-					hscale=0.00120564;
+					hscale=0.001;
 					phase=320;
 					rot_phase=116.618;
 					shadow=Color(0,0,0,0.67);
@@ -211,27 +261,28 @@ Scene() {
 						m3=noise(GRADIENT|NABS|SQR,9,15,0.5,0.6);
 						terrain=map(mp,-0.3,0.5)
 								layer(MORPH,0,0.4)
-									[Z(0.2*m3)
+									[Z(noise(GRADIENT|FS|NABS,7,6.3,0.24,0.5,2,0.88,0.34,0,0.9))
 									+
-									Texture("alpine",BORDER|S|TEX,HT,0.5,2,1,0.11104,1,2,1,0)]
-								layer(MORPH,0)
-									[Z(craters(2,0.1,0.1,0.8))
+									Texture("alpine",BORDER|S|TEX,HT,0.5,1.30556,1,0.11104,1,2,1,0)]
+								layer(MESH,0)
+									[Z(craters(ID1,2,0.1,0.1,0.8))
 									+
 									Texture("dessert",LINEAR|NORM|S|TEX,2*FHT,0.5,2,1,0,1,2,1,0)]
 								;
 					}
-					Sky(0.0022) {
+					Sky(0.0017) {
 						color=Color(0,0.8,0.9);
 						day=1;
-						density=0;
-						halo.color=Color(1,1,1,0);
+						density=0.52778;
+						haze.color=Color(1,1,1,0.55);
 						name="Sky";
-						night.color=Color(0,0,0);
+						night.color=Color(0,0,0,0.98);
+						resolution=4;
 						rseed=0.693607;
 						specular=Color(1,1,1);
-						twilight=Color(0,0,0,0);
 						twilight.max=1;
 						twilight.min=-1;
+						twilight.value=0;
 					}
 				}
 			}

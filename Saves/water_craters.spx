@@ -23,16 +23,31 @@ Scene() {
 		tilt=-3;
 		angle=-1;
 	}
+	View{
+		theta=16.9699;
+		height=4835 ft;
+		gndlvl=1292.14 ft;
+		time=57000;
+		heading=-1;
+		angle=2;
+	}
+	View{
+		height=4836.47 ft;
+		gndlvl=1290.67 ft;
+		time=57500;
+		tilt=0;
+		angle=-1;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
-		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
 			Color(0.502,0.000,0.251),
 			Color(0.000,0.000,1.000),
 			Color(0.000,0.722,1.000),
 			Color(0.502,1.000,1.000),
-			Color(1.000,0.278,0.000),
+			Color(1.000,0.275,0.000),
 			Color(1.000,0.702,0.200),
 			Color(1.000,1.000,0.400),
 			Color(1.000,1.000,0.702)
@@ -50,45 +65,51 @@ Scene() {
 			Planet(0.01,50) {
 				day=1;
 				emission=Color(1,1,1,0.05);
+				rot_phase=65.916;
 				shadow=Color(0,0,0,0.43);
-				tilt=10;
+				tilt=5.0688;
 				year=300;
-				bands("grad",64,0.5,Color(0.9,0.8,0.7),0.2,RAND);
 				Surface{
 					p=noise(3,17);
-					m1=noise(NABS|SQR,8,4);
-					m2=noise(NABS|SQR|UNS,13,2);
+					m1=noise(GRADIENT|NABS|SQR,8,4);
+					m2=noise(GRADIENT|NABS|SQR|UNS,13,2);
 					terrain=Z(0.5*m1+0.02*m2)+
-							Texture("grad",S|TEX,(1+0.1*p*PHI)*(2*PHI+0.01*p));
+							Texture("gasgiant",TEX,1,2,1,0,1,2,0.5,0);
 				}
-				Ring(0.013,0.008) {
-					specular=Color(1,1,1,0.8);
+				Ring(0.0133652,0.0088413) {
 					emission=Color(1,1,1,0.5);
+					specular=Color(1,1,1,0.8);
 					albedo=0.8;
 					rcolor1=Color(0.5,0.5,0.8,0.7);
-					bands("rings",64,0.3,0.5,RAND,Color(0.5,0.5,0.8,0.7));
+					bands("saturn2",ACHNL|NORM,128,0.37736,0.564706,Color(0.937,0.937,0.937,0.565),Color(0.502,1,0.502),
+						Color(0.675,0.4,0),
+						Color(1,0.875,0.275),
+						Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0),
+						Color(0.992,0.773,0.004));
 					Surface{
 						terrain=
-								Texture("rings",S|TEX,2*PHI);
+								Texture("saturn2",S|TEX,0.5*PHI,1,1.19444,1,1.33328,1,2,1,0);
 					}
 				}
 				Moon(0.001,0.03) {
-					ambient=Color(1,1,1,0.04);
+					ambient=Color(1,1,1,0.07);
 					color=Color(0.9,0.7,0.1);
 					day=11;
-					diffuse=Color(1,1,1,0.69);
 					fog.max=5000 ft;
 					fog.min=1000 ft;
 					fog.vmax=2000 ft;
+					hscale=0.0008;
 					phase=145.001;
+					rot_phase=360;
 					shadow=Color(0,0,0);
-					shine=19.2504;
-					specular=Color(1,1,1,0.49);
+					shine=16.4793;
+					specular=Color(1,1,1,0.56);
 					water.albedo=0.29166;
-					water.clarity=465.875 ft;
-					water.color1=Color(0.12,0.31,0.08,0.73);
-					water.color2=Color(0,0.41,0.69);
-					water.level=-1620 ft;
+					water.clarity=945.594 ft;
+					water.color1=Color(0.12,0.31,0.08,0.76);
+					water.color2=Color(0,0.05,0.18);
+					water.level=1300 ft;
 					water.shine=58.334;
 					year=11;
 					albedo=0.89;
@@ -96,23 +117,24 @@ Scene() {
 					haze.max=6e-05;
 					haze.min=2e-05;
 					haze.value=1;
-					image("mars1",256,256,Color(0.3+noise(NABS|SQR|UNS,0,9,0.96,0.5,2.1,1,1,0,0),0.5*RED,0.2*RED,RED));
 					Surface{
-						m1=noise(UNS,1,5,0.47,0.4,2)+0.71;
-						m2=0.5*noise(NABS|SQR|NEG,8,16,0.2,0.5);
-						terrain=fog(1-1.2*noise(UNS,8,3,1))
-								water(0.01*noise(NABS|SQR|NLOD,15,6,0.33,0.5,2.1))
-								Z(m2+craters(3,0.1,0.25,1,0.8,1,0.3))+Color(0.75+noise(UNS,2,5,1,0.5,2,1,1,0,0),RED,RED,1)+
-								Texture("mars1",BUMP|NORM|TEX,7.05918,0.66664,2,3,10,2,1,0);
+						m1=noise(GRADIENT|UNS,1,5,0.47,0.4,2)+0.71;
+						m2=0.5*noise(GRADIENT|NABS|NEG|SQR,8,16,0.2,0.5);
+						terrain=fog(1-1.2*noise(GRADIENT|UNS,8,3,1))
+								water(0.01*noise(GRADIENT|NABS|NLOD|SQR,15,6,0.33,0.5,2.1))
+								Z(m2+craters(3,0.1,0.25,1,0.8,1,0.3))+Color(0.75+noise(GRADIENT|UNS,2,5,1,0.5,2,1,1,0,0),RED,RED,1)+
+								Texture("Shist1",BUMP|LINEAR|RANDOMIZE|TEX,537.269,2.88896,2,0,7.66672,2,0.43056,0);
 					}
 					Sky(0.00103) {
-						color=Color(0.4,0.8,1,0.93);
+						color=Color(0.4,0.8,1,0.76);
 						day=11;
-						haze.color=Color(1,1,0.71,0.3);
+						haze.color=Color(1,1,0.71);
 						haze.height=0.6;
 						haze.max=13.573 miles;
 						haze.min=0.0189 miles;
-						haze.value=1;
+						haze.value=0.298039;
+						night.color=Color(0,0,0);
+						sky.grad=3;
 						specular=Color(1,1,1);
 						twilight=Color(0.5,0,0.25);
 						twilight.max=0.2691;

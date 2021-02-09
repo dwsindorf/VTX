@@ -6,7 +6,7 @@ Scene() {
 		theta=248.95;
 		height=32965.4 ft;
 		gndlvl=2833.15 ft;
-		time=7.24276e+006;
+		time=7.24276e+06;
 		heading=-225;
 		tilt=-20;
 		angle=55;
@@ -18,7 +18,7 @@ Scene() {
 		phi=27.006;
 		theta=248.945;
 		height=31976.4 ft;
-		time=7.24305e+006;
+		time=7.24305e+06;
 		angle=60;
 	}
 	View{
@@ -125,11 +125,21 @@ Scene() {
 		tilt=0;
 		angle=15;
 	}
+	View{
+		phi=26.8481;
+		theta=248.842;
+		height=11545.6 ft;
+		gndlvl=6723.07 ft;
+		time=58461.4;
+		heading=-198;
+		tilt=1;
+		angle=17;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Milky Way";
 			origin=Point(20000,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -144,56 +154,56 @@ Scene() {
 			System(1000) {
 				name="Solor";
 				origin=Point(-2000,0,0);
-				Star(1.03397,10) {
+				Star(1.3375,10) {
 					color=Color(1,1,0.8);
-					day=100;
 					diffuse=Color(0.5,1,1);
-					emission=Color(0,1,1);
+					emission=Color(0,1,1,0.91);
 					name="BlueStar";
-					phase=156.226;
-					rot_phase=135.85;
+					phase=145.001;
+					resolution=3.50002;
+					rot_phase=155.002;
+					skew=6.2496;
 					specular=Color(0.77,1,1);
 					year=30;
-					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
+					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S,noise(NABS|SQR|FS,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),1,1.09432,1.05456,1.88672,1,2,1,0);
+								Texture("neptune",BORDER|NORM|S|TEX,noise(GRADIENT|FS|NABS|NEG|SQR,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),0.5,2,1.05456,1.22224,1,2,1,0.90278);
 					}
-					Corona(12.9137) {
+					Corona(13.2172) {
 						color1=Color(0.5,1,1);
 						color2=Color(0,0,1);
 						gradient=1;
 					}
 				}
-				Star(2,20) {
+				Star(2,10) {
 					diffuse=Color(1,0.5,0.25);
-					emission=Color(1,1,0.5);
+					emission=Color(1,1,0.5,0.39);
 					name="RedStar";
-					phase=169.812;
+					phase=59.9976;
 					specular=Color(1,0.5,0.25);
 					year=75.48;
-					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S,noise(NABS|SQR|FS,0.9,8.2,0.43,0.19,2.19,1,1,0,-1.3),1,0.90568,1.05456,2.03776,1,1.98112,1,0);
+								Texture("sol",TEX,1,2,1,0,1,2,0.5,0);
 					}
 					Corona(14.3606) {
-						color1=Color(1,0.67,0);
+						color1=Color(1,0.8,0.4);
 						color2=Color(0.71,0.1,0.01);
 						gradient=0.71244;
 					}
 				}
-				Planet(0.0015,40) {
+				Planet(0.0015,68.3754) {
 					day=58.65;
 					name="Mercury";
-					phase=95.0976;
+					phase=81.1296;
 					shadow=Color(0,0,0);
 					shine=14.8055;
-					specular=Color(1,1,1,0.26);
+					specular=Color(1,1,1,0.57);
 					sunset=0.01;
 					year=87.97;
 					albedo=0.73;
-					image("ridges",INVT,256,256,noise(NABS|SQR|NEG|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("ridges",INVT,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
 					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 						Color(0.502,0.502,0.502),
@@ -201,9 +211,9 @@ Scene() {
 						Color(0.502,0.502,0.502));
 					Surface{
 						terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
-								noise(UNS|RO1,1,5,0.5,0.2))+
+								noise(GRADIENT|UNS|RO1,1,5,0.5,0.2))+
 								Texture("ridges",BUMP|TEX,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
-								Texture("craters3",BUMP|TEX|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
+								Texture("craters3",BUMP|S|TEX,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
 								Texture("Shist1",BORDER|BUMP,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+
 								Texture("mercury",BORDER|LINEAR|S,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);
 					}
