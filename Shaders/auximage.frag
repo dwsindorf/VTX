@@ -150,7 +150,7 @@ void main(void) {
 	gl_FragData[0] = fcolor1;
 #endif
 	gl_FragData[0].a=1;
-	//gl_FragData[0] = vec4(z,0,0,1.0);
+	//gl_FragData[0] = vec4(pow(z,9),0,0,1.0);
 	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
 }
 

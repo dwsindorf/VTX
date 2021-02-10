@@ -1,38 +1,73 @@
 Scene() {
-	drawmode=1;
 	View{
 		view=SURFACE;
-		phi=-2.51457e-07;
-		theta=225;
-		height=10 miles;
-		time=800051;
-		tilt=5;
-		angle=-10;
+		phi=-37.6282;
+		theta=1.15663;
+		height=34235.4 ft;
+		gndlvl=-12010.2 ft;
+		time=70823.8;
+		tilt=-9;
+		angle=-14;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=836.838 ft;
+		height=22225.2 ft;
+		gndlvl=0 ft;
 	}
 	View{
-		height=8084.17 ft;
+		height=14876.1 ft;
+		gndlvl=6182.44 ft;
 	}
 	View{
-		height=4499.58 ft;
-		time=891208;
-		tilt=6;
+		height=14181.4 ft;
+		gndlvl=0 ft;
+		tilt=-12;
+		angle=-18;
 	}
 	View{
-		height=41692.9 ft;
-		gndlvl=-3290.71 ft;
-		heading=5;
-		tilt=-3;
-		angle=-6;
+		height=16332.1 ft;
 	}
 	View{
-		height=42405.9 ft;
-		gndlvl=-3586.67 ft;
+		height=16489.9 ft;
+	}
+	View{
+		height=36361.9 ft;
+	}
+	View{
+		height=13058.3 ft;
+		tilt=-11;
+		angle=-29;
+	}
+	View{
+		height=10706.8 ft;
+		angle=-26;
+	}
+	View{
+		height=9857.32 ft;
+	}
+	View{
+		height=9165.17 ft;
+		tilt=-7;
+		angle=-17;
+	}
+	View{
+		height=8881.61 ft;
+		tilt=-10;
+		angle=-14;
+	}
+	View{
+		height=9156.73 ft;
+	}
+	View{
+		height=8244.82 ft;
+		gndlvl=1 ft;
+		tilt=-7;
+		angle=7;
+	}
+	View{
+		height=8856.02 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -62,60 +97,25 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.002,100) {
+					ambient=Color(1,1,1,0.04);
 					day=24;
-					hscale=0.00562782;
-					resolution=3;
-					shadow=Color(0,0,0.19,0.8);
-					shine=2.91188;
-					specular=Color(1,1,1,0);
-					water.albedo=1;
-					water.clarity=1000 ft;
-					water.color1=Color(0,1,1);
-					water.level=-3333.2 ft;
-					water.shine=100;
+					diffuse=Color(1,1,1,0.85);
+					fog.color=Color(0.98,0.02,0.02);
+					fog.max=10010 ft;
+					fog.value=1;
+					fog.vmax=3333.4 ft;
+					hscale=0.02;
+					shine=5.56269;
+					specular=Color(1,1,1,0.27);
+					tilt=10;
+					water.color1=Color(0,1,1,0.12);
+					water.level=1 ft;
 					year=100;
+					albedo=1;
 					Surface{
-						terrain=water(noise(GRADIENT|NABS|SCALE,21.3,2,1,0.5,2,0.02,1,0,0))
-								Z(noise(VORONOI|FS|NABS|SCALE,7.3,11.5,0.46,0.5,2,0.82,1,0,0.05))+
-								Texture("BrownStone",NORM|RANDOMIZE|TEX,161.289,1.80556,1,0.44448,10,2,0.5,0);
-					}
-					Clouds(0.00407746) {
-						crot=1;
-						emission=Color(1,1,1,0.2);
-						hscale=0.05;
-						resolution=3;
-						shine=1;
-						specular=Color(1,1,1,0.6);
-						Surface{
-							terrain=Color(1,1,1,noise(GRADIENT|FS|NABS,3,9,1,0.5,2,1,1,0,0.1));
-						}
-					}
-					Moon(0.001,0.008) {
-						ambient=Color(1,1,1,0.36);
-						day=11;
-						name="Luna";
-						phase=82.2888;
-						shine=0.5;
-						specular=Color(1,1,1,0);
-						sunset=0.154005;
-						year=17;
-						Surface{
-							terrain=
-									Texture("luna",BUMP|TEX,1,3.11104,2,0,1,2,0.5,0);
-						}
-					}
-					Sky(0.00419081) {
-						color=Color(0,0.58,0.89);
-						day=24;
-						density=0.15278;
-						haze.height=0.66;
-						haze.value=0.4;
-						sky.grad=0.335967;
-						specular=Color(1,1,1);
-						twilight=Color(1,0,0);
-						twilight.max=0.492922;
-						twilight.min=-1;
+						terrain=water(0)
+								Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}
 				}
 			}

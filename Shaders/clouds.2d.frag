@@ -13,7 +13,8 @@
 #include "tex_funcs.frag"
 #endif
 
-//uniform sampler2DRect FBOTex1;
+uniform sampler2DRect FBOTex1;
+uniform sampler2DRect FBOTex2;
 
 // ########## main section #########################
 void main(void) {
@@ -37,12 +38,12 @@ void main(void) {
 
      color=clamp(color,0.0,1.0);
 	 gl_FragData[0]=color;
-#ifdef BACK
-	 gl_FragData[1]=vec4(0,0,0,1);
-#else
-	 gl_FragData[1]=vec4(0,1,0,1);
-#endif
-     gl_FragData[2]=vec4(0,0,0,1);
+//#ifdef BACK
+	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
+//#else
+//	 gl_FragData[1]=vec4(0,1,0,1);
+//#endif
+ //    gl_FragData[2]=vec4(0,0,0,1);
 
 }
 // ########## end clouds.frag #########################

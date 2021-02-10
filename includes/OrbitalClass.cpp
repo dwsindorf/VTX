@@ -2196,9 +2196,11 @@ void Spheroid::init()
 //-------------------------------------------------------------
 double  Spheroid::max_height()
 {
-    //cout<<"hrange:"<< TheMap->hrange<<" hscale:"<<hscale<<endl;
-    if(TheMap->hrange)
-    	return TheMap->hrange*hscale;
+	map->find_limits();
+
+    //cout<<name()<<" hrange:"<< map->hrange<<" hscale:"<<hscale<<endl;
+    if(map->hrange)
+    	return map->hrange*hscale;
     return hscale;
 }
 
@@ -4279,7 +4281,7 @@ bool CloudLayer::setProgram(){
  	vars.setProgram(program);
 
 	vars.loadVars();
-	GLSLMgr::setFBORenderPass();
+	GLSLMgr::setFBOWritePass();
 	TheScene->setProgram();
 
 	double resolution= sqrt(map->resolution/16);

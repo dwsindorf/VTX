@@ -1,0 +1,84 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-11.7169;
+		theta=113.956;
+		height=0.00468535;
+		gndlvl=-64049.8 ft;
+		time=53021.8;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.0046755;
+		gndlvl=-12022.8 ft;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.002,100) {
+					ambient=Color(1,1,1,0.04);
+					day=24;
+					diffuse=Color(1,1,1,0.85);
+					hscale=0.0136431;
+					shine=5.56269;
+					specular=Color(1,1,1,0.27);
+					tilt=10;
+					year=100;
+					albedo=1;
+					Surface{
+						terrain=snow(-0.7,0.14,0.57,0.17,1,0.82)							
+								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,0.55556,-0.36112)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
+								fractal(SQR|SS,12.5,4,0,0.1,3,0.4,0.08,0.42,0.35,0)noise(RIDGED|SCALE,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
+								Texture("Shist1",BUMP|TEX,5961.67,0.66656,1,0,3.66688,2,0.5,0)+
+								Texture("mars",BUMP|TEX,1,1.75,2,0,1,2,0.5,0);
+					}
+					Sky(0.00211627) {
+						color=Color(0,0.65,0.9);
+						day=24;
+						density=0.09722;
+						haze.color=Color(0.98,0.71,0.11);
+						haze.grad=0.78048;
+						haze.value=1;
+						name="Sky";
+						resolution=4;
+						rseed=1.58657;
+						sky.grad=0.408416;
+						specular=Color(1,1,1);
+						tilt=10;
+						twilight=Color(0.99,0.09,0.19);
+						twilight.min=-0.348045;
+					}
+				}
+			}
+		}
+	}
+}

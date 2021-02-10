@@ -1720,10 +1720,10 @@ void MapNode::render()
 	if(!d)
 	   return;
 
-	if(DRAW_VIS && nodraw()){
-	    if(d->X()==0 && d->Y()==0 && !margin() && Render.show_water() && Raster.water_depth())
-	    	return;
-	}
+//	if(DRAW_VIS && nodraw()){
+//	    if(d->X()==0 && d->Y()==0 && !margin() && Render.show_water() && Raster.water_depth())
+//	    	return;
+//	}
 
     Phi = d->phi()/180;
     Theta = d->theta()/180.0-1;

@@ -971,7 +971,7 @@ void GLSLMgr::setFBORenderPass(){
 #ifdef DEBUG_FBO
 	cout << "GLSLMgr::setFBORenderPass("<< using_fbo << ")"<<endl;
 #endif
-}
+}//
 void GLSLMgr::setFBOReadPass(){
 	if(renderToFrameBuffer){
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);

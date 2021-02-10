@@ -1246,7 +1246,7 @@ void TNwater::eval()
 	dz=(SeaLevel-S0.p.z);  // water-terrain
 	// FIXME - HACK S0.p.z always zero if ONLY geometry noise is present
 	//       - this work work if both real and geometry terrain exist
-    bool geom=Td.get_flag(SNOISEFLAG);
+    bool geom=Td.get_flag(GNOISEFLAG);
 
 	if(geom) // shader noise
 		dz=fabs(dz); // otherwise water not rendered if sealevel <0
@@ -1275,7 +1275,7 @@ void TNwater::eval()
 	    for(int i=1;i<S0.datacnt;i++){
 			S0.data[S0.datacnt-i]=S0.data[S0.datacnt-i-1];
 	    }
-		dz*=Rscale;
+		//dz*=Rscale;
 		//m=Raster.water_clarity;
 		s2.copy(S0);
 		S0.data[0]=&s2;
