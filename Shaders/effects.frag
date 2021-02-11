@@ -47,7 +47,7 @@ void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // image
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
 	vec3 color = fcolor1.rgb;
-	
+	float h;
 #ifdef SHADOW_TEST
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
 	return;
@@ -57,7 +57,7 @@ void main(void) {
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
 		float d=lerp(depth,0.0,haze_zfar,0.0,1.0);
-		float h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
+		h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
 		
 #endif
 #ifdef WATER
@@ -141,8 +141,6 @@ void main(void) {
 #endif
  	}
 	gl_FragData[0]=vec4(color,1.0);	
-	//gl_FragData[0]=vec4(RDP,0,0,1.0);	
-	
     gl_FragData[1]=fcolor2;
 }
 

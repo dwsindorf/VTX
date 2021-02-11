@@ -137,7 +137,8 @@ void main(void) {
 	
 #endif
     gl_FragData[0].a = 1.0;
-    //gl_FragData[0]=vec4(z,0,0,1.0);	
+    //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
+    //gl_FragData[0]=vec4(pow(fcolor2.g,0.2),0,0,1.0);	
 
 }
 

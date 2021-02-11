@@ -2196,12 +2196,13 @@ void Spheroid::init()
 //-------------------------------------------------------------
 double  Spheroid::max_height()
 {
-	map->find_limits();
-
-    //cout<<name()<<" hrange:"<< map->hrange<<" hscale:"<<hscale<<endl;
+	if(TheScene->viewobj==this  && map->hrange==0){
+		map->find_limits();
+	    //cout<<name() << " hrange:"<<map->hrange<<" hscale:"<<hscale<<endl;
+	}
     if(map->hrange)
     	return map->hrange*hscale;
-    return hscale;
+    return 0;
 }
 
 //-------------------------------------------------------------
@@ -2698,6 +2699,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 
 	tp->setProgram();
+
 	if(TheScene->inside_sky()){
 		if(TheScene->viewobj==this)
 			GLSLMgr::setFBORenderPass();
@@ -2862,6 +2864,8 @@ void Planetoid::render()
 		// in orbital views
 		//if(TheScene->viewobj==this && outsky)
 		//	glEnable(GL_POLYGON_OFFSET_FILL);
+		//if(TheScene->viewobj==this)
+
 		TheScene->pushMatrix();
 		set_tilt();
 		set_rotation();

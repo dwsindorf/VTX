@@ -1046,7 +1046,7 @@ void RasterMgr::getPixels()
 	glDisable(GL_DEPTH_TEST);
 	//if(!pixels_valid)
 		glReadPixels(0, 0, vport[2],vport[3],GL_RGBA, GL_UNSIGNED_BYTE,pixels);
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	pixels_valid=1;
 }
 
@@ -1320,6 +1320,7 @@ void RasterMgr::applyFilter()
 		show_filter_mask();
 	glDisable(GL_DEPTH_TEST);
 	glDrawPixels(vport[2],vport[3],GL_RGBA, GL_UNSIGNED_BYTE,pixels);
+	glEnable(GL_DEPTH_TEST);
 	//glClear(GL_DEPTH_BUFFER_BIT);
 }
 

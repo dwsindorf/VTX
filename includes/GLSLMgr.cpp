@@ -359,8 +359,6 @@ void GLSLMgr::drawFrameBuffer(){
 	glDepthMask(GL_TRUE);
 }
 
-
-
 //Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 static void test_geometry(int tesslevel){
 	int triangle=1;
@@ -760,8 +758,8 @@ bool GLSLMgr::loadProgram(char *vshader,char *fshader,char *gshader){
 //-------------------------------------------------------------
 void GLSLMgr::setTessLevel(int n){
 	max_output=(n+1)*(n+3);
-	if(n != tesslevel)
-		cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
+	//if(n != tesslevel)
+	//	cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
 	tesslevel=n;
 }
 //-------------------------------------------------------------
@@ -943,7 +941,7 @@ void GLSLMgr::clrFBOColorBuffer(int i){
 // GLSLMgr::clearTexs() clear texture bindings
 //-------------------------------------------------------------
 void GLSLMgr::clearTexs(){
-#ifdef DEBUG_CLR
+#ifdef DEBUG_CLR_TEXS
 	cout << "GLSLMgr::clearTexs"<<endl;
 #endif
 	for(int i=0;i<8;i++){

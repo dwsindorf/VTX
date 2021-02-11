@@ -496,7 +496,7 @@ void EffectsMgr::render_shadows(){
 		//cout << shadow_intensity << endl;
 		init_view();
 		j=0;
-		//glEnable(GL_DEPTH_TEST);
+		glEnable(GL_DEPTH_TEST);
 
 		while(more_views()){
 			//GLSLMgr::setFBOWritePass();

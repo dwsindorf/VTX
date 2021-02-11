@@ -132,12 +132,13 @@ int  Object3D::scale(double &zn, double &zf)
 	if(d<=size){
 		zn=size*(1-max_height())-d;
 		if(zn<MINZN){
-			//cout << name()<< " setting zmin:"<<MINZN/FEET <<endl;
 		    zn=MINZN;
 		}
 		zf=size*(1+max_height())-d;
 
 		setvis(INSIDE);
+		//cout << name()<< " zn:"<<zn/FEET <<" maxht:"<< max_height()<< endl;
+
 		return INSIDE;
 	}
 	else{

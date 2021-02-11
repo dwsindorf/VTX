@@ -8,6 +8,9 @@ uniform vec3 offset;
 
 uniform bool textures;
 
+uniform sampler2DRect FBOTex1;
+uniform sampler2DRect FBOTex2;
+
 uniform float INVROWS;
 
 // ########## main section #########################
@@ -33,7 +36,8 @@ void main(void) {
     	color.rgb=setLighting(color.rgb,normal);
 
 	gl_FragData[0]=color;
-	gl_FragData[1]=vec4(0,0,0,1);
+	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
+	//gl_FragData[1]=vec4(0,0,0,1);
 	gl_FragData[2]=vec4(0,0,0,1);
 
 }

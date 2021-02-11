@@ -184,7 +184,6 @@ void main(void) {
 #ifdef VIEWOBJ
     float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 	gl_FragData[1]=vec4(Constants.g,depth,reflect1,vfog);
-	//gl_FragData[0] = vec4(reflect1,0,0,1);
 #else  // moons
 	gl_FragData[1]=vec4(0,illumination,0.0,0.0);
 #endif
