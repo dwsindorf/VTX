@@ -64,7 +64,7 @@
 		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*(nbamp); \
-	    Normal.xyz=normalize(Normal.xyz-10*gl_NormalMatrix *df); \
+	    Normal.xyz=normalize(Normal.xyz-4*gl_NormalMatrix *df); \
 	} \
 
 #define NOISE_COLOR(func) \
