@@ -2198,7 +2198,7 @@ double  Spheroid::max_height()
 {
 	if(TheScene->viewobj==this  && map->hrange==0){
 		map->find_limits();
-	    //cout<<name() << " hrange:"<<map->hrange<<" hscale:"<<hscale<<endl;
+	   // cout<<name() << " hrange:"<<map->hrange<<" hscale:"<<hscale<<endl;
 	}
     if(map->hrange)
     	return map->hrange*hscale;

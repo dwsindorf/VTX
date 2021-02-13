@@ -1732,16 +1732,21 @@ void Scene::select()
 	void *obj=0;
 
 	if(surface_view()){
+#define USE_IDS
+#ifdef USE_IDS
 		if(Raster.idvalues()){
 		    viewobj->set_geometry();
 			MapNode *n=Raster.pixelID(selx,sely);
 			if(n){
 				selobj=focusobj=viewobj;
 				selm=Point(n->theta(),n->phi(),n->height());
-				Point temp=Point(selm.x,selm.y,selm.z/FEET);
+				//Point temp=Point(selm.x,selm.y,selm.z/FEET);
+				//temp.print("temp ");
+				//cout<<endl;
 		        return;
 			}
 		}
+#endif
 	    bgpass=FG0;
 	    set_select_node();
 	    pass_group();
@@ -1750,6 +1755,9 @@ void Scene::select()
         if(obj){
            selobj=focusobj=viewobj;
            selm=viewobj->get_focus(obj);
+           //Point temp=Point(selm.x,selm.y,selm.z/FEET);
+           //temp.print("selm ");
+           //cout<<endl;
            return;
         }
 	}

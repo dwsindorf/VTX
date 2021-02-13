@@ -1916,6 +1916,10 @@ static void water_test(MapNode *n)
 // Map::find_limits()	get ht min and max
 //-------------------------------------------------------------
 void Map::find_limits(){
+	TheMap=this;
+	hrange=0;
+	hmax=-lim;
+	hmin=lim;
 	npole->visit(&MapNode::find_limits);
 	//npole->visit(&water_test);
 	hrange=hmax-hmin;

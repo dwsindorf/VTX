@@ -72,7 +72,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 		
 #define SET_COLOR \
 		last_color=color; \
-		color=mix(color,tval, cmix);
+		color=mix(color,tval, cmix); \
+		color.a=cmix;
 		
 #define SET_BUMP \
 		bump*=1.0-tval.a*tex2d[tid].bump_damp*bump_max; \

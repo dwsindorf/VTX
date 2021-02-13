@@ -448,7 +448,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
 		list.add(getObjectSymbol(TN_TEXTURE));
-		if(!obj->hasChild(ID_POINT))
+		//if(!obj->hasChild(ID_POINT))
 			list.add(getObjectSymbol(TN_POINT));
 		if(!obj->hasChild(ID_COLOR))
 			list.add(getObjectSymbol(TN_COLOR));

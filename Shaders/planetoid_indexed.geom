@@ -84,7 +84,7 @@ void ProduceVertex(int i){
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
 	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
-	Constants.x+=g;
+	HT+=g;
 	
 #ifdef COLOR
 if(newcell)

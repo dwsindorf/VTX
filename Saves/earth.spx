@@ -17,7 +17,7 @@ Scene() {
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -76,7 +76,7 @@ Scene() {
 						specular=Color(1,1,1);
 						Surface{
 							terrain=
-									Texture("earth_clouds",BORDER|TEX,1,2,0.52056,0.37728,1,2,0.49056,0);
+									Texture("earth_clouds",BORDER|TEX,1,1,0.52056,0.37728,1,2,0.49056,0);
 						}
 					}
 					Moon(0.000124971,0.00461245) {
