@@ -250,10 +250,13 @@ Scene() {
 		gndlvl=-3084.22 ft;
 		heading=-40;
 	}
+	View{
+		time=79207.2;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -313,9 +316,9 @@ Scene() {
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=water(noise(SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
-								Z(noise(NABS,8,12,0.35,0.95,2.1))+
-								Texture("watery3",BUMP|S|TEX,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
+						terrain=water(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
+								Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
+								Texture("watery3",BUMP|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
 								Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
 								Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0);
 					}
@@ -327,13 +330,15 @@ Scene() {
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
+						resolution=4;
 						specular=Color(1,1,1);
 					}
 					Clouds(0.00407746) {
 						crot=1;
 						day=-1.5872;
+						resolution=8;
 						Surface{
-							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
+							terrain=Color(1,1,1,noise(GRADIENT|FS,3,9,1,0.5,2,1,1,0,0));
 						}
 					}
 				}

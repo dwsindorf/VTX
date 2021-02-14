@@ -1,0 +1,128 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-17.6063;
+		theta=141.985;
+		height=249.911 miles;
+		gndlvl=-29.8317 ft;
+		time=49560.4;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		height=249.912 miles;
+		gndlvl=-34.1647 ft;
+	}
+	View{
+		theta=142.85;
+		height=249.932 miles;
+		gndlvl=-139.328 ft;
+	}
+	View{
+		view=SURFACE;
+		phi=-21.0938;
+		theta=132.891;
+		height=13356.3 ft;
+		gndlvl=3.58133 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=13063.3 ft;
+		gndlvl=26.0026 ft;
+		tilt=-21;
+		angle=-1;
+	}
+	View{
+		phi=-20.5444;
+		theta=134.67;
+		height=257.57 ft;
+		gndlvl=-89.4406 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		phi=-20.5795;
+		theta=134.756;
+		height=25.2601 ft;
+		gndlvl=-15.0938 ft;
+	}
+	View{
+		height=221.623 ft;
+		gndlvl=-158.46 ft;
+		time=53021.8;
+		heading=28;
+		tilt=-12;
+		angle=31;
+	}
+	View{
+		height=216.315 ft;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.04);
+					day=24;
+					hscale=0.00113054;
+					resolution=4;
+					shine=19.8509;
+					specular=Color(1,1,1,0.77);
+					year=100;
+					albedo=1;
+					Surface{
+						terrain=Color(1,0.992157,0.764706,1);
+					}
+					Moon(0.000124971,0.25) {
+						ambient=Color(1,1,1,0.03);
+						day=24;
+						emission=Color(1,1,1,0.04);
+						hscale=0.0056013;
+						name="Moon";
+						phase=334.004;
+						rseed=2.41294;
+						shadow=Color(0,0,0,0.93);
+						shine=3.02106;
+						specular=Color(1,1,1,0.61);
+						year=30;
+						Surface{
+							terrain=
+									Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.1,0)+
+									Texture("rock_stones",BUMP|NORM|RANDOMIZE|TEX,2277.13,1.33344,0.47224,0,7.66672,1.94448,0.48612,0)+Z(craters(ID2,6,0.0009999,0.31,0.04,0.03,0.13,0.73,1,4.2,3.9,0.8,0.47,0.31,0)
+									fractal(SQR|SS,13,6,0.1,0.4,1.31,0.44,1,1,0.63,0)noise(GRADIENT|SCALE,13.7,2,1,0.5,2,0.74,1,0,0));
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -52,8 +52,7 @@
 #define CALC_ZNORMAL(func) \
     { \
 	    Normal.xyz=(Normal.xyz); \
-		float delta=1e-5; \
-		float nbamp = 5e-4/delta; \
+		float delta=1e-6; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
 		gv = func; \
 		df.x =gv.x; \
@@ -63,8 +62,11 @@
 		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
 		gv = func; \
 		df.z =gv.x; \
-		df = (df-vec3(g,g,g))*(nbamp); \
-	    Normal.xyz=normalize(Normal.xyz-4*gl_NormalMatrix *df); \
+		df = (df-vec3(g,g,g)); \
+		df=normalize(df); \
+	    vec3 normal = normalize(Normal.xyz-0.7*gl_NormalMatrix *df); \
+	    if(length(normal)>0.1) /* should always be 1 unless deltas get trashed by spfp limit */ \
+		  Normal.xyz=normal; \
 	} \
 
 #define NOISE_COLOR(func) \
