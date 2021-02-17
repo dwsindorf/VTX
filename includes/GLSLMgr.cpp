@@ -286,8 +286,9 @@ void GLSLMgr::makeTexDefsFile(){
 void GLSLMgr::setVertexAttributes(Point pm,double depth) {
 	if (position1ID < 0 /*&& position2ID<0*/)
 		return;
-	double dfactor=0.5*wscale/depth;
+	double dfactor=0.25*wscale/depth;
 	float max_orders =log2(dfactor);
+	//cout<<max_orders<<endl;
 	// passing in vertex as doubles doesn't work (even if supported by GPU)
 	// because varying doubles (e.g. dvec3) aren't interpolated in fragment shader (flat shading only)
 

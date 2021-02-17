@@ -22,6 +22,8 @@ enum{
     ID_IMAGE_HEIGHT,
     ID_IMAGE_MAP,
     ID_SHOW_MODE,
+    ID_TILE,
+
 };
 
 #define LABEL1 50
@@ -35,6 +37,7 @@ BEGIN_EVENT_TABLE(VtxImportTabs, wxPanel)
 
 EVT_COMBOBOX(ID_FILELIST,VtxImportTabs::OnFileSelect)
 EVT_RADIOBOX(ID_SHOW_MODE, VtxImportTabs::OnShowMode)
+EVT_CHECKBOX(ID_TILE,VtxImportTabs::OnTile)
 
 END_EVENT_TABLE()
 
@@ -82,6 +85,10 @@ void VtxImportTabs::AddImageTab(wxPanel *panel){
 	//m_image_height->Enable(false);
 
 	fileio->Add(m_image_height,0,wxALIGN_LEFT|wxALL,0);
+
+	m_tile=new wxCheckBox(panel, ID_TILE, "Tile");
+
+	fileio->Add(m_tile,0,wxALIGN_LEFT|wxALL,0);
 
 	fileio->SetMinSize(wxSize(TABS_WIDTH,-1));
 	boxSizer->Add(fileio, 0, wxALIGN_LEFT|wxALL,0);
@@ -178,7 +185,7 @@ void VtxImportTabs::displayImage(char *name){
 	}
 	if(!is)
 		return;
-	if(type==IMPORT)
+	if(m_tile->IsChecked())
 		m_image_window->setImage(wxString(name),VtxImageWindow::TILE);
 	else
 		m_image_window->setImage(wxString(name),VtxImageWindow::SCALE);
@@ -199,6 +206,11 @@ void VtxImportTabs::setObjAttributes(){
 	m_image_window->setImage(m_name.ToAscii(),VtxImageWindow::TILE);
 	update_needed=false;
 	imageDialog->UpdateControls();
+}
+
+void VtxImportTabs::OnTile(wxCommandEvent& event){
+	bool tile=event.IsChecked();
+	m_image_window->setImage(m_name,tile?VtxImageWindow::TILE:VtxImageWindow::SCALE);
 }
 
 void VtxImportTabs::OnShowMode(wxCommandEvent& event){

@@ -1,5 +1,13 @@
 // ########## begin geometry_funcs.frag #########################
 
+vec3 NormalFromTriangleVertices(vec3 triangleVertices[3])
+{
+    // now is same as RedBook (OpenGL Programming Guide)
+    vec3 u = triangleVertices[0] - triangleVertices[1];
+    vec3 v = triangleVertices[1] - triangleVertices[2];
+    return cross(v, u);
+}
+
 #define PRODUCE_VERTICES\
 	float dt = 1.0 / float( TESSLVL ); \
 	float t_top = 1.0; \
@@ -49,10 +57,15 @@
 	vec3 v=normalize(pv)*(g*rscale); \
 	p.xyz+=v;
 
+// calculate per-vertex normals using noise same function as above with displaced coordinates (derivatives)
+// - works like shader bumpmaps for textures
+// - but adds considerable overhead to render speed (4x?)
+// - looked into using cross-products to avoid this step but it looks like there's no way to prevent a
+//   "faceted" appearance (as if blending was disabled) since only one normal can be calculated per triangle
 #define CALC_ZNORMAL(func) \
     { \
-	    Normal.xyz=(Normal.xyz); \
 		float delta=1e-6; \
+		float nbamp = 5e-4/delta; \
 		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
 		gv = func; \
 		df.x =gv.x; \
@@ -62,11 +75,8 @@
 		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
 		gv = func; \
 		df.z =gv.x; \
-		df = (df-vec3(g,g,g)); \
-		df=normalize(df); \
-	    vec3 normal = normalize(Normal.xyz-0.7*gl_NormalMatrix *df); \
-	    if(length(normal)>0.1) /* should always be 1 unless deltas get trashed by spfp limit */ \
-		  Normal.xyz=normal; \
+		df = (df-vec3(g,g,g))*(nbamp); \
+	    Normal.xyz=normalize(Normal.xyz-4*gl_NormalMatrix *df); \
 	} \
 
 #define NOISE_COLOR(func) \

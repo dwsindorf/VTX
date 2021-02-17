@@ -2058,7 +2058,7 @@ void MapNode::vertex(MapData*d)
 void MapNode::setVertexAttributes(MapData*d){
 	if(!d)
 		return;
-	double depth = TheScene->vpoint.distance(d->mpoint());
+	double depth = TheScene->vpoint.distance(d->gpoint());
 
 	Point pm=d->mpoint();
 	pm=pm.normalize();  // this gets rid of the Z() component

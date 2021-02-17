@@ -58,7 +58,7 @@ public:
     void OnZEnter(wxCommandEvent& event){
     	invalidateObject();
     }
-
+    void OnEnable(wxCommandEvent& event);
 	DECLARE_EVENT_TABLE()
 };
 #endif /*COLORTABS_H_*/

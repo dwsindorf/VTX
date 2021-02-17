@@ -685,6 +685,9 @@ void TNdensity::eval()
 //-------------------------------------------------------------
 void TNpoint::eval()
 {
+	if(!isEnabled())
+		return;
+
 	INIT;
     Px=Py=Pz=0;
 	Td.clr_flag(SNOISEFLAG);
@@ -733,6 +736,9 @@ void TNpoint::eval()
 // - called AFTER shader program is created
 //-------------------------------------------------------------
 bool TNpoint::setProgram(){
+	if(!isEnabled())
+		return;
+
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
@@ -1031,6 +1037,7 @@ void TNnoise::init()
 //-------------------------------------------------------------
 void TNnoise::eval()
 {
+
 	double f=0,ampl=1.0,offset=0.0;
 	double args[16];
 
@@ -1118,6 +1125,7 @@ static void printFvar(GLhandleARB program,char *v,int nid){
 // - called AFTER shader program is created
 //-------------------------------------------------------------
 bool TNnoise::setProgram(){
+
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;

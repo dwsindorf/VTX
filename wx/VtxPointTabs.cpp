@@ -1,6 +1,9 @@
 
 #include "VtxPointTabs.h"
 #include "FileUtil.h"
+#include "VtxSceneDialog.h"
+#include "VtxTabsMgr.h"
+
 
 #include <wx/filefn.h>
 #include <wx/dir.h>
@@ -33,6 +36,8 @@ EVT_TEXT_ENTER(ID_Z,VtxPointTabs::OnZEnter)
 EVT_MENU(ID_DELETE,VtxPointTabs::OnDelete)
 EVT_MENU(ID_ENABLE,VtxPointTabs::OnEnable)
 EVT_UPDATE_UI(ID_ENABLE, VtxPointTabs::OnUpdateEnable)
+
+EVT_MENU(TABS_ENABLE,VtxPointTabs::OnEnable)
 
 END_EVENT_TABLE()
 
@@ -88,6 +93,14 @@ void VtxPointTabs::AddPointTab(wxWindow *panel){
 	hline->Add(new wxStaticText(panel, -1, "Z", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
 	hline->Add(m_z_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+}
+
+void VtxPointTabs::OnEnable(wxCommandEvent& event){
+    TheView->set_changed_detail();
+	setEnabled(!isEnabled());
+	menu_action=TABS_ENABLE;
+	sceneDialog->updateObjectTree();
+	TheScene->rebuild_all();
 }
 
 int VtxPointTabs::showMenu(bool expanded){

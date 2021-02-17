@@ -1,21 +1,58 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-11.25;
-		theta=194.062;
-		height=41.3247 ft;
-		gndlvl=-3325.39 ft;
-		time=243180;
-		heading=78;
-		tilt=-7;
-		angle=53;
+		phi=-42.1875;
+		theta=216.558;
+		height=154.415 ft;
+		gndlvl=58.3547 ft;
+		time=22362.4;
+		tilt=-11;
+		angle=-17;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=6 ft;
+		height=176.794 ft;
+		gndlvl=35.9759 ft;
+	}
+	View{
+		view=ORBITAL;
+		height=0.006;
+		gndlvl=2126.47 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-41.4844;
+		theta=245.391;
+		height=10 miles;
+		gndlvl=-52054.6 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-41.5448;
+		theta=246.011;
+		height=1463.9 ft;
+		gndlvl=-53198.3 ft;
+	}
+	View{
+		height=483.714 ft;
+		gndlvl=-53796.9 ft;
+		heading=16;
 		tilt=-4;
+	}
+	View{
+		height=288.399 ft;
+		gndlvl=-46631.2 ft;
+	}
+	View{
+		height=424.73 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -62,15 +99,14 @@ Scene() {
 					ambient=Color(1,1,1,0.08);
 					day=30;
 					emission=Color(0.99,0.93,0.09,0.03);
-					fog.color=Color(0.99,0.7,0.3,0.44);
-					fog.max=30000 ft;
-					fog.min=10000 ft;
-					fog.value=0.4423;
-					fog.vmax=4444.4 ft;
-					fog.vmin=1527.8 ft;
-					hscale=0.002;
+					fog.color=Color(1,0.81,0.11);
+					fog.max=11000 ft;
+					fog.min=1000 ft;
+					fog.value=1;
+					fog.vmax=-45000 ft;
+					fog.vmin=-55000 ft;
+					hscale=0.0026;
 					name="Venus";
-					resolution=4;
 					shadow=Color(0.21,0.17,0.04,0.16);
 					shine=16.4793;
 					specular=Color(1,1,1,0.38);
@@ -78,10 +114,10 @@ Scene() {
 					year=100;
 					albedo=0.1;
 					Surface{
-						terrain=fog(noise(GRADIENT|SCALE,3.7,2,1,0.5,2,1,1,0,0))
+						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.05,0.5,2,1,1,0,0))
 								
-								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2896.31,8,2,3.33328,2,2.4,0.93056,0)+
-								Texture("Venus_surface1",HMAP|NORM|TEX,1,1,4,0,1,2,0.5,0,1,0)+Z(fractal(SQR|SS,13,4,0,1.35,1.06,0.24,0.4,0,0.29,1))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,12.1,0.17,0.28,2,1,0.44,0,0));
+								Texture("rock_stones",BUMP|RANDOMIZE,2048,-4,2,3.33328,4,2.4,0.93056,0)+
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,2,4,0,1,2,0.5,0,1,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,0.68,0.66,0.45,0));
 					}
 					Clouds(0.00305588) {
 						ambient=Color(1,1,1,0.07);
@@ -94,7 +130,7 @@ Scene() {
 						albedo=0.1;
 						Surface{
 							terrain=
-									Texture("venus_clouds",BUMP|NORM|TEX,1,4.88896,2,0,1,2,0.5,0);
+									Texture("venus_clouds",BUMP|NORM|TEX,1,1.33344,2,0,1,2,0.5,0);
 						}
 					}
 					Sky(0.00317625) {
@@ -102,6 +138,7 @@ Scene() {
 						day=30;
 						density=0.25;
 						haze.color=Color(0.99,0.84,0.51);
+						haze.grad=0.57318;
 						haze.value=1;
 						name="Sky";
 						night.color=Color(0,0,0);

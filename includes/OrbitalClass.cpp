@@ -2103,6 +2103,8 @@ void Spheroid::adapt_object()
 	set_geometry();
 	terrain.init();
 	terrain.setAdaptMode();
+	set_wscale();
+
 	map->adapt();
 }
 
@@ -3243,6 +3245,8 @@ void Shell::adapt_object()
 	exprs.eval();
 	terrain.init();
 	terrain.setAdaptMode();
+	set_wscale();
+
 	map->adapt();
 }
 
@@ -3530,6 +3534,7 @@ void Sky::adapt_object()
 
 	terrain.init();
 	terrain.set_eval_mode(0);
+	set_wscale();
 
 	map->adapt();
 
@@ -4613,6 +4618,8 @@ void CloudLayer::adapt_object()
 	}
 
 	glDepthMask(GL_FALSE);
+
+	set_wscale();
 
 	map->adapt();
 	map->frontface=GL_FRONT;

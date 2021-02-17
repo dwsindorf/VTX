@@ -116,9 +116,9 @@ void main(void) {
 		    Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 			vdata[index][0]=Vertex1;		    
 			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
-			Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];
 			CALC_ZNOISE(NPZ);
 #if NLIGHTS >0
+			Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];
 			CALC_ZNORMAL(NPZ);
 			vdata[index][3]=Normal;
 #endif

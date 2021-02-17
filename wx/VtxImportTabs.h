@@ -36,6 +36,8 @@ protected:
 	wxTextCtrl *m_image_height;
 	bool update_needed;
 	NameList<ImageSym*> *image_list;
+	wxCheckBox *m_tile;
+
 
 public:
 	VtxImportTabs(wxWindow* parent,
@@ -59,6 +61,7 @@ public:
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowMode(wxCommandEvent& event);
+    void OnTile(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

@@ -285,6 +285,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		cout<<"ERROR UNSUPPORTED MENU CHOICE:"<<menu_choice<<endl;
 		break;
 	case TABS_NONE:
+	case TABS_ENABLE:
 		break;
 	case TABS_VIEWOBJ:
 		updateObjectTree();

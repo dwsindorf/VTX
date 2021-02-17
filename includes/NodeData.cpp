@@ -183,8 +183,8 @@ Point  MapData::gpoint()
 {
 	if(has_geometry()){
 	   Point p=TheMap->point(theta(),phi(),max_height());
-		if(TheScene->eyeref())
-			return p-TheScene->xpoint;
+		//if(TheScene->eyeref())
+		//	return p-TheScene->xpoint;
 		return p;
 	}
 	return point();
