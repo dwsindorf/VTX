@@ -264,7 +264,7 @@ void VtxColorTabs::setExprFromColor(){
 void VtxColorTabs::setObjAttributes(){
 	update_needed=true;
 	TNcolor *tnode=object();
-	tnode->setExpr(getExpr().ToAscii());
+	tnode->setExpr((char*)getExpr().ToAscii());
 	if(tnode->getExprNode()==0)
 		update_needed=true;
 	else{

@@ -58,7 +58,6 @@ struct noise_info {
 };
 
 uniform noise_info nvars[NVALS];
-uniform float rscale;
 
 #define VMAX 0.5
 

@@ -98,8 +98,8 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 	float s=lerp(dp, dpmax-2.0*dpmin, dpmax-dpmin, 0.0, 1.0);
 	s=clamp(s,1e-5,1.0);  // for some reason pow(x,..) causes black pixels if x<=0
 	float dv=pow(s,4.0*haze_grad);
-	// eye to max distance gradient
-	float d=min(DEPTH/haze_zfar,1.0);
+	// eye to max distance gradient	
+	//float d=min(DEPTH/haze_zfar,1.0);
 	float dh=1.0;//pow(d,4.0*haze_grad);
 	float h=Haze.a*dv*dh;
 	transmission*=lerp(haze_grad,0.0,0.2,0.0,1.0);

@@ -19,10 +19,14 @@ uniform sampler2DRect FBOTex2;
 uniform sampler2DRect FBOTex3;
 uniform sampler2DRect FBOTex4;
 
+uniform float rscale;
+
 #define SHADOWTEX FBOTex3
 
 uniform float hdr_min;
 uniform float hdr_max;
+
+const float m2f=5280.0;
 
 // ########## Lighting section #########################
 
@@ -46,6 +50,7 @@ uniform float shadow_darkness;
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
+
 #ifndef LMODE
 #define LMODE 0
 #endif
@@ -53,9 +58,43 @@ varying vec4 Normal;
 uniform vec4 Diffuse;   // for some reason can't seem to set & use gl_FrontMaterial.diffuse ??
 uniform vec4 Shadow;
 
+#ifdef GRID
+uniform vec4 phi_color;
+uniform vec4 theta_color;
+uniform float grid_spacing;
+vec3 addGrid(vec3 color){
+    vec2 p = vec2(THETA,PHI)*180;
+    vec2 f  = abs(fract (p/grid_spacing));
+    vec2 df = 4*fwidth(p/grid_spacing);
+    vec2 g = smoothstep(-df,df , f);
+    g *=1.0-g;
+    g = min(2.0*g,1.0);
+    	
+  	vec3 rcol=mix(color,theta_color.rgb,g.x);  
+    rcol=mix(rcol,phi_color.rgb,g.y);
+     
+	return rcol;		
+}
+#endif
+#ifdef CONTOURS
+uniform vec4 contour_color;
+uniform float contour_spacing;
+
+vec3 addContours(vec3 color){
+	float y =m2f*HT;
+	float f  = abs(fract (y * 1e6/contour_spacing));
+	float dy = 4*fwidth(y * 1e6/contour_spacing);
+	float g = smoothstep(-dy,dy , f);
+	g *=1.0-g;
+	g = min(2*g,1.0);
+ 	vec3 col=mix(color,contour_color,g);
+	return vec3(col.rgb);
+}
+#endif
 //
 //Lighting model
 //
+#if NLIGHTS >0
 vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	vec3 bmp  = -gl_NormalMatrix*b;
 	vec3 eye = normalize(EyeDirection.xyz);
@@ -90,6 +129,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	float shadow_diffuse=1.0;
 	float shadow_specular=1.0;
 #endif
+
 
 	for(int i=0;i<NLIGHTS;i++){
 	    if(gl_LightSource[i].position.w==0.0)
@@ -133,7 +173,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	//illumination=clamp(illumination,0.0,1.0);
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
 }
-
+#endif
 //########## 3D noise section #########################
 
 #if NVALS >0
@@ -166,12 +206,14 @@ void main(void) {
 #include "set_tex.frag"
 #endif
     float illumination = 0.0;
+#if NLIGHTS >0
 	color.a=1.0;
     if(lighting){
 		vec4 c=setLighting(color.rgb,normal,bump);
     	color.rgb=c.rgb;
     	illumination=c.a;//sqrt(c.a);
     }
+#endif
 #ifdef SHADOWS
 	else{
     	float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
@@ -186,6 +228,14 @@ void main(void) {
 	gl_FragData[1]=vec4(Constants.g,depth,reflect1,vfog);
 #else  // moons
 	gl_FragData[1]=vec4(0,illumination,0.0,0.0);
+#endif
+#ifdef VIEWOBJ
+#ifdef CONTOURS
+    color.rgb=addContours(color.rgb);
+#endif 
+#ifdef GRID
+    color.rgb=addGrid(color.rgb);
+#endif   
 #endif
 	gl_FragData[0] = color;
 

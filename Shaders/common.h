@@ -6,9 +6,9 @@ varying vec4 Color;
 #endif
 
 
-#if NVALS >0
+//#if NVALS >0
 varying vec4 Vertex1;
-#endif
+//#endif
 #if NTEXS >0
 varying vec4 Tangent;
 #endif
@@ -37,8 +37,10 @@ uniform float freqmip;
 #define FHT Constants.x
 
 #define DENSITY Constants.z
-#define DEPTH Constants.y
-#define PHI Constants.a
+//#define DEPTH Constants.y
+#define THETA Constants.a
+#define PHI Vertex1.y
+
 
 #define PI		3.14159265359
 #define RT2		1.414213562373
@@ -58,7 +60,6 @@ float ALPHA=1.0;
 #define LAT abs(PHI)
 #define EQU (1-LAT)
 #define X Vertex1.x
-#define THETA 0.0
 
 // ########## end common.h #########################
 

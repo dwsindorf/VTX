@@ -48,6 +48,7 @@ static VFV initializers[32];
 static int inits=0;
 static VFV finishers[32];
 static int fins=0;
+static TerrainData Td;
 
 extern int place_visits,place_hits,place_misses,place_gid;
 extern int tnoise_visits,tnoise_hits,tnoise_visits;
@@ -242,6 +243,8 @@ Scene::Scene(Model *m)
 Scene::~Scene()
 {
 	free();
+	save_prefs();
+	prefs.free();
 	vars.free();
 	exprs.free();
 	TheScene=0;
@@ -310,9 +313,130 @@ bool Scene::setProgram(){
 		vars.newFloatVar("texmip",tex_mip-0.5);
 
 	vars.newFloatVar("colormip",4*colormip);
+
  	vars.setProgram(GLSLMgr::programHandle());
 	vars.loadVars();
 	return true;
+}
+
+//-------------------------------------------------------------
+// Scene::get_prefs() read application scope variables file
+//-------------------------------------------------------------
+void Scene::read_prefs(){
+	char base[256];
+	char dir[256];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Resources/UI/prefs.spx",base);
+ 	prefs_mode=true;
+	model->parse(dir);
+ 	prefs_mode=false;
+ 	get_prefs();
+}
+
+//-------------------------------------------------------------
+// Scene::save_prefs() save application scope variables file
+//-------------------------------------------------------------
+void Scene::save_prefs(){
+	char base[256];
+	char dir[256];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Resources/UI/prefs.spx",base);
+ 	set_prefs();
+
+    FILE *fp=fopen(dir,"wb");
+    if(fp){
+    	fprintf(fp,"Scene() {\n");
+    	inc_tabs();
+    	prefs.save(fp);
+    	dec_tabs();
+    	fprintf(fp,"}\n");
+		fclose(fp);
+    }
+}
+
+//-------------------------------------------------------------
+// Scene::set_prefs() set application scope variables
+//-------------------------------------------------------------
+void Scene::set_prefs(){
+    PCSET("contour_color",contour_color,Color(1,1,1));
+	PCSET("phi_color",phi_color,Color(0,1,1));
+	PCSET("theta_color",theta_color,Color(0,1,0));
+	PCSET("text_color",text_color,Color(0,1,1));
+	PVSET("enable_contours",enable_contours,1);
+	PVSET("enable_grid",enable_grid,1);
+	PVSET("grid_spacing",grid_spacing,1);
+	PVSET("contour_spacing",contour_spacing,1000);
+	PVSET("autogrid",autogrid(),0);
+}
+
+//-------------------------------------------------------------
+// Scene::get_prefs() get application scope variables
+//-------------------------------------------------------------
+void Scene::get_prefs(){
+	prefs.eval();
+	PCGET("contour_color",contour_color,Color(1,1,1));
+	PCGET("phi_color",phi_color,Color(0,1,1));
+	PCGET("theta_color",theta_color,Color(0,1,0));
+	PCGET("text_color",text_color,Color(0,1,1));
+	PVGET("enable_contours",enable_contours,1);
+	PVGET("enable_grid",enable_grid,1);
+	PVGET("grid_spacing",grid_spacing,1);
+	PVGET("contour_spacing",contour_spacing,1000);
+
+    if(prefs.get_local("autogrid",Td))
+    	set_autogrid(Td.s);
+    else
+    	set_autogrid(0);
+
+	syscolor[INFO_COLOR]=text_color;
+}
+
+//-------------------------------------------------------------
+// Scene::adjust_grid() afjust contours based on height
+//-------------------------------------------------------------
+void Scene::adjust_grid() {
+	if(!autogrid() || !viewobj)
+		return;
+	double ht=height/FEET;
+	double cv=(int)(ht/1000.0+0.5);
+	if(cv<50){
+		contour_spacing=1000;
+		grid_spacing=1;
+	}
+	else if(cv<100){
+		contour_spacing=2500;
+		grid_spacing=2;
+	}
+	else if(cv<200){
+		contour_spacing=5000;
+		grid_spacing=5;
+	}
+	else if(cv<400){
+		contour_spacing=10000;
+		grid_spacing=10;
+	}
+	else if(cv<2000){
+		contour_spacing=20000;
+		grid_spacing=20;
+	}
+	else if(cv<5000){
+		contour_spacing=50000;
+		grid_spacing=100;
+	}
+	else {
+		contour_spacing=100000;
+		grid_spacing=500;
+	}
+
+	//cout <<" grid:"<<grid_spacing<<endl;
+}
+
+//-------------------------------------------------------------
+// Scene::eval_exprs() evaluate and set scene scope variables
+//-------------------------------------------------------------
+void Scene::eval_exprs(){
+	exprs.eval();
+	VGET("rseed",rseed,0);
 }
 
 //-------------------------------------------------------------
@@ -320,12 +444,12 @@ bool Scene::setProgram(){
 //-------------------------------------------------------------
 void Scene::add_expr(char *s, TNode *r)
 {
-	TNode  *n=exprs.add_expr(s,r);
-	exprs.eval_node(n);
-	if(strcmp(s,"rseed")==0){ // from file parser
-		cout<<"new rseed:"<<s<<endl;
-		n->eval();
-		rseed=S0.s;
+	TNode  *n;
+	if(prefs_mode){
+		prefs.add_expr(s,r);
+	}
+	else{
+		exprs.add_expr(s,r);
 	}
 }
 
@@ -490,6 +614,7 @@ void Scene::init()
 	set_intrp(1);
 	Render.set_multitexs(0);
 	set_movie((char*)dflt_movie_name);
+	read_prefs();
 }
 
 //-------------------------------------------------------------
@@ -627,6 +752,7 @@ void Scene::open(char *fn)
 	reset();
 	init_for_open();
 	model->parse(fn);
+	eval_exprs();
 
     ViewFrame *frame;
     frame=views->first();
@@ -1732,7 +1858,7 @@ void Scene::select()
 	void *obj=0;
 
 	if(surface_view()){
-#define USE_IDS
+#define USE_IDS // fetch selected node from last idtable image
 #ifdef USE_IDS
 		if(Raster.idvalues()){
 		    viewobj->set_geometry();
@@ -1740,9 +1866,6 @@ void Scene::select()
 			if(n){
 				selobj=focusobj=viewobj;
 				selm=Point(n->theta(),n->phi(),n->height());
-				//Point temp=Point(selm.x,selm.y,selm.z/FEET);
-				//temp.print("temp ");
-				//cout<<endl;
 		        return;
 			}
 		}
@@ -1755,9 +1878,6 @@ void Scene::select()
         if(obj){
            selobj=focusobj=viewobj;
            selm=viewobj->get_focus(obj);
-           //Point temp=Point(selm.x,selm.y,selm.z/FEET);
-           //temp.print("selm ");
-           //cout<<endl;
            return;
         }
 	}
@@ -2100,6 +2220,7 @@ void Scene::render()
 
 		set_render_mode();
 		set_ambient();
+		adjust_grid();
 
 		info_enabled=Render.display(OBJINFO)&&render_info;
 		if(info_enabled && adapt_info)

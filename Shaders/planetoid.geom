@@ -37,7 +37,6 @@ uniform float bump_delta;
 uniform float bump_ampl;
 uniform bool lighting;
 
-
 float delta=0;
 
 #define PI		3.14159265359

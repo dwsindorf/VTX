@@ -34,11 +34,6 @@ extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double sc
 
 //#define DEBUG_SAVE  // show name on save
 
-#define CSET(name,value,test) exprs.set_var(name,value,value!=test)
-#define VSET(name,value,test) exprs.set_var(name,value,fabs(value-test)>1e-6*fabs(value+test))
-#define USET(name,value,test,u) ts=exprs.set_var(name,value,value!=test); ts->units=u
-#define VGET(name,value,init) if(exprs.get_local(name,Td)) value=Td.s; else value=init
-#define CGET(name,value,init) if(exprs.get_local(name,Td)) value=Td.c; else value=init
 
 #define TDGET(name,value) if(exprs.get_local(name,Td)) tree_mgr->value=Td.s
 #define TCGET(name,value) if(exprs.get_local(name,Td)) tree_mgr->value=Td.c
@@ -2639,6 +2634,10 @@ bool Planetoid::setProgram(){
 	if(Render.geometry() && tp->has_geometry())
 		sprintf(defs+strlen(defs),"#define TESSLVL %d\n",Map::tessLevel());
 
+	if(TheScene->enable_contours)
+		sprintf(defs+strlen(defs),"#define CONTOURS\n");
+	if(TheScene->enable_grid)
+		sprintf(defs+strlen(defs),"#define GRID\n");
 
 	double twilite_min=-0.3;
 	double twilite_max=0.4;
@@ -2699,6 +2698,18 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
+	if(TheScene->enable_contours){
+		Color c = TheScene->contour_color;
+		vars.newFloatVec("contour_color",c.red(),c.green(),c.blue(),1.0);
+		vars.newFloatVar("contour_spacing",TheScene->contour_spacing);
+	}
+	if(TheScene->enable_grid){
+		Color c = TheScene->phi_color;
+		vars.newFloatVec("phi_color",c.red(),c.green(),c.blue(),1.0);
+		c = TheScene->theta_color;
+		vars.newFloatVec("theta_color",c.red(),c.green(),c.blue(),1.0);
+		vars.newFloatVar("grid_spacing",TheScene->grid_spacing*MILES/RPD/size);
+	}
 
 	tp->setProgram();
 

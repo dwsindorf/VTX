@@ -25,9 +25,9 @@ bool newcell=false;
 varying in vec4 Normal_G[];
 varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
+varying out vec4 Vertex1;
 #if NVALS >0
 varying in vec4 Vertex1_G[];
-varying out vec4 Vertex1;
 #endif
 #if NTEXS >0
 varying in vec4 Tangent_G[];
@@ -39,6 +39,8 @@ uniform float freqmip=0;
 uniform float bump_delta;
 uniform float bump_ampl;
 uniform bool lighting;
+uniform float rscale;
+
 
 float delta=0;
 

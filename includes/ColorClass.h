@@ -112,6 +112,19 @@ public:
 										cd.c.b=clamp(c3);
 										cd.c.a=clamp(c4);
 									}
+	void set(GLubyte c1,GLubyte c2,GLubyte c3, GLubyte c4)
+									{	cd.c.r=c1;
+										cd.c.g=c2;
+										cd.c.b=c3;
+										cd.c.a=c4;
+									}
+	void set(GLubyte c1,GLubyte c2,GLubyte c3)
+									{	cd.c.r=c1;
+										cd.c.g=c2;
+										cd.c.b=c3;
+										cd.c.a=CMAX;
+									}
+
 	GLubyte clamp(double f)			{	return f<=0.0 ? (GLubyte)0 :
 										(f>=1.0 ? (GLubyte)CMAX:(GLubyte)(f*CMAX));
 									}

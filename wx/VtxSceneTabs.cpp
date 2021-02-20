@@ -50,6 +50,7 @@ enum {
     ID_BUMP_MIP_TEXT,
     ID_FREQ_MIP_SLDR,
     ID_FREQ_MIP_TEXT,
+
     ID_SHADOWS,
     ID_SHADOW_BLUR_SLDR,
     ID_SHADOW_BLUR_TEXT,
@@ -60,6 +61,19 @@ enum {
     ID_SHADOW_DOV_SLDR,
     ID_SHADOW_DOV_TEXT,
     ID_SHOW_WATER,
+    ID_SHOW_GRID,
+    ID_GRID_SPACING_SLDR,
+    ID_GRID_SPACING_TEXT,
+
+    ID_PHI_COLOR,
+    ID_THETA_COLOR,
+    ID_SHOW_CONTOURS,
+    ID_CONTOUR_SPACING_SLDR,
+    ID_CONTOUR_SPACING_TEXT,
+
+    ID_CONTOUR_COLOR,
+    ID_AUTOGRID,
+
     ID_ADAPT_OCCLUSION,
     ID_ADAPT_CURVATURE,
     ID_ADAPT_BACKFACING,
@@ -120,6 +134,9 @@ EVT_UPDATE_UI(ID_SHOW_MASK, VtxSceneTabs::OnUpdateShowMask)
 
 EVT_CHECKBOX(ID_SHOW_WATER,VtxSceneTabs::OnShowWater)
 
+EVT_CHECKBOX(ID_SHOW_GRID,VtxSceneTabs::OnShowGrid)
+EVT_CHECKBOX(ID_SHOW_CONTOURS,VtxSceneTabs::OnShowContours)
+
 EVT_CHECKBOX(ID_HDR,VtxSceneTabs::OnHDR)
 EVT_UPDATE_UI(ID_HDR, VtxSceneTabs::OnUpdateHDR)
 
@@ -159,6 +176,17 @@ SET_SLIDER_EVENTS(BUMP_MIP,VtxSceneTabs,BumpMip)
 SET_SLIDER_EVENTS(FREQ_MIP,VtxSceneTabs,FreqMip)
 SET_SLIDER_EVENTS(SHADOW_FOV,VtxSceneTabs,ShadowFov)
 SET_SLIDER_EVENTS(SHADOW_DOV,VtxSceneTabs,ShadowDov)
+
+SET_SLIDER_EVENTS(GRID_SPACING,VtxSceneTabs,GridSpacing)
+SET_SLIDER_EVENTS(CONTOUR_SPACING,VtxSceneTabs,ContourSpacing)
+
+EVT_COLOURPICKER_CHANGED(ID_PHI_COLOR,VtxSceneTabs::OnPhiColor)
+EVT_COLOURPICKER_CHANGED(ID_THETA_COLOR,VtxSceneTabs::OnThetaColor)
+EVT_COLOURPICKER_CHANGED(ID_CONTOUR_COLOR,VtxSceneTabs::OnContourColor)
+
+EVT_CHECKBOX(ID_AUTOGRID,VtxSceneTabs::OnAutogrid)
+EVT_UPDATE_UI(ID_CONTOUR_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
+EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 
 END_EVENT_TABLE()
 
@@ -294,7 +322,6 @@ void VtxSceneTabs::AddFilterTab(wxWindow *panel){
 	mip_bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(mip_bias, 0, wxALIGN_LEFT|wxALL,0);
-
 }
 
 void VtxSceneTabs::AddRenderTab(wxWindow *panel){
@@ -321,6 +348,14 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	m_water=new wxCheckBox(panel, ID_SHOW_WATER, "Water");
 	m_water->SetToolTip("Enable water");
 	check_options->Add(m_water,0,wxALIGN_LEFT|wxALL,1);
+
+	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Grid");
+	m_grid->SetToolTip("Draw Long/Lat lines");
+	check_options->Add(m_grid,0,wxALIGN_LEFT|wxALL,1);
+
+	m_contours=new wxCheckBox(panel, ID_SHOW_CONTOURS, "Contours");
+	m_contours->SetToolTip("Draw Contour lines");
+	check_options->Add(m_contours,0,wxALIGN_LEFT|wxALL,1);
 
     boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
     check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
@@ -359,7 +394,6 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
-
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	ShadowFovSlider=new SliderCtrl(panel,ID_SHADOW_FOV_SLDR,"FOV",LABEL2,VALUE2,SLIDER2);
@@ -376,6 +410,55 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(shadow_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* grid_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Lines"));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	GridSpacingSlider=new SliderCtrl(panel,ID_GRID_SPACING_SLDR,"Grid",LABEL2,VALUE2,SLIDER2);
+	GridSpacingSlider->setRange(0.1,10);
+	GridSpacingSlider->slider->SetToolTip("Longitude-latitude grid spacing");
+
+	hline->Add(GridSpacingSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	grid_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline->Add(new wxStaticText(panel, -1, "Miles", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
+
+	wxColor col("RGB(255,255,255)");
+
+	m_phi_color=new wxColourPickerCtrl(panel,ID_PHI_COLOR,col,wxDefaultPosition, wxSize(50,30));
+	hline->Add(m_phi_color,0,wxALIGN_LEFT|wxALL,0);
+
+	hline->Add(new wxStaticText(panel, -1, "Lat", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP|wxLEFT,5);
+
+	m_theta_color=new wxColourPickerCtrl(panel,ID_THETA_COLOR,col,wxDefaultPosition, wxSize(50,30));
+	hline->Add(m_theta_color,0,wxALIGN_LEFT|wxALL,0);
+
+	hline->Add(new wxStaticText(panel, -1, "Long", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxALL,5);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ContourSpacingSlider=new SliderCtrl(panel,ID_CONTOUR_SPACING_SLDR,"Contours",LABEL2,VALUE2,SLIDER2);
+	ContourSpacingSlider->setRange(100,20000);
+	ContourSpacingSlider->slider->SetToolTip("Contour interval");
+
+	hline->Add(ContourSpacingSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->Add(new wxStaticText(panel, -1, "Feet", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
+
+	m_contour_color=new wxColourPickerCtrl(panel,ID_CONTOUR_COLOR,col,wxDefaultPosition, wxSize(50,30));
+	hline->Add(m_contour_color,0,wxALIGN_LEFT|wxALL,0);
+
+	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
+	m_autogrid->SetToolTip("Autoset intervals");
+	hline->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,5);
+
+	grid_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(grid_controls, 0, wxALIGN_LEFT|wxALL,0);
+
+	//wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
 
 }
 
@@ -622,6 +705,19 @@ void VtxSceneTabs::updateControls(){
 	m_water->SetValue(Render.show_water());
 	m_tesslevel->SetSelection(Map::tessLevel()-1);
 	m_big->SetValue(Raster.filter_big());
+	m_grid->SetValue(TheScene->enable_grid);
+	m_contours->SetValue(TheScene->enable_contours);
+	m_autogrid->SetValue(TheScene->autogrid());
+
+	updateSlider(GridSpacingSlider,TheScene->grid_spacing);
+	updateSlider(ContourSpacingSlider,TheScene->contour_spacing);
+
+	Color c=TheScene->phi_color;
+	m_phi_color->SetColour(wxColor(c.rb(),c.gb(),c.bb(),1.0));
+	c=TheScene->theta_color;
+	m_theta_color->SetColour(wxColor(c.rb(),c.gb(),c.bb(),1.0));
+	c=TheScene->contour_color;
+	m_contour_color->SetColour(wxColor(c.rb(),c.gb(),c.bb(),1.0));
 
 	m_occlusion->SetValue(Adapt.overlap_test());
 	m_clip->SetValue(Adapt.clip_test());
@@ -650,6 +746,13 @@ void VtxSceneTabs::OnUpdateTime(wxUpdateUIEvent& event){
 void VtxSceneTabs::OnUpdateLOD(wxUpdateUIEvent& event){
 	if(!changing)
 		LODSlider->setValue(TheScene->cellsize);
+}
+
+void VtxSceneTabs::OnUpdateContourSpacing(wxUpdateUIEvent& event) {
+	if(!changing && TheScene->autogrid()){
+		ContourSpacingSlider->setValue(TheScene->contour_spacing);
+		GridSpacingSlider->setValue(TheScene->grid_spacing);
+	}
 }
 
 void VtxSceneTabs::OnTimeSlider(wxScrollEvent& event){

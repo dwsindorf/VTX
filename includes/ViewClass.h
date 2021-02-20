@@ -205,7 +205,7 @@ public:
 
 	virtual void spinTrackball(int type, int x, int y);
 
-	void reset_colors();
+	virtual void reset_colors();
 	void spinTrackball(int type, int x, int y, double ampl);
 	void resetTrackball(int type);
 	void setMouse(int x, int y);

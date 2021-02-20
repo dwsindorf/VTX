@@ -46,6 +46,9 @@ protected:
 
 	wxCheckBox *m_shadows;
 	wxCheckBox *m_water;
+	wxCheckBox *m_grid;
+	wxCheckBox *m_contours;
+	wxCheckBox *m_autogrid;
 
 	wxCheckBox *m_occlusion;
 	wxCheckBox *m_clip;
@@ -60,6 +63,12 @@ protected:
 	SliderCtrl *ShadowResSlider;
 	SliderCtrl *ShadowFovSlider;
 	SliderCtrl *ShadowDovSlider;
+
+	SliderCtrl *GridSpacingSlider;
+	SliderCtrl *ContourSpacingSlider;
+	wxColourPickerCtrl *m_contour_color;
+	wxColourPickerCtrl *m_phi_color;
+	wxColourPickerCtrl *m_theta_color;
 
 	wxChoice   *m_tesslevel;
 
@@ -89,6 +98,9 @@ public:
 		delete ShadowResSlider;
 		delete ShadowFovSlider;
 		delete ShadowDovSlider;
+		delete GridSpacingSlider;
+		delete ContourSpacingSlider;
+
 	}
 	bool Create(wxWindow* parent,
 				wxWindowID id,
@@ -171,6 +183,8 @@ public:
      		TheScene->set_autotm();
      	TheScene->set_changed_render();
     }
+    void OnUpdateContourSpacing(wxUpdateUIEvent& event);
+
     void OnUpdateAnimate(wxUpdateUIEvent& event) {
     	event.Check(TheScene->autotm());
     }
@@ -225,6 +239,20 @@ public:
        	TheScene->set_changed_render();
     }
 
+    void OnShowGrid(wxCommandEvent& event){
+    	TheScene->enable_grid=event.IsChecked();
+       	TheScene->set_changed_render();
+    }
+    void OnShowContours(wxCommandEvent& event){
+     	TheScene->enable_contours=event.IsChecked();
+        TheScene->set_changed_render();
+     }
+
+    void OnAutogrid(wxCommandEvent& event){
+      	 TheScene->set_autogrid(event.IsChecked());
+         TheScene->set_changed_render();
+      }
+
     void OnHDR(wxCommandEvent& event){
         Raster.set_hdr(event.IsChecked());
      	TheScene->set_changed_render();
@@ -267,6 +295,25 @@ public:
         TheScene->rebuild_all();
     }
 
+    void OnPhiColor(wxColourPickerEvent& WXUNUSED(event)){
+    	wxColor col=m_phi_color->GetColour();
+    	TheScene->phi_color.set(col.Red(),col.Green(),col.Blue());
+    	TheScene->set_changed_render();
+    }
+    void OnThetaColor(wxColourPickerEvent& WXUNUSED(event)){
+    	wxColor col=m_theta_color->GetColour();
+    	TheScene->theta_color.set(col.Red(),col.Green(),col.Blue());
+    	TheScene->set_changed_render();
+    }
+    void OnContourColor(wxColourPickerEvent& WXUNUSED(event)){
+     	wxColor col=m_contour_color->GetColour();
+     	TheScene->contour_color.set(col.Red(),col.Green(),col.Blue());
+     	TheScene->set_changed_render();
+     }
+    void OnAutoGrid(wxCommandEvent& event){
+    	TheScene->set_autogrid(event.IsChecked());
+    	TheScene->set_changed_render();
+    }
     void setObjAttributes();
 
     DEFINE_SLIDER_VAR_EVENTS(ShadowRes,Raster.shadow_vsteps)
@@ -276,6 +323,8 @@ public:
     DEFINE_SLIDER_VAR_EVENTS(ShadowFov,Raster.shadow_fov)
     DEFINE_SLIDER_VAR_EVENTS(ShadowDov,Raster.shadow_dov)
 
+    DEFINE_SLIDER_VAR_EVENTS(GridSpacing,TheScene->grid_spacing)
+    DEFINE_SLIDER_VAR_EVENTS(ContourSpacing,TheScene->contour_spacing)
 
 	DEFINE_SLIDER_EVENTS(ColorMip)
 	DEFINE_SLIDER_EVENTS(TexMip)

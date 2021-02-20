@@ -2189,7 +2189,7 @@ void MapNode::Svertex(MapData*dn) {
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;
 	if (GLSLMgr::CommonID >= 0)
-		glVertexAttrib4d(GLSLMgr::CommonID, ht, g,d->density(), phi);
+		glVertexAttrib4d(GLSLMgr::CommonID, ht, g,d->density(), theta);
 
 	setVertexAttributes(d);
 

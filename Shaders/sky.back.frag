@@ -35,7 +35,7 @@ uniform sampler2DRect FBOTex2;
 
 
 #define HT Constants.x
-#define DEPTH Constants.y
+//#define DEPTH Constants.y
 #define PHI Constants.z
 
 // ----------- program entry -----------------

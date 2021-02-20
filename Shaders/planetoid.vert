@@ -17,7 +17,6 @@
 #include "attributes.vert"
 #include "common.h"
 
-
 varying vec4 EyeDirection;
 varying vec4 Normal;
 

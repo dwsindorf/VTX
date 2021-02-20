@@ -22,6 +22,7 @@ uniform vec3 pv;
 uniform float freqmip;
 uniform float MinHt;
 uniform float MaxHt;
+uniform float rscale;
 
 vec4 gv=vec4(0);
 float g=0;

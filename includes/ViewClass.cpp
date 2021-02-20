@@ -93,7 +93,7 @@ void View::reset_colors(){
 	syscolor[PLAY_COLOR]=Color(0,1,0.5);
 	syscolor[HIST_COLOR]=Color(0,1,1);
 	set_show_istring(1);
-	auto_contrast=true;
+	auto_contrast=false;
 
 }
 //-------------------------------------------------------------

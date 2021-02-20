@@ -737,7 +737,7 @@ void TNpoint::eval()
 //-------------------------------------------------------------
 bool TNpoint::setProgram(){
 	if(!isEnabled())
-		return;
+		return false;
 
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)

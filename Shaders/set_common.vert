@@ -7,8 +7,8 @@
 	Tangent=TextureAttributes;
 #endif
 
-#if NVALS >0
+//#if NVALS >0
 	Vertex1=Position1;
-#endif
+//#endif
 	Constants=CommonAttributes;
 // ########## end set_common.vert #########################

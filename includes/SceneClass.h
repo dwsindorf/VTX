@@ -13,6 +13,19 @@
 #include "ModelClass.h"
 #include <time.h>
 
+#define CSET(name,value,test) exprs.set_var(name,value,value!=test)
+#define VSET(name,value,test) exprs.set_var(name,value,fabs(value-test)>1e-6*fabs(value+test))
+#define USET(name,value,test,u) ts=exprs.set_var(name,value,value!=test); ts->units=u
+#define VGET(name,value,init) if(exprs.get_local(name,Td)) value=Td.s; else value=init
+#define CGET(name,value,init) if(exprs.get_local(name,Td)) value=Td.c; else value=init
+
+#define PCSET(name,value,test) prefs.set_var(name,value)
+#define PVSET(name,value,test) prefs.set_var(name,value)
+
+#define PVGET(name,value,init) if(prefs.get_local(name,Td)) value=Td.s; else value=init
+#define PCGET(name,value,init) if(prefs.get_local(name,Td)) value=Td.c; else value=init
+
+
 class Model;
 class TreeNode;
 class FrameMgr;
@@ -68,6 +81,8 @@ enum {
 	VIDEO     = 0x00004000,
 	PATH      = 0x00008000,
 	REVERSE   = 0x00010000,
+	AUTOGRID  = 0x00020000,
+
 	VMODE     = LOG|PATH|VIDEO,
 	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST
 };
@@ -85,6 +100,7 @@ protected:
 	int         vmode;
 	int 		nsobs;
 	int 		vsobs;
+	ExprMgr     prefs;
 	ExprMgr     exprs;
 	ExprMgr     vars;
 	LinkedList<ObjectNode*>objpath;
@@ -103,11 +119,23 @@ protected:
 	void 		save_frame();
 	int			make_movie_dir(char *,char*);
 	int			get_movie_frames();
-
+	void        get_prefs();
+	void        eval_exprs();
+	void        set_prefs();
+	void        adjust_grid();
 
 public:
 	Point       selm;
 	Point2D     selp;
+	Color 	    phi_color;
+	Color 	    theta_color;
+	Color 	    contour_color;
+	Color       text_color;
+	double      grid_spacing;
+	double      contour_spacing;
+	bool        enable_contours;
+	bool        enable_grid;
+	bool        prefs_mode;
 
 	NameList<NameSym*>frame_files;
 	char        filename[256];
@@ -135,11 +163,16 @@ public:
 	double		render_time;
 	double		adapt_time;
 	double		build_time;
-	int    	cells;		// total # cells in scene
-	int    	cycles;		// total adapt cycles
-	double     rseed;
+	int    	    cells;		// total # cells in scene
+	int    	    cycles;		// total adapt cycles
+	double      rseed;
 	Scene(Model *m);
 	~Scene();
+	void read_prefs();
+	void save_prefs();
+	void set_autogrid(bool b)   { BIT_SET(vmode,AUTOGRID,b);}
+	bool autogrid()				{ return vmode & AUTOGRID;}
+
 	void set_focus_object(int i){ self=i;set_changed_render();}
 
 	bool inside_sky();
