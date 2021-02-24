@@ -42,7 +42,7 @@ varying in vec4 Attributes2_G[];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants;
+varying out vec4 Constants1;
 #if NVALS >0
 varying out vec4 Vertex1;
 #endif
@@ -58,7 +58,7 @@ void main(void) {
 		gl_Position = gl_PositionIn[i];
 
 		Normal=Normal_G[i];
-		Constants=Constants_G[i];
+		Constants1=Constants_G[i];
 		EyeDirection=EyeDirection_G[i];
 #ifdef COLOR
 		Color=Color_G[0];
@@ -71,7 +71,7 @@ void main(void) {
 #if NVALS >0
 		Vertex1=Vertex1_G[i];
 #endif
-		Constants=Constants_G[i];
+		Constants1=Constants_G[i];
 
     	gl_TexCoord[0]=gl_TexCoordIn[i][0];
     	gl_TexCoord[1]=gl_TexCoordIn[i][1];

@@ -25,7 +25,7 @@ uniform vec4 Sky;
 uniform vec3 pv;
 varying vec4 EyeDirection;
 varying vec3 Normal;
-varying vec4 Constants;
+varying vec4 Constants1;
 
 uniform bool fbo_read;
 uniform bool fbo_write;
@@ -34,9 +34,9 @@ uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
 
 
-#define HT Constants.x
-//#define DEPTH Constants.y
-#define PHI Constants.z
+#define HT Constants1.x
+//#define DEPTH Constants1.y
+#define PHI Constants1.z
 
 // ----------- program entry -----------------
 void main(void) {

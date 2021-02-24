@@ -175,20 +175,6 @@ void  MapData::invalidate()
 	points.remove(id());
 #endif
 }
-
-//-------------------------------------------------------------
-// MapData::point()	return rectangular point from theta,phi,height
-//-------------------------------------------------------------
-Point  MapData::gpoint()
-{
-	if(has_geometry()){
-	   Point p=TheMap->point(theta(),phi(),max_height());
-		//if(TheScene->eyeref())
-		//	return p-TheScene->xpoint;
-		return p;
-	}
-	return point();
-}
 //-------------------------------------------------------------
 // MapData::point()	return rectangular point from theta,phi,height
 //-------------------------------------------------------------
@@ -231,7 +217,7 @@ Point  MapData::mpoint()
 // MapData::height()		return ht of node (global units)
 //-------------------------------------------------------------
 double MapData::height(){
-    return max_height()*Rscale;
+    return Z()*Rscale;
 }
 
 //-------------------------------------------------------------
@@ -272,7 +258,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int i;
 	int a,b;
 	double density=0;
-	double gdata=0;
 
 	MapData *s2=0;
 
@@ -294,8 +279,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		nf=1;
 		density=td.density;
 	}
-	if(td.get_flag(GNOISEFLAG))
-		gdata=1;
 
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
@@ -334,14 +317,13 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	else if(td.p.z != 0.0)
 	    nd=1;
 
-	setGvals(gdata);
 	setDims(nd);
 	setColors(nc);
 	set_has_density(nf);
 	setEvals(ne);
 	setFchnls(frac);
 
-	int n=nc+nd+ne+nf+frac+gdata+links();
+	int n=nc+nd+ne+nf+frac+links();
 	a=tp->tsize();
 	setMemory(n,a);
 
@@ -359,7 +341,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(ne>0)
 			TheMap->set_erosion(1);
 	}
-	setGZ(0.0);
 	double h=Ht();
 	a=TSTART;
 

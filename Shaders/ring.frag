@@ -78,7 +78,7 @@ void main(void) {
 	gl_FragData[0] = color;
 	gl_FragData[0].a=illumination;
 	//if (fbo_write){
-		gl_FragData[1]=vec4(Constants.g,illumination,0.0,0);
+		gl_FragData[1]=vec4(Constants1.g,illumination,0.0,0);
 		gl_FragData[2]=vec4(0,0,0,1);
 	//}
 }

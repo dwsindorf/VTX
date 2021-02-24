@@ -77,6 +77,8 @@ END_EVENT_TABLE()
 #define DLG_HEIGHT (TABS_HEIGHT+20)
 #define DLG_WIDTH (TREE_WIDTH+TABS_WIDTH+100)
 
+#define DLG_TOP 0
+#define DLG_LEFT 0
 
 VtxSceneDialog::VtxSceneDialog( wxWindow* parent,
   wxWindowID id, const wxString& caption,
@@ -85,7 +87,7 @@ VtxSceneDialog::VtxSceneDialog( wxWindow* parent,
 	colors=new wxColourDatabase();
 	copying=false;
 
-    Create(parent, id, caption, pos,wxSize(DLG_WIDTH,DLG_HEIGHT), style);
+    Create(parent, id, caption, wxPoint(DLG_LEFT,DLG_TOP),wxSize(DLG_WIDTH,DLG_HEIGHT), style);
 }
 
 void VtxSceneDialog::OnClose(wxCloseEvent& event){
@@ -158,8 +160,8 @@ bool VtxSceneDialog::Create( wxWindow* parent,
     Centre();
 
     position=GetScreenPosition();
-    //Move(position.x+size.GetWidth(),position.y+100);
-    Move(position.x+300,position.y+460);
+    Move(position.x+size.GetWidth()-100,position.y-100);
+    //Move(position.x+300,position.y+460);
     position=GetScreenPosition();
     selected=0;
     root=0;

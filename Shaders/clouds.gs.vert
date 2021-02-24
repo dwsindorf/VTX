@@ -29,7 +29,7 @@ void main(void) {
 	Color_G=gl_Color;
 #endif
 
-	Constants_G=CommonAttributes;
+	Constants_G=CommonAttributes1;
 
 	Factors=TextureAttributes;
 

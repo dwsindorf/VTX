@@ -52,6 +52,11 @@ public:
 	double hmap_amp;
 	double hmap_bias;
 
+	double phi_bias;
+	double height_bias;
+	double bump_bias;
+	double slope_bias;
+
 	static double mipbias;
 
 	bool enabled;

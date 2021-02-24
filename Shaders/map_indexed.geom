@@ -50,6 +50,7 @@ void main(void) {
 #endif
     int index=0;
 	float t=1;
+	g=0;
 	float del=1.0/TESSLVL;
 	for(int it = 0; it <= TESSLVL; it++,t-=del){
 		int nums = it+1 ;

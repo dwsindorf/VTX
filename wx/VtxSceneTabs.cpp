@@ -456,10 +456,6 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	grid_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(grid_controls, 0, wxALIGN_LEFT|wxALL,0);
-
-	//wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-
-
 }
 
 void VtxSceneTabs::AddAdaptTab(wxWindow *panel){

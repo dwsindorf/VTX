@@ -22,7 +22,7 @@ void main(void) {
 #if NTEXS >0
 	Tangent=TextureAttributes;
 #endif
-	Constants=CommonAttributes;
+	Constants1=CommonAttributes1;
 #ifdef BB
 	gl_TexCoord[0]=gl_MultiTexCoord0;
 #endif

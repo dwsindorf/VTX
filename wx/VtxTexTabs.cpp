@@ -61,6 +61,14 @@ enum{
     ID_HMAP_AMP_TEXT,
     ID_HMAP_BIAS_SLDR,
     ID_HMAP_BIAS_TEXT,
+    ID_PHI_BIAS_SLDR,
+    ID_PHI_BIAS_TEXT,
+    ID_HT_BIAS_SLDR,
+    ID_HT_BIAS_TEXT,
+    ID_BUMP_BIAS_SLDR,
+    ID_BUMP_BIAS_TEXT,
+    ID_SLOPE_BIAS_SLDR,
+    ID_SLOPE_BIAS_TEXT,
    ID_SHOW_IMAGE_EDIT,
 };
 
@@ -96,6 +104,11 @@ SET_SLIDER_EVENTS(ALPHA,VtxTexTabs,Alpha)
 SET_SLIDER_EVENTS(BUMP,VtxTexTabs,BumpAmp)
 SET_SLIDER_EVENTS(HMAP_AMP,VtxTexTabs,HmapAmp)
 SET_SLIDER_EVENTS(HMAP_BIAS,VtxTexTabs,HmapBias)
+
+SET_SLIDER_EVENTS(PHI_BIAS,VtxTexTabs,PhiBias)
+SET_SLIDER_EVENTS(HT_BIAS,VtxTexTabs,HtBias)
+SET_SLIDER_EVENTS(BUMP_BIAS,VtxTexTabs,BumpBias)
+SET_SLIDER_EVENTS(SLOPE_BIAS,VtxTexTabs,SlopeBias)
 
 SET_SLIDER_EVENTS(BIAS,VtxTexTabs,Bias)
 SET_SLIDER_EVENTS(ORDERS,VtxTexTabs,Orders)
@@ -144,7 +157,7 @@ bool VtxTexTabs::Create(wxWindow* parent,
 
     page=new wxPanel(this,wxID_ANY);
     AddFilterTab(page);
-    AddPage(page,wxT("Advanced"),false);
+    AddPage(page,wxT("Mapping"),false);
 
     //images.makeImagelist();
 	m_name="";
@@ -218,9 +231,6 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
     // line 4 Color
 
 	wxStaticBoxSizer* color_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Color"));
-	m_tex_check=new wxCheckBox(panel, ID_TEXCOLOR, "");
-	m_tex_check->SetValue(true);
-	color_controls->Add(m_tex_check,0,wxALIGN_LEFT|wxALL,4);
 
 	AlphaSlider=new SliderCtrl(panel,ID_ALPHA_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
 	AlphaSlider->setRange(0,2.0);
@@ -229,44 +239,84 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	color_controls->Add(AlphaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	//color_controls->SetMinSize(wxSize(205,BOX_HEIGHT));
 
-	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
 	BiasSlider->setRange(-4.0,4.0);
 	BiasSlider->setValue(0.0);
 	color_controls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
+	m_tex_check=new wxCheckBox(panel, ID_TEXCOLOR, "");
+	m_tex_check->SetValue(true);
+	color_controls->Add(m_tex_check,0,wxALIGN_LEFT|wxALL,4);
+
 	boxSizer->Add(color_controls, 0, wxALIGN_LEFT|wxALL,0);
 
 	wxStaticBoxSizer* bump_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Bump"));
-	m_bump_check=new wxCheckBox(panel, ID_TEXBUMP, "");
-	bump_controls->Add(m_bump_check,0,wxALIGN_LEFT|wxALL,4);
 
 	BumpAmpSlider=new SliderCtrl(panel,ID_BUMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
 	BumpAmpSlider->setRange(-8,8);
 	BumpAmpSlider->setValue(1.0);
 	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
 	BumpDampSlider->setRange(0,1,0,1);
 	BumpDampSlider->setValue(0.0);
 	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	m_bump_check=new wxCheckBox(panel, ID_TEXBUMP, "");
+	bump_controls->Add(m_bump_check,0,wxALIGN_LEFT|wxALL,4);
+
 	boxSizer->Add(bump_controls, 0, wxALIGN_LEFT|wxALL,0);
 
-
-	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HMap"));
-	m_hmap_check=new wxCheckBox(panel, ID_HMAP, "");
-	hmap_controls->Add(m_hmap_check,0,wxALIGN_LEFT|wxALL,4);
+	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
 	HmapAmpSlider->setRange(-1,1);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	HmapBiasSlider=new SliderCtrl(panel,ID_HMAP_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	HmapBiasSlider=new SliderCtrl(panel,ID_HMAP_BIAS_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
 	HmapBiasSlider->setRange(-1,1);
 	HmapBiasSlider->setValue(0.0);
 	hmap_controls->Add(HmapBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
+	m_hmap_check=new wxCheckBox(panel, ID_HMAP, "");
+	hmap_controls->Add(m_hmap_check,0,wxALIGN_LEFT|wxALL,4);
+
 	boxSizer->Add(hmap_controls, 0, wxALIGN_LEFT|wxALL,0);
+	wxStaticBoxSizer* overlays = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Overlays"));
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL1,VALUE2,SLIDER2);
+	StartSlider->setRange(-1,24,0,25);
+
+	hline->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	OrdersSlider=new SliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL2, VALUE2,SLIDER2);
+	OrdersSlider->setRange(1,25);
+	OrdersSlider->setValue(1.0);
+
+	hline->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	overlays->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	OrdersAttenSlider=new SliderCtrl(panel,ID_ORDERS_ATTEN_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
+	OrdersAttenSlider->setRange(0.0,1.0);
+	OrdersAttenSlider->setValue(0.5);
+	hline->Add(OrdersAttenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	OrdersDeltaSlider=new SliderCtrl(panel,ID_ORDERS_DELTA_SLDR,"Freq",LABEL2,VALUE2,SLIDER2);
+	OrdersDeltaSlider->setRange(1.0,5.0);
+	OrdersDeltaSlider->setValue(2.0);
+	hline->Add(OrdersDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	overlays->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(overlays, 0, wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -301,55 +351,59 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("S mapping "));
-	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",0,LINE_WIDTH);
+	wxStaticBoxSizer* modulation = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Modulation"));
 
-	ampl_controls->Add(m_amp_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	boxSizer->Add(ampl_controls, 0, wxALIGN_LEFT|wxALL,0);
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	hline->Add(new wxStaticText(panel, -1, "Color", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
 
-	wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("T mapping or Alpha"));
-	m_alpha_expr = new ExprTextCtrl(panel,ID_ALPHA_EXPR,"",0,LINE_WIDTH);
+	//wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Color"));
+	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",10,LINE_WIDTH-60);
 
-	alpha_controls->Add(m_alpha_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	boxSizer->Add(alpha_controls, 0, wxALIGN_LEFT|wxALL,0);
-    // line 2 start-offset
-
-	wxStaticBoxSizer* overlays = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Orders"));
+	hline->Add(m_amp_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	modulation->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL2,VALUE2,SLIDER2);
-	StartSlider->setRange(-1,24,0,25);
+	hline->Add(new wxStaticText(panel, -1, "Alpha", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
 
-	hline->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	//wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Alpha"));
+	m_alpha_expr = new ExprTextCtrl(panel,ID_ALPHA_EXPR,"",10,LINE_WIDTH-60);
 
-	OrdersSlider=new SliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL2, VALUE2,SLIDER2);
-	OrdersSlider->setRange(1,25);
-	OrdersSlider->setValue(1.0);
+	hline->Add(m_alpha_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	modulation->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
-	hline->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(modulation, 0, wxALIGN_LEFT|wxALL,0);
 
+	wxStaticBoxSizer* biases = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Env. Bias"));
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-	overlays->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	PhiBiasSlider=new SliderCtrl(panel,ID_PHI_BIAS_SLDR,"Lat",LABEL1,VALUE2,SLIDER2);
+	PhiBiasSlider->setRange(-1,1);
+
+	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	HtBiasSlider=new SliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
+	HtBiasSlider->setRange(-1,1);
+	HtBiasSlider->setValue(0.0);
+
+	hline->Add(HtBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	biases->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	OrdersAttenSlider=new SliderCtrl(panel,ID_ORDERS_ATTEN_SLDR,"Ampl",LABEL2,VALUE2,SLIDER2);
-	OrdersAttenSlider->setRange(0.0,1.0);
-	OrdersAttenSlider->setValue(0.5);
-	hline->Add(OrdersAttenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	BumpBiasSlider=new SliderCtrl(panel,ID_BUMP_BIAS_SLDR,"Bump",LABEL1,VALUE2,SLIDER2);
+	BumpBiasSlider->setRange(-1,1);
 
-	OrdersDeltaSlider=new SliderCtrl(panel,ID_ORDERS_DELTA_SLDR,"Freq",LABEL2,VALUE2,SLIDER2);
-	OrdersDeltaSlider->setRange(1.0,5.0);
-	OrdersDeltaSlider->setValue(2.0);
-	hline->Add(OrdersDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(BumpBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-	overlays->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	SlopeBiasSlider=new SliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
+	SlopeBiasSlider->setRange(-1,1);
 
-	boxSizer->Add(overlays, 0, wxALIGN_LEFT|wxALL,0);
+	hline->Add(SlopeBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	biases->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(biases, 0, wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -417,6 +471,11 @@ void VtxTexTabs::saveState(int which){
 	state[which].alpha=AlphaSlider->getValue();
 	state[which].bump=BumpAmpSlider->getValue();
 	state[which].bias=BiasSlider->getValue();
+	state[which].phi_bias=PhiBiasSlider->getValue();
+	state[which].ht_bias=HtBiasSlider->getValue();
+	state[which].bump_bias=BumpBiasSlider->getValue();
+	state[which].slope_bias=SlopeBiasSlider->getValue();
+
 	state[which].interp_state=interp_mode->GetSelection();
 	state[which].clamp=m_clamp_check->GetValue();
 	state[which].randomize=m_rand_check->GetValue();
@@ -439,6 +498,10 @@ void VtxTexTabs::restoreState(int which){
 	AlphaSlider->setValue(state[which].alpha);
 	BumpAmpSlider->setValue(state[which].bump);
 	BiasSlider->setValue(state[which].bias);
+	PhiBiasSlider->setValue(state[which].phi_bias);
+	HtBiasSlider->setValue(state[which].ht_bias);
+	BumpBiasSlider->setValue(state[which].bump_bias);
+	SlopeBiasSlider->setValue(state[which].slope_bias);
 	interp_mode->SetSelection(state[which].interp_state);
 	m_tex_check->SetValue(state[which].tex_enable);
 	m_bump_check->SetValue(state[which].bump_enable);
@@ -596,6 +659,55 @@ void VtxTexTabs::set_hmap_bias(TNode *node)
 }
 
 //-------------------------------------------------------------
+// VtxTexTabs::set_pbias() set bias expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_pbias(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(PhiBiasSlider,S0.s);
+	}
+	else
+		updateSlider(PhiBiasSlider,0.0);
+}
+//-------------------------------------------------------------
+// VtxTexTabs::set_hbias() set bias expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_hbias(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(HtBiasSlider,S0.s);
+	}
+	else
+		updateSlider(HtBiasSlider,0.0);
+}
+//-------------------------------------------------------------
+// VtxTexTabs::set_bbias() set bias expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_bbias(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(BumpBiasSlider,S0.s);
+	}
+	else
+		updateSlider(BumpBiasSlider,0.0);
+}
+//-------------------------------------------------------------
+// VtxTexTabs::set_bbias() set bias expr
+//-------------------------------------------------------------
+void VtxTexTabs::set_sbias(TNode *node)
+{
+	if(node){
+		node->eval();
+		updateSlider(SlopeBiasSlider,S0.s);
+	}
+	else
+		updateSlider(SlopeBiasSlider,0.0);
+}
+
+//-------------------------------------------------------------
 // VtxTexTabs::set_start() set start
 //-------------------------------------------------------------
 void VtxTexTabs::set_start(TNode *node)
@@ -735,6 +847,10 @@ void VtxTexTabs::setObjAttributes(){
     double orders_delta=OrdersDeltaSlider->getValue();
     double orders_atten=OrdersAttenSlider->getValue();
     double damp=BumpDampSlider->getValue();
+    double pbias=PhiBiasSlider->getValue();
+    double hbias=HtBiasSlider->getValue();
+    double bbias=BumpBiasSlider->getValue();
+    double sbias=SlopeBiasSlider->getValue();
 
     if(opts & BUMP)
     	sprintf(p+strlen(p),"%g,%g,%g,%g",scale,bump,ampl,bias);
@@ -745,6 +861,8 @@ void VtxTexTabs::setObjAttributes(){
 
     if(opts & HMAP)
     	sprintf(p+strlen(p),",%g,%g",hmap,hmap_bias);
+    sprintf(p+strlen(p),",%g,%g,%g,%g",pbias,hbias,bbias,sbias);
+
     sprintf(p+strlen(p),")\n");
 
 	tnode->setExpr(p);
@@ -770,7 +888,10 @@ void VtxTexTabs::setObjAttributes(){
 			tex->bump_damp=damp;
 			tex->hmap_amp=hmap;
 			tex->hmap_bias=hmap_bias;
-
+			tex->phi_bias=pbias;
+			tex->height_bias=hbias;
+			tex->bump_bias=bbias;
+			tex->slope_bias=sbias;
 			tex->invalidate();
 		}
 	}
@@ -796,8 +917,8 @@ void VtxTexTabs::getObjAttributes(){
 	if(expr)
 		tnode=expr;
 
-	if(tex && tex->t1d())
-		BIT_ON(tnode->opts,SEXPR);
+	//if(tex && tex->t1d())
+	//	BIT_ON(tnode->opts,SEXPR);
 	int opts=tnode->opts;
 
   	m_name=tnode->name;
@@ -890,6 +1011,10 @@ void VtxTexTabs::getObjAttributes(){
 		set_hmap(args[i++]);
 		set_hmap_bias(args[i++]);
 	}
+	set_pbias(args[i++]);
+	set_hbias(args[i++]);
+	set_bbias(args[i++]);
+	set_sbias(args[i++]);
 
 	m_tex_check->SetValue(tnode->texActive());
 	m_bump_check->SetValue(tnode->bumpActive());

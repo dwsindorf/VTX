@@ -22,10 +22,10 @@
 
 #define TABS_BORDER 10
 #ifndef TABS_HEIGHT
-#define TABS_HEIGHT 320
+#define TABS_HEIGHT 340
 #endif
 #ifndef TABS_WIDTH
-#define TABS_WIDTH 470
+#define TABS_WIDTH 480
 #endif
 #define LABEL    70
 #ifndef LABEL2

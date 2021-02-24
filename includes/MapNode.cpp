@@ -54,7 +54,7 @@ double zslope()
 		return 0;
 	static double s=0;
 	if(!Td.get_flag(SFIRST)){
-	    CELLSLOPE(max_height(),s);
+	    CELLSLOPE(Z(),s);
     	s*=TheMap->hscale*INV2PI;
 		Td.set_flag(SFIRST);
     }
@@ -257,6 +257,7 @@ MapNode::MapNode(MapNode *parent, uint t, uint p): data(t,p)
 	TheScene->cells++;
 	TheMap->size++;
 	mdctr=&data;
+	gval=0;
 }
 
 MapNode::MapNode(MapNode *parent, MapData *c) : data(c)
@@ -268,6 +269,8 @@ MapNode::MapNode(MapNode *parent, MapData *c) : data(c)
 	lnode=rnode=unode=dnode=0;
 	init_flags();
 	info.cdata=0;
+	gval=0;
+
 	//c->invalidate_normal();
 	c->invalidate();
 	cdata=0;
@@ -675,12 +678,8 @@ MapLink *MapNode::split()
 	return new MapLink(l,c,u);
 }
 
-//-------------------------------------------------------------
-// MapNode::recalc2() recalculate surface
-//-------------------------------------------------------------
-void MapNode::recalc2()
-{
-    mdcnt=rccnt=0;
+int    MapNode::find_neighbors(){
+    mdcnt=0;
     for(int i=0;i<MAX_NDATA;i++)
     	mapdata[i]=0;
 	if(rnode && lnode){
@@ -695,6 +694,14 @@ void MapNode::recalc2()
 		if(rnode && !lnode)
 			mapdata[mdcnt++]=&(rnode->data);
 	}
+	return mdcnt;
+}
+//-------------------------------------------------------------
+// MapNode::recalc2() recalculate surface
+//-------------------------------------------------------------
+void MapNode::recalc2()
+{
+	mdcnt=find_neighbors();
 	rccnt=mdcnt;
 	if(mdcnt>2){
 		Td.init();
@@ -723,7 +730,7 @@ void MapNode::recalc2()
 void MapNode::find_limits()
 {
 	extern double MinHt,MaxHt;
-	double z=data.max_height();
+	double z=max_height();
 	MinHt=z<MinHt?z:MinHt;
 	MaxHt=z>MaxHt?z:MaxHt;
 	TheMap->hmax=MaxHt;
@@ -993,7 +1000,7 @@ void MapNode::set_tests()
 		while(d){
 			d=d->next_surface();
 			if(d && d->dims()>1){
-				double mx=TheScene->epoint.distance(d->gpoint());
+				double mx=TheScene->epoint.distance(d->mpoint());
 				depth=mx<depth?mx:depth;
 			}
 		}
@@ -1036,7 +1043,7 @@ void MapNode::vischk()
 		MapData *d=data.surface1();
 		bool clp=false;
 		while(d){
-			Point p=d->gpoint();
+			Point p=d->mpoint();
 			if(!clipchk(p)){
 				clp=false;
 				break;;
@@ -2058,7 +2065,7 @@ void MapNode::vertex(MapData*d)
 void MapNode::setVertexAttributes(MapData*d){
 	if(!d)
 		return;
-	double depth = TheScene->vpoint.distance(d->gpoint());
+	double depth = TheScene->vpoint.distance(d->mpoint());
 
 	Point pm=d->mpoint();
 	pm=pm.normalize();  // this gets rid of the Z() component
@@ -2186,17 +2193,38 @@ void MapNode::Svertex(MapData*dn) {
 	double ht=d->Z()*Rscale;  // global units (MM)
 	static int cnt=0;
 
+
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;
-	if (GLSLMgr::CommonID >= 0)
-		glVertexAttrib4d(GLSLMgr::CommonID, ht, g,d->density(), theta);
+	if (GLSLMgr::CommonID1 >= 0){
+		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), theta);
+	}
 
 	setVertexAttributes(d);
 
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
+			/*
+			static double last_gz=0;
+
+			find_neighbors();
+			Td.clr_flag(SFIRST);
+		    for(int i=0;i<mdcnt;i++){
+		    	if(!mapdata[i]->GZ())
+		    		mapdata[i]->setGZ(last_gz);
+		    	else
+		    		last_gz=mapdata[i]->GZ();
+		    }
+            if(!d->GZ())
+            	d->setGZ(last_gz);
+            //if(TheScene->viewobj==TheMap->object)
+			//cout<<d->GZ()<<endl;
+            */
+			find_neighbors();
+			Td.clr_flag(SFIRST);
+			double zs=zslope();
 			Point T=tangent(d);
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, T.z, max_orders);
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, zs, max_orders);
 		}
 
 		Texture *tx;

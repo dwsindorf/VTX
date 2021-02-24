@@ -399,33 +399,37 @@ void Scene::adjust_grid() {
 		return;
 	double ht=height/FEET;
 	double cv=(int)(ht/1000.0+0.5);
-	if(cv<50){
+	if(cv<10){
 		contour_spacing=1000;
 		grid_spacing=1;
 	}
-	else if(cv<100){
-		contour_spacing=2500;
-		grid_spacing=2;
-	}
-	else if(cv<200){
-		contour_spacing=5000;
+	else if(cv<50){
+		contour_spacing=2000;
 		grid_spacing=5;
 	}
-	else if(cv<400){
-		contour_spacing=10000;
+	else if(cv<100){
+		contour_spacing=5000;
 		grid_spacing=10;
+	}
+	else if(cv<200){
+		contour_spacing=10000;
+		grid_spacing=20;
+	}
+	else if(cv<400){
+		contour_spacing=20000;
+		grid_spacing=50;
 	}
 	else if(cv<2000){
 		contour_spacing=20000;
-		grid_spacing=20;
-	}
-	else if(cv<5000){
-		contour_spacing=50000;
 		grid_spacing=100;
 	}
-	else {
-		contour_spacing=100000;
+	else if(cv<5000){
+		contour_spacing=20000;
 		grid_spacing=500;
+	}
+	else {
+		contour_spacing=20000;
+		grid_spacing=1000;
 	}
 
 	//cout <<" grid:"<<grid_spacing<<endl;
@@ -1865,7 +1869,7 @@ void Scene::select()
 			MapNode *n=Raster.pixelID(selx,sely);
 			if(n){
 				selobj=focusobj=viewobj;
-				selm=Point(n->theta(),n->phi(),n->height());
+				selm=Point(n->theta(),n->phi(),n->max_height());
 		        return;
 			}
 		}

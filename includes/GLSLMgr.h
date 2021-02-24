@@ -80,7 +80,8 @@ public:
 	static GLuint PerlinTextureID;
 	static GLuint gradTextureID;
 	static GLint TexCoordsID;
-	static GLint CommonID;
+	static GLint CommonID1;
+	static GLint CommonID2;
 	static GLint attributes3ID;
 	static GLint attributes4ID;
 	static GLint position1ID;

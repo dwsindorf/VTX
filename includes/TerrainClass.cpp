@@ -1530,8 +1530,8 @@ bool TNsnow::initProgram(){
 	sprintf(defs+strlen(defs)," %g*HT",2*ht);
 	if(bmpht>0)
 		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
-	sprintf(defs+strlen(defs),"\n");
 	//cout << "TNsnow :"<<defs << endl;
+	sprintf(defs+strlen(defs),"\n");
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);

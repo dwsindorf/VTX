@@ -14,7 +14,7 @@ Scene() {
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
-		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
 			Color(0.502,0.000,0.251),
@@ -66,16 +66,16 @@ Scene() {
 					Color(0.58,0.024,0.024));
 				Surface{
 					m1=0.1*noise(6,3);
-					m2=noise(NABS|SQR|SCALE,11,8,0.5,0.5,2)+m1;
+					m2=noise(GRADIENT|NABS|SCALE|SQR,11,8,0.5,0.5,2)+m1;
 					m3=0.1*noise(10,3,0.6);
 					c1=craters(ID1|MAXHT,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
 					m2;
-					terrain=fog(1.5*noise(UNS,11,5,1,0.5,2))
+					terrain=fog(1.5*noise(GRADIENT|UNS,11,5,1,0.5,2))
 							Z(0.5*c1)+
-							Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
 							Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
-							Texture("bricks",BUMP|TEX,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
-							Texture("lava",BORDER|S|TEX,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0);
+							Texture("lava",BORDER|S|TEX,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0)+
+							Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
+							Texture("bricks",BUMP|TEX,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548);
 				}
 				Sky(0.00511133) {
 					color=Color(0.5,0.69,1);
@@ -96,7 +96,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.42);
 					name="Clouds2D-1";
 					Surface{
-						terrain=Color(1,1,1,noise(FS,4.4,9,1,0.5,2,1,0,0,-2));
+						terrain=Color(1,1,1,noise(GRADIENT|FS,4.4,9,1,0.5,2,1,0,0,-2));
 					}
 				}
 				Clouds(0.00505587) {
@@ -114,8 +114,8 @@ Scene() {
 					shine=77.7857;
 					specular=Color(1,1,1,0);
 					Surface{
-						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
-								Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
+						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+								Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 					}
 				}
 			}

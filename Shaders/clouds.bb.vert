@@ -42,7 +42,7 @@ void main(void) {
 	float ta=TextureAttributes.x;
 	float ts=TextureAttributes.y;
 
-	float d=CommonAttributes.w;
+	float d=CommonAttributes1.w;
 
 	float ty=floor(d*INVROWS);
 	float tx=floor(d-ROWS*ty);
@@ -50,7 +50,7 @@ void main(void) {
 	float cosa=ts*cos(ta);
 	float sina=ts*sin(ta);//1-cosa;
 
-	Constants=CommonAttributes;
+	Constants1=CommonAttributes1;
     if(gl_Vertex.w<0.5){
     	gl_Position = vec4(ps.x+sina,ps.y+cosa,ps.z,1);
     	gl_TexCoord[0].xy=vec2(tx,ty);

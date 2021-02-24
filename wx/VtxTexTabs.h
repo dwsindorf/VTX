@@ -23,6 +23,10 @@ typedef struct tex_state {
 	double bias;
 	double bump_orders;
 	double bump_damp;
+	double phi_bias;
+	double ht_bias;
+	double bump_bias;
+	double slope_bias;
 
 	double orders;
 	double orders_delta;
@@ -90,6 +94,10 @@ protected:
 	SliderCtrl *BumpDampSlider;
 	SliderCtrl *HmapAmpSlider;
 	SliderCtrl *HmapBiasSlider;
+	SliderCtrl *PhiBiasSlider;
+	SliderCtrl *HtBiasSlider;
+	SliderCtrl *BumpBiasSlider;
+	SliderCtrl *SlopeBiasSlider;
 
 	SliderCtrl *BiasSlider;
 	SliderCtrl *OrdersDeltaSlider;
@@ -123,6 +131,11 @@ protected:
 	void set_bias(TNode *node);
 	void set_hmap(TNode *node);
 	void set_hmap_bias(TNode *node);
+	void set_pbias(TNode *node);
+	void set_hbias(TNode *node);
+	void set_bbias(TNode *node);
+	void set_sbias(TNode *node);
+
 	void set_orders(TNode *node);
 	void set_orders_delta(TNode *node);
 	void set_orders_atten(TNode *node);
@@ -146,6 +159,12 @@ public:
 		delete BiasSlider;
 		delete OrdersDeltaSlider;
 		delete OrdersAttenSlider;
+		delete HmapAmpSlider;
+		delete HmapBiasSlider;
+		delete PhiBiasSlider;
+		delete HtBiasSlider;
+		delete BumpBiasSlider;
+		delete SlopeBiasSlider;
 		delete m_amp_expr;
 		delete m_alpha_expr;
 	}
@@ -231,6 +250,10 @@ public:
 	DEFINE_SLIDER_EVENTS(OrdersAtten)
 	DEFINE_SLIDER_EVENTS(BumpAmp)
 	DEFINE_SLIDER_EVENTS(BumpDamp)
+	DEFINE_SLIDER_EVENTS(PhiBias)
+	DEFINE_SLIDER_EVENTS(HtBias)
+	DEFINE_SLIDER_EVENTS(BumpBias)
+	DEFINE_SLIDER_EVENTS(SlopeBias)
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowBands(wxCommandEvent& event);

@@ -35,7 +35,8 @@ char 			GLSLMgr::verString[256]="";
 char 			GLSLMgr::extString1[256]="";
 char 			GLSLMgr::extString2[256]="";
 GLint 			GLSLMgr::TexCoordsID=-1;
-GLint 			GLSLMgr::CommonID=-1;
+GLint 			GLSLMgr::CommonID1=-1;
+GLint 			GLSLMgr::CommonID2=-1;
 GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
 GLint 			GLSLMgr::position1ID=-1;
@@ -171,7 +172,7 @@ void GLSLMgr::makeTexDefsFile(){
 		fprintf(fp,"    SET_NOISE(N%d)\n",i);
 		fprintf(fp,"#endif\n");
 		fprintf(fp,"#ifdef X%d\n",i);
-		fprintf(fp,"    SET_TEX(X%d)\n",i);
+		fprintf(fp,"    SET_TEX1D(X%d)\n",i);
 		fprintf(fp,"#endif\n");
 		fprintf(fp,"#ifdef M%d\n",i);
 		fprintf(fp,"    BGN_ORDERS\n");
@@ -780,7 +781,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	TexCoordsID=-1;
 	modelViewProjMat=-1;
 
-	CommonID=-1;
+	CommonID1=-1;
+	CommonID2=-1;
+
 	program=shaders.inlist(tmp);
 
 	if(!program){
@@ -841,7 +844,8 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 //-------------------------------------------------------------
 void GLSLMgr::setProgram(){
 	GLhandleARB program=programHandle();
- 	CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
+ 	CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
+ 	CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
 	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2

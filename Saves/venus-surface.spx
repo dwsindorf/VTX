@@ -29,7 +29,7 @@ Scene() {
 		view=SURFACE;
 		phi=-41.4844;
 		theta=245.391;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-52054.6 ft;
 		heading=0;
 		pitch=0;
@@ -53,6 +53,10 @@ Scene() {
 	}
 	View{
 		height=424.73 ft;
+	}
+	View{
+		height=12 ft;
+		gndlvl=-22671.4 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -116,8 +120,8 @@ Scene() {
 					Surface{
 						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.05,0.5,2,1,1,0,0))
 								
-								Texture("rock_stones",BUMP|RANDOMIZE,2048,-4,2,3.33328,4,2.4,0.93056,0)+
-								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,2,4,0,1,2,0.5,0,1,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,0.68,0.66,0.45,0));
+								Texture("rock_stones",BUMP|RANDOMIZE,2048,-4,2,3.33328,4,2.4,0.93056,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,0.68,0.66,0.45,0))+
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,2,4,0,1,2,0.5,0,1,0);
 					}
 					Clouds(0.00305588) {
 						ambient=Color(1,1,1,0.07);

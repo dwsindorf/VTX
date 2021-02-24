@@ -16,6 +16,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 extern double Rand();
+extern double zslope();
+extern double Phi;
 extern void inc_tabs();
 extern void dec_tabs();
 
@@ -678,9 +680,9 @@ void TNtexture::init()
     if(texture==0)
 	    texture=new Texture(timage,opts,this);
     timage->set_accessed(true);
-	if(texture->t1d()){
-		BIT_ON(opts,SEXPR);
-	}
+	//if(texture->t1d()){
+	//	BIT_ON(opts,SEXPR);
+	//}
 	if(opts & SEXPR){
 		texture->s_data=true;
 	}
@@ -731,13 +733,14 @@ void TNtexture::eval()
 	}
 
 	int n=0;
-	double arg[16];
-	n=getargs(right,arg,14);
+	double arg[20];
+	n=getargs(right,arg,20);
 
 	double s=0,t=0,f=1,a=1,b=0,bias=0;
 	double orders=1,orders_delta=2.0,orders_atten=1.0;
 	double bumpdamp=0;
-	double hmval=0,hmbias=0;;
+	double hmval=0,hmbias=0;
+	double pbias=0,hbias=0,bbias=0,sbias=0;
 
 	int i = 0;
 
@@ -770,10 +773,20 @@ void TNtexture::eval()
 		orders_atten=arg[i++];
 	if(i<n)
 		bumpdamp=arg[i++];
+	if(opts & HMAP){
+		if(i<n)
+			hmval=arg[i++];
+		if(i<n)
+			hmbias=arg[i++];
+	}
 	if(i<n)
-		hmval=arg[i++];
+		pbias=arg[i++];
 	if(i<n)
-		hmbias=arg[i++];
+		hbias=arg[i++];
+	if(i<n)
+		bbias=arg[i++];
+	if(i<n)
+		sbias=arg[i++];
 
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
@@ -803,7 +816,10 @@ void TNtexture::eval()
     texture->bump_damp=bumpdamp;
     texture->hmap_amp=hmval;
     texture->hmap_bias=hmbias;
-
+    texture->phi_bias=pbias;
+    texture->height_bias=hbias;
+    texture->bump_bias=bbias;
+    texture->slope_bias=sbias;
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
@@ -818,6 +834,7 @@ void TNtexture::eval()
 		int mode=texture->intrp();
 
 		double scale=texture->scale;
+
 		double amp0=texture->hmap_amp/scale;
 		double amp=amp0;
 		double z=0;
@@ -830,6 +847,8 @@ void TNtexture::eval()
 		texture->scale=scale;
 		TerrainData::texht+=z+texture->hmap_bias;
 	}
+   //cout<<"TNtexture::eval() "<<s<<endl;
+
 }
 
 #define SEXPR 1

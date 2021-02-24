@@ -52,6 +52,12 @@ Scene() {
 		tilt=-7;
 		angle=-17;
 	}
+	View{
+		height=9254.99 ft;
+	}
+	View{
+		height=9159.54 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -90,9 +96,21 @@ Scene() {
 					tilt=10;
 					year=100;
 					albedo=1;
+					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
+						Color(0.2,0.4,0.094),
+						Color(0.294,0.494,0),
+						Color(0.549,0.322,0.02),
+						Color(0.294,0.251,0.2),
+						Color(0.275,0.247,0.027),
+						Color(0.243,0.196,0.063),
+						Color(0.584,0.584,0.584),
+						Color(0.6,0.588,0.549),
+						Color(0.286,0.278,0.278),
+						Color(1,1,1));
 					Surface{
 						terrain=water(0)
-								Z(noise(GRADIENT|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+								
+								Texture("alpine",LINEAR|NORM|TEX,0.5,2,1,-1.77776,1,2,1,0,0,1,0,-0.30556)+Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
 					}
 					Sky(0.00205145) {
 						color=Color(0,0.9,0.9);

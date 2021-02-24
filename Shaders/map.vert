@@ -10,7 +10,7 @@ void main(void) {
 
 #if NVALS >0
     Vertex1=Position1;
-   
+    g=0;
 #ifdef NPZ
     vec4 p=gl_Vertex;
     CALC_ZNOISE(NPZ);
@@ -21,7 +21,7 @@ void main(void) {
 #endif
 #ifdef COLOR
 	Color=gl_Color;
-	Color.a=0;
+	Color.a=g;
 #endif
 
 }

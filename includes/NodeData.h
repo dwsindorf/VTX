@@ -29,7 +29,7 @@
 
 #define CELLSLOPE(x,v) { \
     static double lastz=0; \
-    if(mdcnt>0) { \
+    if(mdcnt>2) { \
 	     double dt,dp; \
 	     double z1=mapdata[0]->x; \
 	     double z2=mapdata[1]->x; \
@@ -199,7 +199,6 @@ public:
     #define FSIZE  flags.s.fractal
     #define LSIZE  flags.s.links
     #define ESIZE  flags.s.evals
-    #define GSIZE  flags.s.gvals
 
     #define BDSIZE 1
     #define TDSIZE 1
@@ -228,7 +227,6 @@ public:
 #define ZSTART LSIZE+flags.s.colors+flags.s.density
 #define FSTART ZSTART+ZSIZE
 #define ESTART FSTART+FSIZE
-#define GSTART ESTART+ESIZE
 
 #define TSTART flags.s.tstart
 //
@@ -256,12 +254,11 @@ typedef struct mpdata {
 	unsigned int  density	: 1;	// fog/density (0..1)
 	unsigned int  fractal	: 1;	// fractal data
 	unsigned int  evals	    : 2;	// erosion data (0..2)
-	unsigned int  gvals	    : 2;	// geometry data (0..2)
 	unsigned int  tstart	: 4;	// texture data start
 	unsigned int  normal	: 1;	// normal flag
 	unsigned int  hidden	: 1;	// hidden flag
 	unsigned int  hmaps	    : 1;	// hmap flag
-	unsigned int  unused	: 5;	// unassigned
+	unsigned int  unused	: 7;	// unassigned
 } mpdata;
 
 
@@ -316,7 +313,6 @@ public:
 #endif
 	int dims()					{ return flags.s.dims;}
 	int evals()				    { return flags.s.evals;}
-	int gvals()				    { return flags.s.gvals;}
 	int textures()				{ return flags.s.textures;}
 	int bumpmaps()				{ return flags.s.bumpmaps;}
 	int hidden()			    { return flags.s.hidden;}
@@ -329,8 +325,6 @@ public:
 	void set_has_density(int n)	{ flags.s.density=n;}
 	void setFchnls(int n)		{ flags.s.fractal=n;}
 	void setEvals(int n)		{ flags.s.evals=n;}
-	void setGvals(int n)		{ flags.s.gvals=n;}
-	bool has_geometry()         { return flags.s.gvals?true:false;}
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
@@ -388,7 +382,7 @@ public:
 	void setMemory(int n,int t) {
 #ifdef D64
                                 n+=t;
-                                flags.s.tstart=GSTART+GSIZE;
+                                flags.s.tstart=ESTART+ESIZE;
 #else
                                 n+=TDSIZE*t;
 #ifdef __LP64__
@@ -435,17 +429,11 @@ public:
     double Z()                  { return flags.s.dims>0?data[ZSTART].d:0.0;}
     double X()                  { return flags.s.dims>1?data[ZSTART+1].d:0.0;}
     double Y()                  { return flags.s.dims>2?data[ZSTART+2].d:0.0;}
-    double GZ()                 { return flags.s.gvals>0?data[GSTART].d:0.0;}
-    double GX()                 { return flags.s.gvals>1?data[GSTART+1].d:0.0;}
-    double GY()                 { return flags.s.gvals>2?data[GSTART+2].d:0.0;}
     double fractal()            { return flags.s.fractal?data[FSTART].d:0.0;}
     void setDensity(double f)   { if(flags.s.density) data[DSTART].d=f;}
     void setZ(double f)         { if(flags.s.dims>0)  data[ZSTART].d=f;}
     void setX(double f)         { if(flags.s.dims>1)  data[ZSTART+1].d=f;}
     void setY(double f)         { if(flags.s.dims>2)  data[ZSTART+2].d=f;}
-    void setGZ(double f)        { if(flags.s.gvals>0) data[GSTART].d=f;}
-    void setGX(double f)        { if(flags.s.gvals>1) data[GSTART+1].d=f;}
-    void setGY(double f)        { if(flags.s.gvals>2) data[GSTART+2].d=f;}
     void setFractal(double f)   { if(flags.s.fractal) data[FSTART].d=f;}
     void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
     void setRock(double f)      { if(flags.s.evals>0) data[ESTART].d=f;}
@@ -535,7 +523,6 @@ public:
 	uint lphi()					    { return lp.lvalue();}
 
 	double height();
-	double max_height()				{ return Z()+GZ();}
 	double tbase()					{ return lt.dvalue();}
 	double pbase()					{ return lp.dvalue();}
 
@@ -551,7 +538,6 @@ public:
 
 	double span(MapData *d);
 	Point point();
-	Point gpoint();
 	Point mpoint();
 	Point pvector();
 	Point tvector();

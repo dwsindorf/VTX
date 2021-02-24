@@ -39,12 +39,11 @@ void main(void) {
 	 gl_FragData[0]=color;
 #ifdef BACK
 	 //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
-	 //gl_FragData[1]=vec4(0,0,0,1);
-	 // gl_FragData[1]=fcolor2; 
+	 gl_FragData[1]=vec4(0,0,0,1);
+	  //gl_FragData[1]=fcolor2; 
 #else
 	 gl_FragData[1]=vec4(0,1,0,1);
 #endif
      gl_FragData[2]=vec4(0,0,0,1);
-
 }
 // ########## end clouds.frag #########################

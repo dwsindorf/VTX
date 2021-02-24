@@ -70,7 +70,7 @@ void main(void) {
 
     if(lighting)
     	color.rgb=setLighting(color.rgb,normal);
-    //float ah=lerp(Constants.w, 0, sky_ht, 0.0, 1.0); // ht
+    //float ah=lerp(Constants1.w, 0, sky_ht, 0.0, 1.0); // ht
     //color.rgb=vec3(ah,0,0);
 	gl_FragData[0]=color;
 	//gl_FragData[0]=vec4(DEPTH,0,0,1.0);

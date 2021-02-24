@@ -42,7 +42,7 @@ varying in vec4 Attributes_G[][2];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants;
+varying out vec4 Constants1;
 #if NVALS >0
 varying out vec4 Vertex1;
 #endi
@@ -84,7 +84,7 @@ void main(void) {
 #else
 		Normal=Normal_G[i];
 #endif
-		Constants=Constants_G[i];
+		Constants1=Constants_G[i];
 		EyeDirection=-(gl_ModelViewMatrix * p);
 
 #if NVALS >0
@@ -98,7 +98,7 @@ void main(void) {
 		for(int j=0;j<NTEXS;j++)	
 			gl_TexCoord[j]=gl_TexCoordIn[i][j];
 #endif
-		Constants=Constants_G[i];	
+		Constants1=Constants_G[i];	
 		for(int j=0;j<2;j++)
 			attributes[j]=Attributes_G[j][i];
 		EmitVertex();

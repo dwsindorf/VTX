@@ -3,7 +3,6 @@
 #include "attributes.h"
 #include "textures.h"
 
-
 struct tex2d_info {
 	float bumpamp;
 	float texamp;
@@ -17,11 +16,15 @@ struct tex2d_info {
 	float logf;    		 // scale factor
 	float dlogf;         // delta scale factor
 	float orders; 		 // number of orders to add
-	bool  randomize;    // randomized texture
+	float phi_bias; 	 // latitude bias
+	float height_bias;   // height bias
+	float bump_bias;     // bump bias
+	float slope_bias; 	 // slope bias
+	bool  t1d;           // 1d texture
+	bool  randomize;     // randomized texture
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
-
 
 #include "tile_funcs.frag"
 
@@ -39,10 +42,14 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #define SET_ATTRIB(ATTR) \
 	attrib = ATTR;
 
+ //   slope_bias=tex2d[i].slope_bias*Tangent.z;
+ //   slope_bias=tex2d[i].slope_bias*1e7*fwidth(HT);
+
 #define INIT_TEX(i,COORDS) \
   	tid = i; \
 	coords = COORDS; \
-	amplitude = clamp(attrib+tex2d[tid].bias,0.0,1.0); \
+	scale=tex2d[i].scale; \
+	amplitude = clamp(attrib+tex2d[i].bias,0.0,1.0); \
 	logf=tex2d[i].logf; \
 	last_color=color; \
 	alpha = tex2d[i].texamp; \
@@ -51,9 +58,23 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	last_bump=bump; \
 	last_bmpht=bmpht; \
 	bump_ampl = tex2d[i].bumpamp; \
-    bump_delta=tex2d[i].bump_delta;
-    
-#define SET_TEX(X) \
+    bump_delta = tex2d[i].bump_delta; \
+	bump_bias=tex2d[i].bump_bias; \
+	slope_bias = tex2d[i].slope_bias; \
+    phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
+    height_bias=HT*tex2d[i].height_bias;\
+    slope_bias=tex2d[i].slope_bias*Tangent.z; \
+    env_bias=phi_bias+bmpht*bump_bias+height_bias+slope_bias;\
+    env_bias=clamp(env_bias,-2,2); \
+	if(tex2d[i].t1d) \
+	    coords.x+=env_bias*scale; \
+    else { \
+        alpha+=env_bias; \
+        bump_ampl+=env_bias; \
+        amplitude+=env_bias; \
+    }
+
+#define SET_TEX1D(X) \
 	coords.x += tex2d[tid].scale*(X);  // optional offset
 
 #define BGN_ORDERS \
@@ -125,6 +146,12 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	float tex_orders=0.0; \
 	float tex_rem=0.0; \
 	float bump_max=0.0; \
+	float scale=1.0; \
+	float bump_bias=0; \
+	float slope_bias=0; \
+	float height_bias=0; \
+	float phi_bias=0; \
+	float env_bias=0; \
 	int tex_n=0; \
 	vec4 last_color=vec4(0.0); \
 	float last_bmpht; \

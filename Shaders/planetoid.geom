@@ -29,7 +29,7 @@ varying in vec4 Tangent_G[];
 varying out vec4 Tangent;
 #endif
 
-#define HT Constants.x
+#define HT Constants1.x
 
 //########## 3D noise section #########################
 uniform float freqmip=0;
@@ -58,7 +58,7 @@ varying in vec4 Attributes_G[][2];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants;
+varying out vec4 Constants1;
 
 uniform vec3 center;
 uniform vec3 pv;
@@ -93,7 +93,7 @@ else
 	for(int i=0;i<NTEXS;i++)	
 		gl_TexCoord[i]=s*(gl_TexCoordIn[2][i]-gl_TexCoordIn[0][i])+t*(gl_TexCoordIn[1][i]-gl_TexCoordIn[0][i])+gl_TexCoordIn[0][i];
 #endif
-	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];
+	Constants1=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];
 	HT+=g; // water not included
 	for(int i=0;i<2;i++)
 		attributes[i]=s*(Attributes_G[2][i]-Attributes_G[0][i]) + t*(Attributes_G[1][i]-Attributes_G[0][i])+Attributes_G[0][i];

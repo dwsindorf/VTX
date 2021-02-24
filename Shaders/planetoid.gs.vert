@@ -34,7 +34,7 @@ void main(void) {
 #if NVALS >0
 	Vertex1_G=Position1;
 #endif
-	Constants_G=CommonAttributes;
+	Constants_G=CommonAttributes1;
 	
 	Attributes_G[0]=Attributes3;
 	Attributes_G[1]=Attributes4;

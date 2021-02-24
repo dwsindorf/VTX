@@ -13,7 +13,7 @@ varying vec4 Vertex1;
 varying vec4 Tangent;
 #endif
 
-varying vec4 Constants;
+varying vec4 Constants1;
 
 float bump_ampl=1.0;
 float bump_delta=1e-6;
@@ -33,12 +33,12 @@ uniform float bumpmip;
 uniform float colormip;
 uniform float freqmip;
 
-#define HT Constants.x
-#define FHT Constants.x
+#define HT Constants1.x
+#define FHT Constants1.x
 
-#define DENSITY Constants.z
-//#define DEPTH Constants.y
-#define THETA Constants.a
+#define DENSITY Constants1.z
+//#define DEPTH Constants1.y
+#define THETA Constants1.a
 #define PHI Vertex1.y
 
 

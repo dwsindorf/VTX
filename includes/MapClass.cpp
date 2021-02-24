@@ -351,7 +351,7 @@ MapNode *Map::locate(double t, double p)
 //-------------------------------------------------------------
 double hts;
 void heights(MapNode *n){
-	double h=n->data.max_height();
+	double h=n->max_height();
 	if(h>hts)
 		hts=h;
 }
@@ -360,11 +360,13 @@ double Map::elevation(double t, double p)
 	hts=-lim;
 
 	MapNode *n=npole->locate(t,p);
+	/*
 	if(n->cdata)
 		hts=n->cdata->max_height();
 	else
 		hts=n->data.max_height();
-
+*/
+	hts=n->max_height();
 	n->CWcycle(heights);
 	return Rscale*hts;
 }

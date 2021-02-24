@@ -8,7 +8,7 @@ varying in vec4 Factors[1];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants;
+varying out vec4 Constants1;
 
 uniform float INVROWS;
 uniform float ROWS;
@@ -19,7 +19,7 @@ void main(void) {
 	float ts=Factors[0].y;  // offset
 
 	Normal=Normal_G[0];
-	Constants=Constants_G[0];
+	Constants1=Constants_G[0];
 	EyeDirection=EyeDirection_G[0];
 	Color=Color_G[0];
 
@@ -33,7 +33,7 @@ void main(void) {
 
 	ps.xy+=vec2(cosp,sinp);
 
-	float d=Constants.w;
+	float d=Constants1.w;
 
 	float cosa=ts*cos(ta);
 	float sina=ts*sin(ta);

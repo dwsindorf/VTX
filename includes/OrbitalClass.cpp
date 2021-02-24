@@ -3871,7 +3871,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 #endif
 	map->frontface=GL_BACK;
 	map->gmax=0.2;
-	hscale=5e-2;
+	hscale=0;
 	//hscale=5e-4;
 	clouds=0;
 	cmin=16;
@@ -4413,7 +4413,7 @@ bool CloudLayer::setProgram(){
 
 				double ts=sqrt(2.0)*pts/TheView->viewport[3];  // center offset
 
-				glVertexAttrib4d(GLSLMgr::CommonID, ht, depth,transmission, d); // Constants
+				glVertexAttrib4d(GLSLMgr::CommonID1, ht, depth,transmission, d); // Constants1
 
 				switch(clouds_mode){
 				case CLOUDS_BILLBOARDS: // billboards

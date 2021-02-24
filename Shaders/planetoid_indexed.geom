@@ -18,7 +18,7 @@ float g=0;
 float b=0;
 bool newcell=false;
 
-#define HT Constants.x
+#define HT Constants1.x
 
 #define GEOM
 
@@ -63,7 +63,7 @@ varying in vec4 Attributes_G[][2];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants;
+varying out vec4 Constants1;
 
 uniform vec3 center;
 uniform vec3 pv;
@@ -85,7 +85,7 @@ void ProduceVertex(int i){
     Normal=vdata[i][3];
 	EyeDirection=-(gl_ModelViewMatrix * p); // do view rotation
 	
-	Constants=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
+	Constants1=s*(Constants_G[2]-Constants_G[0]) + t*(Constants_G[1]-Constants_G[0])+Constants_G[0];	
 	HT+=rscale*g;
 	
 #ifdef COLOR

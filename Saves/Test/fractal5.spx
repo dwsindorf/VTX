@@ -132,7 +132,6 @@ Scene() {
 					diffuse=Color(1,1,1,0.28);
 					diffusion=0.96104;
 					emission=Color(1,1,1,0.04);
-					hscale=0.05;
 					name="Clouds3D-1";
 					num_sprites=1.57372;
 					resolution=2;

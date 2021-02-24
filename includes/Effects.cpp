@@ -346,8 +346,8 @@ void EffectsMgr::setProgram(int type){
 		cout << "could not load program"<<endl;
 		return;
 	}
-	if(GLSLMgr::CommonID >= 0)
-		GLSLMgr::CommonID=glGetAttribLocation(program,"CommonAttributes"); // Constants
+	if(GLSLMgr::CommonID1 >= 0)
+		GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
 
  	vars.setProgram(program);
 	vars.loadVars();

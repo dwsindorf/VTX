@@ -12,7 +12,7 @@
 
 #include <math.h>
 
-extern double Theta, Phi;
+extern double Theta, Phi,Rscale;
 
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
@@ -52,6 +52,10 @@ Texture::Texture(Image *i, int l, TNode *e)
 	s_data=false;
 	a_data=false;
 	bump_damp=0.0;
+	bump_bias=0;
+	phi_bias=0;
+	height_bias=0;
+	slope_bias=0;
 	tid=0;
 }
 
@@ -409,7 +413,12 @@ bool Texture::setProgram(){
 	sprintf(str,"tex2d[%d].orders_atten",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_atten);
 	sprintf(str,"tex2d[%d].logf",tid);          glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	sprintf(str,"tex2d[%d].dlogf",tid);         glUniform1fARB(glGetUniformLocationARB(program,str),dlogf);
-	sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
+	sprintf(str,"tex2d[%d].phi_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),20*phi_bias);
+	sprintf(str,"tex2d[%d].height_bias",tid);   glUniform1fARB(glGetUniformLocationARB(program,str),height_bias/Rscale);
+	sprintf(str,"tex2d[%d].bump_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),bump_bias);
+	sprintf(str,"tex2d[%d].slope_bias",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),slope_bias);
+    sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
+    sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 
 	vars.setProgram(program);
 	vars.loadVars();

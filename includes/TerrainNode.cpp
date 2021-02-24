@@ -765,12 +765,18 @@ void TNexpr::addToken(LinkedList<TNode*>&l)
     int cflag=1; \
     int aflag=0; \
     SINIT; \
-	left->eval(); \
+    if(typeValue()==ID_ADD)\
+	   right->eval(); \
+    else \
+       left->eval(); \
 	cflag=S0.constant()?cflag:0; \
 	if(S0.inactive()) \
 		aflag++; \
 	SPUSH; \
-	right->eval(); \
+    if(typeValue()==ID_ADD)\
+	   left->eval(); \
+    else \
+       right->eval(); \
 	if(S0.inactive()) \
 		aflag++; \
 	cflag=S0.constant()?cflag:0; \

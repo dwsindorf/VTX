@@ -19,7 +19,7 @@ INIT_TEX(0,C0)
     SET_NOISE(N0)
 #endif
 #ifdef X0
-    SET_TEX(X0)
+    SET_TEX1D(X0)
 #endif
 #ifdef M0
     BGN_ORDERS
@@ -48,7 +48,7 @@ INIT_TEX(1,C1)
     SET_NOISE(N1)
 #endif
 #ifdef X1
-    SET_TEX(X1)
+    SET_TEX1D(X1)
 #endif
 #ifdef M1
     BGN_ORDERS
@@ -77,7 +77,7 @@ INIT_TEX(2,C2)
     SET_NOISE(N2)
 #endif
 #ifdef X2
-    SET_TEX(X2)
+    SET_TEX1D(X2)
 #endif
 #ifdef M2
     BGN_ORDERS
@@ -106,7 +106,7 @@ INIT_TEX(3,C3)
     SET_NOISE(N3)
 #endif
 #ifdef X3
-    SET_TEX(X3)
+    SET_TEX1D(X3)
 #endif
 #ifdef M3
     BGN_ORDERS
@@ -135,7 +135,7 @@ INIT_TEX(4,C4)
     SET_NOISE(N4)
 #endif
 #ifdef X4
-    SET_TEX(X4)
+    SET_TEX1D(X4)
 #endif
 #ifdef M4
     BGN_ORDERS
@@ -164,7 +164,7 @@ INIT_TEX(5,C5)
     SET_NOISE(N5)
 #endif
 #ifdef X5
-    SET_TEX(X5)
+    SET_TEX1D(X5)
 #endif
 #ifdef M5
     BGN_ORDERS
@@ -193,7 +193,7 @@ INIT_TEX(6,C6)
     SET_NOISE(N6)
 #endif
 #ifdef X6
-    SET_TEX(X6)
+    SET_TEX1D(X6)
 #endif
 #ifdef M6
     BGN_ORDERS
@@ -222,7 +222,7 @@ INIT_TEX(7,C7)
     SET_NOISE(N7)
 #endif
 #ifdef X7
-    SET_TEX(X7)
+    SET_TEX1D(X7)
 #endif
 #ifdef M7
     BGN_ORDERS
@@ -246,7 +246,7 @@ INIT_TEX(8,C8)
     SET_NOISE(N8)
 #endif
 #ifdef X8
-    SET_TEX(X8)
+    SET_TEX1D(X8)
 #endif
 #ifdef M8
     BGN_ORDERS
@@ -270,7 +270,7 @@ INIT_TEX(9,C9)
     SET_NOISE(N9)
 #endif
 #ifdef X9
-    SET_TEX(X9)
+    SET_TEX1D(X9)
 #endif
 #ifdef M9
     BGN_ORDERS
@@ -294,7 +294,7 @@ INIT_TEX(10,C10)
     SET_NOISE(N10)
 #endif
 #ifdef X10
-    SET_TEX(X10)
+    SET_TEX1D(X10)
 #endif
 #ifdef M10
     BGN_ORDERS
@@ -318,7 +318,7 @@ INIT_TEX(11,C11)
     SET_NOISE(N11)
 #endif
 #ifdef X11
-    SET_TEX(X11)
+    SET_TEX1D(X11)
 #endif
 #ifdef M11
     BGN_ORDERS
@@ -342,7 +342,7 @@ INIT_TEX(12,C12)
     SET_NOISE(N12)
 #endif
 #ifdef X12
-    SET_TEX(X12)
+    SET_TEX1D(X12)
 #endif
 #ifdef M12
     BGN_ORDERS
@@ -366,7 +366,7 @@ INIT_TEX(13,C13)
     SET_NOISE(N13)
 #endif
 #ifdef X13
-    SET_TEX(X13)
+    SET_TEX1D(X13)
 #endif
 #ifdef M13
     BGN_ORDERS
@@ -390,7 +390,7 @@ INIT_TEX(14,C14)
     SET_NOISE(N14)
 #endif
 #ifdef X14
-    SET_TEX(X14)
+    SET_TEX1D(X14)
 #endif
 #ifdef M14
     BGN_ORDERS
@@ -414,7 +414,7 @@ INIT_TEX(15,C15)
     SET_NOISE(N15)
 #endif
 #ifdef X15
-    SET_TEX(X15)
+    SET_TEX1D(X15)
 #endif
 #ifdef M15
     BGN_ORDERS

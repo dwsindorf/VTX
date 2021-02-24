@@ -14,6 +14,8 @@ class MapNode;
 class Map;
 class MapLink;
 
+extern double Rscale;
+
 class Triangle {
 public:
 	Triangle(MapData *a,MapData *b,MapData *c);
@@ -108,6 +110,7 @@ public:
     MapNode *rnode;
     MapNode *unode;
     MapNode *dnode;
+    double  gval;
 
     void vertexN()              { vertexN(&data);}
     void vertexC()              { Vcolor(&data);vertex(&data);}
@@ -339,7 +342,7 @@ public:
 
     void    free();
 
-    double max_height()             { return data.max_height();}
+    double max_height()             { return height()+getGZ();}
     double height()                 { return data.height();}
     double theta()                  { return data.theta();}
     double phi()                    { return data.phi();}
@@ -352,7 +355,8 @@ public:
     double sediment()               { return data.sediment();}
     double rock()                   { return data.rock();}
 
-    void setGZ(double f)            { data.setGZ(f); }
+    void setGZ(double f)            { gval=f; }
+    double getGZ()                  { return gval*Rscale;}
 
     int type()                      { return data.type(); }
     int fog()                       { return data.has_density()||(cdata && cdata->has_density());}
@@ -365,7 +369,7 @@ public:
 
     MapNode *locate(double, double);
     MapNode *grid_walk(double, double);
-    void    find_neighbors(int);
+    int     find_neighbors();
     int     neighbors();
     void    recalc1();
     void    recalc2();

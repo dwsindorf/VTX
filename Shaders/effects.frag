@@ -141,7 +141,7 @@ void main(void) {
 #endif
  	}
 	gl_FragData[0]=vec4(color,1.0);	
-	//gl_FragData[0]=vec4(VFOG,0,0,1.0);	
+	//gl_FragData[0]=vec4(h,0,0,1.0);	
 	
     gl_FragData[1]=fcolor2;
 }

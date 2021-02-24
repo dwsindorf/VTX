@@ -21,7 +21,7 @@ void main(void) {
 	Color=gl_Color;
 #endif
 
-	Constants=CommonAttributes;
+	Constants1=CommonAttributes1;
 
 	gl_PointSize = TextureAttributes.z;
 	float angle=TextureAttributes.y;

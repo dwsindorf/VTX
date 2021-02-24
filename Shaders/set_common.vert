@@ -10,5 +10,5 @@
 //#if NVALS >0
 	Vertex1=Position1;
 //#endif
-	Constants=CommonAttributes;
+	Constants1=CommonAttributes1;
 // ########## end set_common.vert #########################

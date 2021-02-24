@@ -170,7 +170,6 @@ Scene() {
 						day=24;
 						diffuse=Color(1,1,0.5,0.47);
 						emission=Color(1,1,1,0.04);
-						hscale=0.05;
 						resolution=2;
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);

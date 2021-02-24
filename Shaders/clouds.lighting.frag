@@ -49,7 +49,7 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 	//float top_shading  = RdotN;   // models single light source from above or below
 	vec3 ec = normalize(center);          // viewdir-center
 	float dp=dot(ec, radius); // angle between radius and viewdir direction
-	float transmission=Constants.z;
+	float transmission=Constants1.z;
 
     //vec3 topcolor=gl_FrontMaterial.ambient.rgb*(top_shading*gl_FrontMaterial.ambient.a);
     vec3 topcolor=gl_FrontMaterial.ambient.rgb*top_shading;

@@ -929,8 +929,9 @@ void RasterMgr::setVisibleIDs()
 			if(!idtbl[idb.l]->visible()){
 				TheMap->vnodes++;
 				idtbl[idb.l]->clr_masked();
-				if(gval)
+				if(gval){
 					idtbl[idb.l]->setGZ(gval);
+				}
 			}
 		}
 		i=i+4;
@@ -1128,8 +1129,8 @@ void RasterMgr::vertex(MapNode *node)
 			double phi = d->phi() / 180;
 			double ht=d->Z()*Rscale;
 
-			if (GLSLMgr::CommonID >= 0) // b:reflect a:diffuse calculated in shader
-				glVertexAttrib4d(GLSLMgr::CommonID, ht, type, d->density(), phi);
+			if (GLSLMgr::CommonID1 >= 0) // b:reflect a:diffuse calculated in shader
+				glVertexAttrib4d(GLSLMgr::CommonID1, ht, type, d->density(), phi);
 		}
 		break;
 	case NORMALS:

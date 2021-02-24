@@ -253,6 +253,10 @@ Scene() {
 	View{
 		time=79207.2;
 	}
+	View{
+		height=1308.68 ft;
+		gndlvl=-4350.6 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -302,6 +306,9 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
+					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
+						Color(0.173,0,0.055),
+						Color(0.075,0.02,0.02));
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,128,0.16666,0.572549,Color(0,0,0,0.573),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
@@ -312,15 +319,12 @@ Scene() {
 						Color(0.573,0.573,0.573),
 						Color(0.6,0.573,0.522,0.663),
 						Color(0.275,0.275,0.275,0.463));
-					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
-						Color(0.173,0,0.055),
-						Color(0.075,0.02,0.02));
 					Surface{
 						terrain=water(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
 								Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
-								Texture("watery3",BUMP|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
+								Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0)+
 								Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
-								Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0);
+								Texture("watery3",BUMP|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);

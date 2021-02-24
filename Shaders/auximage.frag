@@ -1,10 +1,10 @@
 #include "utils.h"
 
-#define HT Constants.x
-#define DENSITY Constants.z
+#define HT Constants1.x
+#define DENSITY Constants1.z
 
 varying vec4 Color;
-varying vec4 Constants;
+varying vec4 Constants1;
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
@@ -116,7 +116,7 @@ void main(void) {
 	//float dz=ws1*(depth-z);
 	dz=dz<0.0?0.0:dz;
 	float f=lerp(dz,0.0,clarity,0.0,1.0);
-	float type=Constants.g;
+	float type=Constants1.g;
 #ifdef SKY
 	vec3 DepthColor=WaterDepth.rgb*horizon;
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color

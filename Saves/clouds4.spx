@@ -70,7 +70,6 @@ Scene() {
 						diffuse=Color(1,1,1,0.47);
 						diffusion=0.2096;
 						emission=Color(1,1,1,0.04);
-						hscale=0.05;
 						resolution=2;
 						rot_phase=61.02;
 						shine=77.7857;
