@@ -26,6 +26,7 @@ void main(void) {
 	gl_Position = ftransform();
 
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
+	Normal.w=0;
 
 #include "set_common.vert"
 

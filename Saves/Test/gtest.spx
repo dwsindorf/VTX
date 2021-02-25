@@ -16,6 +16,12 @@ Scene() {
 	View{
 		height=208.059 ft;
 	}
+	View{
+		height=10698.2 ft;
+		gndlvl=0.0209804 ft;
+		tilt=-17;
+		angle=-94;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -58,7 +64,7 @@ Scene() {
 					Surface{
 						terrain=
 								Texture("saturn3",S|TEX,0.1*BMPHT+HT,1,1.30436,1,0,1,2,1,0)+
-								Texture("eroded",BUMP,6912.54,1.42032,1,0,10.3062,2,0.91836,0)+Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(GRADIENT|FS|SCALE,20,3.7,1,0.5,2,0.44,1,0,0));
+								Texture("eroded",BUMP,6912.54,1.42032,1,0,10.3062,2,0.91836,0)+Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(GRADIENT|FS|SCALE,20,3.7,1,0.5,2,0.13,1,0,0));
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);

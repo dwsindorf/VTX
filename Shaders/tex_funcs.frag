@@ -63,7 +63,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	slope_bias = tex2d[i].slope_bias; \
     phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
     height_bias=HT*tex2d[i].height_bias;\
-    slope_bias=tex2d[i].slope_bias*Tangent.z; \
+    slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w); \
     env_bias=phi_bias+bmpht*bump_bias+height_bias+slope_bias;\
     env_bias=clamp(env_bias,-2,2); \
 	if(tex2d[i].t1d) \

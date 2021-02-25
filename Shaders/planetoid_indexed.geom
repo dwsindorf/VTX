@@ -119,11 +119,11 @@ void main(void) {
 			vdata[index][0]=Vertex1;		    
 			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 			CALC_ZNOISE(NPZ);
-#if NLIGHTS >0
+//#if NLIGHTS >0
 			Normal=s*(Normal_G[2]-Normal_G[0]) + t*(Normal_G[1]-Normal_G[0])+Normal_G[0];
 			CALC_ZNORMAL(NPZ);
 			vdata[index][3]=Normal;
-#endif
+//#endif
 			vdata[index][1]=p;
 			vdata[index][2].x=s;
 		    vdata[index][2].y=t;
