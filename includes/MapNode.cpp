@@ -725,19 +725,6 @@ void MapNode::recalc2()
 }
 
 //-------------------------------------------------------------
-// MapNode::find_limits()	find min max ht
-//-------------------------------------------------------------
-void MapNode::find_limits()
-{
-	extern double MinHt,MaxHt;
-	double z=data.Z();
-	MinHt=z<MinHt?z:MinHt;
-	MaxHt=z>MaxHt?z:MaxHt;
-	TheMap->hmax=MaxHt;
-	TheMap->hmin=MinHt;
-}
-
-//-------------------------------------------------------------
 // MapNode::test_backfacing()	test if cell is back facing
 //-------------------------------------------------------------
 void MapNode::test_backfacing()
@@ -2204,22 +2191,6 @@ void MapNode::Svertex(MapData*dn) {
 
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
-			/*
-			static double last_gz=0;
-
-			find_neighbors();
-			Td.clr_flag(SFIRST);
-		    for(int i=0;i<mdcnt;i++){
-		    	if(!mapdata[i]->GZ())
-		    		mapdata[i]->setGZ(last_gz);
-		    	else
-		    		last_gz=mapdata[i]->GZ();
-		    }
-            if(!d->GZ())
-            	d->setGZ(last_gz);
-            //if(TheScene->viewobj==TheMap->object)
-			//cout<<d->GZ()<<endl;
-            */
 			find_neighbors();
 			Td.clr_flag(SFIRST);
 			double zs=zslope();

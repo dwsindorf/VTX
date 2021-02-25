@@ -69,6 +69,74 @@ Scene() {
 		gndlvl=-0.374931 ft;
 		heading=48;
 	}
+	View{
+		height=6615.56 ft;
+	}
+	View{
+		phi=-37.4963;
+		theta=1.51611;
+		height=624.611 ft;
+		gndlvl=-12654 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=606.316 ft;
+	}
+	View{
+		view=ORBITAL;
+		height=0.004;
+		gndlvl=0.000355377 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-45.7031;
+		theta=5.625;
+		height=10 miles;
+		gndlvl=777.103 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-45.7471;
+		theta=6.50391;
+		height=1262.39 ft;
+		gndlvl=2123.27 ft;
+	}
+	View{
+		height=4150.29 ft;
+		tilt=-4;
+		angle=2;
+	}
+	View{
+		height=4148.97 ft;
+	}
+	View{
+		phi=-45.7594;
+		theta=6.6481;
+		height=202.964 ft;
+		gndlvl=4236.94 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=689.484 ft;
+		tilt=0;
+	}
+	View{
+		phi=-45.7533;
+		theta=6.68655;
+		height=67.2841 ft;
+		gndlvl=6181.89 ft;
+		tilt=-15;
+	}
+	View{
+		height=10154.8 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -121,7 +189,7 @@ Scene() {
 					Surface{
 						terrain=
 								Texture("alpine",BORDER|LINEAR|NORM|TEX,8,2,1,0.8,1,2,1,0,0,0,0,0.05556)+
-								Texture("BrownStone",BUMP|TEX,2048,1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+								Texture("BrownStone",BUMP|TEX,2048,1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|FS|NABS|SCALE|SQR|UNS,8,4,0.22,0.5,2,1,1,0,0));
 					}
 					Sky(0.00205145) {
 						color=Color(0,0.9,0.9);

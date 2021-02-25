@@ -376,7 +376,9 @@ public:
 	void  reset_idtbl();
 	void  read_ids();
 	void  setVisibleIDs();
-	void  getLimits(double &zn, double &zf);
+	void  getZLimits(double &zn, double &zf);
+	void  getIDLimits(double &zn, double &zf,double &hmin, double &hmax);
+
 	MapNode *pixelID(int i, int j);
 
 	void  modulate(Color &c);

@@ -254,7 +254,8 @@ public:
     void set_test1(int i)   { info.test1=i;}
     int test1()             { return info.test1;}
     void set_test2(int i)   { info.test2=i;}
-    int test2()             { return info.test2;}
+    int test2()             { return info.test2;}    void find_limits();
+
 
     void set_need_recalc(int i) { info.recalc=i;}
     int  need_recalc()      { return info.recalc;}
@@ -309,7 +310,6 @@ public:
                             }
     void clr_aflags()       { info.aflags=0; }
     void clr_cchecks();
-    void find_limits();
 
     // cellsize level functions
 #define NMOVE(r,u) \

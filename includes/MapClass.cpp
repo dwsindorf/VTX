@@ -411,10 +411,6 @@ void Map::set_scene()
 	gndlvl=oldlvl=TheScene->gndlvl;
 	oldht=TheScene->height;
 
-    if(TheScene->moved() || need_adapt()){
-		gndlvl=elevation(TheScene->theta,TheScene->phi);
-		TheScene->gndlvl=gndlvl;
-	}
 
 	ht=TheScene->radius-(radius+gndlvl);
 	if(ht<TheScene->minh) {  // prevent underground views
@@ -440,15 +436,10 @@ void Map::set_scene()
 
 	TheScene->znear=0.25*ht;
 	//TheScene->zfar=horizon;
-	TheScene->zfar=TheScene->radius;
+	TheScene->zfar=horizon;
 
 	dmin=TheScene->znear;
 	dmax=horizon;
-
-//	if(oldlvl!=gndlvl)
-//		cout << "gndlvl old:"<<oldlvl/FEET<< " new:"<<gndlvl/FEET<<endl;
-//	if(oldht!=ht)
-//		cout << "height old:"<<oldht/FEET<< " new:"<<ht/FEET<<endl;
 
 	object->setvis(OUTSIDE);
 
@@ -1680,8 +1671,14 @@ void Map::make_visbox()
 	    r=rbounds.make();
 
 	    if(idtest && TheScene->viewobj==object){
-			rbounds.zn=zn;
-			rbounds.zf=zf;
+	    	if(geometry()){
+				rbounds.zn=0.2*zn;
+				rbounds.zf=1.2*zf;
+	    	}
+	    	else{
+				rbounds.zn=0.5*zn;
+				rbounds.zf=1.2*zf;
+	    	}
 	    }
 	    else{
 			rbounds.zn=-rbounds.bmax().z;
@@ -1698,8 +1695,8 @@ void Map::make_visbox()
 	   // cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
 		//if(TheScene->viewobj==object)
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
-		vbounds.zn=0.5*rbounds.zn;
-		vbounds.zf=1.5*rbounds.zf;
+		vbounds.zn=rbounds.zn;
+		vbounds.zf=rbounds.zf;
 
 		// quick fix for zf clipped by water surface :
 		// make sure zf-zn >= max water transparency depth
@@ -1744,7 +1741,6 @@ void Map::make_visbox()
 			npole->visit(&MapNode::set_tests); \
 			cycles++; \
 			npole->adapt(); \
-			find_limits();\
 			created=mcreated-created; \
 			deleted=mdeleted-deleted; \
 			pcount++; \
@@ -1775,6 +1771,7 @@ void Map::adapt()
 	make_current();
 	int max_cycles=Adapt.maxcycles();
 
+	vbounds.set_valid(0);
 	//if(TheScene->automv())
 	//	max_cycles=9;
    if( Adapt.never())
@@ -1866,7 +1863,7 @@ void Map::adapt()
 		    npole->visit(&MapNode::pvischk);
 		// TODO: read depth buffer and find zn, zf
         if(idtest && object==TheScene->viewobj){
-        	Raster.getLimits(zn,zf);
+        	find_limits();
         }
 		if(object->allows_selection()||idtest)
 			make_visbox();
@@ -1878,7 +1875,6 @@ void Map::adapt()
 		else {
 			triangles.free();
 		}
-
 	}
 	if(need_adapt())
 		Adapt.set_more_cycles(1);
@@ -1900,7 +1896,7 @@ void Map::adapt()
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
 	}
-	find_limits();
+	//find_limits();
 }
 
 static void water_test(MapNode *n)
@@ -1920,13 +1916,11 @@ static void water_test(MapNode *n)
 void Map::find_limits(){
 	TheMap=this;
 	hrange=0;
-	hmax=-lim;
-	hmin=lim;
-	npole->visit(&MapNode::find_limits);
-	//npole->visit(&water_test);
+	hmax=zf=-lim;
+	hmin=zn=lim;
+	Raster.getIDLimits(zn, zf,hmin, hmax);
 	hrange=hmax-hmin;
-	//if(TheScene->viewobj==object)
-	//   cout<<"tid:"<<tid<<" cycles:"<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<" water:"<<waterpass()<<endl;
+    //cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility

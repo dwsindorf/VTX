@@ -51,7 +51,8 @@ protected:
 		SORT        =	0x00100000, // sort triangle list
 	    RENDER_BTOF =	0x00200000, // render using triangle list back to front
 		VISIDS      =	0x00400000, // generate vis box from id pass
-		ENDADAPT    =	0x00800000  // set before running last ids pass
+		ENDADAPT    =	0x00800000, // set before running last ids pass
+		GEOMETRY    =	0x01000000  // geometery flag;
 	};
 
 	friend class MapNode;
@@ -182,6 +183,10 @@ public:
 
 	void	set_end_adapt(int i)	{ BIT_SET(flags,ENDADAPT,i);}
 	int	    end_adapt()		    { return (flags & ENDADAPT)?1:0;}
+
+	int     geometry()          { return (flags & GEOMETRY)?1:0;}
+	void	set_geometry(int i)	{ BIT_SET(flags,GEOMETRY,i);}
+
 
 	int		size;
 	int		links;

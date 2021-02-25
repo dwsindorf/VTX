@@ -1496,7 +1496,11 @@ void Scene::change_view(int v)
 		viewobj->init_view();
 	}
 	else if(viewobj){
-		viewobj->init_view();
+		if(changed_view())
+		    viewobj->init_view();
+		else{
+			height/=2;
+		}
 	}
 	else{
 		init_view();

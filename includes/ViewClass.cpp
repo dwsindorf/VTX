@@ -1157,7 +1157,6 @@ void View::move_up()
 	if(cartesion()){
 	    head_up();
     } else {
-
 		auto_stride();
 		if(radius==0)
 			radius=1e-6;

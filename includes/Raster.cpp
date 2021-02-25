@@ -907,7 +907,6 @@ void RasterMgr::reset_idtbl()
 //-------------------------------------------------------------
 void RasterMgr::setVisibleIDs()
 {
-
 	int i=0;
     int errs=0;
 	static idu      idb;
@@ -916,6 +915,7 @@ void RasterMgr::setVisibleIDs()
 
 	idb.l=0;
 	int cnt=0;
+	TheMap->set_geometry(false);
 	while(i<4*(n-1)){
 		idb.c.red=roundf(gdata[i]*255);
 		idb.c.green=roundf(gdata[i+1]*255);
@@ -931,6 +931,7 @@ void RasterMgr::setVisibleIDs()
 				idtbl[idb.l]->clr_masked();
 				if(gval){
 					idtbl[idb.l]->setGZ(gval);
+					TheMap->set_geometry(true);
 				}
 			}
 		}
@@ -980,11 +981,11 @@ void RasterMgr::read_ids()
 	glUseProgramObjectARB(0);
 }
 
-//#define DEBUG_LIMITS
+#define DEBUG_LIMITS
 //-------------------------------------------------------------
 // RasterMgr::getLimits()	get zn,zf from depth buffer
 //-------------------------------------------------------------
-void RasterMgr::getLimits(double &zn, double &zf)
+void RasterMgr::getZLimits(double &zn, double &zf)
 {
 	zn=1;
 	zf=-1;
@@ -1006,10 +1007,28 @@ void RasterMgr::getLimits(double &zn, double &zf)
 	zn=1.0/(ws2*zn+ws1);
 	zf=1.0/(ws2*zf+ws1);
 #ifdef DEBUG_LIMITS
-	cout <<"RasterMgr::getLimits zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
+	cout <<"RasterMgr::getZLimits zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
 #endif
 
 }
+//-------------------------------------------------------------
+// RasterMgr::getIDLimits()	get zn,zf,htmin,htmax from id table
+//-------------------------------------------------------------
+void  RasterMgr::getIDLimits(double &zn, double &zf,double &hmin, double &hmax){
+    for(int i=0;i<dcnt;i++){
+    	MapNode *n=idtbl[i];
+    	if(n && n->visible()){
+    		double h=n->max_height();
+    		hmin=h<hmin?h:hmin;
+    		hmax=h>hmax?h:hmax;
+    		Point p=n->point();
+    		double d=p.length();
+    		zn=d<zn?d:zn;
+    		zf=d>zf?d:zf;
+    	}
+	}
+}
+
 //=============================================================
 //-------------------------------------------------------------
 // RasterMgr::getZbuf()	capture z buffer

@@ -1706,7 +1706,7 @@ void Spheroid::move_focus(Point &selm)
 		TheScene->height=ht;
 		TheScene->elevation=TheScene->height+TheScene->gndlvl;
 		TheScene->radius=radius()+TheScene->elevation;
-		map->vbounds.set_valid(0);
+		//map->vbounds.set_valid(0);
 	}
 	else{
 	    TheScene->phi=5;
@@ -1738,7 +1738,6 @@ void Spheroid::set_focus(Point &selm)
 	m.z+=radius();
 	m=m.rectangular();
     Point p=m.mm(TheScene->ModelMatrix.values())+point;
-
     v=TheScene->project(p.x,p.y,p.z);
     //v.z=0;
     d=p.length();
@@ -1790,6 +1789,7 @@ void Spheroid::set_focus(Point &selm)
 //-------------------------------------------------------------
 // Spheroid::scale() 	set znear, zfar
 //-------------------------------------------------------------
+//#define DEBUG_SCALE
 int  Spheroid::scale(double &zn, double &zf)
 {
     int v=getvis();
@@ -1800,10 +1800,16 @@ int  Spheroid::scale(double &zn, double &zf)
 		    set_scene();
 		    zn=TheScene->znear;
 		    zf=TheScene->zfar;
+#ifdef DEBUG_SCALE
+	        cout<<"adapt  zn:"<<zn/FEET<<" zf:"<<zf/MILES<<" ratio:"<<zf/zn<<endl;
+#endif
 		}
 		else{
 			zn=map->vbounds.zn;
 			zf=map->vbounds.zf;
+#ifdef DEBUG_SCALE
+	        cout<<"render zn:"<<zn/FEET<<" zf:"<<zf/MILES<<" ratio:"<<zf/zn<<endl;
+#endif
 		}
 		t=OUTSIDE;
     }
@@ -2193,10 +2199,10 @@ void Spheroid::init()
 //-------------------------------------------------------------
 double  Spheroid::max_height()
 {
-	if(TheScene->viewobj==this  && map->hrange==0){
-		map->find_limits();
+	//if(TheScene->viewobj==this  && map->hrange==0){
+	//	map->find_limits();
 	   // cout<<name() << " hrange:"<<map->hrange<<" hscale:"<<hscale<<endl;
-	}
+	//}
     if(map->hrange)
     	return map->hrange*hscale;
     return 0;
@@ -2280,7 +2286,7 @@ void Spheroid::init_view()
 			    TheScene->height=200*FEET;
 	    }
 	    else{
-			TheScene->height=50*FEET;
+			TheScene->height=100*FEET;
 		}
 		break;
 	}
