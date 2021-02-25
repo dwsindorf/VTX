@@ -19,6 +19,8 @@ varying vec4 ShadowCoord;
 varying vec4 Normal;
 varying vec4 EyeDirection;
 uniform bool lighting;
+uniform float rscale;
+
 
 uniform mat4 smat;
 

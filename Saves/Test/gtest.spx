@@ -51,15 +51,14 @@ Scene() {
 					shadow=Color(0,0,0,0.68);
 					specular=Color(1,1,1,0.76);
 					year=100;
-					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
 						Color(0.992,0.773,0.004));
+					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
 					Surface{
 						terrain=
-								Texture("eroded",BUMP,6912.54,1.42032,1,0,10.3062,2,0.91836,0)+
 								Texture("saturn3",S|TEX,0.1*BMPHT+HT,1,1.30436,1,0,1,2,1,0)+
-								Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(GRADIENT|FS|SCALE,20,3.7,1,0.5,2,1,1,0,0));
+								Texture("eroded",BUMP,6912.54,1.42032,1,0,10.3062,2,0.91836,0)+Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(GRADIENT|FS|SCALE,20,3.7,1,0.5,2,0.44,1,0,0));
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);

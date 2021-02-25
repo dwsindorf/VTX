@@ -14,6 +14,9 @@ varying out vec4 Vertex1;
 uniform vec3 pv;
 uniform float freqmip;
 
+uniform float rscale;
+
+
 varying vec4 Normal;
 vec4 gv=vec4(0);
 float g=0;

@@ -391,7 +391,7 @@ public:
 #ifdef DP_DIMS
                                 n+=flags.s.dims+flags.s.fractal;
 #endif
-                                flags.s.tstart=GSTART+GSIZE;
+                                flags.s.tstart=ESTART+ESIZE;
 #endif
                                 if(n){
                                     MALLOC(n,d32,data);

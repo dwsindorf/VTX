@@ -1,12 +1,5 @@
 // ########## begin geometry_funcs.frag #########################
 
-vec3 NormalFromTriangleVertices(vec3 triangleVertices[3])
-{
-    // now is same as RedBook (OpenGL Programming Guide)
-    vec3 u = triangleVertices[0] - triangleVertices[1];
-    vec3 v = triangleVertices[1] - triangleVertices[2];
-    return cross(v, u);
-}
 
 #define PRODUCE_VERTICES\
 	float dt = 1.0 / float( TESSLVL ); \
@@ -76,7 +69,7 @@ vec3 NormalFromTriangleVertices(vec3 triangleVertices[3])
 		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*(nbamp); \
-	    Normal.xyz=normalize(Normal.xyz-4*gl_NormalMatrix *df); \
+	    Normal.xyz=normalize(Normal.xyz-3*gl_NormalMatrix *df); \
 	} \
 
 #define NOISE_COLOR(func) \

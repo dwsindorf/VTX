@@ -730,7 +730,7 @@ void MapNode::recalc2()
 void MapNode::find_limits()
 {
 	extern double MinHt,MaxHt;
-	double z=max_height();
+	double z=data.Z();
 	MinHt=z<MinHt?z:MinHt;
 	MaxHt=z>MaxHt?z:MaxHt;
 	TheMap->hmax=MaxHt;
