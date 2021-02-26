@@ -38,6 +38,10 @@ Scene() {
 		tilt=0;
 		angle=-1;
 	}
+	View{
+		tilt=4;
+		angle=0;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
@@ -132,7 +136,7 @@ Scene() {
 						haze.height=0.6;
 						haze.max=13.573 miles;
 						haze.min=0.0189 miles;
-						haze.value=0.298039;
+						haze.value=1;
 						night.color=Color(0,0,0);
 						sky.grad=3;
 						specular=Color(1,1,1);

@@ -92,10 +92,8 @@ void TNfractal::eval()
 		else
 			base=S0.s;
 	}
-	if(Td.texht){
-		//S0.set_pvalid();
+	if(Td.texht)
 		base+=Td.texht;
-	}
 
 	double slope,delta,t,f,drop=0;
 	double t1,t2;

@@ -56,14 +56,15 @@ void main(void) {
     vec3 normal=normalize(Normal.xyz);
     bump=vec3(0.0); 
  
-	vec4 color=Emission;
+	//vec4 color=Emission;
+	vec4 color=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
    // float illumination = 0;
     float illumination = Emission.a;
-	color.a=Emission.a;
+	color.a*=Emission.a;
     if(lighting){
 		vec4 c=setLighting(color,normal);
     	color.rgb=c.rgb;

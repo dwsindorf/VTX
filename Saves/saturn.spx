@@ -119,7 +119,7 @@ Scene() {
 		Galaxy(20000) {
 			name="Milky Way";
 			origin=Point(20000,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -142,7 +142,7 @@ Scene() {
 					name="Sol";
 					specular=Color(1,1,1);
 					Surface{
-						mc=clamp(noise(UNS,3,10,0.4,0.5)*noise(NABS|UNS,8,10,0.5,0.5),0,1);
+						mc=clamp(noise(GRADIENT|UNS,3,10,0.4,0.5)*noise(GRADIENT|NABS|UNS,8,10,0.5,0.5),0,1);
 						terrain=Color(1,1-0.3*mc,0.9-mc);
 					}
 					Corona(8.11) {
@@ -155,7 +155,7 @@ Scene() {
 					day=20;
 					name="Saturn";
 					phase=60;
-					shadow=Color(0,0,0,0.34);
+					shadow=Color(0,0,0,0.74);
 					shine=11.809;
 					specular=Color(1,1,1,0.75);
 					tilt=25;
@@ -166,29 +166,27 @@ Scene() {
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=
-								Texture("jupiter",BUMP|S|TEX,2*PHI+0.02*noise(FS|NABS|SCALE,0,11.4,-0.17,0.55,2,0.62,-0.02,1,0),0.5,-0.86792,2,0,1,2,1,0)+
+								Texture("jupiter",BUMP|S|TEX,2*PHI+0.02*noise(GRADIENT|FS|NABS|SCALE,0,11.4,-0.17,0.55,2,0.62,-0.02,1,0),0.5,-0.86792,2,0,1,2,1,0)+
 								Texture("jupitermap",BUMP|TEX,1,-1.24528,1.32076,0,1,2,0.5,0);
 					}
 					Ring(0.0377788,0.00700468) {
-						emission=Color(1,1,1,0.56);
-						shadow=Color(0,0,0,0.85);
+						shadow=Color(0,0,0,0.56);
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
 							Color(0.7,0.4,0),
 							Color(1,0.9,0.3));
 						Surface{
 							terrain=
-									Texture("saturn",S|TEX,PHI,0.9999,1.50304,1,0,1,2);
+									Texture("saturn",S|TEX,PHI,0.9999,1.02776,1,0,1,2,1,0,0,0,0,0);
 						}
 					}
 					Ring(0.0477608,0.024749) {
-						emission=Color(1,1,1,0.86);
-						shadow=Color(0,0,0,0.85);
+						shadow=Color(0,0,0,0.78);
 						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
 							Color(1,1,0.3,0.5));
 						Surface{
 							terrain=
-									Texture("rings",S|TEX,PHI,0.9999,1.7212,1,0,1,2);
+									Texture("rings",S|TEX,PHI,0.9999,0.91668,1,-1,1,2,1,0,0,0,0,0);
 						}
 					}
 					Moon(0.00383586,0.085) {

@@ -100,8 +100,12 @@ Scene() {
 		tilt=0;
 	}
 	View{
-		height=837.585 ft;
-		gndlvl=4607.06 ft;
+		phi=8.40276;
+		theta=343.844;
+	}
+	View{
+		phi=8.40286;
+		time=38035.4;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -142,6 +146,7 @@ Scene() {
 					day=20;
 					name="Saturn";
 					phase=60;
+					resolution=4;
 					shadow=Color(0.2,0.2,0,0.7);
 					tilt=25;
 					year=600;
@@ -158,6 +163,7 @@ Scene() {
 					}
 					Ring(0.06,0.01) {
 						emission=Color(1,1,1,0.8);
+						resolution=4;
 						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
 							Color(1,1,0.3,0.5));
 						Surface{
@@ -167,6 +173,7 @@ Scene() {
 					}
 					Ring(0.045,0.013) {
 						emission=Color(1,1,1,0.8);
+						resolution=4;
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
 							Color(0.7,0.4,0),
@@ -182,7 +189,7 @@ Scene() {
 						diffuse=Color(1,1,1,0.51);
 						fog.color=Color(1,0.51,0.18);
 						fog.max=3065.6 ft;
-						fog.value=0.627451;
+						fog.value=1;
 						fog.vmax=6361.2 ft;
 						fog.vmin=4000 ft;
 						name="Titan";
@@ -210,6 +217,7 @@ Scene() {
 							ambient=Color(1,1,1,0.41);
 							crot=1;
 							day=10;
+							resolution=8;
 							shine=23.5064;
 							specular=Color(1,1,1);
 							tilt=-8;
@@ -226,6 +234,7 @@ Scene() {
 							haze.grad=0.63968;
 							haze.max=100 miles;
 							haze.value=0.898039;
+							resolution=4;
 							shine=0.717137;
 							specular=Color(1,1,1);
 							tilt=-10;

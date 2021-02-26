@@ -1403,8 +1403,8 @@ void TerrainMgr::eval()
 	if(!root || !root->right)
 	    return;
 	root->right->eval();
-	Td.p.z+=Td.texht;
-	S0.p.z+=Td.texht;
+	//Td.p.z+=Td.texht;
+	//S0.p.z+=Td.texht;
 	Height=S0.p.z;
 	PX=S0.p.x;
 	PY=S0.p.y;
@@ -1495,7 +1495,7 @@ void TerrainMgr::init()
 
 	if(Td.get_flag(HT2PASS))
 	   htflag=1;
-    set_twopass(htflag);
+   // set_twopass(htflag);
 
 	set_init_mode(0);
 	set_eval_mode(1);

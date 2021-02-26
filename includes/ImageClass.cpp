@@ -720,9 +720,11 @@ void TNtexture::eval()
 		texture->enabled=false;
 		return;
 	}
+
 	if(CurrentScope->rpass() && (bumpActive()||texActive())){
 		int nid=TerrainData::tp->noise.size;
 		Td.add_texture(texture);
+
 		if(right)
 			right->eval();
 		if(TerrainData::tp->noise.size==nid)
@@ -846,6 +848,9 @@ void TNtexture::eval()
 		}
 		texture->scale=scale;
 		TerrainData::texht+=z+texture->hmap_bias;
+		S0.p.z=z+texture->hmap_bias;
+		S0.set_pvalid();
+		S0.clr_svalid();
 	}
    //cout<<"TNtexture::eval() "<<s<<endl;
 
