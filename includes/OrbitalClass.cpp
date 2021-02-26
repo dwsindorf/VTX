@@ -3447,8 +3447,12 @@ int Sky::render_pass()
 //			clear_pass(BG3);
 //	}
 //	else {
-	    if(near_group())
-			clear_pass(FG1);
+	    if(near_group()){
+	    	if(outside())
+	    		clear_pass(FG1);
+	    	else
+			    clear_pass(BG1);
+	    }
 		else
 			clear_pass(BG2);
 	//}
@@ -3931,8 +3935,12 @@ int CloudLayer::render_pass()
 //			clear_pass(BG3);
 //	}
 //	else {
-	    if(near_group())
-			clear_pass(FG1);
+	    if(near_group()){
+	    	if(outside())
+	    		clear_pass(FG1);
+	    	else
+	    		clear_pass(BG1);
+	    }
 		else
 			clear_pass(BG2);
 //	}
