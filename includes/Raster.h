@@ -77,6 +77,8 @@ protected:
 		DOHDR	        = 0x00010000,
 		USE_SHADERS	    = 0x00020000,
 		DRAW_LINES	    = 0x00040000,
+		EFFECTS	        = 0x00080000,
+
 		DEBUG_SHADOWS	= 0x00100000,
 
 		SDEFAULTS       = DPTEST|SOFT_EDGES|BGSHADOWS|MAX_VIEW,
@@ -278,6 +280,9 @@ public:
 	void set_options(int i)			{ options=i;}
 	void set_filter(int i)			{ ftype=i;}
 	int get_options()				{ return options;}
+
+	int effects()                   { return options  & EFFECTS;}
+	void set_effects(int b)         { BIT_SET(options,EFFECTS,b);}
 
 	int  pix_buf()					{ return options & NEEDS_PIXBUF?1:0;}
 	int  aux_buf()					{ return options & NEEDS_AUXBUF?1:0;}

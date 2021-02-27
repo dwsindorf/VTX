@@ -399,7 +399,6 @@ bool Texture::setProgram(){
 	double tex_bias=t2d()?bias:0;
  	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
-  	//cout << "bumpdelta:"<<bumpdelta<<endl;
  	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
 	sprintf(str,"tex2d[%d].bumpamp",tid);  		glUniform1fARB(glGetUniformLocationARB(program,str),bump_ampl);
@@ -420,6 +419,11 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 
+//	double dfactor=0.5*GLSLMgr::wscale;
+//    double zn=log2(0.2*dfactor/TheScene->znear);
+//    double zf=log2(1.5*dfactor/TheScene->zfar);
+//
+//    cout<<"zn:"<<zn<<" zf:"<<zf<<" logf:"<<logf<<" df1:"<<zn-logf<<" df2:"<<zf-logf<<endl;
 	vars.setProgram(program);
 	vars.loadVars();
 	glActiveTexture(GL_TEXTURE0);

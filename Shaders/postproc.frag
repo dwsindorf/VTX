@@ -26,9 +26,17 @@ uniform vec2 tc_offset[25];
 //   -2  12 -2
 //   -1 -2  -1
 
+#ifdef FILTER1 
+#define BIG_KERNEL
+#endif
+
+#ifdef ONEPASS
 #define IMAGE FBOTex1
 #define FLAGS FBOTex2
-
+#else
+#define IMAGE FBOTex3
+#define FLAGS FBOTex4
+#endif
 uniform float color_ampl;
 uniform float normal_ampl;
 uniform float ws1;
@@ -138,7 +146,7 @@ void main(void) {
 #endif
     gl_FragData[0].a = 1.0;
     //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
-    //gl_FragData[0]=vec4(pow(fcolor2.g,0.2),0,0,1.0);	
+    //gl_FragData[0]=texture2DRect(FBOTex3, gl_FragCoord.xy);
 
 }
 

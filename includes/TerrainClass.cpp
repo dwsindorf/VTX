@@ -703,7 +703,8 @@ void TNpoint::eval()
 			Pz=S0.s;
 		else{
 			Px=S0.s;
-			arg=arg->next();S0.clr_pvalid();
+			arg=arg->next();
+			//S0.clr_pvalid();
 			if(arg){
 				arg->eval();
 				Py=S0.s;
@@ -1067,8 +1068,16 @@ void TNnoise::eval()
 	INIT;
 	S0.set_svalid();
 	S0.clr_constant();
+    if(n>5)
+    	ampl=args[5];
+    if(n>8)
+    	offset=args[8];
+
 	if(norm() && !normalized()){
 		TheNoise.get_minmax(ma,mb,type,n,args);
+	   // if((type&NLOD)==0)
+	   // 	mb*=ampl;
+
 #ifdef DEBUG_NOISE
 		char buff[256];
 		buff[0]=0;
@@ -1099,15 +1108,14 @@ void TNnoise::eval()
 		}
 	}
 
-    if(n>5)
-    	ampl=args[5];
-    if(n>8)
-    	offset=args[8];
 
     if(args[1]>0){
 	    f=TheNoise.eval(type,n,args);
     }
-	S0.s=f*ampl*ma+mb+offset;
+    if(ampl==0)
+    	S0.s=offset;
+    else
+	    S0.s=f*ampl*ma+mb+offset;
 
 }
 
@@ -1169,7 +1177,6 @@ bool TNnoise::setProgram(){
 	minscale=minscale<scale?minscale:scale;
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
-
 
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));

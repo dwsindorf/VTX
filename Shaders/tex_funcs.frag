@@ -53,6 +53,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	logf=tex2d[i].logf; \
 	last_color=color; \
 	alpha = tex2d[i].texamp; \
+	alpha_bias=Tangent.w-logf-colormip; \
 	alpha_fade = lerp(Tangent.w-logf-colormip,-6.0,1.0,0.0,1.0); \
 	dlogf=tex2d[i].dlogf; \
 	last_bump=bump; \
@@ -69,6 +70,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	if(tex2d[i].t1d) \
 	    coords.x+=env_bias*scale; \
     else { \
+ 	    alpha_fade *= lerp(alpha_bias,10,16,1.0,0.0); \
         alpha+=env_bias; \
         bump_ampl+=env_bias; \
         amplitude+=env_bias; \
@@ -93,7 +95,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 		
 #define SET_COLOR \
 		last_color=color; \
-		color=mix(color,tval, cmix); \
+		color.rgb=mix(color,tval, cmix); \
 		color.a=cmix;
 		
 #define SET_BUMP \
@@ -152,6 +154,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	float height_bias=0; \
 	float phi_bias=0; \
 	float env_bias=0; \
+	float alpha_bias=0; \
 	int tex_n=0; \
 	vec4 last_color=vec4(0.0); \
 	float last_bmpht; \

@@ -308,6 +308,8 @@ void EffectsMgr::setProgram(int type){
 //				break;
 //			}
 		}
+		if(!effects)
+			sprintf(defs+strlen(defs),"#define ONEPASS\n");
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("postproc.vert","postproc.frag");
 		GLhandleARB program=GLSLMgr::programHandle();
@@ -395,25 +397,27 @@ void EffectsMgr::apply(){
 
 		surface=1;
 		bool effects=do_vfog||do_haze||do_water;
+		set_effects(false);
 
 		GLSLMgr::renderToFrameBuffer=true;// for read pass set output to FB
 		if(effects /*&& (do_edges||do_hdr)*/){
-			// get artifacts when reading and writing to same draw buffers in two-pass render
+			// sometimes get artifacts when reading and writing to same draw buffers in two-pass render
 			// - need to "pong-pong" between buffer objects
 			// - write to buffers 3&4 in effects pass (maps to FBOTex3 & FBOTex4)
 			// - in postproc pass read image and flags from FBOTex3 & FBOTex4 and write out image to buffer 0
+			set_effects(true);
 			GLSLMgr::setFBOWritePass();
-		    //GLenum mrt1[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
-			//glDrawBuffers(2,mrt1);
+		    GLenum mrt1[] = {GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
+			glDrawBuffers(2,mrt1);
 			setProgram(EFFECTSPGM);
 			GLSLMgr::drawFrameBuffer();
-		    //GLenum mrt2[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT}; // restores default case
-			//glDrawBuffers(2,mrt2);
+		    GLenum mrt2[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT}; // restores default case
+			glDrawBuffers(2,mrt2);
 			GLSLMgr::setFBOReadPass();
 			setProgram(POSTPROCPGM);
 			GLSLMgr::drawFrameBuffer();
 		}
-		else if(effects||(shadows()&&shadow_test&&debug_shadows())){
+		else if(shadows()&&shadow_test&&debug_shadows()){
 			GLSLMgr::setFBOReadPass();
 			setProgram(EFFECTSPGM);
 			GLSLMgr::drawFrameBuffer();

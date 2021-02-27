@@ -69,7 +69,7 @@
 		gv = func; \
 		df.z =gv.x; \
 		df = (df-vec3(g,g,g))*nbamp/delta; \
-	    Normal.xyz=normalize(Normal.xyz-gl_NormalMatrix *df); \
+	    Normal.xyz=normalize(Normal.xyz-0.75*gl_NormalMatrix *df); \
 	    Normal.w=length(df); \
 	} \
 

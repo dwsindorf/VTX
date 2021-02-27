@@ -2178,8 +2178,6 @@ void MapNode::Svertex(MapData*dn) {
 	double g=d->type()+1.5;
 
 	double ht=d->Z()*Rscale;  // global units (MM)
-	static int cnt=0;
-
 
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;
@@ -2196,6 +2194,7 @@ void MapNode::Svertex(MapData*dn) {
 			double zs=zslope();
 			Point T=tangent(d);
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, zs, max_orders);
+			//cout<<max_orders<<endl;
 		}
 
 		Texture *tx;
