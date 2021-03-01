@@ -60,9 +60,10 @@ void main(void) {
 			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 			CALC_ZNOISE(NPZ);
 			vdata[index]=gl_ModelViewProjectionMatrix * p;
+			Color.a+=g;			
 			index++;
 		}
 	}
-	Color.a=g;
+	Color.a/=index;
     PRODUCE_INDEXED_VERTICES;
 }

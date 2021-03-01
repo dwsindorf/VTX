@@ -102,7 +102,7 @@ void main(void) {
 				float zb=1.0/(ws2*z+ws1);// zbuffer depth at y
 				float zr=z1*(cos(alpha)+sin(alpha)/tan(beta)); // depth of reflected ray at y
 				float dz=zb/zr;
-				if(dz<0.99){
+				if(dz<0.999){
 					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+i)).rgb;
 					break;
 				}

@@ -93,6 +93,9 @@ Scene() {
 		tilt=-3;
 		angle=11;
 	}
+	View{
+		height=562.768 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -128,35 +131,22 @@ Scene() {
 					shine=2.38066;
 					specular=Color(1,0.9,0.65,0.14);
 					year=100;
+					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+						Color(0.302,0.082,0.082));
 					image("eroded",BUMP|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
-					bands("jupiter",256,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=
-								Texture("eroded",BUMP,9095.9,1,1,0,9.604,2,0.50944,0)+
-								Texture("BrownStone",TEX,1,1,1,0,1,2,0.5,0)+
-								Texture("bricks",TEX,131072,2,0.566,0,1.90576,2,0.6415,0)+
-								Texture("jupiter",BORDER|S|TEX,HT+noise(GRADIENT|NABS|SQR,8.8,1.9,1,0.5,2,1,1,0,0),0.5,0.72972,0.59456,0.59264,1,2,1,0)+Z(fractal(SQR|SS,16,10.1,1.06,0.05,3,2.36,1,0.45)noise(GRADIENT|NABS,8.3,3,1,0.44,2.06,1,1,0,0));
-					}
-					Clouds(0.00405) {
-						ambient=Color(1,1,1,0.6);
-						crot=1;
-						day=24;
-						diffuse=Color(1,1,0.5,0.47);
-						emission=Color(1,1,1,0.04);
-						hscale=0.05;
-						resolution=2;
-						shine=20.9082;
-						specular=Color(1,1,1,0.54);
-						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
-									Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
-						}
+								Texture("dessert",NORM|S|TEX,noise(GRADIENT|SCALE,9.8,1,1,0.5,2,0.09,1,0,0),256,1.19444,0.59456,-0.11104,4.66672,2,1,0,0,1,0.01,0)+
+								Texture("rock_stones",BUMP|TEX,15613.4,1,1,0,3.00016,2,0.5,0,0,0,0,0)+
+								Texture("bricks",TEX,131072,2,0.566,0,1.90576,2,0.6415,0,0,0,0,0)+
+								Texture("eroded",BUMP,9095.9,1,1,0,9.604,2,0.50944,0)+Z(fractal(SQR|SS,16,10.1,1.06,0.05,3,2.36,1,0.45)noise(GRADIENT|NABS,8.3,3,1,0.44,2.06,1,1,0,0));
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
 						day=24;
 						density=0.2;
-						haze.grad=0.8644;
+						haze.color=Color(1,1,1,0.35);
+						haze.grad=0.53658;
 						night.color=Color(0,0.31,1,0);
 						shine=0.630849;
 						sky.grad=0.66441;
@@ -164,6 +154,22 @@ Scene() {
 						twilight=Color(0.33,0,1);
 						twilight.max=0.379151;
 						twilight.min=-0.446273;
+					}
+					Clouds(0.00407481) {
+						ambient=Color(1,1,1,0.6);
+						crot=1;
+						day=24;
+						diffuse=Color(1,1,0.5,0.47);
+						emission=Color(1,1,1,0.04);
+						hscale=0.05;
+						resolution=2;
+						rseed=1.34467;
+						shine=20.9082;
+						specular=Color(1,1,1,0.54);
+						Surface{
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+									Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
+						}
 					}
 				}
 			}

@@ -342,7 +342,7 @@ public:
 
     void    free();
 
-    double max_height()             { return height()+getGZ();}
+    double max_height();
     double height()                 { return data.height();}
     double theta()                  { return data.theta();}
     double phi()                    { return data.phi();}

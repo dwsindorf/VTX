@@ -16,9 +16,18 @@ Scene() {
 		height=631.706 ft;
 		gndlvl=2569.13 ft;
 	}
+	View{
+		height=300.776 ft;
+		tilt=-12;
+		angle=2;
+	}
+	View{
+		height=435.046 ft;
+		angle=0;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
-		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
 			Color(0.502,0.000,0.251),
@@ -38,8 +47,8 @@ Scene() {
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
 				Surface{
-					m1=noise(UNS,3,6,0.2);
-					m1=0.2*m1*noise(UNS,8,6,0.3);
+					m1=noise(GRADIENT|UNS,3,6,0.2);
+					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
 					terrain=color-Color(0,m1,m1);
 				}
 				Corona(8) {
@@ -53,16 +62,15 @@ Scene() {
 				}
 			}
 			Planet(0.001,60) {
-				ambient=Color(1,1,1,0.05);
+				ambient=Color(1,1,1,0.15);
 				day=5;
-				diffuse=Color(1,1,1,0.7);
 				fog.min=100 ft;
 				fog.value=1;
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				shadow=Color(0,0,0.1,0.7);
-				shine=10;
-				specular=Color(1,1,1,0.4);
+				shine=10.9372;
+				specular=Color(1,1,1,0.47);
 				tilt=10;
 				water.albedo=1;
 				water.clarity=48.952 ft;
@@ -73,20 +81,20 @@ Scene() {
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				wl=water.level*GTOL;
-				image("cracks2",INVT,256,256,noise(NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-				image("bmap1",1,256,noise(NABS|NEG|UNS,2,10,0.81,0.2,2));
-				bands("bands1",128,0.2,Color(0.8,0.7,0.2),0.4,RAND);
+				bands("bands1",ACHNL,32,0.2,0.4,RAND,Color(0.8,0.698,0.2));
+				image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+				image("bmap1",1,256,noise(GRADIENT|NABS|NEG|UNS,2,10,0.81,0.2,2));
 				Surface{
 					ripples=0.0002*noise(20,2);
-					m1=3*noise(SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
+					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
 					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.68,0.13,0.35,0.52)m1;
 					terrain=fog(2*noise(8,5))
 							water(0.0002*noise(20,2))
 							Z(0.5*z1)+
-							Texture("cracks2",BUMP,9999,-0.2,1,0,10,2.29232,1,0)+
-							Texture("bmap1",BUMP|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0)+
-							Texture("bands1",S|TEX,HT+0.2*m3+0.05*BMPHT,1,1.38888,2,0,1,2,1,0);
+							Texture("bands1",NORM|S|TEX,0,256,2,2,1.77776,1,2,1,0,0,1,0.19444,0.25)+
+							Texture("cracks2",BUMP,9999,-0.44448,1,0,10,2.29232,1,0,0,0,0,0)+
+							Texture("bmap1",BUMP|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0);
 				}
 				Sky(0.0011) {
 					color=Color(0.4,0.9,1,0.95);

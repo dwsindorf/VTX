@@ -1105,7 +1105,7 @@ void Map::render_ids()
 	texture=0;
 	npole->init_render();
 
-	Raster.set_all();
+	//Raster.set_all();
 
 	Raster.surface=1; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
@@ -1114,6 +1114,7 @@ void Map::render_ids()
 		setProgram();
 	    npole->render_ids();
 	}
+
 	if(S0.get_flag(WATERFLAG)){
 		Raster.surface=2;
 		tid=WATER;

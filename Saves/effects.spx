@@ -156,17 +156,12 @@ Scene() {
 								Z(noise(GRADIENT|NABS|SCALE|SQR,6.4,8.6,-0.02,0.51,2,1,1,0,0))+
 								Texture("drywash",BUMP|RANDOMIZE|TEX,3683.85,5.11104,2,0,1,2,0.5,0);
 					}
-					Moon(0.000787456,0.004) {
-						day=13.888;
-						hscale=0.0001;
-						name="Moon";
-						phase=310.003;
-						rseed=1.44467;
-						skew=43.7508;
-						year=222.22;
+					Clouds(0.00205059) {
+						crot=1;
+						name="Clouds";
+						rseed=1.78657;
 						Surface{
-							terrain=
-									Texture("Venus_surface1",TEX,1,2,1,0,1,2,0.5,0);
+							terrain=Color(1,1,1,noise(GRADIENT|NABS|SQR,4.3,5,1,0.5,2,1,1,0,0.5));
 						}
 					}
 					Sky(0.00212083) {
@@ -181,14 +176,20 @@ Scene() {
 						specular=Color(1,1,1);
 						tilt=10;
 					}
-					Clouds(0.00205059) {
-						crot=1;
-						name="Clouds";
-						rseed=1.78657;
+					Moon(0.000787456,0.004) {
+						day=13.888;
+						hscale=0.0001;
+						name="Moon";
+						phase=310.003;
+						rseed=1.44467;
+						skew=43.7508;
+						year=222.22;
 						Surface{
-							terrain=Color(1,1,1,noise(GRADIENT|NABS|SQR,4.3,5,1,0.5,2,1,1,0,0.5));
+							terrain=
+									Texture("Venus_surface1",TEX,1,2,1,0,1,2,0.5,0);
 						}
 					}
+					
 				}
 			}
 		}

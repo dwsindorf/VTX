@@ -1874,7 +1874,6 @@ void Scene::select()
 			if(n){
 				selobj=focusobj=viewobj;
 				selm=Point(n->theta(),n->phi(),n->max_height());
-				cout<<" t:"<<n->theta()<<" p:"<<n->phi()<<" h:"<<n->max_height()/FEET<<" z:"<<n->height()/FEET<<" g:"<<n->getGZ()/FEET<<endl;
 		        return;
 			}
 		}

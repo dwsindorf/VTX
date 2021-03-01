@@ -13,6 +13,7 @@
 #include "tex_funcs.frag"
 #endif
 
+uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
 
 // ########## main section #########################
@@ -22,6 +23,7 @@ void main(void) {
 #else
 	vec4 color=vec4(1.0);
 #endif
+    vec4 background=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 	bump=vec3(0.0);
     vec3 normal=normalize(Normal.xyz);
 #ifdef NCC
@@ -31,6 +33,7 @@ void main(void) {
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
+    //color.rgb=mix(color.rgb,background.rgb,0.25);
 
      if(lighting)
     	color.rgb=setLighting(color.rgb,normal-bump);

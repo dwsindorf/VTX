@@ -2394,6 +2394,30 @@ Point *MapNode::ave_normal(MapData *nd)
 #endif
 }
 
+double MapNode::max_height() {
+	double gz=getGZ();
+	double z1=data.height();
+	double z2=0;
+	double ht=z1+gz;
+    if(TheScene->select_mode())
+        cout<<" gz:"<<gz/FEET<<" z1:"<<z1/FEET;
+	MapData *d=&data;
+    if(data.water()){
+    	d=data.data2();
+    	z2=d->height();
+    	if(TheScene->select_mode())
+    		cout<<" z2:"<<z2/FEET;
+    	if((z2+gz)>z1)
+    		ht=z2+gz;
+    	else
+    		ht=z1;
+    }
+    if(TheScene->select_mode())
+       cout<<" ht:"<<ht/FEET<<endl;
+
+	return ht;
+}
+
 //-------------------------------------------------------------
 // MapNode::init_data()	set MapData by calling terrain generator
 //-------------------------------------------------------------

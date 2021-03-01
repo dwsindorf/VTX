@@ -795,10 +795,10 @@ void TNtexture::eval()
 
 	double c1=0.5/texture->width();
 	double c2=1-c1;
-	if(opts & CLAMP){
-		if(s>c2) s=c2;
-		if(s<c1) s=c1;
-	}
+//	if(opts & CLAMP){
+//		if(s>c2) s=c2;
+//		if(s<c1) s=c1;
+//	}
 	texture->scale=f;
 	texture->s=s;
 	texture->t=t;
