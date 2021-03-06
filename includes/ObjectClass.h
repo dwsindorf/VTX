@@ -43,7 +43,7 @@ enum{  // group bits
 	BG4	   		= 0x6,  // background objects
 	BG5	   		= 0x7,  // background objects
 	BG6	   		= 0x8,  // background objects
-	BGS         = 0x9,  // background shadow pass
+	BGS         = 0x9,  // background shadow passTN_TYPES
 	FGS         = 0xa,  // foreground shadow pass
 	FGR         = 0xb,  // outside raster pass
 	BGFAR       = BG6,  // backdrop objects

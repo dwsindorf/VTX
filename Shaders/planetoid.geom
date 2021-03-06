@@ -35,6 +35,7 @@ varying out vec4 Tangent;
 uniform float freqmip=0;
 uniform float bump_delta;
 uniform float bump_ampl;
+uniform float nscale;
 uniform bool lighting;
 
 float delta=0;

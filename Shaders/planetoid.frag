@@ -215,10 +215,8 @@ void main(void) {
     }
 #endif
 #ifdef SHADOWS
-	else{
-    	float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    	color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
-    }
+    float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+    color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
 #endif    
     float depth=gl_FragCoord.z;
     vec3 eye = normalize(EyeDirection.xyz);
@@ -238,6 +236,8 @@ void main(void) {
 #endif   
 #endif
 	gl_FragData[0] = color;
+	//gl_FragData[0] = vec4(bmpht,0,0,1);//color;
+	
 
 
 }

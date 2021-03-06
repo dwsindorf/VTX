@@ -785,7 +785,7 @@ double Noise::eval(int type,int n, double *args)
     domain=type & ROFF;
     int nt=ntype();
     if(domain || rseed){
-		shift=offsets[domain];
+		shift=offsets[domain]+rseed;
 	    POINT[0]=P0[0]+shift;
 	    POINT[1]=P0[1]+shift;
 	    POINT[2]=P0[2]+shift;

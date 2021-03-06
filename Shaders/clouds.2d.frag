@@ -33,7 +33,6 @@ void main(void) {
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
-    //color.rgb=mix(color.rgb,background.rgb,0.25);
 
      if(lighting)
     	color.rgb=setLighting(color.rgb,normal-bump);
@@ -41,9 +40,9 @@ void main(void) {
      color=clamp(color,0.0,1.0);
 	 gl_FragData[0]=color;
 #ifdef BACK
-	 //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
-	 gl_FragData[1]=vec4(0,0,0,1);
-	  //gl_FragData[1]=fcolor2; 
+	 vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
+	 //gl_FragData[1]=vec4(0,0,0,1);
+	 gl_FragData[1]=fcolor2; 
 #else
 	 gl_FragData[1]=vec4(0,1,0,1);
 #endif

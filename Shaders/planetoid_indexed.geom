@@ -40,7 +40,7 @@ uniform float bump_delta;
 uniform float bump_ampl;
 uniform bool lighting;
 uniform float rscale;
-
+uniform float nscale;
 
 float delta=0;
 

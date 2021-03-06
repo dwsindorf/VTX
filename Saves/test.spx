@@ -1,22 +1,49 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-30.7946;
-		theta=350.959;
-		height=9608.83 ft;
-		gndlvl=22054.2 ft;
-		time=50648.8;
-		heading=-65;
-		tilt=-14;
+		phi=-29.5383;
+		theta=350.164;
+		height=7929.32 ft;
+		gndlvl=1089.22 ft;
+		time=49455.5;
+		heading=140;
+		tilt=-15;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=9608.8 ft;
+		phi=-29.549;
+		theta=350.177;
+		height=5182.21 ft;
+		gndlvl=2114.01 ft;
 	}
 	View{
-		height=9216.2 ft;
+		height=13220.5 ft;
+		gndlvl=-4455.77 ft;
+	}
+	View{
+		height=10698.2 ft;
+		gndlvl=-4048.52 ft;
+	}
+	View{
+		height=10914.7 ft;
+		tilt=-12;
+	}
+	View{
+		height=11425.8 ft;
+		tilt=-11;
+		angle=-1;
+	}
+	View{
+		tilt=-18;
+		angle=1;
+	}
+	View{
+		tilt=-15;
+	}
+	View{
+		height=11301.7 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -47,53 +74,37 @@ Scene() {
 					}
 				}
 				Planet(0.004,40) {
-					ambient=Color(0.49,0.49,1,0.05);
+					ambient=Color(1,1,1,0.2);
 					day=24;
-					shadow=Color(0,0,0.19,0.58);
-					shine=6.24298;
-					specular=Color(1,1,1,0.07);
+					diffuse=Color(1,1,1,0.77);
+					shadow=Color(0,0,0.19,0.8);
+					shine=2.80299;
+					specular=Color(1,1,1,0.42);
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
-						Color(0.2,0.4,0.094),
-						Color(0.294,0.494,0),
-						Color(0.549,0.322,0.02),
-						Color(0.294,0.251,0.2),
-						Color(0.275,0.247,0.027),
-						Color(0.243,0.196,0.063),
-						Color(0.584,0.584,0.584),
-						Color(0.6,0.588,0.549),
-						Color(0.286,0.278,0.278),
-						Color(1,1,1));
-					image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					bands("grass",4,0.1,0.1,RAND,Color(0,0.278,0.078),
+						Color(0.2,0.4,0.078),
+						Color(0.278,0.478,0),
+						Color(0.4,0.478,0,0),
+						Color(0.4,0.478,0,0));
+					bands("snow-test",ACHNL|CLAMP|INVT|NEAREST|NORM,8,Color(0.984,0.984,0.984,0),Color(1,1,1));
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS,8,14.1,0,1,2.1,2,0.11,0,-0.3))+
-								Texture("alpine",BORDER|LINEAR|TEX,0.9999,2,2,-0.88896,1,1.73848,1,0,0,0.61112,0.22224,-0.66668)+
-								Texture("cracks2",BUMP,556.879,-0.44448,1,0.2264,10,2.78464,1,0)+
-								Texture("Shist1",BUMP,16384,-1.69808,1,0,4.16992,1.90568,1,0)+
-								Texture("DirtPebbles",BUMP|TEX,331696,-1.32072,1,0,6.43408,2.13208,1,0);
+						terrain=
+								Texture("BrownStone",BUMP|TEX,331.991,0.22208,2,0.44448,1,2,0.5,0,0,0,0,0)+
+								Texture("grass",LINEAR|NORM|S|TEX,0.01*PHI+noise(GRADIENT|SCALE,14,2,1,0.5,2,0.001,1,0,0),84168.9,0.75,1,0.11104,1,2,1,0,-2,0.5,2,-1.05552)+
+								Texture("snow-test",BORDER|LINEAR|NORM|S|TEX,noise(GRADIENT|SCALE,5,2,1,0.5,2,0,1,0,0),66175.1,1.02776,1,0.66672,1,2,1,0,-0.11112,2,2,0)+Z(noise(GRADIENT|NABS|SQR|SS2,9,11,0.24,1.1,2.1));
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
 						day=24;
 						density=0;
-						haze.color=Color(1,1,0.88);
-						haze.grad=0.49316;
-						haze.height=0.52;
-						haze.max=15.085 miles;
-						haze.value=1;
-						resolution=4;
-						shine=0.217207;
 						specular=Color(1,1,1);
 					}
 					Clouds(0.00407746) {
 						crot=1;
-						emission=Color(1,1,1,0.3);
-						resolution=6;
-						specular=Color(1,1,1);
 						Surface{
-							terrain=Color(1,1,1,noise(GRADIENT|FS,3,9,1,0.5,2));
+							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
 						}
 					}
 				}

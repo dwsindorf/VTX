@@ -1,0 +1,214 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-11.7169;
+		theta=113.956;
+		height=0.00468535;
+		gndlvl=-64049.8 ft;
+		time=53021.8;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.0046755;
+		gndlvl=-12022.8 ft;
+	}
+	View{
+		view=SURFACE;
+		phi=-9.14063;
+		theta=104.766;
+		height=52800 ft;
+		gndlvl=-155591 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=51714.6 ft;
+	}
+	View{
+		height=43899.5 ft;
+	}
+	View{
+		height=15.8315 miles;
+	}
+	View{
+		phi=-9.07702;
+		theta=104.902;
+		height=42.1953 miles;
+		heading=25;
+	}
+	View{
+		phi=-7.03125;
+		theta=110.918;
+		height=11763.3 ft;
+		gndlvl=-145879 ft;
+	}
+	View{
+		height=6613.2 ft;
+		tilt=-12;
+		angle=4;
+	}
+	View{
+		phi=-6.89117;
+		theta=111.154;
+		height=566.563 ft;
+		gndlvl=-163393 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=5487.78 ft;
+		heading=16;
+		tilt=-7;
+		angle=6;
+	}
+	View{
+		height=6494.28 ft;
+		time=23845.6;
+		heading=-3;
+		tilt=-6;
+		angle=41;
+	}
+	View{
+		height=7359.79 ft;
+		tilt=-1;
+		angle=30;
+	}
+	View{
+		height=11.1863 miles;
+		heading=24;
+		tilt=-15;
+		angle=15;
+	}
+	View{
+		view=ORBITAL;
+		height=0.004;
+		gndlvl=-0.00494597 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		phi=-7.10992;
+		theta=113.573;
+		height=109.882 miles;
+	}
+	View{
+		view=SURFACE;
+		phi=-7.11914;
+		theta=113.599;
+		height=7417.28 ft;
+		gndlvl=-160246 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=15281.5 ft;
+		tilt=-6;
+	}
+	View{
+		phi=-7.29492;
+		theta=114.5;
+		height=1676.38 ft;
+		gndlvl=-160559 ft;
+		tilt=-15;
+	}
+	View{
+		height=51584.5 ft;
+		time=18406;
+		heading=-134;
+		tilt=-9;
+		angle=1;
+	}
+	View{
+		phi=-7.58331;
+		theta=114.149;
+		height=920.384 ft;
+		gndlvl=-147023 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=12882.6 ft;
+		time=17000;
+		heading=-217;
+		tilt=-6;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.002,100) {
+					ambient=Color(1,1,1,0.12);
+					day=24;
+					hscale=0.0136431;
+					shadow=Color(0,0,0,0.38);
+					shine=4.60508;
+					specular=Color(1,1,1,0.5);
+					tilt=10;
+					year=100;
+					albedo=1;
+					bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
+						Color(1,0.6,0),
+						Color(0.7,0.4,0),
+						Color(1,0.9,0.3));
+					Surface{
+						terrain=
+								Texture("saturn",BORDER|TEX,84168.9,0.88888,1,1.44448,1,2,1,0,0,1,0.63888,0)+
+								Texture("mars",BUMP|TEX,1,1.75,2,-0.11104,1,2,0.5,0,0,0,0,0)+
+								Texture("cratery",BUMP,512,-0.4,1,1.33328,2,2,1,0,0,0,0,0)+
+								Texture("colored-rock",BUMP|TEX,512,0.3,2,4,1,2,0.5,0.56944,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
+								fractal(SQR|SS,12.5,4,0.2,0.2,2.13,0.3,0.08,0.42,0.35,0)noise(GRADIENT|NABS|SCALE|SQR,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
+								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,0.55556,-0.36112);
+					}
+					Sky(0.00213931) {
+						color=Color(0.21,0.75,0.96);
+						day=24;
+						density=0.13888;
+						haze.color=Color(0.96,0.84,0.56,0.76);
+						haze.grad=0.5244;
+						haze.value=0.756863;
+						name="Sky";
+						resolution=4;
+						rseed=1.58657;
+						sky.grad=0.408416;
+						specular=Color(1,1,1);
+						tilt=10;
+						twilight=Color(0.99,0.09,0.19);
+						twilight.min=-0.348045;
+					}
+				}
+			}
+		}
+	}
+}

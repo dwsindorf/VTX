@@ -8,7 +8,7 @@
 #include "GLSLMgr.h"
 
 //#define DEBUG_IMAGES
-//#define DEBUG_TEXS
+#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -853,7 +853,6 @@ void TNtexture::eval()
 		S0.clr_svalid();
 	}
    //cout<<"TNtexture::eval() "<<s<<endl;
-
 }
 
 #define SEXPR 1
@@ -918,8 +917,8 @@ bool TNtexture::initProgram(){
 	if(!S0.inactive())
 		texture->cid=texture->num_coords;
 	TNarg *arg=(TNarg*)right;
-	if(arg && (texture->a_data || texture->s_data)){
 		INIT;
+	if(arg && (texture->a_data || texture->s_data)){
 		int cmode=0;
 		if(texture->s_data){
 			cmode=exprString(arg,nstr);
@@ -951,7 +950,8 @@ bool TNtexture::initProgram(){
 	else
 		sprintf(defs+strlen(defs),"#define C%d BIAS\n",id);
 	//cout <<"numtexs:"<< Texture::num_coords << endl;
-
+cout<<defs<<endl;
+cout<<log2(texture->scale)<<" "<<texture->s_data<<endl;
 	strcat(GLSLMgr::defString,defs);
 	return true;
 }

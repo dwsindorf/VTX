@@ -102,6 +102,9 @@ public:
 	int actionmode;
 	void setActionMode(int m) { actionmode=m;}
 	int getActionMode()       {return actionmode;}
+	int dropping()            { return actionmode==DROPPING;}
+	int adding()               { return actionmode==ADDING;}
+
     int countNodes(TreeNode *);
 	TreeNode *getNode(TreeNode *,NodeIF *);
     void visit(TreeNode *root, void (*func)(TreeNode *));

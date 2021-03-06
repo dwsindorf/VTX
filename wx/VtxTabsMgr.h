@@ -140,6 +140,7 @@
 #define SET_FILE_EVENTS(CLASS) \
 	    EVT_MENU(TABS_SAVE,CLASS::OnSave) \
 		EVT_MENU(TABS_RANDOMIZE,CLASS::OnRandomize) \
+		EVT_MENU(TABS_RESORT,CLASS::OnResort) \
 		EVT_MENU_RANGE(TABS_REPLACE,TABS_REPLACE+TABS_MAX_IDS,CLASS::OnOpen) \
 		EVT_MENU_RANGE(TABS_REMOVE,TABS_REMOVE+TABS_MAX_IDS,CLASS::OnRemove) \
 
@@ -156,6 +157,8 @@ enum{
 	TABS_REMOVE  			= 0x4000,
 	TABS_ENABLE   			= 0x5000,
 	TABS_VIEWOBJ  			= 0x6000,
+	TABS_RESORT  			= 0x7000,
+
 };
 
 WX_DEFINE_ARRAY_PTR(wxCheckBox*, CheckBoxList);
@@ -243,6 +246,9 @@ protected:
     }
     virtual void OnRandomize(wxCommandEvent& event){
      	menu_action=TABS_RANDOMIZE;
+    }
+    virtual void OnResort(wxCommandEvent& event){
+     	menu_action=TABS_RESORT;
     }
     virtual void OnSave(wxCommandEvent& event){
      	menu_action=TABS_SAVE;

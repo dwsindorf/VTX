@@ -16,6 +16,9 @@ Scene() {
 		height=2224.93 ft;
 		gndlvl=1401.4 ft;
 	}
+	View{
+		height=2326.68 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -65,15 +68,15 @@ Scene() {
 						Color(0.4,0.5,0,0));
 					Surface{
 						terrain=Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
-								Texture("saturn",BUMP|S|TEX,HT,2,1,1.22224,0,1,2,1,0)+
-								Texture("alpine",S|TEX,HT+0.042*srand()*noise(7,5,1,0.5,2)+0.3,3,0.88888,1,0,1,2,1,0);
+								Texture("saturn",BUMP|S|TEX,HT,3.4295,1,2,0,1,2,1,0,0,0,0,0)+
+								Texture("alpine",S|TEX,0.002*srand()*noise(GRADIENT,5.5,5,1,0.5,2,1,1,0,0),78.3304,2,1,-1.55552,1,2,1,0,0,1,0,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
 						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
-						haze.grad=0.28572;
+						haze.grad=0.96342;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;

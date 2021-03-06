@@ -52,11 +52,21 @@ Scene() {
 		gndlvl=-46631.2 ft;
 	}
 	View{
-		height=424.73 ft;
+		height=10464.5 ft;
 	}
 	View{
-		height=12 ft;
-		gndlvl=-22671.4 ft;
+		phi=-41.5444;
+		theta=246.012;
+		height=10788 ft;
+		heading=6;
+	}
+	View{
+		phi=-41.5436;
+		theta=246.02;
+		height=9926.72 ft;
+	}
+	View{
+		height=9911.43 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -102,26 +112,32 @@ Scene() {
 				Planet(0.003,50) {
 					ambient=Color(1,1,1,0.08);
 					day=30;
-					emission=Color(0.99,0.93,0.09,0.03);
+					diffuse=Color(1,0.86,0.51);
+					emission=Color(0.99,0.93,0.09,0.04);
 					fog.color=Color(1,0.81,0.11);
-					fog.max=11000 ft;
-					fog.min=1000 ft;
+					fog.max=-10000 ft;
+					fog.min=-20000 ft;
 					fog.value=1;
-					fog.vmax=-45000 ft;
-					fog.vmin=-55000 ft;
-					hscale=0.0026;
+					fog.vmax=-36666.6 ft;
+					fog.vmin=-40000 ft;
+					hscale=0.002;
 					name="Venus";
-					shadow=Color(0.21,0.17,0.04,0.16);
+					shadow=Color(0.21,0.17,0.04,0.2);
 					shine=16.4793;
-					specular=Color(1,1,1,0.38);
+					specular=Color(1,1,1,0.46);
 					tilt=10;
 					year=100;
 					albedo=0.1;
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
 					Surface{
-						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.05,0.5,2,1,1,0,0))
+						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
-								Texture("rock_stones",BUMP|RANDOMIZE,2048,-4,2,3.33328,4,2.4,0.93056,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,0.68,0.66,0.45,0))+
-								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,2,4,0,1,2,0.5,0,1,0);
+								Texture("jupiter",TEX,7.05918,2,1,0,1,2,1,0,0,1,0.38888,-0.02776)+
+								Texture("jupiter",BORDER|TEX,19865.8,1.02776,1,2.22224,1,2,1,0,0,1,0.05556,-0.13888)+
+								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-4,2,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
+								Texture("eroded",BUMP,261.017,-2.44448,1,0,5,2,0.5,0,0,0,0,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,0.68,0.66,0.45,0))+
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0);
 					}
 					Clouds(0.00305588) {
 						ambient=Color(1,1,1,0.07);

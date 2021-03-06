@@ -1493,7 +1493,7 @@ void TNsnow::init()
 		int opts=BORDER|CLAMP|TEX;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
-	    texture->scale=1;
+	    texture->scale=exp2(18);
 	    texture->bump_active=true;
 	    texture->s_data=true;
 	}

@@ -66,6 +66,11 @@ Scene() {
 	View{
 		time=56848.8;
 	}
+	View{
+		height=6 ft;
+		time=50055.4;
+		angle=-11;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -103,12 +108,13 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					bands("lava2",ACHNL,256,0.37778,0.53334,Color(0.925,0.616,0.122,0.533),Color(0.055,0.035,0.035),
-						Color(0.596,0,0));
+					bands("lava2",ACHNL,256,0,0.37096,Color(1,0.973,0,0.369),Color(0.055,0.031,0.031,0.337),
+						Color(1,0.231,0.086),
+						Color(1,0,0));
 					Surface{
 						terrain=Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+Color(0.529412,0.521569,0.521569,1)+
-								Texture("bricks",BORDER|BUMP|NORM|TEX,512,2,2,0,13.4445,2,1,0.37038)+
-								Texture("lava2",BORDER|S|TEX,2*BMPHT,2.48802,0.5926,1.40744,1.92592,1,2,1,0);
+								Texture("lava2",BORDER|BUMP|TEX,2048,1.40744,1.22224,-0.44448,1,2,1,0.95834,0,-1,-0.72224,-1)+
+								Texture("bricks",BORDER|BUMP|NORM|TEX,512,2.44448,2,0,13.4445,2,1,0.48612,0,0,0,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);

@@ -20,7 +20,7 @@ Scene() {
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -36,28 +36,27 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(0.98,0.92,0.79,0.47);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(0.98,0.95,0.77,0.95);
 						color2=Color(0.97,0.67,0.03);
 					}
 				}
 				Planet(0.004,100) {
-					ambient=Color(1,1,1,0.47);
+					ambient=Color(1,1,1,0.21);
 					day=24;
-					diffuse=Color(1,1,1,0.63);
 					shine=2.55622;
 					specular=Color(1,0.9,0.65);
 					year=100;
 					Surface{
-						terrain=Color(0.1+noise(NABS|UNS|RO1,5.2,6,1,0.38,2.2,1,1,0,0),0.5*RED,0,1)+
-								Texture("drywash",BUMP|TEX,1024,0.84928,1.45204,0,5,2.20752,0.75472,0,0,-0.39624)+
+						terrain=Color(0.1+noise(GRADIENT|NABS|UNS|RO1,5.2,6,1,0.38,2.2,1,1,0,0),0.5*RED,0,1)+
+								Texture("drywash",BUMP|TEX,537.269,0.84928,1.45204,0,5,2.20752,0.75472,0,0,-0.39624,0,0)+
 								Texture("Shist1",BUMP|TEX,34986.2,0.90408,2,0,2.81152,2,1)+
-								Texture("crusty2",BUMP|TEX,129357,0.19176,1.58904,0,1.1,2,1)+
-								Texture("bricks",NORM|S|TEX,noise(SQR,16,4.2,1,0.5,2,1,1,0,0.5),179422,1.61644,2,0.52832,3.26416,2,1)+Z(noise(NABS|SQR,9,7,0.1,0.6));
+								Texture("crusty2",BUMP|TEX,129357,0.19176,1.27776,0,1.1,2,1,0,0,0,0,0)+
+								Texture("bricks",NORM|S|TEX,noise(GRADIENT|SQR,16,4.2,1,0.5,2,1,1,0,0.5),179422,1.47224,2,0.52832,3.26416,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SQR,9,7,0.1,0.6));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -69,12 +68,13 @@ Scene() {
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
-									Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+									Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 						}
 					}
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
+						day=24;
 						density=0.2;
 						haze.grad=0.26986;
 						haze.value=0.698039;

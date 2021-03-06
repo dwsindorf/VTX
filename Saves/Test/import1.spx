@@ -17,10 +17,13 @@ Scene() {
 		gndlvl=-9362.17 ft;
 		angle=-110;
 	}
+	View{
+		height=1966.01 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -53,9 +56,9 @@ Scene() {
 					specular=Color(1,1,1,0.45);
 					year=100;
 					Surface{
-						terrain=
-								Texture("Shist1",BUMP|TEX,2392.83,0.55072,2,0,8.34688,2,1,0)+Color(0.219608,0.152941,0.0156863,1)+
-								Texture("BrownStone",TEX,1,1,1,0,1,2,0.5,0)+Z(noise(NABS|SQR,9,7,0.1,0.6));
+						terrain=Color(0.219608,0.152941,0.0156863,1)+
+								Texture("BrownStone",TEX,15613.4,1.25,1,0,6.00016,2,0.5,0,0,0,0,0)+
+								Texture("Shist1",BUMP|TEX,537.269,0.55072,2,0,8.34688,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SQR,9,7,0.1,0.6));
 					}
 					Clouds(0.00405) {
 						ambient=Color(1,1,1,0.6);
@@ -68,8 +71,8 @@ Scene() {
 						shine=20.9082;
 						specular=Color(1,1,1,0.54);
 						Surface{
-							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
-									Color(1,RED,RED,noise(NABS|SQR|FS,5.6,6.9,1,0.5,2,1,1,0,1.3));
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+									Color(1,RED,RED,noise(GRADIENT|FS|NABS|SQR,5.6,6.9,1,0.5,2,1,1,0,1.3));
 						}
 					}
 					Sky(0.0041029) {
@@ -78,6 +81,7 @@ Scene() {
 						density=0.2;
 						haze.color=Color(1,1,1,0.79);
 						haze.grad=0.42682;
+						haze.value=0.788235;
 						night.color=Color(0.03,0.07,0.15,0);
 						shine=0.630849;
 						sky.grad=0.66441;

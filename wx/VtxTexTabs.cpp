@@ -378,12 +378,12 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	PhiBiasSlider=new SliderCtrl(panel,ID_PHI_BIAS_SLDR,"Lat",LABEL1,VALUE2,SLIDER2);
-	PhiBiasSlider->setRange(-1,1);
+	PhiBiasSlider->setRange(-2,2);
 
 	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	HtBiasSlider=new SliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
-	HtBiasSlider->setRange(-1,1);
+	HtBiasSlider->setRange(-2,2);
 	HtBiasSlider->setValue(0.0);
 
 	hline->Add(HtBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -393,12 +393,12 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	BumpBiasSlider=new SliderCtrl(panel,ID_BUMP_BIAS_SLDR,"Bump",LABEL1,VALUE2,SLIDER2);
-	BumpBiasSlider->setRange(-1,1);
+	BumpBiasSlider->setRange(-2,2);
 
 	hline->Add(BumpBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	SlopeBiasSlider=new SliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
-	SlopeBiasSlider->setRange(-1,1);
+	SlopeBiasSlider->setRange(-2,2);
 
 	hline->Add(SlopeBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -828,7 +828,6 @@ void VtxTexTabs::setObjAttributes(){
 		BIT_ON(opts,AEXPR);
 
 	TNinode::optionString(opts_str,opts);
-
 	sprintf(p,"Texture(\"%s\",%s",(const char*)m_name.ToAscii(),opts_str);
 
 	if(opts & SEXPR)

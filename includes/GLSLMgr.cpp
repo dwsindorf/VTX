@@ -192,6 +192,7 @@ void GLSLMgr::makeTexDefsFile(){
 	}
 	fclose(fp);
 
+
 	// make textures.h
 
    	strcpy(path,dir);
@@ -209,6 +210,8 @@ void GLSLMgr::makeTexDefsFile(){
 
 	// make set_tex.vert
 
+	char *swizzle="xyzw";
+
    	strcpy(path,dir);
    	strcat(path,"set_tex.vert");
 	fp=fopen(path,"wb");
@@ -216,16 +219,17 @@ void GLSLMgr::makeTexDefsFile(){
 		cout << "file write error"<< endl;
 	    return;
 	}
+
 	for(int i=0;i<n;i++){
 		fprintf(fp,"#ifdef TX%d\n",i);
 		fprintf(fp,"    CS%d=gl_MultiTexCoord%d.xy;\n",i,i);
 		fprintf(fp,"#endif\n");
 	}
+
 	fclose(fp);
 
 	// make set_attributes.vert
 
-	char *swizzle="xyzw";
 	strcpy(path,dir);
    	strcat(path,"set_attributes.vert");
 	fp=fopen(path,"wb");

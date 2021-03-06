@@ -1062,7 +1062,7 @@ bool Map::setProgram(){
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	vars.newIntVar("tessLevel",tesslevel);
 	vars.newFloatVar("rscale",Rscale);
-
+	vars.newFloatVar("nscale",0.75);
 	vars.setProgram(program);
 	vars.loadVars();
 	TheScene->setProgram();
@@ -1139,7 +1139,6 @@ void Map::render_ids()
 //-------------------------------------------------------------
 void Map::render_shaded()
 {
-
 	GLSLMgr::beginRender();
 	glPushAttrib(GL_CURRENT_BIT);
 
@@ -1211,7 +1210,7 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-
+			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
 		}
@@ -1673,11 +1672,11 @@ void Map::make_visbox()
 
 	    if(idtest && TheScene->viewobj==object){
 	    	if(geometry()){
-				rbounds.zn=0.2*zn;
+				rbounds.zn=0.1*zn;
 				rbounds.zf=1.2*zf;
 	    	}
 	    	else{
-				rbounds.zn=0.5*zn;
+				rbounds.zn=0.1*zn;
 				rbounds.zf=1.2*zf;
 	    	}
 	    }

@@ -95,7 +95,7 @@ Scene() {
 			Color(0.000,0.000,1.000),
 			Color(0.000,0.722,1.000),
 			Color(0.502,1.000,1.000),
-			Color(1.000,0.286,0.000),
+			Color(1.000,0.282,0.000),
 			Color(1.000,0.702,0.200),
 			Color(1.000,1.000,0.400),
 			Color(1.000,1.000,0.702)
@@ -115,7 +115,6 @@ Scene() {
 				ambient=Color(1,1,1,0.13);
 				day=1;
 				diffuse=Color(1,1,1,0.4);
-				fog.color=Color(1,1,1,0.9);
 				fog.max=1200 ft;
 				fog.min=200 ft;
 				fog.value=0.898039;
@@ -136,8 +135,8 @@ Scene() {
 					m1=noise(GRADIENT|NABS|NEG|SQR,8,14,0.2,0.5,2.1);
 					m2=noise(GRADIENT|SQR|RO1,8,14,0.3,0.5,2.1);
 					terrain=fog(2*noise(GRADIENT|SQR|UNS,8,5,0.5))
-							Point(2*m2,0,m1+m2)+
-							Texture("saturn3",BORDER|S|TEX,FHT,1.66555,2,1,-0.11104,1,2,1,0);
+							
+							Texture("saturn3",BORDER|TEX,128,2,1,-0.11104,1,2,1,0,0,1,0,0)+Point(2*m2,0,m1+m2);
 				}
 				Clouds(0.00101) {
 					crot=1;

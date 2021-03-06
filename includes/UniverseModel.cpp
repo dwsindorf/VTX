@@ -107,8 +107,10 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		((System*)child)->origin=Point(f*SRand(),0.01*f*SRand(),0.1*f*SRand());
 		break;
 	case TN_PLANET:
-		((Planetoid*)child)->orbit_radius=psize*(0.1+0.2*SRand());
-		((Planetoid*)child)->orbit_phase=360*Rand();
+		if(!dropping()){
+			((Planetoid*)child)->orbit_radius=psize*(0.1+0.2*SRand());
+			((Planetoid*)child)->orbit_phase=360*Rand();
+		}
 		break;
 	case TN_CORONA:
 		((Corona*)child)->size=psize*6;
@@ -116,11 +118,13 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		((Corona*)child)->ht=((Corona*)child)->size-psize;
 		break;
 	case TN_CLOUDS:
-		((CloudLayer*)child)->size=psize*(1+0.01*(1+Rand()));
+		if(!dropping())
+			((CloudLayer*)child)->size=psize*(1+0.01*(1+Rand()));
 		((CloudLayer*)child)->ht=((CloudLayer*)child)->size-psize;
 		break;
 	case TN_SKY:
-		((Sky*)child)->size=psize*(1+0.02*(1+0.5*Rand()));
+		if(!dropping())
+			((Sky*)child)->size=psize*(1+0.02*(1+0.5*Rand()));
 		((Sky*)child)->ht=((Sky*)child)->size-psize;
 		break;
 	case TN_MOON:
@@ -134,7 +138,7 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		((Ring*)child)->set_geometry();
 		break;
 	}
-	if(child){
+	if(child && !dropping()){
 		if(((Orbital*)child)->isRandom())
 			((Orbital*)child)->rseed=getRandValue();
 	}
@@ -174,13 +178,13 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
 		break;
 	case TN_RING:
-		sprintf(tmp,"Ring(1.5,0.2){Surface{terrain=Texture(\"rings\",S,PHI,1.0,1.7);\n}}\n");
+		sprintf(tmp,"Ring(1.5,0.2){Surface{terrain=Texture(\"rings\",S|TEX,PHI,1.0,1.7);\n}}\n");
 		break;
 	case TN_COMP:
 		sprintf(tmp,"()\n");
 		break;
 	case TN_TEXTURE:
-		sprintf(tmp,"Texture(\"jupiter\",PHI)\n");
+		sprintf(tmp,"Texture(\"jupiter\",TEX,1,2,1,0,1,2,0.5,0)\n");
 		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");
@@ -383,9 +387,10 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			//return getAddList(obj->getParent(),list);
 		}
 		else{
-			if(!obj->hasChild(ID_SKY))
+			if(!obj->hasChild(ID_SKY) || actionmode==DROPPING)
 				list.add(getObjectSymbol(TN_SKY));
-			list.add(getObjectSymbol(TN_CLOUDS));
+			if(!obj->hasChild(TN_CLOUDS) || actionmode==DROPPING)
+				list.add(getObjectSymbol(TN_CLOUDS));
 			list.add(getObjectSymbol(TN_MOON));
 			list.add(getObjectSymbol(TN_RING));
 		}
@@ -398,6 +403,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(getObjectSymbol(TN_CLOUDS));
 		break;
 	case TN_SKY:
+		break;
 	case TN_CLOUDS:
 	case TN_RING:
 		if(obj->collapsed() && obj->getParent())
@@ -443,10 +449,10 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		break;
 
 	case TN_SURFACE:
-		if(actionmode==DROPPING)
-			break;
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
+		if(actionmode==DROPPING)
+			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		//if(!obj->hasChild(ID_POINT))
 			list.add(getObjectSymbol(TN_POINT));
@@ -717,8 +723,8 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
     int branch=node->getFlag(NODE_BRANCH);
 	TreeNode *root=new TreeNode(node);
 	setType(node);
-
-	switch(parent->getFlag(TN_TYPES)){
+	int ptype=parent->getFlag(TN_TYPES);
+	switch(ptype){
 	case TN_DENSITY:
 	case TN_POINT:
 	case TN_COLOR:
@@ -737,14 +743,18 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	    if(!branch)
 			parent=parent->getParent();
 		break;
+	case TN_SKY:
+		//return root;
+		break;
 	case TN_CLOUD:
 		parent=parent->getParent();
 		break;
 	}
 	int ntype=node->getFlag(TN_TYPES);
+	ptype=parent->getFlag(TN_TYPES);
 	switch(ntype){
 	case TN_SURFACE:
-		switch(parent->getFlag(TN_TYPES)){
+		switch(ptype){
 		case TN_CORONA:
 		case TN_SKY:
 			node->setFlag(NODE_HIDE);
@@ -776,6 +786,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		break;
 	case TN_COLOR:
 		root->setName("color");
+
 		break;
 	case TN_TEXTURE:
 		root->setName("texture");
@@ -783,11 +794,11 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 //			node->setFlag(NODE_HIDE);
 		break;
 	case TN_LAYER:
-    	if(parent->node->getFlag(TN_TYPES)!=TN_MAP)
+    	if(ptype!=TN_MAP)
   			parent=parent->getParent();
 		break;
 	}
-
+	ptype=parent->getFlag(TN_TYPES);
 	if(parent && node->getFlag(NODE_HIDE)){
         delete root;
         root=parent;
@@ -807,10 +818,12 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		if(node->getChildren(children)){
 			NodeIF *child;
 			children.ss();
-			while((child=children++)>0)
+			while((child=children++)>0){
 				addToTree(root,child);
+			}
 		}
 	}
+
     return root;
 }
 

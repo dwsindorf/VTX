@@ -29,7 +29,7 @@ extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
 extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double scale);
-//#define DEBUG_OBJS
+#define DEBUG_OBJS
 //#define DEBUG_BASE_OBJS
 
 //#define DEBUG_SAVE  // show name on save
@@ -2694,6 +2694,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("fog_vmax",fog_vmax);
 	vars.newFloatVar("fog_znear",fog_min);
 	vars.newFloatVar("fog_zfar",fog_max);
+	vars.newFloatVar("nscale",shadow_color.alpha());
 
     vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 
@@ -2896,7 +2897,6 @@ void Planetoid::render()
 		moons.ss();
 		while((obj=moons++)>0){
 		    TheScene->pushMatrix();
-		    //cout<< "render moon"<<endl;
 			obj->render();
 		    TheScene->popMatrix();
 		}
@@ -3309,8 +3309,8 @@ int  Shell::scale(double &zn, double &zf)
 			a=sqrt(s*s-r*r);
 		if(size>r)
 			b=sqrt(size*size-r*r);
-		zf=a+b+size*max_height();
-		double zmax=s+size*(1+max_height());
+		zf=a+b+size;
+		double zmax=s+size;
 		zf=zf>zmax?zmax:zf;
 	}
 	//zf*=2;

@@ -49,11 +49,11 @@ vec4 textureTile(int id, in vec2 uv , float mm)
   	tid = i; \
 	coords = COORDS; \
 	scale=tex2d[i].scale; \
-	amplitude = clamp(attrib+tex2d[i].bias,0.0,1.0); \
+	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
 	last_color=color; \
 	alpha = tex2d[i].texamp; \
-	alpha_bias=Tangent.w-logf-colormip; \
+	alpha_bias=Tangent.w-logf-colormip+tex2d[i].bias; \
 	alpha_fade = lerp(alpha_bias,-6.0,1.0,0.0,1.0); \
 	alpha_fade *= lerp(alpha_bias,10,17,1.0,0.0); \
 	dlogf=tex2d[i].dlogf; \
@@ -61,21 +61,21 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	last_bmpht=bmpht; \
 	bump_ampl = tex2d[i].bumpamp; \
     bump_delta = tex2d[i].bump_delta; \
-	bump_bias=tex2d[i].bump_bias; \
+	bump_bias=(bmpht)*tex2d[i].bump_bias; \
 	slope_bias = tex2d[i].slope_bias; \
     phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
     height_bias=HT*tex2d[i].height_bias;\
-    slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w); \
-    env_bias=phi_bias+bmpht*bump_bias+height_bias+slope_bias;\
-    env_bias=clamp(env_bias,-2,2); \
+    slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w-0.5); \
+    env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
+    env_bias=clamp(env_bias,-1,1); \
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias*scale; \
-	    /*alpha_fade *= lerp(alpha_bias,10,19,1.0,0.0);*/\
 	} \
     else { \
         alpha+=env_bias; \
         bump_ampl+=env_bias; \
         amplitude+=env_bias; \
+        amplitude=clamp(amplitude,0,1); \
     }
 
 #define SET_TEX1D(X) \

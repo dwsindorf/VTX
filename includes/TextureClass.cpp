@@ -49,8 +49,8 @@ Texture::Texture(Image *i, int l, TNode *e)
 	bump_active=(options & BUMP)?true:false;
 	hmap_active=(options & HMAP)?true:false;
 	enabled=true;
-	s_data=false;
-	a_data=false;
+	s_data=true;   // FIXME: this fixes texture s_data bug for some reason ??
+	a_data=true;   // - trying this too (originally false) adds space for s in each dnode (more memory allocated)
 	bump_damp=0.0;
 	bump_bias=0;
 	phi_bias=0;
@@ -399,8 +399,8 @@ bool Texture::setProgram(){
 	double tex_bias=t2d()?bias:0;
  	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
-
- 	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
+    double fscale=t1d()?scale:1;
+  	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
 	sprintf(str,"tex2d[%d].bumpamp",tid);  		glUniform1fARB(glGetUniformLocationARB(program,str),bump_ampl);
 	sprintf(str,"tex2d[%d].bump_delta",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),bumpdelta);
@@ -413,10 +413,10 @@ bool Texture::setProgram(){
 	sprintf(str,"tex2d[%d].orders_atten",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_atten);
 	sprintf(str,"tex2d[%d].logf",tid);          glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	sprintf(str,"tex2d[%d].dlogf",tid);         glUniform1fARB(glGetUniformLocationARB(program,str),dlogf);
-	sprintf(str,"tex2d[%d].phi_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),20*phi_bias/scale);
-	sprintf(str,"tex2d[%d].height_bias",tid);   glUniform1fARB(glGetUniformLocationARB(program,str),height_bias/Rscale/scale);
-	sprintf(str,"tex2d[%d].bump_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),bump_bias/scale);
-	sprintf(str,"tex2d[%d].slope_bias",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),slope_bias/scale);
+	sprintf(str,"tex2d[%d].phi_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),20*phi_bias/fscale);
+	sprintf(str,"tex2d[%d].height_bias",tid);   glUniform1fARB(glGetUniformLocationARB(program,str),height_bias/Rscale/fscale);
+	sprintf(str,"tex2d[%d].bump_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),bump_bias/fscale);
+	sprintf(str,"tex2d[%d].slope_bias",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),slope_bias/fscale);
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 

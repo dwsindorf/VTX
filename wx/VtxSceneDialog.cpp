@@ -240,7 +240,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 
 	NodeIF *newobj=0;
 	NodeIF *obj=mgr->getObject();
-	if(expanded)
+	if(expanded  && !empty)
 		obj->set_expanded();
 	else
 		obj->set_collapsed();
@@ -295,6 +295,9 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		break;
 	case TABS_SAVE:
 		saveSelected();
+		break;
+	case TABS_RESORT:
+		cout<<"SORT:"<<endl;
 		break;
 	case TABS_RANDOMIZE:
 		cout<<"RANDOMIZE:"<<endl;
@@ -424,8 +427,8 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 	NodeIF *src=src_node->getObject();
 
 	bool expanded=treepanel->IsExpanded(dstId);
-	//bool empty=!treepanel->ItemHasChildren(dstId);
-	if(expanded)
+	bool empty=!treepanel->ItemHasChildren(dstId);
+	if(expanded  && !empty)
 		dst->set_expanded();
 	else
 		dst->set_collapsed();
@@ -464,7 +467,8 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 			TheScene->regroup();
 	        TheScene->rebuild_all();
 		//}
-		//treepanel->SelectItem(itemId);
+		    rebuildObjectTree();
+
 		selectObject(newobj);
 		setNodeName(sname);
 	}
@@ -507,31 +511,37 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 			TreeNode *data=getData(node);
 			NodeIF *obj=node->getObject();
 			if (addId==first) { // first child > new child or one child
-				if(obj->typeLevel()>newObj->typeLevel()){ // 2nd child < first : insert
+				if(dstObj->typeLevel()>=newObj->typeLevel()){ // 2nd child < first : insert
 					newObj=dstObj->addAfter(0, newObj);
 					tree_node=TheScene->model->addToTree(tnode, 0, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, 0, tree_node);
+					//cout<<"2nd child < first : insert"<<endl;
 				}
 				else{ // add new child after last child with lower level
+					//cout<<"add new child after last child with lower level"<<endl;
+					//cout<<"parent="<<dstObj->typeName()<<" newobj="<<newObj->typeName()<<" childobj="<<obj->typeName()<<endl;
 					newObj=dstObj->addAfter(obj, newObj);
 					tree_node=TheScene->model->addToTree(tnode, data, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, addId, tree_node);
 				}
 			} else { // insert before first child with a higher level
+				cout<<"insert before first child with a higher level"<<endl;
 				newObj=dstObj->addAfter(obj, newObj);
 				tree_node=TheScene->model->addToTree(tnode, data, newObj);
 				TheScene->setPrototype(dstObj, newObj);
 				addToTree(dstId, addId, tree_node);
 			}
 		} else { // no previous children: insert as first child
+			//cout<<"no previous children: insert as first child"<<endl;
 			newObj=dstObj->addChild(newObj);
 			tree_node=TheScene->model->addToTree(tnode, newObj);
 			TheScene->setPrototype(dstObj, newObj);
 			addToTree(dstId, tree_node);
 		}
 	} else {
+		//cout<<"insert new child in parent branch after the selected child"<<endl;
 		// insert new child in parent branch after the selected child,
 		// usually a sibling of the same type (e.g. texture, layer)
 		wxTreeItemId pid=treepanel->GetItemParent(dstId);
@@ -707,6 +717,8 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     setTabs(type);
 }
 
+//#define DEBUG_TREE
+
 //-------------------------------------------------------------
 // VtxSceneDialog::rebuildObjectTree()
 // - regenerate the tree widget
@@ -819,7 +831,7 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 //-------------------------------------------------------------
 // VtxSceneDialog::showObjectTree() recursive tree update
 //-------------------------------------------------------------
-//#define PRINT_TREE
+#define PRINT_TREE
 void VtxSceneDialog::showObjectTree(){
 	showObjectTree(treepanel->GetRootItem(),0);
 }
@@ -935,6 +947,8 @@ wxMenu *VtxSceneDialog::getOpenMenu(wxMenu &menu,NodeIF *obj){
 	menu.Append(TABS_SAVE,wxT("Save.."));
 	menu.AppendSeparator();
 	menu.Append(TABS_RANDOMIZE, wxT("Randomize"));
+	//menu.Append(TABS_RESORT, wxT("Resort"));
+
 	LinkedList<ModelSym*>flist;
 	int type=obj->getFlag(TN_TYPES);
 	TheScene->model->getFileList(type,flist);
