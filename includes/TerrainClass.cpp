@@ -1493,7 +1493,7 @@ void TNsnow::init()
 		int opts=BORDER|CLAMP|TEX;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
-	    texture->scale=exp2(18);
+	    texture->scale=exp2(17);
 	    texture->bump_active=true;
 	    texture->s_data=true;
 	}
@@ -1530,10 +1530,10 @@ bool TNsnow::initProgram(){
     texture->bias=bias+2*slope-ht;
 
 	sprintf(defs+strlen(defs),"#define X%d",id);
-	sprintf(defs+strlen(defs)," %g*HT",2*ht);
+	sprintf(defs+strlen(defs)," %g*HT",ht/Rscale);
 	if(bmpht>0)
 		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
-	//cout << "TNsnow :"<<defs << endl;
+	cout << "TNsnow :"<<defs << endl;
 	sprintf(defs+strlen(defs),"\n");
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);

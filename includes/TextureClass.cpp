@@ -399,7 +399,7 @@ bool Texture::setProgram(){
 	double tex_bias=t2d()?bias:0;
  	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
-    double fscale=t1d()?scale:1;
+    double fscale=1;//t1d()?scale:1;
   	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
 	sprintf(str,"tex2d[%d].bumpamp",tid);  		glUniform1fARB(glGetUniformLocationARB(program,str),bump_ampl);
