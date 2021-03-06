@@ -22,7 +22,7 @@ uniform vec4 Sky;
 
 uniform vec3 pv;
 varying vec4 EyeDirection;
-varying vec3 Normal;
+varying vec4 Normal;
 uniform bool fbo_read;
 uniform bool fbo_write;
 

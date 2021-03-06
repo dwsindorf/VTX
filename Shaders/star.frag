@@ -11,6 +11,8 @@ uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
 
 varying vec4 EyeDirection;
+varying vec4 Normal;
+
 
 //########## 3D noise section #########################
 

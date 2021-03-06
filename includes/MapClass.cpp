@@ -1676,7 +1676,7 @@ void Map::make_visbox()
 				rbounds.zf=1.2*zf;
 	    	}
 	    	else{
-				rbounds.zn=0.1*zn;
+				rbounds.zn=0.5*zn;
 				rbounds.zf=1.2*zf;
 	    	}
 	    }

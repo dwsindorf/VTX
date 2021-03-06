@@ -29,7 +29,7 @@ extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
 extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double scale);
-#define DEBUG_OBJS
+//#define DEBUG_OBJS
 //#define DEBUG_BASE_OBJS
 
 //#define DEBUG_SAVE  // show name on save
