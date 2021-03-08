@@ -52,6 +52,9 @@ Scene() {
 	View{
 		height=7629.65 ft;
 	}
+	View{
+		height=7545.74 ft;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -101,7 +104,7 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
+					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
@@ -117,10 +120,10 @@ Scene() {
 						Color(1,1,1));
 					Surface{
 						terrain=fog(noise(9.4,3.7,-1,1,2,1,1,0,0.6))
-								water(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,1,1,0,0))
+								water(noise(GRADIENT|NABS|SCALE,20.4,3.9,1,0.5,2.08,1,1,0,0))
 								
-								Texture("yellow-black",TEX,2,1.27776,1,-0.11104,1,2,1,0,0,-1,-0.47224,-1)+
-								Texture("alpine",NORM|TEX,7585.35,0.88888,1,0.55552,1,3,1,0,0,1,-0.55552,1.77776)+
+								Texture("yellow-black",BORDER|TEX,8.97866,1.11112,1,-0.55552,1,2,1,0,0,-1,-0.47224,-1)+
+								Texture("alpine",NORM|TEX,7585.35,1.69444,1,0.55552,1,3,1,0,0,1,0.22224,1.77776)+
 								Texture("Shist1",A|BUMP|TEX,HT+0.5,93.5068,2,1,0,8.1112,2.1852,0.9074,0)+
 								Texture("DirtPebbles",A|BUMP|TEX,HT+0.4,3992.29,2,1,0,8.1112,2.1852,0.9074,0)+
 								Texture("drywash",A|BUMP|NORM|RANDOMIZE|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,6.4,6,1,1,1.91,0.01,1,0,0),1-HT,128,1,2,0,6.88672,2,1,0,0,0,0,0)+

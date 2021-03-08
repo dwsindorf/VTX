@@ -20,6 +20,8 @@ struct tex2d_info {
 	float height_bias;   // height bias
 	float bump_bias;     // bump bias
 	float slope_bias; 	 // slope bias
+	float near_bias; 	 // low frequency bias bias
+	float far_bias; 	 // high frequency bias bias	
 	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture
 };
@@ -53,20 +55,21 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	logf=tex2d[i].logf; \
 	last_color=color; \
 	alpha = tex2d[i].texamp; \
-	alpha_bias=Tangent.w-logf-colormip+tex2d[i].bias; \
-	alpha_fade = lerp(alpha_bias,-6.0,1.0,0.0,1.0); \
-	alpha_fade *= lerp(alpha_bias,10,17,1.0,0.0); \
+	alpha_bias=Tangent.w-logf-colormip+tex2d[i].bias; /* larger with higher frequencies */  \
+	alpha_fade = lerp(alpha_bias,-6.0,1.0,tex2d[i].far_bias,1.0); /* fade high frequencies with distance */ \
+	alpha_fade *= lerp(alpha_bias,10,17,1.0,tex2d[i].near_bias); /* fade low frequencies with closeness */ \
 	dlogf=tex2d[i].dlogf; \
 	last_bump=bump; \
 	last_bmpht=bmpht; \
 	bump_ampl = tex2d[i].bumpamp; \
     bump_delta = tex2d[i].bump_delta; \
-	bump_bias=(bmpht)*tex2d[i].bump_bias; \
+	bump_bias=bmpht*tex2d[i].bump_bias; \
 	slope_bias = tex2d[i].slope_bias; \
     phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
     height_bias=HT*tex2d[i].height_bias;\
     slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w-0.5); \
     env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
+    env_bias*=scale; \
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias; \
 	} \

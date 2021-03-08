@@ -744,6 +744,11 @@ void TNtexture::eval()
 	double hmval=0,hmbias=0;
 	double pbias=0,hbias=0,bbias=0,sbias=0;
 
+	extern double Phi,Theta;
+	double phi = Phi / 180;
+	double theta = Theta / 180.0 - 1;
+
+
 	int i = 0;
 
 	if(opts & SEXPR){
@@ -758,7 +763,9 @@ void TNtexture::eval()
 		texture->a_data=true;
 		s=arg[i++];
 	}
+    if(texture->t2d()){
 
+    }
 	if(i<n)
 		f=arg[i++];
 	if(i<n)
@@ -802,6 +809,7 @@ void TNtexture::eval()
 	texture->scale=f;
 	texture->s=s;
 	texture->t=t;
+
 	if(bumpActive()){
 	    texture->bumpamp=a;
 	    texture->texamp=b;
@@ -825,11 +833,9 @@ void TNtexture::eval()
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
-		extern double Phi,Theta;
-		double phi = Phi / 180;
-		double theta = Theta / 180.0 - 1;
  		texture->s+=phi;
 		texture->t+=theta;
+
 		texture->svalue=0;
 		texture->tvalue=0;
 
@@ -852,7 +858,8 @@ void TNtexture::eval()
 		S0.set_pvalid();
 		S0.clr_svalid();
 	}
-   //cout<<"TNtexture::eval() "<<s<<endl;
+	 //  cout<<"TNtexture::eval() "<<texture->s<<endl;
+
 }
 
 #define SEXPR 1

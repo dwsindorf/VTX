@@ -2221,18 +2221,24 @@ void MapNode::Svertex(MapData*dn) {
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
-				tx->texCoords(GL_TEXTURE0 + tx->cid);
+				//tx->texCoords(GL_TEXTURE0 + tx->cid);
 			} else if(tx->cid>=0){
 				if (tx->s_data)
 					s = d->texture(index);
+				else
+					s=0;
 				tx->s = s;
-				tx->texCoords(GL_TEXTURE0 + tx->cid);
+
+				//tx->texCoords(GL_TEXTURE0 + tx->cid);
 				if(tx->a_data){
 					t = d->texture(index);
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 			}
+			if(tx->cid>=0)
+				tx->texCoords(GL_TEXTURE0 + tx->cid);
+
 			texid++;
 		}
 		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0)

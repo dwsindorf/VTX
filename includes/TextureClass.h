@@ -88,6 +88,10 @@ public:
 							  else
 								 return GL_LINEAR_MIPMAP_LINEAR;
 							}
+    bool nearest()          { return intrp()==GL_NEAREST  ? true:false;}
+    bool linear()           { return intrp()==GL_LINEAR ? true:false;}
+    bool mipmap()              { return intrp()== GL_LINEAR_MIPMAP_LINEAR? true:false;}
+
 	bool randomized()        { return (options & RANDOMIZE)?true:false;}
 	int wrap()				{ return options & BORDER ? GL_CLAMP_TO_EDGE:GL_REPEAT;}
 	int t1d()				{ return (width()==1 || height()==1)?1:0;}
