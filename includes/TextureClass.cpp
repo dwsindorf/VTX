@@ -117,8 +117,7 @@ double Texture::getTexAmpl(int mode){
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
 	if(t1d()){
-		//x=s*sc+bias;
-		x=(s+bias)*sc;
+		x=s*sc+bias;
 		y=0;
 		return;
 	}

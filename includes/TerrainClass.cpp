@@ -1490,12 +1490,12 @@ void TNsnow::init()
 		}
 		if(!image)
 			return;
-		int opts=BORDER|CLAMP|TEX;
+		int opts=BORDER|BUMP|TEX|LINEAR;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
-	    texture->scale=exp2(17);
+	    texture->scale=exp2(4);
 	    texture->bump_active=true;
-	    texture->s_data=true;
+	    //texture->s_data=true;
 	}
 	if(right)
     	right->init();
@@ -1527,13 +1527,19 @@ bool TNsnow::initProgram(){
 	double depth=args[4];
 	double bmpht=args[5];
     texture->bump_damp=depth;
-    texture->bias=bias+2*slope-ht;
+    texture->bias=bias;//+2*slope-ht;
 
-	sprintf(defs+strlen(defs),"#define X%d",id);
-	sprintf(defs+strlen(defs)," %g*HT",ht/Rscale);
-	if(bmpht>0)
-		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
-	cout << "TNsnow :"<<defs << endl;
+    texture->bump_bias=bmpht;
+    texture->height_bias=ht;
+    texture->slope_bias=slope;
+    texture->phi_bias=lat;
+    texture->texamp=1;
+
+//	sprintf(defs+strlen(defs),"#define X%d",id);
+//	sprintf(defs+strlen(defs)," %g*HT",ht/Rscale);
+//	if(bmpht>0)
+//		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
+//	cout << "TNsnow :"<<defs << endl;
 	sprintf(defs+strlen(defs),"\n");
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
@@ -1564,17 +1570,17 @@ void TNsnow::eval()
 	}
 
 	if(!CurrentScope->eval_mode()){
-  		TNarg *arg=(TNarg*)left;
-  		double args[6]={0};
-
-		int n=0;
-		n=getargs(arg,args,6);
-		double slope=args[3];
-		double lat=args[2];
-		double amp=-10*slope*zslope();
-		double f=fabs(Phi/180);
-		amp+=20*lat*f*f;
-		texture->s=amp;
+//  		TNarg *arg=(TNarg*)left;
+//  		double args[6]={0};
+//
+//		int n=0;
+//		n=getargs(arg,args,6);
+//		double slope=args[3];
+//		double lat=args[2];
+//		double amp=-10*slope*zslope();
+//		double f=fabs(Phi/180);
+//		amp+=20*lat*f*f;
+//		texture->s=amp;
 
 		S0.clr_svalid();
 	}

@@ -753,7 +753,7 @@ void TNtexture::eval()
 
 	if(opts & SEXPR){
 		texture->s_data=true;
-		s=arg[i++];
+		s=arg[i++]/texture->scale;
 		if(opts & AEXPR){
 			texture->a_data=true;
 			t=arg[i++];
@@ -763,9 +763,6 @@ void TNtexture::eval()
 		texture->a_data=true;
 		s=arg[i++];
 	}
-    if(texture->t2d()){
-
-    }
 	if(i<n)
 		f=arg[i++];
 	if(i<n)
@@ -931,8 +928,8 @@ bool TNtexture::initProgram(){
 			cmode=exprString(arg,nstr);
 			if(tex_noise)
 				sprintf(defs+strlen(defs),"#define N%d %s\n",id,nstr);
-			else if(cmode&SEXPR)
-				sprintf(defs+strlen(defs),"#define X%d %s\n ",id,nstr);
+			//else if(cmode&SEXPR)
+			//	sprintf(defs+strlen(defs),"#define X%d %s\n ",id,nstr);
 			if(texture->a_data)
 				arg=arg->next();
 		}

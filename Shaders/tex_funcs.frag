@@ -69,7 +69,6 @@ vec4 textureTile(int id, in vec2 uv , float mm)
     height_bias=HT*tex2d[i].height_bias;\
     slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w-0.5); \
     env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
-    env_bias*=scale; \
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias; \
 	} \
@@ -80,8 +79,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
         amplitude=clamp(amplitude,0,1); \
     }
 
-#define SET_TEX1D(X) \
-	coords.x += (X);  // optional offset
+//#define SET_TEX1D(X) \
+//	coords.x += (X)/scale;  // optional offset
 
 #define BGN_ORDERS \
 	tex_orders=min(tex2d[tid].orders, Tangent.w-logf-freqmip+0.5); \

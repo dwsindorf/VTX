@@ -98,11 +98,11 @@ void VtxSnowTabs::AddControlsTab(wxWindow *panel){
     hline = new wxBoxSizer(wxHORIZONTAL);
 
     LatSlider=new SliderCtrl(panel,ID_LAT_SLDR,"Lat",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);
-    LatSlider->setRange(0.0,1.0);
+    LatSlider->setRange(-1.0,1.0);
     hline->Add(LatSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
     SlopeSlider=new SliderCtrl(panel,ID_SLOPE_SLDR,"Slope",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);
-    SlopeSlider->setRange(0,1);
+    SlopeSlider->setRange(-1,1);
     hline->Add(SlopeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
     hline->SetMinSize(wxSize(LINE_WIDTH,-1));
@@ -111,11 +111,11 @@ void VtxSnowTabs::AddControlsTab(wxWindow *panel){
     hline = new wxBoxSizer(wxHORIZONTAL);
 
     HeightSlider=new SliderCtrl(panel,ID_HEIGHT_SLDR,"Ht",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);
-    HeightSlider->setRange(0.0,1.0);
+    HeightSlider->setRange(-4,4.0);
     hline->Add(HeightSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
     BumpSlider=new SliderCtrl(panel,ID_BUMP_SLDR,"Bump",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);
-    BumpSlider->setRange(0.0,1.0);
+    BumpSlider->setRange(-1,1.0);
     hline->Add(BumpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
     
     hline->SetMinSize(wxSize(LINE_WIDTH,-1));

@@ -171,9 +171,9 @@ void GLSLMgr::makeTexDefsFile(){
 		fprintf(fp,"#ifdef N%d\n",i);
 		fprintf(fp,"    SET_NOISE(N%d)\n",i);
 		fprintf(fp,"#endif\n");
-		fprintf(fp,"#ifdef X%d\n",i);
-		fprintf(fp,"    SET_TEX1D(X%d)\n",i);
-		fprintf(fp,"#endif\n");
+//		fprintf(fp,"#ifdef X%d\n",i);
+//		fprintf(fp,"    SET_TEX1D(X%d)\n",i);
+//		fprintf(fp,"#endif\n");
 		fprintf(fp,"#ifdef M%d\n",i);
 		fprintf(fp,"    BGN_ORDERS\n");
 		fprintf(fp,"#endif\n");

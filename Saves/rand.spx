@@ -69,7 +69,7 @@ Scene() {
 					Surface{
 						terrain=Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))+
 								Texture("saturn",BUMP|S|TEX,HT,3.4295,1,2,0,1,2,1,0,0,0,0,0)+
-								Texture("alpine",S|TEX,0.002*srand()*noise(GRADIENT,5.5,5,1,0.5,2,1,1,0,0),78.3304,2,1,-1.55552,1,2,1,0,0,1,0,0);
+								Texture("alpine",S|TEX,0.1*srand()*noise(GRADIENT,5.5,5,1,0.5,2,1,1,0,0),78.3304,2,1,-1.55552,1,2,1,0,0,1,0,0);
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
