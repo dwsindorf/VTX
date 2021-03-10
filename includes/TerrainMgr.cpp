@@ -206,8 +206,8 @@ void TNvar::valueString(char *s)
         	if(n)
             	n->valueString(s);
         }
-		//else
-		//	sprintf(s+strlen(s),_name);
+		else
+			sprintf(s+strlen(s),_name);
     }
     else{
 		if(right){
@@ -216,8 +216,8 @@ void TNvar::valueString(char *s)
 		    else
 			    right->valueString(s);
 		}
-		//else
-		//	sprintf(s+strlen(s),_name);
+		else
+			sprintf(s+strlen(s),_name);
 	}
 	setEnd(s);
 }

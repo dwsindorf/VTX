@@ -1534,8 +1534,6 @@ bool TNsnow::initProgram(){
     texture->phi_bias=lat;
     texture->texamp=1;
 
-	//sprintf(defs+strlen(defs),"\n");
-
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);
 	return true;
