@@ -392,7 +392,7 @@ bool Texture::setProgram(){
 			minscale=minscale<noise->scale?minscale:noise->scale;
 		}
 	}
-cout<<"bias:"<<bias<<" scale:"<<scale<<endl;
+
 	// adjust bump delta using lowest order scale
 	double bumpdelta=pow(10,-(0.25*minscale+3.5-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
@@ -425,6 +425,7 @@ cout<<"bias:"<<bias<<" scale:"<<scale<<endl;
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 
+    //cout<<"t1d:"<<tid<<" 1D:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;
 //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);
 //    double zf=log2(1.5*dfactor/TheScene->zfar);

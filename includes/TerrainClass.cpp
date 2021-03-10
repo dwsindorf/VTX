@@ -1469,6 +1469,9 @@ TNsnow::~TNsnow()
 void TNsnow::init()
 {
 #define NALPHA 4
+	if(right)
+    	right->init();
+
 	if(!texture){
 		if(!image){
 			image=images.load("snow",BMP|JPG);
@@ -1485,27 +1488,23 @@ void TNsnow::init()
 				images.save("snow",image);
 				cout <<"building Snow Image"<<endl;
 			}
-			else
+			else{
 				cout <<"loading Snow Image"<<endl;
+			}
+			image->set_accessed(true);
 		}
 		if(!image)
 			return;
-		int opts=BORDER|BUMP|TEX|LINEAR;
+		int opts=BORDER|BUMP|TEX|INTERP;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
-	    texture->scale=exp2(4);
-	    texture->bump_active=true;
-	    //texture->s_data=true;
+	    texture->scale=0.5;
 	}
-	if(right)
-    	right->init();
 }
 
 //-------------------------------------------------------------
 // TNsnow::initProgram() set shader #defines for texture
 //-------------------------------------------------------------
-//+Texture("snow",BORDER|BUMP|LINEAR|S,BMPHT+HT-5*SLOPE+10*LAT*LAT,1,0,1,-1.77776,1,1.73848,1,0.9,0,0,0,-0.07408)
-
 bool TNsnow::initProgram(){
 	char defs[1024];
     TNarg *arg=(TNarg*)left;
@@ -1514,7 +1513,7 @@ bool TNsnow::initProgram(){
 
 	if(!isEnabled() || !Render.textures())
 		return false;
-	int id=TheMap->tp->textures.size-1;
+	int id=texture->tid;
 
 	sprintf(defs,"#define TX%d\n",id);
 
@@ -1527,7 +1526,7 @@ bool TNsnow::initProgram(){
 	double depth=args[4];
 	double bmpht=args[5];
     texture->bump_damp=depth;
-    texture->bias=bias;//+2*slope-ht;
+    texture->bias=bias;
 
     texture->bump_bias=bmpht;
     texture->height_bias=ht;
@@ -1535,12 +1534,7 @@ bool TNsnow::initProgram(){
     texture->phi_bias=lat;
     texture->texamp=1;
 
-//	sprintf(defs+strlen(defs),"#define X%d",id);
-//	sprintf(defs+strlen(defs)," %g*HT",ht/Rscale);
-//	if(bmpht>0)
-//		sprintf(defs+strlen(defs),"+%g*BMPHT",bmpht);
-//	cout << "TNsnow :"<<defs << endl;
-	sprintf(defs+strlen(defs),"\n");
+	//sprintf(defs+strlen(defs),"\n");
 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);
@@ -1552,41 +1546,21 @@ bool TNsnow::initProgram(){
 //-------------------------------------------------------------
 void TNsnow::eval()
 {
-	if(!texture || !right)
+	if(!right)
 		return;
+	right->eval();
+
+ 	if(!texture )
+		return;
+	SINIT;
+	S0.set_flag(TEXFLAG);
+	if(CurrentScope->rpass())
+		Td.add_texture(texture);
+
 	if(!isEnabled()||!Render.textures())
 		texture->enabled=false;
 	else
 		texture->enabled=true;
-	if(CurrentScope->rpass()){
-		right->eval();
-		Td.add_texture(texture);
-		return;
-	}
-
-	if(CurrentScope->zpass()){
-		right->eval();
-		return;
-	}
-
-	if(!CurrentScope->eval_mode()){
-//  		TNarg *arg=(TNarg*)left;
-//  		double args[6]={0};
-//
-//		int n=0;
-//		n=getargs(arg,args,6);
-//		double slope=args[3];
-//		double lat=args[2];
-//		double amp=-10*slope*zslope();
-//		double f=fabs(Phi/180);
-//		amp+=20*lat*f*f;
-//		texture->s=amp;
-
-		S0.clr_svalid();
-	}
-	else {
-		right->eval();
-	}
 }
 
 //************************************************************

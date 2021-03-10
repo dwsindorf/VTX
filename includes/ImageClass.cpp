@@ -797,8 +797,8 @@ void TNtexture::eval()
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
-	double c1=0.5/texture->width();
-	double c2=1-c1;
+//	double c1=0.5/texture->width();
+//	double c2=1-c1;
 //	if(opts & CLAMP){
 //		if(s>c2) s=c2;
 //		if(s<c1) s=c1;
@@ -827,6 +827,9 @@ void TNtexture::eval()
     texture->height_bias=hbias;
     texture->bump_bias=bbias;
     texture->slope_bias=sbias;
+
+    //if(texture->t1d())
+    //cout<<"offset:"<<bias<<" p:"<<pbias<<" h:"<<hbias<<" b:"<<bbias<<" s:"<<sbias<<endl;
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
