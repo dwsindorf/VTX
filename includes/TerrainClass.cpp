@@ -1546,19 +1546,21 @@ void TNsnow::eval()
 {
 	if(!right)
 		return;
-	right->eval();
+	// note: when called from mapnode constructor evaluate texture only
+    if(!CurrentScope->tpass())
+    	right->eval(); // otherwise process downstream stack
 
  	if(!texture )
 		return;
-	SINIT;
-	S0.set_flag(TEXFLAG);
-	if(CurrentScope->rpass())
-		Td.add_texture(texture);
 
 	if(!isEnabled()||!Render.textures())
 		texture->enabled=false;
 	else
 		texture->enabled=true;
+
+	if(texture->enabled && CurrentScope->rpass()){
+		Td.add_texture(texture);
+	}
 }
 
 //************************************************************

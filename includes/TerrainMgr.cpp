@@ -1387,10 +1387,7 @@ void TerrainMgr::eval()
 {
 	TNvar *var;
 	CurrentScope=this;
-	if(twopass())
-		set_zpass();
-	else
-		set_zcpass();
+	set_zcpass();
 
 	exprs.ss();
 
@@ -1403,22 +1400,11 @@ void TerrainMgr::eval()
 	if(!root || !root->right)
 	    return;
 	root->right->eval();
-	//Td.p.z+=Td.texht;
-	//S0.p.z+=Td.texht;
+
 	Height=S0.p.z;
 	PX=S0.p.x;
 	PY=S0.p.y;
 
-	if(twopass()){
-		set_cpass();
-		exprs.ss();
-		while((var=(TNvar*)exprs++)>0){
-		    if(var->ht())
-				var->eval();
-		}
-		Td.reset();
-		root->right->eval();
-	}
 }
 
 //-------------------------------------------------------------
@@ -1471,8 +1457,6 @@ void TerrainMgr::init()
 	set_init_mode(1);
 	set_first(1);
 
-	int htflag=0;
-
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
 
@@ -1480,22 +1464,10 @@ void TerrainMgr::init()
 	TheNoise.set(MapPt);
 
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
-		Td.init();
-		var->init();
-		if(Td.get_flag(HT2PASS)){
-		    var->set_ht(1);
-		    htflag=1;
-		}
-	}
 	Td.init();
 
 	if(root)
 		root->init();
-
-	if(Td.get_flag(HT2PASS))
-	   htflag=1;
-   // set_twopass(htflag);
 
 	set_init_mode(0);
 	set_eval_mode(1);

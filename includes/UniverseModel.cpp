@@ -172,7 +172,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"Moon(0.01,0.05){day=30;year=30;Surface{}}\n");
 		break;
 	case TN_SKY:
-		sprintf(tmp,"Sky(0.1){color=Color(0,0.9,0.9);density=0.2;}\n");
+		sprintf(tmp,"Sky(0.1){color=Color(0,0.9,1.0);density=0.2;}\n");
 		break;
 	case TN_CLOUDS:
 		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
@@ -202,7 +202,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"fog(0.0)\n");
 		break;
 	case TN_SNOW:
-		sprintf(tmp,"snow(1,0.7,1,1,1)\n");
+		sprintf(tmp,"snow(0.2,0.7,1,1,1)\n");
 		break;
 	case TN_CLOUD:
 		sprintf(tmp,"clouds(0.1,-0.1,0)\n");
@@ -454,8 +454,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(actionmode==DROPPING)
 			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
-		//if(!obj->hasChild(ID_POINT))
-			list.add(getObjectSymbol(TN_POINT));
+		list.add(getObjectSymbol(TN_POINT));
 		if(!obj->hasChild(ID_COLOR))
 			list.add(getObjectSymbol(TN_COLOR));
 		if(!obj->hasChild(ID_GLOSS))
@@ -473,17 +472,18 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_MAP));
 		list.add(getObjectSymbol(TN_ROCKS));
 		break;
-	case TN_TEXTURE:
-		list.add(getObjectSymbol(TN_TEXTURE));
-		if(actionmode==DROPPING)
-			list.add(getObjectSymbol(TN_POINT));
-		break;
 	case TN_SNOW:
-		if(actionmode==DROPPING)
-			list.add(getObjectSymbol(TN_TEXTURE));
+	case TN_TEXTURE:
 	case TN_POINT:
-		if(actionmode==DROPPING)
-			list.add(getObjectSymbol(TN_TEXTURE));
+	case TN_COLOR:
+	case TN_GLOSS:
+		if(actionmode!=DROPPING)
+			break;
+		list.add(getObjectSymbol(TN_TEXTURE));
+		list.add(getObjectSymbol(TN_POINT));
+		list.add(getObjectSymbol(TN_COLOR));
+		list.add(getObjectSymbol(TN_GLOSS));
+
 		break;
 
 	}
@@ -786,7 +786,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		break;
 	case TN_COLOR:
 		root->setName("color");
-
 		break;
 	case TN_TEXTURE:
 		root->setName("texture");

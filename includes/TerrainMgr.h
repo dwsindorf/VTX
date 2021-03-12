@@ -28,7 +28,7 @@ enum scope_codes{
 	ID_MGR  	    = 0x00001000,
 	ID_TMGR  	    = 0x00002000,
 	ID_EXPMGR  	    = ID_SCOPE | ID_MGR,
-	ID_TNMGR  		= ID_LEVEL1|ID_SCOPE | ID_MGR  | ID_TMGR,
+	ID_TNMGR  		= ID_LEVEL9|ID_SCOPE | ID_MGR  | ID_TMGR,
 	ID_VOLMGR  		= ID_SCOPE | ID_MGR  | ID_TMGR | 0x00000001
 };
 
@@ -132,7 +132,7 @@ typedef struct scopedata {
 	unsigned int  preview  : 1;	// scope mode
 	unsigned int  changed  : 1;	// scope mode
 	unsigned int  twopass  : 1;	// height pass needed
-	unsigned int  htpass   : 2;	// height pass
+	unsigned int  htpass   : 3;	// height pass
 } scopedata;
 
 
@@ -165,6 +165,7 @@ public:
 	void set_zpass()	        { flags.htpass=1;}
 	void set_cpass()	        { flags.htpass=2;}
 	void set_rpass()	        { flags.htpass=3;}
+	void set_tpass()	        { flags.htpass=4;}
 
 	int passmode()				{ return flags.htpass;}
 	void set_passmode(int m)     { flags.htpass=m;}
@@ -172,6 +173,7 @@ public:
 	int zpass()				    { return flags.htpass==1;}
 	int cpass()				    { return flags.htpass==2;}
 	int rpass()				    { return flags.htpass==3;}
+	int tpass()				    { return flags.htpass==4;}
 
 	void set_init_mode(int c)	{ flags.init=c;}
 	int init_mode()			    { return flags.init;}

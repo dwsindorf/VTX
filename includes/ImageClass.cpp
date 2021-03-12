@@ -714,7 +714,6 @@ void TNtexture::eval()
 		texture->enabled=false;
 		return;
 	}
-    int pass=CurrentScope->passmode();
 	if((!texActive() || !Render.textures())&&(!bumpActive() || !Render.bumps())&&(!hmapActive() || !Render.hmaps())){
 		S0.clr_svalid();
 		texture->enabled=false;
@@ -724,7 +723,6 @@ void TNtexture::eval()
 	if(CurrentScope->rpass() && (bumpActive()||texActive())){
 		int nid=TerrainData::tp->noise.size;
 		Td.add_texture(texture);
-
 		if(right)
 			right->eval();
 		if(TerrainData::tp->noise.size==nid)

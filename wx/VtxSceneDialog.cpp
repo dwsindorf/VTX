@@ -516,11 +516,11 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 					tree_node=TheScene->model->addToTree(tnode, 0, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, 0, tree_node);
-					//cout<<"2nd child < first : insert"<<endl;
+					cout<<"2nd child < first : insert"<<endl;
 				}
 				else{ // add new child after last child with lower level
-					//cout<<"add new child after last child with lower level"<<endl;
-					//cout<<"parent="<<dstObj->typeName()<<" newobj="<<newObj->typeName()<<" childobj="<<obj->typeName()<<endl;
+					cout<<"add new child after last child with lower level"<<endl;
+					cout<<"parent="<<dstObj->typeName()<<" newobj="<<newObj->typeName()<<" childobj="<<obj->typeName()<<endl;
 					newObj=dstObj->addAfter(obj, newObj);
 					tree_node=TheScene->model->addToTree(tnode, data, newObj);
 					TheScene->setPrototype(dstObj, newObj);

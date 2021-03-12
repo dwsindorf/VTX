@@ -164,7 +164,7 @@ void VtxSnowTabs::setObjAttributes(){
 	str+=BumpSlider->getText();
 	str+=")\n";
 
-	tnode->setExpr(str.ToAscii());
+	tnode->setExpr((char*)str.ToAscii());
 	if(tnode->getExprNode()==0)
 		update_needed=true;
 	else{

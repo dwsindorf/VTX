@@ -170,7 +170,7 @@ TerrainProperties *TerrainData::add_id()
 		tp->color=c;
 	}
 	set_id(tids++);
-	tp=new TerrainProperties();
+	tp=new TerrainProperties(id());
 	tp->set_type(tids-1);
 	properties.add(tp);
 	albedo=1;
@@ -259,8 +259,9 @@ void TerrainData::end()
 int TerrainProperties::nid=0;
 int TerrainProperties::tid=0;
 
-TerrainProperties::TerrainProperties()
+TerrainProperties::TerrainProperties(int t)
 {
+	id=t;
 	albedo=shine=1;
 	glow=Color(1,1,1,0);
 	color=Color(1,1,1,0);

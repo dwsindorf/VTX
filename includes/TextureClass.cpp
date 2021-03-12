@@ -4,6 +4,8 @@
 #include "ImageMgr.h"
 #include "NoiseClass.h"
 #include "TerrainNode.h"
+#include "TerrainData.h"
+
 #include "TerrainClass.h"
 #include "GLSLMgr.h"
 #include "GLSLVars.h"
@@ -13,6 +15,7 @@
 #include <math.h>
 
 extern double Theta, Phi,Rscale;
+static TerrainData Td;
 
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
@@ -57,6 +60,8 @@ Texture::Texture(Image *i, int l, TNode *e)
 	height_bias=0;
 	slope_bias=0;
 	tid=0;
+	s=0;
+	t=0;
 }
 
 //-------------------------------------------------------------
@@ -168,7 +173,10 @@ void Texture::bumpCoords(int tchnl,double x, double y)
 //-------------------------------------------------------------
 void Texture::eval()
 {
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_tpass();
 	expr->eval();
+	CurrentScope->set_passmode(mode);
 }
 
 //-------------------------------------------------------------
@@ -425,7 +433,7 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 
-    //cout<<"t1d:"<<tid<<" 1D:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;
+    cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;
 //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);
 //    double zf=log2(1.5*dfactor/TheScene->zfar);

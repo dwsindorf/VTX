@@ -1176,13 +1176,14 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-#ifdef DEBUG_RENDER
-		cout <<"Map::render_shaded - LAND "<<object->name()<<endl;
-#endif
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
 			Td.tp=tp;
+#ifdef DEBUG_RENDER
+		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
+#endif
+
 			if(!visid(tid) || !tp)
 				continue;
 			total_tpasses++;

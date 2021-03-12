@@ -3,6 +3,7 @@ Scene() {
 		view=GLOBAL;
 		origin=Point(0 ,0,0);
 		time=10000;
+		fov=35;
 		speed=1000 ly;
 	}
 	Universe {
@@ -144,16 +145,16 @@ Scene() {
 			color.middle=Color(1,0,0);
 			color.outer=Color(0,1,1);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-			color.expr=0.5*DENSITY+noise(GRADIENT|NABS,6.4,6.9,-0.61,1,2,0,0.09,0,1.5);
+			color.expr=DENSITY+0.1*noise(GRADIENT|NABS|SQR|UNS,3,2,1,0.5,2,1,1,0,0);
 			color.list=Colors(
 				Color(0.165,0.000,1.000),
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
-				Color(0.878,0.016,0.153),
+				Color(0.875,0.016,0.153),
 				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
-				Color(0.984,0.984,0.910)
+				Color(0.980,0.980,0.910)
 				);
 		}
 		Galaxy(20000) {

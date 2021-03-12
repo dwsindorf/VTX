@@ -71,7 +71,7 @@ enum {   //Terrain and NodeData type flags
 	IDMAX          = 0xff   // max terrain id
 };
 
-#define MAX_TDATA 	 4
+#define MAX_TDATA 	 5
 #define MAX_NOISE 	 4
 #define TZBAD       -100
 #define TZVALID(t)   t.p.z>TZBAD
@@ -307,12 +307,13 @@ public:
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
 	tpinfo_u info;
+	int id;
 
 	static int nid;
 	static int tid;
 	static int pass;
 
-	TerrainProperties();
+	TerrainProperties(int);
 	~TerrainProperties();
 	int tsize() { return info.s.tsize;}
 
