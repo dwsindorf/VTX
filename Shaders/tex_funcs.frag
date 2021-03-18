@@ -116,8 +116,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	    bump_fade = lerp(Tangent.w-logf-freqmip,-4.0,1.0,0.0,1.0); \
 	    bump_fade *= lerp(Tangent.w-logf-freqmip,3.0,10.0,1.0,0.0); \
 	    bump_max=max(bump_max,bump_fade); \
-		bump += bump_max*amplitude*bump_ampl*trans_mat*tc; \
-		bmpht += b+amplitude*(tval.a-0.5)*bump_ampl*orders_delta;
+		bump += bump_max*bump_ampl*trans_mat*tc; \
+		bmpht += b+(tval.a-0.5)*bump_ampl*orders_delta;
 		
 #define NEXT_ORDER \
 		orders_delta /= tex2d[tid].orders_delta; \

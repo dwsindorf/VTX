@@ -22,6 +22,7 @@ protected:
 	ExprSliderCtrl   *ScaleSlider;
 	ExprSliderCtrl   *HeightSlider;
 	ExprSliderCtrl   *BaseSlider;
+	ExprSliderCtrl   *MarginSlider;
 
 public:
 	VtxMapTabs(wxWindow* parent,
@@ -34,6 +35,7 @@ public:
 		delete ScaleSlider;
 		delete HeightSlider;
 		delete BaseSlider;
+		delete MarginSlider;
 	}
 	bool Create(wxWindow* parent,
 			wxWindowID id,
@@ -47,7 +49,8 @@ public:
 	DEFINE_SLIDER_EVENTS(Height)
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(Base)
-	
+	DEFINE_SLIDER_EVENTS(Margin)
+
 	DECLARE_EVENT_TABLE()
 };
 #endif /*MAPTABS_H_*/

@@ -16,6 +16,9 @@ enum{
     ID_SCALE_TEXT,
     ID_BASE_SLDR,
     ID_BASE_TEXT,
+    ID_MARGIN_SLDR,
+    ID_MARGIN_TEXT,
+
 };
 
 #define NAME_WIDTH  50
@@ -34,6 +37,7 @@ BEGIN_EVENT_TABLE(VtxMapTabs, VtxTabsMgr)
 SET_SLIDER_EVENTS(HEIGHT,VtxMapTabs,Height)
 SET_SLIDER_EVENTS(SCALE,VtxMapTabs,Scale)
 SET_SLIDER_EVENTS(BASE,VtxMapTabs,Base)
+SET_SLIDER_EVENTS(MARGIN,VtxMapTabs,Margin)
 
 EVT_MENU(OBJ_DELETE,VtxMapTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxMapTabs::OnEnable)
@@ -108,6 +112,11 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
 	ScaleSlider=new ExprSliderCtrl(panel,ID_SCALE_SLDR,"Scale",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
 	ScaleSlider->setRange(0.0,1.0);
 	map_cntrls->Add(ScaleSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	MarginSlider=new ExprSliderCtrl(panel,ID_MARGIN_SLDR,"Margin",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
+	MarginSlider->setRange(0.5,2.0);
+	map_cntrls->Add(MarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
 }
 
 void VtxMapTabs::updateControls(){
@@ -128,6 +137,7 @@ void VtxMapTabs::setObjAttributes(){
 	str+=HeightSlider->getText();
 	str+=","+BaseSlider->getText();
 	str+=","+ScaleSlider->getText();
+	str+=","+MarginSlider->getText();
 
 	str+=")";
 	str+="\n";
@@ -156,6 +166,7 @@ void VtxMapTabs::getObjAttributes(){
 	HeightSlider->setValue(0.0);
 	BaseSlider->setValue(0.0);
 	ScaleSlider->setValue(0.0);
+	MarginSlider->setValue(1.0);
 
 	if(arg){	// height expr
 		HeightSlider->setValue(arg);
@@ -165,6 +176,10 @@ void VtxMapTabs::getObjAttributes(){
 			arg=arg->next();
 			if(arg){ // scale expr
 				ScaleSlider->setValue(arg);
+				arg=arg->next();
+				if(arg){ // scale expr
+					MarginSlider->setValue(arg);
+				}
 			}
 		}
 	}

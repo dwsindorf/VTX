@@ -25,6 +25,12 @@ Scene() {
 		height=435.046 ft;
 		angle=0;
 	}
+	View{
+		phi=-0.0823387;
+		theta=90.6039;
+		tilt=-13;
+		angle=3;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);

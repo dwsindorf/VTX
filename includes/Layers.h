@@ -29,8 +29,10 @@ public:
 	double mht;
 	double mbase;
 	double mscale;
-	double drop;
-	double morph;
+	double mdrop;
+	double mmorph;
+	double msmooth;
+
     int layers;
 	TNmap(TNode *l, TNode *r);
 	void eval();

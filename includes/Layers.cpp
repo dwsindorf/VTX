@@ -49,10 +49,11 @@ NameList<LongSym*> LOpts(lopts,sizeof(lopts)/sizeof(LongSym));
 TNmap::TNmap(TNode *l, TNode *r) :  TNfunc(l,r)
 {
 	margin=0.1;
-	drop=DFLT_DROP;
-	morph=0;
+	mdrop=DFLT_DROP;
+	mmorph=0;
 	mscale=1;
 	mbase=-0.5;
+	msmooth=1;
 }
 
 //-------------------------------------------------------------
@@ -143,7 +144,7 @@ void TNmap::setdrop(double d)
 	TNlayer *node=(TNlayer*)right;
 	char buff[32];
 	sprintf(buff,"%g\n",d);
-	drop=d;
+	mdrop=d;
 	while(node && node->typeValue()==ID_LAYER){
 		TNlayer *layer=node;
 		TNlayer *lexpr=(TNlayer*)layer->getExprNode();
@@ -159,7 +160,7 @@ void TNmap::setdrop(double d)
 			delete oldarg;
 		}
 
-	    node->drop=drop;
+	    node->drop=mdrop;
 		node=(TNlayer*)node->right;
 	}
 }
@@ -172,13 +173,13 @@ void TNmap::setmorph(double d)
 	TNlayer *node=(TNlayer*)right;
 	char buff[32];
 	sprintf(buff,"%g\n",d);
-	morph=d;
+	mmorph=d;
 	while(node && node->typeValue()==ID_LAYER){
 		TNlayer *layer=node;
 		TNlayer *lexpr=(TNlayer*)layer->getExprNode();
 		if(lexpr)
 			layer=lexpr;
-		if(morph){
+		if(mmorph){
 			BIT_ON(layer->type,MORPH);
 			BIT_OFF(layer->type,MESH);
 		}
@@ -194,7 +195,7 @@ void TNmap::setmorph(double d)
 			arg->replaceChild(oldarg,newarg);
 			delete oldarg;
 		}
-	    node->morph=morph;
+	    node->morph=mmorph;
 		node=(TNlayer*)node->right;
 	}
 }
@@ -226,7 +227,8 @@ void TNmap::eval()
 	if(layer && CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);
-		Td.set_flag(MULTILAYER);
+		//if(Td.get_flag(FVALUE))
+			Td.set_flag(MULTILAYER);
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
 
@@ -248,17 +250,18 @@ void TNmap::eval()
 	}
 
     if(!CurrentScope->cpass()){
-		double args[5];
+		double args[6];
 		int n=0;
   		TNarg *arg=(TNarg*)left;
 
 		if(arg)
-			n=getargs(arg,args,5);
+			n=getargs(arg,args,6);
 		mht=n>0?args[0]:0;
 		mbase=n>1?args[1]:0;
 		mscale=n>2?args[2]:1;
-		drop=n>3?args[3]:DFLT_DROP;
-		morph=n>4?args[4]:0;
+		msmooth=n>3?args[3]:1;
+		mdrop=n>4?args[4]:DFLT_DROP;
+		mmorph=n>5?args[5]:0;
 	}
 	if(!right)
 		return;
@@ -290,7 +293,8 @@ void TNmap::eval()
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;
-	Td.set_flag(MULTILAYER);
+	//if(Td.get_flag(FVALUE))
+		Td.set_flag(MULTILAYER);
 
 	while(layer && layer->typeValue()==ID_LAYER){
 		if(!layer->isEnabled()){
@@ -301,8 +305,8 @@ void TNmap::eval()
 		layer->map=this;
 	    S0.height=0;
 		layer->edge=edge;
-		layer->drop=drop;
-		layer->morph=morph;
+		layer->drop=mdrop;
+		layer->morph=mmorph;
 		layer->eval();
 
 		edge_layer=layer;
@@ -391,17 +395,11 @@ void TNmap::eval()
 	//f=0;
 	double s1=5e-4;
 	double s2=1e-6;
-	//if(mdctr&& mdcnt>0){
-	   //s1=mdctr->span(mapdata[0]);
-	   //double cs=CELLSIZE((int)Td.level);
-	   //cout<<TheScene->height<<endl;
-	s1=rampstep(TheScene->height,1e-7,1e-4,1e-3,0.01);
+	s1=msmooth*rampstep(TheScene->height,1e-7,1e-4,1e-3,0.01);
 	s2=0.1*s1;
-	//   cout<<"ht:"<<TheScene->height<<" s1:"<<s1<<" s2:"<<s2<<endl;
+	//  cout<<"ht:"<<TheScene->height<<" s1:"<<s1<<" s2:"<<s2<<endl;
 
-	//}
     double dm=rampstep(top_layer->morph,0,1,s1,s2);
-    //if(Td.get_flag(FVALUE))
     Td.depth=smoothstep(fabs(dz),0,dm,0,1);
     if(top_layer->morph){
         f=top_layer->morph*rampstep(0,margin,dz,0.5,0);
@@ -415,18 +413,27 @@ void TNmap::eval()
 			Td.zlevel[1].p.y=(1-f)*Td.zlevel[1].p.y+f*p.y;
 		}
     }
+    // 1) Remove visual artifact when different textures meet at layer intersection
+    //    get tiled effect (due to texture colors not being blended)
+    //    work-around
+    //    - reduce texture transparency to zero in small dz region at layer intersections
+    //    - replace texture with texture average color
+    //    - blend colors from adjacent layers
     if(Td.depth<1){
-    	FColor avec;
-    	if(Td.zlevel[0].properties[1]->textures.size){
-    		avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
-    		Color c=Color(avec.red(),avec.green(),avec.blue());
-    		//Td.zlevel[0].c=Td.zlevel[0].c.blend(c,Td.depth);
-
-    		Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
-    	}
-       	Td.zlevel[1].c=Td.zlevel[0].c;
-    	Td.zlevel[0].set_cvalid();
-   	    Td.zlevel[1].set_cvalid();
+		if(Td.zlevel[0].properties[1]->textures.size){
+			// first texture only
+			// TODO: better algorithm to pick best texture of combine texture stack
+			FColor  avec=Td.zlevel[i].properties[i+1]->textures[0]->aveColor;
+			Color c=Color(avec.red(),avec.green(),avec.blue());
+			Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
+		}
+		Td.zlevel[0].set_cvalid();
+		for(int i=1;i<MAX_TDATA;i++){
+			if(Td.zlevel[i].p.z==TZBAD)
+				break;
+	    	Td.zlevel[i].set_cvalid();
+	    	Td.zlevel[i].c=Td.zlevel[0].c; // not sure why this works
+		}
     }
     if(f){
 		Color c1=Td.zlevel[0].c;
@@ -444,6 +451,9 @@ void TNmap::eval()
 	//S0.set_cvalid();
 
 	double ave=0;//S0.p.z+Td.zlevel[1].p.z;
+	double maxht=-10;
+	double minht=10;
+
 	bool inmargin=false;
 	for(i=0;i<mdcnt;i++){
 		MapData *d=mapdata[i]->surface1();
@@ -451,27 +461,21 @@ void TNmap::eval()
 			S0.set_flag(INMARGIN);
 			inmargin=true;
 		}
-		ave+=d->Z()/mdcnt;
+		double z=d->Z();
+		maxht=z>maxht?z:maxht;
+		minht=z<minht?z:minht;
+
+		ave+=z/mdcnt;
 	}
 	extern int test3;
 	if(!in_map)    // in case we were in another map on entry
 		S0.clr_flag(CLRTEXS);
 
-	if(Adapt.mindcnt()){  // minimize dual terrain nodes (edges only)
-		if(Td.get_flag(FVALUE)){
-			if(inmargin){
-				Color c;
-				for(int i=0;i<MAX_TDATA;i++){
-					if(Td.zlevel[i].p.z==TZBAD)
-						break;
-					Td.zlevel[i].p.z=ave;
-				}
-				Td.end();
-			}
-		}
-		else
-			Td.end();
-		// special case tilted terrain ?
+	if(Adapt.mindcnt()){
+		// minimize dual terrain nodes (edges only)
+		// - Only keep terrain data for highest layer (reduces memory and processing costs)
+		// check for layer intersection
+		// - special case tilted terrain ?
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){
 				break;
@@ -483,19 +487,31 @@ void TNmap::eval()
 			dz=fabs(S0.p.z-Td.zlevel[i].p.z);
 			if(dz<=dmax){
 				S0.set_flag(INMARGIN);
-			    Td.end();
-			    return;
+				inmargin=true;
+				break;
 			}
+		}
+		// 2) Remove ridge artifact at center of layer intersection
+		//    for some reason it looks like when dz=0 "fractal" doesn't process the node
+		//    which leaves a "wall" in the center
+		//    throwing out the calculated ht and using the average of the nodes neighbors seams to fix the problem
+		if(inmargin){  // at least one neighbor is from another layer
+			if(Td.get_flag(FVALUE)){
+				for(int i=0;i<MAX_TDATA;i++){
+					if(Td.zlevel[i].p.z==TZBAD)
+						break;
+					Td.zlevel[i].p.z=ave;
+				}
+			}
+			Td.end();
 		}
 	}
 	else{
-		if(test3 && inmargin){
-			for(int i=0;i<MAX_TDATA;i++){
-				if(Td.zlevel[i].p.z==TZBAD)
-					break;
-				Td.zlevel[i].p.z=ave;
-			}
-		}
+		// retain data for buried layers
+		// when fractal is present the result is different than previous case
+		// - more intermixed terrain segments
+		// - artifact at some layer intersections (looks like deep slot)
+		// - looks like fractal not operating on all terrain layers in some areas
 		Td.end();
 	}
 	Td.clr_flag(MULTILAYER);
