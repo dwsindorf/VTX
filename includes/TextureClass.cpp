@@ -20,6 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
+//#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -54,6 +55,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	enabled=true;
 	s_data=false;
 	a_data=false;
+	d_data=false;
 	bump_damp=0.0;
 	bump_bias=0;
 	phi_bias=0;
@@ -243,7 +245,10 @@ void Texture::begin() {
 		//bool set_alpha=shader_pass || alpha_enabled();
 		bool auto_alpha= alpha_enabled();
 		bool set_alpha=shader_pass || alpha_image;
+
 		//cout << " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		if((amin==0 && amax==255) || amax==amin)
+			norm=false;
 		for (int i = 0; i < h; i++){
 			for (int j = 0; j< w ; j++) {
 			    unsigned char ac=255;
@@ -252,6 +257,8 @@ void Texture::begin() {
 			    data[index*4+0]=rgb[rgb_index+0];
 			    data[index*4+1]=rgb[rgb_index+1];
 			    data[index*4+2]=rgb[rgb_index+2];
+			    int ci=index*4;
+
 			    if(set_alpha){
 					if(alpha_image)
 						ac=rgb[rgb_index+3];
@@ -267,17 +274,17 @@ void Texture::begin() {
 			    	data[index*4+3]=255;
 			}
 		}
-		if((amin==0 && amax==255) || amax==amin)
-			norm=false;
 		if(norm && set_alpha){
 			double a=255/(amax-amin);
 			double b=-a*amin;
+			double ave=0;
 			//cout << "min:"<< amin << " max:"<< amax<< endl;
 			for (int i = 0; i < h; i++){
 				for (int j = 0; j< w ; j++) {
 					int index=i*w+j;
 					double aval=data[index*4+3];
 					data[index*4+3]=(unsigned char)(a*aval+b);
+					ave+=data[index*4+3];
 				}
 			}
 		}
@@ -432,9 +439,10 @@ bool Texture::setProgram(){
 
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
-
+#ifdef DEBUG_TEXTURES
     cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;
-//	double dfactor=0.5*GLSLMgr::wscale;
+#endif
+    //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);
 //    double zf=log2(1.5*dfactor/TheScene->zfar);
 //

@@ -254,8 +254,8 @@ public:
     void set_test1(int i)   { info.test1=i;}
     int test1()             { return info.test1;}
     void set_test2(int i)   { info.test2=i;}
-    int test2()             { return info.test2;}    void find_limits();
-
+    int test2()             { return info.test2;}    
+    void find_limits();
 
     void set_need_recalc(int i) { info.recalc=i;}
     int  need_recalc()      { return info.recalc;}
@@ -370,6 +370,8 @@ public:
     MapNode *locate(double, double);
     MapNode *grid_walk(double, double);
     int     find_neighbors();
+    int     count_neighbors();
+
     int     neighbors();
     void    recalc1();
     void    recalc2();

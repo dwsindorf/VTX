@@ -87,6 +87,8 @@ int  TerrainData::zlevels=0;
 int TerrainData::datacnt=0;
 int TerrainData::flags=0;
 int TerrainData::tids=0;
+int TerrainData::pass=0;
+
 double TerrainData::level=0;
 double TerrainData::fractal=0;
 double TerrainData::density=0;
@@ -103,9 +105,9 @@ double TerrainData::height=0;
 double TerrainData::clarity=100*FEET;
 double TerrainData::rock=0;
 double TerrainData::depth=0;
+double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
-
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
@@ -268,6 +270,7 @@ TerrainProperties::TerrainProperties(int t)
 	info.l=0;
 	tncolor=0;
 	tnpoint=0;
+	depth=0;
 }
 TerrainProperties::~TerrainProperties(){
 	textures.reset();

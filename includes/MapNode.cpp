@@ -10,7 +10,7 @@
 #include "matrix.h"
 #include "Perlin.h"
 
-extern double Theta, Phi, Height,Rscale;
+extern double Theta, Phi, Height,Rscale,Margin;
 extern Point MapPt;
 
 
@@ -696,6 +696,23 @@ int    MapNode::find_neighbors(){
 	}
 	return mdcnt;
 }
+
+
+int MapNode::count_neighbors(){
+    int cnt=0;
+	if(rnode && lnode){
+		cnt+=2;
+		if(dnode && !unode)
+			cnt++;
+	}
+	if(dnode && unode){
+		cnt+=2;
+		if(rnode && !lnode)
+			cnt++;
+	}
+	return cnt;
+}
+
 //-------------------------------------------------------------
 // MapNode::recalc2() recalculate surface
 //-------------------------------------------------------------
@@ -1062,16 +1079,23 @@ void MapNode::vischk()
 // MapNode::pvischeck()	test if cell is neighbored by visible cells
 //-------------------------------------------------------------
 static int pvflag;
+static int level=0;
+const int maxlvl=2;
 static void testvis(MapNode *n)
 {
 	if(n->visible()){
 		pvflag=1;
+		return;
     }
+	level++;
+	if(level<maxlvl)
+		n->CWcycle(testvis);
 }
 
 void MapNode::pvischk()
 {
 	set_nodraw(0);
+	level=0;
 	if(!visible()){
 	    set_nodraw(1);
 		pvflag=0;
@@ -1870,32 +1894,57 @@ Color MapNode::Tcolor(MapData *d) {
         }
         break;
 
-    case ENODES:					// '5'
-        if (Raster.surface == 2)
-            c = Color(0, 0, 1);
-        else {
-            if (dual_terrain()) {
-                if (d && d->water())
-                    d = d->data2();
-                if (!d)
-                    c = Color(0, 0, 1);
-                else if (d->next_surface()) {
-                    if (!d->next_surface())
-                        c = Color(1, 0, 0);
-                    else
-                        c = Color(0, 0, 1);
-                } else
-                    c = Color(0, 1, 0);
-            } else
-                c = Color(1, 1, 1);
-            if (has_water())
-                c = c.blend(Color(0, 0, 1), 0.25);
-            if (margin())
-                c = c.blend(Color(1, 0, 0), 0.5);
+    case ENODES:// '5'
+    {
+    	//cout<<Margin<<endl;
+
+    	   c = Color(data.depth(), 0, 0);
+ //        if (Raster.surface == 2)
+//            c = Color(0, 0, 1);
+//        else {
+//            if (dual_terrain()) {
+//                if (d && d->water())
+//                    d = d->data2();
+//                if (!d)
+//                    c = Color(0, 0, 1);
+//                else if (d->next_surface()) {
+//                    if (!d->next_surface())
+//                        c = Color(1, 0, 0);
+//                    else
+//                        c = Color(0, 0, 1);
+//                } else
+//                    c = Color(0, 1, 0);
+//            } else
+//                c = Color(1, 1, 1);
+//            if (has_water())
+//                c = c.blend(Color(0, 0, 1), 0.25);
+//            //if (margin())
+//           //    c = c.blend(Color(1, 0, 0), 1);
+//            if (data.margin())
+//                c = c.blend(Color(0, 0, 1), 1);
         }
         break;
     case MNODES:                  	// '6'
     {
+ 	   if (data.margin())
+  		   c = Color(0, 0, 1);
+ 	   else
+ 		   c= Color(1,1, 1);
+
+ 	/*
+     double s = 2*sediment();
+     c = Color(1, 1, 1);
+     if (s > 0)
+         c = c.blend(Color(0, 0, 1), s);
+     else
+         c = c.blend(Color(1, 0, 0), -s);
+         */
+
+    }
+        break;
+    case RNODES:
+    {
+
         Point *np = 0;
         MapData *md;
         if (cdata)
@@ -1922,17 +1971,6 @@ Color MapNode::Tcolor(MapData *d) {
 //                    c = Color(1, 0, 0);
 //            }
         }
-    }
-        break;
-    case RNODES: {
-        //extern double eslope();
-        double s = 2*sediment();
-        c = Color(1, 1, 1);
-        //c = c.blend(Color(1, 0, 0), s);
-        if (s > 0)
-            c = c.blend(Color(0, 0, 1), s);
-        else
-            c = c.blend(Color(1, 0, 0), -s);
     }
         break;
     case SNODES: {
@@ -2221,6 +2259,12 @@ void MapNode::Svertex(MapData*dn) {
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
+				else if(tx->d_data){
+					t=d->depth();
+					A[texid]=clamp(t,0.0,1.0);
+					num_attribs++;
+				}
+
 				//tx->texCoords(GL_TEXTURE0 + tx->cid);
 			} else if(tx->cid>=0){
 				if (tx->s_data)
@@ -2235,10 +2279,14 @@ void MapNode::Svertex(MapData*dn) {
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
+				else if(tx->d_data){
+					t=d->depth();
+					A[texid]=clamp(t,0.0,1.0);
+					num_attribs++;
+				}
 			}
 			if(tx->cid>=0)
 				tx->texCoords(GL_TEXTURE0 + tx->cid);
-
 			texid++;
 		}
 		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0)

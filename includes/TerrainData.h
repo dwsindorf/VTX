@@ -63,6 +63,7 @@ enum {
 	NOISE1D     = 0x00010000,     // shader 1D noise
 	HIDDEN      = 0x00020000,    // invisible node
 	COMPLEX     = 0x00040000,    // complex expression
+	MULTILAYER  = 0x00080000,    // multilayer terrain
 };
 
 enum {   //Terrain and NodeData type flags
@@ -119,6 +120,7 @@ public:
 	static double       clarity; 	// max water clarity
 	static double       rock;    	// rock
 	static double       depth;    	// depth
+	static double       margin;    	// depth
 	static double       height;    	// ht
 	static double       level;      // cell size level
     static double       extent;     // cell size extent (pixels)
@@ -135,6 +137,8 @@ public:
 	static int datacnt;
 	static int flags;
 	static int tids;
+	static int pass;
+
 	static TerrainProperties *tp;
 
 	static void clr_flags()        { flags=0;}
@@ -175,6 +179,8 @@ public:
 	int inactive()		    { return info.s.flags & INACTIVE_FLAG;}
 
 	int type()				{ return info.s.type;}
+	void set_type(int i)     { info.s.type=i;}
+
 	int id()                { return info.s.type-ID0;}
 	void set_id(int i)      { info.s.type=(i&IDMAX)+ID0;}
 	void next_id()          { set_id(tids++);}
@@ -299,6 +305,7 @@ class TerrainProperties
 public:
 	double albedo;
 	double shine;
+	double depth;
 	Color glow;
 	Color color;
 	int callList;

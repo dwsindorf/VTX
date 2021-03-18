@@ -258,11 +258,14 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int i;
 	int a,b;
 	double density=0;
+	Td.pass=pass;
 
 	MapData *s2=0;
 
 	if(td.get_flag(HIDDEN))
 		set_hidden(1);
+	if(td.get_flag(INMARGIN))
+		set_margin(1);
 
 	if(td.get_flag(FVALUE))
 	    frac=1;
@@ -354,6 +357,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		}
 		else if(tex->a_data)
 			setTexture(tex->s,a);
+		//else if(tex->d_data)
+		//	setTexture(tex->s,a);
+
 	}
 	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
 	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;

@@ -5,7 +5,7 @@
 
 #include "TerrainMgr.h"
 
-#define DFLT_DROP 0.5
+#define DFLT_DROP 0.0
 #define DFLT_WIDTH 0.1
 
 enum  {
@@ -86,6 +86,7 @@ public:
 	void lower();
 	void setName(char*);
 	char *nodeName()  { return name_str;}
+	void setEnabled(bool b);
 	NodeIF *addChild(NodeIF *x);
 	friend class TNmap;
 

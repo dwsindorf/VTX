@@ -1921,6 +1921,9 @@ void Map::find_limits(){
 	hmin=zn=lim;
 	Raster.getIDLimits(zn, zf,hmin, hmax);
 	hrange=hmax-hmin;
+	MinHt=hmin;
+	MaxHt=hmax;
+
     //cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
@@ -1970,7 +1973,6 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	a=new MapNode(parent, t, p);
 	Td.clr_flag(FNOREC);
 
-
 	object->set_surface(Td);
 
 	a->data.init_terrain_data(Td,0);
@@ -1978,7 +1980,6 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	    a->set_margin(1);
 	if(Td.get_flag(HIDDEN))
 	    a->set_hidden(1);
-
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
 		a->set_need_recalc(1);
 	return a;

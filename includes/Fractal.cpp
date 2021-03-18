@@ -15,14 +15,14 @@ extern NameList<LongSym*> NOpts;
 #define smallest(x,y) x<y?x:y
 #define largest(x,y)  x>y?x:y
 
+double last_fractal=0;
+
 static 		TerrainData Td;
 const unsigned int 	MAXLVLS=63;
 
 //**************** static and private *********************
 
 #define NBRHT(n) mapdata[n]->fractal()
-
-#define CELLSIZE(i) PI*TheMap->radius*ptable[i]
 
 extern double   ptable[];
 
@@ -66,8 +66,14 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 //-------------------------------------------------------------
 void TNfractal::eval()
 {
+	if(!isEnabled()){
+		if(right)
+			right->eval();
+		return;
+	}
 	static int init=0;
 	static double facts[64];
+	double margin_scale=1;
 	if(!init){
 		int i;
 		for(i=0;i<63;i++){
@@ -86,12 +92,16 @@ void TNfractal::eval()
 
 	INIT;
 	if(right){
+	   	Td.set_flag(FVALUE);
+
 		right->eval();
 		if(S0.pvalid())
 			base=S0.p.z;
 		else
 			base=S0.s;
 	}
+	//if(S0.get_flag(INMARGIN))
+	//	margin_scale=0.1;
 	if(Td.texht)
 		base+=Td.texht;
 
@@ -115,11 +125,9 @@ void TNfractal::eval()
 	double hmax=n>8?args[8]:1.0;
 	double hval=n>9?args[9]:0.0;
 
-	extern double FHt,MinHt,MaxHt;
+	bool inmargin=false;
 
 	unsigned int level=(int)Td.level;
-    if(Adapt.lod()){
-    }
 
 	l1=begin;
 	l2=begin+orders;
@@ -132,7 +140,6 @@ void TNfractal::eval()
 
 	if(level>=l1){
 		if(level<l2){
-
 			double rf=1<<(level/2);
 			rand1=Random(MapPt.x*rf,MapPt.y*rf)+0.5;
 			rand2=RAND(1)+0.5;
@@ -218,7 +225,7 @@ void TNfractal::eval()
 					CELLSLOPE(fractal(),fractal_slope);
 					break;
 				}
-				fractal_slope*=TheMap->hscale;
+				fractal_slope*=margin_scale*TheMap->hscale;
 			}
 		}
 		f=fractal_ave;
@@ -236,10 +243,6 @@ void TNfractal::eval()
 			if(slope<=(thresh*smax))
 				slope*=tbias;
 
-			double fbias=0.2;
-			double fht=(base-MinHt)/(MaxHt-MinHt);
-			slope*=rampstep(fht,0,hmax,1,hval);
-
 			delta=sfact*ampl*rand1*slope*sbias;
 			if(sdrop)
 				drop=sfact*rand2*sdrop*slope*sbias;
@@ -256,6 +259,8 @@ void TNfractal::eval()
 	    f=-f;
 
 	Td.fractal=f;
+
+	last_fractal=f;
 
 	if(S0.pvalid())
 		S0.p.z=f;

@@ -168,6 +168,7 @@ public:
 	double p2v(int index);
 	double p2v(double r, double c);
 
+	Color aveColor();
 
 	Color p2c(int index);
 	Color p2c(double r, double c);

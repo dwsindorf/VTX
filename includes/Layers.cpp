@@ -1,7 +1,10 @@
 #include "TerrainMgr.h"
 #include "Layers.h"
 #include "MapNode.h"
+#include "MapClass.h"
 #include "AdaptOptions.h"
+#include "ImageClass.h"
+
 #include "FileUtil.h"
 #include <iostream>
 
@@ -11,6 +14,7 @@ extern void inc_tabs();
 extern void dec_tabs();
 extern double zslope();
 
+extern Map     *TheMap;
 
 extern char   tabs[];
 extern double Hscale,Rscale;
@@ -199,6 +203,8 @@ void TNmap::setmorph(double d)
 //-------------------------------------------------------------
 void TNmap::init()
 {
+	TheMap->set_multilayer();
+
 	TNlayer *layer=(TNlayer*)right;
 	layers=0;
 	while(layer && layer->typeValue()==ID_LAYER){
@@ -213,12 +219,14 @@ void TNmap::init()
 //-------------------------------------------------------------
 void TNmap::eval()
 {
+	//if(Td.pass==0)
+	//	lastz=0;
 	TNlayer *layer=(TNlayer*)right;
 	int i;
 	if(layer && CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);
-
+		Td.set_flag(MULTILAYER);
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
 
@@ -227,8 +235,12 @@ void TNmap::eval()
 			layer=(TNlayer*)layer->right;
 			if(!layer || layer->typeValue()!=ID_LAYER)
 				break;
+			TerrainData::tp->set_color(true);
+
 			if(layer->isEnabled())
 				Td.add_id();
+			TerrainData::tp->set_color(true);
+
 		}
 		if(!in_map)
 			S0.clr_flag(CLRTEXS);
@@ -269,7 +281,6 @@ void TNmap::eval()
 	Color  lowc;
 
 	int id=0;
-	//	 && edge_layer->type & CBLEND
 
 	#define CHKLOW \
 	        edge_layer->morph \
@@ -279,6 +290,7 @@ void TNmap::eval()
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;
+	Td.set_flag(MULTILAYER);
 
 	while(layer && layer->typeValue()==ID_LAYER){
 		if(!layer->isEnabled()){
@@ -315,7 +327,6 @@ void TNmap::eval()
 		    	edge_layer=last_layer;
 		    	f=(layer->edge-mht)/margin;
 		    }
- 			Margin=fabs((layer->edge-mht)/margin);
  			if(edge_layer->type & FSQR)
  			    f*=f;
  			if(layer->type & FSQR)
@@ -335,12 +346,12 @@ void TNmap::eval()
  			if(layer->type & FSQR)
  			    f*=f;
  			d=f*layer->drop;
- 			Margin=fabs((edge-mht)/margin);
+ 			//Margin=fabs((edge-mht)/margin);
  			if(df)
  				d+=df*clamp(f,0,1)*edge_layer->drop;
 		}
-    	INIT;
 
+    	INIT;
     	Drop=d;
 	    S0.clr_flag(TEXFLAG);
 		layer->base->eval();
@@ -366,8 +377,6 @@ void TNmap::eval()
 		if(S0.get_flag(LOWER))
  			S0.next_id();
 
-		//if(layer && layer->typeValue()==ID_LAYER)
-		//	S0.next_id();
 		id++;
 	}
 	mindex--;
@@ -379,7 +388,21 @@ void TNmap::eval()
 	}
 
 	double dz=Td.zlevel[0].p.z-Td.zlevel[1].p.z;
-	f=0;
+	//f=0;
+	double s1=5e-4;
+	double s2=1e-6;
+	//if(mdctr&& mdcnt>0){
+	   //s1=mdctr->span(mapdata[0]);
+	   //double cs=CELLSIZE((int)Td.level);
+	   //cout<<TheScene->height<<endl;
+	s1=rampstep(TheScene->height,1e-7,1e-4,1e-3,0.01);
+	s2=0.1*s1;
+	//   cout<<"ht:"<<TheScene->height<<" s1:"<<s1<<" s2:"<<s2<<endl;
+
+	//}
+    double dm=rampstep(top_layer->morph,0,1,s1,s2);
+    //if(Td.get_flag(FVALUE))
+    Td.depth=smoothstep(fabs(dz),0,dm,0,1);
     if(top_layer->morph){
         f=top_layer->morph*rampstep(0,margin,dz,0.5,0);
 		if(f){
@@ -391,13 +414,20 @@ void TNmap::eval()
 			Td.zlevel[1].p.x=(1-f)*Td.zlevel[1].p.x+f*p.x;
 			Td.zlevel[1].p.y=(1-f)*Td.zlevel[1].p.y+f*p.y;
 		}
-        dz=Td.zlevel[0].p.z-Td.zlevel[1].p.z;
     }
-    if(CurrentScope->zpass()){
-        S0.copy(Td.zlevel[0]);
-        return;
+    if(Td.depth<1){
+    	FColor avec;
+    	if(Td.zlevel[0].properties[1]->textures.size){
+    		avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
+    		Color c=Color(avec.red(),avec.green(),avec.blue());
+    		//Td.zlevel[0].c=Td.zlevel[0].c.blend(c,Td.depth);
+
+    		Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
+    	}
+       	Td.zlevel[1].c=Td.zlevel[0].c;
+    	Td.zlevel[0].set_cvalid();
+   	    Td.zlevel[1].set_cvalid();
     }
-    //if(f&&top_layer->type&CBLEND){
     if(f){
 		Color c1=Td.zlevel[0].c;
 		Color c2=Td.zlevel[1].c;
@@ -408,39 +438,67 @@ void TNmap::eval()
 		Td.zlevel[0].set_cvalid();
 		Td.zlevel[1].set_cvalid();
     }
+   	//Td.zlevel[1].c=Td.zlevel[0].c;
 
 	S0.copy(Td.zlevel[0]); // return top level
+	//S0.set_cvalid();
 
+	double ave=0;//S0.p.z+Td.zlevel[1].p.z;
+	bool inmargin=false;
+	for(i=0;i<mdcnt;i++){
+		MapData *d=mapdata[i]->surface1();
+		if(d && (d->type()!=Td.zlevel[0].type())){
+			S0.set_flag(INMARGIN);
+			inmargin=true;
+		}
+		ave+=d->Z()/mdcnt;
+	}
+	extern int test3;
 	if(!in_map)    // in case we were in another map on entry
 		S0.clr_flag(CLRTEXS);
 
 	if(Adapt.mindcnt()){  // minimize dual terrain nodes (edges only)
-		for(i=0;i<rccnt;i++){
-			MapData *md=mapdata[i];
-			if(md>0){
-				MapData *d=md->surface1();
-				if(d && (d->type()!=Td.zlevel[0].type())){
-					Td.end();
-					return;
+		if(Td.get_flag(FVALUE)){
+			if(inmargin){
+				Color c;
+				for(int i=0;i<MAX_TDATA;i++){
+					if(Td.zlevel[i].p.z==TZBAD)
+						break;
+					Td.zlevel[i].p.z=ave;
 				}
+				Td.end();
 			}
 		}
+		else
+			Td.end();
+		// special case tilted terrain ?
 		for(i=1;i<MAX_TDATA;i++){
-			if(Td.zlevel[i].p.z<=TZBAD)
+			if(Td.zlevel[i].p.z<=TZBAD){
 				break;
+			}
 			double dx=fabs(Td.zlevel[i].p.x-S0.p.x);
 			double dy=fabs(Td.zlevel[i].p.y-S0.p.y);
 			double dmax=dx>dy?dx:dy;
 
 			dz=fabs(S0.p.z-Td.zlevel[i].p.z);
 			if(dz<=dmax){
+				S0.set_flag(INMARGIN);
 			    Td.end();
 			    return;
 			}
 		}
 	}
-	else
+	else{
+		if(test3 && inmargin){
+			for(int i=0;i<MAX_TDATA;i++){
+				if(Td.zlevel[i].p.z==TZBAD)
+					break;
+				Td.zlevel[i].p.z=ave;
+			}
+		}
 		Td.end();
+	}
+	Td.clr_flag(MULTILAYER);
 }
 
 //************************************************************
@@ -517,7 +575,9 @@ void TNlayer::eval()
 				arg=arg->next();
 				if(arg){ // drop expr
 					arg->eval();
+					//drop=1e-4*S0.s;
 					drop=S0.s;
+
 					if(drop<0)
 						drop=0;
 					arg=arg->next();
@@ -552,6 +612,25 @@ bool TNlayer::hasChild(int type){
 	if(base)
 		base->visitNode(findType);
 	return find_test;
+}
+
+static bool enabled;
+static void enableTexture(NodeIF *obj)
+{
+	if(obj->typeValue()==ID_TEXTURE){
+		TNtexture  *tc=(TNtexture*)obj;
+		tc->setEnabled(enabled);
+	}
+}
+//-------------------------------------------------------------
+// TNlayer::setEnabled disable or enable all textures in layer
+//-------------------------------------------------------------
+void TNlayer::setEnabled(bool b){
+	TNbase::setEnabled(b);
+	if(!base)
+		return;
+	enabled=b;
+	base->visitNode(enableTexture);
 }
 
 //-------------------------------------------------------------
@@ -747,3 +826,4 @@ int TNlayer::optionString(char *s)
 	}
 	return 1;
 }
+

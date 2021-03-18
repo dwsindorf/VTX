@@ -146,7 +146,7 @@ jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CL
 
 #test:;         ./vtx.exe --m snowy.spx
 #test:;         ./vtx.exe --m  last.spx
-test:;         ./vtx.exe --m test.spx
+test:;         ./vtx.exe --m last.spx
 
 ### DEPENDENCIES ###
 

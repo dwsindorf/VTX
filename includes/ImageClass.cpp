@@ -677,12 +677,12 @@ void TNtexture::init()
 		delete texture;
 		texture=0;
 	}
-    if(texture==0)
+    if(texture==0){
 	    texture=new Texture(timage,opts,this);
+	    texture->aveColor=timage->aveColor();
+	    //texture->aveColor.print();
+    }
     timage->set_accessed(true);
-	//if(texture->t1d()){
-	//	BIT_ON(opts,SEXPR);
-	//}
 	if(opts & SEXPR){
 		texture->s_data=true;
 	}
@@ -746,8 +746,8 @@ void TNtexture::eval()
 	double phi = Phi / 180;
 	double theta = Theta / 180.0 - 1;
 
-
 	int i = 0;
+	double depth=Td.depth;
 
 	if(opts & SEXPR){
 		texture->s_data=true;
@@ -755,12 +755,21 @@ void TNtexture::eval()
 		if(opts & AEXPR){
 			texture->a_data=true;
 			t=arg[i++];
+			if(Td.get_flag(MULTILAYER))
+				t+=depth;
 		}
 	}
 	else if(opts & AEXPR){
 		texture->a_data=true;
 		s=arg[i++];
+		if(Td.get_flag(MULTILAYER))
+			s+=depth;
 	}
+	else if(Td.get_flag(MULTILAYER)){
+		texture->d_data=true;
+		s=depth;
+	}
+
 	if(i<n)
 		f=arg[i++];
 	if(i<n)
@@ -922,10 +931,10 @@ bool TNtexture::initProgram(){
 	if(!S0.inactive())
 		texture->cid=texture->num_coords;
 	TNarg *arg=(TNarg*)right;
-	if(arg && (texture->a_data || texture->s_data)){
+	if(texture->a_data || texture->s_data  || texture->d_data){
 		INIT;
 		int cmode=0;
-		if(texture->s_data){
+		if(arg && texture->s_data){
 			cmode=exprString(arg,nstr);
 			if(tex_noise)
 				sprintf(defs+strlen(defs),"#define N%d %s\n",id,nstr);
@@ -935,7 +944,10 @@ bool TNtexture::initProgram(){
 				arg=arg->next();
 		}
 		if(texture->a_data){
-			cmode=exprString(arg,nstr);
+			if(arg)
+				cmode=exprString(arg,nstr);
+			else
+				cmode=VEXPR;
 			switch(cmode){
 			case (SEXPR|VEXPR):
 				sprintf(defs+strlen(defs),"#define A%d AT%d+%s\n",id,id,nstr);
@@ -947,6 +959,9 @@ bool TNtexture::initProgram(){
 				sprintf(defs+strlen(defs),"#define A%d %s\n",id,nstr);
 				break;
 			}
+		}
+		else if(texture->d_data){
+			sprintf(defs+strlen(defs),"#define A%d AT%d\n",id,id);
 		}
 	}
 

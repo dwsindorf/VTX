@@ -451,10 +451,12 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_SURFACE:
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
-		if(actionmode==DROPPING)
-			break;
+		//if(actionmode==DROPPING)
+		//	break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_POINT));
+		list.add(getObjectSymbol(TN_FCHNL));
+
 		if(!obj->hasChild(ID_COLOR))
 			list.add(getObjectSymbol(TN_COLOR));
 		if(!obj->hasChild(ID_GLOSS))
@@ -477,12 +479,18 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_POINT:
 	case TN_COLOR:
 	case TN_GLOSS:
+	case TN_WATER:
+	case TN_FCHNL:
+
 		if(actionmode!=DROPPING)
 			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_COLOR));
 		list.add(getObjectSymbol(TN_GLOSS));
+		list.add(getObjectSymbol(TN_WATER));
+		list.add(getObjectSymbol(TN_SNOW));
+		list.add(getObjectSymbol(TN_FCHNL));
 
 		break;
 

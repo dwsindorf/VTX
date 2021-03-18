@@ -257,8 +257,9 @@ typedef struct mpdata {
 	unsigned int  tstart	: 4;	// texture data start
 	unsigned int  normal	: 1;	// normal flag
 	unsigned int  hidden	: 1;	// hidden flag
+	unsigned int  margin	: 1;	// margin flag
 	unsigned int  hmaps	    : 1;	// hmap flag
-	unsigned int  unused	: 7;	// unassigned
+	unsigned int  unused	: 6;	// unassigned
 } mpdata;
 
 
@@ -317,6 +318,8 @@ public:
 	int bumpmaps()				{ return flags.s.bumpmaps;}
 	int hidden()			    { return flags.s.hidden;}
 	void set_hidden(int n)		{ flags.s.hidden=n;}
+	int margin()			    { return flags.s.margin;}
+	void set_margin(int n)		{ flags.s.margin=n;}
 	int normal_valid()			{ return flags.s.normal;}
 	void set_normal_valid(int n){ flags.s.normal=n;}
 	int colors()				{ return flags.s.colors;}

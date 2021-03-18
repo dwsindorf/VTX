@@ -1,80 +1,20 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=-8.3606;
-		theta=358.726;
-		height=0.00604486;
-		gndlvl=-242501 ft;
-		time=65278;
-		heading=90;
-		pitch=-90;
+		view=SURFACE;
+		phi=-23.2004;
+		theta=36.9224;
+		height=2269.39 ft;
+		gndlvl=40090 ft;
+		time=66294.6;
+		heading=-159;
+		tilt=-19;
+		angle=4;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.00604561;
-		gndlvl=-246464 ft;
-	}
-	View{
-		height=0.00636901;
-		gndlvl=-284437 ft;
-	}
-	View{
-		height=0.0068228;
-	}
-	View{
-		theta=359.569;
-		height=0.00702067;
-		pitch=-86;
-	}
-	View{
-		phi=-8.41937;
-		height=0.00708701;
-	}
-	View{
-		phi=-8.27411;
-		theta=358.724;
-		height=0.00662392;
-		pitch=-90;
-	}
-	View{
-		height=0.00675406;
-	}
-	View{
-		height=0.00668851;
-	}
-	View{
-		phi=-8.25956;
-		height=0.00688492;
-		pitch=-91;
-	}
-	View{
-		phi=-8.27416;
-		height=0.0068189;
-	}
-	View{
-		phi=-8.24501;
-		height=0.00695069;
-	}
-	View{
-		phi=-8.25971;
-		height=0.00688422;
-	}
-	View{
-		phi=-8.61903;
-		height=0.00769027;
-		pitch=-87;
-	}
-	View{
-		phi=-8.57354;
-		height=0.00762176;
-	}
-	View{
-		phi=4.95375;
-		theta=356.964;
-		height=0.00848813;
-		pitch=-90;
+		angle=13;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -107,9 +47,9 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
-					hscale=0.001;
+					hscale=0.003;
 					water.clarity=119.701 ft;
-					water.level=-6388.8 ft;
+					water.level=-14000 ft;
 					year=100;
 					bands("alpine",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),
 						Color(0.2,0.4,0.1,0.7),
@@ -120,21 +60,16 @@ Scene() {
 						Color(0.3,0.4,0.2,0.7),
 						Color(0.4,0.5,0,0.7),
 						Color(0.4,0.5,0,0));
-					bands("snow",ACHNL|CLAMP|INVT|NEAREST|NORM,8,Color(1,1,1,0),Color(1,1,1));
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=water(0)
-						        snow(0.2,0.2,0.4,1,0)
-						        //Texture("snow",BORDER|BUMP|NEAREST|TEX,0.5,0,1,0,1,2,1,1,0.2,0.4,0.1,-0.25)+
-						        //water(0)
-						        map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,0.56)
-								layer("Layer",MORPH,0.1,0.57,0.5,0)
+						terrain=fractal(SQR|SS,14.8,11,0.1,0.38,0.2,0.3,0,0,1,0)map(noise(GRADIENT,1,15,0.3,0.1,2,1,1,0,0),0,1)
+								layer("Layer1",MORPH,1,0.3+noise(GRADIENT|SCALE,7.6,2.8,1,0.5,2,1,1,0,0),0,0)
 									[
-									Texture("alpine",TEX,1,2,1,0,1,2,0.5,0,0,1.27776,0,0)+Z(noise(VORONOI|SCALE,5,6.3,1,0.5,2,1,1,0,0))
+									Texture("alpine",LINEAR|NORM|TEX,205.145,2,1,0,1,2,0.5,0,0,2,0,-1.44448)+Z(noise(GRADIENT|NABS|SCALE,5,6.3,-0.66,0.5,2,1,1,0,0))
 									]
-								layer("Layer",MORPH,0.1)
+								layer("Layer2",MORPH,1,0.1,0,0)
 									[
-									Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0)+Z(noise(GRADIENT|NABS|SCALE|SQR,6.4,2,1,0.5,2,1,1,0,0))
+									Texture("jupiter",LINEAR|TEX,422.264,2,1,0,1,2,1,0,0,2,0,0)+Z(noise(GRADIENT|SCALE|SQR,5,9.5,1,0.5,2,1,1,0,-0.1))
 									]
 								;
 					}

@@ -32,6 +32,7 @@ public:
 	Image  *timage;
 	Texture(Image *i, int f, TNode *e);
 	~Texture();
+	Color   aveColor;
 	double  s;
 	double  t;
 	double  scale;
@@ -68,6 +69,7 @@ public:
 
 	bool s_data;
 	bool a_data;
+	bool d_data;
 
 	int type;
 	int tid;
@@ -120,6 +122,7 @@ public:
 	void invalidate()       { valid=false;}
 	bool setProgram();
 	bool initProgram();
+
     static void reset();
 
 

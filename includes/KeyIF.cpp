@@ -98,12 +98,14 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         //Raster.set_filter_show(!Raster.filter_show());
 		cout << "test2="<<test2<<endl;
         TheScene->set_changed_detail();
+        TheScene->rebuild_all();
 		break;
 
 	case KEY_TEST3:
 		test3=test3?0:1;
  		cout << "test3="<<test3<<endl;
         TheScene->set_changed_detail();
+        TheScene->rebuild_all();
 		break;
 
 	case KEY_TEST4:
@@ -484,6 +486,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 			Render.push();
 		Render.set_fog(false);
 		Render.set_haze(false);
+		Render.set_lighting(true);
+		Render.set_textures(false);
 		TheScene->set_changed_render();
 		Render.show_solid();
 		break;
@@ -676,7 +680,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		break;
 	case KEY_ADAPT_HIDDEN:
 		Adapt.set_mindcnt(!Adapt.mindcnt());
-		//TheScene->rebuild_all();
+		TheScene->rebuild_all();
 		break;
 	case KEY_ADAPT_REBUILD:
 		TheScene->rebuild_all();

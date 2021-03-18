@@ -41,6 +41,8 @@
 #include "VtxSnowTabs.h"
 #include "VtxSystemTabs.h"
 #include "VtxGalaxyTabs.h"
+#include "VtxFractalTabs.h"
+
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
@@ -144,6 +146,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_SNOW,VtxSnowTabs)
 	SET_TABS_OBJECT(TN_SYSTEM,VtxSystemTabs)
 	SET_TABS_OBJECT(TN_GALAXY,VtxGalaxyTabs)
+	SET_TABS_OBJECT(TN_FCHNL,VtxFractalTabs)
 
 	currentTabs=TN_SCENE;
 	lastTabs=TN_SCENE;

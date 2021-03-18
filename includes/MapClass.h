@@ -52,7 +52,9 @@ protected:
 	    RENDER_BTOF =	0x00200000, // render using triangle list back to front
 		VISIDS      =	0x00400000, // generate vis box from id pass
 		ENDADAPT    =	0x00800000, // set before running last ids pass
-		GEOMETRY    =	0x01000000  // geometery flag;
+		GEOMETRY    =	0x01000000, // geometery flag;
+		MULTILAYER    =	0x02000000  // multilayer flag
+
 	};
 
 	friend class MapNode;
@@ -124,6 +126,9 @@ public:
 
 	void	set_render_btof()   { BIT_SET(flags,RENDER_BTOF,1);}
 	int	    render_btof()	    { return (flags & RENDER_BTOF)?1:0;}
+
+	void	set_multilayer()   { BIT_SET(flags,MULTILAYER,1);}
+	int	    multilayer()	    { return (flags & MULTILAYER)?1:0;}
 
 	int     render_triangles();
 
@@ -277,6 +282,9 @@ public:
 	void set_scene();
 };
 extern Map	*TheMap;
+extern double   ptable[];
+
+#define CELLSIZE(i) PI*TheMap->radius*ptable[i]
 
 #endif
 

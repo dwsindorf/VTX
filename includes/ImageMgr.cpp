@@ -463,6 +463,20 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	images.set_building(0);
 }
 
+Color Image::aveColor(){
+	GLubyte      *c=(GLubyte*)data;
+	FColor ave=FColor(0,0,0);
+	int dim=comps();
+	for (int i = 0; i < height; i++){
+		for (int j = 0; j< width ; j++) {
+		    int index=i*width*dim+j*dim;
+			FColor fc=FColor(c[index],c[index+1],c[index+2]);
+			ave=ave+fc;
+		}
+	}
+	ave=ave/size()/255.0;
+	return Color(ave.red(),ave.green(),ave.blue(),ave.alpha());
+}
 //-------------------------------------------------------------
 // Image::addAlphaToImage()    get alpha from aux. RGB image
 //-------------------------------------------------------------

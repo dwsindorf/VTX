@@ -387,12 +387,16 @@ void TNglobal::eval()
 		break;
 	case MARGIN:
 		S0.s=Margin;
+		if(CurrentScope->shader())
+			S0.set_constant();
 		break;
 	case ZBASE:
 		S0.s=S0.height;
 		break;
 	case DEPTH:
 		S0.s=Td.depth;
+		if(CurrentScope->shader())
+			S0.set_constant();
 		break;
 	case PILLOW:
 		S0.s=1;
@@ -451,7 +455,8 @@ const char *TNcolor::symbol(){
 // TNcolor::initProgram() set shader defines
 //-------------------------------------------------------------
 bool TNcolor::initProgram(){
-
+    if(!isEnabled())
+    	return false;
 	//char nstr[256];
 	char defs[256];
 	char red[256]={0};
@@ -500,34 +505,37 @@ bool TNcolor::initProgram(){
 //-------------------------------------------------------------
 void TNcolor::eval()
 {
-	if(!isEnabled()){
-		if((TNarg*)left)
-			((TNarg*)left)->eval();
-		return;
-	}
-	INIT;
-//    if(CurrentScope->zpass())
-//        return;
+
  	TNarg *arg=(TNarg*)right;
     if(CurrentScope->rpass()){
-    	Td.clr_flag(SNOISEFLAG);
-    	//right->init();
-    	arg->eval(); // red
-    	arg=arg->next();
-    	arg->eval(); // green
-    	arg=arg->next();
-    	arg->eval(); // blue
-    	arg=arg->next();
-    	if(arg)
-    		arg->eval(); // alpha
-    	if(Td.get_flag(SNOISEFLAG))
-    		TerrainData::add_TNcolor(this);
-    	else
-    		S0.clr_cvalid();
-    	TerrainData::tp->set_color(true);
-    	Td.clr_flag(SNOISEFLAG);
+		Td.clr_flag(SNOISEFLAG);
+    	if(!isEnabled()){
+    		TerrainData::tp->set_color(false);
+    	}
+    	else{
+			//right->init();
+			arg->eval(); // red
+			arg=arg->next();
+			arg->eval(); // green
+			arg=arg->next();
+			arg->eval(); // blue
+			arg=arg->next();
+			if(arg)
+				arg->eval(); // alpha
+			if(Td.get_flag(SNOISEFLAG))
+				TerrainData::add_TNcolor(this);
+			else
+				S0.clr_cvalid();
+			TerrainData::tp->set_color(true);
+			Td.clr_flag(SNOISEFLAG);
+    	}
     	return;
     }
+	INIT;
+	if(!isEnabled()){
+		S0.clr_cvalid();
+		return;
+	}
 
 	int cflag=1;
 	Alpha=1;
@@ -1513,7 +1521,7 @@ bool TNsnow::initProgram(){
 
 	if(!isEnabled() || !Render.textures())
 		return false;
-	int id=texture->tid;
+	int id=texture->num_coords;//texture->tid;
 
 	sprintf(defs,"#define TX%d\n",id);
 
