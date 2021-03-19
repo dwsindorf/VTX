@@ -747,7 +747,7 @@ void TNtexture::eval()
 	double theta = Theta / 180.0 - 1;
 
 	int i = 0;
-	double depth=Td.depth;
+	double depth=Td.margin;
 
 	if(opts & SEXPR){
 		texture->s_data=true;

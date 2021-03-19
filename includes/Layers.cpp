@@ -400,7 +400,7 @@ void TNmap::eval()
 	//  cout<<"ht:"<<TheScene->height<<" s1:"<<s1<<" s2:"<<s2<<endl;
 
     double dm=rampstep(top_layer->morph,0,1,s1,s2);
-    Td.depth=smoothstep(fabs(dz),0,dm,0,1);
+    Td.margin=smoothstep(fabs(dz),0,dm,0,1);
     if(top_layer->morph){
         f=top_layer->morph*rampstep(0,margin,dz,0.5,0);
 		if(f){
@@ -419,7 +419,7 @@ void TNmap::eval()
     //    - reduce texture transparency to zero in small dz region at layer intersections
     //    - replace texture with texture average color
     //    - blend colors from adjacent layers
-    if(Td.depth<1){
+    if(Td.margin<1){
 		if(Td.zlevel[0].properties[1]->textures.size){
 			// first texture only
 			// TODO: better algorithm to pick best texture of combine texture stack
@@ -450,7 +450,7 @@ void TNmap::eval()
 	S0.copy(Td.zlevel[0]); // return top level
 	//S0.set_cvalid();
 
-	double ave=0;//S0.p.z+Td.zlevel[1].p.z;
+	double ave=0;
 	double maxht=-10;
 	double minht=10;
 
@@ -462,9 +462,6 @@ void TNmap::eval()
 			inmargin=true;
 		}
 		double z=d->Z();
-		maxht=z>maxht?z:maxht;
-		minht=z<minht?z:minht;
-
 		ave+=z/mdcnt;
 	}
 	extern int test3;

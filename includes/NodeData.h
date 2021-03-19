@@ -199,6 +199,8 @@ public:
     #define FSIZE  flags.s.fractal
     #define LSIZE  flags.s.links
     #define ESIZE  flags.s.evals
+    #define MSIZE  flags.s.mdata
+
 
     #define BDSIZE 1
     #define TDSIZE 1
@@ -227,8 +229,9 @@ public:
 #define ZSTART LSIZE+flags.s.colors+flags.s.density
 #define FSTART ZSTART+ZSIZE
 #define ESTART FSTART+FSIZE
+#define MSTART ESTART+ESIZE
 
-#define TSTART flags.s.tstart
+#define TSTART MSTART
 //
 //    mpdata bit map
 //  31            24  23            16  15            8  7             0
@@ -259,7 +262,8 @@ typedef struct mpdata {
 	unsigned int  hidden	: 1;	// hidden flag
 	unsigned int  margin	: 1;	// margin flag
 	unsigned int  hmaps	    : 1;	// hmap flag
-	unsigned int  unused	: 6;	// unassigned
+	unsigned int  mdata	    : 1;	// margin flag
+	unsigned int  unused	: 5;	// unassigned
 } mpdata;
 
 
@@ -333,6 +337,8 @@ public:
 	void setTextures(int n)		{ flags.s.textures=n;}
 	void setBumpmaps(int n)		{ flags.s.bumpmaps=n;}
 	void setHmaps(int n)		{ flags.s.hmaps=n;}
+	void setMdata(int n)		{ flags.s.mdata=n;}
+
 	void setLinks(int n)		{ flags.s.links=n;}
 	int type()  				{ return flags.s.type; }
 	int dtype()  				{ return flags.s.type==WATER?data2()->type():type(); }
@@ -385,7 +391,7 @@ public:
 	void setMemory(int n,int t) {
 #ifdef D64
                                 n+=t;
-                                flags.s.tstart=ESTART+ESIZE;
+                                flags.s.tstart=TSTART;
 #else
                                 n+=TDSIZE*t;
 #ifdef __LP64__
@@ -394,7 +400,7 @@ public:
 #ifdef DP_DIMS
                                 n+=flags.s.dims+flags.s.fractal;
 #endif
-                                flags.s.tstart=ESTART+ESIZE;
+                                flags.s.tstart=TSTART;
 #endif
                                 if(n){
                                     MALLOC(n,d32,data);
@@ -427,6 +433,7 @@ public:
     void setLink(MapData*d)     { if(flags.s.links) data[0].md=d;}
     double density()            { return flags.s.density?data[DSTART].d:0.0;}
     double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
+    double mdata()              { return flags.s.mdata>0?data[MSTART].d:0.0;}
     double rock()               { return flags.s.evals>0?data[ESTART].d:0.0;}
     double sediment()           { return flags.s.evals>1?data[ESTART+1].d:0.0;}
     double Z()                  { return flags.s.dims>0?data[ZSTART].d:0.0;}
@@ -439,6 +446,7 @@ public:
     void setY(double f)         { if(flags.s.dims>2)  data[ZSTART+2].d=f;}
     void setFractal(double f)   { if(flags.s.fractal) data[FSTART].d=f;}
     void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
+    void setMdata(double f)     { if(flags.s.mdata>0) data[MSTART].d=f;}
     void setRock(double f)      { if(flags.s.evals>0) data[ESTART].d=f;}
     void setSediment(double f)  { if(flags.s.evals>1) data[ESTART+1].d=f;}
     void setColor(Color c)      { if(flags.s.colors)  data[CSTART].ul=c.pack();}

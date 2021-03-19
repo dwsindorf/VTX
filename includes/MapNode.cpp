@@ -1898,7 +1898,7 @@ Color MapNode::Tcolor(MapData *d) {
     {
     	//cout<<Margin<<endl;
 
-    	   c = Color(data.depth(), 0, 0);
+    	   c = Color(data.mdata(), 0, 0);
  //        if (Raster.surface == 2)
 //            c = Color(0, 0, 1);
 //        else {
@@ -2260,7 +2260,7 @@ void MapNode::Svertex(MapData*dn) {
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=d->depth();
+					t=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
@@ -2280,7 +2280,7 @@ void MapNode::Svertex(MapData*dn) {
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=d->depth();
+					t=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
