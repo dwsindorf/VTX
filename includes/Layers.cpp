@@ -419,20 +419,19 @@ void TNmap::eval()
     //    - reduce texture transparency to zero in small dz region at layer intersections
     //    - replace texture with texture average color
     //    - blend colors from adjacent layers
+    Color edge_color=Color(1,1,1);
     if(Td.margin<1){
 		if(Td.zlevel[0].properties[1]->textures.size){
 			// first texture only
 			// TODO: better algorithm to pick best texture of combine texture stack
-			FColor  avec=Td.zlevel[i].properties[i+1]->textures[0]->aveColor;
-			Color c=Color(avec.red(),avec.green(),avec.blue());
-			Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
+			FColor  avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
+			edge_color=Color(avec.red(),avec.green(),avec.blue());
 		}
-		Td.zlevel[0].set_cvalid();
-		for(int i=1;i<MAX_TDATA;i++){
+		for(int i=0;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z==TZBAD)
 				break;
 	    	Td.zlevel[i].set_cvalid();
-	    	Td.zlevel[i].c=Td.zlevel[0].c; // not sure why this works
+	    	Td.zlevel[i].c=edge_color; // not sure why this works
 		}
     }
     if(f){

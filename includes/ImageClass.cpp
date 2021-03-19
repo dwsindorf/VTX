@@ -747,7 +747,6 @@ void TNtexture::eval()
 	double theta = Theta / 180.0 - 1;
 
 	int i = 0;
-	double depth=Td.margin;
 
 	if(opts & SEXPR){
 		texture->s_data=true;
@@ -755,19 +754,11 @@ void TNtexture::eval()
 		if(opts & AEXPR){
 			texture->a_data=true;
 			t=arg[i++];
-			if(Td.get_flag(MULTILAYER))
-				t+=depth;
 		}
 	}
 	else if(opts & AEXPR){
 		texture->a_data=true;
 		s=arg[i++];
-		if(Td.get_flag(MULTILAYER))
-			s+=depth;
-	}
-	else if(Td.get_flag(MULTILAYER)){
-		texture->d_data=true;
-		s=depth;
 	}
 
 	if(i<n)
@@ -934,7 +925,7 @@ bool TNtexture::initProgram(){
 	if(texture->a_data || texture->s_data  || texture->d_data){
 		INIT;
 		int cmode=0;
-		if(arg && texture->s_data){
+		if(texture->s_data){
 			cmode=exprString(arg,nstr);
 			if(tex_noise)
 				sprintf(defs+strlen(defs),"#define N%d %s\n",id,nstr);

@@ -255,7 +255,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int ne=0;
 	int ng=0;
 	int frac=0;
-	int mdata=0;
+	int md=0;
 
 	int i;
 	int a,b;
@@ -272,7 +272,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.get_flag(FVALUE))
 	    frac=1;
 	if(td.get_flag(MULTILAYER))
-		mdata=1;
+		md=1;
 	if(td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))
@@ -328,9 +328,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	set_has_density(nf);
 	setEvals(ne);
 	setFchnls(frac);
-	setMdata(mdata);
+	setMdata(md);
 
-	int n=nc+nd+ne+nf+frac+mdata+links();
+	int n=nc+nd+ne+nf+frac+md+links();
 	a=tp->tsize();
 	setMemory(n,a);
 
@@ -340,7 +340,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	setX(Pscale*td.p.x);
 	setY(Pscale*td.p.y);
 	setFractal(td.fractal);
-	setMdata(td.margin);
+	setMargin(td.margin);
 	if(td.water()||td.depth)
 		setDepth(td.depth);
 	else{
@@ -362,10 +362,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		}
 		else if(tex->a_data)
 			setTexture(tex->s,a);
+		if(md)
+			tex->d_data=true;
 	}
 	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
 	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;
-
+//cout<<mdata()<<endl;
 	set_type(td.type());
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);

@@ -2243,6 +2243,7 @@ void MapNode::Svertex(MapData*dn) {
 		double s = 0;
 		double t = 0;
 		for (int j = 0; j < tp->textures.size; j++) {
+			s=t=0;
 			tx = tp->textures[j];
 			if (!tx->tex_active && !tx->bump_active)
 				continue;
@@ -2256,6 +2257,8 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				if(tx->a_data){
 					t = d->texture(index);
+					if(tx->d_data)
+						t*=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
@@ -2264,8 +2267,6 @@ void MapNode::Svertex(MapData*dn) {
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
-
-				//tx->texCoords(GL_TEXTURE0 + tx->cid);
 			} else if(tx->cid>=0){
 				if (tx->s_data)
 					s = d->texture(index);
@@ -2273,14 +2274,16 @@ void MapNode::Svertex(MapData*dn) {
 					s=0;
 				tx->s = s;
 
-				//tx->texCoords(GL_TEXTURE0 + tx->cid);
 				if(tx->a_data){
 					t = d->texture(index);
+					if(tx->d_data)
+						t*=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 				else if(tx->d_data){
 					t=d->mdata();
+					//cout<<t<<endl;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}

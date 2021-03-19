@@ -67,7 +67,7 @@ protected:
     	if(texture())
         texture()->invalidate();
     	TheView->set_changed_detail();
-    	TheScene->rebuild();
+    	TheScene->rebuild_all();
     }
     void invalidateRender(){
       	TheView->set_changed_render();
@@ -84,6 +84,7 @@ protected:
 	int m_image_type;
 	bool m_invert;
 	int m_type;
+	bool d_data;
 
 	wxString m_name;
 

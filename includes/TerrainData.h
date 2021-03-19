@@ -218,6 +218,9 @@ public:
 		image=0;
 		clouds=0;
 		texht=0;
+		margin=0;
+		depth=0;
+		density=0;
 	}
 	void init(){
 		reset();
@@ -305,7 +308,6 @@ class TerrainProperties
 public:
 	double albedo;
 	double shine;
-	double depth;
 	Color glow;
 	Color color;
 	int callList;

@@ -9,16 +9,6 @@
 #include "MapClass.h"
 #include <math.h>
 
-//---------------------------------------------------------------------
-// D64:             all data is 64 bits and double-precision
-//                - doubles memory required for node data
-// ------------------- 32-bit packed data options ---------------------
-// DP_DIMS:         fractal and displacement data is double-precision
-// DPTEXTURES:      texture data is double-precision
-// __LP64__         on 64 bit systems link data is packed
-//                - this is a system #define (do not override)
-//---------------------------------------------------------------------
-#define D64
 //#define DP_DIMS
 #define DPTEXTURES
 //---------------------------------------------------------------------
@@ -124,17 +114,9 @@ enum {
 };
 typedef union d32 {
 	int     l;
-#ifdef D64
     double   d;
 	ulong    ul;
     MapData *md;
-#else
-#ifndef __LP64__
-    MapData *md;
-#endif
-    float    f;
-    uint     ul;
-#endif
 } d32;
 
 typedef struct Hdata {
@@ -194,44 +176,24 @@ public:
 //************************************************************
 // MapData class
 //************************************************************
-#ifdef D64
+
     #define ZSIZE  flags.s.dims
     #define FSIZE  flags.s.fractal
     #define LSIZE  flags.s.links
     #define ESIZE  flags.s.evals
     #define MSIZE  flags.s.mdata
 
-
     #define BDSIZE 1
     #define TDSIZE 1
-#else
-    #ifdef __LP64__
-        #define LSIZE  2*flags.s.links
-    #else
-        #define LSIZE  flags.s.links
-    #endif
-    #ifdef DPTEXTURES
-        #define TDSIZE 2
-    #else
-        #define TDSIZE 1
-    #endif
-    #ifdef DP_DIMS
-        #define ZSIZE  2*flags.s.dims
-        #define FSIZE  2*flags.s.fractal
-    #else
-        #define ZSIZE  flags.s.dims
-        #define FSIZE  flags.s.fractal
-    #endif
-#endif
 
 #define CSTART LSIZE
 #define DSTART LSIZE+flags.s.colors
 #define ZSTART LSIZE+flags.s.colors+flags.s.density
 #define FSTART ZSTART+ZSIZE
-#define ESTART FSTART+FSIZE
-#define MSTART ESTART+ESIZE
+#define MSTART FSTART+FSIZE
+#define ESTART MSTART+MSIZE
 
-#define TSTART MSTART
+#define TSTART ESTART
 //
 //    mpdata bit map
 //  31            24  23            16  15            8  7             0
@@ -301,20 +263,6 @@ public:
                                   fd.l.low=data[i+1].l;
                                   return fd.p;
                                 }
-#endif
-#ifndef D64
-
-	void  packd(double d, int i){  fdu fd;
-	                               fd.d=d;
-	                               data[i].l=fd.l.high;
-	                               data[i+1].l=fd.l.low;
-								}
-	double unpackd(int i)		{ fdu fd;
-	                              fd.l.high=data[i].l;
-	                              fd.l.low=data[i+1].l;
-	                              return fd.d;
-								}
-
 #endif
 	int dims()					{ return flags.s.dims;}
 	int evals()				    { return flags.s.evals;}
@@ -389,19 +337,8 @@ public:
 	                              return this;
  	                            }
 	void setMemory(int n,int t) {
-#ifdef D64
                                 n+=t;
                                 flags.s.tstart=TSTART;
-#else
-                                n+=TDSIZE*t;
-#ifdef __LP64__
-                                n+=flags.s.links;
-#endif
-#ifdef DP_DIMS
-                                n+=flags.s.dims+flags.s.fractal;
-#endif
-                                flags.s.tstart=TSTART;
-#endif
                                 if(n){
                                     MALLOC(n,d32,data);
                                 }
@@ -428,12 +365,12 @@ public:
             d=d->data2();
         }
     }
-#ifdef D64
+
     MapData *data2()            { return flags.s.links?data[0].md:0;}
     void setLink(MapData*d)     { if(flags.s.links) data[0].md=d;}
     double density()            { return flags.s.density?data[DSTART].d:0.0;}
-    double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double mdata()              { return flags.s.mdata>0?data[MSTART].d:0.0;}
+    double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double rock()               { return flags.s.evals>0?data[ESTART].d:0.0;}
     double sediment()           { return flags.s.evals>1?data[ESTART+1].d:0.0;}
     double Z()                  { return flags.s.dims>0?data[ZSTART].d:0.0;}
@@ -445,8 +382,8 @@ public:
     void setX(double f)         { if(flags.s.dims>1)  data[ZSTART+1].d=f;}
     void setY(double f)         { if(flags.s.dims>2)  data[ZSTART+2].d=f;}
     void setFractal(double f)   { if(flags.s.fractal) data[FSTART].d=f;}
+    void setMargin(double f)    { if(flags.s.mdata>0) data[MSTART].d=f;}
     void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
-    void setMdata(double f)     { if(flags.s.mdata>0) data[MSTART].d=f;}
     void setRock(double f)      { if(flags.s.evals>0) data[ESTART].d=f;}
     void setSediment(double f)  { if(flags.s.evals>1) data[ESTART+1].d=f;}
     void setColor(Color c)      { if(flags.s.colors)  data[CSTART].ul=c.pack();}
@@ -466,57 +403,8 @@ public:
     double bumpmap(int &a) {
         double t=data[a].d;
         a+=1;
-        return t;
-    }
-#else
-#ifdef __LP64__
-    MapData *data2()            { return flags.s.links?unpackp(0):0;}
-    void setLink(MapData*d)     { if(flags.s.links) packp(d,0);}
-#else
-    MapData *data2()            { return flags.s.links?data[0].md:0;}
-    void setLink(MapData*d)     { if(flags.s.links) data[0].md=d;}
-#endif
-    void setTexture(double t, int &a){
-        packd(t,a);
-        a+=TDSIZE;
-    }
-    double texture(int &a) {
-        double t=unpackd(a);
-        a+=TDSIZE;
-        return t;
-    }
+        return t;    }
 
-    int tsize() { return TDSIZE;}
-
-#ifdef DP_DIMS
-    double Z()                  { return flags.s.dims>0?unpackd(ZSTART):0.0;}
-    double X()                  { return flags.s.dims>1?unpackd(ZSTART+2):0.0;}
-    double Y()                  { return flags.s.dims>2?unpackd(ZSTART+4):0.0;}
-    double fractal()            { return flags.s.fractal?unpackd(FSTART):0.0;}
-	void setZ(double f)			{ if(flags.s.dims>0)  packd(f, ZSTART);}
-	void setX(double f)			{ if(flags.s.dims>1)  packd(f, ZSTART+2);}
-	void setY(double f)			{ if(flags.s.dims>2)  packd(f, ZSTART+4);}
-	void setFractal(double f)   { if(flags.s.fractal) packd(f, FSTART);}
-#else
-    double Z()                  { return flags.s.dims>0?data[ZSTART].f:0.0;}
-    double X()                  { return flags.s.dims>1?data[ZSTART+1].f:0.0;}
-    double Y()                  { return flags.s.dims>2?data[ZSTART+2].f:0.0;}
-    double fractal()            { return flags.s.fractal?data[FSTART].f:0.0;}
-	void setZ(double f)			{ if(flags.s.dims>0)  data[ZSTART].f=(float)f;}
-	void setX(double f)			{ if(flags.s.dims>1)  data[ZSTART+1].f=(float)f;}
-	void setY(double f)			{ if(flags.s.dims>2)  data[ZSTART+2].f=(float)f;}
-	void setFractal(double f)   { if(flags.s.fractal) data[FSTART].f=(float)f;}
-#endif
-    double density()            { return flags.s.density?data[DSTART].f:0.0;}
-    double depth()              { return flags.s.evals>0?data[ESTART].f:0.0;}
-    double rock()               { return flags.s.evals>0?data[ESTART].f:0.0;}
-    double sediment()           { return flags.s.evals>1?data[ESTART+1].f:0.0;}
-    void setDensity(double f)   { if(flags.s.density) data[DSTART].f=(float)f;}
-	void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].f=(float)f;}
-    void setRock(double f)      { if(flags.s.evals>0) data[ESTART].f=(float)f;}
-    void setSediment(double f)  { if(flags.s.evals>1) data[ESTART+1].f=(float)f;}
-	void setColor(Color c)		{ if(flags.s.colors)  data[CSTART].ul=c.pack();}
-#endif
 	Color  color()				{ return flags.s.colors?Color(data[CSTART].ul):WHITE;}
 	//double Ht()					{ return Z()+sediment();}
     double Ht()                 { return Z();}
