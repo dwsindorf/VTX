@@ -514,7 +514,7 @@ void TNmap::eval()
 		// - looks like fractal not operating on all terrain layers in some areas
 		Td.end();
 	}
-	Td.clr_flag(MULTILAYER);
+	//Td.clr_flag(MULTILAYER);
 }
 
 //************************************************************

@@ -1242,7 +1242,7 @@ bool TNnoise::setProgram(){
 //-------------------------------------------------------------
 void TNwater::eval()
 {
-	if(CurrentScope->rpass()){
+	if(CurrentScope->rpass() || !isEnabled()){
 		if(right){
 			INIT;
 			right->eval();

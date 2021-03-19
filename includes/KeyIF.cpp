@@ -551,6 +551,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_RENDER_WATER:
 		Render.set_water_show(!Render.show_water());
 		TheScene->set_changed_render();
+		if(Render.show_water())
+		    cout << "Water on" << endl;
+		else
+		    cout << "Water off" << endl;
 		break;
 	case KEY_RENDER_DEPTH:
 		Raster.set_water_depth(!Raster.water_depth());

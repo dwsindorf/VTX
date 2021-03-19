@@ -20,7 +20,7 @@ Scene() {
 		view=SURFACE;
 		phi=-22.5;
 		theta=348.75;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=9070.42 ft;
 		heading=0;
 		pitch=0;
@@ -54,7 +54,7 @@ Scene() {
 		view=SURFACE;
 		phi=-30.9375;
 		theta=12.6562;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-14000 ft;
 		heading=0;
 		pitch=0;
@@ -92,7 +92,7 @@ Scene() {
 		view=SURFACE;
 		phi=-26.3672;
 		theta=6.67969;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-4877.24 ft;
 		heading=0;
 		pitch=0;
@@ -155,41 +155,120 @@ Scene() {
 	}
 	View{
 		view=SURFACE;
-		phi=-14.0625;
-		theta=2.8125;
-		height=10 miles;
-		gndlvl=-13855.9 ft;
+		phi=-18.2813;
+		theta=10.5469;
+		height=52800 ft;
+		gndlvl=-8501.85 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
 	}
 	View{
-		phi=-13.8757;
-		theta=3.46069;
-		height=2553.89 ft;
-		gndlvl=-38476.3 ft;
+		height=10.0985 miles;
 	}
 	View{
-		phi=-13.8748;
-		theta=3.46087;
-		height=38342.8 ft;
-		heading=-15;
-		angle=-14;
+		phi=-18.3252;
+		theta=10.849;
+		height=1212.52 ft;
+		gndlvl=-8916.18 ft;
 	}
 	View{
-		phi=-14.0591;
-		theta=3.83605;
-		height=13696.3 ft;
-		heading=-5;
-		tilt=-12;
+		theta=10.8488;
+		height=3468.57 ft;
+		tilt=-16;
+		angle=-19;
+	}
+	View{
+		height=3454.64 ft;
+		heading=13;
+		tilt=-15;
+		angle=-27;
+	}
+	View{
+		phi=-18.3527;
+		theta=11.0165;
+		height=617.738 ft;
+		gndlvl=-15087.9 ft;
+		angle=0;
+	}
+	View{
+		height=7767.35 ft;
+		heading=-16;
+	}
+	View{
+		phi=-18.3592;
+		theta=11.067;
+		height=207.138 ft;
+		gndlvl=-14542.8 ft;
+	}
+	View{
+		height=1417.44 ft;
+		heading=-38;
+		tilt=-8;
 		angle=-4;
 	}
 	View{
-		height=13417.5 ft;
+		height=2963.07 ft;
 	}
 	View{
-		tilt=-13;
+		height=1481.53 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-0.0392822 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-21.0938;
+		theta=24.6094;
+		height=52800 ft;
+		gndlvl=-16536.4 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-21.286;
+		theta=25.0269;
+		height=1710.64 ft;
+		gndlvl=-19754.7 ft;
+	}
+	View{
+		height=16552.4 ft;
+		tilt=-11;
 		angle=-3;
+	}
+	View{
+		phi=-21.2606;
+		theta=25.1154;
+		height=363.876 ft;
+		gndlvl=-17533.4 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=13077.4 ft;
+		heading=32;
+		tilt=-8;
+		angle=3;
+	}
+	View{
+		angle=-6;
+	}
+	View{
+		height=12811.2 ft;
+	}
+	View{
+		height=12294.5 ft;
+	}
+	View{
+		height=12164.8 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -222,9 +301,11 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
-					hscale=0.002;
+					hscale=0.003;
 					water.clarity=1000 ft;
-					water.level=-40000 ft;
+					water.color1=Color(0.6,0.82,1,0.2);
+					water.color2=Color(0,0.29,0.5);
+					water.level=-22000 ft;
 					year=100;
 					bands("alpine",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),
 						Color(0.2,0.4,0.1,0.7),
@@ -236,26 +317,36 @@ Scene() {
 						Color(0.4,0.5,0,0.7),
 						Color(0.4,0.5,0,0));
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-					bands("mercury",128,0,0.6,RAND,Color(1,0.875,0.275,0.475),
-						Color(1,0.6,0,0.475),
-						Color(0.675,0.4,0,0.475),
-						Color(1,0.875,0.275,0.475));
 					Surface{
 						terrain=water(0)
-								fractal(SQR|SS,13.7,3,0.1,1.4,2,0.1,0,0,1,0)map(noise(1,15,0.3,0.1)*(1+2*LAT),0,3,2)
-								layer("Layer",MESH,0,0.3+noise(GRADIENT|SCALE,7.6,2.8,1,0.5,2,1,1,0,0),0,0.17)
+								fractal(SQR|SS,14.6,9.1,0.2,0.4,0.2,0.3,0,0,1,0)map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,1)
+								layer("Layer",MORPH,1,0.3+noise(GRADIENT|SCALE,7.6,2.8,1,0.5,2,1,1,0,0),0.21,1)
 									[
-									Texture("alpine",TEX,1,2,1,0,1,2,0.5,0,0,1.27776,0,0)+Z(noise(VORONOI|SCALE,5,6.3,1,0.5,2,1,1,0,0))
+									Texture("alpine",NORM|TEX,205.145,2,1,0,1,2,0.5,0,0,2,0,-1.44448)+Z(noise(VORONOI|SCALE,5,6.3,1,0.5,2,1,1,0,0))
 									]
-								layer("Layer",MESH,0,0.2+noise(GRADIENT|NABS|NEG,5.2,4.5,1,0.5,2,1,1,0,0),0,0.12)
+								layer("Layer",MORPH,1,0.1,0,0.49)
 									[
-									Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,2,1,0,1,2,1,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,6.4,2,1,0.5,2,1,1,0,0))
-									]
-								layer("Layer",MESH,0,0.15,0.04,1)
-									[
-									Texture("mercury",TEX,1,2,1,0,1,2,0.5,0,0,1.27776,0,0)+Z(noise(VORONOI|NABS|SCALE,5,4.2,1,0.5,2,1,1,0,0))
+									Texture("jupiter",LINEAR|TEX,422.264,2,1,0,1,2,1,0,0,2,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR|RO1,6.4,11.8,1,0.5,2,0.41,1,0,0.1))
 									]
 								;
+					}
+					Clouds(0.00406853) {
+						crot=1;
+						name="Clouds2D";
+						resolution=4.32318;
+						rseed=0.541522;
+						Surface{
+							terrain=
+									Texture("earth_clouds",TEX,1,1,1,0,1,2,0.5,0,0,0,0,0)+Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|SQR,1,6.4,1,0.5,2.06,1,1,0,0.8)));
+						}
+					}
+					Sky(0.0042) {
+						color=Color(0,0.56,1);
+						day=24;
+						density=0.25;
+						name="Sky";
+						rseed=1.62447;
+						specular=Color(1,1,1);
 					}
 				}
 			}

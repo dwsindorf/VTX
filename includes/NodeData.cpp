@@ -269,7 +269,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(td.get_flag(FVALUE))
 	    frac=1;
-	if(td.water()||td.depth)
+	//if(td.get_flag(MULTILAYER))
+	if(td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))
 	    ne=2;

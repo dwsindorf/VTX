@@ -150,7 +150,8 @@ void VtxWaterTabs::updateControls(){
 void VtxWaterTabs::OnEnable(wxCommandEvent& event){
 	setEnabled(!isEnabled());
 	Render.set_water_show(!Render.show_water());
-	TheScene->set_changed_render();
+	TheScene->set_changed_detail();
+	TheScene->rebuild_all();
 	menu_action=TABS_ENABLE;
 	sceneDialog->updateObjectTree();
 }

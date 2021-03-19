@@ -1464,6 +1464,10 @@ void TerrainMgr::init()
 	TheNoise.set(MapPt);
 
 	exprs.ss();
+	while((var=(TNvar*)exprs++)>0){
+		Td.init();
+		var->init();
+	}
 	Td.init();
 
 	if(root)
