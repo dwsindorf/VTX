@@ -72,7 +72,7 @@ Scene() {
 						Color(1,0.9,0.3));
 					Surface{
 						terrain=
-								Texture("saturn",S|TEX,2*PHI+0.01*noise(3,17),0.9999,1.0788,1,0,1,2);
+								Texture("saturn",LINEAR|S|TEX,2*PHI+0.01*noise(3,17),0.9999,2,1,-0.22224,1,2,1,0,0,0,0,0);
 					}
 					Ring(0.06,0.01) {
 						emission=Color(1,1,1,0.8);
@@ -91,7 +91,7 @@ Scene() {
 							Color(1,0.9,0.3));
 						Surface{
 							terrain=
-									Texture("saturn",S|TEX,PHI,0.9999,1.50304,1,0,1,2);
+									Texture("saturn",LINEAR|S|TEX,PHI,0.9999,0.52776,1,0,1,2,1,0,0,0,0,0);
 						}
 					}
 					Moon(0.002,0.068) {
@@ -124,24 +124,25 @@ Scene() {
 									Texture("cracks2",BUMP,100,0.86064,1,0,10,2)+
 									Texture("cracks2",BUMP,127.681,0.86064,1,0,10,2.5);
 						}
-						Clouds(0.00302286) {
+						Clouds(0.00205853) {
 							ambient=Color(1,1,1,0.41);
 							crot=1;
 							day=10;
+							resolution=3.40408;
 							shine=23.5064;
 							specular=Color(1,1,1);
 							tilt=-8;
 							gmax=2;
 							Surface{
-								terrain=Color(1,1,0.4,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,3,7,0.3,0.1,2.1,0.55,0.28,1,0));
+								terrain=Color(1,1,0.4,noise(GRADIENT|FS|NABS|NEG|SQR,3,7,-0.29,0.28,2.1,1,-0.07,0,0.2));
 							}
 						}
-						Sky(0.003077) {
+						Sky(0.00210764) {
 							color=Color(0.5,0.1,0,0.9);
 							day=11;
 							density=0.3;
 							haze.color=Color(1,1,0.46,0.9);
-							haze.grad=0.63968;
+							haze.grad=0.4878;
 							haze.max=100 miles;
 							haze.value=0.898039;
 							shine=0.717137;

@@ -507,6 +507,9 @@ void TNcolor::eval()
 {
 
  	TNarg *arg=(TNarg*)right;
+	INIT;
+	Alpha=1;
+
     if(CurrentScope->rpass()){
 		Td.clr_flag(SNOISEFLAG);
     	if(!isEnabled()){
@@ -515,30 +518,36 @@ void TNcolor::eval()
     	else{
 			//right->init();
 			arg->eval(); // red
+			Red=S0.s;
 			arg=arg->next();
 			arg->eval(); // green
+			Green=S0.s;
 			arg=arg->next();
 			arg->eval(); // blue
+			Blue=S0.s;
 			arg=arg->next();
-			if(arg)
+			if(arg){
 				arg->eval(); // alpha
+				Alpha=S0.s;
+			}
 			if(Td.get_flag(SNOISEFLAG))
 				TerrainData::add_TNcolor(this);
-			else
-				S0.clr_cvalid();
+			else{
+				Td.clr_flag(SNOISEFLAG);
+			}
+			S0.set_cvalid();
+			S0.c=Color(Red,Green,Blue,Alpha);
 			TerrainData::tp->set_color(true);
-			Td.clr_flag(SNOISEFLAG);
+			TerrainData::tp->color=S0.c;
     	}
     	return;
     }
-	INIT;
 	if(!isEnabled()){
 		S0.clr_cvalid();
 		return;
 	}
 
 	int cflag=1;
-	Alpha=1;
 
 	arg->eval();
 	Red=S0.s;

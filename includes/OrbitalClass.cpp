@@ -2842,13 +2842,10 @@ int Planetoid::shadow_pass()
 //-------------------------------------------------------------
 // Planetoid::render() render the object and it's children
 //-------------------------------------------------------------
-void Planetoid::render()
-{
-	if(!isEnabled())
+void Planetoid::render() {
+	if (!isEnabled())
 		return;
 	LinkedList<Object3D*> moons;
-	LinkedList<Object3D*> clouds;
-	Object3D *sky=0;
 	LinkedList<Object3D*> inlist;
 	LinkedList<Object3D*> outlist;
 	LinkedList<Object3D*> shells;
@@ -2856,21 +2853,17 @@ void Planetoid::render()
 	Object3D *obj;
 	children.ss();
 
-	while((obj=children++)>0){
-		if(obj->type()==ID_SKY){
-			sky=(Object3D*)obj;
-			if(sky->inside())
-				shells.add(obj);
-		}
-		else if(obj->type()==ID_CLOUDS)
+	while ((obj = children++) > 0) {
+		if (obj->type() == ID_CLOUDS)
 			shells.add(obj);
-		else
+		else if (obj->type() == ID_SKY)
+			shells.add(obj);
+		else // moons,rings etc.
 			moons.add(obj);
 	}
-	bool outsky=sky && !sky->inside();
 	shells.ss();
-	while((obj=shells++)>0){
-		if(obj->inside())
+	while ((obj = shells++) > 0) {
+		if (obj->inside())
 			inlist.add(obj);
 		else
 			outlist.add(obj);
@@ -2878,66 +2871,60 @@ void Planetoid::render()
 
 	set_ref();
 
-	if(included()){
-		//glPolygonOffset(10,2.0);
-		// offset surface zvalues to fix zbuffer precision problem with clouds
-		// in orbital views
-		//if(TheScene->viewobj==this && outsky)
-		//	glEnable(GL_POLYGON_OFFSET_FILL);
-		//if(TheScene->viewobj==this)
-
+	if (included()) {
 		TheScene->pushMatrix();
 		set_tilt();
 		set_rotation();
 		TheScene->set_matrix(this);
+#ifdef DEBUG_RENDER
+		cout << "rendering " << name() << " " << size << endl;
+#endif
 		render_object();
 		TheScene->popMatrix();
-		//glDisable(GL_POLYGON_OFFSET_FILL);
+		if (TheScene->viewobj != this)
+			Orbital::render(); // render children
+	}
+	if (TheScene->viewobj == this) {
+		inlist.ss();
+		outlist.ss();
+		TheScene->set_backside();
 
 		moons.ss();
-		while((obj=moons++)>0){
-		    TheScene->pushMatrix();
+		while ((obj = moons++) > 0) {
+			TheScene->pushMatrix();
+#ifdef DEBUG_RENDER
+			cout << "inside " << obj->name() << " " << obj->size << endl;
+#endif
 			obj->render();
-		    TheScene->popMatrix();
+			TheScene->popMatrix();
 		}
-	}
-	inlist.ss();
-	outlist.ss();
-	if(included() && TheScene->viewobj==this){
-		if(Raster.auximage()) // skip sky & clouds
-			return; // render children
-
-		TheScene->set_backside();
-		if(inlist.size>0){
-			ValueList<Object3D*>insiders(inlist);
+		if (inlist.size > 0) {
+			// sort objects by radius
+			ValueList<Object3D*> insiders(inlist);
 			insiders.se();
-			while((obj=insiders--)>0){
+			while ((obj = insiders--) > 0) { // back-to-front
 				TheScene->pushMatrix();
-				//cout << "inside "<< obj->name()<< " "<< obj->size<< endl;
+#ifdef DEBUG_RENDER
+				cout << "inside " << obj->name() << " " << obj->size << endl;
+#endif
 				obj->render();
 				TheScene->popMatrix();
 			}
 		}
 		TheScene->set_frontside();
-		if(outlist.size>0){
-			ValueList<Object3D*>outsiders(outlist);
+		if (outlist.size > 0) {
+			ValueList<Object3D*> outsiders(outlist);
 			outsiders.ss();
-			while((obj=outsiders++)>0){
+			while ((obj = outsiders++) > 0) { // front-to-back
 				TheScene->pushMatrix();
-				//cout << "outside "<< obj->name()<< " "<< obj->size<< endl;
+#ifdef DEBUG_RENDER
+				cout << "outside " << obj->name() << " " << obj->size << endl;
+#endif
 				obj->render();
 				TheScene->popMatrix();
 			}
 		}
-		if(outsky){
-			TheScene->set_frontside();
-			TheScene->pushMatrix();
-			//cout << "outside sky - front "<< endl;
-			sky->render();
-			TheScene->popMatrix();
-		}
-	}
-	else
+	} else
 		Orbital::render(); // render children
 }
 

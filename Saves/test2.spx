@@ -359,13 +359,11 @@ Scene() {
 						terrain=fractal(SQR|SS,14.8,11,0.1,0.38,0.2,0.3,0,0,1,0)map(noise(GRADIENT,1,15,0.3,0.1,2,1,1,0,0),1,1)
 								layer("Layer1",MORPH,1,0.1+noise(GRADIENT|SCALE,7.6,2.8,1,0.5,2,1,1,0,0),0,0.14)
 									[
-									Texture("alpine",A|LINEAR|NORM|TEX,DEPTH,205.145,2,1,0,1,2,0.5,0,0,2,0,-1.44448)+Color(1,0.756863,0.301961,1)
-									+Z(noise(GRADIENT|NABS|SCALE,5,6.3,-0.66,0.5,2,1,1,0,0))
+									Texture("alpine",LINEAR|NORM|TEX,205.145,2,1,0,1,2,0.5,0,0,2,0,-1.44448)+Z(noise(GRADIENT|NABS|SCALE,5,6.3,-0.66,0.5,2,1,1,0,0))
 									]
 								layer("Layer2",MORPH,0.17,0.07,0,0.17)
 									[
-									Texture("jupiter",A|BORDER|LINEAR|NORM|TEX,DEPTH,422.264,2,1,0,1,2,1,0,0,2,0,0)+Color(0.956863,0.627451,0.286275,1)
-									+Z(noise(GRADIENT|SCALE|SQR,5,9.5,1,0.5,2,1,1,0,-0.1))
+									Texture("jupiter",BORDER|LINEAR|NORM|TEX,422.264,2,1,0,1,2,1,0,0,2,0,0)+Z(noise(GRADIENT|SCALE|SQR,5,9.5,1,0.5,2,1,1,0,-0.1))
 									]
 								;
 					}

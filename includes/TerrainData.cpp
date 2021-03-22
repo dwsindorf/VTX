@@ -169,7 +169,7 @@ TerrainProperties *TerrainData::add_id()
 		tp->albedo=albedo;
 		tp->shine=shine;
 		tp->glow=emission;
-		tp->color=c;
+		//tp->color=c;
 	}
 	set_id(tids++);
 	tp=new TerrainProperties(id());
@@ -187,7 +187,7 @@ void TerrainData::eval_properties()
 	tp->albedo=albedo;
 	tp->shine=shine;
 	tp->glow=emission;
-	tp->color=c;
+	//tp->color=c;
 
 	int i,j;
 	Texture *tex;

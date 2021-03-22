@@ -220,8 +220,6 @@ void TNmap::init()
 //-------------------------------------------------------------
 void TNmap::eval()
 {
-	//if(Td.pass==0)
-	//	lastz=0;
 	TNlayer *layer=(TNlayer*)right;
 	int i;
 	if(layer && CurrentScope->rpass()){
@@ -234,14 +232,18 @@ void TNmap::eval()
 
 			layer->base->eval();
 
+			if(Td.tp->textures.size && !Td.tp->has_color())
+				Td.tp->color=Td.tp->textures[0]->aveColor;
+
+			//Td.tp->color.print();
+
+			Td.tp->set_color(true);
+
 			layer=(TNlayer*)layer->right;
 			if(!layer || layer->typeValue()!=ID_LAYER)
 				break;
-			TerrainData::tp->set_color(true);
-
 			if(layer->isEnabled())
 				Td.add_id();
-			TerrainData::tp->set_color(true);
 
 		}
 		if(!in_map)
@@ -419,22 +421,16 @@ void TNmap::eval()
     //    - reduce texture transparency to zero in small dz region at layer intersections
     //    - replace texture with texture average color
     //    - blend colors from adjacent layers
-    Color edge_color=Color(1,1,1);
     if(Td.margin<1){
-		if(Td.zlevel[0].properties[1]->textures.size){
-			// first texture only
-			// TODO: better algorithm to pick best texture of combine texture stack
-			FColor  avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
-			edge_color=Color(avec.red(),avec.green(),avec.blue());
-		}
-		for(int i=0;i<MAX_TDATA;i++){
-			if(Td.zlevel[i].p.z==TZBAD)
-				break;
-	    	Td.zlevel[i].set_cvalid();
-	    	Td.zlevel[i].c=edge_color; // not sure why this works
-		}
+    	for(int i=0;i<Td.properties.size-1;i++){
+    		Td.zlevel[i].c=Td.properties[i+1]->color;
+ 		    Td.zlevel[i].set_cvalid();
+        }
+    	for(int i=1;i<Td.properties.size-1;i++){
+    		Td.zlevel[i].c=Td.zlevel[0].c;
+    	}
     }
-    if(f){
+	if(f){
 		Color c1=Td.zlevel[0].c;
 		Color c2=Td.zlevel[1].c;
 		if(lowdz>-10)
@@ -443,11 +439,10 @@ void TNmap::eval()
 		Td.zlevel[0].c=c1.blend(c2,f);
 		Td.zlevel[0].set_cvalid();
 		Td.zlevel[1].set_cvalid();
-    }
-   	//Td.zlevel[1].c=Td.zlevel[0].c;
+	}
+	//Td.zlevel[0].set_cvalid();
 
 	S0.copy(Td.zlevel[0]); // return top level
-	//S0.set_cvalid();
 
 	double ave=0;
 	double maxht=-10;
@@ -488,7 +483,7 @@ void TNmap::eval()
 			}
 		}
 		// 2) Remove ridge artifact at center of layer intersection
-		//    for some reason it looks like when dz=0 "fractal" doesn't process the node
+		//    for some reason it looks like when dz~=0 "fractal" doesn't process the node
 		//    which leaves a "wall" in the center
 		//    throwing out the calculated ht and using the average of the nodes neighbors seams to fix the problem
 		if(inmargin){  // at least one neighbor is from another layer
@@ -507,10 +502,8 @@ void TNmap::eval()
 		// when fractal is present the result is different than previous case
 		// - more intermixed terrain segments
 		// - artifact at some layer intersections (looks like deep slot)
-		// - looks like fractal not operating on all terrain layers in some areas
 		Td.end();
 	}
-	//Td.clr_flag(MULTILAYER);
 }
 
 //************************************************************

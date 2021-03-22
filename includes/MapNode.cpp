@@ -83,11 +83,11 @@ extern HashTable normals;
 #endif
 
 Color sctbl[16]={
-	Color(0,0,1),		// blue (water)
-	Color(1,1,0),		// yellow
+	Color(0,1,1),		// cyan (water)
 	Color(1,0,0),		// red
 	Color(0,1,0),		// green
-	Color(0.5,0.5,0.5),	// gray
+	Color(0,0,1),		// blue
+	Color(1,1,0),	    // yellow
 	Color(1,0,0.5),		// violet
 	Color(0.5,0.5,0.0),	// dark yellow
 	Color(0.5,0.0,0.0),	// dark red
