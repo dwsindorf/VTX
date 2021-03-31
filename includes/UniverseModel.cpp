@@ -372,14 +372,13 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(getObjectSymbol(TN_PLANET));
 		break;
 	case TN_CORONA:
-	//case TN_RING:
+		list.add(getObjectSymbol(TN_CORONA));
 		break;
 	case TN_STAR:
 		if(obj->collapsed() && obj->getParent()){
 			return getAddList(obj->getParent(),list);
 		}
-		if(!obj->hasChild(ID_CORONA))
-			list.add(getObjectSymbol(TN_CORONA));
+		list.add(getObjectSymbol(TN_CORONA));
 		break;
 	case TN_PLANET:
 		if(obj->collapsed() && obj->getParent()){
@@ -728,6 +727,8 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 //-------------------------------------------------------------
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
+	if(actionmode==DROPPING && child)
+		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
     int branch=node->getFlag(NODE_BRANCH);
 	TreeNode *root=new TreeNode(node);
 	setType(node);
@@ -756,6 +757,10 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		break;
 	case TN_CLOUD:
 		parent=parent->getParent();
+		break;
+	case TN_CORONA:
+		//if(actionmode==DROPPING)
+		//parent=parent->getParent();
 		break;
 	}
 	int ntype=node->getFlag(TN_TYPES);

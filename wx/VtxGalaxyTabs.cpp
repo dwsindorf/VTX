@@ -729,7 +729,7 @@ void VtxGalaxyTabs::setObjAttributes()
 	tree->size=SizeSlider->getValue()*LY;
 	galaxy->size=tree->size;
 	galaxy->detail=CellSizeSlider->getValue();
-	galaxy->setName(object_name->GetValue().ToAscii());
+	galaxy->setName((char*)object_name->GetValue().ToAscii());
 
 	TheScene->phi=ViewPhiSlider->getValue();
 	TheScene->theta=ViewThetaSlider->getValue();
@@ -757,10 +757,10 @@ void VtxGalaxyTabs::setObjAttributes()
 	tree->noise_amplitude=AmplitudeSlider->getValue();
 	tree->noise_vertical=VerticalSlider->getValue();
 
-	galaxy->setNoiseFunction(NoiseExpr->GetValue().ToAscii());
+	galaxy->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
 	galaxy->applyNoiseFunction();
 
-	galaxy->setColorFunction(ColorExpr->GetValue().ToAscii());
+	galaxy->setColorFunction((char*)ColorExpr->GetValue().ToAscii());
 	galaxy->applyColorFunction();
 
 	invalidate_object();
@@ -848,8 +848,8 @@ void VtxGalaxyTabs::OnColorButton(wxCommandEvent& event){
 	Color c=galaxy->getColor(i);
 	wxColor wc(c.rb(),c.gb(),c.bb(),c.ab());
 	wxColourData data;
+	data.SetChooseAlpha(true);
 	data.SetColour(wc);
-
 	wxColourDialog dlg(this,&data);
 
     if (dlg.ShowModal() == wxID_OK){
@@ -861,6 +861,8 @@ void VtxGalaxyTabs::OnColorButton(wxCommandEvent& event){
 		c.set_rb(col.Red());
 		c.set_gb(col.Green());
 		c.set_bb(col.Blue());
+		c.set_ab(col.Alpha());
+
 		galaxy->setColor(i,c);
 		TheView->set_changed_render();
 	}

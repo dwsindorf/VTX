@@ -5,6 +5,7 @@
 enum {
 	ID_ENABLE,
 	ID_DELETE,
+	ID_NAME_TEXT,
     ID_SIZE_SLDR,
     ID_SIZE_TEXT,
     ID_GRADIENT_TEXT,
@@ -19,7 +20,11 @@ enum {
 
 IMPLEMENT_CLASS(VtxCoronaTabs, wxNotebook )
 
+
 BEGIN_EVENT_TABLE(VtxCoronaTabs, wxNotebook)
+
+EVT_TEXT_ENTER(ID_NAME_TEXT,VtxCoronaTabs::OnNameText)
+
 EVT_MENU(ID_DELETE,VtxCoronaTabs::OnDelete)
 EVT_MENU(ID_ENABLE,VtxCoronaTabs::OnEnable)
 EVT_UPDATE_UI(ID_ENABLE, VtxCoronaTabs::OnUpdateEnable)
@@ -88,10 +93,19 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
     topsizer->Add(boxsizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Geometry"));
-	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Radius",LABEL, VALUE,SLIDER);
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2S,130);
+	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->AddSpacer(10);
+
+	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Radius",LABEL2S, VALUE2,110);
 	SizeSlider->setRange(1,10);
 	SizeSlider->setValue(2);
-	object_cntrls->Add(SizeSlider->getSizer(),wxALIGN_LEFT|wxALL);
+
+	hline->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	boxsizer->Add(object_cntrls,0, wxALIGN_LEFT|wxALL,0);
 
@@ -119,4 +133,6 @@ void VtxCoronaTabs::updateControls(){
 	updateSlider(GradientSlider,obj->gradient);
 	updateColor(InnerSlider,obj->color1);
 	updateColor(OuterSlider,obj->color2);
+	object_name->SetValue(object_node->node->nodeName());
+
 }

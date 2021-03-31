@@ -327,17 +327,20 @@ public:
 									}
 
 	Array(LinkedList<T> &l)			{	T tmp;
-										memsize = l.size;
-										if(mem_debug & 4)
-											debug_malloc("Array(List&)","",1);
-										addsize=1;
-										MALLOC(memsize, T, base);
 										index=size=0;
+										addsize=1;
+									    memsize = l.size;
+									    base=0;
+										if(l.size){
+											if(mem_debug & 4)
+												debug_malloc("Array(List&)","",1);
+											MALLOC(memsize, T, base);
 
-										l.ss();
-										while((tmp=l++)>0)
-											add(tmp);
-										l.ss();
+											l.ss();
+											while((tmp=l++)>0)
+												add(tmp);
+											l.ss();
+										}
 									}
 	~Array()						{	if(mem_debug & 4)
 											debug_free("~Array","",1);

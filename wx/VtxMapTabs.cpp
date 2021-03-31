@@ -22,8 +22,8 @@ enum{
 };
 
 #define NAME_WIDTH  50
-#define SLDR_WIDTH  160
-#define EXPR_WIDTH  160
+#define SLDR_WIDTH  180
+#define EXPR_WIDTH  200
 
 #define LINE_WIDTH TABS_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 40
@@ -114,7 +114,7 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
 	map_cntrls->Add(ScaleSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	MarginSlider=new ExprSliderCtrl(panel,ID_MARGIN_SLDR,"Margin",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
-	MarginSlider->setRange(0.5,2.0);
+	MarginSlider->setRange(0.25,4.0);
 	map_cntrls->Add(MarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 }

@@ -14,7 +14,24 @@
 
 //#define GEOMETRY_TEST
 //#define WRITE_STAR_DATA
+//#define DEBUG_RENDER
 
+extern const char *pstg[];
+
+static void show_render_state(Object3D *obj){
+#ifdef DEBUG_RENDER
+	const char *side="";
+	if(obj==TheScene->viewobj)
+		side="viewobj";
+	else if(obj->getParent() == TheScene->viewobj){
+		if(obj->inside())
+			side="inside";
+		else if(obj->outside())
+			side= "outside";
+	}
+	cout<<pstg[TheScene->bgpass]<<" " << obj->name() << " " << side << endl;
+#endif
+}
 
 int test2=0;
 int test3=0;
@@ -705,6 +722,8 @@ void DensityCloud::set_surface(TerrainData &data)
 			color_expr->eval();
 			S0.density=S0.s;
 			S0.c=color_list->color(tree->color_bias*S0.s);
+			//cout<<S0.c.alpha()<<endl;
+
 			//S0.c=WHITE*(1-tree->color_mix)+S0.c*(tree->color_mix);
 			//c=c*(1-galaxy->color_mix)+S0.c*(galaxy->color_mix);
 		}
@@ -1366,6 +1385,7 @@ void Galaxy::render()
 		    TheScene->popMatrix();
 		}
 	}
+ 	else
 	Orbital::render(); // render children
 }
 
@@ -1880,7 +1900,10 @@ int Spheroid::render_pass()
     if(!local_group() || offscreen() || !isEnabled())
 		return 0;
 	//if(view_group()){
+    if(view_group())
 		clear_pass(BG2);
+    else
+    	clear_pass(BG3);
 	//}
 	//else
 	//	clear_pass(BG2);
@@ -2513,6 +2536,7 @@ void Star::render()
 void Star::render_object()
 {
  	first=1;
+	show_render_state(this);
 
 	if(TheScene->adapt_mode())
 		map->render();
@@ -2792,16 +2816,11 @@ int Planetoid::render_pass()
 
     if(!local_group() || offscreen()|| !isEnabled())
 		return 0;
-	if(view_group()){
+	if(view_group() || near_group()){
 		if(TheScene->viewobj==this || TheScene->orbital_view())
 			select_pass(FG0);
-		else {
-		    if(TheScene->viewobj==parent && !Render.draw_shaded()){
-		        if(((Orbital*)parent)->inside_sky())
-			        clear_pass(BG4);
-			}
+		else
 			clear_pass(BG2);
-	    }
 	}
 	else
 		clear_pass(BG5);
@@ -2845,7 +2864,6 @@ int Planetoid::shadow_pass()
 void Planetoid::render() {
 	if (!isEnabled())
 		return;
-	LinkedList<Object3D*> moons;
 	LinkedList<Object3D*> inlist;
 	LinkedList<Object3D*> outlist;
 	LinkedList<Object3D*> shells;
@@ -2854,20 +2872,21 @@ void Planetoid::render() {
 	children.ss();
 
 	while ((obj = children++) > 0) {
-		if (obj->type() == ID_CLOUDS)
-			shells.add(obj);
-		else if (obj->type() == ID_SKY)
-			shells.add(obj);
-		else // moons,rings etc.
-			moons.add(obj);
+		if(!obj->included())
+			continue;
+		shells.add(obj);
 	}
 	shells.ss();
+
 	while ((obj = shells++) > 0) {
-		if (obj->inside())
+		if (obj->inside() && TheScene->viewobj == this)
 			inlist.add(obj);
 		else
 			outlist.add(obj);
 	}
+
+	ValueList<Object3D*> insiders(inlist);
+	ValueList<Object3D*> outsiders(outlist);
 
 	set_ref();
 
@@ -2876,50 +2895,38 @@ void Planetoid::render() {
 		set_tilt();
 		set_rotation();
 		TheScene->set_matrix(this);
-#ifdef DEBUG_RENDER
-		cout << "rendering " << name() << " " << size << endl;
-#endif
 		render_object();
 		TheScene->popMatrix();
-		if (TheScene->viewobj != this)
-			Orbital::render(); // render children
+		if (TheScene->viewobj != this){
+			TheScene->set_frontside();
+			//Orbital::render(); // render children
+			if (outsiders.size > 0) {
+				outsiders.ss();
+				while ((obj = outsiders++) > 0) { // front-to-back
+					TheScene->pushMatrix();
+					obj->render();
+					TheScene->popMatrix();
+				}
+			}
+			return;
+		}
 	}
 	if (TheScene->viewobj == this) {
-		inlist.ss();
-		outlist.ss();
 		TheScene->set_backside();
-
-		moons.ss();
-		while ((obj = moons++) > 0) {
-			TheScene->pushMatrix();
-#ifdef DEBUG_RENDER
-			cout << "inside " << obj->name() << " " << obj->size << endl;
-#endif
-			obj->render();
-			TheScene->popMatrix();
-		}
-		if (inlist.size > 0) {
+		if (insiders.size > 0) {
 			// sort objects by radius
-			ValueList<Object3D*> insiders(inlist);
 			insiders.se();
 			while ((obj = insiders--) > 0) { // back-to-front
 				TheScene->pushMatrix();
-#ifdef DEBUG_RENDER
-				cout << "inside " << obj->name() << " " << obj->size << endl;
-#endif
 				obj->render();
 				TheScene->popMatrix();
 			}
 		}
 		TheScene->set_frontside();
-		if (outlist.size > 0) {
-			ValueList<Object3D*> outsiders(outlist);
+		if (outsiders.size > 0) {
 			outsiders.ss();
 			while ((obj = outsiders++) > 0) { // front-to-back
 				TheScene->pushMatrix();
-#ifdef DEBUG_RENDER
-				cout << "outside " << obj->name() << " " << obj->size << endl;
-#endif
 				obj->render();
 				TheScene->popMatrix();
 			}
@@ -3012,6 +3019,8 @@ void Planetoid::render_object()
  	first=1;
 	set_lighting();
 	Raster.init_lights(1);
+	show_render_state(this);
+
     if(TheScene->bgpass==BG4){
 		map->set_mask(1);
 		Color c=Raster.blend_color;
@@ -3271,7 +3280,7 @@ void Shell::set_geometry()
 		map->radius=size;
 	}
 	else
-		cout<<"NO PARENT"<<endl;
+		cout<<"SHELL NO PARENT"<<endl;
 	map->frontface=GL_BACK;
 	map->lighting=0;
 	map->set_transparant(1);
@@ -3427,22 +3436,18 @@ int Sky::render_pass()
 
 	if(!view_group() || offscreen() || !isEnabled())
 	    return 0;
-//	if(inside()){
-//		if(Render.draw_shaded())
-//			clear_pass(BG1);
-//		else
-//			clear_pass(BG3);
-//	}
-//	else {
-	    if(near_group()){
-	    	if(outside())
-	    		clear_pass(FG1);
-	    	else
-			    clear_pass(BG1);
-	    }
+	if(getParent()==TheScene->viewobj){
+		if(near_group()){
+			if(outside())
+				clear_pass(FG1);
+			else
+				clear_pass(BG1);
+		}
 		else
 			clear_pass(BG2);
-	//}
+	}
+	else
+		clear_pass(BG2);
     return selected();
 }
 
@@ -3617,6 +3622,8 @@ void Sky::render_object()
 		return;
 	if(Raster.auximage()) // skip surface fog/water effects
 		return;
+	show_render_state(this);
+
 	glDepthMask(GL_FALSE);
 	if(TheScene->backside() || inside()){
 		map->frontface=GL_BACK;
@@ -3915,22 +3922,18 @@ int CloudLayer::render_pass()
 
 	if(!view_group() || offscreen()|| !isEnabled())
 	    return 0;
-//	if(inside()){
-//		if(Render.draw_shaded())
-//			clear_pass(BG1);
-//		else
-//			clear_pass(BG3);
-//	}
-//	else {
-	    if(near_group()){
-	    	if(outside())
-	    		clear_pass(FG1);
-	    	else
-	    		clear_pass(BG1);
-	    }
+	if(getParent()==TheScene->viewobj){
+		if(near_group()){
+			if(outside())
+				clear_pass(FG1);
+			else
+				clear_pass(BG1);
+		}
 		else
 			clear_pass(BG2);
-//	}
+	}
+	else
+		clear_pass(BG2);
 
     return selected();
 }
@@ -4116,6 +4119,7 @@ void CloudLayer::render()
 	}
 	set_ref();
 	if(included()){
+		show_render_state(this);
 		map->lighting=1;
 		glDepthMask(GL_FALSE);
 
@@ -4644,6 +4648,7 @@ void CloudLayer::adapt_object()
 //-------------------------------------------------------------
 void CloudLayer::render_object()
 {
+	show_render_state(this);
 	Shell::render_object();
 }
 
@@ -4679,8 +4684,8 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	year=day=0;
 	detail=3;
 	gradient=0.8;
+	hscale=0;
 	//inner_radius=m->size;
-	inner_radius=0;
 }
 Corona::~Corona()
 {
@@ -4695,6 +4700,8 @@ Corona::~Corona()
 //-------------------------------------------------------------
 void Corona::get_vars()
 {
+	if(exprs.get_local("name",Td))
+		strncpy(name_str,Td.string,maxstr);
 	VGET("resolution",detail,3);
 	VGET("gradient",gradient,0.8);
 
@@ -4803,7 +4810,7 @@ void Corona::map_color(MapData*n,Color &col)
  	   	c1=color1;
  	   	Point pv=point;
 		double d=pv.length();
-		double s=inner_radius;
+		double s=parent->size;
 		double r=size;
 		double ct=s/d;
 		double st=sin(acos(ct));
@@ -4865,6 +4872,7 @@ int Corona::adapt_pass()
 void Corona::render_object()
 {
     first=1;
+	show_render_state(this);
 	if(Render.draw_solid() || Render.draw_shaded()){
 		glDisable(GL_DEPTH_TEST);
 		if(!Render.draw_nvis()){
@@ -4885,8 +4893,6 @@ void Corona::render_object()
 //-------------------------------------------------------------
 void Corona::orient()
 {
-	if(parent && inner_radius==0)
-		inner_radius=parent->size;
     double view[16];
     TheScene->getMatrix(view);
 
@@ -5158,8 +5164,8 @@ void Ring::render_object()
 		return;
 	first=1;
 	//map->lighting=0;
-
 	if(TheScene->render_mode()){
+		show_render_state(this);
     	Orbital::set_lighting();
     	Lights.setAttenuation(point);
 		Lights.modDiffuse(Raster.sky_color);

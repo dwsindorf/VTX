@@ -2455,7 +2455,7 @@ void Scene::render_objects()
 
 	// render background
 
-	bgpass=BGFAR;
+	bgpass=BGFAR; // stars,galaxies
 
 	pass_init();
 	pass_group();

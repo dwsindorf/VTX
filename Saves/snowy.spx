@@ -59,6 +59,9 @@ Scene() {
 	View{
 		height=62.7149 ft;
 	}
+	View{
+		angle=12;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -97,7 +100,7 @@ Scene() {
 					fog.vmax=5740.8 ft;
 					fog.vmin=5000 ft;
 					hscale=0.002;
-					shadow=Color(0.03,0.03,0.09,0.8);
+					shadow=Color(0.03,0.03,0.09,0.44);
 					shine=1.95572;
 					specular=Color(1,1,1,0.22);
 					year=100;

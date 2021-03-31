@@ -23,6 +23,8 @@ float alpha;
 //		//discard;
 //	else
 //		color.rgb=vec3(bias,1.0-bias,0.0);
+
+    color.a*=length(color);
 	gl_FragData[0] = color;
 #else
 	gl_FragData[0] = Color;

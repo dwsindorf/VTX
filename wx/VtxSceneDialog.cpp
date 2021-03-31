@@ -537,14 +537,15 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 				addToTree(dstId, addId, tree_node);
 			}
 		} else { // no previous children: insert as first child
-			//cout<<"no previous children: insert as first child"<<endl;
+			cout<<"no previous children: insert as first child"<<endl;
 			newObj=dstObj->addChild(newObj);
 			tree_node=TheScene->model->addToTree(tnode, newObj);
 			TheScene->setPrototype(dstObj, newObj);
 			addToTree(dstId, tree_node);
 		}
 	} else {
-		//cout<<"insert new child in parent branch after the selected child"<<endl;
+		cout<<"insert new child in parent branch after the selected child"<<endl;
+
 		// insert new child in parent branch after the selected child,
 		// usually a sibling of the same type (e.g. texture, layer)
 		wxTreeItemId pid=treepanel->GetItemParent(dstId);

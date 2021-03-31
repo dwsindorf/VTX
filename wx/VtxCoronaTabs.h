@@ -47,6 +47,7 @@ public:
     	double val;
     	OnSliderValue(SizeSlider, val);
     	object()->size=val*parentSize();
+    	object()->ht=object()->size-parentSize();
         object()->invalidate();
         TheScene->rebuild();
     }
@@ -54,6 +55,7 @@ public:
     	double val;
     	OnSliderText(SizeSlider, val);
     	object()->size=val*parentSize();
+    	object()->ht=object()->size-parentSize();
         object()->invalidate();
         TheScene->rebuild();
     }

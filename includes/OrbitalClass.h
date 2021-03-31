@@ -383,6 +383,7 @@ public:
     virtual void select();
 	virtual int selection_pass();
 	virtual void dpvars(double &dht, double &dpmin, double &dpmax);
+	bool isLeaf()						{ return true;}
 };
 
 //************************************************************
@@ -433,7 +434,6 @@ class Corona : public Shell
 {
 public:
 	double     gradient;
-	double     inner_radius;
 	Color      color1;
 	Color      color2;
 	Corona(Orbital *m, double s);
@@ -450,6 +450,7 @@ public:
 	int render_pass();
 	int adapt_pass();
 	bool setProgram();
+
 	bool adapt_needed() { return false;}
 };
 
@@ -505,6 +506,7 @@ public:
 	char *getSpritesFile(GLuint &dim);
 	void getSpritesFilePath(char *);
 	void getSpritesDir(int dim,char *);
+
 };
 
 //************************************************************

@@ -55,7 +55,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=81.5625;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=14838.6 ft;
 		heading=0;
 		pitch=0;
@@ -86,7 +86,7 @@ Scene() {
 		view=SURFACE;
 		phi=16.875;
 		theta=84.375;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=2450.05 ft;
 		heading=0;
 		pitch=0;
@@ -196,38 +196,49 @@ Scene() {
 		height=9398.87 ft;
 		heading=251;
 	}
+	View{
+		phi=17.3452;
+		theta=81.6069;
+		heading=237;
+		tilt=2;
+		angle=-55;
+	}
 	Universe {
 		Galaxy(9000) {
-			color.bias=1.13888;
+			color.bias=1.91668;
+			color.mix=0.09722;
 			density=1.1;
 			diffusion=0.19;
-			far.distance=5.77621e+08;
-			far.size=0.8333;
+			far.distance=6.9736e+08;
+			far.size=2.1528;
 			gradient=0.9;
-			near.size=1.3889;
+			near.size=2.8472;
 			noise.cutoff=0.29;
 			noise.vertical=0.15;
-			nova.density=0.05556;
-			nova.size=3.6111;
+			nova.density=0.02778;
+			nova.size=3.6806;
 			origin=Point(-4000,0,6000);
 			pitch=152.309;
-			scatter=1.8;
+			scatter=4.4444;
 			tilt=30;
-			variability=1.52081;
+			variability=4;
 			color.list=Colors(
-				Color(1.000,0.000,0.000),
-				Color(0.024,0.514,1.000),
-				Color(0.024,0.914,1.000),
-				Color(0.016,0.565,1.000),
-				Color(0.016,0.565,1.000),
-				Color(1.000,1.000,0.600),
-				Color(1.000,1.000,0.800),
+				Color(0.000,0.165,1.000),
+				Color(0.239,0.620,0.969),
+				Color(0.522,0.710,1.000),
+				Color(0.867,0.933,0.988),
+				Color(0.957,0.718,0.722),
+				Color(1.000,0.737,0.600),
+				Color(1.000,1.000,0.361),
 				Color(1.000,1.000,1.000)
 				);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY+noise(GRADIENT|NABS|SCALE,4.6,2,-0.98,0.5,2,1,1,0,0);
 		}
 		Galaxy(5000) {
+			near.size=4.0278;
+			nova.density=0.15278;
+			nova.size=3.1944;
 			color.middle=Color(0.8,0,0);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
@@ -237,8 +248,8 @@ Scene() {
 				Color(0.000,1.000,1.000),
 				Color(1.000,0.000,0.000),
 				Color(1.000,0.475,0.000),
-				Color(1.000,1.000,0.000),
-				Color(1.000,1.000,0.675),
+				Color(1.000,1.000,0.800),
+				Color(0.992,0.992,0.992),
 				Color(1.000,1.000,1.000)
 				);
 			System(1000) {
@@ -290,7 +301,7 @@ Scene() {
 								;
 					}
 					Sky(0.0017) {
-						color=Color(0.49,0.87,0.92,0.6);
+						color=Color(0.49,0.87,0.92,0.33);
 						day=1;
 						density=0.52778;
 						haze.color=Color(1,1,1,0.55);
@@ -299,11 +310,11 @@ Scene() {
 						night.color=Color(0,0,0,0.98);
 						resolution=4;
 						rseed=0.693607;
-						sky.grad=2;
+						sky.grad=9;
 						specular=Color(1,1,1);
+						twilight=Color(0.51,0.44,0.98);
 						twilight.max=1;
-						twilight.min=-1;
-						twilight.value=0;
+						twilight.min=-2;
 					}
 				}
 			}

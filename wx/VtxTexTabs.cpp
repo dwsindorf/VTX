@@ -911,12 +911,15 @@ void VtxTexTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	TNtexture *tnode=(TNtexture*)object();
-	d_data=tnode->texture->d_data;
 
 	TNtexture *expr=(TNtexture*)tnode->getExprNode();
 	Texture *tex=texture();
 	if(expr)
 		tnode=expr;
+
+	if(tnode->texture)
+		d_data=tnode->texture->d_data;
+
 
 	//if(tex && tex->t1d())
 	//	BIT_ON(tnode->opts,SEXPR);
