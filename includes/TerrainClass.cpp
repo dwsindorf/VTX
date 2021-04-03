@@ -644,10 +644,14 @@ void  TNclist::save(FILE *f)
 //-------------------------------------------------------------
 void  TNclist::set_color(int i,Color c)
 {
-	if(i>=0 && i <colors.size){
+	if(i<0)
+		return;
+	if(i <colors.size){
 		delete colors.base[i];
 		colors.base[i]=new Color(c);
 	}
+	else
+		colors.add(new Color(c));
 }
 
 //-------------------------------------------------------------
@@ -655,9 +659,11 @@ void  TNclist::set_color(int i,Color c)
 //-------------------------------------------------------------
 Color  TNclist::get_color(int i)
 {
-	Color c;
-	c=*colors[i];
-	return c;
+	Color *cp;
+	cp=colors[i];
+	if(cp)
+		return *cp;
+	return Color(1.0,1.0,1.0,0);
 }
 
 //-------------------------------------------------------------

@@ -1399,17 +1399,19 @@ void Galaxy::init_view()
 	TheScene->minr=0.0;
 	TheScene->maxr=size;
 	TheScene->spoint=Point(0,0,0);
-	if(tree->inside())
-		TheScene->gstride=TheScene->vstride=0.1*LY;
-	else
-		TheScene->gstride=TheScene->vstride=0.1*size;
 
 	//cout <<"stride:"<< TheScene->gstride/LY << endl;
 	TheScene->hstride=1;
 	TheScene->zoom=1;
 	//TheScene->radius=TheScene->height=0;
 	if(TheScene->changed_view()){
+
 		if(!TheScene->changed_position()){
+			if(tree->inside())
+				TheScene->gstride=TheScene->vstride=0.1*LY;
+			else
+				TheScene->gstride=TheScene->vstride=0.1*size;
+
 			TheScene->phi=0;
 			TheScene->theta=0;
 		}

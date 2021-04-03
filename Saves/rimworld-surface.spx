@@ -203,10 +203,14 @@ Scene() {
 		tilt=2;
 		angle=-55;
 	}
+	View{
+		angle=-52;
+	}
 	Universe {
 		Galaxy(9000) {
-			color.bias=1.91668;
-			color.mix=0.09722;
+			center.radius=0.56944;
+			color.bias=2.5;
+			color.mix=0.19444;
 			density=1.1;
 			diffusion=0.19;
 			far.distance=6.9736e+08;
@@ -215,27 +219,31 @@ Scene() {
 			near.size=2.8472;
 			noise.cutoff=0.29;
 			noise.vertical=0.15;
-			nova.density=0.02778;
-			nova.size=3.6806;
-			origin=Point(-4000,0,6000);
+			nova.density=0.05;
+			nova.size=1.5;
+			origin=Point(-3500,0,6000);
 			pitch=152.309;
+			radius=1;
+			radius.outer=1;
 			scatter=4.4444;
 			tilt=30;
+			twist.rotation=1.5708;
 			variability=4;
 			color.list=Colors(
-				Color(0.000,0.165,1.000),
-				Color(0.239,0.620,0.969),
+				Color(0.000,0.039,0.263),
+				Color(0.231,0.620,0.969),
 				Color(0.522,0.710,1.000),
-				Color(0.867,0.933,0.988),
+				Color(0.867,0.925,0.980),
 				Color(0.957,0.718,0.722),
-				Color(1.000,0.737,0.600),
+				Color(1.000,0.729,0.600),
 				Color(1.000,1.000,0.361),
 				Color(1.000,1.000,1.000)
 				);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-			color.expr=DENSITY+noise(GRADIENT|NABS|SCALE,4.6,2,-0.98,0.5,2,1,1,0,0);
+			color.expr=DENSITY*DENSITY-0.1*RADIUS;
 		}
 		Galaxy(5000) {
+			color.mix=0.26388;
 			near.size=4.0278;
 			nova.density=0.15278;
 			nova.size=3.1944;
@@ -249,7 +257,7 @@ Scene() {
 				Color(1.000,0.000,0.000),
 				Color(1.000,0.475,0.000),
 				Color(1.000,1.000,0.800),
-				Color(0.992,0.992,0.992),
+				Color(0.984,0.984,0.984),
 				Color(1.000,1.000,1.000)
 				);
 			System(1000) {

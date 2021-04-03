@@ -13,51 +13,41 @@ Scene() {
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
 	}
 	View{
 		phi=20;
 		theta=7.23881e-12;
-		speed=586570;
 	}
 	View{
 		phi=25;
 		theta=6.72175e-12;
-		speed=586570;
 	}
 	View{
 		phi=35;
 		theta=5.68817e-12;
-		speed=586570;
 	}
 	View{
 		phi=90;
 		theta=0;
-		speed=586570;
 	}
 	View{
 		phi=0;
 		height=20000 ly;
-		speed=586570;
 	}
 	View{
 		phi=30;
-		speed=586570;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
 	}
 	View{
 		phi=0;
 		height=20000 ly;
-		speed=586570;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
 	}
 	View{
 		theta=-3.80587e-29;
@@ -88,47 +78,48 @@ Scene() {
 	}
 	View{
 		height=6000 ly;
-		speed=586570;
 	}
 	View{
 		height=20000 ly;
-		speed=586570;
 	}
 	View{
 		phi=30;
 	}
 	View{
 		pitch=-94;
-		speed=586570;
+	}
+	View{
+		height=20000.8 ly;
+		pitch=-95;
 	}
 	Universe {
 		Galaxy(20000) {
 			center.bias=1;
 			center.radius=0.69444;
-			color.bias=0.72224;
-			color.mix=0.11666;
+			color.bias=0.63888;
+			color.mix=0.19444;
 			density=1.09432;
 			gradient=2;
 			name="Uncharted";
 			near.size=2.9861;
-			nova.density=0.23612;
-			nova.size=3.3333;
-			radius=1.5;
-			radius.outer=1.5;
+			nova.density=0.27778;
+			nova.size=2.7083;
+			radius=1.7;
+			radius.outer=1.7;
 			twist.radius=1.2;
 			twist.rotation=2.13402;
-			variability=1.56946;
+			variability=2.88196;
 			noise.expr=noise(GRADIENT|NLOD|SQR,2,7,1,0.2,2,1,1,0,0)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY-3*RADIUS;
 			color.list=Colors(
 				Color(0.000,0.000,0.000),
 				Color(0.122,0.173,0.302),
-				Color(0.635,0.678,0.875),
-				Color(0.200,0.282,0.373),
-				Color(0.529,0.424,0.435),
-				Color(0.882,0.718,0.675),
-				Color(0.973,0.804,0.702),
-				Color(0.976,0.973,0.973)
+				Color(0.631,0.675,0.875),
+				Color(0.200,0.278,0.373),
+				Color(0.525,0.424,0.431),
+				Color(0.878,0.718,0.675),
+				Color(0.973,0.922,0.702),
+				Color(0.973,0.973,0.973)
 				);
 			System(1000) {
 				Star(0.5,0) {

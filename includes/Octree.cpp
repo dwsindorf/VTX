@@ -481,7 +481,7 @@ OctTree::OctTree(double s, double u)
 	density_scale=1;
 
 	nodes=0;
-	maxnodes=20000000;
+	maxnodes=40000000;
 	maxsize=fullsize/8.0;
 	minsize=1;
 	//minsize=0.5;
@@ -758,6 +758,8 @@ const char *DensityTree::def_noise_expr="noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14
 const char *DensityTree::def_color_expr="1.0*DENSITY\n";
 const char *DensityTree::def_color_list=
 	"Colors("
+		"Color(0.000,0.000,0.000,0),"
+		"Color(0.000,0.000,0.100.0),"
 		"Color(0.502,0.000,0.251),"
 		"Color(0.000,0.000,1.000),"
 		"Color(0.000,0.725,1.000),"
@@ -882,6 +884,7 @@ void DensityTree::init_node(OctNode *octnode)
 			return;
 		}
     }
+
 	R=p.length();
 
 	r=sqrt(p.x*p.x+p.z*p.z);
@@ -901,13 +904,17 @@ void DensityTree::init_node(OctNode *octnode)
 		p.x=x;
 		p.z=z;
 	}
-
 	Td.p=p;
 	Td.density=0;
 	object->set_surface(Td);
 	if(noise_amplitude){
 		rn=noise_amplitude*S0.density;
 	}
+	if(cf && r<1.5*cf){
+		rn*=smoothstep(0,1.5*cf,r,0.1,1.0); // reduce noise in center
+	}
+
+	rn*=rampstep(0,0.5,R,1,0.05); // tapper noise with distance from center
 
 	rnoise=rn;
 	pnoise=noise_vertical*rn;
@@ -1161,14 +1168,21 @@ void StarNode::render()
 		double sf=RAND(j++);
 
 		double nd=0.5*galaxy->nova_density;
-		if(nd>0 && sf>0.5-nd){
+
+		double f=sf+nd;
+
+		if(nd>0 && f>0.5){
 			pts*=galaxy->nova_size*(1+2*galaxy->variability*RAND(j++));
 			nstars=1;
 			alpha+=0.5;
+			sf*=dns*dns;
+			if(sf>0.45){
+				alpha=1;
+				c=c.lighten(0.95);
+			}
 		}
 		glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
-
 
 		galaxy->bgpts+=nstars;
 		glBegin(GL_POINTS);

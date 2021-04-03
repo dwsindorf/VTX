@@ -31,7 +31,7 @@ Scene() {
 		view=SURFACE;
 		phi=33.75;
 		theta=240.469;
-		height=52800 ft;
+		height=10 miles;
 		heading=0;
 		pitch=0;
 		tilt=-15;
@@ -141,7 +141,7 @@ Scene() {
 		view=SURFACE;
 		phi=35.1562;
 		theta=238.359;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=44.8306 ft;
 		heading=0;
 		pitch=0;
@@ -381,7 +381,7 @@ Scene() {
 		view=SURFACE;
 		phi=42.8906;
 		theta=248.203;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=252.673 ft;
 		heading=0;
 		pitch=0;
@@ -436,7 +436,7 @@ Scene() {
 		view=SURFACE;
 		phi=37.2656;
 		theta=249.609;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=252.8 ft;
 		heading=0;
 		pitch=0;
@@ -460,6 +460,9 @@ Scene() {
 	}
 	View{
 		height=9531.53 ft;
+	}
+	View{
+		tilt=-12;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -505,17 +508,6 @@ Scene() {
 					water.shine=68.056;
 					year=365;
 					albedo=1;
-					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
-						Color(0.2,0.4,0.094),
-						Color(0.294,0.494,0),
-						Color(0.549,0.322,0.02),
-						Color(0.294,0.251,0.2),
-						Color(0.275,0.247,0.027),
-						Color(0.243,0.196,0.063),
-						Color(0.584,0.584,0.584),
-						Color(0.6,0.588,0.549),
-						Color(0.286,0.278,0.278),
-						Color(1,1,1));
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
@@ -529,11 +521,10 @@ Scene() {
 					Surface{
 						terrain=water(noise(GRADIENT|NABS|SCALE|SQR,19.8,2,1,0.5,2,0.01,1,0.1,0))
 								
-								Texture("alpine",BORDER|NORM|S|TEX,HT,1,1,1,-3,1,2,1,0,1,1,0,0)+
-								Texture("earth",TEX,1,1.5,0,0,1,2,0.5,0,0,0,0,0)+
-								Texture("alpine2",BORDER|NORM|TEX,256,1,1,0,1,2,1,0,0,1,-0.44444,-0.1)+
-								Texture("colored-rock",BUMP|RANDOMIZE|TEX,1024,0.3,1.02776,1.55552,6,2,0.68056,0,0,0,0,0)+
-								Texture("rock_stones",BUMP|RANDOMIZE|TEX,65536,-0.3,2,0,1,2,1,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|NEG|SCALE|SQR,13,10,0.34,0.45,2,0.07,1,1,0))+Z(fractal(SS,14,11.5,0.28,0.44,0.63,0.15,0.27,0.15,0.37,0.45))+
+								Texture("earth",TEX,1,0.91668,0,0,1,2,0.5,0,0,0,0,0)+
+								Texture("alpine2",BORDER|NORM|TEX,32,0.80556,1,-1.77776,1,2,1,0,0,2,-1.77776,-1.05552)+
+								Texture("colored-rock",BUMP|RANDOMIZE|TEX,1024,-0.4,1.05556,0,2,2,0.81944,0,0,0,0,0)+
+								Texture("rock_stones",BUMP|RANDOMIZE|TEX,331.991,-0.3,2,0,8.66656,2,1,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|NEG|SCALE|SQR,13,10,0.34,0.45,2,0.07,1,1,0))+Z(fractal(SS,14,11.5,0.28,0.44,0.63,0.15,0.27,0.15,0.37,0.45))+
 								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.5,0,0,0,0);
 					}
 					Sky(0.0032) {
@@ -560,7 +551,7 @@ Scene() {
 						specular=Color(1,1,1,0.67);
 						tilt=17;
 						Surface{
-							terrain=Color(1,1,1,twist(0.15,noise(GRADIENT|FS,1,7.7,0.49,0.3,2.5,1,1,0,0.2)));
+							terrain=Color(1,1,1,twist(0.15,noise(GRADIENT|FS|NABS,1,7.7,0.49,0.3,2.5,1,1,0,0.6)));
 						}
 					}
 					Clouds(0.00305) {

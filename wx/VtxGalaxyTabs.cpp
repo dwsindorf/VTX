@@ -322,7 +322,7 @@ void VtxGalaxyTabs::AddStarsTab(wxWindow *panel){
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
-	ColorExpr=new ExprTextCtrl(panel,ID_COLOR_EXPR,"",0,220);
+	ColorExpr=new ExprTextCtrl(panel,ID_COLOR_EXPR,"",0,260);
 	hline->Add(ColorExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	hline->AddSpacer(10);
 
