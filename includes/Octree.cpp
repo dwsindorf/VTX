@@ -1175,10 +1175,11 @@ void StarNode::render()
 			pts*=galaxy->nova_size*(1+2*galaxy->variability*RAND(j++));
 			nstars=1;
 			alpha+=0.5;
-			sf*=dns*dns;
+			sf*=pow(dns,4)*(0.5+sqrt(Radius));
+			c=c.lighten(0.5);
 			if(sf>0.45){
 				alpha=1;
-				c=c.lighten(0.95);
+				c=c.lighten(0.9);
 			}
 		}
 		glPointSize((GLfloat)pts);

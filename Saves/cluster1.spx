@@ -10,10 +10,13 @@ Scene() {
 		heading=-1;
 		pitch=-4;
 	}
+	View{
+		pitch=-5;
+	}
 	Universe {
 		Galaxy(47222.8) {
 			center.radius=0;
-			color.bias=1.58332;
+			color.bias=1.38888;
 			compression=0.5;
 			density=0.49056;
 			diffusion=0.913416;
@@ -22,27 +25,28 @@ Scene() {
 			name="Globular";
 			near.size=1.0417;
 			noise.cutoff=0.3585;
-			noise.vertical=0.26416;
+			noise.vertical=1;
 			origin=Point(200000,-27000,-10000);
-			radius=0.6;
+			radius=0.59722;
 			radius.inner=0.6;
-			radius.outer=0.6;
+			radius.outer=0.59722;
 			resolution=2.5417;
 			scatter=1.5096;
 			twist.radius=1;
 			twist.rotation=0;
+			variability=4;
 			noise.compression=0;
 			color.inner=Color(1,1,0.9);
 			color.middle=Color(1,1,0,0.5);
 			color.outer=Color(1,0,0);
 			noise.radial=0;
-			noise.expr=noise(GRADIENT|NLOD,1.4,5,0.5,0.5,2,0.98,1,0,0);
+			noise.expr=noise(GRADIENT|NABS|NLOD,1.2,5.1,0.5,0.5,2,0.98,1,0,0);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
+				Color(0.502,0.000,0.251,0.000),
 				Color(0.000,0.000,1.000),
 				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
+				Color(0.502,0.718,1.000),
 				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.502),
@@ -50,26 +54,29 @@ Scene() {
 				);
 		}
 		Galaxy(10000) {
-			color.bias=1.41668;
-			diffusion=0.1;
+			center.bias=0.61112;
+			color.bias=0.75;
+			density=2;
+			diffusion=2.44837;
+			far.distance=4.17931e+08;
 			far.size=1.4151;
-			gradient=2;
+			gradient=0.41668;
 			name="Blue Spiral";
-			noise.cutoff=0.2;
-			nova.density=0.0566;
-			nova.size=0.8491;
+			noise.cutoff=0;
+			nova.size=0.2;
 			origin=Point(30000,-10000,8000);
 			pitch=90;
-			twist.radius=1.2;
-			twist.rotation=1.8;
+			scatter=7.7776;
+			twist.rotation=0.7;
+			variability=4;
 			color.inner=Color(1,1,0);
 			color.middle=Color(0,1,1);
 			color.outer=Color(0,0,1);
 			noise.saturation=0.5;
 			noise.octaves=4;
 			noise.homogeneity=0.5;
-			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2);
-			color.expr=1*DENSITY;
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=DENSITY*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
 				Color(0.000,0.000,1.000),
@@ -78,13 +85,14 @@ Scene() {
 				Color(0.475,0.722,1.000),
 				Color(0.718,0.875,1.000),
 				Color(0.773,1.000,1.000),
+				Color(0.706,0.988,0.980),
 				Color(1.000,1.000,1.000)
 				);
 		}
-		Galaxy(10000) {
+		Galaxy(15000) {
 			center.bias=0.84722;
 			center.radius=0.58334;
-			color.bias=1.13888;
+			color.bias=0.86112;
 			color.mix=1;
 			compression=1;
 			density=0.83332;
@@ -124,42 +132,43 @@ Scene() {
 		Galaxy(10000) {
 			center.bias=1;
 			center.radius=0.69444;
-			color.bias=1.86112;
+			color.bias=1.72224;
 			color.mix=0.63888;
-			diffusion=0.01;
+			diffusion=0.176223;
 			far.distance=2.13446e+09;
 			far.size=0.5;
 			gradient=0.9;
 			name="Yellow Spiral";
 			near.size=2.7083;
 			noise.cutoff=0;
-			nova.density=0.05;
+			nova.density=0.13888;
 			nova.size=0.5;
 			origin=Point(10000,1500,0);
 			pitch=150.696;
 			radius=0.68056;
 			radius.outer=0.68056;
 			resolution=4;
-			scatter=3.3332;
+			scatter=11.1112;
 			shape.exterior=0.1;
 			shape.interior=0.61112;
-			twist.radius=4;
-			twist.rotation=0.139626;
-			variability=6;
+			twist.radius=1.36112;
+			twist.rotation=1.2217;
+			variability=9;
 			color.inner=Color(1,1,0);
 			color.middle=Color(1,0,0);
 			color.outer=Color(0,1,1);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-			color.expr=DENSITY+0.1*noise(GRADIENT|NABS|SQR|UNS,3,2,1,0.5,2,1,1,0,0);
+			color.expr=DENSITY+noise(GRADIENT|NABS|SQR|UNS,2.4,2,1,0.5,2,0.17,1,0,0)-RADIUS;
 			color.list=Colors(
-				Color(0.165,0.000,1.000,0.000),
-				Color(0.000,0.000,1.000,0.102),
-				Color(0.000,0.722,1.000,0.533),
+				Color(0.165,0.000,1.000),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
 				Color(0.875,0.016,0.153),
 				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
 				Color(1.000,1.000,0.400),
-				Color(0.976,0.976,0.910)
+				Color(0.973,0.973,0.910),
+				Color(1.000,1.000,1.000)
 				);
 		}
 		Galaxy(20000) {
