@@ -364,9 +364,6 @@ void set_fixed_font()
         font_width=fontInfo->max_bounds.width;
         cout << "font ht:"<< font_height << " width:"<<font_width<<endl;
    }
-    else{
-        cout<<"could not find fixed font"<<endl;
-    }
     XCloseDisplay(dpy);
 }
 #endif // end WXWIN-GTK code

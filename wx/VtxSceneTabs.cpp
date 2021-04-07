@@ -446,7 +446,6 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 
 	hline->Add(new wxStaticText(panel, -1, "Feet", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
 
-	//m_contour_color=new wxColourPickerCtrl(panel,ID_CONTOUR_COLOR,col,wxDefaultPosition, wxSize(50,30),wxCLRP_SHOW_ALPHA);
 	m_contour_color=new wxColourPickerCtrl(panel,ID_CONTOUR_COLOR,col,wxDefaultPosition, wxSize(50,30));
 	hline->Add(m_contour_color,0,wxALIGN_LEFT|wxALL,0);
 

@@ -13,7 +13,7 @@ class VtxGalaxyTabs : public VtxTabsMgr
 	DECLARE_CLASS(VtxGalaxyTabs)
 protected:
 	enum consts{
-		NUM_COLORS=8
+		NUM_COLORS=10
 	};
 	void AddPropertiesTab(wxWindow *panel);
 	void AddViewTab(wxWindow *panel);
@@ -231,8 +231,9 @@ public:
     void OnSetDefault(wxCommandEvent& event);
     void OnColorButton(wxCommandEvent& event);
 
-    void OnChangedDensityExpr(wxCommandEvent& event);
-    void OnChangedColorExpr(wxCommandEvent& event);
+    void OnChanged(wxCommandEvent& event){
+		setObjAttributes();
+    }
 
     void OnUpdateViewObj(wxUpdateUIEvent& event);
 
