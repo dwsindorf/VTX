@@ -8,6 +8,8 @@
 #include "TerrainData.h"
 #include "AdaptOptions.h"
 #include "Effects.h"
+#include "GLSLMgr.h"
+
 
 //**************** extern API area ************************
 
@@ -758,8 +760,6 @@ const char *DensityTree::def_noise_expr="noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14
 const char *DensityTree::def_color_expr="1.0*DENSITY\n";
 const char *DensityTree::def_color_list=
 	"Colors("
-		"Color(0.000,0.000,0.000,0),"
-		"Color(0.000,0.000,0.100.0),"
 		"Color(0.502,0.000,0.251),"
 		"Color(0.000,0.000,1.000),"
 		"Color(0.000,0.725,1.000),"
@@ -1145,10 +1145,11 @@ void StarNode::render()
 
 	int nstars=stars(mpt);
 	Radius=mpt.distance(galaxy->origin)/galaxy->size;
+	int indx=0;
 
     // render bg stars
 	//if(TheScene->viewtype!=SURFACE && galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
-	if( galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
+	if(galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
 		Color c=WHITE;
 		Density=Td.density=dns;
 		Td.p=v*octree->nscale;
@@ -1158,8 +1159,7 @@ void StarNode::render()
 		//dns=S0.density;
 		c=Td.c;
 		delta=octree->dispersion*size();
-	    s=0.5*galaxy->bgpt1;//rampstep(galaxy->fgfar,galaxy->bgfar,d,galaxy->bgpt1,galaxy->bgpt2);
-	    //s=rampstep(galaxy->fgfar,galaxy->bgfar,d,galaxy->bgpt1,galaxy->bgpt2);
+	    s=0.5*galaxy->bgpt1;
 		pts=galaxy->bgscale*s*galaxy->ptscale;
 		alpha=rampstep(0,galaxy->diffusion,dns,0,1);
 		double mix=galaxy->inside()?0.5:1.0;
@@ -1170,6 +1170,10 @@ void StarNode::render()
 		double nd=0.5*galaxy->nova_density;
 
 		double f=sf+nd;
+        indx=1;
+    	Point p1=point();
+    	double angle=0.5*(0.5+Random(p1.x,p1.y,p1.z));
+    	double y=0.5+RAND(1); // random reflection
 
 		if(nd>0 && f>0.5){
 			pts*=galaxy->nova_size*(1+2*galaxy->variability*RAND(j++));
@@ -1177,11 +1181,15 @@ void StarNode::render()
 			alpha+=0.5;
 			sf*=pow(dns,4)*(0.5+sqrt(Radius));
 			c=c.lighten(0.5);
+			indx=1;
 			if(sf>0.45){
 				alpha=1;
+				indx=1;
 				c=c.lighten(0.9);
 			}
 		}
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, angle*2*PI, pts, y);
+
 		glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
 
@@ -1231,6 +1239,7 @@ void StarNode::render()
 		    r=RAND(j+1)+0.75;
 		    c=c.lighten(r);
 			alpha=3*galaxy->color_mix*rampstep(0,galaxy->fgfar,d,1,0.1);
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, pts, 0);
 
 		    glColor4d(c.red(),c.green(),c.blue(),alpha);
 			glBegin(GL_POINTS);

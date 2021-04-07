@@ -1,6 +1,5 @@
 
 #include "SceneClass.h"
-#include "MapNode.h"
 #include "MapLink.h"
 #include "NoiseClass.h"
 #include "AdaptOptions.h"

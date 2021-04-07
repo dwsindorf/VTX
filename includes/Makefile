@@ -80,7 +80,6 @@ HDR_FILES = AdaptOptions.h \
 			ViewClass.h \
 			defs.h \
 			matrix.h \
-			star_data.h
 
 SRC_FILES=  AdaptOptions.cpp \
 			Bitmap.cpp \
@@ -130,9 +129,7 @@ SRC_FILES=  AdaptOptions.cpp \
 		    TrackBall.cpp \
 			UniverseModel.cpp \
 			ViewClass.cpp \
-			matrix.cpp \
-			star_data.cpp \
-			cloud_data.cpp
+			matrix.cpp
 
 #################
 # Object files
@@ -328,7 +325,7 @@ depend:;
 ../Debug/OrbitalClass.o: MapClass.h MapNode.h NodeData.h Octree.h
 ../Debug/OrbitalClass.o: TerrainClass.h ImageClass.h GLSLMgr.h
 ../Debug/OrbitalClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
-../Debug/OrbitalClass.o: AdaptOptions.h FileUtil.h star_data.h
+../Debug/OrbitalClass.o: AdaptOptions.h FileUtil.h
 ../Debug/Placements.o: TerrainMgr.h NoiseClass.h PointClass.h defs.h
 ../Debug/Placements.o: ListClass.h ColorClass.h GLheaders.h TextureClass.h
 ../Debug/Placements.o: GLSupport.h GLglue.h ImageMgr.h TerrainNode.h
@@ -590,7 +587,7 @@ depend:;
 ../Release/OrbitalClass.o: MapClass.h MapNode.h NodeData.h Octree.h
 ../Release/OrbitalClass.o: TerrainClass.h ImageClass.h GLSLMgr.h
 ../Release/OrbitalClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
-../Release/OrbitalClass.o: AdaptOptions.h FileUtil.h star_data.h
+../Release/OrbitalClass.o: AdaptOptions.h FileUtil.h
 ../Release/Placements.o: TerrainMgr.h NoiseClass.h PointClass.h defs.h
 ../Release/Placements.o: ListClass.h ColorClass.h GLheaders.h TextureClass.h
 ../Release/Placements.o: GLSupport.h GLglue.h ImageMgr.h TerrainNode.h
@@ -745,7 +742,6 @@ depend:;
 ../Debug/UniverseModel.o:	UniverseModel.cpp
 ../Debug/ViewClass.o:	ViewClass.cpp
 ../Debug/matrix.o:	matrix.cpp
-../Debug/star_data.o:	star_data.cpp
 ../Debug/cloud_data.o:	cloud_data.cpp
 ../Release/AdaptOptions.o:	AdaptOptions.cpp
 ../Release/Bitmap.o:	Bitmap.cpp
@@ -796,5 +792,4 @@ depend:;
 ../Release/UniverseModel.o:	UniverseModel.cpp
 ../Release/ViewClass.o:	ViewClass.cpp
 ../Release/matrix.o:	matrix.cpp
-../Release/star_data.o:	star_data.cpp
 ../Release/cloud_data.o:	cloud_data.cpp

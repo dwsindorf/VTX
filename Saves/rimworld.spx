@@ -55,7 +55,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=81.5625;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=14838.6 ft;
 		heading=0;
 		pitch=0;
@@ -82,42 +82,59 @@ Scene() {
 		height=0.00478023;
 		gndlvl=20.5487 ft;
 	}
+	View{
+		theta=159.882;
+	}
+	View{
+		theta=144.016;
+		time=16728;
+	}
 	Universe {
 		Galaxy(9994.1) {
+			color.bias=0.67;
+			color.mix=0.3;
 			density=1.1;
-			diffusion=0.19;
-			gradient=0.9;
-			noise.cutoff=0.29;
-			noise.vertical=0.15;
+			diffusion=2.28207;
+			gradient=0.66668;
+			noise.cutoff=0;
+			noise.vertical=0.625;
+			nova.density=0.09722;
+			nova.size=0.5;
 			origin=Point(8000,0,0);
 			pitch=-45;
-			scatter=1.8;
+			radius=1;
+			radius.outer=1;
+			resolution=2;
+			scatter=2.5;
 			tilt=30;
+			variability=8;
 			color.list=Colors(
-				Color(1.000,0.000,0.000),
-				Color(0.027,0.514,1.000),
-				Color(0.027,0.914,1.000),
+				Color(0.000,0.000,0.000),
+				Color(0.024,0.514,1.000),
+				Color(0.024,0.914,1.000),
+				Color(0.420,0.686,0.910),
 				Color(0.016,0.565,1.000),
-				Color(0.016,0.565,1.000),
-				Color(1.000,1.000,0.600),
-				Color(1.000,1.000,0.800),
+				Color(0.635,0.024,0.020),
+				Color(0.635,0.141,0.031),
+				Color(0.988,0.961,0.718),
+				Color(1.000,1.000,1.000),
 				Color(1.000,1.000,1.000)
 				);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
-			color.expr=DENSITY;
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NABS|NLOD,14,5,0.5,0.5,2,1,1,0,0);
+			color.expr=DENSITY*DENSITY-0.2*RADIUS+noise(GRADIENT|NABS|SCALE|UNS,0,7.1,-0.46,0.5,2,0.32,1,0,0);
 		}
 		Galaxy(20000) {
 			color.middle=Color(0.8,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
-				Color(0.282,0.000,0.000),
+				Color(0.275,0.000,0.000),
 				Color(0.000,0.000,1.000),
 				Color(0.000,1.000,1.000),
 				Color(1.000,0.000,0.000),
-				Color(1.000,0.482,0.000),
+				Color(1.000,0.475,0.000),
 				Color(1.000,1.000,0.000),
-				Color(1.000,1.000,0.682),
+				Color(1.000,1.000,0.675),
 				Color(1.000,1.000,1.000)
 				);
 			System(1000) {
@@ -153,8 +170,8 @@ Scene() {
 						Color(0.302,0.082,0.082));
 					Surface{
 						mp=noise(0,10,1);
-						m2=noise(UNS,5.2,7,1,0.5,2,1,1,0,0);
-						m3=noise(NABS|SQR,9,15,0.5,0.6);
+						m2=noise(GRADIENT|UNS,5.2,7,1,0.5,2,1,1,0,0);
+						m3=noise(GRADIENT|NABS|SQR,9,15,0.5,0.6);
 						terrain=map(mp,-0.3,0.5)
 								layer(MORPH,0,0.4)
 									[Z(0.2*m3)

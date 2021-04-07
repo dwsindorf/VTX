@@ -13,7 +13,7 @@
 #include "FileUtil.h"
 
 //#define GEOMETRY_TEST
-//#define WRITE_STAR_DATA
+#define WRITE_STAR_DATA
 //#define DEBUG_RENDER
 
 extern const char *pstg[];
@@ -1030,7 +1030,7 @@ void Nebula::render()
 // Galaxy class
 //************************************************************
 
-GLuint Galaxy::star_image[2]={0,0};
+GLuint Galaxy::star_image[3]={0,0,0};
 StarTree Galaxy::_defaults(1000);
 Galaxy::Galaxy(double s) : DensityCloud(s*LY)
 {
@@ -1198,24 +1198,22 @@ void Galaxy::adapt()
 }
 //-------------------------------------------------------------
 // Galaxy::setStarTexture() set point sprite image texture
-// generate a texture image from a bitmap file or compiled data
-// - if bitmap file or "f" parameter is changed
-//   1. place bitmap image file in "Bitmaps"
-//   2. #define WRITE_STAR_DATA at top of this file
-//   3. recompile and run
-//   4. capture output text from Console window and paste into file "star_data.cpp"
-//   5. save "star_data.cpp" in includes directory
-// - else
-//   1. #include "star_data.h" at top of this file
+// generate a texture image from a bitmap file
 //-------------------------------------------------------------
-void Galaxy::setStarTexture(int id){
+void Galaxy::setStarTexture(int id,char *name){
 	if(star_image[id]>0)
 		return;
 	int height,width;
-#ifdef WRITE_STAR_DATA
-	double f=0?1.0:2.0;
-	char *file="star64";
-	Image *image = images.open(file);
+
+	char base[256];
+	char dir[256];
+
+	//char file[256];
+	//sprintf(file,"star%d",id);
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Resources/Sprites/Stars/%s",base,name);
+
+	Image *image = images.open(name,dir);
 	if (!image)
 		return;
 	height = image->height;
@@ -1224,34 +1222,13 @@ void Galaxy::setStarTexture(int id){
 	unsigned char* rgb = (unsigned char*) image->data;
 	for (int i = 0,index=0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			double a = rgb[index * 3 + 0] / 255.0;
-			a=pow(a,f);
+			int k=(height-i-1)*width+j;  // mirror y !
+			double a = rgb[k * 3] / 255.0;
 			pixels[index]=(unsigned char) (a * 255.0);
 			index++;
 		}
 	}
-#else
-	height=width=STAR_IMAGE_SIZE;
-	unsigned char *pixels;
-	if(id==0)
-		pixels=star_image0;
-	else
-		pixels=star_image1;
-#endif
 
-#ifdef WRITE_STAR_DATA
-	char buff[256];
-	sprintf(buff,"unsigned char star_image%d[%d]={",id,width*height);
-	cout << buff << endl;
-	for(int i=0,index=0;i<height*2;i++){
-		for (int j = 0; j < width/2; j++){
-			sprintf(buff,"%3d,",pixels[index++]);
-			cout << " " << buff ;
-		}
-		cout<<endl;
-	}
-	cout<<"};" << endl;
-#endif
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glGenTextures(1, &star_image[id]); // Generate a unique texture ID
 	glBindTexture(GL_TEXTURE_2D, star_image[id]);
@@ -1264,10 +1241,8 @@ void Galaxy::setStarTexture(int id){
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width,
 			height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
-#ifdef WRITE_STAR_DATA
 	delete image;
 	::free(pixels);
-#endif
 }
 
 //-------------------------------------------------------------
@@ -1282,8 +1257,8 @@ bool Galaxy::setProgram(){
 	char frag_shader[128]="galaxy.frag";
 	char vert_shader[128]="galaxy.vert";
 	char defs[128]="";
-	if(Render.startex())
-		strcpy(defs,"#define SPRITES\n");
+	//if(Render.startex())
+	//	strcpy(defs,"#define SPRITES\n");
 	if(stars->render_fg())
 		strcpy(defs+strlen(defs),"#define FGSTARS\n");
 	if(stars->inside())
@@ -1315,6 +1290,7 @@ bool Galaxy::setProgram(){
 		GLSLMgr::setFBORenderPass();
 
 	GLSLMgr::loadVars();
+	GLSLMgr::setProgram();
 	return true;
 }
 
@@ -1341,30 +1317,32 @@ void Galaxy::render()
 		    TheScene->pushMatrix();
 			TheScene->set_matrix(0);
 			StarTree *stars=(StarTree *)tree;
-			if(!stars->inside()){
-				tree->sort_nodes=true;
-				tree->sortNodes();
-			}
-			else
-				tree->sort_nodes=false;
+			tree->sort_nodes=true;
+			tree->sortNodes();
 			if(Render.startex()){
 				// render bg stars
 				stars->set_render_fg(false);
 				stars->set_render_bg(true);
 				setPointSprites(true);
-				setStarTexture(0);
-				glBindTexture(GL_TEXTURE_2D, star_image[0]);
-				if(Render.draw_shaded())
+
+				//if(Render.draw_shaded()){
+					setStarTexture(0,"sprites1");
+					glBindTexture(GL_TEXTURE_2D, star_image[0]);
 					setProgram();
+				//}
+				//else{
+				//	setStarTexture(0,"star0");
+				//	glBindTexture(GL_TEXTURE_2D, star_image[0]);
+				//}
 
 				render_object();
 				// render fg stars
 				if(stars->inside()){
 					setPointSprites(true);
-					setStarTexture(1);
+					//setStarTexture(1,"star1");
 					stars->set_render_fg(true);
 					stars->set_render_bg(false);
-					glBindTexture(GL_TEXTURE_2D, star_image[1]);
+					//glBindTexture(GL_TEXTURE_2D, star_image[1]);
 					if(Render.draw_shaded())
 						setProgram();
 					render_object();
@@ -4446,7 +4424,7 @@ bool CloudLayer::setProgram(){
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, d, angle*2*PI, pts, y);
 					glVertex3dv(p.values());
 					break;
-				case CLOUDS_GS_SHADER: // geometry shader
+				case CLOUDS_GS_SHADER: // geometry shadery
 					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, scatter*ts,0,0);
 					glVertex3d(p.x,p.y,p.z);
 					for(int i=0;i<ns-1;i++){
