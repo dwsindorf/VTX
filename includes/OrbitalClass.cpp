@@ -13,6 +13,7 @@
 #include "FileUtil.h"
 
 //#define GEOMETRY_TEST
+#define WRITE_STAR_DATA
 //#define DEBUG_RENDER
 
 extern const char *pstg[];
@@ -1207,14 +1208,11 @@ void Galaxy::setStarTexture(int id,char *name){
 	char base[256];
 	char dir[256];
 
-	//char file[256];
-	//sprintf(file,"star%d",id);
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Resources/Sprites/Stars/%s",base,name);
 
- 	double f=id==1?2:1;
-
 	Image *image = images.open(name,dir);
+	
 	if (!image)
 		return;
 	height = image->height;
@@ -1223,13 +1221,12 @@ void Galaxy::setStarTexture(int id,char *name){
 	unsigned char* rgb = (unsigned char*) image->data;
 	for (int i = 0,index=0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			double a = rgb[index * 3 + 0] / 255.0;
-			a=pow(a,f);
+			int k=(height-i-1)*width+j;  // mirror y !
+			double a = rgb[k * 3] / 255.0;
 			pixels[index]=(unsigned char) (a * 255.0);
 			index++;
 		}
 	}
-
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glGenTextures(1, &star_image[id]); // Generate a unique texture ID
 	glBindTexture(GL_TEXTURE_2D, star_image[id]);
@@ -1258,8 +1255,6 @@ bool Galaxy::setProgram(){
 	char frag_shader[128]="galaxy.frag";
 	char vert_shader[128]="galaxy.vert";
 	char defs[128]="";
-	if(Render.startex())
-		strcpy(defs,"#define SPRITES\n");
 	if(stars->render_fg())
 		strcpy(defs+strlen(defs),"#define FGSTARS\n");
 	if(stars->inside())
@@ -1313,30 +1308,30 @@ void Galaxy::render()
 			glUseProgramObjectARB(0);
 		}
 		if(isEnabled() && included() ){
-			//GLSLMgr::beginRender();
-			//GLSLMgr::setFBONoPass();
 		    TheScene->pushMatrix();
 			TheScene->set_matrix(0);
 			StarTree *stars=(StarTree *)tree;
 			tree->sort_nodes=true;
 			tree->sortNodes();
+			if(!Render.draw_shaded())
+				setStarTexture(0,"star1");
+
 			if(Render.startex()){
 				// render bg stars
 				stars->set_render_fg(false);
 				stars->set_render_bg(true);
 				setPointSprites(true);
-				setStarTexture(0,"star64");
-				glBindTexture(GL_TEXTURE_2D, star_image[0]);
 				if(Render.draw_shaded())
-					setProgram();
+					setStarTexture(0,"sprites1");
+				glBindTexture(GL_TEXTURE_2D, star_image[0]);
+				setProgram();
+
 				render_object();
 				// render fg stars
 				if(stars->inside()){
 					setPointSprites(true);
-					setStarTexture(1,"star64");
 					stars->set_render_fg(true);
 					stars->set_render_bg(false);
-					glBindTexture(GL_TEXTURE_2D, star_image[1]);
 					if(Render.draw_shaded())
 						setProgram();
 					render_object();
@@ -1353,7 +1348,6 @@ void Galaxy::render()
 				}
 				render_object();
 			}
-			//GLSLMgr::endRender();
 		    TheScene->popMatrix();
 		}
 	}

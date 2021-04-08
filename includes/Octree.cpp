@@ -1170,10 +1170,6 @@ void StarNode::render()
 		double nd=0.5*galaxy->nova_density;
 
 		double f=sf+nd;
-        indx=1;
-    	Point p1=point();
-    	double angle=0.5*(0.5+Random(p1.x,p1.y,p1.z));
-    	double y=0.5+RAND(1); // random reflection
 
 		if(nd>0 && f>0.5){
 			pts*=galaxy->nova_size*(1+2*galaxy->variability*RAND(j++));
@@ -1184,11 +1180,19 @@ void StarNode::render()
 			indx=1;
 			if(sf>0.45){
 				alpha=1;
-				indx=1;
+				indx=0;
 				c=c.lighten(0.9);
 			}
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, 0, pts, 0);
 		}
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, angle*2*PI, pts, y);
+		else{
+		    double angle=0.5*(0.5+RAND(j++));
+		    double y=0.5+RAND(j++); // random reflection
+		    double f=0.5+RAND(j++); // random sprite
+		    indx=f>0.5?3:2;
+		    //cout<<"y:"<<y<<" a:"<<angle<<" i:"<<indx<<endl;
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, angle*2*PI, pts, y);
+		}
 
 		glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());

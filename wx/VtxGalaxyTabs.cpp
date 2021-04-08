@@ -126,8 +126,8 @@ BEGIN_EVENT_TABLE(VtxGalaxyTabs, wxNotebook)
 
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxGalaxyTabs::OnNameText)
 
-EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxGalaxyTabs::OnChanged)
-EVT_TEXT_ENTER(ID_COLOR_EXPR,VtxGalaxyTabs::OnChanged)
+EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxGalaxyTabs::OnChangedDensityExpr)
+EVT_TEXT_ENTER(ID_COLOR_EXPR,VtxGalaxyTabs::OnChangedColorExpr)
 
 EVT_BUTTON(ID_DEFAULT,VtxGalaxyTabs::OnSetDefault)
 
@@ -1062,3 +1062,15 @@ void VtxGalaxyTabs::OnElyptical(wxCommandEvent& event)
 	invalidate_object();
 	getObjAttributes();
 }
+
+void VtxGalaxyTabs::OnChangedDensityExpr(wxCommandEvent& event){
+	setObjAttributes();
+}
+void VtxGalaxyTabs::OnChangedColorExpr(wxCommandEvent& event){
+	Galaxy *galaxy=(Galaxy*)object();
+	galaxy->setColorFunction((char*)ColorExpr->GetValue().ToAscii());
+	galaxy->applyColorFunction();
+	TheView->set_changed_detail();
+
+}
+
