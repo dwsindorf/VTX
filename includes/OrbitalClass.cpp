@@ -1321,10 +1321,15 @@ void Galaxy::render()
 				stars->set_render_fg(false);
 				stars->set_render_bg(true);
 				setPointSprites(true);
-				if(Render.draw_shaded())
+				if(Render.draw_shaded()){
 					setStarTexture(0,"sprites1");
-				glBindTexture(GL_TEXTURE_2D, star_image[0]);
-				setProgram();
+					glBindTexture(GL_TEXTURE_2D, star_image[0]);
+					setProgram();
+				}
+				else{
+					setStarTexture(0,"star1");
+					glBindTexture(GL_TEXTURE_2D, star_image[0]);
+				}
 
 				render_object();
 				// render fg stars

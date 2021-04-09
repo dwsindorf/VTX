@@ -450,7 +450,7 @@ public:
 	friend class MapNode;
 };
 
-#define MAX_NDATA 5
+#define MAX_NDATA 10
 extern MapData *mapdata[MAX_NDATA];
 extern int mdcnt,rccnt;
 extern MapData *mdctr;
