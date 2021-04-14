@@ -5,13 +5,15 @@
 #include "common.h"
 
 varying vec4 EyeDirection;
+varying vec4 Normal;
 
 void main(void) {
 
 	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
 	gl_Position = ftransform();
 
-	//EyeDirection.w=TextureAttributes.y; // and EyeDirection vectors
+	Normal.xyz = gl_NormalMatrix * gl_Normal;
+	Normal.w=0;
 
 #ifdef COLOR
 	Color=gl_Color;

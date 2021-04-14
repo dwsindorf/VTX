@@ -365,6 +365,15 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(md)
 			tex->d_data=true;
 	}
+	if(h>TheMap->hmax){
+		TheMap->hmax=h;
+		//cout<<"hmax="<<h<<endl;
+	}
+	if(h<TheMap->hmin){
+		TheMap->hmin=h;
+		//cout<<"min="<<h<<endl;
+	}
+
 	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
 	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;
 //cout<<mdata()<<endl;

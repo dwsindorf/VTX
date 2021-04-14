@@ -123,7 +123,7 @@ public:
 	virtual Sky *get_sky() { return 0;}
 	double resolution()	{ return detail;}
 	void setPointSprites(bool f);
-
+    void setOrbitFrom(Orbital *prev);
 
 	// NodeIF methods
 
@@ -269,6 +269,8 @@ public:
 	void locate();
 	int scale(double&n, double&f);
 	int select_pass();
+	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+
 };
 
 //************************************************************

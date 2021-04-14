@@ -422,13 +422,20 @@ void TNmap::eval()
     //    - replace texture with texture average color
     //    - blend colors from adjacent layers
     if(Td.margin<1){
-    	for(int i=0;i<Td.properties.size-1;i++){
-    		Td.zlevel[i].c=Td.properties[i+1]->color;
- 		    Td.zlevel[i].set_cvalid();
-        }
-    	for(int i=1;i<Td.properties.size-1;i++){
-    		Td.zlevel[i].c=Td.zlevel[0].c;
-    	}
+		if(Td.zlevel[0].properties[1]->textures.size){
+			// first texture only
+			// TODO: better algorithm to pick best texture of combine texture stack
+			FColor  avec=Td.zlevel[i].properties[i+1]->textures[0]->aveColor;
+			Color c=Color(avec.red(),avec.green(),avec.blue());
+			Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
+		}
+		Td.zlevel[0].set_cvalid();
+		for(int i=1;i<MAX_TDATA;i++){
+			if(Td.zlevel[i].p.z==TZBAD)
+				break;
+	    	Td.zlevel[i].set_cvalid();
+	    	Td.zlevel[i].c=Td.zlevel[0].c; // not sure why this works
+		}
     }
 	if(f){
 		Color c1=Td.zlevel[0].c;

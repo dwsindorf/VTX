@@ -13,11 +13,14 @@ Scene() {
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
 	}
+	View{
+		height=5.80635;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Milky Way";
 			origin=Point(20000,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -39,18 +42,19 @@ Scene() {
 					emission=Color(1,1,1,0.82);
 					name="Sol";
 					specular=Color(1,1,1);
-					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					bands("star1",ACHNL|CLAMP,16,Color(0.988,0.933,0.259),Color(1,0.949,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
-						Color(0.294,0.016,0.071),
-						Color(0.137,0.024,0.188),
-						Color(0.027,0.02,0.141),
+						Color(0.29,0.016,0.071),
+						Color(0.133,0.024,0.184),
+						Color(0.024,0.02,0.137),
 						Color(0.008,0,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S|TEX,noise(NABS|SQR|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2,1,0);
+								Texture("star1",BORDER|LINEAR|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,1,1,0,0),1.66555,2,1.05456,0.44448,2,2,1,0,0,0,0,0.11112)+
+								Texture("bricks",BUMP,1,2.22208,2,0,1,2,0.5,0.34722,0,0,0,0);
 					}
 					Corona(8.86371) {
-						color1=Color(1,1,0.98);
+						color1=Color(1,1,0.76);
 						color2=Color(1,0.68,0);
 						gradient=1;
 					}

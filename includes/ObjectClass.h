@@ -271,6 +271,14 @@ public:
      	}
     	return false;
     }
+    bool hasChild(NodeIF *n){
+    	for(int i=0;i<children.size;i++){
+    		Object3D *var=children[i];
+    		if(var==n)
+    			return true;
+     	}
+    	return false;
+    }
 
 	virtual bool hasChildren() {return children.size?true:false;}
 	virtual int getChildren(LinkedList<NodeIF*>&l);

@@ -39,7 +39,13 @@ void main(void) {
 	vec3 eye = normalize(EyeDirection.xyz);
 	vec3 normal = -normalize(EyeDirection.xyz+center);
 
-	vec4 color=Night; // start with night color
+	vec4 color=vec4(1,1,1,1);
+#if NLIGHTS>0	
+	color=Night; // start with night color
+#else
+	color=Sky;
+	illumination=1;
+#endif
 
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
@@ -80,14 +86,25 @@ void main(void) {
 
 	vec3 ec = normalize(center);                 // eye-center
 	float dpEV=dot(-eye, ec); // angle between center and eye direction
+	
+#if NLIGHTS>0		
 	if (dpEV>dpmin) // equator to horizon (planet) gradient
-		a=lerp(dpEV, dpmin, 1.0, density, pow(density,1.0+10.0*sky_grad) );
+		a=lerp(dpEV, dpmin, 1.0, density, pow(density,10*sky_grad) );		
 	else // horizon to space gradient (top side)
 		a=lerp(dpEV, dpmax, dpmin, 0, density);
-
+#else
+	float dpn=dot(eye, normal); // angle between normal and eye direction
+	if (dpEV>dpmin) // equator to horizon (planet) gradient
+		a=pow(1-dpn, 2*sky_grad);		
+	else // horizon to space gradient (top side)
+		a=lerp(dpEV, dpmax, dpmin, 0, density);
+		a*=Sky.a;
+#endif
 	color.a=a*lerp(density,0.0,1.0,alpha,1.0);
 	color.rgb*=illumination;
+	//color=vec4(a,0,0,1);
 	color=clamp(color,0.0,1.0);
+    	
 	gl_FragData[0]=color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
 

@@ -188,6 +188,19 @@ TNinode  *Orbital::get_image(char *s, int m)
 	return exprs.get_image(s,m);
 }
 
+void Orbital::setOrbitFrom(Orbital *p){
+	rot_angle=p->rot_angle;
+	orbit_angle=p->orbit_angle;
+	rot_phase=p->rot_phase;
+	orbit_phase=p->orbit_phase;
+	year=p->year;
+	day=p->day;
+	tilt=p->day;
+	pitch=p->pitch;
+	orbit_skew=p->orbit_skew;
+	orbit_radius=p->orbit_radius;
+}
+
 //-------------------------------------------------------------
 // Orbital::setPointSprites(bool f) set point sprites mode
 // - if f==true, use image to draw star points
@@ -1588,6 +1601,17 @@ void System::adapt()
 	Orbital::adapt(); // adapt children
 }
 
+NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
+	((Orbital*)n)->setOrbitFrom((Orbital*)c);
+	if(c->hasChild(TheScene->viewobj)){
+		Orbital * m=(Orbital *)c;
+		m->children.remove(TheScene->viewobj);
+		n->addChild(TheScene->viewobj);
+	}
+	Orbital *m=(Orbital*)Orbital::replaceChild(c,n);
+	return m;
+}
+
 //************************************************************
 // Spheroid class
 //************************************************************
@@ -1983,8 +2007,10 @@ int Spheroid::getChildren(LinkedList<NodeIF*>&l)
 //-------------------------------------------------------------
 NodeIF *Spheroid::replaceChild(NodeIF *c,NodeIF *n)
 {
-	if(c->typeClass()&ID_OBJECT || c->typeClass()==ID_TERRAIN)
+	if(c->typeClass()&ID_OBJECT || c->typeClass()==ID_TERRAIN){
+		((Orbital*)n)->setOrbitFrom((Orbital*)c);
   		return Orbital::replaceChild(c,n);
+	}
 	if(c->typeValue()==ID_TNMGR)
 		return terrain.replaceChild(c,n);
 	return c;
@@ -2470,6 +2496,10 @@ bool Star::setProgram(){
 	set_wscale();
 
  	tp->setProgram();
+
+	Point p=point.mm(TheScene->invViewMatrix);
+	p=p.mm(TheScene->viewMatrix);
+	vars.newFloatVec("center",p.x,p.y,p.z);
 
 	if(TheScene->inside_sky()||Raster.do_shaders)
 		GLSLMgr::setFBOReadWritePass();
@@ -3436,7 +3466,7 @@ void Sky::get_vars()
 	if(exprs.get_local("twilight",Td)){
 		twilite_color=Td.c;
 		twilite_value=twilite_color.alpha();
-		twilite_color.set_alpha(1);
+		//twilite_color.set_alpha(1);
 	}
 	VGET("twilight.min",twilite_min,def_twilite_min);
 	VGET("twilight.max",twilite_max,def_twilite_max);
@@ -3615,7 +3645,11 @@ void Sky::render_object()
 bool Sky::setProgram(){
 	char defs[128]="";
 
-	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+	Orbital *parent=getParent();
+	if(parent->type()==ID_STAR)
+		sprintf(defs,"#define NLIGHTS 0\n");
+	else
+		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	if(!inside() && TheScene->backside())
 		sprintf(defs+strlen(defs),"#define BACK\n");
 	if((TheScene->backside()||inside())&&Render.haze())
@@ -3649,6 +3683,7 @@ bool Sky::setProgram(){
 	c = halo_color;
 	vars.newFloatVec("Halo",c.red(),c.green(),c.blue(),c.alpha());
 	c = twilite_color;
+	//c.print();
 	vars.newFloatVec("Twilite",c.red(),c.green(),c.blue(),c.alpha());
 	c = night_color;
 	vars.newFloatVec("Night",c.red(),c.green(),c.blue(),c.alpha());
@@ -3701,7 +3736,6 @@ void Sky::map_color(MapData*d,Color &c)
 		c.set_alpha(1.0);
 		return;
 	}
-
 	double dp1,dp2,f;
 	Point p=d->mpoint();
 	double ds=p.length();

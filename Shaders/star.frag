@@ -39,6 +39,12 @@ void main(void) {
 	vec4 color=vec4(1.0);
 #endif
 
+    vec3 normal=normalize(Normal.xyz);
+    bump=vec3(0.0); 
+#ifdef NCC
+	NOISE_COLOR(NCC);
+#endif
+
 #if NTEXS >0
 #include "set_tex.frag"
 #endif

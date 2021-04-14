@@ -1820,8 +1820,8 @@ void Map::adapt()
 		minext=lim;
 		set_resolution();
 		npole->visit(&MapNode::clr_flags);
-		hmax=-lim;
-		hmin=lim;
+		//hmax=-lim;
+		//hmin=lim;
 
 		if(TheScene->view->changed_detail())
 			npole->visit_all(&MapNode::clr_ccheck);

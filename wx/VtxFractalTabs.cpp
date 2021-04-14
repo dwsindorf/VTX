@@ -315,13 +315,10 @@ void VtxFractalTabs::setObjAttributes(){
 	s+=")";
 
 	tnode->setExpr((char*)s.ToAscii());
-	if(tnode->getExprNode()==0)
-		update_needed=true;
-	else{
-		update_needed=false;
-		tnode->applyExpr();
-	    TheView->set_changed_detail();
-	    TheScene->rebuild_all();
-	}
+
+	update_needed=false;
+	tnode->applyExpr();
+	TheView->set_changed_detail();
+	TheScene->rebuild_all();
 }
 

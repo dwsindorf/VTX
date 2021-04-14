@@ -134,6 +134,8 @@ public:
 			p->replaceChild(this,n);
 		return this;
 	}
+	virtual bool hasChild(NodeIF *n)			{ return false;}
+
 	virtual bool hasChild(int vtype)			{ return false;}
 	virtual bool hasChildren()					{ return false;}
 	virtual int getChildren(LinkedList<NodeIF*>&l) { return 0;}

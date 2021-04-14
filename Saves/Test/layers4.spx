@@ -37,7 +37,7 @@ Scene() {
 		view=SURFACE;
 		phi=-19.6875;
 		theta=27.4219;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-3955.45 ft;
 		heading=0;
 		pitch=0;
@@ -69,7 +69,7 @@ Scene() {
 		view=SURFACE;
 		phi=-25.3125;
 		theta=61.875;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=15892.8 ft;
 		heading=0;
 		pitch=0;
@@ -93,7 +93,7 @@ Scene() {
 		view=SURFACE;
 		phi=-5.625;
 		theta=58.3594;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=7545.04 ft;
 		heading=0;
 		pitch=0;
@@ -125,7 +125,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=94.2188;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-2936.88 ft;
 		heading=0;
 		pitch=0;
@@ -248,7 +248,7 @@ Scene() {
 		view=SURFACE;
 		phi=-18.9844;
 		theta=98.4375;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-4073.82 ft;
 		heading=0;
 		pitch=0;
@@ -328,7 +328,7 @@ Scene() {
 		view=SURFACE;
 		phi=-28.125;
 		theta=90.7031;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=0.375584 ft;
 		heading=0;
 		pitch=0;
@@ -359,7 +359,7 @@ Scene() {
 		view=SURFACE;
 		phi=-27.4219;
 		theta=87.8906;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-0.503707 ft;
 		heading=0;
 		pitch=0;
@@ -398,7 +398,7 @@ Scene() {
 		view=SURFACE;
 		phi=-23.9063;
 		theta=82.2656;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=0.227108 ft;
 		heading=0;
 		pitch=0;
@@ -494,10 +494,16 @@ Scene() {
 		heading=145;
 		tilt=0;
 	}
+	View{
+		height=205.22 ft;
+		heading=161;
+		tilt=-3;
+		angle=-1;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -513,10 +519,10 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -538,7 +544,7 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					image("ridges",INVT,256,256,noise(NABS|SQR|NEG|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("ridges",INVT,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
 						Color(0.58,0.024,0.024));
 					bands("alpine2",ACHNL|CLAMP|NORM,64,0.1,0.552941,Color(0,0,0,0.553),Color(0.027,0.239,0.102),
@@ -556,39 +562,39 @@ Scene() {
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=fog(noise(UNS,3,2,1,0.5,2,1,1,0,0))
-								water(noise(SCALE,20,2,1,0.5,2,0.08,1,0,0))
-								snow(-1,1,1,1,0.91,0.09)
-								map(noise(SQR|UNS,0,9.4,0.48,0.33,2.22,1,1,1,-0.4),0,0)
-								layer("lavahills",MESH,0,noise(RO1,5.6,2,-1,0.5,2,0.3,1,0,0),0.04,noise(10.2,8.6,1,0.5,2.22,1,1,0,0))
-									[Z(noise(NABS,8,12,0.35,0.95,2.1))
+						terrain=fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
+								water(noise(GRADIENT|SCALE,20,2,1,0.5,2,0.08,1,0,0))
+								snow(-1.3,1,1,1,0.91,0.09)
+								map(noise(GRADIENT|SQR|UNS,0,9.4,0.48,0.33,2.22,1,1,1,-0.4),0,0)
+								layer("lavahills",MESH,0,noise(GRADIENT|RO1,5.6,2,-1,0.5,2,0.3,1,0,0),0.04,noise(10.2,8.6,1,0.5,2.22,1,1,0,0))
+									[Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))
 									+
-									Texture("watery3",BUMP|TEX|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
-									Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0)+
+									Texture("watery3",BUMP|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),345.849,2,2,0,13.6792,2,1,1)+
+									Texture("alpine2",A|LINEAR|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.693275,1.283,1,-1.43392,1,3,1,0,0,0,0,0)+
 									Texture("yellow-black",A|BORDER|LINEAR|NORM|S|TEX,BMPHT,HT+0.5,0.5,2,1,2.33968,1,2,1,0)]
-								layer("snow2",MORPH,0.57,noise(RO2,0,2,1,0.5,2,1,1,0,0),0.01,noise(10.2,8.6,1,0.5,2,1,1,0,0))
-									[Z(noise(NABS|SQR|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))
-									+
-									Texture("ridges",BUMP|TEX,1164.1,0.88888,1,0,10,2.2,0.96296,0)+
+								layer("snow2",MORPH,0.57,noise(GRADIENT|RO2,0,2,1,0.5,2,1,1,0,0),0.01,noise(10.2,8.6,1,0.5,2,1,1,0,0))
+									[
+									Texture("alpine2",BORDER|LINEAR|S|TEX,noise(GRADIENT|NABS|NEG|RO1,5.1,5,1,0.5,2.05,0.2,1,0,0),38.0546,0.91668,0.97296,-0.77776,1,2,1,0,0,2,-0.22224,2)+
+									Texture("ridges",BUMP|LINEAR|TEX,1164.1,0.88888,1,0,10,2.2,0.96296,0,0,0,0,0)+
 									Texture("Shist1",BUMP|TEX,16384,-0.6,2,0,4,2,1,0)+
 									Texture("bricks",A|BUMP|TEX,2*HT,65536,-0.4,1.14816,0,6.33328,2.11112,1,0)+
 									Texture("DirtPebbles",A|BUMP|TEX,2*HT,143382,0.5,2,0,6.33328,2.11112,1,0)+
-									Texture("alpine2",BORDER|S|TEX,HT-0.2*BMPHT+noise(NABS|NEG|RO1,5.1,5,1,0.5,2.05,1,1,0,0),1,0.62964,0.97296,-0.44448,1,2,1,0)+
-									Texture("GrassField",A|BUMP|TEX,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037)]
+									Texture("GrassField",A|BUMP|TEX,0.1*BMPHT-HT,1.04858e+06,-0.66664,2,0.9,3.66688,2.11112,1,0.7037)+Z(noise(GRADIENT|NABS|SQR|UNS,7,12,-0.33,0.63,2.22,1,0.11,0.09,0))
+									]
 								layer("volcanos2",MORPH,0.15,0.1,0,0.04)
 									[Z(0.5*craters(ID1,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
-									noise(NABS|SQR|SCALE,11,8,0.5,0.5,2)+0.1*noise(6,3))
+									noise(GRADIENT|NABS|SCALE|SQR,11,8,0.5,0.5,2)+0.1*noise(6,3))
 									+
 									Texture("coldlava",BUMP|TEX,665.133,-1.84904,0.9434,0,7.33984,2.28304,1,0)+
 									Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,2,0,7.33984,2.28304,1,0)+
 									Texture("bricks",BUMP|TEX,33630.9,-1.16984,1.283,0,6.88672,2.28304,1,0.07548)+
 									Texture("lava",BORDER|S|TEX,HT+2*BMPHT,0.25,1.1698,1,-2.94336,2,2,1,0)]
 								layer("burning hills",MESH,0,0.1,0,0)
-									[Z(noise(NABS,8,12,0.35,0.95,2.1))
+									[Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))
 									+
 									Texture("Shist1",A|BUMP|TEX,HT+0.5,93.5068,2,1,0,8.1112,2.1852,0.9074,0)+
 									Texture("DirtPebbles",A|BUMP|TEX,HT+0.4,3992.29,2,1,0,8.1112,2.1852,0.9074,0)+
-									Texture("drywash",A|BUMP|TEX|S,noise(NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),1-HT,922.241,2,2,0,6.88672,2,1,0)+
+									Texture("drywash",A|BUMP|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,8,6,1,1,1.91,0.01,1,0,0),1-HT,922.241,2,2,0,6.88672,2,1,0)+
 									Texture("DirtPebbles",A|BUMP|TEX,-2*HT,172472,0.71696,0.86792,0,4.16992,2.13208,1,0)+
 									Texture("alpine2",A|S|TEX,0.2*BMPHT+HT,1-10*SLOPE-HT,0.5,0.90568,1,-1.43392,1,3,1,0)+
 									Texture("GrassField",A|BUMP|TEX,1-HT,172472,0.79248,0.8302,0,2.3584,3.03776,0.92452,0.66038)+
@@ -597,6 +603,7 @@ Scene() {
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
+						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
 						haze.grad=0.4;
@@ -611,7 +618,7 @@ Scene() {
 						emission=Color(1,1,1,0.3);
 						specular=Color(1,1,1);
 						Surface{
-							terrain=Color(1,1,1,noise(FS,3,9,1,0.5,2));
+							terrain=Color(1,1,1,noise(GRADIENT|FS,3,9,1,0.5,2));
 						}
 					}
 				}

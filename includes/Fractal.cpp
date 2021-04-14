@@ -242,6 +242,10 @@ void TNfractal::eval()
 
 			if(slope<=(thresh*smax))
 				slope*=tbias;
+            if(TheMap->hmax>TheMap->hmin){
+				double fht=(base-TheMap->hmin)/(TheMap->hmax-TheMap->hmin);
+				slope*=rampstep(fht,0,hmax,1,hval);
+            }
 
 			delta=sfact*ampl*rand1*slope*sbias;
 			if(sdrop)

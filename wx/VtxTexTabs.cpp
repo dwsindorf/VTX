@@ -894,15 +894,14 @@ void VtxTexTabs::setObjAttributes(){
 			tex->invalidate();
 		}
 	}
-	invalidateTexture();
 
 	if(opts & HMAP){
 		object()->invalidate();
 		TheView->set_changed_detail();
 		TheScene->rebuild();
 	}
-
-	//if(texture())
+	else
+		invalidateTexture();
 }
 //-------------------------------------------------------------
 // VtxTexTabs::getObjAttributes() when switched in

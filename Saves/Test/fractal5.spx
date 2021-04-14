@@ -40,9 +40,16 @@ Scene() {
 		height=2111.54 ft;
 		gndlvl=-408.311 ft;
 	}
+	View{
+		time=5094.72;
+	}
+	View{
+		height=2309.83 ft;
+		heading=3;
+	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
-		noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
 			Color(0.502,0.000,0.251),
@@ -95,12 +102,13 @@ Scene() {
 					Color(0.075,0.02,0.02));
 				Surface{
 					m1=0.1*noise(6,3);
-					m2=noise(NABS|SQR|SCALE,11,8,0.5,0.5,2)+m1;
+					m2=noise(GRADIENT|NABS|SCALE|SQR,11,8,0.5,0.5,2)+m1;
 					m3=0.1*noise(10,3,0.6);
-					c1=fractal(SQR|SS,15.3,13.8,0.19,0.19,3,0.97,0.81,0,0.27,0)craters(ID1,1,0.002,0.25,1,1,1,0,0,10,3,0.42,0.24,0,0.6)
+					c1=fractal(SQR|SS,15.3,13.8,0.19,0.19,3,0.97,0.84,0,0.39,0)craters(ID1,1,0.002,0.25,1,1,1,0,0,10,3,0.42,0.24,0,0.6)
 					m2;
-					terrain=Z(0.5*c1)+
-							Texture("yellow-black",BORDER|S|TEX,FHT,1,2,1,0,1,2,1,0);
+					terrain=
+							Texture("yellow-black",BORDER|LINEAR|TEX,11.424,0.75,1,0,1,2,1,0,0,2,-0.2,-0.1)+
+							Texture("rock_stones",BUMP,7585.35,-1.33344,2,0,4.99984,2,0.5,0,0,0,0,0)+Z(0.5*c1);
 				}
 				Sky(0.00511133) {
 					color=Color(0.5,0.69,1);
@@ -108,6 +116,7 @@ Scene() {
 					density=0.35;
 					haze.grad=0.38356;
 					haze.value=0.376471;
+					resolution=8;
 					shine=1;
 					specular=Color(1,1,1);
 					tilt=10;
@@ -121,8 +130,9 @@ Scene() {
 					diffuse=Color(1,1,1,0.42);
 					hscale=0.05;
 					name="Clouds2D-1";
+					resolution=4;
 					Surface{
-						terrain=Color(1,1,1,noise(FS,4.4,9,1,0.5,2,1,0,0,-2));
+						terrain=Color(1,1,1,noise(GRADIENT|FS,4.4,9,1,0.5,2,1,0,0,-2));
 					}
 				}
 				Clouds(0.00505587) {
@@ -134,13 +144,13 @@ Scene() {
 					emission=Color(1,1,1,0.04);
 					name="Clouds3D-1";
 					num_sprites=1.57372;
-					resolution=2;
+					resolution=4;
 					rot_phase=61.02;
 					shine=77.7857;
 					specular=Color(1,1,1,0);
 					Surface{
-						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
-								Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
+						terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+								Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
 					}
 				}
 			}

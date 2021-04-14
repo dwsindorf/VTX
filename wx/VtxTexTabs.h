@@ -60,14 +60,14 @@ protected:
     void invalidateObject(){
     	object()->invalidate();
     	setObjAttributes();
-    	TheView->set_changed_detail();
+    	TheView->set_changed_render();
     	TheScene->rebuild();
     }
     void invalidateTexture(){
     	if(texture())
-        texture()->invalidate();
-    	TheView->set_changed_detail();
-    	TheScene->rebuild_all();
+    		texture()->invalidate();
+    	TheView->set_changed_render();
+    	TheScene->rebuild();
     }
     void invalidateRender(){
       	TheView->set_changed_render();

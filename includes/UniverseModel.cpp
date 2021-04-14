@@ -379,6 +379,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			return getAddList(obj->getParent(),list);
 		}
 		list.add(getObjectSymbol(TN_CORONA));
+		list.add(getObjectSymbol(TN_SKY));
+
 		break;
 	case TN_PLANET:
 		if(obj->collapsed() && obj->getParent()){

@@ -25,6 +25,8 @@ varying vec4 EyeDirection;
 varying vec4 Normal;
 uniform bool fbo_read;
 uniform bool fbo_write;
+uniform bool lighting;
+
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -43,8 +45,10 @@ void main(void) {
 	float specular = 0.0;
 
 	ha=sqrt(Halo.a);
-	vec4 color=Night; // start with night color
-
+	vec4 color=vec4(1,1,1,1);
+#if NLIGHTS>0	
+	color=Night; // start with night color
+#endif
 	vec3 ec = normalize(center);                 // viewdir-center
 	float dp=dot(ec, radius); // angle between radius and viewdir direction
 	//float h=min(1.0,dht)-1.0;
@@ -58,8 +62,6 @@ void main(void) {
 	vec3 B = EyeDirection.xyz;
 	vec3 A = C-B;
 	VdotR=dot(normalize(A),normalize(C));
-	//mx*=lerp(VdotR,-1,0,0,1);
-	//mx*=1-VdotR;//lerp(VdotR,0.0,-0.2,0,mx);
 #endif
 
 	for(int i=0;i<NLIGHTS;i++){
@@ -67,33 +69,26 @@ void main(void) {
 
 		float LdotR    = dot(light,radius); // for horizon band calculation
 		float ampl     = 1.0/gl_LightSource[i].constantAttenuation;
-
+		float mx=0;
 // 		illumination+=lerp(LdotR, twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0);
 //		alpha=lerp(LdotR, twilite_dph+twilite_min, twilite_dph, 0.0, 1.0);
-
-		// mix in twilite color
-		float mx=lerp(LdotR, twilite_dph+twilite_min, twilite_dph, 0.0, Twilite.a);
-
+			// mix in twilite color
+		mx=lerp(LdotR, twilite_dph+twilite_min, twilite_dph, 0.0, Twilite.a);
 		mx*=1-VdotR;
-
 		color.rgb=mix(color.rgb,Twilite.rgb,mx);
 		// mix in sky color
-
-		mx=lerp(LdotR, twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, Sky.a);
-		color.rgb=mix(color.rgb,Sky.rgb,mx);
-
-		// night-side darken all colors
-		mx=lerp(LdotR, twilite_dph+twilite_min,twilite_dph+twilite_max, 1-Night.a, 0.0);
-		color.rgb=mix(color.rgb,vec3(0.0),mx);
+	    mx=lerp(LdotR, twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, Sky.a);
+	    color.rgb=mix(color.rgb,Sky.rgb,mx);		
+		
+        if(Night.a>0{
+			// night-side darken all colors
+			mx=lerp(LdotR, twilite_dph+twilite_min,twilite_dph+twilite_max, 1-Night.a, 0.0);
+			color.rgb=mix(color.rgb,vec3(0.0),mx);
+		}
 
 
  		illumination+=max(lerp(LdotR,  twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0),illumination);
 		alpha=max(lerp(LdotR, twilite_dph+2*twilite_min, twilite_dph+twilite_min, 0.0, 1.0),alpha);
-//
-//		float mx=lerp(LdotR, twilite_min-twilite_max, 0, 0.0, Twilite.a);
-//		color.rgb=mix(color.rgb,Twilite.rgb,mx);
-//		mx=lerp(LdotR, -twilite_max, 0.0, 0.0, Sky.a);
-//		color.rgb=mix(color.rgb,Sky.rgb,mx);
 #ifdef BACKSIDE // darken inside sky with azimuth
 		color.rgb=color.rgb*sd+vec3(0.5*sd);
 #endif
@@ -119,9 +114,7 @@ void main(void) {
 
 	color.a=max(ha,alpha*sa); // fade sky alpha with ht
 	color.a=clamp(color.a,0.0,1.0);
-
 	haze=mix(haze.rgb,Night.a*vec3(0.0),(1.0-alpha)); // darken with night
-
 	color.rgb=mix(color.rgb,haze.rgb,ha); // combine sky and haze colors
 	if (fbo_read) {
 		vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
@@ -146,15 +139,13 @@ void main(void) {
 		a=pow(a, 2*sky_grad); // sharpen sky gradient
 	}
 	else{            //  equator to horizon
-		a=lerp(dpEV, dpmin, 1.0, density, pow(density,1.0+10.0*sky_grad) );
+		a=lerp(dpEV, dpmin, 1.0, density, pow(density,1.0+sky_grad) );
 	}
 	color.a=a*lerp(density,0.0,1.0,alpha,1.0);
 	ha=Haze.a*(1.0-density)*pow(a,0.2+2.0*haze_grad); // sharpen haze gradient
 	color.rgb=mix(color.rgb,haze.rgb,ha); // combine sky and haze colors
 
 #endif
-	//color=vec4(vec3(VdotR),1.0);
-
 	gl_FragData[0]=color;
 }
 
