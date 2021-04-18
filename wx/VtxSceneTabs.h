@@ -69,6 +69,7 @@ protected:
 	wxColourPickerCtrl *m_contour_color;
 	wxColourPickerCtrl *m_phi_color;
 	wxColourPickerCtrl *m_theta_color;
+	wxColourPickerCtrl *m_text_color;
 
 	wxChoice   *m_tesslevel;
 
@@ -305,7 +306,15 @@ public:
     	TheScene->theta_color.set(col.Red(),col.Green(),col.Blue());
     	TheScene->set_changed_render();
     }
-    void OnContourColor(wxColourPickerEvent& WXUNUSED(event)){
+    void OnTextColor(wxColourPickerEvent& WXUNUSED(event)){
+     	wxColor col=m_text_color->GetColour();
+     	Color c;
+     	c.set(col.Red(),col.Green(),col.Blue());
+     	TheScene->text_color=c;
+     	TheScene->syscolor[INFO_COLOR]=c;
+     	TheScene->set_changed_render();
+     }
+   void OnContourColor(wxColourPickerEvent& WXUNUSED(event)){
      	wxColor col=m_contour_color->GetColour();
      	TheScene->contour_color.set(col.Red(),col.Green(),col.Blue());
      	TheScene->set_changed_render();

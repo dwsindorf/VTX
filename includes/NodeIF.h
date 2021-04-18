@@ -103,6 +103,7 @@ public:
 	void setRandom(bool b)      { if(b) clrFlag(RND_RANDOMIZE); else setFlag(RND_RANDOMIZE); }
 	virtual bool canRandomize() { return false;}
 	virtual bool randomize()    { return false;}
+	virtual void setDefault()   { }
 
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}

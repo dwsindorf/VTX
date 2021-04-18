@@ -56,6 +56,17 @@ TNmap::TNmap(TNode *l, TNode *r) :  TNfunc(l,r)
 	msmooth=1;
 }
 
+NodeIF *TNmap::replaceNode(NodeIF *c){
+	TNmap *newmap=(TNmap *)c;
+	NodeIF *newleft=newmap->left;
+	delete left;
+	left=newleft;
+	left->setParent(this);
+}
+void TNmap::saveNode(FILE *f){
+	TNfunc::saveNode(f);
+}
+
 //-------------------------------------------------------------
 // TNmap::valueString() write value string
 //-------------------------------------------------------------
@@ -425,7 +436,7 @@ void TNmap::eval()
 		if(Td.zlevel[0].properties[1]->textures.size){
 			// first texture only
 			// TODO: better algorithm to pick best texture of combine texture stack
-			FColor  avec=Td.zlevel[i].properties[i+1]->textures[0]->aveColor;
+			FColor  avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
 			Color c=Color(avec.red(),avec.green(),avec.blue());
 			Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
 		}
@@ -669,9 +680,7 @@ NodeIF *TNlayer::replaceChild(NodeIF *c,NodeIF *n)
 NodeIF *TNlayer::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
-    //cout << x->typeName()<<endl;
 	if(x->typeValue()!=ID_LAYER){
-
 		NodeIF *newbase=n;
 		while(n->typeValue()&ID_FUNC){
 			TNfunc *f=(TNfunc *)n;
@@ -702,16 +711,10 @@ NodeIF *TNlayer::addChild(NodeIF *x)
 NodeIF *TNlayer::replaceNode(NodeIF *c){
 	if(base)
 		delete base;
-	NodeIF *newbase=c;
-	while(c->typeValue()&ID_FUNC){
-		TNfunc *f=(TNfunc *)c;
-		c=f->right;
-		f->right=0;
-	}
-	delete newbase;
-	base=(TNode*)c;
+	TNlayer *newlayer=(TNlayer *)c;
+	base=newlayer->base;
+	setName(newlayer->getName());
 	base->setParent(this);
-
 	return this;
 }
 
@@ -750,9 +753,18 @@ void TNlayer::lower()
 //-------------------------------------------------------------
 void TNlayer::saveNode(FILE *f)
 {
-	if(base){
+	char buff[256];
+	buff[0]=0;
+	propertyString(buff);
+	fprintf(f,"%s",buff);
+	inc_tabs();
+	addtabs=1;
+	fprintf(f,"\n%s[",tabs);
+	if(base)
 		base->save(f);
-	}
+	dec_tabs();
+	fprintf(f,"]\n%s",tabs);
+	addtabs=0;
 }
 //-------------------------------------------------------------
 // TNlayer::setName() set name
@@ -760,6 +772,15 @@ void TNlayer::saveNode(FILE *f)
 void TNlayer::setName(char *s)
 {
 	strcpy(name_str,s);
+}
+//-------------------------------------------------------------
+// TNlayer::setName() set name
+//-------------------------------------------------------------
+char *TNlayer::getName()
+{
+	if(strlen(name_str)>0)
+		return name_str;
+	return symbol();
 }
 
 //-------------------------------------------------------------
@@ -795,18 +816,7 @@ void TNlayer::propertyString(char *s)
 //-------------------------------------------------------------
 void TNlayer::save(FILE *f)
 {
-	char buff[256];
-	buff[0]=0;
-	propertyString(buff);
-	fprintf(f,"%s",buff);
-	inc_tabs();
-	addtabs=1;
-	fprintf(f,"\n%s[",tabs);
-	if(base)
-		base->save(f);
-	dec_tabs();
-	fprintf(f,"]\n%s",tabs);
-	addtabs=0;
+	saveNode(f);
 	if(right)
 		right->save(f);
 }

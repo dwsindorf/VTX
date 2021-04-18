@@ -299,14 +299,16 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	case TABS_SAVE:
 		saveSelected();
 		break;
-	case TABS_RESORT:
-		cout<<"SORT:"<<endl;
+	case TABS_DEFAULT:
+		obj->setRandom(false);
+		obj->setDefault();
+		obj->invalidate();
+        TheScene->rebuild();
 		break;
 	case TABS_RANDOMIZE:
-		cout<<"RANDOMIZE:"<<endl;
 		obj->setRandom(true);
 		obj->randomize();
-        TheScene->rebuild_all();
+        TheScene->rebuild();
 		break;
 	case TABS_REMOVE:
 		removeMenuFile(menu_id);
@@ -951,7 +953,8 @@ wxMenu *VtxSceneDialog::getOpenMenu(wxMenu &menu,NodeIF *obj){
 	menu.Append(TABS_SAVE,wxT("Save.."));
 	menu.AppendSeparator();
 	menu.Append(TABS_RANDOMIZE, wxT("Randomize"));
-	//menu.Append(TABS_RESORT, wxT("Resort"));
+	menu.Append(TABS_DEFAULT, wxT("Default"));
+	menu.AppendSeparator();
 
 	LinkedList<ModelSym*>flist;
 	int type=obj->getFlag(TN_TYPES);

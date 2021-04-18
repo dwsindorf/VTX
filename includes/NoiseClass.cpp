@@ -510,11 +510,12 @@ int Noise::set_factors(double h,double l)
 //-------------------------------------------------------------
 Point4D Noise::get_point()
 {
-    return Point4D(
+   Point4D p=Point4D(
     	POINT[0],
     	POINT[1],
     	POINT[2],
     	POINT[3]);
+   return p;
 }
 //-------------------------------------------------------------
 //void clearCache()

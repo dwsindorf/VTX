@@ -48,11 +48,11 @@ protected:
 	enum {
 		maxstr=64
 	};
-	static int seed;
 	void set_defaults();
 	void set_wscale();
 	Color      _color;
     char name_str[maxstr];
+    static LinkedList<double>seedlist;
 public:
 	ExprMgr exprs;
 	double rseed;
@@ -75,6 +75,10 @@ public:
 	double shine;
 	double sunset;
 
+	void pushSeed();
+	void popSeed();
+	void setSeed(double);
+
 	Point  origin;
 
 	Orbital(double s);
@@ -88,6 +92,7 @@ public:
 
     virtual bool randomize();
     virtual bool canRandomize() { return true;}
+    virtual void setDefault();
 
 	virtual void locate();
 	virtual void set_tilt();

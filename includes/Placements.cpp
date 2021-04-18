@@ -88,16 +88,6 @@ Placement **PlacementMgr::hash=0;
 int PlacementMgr::last_id=0;
 PlacementMgr::PlacementMgr(int i)
 {
-	//if(i & KEEPID){
-	//	type=last_id;
-	//	free_htable();
-	//}
-	//else
-	//	type=place_gid++;
-	//type=i&PID;
-	//if(type==0)
-	//	type=place_gid++;
-	
 	type=i&PID;
     options=i&(~PID);
 	flags.l=0;
@@ -108,6 +98,7 @@ PlacementMgr::PlacementMgr(int i)
 	density=0.8;    			
   	dexpr=0;
   	base=0;
+
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
 }
@@ -196,9 +187,9 @@ void PlacementMgr::eval()
 	Point4D pc,p;
 	Point4D pv=TheNoise.get_point();
 	pv=pv-TheNoise.offset;  // reset origin to ~0
+
 	if(TheNoise.noise3D())
 		 pv.w=0;
-		 
 	pv=pv.normalize();  // project on unit sphere
 
 	msize=ntest()?maxsize:maxsize*4;
@@ -223,23 +214,23 @@ void PlacementMgr::eval()
 		//  offset domain to mis-register overlap of successive levels
 
 		int seed=lvl*131+id;
-		    
+		double rnd=roff;
         //if(lvl>0 && !ntest()){   
         if(lvl>0){   
 		    set_offset_valid(1);
-			offset.x=roff*SRAND(1);
-			offset.y=roff*SRAND(2);
-			offset.z=roff*SRAND(3);
+			offset.x=rnd*SRAND(1);
+			offset.y=rnd*SRAND(2);
+			offset.z=rnd*SRAND(3);
 			if(TheNoise.noise4D())
-				offset.w=roff*SRAND(4);
+				offset.w=rnd*SRAND(4);
 			else
 			    offset.w=0;
-			mpt=pv+offset;		
+			mpt=pv+offset;
 			p=pv*(1.0/size)+offset;
 		}
 		else{
 		    set_offset_valid(0);
-			mpt=pv;		
+			mpt=pv;
 			p=pv*(1.0/size);
 		}
 		
@@ -396,7 +387,6 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	
     if(mgr.offset_valid())
 		p=p-mgr.offset;
-
 	p=(p+0.5)*mgr.size;
 
 	if(mgr.dexpr){
@@ -434,7 +424,6 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		p.w+=pf*SRAND(5);
 	else
 	    p.w=0;
-
 	p=p.normalize();
     if(mgr.offset_valid())
 	   	p=p+mgr.offset;
@@ -597,6 +586,6 @@ void TNplacements::eval()
 		            1/mgr->maxsize+
 					1/mgr->mult
 					);
-	mgr->id=(int)hashcode+mgr->type;
+	mgr->id=(int)(hashcode*(1+mgr->type+TheNoise.rseed));
 	
 }

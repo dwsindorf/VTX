@@ -84,7 +84,6 @@ int VtxLayerTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 

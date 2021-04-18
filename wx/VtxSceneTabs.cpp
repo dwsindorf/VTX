@@ -73,6 +73,7 @@ enum {
 
     ID_CONTOUR_COLOR,
     ID_AUTOGRID,
+    ID_TEXT_COLOR,
 
     ID_ADAPT_OCCLUSION,
     ID_ADAPT_CURVATURE,
@@ -183,6 +184,7 @@ SET_SLIDER_EVENTS(CONTOUR_SPACING,VtxSceneTabs,ContourSpacing)
 EVT_COLOURPICKER_CHANGED(ID_PHI_COLOR,VtxSceneTabs::OnPhiColor)
 EVT_COLOURPICKER_CHANGED(ID_THETA_COLOR,VtxSceneTabs::OnThetaColor)
 EVT_COLOURPICKER_CHANGED(ID_CONTOUR_COLOR,VtxSceneTabs::OnContourColor)
+EVT_COLOURPICKER_CHANGED(ID_TEXT_COLOR,VtxSceneTabs::OnTextColor)
 
 EVT_CHECKBOX(ID_AUTOGRID,VtxSceneTabs::OnAutogrid)
 EVT_UPDATE_UI(ID_CONTOUR_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
@@ -357,6 +359,10 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	m_contours->SetToolTip("Draw Contour lines");
 	check_options->Add(m_contours,0,wxALIGN_LEFT|wxALL,1);
 
+	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
+	m_autogrid->SetToolTip("Autoset intervals");
+	check_options->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,1);
+
     boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
     check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -444,14 +450,14 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 
 	hline->Add(ContourSpacingSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	hline->Add(new wxStaticText(panel, -1, "Feet", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
+	hline->Add(new wxStaticText(panel, -1, "Feet", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP|wxLEFT,5);
 
 	m_contour_color=new wxColourPickerCtrl(panel,ID_CONTOUR_COLOR,col,wxDefaultPosition, wxSize(50,30));
 	hline->Add(m_contour_color,0,wxALIGN_LEFT|wxALL,0);
 
-	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
-	m_autogrid->SetToolTip("Autoset intervals");
-	hline->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,5);
+	hline->Add(new wxStaticText(panel, -1, "Text", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP|wxLEFT,5);
+	m_text_color=new wxColourPickerCtrl(panel,ID_TEXT_COLOR,col,wxDefaultPosition, wxSize(50,30));
+	hline->Add(m_text_color,0,wxALIGN_LEFT|wxALL,0);
 
 	grid_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -714,6 +720,8 @@ void VtxSceneTabs::updateControls(){
 	m_theta_color->SetColour(wxColor(c.rb(),c.gb(),c.bb()));
 	c=TheScene->contour_color;
 	m_contour_color->SetColour(wxColor(c.rb(),c.gb(),c.bb()));
+	c=TheScene->text_color;
+	m_text_color->SetColour(wxColor(c.rb(),c.gb(),c.bb()));
 
 	m_occlusion->SetValue(Adapt.overlap_test());
 	m_clip->SetValue(Adapt.clip_test());

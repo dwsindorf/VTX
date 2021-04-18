@@ -91,7 +91,23 @@ static double	def_hscale=5e-4;
 // Orbital class
 //************************************************************
 
-int Orbital::seed=0;
+LinkedList<double>Orbital::seedlist;
+
+void Orbital::pushSeed(){
+	TheNoise.rseed=rseed+TheScene->rseed;
+	seedlist.push(rseed);
+}
+void Orbital::popSeed(){
+	rseed=seedlist.pop();
+	TheNoise.rseed=rseed+TheScene->rseed;
+}
+void Orbital::setSeed(double val){
+	rseed=val;
+	TheNoise.rseed=rseed+TheScene->rseed;
+}
+void Orbital::setDefault(){
+	setSeed(0);
+}
 
 // constructors
 
@@ -130,7 +146,6 @@ void Orbital::set_defaults()
 {
 	orbit_skew=orbit_angle=orbit_phase=orbit_radius=0.0;
 	year=day=tilt=pitch=rot_angle=rot_phase=0.0;
-	seed++;
 	detail=1;
 	set_color(WHITE);
 	name_str[0]=0;
@@ -1092,7 +1107,7 @@ void Galaxy::set_focus(Point &p)
 //-------------------------------------------------------------
 void Galaxy::move_focus(Point &selm)
 {
-	selm.print();
+	//selm.print();
 	TheScene->set_changed_view();
 	TheScene->views_mark();
 
@@ -1326,51 +1341,38 @@ void Galaxy::render()
 			StarTree *stars=(StarTree *)tree;
 			tree->sort_nodes=true;
 			tree->sortNodes();
-			if(!Render.draw_shaded())
-				setStarTexture(0,"star1");
-
-			if(Render.startex()){
-				// render bg stars
-				stars->set_render_fg(false);
-				stars->set_render_bg(true);
-				setPointSprites(true);
-				if(Render.draw_shaded()){
-					setStarTexture(0,"sprites1");
-					glBindTexture(GL_TEXTURE_2D, star_image[0]);
-					setProgram();
-				}
-				else{
-					setStarTexture(0,"star1");
-					glBindTexture(GL_TEXTURE_2D, star_image[0]);
-				}
-
-				render_object();
-				// render fg stars
-				if(stars->inside()){
-					setPointSprites(true);
-					stars->set_render_fg(true);
-					stars->set_render_bg(false);
-					if(Render.draw_shaded())
-						setProgram();
-					render_object();
-				}
-				glBindTexture(GL_TEXTURE_2D, 0);
+			// render bg stars
+			stars->set_render_fg(false);
+			stars->set_render_bg(true);
+			setPointSprites(true);
+			if(Render.draw_shaded()){
+				setStarTexture(0,"sprites1");
+				glBindTexture(GL_TEXTURE_2D, star_image[0]);
+				setProgram();
 			}
 			else{
-				setPointSprites(false);
+				if(stars->inside())
+					setStarTexture(1,"star0");
+				else
+					setStarTexture(1,"star1");
+				glBindTexture(GL_TEXTURE_2D, star_image[1]);
+			}
+
+			render_object();
+			// render fg stars
+			if(stars->inside()){
 				stars->set_render_fg(true);
-				stars->set_render_bg(true);
-				if(Render.draw_shaded()){
-					setPointSprites(true);
+				stars->set_render_bg(false);
+				if(Render.draw_shaded())
 					setProgram();
-				}
 				render_object();
 			}
+			glBindTexture(GL_TEXTURE_2D, 0);
 		    TheScene->popMatrix();
 		}
 	}
  	else
-	Orbital::render(); // render children
+ 		Orbital::render(); // render children
 }
 
 //-------------------------------------------------------------
@@ -2127,8 +2129,9 @@ void Spheroid::adapt_object()
 	terrain.init();
 	terrain.setAdaptMode();
 	set_wscale();
-
+	pushSeed();
 	map->adapt();
+	popSeed();
 }
 
 //-------------------------------------------------------------
@@ -2500,6 +2503,7 @@ bool Star::setProgram(){
 	Point p=point.mm(TheScene->invViewMatrix);
 	p=p.mm(TheScene->viewMatrix);
 	vars.newFloatVec("center",p.x,p.y,p.z);
+	vars.newFloatVar("rseed",rseed);
 
 	if(TheScene->inside_sky()||Raster.do_shaders)
 		GLSLMgr::setFBOReadWritePass();
@@ -2721,6 +2725,8 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("fog_vmax",fog_vmax);
 	vars.newFloatVar("fog_znear",fog_min);
 	vars.newFloatVar("fog_zfar",fog_max);
+	vars.newFloatVar("rseed",rseed);
+
 	vars.newFloatVar("nscale",shadow_color.alpha());
 
     vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
@@ -3010,8 +3016,10 @@ void Planetoid::adapt_object()
 	//if(TheScene->viewobj==this && !TheScene->view->changed_model())
 //		map->render_zvals(); // set parant occlusion mask in zbuffer
 	//map->set_render_ftob();
-	TheNoise.rseed=rseed+TheScene->rseed;
+
+	pushSeed();
     Spheroid::adapt_object();
+    popSeed();
 }
 
 //-------------------------------------------------------------
@@ -4259,6 +4267,7 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
 	vars.newFloatVar("ROWS",sprites_dim);
 	vars.newFloatVar("INVROWS",1.0/sprites_dim);
+	vars.newFloatVar("rseed",rseed);
 
 	//UniformBool *backfacing=vars.newBoolVar("backfacing",0);
 	Point cp=TheScene->vpoint;

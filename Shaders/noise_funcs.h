@@ -57,6 +57,8 @@ struct noise_info {
 	
 };
 
+uniform float rseed;
+
 uniform noise_info nvars[NVALS];
 
 #define VMAX 0.5
@@ -88,6 +90,7 @@ float corialis(float a){
 vec4 Noise(int index) {
 	noise_info info=nvars[index];
 
+
     float orders=min(info.orders, Vertex1.w-info.logf-freqmip);
     noise_fade = lerp(orders,-1.0,1.0,0.0,1.0);
 
@@ -112,19 +115,20 @@ vec4 Noise(int index) {
 	if(!info.absval)
 		rmin *=2.0;
 	float clip=info.clamp*VMAX;
+	vec3 v=v1+rseed;
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
         switch(info.vnoise){
         case SIMPLEX:
-        	P1=simplex3d(v1*f);
+        	P1=simplex3d(v*f);
 	        break;
         case VORONOI:
-        	P1=voronoi3d(v1*f);
+        	P1=voronoi3d(v*f);
 	        break;
         case GRADIENT:
         default:
-	        P1=noise3D(v1*f);
+	        P1=noise3D(v*f);
         }
         nvec=P1;
 

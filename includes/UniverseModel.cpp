@@ -256,7 +256,7 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 	case TN_MOON:
 		return new ModelSym("Moon",type);
 	case TN_LAYER:
-		//return new ModelSym("Layer",type);
+		return new ModelSym("Layer",type);
 	case TN_SURFACE:
 		return new ModelSym("Surface",type);
 	case TN_RING:

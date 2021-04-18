@@ -1,5 +1,6 @@
 
 #include "VtxMapTabs.h"
+#include "VtxSceneDialog.h"
 
 #include <wx/filefn.h>
 #include <wx/dir.h>
@@ -41,8 +42,11 @@ SET_SLIDER_EVENTS(MARGIN,VtxMapTabs,Margin)
 
 EVT_MENU(OBJ_DELETE,VtxMapTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxMapTabs::OnEnable)
-EVT_MENU(OBJ_SAVE,VtxMapTabs::OnSave)
+//EVT_MENU(OBJ_SAVE,VtxMapTabs::OnSave)
+
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxMapTabs::OnAddItem)
+
+SET_FILE_EVENTS(VtxMapTabs)
 
 END_EVENT_TABLE()
 
@@ -79,7 +83,7 @@ int VtxMapTabs::showMenu(bool expanded){
 	wxMenu menu;
 
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
+	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 
@@ -87,6 +91,8 @@ int VtxMapTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }

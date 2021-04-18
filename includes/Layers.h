@@ -45,6 +45,9 @@ public:
 	void setdrop(double d);
 	void setmorph(double d);
 
+	NodeIF *replaceNode(NodeIF *c);
+	void saveNode(FILE *f);
+
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *removeNode();
 	NodeIF *addChild(NodeIF *x);
@@ -87,6 +90,8 @@ public:
 	void raise();
 	void lower();
 	void setName(char*);
+	char *getName();
+
 	char *nodeName()  { return name_str;}
 	void setEnabled(bool b);
 	NodeIF *addChild(NodeIF *x);

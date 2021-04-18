@@ -130,6 +130,7 @@ void ViewFrame::restore(View *v)
 	    v->phi=point.x;
 		v->theta=point.y;
 		v->height=point.z;
+		v->set_sidestep(viewtype==SURFACE?0:1);
 	}
 	v->heading=heading;
 	v->pitch=pitch;

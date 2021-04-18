@@ -2456,8 +2456,8 @@ double MapNode::max_height() {
 	double z1=data.height();
 	double z2=0;
 	double ht=z1+gz;
-    if(TheScene->select_mode())
-        cout<<" gz:"<<gz/FEET<<" z1:"<<z1/FEET;
+    //if(TheScene->select_mode())
+    //    cout<<" gz:"<<gz/FEET<<" z1:"<<z1/FEET;
 	MapData *d=&data;
     if(data.water()){
     	d=data.data2();
