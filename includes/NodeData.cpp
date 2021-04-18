@@ -266,8 +266,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(td.get_flag(HIDDEN))
 		set_hidden(1);
-	if(td.get_flag(INMARGIN))
-		set_margin(1);
 
 	if(td.get_flag(FVALUE))
 	    frac=1;
@@ -373,6 +371,13 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		TheMap->hmin=h;
 		//cout<<"min="<<h<<endl;
 	}
+	if(td.get_flag(INEDGE))
+		set_edge(1);
+	if(td.get_flag(INMARGIN))
+		set_margin(1);
+
+	//if(mdata()<0.75)
+	//	set_edge(1);
 
 	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
 	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;

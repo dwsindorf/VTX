@@ -277,8 +277,8 @@ MapNode::MapNode(MapNode *parent, MapData *c) : data(c)
 	TheScene->cells++;
 	//TheMap->nodes++;
 	mdctr=&data;
-	if(parent->margin())
-	    set_margin(1);
+	//if(parent->margin())
+	 //   set_margin(1);
 	if(parent->hidden())
 	    set_hidden(1);
 }
@@ -730,8 +730,8 @@ void MapNode::recalc2()
 		TheMap->object->set_surface(Td);
 		data.free();
 		data.init_terrain_data(Td,0);
-		if(Td.get_flag(INMARGIN))
-	    	set_margin(1);
+		//if(Td.get_flag(INMARGIN))
+	   // 	set_margin(1);
 		if(Td.get_flag(HIDDEN))
 		    set_hidden(1);
 		set_need_recalc(0);
@@ -1172,18 +1172,19 @@ void	MapNode::balance()
 		g3=x.distance(z); \
 		err=1-g3/(g1+g2); \
 		curv=err>curv?err:curv; }
-
 #define TEST_COLOR(x)  \
 	if(x && \
 	    (data.type()!=x->data.type() \
 	    || color().difference(x->color())>TheMap->gmax\
 	    || fabs(density()-x->density())>TheMap->gmax\
+		|| x->edge() \
 	    )) { \
 		set_tlevel(Adapt.sharp());return 0;}
 #define TEST_CCOLOR()  \
 	if(data.type()!=cdata->type() \
 	    || color().difference(cdata->color())>TheMap->gmax \
 	    || fabs(density()-cdata->density())>TheMap->gmax \
+		|| cdata->edge() \
 	    )\
 	   { \
 		set_tlevel(Adapt.sharp());return 0;}
@@ -1204,7 +1205,6 @@ int MapNode::curvechk()
 		set_tlevel(Adapt.normal());
 		return 1;
 	}
-
 	r=CWright();
 	TEST_COLOR(r);
 	d=CCWdown();
@@ -1257,7 +1257,7 @@ int MapNode::curvechk()
 	}
 	cmax=TheMap->cmax;
 	cmin=TheMap->cmin;
-
+//cout<<curv<<endl;
 	if(curv > cmax )
 		set_tlevel(Adapt.sharp());
 	else if(curv <=cmin)
@@ -1854,7 +1854,7 @@ Color MapNode::Tcolor(MapData *d) {
     double a = c.alpha();
     switch (Render.colors()) {
     case CSIZE:						// '1'
-        c = Adapt.tcolor(alevel());
+        c = Adapt.tcolor(tlevel());
         break;
 
     case CNODES:					// '2'
@@ -1884,7 +1884,7 @@ Color MapNode::Tcolor(MapData *d) {
 
     case LNODES:                  	// '4'
         if (Raster.surface == 2)
-            c = Color(0, 0, 1);
+            c = Color(0, 1, 1);
         else {
             c = sctbl[d->type() & 0xf];
             if (dual_terrain())
@@ -1896,50 +1896,54 @@ Color MapNode::Tcolor(MapData *d) {
 
     case ENODES:// '5'
     {
-    	//cout<<Margin<<endl;
-
-    	   c = Color(data.mdata(), 0, 0);
- //        if (Raster.surface == 2)
-//            c = Color(0, 0, 1);
-//        else {
-//            if (dual_terrain()) {
-//                if (d && d->water())
-//                    d = d->data2();
-//                if (!d)
-//                    c = Color(0, 0, 1);
-//                else if (d->next_surface()) {
-//                    if (!d->next_surface())
-//                        c = Color(1, 0, 0);
-//                    else
-//                        c = Color(0, 0, 1);
-//                } else
-//                    c = Color(0, 1, 0);
-//            } else
-//                c = Color(1, 1, 1);
-//            if (has_water())
-//                c = c.blend(Color(0, 0, 1), 0.25);
-//            //if (margin())
-//           //    c = c.blend(Color(1, 0, 0), 1);
-//            if (data.margin())
-//                c = c.blend(Color(0, 0, 1), 1);
+#ifdef TEST_ERODE
+        if (Raster.surface == 2)
+            c = Color(0, 0, 1);
+        else {
+            if (dual_terrain()) {
+                if (d && d->water())
+                    d = d->data2();
+                if (!d)
+                    c = Color(0, 0, 1);
+                else if (d->next_surface()) {
+                    if (!d->next_surface())
+                        c = Color(1, 0, 0);
+                    else
+                        c = Color(0, 0, 1);
+                } else
+                    c = Color(0, 1, 0);
+            } else
+                c = Color(1, 1, 1);
+            if (has_water())
+                c = c.blend(Color(0, 0, 1), 0.25);
+            //if (margin())
+           //    c = c.blend(Color(1, 0, 0), 1);
+            if (data.margin())
+                c = c.blend(Color(0, 0, 1), 1);
+#else
+      	   c = Color(data.mdata(), 0, 0);
+#endif
         }
         break;
     case MNODES:                  	// '6'
     {
- 	   if (data.margin())
-  		   c = Color(0, 0, 1);
- 	   else
- 		   c= Color(1,1, 1);
-
- 	/*
+#ifdef TEST_ERODE
      double s = 2*sediment();
      c = Color(1, 1, 1);
      if (s > 0)
          c = c.blend(Color(0, 0, 1), s);
      else
          c = c.blend(Color(1, 0, 0), -s);
-         */
-
+#else
+       if (Raster.surface == 2)
+          c = Color(0, 1, 1);
+       else if (data.margin())
+ 		   c = Color(1, 0, 0);
+	   else if (data.edge())
+		   c = Color(0, 0, 1);
+	   else
+		   c= Color(1,1, 1);
+#endif
     }
         break;
     case RNODES:
@@ -2493,10 +2497,12 @@ void MapNode::init_map_data(MapData *md)
 	mdctr=md;
 	TheMap->object->set_surface(Td);
 	md->init_terrain_data(Td,0);
-	if(Td.get_flag(INMARGIN))
-	    set_margin(1);
+	//if(Td.get_flag(INMARGIN))
+	//    set_margin(1);
 	if(Td.get_flag(HIDDEN))
 	    set_hidden(1);
+	//if(Td.get_flag(INEDGE))
+	 //   set_edge(1);
 
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
 		set_need_recalc(1);

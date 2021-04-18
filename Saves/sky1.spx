@@ -4,7 +4,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=225;
-		height=10 miles;
+		height=52800 ft;
 		time=800051;
 		tilt=5;
 		angle=-10;
@@ -57,7 +57,6 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					hscale=0.002;
-					resolution=3;
 					shadow=Color(0,0,0.19,0.8);
 					shine=2.91188;
 					specular=Color(1,1,1,0);

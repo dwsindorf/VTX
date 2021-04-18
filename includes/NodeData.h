@@ -225,7 +225,8 @@ typedef struct mpdata {
 	unsigned int  margin	: 1;	// margin flag
 	unsigned int  hmaps	    : 1;	// hmap flag
 	unsigned int  mdata	    : 1;	// margin flag
-	unsigned int  unused	: 5;	// unassigned
+	unsigned int  edge	    : 1;	// edge flag
+	unsigned int  unused	: 4;	// unassigned
 } mpdata;
 
 
@@ -272,6 +273,9 @@ public:
 	void set_hidden(int n)		{ flags.s.hidden=n;}
 	int margin()			    { return flags.s.margin;}
 	void set_margin(int n)		{ flags.s.margin=n;}
+    void set_edge(int i)        { flags.s.edge=i;}
+    int edge()                  { return flags.s.edge;}
+
 	int normal_valid()			{ return flags.s.normal;}
 	void set_normal_valid(int n){ flags.s.normal=n;}
 	int colors()				{ return flags.s.colors;}
@@ -369,7 +373,7 @@ public:
     MapData *data2()            { return flags.s.links?data[0].md:0;}
     void setLink(MapData*d)     { if(flags.s.links) data[0].md=d;}
     double density()            { return flags.s.density?data[DSTART].d:0.0;}
-    double mdata()              { return flags.s.mdata>0?data[MSTART].d:0.0;}
+    double mdata()              { return flags.s.mdata>0?data[MSTART].d:1.0;}
     double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double rock()               { return flags.s.evals>0?data[ESTART].d:0.0;}
     double sediment()           { return flags.s.evals>1?data[ESTART+1].d:0.0;}

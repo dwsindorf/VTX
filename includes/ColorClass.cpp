@@ -137,15 +137,15 @@ double Color::contrast(Color c){
 
 double Color::difference(Color c)
 {
-	double db=fabs(brightness()-c.brightness())/Color::min_brightness;
-	double dc=fabs(contrast(c))/Color::min_contrast;
-	return MAX(db,dc);
-//	double rr,gg,bb,aa;
-//	rr=red()-c.red();
-//	gg=green()-c.green();
-//	bb=blue()-c.blue();
-//	aa=alpha()-c.alpha();
-//	return 0.5*sqrt(rr*rr+gg*gg+bb*bb+aa*aa);
+//	double db=fabs(brightness()-c.brightness())/Color::min_brightness;
+//	double dc=fabs(contrast(c))/Color::min_contrast;
+//	return MAX(db,dc);
+	double rr,gg,bb,aa;
+	rr=red()-c.red();
+	gg=green()-c.green();
+	bb=blue()-c.blue();
+	aa=alpha()-c.alpha();
+	return 0.5*sqrt(rr*rr+gg*gg+bb*bb+aa*aa);
 }
 
 Color Color::mix(Color c,double t){

@@ -261,7 +261,7 @@ Map::Map(double r)
 	grid_=0;
 	gmax=0.3;
 	cmax=0.005;
-	cmin=cmax/10;
+	cmin=cmax/20;
 	symmetry=1;
 	tids=0;
 	tid=0;
@@ -1976,8 +1976,8 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	object->set_surface(Td);
 
 	a->data.init_terrain_data(Td,0);
-	if(Td.get_flag(INMARGIN))
-	    a->set_margin(1);
+	//if(Td.get_flag(INMARGIN))
+	//    a->set_margin(1);
 	if(Td.get_flag(HIDDEN))
 	    a->set_hidden(1);
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))

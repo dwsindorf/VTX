@@ -214,15 +214,15 @@ void PlacementMgr::eval()
 		//  offset domain to mis-register overlap of successive levels
 
 		int seed=lvl*131+id;
-		double rnd=roff;
+		    
         //if(lvl>0 && !ntest()){   
         if(lvl>0){   
 		    set_offset_valid(1);
-			offset.x=rnd*SRAND(1);
-			offset.y=rnd*SRAND(2);
-			offset.z=rnd*SRAND(3);
+			offset.x=roff*SRAND(1);
+			offset.y=roff*SRAND(2);
+			offset.z=roff*SRAND(3);
 			if(TheNoise.noise4D())
-				offset.w=rnd*SRAND(4);
+				offset.w=roff*SRAND(4);
 			else
 			    offset.w=0;
 			mpt=pv+offset;
@@ -230,7 +230,7 @@ void PlacementMgr::eval()
 		}
 		else{
 		    set_offset_valid(0);
-			mpt=pv;
+			mpt=pv;		
 			p=pv*(1.0/size);
 		}
 		
@@ -387,6 +387,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	
     if(mgr.offset_valid())
 		p=p-mgr.offset;
+
 	p=(p+0.5)*mgr.size;
 
 	if(mgr.dexpr){
@@ -586,6 +587,8 @@ void TNplacements::eval()
 		            1/mgr->maxsize+
 					1/mgr->mult
 					);
-	mgr->id=(int)(hashcode*(1+mgr->type+TheNoise.rseed));
+	mgr->id=(int)hashcode+mgr->type+hashcode*TheNoise.rseed;
+//cout<<hashcode<<endl;
+	//mgr->id=(int)(hashcode*(1+mgr->type+TheNoise.rseed));
 	
 }

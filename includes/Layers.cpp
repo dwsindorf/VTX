@@ -403,6 +403,8 @@ void TNmap::eval()
 				Td.zlevel[i].p.z+=mht*mscale;
 		}
 	}
+	bool inmargin=false;
+	bool inedge=false;
 
 	double dz=Td.zlevel[0].p.z-Td.zlevel[1].p.z;
 	//f=0;
@@ -447,6 +449,8 @@ void TNmap::eval()
 	    	Td.zlevel[i].set_cvalid();
 	    	Td.zlevel[i].c=Td.zlevel[0].c; // not sure why this works
 		}
+		if(Td.margin<0.75)
+			S0.set_flag(INEDGE);
     }
 	if(f){
 		Color c1=Td.zlevel[0].c;
@@ -465,8 +469,6 @@ void TNmap::eval()
 	double ave=0;
 	double maxht=-10;
 	double minht=10;
-
-	bool inmargin=false;
 	for(i=0;i<mdcnt;i++){
 		MapData *d=mapdata[i]->surface1();
 		if(d && (d->type()!=Td.zlevel[0].type())){
@@ -485,6 +487,7 @@ void TNmap::eval()
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection
 		// - special case tilted terrain ?
+
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){
 				break;
@@ -495,11 +498,12 @@ void TNmap::eval()
 
 			dz=fabs(S0.p.z-Td.zlevel[i].p.z);
 			if(dz<=dmax){
-				S0.set_flag(INMARGIN);
+				//S0.set_flag(INMARGIN);
 				inmargin=true;
 				break;
 			}
 		}
+
 		// 2) Remove ridge artifact at center of layer intersection
 		//    for some reason it looks like when dz~=0 "fractal" doesn't process the node
 		//    which leaves a "wall" in the center
