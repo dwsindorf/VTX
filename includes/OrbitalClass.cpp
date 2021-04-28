@@ -3355,7 +3355,7 @@ void Shell::dpvars(double &dht, double &dpmin, double &dpmax){
 	//if(inside()){
 	  	dpmax=dp;
 	  	dpmin=h/(h+r);
-	  	//cout <<name()<< " inside dpmin:"<<dpmin<<" dpmax:"<<dpmax<<" cos:"<<cmax<<endl;
+	  	//cout <<name()<< " inside dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
 	}
 	else{
 	  	dpmax=sqrt(d*d-s*s)/d;
@@ -4564,7 +4564,6 @@ void CloudLayer::map_color(MapData*d,Color &c)
 
 	if(!terrain.get_root())
 		c=color();
-
 	if(Render.draw_shaded())
 		return;
 
@@ -4701,6 +4700,7 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	detail=3;
 	gradient=0.8;
 	hscale=0;
+	noise_expr=0;
 	//inner_radius=m->size;
 }
 Corona::~Corona()
@@ -4731,6 +4731,9 @@ void Corona::get_vars()
 		color1=parent->color();
 		color1.set_alpha(0.95);
 	}
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		noise_expr=var->right;
 }
 
 //-------------------------------------------------------------
@@ -4783,6 +4786,10 @@ bool Corona::setProgram(){
 
 //	dpvars(dht,dpmin,dpmax);
 
+	TerrainProperties *tp=map->tp;
+
+	tp->initProgram();
+
 	//cout << dpmin << " " << dpmax << endl;
 	GLSLVarMgr vars;
 
@@ -4806,11 +4813,24 @@ bool Corona::setProgram(){
 		GLSLMgr::setFBORenderPass();
 
 	GLSLMgr::loadVars();
+	tp->setProgram();
 
 	glEnable(GL_BLEND);
 	return true;
 }
 
+//-------------------------------------------------------------
+// Corona::set_surface() set properties
+//-------------------------------------------------------------
+void Corona::set_surface(TerrainData &data)
+{
+	Spheroid::set_surface(data);
+	 if(noise_expr){
+	    noise_expr->eval();
+	    S0.density=S0.s;
+	    //cout<<S0.density<<endl;
+	 }
+}
 //-------------------------------------------------------------
 // Corona::map_color()   modulate render color
 //-------------------------------------------------------------
@@ -4818,7 +4838,6 @@ void Corona::map_color(MapData*n,Color &col)
 {
 	if(Render.draw_shaded())
 		return;
-
     static double p1=0;
     static double p2=90;
     static Color  c1;
@@ -4852,8 +4871,59 @@ void Corona::map_color(MapData*n,Color &col)
 
  	if(!terrain.get_root())
 		col=color2;
+ 	double a=col.alpha();
     col=col.blend(c1,f);
-	col.set_alpha(col.alpha()*f);
+ 	col.set_alpha(a*f);
+}
+
+//------------------------------------------------------------
+// Corona::getNoiseFunction() return noise function
+//-------------------------------------------------------------
+int Corona::getNoiseFunction(char *buff)
+{
+	buff[0]=0;
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(!var)
+		return 0;
+	TNode *expr=var->getExprNode();
+	if(!expr)
+		expr=var->right;
+
+	if(!expr)
+		return 0;
+
+	expr->valueString(buff);
+	return 1;
+}
+
+//------------------------------------------------------------
+// Corona::setNoiseFunction() set noise function
+//-------------------------------------------------------------
+void Corona::setNoiseFunction(char *expr) {
+	TNvar *var = exprs.getVar((char*) "noise.expr");
+    if(var && strlen(expr)==0){
+    	exprs.removeVar("noise.expr");
+    }
+    else if (!var) {
+		char *var_name;
+		TNode *val = (TNode*) TheScene->parse_node(expr);
+		MALLOC(15, char, var_name);
+		strcpy(var_name, "noise.expr");
+		var = (TNvar*) exprs.add_expr(var_name, val);
+	} else
+		var->setExpr(expr);
+}
+
+//------------------------------------------------------------
+// Corona::applyNoiseFunction() set & apply noise function
+//-------------------------------------------------------------
+void Corona::applyNoiseFunction()
+{
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var){
+		var->applyExpr();
+		noise_expr=var->right;
+	}
 }
 
 //-------------------------------------------------------------

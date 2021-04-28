@@ -357,6 +357,7 @@ public:
 
     void setGZ(double f)            { gval=f; }
     double getGZ()                  { return gval*Rscale;}
+    bool has_geometry()             { return gval !=0;}
 
     int type()                      { return data.type(); }
     int fog()                       { return data.has_density()||(cdata && cdata->has_density());}

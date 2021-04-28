@@ -113,9 +113,12 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		}
 		break;
 	case TN_CORONA:
-		((Corona*)child)->size=psize*6;
-		((Corona*)child)->size*=1+0.25*SRand();
+		if(!dropping()){
+			((Corona*)child)->size=psize*6;
+			((Corona*)child)->size*=1+0.25*SRand();
+		}
 		((Corona*)child)->ht=((Corona*)child)->size-psize;
+
 		break;
 	case TN_CLOUDS:
 		if(!dropping())

@@ -441,6 +441,7 @@ class Corona : public Shell
 {
 public:
 	double     gradient;
+	TNode *noise_expr;
 	Color      color1;
 	Color      color2;
 	Corona(Orbital *m, double s);
@@ -457,8 +458,13 @@ public:
 	int render_pass();
 	int adapt_pass();
 	bool setProgram();
-
+	int getNoiseFunction(char *c);
+	void setNoiseFunction(char *c);
+	void applyNoiseFunction();
 	bool adapt_needed() { return false;}
+
+	void set_surface(TerrainData &d);
+
 };
 
 //************************************************************

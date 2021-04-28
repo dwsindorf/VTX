@@ -745,6 +745,7 @@ void TNtexture::eval()
 	extern double Phi,Theta;
 	double phi = Phi / 180;
 	double theta = Theta / 180.0 - 1;
+	double avalue=1;
 
 	int i = 0;
 
@@ -753,12 +754,14 @@ void TNtexture::eval()
 		s=arg[i++]/texture->scale;
 		if(opts & AEXPR){
 			texture->a_data=true;
-			t=arg[i++];
+			avalue=arg[i++];
 		}
+		else if(texture->t2d())
+			t=s;
 	}
 	else if(opts & AEXPR){
 		texture->a_data=true;
-		s=arg[i++];
+		avalue=arg[i++];
 	}
 
 	if(i<n)
@@ -792,6 +795,18 @@ void TNtexture::eval()
 	if(i<n)
 		sbias=arg[i++];
 
+    avalue=clamp(avalue,0,1);
+    a*=avalue;
+    b*=avalue;
+    double hpb=fabs(pbias);
+    double pbf=hpb>1?0.5*hpb:0.5;
+    double hmb=1;
+    double p=pow(abs(Phi/90),pbf);
+    double hb=1-clamp(hpb,0,1);
+    if(pbias>=0)
+        hmb=lerp(p,0,1,hb,1);
+    else
+    	hmb=lerp(p,0,1,1,hb);
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
@@ -840,8 +855,7 @@ void TNtexture::eval()
 		int mode=texture->intrp();
 
 		double scale=texture->scale;
-
-		double amp0=texture->hmap_amp/scale;
+		double amp0=hmb*texture->hmap_amp/scale;
 		double amp=amp0;
 		double z=0;
 		for(int i=0;i<(int)texture->orders;i++){
@@ -851,8 +865,12 @@ void TNtexture::eval()
 			texture->scale*=texture->orders_delta;
 		}
 		texture->scale=scale;
-		TerrainData::texht+=z+texture->hmap_bias;
-		S0.p.z=z+texture->hmap_bias;
+		double h=z+texture->hmap_bias;
+		TerrainData::texht+=h;
+	    //if(texture->t2d())
+	    //   cout<<"phi:"<<Phi<<" p:"<<p<<" hmb:"<<hmb<<" hb:"<<hb<<endl;
+
+		S0.p.z=h;
 		S0.set_pvalid();
 		S0.clr_svalid();
 	}

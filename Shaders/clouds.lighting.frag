@@ -29,7 +29,6 @@ uniform float day_grad;
 
 uniform float dpmax;
 uniform float dpmin;
-
 //
 // Phong Lighting model
 //
@@ -70,12 +69,12 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 		float lpn       = LdotN*amplitude*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
 		illumination   += horizon;
-		if(LdotN>0.0){ // top side
+		//if(LdotN>0.0){ // top side
 			vec3 R = reflect(-light,normal);  // normalize(((2.0*normal )*LdotN)-light);
 			float sdp   = max(0.0, dot(R, eye));
 			float pf    = amplitude*horizon*pow(sdp, gl_FrontMaterial.shininess);
 			specular   += gl_LightSource[i].specular.rgb * pf;
-		}
+		//}
 #ifdef BACK
 		if(day_grad>0.0 && LdotR>twilite_min){ // mix in star color
 			float dpLE=dot(light, -eye); // angle between vertex and light to viewdir direction
@@ -89,13 +88,14 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 	vec3 TotalSpecular = specular.rgb;
 	vec3 TotalEmission = emission.rgb;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
-	vec3 TotalColor=TotalAmbient + TotalDiffuse+ TotalEmission +TotalSpecular;
+	vec3 TotalColor=TotalAmbient + TotalDiffuse + TotalEmission+TotalSpecular;
 	illumination=clamp(illumination,0.0,1.0);
 #ifdef BACK
 #ifdef HAZE
 	// horizon+fog height to zenith gradient
 	//dp=max(dp,0.0);
-	float s=lerp(dp, dpmax-2.0*dpmin, dpmax-dpmin, 0.0, 1.0);
+	//float s=lerp(dp, dpmax-2.0*dpmin, dpmax-dpmin, 0.0, 1.0);
+	float s=lerp(dp, dpmax-2.0*dpmin, dpmin, 0.0, 1.0);
 	s=clamp(s,1e-5,1.0);  // for some reason pow(x,..) causes black pixels if x<=0
 	float dv=pow(s,4.0*haze_grad);
 	// eye to max distance gradient	

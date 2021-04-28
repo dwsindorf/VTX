@@ -573,6 +573,7 @@ bool VtxSceneDialog::setTabs(int t){
 		cout << "dialog for id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
+	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
 	VtxTabsMgr* mgr=tabs[t];
 	mgr->setSelected(selected);
 	//mgr->updateControls();

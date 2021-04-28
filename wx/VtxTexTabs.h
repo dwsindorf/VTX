@@ -76,6 +76,8 @@ protected:
 	void setInvalid(){
 		//object()->invalid=true;
 	}
+	void setSelected(TreeNode *s);
+
 	wxArrayString files;
 	wxChoice *choices;
 

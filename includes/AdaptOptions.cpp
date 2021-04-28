@@ -50,9 +50,9 @@ void AdaptOptions::set_defaults()
     set_grid_depth(4);
     set_sharp(0);
     set_normal(1);
-    set_smooth(3);
-    set_hidden(5);
-    set_conv(0.04);
+    set_smooth(4);
+    set_hidden(7);
+    set_conv(0.1);
     set_minext(2.50);
     set_mindz(0.5);
     set_mindcnt(1);

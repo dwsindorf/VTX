@@ -1201,7 +1201,7 @@ int MapNode::curvechk()
 
 	set_ccheck();
 
-	if(!Adapt.curve_test()){
+	if(!Adapt.curve_test() || has_geometry()){
 		set_tlevel(Adapt.normal());
 		return 1;
 	}
@@ -2466,8 +2466,8 @@ double MapNode::max_height() {
     if(data.water()){
     	d=data.data2();
     	z2=d->height();
-    	if(TheScene->select_mode())
-    		cout<<" z2:"<<z2/FEET;
+    	//if(TheScene->select_mode())
+    	//	cout<<" z2:"<<z2/FEET;
     	if((z2+gz)>z1)
     		ht=z2+gz;
     	else

@@ -31,7 +31,7 @@ Scene() {
 		view=SURFACE;
 		phi=33.75;
 		theta=240.469;
-		height=10 miles;
+		height=52800 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
@@ -141,7 +141,7 @@ Scene() {
 		view=SURFACE;
 		phi=35.1562;
 		theta=238.359;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=44.8306 ft;
 		heading=0;
 		pitch=0;
@@ -357,6 +357,9 @@ Scene() {
 	View{
 		height=52.2683 ft;
 	}
+	View{
+		time=14513.8;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -416,7 +419,7 @@ Scene() {
 								
 								Texture("earth",TEX,1,1.02776,0,0,1,2,0.5,0,0,0,0,0)+
 								Texture("alpine2",BORDER|NORM|TEX,512,1.08332,1,-1,1,2,1,0,0.12,1,1,-1)+
-								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(VORONOI|FS|NABS|SCALE|SQR,15,10,0.34,0.45,2.1,0.07,1,1,0))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
+								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,15,10,0.34,0.45,2.1,0.07,1,1,0))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
 								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.5,0,0,0,0);
 					}
 					Sky(0.0032) {

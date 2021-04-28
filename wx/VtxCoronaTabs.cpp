@@ -2,6 +2,9 @@
 #include "VtxCoronaTabs.h"
 #include "UniverseModel.h"
 
+#define LINE_WIDTH TABS_WIDTH-TABS_BORDER
+#undef CSLIDER
+#define CSLIDER LINE_WIDTH-CBOX1-LABEL-VALUE
 enum {
 	ID_ENABLE,
 	ID_DELETE,
@@ -16,6 +19,7 @@ enum {
     ID_INNER_SLDR,
     ID_INNER_TEXT,
     ID_INNER_COLOR,
+	ID_NOISE_EXPR
 };
 
 IMPLEMENT_CLASS(VtxCoronaTabs, wxNotebook )
@@ -43,6 +47,7 @@ EVT_COMMAND_SCROLL(ID_INNER_SLDR,VtxCoronaTabs::OnInnerSlider)
 EVT_TEXT_ENTER(ID_INNER_TEXT,VtxCoronaTabs::OnInnerText)
 EVT_COLOURPICKER_CHANGED(ID_INNER_COLOR,VtxCoronaTabs::OnInnerColor)
 
+EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxCoronaTabs::OnChangedNoiseExpr)
 
 END_EVENT_TABLE()
 
@@ -93,6 +98,7 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
     topsizer->Add(boxsizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Geometry"));
+    object_cntrls->SetMinSize(wxSize(LINE_WIDTH,-1));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2S,130);
@@ -110,6 +116,7 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
 	boxsizer->Add(object_cntrls,0, wxALIGN_LEFT|wxALL,0);
 
 	wxBoxSizer* color_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Color"));
+	color_cntrls->SetMinSize(wxSize(LINE_WIDTH,-1));
 
 	InnerSlider=new ColorSlider(panel,ID_INNER_SLDR,"Inner",LABEL,VALUE,CSLIDER,CBOX1);
 	color_cntrls->Add(InnerSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
@@ -117,14 +124,21 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
 	color_cntrls->Add(OuterSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
 	wxBoxSizer* grad_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Gradient"));
-	GradientSlider=new SliderCtrl(panel,ID_GRADIENT_SLDR,"Alpha",LABEL, VALUE,SLIDER);
+	grad_cntrls->SetMinSize(wxSize(LINE_WIDTH,-1));
+
+	GradientSlider=new SliderCtrl(panel,ID_GRADIENT_SLDR,"Alpha",LABEL, VALUE,LINE_WIDTH-VALUE-LABEL);
 	GradientSlider->setRange(0.0,1);
 	GradientSlider->setValue(1.0);
 
 	grad_cntrls->Add(GradientSlider->getSizer(),wxALIGN_LEFT|wxALL);
 
+	wxBoxSizer* density_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density"));
+	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"",0,LINE_WIDTH);
+	density_cntrls->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,3);
+
 	boxsizer->Add(color_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 	boxsizer->Add(grad_cntrls, 0, wxALIGN_LEFT|wxALL,0);
+	boxsizer->Add(density_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxCoronaTabs::updateControls(){
@@ -134,5 +148,20 @@ void VtxCoronaTabs::updateControls(){
 	updateColor(InnerSlider,obj->color1);
 	updateColor(OuterSlider,obj->color2);
 	object_name->SetValue(object_node->node->nodeName());
+
+	char buff[256]={0};
+	if(obj->getNoiseFunction(buff))
+		NoiseExpr->SetValue(buff);
+	else
+		NoiseExpr->SetValue("");
+}
+
+void VtxCoronaTabs::OnChangedNoiseExpr(wxCommandEvent& event){
+	Corona *obj=object();
+	obj->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
+	obj->applyNoiseFunction();
+	obj->invalidate();
+	TheScene->set_changed_detail();
+	TheScene->rebuild();
 
 }

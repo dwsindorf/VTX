@@ -2290,7 +2290,6 @@ void Scene::shadow_group(int smode)
 {
 	set_shadows_mode();
 	pass_init();
-
 	switch(smode){
 	case 1:     		// all objects (1 pass)
 		bgpass=BGS;
@@ -2365,7 +2364,8 @@ void Scene::render_shadows()
 	shadowobj=viewobj;
 	if(shadowobj->parent && shadowobj->parent->allows_shadows())
 		shadowobj=shadowobj->parent;
-	shadow_group(single_pass);
+	if(shadows_mode())
+		shadow_group(single_pass);
 
 	if(passobjs() && (bgs || light_view())){
 
@@ -2440,7 +2440,8 @@ void Scene::render_shadows()
 		Raster.render();
 		project();
 		render_objects();
-		shadow_group(2);
+		if(shadows_mode())
+			shadow_group(2);
 		project();
 		Raster.apply();
     }

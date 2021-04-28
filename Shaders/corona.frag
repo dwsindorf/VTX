@@ -1,4 +1,5 @@
 // ########## begin clouds.frag #########################
+#include "common.h"
 #include "utils.h"
 
 varying vec3 VertexPosition;
@@ -16,6 +17,14 @@ uniform vec4 outer;  // outer color
 uniform vec4 inner;  // inner color
 uniform vec3 center;
 
+#ifndef NVALS
+#define NVALS 0
+#endif
+
+#if NVALS >0
+#include "noise_funcs.h"
+#endif
+
 void main(void) {
 	vec4 color;
 	vec3 viewdir = -normalize(VertexPosition.xyz);
@@ -28,6 +37,8 @@ void main(void) {
 	float f=pow(d,10.0*gradient);
 	color=f*inner+(1.0-f)*outer;
 	color.a*=f;
+	float density=clamp(1-DENSITY,0,1);
+	color.a*=density;
 	if (fbo_write){
 		// r = amount of corona color to mix with sky
 		// g = increase in sky opacity

@@ -49,7 +49,7 @@ void main(void) {
 	float diffuse = 0.0;
 
 	vec3 Diffuse = vec3(0.0, 0.0, 0.0);
-	vec3 Specular = vec3(0.0, 0.0, 0.0);
+	vec3 Specular = vec3(1.0, 1.0, 1.0);
 	vec3 Ambient = vec3(0.0, 0.0, 0.0);
 
 	vec3 eye = normalize(EyeDirection.xyz);
@@ -102,9 +102,10 @@ void main(void) {
 		float sdp=max(phong,ogl);
 #endif
 		specular    = pow(max(sdp,0.0), gl_FrontMaterial.shininess);
-		Specular    = gl_LightSource[i].specular.rgb*specular*shadow_specular;
+		Specular    = gl_LightSource[i].specular.rgb*specular*shadow_specular;		
 #endif
 	}
+	
 #ifdef WATER
 	float reflect1=dot(normal,eye); // reflection angle
 	float depth=gl_FragCoord.z; // water
@@ -117,6 +118,7 @@ void main(void) {
 	dz=dz<0.0?0.0:dz;
 	float f=lerp(dz,0.0,clarity,0.0,1.0);
 	float type=Constants1.g;
+	vec3 TopColor=Diffuse*WaterTop.rgb+Ambient*WaterTop.rgb;
 #ifdef SKY
 	vec3 DepthColor=WaterDepth.rgb*horizon;
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
@@ -129,13 +131,12 @@ void main(void) {
 	float f2=fmix*cmod;
 	float f3=rmod;
 
-	vec3 TopColor=Diffuse*WaterTop.rgb+Ambient*WaterTop.rgb;
 	vec3 SkyColor=Diffuse*WaterSky.rgb+Ambient*WaterSky.rgb;
 
 	color=color.rgb*f1+TopColor*f2+SkyColor.rgb*f3+Specular;
 	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
 #else
-    vec3 color=mix(fcolor1.rgb,WaterDepth.rgb,f); // add depth color
+    vec3 color=mix(fcolor1.rgb,WaterDepth.rgb,f)+Specular; // add depth color
 #endif	
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);

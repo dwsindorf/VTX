@@ -80,8 +80,9 @@ Scene() {
 						}
 					}
 					Clouds(0.00407746) {
+						ambient=Color(1,1,1,0.19);
 						crot=1;
-						emission=Color(1,1,1,0.2);
+						emission=Color(1,1,1,0.1);
 						hscale=0.05;
 						resolution=3;
 						shine=1;
@@ -99,7 +100,7 @@ Scene() {
 						sky.grad=0.335967;
 						specular=Color(1,1,1);
 						twilight=Color(1,0,0);
-						twilight.max=0.492922;
+						twilight.max=0.348045;
 						twilight.min=-1;
 					}
 				}

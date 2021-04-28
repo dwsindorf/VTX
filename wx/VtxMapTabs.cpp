@@ -1,6 +1,8 @@
 
 #include "VtxMapTabs.h"
 #include "VtxSceneDialog.h"
+#include "AdaptOptions.h"
+
 
 #include <wx/filefn.h>
 #include <wx/dir.h>
@@ -10,6 +12,8 @@ enum{
 	OBJ_SHOW,
 	OBJ_DELETE,
 	OBJ_SAVE,
+
+    ID_MERGE_MODE,
 
 	ID_HEIGHT_SLDR,
     ID_HEIGHT_TEXT,
@@ -42,7 +46,9 @@ SET_SLIDER_EVENTS(MARGIN,VtxMapTabs,Margin)
 
 EVT_MENU(OBJ_DELETE,VtxMapTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxMapTabs::OnEnable)
-//EVT_MENU(OBJ_SAVE,VtxMapTabs::OnSave)
+
+EVT_RADIOBOX(ID_MERGE_MODE, VtxMapTabs::OnMergeMode)
+EVT_UPDATE_UI(ID_MERGE_MODE, VtxMapTabs::OnUpdateMergeMode)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxMapTabs::OnAddItem)
 
@@ -105,6 +111,8 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxStaticBoxSizer* map_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Transfer Functions"));
+    map_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
     boxSizer->Add(map_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 
 	HeightSlider=new ExprSliderCtrl(panel,ID_HEIGHT_SLDR,"Height",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
@@ -121,7 +129,20 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
 
 	MarginSlider=new ExprSliderCtrl(panel,ID_MARGIN_SLDR,"Margin",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
 	MarginSlider->setRange(0.25,4.0);
+
 	map_cntrls->Add(MarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+   // wxStaticBoxSizer* merge_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Layer Intersection Mode"));
+
+    wxString lmodes[]={"Overlap","Merge"};
+    mergemode=new wxRadioBox(panel,ID_MERGE_MODE,wxT("Layer Intersection Mode"),wxPoint(-1,-1),wxSize(-1,-1),2,
+    		lmodes,2,wxRA_SPECIFY_COLS);
+
+    mergemode->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+    //merge_cntrls->Add(mergemode, 0, wxALIGN_LEFT|wxALL,0);
+
+	topSizer->Add(mergemode, 0, wxALIGN_LEFT|wxALL, 5);
 
 }
 
@@ -196,3 +217,14 @@ void  VtxMapTabs::OnDelete(wxCommandEvent& event){
  	menu_action=TABS_DELETE;
  	TheScene->rebuild_all();
 }
+
+void VtxMapTabs::OnMergeMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	Adapt.set_mindcnt(mode);
+	TheScene->rebuild_all();
+}
+void VtxMapTabs::OnUpdateMergeMode(wxUpdateUIEvent& event){
+	int mode=Adapt.mindcnt();
+	mergemode->SetSelection(mode);
+}
+

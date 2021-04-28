@@ -11,6 +11,9 @@ protected:
 	ColorSlider *OuterSlider;
 	ColorSlider *InnerSlider;
 	SliderCtrl  *GradientSlider;
+
+	ExprTextCtrl *NoiseExpr;
+
 	void AddObjectTab(wxWindow *panel);
 
 public:
@@ -83,6 +86,7 @@ public:
     void OnInnerColor(wxColourPickerEvent& WXUNUSED(event)){
     	OnColorValue(InnerSlider,object()->color1);
     }
+    void OnChangedNoiseExpr(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

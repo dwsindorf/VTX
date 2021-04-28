@@ -57,7 +57,7 @@ void main(void) {
 
 	float dp=dot(ec, radius); // angle between radius and eye direction
 	float h=lerp(dht,0.0,1.0,-1.0,-0.3);
-	aa=lerp(dp, dpmax+h, dpmax, 0.0, 1.0); // horizon to space gradient
+	aa=lerp(dp, dpmax+h, 1.5*dpmax, 0.0, 1.0); // horizon to space gradient
 	float d=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//color.a=d;
 	for(int i=0;i<NLIGHTS;i++){
@@ -87,7 +87,6 @@ void main(void) {
 		alpha=max(lerp(LdotR, twilite_dph+2.0*twilite_min, twilite_dph+twilite_min, 0.0, 1.0),alpha);
 
 		//color.rgb=color.rgb*sd+vec3(0.5*sd);
-
 		float pf=0.0;
 		light = normalize(gl_LightSource[i].position.xyz-pv);
 		if(LdotR>twilite_min){ // do specular for day side only
@@ -103,6 +102,8 @@ void main(void) {
 	sa=pow(aa+rmp, 40.0*sky_grad);  // sharpen sky gradient
 	sa=(1.0-dht)*pow(aa+0.1*illumination, 2.0*sky_grad);  // sharpen sky gradient
 	color.a=alpha*sa;
+	color.a*=3*length(color.rgb);
+	
 	color.a=clamp(color.a,0.0,1.0);
 	//	color.a=max(ha,alpha*sa); // fade sky alpha with ht
 	//color.rgb=vec3(0.0,0.0,1.0);//

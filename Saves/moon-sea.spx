@@ -4,7 +4,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=225;
-		height=52800 ft;
+		height=10 miles;
 		time=800051;
 		tilt=5;
 		angle=-10;
@@ -118,7 +118,7 @@ Scene() {
 						rseed=1.83657;
 						specular=Color(1,1,1);
 						twilight=Color(1,0,0);
-						twilight.max=0.492922;
+						twilight.max=0.420494;
 						twilight.min=-1;
 					}
 					Clouds(0.00407481) {

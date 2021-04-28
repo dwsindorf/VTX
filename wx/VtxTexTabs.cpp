@@ -582,6 +582,16 @@ void VtxTexTabs::set_image(){
 	}
 }
 
+void VtxTexTabs::setSelected(TreeNode *s){
+//	cout<<"VtxTexTabs::getObjAttributes() object:"<<TheScene->changed_object()
+//			<<" render:"<<TheScene->changed_object()
+//			<<" detail:"<<TheScene->changed_detail()
+//			<<" moved:"<<TheScene->moved()
+//			<<endl;
+    update_needed=true;
+	object_node=s;
+}
+
 //-------------------------------------------------------------
 // VtxTexTabs::updateControls() set controls
 //-------------------------------------------------------------
@@ -1029,3 +1039,5 @@ void VtxTexTabs::getObjAttributes(){
 	update_needed=false;
 
 }
+
+

@@ -379,10 +379,10 @@ void EffectsMgr::apply(){
 			glDisable(GL_BLEND);
 			//set_all();
 			setProgram(RENDERPGM);
-			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
-			glFlush();
 			Lights.setSpecular(water_specular);
 			Lights.setShininess(water_shine);
+			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
+			glFlush();
 			Color ambient=((Planetoid*)TheScene->viewobj)->ambient;
 			Color diffuse=((Planetoid*)TheScene->viewobj)->diffuse;
 			Lights.setAmbient(ambient);

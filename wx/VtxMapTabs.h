@@ -23,6 +23,8 @@ protected:
 	ExprSliderCtrl   *HeightSlider;
 	ExprSliderCtrl   *BaseSlider;
 	ExprSliderCtrl   *MarginSlider;
+	wxRadioBox       *mergemode;
+
 
 public:
 	VtxMapTabs(wxWindow* parent,
@@ -45,7 +47,11 @@ public:
 			const wxString& name = wxNotebookNameStr);
 	void updateControls();
 	int showMenu(bool);
-	void OnDelete(wxCommandEvent& event);	
+	void OnDelete(wxCommandEvent& event);
+
+    void OnMergeMode(wxCommandEvent& event);
+    void OnUpdateMergeMode(wxUpdateUIEvent& event);
+
 	DEFINE_SLIDER_EVENTS(Height)
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(Base)

@@ -1,67 +1,17 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-29.6631;
-		theta=345.125;
-		height=3124.49 ft;
-		gndlvl=-6857.37 ft;
-		time=54795.6;
-		heading=185;
-		tilt=-15;
+		phi=-29.6804;
+		theta=345.025;
+		height=5527.02 ft;
+		gndlvl=-4077.54 ft;
+		time=54870.2;
+		heading=130;
+		tilt=-6;
+		angle=-4;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		phi=-29.6398;
-		theta=345.135;
-		height=10347.4 ft;
-		gndlvl=-5417.9 ft;
-		heading=245;
-	}
-	View{
-		height=12869.7 ft;
-		gndlvl=-5329.72 ft;
-	}
-	View{
-		phi=-29.696;
-		theta=345.092;
-		height=288.88 ft;
-		gndlvl=-3725.57 ft;
-	}
-	View{
-		height=4260.22 ft;
-		gndlvl=-3625.87 ft;
-		heading=210;
-	}
-	View{
-		phi=-29.7029;
-		theta=345.043;
-		height=177.8 ft;
-		gndlvl=-4052.3 ft;
-	}
-	View{
-		phi=-29.6804;
-		theta=345.025;
-		height=9020.3 ft;
-		gndlvl=-4077.54 ft;
-		heading=130;
-		tilt=-10;
-		angle=-5;
-	}
-	View{
-		height=7629.65 ft;
-	}
-	View{
-		height=7545.74 ft;
-	}
-	View{
-		time=54812.8;
-	}
-	View{
-		height=6585.51 ft;
-		time=54870.2;
-		tilt=-8;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -94,12 +44,12 @@ Scene() {
 				Planet(0.004,40) {
 					ambient=Color(1,1,1,0.09);
 					day=24;
-					fog.color=Color(0.99,0.96,0.74);
-					fog.max=5094.4 ft;
-					fog.min=0 ft;
+					fog.color=Color(0.99,0.98,0.87);
+					fog.max=20000 ft;
+					fog.min=10000 ft;
 					fog.value=1;
-					fog.vmax=-5094.4 ft;
-					fog.vmin=-10000 ft;
+					fog.vmax=-2916.6 ft;
+					fog.vmin=-4722.2 ft;
 					resolution=2.37142;
 					shadow=Color(0,0,0.19,0.8);
 					shine=9.20157;
@@ -130,19 +80,16 @@ Scene() {
 						terrain=fog(noise(9.4,3.7,-1,1,2,1,1,0,0.6))
 								water(noise(GRADIENT|NABS|SCALE,20.4,3.9,1,0.5,2.08,1,1,0,0))
 								
-								Texture("yellow-black",BORDER|TEX,8.97866,1.11112,1,-1.22224,1,2,1,0,0,-1,-0.47224,-1)+
+								Texture("yellow-black",BORDER|TEX,8.97866,1.19444,1,-0.33328,1,2,1,0,0,2,-0.47224,-1)+
 								Texture("alpine",NORM|TEX,7585.35,1.69444,1,0.55552,1,3,1,0,0,1,0.22224,1.77776)+
-								Texture("Shist1",A|BUMP|TEX,HT+0.5,93.5068,2,1,0,8.1112,2.1852,0.9074,0)+
-								Texture("DirtPebbles",A|BUMP|TEX,HT+0.4,3992.29,2,1,0,8.1112,2.1852,0.9074,0)+
-								Texture("drywash",A|BUMP|NORM|RANDOMIZE|S|TEX,noise(GRADIENT|NABS|SCALE|RO1,6.4,6,1,1,1.91,0.01,1,0,0),1-HT,128,1,2,0,6.88672,2,1,0,0,0,0,0)+
-								Texture("DirtPebbles",A|BUMP|TEX,-2*HT,172472,0.71696,0.86792,0,4.16992,2.13208,1,0)+
-								Texture("GrassField",A|BUMP|TEX,1-HT,172472,0.79248,0.8302,0,2.3584,3.03776,0.92452,0.66038)+Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1));
+								Texture("Shist1",BUMP|TEX,93.5068,0.5,1,0,8.1112,2.1852,0.9074,0,0,-0.94448,0,0)+
+								Texture("DirtPebbles",BUMP|TEX,3992.29,0.5,1,0,8.1112,2.1852,0.9074,0,0,2,0,0)+
+								Texture("drywash",A|BUMP|NORM|RANDOMIZE|S,noise(GRADIENT|NABS|SCALE|RO1,6.4,6,1,1,1.91,0.01,1,0,0),1-HT,128,1,2,0,6.88672,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1));
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89,0.97);
 						day=24;
 						density=0;
-						haze.color=Color(1,1,0.88);
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
@@ -152,7 +99,7 @@ Scene() {
 						crot=1;
 						resolution=3;
 						Surface{
-							terrain=Color(1,1,1,noise(3,9,1,0.5,2));
+							terrain=Color(1,1,1,noise(GRADIENT|FS,3,9,1,0.5,2,1,1,0,0));
 						}
 					}
 				}
