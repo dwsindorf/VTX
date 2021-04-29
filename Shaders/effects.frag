@@ -76,6 +76,7 @@ void main(void) {
 			//       3. fix depth precision artifact
 			//       4. fix ave-normals artifacts
 			//       5. fix striping artifact at low angles
+			//       6. when view is tilted (e.g. turning) reflection is still vertical (should be slanted)
 			float maxy=1-y1-dv;
 			float steps=maxy/dv;
 
@@ -129,14 +130,14 @@ void main(void) {
     // darken fog in shadow
     // - lessen effect for increasing fog density otherwize shadow
     //   seems to punch through fog when viewed in direction of light
-    // - TODO: need a fog "luminosity" factor to control oll of this
+    // - TODO: need a fog "luminosity" factor to control all of this
     fog=mix(fog,vec3(0.0),0.5*shadow*(1-f)*(1-f));
 #endif
 	color=mix(color,fog.rgb*AMBIENT,f);
 #endif
 
 #ifdef HAZE
-		color=mix(color,Haze.rgb*AMBIENT,h);
+	color=mix(color,Haze.rgb*AMBIENT,h);
 #endif
  	}
 	gl_FragData[0]=vec4(color,1.0);	

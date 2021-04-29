@@ -64,6 +64,8 @@ void main(void) {
 
     Ambient = topcolor;
     float horizon=0.0;
+    float illumination = gl_FrontMaterial.emission.a;
+    
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
     float shadow_specular=lerp(Shadow.a,0.0,1.0,1.0,shadow);
@@ -76,6 +78,7 @@ void main(void) {
 		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
 		float LdotR     = dot(light,radius ); // for horizon band calculation
 		horizon   += lerp(LdotR,twilite_dph+twilite_min,twilite_dph+twilite_max,0.0,1.0); // twilite band
+		illumination   += horizon;
 
 		ambient   += horizon;
 
@@ -151,7 +154,7 @@ void main(void) {
 	gl_FragData[0] = fcolor1;
 #endif
 	gl_FragData[0].a=1;
-	//gl_FragData[0] = vec4(pow(z,9),0,0,1.0);
-	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
+	gl_FragData[1] = vec4(type,depth,reflect1,vfog);	
+	
 }
 

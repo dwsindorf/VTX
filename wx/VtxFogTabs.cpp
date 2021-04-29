@@ -11,23 +11,26 @@ enum{
 	ID_ENABLE,
     ID_DENSITY_EXPR,
     ID_HMIN_SLDR,
-    ID_HMIN_EXPR,
+    ID_HMIN_TEXT,
     ID_HMAX_SLDR,
-    ID_HMAX_EXPR,
+    ID_HMAX_TEXT,
     ID_VMIN_SLDR,
-    ID_VMIN_EXPR,
+    ID_VMIN_TEXT,
     ID_VMAX_SLDR,
-    ID_VMAX_EXPR,
-    ID_FOG_SLDR,
-    ID_FOG_EXPR,
-    ID_FOG_COLOR,
+    ID_VMAX_TEXT,
+    ID_FOG_COLOR_SLDR,
+    ID_FOG_COLOR_TEXT,
+    ID_FOG_COLOR_COLOR,
+    ID_FOG_GLOW_SLDR,
+    ID_FOG_GLOW_TEXT,
 };
 
 #define SLDR_WIDTH  160
-#define EXPR_WIDTH  100
 
 #define LINE_WIDTH TABS_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 30
+#define EXPR_WIDTH  LINE_WIDTH-LABEL2
+
 
 //########################### VtxFogTabs Class ########################
 
@@ -35,29 +38,17 @@ IMPLEMENT_CLASS(VtxFogTabs, VtxTabsMgr )
 
 BEGIN_EVENT_TABLE(VtxFogTabs, VtxTabsMgr)
 
+
+SET_SLIDER_EVENTS(FOG_GLOW,VtxFogTabs,FogGlow)
+SET_SLIDER_EVENTS(HMIN,VtxFogTabs,HMin)
+SET_SLIDER_EVENTS(HMAX,VtxFogTabs,HMax)
+SET_SLIDER_EVENTS(VMIN,VtxFogTabs,VMin)
+SET_SLIDER_EVENTS(VMAX,VtxFogTabs,VMax)
+
+
+SET_COLOR_EVENTS(FOG_COLOR,VtxFogTabs,FogColor)
+
 EVT_TEXT_ENTER(ID_DENSITY_EXPR,VtxFogTabs::OnChangedExpr)
-
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_HMIN_SLDR,VtxFogTabs::OnEndHminSlider)
-EVT_COMMAND_SCROLL(ID_HMIN_SLDR,VtxFogTabs::OnHminSlider)
-EVT_TEXT_ENTER(ID_HMIN_EXPR,VtxFogTabs::OnHminEnter)
-
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_HMAX_SLDR,VtxFogTabs::OnEndHmaxSlider)
-EVT_COMMAND_SCROLL(ID_HMAX_SLDR,VtxFogTabs::OnHmaxSlider)
-EVT_TEXT_ENTER(ID_HMAX_EXPR,VtxFogTabs::OnHmaxEnter)
-
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_VMIN_SLDR,VtxFogTabs::OnEndVminSlider)
-EVT_COMMAND_SCROLL(ID_VMIN_SLDR,VtxFogTabs::OnVminSlider)
-EVT_TEXT_ENTER(ID_VMIN_EXPR,VtxFogTabs::OnVminEnter)
-
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_VMAX_SLDR,VtxFogTabs::OnEndVmaxSlider)
-EVT_COMMAND_SCROLL(ID_VMAX_SLDR,VtxFogTabs::OnVmaxSlider)
-EVT_TEXT_ENTER(ID_VMAX_EXPR,VtxFogTabs::OnVmaxEnter)
-
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_FOG_SLDR,VtxFogTabs::OnEndFogSlider)
-EVT_COMMAND_SCROLL(ID_FOG_SLDR,VtxFogTabs::OnFogSlider)
-EVT_TEXT_ENTER(ID_FOG_EXPR,VtxFogTabs::OnFogEnter)
-
-EVT_COLOURPICKER_CHANGED(ID_FOG_COLOR,VtxFogTabs::OnFogColor)
 
 EVT_MENU(ID_ENABLE,VtxFogTabs::OnEnable)
 EVT_UPDATE_UI(ID_ENABLE, VtxFogTabs::OnUpdateEnable)
@@ -102,34 +93,44 @@ void VtxFogTabs::AddFogTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxStaticBoxSizer* horizontal = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Horizontal Range (feet)"));
-    m_hmin_sldr=new SliderCtrl(panel,ID_HMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
-    m_hmin_sldr->setRange(0,1000);
-    horizontal->Add(m_hmin_sldr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-    m_hmax_sldr=new SliderCtrl(panel,ID_HMAX_SLDR,"Depth",LABEL2,VALUE2,SLIDER2);
-    m_hmax_sldr->setRange(0,10000);
-    horizontal->Add(m_hmax_sldr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+    HMinSlider=new SliderCtrl(panel,ID_HMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
+    HMinSlider->setRange(0,1000);
+    horizontal->Add(HMinSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+    HMaxSlider=new SliderCtrl(panel,ID_HMAX_SLDR,"Depth",LABEL2,VALUE2,SLIDER2);
+    HMaxSlider->setRange(0,10000);
+    horizontal->Add(HMaxSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
     horizontal->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(horizontal, 0, wxALIGN_LEFT|wxALL,0);
 
     wxStaticBoxSizer* vertical = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Vertical Range (feet)"));
-    m_vmin_sldr=new SliderCtrl(panel,ID_VMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
-    m_vmin_sldr->setRange(-5000,5000);
-    vertical->Add(m_vmin_sldr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-    m_vmax_sldr=new SliderCtrl(panel,ID_VMAX_SLDR,"Depth",LABEL2,VALUE2,SLIDER2);
-    m_vmax_sldr->setRange(0,10000);
-    vertical->Add(m_vmax_sldr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+    VMinSlider=new SliderCtrl(panel,ID_VMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
+    VMinSlider->setRange(-5000,5000);
+    vertical->Add(VMinSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+    VMaxSlider=new SliderCtrl(panel,ID_VMAX_SLDR,"Depth",LABEL2,VALUE2,SLIDER2);
+    VMaxSlider->setRange(0,10000);
+    vertical->Add(VMaxSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
     vertical->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(vertical, 0, wxALIGN_LEFT|wxALL,0);
 
-    wxStaticBoxSizer* density = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Density"));
+    wxStaticBoxSizer* properties = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Properties"));
 
-	m_density_expr=new ExprTextCtrl(panel,ID_DENSITY_EXPR,"Expr",LABEL2,EXPR_WIDTH);
-	density->Add(m_density_expr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	DensityExpr=new ExprTextCtrl(panel,ID_DENSITY_EXPR,"Density",LABEL2,EXPR_WIDTH);
+	properties->Add(DensityExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
-    m_fog_color = new ColorSlider(panel,ID_FOG_SLDR,"Color",LABEL2,VALUE2,CSLIDER2,CBOX1);
-    density->Add(m_fog_color->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-     density->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-    boxSizer->Add(density, 0, wxALIGN_LEFT|wxALL,0);
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+    FogColorSlider = new ColorSlider(panel,ID_FOG_COLOR_SLDR,"Color",LABEL2,VALUE2,90,CBOX3);
+    hline->Add(FogColorSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,3);
+
+    FogGlowSlider=new SliderCtrl(panel,ID_FOG_GLOW_SLDR,"Glow",50,VALUE2,SLIDER2);
+    FogGlowSlider->setRange(0,1);
+
+    hline->Add(FogGlowSlider->getSizer(), 5, wxALIGN_LEFT|wxALL,0);
+
+    properties->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+    properties->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+    boxSizer->Add(properties, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 int VtxFogTabs::showMenu(bool expanded){
@@ -169,21 +170,22 @@ void VtxFogTabs::setObjAttributes(){
 	TNfog *tnode=fog();
 
 	Planetoid *orb=getOrbital();
-	orb->fog_vmin=m_vmin_sldr->getValue()*FEET;
-	orb->fog_vmax=(m_vmax_sldr->getValue()+m_vmin_sldr->getValue())*FEET;
-	orb->fog_min=m_hmin_sldr->getValue()*FEET;
-	orb->fog_max=(m_hmax_sldr->getValue()+m_hmin_sldr->getValue())*FEET;
+	orb->fog_vmin=VMinSlider->getValue()*FEET;
+	orb->fog_vmax=(VMaxSlider->getValue()+VMinSlider->getValue())*FEET;
+	orb->fog_min=HMinSlider->getValue()*FEET;
+	orb->fog_max=(HMaxSlider->getValue()+HMinSlider->getValue())*FEET;
 
-	Color color=m_fog_color->getColor();
-	double fog_value=m_fog_color->getValue();
+	Color color=FogColorSlider->getColor();
+	double fog_value=FogColorSlider->getValue();
 	color.set_alpha(fog_value);
 
 	orb->fog_color=color;
 	orb->fog_value=fog_value;
+	orb->fog_glow=FogGlowSlider->getValue();
 
 	wxString str="fog(";
 
-	wxString expr=m_density_expr->getText();
+	wxString expr=DensityExpr->getText();
 	if(expr.length()==0)
 		expr="1";
 	str+=expr;
@@ -214,18 +216,19 @@ void VtxFogTabs::getObjAttributes(){
 	//m_density_expr->setValue("1.0");
 
 	if(arg){	// height expr
-		m_density_expr->setValue(arg);
+		DensityExpr->setValue(arg);
 	}
 	Planetoid *orb=getOrbital();
-	m_hmin_sldr->setValue(orb->fog_min/FEET);
-	m_hmax_sldr->setValue((orb->fog_max-orb->fog_min)/FEET);
-	m_vmin_sldr->setValue(orb->fog_vmin/FEET);
-	m_vmax_sldr->setValue((orb->fog_vmax-orb->fog_vmin)/FEET);
+	HMinSlider->setValue(orb->fog_min/FEET);
+	HMaxSlider->setValue((orb->fog_max-orb->fog_min)/FEET);
+	VMinSlider->setValue(orb->fog_vmin/FEET);
+	VMaxSlider->setValue((orb->fog_vmax-orb->fog_vmin)/FEET);
+	FogGlowSlider->setValue(orb->fog_glow);
 
 	Color color=orb->fog_color;
 	color.set_alpha(orb->fog_value);
 
-	m_fog_color->setColor(color);
+	FogColorSlider->setColor(color);
 //	m_fog_color.SetColor(orb->fog_color);
 //	m_fog_value=(int)(orb->fog_value*100);
 

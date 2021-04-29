@@ -105,8 +105,12 @@ enum {
     ID_NEAR_MAX_TEXT,
     ID_FAR_SIZE_SLDR,
     ID_FAR_SIZE_TEXT,
-    ID_EXT_BIAS_SLDR,
-    ID_EXT_BIAS_TEXT,
+    ID_FAR_DENSITY_SLDR,
+    ID_FAR_DENSITY_TEXT,
+    ID_FAR_RANDOM_SLDR,
+    ID_FAR_RANDOM_TEXT,
+    ID_NEAR_RANDOM_SLDR,
+    ID_NEAR_RANDOM_TEXT,
     ID_NOVA_SIZE_SLDR,
     ID_NOVA_SIZE_TEXT,
     ID_NOVA_DENSITY_SLDR,
@@ -134,11 +138,14 @@ EVT_BUTTON(ID_DEFAULT,VtxGalaxyTabs::OnSetDefault)
 SET_SLIDER_EVENTS(NEAR_SIZE,VtxGalaxyTabs,NearSize)
 SET_SLIDER_EVENTS(NEAR_MAX,VtxGalaxyTabs,NearMax)
 SET_SLIDER_EVENTS(FAR_SIZE,VtxGalaxyTabs,FarSize)
-SET_SLIDER_EVENTS(EXT_BIAS,VtxGalaxyTabs,Variability)
+SET_SLIDER_EVENTS(NEAR_RANDOM,VtxGalaxyTabs,NearRandom)
 SET_SLIDER_EVENTS(CMIX,VtxGalaxyTabs,CMix)
 SET_SLIDER_EVENTS(CBIAS,VtxGalaxyTabs,CBias)
 SET_SLIDER_EVENTS(NOVA_SIZE,VtxGalaxyTabs,NovaSize)
 SET_SLIDER_EVENTS(NOVA_DENSITY,VtxGalaxyTabs,NovaDensity)
+SET_SLIDER_EVENTS(FAR_DENSITY,VtxGalaxyTabs,FarDensity)
+SET_SLIDER_EVENTS(FAR_RANDOM,VtxGalaxyTabs,FarRandom)
+
 
 SET_SLIDER_EVENTS(DENSITY,VtxGalaxyTabs,Density)
 SET_SLIDER_EVENTS(GRADIENT,VtxGalaxyTabs,Gradient)
@@ -304,23 +311,38 @@ void VtxGalaxyTabs::AddStarsTab(wxWindow *panel){
 	nova_stars->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
 	boxSizer->Add(nova_stars, 0, wxALIGN_LEFT|wxALL,0);
 
-	wxBoxSizer* distance = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Stars"));
+	wxBoxSizer* stars = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Stars"));
 
-	NearMaxSlider=new SliderCtrl(panel,ID_NEAR_MAX_SLDR,"Far",LABEL2, VALUE2,SLIDER2);
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	NearMaxSlider=new SliderCtrl(panel,ID_NEAR_MAX_SLDR,"Near",LABEL2, VALUE2,SLIDER2);
 	NearMaxSlider->setRange(10,500);
-	distance->Add(NearMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(NearMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
+	NearRandomSlider=new SliderCtrl(panel,ID_NEAR_RANDOM_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	NearRandomSlider->setRange(0.5,4);
+	hline->Add(NearRandomSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	VariabilitySlider=new SliderCtrl(panel,ID_EXT_BIAS_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
-	VariabilitySlider->setRange(0.5,4);
-	distance->Add(VariabilitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	stars->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
-	distance->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
-	boxSizer->Add(distance, 0, wxALIGN_LEFT|wxALL,0);
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	FarDensitySlider=new SliderCtrl(panel,ID_FAR_DENSITY_SLDR,"Far",LABEL2, VALUE2,SLIDER2);
+	FarDensitySlider->setRange(1,5);
+	hline->Add(FarDensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	FarRandomSlider=new SliderCtrl(panel,ID_FAR_RANDOM_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	FarRandomSlider->setRange(0.5,4);
+	hline->Add(FarRandomSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	stars->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	stars->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	boxSizer->Add(stars, 0, wxALIGN_LEFT|wxALL,0);
 
 	wxBoxSizer* color = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Color"));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	ColorExpr=new ExprTextCtrl(panel,ID_COLOR_EXPR,"",0,260);
 	hline->Add(ColorExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
@@ -705,9 +727,11 @@ void VtxGalaxyTabs::invalidateRender(){
 	tree->fgpt1=NearSizeSlider->getValue();
 	tree->fgfar=NearMaxSlider->getValue()*LY;
 	tree->bgpt1=FarSizeSlider->getValue();
-	tree->variability=VariabilitySlider->getValue();
+	tree->fg_random=NearRandomSlider->getValue();
 	tree->nova_size=NovaSizeSlider->getValue();
 	tree->nova_density=NovaDensitySlider->getValue();
+	tree->bg_density=FarDensitySlider->getValue();
+	tree->bg_random=FarRandomSlider->getValue();
 
 	tree->color_mix=CMixSlider->getValue();
 	tree->color_bias=CBiasSlider->getValue();
@@ -756,6 +780,9 @@ void VtxGalaxyTabs::setObjAttributes()
 	tree->noise_saturation=SaturationSlider->getValue();
 	tree->noise_amplitude=AmplitudeSlider->getValue();
 	tree->noise_vertical=VerticalSlider->getValue();
+
+	tree->bg_density=FarDensitySlider->getValue();
+	tree->bg_random=FarRandomSlider->getValue();
 
 	galaxy->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
 	galaxy->applyNoiseFunction();
@@ -819,7 +846,10 @@ void VtxGalaxyTabs::getObjAttributes()
 	updateSlider(NearSizeSlider,tree->fgpt1);
 	updateSlider(NearMaxSlider,tree->fgfar/LY);
 	updateSlider(FarSizeSlider,tree->bgpt1);
-	updateSlider(VariabilitySlider,tree->variability);
+	updateSlider(FarDensitySlider,tree->bg_density);
+	updateSlider(FarRandomSlider,tree->bg_random);
+
+	updateSlider(NearRandomSlider,tree->fg_random);
 	updateSlider(NovaSizeSlider,tree->nova_size);
 	updateSlider(NovaDensitySlider,tree->nova_density);
 

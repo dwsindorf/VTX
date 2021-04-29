@@ -541,6 +541,7 @@ public:
 	double     fog_vmin;
 	double     fog_vmax;
 	double     fog_value;
+	double     fog_glow;
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);

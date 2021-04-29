@@ -1172,7 +1172,7 @@ void StarNode::render()
 		double f=sf+nd;
 
 		if(nd>0 && f>0.5){
-			pts*=galaxy->nova_size*(1+2*galaxy->variability*RAND(j++));
+			pts*=galaxy->nova_size*(1+2*galaxy->fg_random*RAND(j++));
 			nstars=1;
 			alpha+=0.5;
 			sf*=pow(dns,4)*(0.5+sqrt(Radius));
@@ -1198,11 +1198,12 @@ void StarNode::render()
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
 
 		galaxy->bgpts+=nstars;
+		double bg_delta=galaxy->bg_random*delta;
 		glBegin(GL_POINTS);
-		for(i=0;i<nstars;i++){
- 			v.x=mpt.x+delta*RAND(j++);
-			v.y=mpt.y+delta*RAND(j++);
-			v.z=mpt.z+delta*RAND(j++);
+		for(i=0;i<galaxy->bg_density*nstars;i++){
+ 			v.x=mpt.x+bg_delta*RAND(j++);
+			v.y=mpt.y+bg_delta*RAND(j++);
+			v.z=mpt.z+bg_delta*RAND(j++);
 			glVertex3dv((double*)(&v));
 		}
 		glEnd();
@@ -1223,7 +1224,7 @@ void StarNode::render()
 
 			// calculate random star size
 
-			r=(2.5*galaxy->variability*RAND(j++)+0.1);
+			r=(2.5*galaxy->fg_random*RAND(j++)+0.1);
 			r=r*r;
 
 			// calculate point size
@@ -1293,7 +1294,9 @@ StarTree::StarTree(double s) : DensityTree(s,LY)
 	center_bias=0;
 	nova_density=0.01;
 	nova_size=2.0;
-	variability=1.0;
+	fg_random=1.0;
+	bg_density=1;
+    bg_random=1;
 
 	set_render_fg(1);
 	set_render_bg(1);

@@ -114,18 +114,22 @@
 #define DEFINE_COLOR_VAR_EVENTS(NAME,VAR) \
     void OnEnd##NAME##Slider(wxScrollEvent& event){ \
 		OnColorSlider( NAME##Slider, VAR); \
+		invalidateRender(); \
 		changing=false; \
 	} \
     void On##NAME##Slider(wxScrollEvent& event){ \
 		if(TheScene->motion()) changing=true; \
 		NAME##Slider->setValueFromSlider(); \
+		invalidateRender(); \
 	} \
     void On##NAME##Text (wxCommandEvent& event){ \
 		if(TheScene->motion()) changing=true; \
 		OnColorText( NAME##Slider, VAR); \
+		invalidateRender(); \
 	} \
     void On##NAME##Color(wxColourPickerEvent& WXUNUSED(event)){\
 		OnColorValue(NAME##Slider, VAR); \
+		invalidateRender(); \
 	}
 
 #define SET_SLIDER_EVENTS(ENUM,CLASS,NAME) \

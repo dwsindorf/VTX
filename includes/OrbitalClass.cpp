@@ -78,6 +78,8 @@ static double  	def_fog_max=1000*FEET;
 static double  	def_fog_vmin=0;
 static double  	def_fog_vmax=1000*FEET;
 static double  	def_fog_value=0;
+static double  	def_fog_glow=0.2;
+
 static Color 	def_twilite_color=BLACK;
 static double	def_twilite_value=1;
 static double	def_twilite_max=0.2;
@@ -1419,10 +1421,12 @@ void Galaxy::set_vars()
 	StarTree *tree_defs=(StarTree*)defaults();
 	TSET("near.size",fgpt1);
 	TSET("far.size",bgpt1);
+	TSET("far.density",bg_density);
+	TSET("far.random",bg_random);
 	TSET("far.distance",fgfar);
 	TSET("nova.density",nova_density);
 	TSET("nova.size",nova_size);
-	TSET("variability",variability);
+	TSET("variability",fg_random);
 
 }
 
@@ -1435,10 +1439,13 @@ void Galaxy::get_vars()
 	StarTree *tree_mgr=(StarTree*)tree;
 	TDGET("near.size",fgpt1);
 	TDGET("far.size",bgpt1);
+	TDGET("far.density",bg_density);
 	TDGET("far.distance",fgfar);
+	TDGET("far.random",bg_random);
+
 	TDGET("nova.density",nova_density);
 	TDGET("nova.size",nova_size);
-	TDGET("variability",variability);
+	TDGET("variability",fg_random);
 }
 
 //************************************************************
@@ -2633,6 +2640,7 @@ void Planetoid::get_vars()
 	VGET("water.shine",water_shine,def_water_shine);
 
 	VGET("fog.value",fog_value,def_fog_value);
+	VGET("fog.glow",fog_glow,def_fog_glow);
 	if(exprs.get_local("fog.color",Td)){
 		fog_color=Td.c;
 		fog_value=fog_color.alpha();
@@ -2792,6 +2800,8 @@ void Planetoid::set_vars()
 	VSET("water.shine",water_shine,def_water_shine);
 	CSET("fog.color",fog_color,def_fog_color);
 	VSET("fog.value",fog_value,def_fog_value);
+	VSET("fog.glow",fog_glow,def_fog_glow);
+
 	USET("fog.min",fog_min,def_fog_min,"ft");
 	USET("fog.max",fog_max,def_fog_max,"ft");
 	USET("fog.vmin",fog_vmin,def_fog_vmin,"ft");
@@ -2949,21 +2959,25 @@ void Planetoid::render() {
 //-------------------------------------------------------------
 void Planetoid::init_render()
 {
+ 	visit(&Object3D::init_render);
+
 	double dp=0;
-	if(TheScene->viewobj==this){
+	if(TheScene->viewobj==this && !(TheScene->inside_sky())){
 		Raster.blend_factor=Raster.darken_factor=0;
 		Raster.haze_value=0;
 		Point lp=Lights[0]->point.mm(TheScene->invViewMatrix);
 		lp=lp.normalize();
 		Point vp=TheScene->vpoint;
 		dp=lp.dot(vp)/vp.length();
+		double f=rampstep(def_twilite_max,def_twilite_min,dp,0,def_twilite_value);
+		Raster.blend_factor=f;
+		Raster.darken_factor=def_twilite_value*f;
 	}
 
  	glDisable(GL_FOG);
 
  	// Sky.init_render sets Raster.sky_color and Raster.twilite_color
 
- 	visit(&Object3D::init_render);
 	//if(TheScene->viewobj==this)
   	//	Raster.sky_color=shadow_color;
 
@@ -2986,7 +3000,7 @@ void Planetoid::init_render()
 	double df=sqrt(Raster.darken_factor);
 	if(fog_value){
 		Color c=fog_color;
-		//c=c.darken(df);
+		c=c.darken((1-fog_glow)*Raster.darken_factor);
 		Raster.modulate(c);
 		Raster.fog_min=fog_min;
 		Raster.fog_max=fog_max;
@@ -3570,6 +3584,7 @@ void Sky::adapt_object()
 void Sky::init_render()
 {
 	if(parent && parent==TheScene->viewobj){
+
 		Raster.haze_grad=haze_grad;
 		Point lp=Lights[0]->point.mm(TheScene->invViewMatrix);
 		lp=lp.normalize();
@@ -4743,8 +4758,8 @@ void Corona::set_vars()
 {
 	VSET("resolution",detail,3);
 	VSET("gradient",gradient,0.8);
-	CSET("color1",color1,Color(1,1,1,1));
-	CSET("color2",color2,Color(1,1,1,1));
+	exprs.set_var("color1",color1);
+	exprs.set_var("color2",color2);
 }
 
 //-------------------------------------------------------------

@@ -52,8 +52,7 @@ void main(void) {
 		//gl_FragData[1]=data2;
 		gl_FragData[2]=vec4(0,0,0,1);
 	}
-	color=clamp(color,0.0,1.0);
+	//color=clamp(color,0.0,1.0);
 	gl_FragData[0] = color;
-	gl_FragData[1]=vec4(0,1,0.0,0.0);
-	//color.a=1.0;
+	//gl_FragData[1]=vec4(0,1,0.0,0.0);
 }

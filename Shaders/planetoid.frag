@@ -157,9 +157,7 @@ void main(void) {
 #endif   
 #endif
 	gl_FragData[0] = color;
-	//gl_FragData[0] = vec4(bmpht,0,0,1);//color;
-	
-
-
+	//gl_FragData[2] = vec4(illumination,0,0,1);
+	//gl_FragData[0] = vec4(illumination,0,0,1);//color;
 }
 // ########## end planetoid.frag #########################

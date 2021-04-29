@@ -278,10 +278,12 @@ public:
 	double bgpt1;
 	double fgpt1;
 	double fgfar;
+	double bg_density;
 	double ptscale;
 	double nova_density;
 	double nova_size;
-	double variability;
+	double fg_random;
+	double bg_random;
 
 	void set_render_fg(int i) { BIT_SET(flags,RENDER_FG,i);}
 	void set_render_bg(int i) { BIT_SET(flags,RENDER_BG,i);}

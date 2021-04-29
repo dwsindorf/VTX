@@ -83,9 +83,11 @@ protected:
 	SliderCtrl	*NearSizeSlider;
 	SliderCtrl	*NearMaxSlider;
 	SliderCtrl	*FarSizeSlider;
-	SliderCtrl	*VariabilitySlider;
+	SliderCtrl	*NearRandomSlider;
 	SliderCtrl	*NovaSizeSlider;
 	SliderCtrl	*NovaDensitySlider;
+	SliderCtrl	*FarDensitySlider;
+	SliderCtrl	*FarRandomSlider;
 
 	ExprTextCtrl *ColorExpr;
 
@@ -157,7 +159,7 @@ public:
 		delete NearSizeSlider;
 		delete NearMaxSlider;
 		delete FarSizeSlider;
-		delete VariabilitySlider;
+		delete NearRandomSlider;
 		delete NovaSizeSlider;
 		delete NovaDensitySlider;
 		delete ColorExpr;
@@ -209,7 +211,11 @@ public:
 	DEFINE_SLIDER_RENDER_EVENTS(NearSize)
 	DEFINE_SLIDER_RENDER_EVENTS(NearMax)
 	DEFINE_SLIDER_RENDER_EVENTS(FarSize)
-	DEFINE_SLIDER_RENDER_EVENTS(Variability)
+	DEFINE_SLIDER_RENDER_EVENTS(FarDensity)
+	DEFINE_SLIDER_RENDER_EVENTS(FarRandom)
+
+
+	DEFINE_SLIDER_RENDER_EVENTS(NearRandom)
 	DEFINE_SLIDER_RENDER_EVENTS(CMix)
 	DEFINE_SLIDER_RENDER_EVENTS(CBias)
 	DEFINE_SLIDER_RENDER_EVENTS(NovaSize)
