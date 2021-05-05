@@ -1537,6 +1537,7 @@ enum  {
 	SUB_RAND,
 	SUB_SRAND,
 	SUB_TWIST,
+	SUB_GAUSS,
 };
 
 static LongSym subtypes[]={
@@ -1559,6 +1560,8 @@ static LongSym subtypes[]={
 	{"rand",		SUB_RAND},
 	{"srand",		SUB_SRAND},
 	{"twist",		SUB_TWIST},
+	{"gauss",		SUB_GAUSS},
+
 };
 NameList<LongSym*> Subs(subtypes,sizeof(subtypes)/sizeof(LongSym));
 
@@ -2029,6 +2032,32 @@ void TNspline::eval()
 	S0.set_svalid();
 }
 
+//************************************************************
+// Class TNgauss
+//************************************************************
+class TNgauss : public TNsubr
+{
+public:
+	TNgauss(char* s, TNode *r) :  TNsubr(s, r) {}
+	void eval();
+};
+
+//-------------------------------------------------------------
+// TNgauss::eval() evaluate the node
+//-------------------------------------------------------------
+void TNgauss::eval()
+{
+	double arg[3];
+	SINIT;
+	int n=getargs(right,arg,3);
+	double x=arg[0];
+	double m=arg[1];
+	double s=arg[2];
+	double a=1;///sqrt(2*PI)/s;
+	S0.s=a*exp(-0.5*(x-m)*(x-m)/s/s);
+	//cout<<"x:"<<x<<" g:"<<S0.s<<endl;
+	S0.set_svalid();
+}
 //-------------------------------------------------------------
 // subr_expr() return subroutine node
 //-------------------------------------------------------------
@@ -2056,6 +2085,8 @@ TNsubr *subr_node(char *s, TNode *args)
 		case SUB_RAND:		return new TNrand(s,args);
 		case SUB_SRAND:		return new TNsrand(s,args);
 		case SUB_TWIST:		return new TNtwist(s,args);
+		case SUB_GAUSS:   	return new TNgauss(s,args);
+
 		}
 	}
 	printf("error: unknown function %s\n",s);

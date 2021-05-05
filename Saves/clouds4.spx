@@ -24,6 +24,18 @@ Scene() {
 	View{
 		height=159.374 ft;
 	}
+	View{
+		height=778.176 ft;
+		time=31758.4;
+		heading=-115;
+		tilt=3;
+	}
+	View{
+		height=1590.54 ft;
+		time=65384.2;
+		heading=-36;
+		tilt=1;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
@@ -55,8 +67,8 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.08);
 					day=24;
-					diffuse=Color(1,1,1,0.48);
-					specular=Color(1,1,1,0.76);
+					shine=3.81307;
+					specular=Color(1,1,1,0.65);
 					year=100;
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
@@ -70,26 +82,27 @@ Scene() {
 					Sky(0.0041029) {
 						color=Color(0.82,0.98,0.98);
 						day=24;
-						density=0.2;
-						haze.color=Color(1,0.96,0.6,0.73);
-						haze.grad=0.11864;
-						haze.value=0.729412;
-						night.color=Color(0,0.31,1,0);
+						density=0.22222;
+						haze.color=Color(1,0.96,0.6);
+						haze.grad=0.21952;
+						haze.value=1;
+						night.color=Color(0,0,0);
+						resolution=4;
 						rseed=0.869905;
 						shine=2.92377;
 						specular=Color(1,1,1);
-						twilight=Color(0.33,0,1);
-						twilight.max=0.379151;
-						twilight.min=-0.446273;
+						twilight=Color(0.08,0,0.24);
+						twilight.max=1;
+						twilight.min=-1;
 					}
 					Clouds(0.00407481) {
-						ambient=Color(1,1,1,0.6);
+						ambient=Color(1,1,1,0.18);
 						crot=1;
 						diffuse=Color(1,1,1,0.47);
 						diffusion=0.2096;
 						emission=Color(1,1,1,0.04);
 						hscale=0.05;
-						resolution=2;
+						resolution=3;
 						rot_phase=61.02;
 						rseed=0.977999;
 						shine=77.7857;

@@ -936,7 +936,7 @@ void DensityTree::init_node(OctNode *octnode)
 	    	dns=0;
 	}
 
-	dns=clamp(dns,0,1);
+	//dns=clamp(dns,0,1);
 
 	if(dns>0){
 		rn+=0.5;
@@ -1148,7 +1148,6 @@ void StarNode::render()
 	int indx=0;
 
     // render bg stars
-	//if(TheScene->viewtype!=SURFACE && galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
 	if(galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
 		Color c=WHITE;
 		Density=Td.density=dns;
@@ -1156,7 +1155,6 @@ void StarNode::render()
 		Td.c=c;
 		octree->object->set_surface(Td);
 
-		//dns=S0.density;
 		c=Td.c;
 		delta=octree->dispersion*size();
 	    s=0.5*galaxy->bgpt1;
@@ -1165,27 +1163,60 @@ void StarNode::render()
 		double mix=galaxy->inside()?0.5:1.0;
 		alpha*=mix*galaxy->color_mix;
 
-		double sf=RAND(j++);
+		double sf=RAND(j++); // -0.5 .. 0.5
 
 		double nd=0.5*galaxy->nova_density;
 
 		double f=sf+nd;
+	    r=RAND(j++)+0.5;
 
-		if(nd>0 && f>0.5){
+		if(nd>0 && f>0.5){ // nova stars and dust
 			pts*=galaxy->nova_size*(1+2*galaxy->fg_random*RAND(j++));
+			//alpha+=0.5;
+			sf*=pow(dns,2)*(0.5+sqrt(Radius));
 			nstars=1;
-			alpha+=0.5;
-			sf*=pow(dns,4)*(0.5+sqrt(Radius));
-			c=c.lighten(0.5);
-			indx=1;
-			if(sf>0.45){
-				alpha=1;
-				indx=0;
-				c=c.lighten(0.9);
+			alpha=1;
+			double y=0;
+			double angle=0;
+			if(sf>0.4){
+			    double g=0.5+galaxy->bg_random*RAND(j++); // random
+			    g*=(0.2+Radius*Radius);
+			    if(g>0.5){ // dust
+				    angle=0.5*(0.5+RAND(j++));
+				    double f=0.5+RAND(j++); // random sprite
+				    if(f>0.75)
+				    	indx=3;
+				    else if(indx>0.5)
+				    	indx=2;
+				    else if (indx>0.25)
+				    	indx=1;
+				    else
+				    	indx=0;
+				    indx+=4;
+					y=0.5+RAND(j++); // random reflection
+					c=c.mix(Color(1,0,0),0.8);
+					c=c.darken(0.9);
+					pts*=2;
+			    }
+			    else{
+				    int cindx=(int)(r*ncolors);
+				    cindx=(int)clamp(cindx,0,ncolors-1);
+				    c=star_colors[cindx];
+					indx=0;
+					c=c.lighten(0.7);
+				}
 			}
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, 0, pts, 0);
+			else{
+			    int cindx=(int)(r*ncolors);
+			    cindx=(int)clamp(cindx,0,ncolors-1);
+			    Color t=star_colors[cindx];
+			    c=c.mix(t,0.5);
+				c=c.lighten(0.5);
+				indx=1;
+			}
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, angle, pts, y);
 		}
-		else{
+		else{ // backgound sprites
 		    double angle=0.5*(0.5+RAND(j++));
 		    double y=0.5+RAND(j++); // random reflection
 		    double f=0.5+RAND(j++); // random sprite
@@ -1194,11 +1225,12 @@ void StarNode::render()
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, angle*2*PI, pts, y);
 		}
 
+		// background stars
 		glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
 
 		galaxy->bgpts+=nstars;
-		double bg_delta=galaxy->bg_random*delta;
+		double bg_delta=delta;
 		glBegin(GL_POINTS);
 		for(i=0;i<galaxy->bg_density*nstars;i++){
  			v.x=mpt.x+bg_delta*RAND(j++);

@@ -227,7 +227,7 @@ class Galaxy : public DensityCloud
 {
 protected:
     static StarTree _defaults;
-	static GLuint star_image[2];
+	static GLuint star_image[3];
 	void setStarTexture(int id,char *name);
 public:
 	Galaxy(Orbital *m, double s);

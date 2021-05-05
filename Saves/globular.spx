@@ -6,6 +6,7 @@ Scene() {
 		time=65278;
 		heading=90;
 		pitch=-90;
+		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1;
 	}
@@ -28,7 +29,7 @@ Scene() {
 	Universe {
 		Galaxy(20000) {
 			center.radius=0;
-			color.bias=0.7;
+			color.bias=2;
 			compression=0.5;
 			density=0.5;
 			diffusion=3;
@@ -37,13 +38,16 @@ Scene() {
 			noise.amplitude=0;
 			noise.cutoff=0.1;
 			noise.vertical=0;
+			nova.density=0.01388;
+			nova.size=1;
 			radius=0.6;
 			radius.inner=0.6;
 			radius.outer=0.6;
 			scatter=4;
 			twist.radius=1;
 			twist.rotation=0;
-			noise.expr=noise(NLOD,14,5,0.5);
+			variability=3.65973;
+			noise.expr=noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -52,17 +56,17 @@ Scene() {
 				Color(1.000,0.000,0.000),
 				Color(1.000,0.275,0.000),
 				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.678),
+				Color(1.000,1.000,0.675),
 				Color(1.000,1.000,0.957)
 				);
 			System(1000) {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					specular=Color(1,1,1);
-					light=Color(1,1,1);
 					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
 					symmetry=0.95;
+					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
@@ -74,8 +78,8 @@ Scene() {
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(50*noise(NABS|SQR,1,12,0.5,0.5,2))+
-								Texture("jupiter",S,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
+						terrain=Z(50*noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
+								Texture("jupiter",S,0.01*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2);
 					}
 				}
 			}

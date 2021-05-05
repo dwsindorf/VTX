@@ -226,7 +226,6 @@ void Orbital::setOrbitFrom(Orbital *p){
 //   (otherwise render time is VERY slow)
 //-------------------------------------------------------------
 void Orbital::setPointSprites(bool f){
-	glActiveTexture(GL_TEXTURE0);
 	if(!f){
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_POINT_SPRITE);
@@ -1060,7 +1059,7 @@ void Nebula::render()
 // Galaxy class
 //************************************************************
 
-GLuint Galaxy::star_image[2]={0,0};
+GLuint Galaxy::star_image[3]={0,0,0};
 StarTree Galaxy::_defaults(1000);
 Galaxy::Galaxy(double s) : DensityCloud(s*LY)
 {
@@ -1231,8 +1230,12 @@ void Galaxy::adapt()
 // generate a texture image from a bitmap file
 //-------------------------------------------------------------
 void Galaxy::setStarTexture(int id,char *name){
+
+	glActiveTextureARB(GL_TEXTURE0+id);
+	setPointSprites(true);
 	if(star_image[id]>0)
 		return;
+
 	int height,width;
 
 	char base[256];
@@ -1301,6 +1304,8 @@ bool Galaxy::setProgram(){
 	}
 	GLSLVarMgr vars;
 	vars.newIntVar("startex",0);
+	vars.newIntVar("dusttex",1);
+
 	if(stars->render_fg())
 		vars.newFloatVar("pointsize",stars->fgpt1);
 	else
@@ -1346,18 +1351,25 @@ void Galaxy::render()
 			// render bg stars
 			stars->set_render_fg(false);
 			stars->set_render_bg(true);
-			setPointSprites(true);
 			if(Render.draw_shaded()){
-				setStarTexture(0,"sprites1");
+				//glActiveTextureARB(GL_TEXTURE0);
+				//setPointSprites(true);
+				setStarTexture(0,"star-sprites");
 				glBindTexture(GL_TEXTURE_2D, star_image[0]);
+				//glActiveTextureARB(GL_TEXTURE1);
+				//setPointSprites(true);
+				setStarTexture(1,"dust-sprites");
+				glBindTexture(GL_TEXTURE_2D, star_image[1]);
 				setProgram();
 			}
 			else{
+				glActiveTextureARB(GL_TEXTURE0);
+				setPointSprites(true);
 				if(stars->inside())
-					setStarTexture(1,"star0");
+					setStarTexture(2,"star0");
 				else
-					setStarTexture(1,"star1");
-				glBindTexture(GL_TEXTURE_2D, star_image[1]);
+					setStarTexture(2,"star1");
+				glBindTexture(GL_TEXTURE_2D, star_image[2]);
 			}
 
 			render_object();
@@ -4159,6 +4171,7 @@ void CloudLayer::render()
 
 		TheScene->set_matrix(this);
 		bool v3d=threeD()&& Render.draw_shaded();
+		glActiveTexture(GL_TEXTURE0);
 
 		if(v3d ){
 			Raster.surface=1;

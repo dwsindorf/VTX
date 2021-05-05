@@ -319,7 +319,7 @@ void VtxGalaxyTabs::AddStarsTab(wxWindow *panel){
 	NearMaxSlider->setRange(10,500);
 	hline->Add(NearMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	NearRandomSlider=new SliderCtrl(panel,ID_NEAR_RANDOM_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	NearRandomSlider=new SliderCtrl(panel,ID_NEAR_RANDOM_SLDR,"Size",LABEL2, VALUE2,SLIDER2);
 	NearRandomSlider->setRange(0.5,4);
 	hline->Add(NearRandomSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -331,8 +331,8 @@ void VtxGalaxyTabs::AddStarsTab(wxWindow *panel){
 	FarDensitySlider->setRange(1,5);
 	hline->Add(FarDensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FarRandomSlider=new SliderCtrl(panel,ID_FAR_RANDOM_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
-	FarRandomSlider->setRange(0.5,4);
+	FarRandomSlider=new SliderCtrl(panel,ID_FAR_RANDOM_SLDR,"Dust",LABEL2, VALUE2,SLIDER2);
+	FarRandomSlider->setRange(0.0,4);
 	hline->Add(FarRandomSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	stars->Add(hline,0,wxALIGN_LEFT|wxALL,0);

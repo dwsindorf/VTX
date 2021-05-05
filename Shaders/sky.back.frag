@@ -102,7 +102,10 @@ void main(void) {
 	sa=pow(aa+rmp, 40.0*sky_grad);  // sharpen sky gradient
 	sa=(1.0-dht)*pow(aa+0.1*illumination, 2.0*sky_grad);  // sharpen sky gradient
 	color.a=alpha*sa;
-	color.a*=3*length(color.rgb);
+	float ca=3*length(color.rgb);
+	float da=lerp(density,0.25,1,ca,2.0);
+	
+	color.a*=da;
 	
 	color.a=clamp(color.a,0.0,1.0);
 	//	color.a=max(ha,alpha*sa); // fade sky alpha with ht

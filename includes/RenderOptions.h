@@ -149,7 +149,7 @@ public:
 	RenderOptions()             {  set_defaults() ; }
 	void set_defaults()         { renderflags=DEFAULTS;
                                   info.fogsel=EXP;
-                                  info.lmode=PHONG_BLINN;
+                                  info.lmode=PHONG;
                                   info.colors=0;
                                   info.display=0;
                                   valid=0;

@@ -13,31 +13,37 @@ Scene() {
 	View{
 		pitch=-96;
 	}
+	View{
+		phi=29.9999;
+		theta=1.16024e-17;
+		height=9005.48 ly;
+	}
 	Universe {
 		Galaxy(10000) {
 			center.bias=0.875;
 			center.radius=0.5;
-			color.bias=0.27776;
+			color.bias=0.30556;
 			color.mix=0.25;
 			density=2;
 			diffusion=4;
 			far.distance=1.17314e+08;
+			far.random=0.84027;
 			gradient=0;
 			name="Uncharted";
 			near.size=0.25;
-			noise.cutoff=0.11112;
+			noise.cutoff=-0.08332;
 			noise.vertical=0.34722;
-			nova.density=0.04;
-			nova.size=0.5;
+			nova.density=0.07;
+			nova.size=1.0417;
 			radius=1;
 			radius.outer=1;
-			resolution=2;
+			resolution=4;
 			scatter=4;
 			twist.radius=1.2;
 			twist.rotation=2.13402;
 			variability=4;
 			noise.expr=noise(GRADIENT|NLOD|SQR,2,7,1,0.2,2,1,1,0,0)+0.5*noise(GRADIENT|NABS|NLOD|SQR|UNS,13,5,-0.78,0.5,2,1,1,0,0);
-			color.expr=DENSITY*DENSITY-RADIUS+noise(GRADIENT|NABS|SCALE|SQR|UNS,0,4,0.15,0.5,2.4,0.73,1,0,-0.5);
+			color.expr=pow(DENSITY,3)-RADIUS+noise(GRADIENT|NABS|SCALE|SQR|UNS,0,4,0.15,0.5,2.4,0.73,1,0,-0.5);
 			color.list=Colors(
 				Color(0.000,0.122,1.000,0.000),
 				Color(0.255,0.557,0.624),
@@ -46,8 +52,8 @@ Scene() {
 				Color(0.522,0.424,0.424),
 				Color(0.624,0.204,0.075,0.369),
 				Color(0.973,0.804,0.702,0.522),
-				Color(1.000,0.984,0.761),
-				Color(1.000,0.976,0.816),
+				Color(1.000,0.976,0.761),
+				Color(1.000,0.973,0.816),
 				Color(1.000,1.000,1.000)
 				);
 			bands("galaxytex",ACHNL|CLAMP,64,Color(0,0,0,0),Color(0.122,0.173,0.302,0.545),Color(0.627,0.675,0.875),Color(0.2,0.275,0.373,0),
