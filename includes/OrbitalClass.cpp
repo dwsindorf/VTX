@@ -1352,12 +1352,8 @@ void Galaxy::render()
 			stars->set_render_fg(false);
 			stars->set_render_bg(true);
 			if(Render.draw_shaded()){
-				//glActiveTextureARB(GL_TEXTURE0);
-				//setPointSprites(true);
 				setStarTexture(0,"star-sprites");
 				glBindTexture(GL_TEXTURE_2D, star_image[0]);
-				//glActiveTextureARB(GL_TEXTURE1);
-				//setPointSprites(true);
 				setStarTexture(1,"dust-sprites");
 				glBindTexture(GL_TEXTURE_2D, star_image[1]);
 				setProgram();

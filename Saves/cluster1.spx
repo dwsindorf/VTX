@@ -14,19 +14,21 @@ Scene() {
 		pitch=-5;
 	}
 	Universe {
-		Galaxy(47222.8) {
+		Galaxy(54211.8) {
 			center.radius=0;
-			color.bias=1.38888;
+			color.bias=1;
+			color.mix=0.79166;
 			compression=0.5;
-			density=0.49056;
+			density=0.86112;
 			diffusion=0.913416;
-			far.size=1.4151;
-			gradient=1.20756;
+			far.size=0.5;
+			gradient=2;
 			name="Globular";
 			near.size=1.0417;
 			noise.cutoff=0.3585;
 			noise.vertical=1;
-			origin=Point(200000,-27000,-10000);
+			nova.size=1;
+			origin=Point(130000,-20000,-4000);
 			radius=0.59722;
 			radius.inner=0.6;
 			radius.outer=0.59722;
@@ -34,17 +36,17 @@ Scene() {
 			scatter=1.5096;
 			twist.radius=1;
 			twist.rotation=0;
-			variability=4;
+			variability=2;
 			noise.compression=0;
 			color.inner=Color(1,1,0.9);
 			color.middle=Color(1,1,0,0.5);
 			color.outer=Color(1,0,0);
 			noise.radial=0;
-			noise.expr=noise(GRADIENT|NABS|NLOD,1.2,5.1,0.5,0.5,2,0.98,1,0,0);
-			color.expr=1*DENSITY;
+			noise.expr=noise(GRADIENT|NABS|NLOD,1.2,5.1,0.5,0.5,2,1,1,0,0);
+			color.expr=2*DENSITY-RADIUS;
 			color.list=Colors(
 				Color(0.502,0.000,0.251,0.000),
-				Color(0.000,0.000,1.000),
+				Color(0.635,0.169,0.039),
 				Color(0.000,0.722,1.000),
 				Color(0.502,0.718,1.000),
 				Color(1.000,0.275,0.000),
@@ -85,7 +87,7 @@ Scene() {
 				Color(0.475,0.722,1.000),
 				Color(0.718,0.875,1.000),
 				Color(0.773,1.000,1.000),
-				Color(0.706,0.988,0.980),
+				Color(0.706,0.984,0.976),
 				Color(1.000,1.000,1.000)
 				);
 		}
@@ -136,6 +138,7 @@ Scene() {
 			color.mix=0.63888;
 			diffusion=0.176223;
 			far.distance=2.13446e+09;
+			far.random=0.44448;
 			far.size=0.5;
 			gradient=0.9;
 			name="Yellow Spiral";

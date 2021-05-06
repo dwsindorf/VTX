@@ -18,6 +18,9 @@ Scene() {
 		theta=1.16024e-17;
 		height=9005.48 ly;
 	}
+	View{
+		pitch=-101;
+	}
 	Universe {
 		Galaxy(10000) {
 			center.bias=0.875;
@@ -27,7 +30,7 @@ Scene() {
 			density=2;
 			diffusion=4;
 			far.distance=1.17314e+08;
-			far.random=0.84027;
+			far.random=2.55552;
 			gradient=0;
 			name="Uncharted";
 			near.size=0.25;
@@ -38,10 +41,10 @@ Scene() {
 			radius=1;
 			radius.outer=1;
 			resolution=4;
-			scatter=4;
+			scatter=3.6112;
 			twist.radius=1.2;
 			twist.rotation=2.13402;
-			variability=4;
+			variability=2.88196;
 			noise.expr=noise(GRADIENT|NLOD|SQR,2,7,1,0.2,2,1,1,0,0)+0.5*noise(GRADIENT|NABS|NLOD|SQR|UNS,13,5,-0.78,0.5,2,1,1,0,0);
 			color.expr=pow(DENSITY,3)-RADIUS+noise(GRADIENT|NABS|SCALE|SQR|UNS,0,4,0.15,0.5,2.4,0.73,1,0,-0.5);
 			color.list=Colors(
@@ -52,7 +55,7 @@ Scene() {
 				Color(0.522,0.424,0.424),
 				Color(0.624,0.204,0.075,0.369),
 				Color(0.973,0.804,0.702,0.522),
-				Color(1.000,0.976,0.761),
+				Color(1.000,0.973,0.761),
 				Color(1.000,0.973,0.816),
 				Color(1.000,1.000,1.000)
 				);
