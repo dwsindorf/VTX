@@ -9,19 +9,25 @@ varying vec4 Color;
 varying float distance;
 varying vec4 galaxyVars;
 
-#define ROWS 2.0
-#define INVROWS 0.5
+#define ROWS 4.0
+#define INVROWS 0.75
+#define COLS 2.0
+#define INVCOLS 0.5
+
 #define INDX galaxyVars.z
 
-vec2 sprite(int index){
+vec2 sprite(float index){
     vec2 l_uv=gl_PointCoord.xy;
+    vec2 offset=vec2(0.5,0.25);
+  
+   // apply random reflection
+   
 	if(galaxyVars.w<0.33)
 		l_uv.x=1-l_uv.x;
 	else if(galaxyVars.w>0.66)
 		l_uv.y=1-l_uv.y;
-
+ 
     if(galaxyVars.x || galaxyVars.y){
-        // apply random reflection
 		// apply sprite rotation by rotating image in sub-cell
 		float cc =galaxyVars.x;
 		float ss = galaxyVars.y;
@@ -32,10 +38,13 @@ vec2 sprite(int index){
 		l_uv = st_rotated * 0.5 + 0.5;
 	}
 
-    float x=index/2.0-floor(index/2.0);
-    float y=0.5*floor(index/2.0);
+    float x=index/COLS-floor(index/COLS);
+    float y=INVROWS*floor(index/ROWS);
 	// offset to sprite top-left corner in image
-	vec2 pt3=l_uv*0.5+vec2(x,y);
+	l_uv=l_uv*offset;
+	//vec2 pt3=l_uv*0.5+vec2(x,y);
+	vec2 pt3=l_uv+vec2(x,y);
+	
 	return pt3;
 }
 // ----------- program entry -----------------
@@ -44,14 +53,14 @@ float alpha;
 	float bias =lerp(distance,7.0,9.0,-2.0,1.0);
     vec2 l_uv;
     vec4 texcol;
-    if(INDX<4){
+    //if(INDX<4){
        l_uv=sprite(INDX);
        texcol=texture2D(startex,l_uv,bias);
-    }
-    else{
-        l_uv=sprite(INDX-4);
-        texcol=texture2D(dusttex,l_uv,bias);
-	}
+    //}
+   // else{
+    //    l_uv=sprite(INDX-4);
+    //    texcol=texture2D(dusttex,l_uv,bias);
+	//}
 	vec4 color=Color;
 	alpha=texcol.a;
 	color.a=alpha*Color.a;

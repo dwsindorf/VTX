@@ -127,7 +127,7 @@ public:
 	virtual int inside_sky() { return 0;}
 	virtual Sky *get_sky() { return 0;}
 	double resolution()	{ return detail;}
-	void setPointSprites(bool f);
+	static void setPointSprites(bool f);
     void setOrbitFrom(Orbital *prev);
 
 	// NodeIF methods
@@ -154,6 +154,7 @@ public:
 	int scale(double&n, double&f)   { return OFFSCREEN;}
 	NodeIF *addChild(NodeIF *);
 	NodeIF *addAfter(NodeIF *,NodeIF *);
+	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 
 	void save(FILE *);
 };
@@ -239,6 +240,8 @@ public:
 	void set_ref();
 	void init_view();
 	void render();
+	void render_object();
+
 	void adapt();
 	void rebuild();
     void select();

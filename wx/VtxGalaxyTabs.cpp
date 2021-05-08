@@ -24,7 +24,7 @@
 enum {
 	OBJ_VIEWOBJ,
 	OBJ_DELETE,
-	OBJ_SAVE,
+	//OBJ_SAVE,
 	ID_NAME_TEXT,
 	ID_TYPE_TEXT,
 	ID_CELLSIZE_SLDR,
@@ -202,10 +202,12 @@ EVT_MENU(OBJ_VIEWOBJ,VtxGalaxyTabs::OnViewObj)
 EVT_UPDATE_UI(OBJ_VIEWOBJ,VtxGalaxyTabs::OnUpdateViewObj)
 
 EVT_MENU(OBJ_DELETE,VtxGalaxyTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxGalaxyTabs::OnSave)
+//EVT_MENU(OBJ_SAVE,VtxGalaxyTabs::OnSave)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxGalaxyTabs::OnAddItem)
 EVT_COMMAND_RANGE(ID_COLORS, ID_COLORS+NUM_COLORS,wxEVT_COMMAND_BUTTON_CLICKED,VtxGalaxyTabs::OnColorButton)
+
+SET_FILE_EVENTS(VtxGalaxyTabs)
 
 END_EVENT_TABLE()
 
@@ -256,12 +258,12 @@ bool VtxGalaxyTabs::Create(wxWindow* parent,
 int VtxGalaxyTabs::showMenu(bool expanded){
 	menu_action=TABS_NONE;
 	wxMenu menu;
+	menu.AppendCheckItem(OBJ_VIEWOBJ,wxT("Set View"));
 	menu.AppendCheckItem(TABS_ENABLE,wxT("Show"));
 
-	menu.AppendCheckItem(OBJ_VIEWOBJ,wxT("Set View"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
+	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 
@@ -269,6 +271,8 @@ int VtxGalaxyTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }

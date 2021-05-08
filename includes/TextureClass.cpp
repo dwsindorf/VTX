@@ -377,7 +377,7 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
-	cout << "Texture::setProgram tid:"<< tid << " texid:"<< texid<<endl;
+	//cout << "Texture::setProgram tid:"<< tid << " texid:"<< texid<<endl;
 	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
 

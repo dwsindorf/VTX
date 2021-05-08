@@ -7,7 +7,6 @@ enum {
 	OBJ_SHOW,
 	OBJ_VIEWOBJ,
 	OBJ_DELETE,
-//	OBJ_SAVE,
 
 	ID_NAME_TEXT,
 	ID_CELLSIZE_SLDR,
@@ -85,8 +84,6 @@ SET_COLOR_EVENTS(SHADOW,VtxPlanetTabs,Shadow)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxPlanetTabs::OnAddItem)
 
 EVT_MENU(OBJ_DELETE,VtxPlanetTabs::OnDelete)
-//EVT_MENU(OBJ_SAVE,VtxPlanetTabs::OnSave)
-//EVT_MENU(OBJ_RANDOMIZE,VtxPlanetTabs::OnRandomize)
 
 EVT_MENU(OBJ_SHOW,VtxPlanetTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxPlanetTabs::OnUpdateEnable)

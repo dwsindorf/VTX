@@ -212,10 +212,11 @@ void Orbital::setOrbitFrom(Orbital *p){
 	orbit_phase=p->orbit_phase;
 	year=p->year;
 	day=p->day;
-	tilt=p->day;
+	tilt=p->tilt;
 	pitch=p->pitch;
 	orbit_skew=p->orbit_skew;
 	orbit_radius=p->orbit_radius;
+	origin=p->origin;
 }
 
 //-------------------------------------------------------------
@@ -238,13 +239,13 @@ void Orbital::setPointSprites(bool f){
 		// - If using shader & GL_TRUE then "varying" variables (e.g. Color)
 		//   don't transfer from vertex to fragment shader.
 		// - If NOT using shader & GL_TRUE then point sprites don't get drawn
-		if(Render.draw_shaded()){
-			glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-			glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
-		}
-		else{
+		//if(Render.draw_shaded()){
+			//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+		//	glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
+		//}
+		//else{
 			glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-		}
+		//}
 	}
 }
 
@@ -604,6 +605,18 @@ NodeIF *Universe::addChild(NodeIF *c){
 NodeIF *Universe::addAfter(NodeIF *b,NodeIF *c){
 	//ObjectNode::addAfter(b,c);
 	return ObjectNode::addChild(c);
+}
+
+NodeIF *Universe::replaceChild(NodeIF *c,NodeIF *n){
+	((Orbital*)n)->setOrbitFrom((Orbital*)c);
+	if(c->hasChild(TheScene->viewobj)){
+		Orbital * m=(Orbital *)c;
+		m->children.remove(TheScene->viewobj);
+		n->addChild(TheScene->viewobj);
+	}
+	Orbital *m=(Orbital*)Orbital::replaceChild(c,n);
+	cout<<"Universe::replaceChild"<<endl;
+	return m;
 }
 
 //************************************************************
@@ -1304,7 +1317,6 @@ bool Galaxy::setProgram(){
 	}
 	GLSLVarMgr vars;
 	vars.newIntVar("startex",0);
-	vars.newIntVar("dusttex",1);
 
 	if(stars->render_fg())
 		vars.newFloatVar("pointsize",stars->fgpt1);
@@ -1327,62 +1339,48 @@ bool Galaxy::setProgram(){
 
 //-------------------------------------------------------------
 // Galaxy::render() render galaxy
-//  - For point sprites mode, background and foreground stars
-//    need to be rendered in separate passes.
 //-------------------------------------------------------------
 void Galaxy::render()
 {
-	//setPointSprites(false);
- 	if(TheScene->far_pass()){
- 		set_ref();
-		set_point();
-		if(Render.draw_shaded()){
-			GLSLMgr::pass=0;
-			GLSLMgr::setDefString("");
-			GLSLMgr::setFBOReadWritePass();
-			glUseProgramObjectARB(0);
-		}
-		if(isEnabled() && included() ){
-		    TheScene->pushMatrix();
-			TheScene->set_matrix(0);
-			StarTree *stars=(StarTree *)tree;
-			tree->sort_nodes=true;
-			tree->sortNodes();
-			// render bg stars
-			stars->set_render_fg(false);
-			stars->set_render_bg(true);
-			if(Render.draw_shaded()){
-				setStarTexture(0,"star-sprites");
-				glBindTexture(GL_TEXTURE_2D, star_image[0]);
-				setStarTexture(1,"dust-sprites");
-				glBindTexture(GL_TEXTURE_2D, star_image[1]);
-				setProgram();
-			}
-			else{
-				glActiveTextureARB(GL_TEXTURE0);
-				setPointSprites(true);
-				if(stars->inside())
-					setStarTexture(2,"star0");
-				else
-					setStarTexture(2,"star1");
-				glBindTexture(GL_TEXTURE_2D, star_image[2]);
-			}
-
-			render_object();
-			// render fg stars
-			if(stars->inside()){
-				stars->set_render_fg(true);
-				stars->set_render_bg(false);
-				if(Render.draw_shaded())
-					setProgram();
-				render_object();
-			}
-			glBindTexture(GL_TEXTURE_2D, 0);
-		    TheScene->popMatrix();
-		}
+	if(TheScene->far_pass() && isEnabled() && included()){
+		render_object();
+		if(TheScene->focusobj==this) // highlight selected star
+		    tree->draw_selpt();
 	}
- 	else
- 		Orbital::render(); // render children
+	else
+		Orbital::render(); // render children
+}
+//-------------------------------------------------------------
+// Galaxy::render() render galaxy
+//-------------------------------------------------------------
+void Galaxy::render_object()
+{
+	set_ref();
+	set_point();
+	TheScene->pushMatrix();
+	TheScene->set_matrix(0);
+	StarTree *stars=(StarTree *)tree;
+	tree->sort_nodes=true;
+	tree->sortNodes();
+
+	stars->set_render_fg(stars->inside());
+	stars->set_render_bg(true);
+	if(Render.draw_shaded()){
+		setStarTexture(0,"galaxy-sprites");
+		glBindTexture(GL_TEXTURE_2D, star_image[0]);
+		setProgram();
+	}
+	else{
+		glActiveTextureARB(GL_TEXTURE0);
+		setPointSprites(false);
+		if(stars->inside())
+			setStarTexture(1,"star0");
+		else
+			setStarTexture(1,"star1");
+		glBindTexture(GL_TEXTURE_2D, star_image[1]);
+	}
+	DensityCloud::render_object();
+	TheScene->popMatrix();
 }
 
 //-------------------------------------------------------------
@@ -4176,11 +4174,11 @@ void CloudLayer::render()
 		    switch(clouds_mode){
 		    case CLOUDS_BILLBOARDS:
 		    case CLOUDS_GS_SHADER:
-				setPointSprites(false);
+				setPointSprites(true);
 				setSpritesTexture();
 				break;
 		    case CLOUDS_POINTS:
-				setPointSprites(true);
+				setPointSprites(false);
 				setSpritesTexture();
 				break;
 		    case CLOUDS_NO_SHADER:
