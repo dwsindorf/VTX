@@ -1,10 +1,10 @@
 Scene() {
 	autogrid=1;
 	contour_color=Color(0,0,0);
-	contour_spacing=1000;
+	contour_spacing=20000;
 	enable_contours=0;
 	enable_grid=0;
-	grid_spacing=1;
+	grid_spacing=100;
 	phi_color=Color(0.45,0.82,0.09);
 	text_color=Color(1,1,1);
 	theta_color=Color(0.2,0.4,0.64);

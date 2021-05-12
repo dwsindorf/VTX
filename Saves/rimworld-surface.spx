@@ -20,6 +20,9 @@ Scene() {
 		tilt=7;
 		angle=-7;
 	}
+	View{
+		time=3450;
+	}
 	Universe {
 		Galaxy(9000) {
 			center.bias=0.375;
@@ -29,6 +32,7 @@ Scene() {
 			compression=0.70834;
 			density=2;
 			diffusion=1.28457;
+			far.density=1.33336;
 			far.distance=1.17314e+08;
 			far.random=4;
 			gradient=0;
@@ -37,7 +41,7 @@ Scene() {
 			noise.cutoff=-0.08332;
 			noise.vertical=0.34722;
 			nova.density=0.05556;
-			nova.size=1.3194;
+			nova.size=0.9028;
 			origin=Point(-4000,0,8000);
 			pitch=152.309;
 			radius=1;
@@ -72,9 +76,11 @@ Scene() {
 		}
 		Galaxy(5000) {
 			color.mix=0.26388;
-			near.size=4.0278;
-			nova.density=0.15278;
-			nova.size=3.1944;
+			far.size=0.6944;
+			near.size=2.0139;
+			nova.density=0.04166;
+			nova.size=1.25;
+			variability=1.03473;
 			color.middle=Color(0.8,0,0);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
@@ -129,6 +135,17 @@ Scene() {
 									+
 									Texture("dessert",BORDER|LINEAR|NORM|TEX,32,2,1,0,1,2,1,0,0,0.47224,0.05556,0.16668)]
 								;
+					}
+					Sky(0.00153842) {
+						color=Color(0,0.9,1,0);
+						day=1;
+						density=0.2;
+						haze.color=Color(1,1,1,0);
+						name="Sky";
+						rseed=0.991133;
+						specular=Color(1,1,1);
+						twilight.max=0.179033;
+						twilight.min=-0.227325;
 					}
 				}
 			}

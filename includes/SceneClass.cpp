@@ -277,6 +277,9 @@ int Scene::setPrototype(NodeIF *n, NodeIF *s){
 	return model->setPrototype(n,s);
 }
 
+bool Scene::containsViewobj(ObjectNode *obj){
+	return ((Orbital *)obj)->containsViewobj();
+}
 
 //-------------------------------------------------------------
 // Scene::setSeed() set a random seed

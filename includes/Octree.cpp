@@ -1132,19 +1132,20 @@ void StarNode::render()
 		return;
 	double r,delta,s,pts,alpha;
 	int i,j=2;
-#define NRANDS 10
+#define NRANDS 8
 	double rvals[NRANDS];
 
 	double dns=density()*octree->density_scale;
-	if(dns<=0)
-		return;
+	//cout<<dns<<endl;
+	//if(dns<=0)
+	//	return;
 	StarTree *galaxy=(StarTree*)octree;
 	int seed=lastn;
 
 	Point v=randomize();
 
 	for (int j=0;j<NRANDS;j++)
-		rvals[j]=RAND(j);
+		rvals[j]=0.5+RAND(j);
 
 	Point mpt=v*octree->gscale;
 	double d=mpt.distance(TheScene->vpoint);
@@ -1169,16 +1170,15 @@ void StarNode::render()
 		double mix=galaxy->inside()?0.5:1.0;
 		alpha*=mix*galaxy->color_mix;
 
-		double sf=rvals[0]; // -0.5 .. 0.5
-
+		double sf=rvals[0]-0.5; // -0.5 .. 0.5
 		double nd=0.5*galaxy->nova_density;
 		double f=sf+nd;
-	    double r=rvals[1]+0.5;   // 0 .. 1
-		double a=0.5*(0.5+rvals[2]);
-		double s=0.5+rvals[3]; // random sprite
-		double y=0.5+rvals[4]; // random reflection
-	    double g=0.5+galaxy->bg_random*rvals[5]; // random
-	    double h=galaxy->fg_random*rvals[6];
+	    double r=rvals[1];   // 0 .. 1
+		double a=0.5*(rvals[2]);
+		double s=rvals[3]; // random sprite
+		double y=rvals[4]; // random reflection
+	    double g=0.5+galaxy->bg_random*(rvals[5]-0.5); // random
+	    double h=galaxy->fg_random*(rvals[6]-0.5);
 
 		if(nd>0 && f>0.5){ // novas and dust
 			pts*=galaxy->nova_size*(1+2*h);
@@ -1186,25 +1186,21 @@ void StarNode::render()
 			sf*=pow(dns,2)*(0.5+sqrt(Radius));
 			nstars=1;
 			alpha=1;
+			nstars=1+2*r;
+			nstars=nstars<1?1:nstars;
 
 			if(sf>0.4){
 			    g*=(0.2+Radius*Radius);
-			    if(g>0.5 && sf <0.7){ // dust
-				    if(s>0.75)
-				    	indx=3;
-				    else if(s>0.5)
-				    	indx=2;
-				    else if (s>0.25)
-				    	indx=1;
-				    else
-				    	indx=0;
-				    indx+=4;
-					c=c.mix(Color(1,0.4,0),0.3+g);
-					c=c.darken(0.7+r);
+			    if(g>0.4 && sf <0.7){ // dust sprite
+			    	indx=floor(2+s*14);
+					c=c.mix(Color(1,0.4,0),0.1+0.5*g);
+					c=c.darken(0.3+r);
 					pts*=4;
+					//nstars=8;
+			    	delta*=4;
 			    }
-			    else{
-					nstars=1+2*r;
+			    else{ // star clusters
+					//nstars=1+2*r;
 			    	delta*=2;
 				    int cindx=(int)(r*ncolors);
 				    cindx=(int)clamp(cindx,0,ncolors-1);
@@ -1213,34 +1209,36 @@ void StarNode::render()
 					c=c.lighten(0.7);
 				}
 			}
-			else{
+			else{ // single star
 			    int cindx=(int)(r*ncolors);
 			    cindx=(int)clamp(cindx,0,ncolors-1);
 			    Color t=star_colors[cindx];
 			    c=c.mix(t,0.5);
 				c=c.lighten(0.5);
 				indx=1;
+				a=y=0;
 			}
-			indx+=0.01;
+		    pts=pts<1?1:pts;
+
+			indx+=0.001;  // reduces sprite assignment jitter in shader
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, a, pts, y);
 
 		}
 		else{ // backgound sprites
-		    double angle=0.5*(0.5+rvals[0]);
-		    double y=0.5+rvals[1]; // random reflection
-		    double f=0.5+rvals[2]; // random sprite
-		    indx=f>0.5?3:2;
-		    indx+=0.01;
-		    //cout<<"y:"<<y<<" a:"<<angle<<" i:"<<indx<<endl;
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, a*2*PI, pts, y);
+		    double f=rvals[2]; // random sprite
+		    pts=pts<1?1:pts;
+		    indx=f>0.5?4:3;
+		    indx+=0.001;
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, a, pts, y);
 		}
 
-		// background stars
-		glPointSize((GLfloat)pts);
+		// render background stars
+		//glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
 
 		galaxy->bgpts+=nstars;
 		double bg_delta=delta;
+
 		glBegin(GL_POINTS);
 		for(i=0;i<galaxy->bg_density*nstars;i++){
  			v.x=mpt.x+bg_delta*RAND(j++);
@@ -1252,8 +1250,11 @@ void StarNode::render()
 	}
 	// render fg stars
 	j=2;
+	//	if(galaxy->render_fg()&& galaxy->fgpt1>0){
 	if(galaxy->render_fg() && d<galaxy->fgfar && galaxy->fgpt1>0){
+
 		delta=octree->dispersion*size();
+		nstars=nstars<1?1:nstars;
 		galaxy->fgpts+=nstars;
 		for(i=0;i<nstars;i++){
 
@@ -1273,7 +1274,8 @@ void StarNode::render()
 			d=v.distance(TheScene->vpoint);
 			s=rampstep(LY,galaxy->fgfar,d,1,0);
 		    pts=galaxy->fgscale*rampstep(1,0,s*s,galaxy->fgpt1*r,galaxy->fgpt2);
-			glPointSize((GLfloat)(pts));
+		    //pts=pts<0.5?0.5:pts;
+			//glPointSize((GLfloat)(pts));
 
 			// calculate color
 
@@ -1430,8 +1432,6 @@ void StarTree::render()
 {
 	fgpts=bgpts=0;
 	DensityTree::render();
-	//if(object==TheScene->focusobj)
-	//    draw_selpt();
 	if(Render.display(OCTINFO))
 	    star_info(this);
 }
@@ -1473,7 +1473,6 @@ OctNode *StarTree::build(uint l, int lx, int ly, int lz)
 //-------------------------------------------------------------
 // StarTree::test_surface() test if point is in shape
 //-------------------------------------------------------------
-
 double StarTree::test_surface(Point &p)
 {
 	double sr=rmax+rnoise*rmax;

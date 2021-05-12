@@ -176,6 +176,7 @@ public:
 	void set_focus_object(int i){ self=i;set_changed_render();}
 
 	bool inside_sky();
+	bool containsViewobj(ObjectNode *obj);
 
 	void		set_view();
 	void set_movie(char *s);

@@ -1,27 +1,26 @@
 #include "utils.h"
 
-uniform bool fbo_write;
 uniform sampler2D startex;
-uniform sampler2D dusttex;
 
 uniform float color_mix;
 varying vec4 Color;
 varying float distance;
 varying vec4 galaxyVars;
 
-#define ROWS 4.0
-#define INVROWS 0.75
-#define COLS 2.0
-#define INVCOLS 0.5
+const float ROWS=4.0;
+const float COLS=4.0;
+
+const float INVROWS=1.0/ROWS;
+const float INVCOLS=1.0/COLS;
 
 #define INDX galaxyVars.z
 
 vec2 sprite(float index){
     vec2 l_uv=gl_PointCoord.xy;
-    vec2 offset=vec2(0.5,0.25);
+    vec2 offset=vec2(INVCOLS,INVROWS);
   
    // apply random reflection
-   
+ 
 	if(galaxyVars.w<0.33)
 		l_uv.x=1-l_uv.x;
 	else if(galaxyVars.w>0.66)
@@ -38,11 +37,11 @@ vec2 sprite(float index){
 		l_uv = st_rotated * 0.5 + 0.5;
 	}
 
-    float x=index/COLS-floor(index/COLS);
-    float y=INVROWS*floor(index/ROWS);
+    float x=INVCOLS*floor(index*INVROWS);   
+    float y=INVROWS*floor(index*INVCOLS);
+    
 	// offset to sprite top-left corner in image
 	l_uv=l_uv*offset;
-	//vec2 pt3=l_uv*0.5+vec2(x,y);
 	vec2 pt3=l_uv+vec2(x,y);
 	
 	return pt3;
@@ -51,16 +50,10 @@ vec2 sprite(float index){
 void main(void) {
 float alpha;
 	float bias =lerp(distance,7.0,9.0,-2.0,1.0);
-    vec2 l_uv;
-    vec4 texcol;
-    //if(INDX<4){
-       l_uv=sprite(INDX);
-       texcol=texture2D(startex,l_uv,bias);
-    //}
-   // else{
-    //    l_uv=sprite(INDX-4);
-    //    texcol=texture2D(dusttex,l_uv,bias);
-	//}
+    
+    vec2 l_uv=sprite(INDX);
+    vec4 texcol=texture2D(startex,l_uv);
+       
 	vec4 color=Color;
 	alpha=texcol.a;
 	color.a=alpha*Color.a;

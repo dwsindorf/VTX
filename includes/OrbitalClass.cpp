@@ -220,36 +220,6 @@ void Orbital::setOrbitFrom(Orbital *p){
 }
 
 //-------------------------------------------------------------
-// Orbital::setPointSprites(bool f) set point sprites mode
-// - if f==true, use image to draw star points
-//   otherwise use OGL anti-aliased points
-// - set GL_POINT_SPRITE true if using shaders
-//   (otherwise render time is VERY slow)
-//-------------------------------------------------------------
-void Orbital::setPointSprites(bool f){
-	if(!f){
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_POINT_SPRITE);
-		glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-	else{
-		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_POINT_SPRITE);
-		// - If using shader & GL_TRUE then "varying" variables (e.g. Color)
-		//   don't transfer from vertex to fragment shader.
-		// - If NOT using shader & GL_TRUE then point sprites don't get drawn
-		//if(Render.draw_shaded()){
-			//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-		//	glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
-		//}
-		//else{
-			glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-		//}
-	}
-}
-
-//-------------------------------------------------------------
 // Orbital::NodeIF methods
 //-------------------------------------------------------------
 const char *Orbital::typeName() {
@@ -569,6 +539,22 @@ void Orbital::set_view()
 	set_ref();
 	set_tilt();
 	set_rotation();
+}
+
+bool Orbital::isViewobj(){
+	return TheScene->viewobj == this;
+}
+
+bool Orbital::containsViewobj(){
+	if(isViewobj())
+		return true;
+	children.ss();
+	Orbital *obj;
+	while((obj=children++)>0){
+		if(obj->containsViewobj())
+			return true;
+	}
+	return false;
 }
 
 //************************************************************
@@ -1202,6 +1188,8 @@ void Galaxy::set_ref()
 //-------------------------------------------------------------
 void Galaxy::select()
 {
+	//if(!TheScene->containsViewobj(this))
+	//	return;
  	if(isEnabled() && TheScene->far_pass()){
 		set_ref();
 		set_point();
@@ -1243,9 +1231,6 @@ void Galaxy::adapt()
 // generate a texture image from a bitmap file
 //-------------------------------------------------------------
 void Galaxy::setStarTexture(int id,char *name){
-
-	glActiveTextureARB(GL_TEXTURE0+id);
-	setPointSprites(true);
 	if(star_image[id]>0)
 		return;
 
@@ -1366,13 +1351,21 @@ void Galaxy::render_object()
 	stars->set_render_fg(stars->inside());
 	stars->set_render_bg(true);
 	if(Render.draw_shaded()){
+		glActiveTextureARB(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_POINT_SPRITE);
+		glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 		setStarTexture(0,"galaxy-sprites");
 		glBindTexture(GL_TEXTURE_2D, star_image[0]);
 		setProgram();
 	}
 	else{
-		glActiveTextureARB(GL_TEXTURE0);
-		setPointSprites(false);
+		glActiveTextureARB(GL_TEXTURE1);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_POINT_SPRITE);
+		glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 		if(stars->inside())
 			setStarTexture(1,"star0");
 		else
@@ -1380,6 +1373,8 @@ void Galaxy::render_object()
 		glBindTexture(GL_TEXTURE_2D, star_image[1]);
 	}
 	DensityCloud::render_object();
+	glActiveTextureARB(GL_TEXTURE0);
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	TheScene->popMatrix();
 }
 
@@ -2922,7 +2917,7 @@ void Planetoid::render() {
 		TheScene->set_matrix(this);
 		render_object();
 		TheScene->popMatrix();
-		if (TheScene->viewobj != this){
+		if (!isViewobj()){
 			TheScene->set_frontside();
 			//Orbital::render(); // render children
 			if (outsiders.size > 0) {
@@ -2936,7 +2931,7 @@ void Planetoid::render() {
 			return;
 		}
 	}
-	if (TheScene->viewobj == this) {
+	if (isViewobj()) {
 		TheScene->set_backside();
 		if (insiders.size > 0) {
 			// sort objects by radius
@@ -4166,6 +4161,9 @@ void CloudLayer::render()
 		TheScene->set_matrix(this);
 		bool v3d=threeD()&& Render.draw_shaded();
 		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+    	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 		if(v3d ){
 			Raster.surface=1;
@@ -4174,20 +4172,19 @@ void CloudLayer::render()
 		    switch(clouds_mode){
 		    case CLOUDS_BILLBOARDS:
 		    case CLOUDS_GS_SHADER:
-				setPointSprites(true);
+		    	glEnable(GL_POINT_SPRITE);
 				setSpritesTexture();
 				break;
 		    case CLOUDS_POINTS:
-				setPointSprites(false);
 				setSpritesTexture();
+		    	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 				break;
 		    case CLOUDS_NO_SHADER:
-				setPointSprites(false);
+		    	glDisable(GL_POINT_SPRITE);
 				break;
 		    }
 		}
 		else{
-			setPointSprites(false);
 			if(threeD())
 				map->frontface=GL_FRONT_AND_BACK;
 			//else if(TheScene->backside() || inside())
@@ -4200,6 +4197,7 @@ void CloudLayer::render()
 		map->frontface=GL_FRONT;
 		TheScene->popMatrix();
 		glDepthMask(GL_TRUE);
+    	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	}
 }
 

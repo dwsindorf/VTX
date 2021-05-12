@@ -127,8 +127,10 @@ public:
 	virtual int inside_sky() { return 0;}
 	virtual Sky *get_sky() { return 0;}
 	double resolution()	{ return detail;}
-	static void setPointSprites(bool f);
     void setOrbitFrom(Orbital *prev);
+    virtual bool containsViewobj();
+    virtual bool isViewobj();
+
 
 	// NodeIF methods
 
