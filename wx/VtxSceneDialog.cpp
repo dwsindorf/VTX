@@ -44,6 +44,8 @@
 #include "VtxFractalTabs.h"
 
 
+//#define PRINT_TREE
+
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
 #define TEST
@@ -573,7 +575,7 @@ bool VtxSceneDialog::setTabs(int t){
 		cout << "dialog for id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
-	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
+	//cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
 	VtxTabsMgr* mgr=tabs[t];
 	mgr->setSelected(selected);
 	//mgr->updateControls();
@@ -748,8 +750,9 @@ void VtxSceneDialog::rebuildObjectTree(){
 	for(int j=0;j<root->numChildren();j++){
 		addToTree(itemId,(TreeNode*)root->children[j]);
 	}
+#ifdef PRINT_TREE
 	showObjectTree();
-
+#endif
 	rebuilding=false;
 	selected=root;
 	currentTabs=-1;
@@ -838,7 +841,7 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 //-------------------------------------------------------------
 // VtxSceneDialog::showObjectTree() recursive tree update
 //-------------------------------------------------------------
-#define PRINT_TREE
+
 void VtxSceneDialog::showObjectTree(){
 	showObjectTree(treepanel->GetRootItem(),0);
 }

@@ -143,7 +143,8 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 	}
 	if(child && !dropping()){
 		if(((Orbital*)child)->isRandom())
-			((Orbital*)child)->rseed=getRandValue();
+			//((Orbital*)child)->setRseed(getRandValue());
+		((Orbital*)child)->setRseed(Rand());
 	}
 	return 1;
 }
@@ -151,10 +152,10 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 {
 	tmp[0]=0;
-	double psize=0.5;
-	if(parent && (parent->typeClass()& ID_OBJECT)){
-		psize=((Object3D*)parent)->size;
-	}
+//	double psize=0.5;
+//	if(parent && (parent->typeClass()& ID_OBJECT)){
+//		psize=((Object3D*)parent)->size;
+//	}
 	switch(type&TN_TYPES){
 	case TN_GALAXY:
 		sprintf(tmp,"Galaxy(10000) {}\n");

@@ -1071,7 +1071,6 @@ void StarNode::select()
 		return;
 	Point vmax;
 	if(brightest(vmax)){
- 		//glPointSize(2.0f*fgscale);
 		int id=Raster.set_id();
 		Raster.set_data((MapNode*)this);
 		glLoadName(id);
@@ -1090,6 +1089,8 @@ int StarNode::brightest(Point &vmax)
 		return 0;
 
 	int i;
+	int seed=lastn;
+	lastn=0;
 	Point v=randomize();
 	Point mpt=v*octree->gscale;
 	StarTree *galaxy=(StarTree*)octree;
@@ -1097,8 +1098,10 @@ int StarNode::brightest(Point &vmax)
 	int nstars=stars(mpt);
 
 	double d=mpt.distance(TheScene->vpoint);
-	if(d>galaxy->fgfar)
+	if(d>galaxy->fgfar){
+		lastn=seed;
 	    return 0;
+	}
 
 	int j=2;
 	double ptmax=0;
@@ -1108,18 +1111,21 @@ int StarNode::brightest(Point &vmax)
 		v.y=mpt.y+delta*RAND(j++);
 		v.z=mpt.z+delta*RAND(j++);
 
-  		double r=(RAND(j++)+0.8);
+  		//double r=(RAND(j++)+0.8);
+		double r=2.5*galaxy->fg_random*RAND(j++)+0.1;
+		r=r*r;
 
 		double d=v.distance(TheScene->vpoint);
 		double s=r*rampstep(0,galaxy->fgfar,d,1,0);
 		double pts=galaxy->fgscale*rampstep(1,0,s*s,galaxy->fgpt1,galaxy->fgpt2);
-
+		RAND(j++);
 		RAND(j++);
 		if(pts>ptmax){
 			ptmax=pts;
 		    vmax=v;
 		}
 	}
+	lastn=seed;
     return 1;
 }
 
@@ -1132,21 +1138,14 @@ void StarNode::render()
 		return;
 	double r,delta,s,pts,alpha;
 	int i,j=2;
-#define NRANDS 8
-	double rvals[NRANDS];
 
 	double dns=density()*octree->density_scale;
-	//cout<<dns<<endl;
-	//if(dns<=0)
-	//	return;
+	if(dns<=0)
+		return;
 	StarTree *galaxy=(StarTree*)octree;
 	int seed=lastn;
 
 	Point v=randomize();
-
-	for (int j=0;j<NRANDS;j++)
-		rvals[j]=0.5+RAND(j);
-
 	Point mpt=v*octree->gscale;
 	double d=mpt.distance(TheScene->vpoint);
 
@@ -1156,6 +1155,10 @@ void StarNode::render()
 
     // render bg stars
 	if(galaxy->render_bg() && d > galaxy->fgfar && galaxy->bgpt1>0){
+#define NRANDS 8
+		double rvals[NRANDS];
+		for (int j=0;j<NRANDS;j++)
+			rvals[j]=0.5+RAND(j);
 		Color c=WHITE;
 		Density=Td.density=dns;
 		Td.p=v*octree->nscale;
@@ -1180,7 +1183,8 @@ void StarNode::render()
 	    double g=0.5+galaxy->bg_random*(rvals[5]-0.5); // random
 	    double h=galaxy->fg_random*(rvals[6]-0.5);
 
-		if(nd>0 && f>0.5){ // novas and dust
+		if(nd>0 && f>0.5){ // novas and dust	lastn=seed;
+
 			pts*=galaxy->nova_size*(1+2*h);
 			//alpha+=0.5;
 			sf*=pow(dns,2)*(0.5+sqrt(Radius));
@@ -1233,12 +1237,10 @@ void StarNode::render()
 		}
 
 		// render background stars
-		//glPointSize((GLfloat)pts);
 		glColor4d(c.red(),c.green(),c.blue(),alpha*c.alpha());
 
 		galaxy->bgpts+=nstars;
 		double bg_delta=delta;
-
 		glBegin(GL_POINTS);
 		for(i=0;i<galaxy->bg_density*nstars;i++){
  			v.x=mpt.x+bg_delta*RAND(j++);
@@ -1249,12 +1251,13 @@ void StarNode::render()
 		glEnd();
 	}
 	// render fg stars
-	j=2;
 	//	if(galaxy->render_fg()&& galaxy->fgpt1>0){
 	if(galaxy->render_fg() && d<galaxy->fgfar && galaxy->fgpt1>0){
-
+		lastn=0;
+		v=randomize();
+		j=2;
 		delta=octree->dispersion*size();
-		nstars=nstars<1?1:nstars;
+		//nstars=nstars<1?1:nstars;
 		galaxy->fgpts+=nstars;
 		for(i=0;i<nstars;i++){
 
@@ -1266,7 +1269,7 @@ void StarNode::render()
 
 			// calculate random star size
 
-			r=(2.5*galaxy->fg_random*RAND(j++)+0.1);
+			r=2.5*galaxy->fg_random*RAND(j++)+0.1;
 			r=r*r;
 
 			// calculate point size
@@ -1274,8 +1277,6 @@ void StarNode::render()
 			d=v.distance(TheScene->vpoint);
 			s=rampstep(LY,galaxy->fgfar,d,1,0);
 		    pts=galaxy->fgscale*rampstep(1,0,s*s,galaxy->fgpt1*r,galaxy->fgpt2);
-		    //pts=pts<0.5?0.5:pts;
-			//glPointSize((GLfloat)(pts));
 
 			// calculate color
 
@@ -1283,6 +1284,7 @@ void StarNode::render()
 		    r=r*r;
 		    int cindx=(int)(r*ncolors);
 		    cindx=(int)clamp(cindx,0,ncolors-1);
+
 		    Color c=star_colors[cindx];
 		    r=RAND(j++)+0.75;
 		    c=c.lighten(r);
@@ -1296,7 +1298,6 @@ void StarNode::render()
 		}
 	}
 	lastn=seed;
-
 }
 
 //************************************************************
@@ -1413,16 +1414,12 @@ void StarTree::draw_selpt()
 {
 	glPushAttrib(GL_CURRENT_BIT);
     Color c=Color(1,1,0);
-    //glDisable(GL_POINT_SPRITE);
     glColor3d(c.red(),c.green(),c.blue());
   	glPointSize(5.0f*fgscale);
 	glBegin(GL_POINTS);
 	glVertex3dv((double*)(&selpt));
 	glEnd();
-    //glEnable(GL_POINT_SPRITE);
-
 	glPopAttrib();
-
 }
 
 //-------------------------------------------------------------
@@ -1448,13 +1445,15 @@ void StarTree::select()
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glDisable(GL_POINT_SPRITE);
+
 	glDisable(GL_FOG);
-	glEnable(GL_BLEND);
+	glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 	glDisable(GL_POINT_SMOOTH);
-  	glPointSize(4.0f*fgscale);
+  	//glPointSize(1.0f*fgscale);
 	visit(&OctNode::select);
-
     glEnable(GL_DEPTH_TEST);
 	glPointSize(1.0f);
 	glPopAttrib();

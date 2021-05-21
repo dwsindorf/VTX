@@ -1432,6 +1432,9 @@ void Scene::move_selected()
 //-------------------------------------------------------------
 void Scene::change_view(int v)
 {
+//	if(focusobj && focusobj->type()==ID_GALAXY){
+//		v=GLOBAL;
+//	}
     if(viewtype!=v){
         set_changed_view();
         reset_stride();
@@ -1439,11 +1442,13 @@ void Scene::change_view(int v)
     else
         clr_changed_view();
 
-	vobj=viewobj;
 	if(changed_marker())
     	views->add(this);
 
 	viewtype=v;
+
+	//vobj=viewobj;
+
 	set_changed_detail();
 	if(focusobj != viewobj)
 		objects->visitAll(&Object3D::clr_groups);
@@ -1493,6 +1498,7 @@ void Scene::change_view(int v)
 	    set_changed_object();
 	    set_changed_position();
 	    focusobj->move_focus(selm);
+	    viewobj=focusobj;
 	}
 	else if(selobj){
 		viewobj=selobj;

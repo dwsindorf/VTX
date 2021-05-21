@@ -1322,35 +1322,25 @@ void View::head_forward()
 	    move_forward();
 }
 
-void View::auto_delv()
-{
-	if(minr){
-		/*
-		if(radius<=minr && !updir()){ // on surface
-			radius=minr;
-			delv=0;
-			set_up(); // bounce
-		}
-		else
-		*/
+void View::auto_delv() {
+	if (minr) {
 		//cout << "r/m:"<<radius/minr<< " exp:"<< (1-exp(-(radius-minr)/minr))/FEET << endl;
-			delv=zoom*vstride*((1.0-exp(-(radius-minr)/minr)))+minh;
-			if(radius<minr){
-				radius = minr;
-				delv = 0;
-			}
-	}
-	else
-	    //delv=zoom*vstride*rampstep(0,maxr,radius,0.00001*maxr,0.1*maxr);
-	    delv=zoom*vstride;
+		delv = zoom * vstride * ((1.0 - exp(-(radius - minr) / minr))) + minh;
+		//cout<<" vstride:"<<vstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<endl;
+		if (radius < minr) {
+			radius = minr;
+			delv = 0;
+		}
+	} else
+		delv = zoom * vstride;
 }
 
 void View::auto_delh()
 {
 	if(minr && autoh())
 		delh=zoom*hstride*angle_change*(1.0-exp(-(radius-minr)/minr)+1000*minh)/minr;
-	//else
-	 //   delh=zoom*hstride*angle_change;
+	//cout<<" hstride:"<<hstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<endl;
+
 }
 
 void View::reset_stride()

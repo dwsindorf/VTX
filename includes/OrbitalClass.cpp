@@ -11,6 +11,8 @@
 #include "GLSLMgr.h"
 #include "AdaptOptions.h"
 #include "FileUtil.h"
+#include "UniverseModel.h"
+
 
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
@@ -421,6 +423,7 @@ bool Orbital::randomize()
 	if(!canRandomize())
 		return false;
 	rseed=getRandValue();
+
 	invalidate();
 	return true;
  }
@@ -555,6 +558,27 @@ bool Orbital::containsViewobj(){
 			return true;
 	}
 	return false;
+}
+
+NodeIF *Orbital::getInstance(int type){
+	char sbuff[1024];
+	sbuff[0]=0;
+	NodeIF  *newobj=0;
+
+	LinkedList<ModelSym*>flist;
+	TheScene->model->getFileList(type,flist);
+	double rval=URAND(lastn);
+	if(flist.size){
+		int menu_id = fabs(rval) * flist.size;
+		ModelSym* sym=flist[menu_id];
+		TheScene->model->getFullPath(sym,sbuff);
+		newobj=TheScene->open_node(this,sbuff);
+	}
+	else{
+		TheScene->model->getPrototype(getParent(),type,sbuff);
+		newobj=TheScene->parse_node(sbuff);
+	}
+	return newobj;
 }
 
 //************************************************************
@@ -1127,8 +1151,9 @@ void Galaxy::move_focus(Point &selm)
 int Galaxy::selection_pass()
 {
     clr_selected();
+
     if(TheScene->far_pass()){
-     	if(tree->inside())
+     	if(TheScene->containsViewobj(this) && tree->inside())
         	set_selected();
     }
     return selected();
@@ -1188,13 +1213,11 @@ void Galaxy::set_ref()
 //-------------------------------------------------------------
 void Galaxy::select()
 {
-	//if(!TheScene->containsViewobj(this))
-	//	return;
  	if(isEnabled() && TheScene->far_pass()){
 		set_ref();
 		set_point();
 		if(included()){
-			GLSLMgr::setFBORenderPass();
+			//GLSLMgr::setFBORenderPass();
 			//glUseProgramObjectARB(0);
 		    //set_tilt();
 		    //set_rotation();
@@ -1383,8 +1406,12 @@ void Galaxy::render_object()
 //-------------------------------------------------------------
 void Galaxy::init_view()
 {
+	if(TheScene->focusobj==this){
+		newSubSystem();
+		return;
+	}
+
 	TheScene->gndlvl=0;
-	//TheScene->height=0;
 	TheScene->minr=0.0;
 	TheScene->maxr=size;
 	TheScene->spoint=Point(0,0,0);
@@ -1394,7 +1421,6 @@ void Galaxy::init_view()
 	TheScene->zoom=1;
 	//TheScene->radius=TheScene->height=0;
 	if(TheScene->changed_view()){
-
 		if(!TheScene->changed_position()){
 			if(tree->inside())
 				TheScene->gstride=TheScene->vstride=0.1*LY;
@@ -1412,6 +1438,53 @@ void Galaxy::init_view()
 	}
 }
 
+//-------------------------------------------------------------
+// Galaxy::newSubSystem()     make a new star system
+//-------------------------------------------------------------
+void Galaxy::newSubSystem()
+{
+	void rebuild_scene_tree();
+	void select_object(NodeIF *n);
+	cout << "new star"<<endl;
+	int ssave=lastn;
+
+	char tmp[256];
+	TheScene->model->getPrototype(0,TN_SYSTEM,tmp);
+	System  *system=TheScene->parse_node(tmp);
+	system->origin=TheScene->selm;
+	Point p=TheScene->selm/LY;
+	p.print();
+	double nseed=Random(p);
+	system->setRseed(nseed);
+
+	//cout <<lastn<<" "<<system->getRseed()<<endl;
+
+	double ps=pow(URAND(lastn),3);
+	int nstars=1+ps*3;
+	double radius=0;
+	double phase=0;
+
+	for(int i=0;i<nstars;i++){
+		Star *star=getInstance(TN_STAR);
+		star->setRseed(URAND(lastn++));
+		star->orbit_radius=radius*star->size*(1+URAND(lastn++));
+		star->orbit_phase=phase;
+		phase+=360.0/nstars;
+		radius+=5;
+		lastn++;
+		system->addChild(star);
+	}
+	addChild(system);
+	TheScene->regroup();
+    invalidate();
+    TheScene->rebuild_all();
+    rebuild_scene_tree();
+    select_object(system);
+
+    TheScene->focusobj=system;
+    system->init_view();
+    lastn=ssave;
+}
 //------------------------------------------------------------
 // Galaxy::set_vars() set local variables
 //-------------------------------------------------------------
@@ -1622,6 +1695,9 @@ NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
 	return m;
 }
 
+void System::newSubSystem(){
+
+}
 //************************************************************
 // Spheroid class
 //************************************************************

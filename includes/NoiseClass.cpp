@@ -234,14 +234,9 @@ double Random(double x, double y, double z)
 //-------------------------------------------------------------
 // Random()	return random number
 //-------------------------------------------------------------
-Point Random(Point pnt)
+double Random(Point p)
 {
-	int n;
-	Point p=pnt*43758.5453;
-	p.x=PERM(p.x);
-	p.y=PERM(p.y);
-	p.z=PERM(p.z);
-	return p;
+	return Random(p.x,p.y,p.z);
 }
 
 //-------------------------------------------------------------

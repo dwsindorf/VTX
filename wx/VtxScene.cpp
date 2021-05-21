@@ -101,6 +101,14 @@ static int attributeList[] = {
 };
 wxStopWatch VtxScene::stopwatch;
 static int last_cnt=0;
+
+void rebuild_scene_tree(){
+	sceneDialog->rebuildObjectTree();
+}
+void select_object(NodeIF *n){
+	sceneDialog->selectObject(n);
+}
+
 //-------------------------------------------------------------
 // VtxScene::VtxScene() constructor
 //-------------------------------------------------------------

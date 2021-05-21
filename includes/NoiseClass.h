@@ -19,6 +19,7 @@ class Color;
 extern Noise TheNoise;
 
 extern double Noise3(Point);
+extern double Random(Point);
 extern double Random(double);
 extern double Random(double,double);
 extern double Random(double,double,double);
@@ -39,7 +40,9 @@ extern double rands[];
 extern int lastn;
 #define PERM(x) 	perm[((int)(x))&PMASK]
 #define RAND(x) 	(rands[PERM((x)+lastn)])
-#define PRAND(p)  (rands[lastn=PERM(p.z+PERM(p.y+PERM(p.x)))])
+#define URAND(x) 	(rands[PERM((x)+lastn)]+0.5)
+
+#define PRAND(p)  (rands[PERM(p.z+PERM(p.y+PERM(p.x)))+lastn])
 
 // 3rd order smoothstep    f'=0 @x=1, x=0
 #define SCURVE1(t) (t*t*(3.0 - 2.0*t) )

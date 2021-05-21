@@ -53,9 +53,10 @@ protected:
 	Color      _color;
     char name_str[maxstr];
     static LinkedList<double>seedlist;
+	double rseed;
+
 public:
 	ExprMgr exprs;
-	double rseed;
 	double rot_angle;
 	double orbit_angle;
 	double rot_phase;
@@ -130,6 +131,10 @@ public:
     void setOrbitFrom(Orbital *prev);
     virtual bool containsViewobj();
     virtual bool isViewobj();
+    virtual NodeIF *getInstance(int t);
+	virtual void setRseed(double s) {rseed=s;}
+	virtual double getRseed() {return rseed;}
+
 
 
 	// NodeIF methods
@@ -256,6 +261,7 @@ public:
 	bool setProgram();
 	void set_vars();
 	void get_vars();
+	void newSubSystem();
 };
 
 //************************************************************
@@ -280,7 +286,7 @@ public:
 	int scale(double&n, double&f);
 	int select_pass();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
-
+	void newSubSystem();
 };
 
 //************************************************************

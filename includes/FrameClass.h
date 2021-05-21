@@ -21,7 +21,16 @@ public:
 	double time;
 	double delt;
 	double fov;
-	double speed;
+	double gstride;
+
+	double vstride;
+	double hstride;
+	double zoom;
+	double minh;
+	double minr;
+	double angle_change;
+	double radius;
+
 	Point  point;
 	char   *msg;
 	ObjectNode  *vobj;

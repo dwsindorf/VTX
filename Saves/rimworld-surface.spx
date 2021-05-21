@@ -76,6 +76,7 @@ Scene() {
 		}
 		Galaxy(5000) {
 			color.mix=0.26388;
+			far.distance=2.58241e+08;
 			far.size=0.6944;
 			near.size=2.0139;
 			nova.density=0.04166;
