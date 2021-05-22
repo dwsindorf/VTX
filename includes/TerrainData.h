@@ -319,6 +319,7 @@ public:
 	TNpoint *tnpoint;
 	tpinfo_u info;
 	int id;
+	int ntexs;
 
 	static int nid;
 	static int tid;

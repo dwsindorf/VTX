@@ -270,6 +270,7 @@ TerrainProperties::TerrainProperties(int t)
 	info.l=0;
 	tncolor=0;
 	tnpoint=0;
+	ntexs=0;
 }
 TerrainProperties::~TerrainProperties(){
 	textures.reset();

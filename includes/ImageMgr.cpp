@@ -475,7 +475,7 @@ Color Image::aveColor(){
 		}
 	}
 	ave=ave/size()/255.0;
-	return Color(ave.red(),ave.green(),ave.blue(),ave.alpha());
+	return Color(ave.red(),ave.green(),ave.blue());
 }
 //-------------------------------------------------------------
 // Image::addAlphaToImage()    get alpha from aux. RGB image

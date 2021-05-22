@@ -40,7 +40,7 @@ ViewFrame::ViewFrame(View *v)
 	zoom=v->zoom;
 	minh=v->minh;
 	minr=v->minr;
-	angle_change=v->angle_change;
+	astride=v->astride;
 	radius=v->radius;
 
 	msg=0;
@@ -67,7 +67,7 @@ ViewFrame::ViewFrame(ViewFrame *v)
 	zoom=v->zoom;
 	minh=v->minh;
 	minr=v->minr;
-	angle_change=v->angle_change;
+	astride=v->astride;
 	radius=v->radius;
 
 	msg=0;
@@ -138,7 +138,7 @@ void ViewFrame::save(View *v)
 	zoom=v->zoom;
 	minh=v->minh;
 	minr=v->minr;
-	angle_change=v->angle_change;
+	astride=v->astride;
 	radius=v->radius;
 
 	fov=v->fov;
@@ -176,7 +176,7 @@ void ViewFrame::restore(View *v)
 	v->zoom=zoom;
 	v->minh=minh;
 	v->minr=minr;
-	v->angle_change=angle_change;
+	v->astride=astride;
 	v->radius=radius;
 }
 
@@ -239,6 +239,19 @@ void ViewFrame::save(FILE *fp,FrameMgr *mgr)
 		break;		
 	}
 	fprintf(fp,"%stime=%g;\n",tabs,time);
+
+	if(vstride)
+		fprintf(fp,"%svstride=%g;\n",tabs,vstride);
+	if(hstride)
+		fprintf(fp,"%shstride=%g;\n",tabs,hstride);
+	if(astride)
+		fprintf(fp,"%sastride=%g;\n",tabs,astride);
+	if(zoom)
+		fprintf(fp,"%szoom=%g;\n",tabs,zoom);
+	if(minh)
+		fprintf(fp,"%sminh=%g;\n",tabs,minh);
+	if(minr)
+		fprintf(fp,"%sminr=%g;\n",tabs,minr);
 
 	if(heading)
 		fprintf(fp,"%sheading=%g;\n",tabs,heading);
@@ -346,6 +359,21 @@ void ViewFrame::save(FILE *fp,View *v,FrameMgr *mgr)
 		else
 			sprintf(tmp+strlen(tmp),"%sspeed=%g;\n",tabs,gstride);
 	}
+	if(NEQ(vstride , v->vstride))
+		sprintf(tmp+strlen(tmp),"%svstride=%g;\n",tabs,vstride);
+	if(NEQ(hstride , v->hstride))
+		sprintf(tmp+strlen(tmp),"%shstride=%g;\n",tabs,hstride);
+	if(NEQ(astride , v->astride))
+		sprintf(tmp+strlen(tmp),"%sastride=%g;\n",tabs,astride);
+	if(NEQ(zoom , v->zoom))
+		sprintf(tmp+strlen(tmp),"%szoom=%g;\n",tabs,zoom);
+	if(NEQ(minh , v->minh))
+		sprintf(tmp+strlen(tmp),"%sminh=%g;\n",tabs,minh);
+	if(NEQ(minr , v->minr))
+		sprintf(tmp+strlen(tmp),"%sminr=%g;\n",tabs,minr);
+	if(NEQ(radius , v->radius))
+		sprintf(tmp+strlen(tmp),"%sradius=%g;\n",tabs,radius);
+
 	if(msg){
 		sprintf(tmp+strlen(tmp),"%smessage=\"%s\";\n",tabs,msg);
 	}

@@ -287,6 +287,7 @@ public:
 	int select_pass();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	void newSubSystem();
+	bool randomize();
 };
 
 //************************************************************

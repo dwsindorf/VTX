@@ -133,6 +133,8 @@ public:
 	double hstride;
 	double vstride;
 	double gstride;
+	double astride;
+
 	double speed;
 	double view_step;
 	ObjectNode   *vobj;
@@ -184,7 +186,6 @@ public:
 	double  minr,maxr,minh;
 	double  delh,delv;
 	double  size;
-	double	angle_change;
 	double  wscale;
 	double  height;   // view ht above surface
 	double  elevation;// view ht above "sea level"
@@ -399,9 +400,9 @@ public:
 	void adjust_view();
 	void setMatrix();
 	void set_mode(int);
-	void set_small_angle()	{	angle_change=10.0;}
-	void set_rt_angle()		{	angle_change=90.0;}
-	int  rt_angle()			{	return angle_change==90.0 ? 1:0;}
+	void set_small_angle()	{	astride=10.0;}
+	void set_rt_angle()		{	astride=90.0;}
+	int  rt_angle()			{	return astride==90.0 ? 1:0;}
 	int pixels()			{	return viewport[2]*viewport[3];}
 	int swidth()			{	return viewport[3];}
 	int sheight()			{	return viewport[2];}

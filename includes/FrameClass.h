@@ -28,7 +28,7 @@ public:
 	double zoom;
 	double minh;
 	double minr;
-	double angle_change;
+	double astride;
 	double radius;
 
 	Point  point;

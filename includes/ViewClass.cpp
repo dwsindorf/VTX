@@ -107,7 +107,7 @@ void View::reset()
 	eye=Point(0,0,1);
 	normal=Point(0,1,0);
 	center=Point(0,0,1);
-	angle_change=1.0;
+	astride=1.0;
 	fov=dflt_fov;
 	view_step=2.0;
 	zoom=vstride=hstride=1;
@@ -152,6 +152,8 @@ void View::reset(View *v)
 	zoom=v->zoom;
 	hstride=v->hstride;
 	vstride=v->vstride;
+	astride=v->astride;
+
 	gpoint=v->gpoint;
 	spoint=v->spoint;
 	vpoint=v->vpoint;
@@ -1061,7 +1063,7 @@ void View::left()
 {
 	switch(mode){
 	case MOVE:
-	    if(!automv()&&sidestep() && angle_change!=90)
+	    if(!automv()&&sidestep() && astride!=90)
 			move_left();
 		else
 		    head_left();
@@ -1076,7 +1078,7 @@ void View::right()
 {
 	switch(mode){
 	case MOVE:
-	    if(!automv()&&sidestep() && angle_change!=90)
+	    if(!automv()&&sidestep() && astride!=90)
 		    move_right();
 		else
 		    head_right();
@@ -1089,25 +1091,25 @@ void View::right()
 
 void View::scan_left()
 {
-	view_skew=P360(view_skew-angle_change);
+	view_skew=P360(view_skew-astride);
 	set_moved();
 }
 
 void View::scan_right()
 {
-	view_skew=P360(view_skew+angle_change);
+	view_skew=P360(view_skew+astride);
 	set_moved();
 }
 
 void View::look_left()
 {
-	view_angle=P360(view_angle+angle_change);
+	view_angle=P360(view_angle+astride);
 	set_moved();
 }
 
 void View::look_right()
 {
-	view_angle=P360(view_angle-angle_change);
+	view_angle=P360(view_angle-astride);
 	set_moved();
 }
 
@@ -1126,13 +1128,13 @@ void View::look_backward()
 
 void View::look_up()
 {
-	view_tilt=P360(view_tilt+angle_change);
+	view_tilt=P360(view_tilt+astride);
 	set_moved();
 }
 
 void View::look_down()
 {
-	view_tilt=P360(view_tilt-angle_change);
+	view_tilt=P360(view_tilt-astride);
 	set_moved();
 }
 void View::adjust_view()
@@ -1221,10 +1223,10 @@ void View::move_forward()
 		phi+=d*sin(RPD*heading);
 		radius+=delv*sin(RPD*pitch);
 		adjust_view();
-		if(view_skew>=angle_change)
-		    view_skew-=angle_change;
-		else if(view_skew<=-angle_change)
-		    view_skew+=angle_change;
+		if(view_skew>=astride)
+		    view_skew-=astride;
+		else if(view_skew<=-astride)
+		    view_skew+=astride;
 		auto_stride();
 	}
 	set_forward();
@@ -1274,10 +1276,10 @@ void View::move_left()
 
 void View::head_left()
 {
-	heading+=angle_change;
+	heading+=astride;
 	heading=P360(heading);
 	if(automv() && !cartesion())
-		view_skew+=2*angle_change;
+		view_skew+=2*astride;
 	view_skew=P360(view_skew);
 	auto_stride();
 	set_changed_position();
@@ -1287,10 +1289,10 @@ void View::head_left()
 
 void View::head_right()
 {
-	heading-=angle_change;
+	heading-=astride;
 	heading=P360(heading);
 	if(automv() && !cartesion())
-	    view_skew-=2*angle_change;
+	    view_skew-=2*astride;
 	view_skew=P360(view_skew);
 	auto_stride();
 	set_changed_position();
@@ -1300,7 +1302,7 @@ void View::head_right()
 
 void View::head_up()
 {
-	pitch+=angle_change;
+	pitch+=astride;
 	set_moved();
 	set_changed_marker();
 	set_up();
@@ -1308,7 +1310,7 @@ void View::head_up()
 
 void View::head_down()
 {
-	pitch-=angle_change;
+	pitch-=astride;
 	set_moved();
 	set_changed_marker();
 	set_down();
@@ -1338,9 +1340,8 @@ void View::auto_delv() {
 void View::auto_delh()
 {
 	if(minr && autoh())
-		delh=zoom*hstride*angle_change*(1.0-exp(-(radius-minr)/minr)+1000*minh)/minr;
+		delh=zoom*hstride*(1.0-exp(-(radius-minr)/minr)+1000*minh)/minr;
 	//cout<<" hstride:"<<hstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<endl;
-
 }
 
 void View::reset_stride()

@@ -13,6 +13,8 @@
 #include "FileUtil.h"
 #include "UniverseModel.h"
 
+extern	void rebuild_scene_tree();
+extern	void select_object(NodeIF *n);
 
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
@@ -1443,37 +1445,19 @@ void Galaxy::init_view()
 //-------------------------------------------------------------
 void Galaxy::newSubSystem()
 {
-	void rebuild_scene_tree();
-	void select_object(NodeIF *n);
-	cout << "new star"<<endl;
+	cout << "new system"<<endl;
 	int ssave=lastn;
 
 	char tmp[256];
 	TheScene->model->getPrototype(0,TN_SYSTEM,tmp);
 	System  *system=TheScene->parse_node(tmp);
 	system->origin=TheScene->selm;
-	Point p=TheScene->selm/LY;
-	p.print();
-	double nseed=Random(p);
+
+	double nseed=Random(origin);
 	system->setRseed(nseed);
 
-	//cout <<lastn<<" "<<system->getRseed()<<endl;
+	system->newSubSystem();
 
-	double ps=pow(URAND(lastn),3);
-	int nstars=1+ps*3;
-	double radius=0;
-	double phase=0;
-
-	for(int i=0;i<nstars;i++){
-		Star *star=getInstance(TN_STAR);
-		star->setRseed(URAND(lastn++));
-		star->orbit_radius=radius*star->size*(1+URAND(lastn++));
-		star->orbit_phase=phase;
-		phase+=360.0/nstars;
-		radius+=5;
-		lastn++;
-		system->addChild(star);
-	}
 	addChild(system);
 	TheScene->regroup();
     invalidate();
@@ -1618,7 +1602,7 @@ void System::set_vars()
 void System::init_view()
 {
 	TheScene->maxr=size;
-	TheScene->minr=0.0;
+	TheScene->minr=10;
 	TheScene->minh=0.01;
 	TheScene->scale(0.001,size);
 	TheScene->zoom=1;
@@ -1695,9 +1679,43 @@ NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
 	return m;
 }
 
+//-------------------------------------------------------------
+// System::randomize() generate a new random star system
+//-------------------------------------------------------------
+bool System::randomize(){
+	Orbital::randomize();
+	lastn=rseed*123457;
+	newSubSystem();
+	TheScene->set_changed_detail();
+	TheScene->rebuild_all();
+	TheScene->regroup();
+    rebuild_scene_tree();
+	return true;
+}
+//-------------------------------------------------------------
+// System::newSubSystem() generate a new random star system
+//-------------------------------------------------------------
 void System::newSubSystem(){
 
+	children.free();
+
+	double ps=pow(URAND(lastn),2);
+	int nstars=1+ps*3;
+	double radius=0;
+	double phase=0;
+	for(int i=0;i<nstars;i++){
+		Star *star=getInstance(TN_STAR);
+		star->setRseed(URAND(lastn++));
+		star->size=2*star->size*(1+1.5*RAND(lastn++));
+		star->orbit_radius=radius*star->size*(1+URAND(lastn++));
+		star->orbit_phase=phase;
+		phase+=360.0/nstars;
+		radius+=5;
+		lastn++;
+		addChild(star);
+	}
 }
+
 //************************************************************
 // Spheroid class
 //************************************************************

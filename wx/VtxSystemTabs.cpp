@@ -43,9 +43,12 @@ EVT_UPDATE_UI(TABS_ENABLE,VtxSystemTabs::OnUpdateEnable)
 
 EVT_MENU(OBJ_VIEWOBJ,VtxSystemTabs::OnViewObj)
 EVT_MENU(OBJ_DELETE,VtxSystemTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxSystemTabs::OnSave)
+//EVT_MENU(OBJ_SAVE,VtxSystemTabs::OnSave)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSystemTabs::OnAddItem)
+
+SET_FILE_EVENTS(VtxSystemTabs)
+
 
 END_EVENT_TABLE()
 
@@ -101,9 +104,10 @@ int VtxSystemTabs::showMenu(bool expanded){
 	wxMenu menu;
 
 	menu.AppendCheckItem(OBJ_VIEWOBJ,wxT("Set View"));
+
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
+	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=sceneDialog->getAddMenu(object());
 
@@ -111,6 +115,7 @@ int VtxSystemTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
 	PopupMenu(&menu);
 	return menu_action;
 }

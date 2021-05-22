@@ -240,13 +240,11 @@ void TNmap::eval()
 			Td.set_flag(MULTILAYER);
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
-
 			layer->base->eval();
+			Td.tp->ntexs=Td.tp->textures.size;
 
 			if(Td.tp->textures.size && !Td.tp->has_color())
 				Td.tp->color=Td.tp->textures[0]->aveColor;
-
-			//Td.tp->color.print();
 
 			Td.tp->set_color(true);
 
@@ -255,7 +253,6 @@ void TNmap::eval()
 				break;
 			if(layer->isEnabled())
 				Td.add_id();
-
 		}
 		if(!in_map)
 			S0.clr_flag(CLRTEXS);
@@ -435,10 +432,10 @@ void TNmap::eval()
     //    - replace texture with texture average color
     //    - blend colors from adjacent layers
     if(Td.margin<1){
-		if(Td.zlevel[0].properties[1]->textures.size){
-			// first texture only
-			// TODO: better algorithm to pick best texture of combine texture stack
-			FColor  avec=Td.zlevel[0].properties[1]->textures[0]->aveColor;
+    	int id=1+Td.zlevel[0].id(); // get properties for top layer
+		if(Td.zlevel[0].properties[id]->ntexs){
+	    	int tid=Td.zlevel[0].properties[id]->ntexs-1; // top texture in layer
+			FColor  avec=Td.zlevel[0].properties[id]->textures[tid]->aveColor;
 			Color c=Color(avec.red(),avec.green(),avec.blue());
 			Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
 		}
@@ -462,7 +459,7 @@ void TNmap::eval()
 		Td.zlevel[0].set_cvalid();
 		Td.zlevel[1].set_cvalid();
 	}
-	//Td.zlevel[0].set_cvalid();
+	Td.zlevel[0].set_cvalid();
 
 	S0.copy(Td.zlevel[0]); // return top level
 
