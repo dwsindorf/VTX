@@ -115,7 +115,7 @@ class VtxSceneDialog : public wxFrame
 	wxTreeItemId getFirstChild(wxTreeItemId pid);
 public:
 	LinkedList<ModelSym*> add_list;
-	LinkedList<ModelSym*> open_list;
+	LinkedList<ModelSym*> replace_list;
 
 	VtxSceneDialog(wxWindow *parent,
 			wxWindowID id= wxID_ANY,
@@ -147,7 +147,7 @@ public:
 	wxMenu *getFileMenu(ModelSym*,int &i);
 	void setModelSym(ModelSym*);
 
-	wxMenu *getOpenMenu(wxMenu &menu,NodeIF *);
+	wxMenu *getReplaceMenu(wxMenu &menu,NodeIF *);
 	wxMenu *getRemoveMenu(NodeIF *);
 	wxMenu *getAddMenu(NodeIF *);
 	void AddFileMenu(wxMenu &menu,NodeIF *object);

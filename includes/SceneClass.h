@@ -319,6 +319,8 @@ public:
 	NodeIF *addAfter(NodeIF *,NodeIF *);
 	NodeIF *removeChild(NodeIF *c);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+    NodeIF *getInstance(int t);
+
 
 	int typeValue()							{ return ID_SCENE;}
 	const char *typeName()					{ return "Scene";}

@@ -427,6 +427,7 @@ bool Orbital::randomize()
 	rseed=getRandValue();
 
 	invalidate();
+	visitChildren(&Object3D::invalidate);
 	return true;
  }
 
@@ -563,24 +564,7 @@ bool Orbital::containsViewobj(){
 }
 
 NodeIF *Orbital::getInstance(int type){
-	char sbuff[1024];
-	sbuff[0]=0;
-	NodeIF  *newobj=0;
-
-	LinkedList<ModelSym*>flist;
-	TheScene->model->getFileList(type,flist);
-	double rval=URAND(lastn);
-	if(flist.size){
-		int menu_id = fabs(rval) * flist.size;
-		ModelSym* sym=flist[menu_id];
-		TheScene->model->getFullPath(sym,sbuff);
-		newobj=TheScene->open_node(this,sbuff);
-	}
-	else{
-		TheScene->model->getPrototype(getParent(),type,sbuff);
-		newobj=TheScene->parse_node(sbuff);
-	}
-	return newobj;
+	return TheScene->getInstance(type);
 }
 
 //************************************************************
@@ -1684,12 +1668,12 @@ NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
 //-------------------------------------------------------------
 bool System::randomize(){
 	Orbital::randomize();
-	lastn=rseed*123457;
-	newSubSystem();
-	TheScene->set_changed_detail();
-	TheScene->rebuild_all();
-	TheScene->regroup();
-    rebuild_scene_tree();
+//	lastn=rseed*123457;
+//	newSubSystem();
+//	TheScene->set_changed_detail();
+//	TheScene->rebuild_all();
+//	TheScene->regroup();
+//    rebuild_scene_tree();
 	return true;
 }
 //-------------------------------------------------------------
@@ -2231,9 +2215,12 @@ void Spheroid::adapt_object()
 	terrain.init();
 	terrain.setAdaptMode();
 	set_wscale();
-	pushSeed();
+	//cout<<name()<<" adapt_object seed:"<<rseed<<endl;
+	if(rseed)
+		pushSeed();
 	map->adapt();
-	popSeed();
+	if(rseed)
+		popSeed();
 }
 
 //-------------------------------------------------------------
@@ -3374,13 +3361,14 @@ void Shell::render_object()
 //-------------------------------------------------------------
 void Shell::adapt_object()
 {
-	set_geometry();
-	exprs.eval();
-	terrain.init();
-	terrain.setAdaptMode();
-	set_wscale();
-
-	map->adapt();
+	Spheroid::adapt_object();
+//	set_geometry();
+//	exprs.eval();
+//	terrain.init();
+//	terrain.setAdaptMode();
+//	set_wscale();
+//
+//	map->adapt();
 }
 
 //-------------------------------------------------------------

@@ -137,7 +137,7 @@ public:
 		NodeIF *p=getParent();
 		if(p)
 			p->replaceChild(this,n);
-		return this;
+		return n;
 	}
 	virtual bool hasChild(NodeIF *n)			{ return false;}
 

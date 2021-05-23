@@ -1441,23 +1441,10 @@ NodeIF *TNfog::replaceNode(NodeIF *c){
 		return 0;
 	if(c->typeValue()!=typeValue())
 		return 0;
-	//TNfunc *newobj=(TNfunc*)c;
-	//newobj->right=right;
-	//if(right)
-	//	right->setParent(newobj);
-	//NodeIF *p=getParent();
-	//if(p)
-	//	p->replaceChild(this,newobj);
-
-	//if(!TNfunc::replaceNode(c))
-	//	return 0;
-
 	TNfog *fog=(TNfog*)c;
 	delete left; // delete old expr
 	left=(TNarg*)fog->left;
 	TNarg *args=(TNarg*)left; // first arg (noise expr)
-	//if(!args)
-	//	return 0;
 
 	int n=getargs(args,arglist,2);
 

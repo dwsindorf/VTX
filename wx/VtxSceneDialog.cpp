@@ -260,23 +260,24 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	if((menu_choice & TABS_ADD) || (menu_choice & TABS_REPLACE)){
 		bool rand=false;
 		char sbuff[1024];
-
-		if(menu_choice & TABS_ADD){
-			sym=add_list[menu_id];
-
-			wxString name(sym->name());
-			if(!sym->isFile() && name == "<Random>"){
-				LinkedList<ModelSym*>flist;
-				TheScene->model->getFileList(sym->value,flist);
-				int start=menu_id + 1;
-				int end=start+flist.size;
-				menu_id = start + ( std::rand() % ( end - start));
-				sym=add_list[menu_id];
-				rand_flag=true;
-			}
-		}
+		LinkedList<ModelSym*> *reflist=0;
+		if(menu_choice & TABS_ADD)
+			reflist=&add_list;
 		else
-			sym=open_list[menu_id];
+			reflist=&replace_list;
+		LinkedList<ModelSym*> &list=*reflist;
+		sym=list[menu_id];
+		wxString name(sym->name());
+		if(!sym->isFile() && name == "<Random>"){
+			LinkedList<ModelSym*>flist;
+			TheScene->model->getFileList(sym->value,flist);
+			int start=menu_id + 1;
+			int end=start+flist.size;
+			menu_id = start + ( std::rand() % ( end - start));
+			sym=list[menu_id];
+			rand_flag=true;
+		}
+
 		if(sym){
 			sbuff[0]=0;
 			if(sym->isFile()){
@@ -318,7 +319,6 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	case TABS_REPLACE:
 		if(newobj){
 			replaceSelected(newobj);
-			//setNodeName(sym->name());
 		}
 		break;
 	case TABS_DELETE:
@@ -340,7 +340,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		break;
 	}
 	add_list.free();
-	open_list.free();
+	replace_list.free();
 	TheScene->unsuspend();
 }
 
@@ -366,7 +366,7 @@ bool VtxSceneDialog::setTabs(TreeNode *new_select){
 // VtxSceneDialog::removeMenuFile() remove menu item from file system
 //-------------------------------------------------------------
 void VtxSceneDialog::removeMenuFile(int menu_id){
-	ModelSym* sym=open_list[menu_id];
+	ModelSym* sym=replace_list[menu_id+2]; // skip over simple and random
 	if(sym->isFile()){
 		char sbuff[1024];
 		sbuff[0]=0;
@@ -711,12 +711,14 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 	bool expanded=treepanel->IsExpanded(item);
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
-    oldobj->replaceNode(newobj);
+
+    newobj=oldobj->replaceNode(newobj);
     int type=newobj->getFlag(TN_TYPES);
 	TheScene->regroup();
-	//oldobj->invalidate();
     TheScene->rebuild_all();
     rebuildObjectTree();
+
+	//cout<<" newobj:"<<newobj<<" oldobj:"<<oldobj<<endl;
 
     selectObject(newobj);
     item=treepanel->GetSelection();
@@ -820,10 +822,12 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 
 	if(n==node){
 		selectedId=parent;
-//		cout << node->typeName();
-//		if(strlen(tnode->label()))
-//			cout <<"<"<<tnode->label() <<">";
-//		cout<<endl;
+#ifdef DEBUG_SELECT
+		cout << node->typeName();
+		if(strlen(tnode->label()))
+			cout <<"<"<<tnode->label() <<">";
+		cout<<endl;
+#endif
 		treepanel->SelectItem(selectedId);
 		treepanel->EnsureVisible(selectedId);
 		return;
@@ -951,7 +955,7 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 //-------------------------------------------------------------
 // VtxSceneDialog::getOpenMenu()
 //-------------------------------------------------------------
-wxMenu *VtxSceneDialog::getOpenMenu(wxMenu &menu,NodeIF *obj){
+wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
 	menu.Append(TABS_SAVE,wxT("Save.."));
@@ -959,17 +963,30 @@ wxMenu *VtxSceneDialog::getOpenMenu(wxMenu &menu,NodeIF *obj){
 	menu.Append(TABS_RANDOMIZE, wxT("Randomize"));
 	menu.Append(TABS_DEFAULT, wxT("Default"));
 	menu.AppendSeparator();
+	int i=0;
+
+	submenu->Append(TABS_REPLACE|i++,"Simple");
+
+	submenu->AppendSeparator();
+
+	replace_list.free();
 
 	LinkedList<ModelSym*>flist;
 	int type=obj->getFlag(TN_TYPES);
+
+	ModelSym* sym=TheScene->model->getObjectSymbol(type);
+	replace_list.add(sym);
 	TheScene->model->getFileList(type,flist);
+
 	if(flist.size!=0){
-		int i=0;
-		open_list.free();
-		open_list.ss();
+		replace_list.ss();
 		flist.ss();
+		replace_list.add(new ModelSym("<Random>",type));
+
+		submenu->Append(TABS_REPLACE|i++,"<Random>");
+
 		while((fsym=flist++)>0){
-			open_list.add(fsym);
+			replace_list.add(fsym);
 			submenu->Append(TABS_REPLACE|i++,fsym->name());
 		}
 	}
@@ -980,15 +997,16 @@ wxMenu *VtxSceneDialog::getOpenMenu(wxMenu &menu,NodeIF *obj){
 //-------------------------------------------------------------
 wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 	int i=0;
-//	open_list.free();
-	open_list.ss();
+	replace_list.ss();
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
-
-	while((fsym=open_list++)>0){
+	// skip over simple and random options
+	replace_list++;
+	replace_list++;
+	while((fsym=replace_list++)>0){
 		submenu->Append(TABS_REMOVE|i++,fsym->name());
 	}
-	open_list.ss();
+	replace_list.ss();
 	return submenu;
 }
 
@@ -1026,14 +1044,12 @@ wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 // VtxSceneDialog::AddFileMenu()
 //-------------------------------------------------------------
 void VtxSceneDialog::AddFileMenu(wxMenu &menu,NodeIF *object){
-	//menu.Append(TABS_SAVE,wxT("Save.."));
-	wxMenu *open_menu=getOpenMenu(menu,object);
+	wxMenu *open_menu=getReplaceMenu(menu,object);
 	LinkedList<ModelSym*>flist;
 	int type=object->getFlag(TN_TYPES);
 	TheScene->model->getFileList(type,flist);
 
 	if(flist.size>0){
-		//menu.AppendSeparator();
 		menu.AppendSubMenu(open_menu,"Replace with..");
 		wxMenu *remove_menu=getRemoveMenu(object);
 		menu.AppendSubMenu(remove_menu,"Remove file..");

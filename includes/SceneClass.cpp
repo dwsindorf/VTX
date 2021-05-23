@@ -300,6 +300,30 @@ void Scene::setRandomSeed()
 }
 
 //-------------------------------------------------------------
+// Scene::getInstance() return prototype or randomly selected object
+//-------------------------------------------------------------
+NodeIF *Scene::getInstance(int type){
+	char sbuff[1024];
+	sbuff[0]=0;
+	NodeIF  *newobj=0;
+
+	LinkedList<ModelSym*>flist;
+	model->getFileList(type,flist);
+	double rval=URAND(lastn);
+	if(flist.size){
+		int menu_id = fabs(rval) * flist.size;
+		ModelSym* sym=flist[menu_id];
+		model->getFullPath(sym,sbuff);
+		newobj=open_node(this,sbuff);
+	}
+	else{
+		model->getPrototype(getParent(),type,sbuff);
+		newobj=parse_node(sbuff);
+	}
+	return newobj;
+}
+
+//-------------------------------------------------------------
 // Scene::setProgram() set shader variables
 //-------------------------------------------------------------
 bool Scene::setProgram(){

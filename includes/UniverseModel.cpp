@@ -161,7 +161,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"Galaxy(10000) {}\n");
 		break;
 	case TN_SYSTEM:
-		sprintf(tmp,"System(1000) {}\n");
+		sprintf(tmp,"System(1000) {Star(0.5) {Corona(4){}}}\n");
 		break;
 	case TN_STAR:
 		sprintf(tmp,"Star(0.5) {Corona(4){}}\n");

@@ -263,7 +263,6 @@ int VtxGalaxyTabs::showMenu(bool expanded){
 
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 
