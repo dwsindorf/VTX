@@ -7,6 +7,11 @@ Scene() {
 		height=32965.4 ft;
 		gndlvl=2833.15 ft;
 		time=7.24276e+06;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-225;
 		tilt=-20;
 		angle=55;
@@ -155,6 +160,15 @@ Scene() {
 		heading=-193;
 		tilt=4;
 		angle=15;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=1.13636e-09;
+		radius=0.00150241;
+	}
+	View{
+		height=6075.24 ft;
+		minr=0.00150127;
+		radius=0.00150242;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -174,7 +188,7 @@ Scene() {
 				);
 			System(1000) {
 				name="Solor";
-				origin=Point(-2000,0,0);
+				origin=Point(-1000,0,0);
 				Star(1.3375,5) {
 					color=Color(1,1,0.8);
 					diffuse=Color(0.5,1,1);

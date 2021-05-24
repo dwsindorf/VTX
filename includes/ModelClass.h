@@ -128,6 +128,9 @@ public:
 	virtual void printTree(TreeNode *root,char *);
 	virtual int setPrototype(NodeIF*, NodeIF*);
 	virtual int getPrototype(NodeIF*, int,char *);
+	virtual NodeIF* getPrototype(NodeIF*, int) { return 0;}
+	virtual NodeIF* makeObject(NodeIF*, int)  { return 0;}
+
 	virtual int getAddList(NodeIF*,LinkedList<ModelSym*>&list);
 	virtual int getSaveList(NodeIF*,LinkedList<ModelSym*>&list);
 	virtual int getReplaceList(NodeIF*,LinkedList<ModelSym*>&list);

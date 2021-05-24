@@ -105,7 +105,7 @@ static int last_cnt=0;
 void rebuild_scene_tree(){
 	sceneDialog->rebuildObjectTree();
 }
-void select_object(NodeIF *n){
+void select_tree_node(NodeIF *n){
 	sceneDialog->selectObject(n);
 }
 

@@ -107,7 +107,7 @@ public:
 	virtual double getRseed()   { return 0;}
 	virtual void setDefault()   { }
 	virtual NodeIF *getInstance(int t) { return 0;}
-	virtual void newSubSystem() {}
+	virtual NodeIF *newSubSystem() {return 0;}
 
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}
@@ -137,7 +137,7 @@ public:
 		NodeIF *p=getParent();
 		if(p)
 			p->replaceChild(this,n);
-		return n;
+		return this;
 	}
 	virtual bool hasChild(NodeIF *n)			{ return false;}
 

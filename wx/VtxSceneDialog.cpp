@@ -271,7 +271,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		if(!sym->isFile() && name == "<Random>"){
 			LinkedList<ModelSym*>flist;
 			TheScene->model->getFileList(sym->value,flist);
-			int start=menu_id + 1;
+			int start=menu_id + 2;
 			int end=start+flist.size;
 			menu_id = start + ( std::rand() % ( end - start));
 			sym=list[menu_id];
@@ -284,8 +284,11 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);
 			}
-			else if(TheScene->getPrototype(obj,sym->value,sbuff))
-				newobj=TheScene->parse_node(obj,sbuff);
+			else if( name == "Complex"){
+				newobj=TheScene->makeObject(obj,sym->value);
+			}
+			else
+				newobj=TheScene->getPrototype(obj,sym->value);
 		}
 	}
 	switch(menu_choice){
@@ -366,7 +369,7 @@ bool VtxSceneDialog::setTabs(TreeNode *new_select){
 // VtxSceneDialog::removeMenuFile() remove menu item from file system
 //-------------------------------------------------------------
 void VtxSceneDialog::removeMenuFile(int menu_id){
-	ModelSym* sym=replace_list[menu_id+2]; // skip over simple and random
+	ModelSym* sym=replace_list[menu_id+3]; // skip over simple and random
 	if(sym->isFile()){
 		char sbuff[1024];
 		sbuff[0]=0;
@@ -940,6 +943,8 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
 	submenu->Append(TABS_ADD|i++,"Simple");
+	submenu->Append(TABS_ADD|i++,"Complex");
+	add_list.add(new ModelSym("Complex",sym->value));
 
 	submenu->AppendSeparator();
 	flist.ss();
@@ -964,25 +969,27 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	menu.Append(TABS_DEFAULT, wxT("Default"));
 	menu.AppendSeparator();
 	int i=0;
+	int type=obj->getFlag(TN_TYPES);
 
 	submenu->Append(TABS_REPLACE|i++,"Simple");
+	submenu->Append(TABS_REPLACE|i++,"Complex");
 
 	submenu->AppendSeparator();
 
 	replace_list.free();
 
 	LinkedList<ModelSym*>flist;
-	int type=obj->getFlag(TN_TYPES);
 
 	ModelSym* sym=TheScene->model->getObjectSymbol(type);
 	replace_list.add(sym);
+	replace_list.add(new ModelSym("Complex",type));
+
 	TheScene->model->getFileList(type,flist);
 
 	if(flist.size!=0){
 		replace_list.ss();
 		flist.ss();
 		replace_list.add(new ModelSym("<Random>",type));
-
 		submenu->Append(TABS_REPLACE|i++,"<Random>");
 
 		while((fsym=flist++)>0){
@@ -1000,9 +1007,11 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 	replace_list.ss();
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
-	// skip over simple and random options
+	// skip over simple, complex and random options
 	replace_list++;
 	replace_list++;
+	replace_list++;
+
 	while((fsym=replace_list++)>0){
 		submenu->Append(TABS_REMOVE|i++,fsym->name());
 	}

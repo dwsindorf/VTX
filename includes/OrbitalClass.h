@@ -261,7 +261,7 @@ public:
 	bool setProgram();
 	void set_vars();
 	void get_vars();
-	void newSubSystem();
+	NodeIF *newSubSystem();
 };
 
 //************************************************************
@@ -286,7 +286,7 @@ public:
 	int scale(double&n, double&f);
 	int select_pass();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
-	void newSubSystem();
+	NodeIF *newSubSystem();
 	bool randomize();
 };
 

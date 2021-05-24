@@ -59,6 +59,8 @@ const char *dflt_movie_name="movie";
 int scene_rendered=0;
 static double timing_start=0;
 
+extern	void rebuild_scene_tree();
+extern	void select_tree_node(NodeIF *n);
 
 //********* functions called from GLglue.cpp (GLUT) ************
 
@@ -275,6 +277,22 @@ int Scene::getPrototype(NodeIF *n, int t ,char *s){
 }
 int Scene::setPrototype(NodeIF *n, NodeIF *s){
 	return model->setPrototype(n,s);
+}
+
+NodeIF* Scene::getPrototype(NodeIF*n, int t){
+	return model->getPrototype(n,t);
+}
+NodeIF* Scene::makeObject(NodeIF *n, int t){
+	NodeIF *newnode=model->makeObject(n,t);
+	if(newnode){
+		regroup();
+		set_changed_detail();
+		newnode->invalidate();
+		rebuild_all();
+		rebuild_scene_tree();
+		select_tree_node(newnode);
+	}
+	return newnode;
 }
 
 bool Scene::containsViewobj(ObjectNode *obj){

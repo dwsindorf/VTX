@@ -661,7 +661,8 @@ char *FrameMgr::getViewExpr(ObjectNode *vobj)
 		obj=obj->parent;
 	}
     obj=objpath.ss();
-    sprintf(buff,"%s.1",obj->name());
+    if(obj)
+    	sprintf(buff,"%s.1",obj->name());
     while((obj=objpath++)>0){
         ObjectNode *nextobj=objpath.at();
          if(!nextobj)

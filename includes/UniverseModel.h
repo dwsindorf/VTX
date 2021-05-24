@@ -80,5 +80,8 @@ public:
 	TreeNode *buildTree(NodeIF *);
 	void setType(NodeIF *);
 	NodeIF *open_node(NodeIF *parent,char *s);
+	NodeIF* getPrototype(NodeIF*, int);
+	NodeIF* makeObject(NodeIF*, int);
+
 };
 #endif

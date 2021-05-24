@@ -266,6 +266,9 @@ public:
     int  treeNodes(TreeNode *t);
 	int  getPrototype(NodeIF*, int,char *);
 	int  setPrototype(NodeIF*, NodeIF*);
+	NodeIF* getPrototype(NodeIF*, int);
+	NodeIF* makeObject(NodeIF*, int);
+
 	void change_view(int);
 	void change_view(int,double);
 	void change_view(int,Point);

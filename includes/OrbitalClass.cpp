@@ -14,7 +14,7 @@
 #include "UniverseModel.h"
 
 extern	void rebuild_scene_tree();
-extern	void select_object(NodeIF *n);
+extern	void select_tree_node(NodeIF *n);
 
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
@@ -1427,17 +1427,15 @@ void Galaxy::init_view()
 //-------------------------------------------------------------
 // Galaxy::newSubSystem()     make a new star system
 //-------------------------------------------------------------
-void Galaxy::newSubSystem()
+NodeIF *Galaxy::newSubSystem()
 {
 	cout << "new system"<<endl;
 	int ssave=lastn;
 
-	char tmp[256];
-	TheScene->model->getPrototype(0,TN_SYSTEM,tmp);
-	System  *system=TheScene->parse_node(tmp);
+	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
 	system->origin=TheScene->selm;
 
-	double nseed=Random(origin);
+	double nseed=Random(system->origin);
 	system->setRseed(nseed);
 
 	system->newSubSystem();
@@ -1447,11 +1445,12 @@ void Galaxy::newSubSystem()
     invalidate();
     TheScene->rebuild_all();
     rebuild_scene_tree();
-    select_object(system);
+    select_tree_node(system);
 
     TheScene->focusobj=system;
     system->init_view();
     lastn=ssave;
+    return system;
 }
 //------------------------------------------------------------
 // Galaxy::set_vars() set local variables
@@ -1679,9 +1678,12 @@ bool System::randomize(){
 //-------------------------------------------------------------
 // System::newSubSystem() generate a new random star system
 //-------------------------------------------------------------
-void System::newSubSystem(){
+NodeIF *System::newSubSystem(){
 
 	children.free();
+
+	randomize();
+	lastn=rseed*123457;
 
 	double ps=pow(URAND(lastn),2);
 	int nstars=1+ps*3;
@@ -1698,6 +1700,7 @@ void System::newSubSystem(){
 		lastn++;
 		addChild(star);
 	}
+	return this;
 }
 
 //************************************************************

@@ -62,6 +62,7 @@ NodeIF *TNmap::replaceNode(NodeIF *c){
 	delete left;
 	left=newleft;
 	left->setParent(this);
+	return this;
 }
 void TNmap::saveNode(FILE *f){
 	TNfunc::saveNode(f);
