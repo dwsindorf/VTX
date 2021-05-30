@@ -130,6 +130,18 @@ NodeIF *TNmap::removeNode()
 	NodeIF *p=getParent();
 	if(p)
 		p->removeChild(this);
+	TNlayer *first_layer=(TNlayer*)right;
+	if(!first_layer){
+		return this;
+	}
+	p->addChild(first_layer->base);
+	first_layer->base=0;
+	delete first_layer;
+	invalidate();
+	right=0;
+	Object3D *obj=getObject();
+	obj->invalidate();
+
 	return this;
 }
 
@@ -148,6 +160,28 @@ NodeIF *TNmap::replaceChild(NodeIF *c,NodeIF *n)
 	return ((TNlayer*)c)->replaceChild(c,n);
 }
 
+NodeIF *TNmap::newSubSystem(){
+	return 0;
+}
+
+void TNmap::setDefault(){
+	Object3D *obj=getObject();
+	if(obj)
+		obj->setDefault();
+}
+
+void TNmap::setRandom(bool b){
+	Object3D *obj=getObject();
+	if(obj)
+		obj->setRandom(b);
+}
+
+bool TNmap::randomize(){
+	Object3D *obj=getObject();
+	if(obj)
+		return obj->randomize();
+	return false;
+}
 //-------------------------------------------------------------
 // TNmap::setdrop() set drop for all layers
 //-------------------------------------------------------------
@@ -485,7 +519,7 @@ void TNmap::eval()
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection
 		// - special case tilted terrain ?
-
+/*
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){
 				break;
@@ -501,7 +535,7 @@ void TNmap::eval()
 				break;
 			}
 		}
-
+*/
 		// 2) Remove ridge artifact at center of layer intersection
 		//    for some reason it looks like when dz~=0 "fractal" doesn't process the node
 		//    which leaves a "wall" in the center
@@ -711,9 +745,13 @@ NodeIF *TNlayer::addChild(NodeIF *x)
 // TNlayer::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNlayer::replaceNode(NodeIF *c){
+	if(left)
+		delete left;
 	if(base)
 		delete base;
 	TNlayer *newlayer=(TNlayer *)c;
+	left=newlayer->left;
+	left->setParent(this);
 	base=newlayer->base;
 	setName(newlayer->getName());
 	base->setParent(this);

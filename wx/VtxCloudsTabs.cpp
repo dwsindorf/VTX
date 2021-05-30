@@ -633,10 +633,12 @@ void VtxCloudsTabs::getObjAttributes(){
 
 	update_needed=false;
 
-	clouds_dim->SetSelection(obj->threeD()?1:0);
+	int is3D=obj->threeD()?1:0;
+
+	clouds_dim->SetSelection(is3D);
 
 	TNclouds *tnode=obj->getClouds();
-	if(!tnode)
+	if(!is3D || !tnode)
 		return;
 
 	char top[128]="";
@@ -677,7 +679,7 @@ void VtxCloudsTabs::setObjAttributes(){
 	update_needed=true;
 	TNclouds *tnode=object()->getClouds();
 	if(!tnode){
-		//cout << "NO CLOUDS" << endl;
+		cout << "NO CLOUDS" << endl;
 		return; // 2d
 	}
 
@@ -716,6 +718,8 @@ void VtxCloudsTabs::setObjAttributes(){
 void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
 	int pages=GetPageCount();
+
+	cout<<"VtxCloudsTabs::updateControls() "<<obj<<endl;
 
 	if(obj->threeD()){
 		if(pages==2){

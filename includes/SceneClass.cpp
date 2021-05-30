@@ -805,14 +805,15 @@ void Scene::open(char *fn)
 
     ViewFrame *frame;
     frame=views->first();
-	if(frame && !frame->vobj && viewobj)
+	if(frame && !frame->vobj && viewobj){
 	    frame->vobj=(ObjectNode*)views->getViewExpr(viewobj);
+	}
 	views->getObjects();
 	frame=views->se();
 	if(!viewobj)
 	    viewobj=frame->vobj;
 	frame->restore(this);
-	cout << "open ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
+	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
 	scene_objects=total_objs();
 
@@ -1489,7 +1490,7 @@ void Scene::change_view(int v)
 
 	viewtype=v;
 
-	//vobj=viewobj;
+	vobj=viewobj;
 
 	set_changed_detail();
 	if(focusobj != viewobj)

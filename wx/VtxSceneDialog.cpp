@@ -271,10 +271,8 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		if(!sym->isFile() && name == "<Random>"){
 			LinkedList<ModelSym*>flist;
 			TheScene->model->getFileList(sym->value,flist);
-			int start=menu_id + 2;
-			int end=start+flist.size;
-			menu_id = start + ( std::rand() % ( end - start));
-			sym=list[menu_id];
+			int ival=std::rand() % flist.size;
+			sym=flist[ival];
 			rand_flag=true;
 		}
 
@@ -284,9 +282,8 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);
 			}
-			else if( name == "Complex"){
+			else if( name == "Complex")
 				newobj=TheScene->makeObject(obj,sym->value);
-			}
 			else
 				newobj=TheScene->getPrototype(obj,sym->value);
 		}
@@ -299,7 +296,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	case TABS_ENABLE:
 		break;
 	case TABS_VIEWOBJ:
-		updateObjectTree();
+		 updateObjectTree();
 		 TheScene->set_changed_detail();
 		break;
 	case TABS_SAVE:
@@ -320,14 +317,18 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		removeMenuFile(menu_id);
 		break;
 	case TABS_REPLACE:
-		if(newobj){
+		if(newobj)
 			replaceSelected(newobj);
-		}
 		break;
 	case TABS_DELETE:
-		deleteSelected();
-		TheScene->regroup();
-        TheScene->rebuild_all();
+		{
+			newobj=deleteSelected();
+			TheScene->regroup();
+			TheScene->rebuild_all();
+			rebuildObjectTree();
+			if(newobj)
+				selectObject(newobj);
+		}
 		break;
 	case TABS_ADD:
 		if(newobj){
@@ -578,7 +579,7 @@ bool VtxSceneDialog::setTabs(int t){
 		cout << "dialog for id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
-	//cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
+	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
 	VtxTabsMgr* mgr=tabs[t];
 	mgr->setSelected(selected);
 	//mgr->updateControls();
@@ -688,23 +689,26 @@ wxTreeItemId VtxSceneDialog::getAddPosition(wxTreeItemId pid, int level){
 //-------------------------------------------------------------
 // VtxSceneDialog::deleteItem() remove node
 //-------------------------------------------------------------
-void VtxSceneDialog::deleteItem(wxTreeItemId item){
+NodeIF *VtxSceneDialog::deleteItem(wxTreeItemId item){
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *obj=node->getObject();
+    NodeIF *p=obj->getParent();
     obj=obj->removeNode();
     if(obj)
     	delete obj;
     treepanel->Delete(item);
+    return p;
 }
 //-------------------------------------------------------------
 // VtxSceneDialog::deleteSelected() delete selected node
 //-------------------------------------------------------------
-void VtxSceneDialog::deleteSelected(){
+NodeIF *VtxSceneDialog::deleteSelected(){
 	wxTreeItemId item=treepanel->GetSelection();
     wxTreeItemId parent=treepanel->GetItemParent(item);
-	deleteItem(item);
-    treepanel->SelectItem(parent);
-    updateObjectTree();
+    NodeIF *p=deleteItem(item);
+    //treepanel->SelectItem(parent);
+    //updateObjectTree();
+    return p;
 }
 //-------------------------------------------------------------
 // VtxSceneDialog::replaceSelected() replace selected node
@@ -714,6 +718,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 	bool expanded=treepanel->IsExpanded(item);
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
+	cout<<" newobj:"<<newobj->nodeName()<<" oldobj:"<<oldobj->nodeName()<<endl;
 
     newobj=oldobj->replaceNode(newobj);
     int type=newobj->getFlag(TN_TYPES);
@@ -721,11 +726,12 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     TheScene->rebuild_all();
     rebuildObjectTree();
 
-	//cout<<" newobj:"<<newobj<<" oldobj:"<<oldobj<<endl;
 
     selectObject(newobj);
     item=treepanel->GetSelection();
     node=(TreeDataNode*)treepanel->GetItemData(item);
+    node->setObject(newobj);
+
 	if(expanded)
 		treepanel->Expand(item);
     setTabs(type);

@@ -159,7 +159,10 @@ NodeIF* UniverseModel::getPrototype(NodeIF *parent, int type){
 }
 NodeIF* UniverseModel::makeObject(NodeIF *obj, int type){
 	cout<<"UniverseModel::makeObject "<<obj->typeName()<<" "<<type<<endl;
-    return obj->newSubSystem();
+	NodeIF* n=obj->newSubSystem();
+	if(n)
+		n->setName("");
+	return n;
 }
 
 int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)

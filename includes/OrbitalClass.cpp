@@ -267,7 +267,10 @@ NodeIF *Orbital::removeChild(NodeIF *c){
   		ObjectNode::removeChild(c);
   		if(TheScene->viewobj==c){
   		    TheScene->viewobj=(ObjectNode*)c->getParent();
-  		    TheScene->selobj=TheScene->viewobj;
+  		    TheScene->selobj=TheScene->vobj=TheScene->viewobj;
+  		    TheScene->focusobj=0;
+  		    TheScene->change_view(ORBITAL);
+  		    TheScene->views_reset();
   		}
   	}
 	else if(c->typeClass()==ID_TERRAIN)
@@ -285,7 +288,7 @@ NodeIF *Orbital::replaceChild(NodeIF *c,NodeIF *n){
   	}
    	else if(c->typeClass()==ID_TERRAIN)
         exprs.replaceChild(c,n);
-	return c;
+	return n;
 }
 
 //-------------------------------------------------------------
@@ -424,7 +427,8 @@ bool Orbital::randomize()
 {
 	if(!canRandomize())
 		return false;
-	rseed=getRandValue();
+	setRseed(getRandValue());
+	cout<<typeName()<<" "<<getRseed()<<endl;
 
 	invalidate();
 	visitChildren(&Object3D::invalidate);
@@ -1662,17 +1666,20 @@ NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
 	return m;
 }
 
+NodeIF *System::replaceNode(NodeIF *n){
+	Point p=origin;
+
+	NodeIF *node=Orbital::replaceNode(n);
+	((System*)n)->origin=p;
+	if(TheScene->viewobj==n)
+		TheScene->change_view(ORBITAL);
+	return node;
+}
 //-------------------------------------------------------------
 // System::randomize() generate a new random star system
 //-------------------------------------------------------------
 bool System::randomize(){
 	Orbital::randomize();
-//	lastn=rseed*123457;
-//	newSubSystem();
-//	TheScene->set_changed_detail();
-//	TheScene->rebuild_all();
-//	TheScene->regroup();
-//    rebuild_scene_tree();
 	return true;
 }
 //-------------------------------------------------------------
@@ -2213,17 +2220,18 @@ void Spheroid::save(FILE *fp)
 //-------------------------------------------------------------
 void Spheroid::adapt_object()
 {
+	//cout<<name()<<" adapt_object seed:"<<rseed<<endl;
+
 	exprs.eval();
 	set_geometry();
 	terrain.init();
 	terrain.setAdaptMode();
 	set_wscale();
-	//cout<<name()<<" adapt_object seed:"<<rseed<<endl;
-	if(rseed)
-		pushSeed();
+	//if(rseed)
+	//	pushSeed();
 	map->adapt();
-	if(rseed)
-		popSeed();
+	//if(rseed)
+	//popSeed();
 }
 
 //-------------------------------------------------------------
@@ -2705,6 +2713,15 @@ Planetoid::~Planetoid()
 #endif
 }
 
+//-------------------------------------------------------------
+// Planetoid::replaceNode()  replace current instance with another
+//-------------------------------------------------------------
+NodeIF *Planetoid::replaceNode(NodeIF *n){
+	NodeIF *newnode=NodeIF::replaceNode(n);
+	if(TheScene->viewobj==n)
+		TheScene->change_view(ORBITAL);
+	return newnode;
+}
 //-------------------------------------------------------------
 // Planetoid::get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -3397,6 +3414,16 @@ void Shell::set_geometry()
 	map->set_transparant(1);
 }
 
+NodeIF *Shell::replaceNode(NodeIF *n){
+	NodeIF *p=getParent();
+	Shell *shell=(Shell *)n;
+	shell->size=size;
+	shell->ht=ht;
+    shell->setParent(p);
+    shell->set_geometry();
+	p->replaceChild(this,n);
+	return n;
+}
 //-------------------------------------------------------------
 // Shell::scale() 	set znear, zfar
 //-------------------------------------------------------------
@@ -4711,6 +4738,22 @@ bool CloudLayer::force_adapt() {
 	if(TheScene->viewobj==getObjParent() && day==0.0)
 	    return false;
 	return true;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::init() set common variables
+//-------------------------------------------------------------
+void CloudLayer::init()
+{
+	Gscale=1/hscale/size;
+	exprs.init();
+	get_vars();
+	set_geometry();
+	terrain.init();
+	clouds = TerrainData::clouds;
+	terrain.init_render();
+	terrain.set_eval_mode(0);
+	map->make();
 }
 
 //-------------------------------------------------------------

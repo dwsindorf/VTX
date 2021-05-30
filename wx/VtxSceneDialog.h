@@ -135,11 +135,11 @@ public:
 	void rebuildObjectTree();
 	void OnClose(wxCloseEvent& event);
 	void reset();
-	void deleteSelected();
+	NodeIF *deleteSelected();
 	void removeMenuFile(int);
 	void replaceSelected(NodeIF *newob);
 	void saveSelected();
-	void deleteItem(wxTreeItemId);
+	NodeIF *deleteItem(wxTreeItemId);
 	void addChildToSelected(TreeNode *,TreeNode *, int pos);
 	void addSiblingToSelected(TreeNode *,TreeNode *);
 	void setNodeName(char *s);

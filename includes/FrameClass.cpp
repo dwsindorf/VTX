@@ -274,8 +274,10 @@ void ViewFrame::save(FILE *fp,FrameMgr *mgr)
 	}
 	if(vobj){
 		char *buff=mgr->getViewExpr(vobj);
-		fprintf(fp,"%sviewobj=%s;\n",tabs,buff);
-		::free(buff);
+		if(buff){
+			fprintf(fp,"%sviewobj=%s;\n",tabs,buff);
+			::free(buff);
+		}
 	}
 	dec_tabs();
 	fprintf(fp,"%s}\n",tabs);
@@ -380,8 +382,10 @@ void ViewFrame::save(FILE *fp,View *v,FrameMgr *mgr)
 
 	if(vobj && vobj!=v->vobj){
 		char *buff=mgr->getViewExpr(vobj);
-		sprintf(tmp+strlen(tmp),"%sviewobj=%s;\n",tabs,buff);
-		::free(buff);
+		if(buff){
+			sprintf(tmp+strlen(tmp),"%sviewobj=%s;\n",tabs,buff);
+			::free(buff);
+		}
 	}
 	    
 	dec_tabs();
@@ -650,6 +654,8 @@ int FrameMgr::type_index(ObjectNode *obj,ObjectNode*child)
 //-------------------------------------------------------------
 char *FrameMgr::getViewExpr(ObjectNode *vobj)
 {
+	if((vobj->typeClass()& ID_OBJECT)==0)
+		return 0;
 	LinkedList<ObjectNode*>objpath;
     char buff[256];
     buff[0]=0;

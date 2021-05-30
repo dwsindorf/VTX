@@ -51,7 +51,13 @@ public:
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *removeNode();
 	NodeIF *addChild(NodeIF *x);
-	bool isLeaf()						{ return false;}
+	NodeIF *newSubSystem();
+	bool randomize();
+	void setRandom(bool b);
+	void setDefault();
+
+	bool canRandomize() { return true;}
+	bool isLeaf()		{ return false;}
 
 	friend class TNlayer;
 };

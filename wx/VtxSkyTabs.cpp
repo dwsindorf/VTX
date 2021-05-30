@@ -1,6 +1,7 @@
 
 //#include "UniverseModel.h"
 #include "VtxSkyTabs.h"
+#include "VtxSceneDialog.h"
 
 #define LABEL_WIDTH 40
 #define VALUE_WIDTH 40
@@ -10,7 +11,7 @@ enum{
 	OBJ_NONE,
 	OBJ_SHOW,
 	OBJ_DELETE,
-	OBJ_SAVE,
+	//OBJ_SAVE,
 
 	ID_NAME_TEXT,
     ID_CELLSIZE_SLDR,
@@ -101,7 +102,10 @@ EVT_TEXT_ENTER(ID_TWILITE_GRAD_TEXT,VtxSkyTabs::OnTwiliteGradText)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSkyTabs::OnAddItem)
 
 EVT_MENU(OBJ_DELETE,VtxSkyTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxSkyTabs::OnSave)
+
+SET_FILE_EVENTS(VtxSkyTabs)
+
+//EVT_MENU(OBJ_SAVE,VtxSkyTabs::OnSave)
 
 END_EVENT_TABLE()
 
@@ -123,13 +127,15 @@ int VtxSkyTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
 	wxMenu *addmenu=getAddMenu(object());
 
 	if(addmenu){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 
 	return menu_action;

@@ -135,8 +135,6 @@ public:
 	virtual void setRseed(double s) {rseed=s;}
 	virtual double getRseed() {return rseed;}
 
-
-
 	// NodeIF methods
 
 	virtual const char *typeName();
@@ -286,6 +284,7 @@ public:
 	int scale(double&n, double&f);
 	int select_pass();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	NodeIF *replaceNode(NodeIF *n);
 	NodeIF *newSubSystem();
 	bool randomize();
 };
@@ -403,6 +402,7 @@ public:
 	virtual int selection_pass();
 	virtual void dpvars(double &dht, double &dpmin, double &dpmax);
 	bool isLeaf()						{ return true;}
+	NodeIF *replaceNode(NodeIF *n);
 };
 
 //************************************************************
@@ -519,6 +519,7 @@ public:
 	TNclouds *getClouds() { return clouds;}
 	void setClouds(TNclouds *c);
 	void deleteClouds();
+	void init();
 
 
 	bool force_adapt();
@@ -574,6 +575,7 @@ public:
 	virtual double calc_delt();
 	double calc_time(double t);
 	void set_time(double t);
+	NodeIF *replaceNode(NodeIF *n);
 };
 
 //************************************************************
