@@ -66,11 +66,13 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 //-------------------------------------------------------------
 void TNfractal::eval()
 {
-	if(!isEnabled()){
+	if(!isEnabled() || Td.get_flag(FVALUE)){
 		if(right)
 			right->eval();
 		return;
 	}
+
+	Td.clr_flag(FVALUE);
 	static int init=0;
 	static double facts[64];
 	double margin_scale=1;

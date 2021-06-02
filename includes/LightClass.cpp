@@ -80,12 +80,22 @@ double Light::getIntensity(Point p)
 
 double Light::getAttenuation(Point p)
 {
-    double d=p.distance(point)/size;
-    double i=intensity/d/d;
+    double d=p.distance(point);///size;
+    //double i=intensity/d/d;
 
-    double a=1.0/i;
-    a=0.21*log10(a);  // Empirically adjusted so 1=earth normal
-	return a;
+    //double a=1.0/i;
+   // a=0.21*log10(a);  // Empirically adjusted so 1=earth normal
+
+   // Theoretical
+   // - light intensity ~1/d^2
+   // - eye light perception ~sqrt(intensity) ~ 1/d (non-linear)
+
+    double brightness=0.01*intensity*pow(d,-0.6); // increase brightness ~distance (should be 1 ?)
+    brightness=brightness>1?sqrt(brightness):brightness; // HVS saturation
+    cout << brightness<<endl;
+
+    //a=200*pow(d,0.6)/intensity;
+	return 1/brightness;
 }
 
 void Light::setDiffuse(double d)

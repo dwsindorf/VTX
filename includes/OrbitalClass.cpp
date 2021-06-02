@@ -2461,6 +2461,44 @@ Sky *Spheroid::get_sky()
 //************************************************************
 // Star class (stars)
 //************************************************************
+Color StarData::star_colors[StarData::ntypes]={
+    		Color(0.957,0.525,0.255),  // L
+    		Color(1.000,0.824,0.624),  // M
+    		Color(1.000,0.922,0.882),  // K
+    		Color(1.000,0.984,0.882),  // G
+    		Color(1.000,1.000,1.000),  // F
+    		Color(0.827,0.875,1.000),  // A
+    		Color(0.627,0.753,1.000),  // B
+    		Color(0.573,0.710,1.000)}; // O
+double StarData::star_temps[StarData::ntypes]={1000,2400,3700,5200,6000,7500,10000,30000};
+char StarData::star_class[StarData::ntypes]={'L','M','K','G','F','A','B','O'};
+
+void StarData::star_info(Color col, double *t, char *m){
+	int min_index=0;
+	Color c=col;
+	c=col;
+	c.set_alpha(1.0);
+	double min_diff=10;
+	col.print();
+	for(int i=0;i<ntypes;i++){
+		double d=c.difference(star_colors[i]);
+		//cout<<" "<<star_class[i]<<" "<<d<<endl;
+		if(d<min_diff){
+			min_index=i;
+			min_diff=d;
+		}
+	}
+	double temp=star_temps[min_index];
+	double f=0;
+	if(min_index<ntypes-2){
+		double temp2=star_temps[min_index+1];
+		double diff2=c.difference(star_colors[min_index+1]);
+		f=lerp(min_diff,0,diff2,0,1);
+		temp=star_temps[min_index]+f*star_temps[min_index+1];
+	}
+	*t=temp*col.alpha();
+	sprintf(m,"%c%d",star_class[min_index],(int)(10*f*col.alpha()));
+}
 Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 {
 	year=0;
@@ -2472,12 +2510,25 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 	printf("Star\n");
 #endif
 	shadows_exclude();
+	startemp=0;
+	startype[0]=0;
 }
 Star::~Star()
 {
 #ifdef DEBUG_OBJS
 	printf("~Star\n");
 #endif
+}
+
+void Star::setRadiance(Color c){
+	emission=c;
+	//c.print();
+	StarData::star_info(emission,&startemp,startype);
+	cout<<startype<<" "<<startemp<<endl;
+}
+void Star::getStarData(double *d, char *m){
+	*d=startemp;
+	strcpy(m,startype);
 }
 
 //-------------------------------------------------------------
@@ -2498,6 +2549,8 @@ void Star::get_vars()
 		diffuse=Td.c;
 	else
 		diffuse=Color(1,1,1,1);
+	setRadiance(emission);
+	exprs.set_var("temperature",startemp);
 }
 
 //-------------------------------------------------------------
@@ -2554,7 +2607,8 @@ void Star::set_lights()
 
 	TheScene->popMatrix();
 
-    double intensity=emission.alpha();
+   // double intensity=emission.alpha();
+    double intensity=startemp;
 	l->setIntensity(intensity);
 
 	l->Diffuse=diffuse;

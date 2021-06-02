@@ -22,8 +22,7 @@ enum{
     ID_ORBIT_PHASE_TEXT,
     ID_ORBIT_TILT_SLDR,
     ID_ORBIT_TILT_TEXT,
-    ID_TILT_SLDR,
-    ID_TILT_TEXT,
+	ID_TYPE_TEXT,
     ID_ROT_PHASE_SLDR,
     ID_ROT_PHASE_TEXT,
     ID_DAY_SLDR,
@@ -51,7 +50,6 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxStarTabs::OnNameText)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxStarTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxStarTabs,Size)
-SET_SLIDER_EVENTS(TILT,VtxStarTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxStarTabs,Day)
 SET_SLIDER_EVENTS(YEAR,VtxStarTabs,Year)
 SET_SLIDER_EVENTS(ROT_PHASE,VtxStarTabs,RotPhase)
@@ -118,6 +116,7 @@ bool VtxStarTabs::Create(wxWindow* parent,
     if (!VtxTabsMgr::Create(parent, id, pos, size,  style,name))
         return false;
 
+    radiance=Color(1,1,1);
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
     AddObjectTab(page);
     AddPage(page,wxT("Object"),true);
@@ -143,10 +142,9 @@ void VtxStarTabs::AddObjectTab(wxWindow *panel){
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	hline->AddSpacer(10);
 
-	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",LABEL2S, VALUE2,SLIDER2);
-	CellSizeSlider->setRange(1,4);
-	CellSizeSlider->setValue(1);
-	hline->Add(CellSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Type",LABEL2S,VALUE2+SLIDER2);
+	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
     object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
     hline = new wxBoxSizer(wxHORIZONTAL);
@@ -156,12 +154,16 @@ void VtxStarTabs::AddObjectTab(wxWindow *panel){
 	SizeSlider->setValue(1);
 
 	hline->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",LABEL2S, VALUE2,SLIDER2);
+	CellSizeSlider->setRange(1,4);
+	CellSizeSlider->setValue(1);
+	hline->Add(CellSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	TiltSlider=new SliderCtrl(panel,ID_TILT_SLDR,"Tilt",LABEL2S, VALUE2,SLIDER2);
-	TiltSlider->setRange(0,360);
-	TiltSlider->setValue(0.0);
+	//TiltSlider=new SliderCtrl(panel,ID_TILT_SLDR,"Tilt",LABEL2S, VALUE2,SLIDER2);
+	//TiltSlider->setRange(0,360);
+	//TiltSlider->setValue(0.0);
 
-	hline->Add(TiltSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	//hline->Add(TiltSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -240,6 +242,8 @@ void VtxStarTabs::AddLightingTab(wxWindow *panel){
 
 	boxSizer->Add(color_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 
+	boxSizer = new wxBoxSizer(wxVERTICAL);
+
 }
 
 void VtxStarTabs::OnViewObj(wxCommandEvent& event){
@@ -257,13 +261,20 @@ void VtxStarTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 
 void VtxStarTabs::updateControls(){
 	Star *obj=object();
-
+	char type[256];
+	double temp=0;
+	object()->getStarData(&temp, type);
+	char type_str[256];
+	sprintf(type_str,"%s     %d K",type,(int)temp);
+	object_type->SetValue(type_str);
+	//object_type->SetValue((char*)tree->typeName());
+	//obj->emission.print();
 	updateSlider(CellSizeSlider,obj->detail);
 	updateSlider(SizeSlider,obj->size);
 	updateSlider(OrbitRadiusSlider,obj->orbit_radius);
 	updateSlider(OrbitPhaseSlider,obj->orbit_phase);
 	updateSlider(OrbitTiltSlider,obj->orbit_skew);
-	updateSlider(TiltSlider,obj->tilt);
+	//updateSlider(TiltSlider,obj->tilt);
 	updateSlider(RotPhaseSlider,obj->rot_phase);
 	updateSlider(DaySlider,obj->day);
 	updateSlider(YearSlider,obj->year);

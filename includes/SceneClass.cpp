@@ -1490,7 +1490,7 @@ void Scene::change_view(int v)
 
 	viewtype=v;
 
-	vobj=viewobj;
+	//vobj=viewobj;
 
 	set_changed_detail();
 	if(focusobj != viewobj)
@@ -1548,11 +1548,10 @@ void Scene::change_view(int v)
 		viewobj->init_view();
 	}
 	else if(viewobj){
-		if(changed_view())
+		if(changed_view() || viewtype != SURFACE)
 		    viewobj->init_view();
-		else{
+		else
 			height/=2;
-		}
 	}
 	else{
 		init_view();

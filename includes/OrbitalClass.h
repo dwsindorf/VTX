@@ -356,12 +356,26 @@ public:
 
 };
 
+
 //************************************************************
 // Star class
 //************************************************************
+class StarData {
+	public:
+	static const int ntypes=8;
+	static Color star_colors[ntypes];
+	static double star_temps[ntypes];
+	static char star_class[ntypes];
+
+	static void star_info(Color c, double *t, char *m);
+	//static char star_type(double temp);
+};
+
 class Star : public Spheroid
 {
 public:
+	double startemp;
+	char startype[3];
 
 	Star(Orbital *m, double s, double r);
 	~Star();
@@ -378,7 +392,8 @@ public:
 	int render_pass();
 	int adapt_pass();
     void render();
-
+    void setRadiance(Color c);
+    void getStarData(double *d, char *m);
 };
 
 //************************************************************

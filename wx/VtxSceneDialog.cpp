@@ -726,11 +726,10 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     TheScene->rebuild_all();
     rebuildObjectTree();
 
-
     selectObject(newobj);
     item=treepanel->GetSelection();
-    node=(TreeDataNode*)treepanel->GetItemData(item);
-    node->setObject(newobj);
+    //node=(TreeDataNode*)treepanel->GetItemData(item);
+    //node->setObject(newobj);
 
 	if(expanded)
 		treepanel->Expand(item);

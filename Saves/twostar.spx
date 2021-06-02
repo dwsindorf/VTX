@@ -7,11 +7,11 @@ Scene() {
 		height=6075.24 ft;
 		gndlvl=6723.07 ft;
 		time=58461.4;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
-		zoom=0.0015;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-193;
 		tilt=4;
 		angle=15;
@@ -20,7 +20,11 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		minr=0.00150127;
+		minr=0.00150128;
+		radius=0.00150242;
+	}
+	View{
+		heading=-188;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -44,13 +48,14 @@ Scene() {
 				Star(1.3375,5) {
 					color=Color(1,1,0.8);
 					diffuse=Color(0.5,1,1);
-					emission=Color(0,1,1);
+					emission=Color(0.78,0.98,0.98);
 					name="BlueStar";
 					phase=145.001;
 					resolution=3.50002;
 					rot_phase=155.002;
 					skew=6.2496;
 					specular=Color(0.77,1,1);
+					temperature=11720.3;
 					year=30;
 					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
@@ -61,30 +66,42 @@ Scene() {
 						color1=Color(0.5,1,1);
 						color2=Color(0,0,1);
 						gradient=1;
+						name="outer";
+                    }
+					Corona(1.72992) {
+						color1=Color(1,1,1);
+						color2=Color(0.8,0.94,0.98);
+						gradient=1;
+						name="inner";
+						noise.expr=noise(GRADIENT|NABS|SCALE,2.7,2,1,0.5,2,1,1,0,0);
 					}
 				}
-				Star(2,10) {
+				Star(2,15) {
 					diffuse=Color(1,0.5,0.25);
-					emission=Color(1,1,0.5);
+					emission=Color(0.96,0.83,0.64);
 					name="RedStar";
 					phase=59.9976;
+					resolution=4;
+					skew=31.2498;
 					specular=Color(1,0.5,0.25);
+					temperature=3053.93;
 					year=75.48;
 					Surface{
 						terrain=
-								Texture("sol",TEX,1,1.33332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
+								Texture("sol",TEX,1,1.58332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
 					}
-					Corona(12.368) {
+					Corona(8.65208) {
 						color1=Color(1,0.5,0);
 						color2=Color(0,0.27,1);
-						gradient=0.60714;
+						gradient=0.84566;
 						name="c1";
 					}
-					Corona(3.17396) {
+					Corona(3.36944) {
 						color1=Color(0.95,0.98,0.51);
 						color2=Color(1,0.04,0);
 						gradient=1;
 						name="c2";
+						noise.expr=noise(GRADIENT|NABS|SQR|UNS,2.1,2,1,0.21,2,1,1,0,-0.7);
 					}
 				}
 				Planet(0.0015,40) {

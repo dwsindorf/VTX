@@ -1,42 +1,25 @@
 Scene() {
+	drawmode=1;
 	View{
-		view=SURFACE;
-		phi=-51.8589;
-		theta=25.5309;
-		height=964.151 ft;
-		gndlvl=18101 ft;
-		time=65278;
-		vstride=586570;
+		view=ORBITAL;
+		height=51.12;
+		time=58461.4;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
-		heading=11;
-		tilt=-9;
-		angle=-1;
+		minh=0.01;
+		minr=10;
+		heading=90;
+		pitch=-90;
 		fov=35;
 		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=976.449 ft;
-	}
-	View{
-		height=1164.8 ft;
-		angle=0;
-		vstride=0.02;
-		zoom=0.001;
-		minh=1.13636e-09;
-		radius=0.00100365;
-	}
-	View{
-		height=1135.85 ft;
-		minr=0.00100343;
-		radius=0.00100364;
+		viewobj=Universe.1.Galaxy.1.System.1;
 	}
 	Universe {
 		Galaxy(20000) {
-			name="Uncharted";
+			name="Milky Way";
+			origin=Point(20000,0,0);
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
@@ -50,77 +33,52 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				Star(0.5,0) {
-					diffuse=Color(1,1,1);
-					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
-					specular=Color(1,1,1);
-					symmetry=0.95;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
+				name="Solor";
+				origin=Point(-1000,0,0);
+				Star(1.3375,5) {
+					color=Color(1,1,0.8);
+					diffuse=Color(0.5,1,1);
+					emission=Color(0,1,1);
+					name="BlueStar";
+					phase=145.001;
+					resolution=3.50002;
+					rot_phase=155.002;
+					skew=6.2496;
+					specular=Color(0.77,1,1);
+					year=30;
+					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
+					Surface{
+						terrain=
+								Texture("neptune",BORDER|NORM|S|TEX,noise(GRADIENT|FS|NABS|NEG|SQR,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),0.5,2,1.05456,1.22224,1,2,1,0.90278);
+					}
+					Corona(13.2172) {
+						color1=Color(0.5,1,1);
+						color2=Color(0,0,1);
+						gradient=1;
 					}
 				}
-				Planet(0.001,40) {
-					ambient=Color(1,1,1,0.13);
-					day=24;
-					fog.max=5888.96 ft;
-					fog.min=55.56 ft;
-					fog.value=0.607843;
-					fog.vmax=7361.2 ft;
-					hscale=0.002;
-					name="EarthLikeT4";
-					shadow=Color(0,0,0.1,0.7);
-					shine=10.9372;
-					specular=Color(1,1,1,0.47);
-					water.albedo=1;
-					water.clarity=792.288 ft;
-					water.color1=Color(0.08,0.46,0.65,0.54);
-					water.color2=Color(0,0.1,0.3);
-					year=100;
-					water.reflectivity=0.5;
-					twilight=Color(0.5,0.3,0.1);
-					wl=water.level*GTOL;
-					bands("alpine2",ACHNL|CLAMP|NORM,64,0.1,0.54902,Color(0,0,0,0.549),Color(0.024,0.224,0.102,0.078),
-						Color(0.2,0.4,0.075,0.529),
-						Color(0.275,0.475,0),
-						Color(0.529,0.322,0.02),
-						Color(0.275,0.251,0.2),
-						Color(0.275,0.227,0.024),
-						Color(0.224,0.176,0.063),
-						Color(0.573,0.573,0.573),
-						Color(0.6,0.573,0.529),
-						Color(0.275,0.275,0.275));
-					bands("mercury",128,0,0.6,RAND,Color(1,0.875,0.275,0.475),
-						Color(1,0.6,0,0.475),
-						Color(0.675,0.4,0,0.475),
-						Color(1,0.875,0.275,0.475));
-					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
-						Color(0.302,0.082,0.082));
-					image("cracks",BUMP|INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3));
-					bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
-						Color(0.58,0.024,0.024));
+				Star(2,10) {
+					diffuse=Color(1,0.5,0.25);
+					emission=Color(1,1,0.5);
+					name="RedStar";
+					phase=59.9976;
+					specular=Color(1,0.5,0.25);
+					year=75.48;
 					Surface{
-						terrain=map(noise(GRADIENT,0,15,0.3,0.1,2,1,1,0,0)*(1+2*LAT),-0.22,2,1.71)
-								layer("mudflats",MORPH,1,0.3+noise(GRADIENT|NABS|SCALE,5,7.7,1,0.5,2,1,1,0,0),0.51,0.73)
-									[
-									Texture("alpine2",CLAMP|LINEAR|NORM|S|TEX,noise(GRADIENT|NABS|SQR,2.3,3.7,1,0.5,2,1,1,0.09,0),205.145,2,0.70272,0.6,1,2,1,0.5556,0,-0.33336,0.1,0.1)+Z(noise(GRADIENT|NABS|SCALE|SQR,4.3,18,0.5,0.5,2,0.56,1,0,0.1))
-									]
-								layer("seacliffs",MESH|FSQR,0,0.24,1,0.25)
-									[
-									Texture("mercury",LINEAR|NORM|TEX,256,0.77776,2,0.33328,1,2,1,0,0,1,0.19444,0.25)+Z(noise(GRADIENT|NNORM|SCALE|SQR,1,18.6,0.41,0.18,1.99,0.63,1,0,-0.1))
-									]
-								layer("dessert",MORPH,0.57,0.2+noise(GRADIENT|SCALE,7.9,6.6,1,0.5,2,1,1,0,0),0.02,1)
-									[
-									Texture("dessert",CLAMP|LINEAR|S|TEX,noise(GRADIENT|UNS,5.6,2,1,0.5,2,1,1,0,0),261.017,1.19444,1,-0.66672,1,2,1,0,-1.16664,2,0,0.27776)+
-									Texture("cracks",BUMP,1789.7,1,1,0,8.33344,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR|UNS|RO1,9.5,10,0.07,0.7,2.06,0.15,1,0,0))
-									]
-								layer("volcanic",MORPH,1,noise(GRADIENT|SCALE,5,2,1,0.5,2,1,1,0,0.6),0.01,0.25)
-									[
-									Texture("lava",CLAMP|LINEAR|S|TEX,noise(GRADIENT|SCALE|UNS,5.6,2,1,0.5,2,1,1,0,0),161.289,2,1,-1.33328,1,2,1,0,-0.38888,1,0.2,0.2)+Z(noise(GRADIENT|NABS|SCALE|SQR,5.8,10,0.07,0.38,2.1,0.72,1,0,0))
-									]
-								;
+						terrain=
+								Texture("sol",TEX,1,1.33332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
+					}
+					Corona(12.368) {
+						color1=Color(1,0.5,0);
+						color2=Color(0,0.27,1);
+						gradient=0.60714;
+						name="c1";
+					}
+					Corona(3.17396) {
+						color1=Color(0.95,0.98,0.51);
+						color2=Color(1,0.04,0);
+						gradient=1;
+						name="c2";
 					}
 				}
 			}
