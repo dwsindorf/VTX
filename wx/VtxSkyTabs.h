@@ -11,6 +11,9 @@ protected:
 	SliderCtrl *CellSizeSlider;
 	SliderCtrl  *HeightSlider;
 	SliderCtrl  *DensitySlider;
+	SliderCtrl  *PressureSlider;
+	SliderCtrl  *FracGHGSlider;
+
 	ColorSlider *HazeColor;
 	ColorSlider *SkyColor;
 	ColorSlider *TwiliteColor;
@@ -40,6 +43,9 @@ public:
 		delete CellSizeSlider;
 		delete HeightSlider;
 		delete DensitySlider;
+		delete PressureSlider;
+		delete FracGHGSlider;
+
 		delete HazeColor;
 		delete SkyColor;
 		delete TwiliteColor;
@@ -92,13 +98,6 @@ public:
     	Spheroid *obj=object();
     	OnSliderText(CellSizeSlider, obj->detail);
     	invalidateObject();
-    }
-    void OnDensitySlider(wxScrollEvent& event){
-        OnSliderValue(DensitySlider, object()->density);
-     }
-    void OnDensityText(wxCommandEvent& event){
-		OnSliderText(DensitySlider, object()->density);
-       	TheView->set_changed_render();
     }
     void OnHaloSlider(wxScrollEvent& event){
        	OnColorSlider(HaloColor,object()->halo_color);
@@ -177,6 +176,34 @@ public:
     }
     void OnHazeGradSlider(wxScrollEvent& event);
     void OnHazeGradText(wxCommandEvent& event);
+	void OnDensitySlider(wxScrollEvent& event){
+		OnSliderValue(DensitySlider, object()->density);
+	 }
+	void OnDensityText(wxCommandEvent& event){
+		OnSliderText(DensitySlider, object()->density);
+		TheView->set_changed_render();
+	}
+
+    //DEFINE_SLIDER_VAR_EVENTS(Density,object()->density);
+	void OnEndFracGHGSlider(wxScrollEvent &event){
+
+	}
+	void OnFracGHGSlider(wxScrollEvent& event){
+		FracGHGSlider->setValueFromSlider();
+	    double var=FracGHGSlider->getValue();
+	    object()->ghg_fraction=var/100;
+	    TheView->set_changed_render();
+	 }
+	void OnFracGHGText(wxCommandEvent& event){
+		FracGHGSlider->setValueFromText();
+    	double var=FracGHGSlider->getValue();
+    	object()->ghg_fraction=var/100;
+    	TheView->set_changed_render();
+	}
+    DEFINE_SLIDER_VAR_EVENTS(Pressure,object()->pressure);
+
+    //DEFINE_SLIDER_VAR_EVENTS(FracGHG,object()->ghg_fraction);
+
     DECLARE_EVENT_TABLE()
 };
 

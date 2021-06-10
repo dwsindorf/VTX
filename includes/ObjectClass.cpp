@@ -437,7 +437,7 @@ NodeIF *ObjectNode::replaceChild(NodeIF *c,NodeIF *n){
 	if(c->typeClass()&ID_OBJECT){
 		n->setParent(this);
 		children.replace((Object3D*)c,(Object3D*)n);
-		return c;
+		return n;
 	}
 	return 0;
 }

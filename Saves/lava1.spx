@@ -6,6 +6,11 @@ Scene() {
 		height=390.025 ft;
 		gndlvl=1947.56 ft;
 		time=56816.4;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=75;
 		tilt=-10;
 		angle=20;
@@ -70,6 +75,11 @@ Scene() {
 		height=6 ft;
 		time=50055.4;
 		angle=-11;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400036;
+		radius=0.00400036;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -93,13 +103,14 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.17);
 					day=24;
 					shadow=Color(0,0,0.19,0.8);

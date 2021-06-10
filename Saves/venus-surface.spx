@@ -1,72 +1,25 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-42.1875;
-		theta=216.558;
-		height=154.415 ft;
-		gndlvl=58.3547 ft;
+		phi=-41.5436;
+		theta=246.02;
+		height=9926.72 ft;
+		gndlvl=-46631.2 ft;
 		time=22362.4;
-		tilt=-11;
-		angle=-17;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.003;
+		minh=1.13636e-09;
+		heading=6;
+		tilt=-1;
+		angle=-1;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=176.794 ft;
-		gndlvl=35.9759 ft;
-	}
-	View{
-		view=ORBITAL;
-		height=0.006;
-		gndlvl=2126.47 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		view=SURFACE;
-		phi=-41.4844;
-		theta=245.391;
-		height=52800 ft;
-		gndlvl=-52054.6 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		phi=-41.5448;
-		theta=246.011;
-		height=1463.9 ft;
-		gndlvl=-53198.3 ft;
-	}
-	View{
-		height=483.714 ft;
-		gndlvl=-53796.9 ft;
-		heading=16;
-		tilt=-4;
-	}
-	View{
-		height=288.399 ft;
-		gndlvl=-46631.2 ft;
-	}
-	View{
-		height=10464.5 ft;
-	}
-	View{
-		phi=-41.5444;
-		theta=246.012;
-		height=10788 ft;
-		heading=6;
-	}
-	View{
-		phi=-41.5436;
-		theta=246.02;
-		height=9926.72 ft;
-	}
-	View{
-		height=9911.43 ft;
+		minr=0.00299117;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -91,9 +44,10 @@ Scene() {
 					color=Color(1,1,0.8);
 					day=100;
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1,0.54);
+					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
+					temperature=6000;
 					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.294,0.016,0.071),
@@ -109,10 +63,11 @@ Scene() {
 						color2=Color(1,1,0.7);
 					}
 				}
-				Planet(0.003,50) {
+				Planet(0.003,67) {
+					albedo=0.75;
 					ambient=Color(1,1,1,0.08);
 					day=30;
-					diffuse=Color(1,0.86,0.51);
+					diffuse=Color(1,0.86,0.51,0.76);
 					emission=Color(0.99,0.93,0.09,0.04);
 					fog.color=Color(1,0.81,0.11);
 					fog.max=-10000 ft;
@@ -122,12 +77,11 @@ Scene() {
 					fog.vmin=-40000 ft;
 					hscale=0.002;
 					name="Venus";
-					shadow=Color(0.21,0.17,0.04,0.2);
+					shadow=Color(0.21,0.17,0.04,0.05);
 					shine=16.4793;
-					specular=Color(1,1,1,0.46);
+					specular=Color(1,1,1,0.11);
 					tilt=10;
 					year=100;
-					albedo=0.1;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
 					Surface{
@@ -143,27 +97,28 @@ Scene() {
 						ambient=Color(1,1,1,0.07);
 						crot=1;
 						day=30;
+						diffuse=Color(1,1,1,0.85);
 						emission=Color(1,1,1,0.11);
 						resolution=4;
 						shine=42.2088;
-						specular=Color(1,1,1,0.32);
-						albedo=0.1;
+						specular=Color(1,1,1,0.64);
 						Surface{
 							terrain=
-									Texture("venus_clouds",BUMP|NORM|TEX,1,1.33344,2,0,1,2,0.5,0);
+									Texture("venus_clouds",BUMP|NORM|TEX,1,2.44448,2,0,1,2,0.5,0,0,0,0,0);
 						}
 					}
-					Sky(0.00317625) {
+					Sky(0.0032) {
 						color=Color(0.99,0.94,0.58);
 						day=30;
-						density=0.25;
+						density=0.9;
+						ghg_fraction=0.95;
 						haze.color=Color(0.99,0.84,0.51);
-						haze.grad=0.57318;
 						haze.value=1;
 						name="Sky";
 						night.color=Color(0,0,0);
+						pressure=92;
 						rseed=1.15592;
-						sky.grad=0.492922;
+						sky.grad=8;
 						specular=Color(1,1,1);
 						tilt=10;
 						twilight.max=0.867201;

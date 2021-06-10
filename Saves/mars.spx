@@ -6,6 +6,11 @@ Scene() {
 		height=0.00468535;
 		gndlvl=-64049.8 ft;
 		time=53021.8;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -15,6 +20,13 @@ Scene() {
 	View{
 		height=0.0046755;
 		gndlvl=-12022.8 ft;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00667322;
+	}
+	View{
+		minr=0.00199772;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -32,28 +44,47 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				Star(0.5,0) {
+				Star(1.5,0) {
+					color=Color(1,1,0.8);
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
+					emission=Color(1,1,0.93);
+					name="Sol";
 					specular=Color(1,1,1);
-					symmetry=0.95;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
+					temperature=5819.04;
+					bands("star1",ACHNL|CLAMP,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.463,0.039,0.122),
+						Color(0.024,0.02,0.125));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|LINEAR|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,0.3,1,0,0),1.66555,2,1.05456,1.4,2,2,1,0,0,2,-0.33336,0)+
+								Texture("bricks",BUMP,4.36203,-1,2,0,6.00016,2,0.5,0,0,0,0,0)+Color(1,1,1);
+					}
+					Corona(8.39661) {
+						color1=Color(1,1,1);
+						color2=Color(1,0.8,0.09);
+						gradient=1;
+						name="Corona";
+						noise.expr=noise(GRADIENT|NABS|NLOD|SQR|UNS,1.5,3.9,0.07,0.5,2,0.44,1,0,-0.2);
+					}
+					Corona(2.96745) {
+						color1=Color(1,1,0.89);
+						color2=Color(0.97,0.99,0.59);
+						gradient=1;
+						name="flares";
+						noise.expr=noise(SIMPLEX|NABS|NLOD,1.8,7,-0.54,0.2,2,1,1,0,0);
 					}
 				}
-				Planet(0.002,100) {
+				Planet(0.002,140) {
+					albedo=0.16;
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					diffuse=Color(1,1,1,0.85);
 					hscale=0.0136431;
+					name="Mars";
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
 					year=100;
-					albedo=1;
 					Surface{
 						terrain=snow(-0.7,0.14,0.57,0.17,1,0.82)
 								Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
@@ -66,10 +97,12 @@ Scene() {
 						color=Color(0,0.65,0.9);
 						day=24;
 						density=0.09722;
+						ghg_fraction=0.95;
 						haze.color=Color(0.98,0.71,0.11);
 						haze.grad=0.78048;
 						haze.value=1;
 						name="Sky";
+						pressure=0.005;
 						resolution=4;
 						rseed=1.58657;
 						sky.grad=0.408416;

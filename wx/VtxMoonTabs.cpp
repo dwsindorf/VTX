@@ -17,8 +17,7 @@ enum{
     ID_RADIUS_TEXT,
 	ID_HSCALE_SLDR,
 	ID_HSCALE_TEXT,
-	ID_SYMMETRY_SLDR,
-	ID_SYMMETRY_TEXT,
+	ID_TYPE_TEXT,
 
     ID_ORBIT_RADIUS_SLDR,
     ID_ORBIT_RADIUS_TEXT,
@@ -36,6 +35,8 @@ enum{
     ID_YEAR_TEXT,
     ID_SHINE_SLDR,
     ID_SHINE_TEXT,
+	ID_ALBEDO_SLDR,
+	ID_ALBEDO_TEXT,
     ID_AMBIENT_SLDR,
     ID_AMBIENT_TEXT,
     ID_AMBIENT_COLOR,
@@ -65,7 +66,6 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxMoonTabs::OnNameText)
 SET_SLIDER_EVENTS(CELLSIZE,VtxMoonTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxMoonTabs,Size)
 SET_SLIDER_EVENTS(HSCALE,VtxMoonTabs,Hscale)
-SET_SLIDER_EVENTS(SYMMETRY,VtxMoonTabs,Symmetry)
 
 SET_SLIDER_EVENTS(TILT,VtxMoonTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxMoonTabs,Day)
@@ -75,6 +75,8 @@ SET_SLIDER_EVENTS(ORBIT_RADIUS,VtxMoonTabs,OrbitRadius)
 SET_SLIDER_EVENTS(ORBIT_TILT,VtxMoonTabs,OrbitTilt)
 SET_SLIDER_EVENTS(ORBIT_PHASE,VtxMoonTabs,OrbitPhase)
 SET_SLIDER_EVENTS(SHINE,VtxMoonTabs,Shine)
+SET_SLIDER_EVENTS(ALBEDO,VtxMoonTabs,Albedo)
+
 SET_COLOR_EVENTS(AMBIENT,VtxMoonTabs,Ambient)
 SET_COLOR_EVENTS(EMISSION,VtxMoonTabs,Emission)
 SET_COLOR_EVENTS(SPECULAR,VtxMoonTabs,Specular)
@@ -158,34 +160,36 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Object"));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2+10,VALUE2+SLIDER2);
-	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+    wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2 + 10,
+			VALUE2 + SLIDER2);
+	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	hline->AddSpacer(10);
 
-	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",LABEL2S, VALUE2,SLIDER2);
-	CellSizeSlider->setRange(1,4);
-	CellSizeSlider->setValue(1);
-	hline->Add(CellSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-    object_cntrls->Add(hline,wxALIGN_LEFT|wxALL);
+	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temperature",100,VALUE2+SLIDER2);
+	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-    hline = new wxBoxSizer(wxHORIZONTAL);
-
-	SizeSlider=new SliderCtrl(panel,ID_RADIUS_SLDR,"Size(mls)",LABEL2B, VALUE2,SLIDER2);
-	SizeSlider->setRange(100,10000);
-	SizeSlider->setValue(1000);
-
-	hline->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	TiltSlider=new SliderCtrl(panel,ID_TILT_SLDR,"Tilt",LABEL2S, VALUE2,SLIDER2);
-	TiltSlider->setRange(0,360);
-	TiltSlider->setValue(0.0);
-
-	hline->Add(TiltSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	SizeSlider = new SliderCtrl(panel, ID_RADIUS_SLDR, "Size(mls)", LABEL2B,
+			VALUE2, SLIDER2);
+	SizeSlider->setRange(100, 10000);
+	SizeSlider->setValue(1000);
+
+	hline->Add(SizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	CellSizeSlider = new SliderCtrl(panel, ID_CELLSIZE_SLDR, "Grid", LABEL2S,
+			VALUE2, SLIDER2);
+	CellSizeSlider->setRange(1, 4);
+	CellSizeSlider->setValue(1);
+	hline->Add(CellSizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
 	HscaleSlider = new SliderCtrl(panel, ID_HSCALE_SLDR, "Ht(mls)", LABEL2B,
 			VALUE2, SLIDER2);
 	HscaleSlider->setRange(0.1, 20);
@@ -193,11 +197,13 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 
 	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
-	SymmetrySlider = new SliderCtrl(panel, ID_SYMMETRY_SLDR, "Sym", LABEL2S,
-			VALUE2, SLIDER2);
-	SymmetrySlider->setRange(0.1, 2.0);
-	SymmetrySlider->setValue(1.0);
-	hline->Add(SymmetrySlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	TiltSlider = new SliderCtrl(panel, ID_TILT_SLDR, "Tilt", LABEL2S, VALUE2,
+			SLIDER2);
+	TiltSlider->setRange(0, 360);
+	TiltSlider->setValue(0.0);
+
+	hline->Add(TiltSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -262,9 +268,15 @@ void VtxMoonTabs::AddLightingTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
 	wxStaticBoxSizer* color_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Color"));
-    ShineSlider=new SliderCtrl(panel,ID_SHINE_SLDR,"Shine",LABEL, VALUE,SLIDER);
-    ShineSlider->setRange(0.25,100);
-    color_cntrls->Add(ShineSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	ShineSlider = new SliderCtrl(panel, ID_SHINE_SLDR, "Shine", LABEL, VALUE, SLIDER2);
+	ShineSlider->setRange(0.25, 100);
+	hline->Add(ShineSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	AlbedoSlider = new SliderCtrl(panel, ID_ALBEDO_SLDR, "Albedo", LABEL2, VALUE, SLIDER2);
+	AlbedoSlider->setRange(0.01, 1);
+	hline->Add(AlbedoSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	color_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
     AmbientSlider=new ColorSlider(panel,ID_AMBIENT_SLDR,"Ambient",LABEL,VALUE,CSLIDER,CBOX1);
     color_cntrls->Add(AmbientSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
@@ -296,8 +308,22 @@ void VtxMoonTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 	event.Check(is_viewobj());
 }
 
+
+void VtxMoonTabs::setTemp() {
+	Planetoid *obj = (Planetoid*) object();
+    obj->calcTemperature();
+	char type_str[256];
+	double tc=obj->temperature-273;
+	double tf=tc*9.4/5.0+32;
+	sprintf(type_str,"%d C (%d F)",(int)tc,(int)(tf));
+	object_type->SetValue(type_str);
+}
+
 void VtxMoonTabs::updateControls(){
 	Moon *obj=object();
+
+	setTemp();
+
 	updateSlider(SizeSlider,obj->size/MILES);
 	updateSlider(CellSizeSlider,obj->detail);
 	updateSlider(OrbitRadiusSlider,obj->orbit_radius/1000/MILES);
@@ -308,8 +334,8 @@ void VtxMoonTabs::updateControls(){
 	updateSlider(DaySlider,obj->day);
 	updateSlider(YearSlider,obj->year);
 	updateSlider(ShineSlider,obj->shine);
+	updateSlider(AlbedoSlider, obj->albedo);
 	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
-	updateSlider(SymmetrySlider, obj->symmetry);
 
 	updateColor(AmbientSlider,obj->ambient);
 	updateColor(EmissionSlider,obj->emission);

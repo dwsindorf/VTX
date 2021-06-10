@@ -6,11 +6,19 @@ Scene() {
 		height=12175.2 ft;
 		gndlvl=-112244 ft;
 		time=17000;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.002;
+		minh=1.13636e-09;
 		heading=-41;
 		tilt=-15;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00197874;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -34,13 +42,15 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.002,100) {
+				Planet(0.002,141) {
+					albedo=0.16;
 					ambient=Color(1,1,1,0.12);
 					day=24;
 					hscale=0.0136431;
@@ -49,7 +59,6 @@ Scene() {
 					specular=Color(1,1,1,0.5);
 					tilt=10;
 					year=100;
-					albedo=1;
 					bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 						Color(1,0.6,0),
 						Color(0.7,0.4,0),
@@ -68,10 +77,12 @@ Scene() {
 						color=Color(0.21,0.75,0.96);
 						day=24;
 						density=0.13888;
+						ghg_fraction=0.95;
 						haze.color=Color(0.96,0.84,0.56,0.76);
 						haze.grad=0.5244;
 						haze.value=0.756863;
 						name="Sky";
+						pressure=0.005;
 						resolution=4;
 						rseed=1.58657;
 						sky.grad=0.408416;

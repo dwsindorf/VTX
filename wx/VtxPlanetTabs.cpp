@@ -16,8 +16,7 @@ enum {
 	ID_RADIUS_TEXT,
 	ID_HSCALE_SLDR,
 	ID_HSCALE_TEXT,
-	ID_SYMMETRY_SLDR,
-	ID_SYMMETRY_TEXT,
+	ID_TYPE_TEXT,
 
 	ID_ORBIT_RADIUS_SLDR,
 	ID_ORBIT_RADIUS_TEXT,
@@ -35,6 +34,8 @@ enum {
 	ID_YEAR_TEXT,
 	ID_SHINE_SLDR,
 	ID_SHINE_TEXT,
+	ID_ALBEDO_SLDR,
+	ID_ALBEDO_TEXT,
 	ID_AMBIENT_SLDR,
 	ID_AMBIENT_TEXT,
 	ID_AMBIENT_COLOR,
@@ -64,7 +65,6 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxPlanetTabs::OnNameText)
 SET_SLIDER_EVENTS(CELLSIZE,VtxPlanetTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxPlanetTabs,Size)
 SET_SLIDER_EVENTS(HSCALE,VtxPlanetTabs,Hscale)
-SET_SLIDER_EVENTS(SYMMETRY,VtxPlanetTabs,Symmetry)
 
 SET_SLIDER_EVENTS(TILT,VtxPlanetTabs,Tilt)
 SET_SLIDER_EVENTS(DAY,VtxPlanetTabs,Day)
@@ -74,6 +74,7 @@ SET_SLIDER_EVENTS(ORBIT_RADIUS,VtxPlanetTabs,OrbitRadius)
 SET_SLIDER_EVENTS(ORBIT_TILT,VtxPlanetTabs,OrbitTilt)
 SET_SLIDER_EVENTS(ORBIT_PHASE,VtxPlanetTabs,OrbitPhase)
 SET_SLIDER_EVENTS(SHINE,VtxPlanetTabs,Shine)
+SET_SLIDER_EVENTS(ALBEDO,VtxPlanetTabs,Albedo)
 
 SET_COLOR_EVENTS(AMBIENT,VtxPlanetTabs,Ambient)
 SET_COLOR_EVENTS(EMISSION,VtxPlanetTabs,Emission)
@@ -160,11 +161,9 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	hline->AddSpacer(10);
 
-	CellSizeSlider = new SliderCtrl(panel, ID_CELLSIZE_SLDR, "Grid", LABEL2S,
-			VALUE2, SLIDER2);
-	CellSizeSlider->setRange(1, 4);
-	CellSizeSlider->setValue(1);
-	hline->Add(CellSizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temperature",100,VALUE2+SLIDER2);
+	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -176,16 +175,16 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 
 	hline->Add(SizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
-	TiltSlider = new SliderCtrl(panel, ID_TILT_SLDR, "Tilt", LABEL2S, VALUE2,
-			SLIDER2);
-	TiltSlider->setRange(0, 360);
-	TiltSlider->setValue(0.0);
-
-	hline->Add(TiltSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	CellSizeSlider = new SliderCtrl(panel, ID_CELLSIZE_SLDR, "Grid", LABEL2S,
+			VALUE2, SLIDER2);
+	CellSizeSlider->setRange(1, 4);
+	CellSizeSlider->setValue(1);
+	hline->Add(CellSizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
+
 	HscaleSlider = new SliderCtrl(panel, ID_HSCALE_SLDR, "Ht(mls)", LABEL2B,
 			VALUE2, SLIDER2);
 	HscaleSlider->setRange(0.1, 20);
@@ -193,11 +192,13 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 
 	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
-	SymmetrySlider = new SliderCtrl(panel, ID_SYMMETRY_SLDR, "Sym", LABEL2S,
-			VALUE2, SLIDER2);
-	SymmetrySlider->setRange(0.1, 2.0);
-	SymmetrySlider->setValue(1.0);
-	hline->Add(SymmetrySlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	TiltSlider = new SliderCtrl(panel, ID_TILT_SLDR, "Tilt", LABEL2S, VALUE2,
+			SLIDER2);
+	TiltSlider->setRange(0, 360);
+	TiltSlider->setValue(0.0);
+
+	hline->Add(TiltSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -227,7 +228,7 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 
 	OrbitRadiusSlider = new SliderCtrl(panel, ID_ORBIT_RADIUS_SLDR,
 			"Radius(x1e6)", LABEL2B, VALUE2, SLIDER2);
-	OrbitRadiusSlider->setRange(1, 100);
+	OrbitRadiusSlider->setRange(1, 1000);
 	OrbitRadiusSlider->setValue(1);
 
 	hline->Add(OrbitRadiusSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
@@ -270,10 +271,15 @@ void VtxPlanetTabs::AddLightingTab(wxWindow *panel) {
 
 	wxStaticBoxSizer *color_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
 			wxT("Color"));
-	ShineSlider = new SliderCtrl(panel, ID_SHINE_SLDR, "Shine", LABEL, VALUE,
-			SLIDER);
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	ShineSlider = new SliderCtrl(panel, ID_SHINE_SLDR, "Shine", LABEL, VALUE, SLIDER2);
 	ShineSlider->setRange(0.25, 100);
-	color_cntrls->Add(ShineSlider->getSizer(), 1, wxALIGN_LEFT | wxALL);
+	hline->Add(ShineSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	AlbedoSlider = new SliderCtrl(panel, ID_ALBEDO_SLDR, "Albedo", LABEL2, VALUE, SLIDER2);
+	AlbedoSlider->setRange(0.01, 1);
+	hline->Add(AlbedoSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	color_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	AmbientSlider = new ColorSlider(panel, ID_AMBIENT_SLDR, "Ambient", LABEL,
 			VALUE, CSLIDER, CBOX1);
@@ -311,10 +317,23 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 	event.Check(is_viewobj());
 }
 
+void VtxPlanetTabs::setTemp() {
+	Planetoid *obj = (Planetoid*) object();
+    obj->calcTemperature();
+
+	char type_str[256];
+	double tc=obj->temperature-273;
+	double tf=tc*9.4/5.0+32;
+	sprintf(type_str,"%d C (%d F)",(int)tc,(int)(tf));
+	object_type->SetValue(type_str);
+}
 void VtxPlanetTabs::updateControls() {
 	if (changing)
 		return;
 	Planetoid *obj = (Planetoid*) object();
+
+	setTemp();
+
 	updateSlider(CellSizeSlider, obj->detail);
 	updateSlider(SizeSlider, obj->size / MILES);
 	updateSlider(OrbitRadiusSlider, obj->orbit_radius);
@@ -325,8 +344,8 @@ void VtxPlanetTabs::updateControls() {
 	updateSlider(DaySlider, obj->day);
 	updateSlider(YearSlider, obj->year);
 	updateSlider(ShineSlider, obj->shine);
+	updateSlider(AlbedoSlider, obj->albedo);
 	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
-	updateSlider(SymmetrySlider, obj->symmetry);
 
 	updateColor(AmbientSlider, obj->ambient);
 	updateColor(EmissionSlider, obj->emission);

@@ -15,10 +15,10 @@ protected:
 	SliderCtrl *DaySlider;
 	SliderCtrl *RotPhaseSlider;
 	SliderCtrl *YearSlider;
-	SliderCtrl *SymmetrySlider;
 	SliderCtrl *HscaleSlider;
-
 	SliderCtrl *ShineSlider;
+	SliderCtrl *AlbedoSlider;
+
 	ColorSlider *AmbientSlider;
 	ColorSlider *SpecularSlider;
 	ColorSlider *EmissionSlider;
@@ -27,6 +27,7 @@ protected:
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
+	void setTemp();
 
 public:
 	VtxMoonTabs(wxWindow *parent, wxWindowID id, const wxPoint &pos =
@@ -44,12 +45,12 @@ public:
 		delete RotPhaseSlider;
 		delete YearSlider;
 		delete ShineSlider;
+		delete AlbedoSlider;
 		delete AmbientSlider;
 		delete SpecularSlider;
 		delete EmissionSlider;
 		delete DiffuseSlider;
 		delete ShadowSlider;
-		delete SymmetrySlider;
 		delete HscaleSlider;
 	}
 	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
@@ -83,25 +84,6 @@ public:
 		TheScene->rebuild();
 	}
 
-	void OnEndSymmetrySlider(wxScrollEvent &event) {
-		SymmetrySlider->setValueFromSlider();
-		Planetoid *obj = object();
-		double val = SymmetrySlider->getValue();
-		obj->symmetry = val;
-		TheView->set_changed_detail();
-		TheScene->rebuild_all();
-	}
-	void OnSymmetrySlider(wxScrollEvent &event) {
-		SymmetrySlider->setValueFromSlider();
-	}
-	void OnSymmetryText(wxCommandEvent &event) {
-		SymmetrySlider->setValueFromText();
-		Planetoid *obj = object();
-		double val = SymmetrySlider->getValue();
-		obj->symmetry = val;
-		TheView->set_changed_detail();
-		TheScene->rebuild_all();
-	}
 	void OnEndHscaleSlider(wxScrollEvent &event) {
 		HscaleSlider->setValueFromSlider();
 		Planetoid *obj = object();
@@ -159,7 +141,22 @@ public:
 		TheView->set_changed_render();
 	}
 
-	//DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius,1000)
+	void OnEndAlbedoSlider(wxScrollEvent &event) {}
+
+    void OnAlbedoSlider(wxScrollEvent& event){
+    	AlbedoSlider->setValueFromSlider();
+    	OnSliderValue(AlbedoSlider, object()->albedo);
+    	object()->calcTemperature();
+    	setTemp();
+		invalidateRender();
+	}
+    void OnAlbedoText (wxCommandEvent& event){
+    	OnSliderText( AlbedoSlider, object()->albedo);
+    	object()->calcTemperature();
+    	setTemp();
+		invalidateRender();
+	}
+
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
 	DEFINE_SLIDER_VAR_EVENTS(Tilt,object()->tilt)
@@ -167,6 +164,7 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
 	DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)
+	//DEFINE_SLIDER_VAR_EVENTS(Albedo,object()->albedo)
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)

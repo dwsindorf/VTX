@@ -6,6 +6,11 @@ Scene() {
 		height=249.911 miles;
 		gndlvl=-29.8317 ft;
 		time=49560.4;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -304,6 +309,13 @@ Scene() {
 	}
 	View{
 		fov=35.4957;
+		vstride=0.02;
+		zoom=0.000124971;
+		minh=1.13636e-09;
+		radius=0.000125075;
+	}
+	View{
+		minr=0.000125008;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -327,16 +339,18 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,100) {
+				Planet(0.004,93) {
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					hscale=0.004;
+					name="Earth";
 					resolution=4;
 					rot_phase=249.998;
 					shadow=Color(0,0,0,0.93);

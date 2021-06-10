@@ -733,7 +733,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 
 	if(expanded)
 		treepanel->Expand(item);
-    setTabs(type);
+    //setTabs(type);
 }
 
 //#define DEBUG_TREE

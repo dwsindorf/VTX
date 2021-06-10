@@ -6,6 +6,11 @@ Scene() {
 		height=1312.41 ft;
 		gndlvl=5142.73 ft;
 		time=38000;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-5;
 		tilt=-15;
 		fov=35;
@@ -114,6 +119,11 @@ Scene() {
 		phi=50.0596;
 		theta=99.8906;
 		height=0.180863;
+		vstride=0.02;
+		zoom=0.034;
+		minh=1.13636e-09;
+		minr=0.034;
+		radius=0.214863;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -141,6 +151,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
+					temperature=6000;
 					Surface{
 						mc=clamp(noise(GRADIENT|UNS,3,10,0.4,0.5)*noise(GRADIENT|NABS|UNS,8,10,0.5,0.5),0,1);
 						terrain=Color(1,1-0.3*mc,0.9-mc);
@@ -150,7 +161,7 @@ Scene() {
 						color2=Color(1,1,0.7);
 					}
 				}
-				Planet(0.034,803) {
+				Planet(0.034,890) {
 					ambient=Color(1,1,1,0.02);
 					day=20;
 					name="Saturn";
@@ -170,6 +181,7 @@ Scene() {
 								Texture("jupitermap",BUMP|TEX,1,-1.24528,1.32076,0,1,2,0.5,0);
 					}
 					Ring(0.0377788,0.00700468) {
+						emission=Color(1,1,1);
 						shadow=Color(0,0,0,0.56);
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
@@ -181,6 +193,7 @@ Scene() {
 						}
 					}
 					Ring(0.0477608,0.024749) {
+						emission=Color(1,1,1);
 						shadow=Color(0,0,0,0.78);
 						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
 							Color(1,1,0.3,0.5));

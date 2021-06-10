@@ -173,7 +173,7 @@ void Orbital::set_lighting(){
         Lights.defaultLighting();
         Lights.setDiffuse(1.0);
     	Lights.setEmission(emission);
-    	Lights.setSpecular(albedo);
+    	Lights.setSpecular(specular.alpha());
     	Lights.setShininess(shine);
     }
 }
@@ -386,9 +386,9 @@ void Orbital::get_vars()
 	if(exprs.get_local("specular",Td))
 		specular=Td.c;
 	else{
-		VGET("albedo",albedo,DEFAULT_ALBEDO);
-		specular=Color(1,1,1,albedo);
+		specular=Color(1,1,1,DEFAULT_SPECULAR);
 	}
+	VGET("albedo",albedo,DEFAULT_ALBEDO);
 	VGET("shine",shine,DEFAULT_SHINE);
 	VGET("sunset",sunset,0.2);
 	VGET("rseed",rseed,0.0);
@@ -412,9 +412,9 @@ void Orbital::set_vars()
 	CSET("color",color(),WHITE);
 	CSET("ambient",ambient,Color(1,1,1,0));
 	CSET("emission",emission,Color(1,1,1,0));
-	CSET("specular",specular,Color(1,1,1,DEFAULT_ALBEDO));
+	CSET("specular",specular,Color(1,1,1,DEFAULT_SPECULAR));
 	CSET("diffuse",diffuse,Color(1,1,1,1));
-	//VSET("albedo",albedo,DEFAULT_ALBEDO);
+	VSET("albedo",albedo,DEFAULT_ALBEDO);
 	VSET("shine",shine,DEFAULT_SHINE);
 	VSET("sunset",sunset,0.2);
 	VSET("rseed",rseed,0.0);
@@ -2115,6 +2115,16 @@ NodeIF *Spheroid::replaceChild(NodeIF *c,NodeIF *n)
 }
 
 //-------------------------------------------------------------
+// Spheroid::replaceNode()  replace current instance with another
+//-------------------------------------------------------------
+NodeIF *Spheroid::replaceNode(NodeIF *n){
+	NodeIF *newnode=NodeIF::replaceNode(n);
+	if(TheScene->viewobj==n)
+		TheScene->change_view(ORBITAL);
+	return newnode;
+}
+
+//-------------------------------------------------------------
 // Spheroid::locate() set point to global coordinates
 //-------------------------------------------------------------
 void Spheroid::locate()
@@ -2494,10 +2504,10 @@ void StarData::star_info(Color col, double *t, char *m){
 		double temp2=star_temps[min_index+1];
 		double diff2=c.difference(star_colors[min_index+1]);
 		f=lerp(min_diff,0,diff2,0,1);
-		temp=star_temps[min_index]+f*star_temps[min_index+1];
+		temp=(1-f)*star_temps[min_index]+f*star_temps[min_index+1];
 	}
 	*t=temp*col.alpha();
-	sprintf(m,"%c%d",star_class[min_index],(int)(10*f*col.alpha()));
+	sprintf(m,"%c%d",star_class[min_index],(int)(9*f*col.alpha()));
 }
 Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 {
@@ -2510,7 +2520,7 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 	printf("Star\n");
 #endif
 	shadows_exclude();
-	startemp=0;
+	temperature=0;
 	startype[0]=0;
 }
 Star::~Star()
@@ -2523,11 +2533,12 @@ Star::~Star()
 void Star::setRadiance(Color c){
 	emission=c;
 	//c.print();
-	StarData::star_info(emission,&startemp,startype);
-	cout<<startype<<" "<<startemp<<endl;
+	StarData::star_info(emission,&temperature,startype);
+	cout<<startype<<" "<<temperature<<endl;
 }
 void Star::getStarData(double *d, char *m){
-	*d=startemp;
+	setRadiance(emission);
+	*d=temperature;
 	strcpy(m,startype);
 }
 
@@ -2550,7 +2561,7 @@ void Star::get_vars()
 	else
 		diffuse=Color(1,1,1,1);
 	setRadiance(emission);
-	exprs.set_var("temperature",startemp);
+	exprs.set_var("temperature",temperature);
 }
 
 //-------------------------------------------------------------
@@ -2608,14 +2619,14 @@ void Star::set_lights()
 	TheScene->popMatrix();
 
    // double intensity=emission.alpha();
-    double intensity=startemp;
+    double intensity=temperature;
 	l->setIntensity(intensity);
 
 	l->Diffuse=diffuse;
 	l->Specular=specular;
 	l->color=emission;
-	l->diffuse=1.5*diffuse.alpha()*l->intensity;
-	l->specular=specular.alpha()*l->intensity;//0.2;
+	l->diffuse=diffuse.alpha();//*l->intensity;
+	l->specular=specular.alpha();//*l->intensity;//0.2;
 	if(map)
 		map->lighting=0;
 }
@@ -2755,6 +2766,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	fog_color=def_fog_color;
 	water_specular=def_water_specular;
 	water_shine=def_water_shine;
+	temperature=100;
 
 #ifdef DEBUG_BASE_OBJS
 	printf("Planetoid\n");
@@ -2767,15 +2779,6 @@ Planetoid::~Planetoid()
 #endif
 }
 
-//-------------------------------------------------------------
-// Planetoid::replaceNode()  replace current instance with another
-//-------------------------------------------------------------
-NodeIF *Planetoid::replaceNode(NodeIF *n){
-	NodeIF *newnode=NodeIF::replaceNode(n);
-	if(TheScene->viewobj==n)
-		TheScene->change_view(ORBITAL);
-	return newnode;
-}
 //-------------------------------------------------------------
 // Planetoid::get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -2806,6 +2809,9 @@ void Planetoid::get_vars()
 	VGET("fog.max",fog_max,def_fog_max);
 	VGET("fog.vmin",fog_vmin,def_fog_vmin);
 	VGET("fog.vmax",fog_vmax,def_fog_vmax);
+
+	calcTemperature();
+
 }
 
 //-------------------------------------------------------------
@@ -3176,6 +3182,7 @@ void Planetoid::adapt_object()
 {
 	if(!isEnabled())
 		return;
+	calcTemperature();
 	//cout << "Planetoid::adapt_object" << endl;
     Td.clarity=water_clarity;
 	Raster.water_level=water_level;
@@ -3297,6 +3304,53 @@ void Planetoid::set_lighting(){
 }
 
 //-------------------------------------------------------------
+// Planetoid::calcTemperature() calculate surface temperature
+// data      mercury  venus   earth    mars     titan
+// dist      36       67      93       141      886
+// albedo    0.12     0.75    0.30     0.16     0.4
+// pressure  0        92      1        0.01     1.4
+// %ghg      0        96      1        95        5
+// Tobs      440      735     288      215      94
+// Tpre      437      232     255      209      81
+// delta     3        503     33       6        7
+//-------------------------------------------------------------
+void Planetoid::calcTemperature(){
+
+   ObjectNode *p=getParent();
+   if(!p)
+	   return;
+   Orbital *obj;
+
+   double g=0;
+   children.ss();
+   while((obj=(Orbital*)children++)>0){
+	   if(obj->type()==ID_SKY){
+		   Sky *sky=(Sky*)obj;
+	       g=pow(sky->pressure,1.5)*sky->ghg_fraction;
+	   }
+   }
+   g=0.5*pow(g,0.25);
+
+   if(p->type()==ID_PLANET)
+	   p=p->getParent();
+   if(p->type()==ID_SYSTEM){
+       p->children.ss();
+       temperature=0;
+	   while((obj=(Orbital*)p->children++)>0){
+		   if(obj->type()==ID_STAR){
+		       double d=point.distance(obj->point)-obj->size-size;
+		       double Ts=((Star*)obj)->temperature;
+		       double f=0.452; // constant relating star to planet temp
+		       double a=pow(1-albedo,0.25);
+		       double Tp=Ts*f*a/sqrt(d);
+		       double Tg=Tp*g;//Tp*pow(tg,0.25);
+		       //cout<<" tp:"<<Tp<<" g:"<<g<<" tg:"<<Tg<<endl;
+               temperature+=Tp+Tg;
+		   }
+	   }
+   }
+}
+//-------------------------------------------------------------
 // Planetoid::calc_delt() determine (normalized) position of the sun.
 //-------------------------------------------------------------
 double Planetoid::calc_delt()
@@ -3361,6 +3415,7 @@ Moon::~Moon()
 	printf("~Moon\n");
 #endif
 }
+
 
 //************************************************************
 // Shell class
@@ -3661,6 +3716,9 @@ void Sky::get_vars()
 	VGET("twilight.max",twilite_max,def_twilite_max);
 	VGET("resolution",detail,2);
 	VGET("density",density,0.01);
+	VGET("pressure",pressure,1); // earth normal 1ATM
+	VGET("ghg_fraction",ghg_fraction,0.2); //  earth: mostly h2o (20%) co2 (0.03%)
+
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
 		haze_color=Td.c;
@@ -3694,6 +3752,8 @@ void Sky::set_vars()
 	CSET("halo.color",halo_color,Color(1,1,1,1));
 	VSET("resolution",detail,2);
 	VSET("density",density,0.01);
+	VSET("pressure",pressure,1);
+	VSET("ghg_fraction",ghg_fraction,0.2);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
@@ -5385,7 +5445,7 @@ bool Ring::setProgram(){
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
-	vars.newBoolVar("lighting",Render.lighting());
+	//vars.newBoolVar("lighting",Render.lighting());
 
 	tp->setProgram();
 

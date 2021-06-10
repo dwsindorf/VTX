@@ -262,6 +262,7 @@ void VtxStarTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 void VtxStarTabs::updateControls(){
 	Star *obj=object();
 	char type[256];
+	type[0]=0;
 	double temp=0;
 	object()->getStarData(&temp, type);
 	char type_str[256];

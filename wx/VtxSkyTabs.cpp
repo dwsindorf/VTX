@@ -21,6 +21,11 @@ enum{
     ID_HEIGHT_TEXT,
     ID_DENSITY_SLDR,
     ID_DENSITY_TEXT,
+    ID_PRESSURE_SLDR,
+    ID_PRESSURE_TEXT,
+    ID_FRAC_GHG_SLDR,
+    ID_FRAC_GHG_TEXT,
+
     ID_HAZE_GRAD_SLDR,
     ID_HAZE_GRAD_TEXT,
     ID_HAZE_SLIDER,
@@ -57,6 +62,8 @@ BEGIN_EVENT_TABLE(VtxSkyTabs, wxNotebook)
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxSkyTabs::OnNameText)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxSkyTabs,CellSize)
+SET_SLIDER_EVENTS(PRESSURE,VtxSkyTabs,Pressure)
+SET_SLIDER_EVENTS(FRAC_GHG,VtxSkyTabs,FracGHG)
 
 EVT_MENU(OBJ_SHOW,VtxSkyTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxSkyTabs::OnUpdateEnable)
@@ -190,12 +197,29 @@ void VtxSkyTabs::AddObjectTab(wxWindow *panel){
 
 	hline->Add(HeightSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
+	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Opacity",LABEL2, VALUE2,SLIDER2);
 	DensitySlider->setRange(0,1);
 
 	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	hline->SetMinSize(wxSize(TABS_WIDTH-2*TABS_BORDER,-1));
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	PressureSlider=new SliderCtrl(panel,ID_PRESSURE_SLDR,"Pressure",LABEL2, VALUE2,SLIDER2);
+	PressureSlider->setRange(0,200);
+	PressureSlider->setValue(1);
+
+	hline->Add(PressureSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	FracGHGSlider=new SliderCtrl(panel,ID_FRAC_GHG_SLDR,"% GHG",LABEL2, VALUE2,SLIDER2);
+	FracGHGSlider->setRange(0,100);
+	FracGHGSlider->setValue(20);
+
+	hline->Add(FracGHGSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
 	object_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(object_cntrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -282,6 +306,9 @@ void VtxSkyTabs::updateControls(){
 	updateSlider(TwiliteGrad,sky->twilite_max);
 	updateSlider(SkyGrad,sky->sky_grad);
 	updateSlider(CellSizeSlider,sky->detail);
+	updateSlider(PressureSlider,sky->pressure);
+	updateSlider(FracGHGSlider,100*sky->ghg_fraction);
+
 	object_name->SetValue(object_node->node->nodeName());
 }
 

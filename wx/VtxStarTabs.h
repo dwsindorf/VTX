@@ -10,7 +10,6 @@ class VtxStarTabs : public VtxTabsMgr
 protected:
 	SliderCtrl *CellSizeSlider;
 	SliderCtrl *SizeSlider;
-	//SliderCtrl *TiltSlider;
 	SliderCtrl *OrbitRadiusSlider;
 	SliderCtrl *OrbitPhaseSlider;
 	SliderCtrl *OrbitTiltSlider;
@@ -92,13 +91,11 @@ public:
     DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius)
     DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
     DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
-   // DEFINE_SLIDER_VAR_EVENTS(Tilt,object()->tilt)
     DEFINE_SLIDER_VAR_EVENTS(Day,object()->day)
     DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
     DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)
     DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
     DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)
-    //DEFINE_COLOR_VAR_EVENTS(Emission,object()->emission)
 
     void OnEndEmissionSlider(wxScrollEvent& event){
 		OnColorSlider(EmissionSlider, radiance);

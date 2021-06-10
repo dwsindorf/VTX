@@ -343,6 +343,7 @@ public:
 	virtual double far_height();
 	virtual double max_height();
 	virtual NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	NodeIF *replaceNode(NodeIF *n);
 
 	TNode *add_expr(int t, char *c, TNode *r);
 	TNode *set_terrain(TNode *n);
@@ -374,7 +375,7 @@ class StarData {
 class Star : public Spheroid
 {
 public:
-	double startemp;
+	double temperature;
 	char startype[3];
 
 	Star(Orbital *m, double s, double r);
@@ -442,6 +443,8 @@ public:
 	double     haze_grad;
 	double     haze_height;
 	double     haze_zfar;
+	double     pressure;
+	double     ghg_fraction;
 
 	Sky(Orbital *m, double s);
 	~Sky();
@@ -570,6 +573,7 @@ public:
 	double     fog_vmax;
 	double     fog_value;
 	double     fog_glow;
+	double     temperature;
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);
@@ -590,7 +594,7 @@ public:
 	virtual double calc_delt();
 	double calc_time(double t);
 	void set_time(double t);
-	NodeIF *replaceNode(NodeIF *n);
+	virtual void calcTemperature();
 };
 
 //************************************************************

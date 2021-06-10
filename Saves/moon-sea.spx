@@ -4,8 +4,13 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=225;
-		height=10 miles;
+		height=52800 ft;
 		time=800051;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		tilt=5;
 		angle=-10;
 		fov=35;
@@ -45,6 +50,13 @@ Scene() {
 		tilt=2;
 		angle=-10;
 		fov=37.6781;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400522;
+	}
+	View{
+		minr=0.004;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -68,13 +80,14 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.004,100) {
 					day=24;
 					hscale=0.0111556;
 					resolution=3;

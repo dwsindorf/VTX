@@ -37,9 +37,16 @@ uniform float twilite_dph; // dot product between point-center light-point at ho
 //Lighting model
 //
 
-vec4 setLighting(vec4 BaseColor, vec3 n) {
-//TODO - develop lighting model for rings
-   return BaseColor;
+vec3 setLighting(vec4 BaseColor) {
+	vec3 diffuse = vec3(0, 0, 0);
+	//float transmission=Constants1.z;
+
+	for(int i=0;i<NLIGHTS;i++){
+		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
+		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*amplitude;
+	}
+	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
+	return vec3(TotalDiffuse);
 }
 #if NVALS >0
 #include "noise_funcs.h"
@@ -53,33 +60,25 @@ vec4 setLighting(vec4 BaseColor, vec3 n) {
 
 // ########## main section #########################
 void main(void) {
-    vec3 normal=normalize(Normal.xyz);
-    bump=vec3(0.0); 
- 
-	//vec4 color=Emission;
-	vec4 color=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
-
+ 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
+    vec4 color=fcolor1;
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
-   // float illumination = 0;
-    float illumination = Emission.a;
-	color.a*=Emission.a;
+	vec3 emission = gl_FrontMaterial.emission.rgb;
+	float illumination=length(emission);
+	//color.a*=Emission.a;
     if(lighting){
-		vec4 c=setLighting(color,normal);
-    	color.rgb=c.rgb;
-    	illumination=c.a;
+		vec3 c=setLighting(color);
+    	color.rgb=c.rgb*emission.rgb;
     }
-
+    color.rgb=mix(color.rgb,fcolor1.rgb,1-Emission.a);
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
     color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));
 #endif
-
 	gl_FragData[0] = color;
 	gl_FragData[0].a=illumination;
-	//if (fbo_write){
-		gl_FragData[1]=vec4(Constants1.g,illumination,0.0,0);
-		gl_FragData[2]=vec4(0,0,0,1);
-	//}
+	gl_FragData[1]=vec4(Constants1.g,illumination,0.0,0);
+	//gl_FragData[2]=vec4(0,0,0,1);
 }

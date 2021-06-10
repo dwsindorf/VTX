@@ -5,6 +5,11 @@ Scene() {
 		theta=-105.376;
 		height=0.0072546;
 		time=87637.6;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=106;
 		pitch=-90;
 		fov=35;
@@ -359,6 +364,13 @@ Scene() {
 	}
 	View{
 		time=14513.8;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
+		radius=0.00300006;
+	}
+	View{
+		minr=0.00300005;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -382,13 +394,15 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.003,100) {
+				Planet(0.003,93) {
+					albedo=0.3;
 					ambient=Color(1,1,1,0.08);
 					day=24;
 					hscale=0.002;
@@ -403,7 +417,6 @@ Scene() {
 					water.level=320 ft;
 					water.shine=68.056;
 					year=365;
-					albedo=1;
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
@@ -426,6 +439,7 @@ Scene() {
 						color=Color(0.65,0.88,0.99);
 						day=24;
 						density=0.375;
+						ghg_fraction=0.01;
 						haze.color=Color(1,1,1,0.82);
 						haze.grad=0.20732;
 						haze.value=0.819608;

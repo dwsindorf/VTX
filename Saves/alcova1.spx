@@ -6,6 +6,11 @@ Scene() {
 		height=544.424 ft;
 		gndlvl=2656.41 ft;
 		time=5800;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=25;
 		tilt=-15;
 		fov=35;
@@ -41,6 +46,13 @@ Scene() {
 	}
 	View{
 		angle=1;
+		vstride=0.02;
+		zoom=0.001;
+		minh=1.13636e-09;
+		radius=0.00100061;
+	}
+	View{
+		minr=0.00100049;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -63,6 +75,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
+				temperature=6000;
 				Surface{
 					m1=noise(GRADIENT|UNS,3,6,0.2);
 					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
@@ -78,7 +91,7 @@ Scene() {
 					}
 				}
 			}
-			Planet(0.001,60) {
+			Planet(0.001,100) {
 				ambient=Color(1,1,1,0.15);
 				day=5;
 				fog.min=100 ft;

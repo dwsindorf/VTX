@@ -719,8 +719,6 @@ void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
 	int pages=GetPageCount();
 
-	cout<<"VtxCloudsTabs::updateControls() "<<obj<<endl;
-
 	if(obj->threeD()){
 		if(pages==2){
 			InsertPage(2,geometry_page,"Volume",false,-1);

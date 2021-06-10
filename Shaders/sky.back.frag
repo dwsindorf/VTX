@@ -51,7 +51,6 @@ void main(void) {
 
 	ha=sqrt(Halo.a);
 	vec4 color=Night; // start with night color
-
 	vec3 ec = normalize(center);                // eye-center
 	float dpv=dot(eye,ec); // angle between center and eye direction
 
@@ -85,6 +84,7 @@ void main(void) {
 
  		illumination+=horizon;//max(lerp(LdotR,  twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0),illumination);
 		alpha=max(lerp(LdotR, twilite_dph+2.0*twilite_min, twilite_dph+twilite_min, 0.0, 1.0),alpha);
+		//alpha=lerp(density,0.3,0.8,alpha,1);
 
 		//color.rgb=color.rgb*sd+vec3(0.5*sd);
 		float pf=0.0;
@@ -134,9 +134,10 @@ void main(void) {
 
 		a = Sky.a*color.a*(1.0-shine_thru*(1.0-h)*(1.0-density)); // moons: enhance shine-thru of day side
 		a=clamp(a,0.0,1.0);
+		a=lerp(density,0.5,0.9,a,1);
 		color.rgb= mix(fcolor1.rgb,color.rgb,a);
 	//}
-	gl_FragData[0]=color;
+	gl_FragData[0]=vec4(color.rgb,a);//color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
 }
 
