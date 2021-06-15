@@ -333,20 +333,38 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				Star(0.5,0) {
+				Star(1.5,0) {
+					color=Color(1,1,0.8);
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
+					emission=Color(1,1,0.93);
+					name="Sol";
 					specular=Color(1,1,1);
-					symmetry=0.95;
-					temperature=6000;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
+					temperature=5819.04;
+					bands("star1",ACHNL|CLAMP,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.463,0.039,0.122),
+						Color(0.024,0.02,0.125));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|LINEAR|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,0.3,1,0,0),1.66555,2,1.05456,1.4,2,2,1,0,0,2,-0.33336,0)+
+								Texture("bricks",BUMP,4.36203,-1,2,0,6.00016,2,0.5,0,0,0,0,0)+Color(1,1,1);
+					}
+					Corona(8.39661) {
+						color1=Color(1,1,1);
+						color2=Color(1,0.8,0.09);
+						gradient=1;
+						name="Corona";
+						noise.expr=noise(GRADIENT|NABS|NLOD|SQR|UNS,1.5,3.9,0.07,0.5,2,0.44,1,0,-0.2);
+					}
+					Corona(2.96745) {
+						color1=Color(1,1,0.89);
+						color2=Color(0.97,0.99,0.59);
+						gradient=1;
+						name="flares";
+						noise.expr=noise(SIMPLEX|NABS|NLOD,1.8,7,-0.54,0.2,2,1,1,0,0);
 					}
 				}
 				Planet(0.004,93) {
+					albedo=0.3;
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					hscale=0.004;
@@ -357,7 +375,6 @@ Scene() {
 					shine=2.22904;
 					specular=Color(1,1,1,0.7);
 					year=365;
-					albedo=1;
 					Surface{
 						terrain=
 								Texture("earth",TEX,1,2,1,0,1,2,0.5,0,0,0,0,0);

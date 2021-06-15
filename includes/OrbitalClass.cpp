@@ -3717,7 +3717,7 @@ void Sky::get_vars()
 	VGET("resolution",detail,2);
 	VGET("density",density,0.01);
 	VGET("pressure",pressure,1); // earth normal 1ATM
-	VGET("ghg_fraction",ghg_fraction,0.2); //  earth: mostly h2o (20%) co2 (0.03%)
+	VGET("ghg_fraction",ghg_fraction,0.01); //  earth: mostly h2o (20%) co2 (0.03%)
 
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
@@ -3753,7 +3753,7 @@ void Sky::set_vars()
 	VSET("resolution",detail,2);
 	VSET("density",density,0.01);
 	VSET("pressure",pressure,1);
-	VSET("ghg_fraction",ghg_fraction,0.2);
+	VSET("ghg_fraction",ghg_fraction,0.01);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
