@@ -17,8 +17,19 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
+		height=6343.71 ft;
+		heading=-2;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00200215;
+	}
+	View{
+		height=5588.33 ft;
+		tilt=6;
+		angle=-10;
 		minr=0.00200095;
-		radius=0.00200112;
+		radius=0.00200201;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -58,6 +69,7 @@ Scene() {
 				}
 				Planet(0.034,803) {
 					day=20;
+					hscale=0.001;
 					name="Saturn";
 					phase=60;
 					shadow=Color(0.2,0.2,0,0.7);
@@ -75,7 +87,7 @@ Scene() {
 								Texture("saturn",LINEAR|S|TEX,noise(GRADIENT|FS|SCALE,1.8,7.1,1,0.5,2,0.05,1,0,0),0.9999,2,1,1.88896,1,2,1,0,1.77776,0,0,0);
 					}
 					Ring(0.06,0.01) {
-						emission=Color(1,1,1,0.8);
+						emission=Color(1,1,1);
 						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
 							Color(1,1,0.3,0.5));
 						Surface{
@@ -84,14 +96,14 @@ Scene() {
 						}
 					}
 					Ring(0.045,0.013) {
-						emission=Color(1,1,1,0.8);
+						emission=Color(1,1,1);
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
 							Color(0.7,0.4,0),
 							Color(1,0.9,0.3));
 						Surface{
 							terrain=
-									Texture("saturn",LINEAR|S|TEX,PHI,0.9999,0.52776,1,0,1,2,1,0,0,0,0,0);
+									Texture("saturn",LINEAR|S|TEX,PHI,0.9999,2,1,0,1,2,1,0,0,0,0,0);
 						}
 					}
 					Moon(0.002,0.068) {
@@ -101,15 +113,16 @@ Scene() {
 						fog.color=Color(1,0.51,0.18);
 						fog.max=565.6 ft;
 						fog.value=1;
-						fog.vmax=5416.6 ft;
-						fog.vmin=5000 ft;
+						fog.vmax=10750 ft;
+						fog.vmin=9500 ft;
+						hscale=0.001;
 						name="Titan";
 						phase=155;
 						shadow=Color(0,0,0);
 						tilt=-10;
 						water.color1=Color(1,0.5,0.25);
 						water.color2=Color(0.13,0,0.25);
-						water.level=5000 ft;
+						water.level=9500 ft;
 						year=17;
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
@@ -119,7 +132,7 @@ Scene() {
 						Surface{
 							terrain=fog(noise(GRADIENT,11.6,13,0.03,0.5,2,1,1,0.47,0.9))
 									water(0.005*noise(GRADIENT|NABS|SCALE|SQR|UNS,14,6,0.5,0.1,2.1,1,1,0,0))
-									Z(0.7*fractal(SQR|SS,12.9,8.7,0.34,1,4,0.2,1,3,0.63,0.68)craters(ID7,2,0.1,0.1,1,0.9,0.8,1,1,0.5,1,0.8,0.6,0.2)+noise(GRADIENT|NABS|SQR,3.2,12.1,1,0.2,2.56,0.65,0.07,0.52,0))+
+									Z(0.7*fractal(SQR|SS,12.9,8.7,0.34,0.35,4,0.2,1,3,0.63,0.68)craters(ID7,2,0.1,0.1,1,0.9,0.8,1,1,0.5,1,0.8,0.6,0.2)+noise(GRADIENT|NABS|SQR,3.2,12.1,1,0.2,2.56,0.65,0.07,0.52,0))+
 									Texture("saturn",LINEAR|NORM|TEX,0.5,2,0.98184,-2.11104,3.00016,2,1,0,0,2,0.05552,0)+
 									Texture("cracks2",BUMP,100,0.86064,1,0,10,2)+
 									Texture("rock_stones",BUMP,4096,3.55552,2,0,2,2,0.5,0,0,0,0,0);
@@ -140,7 +153,7 @@ Scene() {
 						Sky(0.00210764) {
 							color=Color(0.5,0.1,0);
 							day=11;
-							density=0.7;
+							density=0.38888;
 							haze.color=Color(1,1,0.46,0.9);
 							haze.grad=0.4878;
 							haze.max=100 miles;

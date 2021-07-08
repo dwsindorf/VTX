@@ -89,8 +89,8 @@ void main(void) {
 #endif
 	        flags=texture2DRect(FLAGS, gl_FragCoord.xy + tc_offset[l]);
 	        nmask[i] = flags.b;        // dot(normal-eye)
-	        smask[i] = flags.g;        // type flag
-	        surface_sum += flags.g>0.1?1:0;  // type flag
+	        smask[i] = flags.a;        // type flag
+	        surface_sum += flags.g>0.0?1:0;  // ave illumination
 	    }
     }
     float dh = nmask[2] + nmask[5] + nmask[8]-nmask[0]- nmask[3]-nmask[6];
@@ -119,16 +119,18 @@ void main(void) {
     float c=2*length(delc);  // color diff in adjacent pixels
 #ifdef HDR
 #ifndef BIG_KERNEL
-	float kernelLuminance = dot(ave, vec3(0.5, 0.5, 0.3));
+	float kernelLuminance = dot(ave, vec3(0.3, 0.59, 0.11));
 #else
-	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.5, 0.5, 0.3));
+	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.3, 0.59, 0.11));
 #endif
 
-	float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
+	//float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
+	float exposure = sqrt(hdr_max / (3*kernelLuminance + 0.1*hdr_min));
+	//color.rgb = 1.0 - exp2(-color.rgb * exposure);
+	//exposure=lerp(surface_sum,0.0,9.0,1.0,exposure);
 	
-	exposure=lerp(surface_sum,0.0,9.0,1.0,exposure);
 	ave *= exposure;
-	color *= exposure;	
+	color *= exposure;
 #endif
 #ifdef EDGES    
     if(surface>0.5 && surface <1.9){ // blur water
@@ -141,9 +143,12 @@ void main(void) {
     gl_FragData[0].rgb=mix(color,ave,clamp(blend,0.0,1.0));  
 #endif
 #else
-	gl_FragData[0].rgb=color;
-	
+	gl_FragData[0].rgb=color;	
 #endif
+#ifdef HDR
+   // gl_FragData[0].rgb=vec3(exposure/50.0,0,0);
+#endif
+    //gl_FragData[0].rgb=vec3(exposure,0,0);//texture2DRect(FLAGS, gl_FragCoord.xy).rgb;
     gl_FragData[0].a = 1.0;
     //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
     //gl_FragData[0]=texture2DRect(FBOTex3, gl_FragCoord.xy);

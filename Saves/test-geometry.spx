@@ -6,6 +6,11 @@ Scene() {
 		height=34235.4 ft;
 		gndlvl=-12010.2 ft;
 		time=70823.8;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		tilt=-9;
 		angle=-14;
 		fov=35;
@@ -57,6 +62,24 @@ Scene() {
 	}
 	View{
 		height=9159.54 ft;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00200173;
+	}
+	View{
+		height=7919.18 ft;
+		time=66374.2;
+		heading=-5;
+		tilt=-5;
+		angle=-22;
+		minr=0.002;
+		radius=0.0020015;
+	}
+	View{
+		height=7352.3 ft;
+		time=66393.4;
+		radius=0.00200139;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -80,6 +103,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -87,15 +111,15 @@ Scene() {
 					}
 				}
 				Planet(0.002,100) {
+					albedo=1;
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					diffuse=Color(1,1,1,0.85);
-					hscale=0.02;
+					hscale=0.01;
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
 					year=100;
-					albedo=1;
 					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),
@@ -110,7 +134,7 @@ Scene() {
 					Surface{
 						terrain=water(0)
 								
-								Texture("alpine",LINEAR|NORM|TEX,0.5,2,1,-1.77776,1,2,1,0,0,1,0,-0.30556)+Z(noise(GRADIENT|FS|NABS|SCALE|SQR,8,4,0.22,0.5,2,1,1,0,0));
+								Texture("alpine",LINEAR|NORM|TEX,0.5,2,1,-1.77776,1,2,1,0,0,1,0,-0.30556)+Z(noise(GRADIENT|FS|NABS|SQR,8,4,0.22,0.5,2,0.2,1,0,0.8));
 					}
 					Sky(0.00205145) {
 						color=Color(0,0.9,0.9);

@@ -6,6 +6,11 @@ Scene() {
 		height=5235.83 ft;
 		gndlvl=-1618.84 ft;
 		time=472179;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		tilt=-15;
 		fov=35;
 		speed=586570;
@@ -41,6 +46,13 @@ Scene() {
 	View{
 		tilt=4;
 		angle=0;
+		vstride=0.02;
+		zoom=0.001;
+		minh=1.13636e-09;
+		radius=0.00100116;
+	}
+	View{
+		minr=0.00100025;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -61,6 +73,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
+				temperature=6000;
 				Corona(5.1) {
 					color1=Color(1,1,0.8,0.5);
 					color2=Color(1,1,0.6,0.7);
@@ -81,9 +94,9 @@ Scene() {
 							Texture("gasgiant",TEX,1,2,1,0,1,2,0.5,0);
 				}
 				Ring(0.0133652,0.0088413) {
-					emission=Color(1,1,1,0.5);
-					specular=Color(1,1,1,0.8);
 					albedo=0.8;
+					emission=Color(1,1,1,0.92);
+					specular=Color(1,1,1,0.8);
 					rcolor1=Color(0.5,0.5,0.8,0.7);
 					bands("saturn2",ACHNL|NORM,128,0.70968,0.40322,Color(0.933,0.933,0.933,0.4),Color(0.502,1,0.502),
 						Color(0.675,0.4,0,0),
@@ -97,6 +110,7 @@ Scene() {
 					}
 				}
 				Moon(0.001,0.03) {
+					albedo=0.89;
 					ambient=Color(1,1,1,0.07);
 					color=Color(0.9,0.7,0.1);
 					day=11;
@@ -116,7 +130,6 @@ Scene() {
 					water.level=1300 ft;
 					water.shine=58.334;
 					year=11;
-					albedo=0.89;
 					haze.color=Color(0.7,0.5,1);
 					haze.max=6e-05;
 					haze.min=2e-05;

@@ -36,7 +36,11 @@ Scene() {
 		radius=0.00400089;
 	}
 	View{
+		height=2722.52 ft;
+		time=616000;
+		delt=2000;
 		minr=0.004;
+		radius=0.00400052;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -110,7 +114,6 @@ Scene() {
 						density=0.15278;
 						haze.height=0.66;
 						haze.value=0.4;
-						sky.grad=0.335967;
 						specular=Color(1,1,1);
 						twilight=Color(1,0,0);
 						twilight.max=0.348045;

@@ -20,11 +20,16 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		minr=0.00150128;
+		heading=-188;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=1.13636e-09;
 		radius=0.00150242;
 	}
 	View{
-		heading=-188;
+		height=8708.01 ft;
+		minr=0.00150127;
+		radius=0.00150292;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -55,7 +60,7 @@ Scene() {
 					rot_phase=155.002;
 					skew=6.2496;
 					specular=Color(0.77,1,1);
-					temperature=11720.3;
+					temperature=8555.08;
 					year=30;
 					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
@@ -67,7 +72,7 @@ Scene() {
 						color2=Color(0,0,1);
 						gradient=1;
 						name="outer";
-                    }
+					}
 					Corona(1.72992) {
 						color1=Color(1,1,1);
 						color2=Color(0.8,0.94,0.98);
@@ -84,7 +89,7 @@ Scene() {
 					resolution=4;
 					skew=31.2498;
 					specular=Color(1,0.5,0.25);
-					temperature=3053.93;
+					temperature=2629.76;
 					year=75.48;
 					Surface{
 						terrain=
@@ -105,6 +110,7 @@ Scene() {
 					}
 				}
 				Planet(0.0015,40) {
+					albedo=0.73;
 					day=58.65;
 					name="Mercury";
 					phase=79.9992;
@@ -113,7 +119,6 @@ Scene() {
 					specular=Color(1,1,1,0.57);
 					sunset=0.01;
 					year=87.97;
-					albedo=0.73;
 					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 						Color(0.502,0.502,0.502),
 						Color(0.063,0.063,0.063),
@@ -121,7 +126,7 @@ Scene() {
 					image("ridges",INVT,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
 					Surface{
-						terrain=fractal(SQR|SS,14.7,8,0.39,0.82,1.11,0.92,0,0,1,0)
+						terrain=fractal(SQR|SS,14.7,8,0.39,0.44,1.11,0.92,0,0,1,0)
 								Texture("mercury",LINEAR|TEX,0.5,0.90568,0.32728,0.6792,1,2,1,0,0,2,0.83336,0)+
 								Texture("Shist1",BORDER|BUMP|TEX,205.145,0.66664,1.13888,0,7.33984,2.13208,1,0,0,0,0,0)+
 								Texture("ridges",BUMP,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0,0,0,0,0)+

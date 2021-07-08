@@ -245,8 +245,8 @@ RasterMgr::RasterMgr()
 
 	// HDR parameters
 
-	hdr_min=0.35;
-	hdr_max=1.8;
+	hdr_min=0.5;
+	hdr_max=2.5;
 
 	// water parameters
 

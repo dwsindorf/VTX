@@ -1054,6 +1054,7 @@ void TNnoise::init()
 		Td.set_flag(SNOISEFLAG);
 		//Td.add_TNnoise(this);
 	}
+	clr_normalized();
 }
 
 //-------------------------------------------------------------
@@ -1061,7 +1062,6 @@ void TNnoise::init()
 //-------------------------------------------------------------
 void TNnoise::eval()
 {
-
 	double f=0,ampl=1.0,offset=0.0;
 	double args[16];
 
@@ -1095,11 +1095,8 @@ void TNnoise::eval()
     	ampl=args[5];
     if(n>8)
     	offset=args[8];
-
 	if(norm() && !normalized()){
 		TheNoise.get_minmax(ma,mb,type,n,args);
-	   // if((type&NLOD)==0)
-	   // 	mb*=ampl;
 
 #ifdef DEBUG_NOISE
 		char buff[256];
@@ -1366,6 +1363,7 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	delete left; // delete old expr
 	TNfunc *node=(TNfunc*)c;
 	left=(TNarg*)node->left;
+	node->left=0;
 
 	TNarg *args=(TNarg*)left; // first arg (noise expr)
 	//if(!args)

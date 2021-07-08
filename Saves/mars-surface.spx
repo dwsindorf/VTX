@@ -6,11 +6,11 @@ Scene() {
 		height=12175.2 ft;
 		gndlvl=-112244 ft;
 		time=17000;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
-		zoom=0.002;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-41;
 		tilt=-15;
 		fov=35;
@@ -18,7 +18,20 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
+		height=24.5494 miles;
+		heading=-39;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00200329;
+	}
+	View{
+		height=22.5316 miles;
+		heading=-37;
+		tilt=-10;
+		angle=-2;
 		minr=0.00197874;
+		radius=0.00200127;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -59,33 +72,30 @@ Scene() {
 					specular=Color(1,1,1,0.5);
 					tilt=10;
 					year=100;
-					bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
-						Color(1,0.6,0),
-						Color(0.7,0.4,0),
-						Color(1,0.9,0.3));
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=snow(0.7,4,1,-1,1,0.22)
+						terrain=snow(-3,4,1,-1,1,0.22)
 								
-								Texture("saturn",BORDER|TEX,84168.9,0.88888,1,1.44448,1,2,1,0,0,1,0.63888,0)+
+								Texture("jupiter",BORDER|TEX,84168.9,0.91668,1,1,1,2,1,0,0,1,2,0)+
 								Texture("mars",BUMP|TEX,1,1.75,2,-0.11104,1,2,0.5,0,0,0,0,0)+
 								Texture("cratery",BUMP,512,-0.4,1,1.33328,2,2,1,0,0,0,0,0)+
-								Texture("colored-rock",BUMP|TEX,512,0.3,2,4,1,2,0.5,0.56944,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
-								fractal(SQR|SS,12.5,4,0.2,0.2,1.31,0.2,0.23,0.24,0.71,0.21)noise(GRADIENT|NABS|SCALE|SQR,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
-								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,0.55556,-0.36112);
+								Texture("colored-rock",BUMP|TEX,869.475,2.88896,2,4,2.33344,2,0.5,0.56944,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
+								fractal(SQR|SS,14.2,6.4,0.1,0.2,1.31,0.2,0.23,1,0.71,1)noise(GRADIENT|NABS|SCALE|SQR|UNS,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
+								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,0.55556,0,0,0,0,0);
 					}
 					Sky(0.00213931) {
 						color=Color(0.21,0.75,0.96);
 						day=24;
 						density=0.13888;
 						ghg_fraction=0.95;
-						haze.color=Color(0.96,0.84,0.56,0.76);
-						haze.grad=0.5244;
+						haze.color=Color(0.96,0.84,0.56);
+						haze.grad=0.41464;
 						haze.value=0.756863;
 						name="Sky";
 						pressure=0.005;
 						resolution=4;
 						rseed=1.58657;
-						sky.grad=0.408416;
+						sky.grad=0.686091;
 						specular=Color(1,1,1);
 						tilt=10;
 						twilight=Color(0.99,0.09,0.19);

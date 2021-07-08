@@ -1,0 +1,92 @@
+Scene() {
+	drawmode=1;
+	drawmode=1;
+	View{
+		view=ORBITAL;
+		phi=-4.83822;
+		theta=-22.9237;
+		height=5.24417;
+		time=609280;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
+	}
+	View{
+		height=5.97599;
+	}
+	View{
+		height=11.2584;
+	}
+	View{
+		height=17.1976;
+		time=609299;
+	}
+	View{
+		height=8.59879;
+	}
+	View{
+		height=8.80815;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.5,0.01) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1,0.82);
+					name="Sol";
+					specular=Color(1,1,1);
+					bands("star1",ACHNL|CLAMP,16,Color(1,0.969,0.549),Color(1,0.941,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.463,0.043,0.122),
+						Color(0.024,0.02,0.129));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|LINEAR|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,1,1,0,0),1.66555,2,1.05456,0.55552,2,2,1,0,0,0,-0.88888,0.11112)+
+								Texture("bricks",BUMP,11.424,-2.44448,2,0,1.66672,2,0.5,0.34722,0,0,0,0);
+					}
+					Corona(8.39661) {
+						color1=Color(1,0.91,0.49);
+						color2=Color(0.58,0.11,0.11);
+						gradient=1;
+						name="Corona";
+						noise.expr=noise(GRADIENT|NABS|NLOD|SQR|UNS,1.5,3.9,0.07,0.5,2,0.44,1,0,-0.2);
+					}
+					Corona(2.08698) {
+						color1=Color(1,0.92,0.5);
+						color2=Color(1,0.99,0.96);
+						gradient=1;
+						name="flares";
+						noise.expr=noise(SIMPLEX|NLOD,1.2,7,-0.54,0.2,2,1,1,0,0);
+					}
+					Sky(1.5002) {
+						color=Color(1,0.24,0);
+						day=100;
+						density=0.2;
+						name="Sky";
+						rseed=1.88657;
+						specular=Color(1,1,1);
+					}
+				}
+			}
+		}
+	}
+}

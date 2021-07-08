@@ -364,13 +364,20 @@ Scene() {
 	}
 	View{
 		time=14513.8;
+	}
+	View{
+		height=240.684 ft;
+		heading=-57;
 		vstride=0.02;
 		zoom=0.003;
 		minh=1.13636e-09;
-		radius=0.00300006;
+		radius=0.0030001;
 	}
 	View{
+		height=156.575 ft;
+		tilt=-6;
 		minr=0.00300005;
+		radius=0.00300008;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -414,7 +421,7 @@ Scene() {
 					water.clarity=159.262 ft;
 					water.color1=Color(0,0.47,0.98);
 					water.color2=Color(0,0,0.02);
-					water.level=320 ft;
+					water.level=50 ft;
 					water.shine=68.056;
 					year=365;
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
@@ -432,14 +439,13 @@ Scene() {
 								
 								Texture("earth",TEX,1,1.02776,0,0,1,2,0.5,0,0,0,0,0)+
 								Texture("alpine2",BORDER|NORM|TEX,512,1.08332,1,-1,1,2,1,0,0.12,1,1,-1)+
-								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,15,10,0.34,0.45,2.1,0.07,1,1,0))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
+								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,15,10,0.34,0.45,2.1,0.14,1,1,0))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
 								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.5,0,0,0,0);
 					}
 					Sky(0.0032) {
 						color=Color(0.65,0.88,0.99);
 						day=24;
 						density=0.375;
-						ghg_fraction=0.01;
 						haze.color=Color(1,1,1,0.82);
 						haze.grad=0.20732;
 						haze.value=0.819608;

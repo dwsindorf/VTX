@@ -233,7 +233,6 @@ protected:
        PT4D     = 0x01
     };
     static void   init();
-
     static double multinoise(int options, int n, double *s);
     static double random(int options,int n, double *s);
     static double NoiseMinMax(double v);

@@ -116,10 +116,8 @@ void main(void) {
 	float z2=1.0/(ws2*z+ws1);
 	float z1=1.0/(ws2*depth+ws1);
 	float dz=(z2-z1);
-	
-	//float dz=ws1*(depth-z);
 	dz=dz<0.0?0.0:dz;
-	float f=lerp(dz,0.0,clarity,0.0,1.0);
+	float f=fcolor2.r==0?1:lerp(dz,0.0,clarity,0.0,1.0); // f=1 if back surface != land
 	float type=Constants1.g;
 	vec3 TopColor=Diffuse*WaterTop.rgb+Ambient*WaterTop.rgb;
 #ifdef SKY
@@ -141,6 +139,7 @@ void main(void) {
 #else
     vec3 color=mix(fcolor1.rgb,WaterDepth.rgb,f)+Specular; // add depth color
 #endif	
+    //color.rgb=vec3(fcolor2.r,0,0);
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
 	float ht=HT+fcolor2.a;

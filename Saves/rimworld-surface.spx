@@ -27,14 +27,16 @@ Scene() {
 	}
 	View{
 		time=3450;
+	}
+	View{
+		tilt=6;
+		angle=-8;
 		vstride=0.02;
 		zoom=0.0015;
 		minh=1.13636e-09;
 		radius=0.00150167;
 	}
 	View{
-		tilt=6;
-		angle=-8;
 		minr=0.00150006;
 	}
 	Universe {
@@ -42,7 +44,7 @@ Scene() {
 			center.bias=0.375;
 			center.radius=0.5;
 			color.bias=0.27776;
-			color.mix=0.16666;
+			color.mix=0.08334;
 			compression=0.70834;
 			density=2;
 			diffusion=1.28457;
@@ -89,10 +91,10 @@ Scene() {
 				Color(1,1,1));
 		}
 		Galaxy(5000) {
-			color.mix=0.26388;
+			color.mix=0.25;
 			far.distance=2.58241e+08;
 			far.size=0.6944;
-			near.size=2.0139;
+			near.size=1.6667;
 			nova.density=0.04166;
 			nova.size=1.25;
 			variability=1.03473;
@@ -121,6 +123,7 @@ Scene() {
 					}
 				}
 				Planet(0.0015,100) {
+					albedo=0.4;
 					ambient=Color(1,1,1,0.07);
 					day=1;
 					hscale=0.001;
@@ -130,7 +133,6 @@ Scene() {
 					shine=23.2085;
 					specular=Color(1,1,1,0.35);
 					year=30;
-					albedo=0.4;
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0.471,0.957,0.471,0.451),
 						Color(0.988,0.773,0.004));

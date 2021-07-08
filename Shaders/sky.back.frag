@@ -82,11 +82,11 @@ void main(void) {
 		mx=lerp(LdotR, twilite_dph+twilite_min,twilite_dph+twilite_max, 1.0-Night.a, 0.0);
 		color.rgb=mix(color.rgb,vec3(0.0),mx);
 
- 		illumination+=horizon;//max(lerp(LdotR,  twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0),illumination);
+ 		illumination+=max(lerp(LdotR,  twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0),illumination);
 		alpha=max(lerp(LdotR, twilite_dph+2.0*twilite_min, twilite_dph+twilite_min, 0.0, 1.0),alpha);
 		//alpha=lerp(density,0.3,0.8,alpha,1);
 
-		//color.rgb=color.rgb*sd+vec3(0.5*sd);
+		color.rgb=color.rgb*sd+vec3(0.5*sd);
 		float pf=0.0;
 		light = normalize(gl_LightSource[i].position.xyz-pv);
 		if(LdotR>twilite_min){ // do specular for day side only

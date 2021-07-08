@@ -267,6 +267,7 @@ void EffectsMgr::setProgram(int type){
 		GLSLMgr::loadProgram("effects.vert","effects.frag");
 		vars.newIntVar("shadow_test",shadow_test);
 		c = haze_color;
+		//c.print();
 		vars.newFloatVec("Haze",c.red(),c.green(),c.blue(),c.alpha());
 		vars.newFloatVar("haze_grad",haze_grad);
 		vars.newFloatVar("haze_zfar",haze_zfar);

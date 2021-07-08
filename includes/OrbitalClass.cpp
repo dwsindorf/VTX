@@ -1920,7 +1920,7 @@ int  Spheroid::scale(double &zn, double &zf)
 #endif
 		}
 		else{
-			zn=map->vbounds.zn;
+			zn=0.25*map->vbounds.zn;
 			zf=map->vbounds.zf;
 #ifdef DEBUG_SCALE
 	        cout<<"render zn:"<<zn/FEET<<" zf:"<<zf/MILES<<" ratio:"<<zf/zn<<endl;
@@ -3962,7 +3962,7 @@ bool Sky::setProgram(){
 
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("twilite_max",twilite_max);
-	vars.newFloatVar("twilite_min",twilite_min);
+	vars.newFloatVar("twilite_min",0.5*twilite_min);
 	//cout << twilite_min << " "<< twilite_max << endl;
 
 	Point pv=TheScene->xpoint;

@@ -24,7 +24,7 @@ const unsigned int 	MAXLVLS=63;
 
 #define NBRHT(n) mapdata[n]->fractal()
 
-extern double   ptable[];
+extern double   ptable[],Hscale;
 
 //************************************************************
 // TNfractal class
@@ -127,7 +127,13 @@ void TNfractal::eval()
 	double hmax=n>8?args[8]:1.0;
 	double hval=n>9?args[9]:0.0;
 
+	double hscale=1000*TheMap->hscale;
+
+	ampl/=hscale;
+	smax/=hscale;
 	bool inmargin=false;
+
+	//cout<<Hscale<<endl;
 
 	unsigned int level=(int)Td.level;
 

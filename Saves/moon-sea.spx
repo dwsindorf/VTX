@@ -4,7 +4,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=225;
-		height=52800 ft;
+		height=10 miles;
 		time=800051;
 		vstride=586570;
 		hstride=1;
@@ -56,7 +56,10 @@ Scene() {
 		radius=0.00400522;
 	}
 	View{
+		height=29854.2 ft;
+		heading=11;
 		minr=0.004;
+		radius=0.00400565;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -89,7 +92,7 @@ Scene() {
 				}
 				Planet(0.004,100) {
 					day=24;
-					hscale=0.0111556;
+					hscale=0.001;
 					resolution=3;
 					shadow=Color(0,0,0.19,0.8);
 					shine=2.91188;
@@ -103,7 +106,7 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=water(0)
-								Z(noise(VORONOI|FS|SCALE|SQR,7,13,0.46,0.5,2,0.82,1,0,0.05))+
+								Z(noise(VORONOI|FS|SQR,7,13,0.46,0.5,2,1,1,0,0.7))+
 								Texture("green2",NORM|RANDOMIZE|TEX,161.289,1.80556,1,0.44448,10,2,0.5,0);
 					}
 					Moon(0.001,0.008) {

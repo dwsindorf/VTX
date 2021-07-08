@@ -29,7 +29,7 @@ double gradient_time_per_octave=0;
 Noise TheNoise;
 int	  RandSeed=1;
 
-extern double Height;
+extern double Height,Hscale;
 
 double limits_time=0;
 const double delta=1e-4;
@@ -653,13 +653,15 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
     double exp=0;
     if(type & SCALE){
         exp=amplitude((int)args[0]);
+        if(Hscale)
+        	exp/=1000*Hscale;
         ma*=exp;
         mb*=exp;
     }
 #ifdef DEBUG_MINMAX
     double tm=(double)(clock() - start)/CLOCKS_PER_SEC;
     limits_time+=tm;
-    cout<<"min:"<<v1<<" max:"<<v2<<" exp:"<<exp<<" ma:"<<ma<<" mb:"<<mb<<endl;
+    cout<<"min:"<<v1<<" max:"<<v2<<" exp:"<<exp<<" ma:"<<ma<<" mb:"<<mb<<" tm:"<<tm*1000<<" ms"<<endl;
 #endif
     v1=ma;
     v2=mb;
