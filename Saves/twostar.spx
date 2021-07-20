@@ -21,15 +21,17 @@ Scene() {
 	}
 	View{
 		heading=-188;
-		vstride=0.02;
-		zoom=0.0015;
-		minh=1.13636e-09;
-		radius=0.00150242;
 	}
 	View{
 		height=8708.01 ft;
-		minr=0.00150127;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=1.13636e-09;
 		radius=0.00150292;
+	}
+	View{
+		heading=-189;
+		minr=0.00150127;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -93,17 +95,17 @@ Scene() {
 					year=75.48;
 					Surface{
 						terrain=
-								Texture("sol",TEX,1,1.58332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
+								Texture("sol",TEX,1,2,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
 					}
-					Corona(8.65208) {
-						color1=Color(1,0.5,0);
-						color2=Color(0,0.27,1);
+					Corona(6.30452) {
+						color1=Color(1,0.23,0,0.34);
+						color2=Color(0.52,0.02,0.2,0.74);
 						gradient=0.84566;
 						name="c1";
 					}
 					Corona(3.36944) {
 						color1=Color(0.95,0.98,0.51);
-						color2=Color(1,0.04,0);
+						color2=Color(1,0.04,0,0.77);
 						gradient=1;
 						name="c2";
 						noise.expr=noise(GRADIENT|NABS|SQR|UNS,2.1,2,1,0.21,2,1,1,0,-0.7);

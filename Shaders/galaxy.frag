@@ -52,7 +52,7 @@ float alpha;
 	float bias =lerp(distance,7.0,9.0,-2.0,1.0);
     
     vec2 l_uv=sprite(INDX);
-    vec4 texcol=texture2D(startex,l_uv);
+    vec4 texcol=texture2D(startex,l_uv,bias);
        
 	vec4 color=Color;
 	alpha=texcol.a;

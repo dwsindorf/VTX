@@ -83,7 +83,6 @@ Scene() {
 						color=Color(0,0.58,0.89,0.97);
 						day=24;
 						density=1;
-						ghg_fraction=0.01;
 						haze.color=Color(0.98,0.96,1);
 						haze.grad=0.39024;
 						haze.height=0.52;

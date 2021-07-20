@@ -264,6 +264,12 @@ void TNrocks::eval()
 	//if(CurrentScope->hpass()) // TODO: add support for htmap textures ?
 	//	return;
 
+	if(!isEnabled()){
+		if(right)
+			right->eval();
+		return;
+	}
+
     if(CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);

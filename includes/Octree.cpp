@@ -1222,7 +1222,7 @@ void StarNode::render()
 				indx=1;
 				a=y=0;
 			}
-		    pts=pts<1?1:pts;
+		    //pts=pts<1?1:pts;
 
 			indx+=0.001;  // reduces sprite assignment jitter in shader
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, a, pts, y);
@@ -1230,7 +1230,7 @@ void StarNode::render()
 		}
 		else{ // backgound sprites
 		    double f=rvals[2]; // random sprite
-		    pts=pts<1?1:pts;
+		    //pts=pts<1?1:pts;
 		    indx=f>0.5?4:3;
 		    indx+=0.001;
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, indx, a, pts, y);

@@ -125,7 +125,7 @@ void main(void) {
 #endif
 
 	//float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
-	float exposure = sqrt(hdr_max / (3*kernelLuminance + 0.1*hdr_min));
+	float exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
 	//color.rgb = 1.0 - exp2(-color.rgb * exposure);
 	//exposure=lerp(surface_sum,0.0,9.0,1.0,exposure);
 	

@@ -1396,7 +1396,6 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 //-------------------------------------------------------------
 void TNfog::eval()
 {
-
 	S0.density=0.0;
 	//SINIT
 

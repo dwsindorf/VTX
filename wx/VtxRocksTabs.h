@@ -22,7 +22,7 @@ protected:
 	wxChoice *m_orders;
 	wxChoice *m_seed;
 
-	TNrocks *rocks() 	{ return (TNrocks *)object_node->node;}
+	TNrocks *object() 	{ return (TNrocks *)object_node->node;}
 	Planetoid *getOrbital()
 	{
 		NodeIF *obj=object_node->node;
@@ -33,7 +33,7 @@ protected:
 	}
 
     void invalidateObject(){
-    	rocks()->invalidate();
+    	object()->invalidate();
      	TheView->set_changed_detail();
     	TheScene->rebuild();
     }
@@ -74,7 +74,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Ampl)
 
     void OnDelete(wxCommandEvent& event);
-
+	void OnEnable(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();
     }

@@ -1,314 +1,51 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-23.2004;
-		theta=36.9224;
-		height=2269.39 ft;
-		gndlvl=40090 ft;
-		time=66294.6;
-		heading=-159;
-		tilt=-19;
-		angle=4;
+		phi=-11.6792;
+		theta=141.277;
+		height=3744.37 ft;
+		gndlvl=-2899.85 ft;
+		time=257617;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=-75;
+		tilt=-10;
+		angle=-20;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		tilt=-23;
-	}
-	View{
-		height=2267.87 ft;
-	}
-	View{
-		height=2118.2 ft;
-	}
-	View{
-		phi=-23.2105;
-		theta=36.9152;
-		height=6484.05 ft;
-		heading=-111;
-		tilt=-16;
-		angle=-21;
-	}
-	View{
-		height=5837.15 ft;
-	}
-	View{
-		phi=-23.2512;
-		theta=36.8557;
-		height=272.775 ft;
-		gndlvl=40353.3 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=319.45 ft;
-		heading=-44;
-		angle=41;
-	}
-	View{
-		phi=-23.2516;
-		theta=36.8561;
-		height=564.404 ft;
-		heading=-27;
-	}
-	View{
-		phi=-23.2517;
-		theta=36.8565;
-		height=3200.22 ft;
-		heading=-9;
-		tilt=-10;
-	}
-	View{
-		phi=-23.2385;
-		theta=36.879;
-		height=110.37 ft;
-		gndlvl=40550.1 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=179.74 ft;
-	}
-	View{
-		height=189.208 ft;
-	}
-	View{
-		height=530.349 ft;
-	}
-	View{
-		height=386.798 ft;
-		heading=-78;
-	}
-	View{
-		phi=-23.2404;
-		height=274.239 ft;
-		heading=-120;
-		angle=-12;
-	}
-	View{
-		phi=-23.2408;
-		theta=36.8789;
-		height=78.6764 ft;
-		heading=-100;
-		angle=-5;
-	}
-	View{
-		height=78.5656 ft;
-	}
-	View{
-		height=125.173 ft;
-		tilt=-8;
-		angle=-4;
-	}
-	View{
-		height=292.798 ft;
-		heading=-115;
-	}
-	View{
-		phi=-23.2409;
-		height=54.0681 ft;
-		heading=-94;
-	}
-	View{
-		height=197.924 ft;
-		heading=-141;
-		tilt=-18;
-		angle=-19;
-	}
-	View{
-		height=202.299 ft;
-		angle=-25;
-	}
-	View{
-		height=253.423 ft;
-		tilt=-17;
-		angle=-26;
-	}
-	View{
-		tilt=-12;
-		angle=-15;
-	}
-	View{
-		height=322.421 ft;
-		heading=-119;
-	}
-	View{
-		height=347.109 ft;
-	}
-	View{
-		tilt=-15;
-		angle=-19;
-	}
-	View{
-		height=442.324 ft;
-		heading=-113;
-		tilt=-9;
-		angle=-20;
-	}
-	View{
-		height=427.688 ft;
-	}
-	View{
-		height=441.887 ft;
-	}
-	View{
-		height=434.537 ft;
-	}
-	View{
-		height=584.745 ft;
-		angle=-28;
-	}
-	View{
-		height=1344.01 ft;
+		height=2470.35 ft;
 		tilt=-7;
-		angle=-41;
+		angle=21;
 	}
 	View{
-		height=1587.14 ft;
-		tilt=-8;
+		height=1670.16 ft;
+		angle=18;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00399977;
 	}
 	View{
-		height=1844.14 ft;
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-0.0206431 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+		minr=0.00399945;
+		radius=0.012;
 	}
 	View{
-		height=3208.75 ft;
-		tilt=-2;
-		angle=-39;
-	}
-	View{
-		height=3139.17 ft;
-		tilt=-10;
-		angle=-33;
-	}
-	View{
-		height=3375.83 ft;
-		tilt=-12;
-		angle=-38;
-	}
-	View{
-		height=3291.21 ft;
-		tilt=-23;
-		angle=-35;
-	}
-	View{
-		height=3319.84 ft;
-		tilt=-19;
-		angle=-38;
-	}
-	View{
-		height=4760.1 ft;
-		tilt=-16;
-		angle=-40;
-	}
-	View{
-		phi=-23.2422;
-		theta=36.8784;
-		height=4806.51 ft;
-		heading=-110;
-		tilt=-27;
-		angle=-46;
-	}
-	View{
-		height=1902.02 ft;
-	}
-	View{
-		height=1814.38 ft;
-	}
-	View{
-		tilt=-22;
-		angle=-39;
-	}
-	View{
-		height=1770.04 ft;
-	}
-	View{
-		height=1938.56 ft;
-		tilt=-32;
-	}
-	View{
-		height=1745.79 ft;
-	}
-	View{
-		height=2000.63 ft;
-	}
-	View{
-		height=5925.87 ft;
-	}
-	View{
-		height=485.419 ft;
-		heading=-96;
-		tilt=-26;
-		angle=-40;
-	}
-	View{
-		height=2082.82 ft;
-		tilt=-17;
-		angle=-47;
-	}
-	View{
-		height=1989.33 ft;
-	}
-	View{
-		height=2034.92 ft;
-		heading=-97;
-		tilt=-20;
-		angle=-50;
-	}
-	View{
-		height=1920.31 ft;
-	}
-	View{
-		phi=-23.2391;
-		theta=36.8788;
-		height=1941.31 ft;
-		tilt=-19;
-		angle=-51;
-	}
-	View{
-		tilt=-14;
-	}
-	View{
-		height=2053.52 ft;
-	}
-	View{
-		tilt=-11;
-		angle=-49;
-	}
-	View{
-		height=2349.15 ft;
-	}
-	View{
-		tilt=-10;
-		angle=-48;
-	}
-	View{
-		height=2739.61 ft;
-		tilt=-16;
-		angle=-52;
-	}
-	View{
-		height=2647.92 ft;
-		tilt=-25;
-		angle=-45;
-	}
-	View{
-		tilt=-16;
-		angle=-46;
-	}
-	View{
-		phi=-23.2367;
-		height=2314.23 ft;
-		heading=-90;
-	}
-	View{
-		height=2364.72 ft;
-		tilt=-22;
-		angle=-45;
-	}
-	View{
-		tilt=-18;
-		angle=-43;
+		height=0.00703239;
+		minr=0.004;
+		radius=0.0110324;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -329,43 +66,57 @@ Scene() {
 				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
-					symmetry=0.95;
-					light=Color(1,1,1);
+					temperature=6000;
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
-					day=24;
-					diffuse=Color(1,1,1,0.58);
-					hscale=0.003;
-					water.clarity=119.701 ft;
-					water.level=-14000 ft;
-					year=100;
-					bands("alpine",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),
-						Color(0.2,0.4,0.1,0.7),
-						Color(0.3,0.5,0,0.7),
-						Color(0.4,0.5,0,0.7),
-						Color(0.4,0.4,0.1,0.7),
-						Color(0.2,0.3,0.3,0.7),
-						Color(0.3,0.4,0.2,0.7),
-						Color(0.4,0.5,0,0.7),
-						Color(0.4,0.5,0,0));
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+				Planet(0.004,139.741) {
+					ambient=Color(1,1,1,0.23);
+					day=36.668;
+					resolution=2.05;
+					rot_phase=72;
+					specular=Color(1,1,1);
+					water.clarity=1000 ft;
+					water.color1=Color(0,1,1);
+					water.level=-2900 ft;
+					year=283.34;
+					bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
+						Color(0.58,0.024,0.024));
+					image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
+						Color(0.173,0,0.055),
+						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=fractal(SQR|SS,14.8,11,0.1,0.38,0.2,0.3,0,0,1,0)map(noise(GRADIENT,1,15,0.3,0.1,2,1,1,0,0),1,1)
-								layer("Layer1",MORPH,1,0.1+noise(GRADIENT|SCALE,7.6,2.8,1,0.5,2,1,1,0,0),0,0.14)
-									[
-									Texture("alpine",LINEAR|NORM|TEX,205.145,2,1,0,1,2,0.5,0,0,2,0,-1.44448)+Z(noise(GRADIENT|NABS|SCALE,5,6.3,-0.66,0.5,2,1,1,0,0))
+						b1=noise(GRADIENT|NABS|SQR|UNS,9,5,0.4,0.5);
+						z1=0.2*noise(GRADIENT|NABS|SQR|UNS,9,14,0.4,0.5);
+						b2=0.2*noise(GRADIENT|SQR,8,5,0.5,0.2);
+						z2=0.2*noise(GRADIENT|SQR,8,14,0.5,0.2);
+						z3=noise(9,10,0.5,0.5);
+						ripples=0.1*noise(GRADIENT|SCALE,26,2,0.7);
+						mp=noise(1,12,0.3,0.2);
+						terrain=map(mp,-0.5,2)
+								layer(MORPH,0,0.3,0.1)
+									[rocks(ID2,3,0.09999,0.15,1,0,0.3,1,0)[
+									Texture("lava",BORDER|LINEAR,0.1,1,1,0,1,2,1,0,0,0,2,0.77776)+Color(0.145098,0.482353,0.980392,1)
+									+
+									Texture("cracks2",BUMP,999.9,-0.44448,1.2,1,6,2,1,0,0,0,0,0)+Z(0)
 									]
-								layer("Layer2",MORPH,0.17,0.07,0,0.17)
-									[
-									Texture("jupiter",BORDER|LINEAR|NORM|TEX,422.264,2,1,0,1,2,1,0,0,2,0,0)+Z(noise(GRADIENT|SCALE|SQR,5,9.5,1,0.5,2,1,1,0,-0.1))
+									
+									Texture("yellow-black",LINEAR,0.1,1,1,0,1,2,1,0,0,2,0,0)+Z(noise(GRADIENT,5,2,1,0.5,2,0.21,1,0,0))
 									]
 								;
+					}
+					Sky(0.0041) {
+						color=Color(0.67,1,1,0.95);
+						day=36.668;
+						density=0.1;
+						haze.color=Color(1,1,0.73);
+						haze.max=27.046 miles;
+						haze.value=1;
+						specular=Color(1,1,1);
 					}
 				}
 			}

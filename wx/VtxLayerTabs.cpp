@@ -42,7 +42,6 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxLayerTabs::OnNameText)
 
 EVT_MENU(OBJ_DELETE,VtxLayerTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxLayerTabs::OnEnable)
-//EVT_MENU(OBJ_SAVE,VtxLayerTabs::OnSave)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxLayerTabs::OnAddItem)
 
 SET_FILE_EVENTS(VtxLayerTabs)
@@ -88,7 +87,6 @@ int VtxLayerTabs::showMenu(bool expanded){
 	wxMenu *addmenu=getAddMenu(object());
 
 	if(addmenu){
-		//menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
 	sceneDialog->AddFileMenu(menu,object_node->node);
@@ -142,8 +140,6 @@ void VtxLayerTabs::AddLayerTab(wxWindow *panel){
     ramp->Add(RampSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
     ramp->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
 	boxSizer->Add(ramp, 0, wxALIGN_LEFT|wxALL,0);
-
-
 }
 
 void VtxLayerTabs::updateControls(){
@@ -234,10 +230,6 @@ void VtxLayerTabs::getObjAttributes(){
 }
 void VtxLayerTabs::OnEnable(wxCommandEvent& event){
 	VtxTabsMgr::OnEnable(event);
-//	setEnabled(!isEnabled());
-//    TheView->set_changed_detail();
-//	menu_action=TABS_ENABLE;
-//	sceneDialog->updateObjectTree();
 	TheScene->rebuild_all();
 }
 

@@ -3,6 +3,11 @@ Scene() {
 		view=GLOBAL;
 		origin=Point(0 ,0,0);
 		time=10000;
+		vstride=5.8657e+09;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		fov=35;
 		speed=1000 ly;
 	}
@@ -12,28 +17,30 @@ Scene() {
 	}
 	View{
 		pitch=-5;
+		vstride=1;
 	}
 	Universe {
-		Galaxy(54211.8) {
+		Galaxy(25075) {
+			center.bias=0.45834;
 			center.radius=0;
 			color.bias=1;
-			color.mix=0.79166;
-			compression=0.5;
-			density=0.86112;
+			color.mix=0.20834;
+			compression=1;
+			density=2;
 			diffusion=0.913416;
-			far.size=0.5;
+			far.random=4;
 			gradient=2;
 			name="Globular";
 			near.size=1.0417;
-			noise.cutoff=0.3585;
-			noise.vertical=1;
+			noise.cutoff=0.61112;
+			noise.vertical=0.41666;
 			nova.size=1;
-			origin=Point(130000,-20000,-4000);
-			radius=0.59722;
+			origin=Point(190000,-20000,-4000);
+			radius=1;
 			radius.inner=0.6;
-			radius.outer=0.59722;
-			resolution=2.5417;
-			scatter=1.5096;
+			radius.outer=1;
+			resolution=4;
+			scatter=20;
 			twist.radius=1;
 			twist.rotation=0;
 			variability=2;
@@ -46,7 +53,7 @@ Scene() {
 			color.expr=2*DENSITY-RADIUS;
 			color.list=Colors(
 				Color(0.502,0.000,0.251,0.000),
-				Color(0.635,0.169,0.039),
+				Color(0.631,0.169,0.035),
 				Color(0.000,0.722,1.000),
 				Color(0.502,0.718,1.000),
 				Color(1.000,0.275,0.000),
@@ -87,7 +94,7 @@ Scene() {
 				Color(0.475,0.722,1.000),
 				Color(0.718,0.875,1.000),
 				Color(0.773,1.000,1.000),
-				Color(0.706,0.984,0.976),
+				Color(0.706,0.980,0.973),
 				Color(1.000,1.000,1.000)
 				);
 		}

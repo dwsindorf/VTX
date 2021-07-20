@@ -813,7 +813,7 @@ void Scene::open(char *fn)
 	if(!viewobj)
 	    viewobj=frame->vobj;
 	frame->restore(this);
-	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
+	//cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
 	scene_objects=total_objs();
 

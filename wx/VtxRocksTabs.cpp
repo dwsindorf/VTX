@@ -1,5 +1,5 @@
-
 #include "VtxRocksTabs.h"
+#include "VtxSceneDialog.h"
 
 //########################### VtxRocksTabs Class ########################
 
@@ -10,9 +10,11 @@
 #define SLIDER2  70
 // define all resource ids here
 enum {
+	OBJ_SHOW,
 	OBJ_DELETE,
 	OBJ_SAVE,
 
+	ID_NAME_TEXT,
     ID_SCALE_SLDR,
     ID_SCALE_TEXT,
     ID_SCALE_MULT,
@@ -44,16 +46,17 @@ SET_SLIDER_EVENTS(DROP,VtxRocksTabs,Drop)
 SET_SLIDER_EVENTS(AMPL,VtxRocksTabs,Ampl)
 
 EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxRocksTabs::OnChanged)
+EVT_TEXT_ENTER(ID_NAME_TEXT,VtxRocksTabs::OnNameText)
+
 EVT_CHOICE(ID_SCALE_MULT, VtxRocksTabs::OnChanged)
 EVT_CHOICE(ID_SEED, VtxRocksTabs::OnChanged)
 EVT_CHOICE(ID_ORDERS, VtxRocksTabs::OnChanged)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxRocksTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxRocksTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxRocksTabs::OnSave)
+EVT_MENU(OBJ_SHOW,VtxRocksTabs::OnEnable)
 
-EVT_MENU(TABS_ENABLE,VtxRocksTabs::OnEnable)
-EVT_UPDATE_UI(TABS_ENABLE,VtxRocksTabs::OnUpdateEnable)
+SET_FILE_EVENTS(VtxRocksTabs)
 
 END_EVENT_TABLE()
 
@@ -81,7 +84,7 @@ bool VtxRocksTabs::Create(wxWindow* parent,
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
 
     AddPropertiesTab(page);
-    AddPage(page,wxT("Properties"),true);
+    AddPage(page,wxT("Rocks"),true);
 
     return true;
 }
@@ -90,15 +93,19 @@ int VtxRocksTabs::showMenu(bool expanded){
 	menu_action=TABS_NONE;
 
 	wxMenu menu;
-	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
 
-	wxMenu *addmenu=getAddMenu(rocks());
+	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
+	menu.AppendSeparator();
+	menu.Append(OBJ_DELETE,wxT("Delete"));
+
+	wxMenu *addmenu=getAddMenu(object());
 
 	if(addmenu){
-		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+
+	sceneDialog->AddFileMenu(menu,object_node->node);
+
 	PopupMenu(&menu);
 	return menu_action;
 }
@@ -109,6 +116,12 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+
+    wxStaticBoxSizer* props = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Properties"));
+
+ 	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Label",LABEL2+10,VALUE2+SLIDER2);
+ 	props->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+ 	boxSizer->Add(props,0,wxALIGN_LEFT|wxALL,0);
 
     wxStaticBoxSizer* distro = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Distribution"));
 
@@ -214,7 +227,7 @@ void VtxRocksTabs::updateControls(){
 void VtxRocksTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
-	TNrocks *tc=rocks();
+	TNrocks *tc=object();
 	RockMgr *mgr=(RockMgr*)tc->mgr;
 
 	int id=tc->get_id();
@@ -288,7 +301,7 @@ void VtxRocksTabs::getObjAttributes(){
 void VtxRocksTabs::setObjAttributes(){
 	update_needed=true;
 
-	TNrocks *tc=rocks();
+	TNrocks *tc=object();
 	char id[32];
 
 	wxString s="rocks(";
@@ -324,7 +337,7 @@ void VtxRocksTabs::setObjAttributes(){
 	}
 	s+=")";
 
-	//cout << s << endl;
+	cout << s << endl;
 	s+="\n";
 
 	char p[512];
@@ -338,6 +351,13 @@ void VtxRocksTabs::setObjAttributes(){
 	}
 	invalidateObject();
 }
+
+
+void VtxRocksTabs::OnEnable(wxCommandEvent& event){
+	VtxTabsMgr::OnEnable(event);
+	TheScene->rebuild_all();
+}
+
 void  VtxRocksTabs::OnDelete(wxCommandEvent& event){
  	menu_action=TABS_DELETE;
  	TheScene->rebuild_all();

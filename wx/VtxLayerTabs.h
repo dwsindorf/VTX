@@ -54,7 +54,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Ramp)
 
 	void OnDelete(wxCommandEvent& event);
-	virtual void OnEnable(wxCommandEvent& event);
+	void OnEnable(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();
     }

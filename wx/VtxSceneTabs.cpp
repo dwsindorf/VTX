@@ -369,7 +369,7 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	wxStaticBoxSizer* hdr_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("High Dynamic Range"));
 
 	HDRMinSlider=new SliderCtrl(panel,ID_HDRMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
-	HDRMinSlider->setRange(0.0,1.0);
+	HDRMinSlider->setRange(0.0,5.0);
 	HDRMinSlider->slider->SetToolTip("Increase range in dark areas");
 
 	hdr_controls->Add(HDRMinSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -546,7 +546,7 @@ void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
 	wxString exps[]={"x1","x10","x100","x1000","x10^4","x10^5","x10^6","x10^7"};
 	m_time_scale=new wxChoice(panel, ID_TIME_SCALE, wxDefaultPosition,wxSize(80,-1),8, exps);
 
-	m_time_scale->SetSelection(1);
+	m_time_scale->SetSelection(4);
 
 	hline->Add(TimeSlider->getSizer());
 	hline->Add(m_time_scale);
@@ -558,7 +558,7 @@ void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
 
 	m_rate_scale=new wxChoice(panel, ID_RATE_SCALE, wxDefaultPosition,wxSize(80,-1),8, exps);
 
-
+	m_rate_scale->SetSelection(4);
 	RateSlider=new SliderCtrl(panel,ID_RATE_SLDR,"Rate",LABEL, VALUE,200);
 	RateSlider->setRange(1,10);
 
