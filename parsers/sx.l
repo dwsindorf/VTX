@@ -107,6 +107,10 @@ static LongSym keytbl[]={
 
 	{"noise",       YY_NOISE},
 	{"water",       YY_WATER},
+	{"ocean",       YY_WATER},
+	{"ice",         YY_WATER},
+	
+	
 	{"fractal",     YY_FRACTAL},
 	{"erode",      	YY_ERODE},
 	{"hardness",    YY_HARDNESS},

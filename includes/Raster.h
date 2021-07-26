@@ -167,14 +167,26 @@ public:
 	int bmppass;
 	Point lpts[8]; // light points
 
+	double sea_level;
+
 	Color  water_color2;
 	Color  water_color1;
-	double water_level;
 	double water_mix;
 	double water_clarity;
 	double water_reflect;
 	double water_specular;
 	double water_shine;
+
+	Color  ice_color2;
+	Color  ice_color1;
+	double ice_mix;
+	double ice_clarity;
+	double ice_reflect;
+	double ice_specular;
+	double ice_shine;
+
+	bool   frozen;
+
 	double water_dpr;
 	double water_dpm;
 

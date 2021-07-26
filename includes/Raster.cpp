@@ -257,7 +257,7 @@ RasterMgr::RasterMgr()
 	water_mix=0.8;
 	water_specular=1;
 	water_shine=10;
-	water_level=0;
+	sea_level=0;
 	water_dpr=0.2;
 	water_dpm=0.5;
 

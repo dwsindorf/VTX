@@ -230,6 +230,10 @@ bool VtxSceneTabs::Create(wxWindow* parent,
     AddFilterTab(page);
     AddPage(page,wxT("Filter"),false);
 
+    page=new wxPanel(this,wxID_ANY);
+    AddOptionsTab(page);
+    AddPage(page,wxT("Options"),false);
+
     changing=false;
     return true;
 }
@@ -351,18 +355,6 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	m_water->SetToolTip("Enable water");
 	check_options->Add(m_water,0,wxALIGN_LEFT|wxALL,1);
 
-	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Grid");
-	m_grid->SetToolTip("Draw Long/Lat lines");
-	check_options->Add(m_grid,0,wxALIGN_LEFT|wxALL,1);
-
-	m_contours=new wxCheckBox(panel, ID_SHOW_CONTOURS, "Contours");
-	m_contours->SetToolTip("Draw Contour lines");
-	check_options->Add(m_contours,0,wxALIGN_LEFT|wxALL,1);
-
-	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
-	m_autogrid->SetToolTip("Autoset intervals");
-	check_options->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,1);
-
     boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
     check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -417,9 +409,39 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(shadow_controls, 0, wxALIGN_LEFT|wxALL,0);
 
+}
+
+void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
+  // A top-level sizer
+
+	wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+	panel->SetSizer(topSizer);
+
+	// A second box sizer to give more space around the controls
+
+	wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+	topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+	wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Special Options"));
+
+	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Grid");
+	m_grid->SetToolTip("Draw Long/Lat lines");
+	check_options->Add(m_grid,0,wxALIGN_LEFT|wxALL,1);
+
+	m_contours=new wxCheckBox(panel, ID_SHOW_CONTOURS, "Contours");
+	m_contours->SetToolTip("Draw Contour lines");
+	check_options->Add(m_contours,0,wxALIGN_LEFT|wxALL,1);
+
+	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
+	m_autogrid->SetToolTip("Autoset intervals");
+	check_options->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,1);
+
+	boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
+	check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
 	wxStaticBoxSizer* grid_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Lines"));
 
-	hline = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	GridSpacingSlider=new SliderCtrl(panel,ID_GRID_SPACING_SLDR,"Grid",LABEL2,VALUE2,SLIDER2);
 	GridSpacingSlider->setRange(0.1,10);
@@ -463,7 +485,6 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 
 	boxSizer->Add(grid_controls, 0, wxALIGN_LEFT|wxALL,0);
 }
-
 void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
     // A top-level sizer

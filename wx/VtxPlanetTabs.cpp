@@ -89,6 +89,7 @@ EVT_MENU(OBJ_DELETE,VtxPlanetTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxPlanetTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxPlanetTabs::OnUpdateEnable)
 
+EVT_UPDATE_UI(ID_TYPE_TEXT, VtxPlanetTabs::OnUpdateTemp)
 
 EVT_MENU(OBJ_VIEWOBJ,VtxPlanetTabs::OnViewObj)
 EVT_UPDATE_UI(OBJ_VIEWOBJ,VtxPlanetTabs::OnUpdateViewObj)
@@ -298,7 +299,6 @@ void VtxPlanetTabs::AddLightingTab(wxWindow *panel) {
 	color_cntrls->Add(ShadowSlider->getSizer(), 1, wxALIGN_LEFT | wxALL);
 	color_cntrls->SetMinSize(wxSize(TABS_WIDTH - TABS_BORDER, -1));
 	boxSizer->Add(color_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
-
 }
 
 void VtxPlanetTabs::OnViewObj(wxCommandEvent &event) {
@@ -313,6 +313,11 @@ void VtxPlanetTabs::OnViewObj(wxCommandEvent &event) {
 		menu_action = TABS_VIEWOBJ;
 	}
 }
+
+void VtxPlanetTabs::OnUpdateTemp(wxUpdateUIEvent &event) {
+	//setTemp();
+}
+
 void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 	event.Check(is_viewobj());
 }

@@ -559,13 +559,30 @@ public:
 class Planetoid : public Spheroid
 {
 public:
+	enum {GAS=0,LIQUID=1,SOLID=2};
+
+	double 	   ocean_level;
+	int        ocean_state;
+	int        ocean_auto;
+
+	double     ocean_solid_temp;
+	double     ocean_liquid_temp;
+	char       ocean_name[maxstr];
+
 	Color 	   water_color1;
 	Color 	   water_color2;
 	double 	   water_clarity;
 	double 	   water_mix;
-	double 	   water_level;
 	double 	   water_specular;
 	double 	   water_shine;
+
+	Color 	   ice_color1;
+	Color 	   ice_color2;
+	double 	   ice_clarity;
+	double 	   ice_mix;
+	double 	   ice_specular;
+	double 	   ice_shine;
+
 	Color 	   fog_color;
 	double     fog_min;
 	double     fog_max;
@@ -595,6 +612,8 @@ public:
 	double calc_time(double t);
 	void set_time(double t);
 	virtual void calcTemperature();
+	virtual bool liquid();
+	virtual bool solid();
 };
 
 //************************************************************

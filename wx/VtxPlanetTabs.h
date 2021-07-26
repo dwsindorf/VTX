@@ -125,13 +125,11 @@ public:
     void OnOrbitRadiusSlider(wxScrollEvent& event){
     	OrbitRadiusSlider->setValueFromSlider();
     	OnSliderValue(OrbitRadiusSlider, object()->orbit_radius);
-    	object()->calcTemperature();
     	setTemp();
 		invalidateRender();
 	}
     void OnOrbitRadiusText (wxCommandEvent& event){
     	OnSliderText( OrbitRadiusSlider, object()->orbit_radius);
-    	object()->calcTemperature();
     	setTemp();
 		invalidateRender();
 	}
@@ -141,13 +139,11 @@ public:
     void OnAlbedoSlider(wxScrollEvent& event){
     	AlbedoSlider->setValueFromSlider();
     	OnSliderValue(AlbedoSlider, object()->albedo);
-    	object()->calcTemperature();
     	setTemp();
 		invalidateRender();
 	}
     void OnAlbedoText (wxCommandEvent& event){
     	OnSliderText( AlbedoSlider, object()->albedo);
-    	object()->calcTemperature();
     	setTemp();
 		invalidateRender();
 	}
@@ -169,6 +165,8 @@ public:
 
 	void OnViewObj(wxCommandEvent &event);
 	void OnUpdateViewObj(wxUpdateUIEvent &event);
+	void OnUpdateTemp(wxUpdateUIEvent &event);
+
 
 DECLARE_EVENT_TABLE()
 };

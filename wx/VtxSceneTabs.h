@@ -16,6 +16,8 @@ protected:
 	void AddDisplayTab(wxWindow *panel);
 	void AddFilterTab(wxWindow *panel);
 	void AddRenderTab(wxWindow *panel);
+	void AddOptionsTab(wxWindow *panel);
+
 	Scene *object() 		{ return ((Scene*)(object_node->node));}
 
 	wxChoice *m_time_scale;

@@ -1220,14 +1220,20 @@ void Map::render_shaded()
 	bool show_water=waterpass() &&  Render.show_water() && (TheScene->viewtype!=SURFACE || Raster.show_water());
 	if(show_water){
 #ifdef DEBUG_RENDER
-		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
+		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;water
 #endif
 		tid=WATER;
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		Raster.surface=2;
-		Lights.setSpecular(Raster.water_specular);
-		Lights.setShininess(Raster.water_shine);
+		if(Raster.frozen){
+			Lights.setSpecular(Raster.ice_specular);
+			Lights.setShininess(Raster.ice_shine);
+		}
+		else{
+			Lights.setSpecular(Raster.water_specular);
+			Lights.setShininess(Raster.water_shine);
+		}
 
 		TerrainData::tp->set_color(true);
 		object->setProgram();

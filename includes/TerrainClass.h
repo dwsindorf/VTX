@@ -209,7 +209,7 @@ public:
 	void saveNode(FILE *);
 	NodeIF *replaceNode(NodeIF *c);
 	int typeValue()			{ return ID_WATER;}
-	const char *typeName ()	{ return "water";}
+	const char *typeName ()	{ return "ocean";}
 };
 
 //************************************************************

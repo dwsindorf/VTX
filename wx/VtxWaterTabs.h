@@ -20,7 +20,10 @@ protected:
 		return (Planetoid*)obj;
 	}
 
-	void AddWaterTab(wxWindow *panel);
+	void AddPropertiesTab(wxWindow *panel);
+	void AddLiquidTab(wxWindow *panel);
+	void AddSolidTab(wxWindow *panel);
+
     void invalidateObject(){
     	water()->invalidate();
     	setObjAttributes();
@@ -28,18 +31,36 @@ protected:
     	TheScene->rebuild();
     }
     void invalidateRender(){
-    	//setObjAttributes();
     	TheView->set_changed_render();
     }
 	void getObjAttributes();
 	void setObjAttributes();
+	void getDefaultState();
+	void setState();
+	void OnUpdateState(wxUpdateUIEvent &event);
+
+
+	StaticTextCtrl *planet_temp;
+	wxCheckBox     *auto_state;
 
 	SliderCtrl   *LevelSlider;
-	SliderCtrl   *AlbedoSlider;
-	SliderCtrl   *ShineSlider;
-	ExprTextCtrl *m_waves;
-	ColorSlider  *TransmitSlider;
-	ColorSlider  *ReflectSlider;
+
+	SliderCtrl   *LiquidTempSlider;
+	SliderCtrl   *LiquidAlbedoSlider;
+	SliderCtrl   *LiquidShineSlider;
+	ExprTextCtrl *LiquidFunction;
+	ColorSlider  *LiquidTransmitSlider;
+	ColorSlider  *LiquidReflectSlider;
+
+	SliderCtrl   *SolidTempSlider;
+	SliderCtrl   *SolidAlbedoSlider;
+	SliderCtrl   *SolidShineSlider;
+	ExprTextCtrl *SolidFunction;
+	ColorSlider  *SolidTransmitSlider;
+	ColorSlider  *SolidReflectSlider;
+
+	wxChoice   *Composition;
+	wxRadioBox *State;
 public:
 	VtxWaterTabs(wxWindow* parent,
 			wxWindowID id,
@@ -57,18 +78,31 @@ public:
 
 	~VtxWaterTabs(){
 		delete LevelSlider;
-		delete AlbedoSlider;
-		delete ShineSlider;
-		delete m_waves;
-		delete TransmitSlider;
-		delete ReflectSlider;
+		delete LiquidAlbedoSlider;
+		delete LiquidShineSlider;
+		delete LiquidFunction;
+		delete LiquidTransmitSlider;
+		delete LiquidReflectSlider;
+		delete LiquidTempSlider;
+
+		delete SolidAlbedoSlider;
+		delete SolidShineSlider;
+		delete SolidFunction;
+		delete SolidTransmitSlider;
+		delete SolidReflectSlider;
+		delete SolidTempSlider;
+
 	}
 	void updateControls();
 	int showMenu(bool);
     void OnEnable(wxCommandEvent& event);
     void OnUpdateEnable(wxUpdateUIEvent& event);
+    void OnChangeComposition(wxCommandEvent& event);
+    void OnAutoState(wxCommandEvent& event);
 
-    void OnWavesEnter(wxCommandEvent& event){
+    void OnShowState(wxCommandEvent& event);
+
+    void OnSurfaceFunctionEnter(wxCommandEvent& event){
      	invalidateObject();
     }
 
@@ -83,20 +117,39 @@ public:
     	LevelSlider->setValueFromText();
     	invalidateObject();
     }
-	DEFINE_SLIDER_EVENTS(Transmit)
-    void OnTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
+    void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->water_color2=TransmitSlider->getColor();
+		orb->water_color2=LiquidTransmitSlider->getColor();
     	invalidateRender();
     }
-	DEFINE_SLIDER_EVENTS(Reflect)
-    void OnReflectColor(wxColourPickerEvent& WXUNUSED(event)){
+    void OnLiquidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->water_color1=ReflectSlider->getColor();
+		orb->water_color1=LiquidReflectSlider->getColor();
     	invalidateRender();
     }
-	DEFINE_SLIDER_EVENTS(Albedo)
-	DEFINE_SLIDER_EVENTS(Shine)
+
+	DEFINE_SLIDER_EVENTS(LiquidTemp)
+	DEFINE_SLIDER_EVENTS(LiquidReflect)
+	DEFINE_SLIDER_EVENTS(LiquidTransmit)
+    DEFINE_SLIDER_EVENTS(LiquidAlbedo)
+	DEFINE_SLIDER_EVENTS(LiquidShine)
+
+    void OnSolidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
+		Planetoid *orb=getOrbital();
+		orb->ice_color2=SolidTransmitSlider->getColor();
+    	invalidateRender();
+    }
+    void OnSolidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
+		Planetoid *orb=getOrbital();
+		orb->ice_color1=SolidReflectSlider->getColor();
+    	invalidateRender();
+    }
+
+	DEFINE_SLIDER_EVENTS(SolidTemp)
+	DEFINE_SLIDER_EVENTS(SolidReflect)
+	DEFINE_SLIDER_EVENTS(SolidTransmit)
+    DEFINE_SLIDER_EVENTS(SolidAlbedo)
+	DEFINE_SLIDER_EVENTS(SolidShine)
 
 	DECLARE_EVENT_TABLE()
 };

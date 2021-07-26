@@ -1268,12 +1268,30 @@ void TNwater::eval()
 	static TerrainData water;
 	static TerrainData s2;
 
+	extern Point MapPt;
+
+	//MapPt.print();
+	Planetoid *obj=(Planetoid*)(TheMap->object);
+	//cout<<obj->liquid()<<endl;
+
+	bool liquid=obj->liquid();
+	bool solid=obj->solid();
+
+	TNarg &arg=*((TNarg*)left);
+
 	S0.datacnt=0;
-	SeaLevel=Raster.water_level*Gscale;
+	SeaLevel=Raster.sea_level*Gscale;
 	water.InitS();
 
+	TNarg *args=(TNarg*)left;
+	int n=numargs(args);
+
+
     if(left){
-		left->eval();
+    	if(n==1 ||liquid)
+		    arg[0]->eval();
+    	else if (solid)
+    		arg[1]->eval();
 		SeaLevel+=S0.s;
 	}
 	INIT;
@@ -1309,7 +1327,6 @@ void TNwater::eval()
 	    for(int i=1;i<S0.datacnt;i++){
 			S0.data[S0.datacnt-i]=S0.data[S0.datacnt-i-1];
 	    }
-		//m=Raster.water_clarity;
 		s2.copy(S0);
 		S0.data[0]=&s2;
 		S0.copy(water);
@@ -1335,10 +1352,15 @@ void TNwater::eval()
 void TNwater::saveNode(FILE *f)
 {
 	Planetoid *orb=(Planetoid *)getOrbital(this);
-	fprintf(f,"%s(",symbol());
+	fprintf(f,"water(");
+
+	TNarg &arg=*((TNarg*)left);
+
+	TNarg *args=(TNarg*)left;
+	int n=numargs(args);
 	char tmp[64];
-	if(left)
-		left->save(f);
+	if(n>0)
+		arg[0]->save(f);
 	else
 		fprintf(f,"1.0",tmp);
 	Color color=orb->water_color1;
@@ -1348,6 +1370,19 @@ void TNwater::saveNode(FILE *f)
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
 	fprintf(f,",%g,%g,%g",orb->water_clarity/FEET,orb->water_shine,orb->water_specular);
+	fprintf(f,")\n");
+	fprintf(f,"ice(");
+	if(n>1)
+		arg[1]->save(f);
+	else
+		fprintf(f,"1.0",tmp);
+	color=orb->ice_color1;
+	color.toString(tmp);
+	fprintf(f,",%s",tmp);
+	color=orb->ice_color2;
+	color.toString(tmp);
+	fprintf(f,",%s",tmp);
+	fprintf(f,",%g,%g,%g",orb->ice_clarity/FEET,orb->ice_shine,orb->ice_specular);
 	fprintf(f,")\n");
 }
 //-------------------------------------------------------------
@@ -1366,10 +1401,9 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	node->left=0;
 
 	TNarg *args=(TNarg*)left; // first arg (noise expr)
-	//if(!args)
-	//	return 0;
 
 	int n=getargs(args,arglist,6);
+	//cout<<"water args="<<n<<endl;
 
 	if(n>1)
 		orb->water_color1=arglist[1].c;
@@ -1382,7 +1416,22 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	if(n>5)
 		orb->water_specular=arglist[5].s;
 
-	// remove color expression from tree since it is no longer needed
+	if(node->right){
+		node=(TNfunc*)node->right;
+		TNarg *args=(TNarg*)node->left;
+		n=getargs(args,arglist,6);
+		//cout<<"ice args="<<n<<endl;
+		if(n>1)
+			orb->ice_color1=arglist[1].c;
+		if(n>2)
+			orb->ice_color2=arglist[2].c;
+		if(n>3)
+			orb->ice_clarity=arglist[3].s*FEET;
+		if(n>4)
+			orb->ice_shine=arglist[4].s;
+		if(n>5)
+			orb->ice_specular=arglist[5].s;
+	}
 	args->right=0;
 	delete c;
 	return this;

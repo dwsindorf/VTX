@@ -79,7 +79,6 @@ public:
 		return boxSizer;
 	}
 	void SetValue(char  *value);
-	void setValue(char  *p) {SetValue(p);}
 	void setValue(TNode  *arg);
 	wxString GetValue();
 	wxString getText() { return GetValue();}
