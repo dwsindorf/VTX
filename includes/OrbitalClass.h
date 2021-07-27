@@ -614,6 +614,7 @@ public:
 	virtual void calcTemperature();
 	virtual bool liquid();
 	virtual bool solid();
+	virtual bool gas();
 };
 
 //************************************************************

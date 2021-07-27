@@ -73,7 +73,7 @@ EVT_CHECKBOX(ID_AUTO_STATE,VtxWaterTabs::OnAutoState)
 
 SET_SLIDER_EVENTS(LEVEL,VtxWaterTabs,Level)
 
-EVT_RADIOBOX(ID_SHOW_STATE, VtxWaterTabs::OnShowState)
+EVT_RADIOBOX(ID_SHOW_STATE, VtxWaterTabs::OnSetState)
 SET_COLOR_EVENTS(LIQUID_TRANSMIT,VtxWaterTabs,LiquidTransmit)
 SET_COLOR_EVENTS(LIQUID_REFLECT,VtxWaterTabs,LiquidReflect)
 SET_SLIDER_EVENTS(LIQUID_SHINE,VtxWaterTabs,LiquidShine)
@@ -320,14 +320,12 @@ int VtxWaterTabs::showMenu(bool expanded){
 }
 
 void VtxWaterTabs::OnUpdateState(wxUpdateUIEvent &event) {
-	setState();
 	getDefaultState();
 	bool auto_state_enabled=auto_state->IsChecked();
 	Planetoid *orb=getOrbital();
 
-	if(auto_state_enabled){
+	if(auto_state_enabled)
 		State->SetSelection(orb->ocean_state);
-    }
 }
 
 void VtxWaterTabs::getDefaultState() {
@@ -348,29 +346,13 @@ void VtxWaterTabs::getDefaultState() {
 		strcpy(state_str,"Gas");
 	sprintf(type_str,"%d C (%s)",(int)tc,state_str);
 	planet_temp->SetValue(type_str);
-	//setState();
 }
 
-void VtxWaterTabs::setState(){
-	Planetoid *orb=getOrbital();
-	bool auto_state_enabled=auto_state->IsChecked();
-    double solid_temp=SolidTempSlider->getValue();
-    double liquid_temp=LiquidTempSlider->getValue();
-	double tc=orb->temperature-273;
-	if(tc<=solid_temp)
-		orb->ocean_state=Planetoid::SOLID;
-	else if(tc<=liquid_temp)
-		orb->ocean_state=Planetoid::LIQUID;
-	else
-		orb->ocean_state=Planetoid::GAS;
-    orb->ocean_auto=auto_state_enabled;
-	//State->Enable(!auto_state_enabled);
-
-}
 void VtxWaterTabs::OnAutoState(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	bool autoset=event.IsChecked();
-	setState();
+	orb->ocean_auto=autoset;
+	orb->calcTemperature();
 }
 
 void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
@@ -385,14 +367,18 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
 	orb->calcTemperature();
 }
 
-void VtxWaterTabs::OnShowState(wxCommandEvent& event){
-	//setState();
+void VtxWaterTabs::OnSetState(wxCommandEvent& event){
 	int state=event.GetSelection();
 	Planetoid *orb=getOrbital();
-	bool auto_state_enabled=auto_state->IsChecked();
-	if(auto_state_enabled){
+	bool autoset=auto_state->IsChecked();
+	orb->ocean_auto=autoset;
+	int oldstate=orb->ocean_state;
+	if(!autoset){
 		orb->ocean_state=state;
-		State->SetSelection(orb->ocean_state);
+		if(oldstate!=state){
+			orb->invalidate();
+			TheScene->rebuild();
+		}
     }
 	orb->calcTemperature();
 }

@@ -250,7 +250,7 @@ void EffectsMgr::setProgram(int type){
 			vars.newFloatVar("reflection",water_color1.alpha());
 			vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
 		}
-		//vars.newFloatVar("dpm",water_dpm);
+		vars.newFloatVar("dpm",water_dpm);
 
 		vars.newFloatVar("twilite_min",twilite_min);
 		vars.newFloatVar("twilite_max",twilite_max);

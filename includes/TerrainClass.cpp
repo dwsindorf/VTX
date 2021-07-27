@@ -1254,7 +1254,8 @@ bool TNnoise::setProgram(){
 //-------------------------------------------------------------
 void TNwater::eval()
 {
-	if(CurrentScope->rpass() || !isEnabled()){
+	Planetoid *obj=(Planetoid*)(TheMap->object);
+	if(CurrentScope->rpass() || !isEnabled() || obj->gas()){
 		if(right){
 			INIT;
 			right->eval();
@@ -1270,13 +1271,6 @@ void TNwater::eval()
 
 	extern Point MapPt;
 
-	//MapPt.print();
-	Planetoid *obj=(Planetoid*)(TheMap->object);
-	//cout<<obj->liquid()<<endl;
-
-	bool liquid=obj->liquid();
-	bool solid=obj->solid();
-
 	TNarg &arg=*((TNarg*)left);
 
 	S0.datacnt=0;
@@ -1288,9 +1282,9 @@ void TNwater::eval()
 
 
     if(left){
-    	if(n==1 ||liquid)
+    	if(n==1 ||obj->liquid())
 		    arg[0]->eval();
-    	else if (solid)
+    	else if (obj->solid())
     		arg[1]->eval();
 		SeaLevel+=S0.s;
 	}

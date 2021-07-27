@@ -3267,6 +3267,10 @@ bool Planetoid::solid(){
 	int state=ocean_state;
 	return state==SOLID?true:false;
 }
+bool Planetoid::gas(){
+	int state=ocean_state;
+	return state==GAS?true:false;
+}
 
 //-------------------------------------------------------------
 // Planetoid::render_object()   object level render
@@ -3443,9 +3447,9 @@ void Planetoid::calcTemperature() {
 		}
 	}
 	double temp=temperature-273;
+	int oldstate=ocean_state;
 
 	if(ocean_auto){
-		int oldstate=ocean_state;
 		if (temp <= ocean_solid_temp)
 			ocean_state = SOLID;
 		else if (temp <= ocean_liquid_temp)

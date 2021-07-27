@@ -100,7 +100,7 @@ public:
     void OnChangeComposition(wxCommandEvent& event);
     void OnAutoState(wxCommandEvent& event);
 
-    void OnShowState(wxCommandEvent& event);
+    void OnSetState(wxCommandEvent& event);
 
     void OnSurfaceFunctionEnter(wxCommandEvent& event){
      	invalidateObject();
