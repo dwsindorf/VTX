@@ -1,102 +1,25 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=2.98828;
-		theta=275.449;
-		height=310.5 miles;
-		gndlvl=-530.83 ft;
-		time=67362.4;
-		vstride=586570;
+		view=SURFACE;
+		phi=4.74334;
+		theta=349.229;
+		height=4835.74 ft;
+		gndlvl=-4236.44 ft;
+		time=45116.8;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=90;
-		pitch=-90;
-		fov=24.8015;
+		zoom=0.000207;
+		minh=1.13636e-09;
+		heading=1;
+		tilt=-7;
+		angle=2;
+		fov=25;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
-		theta=282.232;
-		height=715.778 miles;
-		time=43625.8;
-		fov=35;
-	}
-	View{
-		view=SURFACE;
-		phi=4.92187;
-		theta=345.234;
-		height=44800.2 ft;
-		gndlvl=1009.23 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=22400.1 ft;
-	}
-	View{
-		phi=4.87793;
-		theta=348.179;
-		height=628.122 ft;
-		gndlvl=-332.016 ft;
-	}
-	View{
-		height=627.847 ft;
-		tilt=-4;
-		angle=1;
-	}
-	View{
-		phi=4.86694;
-		theta=348.294;
-		height=37.446 ft;
-		gndlvl=-138.385 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=79.2627 ft;
-		time=47582.2;
-		tilt=-3;
-		angle=-1;
-		vstride=0.02;
-		zoom=0.000207;
-		minh=1.13636e-09;
-		radius=0.000206989;
-	}
-	View{
-		height=822.572 ft;
-		time=45109;
-		tilt=-2;
-		angle=-8;
-		fov=25;
-		minr=0.000206975;
-		radius=0.00020713;
-	}
-	View{
-		phi=4.74609;
-		theta=349.387;
-		height=229.397 ft;
-		gndlvl=-4236.44 ft;
-		tilt=-15;
-		angle=0;
-		radius=0.000206241;
-	}
-	View{
-		phi=4.74334;
-		theta=349.229;
-		height=5155.08 ft;
-		heading=1;
-		tilt=-7;
-		angle=2;
 		minr=0.000206199;
-		radius=0.000207174;
-	}
-	View{
-		height=4835.74 ft;
-		time=45116.8;
-		radius=0.000207114;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -131,6 +54,7 @@ Scene() {
 					albedo=1;
 					ambient=Color(1,1,1,0.02);
 					day=24;
+					ocean.level=88503.5 ft;
 					phase=24.9984;
 					resolution=2;
 					rot_phase=180;
@@ -164,24 +88,31 @@ Scene() {
 					Moon(0.000207,0.416) {
 						day=24;
 						hscale=0.002;
+						ice.albedo=1;
+						ice.color1=Color(0.73,0.82,0.97,0.42);
+						ice.color2=Color(0.84,0.91,0.96);
+						ice.shine=41.666;
 						name="Europa";
+						ocean.auto=1;
+						ocean.level=-4166.8 ft;
+						ocean.state=2;
 						phase=59.9976;
 						rseed=0.561332;
 						shine=3.02106;
 						skew=13.7502;
 						specular=Color(1,1,1,0.29);
-						water.albedo=0.18056;
-						water.clarity=1 ft;
-						water.color1=Color(0.74,0.83,0.98,0.42);
-						water.color2=Color(0.85,0.91,0.96);
-						water.level=-4166.8 ft;
-						water.shine=1.388;
+						water.albedo=41.666;
+						water.clarity=411.489 ft;
+						water.color1=Color(1,1,1,0.92);
+						water.color2=Color(0.17,0.48,1);
+						water.level=-7.89167e-07;
+						water.shine=48.612;
 						year=3;
 						bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 							Color(0.173,0,0.055),
 							Color(0.075,0.02,0.02));
 						Surface{
-							terrain=water(noise(VORONOI|NABS|SCALE|SQR,11.3,10.1,-0.02,0.3,1.84,1,-0.24,0,0))
+							terrain=ocean(noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0.05,1,0,0),noise(VORONOI|NABS|SCALE|SQR,11.3,10.1,-0.02,0.3,1.84,1,-0.24,0,0),Color(0.729,0.82,0.969,0.42),Color(0.839,0.91,0.957),1,41.666,1)
 									snow(0.2,0.1,-0.25,-0.92,1,0.31)
 									fractal(SQR|SS,10.5,10.3,0.1,3,3,0.24,0,1,1,1)
 									Texture("yellow-black",BORDER|LINEAR|NORM|TEX,1,0.38888,1,-1.77776,4.66672,2,0.5,0,0,-1.77776,-1.55552,-1.27776)+

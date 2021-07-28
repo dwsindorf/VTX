@@ -1383,21 +1383,27 @@ void TNwater::saveNode(FILE *f)
 // TNwater::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNwater::replaceNode(NodeIF *c){
-	TerrainData arglist[6];
+	TerrainData arglist[8];
+
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	if(!orb)
 		return 0;
 	if(c->typeValue()!=typeValue())
 		return 0;
+
 	delete left; // delete old expr
-	TNfunc *node=(TNfunc*)c;
-	left=(TNarg*)node->left;
-	node->left=0;
+	TNfunc *water_func=(TNfunc*)c;
+	TNfunc *ice_func=water_func->right;
 
-	TNarg *args=(TNarg*)left; // first arg (noise expr)
+	TNnoise *water_noise=(TNnoise *)water_func->left;
+	TNnoise *ice_noise=(TNnoise *)ice_func->left;
 
-	int n=getargs(args,arglist,6);
-	//cout<<"water args="<<n<<endl;
+	TNarg *water_args=(TNarg*)water_func->left; // first arg (noise expr)
+	TNarg *ice_args=(TNarg*)ice_func->left; // first arg (noise expr)
+
+	int n=getargs(water_args,arglist,6);
+
+	//cout <<"water_args="<<n<<endl;
 
 	if(n>1)
 		orb->water_color1=arglist[1].c;
@@ -1410,24 +1416,28 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	if(n>5)
 		orb->water_specular=arglist[5].s;
 
-	if(node->right){
-		node=(TNfunc*)node->right;
-		TNarg *args=(TNarg*)node->left;
-		n=getargs(args,arglist,6);
-		//cout<<"ice args="<<n<<endl;
-		if(n>1)
-			orb->ice_color1=arglist[1].c;
-		if(n>2)
-			orb->ice_color2=arglist[2].c;
-		if(n>3)
-			orb->ice_clarity=arglist[3].s*FEET;
-		if(n>4)
-			orb->ice_shine=arglist[4].s;
-		if(n>5)
-			orb->ice_specular=arglist[5].s;
-	}
-	args->right=0;
-	delete c;
+	n=getargs(ice_args,arglist,6);
+	//cout <<"ice_args="<<n<<endl;
+
+	if(n>1)
+		orb->ice_color1=arglist[1].c;
+	if(n>2)
+		orb->ice_color2=arglist[2].c;
+	if(n>3)
+		orb->ice_clarity=arglist[3].s*FEET;
+	if(n>4)
+		orb->ice_shine=arglist[4].s;
+	if(n>5)
+		orb->ice_specular=arglist[5].s;
+
+	left=(TNarg*)water_noise;
+	((TNarg*)left)->right=ice_noise;
+
+	//delete c;
+	//delete water_noise->right;
+	//delete ice_noise->right;
+	//water_noise->right=0;
+	//ice_noise->right=0;
 	return this;
 }
 
