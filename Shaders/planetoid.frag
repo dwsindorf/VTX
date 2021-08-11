@@ -54,6 +54,14 @@ varying vec4 Normal;
 uniform vec4 Diffuse;   // for some reason can't seem to set & use gl_FrontMaterial.diffuse ??
 uniform vec4 Shadow;
 
+uniform vec4 WaterColor1;
+uniform vec4 WaterColor2;
+uniform vec4 IceColor1;
+uniform vec4 IceColor2;
+uniform float water_clarity;
+uniform float ice_clarity;
+
+
 #ifdef GRID
 uniform vec4 phi_color;
 uniform vec4 theta_color;
@@ -117,6 +125,14 @@ void main(void) {
 #else
 	vec4 color=vec4(1.0);
 #endif
+/*
+    if(Constants1.b>1.0){
+	    if(Constants1.b>1.5)
+		   color.rgb = mix(IceColor2.rgb,IceColor1,ice_clarity);
+	    else  
+	       color.rgb = mix(WaterColor2.rgb,WaterColor1,water_clarity);
+	 }
+*/
     vec3 normal=normalize(Normal.xyz);
     bump=vec3(0.0); 
 #ifdef NCC
@@ -156,8 +172,8 @@ void main(void) {
     color.rgb=addGrid(color.rgb);
 #endif   
 #endif
+
 	gl_FragData[0] = color;
-	//gl_FragData[2] = vec4(illumination,0,0,1);
-	//gl_FragData[0] = vec4(illumination,0,0,1);//color;
+
 }
 // ########## end planetoid.frag #########################

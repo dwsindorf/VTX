@@ -568,6 +568,7 @@ public:
 	double     ocean_solid_temp;
 	double     ocean_liquid_temp;
 	char       ocean_name[maxstr];
+	TNode     *ocean_expr;
 
 	Color 	   water_color1;
 	Color 	   water_color2;
@@ -582,6 +583,7 @@ public:
 	double 	   ice_mix;
 	double 	   ice_specular;
 	double 	   ice_shine;
+
 
 	Color 	   fog_color;
 	double     fog_min;
@@ -615,6 +617,11 @@ public:
 	virtual bool liquid();
 	virtual bool solid();
 	virtual bool gas();
+	virtual int getOceanFunction(char *buff);
+	virtual void setOceanFunction(char *expr);
+	virtual double evalOceanFunction();
+	virtual void set_surface(TerrainData&);
+
 };
 
 //************************************************************

@@ -400,14 +400,14 @@ void EffectsMgr::apply(){
 			glDisable(GL_BLEND);
 			//set_all();
 			setProgram(RENDERPGM);
-			if(frozen){
-				Lights.setSpecular(ice_specular);
-				Lights.setShininess(ice_shine);
-			}
-			else{
-				Lights.setSpecular(water_specular);
-				Lights.setShininess(water_shine);
-			}
+//			if(frozen){
+//				Lights.setSpecular(ice_specular);
+//				Lights.setShininess(ice_shine);
+//			}
+//			else{
+//				Lights.setSpecular(water_specular);
+//				Lights.setShininess(water_shine);
+//			}
 
 			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();

@@ -1226,6 +1226,7 @@ void Map::render_shaded()
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		Raster.surface=2;
+		//Lights.setSpecular(1);
 		if(Raster.frozen){
 			Lights.setSpecular(Raster.ice_specular);
 			Lights.setShininess(Raster.ice_shine);

@@ -238,8 +238,9 @@ class ExprMgr : public Scope, public NodeIF
 protected:
 	NodeIF *object;
 	int     dflag;
-	Point	rectangular(double t, double p);
 public:
+	Point	rectangular(double t, double p);
+
 	LinkedList<TNode*>      exprs;
 	LinkedList<TNode*>      inodes;
 	ExprMgr() : Scope()			{ dflag=0;}

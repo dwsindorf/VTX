@@ -59,6 +59,8 @@ protected:
 	ColorSlider  *SolidTransmitSlider;
 	ColorSlider  *SolidReflectSlider;
 
+	ExprTextCtrl *OceanFunction;
+
 	wxChoice   *Composition;
 	wxRadioBox *State;
 public:
@@ -91,7 +93,7 @@ public:
 		delete SolidTransmitSlider;
 		delete SolidReflectSlider;
 		delete SolidTempSlider;
-
+		delete OceanFunction;
 	}
 	void updateControls();
 	int showMenu(bool);

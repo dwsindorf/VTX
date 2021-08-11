@@ -97,13 +97,12 @@ void Light::setDiffuse(double d)
 {
 	dcolor=Diffuse*d*diffuse;
 	dcolor.set_alpha(d*diffuse);
-	//dcolor=FColor(Diffuse.red()*d,Diffuse.green()*d,Diffuse.blue()*d);
 	glLightfv(id,GL_DIFFUSE,dcolor.values());
 }
 
 void Light::setSpecular(double s)
 {
-	scolor=Specular*s*specular;
+	scolor=Specular*specular;//*s;
 	scolor.set_alpha(1.0);
 	glLightfv(id,GL_SPECULAR,scolor.values());
 }

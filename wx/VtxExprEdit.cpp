@@ -430,13 +430,13 @@ void VtxExprEdit::OnTabKey(wxKeyEvent& event) {
 	if (tkz.HasMoreTokens()){
 		wxString token = tkz.GetNextToken();
 		wxString alias;
-		if (token.StartsWith("n"))
+		if (token.StartsWith("no"))
 			alias=getPrototype(TN_NOISE);
-		else if (token.StartsWith("c"))
+		else if (token.StartsWith("cr"))
 			alias=getPrototype(TN_CRATERS);
-		else if (token.StartsWith("f"))
+		else if (token.StartsWith("fr"))
 			alias=getPrototype(TN_FCHNL);
-		else if (token.StartsWith("e"))
+		else if (token.StartsWith("er"))
 			alias=getPrototype(TN_ERODE);
 		if(!alias.IsEmpty()){
 			di=end.Find(token);

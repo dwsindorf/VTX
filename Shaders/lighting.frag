@@ -1,4 +1,10 @@
 
+uniform float water_shine;
+uniform float ice_shine;
+uniform float water_specular;
+uniform float ice_specular;
+uniform float albedo;
+
 #ifndef LMODE
 #define LMODE 0
 #endif
@@ -39,7 +45,18 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	float shadow_specular=1.0;
 #endif
 
-
+    float shine=gl_FrontMaterial.shininess;
+    if(Constants1.b>1.0){
+	    if(Constants1.b>1.5){
+		   shine=ice_shine;
+		   albedo=ice_specular;
+		}
+	    else {
+	       shine=water_shine;
+	       albedo=water_specular;
+	    }
+	 }
+    
 	for(int i=0;i<NLIGHTS;i++){
 	    if(gl_LightSource[i].position.w==0.0)
 	    	continue;
@@ -68,7 +85,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 			float ogl   = max(0.0, dot(normal,H));
 			float sdp=(0.5*phong+0.5*ogl);
 #endif
-			float pf        = damp*intensity*horizon*pow(sdp, gl_FrontMaterial.shininess);
+			float pf        = damp*intensity*horizon*pow(sdp, shine);
 			
 			specular       += gl_LightSource[i].specular.rgb * pf*shadow_specular;
 			//illumination   += pf*gl_LightSource[i].specular.a;

@@ -2775,6 +2775,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	ocean_name[0]=0;
 	ocean_solid_temp=0;
 	ocean_liquid_temp=100;
+	ocean_expr=0;
 	water_color1=def_water_color1;
 	water_color2=def_water_color2;
 	water_specular=def_water_specular;
@@ -2837,6 +2838,12 @@ void Planetoid::get_vars()
 	VGET("ice.mix",ice_mix,def_ice_mix);
 	VGET("ice.albedo",ice_specular,def_ice_specular);
 	VGET("ice.shine",ice_shine,def_ice_shine);
+
+	TNvar *var=exprs.getVar((char*)"ocean.expr");
+	if(var){
+		var->applyExpr();
+		ocean_expr=var->right;
+	}
 
 	VGET("fog.value",fog_value,def_fog_value);
 	VGET("fog.glow",fog_glow,def_fog_glow);
@@ -2999,6 +3006,21 @@ bool Planetoid::setProgram(){
 		vars.newFloatVar("grid_spacing",TheScene->grid_spacing*MILES/RPD/size);
 	}
 
+	vars.newFloatVec("WaterColor1",water_color1.red(),water_color1.green(),water_color1.blue(),water_color1.alpha());
+	vars.newFloatVec("WaterColor2",water_color2.red(),water_color2.green(),water_color2.blue(),water_color2.alpha());
+	vars.newFloatVec("IceColor1",ice_color1.red(),ice_color1.green(),ice_color1.blue(),ice_color1.alpha());
+	vars.newFloatVec("IceColor2",ice_color2.red(),ice_color2.green(),ice_color2.blue(),ice_color2.alpha());
+
+	vars.newFloatVar("ice_clarity",ice_clarity);
+	vars.newFloatVar("water_clarity",water_clarity);
+
+	vars.newFloatVar("water_shine",water_shine);
+	vars.newFloatVar("ice_shine",ice_shine);
+	vars.newFloatVar("water_specular",water_specular);
+	vars.newFloatVar("ice_specular",ice_specular);
+
+	vars.newFloatVar("albedo",albedo);
+
 	tp->setProgram();
 
 	if(TheScene->inside_sky()){
@@ -3021,8 +3043,6 @@ bool Planetoid::setProgram(){
 
 	return true;
 }
-
-
 
 //-------------------------------------------------------------
 // Planetoid::adapt_pass() select for scene pass
@@ -3052,7 +3072,7 @@ int Planetoid::render_pass()
     if(!local_group() || offscreen()|| !isEnabled())
 		return 0;
 	if(view_group() || near_group()){
-		if(TheScene->viewobj==this || TheScene->orbital_view())
+		if(TheScene->viewobj==this/* || TheScene->orbital_view()*/)
 			select_pass(FG0);
 		else
 			clear_pass(BG2);
@@ -3259,18 +3279,6 @@ void Planetoid::adapt_object()
     popSeed();
 }
 
-bool Planetoid::liquid(){
-	int state=ocean_state;
-	return state==LIQUID?true:false;
-}
-bool Planetoid::solid(){
-	int state=ocean_state;
-	return state==SOLID?true:false;
-}
-bool Planetoid::gas(){
-	int state=ocean_state;
-	return state==GAS?true:false;
-}
 
 //-------------------------------------------------------------
 // Planetoid::render_object()   object level render
@@ -3316,6 +3324,22 @@ void Planetoid::render_object()
 }
 
 //-------------------------------------------------------------
+// Planetoid::set_surface() set properties
+//-------------------------------------------------------------
+void Planetoid::set_surface(TerrainData &data)
+{
+	Spheroid::set_surface(data);
+	if(data.type()==WATER){
+		if(solid())
+			data.density=1.7;
+		else
+			data.density=1.1;
+	}
+	else
+		data.density=0;
+}
+
+//-------------------------------------------------------------
 // Planetoid::map_color()   modulate render color
 //-------------------------------------------------------------
 void Planetoid::map_color(MapData*d,Color &c)
@@ -3345,17 +3369,10 @@ void Planetoid::map_color(MapData*d,Color &c)
 	if(Render.draw_shaded() && TheScene->inside_sky())
 		return;
 
-	/*
-	if(TheScene->viewobj==this){
-		if(Raster.surface==2)
-			c.set_alpha(c.alpha()*wf);
-		return;
-	}
-	*/
 	if(Raster.surface==2){
 		double g;
 		Color c1,c2;
-        if(Raster.frozen){
+        if(d->density()>1.5){
         	c1=Raster.ice_color1;
         	c2=Raster.ice_color2;
         	g=Raster.ice_clarity;
@@ -3463,6 +3480,85 @@ void Planetoid::calcTemperature() {
 	}
 	//cout<<"ocean state="<<ocean_state<<" temp:"<<temp<<" solid:"<<ocean_solid_temp<<" liquid:"<<ocean_liquid_temp<<endl;
 }
+int  Planetoid::getOceanFunction(char *buff){
+	buff[0]=0;
+	TNvar *var=exprs.getVar((char*)"ocean.expr");
+	if(!var)
+		return 0;
+	TNode *expr=var->getExprNode();
+	if(!expr)
+		expr=var->right;
+
+	if(!expr)
+		return 0;
+
+	expr->valueString(buff);
+	return 1;
+}
+void  Planetoid::setOceanFunction(char *expr){
+	TNvar *var = exprs.getVar((char*) "ocean.expr");
+    if(var && strlen(expr)==0){
+    	exprs.removeVar("ocean.expr");
+    }
+    else if (!var) {
+		char *var_name;
+		TNode *val = (TNode*) TheScene->parse_node(expr);
+		MALLOC(15, char, var_name);
+		strcpy(var_name, "ocean.expr");
+		var = (TNvar*) exprs.add_expr(var_name, val);
+	} else
+		var->setExpr(expr);
+
+    var->applyExpr();
+    ocean_expr=var->right;
+}
+
+double  Planetoid::evalOceanFunction(){
+	double t=1;
+	 if(ocean_expr){
+		 ocean_expr->eval();
+		 t=S0.s+1;
+	}
+	//t=clamp(t,0,1);
+	return t;
+}
+bool Planetoid::liquid(){
+	int state=ocean_state;
+	if(ocean_auto){
+		double temp=temperature*evalOceanFunction()-273;
+
+		if (temp > ocean_solid_temp && temp<=ocean_liquid_temp)
+			return true;
+		else
+			return false;
+	}
+	return state==LIQUID?true:false;
+}
+bool Planetoid::solid(){
+	int state=ocean_state;
+	if(ocean_auto){
+		double t=evalOceanFunction();
+		double temp=temperature*t-273;
+        //cout<<t<<endl;
+		if (temp < ocean_solid_temp)
+			return true;
+		else
+			return false;
+	}
+	return state==SOLID?true:false;
+}
+bool Planetoid::gas(){
+	//return false;
+	int state=ocean_state;
+	if(ocean_auto){
+		double temp=temperature*evalOceanFunction()-273;
+		if (temp > ocean_liquid_temp)
+			return true;
+		return false;
+	}
+	return state==GAS?true:false;
+}
+
 //-------------------------------------------------------------
 // Planetoid::calc_delt() determine (normalized) position of the sun.
 //-------------------------------------------------------------
@@ -5459,8 +5555,12 @@ int Ring::render_pass()
     if(!local_group() || offscreen()|| !isEnabled())
 		return 0;
 	if(view_group()){
-		if(TheScene->orbital_view())
-			select_pass(FG0);
+		if(TheScene->orbital_view()){
+			if(getParent()==TheScene->viewobj)
+				select_pass(BG1);
+			else
+				select_pass(BG2);
+		}
 		else if(near_group() && !inside())
 			select_pass(FG0);
 		else
@@ -5667,7 +5767,7 @@ void Ring::save(FILE *f)
 //-------------------------------------------------------------
 int  Ring::scale(double &zn, double &zf)
 {
-	const double MINZN=1e-8;
+	const double MINZN=1e-5;
 
 	double x,y,z,w,y1,y2,x1,x2;
 	double aspect=TheScene->aspect;

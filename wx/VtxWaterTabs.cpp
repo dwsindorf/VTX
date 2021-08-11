@@ -24,6 +24,8 @@ enum{
 	ID_SHOW_STATE,
     ID_LEVEL_SLDR,
     ID_LEVEL_TEXT,
+    ID_OCEAN_FUNCTION_TEXT,
+
     ID_LIQUID_SURFACE_TEXT,
     ID_LIQUID_TRANSMIT_SLDR,
     ID_LIQUID_TRANSMIT_TEXT,
@@ -89,6 +91,8 @@ SET_SLIDER_EVENTS(SOLID_ALBEDO,VtxWaterTabs,SolidAlbedo)
 SET_SLIDER_EVENTS(SOLID_TEMP,VtxWaterTabs,SolidTemp)
 
 EVT_TEXT_ENTER(ID_SOLID_SURFACE_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
+
+EVT_TEXT_ENTER(ID_OCEAN_FUNCTION_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 
 EVT_CHOICE(ID_COMPOSITION, VtxWaterTabs::OnChangeComposition)
 
@@ -205,14 +209,16 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 	wxBoxSizer *default_state = new wxStaticBoxSizer(wxHORIZONTAL, panel,
 			wxT("Temperature"));
 
-	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"Surface",60,120);
-
-	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-
 	auto_state=new wxCheckBox(panel, ID_AUTO_STATE, "Auto");
 
 	default_state->Add(auto_state, 0, wxALIGN_LEFT | wxALL, 0);
 
+	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"",0,90);
+
+	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"",0,200);
+	default_state->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline->Add(default_state, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -435,6 +441,8 @@ void VtxWaterTabs::setObjAttributes(){
 	orb->ice_shine=SolidShineSlider->getValue();
 	orb->ice_specular=SolidAlbedoSlider->getValue();
 
+	orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
+
 	wxString str="ocean(";
 	str+=LiquidFunction->GetValue();
 	str+=",";
@@ -473,6 +481,11 @@ void VtxWaterTabs::getObjAttributes(){
 			SolidFunction->SetValue(arg);
 	}
 	Planetoid *orb=getOrbital();
+
+	char buff[256];
+	orb->getOceanFunction(buff);
+
+	OceanFunction->SetValue(buff);
 
 	State->SetSelection(orb->ocean_state);
 

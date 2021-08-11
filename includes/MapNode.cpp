@@ -2217,12 +2217,16 @@ void MapNode::Svertex(MapData*dn) {
 	double max_orders =log2(dfactor);
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
-	double g=d->type()+1.5;
-
-	double ht=d->Z()*Rscale;  // global units (MM)
+	double g=d->type();
+	if(g==WATER){
+		g=d->density();
+	}
+	else
+	   g+=1.5;
 
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;
+	double ht=d->Z()*Rscale;  // global units (MM)
 	if (GLSLMgr::CommonID1 >= 0){
 		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), theta);
 	}

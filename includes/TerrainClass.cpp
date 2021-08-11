@@ -1280,7 +1280,6 @@ void TNwater::eval()
 	TNarg *args=(TNarg*)left;
 	int n=numargs(args);
 
-
     if(left){
     	if(n==1 ||obj->liquid())
 		    arg[0]->eval();
