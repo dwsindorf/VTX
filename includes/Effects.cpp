@@ -215,41 +215,37 @@ void EffectsMgr::setProgram(int type){
 		break;
 
 
-	case RENDERPGM:
+	case RENDERPGM:  // auximage.frag - water effects
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
-		if(do_water && surface==2){
-			sprintf(defs+strlen(defs),"#define WATER\n");
-			if(shadows())
-				sprintf(defs+strlen(defs),"#define SHADOWS\n");
-		}
+		if(shadows())
+			sprintf(defs+strlen(defs),"#define SHADOWS\n");
 		if(TheScene->inside_sky())
 			sprintf(defs+strlen(defs),"#define SKY\n");
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("auximage.vert","auximage.frag");
 		c=sky_color;
 		vars.newFloatVec("WaterSky",c.red(),c.green(),c.blue(),c.alpha());
-		if(frozen){
-			c=ice_color2; // depth color
-			vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue(),c.alpha());
-			c=ice_color1;
-			vars.newFloatVec("WaterTop",c.red(),c.green(),c.blue(),c.alpha());
-			vars.newFloatVar("clarity",ice_clarity);
-			vars.newFloatVar("cmix",ice_mix*af);
-			vars.newFloatVar("saturation",ice_color2.alpha()*water_modulation());
-			vars.newFloatVar("reflection",ice_color1.alpha());
-			vars.newFloatVar("water_dpr",water_dpr*ice_color1.alpha());
-		}
-		else{
-			c=water_color2; // depth color
-			vars.newFloatVec("WaterDepth",c.red(),c.green(),c.blue(),c.alpha());
-			c=water_color1;
-			vars.newFloatVec("WaterTop",c.red(),c.green(),c.blue(),c.alpha());
-			vars.newFloatVar("clarity",water_clarity);
-			vars.newFloatVar("cmix",water_mix*af);
-			vars.newFloatVar("saturation",water_color2.alpha()*water_modulation());
-			vars.newFloatVar("reflection",water_color1.alpha());
-			vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
-		}
+
+		vars.newFloatVec("WaterColor1",water_color1.red(),water_color1.green(),water_color1.blue(),water_color1.alpha());
+		vars.newFloatVec("WaterColor2",water_color2.red(),water_color2.green(),water_color2.blue(),water_color2.alpha());
+		vars.newFloatVec("IceColor1",ice_color1.red(),ice_color1.green(),ice_color1.blue(),ice_color1.alpha());
+		vars.newFloatVec("IceColor2",ice_color2.red(),ice_color2.green(),ice_color2.blue(),ice_color2.alpha());
+
+		vars.newFloatVar("ice_clarity",ice_clarity);
+		vars.newFloatVar("water_clarity",water_clarity);
+
+		vars.newFloatVar("water_reflection",water_color1.alpha());
+		vars.newFloatVar("ice_reflection",ice_color1.alpha());
+
+		vars.newFloatVar("water_saturation",water_color2.alpha()*water_modulation());
+		vars.newFloatVar("ice_saturation",ice_color2.alpha()*water_modulation());
+
+		vars.newFloatVar("water_mix",water_mix*af);
+		vars.newFloatVar("ice_mix",ice_mix*af);
+
+		vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
+		vars.newFloatVar("ice_dpr",water_dpr*ice_color1.alpha());
+
 		vars.newFloatVar("dpm",water_dpm);
 
 		vars.newFloatVar("twilite_min",twilite_min);
@@ -289,14 +285,13 @@ void EffectsMgr::setProgram(int type){
 		c=fog_color;
 		vars.newFloatVec("Fog",c.red(),c.green(),c.blue(),c.alpha());
 		vars.newFloatVar("fog_ampl",vf);
-		if(frozen){
-			vars.newFloatVar("reflection",ice_color1.alpha());
-			vars.newFloatVar("water_dpr",water_dpr*ice_color1.alpha());
-		}
-		else{
-			vars.newFloatVar("reflection",water_color1.alpha());
-			vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
-		}
+
+		vars.newFloatVar("ice_reflection",ice_color1.alpha());
+		vars.newFloatVar("water_reflection",water_color1.alpha());
+
+		vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
+		vars.newFloatVar("ice_dpr",water_dpr*ice_color1.alpha());
+
 		vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_value);
 		break;
 
@@ -400,14 +395,6 @@ void EffectsMgr::apply(){
 			glDisable(GL_BLEND);
 			//set_all();
 			setProgram(RENDERPGM);
-//			if(frozen){
-//				Lights.setSpecular(ice_specular);
-//				Lights.setShininess(ice_shine);
-//			}
-//			else{
-//				Lights.setSpecular(water_specular);
-//				Lights.setShininess(water_shine);
-//			}
 
 			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();

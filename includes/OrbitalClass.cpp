@@ -3299,27 +3299,19 @@ void Planetoid::render_object()
 	}
 	else{
 		Raster.sea_level=ocean_level;
-		if(ocean_state==SOLID){
-			Color c= ice_color1;
-			Raster.modulate(c);
-			c.set_alpha(ice_color1.alpha());
-			Raster.ice_color1=c;
-			c=ice_color2;
-			Raster.modulate(c);
-			Raster.ice_color2=c;
-			Raster.frozen=true;
-		}
-		else{
-			Color c= water_color1;
-			Raster.modulate(c);
-			c.set_alpha(water_color1.alpha());
-			Raster.water_color1=c;
-			c=water_color2;
-			Raster.modulate(c);
-			Raster.water_color2=c;
-			Raster.frozen=false;
-		}
-		Spheroid::render_object();
+		Color c= ice_color1;
+		Raster.modulate(c);
+		c.set_alpha(ice_color1.alpha());
+		Raster.ice_color1=c;
+		c=ice_color2;
+		Raster.modulate(c);
+		Raster.ice_color2=c;
+		c= water_color1;
+		Raster.modulate(c);
+		c.set_alpha(water_color1.alpha());
+		Raster.water_color1=c;
+		c=water_color2;
+		Raster.modulate(c);
 	}
 }
 
@@ -3333,7 +3325,8 @@ void Planetoid::set_surface(TerrainData &data)
 		if(solid())
 			data.density=1.7;
 		else
-			data.density=1.1;
+			data.density=1.0;
+
 	}
 	else
 		data.density=0;

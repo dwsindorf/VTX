@@ -11,7 +11,6 @@
 //    have modulation attributes are consecutive and start on even texture id boundaries
 //    (The shader compiler/linker doesn't penalize for varying vec4 objects that are
 //    not used but counts half-full vec4 units the same as full ones).
-
 #include "attributes.h"
 #include "textures.h"
 #include "attributes.vert"
@@ -19,6 +18,8 @@
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
+
+//flat vec4 TestFlat;
 
 void main(void) {
 	// note: original vertex coords are in eye space (0,0,0=eye) but not rotated for view
@@ -32,5 +33,6 @@ void main(void) {
 
 #include "set_tex.vert"
 #include "set_attributes.vert"
+  // TestFlat=CommonAttributes1;
 
 }

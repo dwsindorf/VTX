@@ -8,6 +8,7 @@ varying vec4 Constants1;
 varying vec4 EyeDirection;
 varying vec4 Normal;
 
+
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
 uniform sampler2DRect FBOTex3;
@@ -19,15 +20,27 @@ uniform float twilite_max;
 uniform float twilite_dph; // dot product between point-center light-point at horizon
 uniform vec3 center;
 
-uniform vec4 WaterDepth;
 uniform vec4 WaterSky;
-uniform vec4 WaterTop;
-uniform float clarity;
-uniform float saturation;
-uniform float reflection;
+
+uniform vec4 WaterColor2;
+uniform vec4 WaterColor1;
+uniform float water_reflection;
+uniform float water_saturation;
+uniform float water_clarity;
+uniform float water_mix;
 uniform float water_dpr;
+
+uniform vec4 IceColor2;
+uniform vec4 IceColor1;
+uniform float ice_reflection;
+uniform float ice_saturation;
+uniform float ice_clarity;
+uniform float ice_mix;
+uniform float ice_dpr;
+
+
+//uniform float water_dpr;
 uniform float dpm;
-uniform float cmix;
 uniform float ws1;
 uniform float ws2;
 uniform vec4 Shadow;
@@ -43,6 +56,8 @@ uniform float feet;
 void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // data texture
+	
+    float type=Constants1.g;
 
 	float ambient = 0.0;
 	float specular = 0.0;
@@ -82,7 +97,6 @@ void main(void) {
 
 		ambient   += horizon;
 
-#ifdef WATER
 		float LdotN     = dot(light,normal);
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = LdotN*amplitude*horizon;
@@ -106,10 +120,17 @@ void main(void) {
 #endif
 		specular    = pow(max(sdp,0.0), gl_FrontMaterial.shininess);
 		Specular    = gl_LightSource[i].specular.rgb*specular*shadow_specular;		
-#endif
 	}
+	float wf=lerp(type,1,2,0,1);
+	vec3 Color1 = mix(WaterColor1,IceColor1,wf);
+	vec3 Color2 = mix(WaterColor2,IceColor2,wf);
 	
-#ifdef WATER
+	float reflection=mix(water_reflection,ice_reflection,wf);
+	float saturation=mix(water_saturation,ice_saturation,wf);
+	float clarity=mix(water_clarity,ice_clarity,wf);
+	float cmix=mix(water_mix,ice_mix,wf);
+	float dpr=0.5*mix(water_dpr,ice_dpr,wf);
+	
 	float reflect1=dot(normal,eye); // reflection angle
 	float depth=gl_FragCoord.z; // water
 	float z=fcolor2.g;  // land
@@ -118,12 +139,11 @@ void main(void) {
 	float dz=(z2-z1);
 	dz=dz<0.0?0.0:dz;
 	float f=fcolor2.r==0?1:lerp(dz,0.0,clarity,0.0,1.0); // f=1 if back surface != land
-	float type=Constants1.g;
-	vec3 TopColor=Diffuse*WaterTop.rgb+Ambient*WaterTop.rgb;
+	vec3 TopColor=Diffuse*Color1.rgb+Ambient*Color1.rgb;
 #ifdef SKY
-	vec3 DepthColor=WaterDepth.rgb*horizon;
-	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
-	float dpr=0.5*water_dpr;
+	vec3 DepthColor=Color2.rgb*horizon;
+	vec3 color=mix(Color1.rgb,DepthColor,f); // add depth color
+	//float dpr=0.5*water_dpr;
 	float fmix=lerp(reflect1,dpr,dpm,cmix,0);
 	float rmod=lerp(reflect1,0,dpr,reflection,0);
 	float cmod=(1-rmod)*saturation;
@@ -137,7 +157,7 @@ void main(void) {
 	color=color.rgb*f1+TopColor*f2+SkyColor.rgb*f3+Specular;
 	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
 #else
-    vec3 color=mix(fcolor1.rgb,WaterDepth.rgb,f)+Specular; // add depth color
+    vec3 color=mix(fcolor1.rgb,Color2.rgb,f)+Specular; // add depth color
 #endif	
     //color.rgb=vec3(fcolor2.r,0,0);
 	color=clamp(color,0.0,1.0);
@@ -145,15 +165,7 @@ void main(void) {
 	float ht=HT+fcolor2.a;
 	
 	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
-#else // no water
-	float reflect1 = fcolor2.b;
-	float type=fcolor2.r;
-	float depth=fcolor2.g;
-	float vfog=fcolor2.a;
-	gl_FragData[0] = fcolor1;
-#endif
 	gl_FragData[0].a=1;
-	gl_FragData[1] = vec4(type,depth,reflect1,vfog);	
-	
+	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
 }
 

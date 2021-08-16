@@ -1139,8 +1139,13 @@ void RasterMgr::vertex(MapNode *node)
 	case SHADERS:
 		{
 			double type=0,vfog=0;
-			if(TheMap->object==TheScene->viewobj)
-				type = (d->type()+1.5); // note: for water floor(g)=1;
+			if(TheMap->object==TheScene->viewobj){
+				if(d->type()==WATER)
+					type=d->density();
+				else
+					type=d->type()+2;
+				//type = (d->type()+1.5); // note: for water floor(g)=1;
+			}
 			Point *norm=node->normal(d);
 			if(norm)
 				glNormal3dv(norm->values());

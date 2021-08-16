@@ -1256,7 +1256,6 @@ void Map::render_shaded()
 	Render.show_shaded();
 	GLSLMgr::endRender();
 	glPopAttrib();
-
 //	if(TheScene->viewobj==object){
 //    	double minz,maxz;
 //    	cout<< "Render ";

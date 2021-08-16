@@ -2218,14 +2218,16 @@ void MapNode::Svertex(MapData*dn) {
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
 	double g=d->type();
-	if(g==WATER){
+	if(Td.type()==WATER){
 		g=d->density();
 	}
 	else
-	   g+=1.5;
+	   g+=2;
+
 
 	if(TheMap->object!=TheScene->viewobj)
 		g = 0;
+
 	double ht=d->Z()*Rscale;  // global units (MM)
 	if (GLSLMgr::CommonID1 >= 0){
 		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), theta);
@@ -2240,7 +2242,6 @@ void MapNode::Svertex(MapData*dn) {
 			double zs=zslope();
 			Point T=tangent(d);
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, zs, max_orders);
-			//cout<<max_orders<<endl;
 		}
 
 		Texture *tx;
@@ -2291,7 +2292,6 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				else if(tx->d_data){
 					t=d->mdata();
-					//cout<<t<<endl;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}

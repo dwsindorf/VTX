@@ -20,7 +20,13 @@ uniform float fog_znear;
 
 uniform float fog_ampl;
 
-uniform float reflection;
+//uniform float reflection;
+//uniform float water_dpr;
+
+uniform float ice_reflection;
+uniform float water_reflection;
+
+uniform float ice_dpr;
 uniform float water_dpr;
 
 uniform float feet;
@@ -60,9 +66,15 @@ void main(void) {
 		h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
 #endif
 #ifdef WATER
-		if(TYPE<1.8){ // TYPE=1 for water
+		if(TYPE<2){ // TYPE=1 for water
 			float ry=RDP;
-			float rmod=lerp(ry,0.0,water_dpr,1.0,0.0);
+			float wf=lerp(TYPE,1,2,0,1);
+			
+			float reflection=mix(water_reflection,ice_reflection,wf);
+			float dpr=mix(water_dpr,ice_dpr,wf);
+			
+			float rmod=lerp(ry,0.0,dpr,1.0,0.0);
+
 #ifdef REFLECT
 			float y1=gl_FragCoord.y*dv;
 			float y=y1+4*ry;
