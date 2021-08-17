@@ -240,7 +240,7 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"base(0)\n");
 		break;
 	case TN_WATER:
-		sprintf(tmp,"water(0.0)\n");
+		sprintf(tmp,"ocean(0.0)\n");
 		break;
 	case TN_COLOR:
 		sprintf(tmp,"Color(1,1,1)\n");
@@ -304,7 +304,7 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 	case TN_FOG:
 		return new ModelSym("Fog",type);
 	case TN_WATER:
-		return new ModelSym("Water",type);
+		return new ModelSym("Ocean",type);
 	case TN_SNOW:
 		return new ModelSym("Snow",type);
 	case TN_CLOUD:
@@ -472,8 +472,6 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_SURFACE:
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
-		//if(actionmode==DROPPING)
-		//	break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_FCHNL));
@@ -484,6 +482,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_GLOSS));
 		if(obj->getParent()->getFlag(TN_TYPES)==TN_CLOUDS)
 			break;
+		//if(actionmode==DROPPING)
+		//	break;
 
 		if(!obj->hasChild(ID_FOG))
 			list.add(getObjectSymbol(TN_FOG));
@@ -500,7 +500,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_POINT:
 	case TN_COLOR:
 	case TN_GLOSS:
-	case TN_WATER:
+	//case TN_WATER:
 	case TN_FCHNL:
 
 		if(actionmode!=DROPPING)
@@ -509,7 +509,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_COLOR));
 		list.add(getObjectSymbol(TN_GLOSS));
-		list.add(getObjectSymbol(TN_WATER));
+		//list.add(getObjectSymbol(TN_WATER));
 		list.add(getObjectSymbol(TN_SNOW));
 		list.add(getObjectSymbol(TN_FCHNL));
 
@@ -841,8 +841,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
  	    root->setParent(parent);
  	    if(child)
  	    	parent->addAfter(child, root); // insert after child
- 	   // else if(parent->node->expanded())
-        //	parent->addAfter(0, root);     // insert as first child
 		else
         	parent->addChild(root);        // add as last child
     }

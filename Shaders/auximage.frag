@@ -142,8 +142,7 @@ void main(void) {
 	vec3 TopColor=Diffuse*Color1.rgb+Ambient*Color1.rgb;
 #ifdef SKY
 	vec3 DepthColor=Color2.rgb*horizon;
-	vec3 color=mix(Color1.rgb,DepthColor,f); // add depth color
-	//float dpr=0.5*water_dpr;
+	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
 	float fmix=lerp(reflect1,dpr,dpm,cmix,0);
 	float rmod=lerp(reflect1,0,dpr,reflection,0);
 	float cmod=(1-rmod)*saturation;

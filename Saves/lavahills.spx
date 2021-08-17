@@ -311,12 +311,6 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.09);
 					day=24;
-					fog.color=Color(0.99,0.96,0.74);
-					fog.max=5094.4 ft;
-					fog.min=0 ft;
-					fog.value=1;
-					fog.vmax=3905.6 ft;
-					fog.vmin=-1000 ft;
 					resolution=2.37142;
 					shadow=Color(0,0,0.19,0.8);
 					shine=9.20157;

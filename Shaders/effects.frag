@@ -66,7 +66,7 @@ void main(void) {
 		h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
 #endif
 #ifdef WATER
-		if(TYPE<2){ // TYPE=1 for water
+		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
 			float ry=RDP;
 			float wf=lerp(TYPE,1,2,0,1);
 			

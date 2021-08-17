@@ -3312,6 +3312,7 @@ void Planetoid::render_object()
 		Raster.water_color1=c;
 		c=water_color2;
 		Raster.modulate(c);
+		Spheroid::render_object();
 	}
 }
 
@@ -3322,11 +3323,7 @@ void Planetoid::set_surface(TerrainData &data)
 {
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		if(solid())
-			data.density=1.7;
-		else
-			data.density=1.0;
-
+		data.density=oceanState()+1;
 	}
 	else
 		data.density=0;
@@ -3362,7 +3359,7 @@ void Planetoid::map_color(MapData*d,Color &c)
 	if(Render.draw_shaded() && TheScene->inside_sky())
 		return;
 
-	if(Raster.surface==2){
+	if(Raster.surface==2){ // affects orbital view only
 		double g;
 		Color c1,c2;
         if(d->density()>1.5){
@@ -3376,8 +3373,12 @@ void Planetoid::map_color(MapData*d,Color &c)
         	g=Raster.water_clarity;
         }
 		double f=rampstep(0,g,d->depth(),0,wf);
-		double alpha=c1.alpha()*(1-f)+c2.alpha()*f;
-		c=c1*(1-f)+c2*f;
+		double alpha=c2.alpha()*(1-f)+c2.alpha()*f;
+		//if(TheScene->viewtype==ORBITAL)
+			c=c1*(1-f)+c2*f;
+		//else
+		//	c=c2*(1-f)+c1*f;
+
 		c.set_alpha(alpha);
 	}
 	if(TheScene->viewobj==this)
@@ -3490,8 +3491,11 @@ int  Planetoid::getOceanFunction(char *buff){
 }
 void  Planetoid::setOceanFunction(char *expr){
 	TNvar *var = exprs.getVar((char*) "ocean.expr");
-    if(var && strlen(expr)==0){
-    	exprs.removeVar("ocean.expr");
+    if(strlen(expr)==0){
+    	if(var)
+    		exprs.removeVar("ocean.expr");
+    	ocean_expr=0;
+    	return;
     }
     else if (!var) {
 		char *var_name;
@@ -3550,6 +3554,17 @@ bool Planetoid::gas(){
 		return false;
 	}
 	return state==GAS?true:false;
+}
+
+//-------------------------------------------------------------
+// Planetoid::oceanState() return smooth transition between solid and liquid states (1..0)
+//-------------------------------------------------------------
+double Planetoid::oceanState(){
+	if(!ocean_auto){
+		return ocean_state==SOLID?1:0;
+	}
+	double temp=temperature*evalOceanFunction()-273;
+	return smoothstep(ocean_solid_temp,ocean_solid_temp+0.001*(ocean_liquid_temp-ocean_solid_temp),temp,1.0,0);
 }
 
 //-------------------------------------------------------------

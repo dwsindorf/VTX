@@ -1281,11 +1281,16 @@ void TNwater::eval()
 	int n=numargs(args);
 
     if(left){
-    	if(n==1 ||obj->liquid())
-		    arg[0]->eval();
-    	else if (obj->solid())
+    	arg[0]->eval();
+    	double lvl1=S0.s;
+    	double slvl=lvl1;
+    	if(n==2){
     		arg[1]->eval();
-		SeaLevel+=S0.s;
+    		double lvl2=S0.s;
+    		double f=obj->oceanState();
+    		slvl=f*lvl2+(1-f)*lvl1;
+    	}
+		SeaLevel+=slvl;
 	}
 	INIT;
 
