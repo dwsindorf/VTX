@@ -3323,10 +3323,10 @@ void Planetoid::set_surface(TerrainData &data)
 {
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		data.density=oceanState()+1;
+		data.ocean=oceanState()+1;
 	}
 	else
-		data.density=0;
+		data.ocean=0;
 }
 
 //-------------------------------------------------------------
@@ -3362,7 +3362,7 @@ void Planetoid::map_color(MapData*d,Color &c)
 	if(Raster.surface==2){ // affects orbital view only
 		double g;
 		Color c1,c2;
-        if(d->density()>1.5){
+        if(d->ocean()>1.5){
         	c1=Raster.ice_color1;
         	c2=Raster.ice_color2;
         	g=Raster.ice_clarity;
@@ -3374,10 +3374,10 @@ void Planetoid::map_color(MapData*d,Color &c)
         }
 		double f=rampstep(0,g,d->depth(),0,wf);
 		double alpha=c2.alpha()*(1-f)+c2.alpha()*f;
-		//if(TheScene->viewtype==ORBITAL)
+		if(TheScene->viewtype==ORBITAL && d->ocean()>1.5)
+			c=c2*(1-f)+c1*f;
+		else
 			c=c1*(1-f)+c2*f;
-		//else
-		//	c=c2*(1-f)+c1*f;
 
 		c.set_alpha(alpha);
 	}

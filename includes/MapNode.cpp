@@ -2219,7 +2219,7 @@ void MapNode::Svertex(MapData*dn) {
 	double theta = d->theta() / 180.0 - 1;
 	double g=d->type();
 	if(Td.type()==WATER){
-		g=d->density();
+		g=d->ocean();
 	}
 	else
 	   g+=2;

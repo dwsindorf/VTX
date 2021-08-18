@@ -256,6 +256,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int ng=0;
 	int frac=0;
 	int md=0;
+	int nw=0;
 
 	int i;
 	int a,b;
@@ -283,6 +284,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		nf=1;
 		density=td.density;
 	}
+	if(td.water())
+		nw=1;
 
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
@@ -324,21 +327,27 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	setDims(nd);
 	setColors(nc);
 	set_has_density(nf);
+	set_has_ocean(nw);
+
 	setEvals(ne);
 	setFchnls(frac);
 	setMdata(md);
 
-	int n=nc+nd+ne+nf+frac+md+links();
+	int n=nc+nd+nw+ne+nf+frac+md+links();
 	a=tp->tsize();
 	setMemory(n,a);
 
 	setColor(td.c);
 	setDensity(density);
+
 	setZ(td.p.z);
 	setX(Pscale*td.p.x);
 	setY(Pscale*td.p.y);
 	setFractal(td.fractal);
 	setMargin(td.margin);
+	if(td.water()){
+		setOcean(td.ocean);
+	}
 	if(td.water()||td.depth)
 		setDepth(td.depth);
 	else{

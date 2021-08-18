@@ -92,6 +92,7 @@ int TerrainData::pass=0;
 double TerrainData::level=0;
 double TerrainData::fractal=0;
 double TerrainData::density=0;
+double TerrainData::ocean=0;
 double TerrainData::erosion=0;
 double TerrainData::hardness=0;
 double TerrainData::albedo=1;

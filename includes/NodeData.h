@@ -177,18 +177,21 @@ public:
 // MapData class
 //************************************************************
 
-    #define ZSIZE  flags.s.dims
-    #define FSIZE  flags.s.fractal
-    #define LSIZE  flags.s.links
-    #define ESIZE  flags.s.evals
-    #define MSIZE  flags.s.mdata
+#define ZSIZE  flags.s.dims
+#define FSIZE  flags.s.fractal
+#define LSIZE  flags.s.links
+#define ESIZE  flags.s.evals
+#define MSIZE  flags.s.mdata
+#define DSIZE  flags.s.density
+#define WSIZE  flags.s.ocean
 
-    #define BDSIZE 1
-    #define TDSIZE 1
+#define BDSIZE 1
+#define TDSIZE 1
 
 #define CSTART LSIZE
 #define DSTART LSIZE+flags.s.colors
-#define ZSTART LSIZE+flags.s.colors+flags.s.density
+#define WSTART DSTART+DSIZE
+#define ZSTART WSTART+WSIZE
 #define FSTART ZSTART+ZSIZE
 #define MSTART FSTART+FSIZE
 #define ESTART MSTART+MSIZE
@@ -217,6 +220,7 @@ typedef struct mpdata {
 	unsigned int  colors	: 1;	// colors (0..1)
 	unsigned int  dims	    : 2;	// z, x, y (0..2)
 	unsigned int  density	: 1;	// fog/density (0..1)
+	unsigned int  ocean	    : 1;	// water-ice
 	unsigned int  fractal	: 1;	// fractal data
 	unsigned int  evals	    : 2;	// erosion data (0..2)
 	unsigned int  tstart	: 4;	// texture data start
@@ -226,7 +230,7 @@ typedef struct mpdata {
 	unsigned int  hmaps	    : 1;	// hmap flag
 	unsigned int  mdata	    : 1;	// margin flag
 	unsigned int  edge	    : 1;	// edge flag
-	unsigned int  unused	: 4;	// unassigned
+	unsigned int  unused	: 3;	// unassigned
 } mpdata;
 
 
@@ -284,6 +288,7 @@ public:
 	void set_has_density(int n)	{ flags.s.density=n;}
 	void setFchnls(int n)		{ flags.s.fractal=n;}
 	void setEvals(int n)		{ flags.s.evals=n;}
+	void set_has_ocean(int n)		{ flags.s.ocean=n;}
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
@@ -373,6 +378,7 @@ public:
     MapData *data2()            { return flags.s.links?data[0].md:0;}
     void setLink(MapData*d)     { if(flags.s.links) data[0].md=d;}
     double density()            { return flags.s.density?data[DSTART].d:0.0;}
+    double ocean()              { return flags.s.ocean?data[WSTART].d:0.0;}
     double mdata()              { return flags.s.mdata>0?data[MSTART].d:1.0;}
     double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double rock()               { return flags.s.evals>0?data[ESTART].d:0.0;}
@@ -382,6 +388,8 @@ public:
     double Y()                  { return flags.s.dims>2?data[ZSTART+2].d:0.0;}
     double fractal()            { return flags.s.fractal?data[FSTART].d:0.0;}
     void setDensity(double f)   { if(flags.s.density) data[DSTART].d=f;}
+    void setOcean(double f)     { if(flags.s.ocean) data[WSTART].d=f;}
+
     void setZ(double f)         { if(flags.s.dims>0)  data[ZSTART].d=f;}
     void setX(double f)         { if(flags.s.dims>1)  data[ZSTART+1].d=f;}
     void setY(double f)         { if(flags.s.dims>2)  data[ZSTART+2].d=f;}

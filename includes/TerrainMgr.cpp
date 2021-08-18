@@ -1425,6 +1425,8 @@ void TerrainMgr::set_surface(TerrainData &data)
 	data.height=0.0;
 	data.margin=0.0;
 	data.depth=0.0;
+	data.ocean=0.0;
+
 
 	data.albedo=1.0;
 	data.shine=1.0;

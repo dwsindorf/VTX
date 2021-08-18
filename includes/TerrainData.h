@@ -116,6 +116,7 @@ public:
 	static Color		diffuse;  	// diffuse color
 	static Color		specular;  	// specular color
 	static double       density; 	// density (fog ..)
+	static double       ocean; 	    // water-ice
 	static double       fractal;    // fractal ht
 	static double       erosion; 	// erosion
 	static double       hardness;	// hardness
@@ -224,6 +225,7 @@ public:
 		margin=0;
 		depth=0;
 		density=0;
+		ocean=0;
 	}
 	void init(){
 		reset();
