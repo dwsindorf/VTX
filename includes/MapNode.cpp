@@ -1177,6 +1177,7 @@ void	MapNode::balance()
 	    (data.type()!=x->data.type() \
 	    || color().difference(x->color())>TheMap->gmax\
 	    || fabs(density()-x->density())>TheMap->gmax\
+	    || fabs(ocean()-x->ocean())>TheMap->gmax\
 		|| x->edge() \
 	    )) { \
 		set_tlevel(Adapt.sharp());return 0;}
@@ -1184,6 +1185,7 @@ void	MapNode::balance()
 	if(data.type()!=cdata->type() \
 	    || color().difference(cdata->color())>TheMap->gmax \
 	    || fabs(density()-cdata->density())>TheMap->gmax \
+	    || fabs(ocean()-cdata->ocean())>TheMap->gmax \
 		|| cdata->edge() \
 	    )\
 	   { \

@@ -63,6 +63,8 @@ protected:
 
 	wxChoice   *Composition;
 	wxRadioBox *State;
+	wxButton	*default_mod;
+
 public:
 	VtxWaterTabs(wxWindow* parent,
 			wxWindowID id,
@@ -101,6 +103,8 @@ public:
     void OnUpdateEnable(wxUpdateUIEvent& event);
     void OnChangeComposition(wxCommandEvent& event);
     void OnAutoState(wxCommandEvent& event);
+    void OnSetDefaultMod(wxCommandEvent& event);
+
 
     void OnSetState(wxCommandEvent& event);
 

@@ -304,7 +304,8 @@ void TNglobal::eval()
 	case PHI:
 		if(CurrentScope->texture())
 			S0.set_inactive();
-		S0.s=Phi/180;
+		S0.s=(Phi+90)/180;
+		S0.s=clamp(S0.s,0,1);
 		break;
 	case LAT:
 		if(CurrentScope->texture())

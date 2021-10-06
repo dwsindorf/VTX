@@ -10,9 +10,11 @@ enum {GAS=0,LIQUID=1,SOLID,AUTO=2};
 
 static char*    def_water_func="noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0.05,1,0,0)";
 static char*    def_ice_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
-static wxString types[]={"Nitrogen","Methane","Water"};
-static double gas_temps[]={-196,-163,100};
-static double solid_temps[]={-210,-182,0,};
+static char*    def_transition_func="-0.3*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.4,1,0,0)";
+
+static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
+static double gas_temps[]={-196,-163,-78,-10,100};
+static double solid_temps[]={-210,-182,-79,-72,0,};
 
 //########################### VtxWaterTabs Class ########################
 enum{
@@ -25,7 +27,7 @@ enum{
     ID_LEVEL_SLDR,
     ID_LEVEL_TEXT,
     ID_OCEAN_FUNCTION_TEXT,
-
+	ID_DEFAULT_MOD,
     ID_LIQUID_SURFACE_TEXT,
     ID_LIQUID_TRANSMIT_SLDR,
     ID_LIQUID_TRANSMIT_TEXT,
@@ -93,6 +95,8 @@ SET_SLIDER_EVENTS(SOLID_TEMP,VtxWaterTabs,SolidTemp)
 EVT_TEXT_ENTER(ID_SOLID_SURFACE_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 
 EVT_TEXT_ENTER(ID_OCEAN_FUNCTION_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
+
+EVT_BUTTON(ID_DEFAULT_MOD,VtxWaterTabs::OnSetDefaultMod)
 
 EVT_CHOICE(ID_COMPOSITION, VtxWaterTabs::OnChangeComposition)
 
@@ -176,8 +180,8 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),3, types);
-	Composition->SetSelection(2);
+	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),5, types);
+	Composition->SetSelection(4);
 
 	hline->Add(Composition, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -207,20 +211,31 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 
 	wxBoxSizer *default_state = new wxStaticBoxSizer(wxHORIZONTAL, panel,
-			wxT("Temperature"));
+			wxT(""));
 
 	auto_state=new wxCheckBox(panel, ID_AUTO_STATE, "Auto");
 
 	default_state->Add(auto_state, 0, wxALIGN_LEFT | wxALL, 0);
 
-	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"",0,90);
+	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"",0,200);
 
 	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-
-	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"",0,200);
-	default_state->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-
 	hline->Add(default_state, 0, wxALIGN_LEFT | wxALL, 0);
+
+    boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",100,280);
+
+	hline->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	default_mod=new wxButton(panel,ID_DEFAULT_MOD,"Default",wxDefaultPosition,wxSize(60,25));
+	hline->Add(default_mod,0,wxALIGN_LEFT|wxALL,2);
+
+
+	//default_state->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
 
     boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -371,6 +386,8 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
 	orb->ocean_liquid_temp=LiquidTempSlider->getValue();
 	orb->ocean_solid_temp=SolidTempSlider->getValue();
 	orb->calcTemperature();
+	orb->invalidate();
+	TheScene->rebuild();
 }
 
 void VtxWaterTabs::OnSetState(wxCommandEvent& event){
@@ -405,6 +422,15 @@ void VtxWaterTabs::OnEnable(wxCommandEvent& event){
 }
 void VtxWaterTabs::OnUpdateEnable(wxUpdateUIEvent& event) {
  	event.Check(Render.show_water());
+}
+
+void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
+
+	Planetoid *orb=getOrbital();
+	OceanFunction->SetValue(def_transition_func);
+	orb->setOceanFunction(def_transition_func);
+	orb->invalidate();
+	TheScene->rebuild();
 }
 
 //-------------------------------------------------------------

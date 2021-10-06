@@ -352,6 +352,7 @@ public:
     double delp()                   { return data.Y();}
 
     double density()                { return data.density();}
+    double ocean()                  { return data.ocean();}
     double sediment()               { return data.sediment();}
     double rock()                   { return data.rock();}
 

@@ -1166,6 +1166,7 @@ void View::move_up()
 		theta+=d*cos(RPD*heading);
 		phi+=d*sin(RPD*heading);
 		radius+=delv*cos(RPD*pitch);
+		//cout<<radius<<" "<<delv<<endl;
 		adjust_view();
 	}
 	set_moved();

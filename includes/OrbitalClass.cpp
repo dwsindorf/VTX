@@ -519,23 +519,17 @@ void Orbital::visit(void (*func)(Object3D*))
 void Orbital::animate()
 {
 	double secs=0,cycles=0;
-	if(day){
-		 // 360 degrees per 3600 sec/hr per day (hrs)
-		secs=day*3600;
-		cycles=TheScene->ftime/secs;
-		rot_angle=360*(cycles-floor(cycles))+rot_phase;
-	}
-	else if(rot_phase){
-		rot_angle=rot_phase;
-	}
 	if(year){
 		secs=24*3600*year; // earth normal days
 		cycles=TheScene->ftime/secs;
 		orbit_angle=P360(orbit_phase+360*cycles);
-		//orbit_angle=orbit_phase+360*(cycles-floor(cycles));
 	}
-	//else
-	    //orbit_angle=P360(orbit_angle);
+	if(day){
+		secs=day*3600;
+		// back off 1 cycle per year (if year==day orbital is tidal locked)
+		cycles-=TheScene->ftime/secs;
+		rot_angle=P360(rot_phase+360*cycles);
+	}
 }
 
 //-------------------------------------------------------------
@@ -2060,8 +2054,10 @@ void Spheroid::set_tilt()
 {
 	//TODO: fix set_tilt for clouds
 	if(tilt){
-	TheScene->rotate(tilt,1,0,0);	// tilt and freeze pole orientation
-	TheScene->rotate(-orbit_angle,0,cos(RPD*tilt),-sin(RPD*tilt));
+		// tilt and freeze pole orientation
+		// axis always points in same direction globally
+		// but rotation axis transfers from x to z during orbit
+		TheScene->rotate(tilt,cos(orbit_angle*RPD),0,sin(orbit_angle*RPD));
 	}
 }
 
@@ -3992,9 +3988,9 @@ void Sky::set_ref()
 	if(parent){
 		tilt=((Orbital*)parent)->tilt;
 		day=((Orbital*)parent)->day;
+		year=((Orbital*)parent)->year;
 	}
-	Spheroid::set_ref();
-	//day=tilt=0;
+	animate();
 }
 
 
@@ -4578,6 +4574,27 @@ void CloudLayer::set_ref()
 {
 	animate();
 }
+//-------------------------------------------------------------
+// CloudLayer::animate() adjust rotation with time
+//-------------------------------------------------------------
+void CloudLayer::animate()
+{
+	double cycles=0,secs=0;
+	double yr=((Spheroid*)parent)->year;
+	if(yr){
+		secs=24*3600*yr; // earth normal days
+		cycles=TheScene->ftime/secs;
+		orbit_angle=P360(orbit_phase+360*cycles);
+	}
+	double cd=((Spheroid*)parent)->day-day;
+	if(cd){
+		 // 360 degrees per 3600 sec/hr per day (hrs)
+		secs=cd*3600;
+		cycles-=TheScene->ftime/secs;
+		rot_angle=P360(rot_phase+360*cycles);
+	}
+}
+
 
 //-------------------------------------------------------------
 // CloudLayer::render() render the object and it's children
@@ -5144,25 +5161,6 @@ void CloudLayer::render_object()
 {
 	show_render_state(this);
 	Shell::render_object();
-}
-
-//-------------------------------------------------------------
-// CloudLayer::animate() adjust rotation with time
-//-------------------------------------------------------------
-void CloudLayer::animate()
-{
-	double cd=((Spheroid*)parent)->day-day;
-	if(cd){
-		 // 360 degrees per 3600 sec/hr per day (hrs)
-		double secs=cd*3600;
-		double cycles=TheScene->ftime/secs;
-		rot_angle=360*(cycles-floor(cycles))+rot_phase;
-	}
-	else if(rot_phase){
-		rot_angle=rot_phase;
-	}
-
-	//rot_angle=360*fmod((day*TheScene->ftime/3600+rot_phase),1.0);
 }
 
 //************************************************************
