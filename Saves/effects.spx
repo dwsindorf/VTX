@@ -113,15 +113,21 @@ Scene() {
 	}
 	View{
 		height=6163.57 ft;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200117;
 	}
 	View{
 		height=5968.1 ft;
-		minr=0.002;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
 		radius=0.00200113;
+	}
+	View{
+		height=4431.03 ft;
+		time=441208;
+		tilt=6;
+		angle=-8;
+		minr=0.002;
+		radius=0.00200084;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -190,6 +196,9 @@ Scene() {
 						rseed=1.24113;
 						specular=Color(1,1,1);
 						tilt=10;
+						twilight.max=0.01;
+						twilight.min=-0.529156;
+						year=100;
 					}
 					Moon(0.000787456,0.004) {
 						day=13.888;
@@ -206,12 +215,13 @@ Scene() {
 						}
 					}
 					Clouds(0.0020374) {
-						ambient=Color(1,1,1,0.25);
+						ambient=Color(1,1,1);
 						crot=1;
-						emission=Color(1,1,1,0.35);
+						emission=Color(1,1,1);
 						name="Clouds";
 						rseed=1.428;
-						specular=Color(1,1,1,0.57);
+						shine=45.7699;
+						specular=Color(1,1,1);
 						Surface{
 							terrain=Color(1,1,1,noise(GRADIENT|NABS|SQR,4.3,5,1,0.5,2,1,1,0,0.5));
 						}

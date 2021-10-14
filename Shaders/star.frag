@@ -47,12 +47,7 @@ void main(void) {
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
-	if (fbo_write){
-		//vec4 data2=vec4(1.0);
-		//gl_FragData[1]=data2;
-		gl_FragData[2]=vec4(0,0,0,1);
-	}
-	//color=clamp(color,0.0,1.0);
+	gl_FragData[1]=vec4(0,0.0,1,1); // set luminocity to max
+	gl_FragData[2]=vec4(0,0,0,1);
 	gl_FragData[0] = color;
-	//gl_FragData[1]=vec4(0,1,0.0,0.0);
 }

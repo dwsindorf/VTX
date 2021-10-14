@@ -29,6 +29,8 @@ Scene() {
 		radius=0.00400071;
 	}
 	View{
+		time=93572.2;
+		tilt=-8;
 		minr=0.00400027;
 	}
 	Universe {
@@ -62,7 +64,7 @@ Scene() {
 				}
 				Planet(0.004,100) {
 					day=24;
-					shadow=Color(0,0,0.19,0.8);
+					shadow=Color(0,0,0,0.8);
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
@@ -94,6 +96,7 @@ Scene() {
 						haze.max=15.085 miles;
 						haze.value=1;
 						specular=Color(1,1,1);
+						year=100;
 					}
 					Clouds(0.00407746) {
 						crot=1;

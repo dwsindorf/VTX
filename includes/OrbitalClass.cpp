@@ -3319,7 +3319,7 @@ void Planetoid::set_surface(TerrainData &data)
 {
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		data.ocean=oceanState()+1;
+		data.ocean=solidToLiquid()+1;
 	}
 	else
 		data.ocean=0;
@@ -3408,19 +3408,23 @@ void Planetoid::set_lighting(){
 }
 
 //-------------------------------------------------------------
-// Planetoid::calcTemperature() calculate surface temperature
+// Planetoid::calcTemperature() calculate ave surface temperature
+// -increases for: %green house gas, pressure, temp of star
+// -decreases for: distance from star, albedo
+//-------------------------------------------------------------
 // data      mercury  venus   earth    mars     titan
+//------------------------------------------------------------
 // dist      36       67      93       141      886
 // albedo    0.12     0.75    0.30     0.16     0.4
 // pressure  0        92      1        0.01     1.4
 // %ghg      0        96      1        95        5
-// Tobs      440      735     288      215      94
-// Tpre      437      232     255      209      81
-// delta     3        503     33       6        7
+// Tobs      176      475     15      -60      -179
+// Tcalc     174      496     21      -42      -180
+// delta     -2       21      6        18       -1
 //-------------------------------------------------------------
 void Planetoid::calcTemperature() {
 
-	ObjectNode *p = getParent();
+	ObjectNode *p = getParent(); // system for planets
 	if (!p)
 		return;
 	Orbital *obj;
@@ -3433,10 +3437,10 @@ void Planetoid::calcTemperature() {
 			g = pow(sky->pressure, 1.5) * sky->ghg_fraction;
 		}
 	}
-	g = 0.5 * pow(g, 0.25);
+	g = 0.4 * pow(g, 0.25);
 
 	if (p->type() == ID_PLANET)
-		p = p->getParent();
+		p = p->getParent(); // system for moons
 	if (p->type() == ID_SYSTEM) {
 		p->children.ss();
 		temperature = 0;
@@ -3453,7 +3457,7 @@ void Planetoid::calcTemperature() {
 			}
 		}
 	}
-	double temp=temperature-273;
+	double temp=temperature-273; // C
 	int oldstate=ocean_state;
 
 	if(ocean_auto){
@@ -3512,55 +3516,63 @@ double  Planetoid::evalOceanFunction(){
 		 ocean_expr->eval();
 		 t=S0.s+1;
 	}
-	//t=clamp(t,0,1);
 	return t;
 }
+//-------------------------------------------------------------
+// Planetoid::liquid() return true if not ocean_auto and state=liquid
+//-------------------------------------------------------------
 bool Planetoid::liquid(){
 	int state=ocean_state;
-	if(ocean_auto){
-		double temp=temperature*evalOceanFunction()-273;
-
-		if (temp > ocean_solid_temp && temp<=ocean_liquid_temp)
-			return true;
-		else
-			return false;
-	}
+	if(ocean_auto)
+		return false;
 	return state==LIQUID?true:false;
 }
+//-------------------------------------------------------------
+// Planetoid::solid() return true if not ocean_auto and state=solid
+//-------------------------------------------------------------
 bool Planetoid::solid(){
 	int state=ocean_state;
-	if(ocean_auto){
-		double t=evalOceanFunction();
-		double temp=temperature*t-273;
-        //cout<<t<<endl;
-		if (temp < ocean_solid_temp)
-			return true;
-		else
-			return false;
-	}
+	if(ocean_auto)
+		return false;
 	return state==SOLID?true:false;
 }
+//-------------------------------------------------------------
+// Planetoid::gas() return true if not ocean_auto and state=gas
+//-------------------------------------------------------------
 bool Planetoid::gas(){
-	//return false;
 	int state=ocean_state;
-	if(ocean_auto){
-		double temp=temperature*evalOceanFunction()-273;
-		if (temp > ocean_liquid_temp)
-			return true;
+	if(ocean_auto)
 		return false;
-	}
 	return state==GAS?true:false;
 }
 
 //-------------------------------------------------------------
-// Planetoid::oceanState() return smooth transition between solid and liquid states (1..0)
+// Planetoid::solidToLiquid() return smooth transition between solid and liquid states (1..0)
 //-------------------------------------------------------------
-double Planetoid::oceanState(){
+double Planetoid::solidToLiquid(){
 	if(!ocean_auto){
 		return ocean_state==SOLID?1:0;
 	}
 	double temp=temperature*evalOceanFunction()-273;
 	return smoothstep(ocean_solid_temp,ocean_solid_temp+0.001*(ocean_liquid_temp-ocean_solid_temp),temp,1.0,0);
+}
+
+//-------------------------------------------------------------
+// Planetoid::liquidToGas() return smooth transition between liquid and gas states (0..1)
+//-------------------------------------------------------------
+double Planetoid::liquidToGas(){
+	double f=0;
+	if(!ocean_auto){
+		return ocean_state==GAS?1:0;
+	}
+	TheNoise.maxampl=0.0;
+
+	double temp=temperature*evalOceanFunction()-273;
+	if (temp > ocean_liquid_temp){
+		f=smoothstep(temp,ocean_liquid_temp,1.1*ocean_liquid_temp,0.0,1);
+	}
+	TheNoise.maxampl=1;
+	return f;
 }
 
 //-------------------------------------------------------------

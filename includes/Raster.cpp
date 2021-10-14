@@ -296,9 +296,9 @@ RasterMgr::RasterMgr()
 	shadow_vsteps=4.0;
 	shadow_fov_bg=1.3;
 	shadow_dov_bg=1.0;
-	shadow_vbias_bg=1.0;
-	shadow_vshift_bg=0.4;
-	shadow_vsteps_bg=1.1;
+	shadow_vbias_bg=2;
+	shadow_vshift_bg=0.0;
+	shadow_vsteps_bg=4;
 	shadow_edge_min=1;
 	shadow_edge_width=1;
 	shadow_color=Color(0,0,0);
@@ -418,8 +418,8 @@ void RasterMgr::init_view()
 		sum=sum*vbias;
 	}
 	shadow_zrange=shadow_vzf-shadow_vzn;
-	//shadow_vstep=shadow_vmax/z;
-	shadow_vstep=(shadow_vmax-0.5*shadow_vmin)/z;
+	shadow_vstep=shadow_vmax/z;
+	//shadow_vstep=(shadow_vmax-shadow_vmin)/z;
 	shadow_vleft=shadow_vmin+shift*(shadow_vmax-shadow_vmin);
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>shadow_vmax)
@@ -520,13 +520,14 @@ void RasterMgr::set_light_view()
 
 	double aspect=TheScene->aspect;
 	double dov=1,fov=1,fov_step,dov_step;
-		dov_step=shadow_dov;
-		fov_step=shadow_fov;
+	dov_step=shadow_dov;
+	fov_step=shadow_fov;
 
 	if(farview()){
 		dov_step*=shadow_dov_bg;
 		fov_step*=shadow_fov_bg;
 	}
+
 	dov=(shadow_vcnt+1)*dov_step;
 	fov=(shadow_vcnt+1)*fov_step;
     l=light()->point;

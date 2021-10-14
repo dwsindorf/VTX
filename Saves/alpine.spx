@@ -33,6 +33,8 @@ Scene() {
 		radius=0.00400585;
 	}
 	View{
+		time=36208;
+		tilt=-9;
 		minr=0.00400418;
 	}
 	Universe {
@@ -67,6 +69,7 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.05);
 					day=24;
+					ocean.level=0 ft;
 					shadow=Color(0,0,0,0.4);
 					shine=6.24298;
 					specular=Color(1,1,1,0.07);

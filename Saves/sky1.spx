@@ -22,14 +22,22 @@ Scene() {
 	View{
 		height=4389.9 ft;
 		angle=-3;
+	}
+	View{
+		delt=2000;
 		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
 		radius=0.00397461;
 	}
 	View{
-		delt=2000;
+		height=5537.52 ft;
+		time=930772;
+		heading=-5;
+		tilt=4;
+		angle=-5;
 		minr=0.00397377;
+		radius=0.00397482;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -75,6 +83,7 @@ Scene() {
 						ambient=Color(1,1,1,0.36);
 						day=11;
 						name="Luna";
+						ocean.level=3.168e+13 ft;
 						phase=82.2888;
 						shine=0.5;
 						specular=Color(1,1,1,0);
@@ -108,6 +117,7 @@ Scene() {
 						twilight=Color(1,0,0);
 						twilight.max=0.348045;
 						twilight.min=-1;
+						year=100;
 					}
 				}
 			}

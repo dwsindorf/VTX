@@ -19,13 +19,24 @@ Scene() {
 	}
 	View{
 		height=273.786 ft;
+	}
+	View{
+		time=5648.32;
 		vstride=0.02;
 		zoom=0.005;
 		minh=1.13636e-09;
 		radius=0.00500036;
 	}
 	View{
+		height=189.016 ft;
+		time=5697.82;
+		heading=45;
+		tilt=-8;
 		minr=0.00500031;
+		radius=0.00500034;
+	}
+	View{
+		height=228.831 ft;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -47,7 +58,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=2917.65;
+				temperature=6000;
 				year=2;
 				Surface{
 					terrain=Color(1,1,0)-Color(0,1,1)*noise(8,4);
@@ -58,7 +69,8 @@ Scene() {
 				}
 			}
 			Planet(0.005,100) {
-				ambient=Color(1,1,1,0.14);
+				albedo=0.25;
+				ambient=Color(1,1,1,0.03);
 				day=1;
 				fog.color=Color(1,0.96,0.7);
 				fog.max=2866.62 ft;
@@ -66,13 +78,13 @@ Scene() {
 				fog.value=1;
 				fog.vmax=1166.6 ft;
 				fog.vmin=500 ft;
+				ocean.level=1.33022e+07 ft;
 				phase=180;
-				shadow=Color(0,0,0,0.6);
+				shadow=Color(0,0,0,0.25);
 				shine=8.38362;
-				specular=Color(1,1,1,0.77);
+				specular=Color(1,1,1,0.94);
 				tilt=10;
 				year=17;
-				albedo=0.25;
 				haze.color=Color(1,1,0.62);
 				haze.height=0.34;
 				haze.max=5e-05;
@@ -105,6 +117,7 @@ Scene() {
 					twilight=Color(1,0,0);
 					twilight.max=0.389507;
 					twilight.min=-0.290507;
+					year=17;
 				}
 				Clouds(0.00505772) {
 					ambient=Color(1,1,1,0.61);

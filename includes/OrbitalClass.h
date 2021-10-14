@@ -620,7 +620,9 @@ public:
 	virtual int getOceanFunction(char *buff);
 	virtual void setOceanFunction(char *expr);
 	virtual double evalOceanFunction();
-	virtual double oceanState();
+	virtual double solidToLiquid();
+	virtual double liquidToGas();
+
 	virtual void set_surface(TerrainData&);
 
 };

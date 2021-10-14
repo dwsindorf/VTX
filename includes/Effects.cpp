@@ -216,7 +216,11 @@ void EffectsMgr::setProgram(int type){
 
 
 	case RENDERPGM:  // auximage.frag - water effects
-		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+		if(Render.lighting())
+			sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+		else
+			sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
+
 		if(shadows())
 			sprintf(defs+strlen(defs),"#define SHADOWS\n");
 		if(TheScene->inside_sky())

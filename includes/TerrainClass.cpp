@@ -98,6 +98,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	FHT,
 	BMPHT,
 	THETA,
+	LONG,
 	PHI,
 	LAT,
 	EQU,
@@ -146,6 +147,7 @@ static LongSym gtypes[]={
 	{"FHT",		    FHT},
 	{"BMPHT",		BMPHT},
 	{"THETA",		THETA},
+	{"LONG",		LONG},
 	{"PHI",			PHI},
 	{"LAT",			LAT},
 	{"EQU",			EQU},
@@ -300,6 +302,14 @@ void TNglobal::eval()
 		if(CurrentScope->texture())
 			S0.set_inactive();
 		S0.s=Theta/180-1;
+		break;
+	case LONG:
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		S0.s=Theta/180-1;
+		S0.s=cos(0.5*RPD*(Theta+90));
+		S0.s=fabs(S0.s);//fabs(sin(PI*S0.s));
+		//cout<<S0.s<<endl;
 		break;
 	case PHI:
 		if(CurrentScope->texture())
@@ -1063,7 +1073,7 @@ void TNnoise::init()
 //-------------------------------------------------------------
 void TNnoise::eval()
 {
-	double f=0,ampl=1.0,offset=0.0;
+	double f=0,ampl=TheNoise.maxampl,offset=0.0;
 	double args[16];
 
 	int n;
@@ -1093,7 +1103,7 @@ void TNnoise::eval()
 	S0.set_svalid();
 	S0.clr_constant();
     if(n>5)
-    	ampl=args[5];
+    	ampl*=args[5];
     if(n>8)
     	offset=args[8];
 	if(norm() && !normalized()){
@@ -1130,7 +1140,7 @@ void TNnoise::eval()
 	}
 
 
-    if(args[1]>0){
+    if(args[1]>0 && ampl>0){
 	    f=TheNoise.eval(type,n,args);
     }
     if(ampl==0)
@@ -1256,7 +1266,7 @@ bool TNnoise::setProgram(){
 void TNwater::eval()
 {
 	Planetoid *obj=(Planetoid*)(TheMap->object);
-	if(CurrentScope->rpass() || !isEnabled() || obj->gas()){
+	if(CurrentScope->rpass() || !isEnabled()){
 		if(right){
 			INIT;
 			right->eval();
@@ -1276,19 +1286,23 @@ void TNwater::eval()
 
 	S0.datacnt=0;
 	SeaLevel=Raster.sea_level*Gscale;
+
+	// drop sealevel as liquid turns to gas
+	SeaLevel-=obj->liquidToGas();
+
 	water.InitS();
 
 	TNarg *args=(TNarg*)left;
 	int n=numargs(args);
 
-    if(left){
+    if(left && !obj->gas()){
     	arg[0]->eval();
     	double lvl1=S0.s;
     	double slvl=lvl1;
-    	if(n==2){
+    	if(n==2 && !obj->liquid()){
     		arg[1]->eval();
     		double lvl2=S0.s;
-    		double f=obj->oceanState();
+    		double f=obj->solidToLiquid();
     		slvl=f*lvl2+(1-f)*lvl1;
     	}
 		SeaLevel+=slvl;

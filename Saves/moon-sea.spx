@@ -4,7 +4,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=225;
-		height=10 miles;
+		height=52800 ft;
 		time=800051;
 		vstride=586570;
 		hstride=1;
@@ -50,16 +50,19 @@ Scene() {
 		tilt=2;
 		angle=-10;
 		fov=37.6781;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400522;
 	}
 	View{
 		height=29854.2 ft;
 		heading=11;
-		minr=0.004;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
 		radius=0.00400565;
+	}
+	View{
+		time=766000;
+		delt=10000;
+		minr=0.004;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -93,6 +96,7 @@ Scene() {
 				Planet(0.004,100) {
 					day=24;
 					hscale=0.001;
+					ocean.level=1 ft;
 					resolution=3;
 					shadow=Color(0,0,0.19,0.8);
 					shine=2.91188;
@@ -101,11 +105,11 @@ Scene() {
 					water.clarity=1000 ft;
 					water.color1=Color(0,1,0.56);
 					water.color2=Color(0,0.15,0.11);
-					water.level=1 ft;
+					water.level=1.89394e-10;
 					water.shine=100;
 					year=100;
 					Surface{
-						terrain=water(0)
+						terrain=ocean(0)
 								Z(noise(VORONOI|FS|SQR,7,13,0.46,0.5,2,1,1,0,0.7))+
 								Texture("green2",NORM|RANDOMIZE|TEX,161.289,1.80556,1,0.44448,10,2,0.5,0);
 					}
@@ -113,6 +117,7 @@ Scene() {
 						ambient=Color(1,1,1,0.36);
 						day=11;
 						name="Luna";
+						ocean.level=408989 ft;
 						phase=82.2888;
 						shine=0.5;
 						specular=Color(1,1,1,0);
@@ -136,6 +141,7 @@ Scene() {
 						twilight=Color(1,0,0);
 						twilight.max=0.420494;
 						twilight.min=-1;
+						year=100;
 					}
 					Clouds(0.00407481) {
 						crot=1;

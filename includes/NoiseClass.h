@@ -261,6 +261,7 @@ public:
 
 	static double offset;
 	static double scale;
+	static double maxampl;
 	static double aspect;
 	static double theta;
 	static double phi;

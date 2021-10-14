@@ -6,6 +6,11 @@ Scene() {
 		height=0.00604486;
 		gndlvl=-242501 ft;
 		time=65278;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -19,11 +24,21 @@ Scene() {
 	View{
 		height=0.00695618;
 		gndlvl=0 ft;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.0109562;
+	}
+	View{
+		height=0.00728818;
+		time=32746.6;
+		minr=0.004;
+		radius=0.0112882;
 	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -42,6 +57,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -51,11 +67,12 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
+					ocean.level=1.76109e+09 ft;
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=Z(craters(ID2,1,0.5,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
-								Texture("jupiter",S|TEX,0.01*HT+noise(UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0);
+								Texture("jupiter",S|TEX,0.01*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0);
 					}
 				}
 			}

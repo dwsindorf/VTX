@@ -75,14 +75,17 @@ Scene() {
 		height=6 ft;
 		time=50055.4;
 		angle=-11;
+	}
+	View{
+		tilt=-7;
+		angle=-9;
 		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
 		radius=0.00400036;
 	}
 	View{
-		tilt=-7;
-		angle=-9;
+		time=100000;
 		minr=0.00400036;
 	}
 	Universe {
@@ -142,6 +145,7 @@ Scene() {
 						haze.value=0.898039;
 						resolution=4;
 						specular=Color(1,1,1);
+						year=100;
 					}
 					Clouds(0.00407746) {
 						ambient=Color(1,1,1,0.41);

@@ -101,17 +101,11 @@ Scene() {
 		height=12261.1 ft;
 		tilt=-11;
 		angle=-4;
-		vstride=0.02;
-		zoom=0.001;
-		minh=1.13636e-09;
-		radius=0.00100253;
 	}
 	View{
 		height=13842.8 ft;
 		tilt=-20;
 		angle=14;
-		minr=0.00100021;
-		radius=0.00100283;
 	}
 	View{
 		phi=31.8033;
@@ -120,15 +114,12 @@ Scene() {
 		gndlvl=-4374.27 ft;
 		tilt=-15;
 		angle=0;
-		radius=0.000999248;
 	}
 	View{
 		height=5623.22 ft;
 		heading=111;
 		tilt=-13;
 		angle=3;
-		minr=0.000999173;
-		radius=0.00100024;
 	}
 	View{
 		phi=31.9194;
@@ -137,15 +128,12 @@ Scene() {
 		gndlvl=-4005.64 ft;
 		tilt=-15;
 		angle=0;
-		radius=0.000999273;
 	}
 	View{
 		phi=31.9797;
 		theta=89.4999;
 		height=72.8136 ft;
 		gndlvl=-5222.73 ft;
-		minr=0.000999242;
-		radius=0.000999025;
 	}
 	View{
 		phi=31.9921;
@@ -154,8 +142,6 @@ Scene() {
 		heading=83;
 		tilt=-18;
 		angle=-30;
-		minr=0.000999012;
-		radius=0.00100165;
 	}
 	View{
 		phi=31.9504;
@@ -165,7 +151,14 @@ Scene() {
 		heading=166;
 		tilt=1;
 		angle=-18;
+		vstride=0.02;
+		zoom=0.001;
+		minh=1.13636e-09;
 		radius=0.00099955;
+	}
+	View{
+		time=2483.56;
+		minr=0.000999012;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -187,12 +180,14 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
+				temperature=6000;
 				Corona(5.1) {
 					color1=Color(1,1,0.8,0.5);
 					color2=Color(1,1,0.6,0.7);
 				}
 			}
 			Planet(0.001,50) {
+				albedo=0.3;
 				ambient=Color(1,1,1,0.13);
 				day=1;
 				diffuse=Color(1,1,1,0.4);
@@ -202,13 +197,13 @@ Scene() {
 				fog.vmax=2083.4 ft;
 				fog.vmin=555.6 ft;
 				hscale=0.001;
+				ocean.level=-18000 ft;
 				resolution=0.5;
 				shadow=Color(0,0,0.1,0.7);
 				shine=1.24841;
 				specular=Color(1,1,1,0.27);
 				water.clarity=2000 ft;
 				year=300;
-				albedo=0.3;
 				water.color=Color(0,0.5,0.8);
 				bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 				Surface{
@@ -219,11 +214,11 @@ Scene() {
 							Texture("BrownStone",BUMP,422.264,1,1,0,2.66656,2,0.5,0,0,0,0,0)+gloss(0.51588,3.28577);
 				}
 				Clouds(0.00101) {
+					albedo=0.6;
 					crot=1;
 					day=1.5;
 					specular=Color(1,1,1,0.6);
 					tilt=5;
-					albedo=0.6;
 					Surface{
 						a=noise(1,15,0.5,0.1);
 						d=ramp(0.5,1,a,1,0.7);
@@ -242,6 +237,7 @@ Scene() {
 					shine=1;
 					specular=Color(1,1,1);
 					twilight=Color(0.5,0,0.2);
+					year=300;
 				}
 			}
 		}

@@ -47,18 +47,20 @@ Scene() {
 	}
 	View{
 		height=5351.25 ft;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200196;
 	}
 	View{
 		height=5712.16 ft;
 		heading=11;
 		tilt=-3;
 		angle=-22;
-		minr=0.00200095;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
 		radius=0.00200203;
+	}
+	View{
+		time=60934.6;
+		minr=0.00200095;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -140,10 +142,10 @@ Scene() {
 						ambient=Color(1,1,1,0.17);
 						day=11;
 						diffuse=Color(1,1,1,0.51);
-						fog.color=Color(1,0.51,0.18,0.54);
+						fog.color=Color(1,0.51,0.18);
 						fog.max=10361.1 ft;
 						fog.min=361.12 ft;
-						fog.value=0.541176;
+						fog.value=0.537255;
 						fog.vmax=18000 ft;
 						fog.vmin=8000 ft;
 						hscale=0.001;
@@ -204,6 +206,7 @@ Scene() {
 							twilight=Color(0.5,0.3,0.1);
 							twilight.max=1;
 							twilight.min=-1;
+							year=17;
 						}
 					}
 				}

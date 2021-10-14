@@ -40,7 +40,10 @@ uniform sampler2DRect FBOTex2;
 
 // ----------- program entry -----------------
 void main(void) {
-	float illumination = 0.0;
+	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
+	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
+
+	float illumination = fcolor2.b;
 	float alpha = 0.0;
 	float ha=0.0,sa=0.0,sd=0.0,aa=0.0,a=0.0;
 	vec3 haze=Haze.rgb;
@@ -122,21 +125,22 @@ void main(void) {
 #endif
 
 	//if (fbo_read) {
-		vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // FBO image (background)
-		vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
 		float shine_thru=fcolor2.g;
 		shine_thru=clamp(shine_thru,0.0,1.0);
 
 		// reduce opacity of sky in front of luminous objects
 		// notes:
 		// - opacity of background objects encoded in fcolor2.g
-		// - shine of background objects encoded in fcolor2.r
+		// - luminocity of background objects encoded in fcolor2.b
 		// - reduce shine-through as atmospheric density and haze increases
 
 		a = Sky.a*color.a*(1.0-shine_thru*(1.0-h)*(1.0-density)); // moons: enhance shine-thru of day side
 		a=clamp(a,0.0,1.0);
 		a=lerp(density,0.5,0.9,a,1);
-		color.rgb= mix(fcolor1.rgb,color.rgb,a);
+		color.rgb=mix(fcolor1.rgb,color.rgb,a);
+		//mix(fcolor1.rgb,color.rgb,a);
+		//color.rgb=mix(color.rgb,vec3(1.0,1.0,1.0),shine_thru*luminance);
+		
 	//}
 	gl_FragData[0]=vec4(color.rgb,a);//color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)

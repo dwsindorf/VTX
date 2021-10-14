@@ -385,6 +385,8 @@ double Noise::max_order=32;
 double Noise::rseed=0;
 double Noise::offset=0.5;
 double Noise::scale=0.5;
+double Noise::maxampl=1;
+
 double Noise::aspect=1;
 double Noise::theta=0;
 double Noise::phi=0;

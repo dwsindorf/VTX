@@ -6,6 +6,11 @@ Scene() {
 		height=0.00485501;
 		gndlvl=8801.98 ft;
 		time=24812.8;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -46,12 +51,20 @@ Scene() {
 		height=0.00679719;
 		gndlvl=9753.75 ft;
 		pitch=-89;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
+		radius=0.00979904;
+	}
+	View{
+		time=66867.4;
+		minr=0.00300185;
 	}
 	Universe {
 		Galaxy(20000) {
 			name="Milky Way";
 			origin=Point(20000,0,0);
-			noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
 				Color(0.502,0.000,0.251),
@@ -73,6 +86,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
+					temperature=6000;
 					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.294,0.016,0.071),
@@ -81,7 +95,7 @@ Scene() {
 						Color(0.008,0,0));
 					Surface{
 						terrain=
-								Texture("star1",BORDER|S,noise(NABS|SQR|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
+								Texture("star1",BORDER|S,noise(GRADIENT|FS|NABS|SQR,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
 					}
 					Corona(8.11) {
 						color1=Color(1,1,0.8,0.8);
@@ -89,29 +103,30 @@ Scene() {
 					}
 				}
 				Planet(0.003,50) {
+					albedo=0.1;
 					day=30;
 					diffuse=Color(1,1,1,0.5);
 					name="Venus";
+					ocean.level=2.36845e-39 ft;
 					resolution=4;
 					shine=1.37856;
 					specular=Color(1,1,1,0.42);
 					tilt=10;
 					year=100;
-					albedo=0.1;
 					Surface{
 						terrain=craters(ID1,2,0.1,0.1,1,1,0.8)
-								Z(0.1*noise(NABS|SQR|NEG,11,4,0.5,0.5))+Color(noise(UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
+								Z(0.1*noise(GRADIENT|NABS|NEG|SQR,11,4,0.5,0.5))+Color(noise(GRADIENT|UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
 					}
 					Clouds(0.0031) {
+						albedo=0.1;
 						crot=1;
 						day=30;
 						hscale=0.05;
 						resolution=4;
 						shine=24.0815;
 						specular=Color(1,1,1,0.1);
-						albedo=0.1;
 						Surface{
-							terrain=Color(twist(0.2,noise(NABS|SQR|FS|UNS,0.5,5.1,0.15,0.36,2.13,0.55,0.21,0,0)),0.8*RED,0.3*RED,1);
+							terrain=Color(twist(0.2,noise(GRADIENT|FS|NABS|SQR|UNS,0.5,5.1,0.15,0.36,2.13,0.55,0.21,0,0)),0.8*RED,0.3*RED,1);
 						}
 					}
 				}

@@ -20,18 +20,20 @@ Scene() {
 	View{
 		height=24.5494 miles;
 		heading=-39;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200329;
 	}
 	View{
 		height=22.5316 miles;
 		heading=-37;
 		tilt=-10;
 		angle=-2;
-		minr=0.00197874;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
 		radius=0.00200127;
+	}
+	View{
+		time=35714.8;
+		minr=0.00197874;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -67,6 +69,7 @@ Scene() {
 					ambient=Color(1,1,1,0.12);
 					day=24;
 					hscale=0.0136431;
+					ocean.level=2.47611e-300 ft;
 					shadow=Color(0,0,0,0.38);
 					shine=4.60508;
 					specular=Color(1,1,1,0.5);
@@ -90,7 +93,7 @@ Scene() {
 						ghg_fraction=0.95;
 						haze.color=Color(0.96,0.84,0.56);
 						haze.grad=0.41464;
-						haze.value=0.756863;
+						haze.value=1;
 						name="Sky";
 						pressure=0.005;
 						resolution=4;
@@ -100,6 +103,7 @@ Scene() {
 						tilt=10;
 						twilight=Color(0.99,0.09,0.19);
 						twilight.min=-0.348045;
+						year=100;
 					}
 				}
 			}

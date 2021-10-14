@@ -52,6 +52,7 @@ Scene() {
 		radius=0.00100116;
 	}
 	View{
+		time=22362.4;
 		minr=0.00100025;
 	}
 	Galaxy(20000) {
@@ -82,6 +83,7 @@ Scene() {
 			Planet(0.01,50) {
 				day=1;
 				emission=Color(1,1,1,0.05);
+				ocean.level=2.08693e-312 ft;
 				rot_phase=65.916;
 				shadow=Color(0,0,0,0.43);
 				tilt=5.0688;
@@ -118,6 +120,7 @@ Scene() {
 					fog.min=1000 ft;
 					fog.vmax=2000 ft;
 					hscale=0.0008;
+					ocean.level=1300 ft;
 					phase=145.001;
 					rot_phase=360;
 					shadow=Color(0,0,0);
@@ -127,7 +130,7 @@ Scene() {
 					water.clarity=945.594 ft;
 					water.color1=Color(0.12,0.31,0.08,0.76);
 					water.color2=Color(0,0.05,0.18);
-					water.level=1300 ft;
+					water.level=2.46212e-07;
 					water.shine=58.334;
 					year=11;
 					haze.color=Color(0.7,0.5,1);
@@ -138,7 +141,7 @@ Scene() {
 						m1=noise(GRADIENT|UNS,1,5,0.47,0.4,2)+0.71;
 						m2=0.5*noise(GRADIENT|NABS|NEG|SQR,8,16,0.2,0.5);
 						terrain=fog(1-1.2*noise(GRADIENT|UNS,8,3,1))
-								water(0.05*noise(GRADIENT|NABS|NLOD|SCALE|SQR,12.5,2,0.33,0.5,2.1,1,1,0,0))
+								ocean(0.05*noise(GRADIENT|NABS|NLOD|SCALE|SQR,12.5,2,0.33,0.5,2.1,1,1,0,0))
 								Z(m2+craters(3,0.1,0.25,1,0.8,1,0.3))+Color(0.75+noise(GRADIENT|UNS,2,5,1,0.5,2,1,1,0,0),RED,RED,1)+
 								Texture("Shist1",BORDER|BUMP|NORM|RANDOMIZE|TEX,537.269,1.11104,2,0,7.66672,2,0.43056,0,0,0,0,0);
 					}
@@ -156,6 +159,7 @@ Scene() {
 						twilight=Color(0.5,0,0.25);
 						twilight.max=0.2691;
 						twilight.min=-0.2691;
+						year=11;
 					}
 				}
 			}

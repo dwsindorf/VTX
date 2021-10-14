@@ -24,13 +24,16 @@ Scene() {
 	}
 	View{
 		height=8708.01 ft;
+	}
+	View{
+		heading=-189;
 		vstride=0.02;
 		zoom=0.0015;
 		minh=1.13636e-09;
 		radius=0.00150292;
 	}
 	View{
-		heading=-189;
+		time=807148;
 		minr=0.00150127;
 	}
 	Universe {

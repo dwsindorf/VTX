@@ -1,320 +1,26 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=-17.6063;
-		theta=141.985;
-		height=249.911 miles;
-		gndlvl=-29.8317 ft;
-		time=49560.4;
-		vstride=586570;
+		view=SURFACE;
+		phi=28.6962;
+		theta=234.624;
+		height=229.919 ft;
+		gndlvl=189.54 ft;
+		time=1.12924e+07;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=90;
-		pitch=-90;
-		fov=35;
+		zoom=0.000124971;
+		minh=1.13636e-09;
+		heading=349;
+		tilt=-2;
+		angle=7;
+		fov=35.4957;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
-		height=249.912 miles;
-		gndlvl=-34.1647 ft;
-	}
-	View{
-		view=SURFACE;
-		phi=-30.2344;
-		theta=139.219;
-		height=13454.1 ft;
-		gndlvl=-135.789 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=6727.05 ft;
-	}
-	View{
-		phi=-30.498;
-		theta=141.57;
-		height=261.025 ft;
-		gndlvl=-138.268 ft;
-	}
-	View{
-		height=530.23 ft;
-		heading=45;
-		angle=11;
-	}
-	View{
-		phi=-30.3841;
-		theta=141.651;
-		height=30.9319 ft;
-		gndlvl=-17.368 ft;
-		angle=0;
-	}
-	View{
-		phi=-30.3982;
-		height=1187.71 ft;
-		heading=272;
-		tilt=-17;
-		angle=-14;
-	}
-	View{
-		phi=-30.5722;
-		theta=141.581;
-		height=40.2598 ft;
-		gndlvl=-198.014 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=192.962 ft;
-		tilt=-17;
-		angle=-5;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=-0.000181653 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		phi=13.5252;
-		theta=206.43;
-		time=30768.4;
-	}
-	View{
-		view=SURFACE;
-		phi=16.1719;
-		theta=226.406;
-		height=13762.7 ft;
-		gndlvl=32.2056 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=6881.36 ft;
-	}
-	View{
-		height=3440.68 ft;
-	}
-	View{
-		height=1720.34 ft;
-	}
-	View{
-		height=860.17 ft;
-	}
-	View{
-		height=31914.4 ft;
-		heading=172;
-	}
-	View{
-		phi=17.5781;
-		theta=221.309;
-		height=693.355 ft;
-		gndlvl=-42.955 ft;
-	}
-	View{
-		phi=21.0082;
-		theta=219.709;
-		height=35129.9 ft;
-		heading=115;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=-0.000356795 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		height=247.78 miles;
-	}
-	View{
-		view=SURFACE;
-		phi=17.2266;
-		theta=230.977;
-		height=13288.4 ft;
-		gndlvl=-371.175 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=13416.3 ft;
-		heading=158;
-		tilt=-24;
-		angle=-56;
-	}
-	View{
-		view=ORBITAL;
-		phi=22.3242;
-		theta=232.734;
-		height=187.457 miles;
-		gndlvl=191.485 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		view=SURFACE;
-		phi=13.3594;
-		theta=231.328;
-		height=10048.2 ft;
-		gndlvl=-7.76261 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=23240.7 ft;
-		heading=-86;
-		tilt=-26;
-		angle=-24;
-	}
-	View{
-		phi=7.38281;
-		theta=229.746;
-		height=774.44 ft;
-		gndlvl=9.3158 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		phi=8.9697;
-		theta=238.203;
-		height=34209.4 ft;
-		time=11978.2;
-		heading=33;
-		tilt=-50;
-		angle=-3;
-	}
-	View{
-		phi=9.8877;
-		theta=240.601;
-		height=469.849 ft;
-		gndlvl=-15.5257 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=6042.04 ft;
-	}
-	View{
-		phi=11.6016;
-		theta=243.765;
-		height=430.156 ft;
-		gndlvl=-242.871 ft;
-	}
-	View{
-		phi=12.1016;
-		theta=244.535;
-		height=6211.18 ft;
-		heading=66;
-	}
-	View{
-		phi=13.3154;
-		theta=245.039;
-		height=178.866 ft;
-		gndlvl=-290.588 ft;
-	}
-	View{
-		height=1109.54 ft;
-		tilt=-10;
-		angle=-1;
-	}
-	View{
-		phi=13.5516;
-		theta=245.179;
-		height=48.1715 ft;
-		gndlvl=-248.079 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=105.361 ft;
-		heading=137;
-		tilt=-8;
-		angle=-7;
-	}
-	View{
-		phi=13.5727;
-		theta=245.168;
-		height=20 ft;
-		gndlvl=-253.614 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=38.9218 ft;
-		tilt=-14;
-		angle=-19;
-	}
-	View{
-		phi=13.5772;
-		theta=245.166;
-		height=20 ft;
-		gndlvl=-247.394 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		view=ORBITAL;
-		height=249.942 miles;
-		gndlvl=-0.000114174 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		view=SURFACE;
-		phi=20.3906;
-		theta=232.734;
-		height=13488 ft;
-		gndlvl=-160.778 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		phi=28.0657;
-		theta=235.184;
-		height=6838.75 ft;
-		heading=121;
-		tilt=-32;
-		angle=-13;
-	}
-	View{
-		phi=28.6963;
-		theta=234.624;
-		height=128.075 ft;
-		gndlvl=189.54 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		phi=28.6962;
-		height=360.114 ft;
-		time=74780.2;
-		heading=350;
-		tilt=-2;
-		angle=1;
-		fov=38.1148;
-	}
-	View{
-		fov=35.4957;
-		vstride=0.02;
-		zoom=0.000124971;
-		minh=1.13636e-09;
-		radius=0.000125075;
-	}
-	View{
+		time=1.32684e+07;
+		delt=20000;
 		minr=0.000125008;
 	}
 	Universe {
@@ -365,21 +71,24 @@ Scene() {
 				}
 				Planet(0.004,93) {
 					albedo=0.3;
-					ambient=Color(1,1,1,0.04);
+					ambient=Color(1,1,1,0.08);
 					day=24;
 					hscale=0.004;
 					name="Earth";
+					ocean.level=2.46887e-300 ft;
 					resolution=4;
-					rot_phase=249.998;
+					rot_phase=360;
 					shadow=Color(0,0,0,0.93);
 					shine=2.22904;
 					specular=Color(1,1,1,0.7);
+					tilt=20.0016;
 					year=365;
 					Surface{
 						terrain=
 								Texture("earth",TEX,1,2,1,0,1,2,0.5,0,0,0,0,0);
 					}
 					Clouds(0.00406912) {
+						ambient=Color(1,1,1,0.03);
 						crot=1;
 						name="Clouds2D";
 						resolution=4;
@@ -395,21 +104,24 @@ Scene() {
 						name="Sky";
 						rseed=1.5699;
 						specular=Color(1,1,1);
+						tilt=20.0016;
+						year=365;
 					}
 					Moon(0.000124971,0.0546243) {
 						ambient=Color(1,1,1,0.06);
-						day=24;
+						day=240;
 						diffuse=Color(1,1,1,0.69);
 						emission=Color(1,1,1,0.04);
 						hscale=0.004;
 						name="Moon";
-						phase=130.003;
-						rot_phase=360;
+						ocean.level=3.65295e-300 ft;
+						phase=360;
+						rot_phase=310.003;
 						rseed=2.41294;
 						shadow=Color(0,0,0,0.93);
 						shine=3.02106;
 						specular=Color(1,1,1,0.28);
-						year=24;
+						year=10;
 						Surface{
 							terrain=Z(craters(ID2,6,0.0009999,0.48,0.21,0.01,0.08,0.73,1,0.6,8.5,0.98,0.6,0.44,0)
 									fractal(SQR|SS,14.1,4.1,0.1,0.53,0.58,0.2,0.55,0.24,0.6,0))+

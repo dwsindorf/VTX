@@ -19,6 +19,7 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
+		time=60934.6;
 		minr=0.00200087;
 	}
 	Universe {
@@ -114,7 +115,7 @@ Scene() {
 						fog.vmin=4000 ft;
 						hscale=0.0012;
 						name="Titan";
-						ocean.level=9000 ft;
+						ocean.level=9000.02 ft;
 						ocean.liquid=-163;
 						ocean.solid=-182;
 						phase=155;
@@ -165,6 +166,7 @@ Scene() {
 							specular=Color(1,1,1);
 							tilt=-10;
 							twilight=Color(0.5,0.3,0.1);
+							year=17;
 						}
 					}
 				}

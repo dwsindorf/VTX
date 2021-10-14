@@ -6,6 +6,11 @@ Scene() {
 		height=6 ft;
 		gndlvl=6926.49 ft;
 		time=865522;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=95;
 		tilt=-10;
 		angle=5;
@@ -63,8 +68,9 @@ Scene() {
 		angle=12;
 	}
 	View{
-		tilt=-3;
-		angle=10;
+		time=40659.4;
+		minr=0.0040012;
+		radius=0.00400121;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -88,6 +94,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -141,6 +148,7 @@ Scene() {
 						twilight=Color(0.62,0.11,0.24);
 						twilight.max=0.275617;
 						twilight.min=-0.598654;
+						year=100;
 					}
 					Clouds(0.00407794) {
 						ambient=Color(1,1,1,0.35);

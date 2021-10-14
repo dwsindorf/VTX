@@ -1,75 +1,22 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-8.3606;
-		theta=358.726;
-		height=0.00604486;
-		gndlvl=-242501 ft;
-		time=65278;
+		phi=7.10167;
+		theta=-46.8583;
+		height=0.00707434;
+		gndlvl=-2876.09 ft;
+		time=22857.4;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00399946;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=0.00604561;
-		gndlvl=-246464 ft;
-	}
-	View{
-		theta=340.219;
-		height=0.00635215;
-		gndlvl=109.155 ft;
-	}
-	View{
-		height=0.00863459;
-		gndlvl=-674.774 ft;
-	}
-	View{
-		height=0.00655774;
-	}
-	View{
-		theta=340.239;
-		height=0.00655839;
-		gndlvl=-4088.61 ft;
-	}
-	View{
-		theta=146.74;
-		height=0.00655877;
-		gndlvl=-6106.07 ft;
-	}
-	View{
-		theta=66.1412;
-		height=0.00655956;
-		gndlvl=-10299.3 ft;
-	}
-	View{
-		phi=3.73899;
-		theta=54.0428;
-		height=0.0065599;
-		gndlvl=-12048.6 ft;
-	}
-	View{
-		theta=3.58186;
-		height=0.00734595;
-		gndlvl=8165.41 ft;
-	}
-	View{
-		phi=7.10167;
-		theta=-46.8583;
-		height=0.00734707;
-		gndlvl=0 ft;
-	}
-	View{
-		height=0.00649047;
-	}
-	View{
-		height=0.00636033;
-		gndlvl=-2876.09 ft;
-		time=65616;
-	}
-	View{
-		height=0.00707434;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -93,6 +40,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -102,6 +50,7 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
+					ocean.level=4.30351e-301 ft;
 					resolution=4;
 					year=100;
 					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),

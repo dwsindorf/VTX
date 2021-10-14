@@ -41,6 +41,7 @@ uniform float tb;
 uniform vec4 Shadow;
 
 //#undef RAYTRACE
+//#undef REFLECT
 
 #define VFOG    fcolor2.a
 #define TYPE    fcolor2.r

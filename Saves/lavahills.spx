@@ -277,6 +277,7 @@ Scene() {
 		radius=0.00399918;
 	}
 	View{
+		time=17912.8;
 		minr=0.00399918;
 	}
 	Universe {
@@ -317,6 +318,7 @@ Scene() {
 					fog.value=1;
 					fog.vmax=3905.6 ft;
 					fog.vmin=-1000 ft;
+					ocean.level=-6111.2 ft;
 					resolution=2.37142;
 					shadow=Color(0,0,0.19,0.8);
 					shine=9.20157;
@@ -324,7 +326,7 @@ Scene() {
 					water.clarity=244.276 ft;
 					water.color1=Color(0.68,0.95,0.95);
 					water.color2=Color(0.03,0.25,0.07);
-					water.level=-6111.2 ft;
+					water.level=-1.15742e-06;
 					water.shine=73.584;
 					year=100;
 					haze.height=0.66;
@@ -333,7 +335,7 @@ Scene() {
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=water(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
+						terrain=ocean(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
 								
 								Texture("yellow-black",BORDER|LINEAR|NORM|TEX,128,2,1,0.6,1,2,1,0,0,-0.86112,-0.30556,0.25)+
 								Texture("rock_stones",BUMP|TEX,1407.09,-0.66656,2,-4,9.66688,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.61,2.1,1,1,0,0));
@@ -348,6 +350,7 @@ Scene() {
 						haze.value=1;
 						resolution=4;
 						specular=Color(1,1,1);
+						year=100;
 					}
 					Clouds(0.00407746) {
 						crot=1;

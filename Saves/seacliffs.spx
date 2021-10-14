@@ -66,7 +66,7 @@ Scene() {
 		view=SURFACE;
 		phi=-19.6875;
 		theta=85.7812;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-0.339516 ft;
 		heading=0;
 		pitch=0;
@@ -95,7 +95,7 @@ Scene() {
 		view=SURFACE;
 		phi=-28.125;
 		theta=98.4375;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=1154.67 ft;
 		heading=0;
 		pitch=0;
@@ -136,7 +136,7 @@ Scene() {
 		view=SURFACE;
 		phi=-16.875;
 		theta=101.953;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=463.691 ft;
 		heading=0;
 		pitch=0;
@@ -200,14 +200,17 @@ Scene() {
 		heading=140;
 		tilt=-13;
 		angle=1;
+	}
+	View{
+		height=72.9673 ft;
+		heading=153;
 		vstride=0.02;
 		zoom=0.001;
 		minh=1.13636e-09;
 		radius=0.00100003;
 	}
 	View{
-		height=72.9673 ft;
-		heading=153;
+		time=7230.7;
 		minr=0.00100001;
 	}
 	Galaxy(20000) {
@@ -250,11 +253,13 @@ Scene() {
 			Planet(0.001,100) {
 				ambient=Color(1,1,1,0.1);
 				day=5;
+				fog.max=2044.4 ft;
 				fog.min=100 ft;
 				fog.value=1;
-				fog.vmax=2000 ft;
+				fog.vmax=11000 ft;
 				fog.vmin=1000 ft;
 				hscale=0.002;
+				ocean.level=8.34773e-313 ft;
 				shadow=Color(0,0,0.1,0.7);
 				shine=6.18712;
 				specular=Color(1,1,1,0.25);
@@ -271,7 +276,7 @@ Scene() {
 				image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
 				Surface{
 					terrain=fog(2*noise(8,5))
-							water(0.1*noise(GRADIENT|SCALE,20,2,1,0.5,2,1,1,0,0))
+							ocean(0.1*noise(GRADIENT|SCALE,20,2,1,0.5,2,1,1,0,0))
 							Z(fractal(SQR|SS,14.1,14,0.1,2.47,0.44,0.2,0,1,0,1)noise(GRADIENT|SQR,1,18.6,0.41,0.18,1.99,1.5,1,0,0))+
 							Texture("bands1",BORDER|NORM|S|TEX,0,256,2,2,0.33328,1,2,1,0,0,1,0.19444,0.25)+
 							Texture("cracks2",BUMP,9999,-0.44448,1,0,10,2.29232,1,0,0,0,0,0)+
@@ -281,13 +286,14 @@ Scene() {
 					color=Color(0.4,0.9,1);
 					day=5;
 					density=0.47222;
-					haze.grad=0.45122;
+					haze.grad=0.87804;
 					haze.max=5.6818 miles;
 					haze.value=1;
 					shine=1;
 					specular=Color(1,1,1);
 					tilt=10;
 					twilight=Color(0,0.47,1);
+					year=30;
 				}
 			}
 		}

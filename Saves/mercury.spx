@@ -28,6 +28,7 @@ Scene() {
 		radius=0.00150114;
 	}
 	View{
+		time=589564;
 		minr=0.00150105;
 	}
 	Universe {
@@ -74,6 +75,7 @@ Scene() {
 					day=58.65;
 					diffuse=Color(0.87,0.89,0.99);
 					name="Mercury";
+					ocean.level=2.47611e-300 ft;
 					shadow=Color(0,0,0,0.95);
 					shine=8.77663;
 					specular=Color(1,0.96,0.86);

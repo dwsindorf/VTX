@@ -29,6 +29,7 @@ Scene() {
 		radius=0.00400048;
 	}
 	View{
+		time=23845.6;
 		minr=0.00400021;
 	}
 	Universe {
@@ -90,6 +91,7 @@ Scene() {
 						haze.value=1;
 						resolution=4;
 						specular=Color(1,1,1);
+						year=100;
 					}
 					Clouds(0.00407188) {
 						ambient=Color(1,1,1,0.41);

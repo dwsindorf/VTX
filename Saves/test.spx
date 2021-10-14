@@ -1,433 +1,296 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=21.0424;
-		theta=190.154;
-		height=3427.06 ft;
-		gndlvl=-1828.33 ft;
-		time=10071.8;
+		view=ORBITAL;
+		phi=23.5547;
+		theta=187.657;
+		height=0.0117613;
+		gndlvl=-28451.6 ft;
+		time=7.75856e+07;
 		vstride=586570;
 		hstride=1;
 		astride=1;
 		zoom=1;
 		minh=1.89394e-09;
-		heading=38;
-		tilt=-4;
-		angle=-12;
-		fov=35;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		view=ORBITAL;
-		height=0.008;
-		gndlvl=0.00487382 ft;
 		heading=90;
 		pitch=-90;
-		tilt=0;
-		angle=0;
+		fov=35;
+		speed=586570;
+		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.00834713;
+		phi=4.58191;
+		theta=185.759;
+		time=8.02476e+07;
+		delt=20000;
 	}
 	View{
-		height=0.00891186;
-	}
-	View{
-		phi=21.1214;
-		theta=191.062;
-		height=0.00919734;
-		pitch=-89;
-	}
-	View{
-		phi=21.1057;
-		height=0.00926916;
-	}
-	View{
-		phi=21.1996;
-		height=0.00883919;
-	}
-	View{
-		phi=21.2151;
-		height=0.00876798;
-	}
-	View{
-		phi=21.4749;
-		theta=185.834;
-		height=0.00757731;
-	}
-	View{
-		phi=21.4453;
-		height=0.00771301;
-	}
-	View{
-		phi=21.0926;
-		height=0.00932935;
-	}
-	View{
-		phi=21.0927;
-		height=0.00932906;
-	}
-	View{
-		height=0.00932892;
-	}
-	View{
-		phi=21.1085;
-		height=0.0092567;
-	}
-	View{
-		height=0.00925656;
-	}
-	View{
-		phi=21.2643;
-		height=0.00854236;
-	}
-	View{
-		phi=21.1875;
-		height=0.00889445;
-	}
-	View{
-		phi=21.2031;
-		height=0.00882312;
-	}
-	View{
-		phi=21.1876;
-		height=0.00889398;
-	}
-	View{
-		phi=21.2187;
-		height=0.00875131;
-	}
-	View{
-		phi=21.2958;
-		height=0.00839785;
-	}
-	View{
-		phi=21.3264;
-		height=0.00825765;
-	}
-	View{
-		phi=21.3417;
-		height=0.00818763;
-	}
-	View{
-		phi=21.3721;
-		height=0.00804849;
-	}
-	View{
-		phi=21.3722;
-		height=0.00804812;
-	}
-	View{
-		phi=21.4024;
-		height=0.00790972;
-	}
-	View{
-		phi=21.4324;
-		height=0.00777208;
-	}
-	View{
-		phi=21.5215;
-		height=0.00736353;
-	}
-	View{
-		phi=21.5654;
-		height=0.00716229;
-	}
-	View{
-		phi=21.5799;
-		height=0.00709565;
-	}
-	View{
-		phi=21.5944;
-		height=0.00702901;
-	}
-	View{
-		phi=21.5656;
-		height=0.00716091;
-	}
-	View{
-		phi=21.6523;
-		height=0.00676337;
-	}
-	View{
-		phi=21.6102;
-		height=0.00695653;
-	}
-	View{
-		phi=21.6246;
-		height=0.00689036;
-	}
-	View{
-		phi=21.5526;
-		height=0.00722023;
-	}
-	View{
-		height=0.00722001;
-	}
-	View{
-		phi=21.5962;
-		height=0.00702018;
-	}
-	View{
-		phi=21.1129;
-		height=0.00923534;
-	}
-	View{
-		phi=21.1287;
-		height=0.00916301;
-	}
-	View{
-		phi=21.16;
-		height=0.00901937;
-	}
-	View{
-		phi=21.1756;
-		height=0.00894777;
-	}
-	View{
-		phi=21.1912;
-		height=0.00887632;
-	}
-	View{
-		phi=21.2223;
-		theta=187.613;
-		height=0.00873389;
-	}
-	View{
-		phi=21.2378;
-		theta=192.04;
-		height=0.00866291;
-	}
-	View{
-		phi=-58.355;
-		theta=353.058;
-		height=0.00761979;
-		pitch=-88;
-	}
-	View{
-		theta=350.504;
-	}
-	View{
-		phi=-34.4931;
-		theta=320.684;
-		height=0.00769596;
-	}
-	View{
-		phi=-34.493;
-		height=0.00769576;
-	}
-	View{
-		phi=-34.5228;
-		height=0.00776404;
-	}
-	View{
-		phi=-34.5825;
-		height=0.00790078;
-	}
-	View{
-		phi=1.2725;
-		height=0.00884308;
-	}
-	View{
-		phi=0.831694;
-		height=0.00985294;
-	}
-	View{
-		phi=0.863622;
-		theta=238.348;
-		height=0.0097798;
-	}
-	View{
-		phi=0.895551;
-		height=0.00970665;
+		theta=335.644;
+		time=8.11156e+07;
 	}
 	View{
 		view=SURFACE;
-		phi=39.375;
-		theta=237.656;
+		phi=16.875;
+		theta=336.094;
 		height=52800 ft;
-		gndlvl=-826.959 ft;
+		gndlvl=1192.66 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
 	}
 	View{
-		phi=35.4919;
-		theta=242.618;
-		height=96.9605 miles;
-		heading=-53;
-		tilt=-24;
-		angle=20;
+		height=10.2009 miles;
+		heading=63;
+	}
+	View{
+		phi=17.3804;
+		theta=336.621;
+		height=2775.71 ft;
+		gndlvl=-28380.8 ft;
+	}
+	View{
+		height=12.6022 miles;
+		time=8.50076e+07;
+		heading=108;
+		tilt=-1;
+		angle=1;
 	}
 	View{
 		view=ORBITAL;
-		height=0.008;
-		gndlvl=0.00487382 ft;
+		phi=17.4902;
+		theta=335.588;
+		height=0.006;
+		gndlvl=-26507.8 ft;
 		heading=90;
 		pitch=-90;
 		tilt=0;
 		angle=0;
 	}
 	View{
-		phi=9.52912;
-		theta=245.158;
-		height=0.0084605;
-		pitch=-92;
+		theta=193.944;
+		time=8.98916e+07;
 	}
 	View{
-		phi=9.62126;
-		height=0.00867158;
+		view=SURFACE;
+		phi=29.5312;
+		theta=212.344;
+		height=52800 ft;
+		gndlvl=1209.14 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
 	}
 	View{
-		phi=10.3411;
-		theta=247.356;
-		height=0.00974925;
+		phi=1.98045;
+		theta=172.276;
+		height=213.675 miles;
+		time=9.29996e+07;
+		heading=38;
 	}
 	View{
-		phi=10.3093;
-		height=0.00967628;
-	}
-	View{
-		phi=10.2775;
-		height=0.00960344;
-	}
-	View{
-		phi=10.2141;
-		height=0.00945816;
-	}
-	View{
-		phi=10.0253;
-		height=0.00902564;
-	}
-	View{
-		phi=9.96288;
-		height=0.00888263;
-	}
-	View{
-		phi=10.119;
-		height=0.00924019;
-	}
-	View{
-		phi=10.0876;
-		height=0.00916817;
-	}
-	View{
-		phi=10.0873;
-		height=0.00916741;
-	}
-	View{
-		phi=10.1814;
-		height=0.009383;
-	}
-	View{
-		phi=9.93071;
-		height=0.00880868;
-	}
-	View{
-		phi=9.80697;
-		height=0.00852519;
-	}
-	View{
-		phi=9.41283;
-		height=0.00762224;
-	}
-	View{
-		phi=56.1777;
-		theta=259.183;
-		height=0.00616129;
-	}
-	View{
-		phi=-4.31698;
-		theta=270.782;
-		height=0.0101122;
-		pitch=-89;
-	}
-	View{
-		phi=-4.30089;
-		height=0.0100385;
-	}
-	View{
-		phi=29.6598;
-		theta=281.828;
-		height=0.0101551;
-	}
-	View{
-		height=0.008;
+		view=ORBITAL;
+		phi=29.4104;
+		theta=212.915;
+		height=0.006;
+		gndlvl=-14376.9 ft;
+		heading=90;
 		pitch=-90;
+		tilt=0;
 	}
 	View{
-		phi=13.3495;
-		theta=262.805;
-		height=0.00799882;
+		phi=9.9697;
+		theta=179.475;
+		height=0.00599886;
+	}
+	View{
+		theta=183.192;
+		height=0.0105589;
+	}
+	View{
+		theta=142.299;
+		height=0.0104104;
+	}
+	View{
+		theta=180.293;
+	}
+	View{
+		height=0.0100411;
+	}
+	View{
+		theta=200.522;
+	}
+	View{
+		phi=8.11364;
+		height=0.0104839;
+	}
+	View{
+		theta=180.106;
+	}
+	View{
+		view=SURFACE;
+		phi=5.625;
+		theta=180;
+		height=52800 ft;
+		gndlvl=6292.55 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=45.73 miles;
+		tilt=-2;
+		angle=2;
+	}
+	View{
+		phi=4.74609;
+		theta=189.229;
+		height=34289.7 ft;
+		gndlvl=6147.23 ft;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		phi=4.74618;
+		theta=189.227;
+		height=32248.7 ft;
+		heading=-2;
+		tilt=-3;
+		angle=13;
+	}
+	View{
+		height=30967.7 ft;
+		tilt=7;
+		angle=4;
+	}
+	View{
+		heading=-6;
+	}
+	View{
+		height=31904.5 ft;
+	}
+	View{
+		tilt=4;
+		angle=3;
+	}
+	View{
+		phi=4.7471;
+		theta=189.218;
+		height=21930.3 ft;
+		angle=-1;
 		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
-		minr=0.004;
-		radius=0.0119988;
+		radius=0.00400532;
 	}
-	Universe {
-		Galaxy(20000) {
-			name="Uncharted";
-			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-			color.expr=1*DENSITY;
-			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
-				);
-			System(1000) {
-				Star(0.5,0) {
-					diffuse=Color(1,1,1);
-					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
-					specular=Color(1,1,1);
-					symmetry=0.95;
-					temperature=6000;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
-					}
+	View{
+		phi=4.74645;
+		theta=189.212;
+		heading=6;
+		minr=0.00400117;
+	}
+	Galaxy(20000) {
+		origin=Point(4000,0,0);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+		color.expr=1*DENSITY;
+		color.list=Colors(
+			Color(0.502,0.000,0.251),
+			Color(0.000,0.000,1.000),
+			Color(0.000,0.722,1.000),
+			Color(0.502,1.000,1.000),
+			Color(1.000,0.275,0.000),
+			Color(1.000,0.702,0.200),
+			Color(1.000,1.000,0.400),
+			Color(1.000,1.000,0.702)
+			);
+		System(10) {
+			Star(4,0) {
+				day=100;
+				diffuse=Color(1,1,1);
+				emission=Color(1,1,1);
+				name="RedStar";
+				resolution=4;
+				specular=Color(0.98,0.94,0.74);
+				temperature=6000;
+				Surface{
+					terrain=
+							Texture("sol",TEX,1,1.58332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
 				}
-				Planet(0.004,93) {
-					albedo=0.2545;
-					day=24;
-					diffuse=Color(1,1,1,0.58);
-					hscale=0.005;
-					ice.albedo=1;
-					ice.color1=Color(1,1,1,0.17);
-					ice.color2=Color(1,1,1);
-					ice.shine=26.388;
-					ocean.auto=1;
-					ocean.level=-1000 ft;
-					ocean.name="water";
-					water.albedo=0.41666;
-					water.clarity=1000 ft;
-					water.color1=Color(0.82,0.86,0.99,0);
-					water.color2=Color(0.04,0.38,0.35);
-					water.shine=31.944;
-					year=100;
-					ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,2,1,0.5,2,0.4,1,0,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-					Surface{
-						terrain=ocean(noise(GRADIENT|SCALE,17.7,3,-0.34,0.5,2.08,0.22,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
-								
-								Texture("jupiter",LINEAR|S|TEX,noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0,0,0.44448,0,-0.38888)+Z(noise(GRADIENT|NABS|SQR,1,16,0.5,0.5,2,1,1,0,0.5));
-					}
-					Sky(0.0042) {
-						color=Color(0.56,0.72,0.97);
-						day=24;
-						density=0.31944;
-						name="Sky";
-						rseed=0.636572;
-						specular=Color(1,1,1);
-					}
+				Corona(19.6521) {
+					color1=Color(1,0.5,0);
+					color2=Color(0,0.27,1);
+					gradient=0.84566;
+					name="c1";
+				}
+				Corona(5.36944) {
+					color1=Color(0.95,0.98,0.51);
+					color2=Color(1,0.04,0);
+					gradient=1;
+					name="c2";
+					noise.expr=noise(GRADIENT|NABS|SQR|UNS,2.1,2,1,0.21,2,1,1,0,-0.7);
+				}
+			}
+			Planet(0.004,20) {
+				albedo=0.147491;
+				ambient=Color(1,1,1,0.04);
+				day=240;
+				fog.min=100 ft;
+				fog.value=1;
+				fog.vmax=2000 ft;
+				fog.vmin=1000 ft;
+				hscale=0.00175847;
+				ice.albedo=1;
+				ice.color1=Color(1,1,1,0.04);
+				ice.color2=Color(0.81,0.84,0.98);
+				ice.shine=48.612;
+				ocean.auto=1;
+				ocean.level=1388.8 ft;
+				ocean.state=0;
+				shadow=Color(0,0,0,0.56);
+				shine=10.9372;
+				specular=Color(1,1,1,0.37);
+				water.albedo=1;
+				water.clarity=154.307 ft;
+				water.color1=Color(0.68,0.94,0.93,0.01);
+				water.color2=Color(0,0.15,0.3);
+				water.level=2.6303e-07;
+				year=10;
+				water.reflectivity=0.5;
+				twilight=Color(0.5,0.3,0.1);
+				wl=water.level*GTOL;
+				ocean.expr=scurve(LONG-0.95,0.1)+noise(GRADIENT|NLOD|NNORM|SCALE,4.9,11.5,1,0.5,2,0.52,1,0,-0.1)-0.1*LAT;
+				bands("tidal-locked",ACHNL|CLAMP|NORM,128,0.06452,0.0784314,RAND,Color(0.729,0.878,0.973),
+					Color(1,1,1),
+					Color(1,0.969,0.875),
+					Color(0.024,0.424,0.055),
+					Color(0.867,0.831,0.016),
+					Color(0.973,0.718,0.424),
+					Color(0.973,0.875,0.427),
+					Color(0.208,0,0.024),
+					Color(0.337,0.294,0.031),
+					Color(0.478,0.455,0.455),
+					Color(0.373,0.039,0.039),
+					Color(0.141,0,0,0.58));
+				Surface{
+					terrain=ocean(0.002*noise(GRADIENT,15.2,6,1,0.5,2,0.34,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
+							Z(fractal(SQR|SS,14,14,0.1,1.02,1.84,0.15,0.68,0.16,0.32,0.29)noise(GRADIENT|SQR,1.8,14.2,0.5,0.1,2.1,1,1,0.23,0))+
+							Texture("tidal-locked",BORDER|S|TEX,scurve(LONG-0.5,-0.2)+noise(GRADIENT|SCALE,4.3,10.4,1,0.5,2,1,1,0,-0.3),18.4878,1.05556,0,0.66672,1,2,1,0,-0.05,0.11112,0.1,0)+
+							Texture("rock_stones",BUMP|RANDOMIZE|TEX,8.97866,-1.33344,2,0,10.3331,2,0.88888,0,0,0,0,0);
+				}
+				Sky(0.0042) {
+					color=Color(0.4,0.9,1);
+					day=240;
+					density=0.40278;
+					ghg_fraction=0.18056;
+					haze.max=5.6818 miles;
+					haze.value=1;
+					night.color=Color(0,0,0);
+					pressure=2;
+					resolution=4;
+					shine=0.1;
+					specular=Color(1,1,1);
+					twilight=Color(0,0.47,1);
+					twilight.max=1;
+					twilight.min=-1;
+					year=10;
 				}
 			}
 		}

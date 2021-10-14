@@ -119,11 +119,17 @@ Scene() {
 		phi=50.0596;
 		theta=99.8906;
 		height=0.180863;
+	}
+	View{
+		time=57966.4;
 		vstride=0.02;
 		zoom=0.034;
 		minh=1.13636e-09;
-		minr=0.034;
 		radius=0.214863;
+	}
+	View{
+		theta=-206.602;
+		minr=0.034;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -165,6 +171,7 @@ Scene() {
 					ambient=Color(1,1,1,0.02);
 					day=20;
 					name="Saturn";
+					ocean.level=6.70427e-312 ft;
 					phase=60;
 					shadow=Color(0,0,0,0.74);
 					shine=11.809;
@@ -206,6 +213,7 @@ Scene() {
 						ambient=Color(1,1,1,0.13);
 						day=30;
 						name="Moon";
+						ocean.level=8.34773e-313 ft;
 						phase=183.398;
 						shadow=Color(0,0,0,0.58);
 						shine=9.23947;

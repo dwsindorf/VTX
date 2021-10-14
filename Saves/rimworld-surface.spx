@@ -1,43 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=17.3444;
-		theta=81.6064;
+		phi=17.347;
+		theta=81.6099;
 		height=8505.92 ft;
 		gndlvl=335.532 ft;
-		time=3472.48;
-		vstride=586570;
+		time=3769.3;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=226;
-		tilt=3;
-		angle=-36;
+		zoom=0.0015;
+		minh=1.13636e-09;
+		minr=0.00150006;
+		heading=197;
+		tilt=6;
+		angle=-8;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.2.System.1.Planet.1;
-	}
-	View{
-		phi=17.347;
-		theta=81.6099;
-		heading=197;
-		tilt=7;
-		angle=-7;
-	}
-	View{
-		time=3450;
-	}
-	View{
-		tilt=6;
-		angle=-8;
-		vstride=0.02;
-		zoom=0.0015;
-		minh=1.13636e-09;
-		radius=0.00150167;
-	}
-	View{
-		minr=0.00150006;
 	}
 	Universe {
 		Galaxy(9000) {
@@ -127,6 +107,7 @@ Scene() {
 					ambient=Color(1,1,1,0.07);
 					day=1;
 					hscale=0.001;
+					ocean.level=4.69677e-301 ft;
 					phase=320;
 					rot_phase=116.618;
 					shadow=Color(0,0,0,0.44);
@@ -164,6 +145,7 @@ Scene() {
 						specular=Color(1,1,1);
 						twilight.max=0.179033;
 						twilight.min=-0.227325;
+						year=30;
 					}
 				}
 			}

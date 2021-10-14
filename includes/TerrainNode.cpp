@@ -1530,6 +1530,7 @@ enum  {
 	SUB_MIN,
 	SUB_MAX,
 	SUB_POW,
+	SUB_SCURVE,
 	SUB_MOD,
 	SUB_SIN,
 	SUB_COS,
@@ -1554,6 +1555,7 @@ static LongSym subtypes[]={
 	{"max",			SUB_MAX},
 	{"mod",			SUB_MOD},
 	{"pow",			SUB_POW},
+	{"scurve",		SUB_SCURVE},
 	{"sin",			SUB_SIN},
 	{"cos",			SUB_COS},
 	{"sqrt",		SUB_SQRT},
@@ -1991,6 +1993,44 @@ void TNmod::eval()
 	S0.set_svalid();
 	TNsubr::eval();
 }
+
+//************************************************************
+// Class TNscurve
+//************************************************************
+class TNscurve : public TNsubr
+{
+public:
+	TNscurve(char* s, TNode *r) :  TNsubr(s, r) {}
+	void eval();
+};
+//-------------------------------------------------------------
+// TNscurve::eval() evaluate the node
+// arg[0]: expected input -1..1 or 0..1
+// arg[1]: sharpness factor (k)
+// output: range same as input but sigmoidal or exponential
+//         k=0:linear, k= -0.9:very sharp k=0.9:very wide
+//-------------------------------------------------------------
+void TNscurve::eval()
+{
+	double k=0.0,b=0;
+	double arg[3];
+	SINIT;
+	int n=getargs(right,arg,3);
+	double x=arg[0];
+    if(n>1){
+    	k=arg[1];
+    	if(n>2)
+    		b=arg[2];
+    }
+    x=clamp(x,-1,1);
+
+	S0.s=b+(x-k*x)/(k-2*k*fabs(x)+1);
+	//S0.s=1.0/(1.0+exp(-x*k)); // logistic function
+
+	S0.set_svalid();
+	TNsubr::eval();
+}
+
 //************************************************************
 // Class TNpow
 //************************************************************
@@ -2077,6 +2117,7 @@ TNsubr *subr_node(char *s, TNode *args)
 		case SUB_FLOOR: 	return new TNfloor(s,args);
 		case SUB_FRACT: 	return new TNfract(s,args);
 		case SUB_POW:   	return new TNpow(s,args);
+		case SUB_SCURVE:   	return new TNscurve(s,args);
 		case SUB_MOD:   	return new TNmod(s,args);
 		case SUB_SIN:   	return new TNsin(s,args);
 		case SUB_COS:   	return new TNcos(s,args);

@@ -36,7 +36,7 @@ Scene() {
 		view=SURFACE;
 		phi=33.75;
 		theta=240.469;
-		height=52800 ft;
+		height=10 miles;
 		heading=0;
 		pitch=0;
 		tilt=-15;
@@ -146,7 +146,7 @@ Scene() {
 		view=SURFACE;
 		phi=35.1562;
 		theta=238.359;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=44.8306 ft;
 		heading=0;
 		pitch=0;
@@ -368,16 +368,22 @@ Scene() {
 	View{
 		height=240.684 ft;
 		heading=-57;
-		vstride=0.02;
-		zoom=0.003;
-		minh=1.13636e-09;
-		radius=0.0030001;
 	}
 	View{
 		height=156.575 ft;
 		tilt=-6;
-		minr=0.00300005;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
 		radius=0.00300008;
+	}
+	View{
+		height=82.0114 ft;
+		time=81208;
+		tilt=-3;
+		angle=4;
+		minr=0.00300005;
+		radius=0.00300007;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -413,6 +419,7 @@ Scene() {
 					ambient=Color(1,1,1,0.08);
 					day=24;
 					hscale=0.002;
+					ocean.level=50 ft;
 					shadow=Color(0,0,0,0.72);
 					shine=6.97914;
 					specular=Color(1,1,1,0.62);
@@ -421,7 +428,7 @@ Scene() {
 					water.clarity=159.262 ft;
 					water.color1=Color(0,0.47,0.98);
 					water.color2=Color(0,0,0.02);
-					water.level=50 ft;
+					water.level=9.4697e-09;
 					water.shine=68.056;
 					year=365;
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
@@ -435,7 +442,7 @@ Scene() {
 						Color(0.996,0.769,0.345),
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
-						terrain=water(noise(GRADIENT|NABS|SCALE|SQR,19.8,2,1,0.5,2,0.01,1,0.1,0))
+						terrain=ocean(noise(GRADIENT|NABS|SCALE|SQR,19.8,2,1,0.5,2,0.01,1,0.1,0))
 								
 								Texture("earth",TEX,1,1.02776,0,0,1,2,0.5,0,0,0,0,0)+
 								Texture("alpine2",BORDER|NORM|TEX,512,1.08332,1,-1,1,2,1,0,0.12,1,1,-1)+
@@ -446,8 +453,8 @@ Scene() {
 						color=Color(0.65,0.88,0.99);
 						day=24;
 						density=0.375;
-						haze.color=Color(1,1,1,0.82);
-						haze.grad=0.20732;
+						haze.color=Color(1,1,1,0.8);
+						haze.grad=0.5244;
 						haze.value=0.819608;
 						night.color=Color(0,0,0);
 						resolution=4;
@@ -456,6 +463,7 @@ Scene() {
 						twilight=Color(0.58,0,0.42);
 						twilight.max=1;
 						twilight.min=-1;
+						year=365;
 					}
 					Clouds(0.00304) {
 						crot=1;
@@ -490,6 +498,7 @@ Scene() {
 						day=24;
 						hscale=0.001;
 						name="MoonMap";
+						ocean.level=2.4646e-300 ft;
 						phase=139.997;
 						resolution=4;
 						rseed=2.34627;

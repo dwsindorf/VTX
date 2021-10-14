@@ -20,22 +20,23 @@ Scene() {
 	}
 	View{
 		height=11551.7 ft;
-		vstride=0.02;
-		zoom=0.003;
-		minh=1.13636e-09;
-		radius=0.00299336;
 	}
 	View{
 		phi=-41.5435;
 		theta=246.028;
 		height=11256.4 ft;
 		heading=9;
-		minr=0.00299117;
-		radius=0.0029933;
 	}
 	View{
 		height=11140.6 ft;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
 		radius=0.00299328;
+	}
+	View{
+		time=85164.4;
+		minr=0.00299117;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -85,15 +86,16 @@ Scene() {
 					day=30;
 					diffuse=Color(1,0.82,0.51);
 					emission=Color(0.99,0.93,0.09,0.04);
-					fog.color=Color(1,0.81,0.11,0.71);
+					fog.color=Color(1,0.81,0.11);
 					fog.glow=0.26316;
 					fog.max=10208.3 ft;
 					fog.min=208.34 ft;
-					fog.value=0.70834;
+					fog.value=0.709804;
 					fog.vmax=-19000 ft;
 					fog.vmin=-39000 ft;
 					hscale=0.002;
 					name="Venus";
+					ocean.level=295046 ft;
 					shadow=Color(0.21,0.17,0.04,0.31);
 					shine=16.4793;
 					specular=Color(1,1,1,0.11);
@@ -140,6 +142,7 @@ Scene() {
 						tilt=10;
 						twilight.max=0.867201;
 						twilight.min=-0.203169;
+						year=100;
 					}
 				}
 			}

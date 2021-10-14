@@ -2464,7 +2464,7 @@ void Scene::render_shadows()
 			}
 			else{
 				shadow_group(1);
-				Raster.set_farview(vsobs>1);
+				Raster.set_farview(1);
 				//Raster.shadow_vsize=0.5*(zfar-znear);
 				ObjectNode *sobj=(ObjectNode *)shadowobj;
 				if(shadowobj->type()==ID_MOON)

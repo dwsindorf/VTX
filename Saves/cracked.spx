@@ -6,6 +6,11 @@ Scene() {
 		height=45753.4 ft;
 		gndlvl=-11981.9 ft;
 		time=6043.96;
+		vstride=586570;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=15;
 		tilt=-1;
 		angle=-26;
@@ -20,6 +25,15 @@ Scene() {
 		height=49455 ft;
 		tilt=-3;
 		angle=-25;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=1.13636e-09;
+		radius=0.0015071;
+	}
+	View{
+		tilt=-5;
+		angle=-27;
+		minr=0.00149773;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -44,9 +58,10 @@ Scene() {
 					color=Color(1,1,0.8);
 					day=100;
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1,0.82);
+					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
+					temperature=4917.65;
 					Surface{
 						m1=noise(GRADIENT|UNS,3,10,0.4,0.5);
 						m2=noise(GRADIENT|NABS|UNS,8,10,0.5,0.5);
@@ -58,18 +73,18 @@ Scene() {
 						color2=Color(1,1,0.7);
 					}
 				}
-				Planet(0.0015,36) {
+				Planet(0.0015,42.6183) {
+					albedo=0.73;
 					ambient=Color(1,1,1,0.06);
 					day=58.65;
 					name="Mercury";
+					ocean.level=1.25216e-312 ft;
 					resolution=3.31426;
 					shadow=Color(0,0,0,0.95);
 					shine=38.6458;
 					specular=Color(1,1,1);
 					sunset=0.01;
 					water.albedo=0.73;
-					year=87.97;
-					albedo=0.73;
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
 						Color(0.992,0.773,0.004));
@@ -88,7 +103,8 @@ Scene() {
 						diffuse=Color(1,1,1,0.66);
 						emission=Color(0.95,0.97,0.96,0);
 						name="Luna";
-						phase=231;
+						ocean.level=1.8115e+06 ft;
+						phase=214.999;
 						shine=20.4374;
 						specular=Color(1,1,1,0.89);
 						sunset=0.621998;

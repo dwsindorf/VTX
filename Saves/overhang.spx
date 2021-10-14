@@ -96,6 +96,7 @@ Scene() {
 		radius=0.00100104;
 	}
 	View{
+		time=38600;
 		minr=0.00100021;
 	}
 	Galaxy(20000) {
@@ -107,7 +108,7 @@ Scene() {
 			Color(0.000,0.000,1.000),
 			Color(0.000,0.722,1.000),
 			Color(0.502,1.000,1.000),
-			Color(1.000,0.278,0.000),
+			Color(1.000,0.275,0.000),
 			Color(1.000,0.702,0.200),
 			Color(1.000,1.000,0.400),
 			Color(1.000,1.000,0.702)
@@ -125,6 +126,7 @@ Scene() {
 				}
 			}
 			Planet(0.001,100) {
+				albedo=0.3;
 				ambient=Color(1,1,1,0.13);
 				day=1;
 				diffuse=Color(1,1,1,0.4);
@@ -133,13 +135,13 @@ Scene() {
 				fog.value=0.898039;
 				fog.vmax=2083.4 ft;
 				fog.vmin=555.6 ft;
+				ocean.level=7.34274e-300 ft;
 				resolution=0.5;
 				shadow=Color(0,0,0.1,0.7);
 				shine=1.24841;
 				specular=Color(1,1,1,0.27);
 				water.clarity=2000 ft;
 				year=300;
-				albedo=0.3;
 				water.color=Color(0,0.5,0.8);
 				bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 					Color(0,0.251,0,0.451),
@@ -152,11 +154,11 @@ Scene() {
 							Texture("saturn3",BORDER|TEX,128,2,1,-0.11104,1,2,1,0,0,1,0,0)+Point(2*m2,0,m1+m2);
 				}
 				Clouds(0.00101) {
+					albedo=0.6;
 					crot=1;
 					day=1.5;
 					specular=Color(1,1,1,0.6);
 					tilt=5;
-					albedo=0.6;
 					Surface{
 						a=noise(1,15,0.5,0.1);
 						d=ramp(0.5,1,a,1,0.7);
@@ -175,6 +177,7 @@ Scene() {
 					shine=1;
 					specular=Color(1,1,1);
 					twilight=Color(0.5,0,0.2);
+					year=300;
 				}
 			}
 		}
