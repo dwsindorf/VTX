@@ -622,7 +622,7 @@ public:
 	virtual double evalOceanFunction();
 	virtual double solidToLiquid();
 	virtual double liquidToGas();
-
+    virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
 
 };

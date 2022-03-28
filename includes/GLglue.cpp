@@ -15,6 +15,16 @@ using namespace std;
 
 double font_width=6;
 double font_height=13;
+double view_font_width=12;
+double view_font_height=24;
+
+#define FONT1 1000
+#define FONT2 2000
+#define FONT3 3000
+
+int Font1=FONT1;
+int Font2=FONT2;
+int Font3=FONT3;
 
 extern void mouse_down(int x, int y);
 extern void resize_window(int x, int y);
@@ -95,7 +105,7 @@ void draw_text(int x, int y, char *stg)
 
 //#ifndef GLUT
 #ifdef WIN32
-void set_fixed_font()
+bool set_fixed_font()
 {
 #ifndef JNI	 
     HDC hDC;   
@@ -123,6 +133,13 @@ void set_fixed_font()
     wglUseFontBitmaps(hDC, 0, 255, FONT1);
     DeleteObject(hFont);
 #endif
+    return true;
+}
+bool set_select_font(){
+	return set_fixed_font();
+}
+bool set_fonts(){
+	return fixed_font()
 }
 #ifdef MFC
 //===============================================================
@@ -353,18 +370,60 @@ void set_window_size(unsigned width, unsigned height)
 //#endif
 #else  // not WIN32
 #ifndef GLUT
-void set_fixed_font()
+bool set_view_font()
+{
+    XFontStruct *fontInfo=0;  // font storage
+    Display *dpy = XOpenDisplay(NULL); // default to DISPLAY env.
+    char *font="12x24";
+    fontInfo=XLoadQueryFont(dpy,font);
+    if(fontInfo){
+    	Font3=FONT3;
+		glXUseXFont(fontInfo->fid,0,255, Font3);
+    }
+    else{
+    	cout<< "couldn't load view font:"<<font<<endl;
+    	Font3=FONT1;
+    }
+	 XCloseDisplay(dpy);
+    return fontInfo?true:false;
+}
+
+bool set_select_font()
 {
     XFontStruct *fontInfo=0;  // font storage   
+    Display *dpy = XOpenDisplay(NULL); // default to DISPLAY env.
+    char *font="9x15bold";
+    fontInfo=XLoadQueryFont(dpy,font);
+    if(fontInfo){
+    	Font2=FONT2;
+		glXUseXFont(fontInfo->fid,0,255, Font2);
+    }
+    else{
+    	cout<< "couldn't load select font:"<<font<<endl;
+    	Font2=FONT1;
+    }
+	 XCloseDisplay(dpy);
+    return fontInfo?true:false;
+}
+bool set_fixed_font()
+{
+    XFontStruct *fontInfo=0;  // font storage
     Display *dpy = XOpenDisplay(NULL); // default to DISPLAY env.
     fontInfo=XLoadQueryFont(dpy,"fixed");
     if(fontInfo){
         glXUseXFont(fontInfo->fid,0,255, FONT1);
         font_height=fontInfo->ascent+fontInfo->descent;
         font_width=fontInfo->max_bounds.width;
-        cout << "font ht:"<< font_height << " width:"<<font_width<<endl;
+        Font1=FONT1;
+        //cout << "fixed font ht:"<< font_height << " width:"<<font_width<<endl;
    }
-    XCloseDisplay(dpy);
+   XCloseDisplay(dpy);
+   return fontInfo?true:false;
+}
+bool set_fonts(){
+	set_fixed_font();
+	set_select_font();
+	set_view_font();
 }
 #endif // end WXWIN-GTK code
 #endif // end WIN32 code

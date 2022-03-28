@@ -2073,6 +2073,17 @@ void Scene::show_select_info()
 }
 
 //-------------------------------------------------------------
+// show_view_info() show view message
+//-------------------------------------------------------------
+void Scene::show_view_info()
+{
+    if(!viewobj || viewtype!=SURFACE)
+	    set_vstring(0);
+    else
+    	viewobj->set_view_info();
+}
+
+//-------------------------------------------------------------
 // Scene::animate() do all animation tasks
 //-------------------------------------------------------------
 void Scene::animate()
@@ -2298,6 +2309,7 @@ void Scene::render()
 		setMatrixMode(GL_MODELVIEW);
         loadIdentity();
 		show_select_info();
+		show_view_info();
 		show_log_info();
     	render_time=(double)(clock() - start)/CLOCKS_PER_SEC;
     	render_time-=adapt_time;
@@ -2313,7 +2325,9 @@ void Scene::render()
 #endif
     	build_time=0;
 		exec_finishers();
-		output_strings();
+
+		output_text(); // on-screen info
+
 		set_action("Ready");
     	if(/*changed_detail() ||*/ automv())
     		set_moved();

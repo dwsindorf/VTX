@@ -25,10 +25,6 @@ Scene() {
 	}
 	View{
 		delt=2000;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00397461;
 	}
 	View{
 		height=5537.52 ft;
@@ -36,8 +32,15 @@ Scene() {
 		heading=-5;
 		tilt=4;
 		angle=-5;
-		minr=0.00397377;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
 		radius=0.00397482;
+	}
+	View{
+		height=24182.4 ft;
+		minr=0.00397377;
+		radius=0.00397835;
 	}
 	Universe {
 		Galaxy(20000) {

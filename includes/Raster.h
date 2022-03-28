@@ -378,7 +378,8 @@ public:
 
 	void set_data(MapNode *n)		{ if(dcnt>=idsize)
 										  resize_idtbl((int)(idsize*1.25));
-									  idtbl[dcnt++]=n;
+									  if(idtbl)
+										  idtbl[dcnt++]=n;
 									}
 	MapNode *get_data(int id)		{ if(valid_id(id))
 										return idtbl[id];

@@ -160,6 +160,7 @@ public:
 	virtual double far_height();
 	virtual double max_height();
 	virtual Point screen();
+	virtual void set_view_info();
 	virtual void set_focus(Point &p);
 	virtual void move_focus(Point &p);
 	virtual Point get_focus(void *);

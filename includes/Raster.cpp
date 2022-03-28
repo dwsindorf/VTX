@@ -898,8 +898,10 @@ void RasterMgr::alloc_idtbl(int size)
 //-------------------------------------------------------------
 void RasterMgr::reset_idtbl()
 {
-	idtbl[0]=0;
-	idcnt=1;
+	if(idtbl){
+		idtbl[0]=0;
+		idcnt=1;
+	}
 	dcnt=1;
 }
 

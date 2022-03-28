@@ -445,7 +445,7 @@ void PreviewRenderer::render()
 		double render_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 		if(show_istring()){
 			draw_string(DATA_COLOR,"time %-2.1f ms cells %d",render_time*1000,object->map->size);
-			output_strings();
+			output_info_strings();
 		}
 		glFlush();
 		clr_moved();

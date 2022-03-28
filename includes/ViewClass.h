@@ -56,6 +56,7 @@ enum{ // color bits
 	PLAY_COLOR	    = 0x00000005,
 	HIST_COLOR	    = 0x00000006,
 	MENU_COLOR	    = 0x00000007,
+	VIEW_COLOR	    = 0x00000008,
 	NUM_SYSCOLORS   = 10,
 };
 
@@ -104,6 +105,11 @@ protected:
 	int		status;
 	int         suspend_cnt;
 
+	int mm;
+
+	void push_attributes();
+	void pop_attributes();
+
 public:
 	TrackBall model_trackball;
 	TrackBall light_trackball;
@@ -115,6 +121,7 @@ public:
 	int        stgcolor[MAX_STRINGS];
 	int        nstrings;
 	char       istring[MAX_STRING_SIZE];
+	char       vstring[MAX_STRING_SIZE];
 	Color      syscolor[NUM_SYSCOLORS];
 	bool       auto_contrast; // enables color inversion to optimize contrast;
 	int window_height;
@@ -355,10 +362,19 @@ public:
 	void reset(View*);
 
 	void draw_string(int c, const char *msg,...);
-	void output_strings();
+	void output_info_strings();
+	void output_view_string();
+	void output_select_string();
+	void output_text();
+
+
 	void set_istring(const char *msg,...);
 	void set_show_istring(int c) { BIT_SET(status,SHOW_ISTRING,c);}
 	int show_istring()           { return status & SHOW_ISTRING;}
+
+	void set_vstring(const char *msg,...);
+	void set_show_vstring(int c) { BIT_SET(status,SHOW_VSTRING,c);}
+	int show_vstring()           { return status & SHOW_VSTRING;}
 
 	// viewpoint motion functions
 

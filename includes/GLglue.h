@@ -23,7 +23,7 @@ extern void set_position(const char *c, ...);
 extern void set_info(const char *c, ...);
 extern void DisplayErrorMessage(const char *format,...);
 extern void set_window_size(unsigned width, unsigned height);
-extern void set_fixed_font();
+extern bool set_fonts();
 
 enum {
     SMALL,
@@ -47,7 +47,9 @@ enum {
     USE_RGBA_8,
     USE_INDEX_8 
 };
-#define FONT1 1000
+
+extern int Font1,Font2,Font3;
+
 #ifdef WIN32     // windows 2000 XP
 #ifdef WINDOWS   // mfc wgl
 #include <afxwin.h>

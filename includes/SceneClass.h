@@ -108,6 +108,7 @@ protected:
 	void		save(FILE *);
 	void 		render_ids_();
 	void 		show_select_info();
+	void        show_view_info();
 	void 		show_mode_info();
 	void		show_log_info();
 	void 		shadow_group(int);

@@ -11,7 +11,7 @@
 #define MATRIX_MGR          // enable MatrixMgr
 #define TFACT 0.1
 
-extern double font_height,font_width;
+extern double font_height,font_width,view_font_height,view_font_width;
 
 int print_strings=0;
 int draw_strings=1;
@@ -87,11 +87,12 @@ void View::reset_colors(){
 	syscolor[INFO_COLOR]=Color(0.0,0.9,1);
 	syscolor[DATA_COLOR]=Color(1,1,1);
 	syscolor[HDR1_COLOR]=Color(1,0.7,0);
-	//syscolor[MENU_COLOR]=Color(1,1,0);
 	syscolor[MENU_COLOR]=Color(1,1,0.0);
 	syscolor[RECD_COLOR]=Color(1,0.2,0.2);
 	syscolor[PLAY_COLOR]=Color(0,1,0.5);
 	syscolor[HIST_COLOR]=Color(0,1,1);
+	syscolor[VIEW_COLOR]=Color(1,0,0);
+
 	set_show_istring(1);
 	auto_contrast=false;
 
@@ -126,7 +127,7 @@ void View::reset()
 	reset_time();
 	maxht=0;
 	nstrings=0;
-	istring[0]=0;
+	istring[0]=vstring[0]=0;
 	vobj=0;
 	move_type=MODEL_MOVE;
 	set_autoldm();
@@ -202,6 +203,25 @@ void View::draw_string(int id, const char *msg,...)
 }
 
 //-------------------------------------------------------------
+// View::set_istring() set view string
+//-------------------------------------------------------------
+void View::set_vstring(const char *msg,...)
+{
+    if(!msg){
+    	istring[0]=0;
+    	return;
+    }
+	va_list             xp;
+	va_start(xp, msg);
+
+	int n=MAX_STRING_SIZE;
+	char buff[512];
+	vsprintf(buff,msg, xp);
+	va_end(xp);
+	strncpy(vstring,buff,n);
+}
+
+//-------------------------------------------------------------
 // View::set_istring() set info string
 //-------------------------------------------------------------
 void View::set_istring(const char *msg,...)
@@ -220,30 +240,25 @@ void View::set_istring(const char *msg,...)
 	strncpy(istring,buff,n);
 }
 
-static FColor ave_color(char *str, GLfloat *pixels,int num_pixels){
-	FColor fc=FColor(0,0,0);
-	for(int i=0;i<num_pixels*3;i+=3){
-		FColor nc=FColor(pixels[i],pixels[i+1],pixels[i+2]);
-		fc=fc+nc;
-	}
-	fc=fc/num_pixels;
-	return fc;
-}
-
 //-------------------------------------------------------------
 // View::output_strings() draw cached strings
 //-------------------------------------------------------------
-void View::output_strings()
+void View::output_text()
 {
-    extern void draw_char(int c);
+	push_attributes();
+	output_info_strings();
+	output_select_string();
+	output_view_string();
+	pop_attributes();
+}
 
-    if(istring[0]==0 && nstrings==0)
-    	return;
-
-    int mm=getMatrixMode();
+//-------------------------------------------------------------
+// View::push_attributes() push render attributes
+//-------------------------------------------------------------
+void View::push_attributes(){
+	mm=getMatrixMode();
 	pushMatrix();
     glLoadIdentity();
-	glListBase(FONT1);
 	setMatrixMode(GL_PROJECTION);
     loadIdentity();
 	glDisable(GL_BLEND);
@@ -254,53 +269,76 @@ void View::output_strings()
 	glDisable(GL_DITHER);
 	glDisable(GL_FOG);
 	glRasterPos4d(-1,-1,0,1);
-
 	glPushAttrib (GL_ALL_ATTRIB_BITS);
-	//glEnable(GL_COLOR_LOGIC_OP);
-	//glLogicOp(GL_XOR);
+}
+//-------------------------------------------------------------
+// View::push_attributes() pop render attributes
+//-------------------------------------------------------------
+void View::pop_attributes(){
+    glPopAttrib();
+	glMatrixMode(mm);
+	popMatrix();
+	glRasterPos4d(-1,-1,0,1);
+	glEnable(GL_DEPTH_TEST);
+}
 
-	GLfloat *pixels=0;
-	MALLOC(viewport[2]*3,GLfloat,pixels);
+//-------------------------------------------------------------
+// View::output_strings() draw cached strings
+//-------------------------------------------------------------
+void View::output_info_strings()
+{
+    if(nstrings==0)
+    	return;
+
+	glListBase(Font1);
 
 	for (int i = 0; i < nstrings; i++) {
 		char *str = strings + i * MAX_STRING_SIZE;
 		FColor fg=syscolor[stgcolor[i]];
 		int y = (int)(viewport[3] - i * font_height-1);
-		if (auto_contrast && y < viewport[3] && y >= 0) {
-			int npixels=(int)(strlen(str)*font_width);
-			npixels=npixels>viewport[2]?viewport[2]:npixels;
-			glReadPixels(0, y, npixels , 1, GL_RGB, GL_FLOAT, pixels);
-			FColor bg = ave_color(str, pixels,npixels);
-			fg=bg.contrast_color(fg,4.0);
-		}
 		glColor3d(fg.red(), fg.green(), fg.blue());
 		draw_text(0, i, str);
 		if (print_strings)
 			printf("%s\n", str);
 	}
-	if(istring[0]){
-		if(print_strings)
-			printf("%s\n",istring);
-		double y=20.0/viewport[3];
-		FColor fg=syscolor[INFO_COLOR];
-		if(auto_contrast){
-			int npixels=(int)(strlen(istring)*font_width);
-			npixels=npixels>viewport[2]?viewport[2]:npixels;
-			glReadPixels(0, 10, npixels,1, GL_RGB, GL_FLOAT,pixels);
-			FColor bg=ave_color(istring,pixels,npixels);
-			fg=bg.contrast_color(fg,4.0);
-		}
-		glColor3d(fg.red(),fg.green(),fg.blue());
-		glRasterPos2d(-1,-1+y);
-		glCallLists(strlen(istring),GL_UNSIGNED_BYTE,istring);
-	}
-    glPopAttrib();
+}
 
-	glMatrixMode(mm);
-	popMatrix();
-	glRasterPos4d(-1,-1,0,1);
-	glEnable(GL_DEPTH_TEST);
-	FREE(pixels);
+//-------------------------------------------------------------
+// View::output_strings() draw cached strings
+//-------------------------------------------------------------
+void View::output_select_string()
+{
+    if(istring[0]==0)
+    	return;
+
+	glListBase(Font2);
+
+	if(print_strings)
+		printf("%s\n",istring);
+	double y=20.0/viewport[3];
+	FColor fg=syscolor[INFO_COLOR];
+	glColor3d(fg.red(),fg.green(),fg.blue());
+	glRasterPos2d(-1,-1+y);
+	glCallLists(strlen(istring),GL_UNSIGNED_BYTE,istring);
+}
+
+//-------------------------------------------------------------
+// View::output_strings() draw cached strings
+//-------------------------------------------------------------
+void View::output_view_string()
+{
+    if(vstring[0]==0)
+    	return;
+
+	glListBase(Font3);
+
+	if(print_strings)
+		printf("%s\n",vstring);
+	FColor fg=syscolor[VIEW_COLOR];
+	glColor3d(fg.red(),fg.green(),fg.blue());
+	glRasterPos2d(0.9,0.9);
+	glCallLists(strlen(vstring),GL_UNSIGNED_BYTE,vstring);
+
 }
 
 //-------------------------------------------------------------

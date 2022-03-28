@@ -1402,7 +1402,8 @@ void Galaxy::render_object()
 void Galaxy::init_view()
 {
 	if(TheScene->focusobj==this){
-		newSubSystem();
+		//cout<<"Galaxy::init_view"<<endl;
+		//newSubSystem();
 		return;
 	}
 
@@ -1450,11 +1451,11 @@ NodeIF *Galaxy::newSubSystem()
 	system->newSubSystem();
 
 	addChild(system);
-	TheScene->regroup();
-    invalidate();
-    TheScene->rebuild_all();
-    rebuild_scene_tree();
-    select_tree_node(system);
+	//TheScene->regroup();
+    //invalidate();
+    //TheScene->rebuild_all();
+    //rebuild_scene_tree();
+    //select_tree_node(system);
 
     TheScene->focusobj=system;
     system->init_view();
@@ -3607,6 +3608,22 @@ void Planetoid::set_time(double t)
 	double tm=calc_time(t)+TheScene->time;
 	TheScene->ftime=tm;
 	TheScene->set_time(tm);
+}
+
+//-------------------------------------------------------------
+// Planetoid::set_view_info()
+//-------------------------------------------------------------
+void Planetoid::set_view_info()
+{
+	static char *hsyms[8]={"E","NE","N","NW","W","SW","S","SE"};
+	if(TheScene->viewobj==this){
+		double h=P360(TheView->heading);
+		h=h<0?360+h:h;
+		double indx=fmod(8*h/360+0.5,8.0);
+		// heading 0 = E, 180 = W, 90 = N, 270=S
+		//cout<<"heading:"<<TheView->heading<<" angle:"<<h<<" indx:"<<indx<<endl;
+		TheView->set_vstring("%s",hsyms[(int)indx]);
+	}
 }
 
 //************************************************************

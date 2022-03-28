@@ -101,9 +101,8 @@ bool VtxApp::OnInit()
     
     frame->Show(true);
 
-    set_fixed_font(); // set fixed font for opengl text
+    set_fonts(); // set fonts for opengl text
     
-
     vs->SetSceneName(filename);
     vs->Refresh();
 

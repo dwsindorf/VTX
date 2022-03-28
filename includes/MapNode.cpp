@@ -2479,8 +2479,8 @@ double MapNode::max_height() {
     	else
     		ht=z1;
     }
-    if(TheScene->select_mode())
-       cout<<" ht:"<<ht/FEET<<endl;
+    //if(TheScene->select_mode())
+    //   cout<<" ht:"<<ht/FEET<<endl;
 
 	return ht;
 }
