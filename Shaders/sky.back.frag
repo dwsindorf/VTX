@@ -121,6 +121,7 @@ void main(void) {
 	//float dh=1.0;//pow(d,haze_grad);
 	h = Haze.a*dv; // haze transparancy
 	//h=clamp(h,0.0,1.0);
+	illumination=lerp(density,0.5,0.9,illumination,1);
 	color.rgb=mix(color.rgb,haze.rgb*illumination,h);
 #endif
 
@@ -138,7 +139,6 @@ void main(void) {
 		a=clamp(a,0.0,1.0);
 		a=lerp(density,0.5,0.9,a,1);
 		color.rgb=mix(fcolor1.rgb,color.rgb,a);
-		//mix(fcolor1.rgb,color.rgb,a);
 		//color.rgb=mix(color.rgb,vec3(1.0,1.0,1.0),shine_thru*luminance);
 		
 	//}

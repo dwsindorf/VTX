@@ -1130,8 +1130,7 @@ void MapNode::sizechk()
 	else{
 		if(hidden())
 		   set_tlevel(Adapt.smooth());
-		else
-		if(masked()){// clipped by frame
+		else if(masked()){// clipped by frame
 		    if(partvis())
 				set_tlevel(Adapt.normal());
 			else

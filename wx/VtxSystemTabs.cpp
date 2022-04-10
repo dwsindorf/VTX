@@ -156,12 +156,14 @@ void VtxSystemTabs::AddDisplayTab(wxWindow *panel){
 }
 
 void VtxSystemTabs::OnViewObj(wxCommandEvent& event){
-	if(!is_viewobj()){
+	//if(!is_viewobj()){
 		TheScene->set_viewobj(object());
 		TheScene->selobj=object();
+		TheScene->focusobj=object();
+		TheScene->set_changed_view();
 		TheScene->change_view(ORBITAL);
 		menu_action=TABS_VIEWOBJ;
-	}
+	//}
 }
 void VtxSystemTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 	event.Check(is_viewobj());

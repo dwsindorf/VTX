@@ -45,7 +45,7 @@ static DoubleSym units[]={
 NameList<DoubleSym*> Units(units,sizeof(units)/sizeof(DoubleSym));
 
 double View::dflt_fov=35;
-double View::dflt_cellsize=5;
+double View::dflt_cellsize=3.5;
 
 View::View()
 {
@@ -208,7 +208,7 @@ void View::draw_string(int id, const char *msg,...)
 void View::set_vstring(const char *msg,...)
 {
     if(!msg){
-    	istring[0]=0;
+    	vstring[0]=0;
     	return;
     }
 	va_list             xp;
@@ -238,6 +238,7 @@ void View::set_istring(const char *msg,...)
 	vsprintf(buff,msg, xp);
 	va_end(xp);
 	strncpy(istring,buff,n);
+	//cout<<"View::set_istring "<<istring<<endl;
 }
 
 //-------------------------------------------------------------
@@ -308,6 +309,8 @@ void View::output_info_strings()
 //-------------------------------------------------------------
 void View::output_select_string()
 {
+	//cout<<"View::output_select_string() "<<istring<<endl;
+
     if(istring[0]==0)
     	return;
 

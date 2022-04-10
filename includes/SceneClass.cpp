@@ -828,6 +828,7 @@ void Scene::open(char *fn)
 	selobj=focusobj=0;
 
 	objects->visitAll(&Object3D::clr_groups);
+	objects->visitAll(&Object3D::init);
 	if(viewobj){
 	    radius=height+gndlvl+viewobj->radius();
 		viewobj->init_view();
@@ -850,7 +851,7 @@ void Scene::open(char *fn)
 	auto_stride();
 	clr_automv();
     double tm=clock();
-	objects->visitAll(&Object3D::init);
+	//objects->visitAll(&Object3D::init);
     init_time=(double)(clock() - tm)/CLOCKS_PER_SEC;
 #ifdef VERIFY_OPEN
 	char path[256];
@@ -1478,12 +1479,12 @@ void Scene::change_view(int v)
 //	if(focusobj && focusobj->type()==ID_GALAXY){
 //		v=GLOBAL;
 //	}
-    if(viewtype!=v){
+    //if(viewtype!=v){
         set_changed_view();
         reset_stride();
-    }
-    else
-        clr_changed_view();
+    //}
+    //else
+    //    clr_changed_view();
 
 	if(changed_marker())
     	views->add(this);
@@ -2038,7 +2039,7 @@ void *Scene::select_pass()
 			obj=(void*)hit[3];
 		}
 	}
-	//cout << "hits="<<n<<endl;
+	//cout << "hits="<<n<<" obj:"<<obj<<endl;
     return obj;
 }
 
@@ -2068,8 +2069,9 @@ void Scene::show_select_info()
 {
     if(!focusobj)
 	    set_istring(0);
-    else
+    else{
         focusobj->set_focus(selm);
+    }
 }
 
 //-------------------------------------------------------------

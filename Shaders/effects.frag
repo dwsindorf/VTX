@@ -63,8 +63,8 @@ void main(void) {
 		float z=DEPTH;
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
-		d=lerp(depth,0.0,haze_zfar,0.0,1.0);
-		h=haze_ampl*Haze.a*pow(d,1.5*haze_grad);
+		d=haze_grad==0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0);
+		h=haze_ampl*Haze.a*pow(d,2*haze_grad);
 #endif
 #ifdef WATER
 		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
@@ -130,7 +130,9 @@ void main(void) {
 #else
 			vec3 rfog=Haze.rgb;
 #endif // FOG
-			color=mix(color,rfog*AMBIENT,rmod*h);
+			color=mix(color,rfog,rmod*h);
+			//color=mix(color,rfog*AMBIENT,rmod*h);
+			
 #endif // HAZE
 		}
 #endif // WATER

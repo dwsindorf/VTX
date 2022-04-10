@@ -13,6 +13,8 @@ protected:
 	SliderCtrl *OrbitRadiusSlider;
 	SliderCtrl *OrbitPhaseSlider;
 	SliderCtrl *OrbitTiltSlider;
+	SliderCtrl *OrbitSkewSlider;
+	SliderCtrl *OrbitEllipseSlider;
 	SliderCtrl *DaySlider;
 	SliderCtrl *RotPhaseSlider;
 	SliderCtrl *YearSlider;
@@ -90,7 +92,7 @@ public:
 
     DEFINE_SLIDER_VAR_EVENTS(OrbitRadius,object()->orbit_radius)
     DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
-    DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
+    DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_eccentricity)
     DEFINE_SLIDER_VAR_EVENTS(Day,object()->day)
     DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
     DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)

@@ -161,7 +161,7 @@ Orbital::~Orbital(){ }
 
 void Orbital::set_defaults()
 {
-	orbit_skew=orbit_angle=orbit_phase=orbit_radius=0.0;
+	orbit_skew=orbit_angle=orbit_phase=orbit_radius=0.0,orbit_eccentricity=0;
 	year=day=tilt=pitch=rot_angle=rot_phase=0.0;
 	detail=1;
 	set_color(WHITE);
@@ -230,6 +230,7 @@ void Orbital::setOrbitFrom(Orbital *p){
 	tilt=p->tilt;
 	pitch=p->pitch;
 	orbit_skew=p->orbit_skew;
+	orbit_eccentricity=p->orbit_eccentricity;
 	orbit_radius=p->orbit_radius;
 	origin=p->origin;
 }
@@ -372,6 +373,7 @@ void Orbital::get_vars()
 	VGET("tilt",tilt,0);
 	VGET("pitch",pitch,0);
 	VGET("skew",orbit_skew,0);
+	VGET("eccentricity",orbit_eccentricity,0);
 	VGET("phase",orbit_phase,0);
 	VGET("rot_phase",rot_phase,0);
 
@@ -415,6 +417,7 @@ void Orbital::set_vars()
 	VSET("tilt",tilt,0);
 	VSET("pitch",pitch,0);
 	VSET("skew",orbit_skew,0);
+	VSET("eccentricity",orbit_eccentricity,0);
 	VSET("phase",orbit_phase,0);
 	VSET("rot_phase",rot_phase,0);
 	VSET("day",day,0);
@@ -519,10 +522,27 @@ void Orbital::visit(void (*func)(Object3D*))
 void Orbital::animate()
 {
 	double secs=0,cycles=0;
+
 	if(year){
 		secs=24*3600*year; // earth normal days
 		cycles=TheScene->ftime/secs;
+		// angle around focal point (as if a circular orbit)
 		orbit_angle=P360(orbit_phase+360*cycles);
+
+		double r=orbit_radius;
+		double e=orbit_eccentricity;
+
+        double c=cos(RPD*orbit_angle);
+        double b=(c+e)/(1+c*e);//converts circular angle to elliptical angle
+        double x=DPR*acos(b); // angle around COM
+
+        if(orbit_angle>180) //fixes transition direction change in cosine
+        	x=360-x;
+
+		orbit_angle=x;
+		c=cos(RPD*orbit_angle); // recalculate rotation angle
+		orbit_distance=r*(1-e*e)/(1-e*c);
+
 	}
 	if(day){
 		secs=day*3600;
@@ -543,7 +563,7 @@ void Orbital::set_ref()
 	if(orbit_angle)
 		TheScene->rotate(orbit_angle,0.0,1.0,0.0);
 	if(orbit_radius)
-		TheScene->translate(0,0,orbit_radius);
+		TheScene->translate(0,0,orbit_distance);
 }
 
 //-------------------------------------------------------------
@@ -1117,8 +1137,18 @@ Point Galaxy::get_focus(void *obj)
 //-------------------------------------------------------------
 void Galaxy::set_focus(Point &p)
 {
+
+	System *system=new System(0);
+	system->set_system(p);
+	//double nseed=Random(p);
+	//lastn=nseed*123457;
+	//double ps=pow(URAND(lastn),2);
+	//int stars=1+ps*3;
+	int stars=system->stars();
+
     Point vp=Point(0,0,0)-TheScene->spoint;
-    TheScene->set_istring("Star dist %g ly",p.distance(vp)/LY);
+    TheScene->set_istring("System dist:%g ly Stars:%d",p.distance(vp)/LY,stars);
+    delete system;
 }
 
 //-------------------------------------------------------------
@@ -1402,8 +1432,8 @@ void Galaxy::render_object()
 void Galaxy::init_view()
 {
 	if(TheScene->focusobj==this){
-		//cout<<"Galaxy::init_view"<<endl;
-		//newSubSystem();
+		cout<<"Galaxy::init_view"<<endl;
+		newSubSystem();
 		return;
 	}
 
@@ -1445,17 +1475,17 @@ NodeIF *Galaxy::newSubSystem()
 	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
 	system->origin=TheScene->selm;
 
-	double nseed=Random(system->origin);
-	system->setRseed(nseed);
+	//double nseed=Random(system->origin);
+	//system->setRseed(nseed);
 
 	system->newSubSystem();
 
 	addChild(system);
-	//TheScene->regroup();
-    //invalidate();
-    //TheScene->rebuild_all();
-    //rebuild_scene_tree();
-    //select_tree_node(system);
+	TheScene->regroup();
+    invalidate();
+    TheScene->rebuild_all();
+    rebuild_scene_tree();
+    select_tree_node(system);
 
     TheScene->focusobj=system;
     system->init_view();
@@ -1508,6 +1538,7 @@ System::System(double s) : Orbital(s)
 	printf("System\n");
 #endif
 	all_exclude();
+	m_planets=m_stars=0;
 }
 System::System(Orbital *m,double s) : Orbital(m,s)
 {
@@ -1515,6 +1546,7 @@ System::System(Orbital *m,double s) : Orbital(m,s)
 	printf("System\n");
 #endif
 	all_exclude();
+	m_planets=m_stars=0;
 }
 
 //-------------------------------------------------------------
@@ -1594,6 +1626,8 @@ void System::set_vars()
 //-------------------------------------------------------------
 void System::init_view()
 {
+	get_system();
+
 	TheScene->maxr=size;
 	TheScene->minr=10;
 	TheScene->minh=0.01;
@@ -1601,20 +1635,30 @@ void System::init_view()
 	TheScene->zoom=1;
 	TheScene->hstride=TheScene->vstride=1;
 	TheScene->gstride=0.1*LY;
-	if(TheScene->changed_file())  // exit for open
-	    return;
+	//if(TheScene->changed_file())  // exit for open
+	//    return;
 	TheScene->view_tilt=0;
-	TheScene->view_angle=0;
-	TheScene->heading=90;
 	TheScene->view_skew=0.0;
-	TheScene->pitch=-90.0;
 	TheScene->gndlvl=0;
-	TheScene->height=51.120;
+	TheScene->height=3.5*size;//51.120;
 	//TheScene->height=30;
 	//TheScene->radius=30;
-	TheScene->radius=0;
+	TheScene->radius=TheScene->height;
 	TheScene->theta=0;
-	TheScene->phi=0;
+	if(m_stars==1){
+		TheScene->phi=0;
+		TheScene->view_angle=0;
+		TheScene->heading=90;
+		TheScene->pitch=-90;
+	}
+	else{
+		TheScene->phi=90;
+		TheScene->view_angle=-90;
+		TheScene->heading=90;
+		TheScene->pitch=-90.0;
+	}
+	cout<<"stars:"<<m_stars<<" planets:"<<m_planets<<" size:"<<size<<" ht:"<<TheScene->radius<<endl;
+
 }
 
 //-------------------------------------------------------------
@@ -1688,31 +1732,134 @@ bool System::randomize(){
 	Orbital::randomize();
 	return true;
 }
+
+//-------------------------------------------------------------
+// System::planets() return number of planets in system
+//-------------------------------------------------------------
+int System::planets()
+{
+	return m_planets;
+}
+
+//-------------------------------------------------------------
+// System::planets() return number of stars in system
+//-------------------------------------------------------------
+int System::stars()
+{
+	return m_stars;
+}
+
+//-------------------------------------------------------------
+// System::get_system() identify system children
+//-------------------------------------------------------------
+void System::get_system()
+{
+	Orbital *obj;
+	children.ss();
+	m_stars=0;
+	m_planets=0;
+	size=0;
+
+	while((obj=(Orbital*)children++)>0){
+        if(obj->type()!=ID_STAR && obj->type()!=ID_PLANET)
+        	continue;
+        double r=(obj->orbit_radius)*(1+obj->orbit_eccentricity)+obj->size;
+        size=r>size?r:size;
+		if(obj->type()==ID_STAR){
+			Star *star=(Star*)obj;
+			cout<<"size:"<<star->size<<" radius:" <<star->orbit_radius<<" e:"<<star->orbit_eccentricity<<endl;
+			m_stars++;
+		}
+		else if(obj->type()==ID_PLANET){
+			m_planets++;
+		}
+	}
+}
+//-------------------------------------------------------------
+// System::set_system() set system prototype
+//-------------------------------------------------------------
+void System::set_system(Point p)
+{
+	origin=p;
+	double nseed=Random(p);
+	setRseed(nseed);
+
+	lastn=rseed*123457;
+
+	double ps=pow(URAND(lastn),2);
+	m_stars=1.2+ps*2;
+	m_planets=0;
+
+}
 //-------------------------------------------------------------
 // System::newSubSystem() generate a new random star system
 //-------------------------------------------------------------
 NodeIF *System::newSubSystem(){
 
 	children.free();
+	set_system(origin);
 
-	randomize();
-	lastn=rseed*123457;
-
-	double ps=pow(URAND(lastn),2);
-	int nstars=1+ps*3;
-	double radius=0;
+	double year=0;
 	double phase=0;
-	for(int i=0;i<nstars;i++){
-		Star *star=getInstance(TN_STAR);
+	Star *star;
+
+	for(int i=0;i<m_stars;i++){
+		star=getInstance(TN_STAR);
 		star->setRseed(URAND(lastn++));
-		star->size=2*star->size*(1+1.5*RAND(lastn++));
-		star->orbit_radius=radius*star->size*(1+URAND(lastn++));
+        double z=Star::star_size(star->temperature);
+		star->size=z*(1+0.2*RAND(lastn++));
+		cout<<star->startype<<" z:"<<z<<" r:"<<star->size<<endl;
+		if(m_stars==1)
+			star->orbit_radius=0;
 		star->orbit_phase=phase;
-		phase+=360.0/nstars;
-		radius+=5;
+
+		phase+=360.0/m_stars;
 		lastn++;
 		addChild(star);
 	}
+	ValueList<Object3D*> sorted(children);
+	sorted.se();
+	double radius=0;
+
+	if(m_stars>=2){ //binary
+		double r,m1,m2,m;
+		Star *star1=sorted--; //biggest
+		Star *star2=sorted--; // smallest
+		m1=star1->size;
+		m2=star2->size;
+		m=m1+m2;// min distance
+		r=m*(20+3*RAND(lastn++));   // random distance between stars
+		star1->orbit_radius=r*m2/m;
+		star2->orbit_radius=r-star1->orbit_radius;
+
+		double year=0.5*r*(1+0.2*URAND(lastn++));
+		star1->day=0.1*year*(1+0.5*RAND(lastn++));
+		star2->day=0.1*year*(1+0.5*RAND(lastn++));
+		r=URAND(lastn++);
+		double e=sqrt(r)*m1/m;
+		e=e>0.97?0.97:e;
+		star1->year=year;
+		star2->year=year;
+		star2->orbit_eccentricity=e; //
+		star1->orbit_eccentricity=1-e;
+		radius=star2->orbit_radius*(1+e);
+	}
+	if(m_stars>2){
+		while ((star = sorted--) > 0) { // back-to-front
+			//cout<<star->size<<" ";
+			star->orbit_radius=radius*(1.3+URAND(lastn++));
+			star->year=star->orbit_radius*URAND(lastn++);
+			lastn++;
+			radius+=20;
+		}
+	}
+	children.reset();
+	sorted.se();
+	while ((star = sorted--) > 0){
+		addChild(star);
+	}
+	star=(Star*)children.first();
+    size=star->orbit_radius;
 	return this;
 }
 
@@ -2433,6 +2580,7 @@ void Spheroid::init_view()
 		}
 		break;
 	}
+	cout<<TheScene->heading<<" "<<TheScene->view_angle<<" "<<TheScene->pitch<<endl;
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
 	TheScene->radius=TheScene->elevation+map->radius;
 }
@@ -2476,10 +2624,11 @@ Sky *Spheroid::get_sky()
 	return 0;
 }
 
+
 //************************************************************
 // Star class (stars)
 //************************************************************
-Color StarData::star_colors[StarData::ntypes]={
+Color Star::star_colors[StarData::ntypes]={
     		Color(0.957,0.525,0.255),  // L
     		Color(1.000,0.824,0.624),  // M
     		Color(1.000,0.922,0.882),  // K
@@ -2488,16 +2637,17 @@ Color StarData::star_colors[StarData::ntypes]={
     		Color(0.827,0.875,1.000),  // A
     		Color(0.627,0.753,1.000),  // B
     		Color(0.573,0.710,1.000)}; // O
-double StarData::star_temps[StarData::ntypes]={1000,2400,3700,5200,6000,7500,10000,30000};
-char StarData::star_class[StarData::ntypes]={'L','M','K','G','F','A','B','O'};
+double Star::star_temps[StarData::ntypes]={1000,2400,3700,5200,6000,7500,10000,30000};
+char Star::star_class[StarData::ntypes]={'L','M','K','G','F','A','B','O'};
 
-void StarData::star_info(Color col, double *t, char *m){
+// generate a predicted star type based on emission color
+void Star::star_info(Color col, double *t, char *m){
 	int min_index=0;
 	Color c=col;
 	c=col;
 	c.set_alpha(1.0);
 	double min_diff=10;
-	col.print();
+	//col.print();
 	for(int i=0;i<ntypes;i++){
 		double d=c.difference(star_colors[i]);
 		//cout<<" "<<star_class[i]<<" "<<d<<endl;
@@ -2516,6 +2666,14 @@ void StarData::star_info(Color col, double *t, char *m){
 	}
 	*t=temp*col.alpha();
 	sprintf(m,"%c%d",star_class[min_index],(int)(9*f*col.alpha()));
+}
+
+// return average star size based on temperature
+// approx. linear fit to data at:
+// https://people.highline.edu/iglozman/classes/astronotes/hr_diagram.htm
+double Star::star_size(double temp){
+	static double sun_radius=0.4327; // in 10^6 miles
+	return (0.27*temp/1000)*sun_radius;
 }
 Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 {
@@ -2541,8 +2699,8 @@ Star::~Star()
 void Star::setRadiance(Color c){
 	emission=c;
 	//c.print();
-	StarData::star_info(emission,&temperature,startype);
-	cout<<startype<<" "<<temperature<<endl;
+	star_info(emission,&temperature,startype);
+	//cout<<startype<<" "<<temperature<<endl;
 }
 void Star::getStarData(double *d, char *m){
 	setRadiance(emission);

@@ -58,7 +58,8 @@ protected:
 public:
 	ExprMgr exprs;
 	double rot_angle;
-	double orbit_angle;
+	double orbit_angle;    // time dependent rotation angle
+	double orbit_distance; // time dependent rotation radius
 	double rot_phase;
 	double orbit_phase;
 	double year;
@@ -67,6 +68,7 @@ public:
 	double pitch;
 	double orbit_skew;
 	double orbit_radius;
+	double orbit_eccentricity;
 	double detail;
 	Color  emission;
 	Color  ambient;
@@ -267,7 +269,13 @@ public:
 //************************************************************
 class System : public Orbital
 {
+private:
+	int m_planets;
+	int m_stars;
+    void get_system();
 public:
+    void set_system(Point p);
+
 	System(Orbital *m, double s);
 	System(double s);
 	int  type()				{ return ID_SYSTEM;}
@@ -283,6 +291,8 @@ public:
 	void locate();
 	int scale(double&n, double&f);
 	int select_pass();
+	int stars();
+    int planets();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *replaceNode(NodeIF *n);
 	NodeIF *newSubSystem();
@@ -369,12 +379,21 @@ class StarData {
 	static char star_class[ntypes];
 
 	static void star_info(Color c, double *t, char *m);
+	static double star_size(double t);
 	//static char star_type(double temp);
 };
 
 class Star : public Spheroid
 {
 public:
+	static const int ntypes=8;
+	static Color star_colors[ntypes];
+	static double star_temps[ntypes];
+	static char star_class[ntypes];
+
+	static void star_info(Color c, double *t, char *m);
+	static double star_size(double t);
+
 	double temperature;
 	char startype[3];
 

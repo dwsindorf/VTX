@@ -190,13 +190,13 @@ void VtxStarTabs::AddObjectTab(wxWindow *panel){
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	OrbitRadiusSlider=new SliderCtrl(panel,ID_ORBIT_RADIUS_SLDR,"Radius(mm)",LABEL2B, VALUE2,SLIDER2);
-	OrbitRadiusSlider->setRange(0,10);
-	OrbitRadiusSlider->setValue(1);
+	OrbitRadiusSlider->setRange(0,100);
+	OrbitRadiusSlider->setValue(10);
 
 	hline->Add(OrbitRadiusSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	OrbitTiltSlider=new SliderCtrl(panel,ID_ORBIT_TILT_SLDR,"Tilt",LABEL2S, VALUE2,SLIDER2);
-	OrbitTiltSlider->setRange(0,90);
+	OrbitTiltSlider=new SliderCtrl(panel,ID_ORBIT_TILT_SLDR,"Oblique",LABEL2S, VALUE2,SLIDER2);
+	OrbitTiltSlider->setRange(0,0.95);
 	OrbitTiltSlider->setValue(0.0);
 	hline->Add(OrbitTiltSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -274,7 +274,7 @@ void VtxStarTabs::updateControls(){
 	updateSlider(SizeSlider,obj->size);
 	updateSlider(OrbitRadiusSlider,obj->orbit_radius);
 	updateSlider(OrbitPhaseSlider,obj->orbit_phase);
-	updateSlider(OrbitTiltSlider,obj->orbit_skew);
+	updateSlider(OrbitTiltSlider,obj->orbit_eccentricity);
 	//updateSlider(TiltSlider,obj->tilt);
 	updateSlider(RotPhaseSlider,obj->rot_phase);
 	updateSlider(DaySlider,obj->day);
