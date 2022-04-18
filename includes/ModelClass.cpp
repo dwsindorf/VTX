@@ -243,7 +243,7 @@ int Model::setPrototype(NodeIF *parent, NodeIF *child)
 	return 0;
 }
 
-int Model::getPrototype(NodeIF *root,int i,char *)
+int Model::getPrototype(int i,char *)
 {
 	return 0;
 }

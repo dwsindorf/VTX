@@ -24,12 +24,13 @@ enum {
 // bits that control randomization behavior
 enum {
 	RND_RANDOMIZE   = 0x00100000, // need to randomize construction
+	RND_PROTOTYPE   = 0x00200000, // need to randomize prototype
 };
 
 // bits that control runtime behavior
 enum {
-	RTM_DISABLED    = 0x00200000,
-	RTM_ANIMATE     = 0x00400000,
+	RTM_DISABLED    = 0x00400000,
+	RTM_ANIMATE     = 0x00800000,
 	RTM_FLAGS       = RTM_DISABLED|RTM_ANIMATE
 };
 
@@ -101,13 +102,14 @@ public:
 
 	bool isRandom()             { return getFlag(RND_RANDOMIZE) ? false:true;}
 	void setRandom(bool b)      { if(b) clrFlag(RND_RANDOMIZE); else setFlag(RND_RANDOMIZE); }
+	void setProtoValid(bool b)      { if(b) clrFlag(RND_PROTOTYPE); else setFlag(RND_PROTOTYPE); }
+	bool protoValid()             { return getFlag(RND_PROTOTYPE) ? true:false;}
 	virtual bool canRandomize() { return false;}
 	virtual bool randomize()    { return false;}
 	virtual void setRseed(double s) {}
 	virtual double getRseed()   { return 0;}
 	virtual void setDefault()   { }
-	virtual NodeIF *getInstance(int t) { return 0;}
-	virtual NodeIF *newSubSystem() {return 0;}
+	virtual NodeIF *getInstance() {return this;}
 
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}

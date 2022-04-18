@@ -26,6 +26,7 @@ protected:
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
+	void setTypeString();
 	Color radiance;
 public:
 	VtxStarTabs(wxWindow* parent,
@@ -103,6 +104,7 @@ public:
 		OnColorSlider(EmissionSlider, radiance);
 		object()->setRadiance(radiance);
 		invalidateRender();
+		setTypeString();
 		changing=false;
 	}
     void OnEmissionSlider(wxScrollEvent& event){
@@ -118,6 +120,7 @@ public:
     void OnEmissionColor(wxColourPickerEvent& WXUNUSED(event)){
 		OnColorValue(EmissionSlider, radiance);
 		object()->setRadiance(radiance);
+		setTypeString();
 		invalidateRender();
 	}
     void OnViewObj(wxCommandEvent& event);

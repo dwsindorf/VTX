@@ -10,10 +10,16 @@ class VtxSystemTabs : public VtxTabsMgr
 	DECLARE_CLASS(VtxSystemTabs)
 protected:
 	void AddDisplayTab(wxWindow *panel);
+	void AddViewTab(wxWindow *panel);
 	//SliderCtrl *SizeSlider;
 	SliderCtrl *OriginXSlider;
 	SliderCtrl *OriginYSlider;
 	SliderCtrl *OriginZSlider;
+
+	wxButton	*m_overhead;
+	wxButton	*m_oblique;
+	wxButton	*m_edgeon;
+
 	System *object() 		{ return ((System*)(object_node->node));}
 
 	void invalidate_object(){
@@ -22,6 +28,13 @@ protected:
 	        TheScene->rebuild();
 	    	update_needed=true;
 		}
+	void set_view(double  v,double x,double y,double z);
+
+	void OnOverheadView(wxCommandEvent& event);
+	void OnObliqueView(wxCommandEvent& event);
+	void OnEdgeView(wxCommandEvent& event);
+
+	double size;
 
 public:
 	VtxSystemTabs(wxWindow* parent,

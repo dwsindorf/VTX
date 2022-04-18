@@ -265,9 +265,9 @@ public:
 	void freeTree(TreeNode *t);
 	void printTree(TreeNode *t,char *s);
     int  treeNodes(TreeNode *t);
-	int  getPrototype(NodeIF*, int,char *);
 	int  setPrototype(NodeIF*, NodeIF*);
 	NodeIF* getPrototype(NodeIF*, int);
+	int getPrototype(int t ,char *s);
 	NodeIF* makeObject(NodeIF*, int);
 
 	void change_view(int);

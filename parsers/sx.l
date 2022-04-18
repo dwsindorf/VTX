@@ -82,6 +82,7 @@ static LongSym keytbl[]={
 	{"System",		YY_SYSTEM},
 	{"Star",		YY_STAR},
 	{"Corona",		YY_CORONA},
+	{"Halo",		YY_HALO},
 	{"Planet",		YY_PLANET},
 	{"Moon",		YY_MOON},
 	{"Clouds",		YY_CLOUD_LAYER},

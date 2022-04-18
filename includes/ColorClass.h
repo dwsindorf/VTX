@@ -223,6 +223,7 @@ public:
 	Color mix(Color c,double t);
 	Color contrast_color(Color fg,double ampl);
 	Color color()               { return Color(red(),blue(),green(),1.0);}
+	Color intensify(double f);
 };
 
 //************************************************************
@@ -294,6 +295,9 @@ public:
 	FColor mix(FColor c,double t);
 	FColor clamp();
 	FColor contrast_color(FColor fg,double ampl);
+	FColor rgb2hsv();
+	FColor hsv2rgb();
+	FColor intensify(double f);
 
 	friend class Color;
 };

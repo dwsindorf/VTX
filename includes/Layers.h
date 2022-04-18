@@ -51,7 +51,6 @@ public:
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *removeNode();
 	NodeIF *addChild(NodeIF *x);
-	NodeIF *newSubSystem();
 	bool randomize();
 	void setRandom(bool b);
 	void setDefault();

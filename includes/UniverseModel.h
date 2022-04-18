@@ -17,14 +17,14 @@ enum tree_codes{
 	TN_SYSTEM  		= 0x0005,
 	TN_STAR     	= 0x0006,
 	TN_CORONA  		= 0x0007,
-	TN_PLANET   	= 0x0008,
-	TN_MOON     	= 0x0009,
-	TN_SKY      	= 0x000a,
-	TN_CLOUDS  		= 0x000b,
-	TN_RING	 		= 0x000c,
-	TN_VAR          = 0x000d,
-	TN_SURFACE      = 0x000e,
-	TN_EXPRS        = 0x000f,
+	TN_HALO  		= 0x0008,
+	TN_PLANET   	= 0x0009,
+	TN_MOON     	= 0x000a,
+	TN_SKY      	= 0x000b,
+	TN_CLOUDS  		= 0x000c,
+	TN_RING	 		= 0x000d,
+	TN_VAR          = 0x000e,
+	TN_SURFACE      = 0x000f,
 
 	TN_WATER  		= 0x0010,
 	TN_FOG    	    = 0x0011,
@@ -68,7 +68,7 @@ public:
 	TreeNode *addToTree(TreeNode *parent, TreeNode *child, NodeIF *node);
 	TreeNode *replaceInTree(TreeNode *parent, TreeNode *child, NodeIF *node);
 	TreeNode *lastBranch(TreeNode *n);
-	int getPrototype(NodeIF*, int,char *);
+	int getPrototype(int,char *);
 	int setPrototype(NodeIF*, NodeIF*);
 	int getAddList(NodeIF*,LinkedList<ModelSym*>&list);
 	int getSaveList(NodeIF*,LinkedList<ModelSym*>&list);
@@ -80,8 +80,5 @@ public:
 	TreeNode *buildTree(NodeIF *);
 	void setType(NodeIF *);
 	NodeIF *open_node(NodeIF *parent,char *s);
-	NodeIF* getPrototype(NodeIF*, int);
-	NodeIF* makeObject(NodeIF*, int);
-
 };
 #endif

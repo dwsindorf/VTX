@@ -272,27 +272,57 @@ void Scene::printTree(TreeNode *t,char *s) {
 int  Scene::treeNodes(TreeNode *t) {
 	return model->countNodes(t);
 }
-int Scene::getPrototype(NodeIF *n, int t ,char *s){
-	return model->getPrototype(n,t,s);
+int Scene::getPrototype(int t ,char *s){
+	return model->getPrototype(t,s);
 }
 int Scene::setPrototype(NodeIF *n, NodeIF *s){
 	return model->setPrototype(n,s);
 }
 
-NodeIF* Scene::getPrototype(NodeIF*n, int t){
-	return model->getPrototype(n,t);
-}
-NodeIF* Scene::makeObject(NodeIF *n, int t){
-	NodeIF *newnode=model->makeObject(n,t);
-	if(newnode){
-		regroup();
-		set_changed_detail();
-		newnode->invalidate();
-		rebuild_all();
-		rebuild_scene_tree();
-		select_tree_node(newnode);
+//-------------------------------------------------------------
+// Scene::getInstance() return prototype or randomly selected object
+//-------------------------------------------------------------
+NodeIF *Scene::getInstance(int type){
+	char sbuff[1024];
+	sbuff[0]=0;
+	NodeIF  *newobj=0;
+
+	LinkedList<ModelSym*>flist;
+	model->getFileList(type,flist);
+	double rval=2*URAND(lastn);
+    rval=fmod(rval,1.0);
+	if(flist.size){
+		int menu_id = fabs(rval) * flist.size;
+		cout<<"lastn:"<<PERM(lastn)<<" rval="<<rval<<" id="<<menu_id+1<<":"<<flist.size<<endl;
+
+		ModelSym* sym=flist[menu_id];
+		model->getFullPath(sym,sbuff);
+		newobj=open_node(this,sbuff);
 	}
-	return newnode;
+	else{
+		model->getPrototype(type,sbuff);
+		newobj=parse_node(sbuff);
+	}
+	return newobj;
+}
+
+NodeIF* Scene::getPrototype(NodeIF *obj, int type){
+	char sbuff[1024];
+	NodeIF *newobj=0;
+	if (model->getPrototype(type,sbuff))
+		newobj=parse_node(obj,sbuff);
+	return newobj;
+}
+
+NodeIF* Scene::makeObject(NodeIF *obj, int type){
+
+	NodeIF *n=getPrototype(obj,type);
+	n->setType(type);
+	cout<<"UniverseModel::makeObject "<<obj->typeName()<<" "<<type<<endl;
+	n=n->getInstance();
+	if(n)
+		n->setName("");
+	return n;
 }
 
 bool Scene::containsViewobj(ObjectNode *obj){
@@ -316,30 +346,21 @@ void Scene::setRandomSeed()
 	double seed=getRandValue();
 	setSeed(seed);
 }
-
+/*
 //-------------------------------------------------------------
-// Scene::getInstance() return prototype or randomly selected object
+// Scene::getPrototype() return prototype
 //-------------------------------------------------------------
-NodeIF *Scene::getInstance(int type){
+NodeIF *Scene::getPrototype(int type){
 	char sbuff[1024];
 	sbuff[0]=0;
 	NodeIF  *newobj=0;
 
-	LinkedList<ModelSym*>flist;
-	model->getFileList(type,flist);
-	double rval=URAND(lastn);
-	if(flist.size){
-		int menu_id = fabs(rval) * flist.size;
-		ModelSym* sym=flist[menu_id];
-		model->getFullPath(sym,sbuff);
-		newobj=open_node(this,sbuff);
-	}
-	else{
-		model->getPrototype(getParent(),type,sbuff);
-		newobj=parse_node(sbuff);
-	}
+	model->getPrototype(getParent(),type,sbuff);
+	newobj=parse_node(sbuff);
+
 	return newobj;
 }
+*/
 
 //-------------------------------------------------------------
 // Scene::setProgram() set shader variables

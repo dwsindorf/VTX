@@ -13,7 +13,7 @@
 //#define LONGLONG // slower but allows freqs>2e9
 
 //#define DEBUG_NOISE_CACHE
-#define DEBUG_NOISE_EVAL
+//#define DEBUG_NOISE_EVAL
 
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
@@ -696,7 +696,7 @@ void Noise::init()
 			perm[i] = perm[j = IntRand() % mod];
 			perm[j] = k;
 		}
-		//printf("n %d\n",nfact);
+		printf("Noise::init n %d\n",nfact);
 		//init_noise(RandSeed);
 		init_flag=0;
 	}

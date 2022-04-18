@@ -42,6 +42,7 @@
 #include "VtxSystemTabs.h"
 #include "VtxGalaxyTabs.h"
 #include "VtxFractalTabs.h"
+#include "VtxHaloTabs.h"
 
 
 //#define PRINT_TREE
@@ -132,6 +133,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_STAR,VtxStarTabs)
 	SET_TABS_OBJECT(TN_MOON,VtxMoonTabs)
 	SET_TABS_OBJECT(TN_CORONA,VtxCoronaTabs)
+	SET_TABS_OBJECT(TN_HALO,VtxHaloTabs)
 	SET_TABS_OBJECT(TN_CLOUDS,VtxCloudsTabs)
 	SET_TABS_OBJECT(TN_SKY,VtxSkyTabs)
 	SET_TABS_OBJECT(TN_TEXTURE,VtxTexTabs)
@@ -149,6 +151,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_SYSTEM,VtxSystemTabs)
 	SET_TABS_OBJECT(TN_GALAXY,VtxGalaxyTabs)
 	SET_TABS_OBJECT(TN_FCHNL,VtxFractalTabs)
+
 
 	currentTabs=TN_SCENE;
 	lastTabs=TN_SCENE;

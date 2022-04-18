@@ -93,6 +93,8 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 //	cout << "p:"<< parent->typeName() << endl;
 	if((type & ID_OBJECT)==0)
 		return 0;
+	if(child->protoValid())
+		return 0;
 	type=child->getFlag(TN_TYPES);
 	double f;
 
@@ -118,6 +120,13 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 			((Corona*)child)->size*=1+0.25*SRand();
 		}
 		((Corona*)child)->ht=((Corona*)child)->size-psize;
+
+		break;
+	case TN_HALO:
+		if(!dropping()){
+			((Halo*)child)->size=psize*1.01;
+		}
+		((Halo*)child)->ht=((Halo*)child)->size-psize;
 
 		break;
 	case TN_CLOUDS:
@@ -146,32 +155,15 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 			//((Orbital*)child)->setRseed(getRandValue());
 		((Orbital*)child)->setRseed(Rand());
 	}
+	child->setProtoValid(true);
 	return 1;
 }
 
-NodeIF* UniverseModel::getPrototype(NodeIF *parent, int type){
-	char sbuff[1024];
-	NodeIF *newobj=0;
-	if (getPrototype(parent,type,sbuff))
-		newobj=parse_node(parent,sbuff);
-	return newobj;
-
-}
-NodeIF* UniverseModel::makeObject(NodeIF *obj, int type){
-	cout<<"UniverseModel::makeObject "<<obj->typeName()<<" "<<type<<endl;
-	NodeIF* n=obj->newSubSystem();
-	if(n)
-		n->setName("");
-	return n;
-}
-
-int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
+int UniverseModel::getPrototype(int type,char *tmp)
 {
 	tmp[0]=0;
-//	double psize=0.5;
-//	if(parent && (parent->typeClass()& ID_OBJECT)){
-//		psize=((Object3D*)parent)->size;
-//	}
+	char buff[256];
+
 	switch(type&TN_TYPES){
 	case TN_GALAXY:
 		sprintf(tmp,"Galaxy(10000) {}\n");
@@ -180,10 +172,13 @@ int UniverseModel::getPrototype(NodeIF *parent,int type,char *tmp)
 		sprintf(tmp,"System(1000) {Star(0.5) {Corona(4){}}}\n");
 		break;
 	case TN_STAR:
-		sprintf(tmp,"Star(0.5) {Corona(4){}}\n");
+		sprintf(tmp,"Star(1) {Surface{terrain=0;}Halo(1.01){}Corona(1.1){}Corona(4){}}\n");
 		break;
 	case TN_CORONA:
 		sprintf(tmp,"Corona(4) {}\n");
+		break;
+	case TN_HALO:
+		sprintf(tmp,"Halo(1) {}\n");
 		break;
 	case TN_PLANET:
 		sprintf(tmp,"Planet(0.004,0.01){day=24;year=100;Surface{}}\n");
@@ -271,6 +266,8 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("Star",type);
 	case TN_CORONA:
 		return new ModelSym("Corona",type);
+	case TN_HALO:
+		return new ModelSym("Halo",type);
 	case TN_PLANET:
 		return new ModelSym("Planet",type);
 	case TN_MOON:
@@ -386,8 +383,11 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		}
 		break;
 	case TN_SYSTEM:
-		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
-			return getAddList(obj->getParent(),list);
+		if(obj->collapsed() && obj->getParent()){
+			obj=obj->getParent();
+			obj->set_expanded();
+			return getAddList(obj,list);
+		}
 		list.add(getObjectSymbol(TN_STAR));
 		list.add(getObjectSymbol(TN_PLANET));
 		break;
@@ -399,7 +399,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			return getAddList(obj->getParent(),list);
 		}
 		list.add(getObjectSymbol(TN_CORONA));
-		list.add(getObjectSymbol(TN_SKY));
+		list.add(getObjectSymbol(TN_HALO));
 
 		break;
 	case TN_PLANET:
@@ -578,6 +578,9 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_CORONA:
 			node->setFlag(TN_CORONA);
+			break;
+		case ID_HALO:
+			node->setFlag(TN_HALO);
 			break;
 		case ID_PLANET:
 			node->setFlag(TN_PLANET);
@@ -781,6 +784,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		parent=parent->getParent();
 		break;
 	case TN_CORONA:
+	case TN_HALO:
 		//if(actionmode==DROPPING)
 		//parent=parent->getParent();
 		break;
@@ -792,6 +796,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		switch(ptype){
 		case TN_CORONA:
 		case TN_SKY:
+		case TN_HALO:
 			node->setFlag(NODE_HIDE);
 			parent->setFlag(TN_HIDEFLAG);
 			parent=parent->getParent();

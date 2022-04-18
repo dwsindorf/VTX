@@ -107,7 +107,7 @@ void set_orbital(Orbital *orb){
 /******************************  YACC SECTION ****************************/
 %token YY_SCENE
 %token YY_UNIVERSE YY_GALAXY YY_NEBULA YY_SYSTEM YY_STAR YY_PLANET YY_MOON
-%token YY_CLOUD_LAYER YY_SHELL YY_RING YY_SKY YY_CORONA
+%token YY_CLOUD_LAYER YY_SHELL YY_RING YY_SKY YY_CORONA YY_HALO
 %token YY_VIEWOBJ YY_DEBUG YY_INCLUDE YY_EXCLUDE
 %token YY_COLOR YY_DENSITY YY_POINT YY_NOISE YY_VIEW  YY_VEXPR YY_SURFACE
 %token YY_TERRAIN YY_IMAGE YY_BANDS
@@ -159,6 +159,7 @@ orbital_item
     | nebula
     | star
     | corona
+    | halo
     | planet
     | moon
     | ring
@@ -360,6 +361,7 @@ star_expr
    	: orb_expr
    	| surface
    	| corona
+   	| halo
    	| sky
 
 /*------------- Corona rules ----------------------------------------------*/
@@ -369,6 +371,14 @@ corona
 
 corona_def
     : YY_CORONA '(' expr ')' 	  { OPUSH(new Corona(ORB1,TNvalue($3)));}
+    
+/*------------- Halo rules ----------------------------------------------*/
+
+halo
+    : halo_def '{' shell_body '}'	{ OPOP;}
+
+halo_def
+    : YY_HALO '(' expr ')' 	  { OPUSH(new Halo(ORB1,TNvalue($3)));}
 
 /*------------- Ring rules ----------------------------------------------*/
 

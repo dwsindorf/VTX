@@ -1,5 +1,11 @@
+/*
+ * VtxHaloTabs.cpp
+ *
+ *  Created on: Apr 16, 2022
+ *      Author: dean
+ */
 
-#include "VtxCoronaTabs.h"
+#include "VtxHaloTabs.h"
 #include "UniverseModel.h"
 
 #define LINE_WIDTH TABS_WIDTH-TABS_BORDER
@@ -18,40 +24,37 @@ enum {
     ID_OUTER_COLOR,
     ID_INNER_SLDR,
     ID_INNER_TEXT,
-    ID_INNER_COLOR,
-	ID_NOISE_EXPR
+    ID_INNER_COLOR
 };
 
-IMPLEMENT_CLASS(VtxCoronaTabs, wxNotebook )
+IMPLEMENT_CLASS(VtxHaloTabs, wxNotebook )
 
 
-BEGIN_EVENT_TABLE(VtxCoronaTabs, wxNotebook)
+BEGIN_EVENT_TABLE(VtxHaloTabs, wxNotebook)
 
-EVT_TEXT_ENTER(ID_NAME_TEXT,VtxCoronaTabs::OnNameText)
+EVT_TEXT_ENTER(ID_NAME_TEXT,VtxHaloTabs::OnNameText)
 
-EVT_MENU(ID_DELETE,VtxCoronaTabs::OnDelete)
-EVT_MENU(ID_ENABLE,VtxCoronaTabs::OnEnable)
-EVT_UPDATE_UI(ID_ENABLE, VtxCoronaTabs::OnUpdateEnable)
+EVT_MENU(ID_DELETE,VtxHaloTabs::OnDelete)
+EVT_MENU(ID_ENABLE,VtxHaloTabs::OnEnable)
+EVT_UPDATE_UI(ID_ENABLE, VtxHaloTabs::OnUpdateEnable)
 
-EVT_COMMAND_SCROLL(ID_SIZE_SLDR,VtxCoronaTabs::OnSizeSlider)
-EVT_TEXT_ENTER(ID_SIZE_TEXT,VtxCoronaTabs::OnSizeText)
+EVT_COMMAND_SCROLL(ID_SIZE_SLDR,VtxHaloTabs::OnSizeSlider)
+EVT_TEXT_ENTER(ID_SIZE_TEXT,VtxHaloTabs::OnSizeText)
 
-EVT_COMMAND_SCROLL(ID_GRADIENT_SLDR,VtxCoronaTabs::OnGradientSlider)
-EVT_TEXT_ENTER(ID_GRADIENT_TEXT,VtxCoronaTabs::OnGradientText)
+EVT_COMMAND_SCROLL(ID_GRADIENT_SLDR,VtxHaloTabs::OnGradientSlider)
+EVT_TEXT_ENTER(ID_GRADIENT_TEXT,VtxHaloTabs::OnGradientText)
 
-EVT_COMMAND_SCROLL(ID_OUTER_SLDR,VtxCoronaTabs::OnOuterSlider)
-EVT_TEXT_ENTER(ID_OUTER_TEXT,VtxCoronaTabs::OnOuterText)
-EVT_COLOURPICKER_CHANGED(ID_OUTER_COLOR,VtxCoronaTabs::OnOuterColor)
+EVT_COMMAND_SCROLL(ID_OUTER_SLDR,VtxHaloTabs::OnOuterSlider)
+EVT_TEXT_ENTER(ID_OUTER_TEXT,VtxHaloTabs::OnOuterText)
+EVT_COLOURPICKER_CHANGED(ID_OUTER_COLOR,VtxHaloTabs::OnOuterColor)
 
-EVT_COMMAND_SCROLL(ID_INNER_SLDR,VtxCoronaTabs::OnInnerSlider)
-EVT_TEXT_ENTER(ID_INNER_TEXT,VtxCoronaTabs::OnInnerText)
-EVT_COLOURPICKER_CHANGED(ID_INNER_COLOR,VtxCoronaTabs::OnInnerColor)
-
-EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxCoronaTabs::OnChangedNoiseExpr)
+EVT_COMMAND_SCROLL(ID_INNER_SLDR,VtxHaloTabs::OnInnerSlider)
+EVT_TEXT_ENTER(ID_INNER_TEXT,VtxHaloTabs::OnInnerText)
+EVT_COLOURPICKER_CHANGED(ID_INNER_COLOR,VtxHaloTabs::OnInnerColor)
 
 END_EVENT_TABLE()
 
-VtxCoronaTabs::VtxCoronaTabs(wxWindow* parent,
+VtxHaloTabs::VtxHaloTabs(wxWindow* parent,
 		wxWindowID id,
 		const wxPoint& pos,
 		const wxSize& size ,
@@ -62,7 +65,7 @@ VtxCoronaTabs::VtxCoronaTabs(wxWindow* parent,
 	Create(parent, id, pos,size, style, name);
 }
 
-int VtxCoronaTabs::showMenu(bool expanded){
+int VtxHaloTabs::showMenu(bool expanded){
 
 	menu_action=TABS_NONE;
 	wxMenu menu;
@@ -74,7 +77,7 @@ int VtxCoronaTabs::showMenu(bool expanded){
 	return menu_action;
 }
 
-bool VtxCoronaTabs::Create(wxWindow* parent,
+bool VtxHaloTabs::Create(wxWindow* parent,
 	wxWindowID id,
 	const wxPoint& pos,
 	const wxSize& size ,
@@ -90,7 +93,7 @@ bool VtxCoronaTabs::Create(wxWindow* parent,
     return true;
 }
 
-void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
+void VtxHaloTabs::AddObjectTab(wxWindow *panel){
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(topsizer);
 
@@ -105,9 +108,9 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	hline->AddSpacer(10);
 
-	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Radius",LABEL2S, VALUE2,110);
-	SizeSlider->setRange(1,10);
-	SizeSlider->setValue(2);
+	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Ht",LABEL2S, VALUE2,110);
+	SizeSlider->setRange(0.001,0.1);
+	SizeSlider->setValue(0.01);
 
 	hline->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -132,37 +135,20 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
 
 	grad_cntrls->Add(GradientSlider->getSizer(),wxALIGN_LEFT|wxALL);
 
-	wxBoxSizer* density_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density"));
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"",0,LINE_WIDTH);
-	density_cntrls->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,3);
-
 	boxsizer->Add(color_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 	boxsizer->Add(grad_cntrls, 0, wxALIGN_LEFT|wxALL,0);
-	boxsizer->Add(density_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 }
 
-void VtxCoronaTabs::updateControls(){
-	Corona *obj=object();
-	updateSlider(SizeSlider,obj->size/parentSize());
+void VtxHaloTabs::updateControls(){
+	Halo *obj=object();
+	updateSlider(SizeSlider,obj->ht);
 
 	updateSlider(GradientSlider,obj->gradient);
 	updateColor(InnerSlider,obj->color1);
 	updateColor(OuterSlider,obj->color2);
 	object_name->SetValue(object_node->node->nodeName());
 
-	char buff[256]={0};
-	if(obj->getNoiseFunction(buff))
-		NoiseExpr->SetValue(buff);
-	else
-		NoiseExpr->SetValue("");
 }
 
-void VtxCoronaTabs::OnChangedNoiseExpr(wxCommandEvent& event){
-	Corona *obj=object();
-	obj->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
-	obj->applyNoiseFunction();
-	obj->invalidate();
-	TheScene->set_changed_detail();
-	TheScene->rebuild();
 
-}
+

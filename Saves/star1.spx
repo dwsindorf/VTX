@@ -7,11 +7,20 @@ Scene() {
 		theta=-22.9237;
 		height=5.24417;
 		time=609280;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1.5;
+		minh=1.13636e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
+	}
+	View{
+		delt=2000;
+		minr=1.5;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -39,6 +48,7 @@ Scene() {
 					emission=Color(1,1,1,0.82);
 					name="Sol";
 					specular=Color(1,1,1);
+					temperature=4917.65;
 					bands("star1",ACHNL|CLAMP,16,Color(1,0.969,0.549),Color(1,0.941,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.463,0.043,0.122),
 						Color(0.024,0.02,0.129));

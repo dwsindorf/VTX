@@ -226,10 +226,6 @@ Orbital *TNode::getOrbital(NodeIF *obj)
 	return (Orbital*)obj;
 }
 
-NodeIF *TNode::getInstance(int type){
-	return TheScene->getInstance(type);
-}
-
 //************************************************************
 // Class TNunary
 //************************************************************

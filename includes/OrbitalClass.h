@@ -32,6 +32,7 @@ enum orbital_codes{
 	ID_SYSTEM  		= ID_ORBITAL|0x0006,
 	ID_STAR     	= ID_LEVEL1|ID_ORBITAL|0x0107,
 	ID_CORONA  		= ID_LEVEL1|ID_ORBITAL|0x0508,
+	ID_HALO  		= ID_LEVEL1|ID_ORBITAL|0x050a,
 	ID_PLANET   	= ID_LEVEL2|ID_ORBITAL|0x0309,
 	ID_CLOUDS  		= ID_LEVEL2|ID_ORBITAL|0x050c,
 	ID_SKY      	= ID_LEVEL2|ID_ORBITAL|0x050b,
@@ -133,7 +134,6 @@ public:
     void setOrbitFrom(Orbital *prev);
     virtual bool containsViewobj();
     virtual bool isViewobj();
-    virtual NodeIF *getInstance(int t);
 	virtual void setRseed(double s) {rseed=s;}
 	virtual double getRseed() {return rseed;}
 
@@ -147,6 +147,7 @@ public:
 	virtual NodeIF *addAfter(NodeIF *,NodeIF *);
 	virtual NodeIF *removeChild(NodeIF *);
 	virtual NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	virtual NodeIF *getInstance();
 };
 
 //************************************************************
@@ -261,7 +262,7 @@ public:
 	bool setProgram();
 	void set_vars();
 	void get_vars();
-	NodeIF *newSubSystem();
+	void addNewSystem();
 };
 
 //************************************************************
@@ -272,9 +273,12 @@ class System : public Orbital
 private:
 	int m_planets;
 	int m_stars;
-    void get_system();
+    void get_system_stats();
 public:
     void set_system(Point p);
+    static Point galaxy_origin;
+    static int star_id;
+    static bool building_system;
 
 	System(Orbital *m, double s);
 	System(double s);
@@ -295,8 +299,13 @@ public:
     int planets();
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *replaceNode(NodeIF *n);
-	NodeIF *newSubSystem();
+	static System *newInstance();
+	NodeIF *getInstance();
 	bool randomize();
+	void adjustOrbits();
+	NodeIF *addChild(NodeIF *);
+	NodeIF *addAfter(NodeIF *,NodeIF *);
+	NodeIF *removeChild(NodeIF *);
 };
 
 //************************************************************
@@ -367,33 +376,29 @@ public:
 
 };
 
-
 //************************************************************
 // Star class
 //************************************************************
-class StarData {
-	public:
-	static const int ntypes=8;
-	static Color star_colors[ntypes];
-	static double star_temps[ntypes];
-	static char star_class[ntypes];
-
-	static void star_info(Color c, double *t, char *m);
-	static double star_size(double t);
-	//static char star_type(double temp);
-};
-
 class Star : public Spheroid
 {
 public:
-	static const int ntypes=8;
-	static Color star_colors[ntypes];
-	static double star_temps[ntypes];
+	static const int ntypes=7;
+	static Color star_color[ntypes];
+	static double star_temp[ntypes];
 	static char star_class[ntypes];
+	static double star_frequency[ntypes];
+	static double star_luminocity[ntypes];
+	static double star_radius[ntypes];
+	
+	static double *probability;
+	static double *temps;
+	static int num_temps;
+	static int expand_factor;
 
 	static void star_info(Color c, double *t, char *m);
 	static double star_size(double t);
-
+	double max_height();
+	static void make_temps_table();
 	double temperature;
 	char startype[3];
 
@@ -414,6 +419,11 @@ public:
     void render();
     void setRadiance(Color c);
     void getStarData(double *d, char *m);
+    NodeIF *getInstance();
+    static Star *newInstance();
+    static void random(double &temp, double &r, Color &color);
+    static TNinode *image(Color color);
+    static TNtexture *Star::texture();
 };
 
 //************************************************************
@@ -483,6 +493,30 @@ public:
 	bool adapt_needed() { return false;}
 };
 
+
+//************************************************************
+// Halo class
+//************************************************************
+class Halo : public Shell
+{
+public:
+	Color 	   color1;
+	Color 	   color2;
+	double     gradient;
+	double     density;
+	Halo(Orbital *m, double s);
+	~Halo();
+	const char *name()			{ return "Halo";}
+	int  type()					{ return ID_HALO;}
+	void set_vars();
+	void get_vars();
+	void adapt();
+	void render();
+	void orient();
+	void map_color(MapData*n,Color &col);
+	int render_pass();
+	bool setProgram();
+};
 //************************************************************
 // Corona class
 //************************************************************
@@ -511,9 +545,7 @@ public:
 	void setNoiseFunction(char *c);
 	void applyNoiseFunction();
 	bool adapt_needed() { return false;}
-
 	void set_surface(TerrainData &d);
-
 };
 
 //************************************************************
@@ -557,8 +589,6 @@ public:
 	void setClouds(TNclouds *c);
 	void deleteClouds();
 	void init();
-
-
 	bool force_adapt();
 	void setSpritesTexture();
 	char *getSpritesFile()       { return sprites_file;}

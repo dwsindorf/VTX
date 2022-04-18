@@ -356,7 +356,7 @@ wxString VtxExprEdit::getPrototype(int type){
 	case TN_FCHNL:
 	case TN_CRATERS:
     case TN_ERODE:
-		if(TheScene->getPrototype(0,type,prototype))
+		if(TheScene->getPrototype(type,prototype))
 			return wxString(prototype).Trim();
 		break;
 	}

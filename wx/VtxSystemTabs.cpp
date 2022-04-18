@@ -12,6 +12,8 @@
 #define LINE_WIDTH TABS_WIDTH-TABS_BORDER
 #define BOX_WIDTH TABS_WIDTH
 
+#define BTNWIDTH 75
+#define BTNSIZE wxSize(BTNWIDTH,30)
 
 // define all resource ids here
 enum {
@@ -19,6 +21,9 @@ enum {
 	OBJ_DELETE,
 	OBJ_SAVE,
 	ID_NAME_TEXT,
+	ID_OVERHEAD,
+	ID_OBLIQUE,
+	ID_EDGEON,
     ID_ORIGIN_X_SLDR,
     ID_ORIGIN_X_TEXT,
     ID_ORIGIN_Y_SLDR,
@@ -36,6 +41,11 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxSystemTabs::OnNameText)
 SET_SLIDER_EVENTS(ORIGIN_X,VtxSystemTabs,OriginX)
 SET_SLIDER_EVENTS(ORIGIN_Y,VtxSystemTabs,OriginY)
 SET_SLIDER_EVENTS(ORIGIN_Z,VtxSystemTabs,OriginZ)
+
+
+EVT_BUTTON(ID_OVERHEAD,VtxSystemTabs::OnOverheadView)
+EVT_BUTTON(ID_OBLIQUE,VtxSystemTabs::OnObliqueView)
+EVT_BUTTON(ID_EDGEON,VtxSystemTabs::OnEdgeView)
 
 
 EVT_MENU(TABS_ENABLE,VtxSystemTabs::OnEnable)
@@ -78,6 +88,10 @@ bool VtxSystemTabs::Create(wxWindow* parent,
     AddDisplayTab(page);
     AddPage(page,wxT("Properties"),true);
 
+    page=new wxPanel(this,wxID_ANY);
+    AddViewTab(page);
+    AddPage(page,wxT("View"),false);
+
     return true;
 }
 
@@ -94,6 +108,7 @@ void VtxSystemTabs::getObjAttributes()
 	if(!update_needed)
 		return;
 	System *system=(System*)object();
+	size=system->size;
 	updateSlider(OriginXSlider,system->origin.x/LY);
 	updateSlider(OriginYSlider,system->origin.y/LY);
 	updateSlider(OriginZSlider,system->origin.z/LY);
@@ -155,6 +170,29 @@ void VtxSystemTabs::AddDisplayTab(wxWindow *panel){
 
 }
 
+//-------------------------------------------------------------
+// VtxSystemTabs::AddViewTab() Add view controls tab
+//-------------------------------------------------------------
+void VtxSystemTabs::AddViewTab(wxWindow *panel){
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* set_view = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Set View"));
+
+	m_overhead=new wxButton(panel,ID_OVERHEAD,"Top",wxDefaultPosition,BTNSIZE);
+	m_edgeon=new wxButton(panel,ID_EDGEON,"Edge",wxDefaultPosition,BTNSIZE);
+	m_oblique=new wxButton(panel,ID_OBLIQUE,"Oblique",wxDefaultPosition,BTNSIZE);
+
+	set_view->Add(m_overhead,0,wxALIGN_LEFT|wxALL,0);
+	set_view->Add(m_edgeon,0,wxALIGN_LEFT|wxALL,0);
+	set_view->Add(m_oblique,0,wxALIGN_LEFT|wxALL,0);
+	set_view->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+	boxSizer->Add(set_view, 0, wxALIGN_LEFT|wxALL,0);
+	topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+
+}
+
 void VtxSystemTabs::OnViewObj(wxCommandEvent& event){
 	//if(!is_viewobj()){
 		TheScene->set_viewobj(object());
@@ -176,3 +214,40 @@ void VtxSystemTabs::updateControls(){
 	getObjAttributes();
 }
 
+//-------------------------------------------------------------
+// VtxSystemTabs::set_view() set view point
+//-------------------------------------------------------------
+void VtxSystemTabs::set_view(double v, double t, double p, double r)
+{
+	System *system=(System*)object();
+
+	TheScene->viewtype=ORBITAL;
+	TheScene->set_changed_view();
+	system->init_view();
+	TheScene->theta=t;
+	TheScene->phi=p;
+	TheScene->height=TheScene->radius=r;
+	TheScene->selobj=TheScene->focusobj=0;
+	TheScene->set_viewobj(system);
+	TheScene->views_mark();
+	TheScene->clr_automv();
+	TheScene->view_angle=v;
+
+	TheScene->gstride=TheScene->vstride=0.1001*system->size;
+
+	TheScene->minr=0.0;
+	TheScene->view->speed=TheScene->gstride;
+	TheScene->rebuild_all();
+	update_needed=true;
+	getObjAttributes();
+}
+
+void VtxSystemTabs::OnOverheadView(wxCommandEvent& event){
+	set_view(-90,0,90,4*size);
+}
+void VtxSystemTabs::OnObliqueView(wxCommandEvent& event){
+	set_view(0,0,45,3*size);
+}
+void VtxSystemTabs::OnEdgeView(wxCommandEvent& event){
+	set_view(0,0,0,4*size);
+}

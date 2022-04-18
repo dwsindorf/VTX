@@ -160,10 +160,6 @@ NodeIF *TNmap::replaceChild(NodeIF *c,NodeIF *n)
 	return ((TNlayer*)c)->replaceChild(c,n);
 }
 
-NodeIF *TNmap::newSubSystem(){
-	return 0;
-}
-
 void TNmap::setDefault(){
 	Object3D *obj=getObject();
 	if(obj)

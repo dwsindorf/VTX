@@ -174,6 +174,11 @@ Color Color::contrast_color(Color c,double ampl){
 	return Color(fg.red(),fg.blue(),fg.green());
 }
 
+Color Color::intensify(double f){
+	FColor fc(*this);
+	fc=fc.intensify(f);
+    return Color(fc.red(),fc.green(),fc.blue(),fc.alpha());
+}
 RGBColor Color::rgb()
 {
 	return RGBColor(red(),blue(),green());
@@ -313,6 +318,120 @@ FColor FColor::contrast_color(FColor fg,double ampl){
 	return fg;
 }
 
+// convert rgb to hsv
+// input   r(0..1),g(0..1) b(0..1)
+// return  h(0..360),s(0..1),v(0..1)
+FColor FColor::rgb2hsv(){
+	double      min, max, delta;
+	FColor out;
+	out.set_alpha(alpha());
+
+	min = red() < green() ? red() : green();
+	min = min  < blue() ? min  : blue();
+
+	max = red() > green() ? red() : green();
+	max = max  > blue() ? max  : blue();
+
+	out.set_blue(max);                                // v
+	delta = max - min;
+	if (delta < 0.00001)
+	{
+		out.set_green(0);
+		out.set_red(0); // undefined, maybe nan?
+		return out;
+	}
+	if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
+		out.set_green(delta / max);                  // s
+	} else {
+		// if max is 0, then r = g = b = 0
+		// s = 0, h is undefined
+		out.set_green(0.0);
+		out.set_red(0);                            // its now undefined
+		return out;
+	}
+	if( red() >= max )                           // > is bogus, just keeps compilor happy
+		out.set_red((green() - blue()) / delta);        // between yellow & magenta
+	else
+	if( green() >= max )
+		out.set_red(2.0 + (blue() - red() ) / delta);  // between cyan & yellow
+	else
+		out.set_red(4.0 + (red() - green()) / delta);  // between magenta & cyan
+
+	out.set_red(out.red() * 60.0);                              // degrees
+
+	if( out.red() < 0.0 )
+		out.set_red(out.red()+360.0);
+
+	return out;
+
+}
+FColor FColor::hsv2rgb(){
+	double      hh, p, q, t, ff;
+	long        i;
+	FColor         out;
+	out.set_alpha(alpha());
+
+	if(green() <= 0.0) {       // < is bogus, just shuts up warnings
+		out.set_red(blue());
+		out.set_green(blue());
+		out.set_blue(blue());
+		return out;
+	}
+	hh = red();
+	if(hh >= 360.0) hh = 0.0;
+	hh /= 60.0;
+	i = (long)hh;
+	ff = hh - i;
+	p = blue() * (1.0 - green());
+	q = blue() * (1.0 - (green() * ff));
+	t = blue() * (1.0 - (green() * (1.0 - ff)));
+
+	switch(i) {
+	case 0:
+		out.set_red(blue());
+		out.set_green(t);
+		out.set_blue(p);
+		break;
+	case 1:
+		out.set_red(q);
+		out.set_green(blue());
+		out.set_blue(p);
+		break;
+	case 2:
+		out.set_red(p);
+		out.set_green(blue());
+		out.set_blue(t);
+		break;
+
+	case 3:
+		out.set_red(p);
+		out.set_green(q);
+		out.set_blue(blue());
+		break;
+	case 4:
+		out.set_red(t);
+		out.set_green(p);
+		out.set_blue(blue());
+		break;
+	case 5:
+	default:
+		out.set_red(blue());
+		out.set_green(p);
+		out.set_blue(q);
+		break;
+	}
+	return out;
+}
+
+FColor FColor::intensify(double f){
+	FColor hsv=rgb2hsv();
+	double g=hsv.green()*f;
+	g=g>1?1:g;
+	hsv.set_green(g);
+	FColor rgb=hsv.hsv2rgb();
+	rgb.print();
+	return rgb;
+}
 void FColor::print()
 {
 	if(alpha()!=1)

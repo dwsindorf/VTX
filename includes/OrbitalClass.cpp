@@ -592,10 +592,13 @@ bool Orbital::containsViewobj(){
 	return false;
 }
 
-NodeIF *Orbital::getInstance(int type){
-	return TheScene->getInstance(type);
-}
 
+//-------------------------------------------------------------
+// Scene::getInstance() return prototype or randomly selected object
+//-------------------------------------------------------------
+NodeIF *Orbital::getInstance(){
+	return TheScene->getInstance(type());
+}
 //************************************************************
 // Universe class
 //************************************************************
@@ -1137,13 +1140,9 @@ Point Galaxy::get_focus(void *obj)
 //-------------------------------------------------------------
 void Galaxy::set_focus(Point &p)
 {
-
 	System *system=new System(0);
 	system->set_system(p);
-	//double nseed=Random(p);
-	//lastn=nseed*123457;
-	//double ps=pow(URAND(lastn),2);
-	//int stars=1+ps*3;
+
 	int stars=system->stars();
 
     Point vp=Point(0,0,0)-TheScene->spoint;
@@ -1433,7 +1432,7 @@ void Galaxy::init_view()
 {
 	if(TheScene->focusobj==this){
 		cout<<"Galaxy::init_view"<<endl;
-		newSubSystem();
+		addNewSystem();
 		return;
 	}
 
@@ -1465,20 +1464,15 @@ void Galaxy::init_view()
 }
 
 //-------------------------------------------------------------
-// Galaxy::newSubSystem()     make a new star system
+// Galaxy::addNewSystem() make a new star system
 //-------------------------------------------------------------
-NodeIF *Galaxy::newSubSystem()
+void Galaxy::addNewSystem()
 {
 	cout << "new system"<<endl;
 	int ssave=lastn;
+	System::galaxy_origin=TheScene->selm;
 
-	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
-	system->origin=TheScene->selm;
-
-	//double nseed=Random(system->origin);
-	//system->setRseed(nseed);
-
-	system->newSubSystem();
+	System  *system=System::newInstance();
 
 	addChild(system);
 	TheScene->regroup();
@@ -1490,7 +1484,6 @@ NodeIF *Galaxy::newSubSystem()
     TheScene->focusobj=system;
     system->init_view();
     lastn=ssave;
-    return system;
 }
 //------------------------------------------------------------
 // Galaxy::set_vars() set local variables
@@ -1532,6 +1525,10 @@ void Galaxy::get_vars()
 //************************************************************
 // System class
 //************************************************************
+Point System::galaxy_origin;
+int System::star_id=0;
+bool System::building_system=false;
+
 System::System(double s) : Orbital(s)
 {
 #ifdef DEBUG_OBJS
@@ -1626,7 +1623,7 @@ void System::set_vars()
 //-------------------------------------------------------------
 void System::init_view()
 {
-	get_system();
+	get_system_stats();
 
 	TheScene->maxr=size;
 	TheScene->minr=10;
@@ -1640,22 +1637,21 @@ void System::init_view()
 	TheScene->view_tilt=0;
 	TheScene->view_skew=0.0;
 	TheScene->gndlvl=0;
-	TheScene->height=3.5*size;//51.120;
+	TheScene->height=3*size;//51.120;
 	//TheScene->height=30;
 	//TheScene->radius=30;
 	TheScene->radius=TheScene->height;
 	TheScene->theta=0;
+	TheScene->heading=90;
+	TheScene->pitch=-90.0;
 	if(m_stars==1){
 		TheScene->phi=0;
 		TheScene->view_angle=0;
-		TheScene->heading=90;
-		TheScene->pitch=-90;
 	}
 	else{
 		TheScene->phi=90;
 		TheScene->view_angle=-90;
-		TheScene->heading=90;
-		TheScene->pitch=-90.0;
+
 	}
 	cout<<"stars:"<<m_stars<<" planets:"<<m_planets<<" size:"<<size<<" ht:"<<TheScene->radius<<endl;
 
@@ -1716,6 +1712,23 @@ NodeIF *System::replaceChild(NodeIF *c,NodeIF *n){
 	return m;
 }
 
+NodeIF *System::addChild(NodeIF *child){
+	NodeIF *n=Orbital::addChild(child);
+	adjustOrbits();
+	return n;
+}
+NodeIF *System::addAfter(NodeIF *b,NodeIF *c){
+	NodeIF *n=Orbital::addAfter(b,c);
+	adjustOrbits();
+	return n;
+}
+
+NodeIF *System::removeChild(NodeIF *child){
+	NodeIF *n=Orbital::removeChild(child);
+	adjustOrbits();
+	return n;
+}
+
 NodeIF *System::replaceNode(NodeIF *n){
 	Point p=origin;
 
@@ -1750,9 +1763,9 @@ int System::stars()
 }
 
 //-------------------------------------------------------------
-// System::get_system() identify system children
+// System::get_system_stats() identify system children
 //-------------------------------------------------------------
-void System::get_system()
+void System::get_system_stats()
 {
 	Orbital *obj;
 	children.ss();
@@ -1763,7 +1776,7 @@ void System::get_system()
 	while((obj=(Orbital*)children++)>0){
         if(obj->type()!=ID_STAR && obj->type()!=ID_PLANET)
         	continue;
-        double r=(obj->orbit_radius)*(1+obj->orbit_eccentricity)+obj->size;
+        double r=(obj->orbit_radius)*(1+obj->orbit_eccentricity)+3*obj->size;
         size=r>size?r:size;
 		if(obj->type()==ID_STAR){
 			Star *star=(Star*)obj;
@@ -1781,54 +1794,66 @@ void System::get_system()
 void System::set_system(Point p)
 {
 	origin=p;
-	double nseed=Random(p);
+	double nseed=0.5+Random(p);
 	setRseed(nseed);
 
 	lastn=rseed*123457;
 
 	double ps=pow(URAND(lastn),2);
-	m_stars=1.2+ps*2;
+	m_stars=1.1+ps*3;
 	m_planets=0;
 
 }
-//-------------------------------------------------------------
-// System::newSubSystem() generate a new random star system
-//-------------------------------------------------------------
-NodeIF *System::newSubSystem(){
 
-	children.free();
-	set_system(origin);
+NodeIF *System::getInstance(){
+	double f=1000*LY;
+	System::galaxy_origin=Point(f*SRand(),0.01*f*SRand(),0.1*f*SRand());
+	return newInstance();
+}
 
+void System::adjustOrbits(){
+	if(building_system)
+		return;
 	double year=0;
 	double phase=0;
+	
+	cout<<"System::adjustOrbits()"<<endl;
+
 	Star *star;
+	Object3D *child;
 
-	for(int i=0;i<m_stars;i++){
-		star=getInstance(TN_STAR);
-		star->setRseed(URAND(lastn++));
-        double z=Star::star_size(star->temperature);
-		star->size=z*(1+0.2*RAND(lastn++));
-		cout<<star->startype<<" z:"<<z<<" r:"<<star->size<<endl;
-		if(m_stars==1)
-			star->orbit_radius=0;
-		star->orbit_phase=phase;
+	ValueList<Object3D*> sorted;
 
-		phase+=360.0/m_stars;
-		lastn++;
-		addChild(star);
+	children.ss();
+	while ((child = children++) > 0){
+		if(child->type()==ID_STAR){
+			sorted.add(child);
+		}
 	}
-	ValueList<Object3D*> sorted(children);
+	int stars=sorted.size;
+	if(stars==1){
+		star=sorted.first();
+		star->orbit_radius=0;
+		star->orbit_eccentricity=0;
+		size=4*star->size;
+		return;
+	}
+	sorted.se();
+
+	while ((star = sorted--) > 0){
+		star->orbit_phase=phase;
+		phase+=360.0/stars;
+	}
 	sorted.se();
 	double radius=0;
-
-	if(m_stars>=2){ //binary
+	if(stars>=2){ //binary
 		double r,m1,m2,m;
 		Star *star1=sorted--; //biggest
 		Star *star2=sorted--; // smallest
 		m1=star1->size;
 		m2=star2->size;
 		m=m1+m2;// min distance
-		r=m*(20+3*RAND(lastn++));   // random distance between stars
+		r=m*(10+RAND(lastn++));   // random distance between stars
 		star1->orbit_radius=r*m2/m;
 		star2->orbit_radius=r-star1->orbit_radius;
 
@@ -1836,31 +1861,58 @@ NodeIF *System::newSubSystem(){
 		star1->day=0.1*year*(1+0.5*RAND(lastn++));
 		star2->day=0.1*year*(1+0.5*RAND(lastn++));
 		r=URAND(lastn++);
-		double e=sqrt(r)*m1/m;
-		e=e>0.97?0.97:e;
+		double e=r;//*m1/m;
+		cout<<"e:"<<e<<endl;
+
 		star1->year=year;
 		star2->year=year;
-		star2->orbit_eccentricity=e; //
-		star1->orbit_eccentricity=1-e;
+		star2->orbit_eccentricity=e*m1/m;
+		star1->orbit_eccentricity=e*m2/m;
 		radius=star2->orbit_radius*(1+e);
 	}
-	if(m_stars>2){
+	if(stars>2){
 		while ((star = sorted--) > 0) { // back-to-front
-			//cout<<star->size<<" ";
-			star->orbit_radius=radius*(1.3+URAND(lastn++));
-			star->year=star->orbit_radius*URAND(lastn++);
-			lastn++;
-			radius+=20;
+			star->orbit_eccentricity=0;
+			radius+=10;
+			star->orbit_radius=radius*(1.2+URAND(lastn++));
+			star->year=star->orbit_radius*(1+0.5*URAND(lastn++));
 		}
 	}
-	children.reset();
-	sorted.se();
-	while ((star = sorted--) > 0){
-		addChild(star);
+
+	star=(Star*)sorted.first();
+	size=star->orbit_radius+4*star->size;
+}
+//-------------------------------------------------------------
+// System::setInstance() generate a new random star system
+//-------------------------------------------------------------
+System *System::newInstance(){
+
+	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
+
+	system->origin=galaxy_origin;
+
+	system->set_system(system->origin);
+	system->children.free();
+
+	double year=0;
+	double phase=0;
+	int stars=system->m_stars;
+	Star *star;
+	star_id=0;
+	building_system=true;
+	for(int i=0;i<stars;i++){
+		star_id++;
+		star=Star::newInstance();
+		if(stars==1)
+			star->orbit_radius=0;
+		lastn++;
+		system->addChild(star);
 	}
-	star=(Star*)children.first();
-    size=star->orbit_radius;
-	return this;
+	building_system=false;
+	system->adjustOrbits();
+    //star_id=0;
+    system->setProtoValid(true);
+    return system;
 }
 
 //************************************************************
@@ -2628,17 +2680,84 @@ Sky *Spheroid::get_sky()
 //************************************************************
 // Star class (stars)
 //************************************************************
-Color Star::star_colors[StarData::ntypes]={
-    		Color(0.957,0.525,0.255),  // L
-    		Color(1.000,0.824,0.624),  // M
-    		Color(1.000,0.922,0.882),  // K
-    		Color(1.000,0.984,0.882),  // G
-    		Color(1.000,1.000,1.000),  // F
-    		Color(0.827,0.875,1.000),  // A
-    		Color(0.627,0.753,1.000),  // B
-    		Color(0.573,0.710,1.000)}; // O
-double Star::star_temps[StarData::ntypes]={1000,2400,3700,5200,6000,7500,10000,30000};
-char Star::star_class[StarData::ntypes]={'L','M','K','G','F','A','B','O'};
+//#define TRUE_COLORS
+Color Star::star_color[Star::ntypes]={
+#ifdef TRUE_COLORS
+		Color(1.000,0.824,0.624),  // M
+		Color(1.000,0.922,0.882),  // K
+		Color(1.000,0.984,0.882),  // G
+		Color(1.000,1.000,1.000),  // F
+		Color(0.827,0.875,1.000),  // A
+		Color(0.627,0.753,1.000),  // B
+		Color(0.573,0.710,1.000)}; // O
+#else // exagerate colors
+		Color(1.000,0.7,0.5),  // M
+		Color(1.000,0.8,0.4),  // K
+		Color(1.000,0.9,0.7),  // G
+		Color(0.9,1.000,1.000),  // F
+		Color(0.8,0.8,1.000),  // A
+		Color(0.6,0.8,1.000),  // B
+		Color(0.5,0.7,1.000)}; // O
+#endif
+
+char Star::star_class[Star::ntypes]={'M','K','G','F','A','B','O'};
+double Star::star_temp[Star::ntypes]={2000,3500,5000,6000,7500,10000,30000};//surface temperature
+double Star::star_luminocity[Star::ntypes]={0.04,0.4,1.2,6,40,5e4,1e6}; //brightness vs sun
+double Star::star_radius[Star::ntypes]={0.5,0.9,1.1,1.4,2,7,16}; //radius vs sun
+double Star::star_frequency[Star::ntypes]={76,12,8,3,0.6,0.1,0.001};  //% of main sequence stars
+int Star::num_temps=0;
+int Star::expand_factor=1000;
+double *Star::probability=0;
+double *Star::temps=0;
+
+// generate a table of star temperatures based on stellar frequency and luminocity
+// The idea is that when picking a star from the background (brightest in select region) 
+// the star type will be a product of it's stellar frequency and relative brightness
+// (e.g. close in red stars, further out blue stars)
+void Star::make_temps_table(){
+	num_temps=expand_factor;
+	MALLOC(num_temps,double,temps);
+	
+	MALLOC(ntypes,double,probability);
+	int index=0;
+	double sum=0;
+	for(int i=0;i<ntypes;i++){
+		double f=star_frequency[i]*sqrt(star_luminocity[i]); // brightness falls off as 1.0/r*2
+		probability[i]=f;
+		sum+=f;
+	}
+	for(int i=0;i<ntypes;i++){
+		probability[i]/=sum;
+#ifdef SHOW_PROBABILITIES
+		cout<<i<<" "<<probability[i]*100<<endl;
+#endif
+	}
+	for(int i=0;i<ntypes;i++){
+		int m=probability[i]*num_temps;
+		double start_temp=star_temp[i];
+		double end_temp=(i==(ntypes-1)?60000:star_temp[i+1]);
+		double f=0;
+		double delta=1.0/m;
+		for(int j=0;j<m;j++){
+			double t=(1-f)*start_temp+f*end_temp;
+			temps[index++]=t;
+			f+=delta;			
+		}	
+	}
+	// for some reason not all table entries at the end are getting filled
+	if(index<num_temps){
+		double t=temps[index-1];
+		while(index<num_temps){
+			temps[index++]=t;
+			t+=1000;
+		}
+	}
+#ifdef SHOW_PROBABILITIES
+	for(int i=0;i<num_temps;i++){
+		cout<<i<<" "<<temps[i]<<endl;
+	}
+#endif
+}
 
 // generate a predicted star type based on emission color
 void Star::star_info(Color col, double *t, char *m){
@@ -2649,20 +2768,20 @@ void Star::star_info(Color col, double *t, char *m){
 	double min_diff=10;
 	//col.print();
 	for(int i=0;i<ntypes;i++){
-		double d=c.difference(star_colors[i]);
+		double d=c.difference(star_color[i]);
 		//cout<<" "<<star_class[i]<<" "<<d<<endl;
 		if(d<min_diff){
 			min_index=i;
 			min_diff=d;
 		}
 	}
-	double temp=star_temps[min_index];
+	double temp=star_temp[min_index];
 	double f=0;
 	if(min_index<ntypes-2){
-		double temp2=star_temps[min_index+1];
-		double diff2=c.difference(star_colors[min_index+1]);
+		double temp2=star_temp[min_index+1];
+		double diff2=c.difference(star_color[min_index+1]);
 		f=lerp(min_diff,0,diff2,0,1);
-		temp=(1-f)*star_temps[min_index]+f*star_temps[min_index+1];
+		temp=(1-f)*star_temp[min_index]+f*star_temp[min_index+1];
 	}
 	*t=temp*col.alpha();
 	sprintf(m,"%c%d",star_class[min_index],(int)(9*f*col.alpha()));
@@ -2674,6 +2793,72 @@ void Star::star_info(Color col, double *t, char *m){
 double Star::star_size(double temp){
 	static double sun_radius=0.4327; // in 10^6 miles
 	return (0.27*temp/1000)*sun_radius;
+}
+//generate a random star
+// return temperature radius and color
+void Star::random(double &temp, double &radius, Color &color){
+   double p=URAND(lastn++);
+   int index=p*num_temps;
+   index=index>=num_temps?num_temps-1:index;
+   temp=temps[index];
+   int m=0;
+   Color c1=WHITE,c2=Color(0.2,0.5,1.0);
+   double f=1;
+   while(m<ntypes){
+	   if(temp>star_temp[m])
+		   m++;
+	   else{
+		   double t1=star_temp[m-1];
+		   double t2=star_temp[m];
+		   c1=star_color[m-1];
+		   c2=star_color[m];
+		   f=(temp-t1)/(t2-t1);
+		   break;
+	   }   
+   }
+   Color c=c1.mix(c2,f);
+   char str[128];
+   c.toString(str);
+   color=c;
+   double z=Star::star_size(temp);
+   radius=z*(1+0.2*RAND(lastn++));
+   cout<<"r:"<<z<<" t:"<<temp<<" "<<str<<endl;
+}
+static TNinode *Star::image(Color tc){
+	char buff[2048];
+
+	sprintf(buff,"bands(\"star%d\",CLAMP,16",System::star_id);
+	Color colors[5];
+	colors[0]=tc.lighten(0.75);
+	colors[1]=tc.lighten(0.5);
+	colors[2]=tc;
+	colors[3]=tc.darken(0.5);
+	colors[4]=tc.darken(0.75);
+
+	for(int i=0;i<5;i++){
+		Color c=colors[i];
+		strcat(buff,",");
+		c.toString(buff+strlen(buff));
+	}
+	strcat(buff,");\n");
+	cout<<buff<<endl;
+	TNinode *n=(TNinode*)TheScene->parse_node(buff);
+	if(!n)
+		return 0;
+	n->init();
+	return n;
+}
+static TNtexture *Star::texture(){
+ char *ntype[]={"GRADIENT","SIMPLEX","VORONOI"};
+ int nt=(int)(3*URAND(lastn++));
+ nt=nt>2?2:nt;
+ char buff[256];
+ char noise_expr[64];
+ sprintf(noise_expr,"noise(%s|FS|NABS|SQR,0.9,8.9,0.9,0.01,2.06,1,1,0,0.3)",ntype[nt]);
+ sprintf(buff,"Texture(\"star%d\",BORDER|S|TEX,%s,0.5,2,1,1,1,2,1,0.9,0,0,0,0)",System::star_id,noise_expr);
+ cout<<buff<<endl;
+ TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
+ return nc;
 }
 Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 {
@@ -2688,6 +2873,9 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 	shadows_exclude();
 	temperature=0;
 	startype[0]=0;
+	if(temps==0){
+		make_temps_table();	
+	}
 }
 Star::~Star()
 {
@@ -2708,6 +2896,87 @@ void Star::getStarData(double *d, char *m){
 	strcpy(m,startype);
 }
 
+//-------------------------------------------------------------
+// Star::setInstance()  generate a random instance
+//-------------------------------------------------------------
+Star *Star::newInstance(){
+	Star *star;
+
+//    double f=URAND(lastn++);
+//	if(f>0.9){
+//		star=TheScene->getInstance(TN_STAR);
+//		star->setRseed(URAND(lastn++));
+//		return star;
+//	}
+	star=TheScene->getPrototype(0,TN_STAR);
+	star->setRseed(URAND(lastn++));
+
+	double t,r;
+	Color c;
+	random(t,r,c);
+	star->temperature=t;
+	star->emission=c;
+	star->size=r;
+    star->children.ss();
+    double cf=1.2+URAND(lastn++);
+	c=c.intensify(cf);
+
+    TNinode *img=image(c);
+    //Render.invalidate_textures();
+    star->add_image(img);
+    TNode *root=star->terrain.get_root();
+    TNtexture *stex=texture();
+    if(stex){
+    	star->terrain.set_root(stex);
+    	star->terrain.init();
+    }
+    else
+    	cout<<"error building star texture"<<endl;
+
+	Halo *halo=star->children++;
+	halo->size=1.01*r;
+	halo->ht=halo->size-r;
+	halo->color1=c;
+	halo->color2=c;
+	halo->gradient=0.5;
+	halo->density=0.9;
+
+	Corona *inner=star->children++;
+	inner->size=1.2*r;
+	inner->ht=inner->size-r;
+	inner->color1=c;
+	inner->color2=c;
+	inner->setProtoValid(true);
+	inner->setName("inner");
+
+	inner->setNoiseFunction("0.5+noise(GRADIENT|NLOD,0,7,1,0.2,2.17,1,1,0,0)");
+	inner->applyNoiseFunction();
+
+	Corona *outer=star->children++;
+	outer->size=pow(1+r,2);
+	outer->ht=outer->size-r;
+	outer->color1=c;
+	outer->color2=c.mix(Color(1,0,0),0.2);
+	outer->setName("outer");
+	outer->setProtoValid(true);
+
+	outer->setNoiseFunction("noise(GRADIENT|NABS|SQR,0,1,0.0,0.41,2,1,1,0,1.1)-2.5*PHI");
+	outer->applyNoiseFunction();
+
+    star->setProtoValid(true);
+    return star;
+}
+
+//-------------------------------------------------------------
+// Star::setInstance()  generate a random instance
+//-------------------------------------------------------------
+NodeIF *Star::getInstance(){
+	return newInstance();
+}
+
+double Star::max_height(){
+	return 1e-10;
+}
 //-------------------------------------------------------------
 // Star::get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -4000,6 +4269,7 @@ void Shell::dpvars(double &dht, double &dpmin, double &dpmax){
 	}
 }
 
+
 //************************************************************
 // Sky class
 //************************************************************
@@ -4053,8 +4323,6 @@ int  Sky::scale(double &zn, double &zf)
 
     	Raster.center=p;
 
-
-    	//cout << "horizon:"<<l1/MILES << " gndlvl:"<< TheScene->gndlvl/MILES<<endl;
     }
 	return t;
 }
@@ -5362,7 +5630,7 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	map->lighting=0;
 	year=day=0;
 	detail=3;
-	gradient=0.8;
+	gradient=1;
 	hscale=0;
 	noise_expr=0;
 	//inner_radius=m->size;
@@ -5394,6 +5662,7 @@ void Corona::get_vars()
 	else if(parent){
 		color1=parent->color();
 		color1.set_alpha(0.95);
+		color2=((Star*)parent)->emission;
 	}
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	if(var)
@@ -5448,13 +5717,11 @@ bool Corona::setProgram(){
 	  	dpmin=l1/d;
 	}
 
-//	dpvars(dht,dpmin,dpmax);
-
 	TerrainProperties *tp=map->tp;
 
 	tp->initProgram();
 
-	//cout << dpmin << " " << dpmax << endl;
+	//cout<<"Corona " << dpmin << " " << dpmax << endl;
 	GLSLVarMgr vars;
 
 	FColor outer=FColor(color2);
@@ -5703,6 +5970,219 @@ void Corona::adapt()
 		TheScene->popMatrix();
 	}
 	Orbital::adapt(); // adapt children
+}
+
+//************************************************************
+// Halo class
+//************************************************************
+Halo::Halo(Orbital *m, double s) : Shell(m,s)
+{
+#ifdef DEBUG_OBJS
+	printf("Halo\n");
+#endif
+	density=0.1;
+	gradient=0.9;
+	detail=2;
+	color1=WHITE;
+	color2=WHITE;
+}
+Halo::~Halo()
+{
+#ifdef DEBUG_OBJS
+	printf("~Halo\n");
+#endif
+}
+//-------------------------------------------------------------
+// Halo::get_vars() reserve interactive variables
+//-------------------------------------------------------------
+void Halo::get_vars()
+{
+	VGET("resolution",detail,4);
+	VGET("gradient",gradient,1);
+	VGET("density",density,0.2);
+	if(exprs.get_local("color1",Td))
+		color1=Td.c;
+	if(exprs.get_local("color2",Td))
+		color2=Td.c;
+}
+
+//-------------------------------------------------------------
+// Halo::set_vars() set common variables
+//-------------------------------------------------------------
+void Halo::set_vars()
+{
+	VSET("resolution",detail,4);
+	VSET("gradient",gradient,1);
+	VSET("density",density,0.2);
+	exprs.set_var("color1",color1);
+	exprs.set_var("color2",color2);
+}
+//-------------------------------------------------------------
+// Halo::set_rotation()   tilt
+//-------------------------------------------------------------
+void Halo::orient()
+{
+	//Shell::set_rotation();
+    double view[16];
+    TheScene->getMatrix(view);
+
+	Matrix A(view);
+	Matrix B=A*TheScene->InvEyeMatrix;
+
+	minv(B.values(),view,4);
+
+	Point p;
+
+	if(TheScene->eyeref())
+	     p=(Point(0,0,0)-TheScene->xoffset).mm(view);
+	else
+	     p=TheScene->eye.mm(view);
+	p=p.spherical();
+
+	// rotate to orient axis to point to eye
+
+    TheScene->rotate(p.x,0,1,0);	 // remove theta
+	TheScene->rotate(90+p.y,0,0,1);	 // remove phi,rotate pole down
+
+	TheScene->set_matrix(0);
+
+}
+
+bool Halo::setProgram(){
+	glEnable(GL_BLEND);
+	char frag_shader[128]="halo.frag";
+	char vert_shader[128]="halo.vert";
+	GLSLMgr::setDefString("");
+	GLSLMgr::loadProgram(vert_shader,frag_shader);
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program)
+		return false;
+
+	double dpmin,dpmax;
+
+	double r=parent->size;
+	double d=point.length();
+	double s=size; // radius of shell
+	double h=s-r;
+	double theta=asin(r/d);
+	double l1=sqrt(d*d-r*r);
+	double l2=sqrt(s*s-r*r);
+	double L=l1+l2;
+	double D=L*cos(theta);
+	double x=D-d;   // may be negative because l2 length constrained to r
+	double dp=x/s;  // cos(phi)
+
+	if(inside()){
+	  	dpmax=dp;
+	  	dpmin=h/(h+r);
+	}
+	else{
+	  	dpmax=dp;
+	  	dpmin=l1/d;
+	}
+
+	//TerrainProperties *tp=map->tp;
+
+	//tp->initProgram();
+
+	//cout<<"Halo " << dpmin << " " << dpmax << endl;
+	GLSLVarMgr vars;
+
+	FColor outer=FColor(color2);
+	FColor inner=FColor(color1);
+
+	vars.newFloatVar("dpmax",dpmax);
+    vars.newFloatVar("dpmin",dpmin);
+    vars.newFloatVar("gradient",gradient);
+    vars.newFloatVec("outer",outer.values(),4);
+    vars.newFloatVec("inner",inner.values(),4);
+
+	Point p=point.mm(TheScene->invViewMatrix);
+	p=p.mm(TheScene->viewMatrix);
+	vars.newFloatVec("center",p.x,p.y,p.z);
+	vars.setProgram(program);
+	vars.loadVars();
+	if(TheScene->inside_sky()||Raster.do_shaders)
+		GLSLMgr::setFBOReadWritePass();
+	else
+		GLSLMgr::setFBORenderPass();
+
+	GLSLMgr::loadVars();
+	//tp->setProgram();
+
+	return true;
+}
+//-------------------------------------------------------------
+// Halo::map_color()   modulate render color
+//-------------------------------------------------------------
+void Halo::map_color(MapData*n,Color &col)
+{
+	if(Render.draw_shaded())
+		return;
+	double f=rampstep(90,0,n->phi(),0,1);
+	f=pow(f,1+gradient);
+    col=color1.mix(color2,f);
+    double a=f*color2.alpha()+(1-f)*color1.alpha();
+   //cout<<color1.alpha()<<" "<<col.alpha()<<endl;
+
+ 	col.set_alpha(a*f);
+}
+//-------------------------------------------------------------
+// Halo::render() render the object and it's children
+//-------------------------------------------------------------
+void Halo::render()
+{
+	if(!isEnabled())
+		return;
+
+	set_ref();
+	if(included()){
+		TheScene->pushMatrix();
+		set_tilt();
+		set_rotation();
+		orient();
+		render_object();
+		TheScene->popMatrix();
+	}
+	Orbital::render(); // render children
+}
+
+//-------------------------------------------------------------
+// Corona::adapt() adapt the object and it's children
+//-------------------------------------------------------------
+void Halo::adapt()
+{
+	set_ref();
+	if(included()){
+		TheScene->pushMatrix();
+		set_tilt();
+		set_rotation();
+		orient();
+		adapt_object();
+		TheScene->popMatrix();
+	}
+	Orbital::adapt(); // adapt children
+}
+//-------------------------------------------------------------
+// Halo::render_pass() select for scene pass
+//-------------------------------------------------------------
+int Halo::render_pass() {
+	clr_selected();
+
+	if (!local_group() || offscreen() || !isEnabled())
+		return 0;
+	if (getParent() == TheScene->viewobj) {
+		if (near_group()) {
+			if (outside())
+				clear_pass(FG1);
+			else
+				clear_pass(BG1);
+		} else
+			clear_pass(BG2);
+	} else
+		clear_pass(BG2);
+	return selected();
+
 }
 
 //************************************************************

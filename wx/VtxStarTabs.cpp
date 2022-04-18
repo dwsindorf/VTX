@@ -259,8 +259,7 @@ void VtxStarTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 	event.Check(is_viewobj());
 }
 
-void VtxStarTabs::updateControls(){
-	Star *obj=object();
+void VtxStarTabs::setTypeString(){
 	char type[256];
 	type[0]=0;
 	double temp=0;
@@ -268,6 +267,20 @@ void VtxStarTabs::updateControls(){
 	char type_str[256];
 	sprintf(type_str,"%s     %d K",type,(int)temp);
 	object_type->SetValue(type_str);
+}
+void VtxStarTabs::updateControls(){
+
+	Star *obj=object();
+	/*
+	char type[256];
+	type[0]=0;
+	double temp=0;
+	object()->getStarData(&temp, type);
+	char type_str[256];
+	sprintf(type_str,"%s     %d K",type,(int)temp);
+	object_type->SetValue(type_str);
+	*/
+	setTypeString();
 	//object_type->SetValue((char*)tree->typeName());
 	//obj->emission.print();
 	updateSlider(CellSizeSlider,obj->detail);

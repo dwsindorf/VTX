@@ -109,8 +109,6 @@ public:
 	virtual int getMiddle();
 	virtual int getEnd();
 	virtual Object3D *getObject();
-    virtual NodeIF *getInstance(int t);
-
 
 	// NodeIF methods
 
