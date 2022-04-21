@@ -130,6 +130,21 @@ public:
 };
 
 //************************************************************
+// Class TNdensity
+//************************************************************
+class TNdensity : public TNvector
+{
+public:
+	TNdensity(TNode *r) : TNvector(r) {}
+	void eval();
+	int typeValue()			{ return ID_DENSITY;}
+	const char *typeName ()	{ return "Density";}
+	const char *symbol()	{ return "Density";}
+	void init();
+	bool initProgram();
+};
+
+//************************************************************
 // Class TNclist
 //************************************************************
 class TNclist : public TNvector
@@ -149,18 +164,6 @@ public:
 	Color color(double f);
 };
 
-//************************************************************
-// Class TNdensity
-//************************************************************
-class TNdensity : public TNvector
-{
-public:
-	TNdensity(TNode *r) : TNvector(r) {}
-	void eval();
-	int typeValue()			{ return ID_DENSITY;}
-	const char *typeName ()	{ return "Density";}
-	const char *symbol()	{ return "Density";}
-};
 
 //************************************************************
 // Class TNnoise

@@ -21,6 +21,7 @@ class Texture;
 class TerrainProperties;
 class TNnoise;
 class TNcolor;
+class TNdensity;
 class TNpoint;
 class TNclouds;
 
@@ -192,6 +193,7 @@ public:
 	static void add_texture(Texture *);
 	static void add_TNnoise(TNnoise *);
 	static void add_TNcolor(TNcolor *);
+	static void add_TNdensity(TNdensity *);
 	static void add_TNpoint(TNpoint *);
 	static void add_TNclouds(TNclouds *);
 	void set_water()    	{ info.s.type=WATER;}
@@ -295,13 +297,14 @@ extern TerrainData Tstack[64];
 typedef struct tpinfo {
 	unsigned int  type	    : 8;	// type flag
 	unsigned int  tsize	    : 6;	// textures info size
+	unsigned int  density	: 1;	// terrain contains TNdensity
 	unsigned int  color	    : 1;	// terrain contains TNcolor
 	unsigned int  point	    : 1;	// terrain contains TNpoint
 	unsigned int  bmpht	    : 1;	// terrain contains BMPHT
 	unsigned int  inactive  : 1;	// hidden layer
 	unsigned int  geometry	: 1;	// use geometry shader (point noise)
 	unsigned int  complex	: 1;	// complex expression
-	unsigned int  unused	: 6;	// unassigned
+	unsigned int  unused	: 5;	// unassigned
 } tpinfo;
 
 typedef union tpinfo_u {
@@ -320,6 +323,7 @@ public:
 	Array<TNnoise*> noise;
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
+	TNdensity *tndensity;
 	tpinfo_u info;
 	int id;
 	int ntexs;
@@ -338,6 +342,8 @@ public:
 	bool has_geometry()  	{ return info.s.geometry;}
 	void set_color(bool b)  { info.s.color=b;}
 	bool has_color()  		{ return info.s.color;}
+	void set_density(bool b) { info.s.density=b;}
+	bool has_density()  	{ return info.s.density;}
 	void set_bmpht(bool b)  { info.s.bmpht=b;}
 	bool has_bmpht()  		{ return info.s.bmpht;}
 	void set_point(bool b)  { info.s.point=b;}

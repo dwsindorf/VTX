@@ -1089,9 +1089,12 @@ TNroot::~TNroot()
 //-------------------------------------------------------------
 TNode *TerrainMgr::set_root(TNode *r)   {
 	DFREE(root);
-	root=new TNroot(r);
-	root->setParent(this);
+	if(r){
+		root=new TNroot(r);
+		root->setParent(this);
+	}
 	return root;
+
 }
 
 //-------------------------------------------------------------

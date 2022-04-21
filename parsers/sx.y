@@ -120,7 +120,7 @@ void set_orbital(Orbital *orb){
 %token <l> NTYPE VTYPE LTYPE GTYPE ITYPE OTYPE PTYPE CTYPE ID
 
 %type <d> value positive negative
-%type <n> expr water_expr craters_expr color_expr layer_expr fog_expr
+%type <n> expr water_expr craters_expr color_expr density_expr layer_expr fog_expr
 %type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
 %type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr
@@ -513,6 +513,7 @@ expr
     | texture_expr          { $$=$1;}
     | map_expr              { $$=$1;}
     | color_expr            { $$=$1;}
+    | density_expr          { $$=$1;}  
     | colors_expr           { $$=$1;}
     | const_expr            { $$=$1;}
     | string_expr           { $$=$1;}
@@ -683,6 +684,9 @@ expr
  color_expr
     : YY_COLOR '(' arg_list ')'
                             { $$=new TNcolor($3);APOP;}
+ density_expr
+    : YY_DENSITY '(' arg_list ')'
+                            { $$=new TNdensity($3);APOP;}
  colors_expr
     : YY_COLORS '(' arg_list ')'
                             { $$=new TNclist($3);APOP;}

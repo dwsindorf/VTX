@@ -303,6 +303,7 @@ public:
 	~TerrainMgr();
 	virtual TNode *set_root(TNode *r);
 	virtual TNode *get_root();
+	virtual void clr_root(){root=0;}
 	virtual void set_surface(TerrainData&);
 	virtual void init();
 	virtual void eval();

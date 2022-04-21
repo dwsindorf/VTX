@@ -9,6 +9,6 @@ void main(void) {
 	gl_Position = ftransform();
 	
 	Constants1=CommonAttributes1;
-	
+#include "set_common.vert"
 }
 

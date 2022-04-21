@@ -9,6 +9,7 @@ uniform float dpmin;
 uniform float gradient;
 uniform bool fbo_read;
 uniform bool fbo_write;
+uniform float time;
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -16,6 +17,8 @@ uniform sampler2DRect FBOTex2;
 uniform vec4 outer;  // outer color
 uniform vec4 inner;  // inner color
 uniform vec3 center;
+//varying vec4 Constants1;
+//varying vec4 Vertex1;
 
 #ifndef NVALS
 #define NVALS 0
@@ -25,7 +28,18 @@ uniform vec3 center;
 #include "noise_funcs.h"
 #endif
 
+//#define PHI Constants1.z
+//#define DENSITY Constants1.z
+//#define PHI Vertex1.y
+
 void main(void) {
+#ifdef ND
+	NOISE_DENSITY(ND);
+	float density=nd;
+#else
+	float density=DENSITY;
+#endif
+
 	vec4 color;
 	vec3 viewdir = -normalize(VertexPosition.xyz);
 	vec3 radius = normalize(-VertexPosition-center); // vertex-center
@@ -37,7 +51,6 @@ void main(void) {
 	float f=pow(d,10.0*gradient);
 	color=f*inner+(1.0-f)*outer;
 	color.a*=f;
-	float density=clamp(1-DENSITY,0,1);
 	color.a*=density;
 	if (fbo_write){
 		// r = amount of corona color to mix with sky

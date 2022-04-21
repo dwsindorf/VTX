@@ -424,12 +424,12 @@ FColor FColor::hsv2rgb(){
 }
 
 FColor FColor::intensify(double f){
-	FColor hsv=rgb2hsv();
-	double g=hsv.green()*f;
+	FColor hsv=rgb2hsv();   // convert color to hsv
+	double g=hsv.green()*f; // in hsv mode change saturation only
 	g=g>1?1:g;
 	hsv.set_green(g);
-	FColor rgb=hsv.hsv2rgb();
-	rgb.print();
+	FColor rgb=hsv.hsv2rgb(); // convert back to rgb
+	//rgb.print();
 	return rgb;
 }
 void FColor::print()

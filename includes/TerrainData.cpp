@@ -141,6 +141,11 @@ void TerrainData::add_TNcolor(TNcolor *t){
 		tp->tncolor=t;
 }
 
+void TerrainData::add_TNdensity(TNdensity *t){
+	tp=properties.last();
+	if(tp)
+		tp->tndensity=t;
+}
 void TerrainData::add_TNpoint(TNpoint *t){
 	tp=properties.last();
 	if(tp){
@@ -271,6 +276,7 @@ TerrainProperties::TerrainProperties(int t)
 	info.l=0;
 	tncolor=0;
 	tnpoint=0;
+	tndensity=0;
 	ntexs=0;
 }
 TerrainProperties::~TerrainProperties(){
@@ -311,6 +317,8 @@ void TerrainProperties::initProgram(){
 	}
 	if(tncolor)
 		tncolor->initProgram();
+	if(tndensity)
+		tndensity->initProgram();
 	if(tnpoint)
 		tnpoint->initProgram();
 }

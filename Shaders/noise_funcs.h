@@ -236,10 +236,14 @@ float Noise1D(int i) {
  	g=gv.x;
 #endif
 
+#define NOISE_DENSITY(func) \
+	v1= Vertex1.xyz; \
+    nd=func;
+    
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
     vec4 ncolor=func; \
- 	color =ncolor+color;
+    color=ncolor*color;
 
 #define NOISE_VARS \
     df=vec3(0); \

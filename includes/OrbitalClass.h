@@ -525,8 +525,11 @@ class Corona : public Shell
 public:
 	double     gradient;
 	TNode *noise_expr;
+	TNdensity *density_expr;
 	Color      color1;
 	Color      color2;
+	bool       animation;
+	double     rate;
 	Corona(Orbital *m, double s);
 	~Corona();
 	const char *name()			{ return "Corona";}

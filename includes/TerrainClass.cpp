@@ -705,12 +705,51 @@ Color  TNclist::color(double s)
 //-------------------------------------------------------------
 void TNdensity::eval()
 {
+	TNarg *arg=(TNarg*)right;
+	INIT;
 	if(CurrentScope->zpass()){
-		TNvector::eval();
+		arg->eval();
 		S0.density=S0.s;
 	}
+	if(CurrentScope->rpass()){
+		Td.clr_flag(SNOISEFLAG);
+		arg->eval();
+		if(Td.get_flag(SNOISEFLAG))
+			TerrainData::add_TNdensity(this);
+		else
+			Td.clr_flag(SNOISEFLAG);	
+	}
+	
 }
 
+//-------------------------------------------------------------
+// TNdensity::init() init the node
+//-------------------------------------------------------------
+void TNdensity::init(){
+	right->init();
+}
+//-------------------------------------------------------------
+// TNdensity::initProgram() set shader defines
+//-------------------------------------------------------------
+bool TNdensity::initProgram(){
+    if(!isEnabled())
+    	return false;
+    char defs[256];
+	defs[0]=0;
+	char argstr[256];
+	argstr[0]=0;
+	CurrentScope->set_shader(1);
+	TNarg *arg=(TNarg*)right;
+	Td.clr_flag(SNOISEFLAG);
+    Td.set_flag(NOISE1D);
+    arg->eval();
+    arg->valueString(argstr); // red
+    sprintf(defs,"#define ND %s\n",argstr);
+    strcat(GLSLMgr::defString,defs);
+    CurrentScope->set_shader(0);
+    Td.clr_flag(NOISE1D);
+    return true;
+}
 //************************************************************
 // TNpoint class
 //************************************************************

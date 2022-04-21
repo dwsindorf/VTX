@@ -370,7 +370,7 @@ bool Scene::setProgram(){
 	GLSLVarMgr vars;
 
 	float colormip=color_mip;
-
+	
 	vars.newFloatVar("bumpmip",bump_mip);
 	vars.newFloatVar("freqmip",freq_mip);
 	if(Raster.filter_aniso())

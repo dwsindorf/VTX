@@ -245,11 +245,13 @@ float Noise1D(int i) {
 	p.xyz+=amp*v;	\
 	gl_Position=gl_ModelViewProjectionMatrix * p
 
+
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
     v2= Vertex2.xyz; \
     vec4 ncolor=func; \
  	color =ncolor+color;
+
 
 #define NOISE_VARS \
     df=vec3(0); \

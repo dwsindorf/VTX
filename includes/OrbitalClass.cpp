@@ -1838,6 +1838,7 @@ void System::adjustOrbits(){
 		size=4*star->size;
 		return;
 	}
+	sorted.sort();
 	sorted.se();
 
 	while ((star = sorted--) > 0){
@@ -2676,10 +2677,11 @@ Sky *Spheroid::get_sky()
 	return 0;
 }
 
-
 //************************************************************
 // Star class (stars)
 //************************************************************
+//--------------- static values and functions ---------------
+// data from https://people.highline.edu/iglozman/classes/astronotes/hr_diagram.htm
 //#define TRUE_COLORS
 Color Star::star_color[Star::ntypes]={
 #ifdef TRUE_COLORS
@@ -2698,22 +2700,26 @@ Color Star::star_color[Star::ntypes]={
 		Color(0.8,0.8,1.000),  // A
 		Color(0.6,0.8,1.000),  // B
 		Color(0.5,0.7,1.000)}; // O
-#endif
-
+#endif	
 char Star::star_class[Star::ntypes]={'M','K','G','F','A','B','O'};
 double Star::star_temp[Star::ntypes]={2000,3500,5000,6000,7500,10000,30000};//surface temperature
 double Star::star_luminocity[Star::ntypes]={0.04,0.4,1.2,6,40,5e4,1e6}; //brightness vs sun
 double Star::star_radius[Star::ntypes]={0.5,0.9,1.1,1.4,2,7,16}; //radius vs sun
 double Star::star_frequency[Star::ntypes]={76,12,8,3,0.6,0.1,0.001};  //% of main sequence stars
+
 int Star::num_temps=0;
 int Star::expand_factor=1000;
 double *Star::probability=0;
 double *Star::temps=0;
 
-// generate a table of star temperatures based on stellar frequency and luminocity
+//-------------------------------------------------------------
+// Star::make_temps_table()  generate a random instance
+//-------------------------------------------------------------
+// generate a table of star temperatures based on stellar frequency and luminocity data
 // The idea is that when picking a star from the background (brightest in select region) 
 // the star type will be a product of it's stellar frequency and relative brightness
 // (e.g. close in red stars, further out blue stars)
+//-------------------------------------------------------------
 void Star::make_temps_table(){
 	num_temps=expand_factor;
 	MALLOC(num_temps,double,temps);
@@ -2744,7 +2750,7 @@ void Star::make_temps_table(){
 			f+=delta;			
 		}	
 	}
-	// for some reason not all table entries at the end are getting filled
+	// note: for some reason not all table entries at the end are getting filled
 	if(index<num_temps){
 		double t=temps[index-1];
 		while(index<num_temps){
@@ -2759,7 +2765,11 @@ void Star::make_temps_table(){
 #endif
 }
 
-// generate a predicted star type based on emission color
+//-------------------------------------------------------------
+// void Star::star_info(..) 
+//-------------------------------------------------------------
+// return predicted temperature and type string based on radiance color
+//-------------------------------------------------------------
 void Star::star_info(Color col, double *t, char *m){
 	int min_index=0;
 	Color c=col;
@@ -2787,15 +2797,22 @@ void Star::star_info(Color col, double *t, char *m){
 	sprintf(m,"%c%d",star_class[min_index],(int)(9*f*col.alpha()));
 }
 
-// return average star size based on temperature
-// approx. linear fit to data at:
-// https://people.highline.edu/iglozman/classes/astronotes/hr_diagram.htm
+//-------------------------------------------------------------
+// double Star::star_size(double temp)
+//-------------------------------------------------------------
+// - star size from temperature
+// - approximate linear fit to data 
+//-------------------------------------------------------------
 double Star::star_size(double temp){
 	static double sun_radius=0.4327; // in 10^6 miles
 	return (0.27*temp/1000)*sun_radius;
 }
-//generate a random star
-// return temperature radius and color
+
+//-------------------------------------------------------------
+// void Star::random(..) generate random star
+//-------------------------------------------------------------
+// - return temperature radius and color
+//-------------------------------------------------------------
 void Star::random(double &temp, double &radius, Color &color){
    double p=URAND(lastn++);
    int index=p*num_temps;
@@ -2817,14 +2834,18 @@ void Star::random(double &temp, double &radius, Color &color){
 	   }   
    }
    Color c=c1.mix(c2,f);
-   char str[128];
-   c.toString(str);
    color=c;
    double z=Star::star_size(temp);
    radius=z*(1+0.2*RAND(lastn++));
-   cout<<"r:"<<z<<" t:"<<temp<<" "<<str<<endl;
+   //char str[128];
+   // c.toString(str);
+   //cout<<"r:"<<z<<" t:"<<temp<<" "<<str<<endl;
 }
-static TNinode *Star::image(Color tc){
+
+//-------------------------------------------------------------
+// TNinode *Star::image(Color tc) generate a 1D texture image from color
+//-------------------------------------------------------------
+TNinode *Star::image(Color tc){
 	char buff[2048];
 
 	sprintf(buff,"bands(\"star%d\",CLAMP,16",System::star_id);
@@ -2841,25 +2862,31 @@ static TNinode *Star::image(Color tc){
 		c.toString(buff+strlen(buff));
 	}
 	strcat(buff,");\n");
-	cout<<buff<<endl;
+	//cout<<buff<<endl;
 	TNinode *n=(TNinode*)TheScene->parse_node(buff);
 	if(!n)
 		return 0;
 	n->init();
 	return n;
 }
-static TNtexture *Star::texture(){
+
+//-------------------------------------------------------------
+// TNtexture *Star::texture() generate a random texture
+//-------------------------------------------------------------
+TNtexture *Star::texture(){
  char *ntype[]={"GRADIENT","SIMPLEX","VORONOI"};
+ double offset[]={0,0.5,0.5};
  int nt=(int)(3*URAND(lastn++));
  nt=nt>2?2:nt;
  char buff[256];
  char noise_expr[64];
- sprintf(noise_expr,"noise(%s|FS|NABS|SQR,0.9,8.9,0.9,0.01,2.06,1,1,0,0.3)",ntype[nt]);
- sprintf(buff,"Texture(\"star%d\",BORDER|S|TEX,%s,0.5,2,1,1,1,2,1,0.9,0,0,0,0)",System::star_id,noise_expr);
- cout<<buff<<endl;
+ sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS,0.9,8.9,0.9,0.01,2.06,1,1,0,%g)",ntype[nt],offset[nt]);
+ sprintf(buff,"Texture(\"star%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",System::star_id,noise_expr);
+ //cout<<buff<<endl;
  TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
  return nc;
 }
+//--------------- end static values and functions ---------------
 Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 {
 	year=0;
@@ -2884,12 +2911,17 @@ Star::~Star()
 #endif
 }
 
+//-------------------------------------------------------------
+// Star::setRadiance()  set radiance from color
+//-------------------------------------------------------------
 void Star::setRadiance(Color c){
 	emission=c;
-	//c.print();
 	star_info(emission,&temperature,startype);
 	//cout<<startype<<" "<<temperature<<endl;
 }
+//-------------------------------------------------------------
+// Star::getStarData()  return temperature and type string
+//-------------------------------------------------------------
 void Star::getStarData(double *d, char *m){
 	setRadiance(emission);
 	*d=temperature;
@@ -2938,30 +2970,32 @@ Star *Star::newInstance(){
 	halo->ht=halo->size-r;
 	halo->color1=c;
 	halo->color2=c;
-	halo->gradient=0.5;
+	halo->gradient=0.8;
 	halo->density=0.9;
+	
+	Corona *outer=star->children++;
+	outer->size = pow(1 + r, 2);
+	outer->ht = outer->size - r;
+	outer->color1 = c;
+	outer->color1.set_alpha(0.8);
+	outer->color2 = c.mix(Color(1, 0, 0), 0.2);
+	outer->setName("outer");
+
+	outer->setProtoValid(true);
+
+	outer->setNoiseFunction("noise(GRADIENT|FS|SQR|UNS,0,4.8,0.15,0.41,2,1,1,0,1)");
+	outer->applyNoiseFunction();
 
 	Corona *inner=star->children++;
 	inner->size=1.2*r;
 	inner->ht=inner->size-r;
-	inner->color1=c;
+	inner->color1=c.lighten(0.2);
 	inner->color2=c;
 	inner->setProtoValid(true);
 	inner->setName("inner");
 
-	inner->setNoiseFunction("0.5+noise(GRADIENT|NLOD,0,7,1,0.2,2.17,1,1,0,0)");
+	inner->setNoiseFunction("noise.expr=noise(GRADIENT|FS|SQR,0.3,7,0.71,0,2.1,1,1,0,1)");
 	inner->applyNoiseFunction();
-
-	Corona *outer=star->children++;
-	outer->size=pow(1+r,2);
-	outer->ht=outer->size-r;
-	outer->color1=c;
-	outer->color2=c.mix(Color(1,0,0),0.2);
-	outer->setName("outer");
-	outer->setProtoValid(true);
-
-	outer->setNoiseFunction("noise(GRADIENT|NABS|SQR,0,1,0.0,0.41,2,1,1,0,1.1)-2.5*PHI");
-	outer->applyNoiseFunction();
 
     star->setProtoValid(true);
     return star;
@@ -5633,6 +5667,9 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	gradient=1;
 	hscale=0;
 	noise_expr=0;
+	density_expr=0;
+	noise_expr=0;
+	rate=1e-6;
 	//inner_radius=m->size;
 }
 Corona::~Corona()
@@ -5651,7 +5688,9 @@ void Corona::get_vars()
 	if(exprs.get_local("name",Td))
 		strncpy(name_str,Td.string,maxstr);
 	VGET("resolution",detail,3);
-	VGET("gradient",gradient,0.8);
+	VGET("gradient",gradient,1);
+	VGET("rate",rate,1e-6);
+	VGET("animate",animation,1);
 
 	if(exprs.get_local("color",Td))
 	    set_color(Td.c);
@@ -5665,8 +5704,10 @@ void Corona::get_vars()
 		color2=((Star*)parent)->emission;
 	}
 	TNvar *var=exprs.getVar((char*)"noise.expr");
-	if(var)
+	if(var){
 		noise_expr=var->right;
+		applyNoiseFunction();
+	}
 }
 
 //-------------------------------------------------------------
@@ -5675,7 +5716,10 @@ void Corona::get_vars()
 void Corona::set_vars()
 {
 	VSET("resolution",detail,3);
-	VSET("gradient",gradient,0.8);
+	VSET("gradient",gradient,1);
+	VSET("rate",rate,1e-6);
+	VSET("animate",(double)animation,1);
+
 	exprs.set_var("color1",color1);
 	exprs.set_var("color2",color2);
 }
@@ -5687,10 +5731,7 @@ bool Corona::setProgram(){
 	char frag_shader[128]="corona.frag";
 	char vert_shader[128]="corona.vert";
 	GLSLMgr::setDefString("");
-	GLSLMgr::loadProgram(vert_shader,frag_shader);
-	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program)
-		return false;
+	
 
 	double dpmin,dpmax;
 
@@ -5716,16 +5757,24 @@ bool Corona::setProgram(){
 	  	dpmax=dp;
 	  	dpmin=l1/d;
 	}
-
+	    
 	TerrainProperties *tp=map->tp;
 
 	tp->initProgram();
+	
+	GLSLMgr::loadProgram(vert_shader,frag_shader);
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program)
+		return false;
 
-	//cout<<"Corona " << dpmin << " " << dpmax << endl;
 	GLSLVarMgr vars;
 
 	FColor outer=FColor(color2);
 	FColor inner=FColor(color1);
+	
+	double t=animation?rate*TheScene->time:0.0;
+
+	vars.newFloatVar("rseed",rseed+t);
 
 	vars.newFloatVar("dpmax",dpmax);
     vars.newFloatVar("dpmin",dpmin);
@@ -5744,7 +5793,9 @@ bool Corona::setProgram(){
 		GLSLMgr::setFBORenderPass();
 
 	GLSLMgr::loadVars();
+
 	tp->setProgram();
+	TheScene->setProgram();
 
 	glEnable(GL_BLEND);
 	return true;
@@ -5758,7 +5809,8 @@ void Corona::set_surface(TerrainData &data)
 	Spheroid::set_surface(data);
 	 if(noise_expr){
 	    noise_expr->eval();
-	    S0.density=S0.s;
+	    if(!Td.get_flag(SNOISEFLAG))
+	    	S0.density=S0.s;
 	    //cout<<S0.density<<endl;
 	 }
 }
@@ -5854,6 +5906,12 @@ void Corona::applyNoiseFunction()
 	if(var){
 		var->applyExpr();
 		noise_expr=var->right;
+		char argstr[256];
+		argstr[0]=0;
+		char dstr[256];
+		noise_expr->valueString(argstr);
+		sprintf(dstr,"Density(%s)",argstr);
+		density_expr=TheScene->parse_node(dstr);
 	}
 }
 
@@ -5886,23 +5944,24 @@ int Corona::adapt_pass()
 //-------------------------------------------------------------
 // Corona::render_object()   lower level render
 //-------------------------------------------------------------
-void Corona::render_object()
-{
-    first=1;
+void Corona::render_object() {
+	if (Raster.auximage()) // skip surface fog/water effects
+		return;
 	show_render_state(this);
-	if(Render.draw_solid() || Render.draw_shaded()){
-		glDisable(GL_DEPTH_TEST);
-		if(!Render.draw_nvis()){
-			Render.set_draw_nvis(1);
-			Shell::render_object();
-			Render.set_draw_nvis(0);
-		}
-		else
-			Shell::render_object();
-		glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
+	first = 1;
+	if(density_expr){
+		terrain.set_root(density_expr);
+		terrain.init();
+		terrain.init_render();
 	}
 	else
-		Shell::render_object();
+		terrain.init_render();
+	map->render();
+	first = 0;
+	glEnable(GL_DEPTH_TEST);
+	terrain.clr_root();
+
 }
 
 //-------------------------------------------------------------
