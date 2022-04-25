@@ -3,83 +3,20 @@ Scene() {
 		view=SURFACE;
 		phi=-37.6282;
 		theta=1.15663;
-		height=34235.4 ft;
-		gndlvl=-12010.2 ft;
-		time=70823.8;
-		vstride=586570;
+		height=7051.1 ft;
+		time=93572.2;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		tilt=-9;
-		angle=-14;
-		fov=35;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=22225.2 ft;
-		gndlvl=0 ft;
-	}
-	View{
-		height=14876.1 ft;
-		gndlvl=6182.44 ft;
-	}
-	View{
-		height=14181.4 ft;
-		gndlvl=0 ft;
-		tilt=-12;
-		angle=-18;
-	}
-	View{
-		height=16332.1 ft;
-	}
-	View{
-		height=16489.9 ft;
-	}
-	View{
-		height=36361.9 ft;
-	}
-	View{
-		height=13058.3 ft;
-		tilt=-11;
-		angle=-29;
-	}
-	View{
-		height=10706.8 ft;
-		angle=-26;
-	}
-	View{
-		height=9857.32 ft;
-	}
-	View{
-		height=9165.17 ft;
-		tilt=-7;
-		angle=-17;
-	}
-	View{
-		height=9254.99 ft;
-	}
-	View{
-		height=9159.54 ft;
-		vstride=0.02;
 		zoom=0.002;
 		minh=1.13636e-09;
-		radius=0.00200173;
-	}
-	View{
-		height=7919.18 ft;
-		time=66374.2;
+		minr=0.002;
 		heading=-5;
 		tilt=-5;
 		angle=-22;
-		minr=0.002;
-		radius=0.0020015;
-	}
-	View{
-		height=7352.3 ft;
-		time=66393.4;
-		radius=0.00200139;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -103,7 +40,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6000;
+					temperature=6540.73;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -132,7 +69,7 @@ Scene() {
 						Color(0.286,0.278,0.278),
 						Color(1,1,1));
 					Surface{
-						terrain=water(0)
+						terrain=ocean(0)
 								
 								Texture("alpine",LINEAR|NORM|TEX,0.5,2,1,-1.77776,1,2,1,0,0,1,0,-0.30556)+Z(noise(GRADIENT|FS|NABS|SQR,8,4,0.22,0.5,2,0.2,1,0,0.8));
 					}
@@ -144,6 +81,7 @@ Scene() {
 						rseed=1.58657;
 						specular=Color(1,1,1);
 						tilt=10;
+						year=100;
 					}
 				}
 			}

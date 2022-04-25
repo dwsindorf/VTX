@@ -1,283 +1,24 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-29.6631;
-		theta=345.125;
-		height=3124.49 ft;
-		gndlvl=-6857.37 ft;
-		time=54795.6;
-		vstride=586570;
+		phi=-28.4199;
+		theta=345.017;
+		height=6 ft;
+		gndlvl=-4350.6 ft;
+		time=17912.8;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=185;
-		tilt=-15;
+		zoom=0.004;
+		minh=1.13636e-09;
+		heading=-46;
+		tilt=-3;
+		angle=10;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		phi=-29.6398;
-		theta=345.135;
-		height=10347.4 ft;
-		gndlvl=-5417.9 ft;
-		heading=245;
-	}
-	View{
-		height=12869.7 ft;
-		gndlvl=-5329.72 ft;
-	}
-	View{
-		phi=-29.696;
-		theta=345.092;
-		height=288.88 ft;
-		gndlvl=-3725.57 ft;
-	}
-	View{
-		height=4260.22 ft;
-		gndlvl=-3625.87 ft;
-		heading=210;
-	}
-	View{
-		phi=-29.7029;
-		theta=345.043;
-		height=177.8 ft;
-		gndlvl=-4052.3 ft;
-	}
-	View{
-		phi=-29.6804;
-		theta=345.025;
-		height=9020.3 ft;
-		gndlvl=-4077.54 ft;
-		heading=130;
-		tilt=-10;
-		angle=-5;
-	}
-	View{
-		height=2121.02 ft;
-		gndlvl=-4078.25 ft;
-	}
-	View{
-		height=3116.75 ft;
-		gndlvl=-4077.54 ft;
-		heading=-5;
-	}
-	View{
-		phi=-29.7043;
-		theta=345.103;
-		height=280.076 ft;
-		gndlvl=-3995.76 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=607.982 ft;
-		gndlvl=-3991.34 ft;
-	}
-	View{
-		phi=-29.705;
-		theta=345.114;
-		height=51.4627 ft;
-		gndlvl=-4315.63 ft;
-	}
-	View{
-		phi=-29.7067;
-		theta=345.111;
-		height=3464.95 ft;
-		gndlvl=-3923.57 ft;
-		time=88035.4;
-		heading=135;
-		tilt=-5;
-		angle=-5;
-	}
-	View{
-		phi=-29.6864;
-		theta=345.083;
-		height=137.316 ft;
-		gndlvl=-4013.44 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=45.9046 miles;
-		gndlvl=7267.63 ft;
-		time=50057.2;
-		heading=105;
-		tilt=-40;
-		angle=-20;
-	}
-	View{
-		phi=-29.0259;
-		theta=345.19;
-		height=3554.76 ft;
-		gndlvl=-3724.34 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=50 ft;
-		gndlvl=315603 ft;
-	}
-	View{
-		height=13.28 miles;
-		gndlvl=-2486.73 ft;
-	}
-	View{
-		phi=-28.5864;
-		theta=345.07;
-		height=1831.82 ft;
-		gndlvl=-4340.4 ft;
-	}
-	View{
-		height=2939.77 ft;
-		gndlvl=-3216.69 ft;
-		tilt=-5;
-		angle=-5;
-	}
-	View{
-		phi=-28.4161;
-		theta=345.009;
-		height=672.688 ft;
-		gndlvl=-2577.28 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=922.553 ft;
-		gndlvl=-2573.66 ft;
-		tilt=0;
-		angle=10;
-	}
-	View{
-		height=228.108 ft;
-		gndlvl=-2568.55 ft;
-		heading=320;
-		tilt=-10;
-		angle=-10;
-	}
-	View{
-		phi=-28.4203;
-		theta=345.017;
-		height=45.2403 ft;
-		gndlvl=-3086.93 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=7.21558 ft;
-		gndlvl=-3087.09 ft;
-		time=79190.2;
-		heading=255;
-		tilt=-5;
-		angle=5;
-	}
-	View{
-		height=120.441 ft;
-		gndlvl=-3089.71 ft;
-		heading=-75;
-		tilt=-10;
-		angle=0;
-	}
-	View{
-		height=93.9823 ft;
-		gndlvl=-3091.45 ft;
-	}
-	View{
-		height=16.8197 ft;
-		gndlvl=-3092.5 ft;
-	}
-	View{
-		phi=-28.4199;
-		height=28.1306 ft;
-		gndlvl=-3090.82 ft;
-	}
-	View{
-		height=292.466 ft;
-		gndlvl=-3088.11 ft;
-	}
-	View{
-		height=172.575 ft;
-		gndlvl=-3099.18 ft;
-	}
-	View{
-		height=69.6439 ft;
-	}
-	View{
-		height=41.1581 ft;
-	}
-	View{
-		height=78.0349 ft;
-	}
-	View{
-		height=61.6855 ft;
-		gndlvl=-3101.13 ft;
-	}
-	View{
-		height=43.7832 ft;
-		gndlvl=-3099.18 ft;
-	}
-	View{
-		height=46.7823 ft;
-		gndlvl=-3100.37 ft;
-	}
-	View{
-		height=20.372 ft;
-	}
-	View{
-		height=49.5977 ft;
-		gndlvl=-3099.18 ft;
-	}
-	View{
-		height=11.889 ft;
-		gndlvl=-3101.13 ft;
-	}
-	View{
-		height=13.9633 ft;
-		gndlvl=-3100.37 ft;
-	}
-	View{
-		height=14.2804 ft;
-		gndlvl=-3102.04 ft;
-		heading=-40;
-		tilt=0;
-	}
-	View{
-		phi=-28.4201;
-		height=44.54 ft;
-		gndlvl=-3094.33 ft;
-		time=79200.6;
-		heading=-70;
-	}
-	View{
-		phi=-28.4199;
-		height=29.9857 ft;
-		gndlvl=-3084.22 ft;
-		heading=-40;
-	}
-	View{
-		time=79207.2;
-	}
-	View{
-		height=1308.68 ft;
-		gndlvl=-4350.6 ft;
-	}
-	View{
-		tilt=-1;
-		angle=3;
-	}
-	View{
-		height=6 ft;
-		heading=-46;
-		tilt=-3;
-		angle=10;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00399918;
-	}
-	View{
-		time=17912.8;
 		minr=0.00399918;
 	}
 	Universe {
@@ -302,7 +43,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6000;
+					temperature=6540.73;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -318,9 +59,9 @@ Scene() {
 					fog.value=1;
 					fog.vmax=3905.6 ft;
 					fog.vmin=-1000 ft;
-					ocean.level=-6111.2 ft;
+					ocean.level=-6111.18 ft;
 					resolution=2.37142;
-					shadow=Color(0,0,0.19,0.8);
+					shadow=Color(0.04,0.04,0.05,0.8);
 					shine=9.20157;
 					specular=Color(1,1,1,0.05);
 					water.clarity=244.276 ft;

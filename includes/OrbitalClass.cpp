@@ -201,6 +201,11 @@ Bounds *Orbital::bounds(){return 0;}
 TNode *Orbital::set_terrain(TNode *r)	{return 0;}
 Color Orbital::color()				{ return _color;}
 void Orbital::set_color(Color c)	{ _color=c;}
+int Orbital::getChildren(LinkedList<NodeIF*>&l){
+	int n=exprs.getChildren(l);
+    n+=ObjectNode::getChildren(l);
+	return n;
+}
 void Orbital::free() {}
 void Orbital::set_surface(TerrainData &d){}
 void Orbital::set_mode(int d) {}
@@ -246,11 +251,6 @@ char *Orbital::nodeName() {
 	return name_str;
 }
 //-------------------------------------------------------------
-int Orbital::getChildren(LinkedList<NodeIF*>&l){
-	int n=exprs.getChildren(l);
-    n+=ObjectNode::getChildren(l);
-	return n;
-}
 //-------------------------------------------------------------
 NodeIF *Orbital::addChild(NodeIF *c){
    if(c->typeClass()&ID_OBJECT)
@@ -1526,7 +1526,6 @@ void Galaxy::get_vars()
 // System class
 //************************************************************
 Point System::galaxy_origin;
-int System::star_id=0;
 bool System::building_system=false;
 
 System::System(double s) : Orbital(s)
@@ -1899,10 +1898,8 @@ System *System::newInstance(){
 	double phase=0;
 	int stars=system->m_stars;
 	Star *star;
-	star_id=0;
 	building_system=true;
 	for(int i=0;i<stars;i++){
-		star_id++;
 		star=Star::newInstance();
 		if(stars==1)
 			star->orbit_radius=0;
@@ -1911,7 +1908,6 @@ System *System::newInstance(){
 	}
 	building_system=false;
 	system->adjustOrbits();
-    //star_id=0;
     system->setProtoValid(true);
     return system;
 }
@@ -2707,6 +2703,7 @@ double Star::star_luminocity[Star::ntypes]={0.04,0.4,1.2,6,40,5e4,1e6}; //bright
 double Star::star_radius[Star::ntypes]={0.5,0.9,1.1,1.4,2,7,16}; //radius vs sun
 double Star::star_frequency[Star::ntypes]={76,12,8,3,0.6,0.1,0.001};  //% of main sequence stars
 
+int Star::star_id=0;
 int Star::num_temps=0;
 int Star::expand_factor=1000;
 double *Star::probability=0;
@@ -2848,7 +2845,7 @@ void Star::random(double &temp, double &radius, Color &color){
 TNinode *Star::image(Color tc){
 	char buff[2048];
 
-	sprintf(buff,"bands(\"star%d\",CLAMP,16",System::star_id);
+	sprintf(buff,"bands(\"star-%d\",CLAMP,16",star_id);
 	Color colors[5];
 	colors[0]=tc.lighten(0.75);
 	colors[1]=tc.lighten(0.5);
@@ -2879,9 +2876,9 @@ TNtexture *Star::texture(){
  int nt=(int)(3*URAND(lastn++));
  nt=nt>2?2:nt;
  char buff[256];
- char noise_expr[64];
- sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS,0.9,8.9,0.9,0.01,2.06,1,1,0,%g)",ntype[nt],offset[nt]);
- sprintf(buff,"Texture(\"star%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",System::star_id,noise_expr);
+ char noise_expr[128];
+ sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS|TA,0.9,8.9,0.9,0.01,2.06,1,1,0,%g,1e-6)",ntype[nt],offset[nt]);
+ sprintf(buff,"Texture(\"star-%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
  //cout<<buff<<endl;
  TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
  return nc;
@@ -2941,7 +2938,9 @@ Star *Star::newInstance(){
 //		return star;
 //	}
 	star=TheScene->getPrototype(0,TN_STAR);
+	star_id=lastn;
 	star->setRseed(URAND(lastn++));
+	//System::star_id=star->rseed*12345;
 
 	double t,r;
 	Color c;
@@ -2954,7 +2953,7 @@ Star *Star::newInstance(){
 	c=c.intensify(cf);
 
     TNinode *img=image(c);
-    //Render.invalidate_textures();
+    Render.invalidate_textures();
     star->add_image(img);
     TNode *root=star->terrain.get_root();
     TNtexture *stex=texture();
@@ -2983,18 +2982,18 @@ Star *Star::newInstance(){
 
 	outer->setProtoValid(true);
 
-	outer->setNoiseFunction("noise(GRADIENT|FS|SQR|UNS,0,4.8,0.15,0.41,2,1,1,0,1)");
+	outer->setNoiseFunction("noise(GRADIENT|FS|SQR|UNS|TA,0,4.8,0.15,0.41,2,1,1,0,1,1e-6)");
 	outer->applyNoiseFunction();
 
 	Corona *inner=star->children++;
-	inner->size=1.2*r;
+	inner->size=1.1*r;
 	inner->ht=inner->size-r;
 	inner->color1=c.lighten(0.2);
 	inner->color2=c;
 	inner->setProtoValid(true);
 	inner->setName("inner");
 
-	inner->setNoiseFunction("noise.expr=noise(GRADIENT|FS|SQR,0.3,7,0.71,0,2.1,1,1,0,1)");
+	inner->setNoiseFunction("noise.expr=noise(GRADIENT|FS|NABS|NLOD|SQR|TA,0,7,1,0.16,2.17,1,1,0,1,1e-06)");
 	inner->applyNoiseFunction();
 
     star->setProtoValid(true);
@@ -3117,16 +3116,15 @@ bool Star::setProgram(){
 	char frag_shader[128]="star.frag";
 	char vert_shader[128]="star.vert";
 	char defs[128]="";
+	GLSLMgr::setDefString(defs);
 
 	TerrainProperties *tp=map->tp;
-	GLSLMgr::setDefString(defs);
 	tp->initProgram();
 
 	GLSLMgr::loadProgram(vert_shader,frag_shader);
 	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program){
+	if(!program)
 		return false;
-	}
 
 	GLSLVarMgr vars;
 
@@ -3158,7 +3156,6 @@ void Star::render()
 {
 	if(!isEnabled())
 		return;
-
 	set_ref();
 	if(included()){
 		TheScene->pushMatrix();
@@ -3178,7 +3175,6 @@ void Star::render_object()
 {
  	first=1;
 	show_render_state(this);
-
 	if(TheScene->adapt_mode())
 		map->render();
 	else {
@@ -3199,7 +3195,8 @@ int Star::adapt_pass()
 		return 0;
 
     if(!local_group() || !view_group() || offscreen())
-        clear_pass(BG2);
+        clear_pass(BG3);
+    	//return 0;
     else
         clear_pass(BG1);
     return selected();
@@ -3212,14 +3209,14 @@ int Star::render_pass()
 {
 	clr_selected();
 
-//    if(!local_group() || offscreen() || !isEnabled())
-//		return 0;
-//	if(view_group()){
-		clear_pass(BG2);
-//	}
-//	else
-		//clear_pass(BG2);
-//		clear_pass(BG5);
+    if(!local_group() || offscreen() || !isEnabled())
+		return 0;
+    if(TheScene->viewobj==this)
+		clear_pass(FG0);		
+	else if(local_group())
+		clear_pass(BG3);
+	else
+		clear_pass(BG4);
     return selected();
 }
 
@@ -3536,7 +3533,7 @@ int Planetoid::render_pass()
 			clear_pass(BG2);
 	}
 	else
-		clear_pass(BG5);
+		clear_pass(BG4);
 	if(selected() && map->visbumps() && Render.bumps())
 	    Raster.set_bumptexs(1);
 
@@ -5689,8 +5686,7 @@ void Corona::get_vars()
 		strncpy(name_str,Td.string,maxstr);
 	VGET("resolution",detail,3);
 	VGET("gradient",gradient,1);
-	VGET("rate",rate,1e-6);
-	VGET("animate",animation,1);
+	VGET("internal",internal,0);
 
 	if(exprs.get_local("color",Td))
 	    set_color(Td.c);
@@ -5708,6 +5704,11 @@ void Corona::get_vars()
 		noise_expr=var->right;
 		applyNoiseFunction();
 	}
+	else{
+		char dstr[256];
+		sprintf(dstr,"Density(1.0)");
+	    density_expr=TheScene->parse_node(dstr);
+	}
 }
 
 //-------------------------------------------------------------
@@ -5717,8 +5718,7 @@ void Corona::set_vars()
 {
 	VSET("resolution",detail,3);
 	VSET("gradient",gradient,1);
-	VSET("rate",rate,1e-6);
-	VSET("animate",(double)animation,1);
+	VSET("internal",internal,0);
 
 	exprs.set_var("color1",color1);
 	exprs.set_var("color2",color2);
@@ -5807,8 +5807,8 @@ bool Corona::setProgram(){
 void Corona::set_surface(TerrainData &data)
 {
 	Spheroid::set_surface(data);
-	 if(noise_expr){
-	    noise_expr->eval();
+	 if(density_expr){
+		 density_expr->right->eval();
 	    if(!Td.get_flag(SNOISEFLAG))
 	    	S0.density=S0.s;
 	    //cout<<S0.density<<endl;
@@ -5903,14 +5903,18 @@ void Corona::setNoiseFunction(char *expr) {
 void Corona::applyNoiseFunction()
 {
 	TNvar *var=exprs.getVar((char*)"noise.expr");
+	char dstr[256];
 	if(var){
 		var->applyExpr();
 		noise_expr=var->right;
 		char argstr[256];
 		argstr[0]=0;
-		char dstr[256];
 		noise_expr->valueString(argstr);
 		sprintf(dstr,"Density(%s)",argstr);
+		density_expr=TheScene->parse_node(dstr);
+	}
+	else{
+		sprintf(dstr,"Density(1.0)");
 		density_expr=TheScene->parse_node(dstr);
 	}
 }
@@ -5924,7 +5928,18 @@ int Corona::render_pass()
 
 	if(!local_group() || offscreen() || !isEnabled())
 	    return 0;
-	clear_pass(BG3);
+	if(getParent()==TheScene->viewobj){
+		if(internal)
+			clear_pass(FG1);
+	    else
+			clear_pass(BG1);	
+	}
+	else{
+		if(internal)
+			clear_pass(BG2);
+	     else
+			clear_pass(BG4);	
+	}	
     return selected();
 }
 //-------------------------------------------------------------
@@ -6230,16 +6245,10 @@ int Halo::render_pass() {
 
 	if (!local_group() || offscreen() || !isEnabled())
 		return 0;
-	if (getParent() == TheScene->viewobj) {
-		if (near_group()) {
-			if (outside())
-				clear_pass(FG1);
-			else
-				clear_pass(BG1);
-		} else
-			clear_pass(BG2);
-	} else
-		clear_pass(BG2);
+	if (getParent() == TheScene->viewobj)
+		clear_pass(FG1);
+	else
+		clear_pass(BG3);
 	return selected();
 
 }

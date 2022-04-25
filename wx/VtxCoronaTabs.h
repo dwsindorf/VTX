@@ -10,17 +10,13 @@ protected:
 	SliderCtrl  *SizeSlider;
 	ColorSlider *OuterSlider;
 	ColorSlider *InnerSlider;
-	SliderCtrl  *RateSlider;
 	SliderCtrl  *GradientSlider;
-	wxChoice    *rate_scale;
-	wxCheckBox  *animate;
+
+	wxCheckBox  *internal;
 
 	ExprTextCtrl *NoiseExpr;
 
 	void AddObjectTab(wxWindow *panel);
-	void getRate();
-	void setRate();
-
 public:
 	VtxCoronaTabs(wxWindow* parent,
 			wxWindowID id,
@@ -91,22 +87,10 @@ public:
     void OnInnerColor(wxColourPickerEvent& WXUNUSED(event)){
     	OnColorValue(InnerSlider,object()->color1);
     }
-	void OnEndRateSlider(wxScrollEvent &event) {
-		setRate();
-	}
-	void OnRateSlider(wxScrollEvent &event) {
-		RateSlider->setValueFromSlider();
-		setRate();
+	
+	void OnInternal(wxCommandEvent& event) {
+		object()->internal=event.IsChecked();
 		TheScene->set_changed_render();
-	}
-	void OnRateText(wxCommandEvent &event) {
-		setRate();
-	}
-	void OnRateScale(wxCommandEvent& event){
-	    setRate();
-	}
-	void OnAnimate(wxCommandEvent& event) {
-		object()->animation=event.IsChecked();
 	}
 
     void OnChangedNoiseExpr(wxCommandEvent& event);

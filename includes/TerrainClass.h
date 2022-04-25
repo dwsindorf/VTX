@@ -179,6 +179,8 @@ protected:
 	int flags;
 public:
 	double scale;
+	double rate;
+
 	double mn,mx,ma,mb;
     int type;
     int id;

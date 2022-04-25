@@ -25,14 +25,16 @@ Scene() {
 		height=49455 ft;
 		tilt=-3;
 		angle=-25;
+	}
+	View{
+		tilt=-5;
+		angle=-27;
 		vstride=0.02;
 		zoom=0.0015;
 		minh=1.13636e-09;
 		radius=0.0015071;
 	}
 	View{
-		tilt=-5;
-		angle=-27;
 		minr=0.00149773;
 	}
 	Universe {
@@ -61,7 +63,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=4917.65;
+					temperature=6540.73;
 					Surface{
 						m1=noise(GRADIENT|UNS,3,10,0.4,0.5);
 						m2=noise(GRADIENT|NABS|UNS,8,10,0.5,0.5);
@@ -79,12 +81,14 @@ Scene() {
 					day=58.65;
 					name="Mercury";
 					ocean.level=1.25216e-312 ft;
+					phase=180;
 					resolution=3.31426;
 					shadow=Color(0,0,0,0.95);
 					shine=38.6458;
 					specular=Color(1,1,1);
 					sunset=0.01;
 					water.albedo=0.73;
+					year=83.34;
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),
 						Color(0.992,0.773,0.004));

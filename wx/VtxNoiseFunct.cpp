@@ -43,7 +43,11 @@ enum {
 	ID_NORM,
 	ID_SCALE,
 	ID_LOD,
-	ID_TYPE
+	ID_TYPE,
+	ID_RATE_SCALE,
+	ID_RATE_SLDR,
+	ID_RATE_TEXT,
+	ID_ANIMATE,
 };
 
 IMPLEMENT_CLASS(VtxNoiseFunct, wxNotebook )
@@ -57,6 +61,8 @@ EVT_CHECKBOX(ID_NORM,VtxNoiseFunct::OnChangeEvent)
 EVT_CHECKBOX(ID_SCALE,VtxNoiseFunct::OnChangeEvent)
 EVT_CHECKBOX(ID_LOD,VtxNoiseFunct::OnChangeEvent)
 EVT_CHECKBOX(ID_ABS,VtxNoiseFunct::OnChangeEvent)
+EVT_CHECKBOX(ID_ANIMATE, VtxNoiseFunct::OnChangeEvent)
+
 EVT_CHOICE(ID_DOMAIN, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MAPPING, VtxNoiseFunct::OnChangeEvent)
 EVT_CHOICE(ID_MODE, VtxNoiseFunct::OnChangeEvent)
@@ -71,6 +77,11 @@ SET_SLIDER_EVENTS(ORDERS,VtxNoiseFunct,Orders)
 SET_SLIDER_EVENTS(H,VtxNoiseFunct,H)
 SET_SLIDER_EVENTS(L,VtxNoiseFunct,L)
 SET_SLIDER_EVENTS(HOMOG,VtxNoiseFunct,Homog)
+
+EVT_COMMAND_SCROLL(ID_RATE_SLDR,VtxNoiseFunct::OnRateSlider)
+EVT_TEXT_ENTER(ID_RATE_TEXT,VtxNoiseFunct::OnRateText)
+EVT_CHOICE(ID_RATE_SCALE, VtxNoiseFunct::OnRateScale)
+
 
 END_EVENT_TABLE()
 
@@ -238,12 +249,14 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 }
 
 void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
 
 	wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
-	panel->SetSizer(boxSizer);
+	topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 2);
+	//panel->SetSizer(boxSizer);
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-
+	//wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	wxBoxSizer* noise_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Noise"));
 
@@ -274,9 +287,32 @@ void VtxNoiseFunct::AddTypeTab(wxWindow *panel){
     m_noisetype->SetSelection(0);
     noise_cntrls->Add(m_noisetype,0,wxALIGN_LEFT|wxALL,5);
 
-	hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxALL,5);
+	//hline->Add(noise_cntrls,0,wxALIGN_LEFT|wxALL,5);
 
-    boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+    boxSizer->Add(noise_cntrls, 0, wxALIGN_LEFT|wxALL,0);
+    
+    wxBoxSizer* time_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Animation"));
+    	
+	time_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+
+	wxString exps[]={"1","0.1","0.01","0.001","1e-4","1e-5","1e-6","1e-7","1e-8"};
+	
+	m_animate=new wxCheckBox(panel, ID_ANIMATE, " On ");
+	
+	rate_scale=new wxChoice(panel, ID_RATE_SCALE, wxDefaultPosition,wxSize(80,-1),9, exps);
+
+	rate_scale->SetSelection(6);
+	RateSlider=new SliderCtrl(panel,ID_RATE_SLDR,"Rate",LABEL, VALUE,180);
+	RateSlider->setRange(1,10);
+
+	hline->Add(RateSlider->getSizer());
+	hline->Add(rate_scale);
+	hline->Add(m_animate);
+
+	time_ctrls->Add(hline);
+	
+	boxSizer->Add(time_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxNoiseFunct::OnChangeEvent(wxCommandEvent& event){
@@ -343,6 +379,15 @@ void VtxNoiseFunct::setFunction(wxString f){
 		OffsetSlider->setValue(a);
 	else
 		OffsetSlider->setValue(0.0);
+	
+	rate=1e-6;
+	
+	a=args[9];
+	if(a){
+		a->eval();
+		rate=S0.s;
+	}
+	getRate();
 
 	setTypeControls(type);
 
@@ -361,14 +406,13 @@ void VtxNoiseFunct::setTypeControls(int type)
 	m_scale->SetValue((type & SCALE)?true:false);
 	m_lod->SetValue((type & NLOD)?false:true);
 	m_norm->SetValue((type & NNORM)?false:true);
+	m_animate->SetValue((type & TA)?true:false);
 	m_domain->SetSelection(type & ROFF);
-
-	if(type & FS){
-//		if(type & BP)
-//			m_mode->SetSelection(2);
-//		else
-			m_mode->SetSelection(1);
-	}
+	
+	cout<<"VtxNoiseFunct "<<(type & TA)<<endl;
+	
+	if(type & FS)
+		m_mode->SetSelection(1);	
 	else
 		m_mode->SetSelection(0);
 	int ntype=type & NTYPES;
@@ -383,6 +427,7 @@ void VtxNoiseFunct::setTypeControls(int type)
 	default:
 		m_noisetype->SetSelection(0);
 	}
+	getRate();
 }
 
 //-------------------------------------------------------------
@@ -417,6 +462,8 @@ wxString VtxNoiseFunct::getTypeStr()
 		n+="|NNORM";
 	if(m_abs->GetValue())
 		n+="|NABS";
+	if(m_animate->GetValue())
+		n+="|TA";
 
     int roff = m_domain->GetSelection();
 	switch(roff){
@@ -438,6 +485,7 @@ wxString VtxNoiseFunct::getTypeStr()
 // VtxNoiseFunct::getFunction() set return string from controls
 //-------------------------------------------------------------
 void VtxNoiseFunct::getFunction(){
+	setRate();
 	wxString s="noise(";
 	s+=getTypeStr()+",";
 	s+=StartSlider->getText()+",";
@@ -448,7 +496,8 @@ void VtxNoiseFunct::getFunction(){
 	s+=AmplSlider->getText()+",";
 	s+=ClampSlider->getText()+",";
 	s+=RoundSlider->getText()+",";
-	s+=OffsetSlider->getText();
+	s+=OffsetSlider->getText()+",";
+	s<<rate;
 	s+=")";
 
 	noise=(TNnoise*)TheScene->parse_node((char*)s.ToAscii());
@@ -458,8 +507,20 @@ void VtxNoiseFunct::getFunction(){
 	}
 	char buff[256];
 	buff[0]=0;
+	//noise->rate=rate;
 	noise->valueString(buff);
 	s = wxString(buff);
 
 	noiseDialog->getFunct(s);
+}
+void VtxNoiseFunct::getRate(){
+	double exp=-floor(log10(rate));
+	double rem=rate/pow(10,-exp);
+	rate_scale->SetSelection((int)exp);
+	RateSlider->setValue(rem);	
+}
+void VtxNoiseFunct::setRate(){
+	double rem=RateSlider->getValue();
+	double exp=rate_scale->GetSelection();
+	rate=rem*pow(10,-exp);
 }

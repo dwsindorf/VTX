@@ -21,6 +21,9 @@ protected:
 	SliderCtrl *OffsetSlider;
 	SliderCtrl *RoundSlider;
 	SliderCtrl *ClampSlider;
+	SliderCtrl  *RateSlider;
+	wxChoice    *rate_scale;
+	
 	wxChoice   *m_domain;
 	wxChoice   *m_map;
 	wxChoice   *m_mode;
@@ -32,8 +35,13 @@ protected:
 	wxCheckBox *m_scale;
 	wxCheckBox *m_lod;
 	wxCheckBox *m_abs;
+	wxCheckBox *m_animate;
 
 	TNnoise *noise;
+	
+	void getRate();
+	void setRate();
+	double rate;
 
 public:
 	VtxNoiseFunct(wxWindow* parent,
@@ -52,6 +60,8 @@ public:
 		delete OffsetSlider;
 		delete RoundSlider;
 		delete ClampSlider;
+		delete RateSlider;
+
 	}
 	bool Create(wxWindow* parent,
 				wxWindowID id,
@@ -64,6 +74,17 @@ public:
 	void getFunction();
 
     void OnChangeEvent(wxCommandEvent& event);
+	void OnRateSlider(wxScrollEvent &event) {
+		RateSlider->setValueFromSlider();
+		getFunction();
+	}
+	void OnRateText(wxCommandEvent &event) {
+		getFunction();
+	}
+
+	void OnRateScale(wxCommandEvent &event) {
+		getFunction();
+	}
 
 	DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(Orders)

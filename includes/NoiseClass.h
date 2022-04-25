@@ -83,6 +83,7 @@ enum {		// NTypes
 	SCALE    = 0x00010000,
 	SS       = 0x00020000,
 	SS2      = 0x00040000,
+	TA       = 0x00080000, // time animation
 	V2       = 0x00100000,
 	V4       = 0x00200000,
 	VR       = 0x00400000,

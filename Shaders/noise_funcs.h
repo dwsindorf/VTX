@@ -49,10 +49,13 @@ struct noise_info {
 	float clamp;
 	float logf;
 	float scale;
+	float seed;
 	bool sqr;
 	bool invert;
 	bool absval;
 	bool uns;
+	bool animate;
+
 	int vnoise;
 	
 };
@@ -64,6 +67,8 @@ uniform noise_info nvars[NVALS];
 #define VMAX 0.5
 
 float noise_fade=0.0;
+float last_seed=0;
+float current_seed=0;
 
 float reset(){
 	v1=Vertex1.xyz;
@@ -89,7 +94,11 @@ float corialis(float a){
 // multi-order procedural 3d noise
 vec4 Noise(int index) {
 	noise_info info=nvars[index];
-
+	
+	last_seed=rseed;
+	current_seed=info.animate?info.seed:rseed;
+	//else
+	//	current_seed=rseed;
 
     float orders=min(info.orders, Vertex1.w-info.logf-freqmip);
     noise_fade = lerp(orders,-1.0,1.0,0.0,1.0);
@@ -115,7 +124,7 @@ vec4 Noise(int index) {
 	if(!info.absval)
 		rmin *=2.0;
 	float clip=info.clamp*VMAX;
-	vec3 v=v1+rseed;
+	vec3 v=v1+current_seed;
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
@@ -187,6 +196,7 @@ vec4 Noise(int index) {
 		result=-result;
 	result*=noise_fade*info.ampl;
 	result.x+=offset;
+	current_seed=last_seed;
 	return result;	
 }
 
@@ -243,7 +253,7 @@ float Noise1D(int i) {
 #define NOISE_COLOR(func) \
 	v1= Vertex1.xyz; \
     vec4 ncolor=func; \
-    color=ncolor*color;
+ 	color =ncolor+color;
 
 #define NOISE_VARS \
     df=vec3(0); \

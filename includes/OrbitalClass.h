@@ -277,7 +277,6 @@ private:
 public:
     void set_system(Point p);
     static Point galaxy_origin;
-    static int star_id;
     static bool building_system;
 
 	System(Orbital *m, double s);
@@ -389,6 +388,7 @@ public:
 	static double star_frequency[ntypes];
 	static double star_luminocity[ntypes];
 	static double star_radius[ntypes];
+    static int star_id;
 	
 	static double *probability;
 	static double *temps;
@@ -529,6 +529,7 @@ public:
 	Color      color1;
 	Color      color2;
 	bool       animation;
+	bool       internal;
 	double     rate;
 	Corona(Orbital *m, double s);
 	~Corona();
@@ -570,6 +571,8 @@ public:
 	double     crot;
 	double     num_sprites;
 	double     diffusion;
+	bool   	   animation;
+	double     rate;
 	CloudLayer(Orbital *m, double s);
 	~CloudLayer();
 	const char *name()			{ return "Clouds";}

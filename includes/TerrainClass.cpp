@@ -64,6 +64,7 @@ static LongSym nopts[]={
 	{"RO3",		    RO3},
 	{"RO4",		    RO4},
 	{"RO5",		    RO5},
+	{"TA",	    	TA},
 	{"FS",		    FS},
 	{"BP",		    BP},
 	{"SCALE",	    SCALE},
@@ -980,6 +981,7 @@ TNnoise::TNnoise(int t, TNode *a) : TNvector(a)
 	mb=0;
 	id=-1;
 	scale=1.0;
+	rate=1e-6;
 
 	if(t & NNORM)
 	    flags=0;
@@ -1221,11 +1223,13 @@ bool TNnoise::setProgram(){
 	float clamp=n>6?args[6]:1.0;
 	float smooth=n>7?args[7]:0.0;
 	float offset=n>8?args[8]:0.0;
+	float rate=n>9?args[9]:2e-6;
 
 	bool sqr = (type & SQR)?true:false;
 	bool invert = (type & NEG)?true:false;
 	bool absval = (type & NABS)?true:false;
 	bool uns = (type & UNS)?true:false;
+	bool animate=(type & TA)?true:false;
 	int vnoise=(type & NTYPES)>>8; // GRADient=0, VORONai=1, SIMPLEX=2
 
 	int nid=id;//TerrainProperties::nid;
@@ -1247,6 +1251,13 @@ bool TNnoise::setProgram(){
 	minscale=minscale<scale?minscale:scale;
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
+	double seed=0;
+	if(animate){
+		double t=animate?rate*TheScene->time:0;
+		seed=t;
+		//cout<<rate<<" "<<t<<endl;
+		//vars.newFloatVar("rseed",t+nid);	
+	}
 
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
@@ -1259,12 +1270,17 @@ bool TNnoise::setProgram(){
 	sprintf(str,"nvars[%d].clamp",nid);     glUniform1fARB(glGetUniformLocationARB(program,str),clamp);
 	sprintf(str,"nvars[%d].ampl",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),ampl*ma);
 	sprintf(str,"nvars[%d].offset",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),mb+offset);
+	sprintf(str,"nvars[%d].seed",nid);    glUniform1fARB(glGetUniformLocationARB(program,str),seed);
+
 	sprintf(str,"nvars[%d].sqr",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),sqr);
 	sprintf(str,"nvars[%d].invert",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),invert);
 	sprintf(str,"nvars[%d].absval",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),absval);
+	sprintf(str,"nvars[%d].animate",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),animate);
+
 	sprintf(str,"nvars[%d].uns",nid);       glUniform1iARB(glGetUniformLocationARB(program,str),uns);
 	sprintf(str,"nvars[%d].vnoise",nid);    glUniform1iARB(glGetUniformLocationARB(program,str),vnoise);
 	sprintf(str,"nvars[%d].logf",nid);      glUniform1fARB(glGetUniformLocationARB(program,str),logf);
+	
 
 //#define TEST
 #ifdef TEST

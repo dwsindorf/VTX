@@ -23,7 +23,7 @@ enum {
 	ID_RATE_SCALE,
 	ID_RATE_SLDR,
 	ID_RATE_TEXT,
-	ID_ANIMATE
+	ID_INTERNAL
 };
 
 IMPLEMENT_CLASS(VtxCoronaTabs, wxNotebook )
@@ -53,13 +53,8 @@ EVT_COLOURPICKER_CHANGED(ID_INNER_COLOR,VtxCoronaTabs::OnInnerColor)
 
 EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxCoronaTabs::OnChangedNoiseExpr)
 
-EVT_COMMAND_SCROLL_THUMBRELEASE(ID_RATE_SLDR,VtxCoronaTabs::OnEndRateSlider)
-EVT_COMMAND_SCROLL(ID_RATE_SLDR,VtxCoronaTabs::OnRateSlider)
-EVT_TEXT_ENTER(ID_RATE_TEXT,VtxCoronaTabs::OnRateText)
+EVT_CHECKBOX(ID_INTERNAL, VtxCoronaTabs::OnInternal)
 
-EVT_CHOICE(ID_RATE_SCALE, VtxCoronaTabs::OnRateScale)
-
-EVT_CHECKBOX(ID_ANIMATE, VtxCoronaTabs::OnAnimate)
 
 
 END_EVENT_TABLE()
@@ -138,39 +133,26 @@ void VtxCoronaTabs::AddObjectTab(wxWindow *panel){
 
 	wxBoxSizer* grad_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Gradient"));
 	grad_cntrls->SetMinSize(wxSize(LINE_WIDTH,-1));
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	GradientSlider=new SliderCtrl(panel,ID_GRADIENT_SLDR,"Alpha",LABEL, VALUE,LINE_WIDTH-VALUE-LABEL);
 	GradientSlider->setRange(0.0,1);
 	GradientSlider->setValue(1.0);
+	
+	hline->Add(GradientSlider->getSizer(),wxALIGN_LEFT|wxALL);
+	
+	internal=new wxCheckBox(panel, ID_INTERNAL, "Internal ");
+	hline->Add(internal);
 
-	grad_cntrls->Add(GradientSlider->getSizer(),wxALIGN_LEFT|wxALL);
+	grad_cntrls->Add(hline);
 
 	wxBoxSizer* density_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density"));
+	density_cntrls->SetMinSize(wxSize(LINE_WIDTH,-1));
 	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"",0,LINE_WIDTH);
 	density_cntrls->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,3);
 	
-	wxBoxSizer* time_ctrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Animation"));
-	hline = new wxBoxSizer(wxHORIZONTAL);
-
-	wxString exps[]={"1","0.1","0.01","0.001","1e-4","1e-5","1e-6","1e-7","1e-8"};
-	
-	animate=new wxCheckBox(panel, ID_ANIMATE, " On ");
-	
-	rate_scale=new wxChoice(panel, ID_RATE_SCALE, wxDefaultPosition,wxSize(80,-1),9, exps);
-
-	rate_scale->SetSelection(4);
-	RateSlider=new SliderCtrl(panel,ID_RATE_SLDR,"Rate",LABEL, VALUE,180);
-	RateSlider->setRange(1,10);
-
-	hline->Add(RateSlider->getSizer());
-	hline->Add(rate_scale);
-	hline->Add(animate);
-
-    time_ctrls->Add(hline);
-
 	boxsizer->Add(color_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 	boxsizer->Add(grad_cntrls, 0, wxALIGN_LEFT|wxALL,0);
-	boxsizer->Add(time_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 	boxsizer->Add(density_cntrls, 0, wxALIGN_LEFT|wxALL,0);
 
 }
@@ -183,8 +165,7 @@ void VtxCoronaTabs::updateControls(){
 	updateColor(InnerSlider,obj->color1);
 	updateColor(OuterSlider,obj->color2);
 	object_name->SetValue(object_node->node->nodeName());
-	getRate();
-	animate->SetValue(obj->animation);
+	internal->SetValue(obj->internal);
 
 	char buff[256]={0};
 	if(obj->getNoiseFunction(buff))
@@ -202,17 +183,3 @@ void VtxCoronaTabs::OnChangedNoiseExpr(wxCommandEvent& event){
 	TheScene->rebuild();
 }
 
-void VtxCoronaTabs::getRate(){
-	double rate=object()->rate;
-	double exp=-floor(log10(rate));
-	double rem=rate/pow(10,-exp);
-	rate_scale->SetSelection((int)exp);
-	RateSlider->setValue(rem);	
-}
-void VtxCoronaTabs::setRate(){
-	double rem=RateSlider->getValue();
-	double exp=rate_scale->GetSelection();
-	double rate=rem*pow(10,-exp);
-	object()->rate=rate;
-	TheScene->set_changed_render();
-}

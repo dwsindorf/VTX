@@ -21,9 +21,12 @@ struct tex2d_info {
 	float bump_bias;     // bump bias
 	float slope_bias; 	 // slope bias
 	float near_bias; 	 // low frequency bias bias
-	float far_bias; 	 // high frequency bias bias	
+	float far_bias; 	 // high frequency bias bias
+	float rseed; 	     // noise randomization seed		
 	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture
+	bool  animate;       // animate texture
+	
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
@@ -52,6 +55,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	coords = COORDS; \
 	scale=tex2d[i].scale; \
 	amplitude = clamp(attrib,0.0,1.0); \
+	if(tex2d[i].animate) \
+	rseed=tex2d[i].rseed; \
 	logf=tex2d[i].logf; \
 	last_color=color; \
 	alpha = tex2d[i].texamp; \

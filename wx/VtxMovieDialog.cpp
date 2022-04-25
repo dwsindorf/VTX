@@ -180,8 +180,8 @@ bool VtxMovieDialog::Create(wxWindow *parent, wxWindowID id,
 
 	char moviedir[MAXSTR];
 	TheScene->make_movie_dir(moviedir);
-	m_last_path=wxString(moviedir)+"/movie.spx";
-	m_last_movie=wxString(moviedir)+"/movie.mp4";
+	m_last_path=wxString(moviedir)+"/movie/movie.spx";
+	m_last_movie=wxString(moviedir)+"/Videos/movie.mp4";
 
 	m_last_ext==FILE_MP4;
 
