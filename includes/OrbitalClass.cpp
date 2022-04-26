@@ -1109,6 +1109,7 @@ Galaxy::Galaxy(double s) : DensityCloud(s*LY)
 #endif
 	tree=new StarTree(s);
 	tree->object=this;
+	all_exclude();
 }
 Galaxy::Galaxy(Orbital *m,double s) : DensityCloud(m,s*LY)
 {
@@ -1117,6 +1118,7 @@ Galaxy::Galaxy(Orbital *m,double s) : DensityCloud(m,s*LY)
 #endif
 	tree=new StarTree(s);
 	tree->object=this;
+	all_exclude();
 	validate();
 }
 Galaxy::~Galaxy()
@@ -2395,6 +2397,8 @@ bool Spheroid::force_adapt() {
 		return false;
 	if(TheScene->viewobj!=getObjParent())
 	    return true;
+	if(!local_group())
+		return true;
 	return false;
 }
 
@@ -3152,10 +3156,57 @@ bool Star::setProgram(){
 //-------------------------------------------------------------
 // Star::render() render the object and it's children
 //-------------------------------------------------------------
+#define TEST
 void Star::render()
 {
 	if(!isEnabled())
 		return;
+
+#ifdef TEST
+	if(included()){
+		ValueList<Object3D*> coronas_back;
+		ValueList<Object3D*> coronas_front;
+		Object3D *halo=0;
+		
+		Object3D *obj;
+		children.ss();
+		while ((obj = children++) > 0) {
+			if(obj->type()==ID_HALO)
+				halo=obj;
+			else if(obj->type()==ID_CORONA){
+				Corona *corona=obj;
+				if(corona->internal)
+		 	 	 	coronas_front.add(obj);
+		 	 	else
+		 	 	 	coronas_back.add(obj);		 	 	 	 
+			}
+		}
+		set_ref();
+
+		if(coronas_back.size>0){
+			coronas_back.sort();
+			coronas_back.se();
+			while ((obj = coronas_back--) > 0){
+				obj->render();
+			}
+		}
+		TheScene->pushMatrix();
+		set_tilt();
+		set_rotation();
+		TheScene->set_matrix(this);
+		render_object();
+		TheScene->popMatrix();
+		if(halo)
+			halo->render();
+		if(coronas_front.size>0){
+			coronas_front.sort();
+			coronas_front.ss();
+			while ((obj = coronas_front++) > 0){
+				obj->render();			
+			}
+		}
+	}
+#else
 	set_ref();
 	if(included()){
 		TheScene->pushMatrix();
@@ -3165,7 +3216,8 @@ void Star::render()
 		render_object();
 		TheScene->popMatrix();
 	}
-	Orbital::render(); // render children
+	Orbital::render(); // render children	
+#endif
 }
 
 //-------------------------------------------------------------
@@ -3189,17 +3241,18 @@ void Star::render_object()
 //-------------------------------------------------------------
 int Star::adapt_pass()
 {
-	clr_selected();
-
-    if(!isEnabled())
-		return 0;
-
-    if(!local_group() || !view_group() || offscreen())
-        clear_pass(BG3);
-    	//return 0;
-    else
-        clear_pass(BG1);
-    return selected();
+	return Spheroid::adapt_pass();
+//	clr_selected();
+//
+//    if(!isEnabled())
+//		return 0;
+//
+//    if(!local_group() || !view_group() || offscreen())
+//        clear_pass(BG3);
+//    	//return 0;
+//    else
+//        clear_pass(BG1);
+//    return selected();
 }
 
 //-------------------------------------------------------------
@@ -3215,8 +3268,8 @@ int Star::render_pass()
 		clear_pass(FG0);		
 	else if(local_group())
 		clear_pass(BG3);
-	else
-		clear_pass(BG4);
+	//else
+	//	clear_pass(BG4);
     return selected();
 }
 
@@ -5684,7 +5737,7 @@ void Corona::get_vars()
 {
 	if(exprs.get_local("name",Td))
 		strncpy(name_str,Td.string,maxstr);
-	VGET("resolution",detail,3);
+	VGET("resolution",detail,4);
 	VGET("gradient",gradient,1);
 	VGET("internal",internal,0);
 
@@ -5716,7 +5769,7 @@ void Corona::get_vars()
 //-------------------------------------------------------------
 void Corona::set_vars()
 {
-	VSET("resolution",detail,3);
+	VSET("resolution",detail,4);
 	VSET("gradient",gradient,1);
 	VSET("internal",internal,0);
 
@@ -5928,17 +5981,23 @@ int Corona::render_pass()
 
 	if(!local_group() || offscreen() || !isEnabled())
 	    return 0;
+//	if(TheScene->viewobj==this)
+//			clear_pass(FG0);		
+//		else if(local_group())
+//			clear_pass(BG3);
+//		else
+//			clear_pass(BG4);
 	if(getParent()==TheScene->viewobj){
-		if(internal)
-			clear_pass(FG1);
-	    else
-			clear_pass(BG1);	
+		//if(internal)
+			clear_pass(FG0);
+	    //else
+		//	clear_pass(FG1);	
 	}
-	else{
-		if(internal)
-			clear_pass(BG2);
-	     else
-			clear_pass(BG4);	
+	else if(local_group()){
+//		if(internal)
+//			clear_pass(BG3);
+//	     else
+			clear_pass(BG3);	
 	}	
     return selected();
 }
@@ -5947,13 +6006,14 @@ int Corona::render_pass()
 //-------------------------------------------------------------
 int Corona::adapt_pass()
 {
-	clr_selected();
-
-    if(!local_group() || !view_group() || offscreen())
-        clear_pass(BG2);
-    else
-        clear_pass(BG1);
-    return selected();
+	return Spheroid::adapt_pass();
+//	clr_selected();
+//
+//    if(!local_group() || !view_group() || offscreen())
+//        clear_pass(BG2);
+//    else
+//        clear_pass(BG1);
+//    return selected();
 }
 
 //-------------------------------------------------------------
@@ -6246,7 +6306,7 @@ int Halo::render_pass() {
 	if (!local_group() || offscreen() || !isEnabled())
 		return 0;
 	if (getParent() == TheScene->viewobj)
-		clear_pass(FG1);
+		clear_pass(FG0);
 	else
 		clear_pass(BG3);
 	return selected();

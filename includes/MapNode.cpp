@@ -1042,6 +1042,11 @@ void MapNode::vischk()
 	clr_masked();
 	if(Adapt.clip_test()){
 	    clr_clipped();
+		if(!TheMap->object->local_group()){
+			set_clipped();
+			set_masked();
+			return;
+		}
 	    // tag node as clipped only is all surfaces
 	    // are clipped.
 		MapData *d=data.surface1();

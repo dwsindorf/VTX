@@ -46,6 +46,9 @@ NameList<DoubleSym*> Units(units,sizeof(units)/sizeof(DoubleSym));
 
 double View::dflt_fov=35;
 double View::dflt_cellsize=3.5;
+Color  View::syscolor[NUM_SYSCOLORS];
+int    View::stgcolor[MAX_STRINGS]={0};
+int    View::nstrings=0;
 
 View::View()
 {

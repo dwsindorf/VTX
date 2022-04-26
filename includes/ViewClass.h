@@ -16,7 +16,7 @@
 #define LIGHT_MOVE  2
 #define EYE_MOVE    3
 
-#define MAX_STRINGS 	64
+#define MAX_STRINGS 	128
 #define MAX_STRING_SIZE 64
 
 #define COS45	0.70711f
@@ -118,11 +118,11 @@ public:
     MatrixMgr *modelMgr;
     MatrixMgr *projMgr;
 	char       strings[MAX_STRINGS*MAX_STRING_SIZE];
-	int        stgcolor[MAX_STRINGS];
-	int        nstrings;
+	static int        stgcolor[MAX_STRINGS];
+	static int        nstrings;
 	char       istring[MAX_STRING_SIZE];
 	char       vstring[MAX_STRING_SIZE];
-	Color      syscolor[NUM_SYSCOLORS];
+	static Color      syscolor[NUM_SYSCOLORS];
 	bool       auto_contrast; // enables color inversion to optimize contrast;
 	int window_height;
 	int window_width;

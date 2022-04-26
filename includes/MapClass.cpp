@@ -143,15 +143,27 @@ static void init_map_specs()
 		return;
 
 	TheScene->draw_string(HDR1_COLOR,"------- map info ------------------------------");
-	TheScene->draw_string(HDR1_COLOR,"name   cycs  ids  cells  vis   pvis  nvis  %% vis");
+	TheScene->draw_string(HDR1_COLOR,"name    grp cycs  ids  cells  vis   pvis  nvis  %% vis");
 	TheScene->draw_string(HDR1_COLOR,"-----------------------------------------------");
 }
 
 static void map_string(Map *map)
 {
+	char grp='X';
+	if(map->object==TheScene->viewobj)
+		grp='O';
+	else if(map->object->offscreen())
+		grp='H';
+	else if(map->object->local_group())
+		grp='L';
+	else if(map->object->view_group())
+		grp='V';
+	else if(map->object->near_group())
+		grp='N';
    	if(map_nodes)
-   	TheScene->draw_string(DATA_COLOR,"%-8s %-4d %-4d %-5.1f %-5.1f %-5.1f %-5.2f %-3.1f",
+   	TheScene->draw_string(DATA_COLOR,"%-8s %-3c  %-4d %-4d %-5.1f %-5.1f %-5.1f %-5.2f %-3.1f",
 		map->object->name(),
+		grp,
 		map->cycles,
 		map->tids,
    		0.001*map_nodes,
@@ -1840,7 +1852,6 @@ void Map::adapt()
 			    int vn=vnodes;
 			    if(idtest)
 			    	glClear(GL_DEPTH_BUFFER_BIT);
-
 			    vischk(idtest);
 				dv=vnodes-vn;
 				dv=dv<0?-dv:dv;
