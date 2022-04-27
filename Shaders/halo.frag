@@ -32,14 +32,14 @@ void main(void) {
 	color=f*outer+(1.0-f)*inner;
 	color.a*=f;
 	
-	if (fbo_write){
+	//if (fbo_write){
 		// r = amount of corona color to mix with sky
 		// g = increase in sky opacity
 		// a = FBO transparency
 		vec4 data2=vec4(0,0.0,0.0,1.0);
 		gl_FragData[1] = data2;
 		gl_FragData[2]=vec4(0,0,0,0);
-	}
+	//}
 	color=clamp(color,0.0,1.0);
 	//gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)	
 	gl_FragData[0]=color;

@@ -300,6 +300,7 @@ public:
 	void open(char *);
 	void show_status(int);
 	void show_info(int);
+	void delete_tmpfiles();
 
 	double get_expr(char *s);
 	void add_expr(char *s,double v);

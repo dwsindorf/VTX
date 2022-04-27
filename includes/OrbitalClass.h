@@ -100,6 +100,9 @@ public:
 
 	virtual void locate();
 	virtual void set_tilt();
+	virtual void orient();
+	virtual void setMatrix();
+
 	virtual void set_rotation();
 	virtual void set_ref();
 	virtual void adapt();
@@ -186,6 +189,7 @@ public:
 	DensityCloud(double s);
 	virtual ~DensityCloud();
 	virtual DensityTree *defaults() { return 0;}
+	virtual void setMatrix();
 	virtual void render();
 	virtual void adapt();
 	virtual void save(FILE *);
@@ -510,9 +514,9 @@ public:
 	int  type()					{ return ID_HALO;}
 	void set_vars();
 	void get_vars();
-	void adapt();
-	void render();
+	void render_object();
 	void orient();
+	void setMatrix();
 	void map_color(MapData*n,Color &col);
 	int render_pass();
 	bool setProgram();
@@ -539,9 +543,8 @@ public:
 	void set_vars();
 	void get_vars();
 	void render_object();
-	void adapt();
-	void render();
 	void orient();
+	void setMatrix();
 	int render_pass();
 	int adapt_pass();
 	bool setProgram();

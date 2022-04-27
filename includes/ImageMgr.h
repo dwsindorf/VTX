@@ -37,19 +37,20 @@ enum  {
 	ACHNL    	= 0x00000010,   // add alpha channel
 	NORM    	= 0x00000020,   // normalize intensity
 	CLAMP       = 0x00000040,   // don't wrap bands color spline
-	INOPTS 		= 0x0000007f,
+	REFLECT     = 0x00000080,   // add reflect colors from end
+	INOPTS 		= 0x000000ff,
 
     // TNtexture options
 
 	MODULATE    = 0x00000000,   //
-	DECAL		= 0x00000080, 	// style options
-	BLEND       = 0x00000180,
-	REPLACE     = 0x00000100, 	// style mask
-	STYLE       = REPLACE|DECAL|BLEND|MODULATE, 	// style mask
+	DECAL		= 0x00000100, 	// style options
+	BLEND       = 0x00000200,
+	REPLACE     = 0x00000300, 	// style mask
+	STYLE       = 0x00000300, 	// style mask
 	MMAP        = 0x00000000, 	// GL_LINEAR_MIPMAP_LINEAR  (default)
-	INTERP      = 0x00000200, 	// GL_LINEAR
-	NEAREST     = 0x00000400,   // GL_NEAREST
-	INTRP_MASK  = MMAP|NEAREST|INTERP, 	// interp mask
+	INTERP      = 0x00000400, 	// GL_LINEAR
+	NEAREST     = 0x00000600,   // GL_NEAREST
+	INTRP_MASK  = 0x00000600, 	// interp mask
 	REPEAT      = 0x00000000, 	// wrap options
 	BORDER      = 0x00000800, 	// border flag (GL_CLAMP)
 	TEX         = 0x00001000,   // default

@@ -77,18 +77,20 @@ public:
 	TNode  *expr;
 
 	int style()				{ switch(options & STYLE){
-								default    : return GL_MODULATE;
+								default:
+								case MODULATE    : return GL_MODULATE;
 							    case DECAL : return GL_DECAL;
 							    case BLEND : return GL_BLEND;
 							    case REPLACE : return GL_REPLACE;
 							   }
 							}
-	int intrp()				{ if(options & NEAREST)
-								 return GL_NEAREST;
-							  else if(options & INTERP)
-							     return GL_LINEAR;
-							  else
-								 return GL_LINEAR_MIPMAP_LINEAR;
+	int intrp()				{ 
+							 switch(options & INTRP_MASK){
+							 	default:
+							    case MMAP : return GL_LINEAR_MIPMAP_LINEAR;
+							    case NEAREST : return GL_NEAREST;
+								case INTERP : return GL_LINEAR;
+							    }
 							}
     bool nearest()          { return intrp()==GL_NEAREST  ? true:false;}
     bool linear()           { return intrp()==GL_LINEAR ? true:false;}

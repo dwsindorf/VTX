@@ -17,6 +17,7 @@ enum{
     ID_INVERT,
     ID_CLAMP,
     ID_NEAREST,
+    ID_REFLECT,
     ID_ALPHA,
 	ID_FILELIST,
     ID_IMAGE_SIZE,
@@ -55,9 +56,11 @@ BEGIN_EVENT_TABLE(VtxBandsTabs, wxPanel)
 EVT_CHECKBOX(ID_NORM,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_INVERT,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_CLAMP,VtxBandsTabs::OnChanged)
-EVT_CHECKBOX(ID_RANDMIX,VtxBandsTabs::OnChanged)
+//EVT_CHECKBOX(ID_RANDMIX,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
+EVT_CHECKBOX(ID_REFLECT,VtxBandsTabs::OnChanged)
+
 EVT_COMBOBOX(ID_FILELIST,VtxBandsTabs::OnFileSelect)
 EVT_TEXT_ENTER(ID_FILELIST,VtxBandsTabs::OnFileEdit)
 EVT_CHOICE(ID_IMAGE_SIZE, VtxBandsTabs::OnImageSize)
@@ -145,9 +148,9 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
 
     wxStaticBoxSizer* image_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Options"));
     m_norm_check=new wxCheckBox(panel, ID_NORM, "Norm");
-    image_options->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,0);
+    image_options->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,5);
     m_invert_check=new wxCheckBox(panel, ID_INVERT, "Invert");
-    image_options->Add(m_invert_check, 0, wxALIGN_LEFT|wxALL,0);
+    image_options->Add(m_invert_check, 0, wxALIGN_LEFT|wxALL,5);
 
     image_options->SetMinSize(wxSize(TABS_WIDTH-w,h));
 
@@ -167,14 +170,17 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
 
 	wxStaticBoxSizer* mod_colors = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Mix/Modulate"));
 
+	mod_colors->Add(new wxStaticText(panel, -1, "Mix", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxALL,8);
 	m_mix_color=new ColorSlider(panel,ID_MIX_SLDR,"",0,CVALUE,CSLIDER,CBOX);
 	mod_colors->Add(m_mix_color->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	mod_colors->AddSpacer(2);
+	mod_colors->Add(new wxStaticText(panel, -1, "Random", wxDefaultPosition, wxSize(60,-1)),0,wxALIGN_LEFT|wxALL,8);
+
 	m_mod_slider=new SliderCtrl(panel,ID_MOD_SLDR,"",0, CVALUE,CSLIDER);
 	m_mod_slider->setRange(0.0,1.0);
 	mod_colors->Add(m_mod_slider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-    m_random_mix_check=new wxCheckBox(panel, ID_RANDMIX, "Random");
-    mod_colors->Add(m_random_mix_check, 0, wxALIGN_LEFT|wxALL,0);
+    //m_random_mix_check=new wxCheckBox(panel, ID_RANDMIX, "Random");
+   // mod_colors->Add(m_random_mix_check, 0, wxALIGN_LEFT|wxALL,0);
 	mod_colors->SetMinSize(wxSize(TABS_WIDTH,-1));
 	boxSizer->Add(mod_colors, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -222,6 +228,8 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
     color_options->Add(m_clamp_check, 0, wxALIGN_LEFT|wxALL,0);
     m_nearest_check=new wxCheckBox(panel, ID_NEAREST, "Nearest");
     color_options->Add(m_nearest_check, 0, wxALIGN_LEFT|wxALL,0);
+    m_reflect_check=new wxCheckBox(panel, ID_REFLECT, "Reflect");
+    color_options->Add(m_reflect_check, 0, wxALIGN_LEFT|wxALL,0);
     m_alpha_check=new wxCheckBox(panel, ID_ALPHA, "Alpha");
     color_options->Add(m_alpha_check, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -479,6 +487,9 @@ wxString VtxBandsTabs::getImageString(wxString name){
 		opts |= CLAMP;
 	if(m_nearest_check->GetValue())
 		opts |= NEAREST;
+	if(m_reflect_check->GetValue())
+		opts |= REFLECT;
+
 	if(m_alpha_check->GetValue())
 		opts |= ACHNL;
 	TNinode::optionString(opts_str,opts);
@@ -508,9 +519,9 @@ wxString VtxBandsTabs::getImageString(wxString name){
 	else{                                       // 3,4,5
 		sprintf(buff+strlen(buff),"%d,%g",size,dmod);
 		sprintf(buff+strlen(buff),",%g,",dmix);
-		if(m_random_mix_check->GetValue())
-			sprintf(buff+strlen(buff),"RAND");
-		else
+		//if(m_random_mix_check->GetValue())
+		//	sprintf(buff+strlen(buff),"RAND");
+		//else
 			c.toString(buff+strlen(buff));
 		if(num_colors>0){                        // 5
 			strcat(buff,",");
@@ -594,6 +605,7 @@ void VtxBandsTabs::displayImage(char *name){
     m_invert_check->SetValue((opts&INVT)?true:false);
     m_clamp_check->SetValue((opts&CLAMP)?true:false);
     m_nearest_check->SetValue((opts&NEAREST)?true:false);
+    m_reflect_check->SetValue((opts&REFLECT)?true:false);
 
  	TNarg *arg=(TNarg*)inode->right;
 
@@ -650,7 +662,7 @@ void VtxBandsTabs::displayImage(char *name){
 	m_mod_slider->setValue(dval);
 	cmix.set_alpha(mval);
 	m_mix_color->setColor(cmix);
-	m_random_mix_check->SetValue(random_mix);
+	//m_random_mix_check->SetValue(random_mix);
 	setControlsFromColors();
 	m_alpha_check->SetValue(alpha());
 	m_image_window->setImage(wxString(name),m_image_window->TILE);

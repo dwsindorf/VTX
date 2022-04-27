@@ -362,7 +362,7 @@ star_expr
    	| surface
    	| corona
    	| halo
-   	| sky
+ 
 
 /*------------- Corona rules ----------------------------------------------*/
 

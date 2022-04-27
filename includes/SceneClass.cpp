@@ -818,6 +818,7 @@ void Scene::open(char *fn)
 	int stat=status;
 	images.clear_flags();
 	Noise::resetStats();
+	delete_tmpfiles();
 
 	reset();
 	init_for_open();
@@ -1161,6 +1162,18 @@ void Scene::delete_movie_dir(char *s)
 	File.deleteDirectory(dir);
 }
 
+//-------------------------------------------------------------
+// Scene::delete_tmpfiles() tmp files
+//-------------------------------------------------------------
+void Scene::delete_tmpfiles()
+{
+	char dir[MAXSTR];
+	FileUtil::getBitmapsDir(dir);
+	File.addToPath(dir,"tmp");
+	File.deleteDirectoryFiles(dir,(char*)"*.*");
+	FileUtil::getShadersDir(dir);
+	File.deleteDirectoryFiles(dir,(char*)"*.debug");
+}
 //-------------------------------------------------------------
 // Scene::delete_frames() delete movie frames
 //-------------------------------------------------------------

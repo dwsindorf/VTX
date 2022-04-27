@@ -40,6 +40,7 @@ static LongSym iopts[]={
 	{"LINEAR",	INTERP},
 	{"NEAREST",	NEAREST},
 	{"CLAMP",	CLAMP},
+	{"REFLECT",	REFLECT},
 	{"BLEND",	BLEND},
 	{"REPLACE",	REPLACE},
 	{"BORDER",	BORDER},
@@ -338,9 +339,13 @@ void TNbands::init()
 	Color ca=Color(0.5,0.5,0.5);
 	Color cb=ca;
 	Color *knots=0;
+	Color randcol;
 	double delta=0;
 	double mix=0;
-
+	bool reflect=opts&REFLECT;
+	int r=reflect?2:1;
+	int last_rand=lastn;
+	
 	// evaluate remaining arguments
 
 	while(arg && ncols<255){
@@ -356,18 +361,18 @@ void TNbands::init()
 			    cols[ncols++]=S0.c;
 		}
 		else if(S0.s==RANDID){
-		    if(j){
+		   // if(j){
 		        rmix=1;
-		        j=0;
-		    }
-		    else
-		        cols[ncols++]=Color(Rand(),Rand(),Rand(),Rand());
+		    //    j=0;
+		    //}
+		    //else
+		    //    cols[ncols++]=Color(Rand(),Rand(),Rand(),Rand());
 		}
 		else if(i==0){
 			delta=S0.s;
 			dflag=1;
 		}
-		else {
+		else if(i==1){
 		    mix=S0.s;
 		    mflag=1;
 		    j=1;
@@ -392,7 +397,8 @@ void TNbands::init()
 		h=b;
 	}
 	else{
-		MALLOC(h,Color,colors);
+		
+		MALLOC(h*r,Color,colors);
 		if(!dflag && !mflag)
 		    knots=cols;
 		else {
@@ -429,30 +435,35 @@ void TNbands::init()
 		    }
 		    else
 			   colors[i]=ca;
-			if(delta){
-			    double f=Rand();
-			    if(f>0.5)
-					colors[i]=colors[i].lighten(delta*(f-0.5));
-			    else
-					colors[i]=colors[i].darken(delta*(0.5-f));
-			}
-			if(mix){
-			    double f=Rand();
-			    if(rmix)
-					cb=Color(Rand(),Rand(),Rand(),Rand());
-			    colors[i]=colors[i].blend(cb,f*mix);
-			}
+//			if(delta){
+//			    double f=Rand();
+//			    if(f>0.5)
+//					colors[i]=colors[i].lighten(delta*(f-0.5));
+//			    else
+//					colors[i]=colors[i].darken(delta*(0.5-f));
+//			}
+			if(mix)
+			    colors[i]=colors[i].blend(cb,mix*LRAND);
+		    if(delta)
+		    	colors[i]=colors[i].blend(Color(LRAND,LRAND,LRAND,LRAND),delta*LRAND);			    			    
+
 			if(!aflag)
 			    colors[i].set_alpha(1);
 		}
 	}
+	if(reflect){
+		for(int i=0;i<h;i++){
+			colors[i+h]=colors[h-i-1];
+		}		
+	}
 #ifdef DEBUG_IMAGES
 		printf("%-20s BUILDING 1 X %d %s IMAGE %s\n","TNbands",h,aflag?"alpha":"",name);
 #endif
-	image=new Image(colors,h,1);
+	image=new Image(colors,h*r,1);
 	if(aflag){
 	    image->set_alpha(1);
 	}
+	lastn=last_rand;
 	images.save(name,image,this);
 }
 

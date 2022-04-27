@@ -54,8 +54,9 @@ protected:
 	wxCheckBox *m_norm_check;
 	wxCheckBox *m_clamp_check;
 	wxCheckBox *m_nearest_check;
-	wxCheckBox *m_random_mix_check;
+//	wxCheckBox *m_random_mix_check;
 	wxCheckBox *m_alpha_check;
+	wxCheckBox *m_reflect_check;
 
 	wxButton *m_next_colors;
 	wxButton *m_prev_colors;
@@ -119,7 +120,7 @@ public:
     void OnModText(wxCommandEvent& event);
 
     void OnSetColors(wxCommandEvent& event);
-    void OnRandomizeColors(wxCommandEvent& event);
+    //void OnRandomizeColors(wxCommandEvent& event);
 
     wxString getImageString(wxString name);
     void OnSplineColorSlider(wxScrollEvent& event);

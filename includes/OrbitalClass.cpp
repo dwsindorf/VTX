@@ -195,6 +195,9 @@ void Orbital::set_wscale(){
 }
 
 void Orbital::set_tilt() {}
+void Orbital::orient() {}
+void Orbital::setMatrix() {TheScene->set_matrix(this);}
+
 void Orbital::set_rotation() {}
 void Orbital::init_view() { TheScene->maxht=0;}
 Bounds *Orbital::bounds(){return 0;}
@@ -686,6 +689,9 @@ DensityCloud::~DensityCloud()
 #endif
 }
 
+void DensityCloud::setMatrix(){
+	TheScene->set_matrix(0);
+}
 //-------------------------------------------------------------
 // DensityCloud::animate() adjust rotation with time
 //-------------------------------------------------------------
@@ -738,6 +744,7 @@ void DensityCloud::adapt()
 		set_ref();
 		TheScene->pushMatrix();
 		TheScene->set_matrix(0);
+		//setMatrix();
 		tree->adapt();
 		TheScene->popMatrix();
 	}
@@ -753,6 +760,7 @@ void DensityCloud::render()
 		set_ref();
 		TheScene->pushMatrix();
 		TheScene->set_matrix(0);
+		//setMatrix();
 		render_object();
 		TheScene->popMatrix();
 	}
@@ -1248,7 +1256,8 @@ void Galaxy::select()
 		    //set_tilt();
 		    //set_rotation();
 			TheScene->pushMatrix();
-		    TheScene->set_matrix(0);
+		    //TheScene->set_matrix(0);
+			setMatrix();
 			tree->select();
 		    TheScene->popMatrix();
 		}
@@ -1266,7 +1275,8 @@ void Galaxy::adapt()
 		set_point();
 		if(included()){
 		    TheScene->pushMatrix();
-			TheScene->set_matrix(0);
+			//TheScene->set_matrix(0);
+		    setMatrix();
 			adapt_object();
 			//volume.set_zpass();
 			//tree->adapt();
@@ -1392,7 +1402,8 @@ void Galaxy::render_object()
 	set_ref();
 	set_point();
 	TheScene->pushMatrix();
-	TheScene->set_matrix(0);
+	//TheScene->set_matrix(0);
+	setMatrix();
 	StarTree *stars=(StarTree *)tree;
 	tree->sort_nodes=true;
 	tree->sortNodes();
@@ -1593,7 +1604,7 @@ void System::locate()
  	set_ref();
 
  	TheScene->pushMatrix();
- 	TheScene->set_matrix(this);
+ 	setMatrix();
  	set_point();
  	TheScene->popMatrix();
  	visit(&Object3D::locate);
@@ -2338,7 +2349,7 @@ void Spheroid::locate()
  	set_ref();
 
  	TheScene->pushMatrix();
- 	TheScene->set_matrix(this);
+ 	setMatrix();
  	set_point();
  	TheScene->popMatrix();
  	visit(&Object3D::locate);
@@ -2355,7 +2366,7 @@ void Spheroid::select()
 
 		set_tilt();
 		set_rotation();
-		TheScene->set_matrix(this);
+		setMatrix();
 		if(TheScene->select_object()){
 			int id=Raster.set_id();
 			Raster.set_data((MapNode*)this);
@@ -2377,12 +2388,16 @@ void Spheroid::select()
 //-------------------------------------------------------------
 void Spheroid::render()
 {
+	if(!isEnabled())
+		return;
+
 	set_ref();
 	if(included()){
 		TheScene->pushMatrix();
 		set_tilt();
 		set_rotation();
-		TheScene->set_matrix(this);
+		orient();
+		setMatrix();
 		render_object();
 		TheScene->popMatrix();
 	}
@@ -2411,8 +2426,9 @@ void Spheroid::adapt()
 	if(included()){
 		TheScene->pushMatrix();
 		set_tilt();
+		orient();
 		set_rotation();
-		TheScene->set_matrix(this);
+		setMatrix();
 		adapt_object();
 		TheScene->popMatrix();
 	}
@@ -2849,7 +2865,7 @@ void Star::random(double &temp, double &radius, Color &color){
 TNinode *Star::image(Color tc){
 	char buff[2048];
 
-	sprintf(buff,"bands(\"star-%d\",CLAMP,16",star_id);
+	sprintf(buff,"bands(\"tmp/S%d\",CLAMP,16",star_id);
 	Color colors[5];
 	colors[0]=tc.lighten(0.75);
 	colors[1]=tc.lighten(0.5);
@@ -2882,7 +2898,7 @@ TNtexture *Star::texture(){
  char buff[256];
  char noise_expr[128];
  sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS|TA,0.9,8.9,0.9,0.01,2.06,1,1,0,%g,1e-6)",ntype[nt],offset[nt]);
- sprintf(buff,"Texture(\"star-%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
+ sprintf(buff,"Texture(\"tmp/S%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
  //cout<<buff<<endl;
  TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
  return nc;
@@ -3079,7 +3095,7 @@ void Star::set_lights()
 
 	TheScene->pushMatrix();
 
-	TheScene->set_matrix(this);
+	setMatrix();
 	set_point();
 
 	l->point=point;  // 	position of light in "eye" frame
@@ -3156,68 +3172,51 @@ bool Star::setProgram(){
 //-------------------------------------------------------------
 // Star::render() render the object and it's children
 //-------------------------------------------------------------
-#define TEST
-void Star::render()
-{
-	if(!isEnabled())
+void Star::render() {
+	if (!isEnabled())
 		return;
 
-#ifdef TEST
-	if(included()){
-		ValueList<Object3D*> coronas_back;
-		ValueList<Object3D*> coronas_front;
-		Object3D *halo=0;
-		
+	if (included()) {
+		ValueList<Object3D*> back;
+		ValueList<Object3D*> front;
+
 		Object3D *obj;
 		children.ss();
 		while ((obj = children++) > 0) {
-			if(obj->type()==ID_HALO)
-				halo=obj;
-			else if(obj->type()==ID_CORONA){
-				Corona *corona=obj;
-				if(corona->internal)
-		 	 	 	coronas_front.add(obj);
-		 	 	else
-		 	 	 	coronas_back.add(obj);		 	 	 	 
+			if (obj->type() == ID_HALO)
+				front.add(obj);
+			else if (obj->type() == ID_CORONA) {
+				Corona *corona = obj;
+				if (corona->internal)
+					front.add(obj);
+				else
+					back.add(obj);
 			}
 		}
 		set_ref();
 
-		if(coronas_back.size>0){
-			coronas_back.sort();
-			coronas_back.se();
-			while ((obj = coronas_back--) > 0){
+		if (back.size > 0) {
+			back.sort();
+			back.se();
+			while ((obj = back--) > 0) {
 				obj->render();
 			}
 		}
 		TheScene->pushMatrix();
 		set_tilt();
 		set_rotation();
-		TheScene->set_matrix(this);
+		setMatrix();
 		render_object();
 		TheScene->popMatrix();
-		if(halo)
-			halo->render();
-		if(coronas_front.size>0){
-			coronas_front.sort();
-			coronas_front.ss();
-			while ((obj = coronas_front++) > 0){
-				obj->render();			
+
+		if (front.size > 0) {
+			front.sort();
+			front.ss();
+			while ((obj = front++) > 0) {
+				obj->render();
 			}
 		}
 	}
-#else
-	set_ref();
-	if(included()){
-		TheScene->pushMatrix();
-		set_tilt();
-		set_rotation();
-		TheScene->set_matrix(this);
-		render_object();
-		TheScene->popMatrix();
-	}
-	Orbital::render(); // render children	
-#endif
 }
 
 //-------------------------------------------------------------
@@ -3242,17 +3241,6 @@ void Star::render_object()
 int Star::adapt_pass()
 {
 	return Spheroid::adapt_pass();
-//	clr_selected();
-//
-//    if(!isEnabled())
-//		return 0;
-//
-//    if(!local_group() || !view_group() || offscreen())
-//        clear_pass(BG3);
-//    	//return 0;
-//    else
-//        clear_pass(BG1);
-//    return selected();
 }
 
 //-------------------------------------------------------------
@@ -3657,7 +3645,7 @@ void Planetoid::render() {
 		TheScene->pushMatrix();
 		set_tilt();
 		set_rotation();
-		TheScene->set_matrix(this);
+		setMatrix();
 		render_object();
 		TheScene->popMatrix();
 		if (!isViewobj()){
@@ -4231,7 +4219,7 @@ void Shell::render_object()
 {
 	if(Raster.auximage()) // skip surface fog/water effects
 		return;
-
+    
 	if(TheScene->render_mode()){
 	    set_lighting();
 		Spheroid::render_object();
@@ -5157,7 +5145,8 @@ void CloudLayer::render()
 		set_tilt();
 		set_rotation();
 
-		TheScene->set_matrix(this);
+		//setMatrix();
+		setMatrix();
 		bool v3d=threeD()&& Render.draw_shaded();
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
@@ -6065,46 +6054,15 @@ void Corona::orient()
     TheScene->rotate(p.x,0,1,0);	 // remove theta
 	TheScene->rotate(90+p.y,0,0,1);	 // remove phi,rotate pole down
 
+	//TheScene->set_matrix(0);
+	//setMatrix();
+
+}
+
+void Corona::setMatrix(){
 	TheScene->set_matrix(0);
-
 }
 
-//-------------------------------------------------------------
-// Corona::render() render the object and it's children
-//-------------------------------------------------------------
-void Corona::render()
-{
-	if(!isEnabled())
-		return;
-
-	set_ref();
-	if(included()){
-		TheScene->pushMatrix();
-		set_tilt();
-		set_rotation();
-		orient();
-		render_object();
-		TheScene->popMatrix();
-	}
-	Orbital::render(); // render children
-}
-
-//-------------------------------------------------------------
-// Corona::adapt() adapt the object and it's children
-//-------------------------------------------------------------
-void Corona::adapt()
-{
-	set_ref();
-	if(included()){
-		TheScene->pushMatrix();
-		set_tilt();
-		set_rotation();
-		orient();
-		adapt_object();
-		TheScene->popMatrix();
-	}
-	Orbital::adapt(); // adapt children
-}
 
 //************************************************************
 // Halo class
@@ -6119,6 +6077,7 @@ Halo::Halo(Orbital *m, double s) : Shell(m,s)
 	detail=2;
 	color1=WHITE;
 	color2=WHITE;
+	map->frontface=GL_BACK;
 }
 Halo::~Halo()
 {
@@ -6178,11 +6137,13 @@ void Halo::orient()
     TheScene->rotate(p.x,0,1,0);	 // remove theta
 	TheScene->rotate(90+p.y,0,0,1);	 // remove phi,rotate pole down
 
-	TheScene->set_matrix(0);
+	//TheScene->set_matrix(0);
+	//setMatrix();
 
 }
 
 bool Halo::setProgram(){
+	
 	glEnable(GL_BLEND);
 	char frag_shader[128]="halo.frag";
 	char vert_shader[128]="halo.vert";
@@ -6236,10 +6197,10 @@ bool Halo::setProgram(){
 	vars.newFloatVec("center",p.x,p.y,p.z);
 	vars.setProgram(program);
 	vars.loadVars();
-	if(TheScene->inside_sky()||Raster.do_shaders)
+	//if(TheScene->inside_sky()||Raster.do_shaders)
 		GLSLMgr::setFBOReadWritePass();
-	else
-		GLSLMgr::setFBORenderPass();
+	//else
+	//	GLSLMgr::setFBORenderPass();
 
 	GLSLMgr::loadVars();
 	//tp->setProgram();
@@ -6262,41 +6223,22 @@ void Halo::map_color(MapData*n,Color &col)
  	col.set_alpha(a*f);
 }
 //-------------------------------------------------------------
-// Halo::render() render the object and it's children
+// Halo::render_object()   lower level render
 //-------------------------------------------------------------
-void Halo::render()
-{
-	if(!isEnabled())
+void Halo::render_object() {
+	if (Raster.auximage()) // skip surface fog/water effects
 		return;
+	show_render_state(this);
+	glDisable(GL_DEPTH_TEST);
+	map->render();
+	first = 0;
+	glEnable(GL_DEPTH_TEST);
 
-	set_ref();
-	if(included()){
-		TheScene->pushMatrix();
-		set_tilt();
-		set_rotation();
-		orient();
-		render_object();
-		TheScene->popMatrix();
-	}
-	Orbital::render(); // render children
+}
+void Halo::setMatrix(){
+	TheScene->set_matrix(0);
 }
 
-//-------------------------------------------------------------
-// Corona::adapt() adapt the object and it's children
-//-------------------------------------------------------------
-void Halo::adapt()
-{
-	set_ref();
-	if(included()){
-		TheScene->pushMatrix();
-		set_tilt();
-		set_rotation();
-		orient();
-		adapt_object();
-		TheScene->popMatrix();
-	}
-	Orbital::adapt(); // adapt children
-}
 //-------------------------------------------------------------
 // Halo::render_pass() select for scene pass
 //-------------------------------------------------------------
