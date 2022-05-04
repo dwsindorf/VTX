@@ -167,10 +167,10 @@ void VtxColorTabs::saveLastExpr(){
     m_last_expr=getExpr();
 }
 wxString VtxColorTabs::getExpr(){
-	char red[128]="0.0";
-	char green[128]="0.0";
-	char blue[128]="0.0";
-	char alpha[128]="1.0";
+	char red[MAXSTR]="0.0";
+	char green[MAXSTR]="0.0";
+	char blue[MAXSTR]="0.0";
+	char alpha[MAXSTR]="1.0";
 	if(strlen(m_r_expr->GetValue().ToAscii()))
 		strcpy(red,m_r_expr->GetValue().ToAscii());
 	if(strlen(m_g_expr->GetValue().ToAscii()))
@@ -179,13 +179,13 @@ wxString VtxColorTabs::getExpr(){
 		strcpy(blue,m_b_expr->GetValue().ToAscii());
 	if(strlen(m_a_expr->GetValue().ToAscii()))
 		strcpy(alpha,m_a_expr->GetValue().ToAscii());
-	char cstr[256];
+	char cstr[MAXSTR];
 	sprintf(cstr,"Color(%s,%s,%s,%s)\n",red,green,blue,alpha);
     return wxString(cstr);
 }
 
 void VtxColorTabs::restoreLastExpr(){
-	char cstr[256];
+	char cstr[MAXSTR];
 	strcpy(cstr,m_last_expr.ToAscii());
 	if(strlen(cstr)){
 		TNcolor *tnode=(TNcolor*)TheScene->parse_node(cstr);

@@ -58,7 +58,7 @@ Color RGBColor::color()
 
 Color::Color(char *s)
 {
-    char buff[256];
+    char buff[4096];
     strcpy(buff,s);
  	float c1=1.0f;
 	float c2=1.0f;

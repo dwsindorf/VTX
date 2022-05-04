@@ -89,7 +89,7 @@ void TreeNode::print(FILE *fp)
 	level++;
 	children.ss();
 	TreeNode *child;
-	while((child=children++)>0)
+	while(child=children++)
 		child->print(fp);
 	level--;
 }
@@ -103,7 +103,7 @@ void TreeNode::visit(void (*func)(TreeNode *))
 	Node<TreeNode*> *ptr=children.ptr;
 	children.ss();
 	TreeNode *child;
-	while((child=children++)>0)
+	while(child=children++)
 		child->visit(func);
 	children.ptr=ptr;
 }
@@ -129,7 +129,7 @@ TreeNode *Model::buildTree(NodeIF *node)
 	if(node->getChildren(children)){
 		NodeIF *child;
 		children.ss();
-		while((child=children++)>0)
+		while(child=children++)
 			addToTree(root,child);
 	}
 	return root;
@@ -165,7 +165,7 @@ TreeNode *Model::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 	if(node->getChildren(children)){
 		NodeIF *child;
 		children.ss();
-		while((child=children++)>0)
+		while(child=children++)
 			addToTree(root,child);
 	}
 	return root;

@@ -24,7 +24,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	float bumpamp=dot(n,bmp);
     float exposure = 1.0-hdr_min*smoothstep(0.0,1.0,bumpamp/hdr_max);
 	exposure = max(exposure,0.0);
-	exposure*=exposure;	
+	//exposure*=exposure;	
 	float RdotN   = dot(radius,normal); // for top lighting on nightside
 	float top_shading  = 0.5*exposure*RdotN+0.5+0.5*exposure;  
 #else
@@ -96,7 +96,9 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
 	vec3 TotalDiffuse = diffuse.rgb * BaseColor*Diffuse.a*shadow_diffuse;
 	vec3 TotalSpecular = specular.rgb;
+
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
+
 }
 
 

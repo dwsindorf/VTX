@@ -393,7 +393,7 @@ ObjectNode::~ObjectNode()
 int ObjectNode::getChildren(LinkedList<NodeIF*>&l){
 	children.ss();
 	NodeIF *obj;
-	while((obj=children++)>0)
+	while(obj=children++)
 		l.add(obj);
 	return children.size;
 }
@@ -457,7 +457,7 @@ void ObjectNode::save(FILE *fp)
 {
 	Object3D *obj;
 	children.ss();
-	while((obj=children++)>0)
+	while(obj=children++)
 		obj->save(fp);
 }
 
@@ -471,7 +471,7 @@ void ObjectNode::visit(void (Object3D::*func)())
 	(this->*func)();
 
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		(obj->*func)();
 	}
 }
@@ -482,7 +482,7 @@ void ObjectNode::visit(void (Object3D::*func)())
 void ObjectNode::visitChildren(void  (Object3D::*func)()){
 	Object3D *obj;
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		(obj->*func)();
 	}
 }
@@ -493,7 +493,7 @@ void ObjectNode::visitChildren(void  (Object3D::*func)()){
 void ObjectNode::visitChildren(void  (*func)(Object3D*)){
 	Object3D *obj;
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		obj->visit(func);
 	}
 }
@@ -507,10 +507,21 @@ void ObjectNode::visitAll(void (Object3D::*func)())
 
 	(this->*func)();
 
+#ifdef BUGGY
+	// for some reason this code fails when "init" function is called
+	// (maybe others?) but seems to work with some functions (e.g. clr_groups)
+	// when it fails the function for the last object in the list is not
+	// called (the loop is only executed n-1 times instead of n)
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		obj->visitAll(func);
 	}
+#else
+	for(int i=0;i<children.size;i++){
+		obj=children[i];
+		obj->visitAll(func);
+	}
+#endif
 }
 
 //-------------------------------------------------------------
@@ -523,7 +534,7 @@ void ObjectNode::visit(void (*func)(Object3D*))
 	(*func)(this);
 
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		obj->visit(func);
 	}
 }

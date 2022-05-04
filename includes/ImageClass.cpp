@@ -353,7 +353,7 @@ void TNbands::init()
 		if(S0.cvalid()){
 			if(S0.c.hasAlpha())
 			   aflag=true;
-			if(j){
+			if(mflag && j){
 			    cb=S0.c;
 			    j=0;
 			}
@@ -381,6 +381,14 @@ void TNbands::init()
 		i++;
 	}
 
+	if(reflect){
+		for(int i=0;i<ncols;i++){
+			cols[ncols*2-i-1]=cols[i];
+		}
+		ncols*=2;
+	}
+	//cout<<"ncols="<<ncols<<" h:"<<h<<endl;
+
 	// malloc colors and assign variables
 	int b=1;
 
@@ -398,7 +406,7 @@ void TNbands::init()
 	}
 	else{
 		
-		MALLOC(h*r,Color,colors);
+		MALLOC(h,Color,colors);
 		if(!dflag && !mflag)
 		    knots=cols;
 		else {
@@ -414,7 +422,7 @@ void TNbands::init()
 
 		for(i=0;i<h;i++){
 		    if(knots){
-		    	if(opts & NEAREST){
+		    	if((opts & INTRP_MASK) == NEAREST){
 		    		int m = i*ncols/h;
 		    		colors[i]=knots[m];
 		    	}
@@ -442,24 +450,26 @@ void TNbands::init()
 //			    else
 //					colors[i]=colors[i].darken(delta*(0.5-f));
 //			}
-			if(mix)
+			if(mflag){
+				double a=colors[i].alpha();
 			    colors[i]=colors[i].blend(cb,mix*LRAND);
-		    if(delta)
+			    colors[i].set_alpha(a);
+			}
+		    if(dflag)
 		    	colors[i]=colors[i].blend(Color(LRAND,LRAND,LRAND,LRAND),delta*LRAND);			    			    
-
 			if(!aflag)
 			    colors[i].set_alpha(1);
 		}
+
 	}
-	if(reflect){
-		for(int i=0;i<h;i++){
-			colors[i+h]=colors[h-i-1];
-		}		
-	}
+
+//	for(int i=0;i<h;i++){
+//		colors[i].print();
+//	}
 #ifdef DEBUG_IMAGES
 		printf("%-20s BUILDING 1 X %d %s IMAGE %s\n","TNbands",h,aflag?"alpha":"",name);
 #endif
-	image=new Image(colors,h*r,1);
+	image=new Image(colors,h,1);
 	if(aflag){
 	    image->set_alpha(1);
 	}

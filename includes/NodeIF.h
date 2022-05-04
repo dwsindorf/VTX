@@ -25,6 +25,7 @@ enum {
 enum {
 	RND_RANDOMIZE   = 0x00100000, // need to randomize construction
 	RND_PROTOTYPE   = 0x00200000, // need to randomize prototype
+	RND_FLAGS=RND_RANDOMIZE|RND_PROTOTYPE
 };
 
 // bits that control runtime behavior
@@ -102,7 +103,7 @@ public:
 
 	bool isRandom()             { return getFlag(RND_RANDOMIZE) ? false:true;}
 	void setRandom(bool b)      { if(b) clrFlag(RND_RANDOMIZE); else setFlag(RND_RANDOMIZE); }
-	void setProtoValid(bool b)      { if(b) clrFlag(RND_PROTOTYPE); else setFlag(RND_PROTOTYPE); }
+	void setProtoValid(bool b)      { if(b) setFlag(RND_PROTOTYPE); else clrFlag(RND_PROTOTYPE); }
 	bool protoValid()             { return getFlag(RND_PROTOTYPE) ? true:false;}
 	virtual bool canRandomize() { return false;}
 	virtual bool randomize()    { return false;}

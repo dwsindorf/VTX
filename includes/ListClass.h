@@ -171,11 +171,13 @@ public:
 									}
 	int atstart()				    {   return ptr==start.next?1:0;}
 	int atend()				    	{   return ptr==end.prev?1:0;}
-	T  operator++(int)				{	// post inc ptr
+	T  operator++(int i)				{	// post inc ptr
 										if(ATEND(ptr))
 											return 0;
+										T obj = ptr->obj;
+										
 										ptr=ptr->next;
-										return ptr->prev->obj;
+										return obj;
 									}
 	T  operator--(int)				{	// post decr ptr
 										if(ATSTART(ptr))

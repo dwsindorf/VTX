@@ -18,6 +18,9 @@
 #include <iostream>
 using namespace std;
 /* ========================================================================*/
+#ifndef MAXSTR
+#define MAXSTR 1024
+#endif
 
 #define CCHAR2CHAR(f)  const_cast<char*>((f))
 //#define WXSTR2CHAR(f)  const_cast<char*>((f).ToAscii())

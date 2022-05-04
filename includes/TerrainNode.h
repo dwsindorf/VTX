@@ -187,7 +187,7 @@ public:
 class TNvector : public TNunary
 {
 protected:
-    char token[256];
+    char token[MAXSTR];
     TNvector *expr;
 public:
 	TNvector(TNode *r) : TNunary(r) {token[0]=0;expr=0;}

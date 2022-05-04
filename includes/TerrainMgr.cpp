@@ -10,8 +10,8 @@
 #include <math.h>
 
 //#define DEBUG_VARS  // show var status on save
-//#define DEBUG_INIT  // show var status on save
-//#define DEBUG_IMAGES
+#define DEBUG_INIT  // show var status on save
+#define DEBUG_IMAGES
 
 extern void sx_error(char *msg,...);
 extern double Rand();
@@ -899,9 +899,9 @@ void ExprMgr::save_selected(FILE *f)
 	exprs.ss();
 	while((var=(TNvar*)exprs++)>0){
 	    if(var->do_show())
-	        printf("\tshow expr %s\n",var->name);
+	        printf("\tshow expr %s\n",var->name());
 		else
-	        printf("\thide expr %s\n",var->name);
+	        printf("\thide expr %s\n",var->name());
 	}
 #endif
     exprs.ptr=ptr;

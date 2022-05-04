@@ -8,7 +8,7 @@
 class ModelSym;
 
 #ifndef MAXSTR
-#define MAXSTR 256
+#define MAXSTR 1024
 #endif
 enum {
    FILE_JPG = 0,

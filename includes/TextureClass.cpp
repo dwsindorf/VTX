@@ -383,7 +383,7 @@ bool Texture::setProgram(){
 
 	GLSLVarMgr vars;
 
-	char str[256];
+	char str[MAXSTR];
 
 	float delta=width()>height()?width():height();
 	double tex_ampl=(tex_active && Render.textures()) ? texamp:0.0;

@@ -316,12 +316,16 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
 
-	NodeIF *n=getPrototype(obj,type);
-	n->setType(type);
-	cout<<"UniverseModel::makeObject "<<obj->typeName()<<" "<<type<<endl;
-	n=n->getInstance();
-	if(n)
+	NodeIF *m=getPrototype(obj,type);
+	//cout<<"UniverseModel::makeObject "<<n->getParent()->typeName()<<" "<<n->typeName()<<endl;
+	NodeIF *n=m->getInstance();
+	if(n){
+		n->setType(type);
+		n->setParent(obj);
 		n->setName("");
+	}
+	if(m!=n)
+		delete m;
 	return n;
 }
 
@@ -848,7 +852,6 @@ void Scene::open(char *fn)
 	clr_moved();
 	clr_changed_marker();
 	selobj=focusobj=0;
-
 	objects->visitAll(&Object3D::clr_groups);
 	objects->visitAll(&Object3D::init);
 	if(viewobj){

@@ -162,7 +162,7 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 int UniverseModel::getPrototype(int type,char *tmp)
 {
 	tmp[0]=0;
-	char buff[256];
+	char buff[MAXSTR];
 
 	switch(type&TN_TYPES){
 	case TN_GALAXY:
@@ -193,7 +193,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
 		break;
 	case TN_RING:
-		sprintf(tmp,"Ring(1.5,0.2){Surface{terrain=Texture(\"rings\",S|TEX,PHI,1.0,1.7);\n}}\n");
+		sprintf(tmp,"Ring(1.5,0.2){emission=Color(1,1,1,0.64);}\n");
 		break;
 	case TN_COMP:
 		sprintf(tmp,"()\n");
@@ -529,7 +529,7 @@ TreeNode *UniverseModel::buildTree(NodeIF *node){
 	if(node->getChildren(children)){
 		NodeIF *child;
 		children.ss();
-		while((child=children++)>0)
+		while(child=children++)
 			addToTree(root,child);
 	}
 	return root;
@@ -543,7 +543,9 @@ void UniverseModel::setType(NodeIF *node)
 	TerrainData td;
 	int type=node->typeValue();
   	int compflag=0;
+  	int rflags=node->getFlag(RND_FLAGS);
     node->clrAllFlags();
+    node->setFlag(rflags);
 	switch(node->typeClass()){
 	case ID_SCENE:
 		node->setFlag(TN_SCENE);
@@ -754,9 +756,11 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 {
 	if(actionmode==DROPPING && child)
 		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
+
     int branch=node->getFlag(NODE_BRANCH);
 	TreeNode *root=new TreeNode(node);
 	setType(node);
+
 	int ptype=parent->getFlag(TN_TYPES);
 	switch(ptype){
 	case TN_DENSITY:
@@ -855,7 +859,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		if(node->getChildren(children)){
 			NodeIF *child;
 			children.ss();
-			while((child=children++)>0){
+			while(child=children++){
 				addToTree(root,child);
 			}
 		}

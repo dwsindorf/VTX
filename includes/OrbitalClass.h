@@ -32,6 +32,7 @@ enum orbital_codes{
 	ID_SYSTEM  		= ID_ORBITAL|0x0006,
 	ID_STAR     	= ID_LEVEL1|ID_ORBITAL|0x0107,
 	ID_CORONA  		= ID_LEVEL1|ID_ORBITAL|0x0508,
+	ID_FLARES  		= ID_LEVEL1|ID_ORBITAL|0x0509,
 	ID_HALO  		= ID_LEVEL1|ID_ORBITAL|0x050a,
 	ID_PLANET   	= ID_LEVEL2|ID_ORBITAL|0x0309,
 	ID_CLOUDS  		= ID_LEVEL2|ID_ORBITAL|0x050c,
@@ -427,7 +428,7 @@ public:
     static Star *newInstance();
     static void random(double &temp, double &r, Color &color);
     static TNinode *image(Color color);
-    static TNtexture *Star::texture();
+    static TNtexture *texture();
 };
 
 //************************************************************
@@ -553,6 +554,7 @@ public:
 	void applyNoiseFunction();
 	bool adapt_needed() { return false;}
 	void set_surface(TerrainData &d);
+	virtual NodeIF *getInstance();
 };
 
 //************************************************************
@@ -656,7 +658,7 @@ public:
 	Planetoid(Orbital *m, double s, double r);
 	~Planetoid();
 	const char *name()			{ return "Planetoid";}
-	int  type()					{ return ID_PLANET;}
+	virtual int  type()					{ return ID_PLANET;}
 	virtual void set_lighting();
     virtual void map_color(MapData*,Color&);
 	virtual void set_vars();
@@ -696,6 +698,11 @@ public:
 
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
+	NodeIF *getInstance();
+	static int planet_id;
+	static int planet_cnt;
+	static Planet *newInstance();
+	static Planet *newGasGiant();
 };
 
 //************************************************************
@@ -717,6 +724,7 @@ public:
 class Ring : public Spheroid
 {
 public:
+	static int ring_id;
 	double width;
 	double inner_radius;
 	Ring(Planet *m, double s, double r);
@@ -735,6 +743,8 @@ public:
 	int shadow_pass();
     void select();
 	bool setProgram();
+    NodeIF *getInstance();
+    static Ring *newInstance();
 };
 
 

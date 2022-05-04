@@ -370,7 +370,7 @@ void heights(MapNode *n){
 double Map::elevation(double t, double p)
 {
 	hts=-lim;
-
+   
 	MapNode *n=npole->locate(t,p);
 	/*
 	if(n->cdata)

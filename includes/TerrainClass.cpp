@@ -41,7 +41,7 @@ double Red=0, Green=0, Blue=0, Alpha=1;
 double Pz=0, Px=0, Py=0;
 int addtabs=0;
 
-char tmps[256];
+char tmps[1024];
 
 // noise symbols
 
@@ -469,12 +469,12 @@ const char *TNcolor::symbol(){
 bool TNcolor::initProgram(){
     if(!isEnabled())
     	return false;
-	//char nstr[256];
-	char defs[256];
-	char red[256]={0};
-	char green[256]={0};
-	char blue[256]={0};
-	char alpha[256]={0};
+	//char nstr[MAXSTR];
+	char defs[1024];
+	char red[1024]={0};
+	char green[1024]={0};
+	char blue[1024]={0};
+	char alpha[1024]={0};
 	defs[0]=0;
 	CurrentScope->set_shader(1);
 	TNarg *arg=(TNarg*)right;
@@ -735,9 +735,9 @@ void TNdensity::init(){
 bool TNdensity::initProgram(){
     if(!isEnabled())
     	return false;
-    char defs[256];
+    char defs[MAXSTR];
 	defs[0]=0;
-	char argstr[256];
+	char argstr[MAXSTR];
 	argstr[0]=0;
 	CurrentScope->set_shader(1);
 	TNarg *arg=(TNarg*)right;
@@ -844,11 +844,11 @@ bool TNpoint::setProgram(){
 // TNpoint::initProgram() set shader defines
 //-------------------------------------------------------------
 bool TNpoint::initProgram(){
-	//char nstr[256];
-	char defs[256];
-	char x[256]={0};
-	char y[256]={0};
-	char z[256]={0};
+	//char nstr[MAXSTR];
+	char defs[MAXSTR];
+	char x[MAXSTR]={0};
+	char y[MAXSTR]={0};
+	char z[MAXSTR]={0};
 	defs[0]=0;
 	CurrentScope->set_shader(1);
 	TNarg *arg=(TNarg*)right;
@@ -1003,7 +1003,7 @@ void TNnoise::addToken(LinkedList<TNode*>&l)
 //-------------------------------------------------------------
 void TNnoise::save(FILE *f)
 {
-	char buff[256];
+	char buff[MAXSTR];
 	buff[0]=0;
 	valueString(buff);
 	fprintf(f,"%s",buff);
@@ -1151,7 +1151,7 @@ void TNnoise::eval()
 		TheNoise.get_minmax(ma,mb,type,n,args);
 
 #ifdef DEBUG_NOISE
-		char buff[256];
+		char buff[MAXSTR];
 		buff[0]=0;
     	valueString(buff);
     	sprintf(tmps,"new %-30s %-12g %-12g",buff,ma,mb);
@@ -1193,7 +1193,7 @@ void TNnoise::eval()
 
 // debug routine to print out shader noise value
 static void printFvar(GLhandleARB program,char *v,int nid){
-	char str[256];
+	char str[MAXSTR];
 	sprintf(str,"nvars[%d].%s",nid,v);
 	float d[1]={0};
 	int loc=glGetUniformLocationARB(program,str);
@@ -1234,7 +1234,7 @@ bool TNnoise::setProgram(){
 
 	int nid=id;//TerrainProperties::nid;
 
-	char str[256];
+	char str[MAXSTR];
 
 	GLSLVarMgr vars;
 #define MAXORDERS 28

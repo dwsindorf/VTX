@@ -345,7 +345,7 @@ void TNinvert::valueString(char *s)
 //************************************************************
 void TNgroup::valueString(char *s)
 {
-	char rstr[256]={0};
+	char rstr[MAXSTR]={0};
     if(right)
 	    right->valueString(rstr);
 	if(strlen(rstr)){
@@ -719,8 +719,8 @@ void TNcond::save(FILE *f)
 TNexpr::TNexpr(TNode *l, TNode *r) :  TNbinary(l,r) {}
 void TNexpr::valueString(char *s)
 {
-	char lstr[256]={0};
-	char rstr[256]={0};
+	char lstr[MAXSTR]={0};
+	char rstr[MAXSTR]={0};
 	if(left){
 		SINIT;
 		left->valueString(lstr);
@@ -869,8 +869,8 @@ void TNand::eval()  { LOGICAL_EVAL(&&);}
 //-------------------------------------------------------------
 void TNadd::valueString(char *s)
 {
-	char lstr[256];
-	char rstr[256];
+	char lstr[MAXSTR];
+	char rstr[MAXSTR];
 	lstr[0]=rstr[0]=0;
 	if(left){
 		SINIT;
@@ -897,8 +897,8 @@ void TNadd::valueString(char *s)
 //-------------------------------------------------------------
 void TNsub::valueString(char *s)
 {
-	char lstr[256];
-	char rstr[256];
+	char lstr[MAXSTR];
+	char rstr[MAXSTR];
 	lstr[0]=rstr[0]=0;
 	if(left){
 		SINIT;
@@ -1927,8 +1927,8 @@ public:
 	void valueString(char *s);
 };
 void TNtwist::valueString(char *s){
-	char arg1[256]={0};
-	char arg2[256]={0};
+	char arg1[MAXSTR]={0};
+	char arg2[MAXSTR]={0};
 
 	TNarg &args=*((TNarg *)right);
 	args[0]->valueString(arg1);

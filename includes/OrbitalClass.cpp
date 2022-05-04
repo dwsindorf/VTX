@@ -495,7 +495,7 @@ void Orbital::visit(void (Object3D::*func)())
 	Object3D *obj;
 
 	children.ss();
-	while((obj=children++)>0){
+	while(obj=children++){
 		TheScene->pushMatrix();
 		(obj->*func)();
 		TheScene->popMatrix();
@@ -511,7 +511,7 @@ void Orbital::visit(void (*func)(Object3D*))
 	(*func)(this);
 	if(children.size){
 		children.ss();
-		while((obj=children++)>0){
+		while(obj=children++){
 			TheScene->pushMatrix();
 			obj->visit(func);
 			TheScene->popMatrix();
@@ -588,13 +588,12 @@ bool Orbital::containsViewobj(){
 		return true;
 	children.ss();
 	Orbital *obj;
-	while((obj=children++)>0){
+	while(obj=children++){
 		if(obj->containsViewobj())
 			return true;
 	}
 	return false;
 }
-
 
 //-------------------------------------------------------------
 // Scene::getInstance() return prototype or randomly selected object
@@ -1154,9 +1153,10 @@ void Galaxy::set_focus(Point &p)
 	system->set_system(p);
 
 	int stars=system->stars();
+	int planets=system->planets();
 
     Point vp=Point(0,0,0)-TheScene->spoint;
-    TheScene->set_istring("System dist:%g ly Stars:%d",p.distance(vp)/LY,stars);
+    TheScene->set_istring("System dist:%g ly Stars:%d Planets:%d",p.distance(vp)/LY,stars,planets);
     delete system;
 }
 
@@ -1785,14 +1785,15 @@ void System::get_system_stats()
 	m_planets=0;
 	size=0;
 
-	while((obj=(Orbital*)children++)>0){
+	while(obj=(Orbital*)children++){
         if(obj->type()!=ID_STAR && obj->type()!=ID_PLANET)
         	continue;
         double r=(obj->orbit_radius)*(1+obj->orbit_eccentricity)+3*obj->size;
-        size=r>size?r:size;
 		if(obj->type()==ID_STAR){
 			Star *star=(Star*)obj;
-			cout<<"size:"<<star->size<<" radius:" <<star->orbit_radius<<" e:"<<star->orbit_eccentricity<<endl;
+	        size=r>size?r:size;
+
+			//cout<<"size:"<<star->size<<" radius:" <<star->orbit_radius<<" e:"<<star->orbit_eccentricity<<endl;
 			m_stars++;
 		}
 		else if(obj->type()==ID_PLANET){
@@ -1813,7 +1814,12 @@ void System::set_system(Point p)
 
 	double ps=pow(URAND(lastn),2);
 	m_stars=1.1+ps*3;
-	m_planets=0;
+	double pp=URAND(lastn++);
+	//if(m_stars==1)
+	//	m_planets=0.5+ps*6;
+	//else
+	//	m_planets=0.1+ps*2;
+	m_planets=1;
 
 }
 
@@ -1875,7 +1881,7 @@ void System::adjustOrbits(){
 		star2->day=0.1*year*(1+0.5*RAND(lastn++));
 		r=URAND(lastn++);
 		double e=r;//*m1/m;
-		cout<<"e:"<<e<<endl;
+		//cout<<"e:"<<e<<endl;
 
 		star1->year=year;
 		star2->year=year;
@@ -1910,14 +1916,20 @@ System *System::newInstance(){
 	double year=0;
 	double phase=0;
 	int stars=system->m_stars;
-	Star *star;
+	int planets=system->m_planets;
 	building_system=true;
 	for(int i=0;i<stars;i++){
-		star=Star::newInstance();
+		Star *star=Star::newInstance();
 		if(stars==1)
 			star->orbit_radius=0;
 		lastn++;
 		system->addChild(star);
+	}
+	for(int i=0;i<planets;i++){
+		Planet::planet_cnt=i+1;
+		Planet *planet=Planet::newInstance();		
+		lastn++;
+		system->addChild(planet);
 	}
 	building_system=false;
 	system->adjustOrbits();
@@ -2541,6 +2553,7 @@ Bounds *Spheroid::bounds()
 //-------------------------------------------------------------
 void Spheroid::init()
 {
+	cout<<"init:"<<name()<<endl;
 	Gscale=1/hscale/size;
 	exprs.init();
 	get_vars();
@@ -2580,7 +2593,7 @@ double Spheroid::far_height()
 	double mht=2*size;
 	double ht;
 
-	while((obj=(Orbital*)children++)>0){
+	while(obj=(Orbital*)children++){
 		if(obj->type()==ID_RING){
 		    ht=0.9*(obj->size-size);
 			mht=ht<mht?ht:mht;
@@ -2683,7 +2696,7 @@ Sky *Spheroid::get_sky()
 	Node<Object3D*> *ptr=children.ptr;
 	children.ss();
 
-	while((obj=children++)>0){
+	while(obj=children++){
 		if(obj->type()==ID_SKY){
 			children.ptr=ptr;
 		    return (Sky*)obj;
@@ -2951,16 +2964,9 @@ void Star::getStarData(double *d, char *m){
 Star *Star::newInstance(){
 	Star *star;
 
-//    double f=URAND(lastn++);
-//	if(f>0.9){
-//		star=TheScene->getInstance(TN_STAR);
-//		star->setRseed(URAND(lastn++));
-//		return star;
-//	}
 	star=TheScene->getPrototype(0,TN_STAR);
 	star_id=lastn;
 	star->setRseed(URAND(lastn++));
-	//System::star_id=star->rseed*12345;
 
 	double t,r;
 	Color c;
@@ -3002,8 +3008,8 @@ Star *Star::newInstance(){
 
 	outer->setProtoValid(true);
 
-	outer->setNoiseFunction("noise(GRADIENT|FS|SQR|UNS|TA,0,4.8,0.15,0.41,2,1,1,0,1,1e-6)");
-	outer->applyNoiseFunction();
+	//outer->setNoiseFunction("noise(GRADIENT|FS|SQR|UNS|TA,0,4.8,0.15,0.41,2,1,1,0,1,1e-6)");
+	//outer->applyNoiseFunction();
 
 	Corona *inner=star->children++;
 	inner->size=1.1*r;
@@ -3553,7 +3559,7 @@ int Planetoid::adapt_pass()
         if(TheScene->viewobj==this)
             clear_pass(FG0);
         else
-            clear_pass(BG1);
+            clear_pass(BG2);
     }
     return selected();
 }
@@ -4128,6 +4134,9 @@ void Planetoid::set_view_info()
 //************************************************************
 // Planet class
 //************************************************************
+int Planet::planet_id=0;
+int Planet::planet_cnt=0;
+
 Planet::Planet(Orbital *m, double s, double r) : Planetoid(m,s,r)
 {
 #ifdef DEBUG_OBJS
@@ -4141,6 +4150,144 @@ Planet::~Planet()
 #endif
 }
 
+NodeIF *Planet::getInstance(){
+	planet_cnt++;
+	lastn=Rand()*12345;
+	return newInstance();	
+}
+Planet *Planet::newInstance(){
+	//Planet *planet=TheScene->getInstance(ID_PLANET);
+	Planet *planet=newGasGiant();
+	return planet;
+	
+}
+
+Planet *Planet::newGasGiant(){
+    const int THEMES=4;
+	static Color themes[THEMES*4]={
+		Color(1,0.89,0.49),Color(0.988,0.808,0.439),Color(0.616,0.38,0.02),Color(1,1,1),
+		Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+		Color(1,0.89,0.29),Color(1,0.6,0),Color(0.69,0.4,0),Color(1,0.89,0.29),
+		Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1)	 
+	};
+    const int RANDS=10;
+	double r[RANDS];
+	double s[RANDS];
+	for(int i=0;i<RANDS;i++){
+		r[i]=URAND(lastn++);
+		s[i]=RAND(lastn++);
+	}
+	Color tc,mix;
+	int ncolors=6;
+	Color colors[6];
+
+	double use_theme=r[7];
+	if(use_theme>0.5){
+		int index=(int)THEMES*r[8];
+		ncolors=4;
+		for(int i=0;i<4;i++){
+			tc=themes[4*index+i];
+			tc.set_red(tc.red()+0.1*s[i]);
+			tc.set_green(tc.green()+0.1*s[i+1]);
+			tc.set_blue(tc.blue()+0.1*s[i+2]);
+			colors[i]=tc;		
+		}
+	}
+	else{
+		tc=Color(0.5+3*r[4],0.2+2*r[5],0.8*r[5]);
+		mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9]);
+		colors[0]=mix;
+		colors[1]=tc.darken(0.75+0.2*s[7]);
+		colors[2]=tc.lighten(0.5+0.1*s[8]);
+		colors[3]=tc;
+		colors[4]=tc.darken(0.9+0.6*s[9]);
+		colors[5]=tc.lighten(0.9+0.6*s[6]);
+		//cout<<"random "<<endl;
+	}
+
+	Planet *planet=TheScene->getPrototype(0,ID_PLANET);
+	planet_id=planet_cnt+lastn;
+	planet->setRseed(r[0]);
+	planet->size=0.4+0.2*r[1];
+	planet->day=100+90*r[2];
+	planet->year=planet->day*(1+3*r[3]);
+	planet->orbit_radius=100+planet_cnt*100*r[4];
+	planet->detail=4;
+	planet->ambient=Color(1,1,1,0.07);
+
+	char buff[2048];
+
+	sprintf(buff,"bands(\"tmp/P%d\",NORM|REFLECT,16,%g,%g",planet_id,0.2+0.1*s[0],0.4+0.2*s[1]);
+
+	for(int i=0;i<ncolors;i++){
+		Color c=colors[i];
+		strcat(buff,",");
+		c.toString(buff+strlen(buff));
+	}
+	strcat(buff,");\n");
+	cout<<buff<<endl;
+	TNinode *img=(TNinode*)TheScene->parse_node(buff);
+	img->init();
+	Render.invalidate_textures();
+	planet->add_image(img);
+	
+	char *ntype[]={"GRADIENT","SIMPLEX","VORONOI"};
+	int nt=(int)(3*r[5]);
+	nt=nt>2?2:nt;
+	char noise_expr1[1024];
+	char noise_expr2[1024];
+	char noise_expr3[1024];
+	double twist=0.2+0.1*r[6];
+	sprintf(noise_expr1,"%g*twist(%g,noise(%s|FS|NABS|SQR|TA|UNS,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-6))",twist,0.2+0.1*s[2],ntype[nt]);
+	double storms=0.4+0.1*s[3];
+
+	// storms
+	sprintf(noise_expr2,"%g*max(EQU*noise(SIMPLEX|FS|SCALE|SQR,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms);
+	double ripple=1+0.1*s[4];
+
+    sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,ntype[nt]);
+    double scale=0.5+r[5];
+    double ampl=1.5+0.5*r[6];
+    double bump=-0.02;
+    double offset=r[7];
+    double levels=2+r[8];
+    double delf=2.2+s[6];
+    double dela=0.4+r[9];
+
+    sprintf(buff,"Texture(\"tmp/P%d\",S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
+    		planet_id,noise_expr1,0.5+0.5*s[3],noise_expr2,noise_expr3,
+			scale,bump,ampl,offset,levels,delf,dela);
+
+	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
+	 if(tex){
+	    planet->terrain.set_root(tex);
+	    planet->terrain.init();
+	 }
+	 else
+	    cout<<"error building star texture"<<endl;
+	Sky *sky=TheScene->getPrototype(0,ID_SKY);
+	sky->size=1.01*planet->size;
+	sky->ht=sky->size-planet->size;
+	sky->density=0.1;
+	sky->detail=4;
+	planet->addChild(sky);
+
+	bool has_rings=r[6]>0.8;
+	if(has_rings){
+		Ring *ring=Ring::newInstance();
+		ring->inner_radius=(1.2+0.3*r[4])*(planet->size);
+		ring->width=(0.8+0.3*s[5])*(planet->size);
+		ring->size=ring->inner_radius+ring->width;
+		planet->addChild(ring);
+		ring->set_geometry();
+	}
+	planet->symmetry=1;
+	planet->set_geometry();
+	planet->setProtoValid(true);
+
+	return planet;
+	
+}
 //************************************************************
 // Moon class
 //************************************************************
@@ -5707,7 +5854,6 @@ Corona::Corona(Orbital *m, double s) : Shell(m,s)
 	hscale=0;
 	noise_expr=0;
 	density_expr=0;
-	noise_expr=0;
 	rate=1e-6;
 	//inner_radius=m->size;
 }
@@ -5747,6 +5893,7 @@ void Corona::get_vars()
 		applyNoiseFunction();
 	}
 	else{
+		noise_expr=0;
 		char dstr[256];
 		sprintf(dstr,"Density(1.0)");
 	    density_expr=TheScene->parse_node(dstr);
@@ -5970,24 +6117,12 @@ int Corona::render_pass()
 
 	if(!local_group() || offscreen() || !isEnabled())
 	    return 0;
-//	if(TheScene->viewobj==this)
-//			clear_pass(FG0);		
-//		else if(local_group())
-//			clear_pass(BG3);
-//		else
-//			clear_pass(BG4);
-	if(getParent()==TheScene->viewobj){
-		//if(internal)
-			clear_pass(FG0);
-	    //else
-		//	clear_pass(FG1);	
-	}
-	else if(local_group()){
-//		if(internal)
-//			clear_pass(BG3);
-//	     else
-			clear_pass(BG3);	
-	}	
+
+	if(getParent()==TheScene->viewobj)
+		clear_pass(FG0);	
+	else if(local_group())
+		clear_pass(BG3);	
+		
     return selected();
 }
 //-------------------------------------------------------------
@@ -5996,15 +6131,14 @@ int Corona::render_pass()
 int Corona::adapt_pass()
 {
 	return Spheroid::adapt_pass();
-//	clr_selected();
-//
-//    if(!local_group() || !view_group() || offscreen())
-//        clear_pass(BG2);
-//    else
-//        clear_pass(BG1);
-//    return selected();
 }
 
+//-------------------------------------------------------------
+// Corona::getInstance() return prototype or randomly selected object
+//-------------------------------------------------------------
+NodeIF *Corona::getInstance(){
+	return TheScene->getInstance(type());
+}
 //-------------------------------------------------------------
 // Corona::render_object()   lower level render
 //-------------------------------------------------------------
@@ -6258,6 +6392,7 @@ int Halo::render_pass() {
 //************************************************************
 // Ring class
 //************************************************************
+int Ring::ring_id=0;
 Ring::Ring(Planet *m, double s, double r) : Spheroid(m,s)
 {
 	width=r;
@@ -6558,4 +6693,77 @@ int  Ring::scale(double &zn, double &zf)
 	   zn=MINZN;
 	setvis(OUTSIDE);
 	return OUTSIDE;
+}
+//-------------------------------------------------------------
+// Ring::setInstance()  generate a random instance
+//-------------------------------------------------------------
+NodeIF *Ring::getInstance(){
+	return newInstance();
+}
+
+//-------------------------------------------------------------
+// Ring::setInstance()  generate a random instance
+//-------------------------------------------------------------
+Ring *Ring::newInstance(){
+	Ring *ring;
+
+	ring=TheScene->getPrototype(0,TN_RING);
+	ring_id=lastn;
+	ring->setRseed(URAND(lastn++));
+	
+	Color tc,mix;
+	const int ncolors=8;
+	Color colors[ncolors];
+	const int nrands=10;
+			
+	double r[nrands];
+	double s[nrands];
+	for(int i=0;i<nrands;i++){
+		r[i]=URAND(lastn++);
+		s[i]=RAND(lastn++);
+	}
+		
+	tc=Color(0.5+3*r[4],0.2+2*r[5],0.8*r[5],r[2]);
+    mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9],r[3]);
+	colors[0]=mix;
+    colors[1]=tc.lighten(0.1+0.4*r[8]);
+	colors[2]=tc.darken(0.75+0.2*s[7]);
+	colors[3]=tc.lighten(0.5+0.1*s[8]);
+	colors[4]=tc;
+	colors[4].set_alpha(0);
+	colors[5]=tc.darken(0.9+0.6*s[9]);
+	colors[6]=tc.lighten(0.9+0.6*s[6]);
+	colors[7]=tc.darken(0.9);
+	colors[7].set_alpha(0);
+	
+	char buff[2048];
+
+	sprintf(buff,"bands(\"tmp/R%d\",NORM|REFLECT,64,%g,%g",ring_id,0.2+0.1*s[0],0.4+0.2*s[1]);
+
+	for(int i=0;i<ncolors;i++){
+		Color c=colors[i];
+		strcat(buff,",");
+		c.toString(buff+strlen(buff));
+	}
+	strcat(buff,");\n");
+	cout<<buff<<endl;
+	TNinode *img=(TNinode*)TheScene->parse_node(buff);
+	img->init();
+	Render.invalidate_textures();
+	ring->add_image(img);
+	
+	sprintf(buff,"Texture(\"tmp/R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1,1,0,1,2,1,0,0,0,0,0)",ring_id);
+
+	//cout<<buff<<endl;
+	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
+	if(tex){
+		ring->terrain.set_root(tex);
+		ring->terrain.init();
+	}
+	else
+		cout<<"error building ring texture"<<endl;
+	ring->emission=Color(1,1,1,0.8);
+	ring->shadow_color=Color(0,0,0,0.8);
+	ring->detail=3;
+	return ring;
 }

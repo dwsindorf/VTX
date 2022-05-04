@@ -515,6 +515,8 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 	TreeNode *tnode=node->tnode;
 	TreeNode *tree_node;
 	NodeIF *dstObj=tnode->node;
+	
+	cout<<"add proto valid:"<<newObj->protoValid()<<endl;
 
 	wxTreeItemId itemId=dstId;
 	if (expanded || (empty && !dstObj->isLeaf())) {
@@ -565,8 +567,11 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 		NodeIF *parobj=pdata->getObject();
 
 		newObj=parobj->addAfter(dstObj, newObj);
+
 		// make a TreeNode from newobj insert it in the TreeNode tree
 		tree_node=TheScene->model->addToTree(tree_parent, tnode, newObj);
+		cout<<"add 2 proto valid:"<<newObj->protoValid()<<endl;
+
 		TheScene->setPrototype(tree_parent->node, newObj);
 		// add new node to wxTreeCntrl
 		addToTree(pid, dstId, tree_node);

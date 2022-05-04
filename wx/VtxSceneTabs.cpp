@@ -361,13 +361,13 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	wxStaticBoxSizer* hdr_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("High Dynamic Range"));
 
 	HDRMinSlider=new SliderCtrl(panel,ID_HDRMIN_SLDR,"Min",LABEL2,VALUE2,SLIDER2);
-	HDRMinSlider->setRange(0.0,5.0);
+	HDRMinSlider->setRange(0.0,30.0);
 	HDRMinSlider->slider->SetToolTip("Increase range in dark areas");
 
 	hdr_controls->Add(HDRMinSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	HDRMaxSlider=new SliderCtrl(panel,ID_HDRMAX_SLDR,"Max",LABEL2,VALUE2,SLIDER2);
-	HDRMaxSlider->setRange(0.0,5.0);
+	HDRMaxSlider->setRange(0.0,10.0);
 	HDRMaxSlider->slider->SetToolTip("Decreases range in light areas");
 
 	hdr_controls->Add(HDRMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

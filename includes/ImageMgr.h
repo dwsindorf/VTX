@@ -45,22 +45,22 @@ enum  {
 	MODULATE    = 0x00000000,   //
 	DECAL		= 0x00000100, 	// style options
 	BLEND       = 0x00000200,
-	REPLACE     = 0x00000300, 	// style mask
-	STYLE       = 0x00000300, 	// style mask
+	REPLACE     = 0x00000300, 	// replace
+	STYLE       = MODULATE|DECAL|BLEND|REPLACE, 	// style mask
 	MMAP        = 0x00000000, 	// GL_LINEAR_MIPMAP_LINEAR  (default)
 	INTERP      = 0x00000400, 	// GL_LINEAR
-	NEAREST     = 0x00000600,   // GL_NEAREST
-	INTRP_MASK  = 0x00000600, 	// interp mask
+	NEAREST     = 0x00000800,   // GL_NEAREST
+	INTRP_MASK  = MMAP|INTERP|NEAREST, 	// interp mask
 	REPEAT      = 0x00000000, 	// wrap options
-	BORDER      = 0x00000800, 	// border flag (GL_CLAMP)
-	TEX         = 0x00001000,   // default
-	BUMP	    = 0x00002000, 	// bump map flag
-	HMAP   	    = 0x00004000,
-	RANDOMIZE   = 0x00008000,   // random flip
-	RGBA        = 0x00010000, 	// generate texture alpha from intensity
-	SEXPR       = 0x00020000, 	// S expression in argument list
-	AEXPR       = 0x00040000, 	// T expression in argument list
-	TXOPTS	    = 0x0007ffA0, 	// texture opts mask
+	BORDER      = 0x00001000, 	// border flag (GL_CLAMP)
+	TEX         = 0x00002000,   // default
+	BUMP	    = 0x00004000, 	// bump map flag
+	HMAP   	    = 0x00008000,
+	RANDOMIZE   = 0x00010000,   // random flip
+	RGBA        = 0x00020000, 	// generate texture alpha from intensity
+	SEXPR       = 0x00040000, 	// S expression in argument list
+	AEXPR       = 0x00080000, 	// T expression in argument list
+	TXOPTS	    = 0x000fffA0, 	// texture opts mask
 
     // ImageMgr file options
 
