@@ -22,21 +22,27 @@ Scene() {
 	}
 	View{
 		time=5648.32;
-		vstride=0.02;
-		zoom=0.005;
-		minh=1.13636e-09;
-		radius=0.00500036;
 	}
 	View{
 		height=189.016 ft;
 		time=5697.82;
 		heading=45;
 		tilt=-8;
-		minr=0.00500031;
-		radius=0.00500034;
 	}
 	View{
 		height=228.831 ft;
+		vstride=0.02;
+		zoom=0.005;
+		minh=1.13636e-09;
+		radius=0.00500035;
+	}
+	View{
+		phi=30.0572;
+		theta=30.1983;
+		height=311.007 ft;
+		heading=32;
+		minr=0.00500031;
+		radius=0.00500037;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -58,7 +64,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6000;
+				temperature=6540.73;
 				year=2;
 				Surface{
 					terrain=Color(1,1,0)-Color(0,1,1)*noise(8,4);

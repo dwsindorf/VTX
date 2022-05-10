@@ -1481,19 +1481,19 @@ void Galaxy::init_view()
 //-------------------------------------------------------------
 void Galaxy::addNewSystem()
 {
-	cout << "new system"<<endl;
 	int ssave=lastn;
 	System::galaxy_origin=TheScene->selm;
 
 	System  *system=System::newInstance();
 
 	addChild(system);
-	TheScene->regroup();
     invalidate();
+
+	TheScene->regroup();
     TheScene->rebuild_all();
     rebuild_scene_tree();
     select_tree_node(system);
-
+    
     TheScene->focusobj=system;
     system->init_view();
     lastn=ssave;
@@ -1737,6 +1737,7 @@ NodeIF *System::addAfter(NodeIF *b,NodeIF *c){
 
 NodeIF *System::removeChild(NodeIF *child){
 	NodeIF *n=Orbital::removeChild(child);
+	TheScene->views_reset();
 	adjustOrbits();
 	return n;
 }
@@ -1826,7 +1827,9 @@ void System::set_system(Point p)
 NodeIF *System::getInstance(){
 	double f=1000*LY;
 	System::galaxy_origin=Point(f*SRand(),0.01*f*SRand(),0.1*f*SRand());
-	return newInstance();
+	System *system=newInstance();
+	system->setNewViewObj(true);
+	return system;
 }
 
 void System::adjustOrbits(){
@@ -1835,8 +1838,6 @@ void System::adjustOrbits(){
 	double year=0;
 	double phase=0;
 	
-	cout<<"System::adjustOrbits()"<<endl;
-
 	Star *star;
 	Object3D *child;
 
@@ -1934,6 +1935,7 @@ System *System::newInstance(){
 	building_system=false;
 	system->adjustOrbits();
     system->setProtoValid(true);
+   
     return system;
 }
 
@@ -2553,7 +2555,7 @@ Bounds *Spheroid::bounds()
 //-------------------------------------------------------------
 void Spheroid::init()
 {
-	cout<<"init:"<<name()<<endl;
+	//cout<<"init:"<<name()<<endl;
 	Gscale=1/hscale/size;
 	exprs.init();
 	get_vars();
@@ -2662,7 +2664,6 @@ void Spheroid::init_view()
 		}
 		break;
 	}
-	cout<<TheScene->heading<<" "<<TheScene->view_angle<<" "<<TheScene->pitch<<endl;
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
 	TheScene->radius=TheScene->elevation+map->radius;
 }
@@ -3030,7 +3031,9 @@ Star *Star::newInstance(){
 // Star::setInstance()  generate a random instance
 //-------------------------------------------------------------
 NodeIF *Star::getInstance(){
-	return newInstance();
+	Star *star=newInstance();
+	star->setNewViewObj(true);
+	return star;
 }
 
 double Star::max_height(){
@@ -3315,6 +3318,8 @@ void Planetoid::get_vars()
 		ocean_level=Td.s;
 	else if(exprs.get_local("ocean.level",Td))
 		ocean_level=Td.s;
+	else
+		ocean_level=0;
 	VGET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	VGET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
 	VGET("ocean.state",ocean_state,def_ocean_state);
@@ -4131,11 +4136,68 @@ void Planetoid::set_view_info()
 	}
 }
 
+void Planetoid::setRands(){
+	for(int i=0;i<RANDS;i++){
+		r[i]=URAND(lastn++);
+		s[i]=RAND(lastn++);
+	}
+}
+Color Planetoid::themes[THEMES*4]={
+	Color(1,0.89,0.49),Color(0.988,0.808,0.439),Color(0.616,0.38,0.02),Color(1,1,1),
+	Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+	Color(1,0.89,0.29),Color(1,0.6,0),Color(0.69,0.4,0),Color(1,0.89,0.29),
+	Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1),
+	Color(1,0.639,0.09,0.29),Color(1,0.89,0.49),Color(0.302,0.078,0.078),Color(0.202,0.02,0.02),
+	Color(0.267,0.267,0.267),Color(0.71,0.71,0.71),Color(0.722,0.722,0.722),Color(0.933,0.933,0.933)
+};
+Color Planetoid::mix;
+Color Planetoid::tc;
+int Planetoid::ncolors=6;
+double Planetoid::r[RANDS];
+double Planetoid::s[RANDS];
+Color Planetoid::colors[COLORS];
+int Planetoid::planet_id=0;
+int Planetoid::planet_cnt=0;
+
+void Planetoid::setColors(){
+	double use_theme=r[7];
+	if(use_theme>0.5){
+		int index=(int)THEMES*r[8];
+		ncolors=4;
+		for(int i=0;i<4;i++){
+			tc=themes[4*index+i];
+			tc.set_red(tc.red()+0.1*s[i]);
+			tc.set_green(tc.green()+0.1*s[i+1]);
+			tc.set_blue(tc.blue()+0.1*s[i+2]);
+			colors[i]=tc;		
+		}
+		cout<<"theme "<<index<<endl;
+	}
+	else{
+		ncolors=6;
+		tc=Color(0.5+3*r[4],0.2+2*r[5],0.8*r[5]);
+		mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9]);
+		colors[0]=mix;
+		colors[1]=tc.darken(0.75+0.2*s[7]);
+		colors[2]=tc.lighten(0.5+0.1*s[8]);
+		colors[3]=tc;
+		colors[4]=tc.darken(0.9+0.6*s[9]);
+		colors[5]=tc.lighten(0.9+0.6*s[6]);
+		cout<<"random "<<endl;
+	}	
+}
+void Planetoid::newCratered(Planetoid *p){
+	//initInstance();
+}
+
+void Planetoid::initInstance(){
+	setRands();
+	setColors();
+}
+
 //************************************************************
 // Planet class
 //************************************************************
-int Planet::planet_id=0;
-int Planet::planet_cnt=0;
 
 Planet::Planet(Orbital *m, double s, double r) : Planetoid(m,s,r)
 {
@@ -4153,67 +4215,31 @@ Planet::~Planet()
 NodeIF *Planet::getInstance(){
 	planet_cnt++;
 	lastn=Rand()*12345;
-	return newInstance();	
+	Planet *planet=newInstance();
+	return planet;
 }
 Planet *Planet::newInstance(){
-	//Planet *planet=TheScene->getInstance(ID_PLANET);
-	Planet *planet=newGasGiant();
-	return planet;
-	
-}
-
-Planet *Planet::newGasGiant(){
-    const int THEMES=4;
-	static Color themes[THEMES*4]={
-		Color(1,0.89,0.49),Color(0.988,0.808,0.439),Color(0.616,0.38,0.02),Color(1,1,1),
-		Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
-		Color(1,0.89,0.29),Color(1,0.6,0),Color(0.69,0.4,0),Color(1,0.89,0.29),
-		Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1)	 
-	};
-    const int RANDS=10;
-	double r[RANDS];
-	double s[RANDS];
-	for(int i=0;i<RANDS;i++){
-		r[i]=URAND(lastn++);
-		s[i]=RAND(lastn++);
-	}
-	Color tc,mix;
-	int ncolors=6;
-	Color colors[6];
-
-	double use_theme=r[7];
-	if(use_theme>0.5){
-		int index=(int)THEMES*r[8];
-		ncolors=4;
-		for(int i=0;i<4;i++){
-			tc=themes[4*index+i];
-			tc.set_red(tc.red()+0.1*s[i]);
-			tc.set_green(tc.green()+0.1*s[i+1]);
-			tc.set_blue(tc.blue()+0.1*s[i+2]);
-			colors[i]=tc;		
-		}
-	}
-	else{
-		tc=Color(0.5+3*r[4],0.2+2*r[5],0.8*r[5]);
-		mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9]);
-		colors[0]=mix;
-		colors[1]=tc.darken(0.75+0.2*s[7]);
-		colors[2]=tc.lighten(0.5+0.1*s[8]);
-		colors[3]=tc;
-		colors[4]=tc.darken(0.9+0.6*s[9]);
-		colors[5]=tc.lighten(0.9+0.6*s[6]);
-		//cout<<"random "<<endl;
-	}
-
+	initInstance();
 	Planet *planet=TheScene->getPrototype(0,ID_PLANET);
 	planet_id=planet_cnt+lastn;
 	planet->setRseed(r[0]);
+	newGasGiant(planet);
+	planet->setNewViewObj(true);
+	return planet;
+}
+
+void Planet::newCratered(Planet *planet){
+	Planetoid::newCratered(planet);
+}
+void Planet::newGasGiant(Planet *planet){
+	cout<<"new gas giant"<<endl;
 	planet->size=0.4+0.2*r[1];
 	planet->day=100+90*r[2];
 	planet->year=planet->day*(1+3*r[3]);
 	planet->orbit_radius=100+planet_cnt*100*r[4];
 	planet->detail=4;
-	planet->ambient=Color(1,1,1,0.07);
+	planet->ambient=Color(1,1,1,0.04);
+	planet->diffuse=Color(1,1,1,1);
 
 	char buff[2048];
 
@@ -4225,7 +4251,6 @@ Planet *Planet::newGasGiant(){
 		c.toString(buff+strlen(buff));
 	}
 	strcat(buff,");\n");
-	cout<<buff<<endl;
 	TNinode *img=(TNinode*)TheScene->parse_node(buff);
 	img->init();
 	Render.invalidate_textures();
@@ -4266,9 +4291,10 @@ Planet *Planet::newGasGiant(){
 	 else
 	    cout<<"error building star texture"<<endl;
 	Sky *sky=TheScene->getPrototype(0,ID_SKY);
+	sky->set_color(Color(0.1*s[5],0.7+0.1*s[6],0.8+0.1*s[7]));
 	sky->size=1.01*planet->size;
 	sky->ht=sky->size-planet->size;
-	sky->density=0.1;
+	sky->density=0.15;
 	sky->detail=4;
 	planet->addChild(sky);
 
@@ -4285,8 +4311,7 @@ Planet *Planet::newGasGiant(){
 	planet->set_geometry();
 	planet->setProtoValid(true);
 
-	return planet;
-	
+	//return planet;	
 }
 //************************************************************
 // Moon class
@@ -6727,7 +6752,9 @@ Ring *Ring::newInstance(){
     mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9],r[3]);
 	colors[0]=mix;
     colors[1]=tc.lighten(0.1+0.4*r[8]);
+    colors[1].set_alpha(0.1*s[6]);
 	colors[2]=tc.darken(0.75+0.2*s[7]);
+	colors[2].set_alpha(0.1*r[3]);
 	colors[3]=tc.lighten(0.5+0.1*s[8]);
 	colors[4]=tc;
 	colors[4].set_alpha(0);
@@ -6752,7 +6779,7 @@ Ring *Ring::newInstance(){
 	Render.invalidate_textures();
 	ring->add_image(img);
 	
-	sprintf(buff,"Texture(\"tmp/R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1,1,0,1,2,1,0,0,0,0,0)",ring_id);
+	sprintf(buff,"Texture(\"tmp/R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,%g,1,0,1,2,1,0,0,0,0,0)",ring_id,0.1+r[0]);
 
 	//cout<<buff<<endl;
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);

@@ -47,6 +47,8 @@
 
 //#define PRINT_TREE
 
+#define DEBUG_SELECT
+
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
 #define TEST
@@ -337,6 +339,11 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		if(newobj){
 			newobj->setRandom(rand_flag);
 			newobj=addToTree(newobj,id);
+			if(newobj->newViewObj()){
+				ObjectNode *obj=newobj;
+				TheScene->set_viewobj(obj);
+				obj->init_view();
+			}
 			TheScene->regroup();
 	        obj->invalidate();
 	        TheScene->rebuild_all();

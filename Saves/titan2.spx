@@ -53,14 +53,39 @@ Scene() {
 		heading=11;
 		tilt=-3;
 		angle=-22;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200203;
 	}
 	View{
 		time=60934.6;
-		minr=0.00200095;
+	}
+	View{
+		height=3684.85 ft;
+	}
+	View{
+		phi=8.40729;
+		theta=343.99;
+		height=296.581 ft;
+		gndlvl=814.819 ft;
+		heading=0;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=3284.32 ft;
+		heading=-9;
+		tilt=1;
+		angle=2;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00200078;
+	}
+	View{
+		height=2588.95 ft;
+		heading=-11;
+		tilt=3;
+		angle=7;
+		minr=0.00200016;
+		radius=0.00200064;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -88,7 +113,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6000;
+					temperature=6540.73;
 					Surface{
 						mc=clamp(noise(GRADIENT|UNS,3,10,0.4,0.5)*noise(GRADIENT|NABS|UNS,8,10,0.5,0.5),0,1);
 						terrain=Color(1,1-0.3*mc,0.9-mc);
@@ -99,53 +124,56 @@ Scene() {
 					}
 				}
 				Planet(0.034,803) {
+					ambient=Color(1,1,1,0.04);
 					day=20;
-					hscale=0.001;
-					name="Saturn";
-					ocean.level=6.19394e-139 ft;
+					name="ringed1";
+					ocean.level=-66.667 ft;
 					phase=60;
-					shadow=Color(0.2,0.2,0,0.7);
+					resolution=4;
+					rseed=0.116233;
 					tilt=25;
 					year=600;
-					c1=Color(1,0.9,0.3);
-					c2=Color(1,0.6,0);
-					c3=Color(0.7,0.4,0);
-					bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
-						Color(1,0.6,0),
-						Color(0.7,0.4,0),
-						Color(1,0.9,0.3));
+					bands("tmp/P7937",NORM|REFLECT,16,0.188904,0.359895,Color(0,0,0),Color(0.651,0.357,0),
+						Color(0.957,0.843,0.235),
+						Color(0.471,0.212,0.043,0.714));
 					Surface{
 						terrain=
-								Texture("saturn",LINEAR|S|TEX,noise(GRADIENT|FS|SCALE,1.8,7.1,1,0.5,2,0.05,1,0,0),0.9999,2,1,1.88896,1,2,1,0,1.77776,0,0,0);
+								Texture("tmp/P7937",BUMP|S|TEX,0.344922*PHI+0.283428*twist(0.159404,noise(SIMPLEX|FS|NABS|SQR|TA|UNS,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-06))+0.368984*max(EQU*noise(SIMPLEX|FS|SCALE|SQR,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)+0.961561*noise(SIMPLEX|FS|SQR|TA,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07),0.966359,-0.02,1.91714,0.750226,2.25927,1.89278,1.28279,0,0,0,0,0);
 					}
-					Ring(0.06,0.01) {
+					Sky(0.039225) {
+						color=Color(0.04,0.67,0.75);
+						day=20;
+						density=0.15;
+						resolution=4;
+						specular=Color(1,1,1);
+						tilt=25;
+						year=600;
+					}
+					Ring(0.0415954,0.0205758) {
 						emission=Color(1,1,1);
-						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
-							Color(1,1,0.3,0.5));
+						resolution=3;
+						rseed=0.461239;
+						shadow=Color(0,0,0,0.8);
+						bands("saturn-rings",ACHNL|REFLECT,128,0.07142,0.2742,Color(1,1,1,0.271),Color(0.529,0.475,0.424),
+							Color(0.827,0.78,0.733),
+							Color(0.886,0.886,0.886),
+							Color(0.557,0.537,0.478,0.369),
+							Color(0.373,0.325,0.278),
+							Color(0.357,0.322,0.282),
+							Color(0.573,0.506,0.467),
+							Color(0.337,0.302,0.267));
 						Surface{
 							terrain=
-									Texture("rings",S|TEX,PHI,0.9999,1.7212,1,0,1,2);
-						}
-					}
-					Ring(0.045,0.013) {
-						emission=Color(1,1,1);
-						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
-							Color(1,0.6,0),
-							Color(0.7,0.4,0),
-							Color(1,0.9,0.3));
-						Surface{
-							terrain=
-									Texture("saturn",LINEAR|S|TEX,PHI,0.9999,2,1,0,1,2,1,0,0,0,0,0);
+									Texture("saturn-rings",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1,8,0,1,2,1,0,0,0,0,0);
 						}
 					}
 					Moon(0.002,0.068) {
-						ambient=Color(1,1,1,0.17);
+						ambient=Color(1,1,1,0.1);
 						day=11;
-						diffuse=Color(1,1,1,0.51);
 						fog.color=Color(1,0.51,0.18);
 						fog.max=10361.1 ft;
 						fog.min=361.12 ft;
-						fog.value=0.537255;
+						fog.value=0.317647;
 						fog.vmax=18000 ft;
 						fog.vmin=8000 ft;
 						hscale=0.001;
@@ -155,7 +183,7 @@ Scene() {
 						ice.color2=Color(0.25,0.16,0.13);
 						ice.shine=37.5;
 						name="Titan";
-						ocean.level=9500 ft;
+						ocean.level=649.2 ft;
 						ocean.liquid=-163;
 						ocean.solid=-182;
 						phase=155;
@@ -172,7 +200,7 @@ Scene() {
 							Color(1,0.9,0.3));
 						image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
 						Surface{
-							terrain=fog(noise(GRADIENT,12.8,13,0.03,0.5,2,1,1,0.47,0.9))
+							terrain=fog(noise(GRADIENT,7,13,0.03,0.5,2,1,1,0.47,0.9,1e-06))
 									ocean(noise(GRADIENT|NABS|NLOD|SCALE|SQR|UNS,16.5,6,0.5,0.1,2.1,0.01,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,1,-0.34,0,0))
 									Z(0.7*fractal(SQR|SS,12.9,8.7,0.34,0.35,4,0.2,1,3,0.63,0.68)craters(ID7,2,0.1,0.1,1,0.9,0.8,1,1,0.5,1,0.8,0.6,0.2)+noise(GRADIENT|NABS|SQR,3.2,12.1,1,0.2,2.56,0.65,0.07,0.52,0))+
 									Texture("saturn",LINEAR|NORM|TEX,0.5,2,0.98184,-2.11104,3.00016,2,1,0,0,2,0.05552,0)+

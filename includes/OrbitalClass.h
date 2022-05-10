@@ -653,6 +653,23 @@ public:
 	double     fog_value;
 	double     fog_glow;
 	double     temperature;
+	
+    static const int THEMES=6;
+	static Color themes[THEMES*4];
+	static const int COLORS=6;
+	static Color colors[COLORS];
+	static Color mix;
+	static Color tc;
+	static const int RANDS=10;
+	static int ncolors;
+	static double r[RANDS];
+	static double s[RANDS];
+	static int planet_id;
+	static int planet_cnt;
+
+	static void setColors();
+	static void setRands();
+	static void initInstance();
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);
@@ -684,7 +701,7 @@ public:
 	virtual double liquidToGas();
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
-
+	static void newCratered(Planetoid *);
 };
 
 //************************************************************
@@ -699,10 +716,9 @@ public:
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
 	NodeIF *getInstance();
-	static int planet_id;
-	static int planet_cnt;
 	static Planet *newInstance();
-	static Planet *newGasGiant();
+	static void newGasGiant(Planet *);
+	static void newCratered(Planet *);
 };
 
 //************************************************************

@@ -1,135 +1,28 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=15.4421;
-		theta=346.096;
-		height=1312.41 ft;
-		gndlvl=5142.73 ft;
-		time=38000;
-		vstride=586570;
-		hstride=1;
-		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=-5;
-		tilt=-15;
-		fov=35;
-		speed=586570;
-	}
-	View{
-		height=3033.16 ft;
-		gndlvl=5101.02 ft;
-	}
-	View{
-		phi=15.4412;
-		theta=346.106;
-		height=8126.44 ft;
-		gndlvl=7.74482 ft;
-	}
-	View{
 		view=ORBITAL;
-		height=0.004;
-		gndlvl=4785.14 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		phi=5;
-		theta=0;
-		height=0.068;
-		gndlvl=0 ft;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		phi=24.8396;
-		theta=54.559;
-		height=0.164082;
-	}
-	View{
-		theta=99.1982;
-		time=38013;
-	}
-	View{
-		phi=34.7595;
-	}
-	View{
-		height=0.0804828;
-	}
-	View{
-		phi=49.7418;
-		height=0.178383;
-	}
-	View{
-		phi=9.99873;
-		theta=-171.272;
-		height=0.195192;
-	}
-	View{
-		phi=39.9402;
-		theta=-261.096;
-		height=0.212137;
-	}
-	View{
-		height=0.212102;
-	}
-	View{
-		height=0.178054;
-	}
-	View{
-		phi=5;
-		theta=0;
-		height=0.00767172;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		theta=39.9735;
-		height=0.0280653;
-	}
-	View{
-		phi=34.9997;
-		theta=15.0164;
-		height=0.269721;
-	}
-	View{
-		height=0.263967;
-	}
-	View{
-		phi=115;
-		theta=260.017;
-		height=0.29849;
-	}
-	View{
-		phi=45;
-		theta=90;
-		height=0.00575379;
-	}
-	View{
-		phi=55.275;
-		theta=332.916;
-		height=0.211665;
-	}
-	View{
-		phi=5;
-		theta=0;
-		height=0.068;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		phi=50.0596;
-		theta=99.8906;
-		height=0.180863;
-	}
-	View{
+		phi=36.3605;
+		theta=-200.886;
+		height=0.162539;
 		time=57966.4;
 		vstride=0.02;
+		hstride=1;
+		astride=1;
 		zoom=0.034;
 		minh=1.13636e-09;
-		radius=0.214863;
+		heading=90;
+		pitch=-94;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		theta=-206.602;
+		phi=37.6515;
+		theta=-195.889;
+		height=0.158502;
+		pitch=-93;
 		minr=0.034;
+		radius=0.192502;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -150,64 +43,40 @@ Scene() {
 			System(1000) {
 				name="Solor";
 				origin=Point(-2000,0,0);
-				Star(1.5,0.01) {
+				Star(1.20009,0.01) {
 					color=Color(1,1,0.8);
 					day=100;
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6000;
+					temperature=6540.73;
 					Surface{
 						mc=clamp(noise(GRADIENT|UNS,3,10,0.4,0.5)*noise(GRADIENT|NABS|UNS,8,10,0.5,0.5),0,1);
 						terrain=Color(1,1-0.3*mc,0.9-mc);
 					}
-					Corona(8.11) {
+					Corona(7.81009) {
 						color1=Color(1,1,0.8,0.8);
 						color2=Color(1,1,0.7);
 					}
 				}
-				Planet(0.034,890) {
-					ambient=Color(1,1,1,0.02);
+				Planet(0.034,750.25) {
+					ambient=Color(1,1,1,0.04);
 					day=20;
 					name="Saturn";
 					ocean.level=6.70427e-312 ft;
 					phase=60;
-					shadow=Color(0,0,0,0.74);
-					shine=11.809;
-					specular=Color(1,1,1,0.75);
+					shadow=Color(0,0,0,0.24);
+					shine=1.63453;
+					specular=Color(1,1,1,0.21);
 					tilt=25;
 					year=600;
 					c1=Color(1,0.9,0.3);
 					c2=Color(1,0.6,0);
 					c3=Color(0.7,0.4,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=
-								Texture("jupiter",BUMP|S|TEX,2*PHI+0.02*noise(GRADIENT|FS|NABS|SCALE,0,11.4,-0.17,0.55,2,0.62,-0.02,1,0),0.5,-0.86792,2,0,1,2,1,0)+
-								Texture("jupitermap",BUMP|TEX,1,-1.24528,1.32076,0,1,2,0.5,0);
-					}
-					Ring(0.0377788,0.00700468) {
-						emission=Color(1,1,1);
-						shadow=Color(0,0,0,0.56);
-						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
-							Color(1,0.6,0),
-							Color(0.7,0.4,0),
-							Color(1,0.9,0.3));
-						Surface{
-							terrain=
-									Texture("saturn",S|TEX,PHI,0.9999,1.02776,1,0,1,2,1,0,0,0,0,0);
-						}
-					}
-					Ring(0.0477608,0.024749) {
-						emission=Color(1,1,1);
-						shadow=Color(0,0,0,0.78);
-						bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
-							Color(1,1,0.3,0.5));
-						Surface{
-							terrain=
-									Texture("rings",S|TEX,PHI,0.9999,0.91668,1,-1,1,2,1,0,0,0,0,0);
-						}
+								Texture("saturn-8k",BUMP|TEX,0.707107,4.22208,2,0,1,2,0.5,0,0,0,0,0);
 					}
 					Moon(0.00383586,0.085) {
 						ambient=Color(1,1,1,0.13);
@@ -223,6 +92,24 @@ Scene() {
 						Surface{
 							terrain=
 									Texture("europamap",BORDER|LINEAR|TEX,0.5,2,1,0,1,2,0.5,1);
+						}
+					}
+					Ring(0.0482608,0.02801) {
+						emission=Color(1,1,1);
+						resolution=3;
+						rseed=0.584485;
+						shadow=Color(0,0,0,0.55);
+						bands("tmp/R0",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
+							Color(0.576,0.514,0.455),
+							Color(0.573,0.506,0.467),
+							Color(0.204,0.141,0.106,0.369),
+							Color(0.373,0.337,0.29),
+							Color(0.357,0.322,0.294),
+							Color(0.573,0.506,0.467),
+							Color(0.349,0.302,0.267));
+						Surface{
+							terrain=
+									Texture("tmp/R0",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1.08332,1,0,1,2,1,0,0,0,0,0);
 						}
 					}
 				}

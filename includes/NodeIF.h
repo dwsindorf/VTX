@@ -23,9 +23,10 @@ enum {
 
 // bits that control randomization behavior
 enum {
-	RND_RANDOMIZE   = 0x00100000, // need to randomize construction
-	RND_PROTOTYPE   = 0x00200000, // need to randomize prototype
-	RND_FLAGS=RND_RANDOMIZE|RND_PROTOTYPE
+	RND_RANDOMIZE   = 0x00010000, // need to randomize construction
+	RND_PROTOTYPE   = 0x00020000, // need to randomize prototype
+	RND_SETVIEW     = 0x00040000, // need to randomize prototype
+	RND_FLAGS=RND_RANDOMIZE|RND_PROTOTYPE|RND_SETVIEW
 };
 
 // bits that control runtime behavior
@@ -105,6 +106,9 @@ public:
 	void setRandom(bool b)      { if(b) clrFlag(RND_RANDOMIZE); else setFlag(RND_RANDOMIZE); }
 	void setProtoValid(bool b)      { if(b) setFlag(RND_PROTOTYPE); else clrFlag(RND_PROTOTYPE); }
 	bool protoValid()             { return getFlag(RND_PROTOTYPE) ? true:false;}
+	void setNewViewObj(bool b)      { if(b) setFlag(RND_SETVIEW); else clrFlag(RND_SETVIEW); }
+	bool newViewObj()             { return getFlag(RND_SETVIEW) ? true:false;}
+
 	virtual bool canRandomize() { return false;}
 	virtual bool randomize()    { return false;}
 	virtual void setRseed(double s) {}

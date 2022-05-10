@@ -1895,10 +1895,15 @@ public:
 void TNmax::eval()
 {
 	double arg[3];
+	//cout<<S0.s<<endl;
 	SINIT;
 
-	getargs(right,arg,3);
-	S0.s=arg[0]>arg[1]?arg[0]:arg[1];
+	int n=getargs(right,arg,3);
+	if(n==3){
+		S0.s=arg[2]<arg[1]?arg[2]:arg[0];
+	}
+	else
+		S0.s=arg[0]>arg[1]?arg[0]:arg[1];
 	S0.set_svalid();
 	TNsubr::eval();
 }

@@ -1018,7 +1018,7 @@ void ImageReader::makeImagelist()
 				images.sort();
 			}
 		}
-		cout << "images.size:"<<images.size<< endl;
+		//cout << "images.size:"<<images.size<< endl;
 		flist.free();
 		init=0;
 	}
