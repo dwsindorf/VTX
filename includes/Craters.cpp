@@ -38,8 +38,8 @@ static double  bht;
 static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
-static const char *def_rnoise_expr="noise(GRADIENT|NABS,0,14,0.5,0.6,2)\n";
-static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG,1,10,0.4,0.5,1.9873215)\n";
+static const char *def_rnoise_expr="noise(GRADIENT|NABS|RO1,0,14,0.5,0.6,2)\n";
+static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG|RO1,1,10,0.4,0.5,1.9873215)\n";
 //************************************************************
 // classes Crater, CraterMgr
 //************************************************************
@@ -57,8 +57,8 @@ static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG,1,10,0.4,0.5,1.9
 //
 //	arg[4]  ampl		    amplitude factor
 //	arg[5]  impact		    impact factor
-//	arg[6]  rnoise		    radial noise componant
-//	arg[7]  vnoise	        vertical noise componant
+//	arg[6]  rnoise		    radial noise component
+//	arg[7]  vnoise	        vertical noise component
 //	arg[8]  rise			rise factor
 //	arg[9]  drop			drop factor
 //	arg[10] rim			    rim radius
@@ -444,6 +444,8 @@ void TNcraters::eval()
 	TNarg &args=*((TNarg *)left);
 	double arg[16];
 	CraterMgr *cmgr=(CraterMgr*)mgr;
+	
+	//Point4D pv=TheNoise.get_point();
 
 	cmgr->init();
 
@@ -570,5 +572,7 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
+	
+	//TheNoise.set(pv);
 
 }

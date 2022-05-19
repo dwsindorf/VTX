@@ -190,6 +190,7 @@ void PlacementMgr::eval()
 
 	if(TheNoise.noise3D())
 		 pv.w=0;
+	
 	pv=pv.normalize();  // project on unit sphere
 
 	msize=ntest()?maxsize:maxsize*4;

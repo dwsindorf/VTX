@@ -49,6 +49,10 @@ uniform float hdr_max;
 void main(void) {
 	vec3 color = texture2DRect(IMAGE, gl_FragCoord.xy).rgb;
 	vec3 edge_sum;
+	float ss=texture2DRect(FLAGS, gl_FragCoord.xy).r;
+	float c=0;
+	float exposure=1;
+	
 #ifdef HDR
 #ifdef BIG_KERNEL
 	vec3 hdrSample[25];
@@ -116,42 +120,36 @@ void main(void) {
     for (int k = 0; k < 9; k++){ 
        delc+=pixel[k]-ctr;
     }
-    float c=2*length(delc);  // color diff in adjacent pixels
+    c=2*length(delc);  // color diff in adjacent pixels
 #ifdef HDR
 #ifndef BIG_KERNEL
 	float kernelLuminance = dot(ave, vec3(0.3, 0.59, 0.11));
 #else
 	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.3, 0.59, 0.11));
 #endif
-
-	//float exposure = 2.0*hdr_min+sqrt(hdr_max)*exp2(-hdr_max*kernelLuminance);
-	float exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
-	//color.rgb = 1.0 - exp2(-color.rgb * exposure);
-	//exposure=lerp(surface_sum,0.0,9.0,1.0,exposure);
+    if(ss>0)
+	exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
 	
 	ave *= exposure;
 	color *= exposure;
+	
 #endif
 #ifdef EDGES    
-    if(surface>0.5 && surface <1.9){ // blur water
+    if(surface>0.5 && surface <1.9) // blur water
     	c*=10;
-    }
     float blend=(color_ampl*c+normal_ampl*dn+dt);
 #ifdef SHOW                          
     gl_FragData[0].rgb=mix(0.5*color,vec3(color_ampl*c,normal_ampl*dn,dt),clamp(blend,0.0,1.0));
 #else
+    //if(ss==0)
+    //gl_FragData[0].rgb=vec3(ss/2.0,0,0);
+    //else
+
     gl_FragData[0].rgb=mix(color,ave,clamp(blend,0.0,1.0));  
 #endif
 #else
-	gl_FragData[0].rgb=color;	
+	  gl_FragData[0].rgb=color;		
 #endif
-#ifdef HDR
-   // gl_FragData[0].rgb=vec3(exposure/50.0,0,0);
-#endif
-    //gl_FragData[0].rgb=vec3(exposure,0,0);//texture2DRect(FLAGS, gl_FragCoord.xy).rgb;
     gl_FragData[0].a = 1.0;
-    //vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
-    //gl_FragData[0]=texture2DRect(FBOTex3, gl_FragCoord.xy);
-
 }
 

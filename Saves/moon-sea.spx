@@ -2,43 +2,71 @@ Scene() {
 	drawmode=1;
 	View{
 		view=SURFACE;
-		phi=27.0923;
-		theta=248.607;
-		height=662.486 ft;
-		gndlvl=5335.27 ft;
-		time=6.8153e+06;
+		phi=-2.51457e-07;
+		theta=225;
+		height=52800 ft;
+		time=800051;
 		vstride=586570;
 		hstride=1;
 		astride=1;
 		zoom=1;
 		minh=1.89394e-09;
-		heading=-180;
-		tilt=-5;
-		angle=5;
+		tilt=5;
+		angle=-10;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=460.341 ft;
-		gndlvl=5537.42 ft;
+		height=836.838 ft;
 	}
 	View{
-		time=589564;
+		height=8084.17 ft;
+	}
+	View{
+		height=4499.58 ft;
+		time=891208;
+		tilt=6;
+	}
+	View{
+		height=41692.9 ft;
+		gndlvl=-3290.71 ft;
+		heading=5;
+		tilt=-3;
+		angle=-6;
+	}
+	View{
+		height=51363.6 ft;
+		gndlvl=-2726.76 ft;
+		tilt=-4;
+		angle=-2;
+	}
+	View{
+		phi=0.094025;
+		theta=225.453;
+		height=27576.3 ft;
+		gndlvl=1 ft;
+		heading=8;
+		tilt=2;
+		angle=-10;
+		fov=37.6781;
+	}
+	View{
+		height=29854.2 ft;
+		heading=11;
 		vstride=0.02;
-		zoom=0.0015;
+		zoom=0.004;
 		minh=1.13636e-09;
-		radius=0.00150114;
+		radius=0.00400565;
 	}
 	View{
-		time=590816;
-		delt=200;
-		minr=0.00150105;
+		time=766000;
+		delt=10000;
+		minr=0.004;
 	}
 	Universe {
 		Galaxy(20000) {
-			name="Milky Way";
-			origin=Point(20000,0,0);
+			name="Uncharted";
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
@@ -52,51 +80,80 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				name="Solor";
-				origin=Point(-2000,0,0);
-				Star(1.5,0.01) {
-					color=Color(1,1,0.8);
-					day=100;
+				Star(0.5,0) {
 					diffuse=Color(1,1,1);
 					emission=Color(1,1,1);
-					name="Sol";
+					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
-					temperature=6540.73;
-					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
-					Surface{
-						terrain=
-								Texture("star1",BORDER|S,noise(GRADIENT|FS|NABS|SQR,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),1,1.3212,1.05456,2.3,1,2,1,0);
-					}
-					Corona(8.86371) {
-						color1=Color(1,1,0.98);
-						color2=Color(0.97,0.83,0.4);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.0015,36) {
-					albedo=0.12;
-					ambient=Color(0.94,0.95,0.95,0);
-					day=58.65;
-					diffuse=Color(0.87,0.89,0.99);
-					name="Mercury";
-					ocean.level=2.47611e-300 ft;
-					shadow=Color(0,0,0,0.95);
-					shine=8.77663;
-					specular=Color(1,0.96,0.86);
-					sunset=0.01;
-					year=87.97;
-					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
-					image("craters3",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
-						Color(0.502,0.502,0.502),
-						Color(0.063,0.063,0.063),
-						Color(0.502,0.502,0.502));
+				Planet(0.004,100) {
+					day=24;
+					hscale=0.001;
+					ocean.level=1 ft;
+					resolution=3;
+					shadow=Color(0,0,0.19,0.8);
+					shine=2.91188;
+					specular=Color(1,1,1,0);
+					water.albedo=1;
+					water.clarity=1000 ft;
+					water.color1=Color(0,1,0.56);
+					water.color2=Color(0,0.15,0.11);
+					water.level=1.89394e-10;
+					water.shine=100;
+					year=100;
 					Surface{
-						terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
-								noise(GRADIENT|UNS|RO1,1,5,0.5,0.2))+
-								Texture("ridges",BUMP,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
-								Texture("craters3",BUMP|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
-								Texture("Shist1",BORDER|BUMP|TEX,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+
-								Texture("mercury",BORDER|LINEAR|S|TEX,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);
+						terrain=ocean(0)
+								Z(noise(VORONOI|FS|SQR,7,13,0.46,0.5,2,1,1,0,0.7))+
+								Texture("green2",NORM|RANDOMIZE|TEX,161.289,1.80556,1,0.44448,10,2,0.5,0);
+					}
+					Moon(0.001,0.008) {
+						ambient=Color(1,1,1,0.36);
+						day=11;
+						name="Luna";
+						ocean.level=408989 ft;
+						phase=82.2888;
+						shine=0.5;
+						specular=Color(1,1,1,0);
+						sunset=0.154005;
+						year=17;
+						Surface{
+							terrain=
+									Texture("luna",BUMP|TEX,1,3.11104,2,0,1,2,0.5,0);
+						}
+					}
+					Sky(0.0041029) {
+						color=Color(0,0.58,0.89);
+						day=24;
+						density=0.15278;
+						haze.color=Color(0.94,0.98,0.73);
+						haze.grad=0.78048;
+						haze.height=0.66;
+						haze.value=1;
+						rseed=1.83657;
+						specular=Color(1,1,1);
+						twilight=Color(1,0,0);
+						twilight.max=0.420494;
+						twilight.min=-1;
+						year=100;
+					}
+					Clouds(0.00407481) {
+						crot=1;
+						emission=Color(1,1,1,0.2);
+						hscale=0.05;
+						resolution=3;
+						rseed=2.01133;
+						shine=1;
+						specular=Color(1,1,1,0.6);
+						Surface{
+							terrain=Color(1,1,1,noise(GRADIENT|FS|NABS,3,9,1,0.5,2,1,1,0,0.1));
+						}
 					}
 				}
 			}

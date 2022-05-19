@@ -268,6 +268,9 @@ public:
 
 	double hdr_min;
 	double hdr_max;
+	
+	double hdr_min_delta;
+	double hdr_max_delta;
 
 	int do_water;
 	int do_depth;

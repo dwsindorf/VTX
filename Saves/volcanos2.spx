@@ -31,18 +31,24 @@ Scene() {
 	}
 	View{
 		height=228.831 ft;
-		vstride=0.02;
-		zoom=0.005;
-		minh=1.13636e-09;
-		radius=0.00500035;
 	}
 	View{
 		phi=30.0572;
 		theta=30.1983;
 		height=311.007 ft;
 		heading=32;
-		minr=0.00500031;
+		vstride=0.02;
+		zoom=0.005;
+		minh=1.13636e-09;
 		radius=0.00500037;
+	}
+	View{
+		phi=30.0575;
+		theta=30.1992;
+		height=412.749 ft;
+		heading=12;
+		minr=0.00500031;
+		radius=0.00500039;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);

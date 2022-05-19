@@ -69,13 +69,11 @@ MinMax nvals,norms;
 #define STATUS      states[state][domain].status
 #define POINT       states[state][domain].vec
 #define P0          states[state][0].vec
+
+
 #define INIT_STATE  domain=0; \
-					states[state][0].status=0; \
-					states[state][1].status=0; \
-					states[state][2].status=0; \
-					states[state][3].status=0; \
-					states[state][4].status=0; \
-					states[state][5].status=0;
+					for(int i=0;i<OFFSETS;i++) \
+						states[state][i].status=0;
 
 #define NPUSH		state++
 #define NPOP		state--
@@ -667,6 +665,8 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
 #endif
     v1=ma;
     v2=mb;
+   // cout<<"domain="<<domain<<endl;
+
 	set_mode(oldmode);
 }
 
@@ -784,7 +784,12 @@ double Noise::eval(int type,int n, double *args)
 {
     domain=type & ROFF;
     int nt=ntype();
-    if(domain || rseed){
+
+    if(rseed && !domain){
+    	domain=1;
+    	type |=RO1;
+    }
+     if(domain){
 		shift=offsets[domain]+rseed;
 	    POINT[0]=P0[0]+shift;
 	    POINT[1]=P0[1]+shift;

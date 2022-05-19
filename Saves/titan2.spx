@@ -74,18 +74,23 @@ Scene() {
 		heading=-9;
 		tilt=1;
 		angle=2;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200078;
 	}
 	View{
 		height=2588.95 ft;
 		heading=-11;
 		tilt=3;
 		angle=7;
-		minr=0.00200016;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
 		radius=0.00200064;
+	}
+	View{
+		height=2952.6 ft;
+		heading=-23;
+		tilt=1;
+		minr=0.00200016;
+		radius=0.00200071;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -124,13 +129,17 @@ Scene() {
 					}
 				}
 				Planet(0.034,803) {
-					ambient=Color(1,1,1,0.04);
+					ambient=Color(1,1,1,0.2);
 					day=20;
+					emission=Color(1,1,1,0.79);
 					name="ringed1";
 					ocean.level=-66.667 ft;
 					phase=60;
 					resolution=4;
 					rseed=0.116233;
+					shadow=Color(0,0,0,0.66);
+					shine=16.8743;
+					specular=Color(1,1,1);
 					tilt=25;
 					year=600;
 					bands("tmp/P7937",NORM|REFLECT,16,0.188904,0.359895,Color(0,0,0),Color(0.651,0.357,0),
@@ -173,9 +182,9 @@ Scene() {
 						fog.color=Color(1,0.51,0.18);
 						fog.max=10361.1 ft;
 						fog.min=361.12 ft;
-						fog.value=0.317647;
-						fog.vmax=18000 ft;
-						fog.vmin=8000 ft;
+						fog.value=1;
+						fog.vmax=11000 ft;
+						fog.vmin=1000 ft;
 						hscale=0.001;
 						ice.albedo=0.375;
 						ice.clarity=149.371 ft;
@@ -223,9 +232,9 @@ Scene() {
 						Sky(0.00210764) {
 							color=Color(0.5,0.1,0);
 							day=11;
-							density=0.38888;
-							haze.color=Color(1,1,0.46,0.9);
-							haze.grad=0.4878;
+							density=0.375;
+							haze.color=Color(1,1,0.46,0.83);
+							haze.grad=0.53658;
 							haze.max=100 miles;
 							haze.value=0.898039;
 							shine=0.717137;

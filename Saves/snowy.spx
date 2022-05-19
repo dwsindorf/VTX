@@ -69,8 +69,15 @@ Scene() {
 	}
 	View{
 		time=40659.4;
-		minr=0.0040012;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
 		radius=0.00400121;
+	}
+	View{
+		height=57.2591 ft;
+		tilt=-2;
+		minr=0.0040012;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -94,7 +101,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6000;
+					temperature=6540.73;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -115,7 +122,6 @@ Scene() {
 					shine=1.95572;
 					specular=Color(1,1,1,0.22);
 					year=100;
-					bands("snow",ACHNL|CLAMP|INVT|NEAREST|NORM,8,Color(1,1,1,0),Color(1,1,1));
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,128,0.16666,0.572549,Color(0,0,0,0.573),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
@@ -127,12 +133,12 @@ Scene() {
 						Color(0.6,0.573,0.522,0.663),
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
-						terrain=fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
+						terrain=snow(0.2,3.1,0,-0.5,1,0.28)
+								fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
 								
-								Texture("snow",BORDER|BUMP|LINEAR|NORM|TEX,32768,0,1.13888,-1,1,2,1,1,0,2,0.72224,-2)+
-								Texture("alpine2",BORDER|TEX,64,2,0.97296,1.33328,1,2,1,0,0,0,0,0)+
-								Texture("GrassField",BUMP|TEX,524288,-0.1,1,1.77776,3.66688,2.11112,1,0.7037,0,-0.77776,0,-1)+
-								Texture("Shist1",BUMP|TEX,16384,-0.6,2,0,4,2,1,0,0,0,0,0)+
+								Texture("alpine2",BORDER|TEX,61.5847,2,0.97296,0.11104,1,2,1,0,0,1.61112,0,0.38888)+
+								Texture("GrassField",BUMP|TEX,220436,-0.1,1,0,3.66688,2.11112,1,0.7037,0,1.55552,0,-1.11112)+
+								Texture("Shist1",BUMP|TEX,16384,-0.6,2,0.44448,4,2,1,0,0,0.83336,0,2)+
 								Texture("bricks",A|BUMP|TEX,2*HT,65536,-0.4,1,0,6.33328,2.11112,1,0,0,0,0,0)+
 								Texture("DirtPebbles",A|BUMP|TEX,2*HT,143382,0.5,2,0,6.33328,2.11112,1,0)+Z(noise(GRADIENT|NABS|SQR|UNS,7,12,-0.33,0.63,2.22,0.25,0.11,0.09,0));
 					}

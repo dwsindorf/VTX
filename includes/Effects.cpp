@@ -340,8 +340,8 @@ void EffectsMgr::setProgram(int type){
 			printf("tc_offset not in program");
 		vars.newFloatVar("color_ampl",filter_color_ampl);
 		vars.newFloatVar("normal_ampl",filter_normal_ampl);
-		vars.newFloatVar("hdr_min",hdr_min);
-		vars.newFloatVar("hdr_max",hdr_max);
+		vars.newFloatVar("hdr_min",hdr_min+hdr_min_delta);
+		vars.newFloatVar("hdr_max",hdr_max+hdr_max_delta);
 		break;
 	}
 	vars.newFloatVar("fog_znear",fog_min);

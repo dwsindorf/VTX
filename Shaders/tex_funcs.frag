@@ -64,10 +64,9 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	bump_ampl = tex2d[i].bumpamp; \
     bump_delta = tex2d[i].bump_delta; \
 	bump_bias=bmpht*tex2d[i].bump_bias; \
-	slope_bias = tex2d[i].slope_bias; \
     phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
     height_bias=HT*tex2d[i].height_bias;\
-    slope_bias=tex2d[i].slope_bias*(Tangent.z+Normal.w-0.5); \
+    slope_bias=lerp(4*Tangent.z,0,1,-tex2d[i].slope_bias,tex2d[i].slope_bias); \
     env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias; \
@@ -78,6 +77,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
         amplitude+=env_bias; \
         amplitude=clamp(amplitude,0,1); \
     }
+
+//    slope_bias=(slope_factor>=0?2*slope_factor*Tangent.z-1:-5*slope_factor*(0.2-Tangent.z)-1); \
 
 //#define SET_TEX1D(X) \
 //	coords.x += (X)/scale;  // optional offset
@@ -99,8 +100,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #define SET_COLOR \
 		last_color=color; \
 		color.rgb=mix(color,tval, cmix); \
-		color.a=cmix;
-		
+		color.a=cmix;	
+				
 #define SET_BUMP \
 		bump*=1.0-tval.a*tex2d[tid].bump_damp*bump_max; \
 		s=coords.x; \
@@ -154,6 +155,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	float scale=1.0; \
 	float bump_bias=0; \
 	float slope_bias=0; \
+	float slope_factor=0; \
 	float height_bias=0; \
 	float phi_bias=0; \
 	float env_bias=0; \

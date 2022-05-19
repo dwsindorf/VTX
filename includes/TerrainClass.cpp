@@ -1180,10 +1180,8 @@ void TNnoise::eval()
 		}
 	}
 
-
-    if(args[1]>0 && ampl>0){
-	    f=TheNoise.eval(type,n,args);
-    }
+    if(args[1]>0 && ampl>0)
+	  f=TheNoise.eval(type,n,args);
     if(ampl==0)
     	S0.s=offset;
     else
@@ -1251,14 +1249,14 @@ bool TNnoise::setProgram(){
 	minscale=minscale<scale?minscale:scale;
 	double bumpdelta=pow(10,-(0.25*minscale+4-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
-	double seed=0;
+	double seed=TheNoise.rseed;
 	if(animate){
 		double t=animate?rate*TheScene->time:0;
-		seed=t;
-		//cout<<rate<<" "<<t<<endl;
-		//vars.newFloatVar("rseed",t+nid);	
+		seed+=t;
 	}
-
+	else
+		vars.newFloatVar("rseed",seed);
+	
 	sprintf(str,"nvars[%d].fact",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(nfreq,-H));
 	sprintf(str,"nvars[%d].delta",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),pow(L,-H));
 	sprintf(str,"nvars[%d].freq",nid);    	glUniform1fARB(glGetUniformLocationARB(program,str),nfreq);

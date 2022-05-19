@@ -2,34 +2,27 @@ Scene() {
 	drawmode=1;
 	View{
 		view=SURFACE;
-		phi=27.0923;
-		theta=248.607;
-		height=662.486 ft;
-		gndlvl=5335.27 ft;
-		time=6.8153e+06;
-		vstride=586570;
+		phi=27.1364;
+		theta=248.582;
+		height=17592.4 ft;
+		gndlvl=-3768.97 ft;
+		time=154396;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=-180;
+		zoom=0.0015;
+		minh=1.13636e-09;
+		minr=0.00149929;
+		heading=205;
 		tilt=-5;
-		angle=5;
+		angle=-23;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=460.341 ft;
-		gndlvl=5537.42 ft;
-		vstride=0.02;
-		zoom=0.0015;
-		minh=1.13636e-09;
-		radius=0.00150114;
-	}
-	View{
-		time=589564;
-		minr=0.00150105;
+		height=16882.9 ft;
+		radius=0.00150248;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -57,7 +50,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6000;
+					temperature=6540.73;
 					bands("star1",ACHNL,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
 					Surface{
 						terrain=
@@ -66,7 +59,6 @@ Scene() {
 					Corona(8.86371) {
 						color1=Color(1,1,0.98);
 						color2=Color(0.97,0.83,0.4);
-						gradient=1;
 					}
 				}
 				Planet(0.0015,36) {
@@ -76,7 +68,7 @@ Scene() {
 					diffuse=Color(0.87,0.89,0.99);
 					name="Mercury";
 					ocean.level=2.47611e-300 ft;
-					shadow=Color(0,0,0,0.95);
+					shadow=Color(0,0,0,0.36);
 					shine=8.77663;
 					specular=Color(1,0.96,0.86);
 					sunset=0.01;
@@ -91,9 +83,9 @@ Scene() {
 						terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
 								noise(GRADIENT|UNS|RO1,1,5,0.5,0.2))+
 								Texture("ridges",BUMP,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
-								Texture("craters3",BUMP|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
-								Texture("Shist1",BORDER|BUMP|TEX,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+
-								Texture("mercury",BORDER|LINEAR|S|TEX,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);
+								Texture("craters3",BUMP|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0,0,0,0,0)+
+								Texture("Shist1",BORDER|BUMP|TEX,6822.1,0.3,2,0,7.33984,2.13208,1,0,0,0,0,0)+
+								Texture("mercury",BORDER|LINEAR|TEX,1,0.90568,0.32728,0.6792,1,2,1,0,0,0,0.1,0);
 					}
 				}
 			}

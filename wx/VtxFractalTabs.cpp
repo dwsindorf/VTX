@@ -106,12 +106,12 @@ void VtxFractalTabs::AddControlsTab(wxWindow *panel){
 
     wxBoxSizer* orders_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Orders"));
 
-	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL2, VALUE1,SLIDER2);
+	StartSlider=new ExprSliderCtrl(panel,ID_START_SLDR,"Start",LABEL2, VALUE1,SLIDER2);
 	StartSlider->setRange(0,25);
 
 	orders_cntrls->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	OrdersSlider=new SliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL1, VALUE1,SLIDER2);
+	OrdersSlider=new ExprSliderCtrl(panel,ID_ORDERS_SLDR,"Levels",LABEL1, VALUE1,SLIDER2);
 	OrdersSlider->setRange(1,25);
 
 	orders_cntrls->Add(OrdersSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

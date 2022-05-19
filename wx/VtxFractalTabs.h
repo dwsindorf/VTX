@@ -11,8 +11,8 @@ protected:
 	TNfractal *object() 	{ return (TNfractal *)object_node->node;}
 
 	void AddControlsTab(wxWindow *panel);
-	SliderCtrl *StartSlider;
-	SliderCtrl *OrdersSlider;
+	ExprSliderCtrl *StartSlider;
+	ExprSliderCtrl *OrdersSlider;
 	ExprSliderCtrl *BuildSlider;
 	ExprSliderCtrl *ErodeSlider;
 	ExprSliderCtrl *SlopeSlider;

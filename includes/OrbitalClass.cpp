@@ -2476,10 +2476,10 @@ void Spheroid::adapt_object()
 	terrain.setAdaptMode();
 	set_wscale();
 	//if(rseed)
-	//	pushSeed();
+	pushSeed();
 	map->adapt();
 	//if(rseed)
-	//popSeed();
+	popSeed();
 }
 
 //-------------------------------------------------------------
@@ -2495,7 +2495,9 @@ void Spheroid::render_object()
 	Td.emission=emission;
 	Td.diffuse=diffuse;
 	Td.specular=specular;
+	//pushSeed();
 	map->render();
+	//popSeed();
 	first=0;
 }
 
@@ -2911,7 +2913,7 @@ TNtexture *Star::texture(){
  nt=nt>2?2:nt;
  char buff[256];
  char noise_expr[128];
- sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS|TA,0.9,8.9,0.9,0.01,2.06,1,1,0,%g,1e-6)",ntype[nt],offset[nt]);
+ sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS|TA|RO1,0.9,8.9,0.9,0.01,2.06,1,1,0,%g,1e-6)",ntype[nt],offset[nt]);
  sprintf(buff,"Texture(\"tmp/S%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
  //cout<<buff<<endl;
  TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
@@ -3020,7 +3022,7 @@ Star *Star::newInstance(){
 	inner->setProtoValid(true);
 	inner->setName("inner");
 
-	inner->setNoiseFunction("noise.expr=noise(GRADIENT|FS|NABS|NLOD|SQR|TA,0,7,1,0.16,2.17,1,1,0,1,1e-06)");
+	inner->setNoiseFunction("noise.expr=noise(GRADIENT|FS|NABS|NLOD|SQR|TA|RO1,0,7,1,0.16,2.17,1,1,0,1,1e-06)");
 	inner->applyNoiseFunction();
 
     star->setProtoValid(true);
@@ -3142,6 +3144,8 @@ void Star::map_color(MapData* d,Color &c)
 // Star::setProgram() set shader program;
 //-------------------------------------------------------------
 bool Star::setProgram(){
+	
+	pushSeed();
 	char frag_shader[128]="star.frag";
 	char vert_shader[128]="star.vert";
 	char defs[128]="";
@@ -3164,8 +3168,8 @@ bool Star::setProgram(){
 	Point p=point.mm(TheScene->invViewMatrix);
 	p=p.mm(TheScene->viewMatrix);
 	vars.newFloatVec("center",p.x,p.y,p.z);
-	vars.newFloatVar("rseed",rseed);
-
+	vars.newFloatVar("rseed",TheNoise.rseed);
+	
 	if(TheScene->inside_sky()||Raster.do_shaders)
 		GLSLMgr::setFBOReadWritePass();
 	else
@@ -3174,6 +3178,7 @@ bool Star::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	TheScene->setProgram();
+	popSeed();
 
 	return true;
 }
@@ -3233,7 +3238,9 @@ void Star::render() {
 //-------------------------------------------------------------
 void Star::render_object()
 {
+	
  	first=1;
+ 	pushSeed();
 	show_render_state(this);
 	if(TheScene->adapt_mode())
 		map->render();
@@ -3242,6 +3249,7 @@ void Star::render_object()
 		terrain.init_render();
 		map->render();
 	}
+	popSeed();
 }
 
 //-------------------------------------------------------------
@@ -3496,8 +3504,9 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
-	vars.newFloatVar("hdr_min",Raster.hdr_min);
-	vars.newFloatVar("hdr_max",Raster.hdr_max);
+
+	vars.newFloatVar("hdr_min",Raster.hdr_min+Raster.hdr_min_delta);
+	vars.newFloatVar("hdr_max",Raster.hdr_max+Raster.hdr_max_delta);
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	if(TheScene->enable_contours){
@@ -3781,9 +3790,9 @@ void Planetoid::adapt_object()
 	Raster.ice_color2=ice_color2;
 	Raster.ice_clarity=ice_clarity;
 
-	pushSeed();
+	//pushSeed();
     Spheroid::adapt_object();
-    popSeed();
+    //popSeed();
 }
 
 
@@ -3796,6 +3805,26 @@ void Planetoid::render_object()
 	set_lighting();
 	Raster.init_lights(1);
 	show_render_state(this);
+    if(TheScene->viewobj==this){
+    	Point pl=Lights[0]->point.mm(TheScene->InvModelMatrix.values());	
+    	Point p=TheScene->viewobj->point.mm(TheScene->invViewMatrix);
+    	
+    	Point pp=pl-p;
+    	pp=pp.normalize();
+    	p=p.normalize();
+    	
+    	double dp=p.dot(pp);
+    	
+    	double dmin=lerp(dp,-0.7,0.6,30,-8);
+    	double dmax=lerp(dp,-0.7,0.6,0,2);
+    	Raster.hdr_min_delta=dmin;
+    	Raster.hdr_max_delta=dmax;
+    	
+    	dmin=Raster.hdr_min_delta+Raster.hdr_min;
+    	dmax=Raster.hdr_max_delta+Raster.hdr_max;
+     	//cout<<dp<<" "<<dmin<<" "<<dmax<<endl;
+
+    }
 
     if(TheScene->bgpass==BG4){
 		map->set_mask(1);
@@ -4095,7 +4124,7 @@ double Planetoid::calc_delt()
 
 	double tl=pl.spherical().x;
 	double tv=TheScene->theta;
-	double del=P360(tl-tv)/360;
+	double del=P360(tv-tl)/360;
 	return del;
 }
 
@@ -4263,14 +4292,14 @@ void Planet::newGasGiant(Planet *planet){
 	char noise_expr2[1024];
 	char noise_expr3[1024];
 	double twist=0.2+0.1*r[6];
-	sprintf(noise_expr1,"%g*twist(%g,noise(%s|FS|NABS|SQR|TA|UNS,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-6))",twist,0.2+0.1*s[2],ntype[nt]);
+	sprintf(noise_expr1,"%g*twist(%g,noise(%s|FS|NABS|SQR|TA|UNS|RO1,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-6))",twist,0.2+0.1*s[2],ntype[nt]);
 	double storms=0.4+0.1*s[3];
 
 	// storms
-	sprintf(noise_expr2,"%g*max(EQU*noise(SIMPLEX|FS|SCALE|SQR,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms);
+	sprintf(noise_expr2,"%g*max(EQU*noise(SIMPLEX|FS|SCALE|SQR|RO1,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms);
 	double ripple=1+0.1*s[4];
 
-    sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,ntype[nt]);
+    sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,ntype[nt]);
     double scale=0.5+r[5];
     double ampl=1.5+0.5*r[6];
     double bump=-0.02;

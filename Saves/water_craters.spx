@@ -46,13 +46,15 @@ Scene() {
 	View{
 		tilt=4;
 		angle=0;
+	}
+	View{
+		time=22362.4;
 		vstride=0.02;
 		zoom=0.001;
 		minh=1.13636e-09;
 		radius=0.00100116;
 	}
 	View{
-		time=22362.4;
 		minr=0.00100025;
 	}
 	Galaxy(20000) {
@@ -74,7 +76,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6000;
+				temperature=6540.73;
 				Corona(5.1) {
 					color1=Color(1,1,0.8,0.5);
 					color2=Color(1,1,0.6,0.7);
@@ -82,10 +84,12 @@ Scene() {
 			}
 			Planet(0.01,50) {
 				day=1;
+				diffuse=Color(1,1,1,0.59);
 				emission=Color(1,1,1,0.05);
 				ocean.level=2.08693e-312 ft;
 				rot_phase=65.916;
 				shadow=Color(0,0,0,0.43);
+				specular=Color(1,1,1,0.05);
 				tilt=5.0688;
 				year=300;
 				Surface{

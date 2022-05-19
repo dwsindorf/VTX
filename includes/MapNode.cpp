@@ -58,6 +58,7 @@ double zslope()
     	s*=TheMap->hscale*INV2PI;
 		Td.set_flag(SFIRST);
     }
+	s=clamp(s,0,1);
 	return s;
 }
 

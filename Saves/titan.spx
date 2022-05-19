@@ -44,15 +44,26 @@ Scene() {
 		heading=-6;
 		tilt=1;
 		angle=1;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00200013;
 	}
 	View{
 		height=1083.15 ft;
+	}
+	View{
+		phi=8.33919;
+		theta=344.199;
+		height=328.023 ft;
+		heading=-11;
+		tilt=2;
+		vstride=0.02;
+		zoom=0.002;
+		minh=1.13636e-09;
+		radius=0.00200006;
+	}
+	View{
+		height=101.487 ft;
+		heading=-20;
 		minr=0.002;
-		radius=0.00200021;
+		radius=0.00200002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -134,12 +145,13 @@ Scene() {
 						fog.glow=0.29824;
 						fog.max=10180.6 ft;
 						fog.min=180.56 ft;
-						fog.value=0.65278;
-						fog.vmax=277.6 ft;
-						fog.vmin=-2361.2 ft;
-						hscale=0.0012;
+						fog.value=0.647059;
+						fog.vmax=-3361.2 ft;
+						fog.vmin=-6000 ft;
+						hscale=0.002;
 						name="Titan";
-						ocean.level=-2467.6 ft;
+						ocean.auto=1;
+						ocean.level=-6000 ft;
 						ocean.liquid=-163;
 						ocean.solid=-182;
 						phase=155;
@@ -148,7 +160,6 @@ Scene() {
 						tilt=-10;
 						water.color1=Color(1,0.5,0.25);
 						water.color2=Color(0.13,0,0.25);
-						water.level=1.70455e-06;
 						year=17;
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),

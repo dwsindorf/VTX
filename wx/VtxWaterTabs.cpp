@@ -8,9 +8,9 @@
 
 enum {GAS=0,LIQUID=1,SOLID,AUTO=2};
 
-static char*    def_water_func="noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0.05,1,0,0)";
-static char*    def_ice_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
-static char*    def_transition_func="-0.3*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.4,1,0,0)";
+static char*    def_water_func="noise(GRADIENT|SCALE|RO1,16,3,-0.02,0.5,2,0.05,1,0,0)";
+static char*    def_ice_func="noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
+static char*    def_transition_func="-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
 
 static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
 static double gas_temps[]={-196,-163,-78,-10,100};

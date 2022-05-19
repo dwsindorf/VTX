@@ -2455,6 +2455,10 @@ void Scene::render_shadows()
 	set_lights();
 
 	bounds=viewobj->bounds();
+	
+	Raster.hdr_min_delta=0;
+	Raster.hdr_max_delta=0;
+
 
 	if(test_view()){   					 // only for viewobj
 		shadow_group(2);
