@@ -2459,7 +2459,6 @@ void Scene::render_shadows()
 	Raster.hdr_min_delta=0;
 	Raster.hdr_max_delta=0;
 
-
 	if(test_view()){   					 // only for viewobj
 		shadow_group(2);
 		setview_test();
@@ -2506,53 +2505,49 @@ void Scene::render_shadows()
 	    	Raster.applyBgShadows();// add shadows
 	    }
 		Raster.apply();
+		return;
     }
-    else {
-		set_view();
-		viewobj->init_render();
-		shadowobj=viewobj;
-		bounds=viewobj->bounds();
-
-		if(Raster.shadows()){
-			if(surface_view()){ // surface views
-				shadow_group(2);
-				Raster.set_farview(vsobs>1);
-				Raster.shadow_vsize=shadowobj->size;
-			}
-			else{
-				shadow_group(1);
-				Raster.set_farview(1);
-				//Raster.shadow_vsize=0.5*(zfar-znear);
-				ObjectNode *sobj=(ObjectNode *)shadowobj;
-				if(shadowobj->type()==ID_MOON)
-					sobj=(ObjectNode *)sobj->getParent();
-
-				Raster.shadow_vsize=znear+2*sobj->far_height();
-				Raster.shadow_vmax=Raster.shadow_vsize;
-			}
+	set_view();
+	viewobj->init_render();
+	shadowobj=viewobj;
+	bounds=viewobj->bounds();
+	if(Raster.shadows()&& Raster.twilight()){
+		if(surface_view()){ // surface views
+			shadow_group(2);
+			Raster.set_farview(vsobs>1);
+			Raster.shadow_vsize=shadowobj->size;
 		}
- 		Raster.init_render();
-  		if(light_view() && viewobj){
+		else{
+			shadow_group(1);
+			Raster.set_farview(1);
+			//Raster.shadow_vsize=0.5*(zfar-znear);
+			ObjectNode *sobj=(ObjectNode *)shadowobj;
+			if(shadowobj->type()==ID_MOON)
+				sobj=(ObjectNode *)sobj->getParent();
+
+			Raster.shadow_vsize=znear+2*sobj->far_height();
+			Raster.shadow_vmax=Raster.shadow_vsize;
+		}
+		Raster.init_render();
+		if(light_view() && viewobj){
 			viewobj->set_selected();
 			render_light_view();
 			Raster.apply();
-		    return;
+			return;
 		}
 		project();
 		if(Raster.shadows() && !test_view())
 			Raster.renderFgShadows();
+	}
+	project();
 
-		project();
-		//setView();
-
-		Raster.render();
-		project();
-		render_objects();
-		if(shadows_mode())
-			shadow_group(2);
-		project();
-		Raster.apply();
-    }
+	Raster.render();
+	project();
+	render_objects();
+	if(shadows_mode())
+		shadow_group(2);
+	project();
+	Raster.apply();
 }
 
 //-------------------------------------------------------------

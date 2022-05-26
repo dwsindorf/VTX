@@ -262,7 +262,7 @@ void TNfractal::eval()
 		}
 	}
 	else {
-		f=base;
+		f=base;	
 	}
    	Td.set_flag(FVALUE);
 	//if(options & SQR)

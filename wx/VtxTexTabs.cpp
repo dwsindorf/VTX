@@ -1040,4 +1040,14 @@ void VtxTexTabs::getObjAttributes(){
 
 }
 
+void VtxTexTabs::setHtmap(){
+	HmapAmpSlider->setValueFromSlider();
+	double val = HmapAmpSlider->getValue();
+	bool hm=m_hmap_check->GetValue();
+	texture()->hmap_amp=val;
+	texture()->invalidate();
+	if(hm)
+		invalidateObject();
+}
+
 

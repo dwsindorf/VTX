@@ -3425,8 +3425,8 @@ bool Planetoid::setProgram(){
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	else
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
-
-	if(!TheScene->light_view()&& !TheScene->test_view() && Raster.shadows()&&(Raster.farview()||TheScene->viewobj==this))
+    bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
+	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()||TheScene->viewobj==this))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");
@@ -3505,8 +3505,8 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
 
-	vars.newFloatVar("hdr_min",Raster.hdr_min+Raster.hdr_min_delta);
-	vars.newFloatVar("hdr_max",Raster.hdr_max+Raster.hdr_max_delta);
+	vars.newFloatVar("hdr_min",Raster.hdr_min);
+	vars.newFloatVar("hdr_max",Raster.hdr_max);
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 	if(TheScene->enable_contours){
@@ -3594,7 +3594,7 @@ int Planetoid::render_pass()
 			clear_pass(BG2);
 	}
 	else
-		clear_pass(BG4);
+		clear_pass(BG3);
 	if(selected() && map->visbumps() && Render.bumps())
 	    Raster.set_bumptexs(1);
 
@@ -3714,17 +3714,36 @@ void Planetoid::init_render()
  	visit(&Object3D::init_render);
 
 	double dp=0;
-	if(TheScene->viewobj==this && !(TheScene->inside_sky())){
-		Raster.blend_factor=Raster.darken_factor=0;
-		Raster.haze_value=0;
-		Point lp=Lights[0]->point.mm(TheScene->invViewMatrix);
-		lp=lp.normalize();
+	double dpmin=1,dpmax=-1;
+	Raster.blend_factor=Raster.darken_factor=0;
+
+	if(TheScene->viewobj==this){
+		Point lp;
 		Point vp=TheScene->vpoint;
-		dp=lp.dot(vp)/vp.length();
-		double f=rampstep(def_twilite_max,def_twilite_min,dp,0,def_twilite_value);
-		Raster.blend_factor=f;
-		Raster.darken_factor=def_twilite_value*f;
-	}
+		for(int i=0;i<Lights.numLights();i++){
+			Point c=point.mm(TheScene->invViewMatrix);
+			Point cv=vp-c;
+			cv=cv.normalize();
+		    Point l=Lights[i]->point.mm(TheScene->invViewMatrix);
+		    Point cl=l-c;
+		    cl=cl.normalize();
+			double dpl=-cv.dot(cl);
+			dpmax=dpl>dpmax?dpl:dpmax;
+			dpmin=dpl<dpmin?dpl:dpmin;	
+		}
+		//cout<<dpmin<<" "<<dpmax<<endl;
+		if(dpmin<=0 && dpmax<=0)
+			dp=dpmax;
+		else
+			dp=dpmin;		
+		Raster.set_ldp(dp);
+		if(!TheScene->inside_sky()){
+			Raster.haze_value=0;
+			double f=rampstep(def_twilite_max,def_twilite_min,dp,0,def_twilite_value);
+			Raster.blend_factor=f;
+			Raster.darken_factor=def_twilite_value*f;
+		}
+	}	
 
  	glDisable(GL_FOG);
 
@@ -3805,26 +3824,6 @@ void Planetoid::render_object()
 	set_lighting();
 	Raster.init_lights(1);
 	show_render_state(this);
-    if(TheScene->viewobj==this){
-    	Point pl=Lights[0]->point.mm(TheScene->InvModelMatrix.values());	
-    	Point p=TheScene->viewobj->point.mm(TheScene->invViewMatrix);
-    	
-    	Point pp=pl-p;
-    	pp=pp.normalize();
-    	p=p.normalize();
-    	
-    	double dp=p.dot(pp);
-    	
-    	double dmin=lerp(dp,-0.7,0.6,30,-8);
-    	double dmax=lerp(dp,-0.7,0.6,0,2);
-    	Raster.hdr_min_delta=dmin;
-    	Raster.hdr_max_delta=dmax;
-    	
-    	dmin=Raster.hdr_min_delta+Raster.hdr_min;
-    	dmax=Raster.hdr_max_delta+Raster.hdr_max;
-     	//cout<<dp<<" "<<dmin<<" "<<dmax<<endl;
-
-    }
 
     if(TheScene->bgpass==BG4){
 		map->set_mask(1);
@@ -3850,6 +3849,7 @@ void Planetoid::render_object()
 		Raster.modulate(c);
 		Spheroid::render_object();
 	}
+
 }
 
 //-------------------------------------------------------------
@@ -6576,11 +6576,12 @@ bool Ring::setProgram(){
 	if(!program){
 		return false;
 	}
-
+    Planetoid *parent=getParent();
+    double alpha=parent->shadow_color.alpha();
 	GLSLVarMgr vars;
 	//vars.newFloatVar("emission",emission.alpha());
 	vars.newFloatVec("Emission",emission.red(),emission.green(),emission.blue(),emission.alpha());
-	vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_color.alpha());
+	vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),alpha);
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
 
 	double twilite_min=-0.3;

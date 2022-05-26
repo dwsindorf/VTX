@@ -12,8 +12,9 @@ class EffectsMgr : public RasterMgr
 	GLuint jitterTextureId;
 	GLuint shadow_map_height;
 	GLuint shadow_map_width;
-	void enableShadowMap(bool b);
 public:
+
+	void enableShadowMap(bool b);
 
 	GLuint shadow_map_ratio;
 	void create_jitter_lookup(int size, int samples_u, int samples_v);

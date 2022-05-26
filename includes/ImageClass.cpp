@@ -819,15 +819,6 @@ void TNtexture::eval()
     avalue=clamp(avalue,0,1);
     a*=avalue;
     b*=avalue;
-    double hpb=fabs(pbias);
-    double pbf=hpb>1?0.5*hpb:0.5;
-    double hmb=1;
-    double p=pow(abs(Phi/90),pbf);
-    double hb=1-clamp(hpb,0,1);
-    if(pbias>=0)
-        hmb=lerp(p,0,1,hb,1);
-    else
-    	hmb=lerp(p,0,1,1,hb);
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
@@ -867,6 +858,18 @@ void TNtexture::eval()
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
+	    double hpb=fabs(pbias);
+	    double pbf=hpb>1?0.5*hpb:0.5;
+	    double hmb=1;
+	    double p=pow(abs(Phi/90),pbf);
+	    double hb=1-clamp(hpb,0,1);
+	    double pb;
+	    if(pbias>=0)
+	        pb=lerp(p,0,1,hb,1);
+	    else
+	    	pb=lerp(p,0,1,1,hb);
+	    hmb=pb;
+
  		texture->s+=phi;
 		texture->t+=theta;
 

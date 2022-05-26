@@ -33,16 +33,27 @@ Scene() {
 	}
 	View{
 		height=633.912 ft;
-		vstride=0.02;
-		zoom=0.005;
-		minh=1.13636e-09;
-		radius=0.00500042;
 	}
 	View{
 		height=690.705 ft;
 		heading=-21;
-		minr=0.0050003;
+	}
+	View{
+		tilt=-7;
+		vstride=0.02;
+		zoom=0.005;
+		minh=1.13636e-09;
 		radius=0.00500043;
+	}
+	View{
+		phi=30.0578;
+		theta=30.1976;
+		height=729.265 ft;
+		time=51523.8;
+		heading=-18;
+		tilt=-9;
+		angle=12;
+		minr=0.0050003;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -78,12 +89,11 @@ Scene() {
 				albedo=0.25;
 				ambient=Color(1,1,1,0.08);
 				day=1;
-				fog.color=Color(1,0.96,0.7);
 				fog.max=916.74 ft;
 				fog.min=83.34 ft;
 				fog.value=1;
-				fog.vmax=555.6 ft;
-				fog.vmin=-138.8 ft;
+				fog.vmax=1518.2 ft;
+				fog.vmin=823.8 ft;
 				ocean.level=2.45877e-300 ft;
 				phase=180;
 				shadow=Color(0,0,0.1,0.6);
@@ -109,7 +119,8 @@ Scene() {
 					color=Color(0.5,0.69,1);
 					day=1;
 					density=0.35;
-					haze.grad=0.18;
+					haze.color=Color(1,1,1,0.8);
+					haze.grad=0.2683;
 					haze.value=0.376471;
 					shine=1;
 					specular=Color(1,1,1);

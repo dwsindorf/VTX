@@ -66,15 +66,16 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	bump_bias=bmpht*tex2d[i].bump_bias; \
     phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
     height_bias=HT*tex2d[i].height_bias;\
-    slope_bias=lerp(4*Tangent.z,0,1,-tex2d[i].slope_bias,tex2d[i].slope_bias); \
+    slope_factor=abs(tex2d[i].slope_bias); \
+    slope_bias=2*lerp(8*slope_factor*Tangent.z,0,1,-tex2d[i].slope_bias,tex2d[i].slope_bias); \
     env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias; \
 	} \
     else { \
         alpha+=env_bias; \
-        bump_ampl+=env_bias; \
-        amplitude+=env_bias; \
+        bump_ampl*=1+max(env_bias,-1); \
+        amplitude*=1+max(env_bias,-1); \
         amplitude=clamp(amplitude,0,1); \
     }
 

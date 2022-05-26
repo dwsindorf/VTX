@@ -1,44 +1,22 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-24.659;
-		theta=206.356;
-		height=0.0101114;
-		gndlvl=65315.4 ft;
-		time=59451.4;
-		vstride=586570;
+		phi=-22.4884;
+		theta=91.9004;
+		height=0.00820686;
+		gndlvl=0.000252688 ft;
+		time=56000;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.004;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		phi=-9.0749;
-		theta=118.352;
-		height=0.00662437;
-		time=38186.2;
-	}
-	View{
-		theta=-39.4714;
-		height=0.00782322;
-		time=86672.8;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0118356;
-	}
-	View{
-		phi=-29.2506;
-		theta=-305.921;
-		height=0.00705909;
-		time=41118.4;
-		minr=0.00401237;
-		radius=0.0110715;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -70,20 +48,39 @@ Scene() {
 					}
 				}
 				Planet(0.004,100) {
-					ambient=Color(1,1,1,0.06);
+					albedo=0.64;
 					day=24;
-					hscale=0.001;
-					shine=3.02106;
-					specular=Color(1,1,1,0.44);
+					hscale=0.002;
+					ice.albedo=0.625;
+					ice.clarity=30.6703 ft;
+					ice.color1=Color(1,1,1,0.05);
+					ice.color2=Color(0.48,0.67,0.84);
+					ice.shine=6.944;
+					ocean.auto=1;
+					ocean.state=2;
+					shadow=Color(0,0,0,0.2);
+					specular=Color(1,1,1,0.13);
+					water.albedo=1;
+					water.clarity=762.618 ft;
+					water.color1=Color(0.82,0.86,0.99);
+					water.color2=Color(0.02,0.24,0.22);
+					water.shine=100;
 					year=100;
-					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
+					ocean.expr=-0.2*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,12.7,1,0.5,2,0.4,1,0,0,1e-06);
+					bands("dessert",ACHNL|NORM|REFLECT,128,0.14286,0.596078,Color(1,0.624,0.075,0.596),Color(1,0.875,0.475),
+						Color(0.165,0,0),
+						Color(0,0,0));
+					bands("blueice",ACHNL|NORM,128,0.07142,0.24194,Color(1,1,1,0.239),Color(0.031,0.216,0.251),
+						Color(0.012,0.38,0.522),
+						Color(0.769,0.933,0.973),
+						Color(1,1,1));
+					image("ridges2",NORM,256,256,noise(GRADIENT|NABS|SQR,0,5.7,1,0.1,2,1,0,0,0,1e-06));
 					Surface{
-						n1=noise(SIMPLEX|NABS|NNORM|SCALE|UNS,0.5,7.1,-0.1,0.6,2.02,1,1,1,0,1e-06);
-						n2=noise(GRADIENT|NABS|SCALE|SQR|UNS,9.8,12.7,-0.66,0.4,2.3,0.1,1,0.41,0,1e-06);
-						c1=craters(ID1,10,0.433827,0.4,0.34,0.39,1,1,0.69,0.1,0.05,1,0.19,0.21,0);
-						c2=craters(ID1,10,0.09999,0.39,0.23,1,0.8,0.26,0.21,0.1,0.1,0.8,0.6,0.2,0);
-						terrain=fractal(SQR|SS,15,12,0.05,0.4,2,0.1,0,1,1,1)
-								Texture("neptune",BORDER|TEX,0.9999,1,1,0.44448,1,2,1,0,0,0.2,0,0.4)+Z(n1*c1+2*n1+c2+n2+2*twist(-0.5+noise(GRADIENT|SCALE,3.7,4.2,0.27,0.5,2,0.12,1,0,0,1e-06),noise(SIMPLEX|NABS|NEG|NNORM|SQR|UNS,0.5,3.9,1,0.4,1.88,0.2,1,0,0,1e-06)));
+						n1=noise(GRADIENT|NLOD|SCALE|UNS,0,4,1,0.5,2,1,1,0,0,1e-06);
+						terrain=
+								Texture("dessert",A|LINEAR|NORM|TEX,n1,0.5,2,1,0,1,2,1,0,0,1,0.05,0.02)+
+								Texture("blueice",A|LINEAR|TEX,1-n1,1,2,1,0,1,2,0.5,0,0,1,0,0)+
+								Texture("ridges2",HMAP|S,noise(GRADIENT|SCALE|UNS,0,14.2,0.88,0.5,2,1,1,0,0,1e-06),1.66555,1,1,0,8.33344,2,0.5,0,-1,0,0,0,0,0)+Z(min(noise(SIMPLEX|NABS|NEG|NNORM|SQR,0,15.9,0.17,0.51,2.5,1,1,0,3,1e-06),0)+noise(VORONOI|NABS|SCALE,1,2.8,0.78,0.4,2,1,1,0,0.4,1e-06));
 					}
 				}
 			}

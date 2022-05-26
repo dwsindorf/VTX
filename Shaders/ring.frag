@@ -72,13 +72,14 @@ void main(void) {
 		vec3 c=setLighting(color);
     	color.rgb=c.rgb*emission.rgb;
     }
-    color.rgb=mix(color.rgb,fcolor1.rgb,1-Emission.a);
+    //color.rgb=mix(color.rgb,fcolor1.rgb,1-Emission.a);
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
     color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));
+    
 #endif
 	gl_FragData[0] = color;
 	gl_FragData[0].a=illumination;
-	gl_FragData[1]=vec4(Constants1.g,illumination,0.0,0);
+	gl_FragData[1]=vec4(Constants1.g,pow(color.a,4)*illumination,0.0,0);
 	//gl_FragData[2]=vec4(0,0,0,1);
 }

@@ -1793,7 +1793,7 @@ void Map::adapt()
 	vbounds.set_valid(0);
 	//if(TheScene->automv())
 	//	max_cycles=9;
-   if( Adapt.never())
+    if(Adapt.never())
 	   return;
 	mcreated=mdeleted=mcount=cycles=0;
 	if(!npole)
@@ -1827,10 +1827,10 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
-
+   
 	if(ADAPT_NEEDED  || TheScene->changed_render())
 		clearLists();
-    if(!test2)
+	if(!test2)
 	if(ADAPT_NEEDED) {
 		set_end_adapt(0);
 		converged=0;

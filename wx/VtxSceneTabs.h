@@ -329,8 +329,8 @@ public:
 
     DEFINE_SLIDER_VAR_EVENTS(ShadowRes,Raster.shadow_vsteps)
     DEFINE_SLIDER_VAR_EVENTS(ShadowBlur,Raster.shadow_blur)
-    DEFINE_SLIDER_VAR_EVENTS(HDRMax,Raster.hdr_max)
-    DEFINE_SLIDER_VAR_EVENTS(HDRMin,Raster.hdr_min)
+    DEFINE_SLIDER_VAR_EVENTS(HDRMax,Raster.hdr_max_base)
+    DEFINE_SLIDER_VAR_EVENTS(HDRMin,Raster.hdr_min_base)
     DEFINE_SLIDER_VAR_EVENTS(ShadowFov,Raster.shadow_fov)
     DEFINE_SLIDER_VAR_EVENTS(ShadowDov,Raster.shadow_dov)
 

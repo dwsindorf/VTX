@@ -340,8 +340,8 @@ void EffectsMgr::setProgram(int type){
 			printf("tc_offset not in program");
 		vars.newFloatVar("color_ampl",filter_color_ampl);
 		vars.newFloatVar("normal_ampl",filter_normal_ampl);
-		vars.newFloatVar("hdr_min",hdr_min+hdr_min_delta);
-		vars.newFloatVar("hdr_max",hdr_max+hdr_max_delta);
+		vars.newFloatVar("hdr_min",hdr_min);
+		vars.newFloatVar("hdr_max",hdr_max);
 		break;
 	}
 	vars.newFloatVar("fog_znear",fog_min);
@@ -454,10 +454,14 @@ void EffectsMgr::apply(){
 		RasterMgr::apply(); //
 	}
 }
+
 //-------------------------------------------------------------
 // EffectsMgr::render_shadows() render scene with shadows
 //-------------------------------------------------------------
 void EffectsMgr::render_shadows(){
+	GLenum mrt1[] = {GL_COLOR_ATTACHMENT0_EXT,GL_COLOR_ATTACHMENT1_EXT};
+	GLenum mrt2[] = {GL_COLOR_ATTACHMENT2_EXT,GL_COLOR_ATTACHMENT3_EXT};
+
 	if(!Render.draw_shaded()){
 		glViewport(0,0,GLSLMgr::width,GLSLMgr::height);
 		RasterMgr::render_shadows();
@@ -503,8 +507,6 @@ void EffectsMgr::render_shadows(){
 
 	GLSLMgr::clrBuffers();
 
-	GLenum mrt1[] = {GL_COLOR_ATTACHMENT0_EXT,GL_COLOR_ATTACHMENT1_EXT};
-	GLenum mrt2[] = {GL_COLOR_ATTACHMENT2_EXT,GL_COLOR_ATTACHMENT3_EXT};
 	GLSLMgr::setFBOWritePass();
 	glDrawBuffers(1,mrt2);
 	GLSLMgr::clrBuffers();

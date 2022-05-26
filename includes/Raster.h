@@ -268,9 +268,11 @@ public:
 
 	double hdr_min;
 	double hdr_max;
-	
+	double hdr_min_base;
+	double hdr_max_base;
 	double hdr_min_delta;
-	double hdr_max_delta;
+	double hdr_max_delta;	
+	double ldp;
 
 	int do_water;
 	int do_depth;
@@ -286,6 +288,11 @@ public:
 	int do_shaders;
 
 	Color blend_color;
+	
+	void set_ldp(double f);
+	bool twilight();
+	bool night();
+	bool day();
 
 	void set_render_type(int i)     { flags.rtype=i;}
 	int render_type()				{ return flags.rtype;}

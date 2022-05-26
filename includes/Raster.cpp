@@ -245,11 +245,14 @@ RasterMgr::RasterMgr()
 
 	// HDR parameters
 
-	hdr_min=10;
-	hdr_max=3.2;
+	hdr_min_base=10;
+	hdr_max_base=3;
 
 	hdr_min_delta=0;
 	hdr_max_delta=0;
+	
+	hdr_min=hdr_min_base;
+	hdr_max=hdr_max_base;
 
 	// water parameters
 
@@ -297,7 +300,7 @@ RasterMgr::RasterMgr()
 	shadow_vbias=2;
 	shadow_vshift=0.0;
 	shadow_vsteps=4.0;
-	shadow_fov_bg=1.3;
+	shadow_fov_bg=1.0;
 	shadow_dov_bg=1.0;
 	shadow_vbias_bg=2;
 	shadow_vshift_bg=0.0;
@@ -390,6 +393,37 @@ void RasterMgr::modulate(Color &c)
 		c=c.darken(darken_factor);
 }
 
+void RasterMgr::set_ldp(double dp){
+	ldp=dp;
+  	if(dp>0){ 	
+  		hdr_min_delta=lerp(dp,0,0.5,0,-2);
+	    //dmax=lerp(dp,0,0.5,0,0.5);
+    }
+    else {
+    	hdr_min_delta=lerp(dp,-1,-0.7,10,0);
+		//dmax=lerp(dp,-1,-0.5,-0.5,0);    	
+    }	
+  	hdr_min=hdr_min_delta+hdr_min_base;
+  	hdr_max=hdr_max_delta+hdr_max_base;
+   // cout<<dp<<" "<<hdr_min<<" "<<hdr_max<<endl;
+}
+bool RasterMgr::twilight(){
+	if(TheScene->viewtype!=SURFACE)
+		return true;
+    //if(Lights.numLights()>1)
+    //	return true;
+	if(ldp<=0 && ldp>-0.7)
+		return true;
+	return false;
+}
+bool RasterMgr::night(){
+	return ldp>0 && TheScene->viewtype==SURFACE;
+}
+bool RasterMgr::day(){
+	return ldp<-0.25 && TheScene->viewtype==SURFACE;
+}
+
+
 //================ Shadows functions ==========================
 
 //-------------------------------------------------------------
@@ -427,7 +461,6 @@ void RasterMgr::init_view()
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>shadow_vmax)
 	//	shadow_vright=shadow_vmax;
-
 	shadow_vcnt=0;
 }
 
@@ -449,6 +482,8 @@ int RasterMgr::next_view()
 		shadow_vleft=shadow_vmax;
 	shadow_vcnt++;
 	shadow_count++;
+    //cout<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
+
 	return shadow_vcnt;
 }
 
@@ -536,9 +571,12 @@ void RasterMgr::set_light_view()
     l=light()->point;
 	w=shadow_vright-shadow_vleft;
 	h=2*shadow_vright*tan(RPD*0.5*TheScene->fov);
-	cv=(TheScene->cpoint-TheScene->epoint).normalize();
-
-	c=cv*(shadow_vleft+0.5*w);
+	cv=TheScene->cpoint-TheScene->epoint;
+	cv=cv.normalize();
+	if(farview())
+		c=cv*TheScene->height; // center light view at shadow obj surface
+	else
+		c=cv*(shadow_vleft+0.5*w);
 
 	y=h>w?h:w;
 
@@ -549,12 +587,13 @@ void RasterMgr::set_light_view()
 	r=shadow_vzf-shadow_vzn;
     r=y>r?y:r;
 
-   	s=1000*r;
+   	s=2000*r;
 
 	e=c+cl*s;
     d=e.distance(c);
+   
 	fov=fov*2*DPR*atan(0.5*y/d);
-
+	
 	zn=d-4*dov*r;
 
 	double s1,s2;
@@ -577,10 +616,11 @@ void RasterMgr::set_light_view()
     f=sf*shadow_zfactor/shadow_vzf;
 	s_zmin=f*shadow_zmin;
 	s_zmax=s_zmin+f*shadow_zmax;
-//	char tmp[256];
-//	sprintf(tmp,"# %d d %g h %g w %g y %g zn %g zf %g fov %g",shadow_vcnt,d,h,w,y,zn,zf,fov);
-//	cout << tmp <<endl;
-
+#ifdef DEBUF_SHADOWS
+	char tmp[256];
+	sprintf(tmp,"# %d d %g h %g w %g y %g zn %g zf %g fov %g",shadow_vcnt,d,h,w,y,zn,zf,fov);
+	cout << tmp <<endl;
+#endif
 	TheScene->perspective(fov, aspect, zn, zf, e, c, n);
 //	TheScene->perspective(1.8*fov, 1.2,0.999*zn, zf, e, c, n);
 

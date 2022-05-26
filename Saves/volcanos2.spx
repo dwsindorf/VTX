@@ -37,18 +37,31 @@ Scene() {
 		theta=30.1983;
 		height=311.007 ft;
 		heading=32;
-		vstride=0.02;
-		zoom=0.005;
-		minh=1.13636e-09;
-		radius=0.00500037;
 	}
 	View{
 		phi=30.0575;
 		theta=30.1992;
 		height=412.749 ft;
 		heading=12;
+	}
+	View{
+		phi=30.0579;
+		theta=30.2008;
+		height=286.601 ft;
+		time=5500;
+		heading=22;
+		vstride=0.02;
+		zoom=0.005;
+		minh=1.13636e-09;
+		radius=0.00500036;
+	}
+	View{
+		phi=30.0576;
+		theta=30.1998;
+		height=365.469 ft;
+		heading=19;
 		minr=0.00500031;
-		radius=0.00500039;
+		radius=0.00500038;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -82,19 +95,19 @@ Scene() {
 			}
 			Planet(0.005,100) {
 				albedo=0.25;
-				ambient=Color(1,1,1,0.03);
+				ambient=Color(1,1,1,0.05);
 				day=1;
-				fog.color=Color(1,0.96,0.7);
-				fog.max=2866.62 ft;
-				fog.min=422.22 ft;
+				fog.color=Color(1,1,0.97);
+				fog.max=499.94 ft;
+				fog.min=83.34 ft;
 				fog.value=1;
-				fog.vmax=1166.6 ft;
-				fog.vmin=500 ft;
+				fog.vmax=1250 ft;
+				fog.vmin=1111.2 ft;
 				ocean.level=1.33022e+07 ft;
 				phase=180;
 				shadow=Color(0,0,0,0.25);
-				shine=8.38362;
-				specular=Color(1,1,1,0.94);
+				shine=14.1033;
+				specular=Color(1,1,1,0.57);
 				tilt=10;
 				year=17;
 				haze.color=Color(1,1,0.62);
@@ -110,7 +123,7 @@ Scene() {
 					m3=0.1*noise(10,3,0.6);
 					c1=craters(ID1|MAXHT,2,0.002,0.25,1,1,1,0.5,0.5,5,0.1,0.2,0,0)
 					m2;
-					terrain=fog(1.5*noise(GRADIENT|UNS,11,5,1,0.5,2))
+					terrain=fog(1.5*noise(GRADIENT|NABS|SQR|UNS,8.8,3.9,0.61,0.2,2.1,0.7,1,0,0,1e-06))
 							Z(0.5*c1)+
 							Texture("lava",BORDER|TEX,25267.6,1.08332,1,-2.94336,2,2,1,0,0,1,0.66668,-0.25)+
 							Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,1.05556,0,7.33984,2.28304,1,0,0,0,0,0)+
@@ -136,6 +149,7 @@ Scene() {
 					crot=1;
 					diffuse=Color(1,1,1,0.42);
 					name="Clouds2D-1";
+					resolution=4;
 					Surface{
 						terrain=Color(1,1,1,noise(GRADIENT|FS,4.4,9,1,0.5,2,1,0,0,-2));
 					}
@@ -150,7 +164,7 @@ Scene() {
 					hscale=0.05;
 					name="Clouds3D-1";
 					num_sprites=1.57372;
-					resolution=2;
+					resolution=4;
 					rot_phase=61.02;
 					shine=77.7857;
 					specular=Color(1,1,1,0);

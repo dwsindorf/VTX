@@ -97,8 +97,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		test2=test2?0:1;
         //Raster.set_filter_show(!Raster.filter_show());
 		cout << "test2="<<test2<<endl;
-        TheScene->set_changed_detail();
-        TheScene->rebuild_all();
+        //TheScene->set_changed_detail();
+        //TheScene->rebuild_all();
 		break;
 
 	case KEY_TEST3:

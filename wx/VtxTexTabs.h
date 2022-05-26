@@ -54,6 +54,7 @@ protected:
 	void AddFilterTab(wxWindow *panel);
 	TNtexture *object() 	{ return ((TNtexture *)object_node->node);}
 	Texture *texture() 		{ return object()->texture;}
+	void setHtmap();
 
 	void makeFileList();
 
@@ -203,24 +204,14 @@ public:
 
 	void OnEndHmapAmpSlider(wxScrollEvent &event) {
 		HmapAmpSlider->setValueFromSlider();
-		double val = HmapAmpSlider->getValue();
-		bool hm=m_hmap_check->GetValue();
-		texture()->hmap_amp=val;
-		texture()->invalidate();
-		if(hm)
-			invalidateObject();
+		setHtmap();
 	}
 	void OnHmapAmpSlider(wxScrollEvent &event) {
 		HmapAmpSlider->setValueFromSlider();
 	}
 	void OnHmapAmpText(wxCommandEvent &event) {
 		HmapAmpSlider->setValueFromText();
-		double val = HmapAmpSlider->getValue();
-		texture()->hmap_amp=val;
-		bool hm=m_hmap_check->GetValue();
-		texture()->invalidate();
-		if(hm)
-			invalidateObject();
+		setHtmap();
 	}
 	void OnEndHmapBiasSlider(wxScrollEvent &event) {
 		HmapBiasSlider->setValueFromSlider();

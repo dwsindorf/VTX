@@ -69,14 +69,17 @@ Scene() {
 	}
 	View{
 		time=40659.4;
+	}
+	View{
+		height=57.2591 ft;
+		tilt=-2;
 		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
 		radius=0.00400121;
 	}
 	View{
-		height=57.2591 ft;
-		tilt=-2;
+		height=71.3404 ft;
 		minr=0.0040012;
 	}
 	Universe {
@@ -133,7 +136,7 @@ Scene() {
 						Color(0.6,0.573,0.522,0.663),
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
-						terrain=snow(0.2,3.1,0,-0.5,1,0.28)
+						terrain=snow(0.2,3.1,0,-0.83,1,0.26)
 								fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
 								
 								Texture("alpine2",BORDER|TEX,61.5847,2,0.97296,0.11104,1,2,1,0,0,1.61112,0,0.38888)+
