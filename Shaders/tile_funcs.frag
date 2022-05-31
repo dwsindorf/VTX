@@ -7,7 +7,7 @@ vec4 warmup(){
    // 2) this somehow must fool the ogl compiler into doing something more efficiently
    // 3) seems to affect performance more in "adapt" pass than render pass
 
-	v1= Vertex1.xyz; // required for mapping to wor
+	v1= Vertex1.xyz; // required for mapping to work
 	vec4 result=vec4(0.0);
 	vec4 val;
 	

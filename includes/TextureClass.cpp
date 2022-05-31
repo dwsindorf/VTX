@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-//#define DEBUG_TEXTURES
+#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -42,6 +42,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	tvalue=svalue=0;
 	texamp=1;
 	bumpamp=0;
+	avalue=1;
 	bias=0;
 	valid=false;
 	orders=1;
@@ -386,7 +387,7 @@ bool Texture::setProgram(){
 	char str[MAXSTR];
 
 	float delta=width()>height()?width():height();
-	double tex_ampl=(tex_active && Render.textures()) ? texamp:0.0;
+	double tex_ampl=2;//(tex_active && Render.textures()) ? texamp:0.0;
 	double bump_ampl=(Render.bumps() && bump_active) ? 3.0*bumpamp:0.0;
 
 	float ts= scale;

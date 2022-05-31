@@ -54,7 +54,9 @@ class TNtexture : public TNinode
 {
 public:
 	Texture  *texture;
-	bool tex_noise;
+	bool s_noise;
+	bool a_noise;
+
 	TNtexture(char *, int l, TNode *d);
    ~TNtexture();
 	void init();

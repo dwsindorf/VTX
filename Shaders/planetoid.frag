@@ -125,14 +125,6 @@ void main(void) {
 #else
 	vec4 color=vec4(1.0);
 #endif
-/*
-    if(Constants1.b>1.0){
-	    if(Constants1.b>1.5)
-		   color.rgb = mix(IceColor2.rgb,IceColor1,ice_clarity);
-	    else  
-	       color.rgb = mix(WaterColor2.rgb,WaterColor1,water_clarity);
-	 }
-*/
     vec3 normal=normalize(Normal.xyz);
     bump=vec3(0.0); 
 #ifdef NCC

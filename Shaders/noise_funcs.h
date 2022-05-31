@@ -3,7 +3,7 @@
 uniform sampler3D noise3DTexture;
 uniform float fmax;
 
-vec3 v1;
+//vec3 v1;
 vec3 v3;
 vec3 df;
 

@@ -38,6 +38,7 @@ public:
 	double  scale;
     double  tvalue;
     double  svalue;
+    double  avalue;
 
 	double texamp;
 

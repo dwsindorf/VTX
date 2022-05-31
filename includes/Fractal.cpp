@@ -104,8 +104,8 @@ void TNfractal::eval()
 	}
 	//if(S0.get_flag(INMARGIN))
 	//	margin_scale=0.1;
-	if(Td.texht)
-		base+=Td.texht;
+	//if(Td.texht)
+	//	base+=Td.texht;
 
 	double slope,delta,t,f,drop=0;
 	double t1,t2;
@@ -262,11 +262,9 @@ void TNfractal::eval()
 		}
 	}
 	else {
-		f=base;	
+		f=base;
 	}
    	Td.set_flag(FVALUE);
-	//if(options & SQR)
-	//    f=f*fabs(f);
 	if(options & NEG)
 	    f=-f;
 

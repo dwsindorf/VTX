@@ -27,6 +27,7 @@ float b=0.0;
 float nd=1.0;
 bool newcell=false;
 uniform vec3 pv;
+vec3 v1;
 
 
 uniform float texmip;

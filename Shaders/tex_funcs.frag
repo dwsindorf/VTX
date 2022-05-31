@@ -42,10 +42,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0
 #define SET_ATTRIB(ATTR) \
+	v1= Vertex1.xyz; \
 	attrib = ATTR;
-
- //   slope_bias=tex2d[i].slope_bias*Tangent.z;
- //   slope_bias=tex2d[i].slope_bias*1e7*fwidth(HT);
 
 #define INIT_TEX(i,COORDS) \
   	tid = i; \
@@ -102,7 +100,11 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 		last_color=color; \
 		color.rgb=mix(color,tval, cmix); \
 		color.a=cmix;	
-				
+
+//		color.rgb=vec3(cmix,0,0); \
+//		color.rgb=mix(color,tval, cmix); \
+
+			
 #define SET_BUMP \
 		bump*=1.0-tval.a*tex2d[tid].bump_damp*bump_max; \
 		s=coords.x; \

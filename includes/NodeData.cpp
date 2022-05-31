@@ -365,10 +365,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(tex->s_data){
 			setTexture(tex->s,a);
 			if(tex->a_data)
-				setTexture(tex->t,a);
+				setTexture(tex->avalue,a);
 		}
-		else if(tex->a_data)
-			setTexture(tex->s,a);
+		else if(tex->a_data){
+			//cout<<tex->t<<endl;
+			setTexture(tex->avalue,a);
+		}
 		if(md)
 			tex->d_data=true;
 	}

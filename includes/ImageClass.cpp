@@ -8,7 +8,7 @@
 #include "GLSLMgr.h"
 
 //#define DEBUG_IMAGES
-//#define DEBUG_TEXS
+#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -744,12 +744,25 @@ void TNtexture::eval()
 	if(CurrentScope->rpass() && (bumpActive()||texActive())){
 		int nid=TerrainData::tp->noise.size;
 		Td.add_texture(texture);
-		if(right)
-			right->eval();
-		if(TerrainData::tp->noise.size==nid)
-			tex_noise=false;
-		else
-			tex_noise=true;
+		TNarg *arg=(TNarg*)right;
+
+		if(opts & SEXPR){
+			arg->eval();
+			if(TerrainData::tp->noise.size==nid)
+				s_noise=false;
+			else
+				s_noise=true;
+			if(opts & AEXPR)
+				arg=arg->next();
+		}
+		if(opts & AEXPR){
+			nid=TerrainData::tp->noise.size;
+			arg->eval();
+			if(TerrainData::tp->noise.size==nid)
+				a_noise=false;
+			else
+				a_noise=true;
+		}
 		return;
 	}
 
@@ -766,8 +779,8 @@ void TNtexture::eval()
 	extern double Phi,Theta;
 	double phi = Phi / 180;
 	double theta = Theta / 180.0 - 1;
-	double avalue=1;
-
+	//double avalue=1;
+	texture->avalue=1;
 	int i = 0;
 
 	if(opts & SEXPR){
@@ -775,14 +788,14 @@ void TNtexture::eval()
 		s=arg[i++]/texture->scale;
 		if(opts & AEXPR){
 			texture->a_data=true;
-			avalue=arg[i++];
+			texture->avalue=arg[i++];
 		}
 		else if(texture->t2d())
 			t=s;
 	}
 	else if(opts & AEXPR){
 		texture->a_data=true;
-		avalue=arg[i++];
+		texture->avalue=arg[i++];
 	}
 
 	if(i<n)
@@ -816,9 +829,10 @@ void TNtexture::eval()
 	if(i<n)
 		sbias=arg[i++];
 
-    avalue=clamp(avalue,0,1);
-    a*=avalue;
-    b*=avalue;
+    //avalue=clamp(avalue,0,1);
+    //a*=avalue;
+   // b*=avalue;
+
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
@@ -915,7 +929,7 @@ int TNtexture::exprString(TNarg *arg,char *nstr){
 	char vstr[256];
 	vstr[0]=0;
 	arg->valueString(vstr);
-	cout << "TNtexture   expr:"<<vstr << endl;
+	cout << "TNtexture ? expr:"<<vstr << endl;
 #endif
 	CurrentScope->set_shader(1);
 	arg->valueString(nstr);
@@ -937,8 +951,10 @@ int TNtexture::exprString(TNarg *arg,char *nstr){
 #ifdef DEBUG_TEXS
 	if(s_expr)
 		cout << "TNtexture s expr:"<<nstr << endl;
-	if(v_expr)
+	if(v_expr){
 		cout << "TNtexture v expr:"<<sstr << endl;
+		strcpy(nstr,sstr);
+	}
 #endif
 	SINIT;
 	CurrentScope->set_texture(0);
@@ -969,10 +985,8 @@ bool TNtexture::initProgram(){
 		int cmode=0;
 		if(texture->s_data){
 			cmode=exprString(arg,nstr);
-			if(tex_noise)
+			if(s_noise)
 				sprintf(defs+strlen(defs),"#define N%d %s\n",id,nstr);
-			//else if(cmode&SEXPR)
-			//	sprintf(defs+strlen(defs),"#define X%d %s\n ",id,nstr);
 			if(texture->a_data)
 				arg=arg->next();
 		}
@@ -982,9 +996,6 @@ bool TNtexture::initProgram(){
 			else
 				cmode=VEXPR;
 			switch(cmode){
-			case (SEXPR|VEXPR):
-				sprintf(defs+strlen(defs),"#define A%d AT%d+%s\n",id,id,nstr);
-				break;
 			case VEXPR:
 				sprintf(defs+strlen(defs),"#define A%d AT%d\n",id,id);
 				break;

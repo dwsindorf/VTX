@@ -2273,6 +2273,7 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				if(tx->a_data){
 					t = d->texture(index);
+					//cout<<t<<endl;
 					if(tx->d_data)
 						t*=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
