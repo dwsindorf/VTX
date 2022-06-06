@@ -207,12 +207,18 @@ Image::Image(float *b, int w, int h)
 	height=h;
 	width=w;
 }
-Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
+//Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
+
+Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 {
 	Color *colors=0;
 	FColor *fcolors=0;
 	FColor  fmax(-lim,-lim,-lim);
 	FColor  fmin(lim,lim,lim);
+	double rh=0.5,rw=0.5;
+	
+	Color *gcolors=0;
+	int gsize=0;
 
 	Noise::resetStats();
 	set_alpha_image(0);
@@ -256,6 +262,10 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	    bvalue=vc[2];
 	    avalue=vc[3];
 	    MALLOC(h*w,FColor,fcolors);
+	}
+	if(grad){
+		gsize=grad->size()-1;
+		gcolors=(Color *)grad->data;
 	}
 	CALLOC(h*w,Color,colors);
 	double b=0.5;
@@ -306,7 +316,10 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 
 		//TheNoise.phi=y-180;
 		TheNoise.phi=y;
-		Phi=y/360-0.5;
+		//Phi=y/360-0.5;
+		Phi=0.5*(y-180);
+		//cout<<y<<endl;
+
 		for(x=x1,i=0;i<w;i++,x+=dx){
 			switch(mtype){
 			case SMAP:
@@ -327,7 +340,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 				break;
 			}
 			TheNoise.theta=x;
-			Theta=x/360;
+			Theta=x;
 			TheNoise.set(vx+b,vy+b,vz+b,vw+b);
 			INIT;
 			CurrentScope->revaluate();
@@ -388,11 +401,20 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 					mx=f>mx?f:mx;
 				}
 				else{
-					f=clamp(f,0,1);
-					if(achnl)
-						colors[j*w+i]=Color(f,f,f,f);
-					else
-						colors[j*w+i]=Color(f,f,f);
+					if(gcolors){
+						int index=f*gsize;
+						double g=f*gsize-index;
+						if(index<gsize)
+							colors[j*w+i]=gcolors[index].blend(gcolors[index+1],g);
+						else
+							colors[j*w+i]=gcolors[index];
+					}
+					else{
+						if(achnl)
+							colors[j*w+i]=Color(f,f,f,f);
+						else
+							colors[j*w+i]=Color(f,f,f);
+					}
 				}
 			}
 		}
@@ -428,7 +450,7 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 	else if(!cimage && norm){
 	    double ma=1;
 	    double mb=0;
-	   // printf("min %g max %g\n",mx,mn);
+	    //printf("min %g max %g\n",mx,mn);
 	    if(mx != mn){
 			ma=1/(mx-mn);
 			mb=mn*ma;
@@ -437,10 +459,21 @@ Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 			for(i=0;i<w;i++){
 				double v=colors[j*w+i].cd.f;
 				double f=ma*v-mb;
-				if(achnl)
-					colors[j*w+i]=Color(f,f,f,f);
-				else
-					colors[j*w+i]=Color(f,f,f);
+				f=clamp(f,0,1);
+				if(gcolors){
+					int index=f*gsize;
+					double g=f*gsize-index;
+					if(index<gsize)
+						colors[j*w+i]=gcolors[index].blend(gcolors[index+1],g);
+					else
+						colors[j*w+i]=gcolors[index];
+				}
+				else{
+					if(achnl)
+						colors[j*w+i]=Color(f,f,f,f);
+					else
+						colors[j*w+i]=Color(f,f,f);
+				}
 			}
 		}
 	}
@@ -842,6 +875,8 @@ ImageSym *ImageReader::getImageInfo(char *name)
 void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 {
 	ImageSym *is;
+	
+	//cout<<"ImageReader::getImageInfo"<<endl;
 	for(int i=0;i<images.size;i++){
 		is=images[i];
 	    int info=is->info;

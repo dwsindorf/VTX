@@ -5,6 +5,7 @@
 // 
 
 #include "utils.h"
+#include "common.h"
 
 float logf=0;
 float nbamp=0;

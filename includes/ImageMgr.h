@@ -114,7 +114,9 @@ public:
 	Image(RGBColor *b, int h, int w);
 	Image(Color *b, int h, int w);
 	Image(float  *b, int h, int w);
-	Image(int opts, int h, int w,double rh,double rw, TNode  *b);
+	//Image(int opts, int h, int w,double rh,double rw, TNode  *b);
+	Image(int opts, int h, int w, TNode  *b, Image *grad);
+
 	Image();
 
 	~Image();

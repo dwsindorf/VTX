@@ -8,15 +8,7 @@
 // 
 
 #include "utils.h"
-
-float logf=0;
-float nbamp=0;
-vec4 gv=vec4(0);
-float amplitude = 1.0;
-vec3 bump;
-float g=0;
-float b=0;
-bool newcell=false;
+#include "common.h"
 
 #define HT Constants1.x
 
@@ -25,19 +17,15 @@ bool newcell=false;
 varying in vec4 Normal_G[];
 varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
-varying out vec4 Vertex1;
 #if NVALS >0
 varying in vec4 Vertex1_G[];
 #endif
 #if NTEXS >0
 varying in vec4 Tangent_G[];
-varying out vec4 Tangent;
 #endif
 
 //########## 3D noise section #########################
-uniform float freqmip=0;
-uniform float bump_delta;
-uniform float bump_ampl;
+
 uniform bool lighting;
 uniform float rscale;
 uniform float nscale;
@@ -63,10 +51,8 @@ varying in vec4 Attributes_G[][2];
 varying out vec4 Color;
 varying out vec4 Normal;
 varying out vec4 EyeDirection;
-varying out vec4 Constants1;
 
 uniform vec3 center;
-uniform vec3 pv;
 
 varying out vec4 attributes[2];
 

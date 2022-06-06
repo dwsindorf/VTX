@@ -8,7 +8,7 @@
 #include "GLSLMgr.h"
 
 //#define DEBUG_IMAGES
-#define DEBUG_TEXS
+//#define DEBUG_TEXS
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -527,6 +527,7 @@ void TNimage::init()
 
 	TNarg *arg=(TNarg*)right;
 	TNode *value=0;
+	Image *grad=0;
 	double rw=0.5,rh=0.5;
 	int h=1,w=1;
 
@@ -550,25 +551,33 @@ void TNimage::init()
 	arg=arg->next();
 	value=arg->left;
 	arg=arg->next();
-	if(arg){
+	if(arg && !(opts&GRAY)){
 		arg->eval();
-		rh=0.5*S0.s;
-		rw=rh;
-		arg=arg->next();
-		if(arg){
-			arg->eval();
-			rw=0.5*S0.s;
-		}
+		char *s="unknown";
+		if(S0.strvalid())
+			s=S0.string;			
+		grad=images.load(s,BMP|JPG);
 	}
+	
+//	if(arg){
+//		arg->eval();
+//		rh=0.5*S0.s;
+//		rw=rh;
+//		arg=arg->next();
+//		if(arg){
+//			arg->eval();
+//			rw=0.5*S0.s;
+//		}
+//	}
 #ifdef DEBUG_IMAGES
 	Noise::resetStats();
 	printf("%-20s BUILDING %d X %d IMAGE %s\n","TNimage",w,h,name);
-	im=new Image(opts,h,w,rh,rw,value);
+	im=new Image(opts,h,w,value,grad);
 	double build_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 	cout<< "image build time:"<<build_time<<endl;
 	Noise::showStats();
 #else
-	im=new Image(opts,h,w,rh,rw,value);
+	im=new Image(opts,h,w,value,grad);
 #endif
 	images.save(name,im,this);
 	image=images.load(name,this);

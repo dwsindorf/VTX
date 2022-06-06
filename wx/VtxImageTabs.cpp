@@ -7,6 +7,8 @@
 #include <wx/dir.h>
 #include "RenderOptions.h"
 
+extern wxString last_gradient;
+
 #define STATE1D 0
 #define STATE2D 1
 //########################### VtxImageTabs Class ########################
@@ -21,6 +23,8 @@ enum{
     ID_IMAGE_WIDTH,
     ID_IMAGE_HEIGHT,
     ID_IMAGE_MAP,
+	ID_GRADIENT,
+	ID_GRADIENT_LIST
 };
 
 #define LABEL1 50
@@ -41,7 +45,10 @@ EVT_CHOICE(ID_IMAGE_MAP, VtxImageTabs::OnChanged)
 EVT_CHECKBOX(ID_NORM,VtxImageTabs::OnChanged)
 EVT_CHECKBOX(ID_INVERT,VtxImageTabs::OnChanged)
 EVT_CHECKBOX(ID_GRAYS,VtxImageTabs::OnChanged)
+EVT_CHECKBOX(ID_GRADIENT,VtxImageTabs::OnChanged)
+
 EVT_COMBOBOX(ID_FILELIST,VtxImageTabs::OnFileSelect)
+EVT_COMBOBOX(ID_GRADIENT_LIST,VtxImageTabs::OnGradientSelect)
 
 END_EVENT_TABLE()
 
@@ -75,7 +82,7 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
 	wxStaticBoxSizer* fileio = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("File"));
 
 	m_file_menu=new wxComboBox(panel,ID_FILELIST,"",
-			wxDefaultPosition,wxSize(130,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
+			wxDefaultPosition,wxSize(160,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
 
     hline->Add(m_file_menu,0,wxALIGN_LEFT|wxALL,0);
 
@@ -109,8 +116,17 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
     options->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,0);
     m_invert_check=new wxCheckBox(panel, ID_INVERT, "Invert");
     options->Add(m_invert_check, 0, wxALIGN_LEFT|wxALL,0);
-    m_grays_check=new wxCheckBox(panel, ID_GRAYS, "Grays");
+    m_grays_check=new wxCheckBox(panel, ID_GRAYS, "Gray");
     options->Add(m_grays_check, 0, wxALIGN_LEFT|wxALL,0);
+    
+    m_gradient_check=new wxCheckBox(panel, ID_GRADIENT, "Color");
+    options->Add(m_gradient_check, 0, wxALIGN_LEFT|wxALL,0);
+    
+    m_gradient_file_menu=new wxComboBox(panel,ID_GRADIENT_LIST,"",
+    			wxDefaultPosition,wxSize(120,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
+    options->Add(m_gradient_file_menu,0,wxALIGN_LEFT|wxALL,0);
+	m_gradient_image = new VtxImageWindow(panel,wxID_ANY,wxDefaultPosition,wxSize(100,26));
+	options->Add(m_gradient_image, 0, wxALIGN_LEFT|wxALL,2);
 
     options->SetMinSize(wxSize(TABS_WIDTH,-1));
     boxSizer->Add(options, 0, wxALIGN_LEFT|wxALL,0);
@@ -215,6 +231,50 @@ void VtxImageTabs::makeImageList(){
 }
 
 //-------------------------------------------------------------
+// VtxImageTabs::freeImageList() free image file list
+//-------------------------------------------------------------
+void VtxImageTabs::freeGradientsList() {
+	if(gradient_list){
+		gradient_list->free();
+		delete gradient_list;
+		gradient_list=0;
+	}
+}
+
+//-------------------------------------------------------------
+// VtxImageTabs::makeImageList() build image file list
+//-------------------------------------------------------------
+void VtxImageTabs::makeGradientsList(){
+	LinkedList<ImageSym *> list;
+	images.getImageInfo(BANDS|T1D|SPX, list);
+	freeGradientsList();
+	gradient_list=new NameList<ImageSym*>(list);
+	gradient_list->ss();
+
+    m_gradient_file_menu->Clear();
+	ImageSym *is;
+	while((is=(*gradient_list)++)>0){
+		m_gradient_file_menu->Append(is->name());
+	}
+	int index=m_gradient_file_menu->FindString(m_gradient_name);
+	if(index== wxNOT_FOUND){
+		index=0;
+	}
+	if(m_gradient_file_menu->GetCount()>0){
+		m_gradient_file_menu->SetSelection(index);
+		m_gradient_name=m_gradient_file_menu->GetStringSelection();
+	}
+	m_gradient_image->setImage(wxString(m_gradient_name),m_gradient_image->TILE);
+}
+
+void VtxImageTabs::OnGradientSelect(wxCommandEvent& event){
+	m_gradient_name=m_gradient_file_menu->GetStringSelection();
+	m_gradient_image->setImage(wxString(m_gradient_name),m_gradient_image->TILE);
+	imageDialog->UpdateControls();
+	setObjAttributes();
+}
+
+//-------------------------------------------------------------
 // VtxImageTabs::updateControls() update controls
 //-------------------------------------------------------------
 void VtxImageTabs::updateControls(){
@@ -238,6 +298,7 @@ void VtxImageTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	makeImageList();
+	makeGradientsList();
 	displayImage((char*)m_name.ToAscii());
 }
 
@@ -314,6 +375,14 @@ void VtxImageTabs::displayImage(char *name){
 	char vals[512]="";
 	vnode->valueString(vals);
 	m_image_expr->SetValue(vals);
+	arg=arg->next();
+	if(arg){
+		arg->eval();
+		if(S0.strvalid()){
+			m_gradient_name=S0.string;
+			last_gradient=m_gradient_name;
+		}
+	}
 
 	m_image_window->setImage(wxString(name),display_mode);
 	delete inode;
@@ -352,7 +421,10 @@ wxString VtxImageTabs::getImageString(wxString name){
 	int height=1<<exp;
 
 	char buff[512];
-	sprintf(buff,"image(\"%s\",%s,%d,%d,%s);\n",(const char*)name.ToAscii(),opts,width,height,iexpr);
+	if(m_gradient_check->GetValue())
+		sprintf(buff,"image(\"%s\",%s,%d,%d,%s,\"%s\");\n",(const char*)name.ToAscii(),opts,width,height,iexpr,m_gradient_name.ToAscii());
+	else
+		sprintf(buff,"image(\"%s\",%s,%d,%d,%s);\n",(const char*)name.ToAscii(),opts,width,height,iexpr);
 	//cout << buff << endl;
 	return wxString(buff);
 }

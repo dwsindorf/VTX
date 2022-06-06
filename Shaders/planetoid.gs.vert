@@ -2,7 +2,6 @@
 // notes:
 // 1. first shader in pipeline
 // 2. output to geom shader
-
 #include "textures.h"
 #include "attributes.vert"
 

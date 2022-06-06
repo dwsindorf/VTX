@@ -8,24 +8,19 @@
 // 
 
 #include "utils.h"
+#include "common.h"
 
 varying in vec4 Color_G[];
-varying out vec4 Color;
 varying out vec4 Data;
 
 uniform mat4 modelViewProjectionMat;
 
 varying in vec4 Vertex1_G[];
-vec4 Vertex1;
+//vec4 Vertex1;
 
-uniform vec3 pv;
-uniform float freqmip;
 uniform float MinHt;
 uniform float MaxHt;
 uniform float rscale;
-
-vec4 gv=vec4(0);
-float g=0;
 
 #if NVALS >0
 #include "noise_funcs.h"

@@ -25,6 +25,8 @@ protected:
     bool isModified();
 	void AddImageTab(wxPanel *panel);
 	void makeImageList();
+	void freeGradientsList();
+	void makeGradientsList();
 	void freeImageList();
 	void makeRevertList();
 	void freeRevertList();
@@ -39,6 +41,7 @@ protected:
 	wxCheckBox *m_norm_check;
 	wxCheckBox *m_invert_check;
 	wxCheckBox *m_grays_check;
+
 	ExprTextCtrl *m_image_expr;
 	wxChoice *m_image_width;
 	wxChoice *m_image_height;
@@ -47,6 +50,12 @@ protected:
 	bool update_needed;
 	NameList<ImageSym*> *image_list;
 	NameList<ImageSym*> *revert_list;
+	
+	VtxImageWindow *m_gradient_image;	
+	wxCheckBox *m_gradient_check;
+	NameList<ImageSym*> *gradient_list;
+	wxComboBox *m_gradient_file_menu;
+	wxString m_gradient_name;
 
 public:
 	VtxImageTabs(wxWindow* parent,
@@ -70,6 +79,7 @@ public:
     void OnExprEdit(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event);
     void OnFileSelect(wxCommandEvent& event);
+    void OnGradientSelect(wxCommandEvent& event);
     void OnImageSize(wxCommandEvent& event);
     void OnFileEdit(wxCommandEvent& event);
 

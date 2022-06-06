@@ -935,7 +935,7 @@ double Noise::multinoise(int type, int nargs, double *args)
     weight=1;
 
     bool nabs=type & NABS;
-	double clip=nargs>6?args[6]:1.0;
+	double clip=nargs>6?args[6]:4.0;
 	clip*=VMAX;
 	double x,rmin=0;
     if(nargs>7){

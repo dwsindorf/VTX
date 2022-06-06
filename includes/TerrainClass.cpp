@@ -1218,7 +1218,7 @@ bool TNnoise::setProgram(){
 	float H = n>3?args[3]:Noise::dflt_H;
 	float L = n>4?args[4]:Noise::dflt_L;
 	float ampl=(n>5)?args[5]:1.0;
-	float clamp=n>6?args[6]:1.0;
+	float clamp=n>6?args[6]:4.0;
 	float smooth=n>7?args[7]:0.0;
 	float offset=n>8?args[8]:0.0;
 	float rate=n>9?args[9]:2e-6;

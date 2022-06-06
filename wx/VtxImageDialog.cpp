@@ -29,6 +29,8 @@ enum {
 
 #define BTNSIZE wxSize(60,30)
 
+wxString last_gradient("");
+
 //########################### VtxImageDialog Class Methods #############################
 IMPLEMENT_CLASS( VtxImageDialog, wxFrame )
 
@@ -125,6 +127,7 @@ bool VtxImageDialog::Show(wxString name, int type){
 		m_2D_tabs->setSelection(name);
 		break;
 	case TYPE_1D:
+		last_gradient=name;
 		m_1D_tabs->setSelection(name);
 		break;
 	case TYPE_IMPORT:
@@ -159,6 +162,8 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_revert->Enable(m_1D_tabs->canRevert());
 		m_delete->Enable(m_1D_tabs->canDelete());
 		m_save->Enable(m_1D_tabs->canSave());
+		if(!last_gradient.IsEmpty())
+			m_1D_tabs->setSelection(last_gradient);
 		break;
 	case TYPE_IMPORT:
 		m_revert->Enable(m_img_tabs->canRevert());

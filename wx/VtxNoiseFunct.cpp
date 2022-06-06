@@ -235,7 +235,7 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 	mod_cntrls->Add(RoundSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	ClampSlider=new SliderCtrl(panel,ID_CLAMP_SLDR,"Clamp",LABEL2, VALUE2,SLIDER2);
-	ClampSlider->setRange(-1,1);
+	ClampSlider->setRange(0,4);
 
 	mod_cntrls->Add(ClampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -366,7 +366,7 @@ void VtxNoiseFunct::setFunction(wxString f){
 	if(a)
 		ClampSlider->setValue(a);
 	else
-		ClampSlider->setValue(1.0);
+		ClampSlider->setValue(4.0);
 
 	a=args[7];
 	if(a)

@@ -140,9 +140,11 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
   		break;
     case KEY_DECR_VIEW:
     	TheScene->views_decr();
+    	TheScene->rebuild_all();
   		break;
     case KEY_INCR_VIEW:
     	TheScene->views_incr();
+    	TheScene->rebuild_all();
         break;
     case KEY_UNSELECT:
     	TheScene->selobj=0;

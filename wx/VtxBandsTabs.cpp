@@ -6,6 +6,7 @@
 #include <wx/filefn.h>
 #include <wx/dir.h>
 
+
 //########################### VtxBandsTabs Class ########################
 enum{
 	ID_ENABLE,
@@ -57,7 +58,7 @@ EVT_CHECKBOX(ID_NORM,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_INVERT,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_CLAMP,VtxBandsTabs::OnChanged)
 //EVT_CHECKBOX(ID_RANDMIX,VtxBandsTabs::OnChanged)
-EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
+//EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_REFLECT,VtxBandsTabs::OnChanged)
 
@@ -230,8 +231,8 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
     color_options->Add(m_nearest_check, 0, wxALIGN_LEFT|wxALL,0);
     m_reflect_check=new wxCheckBox(panel, ID_REFLECT, "Reflect");
     color_options->Add(m_reflect_check, 0, wxALIGN_LEFT|wxALL,0);
-    m_alpha_check=new wxCheckBox(panel, ID_ALPHA, "Alpha");
-    color_options->Add(m_alpha_check, 0, wxALIGN_LEFT|wxALL,0);
+   // m_alpha_check=new wxCheckBox(panel, ID_ALPHA, "Alpha");
+    //color_options->Add(m_alpha_check, 0, wxALIGN_LEFT|wxALL,0);
 
     color_options->AddSpacer(10);
 
@@ -452,8 +453,6 @@ void VtxBandsTabs::splineString(char *buff)
 	int i=0;
 	while((cp=colors++)>0){
 		Color c=*cp;
-		if(!m_alpha_check->GetValue())
-			c.set_alpha(1.0);
 		c.toString(buff+strlen(buff));
 		i++;
 		if(i<colors.size)
@@ -490,18 +489,15 @@ wxString VtxBandsTabs::getImageString(wxString name){
 	if(m_reflect_check->GetValue())
 		opts |= REFLECT;
 
-	if(m_alpha_check->GetValue())
-		opts |= ACHNL;
+	//if(m_alpha_check->GetValue())
+	//	opts |= ACHNL;
 	TNinode::optionString(opts_str,opts);
 
 	double dmix=m_mix_color->getValue();
 	double dmod=m_mod_slider->getValue();
 
 	Color c=m_mix_color->getColor();
-	if(m_alpha_check->GetValue())
-		c.set_alpha(dmix);
-	else
-		c.set_alpha(1.0);
+	c.set_alpha(1.0);
 
 	int size=m_image_size->GetSelection();
 

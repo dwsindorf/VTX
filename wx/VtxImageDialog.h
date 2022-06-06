@@ -22,7 +22,7 @@
 
 
 #define DLG_HEIGHT (380)
-#define DLG_WIDTH  (440)
+#define DLG_WIDTH  (500)
 #define TABS_BORDER 10
 #ifndef TABS_WIDTH
 #define TABS_WIDTH  (DLG_WIDTH-20)
@@ -53,6 +53,7 @@ class VtxImageDialog : public wxFrame
 
 	//int m_tab_selected;
 	int m_type;
+	int m_last;
 
 	void setTitle();
 	void updateControls();

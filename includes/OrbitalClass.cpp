@@ -3460,7 +3460,10 @@ bool Planetoid::setProgram(){
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
 	}
-
+	double clarity=water_clarity;
+ 	if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
+ 		clarity*=20;
+    
 	GLSLMgr::setDefString(defs);
 
 	//GLSLMgr::init3DNoiseTexture();
@@ -3528,7 +3531,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVec("IceColor2",ice_color2.red(),ice_color2.green(),ice_color2.blue(),ice_color2.alpha());
 
 	vars.newFloatVar("ice_clarity",ice_clarity);
-	vars.newFloatVar("water_clarity",water_clarity);
+	vars.newFloatVar("water_clarity",clarity);
 
 	vars.newFloatVar("water_shine",water_shine);
 	vars.newFloatVar("ice_shine",ice_shine);
@@ -3757,15 +3760,18 @@ void Planetoid::init_render()
  	Raster.shadow_color.set_alpha(1);
 
     // set water factors
+ 	double clarity=water_clarity;
+ 	if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
+ 		clarity*=20;
 
 	//Raster.water_reflect=water_reflectance;
-	Raster.water_clarity=water_clarity;
+	Raster.water_clarity=clarity;
 	Raster.water_mix=water_mix;
 	Raster.ice_clarity=ice_clarity;
 	Raster.ice_mix=ice_mix;
 
 	//Raster.water_saturation=water_saturation;
-	Td.clarity=water_clarity;
+	Td.clarity=clarity;
 
     // set fog factors
 
