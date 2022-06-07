@@ -35,7 +35,7 @@ IMPLEMENT_CLASS(VtxImportTabs, wxPanel )
 
 BEGIN_EVENT_TABLE(VtxImportTabs, wxPanel)
 
-EVT_COMBOBOX(ID_FILELIST,VtxImportTabs::OnFileSelect)
+EVT_CHOICE(ID_FILELIST,VtxImportTabs::OnFileSelect)
 EVT_RADIOBOX(ID_SHOW_MODE, VtxImportTabs::OnShowMode)
 EVT_CHECKBOX(ID_TILE,VtxImportTabs::OnTile)
 
@@ -68,8 +68,11 @@ void VtxImportTabs::AddImageTab(wxPanel *panel){
 
 	wxStaticBoxSizer* fileio = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("File"));
 
-	m_file_menu=new wxComboBox(panel,ID_FILELIST,"",
-			wxDefaultPosition,wxSize(200,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER|wxTE_READONLY);
+	//m_file_menu=new wxComboBox(panel,ID_FILELIST,"",
+	//		wxDefaultPosition,wxSize(200,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER|wxTE_READONLY);
+	
+	m_file_menu=new wxChoice(panel,ID_FILELIST,wxDefaultPosition,wxSize(200,-1));
+	m_file_menu->SetColumns(5);
 	//m_file_menu->SetColumns(5);
 
 	fileio->Add(m_file_menu,0,wxALIGN_LEFT|wxALL,0);

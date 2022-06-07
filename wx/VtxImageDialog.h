@@ -46,10 +46,14 @@ class VtxImageDialog : public wxFrame
 	VtxBandsTabs *m_1D_tabs;
 	VtxImportTabs *m_img_tabs;
 	VtxImportTabs *m_map_tabs;
-
+	
 	wxButton *m_save;
 	wxButton *m_revert;
 	wxButton *m_delete;
+	wxButton *m_new;
+	wxButton *m_rename;
+	
+	wxString image_name;
 
 	//int m_tab_selected;
 	int m_type;
@@ -57,6 +61,7 @@ class VtxImageDialog : public wxFrame
 
 	void setTitle();
 	void updateControls();
+	wxString getSelection();
 
 public:
 	VtxImageDialog(wxWindow *parent,
@@ -87,10 +92,13 @@ public:
     void OnSave(wxCommandEvent &event);
     void OnRevert(wxCommandEvent &event);
     void OnDelete(wxCommandEvent &event);
+    void OnNew(wxCommandEvent &event);
+    void OnRename(wxCommandEvent &event);
 
     void Invalidate();
 
     void UpdateControls();
+    
 
     DECLARE_EVENT_TABLE()
 };

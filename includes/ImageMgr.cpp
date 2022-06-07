@@ -241,6 +241,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	int norm=opts&NORM;
 	int invt=opts&INVT;
 	int gray=opts&GRAY;
+	bool gradient=(opts&ACHNL)>0 && grad>0;
 	int achnl=(opts&ACHNL)||(opts&BUMP);
 	TNode *rvalue=0;
 	TNode *gvalue=0;
@@ -263,7 +264,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	    avalue=vc[3];
 	    MALLOC(h*w,FColor,fcolors);
 	}
-	if(grad){
+	if(gradient){
 		gsize=grad->size()-1;
 		gcolors=(Color *)grad->data;
 	}
@@ -401,7 +402,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 					mx=f>mx?f:mx;
 				}
 				else{
-					if(gcolors){
+					if(gradient){
 						int index=f*gsize;
 						double g=f*gsize-index;
 						if(index<gsize)
@@ -460,7 +461,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 				double v=colors[j*w+i].cd.f;
 				double f=ma*v-mb;
 				f=clamp(f,0,1);
-				if(gcolors){
+				if(gradient){
 					int index=f*gsize;
 					double g=f*gsize-index;
 					if(index<gsize)
@@ -1101,12 +1102,10 @@ Image *ImageReader::load(char *f,TNinode *n)
 		delete is;
 		return 0;      // no spx file TNinode needs to build
 	}
+	char buff[4096];
+	buff[0]=0;
 
     // see if spx string has changed
-
-	char buff[4096];
-
-    buff[0]=0;
 	if(TheScene->keep_variables()){
 		TheScene->set_keep_variables(0);
 		n->valueString(buff);
@@ -1121,7 +1120,7 @@ Image *ImageReader::load(char *f,TNinode *n)
 		delete is;
 		return 0;      // changed: builder needs to rebuild
 	}
-
+    
 	Image *image=open(name);
 	addImage(name,is->info,buff,image);
 

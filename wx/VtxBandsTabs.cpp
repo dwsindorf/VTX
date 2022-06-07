@@ -57,12 +57,11 @@ BEGIN_EVENT_TABLE(VtxBandsTabs, wxPanel)
 EVT_CHECKBOX(ID_NORM,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_INVERT,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_CLAMP,VtxBandsTabs::OnChanged)
-//EVT_CHECKBOX(ID_RANDMIX,VtxBandsTabs::OnChanged)
-//EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
+EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_REFLECT,VtxBandsTabs::OnChanged)
 
-EVT_COMBOBOX(ID_FILELIST,VtxBandsTabs::OnFileSelect)
+EVT_CHOICE(ID_FILELIST,VtxBandsTabs::OnFileSelect)
 EVT_TEXT_ENTER(ID_FILELIST,VtxBandsTabs::OnFileEdit)
 EVT_CHOICE(ID_IMAGE_SIZE, VtxBandsTabs::OnImageSize)
 EVT_BUTTON(ID_NEXT_COLORS, VtxBandsTabs::OnNextColors)
@@ -104,7 +103,6 @@ VtxBandsTabs::VtxBandsTabs(wxWindow* parent,
 {
 	   m_file_menu=0;
 		AddBandsTab(this);
-	   // images.makeImagelist();
 		update_needed=true;
 		m_name="";
 		image_list=0;
@@ -128,8 +126,8 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
 
 	wxStaticBoxSizer* fileio = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("File"));
 
-	m_file_menu=new wxComboBox(panel,ID_FILELIST,"",
-			wxDefaultPosition,wxSize(130,-1),0, NULL, wxCB_SORT|wxTE_PROCESS_ENTER);
+	m_file_menu=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(120,-1));
+	m_file_menu->SetColumns(5);
 
 	fileio->Add(m_file_menu,0,wxALIGN_LEFT|wxALL,2);
 
@@ -231,8 +229,8 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
     color_options->Add(m_nearest_check, 0, wxALIGN_LEFT|wxALL,0);
     m_reflect_check=new wxCheckBox(panel, ID_REFLECT, "Reflect");
     color_options->Add(m_reflect_check, 0, wxALIGN_LEFT|wxALL,0);
-   // m_alpha_check=new wxCheckBox(panel, ID_ALPHA, "Alpha");
-    //color_options->Add(m_alpha_check, 0, wxALIGN_LEFT|wxALL,0);
+    m_alpha_check=new wxCheckBox(panel, ID_ALPHA, "Alpha");
+    color_options->Add(m_alpha_check, 0, wxALIGN_LEFT|wxALL,0);
 
     color_options->AddSpacer(10);
 
@@ -282,7 +280,7 @@ bool VtxBandsTabs::canDelete()  {
 // - image has been edited after last save or load
 //-------------------------------------------------------------
 bool VtxBandsTabs::canSave()  {
-	return isModified();
+	return true;
 }
 
 //-------------------------------------------------------------
@@ -364,13 +362,11 @@ void VtxBandsTabs::makeImageList(){
 	freeImageList();
 	image_list=new NameList<ImageSym*>(list);
 	image_list->ss();
-
+	
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)>0){
-//		int smode=m_showmode->GetSelection();
-//		if(smode==0 || is->info&(INUSE|NEWIMG))
-			m_file_menu->Append(is->name());
+		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
 	if(index== wxNOT_FOUND){
@@ -413,9 +409,11 @@ void VtxBandsTabs::setObjAttributes(){
 		return;
 	n->init();
 	delete n;
+
 	m_image_window->setImage(m_name.ToAscii(),m_image_window->TILE);
 	update_needed=false;
 	Render.invalidate_textures();
+	//imageDialog->Invalidate();
 	TheScene->set_changed_detail();
 	TheScene->rebuild_all();
 	setModified(true);
@@ -453,6 +451,8 @@ void VtxBandsTabs::splineString(char *buff)
 	int i=0;
 	while((cp=colors++)>0){
 		Color c=*cp;
+		if(!m_alpha_check->GetValue())
+			c.set_alpha(1.0);
 		c.toString(buff+strlen(buff));
 		i++;
 		if(i<colors.size)
@@ -489,15 +489,18 @@ wxString VtxBandsTabs::getImageString(wxString name){
 	if(m_reflect_check->GetValue())
 		opts |= REFLECT;
 
-	//if(m_alpha_check->GetValue())
-	//	opts |= ACHNL;
+	if(m_alpha_check->GetValue())
+		opts |= ACHNL;
 	TNinode::optionString(opts_str,opts);
 
 	double dmix=m_mix_color->getValue();
 	double dmod=m_mod_slider->getValue();
 
 	Color c=m_mix_color->getColor();
-	c.set_alpha(1.0);
+	if(m_alpha_check->GetValue())
+		c.set_alpha(dmix);
+	else
+		c.set_alpha(1.0);
 
 	int size=m_image_size->GetSelection();
 
@@ -691,10 +694,12 @@ void VtxBandsTabs::makeNewImage(char *name, char *iexpr){
 // VtxBandsTabs::OnFileEdit() handler for filename edit event
 //-------------------------------------------------------------
 void VtxBandsTabs::OnFileEdit(wxCommandEvent& event){
-	wxString name=m_file_menu->GetValue();
-	int index=m_file_menu->FindString(name);
+	
+	int index=m_file_menu->GetCurrentSelection();
+	wxString name=m_file_menu->GetStringSelection();
+
 	if(index != wxNOT_FOUND){
-		m_file_menu->SetSelection(index);
+		//m_file_menu->SetSelection(index);
 		m_name=m_file_menu->GetStringSelection();
 		displayImage((char*)m_name.ToAscii());
 	}
@@ -722,7 +727,6 @@ void VtxBandsTabs::OnFileEdit(wxCommandEvent& event){
 //-------------------------------------------------------------
 void VtxBandsTabs::OnChanged(wxCommandEvent& event){
 	setObjAttributes();
-	TheView->set_changed_detail();
 }
 
 //-------------------------------------------------------------
@@ -743,7 +747,6 @@ void VtxBandsTabs::setSelection(wxString name){
     displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
-
 //-------------------------------------------------------------
 // VtxBandsTabs::OnImageSize() handler for image size select event
 //-------------------------------------------------------------
@@ -788,6 +791,37 @@ void VtxBandsTabs::Revert(){
 	TheScene->rebuild_all();
 	setModified(false);
 	imageDialog->UpdateControls();
+}
+
+bool VtxBandsTabs::Clone(wxString new_name, bool rename){
+	char *name=(char*)new_name.ToAscii();
+	ImageSym *is=image_list->inlist((char*)new_name.ToAscii());
+	if(is)
+		return false; // name exists
+	is=image_list->inlist((char*)m_name.ToAscii());
+	if(is && is->istring){
+		wxString iexpr=getImageString(new_name);
+		TNinode *n=(TNinode*)TheScene->parse_node((char*)iexpr.ToAscii());
+		if(!n)
+			return false;
+		if(rename)
+			images.removeAll((char*)m_name.ToAscii());
+
+		n->init();
+		m_name=new_name;
+		makeImageList();
+		makeRevertList();
+		displayImage((char*)m_name.ToAscii());
+	    setSelection(name);
+		return true;	
+	}
+	return false;	
+}
+bool VtxBandsTabs::New(wxString name){
+	return Clone(name,false);	
+}
+bool VtxBandsTabs::Rename(wxString name){
+	return Clone(name,true);
 }
 
 //-------------------------------------------------------------

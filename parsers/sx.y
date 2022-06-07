@@ -476,7 +476,6 @@ inode_expr
 image
     : bands_expr            { $$=$1;}
     | image_expr            { $$=$1;}
-    | image_expr bands_expr  { $$=$1;}
 
 bands_expr
     : YY_BANDS '('  item_name ',' itype ',' arg_list ')'

@@ -34,8 +34,9 @@ protected:
 	void getObjAttributes();
 	void setObjAttributes();
 	void makeNewImage(char *, char *);
+	bool Clone(wxString name,bool rename);
 
-	wxComboBox *m_file_menu;
+	wxChoice *m_file_menu;
 	wxString m_name;
 	VtxImageWindow *m_image_window;
 	wxCheckBox *m_norm_check;
@@ -54,7 +55,7 @@ protected:
 	VtxImageWindow *m_gradient_image;	
 	wxCheckBox *m_gradient_check;
 	NameList<ImageSym*> *gradient_list;
-	wxComboBox *m_gradient_file_menu;
+	wxChoice *m_gradient_file_menu;
 	wxString m_gradient_name;
 
 public:
@@ -72,12 +73,19 @@ public:
     void Save();
     void Revert();
     void Delete();
+	bool New(wxString name);
+	bool Rename(wxString name);
+
     void Invalidate();
+    int rebuild();
 
     void setSelection(wxString name);
+    wxString getSelection(){return m_file_menu->GetStringSelection();}
 
     void OnExprEdit(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event);
+    void OnGradientMode(wxCommandEvent& event);
+
     void OnFileSelect(wxCommandEvent& event);
     void OnGradientSelect(wxCommandEvent& event);
     void OnImageSize(wxCommandEvent& event);

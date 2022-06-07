@@ -29,7 +29,7 @@ protected:
 	void setObjAttributes();
 
 	int type;
-	wxComboBox *m_file_menu;
+	wxChoice *m_file_menu;
 	wxString m_name;
 	VtxImageWindow *m_image_window;
 	wxTextCtrl *m_image_width;
@@ -58,6 +58,7 @@ public:
     void Invalidate();
 
     void setSelection(wxString name);
+    wxString getSelection(){return m_file_menu->GetStringSelection();}
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowMode(wxCommandEvent& event);

@@ -37,11 +37,12 @@ protected:
 	void setControlsFromColors();
 	void setColorsFromControls();
 	bool alpha();
+	bool Clone(wxString name,bool rename);
 
 	ColorSlider *m_mix_color;
 	SliderCtrl *m_mod_slider;
 
-	wxComboBox *m_file_menu;
+	wxChoice *m_file_menu;
 	ColorSlider *csliders[MAX_COLORS];
 	wxCheckBox  *enables[MAX_COLORS];
 
@@ -54,8 +55,7 @@ protected:
 	wxCheckBox *m_norm_check;
 	wxCheckBox *m_clamp_check;
 	wxCheckBox *m_nearest_check;
-//	wxCheckBox *m_random_mix_check;
-//	wxCheckBox *m_alpha_check;
+	wxCheckBox *m_alpha_check;
 	wxCheckBox *m_reflect_check;
 
 	wxButton *m_next_colors;
@@ -92,7 +92,7 @@ public:
 
 	void updateControls();
     void Save();
-	void New();
+	bool New(wxString name);
     void Revert();
 	void Build();
     void Delete();
@@ -100,8 +100,11 @@ public:
 	bool canRevert();
 	bool canSave();
     void Invalidate();
+    bool Rename(wxString name);
+
 
     void setSelection(wxString name);
+    wxString getSelection(){return m_file_menu->GetStringSelection();}
 
     void OnNextColors(wxCommandEvent& event);
     void OnPrevColors(wxCommandEvent& event);
@@ -120,7 +123,6 @@ public:
     void OnModText(wxCommandEvent& event);
 
     void OnSetColors(wxCommandEvent& event);
-    //void OnRandomizeColors(wxCommandEvent& event);
 
     wxString getImageString(wxString name);
     void OnSplineColorSlider(wxScrollEvent& event);

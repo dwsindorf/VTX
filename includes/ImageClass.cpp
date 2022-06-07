@@ -538,13 +538,17 @@ void TNimage::init()
 	arg->eval();
 	w=(int)S0.s;
 
-	Image *im=images.load(name,this);
-	if(im){
+	Image *im = 0;
+	if (!(opts & CHANGED)) {
+		im = images.load(name, this);
+		if (im) {
 #ifdef DEBUG_IMAGES
-		printf("%-20s LOADING SAVED %d X %d X %d IMAGE %s\n","TNimage",w,h,im->comps(),name);
+			printf("%-20s LOADING SAVED %d X %d X %d IMAGE %s\n", "TNimage", w,
+					h, im->comps(), name);
 #endif
-	    image=im;
-		return;
+			image = im;
+			return;
+		}
 	}
 	double start=clock();
 
@@ -559,16 +563,6 @@ void TNimage::init()
 		grad=images.load(s,BMP|JPG);
 	}
 	
-//	if(arg){
-//		arg->eval();
-//		rh=0.5*S0.s;
-//		rw=rh;
-//		arg=arg->next();
-//		if(arg){
-//			arg->eval();
-//			rw=0.5*S0.s;
-//		}
-//	}
 #ifdef DEBUG_IMAGES
 	Noise::resetStats();
 	printf("%-20s BUILDING %d X %d IMAGE %s\n","TNimage",w,h,name);
