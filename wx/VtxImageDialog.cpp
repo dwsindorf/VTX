@@ -114,6 +114,7 @@ void VtxImageDialog::OnNew(wxCommandEvent &event){
     	switch(m_type){
     	case TYPE_1D:
     		ok=m_1D_tabs->New(new_name);
+    		m_2D_tabs->Invalidate();
     		break;
     	case TYPE_2D:
     		ok=m_2D_tabs->New(new_name);
@@ -289,18 +290,14 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 
 }
 void VtxImageDialog::OnSave(wxCommandEvent &event){
+	//Invalidate();
 	switch(m_type){
 	case TYPE_2D:
-		m_2D_tabs->Save();
+		//m_2D_tabs->Save();
+		m_2D_tabs->Invalidate();
 		break;
 	case TYPE_1D:
-		m_1D_tabs->Save();
-		break;
-	case TYPE_IMPORT:
-		m_img_tabs->Save();
-		break;
-	case TYPE_MAP:
-		m_map_tabs->Save();
+		m_1D_tabs->Invalidate();
 		break;
 	}
 }

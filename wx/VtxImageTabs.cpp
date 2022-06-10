@@ -37,14 +37,13 @@ IMPLEMENT_CLASS(VtxImageTabs, wxPanel )
 BEGIN_EVENT_TABLE(VtxImageTabs, wxPanel)
 
 EVT_TEXT_ENTER(ID_IMAGE_EXPR,VtxImageTabs::OnExprEdit)
-EVT_TEXT_ENTER(ID_FILELIST,VtxImageTabs::OnFileEdit)
 EVT_CHOICE(ID_IMAGE_WIDTH, VtxImageTabs::OnImageSize)
 EVT_CHOICE(ID_IMAGE_HEIGHT, VtxImageTabs::OnImageSize)
 EVT_CHOICE(ID_IMAGE_MAP, VtxImageTabs::OnChanged)
 
 EVT_CHECKBOX(ID_NORM,VtxImageTabs::OnChanged)
 EVT_CHECKBOX(ID_INVERT,VtxImageTabs::OnChanged)
-EVT_CHECKBOX(ID_GRAYS,VtxImageTabs::OnChanged)
+EVT_CHECKBOX(ID_GRAYS,VtxImageTabs::OnGraysMode)
 EVT_CHECKBOX(ID_GRADIENT,VtxImageTabs::OnGradientMode)
 
 EVT_CHOICE(ID_FILELIST,VtxImageTabs::OnFileSelect)
@@ -249,6 +248,20 @@ void VtxImageTabs::freeGradientsList() {
 //-------------------------------------------------------------
 // VtxImageTabs::makeImageList() build image file list
 //-------------------------------------------------------------
+void VtxImageTabs::setGradientName(){
+	int index=m_gradient_file_menu->FindString(m_gradient_name);
+	if(index== wxNOT_FOUND){
+		index=0;
+	}
+	if(m_gradient_file_menu->GetCount()>0){
+		m_gradient_file_menu->SetSelection(index);
+		m_gradient_name=m_gradient_file_menu->GetStringSelection();
+	}
+	m_gradient_image->setImage(wxString(m_gradient_name),m_gradient_image->TILE);
+}
+//-------------------------------------------------------------
+// VtxImageTabs::makeImageList() build image file list
+//-------------------------------------------------------------
 void VtxImageTabs::makeGradientsList(){
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(BANDS|T1D|SPX, list);
@@ -261,27 +274,33 @@ void VtxImageTabs::makeGradientsList(){
 	while((is=(*gradient_list)++)>0){
 		m_gradient_file_menu->Append(is->name());
 	}
-	int index=m_gradient_file_menu->FindString(m_gradient_name);
-	if(index== wxNOT_FOUND){
-		index=0;
-	}
-	if(m_gradient_file_menu->GetCount()>0){
-		m_gradient_file_menu->SetSelection(index);
-		m_gradient_name=m_gradient_file_menu->GetStringSelection();
-	}
-	m_gradient_image->setImage(wxString(m_gradient_name),m_gradient_image->TILE);
+	m_gradient_file_menu->SetSelection(0);
+
 }
 
 void VtxImageTabs::OnGradientMode(wxCommandEvent& event){
-	if(m_gradient_check->IsChecked())
+	update_needed=true;
+	if(m_gradient_check->IsChecked()){
+		setModified(true);	
+		m_grays_check->SetValue(false);
 		setObjAttributes();
-
+	}
 }
+void VtxImageTabs::OnGraysMode(wxCommandEvent& event){
+	if(m_grays_check->IsChecked()){
+		update_needed=true;
+		m_gradient_check->SetValue(false);
+		setObjAttributes();
+	}
+}
+
 void VtxImageTabs::OnGradientSelect(wxCommandEvent& event){
 	m_gradient_name=m_gradient_file_menu->GetStringSelection();
 	m_gradient_image->setImage(wxString(m_gradient_name),m_gradient_image->TILE);
 	last_gradient=m_gradient_name;
 	if(m_gradient_check->IsChecked()){
+		setModified(true);
+		update_needed=true;
 		imageDialog->UpdateControls();
 		setObjAttributes();
 	}
@@ -303,7 +322,12 @@ void VtxImageTabs::Invalidate(){
     setModified(true);
 	rebuild();
 	getObjAttributes();
-	makeRevertList();
+	update_needed=true;
+
+	//rebuild();
+	makeGradientsList();
+	setObjAttributes();
+	//makeRevertList();
 }
 
 //-------------------------------------------------------------
@@ -400,8 +424,9 @@ void VtxImageTabs::displayImage(char *name){
 			last_gradient=m_gradient_name;
 		}
 	}
-
 	m_image_window->setImage(wxString(name),display_mode);
+	setGradientName();
+
 	delete inode;
 }
 
@@ -461,8 +486,14 @@ int VtxImageTabs::rebuild(){
 		return 0;
 	}
 	//cout << buff << endl;
-	if(isModified())
+	if(isModified()){
 		BIT_ON(n->opts,CHANGED);
+		cout<<"rebuilding image"<<endl;
+	}
+	else{
+		BIT_OFF(n->opts,CHANGED);
+		cout<<"loading previous image"<<endl;
+	}
 	n->init();
 	int opts=n->opts;
 	delete n;
@@ -472,18 +503,19 @@ int VtxImageTabs::rebuild(){
 // VtxImageTabs::setObjAttributes() when switched out
 //-------------------------------------------------------------
 void VtxImageTabs::setObjAttributes(){
-	update_needed=true;
+	if(!update_needed)
+		return;
 	int opts=rebuild();
 	int map_type=opts&IMAP;
 	int display_mode=map_type==SMAP?VtxImageWindow::SCALE:VtxImageWindow::TILE;
     
 	m_image_window->setImage(m_name.ToAscii(),display_mode);
-	update_needed=false;
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();
 	TheScene->rebuild_all();
-	//setModified(true);
 	imageDialog->UpdateControls();
+	update_needed=false;
+
 }
 
 //-------------------------------------------------------------
@@ -519,41 +551,14 @@ bool VtxImageTabs::isModified()  {
 }
 
 void VtxImageTabs::OnExprEdit(wxCommandEvent& event){
+	update_needed=true;
 	setObjAttributes();
 }
 
-void VtxImageTabs::OnFileEdit(wxCommandEvent& event){
-	//wxString name=m_file_menu->GetValue();
-	//int index=m_file_menu->FindString(name);
-	
-	int index=m_file_menu->GetCurrentSelection();
-	wxString name=m_file_menu->GetStringSelection();
-
-	if(index != wxNOT_FOUND){
-		m_file_menu->SetSelection(index);
-		m_name=m_file_menu->GetStringSelection();
-		displayImage((char*)m_name.ToAscii());
-	}
-	else{
-		wxString istr=getImageString(name); // new name
-		char buff[512];
-		strcpy(buff,istr.ToAscii());
-		TNinode *n=(TNinode*)TheScene->parse_node(buff);
-		if(!n)
-			return;
-		n->init();
-		delete n;
-		Image *img=images.find((char*)name.ToAscii());
-		if(img){
-			img->set_newimg(1);
-			m_name=name;
-			makeImageList();
-		}
-	}
-	imageDialog->UpdateControls();
-}
 
 void VtxImageTabs::OnChanged(wxCommandEvent& event){
+	update_needed=true;
+	setModified(true);
 	setObjAttributes();
 }
 
@@ -571,23 +576,28 @@ void VtxImageTabs::setSelection(wxString name){
 }
 
 void VtxImageTabs::OnImageSize(wxCommandEvent& event){
+	update_needed=true;
+	setModified(true);
 	setObjAttributes();
 	TheView->set_changed_render();
 }
 
 void VtxImageTabs::Save(){
-	char *name=m_name.ToAscii();
-	ImageSym *isc=image_list->inlist(name);
-	if(!isc)
-		return;
-	ImageSym *isr=revert_list->inlist(name);
-	ImageSym *isn=new ImageSym(isc);
-	if(isr){
-		revert_list->remove(isr);
-	}
-	revert_list->add(isn);
-	revert_list->sort();
-
+	setModified(false);
+	rebuild();
+	makeImageList();
+	makeRevertList();
+//	char *name=m_name.ToAscii();
+//	ImageSym *isc=image_list->inlist(name);
+//	if(!isc)
+//		return;
+//	ImageSym *isr=revert_list->inlist(name);
+//	ImageSym *isn=new ImageSym(isc);
+//	if(isr){
+//		revert_list->remove(isr);
+//	}
+//	revert_list->add(isn);
+//	revert_list->sort();
 	setModified(false);
 	imageDialog->UpdateControls();
 }

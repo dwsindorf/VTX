@@ -111,7 +111,6 @@ public:
     void OnChanged(wxCommandEvent& event);
     void OnFileSelect(wxCommandEvent& event);
     void OnImageSize(wxCommandEvent& event);
-    void OnFileEdit(wxCommandEvent& event);
 
     void OnMixSlider(wxScrollEvent& event);
     void OnEndMixSlider(wxScrollEvent& event);

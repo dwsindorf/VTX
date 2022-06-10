@@ -73,6 +73,7 @@ public:
     void Save();
     void Revert();
     void Delete();
+    void setGradientName();
 	bool New(wxString name);
 	bool Rename(wxString name);
 
@@ -85,11 +86,11 @@ public:
     void OnExprEdit(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event);
     void OnGradientMode(wxCommandEvent& event);
+    void OnGraysMode(wxCommandEvent& event);
 
     void OnFileSelect(wxCommandEvent& event);
     void OnGradientSelect(wxCommandEvent& event);
     void OnImageSize(wxCommandEvent& event);
-    void OnFileEdit(wxCommandEvent& event);
 
     wxString getImageString(wxString name);
 

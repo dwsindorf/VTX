@@ -62,7 +62,6 @@ EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_REFLECT,VtxBandsTabs::OnChanged)
 
 EVT_CHOICE(ID_FILELIST,VtxBandsTabs::OnFileSelect)
-EVT_TEXT_ENTER(ID_FILELIST,VtxBandsTabs::OnFileEdit)
 EVT_CHOICE(ID_IMAGE_SIZE, VtxBandsTabs::OnImageSize)
 EVT_BUTTON(ID_NEXT_COLORS, VtxBandsTabs::OnNextColors)
 EVT_BUTTON(ID_PREV_COLORS, VtxBandsTabs::OnPrevColors)
@@ -399,7 +398,8 @@ void VtxBandsTabs::makeRevertList(){
 // VtxBandsTabs::setObjAttributes() when switched out
 //-------------------------------------------------------------
 void VtxBandsTabs::setObjAttributes(){
-	update_needed=true;
+	//if(!update_needed)
+	//	return;
 	wxString istr=getImageString(m_name);
 	char buff[512];
 	strcpy(buff,istr.ToAscii());
@@ -411,12 +411,16 @@ void VtxBandsTabs::setObjAttributes(){
 	delete n;
 
 	m_image_window->setImage(m_name.ToAscii(),m_image_window->TILE);
-	update_needed=false;
+	if(update_needed){
+		TheScene->set_changed_detail();
+		TheScene->rebuild_all();
+		setModified(true);
+	}
+	else
+		setModified(true);
 	Render.invalidate_textures();
-	//imageDialog->Invalidate();
-	TheScene->set_changed_detail();
-	TheScene->rebuild_all();
-	setModified(true);
+
+	update_needed=false;
 	imageDialog->UpdateControls();
 }
 
@@ -690,37 +694,7 @@ void VtxBandsTabs::makeNewImage(char *name, char *iexpr){
 	displayImage(name);
 }
 
-//-------------------------------------------------------------
-// VtxBandsTabs::OnFileEdit() handler for filename edit event
-//-------------------------------------------------------------
-void VtxBandsTabs::OnFileEdit(wxCommandEvent& event){
-	
-	int index=m_file_menu->GetCurrentSelection();
-	wxString name=m_file_menu->GetStringSelection();
 
-	if(index != wxNOT_FOUND){
-		//m_file_menu->SetSelection(index);
-		m_name=m_file_menu->GetStringSelection();
-		displayImage((char*)m_name.ToAscii());
-	}
-	else{
-		wxString istr=getImageString(name); // new name
-		char buff[512];
-		strcpy(buff,istr.ToAscii());
-		TNinode *n=(TNinode*)TheScene->parse_node(buff);
-		if(!n)
-			return;
-		n->init();
-		delete n;
-		Image *img=images.find((char*)name.ToAscii());
-		if(img){
-			img->set_newimg(1);
-			m_name=name;
-			makeImageList();
-		}
-	}
-	imageDialog->UpdateControls();
-}
 
 //-------------------------------------------------------------
 // VtxBandsTabs::OnChanged() generic handler attribute change event

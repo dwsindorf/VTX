@@ -1,112 +1,26 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=-11.7169;
-		theta=113.956;
-		height=0.00468535;
-		gndlvl=-64049.8 ft;
+		view=SURFACE;
+		phi=-12.569;
+		theta=96.254;
+		height=377.587 ft;
+		gndlvl=11289.1 ft;
 		time=53021.8;
-		heading=90;
-		pitch=-90;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.002;
+		minh=1.13636e-09;
+		heading=33;
+		tilt=-15;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.0046755;
-		gndlvl=-12022.8 ft;
-	}
-	View{
-		phi=2.56071;
-		theta=99.6762;
-		height=0.00440912;
-		gndlvl=6211.77 ft;
-		pitch=-91;
-	}
-	View{
-		phi=2.52946;
-		height=0.00433623;
-		gndlvl=12444.1 ft;
-	}
-	View{
-		phi=3.43431;
-		theta=99.662;
-		height=0.00524183;
-		gndlvl=13161.4 ft;
-		heading=91;
-	}
-	View{
-		phi=3.40202;
-		theta=99.6626;
-		height=0.00516773;
-	}
-	View{
-		view=SURFACE;
-		phi=-12.6563;
-		theta=95.625;
-		height=52800 ft;
-		gndlvl=47755.6 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=10.6055 miles;
-		gndlvl=47826.3 ft;
-	}
-	View{
-		phi=-12.6233;
-		theta=96.2292;
-		height=1250.16 ft;
-		gndlvl=46815.8 ft;
-	}
-	View{
-		phi=-12.6187;
-		theta=96.245;
-		height=47.0514 ft;
-		gndlvl=46882.3 ft;
-	}
-	View{
-		height=192.264 ft;
-		tilt=-16;
-		angle=15;
-	}
-	View{
-		height=843.313 ft;
-		gndlvl=93548 ft;
-		angle=22;
-	}
-	View{
-		theta=96.2322;
-		height=1405.88 ft;
-		gndlvl=93500.8 ft;
-	}
-	View{
-		height=17.9755 miles;
-		gndlvl=1.86529 ft;
-	}
-	View{
-		height=16.9248 miles;
-		gndlvl=1.84316 ft;
-		angle=20;
-	}
-	View{
-		height=14.1122 miles;
-	}
-	View{
-		height=12567.7 ft;
-		heading=33;
-	}
-	View{
-		phi=-12.569;
-		theta=96.254;
-		height=115.444 ft;
-		gndlvl=11289.1 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=377.587 ft;
+		height=646.173 ft;
+		minr=0.00200214;
+		radius=0.00200226;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -130,6 +44,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
+					temperature=6540.73;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -137,6 +52,7 @@ Scene() {
 					}
 				}
 				Planet(0.002,100) {
+					albedo=1;
 					ambient=Color(1,1,1,0.04);
 					day=24;
 					diffuse=Color(1,1,1,0.85);
@@ -145,7 +61,6 @@ Scene() {
 					specular=Color(1,1,1,0.27);
 					tilt=10;
 					year=100;
-					albedo=1;
 					bands("snow-test",ACHNL|CLAMP|INVT|NEAREST|NORM,8,Color(0.984,0.984,0.984,0),Color(1,1,1));
 					Surface{
 						terrain=
@@ -170,6 +85,7 @@ Scene() {
 						tilt=10;
 						twilight=Color(0.99,0.09,0.19);
 						twilight.min=-0.348045;
+						year=100;
 					}
 				}
 			}
