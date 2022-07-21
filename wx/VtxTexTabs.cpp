@@ -270,7 +270,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-1,1);
+	HmapAmpSlider->setRange(-10,10);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -450,6 +450,7 @@ void VtxTexTabs::OnFileSelect(wxCommandEvent& event){
 	int i=choices->GetCurrentSelection();
     m_name=files[i];
     set_image();
+ 
     if(imageDialog->IsShown())
     	imageDialog->Show(m_name,m_image_type);
     sceneDialog->setNodeName((char*)m_name.ToAscii());
@@ -599,6 +600,7 @@ void VtxTexTabs::updateControls(){
 	if(update_needed){
 		wxString selected=wxString(object()->name);
 		int index=files.Index(selected);
+		if(index>=0)
 		choices->SetSelection(index);
 		getObjAttributes();
 	}
@@ -912,6 +914,8 @@ void VtxTexTabs::setObjAttributes(){
 	}
 	else
 		invalidateTexture();
+	
+
 }
 //-------------------------------------------------------------
 // VtxTexTabs::getObjAttributes() when switched in
@@ -970,7 +974,7 @@ void VtxTexTabs::getObjAttributes(){
 		m_amp_expr->SetValue(wxString(p));
 	}
 	if(opts & AEXPR){
-		char p[256]={0};
+		char p[2048]={0};
 		args[i++]->valueString(p);
 		m_alpha_expr->SetValue(wxString(p));
 	}
@@ -1037,7 +1041,6 @@ void VtxTexTabs::getObjAttributes(){
 	m_image_window->setImage(m_name,VtxImageWindow::TILE);
 	saveState(m_image_type);
 	update_needed=false;
-
 }
 
 void VtxTexTabs::setHtmap(){

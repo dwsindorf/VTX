@@ -187,7 +187,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Moon(0.01,0.05){day=30;year=30;Surface{}}\n");
 		break;
 	case TN_SKY:
-		sprintf(tmp,"Sky(0.1){color=Color(0,0.9,1.0);density=0.2;}\n");
+		sprintf(tmp,"Sky(0.1){color=Color(0.5,0.9,1.0);density=0.2;}\n");
 		break;
 	case TN_CLOUDS:
 		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");

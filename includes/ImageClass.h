@@ -27,9 +27,12 @@ public:
 	int opts;
 	Image *image;
 	char  *name;
+	char  *gname;
 	TNinode(char *, int l, TNode *r);
 	virtual ~TNinode();
 	void setName(char*);
+	void setGName(char*);
+
 	static void optionString(char *, int);
 	virtual void optionString(char *);
 	virtual void valueString(char *);
@@ -44,6 +47,7 @@ public:
 	virtual void setBumpActive(bool);
 	virtual void setHmapActive(bool);
 	virtual char *nodeName()  { return name;}
+	virtual char *gradName()  { return gname;}
 
 };
 
@@ -82,7 +86,6 @@ class TNimage : public TNinode
 {
 protected:
 public:
-
 	TNimage(char *s, int l, TNode *r);
 	int typeValue()			    { return ID_IMAGE;}
 	void save(FILE *f);

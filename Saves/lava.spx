@@ -6,7 +6,7 @@ Scene() {
 		height=1181.56 ft;
 		gndlvl=1107.22 ft;
 		time=56816.4;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;

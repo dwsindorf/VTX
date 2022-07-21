@@ -6,7 +6,7 @@ Scene() {
 		height=9926.72 ft;
 		gndlvl=-46631.2 ft;
 		time=22362.4;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -29,13 +29,21 @@ Scene() {
 	}
 	View{
 		height=11140.6 ft;
-		vstride=0.02;
-		zoom=0.003;
-		minh=1.13636e-09;
-		radius=0.00299328;
 	}
 	View{
 		time=85164.4;
+	}
+	View{
+		height=28950.6 ft;
+		heading=15;
+		angle=-2;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
+		radius=0.00299665;
+	}
+	View{
+		height=28924.4 ft;
 		minr=0.00299117;
 	}
 	Universe {
@@ -64,7 +72,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6000;
+					temperature=6540.73;
 					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.294,0.016,0.071),
@@ -90,9 +98,9 @@ Scene() {
 					fog.glow=0.26316;
 					fog.max=10208.3 ft;
 					fog.min=208.34 ft;
-					fog.value=0.709804;
-					fog.vmax=-19000 ft;
-					fog.vmin=-39000 ft;
+					fog.value=1;
+					fog.vmax=-17361.2 ft;
+					fog.vmin=-20000 ft;
 					hscale=0.002;
 					name="Venus";
 					ocean.level=295046 ft;
@@ -102,25 +110,22 @@ Scene() {
 					tilt=10;
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
+					image("eroded",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"test");
 					Surface{
 						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
-								Texture("jupiter",TEX,7.05918,2,1,0,1,2,1,0,0,1,0.38888,-0.02776)+
-								Texture("jupiter",BORDER|TEX,19865.8,1.02776,1,2.22224,1,2,1,0,0,1,0.05556,-0.13888)+
-								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-4,2,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
-								Texture("eroded",BUMP,261.017,-2.44448,1,0,5,2,0.5,0,0,0,0,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,1,0.66,0.45,0))+
-								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0);
+								Texture("jupiter",BORDER|TEX,161.289,1.02776,1,2.22224,1,2,1,0,0,1,0.05556,-0.22224)+
+								Texture("eroded",BUMP|TEX,683.359,-0.22208,2,0,5,2,0.5,0,0,0,0,0)+
+								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-4,1.02776,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(fractal(SQR|SS,12.9,9.1,0.15,1.84,1.21,0.15,0.47,0.24,0.48,0))+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,1,0.66,0.45,0));
 					}
 					Clouds(0.00305588) {
-						ambient=Color(1,1,1,0.07);
+						ambient=Color(1,1,1,0.08);
 						crot=1;
 						day=30;
-						diffuse=Color(1,1,1,0.85);
-						emission=Color(1,1,1,0.11);
 						resolution=4;
 						shine=42.2088;
-						specular=Color(1,1,1,0.64);
+						specular=Color(1,1,1,0.1);
 						Surface{
 							terrain=
 									Texture("venus_clouds",BUMP|NORM|TEX,1,2.44448,2,0,1,2,0.5,0,0,0,0,0);
@@ -132,6 +137,7 @@ Scene() {
 						density=0.9;
 						ghg_fraction=0.95;
 						haze.color=Color(0.99,0.84,0.51);
+						haze.grad=0.46342;
 						haze.value=1;
 						name="Sky";
 						night.color=Color(0,0,0);

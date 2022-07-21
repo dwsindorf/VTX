@@ -207,7 +207,6 @@ Image::Image(float *b, int w, int h)
 	height=h;
 	width=w;
 }
-//Image::Image(int opts, int h, int w, double rh, double rw, TNode *value)
 
 Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 {
@@ -242,14 +241,14 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	int invt=opts&INVT;
 	int gray=opts&GRAY;
 	bool gradient=(opts&ACHNL)>0 && grad>0;
-	int achnl=(opts&ACHNL)||(opts&BUMP);
+	int achnl=((opts&ACHNL) && (opts&T1D))||(opts&BUMP);
 	TNode *rvalue=0;
 	TNode *gvalue=0;
 	TNode *bvalue=0;
 	TNode *avalue=0;
 
-	if(achnl)
-		aflag=1;
+	//if(achnl)
+	//	aflag=1;
 
 	value->init();
 	value->eval();
@@ -319,7 +318,6 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 		TheNoise.phi=y;
 		//Phi=y/360-0.5;
 		Phi=0.5*(y-180);
-		//cout<<y<<endl;
 
 		for(x=x1,i=0;i<w;i++,x+=dx){
 			switch(mtype){
@@ -588,6 +586,8 @@ FColor Image::color(int opts, double s)
 // Image::color()      get nearest pixel Color
 //-------------------------------------------------------------
 double Image::p2v(int indx){
+	if(indx<0)
+		return 0;
  	if(type()==RGB_DATA && comps()==3){
  		RGBColor c=*((RGBColor*)data+indx);
  		return c.intensity();
@@ -741,7 +741,7 @@ FColor Image::color(int opts, double x, double y)
 //************************************************************
 ImageReader::ImageReader()
 {
-    flags=0;
+    flags=NEED_REBUILD;
 
 }
 ImageReader::~ImageReader()
@@ -998,9 +998,9 @@ void ImageReader::imagedir(char *dir)
 //-------------------------------------------------------------
 void ImageReader::makeImagelist()
 {
-    static int init=1;
+    //static int init=1;
 
-    if(init){
+    if(invalid()){
 		char base[256];
 		char sdir[512];
 
@@ -1054,9 +1054,9 @@ void ImageReader::makeImagelist()
 				images.sort();
 			}
 		}
-		//cout << "images.size:"<<images.size<< endl;
 		flist.free();
-		init=0;
+		//init=0;
+		validate();
 	}
 }
 
@@ -1371,6 +1371,7 @@ Image *ImageReader::openBmpFile(char *name,char *path)
 
 	int h=info->bmiHeader.biHeight;
 	int w=info->bmiHeader.biWidth;
+
 	if(!aflag){
 		image=new Image((RGBColor*)pxls,w,h);
 		image->set_global(1);

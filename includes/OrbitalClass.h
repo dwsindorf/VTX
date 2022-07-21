@@ -20,6 +20,7 @@ class TNtexture;
 class TNclist;
 class TNclouds;
 class Sky;
+class Ring;
 class Triangle;
 
 enum orbital_codes{
@@ -41,6 +42,8 @@ enum orbital_codes{
 	ID_MOON     	= ID_LEVEL5|ID_ORBITAL|0x030a,
 };
 
+
+
 //************************************************************
 // Orbital base class
 //************************************************************
@@ -58,6 +61,11 @@ protected:
 	double rseed;
 
 public:
+	static const int RANDS=10;
+	static double r[RANDS];
+	static double s[RANDS];
+	static void setRands();
+
 	ExprMgr exprs;
 	double rot_angle;
 	double orbit_angle;    // time dependent rotation angle
@@ -496,6 +504,8 @@ public:
 	bool setProgram();
 	int scale(double&n, double&f);
 	bool adapt_needed() { return false;}
+	NodeIF *getInstance();
+	static Sky *newInstance();
 };
 
 
@@ -619,6 +629,9 @@ public:
 class Planetoid : public Spheroid
 {
 public:
+	
+	static std::string randFeature(int type);
+
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
 	double 	   ocean_level;
@@ -654,21 +667,17 @@ public:
 	double     fog_glow;
 	double     temperature;
 	
-    static const int THEMES=6;
+    static const int THEMES=7;
 	static Color themes[THEMES*4];
 	static const int COLORS=6;
 	static Color colors[COLORS];
 	static Color mix;
-	static Color tc;
-	static const int RANDS=10;
 	static int ncolors;
-	static double r[RANDS];
-	static double s[RANDS];
+	static Color tc;
 	static int planet_id;
 	static int planet_cnt;
 
 	static void setColors();
-	static void setRands();
 	static void initInstance();
 
 	void 	   init_render();
@@ -701,7 +710,10 @@ public:
 	virtual double liquidToGas();
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
-	static void newCratered(Planetoid *);
+	static void newRocky(Planetoid *);
+	virtual Sky *newSky();
+	virtual Ring *newRing();
+
 };
 
 //************************************************************
@@ -718,7 +730,7 @@ public:
 	NodeIF *getInstance();
 	static Planet *newInstance();
 	static void newGasGiant(Planet *);
-	static void newCratered(Planet *);
+	static void newRocky(Planet *);
 };
 
 //************************************************************

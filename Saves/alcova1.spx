@@ -9,9 +9,8 @@ Scene() {
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=0.001;
-		minh=1.13636e-09;
-		minr=0.00100049;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=25;
 		tilt=-10;
 		angle=1;
@@ -21,6 +20,15 @@ Scene() {
 	}
 	View{
 		delt=200;
+		vstride=0.02;
+		zoom=0.001;
+		minh=1.13636e-09;
+		radius=0.00100061;
+	}
+	View{
+		height=538.683 ft;
+		minr=0.00100049;
+		radius=0.00100059;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -43,7 +51,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6000;
+				temperature=6540.73;
 				Surface{
 					m1=noise(GRADIENT|UNS,3,6,0.2);
 					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
@@ -66,6 +74,7 @@ Scene() {
 				fog.value=1;
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
+				ocean.level=1388.8 ft;
 				shadow=Color(0,0,0,0.51);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
@@ -74,24 +83,26 @@ Scene() {
 				water.clarity=48.952 ft;
 				water.color1=Color(0.68,0.94,0.93,0.54);
 				water.color2=Color(0,0.3,0.3);
-				water.level=1388.8 ft;
+				water.level=2.6303e-07;
 				year=30;
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				wl=water.level*GTOL;
-				bands("bands1",ACHNL,32,0.2,0.4,RAND,Color(0.8,0.698,0.2));
+				bands("dessert",ACHNL,128,0.07142,0.6,Color(1,0.635,0.086,0.6),Color(1,0.886,0.486),
+					Color(0.165,0,0),
+					Color(0,0,0));
 				image("cracks2",INVT,256,256,noise(GRADIENT|NABS|SQR,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-				image("bmap1",1,256,noise(GRADIENT|NABS|NEG|UNS,2,10,0.81,0.2,2));
+				image("bmap1",ACHNL|NORM,256,256,noise(GRADIENT|NABS|UNS,0,5.4,0.02,0.2,2,0.5,4,0,0,1e-06),"red-browns");
 				Surface{
 					ripples=0.0002*noise(20,2);
 					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
 					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.68,0.13,0.35,0.52)m1;
 					terrain=fog(2*noise(8,5))
-							water(0.0002*noise(20,2))
+							ocean(0.0002*noise(20,2))
 							Z(0.5*z1)+
-							Texture("bands1",NORM|S|TEX,0,256,2,2,1.77776,1,2,1,0,0,1,0.19444,0.25)+
-							Texture("cracks2",BUMP,9999,-0.44448,1,0,10,2.29232,1,0,0,0,0,0)+
+							Texture("dessert",NORM|S|TEX,0,256,2,2,1.77776,1,2,1,0,0,1,0.19444,0.25)+
+							Texture("cracks2",BUMP,1105.9,-0.22208,1,0,10,2.29232,1,0,0,0,0,0)+
 							Texture("bmap1",BUMP|S,HT,5.65685,0.66656,1.0788,0,1,2,0,0);
 				}
 				Sky(0.0011) {
@@ -105,6 +116,7 @@ Scene() {
 					specular=Color(1,1,1);
 					tilt=10;
 					twilight=Color(0,0.47,1);
+					year=30;
 				}
 			}
 		}

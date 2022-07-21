@@ -610,6 +610,8 @@ void FrameMgr::getObject(ViewFrame *v)
     }
     LinkedList<ObjectNode*>children;
     ObjectNode *obj=(ObjectNode*)objects.ss();
+    if(!obj)
+    	return;
     if(strcmp(obj->name(),objs[0])==0){
         while((obj=(ObjectNode*)objects.next())>0)
             children.add(obj);

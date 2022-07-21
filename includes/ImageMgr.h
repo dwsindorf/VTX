@@ -148,7 +148,7 @@ public:
 							}
 	void set_alpha(int i)	{ opts.flags.alpha=i;}
 	void set_alpha_image(int i)	{ opts.flags.alpha_image=i;}
-	int alpha()				{ return opts.flags.type==RGBA_DATA ? opts.flags.alpha:0;}
+	int alpha()				{ return opts.flags.type==RGBA_DATA ? tx1d()&&opts.flags.alpha:0;}
 	int alpha_image()       { return opts.flags.alpha_image;}
 	int txtype() 			{ return (height==1 || width==1)?GL_TEXTURE_1D:GL_TEXTURE_2D;}
 	int tx1d()				{ return (height==1 || width==1)?1:0;}
@@ -206,7 +206,8 @@ public:
 class ImageReader
 {
     enum  {
-		BUILDING   	= 0x1000
+		BUILDING   	  = 0x1000,
+		NEED_REBUILD  = 0x2000
 	};
 
 	int   flags;
@@ -226,6 +227,11 @@ public:
 
 	void set_building(int i)     { BIT_SET(flags,BUILDING,i);}
 	int building()               { return flags&BUILDING;}
+
+	void invalidate()            { BIT_ON(flags,NEED_REBUILD);}
+	void validate()              { BIT_OFF(flags,NEED_REBUILD);}
+
+	int invalid()               { return flags&NEED_REBUILD;}
 
 	void getImageInfo(int, LinkedList<ImageSym*> &list);
 

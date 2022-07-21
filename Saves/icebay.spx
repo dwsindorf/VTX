@@ -6,7 +6,7 @@ Scene() {
 		height=649.017 ft;
 		gndlvl=2569.13 ft;
 		time=6192.28;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -40,7 +40,7 @@ Scene() {
 		view=SURFACE;
 		phi=-26.7188;
 		theta=105.469;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=1434.15 ft;
 		heading=0;
 		pitch=0;
@@ -73,7 +73,7 @@ Scene() {
 		view=SURFACE;
 		phi=-24.6094;
 		theta=103.359;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=1388.64 ft;
 		heading=0;
 		pitch=0;
@@ -101,7 +101,7 @@ Scene() {
 		view=SURFACE;
 		phi=-26.7188;
 		theta=85.7812;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=2189.3 ft;
 		heading=0;
 		pitch=0;
@@ -153,14 +153,20 @@ Scene() {
 		theta=86.1774;
 		time=5302.18;
 		heading=-181;
+	}
+	View{
+		time=49065.4;
 		vstride=0.02;
 		zoom=0.001;
 		minh=1.13636e-09;
 		radius=0.00100052;
 	}
 	View{
-		time=49065.4;
+		height=1516.55 ft;
+		tilt=-11;
+		angle=-4;
 		minr=0.00100027;
+		radius=0.00100056;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -183,7 +189,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6000;
+				temperature=6540.73;
 				Surface{
 					m1=noise(GRADIENT|UNS,3,6,0.2);
 					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
@@ -200,7 +206,7 @@ Scene() {
 				}
 			}
 			Planet(0.001,100) {
-				albedo=0.353748;
+				albedo=0.49;
 				ambient=Color(1,1,1,0.03);
 				day=5;
 				fog.min=100 ft;

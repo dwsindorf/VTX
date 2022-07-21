@@ -351,6 +351,8 @@ public:
 	void validateVariables();
 	void init_render();
 	void saveNode(FILE *f);
+	bool addTextureImage(char *name);
+
 };
 
 

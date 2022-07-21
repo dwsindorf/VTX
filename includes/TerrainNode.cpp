@@ -115,7 +115,7 @@ ExprMgr *TNode::getExprMgr()
 {
 	NodeIF *obj=getParent();
 
-	while(obj && obj->typeValue() != ID_EXPMGR){
+	while(obj && obj->typeValue() != ID_TNMGR){
 		obj=obj->getParent();
 	}
 	return (ExprMgr*)obj;

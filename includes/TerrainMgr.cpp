@@ -10,8 +10,8 @@
 #include <math.h>
 
 //#define DEBUG_VARS  // show var status on save
-#define DEBUG_INIT  // show var status on save
-#define DEBUG_IMAGES
+//#define DEBUG_INIT  // show var status on save
+//#define DEBUG_IMAGES
 
 extern void sx_error(char *msg,...);
 extern double Rand();
@@ -1305,6 +1305,7 @@ void TerrainMgr::validateTextures()
     if(!parent || !root)
         return;
 	CurrentScope=this;
+	
 
 	textures.reset();
 	root->visit(get_textures);
@@ -1313,6 +1314,8 @@ void TerrainMgr::validateTextures()
 	TNinode  *inode;
 	TNode    *tnode;
 	ExprMgr *imgr=(ExprMgr*)parent;
+	
+//	cout<<"TerrainMgr::validateTextures() start images="<<imgr->inodes.size<<endl;
 
 	imgr->inodes.ss();
 	while((tnode=imgr->inodes++)>0)
@@ -1322,26 +1325,21 @@ void TerrainMgr::validateTextures()
 	// add new texture variables
 
 	while((tex=(TNtexture*)textures++)>0){
-	    char name[256];
-	    int opts=tex->opts;
-	    images.hashName(tex->name,opts,name);
-		inode=imgr->get_image(tex->name,opts);
-		// old: if texture image name is in "images" retain current imgr->image_expr
-		// new: replace imgr->image_expr with "images" spx file to catch editor changes
-		if(inode){
-			//inode->NodeIF::validate();  // old:mark used
-			//continue;
-			imgr->inodes.free((TNode*)inode); // new
-		}
-	    char *s=images.readSpxFile(name);
-	    if(!s)
+		if(!addTextureImage(tex->name))
 			continue;
-	    TNode *tnode=(TNode*)TheScene->parse_node(s);
-#ifdef DEBUG_IMAGES
-	    printf("%-20s ADDING TERRAIN IMAGE %s\n","TerrainMgr",tex->name);
-#endif
-	    imgr->add_image(tnode);
-	    FREE(s);
+
+	    int opts=tex->opts;
+		inode=imgr->get_image(tex->name,opts);
+		if(inode){
+			if(inode->gradName()){
+				TNinode *gnode=imgr->get_image(inode->gradName(),opts);
+				if(gnode)
+					imgr->inodes.free((TNode*)gnode);
+		
+				addTextureImage(inode->gradName());
+			}			
+			imgr->inodes.free((TNode*)inode); // new	
+		}
 	}
 
 	// remove unused texture variables
@@ -1355,8 +1353,27 @@ void TerrainMgr::validateTextures()
 		else
 			imgr->inodes++;
 	}
+	
+//	cout<<"TerrainMgr::validateTextures() end images="<<imgr->inodes.size<<endl;
+
 }
 
+bool TerrainMgr::addTextureImage(char *name){
+	ExprMgr *imgr=(ExprMgr*)parent;
+
+    char *s=images.readSpxFile(name);
+    if(!s)
+		return false;
+    TNode *tnode=(TNode*)TheScene->parse_node(s);
+#ifdef DEBUG_IMAGES
+    printf("%-20s ADDING TERRAIN IMAGE %s\n","TerrainMgr",name);
+#endif
+    tnode->init();
+    imgr->add_image(tnode);
+    FREE(s);
+    return true;
+
+}
 //-------------------------------------------------------------
 // TerrainMgr::save() archive
 //-------------------------------------------------------------

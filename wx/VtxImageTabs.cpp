@@ -201,15 +201,7 @@ void VtxImageTabs::makeRevertList(){
 // VtxImageTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxImageTabs::makeImageList(){
-	char path[256];
-	FileUtil::getBitmapsDir(path);
-
-    wxDir dir(path);
-
-    if (!dir.IsOpened() ){
-    	cout << "Could not open Bitmap directory"<< endl;
-    	return;
-    }
+	cout<<"VtxImageTabs::makeImageList()"<<endl;
     images.makeImagelist();
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(type, list);
@@ -310,7 +302,7 @@ void VtxImageTabs::OnGradientSelect(wxCommandEvent& event){
 // VtxImageTabs::updateControls() update controls
 //-------------------------------------------------------------
 void VtxImageTabs::updateControls(){
-	if(update_needed)
+	//if(update_needed)
 		getObjAttributes();
 }
 
@@ -334,8 +326,8 @@ void VtxImageTabs::Invalidate(){
 // VtxImageTabs::getObjAttributes() when switched in
 //-------------------------------------------------------------
 void VtxImageTabs::getObjAttributes(){
-	if(!update_needed)
-		return;
+	//if(!update_needed)
+	//	return;
 	makeImageList();
 	makeGradientsList();
 	displayImage((char*)m_name.ToAscii());

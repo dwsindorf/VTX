@@ -71,6 +71,8 @@ TNinode::TNinode(char *s, int l, TNode *r) : TNvector(r)
 	opts=l;
 	image=0;
 	name=0;
+	gname=0;
+
 	setName(s);
 	FREE(s);
 }
@@ -78,6 +80,7 @@ TNinode::TNinode(char *s, int l, TNode *r) : TNvector(r)
 TNinode::~TNinode()
 {
 	FREE(name);
+	FREE(gname);
 	DFREE(expr);
 	DFREE(right);
 }
@@ -170,6 +173,17 @@ void TNinode::setName(char *s)
 	if(s){
 	 	MALLOC(strlen(s)+1,char,name);
 		strcpy(name,s);
+	}
+}
+//-------------------------------------------------------------
+// TNinode::setName() set name
+//-------------------------------------------------------------
+void TNinode::setGName(char *s)
+{
+	FREE(gname);
+	if(s){
+	 	MALLOC(strlen(s)+1,char,gname);
+		strcpy(gname,s);
 	}
 }
 
@@ -539,6 +553,19 @@ void TNimage::init()
 	w=(int)S0.s;
 
 	Image *im = 0;
+
+	arg=arg->next();
+	value=arg->left;
+	arg=arg->next();
+	if(arg && !(opts&GRAY)){
+		arg->eval();
+		if(S0.strvalid()){
+			if(gname && strcmp(gname,S0.string))
+				BIT_ON(opts,CHANGED);
+			setGName(S0.string);
+			grad=images.load(gname,BMP|JPG);
+		}
+	}
 	if (!(opts & CHANGED)) {
 		im = images.load(name, this);
 		if (im) {
@@ -550,18 +577,9 @@ void TNimage::init()
 			return;
 		}
 	}
+
 	double start=clock();
 
-	arg=arg->next();
-	value=arg->left;
-	arg=arg->next();
-	if(arg && !(opts&GRAY)){
-		arg->eval();
-		char *s="unknown";
-		if(S0.strvalid())
-			s=S0.string;			
-		grad=images.load(s,BMP|JPG);
-	}
 	
 #ifdef DEBUG_IMAGES
 	Noise::resetStats();
