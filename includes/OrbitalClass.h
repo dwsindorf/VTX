@@ -21,6 +21,8 @@ class TNclist;
 class TNclouds;
 class Sky;
 class Ring;
+class CloudLayer;
+
 class Triangle;
 
 enum orbital_codes{
@@ -148,6 +150,8 @@ public:
     virtual bool isViewobj();
 	virtual void setRseed(double s) {rseed=s;}
 	virtual double getRseed() {return rseed;}
+	TNvar *addExprVar(const char *,const char *);
+
 
 	// NodeIF methods
 
@@ -284,13 +288,14 @@ public:
 class System : public Orbital
 {
 private:
-	int m_planets;
-	int m_stars;
     void get_system_stats();
 public:
-    void set_system(Point p);
+ 	int m_planets;
+	int m_stars;
+   void set_system(Point p);
     static Point galaxy_origin;
     static bool building_system;
+    static System *TheSystem;
 
 	System(Orbital *m, double s);
 	System(double s);
@@ -385,6 +390,8 @@ public:
 	bool hasChildren();
 	int getChildren(LinkedList<NodeIF*>&l);
 	Map *getMap()                       { return map;}
+	
+	void addTerrainVar(const char *,const char *);
 
 };
 
@@ -620,7 +627,8 @@ public:
 	char *getSpritesFile(GLuint &dim);
 	void getSpritesFilePath(char *);
 	void getSpritesDir(int dim,char *);
-
+    NodeIF *getInstance();
+	static CloudLayer *newInstance();
 };
 
 //************************************************************
@@ -676,6 +684,11 @@ public:
 	static Color tc;
 	static int planet_id;
 	static int planet_cnt;
+	static int nsave;
+	static int ncount;
+	static int tcount;
+
+	static double planet_orbit;
 
 	static void setColors();
 	static void initInstance();
@@ -711,9 +724,18 @@ public:
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
 	static void newRocky(Planetoid *);
+	static std::string newLocalTex(Planetoid *);
+	static std::string newGlobalTex(Planetoid *);
+	static std::string newDualGlobalTex(Planetoid *);
+	static std::string newOcean(Planetoid *);
+
+	static std::string newHmapTex(Planetoid *);
+    static void pushInstance(Planetoid *);
+    static void popInstance(Planetoid *);
+
 	virtual Sky *newSky();
 	virtual Ring *newRing();
-
+	virtual CloudLayer *newClouds();
 };
 
 //************************************************************

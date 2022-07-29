@@ -1,22 +1,31 @@
 Scene() {
+	drawmode=1;
 	View{
 		view=ORBITAL;
-		phi=-15.8883;
-		theta=356.953;
-		height=0.006;
-		gndlvl=-23608.2 ft;
-		time=32746.6;
+		phi=25.2905;
+		theta=78.9124;
+		height=3.75043;
+		time=5.13781e+06;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
+		zoom=1.87522;
 		minh=1.13636e-09;
-		minr=0.00399553;
+		minr=0.00773765;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.2;
+	}
+	View{
+		height=0.00707098;
+		zoom=0.00353549;
+		radius=0.0106065;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.2;
+	}
+	View{
+		minr=0.00353549;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -33,38 +42,147 @@ Scene() {
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
 				);
-			System(1000) {
-				Star(0.5,0) {
+			System(2.7028) {
+				rseed=0.919479;
+				Star(0.6757,0) {
+					day=0.512879;
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
+					emission=Color(1,0.98,0.92);
+					rseed=0.0835083;
 					specular=Color(1,1,1);
-					symmetry=0.95;
-					temperature=6540.73;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
+					temperature=5460.15;
+					year=6.37994;
+					bands("tmp/S113517",CLAMP,16,Color(1,0.992,0.969),Color(1,0.984,0.937),Color(1,0.973,0.875),Color(0.498,0.486,0.435),
+						Color(0.247,0.243,0.216));
+					Surface{
+						terrain=
+								Texture("tmp/S113517",BORDER|S|TEX,noise(GRADIENT|FS|NABS|SQR|TA|UNS|RO1,0.9,8.9,0.9,0.01,2.06,1,1,0,0,1e-06),0.5,2,1,0,1,2,1,0.9,0,0,0,0);
+					}
+					Halo(0.682457) {
+						color1=Color(1,0.97,0.87);
+						color2=Color(1,0.97,0.87);
+						density=0.9;
+						gradient=0.8;
+					}
+					Corona(2.80797) {
+						color1=Color(1,0.97,0.87,0.8);
+						color2=Color(1,0.78,0.7);
+						name="outer";
+					}
+					Corona(0.74327) {
+						color1=Color(1,0.98,0.9);
+						color2=Color(1,0.97,0.87);
+						name="inner";
+						noise.expr=noise.expr=noise(GRADIENT|FS|NABS|NLOD|SQR|TA|RO1,0,7,1,0.16,2.17,1,1,0,1,1e-06);
 					}
 				}
-				Planet(0.004,100) {
-					day=24;
-					hscale=0.004;
-					ocean.level=1.76109e+09 ft;
-					rseed=1.93682;
-					specular=Color(1,1,1,0.31);
-					year=100;
-					bands("grad",ACHNL|NORM|REFLECT,16,0.03572,0.40322,Color(0,0,0,0.4),Color(1,0.529,0),
-						Color(1,0.863,0.635),
-						Color(0.329,0.18,0.024),
-						Color(0.576,0.537,0.537),
-						Color(0.655,0.471,0.024),
+				Planet(0.00565354,62.1221) {
+					day=70.6204;
+					hscale=0.003;
+					rseed=0.697922;
+					year=241.163;
+					bands("tmp/P113556",NORM|REFLECT,16,0.194962,0.381774,Color(0.812,0.424,0.31),Color(0.227,0.227,0.082),
+						Color(1,1,0.686),
+						Color(1,1,0.361),
+						Color(0.231,0.231,0.082),
 						Color(1,1,1));
-					image("craters",GRAY|NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2),"grad");
+					image("tmp/H113556",GRAY|NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					image("tmp/L113577",ACHNL|NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2),"tmp/P113577");
+					bands("tmp/P113577",NORM|REFLECT,16,0.207993,0.444404,Color(1,0.4,0.384),Color(0.22,0.22,0.173),
+						Color(1,1,0.894),
+						Color(1,1,0.792),
+						Color(0,0,0),
+						Color(1,1,0.922));
+					image("tmp/L113587",ACHNL|NORM,256,256,noise(VORONOI|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4),"tmp/P113587");
+					bands("tmp/P113587",NORM|REFLECT,16,0.236062,0.312969,Color(0.718,0.118,0.286),Color(0.341,0.341,0.227),
+						Color(1,1,0.831),
+						Color(1,1,0.671),
+						Color(0.333,0.333,0.224),
+						Color(1,1,1));
 					Surface{
-						terrain=fractal(SQR|SS,17+noise(GRADIENT|NABS|NNORM|SQR|UNS,6,6,0.17,0.3,2.3,2,4,0,0.5,1e-06),4,0,0.01,0.5,0.1,0,1,1,1)
-								Texture("grad",BORDER|LINEAR|NORM|TEX,48.4022,2,1,-0.11104,1,2,1,0,0.02,-0.3,0,-0.1)+
-								Texture("craters",HMAP|LINEAR|S,noise(GRADIENT|SCALE,4.3,6.3,0.15,0.4,2.28,0.34,4,0,0,1e-06),0.5,1,1,0,10.3331,2.44448,0.3,0,1,0,0,0,0,0)+Z(0.2*craters(ID2,7,0.000637042,0.37,0.31,1,0.66,0.23,0.44,0.2,0.4,0.8,0.6,0.2,0)+min(noise(GRADIENT|NABS|NEG|NNORM|SQR,0.5,11,0.07,0.4,2.7,1,1,0,2,1e-06),craters(ID17,7,0.5,0.2,0,0,0,1,1,0.2,0.2,0.5,0.23,0.2,0)));
+						terrain=fractal(SQR|SS,15+3*noise(SIMPLEX|NLOD|UNS,6,1,1,0.5,2.2,1,4,0,0.5,1e-06),4,0.1,0,1,0.1,0,0,1,0)
+								Texture("tmp/P113556",NORM|TEX,31.7985,1.90887,1,0,1,2,1,0,0.02,0.2,0,-0.037886)+
+								Texture("tmp/H113556",HMAP|LINEAR|S,noise(VORONOI|NABS|NEG|SCALE,4,6,0.15,0.4,2.28,0.34,4,0,0,1e-06),0.603402,1,1,0,10,2.84831,0.28943,0,0.401948,0.25,0,0,0,0)+
+								Texture("tmp/L113577",BORDER|BUMP|NORM|RANDOMIZE|TEX,4096,0.4,2,0,3.5,2.22202,0.5,0,0,0.2,0,0.3)+
+								Texture("tmp/L113587",BORDER|BUMP|NORM|RANDOMIZE|TEX,4096,0.4,2,0,3.5,1.56485,0.5,0,0,-0.2,0,-0.3)+Z(noise(VORONOI|NABS|SQR,1.5,12,0.34,0.3,2,1,4,0,0,1e-06)+min(noise(VORONOI|NABS|NEG|NNORM|SQR|RO1,0.5,14.8,0.17,0.51,2.7,1,1,0,2,1e-06),0));
+					}
+					Sky(0.00593622) {
+						color=Color(0.51,0.71,0.74);
+						day=70.6204;
+						density=0.118453;
+						ghg_fraction=0.204178;
+						haze.color=Color(0.95,0.97,0.97,0.57);
+						haze.grad=0.693518;
+						pressure=0.650863;
+						resolution=4;
+						specular=Color(1,1,1);
+						year=241.163;
+					}
+					Clouds(0.00576661) {
+						crot=1;
+						resolution=4;
+						Surface{
+							terrain=Color(1,1,1,twist(0.1,noise(SIMPLEX|FS|NABS|SQR|TA,1,6.4,1,0.5,2.48535,1,1,0,0.8,1e-05)));
+						}
+					}
+				}
+				Planet(0.00353549,116.151) {
+					day=189.145;
+					hscale=0.003;
+					rseed=0.788813;
+					year=594.096;
+					bands("tmp/P2849",NORM|REFLECT,16,0.171949,0.405115,Color(1,0.235,0.482),Color(0.259,0.271,0.137),
+						Color(0.976,1,0.741),
+						Color(0.957,1,0.518),
+						Color(0.169,0.176,0.09),
+						Color(0.992,1,0.941));
+					bands("tmp/P2859",NORM|REFLECT,16,0.223761,0.393042,Color(0.643,0.22,0.486),Color(0.208,0.208,0.149),
+						Color(1,1,0.863),
+						Color(1,1,0.718),
+						Color(0.231,0.231,0.165),
+						Color(1,1,1));
+					image("tmp/L2869",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4),"tmp/P2869");
+					bands("tmp/P2869",NORM|REFLECT,16,0.158279,0.470364,Color(1,0.2,0.337),Color(0.298,0.298,0.204),
+						Color(1,1,0.839),
+						Color(1,1,0.69),
+						Color(0,0,0),
+						Color(1,1,1));
+					image("tmp/L2879",ACHNL|NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2),"tmp/P2879");
+					bands("tmp/P2879",NORM|REFLECT,16,0.152839,0.453864,Color(1,0.329,0.396),Color(0.157,0.137,0.027),
+						Color(1,0.941,0.62),
+						Color(1,0.878,0.192),
+						Color(0.035,0.031,0.004),
+						Color(1,0.973,0.824));
+					image("tmp/H2879",GRAY|NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					Surface{
+						n1=noise(GRADIENT|SCALE|SQR,0.452053,4.5,0.33994,0.29,2.65002,5,4,0,-0,1e-06);
+						terrain=snow(-0.841581,1,0.25,-0.25,1,0.1)
+								fractal(SQR|SS,15+3*noise(SIMPLEX|NLOD|UNS,6,1,1,0.5,2.2,1,4,0,0.5,1e-06),4,0.1,0,1,0.1,0,0,1,0)
+								Texture("tmp/P2849",A|NORM|TEX,n1,30.6296,2,1,0,1,2,1,0,0.02,0.2,0,0.1)+
+								Texture("tmp/P2859",A|NORM|TEX,-n1,32.6303,2,1,0,1,2,1,0,0.02,0.2,0,-0.1)+
+								Texture("tmp/L2869",BORDER|BUMP|NORM|RANDOMIZE|TEX,4096,0.2,2,0,7,2.37768,0.5,0,0,-0.2,0,-1)+
+								Texture("tmp/L2879",BORDER|BUMP|NORM|RANDOMIZE|TEX,4096,0.2,2,0,7,2.18205,0.5,0,0,0.2,0,1)+
+								Texture("tmp/H2879",HMAP|LINEAR|S,noise(SIMPLEX|NABS|NEG|SCALE,4,6,0.15,0.4,2.28,0.34,4,0,0,1e-06),0.672014,1,1,0,10,2.6592,0.427716,0,0.443811,0.25,0,0,0,0)+Z(craters(ID2,5,0.707727,0.2,0.178431,0.13,0.4,1,1,0.2,0.206417,0.8,0.6,0.2,0)
+								noise(GRADIENT|NABS|SQR,1.5,12,0.34,0.3,2,1,4,0,0,1e-06)+min(noise(GRADIENT|NABS|NEG|NNORM|SQR|RO1,0.5,14.8,0.17,0.51,2.7,1,1,0,2,1e-06),0));
+					}
+					Sky(0.00371227) {
+						color=Color(0.31,0.72,0.75);
+						day=189.145;
+						density=0.127756;
+						ghg_fraction=0.0417414;
+						haze.color=Color(0.93,0.97,0.97,0.58);
+						haze.grad=0.679046;
+						pressure=0.732528;
+						resolution=4;
+						specular=Color(1,1,1);
+						year=594.096;
+					}
+					Clouds(0.0036062) {
+						crot=1;
+						resolution=4;
+						Surface{
+							terrain=Color(1,1,1,twist(0.1,noise(SIMPLEX|FS|NABS|SQR|TA,1,6.4,1,0.5,2.27355,1,1,0,0.8,1e-05)));
+						}
 					}
 				}
 			}

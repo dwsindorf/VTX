@@ -317,7 +317,7 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
 
 	NodeIF *m=getPrototype(obj,type);
-	//cout<<"UniverseModel::makeObject "<<n->getParent()->typeName()<<" "<<n->typeName()<<endl;
+	cout<<"UniverseModel::makeObject "<<obj->getParent()->typeName()<<" "<<obj->typeName()<<endl;
 	NodeIF *n=m->getInstance();
 	if(n){
 		n->setType(type);
@@ -1693,6 +1693,13 @@ void Scene::set_viewobj(ObjectNode *obj)
 		viewobj=obj;
 		set_changed_object();
 	}
+    ObjectNode *p=0;
+    if(viewobj->type()==ID_MOON)
+    	p=viewobj->getParent()->getParent();
+    else if(viewobj->type()==ID_PLANET || viewobj->type()==ID_STAR)
+    	p=viewobj->getParent();
+    if(p && p->type()==ID_SYSTEM)
+    	System::TheSystem=(System *)p;
 	set_obj_path();
 }
 

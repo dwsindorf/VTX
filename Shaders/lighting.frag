@@ -64,7 +64,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float LdotN     = dot(light,normal);  // for day side diffuse lighting
 		float LdotR     = dot(light,radius ); // for horizon band calculation
 		float horizon   = lerp(LdotR,twilite_dph+twilite_min,twilite_dph+twilite_max,0.0,1.0); // twilite band
-		float intensity = 1.0/gl_LightSource[i].constantAttenuation;
+		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
 		//illumination   += 2.0*LdotN*intensity*horizon;

@@ -287,7 +287,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);
 			}
-			else if( name == "Complex")
+			else if( name == "Procedural")
 				newobj=TheScene->makeObject(obj,sym->value);
 			else
 				newobj=TheScene->getPrototype(obj,sym->value);
@@ -963,8 +963,8 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
 	submenu->Append(TABS_ADD|i++,"Simple");
-	submenu->Append(TABS_ADD|i++,"Complex");
-	add_list.add(new ModelSym("Complex",sym->value));
+	submenu->Append(TABS_ADD|i++,"Procedural");
+	add_list.add(new ModelSym("Procedural",sym->value));
 
 	submenu->AppendSeparator();
 	flist.ss();
@@ -992,7 +992,7 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	int type=obj->getFlag(TN_TYPES);
 
 	submenu->Append(TABS_REPLACE|i++,"Simple");
-	submenu->Append(TABS_REPLACE|i++,"Complex");
+	submenu->Append(TABS_REPLACE|i++,"Procedural");
 
 	submenu->AppendSeparator();
 
@@ -1002,7 +1002,7 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 
 	ModelSym* sym=TheScene->model->getObjectSymbol(type);
 	replace_list.add(sym);
-	replace_list.add(new ModelSym("Complex",type));
+	replace_list.add(new ModelSym("Procedural",type));
 
 	TheScene->model->getFileList(type,flist);
 
