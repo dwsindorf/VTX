@@ -215,6 +215,7 @@ public:
 	NodeIF *replaceNode(NodeIF *c);
 	int typeValue()			{ return ID_WATER;}
 	const char *typeName ()	{ return "ocean";}
+	NodeIF *getInstance();
 };
 
 //************************************************************

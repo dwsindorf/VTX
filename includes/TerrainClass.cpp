@@ -1505,11 +1505,14 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	left=(TNarg*)water_noise;
 	((TNarg*)left)->right=ice_noise;
 
-	//delete c;
-	//delete water_noise->right;
-	//delete ice_noise->right;
-	//water_noise->right=0;
-	//ice_noise->right=0;
+	return this;
+}
+
+NodeIF *TNwater::getInstance(){
+	Planetoid *planet=(Planetoid *)getOrbital(this);
+	if(planet){
+		Sky *sky=planet->getChild(ID_SKY);
+	}
 	return this;
 }
 

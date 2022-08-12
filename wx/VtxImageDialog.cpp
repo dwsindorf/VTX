@@ -216,8 +216,8 @@ void VtxImageDialog::setTitle(){
 }
 bool VtxImageDialog::Show(const bool b){
 	if(b){
-		m_2D_tabs->updateControls();
 		m_1D_tabs->updateControls();
+		m_2D_tabs->updateControls();
 		m_img_tabs->updateControls();
 		m_map_tabs->updateControls();
 		UpdateControls();

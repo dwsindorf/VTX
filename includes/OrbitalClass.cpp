@@ -83,6 +83,8 @@ static double	def_ice_mix=0.95;
 static double 	def_ice_specular=0.8;
 static double 	def_ice_shine=10;
 
+static const char *def_ocean_expr="-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
+
 static Color 	def_haze_color=WHITE;
 static double  	def_haze_value=0;
 static double  	def_haze_min=100*FEET;
@@ -246,7 +248,10 @@ TNvar *Orbital::addExprVar(const char *name,const char *expr){
 	char *var_name;
 	MALLOC(32, char, var_name);
 	strcpy(var_name, name);
-	TNode *var=TheScene->parse_node(buff);
+	TNode *val=TheScene->parse_node(buff);
+	TNvar *var=(TNvar*)exprs.add_expr(var_name,val);
+	if(!var)
+		cout<<"parser error:"<<expr<<endl;
 	return (TNvar *)var;
 }
 
@@ -1836,14 +1841,13 @@ void System::set_system(Point p)
 	lastn=rseed*123457;
 
 	double ps=pow(URAND(lastn),2);
-	m_stars=1.1+ps*3;
-	double pp=URAND(lastn++);
+	m_stars=1+ps*3;
+	m_stars=m_stars<1?1:m_stars;
+	double pp=pow(URAND(lastn++),2);
 	if(m_stars==1)
-		m_planets=1+ps*12;
+		m_planets=0.9+pp*12;
 	else
-		m_planets=0.5+ps*5;
-	//m_planets=1;
-
+		m_planets=0.5+pp*5;
 }
 
 NodeIF *System::getInstance(){
@@ -3397,10 +3401,14 @@ void Planetoid::get_vars()
 	VGET("ice.shine",ice_shine,def_ice_shine);
 
 	TNvar *var=exprs.getVar((char*)"ocean.expr");
-	if(var){
-		var->applyExpr();
-		ocean_expr=var->right;
+	if(!var){
+		var=addExprVar("ocean.expr",def_ocean_expr);
+		var->eval();
 	}
+	else
+			var->applyExpr();
+	
+	ocean_expr=var->right;
 
 	VGET("fog.value",fog_value,def_fog_value);
 	VGET("fog.glow",fog_glow,def_fog_glow);
@@ -3432,7 +3440,7 @@ void Planetoid::set_vars()
 	VSET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	VSET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
 	exprs.set_var("ocean.name",ocean_name,ocean_name[0]!=0);
-
+	
     CSET("water.color1",water_color1,def_water_color1);
     CSET("water.color2",water_color2,def_water_color2);
 	USET("water.clarity",water_clarity,def_water_clarity,"ft");
@@ -3455,6 +3463,7 @@ void Planetoid::set_vars()
 	USET("fog.max",fog_max,def_fog_max,"ft");
 	USET("fog.vmin",fog_vmin,def_fog_vmin,"ft");
 	USET("fog.vmax",fog_vmax,def_fog_vmax,"ft");
+	
 }
 //-------------------------------------------------------------
 // Planetoid::setProgram() set shader program;
@@ -4035,14 +4044,6 @@ void Planetoid::calcTemperature() {
 	while ((obj = (Orbital*) System::TheSystem->children++) > 0) {
 		if (obj->type() == ID_STAR) {
 			double d = point.distance(obj->point);// - obj->size - size;
-			//cout<<"d "<<d<<endl;
-
-			//if(d<1){
-//				point.print(str);
-//				obj->point.print(str+strlen(str));
-//				cout<<"p "<<str<<endl;
-				//return;
-			//}
 			double Ts = ((Star*) obj)->temperature;
 			double f = 0.452; // constant relating star to planet temp
 			double a = pow(1 - albedo, 0.25);
@@ -4078,8 +4079,10 @@ void Planetoid::calcTemperature() {
 int  Planetoid::getOceanFunction(char *buff){
 	buff[0]=0;
 	TNvar *var=exprs.getVar((char*)"ocean.expr");
-	if(!var)
+	if(!var){
+		cout<<"ocean.expr missing"<<endl;
 		return 0;
+	}
 	TNode *expr=var->getExprNode();
 	if(!expr)
 		expr=var->right;
@@ -4092,11 +4095,8 @@ int  Planetoid::getOceanFunction(char *buff){
 }
 void  Planetoid::setOceanFunction(char *expr){
 	TNvar *var = exprs.getVar((char*) "ocean.expr");
-    if(strlen(expr)==0){
-    	if(var)
-    		exprs.removeVar("ocean.expr");
-    	ocean_expr=0;
-    	return;
+    if(var && strlen(expr)==0){
+    	exprs.removeVar("ocean.expr");
     }
     else if (!var) {
     	var=addExprVar("ocean.expr",expr);
@@ -4253,7 +4253,7 @@ void Planetoid::setColors(){
 			tc.set_blue(tc.blue()+0.1*s[i+2]);
 			colors[i]=tc;		
 		}
-		cout<<"theme "<<index<<endl;
+		//cout<<"theme "<<index<<endl;
 	}
 	else{
 		ncolors=6;
@@ -4265,7 +4265,7 @@ void Planetoid::setColors(){
 		colors[3]=tc;
 		colors[4]=tc.darken(0.9+0.6*s[9]);
 		colors[5]=tc.lighten(0.9+0.6*s[6]);
-		cout<<"random "<<endl;
+		//cout<<"random "<<endl;
 	}	
 }
 
@@ -4324,7 +4324,7 @@ Planet *Planet::newInstance(){
 	Planet *planet=TheScene->getPrototype(0,ID_PLANET);
 	planet_id=planet_cnt+lastn;
 	planet->setRseed(r[0]);
-	planet->orbit_radius=planet_orbit+20+50*r[4];
+	planet->orbit_radius=1.3*(planet_orbit+20+50*r[4]);
 	planet->orbit_distance=planet->orbit_radius;
 	//planet->locate();
 
@@ -4373,6 +4373,8 @@ enum orbital_features{
 	RND_LOCAL_TEX,
 	RND_LOCAL_IMAGE,
 	RND_OCEAN_EXPR,
+	RND_OCEAN_FUNC,
+
 };
 
 std::string gets(char *s[], int n, double r){
@@ -4438,12 +4440,15 @@ std::string Planetoid::randFeature(int type) {
 		str="craters(ID2,5,";
 		str+=std::to_string(0.6+0.4*s[1]);
 		str+=",0.2,";
-		str+=std::to_string(1.1*r[7]-0.2);  // fraction
+		str+=std::to_string((r[7]-0.2)/0.8);  // probability
 		str+=",0.13,0.4,1,1,0.2,";
 		str+=std::to_string(0.6*r[7]); //drop
 		str+=",0.8,0.6,0.2,0)";
 		break;
 	case RND_OCEAN_EXPR:
+		str="-0.4*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
+		break;
+	case RND_OCEAN_FUNC:
 		str="ocean(noise(GRADIENT|SCALE,17.7,3,-0.34,0.5,2.08,0.22,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
 		break;
 	case RND_HCRATERS:
@@ -4453,7 +4458,13 @@ std::string Planetoid::randFeature(int type) {
 		str="min(noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|NNORM|SQR|RO1,0.5,14.8,0.17,0.51,2.7,1,1,0,2,1e-06),0)";
 		break;
 	case RND_MOUNTAINS:
-		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|SQR,1.5,12,0.34,0.3,2,1,4,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SQR,1.5,16,";
+		str+=std::to_string(0.0+0.5*s[7]); //homogeneity
+		str+=",";
+		str+=std::to_string(0.3+0.1*r[7]); //atten
+		str+=",";
+		str+=std::to_string(2.0+0.3*r[6]); //frequency
+		str+=",1,4,0,0,1e-06)";
 		break;
 	case RND_HRIDGES:
 		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4)";
@@ -4636,7 +4647,28 @@ std::string Planetoid::newLocalTex(Planetoid *planet){
 }
 
 std::string Planetoid::newOcean(Planetoid *planet){
-	return randFeature(RND_OCEAN_EXPR);
+	//Europa    Color(1.000,1.000,1.000,0.918),Color(0.169,0.486,1.000),411.489,48.612,41.666)
+	//Water-ice Color(0.827,0.863,0.996),Color(0.027,0.247,0.220)
+	planet->water_color1=Color(0.678,0.949,0.949);
+	planet->water_color2=Color(0.027,0.247,0.367);
+	planet->water_clarity=1000*FEET;
+	planet->water_shine=100;
+	planet->water_specular=1;
+	
+	//Color(0.729,0.820,0.969,0.420),Color(0.839,0.910,0.957)
+
+	planet->ice_color1=Color(1.000,1.000,1.000,0.600);
+	planet->ice_color2=Color(0.400,0.675,0.800);
+	planet->ice_clarity=1*FEET;
+	planet->ice_shine=10;
+	planet->ice_specular=0.5;
+	
+	planet->ocean_auto=1;
+	planet->ocean_level=s[0]*FEET;
+	
+	planet->setOceanFunction((char*)randFeature(RND_OCEAN_EXPR).c_str());
+
+	return randFeature(RND_OCEAN_FUNC);
 }
 void Planetoid::newRocky(Planetoid *planet){
 	char surface[2048];
@@ -4644,9 +4676,10 @@ void Planetoid::newRocky(Planetoid *planet){
 	int nsave=lastn;
 	std::string str;
 	ncount=0;
+	Sky *sky=0;
 	
 	if (r[2] > 0.1 && planet->size >= 0.001) {
-		Sky *sky = planet->newSky();
+		sky= planet->newSky();
 		planet->addChild(sky);
 		if (sky->pressure >= 0.03) {
 			CloudLayer *clouds = planet->newClouds();
@@ -4657,10 +4690,15 @@ void Planetoid::newRocky(Planetoid *planet){
 
 	planet->calcTemperature();
 	
-	cout<<planet->temperature<<" "<<planet->orbit_radius<<endl;
+	cout<<"temp:"<<planet->temperature<<" radius:"<<planet->orbit_radius<<endl;
 	if(planet->temperature<400){ // boiling point K
-		s[0]=lerp(planet->temperature,200,400,-0.5,-1.7);
+		s[0]=lerp(planet->temperature,200,373,-0.5,-1.7);
 		str=randFeature(RND_SNOW);
+        //if(s[1]>-0.5){
+        	s[0]=lerp(planet->temperature,200,373,0,-50000);
+        	if(sky || planet->temperature<200)
+        		str+=newOcean(planet);
+        //}
 		str+=randFeature(RND_FRACTAL);
 	}
 	else
@@ -6614,11 +6652,6 @@ void Corona::setNoiseFunction(char *expr) {
     	exprs.removeVar("noise.expr");
     }
     else if (!var) {
-//		char *var_name;
-//		TNode *val = (TNode*) TheScene->parse_node(expr);
-//		MALLOC(15, char, var_name);
-//		strcpy(var_name, "noise.expr");
-//		var = (TNvar*) exprs.add_expr(var_name, val);
     	var=addExprVar("noise.expr",expr);
 	} else
 		var->setExpr(expr);

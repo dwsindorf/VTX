@@ -947,7 +947,7 @@ int TNtexture::exprString(TNarg *arg,char *nstr){
 	sstr[0]=0;
 	nstr[0]=0;
 #ifdef DEBUG_TEXS
-	char vstr[256];
+	char vstr[1024];
 	vstr[0]=0;
 	arg->valueString(vstr);
 	cout << "TNtexture ? expr:"<<vstr << endl;

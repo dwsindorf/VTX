@@ -12,7 +12,7 @@
 //#define DEBUG_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
 //#define DEBUG_IMAGES
-
+//#define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
 
@@ -1314,9 +1314,10 @@ void TerrainMgr::validateTextures()
 	TNinode  *inode;
 	TNode    *tnode;
 	ExprMgr *imgr=(ExprMgr*)parent;
-	
-//	cout<<"TerrainMgr::validateTextures() start images="<<imgr->inodes.size<<endl;
 
+#ifdef DEBUG_VALIDATE
+	cout<<"TerrainMgr::validateTextures() start images="<<imgr->inodes.size<<endl;
+#endif
 	imgr->inodes.ss();
 	while((tnode=imgr->inodes++)>0)
 		tnode->NodeIF::invalidate();  // mark unused
@@ -1325,8 +1326,8 @@ void TerrainMgr::validateTextures()
 	// add new texture variables
 
 	while((tex=(TNtexture*)textures++)>0){
-		if(!addTextureImage(tex->name))
-			continue;
+//		if(!addTextureImage(tex->name))
+//			continue;
 
 	    int opts=tex->opts;
 		inode=imgr->get_image(tex->name,opts);
@@ -1339,6 +1340,7 @@ void TerrainMgr::validateTextures()
 				addTextureImage(inode->gradName());
 			}			
 			imgr->inodes.free((TNode*)inode); // new	
+			addTextureImage(tex->name);
 		}
 	}
 
@@ -1353,9 +1355,9 @@ void TerrainMgr::validateTextures()
 		else
 			imgr->inodes++;
 	}
-	
-//	cout<<"TerrainMgr::validateTextures() end images="<<imgr->inodes.size<<endl;
-
+#ifdef DEBUG_VALIDATE	
+	cout<<"TerrainMgr::validateTextures() end images="<<imgr->inodes.size<<endl;
+#endif
 }
 
 bool TerrainMgr::addTextureImage(char *name){
