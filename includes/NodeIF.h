@@ -4,6 +4,7 @@
 #define _NODEIF
 
 #include "ListClass.h"
+#include "NoiseClass.h"
 
 class NodeIF;
 
@@ -76,11 +77,30 @@ enum {
 	ID_LEVEL10      = 0x0a000000,  // level code
 };
 
+//extern int lastn;
 
 class NodeIF
 {
 protected:
 public:
+	static const int RANDS=10;
+	static double r[RANDS];
+	static double s[RANDS];
+	
+    static const int THEMES=7;
+	static Color themes[THEMES*4];
+	static const int COLORS=6;
+	static Color colors[COLORS];
+	static Color mix;
+	static int ncolors;
+	static Color tc;
+	static int nsave;
+	static int ncount;
+
+	static void setRands();
+	static void setColors();
+	static void initInstance();
+
     int nodeflags;
     NodeIF() { nodeflags=0;}
     virtual ~NodeIF() {}

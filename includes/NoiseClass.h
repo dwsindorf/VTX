@@ -255,6 +255,13 @@ protected:
 
 public:
 
+    static char *ntypes[];
+    static char *nopts[];
+    
+    static std::string getNtype(double f);
+    static std::string getNopts(double f);
+
+    
  	static double dflt_L;
 	static double dflt_H;
 	static double max_order;

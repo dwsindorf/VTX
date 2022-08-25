@@ -92,6 +92,7 @@ void main(void) {
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
 		float LdotR     = dot(light,radius ); // for horizon band calculation
+		//horizon   += lerp(LdotR,-1,1,1.0,0.0); // twilite band
 		horizon   += lerp(LdotR,twilite_dph+twilite_min,twilite_dph+twilite_max,0.0,1.0); // twilite band
 		illumination   += horizon;
 
@@ -139,10 +140,11 @@ void main(void) {
 	float dz=(z2-z1);
 	dz=dz<0.0?0.0:dz;
 	float f=fcolor2.r==0?1:lerp(dz,0.0,clarity,0.0,1.0); // f=1 if back surface != land
+	
 	vec3 TopColor=Diffuse*Color1.rgb+Ambient*Color1.rgb;
+	
 #ifdef SKY
-	vec3 DepthColor=Color2.rgb*horizon;
-		
+	vec3 DepthColor=Color2.rgb*horizon;	
 	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
 	float fmix=lerp(reflect1,dpr,dpm,cmix,0);
 	float rmod=lerp(reflect1,0,dpr,reflection,0);
@@ -157,9 +159,9 @@ void main(void) {
 	color=color.rgb*f1+TopColor*f2+SkyColor.rgb*f3+Specular;
 	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
 #else
-    vec3 color=mix(fcolor1.rgb,Color2.rgb,f)+Specular; // add depth color
+    vec3 color=mix(fcolor1.rgb,Color2.rgb*(0.25+horizon),f)+Specular; // add depth color 
 #endif	
-    //color.rgb=vec3(fcolor2.r,0,0);
+    //color.rgb=vec3(horizon,0,0);
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
 	float ht=HT+fcolor2.a;

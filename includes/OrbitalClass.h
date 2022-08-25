@@ -63,10 +63,6 @@ protected:
 	double rseed;
 
 public:
-	static const int RANDS=10;
-	static double r[RANDS];
-	static double s[RANDS];
-	static void setRands();
 
 	ExprMgr exprs;
 	double rot_angle;
@@ -151,7 +147,6 @@ public:
 	virtual void setRseed(double s) {rseed=s;}
 	virtual double getRseed() {return rseed;}
 	TNvar *addExprVar(const char *,const char *);
-
 
 	// NodeIF methods
 
@@ -319,7 +314,7 @@ public:
 	static System *newInstance();
 	NodeIF *getInstance();
 	bool randomize();
-	void adjustOrbits();
+	double adjustOrbits();
 	NodeIF *addChild(NodeIF *);
 	NodeIF *addAfter(NodeIF *,NodeIF *);
 	NodeIF *removeChild(NodeIF *);
@@ -466,6 +461,7 @@ public:
     virtual void select();
 	virtual int selection_pass();
 	virtual void dpvars(double &dht, double &dpmin, double &dpmax);
+	virtual double max_height() { return 0;}
 	bool isLeaf()						{ return true;}
 	NodeIF *replaceNode(NodeIF *n);
 };
@@ -674,24 +670,13 @@ public:
 	double     fog_value;
 	double     fog_glow;
 	double     temperature;
-	
-    static const int THEMES=7;
-	static Color themes[THEMES*4];
-	static const int COLORS=6;
-	static Color colors[COLORS];
-	static Color mix;
-	static int ncolors;
-	static Color tc;
 	static int planet_id;
+	static int moon_cnt;
 	static int planet_cnt;
-	static int nsave;
-	static int ncount;
+
 	static int tcount;
 
 	static double planet_orbit;
-
-	static void setColors();
-	static void initInstance();
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);
@@ -753,6 +738,7 @@ public:
 	static Planet *newInstance();
 	static void newGasGiant(Planet *);
 	static void newRocky(Planet *);
+	void addMoon();
 };
 
 //************************************************************

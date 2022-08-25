@@ -31,6 +31,7 @@ extern int    tindex, mindex;
 #define DEFAULT_SHINE   5
 #define DEFAULT_ALBEDO  0.2
 #define DEFAULT_SPECULAR  0.2
+#define DEFAULT_AMBIENT  0.02
 
 #define S0 Tstack[tindex]
 #define S1 Tstack[tindex-1]

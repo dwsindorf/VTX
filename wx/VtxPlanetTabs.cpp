@@ -169,10 +169,10 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	SizeSlider = new SliderCtrl(panel, ID_RADIUS_SLDR, "Size(mls)", LABEL2B,
+	SizeSlider = new SliderCtrl(panel, ID_RADIUS_SLDR, "Size(1e3 ml)", LABEL2B,
 			VALUE2, SLIDER2);
-	SizeSlider->setRange(100, 10000);
-	SizeSlider->setValue(1000);
+	SizeSlider->setRange(1, 1000);
+	SizeSlider->setValue(1);
 
 	hline->Add(SizeSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -340,7 +340,7 @@ void VtxPlanetTabs::updateControls() {
 	setTemp();
 
 	updateSlider(CellSizeSlider, obj->detail);
-	updateSlider(SizeSlider, obj->size / MILES);
+	updateSlider(SizeSlider, obj->size / MILES/1000);
 	updateSlider(OrbitRadiusSlider, obj->orbit_radius);
 	updateSlider(OrbitPhaseSlider, obj->orbit_phase);
 	updateSlider(OrbitTiltSlider, obj->orbit_skew);
@@ -356,7 +356,6 @@ void VtxPlanetTabs::updateControls() {
 	updateColor(EmissionSlider, obj->emission);
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider, obj->diffuse);
-	updateColor(ShadowSlider, obj->shadow_color);
 	updateColor(ShadowSlider, obj->shadow_color);
 
 	object_name->SetValue(object_node->node->nodeName());

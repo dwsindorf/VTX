@@ -804,10 +804,17 @@ void VtxSceneTabs::getTime(){
 //		return;
 	changing=true;
 	double time=object()->time;
-	double exp=floor(log10(time));
-	double rem=time/pow(10,exp);
-	m_time_scale->SetSelection((int)exp);
-	TimeSlider->setValue(rem);
+	if(time>=1){
+		double exp=floor(log10(time));
+		double rem=time/pow(10,exp);
+		m_time_scale->SetSelection((int)exp);
+		TimeSlider->setValue(rem);
+	}
+	else{
+		m_time_scale->SetSelection(0);
+		TimeSlider->setValue(0.0);
+	}
+		
 	changing=false;
 }
 

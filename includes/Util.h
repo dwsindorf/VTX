@@ -167,5 +167,12 @@ inline void d2f(double doubleValue, float  &floatHigh, float &floatLow, double s
     }
 }
 
+
+inline std::string gets(char *s[], int n, double r) {
+	int nt=(int)(n*r);
+	nt=nt>n-1?n-1:nt;
+	return std::string(s[nt]);
+}
+
 #endif
 

@@ -354,7 +354,7 @@ void VtxBandsTabs::freeRevertList() {
 // VtxBandsTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxBandsTabs::makeImageList(){
-	cout<<"VtxBandsTabs::makeImageList()"<<endl;
+	//cout<<"VtxBandsTabs::makeImageList()"<<endl;
 
     images.makeImagelist();
 

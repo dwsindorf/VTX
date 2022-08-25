@@ -146,6 +146,8 @@ int  Object3D::scale(double &zn, double &zf)
 		if(zn<MINZN)
 			zn=MINZN;
 		zf=zn+size*(1+max_height());
+		//cout << name()<< " zn:"<<zn/FEET <<" maxht:"<< max_height()<< endl;
+
 	}
 
 	z=point.mz(TheView->lookMatrix);	// screen z (before perspective)
@@ -164,7 +166,7 @@ int  Object3D::scale(double &zn, double &zf)
 	if(y1>1 || y2<-1)
 		return OFFSCREEN;
 
-	zn=-z-size;		// front end
+	zn=-z-(size+max_height());		// front end
 	zf=-z+size;    	// back end
 	if(zn<MINZN)
 		zn=MINZN;

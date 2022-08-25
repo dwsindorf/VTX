@@ -734,10 +734,14 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
 	cout<<" newobj:"<<newobj->nodeName()<<" oldobj:"<<oldobj->nodeName()<<endl;
-
+	bool vo=(oldobj==TheScene->viewobj);
+	if(vo)
+	   TheScene->viewobj=(ObjectNode *)newobj;  	
     newobj=oldobj->replaceNode(newobj);
     int type=newobj->getFlag(TN_TYPES);
 	TheScene->regroup();
+    
+
     TheScene->rebuild_all();
     rebuildObjectTree();
 

@@ -322,7 +322,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	if(n){
 		n->setType(type);
 		n->setParent(obj);
-		n->setName("");
+		//n->setName("");
 	}
 	if(m!=n)
 		delete m;
@@ -1858,6 +1858,7 @@ void Scene::views_clr()
 //-------------------------------------------------------------
 void Scene::views_reset()
 {
+	views->add(this);
 	ViewFrame *last=views->pop();
     views->free();
 	views->add(last);

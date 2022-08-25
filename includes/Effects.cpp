@@ -225,9 +225,15 @@ void EffectsMgr::setProgram(int type){
 			sprintf(defs+strlen(defs),"#define SHADOWS\n");
 		if(TheScene->inside_sky())
 			sprintf(defs+strlen(defs),"#define SKY\n");
+		else{
+			twilite_min=-1;
+			twilite_max=1;
+			twilite_dph=0;
+		}
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("auximage.vert","auximage.frag");
 		c=sky_color;
+
 		vars.newFloatVec("WaterSky",c.red(),c.green(),c.blue(),c.alpha());
 
 		vars.newFloatVec("WaterColor1",water_color1.red(),water_color1.green(),water_color1.blue(),water_color1.alpha());

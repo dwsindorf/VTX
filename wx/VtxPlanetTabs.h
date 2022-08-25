@@ -65,7 +65,7 @@ public:
 	void OnEndSizeSlider(wxScrollEvent &event) {
 		SizeSlider->setValueFromSlider();
 		Planetoid *obj = object();
-		double val = SizeSlider->getValue() * MILES;
+		double val = SizeSlider->getValue() * MILES*1000;
 		obj->size = val;
 		TheView->set_changed_detail();
 		TheScene->rebuild_all();
@@ -75,7 +75,7 @@ public:
 	}
 	void OnSizeText(wxCommandEvent &event) {
 		SizeSlider->setValueFromText();
-		double val = SizeSlider->getValue() * MILES;
+		double val = SizeSlider->getValue() * MILES*1000;
 		object()->size = val;
 		TheView->set_changed_detail();
 		TheScene->rebuild_all();

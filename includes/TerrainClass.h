@@ -216,6 +216,7 @@ public:
 	int typeValue()			{ return ID_WATER;}
 	const char *typeName ()	{ return "ocean";}
 	NodeIF *getInstance();
+	static NodeIF *newInstance();
 };
 
 //************************************************************

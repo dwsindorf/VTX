@@ -10,6 +10,8 @@
 #include "GLSLMgr.h"
 #include "GLSLVars.h"
 #include "RenderOptions.h"
+#include "UniverseModel.h"
+
 
 #define DEBUG_LOD          // turn on to get lod info
 
@@ -1503,17 +1505,64 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 		orb->ice_specular=arglist[5].s;
 
 	left=(TNarg*)water_noise;
+	
 	((TNarg*)left)->right=ice_noise;
-
+	TNode *rem=ice_noise->right;
+	ice_noise->right=0;
+    delete rem;
 	return this;
 }
 
+NodeIF *TNwater::newInstance(){
+	//Europa    Color(1.000,1.000,1.000,0.918),Color(0.169,0.486,1.000),411.489,48.612,41.666)
+	//Water-ice Color(0.827,0.863,0.996),Color(0.027,0.247,0.220)
+
+	char buff[2045];
+	std::string water="ocean(noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0.05,1,0,0),";
+	char cstr[256];
+	Color b=Color("Color(0.8,0.9,1)");
+	b=b.mix(colors[0],0.8*r[2]);
+	b.toString(cstr);
+	water+=cstr;
+	water+=",";
+	b=Color("Color(0.2,0.5,0.900)");
+	b=b.mix(colors[1],0.8*r[2]);
+	b.toString(cstr);
+	water+=cstr;
+	water+=",";
+	water+="400,50,40)";
+	std::string ice="ice(noise(";
+	ice+=Noise::getNtype(r[6]);
+	ice+="|NABS|SCALE|SQR|UNS,11.3,10.1,";
+	ice+=std::to_string(0.3*s[5]);
+	ice+=",0.3,1.84,0.8,-0.24,0,-0.01),";
+	b=Color("Color(1.000,1.000,1.000,0.173)");
+	b=b.mix(colors[2],0.1*r[2]);
+	b.toString(cstr);
+	ice+=cstr;
+	ice+=",";
+	b=Color("Color(0.4,0.8,0.8)");
+	b=b.mix(colors[3],0.5*r[2]);
+	b.toString(cstr);
+	ice+=cstr;
+	ice+=",0.3,41.666,1)";
+
+    strcpy(buff,water.c_str());
+    strcat(buff,ice.c_str());
+    NodeIF *c=TheScene->parse_node(buff);
+	return c;
+}
+
 NodeIF *TNwater::getInstance(){
-	Planetoid *planet=(Planetoid *)getOrbital(this);
-	if(planet){
-		Sky *sky=planet->getChild(ID_SKY);
-	}
-	return this;
+	int last=lastn;
+	lastn=getRandValue()*1115;
+	initInstance();
+	
+	NodeIF *n=newInstance();
+	n->setParent(getParent());
+	lastn=last;
+	return n;
+
 }
 
 //************************************************************

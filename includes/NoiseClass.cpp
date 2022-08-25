@@ -3,9 +3,9 @@
 
 #include "ColorClass.h"
 #include "Perlin.h"
-#include "Util.h"
 #include <ctime>
 #include <math.h>
+#include "Util.h"
 
 
 //#define OLDPERLIN
@@ -409,6 +409,17 @@ Noise::~Noise()
 	    }
     }
 }
+
+char *Noise::ntypes[]={"GRADIENT","SIMPLEX","VORONOI"};
+char *Noise::nopts[]={"","|NABS","|SQR","|NEG","|NABS|NEG","|SQR|NABS|NEG","|SQR|NEG","|SQR|NABS"};
+
+std::string Noise::getNtype(double f){
+	return gets(ntypes,3,f);
+}
+std::string Noise::getNopts(double f){
+	return gets(nopts,8,f);
+}
+
 //-------------------------------------------------------------
 // Noise::set()	set 4D point
 //-------------------------------------------------------------

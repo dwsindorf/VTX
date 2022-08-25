@@ -4,6 +4,8 @@ uniform float ice_shine;
 uniform float water_specular;
 uniform float ice_specular;
 uniform float albedo;
+uniform float glow;
+
 
 #ifndef LMODE
 #define LMODE 0
@@ -67,8 +69,8 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
-		//illumination   += 2.0*LdotN*intensity*horizon;
-		illumination   += horizon;
+		illumination   += LdotN*intensity*horizon;
+		//illumination   += horizon;
 		ambient+=topcolor*(3.0*horizon);
         if(LdotN>-0.5){
 			float damp = lerp(LdotN,-0.5,0.0,0.0,1.0); // prevents false specular highlites on backfaces
@@ -94,7 +96,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	diffuse.rgb=mix(diffuse.rgb,Shadow.rgb,1.0-shadow_diffuse);
 	vec3 TotalEmission = emission.rgb * BaseColor;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
-	vec3 TotalDiffuse = diffuse.rgb * BaseColor*Diffuse.a*shadow_diffuse;
+	vec3 TotalDiffuse = diffuse.rgb * BaseColor*Diffuse.a*shadow_diffuse*glow;
 	vec3 TotalSpecular = specular.rgb;
 
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
