@@ -415,14 +415,12 @@ void EffectsMgr::apply(){
 			glColor4d(1,0,0,1);
 			set_show_water(0);
 			surface=1;
-
 		}
 
 	    // following passes use full screen render (2 triangles)
 
 		surface=1;
 		bool effects=do_vfog||do_haze||do_water;
-		set_effects(false);
 
 		GLSLMgr::renderToFrameBuffer=true;// for read pass set output to FB
 		if(effects /*&& (do_edges||do_hdr)*/){

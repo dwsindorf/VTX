@@ -1228,8 +1228,9 @@ void Map::render_shaded()
 			reset_texs();
 		}
 	}
-
-	bool show_water=waterpass() &&  Render.show_water() && (TheScene->viewtype!=SURFACE || Raster.show_water());
+	// for surface views the viewobj (only) uses an effects shader to render water
+    bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
+	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
 	if(show_water){
 #ifdef DEBUG_RENDER
 		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;water

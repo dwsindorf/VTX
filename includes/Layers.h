@@ -101,6 +101,7 @@ public:
 	void setEnabled(bool b);
 	NodeIF *addChild(NodeIF *x);
 	friend class TNmap;
+	NodeIF *getInstance();
 
 };
 #endif

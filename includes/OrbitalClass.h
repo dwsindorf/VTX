@@ -633,6 +633,7 @@ public:
 class Planetoid : public Spheroid
 {
 public:
+	enum {EARTH_LIKE,ROCKY,ICY,VOLCANIC};
 	
 	static std::string randFeature(int type);
 
@@ -641,6 +642,7 @@ public:
 	double 	   ocean_level;
 	int        ocean_state;
 	int        ocean_auto;
+	int        terrain_type;
 
 	double     ocean_solid_temp;
 	double     ocean_liquid_temp;
@@ -673,6 +675,7 @@ public:
 	static int planet_id;
 	static int moon_cnt;
 	static int planet_cnt;
+	static int layer_cnt;
 
 	static int tcount;
 
@@ -713,6 +716,7 @@ public:
 	static std::string newGlobalTex(Planetoid *);
 	static std::string newDualGlobalTex(Planetoid *);
 	static std::string newOcean(Planetoid *);
+	static std::string newLayer(Planetoid *);
 
 	static std::string newHmapTex(Planetoid *);
     static void pushInstance(Planetoid *);
@@ -752,6 +756,8 @@ public:
 
 	const char *name()			{ return "Moon";}
 	int  type()					{ return ID_MOON;}
+	Moon *newInstance();
+	NodeIF *getInstance();
 };
 
 //************************************************************

@@ -181,10 +181,10 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Halo(1) {}\n");
 		break;
 	case TN_PLANET:
-		sprintf(tmp,"Planet(0.004,0.01){day=24;year=100;Surface{}}\n");
+		sprintf(tmp,"Planet(0.005,0.01){day=24;year=100;Surface{}}\n");
 		break;
 	case TN_MOON:
-		sprintf(tmp,"Moon(0.01,0.05){day=30;year=30;Surface{}}\n");
+		sprintf(tmp,"Moon(0.001,0.05){day=30;year=30;Surface{}}\n");
 		break;
 	case TN_SKY:
 		sprintf(tmp,"Sky(0.1){color=Color(0.5,0.9,1.0);density=0.2;}\n");

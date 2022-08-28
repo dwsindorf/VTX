@@ -885,3 +885,21 @@ int TNlayer::optionString(char *s)
 	return 1;
 }
 
+//-------------------------------------------------------------
+// TNlayer::getInstance() return a randomly generated instance
+//-------------------------------------------------------------
+NodeIF *TNlayer::getInstance(){
+	int last=lastn;
+	lastn=getRandValue()*1135;
+	initInstance();
+	char buff[2048];
+		
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	
+	std::string str=Planetoid::newLayer(orb);
+	strcpy(buff,str.c_str());
+	TNlayer *layer=TheScene->parse_node(buff);
+	layer->setParent(getParent());
+	lastn=last;
+	return layer;
+}

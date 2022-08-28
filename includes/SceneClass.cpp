@@ -309,8 +309,10 @@ NodeIF *Scene::getInstance(int type){
 NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 	char sbuff[1024];
 	NodeIF *newobj=0;
-	if (model->getPrototype(type,sbuff))
+	if (model->getPrototype(type,sbuff)){
 		newobj=parse_node(obj,sbuff);
+		newobj->setParent(obj);
+	}
 	return newobj;
 }
 
@@ -322,7 +324,6 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	if(n){
 		n->setType(type);
 		n->setParent(obj);
-		//n->setName("");
 	}
 	if(m!=n)
 		delete m;
