@@ -3,7 +3,7 @@
 #include "attributes.vert"
 #include "common.h"
 
-varying vec4 Color;
+//varying vec4 Color;
 uniform vec3 object;
 varying vec4 Normal;
 varying vec4 EyeDirection;

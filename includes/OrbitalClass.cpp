@@ -100,11 +100,11 @@ static double  	def_fog_glow=0.2;
 
 static Color 	def_twilite_color=BLACK;
 static double	def_twilite_value=1;
-static double	def_twilite_max=0.2;
-static double	def_twilite_min=-0.2;
+static double	def_twilite_max=1;
+static double	def_twilite_min=-0.5;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
-static double	def_hscale=5e-4;
+static double	def_hscale=2e-3;
 
 
 //************************************************************
@@ -1964,7 +1964,13 @@ System *System::newInstance(){
 	Planetoid::planet_orbit=1.2*star_radius;
 	for(int i=0;i<planets;i++){
 		Planet::planet_cnt=i+1;
-		Planet *planet=Planet::newInstance();
+		Planet *planet=TheScene->getPrototype(0,ID_PLANET);
+		planet->setRands();
+		
+		planet->orbit_radius=1.3*(Planetoid::planet_orbit+20+50*r[4]);
+		planet->orbit_distance=planet->orbit_radius;
+
+		planet->newInstance();
 		Planetoid::planet_orbit=planet->orbit_radius;
 		lastn++;
 		system->addChild(planet);
@@ -1991,7 +1997,7 @@ Spheroid::Spheroid(Orbital *m, double s) :
 Spheroid::Spheroid(Orbital *m, double s, double r) :
 	Orbital(m,s,r)
 {
-    hscale=5e-4;
+    hscale=2e-3;
 	map=new Map(s);
 	map->object=this;
 	set_geometry();
@@ -2337,7 +2343,7 @@ void Spheroid::set_tilt()
 void Spheroid::set_rotation()
 {
 	if(rot_angle)
-	    TheScene->rotate(rot_angle,0,1,0);	// rotate ccw
+	    TheScene->rotate(-rot_angle,0,1,0);	// rotate ccw
 }
 
 //-------------------------------------------------------------
@@ -3790,11 +3796,11 @@ void Planetoid::init_render()
 			dpmax=dpl>dpmax?dpl:dpmax;
 			dpmin=dpl<dpmin?dpl:dpmin;	
 		}
-		//cout<<dpmin<<" "<<dpmax<<endl;
 		if(dpmin<=0 && dpmax<=0)
 			dp=dpmax;
 		else
-			dp=dpmin;		
+			dp=dpmin;
+
 		Raster.set_ldp(dp);
 		if(!TheScene->inside_sky()){
 			Raster.haze_value=0;
@@ -4236,6 +4242,8 @@ int Planetoid::planet_id=0;
 int Planetoid::planet_cnt=0;
 int Planetoid::moon_cnt=0;
 int Planetoid::layer_cnt=0;
+int Planetoid::num_layers=1;
+
 
 int Planetoid::tcount=0;
 double Planetoid::planet_orbit=0;
@@ -4256,9 +4264,12 @@ Ring *Planetoid::newRing(){
 	return ring;
 }
 
-CloudLayer *Planetoid::newClouds(){
-	CloudLayer *clouds=CloudLayer::newInstance();
-	clouds->size=1.005*size;
+CloudLayer *Planetoid::newClouds(bool is3d){
+	CloudLayer *clouds=CloudLayer::newInstance(is3d);
+	if(is3d)
+		clouds->size=1.005*size;
+	else
+		clouds->size=1.01*size;
 	clouds->ht=clouds->size-size;
 	return clouds;
 }
@@ -4278,34 +4289,35 @@ Planet::~Planet()
 #endif
 }
 
-NodeIF *Planet::getInstance(){
+NodeIF *Planet::getInstance(NodeIF *prev){
 	planet_cnt++;
 	lastn=getRandValue()*1234;
-	Planet *planet=newInstance();
-	return planet;
+	setRands();
+	setParent(prev->getParent());
+	orbit_radius=((Planet *)prev)->orbit_radius;
+	newInstance();
+	return this;
 }
-Planet *Planet::newInstance(){
-	initInstance();
-	Planet *planet=TheScene->getPrototype(0,ID_PLANET);
+void Planet::newInstance(){
 	planet_id=planet_cnt+lastn;
-	planet->setRseed(r[0]);
-	planet->orbit_radius=1.3*(planet_orbit+20+50*r[4]);
-	planet->orbit_distance=planet->orbit_radius;
+	setRseed(r[0]);
+	//planet->orbit_radius=1.3*(planet_orbit+20+50*r[4]);
+	//planet->orbit_distance=planet->orbit_radius;
 
 	if(s[0]>0){
-		planet->size=0.03*(1+0.7*s[1]);
-		newGasGiant(planet);
+		size=0.03*(1+0.7*s[1]);
+		newGasGiant(this);
 	}
 	else{
-		planet->size=0.001*(0.8+5*r[1]);
-		newRocky(planet);
+		size=0.001*(0.8+5*r[1]);
+		newRocky(this);
 	}
-	planet->symmetry=1;
-	planet->set_geometry();
-	planet->setProtoValid(true);
+	symmetry=1;
+	set_geometry();
+	setProtoValid(true);
 
-	planet->setNewViewObj(true);
-	return planet;
+	setNewViewObj(true);
+	//return planet;
 }
 
 enum orbital_features{
@@ -4343,9 +4355,80 @@ enum orbital_features{
 	RND_OCEAN_EXPR,
 	RND_MAP,
 	RND_LAYER,
-	RND_LAYER_VAR
+	RND_LAYER_VAR,
+	RND_CLOUDS_2D,
+	RND_CLOUDS_3D
 };
 
+Color Planetoid::themes[THEMES*4]={
+	Color(1,0.89,0.49),Color(0.988,0.808,0.439),Color(0.616,0.38,0.02),Color(1,1,1),
+	Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+	Color(1,0.89,0.29),Color(1,0.6,0),Color(0.69,0.4,0),Color(1,0.89,0.29),
+	Color(0.135,0.216,0.251),Color(0.012,0.384,0.422),Color(0.769,0.937,0.976),Color(1,1,1),
+	Color(1,0.639,0.09,0.29),Color(1,0.89,0.49),Color(0.302,0.078,0.078),Color(0.202,0.02,0.02),
+	Color(0.267,0.267,0.267),Color(0.71,0.71,0.71),Color(0.722,0.722,0.722),Color(0.933,0.933,0.933),
+	Color(0,0,0,0.4),Color(1,0.529,0),Color(1,0.863,0.635),Color(0.655,0.471,0.024)
+};
+Color Planetoid::mix;
+Color Planetoid::tc;
+int Planetoid::ncolors=6;
+Color Planetoid::colors[COLORS];
+
+void Planetoid::initInstance(){
+	setRands();
+	if(terrain_type==ICY)
+		setIceColors();
+	else
+		setColors();
+}
+
+void Planetoid::setColors(){
+	//cout<<"setColors"<<endl;
+	double use_theme=r[7];
+	if(use_theme>0.8){
+		int index=(int)THEMES*r[8];
+		ncolors=4;
+		for(int i=0;i<4;i++){
+			tc=themes[4*index+i];
+			tc.set_red(tc.red()+0.1*s[i]);
+			tc.set_green(tc.green()+0.1*s[i+1]);
+			tc.set_blue(tc.blue()+0.1*s[i+2]);
+			colors[i]=tc;		
+		}
+		//cout<<"theme "<<index<<endl;
+	}
+	else{
+		ncolors=6;
+		tc=Color(0.5+3*r[4],0.4+2*r[5],0.8*r[5]);
+		mix=Color(0.4+2*r[7],0.5*r[8],0.2+0.3*r[9]);
+		colors[0]=mix;
+		colors[1]=tc.darken(0.75+0.2*s[2]);
+		colors[2]=tc.lighten(0.5+0.1*s[3]);
+		colors[3]=tc;
+		colors[4]=tc.darken(0.9+0.8*s[9]);
+		colors[5]=tc.lighten(0.9+0.8*s[6]);
+		//cout<<"random "<<endl;
+	}	
+}
+
+void Planetoid::setIceColors(){
+	// bands("neptune",ACHNL,64,0.14286,0.19354,Color(1,1,1,0.192),Color(0.031,0.216,0.251),
+	//Color(0.012,0.38,0.522),Color(0.769,0.933,0.973),Color(1,1,1));
+	colors[0]=Color(0.031,0.216,0.251);
+	colors[1]=Color(0.012,0.38,0.522);
+	colors[2]=Color(0.769,0.933,0.973);
+	colors[3]=Color(1,1,1);
+	ncolors=4;
+	for(int i=0;i<4;i++){
+		tc=colors[i];
+		tc.set_red(tc.red()+0.2*s[i]);
+		tc.set_green(tc.green()+0.2*s[i+1]);
+		tc.set_blue(tc.blue()+0.2*s[i+2]);
+		colors[i]=tc;		
+	}
+	cout<<"setIceColors "<<endl;
+	
+}
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
 //-------------------------------------------------------------
@@ -4379,21 +4462,21 @@ std::string Planetoid::randFeature(int type) {
 		str=Noise::getNtype(0.6*r[3]);
 		break;
 	case RND_NOISEOPTS:
-		str=Noise::getNopts(r[6]);
+		str=Noise::getNopts(r[9]);
 		break;
 	case RND_SNOW:
 		str="snow(";
-		str+=std::to_string(s[0]+0.1*s[1]);
+		str+=std::to_string(s[0]);
 		str+=",0.5,0.25,-0.25,0.5,0.1)";
 		break;
 	case RND_FRACTAL_NOISE:
-		str="+4*noise(";
+		str="18+3*noise(";
 		str+=randFeature(RND_NOISEFUNC3);
-		str+="|NLOD|UNS,6,1,1,0.5,2.2,1,4,0,0.5,1e-06)";
+		str+="|NLOD,8,5,0,0.5,2.2,1,4,0,0.0,1e-06)";
 		break;
 	case RND_FRACTAL:
 		str="fractal(SQR|SS,";
-		str+=std::to_string((int)(15+2*r[7])); //start
+		//str+=std::to_string((int)(18)); //start
 		str+=randFeature(RND_FRACTAL_NOISE);
 		str+=",4,0.1,0.0,1,0.1,0,0,1,0)";
 		break;
@@ -4405,15 +4488,15 @@ std::string Planetoid::randFeature(int type) {
 		str+=",0.2,";
 		str+=std::to_string((r[7]-0.2)/0.8);  // probability
 		str+=",0.13,0.4,1,0.1,";
-		str+=std::to_string(0.3+0.3*r[6]); //rise
+		str+=std::to_string(0.3+0.3*r[4]); //rise
 		str+=",";
-		str+=std::to_string(0.1+0.1*r[8]); //drop
+		str+=std::to_string(0.1+0.1*r[5]); //drop
 		str+=",0.8,0.6,0.2,0)";
 		break;
 	case RND_VOLCANOS:
 		// craters(ID8,5,0.2,0.13,0.5,0.21,0.71,0.44,0.52,2.4,0.2,0.3,0.05,0.45,-0.1
 		str="craters(ID";
-		str+=std::to_string(layer_cnt);
+		str+=std::to_string(9-layer_cnt);
 		str+=",5,";
 		str+=std::to_string(0.1+0.3*r[2]); // size
 		str+=",0.15,";  // delta size
@@ -4457,15 +4540,15 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(0.3+0.1*r[7]); //atten
 		str+=",";
 		str+=std::to_string(2.0+0.3*r[6]); //frequency
-		str+=",1,4,0,0,1e-06)";
+		str+=",1,4,0,0.5,1e-06)";
 		break;
 	case RND_BANDS:
 		str="bands(";
 		str+=randFeature(RND_TEXNAME);
 		str+=",NORM|REFLECT,64,";
-		str+=std::to_string(0.2+0.2*s[0]);
+		str+=std::to_string(0.3*r[5]); // random
 		str+=",";
-		str+=std::to_string(0.4+0.2*s[1]);
+		str+=std::to_string(0.5*r[6]); // mix
         buff[0]=0;
 		for(int i=0;i<ncolors;i++){
 			Color c=colors[i];
@@ -4495,9 +4578,9 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(pow(2,5+2*s[0])); // start
 		str+=",2,1,0,1,2,1,0.0,";
 		if(tcount>0)
-			str+="-0.05,-0.1,0.0,-0.1";
+			str+="-0.05,-0.1,0.0,-0.07";
 		else
-			str+="0.05,0.1,0.0,0.1";
+			str+="0.05,0.1,0.0,0.07";
 		str+=")\n";
 		break;
 	case RND_GLOBAL_TEX:
@@ -4555,11 +4638,13 @@ std::string Planetoid::randFeature(int type) {
 		str+=randFeature(RND_HTEXNAME);
 		str+=",HMAP|LINEAR|S,";
 		str+=randFeature(RND_HMAP_TWIST);
-		str+=",1.0,1,1,0,10,"; // start, ..
-		str+=std::to_string(2.2+0.2*s[8]); // frequency
+		str+=",1.0,1,0,0,10,"; // start, ..
+		str+=std::to_string(2.3+0.2*s[8]); // frequency
 		str+=",";
-		str+=std::to_string(0.5+0.05*s[9]); // orders ampl
-		str+=",0,1.0,0,0,0,0,0)";
+		str+=std::to_string(0.5+0.1*r[9]); // orders ampl
+		str+=",0,";
+		str+=std::to_string(0.5+0.5*r[6]); // H ampl
+		str+=",0,0,0,0,0)";
 		//cout<<"RND_HMAP_TEX:"<<str<<endl;
 		break;
 	case RND_HMAP_TWIST:
@@ -4595,6 +4680,19 @@ std::string Planetoid::randFeature(int type) {
 		str="n";
 		str+=std::to_string(layer_cnt);
 		break;
+	case RND_CLOUDS_2D:
+		str="Color(1,1,1,twist(0.1,noise(";
+		str+=randFeature(RND_NOISEFUNC3); // perlin or simplex
+		str+="|FS|NABS|SQR|TA,1,8,1,";
+		str+=std::to_string(0.5+0.4*r[6]);    // offset
+		str+=",";
+		str+=std::to_string(2+r[1]);    // freq
+		str+=",1,1,0,0.4,1e-5)))";
+		break;
+	case RND_CLOUDS_3D:
+		str="clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)";
+		str+="Z(0.1*noise(GRADIENT|SQR,4.3,12,0.2,0.5,2,1,1,0,0,1e-06))+Color(1+4*HT,RED,RED,1)";
+		break;
 	}
 	return str;
 }
@@ -4609,7 +4707,7 @@ void Planet::newRocky(Planet *planet){
 void Planetoid::pushInstance(Planetoid *planet){
 	nsave=lastn;
 	lastn+=ncount*131;
-	initInstance();
+	planet->initInstance();
 	planet_id=planet_cnt+lastn;
 	ncount++;
 }
@@ -4623,7 +4721,11 @@ std::string Planetoid::newHmapTex(Planetoid *planet){
 	strcpy(buff,str.c_str());	
 	TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 	himg->init();
-	planet->add_image(himg);	
+	planet->add_image(himg);
+	if(planet->terrain_type==ICY){
+		r[9]*=2;
+		r[6]*=2;
+	}
 	return randFeature(RND_HMAP_TEX);
 }
 
@@ -4640,6 +4742,10 @@ std::string Planetoid::newGlobalTex(Planetoid *planet){
 std::string Planetoid::newDualGlobalTex(Planetoid *planet){
 	char buff[2048];
 	pushInstance(planet);
+	if(planet->terrain_type==ICY){
+		r[5]*=0.25;
+		r[6]*=0.25;
+	}
 	std::string str = randFeature(RND_BANDS);
 	strcpy(buff, str.c_str());
 	TNinode *img = (TNinode*) TheScene->parse_node(buff);
@@ -4681,7 +4787,7 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	buff[0]=0;
 
 	water->propertyString(buff);
-	cout<<"ocean property:"<<buff<<endl;
+	//cout<<"ocean property:"<<buff<<endl;
 
 	planet->terrain.set_root(0);
 
@@ -4726,7 +4832,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	str+="+Z(";
 	if(r[8]>0.5)
 		str+=randFeature(RND_VOLCANOS);
-	if(planet->terrain_type==EARTH_LIKE){
+	if(planet->terrain_type==OCEANIC){
 		if(r[7]>0.5){
 			r[6]*=0.5;
 			r[7]*=0.5;
@@ -4756,48 +4862,61 @@ void Planetoid::newRocky(Planetoid *planet){
 	std::string str;
 	ncount=0;
 	Sky *sky=0;
+	str="";
 	
 	if (r[2] > 0.1 && planet->size >= 0.001) {
 		sky= planet->newSky();
 		planet->addChild(sky);
 		if (sky->pressure >= 0.1) {
-			CloudLayer *clouds = planet->newClouds();
+			CloudLayer *clouds;
+			clouds = planet->newClouds(false);
 			planet->addChild(clouds);
+			if(sky->pressure >=0.5){
+				clouds = planet->newClouds(true);
+				planet->addChild(clouds);				
+			}
 		}
+		
 		planet->shadow_color.set_alpha(0.5);
 	}
-	cout<<"new rocky"<<endl;
 	//planet->setName("Rocky");
 	planet->terrain_type=ROCKY;
 
 	planet->calcTemperature();
-	
-	bool earth_like=false;
-	
-	cout<<"temp:"<<planet->temperature-273<<" radius:"<<planet->orbit_radius<<endl;
+		
+	cout<<"temp:"<<planet->temperature<<" radius:"<<planet->orbit_radius<<endl;
 	if(planet->temperature<400){ // boiling point K
-		s[0]=lerp(planet->temperature,200,373,-0.5,-1.7);
-		str=randFeature(RND_SNOW);
-        if(s[1]>-0.2){
-        	s[0]=lerp(planet->temperature,200,373,0,-50000);
-        	if(sky || planet->temperature<200){
-        		str+=newOcean(planet);
-        		if(planet->temperature<200){
+		s[0]=lerp(planet->temperature,200,373,-0.6,-1.7);
+		str+=randFeature(RND_SNOW);
+        if(s[1]>0){
+        	s[0]=lerp(planet->temperature,300,400,0,-50000);
+        	if(sky || planet->temperature<300){
+        		if(planet->temperature<300){
+        			if(s[1]>0.6)
+        				str+=newOcean(planet);
             		planet->terrain_type=ICY;
         		}
         		else{
-            		planet->terrain_type=EARTH_LIKE;
+            		str+=newOcean(planet);
+            		planet->terrain_type=OCEANIC;
         		}
         	}
         }
 	}
-	int num_layers=3.9*r[0]*r[0]+1;
-	r[7]*=planet->terrain_type==ROCKY?3:1;
-	if(num_layers<4)
+	double lf=planet->terrain_type==ICY?1.5:3.9;
+	num_layers=lf*r[0]*r[0]+1;
+	r[7]*=(planet->terrain_type==ROCKY)?3:1;
+	//if(num_layers<4)
+	if(planet->terrain_type==OCEANIC)
+		r[6]*=0.2;
+	else if(planet->terrain_type==ICY)
+		r[6]=1;
+	else
+		r[6]=0.5;
+	//if(num_layers<3)
 		str+=randFeature(RND_FRACTAL);
 	str+=randFeature(RND_MAP);
 	
-	cout<<num_layers<<endl;
 	layer_cnt=0;
 	for(int i=0;i<num_layers;i++)
 		str+=newLayer(planet);
@@ -4825,7 +4944,7 @@ void Planetoid::newRocky(Planetoid *planet){
 	case ROCKY:
 		sprintf(pname,"Rocky-l%d",num_layers);
 		break;
-	case EARTH_LIKE:
+	case OCEANIC:
 		sprintf(pname,"Oceanic-l%d",num_layers);
 		break;
 	case ICY:
@@ -4857,10 +4976,13 @@ void Planet::addMoon(){
 void Planet::newGasGiant(Planet *planet){
 	cout<<"new gas giant"<<endl;
 	planet->setName("Gaseous");
+	planet->setColors();
 
 	planet->day=100+90*r[2];
 	planet->year=planet->day*(1+3*r[3]);
 	planet->detail=4;
+	
+	planet->terrain_type=GASGIANT;
 
 	char buff[2048];
 
@@ -4936,29 +5058,21 @@ Moon::~Moon()
 #endif
 }
 
-NodeIF *Moon::getInstance(){
+NodeIF *Moon::getInstance(NodeIF *prev){
 	lastn=getRandValue()*1234;
-	Moon *moon=newInstance();
-	return moon;
+	setRands();
+	setParent(prev->getParent());
+	size=((Planetoid *)prev)->size;
+	newInstance();
+	return this;
 }
 
-Moon *Moon::newInstance(){
+void Moon::newInstance(){
 	initInstance();
-	Moon *moon=TheScene->getPrototype(0,ID_MOON);
-	moon->setRseed(r[0]);
-	moon->setParent(getParent());
-	moon->size=size*(1+0.2*s[1]);
-	
-	//moon->size=size;
-
-	newRocky(moon);
-	
-	moon->symmetry=1;
-	moon->set_geometry();
-	moon->setProtoValid(true);
-
-	moon->setNewViewObj(true);
-	return moon;
+	setRseed(r[0]);
+	newRocky(this);
+	setProtoValid(true);
+	setNewViewObj(true);
 }
 //************************************************************
 // Shell class
@@ -5145,11 +5259,11 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 #endif
 	set_geometry();
 	year=day=0;
-	twilite_max=0.2;
-	twilite_min=-0.2;
+	twilite_max=1;
+	twilite_min=-0.5;
 	haze_color=def_haze_color;
-	density=0.01;
-	detail=2;
+	density=0.05;
+	detail=8;
 }
 Sky::~Sky()
 {
@@ -5174,11 +5288,14 @@ Sky *Sky::newInstance(){
 	Sky *sky=TheScene->getPrototype(0,ID_SKY);
 	Color c(0.5+0.4*s[5],0.6+0.4*s[6],0.7+0.4*s[7]);
 	sky->set_color(c);
-	sky->detail=4;
+	sky->detail=8;
 	double f=pow(r[3],3);
 	sky->pressure=lerp(f,0,1,0.05,4);
 	sky->density=lerp(f,0,1,0.05,0.5);
 	sky->haze_grad=lerp(f,0,1,0.8,0.1);
+	
+	sky->twilite_color=c.darken(0.8);
+	sky->twilite_color=sky->twilite_color.blend(Color(1,0,0),0.3);
 	Color sc=sky->haze_color;
 	sc=sc.mix(c,0.1);
 	sc.set_alpha(lerp(f,0,1,0.8,1));
@@ -5255,8 +5372,15 @@ int Sky::render_pass()
 		if(near_group()){
 			if(outside())
 				clear_pass(FG1);
-			else
+			else{
+				// hides stars in transparent bands of rings
+				Orbital *parent=getParent();
+				if (parent->type()==ID_MOON){
+					if(parent->getParent()->hasChild(ID_RING))
+						clear_pass(BG3);
+				}
 				clear_pass(BG1);
+			}
 		}
 		else
 			clear_pass(BG2);
@@ -5403,6 +5527,8 @@ void Sky::init_render()
 		double f=rampstep(twilite_max,twilite_min,dp,0,twilite_value);
 		Raster.blend_factor=f;
 		Raster.darken_factor=twilite_value*f;
+		
+		//cout<<dp<<" blend:"<<Raster.blend_factor<<" darken:"<<Raster.darken_factor<<endl;
 
 		Color c=color();
 	    Raster.sky_color=c;
@@ -5710,6 +5836,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	sprites_dim=4;
 	sprites_file[0]=0;
 	sprites_image=0;
+	emission=Color(1,1,1,0.05);
 }
 CloudLayer::~CloudLayer()
 {
@@ -5929,6 +6056,13 @@ void CloudLayer::set_ref()
 {
 	animate();
 }
+void CloudLayer::set_tilt()
+{
+	Orbital::set_tilt();
+	// use planet tilt parent reference
+	//((Orbital*)parent)->set_tilt();
+}
+
 //-------------------------------------------------------------
 // CloudLayer::animate() adjust rotation with time
 //-------------------------------------------------------------
@@ -6048,6 +6182,8 @@ bool CloudLayer::setProgram(){
 	Sky *sky=((Spheroid*)parent)->get_sky();
 	Color haze(1,1,1);
 	Color halo(1,1,1);
+	Color twilight(1,1,1);
+
 	double twilite_min=-0.2;
 	double twilite_max=0.2;
 	double twilite_dph=0;
@@ -6060,6 +6196,7 @@ bool CloudLayer::setProgram(){
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
 		halo=sky->halo_color;
+		twilight=sky->twilite_color;
 		if(Render.haze() && parent == TheScene->viewobj){
 			haze=sky->haze_color;
 			haze_grad = sky->haze_grad;
@@ -6090,6 +6227,8 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVar("day_grad",day_grad);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVec("Halo",halo.red(),halo.green(),halo.blue(),halo.alpha());
+	vars.newFloatVec("Twilight",twilight.red(),twilight.green(),twilight.blue(),twilight.alpha());
+
 
 	vars.newFloatVar("sky_ht",sky_ht);
 	vars.newFloatVar("eye_ht",TheScene->height);
@@ -6113,6 +6252,9 @@ bool CloudLayer::setProgram(){
 
 	vars.newFloatVar("dpmin",dpmin);
 	vars.newFloatVar("dpmax",dpmax);
+	vars.newFloatVar("ldp",Raster.ldp);
+	
+	//cout<<"CloudLayer::setProgram "<<Raster.ldp<<endl;
 
 	//cout <<"clouds dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
 
@@ -6260,7 +6402,7 @@ bool CloudLayer::setProgram(){
 				depth = TheScene->vpoint.distance(m);
 				d=clamp(d,0,sprites_dim*sprites_dim-0.9);
 				double zht=triangle->height();
-				double transmission=clamp(1+diffusion*50*zht,0,1);
+				double transmission=clamp(0.5+diffusion*20*zht,0,1);
 
 				double a=c.alpha();
 				c=c*transmission; // note: Color * operator doesn't preserve alpha (sets it to 1.0)
@@ -6467,6 +6609,9 @@ void CloudLayer::adapt_object()
 {
 	if(!isEnabled())
 		return;
+	if(threeD())
+		map->set_conv(0.1);
+
 	map->make_current();
 	terrain.set_init_mode(1);
 	exprs.eval();
@@ -6522,27 +6667,30 @@ void CloudLayer::render_object()
 //-------------------------------------------------------------
 // CloudLayer::getInstance()  generate a random instance
 //-------------------------------------------------------------
-NodeIF *CloudLayer::getInstance(){
+NodeIF *CloudLayer::getInstance(NodeIF *prev){
 	lastn=getRandValue()*1271;
 	Orbital::setRands();
-	return newInstance();
+	if(((CloudLayer*)prev)->threeD())
+		return newInstance(true);
+	else
+		return newInstance(false);
 }
 
 //-------------------------------------------------------------
 // CloudLayer::newInstance()  generate a random instance
 //-------------------------------------------------------------
-CloudLayer *CloudLayer::newInstance(){
+CloudLayer *CloudLayer::newInstance(bool is3d){
 	CloudLayer *clouds=TheScene->getPrototype(0,ID_CLOUDS);
-	clouds->detail=4;
+	clouds->detail=16;
 	char buff[2048];
-	
-	std::string str="Color(1,1,1,twist(0.1,noise(";
-	str+=Planetoid::randFeature(RND_NOISEFUNC3);
-	str+="|FS|NABS|SQR|TA,1,6.4,1,0.5,";
-	str+=std::to_string(2+r[1]);    // freq
-	str+=",1,1,0,0.8,1e-5)))";
+	std::string str;
+    
+	if(is3d)
+		str=Planetoid::randFeature(RND_CLOUDS_3D);
+	else
+		str=Planetoid::randFeature(RND_CLOUDS_2D);
 	strcpy(buff,str.c_str());
-	
+		
 	TNode *root=TheScene->parse_node(buff);
 	if(root){
 	    clouds->terrain.set_root(root);

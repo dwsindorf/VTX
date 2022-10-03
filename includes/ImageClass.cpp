@@ -872,7 +872,7 @@ void TNtexture::eval()
 	    texture->texamp=b;
 	}
 	else{
-	    texture->texamp=a;
+	    texture->texamp=1;
 	    texture->bumpamp=b;
 	}
     texture->bias=bias;

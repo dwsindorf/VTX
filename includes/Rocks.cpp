@@ -269,6 +269,7 @@ void TNrocks::eval()
 			right->eval();
 		return;
 	}
+	S0.set_flag(ROCKLAYER);
 
     if(CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
@@ -371,14 +372,17 @@ void TNrocks::eval()
  	    S0.clr_cvalid();
  	    S0.clr_pvalid();
  	    S0.set_svalid();
+ 		S0.set_flag(ROCKLAYER);
+
  	    return;
  	}
 	if(S0.get_flag(CLRTEXS)){  // Map-layer mode (Map will adjust levels)
 		S0.set_flag(LOWER);
+		S0.set_flag(ROCKLAYER);
 	    return;
  	}
 
-	Td.begin();
+	Td.begin();		
 
     Td.zlevel[0].copy(S0);
 	Td.insert_strata(Td.lower);
@@ -407,7 +411,6 @@ void TNrocks::eval()
 	}
 	else
 		Td.end();
-
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists

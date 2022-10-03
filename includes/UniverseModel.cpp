@@ -190,7 +190,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Sky(0.1){color=Color(0.5,0.9,1.0);density=0.2;}\n");
 		break;
 	case TN_CLOUDS:
-		sprintf(tmp,"Clouds(0.01){Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
+		sprintf(tmp,"Clouds(0.01){emission=Color(1,1,1,0.05);Surface{terrain=Color(1,1,1,noise(1,5));\n}}\n");
 		break;
 	case TN_RING:
 		sprintf(tmp,"Ring(1.5,0.2){emission=Color(1,1,1,0.64);}\n");

@@ -268,7 +268,7 @@ void TNmap::eval()
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);
 		//if(Td.get_flag(FVALUE))
-			Td.set_flag(MULTILAYER);
+		//	Td.set_flag(MULTILAYER);
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
 			layer->base->eval();
@@ -334,8 +334,8 @@ void TNmap::eval()
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;
-	//if(Td.get_flag(FVALUE))
-		Td.set_flag(MULTILAYER);
+	//if(Td.get_flag(!ROCKLAYER))
+	//	Td.set_flag(MULTILAYER);
 
 	while(layer && layer->typeValue()==ID_LAYER){
 		if(!layer->isEnabled()){
@@ -349,7 +349,7 @@ void TNmap::eval()
 		layer->drop=mdrop;
 		layer->morph=mmorph;
 		layer->eval();
-
+	
 		edge_layer=layer;
 
 	    if(layer->right){
@@ -399,8 +399,12 @@ void TNmap::eval()
     	INIT;
     	Drop=d;
 	    S0.clr_flag(TEXFLAG);
+		S0.clr_flag(ROCKLAYER);
+
 		layer->base->eval();
-       	S0.p.z-=d;
+ 		if(!Td.get_flag(ROCKLAYER))
+			Td.set_flag(MULTILAYER);
+      	S0.p.z-=d;
        	if(S0.get_flag(LOWER))
        	    Td.lower.p.z-=d;
 	    else
@@ -442,8 +446,14 @@ void TNmap::eval()
 	s2=0.1*s1;
 	//  cout<<"ht:"<<TheScene->height<<" s1:"<<s1<<" s2:"<<s2<<endl;
 
+    // 1) Remove visual artifact when different textures meet at layer intersection
+    //    get tiled effect (due to texture colors not being blended)
+    //    work-around
+    //    - reduce texture opacity to zero in small dz region at layer intersections
+    //    - replace texture with texture average color
+    //    - blend colors from adjacent layers
     double dm=rampstep(top_layer->morph,0,1,s1,s2);
-    Td.margin=smoothstep(fabs(dz),0,dm,0,1);
+    Td.margin=smoothstep(fabs(dz),0,dm,0,1); // sets texture opacity 
     if(top_layer->morph){
         f=top_layer->morph*rampstep(0,margin,dz,0.5,0);
 		if(f){
@@ -456,12 +466,6 @@ void TNmap::eval()
 			Td.zlevel[1].p.y=(1-f)*Td.zlevel[1].p.y+f*p.y;
 		}
     }
-    // 1) Remove visual artifact when different textures meet at layer intersection
-    //    get tiled effect (due to texture colors not being blended)
-    //    work-around
-    //    - reduce texture transparency to zero in small dz region at layer intersections
-    //    - replace texture with texture average color
-    //    - blend colors from adjacent layers
     if(Td.margin<1){
     	int id=1+Td.zlevel[0].id(); // get properties for top layer
 		if(Td.zlevel[0].properties[id]->ntexs){
@@ -891,7 +895,6 @@ int TNlayer::optionString(char *s)
 NodeIF *TNlayer::getInstance(){
 	int last=lastn;
 	lastn=getRandValue()*1135;
-	initInstance();
 	char buff[2048];
 		
 	Planetoid *orb=(Planetoid *)getOrbital(this);

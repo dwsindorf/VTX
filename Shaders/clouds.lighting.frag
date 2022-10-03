@@ -23,12 +23,15 @@ uniform vec3 center;
 
 uniform vec4 Haze;
 uniform vec4 Halo;
+uniform vec4 Twilight;
 uniform float haze_grad;
 uniform float haze_zfar;
 uniform float day_grad;
 
 uniform float dpmax;
 uniform float dpmin;
+uniform float ldp;
+
 //
 // Phong Lighting model
 //
@@ -85,10 +88,19 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 #endif
 	}
 	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
+	
+	if(abs(ldp)<0.5)
+		TotalDiffuse=mix(TotalDiffuse,Twilight.xyz,0.1*abs(ldp)); // redden
+	if(ldp<0)
+	   TotalDiffuse=mix(TotalDiffuse,vec3(1,1,1),-0.5*ldp); // lighten
+	else
+	   TotalDiffuse=mix(TotalDiffuse,vec3(0,0,0),0.5*ldp);  //darken
+	
 	vec3 TotalSpecular = specular.rgb;
 	vec3 TotalEmission = emission.rgb;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
 	vec3 TotalColor=TotalAmbient + TotalDiffuse + TotalEmission+TotalSpecular;
+	
 	illumination=clamp(illumination,0.0,1.0);
 #ifdef BACK
 #ifdef HAZE

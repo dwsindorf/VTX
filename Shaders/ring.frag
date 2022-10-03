@@ -79,7 +79,11 @@ void main(void) {
     
 #endif
 	gl_FragData[0] = color;
-	gl_FragData[0].a=illumination;
-	gl_FragData[1]=vec4(Constants1.g,pow(color.a,4)*illumination,0.0,0);
-	//gl_FragData[2]=vec4(0,0,0,1);
+	//gl_FragData[0] = vec4(Constants1.g,0,0,1);
+	//gl_FragData[0].a=illumination;
+	//gl_FragData[1]=vec4(Constants1.g,pow(color.a,4)*illumination,0.0,0);
+	//gl_FragData[0].a=1;
+
+	//gl_FragData[1]=vec4(0,fcolor1.g,0,0);
+	
 }

@@ -29,20 +29,6 @@ Point           MapPt;
 double          Theta,Phi,Height=0.0,PX,PY,Radius=0,Density=0,MaxHt=0,MinHt=0,FHt=0;
 Scope          *CurrentScope;
 
-Color NodeIF::themes[THEMES*4]={
-	Color(1,0.89,0.49),Color(0.988,0.808,0.439),Color(0.616,0.38,0.02),Color(1,1,1),
-	Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
-	Color(1,0.89,0.29),Color(1,0.6,0),Color(0.69,0.4,0),Color(1,0.89,0.29),
-	Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1),
-	Color(1,0.639,0.09,0.29),Color(1,0.89,0.49),Color(0.302,0.078,0.078),Color(0.202,0.02,0.02),
-	Color(0.267,0.267,0.267),Color(0.71,0.71,0.71),Color(0.722,0.722,0.722),Color(0.933,0.933,0.933),
-	Color(0,0,0,0.4),Color(1,0.529,0),Color(1,0.863,0.635),Color(0.655,0.471,0.024)
-};
-Color NodeIF::mix;
-Color NodeIF::tc;
-int NodeIF::ncolors=6;
-Color NodeIF::colors[COLORS];
-
 void NodeIF::setRands(){
 	lastn++;
 	for(int i=0;i<RANDS;i++){
@@ -51,41 +37,9 @@ void NodeIF::setRands(){
 	}
 }
 
-void NodeIF::setColors(){
-	double use_theme=r[7];
-	if(use_theme>0.8){
-		int index=(int)THEMES*r[8];
-		ncolors=4;
-		for(int i=0;i<4;i++){
-			tc=themes[4*index+i];
-			tc.set_red(tc.red()+0.1*s[i]);
-			tc.set_green(tc.green()+0.1*s[i+1]);
-			tc.set_blue(tc.blue()+0.1*s[i+2]);
-			colors[i]=tc;		
-		}
-		cout<<"theme "<<index<<endl;
-	}
-	else{
-		ncolors=6;
-		tc=Color(0.5+3*r[4],0.4+2*r[5],0.8*r[5]);
-		mix=Color(0.4+2*r[7],0.5*r[8],0.2+0.3*r[9]);
-		colors[0]=mix;
-		colors[1]=tc.darken(0.75+0.2*s[2]);
-		colors[2]=tc.lighten(0.5+0.1*s[3]);
-		colors[3]=tc;
-		colors[4]=tc.darken(0.9+0.8*s[9]);
-		colors[5]=tc.lighten(0.9+0.8*s[6]);
-		cout<<"random "<<endl;
-	}	
-}
 
 int NodeIF::nsave=0;
 int NodeIF::ncount=0;
-
-void NodeIF::initInstance(){
-	setRands();
-	setColors();
-}
 
 double TNvalue(TNode *n)
 {

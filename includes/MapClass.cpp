@@ -279,6 +279,7 @@ Map::Map(double r)
 	tid=0;
 	minext=lim;
 	ntexs=1;
+	_conv=1;
     mcreated=mdeleted=mcount=cycles=0;
     for(int i=0;i<LISTTYPES;i++){
 		tid_lists[i]=true;
@@ -1745,7 +1746,6 @@ void Map::make_visbox()
 					|| Adapt.always() \
 					|| need_adapt() \
 					|| TheScene->view->changed_model() \
-					|| TheScene->viewobj!=object && TheScene->view->changed_time() \
 					)
 
 #define ADAPT_COMPLETE ( converged \
@@ -1822,7 +1822,7 @@ void Map::adapt()
 		set_idmap(0);
 	idtest=idmap();
 	//double sfact=0.3*object->resolution()*TheScene->cellsize;
-	double sfact=Adapt.conv()*0.5*sqrt(object->resolution()*TheScene->cellsize);
+	double sfact=conv()*Adapt.conv()*0.5*sqrt(object->resolution()*TheScene->cellsize);
 	if(TheScene->changed_file()){
 		sfact*=0.5;
 		max_cycles*=2;

@@ -65,6 +65,8 @@ protected:
 	MapNode *last;
 	MapNode *current;
 	int mcount,mcreated,mdeleted;
+	
+    double _conv;
 
 	static int tesslevel;
 
@@ -89,7 +91,7 @@ public:
 	int ntexs;
     int tid;
     int tids;
-
+    
     static LinkedList<Triangle*> triangle_list;
 	ValueList<Triangle*> triangles;
 
@@ -107,6 +109,9 @@ public:
 
 	void    render_ids();
 	void    setvis_ids();
+	
+	void set_conv(double f)     {_conv=f;}
+	double conv()               {return _conv;}
 
 	void	set_grid(int i)		{ grid_=i;}
 	unsigned int grid_size()	{ return grid_;}

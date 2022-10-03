@@ -127,7 +127,7 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
 	map_cntrls->Add(ScaleSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	MarginSlider=new ExprSliderCtrl(panel,ID_MARGIN_SLDR,"Margin",NAME_WIDTH,EXPR_WIDTH,SLDR_WIDTH);
-	MarginSlider->setRange(0.25,4.0);
+	MarginSlider->setRange(0.0,4.0);
 
 	map_cntrls->Add(MarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 

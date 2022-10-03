@@ -67,7 +67,8 @@ enum {
 	HIDDEN      = 0x00020000,    // invisible node
 	COMPLEX     = 0x00040000,    // complex expression
 	MULTILAYER  = 0x00080000,    // multilayer terrain
-	INEDGE      = 0x00100000,    // edge flag
+	ROCKLAYER   = 0x00100000,    // rocks terrain
+	INEDGE      = 0x00200000,    // edge flag
 
 };
 

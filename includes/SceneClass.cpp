@@ -320,7 +320,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 
 	NodeIF *m=getPrototype(obj,type);
 	cout<<"UniverseModel::makeObject "<<obj->getParent()->typeName()<<" "<<obj->typeName()<<endl;
-	NodeIF *n=m->getInstance();
+	NodeIF *n=m->getInstance(obj);
 	if(n){
 		n->setType(type);
 		n->setParent(obj);

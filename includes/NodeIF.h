@@ -87,19 +87,10 @@ public:
 	static double r[RANDS];
 	static double s[RANDS];
 	
-    static const int THEMES=7;
-	static Color themes[THEMES*4];
-	static const int COLORS=6;
-	static Color colors[COLORS];
-	static Color mix;
-	static int ncolors;
-	static Color tc;
-	static int nsave;
+ 	static int nsave;
 	static int ncount;
 
 	static void setRands();
-	static void setColors();
-	static void initInstance();
 
     int nodeflags;
     NodeIF() { nodeflags=0;}
@@ -135,6 +126,7 @@ public:
 	virtual double getRseed()   { return 0;}
 	virtual void setDefault()   { }
 	virtual NodeIF *getInstance() {return this;}
+	virtual NodeIF *getInstance(NodeIF *prev) {return getInstance();}
 
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}

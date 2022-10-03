@@ -1517,16 +1517,23 @@ NodeIF *TNwater::newInstance(){
 	//Europa    Color(1.000,1.000,1.000,0.918),Color(0.169,0.486,1.000),411.489,48.612,41.666)
 	//Water-ice Color(0.827,0.863,0.996),Color(0.027,0.247,0.220)
 
+	Color tc=Color(0.5+3*r[4],0.5+r[5],0.6*r[5]);
+	Color mix=Color(0.4+2*r[7],0.5*r[8],0.1+0.3*r[9]);
+	
+	Color c1=tc.darken(0.7+0.1*s[2]);
+	Color c2=tc.lighten(0.5+0.1*s[3]);
+
 	char buff[2045];
 	std::string water="ocean(noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0.05,1,0,0),";
 	char cstr[256];
 	Color b=Color("Color(0.8,0.9,1)");
-	b=b.mix(colors[0],0.8*r[2]);
+	b=b.mix(mix,0.8*r[2]);
 	b.toString(cstr);
 	water+=cstr;
 	water+=",";
-	b=Color("Color(0.2,0.5,0.900)");
-	b=b.mix(colors[1],0.8*r[2]);
+	b=Color("Color(0.2,0.4,0.5)");
+	b=b.mix(c1,0.8*r[2]);
+	b=b.darken(0.3);
 	b.toString(cstr);
 	water+=cstr;
 	water+=",";
@@ -1537,12 +1544,12 @@ NodeIF *TNwater::newInstance(){
 	ice+=std::to_string(0.3*s[5]);
 	ice+=",0.3,1.84,0.8,-0.24,0,-0.01),";
 	b=Color("Color(1.000,1.000,1.000,0.173)");
-	b=b.mix(colors[2],0.1*r[2]);
+	b=b.mix(c2,0.1*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
 	ice+=",";
 	b=Color("Color(0.4,0.8,0.8)");
-	b=b.mix(colors[3],0.5*r[2]);
+	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
 	ice+=",0.3,41.666,1)";
@@ -1556,7 +1563,7 @@ NodeIF *TNwater::newInstance(){
 NodeIF *TNwater::getInstance(){
 	int last=lastn;
 	lastn=getRandValue()*1115;
-	initInstance();
+	setRands();
 	
 	NodeIF *n=newInstance();
 	n->setParent(getParent());

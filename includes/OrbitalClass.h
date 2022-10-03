@@ -602,6 +602,8 @@ public:
 	void set_vars();
 	void get_vars();
 	void set_ref();
+	void set_tilt();
+
 	int render_pass();
 	int shadow_pass();
 	int adapt_pass();
@@ -623,8 +625,10 @@ public:
 	char *getSpritesFile(GLuint &dim);
 	void getSpritesFilePath(char *);
 	void getSpritesDir(int dim,char *);
-    NodeIF *getInstance();
-	static CloudLayer *newInstance();
+    NodeIF *getInstance(NodeIF *prev);
+    
+	static CloudLayer *newInstance(bool is3d);
+
 };
 
 //************************************************************
@@ -633,7 +637,7 @@ public:
 class Planetoid : public Spheroid
 {
 public:
-	enum {EARTH_LIKE,ROCKY,ICY,VOLCANIC};
+	enum {GASGIANT,OCEANIC,ROCKY,ICY,VOLCANIC};
 	
 	static std::string randFeature(int type);
 
@@ -676,10 +680,19 @@ public:
 	static int moon_cnt;
 	static int planet_cnt;
 	static int layer_cnt;
+	static int num_layers;
 
 	static int tcount;
 
 	static double planet_orbit;
+	
+    static const int THEMES = 7;
+	static Color themes[THEMES * 4];
+	static const int COLORS = 6;
+	static Color colors[COLORS];
+	static Color mix;
+	static int ncolors;
+	static Color tc;
 
 	void 	   init_render();
 	Planetoid(Orbital *m, double s, double r);
@@ -721,10 +734,14 @@ public:
 	static std::string newHmapTex(Planetoid *);
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
+	void setColors();
+	void initInstance();
+	
+	void setIceColors();
 
 	virtual Sky *newSky();
 	virtual Ring *newRing();
-	virtual CloudLayer *newClouds();
+	virtual CloudLayer *newClouds(bool is3d);
 };
 
 //************************************************************
@@ -738,8 +755,8 @@ public:
 
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
-	NodeIF *getInstance();
-	static Planet *newInstance();
+	NodeIF *getInstance(NodeIF *prev);
+	void newInstance();
 	static void newGasGiant(Planet *);
 	static void newRocky(Planet *);
 	void addMoon();
@@ -756,8 +773,8 @@ public:
 
 	const char *name()			{ return "Moon";}
 	int  type()					{ return ID_MOON;}
-	Moon *newInstance();
-	NodeIF *getInstance();
+	void newInstance();
+	NodeIF *getInstance(NodeIF *prev);
 };
 
 //************************************************************
