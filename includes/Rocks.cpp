@@ -111,6 +111,9 @@ void Rock::set_terrain(PlacementMgr &pmgr)
 	}
 	d+=rm;
 	r-=rm;
+	if(d<radius)
+		S0.set_flag(ROCKBODY);
+
 	/*
 	if(d>r)
 	    return;
@@ -124,7 +127,7 @@ void Rock::set_terrain(PlacementMgr &pmgr)
     z=mgr.base-0.5*mgr.zcomp*radius/Hscale;
 	if(r>d)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
-     if(z>mgr.ht)
+    if(z>mgr.ht)
         mgr.ht=z;
 }
 
@@ -354,16 +357,19 @@ void TNrocks::eval()
 	Td.lower.p.z=TZBAD;
 
 
-	if(rock.p.z>ground.p.z){
+	if(S0.get_flag(ROCKBODY) && rock.p.z>ground.p.z){
 		S0.copy(rock);
 		if(z)
 			Td.lower.copy(ground);
 	}
 	else{
+		if(rock.p.z>ground.p.z)
+			ground.p.z=rock.p.z;
 		S0.copy(ground);
 		if(z)
 			Td.lower.copy(rock);
 	}
+	//S0.set_flag(ROCKBODY);
 
 	if(!z){ // image
  	    S0.s=S0.p.z;
@@ -372,15 +378,15 @@ void TNrocks::eval()
  	    S0.clr_cvalid();
  	    S0.clr_pvalid();
  	    S0.set_svalid();
- 		S0.set_flag(ROCKLAYER);
-
+ 		//S0.set_flag(ROCKLAYER);
  	    return;
  	}
 	if(S0.get_flag(CLRTEXS)){  // Map-layer mode (Map will adjust levels)
 		S0.set_flag(LOWER);
-		S0.set_flag(ROCKLAYER);
+		//S0.set_flag(ROCKLAYER);
 	    return;
  	}
+
 
 	Td.begin();		
 

@@ -68,8 +68,8 @@ enum {
 	COMPLEX     = 0x00040000,    // complex expression
 	MULTILAYER  = 0x00080000,    // multilayer terrain
 	ROCKLAYER   = 0x00100000,    // rocks terrain
-	INEDGE      = 0x00200000,    // edge flag
-
+	ROCKBODY    = 0x00200000,    // rocks terrain
+	INEDGE      = 0x00400000,    // edge flag
 };
 
 enum {   //Terrain and NodeData type flags

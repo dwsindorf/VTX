@@ -104,7 +104,7 @@ static double	def_twilite_max=1;
 static double	def_twilite_min=-0.5;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
-static double	def_hscale=2e-3;
+static double	def_hscale=5e-4;
 
 
 //************************************************************
