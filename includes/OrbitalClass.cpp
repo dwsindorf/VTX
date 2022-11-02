@@ -100,8 +100,8 @@ static double  	def_fog_glow=0.2;
 
 static Color 	def_twilite_color=BLACK;
 static double	def_twilite_value=1;
-static double	def_twilite_max=1;
-static double	def_twilite_min=-0.5;
+static double	def_twilite_max=0.2;
+static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
 static double	def_hscale=5e-4;
@@ -1997,7 +1997,7 @@ Spheroid::Spheroid(Orbital *m, double s) :
 Spheroid::Spheroid(Orbital *m, double s, double r) :
 	Orbital(m,s,r)
 {
-    hscale=2e-3;
+    hscale=5e-4;
 	map=new Map(s);
 	map->object=this;
 	set_geometry();
@@ -2343,7 +2343,7 @@ void Spheroid::set_tilt()
 void Spheroid::set_rotation()
 {
 	if(rot_angle)
-	    TheScene->rotate(-rot_angle,0,1,0);	// rotate ccw
+	    TheScene->rotate(rot_angle,0,1,0);	// rotate ccw
 }
 
 //-------------------------------------------------------------
@@ -5527,8 +5527,6 @@ void Sky::init_render()
 		double f=rampstep(twilite_max,twilite_min,dp,0,twilite_value);
 		Raster.blend_factor=f;
 		Raster.darken_factor=twilite_value*f;
-		
-		//cout<<dp<<" blend:"<<Raster.blend_factor<<" darken:"<<Raster.darken_factor<<endl;
 
 		Color c=color();
 	    Raster.sky_color=c;
@@ -6182,7 +6180,7 @@ bool CloudLayer::setProgram(){
 	Sky *sky=((Spheroid*)parent)->get_sky();
 	Color haze(1,1,1);
 	Color halo(1,1,1);
-	Color twilight(1,1,1);
+	Color twilight(0,0,0);
 
 	double twilite_min=-0.2;
 	double twilite_max=0.2;

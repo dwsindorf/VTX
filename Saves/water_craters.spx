@@ -6,7 +6,7 @@ Scene() {
 		height=5235.83 ft;
 		gndlvl=-1618.84 ft;
 		time=472179;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -55,7 +55,15 @@ Scene() {
 		radius=0.00100116;
 	}
 	View{
+		height=4834.94 ft;
+		tilt=5;
+		angle=-1;
 		minr=0.00100025;
+	}
+	View{
+		time=22962.4;
+		tilt=6;
+		angle=1;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -74,17 +82,17 @@ Scene() {
 		System(1) {
 			Star(1,0) {
 				diffuse=Color(1,1,1);
-				emission=Color(1,1,1);
+				emission=Color(1,0.99,0.8);
 				specular=Color(1,1,1);
-				temperature=6540.73;
+				temperature=6000;
 				Corona(5.1) {
 					color1=Color(1,1,0.8,0.5);
 					color2=Color(1,1,0.6,0.7);
 				}
 			}
-			Planet(0.01,50) {
+			Planet(0.01,153.627) {
 				day=1;
-				diffuse=Color(1,1,1,0.59);
+				diffuse=Color(1,1,1,0.54);
 				emission=Color(1,1,1,0.05);
 				ocean.level=2.08693e-312 ft;
 				rot_phase=65.916;
@@ -92,27 +100,22 @@ Scene() {
 				specular=Color(1,1,1,0.05);
 				tilt=5.0688;
 				year=300;
+				ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 				Surface{
 					p=noise(3,17);
 					m1=noise(GRADIENT|NABS|SQR,8,4);
 					m2=noise(GRADIENT|NABS|SQR|UNS,13,2);
 					terrain=Z(0.5*m1+0.02*m2)+
-							Texture("gasgiant",TEX,1,2,1,0,1,2,0.5,0);
+							Texture("gasgiant",BUMP|TEX,1,1,2,0,1,2,0.5,0,0,0,0,0);
 				}
 				Ring(0.0133652,0.0088413) {
 					albedo=0.8;
 					emission=Color(1,1,1,0.92);
 					specular=Color(1,1,1,0.8);
 					rcolor1=Color(0.5,0.5,0.8,0.7);
-					bands("saturn2",ACHNL|NORM,128,0.70968,0.40322,Color(0.933,0.933,0.933,0.4),Color(0.502,1,0.502),
-						Color(0.675,0.4,0,0),
-						Color(1,0.875,0.275),
-						Color(0.502,0.251,0,0.714),
-						Color(0,0.251,0,0),
-						Color(0.988,0.773,0.004,0.176));
 					Surface{
 						terrain=
-								Texture("saturn2",LINEAR|S|TEX,0.5*PHI,2,1.08332,1,3.44448,1,2,1,0,0,0,0,0);
+								Texture("saturn-rings",LINEAR|S|TEX,0.5*PHI,2,1.08332,1,3.44448,1,2,1,0,0,0,0,0);
 					}
 				}
 				Moon(0.001,0.03) {
@@ -141,6 +144,7 @@ Scene() {
 					haze.max=6e-05;
 					haze.min=2e-05;
 					haze.value=1;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						m1=noise(GRADIENT|UNS,1,5,0.47,0.4,2)+0.71;
 						m2=0.5*noise(GRADIENT|NABS|NEG|SQR,8,16,0.2,0.5);
@@ -150,18 +154,19 @@ Scene() {
 								Texture("Shist1",BORDER|BUMP|NORM|RANDOMIZE|TEX,537.269,1.11104,2,0,7.66672,2,0.43056,0,0,0,0,0);
 					}
 					Sky(0.00103) {
-						color=Color(0.4,0.8,1,0.76);
+						color=Color(0.4,0.8,1);
 						day=11;
 						haze.color=Color(1,1,0.71);
+						haze.grad=0.89024;
 						haze.height=0.6;
 						haze.max=13.573 miles;
 						haze.min=0.0189 miles;
 						haze.value=1;
 						night.color=Color(0,0,0);
-						sky.grad=3;
+						sky.grad=2;
 						specular=Color(1,1,1);
 						twilight=Color(0.5,0,0.25);
-						twilight.max=0.2691;
+						twilight.max=0.263539;
 						twilight.min=-0.2691;
 						year=11;
 					}

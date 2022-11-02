@@ -16,6 +16,7 @@ enum {
     ID_QUALITY,
     ID_LMODE,
     ID_ANIMATE,
+	ID_TIME_FORWARD,
     ID_TIME_SLDR,
     ID_TIME_TEXT,
     ID_RATE_SLDR,
@@ -88,6 +89,9 @@ BEGIN_EVENT_TABLE(VtxSceneTabs, wxNotebook)
 
 EVT_CHECKBOX(ID_ANIMATE,VtxSceneTabs::OnAnimate)
 EVT_UPDATE_UI(ID_ANIMATE, VtxSceneTabs::OnUpdateAnimate)
+EVT_CHECKBOX(ID_TIME_FORWARD,VtxSceneTabs::OnForwardTime)
+EVT_UPDATE_UI(ID_TIME_FORWARD, VtxSceneTabs::OnUpdateTimeDirection)
+
 
 EVT_RADIOBOX(ID_DRAWTYPE, VtxSceneTabs::OnDrawMode)
 EVT_UPDATE_UI(ID_DRAWTYPE, VtxSceneTabs::OnUpdateDrawMode)
@@ -585,6 +589,9 @@ void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
 
 	hline->Add(RateSlider->getSizer());
 	hline->Add(m_rate_scale);
+	
+	m_forward_time=new wxCheckBox(panel, ID_TIME_FORWARD, "+");
+	hline->Add(m_forward_time,0, wxALIGN_LEFT|wxALL,5);
 
 	time_ctrls->Add(hline);
 	time_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));

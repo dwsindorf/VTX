@@ -124,7 +124,7 @@ void Rock::set_terrain(PlacementMgr &pmgr)
         mgr.ht=z;
 		*/
     //z=mgr.base-0.5*mgr.zcomp*radius/Hscale;
-    z=mgr.base-0.5*mgr.zcomp*radius/Hscale;
+    z=mgr.base-0.5*mgr.zcomp*r/Hscale;
 	if(r>d)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
     if(z>mgr.ht)
@@ -141,6 +141,7 @@ TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r
 	TNode *arg=args[3];
 	if(arg && (arg->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
+	set_collapsed();
 }
 
 //-------------------------------------------------------------
@@ -333,14 +334,17 @@ void TNrocks::eval()
 		base->eval();
 		if(S0.svalid())
 		    S0.p.z=S0.s;
+		if(!S0.pvalid())
+			S0.p.z=ground.p.z;
 	//	rmgr->base=S0.p.z+S0.height-rmgr->drop*rmgr->maxsize/Hscale;
 		rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
 		//S0.p.z=rmgr->base;
-		S0.p.z=0;
+		//S0.p.z=0;
 	    rock.copy(S0);
 		if(right)
 			rock.next_id();
 	}
+	
 	if(right)
 		ground.set_id(S0.tids);
 

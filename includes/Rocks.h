@@ -49,7 +49,7 @@ public:
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	bool isLeaf()			{ return false;}
-
+	int linkable()      		    { return 1;}
 };
 
 #endif

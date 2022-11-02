@@ -202,6 +202,7 @@ public:
 	double  tesslevel;	// cell size multiplier
 	double	resolution; // cell size multiplier
 	int     detail_direction;
+	int 	time_direction;
 	double  time;		// current time
 	double  ftime;		// frame time
 	double  delt;		// time multiplier

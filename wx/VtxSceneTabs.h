@@ -39,6 +39,8 @@ protected:
 	wxRadioBox *filtermode;
 	wxRadioBox *quality;
 
+	wxCheckBox *m_forward_time;
+
 	wxCheckBox *m_ave_check;
 	wxCheckBox *m_aa_check;
 	wxCheckBox *m_show_check;
@@ -241,6 +243,13 @@ public:
     	Render.set_water_show(!Render.show_water());
        	TheScene->set_changed_render();
     }
+
+    void OnForwardTime(wxCommandEvent& event){
+    	TheScene->time_direction=event.IsChecked()?1:-1;
+    }
+    void OnUpdateTimeDirection(wxUpdateUIEvent& event) {
+     	event.Check(TheScene->time_direction==1);
+     }
 
     void OnShowGrid(wxCommandEvent& event){
     	TheScene->enable_grid=event.IsChecked();

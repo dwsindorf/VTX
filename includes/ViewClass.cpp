@@ -127,6 +127,7 @@ void View::reset()
 	status=0;
 	tfact=1;
 	detail_direction=1;
+	time_direction=1;
 	reset_time();
 	maxht=0;
 	nstrings=0;
@@ -1540,7 +1541,7 @@ void View::animate()
 	    head_forward();
 
 	if(autotm()){
-		time+=TFACT*delt;
+		time+=time_direction*TFACT*delt;
 		set_changed_time();
 	}
 }

@@ -88,14 +88,14 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 #endif
 	}
 	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
-	
+#ifdef BACK
 	if(abs(ldp)<0.5)
 		TotalDiffuse=mix(TotalDiffuse,Twilight.xyz,0.1*abs(ldp)); // redden
 	if(ldp<0)
 	   TotalDiffuse=mix(TotalDiffuse,vec3(1,1,1),-0.5*ldp); // lighten
 	else
 	   TotalDiffuse=mix(TotalDiffuse,vec3(0,0,0),0.5*ldp);  //darken
-	
+#endif
 	vec3 TotalSpecular = specular.rgb;
 	vec3 TotalEmission = emission.rgb;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;

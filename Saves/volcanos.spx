@@ -6,7 +6,7 @@ Scene() {
 		height=380.265 ft;
 		gndlvl=1487.01 ft;
 		time=51516;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -40,10 +40,6 @@ Scene() {
 	}
 	View{
 		tilt=-7;
-		vstride=0.02;
-		zoom=0.005;
-		minh=1.13636e-09;
-		radius=0.00500043;
 	}
 	View{
 		phi=30.0578;
@@ -53,6 +49,12 @@ Scene() {
 		heading=-18;
 		tilt=-9;
 		angle=12;
+		vstride=0.02;
+		zoom=0.005;
+		minh=1.13636e-09;
+		radius=0.00500044;
+	}
+	View{
 		minr=0.0050003;
 	}
 	Galaxy(10000) {
@@ -75,7 +77,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6540.73;
+				temperature=6000;
 				year=2;
 				Surface{
 					terrain=Color(1,1,0)-Color(0,1,1)*noise(8,4);
@@ -89,6 +91,7 @@ Scene() {
 				albedo=0.25;
 				ambient=Color(1,1,1,0.08);
 				day=1;
+				fog.glow=0.36842;
 				fog.max=916.74 ft;
 				fog.min=83.34 ft;
 				fog.value=1;
@@ -106,13 +109,14 @@ Scene() {
 				haze.max=5e-05;
 				haze.min=5e-06;
 				haze.value=1;
-				bands("lava",NORM,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
-					Color(0.58,0.024,0.024));
+				ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+				bands("lava",ACHNL,128,0.42222,0.776471,Color(0.176,0.176,0.204,0.776),Color(0.09,0.09,0.09),
+					Color(0.576,0.024,0.024));
 				image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
 				Surface{
 					terrain=fog(1.5*noise(GRADIENT|UNS,11,5,1,0.5,2))
 							
-							Texture("lava",TEX,2277.13,2,1,0.67696,1,2,1,0,0,1,-0.47224,0.16668)+
+							Texture("lava",LINEAR|TEX,2277.13,2,1,0.67696,1,2,1,0,0,1,-0.47224,0.16668)+
 							Texture("craters3",BUMP,1279.18,1.39624,1,0,11.8682,2.13208,1,0)+Z(0.5*craters(ID1,2,0.002,0.25,1,1,1,1,0.32,5,0.1,0.2,0,0,0));
 				}
 				Sky(0.00511133) {
