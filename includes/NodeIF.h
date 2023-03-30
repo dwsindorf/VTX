@@ -225,7 +225,7 @@ public:
 		getChildren(nlist);
 		NodeIF *obj;
 		nlist.ss();
-		while((obj=nlist++)>0){
+		while((obj=nlist++)!=0){
 			obj->visitNode(func);
 			if(obj->getFlag(NODE_STOP)){
 				obj->clrFlag(NODE_STOP);

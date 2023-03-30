@@ -462,7 +462,7 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 	strcpy(sname,src_node->tnode->node->nodeName());
 	wxString dstr=dst_node->getName();
 	int type=0;
-	while((sym=list++)>0){
+	while((sym=list++)){
 		if(sym->value==src->getFlag(TN_TYPES)){
 			type=sym->value;
 			break;
@@ -975,7 +975,7 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 
 	add_list.add(new ModelSym("<Random>",sym->value));
 	submenu->Append(TABS_ADD|i++,"<Random>");
-	while((fsym=flist++)>0){
+	while((fsym=flist++)){
 		add_list.add(fsym);
 		submenu->Append(TABS_ADD|i++,fsym->name());
 	}
@@ -1016,7 +1016,7 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 		replace_list.add(new ModelSym("<Random>",type));
 		submenu->Append(TABS_REPLACE|i++,"<Random>");
 
-		while((fsym=flist++)>0){
+		while((fsym=flist++)){
 			replace_list.add(fsym);
 			submenu->Append(TABS_REPLACE|i++,fsym->name());
 		}
@@ -1036,7 +1036,7 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 	replace_list++;
 	replace_list++;
 
-	while((fsym=replace_list++)>0){
+	while((fsym=replace_list++)){
 		submenu->Append(TABS_REMOVE|i++,fsym->name());
 	}
 	replace_list.ss();
@@ -1058,7 +1058,7 @@ wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 	wxMenu *addmenu=new wxMenu();
 	wxMenu *submenu;
 	int i=0;
-	while((sym=dlist++)>0){
+	while((sym=dlist++)){
 		add_list.add(sym);
 		wxString label=sym->name();
 		submenu=getFileMenu(sym,i);

@@ -129,10 +129,10 @@ int yywrap()
 								else
 									fprintf(yyout,"int");
 							}
-^"#pragma".*$				{	if(!(status & WINDOWS)) 
+^"#pragma".*$				{	if(!(status & WINDOWS))
 									fprintf(yyout,"%s",yytext);
                             }
-^"#include <inttypes.h>"	{	if(!(status & WINDOWS)) 
+^"#include <inttypes.h>"	{	if(!(status & WINDOWS))
 									fprintf(yyout,"%s",yytext);
 							}							
 ^"#include <values.h>"		{	if(!(status & WINDOWS))
@@ -141,6 +141,9 @@ int yywrap()
 ^"#include <unistd.h>"		{	if(!(status & WINDOWS))
 									fprintf(yyout,"%s",yytext);
                             }
+^"#include \"y.tab.h\""		{
+								fprintf(yyout,"#include \"sx_y.h\"");
+							}
 ^"	void exit(int);"		{	if(!(status & WINDOWS))
 									fprintf(yyout,"%s",yytext);
                             }

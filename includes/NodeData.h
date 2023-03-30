@@ -115,7 +115,7 @@ enum {
 typedef union d32 {
 	int     l;
     double   d;
-	ulong    ul;
+	unsigned long    ul;
     MapData *md;
 } d32;
 

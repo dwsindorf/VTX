@@ -100,14 +100,14 @@ bool VtxApp::OnInit()
     frame->SetClientSize(w,h);
     
     frame->Show(true);
-
-    set_fonts(); // set fonts for opengl text
+    //set_fonts(); // set fonts for opengl text
     
     vs->SetSceneName(filename);
     vs->Refresh();
 
     //printf("long=%d int=%d\n",sizeof(long),sizeof(int));
     frame->start_timer(repeat_rate); // the first tick builds the "scene" object
+    cout<<"VtxApp::OnInit"<<endl;
     return true;
 }
 

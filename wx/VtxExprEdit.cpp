@@ -179,7 +179,7 @@ void VtxExprEdit::exprToSymbols(){
 
 	// - set TNnode token field only for tokens that are to be tracked
 	// - add new tokens to hash table
-	while((tn=list++)>0){
+	while((tn=list++)){
 		symb[0]=0;
 		switch(tn->typeValue()){
 		case ID_NOISE:

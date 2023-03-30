@@ -595,7 +595,7 @@ void OctTree::render() {
 		if (sorted.size>0) {
 			sorted.se();
 			OctNode *node = sorted.at();
-			while ((node = sorted--)>0) {
+			while ((node = sorted--)) {
 				node->render();
 			}
 #ifdef DEBUG_RENDER

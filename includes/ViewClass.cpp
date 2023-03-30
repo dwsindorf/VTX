@@ -11,7 +11,8 @@
 #define MATRIX_MGR          // enable MatrixMgr
 #define TFACT 0.1
 
-extern double font_height,font_width,view_font_height,view_font_width;
+//extern double font_height,font_width,view_font_height,view_font_width;
+extern double font_height,view_font_height;
 
 int print_strings=0;
 int draw_strings=1;

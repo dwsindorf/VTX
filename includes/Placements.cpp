@@ -276,7 +276,7 @@ void PlacementMgr::eval()
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
-			while((h=list++)>0){
+			while((h=list++)){
 		  		h->set_terrain(*this);
 		  		h->users--;
 				if(hash[h->hid]!=h){

@@ -7,15 +7,13 @@
 #include "KeyIF.h"
 
 #ifndef MFC // Window using MFC
-#include <strings.h>
+#include <string.h>
 #include <string.h>
 #endif
 #include <iostream>
 using namespace std;
 
-double font_width=6;
-double font_height=13;
-double view_font_width=12;
+double font_height=12;
 double view_font_height=24;
 
 #define FONT1 1000
@@ -105,42 +103,77 @@ void draw_text(int x, int y, char *stg)
 
 //#ifndef GLUT
 #ifdef WIN32
-bool set_fixed_font()
+#define MAX_CHARS	256	
+UINT CreateOpenGLFont(LPSTR font, int height, bool bold, int id)	// Build Our Bitmap Font
 {
-#ifndef JNI	 
-    HDC hDC;   
-    HFONT hFont;
-     LOGFONT logfont;
+	UINT	fontListID = 0;								// This will hold the base ID for our display list
+	HFONT	hFont;
 
-    logfont.lfHeight = -12;
-    logfont.lfWidth = 0;
-    logfont.lfEscapement = 0;
-    logfont.lfOrientation = 0;
-    logfont.lfWeight = FW_NORMAL;
-    logfont.lfItalic = FALSE;
-    logfont.lfUnderline = FALSE;
-    logfont.lfStrikeOut = FALSE;
-    logfont.lfCharSet = ANSI_CHARSET;
-    logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-    logfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    logfont.lfQuality = DEFAULT_QUALITY;
-    logfont.lfPitchAndFamily = FIXED_PITCH;
-    strcpy(logfont.lfFaceName,"Courier");
-    
-    hDC = wglGetCurrentDC();
-    hFont = CreateFontIndirect(&logfont);
-    SelectObject (hDC, hFont); 
-    wglUseFontBitmaps(hDC, 0, 255, FONT1);
-    DeleteObject(hFont);
-#endif
-    return true;
+    // int n=strlen(font)>32?32:strlen(font);
+
+	// wchar_t wfont[33]={0};
+	// for (int i=0;i<n;i++)
+	//   wfont[i]=(wchar_t)font[i];
+
+	HDC hDC = wglGetCurrentDC();
+	// Here we generate the lists for each character we want to use.
+	// This function then returns the base pointer, which will be 1 because
+	// we haven't created any other lists.  If we generated another list after
+	// this, the base pointer would be at 257 since the last one used was 256 (which is MAX_CHARS)
+	fontListID = glGenLists(MAX_CHARS);					// Generate the list for the font
+
+	// Now we actually need to create the font.  We use a windows function called:
+	// CreateFont() that returns a handle to a font (HFONT).
+	cout<<"CreateOpenGLFont "<<id<<endl;
+    int mkbold=bold?FW_BOLD:FW_NORMAL;
+	hFont = CreateFont(height,						    // Our desired HEIGHT of the font
+						0,								// The WIDTH (If we leave this zero it will pick the best width depending on the height)
+						0,								// The angle of escapement
+						0,								// The angle of orientation
+						mkbold,						    // The font's weight
+						FALSE,							// Italic - We don't want italic
+						FALSE,							// Underline - We don't want it underlined
+						FALSE,							// Strikeout - We don't want it strikethrough
+						ANSI_CHARSET,					// This is the type of character set
+						OUT_TT_PRECIS,					// The Output Precision
+						CLIP_DEFAULT_PRECIS,			// The Clipping Precision
+						ANTIALIASED_QUALITY,			// The quality of the font - We want anitaliased fonts
+						FF_DONTCARE|DEFAULT_PITCH,		// The family and pitch of the font.  We don't care.
+						font);							// The font name (Like "Arial", "Courier", etc...)
+
+	// Now that we have created a new font, we need to select that font into our global HDC.
+	// We store the old font so we can select it back in when we are done to avoid memory leaks.
+	
+	SelectObject (hDC, hFont); 
+
+	// This function does the magic.  It takes the current font selected in
+	// the hdc and makes bitmaps out of each character.  These are called glyphs.
+	// The first parameter is the HDC that holds the font to be used.
+	// The second parameters is the ASCII value to start from, which is zero in our case.
+	// The third parameters is the ASCII value to end on (255 is the last of the ASCII values so we minus 1 from MAX_CHARS)
+	// The last parameter is the base pointer for the display lists being used.
+	wglUseFontBitmaps(hDC, 0, MAX_CHARS - 1, id);	// Builds 255 bitmap characters
+
+	DeleteObject(hFont);
+
+	return fontListID; // returns 0 if failure
+}
+
+bool set_fixed_font(){
+	return CreateOpenGLFont("Courier",font_height,false,FONT1);
+}
+bool set_view_font(){
+	return CreateOpenGLFont("Courier",view_font_height,false,FONT3);
 }
 bool set_select_font(){
-	return set_fixed_font();
+	return CreateOpenGLFont("Courier",font_height,true,FONT2);
 }
 bool set_fonts(){
-	return fixed_font()
+	set_fixed_font();
+	set_select_font();
+	set_view_font();
 }
+
 #ifdef MFC
 //===============================================================
 // MFC glue code

@@ -366,7 +366,7 @@ void VtxBandsTabs::makeImageList(){
 	
     m_file_menu->Clear();
 	ImageSym *is;
-	while((is=(*image_list)++)>0){
+	while((is=(*image_list)++)){
 		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
@@ -436,7 +436,7 @@ bool VtxBandsTabs::alpha()
 	Color *cp;
 	colors.ss();
 	bool aflag=false;
-	while((cp=colors++)>0){
+	while((cp=colors++)){
 		if(cp->alpha()){
 			aflag=true;
 			break;
@@ -455,7 +455,7 @@ void VtxBandsTabs::splineString(char *buff)
 
 	colors.ss();
 	int i=0;
-	while((cp=colors++)>0){
+	while((cp=colors++)){
 		Color c=*cp;
 		if(!m_alpha_check->GetValue())
 			c.set_alpha(1.0);
@@ -552,7 +552,7 @@ void VtxBandsTabs::setControlsFromColors()
 		enables[i]->SetValue(false);
 	}
 	i=0;
-	while((cp=colors++)>0){
+	while((cp=colors++)){
 		Color c=*cp;
 		csliders[i]->setColor(c);
 		enables[i]->SetValue(true);

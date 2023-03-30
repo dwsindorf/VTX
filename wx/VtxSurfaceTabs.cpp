@@ -215,7 +215,7 @@ void VtxSurfaceTabs::getVariables()
 	Node<TNode*> *ptr=mgr->exprs.ptr;
 	mgr->exprs.ss();
 	TNvar *obj;
-	while((obj=(TNvar*)mgr->exprs++)>0){
+	while((obj=(TNvar*)mgr->exprs++)){
 		m_list->Append(obj->name());
 	}
 	if(mgr->exprs.size>0)

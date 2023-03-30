@@ -671,7 +671,7 @@ void ExprMgr::applyVarExprs()
 	TNvar *exp=0;
 	Node<TNode*> *ptr=exprs.ptr;
 	exprs.ss();
-	while((exp=(TNvar*)exprs++)>0){
+	while((exp=(TNvar*)exprs++)){
 	    exp->applyExpr();
 	}
     exprs.ptr=ptr;
@@ -685,7 +685,7 @@ void ExprMgr::clearVarExprs()
 	TNvar *exp=0;
 	Node<TNode*> *ptr=exprs.ptr;
 	exprs.ss();
-	while((exp=(TNvar*)exprs++)>0){
+	while((exp=(TNvar*)exprs++)){
 	    exp->clearExpr();
 	}
     exprs.ptr=ptr;
@@ -766,7 +766,7 @@ TNvar *ExprMgr::get_expr(char *s)
 	TNvar *exp=0;
 	Node<TNode*> *ptr=exprs.ptr;
 	exprs.ss();
-	while((exp=(TNvar*)exprs++)>0){
+	while((exp=(TNvar*)exprs++)){
 	    if(strcmp(exp->name(),s)==0)
 	    	break;
 	}
@@ -781,7 +781,7 @@ void ExprMgr::revaluate()
 {
 	TerrainSym *ts;
 	vars.ss();
-	while((ts=(TerrainSym*)vars++)>0){
+	while((ts=(TerrainSym*)vars++)){
 	    if(!ts->constant())
 	    	ts->set_reval(1);
 	}
@@ -800,7 +800,7 @@ void ExprMgr::init()
 	//vars.free();
 
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		if(var->do_show()){
 			var->init();
 			var->eval();
@@ -817,7 +817,7 @@ void ExprMgr::init()
     }
 	inodes.ss();
 	TNinode *image;
-	while((image=(TNinode*)inodes++)>0){
+	while((image=(TNinode*)inodes++)){
 	   image->init();
 #ifdef DEBUG_INIT
 	   printf("image expr %s\n",image->name);
@@ -831,7 +831,7 @@ void ExprMgr::init()
 	TheNoise.set(MapPt);
 
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		if(var->constant())
 			 continue;
 		var->init();
@@ -868,7 +868,7 @@ void ExprMgr::save(FILE *f)
 	save_selected(f);
 	TNode *t;
 	inodes.ss();
-	while((t=inodes++)>0)
+	while((t=inodes++))
 		t->save(f);
 }
 
@@ -884,18 +884,18 @@ void ExprMgr::save_selected(FILE *f)
 	Node<TNode*> *ptr=exprs.ptr;
 
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 	    ts=vars.inlist(var->name());
 		if(ts)
 	    var->set_show(ts->do_show() && ts->do_eval());
 	}
 	vars.ss();
-	while((ts=vars++)>0){
+	while((ts=vars++)){
 	    if(ts->do_show() && !ts->do_eval())
 			ts->save(f);
 	}
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 	    if(var->do_show())
 		    var->save(f);
 	}
@@ -930,7 +930,7 @@ void ExprMgr::eval()
 	exprs.ss();
 	Td.reset();
 
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		var->eval();
 	}
 }
@@ -967,7 +967,7 @@ TNinode *ExprMgr::get_image(char *s, int m)
 	char name1[256];
 	char name2[256];
 	images.hashName(s,m,name1);
-	while((image=(TNinode*)inodes++)>0){
+	while((image=(TNinode*)inodes++)){
 	    int opts=image->opts;
 	    images.hashName(image->name,opts,name2);
 		if(strcmp(name1,name2)==0)
@@ -1028,7 +1028,7 @@ TNvar *ExprMgr::getVar(char *s){
 
 	TNvar *var;
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		if(strcmp(var->name(),s)==0){
 			exprs.ptr=ptr;
 	        return var;
@@ -1286,11 +1286,11 @@ void TerrainMgr::validateVariables()
 
 		//check for dependent variables
 		exprs.ss();
-		while((vnode=(TNvar*)exprs++)>0)
+		while((vnode=(TNvar*)exprs++))
 			vnode->right->visit(getvar);
 
 		exprs.ss();
-		while((vnode=(TNvar*)exprs.at())>0){
+		while((vnode=(TNvar*)exprs.at())){
 			if(!vnodes.inlist(vnode->name())){  // unused
 				exprs.pop();
 				delete vnode;
@@ -1331,13 +1331,13 @@ void TerrainMgr::validateTextures()
 	cout<<"TerrainMgr::validateTextures() start images="<<imgr->inodes.size<<endl;
 #endif
 	imgr->inodes.ss();
-	while((tnode=imgr->inodes++)>0)
+	while((tnode=imgr->inodes++))
 		tnode->NodeIF::invalidate();  // mark unused
 	imgr->inodes.ss();
 
 	// add new texture variables
 
-	while((tex=(TNtexture*)textures++)>0){
+	while((tex=(TNtexture*)textures++)){
 //		if(!addTextureImage(tex->name))
 //			continue;
 
@@ -1359,7 +1359,7 @@ void TerrainMgr::validateTextures()
 	// remove unused texture variables
 
 	imgr->inodes.ss();
-	while((tnode=imgr->inodes.at())>0){
+	while((tnode=imgr->inodes.at())){
 		if(tnode->NodeIF::invalid()){  // unused
 			imgr->inodes.pop();
 			delete tnode;
@@ -1426,7 +1426,7 @@ void TerrainMgr::eval()
 	exprs.ss();
 
 	Td.reset();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		var->eval();
 	}
 
@@ -1503,7 +1503,7 @@ void TerrainMgr::init()
 	TheNoise.set(MapPt);
 
 	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
+	while((var=(TNvar*)exprs++)){
 		Td.init();
 		var->init();
 	}

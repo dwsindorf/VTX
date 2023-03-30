@@ -8,6 +8,10 @@ INCLUDES       = ../includes
 OBJDIR         = "../$(THIS)"
 PARSERS        = "../parsers"
 
+ifneq ($(PLATFORM),WIN)
+	X11=-lX11
+endif
+
 OSTYPE      = `uname -s`
 PARSER_TMPS = .sb y.output lex.yy.c sx_y.h sx_y.cpp sx_l.cpp yytopp
 
@@ -17,7 +21,7 @@ PARSER_TMPS = .sb y.output lex.yy.c sx_y.h sx_y.cpp sx_l.cpp yytopp
 #################
 #GLIBS     = -lGL -lGLU
 GLUTLIB    = -lglut
-LIBS      = $(GLIBS) 
+LIBS      = $(GLIBS) $(X11)
 LIBPATH       = .;$(JOGL_LIB)
 CLASSPATH    = ".;$(JOGL_LIB)/jogl.jar;$(JOGL_LIB)/gluegen-rt.jar"
 INCS  		= -I../jpeglib
@@ -64,7 +68,7 @@ build_glut: parsers jpeglib glut includes vtxg
 wx:;	    cd  ../wx; \
             make $(MFLAGS) \
 			INCS="-I../includes -I../ -I../Resources/UI" \
-			CFLAGS="$(CFLAGS)" \
+			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) $(GLDEFS)"\
 			CC="$(CC)" \
 			OBJDIR="../$(THIS)" \
 			build; \
@@ -123,7 +127,7 @@ vtxg:;	    @echo "### Building vtx-glut ...";
 			@echo "### done"
 
 vtxw:;	    @echo "### Building vtx-wxWidgets ...";
-			$(CC) $(CFLAGS) -o $(PROGRAM) *.o  `wx-config --libs --gl_libs` -lX11 ;
+			$(CC) $(CFLAGS) -o $(PROGRAM) *.o  `wx-config --libs --gl_libs` ;
 			@echo "### done"
 
 showenv:;   @echo "CFLAGS = $(CFLAGS)"
@@ -131,7 +135,7 @@ showenv:;   @echo "CFLAGS = $(CFLAGS)"
 			@echo "INCS = $(INCS)"
 			@echo "PLATFORM = $(PLATFORM)"
 			@echo "PATH = $(PATH)"
-			@echo "LIBS = `wx-config --libs --gl_libs`"
+			@echo "LIBS = `wx-config --libs --gl_libs` $(LIBS)"
 			@echo "WXFLAGS = `wx-config --cxxflags`"			
 			
 clean:;		rm -f *.class *.o $(NLIB) $(PROGRAM)  ../jni/*.o ../glut/*.o $(PARSER_TMPS) $(NHDRS)
@@ -144,10 +148,9 @@ undebug:;   rm ../Shaders/*.debug
 #################
 jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CLASSPATH) VtxMain
 
-test:;         ./vtx.exe --m binary.spx
-#test:;         ./vtx.exe --m  last.spx
-#test:;         ./vtx.exe --m test.spx
-
+#test:;         ./vtx.exe --m 
+#test:;         ./vtx.exe --m  gasgiant1.spx
+test:;         ./vtx.exe --m simple.spx
 
 ### DEPENDENCIES ###
 

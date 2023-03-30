@@ -514,8 +514,12 @@ void VtxScene::timer_tick()
    cout << "VtxScene::OnTimer()"<< endl;
 #endif
     SetCurrent();
-    if(!TheScene)
+    if(!TheScene){
+        set_fonts(); // set fonts for opengl text
+        cout<<"make_scene start"<<endl;
         make_scene();
+        cout<<"make_scene end"<<endl;
+    }
     draw_cnt++;
     Refresh();
 }

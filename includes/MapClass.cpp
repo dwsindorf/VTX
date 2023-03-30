@@ -2258,7 +2258,7 @@ void Map::make_triangle_lists() {
 		double d2=clock();
 #endif
 		triangle_list.ss();
-		while ((triangle = triangle_list++)>0) {
+		while ((triangle = triangle_list++)) {
 			if(!triangle->visible)
 				continue;
 			Point c = triangle->d1->point();
