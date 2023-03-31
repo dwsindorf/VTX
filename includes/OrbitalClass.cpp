@@ -4974,7 +4974,7 @@ void Planet::addMoon(){
 	popInstance(this);
 }
 void Planet::newGasGiant(Planet *planet){
-	cout<<"new gas giant"<<endl;
+	cout<<"building new gas giant"<<endl;
 	planet->setName("Gaseous");
 	planet->setColors();
 
@@ -4984,7 +4984,7 @@ void Planet::newGasGiant(Planet *planet){
 	
 	planet->terrain_type=GASGIANT;
 
-	char buff[2048];
+	char buff[4096];
 
 	std::string str=randFeature(RND_BANDS);
 	strcpy(buff,str.c_str());
@@ -4996,9 +4996,9 @@ void Planet::newGasGiant(Planet *planet){
 	
 	std::string  noise_func=randFeature(RND_NOISEFUNC);
 	
-	char noise_expr1[1024];
-	char noise_expr2[1024];
-	char noise_expr3[1024];
+	char noise_expr1[2048];
+	char noise_expr2[2048];
+	char noise_expr3[2048];
 	double twist=0.2+0.1*r[6];
 	sprintf(noise_expr1,"%g*twist(%g,noise(%s|FS|NABS|SQR|TA|UNS|RO1,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-6))",twist,0.2+0.1*s[2],noise_func.c_str());
 	double storms=0.4+0.1*s[3];
@@ -5017,7 +5017,7 @@ void Planet::newGasGiant(Planet *planet){
     double dela=0.4+r[9];
 
     sprintf(buff,"Texture(\"tmp/P%d\",S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
-    		planet_id,noise_expr1,0.5+0.5*s[3],noise_expr2,noise_expr3,
+    		planet_id,0.5+0.5*s[3],noise_expr1,noise_expr2,noise_expr3,
 			scale,bump,ampl,offset,levels,delf,dela);
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
@@ -5027,6 +5027,7 @@ void Planet::newGasGiant(Planet *planet){
 	 }
 	 else
 	    cout<<"error building planet texture"<<endl;
+
 	Sky *sky=planet->newSky();
 	planet->addChild(sky);
 
@@ -5040,6 +5041,7 @@ void Planet::newGasGiant(Planet *planet){
 	for(int i=0;i<moons;i++){
 		planet->addMoon();		
 	}
+
 }
 
 //************************************************************

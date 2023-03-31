@@ -110,7 +110,7 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		break;
 	case TN_PLANET:
 		if(!dropping()){
-			((Planetoid*)child)->orbit_radius=psize*(0.1+0.2*SRand());
+			((Planetoid*)child)->orbit_radius=psize*(50+10*SRand());
 			((Planetoid*)child)->orbit_phase=360*Rand();
 		}
 		break;
@@ -181,7 +181,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Halo(1) {}\n");
 		break;
 	case TN_PLANET:
-		sprintf(tmp,"Planet(0.005,0.01){day=24;year=100;Surface{}}\n");
+		sprintf(tmp,"Planet(0.005,40){day=24;year=100;Surface{}}\n");
 		break;
 	case TN_MOON:
 		sprintf(tmp,"Moon(0.001,0.05){day=30;year=30;Surface{}}\n");
