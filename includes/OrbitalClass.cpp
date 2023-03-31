@@ -1862,7 +1862,7 @@ double System::adjustOrbits(){
 	ValueList<Object3D*> sorted;
 
 	children.ss();
-	while ((child = children++) > 0){
+	while ((child = children++)){
 		if(child->type()==ID_STAR){
 			sorted.add(child);
 		}
@@ -1880,7 +1880,7 @@ double System::adjustOrbits(){
 	sorted.sort();
 	sorted.se();
 
-	while ((star = sorted--) > 0){
+	while ((star = sorted--)){
 		star->orbit_phase=phase;
 		phase+=360.0/stars;
 	}
@@ -1919,7 +1919,7 @@ double System::adjustOrbits(){
 		star2->locate();
 	}
 	if(stars>2){
-		while ((star = sorted--) > 0) { // back-to-front
+		while ((star = sorted--)) { // back-to-front
 			star->orbit_eccentricity=0;
 			radius+=10;
 			star->orbit_radius=radius*(1.2+URAND(lastn++));
@@ -3249,7 +3249,7 @@ void Star::render() {
 
 		Object3D *obj;
 		children.ss();
-		while ((obj = children++) > 0) {
+		while ((obj = children++)) {
 			if (obj->type() == ID_HALO)
 				front.add(obj);
 			else if (obj->type() == ID_CORONA) {
@@ -3265,7 +3265,7 @@ void Star::render() {
 		if (back.size > 0) {
 			back.sort();
 			back.se();
-			while ((obj = back--) > 0) {
+			while ((obj = back--)) {
 				obj->render();
 			}
 		}
@@ -3279,7 +3279,7 @@ void Star::render() {
 		if (front.size > 0) {
 			front.sort();
 			front.ss();
-			while ((obj = front++) > 0) {
+			while ((obj = front++)) {
 				obj->render();
 			}
 		}
@@ -3707,14 +3707,14 @@ void Planetoid::render() {
 	Object3D *obj;
 	children.ss();
 
-	while ((obj = children++) > 0) {
+	while ((obj = children++)) {
 		if(!obj->included())
 			continue;
 		shells.add(obj);
 	}
 	shells.ss();
 
-	while ((obj = shells++) > 0) {
+	while ((obj = shells++)) {
 		if (obj->inside() && TheScene->viewobj == this)
 			inlist.add(obj);
 		else
@@ -3738,7 +3738,7 @@ void Planetoid::render() {
 			//Orbital::render(); // render children
 			if (outsiders.size > 0) {
 				outsiders.ss();
-				while ((obj = outsiders++) > 0) { // front-to-back
+				while ((obj = outsiders++)) { // front-to-back
 					TheScene->pushMatrix();
 					obj->render();
 					TheScene->popMatrix();
@@ -3752,7 +3752,7 @@ void Planetoid::render() {
 		if (insiders.size > 0) {
 			// sort objects by radius
 			insiders.se();
-			while ((obj = insiders--) > 0) { // back-to-front
+			while ((obj = insiders--)) { // back-to-front
 				TheScene->pushMatrix();
 				obj->render();
 				TheScene->popMatrix();
@@ -3761,7 +3761,7 @@ void Planetoid::render() {
 		TheScene->set_frontside();
 		if (outsiders.size > 0) {
 			outsiders.ss();
-			while ((obj = outsiders++) > 0) { // front-to-back
+			while ((obj = outsiders++)) { // front-to-back
 				TheScene->pushMatrix();
 				obj->render();
 				TheScene->popMatrix();
@@ -4040,7 +4040,7 @@ void Planetoid::calcTemperature() {
 	
 	double g = 0;
 	children.ss();
-	while ((obj = (Orbital*) children++) > 0) {
+	while ((obj = (Orbital*) children++)) {
 		if (obj->type() == ID_SKY) {
 			Sky *sky = (Sky*) obj;
 			g = pow(sky->pressure, 1.5) * sky->ghg_fraction;
@@ -4056,7 +4056,7 @@ void Planetoid::calcTemperature() {
 
 	System::TheSystem->children.ss();
 	temperature = 0;
-	while ((obj = (Orbital*) System::TheSystem->children++) > 0) {
+	while ((obj = (Orbital*) System::TheSystem->children++)) {
 		if (obj->type() == ID_STAR) {
 			double d = radius-((Star*)obj)->size;//point.distance(obj->point);// - obj->size - size;
 			double Ts = ((Star*) obj)->temperature;

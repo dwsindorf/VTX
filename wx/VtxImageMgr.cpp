@@ -26,7 +26,7 @@ void VtxImageMgr::showBmpFile(char *path){
 	int width=img.GetWidth();
 	int height=img.GetHeight();
 	GLubyte *data=img.GetData();
-	if(data>0)
+	if(data!=0)
 		writePixels(data, width, height);
 }
 
@@ -90,7 +90,7 @@ void VtxImageMgr::showJpegFile(char *path)
 	int width=img.GetWidth();
 	int height=img.GetHeight();
 	GLubyte *data=img.GetData();
-	if(data>0)
+	if(data!=0)
 		writePixels(data, width, height);
 }
 

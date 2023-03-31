@@ -553,7 +553,7 @@ void Scene::remove_expr(char *s){
 int Scene::getChildren(LinkedList<NodeIF*>&l){
 	objects->list.ss();
 	NodeIF *obj;
-	while((obj=(NodeIF *)objects->list++)>0)
+	while((obj=(NodeIF *)objects->list++))
 		l.add(obj);
 
 	return objects->list.size;
@@ -801,7 +801,7 @@ void Scene::save(FILE *fp)
 	//cout<< "frame "<<i++<<" ht:"<<frame->point.z/FEET<<endl;
 	views->save(fp,frame);
 	frame->restore(this);
-	while((frame=views->incr())>0){
+	while((frame=views->incr())){
 	    views->save(fp,this,frame);
 		//cout<< "frame "<<i++<<" ht:"<<frame->point.z/FEET<<endl;
 		frame->restore(this);
@@ -1210,7 +1210,7 @@ void Scene::movie_save(char *path)
 	ViewFrame *frame=movie->incr();
 	movie->save(fp,frame);
 	frame->restore(this);
-	while((frame=movie->incr())>0){
+	while((frame=movie->incr())){
 	    movie->save(fp,this,frame);
 		frame->restore(this);
 	}
@@ -1773,7 +1773,7 @@ int Scene::get_movie_frames()
 	File.getFileNameList(path,"*.jpg",list);
 	ModelSym *sym;
 	list.ss();
-	while((sym=list++)>0)
+	while((sym=list++))
 		frame_files.add(new NameSym(sym->path));
 	frame_files.sort();
 	list.free();
@@ -2678,7 +2678,7 @@ void Scene::set_view()
 
 	if(viewobj){
 		objpath.ss();
-		while((obj=objpath++)>0)
+		while((obj=objpath++))
 			obj->set_ref();
 		viewobj->set_view();
 	}
@@ -2933,7 +2933,7 @@ void Scene::pass_group()
 	 	passlist.ss();
 		objects->visitAll(&Object3D::clr_selected);
 		nsobs=passlist.size;
-		while((obj=passlist++)>0){
+		while((obj=passlist++)){
         	obj->set_selected();
 			if(obj->onscreen()){
 				rendered_objects++;

@@ -240,7 +240,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	int norm=opts&NORM;
 	int invt=opts&INVT;
 	int gray=opts&GRAY;
-	bool gradient=(opts&ACHNL)>0 && grad>0;
+	bool gradient=(opts&ACHNL)>0 && grad!=0;
 	int achnl=((opts&ACHNL) && (opts&T1D))||(opts&BUMP);
 	TNode *rvalue=0;
 	TNode *gvalue=0;
@@ -767,7 +767,7 @@ void ImageReader::printImageInfo(int info)
 	getImageInfo(info,list);
 	list.ss();
 	ImageSym *is;
-	while((is=list++)>0)
+	while((is=list++))
 	    is->print();
     list.free();
 }
@@ -1019,7 +1019,7 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.jpeg",flist);
 
 		flist.ss();
-		while((sym=flist++)>0){
+		while((sym=flist++)){
 			if(!images.inlist(sym->name())){
 				is=getImageInfo(sym->name());
 				images.add(is);
@@ -1033,7 +1033,7 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.jpeg",flist);
 
 		flist.ss();
-		while((sym=flist++)>0){
+		while((sym=flist++)){
 			if(!images.inlist(sym->name())){
 				is=getImageInfo(sym->name());
 				images.add(is);
@@ -1047,7 +1047,7 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.jpeg",flist);
 
 		flist.ss();
-		while((sym=flist++)>0){
+		while((sym=flist++)){
 			if(!images.inlist(sym->name())){
 				is=getImageInfo(sym->name());
 				images.add(is);

@@ -13,7 +13,9 @@
 #endif
 #include <wx/notebook.h>
 #include <wx/tglbtn.h>
-#include <wx/gtk/frame.h>
+#ifndef WIN32
+	#include <wx/gtk/frame.h>
+#endif
 
 #define DLG_HEIGHT (380)
 #define DLG_WIDTH  (440)

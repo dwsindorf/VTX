@@ -557,7 +557,7 @@ void ObjectMgr::save(FILE *fp)
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		obj->save(fp);
 }
 
@@ -574,7 +574,7 @@ void ObjectMgr::visit(void (Object3D::*func)())
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		(obj->*func)();
 }
 
@@ -585,7 +585,7 @@ void ObjectMgr::visitAll(void (Object3D::*func)())
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		obj->visitAll(func);
 }
 
@@ -596,7 +596,7 @@ void ObjectMgr::visit(void (*func)(Object3D*))
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		obj->visit(func);
 }
 //-------------------------------------------------------------
@@ -606,7 +606,7 @@ void ObjectMgr::visitAll(void (*func)(Object3D*))
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		obj->visitAll(func);
 }
 //-------------------------------------------------------------
@@ -616,7 +616,7 @@ void ObjectMgr::visitNodes(void (*func)(NodeIF*))
 {
 	Object3D *obj;
 	list.ss();
-	while((obj=list++)>0)
+	while((obj=list++))
 		obj->visitNode(func);
 }
 

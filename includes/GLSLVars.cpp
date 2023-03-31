@@ -405,7 +405,7 @@ void GLSLVarMgr::loadProgram(){
 	GLhandleARB p=GLSLMgr::programHandle();
 	vars.ss();
 	UniformVar *var;
-	while((var=vars++)>0){
+	while((var=vars++)){
 		var->setProgram(p);
 	}
 }
@@ -413,7 +413,7 @@ void GLSLVarMgr::loadProgram(){
 void GLSLVarMgr::setProgram(GLhandleARB p){
 	UniformVar *var;
 	vars.ss();
-	while((var=vars++)>0){
+	while((var=vars++)){
 		var->setProgram(p);
 	}
 }

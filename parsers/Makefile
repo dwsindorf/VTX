@@ -5,7 +5,7 @@
 #
 #################
 MAKEFILE    = Makefile
-#PARSERS	    = ../PARSERS
+#PARSERS	    = ../parsers
 #################
 #################
 # Lex/Yacc parameters
@@ -13,8 +13,8 @@ MAKEFILE    = Makefile
 
 LEX         = flex
 YACC        = bison -y
-#OBJDIR      = PARSERS
-#INCLUDES    =  ../includes
+#OBJDIR      = ../Release
+#INCLUDES    = ../includes
 
 PPFLAGS     = -w -DYYDEBUG -DYY_ALWAYS_INTERACTIVE=1
 LFLAGS      = -l

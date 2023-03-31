@@ -274,7 +274,7 @@ public:
 										if(size>0){
 											T tmp;
 											ss();
-											while((tmp=pop())>0)
+											while((tmp=pop())!=0)
 											delete tmp;
 										}
 										end.prev=&start;
@@ -339,7 +339,7 @@ public:
 											MALLOC(memsize, T, base);
 
 											l.ss();
-											while((tmp=l++)>0)
+											while((tmp=l++))
 												add(tmp);
 											l.ss();
 										}
@@ -359,7 +359,7 @@ public:
 										MALLOC(memsize, T, base);
 										index=size=0;
 										l.ss();
-										while((tmp=l++)>0)
+										while((tmp=l++))
 											add(tmp);
 										l.ss();
 									}

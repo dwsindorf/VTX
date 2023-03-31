@@ -2109,7 +2109,7 @@ void TNgauss::eval()
 TNsubr *subr_node(char *s, TNode *args)
 {
 	LongSym *ls;
-    if((ls=Subs.inlist(s))>0){
+    if((ls=Subs.inlist(s))){
 		switch(ls->value){
 		case SUB_PZ: 		return new TNpz(s, args);
 		case SUB_ABS: 		return new TNabs(s, args);

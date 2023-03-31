@@ -134,7 +134,7 @@ void VtxImportTabs::makeImageList(){
 
     m_file_menu->Clear();
 	ImageSym *is;
-	while((is=(*image_list)++)>0){
+	while((is=(*image_list)++)){
 		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);

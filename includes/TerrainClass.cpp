@@ -101,7 +101,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	FHT,
 	BMPHT,
 	THETA,
-	LONG,
+	LNG,
 	PHI,
 	LAT,
 	EQU,
@@ -150,7 +150,7 @@ static LongSym gtypes[]={
 	{"FHT",		    FHT},
 	{"BMPHT",		BMPHT},
 	{"THETA",		THETA},
-	{"LONG",		LONG},
+	{"LONG",		LNG},
 	{"PHI",			PHI},
 	{"LAT",			LAT},
 	{"EQU",			EQU},
@@ -306,7 +306,7 @@ void TNglobal::eval()
 			S0.set_inactive();
 		S0.s=Theta/180-1;
 		break;
-	case LONG:
+	case LNG:
 		if(CurrentScope->texture())
 			S0.set_inactive();
 		S0.s=Theta/180-1;
@@ -640,7 +640,7 @@ void  TNclist::save(FILE *f)
 	fprintf(f,"\n%s",tabs);
 
 	int i=0;
-	while((c=colors++)>0){
+	while((c=colors++)){
 		char tmp[64];
 		c->toString(tmp);
 		fprintf(f,"%s",tmp);
@@ -1822,7 +1822,7 @@ void TNclouds::eval()
 
 		TNarg &arg=*((TNarg*)left);
 		TNnoise *tn=0;//(TNnoise*)arg[2];
-		if(arg[2]>0){
+		if(arg[2]!=0){
 			s_noise=0;
 			arg[2]->visitNode(findSNoise);
 			tn=s_noise;
@@ -1947,7 +1947,7 @@ bool TNclouds::initProgram(){
 	defs[0]=0;
 	nstr[0]=0;
 
-	if(arg[2]>0){
+	if(arg[2]){
 		s_noise=0;
 		arg[2]->visitNode(findSNoise);
 		if(s_noise){

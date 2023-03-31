@@ -455,7 +455,7 @@ void FrameMgr::restart()
 	frames--;
 	ViewFrame *f=frames.at();
 	frames.ss();
-	while((v=frames.pop())>0){
+	while((v=frames.pop())){
 		if(v==frames.last() || v==f)
 			break;
 		delete v;
@@ -473,7 +473,7 @@ void FrameMgr::clip()
 	ViewFrame *f=frames.at();
 	//frames.se();
 	frames++;
-	while((v=frames.pop())>0){
+	while((v=frames.pop())){
 		if(v==frames.first() || v==f)
 			break;
 		delete v;
@@ -533,7 +533,7 @@ ObjectNode *FrameMgr::childobj(LinkedList<ObjectNode*>&children, char *name, int
     ObjectNode *node;
     int i=0;
     children.ss();
-    while((node=children++)>0){
+    while((node=children++)){
         if(strcmp(name,node->name())==0){
             i++;
             if(i==cnt)
@@ -551,7 +551,7 @@ void FrameMgr::getChildren(ObjectNode *obj,LinkedList<ObjectNode*>&children)
     ObjectNode *node;
     obj->children.ss();
     children.reset();
-    while((node=(ObjectNode*)obj->children++)>0){
+    while((node=(ObjectNode*)obj->children++)){
         children.add(node);
     }
 }
@@ -565,7 +565,7 @@ void FrameMgr::getObjects()
     vlast=0;
     frames.ss();
     ViewFrame *frame;
-    while((frame=frames++)>0){
+    while((frame=frames++)){
         getObject(frame);
     }
     frame=frames.last();
@@ -613,7 +613,7 @@ void FrameMgr::getObject(ViewFrame *v)
     if(!obj)
     	return;
     if(strcmp(obj->name(),objs[0])==0){
-        while((obj=(ObjectNode*)objects.next())>0)
+        while((obj=(ObjectNode*)objects.next()))
             children.add(obj);
     }
     else
@@ -641,7 +641,7 @@ int FrameMgr::type_index(ObjectNode *obj,ObjectNode*child)
     int i=0;
     obj->children.ss();
     ObjectNode *node;
-    while((node=(ObjectNode*)obj->children++)>0){
+    while((node=(ObjectNode*)obj->children++)){
         if(strcmp(node->name(),child->name()))
             continue;
         i++;
@@ -671,7 +671,7 @@ char *FrameMgr::getViewExpr(ObjectNode *vobj)
     obj=objpath.ss();
     if(obj)
     	sprintf(buff,"%s.1",obj->name());
-    while((obj=objpath++)>0){
+    while((obj=objpath++)){
         ObjectNode *nextobj=objpath.at();
          if(!nextobj)
              break;

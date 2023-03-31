@@ -1,0 +1,20 @@
+Installation notes and issues windows 11 installation (march 2023)
+I. cygwin
+ 1. installed g++ 11.02 (later versions generate errors when compiling wxWidgets)
+ 2. using g++ (in C:\cygwin64\bin) results in linker error
+    - have to set CC in Makefile to "x86_64-w64-mingw32-gcc.exe"
+    - or overwrite g++ in C:\cygwin64\bin with x86_64-w64-mingw32-gcc.exe
+      do the same for gcc (using "C:\cygwin64\bin\x86_64-w64-mingw32-gcc.exe")
+II. wxWidgets
+  1. checked out ans build version 3.0 (initially got build errors for 3.1 3.2)
+    - but need to recheck if problem exists after the above fix for cygwin
+III. building
+  1. changed all tests for null pointer from ptr>0 to ptr !=0 (otherwize get compile errors)
+  2. need to create system environment variabe "PLATFORM" and set it to "WIN" 
+  2. need to disable optimize (-O3) for wxWidgets directory only or get crash (core dump) shortly after program starts
+     - briefly see scene image then get crash
+     - need to find out where problem is occuring
+IV.  unresolved problems
+  1. text doesn't appear in glcanvas
+  2. no print statements show up in terminal or console window (both vscode and eclipse)
+     - however, they do show if vtx is run in an external git-bash terminal
