@@ -10,7 +10,6 @@ Archive
 *.*.debug
 *.o
 *.d
-*.exe
 *.output
 Release/*.c
 Release/*.cpp
