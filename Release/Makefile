@@ -73,7 +73,8 @@ wx:;	    cd  ../wx; \
 			OBJDIR="../$(THIS)" \
 			build; \
 			cd ../$(THIS); \
-			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes;
+			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes; \
+			cp vtx.exe ../binaries
 
 jni:;	    @cd ../jni; \
             make \
