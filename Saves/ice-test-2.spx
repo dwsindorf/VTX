@@ -1,0 +1,239 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-8.3606;
+		theta=358.726;
+		height=0.00604486;
+		gndlvl=-242501 ft;
+		time=65278;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.00604561;
+		gndlvl=-246464 ft;
+	}
+	View{
+		height=0.00636901;
+		gndlvl=-284437 ft;
+	}
+	View{
+		height=0.00643308;
+	}
+	View{
+		view=SURFACE;
+		phi=4.21875;
+		theta=40.7812;
+		height=10 miles;
+		gndlvl=-521471 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		time=10000;
+		tilt=2;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-0.00629556 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		phi=14.5947;
+		theta=163.564;
+	}
+	View{
+		view=SURFACE;
+		phi=27.4219;
+		theta=163.828;
+		height=52800 ft;
+		gndlvl=68809 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		theta=163.845;
+		height=51230 ft;
+		angle=-23;
+	}
+	View{
+		phi=27.1362;
+		theta=164.399;
+		height=2448.32 ft;
+		gndlvl=-2100.81 ft;
+		angle=0;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-7.86052e-05 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=29.5312;
+		theta=165.938;
+		height=52800 ft;
+		gndlvl=-114.896 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=26.4265 miles;
+		heading=-34;
+	}
+	View{
+		phi=28.103;
+		theta=168.179;
+		height=9099.08 ft;
+		gndlvl=-163.296 ft;
+	}
+	View{
+		height=5.62263 ly;
+	}
+	View{
+		height=2.81131 ly;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-7.86052e-05 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=14.7656;
+		theta=176.484;
+		height=52800 ft;
+		gndlvl=-148.99 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=10.6147 miles;
+		heading=40;
+	}
+	View{
+		phi=15.4687;
+		theta=177.166;
+		height=3611.04 ft;
+		gndlvl=-46.792 ft;
+	}
+	View{
+		height=10746.9 ft;
+		tilt=-14;
+	}
+	View{
+		phi=15.5347;
+		theta=177.223;
+		height=350.758 ft;
+		gndlvl=-131.036 ft;
+		tilt=-15;
+	}
+	View{
+		height=507.436 ft;
+		tilt=-11;
+		angle=-7;
+	}
+	View{
+		height=523.221 ft;
+		heading=92;
+	}
+	View{
+		height=608.278 ft;
+	}
+	View{
+		height=794.871 ft;
+	}
+	View{
+		height=805.542 ft;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400013;
+	}
+	View{
+		time=60934.6;
+		minr=0.00399998;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,93) {
+					albedo=0.3;
+					day=24;
+					diffuse=Color(1,1,1,0.58);
+					hscale=0.005;
+					ocean.level=-1000 ft;
+					water.albedo=0.55556;
+					water.clarity=1 ft;
+					water.color1=Color(1,1,1,0.66);
+					water.color2=Color(0.4,0.67,0.81);
+					water.level=-1.89394e-07;
+					water.shine=1.388;
+					year=100;
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					Surface{
+						terrain=ocean(noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
+								
+								Texture("jupiter",LINEAR|S|TEX,noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0,0,0.44448,0,-0.38888)+Z(noise(GRADIENT|NABS|SQR,1,16,0.5,0.5,2,1,1,0,0.5));
+					}
+					Sky(0.0042) {
+						color=Color(0.56,0.72,0.97);
+						day=24;
+						density=0.52778;
+						name="Sky";
+						rseed=0.636572;
+						specular=Color(1,1,1);
+						year=100;
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,86 @@
+Scene() {
+	drawmode=1;
+	drawmode=1;
+	View{
+		view=ORBITAL;
+		phi=5;
+		theta=2.22711e-25;
+		height=2.86798;
+		time=7.43748e+06;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1.81118;
+		minh=1.13636e-09;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Star.1;
+	}
+	View{
+		theta=42.0036;
+		height=4.42515;
+		time=8.2346e+06;
+		minr=1.81118;
+		radius=6.23633;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(5.43354) {
+				origin=Point(-1.82652,-1.38192,7.99282);
+				rseed=0.403001;
+				Star(1.81118,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(0.57,0.77,1);
+					rate=1e-05;
+					rseed=0.224404;
+					specular=Color(1,1,1);
+					temperature=10000;
+					bands("star-49753",CLAMP,16,Color(0.788,0.886,1),Color(0.576,0.773,1),Color(0.157,0.549,1),Color(0.078,0.275,0.498),
+						Color(0.039,0.137,0.247));
+					Surface{
+						terrain=
+								Texture("star-49753",BORDER|S|TEX,noise(GRADIENT|FS|NABS|SQR|UNS,0.9,8.9,0.9,0.01,2.06,1,1,0,0),0.5,2,1,0,1,2,1,0.9,0,0,0,0);
+					}
+					Halo(1.82929) {
+						color1=Color(0.16,0.55,1);
+						color2=Color(0.16,0.55,1);
+						density=0.9;
+						gradient=0.8;
+					}
+					Corona(7.90274) {
+						animate=0;
+						color1=Color(0.16,0.55,1,0.8);
+						color2=Color(0.33,0.44,0.8);
+						name="outer";
+						rate=5.55562e-06;
+						noise.expr=noise(GRADIENT|FS|SQR|UNS,0,4.8,0.15,0.41,2,1,1,0,1);
+					}
+					Corona(1.9923) {
+						color1=Color(0.33,0.64,1);
+						color2=Color(0.16,0.55,1);
+						gradient=0.6;
+						name="inner";
+						rate=1e-05;
+						noise.expr=noise.expr=noise(GRADIENT|FS|SQR,0.3,7,0.71,0,2.1,1,1,0,1);
+					}
+				}
+			}
+		}
+	}
+}

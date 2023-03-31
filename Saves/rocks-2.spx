@@ -1,0 +1,81 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-36.6001;
+		theta=350.867;
+		height=405.836 ft;
+		gndlvl=1421.58 ft;
+		time=10000;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400027;
+		heading=12;
+		tilt=-12;
+		angle=-1;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					specular=Color(1,1,1);
+					temperature=6000;
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0.68,0.08,0);
+					}
+				}
+				Planet(0.004,66.9993) {
+					day=24;
+					diffuse=Color(1,1,1,0.93);
+					hscale=0.001;
+					phase=104.076;
+					shine=6.48785;
+					year=100;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					Surface{
+						terrain=map(noise(1,5),0,0,0)
+								layer(MESH,0)
+									[rocks(ID1,5,9.999e-06,0.5,1,0.17,noise(GRADIENT|SCALE|UNS,14.6,3.9,0.12,0.23,2,1,4,0,0.07,1e-06),1,noise(GRADIENT|NABS|NLOD|SCALE|SQR|UNS,0,8.3,0.56,0.47,2.5,1,4,0,0,1e-06))[
+									Texture("grays",TEX,1789.7,2,1,0,3.33328,2,0.5,0,0,2,-0.88888,0)+
+									Texture("craters",BUMP,66175.1,0.5,2,1,9,2,0.84932,0,0,0,0.22224,0)]
+									
+									Texture("pink-rocks",BORDER|LINEAR|RANDOMIZE|TEX,84168.9,2,1,0,1,2,0.5,0,0,-0.22224,0,-0.05552)+Z(noise(GRADIENT|NABS|SCALE|UNS,9,16,0.35,0.4,2,1,4,0.17,0,1e-06))
+									]
+								;
+					}
+					Sky(0.00411214) {
+						color=Color(0,0.64,0.9);
+						day=24;
+						density=0.2;
+						haze.color=Color(1,1,1,0.75);
+						name="Sky";
+						rseed=2.46869;
+						specular=Color(1,1,1);
+						year=100;
+					}
+				}
+			}
+		}
+	}
+}

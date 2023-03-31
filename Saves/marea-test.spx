@@ -1,0 +1,81 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-8.3606;
+		theta=-9.75592;
+		height=0.00803073;
+		gndlvl=-284437 ft;
+		time=32746.6;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.00851807;
+	}
+	View{
+		theta=8.29214;
+		height=0.00959292;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00394613;
+		radius=0.013539;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6540.73;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,40) {
+					day=24;
+					hscale=0.001;
+					ocean.level=4.97627e+09 ft;
+					rseed=1.4699;
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1,0.25);
+					year=100;
+					bands("grays",ACHNL|INVT|NORM,16,Color(1,1,1,0),Color(0.682,0.682,0.682,0.239),Color(0.333,0.333,0.333),Color(0.353,0.353,0.353),
+						Color(0.082,0.082,0.082),
+						Color(0,0,0));
+					Surface{
+						n1=pow(noise(GRADIENT|NEG|SCALE|SQR,0.5,13.3,0.1,0.13,2.1,3,1,0,0.4,1e-06),0.5);
+						terrain=Color(max(1-n1,0.1),RED,RED,1)+Z(max(craters(ID5,8,0.303197,0.31,0.48,0.61,1,0.24,0.58,0.1,1,0.8,0.6,0.2,0),n1)+noise(GRADIENT|NABS|SCALE|RO1,2.1,14.2,1,0.5,2,0.18,1,0,0,1e-06))+
+								Texture("grays",BORDER|NORM|TEX,0.5,0.66668,1,0.4,1,2,1,0,0,-0.1,0,0);
+					}
+				}
+			}
+		}
+	}
+}

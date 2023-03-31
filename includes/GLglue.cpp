@@ -101,7 +101,8 @@ void draw_text(int x, int y, char *stg)
 #endif
 }
 
-//#ifndef GLUT
+//#ifndef GLUTadd text to canvas 
+
 #ifdef WIN32
 #define MAX_CHARS	256	
 UINT CreateOpenGLFont(LPSTR font, int height, bool bold, int id)	// Build Our Bitmap Font
@@ -446,7 +447,7 @@ bool set_fixed_font()
     if(fontInfo){
         glXUseXFont(fontInfo->fid,0,255, FONT1);
         font_height=fontInfo->ascent+fontInfo->descent;
-        font_width=fontInfo->max_bounds.width;
+        //font_width=fontInfo->max_bounds.width;
         Font1=FONT1;
         //cout << "fixed font ht:"<< font_height << " width:"<<font_width<<endl;
    }

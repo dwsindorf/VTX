@@ -36,7 +36,7 @@ GFILE         = glew.cpp
 LFLAGS        = $(GLDFLAGS)
 CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS)
 #CFLAGS        = -w $(OPTLVL) $(DEFINES) $(GLDEFS)
-MFLAGS        = -j8
+MFLAGS        = -j4
 CC            = g++
 LD	       	  = $(CC)
 

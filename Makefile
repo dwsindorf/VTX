@@ -35,6 +35,10 @@ clean:;		@rm -f core
 			cd $$dir; $(MAKE) $(@); \
 			cd ..; done
 
+test:;   @cd Release; \
+            $(MAKE) test; \
+			cd ..;
+
 showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 		    @echo "  JAVAINC = $(JAVAINC)"
 		    @echo "    GLIBS = $(GLIBS)"

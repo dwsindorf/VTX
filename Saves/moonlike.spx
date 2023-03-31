@@ -1,0 +1,79 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=-34.459;
+		theta=277.938;
+		height=0.006;
+		gndlvl=74576.1 ft;
+		time=92582.2;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.0040141;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00401413;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6540.73;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.04);
+					day=24;
+					hscale=0.0025;
+					shadow=Color(0,0,0,0.43);
+					shine=4.40559;
+					specular=Color(1,1,1,0.32);
+					tilt=-10;
+					year=100;
+					bands("grays",ACHNL|CLAMP,16,0.02,0.24194,Color(1,1,1,0.239),Color(0.161,0.161,0.161),
+						Color(0.267,0.267,0.267,0.937),
+						Color(0.71,0.71,0.71),
+						Color(0.722,0.722,0.722),
+						Color(0.922,0.922,0.922),
+						Color(0.973,0.973,0.973));
+					image("voronoi-2",GRAY|INVT|NORM,512,512,noise(VORONOI|RO1,2,3,0.59,0.27,2.1,1,1,1,0,1e-06));
+					Surface{
+						n1=noise(SIMPLEX|NABS|NNORM|SCALE|UNS,0,8,0.29,0.5,2.02,1,1,0.54,0,1e-06);
+						terrain=
+								Texture("grays",BORDER|LINEAR|TEX,683.359,2,1,0.3,1,2,1,0,0,0.3,-0.1,0.2)+
+								Texture("voronoi-2",BUMP|RANDOMIZE,16384,0.2,1.08332,0,5.124,2,0.5,0,0,-0.2,0,-1)+Z(n1*craters(ID1,10,0.317722,0.34,0.15,0.42,1,1,1,0.1,0.05,0.9,0.63,0.21,0)+2*n1+craters(ID2,10,0.0404796,0.15,0.58,0.58,1,0.52,0.55,0.3,0.05,0.92,0.42,0.2,0)+noise(GRADIENT|NABS|SCALE|SQR|UNS,12,17,0.2,0.4,2.1,0.3,1,0,0,1e-06));
+					}
+				}
+			}
+		}
+	}
+}
