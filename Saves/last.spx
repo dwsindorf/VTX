@@ -1,11 +1,9 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-8.3606;
-		theta=358.726;
-		height=0.00604486;
-		gndlvl=-242501 ft;
-		time=65278;
+		phi=90;
+		height=221.093;
+		time=1.38601e+06;
 		vstride=586570;
 		hstride=1;
 		astride=1;
@@ -13,47 +11,17 @@ Scene() {
 		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
+		angle=-90;
 		fov=35;
 		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+		viewobj=Universe.1.Galaxy.1.System.1;
 	}
 	View{
-		height=0.00604561;
-		gndlvl=-246464 ft;
-	}
-	View{
-		height=0.00636901;
-		gndlvl=-284437 ft;
-	}
-	View{
-		time=32746.6;
-	}
-	View{
-		delt=20000;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0103151;
-	}
-	View{
-		view=SURFACE;
-		phi=2.8125;
-		theta=10.5469;
-		height=52800 ft;
-		gndlvl=-416063 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-		minr=0.00394613;
-		radius=0.0039312;
-	}
-	View{
-		theta=10.9288;
-		height=10.2644 miles;
-		pitch=1;
-		angle=1;
-		minr=0.0039212;
-		radius=0.00393146;
+		height=217.524;
+		vstride=1;
+		minh=0.01;
+		minr=10;
+		radius=217.524;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -70,31 +38,74 @@ Scene() {
 				Color(1.000,1.000,0.400),
 				Color(1.000,1.000,0.702)
 				);
-			System(1000) {
-				Star(0.5,0) {
+			System(72.5081) {
+				origin=Point(5.77976,-2.38609,-2.53634);
+				rseed=-0.364817;
+				Star(4.16222,30) {
+					color=Color(1,1,0.8);
+					day=0.112699;
 					diffuse=Color(1,1,1);
+					eccentricity=0.95;
 					emission=Color(1,1,1);
-					shadow=Color(0,0,0);
+					name="YellowStar";
+					rseed=0.379939;
 					specular=Color(1,1,1);
-					symmetry=0.95;
 					temperature=6000;
-					light=Color(1,1,1);
-					Corona(4) {
-						color1=Color(1,1,1,0.95);
-						color2=Color(0,0,0);
+					tilt=100;
+					year=5;
+					bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.467,0,0),
+						Color(0.29,0.016,0.071),
+						Color(0,0,0),
+						Color(1,1,1));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|S|TEX,noise(GRADIENT|FS|NABS|SQR,1,10,-0.34,0.46,2,1,1,0,-0.1),1.6922,1.3212,1.05456,0.11104,2,2,1,0,0,0,-0.55552,0)+
+								Texture("Cracks1",BUMP,14.5304,1,2,0,1,2,0.5,0,0,0,0,0);
+					}
+					Corona(10.4721) {
+						color1=Color(1,0.95,0);
+						color2=Color(0.53,0.06,0);
+						name="Outer";
+						noise.expr=noise(GRADIENT|SCALE|RO1,1.5,2,1,0.5,2,1,1,0,0);
+					}
+					Corona(5.48279) {
+						color1=Color(0.97,0.95,0.91);
+						color2=Color(0.94,0.96,0.11);
+						name="Inner";
+						noise.expr=noise(GRADIENT|NABS|NEG|SCALE,1.2,4.8,0.66,0.5,2,1,1,0,0.8)-1.5*PHI;
 					}
 				}
-				Planet(0.004,40) {
-					day=24;
-					diffuse=Color(1,1,1,0.58);
-					hscale=0.001;
-					ocean.level=4.97627e+09 ft;
-					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+				Star(4.66936,30) {
+					color=Color(1,1,0.8);
+					day=1.99807;
+					diffuse=Color(0.5,1,1);
+					eccentricity=0.95;
+					emission=Color(0.78,0.98,0.98);
+					name="BlueStar";
+					phase=180;
+					resolution=3.50002;
+					rot_phase=155.002;
+					rseed=0.057638;
+					skew=6.2496;
+					specular=Color(0.77,1,1);
+					temperature=8555.08;
+					year=5;
+					bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2,1,1,0,0)+craters(ID2,1,0.419321,0.2,0.8,1,0.8,1,1,0.2,1,0.8,0.6,0.2,0))+
-								Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0);
+						terrain=
+								Texture("neptune",BORDER|NORM|S|TEX,noise(GRADIENT|FS|NABS|NEG|SQR,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),0.5,2,1.05456,1.22224,1,2,1,0.90278);
+					}
+					Corona(16.5491) {
+						color1=Color(0.5,1,1);
+						color2=Color(0,0,1);
+						name="outer";
+					}
+					Corona(5.06178) {
+						color1=Color(1,1,1);
+						color2=Color(0.8,0.94,0.98);
+						name="inner";
+						noise.expr=noise(GRADIENT|NABS|SCALE,2.7,2,1,0.5,2,1,1,0,0);
 					}
 				}
 			}
