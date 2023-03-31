@@ -1,0 +1,27 @@
+Star(1.25215,7.15627) {
+	day=1.22937;
+	diffuse=Color(1,1,1);
+	eccentricity=0.361304;
+	emission=Color(0.62,0.75,1);
+	name="B0";
+	phase=180;
+	rseed=0.171501;
+	specular=Color(1,1,1);
+	temperature=6000;
+	year=9.87998;
+	Corona(1.37737) {
+		color1=Color(0.62,0.75,1);
+		color2=Color(0.62,0.75,1);
+	}
+	Corona(5.07219) {
+		color1=Color(0.62,0.75,1);
+		color2=Color(0.69,0.6,0.8);
+	}
+	Halo(1.25341) {
+		color1=Color(0.62,0.75,1);
+		color2=Color(0.62,0.75,1);
+		density=0.9;
+		gradient=0.5;
+	}
+}
+

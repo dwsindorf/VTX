@@ -1,0 +1,6 @@
+layer("yellow",MESH,0)
+	[
+	Texture("jupiter",LINEAR|S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,2,1,0,1,2,1,0,0,0,0,0)+Color(0.972549,0.831373,0.027451,1)
+	+Z(noise(SIMPLEX|NABS|SCALE|SQR,6.4,2,1,0.5,2,1,1,0,0))
+	]
+

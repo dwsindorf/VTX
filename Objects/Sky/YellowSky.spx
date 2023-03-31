@@ -1,0 +1,15 @@
+Sky(0.001605) {
+	color=Color(1,0.8,0);
+	day=58.65;
+	density=0.31944;
+	halo.color=Color(0.98,0.96,0.72,0.25);
+	haze.color=Color(0.98,0.91,0.79);
+	name="YellowSky";
+	night.color=Color(0,0,0);
+	rseed=0.636572;
+	specular=Color(1,1,1);
+	twilight=Color(0.46,0.04,0.04);
+	twilight.max=1;
+	twilight.min=-1;
+}
+

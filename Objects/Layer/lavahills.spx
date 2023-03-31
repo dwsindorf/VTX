@@ -1,0 +1,7 @@
+layer("lavahills",MESH,0)
+	[water(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
+	
+	Texture("yellow-black",BORDER|LINEAR|NORM|TEX,128,2,1,0.6,1,2,1,0,0,-0.86112,-0.30556,0.25)+
+	Texture("rock_stones",BUMP|TEX,1407.09,-0.66656,2,-4,9.66688,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.61,2.1,1,1,0,0))
+	]
+

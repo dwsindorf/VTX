@@ -1,0 +1,7 @@
+layer("tilted-3",MORPH|FSQR,0)
+	[Point(noise(GRADIENT|NLOD|SQR,7.6,5.7,0.1,0.44,2,0.57,1,0,0),noise(GRADIENT|SQR,9.1,8,0.98,0.5,2,0.46,1,0,0),noise(SIMPLEX|NLOD|SQR,9.1,2,-0.39,0.44,2,0.74,1,0,0))
+	+
+	Texture("jupiter",BORDER|LINEAR|TEX,1,2,1,1.55552,1,2,0.5,0,0,2,-0.55552,-0.22224)+
+	Texture("BrownStone",BUMP,422.264,1,1,0,2.66656,2,0.5,0,0,0,0,0)+gloss(0.51588,3.28577)
+	]
+

@@ -1,0 +1,25 @@
+fractal(SQR|SS,14,3,0.1,0.1)map(noise(GRADIENT,0,15,0.3,0.1,2,1,1,0,0)*(1+2*LAT),-0.6,2,1.66)
+layer("tilted",MORPH,0,0.2-0.5*noise(GRADIENT|RO1,3,7,0.4,0.2),0.35,0)
+	[gloss(0.7094,0.5)
+	+
+	Texture("watery2",CLAMP|TEX,12611.9,1.5,0.566,0,6.88672,2,0.71698,1,0,0,0,0)+
+	Texture("ridges",S|TEX,1,4096,1,1.08112,1,5.8888,2.1852,0.94444,0,0,0,0,0)+Point(0.6*noise(GRADIENT|SQR|RO2,9,12,0.5,0.4,2,1,1,0,0),0,0.4*noise(GRADIENT|NABS|SQR,8,14,0.2,0.5)+0.7*PX)
+	+Color(1,1-0.5*abs(2*PX),GREEN-0.3)
+	]
+layer("mudflats",MESH,1,0.3+noise(GRADIENT|NABS|SCALE,5,7.7,1,0.5,2,1,1,0,0),0.14,0.73)
+	[
+	Texture("lava",CLAMP|NORM|S|TEX,noise(GRADIENT|NABS|SQR,2.3,3.7,1,0.5,2,0.02,1,0.09,0),205.145,0.80556,0.70272,0.6,1,2,1,0.5556,0,-0.55552,0.27776,0.27776)+
+	Texture("drywash",BUMP|RANDOMIZE,1024,1,0.94444,0,10,2.92592,0.72222,0,0,0,0,0)+
+	Texture("ridges2",BUMP,131072,0.8108,2,0,6,2.48152,1,0,0,0,0,0)+gloss(0.46428,2.04752)
+	+Color(0.0784314,0.498039,0,1)
+	+Z(noise(GRADIENT|NABS|SCALE|SQR,4.3,18,0.5,0.5,2,0.56,1,0,0.1))
+	]
+layer("mercury",MESH,0)
+	[
+	Texture("mercury",BORDER|LINEAR|S|TEX,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0)+
+	Texture("ridges",BUMP,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
+	Texture("craters3",BUMP|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
+	Texture("Shist1",BORDER|BUMP|TEX,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)
+	noise(GRADIENT|UNS|RO1,1,5,0.5,0.2))
+	]
+

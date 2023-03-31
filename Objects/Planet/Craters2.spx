@@ -1,0 +1,26 @@
+Planet(0.004,50) {
+	albedo=0.477498;
+	ambient=Color(1,1,1,0.09);
+	day=24;
+	hscale=0.001;
+	name="Craters2";
+	ocean.level=4.97627e+09 ft;
+	shadow=Color(0,0,0,0.62);
+	shine=12.7188;
+	specular=Color(1,1,1,0.21);
+	year=100;
+	bands("galaxytex",ACHNL|CLAMP,64,Color(0,0,0,0),Color(0.122,0.173,0.302,0.545),Color(0.627,0.675,0.875),Color(0.2,0.275,0.373,0),
+		Color(0.522,0.424,0.427),
+		Color(0.875,0.718,0.675),
+		Color(0.973,0.804,0.702),
+		Color(0.973,0.973,0.973),
+		Color(1,1,1),
+		Color(1,1,1));
+	image("craters2",NORM,256,256,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
+	Surface{
+		terrain=
+				Texture("galaxytex",BORDER|NORM|TEX,0.5,1.02776,1,0.3,1.99984,2,1,0,-0.02,-0.27776,0.22224,0)+
+				Texture("craters2",BUMP|TEX,161.289,0.44448,1,0,6.00016,2,0.5,0,0,0,0,0)+Z(fractal(SQR|SS,14.5,9.9,0.29,0.1,2,0.44,0,0,1,0)max(craters(ID1,8,0.535444,0.37,0.31,0.27,1,1,0.9,0.5,1,0.8,0.6,0.2,0),noise(GRADIENT|SQR|RO1,0,6,-0.22,0.22,2.21,1,1,0,1.6,1e-06))+noise(SIMPLEX|NABS|SQR|RO1,3,15.3,0.56,0.28,2.24,1,1,0,0,1e-06));
+	}
+}
+

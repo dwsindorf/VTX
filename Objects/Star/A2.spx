@@ -1,0 +1,41 @@
+Star(1.5,0.01) {
+	color=Color(1,1,0.8);
+	day=100;
+	diffuse=Color(1,1,1);
+	emission=Color(0.84,0.87,0.94);
+	name="A2";
+	specular=Color(1,1,1);
+	temperature=8146.91;
+	bands("star1",ACHNL|CLAMP,16,Color(1,0.937,0.545),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+		Color(0.463,0.039,0.122),
+		Color(0.024,0.02,0.125));
+	Surface{
+		terrain=
+				Texture("star1",BORDER|LINEAR|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,1,1,0,0),1.66555,2,1.05456,1,2,2,1,0,0,0,-0.88888,0.11112)+
+				Texture("bricks",BUMP,8.97866,-2.44448,2,0,2.33344,1.27776,1,0.34722,0,0,0,0);
+	}
+	Corona(6.92943) {
+		color1=Color(1,0.65,0.49);
+		color2=Color(0.98,0.73,0.25);
+		gradient=1;
+		name="Corona";
+		noise.expr=noise(GRADIENT|NABS|NNORM|UNS,0.6,1.9,1,0.5,2,1,1,0,-0.7)-0.5*PHI;
+	}
+	Corona(2.08698) {
+		color1=Color(0.98,0.24,0.24);
+		color2=Color(1,0.84,0.42,0.27);
+		gradient=1;
+		name="flares";
+		noise.expr=0.5+noise(GRADIENT|NLOD,0,7,1,0.2,2.17,1,1,0,0);
+	}
+	Sky(1.5002) {
+		color=Color(1,0.24,0);
+		day=100;
+		density=0.66666;
+		name="Sky";
+		rseed=1.88657;
+		sky.grad=0.348045;
+		specular=Color(1,1,1);
+	}
+}
+

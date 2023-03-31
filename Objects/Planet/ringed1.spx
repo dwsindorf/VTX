@@ -1,0 +1,42 @@
+Planet(0.522492,336.114) {
+	ambient=Color(1,1,1,0.04);
+	day=152.793;
+	name="ringed1";
+	ocean.level=-66.667 ft;
+	resolution=4;
+	rseed=0.116233;
+	year=207.801;
+	bands("tmp/P7937",NORM|REFLECT,16,0.188904,0.359895,Color(0,0,0),Color(0.651,0.357,0),
+		Color(0.957,0.843,0.235),
+		Color(0.471,0.212,0.043,0.714));
+	Surface{
+		terrain=
+				Texture("tmp/P7937",BUMP|S|TEX,0.344922*PHI+0.283428*twist(0.159404,noise(SIMPLEX|FS|NABS|SQR|TA|UNS,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-06))+0.368984*max(EQU*noise(SIMPLEX|FS|SCALE|SQR,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)+0.961561*noise(SIMPLEX|FS|SQR|TA,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07),0.966359,-0.02,1.91714,0.750226,2.25927,1.89278,1.28279,0,0,0,0,0);
+	}
+	Sky(0.527717) {
+		color=Color(0.04,0.67,0.75);
+		day=152.793;
+		density=0.15;
+		resolution=4;
+		specular=Color(1,1,1);
+		year=207.801;
+	}
+	Ring(0.750358,0.487051) {
+		emission=Color(1,1,1,0.8);
+		resolution=3;
+		rseed=0.461239;
+		shadow=Color(0,0,0,0.8);
+		bands("tmp/R7934",NORM|REFLECT,64,0.171753,0.440965,Color(1,0.039,0.251,0.514),Color(0.729,1,0.745,0),
+			Color(0.239,0.345,0.243,0.051),
+			Color(0.843,1,0.851,0.831),
+			Color(0.694,1,0.714,0),
+			Color(0,0,0),
+			Color(0.945,1,0.949,0.941),
+			Color(0.067,0.098,0.071,0));
+		Surface{
+			terrain=
+					Texture("tmp/R7934",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,0.570486,1,0,1,2,1,0,0,0,0,0);
+		}
+	}
+}
+

@@ -1,0 +1,5 @@
+Z(noise(GRADIENT|NABS,8,14.1,0,1,2.1,2,0.11,0,-0.3))+
+Texture("alpine",BORDER|LINEAR|TEX,2048,2,2,-3,1,1,1,0,0,1.11112,0.3,-2)+
+Texture("cracks2",BUMP,556.879,-0.44448,1,0.2264,10,2.78464,1,0)+
+Texture("Shist1",BUMP,16384,-1.69808,1,0,4.16992,1.90568,1,0)+
+Texture("DirtPebbles",BUMP|TEX,331696,-1.32072,1,0,6.43408,2.13208,1,0)

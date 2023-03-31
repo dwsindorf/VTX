@@ -1,0 +1,28 @@
+Moon(0.000124971,0.25) {
+	day=24;
+	hscale=0.177833;
+	name="FakeMoon1";
+	phase=334.004;
+	resolution=4;
+	rseed=2.41294;
+	year=30;
+	bands("rings",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),
+		Color(1,1,0.3,0.5));
+	Surface{
+		terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.03,1,0,0)+craters(ID17,3,0.9999,0.55,1,1,1,1,1,0.5,1,0.8,0.6,0.2))+
+				Texture("rings",A|BUMP|NORM|S,HT,1,1,0.44448,1.38888,-0.44448,1,2,1,0.11112)+
+				Texture("coldlava",BUMP,0.5,-1.55552,1.08332,0,3.33328,2,0.5,1);
+	}
+	Sky(0.000134971) {
+		color=Color(0,0.9,0.9);
+		day=24;
+		density=0.23612;
+		haze.color=Color(1,1,1,0.87);
+		name="Sky";
+		rseed=1.44113;
+		shine=0.1;
+		specular=Color(1,1,1);
+		twilight.max=0.686091;
+	}
+}
+

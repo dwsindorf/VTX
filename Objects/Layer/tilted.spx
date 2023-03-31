@@ -1,0 +1,8 @@
+layer("tilted",MESH,0,0.2-0.5*noise(GRADIENT|RO1,3,7,0.4,0.2),0.35,0)
+	[gloss(0.7094,0.5)
+	+
+	Texture("watery2",CLAMP|TEX,12611.9,2,0.566,0,6.88672,2,0.71698,1,0,0,0,0)+
+	Texture("ridges",S|TEX,1,4096,1,1.08112,1,5.8888,2.1852,0.94444,0,0,0,0,0)+Point(0.6*noise(GRADIENT|SQR|RO2,9,12,0.5,0.4,2,1,1,0,0),0,0.4*noise(GRADIENT|NABS|SQR,8,14,0.2,0.5)+0.7*PX)
+	+Color(1,1-0.5*abs(2*PX),GREEN-0.3)
+	]
+

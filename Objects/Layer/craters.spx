@@ -1,0 +1,9 @@
+layer("craters",MORPH,0,0.1+0.2*noise(GRADIENT|RO3,3,7,0.3,0.1))
+	[
+	Texture("Lava1",S|TEX,SLOPE,8192,1.70272,1,0,4.99984,2,1,0,0,0,0,0)+
+	Texture("watery3",S|TEX,HT+BMPHT,4096,1.5946,1,0,4.99984,2,1,0,0,0,0,0)+
+	Texture("craters3",BUMP,612.897,1.29728,1,0,10,2.77776,1,0,0,0,0,0)+Color(noise(1,15,0.3,0.1)+0.2*noise(GRADIENT|RO2,2,8,0.2,0.1)+0.2,RED,RED)
+	+Z(craters(ID3,3,0.004,0.2,1,1,1,0.5,0.5,5,0.1,0.2,0,0))
+	+gloss(1.5,1.66649)
+	]
+

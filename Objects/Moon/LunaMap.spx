@@ -1,0 +1,14 @@
+Moon(0.000124971,0.25) {
+	day=24;
+	hscale=0.0222132;
+	name="LunaMap";
+	phase=334.004;
+	resolution=4;
+	rseed=2.41294;
+	year=30;
+	Surface{
+		terrain=Z(noise(SCALE|SQR,3.6,2,-1,0.5,2,0.4,1,0,0)+craters(ID3,1,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2))+
+				Texture("luna",BUMP,1,3.55552,2,0,1,2,0.5,1);
+	}
+}
+

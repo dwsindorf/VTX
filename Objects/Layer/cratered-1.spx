@@ -1,0 +1,9 @@
+layer("cratered-1",MORPH|FSQR,1,0.1,noise(GRADIENT|SCALE|SQR|UNS,2.4,2,-0.71,0.5,2,1,1,0,0),0)
+	[
+	Texture("lava1",BORDER|LINEAR|S|TEX,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0,0,0,0,0)+
+	Texture("ridges",BUMP,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+
+	Texture("craters3",BUMP|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+
+	Texture("Shist1",BORDER|BUMP|TEX,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+Z(craters(ID1,4,0.158062,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2,0)
+	noise(GRADIENT|UNS|RO1,1,5,0.5,0.2))
+	]
+

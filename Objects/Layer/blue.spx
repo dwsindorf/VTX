@@ -1,0 +1,6 @@
+layer("blue",MESH,0)
+	[
+	Texture("mercury",LINEAR|TEX,1,2,1,0,1,2,0.5,0,0,1.27776,0,0)+Color(0,0.643137,1,1)
+	+Z(noise(VORONOI|NABS|SCALE,5,4.2,1,0.5,2,1,1,0,0))
+	]
+

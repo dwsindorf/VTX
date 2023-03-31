@@ -1,0 +1,22 @@
+Planet(0.004,100) {
+	ambient=Color(1,1,1,0.12);
+	day=24;
+	hscale=0.002;
+	name="RedCratered";
+	ocean.level=1.76109e+09 ft;
+	shadow=Color(0,0,0,0.46);
+	shine=4.40559;
+	specular=Color(1,1,1,0.39);
+	year=100;
+	bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+		Color(0.302,0.082,0.082));
+	image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
+	image("mars1",INVT|NORM,256,256,Color(0.2+noise(GRADIENT|NABS|NEG|SQR|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));
+	Surface{
+		terrain=fractal(SQR|SS,14.5,12.2,0.1,0.5,2,0.1,0,0,1,0)
+				Texture("dessert",BORDER|TEX,0.9999,1,1,0.4,1,2,1,0,0,0.33336,0.2,-0.83336)+
+				Texture("craters3",BUMP|RANDOMIZE,99.664,0.66656,0.83332,0,10.3331,2,0.5,0,0,0,0,0)+
+				Texture("mars1",BUMP|RANDOMIZE|TEX,1789.7,2,0.8,0,4.33312,2,0.91666,0,0,0,0,0)+Z(min(craters(ID2,8,0.695104,0.23,1,1,1,1,1,1,0.01,1,0.63,0.4,-0.2)+noise(SIMPLEX|NABS|SCALE|SQR|RO1,8.2,9.2,0.27,0.5,2.13,1,1,0,0,1e-06),pow(noise(SIMPLEX|NABS|NEG|NNORM|SQR|RO1,0.5,14.8,0.49,0.51,2.79,0.6,1,0,0,1e-06)+noise(GRADIENT|NABS|SCALE|RO2,12.8,5,0.2,0.52,1.95,1,1,0,0.3,1e-06),2))+craters(ID2,8,0.054995,0.2,0.8,0.13,0.8,1,1,0.5,1,0.8,0.6,0.2,0));
+	}
+}
+

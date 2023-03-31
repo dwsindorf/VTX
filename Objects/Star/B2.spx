@@ -1,0 +1,35 @@
+Star(0.945027,12.4776) {
+	color=Color(1,1,0.8);
+	day=1.35694;
+	diffuse=Color(0.5,1,1);
+	eccentricity=0.379741;
+	emission=Color(0.52,1,1);
+	name="Blue2spx";
+	phase=180;
+	resolution=3.50002;
+	rot_phase=155.002;
+	rseed=0.0935247;
+	skew=6.2496;
+	specular=Color(0.77,1,1);
+	temperature=8555.08;
+	year=17.9459;
+	bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
+	Surface{
+		terrain=
+				Texture("neptune",BORDER|NORM|S|TEX,noise(GRADIENT|FS|NABS|SQR,0.3,8.6,0.3,0.37,2.13,1,1,0,0.4),0.5,2,1.05456,1.22224,1,2,1,0.90278,0,0,0,0);
+	}
+	Corona(12.8247) {
+		color1=Color(0.87,0.98,0.98);
+		color2=Color(0,0.55,1);
+		gradient=1;
+		name="outer";
+	}
+	Corona(1.33744) {
+		color1=Color(1,1,1);
+		color2=Color(0.8,0.94,0.98);
+		gradient=1;
+		name="inner";
+		noise.expr=noise(GRADIENT|NABS|SCALE,3,2,1,0.5,2,1,1,0,0);
+	}
+}
+

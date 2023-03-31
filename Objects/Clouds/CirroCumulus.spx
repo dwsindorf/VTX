@@ -1,0 +1,23 @@
+Clouds(0.0040629) {
+	ambient=Color(1,1,1,0.6);
+	cmin=2.76276;
+	crot=1;
+	day=0.5;
+	diffuse=Color(1,1,1,0.47);
+	diffusion=0.2096;
+	emission=Color(1,1,1,0.16);
+	name="CirroCumulus";
+	num_sprites=1.29162;
+	resolution=2;
+	rot_phase=121.932;
+	rseed=1.38657;
+	shine=77.7857;
+	smax=2.55552;
+	specular=Color(1,1,1,0);
+	Surface{
+		x=noise(NABS|SQR|UNS,0,4.9,1,1,2,1,1,0,0);
+		terrain=clouds(HT,-0.1*HT,(1-x)*CIRRUS+x*CUMULUS)
+				Z(0.1*noise(SQR,5,12,-0.1,0.5,2,1,1,0,0))+Color(1,1,1,noise(0,2,0,0.5,2,1,1,0,0));
+	}
+}
+

@@ -1,0 +1,29 @@
+Star(0.294757,40.5806) {
+	diffuse=Color(1,0.5,0.25);
+	emission=Color(0.96,0.83,0.64);
+	name="RedStar";
+	phase=120;
+	resolution=4;
+	rseed=0.452016;
+	specular=Color(1,0.5,0.25);
+	temperature=2629.76;
+	year=69.44;
+	Surface{
+		terrain=
+				Texture("sol",TEX,1,1.58332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
+	}
+	Corona(2.94757) {
+		color1=Color(1,0.5,0);
+		color2=Color(0.53,0.03,0.43);
+		gradient=0.84566;
+		name="c1";
+	}
+	Corona(1.01563) {
+		color1=Color(0.95,0.98,0.51);
+		color2=Color(1,0.04,0);
+		gradient=1;
+		name="c2";
+		noise.expr=noise(GRADIENT|NABS|SQR|UNS,2.1,2,1,0.21,2,1,1,0,-0.7);
+	}
+}
+

@@ -1,0 +1,25 @@
+Planet(0.004,600) {
+	day=24;
+	name="Blue1";
+	ocean.level=1 ft;
+	resolution=4;
+	shine=2.62405;
+	specular=Color(1,1,1,0.46);
+	year=100;
+	bands("neptune",ACHNL,64,Color(0.035,0.216,0.251),Color(0.012,0.384,0.522),Color(0.769,0.937,0.976),Color(1,1,1));
+	Surface{
+		terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
+				Texture("neptune",BORDER|BUMP|S|TEX,twist(0.2,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,0.02,1.29232,2.33968,1,2,1,0,-0.05552,-0.1,0,0.27776);
+	}
+	Sky(0.00408943) {
+		color=Color(0,0.9,1);
+		day=24;
+		density=0.2;
+		name="Sky";
+		resolution=4;
+		rseed=0.601791;
+		specular=Color(1,1,1);
+		year=100;
+	}
+}
+

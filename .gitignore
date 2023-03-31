@@ -1,5 +1,4 @@
 System
-Objects
 Bitmaps
 Movies
 Test
@@ -23,3 +22,4 @@ Debug/*.h
 LINUX
 /WINDOWS/
 /WX3.1/
+Saves/last.spx

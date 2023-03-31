@@ -1,0 +1,31 @@
+Planet(0.05,195.246) {
+	ambient=Color(1,1,1,0.02);
+	day=24;
+	name="GG1";
+	ocean.level=1 ft;
+	resolution=4;
+	shine=2.62405;
+	specular=Color(1,1,1,0.16);
+	year=100;
+	bands("test",REFLECT,16,0.19354,0.46774,RAND,Color(1,0.89,0.49),
+		Color(0.988,0.808,0.439),
+		Color(0.616,0.38,0.02),
+		Color(1,1,1));
+	Surface{
+		terrain=
+				Texture("test",S|TEX,0.5*PHI+0.2*twist(0.2,noise(SIMPLEX|FS|NABS|SQR|TA|UNS,2.4,6,1,0.55,2.25,0.3,1,0,0,6.16672e-07))+0.3*max(EQU*noise(SIMPLEX|FS|SCALE|SQR,1,2.5,1,0.5,2,0.5,1,0,0.3,1e-06),0)+noise(GRADIENT|FS|SQR|TA,1.2,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07),0.5,2,0.01,0,2.66656,2.16664,0.83334,0,0,0,0,0);
+	}
+	Sky(0.0514194) {
+		color=Color(0,0.71,1,0.82);
+		day=24;
+		density=0.16666;
+		name="Sky";
+		resolution=4;
+		rseed=0.601791;
+		specular=Color(1,1,1);
+		twilight.max=0.517078;
+		twilight.min=-0.891338;
+		year=100;
+	}
+}
+

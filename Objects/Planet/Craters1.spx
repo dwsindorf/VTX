@@ -1,0 +1,16 @@
+Planet(0.004,40) {
+	day=24;
+	hscale=0.001;
+	name="Craters1";
+	ocean.level=4.97627e+09 ft;
+	shadow=Color(0,0,0);
+	specular=Color(1,1,1,0.25);
+	year=100;
+	bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+		Color(0.302,0.082,0.082));
+	Surface{
+		terrain=Z(max(craters(ID68,8,0.535444,0.31,0.31,0.61,1,0.24,0.58,0.5,1,0.8,0.6,0.2,0),noise(GRADIENT|NEG|SCALE|SQR,0,6,0.66,0.5,1.91,3,1,0,3,1e-06))+noise(GRADIENT|NABS|SCALE|RO1,2.1,14.2,1,0.5,2,2,1,0,0,1e-06))+
+				Texture("dessert",NORM|TEX,0.9999,1.24848,1,0,1,2,1,0,0,0.33336,0,0.33336);
+	}
+}
+

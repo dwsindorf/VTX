@@ -1,0 +1,10 @@
+Clouds(0.00102677) {
+	crot=1;
+	name="Clouds2D";
+	resolution=4;
+	rseed=1.40819;
+	Surface{
+		terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|SQR,1,6.4,1,0.5,2.06,1,1,0,0.8)));
+	}
+}
+

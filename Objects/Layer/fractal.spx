@@ -1,0 +1,9 @@
+layer("fractal",MORPH,0.14,0.2-0.4*noise(GRADIENT|RO3,3,7,0.3,0.1),0.35,0)
+	[gloss(0.5641,0.99998)
+	+
+	Texture("alpine",BORDER|CLAMP|S|TEX,(0.2+HT)*0.3*(1+0.5*noise(GRADIENT|SQR|UNS,15,3,0.3,0.1))*(1+0.5*LAT)*(1+0.2*SLOPE)+0.4*BMPHT,2,1.07408,0,0.2,1,2,1,0,0,0,0,0)+
+	Texture("Shist1",BUMP,16384,0.97296,1.43244,0,9.88912,2.92592,0.72222)+
+	Texture("eroded",S|TEX,1,32.2226,1,-1,1,8,2.8,0.94444,0,0,0,0,0)+Z(noise(GRADIENT|NLOD|UNS,10,4,0,1,2.2,0.81,1,0,0))
+	+Color(0.976471,0.713725,0.47451,1)
+	]
+
