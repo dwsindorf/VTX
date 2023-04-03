@@ -224,6 +224,7 @@ Scene::Scene(Model *m)
 	model=m;
 	TheScene=this;
 	TheView=this;
+	view=0;
 
 	playback_rate=20;   // movie playback(frames/sec)
 	redraw_rate=20;     // normal refresh(frames/sec)
@@ -240,6 +241,7 @@ Scene::Scene(Model *m)
 	status=0;
 	vmode=VLOG;
 	rseed=0;
+	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
 }
 
 Scene::~Scene()
@@ -1400,12 +1402,14 @@ NodeIF *Scene::open_node(NodeIF *n,char *s)
 void Scene::make()
 {
 	model->make_libraries(0);
-    char path[256];
+    char path[256]={0};
     FILE *fp;
 	File.makeFilePath(File.saves,(char*)"Default.spx",path);
 	fp=fopen(path, "wb");
-	model->make(fp);
-	fclose(fp);
+	if(fp){
+		model->make(fp);
+		fclose(fp);
+	}
 }
 
 //-------------------------------------------------------------
@@ -2281,6 +2285,7 @@ void Scene::render()
  			//||Adapt.more_cycles()
 			||moved()
 			||changed_render();
+
 	if(!suspended() && (update_needed || self)){
 		setContext();
 		init_for_cycle();
@@ -2385,6 +2390,7 @@ void Scene::render()
         clr_changed_position();
         Render.validate_textures();
     	auto_stride();
+		cout << "Scene::render()" <<swap_on_update<<endl;
         if(swap_on_update)
 	       swap_buffers();
 	}

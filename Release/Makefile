@@ -36,7 +36,7 @@ GFILE         = glew.cpp
 LFLAGS        = $(GLDFLAGS)
 CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS)
 #CFLAGS        = -w $(OPTLVL) $(DEFINES) $(GLDEFS)
-MFLAGS        = -j4
+MFLAGS        = -j6
 CC            = g++
 LD	       	  = $(CC)
 
@@ -73,8 +73,7 @@ wx:;	    cd  ../wx; \
 			OBJDIR="../$(THIS)" \
 			build; \
 			cd ../$(THIS); \
-			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes; \
-			cp vtx.exe ../binaries
+			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes; 
 
 jni:;	    @cd ../jni; \
             make \
@@ -135,7 +134,7 @@ showenv:;   @echo "CFLAGS = $(CFLAGS)"
 			@echo "LFLAGS = $(LFLAGS)"
 			@echo "INCS = $(INCS)"
 			@echo "PLATFORM = $(PLATFORM)"
-			@echo "PATH = $(PATH)"
+#			@echo "PATH = $(PATH)"
 			@echo "LIBS = `wx-config --libs --gl_libs` $(LIBS)"
 			@echo "WXFLAGS = `wx-config --cxxflags`"
 			

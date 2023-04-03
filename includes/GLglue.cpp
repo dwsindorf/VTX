@@ -458,6 +458,7 @@ bool set_fonts(){
 	set_fixed_font();
 	set_select_font();
 	set_view_font();
+	
 }
 #endif // end WXWIN-GTK code
 #endif // end WIN32 code

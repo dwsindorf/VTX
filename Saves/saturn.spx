@@ -91,7 +91,7 @@ Scene() {
 						year=30;
 						Surface{
 							terrain=
-									Texture("europamap",BORDER|LINEAR|TEX,0.5,2,1,0,1,2,0.5,1);
+									Texture("europa",BORDER|LINEAR|TEX,0.5,2,1,0,1,2,0.5,1);
 						}
 					}
 					Ring(0.0482608,0.02801) {
@@ -99,7 +99,7 @@ Scene() {
 						resolution=3;
 						rseed=0.584485;
 						shadow=Color(0,0,0,0.55);
-						bands("tmp/R0",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
+						bands("saturn-ring",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
 							Color(0.576,0.514,0.455),
 							Color(0.573,0.506,0.467),
 							Color(0.204,0.141,0.106,0.369),
@@ -109,7 +109,7 @@ Scene() {
 							Color(0.349,0.302,0.267));
 						Surface{
 							terrain=
-									Texture("tmp/R0",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1.08332,1,0,1,2,1,0,0,0,0,0);
+									Texture("saturn-ring",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1.08332,1,0,1,2,1,0,0,0,0,0);
 						}
 					}
 				}

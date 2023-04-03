@@ -3020,7 +3020,7 @@ void Star::getStarData(double *d, char *m){
 Star *Star::newInstance(){
 	Star *star;
 
-	star=TheScene->getPrototype(0,TN_STAR);
+	star=(Star *)TheScene->getPrototype(0,TN_STAR);
 	star_id=lastn;
 	star->setRseed(URAND(lastn++));
 
@@ -5158,7 +5158,7 @@ void Shell::adapt_object()
 void Shell::set_geometry()
 {
 	Spheroid::set_geometry();
-	Object3D *parent=getParent();
+	Object3D *parent=(Object3D*)getParent();
 	if(parent){
 		double dht=size-parent->size;
 		if(dht!=ht){
@@ -6058,9 +6058,9 @@ void CloudLayer::set_ref()
 }
 void CloudLayer::set_tilt()
 {
-	Orbital::set_tilt();
+	//Orbital::set_tilt();
 	// use planet tilt parent reference
-	//((Orbital*)parent)->set_tilt();
+	((Orbital*)parent)->set_tilt();
 }
 
 //-------------------------------------------------------------
@@ -7252,8 +7252,9 @@ int Halo::render_pass() {
 // Ring class
 //************************************************************
 int Ring::ring_id=0;
-Ring::Ring(Planet *m, double s, double r) : Spheroid(m,s)
+Ring::Ring(Planet *m, double s, double r) : Shell(m,s)
 {
+	set_cargs(2);
 	width=r;
 	inner_radius=s;
 	year=0;

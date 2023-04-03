@@ -100,7 +100,6 @@ bool VtxApp::OnInit()
     frame->SetClientSize(w,h);
     
     frame->Show(true);
-    //set_fonts(); // set fonts for opengl text
     
     vs->SetSceneName(filename);
     vs->Refresh();

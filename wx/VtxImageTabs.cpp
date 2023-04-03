@@ -66,6 +66,7 @@ VtxImageTabs::VtxImageTabs(wxWindow* parent,
 	image_list=0;
 	revert_list=0;
 	m_name="";
+	gradient_list=0;
 }
 
 void VtxImageTabs::AddImageTab(wxPanel *panel){
@@ -484,7 +485,7 @@ int VtxImageTabs::rebuild(){
 	}
 	else{
 		BIT_OFF(n->opts,CHANGED);
-		cout<<"loading previous image"<<endl;
+		cout<<"loading previous image "<<istr<<endl;
 	}
 	n->init();
 	int opts=n->opts;

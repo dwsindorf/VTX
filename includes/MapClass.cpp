@@ -1829,7 +1829,7 @@ void Map::adapt()
 		//cout<<"new file"<<endl;
 	}
    
-	if(ADAPT_NEEDED  || TheScene->changed_render())
+	if(ADAPT_NEEDED  || TheScene->changed_render() || (TheScene->changed_time() && TheScene->viewtype!=SURFACE))
 		clearLists();
 	if(!test2)
 	if(ADAPT_NEEDED) {

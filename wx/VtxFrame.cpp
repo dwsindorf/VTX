@@ -167,7 +167,7 @@ VtxFrame::VtxFrame(wxFrame *frame, const wxString& filename, const wxPoint& pos,
 	::wxInitAllImageHandlers();
 
 	char path[256];
-    m_canvas = NULL;
+    m_canvas = 0;
     static const int widths[] = { 80, 90,200,-1, 100 };
     wxIcon icon(vtx_small_icon_xpm);
     SetIcon(icon);

@@ -9,7 +9,7 @@
 
 #include "GLglue.h"
 // For compilers that support precompilation, includes "wx.h".
-#include "wx/wxprec.h"
+//#include "wx/wxprec.h"
 
 #ifndef WX_PRECOMP
 #include "wx/wx.h"
@@ -43,7 +43,7 @@
 #include <wx/defs.h>
 
 extern int scene_rendered;
-//#define DEBUG_SCENE
+#define DEBUG_SCENE
 //#define DEBUG_KEYS
 
 static KeyIF kif;
@@ -65,14 +65,13 @@ static long mouse_x=0,mouse_y=0, mouse_dir=0,mouse_button=LEFT;
 static bool dragging=false;
 extern void set_status_field(int i,const char *c, ...);
 
-VtxSceneDialog *sceneDialog=0;
-VtxImageDialog *imageDialog=0;
-VtxFunctDialog *functDialog=0;
-VtxFunctDialog *noiseDialog=0;
-VtxMovieDialog *movieDialog=0;
+static VtxSceneDialog *sceneDialog=0;
+static VtxImageDialog *imageDialog=0;
+static VtxFunctDialog *functDialog=0;
+static VtxFunctDialog *noiseDialog=0;
+static VtxMovieDialog *movieDialog=0;
 
-VtxScene       *vtxScene=0;
-
+static VtxScene       *vtxScene=0;
 
 BEGIN_EVENT_TABLE(VtxScene, wxGLCanvas)
     EVT_CHAR(VtxScene::OnKey)
@@ -131,8 +130,13 @@ name,attributeList)
     frames=0;
     t0=0;
     vtxScene=this;
-    m_glRC=NULL;
+    m_glRC=0;
     infile=file;
+    sceneDialog=0;
+    imageDialog=0;
+    functDialog=0;
+    noiseDialog=0;
+    movieDialog=0;
     //SetContext();
 }
 
@@ -511,10 +515,12 @@ void VtxScene::update_status()
 void VtxScene::timer_tick()
 {
 #ifdef DEBUG_SCENE
+if(draw_cnt==0)
    cout << "VtxScene::OnTimer()"<< endl;
 #endif
     SetCurrent();
     if(!TheScene){
+        cout<<"set_fonts"<<endl;
         set_fonts(); // set fonts for opengl text
         cout<<"make_scene start"<<endl;
         make_scene();
@@ -635,6 +641,7 @@ void VtxScene::make_scene()
     char sargs[256];
     int  nargs=0;
     int i;
+    
 #ifdef DEBUG_SCENE
      cout << "VtxScene::make_scene()"<<endl;
 #endif
@@ -642,10 +649,10 @@ void VtxScene::make_scene()
 	//glewExperimental = GL_TRUE;
 	glewInit();
 #endif
-    SetCurrent();
+    //SetCurrent();
 
     GetClientSize(&width, &height);
-    bool make_default=false;
+    bool make_default=argc?true:false;
 
     for (i = 1; i < argc; i++) {
         if (argv[i][0]=='-'){
@@ -663,8 +670,7 @@ void VtxScene::make_scene()
     TheScene=new Scene(new UniverseModel());
     Perlin::seed=1;
 	GLSLMgr::initGL(width,height);
-    TheScene->resize(width,height);
-    TheScene->init();
+    
     if(!sceneDialog){
     	sceneDialog=new VtxSceneDialog(this);
     	sceneDialog->SetIcon(wxIcon(objectdlg_xpm));
@@ -684,11 +690,13 @@ void VtxScene::make_scene()
     if(!noiseDialog){
     	noiseDialog=new VtxFunctDialog(this);
     }
+    TheScene->resize(width,height);
+    TheScene->init();
 	//Render.invalidate_textures();
     if(make_default)
     	TheScene->make(); // create Default scene
 
-    char path[256];
+    char path[256]={0};
     if(infile.Length()>0){
         char name[256];
         File.getFileName((char*)infile.ToAscii(),name);
@@ -719,8 +727,8 @@ void VtxScene::make_scene()
     imageDialog->Invalidate();
     movieDialog->Invalidate();
 	stopwatch.Start();
+   
 }
-
 
 //-------------------------------------------------------------
 // VtxScene::set_key() set key command
@@ -789,6 +797,10 @@ void VtxScene::OnSize(wxSizeEvent& event)
 }
 
 bool  VtxScene::SwapBuffers(){
+#ifdef DEBUG_SCENE
+    if(draw_cnt<2)
+        cout << "VtxScene::SwapBuffers()" <<endl;
+#endif
 	wxGLCanvas::SwapBuffers();
 }
 //-------------------------------------------------------------
@@ -1004,19 +1016,22 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     	SetContext();
         SetCurrent();
         clear_canvas();
+        return;
      }
      if(!IsShown())
     	return;
      if(!TheScene)
     	return;
 #ifdef DEBUG_SCENE
-    cout << "VtxScene::OnPaint()" <<endl;
+    if(draw_cnt<2)
+        cout << "VtxScene::OnPaint()" <<endl;
 #endif
     kif.get_state(state);
     if(state & CMD_QUIT)
          return;
 
     SetCurrent();
+
   	if(dragging)
   		dragAction();
 
@@ -1032,7 +1047,6 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 
     ::wxSetWorkingDirectory("../Shaders");
 
-   //cout << wxGetCwd() << endl;
    // if(!TheScene->suspended())
     int moved=TheScene->moved();
     TheScene->render();
@@ -1044,10 +1058,16 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 }
 
 void VtxScene::SetCurrent() {
-    if(!IsShown())
+    if(!IsShown()){
+        cout << "VtxScene::Canvas isn't showing"<< endl;
     	return;
+    }
     if(!GetContext())
     	 cout << "VtxScene::Error SetCurrent called before context initialized"<< endl;
+#ifdef DEBUG_SCENE
+    if(draw_cnt<2)
+        cout << "VtxScene::SetCurrent()" <<endl;
+#endif
 #if wxCHECK_VERSION(3, 0, 0)
 	wxGLCanvas::SetCurrent(*m_glRC);
 #else

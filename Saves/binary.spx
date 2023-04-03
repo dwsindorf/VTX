@@ -46,7 +46,6 @@ Scene() {
 					specular=Color(1,1,1);
 					temperature=6000;
 					eccentricity=0.95;
-					tilt=100;
 					year=5;
 					bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
@@ -84,7 +83,6 @@ Scene() {
 					resolution=3.50002;
 					rot_phase=155.002;
 					rseed=0.057638;
-					skew=6.2496;
 					specular=Color(0.77,1,1);
 					temperature=8555.08;
 					year=5;

@@ -154,7 +154,6 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_GALAXY,VtxGalaxyTabs)
 	SET_TABS_OBJECT(TN_FCHNL,VtxFractalTabs)
 
-
 	currentTabs=TN_SCENE;
 	lastTabs=TN_SCENE;
 

@@ -780,7 +780,7 @@ public:
 //************************************************************
 // Ring class
 //************************************************************
-class Ring : public Spheroid
+class Ring : public Shell
 {
 public:
 	static int ring_id;

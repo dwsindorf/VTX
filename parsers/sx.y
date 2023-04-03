@@ -388,6 +388,7 @@ ring
 ring_def
     : YY_RING '(' expr ',' expr ')'
     	{ OPUSH(new Ring((Planet*)ORB1,TNvalue($3),TNvalue($5)));}
+    
 /*------------- Planet rules --------------------------------------------*/
 
 planet

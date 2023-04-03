@@ -885,7 +885,7 @@ TreeNode *UniverseModel::lastBranch(TreeNode *n)
 //-------------------------------------------------------------
 void UniverseModel::make(FILE *fp)
 {
-	fprintf(fp,"%s\n",default_model);
+	fprintf(fp,"%s\n",default_galaxy);
 }
 
 //-------------------------------------------------------------
@@ -949,6 +949,7 @@ NodeIF *UniverseModel::open_node(NodeIF *parent,char *fn)
 //************************************************************
 // default systems
 //************************************************************
+
 char UniverseModel::default_galaxy[]=""
 " Scene() {\n"
 " 	View{\n"
