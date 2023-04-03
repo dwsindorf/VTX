@@ -16,6 +16,7 @@
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
+extern void setCenterText(char *text);
 
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
@@ -1938,9 +1939,10 @@ double System::adjustOrbits(){
 // System::setInstance() generate a new random star system
 //-------------------------------------------------------------
 System *System::newInstance(){
+	setCenterText(" New System");
 
 	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
-
+    
 	system->origin=galaxy_origin;
 
 	system->set_system(system->origin);

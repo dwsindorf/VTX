@@ -43,7 +43,7 @@
 #include <wx/defs.h>
 
 extern int scene_rendered;
-#define DEBUG_SCENE
+//#define DEBUG_SCENE
 //#define DEBUG_KEYS
 
 static KeyIF kif;
@@ -108,6 +108,14 @@ void select_tree_node(NodeIF *n){
 	sceneDialog->selectObject(n);
 }
 
+
+void setCenterText(char *text){
+    cout <<" seting center text"<<endl;
+    wxString  msg("Building ");
+    msg+=text;
+    msg+=" ...";
+    vtxScene->center_text(msg,"YELLOW",15,wxFONTSTYLE_SLANT);
+}
 //-------------------------------------------------------------
 // VtxScene::VtxScene() constructor
 //-------------------------------------------------------------
@@ -1049,6 +1057,7 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 
    // if(!TheScene->suspended())
     int moved=TheScene->moved();
+    
     TheScene->render();
     if(TheScene->automv()||TheScene->autotm()||moved)
     	sceneDialog->updateTabs();

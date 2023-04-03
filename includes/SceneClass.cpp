@@ -2390,7 +2390,6 @@ void Scene::render()
         clr_changed_position();
         Render.validate_textures();
     	auto_stride();
-		cout << "Scene::render()" <<swap_on_update<<endl;
         if(swap_on_update)
 	       swap_buffers();
 	}
