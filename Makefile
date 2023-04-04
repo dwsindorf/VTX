@@ -39,6 +39,9 @@ test:;   @cd Release; \
             $(MAKE) test; \
 			cd ..;
 
+distribution:; \
+            tar -cvf binaries/$(PLATFORM)_VTX.tar Release/vtx.exe Resources Shaders Textures Saves
+
 showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 		    @echo "  JAVAINC = $(JAVAINC)"
 		    @echo "    GLIBS = $(GLIBS)"
