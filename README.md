@@ -16,6 +16,38 @@ interface available in the application
 
 Some screenshots of previously generated scenes are available in the Images sub-directory
 
-NOTE: This README is just an initial check-in and will be amended in the future
-      to include instructions for building and running the program. 
+<h2>Getting Started</h2>
+<h3>System Requirements</h3>
+<ol>
+<li>Desktop or laptop computer</li>
+  <ul>
+    <li>memory: 8GB+</li>
+    <li>graphics card: NVIDIA 980(m) or better (note: built in Intel graphics processor will not work)</li>
+  </ul>
+<li>Operating Sytem (tested)</li>
+  <ul>
+    <li>Windows 10 or 11 </li>
+    <li>Ubuntu 18.04</li>
+   </ul>
+<li>Other Software</li>
+  <ul>
+    <li>Gitbash terminal</li>
+  </ul>
+</ol>
+<h3>Running the program(using the files in this repository</h3>
+<ol>
+  <li>Executing VTX</li>
+    <ul>
+      <li>Open a Gitbash shell</li>
+      <li>clone this repository into a computer directory of your choice (e.g. git clone https://github.com/dwsindorf/VTX)
+      <li>"cd" to the "binaries" directory of this project</li>
+      <li>launch the program</li>
+      <ul>
+        <li>Windows: ./vtx</li>
+        <li>Linux: ./vtx-linux</li>
+      </ul>
+   </ul>
+ </ol>
+
+
 
