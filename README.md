@@ -46,7 +46,21 @@ Some screenshots of previously generated scenes are available in the Images sub-
         <li>Windows: ./vtx</li>
         <li>Linux: ./vtx-linux</li>
       </ul>
+      <li>if successful you should see the following program startup window</li>
+      <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/VTX-Startup-window.jpg">
    </ul>
+  <li>Navigating to a new Random Star system</li>
+  <ul>
+    <li>Select a star in the star field and Press the "goto orbit" button in the menu bar</li>
+    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/select-star-and-go-to-orbit.jpg">
+    <li>open the Scene tree dialog window</li>
+    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/new-star-system-view.jpg">
+    <li>Select a system object to view</li>
+    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/scenetree-dialog-set-view.jpg">
+    <li>View/edit selected object</li>
+    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/new-random-gas-giant.png">
+  </ul>
+  </ul>
  </ol>
 
 
