@@ -1,17 +1,17 @@
 # VTX
-A completely procedural full Universe generation program with arbitrary level of detail
+<h3>A procedural universe generation program</h3>
 
 VTX stands for "Virtual Terrain EXplorer"
 
-The program is designed to generate an entire Universe containing galaxies, Stars, Planets and Moons
-with an arbitrary size and level of detail using completely procedural techniques.
+The program is designed to generate an artificial Universe containing galaxies, Stars, Planets, Moons etc.
+with an arbitrary level of detail using primarily procedural techniques.
 
-The project is based on WXWidgets for the UI, OpenGL for the graphics and C++ for the programming language
-and is therefore totally cross-platform and can be build and run on Windows, Linux and (presumably)
-Apple operating systems (although a port to the mac has not been tested)
+The VTX project is based on WxWidgets for the UI, OpenGL for the graphics and C++ for the programming language.
+It was designed to be cross-platform and able to build and run on Windows, Linux and (presumably)
+Apple operating systems (although a port to the Mac has not been tested)
 
-It also utilizes a unique text-based description language that allows user generated scenes to be 
-created and modified via a standard text editor or using the extensive graphical editing 
+The program utilizes a custom text-based description language that allows user generated scenes to be 
+created and modified via a standard text editor or by using the extensive graphical editing 
 interface available in the application
 
 Some screenshots of previously generated scenes are available in the Images sub-directory
@@ -59,6 +59,7 @@ Some screenshots of previously generated scenes are available in the Images sub-
     <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/scenetree-dialog-set-view.jpg">
     <li>View/edit selected object</li>
     <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/new-random-gas-giant.png">
+    <li>This procedure can be repeated again if desired by selecting a new star from the generated system ..</li>
   </ul>
   </ul>
  </ol>
