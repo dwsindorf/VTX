@@ -1,0 +1,67 @@
+Planet(0.003,205.8) {
+	albedo=0.75;
+	ambient=Color(1,1,1,0);
+	day=30;
+	diffuse=Color(1,0.82,0.51);
+	emission=Color(0.99,0.93,0.09,0.02);
+	fog.color=Color(1,0.89,0.54);
+	fog.glow=0.94736;
+	fog.max=10208.3 ft;
+	fog.min=208.34 ft;
+	fog.value=1;
+	fog.vmax=-16984.2 ft;
+	fog.vmin=-20000 ft;
+	hscale=0.002;
+	name="Venus";
+	ocean.level=295046 ft;
+	phase=229.166;
+	shadow=Color(0.21,0.17,0.04,0.52);
+	shine=16.4793;
+	specular=Color(1,1,1,0.31);
+	tilt=10;
+	year=100;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+	Surface{
+		terrain=fractal(SQR|SS,15.6,3,0.1,0.1,2,0.1,0,0,1,0)fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
+				
+				Texture("jupiter",BORDER|TEX,577315,1.02776,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
+				Texture("mud1",BUMP|RANDOMIZE,2048,-0.5,1.02776,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
+				Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-1,1.02776,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
+				Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,1,0.66,0.45,0));
+	}
+	Clouds(0.00302) {
+		ambient=Color(1,1,1,0.2);
+		crot=1;
+		day=30;
+		resolution=4;
+		shine=44.1719;
+		specular=Color(1,1,1);
+		Surface{
+			terrain=
+					Texture("venus_clouds",BUMP|LINEAR|TEX,1,1,1.07936,0,1,2,0.5,0,0,0,0,0);
+		}
+	}
+	Sky(0.00310048) {
+		color=Color(0.99,0.97,0.8);
+		day=30;
+		density=0.22222;
+		ghg_fraction=0.95;
+		haze.color=Color(0.97,0.83,0.38);
+		haze.grad=0.9041;
+		haze.value=1;
+		name="Sky";
+		night.color=Color(0,0,0);
+		pressure=92;
+		resolution=4;
+		rseed=1.15592;
+		sky.grad=0.299753;
+		specular=Color(1,1,1);
+		tilt=10;
+		twilight=Color(0.99,0.64,0.16);
+		twilight.max=0.166955;
+		twilight.min=-1;
+		year=100;
+	}
+}
+

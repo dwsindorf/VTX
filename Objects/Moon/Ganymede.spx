@@ -1,0 +1,30 @@
+Moon(0.000816,0.665) {
+	day=168;
+	name="Ganymede";
+	phase=313.256;
+	year=7;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=
+				Texture("mercury",BORDER|TEX,156305,2,1,0,1,2,0.5,0,0,0.15872,-0.6032,-0.92064)+
+				Texture("West_Norway",BUMP|RANDOMIZE,840.148,1,1.23808,0,4.42864,2.35208,0.5,0,0,0,0,0)+Z(craters(ID2,3,0.005,0.2,0.8,0.38,0.8,1,1,0.5,1,0.8,0.6,0.2,0))+fractal(11,10,0.1,2,3,0.3,0,1,1,1)
+				Texture("ganymede-2k",BUMP|HMAP|TEX,1,0.1,2,0,1,2,0.5,0,10,0,0,0,0,0);
+	}
+	Sky(0.000913461) {
+		color=Color(0,0.58,0.89,0.42);
+		day=168;
+		density=0.03174;
+		haze.color=Color(1,1,0.88,0.29);
+		haze.height=0.52;
+		haze.max=15.085 miles;
+		haze.value=1;
+		name="BlueSky";
+		night.color=Color(0,0,0,0.9);
+		resolution=4;
+		specular=Color(1,1,1);
+		twilight.max=1;
+		twilight.min=-1;
+		year=7;
+	}
+}
+

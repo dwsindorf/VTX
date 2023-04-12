@@ -1,0 +1,38 @@
+Star(1.5,0) {
+	color=Color(1,1,0.8);
+	diffuse=Color(1,1,1);
+	emission=Color(1,1,1);
+	name="Sol";
+	rseed=0.5725;
+	specular=Color(1,1,1);
+	temperature=6000;
+	bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+		Color(0.467,0,0),
+		Color(0.29,0.016,0.071),
+		Color(0,0,0),
+		Color(1,1,1));
+	Surface{
+		terrain=
+				Texture("star1",BORDER|S|TEX,noise(GRADIENT|FS|NABS|SQR,1,10,-0.34,0.46,2,1,1,0,-0.1),1.6922,1.3212,1.05456,0.11104,2,2,1,0,0,0,-0.55552,0)+
+				Texture("Cracks1",BUMP,14.5304,1,2,0,1,2,0.5,0,0,0,0,0);
+	}
+	Corona(2.82057) {
+		color1=Color(0.97,0.95,0.91);
+		color2=Color(0.94,0.96,0.11);
+		name="Inner";
+		noise.expr=noise(GRADIENT|NABS|NEG|SCALE,1.2,4.8,0.66,0.5,2,1,1,0,0.8)-1.5*PHI;
+	}
+	Corona(7.8099) {
+		color1=Color(1,0.98,0.68);
+		color2=Color(0.53,0.06,0);
+		name="Outer";
+		noise.expr=noise(GRADIENT|FS|SCALE|TA|UNS|RO1,1.5,2,1,0.5,2,1,1,0,0,1e-06);
+	}
+	Halo(1.501) {
+		color1=Color(1,0.74,0.18);
+		color2=Color(0.96,0.82,0.17,0.53);
+		gradient=0.9164;
+		name="Halo";
+	}
+}
+

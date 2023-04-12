@@ -71,8 +71,10 @@ void FileUtil::getSystemDir(char *dir)
 void FileUtil::getBitmapsDir(char *dir)
 {
 	char base[MAXSTR];
+	char tmp[MAXSTR];
   	getBaseDirectory(base);
 	makeSubDirectory(base,bitmaps,dir);
+	makeSubDirectory(dir,"tmp",tmp);
 }
 //-------------------------------------------------------------
 // FileUtil::getImagesDir get images directory

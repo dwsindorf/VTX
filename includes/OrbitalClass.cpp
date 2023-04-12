@@ -3256,7 +3256,7 @@ void Star::render() {
 				front.add(obj);
 			else if (obj->type() == ID_CORONA) {
 				Corona *corona = obj;
-				if (corona->internal)
+				if (corona->internal || (TheScene->viewobj != this))
 					front.add(obj);
 				else
 					back.add(obj);
@@ -3635,7 +3635,7 @@ int Planetoid::adapt_pass()
 	clr_selected();
 
     if(!local_group() || !view_group() || offscreen()|| !isEnabled())
-        clear_pass(BG2);
+        clear_pass(BG4);
     else{
         if(TheScene->viewobj==this)
             clear_pass(FG0);
@@ -3659,12 +3659,12 @@ int Planetoid::render_pass()
 			select_pass(FG0);
 		else
 			clear_pass(BG2);
-	}
+		}
 	else
-		clear_pass(BG3);
+		clear_pass(BG4);
 	if(selected() && map->visbumps() && Render.bumps())
-	    Raster.set_bumptexs(1);
-
+	    	Raster.set_bumptexs(1);
+	
     return selected();
 }
 
@@ -4472,7 +4472,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=",0.5,0.25,-0.25,0.5,0.1)";
 		break;
 	case RND_FRACTAL_NOISE:
-		str="18+3*noise(";
+		str="20+3*noise(";
 		str+=randFeature(RND_NOISEFUNC3);
 		str+="|NLOD,8,5,0,0.5,2.2,1,4,0,0.0,1e-06)";
 		break;
@@ -6684,6 +6684,10 @@ NodeIF *CloudLayer::getInstance(NodeIF *prev){
 CloudLayer *CloudLayer::newInstance(bool is3d){
 	CloudLayer *clouds=TheScene->getPrototype(0,ID_CLOUDS);
 	clouds->detail=16;
+	if(is3d)
+		clouds->day=-(4+3*s[4]);
+	else
+		clouds->day=(4+3*s[5]);
 	char buff[2048];
 	std::string str;
     
@@ -7067,6 +7071,10 @@ Halo::Halo(Orbital *m, double s) : Shell(m,s)
 #ifdef DEBUG_OBJS
 	printf("Halo\n");
 #endif
+	if(m){
+		size=m->size;
+		ht=0;
+	}
 	density=0.1;
 	gradient=0.9;
 	detail=2;

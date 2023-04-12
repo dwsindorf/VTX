@@ -1,0 +1,89 @@
+Planet(0.003,93) {
+	albedo=0.3;
+	ambient=Color(1,1,1,0.08);
+	day=24;
+	diffuse=Color(1,1,1,0.89);
+	hscale=0.002;
+	name="Earth";
+	ocean.auto=1;
+	ocean.level=500 ft;
+	shadow=Color(0,0,0,0.83);
+	shine=6.97914;
+	specular=Color(1,1,1,0.13);
+	tilt=-17;
+	water.albedo=0.70834;
+	water.clarity=425.455 ft;
+	water.color1=Color(0.01,0.11,0.34);
+	water.color2=Color(0.04,0.25,0.47);
+	water.level=3.78788e-08;
+	water.shine=68.056;
+	year=365;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
+				fractal(SQR|SS,14,8,0.05,0.5,3,0.1,0,1,1,1)snow(-1.1,0.7,0.25,-0.3,1,0.3)
+				
+				Texture("earth",BUMP|TEX,1,0,2,0,1,2,0.5,0,0,0,0,0)+
+				Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,2,1,0,0,0,0);
+	}
+	Sky(0.0031) {
+		color=Color(0.65,0.88,0.99);
+		day=24;
+		density=0.26984;
+		ghg_fraction=0.04;
+		haze.color=Color(1,1,1,0.82);
+		haze.grad=0.90244;
+		haze.value=0.819608;
+		night.color=Color(0,0,0);
+		resolution=4;
+		specular=Color(1,1,1);
+		tilt=-17;
+		twilight=Color(0.58,0,0.42);
+		twilight.max=1;
+		twilight.min=-1;
+		year=365;
+	}
+	Clouds(0.00303) {
+		ambient=Color(1,1,1,0.07);
+		crot=1;
+		emission=Color(1,1,1,0.3);
+		name="Clouds2D";
+		resolution=3.98872;
+		rseed=1.75324;
+		shine=20.0424;
+		specular=Color(1,1,1,0.67);
+		Surface{
+			terrain=Color(1,1,1,twist(0.15,noise(GRADIENT|FS|TA,0,7.7,1,0.3,2.73,1,1,0,-0.1,1e-05))+max(noise(VORONOI|FS|NABS|TA,1,2,1,0.5,2,1,1,0,0.3,1e-05),0));
+		}
+	}
+	Clouds(0.00304) {
+		crot=1;
+		day=0.5;
+		emission=Color(1,1,1,0.21);
+		name="EarthClouds";
+		resolution=8;
+		rseed=1.728;
+		shine=8.56316;
+		specular=Color(1,1,1,0.99);
+		tilt=17;
+		Surface{
+			terrain=
+					Texture("earth_clouds",BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
+		}
+	}
+	Moon(0.001,0.1) {
+		day=24;
+		hscale=0.001;
+		name="MoonMap";
+		phase=139.997;
+		resolution=4;
+		rseed=2.34627;
+		year=30;
+		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		Surface{
+			terrain=
+					Texture("luna",BORDER|BUMP|HMAP|TEX,1,-4,2,0,1,2,0.5,0,1,0.5);
+		}
+	}
+}
+

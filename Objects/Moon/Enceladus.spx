@@ -1,0 +1,33 @@
+Moon(0.000156,0.147) {
+	ambient=Color(1,1,1,0.05);
+	day=32.9;
+	name="Enceladus";
+	phase=194.285;
+	specular=Color(1,1,1);
+	year=1.37;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=Z(craters(ID2,3,0.00286765,0.2,0.15,1,0.49,1,1,0.5,0.4,0.8,0.6,0.2,0)+max(noise(GRADIENT|NABS|SCALE|SQR,13.4,1,1,0.5,2,0.44,4,0,0.9,1e-06),0))+fractal(12,10.5,0.1,1,2,0.57,0.26,0,0.62,0)
+				Texture("neptune",A|BORDER|TEX,noise(GRADIENT|SCALE,0,3.3,0.86,0.58,2.08,1,4,0,-0.2,1e-06),0.5,1,0,-0.1904,1,2,1,0,0,0.2,0.1,-0.53968)+
+				Texture("enceladus-2d",BUMP|RANDOMIZE|TEX,212.306,0.88896,1.46032,0,10.5237,2.91552,0.5,0,0,0,0,0)+
+				Texture("craters3",BUMP|RANDOMIZE,2524.01,-1,1,0,1,2.1268,0.5,0,0,0,0,0)+
+				Texture("enceladus",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0.19048,8.4128,2,0,0,0,0);
+	}
+	Sky(0.000175048) {
+		color=Color(0,0.58,0.89,0.49);
+		day=32.9;
+		density=0.0635;
+		haze.color=Color(1,1,0.88,0.53);
+		haze.height=0.52;
+		haze.max=15.085 miles;
+		haze.value=1;
+		name="BlueSky";
+		night.color=Color(0,0,0,0.9);
+		resolution=4;
+		specular=Color(1,1,1);
+		twilight.max=1;
+		twilight.min=-1;
+		year=1.37;
+	}
+}
+

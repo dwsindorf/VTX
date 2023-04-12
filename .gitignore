@@ -11,6 +11,7 @@ Archive
 *.o
 *.d
 *.output
+.cproject
 Release/*.c
 Release/*.cpp
 Release/*.h

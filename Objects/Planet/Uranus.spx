@@ -1,0 +1,38 @@
+Planet(0.0157,1783) {
+	day=17.2;
+	name="Uranus";
+	ocean.level=1 ft;
+	resolution=4;
+	shine=2.62405;
+	skew=0.8;
+	specular=Color(1,1,1,0.46);
+	tilt=98;
+	year=30687;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
+				Texture("blue-white",BORDER|BUMP|S|TEX,twist(0.2,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,0.02,1.29232,2.33968,1,2,1,0,-0.05552,-0.1,0,0.27776);
+	}
+	Sky(0.0157894) {
+		color=Color(0,0.9,1);
+		day=17.2;
+		density=0.2;
+		name="Sky";
+		resolution=4;
+		rseed=0.601791;
+		specular=Color(1,1,1);
+		tilt=98;
+		year=30687;
+	}
+	Ring(0.0237892,0.0158096) {
+		emission=Color(1,1,1,0.5);
+		name="UranusRings";
+		resolution=4;
+		shadow=Color(0,0,0,0.75);
+		Surface{
+			terrain=
+					Texture("uranus-ring",BLEND|DECAL|NORM|REPLACE|S|TEX,PHI,0.5,1,1,0,1,2,1,0,0,0,0,0);
+		}
+	}
+}
+

@@ -68,7 +68,7 @@ build_glut: parsers jpeglib glut includes vtxg
 wx:;	    cd  ../wx; \
             make $(MFLAGS) \
 			INCS="-I../includes -I../ -I../Resources/UI" \
-			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) $(GLDEFS)"\
+			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) -DNDEBUG $(GLDEFS)"\
 			CC="$(CC)" \
 			OBJDIR="../$(THIS)" \
 			build; \
@@ -150,7 +150,7 @@ jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CL
 
 #test:;         ./vtx.exe --m 
 #test:;         ./vtx.exe --m  gasgiant1.spx
-test:;         ./vtx.exe --m simple.spx
+test:;         ./vtx.exe --m last.spx
 
 ### DEPENDENCIES ###
 

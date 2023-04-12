@@ -1,6 +1,37 @@
 11/4/2010
+-----------------
 1. Enable flag doesn't affect whether or not or how layers get drawn
 2. If terrain contains PX,PY layers render/adapt times are extremely long if object is not viewobj
    -fixed
 3. In "h" off case get holes in triangle mesh
 4. Far off orbital views of clouds and sky show z-depth precision artifacts
+4/6/2023
+-----------------
+1. Coronas don't show if pixel noise selected and star is not viewobj
+  - work-around needed to render star first or set mode to internal
+2. need to make sure github ".ignore" directories are created on first use if not present
+  - specifically, Bitmaps/tmp (done)
+3. Can't "Replace with" if Objects/<type> doesn't exist 
+  - fixed
+4. need to compile VtxScene.cpp with -g flag (vs -O3) otherwise get crash (segment violation) when program starts
+  - deferred (windows only problem)
+  - work-aroung is to compile all wx directory with -g (doesn't seem to affect performance)
+5. Colored textures too light unless bumpmap is enabled
+6. adding fractal to terrain should be below ocean
+7. replacing moon (luna) crashed program
+8. selecting Set view earth crashed program
+9. selecting lines mode on surface crashed program
+10. dragging point above fractal (to add small features) didn't work (needed to edit text file manually)
+11. Center text doesn't show up on Linux or windows laptop
+12. orbital distances sometimes get reset to 204 MM
+13. after adding new texture need to restart program for it to show up in list
+14. artifacts seen at water boundary if fog enabled
+ - not noticable at high or better resolutions
+15. following set view(?) -/+ move up down etc. has huge value
+ - need to goto new surface point to fix
+16. sometimes parent planet shows through sky etc. ion moon surface view
+  - rebuild, change view etc. doesn't fix. need to restart program (last.spx) to fix
+  - related (same?) problem seen after turning shadows on and off
+  - somewhat fixed by always clearing depth buffer in render passes (SceneClass) related to raster.set_farview()
+17. moons don't show up in front of planet in orbital views
+18. save does not save all bitmaps used by textures ()

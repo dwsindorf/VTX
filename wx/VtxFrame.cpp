@@ -785,7 +785,7 @@ void VtxFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     wxString msg;
     msg.Printf( _T("VTX       A Virtual Terrain Exploration Tool\n")
                 _T("Author    Dean Sindorf\n")
-                _T("Version   2.2 1997-2011\n")
+                _T("Version   2.2 1997-2023\n")
                 _T("GUI      %s"), wxVERSION_STRING);
     wxMessageBox(msg, _T("About VTX"), wxOK | wxICON_INFORMATION, this);
 }

@@ -1,0 +1,23 @@
+Moon(0.000124971,0.0546243) {
+	ambient=Color(1,1,1,0.06);
+	day=240;
+	diffuse=Color(1,1,1,0.69);
+	emission=Color(1,1,1,0.04);
+	hscale=0.008;
+	name="Luna";
+	ocean.level=3.65295e-300 ft;
+	phase=360;
+	rot_phase=310.003;
+	rseed=2.41294;
+	shadow=Color(0,0,0,0.93);
+	shine=3.02106;
+	specular=Color(1,1,1,0.28);
+	year=10;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=fractal(SQR|SS,12.5,10,0,0.4,1.13,0.2,0,0,1,0)
+				Texture("cratery",BUMP|NORM|TEX,5961.67,0.4,0.47224,0,1,1.94448,0.48612,0,0,0,0,0)+
+				Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.5,0,0,0,0,0)+Z(craters(ID2,6,0.0009999,0.75,0.21,0.1,1,0.73,1,0.6,8.5,0.98,0.6,0.44,0));
+	}
+}
+

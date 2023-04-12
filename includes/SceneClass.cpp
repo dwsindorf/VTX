@@ -834,14 +834,16 @@ void Scene::open(char *fn)
 
     ViewFrame *frame;
     frame=views->first();
-	if(frame && !frame->vobj && viewobj){
-	    frame->vobj=(ObjectNode*)views->getViewExpr(viewobj);
+	if(frame){
+		if(!frame->vobj && viewobj){
+			frame->vobj=(ObjectNode*)views->getViewExpr(viewobj);
+		}
+		views->getObjects();
+		frame=views->se();
+		if(!viewobj)
+			viewobj=frame->vobj;
+		frame->restore(this);
 	}
-	views->getObjects();
-	frame=views->se();
-	if(!viewobj)
-	    viewobj=frame->vobj;
-	frame->restore(this);
 	//cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
 	scene_objects=total_objs();
@@ -892,8 +894,6 @@ void Scene::open(char *fn)
 	Render.invalidate_textures();
 	GLSLMgr::clearTexs();
 	views_mark();
-
-
 }
 
 //-------------------------------------------------------------
@@ -2557,6 +2557,7 @@ void Scene::render_shadows()
 
 	Raster.render();
 	project();
+
 	render_objects();
 	if(shadows_mode())
 		shadow_group(2);
@@ -2601,8 +2602,7 @@ void Scene::render_objects()
 			project();
 			//cout << bgpass << endl;
 			render_bgpass();
-			//if(bgpass>FGMAX && TheScene->inside_sky())
-			if(bgpass>FGMAX && !Raster.farview())
+			//if(bgpass>FGMAX && !Raster.farview())
 				GLSLMgr::clrDepthBuffer();
 			pass_reset();
 		}
