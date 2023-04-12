@@ -115,6 +115,7 @@ void setCenterText(char *text){
     msg+=text;
     msg+=" ...";
     vtxScene->center_text(msg,"YELLOW",15,wxFONTSTYLE_SLANT);
+    
 }
 //-------------------------------------------------------------
 // VtxScene::VtxScene() constructor
@@ -483,6 +484,8 @@ void VtxScene::showFPS()
 //-------------------------------------------------------------
 void VtxScene::center_text(wxString& msg, const wxString &cname, int fsize, int style)
 {
+    SetCurrent();
+    
     wxPaintDC dc(this);
     dc.SetFont(*wxNORMAL_FONT);
     wxFont font=dc.GetFont();
