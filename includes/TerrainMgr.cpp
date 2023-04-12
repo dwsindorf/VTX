@@ -11,8 +11,8 @@
 
 //#define DEBUG_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
-//#define DEBUG_IMAGES
-//#define DEBUG_VALIDATE
+#define DEBUG_IMAGES
+#define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
 
@@ -1338,8 +1338,8 @@ void TerrainMgr::validateTextures()
 	// add new texture variables
 
 	while((tex=(TNtexture*)textures++)){
-//		if(!addTextureImage(tex->name))
-//			continue;
+		//if(!addTextureImage(tex->name))
+		//	continue;
 
 	    int opts=tex->opts;
 		inode=imgr->get_image(tex->name,opts);
@@ -1352,8 +1352,9 @@ void TerrainMgr::validateTextures()
 				addTextureImage(inode->gradName());
 			}			
 			imgr->inodes.free((TNode*)inode); // new	
-			addTextureImage(tex->name);
+			//addTextureImage(tex->name);
 		}
+		addTextureImage(tex->name);
 	}
 
 	// remove unused texture variables

@@ -21,7 +21,7 @@ extern double Rand();
 extern double Hscale;
 extern double Red,Green,Blue,Alpha,Theta,Phi;
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
