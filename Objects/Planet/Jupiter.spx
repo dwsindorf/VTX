@@ -32,7 +32,7 @@ Planet(0.0434,460) {
 		year=4380;
 	}
 	Moon(0.0011,0.2) {
-		day=240;
+		day=43.2;
 		fog.color=Color(0.98,0.62,0.15);
 		fog.glow=1;
 		fog.max=10625 ft;
@@ -54,7 +54,7 @@ Planet(0.0434,460) {
 		water.color2=Color(0.4,0.15,0.05);
 		water.level=-1.89394e-06;
 		water.shine=52.778;
-		year=10;
+		year=1.8;
 		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 			Color(0.502,0.251,0),
@@ -82,7 +82,7 @@ Planet(0.0434,460) {
 		}
 		Sky(0.00118389) {
 			color=Color(0.89,0.42,0,0.82);
-			day=240;
+			day=43.2;
 			density=0.44444;
 			haze.color=Color(0.95,0.55,0.09);
 			haze.grad=0.59756;
@@ -96,26 +96,92 @@ Planet(0.0434,460) {
 			specular=Color(1,1,1);
 			twilight.max=1;
 			twilight.min=-1;
-			year=10;
+			year=1.8;
 		}
 	}
-	Moon(0.00082,0.0889991) {
-		day=11;
+	Moon(0.00082,0.084) {
+		day=96;
 		hscale=0.002;
 		name="Europa";
-		phase=155;
 		shine=8.56316;
 		specular=Color(1,1,1,0.38);
-		tilt=-10;
+		year=3.5;
+		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+		Surface{
+			terrain=fractal(SQR|SS,12,12,0.1,1,3,0.2,0.25,1,0.38,1)
+					Texture("neptune",A|BORDER|BUMP|TEX,noise(GRADIENT|NABS|UNS,0,5.1,0.26,0.5,2,1,4,0,0,1e-06),70.6687,0,0.22224,-1.2064,1,2,0.5,0,0,0.98416,0.53968,-0.79368)+
+					Texture("europa-8k",BORDER|BUMP|HMAP|TEX,1,0,2,0,1,1.90568,0.86792,0,2,0,0,0,0,0)+
+					Texture("West_Norway",HMAP,8.97866,1,1,0,2,2,0.5,0,4,0,0,-0.73016,0,0.53968)+
+					Texture("watery1",BUMP|LINEAR|TEX,2048,0.1,2,0,2,2.4648,0.2676,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,12,2,1,0.5,2,1,1,0,0,1e-06)+craters(ID2,4,0.01,0.32,0.8,0.2,0.68,1,1,0.5,1,0.8,0.6,0.2,0));
+		}
+		Sky(0.000908413) {
+			color=Color(0,0.58,0.89,0.53);
+			day=96;
+			density=0.1;
+			haze.color=Color(1,1,0.88,0.08);
+			haze.height=0.52;
+			haze.max=15.085 miles;
+			haze.value=1;
+			name="BlueSky";
+			night.color=Color(0,0,0,0.9);
+			pressure=0.01;
+			resolution=4;
+			specular=Color(1,1,1);
+			twilight.max=1;
+			twilight.min=-1;
+			year=3.5;
+		}
+	}
+	Moon(0.000816,0.665) {
+		day=168;
+		name="Ganymede";
+		phase=313.256;
+		year=7;
+		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
+			Color(0.502,0.502,0.502),
+			Color(0.063,0.063,0.063),
+			Color(0.502,0.502,0.502));
+		Surface{
+			terrain=
+					Texture("mercury",BORDER|TEX,156305,2,1,0,1,2,0.5,0,0,0.15872,-0.6032,-0.92064)+
+					Texture("West_Norway",BUMP|RANDOMIZE,840.148,1,1.23808,0,4.42864,2.35208,0.5,0,0,0,0,0)+Z(craters(ID2,3,0.005,0.2,0.8,0.38,0.8,1,1,0.5,1,0.8,0.6,0.2,0))+fractal(11,10,0.1,2,3,0.3,0,1,1,1)
+					Texture("ganymede-2k",BUMP|HMAP|TEX,1,0.1,2,0,1,2,0.5,0,10,0,0,0,0,0);
+		}
+		Sky(0.000913461) {
+			color=Color(0,0.58,0.89,0.42);
+			day=168;
+			density=0.03174;
+			haze.color=Color(1,1,0.88,0.29);
+			haze.height=0.52;
+			haze.max=15.085 miles;
+			haze.value=1;
+			name="BlueSky";
+			night.color=Color(0,0,0,0.9);
+			resolution=4;
+			specular=Color(1,1,1);
+			twilight.max=1;
+			twilight.min=-1;
+			year=7;
+		}
+	}
+	Moon(0.00232732,1.17) {
+		day=408;
+		name="Calisto";
+		phase=313.256;
 		year=17;
 		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		bands("calisto",ACHNL,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
+			Color(0.522,0.345,0.227),
+			Color(0.753,0.753,0.753),
+			Color(0.502,0.502,0.502,0.773));
+		image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 		Surface{
-			terrain=snow(-1.1,-0.3,0.19,-0.75,1,-0.22)
-					fractal(SQR|SS,13,10.3,0.1,0.1,3,0.68,0,1,1,1)
-					Texture("neptune",A|BORDER|BUMP|TEX,noise(GRADIENT|NABS|UNS,0,5.1,0.26,0.5,2,1,4,0,0,1e-06),0.5,0,0.2,-1.66672,1,2,0.5,0,0.0952,-1.87304,0.47616,-1.0476)+
-					Texture("europa",BORDER|BUMP|HMAP|TEX,0.5,0,1.1746,0,1,1.90568,0.86792,0,1.5,0,0,0,0,0)+
-					Texture("West_Norway",HMAP,8.97866,1,1,0,2,2,0.5,0,1,0,0,0,0,0)+
-					Texture("colored-rock",BUMP|LINEAR|TEX,48.4022,0.5,2,0,2,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,4,2,1,0.5,2,1,1,0,0)+craters(ID2,4,0.0375783,0.32,0.8,0.42,0.68,1,1,0.5,1,0.8,0.6,0.2,0));
+			terrain=Z(craters(ID2,3,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2,0))+fractal(15,3,0.1,0.5,2,0.2,0,0,1,0)
+					Texture("calisto",TEX,4374.8,0.38096,1,0,1,2,0.5,0,0,0.3,-0.1,-0.1)+
+					Texture("Callisto-8k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,4.6032,0,0,0,0,0)+
+					Texture("ridges",BUMP|RANDOMIZE,1456.21,1.3968,1.90476,0,3.28576,3.30984,0.2676,0,0,0,0,0);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 Planet(0.034,911) {
 	ambient=Color(1,1,1,0.04);
 	day=20;
+	hscale=0.001;
 	name="Saturn";
 	ocean.level=6.70427e-312 ft;
 	phase=229.166;
@@ -19,10 +20,18 @@ Planet(0.034,911) {
 	}
 	Ring(0.0517841,0.0175998) {
 		emission=Color(1,1,1,0.8);
-		name="Procedural";
+		name="saturn-rings";
 		resolution=3;
 		rseed=0.584485;
 		shadow=Color(0,0,0,0.8);
+		bands("saturn-ring",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
+			Color(0.576,0.514,0.455),
+			Color(0.573,0.506,0.467),
+			Color(0.204,0.141,0.106,0.369),
+			Color(0.373,0.337,0.29),
+			Color(0.357,0.322,0.294),
+			Color(0.573,0.506,0.467),
+			Color(0.349,0.302,0.267));
 		Surface{
 			terrain=
 					Texture("saturn-ring",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,0.333087,1,0,1,2,1,0,0,0,0,0);
@@ -30,7 +39,7 @@ Planet(0.034,911) {
 	}
 	Moon(0.0016,0.0889991) {
 		ambient=Color(1,1,1,0.03);
-		day=11;
+		day=368.8;
 		fog.color=Color(1,0.51,0.18);
 		fog.glow=0.08772;
 		fog.max=10361.1 ft;
@@ -64,6 +73,8 @@ Planet(0.034,911) {
 			Color(1,0.6,0),
 			Color(0.7,0.4,0),
 			Color(1,0.9,0.3));
+		bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+		image("eroded",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"neptune");
 		Surface{
 			terrain=ocean(noise(GRADIENT|NABS|NLOD|SCALE|SQR|UNS,16.5,6,0.5,0.1,2.1,0.01,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,1,-0.34,0,0))
 					fractal(SQR|SS,13,3,0.1,0.1,2,0.96,0,0,1,0)fog(noise(GRADIENT|NABS,7,13,0.03,0.5,2,1,1,0.47,0.9,1e-06))
@@ -89,7 +100,7 @@ Planet(0.034,911) {
 		}
 		Sky(0.00167) {
 			color=Color(0.99,0.59,0.14);
-			day=11;
+			day=368.8;
 			density=0.66666;
 			ghg_fraction=0.1;
 			haze.color=Color(1,1,0.46);
@@ -104,6 +115,46 @@ Planet(0.034,911) {
 			twilight.max=1;
 			twilight.min=-1;
 			year=17;
+		}
+	}
+	Moon(0.000156,0.147) {
+		ambient=Color(1,1,1,0.05);
+		day=32.9;
+		name="Enceladus";
+		phase=313.256;
+		specular=Color(1,1,1);
+		year=1.37;
+		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		bands("blue-white-tan",ACHNL|CLAMP,64,0,0.411765,Color(1,1,1,0.412),Color(0.008,0.522,0.824,0.376),
+			Color(0.314,0.675,0.973),
+			Color(0.722,0.875,0.976),
+			Color(0.773,0.925,0.988),
+			Color(1,1,1),
+			Color(0.875,0.875,0.875,0.263),
+			Color(0.502,0.251,0));
+		image("enceladus-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"blue-white-tan");
+		bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+		Surface{
+			terrain=fractal(SQR|SS,14,10.5,0.05,1,2,0.1,0,0,1,0)
+					Texture("enceladus-2d",BUMP|TEX,122.488,1.5,1.46032,0,3.28576,2.18312,0.5,0,0,0,0,0)+
+					Texture("neptune",A|BORDER|TEX,noise(SIMPLEX|SCALE,0,3.3,0.86,0.85,2.08,1,4,0,-0.8,1e-06),0.5,1,0,-0.1904,1,2,1,0,0,0.2,0.1,-0.2)+
+					Texture("enceladus",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0.19048,5,2,0,0,0,0);
+		}
+		Sky(0.0002233) {
+			color=Color(0,0.58,0.89,0.53);
+			day=32.9;
+			density=0.0635;
+			haze.color=Color(1,1,0.88,0.09);
+			haze.height=0.52;
+			haze.max=15.085 miles;
+			haze.value=1;
+			name="BlueSky";
+			night.color=Color(0,0,0,0.9);
+			resolution=4;
+			specular=Color(1,1,1);
+			twilight.max=1;
+			twilight.min=-1;
+			year=1.37;
 		}
 	}
 }

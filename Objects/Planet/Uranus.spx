@@ -9,6 +9,7 @@ Planet(0.0157,1783) {
 	tilt=98;
 	year=30687;
 	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	bands("blue-white",ACHNL|NORM,64,Color(0.502,0.973,1),Color(0.231,0.514,1),Color(1,1,1));
 	Surface{
 		terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
 				Texture("blue-white",BORDER|BUMP|S|TEX,twist(0.2,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,0.02,1.29232,2.33968,1,2,1,0,-0.05552,-0.1,0,0.27776);
@@ -29,6 +30,13 @@ Planet(0.0157,1783) {
 		name="UranusRings";
 		resolution=4;
 		shadow=Color(0,0,0,0.75);
+		bands("uranus-ring",ACHNL|REFLECT,128,0.15094,0.5283,Color(0.224,0.69,0.678,0.525),Color(0.02,0.573,0.922,0),
+			Color(0.039,0.557,0.973,0.188),
+			Color(0.878,0.973,0.98,0.733),
+			Color(0.922,0.91,1,0.075),
+			Color(0.902,0.973,1,0.224),
+			Color(1,1,1,0),
+			Color(1,1,1,0));
 		Surface{
 			terrain=
 					Texture("uranus-ring",BLEND|DECAL|NORM|REPLACE|S|TEX,PHI,0.5,1,1,0,1,2,1,0,0,0,0,0);

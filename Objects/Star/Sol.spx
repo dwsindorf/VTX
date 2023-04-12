@@ -1,4 +1,4 @@
-Star(1.5,0) {
+Star(1,0) {
 	color=Color(1,1,0.8);
 	diffuse=Color(1,1,1);
 	emission=Color(1,1,1);
@@ -28,7 +28,7 @@ Star(1.5,0) {
 		name="Outer";
 		noise.expr=noise(GRADIENT|FS|SCALE|TA|UNS|RO1,1.5,2,1,0.5,2,1,1,0,0,1e-06);
 	}
-	Halo(1.501) {
+	Halo(1) {
 		color1=Color(1,0.74,0.18);
 		color2=Color(0.96,0.82,0.17,0.53);
 		gradient=0.9164;

@@ -6,7 +6,8 @@ Planet(0.003,93) {
 	hscale=0.002;
 	name="Earth";
 	ocean.auto=1;
-	ocean.level=500 ft;
+	ocean.level=200 ft;
+	phase=229.166;
 	shadow=Color(0,0,0,0.83);
 	shine=6.97914;
 	specular=Color(1,1,1,0.13);
@@ -30,7 +31,7 @@ Planet(0.003,93) {
 		color=Color(0.65,0.88,0.99);
 		day=24;
 		density=0.26984;
-		ghg_fraction=0.04;
+		ghg_fraction=0.02;
 		haze.color=Color(1,1,1,0.82);
 		haze.grad=0.90244;
 		haze.value=0.819608;
@@ -71,18 +72,26 @@ Planet(0.003,93) {
 					Texture("earth_clouds",BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
 		}
 	}
-	Moon(0.001,0.1) {
-		day=24;
-		hscale=0.001;
-		name="MoonMap";
+	Moon(0.00108,0.1) {
+		ambient=Color(1,1,1,0.06);
+		day=648;
+		diffuse=Color(1,1,1,0.69);
+		emission=Color(1,1,1,0.04);
+		hscale=0.008;
+		name="Luna";
+		ocean.level=3.65295e-300 ft;
 		phase=139.997;
-		resolution=4;
-		rseed=2.34627;
-		year=30;
+		rseed=2.41294;
+		shadow=Color(0,0,0,0.93);
+		shine=3.02106;
+		specular=Color(1,1,1,0.28);
+		year=27;
 		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 		Surface{
-			terrain=
-					Texture("luna",BORDER|BUMP|HMAP|TEX,1,-4,2,0,1,2,0.5,0,1,0.5);
+			terrain=fractal(SQR|SS,12.5,10,0,0.4,1.13,0.2,0,0,1,0)
+					Texture("craters2",BUMP|RANDOMIZE,7585.35,-1.5,1,0,4.04752,3.30984,0.61972,0,0,0,0,0)+
+					Texture("luna",BUMP|HMAP|TEX,1,2,2,0,1,2,0.5,0,0.5,0,0,0,0,0)+Z(craters(ID2,6,0.0009999,0.75,0.21,0.17,1,0.73,1,0.6,8.5,0.98,0.6,0.44,0));
 		}
 	}
 }

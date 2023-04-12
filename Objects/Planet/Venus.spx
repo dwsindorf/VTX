@@ -1,4 +1,4 @@
-Planet(0.003,205.8) {
+Planet(0.003,66) {
 	albedo=0.75;
 	ambient=Color(1,1,1,0);
 	day=30;
