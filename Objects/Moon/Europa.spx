@@ -1,18 +1,34 @@
-Moon(0.0001,0.1) {
-	day=24;
+Moon(0.00082,0.084) {
+	day=96;
 	hscale=0.002;
 	name="Europa";
 	shine=8.56316;
-	specular=Color(1,1,1,0.59);
-	year=100;
-	bands("blue-white",ACHNL|NORM,64,Color(0.502,0.973,1),Color(0.231,0.514,1),Color(1,1,1));
+	specular=Color(1,1,1,0.38);
+	year=3.5;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
-		terrain=snow(-1.1,-0.3,0.19,-0.75,1,-0.22)
-				fractal(SQR|SS,8.9,10.3,0.1,3,3,0.68,0,1,1,1)
-				Texture("blue-white",BORDER|LINEAR|NORM|TEX,1,0.63888,1,-1.66672,4.66672,2,0.5,0,0,-2,0,-2)+
-				Texture("europa",BORDER|BUMP|HMAP|TEX,0.5,0.2,1.44444,0,1,1.90568,0.86792,0,2,0,0,0,0,0)+
-				Texture("West_Norway",HMAP,8.97866,1,1,0,2,2,0.5,0,1,0,0,0,0,0)+
-				Texture("colored-rock",BUMP|LINEAR|TEX,48.4022,0.5,2,0,2,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,4,2,1,0.5,2,1,1,0,0)+craters(ID2,4,0.0375783,0.32,0.8,1,0.5,1,1,0.5,1,0.8,0.6,0.2,0));
+		terrain=fractal(SQR|SS,12,12,0.1,1,3,0.2,0.25,1,0.38,1)
+				Texture("neptune",A|BORDER|BUMP|TEX,noise(GRADIENT|NABS|UNS,0,5.1,0.26,0.5,2,1,4,0,0,1e-06),70.6687,0,0.22224,-1.2064,1,2,0.5,0,0,0.98416,0.53968,-0.79368)+
+				Texture("europa-8k",BORDER|BUMP|HMAP|TEX,1,0,2,0,1,1.90568,0.86792,0,2,0,0,0,0,0)+
+				Texture("West_Norway",HMAP,8.97866,1,1,0,2,2,0.5,0,4,0,0,-0.73016,0,0.53968)+
+				Texture("watery1",BUMP|LINEAR|TEX,2048,0.1,2,0,2,2.4648,0.2676,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,12,2,1,0.5,2,1,1,0,0,1e-06)+craters(ID2,4,0.01,0.32,0.8,0.2,0.68,1,1,0.5,1,0.8,0.6,0.2,0));
+	}
+	Sky(0.000908413) {
+		color=Color(0,0.58,0.89,0.53);
+		day=96;
+		density=0.1;
+		haze.color=Color(1,1,0.88,0.08);
+		haze.height=0.52;
+		haze.max=15.085 miles;
+		haze.value=1;
+		name="BlueSky";
+		night.color=Color(0,0,0,0.9);
+		pressure=0.01;
+		resolution=4;
+		specular=Color(1,1,1);
+		twilight.max=1;
+		twilight.min=-1;
+		year=3.5;
 	}
 }
 

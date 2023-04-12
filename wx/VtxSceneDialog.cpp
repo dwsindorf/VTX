@@ -913,9 +913,11 @@ void VtxSceneDialog::setNodeName(char *s){
 // VtxSceneDialog::saveSelected() save selected node
 //-------------------------------------------------------------
 void VtxSceneDialog::saveSelected(){
-	char path[256];
+	// following line prevents an annoying popup error even after a successful save
+	wxLogNull logNo;  // disable errors
+	char path[512];
 	char filename[64];
-    char dir[256];
+    char dir[512];
     filename[0]=0;
 	path[0]=0;
     wxTreeItemId item = treepanel->GetSelection();
@@ -933,6 +935,7 @@ void VtxSceneDialog::saveSelected(){
 
     wxString ext("*");
     ext+=FileUtil::ext;
+	
     wxFileDialog dialog
                  (
                     this,
@@ -940,13 +943,14 @@ void VtxSceneDialog::saveSelected(){
                     wxString(dir),
                     wxString(filename),
                     ext,
-                    //wxFD_SAVE|wxOVERWRITE_PROMPT
                     wxFD_SAVE
                   );
     if (dialog.ShowModal() == wxID_OK) {
         strcpy(filename, dialog.GetFilename().ToAscii());
+
         File.getFileName(filename,filename);
-        sprintf(path,"%s%s%s.spx",dir,FileUtil::separator,filename);
+        sprintf(path,"%s%s%s.spx",dir,"/",filename);
+
         if(obj->typeValue() & ID_TERRAIN)
         	TheScene->set_keep_variables(0);
         setNodeName(filename);
@@ -1080,9 +1084,8 @@ void VtxSceneDialog::AddFileMenu(wxMenu &menu,NodeIF *object){
 	LinkedList<ModelSym*>flist;
 	int type=object->getFlag(TN_TYPES);
 	TheScene->model->getFileList(type,flist);
-
+	menu.AppendSubMenu(open_menu,"Replace with..");
 	if(flist.size>0){
-		menu.AppendSubMenu(open_menu,"Replace with..");
 		wxMenu *remove_menu=getRemoveMenu(object);
 		menu.AppendSubMenu(remove_menu,"Remove file..");
 	}

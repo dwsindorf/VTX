@@ -1,0 +1,33 @@
+Planet(0.0154,2805) {
+	ambient=Color(1,1,1,0.11);
+	day=16.1;
+	name="Neptune";
+	shadow=Color(0,0,0,0.37);
+	skew=1.8;
+	specular=Color(1,1,1);
+	tilt=28;
+	year=59800;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=
+				Texture("neptune-2k",BUMP|LINEAR|TEX,1,0,2,0,1,1.90568,1,0,0,0,0,0);
+	}
+	Sky(0.0157962) {
+		color=Color(0,0.58,0.89);
+		day=16.1;
+		density=0.51388;
+		haze.color=Color(1,1,0.88);
+		haze.height=0.52;
+		haze.max=15.085 miles;
+		haze.value=1;
+		name="BlueSky";
+		night.color=Color(0,0,0,0.9);
+		resolution=4;
+		specular=Color(1,1,1);
+		tilt=28;
+		twilight.max=1;
+		twilight.min=-1;
+		year=59800;
+	}
+}
+

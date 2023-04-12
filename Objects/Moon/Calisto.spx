@@ -1,0 +1,14 @@
+Moon(0.00232732,1.17) {
+	day=408;
+	name="Calisto";
+	phase=313.256;
+	year=17;
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=Z(craters(ID2,3,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2,0))+fractal(15,3,0.1,0.5,2,0.2,0,0,1,0)
+				Texture("calisto",TEX,4374.8,0.38096,1,0,1,2,0.5,0,0,0.3,-0.1,-0.1)+
+				Texture("Callisto-8k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,4.6032,0,0,0,0,0)+
+				Texture("ridges",BUMP|RANDOMIZE,1456.21,1.3968,1.90476,0,3.28576,3.30984,0.2676,0,0,0,0,0);
+	}
+}
+

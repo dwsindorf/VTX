@@ -1,0 +1,110 @@
+Planet(0.034,911) {
+	ambient=Color(1,1,1,0.04);
+	day=20;
+	name="Saturn";
+	ocean.level=6.70427e-312 ft;
+	phase=229.166;
+	shadow=Color(0,0,0,0.24);
+	shine=1.63453;
+	specular=Color(1,1,1,0.21);
+	tilt=26.7;
+	year=10759;
+	c1=Color(1,0.9,0.3);
+	c2=Color(1,0.6,0);
+	c3=Color(0.7,0.4,0);
+	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	Surface{
+		terrain=
+				Texture("saturn-8k",BUMP|TEX,0.707107,4.22208,2,0,1,2,0.5,0,0,0,0,0);
+	}
+	Ring(0.0517841,0.0175998) {
+		emission=Color(1,1,1,0.8);
+		name="Procedural";
+		resolution=3;
+		rseed=0.584485;
+		shadow=Color(0,0,0,0.8);
+		Surface{
+			terrain=
+					Texture("saturn-ring",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,0.333087,1,0,1,2,1,0,0,0,0,0);
+		}
+	}
+	Moon(0.0016,0.0889991) {
+		ambient=Color(1,1,1,0.03);
+		day=11;
+		fog.color=Color(1,0.51,0.18);
+		fog.glow=0.08772;
+		fog.max=10361.1 ft;
+		fog.min=361.12 ft;
+		fog.value=1;
+		fog.vmax=4055.6 ft;
+		fog.vmin=1000 ft;
+		hscale=0.001;
+		ice.albedo=0.375;
+		ice.clarity=149.371 ft;
+		ice.color1=Color(1,1,1,0.74);
+		ice.color2=Color(0.25,0.16,0.13);
+		ice.shine=37.5;
+		name="Titan";
+		ocean.auto=1;
+		ocean.level=4000 ft;
+		ocean.liquid=-163;
+		ocean.solid=-182;
+		phase=155;
+		shadow=Color(0,0,0);
+		specular=Color(1,1,1,0.05);
+		tilt=-10;
+		water.albedo=0.3492;
+		water.clarity=1000 ft;
+		water.color1=Color(1,0.63,0.25,0.82);
+		water.color2=Color(0.13,0,0.25);
+		water.shine=63.492;
+		year=17;
+		ocean.expr=1;
+		bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
+			Color(1,0.6,0),
+			Color(0.7,0.4,0),
+			Color(1,0.9,0.3));
+		Surface{
+			terrain=ocean(noise(GRADIENT|NABS|NLOD|SCALE|SQR|UNS,16.5,6,0.5,0.1,2.1,0.01,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,1,-0.34,0,0))
+					fractal(SQR|SS,13,3,0.1,0.1,2,0.96,0,0,1,0)fog(noise(GRADIENT|NABS,7,13,0.03,0.5,2,1,1,0.47,0.9,1e-06))
+					
+					Texture("Venus_surface1",TEX,1,1,1,0,1,2,0.5,0,0,0,0,0)+
+					Texture("saturn",LINEAR|NORM|TEX,0.5,2,0.98184,-2.11104,3.00016,2,1,0,0,2,0.05552,0)+
+					Texture("eroded",BUMP,100,0.7,1,0,10,2,1,0,0,0,0,0)+
+					Texture("rock_stones",BUMP,4096,1,2,0,2,2,0.5,0,0,0,0,0)+
+					Texture("Titan-8k",BUMP|HMAP,1,1,1,0,1,2,0.5,0,10,0,0,0,0,0)+Z(craters(ID7,4,0.405624,0.1,0.26,0.47,0.8,1,1,0.5,1,0.8,0.6,0.2,0)+noise(GRADIENT|NABS|SQR,3.2,12.1,1,0.2,2.56,0.65,0.07,0.52,0));
+		}
+		Clouds(0.00162) {
+			ambient=Color(1,1,1,0.14);
+			crot=1;
+			day=10;
+			resolution=3.40408;
+			shine=18.3107;
+			specular=Color(1,1,1,0.48);
+			tilt=-8;
+			gmax=2;
+			Surface{
+				terrain=Color(1,1,0.6,noise(SIMPLEX|FS|SQR|TA,0,8.9,1,0.56,2.36,1,0.2,0,0.6,0.0001));
+			}
+		}
+		Sky(0.00167) {
+			color=Color(0.99,0.59,0.14);
+			day=11;
+			density=0.66666;
+			ghg_fraction=0.1;
+			haze.color=Color(1,1,0.46);
+			haze.grad=0.71232;
+			haze.max=100 miles;
+			haze.value=0.827451;
+			pressure=1.45;
+			shine=0.717137;
+			specular=Color(1,1,1);
+			tilt=-10;
+			twilight=Color(0.5,0.3,0.1);
+			twilight.max=1;
+			twilight.min=-1;
+			year=17;
+		}
+	}
+}
+
