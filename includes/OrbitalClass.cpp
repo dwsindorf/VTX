@@ -3898,7 +3898,8 @@ void Planetoid::render_object()
 		map->set_mask(1);
 		Color c=Raster.blend_color;
 	    glColor4d(c.red(),c.green(),c.blue(),1);
-		map->render_zvals();
+		map->render_as_point();
+		//map->render_zvals();
 	    map->set_mask(0);
 	}
 	else{

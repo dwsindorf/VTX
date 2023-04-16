@@ -802,6 +802,7 @@ void TNtexture::eval()
 	double theta = Theta / 180.0 - 1;
 	//double avalue=1;
 	texture->avalue=1;
+	texture->bumpamp=0;
 	int i = 0;
 
 	if(opts & SEXPR){
@@ -821,9 +822,12 @@ void TNtexture::eval()
 
 	if(i<n)
 		f=arg[i++];
+	//if(i<n && bumpActive())
 	if(i<n)
+		//texture->bumpamp=arg[i++];
 		a=arg[i++];
 	if(i<n)
+		//texture->texamp=arg[i++];
 		b=arg[i++];
 	if(i<n)
 		bias=arg[i++];
@@ -857,12 +861,7 @@ void TNtexture::eval()
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
-//	double c1=0.5/texture->width();
-//	double c2=1-c1;
-//	if(opts & CLAMP){
-//		if(s>c2) s=c2;
-//		if(s<c1) s=c1;
-//	}
+
 	texture->scale=f;
 	texture->s=s;
 	texture->t=t;
@@ -872,8 +871,8 @@ void TNtexture::eval()
 	    texture->texamp=b;
 	}
 	else{
-	    texture->texamp=1;
-	    texture->bumpamp=b;
+	    texture->texamp=a;
+	    texture->bumpamp=0;
 	}
     texture->bias=bias;
 

@@ -136,7 +136,7 @@ showenv:;   @echo "CFLAGS = $(CFLAGS)"
 			@echo "PLATFORM = $(PLATFORM)"
 #			@echo "PATH = $(PATH)"
 			@echo "LIBS = `wx-config --libs --gl_libs` $(LIBS)"
-			@echo "WXFLAGS = `wx-config --cxxflags`"			
+			@echo "WXFLAGS = `wx-config --cxxflags`"
 			
 clean:;		rm -f *.class *.o $(NLIB) $(PROGRAM)  ../jni/*.o ../glut/*.o $(PARSER_TMPS) $(NHDRS)
 
@@ -150,7 +150,7 @@ jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CL
 
 #test:;         ./vtx.exe --m 
 #test:;         ./vtx.exe --m  gasgiant1.spx
-test:;         ./vtx.exe --m simple.spx
+test:;         ./vtx.exe --m last.spx
 
 ### DEPENDENCIES ###
 

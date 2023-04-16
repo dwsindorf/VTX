@@ -7,31 +7,60 @@
 4. Far off orbital views of clouds and sky show z-depth precision artifacts
 4/6/2023
 -----------------
-1. Coronas don't show if pixel noise selected and star is not viewobj
-  - work-around needed to render star first or set mode to internal
-2. need to make sure github ".ignore" directories are created on first use if not present
-  - specifically, Bitmaps/tmp (done)
-3. Can't "Replace with" if Objects/<type> doesn't exist 
-  - fixed
-4. need to compile VtxScene.cpp with -g flag (vs -O3) otherwise get crash (segment violation) when program starts
-  - deferred (windows only problem)
-  - work-aroung is to compile all wx directory with -g (doesn't seem to affect performance)
-5. Colored textures too light unless bumpmap is enabled
-6. adding fractal to terrain should be below ocean
-7. replacing moon (luna) crashed program
-8. selecting Set view earth crashed program
-9. selecting lines mode on surface crashed program
+1.  Coronas don't show if pixel noise selected and star is not viewobj
+    - work-around needed to render star first or set mode to internal
+2.  need to make sure github ".ignore" directories are created on first use if not present
+    - specifically, Bitmaps/tmp (done)
+3.  Can't "Replace with" if Objects/<type> doesn't exist 
+    - fixed
+4.  need to compile VtxScene.cpp with -g flag (vs -O3) otherwise get crash (segment violation) when program starts
+    - deferred (windows only problem)
+    - work-aroung is to compile all wx directory with -g (doesn't seem to affect performance)
+5.  Colored textures too light unless bumpmap is enabled
+6.  adding fractal to terrain should be below ocean
+7.  replacing moon (luna) crashed program
+8.  misc. crashes
+     - selecting Set view earth crashed program
+     - selecting lines mode on surface crashed program
+     - time animation from pluto surface crashed program
+     - one problem traced to non-local planets and moons being drawn as shaded in BG4 pass (though draw_zvals called)
+       o fixed (workaround) by rendering maps as single points (draw_as_point)
+       o todo: draw_zvals should call Vertex (not SVertex) need to trace and fix this
 10. dragging point above fractal (to add small features) didn't work (needed to edit text file manually)
 11. Center text doesn't show up on Linux or windows laptop
 12. orbital distances sometimes get reset to 204 MM
 13. after adding new texture need to restart program for it to show up in list
 14. artifacts seen at water boundary if fog enabled
- - not noticable at high or better resolutions
+    - not noticable at high or better resolutions
 15. following set view(?) -/+ move up down etc. has huge value
- - need to goto new surface point to fix
+    - need to goto new surface point to fix
 16. sometimes parent planet shows through sky etc. ion moon surface view
-  - rebuild, change view etc. doesn't fix. need to restart program (last.spx) to fix
-  - related (same?) problem seen after turning shadows on and off
-  - somewhat fixed by always clearing depth buffer in render passes (SceneClass) related to raster.set_farview()
+    - rebuild, change view etc. doesn't fix. need to restart program (last.spx) to fix
+    - problem also seen after turning shadows on and off
+    - fixed (?) by always clearing depth buffer in render passes (SceneClass) related to raster.set_farview
 17. moons don't show up in front of planet in orbital views
-18. save does not save all bitmaps used by textures ()
+18. save does not save all bitmaps used by textures
+    - fixed (bug in invalidateTextures
+19. Adding new 1d texture - texture doesn't show unless program is restarted
+20. after saving planet textures are wrong (too light ?) unlsee rebuild
+21. (windows only) gdb debugger doesn't work in eclipse (but works in vscode)
+    workaround
+    1) download mingw64 prebuild binaries (including gdb)
+       mv folder from downloads to to C:/mingw64
+    2) rename gdb.exe in C:/cygwin/bin to gdb-cygwin.exe
+    3) add C:/mingw64/bin to PATH below C:/cygwin64
+    Eclipse
+    - generating a new configuration in Eclipse fixes debugger
+    - but can't compile using mingw64 because of missing libraries
+    - need make g++ etc. from cygwin64/bin to build (so cygwin64 needs to be before mingw64 in PATH)
+    Visual Studio Code
+    - debugger now doesn't work since C:/cygwin/bin/gdb.exe no longer exists (renamed)
+    - changing "miDebuggerPath": "C:\\mingw64\\bin\\gdb" in launch json file allows debugger to run but can
+      no longer finds files where breakpoints are set
+    - need to set "miDebuggerPath": "C:\\cygwin64\\bin\\gdb-cygwin.exe"
+    - can now run debug launch configuration at see breakpoint stopped in file
+    - new bug:now running "make test" etc. from gitbash terminal hangs up with no output
+    
+22. (linux only) no screen erase on program start or center text
+23. new bug in water render: depth buffer problem 
+    - caused by fix for 16 above
