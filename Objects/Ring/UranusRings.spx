@@ -1,0 +1,11 @@
+Ring(0.00494983,0.00210665) {
+	emission=Color(1,1,1,0.5);
+	name="UranusRings";
+	resolution=4;
+	shadow=Color(0,0,0,0.75);
+	Surface{
+		terrain=
+				Texture("saturn-ring",BLEND|DECAL|NORM|REPLACE|S|TEX,PHI,0.5,1,1,0,1,2,1,0,0,0,0,0);
+	}
+}
+
