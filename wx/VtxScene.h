@@ -37,6 +37,7 @@ class VtxScene: public wxGLCanvas
     wxString infile;
     void clear_canvas();
     bool motionKeypressed(wxKeyCode key);
+    void drawCenterText(wxString& msg);
 
 public:
     VtxScene(wxString file, wxWindow *parent, wxWindowID id = wxID_ANY,
@@ -61,7 +62,7 @@ public:
     void OnMouseWheel(wxMouseEvent& event);
     void OnKey(wxKeyEvent& event);
 
-    void center_text(wxString& msg, const wxString &cname,int size,int style);
+    void setCenterText(wxString& msg);
     void timer_tick();
     void open_scene(char *);
     void save_scene(char *);

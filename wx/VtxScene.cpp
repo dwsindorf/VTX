@@ -110,12 +110,10 @@ void select_tree_node(NodeIF *n){
 
 
 void setCenterText(char *text){
-    cout <<" seting center text"<<endl;
     wxString  msg("Building ");
     msg+=text;
     msg+=" ...";
-    vtxScene->center_text(msg,"YELLOW",15,wxFONTSTYLE_SLANT);
-    
+    vtxScene->setCenterText(msg);  
 }
 //-------------------------------------------------------------
 // VtxScene::VtxScene() constructor
@@ -146,6 +144,7 @@ name,attributeList)
     functDialog=0;
     noiseDialog=0;
     movieDialog=0;
+  
     //SetContext();
 }
 
@@ -455,7 +454,7 @@ void VtxScene::clear_canvas()
     msg+=" ...";
     dc.SetBackground(*wxBLACK_BRUSH);
     dc.Clear();
-    center_text(msg,"YELLOW",15,wxFONTSTYLE_SLANT);
+    drawCenterText(msg);
 }
 
 //-------------------------------------------------------------
@@ -482,18 +481,32 @@ void VtxScene::showFPS()
 //-------------------------------------------------------------
 // VtxScene::center_text() print a message in center of canvas
 //-------------------------------------------------------------
-void VtxScene::center_text(wxString& msg, const wxString &cname, int fsize, int style)
+void VtxScene::setCenterText(wxString& msg)
 {
-    SetCurrent();
+	drawCenterText(msg);
+	Refresh();
+}
+//-------------------------------------------------------------
+// VtxScene::center_text() print a message in center of canvas
+//-------------------------------------------------------------
+void VtxScene::drawCenterText(wxString& msg)
+{
+    cout <<"VtxScene::center_tex "<<msg<<endl;
+    // create special context to draw into front buffer
+    suspend();
     
+    wxGLContext *gc = new wxGLContext(this);
     wxPaintDC dc(this);
+    glDrawBuffer(GL_FRONT);
+    glReadBuffer(GL_FRONT);
+	
     dc.SetFont(*wxNORMAL_FONT);
     wxFont font=dc.GetFont();
-    font.SetPointSize(fsize);
-    font.SetStyle(style);
+    font.SetPointSize(15);
+    font.SetStyle(wxFONTSTYLE_SLANT);
     dc.SetFont(font);
     dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.SetTextForeground(wxColor(cname));
+    dc.SetTextForeground(wxColor("YELLOW"));
 
     // Get window and text dimensions
     wxSize sz = GetClientSize();
@@ -507,6 +520,13 @@ void VtxScene::center_text(wxString& msg, const wxString &cname, int fsize, int 
 
     dc.DrawText(msg, x, y);
     dc.SetFont(*wxNORMAL_FONT);
+    glFlush();
+    glDrawBuffer(GL_BACK);
+    glReadBuffer(GL_BACK);
+    delete gc;
+    SetCurrent(); // restore normal context
+    unsuspend();
+    
 }
 
 //-------------------------------------------------------------
@@ -531,6 +551,7 @@ if(draw_cnt==0)
 #endif
     SetCurrent();
     if(!TheScene){
+    	clear_canvas();
         cout<<"set_fonts"<<endl;
         set_fonts(); // set fonts for opengl text
         cout<<"make_scene start"<<endl;
@@ -637,7 +658,10 @@ void VtxScene::open_scene(char *path)
 #ifdef DEBUG_SCENE
     cout << "VtxScene::open_scene("<<path<<")" <<endl;
 #endif
-    //Adapt.set_maxcycles(50);
+    char filename[256];
+    File.getFileName(path,filename);
+    
+    ::setCenterText(filename);
 
     TheScene->open(path);
     rebuild_all();
@@ -1037,12 +1061,15 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     if(draw_cnt<2)
         cout << "VtxScene::OnPaint()" <<endl;
 #endif
+    
+    if(TheView->suspended())
+    	return;
     kif.get_state(state);
     if(state & CMD_QUIT)
          return;
 
     SetCurrent();
-
+    
   	if(dragging)
   		dragAction();
 
