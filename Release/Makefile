@@ -4,7 +4,7 @@
 MAKEFILE       = Makefile
 THIS	       = Release
 #SHELL         = /bin/tcsh
-INCLUDES       = ../includ
+INCLUDES       = ../includes 
 OBJDIR         = "../$(THIS)"
 PARSERS        = "../parsers"
 
@@ -68,12 +68,13 @@ build_glut: parsers jpeglib glut includes vtxg
 wx:;	    cd  ../wx; \
             make $(MFLAGS) \
 			INCS="-I../includes -I../ -I../Resources/UI" \
-			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) -DNDEBUG $(GLDEFS)"\
+			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) -DNDEBUG \
+			$(GLDEFS)"\
 			CC="$(CC)" \
 			OBJDIR="../$(THIS)" \
 			build; \
 			cd ../$(THIS); \
-			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes; 
+			make $(MFLAGS) CFLAGS="$(CFLAGS) -DWXWIN" includes;
 
 jni:;	    @cd ../jni; \
             make \
@@ -102,7 +103,7 @@ jpeglib:;   @cd  ../jpeglib; \
 
 parsers:;   @cd  ../parsers; \
             make  \
-			CFLAGS="$(CFLAGS) -I../includes -I../ -I./" \
+			CFLAGS="$(CFLAGS) -I../includes -I../" \
 			OBJDIR="../$(THIS)" \
 			PARSERS="../parsers" \
 			INCLUDES="../includes" \

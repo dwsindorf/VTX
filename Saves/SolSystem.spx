@@ -4,11 +4,11 @@ Scene() {
 		phi=5;
 		height=0.0308;
 		time=729478;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
-		zoom=0.0154;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -16,7 +16,92 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.8;
 	}
 	View{
-		minr=0.0154;
+		height=0.001474;
+		gndlvl=0.606071 ft;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.9;
+	}
+	View{
+		theta=158.233;
+		vstride=0.02;
+		zoom=0.000737;
+		minh=1.13636e-09;
+		radius=0.002211;
+	}
+	View{
+		view=SURFACE;
+		phi=11.25;
+		theta=181.406;
+		height=52800 ft;
+		gndlvl=5625.84 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+		minr=0.000737001;
+		radius=0.000748065;
+	}
+	View{
+		phi=10.7886;
+		theta=182.439;
+		height=941.787 ft;
+		gndlvl=5717.98 ft;
+		minr=0.000738067;
+		radius=0.000738261;
+	}
+	View{
+		view=ORBITAL;
+		height=0.001474;
+		gndlvl=0.00157128 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		minr=0.000738084;
+		radius=0.002211;
+	}
+	View{
+		phi=5;
+		theta=0;
+		height=79.0432 miles;
+		gndlvl=0 ft;
+		zoom=3.95216e-05;
+		minr=0.000737001;
+		radius=0.000118565;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.9.Moon.1;
+	}
+	View{
+		theta=-56.2009;
+		height=18.5648 miles;
+		time=791523;
+		hstride=2;
+		minr=0.000100001;
+	}
+	View{
+		phi=-5.625;
+		theta=22.5;
+		height=150 miles;
+		hstride=1;
+		zoom=0.0001;
+		radius=0.00025;
+	}
+	View{
+		theta=82.4625;
+		height=339.946 miles;
+		hstride=2;
+		minr=0.000375001;
+		radius=0.000714946;
+	}
+	View{
+		phi=-9.84375;
+		theta=11.25;
+		height=562.5 miles;
+		hstride=1;
+		zoom=0.000375;
+		radius=0.0009375;
+	}
+	View{
+		phi=-10.8157;
+		theta=-243.403;
+		height=0.00134029;
+		radius=0.00171529;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -723,6 +808,53 @@ Scene() {
 						twilight.max=1;
 						twilight.min=-1;
 						year=59800;
+					}
+				}
+				Planet(0.000737,3670) {
+					albedo=0.607148;
+					ambient=Color(1,1,1,0.07);
+					day=-153;
+					name="Pluto";
+					phase=229.166;
+					shadow=Color(0,0,0,0.93);
+					shine=4;
+					skew=17.2;
+					specular=Color(1,1,1,0.93);
+					year=90560;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					image("pluto-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"pluto");
+					bands("pluto",ACHNL|CLAMP,64,Color(0.133,0.078,0.071),Color(0.792,0.369,0.161),Color(0.859,0.875,0.945),Color(0.745,0.8,0.867,0.89),
+						Color(0.522,0.424,0.424),
+						Color(0.875,0.718,0.675),
+						Color(0.992,0.984,0.918),
+						Color(0.973,0.973,0.973),
+						Color(1,1,1),
+						Color(1,1,1));
+					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					Surface{
+						terrain=
+								Texture("pluto-2d",A|BORDER|BUMP|TEX,noise(SIMPLEX|NABS,9.2,10,1,0.51,2,1,4,0,0,1e-06),3323.53,0.3,2,0,7,2.9,0.5,0,0,0.5,0.05,-0.3)+Z(craters(ID2,8,0.002,0.2,0.6,1,0.5,1,1,0.5,1,0.8,0.6,0.2,0))+
+								Texture("pluto",BORDER|BUMP|TEX,0.5,1,0.2,0.25,1,2,0.5,0,0,0.1,0.0952,0.2)+
+								Texture("ridges",BUMP|HMAP,17.858,0.5,1,0,10.143,2.52112,0.5,0,1,0,0,0,0,0)+fractal(11.3,12,0.1,3,2,0.3,0,0,1,0)
+								Texture("pluto-8k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,10,0,0,0,0,0);
+					}
+					Sky(0.0008043) {
+						color=Color(0.5,0.9,1,0.53);
+						day=-153;
+						density=0.03174;
+						haze.color=Color(1,1,1,0.37);
+						name="Sky";
+						pressure=0.001;
+						sky.grad=5;
+						specular=Color(1,1,1);
+						year=90560;
+					}
+					Moon(0.000375,0.0109) {
+						day=30;
+						name="Charon";
+						phase=313.256;
+						year=30;
+						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					}
 				}
 			}
