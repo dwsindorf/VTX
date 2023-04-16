@@ -11,8 +11,8 @@
 
 //#define DEBUG_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
-#define DEBUG_IMAGES
-#define DEBUG_VALIDATE
+//#define DEBUG_IMAGES
+//#define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
 
