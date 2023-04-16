@@ -1,107 +1,22 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=5;
-		height=0.0308;
-		time=729478;
-		vstride=586570;
+		phi=-1.27441;
+		theta=281.052;
+		height=750 miles;
+		gndlvl=0.000133615 ft;
+		time=791523;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
+		zoom=0.000375;
+		minh=1.13636e-09;
+		minr=0.000375001;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.8;
-	}
-	View{
-		height=0.001474;
-		gndlvl=0.606071 ft;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.9;
-	}
-	View{
-		theta=158.233;
-		vstride=0.02;
-		zoom=0.000737;
-		minh=1.13636e-09;
-		radius=0.002211;
-	}
-	View{
-		view=SURFACE;
-		phi=11.25;
-		theta=181.406;
-		height=52800 ft;
-		gndlvl=5625.84 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-		minr=0.000737001;
-		radius=0.000748065;
-	}
-	View{
-		phi=10.7886;
-		theta=182.439;
-		height=941.787 ft;
-		gndlvl=5717.98 ft;
-		minr=0.000738067;
-		radius=0.000738261;
-	}
-	View{
-		view=ORBITAL;
-		height=0.001474;
-		gndlvl=0.00157128 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		minr=0.000738084;
-		radius=0.002211;
-	}
-	View{
-		phi=5;
-		theta=0;
-		height=79.0432 miles;
-		gndlvl=0 ft;
-		zoom=3.95216e-05;
-		minr=0.000737001;
-		radius=0.000118565;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.9.Moon.1;
-	}
-	View{
-		theta=-56.2009;
-		height=18.5648 miles;
-		time=791523;
-		hstride=2;
-		minr=0.000100001;
-	}
-	View{
-		phi=-5.625;
-		theta=22.5;
-		height=150 miles;
-		hstride=1;
-		zoom=0.0001;
-		radius=0.00025;
-	}
-	View{
-		theta=82.4625;
-		height=339.946 miles;
-		hstride=2;
-		minr=0.000375001;
-		radius=0.000714946;
-	}
-	View{
-		phi=-9.84375;
-		theta=11.25;
-		height=562.5 miles;
-		hstride=1;
-		zoom=0.000375;
-		radius=0.0009375;
-	}
-	View{
-		phi=-10.8157;
-		theta=-243.403;
-		height=0.00134029;
-		radius=0.00171529;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -810,7 +725,7 @@ Scene() {
 						year=59800;
 					}
 				}
-				Planet(0.000737,3670) {
+				Planet(0.000737,286.434) {
 					albedo=0.607148;
 					ambient=Color(1,1,1,0.07);
 					day=-153;
@@ -855,6 +770,11 @@ Scene() {
 						phase=313.256;
 						year=30;
 						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						Surface{
+							terrain=fractal(SQR|SS,12,7.8,0.1,0.2,2,1.02,0,0,1,0)
+									Texture("usgs10m-1",BUMP|HMAP|LINEAR|NORM|TEX,0.5,0.2,1,0,4,2,0.5,0,6.8252,0,2,-0.28568,1.0476,0.66664)+
+									Texture("charon-4k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,8.4128,0,0,0,0,0);
+						}
 					}
 				}
 			}
