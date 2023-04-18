@@ -9,6 +9,7 @@
 //#include <afxwin.h>
 //#else
 #include <string.h>
+#include <stddef.h>
 //#endif
 #ifdef GLEW
 #include <GL/glew.h>

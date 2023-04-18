@@ -7,7 +7,7 @@
 #pragma interface
 #endif
 
-#include "GLglue.h"
+//#include "GLglue.h"
 // For compilers that support precompilation, includes "wx.h".
 //#include "wx/wxprec.h"
 
@@ -484,7 +484,7 @@ void VtxScene::showFPS()
 void VtxScene::setCenterText(wxString& msg)
 {
 	drawCenterText(msg);
-	Refresh();
+	//Refresh();
 }
 //-------------------------------------------------------------
 // VtxScene::center_text() print a message in center of canvas
@@ -492,15 +492,9 @@ void VtxScene::setCenterText(wxString& msg)
 void VtxScene::drawCenterText(wxString& msg)
 {
     cout <<"VtxScene::center_tex "<<msg<<endl;
-    // create special context to draw into front buffer
-    suspend();
-    
-    wxGLContext *gc = new wxGLContext(this);
     wxPaintDC dc(this);
-    glDrawBuffer(GL_FRONT);
-    glReadBuffer(GL_FRONT);
 	
-    dc.SetFont(*wxNORMAL_FONT);
+    //dc.SetFont(*wxNORMAL_FONT);
     wxFont font=dc.GetFont();
     font.SetPointSize(15);
     font.SetStyle(wxFONTSTYLE_SLANT);
@@ -519,14 +513,7 @@ void VtxScene::drawCenterText(wxString& msg)
     int y = wxMax(0, (sz.y - h)/2);
 
     dc.DrawText(msg, x, y);
-    dc.SetFont(*wxNORMAL_FONT);
     glFlush();
-    glDrawBuffer(GL_BACK);
-    glReadBuffer(GL_BACK);
-    delete gc;
-    SetCurrent(); // restore normal context
-    unsuspend();
-    
 }
 
 //-------------------------------------------------------------
@@ -1061,9 +1048,6 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     if(draw_cnt<2)
         cout << "VtxScene::OnPaint()" <<endl;
 #endif
-    
-    if(TheView->suspended())
-    	return;
     kif.get_state(state);
     if(state & CMD_QUIT)
          return;

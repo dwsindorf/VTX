@@ -31,7 +31,7 @@ OPTLVL     = -O3
 DEFINES	      = -D$(PLATFORM) $(MAXRGB) -Wall -Wno-non-virtual-dtor -fno-strict-aliasing -fpermissive
 #DEFINES	      = -D$(PLATFORM) $(MAXRGB) -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 
-GLDEFS	   = -DGLEW_STATIC -DGLEW
+GLDEFS	      = -DGLEW_STATIC -DGLEW
 GFILE         = glew.cpp
 LFLAGS        = $(GLDFLAGS)
 CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS)
@@ -151,7 +151,7 @@ jni_test:;     cd ../jni; java  -Djava.library.path='$(LIBPATH)' -classpath $(CL
 
 #test:;         ./vtx.exe --m 
 #test:;         ./vtx.exe --m  gasgiant1.spx
-test:;         ./vtx.exe --m mars.spx
+test:;         ./vtx.exe --m last.spx
 
 ### DEPENDENCIES ###
 

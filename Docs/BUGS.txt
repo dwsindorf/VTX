@@ -58,9 +58,12 @@
     - changing "miDebuggerPath": "C:\\mingw64\\bin\\gdb" in launch json file allows debugger to run but can
       no longer finds files where breakpoints are set
     - need to set "miDebuggerPath": "C:\\cygwin64\\bin\\gdb-cygwin.exe"
-    - can now run debug launch configuration at see breakpoint stopped in file
-    - new bug:now running "make test" etc. from gitbash terminal hangs up with no output
-    
-22. (linux only) no screen erase on program start or center text
+    - can now run debug launch configuration at see breakpoint stopped in file    
+22. center text not displayed in some instances
+    Linux
+    - works for starup screen and open scene from file
+    - momentarily was working for newSystem then stopped working after minor refactoring
+    Windows 
+    - works for starup screen and newSystem but not for open scene file (desktop)
 23. new bug in water render: depth buffer problem 
     - caused by fix for 16 above
