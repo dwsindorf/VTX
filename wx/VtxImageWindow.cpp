@@ -43,18 +43,18 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 		unsigned char*pixels = (unsigned char*)img->data;
 
 		if(img->gltype()==GL_RGBA){
-		    //unsigned char*alpha = (unsigned char*)malloc( h*w*1 );
+		    unsigned char*alpha = (unsigned char*)malloc( h*w*1 );
 		    unsigned char*rgb=(unsigned char*)malloc( h*w*3 );
 		    for(int i=0;i<h;i++){
 		    	for(int j=0;j<w;j++){
 		    		rgb[i*w*3+j*3]=pixels[i*w*4+j*4];
 		    		rgb[i*w*3+j*3+1]=pixels[i*w*4+j*4+1];
 		    		rgb[i*w*3+j*3+2]=pixels[i*w*4+j*4+2];
-		    		//alpha[i*w+j]=pixels[i*w*4+j*4+3];
+		    		alpha[i*w+j]=pixels[i*w*4+j*4+3];
 		    	}
 		    }
 		    wxImage wim(w,h,rgb,false);
-		    //wim.SetAlpha(alpha,false);
+		    wim.SetAlpha(alpha,false);
 			wxBitmap bmp(wim,-1);
 			if(option==TILE)
 			    TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, bmp);

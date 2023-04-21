@@ -21,6 +21,10 @@ extern double Rand();
 extern double Hscale;
 extern double Red,Green,Blue,Alpha,Theta,Phi;
 
+extern GLubyte *readJpegFile(char *path,int &w, int &h, int &c);
+extern GLubyte *readBmpFile(char *path,int &w, int &h, int &c);
+extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
+
 //#define DEBUG_IMAGES
 
 int icnt1=0;
@@ -809,6 +813,9 @@ int ImageReader::getFileInfo(char *name, char *dir)
 	sprintf(path,"%s%s.jpeg",dir,name);
 	if(File.fileExists(path))
 		info|=JPG;
+	sprintf(path,"%s%s.png",dir,name);
+		if(File.fileExists(path))
+			info|=JPG;
 	return info;
 }
 
@@ -968,6 +975,9 @@ void ImageReader::remove(char *fn)
 	File.deleteFile(path);
  	sprintf(path,"%s_alpha.jpg",fn);
 	File.deleteFile(path);
+ 	sprintf(path,"%s.png",fn);
+	File.deleteFile(path);
+
 }
 
 //-------------------------------------------------------------
@@ -1031,6 +1041,7 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
 		File.getFileNameList(sdir,"*.jpeg",flist);
+		File.getFileNameList(sdir,"*.png",flist);
 
 		flist.ss();
 		while((sym=flist++)){
@@ -1045,6 +1056,7 @@ void ImageReader::makeImagelist()
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
 		File.getFileNameList(sdir,"*.jpeg",flist);
+		File.getFileNameList(sdir,"*.png",flist);
 
 		flist.ss();
 		while((sym=flist++)){
@@ -1274,16 +1286,50 @@ Image *ImageReader::open(char *name, char *path)
 	image=openJpgFile(name,path);
 	if(image)
 		return image;
+	image=openPngFile(name,path);
+	if(image)
+		return image;
 	return 0;
 }
 
+//-------------------------------------------------------------
+// ImageReader::openPngFile read an image from a file
+//-------------------------------------------------------------
+Image *ImageReader::openPngFile(char *name,char *path)
+{
+	Image *image=0;
+	char cpath[256];
+
+ 	sprintf(cpath,"%s.png",path);
+
+ 	FILE *fp=fopen(cpath, "rb");
+	if (fp == NULL){
+		return 0;
+	}
+
+	fclose(fp);
+
+	int width=0;
+	int height=0;
+	int comps=0;
+	GLubyte *pxls=readPngFile(cpath,width,height,comps);
+	cout<<"reading png image "<<path<<" comps="<<comps<<endl;
+    if(pxls){
+		image=new Image((Color*)pxls,width,height);
+		image->set_global(1);
+		if(comps==4)
+			image->set_alpha_image(1);
+		else
+			image->set_alpha_image(0);
+    }
+	return image;
+}
 //-------------------------------------------------------------
 // ImageReader::openJpgFile read an image from a file
 //-------------------------------------------------------------
 Image *ImageReader::openJpgFile(char *name,char *path)
 {
 	Image *image=0;
-	extern GLubyte *readJpegFile(char *path,int &w, int &h, int &c);
 	char cpath[256];
 
  	sprintf(cpath,"%s.jpg",path);
@@ -1303,7 +1349,7 @@ Image *ImageReader::openJpgFile(char *name,char *path)
 	int comps=0;
 	GLubyte *pxls=readJpegFile(cpath,width,height,comps);
     if(pxls){
-		image=new Image((RGBColor*)pxls,width,height);
+		image=new Image((Color*)pxls,width,height);
 		image->set_global(1);
 		if(comps==4)
 			image->set_alpha_image(1);

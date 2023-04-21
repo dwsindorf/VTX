@@ -12,6 +12,10 @@ public:
 	static void writeBmpFile(char *path);
 	static void writeJpegFile(char *path,double quality);
 	static void showJpegFile(char *path);
-	static GLubyte *readJpegFile(char *path,int &width, int &height, int &comps);
+
+	//static GLubyte *readJpegFile(char *path,int &width, int &height, int &comps);
+	//static GLubyte *readBmpFile(char *path,int &width, int &height, int &comps);
+	//static GLubyte *readPngFile(char *path,int &width, int &height, int &comps);
+	static GLubyte *readImageFile( int type,char *path,int &width, int &height, int &comps);
 };
 #endif /*VTXIMAGEMGR_H_*/
