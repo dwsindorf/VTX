@@ -1,17 +1,17 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-1.27441;
-		theta=281.052;
-		height=750 miles;
-		gndlvl=0.000133615 ft;
+		phi=-0.736084;
+		theta=284.019;
+		height=760.41 miles;
+		gndlvl=-876.601 ft;
 		time=791523;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.000375;
 		minh=1.13636e-09;
-		minr=0.000375001;
+		minr=0.000374835;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -770,10 +770,12 @@ Scene() {
 						phase=313.256;
 						year=30;
 						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
 						Surface{
-							terrain=fractal(SQR|SS,12,7.8,0.1,0.2,2,1.02,0,0,1,0)
-									Texture("usgs10m-1",BUMP|HMAP|LINEAR|NORM|TEX,0.5,0.2,1,0,4,2,0.5,0,6.8252,0,2,-0.28568,1.0476,0.66664)+
-									Texture("charon-4k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,8.4128,0,0,0,0,0);
+							terrain=fractal(SQR|SS,12,7.8,0.1,0.2,2,0.5,0,0,1,0)
+									Texture("usgs10m-1",BUMP|HMAP|LINEAR|NORM|TEX,0.5,0.1,1,0,4,2,0.5,0,6.8252,0,2,-0.28568,1.0476,0.66664)+
+									Texture("charon-4k",HMAP|TEX,1,2,-0.5,0,1,2,0.5,0,10,0,0,0,0,0)+
+									Texture("craters3",BUMP|TEX,368.112,0.2,1,0,6.7144,2,0.5,0,0,0,0,0);
 						}
 					}
 				}

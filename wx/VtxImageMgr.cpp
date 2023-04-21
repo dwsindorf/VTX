@@ -15,8 +15,17 @@ void showJpegFile(char *path){
 	VtxImageMgr::showJpegFile(path);
 }
 GLubyte *readJpegFile(char *path,int &width, int &height, int &comps){
-	return VtxImageMgr::readJpegFile(path,width,height,comps);
+	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_JPEG,path,width,height,comps);
 }
+GLubyte *readBmpFile(char *path,int &width, int &height, int &comps){
+	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_BMP,path,width,height,comps);
+}
+GLubyte *readPngFile(char *path,int &width, int &height, int &comps){
+	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_PNG,path,width,height,comps);
+}
+//GLubyte *VtxImageMgr::readJpegFile(char *path,int &width, int &height, int &comps){
+//	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_JPEG,path,width,height,comps);
+//}
 //************************************************************
 // read a BMP file
 //************************************************************
@@ -33,6 +42,44 @@ void VtxImageMgr::showBmpFile(char *path){
 //************************************************************
 // read a JPG file
 //************************************************************
+GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height, int &comps){
+	wxImage bmp(wxString(path),type);
+	wxImage img=bmp.Mirror(false); // need to flip vertically for ogl
+	width=img.GetWidth();
+	height=img.GetHeight();
+	GLubyte *data=0;
+	GLubyte *adata=0;
+
+	if(img.IsOk()){
+		data=img.GetData();
+		if(img.HasAlpha()){
+			comps=4;
+		}
+		else{
+			comps=3;
+			img.InitAlpha();
+		}
+		adata=img.GetAlpha();
+
+		// need a copy since img data will be deleted on call exit
+		GLubyte *pxls;
+		int size=width*height;
+		MALLOC(size*4,GLubyte,pxls);
+		for(int i=0;i<size;i++){
+			pxls[i*4]=data[i*3];
+			pxls[i*4+1]=data[i*3+1];
+			pxls[i*4+2]=data[i*3+2];
+			pxls[i*4+3]=adata[i];
+		}
+		return pxls;
+	}
+	return 0;
+}
+
+//************************************************************
+// read a JPG file
+//************************************************************
+/*
 GLubyte *VtxImageMgr::readJpegFile(char *path,int &width, int &height, int &comps){
 	wxImage bmp(wxString(path),wxBITMAP_TYPE_JPEG);
 	wxImage img=bmp.Mirror(false); // need to flip vertically for ogl
@@ -54,7 +101,7 @@ GLubyte *VtxImageMgr::readJpegFile(char *path,int &width, int &height, int &comp
 	}
 	return 0;
 }
-
+*/
 //************************************************************
 // write a BMP file
 //************************************************************

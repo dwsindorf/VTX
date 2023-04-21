@@ -7,7 +7,7 @@
 #pragma interface
 #endif
 
-#include "GLglue.h"
+//#include "GLglue.h"
 // For compilers that support precompilation, includes "wx.h".
 //#include "wx/wxprec.h"
 
@@ -484,6 +484,7 @@ void VtxScene::showFPS()
 void VtxScene::setCenterText(wxString& msg)
 {
 	drawCenterText(msg);
+	//Refresh();
 }
 //-------------------------------------------------------------
 // VtxScene::center_text() print a message in center of canvas
@@ -491,9 +492,9 @@ void VtxScene::setCenterText(wxString& msg)
 void VtxScene::drawCenterText(wxString& msg)
 {
     cout <<"VtxScene::center_tex "<<msg<<endl;
-    
     wxPaintDC dc(this);
 	
+    //dc.SetFont(*wxNORMAL_FONT);
     wxFont font=dc.GetFont();
     font.SetPointSize(15);
     font.SetStyle(wxFONTSTYLE_SLANT);
@@ -1047,9 +1048,6 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
     if(draw_cnt<2)
         cout << "VtxScene::OnPaint()" <<endl;
 #endif
-    
-    //if(TheView->suspended())
-    //	return;
     kif.get_state(state);
     if(state & CMD_QUIT)
          return;
