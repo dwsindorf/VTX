@@ -79,7 +79,7 @@ Scene() {
 					day=24;
 					hscale=0.004;
 					name="Earth";
-					ocean.level=2.46887e-300 ft;
+					ocean.level=0 ft;
 					resolution=4;
 					rot_phase=360;
 					shadow=Color(0,0,0,0.93);
@@ -118,7 +118,7 @@ Scene() {
 						emission=Color(1,1,1,0.04);
 						hscale=0.008;
 						name="Moon";
-						ocean.level=3.65295e-300 ft;
+						ocean.level=0 ft;
 						phase=360;
 						rot_phase=310.003;
 						rseed=2.41294;

@@ -52,7 +52,7 @@ Scene() {
 					ambient=Color(1,1,1,0.09);
 					day=24;
 					hscale=0.001;
-					ocean.level=4.97627e+09 ft;
+					ocean.level=0 ft;
 					shadow=Color(0,0,0,0.62);
 					shine=12.7188;
 					specular=Color(1,1,1,0.21);

@@ -3340,6 +3340,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	Spheroid(m,s,r)
 {
 	//hscale=0.004;
+	ocean_level=0;
 	ocean_name[0]=0;
 	ocean_solid_temp=0;
 	ocean_liquid_temp=100;
@@ -3376,13 +3377,14 @@ Planetoid::~Planetoid()
 void Planetoid::get_vars()
 {
 	Spheroid::get_vars();
-
+	ocean_level=0;
 	if(exprs.get_local("water.level",Td))
-		ocean_level=Td.s;
+		cout<<"water.level="<<Td.s<<endl;
+		//ocean_level=Td.s;
 	else if(exprs.get_local("ocean.level",Td))
-		ocean_level=Td.s;
-	else
-		ocean_level=0;
+		cout<<"ocean.level="<<Td.s<<endl;
+		//ocean_level=Td.s;
+	
 	VGET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	VGET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
 	VGET("ocean.state",ocean_state,def_ocean_state);
@@ -3415,7 +3417,7 @@ void Planetoid::get_vars()
 		var->eval();
 	}
 	else
-			var->applyExpr();
+		var->applyExpr();
 	
 	ocean_expr=var->right;
 
@@ -3930,7 +3932,7 @@ void Planetoid::set_surface(TerrainData &data)
 {
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		data.ocean=solidToLiquid()+1;
+		data.ocean=solidToLiquid()+0.99;
 	}
 	else
 		data.ocean=0;

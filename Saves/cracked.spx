@@ -80,7 +80,7 @@ Scene() {
 					ambient=Color(1,1,1,0.06);
 					day=58.65;
 					name="Mercury";
-					ocean.level=1.25216e-312 ft;
+					ocean.level=0 ft;
 					phase=180;
 					resolution=3.31426;
 					shadow=Color(0,0,0,0.95);
@@ -107,7 +107,7 @@ Scene() {
 						diffuse=Color(1,1,1,0.66);
 						emission=Color(0.95,0.97,0.96,0);
 						name="Luna";
-						ocean.level=1.8115e+06 ft;
+						ocean.level=0 ft;
 						phase=214.999;
 						shine=20.4374;
 						specular=Color(1,1,1,0.89);

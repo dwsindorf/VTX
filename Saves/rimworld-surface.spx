@@ -107,7 +107,7 @@ Scene() {
 					ambient=Color(1,1,1,0.07);
 					day=1;
 					hscale=0.001;
-					ocean.level=4.69677e-301 ft;
+					ocean.level=0 ft;
 					phase=320;
 					rot_phase=116.618;
 					shadow=Color(0,0,0,0.44);

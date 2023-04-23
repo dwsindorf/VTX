@@ -64,7 +64,7 @@ Scene() {
 					ambient=Color(1,1,1,0.04);
 					day=20;
 					name="Saturn";
-					ocean.level=6.70427e-312 ft;
+					ocean.level=0 ft;
 					phase=60;
 					shadow=Color(0,0,0,0.24);
 					shine=1.63453;
@@ -82,7 +82,7 @@ Scene() {
 						ambient=Color(1,1,1,0.13);
 						day=30;
 						name="Moon";
-						ocean.level=8.34773e-313 ft;
+						ocean.level=0 ft;
 						phase=183.398;
 						shadow=Color(0,0,0,0.58);
 						shine=9.23947;

@@ -148,12 +148,11 @@ public:
 							}
 	void set_alpha(int i)	{ opts.flags.alpha=i;}
 	void set_alpha_image(int i)	{ opts.flags.alpha_image=i;}
-	int alpha()				{ return opts.flags.type==RGBA_DATA ? 1:0;}
+	int alpha()				{ return opts.flags.type==RGBA_DATA ? tx1d()&&opts.flags.alpha:0;}
 	int alpha_image()       { return opts.flags.alpha_image;}
 	int txtype() 			{ return (height==1 || width==1)?GL_TEXTURE_1D:GL_TEXTURE_2D;}
 	int tx1d()				{ return (height==1 || width==1)?1:0;}
 	int tx2d()				{ return (height>1 && width>1)?1:0;}
-	void addAlphaToImage(GLubyte *a);
 
 	double aspect()         { return (double)height/(double)width;}
 	int size()              { return height*width;}

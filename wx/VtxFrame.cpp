@@ -738,12 +738,12 @@ void VtxFrame::OnImageOpen(wxCommandEvent& WXUNUSED(event) )
 //-------------------------------------------------------------
 void VtxFrame::OnImageSave(wxCommandEvent& WXUNUSED(event) )
 {
-	m_timer.Stop();
+	//m_timer.Stop();
 
 	char filename[256];
     char dir[256];
     filename[0]=0;
- 	m_canvas->suspend();
+ 	//m_canvas->suspend();
  	char path[256];
  	strcpy(path,m_last_image.ToAscii());
 	File.getFilePath(path,dir);
@@ -776,8 +776,8 @@ void VtxFrame::OnImageSave(wxCommandEvent& WXUNUSED(event) )
         m_canvas->save_image(path,m_last_itype);
     }
     m_tbar1->ToggleTool(IDM_FILE_IMAGE_SAVE, false);
-    m_canvas->unsuspend();
-    m_timer.Start(repeat_rate);
+    //m_canvas->unsuspend();
+    //m_timer.Start(repeat_rate);
 }
 
 void VtxFrame::OnAbout(wxCommandEvent& WXUNUSED(event))

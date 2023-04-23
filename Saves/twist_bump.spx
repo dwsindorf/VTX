@@ -63,7 +63,7 @@ Scene() {
 					albedo=1;
 					ambient=Color(1,1,1,0.02);
 					day=24;
-					ocean.level=88503.5 ft;
+					ocean.level=0 ft;
 					phase=24.9984;
 					resolution=2;
 					rot_phase=180;

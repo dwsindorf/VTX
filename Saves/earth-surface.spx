@@ -498,7 +498,7 @@ Scene() {
 						day=24;
 						hscale=0.001;
 						name="MoonMap";
-						ocean.level=2.4646e-300 ft;
+						ocean.level=0 ft;
 						phase=139.997;
 						resolution=4;
 						rseed=2.34627;

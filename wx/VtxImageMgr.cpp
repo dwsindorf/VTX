@@ -23,9 +23,14 @@ GLubyte *readBmpFile(char *path,int &width, int &height, int &comps){
 GLubyte *readPngFile(char *path,int &width, int &height, int &comps){
 	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_PNG,path,width,height,comps);
 }
-//GLubyte *VtxImageMgr::readJpegFile(char *path,int &width, int &height, int &comps){
-//	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_JPEG,path,width,height,comps);
-//}
+
+bool writeBmpFile(int w, int h,char *data, char *path, bool static_data){
+	 return VtxImageMgr::writeBmpFile(w,h,data,path,static_data);
+}
+bool writePngFile(int w, int h,char *data,char *adata,char *path,bool static_data){
+	return VtxImageMgr::writePngFile(w,h,data,adata,path,static_data);
+}
+
 //************************************************************
 // read a BMP file
 //************************************************************
@@ -54,13 +59,11 @@ GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height,
 		data=img.GetData();
 		if(img.HasAlpha()){
 			comps=4;
+			adata=img.GetAlpha();
 		}
 		else{
 			comps=3;
-			img.InitAlpha();
 		}
-		adata=img.GetAlpha();
-
 		// need a copy since img data will be deleted on call exit
 		GLubyte *pxls;
 		int size=width*height;
@@ -69,7 +72,10 @@ GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height,
 			pxls[i*4]=data[i*3];
 			pxls[i*4+1]=data[i*3+1];
 			pxls[i*4+2]=data[i*3+2];
-			pxls[i*4+3]=adata[i];
+			if(comps==4)
+				pxls[i*4+3]=adata[i];
+			else
+				pxls[i*4+3]=255;
 		}
 		return pxls;
 	}
@@ -77,41 +83,32 @@ GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height,
 }
 
 //************************************************************
-// read a JPG file
+// write a PNG file from image data
 //************************************************************
-/*
-GLubyte *VtxImageMgr::readJpegFile(char *path,int &width, int &height, int &comps){
-	wxImage bmp(wxString(path),wxBITMAP_TYPE_JPEG);
-	wxImage img=bmp.Mirror(false); // need to flip vertically for ogl
-	width=img.GetWidth();
-	height=img.GetHeight();
-	if(img.HasAlpha())
-		comps=4;
-	else
-		comps=3;
-	if(img.IsOk()){
-		// need a copy since img data will be deleted on call exit
-		GLubyte *data=img.GetData();
-		GLubyte *pxls;
-		int size=width*height*comps;
-		MALLOC(size,GLubyte,pxls);
-		for(int i=0;i<size;i++)
-			pxls[i]=data[i];
-		return pxls;
-	}
-	return 0;
+bool VtxImageMgr::writePngFile(int w, int h, char *data, char *adata, char *path,bool static_data)
+{
+	wxImage bmp(w,h,data,static_data);
+	return bmp.SaveFile(wxString(path), wxBITMAP_TYPE_PNG);
 }
-*/
 //************************************************************
-// write a BMP file
+// write a BMP file from image data
+//************************************************************
+bool VtxImageMgr::writeBmpFile(int w, int h, char *data, char *path, bool static_data)
+{
+	wxImage img(w,h,data,static_data);
+	return img.SaveFile(wxString(path), wxBITMAP_TYPE_BMP);
+}
+
+//************************************************************
+// write a BMP file from screen buffer
 //************************************************************
 void VtxImageMgr::writeBmpFile(char *path)
 {
 	int width=0;
 	int height=0;
-	GLubyte *data=readPixels(width,height);
-	wxImage bmp(width,height,data);
-	bmp.SaveFile(wxString(path), wxBITMAP_TYPE_BMP);
+	char *data=readPixels(width,height);
+	wxImage img(width,height,data);
+	img.SaveFile(wxString(path), wxBITMAP_TYPE_BMP);
 }
 
 //************************************************************

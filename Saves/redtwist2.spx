@@ -49,7 +49,7 @@ Scene() {
 				}
 				Planet(0.004,100) {
 					day=24;
-					ocean.level=8.34773e-313 ft;
+					ocean.level=0 ft;
 					resolution=4;
 					shine=22.9391;
 					specular=Color(1,1,1,0.96);

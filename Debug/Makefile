@@ -68,7 +68,7 @@ build_glut: parsers jpeglib glut includes vtxg
 wx:;	    cd  ../wx; \
             make $(MFLAGS) \
 			INCS="-I../includes -I../ -I../Resources/UI" \
-			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) $(GLDEFS)"\
+			CFLAGS="-w $(GCCFLAGS) -g $(DEFINES) -DNDEBUG $(GLDEFS)"\
 			CC="$(CC)" \
 			OBJDIR="../$(THIS)" \
 			build; \

@@ -67,3 +67,12 @@
     - works for starup screen and newSystem but not for open scene file (desktop)
 23. new bug in water render: depth buffer problem 
     - caused by fix for 16 above
+    - fixed removed test for raster.set_farview
+24. windows - save image from back buffer broken (all plack image generated)
+    - seems to work again (??)
+    - but need to render scene at least once after open before taking snapshot
+      otherwise image is from previous scene (swap buffers ?) 
+    - fixed: changed glReadBuffer(GL_BACK) to glReadBuffer(GL_FRONT)in Jpeg.cpp readPixels
+25. Water too shiny (specular not chaged with water.albedo)
+    - fixed (Bug in assignment of Constants1.g for water and ice)
+26. adding new water to planet results in huge level value

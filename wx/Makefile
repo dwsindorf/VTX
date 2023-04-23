@@ -528,7 +528,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Debug/VtxScene.o: ../includes/Raster.h ../includes/KeyIF.h
 ../Debug/VtxScene.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
 ../Debug/VtxScene.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
-../Debug/VtxScene.o: ../includes/FileUtil.h VtxScene.h ../includes/Bitmap.h
+../Debug/VtxScene.o: ../includes/FileUtil.h VtxScene.h
 ../Debug/VtxScene.o: ../includes/FrameClass.h VtxSceneDialog.h VtxControls.h
 ../Debug/VtxScene.o: VtxExprEdit.h VtxTabsMgr.h VtxImageDialog.h
 ../Debug/VtxScene.o: VtxImageTabs.h ../includes/ImageClass.h VtxImageWindow.h
@@ -1150,7 +1150,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Release/VtxScene.o: ../includes/Raster.h ../includes/KeyIF.h
 ../Release/VtxScene.o: ../includes/GLSLMgr.h ../includes/GLSLProgram.h
 ../Release/VtxScene.o: ../includes/GLSLVars.h ../includes/FrameBuffer.h
-../Release/VtxScene.o: ../includes/FileUtil.h VtxScene.h ../includes/Bitmap.h
+../Release/VtxScene.o: ../includes/FileUtil.h VtxScene.h
 ../Release/VtxScene.o: ../includes/FrameClass.h VtxSceneDialog.h
 ../Release/VtxScene.o: VtxControls.h VtxExprEdit.h VtxTabsMgr.h
 ../Release/VtxScene.o: VtxImageDialog.h VtxImageTabs.h

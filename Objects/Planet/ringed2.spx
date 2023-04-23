@@ -2,7 +2,7 @@ Planet(0.57071,383.751) {
 	ambient=Color(1,1,1,0.04);
 	day=176.923;
 	name="ringed2";
-	ocean.level=4.33107e-300 ft;
+	ocean.level=0 ft;
 	resolution=4;
 	rseed=0.775516;
 	year=245.595;

@@ -96,7 +96,7 @@ Scene() {
 						day=13.888;
 						hscale=0.0001;
 						name="Moon";
-						ocean.level=7.45452e+06 ft;
+						ocean.level=0 ft;
 						phase=310.003;
 						rseed=1.44467;
 						skew=43.7508;
