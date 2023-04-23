@@ -220,7 +220,7 @@ Scene() {
 				Planet(0.004,100) {
 					day=24;
 					hscale=0.008;
-					ocean.level=1.76109e+09 ft;
+					ocean.level=0 ft;
 					specular=Color(1,1,1,0.31);
 					year=100;
 					bands("grad",ACHNL|NORM|REFLECT,16,0.03572,0.40322,Color(0,0,0,0.4),Color(1,0.529,0),

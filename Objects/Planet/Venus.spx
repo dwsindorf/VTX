@@ -13,7 +13,7 @@ Planet(0.003,66) {
 	fog.vmin=-20000 ft;
 	hscale=0.002;
 	name="Venus";
-	ocean.level=295046 ft;
+	ocean.level=0 ft;
 	phase=229.166;
 	shadow=Color(0.21,0.17,0.04,0.52);
 	shine=16.4793;

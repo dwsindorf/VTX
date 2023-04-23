@@ -69,7 +69,7 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.001;
-					ocean.level=4.97627e+09 ft;
+					ocean.level=0 ft;
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{

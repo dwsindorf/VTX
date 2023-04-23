@@ -50,7 +50,7 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
-					ocean.level=4.30351e-301 ft;
+					ocean.level=0 ft;
 					resolution=4;
 					year=100;
 					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),

@@ -48,8 +48,9 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #endif
 
     float shine=gl_FrontMaterial.shininess;
-    if(Constants1.b>1.0){
-	    if(Constants1.b>1.5){
+    albedo=1;
+    if(Constants1.g>0.5 && Constants1.g<2.0){
+	    if(Constants1.g>1.5){
 		   shine=ice_shine;
 		   albedo=ice_specular;
 		}
@@ -89,7 +90,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #endif
 			float pf        = damp*intensity*horizon*pow(sdp, shine);
 			
-			specular       += gl_LightSource[i].specular.rgb * pf*shadow_specular;
+			specular       += gl_LightSource[i].specular.rgb * pf*shadow_specular*albedo;
 			//illumination   += pf*gl_LightSource[i].specular.a;
         }
 	}
@@ -100,6 +101,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	vec3 TotalSpecular = specular.rgb;
 
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
+	//return vec4(Constants1*0.25);
 
 }
 

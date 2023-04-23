@@ -3,7 +3,7 @@ Planet(0.004,40) {
 	diffuse=Color(1,1,1,0.58);
 	hscale=0.001;
 	name="Planet";
-	ocean.level=4.97627e+09 ft;
+	ocean.level=0 ft;
 	year=100;
 	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));

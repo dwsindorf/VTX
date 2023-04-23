@@ -125,7 +125,7 @@ Scene() {
 					day=30;
 					diffuse=Color(1,1,1,0.5);
 					name="Venus";
-					ocean.level=2.36845e-39 ft;
+					ocean.level=0 ft;
 					resolution=4;
 					shine=1.37856;
 					specular=Color(1,1,1,0.42);

@@ -135,7 +135,7 @@ Scene() {
 				fog.value=0.898039;
 				fog.vmax=2083.4 ft;
 				fog.vmin=555.6 ft;
-				ocean.level=7.34274e-300 ft;
+				ocean.level=0 ft;
 				resolution=0.5;
 				shadow=Color(0,0,0.1,0.7);
 				shine=1.24841;

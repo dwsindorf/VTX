@@ -79,7 +79,7 @@ Planet(0.003,93) {
 		emission=Color(1,1,1,0.04);
 		hscale=0.008;
 		name="Luna";
-		ocean.level=3.65295e-300 ft;
+		ocean.level=0 ft;
 		phase=139.997;
 		rseed=2.41294;
 		shadow=Color(0,0,0,0.93);

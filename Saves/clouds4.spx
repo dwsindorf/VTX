@@ -81,7 +81,7 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.08);
 					day=24;
-					ocean.level=2.03198e+06 ft;
+					ocean.level=0 ft;
 					shine=3.81307;
 					specular=Color(1,1,1,0.65);
 					year=100;

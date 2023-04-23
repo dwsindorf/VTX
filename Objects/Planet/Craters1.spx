@@ -2,7 +2,7 @@ Planet(0.004,40) {
 	day=24;
 	hscale=0.001;
 	name="Craters1";
-	ocean.level=4.97627e+09 ft;
+	ocean.level=0 ft;
 	shadow=Color(0,0,0);
 	specular=Color(1,1,1,0.25);
 	year=100;

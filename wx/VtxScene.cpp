@@ -27,7 +27,6 @@
 
 #include "FileUtil.h"
 #include "VtxScene.h"
-#include "Bitmap.h"
 #include "FrameClass.h"
 #include <objectdlg.xpm>
 #include <image_dialog.xpm>
@@ -493,6 +492,7 @@ void VtxScene::drawCenterText(wxString& msg)
 {
     cout <<"VtxScene::center_tex "<<msg<<endl;
     wxPaintDC dc(this);
+    glDrawBuffer(GL_BACK);
 	
     //dc.SetFont(*wxNORMAL_FONT);
     wxFont font=dc.GetFont();
@@ -590,6 +590,7 @@ void VtxScene::save_image(char *path,int type)
 	File.getFileName(path,filename);
 
     SetCurrent();
+
 #ifdef DEBUG_SCENE
     cout << "VtxScene::save_image("<<path<<")" <<endl;
 #endif

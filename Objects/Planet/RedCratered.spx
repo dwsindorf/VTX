@@ -3,7 +3,7 @@ Planet(0.004,100) {
 	day=24;
 	hscale=0.002;
 	name="RedCratered";
-	ocean.level=1.76109e+09 ft;
+	ocean.level=0 ft;
 	shadow=Color(0,0,0,0.46);
 	shine=4.40559;
 	specular=Color(1,1,1,0.39);

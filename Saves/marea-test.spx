@@ -61,7 +61,7 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					hscale=0.001;
-					ocean.level=4.97627e+09 ft;
+					ocean.level=0 ft;
 					rseed=1.4699;
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1,0.25);

@@ -74,7 +74,7 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.002;
-					ocean.level=4.97627e+09 ft;
+					ocean.level=0 ft;
 					specular=Color(1,1,1,0.03);
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);

@@ -171,7 +171,7 @@ Scene() {
 				}
 				Planet(0.004,778.002) {
 					day=24;
-					ocean.level=2.46887e-300 ft;
+					ocean.level=0 ft;
 					shine=11.3801;
 					specular=Color(1,1,1,0.59);
 					year=100;

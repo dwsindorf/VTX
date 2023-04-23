@@ -28,7 +28,6 @@ GFILE        = glew.cpp
 # RCS files
 #################
 HDR_FILES = AdaptOptions.h \
-			Bitmap.h \
 			ColorClass.h \
 			Craters.h \
 			Effects.h \
@@ -82,7 +81,6 @@ HDR_FILES = AdaptOptions.h \
 			matrix.h
 
 SRC_FILES=  AdaptOptions.cpp \
-			Bitmap.cpp \
 			ColorClass.cpp \
 			Craters.cpp \
 			Effects.cpp \
@@ -174,7 +172,6 @@ depend:;
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 ../Debug/AdaptOptions.o: AdaptOptions.h defs.h ColorClass.h GLheaders.h
-../Debug/Bitmap.o: Bitmap.h GLheaders.h
 ../Debug/ColorClass.o: defs.h ColorClass.h GLheaders.h
 ../Debug/Craters.o: Craters.h Placements.h TerrainMgr.h NoiseClass.h
 ../Debug/Craters.o: PointClass.h defs.h ListClass.h ColorClass.h GLheaders.h
@@ -234,7 +231,7 @@ depend:;
 ../Debug/ImageClass.o: RenderOptions.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
 ../Debug/ImageClass.o: ./FrameBuffer.h
 ../Debug/ImageMgr.o: ImageMgr.h GLheaders.h defs.h ColorClass.h ListClass.h
-../Debug/ImageMgr.o: Bitmap.h FileUtil.h Util.h PointClass.h TerrainClass.h
+../Debug/ImageMgr.o: FileUtil.h Util.h PointClass.h TerrainClass.h
 ../Debug/ImageMgr.o: TerrainMgr.h NoiseClass.h TextureClass.h GLSupport.h
 ../Debug/ImageMgr.o: GLglue.h TerrainNode.h TerrainData.h NodeIF.h
 ../Debug/ImageMgr.o: AdaptOptions.h ModelClass.h SceneClass.h LightClass.h
@@ -245,7 +242,7 @@ depend:;
 ../Debug/Jpeg.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
 ../Debug/Jpeg.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
 ../Debug/Jpeg.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
-../Debug/Jpeg.o: matrix.h TrackBall.h ModelClass.h Bitmap.h
+../Debug/Jpeg.o: matrix.h TrackBall.h ModelClass.h
 ../Debug/KeyIF.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Debug/KeyIF.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Debug/KeyIF.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
@@ -430,7 +427,6 @@ depend:;
 ../Debug/matrix.o: defs.h
 
 ../Release/AdaptOptions.o: AdaptOptions.h defs.h ColorClass.h GLheaders.h
-../Release/Bitmap.o: Bitmap.h GLheaders.h
 ../Release/ColorClass.o: defs.h ColorClass.h GLheaders.h
 ../Release/Craters.o: Craters.h Placements.h TerrainMgr.h NoiseClass.h
 ../Release/Craters.o: PointClass.h defs.h ListClass.h ColorClass.h
@@ -492,7 +488,7 @@ depend:;
 ../Release/ImageClass.o: TrackBall.h ModelClass.h RenderOptions.h GLSLMgr.h
 ../Release/ImageClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
 ../Release/ImageMgr.o: ImageMgr.h GLheaders.h defs.h ColorClass.h ListClass.h
-../Release/ImageMgr.o: Bitmap.h FileUtil.h Util.h PointClass.h TerrainClass.h
+../Release/ImageMgr.o: FileUtil.h Util.h PointClass.h TerrainClass.h
 ../Release/ImageMgr.o: TerrainMgr.h NoiseClass.h TextureClass.h GLSupport.h
 ../Release/ImageMgr.o: GLglue.h TerrainNode.h TerrainData.h NodeIF.h
 ../Release/ImageMgr.o: AdaptOptions.h ModelClass.h SceneClass.h LightClass.h
@@ -503,7 +499,7 @@ depend:;
 ../Release/Jpeg.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
 ../Release/Jpeg.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
 ../Release/Jpeg.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
-../Release/Jpeg.o: matrix.h TrackBall.h ModelClass.h Bitmap.h
+../Release/Jpeg.o: matrix.h TrackBall.h ModelClass.h
 ../Release/KeyIF.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Release/KeyIF.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Release/KeyIF.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
@@ -695,7 +691,6 @@ depend:;
 ../Release/ViewClass.o: TrackBall.h RenderOptions.h NoiseClass.h
 ../Release/matrix.o: defs.h
 ../Debug/AdaptOptions.o:	AdaptOptions.cpp
-../Debug/Bitmap.o:	Bitmap.cpp
 ../Debug/ColorClass.o:	ColorClass.cpp
 ../Debug/Craters.o:	Craters.cpp
 ../Debug/Effects.o:	Effects.cpp
@@ -745,7 +740,6 @@ depend:;
 ../Debug/matrix.o:	matrix.cpp
 ../Debug/cloud_data.o:	cloud_data.cpp
 ../Release/AdaptOptions.o:	AdaptOptions.cpp
-../Release/Bitmap.o:	Bitmap.cpp
 ../Release/ColorClass.o:	ColorClass.cpp
 ../Release/Craters.o:	Craters.cpp
 ../Release/Effects.o:	Effects.cpp
