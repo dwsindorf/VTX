@@ -24,10 +24,10 @@ GLubyte *readPngFile(char *path,int &width, int &height, int &comps){
 	return VtxImageMgr::readImageFile(wxBITMAP_TYPE_PNG,path,width,height,comps);
 }
 
-bool writeBmpFile(int w, int h,char *data, char *path, bool static_data){
+bool writeBmpFile(int w, int h,void *data, char *path, bool static_data){
 	 return VtxImageMgr::writeBmpFile(w,h,data,path,static_data);
 }
-bool writePngFile(int w, int h,char *data,char *adata,char *path,bool static_data){
+bool writePngFile(int w, int h,void *data,void *adata,char *path,bool static_data){
 	return VtxImageMgr::writePngFile(w,h,data,adata,path,static_data);
 }
 
@@ -67,7 +67,7 @@ GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height,
 		// need a copy since img data will be deleted on call exit
 		GLubyte *pxls;
 		int size=width*height;
-		MALLOC(size*4,GLubyte,pxls);
+		CALLOC(size*4,GLubyte,pxls);
 		for(int i=0;i<size;i++){
 			pxls[i*4]=data[i*3];
 			pxls[i*4+1]=data[i*3+1];
@@ -85,7 +85,7 @@ GLubyte *VtxImageMgr::readImageFile(int type,char *path,int &width, int &height,
 //************************************************************
 // write a PNG file from image data
 //************************************************************
-bool VtxImageMgr::writePngFile(int w, int h, char *data, char *adata, char *path,bool static_data)
+bool VtxImageMgr::writePngFile(int w, int h, void *data, void *adata, char *path,bool static_data)
 {
 	wxImage bmp(w,h,data,static_data);
 	return bmp.SaveFile(wxString(path), wxBITMAP_TYPE_PNG);
@@ -93,7 +93,7 @@ bool VtxImageMgr::writePngFile(int w, int h, char *data, char *adata, char *path
 //************************************************************
 // write a BMP file from image data
 //************************************************************
-bool VtxImageMgr::writeBmpFile(int w, int h, char *data, char *path, bool static_data)
+bool VtxImageMgr::writeBmpFile(int w, int h, void *data, char *path, bool static_data)
 {
 	wxImage img(w,h,data,static_data);
 	return img.SaveFile(wxString(path), wxBITMAP_TYPE_BMP);

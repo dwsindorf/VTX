@@ -3377,14 +3377,13 @@ Planetoid::~Planetoid()
 void Planetoid::get_vars()
 {
 	Spheroid::get_vars();
-	ocean_level=0;
+
 	if(exprs.get_local("water.level",Td))
-		cout<<"water.level="<<Td.s<<endl;
-		//ocean_level=Td.s;
+		ocean_level=Td.s;
 	else if(exprs.get_local("ocean.level",Td))
-		cout<<"ocean.level="<<Td.s<<endl;
-		//ocean_level=Td.s;
-	
+		ocean_level=Td.s;
+	else
+		ocean_level=0;
 	VGET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	VGET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
 	VGET("ocean.state",ocean_state,def_ocean_state);

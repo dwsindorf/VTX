@@ -1,7 +1,6 @@
 // ImageMgr.cpp
 
 #include "ImageMgr.h"
-//#include "Bitmap.h"
 #include "FileUtil.h"
 #include "Util.h"
 #include "TerrainClass.h"
@@ -26,15 +25,16 @@ extern double Red,Green,Blue,Alpha,Theta,Phi;
 extern GLubyte *readJpegFile(char *path,int &w, int &h, int &c);
 extern GLubyte *readBmpFile(char *path,int &w, int &h, int &c);
 extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
-extern bool writeBmpFile(int w, int h,char *data, char *path, bool);
-extern bool writePngFile(int w, int h,char *data,char *adata,char *path,bool);
+extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
+extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
 
-static char *ColorToRGB(int n, char *pxls){
+static char *ColorToRGB(int width, int height, unsigned char *pxls){
+	int n=width*height;
 	char *rptr=calloc(n,3);
 	for(int i=0;i<n;i++){
 		rptr[i*3]=pxls[i*4];
@@ -44,14 +44,14 @@ static char *ColorToRGB(int n, char *pxls){
 	return rptr;
 }
 
-static char *AlphaToRGB(int width, int height, char *bits){
+static char *AlphaToRGB(int width, int height, unsigned char *bits){
 	int n=width*height;
 	char *rptr=calloc(n,3);
 	for(int i=0;i<n;i++){
-		char aval=bits[i*4+3];
-		rptr[i]=aval;
-		rptr[i+1]=aval;
-		rptr[i+2]=aval;
+		GLubyte aval=bits[i*4+3];
+		rptr[i*3]=aval;
+		rptr[i*3+1]=aval;
+		rptr[i*3+2]=aval;
 	}
 	return rptr;
 }
@@ -538,6 +538,27 @@ Color Image::aveColor(){
 	ave=ave/size()/255.0;
 	return Color(ave.red(),ave.green(),ave.blue());
 }
+//-------------------------------------------------------------
+// Image::addAlphaToImage()    get alpha from aux. RGB image
+//-------------------------------------------------------------
+void Image::addAlphaToImage(GLubyte *a)
+{
+	Color      *c=(Color*)data;
+    RGBColor   *rgb=(RGBColor*)a;
+
+    set_alpha_image(1);
+    set_alpha(1);
+
+	for (int i = 0; i < height; i++){
+		for (int j = 0; j< width ; j++) {
+		    int index=i*width+j;
+		    double aval=rgb[index].intensity();
+			c[index].set_alpha(aval);
+			//c[index].print();
+
+		}
+	}
+}
 
 //-------------------------------------------------------------
 // Image::clone()      make deep copy
@@ -942,7 +963,7 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		}
 		ImageSym *nis=new ImageSym(is);
 #ifdef DEBUG_IMAGES
-		printf("adding image info for:%-25s 0x%-8X\n",nis->name(),nis->info);
+		//printf("adding image info for:%-25s 0x%-8X\n",nis->name(),nis->info);
 #endif
 		list.add(nis);
 	}
@@ -1365,11 +1386,23 @@ Image *ImageReader::openJpgFile(char *name,char *path)
 	return image;	
 }
 
+
+//-------------------------------------------------------------
+// ImageReader::printImageInfo   print file info
+//-------------------------------------------------------------
+void ImageReader::printImageInfo(char *f)
+{
+    ImageSym *is=getImageInfo(f);
+    is->print();
+    delete is;
+}
+
 //-------------------------------------------------------------
 // ImageReader::openBmpFile read an image from a file
 //-------------------------------------------------------------
 Image *ImageReader::openBmpFile(char *name,char *path)
 {
+	BITMAPINFO	*info=0;
 	void *bits;
 	void *pxls;
 	Image *image=0;
@@ -1390,7 +1423,9 @@ Image *ImageReader::openBmpFile(char *name,char *path)
 #ifdef DEBUG_IMAGES
 	printf("%-20s READING IMAGE %s\n","ImageReader",name);
 #endif
+
  	sprintf(apath,"%s_alpha.bmp",path);
+
 	fp=fopen(apath, "rb");
 	if (fp == NULL)
 	    aflag=0;
@@ -1404,7 +1439,7 @@ Image *ImageReader::openBmpFile(char *name,char *path)
     	return 0;
 	}
 	if(!aflag){
-		bits=ColorToRGB(h*w,(char*)pxls);
+		bits=ColorToRGB(w,h,(unsigned char*)pxls);
 		image=new Image((RGBColor*)bits,w,h);
 		image->set_global(1);
 		image->set_alpha_image(0);
@@ -1417,25 +1452,17 @@ Image *ImageReader::openBmpFile(char *name,char *path)
 
 	bits=readBmpFile(apath,w,h,comps);
 	if(bits){
-		for(int i=0;i<h*w;i+=4){
-			Color *a=(Color*)(bits+i);
-			Color *c=(Color*)(pxls+i);
-			double aval=a->intensity();
-			c->set_alpha(aval);
+		Color *a=(Color*)(bits);
+		Color *c=(Color*)(pxls);
+		for(int i=0;i<h*w;i++){
+			double aval=a[i].intensity();
+			c[i].set_alpha(aval);
 		}
 		FREE(bits);
+		image->set_alpha(1);
 	}
-	return image;
-}
 
-//-------------------------------------------------------------
-// ImageReader::printImageInfo   print file info
-//-------------------------------------------------------------
-void ImageReader::printImageInfo(char *f)
-{
-    ImageSym *is=getImageInfo(f);
-    is->print();
-    delete is;
+	return image;
 }
 
 //-------------------------------------------------------------
@@ -1451,31 +1478,26 @@ void ImageReader::save(char *f, Image *image)
 
 	getImagePath(f,path);
    	strcat(path,".bmp");
+   	
    	int h=image->height;
    	int w=image->width;
    	
    	FILE *fp=fopen(path, "wb");
    	if (fp == NULL)
    		return;
+	void *pxls=ColorToRGB(w,h,(unsigned char*)image->data);
+	if(!writeBmpFile(w, h,pxls, path,false)){
+		cout<<"failed to save bmp file:"<<path<<endl;
+		return;
+	}
+	getImagePath(f,path);
+	strcat(path,"_alpha.bmp");
 
-   	if(image->type()==RGB_DATA){
-   	 	writeBmpFile(w, h,(char*)image->data, path,true);	
-   	}
-   	else{
-		char *pxls=ColorToRGB(h*w,(char*)image->data);
-		if(!writeBmpFile(w, h,pxls, path,false)){
-			cout<<"failed to save bmp file:"<<path<<endl;
-			return;
-		}
-		getImagePath(f,path);
-		strcat(path,"_alpha.bmp");
-	
-		if(image->alpha()){
-			pxls=AlphaToRGB(w,h,(char*)image->data);
-			writeBmpFile(w, h,pxls, path,false);
-		}
-		else
-		   File.deleteFile(path);
-   	}
+	if(image->alpha()){
+		pxls=AlphaToRGB(w,h,(unsigned char*)image->data);
+		writeBmpFile(w, h,pxls, path,false);
+	}
+	else
+	   File.deleteFile(path);
 }
 

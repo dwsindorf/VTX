@@ -1677,16 +1677,16 @@ void TNsnow::init()
 				image=new Image(color,2*NALPHA,1);
 				image->set_alpha(1);
 				images.save("snow",image);
-				cout <<"building Snow Image"<<endl;
+				//cout <<"building Snow Image"<<endl;
 			}
-			else{
-				cout <<"loading Snow Image"<<endl;
-			}
+//			else{
+//				cout <<"loading Snow Image"<<endl;
+//			}
 			image->set_accessed(true);
 		}
 		if(!image)
 			return;
-		int opts=BORDER|BUMP|TEX|INTERP;
+		int opts=ACHNL|BORDER|BUMP|TEX|INTERP;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
 	    texture->scale=0.5;
