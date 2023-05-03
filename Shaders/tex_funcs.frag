@@ -94,7 +94,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	    offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
 		tval=textureTile(tid,coords+offset,texmip); \
 		alpha = tex2d[tid].texamp; \
-		cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
+		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1);
+        //cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
 		
 #define SET_COLOR \
 		last_color=color; \

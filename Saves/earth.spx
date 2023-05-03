@@ -1,17 +1,17 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=28.9137;
-		theta=36.9481;
-		height=0.00875118;
-		gndlvl=1938 ft;
-		time=50577.4;
+		phi=33.4946;
+		theta=248.621;
+		height=0.0045;
+		gndlvl=12376.7 ft;
+		time=10000;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.003;
 		minh=1.13636e-09;
-		minr=0.00300037;
+		minr=0.00300235;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -70,30 +70,46 @@ Scene() {
 					diffuse=Color(1,1,1,0.89);
 					hscale=0.002;
 					ocean.auto=1;
-					ocean.level=200 ft;
-					shadow=Color(0,0,0,0.83);
+					ocean.level=100 ft;
+					shadow=Color(0,0,0,0.36);
 					shine=9.75019;
 					specular=Color(1,1,1,0.13);
 					tilt=-17;
-					water.albedo=0.28572;
-					water.clarity=228.492 ft;
+					water.albedo=0.4127;
+					water.clarity=140.76 ft;
 					water.color1=Color(0.01,0.21,0.31);
 					water.color2=Color(0.12,0.19,0.39);
 					water.level=3.78788e-08;
-					water.shine=26.984;
+					water.shine=19.048;
 					year=365;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
+						Color(0.2,0.4,0.094),
+						Color(0.294,0.494,0),
+						Color(0.549,0.322,0.02),
+						Color(0.294,0.251,0.2),
+						Color(0.275,0.247,0.027),
+						Color(0.243,0.196,0.063),
+						Color(0.584,0.584,0.584),
+						Color(0.6,0.588,0.549),
+						Color(0.286,0.278,0.278),
+						Color(1,1,1));
 					Surface{
-						terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
+						terrain=ocean(noise(GRADIENT|SCALE,16,3,-0.02,0.5,2,0,1,0,0,1e-06),Color(0.816,0.624,0.749))
+								snow(-4,1,0.71,-0.49,1,0)
 								
-								Texture("earth",TEX,1,2,0,0,1,2,0.5,0,0,0,0,0)+Z(fractal(SS,15.3,13,0.44,0.15,0.73,0.63,0.5,0.34,1,0.32))+Z(noise(GRADIENT|NABS|SCALE|SQR,9.5,10.1,-0.8,0.46,2.21,0.12,1,1,0,1e-05))+
-								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.52,0,0,0,0);
+								Texture("earth-10k",TEX,1,1,0,0,1,2,0.5,0,0,0,0,0)+
+								Texture("alpine",BORDER|TEX,279.557,1,1,-0.3,1,2,0.5,0,0.2,0.92064,0.1,-0.1)+Z(noise(SIMPLEX|NABS|NEG|SCALE,10.3,16.8,0.26,0.48,2.12,1,4,0,0,1e-06))+fractal(13,16.4,0,0.2,2,0.2,0.34,0.15,0.26,0.15)
+								Texture("earth-htmap",HMAP,1,1,-0.63488,0,1,2,0.5,0,2,0.99,0,0,0,0)+Color(0.501961,0.501961,0,1)+
+								Texture("usgs10m-1",BUMP|RANDOMIZE,16,0.5,1,0,3,2.4648,0.52112,0,0,1.42856,0,0.92064)+
+								Texture("tallgrass-3",NORM|RANDOMIZE|TEX,131072,1.1,-0.1,0,1.5,1.3944,1,0,0,-1.55552,0,-0.6032)+
+								Texture("DirtPebbles",RANDOMIZE|TEX,7585.35,2,0.88896,0,1,2.4648,0.52112,0,0,1.42856,0,-0.28568);
 					}
 					Sky(0.0032) {
 						color=Color(0.01,0.4,0.99);
 						day=24;
 						density=0.20634;
-						ghg_fraction=0.1;
+						ghg_fraction=0.11112;
 						haze.color=Color(1,1,1,0.82);
 						haze.grad=0.90244;
 						haze.value=0.819608;
@@ -131,7 +147,7 @@ Scene() {
 						tilt=17;
 						Surface{
 							terrain=
-									Texture("earth_clouds",BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
+									Texture("earth_clouds",ACHNL|BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
 						}
 					}
 					Moon(0.001,0.1) {

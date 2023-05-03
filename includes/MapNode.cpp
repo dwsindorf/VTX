@@ -2225,15 +2225,13 @@ void MapNode::Svertex(MapData*dn) {
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
 	double g=d->type();
-	if(Td.type()==WATER){
+	if(Raster.surface==2)
 		g=d->ocean();
-	}
 	else
-	   g+=2;
-
-
-	if(TheMap->object!=TheScene->viewobj)
-		g = 0;
+	    g+=3;
+	
+	//if(TheMap->object!=TheScene->viewobj)
+	//	g = 0;
 
 	double ht=d->Z()*Rscale;  // global units (MM)
 	if (GLSLMgr::CommonID1 >= 0){

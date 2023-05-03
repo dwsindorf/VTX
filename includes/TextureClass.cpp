@@ -228,28 +228,67 @@ void Texture::begin() {
 		int w=width();
 		int h=height();
 		bool rgba_image=(image()->gltype()==GL_RGBA)?true:false;
-		bool alpha_image=image()->alpha();
+		bool alpha_image=image()->alpha_image();
 		int rgb_step=rgba_image?4:3;
 
-		unsigned char* data=(unsigned char*)malloc(h*w*4);
-		unsigned char* rgb=(unsigned char*)pixels(); // original image date
+		unsigned char* data=(unsigned char*)malloc(h*w*4); // temporary data (rgba)
+		unsigned char* rgb=(unsigned char*)pixels();       // original image data (rgba or rgb)
 
 		// build texture image for Shader and OGL usage
 
-		//bool shader_pass=(Raster.render_type()==SHADER_TEXS)?true:false;
 		bool shader_pass=Render.draw_shaded()?true:false;
 		double alpha=shader_pass?1.0:texamp;
 
 		bool norm=normalize();
 		double amin=255;
 		double amax=0;
-		//bool set_alpha=shader_pass || alpha_enabled();
+		bool set_alpha=shader_pass || alpha_enabled();
 		bool auto_alpha= alpha_enabled();
-		bool set_alpha=shader_pass || alpha_image;
+			
+		double color_comp=1;
+		double alpha_comp=0;
+		
+		if(auto_alpha){
+			alpha_comp=1;
+			color_comp=0;
+		}
+		else 
+		if(bump_active || tex_active){
+			double bval=bump_active?fabs(bumpamp):0;
+			double aval=tex_active?fabs(texamp):0;
+			double total=bval+aval+1e-6;
+			color_comp=aval/total;
+			alpha_comp=bval/total;
+		}
+		
+		cout<<"2d:"<< image()->tx2d()<<" cc:"<<color_comp<<" ac:"<<alpha_comp<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
-		//cout << " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
-		if((amin==0 && amax==255) || amax==amin)
-			norm=false;
+		double a=1;
+		double b=0;
+		double ave=0;
+		int n=h*w;
+		if(norm && set_alpha){
+			for (int i = 0; i < h; i++){
+				for (int j = 0; j< w ; j++) {
+					int index=i*w+j;
+					int rgb_index=index*rgb_step;
+					unsigned char ac=255;
+			    	if(alpha_image)
+			    		ac=rgb[rgb_index+3];			    	
+			    	else 
+			    		ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
+					ac*=alpha;
+					ac=ac>=255?255:ac;
+					amin=ac<amin?ac:amin;
+					amax=ac>=amax?ac:amax;
+					ave+=ac;
+				}
+			}
+			a=255/(amax-amin);
+			b=-a*amin;
+			ave/=n;
+			cout << "min:"<< amin << " max:"<< amax<< " ave:"<<ave<<endl;
+		}
 		for (int i = 0; i < h; i++){
 			for (int j = 0; j< w ; j++) {
 			    unsigned char ac=255;
@@ -261,37 +300,23 @@ void Texture::begin() {
 			    int ci=index*4;
 
 			    if(set_alpha){
-					if(alpha_image)
-						ac=rgb[rgb_index+3];
-					else
-						ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
-					double aval=ac*alpha;
-					aval=aval>255?255:aval;
-					amin=aval<amin?aval:amin;
-					amax=aval>amax?aval:amax;
-					data[index*4+3]=(unsigned char)(aval);
+			    	if(alpha_image)
+			    		ac=alpha*rgb[rgb_index+3];
+			    	else 
+			    		ac=alpha*(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
+			    	ac=a*ac+b;
+			    	if(!alpha_image)
+		    			ac=255*color_comp+ac*alpha_comp;
+					ac=ac>=255?255:ac;
+					data[index*4+3]=(unsigned char)(ac);
 			    }
 			    else
 			    	data[index*4+3]=255;
 			}
 		}
-		if(norm && set_alpha){
-			double a=255/(amax-amin);
-			double b=-a*amin;
-			double ave=0;
-			//cout << "min:"<< amin << " max:"<< amax<< endl;
-			for (int i = 0; i < h; i++){
-				for (int j = 0; j< w ; j++) {
-					int index=i*w+j;
-					double aval=data[index*4+3];
-					data[index*4+3]=(unsigned char)(a*aval+b);
-					ave+=data[index*4+3];
-				}
-			}
-		}
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-		// build bump texture image for OGL legacy bumpmap usage
+		// build bump texture image for OGL legacy bumpmap usage (non-shader)
 
 		if(bump_active && !Render.draw_shaded()){
 			glGenTextures(1, &id[++tid]); // Generate a unique texture ID

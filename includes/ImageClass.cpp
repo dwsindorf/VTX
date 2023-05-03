@@ -30,7 +30,7 @@ extern int addtabs;
 static LongSym iopts[]={
 	{"INVT",	INVT},
 	{"GRAY",	GRAY},
-	{"ACHNL",	ACHNL},
+	{"ACHNL",	RGBA},
 	{"NORM",	NORM},
 	{"REPEAT",  REPEAT},
 	{"BUMP",	BUMP},

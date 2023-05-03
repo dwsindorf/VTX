@@ -48,9 +48,9 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #endif
 
     float shine=gl_FrontMaterial.shininess;
-    albedo=1;
-    if(Constants1.g>0.5 && Constants1.g<2.0){
-	    if(Constants1.g>1.5){
+    //float albedo=0.5;
+    if(Constants1.g>=0.5 && Constants1.g<2.1){
+	    if(Constants1.g>1.1){
 		   shine=ice_shine;
 		   albedo=ice_specular;
 		}

@@ -76,3 +76,6 @@
 25. Water too shiny (specular not chaged with water.albedo)
     - fixed (Bug in assignment of Constants1.g for water and ice)
 26. adding new water to planet results in huge level value
+27. adding procedural water creates two ocean objects
+28. boundary between night and day in sky too sharp (or stars never shown or only shown for a short period)
+   - controlled by night sharpen slider

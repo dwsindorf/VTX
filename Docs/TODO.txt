@@ -18,7 +18,7 @@ II. Normals
    - Can this be automated somehow?
 III. Terrain
 1. Fractals
-  - Can itterative shader passes using RTT and Geometry shader be
+  - Can iterative shader passes using RTT and Geometry shader be
     used to generate fractal terrain or images ?
 2. Erosion
   - continue vertex study using neighbor transport model
@@ -35,6 +35,25 @@ III. Terrain
     o pass 2 create ht map using z-buffer data and xy image coodinates
     o pass 3-n repeat from pass 2 of image method until convergence
     In render pass
-    o apply eroded image as bump-map texture 
-     
+    o apply eroded image as bump-map texture
+    
+5/2/2023
+
+IV. Vegetation
+ 1) Low profile plants using simple textures
+  proposal
+    - download or create a set of sparse texture images of various plants and vegetation(grasses bushes etc.
+    - using gimp, set transparency to 100% for backgraound parts of image (save as png files)
+    - blend images as overlays (random or noise controlled alpha) onto underlaying terrain
+ 2) render 3d plants using billboards
+   proposal
+   - download or create a set of profile images of various plants and trees
+   - set transparency to 100% for background parts of image
+   - use placement method in VTX (as for craters and rocks) to assign spawn positions of plants
+   - use billbord method (as in 3d cloud option) for rendering
+ 3) auto-generate random plants using procedural techniques
+   proposal
+   - use fractalization techniques to render trees etc. forking branches and leaves in a heirachical manner
+     o this was done in paint project on mac in the 80's
+   - generate images for buillboard rendering (as above) or 3d solid models
     

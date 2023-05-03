@@ -156,6 +156,8 @@ public:
 
 	double aspect()         { return (double)height/(double)width;}
 	int size()              { return height*width;}
+	
+	void addAlphaToImage(GLubyte *a);
 
 	FColor color(int,double); //1d
 	FColor color(int,double,double);  //2d
