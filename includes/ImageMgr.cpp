@@ -1454,7 +1454,7 @@ void ImageReader::save(char *f, Image *image)
    	int h=image->height;
    	int w=image->width;
    	
-   	FILE *fp=fopen(path, "rb");
+   	FILE *fp=fopen(path, "wb");
    	if (fp == NULL)
    		return;
 

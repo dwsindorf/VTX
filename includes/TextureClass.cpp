@@ -279,7 +279,7 @@ void Texture::begin() {
 			double a=255/(amax-amin);
 			double b=-a*amin;
 			double ave=0;
-			//cout << "min:"<< amin << " max:"<< amax<< endl;
+			cout << "min:"<< amin << " max:"<< amax<< endl;
 			for (int i = 0; i < h; i++){
 				for (int j = 0; j< w ; j++) {
 					int index=i*w+j;

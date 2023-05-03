@@ -231,7 +231,7 @@ depend:;
 ../Debug/ImageClass.o: RenderOptions.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
 ../Debug/ImageClass.o: ./FrameBuffer.h
 ../Debug/ImageMgr.o: ImageMgr.h GLheaders.h defs.h ColorClass.h ListClass.h
-../Debug/ImageMgr.o: FileUtil.h Util.h PointClass.h TerrainClass.h
+../Debug/ImageMgr.o:	FileUtil.h Util.h PointClass.h TerrainClass.h
 ../Debug/ImageMgr.o: TerrainMgr.h NoiseClass.h TextureClass.h GLSupport.h
 ../Debug/ImageMgr.o: GLglue.h TerrainNode.h TerrainData.h NodeIF.h
 ../Debug/ImageMgr.o: AdaptOptions.h ModelClass.h SceneClass.h LightClass.h
