@@ -1402,7 +1402,6 @@ void ImageReader::printImageInfo(char *f)
 //-------------------------------------------------------------
 Image *ImageReader::openBmpFile(char *name,char *path)
 {
-	BITMAPINFO	*info=0;
 	void *bits;
 	void *pxls;
 	Image *image=0;

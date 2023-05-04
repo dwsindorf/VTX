@@ -335,7 +335,7 @@ depend:;
 ../Debug/PreviewRenderer.o: PreviewRenderer.h LightClass.h ColorClass.h
 ../Debug/PreviewRenderer.o: GLheaders.h PointClass.h defs.h ListClass.h
 ../Debug/PreviewRenderer.o: ObjectClass.h GLglue.h NodeIF.h OrbitalClass.h
-../Debug/PreviewRenderer.o: TerrainMgr.h NoiseClass.h TextureClass.h
+../Debug/PreviewRenderer.o: TerrainMgr.h NoiseClass.h .h
 ../Debug/PreviewRenderer.o: GLSupport.h ImageMgr.h TerrainNode.h
 ../Debug/PreviewRenderer.o: TerrainData.h Renderer.h ViewClass.h Util.h
 ../Debug/PreviewRenderer.o: MatrixClass.h matrix.h TrackBall.h MapClass.h
@@ -345,7 +345,7 @@ depend:;
 ../Debug/Raster.o: Effects.h Raster.h SceneClass.h LightClass.h ColorClass.h
 ../Debug/Raster.o: GLheaders.h PointClass.h defs.h ListClass.h ObjectClass.h
 ../Debug/Raster.o: GLglue.h NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
-../Debug/Raster.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
+../Debug/Raster.o: .h GLSupport.h ImageMgr.h TerrainNode.h
 ../Debug/Raster.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Debug/Raster.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h
 ../Debug/Raster.o: AdaptOptions.h MapNode.h NodeData.h MapClass.h KeyIF.h
@@ -357,14 +357,14 @@ depend:;
 ../Debug/Rocks.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Debug/Rocks.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Debug/Rocks.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
-../Debug/Rocks.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
+../Debug/Rocks.o: .h GLSupport.h ImageMgr.h TerrainNode.h
 ../Debug/Rocks.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Debug/Rocks.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h Rocks.h
 ../Debug/Rocks.o: Placements.h MapNode.h NodeData.h MapClass.h AdaptOptions.h
 ../Debug/SceneClass.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Debug/SceneClass.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Debug/SceneClass.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
-../Debug/SceneClass.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
+../Debug/SceneClass.o: .h GLSupport.h ImageMgr.h TerrainNode.h
 ../Debug/SceneClass.o: TerrainData.h Renderer.h ViewClass.h Util.h
 ../Debug/SceneClass.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Debug/SceneClass.o: AdaptOptions.h RenderOptions.h Effects.h Raster.h
@@ -373,7 +373,7 @@ depend:;
 ../Debug/SceneClass.o: ./FrameBuffer.h
 ../Debug/TerrainClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
-../Debug/TerrainClass.o: TerrainClass.h TerrainMgr.h TextureClass.h
+../Debug/TerrainClass.o: TerrainClass.h TerrainMgr.h .h
 ../Debug/TerrainClass.o: GLSupport.h GLglue.h ImageMgr.h TerrainNode.h
 ../Debug/TerrainClass.o: MapNode.h NodeData.h MapClass.h SceneClass.h
 ../Debug/TerrainClass.o: LightClass.h ObjectClass.h OrbitalClass.h Renderer.h
@@ -383,7 +383,7 @@ depend:;
 ../Debug/TerrainClass.o: ./FrameBuffer.h RenderOptions.h
 ../Debug/TerrainData.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainData.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
-../Debug/TerrainData.o: NodeData.h TextureClass.h GLSupport.h GLglue.h
+../Debug/TerrainData.o: NodeData.h .h GLSupport.h GLglue.h
 ../Debug/TerrainData.o: ImageMgr.h MapClass.h SceneClass.h LightClass.h
 ../Debug/TerrainData.o: ObjectClass.h OrbitalClass.h TerrainMgr.h
 ../Debug/TerrainData.o: TerrainNode.h Renderer.h ViewClass.h Util.h
@@ -392,13 +392,13 @@ depend:;
 ../Debug/TerrainData.o: ./GLSLVars.h ./FrameBuffer.h RenderOptions.h
 ../Debug/TerrainMgr.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainMgr.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
-../Debug/TerrainMgr.o: TerrainMgr.h TextureClass.h GLSupport.h GLglue.h
+../Debug/TerrainMgr.o: TerrainMgr.h .h GLSupport.h GLglue.h
 ../Debug/TerrainMgr.o: ImageMgr.h TerrainNode.h ImageClass.h SceneClass.h
 ../Debug/TerrainMgr.o: LightClass.h ObjectClass.h OrbitalClass.h Renderer.h
 ../Debug/TerrainMgr.o: ViewClass.h Util.h MatrixClass.h matrix.h TrackBall.h
 ../Debug/TerrainMgr.o: ModelClass.h
 ../Debug/TerrainNode.o: TerrainMgr.h NoiseClass.h PointClass.h defs.h
-../Debug/TerrainNode.o: ListClass.h ColorClass.h GLheaders.h TextureClass.h
+../Debug/TerrainNode.o: ListClass.h ColorClass.h GLheaders.h .h
 ../Debug/TerrainNode.o: GLSupport.h GLglue.h ImageMgr.h TerrainNode.h
 ../Debug/TerrainNode.o: TerrainData.h NodeIF.h SceneClass.h LightClass.h
 ../Debug/TerrainNode.o: ObjectClass.h OrbitalClass.h Renderer.h ViewClass.h
