@@ -261,7 +261,7 @@ void Texture::begin() {
 			alpha_comp=bval/total;
 		}
 		
-		cout<<"2d:"<< image()->tx2d()<<" cc:"<<color_comp<<" ac:"<<alpha_comp<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		//cout<<"2d:"<< image()->tx2d()<<" cc:"<<color_comp<<" ac:"<<alpha_comp<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
 		double a=1;
 		double b=0;

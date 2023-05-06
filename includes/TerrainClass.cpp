@@ -1457,23 +1457,37 @@ void TNwater::saveNode(FILE *f)
 // TNwater::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNwater::replaceNode(NodeIF *c){
+	//cout<<"TNwater::replaceNode:"<<this<<" "<<c<<" r:"<<right<<endl;
 	TerrainData arglist[8];
-
+	if(getParent()==0){
+	   cout<<"TNwater::replaceNode parent=0"<<end;
+	   return 0;
+	}
 	Planetoid *orb=(Planetoid *)getOrbital(this);
-	if(!orb)
+	if(!orb){
+		cout<<"TNwater::replaceNode orb=0"<<end;
 		return 0;
-	if(c->typeValue()!=typeValue())
+	}
+	if(c->typeValue()!=typeValue()){
+		cout<<"TNwater::replaceNode wrong type "<<typeValue()<<":"<<c->typeValue()<<end;
 		return 0;
+	}
 
-	delete left; // delete old expr
 	TNfunc *water_func=(TNfunc*)c;
-	TNfunc *ice_func=water_func->right;
-
+	TNfunc *ice_func=water_func->right;		
 	TNnoise *water_noise=(TNnoise *)water_func->left;
+	
+	delete left;
+	
+	if(!ice_func){ // replace with converted function 
+		left=(TNarg*)water_noise;
+		return this;
+	}
+	
 	TNnoise *ice_noise=(TNnoise *)ice_func->left;
-
-	TNarg *water_args=(TNarg*)water_func->left; // first arg (noise expr)
-	TNarg *ice_args=(TNarg*)ice_func->left; // first arg (noise expr)
+	
+	TNarg *water_args=(TNarg*)water_noise; // first arg (noise expr)	
+	TNarg *ice_args=(TNarg*)ice_noise; // first arg (noise expr)
 
 	int n=getargs(water_args,arglist,6);
 
@@ -1508,6 +1522,7 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	
 	((TNarg*)left)->right=ice_noise;
 	TNode *rem=ice_noise->right;
+
 	ice_noise->right=0;
     delete rem;
 	return this;
@@ -1537,7 +1552,7 @@ NodeIF *TNwater::newInstance(){
 	b.toString(cstr);
 	water+=cstr;
 	water+=",";
-	water+="400,50,40)";
+	water+="400,20,0.3)";
 	std::string ice="ice(noise(";
 	ice+=Noise::getNtype(r[6]);
 	ice+="|NABS|SCALE|SQR|UNS,11.3,10.1,";
@@ -1552,11 +1567,14 @@ NodeIF *TNwater::newInstance(){
 	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
-	ice+=",0.3,41.666,1)";
+	ice+=",0.3,40,1)";
 
     strcpy(buff,water.c_str());
     strcat(buff,ice.c_str());
+    //cout<<"TNwater::newInstance"<<endl;
+    //cout<<buff<<endl;
     NodeIF *c=TheScene->parse_node(buff);
+ 
 	return c;
 }
 
@@ -1566,9 +1584,12 @@ NodeIF *TNwater::getInstance(){
 	setRands();
 	
 	NodeIF *n=newInstance();
+	
 	n->setParent(getParent());
+	replaceNode(n);
 	lastn=last;
-	return n;
+	//return n;
+	return this;
 
 }
 

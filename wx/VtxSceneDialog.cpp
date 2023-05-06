@@ -321,8 +321,10 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		removeMenuFile(menu_id);
 		break;
 	case TABS_REPLACE:
-		if(newobj)
+		if(newobj){
+			cout<<"replace in tree "<<newobj<<endl;
 			replaceSelected(newobj);
+		}
 		break;
 	case TABS_DELETE:
 		{
@@ -337,6 +339,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	case TABS_ADD:
 		if(newobj){
 			newobj->setRandom(rand_flag);
+			cout<<"add to tree "<<newobj<<endl;
 			newobj=addToTree(newobj,id);
 			if(newobj->newViewObj()){
 				ObjectNode *obj=newobj;
@@ -522,7 +525,7 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 	TreeNode *tree_node;
 	NodeIF *dstObj=tnode->node;
 	
-	cout<<"add proto valid:"<<newObj->protoValid()<<endl;
+	cout<<"add proto valid:"<<newObj->protoValid()<<" "<<newObj<<endl;
 
 	wxTreeItemId itemId=dstId;
 	if (expanded || (empty && !dstObj->isLeaf())) {
@@ -593,7 +596,7 @@ bool VtxSceneDialog::setTabs(int t){
 		cout << "dialog for id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
-	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<endl;
+	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<" "<<selected->node<<endl;
 	VtxTabsMgr* mgr=tabs[t];
 	mgr->setSelected(selected);
 	//mgr->updateControls();
@@ -732,7 +735,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 	bool expanded=treepanel->IsExpanded(item);
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
-	cout<<" newobj:"<<newobj->nodeName()<<" oldobj:"<<oldobj->nodeName()<<endl;
+	cout<<" newobj:"<<newobj<<" oldobj:"<<oldobj<<endl;
 	bool vo=(oldobj==TheScene->viewobj);
 	if(vo)
 	   TheScene->viewobj=(ObjectNode *)newobj;  	

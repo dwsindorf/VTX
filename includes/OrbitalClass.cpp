@@ -4791,7 +4791,7 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	buff[0]=0;
 
 	water->propertyString(buff);
-	//cout<<"ocean property:"<<buff<<endl;
+	cout<<"ocean property:"<<buff<<endl;
 
 	planet->terrain.set_root(0);
 

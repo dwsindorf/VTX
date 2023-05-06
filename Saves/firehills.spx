@@ -6,11 +6,11 @@ Scene() {
 		height=5527.02 ft;
 		gndlvl=-4077.54 ft;
 		time=54870.2;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=130;
 		tilt=-6;
 		angle=-4;
@@ -20,7 +20,18 @@ Scene() {
 	}
 	View{
 		time=19396;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400027;
+	}
+	View{
+		height=5904.45 ft;
+		heading=144;
+		tilt=-12;
+		angle=-9;
 		minr=0.00399923;
+		radius=0.00400035;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -73,6 +84,7 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
@@ -91,10 +103,10 @@ Scene() {
 						terrain=fog(noise(9.4,3.7,-1,1,2,1,1,0,0.6))
 								ocean(noise(GRADIENT|NABS|SCALE,20.4,3.9,1,0.5,2.08,1,1,0,0))
 								
-								Texture("yellow-black",BORDER|TEX,8.97866,1.19444,1,-0.33328,1,2,1,0,0,2,-0.47224,-1)+
+								Texture("yellow-black",BORDER|TEX,8.97866,1,1,2.73008,1,2,1,0,0,2,-0.47224,-1)+
 								Texture("alpine",NORM|TEX,7585.35,1.69444,1,0.55552,1,3,1,0,0,1,0.22224,1.77776)+
-								Texture("Shist1",BUMP|TEX,93.5068,0.5,1,0,8.1112,2.1852,0.9074,0,0,-0.94448,0,0)+
-								Texture("DirtPebbles",BUMP|TEX,3992.29,0.5,1,0,8.1112,2.1852,0.9074,0,0,2,0,0)+
+								Texture("Shist1",BUMP,93.5068,0.5,1,0,8.1112,2.1852,0.9074,0,0,-0.94448,0,0)+
+								Texture("DirtPebbles",BUMP,3992.29,0.5,1,0,8.1112,2.1852,0.9074,0,0,2,0,0)+
 								Texture("drywash",A|BUMP|NORM|RANDOMIZE|S,noise(GRADIENT|NABS|SCALE|RO1,6.4,6,1,1,1.91,0.01,1,0,0),1-HT,128,1,2,0,6.88672,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1));
 					}
 					Sky(0.00419081) {

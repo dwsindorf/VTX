@@ -70,7 +70,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
-		illumination   += LdotN*intensity*horizon;
+		//illumination   += LdotN*intensity*horizon;
 		//illumination   += horizon;
 		ambient+=topcolor*(3.0*horizon);
         if(LdotN>-0.5){

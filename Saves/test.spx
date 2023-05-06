@@ -1,11 +1,11 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=28.9137;
-		theta=36.9481;
-		height=0.00875118;
-		gndlvl=1938 ft;
-		time=50577.4;
+		phi=-8.3606;
+		theta=358.726;
+		height=0.00604486;
+		gndlvl=-242501 ft;
+		time=65278;
 		vstride=586570;
 		hstride=1;
 		astride=1;
@@ -18,106 +18,53 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		phi=29.8445;
-		theta=57.4259;
-		height=0.00801854;
+		height=0.00604561;
+		gndlvl=-246464 ft;
 	}
 	View{
-		view=SURFACE;
-		phi=9.84375;
-		theta=77.3438;
-		height=10 miles;
-		gndlvl=1784.11 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
+		height=0.00636901;
+		gndlvl=-284437 ft;
 	}
 	View{
-		height=11.4922 miles;
+		time=32746.6;
 	}
 	View{
-		phi=9.31641;
-		theta=78.9258;
-		height=11.8202 miles;
-		gndlvl=51.935 ft;
-	}
-	View{
-		height=21.2272 miles;
-		heading=-49;
-		tilt=-17;
-		angle=-2;
-	}
-	View{
-		height=21.645 miles;
-		heading=-48;
-		tilt=-15;
-		angle=1;
-	}
-	View{
-		phi=6.85547;
-		theta=80.9473;
-		height=8879.89 ft;
-		gndlvl=6253.26 ft;
-		heading=0;
-		angle=0;
-	}
-	View{
-		height=36347.8 ft;
-	}
-	View{
-		view=ORBITAL;
-		phi=6.50391;
-		theta=82.2656;
-		height=0.0045;
-		gndlvl=633.6 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		phi=41.409;
-		theta=8.00272;
-		height=160.421 miles;
-	}
-	View{
-		view=SURFACE;
-		phi=41.5723;
-		theta=9.05273;
-		height=8782.53 ft;
-		gndlvl=797.541 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		phi=41.681;
-		theta=8.97362;
-		height=15626.5 ft;
-		time=31330;
-		heading=141;
-		tilt=-14;
-		angle=-3;
-	}
-	View{
-		phi=41.6789;
-		theta=8.97634;
-		height=27396.9 ft;
-		heading=142;
-		tilt=-16;
-		angle=0;
+		delt=20000;
 		vstride=0.02;
-		zoom=0.003;
+		zoom=0.004;
 		minh=1.13636e-09;
-		radius=0.00300534;
+		radius=0.0103151;
 	}
 	View{
-		minr=0.00300015;
+		height=0.00643256;
+		hstride=2;
+		minr=0.00394613;
+		radius=0.0103787;
+	}
+	View{
+		view=SURFACE;
+		phi=-14.0625;
+		theta=37.9688;
+		height=52800 ft;
+		gndlvl=-359.346 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+		hstride=1;
+		radius=0.00400993;
+	}
+	View{
+		height=14.0179 miles;
+		time=62000;
+		delt=1000;
+		heading=-38;
+		tilt=1;
+		minr=0.00399993;
+		radius=0.00401395;
 	}
 	Universe {
 		Galaxy(20000) {
-			far.distance=1.95526e+08;
 			name="Uncharted";
-			variability=0.66667;
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
@@ -131,116 +78,47 @@ Scene() {
 				Color(1.000,1.000,0.702)
 				);
 			System(1000) {
-				Star(1.5,0) {
-					color=Color(1,1,0.8);
+				Star(0.5,0) {
 					diffuse=Color(1,1,1);
-					emission=Color(1,1,0.93);
-					name="Sol";
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
-					temperature=5773.8;
-					bands("star1",ACHNL|CLAMP,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
-						Color(0.463,0.039,0.122),
-						Color(0.024,0.02,0.125));
-					Surface{
-						terrain=
-								Texture("star1",BLEND|BORDER|DECAL|LINEAR|NEAREST|REPLACE|S|TEX,noise(VORONOI|FS|NABS|SQR,0.6,10,0.98,0.4,2,0.3,1,0,0),1.66555,2,1.05456,1.4,2,2,1,0,0,2,-0.33336,0)+
-								Texture("bricks",BUMP,4.36203,-1,2,0,6.00016,2,0.5,0,0,0,0,0)+Color(1,1,1);
-					}
-					Corona(8.39661) {
-						color1=Color(1,1,1);
-						color2=Color(1,0.8,0.09);
-						name="Corona";
-						noise.expr=noise(GRADIENT|NABS|NLOD|SQR|UNS,1.5,3.9,0.07,0.5,2,0.44,1,0,-0.2);
-					}
-					Corona(2.96745) {
-						color1=Color(1,1,0.89);
-						color2=Color(0.97,0.99,0.59);
-						name="flares";
-						noise.expr=noise(SIMPLEX|NABS|NLOD,1.8,7,-0.54,0.2,2,1,1,0,0);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.003,93) {
-					albedo=0.3;
+				Planet(0.004,40) {
 					day=24;
-					diffuse=Color(1,1,1,0.89);
-					hscale=0.002;
-					ocean.level=200 ft;
-					shadow=Color(0,0,0,0.83);
-					shine=9.75019;
-					specular=Color(1,1,1,0.13);
-					tilt=-17;
-					water.albedo=0.28572;
-					water.clarity=1000 ft;
-					water.color1=Color(0.01,0.21,0.31);
-					water.color2=Color(0.12,0.19,0.39);
-					water.level=3.78788e-08;
-					water.shine=26.984;
-					year=365;
+					diffuse=Color(1,1,1,0.58);
+					hscale=0.001;
+					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
-								
-								Texture("earth-10k-alpha",TEX,1,2,0,0,1,2,0.5,0,0,0,0,0)+Z(max(noise(GRADIENT|NABS|NLOD|NNORM,8.2,10.1,0.84,0.46,2.21,1,1,1,0,1e-05),0))+
-								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.5,0,0,0,0)+Color(0.501961,0.501961,0.25098,1);
+						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2,1,1,0,0)+craters(ID2,1,0.419321,0.2,0.8,1,0.8,1,1,0.2,1,0.8,0.6,0.2,0))+
+								Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0);
 					}
-					Sky(0.0032) {
-						color=Color(0.01,0.4,0.99);
+					Sky(0.0042) {
+						color=Color(0,0.58,0.89);
 						day=24;
-						density=0.20634;
-						ghg_fraction=0.1;
-						haze.color=Color(1,1,1,0.82);
-						haze.grad=0.90244;
-						haze.value=0.819608;
+						density=0.51388;
+						haze.color=Color(1,1,0.88);
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						name="BlueSky";
 						night.color=Color(0,0,0);
 						resolution=4;
+						sky.grad=0.877953;
 						specular=Color(1,1,1);
-						tilt=-17;
-						twilight=Color(0.58,0,0.42);
-						twilight.max=1;
-						twilight.min=-1;
-						year=365;
-					}
-					Clouds(0.00303) {
-						ambient=Color(1,1,1,0);
-						crot=1;
-						emission=Color(1,1,1,0.07);
-						name="Clouds2D";
-						resolution=3.98872;
-						rseed=1.75324;
-						shine=20.0424;
-						specular=Color(1,1,1,0.67);
-						Surface{
-							terrain=Color(1,1,1,twist(0.15,noise(GRADIENT|FS|TA,1,10,0.84,0.3,2.83,1,1,0,0,1e-05))+max(noise(VORONOI|FS|NABS|TA,1,6.6,1,0.5,2,1,1,0,0,1e-05),0));
-						}
-					}
-					Clouds(0.00304) {
-						crot=1;
-						day=0.5;
-						emission=Color(1,1,1,0.21);
-						name="EarthClouds";
-						resolution=8;
-						rseed=1.728;
-						shine=8.56316;
-						specular=Color(1,1,1,0.99);
-						tilt=17;
-						Surface{
-							terrain=
-									Texture("earth_clouds",ACHNL|BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
-						}
-					}
-					Moon(0.001,0.1) {
-						day=24;
-						hscale=0.001;
-						name="MoonMap";
-						phase=139.997;
-						resolution=4;
-						rseed=2.34627;
-						year=30;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-						Surface{
-							terrain=
-									Texture("luna",BORDER|BUMP|HMAP|TEX,1,-4,2,0,1,2,0.5,0,1,0.5);
-						}
+						twilight=Color(0.5,0,0.25);
+						twilight.max=0.389724;
+						twilight.min=-0.240551;
+						year=100;
 					}
 				}
 			}

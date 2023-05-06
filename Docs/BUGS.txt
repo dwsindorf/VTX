@@ -11,39 +11,39 @@
     - work-around needed to render star first or set mode to internal
 2.  need to make sure github ".ignore" directories are created on first use if not present
     - specifically, Bitmaps/tmp (done)
-3.  Can't "Replace with" if Objects/<type> doesn't exist 
-    - fixed
+3.  Can't see "Replace with" menu if Objects/<type> doesn't exist 
+    - FIXED
 4.  need to compile VtxScene.cpp with -g flag (vs -O3) otherwise get crash (segment violation) when program starts
     - deferred (windows only problem)
     - work-aroung is to compile all wx directory with -g (doesn't seem to affect performance)
 5.  Colored textures too light unless bumpmap is enabled
 6.  adding fractal to terrain should be below ocean
-7.  replacing moon (luna) crashed program
-8.  misc. crashes
-     - selecting Set view earth crashed program
-     - selecting lines mode on surface crashed program
-     - time animation from pluto surface crashed program
-     - one problem traced to non-local planets and moons being drawn as shaded in BG4 pass (though draw_zvals called)
-       o fixed (workaround) by rendering maps as single points (draw_as_point)
-       o todo: draw_zvals should call Vertex (not SVertex) need to trace and fix this
-10. dragging point above fractal (to add small features) didn't work (needed to edit text file manually)
-11. Center text doesn't show up on Linux or windows laptop
-12. orbital distances sometimes get reset to 204 MM
-13. after adding new texture need to restart program for it to show up in list
-14. artifacts seen at water boundary if fog enabled
+7.  misc. crashes
+	- replacing moon (luna) crashed program
+    - selecting Set view earth crashed program
+    - selecting lines mode on surface crashed program
+    - time animation from pluto surface crashed program
+    - one problem traced to non-local planets and moons being drawn as shaded in BG4 pass (though draw_zvals called)
+      o fixed (workaround) by rendering maps as single points (draw_as_point)
+      o todo: draw_zvals should call Vertex (not SVertex) need to trace and fix this
+8. dragging point above fractal (to add small features) didn't work (needed to edit text file manually)
+   - adds "+" after fractal (should be no +)
+9. orbital distances sometimes get reset to 204 MM
+10. after adding new texture need to restart program for it to show up in list
+11. artifacts seen at water boundary if fog enabled
     - not noticable at high or better resolutions
-15. following set view(?) -/+ move up down etc. has huge value
+12. following set view(?) -/+ move up down etc. has huge value
     - need to goto new surface point to fix
-16. sometimes parent planet shows through sky etc. ion moon surface view
+13. sometimes parent planet shows through sky etc. ion moon surface view
     - rebuild, change view etc. doesn't fix. need to restart program (last.spx) to fix
     - problem also seen after turning shadows on and off
     - fixed (?) by always clearing depth buffer in render passes (SceneClass) related to raster.set_farview
-17. moons don't show up in front of planet in orbital views
-18. save does not save all bitmaps used by textures
-    - fixed (bug in invalidateTextures
-19. Adding new 1d texture - texture doesn't show unless program is restarted
-20. after saving planet textures are wrong (too light ?) unlsee rebuild
-21. (windows only) gdb debugger doesn't work in eclipse (but works in vscode)
+14. moons don't show up in front of planet in orbital views
+15. save does not save all bitmaps used by textures
+    - FIXED (bug in invalidateTextures)
+16. Adding new 1d texture - texture doesn't show unless program is restarted
+17. after saving planet textures are wrong (too light ?) unless rebuild
+18. (windows only) gdb debugger doesn't work in eclipse (but works in vscode)
     workaround
     1) download mingw64 prebuild binaries (including gdb)
        mv folder from downloads to to C:/mingw64
@@ -59,23 +59,30 @@
       no longer finds files where breakpoints are set
     - need to set "miDebuggerPath": "C:\\cygwin64\\bin\\gdb-cygwin.exe"
     - can now run debug launch configuration at see breakpoint stopped in file    
-22. center text not displayed in some instances
+19. center text not displayed in some instances
+    - may be because text not drawn in OnPaint thread (?)
     Linux
     - works for starup screen and open scene from file
     - momentarily was working for newSystem then stopped working after minor refactoring
     Windows 
     - works for starup screen and newSystem but not for open scene file (desktop)
-23. new bug in water render: depth buffer problem 
+20. new bug in water render: depth buffer problem 
     - caused by fix for 16 above
-    - fixed removed test for raster.set_farview
-24. windows - save image from back buffer broken (all plack image generated)
+    - FIXED removed test for raster.set_farview
+21. windows - save image from back buffer broken (all black image generated)
     - seems to work again (??)
     - but need to render scene at least once after open before taking snapshot
       otherwise image is from previous scene (swap buffers ?) 
-    - fixed: changed glReadBuffer(GL_BACK) to glReadBuffer(GL_FRONT)in Jpeg.cpp readPixels
-25. Water too shiny (specular not chaged with water.albedo)
-    - fixed (Bug in assignment of Constants1.g for water and ice)
-26. adding new water to planet results in huge level value
-27. adding procedural water creates two ocean objects
-28. boundary between night and day in sky too sharp (or stars never shown or only shown for a short period)
+    - FIXED: changed glReadBuffer(GL_BACK) to glReadBuffer(GL_FRONT)in Jpeg.cpp readPixels
+22. Water too shiny (specular not chaged with water.albedo)
+    - FIXED (Bug in assignment of Constants1.g for water and ice)
+23. adding new water to planet results in huge level value
+24. adding procedural water creates two ocean objects
+    - FIXED problems in TNwater.replaceNode
+25. boundary between night and day in sky too sharp (or stars never shown or only shown for a short period)
    - controlled by night sharpen slider
+26. problem with reflections - first sky pixel after sky-land boundary extended to rest of water as a color column
+   - FIXED in planetoid.frag ring.frag etc need to set gl_FragData[1].a to 0 
+     o used in effects.frag to identify background objects or space/sky
+27. from moon dark circular band appears on parent planet if lighting enabled
+   - FIXED bug introduced in lighting.frag (removed - illumination   += LdotN*intensity*horizon)
