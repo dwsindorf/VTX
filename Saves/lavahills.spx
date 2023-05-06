@@ -6,11 +6,11 @@ Scene() {
 		height=6 ft;
 		gndlvl=-4350.6 ft;
 		time=17912.8;
-		vstride=0.02;
+		vstride=586570;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-46;
 		tilt=-3;
 		angle=10;
@@ -19,7 +19,22 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
+		height=57.4986 ft;
+		heading=-56;
+		tilt=1;
+		angle=6;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00399919;
+	}
+	View{
+		height=241.453 ft;
+		heading=-30;
+		tilt=-3;
+		angle=-9;
 		minr=0.00399918;
+		radius=0.00399922;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -43,7 +58,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -72,14 +87,15 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
-						terrain=ocean(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.23,1,0,0))
+						terrain=ocean(noise(GRADIENT|SCALE,20.3,4.6,1,0.5,2.08,0.3,1,0,0,1e-06),noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
 								
-								Texture("yellow-black",BORDER|LINEAR|NORM|TEX,128,2,1,0.6,1,2,1,0,0,-0.86112,-0.30556,0.25)+
-								Texture("rock_stones",BUMP|TEX,1407.09,-0.66656,2,-4,9.66688,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.61,2.1,1,1,0,0));
+								Texture("yellow-black",BORDER|LINEAR|NORM|TEX,128,1,1,0.06352,1,2,1,0,0,-1.17464,-0.98416,-0.03176)+
+								Texture("rock_stones",BUMP,1407.09,-0.66656,2,-4,9.66688,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.61,2.1,1,1,0,0));
 					}
 					Sky(0.00419081) {
 						color=Color(0,0.58,0.89);

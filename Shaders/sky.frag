@@ -73,6 +73,7 @@ void main(void) {
 
 		// mix in twilite color
 		float mx=lerp(LdotR, twilite_dph+twilite_min, twilite_dph, 0.0, Twilite.a);
+		//alpha*=Twilight.a;
 
 		mx*=1-VdotR;
 

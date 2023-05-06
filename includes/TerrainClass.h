@@ -210,6 +210,7 @@ class TNwater : public TNfunc
 {
 public:
 	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {}
+	
 	void eval();
 	void saveNode(FILE *);
 	NodeIF *replaceNode(NodeIF *c);

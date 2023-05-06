@@ -153,8 +153,8 @@ void main(void) {
 #ifdef VIEWOBJ
     float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 	gl_FragData[1]=vec4(Constants1.g,depth,reflect1,vfog);
-#else  // moons
-	gl_FragData[1]=vec4(Constants1.g,illumination,0.05,0.0);
+#else  // moons 
+	gl_FragData[1]=vec4(0,illumination,0.05,0.0); // set first component (type) to 0 so reflections work
 #endif
 #ifdef VIEWOBJ
 #ifdef CONTOURS

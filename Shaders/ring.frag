@@ -24,7 +24,7 @@ uniform sampler2DRect FBOTex4;
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
-varying vec4 Color;
+//varying vec4 Color;
 uniform vec4 Shadow;
 uniform vec4 Emission;
 uniform vec4 Diffuse;
@@ -46,7 +46,7 @@ vec3 setLighting(vec4 BaseColor) {
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*amplitude;
 	}
 	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
-	return vec3(TotalDiffuse);
+	return TotalDiffuse;
 }
 #if NVALS >0
 #include "noise_funcs.h"
@@ -84,6 +84,6 @@ void main(void) {
 	//gl_FragData[1]=vec4(Constants1.g,pow(color.a,4)*illumination,0.0,0);
 	//gl_FragData[0].a=1;
 
-	//gl_FragData[1]=vec4(0,fcolor1.g,0,0);
+	gl_FragData[1]=vec4(0,fcolor1.g,0,0);
 	
 }

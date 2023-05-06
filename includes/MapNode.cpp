@@ -1866,19 +1866,28 @@ Color MapNode::Tcolor(MapData *d) {
 
     case CNODES:					// '2'
     {
-        double depth;
-        double size = cell_size();
-        int ext = 10;
-        depth = TheScene->vpoint.distance(DPOINT(this));
-
-        if (depth > 0)
-            ext = (int) (TheScene->wscale * (size / depth)); // perspective scaling
-
-        c = Adapt.tcolor(ext);
+    	double g=d->type();
+    		if(Raster.surface==2)
+    			g=d->ocean();
+    		else
+    		    g+=3;
+    	 c = Adapt.tcolor(g);
+    	        break;
     }
-        break;
+//        double depth;
+//        double size = cell_size();
+//        int ext = 10;
+//        depth = TheScene->vpoint.distance(DPOINT(this));
+//
+//        if (depth > 0)
+//            ext = (int) (TheScene->wscale * (size / depth)); // perspective scaling
+//
+//        c = Adapt.tcolor(ext);
+//    }
+//        break;
 
     case VNODES:                  	// '3'
+    {
         if (partvis())
             c = Color(1, 1, 0);
         else if (hidden())
@@ -1888,6 +1897,7 @@ Color MapNode::Tcolor(MapData *d) {
         else
             c = Color(1, 1, 1);
         break;
+    }
 
     case LNODES:                  	// '4'
         if (Raster.surface == 2)

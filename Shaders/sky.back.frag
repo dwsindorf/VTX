@@ -103,10 +103,10 @@ void main(void) {
 		}
 	}
 	float rmp = lerp(dht,0.0,0.2,0.1*illumination,0.0);
-	sa=pow(aa+rmp, 40.0*sky_grad);  // sharpen sky gradient
+	//sa=pow(aa+rmp, 40.0*sky_grad);  // sharpen sky gradient
 	sa=(1.0-dht)*pow(aa+0.1*illumination, 2.0*sky_grad);  // sharpen sky gradient
 	color.a=alpha*sa;
-	float ca=3*length(color.rgb);
+	float ca=length(color.rgb);
 	float da=lerp(density,0.25,1,ca,2.0);
 	
 	color.a*=da;
