@@ -14,18 +14,18 @@ Scene() {
 		pitch=-90;
 		angle=-90;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1;
 	}
 	View{
 		time=4.132e+07;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=5;
 		height=1.30009;
 		angle=0;
-		speed=586570;
+		speed=0.02;
 		vstride=0.02;
 		zoom=0.650044;
 		minh=1.13636e-09;
@@ -35,7 +35,7 @@ Scene() {
 	View{
 		height=6.35444;
 		time=4.1384e+07;
-		speed=586570;
+		speed=0.02;
 		zoom=3.17722;
 		minr=0.650044;
 		radius=9.53166;
@@ -43,7 +43,7 @@ Scene() {
 	}
 	View{
 		height=1.47747;
-		speed=586570;
+		speed=0.02;
 		zoom=0.738735;
 		minr=3.17722;
 		radius=2.2162;
@@ -54,7 +54,7 @@ Scene() {
 		height=344.857;
 		time=4.5658e+07;
 		angle=-90;
-		speed=586570;
+		speed=0.02;
 		vstride=1;
 		zoom=1;
 		minh=0.01;
@@ -66,14 +66,14 @@ Scene() {
 		phi=0;
 		height=464.149;
 		time=4.6134e+07;
-		speed=586570;
+		speed=0.02;
 		radius=464.149;
 	}
 	View{
 		phi=45;
 		height=348.111;
 		time=4.635e+07;
-		speed=586570;
+		speed=0.02;
 		radius=348.111;
 	}
 	View{

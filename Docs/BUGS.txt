@@ -86,3 +86,5 @@
      o used in effects.frag to identify background objects or space/sky
 27. from moon dark circular band appears on parent planet if lighting enabled
    - FIXED bug introduced in lighting.frag (removed - illumination   += LdotN*intensity*horizon)
+28. bug in 1d texture if no valid option is set (e.g. CLAMP, NORM,ACHNL) spx file contains no colors (illegal string generated)
+29. 2d generated color images have bad color component unless mod or rand value !=0

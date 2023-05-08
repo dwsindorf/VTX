@@ -13,7 +13,7 @@ Scene() {
 		minh=1.89394e-09;
 		heading=-6;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{

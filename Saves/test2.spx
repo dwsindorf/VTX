@@ -1,154 +1,23 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=1.53603;
-		theta=192.529;
-		height=0.00867082;
-		gndlvl=3635.44 ft;
-		time=53021.8;
-		vstride=586570;
+		view=SURFACE;
+		phi=-12.6589;
+		theta=3.20913;
+		height=1333.23 ft;
+		gndlvl=-95.7641 ft;
+		time=1.32155e+06;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=90;
-		pitch=-90;
-		fov=35;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		view=SURFACE;
-		phi=-2.46094;
-		theta=177.539;
-		height=52800 ft;
-		gndlvl=5175.54 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=10.6145 miles;
-	}
-	View{
-		view=ORBITAL;
-		height=0.008;
-		gndlvl=0.00508569 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-	}
-	View{
-		view=SURFACE;
-		phi=-2.51457e-07;
-		theta=177.188;
-		height=10 miles;
-		gndlvl=10957.5 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=37.314 miles;
-	}
-	View{
-		phi=-0.175782;
-		theta=178.802;
-		height=6396.74 ft;
-		gndlvl=-5315.96 ft;
-	}
-	View{
-		height=14.9898 miles;
-		heading=-37;
-		tilt=-10;
-		angle=-1;
-	}
-	View{
-		view=ORBITAL;
-		phi=-0.856934;
-		theta=179.379;
-		height=0.006;
-		gndlvl=11677.4 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-	}
-	View{
-		view=SURFACE;
-		phi=11.6016;
-		theta=163.477;
-		height=10 miles;
-		gndlvl=2752.42 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-	}
-	View{
-		height=14.2982 miles;
-	}
-	View{
-		height=63.1656 miles;
-		heading=-29;
-		tilt=-26;
-		angle=1;
-	}
-	View{
-		phi=8.41553;
-		theta=166.234;
-		height=15908.2 ft;
-		gndlvl=5865.67 ft;
-		heading=0;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		height=36900.2 ft;
-		heading=-23;
-		tilt=-16;
-		angle=-2;
-	}
-	View{
-		time=43000;
-	}
-	View{
-		phi=8.42722;
-		theta=166.217;
-		height=39174.1 ft;
-		heading=-30;
-	}
-	View{
-		phi=8.40398;
-		theta=166.276;
-		height=27194.4 ft;
-		time=45000;
-		heading=-42;
-	}
-	View{
-		height=26378.7 ft;
-		heading=-38;
-		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
-		radius=0.00400611;
-	}
-	View{
-		view=ORBITAL;
-		height=0.008;
-		gndlvl=0.000595169 ft;
-		heading=90;
-		pitch=-90;
-		tilt=0;
-		angle=0;
-		minr=0.00400111;
-		radius=0.012;
-	}
-	View{
-		phi=3.11688;
-		theta=136.122;
-		height=0.01007;
-		minr=0.004;
-		radius=0.01407;
+		minr=0.00399998;
+		heading=85;
+		tilt=-23;
+		angle=10;
+		fov=35;
+		speed=0.02;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -179,33 +48,15 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,100) {
-					ambient=Color(1,1,1,0.12);
+				Planet(0.004,40) {
 					day=24;
+					diffuse=Color(1,1,1,0.58);
 					hscale=0.001;
-					ocean.level=1.76109e+09 ft;
-					shadow=Color(0,0,0,0.48);
-					specular=Color(1,1,1,0.31);
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
-						Color(0.502,0.251,0),
-						Color(0.141,0,0));
-					image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
-					image("mars1",INVT|NORM,256,256,Color(0.2+noise(GRADIENT|NABS|NEG|SQR|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));
 					Surface{
 						terrain=
-								Texture("yellow-white",TEX,0.9999,1,1,0.44448,1,2,1,0,0,0.98416,0.22224,-0.27776)+
-								Texture("craters3",HMAP|S,noise(GRADIENT|NABS|SCALE|SQR|RO1,3,15,0.15,0.5,2.1,1,1,0,0.4,1e-06),1.02918,0.83332,0.66656,0,12.3333,2,0.5,0,1,0.22224,0,0,0,0)+
-								Texture("mars1",BUMP|TEX,1789.7,0.66656,0.8,0,4.33312,2,0.91666,0,0,0,0,0)+Z(min(noise(GRADIENT|NABS|SQR|RO1,0,11.1,0.37,0.44,2.13,1,0.9,0,0.4,1e-06),0));
-					}
-					Sky(0.0041029) {
-						color=Color(0,0.9,1);
-						day=24;
-						density=0.2;
-						name="Sky";
-						specular=Color(1,1,1);
-						year=100;
+								Texture("DirtPebbles",A|BUMP|TEX,noise(GRADIENT|NABS|SQR,11.6,2,1,0.5,2,1,4,0,0,1e-06),32768,1,1,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR,15.1,1,0.5,0.5,2,1,1,0,0,1e-06));
 					}
 				}
 			}

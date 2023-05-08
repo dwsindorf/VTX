@@ -7,7 +7,7 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 //#define DEBUG_TEXS
 
 #ifdef _DEBUG
@@ -30,7 +30,7 @@ extern int addtabs;
 static LongSym iopts[]={
 	{"INVT",	INVT},
 	{"GRAY",	GRAY},
-	{"ACHNL",	RGBA},
+	{"ACHNL",	ACHNL},
 	{"NORM",	NORM},
 	{"REPEAT",  REPEAT},
 	{"BUMP",	BUMP},
@@ -286,6 +286,10 @@ void TNbands::save(FILE *f)
 
 	int n=0;
 	TNarg *arg=(TNarg*)right;
+	if(arg)
+	arg->dump();
+	else
+		cout<<"TNbands::save no args !"<<endl;
 	while(arg){
 		if(arg->left)
 			arg->left->save(f);
@@ -481,7 +485,7 @@ void TNbands::init()
 //		colors[i].print();
 //	}
 #ifdef DEBUG_IMAGES
-		printf("%-20s BUILDING 1 X %d %s IMAGE %s\n","TNbands",h,aflag?"alpha":"",name);
+		printf("%-20s BUILDING 1 X %d %s IMAGE %s\n","TNbands",h,aflag?"RGBA":"RGB",name);
 #endif
 	image=new Image(colors,h,1);
 	if(aflag){

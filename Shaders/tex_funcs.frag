@@ -4,6 +4,7 @@
 #include "textures.h"
 
 struct tex2d_info {
+	float bumpval;
 	float bumpamp;
 	float texamp;
 	float bump_delta;
@@ -75,9 +76,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
         bump_ampl*=1+max(env_bias,-1); \
         amplitude*=1+max(env_bias,-1); \
         amplitude=clamp(amplitude,0,1); \
+        bump_ampl*=amplitude; \
     }
-
-//    slope_bias=(slope_factor>=0?2*slope_factor*Tangent.z-1:-5*slope_factor*(0.2-Tangent.z)-1); \
 
 //#define SET_TEX1D(X) \
 //	coords.x += (X)/scale;  // optional offset
@@ -94,7 +94,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	    offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
 		tval=textureTile(tid,coords+offset,texmip); \
 		alpha = tex2d[tid].texamp; \
-		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1);
+		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1); 
         //cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
 		
 #define SET_COLOR \
@@ -102,19 +102,20 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 		color.rgb=mix(color,tval, cmix); \
 		color.a=cmix;	
 
-//		color.rgb=vec3(cmix,0,0); \
-//		color.rgb=mix(color,tval, cmix); \
-
-			
 #define SET_BUMP \
-		bump*=1.0-tval.a*tex2d[tid].bump_damp*bump_max; \
+	    tva=(tval.x+tval.y+tval.z)/3.0;\
+		bump*=1.0-tva*tex2d[tid].bump_damp*bump_max; \
 		s=coords.x; \
 		t=coords.y; \
 		orders_bump=tex2d[tid].orders_bump; \
 		ds=vec2(s+orders_bump,t); \
 		dt=vec2(s,t+orders_bump); \
-		tc2.x=textureTile(tid,ds,texmip).a-tval.a; \
-		tc2.y=textureTile(tid,dt,texmip).a-tval.a; \
+		tcs=textureTile(tid,ds,texmip); \
+		tct=textureTile(tid,dt,texmip); \
+		tsa=(tcs.x+tcs.y+tcs.z)/3.0;\
+		tta=(tct.x+tct.y+tct.z)/3.0;\
+		tc2.x=tsa-tva; \
+		tc2.y=tta-tva; \
 		tc=vec3(tc2, 0.0); \
 	    last_bump=bump; \
 	    last_bmpht=bmpht; \
@@ -122,7 +123,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	    bump_fade *= lerp(Tangent.w-logf-freqmip,3.0,10.0,1.0,0.0); \
 	    bump_max=max(bump_max,bump_fade); \
 		bump += bump_max*bump_ampl*trans_mat*tc; \
-		bmpht += b+(tval.a-0.5)*bump_ampl*orders_delta;
+		bmpht += b+(tva-0.5)*bump_ampl*orders_delta;
 		
 #define NEXT_ORDER \
 		orders_delta /= tex2d[tid].orders_delta; \
@@ -137,6 +138,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 		bump=mix(last_bump,bump,tex_rem); \
 		bmpht=mix(last_bmpht,bmpht,tex_rem); \
 	} \
+
 
 #define TEX_VARS \
 	int tid=0; \
@@ -172,7 +174,12 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	g=0.0; 	
 	
 #define BUMP_VARS \
+	float tva; \
+	float tsa; \
+	float tta; \
  	vec2 tc2; \
+ 	vec4 tcs; \
+ 	vec4 tct; \
 	float s,t; \
 	vec3 tc; \
 	vec2 ds,dt; \

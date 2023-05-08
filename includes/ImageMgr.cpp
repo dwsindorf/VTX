@@ -269,7 +269,9 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	int norm=opts&NORM;
 	int invt=opts&INVT;
 	int gray=opts&GRAY;
-	bool gradient=(opts&ACHNL)>0 && grad!=0;
+	bool gradient=!gray && (grad!=0);
+	//bool gradient=grad!=0;
+
 	int achnl=((opts&ACHNL) && (opts&T1D))||(opts&BUMP);
 	TNode *rvalue=0;
 	TNode *gvalue=0;
@@ -292,6 +294,8 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	    avalue=vc[3];
 	    MALLOC(h*w,FColor,fcolors);
 	}
+	cout<<"cimage="<<cimage<<" cnorm="<<cnorm<<endl;
+
 	if(gradient){
 		gsize=grad->size()-1;
 		gcolors=(Color *)grad->data;
@@ -1473,7 +1477,7 @@ void ImageReader::save(char *f, Image *image)
 	char path[256];
 
 #ifdef DEBUG_IMAGES
-	printf("%-20s SAVING IMAGE %s\n","ImageReader",f);
+	printf("%-20s SAVING IMAGE %s %s\n","ImageReader",image->alpha()?"RGBA":"RGB",f);
 #endif
 
 	getImagePath(f,path);

@@ -6,7 +6,7 @@ Scene() {
 		height=0.00604486;
 		gndlvl=-242501 ft;
 		time=65278;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -14,7 +14,7 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -30,28 +30,19 @@ Scene() {
 	}
 	View{
 		delt=20000;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0103151;
 	}
 	View{
 		height=0.00643256;
-		hstride=2;
-		minr=0.00394613;
-		radius=0.0103787;
 	}
 	View{
 		view=SURFACE;
 		phi=-14.0625;
 		theta=37.9688;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-359.346 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		hstride=1;
-		radius=0.00400993;
 	}
 	View{
 		height=14.0179 miles;
@@ -59,8 +50,28 @@ Scene() {
 		delt=1000;
 		heading=-38;
 		tilt=1;
+	}
+	View{
+		height=14.0137 miles;
+	}
+	View{
+		height=11.3405 miles;
+		time=711100;
+		heading=-20;
+	}
+	View{
+		time=853900;
+	}
+	View{
+		time=64624.6;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00401127;
+	}
+	View{
+		time=64104.4;
 		minr=0.00399993;
-		radius=0.00401395;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -106,18 +117,17 @@ Scene() {
 						color=Color(0,0.58,0.89);
 						day=24;
 						density=0.51388;
-						haze.color=Color(1,1,0.88);
+						haze.color=Color(1,1,0.88,0);
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
 						name="BlueSky";
-						night.color=Color(0,0,0);
+						night.color=Color(0.11,0.44,0.46);
 						resolution=4;
-						sky.grad=0.877953;
 						specular=Color(1,1,1);
-						twilight=Color(0.5,0,0.25);
-						twilight.max=0.389724;
-						twilight.min=-0.240551;
+						twilight=Color(0.33,0,0.16);
+						twilight.max=1;
+						twilight.min=-0.335472;
 						year=100;
 					}
 				}

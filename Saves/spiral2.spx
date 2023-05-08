@@ -7,112 +7,112 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=20;
 		theta=7.23881e-12;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=25;
 		theta=6.72175e-12;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=35;
 		theta=5.68817e-12;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=90;
 		theta=0;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=0;
 		height=20000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=30;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=0;
 		height=20000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		theta=-3.80587e-29;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=30;
 		theta=0;
 		height=20000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=0;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=30;
 		height=20000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=90;
 		height=18000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=0;
 		height=0 ft;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		height=6000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		height=20000 ly;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		phi=30;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		pitch=-94;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		height=20000.8 ly;
 		pitch=-95;
-		speed=586570;
+		speed=0.02;
 	}
 	View{
 		height=20000 ly;
