@@ -44,6 +44,8 @@ static int	chits=0,cvisits=0,crejects=0;
 static int	nhits=0,nmisses=0,nvisits=0,nrejects=0;
 static int  cmade=0,cfreed=0;
 
+static PlacementMgr s_mgr=0;
+
 void init_display_placements()
 {
 }
@@ -148,6 +150,7 @@ void PlacementMgr::free_htable()
 //-------------------------------------------------------------
 void PlacementMgr::reset()
 {
+	//list.reset();
 }
 
 //-------------------------------------------------------------
@@ -165,6 +168,12 @@ void PlacementMgr::init()
 		add_finisher(show_display_placements);
 #endif
 	}
+//#define TEST
+//#ifdef TEST
+//	else
+//		dump();
+//#endif
+	reset();
 }
 
 //-------------------------------------------------------------
@@ -175,6 +184,20 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
     return new Placement(*this,p,n);
 }
 
+void PlacementMgr::dump(){
+	if(!hash)
+		return;
+	int cnt=0;
+	for(int i=0;i<PERMSIZE;i++){
+		Placement *h=hash[i];
+		if(h && h->flags.s.active && h->flags.s.valid){
+			h->dump();
+			cnt++;
+		}		
+	}
+	cout<<"num placements="<<cnt<<endl;
+	
+}
 //-------------------------------------------------------------
 // PlacementMgr::eval()	modulate terrain
 //-------------------------------------------------------------
@@ -266,18 +289,19 @@ void PlacementMgr::eval()
 		else
 			chits++;
 #endif        
-		if(h->radius>0.0)
-		  	h->set_terrain(*this);
+		if(h->radius>0.0){
+		  	bool active=h->set_terrain(*this);
+		  	h->flags.s.active=active;
+		}
 #ifdef DEBUG_PLACEMENTS
 		else
 			crejects++;
 #endif
-
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
 			while((h=list++)){
-		  		h->set_terrain(*this);
+		  		bool active=h->set_terrain(*this);
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;
@@ -286,6 +310,8 @@ void PlacementMgr::eval()
 #endif
 					delete h;
 				}
+				else
+					h->flags.s.active=true;
 			}
 			list.reset();
 		}
@@ -374,12 +400,15 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	double d,r,pf=1;
 	radius=0.0;
 	users=0;
+	flags.l=0;
 #ifdef DEBUG_PLACEMENTS
 	cmade++;
 #endif
     if(!mgr.dexpr && mgr.density<1){
-	    if(rands[hid]+0.5>mgr.density)
+	    if(rands[hid]+0.5>mgr.density){
+	    	flags.s.valid=false;
 		    return;
+	    }
 	}
 
 	Point4D	p(pt);
@@ -434,16 +463,21 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	    p.w=0;
 	center=p;
 	radius=r;
+	flags.s.valid=true;
 }
 
 //-------------------------------------------------------------
 // Placement::set_terrain()	impact terrain
 //-------------------------------------------------------------
-void Placement::set_terrain(PlacementMgr &mgr)
+bool Placement::set_terrain(PlacementMgr &mgr)
 {
-  // extended classes must override this
+    // extended classes must override this
+	return false;
 }
 
+void Placement::dump(){
+	// extended classes can override this
+}
 //************************************************************
 // TNplacements class
 //************************************************************
