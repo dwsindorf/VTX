@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-//#define DEBUG_TEXTURES
+#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -242,32 +242,16 @@ void Texture::begin() {
 		bool norm=normalize();
 		double amin=255;
 		double amax=0;
-		bool set_alpha=shader_pass || alpha_enabled();
-		bool auto_alpha= alpha_enabled();
-			
-//		double color_comp=1;
-//		double alpha_comp=0;
-//		
-//		if(auto_alpha){
-//			alpha_comp=1;
-//			color_comp=0;
-//		}
-//		else 
-//		if(bump_active || tex_active){
-//			double bval=bump_active?fabs(bumpamp):0;
-//			double aval=tex_active?fabs(texamp):0;
-//			double total=bval+aval+1e-6;
-//			color_comp=aval;///total;
-//			alpha_comp=bval/total;
-//		}
+		bool set_alpha=shader_pass || alpha_image;
+		bool auto_alpha= alpha_image;
 		
-		cout<<"2d:"<< image()->tx2d()<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		//cout<<"2d:"<< image()->tx2d()<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
 		double a=1;
 		double b=0;
 		double ave=0;
 		int n=h*w;
-		if(norm && (auto_alpha || rgba_image)){
+		if(norm && rgba_image){
 			for (int i = 0; i < h; i++){
 				for (int j = 0; j< w ; j++) {
 					int index=i*w+j;
@@ -305,8 +289,6 @@ void Texture::begin() {
 			    	else if(auto_alpha)
 			    		ac=alpha*(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
 			    	ac=a*ac+b;
-			    	//if(!alpha_image)
-		    		//	ac=255*color_comp;//+ac*alpha_comp;
 					ac=ac>=255?255:ac;
 					data[index*4+3]=(unsigned char)(ac);
 			    }

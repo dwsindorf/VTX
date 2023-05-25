@@ -1359,7 +1359,7 @@ void Map::render_texs(){
 		// if first texture has alpha<1 need separate pass for color
 		// otherwise object will be transparant
 
-		int aflag=texture && texture->alpha_enabled() && !transparant();
+		int aflag=texture && texture->alpha_image() && !transparant();
 
         //cout<<" Map::render_texs:"<<stexs<<endl;
 

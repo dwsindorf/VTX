@@ -362,6 +362,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	for(i=0;i<tp->textures.size;i++){
 		Texture *tex=tp->textures[i];
 		tex->eval();
+		setColor(td.c);
 		if(tex->s_data){
 			setTexture(tex->s,a);
 			if(tex->a_data)

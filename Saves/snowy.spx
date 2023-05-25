@@ -11,15 +11,13 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=1.13636e-09;
+		minr=0.0040012;
 		heading=91;
 		tilt=-2;
 		angle=11;
 		fov=35;
-		speed=0.02;
+		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		minr=0.0040012;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -76,7 +74,7 @@ Scene() {
 						Color(0.6,0.573,0.522,0.663),
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
-						terrain=snow(0.2,3,0,-0.82,1,-0.33)
+						terrain=snow(0.7,3,0,-0.17,1,-0.14)
 								fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
 								
 								Texture("alpine2",BORDER|TEX,61.5847,1,0.97296,0.11104,1,2,1,0,0,1.61112,0,0.38888)+

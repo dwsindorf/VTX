@@ -15,7 +15,8 @@ enum {
 	CRATERS 	= 0x00001000,
     ROCKS   	= 0x00002000,
     CLOUDS   	= 0x00004000,
-    PLACETYPE   = 0x000f0000,
+	SPRITES   	= 0x00008000,
+    PLACETYPE   = 0x000ff000,
     NPROJ   	= 0x01000000,
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
@@ -24,6 +25,19 @@ enum {
     CNORM    	= 0x20000000,
     FINAL   	= 0x80000000
 };
+
+
+typedef struct place_flags {
+	unsigned int  users	     : 8;	// users
+	unsigned int  valid	     : 1;	// radius >0
+	unsigned int  active	 : 1;	// used
+	unsigned int  unused     : 22;	// unassigned bits
+} place_flags;
+
+typedef union place_flags_u {
+	place_flags			s;
+	int         		l;
+} place_flags_u;
 
 class Placement
 {
@@ -35,40 +49,44 @@ public:
 	int			hid;     // hash id
 	int			type;    // type id
 	int			users;
+	place_flags_u flags;
 
 	Placement(PlacementMgr&, Point4DL&,int);
 
-	virtual void set_terrain(PlacementMgr &mgr);
+	virtual bool set_terrain(PlacementMgr &mgr);
+	virtual void dump();
 };
 
-typedef struct place_flags {
+
+typedef struct place_mgr_flags {
 	unsigned int  margin	 : 1;	// set margin bit
 	unsigned int  first	     : 1;	// first mgr in pass
 	unsigned int  joined	 : 1;	// joined mgr in pass
 	unsigned int  offset	 : 1;	// offset valid flag
 	unsigned int  finalizer  : 1;	// indicates static object
 	unsigned int  unused     : 27;	// unassigned bits
-} place_flags;
+} place_mgr_flags;
 
-typedef union place_flags_u {
-	place_flags			s;
+typedef union place_mgr_flags_u {
+	place_mgr_flags			s;
 	int         		l;
-} place_flags_u;
+} place_mgr_flags_u;
 
 class PlacementMgr
 {
 protected:
-	place_flags_u flags;
-	static Placement  **hash;
+	place_mgr_flags_u flags;
+	Placement  **hash;
     void find_neighbors(Placement *);
 
 public:
-	static	int		last_id;
+	//static	int		last_id;
 	double			size;
 	Point4D			mpt;
 	Point4D			offset;
 	LinkedList<Placement*> list;
 
+	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
 	int ntest()					{ return options & NNBRS?0:1;}
 	int project()				{ return options & NPROJ?0:1;}
 	void set_margin(int i)   	{ flags.s.margin=i;}
@@ -84,7 +102,7 @@ public:
 	void set_id(int i)          { type=i&PID;}
 	int get_id()				{ return type;}
 
-	static void free_htable();
+	void free_htable();
 
 	int		type;    // type id
 	int     options;
@@ -106,6 +124,7 @@ public:
 	virtual void reset();
 	virtual void init();
 	virtual void eval();
+	virtual void dump();
 	virtual Placement *make(Point4DL&,int);
 
 	friend class Placement;
