@@ -514,10 +514,7 @@ wxString VtxBandsTabs::getImageString(wxString name){
 	//	size=1<<(size-1);
 	size=1<<size;
 	setColorsFromControls();
-	if(strlen(opts_str)>2)
-		sprintf(buff,"bands(\"%s\",%s",(const char*)name.ToAscii(),opts_str);
-	else
-		sprintf(buff,"bands(\"%s\",",(const char*)name.ToAscii());
+	sprintf(buff,"bands(\"%s\",%s",(const char*)name.ToAscii(),opts_str);
 	if(size==0)								    // case 1
 		splineString(buff+strlen(buff));
 	else if(!dmod && !dmix){					// case 2
@@ -537,7 +534,6 @@ wxString VtxBandsTabs::getImageString(wxString name){
 		}
 	}
 	strcat(buff,");\n");
-	cout<<buff<<endl;
 	return wxString(buff);
 }
 

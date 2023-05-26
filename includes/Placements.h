@@ -15,8 +15,7 @@ enum {
 	CRATERS 	= 0x00001000,
     ROCKS   	= 0x00002000,
     CLOUDS   	= 0x00004000,
-	SPRITES   	= 0x00008000,
-    PLACETYPE   = 0x000ff000,
+    PLACETYPE   = 0x0000f000,
     NPROJ   	= 0x01000000,
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
@@ -53,8 +52,7 @@ public:
 
 	Placement(PlacementMgr&, Point4DL&,int);
 
-	virtual bool set_terrain(PlacementMgr &mgr);
-	virtual void dump();
+	virtual void set_terrain(PlacementMgr &mgr);
 };
 
 
@@ -124,7 +122,6 @@ public:
 	virtual void reset();
 	virtual void init();
 	virtual void eval();
-	virtual void dump();
 	virtual Placement *make(Point4DL&,int);
 
 	friend class Placement;

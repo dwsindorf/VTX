@@ -294,8 +294,6 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	    avalue=vc[3];
 	    MALLOC(h*w,FColor,fcolors);
 	}
-	cout<<"cimage="<<cimage<<" cnorm="<<cnorm<<endl;
-
 	if(gradient){
 		gsize=grad->size()-1;
 		gcolors=(Color *)grad->data;

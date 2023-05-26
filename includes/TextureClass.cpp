@@ -244,22 +244,6 @@ void Texture::begin() {
 		double amax=0;
 		bool set_alpha=shader_pass || alpha_enabled();
 		bool auto_alpha= alpha_enabled();
-			
-//		double color_comp=1;
-//		double alpha_comp=0;
-//		
-//		if(auto_alpha){
-//			alpha_comp=1;
-//			color_comp=0;
-//		}
-//		else 
-//		if(bump_active || tex_active){
-//			double bval=bump_active?fabs(bumpamp):0;
-//			double aval=tex_active?fabs(texamp):0;
-//			double total=bval+aval+1e-6;
-//			color_comp=aval;///total;
-//			alpha_comp=bval/total;
-//		}
 		
 		cout<<"2d:"<< image()->tx2d()<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 

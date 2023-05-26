@@ -12,7 +12,7 @@ class Rock : public Placement
 protected:
 public:
 	Rock(PlacementMgr&, Point4DL&,int);
-	bool set_terrain(PlacementMgr  &mgr);
+	void set_terrain(PlacementMgr  &mgr);
 };
 
 class RockMgr : public PlacementMgr
