@@ -15,8 +15,12 @@ enum {
 	CRATERS 	= 0x00001000,
     ROCKS   	= 0x00002000,
     CLOUDS   	= 0x00004000,
+<<<<<<< HEAD
 	SPRITES   	= 0x00008000,
     PLACETYPE   = 0x000ff000,
+=======
+    PLACETYPE   = 0x0000f000,
+>>>>>>> master
     NPROJ   	= 0x01000000,
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
@@ -76,7 +80,11 @@ class PlacementMgr
 {
 protected:
 	place_mgr_flags_u flags;
+<<<<<<< HEAD
 	Placement  **hash;
+=======
+	static Placement  **hash;
+>>>>>>> master
     void find_neighbors(Placement *);
 
 public:

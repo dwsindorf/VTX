@@ -19,6 +19,7 @@ extern void dec_tabs();
 extern char   tabs[];
 extern int addtabs;
 
+<<<<<<< HEAD
 static double cval=0;
 static double mind=0;
 static double htval=0;
@@ -32,13 +33,29 @@ static int hits=0;
 #define DEBUG_PMEM
 #define DEBUG
 #ifdef DEBUG
+=======
+static double dval=0;
+static double cval=0;
+static double hval=0;
+static double htval=0;
+static int ncalls=0;
+
+static TerrainData Td;
+static SpriteMgr *s_mgr=0; // static finalizer
+>>>>>>> master
 static void show_stats()
 {
 	if(s_mgr)
 		s_mgr->dump();
+<<<<<<< HEAD
 	cout<<"calls="<<ncalls<< " hits="<<nhits<<endl;
 }
 #endif
+=======
+	cout<<"calls="<<ncalls<<endl;
+}
+
+>>>>>>> master
 //************************************************************
 // SpriteMgr class
 //************************************************************
@@ -50,17 +67,28 @@ static void show_stats()
 //-------------------------------------------------------------
 SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 {
+<<<<<<< HEAD
 #ifdef DEBUG
 	if(!s_mgr)
 		add_finisher(show_stats);
 #endif
 	s_mgr=this;
 	//set_ntest(0);
+=======
+	set_ntest(0);
+	c=Color(1,1,1);
+	if(!s_mgr)
+		add_finisher(show_stats);
+	s_mgr=this;
+>>>>>>> master
 }
 SpriteMgr::~SpriteMgr()
 {
   	if(finalizer()){
+<<<<<<< HEAD
   		s_mgr=0;
+=======
+>>>>>>> master
 #ifdef DEBUG_PMEM
   		printf("SpriteMgr::free()\n");
 #endif
@@ -77,6 +105,7 @@ void SpriteMgr::init()
 #endif
 	PlacementMgr::init();
 	ncalls=0;
+<<<<<<< HEAD
 	nhits=0;
   	//reset();
 
@@ -85,6 +114,13 @@ void SpriteMgr::init()
 void SpriteMgr::eval(){
 	//reset();
 	PlacementMgr::eval();
+=======
+}
+
+void SpriteMgr::eval(){
+	PlacementMgr::eval();
+	dval=cval;
+>>>>>>> master
 }
 
 //-------------------------------------------------------------
@@ -106,10 +142,15 @@ Sprite::Sprite(PlacementMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 //	d=d/radius;
 //
 	ht=0;
+<<<<<<< HEAD
 	dist=1e16;
 	visits=0;
 	hits=0;
 	mind=1e16;
+=======
+	dist=1e6;
+	visits=0;
+>>>>>>> master
 //	
 //	d=d>1?1:d;
 }
@@ -122,6 +163,7 @@ bool Sprite::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 	SpriteMgr &mgr=(SpriteMgr&)pmgr;
+<<<<<<< HEAD
     flags.s.active=false;
 	if(d>=thresh)
 		return false;
@@ -141,12 +183,31 @@ bool Sprite::set_terrain(PlacementMgr &pmgr)
 
 	}
 	::hits++;
+=======
+	
+	//d=d>1?1:d;
+    //cval=0;
+	if(d>=1.0)
+		return false;
+	cval=d;
+	if(d<dist){
+		ht=htval;
+		dist=d;
+	}
+	visits++;
+
+>>>>>>> master
 	return true;
 }
 
 void Sprite::dump(){
+<<<<<<< HEAD
 	if(flags.s.active && dist<thresh)
 	cout<<visits<<":"<<hits<<" dist:"<<dist<<" ht:"<<ht<<endl;
+=======
+	if(flags.s.active)
+	cout<<visits<<" d:"<<dist<<" ht:"<<ht<<endl;
+>>>>>>> master
 }
 
 //************************************************************
@@ -154,7 +215,11 @@ void Sprite::dump(){
 //************************************************************
 TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES,l,r,0)
 {
+<<<<<<< HEAD
     mgr=new SpriteMgr(type|FINAL);
+=======
+    mgr=new SpriteMgr(type);
+>>>>>>> master
 //	TNarg &args=*((TNarg *)left);
 //	TNode *arg=args[3];
 //	if(arg && (arg->typeValue() != ID_CONST))
@@ -163,6 +228,7 @@ TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES,l,r,0)
 	setName(s);
 	FREE(s);
 	image=0;
+<<<<<<< HEAD
 	texture=0;
 }
 
@@ -172,6 +238,8 @@ TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES,l,r,0)
 TNsprite::~TNsprite()
 {
 	DFREE(texture);
+=======
+>>>>>>> master
 }
 
 //-------------------------------------------------------------
@@ -180,13 +248,22 @@ TNsprite::~TNsprite()
 void TNsprite::init()
 {
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
+<<<<<<< HEAD
 	image=images.load(sprites_file,JPG);
 	if(!image){
+=======
+	Image *timage=images.load(sprites_file,JPG);
+	if(!timage){
+>>>>>>> master
 		printf("TNsprites ERROR image %s not found\n",sprites_file);
 		return;
 	}
 	if(texture==0)
+<<<<<<< HEAD
 		texture=new Texture(image,SPRITE,this);
+=======
+		texture=new Texture(image,0,this);
+>>>>>>> master
 	smgr->init();
 	TNplacements::init();
 }
@@ -196,6 +273,7 @@ void TNsprite::init()
 //-------------------------------------------------------------
 void TNsprite::eval()
 {
+<<<<<<< HEAD
 	SINIT;
 	S0.set_flag(TEXFLAG);
 
@@ -237,6 +315,46 @@ void TNsprite::eval()
 			S0.c=Color(1,1,1);
 		nhits++;
 	}
+=======
+	//if(!right)
+	//	return;
+
+	if(TheScene->adapt_mode()){
+		if(right)
+			right->eval();
+		//return;
+	}			
+	ncalls++;
+	//double z=S0.p.z;
+	SpriteMgr *smgr=(SpriteMgr*)mgr;
+	//smgr->init();
+	htval=Height;
+
+	TNplacements::eval();  // evaluate common arguments
+	cval=0;
+	smgr->eval();
+	
+	S0.set_cvalid();
+	if(fabs(dval)>0)
+		S0.c=Color(1-dval,0,0);
+	else
+		S0.c=Color(1,1,1);
+	S0.set_pvalid();
+	S0.p.z=Height;
+	//}
+//	INIT;
+//	right->eval();
+//	double z=S0.p.z;
+//	//cout<<z<<endl;
+//	TNplacements::eval();  // evaluate common arguments
+//	smgr->ht=z;
+//	smgr->eval();
+//	right->eval();
+//	S0.set_cvalid();
+//	Color red(1,0,0);
+//	S0.c=red.mix(WHITE, smgr->radius);
+
+>>>>>>> master
 }
 //-------------------------------------------------------------
 // TNinode::setName() set name
