@@ -13,10 +13,7 @@ public:
 	double ht;
 	double dist;
 	int visits;
-<<<<<<< HEAD
-	int hits;
-=======
->>>>>>> master
+	
 
 	Sprite(PlacementMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
@@ -53,10 +50,7 @@ public:
 	Image *image;
 	Texture *texture;
 	TNsprite(char *, TNode *l, TNode *r);
-<<<<<<< HEAD
 	~TNsprite();
-=======
->>>>>>> master
 	void eval();
 	void init();
 	int typeValue()			{ return ID_SPRITE;}

@@ -242,13 +242,8 @@ void Texture::begin() {
 		bool norm=normalize();
 		double amin=255;
 		double amax=0;
-<<<<<<< HEAD
 		bool set_alpha=shader_pass || alpha_image;
 		bool auto_alpha= alpha_image;
-=======
-		bool set_alpha=shader_pass || alpha_enabled();
-		bool auto_alpha= alpha_enabled();
->>>>>>> master
 		
 		//cout<<"2d:"<< image()->tx2d()<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 

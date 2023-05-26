@@ -230,7 +230,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 	d=d/radius;
 
 	if(d>1.5)
-		return false;;
+		return false;
 
 	CraterMgr &mgr=(CraterMgr&)pmgr;
 
@@ -580,7 +580,7 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
-#define TEST
+//#define TEST
 #ifdef TEST
 	S0.set_cvalid();
 	if(fabs(dval)>0)
