@@ -177,7 +177,10 @@ void Texture::bumpCoords(int tchnl,double x, double y)
 void Texture::eval()
 {
 	int mode=CurrentScope->passmode();
-	CurrentScope->set_tpass();
+	if(sprite())
+		CurrentScope->set_spass();
+	else
+		CurrentScope->set_tpass();
 	expr->eval();
 	CurrentScope->set_passmode(mode);
 }

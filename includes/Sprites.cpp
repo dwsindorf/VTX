@@ -26,6 +26,8 @@ static int ncalls=0;
 static int nhits=0;
 static double thresh=0.25;
 
+static int cnt=0;
+
 static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
@@ -78,8 +80,8 @@ void SpriteMgr::init()
 	PlacementMgr::init();
 	ncalls=0;
 	nhits=0;
+	cnt=0;
   	//reset();
-
 }
 
 void SpriteMgr::eval(){
@@ -110,6 +112,7 @@ Sprite::Sprite(PlacementMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 	visits=0;
 	hits=0;
 	mind=1e16;
+	flags.s.active=false;
 //	
 //	d=d>1?1:d;
 }
@@ -122,31 +125,46 @@ bool Sprite::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 	SpriteMgr &mgr=(SpriteMgr&)pmgr;
-    flags.s.active=false;
+    //flags.s.active=false;
+    //Color c =Color(1,1,1);
+
 	if(d>=thresh)
 		return false;
 	visits++;
-
-//	if(hits>0)
-//		return false;
-
     flags.s.active=true;
-   
+    //if(visits>1)
+    //	return true;
+  
 	cval=lerp(d,0,thresh,0,1);
-	if(d<=dist && CurrentScope->tpass()){
+	if(d<dist){
 		ht=Height;
 		dist=d;
 		mind=d;	
 		hits++;
-
 	}
+//	if(visits==1)
+//		c=Color(0,0,1);
+//	else
+//		c=Color(1-cval,0,0);
 	::hits++;
+//	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
 	return true;
 }
 
+void Sprite::reset(){
+	flags.s.active=0;
+	visits=0;
+	hits=0;
+	dist=1e6;
+}
 void Sprite::dump(){
-	if(flags.s.active && dist<thresh)
-	cout<<visits<<":"<<hits<<" dist:"<<dist<<" ht:"<<ht<<endl;
+	if(flags.s.valid && flags.s.active){
+		char msg[256];
+		char vh[32];
+		sprintf(vh,"%d:%d",visits,hits);
+		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,center.x,center.y,center.z);
+		cout<<msg<<endl;
+	}
 }
 
 //************************************************************
@@ -196,8 +214,12 @@ void TNsprite::init()
 //-------------------------------------------------------------
 void TNsprite::eval()
 {
+	
 	SINIT;
 	S0.set_flag(TEXFLAG);
+	S0.clr_constant();
+	S0.set_cvalid();
+	S0.clr_svalid();
 
 	if(CurrentScope->rpass()){
 		Td.add_texture(texture);
@@ -209,12 +231,15 @@ void TNsprite::eval()
 		texture->enabled=false;
 		return;
 	}
-//	if(!CurrentScope->tpass()){
+	if(!CurrentScope->spass()){
+		return;	
+	}
+	if(!TheScene->adapt_mode()){
 //		S0.set_cvalid();
 //		S0.clr_svalid();
-//		S0.c=Color(0,0,1);
-//	    return;
-//	}
+//		S0.c=Color(1,1,1);
+	    return;
+	}
 
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 	//smgr->init();
@@ -227,16 +252,22 @@ void TNsprite::eval()
 	cval=0;
 	hits=0;
 	smgr->eval();  // calls Sprite.set_terrain
+   
+	Color c =Color(1,1,0);
 
+	S0.clr_constant();
+	S0.set_cvalid();
 	S0.clr_svalid();
+
 	if(hits>0){ // inside target radius
-		S0.set_cvalid();
 		if(fabs(cval)>0)
-			S0.c=Color(1-cval,0,0);
-		else
-			S0.c=Color(1,1,1);
+			c=Color(1-cval,0,0);
 		nhits++;
 	}
+	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
+    Td.c=c;
+	S0.c=c;
+
 }
 //-------------------------------------------------------------
 // TNinode::setName() set name

@@ -580,7 +580,7 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
-//#define TEST
+#define TEST
 #ifdef TEST
 	S0.set_cvalid();
 	if(fabs(dval)>0)

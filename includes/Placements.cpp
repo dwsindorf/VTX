@@ -154,7 +154,7 @@ void PlacementMgr::reset()
 	for(int i=0;i<PERMSIZE;i++){
 		Placement *h=hash[i];
 		if(h){
-			h->flags.s.active=false;
+			h->reset();
 		}		
 	}
 
@@ -193,7 +193,8 @@ void PlacementMgr::dump(){
 	int cnt=0;
 	for(int i=0;i<PERMSIZE;i++){
 		Placement *h=hash[i];
-		if(h && h->flags.s.active && h->flags.s.valid){
+		//if(h && h->flags.s.active && h->flags.s.valid){
+		if(h){
 			h->dump();
 			cnt++;
 		}		
@@ -219,11 +220,11 @@ void PlacementMgr::eval()
 	
 	pv=pv.normalize();  // project on unit sphere
 
-	msize=ntest()?maxsize:maxsize*4;
+	msize=maxsize;//ntest()?maxsize:maxsize*4;
 	for(lvl=0,size=msize;lvl<levels;size*=0.5*(mult+1),lvl++){
 
 #ifdef PLACEMENTS_LOD
-		if(!CurrentScope->init_mode() && Adapt.lod()){
+		if(!CurrentScope->init_mode() && !CurrentScope->spass()&& Adapt.lod()){
 		    double x=ptable[(int)Td.level];
 #ifdef DEBUG_LOD
 		    place_visits++;
@@ -277,7 +278,6 @@ void PlacementMgr::eval()
 #ifdef DEBUG_PLACEMENTS
 		cvisits++;
 #endif
-		//if(!h || h->type !=type){
 		if(!h || h->point!=pc || h->type !=type){
 			Placement *c=make(pc,n);
 			if(h){
@@ -293,10 +293,8 @@ void PlacementMgr::eval()
 		else
 			chits++;
 #endif        
-		if(h->radius>0.0){
-		  	bool active=h->set_terrain(*this);
-		  	h->flags.s.active=active;
-		}
+		if(h->radius>0.0)
+		  	h->set_terrain(*this);		
 #ifdef DEBUG_PLACEMENTS
 		else
 			crejects++;
@@ -305,7 +303,7 @@ void PlacementMgr::eval()
 		  	find_neighbors(h);
 			list.ss();
 			while((h=list++)){
-		  		bool active=h->set_terrain(*this);
+		  		h->set_terrain(*this);
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;
@@ -314,8 +312,6 @@ void PlacementMgr::eval()
 #endif
 					delete h;
 				}
-				else
-					h->flags.s.active=true;
 			}
 			list.reset();
 		}
@@ -481,6 +477,9 @@ bool Placement::set_terrain(PlacementMgr &mgr)
 
 void Placement::dump(){
 	// extended classes can override this
+}
+void Placement::reset(){
+	flags.s.active=false;
 }
 //************************************************************
 // TNplacements class

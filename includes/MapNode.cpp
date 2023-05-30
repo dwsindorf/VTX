@@ -2190,6 +2190,22 @@ void MapNode::Svertex(MapData*dn) {
 
 	if(!d)
 		return;
+#ifdef TEST_SPRITES	
+	TheNoise.offset=0.5;
+	TheNoise.scale=0.5;
+	double t=d->theta();
+	double p=d->phi();
+	
+	TheNoise.phi=p;
+	TheNoise.theta=t;
+	
+	Point pnt(t,p,0.5);
+	pnt=pnt+0.5;
+	pnt=pnt.rectangular();
+
+	TheNoise.set(pnt);
+	Height=d->Ht();
+#endif
 
 	Point pt=d->point();
 
@@ -2269,6 +2285,11 @@ void MapNode::Svertex(MapData*dn) {
 		for (int j = 0; j < tp->textures.size; j++) {
 			s=t=0;
 			tx = tp->textures[j];
+			if(tx->sprite()){
+				//if(visible())				
+				//	tx->eval();
+				continue;
+			}
 			if (!tx->tex_active && !tx->bump_active)
 				continue;
 			if (tx->t2d()) {

@@ -63,7 +63,6 @@ protected:
 	MapNode *npole;
 	MapNode *spole;
 	MapNode *last;
-	MapNode *current;
 	int mcount,mcreated,mdeleted;
 	
     double _conv;
@@ -81,6 +80,7 @@ protected:
 	void clearLists();
 
 public:
+	MapNode *current;
 
 	int callLists[LISTTYPES][MAXLISTS];
     bool tid_lists[LISTTYPES];

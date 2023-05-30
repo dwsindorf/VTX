@@ -12,12 +12,14 @@ class Sprite : public Placement
 public:
 	double ht;
 	double dist;
+	int hits;
 	int visits;
 	
 
 	Sprite(PlacementMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 	void dump();
+	void reset();
 };
 
 class SpriteMgr : public PlacementMgr

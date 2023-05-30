@@ -359,17 +359,19 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	double h=Ht();
 	a=TSTART;
 
+	MapNode *mn=TheMap->current;
 	for(i=0;i<tp->textures.size;i++){
 		Texture *tex=tp->textures[i];
 		tex->eval();
-		setColor(td.c);
+#ifdef TEST_SPRITES
+		setColor(S0.c);
+#endif
 		if(tex->s_data){
 			setTexture(tex->s,a);
 			if(tex->a_data)
 				setTexture(tex->avalue,a);
 		}
 		else if(tex->a_data){
-			//cout<<tex->t<<endl;
 			setTexture(tex->avalue,a);
 		}
 		if(md)

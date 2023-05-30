@@ -56,6 +56,7 @@ public:
 
 	virtual bool set_terrain(PlacementMgr &mgr);
 	virtual void dump();
+	virtual void reset();
 };
 
 

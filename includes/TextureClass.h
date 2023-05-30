@@ -76,6 +76,8 @@ public:
 	int tid;
 	int cid;
 	TNode  *expr;
+	
+	bool  sprite() 			{ return options & SPRITE ? true:false;}
 
 	int style()				{ switch(options & STYLE){
 								default:
