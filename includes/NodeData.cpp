@@ -364,8 +364,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		Texture *tex=tp->textures[i];
 		tex->eval();
 #ifdef TEST_SPRITES
-		setColor(S0.c);
-#endif
+		tex->eval();
+		setColor(S0.c);	
+#else
+		if(!tex->sprite())
+			tex->eval();
+#endif	
 		if(tex->s_data){
 			setTexture(tex->s,a);
 			if(tex->a_data)

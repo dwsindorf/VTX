@@ -1282,7 +1282,7 @@ int MapNode::gradchk()
 {
     return 0;
 }
-#define TEST_VISIT
+//#define TEST_VISIT
 //-------------------------------------------------------------
 // MapNode::visit()	visit terminal nodes only and apply function
 //-------------------------------------------------------------
@@ -2286,8 +2286,10 @@ void MapNode::Svertex(MapData*dn) {
 			s=t=0;
 			tx = tp->textures[j];
 			if(tx->sprite()){
-				//if(visible())				
-				//	tx->eval();
+#ifdef TEST_SPRITES
+			if(visible())				
+				tx->eval();
+#endif
 				continue;
 			}
 			if (!tx->tex_active && !tx->bump_active)

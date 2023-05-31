@@ -1,26 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-9.51019;
-		theta=138.605;
-		height=102.735 ft;
-		gndlvl=1595.37 ft;
+		phi=-9.49356;
+		theta=138.627;
+		height=1514.32 ft;
+		gndlvl=183.785 ft;
 		time=56005.6;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		heading=-193;
-		tilt=-12;
+		zoom=1;
+		minh=1.89394e-09;
+		minr=0.00400004;
+		heading=-226;
+		tilt=-6;
 		angle=-37;
 		fov=35;
 		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=135.438 ft;
-		minr=0.0040003;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -44,7 +41,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -61,6 +58,7 @@ Scene() {
 					ice.color2=Color(0.48,0.67,0.84);
 					ice.shine=6.944;
 					ocean.auto=1;
+					ocean.state=2;
 					shadow=Color(0,0,0,0.2);
 					specular=Color(1,1,1,0.13);
 					water.albedo=1;
@@ -85,19 +83,22 @@ Scene() {
 						Color(0.278,0.275,0.275),
 						Color(1,1,1));
 					image("ridges2",NORM,256,256,noise(GRADIENT|NABS|SQR,0,5.7,1,0.1,2,1,0,0,0,1e-06));
-					image("mounds-color",ACHNL|NORM,512,512,noise(VORONOI|NLOD|NNORM|SQR|UNS,0,1.6,1,0.5,2,1,1.1,0,0,1e-06)*noise(SIMPLEX|NABS|SQR,0.9,6.3,1,0.1,2.21,0.17,4,0,0,1e-06),"yellow-green");
-					bands("yellow-green",ACHNL|NORM|REFLECT,64,0.41936,0.34902,Color(0.039,0.039,0.039,0.349),Color(0.922,0.902,0.106),
-						Color(0.902,0.722,0.11),
-						Color(0.071,0.173,0.024),
-						Color(0.004,0.075,0),
-						Color(0,0.106,0.024),
-						Color(0,0.306,0.004),
-						Color(0.02,0.114,0.02));
+					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
+						Color(0.2,0.4,0.075),
+						Color(0.275,0.475,0),
+						Color(0.522,0.322,0.02),
+						Color(0.275,0.251,0.2),
+						Color(0.275,0.224,0.024),
+						Color(1,1,1),
+						Color(1,1,1,0),
+						Color(0.996,0.769,0.345),
+						Color(0.275,0.275,0.275,0.463));
+					image("mounds-color",ACHNL|NORM,512,512,noise(VORONOI|NLOD|NNORM|SQR|UNS,0,1.6,1,0.5,2,1,1.1,0,0,1e-06)*noise(SIMPLEX|NABS|SQR,0.9,6.3,1,0.1,2.21,0.17,4,0,0,1e-06),"alpine2");
 					image("rocks1",ACHNL|NORM,512,512,noise(SIMPLEX|NABS|NLOD|SQR,0,4.2,0.41,0.41,2.8,1,0.4,0,0.5,1e-06)*noise(VORONOI,1,3.3,1,0.5,2,1,4,0,-0,1e-06),"red-browns");
 					Surface{
 						terrain=ocean(noise(GRADIENT|SCALE,19,3,-0.34,0.5,2.08,0.1,1,0,0,1e-06),noise(GRADIENT|NABS|SCALE|SQR,21,8.9,0.22,0.4,1.84,0.17,-0.34,0,0.003,1e-06))
 								fractal(SQR|SS,15.5+noise(GRADIENT,4,10.7,0.8,0.26,2.2,2,1,1,0,1e-06),14,0.1,0.1,1,0.1,0,1,0,1)
-								Texture("dessert",A|BORDER|NORM|S|TEX,noise(GRADIENT|NABS|SCALE,0,16.2,0.07,0.13,2.1,1,1,0,0,1e-06),noise(SIMPLEX|FS|SCALE|SQR,1,5.4,1,0.5,2.06,1,1,0,0.6,1e-06),32,2,1,0.88896,1,2,1,0,0.11112,1,0.05552,0.02)+
+								Texture("dessert",A|BORDER|S|TEX,noise(GRADIENT|NABS|SCALE,0,16.2,0.07,0.13,2.1,1,1,0,0,1e-06),noise(SIMPLEX|FS|SCALE|SQR,1,5.4,1,0.5,2.06,1,1,0,0.6,1e-06),32,2,1,0.88896,1,2,1,0,0.11112,-0.6032,0.01,-0.22224)+
 								Texture("alpine",BORDER|TEX,16,2,1,0,1,2,0.5,0,0,2,0.61112,-0.83336)+
 								Texture("ridges2",HMAP|S,noise(GRADIENT|SCALE|UNS,0,14.2,0.88,0.5,2,1,1,0,0,1e-06),1.66555,1,1,0,8.33344,2,0.5,0,-1,0,0,0,0,0)+
 								Texture("mounds-color",BUMP|TEX,15613.4,-0.22208,2,0,6.33328,2.33336,0.63888,0,0,0,0,-1.22224)+
