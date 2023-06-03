@@ -827,7 +827,7 @@ void ExprMgr::init()
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
 
-	MapPt=rectangular(0.0,0.0);
+	MapPt=Td.rectangular(0.0,0.0);
 	TheNoise.set(MapPt);
 
 	exprs.ss();
@@ -1058,19 +1058,6 @@ void ExprMgr::invalidate(){
         p->invalidate();
 }
 
-//-------------------------------------------------------------
-// ExprMgr::rectangular() map point on 1,1,1, cube
-//-------------------------------------------------------------
-Point	ExprMgr::rectangular(double t, double p)
-{
-	TheNoise.offset=0.5;
-	TheNoise.scale=0.5;
-	TheNoise.phi=p;
-	TheNoise.theta=t;
-	Point pt(t,p,0.5);
-	pt=pt.rectangular();
-	return (pt+0.5);
-}
 
 //************************************************************
 // TerrainMgr class
@@ -1470,7 +1457,7 @@ void TerrainMgr::set_surface(TerrainData &data)
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
 
-	MapPt=rectangular(theta,phi);
+	MapPt=Td.rectangular(theta,phi);
 	TheNoise.set(MapPt);
 
 	INIT;
@@ -1499,7 +1486,7 @@ void TerrainMgr::init()
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
 
-	MapPt=rectangular(0.0,0.0);
+	MapPt=Td.rectangular(0.0,0.0);
 	TheNoise.set(MapPt);
 
 	exprs.ss();

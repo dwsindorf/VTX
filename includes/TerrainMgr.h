@@ -243,7 +243,6 @@ protected:
 	NodeIF *object;
 	int     dflag;
 public:
-	static Point	rectangular(double t, double p);
 
 	LinkedList<TNode*>      exprs;
 	LinkedList<TNode*>      inodes;

@@ -35,7 +35,7 @@ static double  cval;
 static double  aht;
 static double  bht;
 
-static CraterMgr s_cm(FINAL);    // static finalizer
+//static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
 static const char *def_rnoise_expr="noise(GRADIENT|NABS|RO1,0,14,0.5,0.6,2)\n";

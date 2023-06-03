@@ -2193,18 +2193,9 @@ void MapNode::Svertex(MapData*dn) {
 	if(!d)
 		return;
 #ifdef TEST_SPRITES	
-	TheNoise.offset=0.5;
-	TheNoise.scale=0.5;
 	double t=d->theta();
 	double p=d->phi();
-	
-	TheNoise.phi=p;
-	TheNoise.theta=t;
-	
-	Point pnt(t,p,0.5);
-	
-	pnt=pnt.rectangular();
-	pnt=pnt+0.5;
+	Point pnt=Td.rectangular(t,p);
 	TheNoise.set(pnt);
 	Height=d->Ht();
 #endif
@@ -2553,7 +2544,7 @@ void MapNode::init_map_data(MapData *md)
 		set_need_recalc(1);
 }
 
-void MapNode::spritetest()
+void MapNode::evalsprites()
 {
 	TerrainProperties *tp=TerrainData::tp;
     if(!visible())
@@ -2563,14 +2554,7 @@ void MapNode::spritetest()
 	double t=d->theta();
 	double p=d->phi();
 	
-	TheNoise.offset=0.5;
-	TheNoise.scale=0.5;
-	TheNoise.phi=p;
-	TheNoise.theta=t;
-	Point pt(t,p,0.5);
-	pt=pt.rectangular();
-	pt=pt+0.5;
-	
+	Point pt=Td.rectangular(t, p);
 	TheNoise.set(pt);
 	Height=d->Ht();
 

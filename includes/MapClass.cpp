@@ -1892,9 +1892,11 @@ void Map::adapt()
 #define TEST_SPRITES
 #ifdef TEST_SPRITES
 	    if(tp && tp->sprites.size ){
-			npole->visit(&MapNode::spritetest);
-			Sprite *s=tp->sprites[0];
-			s->collect();
+			npole->visit(&MapNode::evalsprites);
+			for(int i=0;i<tp->sprites.size;i++){
+				Sprite *sprite=tp->sprites[i];
+				sprite->collect();
+			}	
 	    }
 #endif
 		if(make_lists() || render_triangles()|| Render.avenorms())

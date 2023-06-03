@@ -174,6 +174,7 @@ SpriteData::SpriteData(SpritePoint *pnt){
 	aveht=pnt->aveht/pnt->visits;
 	center=TheMap->point(ps.x, ps.y, ht);
 	radius=pnt->radius;
+	id=pnt->type;
 	
 	Point t=Point(-center.x,center.y,-center.z); // why the 180 rotation around y axis ????
 
@@ -236,6 +237,20 @@ void Sprite::eval()
 	CurrentScope->set_passmode(mode);
 }
 
+bool Sprite::setProgram(){
+	return false;
+}
+bool Sprite::initProgram(){
+	return false;
+}
+void Sprite::begin(){
+	
+}
+void Sprite::end(){
+	
+}
+
+//===================== TNsprite ==============================
 //************************************************************
 // TNsprite class
 //************************************************************

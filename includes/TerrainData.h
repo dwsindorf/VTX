@@ -145,6 +145,7 @@ public:
 	static int datacnt;
 	static int flags;
 	static int tids;
+	static int sids;
 	static int pass;
 
 	static TerrainProperties *tp;
@@ -153,6 +154,8 @@ public:
 	static void set_flag(int i)    { BIT_ON(flags,i);}
 	static void clr_flag(int i)    { BIT_OFF(flags,i);}
 	static int get_flag(int i)		{ return flags&i;}
+
+	static Point	rectangular(double t, double p);
 
 	void insert_strata(TerrainData &);
 	void begin();
@@ -335,6 +338,7 @@ public:
 
 	static int nid;
 	static int tid;
+	static int sid;
 	static int pass;
 
 	TerrainProperties(int);

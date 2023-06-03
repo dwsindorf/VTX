@@ -309,7 +309,7 @@ void PlacementMgr::eval()
 			chits++;
 #endif        
 		if(h->radius>0.0)
-		  	h->set_terrain(*this);		
+		  	h->set_terrain(*this);
 #ifdef DEBUG_PLACEMENTS
 		else
 			crejects++;
