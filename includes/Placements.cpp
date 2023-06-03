@@ -128,6 +128,7 @@ PlacementMgr::~PlacementMgr()
 		FREE(hash);
 	}
 }
+
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
 //-------------------------------------------------------------
@@ -157,7 +158,6 @@ void PlacementMgr::reset()
 			h->reset();
 		}		
 	}
-
 	//list.reset();
 }
 
@@ -170,7 +170,7 @@ void PlacementMgr::init()
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
 #endif
-  		CALLOC(PERMSIZE,Placement*,hash);
+  		CALLOC(PERMSIZE+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
 		add_initializer(init_display_placements);
 		add_finisher(show_display_placements);
@@ -187,6 +187,21 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
     return new Placement(*this,p,n);
 }
 
+//-------------------------------------------------------------
+// PlacementMgr::make()	virtual factory method to make Placement
+//-------------------------------------------------------------
+Placement *PlacementMgr::next()
+{
+	if(!hash || index>=PERMSIZE)
+		return 0;
+	Placement *h=hash[index];
+	while(!h && index<PERMSIZE){
+		index++;
+		h=hash[index];
+	}
+	index++;
+    return h;
+}
 void PlacementMgr::dump(){
 	if(!hash)
 		return;
@@ -217,7 +232,7 @@ void PlacementMgr::eval()
 
 	if(TheNoise.noise3D())
 		 pv.w=0;
-	
+	double l=pv.length();
 	pv=pv.normalize();  // project on unit sphere
 
 	msize=maxsize;//ntest()?maxsize:maxsize*4;

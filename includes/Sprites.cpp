@@ -1,6 +1,6 @@
 
 //************************************************************
-// classes Sprite, SpriteMgr
+// classes SpritePoint, SpriteMgr
 //************************************************************
 #include "SceneClass.h"
 #include "RenderOptions.h"
@@ -32,7 +32,7 @@ static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
 #define DEBUG_PMEM
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 static void show_stats()
 {
@@ -81,6 +81,7 @@ void SpriteMgr::init()
 	ncalls=0;
 	nhits=0;
 	cnt=0;
+	ss();
   	//reset();
 }
 
@@ -94,46 +95,38 @@ void SpriteMgr::eval(){
 //-------------------------------------------------------------
 Placement *SpriteMgr::make(Point4DL &p, int n)
 {
-    return new Sprite(*this,p,n);
+    return new SpritePoint(*this,p,n);
 }
 
 //************************************************************
-// class Sprite
+// class SpritePoint
 //************************************************************
-Sprite::Sprite(PlacementMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
+SpritePoint::SpritePoint(PlacementMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 {
-//	SpriteMgr &m=(SpriteMgr&)mgr;
-//
-//	double d=m.mpt.distance(center);
-//	d=d/radius;
-//
 	ht=0;
+	aveht=0;
 	dist=1e16;
 	visits=0;
 	hits=0;
 	mind=1e16;
 	flags.s.active=false;
-//	
-//	d=d>1?1:d;
 }
 
 //-------------------------------------------------------------
-// Sprite::set_terrain()	impact terrain
+// SpritePoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
-bool Sprite::set_terrain(PlacementMgr &pmgr)
+bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 {
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 	SpriteMgr &mgr=(SpriteMgr&)pmgr;
-    //flags.s.active=false;
-    //Color c =Color(1,1,1);
-
+ 
 	if(d>=thresh)
 		return false;
 	visits++;
     flags.s.active=true;
-    //if(visits>1)
-    //	return true;
+   // if(visits==1)
+    aveht+=Height;
   
 	cval=lerp(d,0,thresh,0,1);
 	if(d<dist){
@@ -151,20 +144,96 @@ bool Sprite::set_terrain(PlacementMgr &pmgr)
 	return true;
 }
 
-void Sprite::reset(){
+void SpritePoint::reset(){
 	flags.s.active=0;
 	visits=0;
 	hits=0;
 	dist=1e6;
+	aveht=0;
 }
-void Sprite::dump(){
+void SpritePoint::dump(){
 	if(flags.s.valid && flags.s.active){
+		Point4D p(point);
+		p=center;
 		char msg[256];
 		char vh[32];
 		sprintf(vh,"%d:%d",visits,hits);
-		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,center.x,center.y,center.z);
+		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
 		cout<<msg<<endl;
 	}
+}
+//==================== SpriteData ===============================
+SpriteData::SpriteData(SpritePoint *pnt){
+	Point4D	p(pnt->center);
+	//p=p.normalize();
+	Point pp=Point(p.x,p.y,p.z);
+
+	Point ps=pp.spherical();
+	
+	ht=pnt->ht;//aveht/pnt->visits;
+	aveht=pnt->aveht/pnt->visits;
+	center=TheMap->point(ps.x, ps.y, ht);
+	radius=pnt->radius;
+	
+	Point t=Point(-center.x,center.y,-center.z); // why the 180 rotation around y axis ????
+
+	distance=TheScene->vpoint.distance(t);
+}
+
+void SpriteData::print(){
+	char msg[256];
+	Point ps=center.spherical();
+	double h=TheMap->radius*TheMap->hscale;
+	
+	sprintf(msg,"t:%-1.3g p:%-1.3g ht:%-1.4f dist:%g",ps.x,ps.y,h*ht/FEET,distance/FEET);
+	cout<<msg<<endl;
+	
+}
+//===================== Sprite ==============================
+//-------------------------------------------------------------
+// Sprite::Sprite() Constructor
+//-------------------------------------------------------------
+Sprite::Sprite(Image *i, int l, TNode *e)
+{
+	options=l;
+    image=i;
+	expr=e;
+}
+
+//-------------------------------------------------------------
+// Sprite::collect() collect valid sprite points
+//-------------------------------------------------------------
+void Sprite::collect()
+{
+	SpriteMgr *smgr=(SpriteMgr*)expr->mgr;
+	smgr->ss();
+	sprites.free();
+	SpritePoint *s=(SpritePoint *)smgr->next();
+	LinkedList<SpriteData*> list;
+	while(s){
+		if(s->flags.s.valid && s->flags.s.active){
+			list.add(new SpriteData(s));
+		}
+		s=smgr->next();
+	}
+	sprites.set(list); // copy pointers to array
+	sprites.sort();
+	cout<<" collected "<<sprites.size<<" sprites"<<endl;
+	for(int i=0;i<sprites.size;i++){
+		cout<<i<<" ";
+		sprites[i]->print();	
+	}
+	//expr->collect();
+}
+//-------------------------------------------------------------
+// Sprite::eval() evaluate TNtexture string
+//-------------------------------------------------------------
+void Sprite::eval()
+{
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+	expr->eval();
+	CurrentScope->set_passmode(mode);
 }
 
 //************************************************************
@@ -173,15 +242,11 @@ void Sprite::dump(){
 TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES,l,r,0)
 {
     mgr=new SpriteMgr(type);
-//	TNarg &args=*((TNarg *)left);
-//	TNode *arg=args[3];
-//	if(arg && (arg->typeValue() != ID_CONST))
-//		mgr->dexpr=arg;
 	set_collapsed();
 	setName(s);
 	FREE(s);
 	image=0;
-	texture=0;
+	sprite=0;
 }
 
 //-------------------------------------------------------------
@@ -189,7 +254,7 @@ TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES,l,r,0)
 //-------------------------------------------------------------
 TNsprite::~TNsprite()
 {
-	DFREE(texture);
+	DFREE(sprite);
 }
 
 //-------------------------------------------------------------
@@ -203,8 +268,8 @@ void TNsprite::init()
 		printf("TNsprites ERROR image %s not found\n",sprites_file);
 		return;
 	}
-	if(texture==0)
-		texture=new Texture(image,SPRITE,this);
+	if(sprite==0)
+		sprite=new Sprite(image,SPRITE,this);
 	smgr->init();
 	TNplacements::init();
 }
@@ -213,8 +278,7 @@ void TNsprite::init()
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
 void TNsprite::eval()
-{
-	
+{	
 	SINIT;
 	S0.set_flag(TEXFLAG);
 	S0.clr_constant();
@@ -222,23 +286,12 @@ void TNsprite::eval()
 	S0.clr_svalid();
 
 	if(CurrentScope->rpass()){
-		Td.add_texture(texture);
+		Td.add_sprite(sprite);
 		return;
 	}	
 
-	texture->enabled=true;
-	if(!isEnabled()){
-		texture->enabled=false;
-		return;
-	}
 	if(!CurrentScope->spass()){
 		return;	
-	}
-	if(!TheScene->adapt_mode()){
-//		S0.set_cvalid();
-//		S0.clr_svalid();
-//		S0.c=Color(1,1,1);
-	    return;
 	}
 
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
@@ -251,7 +304,7 @@ void TNsprite::eval()
 	TNplacements::eval();  // evaluate common arguments
 	cval=0;
 	hits=0;
-	smgr->eval();  // calls Sprite.set_terrain
+	smgr->eval();  // calls SpritePoint.set_terrain
    
 	Color c =Color(1,1,0);
 

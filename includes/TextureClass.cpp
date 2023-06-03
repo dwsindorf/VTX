@@ -177,10 +177,7 @@ void Texture::bumpCoords(int tchnl,double x, double y)
 void Texture::eval()
 {
 	int mode=CurrentScope->passmode();
-	if(sprite())
-		CurrentScope->set_spass();
-	else
-		CurrentScope->set_tpass();
+	CurrentScope->set_tpass();
 	expr->eval();
 	CurrentScope->set_passmode(mode);
 }
@@ -221,7 +218,6 @@ void Texture::begin() {
 	glEnable(GL_TEXTURE_2D);
 	int tid=0;
 	if(!valid || Render.invalid_textures()) {
-		//cout<<"Texture::begin()"<<endl;
 		if (id[tid]>0)
 			glDeleteTextures(2, (GLuint*)&id);
 		glGenTextures(1, &id[tid]); // Generate a unique texture ID
@@ -243,39 +239,10 @@ void Texture::begin() {
 		double alpha=shader_pass?1.0:texamp;
 
 		bool norm=normalize();
-		double amin=255;
-		double amax=0;
 		bool set_alpha=shader_pass || alpha_image;
-		bool auto_alpha= alpha_image;
 		
-		cout<<"2d:"<< image()->tx2d()<< " auto_alpha:"<< auto_alpha << " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		cout<<"2d:"<< image()->tx2d()<< " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
-		double a=1;
-		double b=0;
-		double ave=0;
-		int n=h*w;
-//		if(norm && rgba_image){
-//			for (int i = 0; i < h; i++){
-//				for (int j = 0; j< w ; j++) {
-//					int index=i*w+j;
-//					int rgb_index=index*rgb_step;
-//					unsigned char ac=255;
-//			    	if(alpha_image)
-//			    		ac=rgb[rgb_index+3];			    	
-//			    	else 
-//			    		ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
-//					ac*=alpha;
-//					ac=ac>=255?255:ac;
-//					amin=ac<amin?ac:amin;
-//					amax=ac>=amax?ac:amax;
-//					ave+=ac;
-//				}
-//			}
-//			a=255/(amax-amin);
-//			b=-a*amin;
-//			ave/=n;
-//			cout << "min:"<< amin << " max:"<< amax<< " ave:"<<ave<<endl;
-//		}
 		for (int i = 0; i < h; i++){
 			for (int j = 0; j< w ; j++) {
 			    unsigned char ac=255;
@@ -284,19 +251,11 @@ void Texture::begin() {
 			    data[index*4+0]=rgb[rgb_index+0];
 			    data[index*4+1]=rgb[rgb_index+1];
 			    data[index*4+2]=rgb[rgb_index+2];
-			    int ci=index*4;
 
-			    if(set_alpha && rgba_image){
-	//		    	if(rgba_image)
-			    		ac=alpha*rgb[rgb_index+3];
-//			    	else if(auto_alpha)
-//			    		ac=alpha*(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
-//			    	ac=a*ac+b;
-//					ac=ac>=255?255:ac;
-//					data[index*4+3]=(unsigned char)(ac);
-			    }
-			   // else
-			    	data[index*4+3]=ac;
+			    if(set_alpha && rgba_image)
+			    	ac=alpha*rgb[rgb_index+3];
+			    
+			    data[index*4+3]=ac;
 			}
 		}
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -403,7 +362,6 @@ bool Texture::setProgram(){
 	float ts= scale;
 	float orders_bump=1.0/delta;
 	//float logf = log2(ts)+log2(orders_delta)-1+0.5*log2(height())+TheScene->freq_mip;
-
 
 	float dlogf=log2(orders_delta); //
 	float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images

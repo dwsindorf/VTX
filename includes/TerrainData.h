@@ -18,6 +18,7 @@ class TNtexture;
 class TNsubr;
 class TNvar;
 class Texture;
+class Sprite;
 class TerrainProperties;
 class TNnoise;
 class TNcolor;
@@ -193,6 +194,7 @@ public:
 	void next_id()          { set_id(tids++);}
 	TerrainProperties		*add_id();
 	static void add_texture(Texture *);
+	static void add_sprite(Sprite *);
 	static void add_TNnoise(TNnoise *);
 	static void add_TNcolor(TNcolor *);
 	static void add_TNdensity(TNdensity *);
@@ -322,6 +324,7 @@ public:
 	Color color;
 	int callList;
 	Array<Texture*> textures;
+	Array<Sprite*> sprites;
 	Array<TNnoise*> noise;
 	TNcolor *tncolor;
 	TNpoint *tnpoint;

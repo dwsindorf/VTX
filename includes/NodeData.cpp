@@ -6,6 +6,7 @@
 #include "RenderOptions.h"
 #include "Effects.h"
 #include "matrix.h"
+#include "Sprites.h"
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
@@ -302,6 +303,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	a=b=0;
 
 	setTextures(tp->textures.size?1:0);
+	setSprites(tp->sprites.size?1:0);
 	int nbumps=0;
 	int nmaps=0;
 
@@ -357,19 +359,19 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			TheMap->set_erosion(1);
 	}
 	double h=Ht();
+//#define TEST_SPRITES
+#ifdef TEST_SPRITES
+	for(i=0;i<tp->sprites.size;i++){
+		Sprite *sprite=tp->sprites[i];
+		sprite->eval();
+		setColor(S0.c);
+	}
+#endif
 	a=TSTART;
 
-	MapNode *mn=TheMap->current;
 	for(i=0;i<tp->textures.size;i++){
 		Texture *tex=tp->textures[i];
 		tex->eval();
-#ifdef TEST_SPRITES
-		tex->eval();
-		setColor(S0.c);	
-#else
-		if(!tex->sprite())
-			tex->eval();
-#endif	
 		if(tex->s_data){
 			setTexture(tex->s,a);
 			if(tex->a_data)

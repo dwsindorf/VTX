@@ -192,6 +192,7 @@ public:
 	Point4D fract()                 { Point4D p=floor(); return *this-p;}
 
 	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
+	Point toPoint()                 { return Point(x,x,z);}
 
 
 	void print();

@@ -10,6 +10,7 @@
 #include "GLSLMgr.h"
 #include "FileUtil.h"
 #include "TerrainClass.h"
+#include "Sprites.h"
 static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
@@ -1888,7 +1889,14 @@ void Map::adapt()
 			make_visbox();
 		Raster.set_draw_nvis(0);
 		get_info();
-
+#define TEST_SPRITES
+#ifdef TEST_SPRITES
+	    if(tp && tp->sprites.size ){
+			npole->visit(&MapNode::spritetest);
+			Sprite *s=tp->sprites[0];
+			s->collect();
+	    }
+#endif
 		if(make_lists() || render_triangles()|| Render.avenorms())
 			make_triangle_lists();
 		else {

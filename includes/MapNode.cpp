@@ -9,6 +9,7 @@
 #include "Effects.h"
 #include "matrix.h"
 #include "Perlin.h"
+#include "Sprites.h"
 
 extern double Theta, Phi, Height,Rscale,Margin;
 extern Point MapPt;
@@ -2183,6 +2184,7 @@ void MapNode::vertexN(MapData*d)
 //-------------------------------------------------------------
 // MapNode::Svertex()	node visit function for shader pass
 //-------------------------------------------------------------
+#define TEST_SPRITES	
 void MapNode::Svertex(MapData*dn) {
 	MapData*d=surface_data(dn);
 
@@ -2200,9 +2202,9 @@ void MapNode::Svertex(MapData*dn) {
 	TheNoise.theta=t;
 	
 	Point pnt(t,p,0.5);
-	pnt=pnt+0.5;
+	
 	pnt=pnt.rectangular();
-
+	pnt=pnt+0.5;
 	TheNoise.set(pnt);
 	Height=d->Ht();
 #endif
@@ -2244,6 +2246,7 @@ void MapNode::Svertex(MapData*dn) {
 		dpfactor=rampstep(0,1.0,norm.dot(dv),0.2,1);
 	//}
 	// reduce max orders with distance
+    Point mp=d->mpoint();
 	double depth = TheScene->vpoint.distance(d->mpoint());
 	double dfactor=0.5*GLSLMgr::wscale/depth;
 
@@ -2265,6 +2268,13 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d);
+#ifdef TEST_SPRITES
+	for (int j = 0; j < tp->sprites.size; j++) {
+		Sprite *ts=tp->sprites[j];
+		if(visible())				
+			ts->eval();		
+	}
+#endif
 
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
@@ -2285,13 +2295,6 @@ void MapNode::Svertex(MapData*dn) {
 		for (int j = 0; j < tp->textures.size; j++) {
 			s=t=0;
 			tx = tp->textures[j];
-			if(tx->sprite()){
-#ifdef TEST_SPRITES
-			if(visible())				
-				tx->eval();
-#endif
-				continue;
-			}
 			if (!tx->tex_active && !tx->bump_active)
 				continue;
 			if (tx->t2d()) {
@@ -2304,7 +2307,6 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				if(tx->a_data){
 					t = d->texture(index);
-					//cout<<t<<endl;
 					if(tx->d_data)
 						t*=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
@@ -2550,4 +2552,32 @@ void MapNode::init_map_data(MapData *md)
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
 		set_need_recalc(1);
 }
+
+void MapNode::spritetest()
+{
+	TerrainProperties *tp=TerrainData::tp;
+    if(!visible())
+    	return;
+	MapData *d=&data;
+
+	double t=d->theta();
+	double p=d->phi();
+	
+	TheNoise.offset=0.5;
+	TheNoise.scale=0.5;
+	TheNoise.phi=p;
+	TheNoise.theta=t;
+	Point pt(t,p,0.5);
+	pt=pt.rectangular();
+	pt=pt+0.5;
+	
+	TheNoise.set(pt);
+	Height=d->Ht();
+
+	for(int i=0;i<tp->sprites.size;i++){
+		Sprite *sprite=tp->sprites[i];
+		sprite->eval();
+	}	
+}
+
 

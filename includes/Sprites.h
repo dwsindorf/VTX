@@ -6,22 +6,51 @@
 #include "Placements.h"
 
 class SpriteMgr;
+class TNsprite;
 
-class Sprite : public Placement
+class SpritePoint : public Placement
 {
 public:
 	double ht;
+	double aveht;
 	double dist;
 	int hits;
 	int visits;
-	
 
-	Sprite(PlacementMgr&, Point4DL&,int);
+	SpritePoint(PlacementMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 	void dump();
 	void reset();
+
 };
 
+class SpriteData
+{
+public:
+	double distance;
+	double radius;
+	double ht;
+	double aveht;
+	Point center;
+	SpriteData(SpritePoint*);
+	double value() { return distance;}
+	void print();
+};
+
+class Sprite
+{
+	ValueList<SpriteData*> sprites;
+public:
+	Image *image;
+	int    options;
+	TNsprite  *expr;
+
+	Sprite(Image *i, int l, TNode *e);
+	void eval();
+	void collect();
+	void print();
+
+};
 class SpriteMgr : public PlacementMgr
 {
 protected:
@@ -50,7 +79,7 @@ protected:
 
 public:
 	Image *image;
-	Texture *texture;
+	Sprite *sprite;
 	TNsprite(char *, TNode *l, TNode *r);
 	~TNsprite();
 	void eval();

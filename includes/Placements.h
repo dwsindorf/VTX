@@ -87,6 +87,7 @@ public:
 	double			size;
 	Point4D			mpt;
 	Point4D			offset;
+	int index;
 	LinkedList<Placement*> list;
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
@@ -129,6 +130,8 @@ public:
 	virtual void eval();
 	virtual void dump();
 	virtual Placement *make(Point4DL&,int);
+	virtual Placement *next();
+	virtual void ss(){ index=0;}
 
 	friend class Placement;
 };
