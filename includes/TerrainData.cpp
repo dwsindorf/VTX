@@ -333,6 +333,10 @@ void TerrainProperties::initProgram(){
 			rand=true;
 		textures[tid]->initProgram();
 	}
+	for(sid=0;sid<sprites.size;sid++){
+		sprites[sid]->initProgram();
+	}
+
 	if(tncolor)
 		tncolor->initProgram();
 	if(tndensity)

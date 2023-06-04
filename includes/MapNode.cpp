@@ -2184,7 +2184,6 @@ void MapNode::vertexN(MapData*d)
 //-------------------------------------------------------------
 // MapNode::Svertex()	node visit function for shader pass
 //-------------------------------------------------------------
-#define TEST_SPRITES	
 void MapNode::Svertex(MapData*dn) {
 	MapData*d=surface_data(dn);
 
@@ -2192,13 +2191,6 @@ void MapNode::Svertex(MapData*dn) {
 
 	if(!d)
 		return;
-#ifdef TEST_SPRITES	
-	double t=d->theta();
-	double p=d->phi();
-	Point pnt=Td.rectangular(t,p);
-	TheNoise.set(pnt);
-	Height=d->Ht();
-#endif
 
 	Point pt=d->point();
 
@@ -2259,7 +2251,14 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d);
-#ifdef TEST_SPRITES
+//#define COLOR_SPRITES	
+
+#ifdef COLOR_SPRITES
+	double t=d->theta();
+	double p=d->phi();
+	Point pnt=Td.rectangular(t,p);
+	TheNoise.set(pnt);
+	Height=d->Ht();
 	for (int j = 0; j < tp->sprites.size; j++) {
 		Sprite *ts=tp->sprites[j];
 		if(visible())				

@@ -220,10 +220,12 @@ void Sprite::collect()
 	sprites.set(list); // copy pointers to array
 	sprites.sort();
 	cout<<" collected "<<sprites.size<<" sprites"<<endl;
+#ifdef SHOW
 	for(int i=0;i<sprites.size;i++){
 		cout<<i<<" ";
 		sprites[i]->print();	
 	}
+#endif
 	//expr->collect();
 }
 //-------------------------------------------------------------

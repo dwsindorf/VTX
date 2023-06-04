@@ -1214,9 +1214,10 @@ void Map::render_shaded()
 			else
 				Lights.setEmission(Td.emission);
 			glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
+            set_sprites(tp->sprites.size>0);
+
 			if(!object->setProgram())
 				continue;
-
 			texture=0;
 			total_rpasses++;
 			if(render_triangles()){
@@ -1227,6 +1228,8 @@ void Map::render_shaded()
 			}
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
+			if(sprites())
+				render_sprites();
 			reset_texs();
 		}
 	}
@@ -1400,6 +1403,13 @@ void Map::render_texs(){
 		}
 		reset_texs();
 	}
+}
+
+//-------------------------------------------------------------
+// Map::render_sprites()	render sprites
+//-------------------------------------------------------------
+void Map::render_sprites(){
+	cout<<"TODO: render sprites"<<endl;
 }
 
 //-------------------------------------------------------------
@@ -1889,7 +1899,7 @@ void Map::adapt()
 			make_visbox();
 		Raster.set_draw_nvis(0);
 		get_info();
-#define TEST_SPRITES
+//#define TEST_SPRITES
 #ifdef TEST_SPRITES
 	    if(tp && tp->sprites.size ){
 			npole->visit(&MapNode::evalsprites);

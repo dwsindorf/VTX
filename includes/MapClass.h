@@ -53,7 +53,8 @@ protected:
 		VISIDS      =	0x00400000, // generate vis box from id pass
 		ENDADAPT    =	0x00800000, // set before running last ids pass
 		GEOMETRY    =	0x01000000, // geometery flag;
-		MULTILAYER    =	0x02000000  // multilayer flag
+		MULTILAYER  =	0x02000000,  // multilayer flag
+		SPRITES     =	0x04000000	// transparancy flag
 
 	};
 
@@ -74,6 +75,8 @@ protected:
 	void reset();
 	void reset_texs();
 	void render_texs();
+	void render_sprites();
+
 	void render_bumps();
 	void render_water();
 	void make_triangle_lists();
@@ -172,6 +175,9 @@ public:
 
 	void	set_transparant(int i){ BIT_SET(flags,TRANSPARANT,i);}
 	int		transparant()		{ return (flags & TRANSPARANT)?1:0;}
+
+	void	set_sprites(int i)	{ BIT_SET(flags,SPRITES,i);}
+	int		sprites()			{ return (flags & SPRITES)?1:0;}
 
 	void	set_vchecked()		{ BIT_ON(flags,VCHKED);}
 	void	clr_vchecked()		{ BIT_OFF(flags,VCHKED);}
