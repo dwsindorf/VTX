@@ -583,6 +583,7 @@ void Map::render()
 	    if(TheScene->bounds==&vbounds)
 	    	render_bounds();
 	}
+	set_first(false);
 }
 
 //-------------------------------------------------------------
@@ -1409,7 +1410,21 @@ void Map::render_texs(){
 // Map::render_sprites()	render sprites
 //-------------------------------------------------------------
 void Map::render_sprites(){
-	cout<<"TODO: render sprites"<<endl;
+	reset_texs();
+	if(first()){
+		Sprite::reset();
+		npole->visit(&MapNode::evalsprites);
+		Sprite::start_collect();
+		for(int i=0;i<tp->sprites.size;i++){
+			Sprite *sprite=tp->sprites[i];
+			sprite->collect();
+		}
+		Sprite::end_collect();
+	}
+	
+	bool ok=SpriteMgr::setProgram();
+
+	cout<<"render sprites shader="<<ok<<endl;
 }
 
 //-------------------------------------------------------------
@@ -1899,16 +1914,7 @@ void Map::adapt()
 			make_visbox();
 		Raster.set_draw_nvis(0);
 		get_info();
-//#define TEST_SPRITES
-#ifdef TEST_SPRITES
-	    if(tp && tp->sprites.size ){
-			npole->visit(&MapNode::evalsprites);
-			for(int i=0;i<tp->sprites.size;i++){
-				Sprite *sprite=tp->sprites[i];
-				sprite->collect();
-			}	
-	    }
-#endif
+
 		if(make_lists() || render_triangles()|| Render.avenorms())
 			make_triangle_lists();
 		else {
@@ -1935,6 +1941,7 @@ void Map::adapt()
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
 	}
+	set_first(true);
 	//find_limits();
 }
 

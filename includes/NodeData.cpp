@@ -364,7 +364,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	for(i=0;i<tp->sprites.size;i++){
 		Sprite *sprite=tp->sprites[i];
 		sprite->eval();
-		setColor(S0.c);
+		setDensity(td.density);
 	}
 #endif
 	a=TSTART;

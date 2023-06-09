@@ -27,7 +27,7 @@ public:
 class SpriteData
 {
 public:
-	int id;
+	int    type;
 	double distance;
 	double radius;
 	double ht;
@@ -40,21 +40,24 @@ public:
 
 class Sprite
 {
-	ValueList<SpriteData*> sprites;
 public:
 	Image *image;
 	int    options;
 	TNsprite  *expr;
+	unsigned int id;
+	bool   valid;
+	static ValueList<SpriteData*> sprites;
 
 	Sprite(Image *i, int l, TNode *e);
 	
 	void eval();
-	void collect();
 	void print();
 	bool setProgram();
 	bool initProgram();
-	void begin();
-	void end();
+	static void reset();
+	static void start_collect();
+	void collect();
+	static void end_collect();
 };
 class SpriteMgr : public PlacementMgr
 {
@@ -69,6 +72,7 @@ public:
 
 	void init();
 	void eval();
+	static bool setProgram();
 };
 
 //************************************************************

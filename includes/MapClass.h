@@ -39,8 +39,8 @@ protected:
 		WATERPASS   =	0x00000100,	// two surfaces (visible water)
 		VISVFOG     =	0x00000200,	// visible vfog
 		VISBMPS     =	0x00000400,	// visible bumpmaps
-		TRANSPARANT =	0x00000800,	// set transparancy flag
-		TEXTURES    =	0x00001000, // textures enabled in pass
+		TEXTURES    =	0x00000800, // textures enabled in pass
+		SPRITES     =	0x00001000,	// sprites enabled in pass
 		LIGHTING    =	0x00002000,	// lighting enabled in pass
 		EROSION     =	0x00004000, // has erosion attributes
 		COLORS      =	0x00008000, // enable colors
@@ -53,8 +53,9 @@ protected:
 		VISIDS      =	0x00400000, // generate vis box from id pass
 		ENDADAPT    =	0x00800000, // set before running last ids pass
 		GEOMETRY    =	0x01000000, // geometery flag;
-		MULTILAYER  =	0x02000000,  // multilayer flag
-		SPRITES     =	0x04000000	// transparancy flag
+		MULTILAYER  =	0x02000000, // multilayer flag
+		TRANSPARANT =	0x04000800,	// set transparancy flag
+		FIRST       =	0x08000000	// first render pass
 
 	};
 
@@ -122,6 +123,9 @@ public:
 
 	void	set_sort(int i) 	{ BIT_SET(flags,SORT,i);}
 	int	    sort()			 	{ return (flags & SORT)?1:0;}
+
+	void	set_first(int i) 	{ BIT_SET(flags,FIRST,i);}
+	int	    first()			 	{ return (flags & FIRST)?1:0;}
 
 	void	set_make_lists(int i) 	{ BIT_SET(flags,MAKE_LISTS,i);}
 	int	    make_lists()		{ return (flags & MAKE_LISTS)?1:0;}

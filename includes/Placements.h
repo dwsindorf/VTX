@@ -79,15 +79,18 @@ class PlacementMgr
 protected:
 	place_mgr_flags_u flags;
 
-	Placement  **hash;
+	static Placement  **hash;
     void find_neighbors(Placement *);
 
 public:
 	//static	int		last_id;
 	double			size;
+	double 			roff;
+	double 			roff2;
 	Point4D			mpt;
 	Point4D			offset;
-	int index;
+	static int index;
+	static int hits;
 	LinkedList<Placement*> list;
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
@@ -106,7 +109,7 @@ public:
 	void set_id(int i)          { type=i&PID;}
 	int get_id()				{ return type;}
 
-	void free_htable();
+	static void free_htable();
 
 	int		type;    // type id
 	int     options;
@@ -125,13 +128,14 @@ public:
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
 
-	virtual void reset();
+	static void reset();
 	virtual void init();
 	virtual void eval();
 	virtual void dump();
 	virtual Placement *make(Point4DL&,int);
-	virtual Placement *next();
-	virtual void ss(){ index=0;}
+	static Placement *next();
+	static void ss();
+	static void end();
 
 	friend class Placement;
 };

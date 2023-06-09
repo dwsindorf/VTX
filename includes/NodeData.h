@@ -293,7 +293,7 @@ public:
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
-	void setSprites(int n)		{ flags.s.textures=n;}
+	void setSprites(int n)		{ flags.s.sprites=n;}
 	void setBumpmaps(int n)		{ flags.s.bumpmaps=n;}
 	void setHmaps(int n)		{ flags.s.hmaps=n;}
 	void setMdata(int n)		{ flags.s.mdata=n;}

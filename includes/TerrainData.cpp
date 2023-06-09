@@ -333,9 +333,9 @@ void TerrainProperties::initProgram(){
 			rand=true;
 		textures[tid]->initProgram();
 	}
-	for(sid=0;sid<sprites.size;sid++){
-		sprites[sid]->initProgram();
-	}
+//	for(sid=0;sid<sprites.size;sid++){
+//		sprites[sid]->initProgram();
+//	}
 
 	if(tncolor)
 		tncolor->initProgram();
@@ -353,9 +353,9 @@ void TerrainProperties::setProgram(){
 	for(tid=0;tid<textures.size;tid++){
 		textures[tid]->setProgram();
 	}
-	for(sid=0;sid<sprites.size;sid++){
-		sprites[sid]->setProgram();
-	}
+//	for(sid=0;sid<sprites.size;sid++){
+//		sprites[sid]->setProgram();
+//	}
 	for(nid=0;nid<noise.size;nid++){
 		noise[nid]->setProgram();
 	}

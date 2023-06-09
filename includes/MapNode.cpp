@@ -1890,7 +1890,7 @@ Color MapNode::Tcolor(MapData *d) {
     case VNODES:                  	// '3'
     {
         if (partvis())
-            c = Color(1, 1, 0);
+            c = Color(0, 1, 0);
         else if (hidden())
             c = Color(0, 0, 1);
         else if (invisible() && rnode && dnode)
@@ -2252,20 +2252,19 @@ void MapNode::Svertex(MapData*dn) {
 
 	setVertexAttributes(d);
 //#define COLOR_SPRITES	
-
 #ifdef COLOR_SPRITES
 	double t=d->theta();
 	double p=d->phi();
 	Point pnt=Td.rectangular(t,p);
 	TheNoise.set(pnt);
+	MapPt=pt;
 	Height=d->Ht();
 	for (int j = 0; j < tp->sprites.size; j++) {
 		Sprite *ts=tp->sprites[j];
-		if(visible())				
+		if(visible() || partvis())				
 			ts->eval();		
 	}
 #endif
-
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
 			find_neighbors();
@@ -2546,7 +2545,7 @@ void MapNode::init_map_data(MapData *md)
 void MapNode::evalsprites()
 {
 	TerrainProperties *tp=TerrainData::tp;
-    if(!visible())
+    if(!partvis() && !visible() )
     	return;
 	MapData *d=&data;
 
