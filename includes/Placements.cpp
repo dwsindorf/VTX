@@ -72,7 +72,7 @@ static LongSym popts[]={
 	{"MAXHT",		MAXHT},
 	{"MAXA",		MAXA},
 	{"MAXB",		MAXB},
-	{"NPROJ",		NPROJ},
+	{"NOLOD",		NOLOD},
 	{"CNORM",		CNORM},
 	{"NNBRS",		NNBRS}
 };
@@ -119,16 +119,7 @@ PlacementMgr::~PlacementMgr()
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::free()\n");
 #endif
-		for(int i=0;i<hashsize;i++){
-			h=hash[i];
-			if(h){
-#ifdef DEBUG_PLACEMENTS
-				cfreed++;
-#endif
-				delete h;
-				hash[i]=0;
-			}
-		}
+  		free_htable();
 		FREE(hash);
 	}
 }
@@ -251,7 +242,7 @@ void PlacementMgr::eval()
 	for(lvl=0,size=msize;lvl<levels;size*=0.5*(mult+1),lvl++){
 
 #ifdef PLACEMENTS_LOD
-		if(!CurrentScope->init_mode()&&!CurrentScope->spass()&& Adapt.lod()){
+		if(!CurrentScope->init_mode()&&lod()&& Adapt.lod()){
 		    double x=ptable[(int)Td.level];
 #ifdef DEBUG_LOD
 		    place_visits++;
@@ -270,8 +261,7 @@ void PlacementMgr::eval()
 
 		int seed=lvl*131+id;
 		    
-        //if(lvl>0 && !ntest()){   
-        if(lvl>0){   
+        if(lvl>0&&roff>0){   
 		    set_offset_valid(1);
 			offset.x=roff*SRAND(1);
 			offset.y=roff*SRAND(2);
@@ -431,11 +421,9 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 #ifdef DEBUG_PLACEMENTS
 	cmade++;
 #endif
-    if(!mgr.dexpr){
-	    if(rands[hid]+0.5>mgr.density){
-	    	flags.s.valid=false;
+    if(!mgr.dexpr && mgr.density<1){
+	    if(rands[hid]+0.5>mgr.density)
 		    return;
-	    }
 	}
 
 	Point4D	p(pt);
@@ -470,8 +458,8 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		pf=2*mgr.size-r;
 	}
 	else{
-//		if(d>0.4*mgr.size)
-//			return;
+		//if(d>0.4*mgr.size)
+		//	return;
 		r=0.25*mgr.size*(1-URAND(1)*rf);
 		pf=0.8*mgr.size-r;
 	}

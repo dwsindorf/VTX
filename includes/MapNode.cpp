@@ -2545,8 +2545,8 @@ void MapNode::init_map_data(MapData *md)
 void MapNode::evalsprites()
 {
 	TerrainProperties *tp=TerrainData::tp;
-    if(!partvis() && !visible() )
-    	return;
+    //if(!partvis() && !visible() )
+    //	return;
 	MapData *d=&data;
 
 	double t=d->theta();
@@ -2556,8 +2556,8 @@ void MapNode::evalsprites()
 	TheNoise.set(pt);
 	Height=d->Ht();
 
-	for(int i=0;i<tp->sprites.size;i++){
-		Sprite *sprite=tp->sprites[i];
+	for(tp->sid=0;tp->sid<tp->sprites.size;tp->sid++){
+		Sprite *sprite=tp->sprites[tp->sid];
 		sprite->eval();
 	}	
 }

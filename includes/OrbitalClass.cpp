@@ -5820,7 +5820,7 @@ void Sky::map_color(MapData*d,Color &c)
 #define CLOUDS_GS_SHADER   2 // use geometry shader for 3d clouds
 #define CLOUDS_NO_SHADER   3
 
-int clouds_mode=CLOUDS_POINTS;
+int clouds_mode=CLOUDS_GS_SHADER;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)

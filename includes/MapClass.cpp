@@ -495,7 +495,6 @@ void Map::reset_texs()
 {
 	GLSLMgr::clearTexs();
 	ntexs=1;
-
 }
 
 //-------------------------------------------------------------
@@ -1413,13 +1412,11 @@ void Map::render_sprites(){
 	reset_texs();
 	if(first()){
 		Sprite::reset();
+		int mode=CurrentScope->passmode();
+		CurrentScope->set_spass();
 		npole->visit(&MapNode::evalsprites);
-		Sprite::start_collect();
-		for(int i=0;i<tp->sprites.size;i++){
-			Sprite *sprite=tp->sprites[i];
-			sprite->collect();
-		}
-		Sprite::end_collect();
+		Sprite::collect();
+		CurrentScope->set_passmode(mode);
 	}
 	
 	bool ok=SpriteMgr::setProgram();

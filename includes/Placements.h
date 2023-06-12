@@ -18,7 +18,7 @@ enum {
     SPRITES   	= 0x00008000,
     PLACETYPE   = 0x0000f000,
 
-    NPROJ   	= 0x01000000,
+    NOLOD   	= 0x01000000,
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
     MAXB    	= 0x08000000,
@@ -57,6 +57,9 @@ public:
 	virtual bool set_terrain(PlacementMgr &mgr);
 	virtual void dump();
 	virtual void reset();
+	int get_id()				{ return type&PID;}
+	int get_class()				{ return type&PLACETYPE;}
+
 };
 
 
@@ -95,7 +98,7 @@ public:
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
 	int ntest()					{ return options & NNBRS?0:1;}
-	int project()				{ return options & NPROJ?0:1;}
+	int lod()					{ return options & NOLOD?0:1;}
 	void set_margin(int i)   	{ flags.s.margin=i;}
 	int margin()				{ return flags.s.margin;}
 	void set_first(int i)   	{ flags.s.first=i;}
@@ -107,7 +110,8 @@ public:
 	void set_finalizer(int i)   { flags.s.finalizer=i;}
 	int finalizer()		        { return flags.s.finalizer;}
 	void set_id(int i)          { type=i&PID;}
-	int get_id()				{ return type;}
+	int get_id()				{ return type&PID;}
+	int get_class()				{ return type&PLACETYPE;}
 
 	static void free_htable();
 
@@ -149,8 +153,6 @@ protected:
 public:
     PlacementMgr *mgr;
 	TNplacements(int t, TNode *l, TNode *r, TNode *b);
-	void set_id(int i);
-	int get_id();
 
 	virtual ~TNplacements();
 	virtual void reset();
@@ -162,6 +164,9 @@ public:
 	virtual void valueString(char *);
 	virtual int optionString(char *);
 	virtual void addToken(LinkedList<TNode*>&l);
+	virtual void set_id(int i);
+	virtual int get_id();
+
 };
 
 #endif

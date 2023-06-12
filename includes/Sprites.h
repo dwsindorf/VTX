@@ -32,19 +32,23 @@ public:
 	double radius;
 	double ht;
 	double aveht;
+	double pntsize;
 	Point center;
-	SpriteData(SpritePoint*);
+	SpriteData(SpritePoint*,Point,double,double);
 	double value() { return distance;}
 	void print();
+	int get_id()				{ return type&PID;}
+	int get_class()				{ return type&PLACETYPE;}
 };
 
 class Sprite
 {
 public:
 	Image *image;
-	int    options;
+	int    type;
 	TNsprite  *expr;
-	unsigned int id;
+	unsigned int texture_id;
+	unsigned int sprite_id;
 	bool   valid;
 	static ValueList<SpriteData*> sprites;
 
@@ -54,10 +58,10 @@ public:
 	void print();
 	bool setProgram();
 	bool initProgram();
+	int get_id()				{ return sprite_id;}
+	void set_id(int i)			{ sprite_id=i;}
 	static void reset();
-	static void start_collect();
-	void collect();
-	static void end_collect();
+	static void collect();
 };
 class SpriteMgr : public PlacementMgr
 {
@@ -81,7 +85,6 @@ public:
 class TNsprite : public TNplacements
 {
 protected:
-	GLuint sprites_image;
 	char sprites_file[256];
 	char sprites_type[256];
 	GLuint sprites_dim;
@@ -105,6 +108,7 @@ public:
 	void save(FILE*);
 	void setSpritesTexture();
 	void getSpritesFilePath(char *dir);
+	void set_id(int i);
 };
 
 #endif
