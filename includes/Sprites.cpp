@@ -2,10 +2,9 @@
 // 1) need to disable neighbor test in PlacementMgr
 //    - else no color or density gradient causes random sprite 
 //      visibility as viewpoint moves
-// 2) can only have 1 level
-//    - else sprites are moved to arbitrary location (bad ht values)
-//    - don't see extra colored circles for other levels in debug mode
+// 2) can only have 1 level (FIXED)
 // 3) at maximum probability minimum density very low
+//    - compensated somewhat bt adding additional levels
 // 4) Occasionally some sprites disappear reappear as viewpoint moves
 //   - but still see colored placement circles in debug mode
 // 5) draw order sometimes fails (back to front)
@@ -49,16 +48,16 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=1.0;
+static double thresh=0.5;
 
 static int cnt=0;
 
 static TerrainData Td;
-//static SpriteMgr *s_mgr=0; // static finalizer
+static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
 #define DEBUG_PMEM
 //#define SHOW
-//#define DUMP
+#define DUMP
 #define TEST
 #ifdef DUMP
 static void show_stats()
@@ -84,7 +83,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 		add_finisher(show_stats);
 #endif
 	//type|=SPRITES;
-	//s_mgr=this;
+	s_mgr=this;
 	roff=0;
 	//roff2=0;
 	set_ntest(0);
@@ -92,7 +91,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 SpriteMgr::~SpriteMgr()
 {
   	if(finalizer()){
-  		//s_mgr=0;
+  		s_mgr=0;
 #ifdef DEBUG_PMEM
   		printf("SpriteMgr::free()\n");
 #endif
@@ -156,7 +155,6 @@ bool SpriteMgr::setProgram(){
 		int id=s->get_id();
 		Point t=s->center;
 		double f=s->pntsize;
-		//glVertexAttrib4d(GLSLMgr::TexCoordsID,tp->sprites.size-id-1, f, f, 1);
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id, f, f, 1);
 
 	    glVertex3dv(t.values());
@@ -284,12 +282,12 @@ void Sprite::collect()
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
 	while(s){
-		if((s->get_class()==SPRITES) && s->flags.s.valid && s->flags.s.active){
+		if(s->visits>1 &&(s->get_class()==SPRITES) && s->flags.s.valid && s->flags.s.active){
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
 			Point ps=pp.spherical();
-			double ht_offset=1.0;
-			Point center=TheMap->point(ps.x, ps.y, s->ht+ht_offset*s->radius/TheMap->radius);
+			double ht_offset=0.5;
+			Point center=TheMap->point(ps.x, ps.y, s->ht);
 			Point t=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
      
 			double d=t.length();
@@ -412,7 +410,7 @@ void TNsprite::set_id(int i){
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
-//#define COLOR_TEST
+#define COLOR_TEST
 //#define DENSITY_TEST
 void TNsprite::eval()
 {	

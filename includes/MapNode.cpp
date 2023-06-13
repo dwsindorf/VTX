@@ -2251,7 +2251,7 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d);
-//#define COLOR_SPRITES	
+#define COLOR_SPRITES	
 #ifdef COLOR_SPRITES
 	double t=d->theta();
 	double p=d->phi();
@@ -2545,8 +2545,8 @@ void MapNode::init_map_data(MapData *md)
 void MapNode::evalsprites()
 {
 	TerrainProperties *tp=TerrainData::tp;
-    //if(!partvis() && !visible() )
-    //	return;
+    if(!partvis() && !visible() )
+    	return;
 	MapData *d=&data;
 
 	double t=d->theta();
