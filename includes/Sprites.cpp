@@ -9,6 +9,10 @@
 //   - but still see colored placement circles in debug mode
 // 5) draw order sometimes fails (back to front)
 //   - defined by distance from viewpoint
+// 6) need to add small level offset (roff) otherwise sprites will overlap
+//   - but this causes more jitter in sprite ht and "floating" sprites
+//   - possibly because spread in xy uses same ht as first level
+//   - need to generate new true placements for each level ?
 // TODO
 // 1) change sprite pointsize with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
@@ -49,6 +53,8 @@ static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=0.5;
+static double ht_offset=0.9;
+static double lvl_offset=5e-5;
 
 static int cnt=0;
 
@@ -56,9 +62,10 @@ static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
 #define DEBUG_PMEM
-//#define SHOW
-#define DUMP
 #define TEST
+//#define SHOW
+#define MIN_VISITS 1
+//#define DUMP
 #ifdef DUMP
 static void show_stats()
 {
@@ -82,11 +89,11 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	if(!s_mgr)
 		add_finisher(show_stats);
 #endif
-	//type|=SPRITES;
+	type|=SPRITES;
 	s_mgr=this;
-	roff=0;
-	//roff2=0;
-	set_ntest(0);
+	roff=0;//lvl_offset;
+	//roff2=lvl_offset;
+	set_ntest(1);
 }
 SpriteMgr::~SpriteMgr()
 {
@@ -111,12 +118,12 @@ void SpriteMgr::init()
 	nhits=0;
 	cnt=0;
 	ss();
-  	//reset();
+  	reset();
 }
 
 void SpriteMgr::eval(){
-	//reset();
 	PlacementMgr::eval();
+	//reset();
 }
 
 bool SpriteMgr::setProgram(){
@@ -124,7 +131,6 @@ bool SpriteMgr::setProgram(){
 	char defs[128]="";
 	sprintf(defs,"#define NSPRITES %d\n",tp->sprites.size);
 
-	//glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 256, 1);
 	GLSLMgr::setDefString(defs);
 	
 	GLSLMgr::loadProgram("sprites.ps.vert","sprites.ps.frag");
@@ -134,7 +140,6 @@ bool SpriteMgr::setProgram(){
 	GLSLMgr::setProgram();
 	glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
-    glDisable(GL_POINT_SMOOTH);
     //glDisable(GL_DEPTH_TEST);
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glEnable(GL_BLEND);
@@ -155,13 +160,15 @@ bool SpriteMgr::setProgram(){
 		int id=s->get_id();
 		Point t=s->center;
 		double f=s->pntsize;
+		//glVertexAttrib4d(GLSLMgr::TexCoordsID,tp->sprites.size-id-1, f, f, 1);
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id, f, f, 1);
 
 	    glVertex3dv(t.values());
-		//printf("x:%-1.5g y:%-1.5g z:%-1.5g d:%-4.1f r:%-4.1f s:%-1.5f\n ",t.x,t.y,t.z,d/FEET,r/FEET,f);	
+		//printf("%d x:%-1.5g y:%-1.5g z:%-1.5g d:%-4.1f r:%-4.1f s:%-1.5f\n ",n-i,t.x,t.y,t.z,s->distance/FEET,s->radius/FEET,f);	
 	}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
+	cout<<"rendered "<< n<<" sprites"<<endl;
 	return true;
 }
 //-------------------------------------------------------------
@@ -183,8 +190,8 @@ SpritePoint::SpritePoint(PlacementMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n
 	visits=0;
 	hits=0;
 	mind=1e16;
-	//radius=1e-6;
-	type|=mgr.options;
+	// breaks visits >1 fixes sprite visibility in TEST
+	//type|=SPRITES;//mgr.options;
 	flags.s.active=false;
 }
 
@@ -202,8 +209,9 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 	visits++;
     flags.s.active=true;
     aveht+=Height;
-  
-	cval=lerp(d,0,thresh,0,1);
+	//dist=d;
+
+	cval=lerp(d,0,thresh,0,.1);
 	if(d<dist){
 		ht=Height;
 		dist=d;
@@ -222,7 +230,7 @@ void SpritePoint::reset(){
 	aveht=0;
 }
 void SpritePoint::dump(){
-	if(flags.s.valid && flags.s.active){
+	if(visits>=MIN_VISITS && flags.s.valid && flags.s.active){
 		Point4D p(point);
 		p=center;
 		char msg[256];
@@ -242,6 +250,7 @@ SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
 	radius=pnt->radius;
     pntsize=ps;
 	distance=d;//TheScene->vpoint.distance(t);
+	visits=pnt->visits;
 }
 
 void SpriteData::print(){
@@ -249,7 +258,7 @@ void SpriteData::print(){
 	Point ps=center.spherical();
 	double h=TheMap->radius*TheMap->hscale;
 	
-	sprintf(msg,"t:%-1.3g p:%-1.3g ht:%-1.4f dist:%g",ps.x,ps.y,h*ht/FEET,distance/FEET);
+	sprintf(msg,"visits:%-1d t:%-1.3g p:%-1.3g ht:%-1.4f aveht:%-1.4f dist:%g",visits,ps.x,ps.y,h*ht/FEET,h*aveht/FEET,distance/FEET);
 	cout<<msg<<endl;
 	
 }
@@ -282,12 +291,14 @@ void Sprite::collect()
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
 	while(s){
-		if(s->visits>1 &&(s->get_class()==SPRITES) && s->flags.s.valid && s->flags.s.active){
+		if(s->visits>=MIN_VISITS && /*(s->get_class()==SPRITES) && */s->flags.s.valid && s->flags.s.active){
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
 			Point ps=pp.spherical();
-			double ht_offset=0.5;
-			Point center=TheMap->point(ps.x, ps.y, s->ht);
+			//double ht=s->aveht/s->visits;
+			double ht=s->ht;
+			
+			Point center=TheMap->point(ps.x, ps.y,ht+ht_offset*s->radius/TheMap->radius);
 			Point t=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
      
 			double d=t.length();
@@ -303,13 +314,13 @@ void Sprite::collect()
 	}
 	PlacementMgr::end();
 	sprites.sort();
-	cout<<" collected "<<sprites.size<<" sprites"<<endl;
 #ifdef SHOW
 	for(int i=0;i<sprites.size;i++){
 		cout<<i<<" ";
 		sprites[i]->print();	
 	}
 #endif
+	cout<<" collected "<<sprites.size<<" sprites"<<endl;
 
 }
 //-------------------------------------------------------------
@@ -317,7 +328,10 @@ void Sprite::collect()
 //-------------------------------------------------------------
 void Sprite::eval()
 {
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
 	expr->eval();
+	CurrentScope->set_passmode(mode);
 }
 
 bool Sprite::setProgram(){
@@ -410,7 +424,7 @@ void TNsprite::set_id(int i){
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
-#define COLOR_TEST
+//#define COLOR_TEST
 //#define DENSITY_TEST
 void TNsprite::eval()
 {	
@@ -423,15 +437,16 @@ void TNsprite::eval()
 		Td.add_sprite(sprite);
 		return;
 	}	
-#ifdef DENSITY_TEST
-	Td.set_flag(DVALUE);
-	Td.density=0;
-	double density=0;
-#else
-	if(TheScene->adapt_mode())
-		return;	
-#endif
+//#ifdef DENSITY_TEST
+//	Td.set_flag(DVALUE);
+//	Td.density=0;
+//	double density=0;
+//#else
+//	if(!TheScene->adapt_mode())
+//		return;	
+//#endif
 
+	Color c =Color(1,1,1);
 #ifdef COLOR_TEST
 	Color c =Color(1,1,1);
 #else
@@ -449,26 +464,32 @@ void TNsprite::eval()
 	hits=0;
 	smgr->eval();  // calls SpritePoint.set_terrain
    
-	if(hits>0 && cval>0 && cval<1){ // inside target radius
+	if(hits>0/* && cval>0 && cval<1*/){ // inside target radius
 		nhits++;
-#ifdef COLOR_TEST
+		double x=1-cval;
+		//x=pow(x,4);
+//#ifdef COLOR_TEST
 		if(get_id()==1)
-			c=Color(1-cval,0,0);
+			c=Color(x,1,0);
 		else
-			c=Color(0,0,1-cval);
-#endif
-#ifdef DENSITY_TEST
-		double x=1/(cval);
-		x=x*x;//*x*x;
-		density=lerp(cval,0,0.2,0,.05*x);		
-#endif
+			c=Color(0,0,x);
+//#endif
+//#ifdef DENSITY_TEST
+//		double x=1/(cval);
+//		x=x*x;//*x*x;
+//		density=lerp(cval,0,0.2,0,.05*x);		
+//#endif
 	}
-#ifdef COLOR_TEST
+//#ifdef COLOR_TEST
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
-#endif	
-#ifdef DENSITY_TEST
-	Td.density=density;	
-#endif
+//	Td.c=c;
+//	Td.set_cvalid();
+//#endif	
+//#ifdef DENSITY_TEST
+//	Td.set_cvalid();
+	//Td.density=1-cval;
+	Td.diffuse=c;	
+//#endif
  }
 //-------------------------------------------------------------
 // TNinode::setName() set name

@@ -33,6 +33,7 @@ public:
 	double ht;
 	double aveht;
 	double pntsize;
+	int visits;
 	Point center;
 	SpriteData(SpritePoint*,Point,double,double);
 	double value() { return distance;}

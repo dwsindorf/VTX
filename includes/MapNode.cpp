@@ -2251,7 +2251,7 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d);
-#define COLOR_SPRITES	
+//#define COLOR_SPRITES	
 #ifdef COLOR_SPRITES
 	double t=d->theta();
 	double p=d->phi();

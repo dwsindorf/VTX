@@ -12,6 +12,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 //#define DEBUG_CRATERS
+#define TEST
 
 static 	TerrainData Td;
 extern double Hscale,Height;
@@ -24,6 +25,7 @@ public:
     double h;
     double b;
     double r;
+    double d;
     double value()   { return v;}
 };
 static CraterData   cdata[256];
@@ -32,10 +34,11 @@ static int          ccnt;
 static double  cmax;
 static double  cmin;
 static double  cval;
+static double  dval;
 static double  aht;
 static double  bht;
 
-//static CraterMgr s_cm(FINAL);    // static finalizer
+static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
 static const char *def_rnoise_expr="noise(GRADIENT|NABS|RO1,0,14,0.5,0.6,2)\n";
@@ -82,6 +85,9 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
  	noise_vertical=1;
   	noise_radial=1;
   	rnoise=vnoise=0;
+#ifdef TEST
+  	set_ntest(0);
+#endif
 }
 CraterMgr::~CraterMgr()
 {
@@ -119,6 +125,7 @@ void CraterMgr::reset()
     	cval=0;
    		cmax=0;
    		cmin=10;
+   		dval=0;
    	}
 }
 
@@ -174,7 +181,7 @@ void CraterMgr::eval()
 	clist.sort();
 
 	aht=bht=0;
-
+	
 	for(i=0;i<ccnt;i++){
 	    double f=clist.base[i]->f;
 	    double r=clist.base[i]->r;
@@ -182,6 +189,9 @@ void CraterMgr::eval()
 	    double h=clist.base[i]->h*a;
 	    double b=clist.base[ccnt-i-1]->b;
 		cval+=f;
+		//dval=clist.base[i]->d>dval?clist.base[i]->d:dval;
+		dval=clist.base[i]->d;
+
 		if(options & MAXA)
 		    aht=h>aht?h:aht;
 		else
@@ -222,10 +232,13 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 
 	d=pmgr.mpt.distance(center);
 	d=d/radius;
-
+#ifdef TEST
+	if(d>0.5)
+		return false;
+#else
 	if(d>1.5)
 		return false;
-
+#endif
 	CraterMgr &mgr=(CraterMgr&)pmgr;
 
 	scale=100*mgr.ampl*radius;
@@ -298,6 +311,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
  	cdata[ccnt].h=h;
  	cdata[ccnt].f=f;
   	cdata[ccnt].b=b;
+  	cdata[ccnt].d=d;
   	cdata[ccnt].r=radius;
   	if(ccnt<255)
   	    ccnt++;
@@ -573,5 +587,12 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
-	
+#ifdef TEST
+	S0.set_cvalid();
+	if(fabs(dval)>0)
+		S0.c=Color(1-dval,0,1);
+	else
+		S0.c=Color(1,1,0);
+#endif
+	Td.set_cvalid();
 }

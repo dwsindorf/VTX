@@ -7,7 +7,7 @@
 #include "ImageMgr.h"
 
 //#define DEBUG_PMEM         // turn on for memory usage
-
+// FIXME: need to base hash code on placement type
 class PlacementMgr;
 
 enum {

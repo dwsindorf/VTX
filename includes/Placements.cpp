@@ -270,6 +270,8 @@ void PlacementMgr::eval()
 				offset.w=roff*SRAND(4);
 			else
 			    offset.w=0;
+			//Point4D tmp=offset.normalize();
+			//offset=tmp*roff;
 			mpt=pv+offset;
 			p=pv*(1.0/size)+offset;
 		}

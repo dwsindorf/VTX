@@ -248,6 +248,7 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
+#define TEST_SPRITES
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -316,9 +317,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	setBumpmaps(nbumps?1:0);
 	setHmaps(nmaps?1:0);
-
+#ifdef TEST_SPRITES
+	nc=1;
+#else
 	if(td.cvalid())
 		nc=1;
+#endif
 	if(td.p.y != 0.0)
 	    nd=3;
 	else if(td.p.x != 0.0)
@@ -359,13 +363,19 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			TheMap->set_erosion(1);
 	}
 	double h=Ht();
-//#define TEST_SPRITES
+#define TEST_SPRITES
 #ifdef TEST_SPRITES
+	//int mode=CurrentScope->passmode();
+	//CurrentScope->set_spass();
+
 	for(i=0;i<tp->sprites.size;i++){
 		Sprite *sprite=tp->sprites[i];
 		sprite->eval();
-		setDensity(td.density);
+		setDensity(Td.density);
+		setColor(Td.diffuse);
 	}
+	//CurrentScope->set_passmode(mode);
+
 #endif
 	a=TSTART;
 
