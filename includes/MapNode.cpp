@@ -2544,12 +2544,14 @@ void MapNode::init_map_data(MapData *md)
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
 		set_need_recalc(1);
 }
-
+double MapNode::value()
+{
+	return point().length();
+}
 void MapNode::evalsprites()
 {
 	TerrainProperties *tp=TerrainData::tp;
-    if(!partvis() && !visible() )
-    	return;
+
 	MapData *d=&data;
 
 	double t=d->theta();

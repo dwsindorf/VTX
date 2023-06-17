@@ -1,172 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=19.6051;
-		theta=29.6736;
-		height=6 ft;
-		gndlvl=1355.62 ft;
+		phi=19.6006;
+		theta=29.6702;
+		height=420.72 ft;
+		gndlvl=987.173 ft;
 		time=200264;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=26;
-		tilt=34;
-		angle=-3;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400019;
+		heading=1;
+		tilt=8;
+		angle=48;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		tilt=24;
-		angle=2;
-	}
-	View{
-		phi=19.605;
-		heading=31;
-		tilt=12;
-		angle=-42;
-	}
-	View{
-		phi=19.6051;
-		theta=29.6742;
-		height=20 ft;
-		gndlvl=1381.45 ft;
-		heading=0;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		phi=19.605;
-		theta=29.6744;
-		height=6 ft;
-		heading=233;
-		tilt=-16;
-		angle=-38;
-	}
-	View{
-		phi=19.6049;
-		theta=29.6745;
-		heading=302;
-		tilt=-17;
-		angle=-41;
-	}
-	View{
-		tilt=-13;
-		angle=-42;
-	}
-	View{
-		phi=19.6048;
-		theta=29.6746;
-		tilt=-12;
-		angle=-51;
-	}
-	View{
-		tilt=-13;
-	}
-	View{
-		phi=19.6047;
-		tilt=-15;
-		angle=-53;
-	}
-	View{
-		phi=19.6024;
-		theta=29.673;
-		height=25.9664 ft;
-		gndlvl=1039.39 ft;
-		heading=0;
-		angle=0;
-	}
-	View{
-		tilt=7;
-	}
-	View{
-		phi=19.6025;
-		theta=29.6731;
-		heading=48;
-		tilt=17;
-		angle=-1;
-	}
-	View{
-		heading=158;
-		tilt=12;
-		angle=2;
-	}
-	View{
-		height=145.244 ft;
-		heading=186;
-		tilt=13;
-		angle=-40;
-	}
-	View{
-		height=638.186 ft;
-		heading=204;
-		tilt=-3;
-		angle=-27;
-	}
-	View{
-		height=416.653 ft;
-		heading=240;
-		tilt=-9;
-	}
-	View{
-		phi=19.6006;
-		theta=29.6696;
-		height=29.6945 ft;
-		gndlvl=987.173 ft;
-		heading=0;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		theta=29.6702;
-		tilt=4;
-	}
-	View{
-		tilt=1;
-		angle=2;
-	}
-	View{
-		tilt=-4;
-		angle=5;
-	}
-	View{
-		angle=10;
-	}
-	View{
-		height=150.362 ft;
-		tilt=-15;
-		angle=25;
-	}
-	View{
-		tilt=-25;
-		angle=34;
-	}
-	View{
-		tilt=-13;
-		angle=36;
-	}
-	View{
-		tilt=-9;
-		angle=44;
-	}
-	View{
-		tilt=-14;
-		angle=35;
-	}
-	View{
-		tilt=-6;
-		angle=34;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400022;
-	}
-	View{
-		tilt=-14;
-		angle=48;
-		minr=0.00400019;
 	}
 	Universe {
 		Galaxy(20000) {

@@ -154,6 +154,7 @@ public:
     void    balance();
     void    set_tests();
     int     clipchk(Point p);
+    double  value();
     MapLink *link;
     MapData *cdata;
     MapData data;    // point, color data

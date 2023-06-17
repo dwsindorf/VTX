@@ -120,6 +120,7 @@ public:
 	int		type;    // type id
 	int     options;
 	int		id;
+	int		instance;
 	int     lvl;
 	double  maxsize;
 	int     levels;

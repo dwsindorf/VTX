@@ -93,6 +93,7 @@ protected:
 	GLuint sprites_dim;
 
 public:
+	int instance;
 	Image *image;
 	Sprite *sprite;
 	TNsprite(char *, TNode *l, TNode *r);

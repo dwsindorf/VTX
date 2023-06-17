@@ -310,6 +310,7 @@ void Map::clearLists() {
 			callLists[i][j] = 0;
 		}
 	}
+	set_first(true);
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -1408,20 +1409,46 @@ void Map::render_texs(){
 //-------------------------------------------------------------
 // Map::render_sprites()	render sprites
 //-------------------------------------------------------------
+static LinkedList<MapNode*> node_list;
+static int test_cnt;
+static void collect_nodes(MapNode *n)
+{
+	if(n->visible() || n->partvis()){
+		node_list.add(n);
+    }
+}
+
 void Map::render_sprites(){
 	reset_texs();
 	if(first()){
+		double d0=clock();
+		test_cnt=0;
+		node_list.reset();
+		npole->visit(&collect_nodes);
+		ValueList<MapNode*> sorted;
+		sorted.set(node_list);
+		sorted.sort();
+		double d1=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 		Sprite::reset();
 		int mode=CurrentScope->passmode();
 		CurrentScope->set_spass();
-		npole->visit(&MapNode::evalsprites);
+		sorted.ss();
+		int n=sorted.size;
+		for(int i=0;i<n;i++){
+			MapNode *node=sorted[n-i-1];
+			node->evalsprites();
+		}
+		double d2=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+		//npole->visit(&MapNode::evalsprites);
 		Sprite::collect();
+		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+
+		cout<<"Map sprites n:"<<sorted.size<<" sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+
 		CurrentScope->set_passmode(mode);
 	}
 	
 	bool ok=SpriteMgr::setProgram();
-
-	cout<<"render sprites shader="<<ok<<endl;
 }
 
 //-------------------------------------------------------------
@@ -1938,7 +1965,7 @@ void Map::adapt()
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
 	}
-	set_first(true);
+	
 	//find_limits();
 }
 
@@ -2272,7 +2299,7 @@ void Map::make_triangle_lists() {
 	   triangles.sort();
 #if DEBUG_TRIANGLES >1
 	   double d2=(double)clock();
-	   cout << "Map::sort :"<< (double)(d2 - d1)/CLOCKS_PER_SEC<< endl;
+	   cout << "Map::sort :"<< (double)1000.0*(d2 - d1)/CLOCKS_PER_SEC<< endl;
 #endif
 	}
 	else if(render_triangles())
@@ -2303,7 +2330,7 @@ void Map::make_triangle_lists() {
 		triangle_list.free();
 #if DEBUG_TRIANGLES >0
 	if(TheScene->viewobj==object){
-	cout << "Map::triangles overhead:"<< (clock()-d0)/CLOCKS_PER_SEC << " ms"<< endl;
+	cout << "Map::triangles overhead:"<< 1000.0*(clock()-d0)/CLOCKS_PER_SEC << " ms"<< endl;
 	}
 #endif
 

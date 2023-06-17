@@ -1,10 +1,11 @@
 // BUGS/problems
-// 1) need to disable neighbor test in PlacementMgr
-//    - else no color or density gradient causes random sprite 
-//      visibility as viewpoint moves
+// 1) need to disable neighbor test in PlacementMgr (FIXED)
+//    - hash table full problem
+//    - if hash table almost full closer sprites get overridden by more distant ones
+//    - solution was to render nodes based on distance (closest last)
 // 2) can only have 1 level (FIXED)
-// 3) at maximum probability minimum density very low
-//    - compensated somewhat bt adding additional levels
+// 3) at maximum probability minimum density low if neighbors disabled
+//    - compensated somewhat by adding additional levels
 // 4) Occasionally some sprites disappear reappear as viewpoint moves
 //   - but still see colored placement circles in debug mode
 // 5) draw order sometimes fails (back to front)
@@ -12,7 +13,7 @@
 // 6) need to add small level offset (roff) otherwise sprites will overlap
 //   - but this causes more jitter in sprite ht and "floating" sprites
 //   - possibly because spread in xy uses same ht as first level
-//   - need to generate new true placements for each level ?
+// 7) sometimes see grid like artifact (sprites arranged in lines)
 // TODO
 // 1) change sprite pointsize with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
@@ -52,11 +53,11 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=0.5;
-static double ht_offset=0.9;
-//static double lvl_offset=5e-5;
+static double thresh=4;    // move to argument ?
+static double ht_offset=0.9; // move to argument ?
+
 static double lvl_offset=0;
-static double min_pts=2;
+static double min_pts=3;
 
 static int cnt=0;
 static int tests=0;
@@ -65,12 +66,12 @@ static int fails=0;
 static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
-#define DEBUG_PMEM
+//#define DEBUG_PMEM
 #define TEST
 //#define SHOW
 #define MIN_VISITS 1
-#define TEST_NEIGHBORS 0
-//#define TEST_PTS 
+#define TEST_NEIGHBORS 1
+#define TEST_PTS 
 //#define DUMP
 #ifdef DUMP
 static void show_stats()
@@ -98,7 +99,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	type|=SPRITES;
 	s_mgr=this;
 	roff=lvl_offset;
-	//roff2=lvl_offset;
+	roff2=PI;
 	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
@@ -195,7 +196,7 @@ bool SpriteMgr::setProgram(){
 		int id=s->get_id();
 		Point t=s->center;
 		double f=s->pntsize;
-		//glVertexAttrib4d(GLSLMgr::TexCoordsID,tp->sprites.size-id-1, f, f, 1);
+		
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id, f, f, 1);
 
 	    glVertex3dv(t.values());
@@ -203,7 +204,8 @@ bool SpriteMgr::setProgram(){
 	}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
-	cout<<"rendered "<< n<<" sprites"<<endl;
+	if(TheMap->first())
+	cout<<"collected "<< n<<" sprites"<<endl;
 	return true;
 }
 //-------------------------------------------------------------
@@ -239,6 +241,7 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 	d=d/radius;
 	SpriteMgr &mgr=(SpriteMgr&)pmgr;
 	cval=0;
+	
 	if(d>thresh)
 		return false;
 	visits++;
@@ -332,7 +335,7 @@ void Sprite::collect()
 	
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
-	cout<<"tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
+	cout<<"pts tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
 
 	while(s){
 		trys++;
@@ -476,6 +479,7 @@ void TNsprite::init()
 	TNplacements::init();
 }
 void TNsprite::set_id(int i){
+	instance=i;
 	TNplacements::set_id(i);
 	if(sprite)
 		sprite->set_id(i);
@@ -489,8 +493,8 @@ void TNsprite::eval()
 {	
 	SINIT;
 #ifdef DENSITY_TEST
-		Td.set_flag(DVALUE);
-		Td.density=0;
+	Td.set_flag(DVALUE);
+	Td.density=0;
 #endif
 	if(CurrentScope->rpass()){
 #ifdef TEST
@@ -500,17 +504,44 @@ void TNsprite::eval()
 		Td.add_sprite(sprite);
 		return;
 	}	
+	if(!CurrentScope->spass())
+		return;
+	
 	Color c =Color(1,1,1);
 	double density=0;
-	if(!CurrentScope->spass())
-		return;	
 
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
 	htval=Height;
 	ncalls++;
 
-	TNplacements::eval();  // evaluate common arguments
+	double arg[4];
+	INIT;
+	TNarg &args=*((TNarg *)left);
+	TNode *dexpr;
+	
+	int n=getargs(&args,arg,3);
+
+	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
+	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
+	if(n>2) mgr->mult=arg[2];			// scale multiplier per level
+	
+	if(mgr->dexpr==0){
+		dexpr=args[3];
+		if(dexpr){
+		    dexpr->eval();
+		    mgr->density=S0.s;
+		}
+	}
+	
+	MaxSize=mgr->maxsize;
+
+	double hashcode=(mgr->levels+
+		            1/mgr->maxsize+
+					1/mgr->mult
+					);
+	mgr->id=(int)hashcode+mgr->type+SPRITES+instance+hashcode*TheNoise.rseed;
+	//TNplacements::eval();  // evaluate common arguments
 	
 	cval=0;
 	hits=0;
