@@ -59,7 +59,7 @@ public:
 	virtual void reset();
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
-
+	
 };
 
 
@@ -94,7 +94,9 @@ public:
 	Point4D			offset;
 	static int index;
 	static int hits;
-	LinkedList<Placement*> list;
+	static int hashsize;
+	static LinkedList<Placement*> list;
+	virtual bool valid(){ return true;}
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
 	int ntest()					{ return options & NNBRS?0:1;}
@@ -132,7 +134,7 @@ public:
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
 
-	static void reset();
+	virtual void reset();
 	virtual void init();
 	virtual void eval();
 	virtual void dump();

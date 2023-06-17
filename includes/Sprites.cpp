@@ -54,9 +54,13 @@ static int ncalls=0;
 static int nhits=0;
 static double thresh=0.5;
 static double ht_offset=0.9;
-static double lvl_offset=5e-5;
+//static double lvl_offset=5e-5;
+static double lvl_offset=0;
+static double min_pts=2;
 
 static int cnt=0;
+static int tests=0;
+static int fails=0;
 
 static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
@@ -65,6 +69,8 @@ static int hits=0;
 #define TEST
 //#define SHOW
 #define MIN_VISITS 1
+#define TEST_NEIGHBORS 0
+//#define TEST_PTS 
 //#define DUMP
 #ifdef DUMP
 static void show_stats()
@@ -91,9 +97,9 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 #endif
 	type|=SPRITES;
 	s_mgr=this;
-	roff=0;//lvl_offset;
+	roff=lvl_offset;
 	//roff2=lvl_offset;
-	set_ntest(1);
+	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
 {
@@ -124,6 +130,35 @@ void SpriteMgr::init()
 void SpriteMgr::eval(){
 	PlacementMgr::eval();
 	//reset();
+}
+
+void SpriteMgr::reset(){
+	PlacementMgr::reset();
+	tests=fails=0;
+}
+//-------------------------------------------------------------
+// SpritePoint::set_terrain()	impact terrain
+//-------------------------------------------------------------
+bool SpriteMgr::valid()
+{ 
+#ifndef TEST_PTS
+	return true;
+#endif
+	if(TheScene->adapt_mode())
+		return true;
+	Point pv=MapPt;
+	double d=MapPt.length();
+	double r=TheMap->radius*size;
+	double f=TheScene->wscale*r/d;
+    double pts=f;
+    tests++;
+	//return true;
+    if(pts<2*min_pts){
+    	fails++;
+    	return false;
+    }
+
+	return true;
 }
 
 bool SpriteMgr::setProgram(){
@@ -211,7 +246,7 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
     aveht+=Height;
 	//dist=d;
 
-	cval=lerp(d,0,thresh,0,.1);
+	cval=lerp(d,0,thresh,0,1);
 	if(d<dist){
 		ht=Height;
 		dist=d;
@@ -288,9 +323,26 @@ void Sprite::reset()
 //-------------------------------------------------------------
 void Sprite::collect()
 {
+	int trys=0;
+	int visits=0;
+	int bad_visits=0;
+	int bad_valid=0;
+	int bad_active=0;
+	int bad_pts=0;
+	
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
+	cout<<"tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
+
 	while(s){
+		trys++;
+		if(s->visits<MIN_VISITS)
+			bad_visits++;
+		if(!s->flags.s.valid)
+			bad_valid++;
+		if(!s->flags.s.active)
+			bad_active++;
+		
 		if(s->visits>=MIN_VISITS && /*(s->get_class()==SPRITES) && */s->flags.s.valid && s->flags.s.active){
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
@@ -307,8 +359,10 @@ void Sprite::collect()
 			double f=TheScene->wscale*r/d;
 		    double pts=f;
 		    
-		    if(pts>2)
+		    if(pts>=min_pts)
 				sprites.add(new SpriteData((SpritePoint*)s,t,d,pts));
+		    else
+		    	bad_pts++;
 		}
 		s=PlacementMgr::next();
 	}
@@ -320,7 +374,12 @@ void Sprite::collect()
 		sprites[i]->print();	
 	}
 #endif
-	cout<<" collected "<<sprites.size<<" sprites"<<endl;
+	double usage=100.0*trys/PlacementMgr::hashsize;
+	double badvis=100.0*bad_visits/trys;
+	double badactive=100.0*bad_active/trys;
+	double badpts=100.0*bad_pts/trys;
+
+	cout<<" collected "<<sprites.size<<" trys:"<<trys<<" usage:"<<usage<<" bad - active:"<<badactive<<" pts:"<<badpts<<" %"<<endl;
 
 }
 //-------------------------------------------------------------
@@ -429,6 +488,10 @@ void TNsprite::set_id(int i){
 void TNsprite::eval()
 {	
 	SINIT;
+#ifdef DENSITY_TEST
+		Td.set_flag(DVALUE);
+		Td.density=0;
+#endif
 	if(CurrentScope->rpass()){
 #ifdef TEST
 		int size=Td.tp->sprites.size;
@@ -437,22 +500,11 @@ void TNsprite::eval()
 		Td.add_sprite(sprite);
 		return;
 	}	
-//#ifdef DENSITY_TEST
-//	Td.set_flag(DVALUE);
-//	Td.density=0;
-//	double density=0;
-//#else
-//	if(!TheScene->adapt_mode())
-//		return;	
-//#endif
-
 	Color c =Color(1,1,1);
-#ifdef COLOR_TEST
-	Color c =Color(1,1,1);
-#else
+	double density=0;
 	if(!CurrentScope->spass())
 		return;	
-#endif
+
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
 	htval=Height;
@@ -464,32 +516,29 @@ void TNsprite::eval()
 	hits=0;
 	smgr->eval();  // calls SpritePoint.set_terrain
    
-	if(hits>0/* && cval>0 && cval<1*/){ // inside target radius
+	if(hits>0 && cval>0 && cval<=1/**/){ // inside target radius
 		nhits++;
 		double x=1-cval;
-		//x=pow(x,4);
-//#ifdef COLOR_TEST
+#ifdef COLOR_TEST
 		if(get_id()==1)
 			c=Color(x,1,0);
 		else
-			c=Color(0,0,x);
-//#endif
-//#ifdef DENSITY_TEST
-//		double x=1/(cval);
-//		x=x*x;//*x*x;
-//		density=lerp(cval,0,0.2,0,.05*x);		
-//#endif
+			c=Color(1,1,x);
+#endif
+#ifdef DENSITY_TEST
+		x=1/(cval);
+		x=x*x;//*x*x;
+		density=lerp(cval,0,0.2,0,.05*x);		
+#endif
 	}
-//#ifdef COLOR_TEST
+#ifdef COLOR_TEST
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
-//	Td.c=c;
-//	Td.set_cvalid();
-//#endif	
-//#ifdef DENSITY_TEST
-//	Td.set_cvalid();
-	//Td.density=1-cval;
 	Td.diffuse=c;	
-//#endif
+	Td.set_cvalid();
+#endif	
+#ifdef DENSITY_TEST
+	Td.density=density;	
+#endif
  }
 //-------------------------------------------------------------
 // TNinode::setName() set name

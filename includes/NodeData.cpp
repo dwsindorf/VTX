@@ -13,6 +13,8 @@ extern int     hits, misses, visits;
 extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt;
 extern double  zslope();
 extern int test_flag;
+extern Point MapPt;
+
 
 static TerrainData Td;
 //**************** static and private *********************
@@ -248,7 +250,10 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
-#define TEST_SPRITES
+//#define TEST_SPRITES
+#define SPRITES_DENSITY
+#define SPRITES_COLOR
+
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -289,6 +294,17 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.water())
 		nw=1;
 
+	if(td.cvalid())
+		nc=1;
+#ifdef TEST_SPRITES
+#ifdef SPRITES_COLOR
+	nc=1;
+#endif
+#ifdef SPRITES_DENSITY
+	nf=1;
+#endif
+#endif
+
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
         s2=new MapData(lt.lvalue(),lp.lvalue());
@@ -317,12 +333,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	setBumpmaps(nbumps?1:0);
 	setHmaps(nmaps?1:0);
-#ifdef TEST_SPRITES
-	nc=1;
-#else
-	if(td.cvalid())
-		nc=1;
-#endif
+	
 	if(td.p.y != 0.0)
 	    nd=3;
 	else if(td.p.x != 0.0)
@@ -363,18 +374,23 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			TheMap->set_erosion(1);
 	}
 	double h=Ht();
-#define TEST_SPRITES
-#ifdef TEST_SPRITES
-	//int mode=CurrentScope->passmode();
-	//CurrentScope->set_spass();
 
+#ifdef TEST_SPRITES
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+
+    MapPt=point();
 	for(i=0;i<tp->sprites.size;i++){
 		Sprite *sprite=tp->sprites[i];
 		sprite->eval();
+#ifdef SPRITES_DENSITY
 		setDensity(Td.density);
+#endif
+#ifdef SPRITES_COLOR
 		setColor(Td.diffuse);
+#endif
 	}
-	//CurrentScope->set_passmode(mode);
+	CurrentScope->set_passmode(mode);
 
 #endif
 	a=TSTART;

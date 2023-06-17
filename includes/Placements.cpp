@@ -42,7 +42,6 @@ double MaxSize;
 static int	chits=0,cvisits=0,crejects=0;
 static int	nhits=0,nmisses=0,nvisits=0,nrejects=0;
 static int  cmade=0,cfreed=0;
-static int hashsize=PERMSIZE;
 
 static PlacementMgr s_mgr=0;
 
@@ -89,6 +88,9 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 Placement **PlacementMgr::hash=0;
 int PlacementMgr::index=0;
 int PlacementMgr::hits=0;
+int PlacementMgr::hashsize=PERMSIZE;
+LinkedList<Placement*> PlacementMgr::list;
+
 PlacementMgr::PlacementMgr(int i)
 {
 	type=i&PID;
@@ -130,6 +132,7 @@ PlacementMgr::~PlacementMgr()
 void PlacementMgr::free_htable()
 {
 	Placement *h;
+	cfreed=0;
 	for(int i=0;i<hashsize;i++){
 		h=hash[i];
 		if(h){
@@ -140,6 +143,7 @@ void PlacementMgr::free_htable()
 			hash[i]=0;
 		}
 	}
+	cout<<"freed:"<<cfreed<<endl;
 }
 
 //-------------------------------------------------------------
@@ -153,7 +157,10 @@ void PlacementMgr::reset()
 			h->reset();
 		}		
 	}
-	//list.reset();
+	list.reset();
+	chits=cvisits=crejects=0;
+	nhits=nmisses=nvisits=nrejects=0;
+	cmade=cfreed=0;
 }
 
 //-------------------------------------------------------------
@@ -240,6 +247,8 @@ void PlacementMgr::eval()
 
 	msize=maxsize;//ntest()?maxsize:maxsize*4;
 	for(lvl=0,size=msize;lvl<levels;size*=0.5*(mult+1),lvl++){
+		if(!valid())
+			continue;
 
 #ifdef PLACEMENTS_LOD
 		if(!CurrentScope->init_mode()&&lod()&& Adapt.lod()){
@@ -287,6 +296,8 @@ void PlacementMgr::eval()
 		            FLOOR(p.w));
 		if(TheNoise.noise3D())
 		    p.w=0;
+		
+		Point4D d(pc);
 
 		int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
 		if(TheNoise.noise4D())
@@ -297,7 +308,7 @@ void PlacementMgr::eval()
 #ifdef DEBUG_PLACEMENTS
 		cvisits++;
 #endif
-		if(!h || h->point!=pc || h->type !=type){
+		if(!h|| h->point!=pc || h->type !=type /**/){
 			Placement *c=make(pc,n);
 			if(h){
 #ifdef DEBUG_PLACEMENTS
@@ -499,7 +510,7 @@ void Placement::dump(){
 	// extended classes can override this
 }
 void Placement::reset(){
-	flags.s.active=false;
+	flags.l=0;
 }
 //************************************************************
 // TNplacements class

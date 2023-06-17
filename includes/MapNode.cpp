@@ -730,7 +730,9 @@ void MapNode::recalc2()
 		mdctr=&data;
 		mdctr->invalidate();
 		TheMap->object->set_surface(Td);
+		
 		data.free();
+		
 		data.init_terrain_data(Td,0);
 		//if(Td.get_flag(INMARGIN))
 	   // 	set_margin(1);
@@ -2529,6 +2531,7 @@ void MapNode::init_map_data(MapData *md)
 	Td.clr_flag(FNOREC);
 
 	mdctr=md;
+
 	TheMap->object->set_surface(Td);
 	md->init_terrain_data(Td,0);
 	//if(Td.get_flag(INMARGIN))
@@ -2555,6 +2558,7 @@ void MapNode::evalsprites()
 	Point pt=Td.rectangular(t, p);
 	TheNoise.set(pt);
 	Height=d->Ht();
+	MapPt=point();
 
 	for(tp->sid=0;tp->sid<tp->sprites.size;tp->sid++){
 		Sprite *sprite=tp->sprites[tp->sid];
