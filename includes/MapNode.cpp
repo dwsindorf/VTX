@@ -2263,7 +2263,7 @@ void MapNode::Svertex(MapData*dn) {
 	Height=d->Ht();
 	for (int j = 0; j < tp->sprites.size; j++) {
 		Sprite *ts=tp->sprites[j];
-		if(visible() || partvis())				
+		if(visible())				
 			ts->eval();		
 	}
 #endif

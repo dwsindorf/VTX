@@ -1,3 +1,14 @@
+#include "SceneClass.h"
+#include "RenderOptions.h"
+#include "Sprites.h"
+#include "Util.h"
+#include "MapNode.h"
+#include "ModelClass.h"
+#include "AdaptOptions.h"
+#include "FileUtil.h"
+#include "GLSLMgr.h"
+#include "Effects.h"
+
 // BUGS/problems
 // 1) need to disable neighbor test in PlacementMgr (FIXED)
 //    - hash table full problem
@@ -23,21 +34,28 @@
 // 6) implement multiple sprite lookup from single image
 //    - Could be same sprite different views depending on camera angle
 //    - or different sprites of similar types (trees etc)
-// 7) implement random horizontal flip of sprite image for better aliasing
+// 7) implement random horizontal flip of sprite image (DONE)
+//    - in fragment shader use vec2(1-l_uv.x,l_uv.y) based on random variable
 // 8) implement environmental density (ht,slope) as in Texture class
 // 9) implement lighting
+//    - star distance + time of day (DONE)
+//    - shadows (DONE)
+//    - haze 
+// coverage table  
+// window 640x480 sprite size=1e-5 thresh=5 min_pts=2 neighbors=true
+// -----------------------------------------------------------------------
+// levels   #		ms      % coverage (est)
+// 1		364		14      25
+// 2		708		29      50
+// 3		1052	48      75
+// 4		1381	64      100
+// 8        2590    133     >100
+// 16  		4722	289     >100
+// GUI idea: pull down menu max-coverage 25,50,75,100 ->1,2,3,4 levels
+//           - may want to multiply actual levels by 1/level_mult
 //************************************************************
 // classes SpritePoint, SpriteMgr
 //************************************************************
-#include "SceneClass.h"
-#include "RenderOptions.h"
-#include "Sprites.h"
-#include "Util.h"
-#include "MapNode.h"
-#include "ModelClass.h"
-#include "AdaptOptions.h"
-#include "FileUtil.h"
-#include "GLSLMgr.h"
 
 extern double Hscale, Drop, MaxSize,Height;
 extern double ptable[];
@@ -53,11 +71,13 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=4;    // move to argument ?
+static double thresh=5;    // move to argument ?
 static double ht_offset=0.9; // move to argument ?
 
-static double lvl_offset=0;
-static double min_pts=3;
+static double roff_value=0;
+static double roff2_value=PI;
+
+static double min_pts=2;
 
 static int cnt=0;
 static int tests=0;
@@ -98,8 +118,9 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 #endif
 	type|=SPRITES;
 	s_mgr=this;
-	roff=lvl_offset;
-	roff2=PI;
+	roff=roff_value;
+	roff2=roff2_value;
+	level_mult=1;
 	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
@@ -164,8 +185,15 @@ bool SpriteMgr::valid()
 
 bool SpriteMgr::setProgram(){
 	TerrainProperties *tp=Td.tp;
-	char defs[128]="";
-	sprintf(defs,"#define NSPRITES %d\n",tp->sprites.size);
+	char defs[1024]="";
+	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",tp->sprites.size);
+	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
+	if(Render.haze())
+		sprintf(defs+strlen(defs),"#define HAZE\n");
+
+    bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
+	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
+		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
 	GLSLMgr::setDefString(defs);
 	
@@ -173,39 +201,76 @@ bool SpriteMgr::setProgram(){
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
-	GLSLMgr::setProgram();
 	glEnable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     //glDisable(GL_DEPTH_TEST);
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glEnable(GL_BLEND);
 	glEnable(GL_POINT_SPRITE);
 	glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
 	GLSLVarMgr vars;
+	
+	Planetoid *orb=(Planetoid*)TheScene->viewobj;
+	Color diffuse=orb->diffuse;
+	Color shadow=orb->shadow_color;
+	Color haze=Raster.haze_color;
+	
+	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
+	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow.alpha());
+	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
+	vars.newFloatVar("haze_grad",Raster.haze_grad);
+	vars.newFloatVar("haze_ampl",Raster.haze_hf);
+	
+	double zn=TheScene->znear;
+	double zf=TheScene->zfar;
+	double ws1=1/zn;
+	double ws2=(zn-zf)/zf/zn;
+
+	vars.newFloatVar("ws1",ws1);
+	vars.newFloatVar("ws2",ws2);
+
+	vars.setProgram(program);
+	vars.loadVars();
+	GLSLMgr::setProgram();
+	GLSLMgr::loadVars();
 	for(int i=0;i<tp->sprites.size;i++){
 		TerrainProperties::sid=i;
 		tp->sprites[i]->setProgram();
 	}
 	
+	double rand_flip_prob=0.5;
 	glBegin(GL_POINTS);
 	
 	// render the sprites
+	int scaleup=10000;
+	int scaledn=100;
 	int n=Sprite::sprites.size;
+	int flip=0;
 	for(int i=n-1;i>=0;i--){
 		SpriteData *s=Sprite::sprites[i];
 		int id=s->get_id();
 		Point t=s->center;
 		double f=s->pntsize;
 		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID,id, f, f, 1);
-
+		// 50% random reflection 
+		// based on sprite hash table center position
+		Point4DL pp=s->point;
+		if(s->flip()){
+			flip=Random(pp.x,pp.y,pp.z)>0?0:1;
+			//if(i<10)
+			//	printf("%d flip:%d x:%d y:%d z:%d dist:%-1.2f\n ",i,flip,pp.x,pp.y,pp.z,s->distance/FEET);	
+		}
+		glVertexAttrib4d(GLSLMgr::TexCoordsID,id, flip, f, 1);  // TODO: use w as lookup for grid image
+		Point pn=Point(pp.x,pp.y,pp.z);
+		pn=pn.normalize();
 	    glVertex3dv(t.values());
+	    glNormal3dv(pn.values());
+	    //if(i<10)
 		//printf("%d x:%-1.5g y:%-1.5g z:%-1.5g d:%-4.1f r:%-4.1f s:%-1.5f\n ",n-i,t.x,t.y,t.z,s->distance/FEET,s->radius/FEET,f);	
 	}
 	glEnd();
 	glEnable(GL_DEPTH_TEST);
-	if(TheMap->first())
-	cout<<"collected "<< n<<" sprites"<<endl;
 	return true;
 }
 //-------------------------------------------------------------
@@ -282,12 +347,14 @@ void SpritePoint::dump(){
 SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
 	type=pnt->type;
 	ht=pnt->ht;
-
+	
+	point=pnt->point;
+	
 	aveht=pnt->aveht/pnt->visits;
 	center=vp;
 	radius=pnt->radius;
     pntsize=ps;
-	distance=d;//TheScene->vpoint.distance(t);
+ 	distance=d;//TheScene->vpoint.distance(t);
 	visits=pnt->visits;
 }
 
@@ -326,27 +393,31 @@ void Sprite::reset()
 //-------------------------------------------------------------
 void Sprite::collect()
 {
+#ifdef SHOW_STATS	
 	int trys=0;
 	int visits=0;
 	int bad_visits=0;
 	int bad_valid=0;
 	int bad_active=0;
 	int bad_pts=0;
-	
+	double ave_pts=0;
+#endif	
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
-	cout<<"pts tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
+	cout<<"pointsize tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
 
 	while(s){
+#ifdef SHOW_STATS
 		trys++;
+		
 		if(s->visits<MIN_VISITS)
 			bad_visits++;
 		if(!s->flags.s.valid)
 			bad_valid++;
 		if(!s->flags.s.active)
 			bad_active++;
-		
-		if(s->visits>=MIN_VISITS && /*(s->get_class()==SPRITES) && */s->flags.s.valid && s->flags.s.active){
+#endif	
+		if(s->visits>=MIN_VISITS && s->flags.s.valid && s->flags.s.active){
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
 			Point ps=pp.spherical();
@@ -361,11 +432,17 @@ void Sprite::collect()
 			double r=TheMap->radius*s->radius;
 			double f=TheScene->wscale*r/d;
 		    double pts=f;
-		    
-		    if(pts>=min_pts)
+#ifdef SHOW_STATS		    
+		    if(pts>=min_pts){
 				sprites.add(new SpriteData((SpritePoint*)s,t,d,pts));
+				ave_pts+=pts;
+		    }
 		    else
 		    	bad_pts++;
+#else
+		    if(pts>=min_pts)
+		    	sprites.add(new SpriteData((SpritePoint*)s,t,d,pts));
+#endif
 		}
 		s=PlacementMgr::next();
 	}
@@ -377,13 +454,21 @@ void Sprite::collect()
 		sprites[i]->print();	
 	}
 #endif
+#ifdef SHOW_STATS
+	double winsize=640*480;
 	double usage=100.0*trys/PlacementMgr::hashsize;
 	double badvis=100.0*bad_visits/trys;
 	double badactive=100.0*bad_active/trys;
 	double badpts=100.0*bad_pts/trys;
+	double avepts=ave_pts/sprites.size;
+	double proj=0.8*avepts;
+	double coverage=100.0*proj*proj*sprites.size/winsize;
+	double overlap=lerp(coverage,0,100,1,4);
 
-	cout<<" collected "<<sprites.size<<" trys:"<<trys<<" usage:"<<usage<<" bad - active:"<<badactive<<" pts:"<<badpts<<" %"<<endl;
-
+	cout<<" sprites "<<sprites.size<<" %cov:"<<coverage/overlap<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<endl;
+#else
+	cout<<" sprites collected:"<<sprites.size<<endl;
+#endif
 }
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string
@@ -426,10 +511,6 @@ bool Sprite::setProgram(){
 	//sprintf(str,"sprite");    	
 	glUniform1iARB(glGetUniformLocationARB(program,str),texid);
 	
-	GLSLVarMgr vars;
-	vars.setProgram(program);
-	vars.loadVars();
-	
 	return true;
 }
 bool Sprite::initProgram(){
@@ -440,7 +521,7 @@ bool Sprite::initProgram(){
 //************************************************************
 // TNsprite class
 //************************************************************
-TNsprite::TNsprite(char *s, TNode *l, TNode *r) : TNplacements(SPRITES|NNBRS|NOLOD,l,r,0)
+TNsprite::TNsprite(char *s, int opts,  TNode *l, TNode *r) : TNplacements(opts|SPRITES|NNBRS|NOLOD,l,r,0)
 {
 	set_collapsed();
 	setName(s);
@@ -535,6 +616,8 @@ void TNsprite::eval()
 	}
 	
 	MaxSize=mgr->maxsize;
+	
+	mgr->type=type;
 
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize+
@@ -552,7 +635,7 @@ void TNsprite::eval()
 		double x=1-cval;
 #ifdef COLOR_TEST
 		if(get_id()==1)
-			c=Color(x,1,0);
+			c=Color(x,1,1);
 		else
 			c=Color(1,1,x);
 #endif
@@ -592,10 +675,10 @@ void TNsprite::setType(char *s)
 void TNsprite::valueString(char *s)
 {
 	sprintf(s+strlen(s),"%s(\"%s\",",symbol(),sprites_file);
-	//char opts[64];
-	//opts[0]=0;
-	//if(optionString(opts))
-	//	sprintf(s+strlen(s),"%s,",opts);
+	char opts[64];
+	opts[0]=0;
+	if(optionString(opts))
+		sprintf(s+strlen(s),"%s,",opts);
 	TNarg *arg=(TNarg*)left;
 	while(arg){
 		arg->valueString(s+strlen(s));

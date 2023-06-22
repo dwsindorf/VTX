@@ -251,7 +251,7 @@ Point MapData::tvector()
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
 //#define TEST_SPRITES
-#define SPRITES_DENSITY
+//#define SPRITES_DENSITY
 #define SPRITES_COLOR
 
 void MapData::init_terrain_data(TerrainData &td,int pass)

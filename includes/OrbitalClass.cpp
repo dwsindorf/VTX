@@ -5340,6 +5340,8 @@ int  Sky::scale(double &zn, double &zf)
     	Raster.twilite_dph=twilite_dph;
     	Raster.twilite_max=twilite_max;
     	Raster.twilite_min=twilite_min;
+    	
+    	Raster.setParams();
 
     	Point p=point.mm(TheScene->invViewMatrix);
     	p=p.mm(TheScene->viewMatrix);
@@ -5820,7 +5822,7 @@ void Sky::map_color(MapData*d,Color &c)
 #define CLOUDS_GS_SHADER   2 // use geometry shader for 3d clouds
 #define CLOUDS_NO_SHADER   3
 
-int clouds_mode=CLOUDS_GS_SHADER;
+int clouds_mode=CLOUDS_BILLBOARDS;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)

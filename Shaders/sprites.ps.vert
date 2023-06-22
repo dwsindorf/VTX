@@ -1,10 +1,9 @@
-//#version 450
-
 #include "attributes.h"
 #include "attributes.vert"
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
+varying vec4 Position;
 
 varying vec4 index;
 
@@ -14,7 +13,7 @@ void main(void) {
 	
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	
-	float delta=length(EyeDirection-gl_Position);
+	Position = EyeDirection;
 
 	gl_PointSize = TextureAttributes.z;
 	index=TextureAttributes;

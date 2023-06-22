@@ -17,6 +17,7 @@ enum {
     CLOUDS   	= 0x00004000,
     SPRITES   	= 0x00008000,
     PLACETYPE   = 0x0000f000,
+    FLIP        = 0x00010000,
 
     NOLOD   	= 0x01000000,
     NNBRS   	= 0x02000000,
@@ -125,6 +126,7 @@ public:
 	double  maxsize;
 	int     levels;
 	double	mult;
+	double	level_mult;
 	double  density;
 	TNode   *dexpr;
 	double  base;
@@ -169,6 +171,8 @@ public:
 	virtual void addToken(LinkedList<TNode*>&l);
 	virtual void set_id(int i);
 	virtual int get_id();
+	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
+	int flip()				    { return type & FLIP;}
 
 };
 

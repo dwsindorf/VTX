@@ -34,12 +34,15 @@ public:
 	double aveht;
 	double pntsize;
 	int visits;
+	Point4DL point;
 	Point center;
 	SpriteData(SpritePoint*,Point,double,double);
 	double value() { return distance;}
 	void print();
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
+	int flip()				    { return type & FLIP;}
+
 };
 
 class Sprite
@@ -96,7 +99,7 @@ public:
 	int instance;
 	Image *image;
 	Sprite *sprite;
-	TNsprite(char *, TNode *l, TNode *r);
+	TNsprite(char *, int opts,  TNode *l, TNode *r);
 	~TNsprite();
 	void eval();
 	void init();
@@ -113,6 +116,7 @@ public:
 	void setSpritesTexture();
 	void getSpritesFilePath(char *dir);
 	void set_id(int i);
+
 };
 
 #endif

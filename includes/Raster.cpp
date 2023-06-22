@@ -2158,7 +2158,15 @@ void RasterMgr::init_render()
 	do_edges=Render.dealias()||filter_show();
 	do_fog=do_haze|do_vfog;
 	do_image=do_water||do_fog||do_edges;
+	setParams();
 }
+void RasterMgr::setParams(){
+	double f=TheScene->height/TheScene->maxht;
+	double attn=rampstep(0,0.75,f,1,0);
+	fog_vf=fog_value*Render.fog_value()*attn;
+	haze_hf=haze_value*Render.haze_value()*attn;
+}
+
 //-------------------------------------------------------------
 // RasterMgr::render()	pixel image rasterization
 //-------------------------------------------------------------

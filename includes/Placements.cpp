@@ -74,6 +74,7 @@ static LongSym popts[]={
 	{"MAXB",		MAXB},
 	{"NOLOD",		NOLOD},
 	{"CNORM",		CNORM},
+	{"FLIP",		FLIP},
 	{"NNBRS",		NNBRS}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
@@ -102,6 +103,7 @@ PlacementMgr::PlacementMgr(int i)
 	levels=5;
 	maxsize=0.01;
 	mult=0.8;
+	level_mult=0.8;
 	density=0.8;    			
   	dexpr=0;
   	base=0;
@@ -145,7 +147,7 @@ void PlacementMgr::free_htable()
 			hash[i]=0;
 		}
 	}
-	cout<<"freed:"<<cfreed<<endl;
+	cout<<"PlacementMgr::free_htable freed:"<<cfreed<<endl;
 }
 
 //-------------------------------------------------------------
@@ -196,7 +198,7 @@ void PlacementMgr::ss(){
 	hits=0;
 }
 void PlacementMgr::end(){ 
-	cout<<"index="<<index<<" hits="<<hits;
+	cout<<"placement tests:"<<index<<" hits:"<<hits;
 }
 //-------------------------------------------------------------
 // PlacementMgr::make()	virtual factory method to make Placement
@@ -247,7 +249,7 @@ void PlacementMgr::eval()
 	pv=pv.normalize();  // project on unit sphere
 
 	msize=maxsize;//ntest()?maxsize:maxsize*4;
-	for(lvl=0,size=msize;lvl<levels;size*=0.5*(mult+1),lvl++){
+	for(lvl=0,size=msize;lvl<levels;size*=0.5*(level_mult+1),lvl++){
 		if(!valid())
 			continue;
 
@@ -623,7 +625,11 @@ void TNplacements::eval()
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2) mgr->mult=arg[2];			// scale multiplier per level
+	if(n>2){
+		double randscale=arg[2];		// random scale multiplier
+		mgr->mult=randscale;            // in same level
+		mgr->level_mult=randscale;      // reduce size per level
+	}
 	
 	if(mgr->dexpr==0){
 		dexpr=args[3];

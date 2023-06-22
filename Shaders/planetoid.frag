@@ -61,7 +61,6 @@ uniform vec4 IceColor2;
 uniform float water_clarity;
 uniform float ice_clarity;
 
-
 #ifdef GRID
 uniform vec4 phi_color;
 uniform vec4 theta_color;
@@ -146,6 +145,8 @@ void main(void) {
 #ifdef SHADOWS
     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
     color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
+    //color.rgb = gl_FragCoord.xyz;
+    //color.rgb=vec3(shadow,0,0);
 #endif    
     float depth=gl_FragCoord.z;
     vec3 eye = normalize(EyeDirection.xyz);

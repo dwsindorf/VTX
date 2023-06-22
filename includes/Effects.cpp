@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-//#define DEBUG_EFFECTS
+#define DEBUG_EFFECTS
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
@@ -127,6 +127,7 @@ void EffectsMgr::render() {
 		//glEnable(GL_BLEND);
 	}
 }
+
 //-------------------------------------------------------------
 // EffectsMgr::setApplyProgram()	apply raster effects to image
 //-------------------------------------------------------------
@@ -143,10 +144,6 @@ void EffectsMgr::setProgram(int type){
 	double ws2=(zn-zf)/zf/zn;
 	double af=rampstep(0,TheScene->maxht,TheScene->height,1,0);
 	double wht=(TheScene->elevation-sea_level)/FEET;
-	double f=TheScene->height/TheScene->maxht;
-	double attn=rampstep(0,0.75,f,1,0);
-	double vf=fog_value*Render.fog_value()*attn;
-	double hf=haze_value*Render.haze_value()*attn;
 	GLSLMgr::clrDefString();
 
 #ifdef DEBUG_EFFECTS
@@ -291,10 +288,10 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVec("Haze",c.red(),c.green(),c.blue(),c.alpha());
 		vars.newFloatVar("haze_grad",haze_grad);
 		vars.newFloatVar("haze_zfar",haze_zfar);
-		vars.newFloatVar("haze_ampl",hf);
+		vars.newFloatVar("haze_ampl",haze_hf);
 		c=fog_color;
 		vars.newFloatVec("Fog",c.red(),c.green(),c.blue(),c.alpha());
-		vars.newFloatVar("fog_ampl",vf);
+		vars.newFloatVar("fog_ampl",fog_vf);
 
 		vars.newFloatVar("ice_reflection",ice_color1.alpha());
 		vars.newFloatVar("water_reflection",water_color1.alpha());

@@ -196,6 +196,7 @@ public:
 	double haze_max;
 	double haze_grad;
 	double haze_zfar;
+	double haze_hf;
 
 	Color  fog_color;
 	double fog_value;
@@ -203,6 +204,7 @@ public:
 	double fog_max;
 	double fog_vmin;
 	double fog_vmax;
+	double fog_vf;
 
 	Color  sky_color;
 
@@ -404,6 +406,7 @@ public:
 	void  reset_idtbl();
 	void  read_ids();
 	void  setVisibleIDs();
+	void  setParams();
 	void  getZLimits(double &zn, double &zf);
 	void  getIDLimits(double &zn, double &zf,double &hmin, double &hmax);
 

@@ -833,7 +833,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	}
 	else{
 		glUseProgramObjectARB(programHandle());
-#ifdef DEBUG_SHADER_ERRORS
+		
+//#define SHOW_SHADER_WARNINGS
+#ifdef SHOW_SHADER_WARNINGS
 		if(first){
 			showShaderLog("vertex program: ", program->vertex_shader);
 			showShaderLog("fragment program: ",program->fragment_shader);

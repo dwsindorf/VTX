@@ -27,7 +27,6 @@ public:
 	void init_render();
 
 	void setProgram(int);
-
 	void renderBgShadows();
 	void applyBgShadows();
 	void renderFgShadows();

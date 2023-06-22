@@ -15,7 +15,7 @@ static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
-//#define DEBUG_RENDER
+#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -706,6 +706,7 @@ void Map::render_zvals()
 {
 	make_current();
 
+	cout<<"Map::render_zval"<<endl;
 	GLSLMgr::beginRender();
 	//glFlush();
 //#ifndef WINDOWS
@@ -1215,22 +1216,23 @@ void Map::render_shaded()
 			else
 				Lights.setEmission(Td.emission);
 			glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
-            set_sprites(tp->sprites.size>0);
-
+ 
 			if(!object->setProgram())
 				continue;
 			texture=0;
 			total_rpasses++;
+
 			if(render_triangles()){
 				RENDER_TRIANGLES(SHADER_LISTS,tid);
 			}
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-			GLSLMgr::setTessLevel(tesslevel);
-			Render.show_shaded();
+	        set_sprites(tp->sprites.size>0);
 			if(sprites())
 				render_sprites();
+			GLSLMgr::setTessLevel(tesslevel);
+			Render.show_shaded();
 			reset_texs();
 		}
 	}
@@ -1239,7 +1241,7 @@ void Map::render_shaded()
 	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
 	if(show_water){
 #ifdef DEBUG_RENDER
-		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;water
+		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
 #endif
 		tid=WATER;
 		tp=Td.properties[tid];
@@ -1413,7 +1415,7 @@ static LinkedList<MapNode*> node_list;
 static int test_cnt;
 static void collect_nodes(MapNode *n)
 {
-	if(n->visible() || n->partvis()){
+	if(n->visible()){
 		node_list.add(n);
     }
 }
@@ -1434,6 +1436,7 @@ void Map::render_sprites(){
 		CurrentScope->set_spass();
 		sorted.ss();
 		int n=sorted.size;
+		// collect far to near so overwrites in hash table preserve nearest
 		for(int i=0;i<n;i++){
 			MapNode *node=sorted[n-i-1];
 			node->evalsprites();
@@ -1443,12 +1446,11 @@ void Map::render_sprites(){
 		Sprite::collect();
 		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 
-		cout<<"Map sprites n:"<<sorted.size<<" sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+		cout<<"Map::render_sprites nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}
-	
-	bool ok=SpriteMgr::setProgram();
+	SpriteMgr::setProgram();
 }
 
 //-------------------------------------------------------------
