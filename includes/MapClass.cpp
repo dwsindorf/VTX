@@ -15,7 +15,7 @@ static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
-#define DEBUG_RENDER
+//#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -1228,7 +1228,7 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-	        set_sprites(tp->sprites.size>0);
+	        set_sprites(tp->sprites.size>0&& TheScene->viewobj==object);
 			if(sprites())
 				render_sprites();
 			GLSLMgr::setTessLevel(tesslevel);

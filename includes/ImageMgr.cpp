@@ -28,7 +28,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
@@ -178,6 +178,8 @@ void ImageSym::print()
         printf("%-5s","MAP");
     if(info&IMTYPE==IMPORT)
         printf("%-5s","IMPORT");
+    if(info&IMTYPE==SPRITE)
+        printf("%-5s","SPRITE");
     if(info&SPX){
         printf("%-5s","SPX");
         if(info&BANDS)
@@ -870,6 +872,12 @@ int ImageReader::getFileInfo(char *name)
    		info |=IMPORT;
    		return info;
    	}
+	sprintf(dir,"%s%sTextures%sSprites%s",base,File.separator,File.separator,File.separator);
+	info=getFileInfo(name,dir);
+   	if(info){
+   		info |=SPRITE;
+   		return info;
+   	}
 	sprintf(dir,"%s%sTextures%sMaps%s",base,File.separator,File.separator,File.separator);
 	info=getFileInfo(name,dir);
 	if(info)
@@ -945,6 +953,10 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			break;
 		case IMPORT:
 			if((info&IMTYPE) != IMPORT)
+				continue;
+			break;
+		case SPRITE:
+			if((info&IMTYPE) != SPRITE)
 				continue;
 			break;
 
@@ -1290,6 +1302,10 @@ Image *ImageReader::open(char *name)
 	sprintf(dir,"%s%sBitmaps%s%s",base,d,d,name);
 
 	Image *image=open(name, dir);
+	if(image)
+		return image;
+	sprintf(dir,"%s%sTextures%sSprites%s%s",base,d,d,d,name);
+	image=open(name, dir);
 	if(image)
 		return image;
 	sprintf(dir,"%s%sTextures%sImages%s%s",base,d,d,d,name);

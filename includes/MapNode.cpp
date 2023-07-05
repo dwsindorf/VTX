@@ -2558,11 +2558,33 @@ void MapNode::evalsprites()
 	double p=d->phi();
 	
 	Point pt=Td.rectangular(t, p);
+	//TheNoise.set(pt);
+	//Height=d->Ht();
+    double  aveht=d->Ht();
+    
+    Point pnt=d->point();
+	int nct=find_neighbors(); // also used for slope
+#define AVE_PTS
+#ifdef AVE_PTS
+ 	for(int i=0;i<nct;i++){
+		MapData *md=mapdata[i];
+		aveht+=md->Ht();
+		double t=md->theta();
+		double p=md->phi();
+		Point pt1=Td.rectangular(t, p);
+		pt=pt+Td.rectangular(t, p);
+		pnt=pnt+mapdata[i]->point();
+	}
+    double a=1.0/(1+nct);
+	aveht*=a;
+	pt=pt*a;
+#endif
+	Height=aveht;
+	MapPt=pnt;
 	TheNoise.set(pt);
-	Height=d->Ht();
-	MapPt=point();
 
 	for(tp->sid=0;tp->sid<tp->sprites.size;tp->sid++){
+		Td.clr_flag(SFIRST);
 		Sprite *sprite=tp->sprites[tp->sid];
 		sprite->eval();
 	}	

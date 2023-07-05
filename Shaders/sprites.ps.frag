@@ -4,7 +4,9 @@
 
 uniform sampler2D samplers2d[NSPRITES];
 
-varying vec4 index;
+varying vec4 SpriteVars;
+//varying vec4 Constants1;
+
 varying vec4 Normal;
 varying vec4 EyeDirection;
 varying vec4 Position;
@@ -16,6 +18,9 @@ uniform sampler2DRect FBOTex4;
 
 #define SHADOWTEX FBOTex3
 
+//uniform float INVROWS;
+//uniform float ROWS;
+
 uniform vec4 Diffuse;
 uniform vec4 Shadow;
 uniform vec4 Haze;
@@ -26,6 +31,7 @@ uniform float ws1;
 uniform float ws2;
 
 #define DEPTH   gl_FragCoord.z
+
 
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
@@ -42,20 +48,38 @@ vec3 setLighting(vec3 BaseColor) {
 	return TotalDiffuse;
 }
 
+vec2 sprite(float index){
+    vec2 l_uv=gl_PointCoord.xy;
+    
+    float rows=SpriteVars.y;
+    
+    // apply random reflection
+    if(Constants1.r>0.1)
+       l_uv.x=1.0-l_uv.x;
+
+    int y=index/rows;
+    int x=index-rows*y;
+	vec2 pt3=l_uv+vec2(x,y);
+	//pt3.y-=0.5;
+	//pt3.y=max(pt3.y,0);
+	//pt3.y*=2;
+	
+	pt3/=rows;
+	//pt3.x*=2;
+    	
+	return pt3;
+}
+
 //-------------------------------------------------------------
 
 // ########## main section #########################
 void main(void) {
 	vec4 color;
+    int i=SpriteVars.x;
 
-    vec2 l_uv=gl_PointCoord.xy;
-    int i=index.x+0.1;
-    if(index.y>0.1){
-       l_uv.x=1.0-l_uv.x;
-       //l_uv.y=1-l_uv.y; //  test mode (flip upside down for better visibility)
-    }
-  
- 	color=texture2D(samplers2d[i],l_uv);
+    vec2 l_uv=sprite(SpriteVars.w);
+ 
+  	color=texture2D(samplers2d[i],l_uv);
  	color.rgb=setLighting(color.rgb);
  	//color.rgb=mix(color.rgb,Haze.rgb,gl_FragCoord.z);
 #ifdef SHADOWS

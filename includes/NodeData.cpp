@@ -250,10 +250,10 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
-//#define TEST_SPRITES
+#define TEST_SPRITES
 //#define SPRITES_DENSITY
 #define SPRITES_COLOR
-
+#define TEST_CRATERS
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -296,6 +296,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(td.cvalid())
 		nc=1;
+#ifdef TEST_CRATERS
+	nc=1;
+#endif
 #ifdef TEST_SPRITES
 #ifdef SPRITES_COLOR
 	nc=1;

@@ -459,8 +459,8 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		pf=2*mgr.size-r;
 	}
 	else{
-		//if(d>0.4*mgr.size)
-		//	return;
+		if(d>0.4*mgr.size)
+			return;
 		r=0.25*mgr.size*(1-URAND(1)*rf);
 		pf=0.8*mgr.size-r;
 	}

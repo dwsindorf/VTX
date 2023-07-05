@@ -38,6 +38,16 @@ static double  dval;
 static double  aht;
 static double  bht;
 
+#ifdef TEST
+static double thresh=1.0;    // move to argument ?
+static double roff_value=0.5*PI;
+static double roff2_value=1;
+#else
+static double thresh=1.5;    // move to argument ?
+static double roff_value=0.5*PI;
+static double roff2_value=1;
+
+#endif
 static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
@@ -85,8 +95,11 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
  	noise_vertical=1;
   	noise_radial=1;
   	rnoise=vnoise=0;
+	roff=roff_value;
+	roff2=roff2_value;
+
 #ifdef TEST
-  	set_ntest(0);
+  	//set_ntest(0);
 #endif
 }
 CraterMgr::~CraterMgr()
@@ -232,13 +245,8 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 
 	d=pmgr.mpt.distance(center);
 	d=d/radius;
-#ifdef TEST
-	if(d>0.5)
+	if(d>thresh)
 		return false;
-#else
-	if(d>1.5)
-		return false;
-#endif
 	CraterMgr &mgr=(CraterMgr&)pmgr;
 
 	scale=100*mgr.ampl*radius;
@@ -593,6 +601,8 @@ void TNcraters::eval()
 		S0.c=Color(1-dval,0,1);
 	else
 		S0.c=Color(1,1,0);
-#endif
+	Td.c=S0.c;
 	Td.set_cvalid();
+#endif
+
 }

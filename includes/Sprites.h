@@ -16,8 +16,11 @@ public:
 	double dist;
 	int hits;
 	int visits;
+	int sprites_dim;
+	double variability;
+	double rand_flip_prob;
 
-	SpritePoint(PlacementMgr&, Point4DL&,int);
+	SpritePoint(SpriteMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 	void dump();
 	void reset();
@@ -33,6 +36,10 @@ public:
 	double ht;
 	double aveht;
 	double pntsize;
+	double variability;
+	double rand_flip_prob;
+
+	int sprites_dim;
 	int visits;
 	Point4DL point;
 	Point center;
@@ -53,6 +60,8 @@ public:
 	TNsprite  *expr;
 	unsigned int texture_id;
 	unsigned int sprite_id;
+	GLuint sprites_dim;
+
 	bool   valid;
 	static ValueList<SpriteData*> sprites;
 
@@ -74,6 +83,12 @@ public:
 	Placement *make(Point4DL&,int);
 
 	Color c;
+	int sprites_dim;
+	double variability;
+	double slope_bias;
+	double ht_bias;
+	double lat_bias;
+	double rand_flip_prob;
 
 	~SpriteMgr();
 	SpriteMgr(int);
@@ -92,10 +107,10 @@ class TNsprite : public TNplacements
 {
 protected:
 	char sprites_file[256];
-	char sprites_type[256];
-	GLuint sprites_dim;
 
 public:
+	GLuint sprites_dim;
+
 	int instance;
 	Image *image;
 	Sprite *sprite;
@@ -110,12 +125,13 @@ public:
 	bool isLeaf()			{ return false;}
 	int linkable()          { return 1;}
 	void setName(char*);
-	void setType(char*);
 	void valueString(char *);
 	void save(FILE*);
 	void setSpritesTexture();
-	void getSpritesFilePath(char *dir);
 	void set_id(int i);
+	int getFilePath(char*name,char *path);
+	void getSpritesDir(int dim,char*dir);
+	void getSpritesFilePath(char*name,int dim,char *dir);
 
 };
 
