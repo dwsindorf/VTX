@@ -73,16 +73,16 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=1;    // move to argument ?
-static double ht_offset=0.9; // move to argument ?
+static double thresh=1.0;    // move to argument ?
+static double ht_offset=0.5; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
 
-static double roff_value=0.5*PI;
+static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
-static double min_pts=2;
+static double min_pts=1;
 
 static int cnt=0;
 static int tests=0;
@@ -94,9 +94,9 @@ static int hits=0;
 //#define DEBUG_PMEM
 
 //#define SHOW
-#define MIN_VISITS 2
+#define MIN_VISITS 3
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
+#define TEST_PTS 
 //#define DUMP
 #ifdef DUMP
 static void show_stats()
@@ -107,6 +107,15 @@ static void show_stats()
 }
 #endif
 
+class SData {
+public:
+    double v;
+    double f;
+    double value()   { return v;}
+};
+static SData   sdata[256];
+static ValueList<SData*> slist(sdata,256);
+static int          scnt;
 
 //************************************************************
 // SpriteMgr class
@@ -160,17 +169,29 @@ void SpriteMgr::init()
 	cnt=0;
 	ss();
   	reset();
-}
+ }
 
-void SpriteMgr::eval(){
+void SpriteMgr::eval(){	
+	PlacementMgr::eval(); 
+	if(!first() || !scnt)
+	    return;
+	for(int i=0;i<scnt;i++){
+	    slist.base[i]=sdata+i;
+	}
+	slist.size=scnt;
+	slist.sort();
 	
-	PlacementMgr::eval();  
+	for(int i=0;i<scnt;i++){
+	   double f=slist.base[i]->f;
+	   cval=f;
+	}
 }
 
 void SpriteMgr::reset(){
 	PlacementMgr::reset();
 	tests=fails=0;
 	cval=0;
+	scnt=0;
 
 }
 //-------------------------------------------------------------
@@ -181,17 +202,19 @@ bool SpriteMgr::valid()
 #ifndef TEST_PTS
 	return true;
 #endif
+	double mps=min_pts;
 	if(TheScene->adapt_mode())
-		return true;
+		mps*=10;
 	Point pv=MapPt;
-	double d=MapPt.length();
+	double d=pv.length();
+	
 	double r=TheMap->radius*size;
 	double f=TheScene->wscale*r/d;
     double pts=f;
     tests++;
     // TODO set density biases here
 	
-    if(pts<min_pts){
+    if(pts<mps){
     	fails++;
     	return false;
     }
@@ -346,7 +369,11 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 		hits++;
 	}
 	::hits++;
-	cval+=sval;
+
+ 	sdata[scnt].v=hid;
+   	sdata[scnt].f=sval;
+  	if(scnt<255)
+  	    scnt++;
 	return true;
 }
 
@@ -436,8 +463,9 @@ void Sprite::collect()
 #endif	
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
+#ifdef TEST_PTS	
 	cout<<"pointsize tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
-
+#endif
 	while(s){
 #ifdef SHOW_STATS
 		trys++;
@@ -469,15 +497,20 @@ void Sprite::collect()
 		    double pts=f;
 		   // vp=Point(-mp.x,mp.y,-mp.z);
 		    double minv=lerp(pts,min_pts,4*min_pts,1,2*MIN_VISITS);
+#ifdef TEST_PTS
+		    bool pts_test=pts>=min_pts;
+#else
+		    bool pts_test=true;
+#endif
 #ifdef SHOW_STATS		    
-		    if(pts>=min_pts && s->visits>=minv){
+		    if(pts_test && s->visits>=minv){
 				sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
 				ave_pts+=pts;
 		    }
 		    else
 		    	bad_pts++;
 #else
-		    if(pts>=min_pts && s->visits>=minv)
+		    if(pts_test && s->visits>=minv)
 		    	sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
 #endif
 		}
@@ -601,6 +634,8 @@ void TNsprite::init()
 	if(sprite==0)
 		sprite=new Sprite(image,type,this);
 	smgr->init();
+ 	smgr->set_first(1);
+
 	TNplacements::init();
 }
 void TNsprite::set_id(int i){
@@ -617,10 +652,10 @@ void TNsprite::set_id(int i){
 void TNsprite::eval()
 {	
 	SINIT;
-#ifdef DENSITY_TEST
-	Td.set_flag(DVALUE);
-	Td.density=1;
-#endif
+//#ifdef DENSITY_TEST
+//	Td.set_flag(DVALUE);
+//	Td.density=1;
+//#endif
 	if(CurrentScope->rpass()){
 		int size=Td.tp->sprites.size;
 		set_id(size);
@@ -668,23 +703,25 @@ void TNsprite::eval()
 	sval=0;
 	hits=0;
 	cval=0;
+	scnt=0;
+
 	smgr->eval();  // calls SpritePoint.set_terrain
    
-	//if(hits>0 && cval>0 ){ // inside target radius
+	if(hits>0){ // inside target radius
 		nhits++;
 		double x=1-cval;
 #ifdef COLOR_TEST
-		if(fabs(cval)>0)
+		//if(cval>0)
 			c=Color(x,0,1);
-		else
-			c=Color(1,1,0);
+		//else
+		//	c=Color(1,1,0);
 #endif
 #ifdef DENSITY_TEST
 		x=1/(cval+1e-6);
 		x=x*x;//*x*x;
 		density=lerp(cval,0,0.2,0,.05*x);		
 #endif
-	//}
+	}
 #ifdef COLOR_TEST
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
 	Td.c=c;	

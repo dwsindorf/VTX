@@ -17,7 +17,7 @@ static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
-
+#define RENDER_SPRITES
 #define RENDERLIST(i,j,func) \
 	if(use_call_lists && tid_lists[i]){ \
 		if(callLists[i][j]==0) { \
@@ -1229,8 +1229,10 @@ void Map::render_shaded()
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
 	        set_sprites(tp->sprites.size>0&& TheScene->viewobj==object);
+#ifdef RENDER_SPRITES
 			if(sprites())
 				render_sprites();
+#endif
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();

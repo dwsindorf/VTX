@@ -39,15 +39,13 @@ static double  aht;
 static double  bht;
 
 #ifdef TEST
-static double thresh=1.0;    // move to argument ?
-static double roff_value=0.5*PI;
-static double roff2_value=1;
+static double thresh=1.0;
 #else
-static double thresh=1.5;    // move to argument ?
+static double thresh=1.5;
+#endif
 static double roff_value=0.5*PI;
 static double roff2_value=1;
 
-#endif
 static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
@@ -183,8 +181,9 @@ void CraterMgr::eval()
 	PlacementMgr::eval();
 	cmin=size<cmin?size:cmin;
 	cmax=maxsize>cmax?maxsize:cmax;
+	aht=bht=0;
 
-	if(!first())
+	if(!first()||!ccnt)
 	    return;
 
 	for(i=0;i<ccnt;i++){
@@ -193,7 +192,6 @@ void CraterMgr::eval()
 	clist.size=ccnt;
 	clist.sort();
 
-	aht=bht=0;
 	
 	for(i=0;i<ccnt;i++){
 	    double f=clist.base[i]->f;

@@ -251,8 +251,8 @@ Point MapData::tvector()
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
 #define TEST_SPRITES
-//#define SPRITES_DENSITY
-#define SPRITES_COLOR
+#define SPRITES_DENSITY
+//#define SPRITES_COLOR
 #define TEST_CRATERS
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
@@ -378,24 +378,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	double h=Ht();
 
-#ifdef TEST_SPRITES
-	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();
-
-    MapPt=point();
-	for(i=0;i<tp->sprites.size;i++){
-		Sprite *sprite=tp->sprites[i];
-		sprite->eval();
-#ifdef SPRITES_DENSITY
-		setDensity(Td.density);
-#endif
-#ifdef SPRITES_COLOR
-		setColor(Td.diffuse);
-#endif
-	}
-	CurrentScope->set_passmode(mode);
-
-#endif
 	a=TSTART;
 
 	for(i=0;i<tp->textures.size;i++){
@@ -437,6 +419,25 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
 #endif
+#ifdef TEST_SPRITES
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+
+    MapPt=point();
+	for(i=0;i<tp->sprites.size;i++){
+		Sprite *sprite=tp->sprites[i];
+		sprite->eval();
+#ifdef SPRITES_DENSITY
+		setDensity(Td.density);
+#endif
+#ifdef SPRITES_COLOR
+		setColor(Td.diffuse);
+#endif
+	}
+	CurrentScope->set_passmode(mode);
+
+#endif
+
 }
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)
