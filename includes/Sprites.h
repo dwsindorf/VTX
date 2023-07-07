@@ -13,6 +13,7 @@ class SpritePoint : public Placement
 public:
 	double ht;
 	double aveht;
+	double wtsum;
 	double dist;
 	int hits;
 	int visits;

@@ -2564,7 +2564,7 @@ void MapNode::evalsprites()
     
     Point pnt=d->point();
 	int nct=find_neighbors(); // also used for slope
-#define AVE_PTS
+//#define AVE_PTS
 #ifdef AVE_PTS
  	for(int i=0;i<nct;i++){
 		MapData *md=mapdata[i];

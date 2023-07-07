@@ -1125,6 +1125,8 @@ void Map::render_ids()
 
 	Raster.surface=1; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
+		//cout<<"Map::render_ids "<<tid<<endl;
+
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
@@ -1139,7 +1141,7 @@ void Map::render_ids()
 		setProgram();
 		npole->render_ids();
     }
-
+    tid=0;
 	glFinish();
 	glFlush();
 	Raster.read_ids();
@@ -1228,7 +1230,7 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-	        set_sprites(tp->sprites.size>0&& TheScene->viewobj==object);
+	        set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
 #ifdef RENDER_SPRITES
 			if(sprites())
 				render_sprites();
@@ -1448,7 +1450,7 @@ void Map::render_sprites(){
 		Sprite::collect();
 		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 
-		cout<<"Map::render_sprites nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+		cout<<"Map::render_sprites tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}
@@ -1913,6 +1915,7 @@ void Map::adapt()
 				npole->visit(&MapNode::sizechk);
 				npole->visit(&MapNode::balance);
 			}
+
 			ADAPT_CYCLE; // squares pass
 			ADAPT_CYCLE; // diamonds pass
 

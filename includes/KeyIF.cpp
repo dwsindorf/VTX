@@ -540,7 +540,11 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		Render.set_textures(!Render.textures());
 		TheScene->set_changed_render();
         TheScene->set_changed_detail();
-
+		break;
+	case KEY_RENDER_SPRITES:
+		Raster.set_sprites(!Raster.sprites());
+		TheScene->set_changed_render();
+        TheScene->set_changed_detail();
 		break;
 	case KEY_RENDER_SPECULAR:
 		TheScene->set_spectex(TheScene->spectex()?0:1);

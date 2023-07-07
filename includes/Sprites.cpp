@@ -27,21 +27,21 @@
 // 7) sometimes see grid like artifact (sprites arranged in lines)
 //   - reduced by increasing roff2 (but decreases density)
 // TODO
-// 1) change sprite pointsize with distance (DONE)
+// 1) change sprite point size with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
-// 3) implement method for multiple sprite types and multiple terrain types
-// 4) create sprite wxWidgets gui
-// 5) allow sprite images to be in different directory than 2d textures
-// 6) implement multiple sprite lookup from single image
-//    - Could be same sprite different views depending on camera angle
-//    - or different sprites of similar types (trees etc)
+// 3) add support for multiple sprite types (DONE)
+// 4) add support for multiple terrain types
+// 5) allow sprite images to be in different directory than 2d textures (DONE)
+// 6) implement multiple sprite lookup from single image (DONE)
 // 7) implement random horizontal flip of sprite image (DONE)
 //    - in fragment shader use vec2(1-l_uv.x,l_uv.y) based on random variable
-// 8) implement environmental density (ht,slope) as in Texture class
+// 8) implement environmental density (ht,slope) as in Texture class (WIP)
 // 9) implement lighting
 //    - star distance + time of day (DONE)
-//    - shadows (DONE)
-//    - haze 
+//    - shadows (~DONE)
+//    - haze (~DONE)
+//    - fog
+// 10) create sprite wxWidgets gui
 // coverage table  
 // window 640x480 sprite size=1e-5 thresh=5 min_pts=2 neighbors=true
 // -----------------------------------------------------------------------
@@ -61,6 +61,7 @@
 extern double Hscale, Drop, MaxSize,Height;
 extern double ptable[];
 extern Point MapPt;
+extern double  zslope();
 
 extern void inc_tabs();
 extern void dec_tabs();
@@ -82,19 +83,22 @@ static double ht_offset=0.5; // move to argument ?
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
-static double min_pts=1;
+static double min_render_pts=1; // for render
+static double min_adapt_pts=15; // increase resolution only around nearby sprites
 
 static int cnt=0;
 static int tests=0;
-static int fails=0;
+static int pts_fails=0;
+static int dns_fails=0;
 
 static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
-//#define DEBUG_PMEM
+#define DEBUG_PMEM
 
-//#define SHOW
-#define MIN_VISITS 3
+#define USE_AVEHT
+#define SHOW
+#define MIN_VISITS 5
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
 //#define DUMP
@@ -136,8 +140,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	s_mgr=this;
 	roff=roff_value;
 	roff2=roff2_value;
-	level_mult=1;
-	variability=0.5;
+	level_mult=0.2;
 	slope_bias=0;
 	ht_bias=0;
 	lat_bias=0;
@@ -189,36 +192,38 @@ void SpriteMgr::eval(){
 
 void SpriteMgr::reset(){
 	PlacementMgr::reset();
-	tests=fails=0;
+	tests=pts_fails=dns_fails=0;
 	cval=0;
 	scnt=0;
-
 }
 //-------------------------------------------------------------
 // SpritePoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
 bool SpriteMgr::valid()
 { 
-#ifndef TEST_PTS
-	return true;
-#endif
-	double mps=min_pts;
+    tests++;
+
+#ifdef TEST_PTS
+	double mps=min_render_pts;
 	if(TheScene->adapt_mode())
-		mps*=10;
+		mps=min_adapt_pts;
 	Point pv=MapPt;
 	double d=pv.length();
 	
 	double r=TheMap->radius*size;
 	double f=TheScene->wscale*r/d;
     double pts=f;
-    tests++;
-    // TODO set density biases here
-	
     if(pts<mps){
-    	fails++;
+    	pts_fails++;
     	return false;
     }
+#endif  
+    // TODO set density biases here ?
 
+    if(density<=0){
+    	dns_fails++;
+    	return false;
+    }
 	return true;
 }
 
@@ -296,8 +301,9 @@ bool SpriteMgr::setProgram(){
 		if(s->flip())
 			flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
 		
-		double x=Random(pp.x,pp.y,pp.z);
-		pts*=(1+s->variability*x);
+		double x=Random(pp.x,pp.y,pp.z)+0.5;
+		double rv=s->variability*x;
+		pts*=1+rv;
 		
 		double sel=0.1;	
 		if(s->sprites_dim>1){ // random selection in multirow sprites image
@@ -333,12 +339,13 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 {
 	ht=0;
 	aveht=0;
+	wtsum=0;
 	dist=1e16;
 	visits=0;
 	hits=0;
 	mind=1e16;
 	sprites_dim=mgr.sprites_dim;
-	variability=mgr.variability;
+	variability=mgr.mult;
 	rand_flip_prob=mgr.rand_flip_prob;
 
 	flags.s.active=false;
@@ -358,10 +365,13 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 		return false;
 	visits++;
     flags.s.active=true;
-    aveht+=Height;
-	//dist=d;
-
 	sval=lerp(d,0,thresh,0,1);
+
+    double wt=1/(0.01+sval);
+    aveht+=Height*wt;
+	
+    wtsum+=wt;
+
 	if(d<dist){
 		ht=Height;
 		dist=d;
@@ -383,9 +393,10 @@ void SpritePoint::reset(){
 	hits=0;
 	dist=1e6;
 	aveht=0;
+	wtsum=0;
 }
 void SpritePoint::dump(){
-	if(visits>=MIN_VISITS && flags.s.valid && flags.s.active){
+	if(flags.s.valid && flags.s.active){
 		Point4D p(point);
 		p=center;
 		char msg[256];
@@ -402,7 +413,7 @@ SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
 	
 	point=pnt->point;
 	
-	aveht=pnt->aveht/pnt->visits;
+	aveht=pnt->aveht/pnt->wtsum;
 	center=vp;
 	radius=pnt->radius;
     pntsize=ps;
@@ -463,8 +474,9 @@ void Sprite::collect()
 #endif	
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
-#ifdef TEST_PTS	
-	cout<<"pointsize tests:"<<tests<<" fails:"<<fails<<" "<<100.0*fails/tests<<" %"<<endl;
+#ifdef TEST_PTS
+	if(tests>0)
+	cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
 #endif
 	while(s){
 #ifdef SHOW_STATS
@@ -482,11 +494,12 @@ void Sprite::collect()
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
 			Point ps=pp.spherical();
-			//double ht=s->aveht/s->visits;
+#ifdef USE_AVEHT
+			double ht=s->aveht/s->wtsum;
+#else
 			double ht=s->ht;
-			
+#endif			
 			Point center=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius);
-			//cout<<s->radius<<endl;
 
 			Point vp=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
      
@@ -495,10 +508,10 @@ void Sprite::collect()
 			double r=TheMap->radius*s->radius;
 			double f=TheScene->wscale*r/d;
 		    double pts=f;
-		   // vp=Point(-mp.x,mp.y,-mp.z);
-		    double minv=lerp(pts,min_pts,4*min_pts,1,2*MIN_VISITS);
+		   
+		    double minv=lerp(pts,min_render_pts,10*min_render_pts,1,2*MIN_VISITS); 
 #ifdef TEST_PTS
-		    bool pts_test=pts>=min_pts;
+		    bool pts_test=pts>=min_render_pts;
 #else
 		    bool pts_test=true;
 #endif
@@ -519,7 +532,10 @@ void Sprite::collect()
 	PlacementMgr::end();
 	sprites.sort();
 #ifdef SHOW
-	for(int i=sprites.size-1;i>=0;i--){
+	//int pnrt_num=sprites.size-1;
+	int pnrt_num=min(2,sprites.size-1);
+
+	for(int i=pnrt_num;i>=0;i--){
 		cout<<i<<" ";
 		sprites[i]->print();	
 	}
@@ -574,7 +590,6 @@ bool Sprite::setProgram(){
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	GLhandleARB program=GLSLMgr::programHandle();
 	sprintf(str,"samplers2d[%d]",texid);  
-	//sprintf(str,"sprite");    	
 	glUniform1iARB(glGetUniformLocationARB(program,str),texid);
 	
 	GLSLVarMgr vars;
@@ -647,15 +662,11 @@ void TNsprite::set_id(int i){
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
-#define COLOR_TEST
+//#define COLOR_TEST
 #define DENSITY_TEST
 void TNsprite::eval()
 {	
 	SINIT;
-//#ifdef DENSITY_TEST
-//	Td.set_flag(DVALUE);
-//	Td.density=1;
-//#endif
 	if(CurrentScope->rpass()){
 		int size=Td.tp->sprites.size;
 		set_id(size);
@@ -667,7 +678,6 @@ void TNsprite::eval()
 	}
 	
 	Color c =Color(1,1,1);
-	double density=0;
 
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
@@ -679,26 +689,34 @@ void TNsprite::eval()
 	TNarg &args=*((TNarg *)left);
 	TNode *dexpr;
 	
-	int n=getargs(&args,arg,8);
+	int n=getargs(&args,arg,9);
+	
+	double density=1;
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2) mgr->mult=arg[2];			// scale multiplier
-	if(n>3) mgr->density=clamp(arg[3],0,1);
-	if(n>4) smgr->variability=arg[4];
+	if(n>2) mgr->mult=arg[2];			// random scale multiplier
+	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	if(n>4) density=arg[4];
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
 	
 	MaxSize=mgr->maxsize;
+	TerrainProperties *tp=TerrainData::tp;
 	
 	mgr->type=type;
+	if(smgr->slope_bias)
+		density*=1-10000*pow(zslope(),4.0);
+	density=clamp(density,0,1);
 
+	mgr->density=density;
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
-					//+11*TheMap->tid
+					+11*tp->id
+					+7*instance
 					);
-	mgr->id=(int)hashcode+mgr->type+SPRITES+instance+hashcode*TheNoise.rseed;
+	mgr->id=(int)hashcode+mgr->type+SPRITES+hashcode*TheNoise.rseed;
 	
 	sval=0;
 	hits=0;
@@ -711,26 +729,18 @@ void TNsprite::eval()
 		nhits++;
 		double x=1-cval;
 #ifdef COLOR_TEST
-		//if(cval>0)
+		if(instance==0)
 			c=Color(x,0,1);
-		//else
-		//	c=Color(1,1,0);
+		else
+			c=Color(x,1,0);
+		Td.diffuse=Td.diffuse.mix(c,1);
 #endif
 #ifdef DENSITY_TEST
 		x=1/(cval+1e-6);
 		x=x*x;//*x*x;
-		density=lerp(cval,0,0.2,0,.05*x);		
+		Td.density+=lerp(cval,0,0.2,0,.05*x);
 #endif
 	}
-#ifdef COLOR_TEST
-	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
-	Td.c=c;	
-	Td.diffuse=c;	
-	Td.set_cvalid();
-#endif	
-#ifdef DENSITY_TEST
-	Td.density=density;	
-#endif
  }
 //-------------------------------------------------------------
 // TNinode::setName() set name

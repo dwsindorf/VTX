@@ -253,7 +253,7 @@ Point MapData::tvector()
 #define TEST_SPRITES
 #define SPRITES_DENSITY
 //#define SPRITES_COLOR
-#define TEST_CRATERS
+//#define TEST_CRATERS
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -296,17 +296,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(td.cvalid())
 		nc=1;
-#ifdef TEST_CRATERS
-	nc=1;
-#endif
-#ifdef TEST_SPRITES
-#ifdef SPRITES_COLOR
-	nc=1;
-#endif
-#ifdef SPRITES_DENSITY
-	nf=1;
-#endif
-#endif
 
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
@@ -314,11 +303,27 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	    s2->init_terrain_data(*td.data[pass],pass+1);
 	    setLinks(1);
     }
-
+    
 	Height=td.p.z;
 
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];
+
+#ifdef TEST_CRATERS
+	nc=1;
+#endif
+	int pm=CurrentScope->passmode();
+	bool do_sprites=Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
+#ifdef TEST_SPRITES
+	if(do_sprites){
+#ifdef SPRITES_COLOR
+		nc=1;
+#endif
+#ifdef SPRITES_DENSITY
+		nf=1;
+#endif
+	}
+#endif
 
 	a=b=0;
 
@@ -410,9 +415,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	//if(mdata()<0.75)
 	//	set_edge(1);
 
-	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
-	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;
-//cout<<mdata()<<endl;
 	set_type(td.type());
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
@@ -420,11 +422,16 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	point_=TheMap->point(theta(),phi(),h);
 #endif
 #ifdef TEST_SPRITES
+	if(!do_sprites)
+		return;
 	int mode=CurrentScope->passmode();
 	CurrentScope->set_spass();
 
     MapPt=point();
+    Td.density=0;
+    Td.diffuse=Color(1,1,1);
 	for(i=0;i<tp->sprites.size;i++){
+		
 		Sprite *sprite=tp->sprites[i];
 		sprite->eval();
 #ifdef SPRITES_DENSITY
