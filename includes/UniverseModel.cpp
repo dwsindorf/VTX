@@ -201,6 +201,9 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	case TN_TEXTURE:
 		sprintf(tmp,"Texture(\"jupiter\",TEX,1,2,1,0,1,2,0.5,0)\n");
 		break;
+	case TN_SPRITE:
+		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,0.0001,1,1,1)\n");
+		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");
 		break;
@@ -284,6 +287,8 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("Clouds",type);
 	case TN_TEXTURE:
 		return new ModelSym("Texture",type);
+	case TN_SPRITE:
+		return new ModelSym("Sprite",type);
 	case TN_POINT:
 		return new ModelSym("Point",type);
 	case TN_DENSITY:
@@ -448,6 +453,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			if(!obj->hasChild(ID_GLOSS))
 				list.add(getObjectSymbol(TN_GLOSS));
 			list.add(getObjectSymbol(TN_TEXTURE));
+			list.add(getObjectSymbol(TN_SPRITE));
 			//list.add(getObjectSymbol(TN_BASE));
 			//list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
@@ -473,6 +479,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
 		list.add(getObjectSymbol(TN_TEXTURE));
+		list.add(getObjectSymbol(TN_SPRITE));
 		list.add(getObjectSymbol(TN_POINT));
 
 		if(!obj->hasChild(ID_COLOR))
@@ -498,6 +505,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		break;
 	case TN_SNOW:
 	case TN_TEXTURE:
+	case TN_SPRITE:
 	case TN_POINT:
 	case TN_COLOR:
 	case TN_GLOSS:
@@ -507,6 +515,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(actionmode!=DROPPING)
 			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
+		list.add(getObjectSymbol(TN_SPRITE));
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_COLOR));
 		list.add(getObjectSymbol(TN_GLOSS));
@@ -670,6 +679,9 @@ void UniverseModel::setType(NodeIF *node)
 		case ID_COLOR:
 			node->setFlag(TN_COLOR);
 			break;
+		case ID_SPRITE:
+			node->setFlag(TN_SPRITE);
+			break;
 		case ID_TEXTURE:
 			{
 				TNtexture *tex=(TNtexture *)node;
@@ -769,6 +781,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_COLOR:
 	case TN_CRATERS:
 	case TN_TEXTURE:
+	case TN_SPRITE:
 	case TN_FOG:
 	case TN_SNOW:
 	case TN_ERODE:

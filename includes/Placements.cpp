@@ -198,7 +198,7 @@ void PlacementMgr::ss(){
 	hits=0;
 }
 void PlacementMgr::end(){ 
-	cout<<"placement tests:"<<index<<" hits:"<<hits;
+	//cout<<"placement tests:"<<index<<" hits:"<<hits;
 }
 //-------------------------------------------------------------
 // PlacementMgr::make()	virtual factory method to make Placement

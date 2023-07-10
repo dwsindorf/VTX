@@ -313,7 +313,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	nc=1;
 #endif
 	int pm=CurrentScope->passmode();
-	bool do_sprites=Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
+	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
 #ifdef TEST_SPRITES
 	if(do_sprites){
 #ifdef SPRITES_COLOR

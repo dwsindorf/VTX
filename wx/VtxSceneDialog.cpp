@@ -43,6 +43,7 @@
 #include "VtxGalaxyTabs.h"
 #include "VtxFractalTabs.h"
 #include "VtxHaloTabs.h"
+#include "VtxSpritesTabs.h"
 
 
 //#define PRINT_TREE
@@ -139,6 +140,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_CLOUDS,VtxCloudsTabs)
 	SET_TABS_OBJECT(TN_SKY,VtxSkyTabs)
 	SET_TABS_OBJECT(TN_TEXTURE,VtxTexTabs)
+	SET_TABS_OBJECT(TN_SPRITE,VtxSpritesTabs)
 	SET_TABS_OBJECT(TN_COLOR,VtxColorTabs)
 	SET_TABS_OBJECT(TN_POINT,VtxPointTabs)
 	SET_TABS_OBJECT(TN_GLOSS,VtxGlossTabs)
@@ -593,7 +595,7 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 //-------------------------------------------------------------
 bool VtxSceneDialog::setTabs(int t){
 	if(tabs.find(t) == tabs.end()){
-		cout << "dialog for id : "<< t << " not yet supported" <<endl;
+		cout << "dialog for class id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
 	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<" "<<selected->node<<endl;

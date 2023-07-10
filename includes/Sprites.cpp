@@ -30,30 +30,19 @@
 // 1) change sprite point size with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
 // 3) add support for multiple sprite types (DONE)
-// 4) add support for multiple terrain types
+// 4) add support for multiple terrain types (DONE - TEST?)
 // 5) allow sprite images to be in different directory than 2d textures (DONE)
 // 6) implement multiple sprite lookup from single image (DONE)
 // 7) implement random horizontal flip of sprite image (DONE)
 //    - in fragment shader use vec2(1-l_uv.x,l_uv.y) based on random variable
-// 8) implement environmental density (ht,slope) as in Texture class (WIP)
+// 8) implement environmental density (ht,slope) as in Texture class
+//    - slope (DONE)
 // 9) implement lighting
 //    - star distance + time of day (DONE)
 //    - shadows (~DONE)
 //    - haze (~DONE)
 //    - fog
 // 10) create sprite wxWidgets gui
-// coverage table  
-// window 640x480 sprite size=1e-5 thresh=5 min_pts=2 neighbors=true
-// -----------------------------------------------------------------------
-// levels   #		ms      % coverage (est)
-// 1		364		14      25
-// 2		708		29      50
-// 3		1052	48      75
-// 4		1381	64      100
-// 8        2590    133     >100
-// 16  		4722	289     >100
-// GUI idea: pull down menu max-coverage 25,50,75,100 ->1,2,3,4 levels
-//           - may want to multiply actual levels by 1/level_mult
 //************************************************************
 // classes SpritePoint, SpriteMgr
 //************************************************************
@@ -75,7 +64,7 @@ static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1.0;    // move to argument ?
-static double ht_offset=0.5; // move to argument ?
+static double ht_offset=0.7; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -97,8 +86,8 @@ static int hits=0;
 #define DEBUG_PMEM
 
 #define USE_AVEHT
-#define SHOW
-#define MIN_VISITS 5
+//#define SHOW
+#define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
 //#define DUMP
@@ -662,7 +651,7 @@ void TNsprite::set_id(int i){
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
-//#define COLOR_TEST
+#define COLOR_TEST
 #define DENSITY_TEST
 void TNsprite::eval()
 {	
