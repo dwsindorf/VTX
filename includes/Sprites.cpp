@@ -447,6 +447,13 @@ void Sprite::reset()
 	PlacementMgr::free_htable();
 }
 
+void Sprite::set_image(Image *i, int d){
+	image=i;
+	sprites_dim=d;
+	valid=false;
+	if(texture_id>0)
+		glDeleteTextures(1,&texture_id);
+}
 //-------------------------------------------------------------
 // Sprite::collect() collect valid sprite points
 //-------------------------------------------------------------
@@ -777,8 +784,20 @@ void TNsprite::save(FILE *f)
 //-------------------------------------------------------------
 // TNsprite::setSpritesTexture() set sprite image texture
 //-------------------------------------------------------------
-void TNsprite::setSpritesTexture(){
-
+void TNsprite::setSpritesImage(char *name){
+	if(strcmp(name,sprites_file)){
+		setName(name);
+		char path[512];
+		sprites_dim=getFilePath(sprites_file,path);
+		if(sprites_dim){
+			delete image;
+			image=images.open(sprites_file,path);
+			if(image){
+				cout<<"Sprite image found:"<<path<<endl;
+				sprite->set_image(image,sprites_dim);
+			}
+		}
+	}
 }
 
 int TNsprite::getFilePath(char*name,char *dir){
@@ -786,7 +805,7 @@ int TNsprite::getFilePath(char*name,char *dir){
 	char path[512];
 	path[0]=0;
 
-	for(int i=0;i<4;i++){
+	for(int i=0;i<2;i++){
 		getSpritesFilePath(name,i+1,dir);
 		sprintf(path,"%s.png",dir);
 		if(FileUtil::fileExists(path)){
@@ -805,9 +824,7 @@ void TNsprite::getSpritesDir(int dim, char*dir){
   	switch(dim){
   	default:
   	case 1: strcpy(dimdir,"1x"); break;
-  	case 2: strcpy(dimdir,"2x"); break;
-  	case 3: strcpy(dimdir,"3x"); break;
-  	case 4: strcpy(dimdir,"4x"); break;
+  	case 2: strcpy(dimdir,"4x"); break;
   	}
  	sprintf(dir,"%s/Textures/Sprites/%s",base,dimdir);
 }
@@ -816,4 +833,9 @@ void TNsprite::getSpritesFilePath(char*name,int dim,char *dir){
 	char dimdir[512];
 	getSpritesDir(dim,dimdir);
   	sprintf(dir,"%s/%s",dimdir,name);
+}
+
+char *TNsprite::getSpritesFile(GLuint &dim){
+	dim=sprites_dim;
+	return sprites_file;
 }

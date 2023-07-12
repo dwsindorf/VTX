@@ -688,8 +688,6 @@ void VtxCloudsTabs::setObjAttributes(){
 
 	wxString str=getCloudsExpr();
 
-	//cout << str << endl;
-
 	tnode->setExpr((char*)(str.ToAscii()));
 
 	if(tnode->getExprNode()==0)

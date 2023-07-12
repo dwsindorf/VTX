@@ -35,9 +35,13 @@ void VtxBitmapPanel::setImage(wxString name){
 	Refresh();
 }
 void VtxBitmapPanel::setScaledImage(wxString name){
+	setScaledImage(name,wxBITMAP_TYPE_BMP);
+}
+
+void VtxBitmapPanel::setScaledImage(wxString name,wxBitmapType type){
 	m_name=name;
 	wxSize sz = GetSize();
-	m_bitmap.LoadFile(m_name, wxBITMAP_TYPE_BMP);
+	m_bitmap.LoadFile(m_name, type);
 	wxImage img=m_bitmap.ConvertToImage().Rescale(sz.x, sz.y);
 	m_bitmap=wxBitmap(img);
 	Refresh();
@@ -53,8 +57,12 @@ bool VtxBitmapPanel::scaleImage(){
 	return true;
 }
 bool VtxBitmapPanel::setSubImage(const wxRect& rect){
+	return setSubImage(rect,wxBITMAP_TYPE_BMP);
+}
+
+bool VtxBitmapPanel::setSubImage(const wxRect& rect,wxBitmapType type){
 	if(m_name!=""){
-		m_bitmap.LoadFile(m_name, wxBITMAP_TYPE_BMP);
+		m_bitmap.LoadFile(m_name, type);
 		if(m_bitmap.IsOk())
 			return getSubImage(rect, m_bitmap);
 	}

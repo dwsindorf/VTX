@@ -74,6 +74,7 @@ public:
 	bool initProgram();
 	int get_id()				{ return sprite_id;}
 	void set_id(int i)			{ sprite_id=i;}
+	void set_image(Image *, int );
 	static void reset();
 	static void collect();
 };
@@ -128,11 +129,12 @@ public:
 	void setName(char*);
 	void valueString(char *);
 	void save(FILE*);
-	void setSpritesTexture();
+	void setSpritesImage(char *name);
 	void set_id(int i);
 	int getFilePath(char*name,char *path);
 	void getSpritesDir(int dim,char*dir);
 	void getSpritesFilePath(char*name,int dim,char *dir);
+	char *getSpritesFile(GLuint &dim);
 
 };
 
