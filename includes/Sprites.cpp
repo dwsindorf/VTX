@@ -47,7 +47,7 @@
 // classes SpritePoint, SpriteMgr
 //************************************************************
 
-extern double Hscale, Drop, MaxSize,Height;
+extern double Hscale, Drop, MaxSize,Height,Phi;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -693,17 +693,33 @@ void TNsprite::eval()
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
 	if(n>2) mgr->mult=arg[2];			// random scale multiplier
 	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) density=arg[4];
+	if(n>4) maxdensity=arg[4];
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
 	
+	density=maxdensity;
 	MaxSize=mgr->maxsize;
+	radius=TheMap->radius;
 	TerrainProperties *tp=TerrainData::tp;
 	
+	//cout<<Height<<endl;
+	
 	mgr->type=type;
-	if(smgr->slope_bias)
-		density*=1-10000*pow(zslope(),4.0);
+	if(smgr->slope_bias){
+		double slope=zslope();
+		double f=2*lerp(8*fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+		density+=f;
+	}
+	if(smgr->ht_bias){
+		double f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
+		density+=f;
+	}
+	if(smgr->lat_bias){
+		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
+		density+=f;
+	}
+
 	density=clamp(density,0,1);
 
 	mgr->density=density;

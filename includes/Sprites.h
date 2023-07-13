@@ -116,6 +116,8 @@ public:
 	int instance;
 	Image *image;
 	Sprite *sprite;
+	double radius;
+	double maxdensity;
 	TNsprite(char *, int opts,  TNode *l, TNode *r);
 	~TNsprite();
 	void eval();
