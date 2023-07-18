@@ -6,6 +6,7 @@
 #include "TerrainMgr.h"
 #include "ImageMgr.h"
 
+//#define GLOBAL_HASH
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
 class PlacementMgr;
@@ -83,7 +84,11 @@ class PlacementMgr
 protected:
 	place_mgr_flags_u flags;
 
+#ifdef GLOBAL_HASH
 	static Placement  **hash;
+#else
+	Placement  **hash;
+#endif
     void find_neighbors(Placement *);
 
 public:
@@ -93,9 +98,20 @@ public:
 	double 			roff2;
 	Point4D			mpt;
 	Point4D			offset;
+	static int hashsize;	
+#ifdef GLOBAL_HASH
 	static int index;
 	static int hits;
-	static int hashsize;
+	static void free_htable();
+	static Placement *next();
+	static void ss();
+#else
+	int index;
+	int hits;
+	void free_htable();
+	Placement *next();
+	void ss();
+#endif
 	static LinkedList<Placement*> list;
 	virtual bool valid(){ return true;}
 
@@ -115,8 +131,6 @@ public:
 	void set_id(int i)          { type=i&PID;}
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
-
-	static void free_htable();
 
 	int		type;    // type id
 	int     options;
@@ -142,9 +156,6 @@ public:
 	virtual void eval();
 	virtual void dump();
 	virtual Placement *make(Point4DL&,int);
-	static Placement *next();
-	static void ss();
-	static void end();
 
 	friend class Placement;
 };

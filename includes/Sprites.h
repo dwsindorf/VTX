@@ -53,31 +53,7 @@ public:
 
 };
 
-class Sprite
-{
-public:
-	Image *image;
-	int    type;
-	TNsprite  *expr;
-	unsigned int texture_id;
-	unsigned int sprite_id;
-	GLuint sprites_dim;
 
-	bool   valid;
-	static ValueList<SpriteData*> sprites;
-
-	Sprite(Image *i, int l, TNode *e);
-	
-	void eval();
-	void print();
-	bool setProgram();
-	bool initProgram();
-	int get_id()				{ return sprite_id;}
-	void set_id(int i)			{ sprite_id=i;}
-	void set_image(Image *, int );
-	static void reset();
-	static void collect();
-};
 class SpriteMgr : public PlacementMgr
 {
 protected:
@@ -143,6 +119,33 @@ public:
 
 };
 
+class Sprite
+{
+public:
+	Image *image;
+	int    type;
+	TNsprite  *expr;
+	unsigned int texture_id;
+	unsigned int sprite_id;
+	GLuint sprites_dim;
+
+	bool   valid;
+	static ValueList<SpriteData*> sprites;
+
+	Sprite(Image *i, int l, TNode *e);
+	
+	SpriteMgr *mgr() { return expr->mgr;}
+	char *name() { return expr->nodeName();}
+	void eval();
+	void print();
+	bool setProgram();
+	bool initProgram();
+	int get_id()				{ return sprite_id;}
+	void set_id(int i)			{ sprite_id=i;}
+	void set_image(Image *, int );
+	static void reset();
+	static void collect();
+};
 #endif
 
 

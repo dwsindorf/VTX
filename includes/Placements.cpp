@@ -46,10 +46,6 @@ static int  cmade=0,cfreed=0;
 
 static PlacementMgr s_mgr=0;
 
-void init_display_placements()
-{
-}
-
 void show_display_placements()
 {
 	if(!Render.display(CRTRINFO))
@@ -87,11 +83,14 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 //	arg[2]  mult			size multiplier per level
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
+#ifdef GLOBAL_HASH
+
 Placement **PlacementMgr::hash=0;
 int PlacementMgr::index=0;
 int PlacementMgr::hits=0;
-int PlacementMgr::hashsize=PERMSIZE;
+#endif
 LinkedList<Placement*> PlacementMgr::list;
+int PlacementMgr::hashsize=PERMSIZE;
 
 PlacementMgr::PlacementMgr(int i)
 {
@@ -107,7 +106,11 @@ PlacementMgr::PlacementMgr(int i)
 	density=0.8;    			
   	dexpr=0;
   	base=0;
-  	//hash=0;
+#ifndef GLOBAL_HASH
+  	hash=0;
+  	hashsize=PERMSIZE;
+  	index=0;
+#endif
   	hits=0;
   	roff=0.5*PI;
   	roff2=1;
@@ -172,14 +175,16 @@ void PlacementMgr::reset()
 //-------------------------------------------------------------
 void PlacementMgr::init()
 {
+	static bool finisher_added=false;
 	if(hash==0){
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
 #endif
   		CALLOC(hashsize+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
-		add_initializer(init_display_placements);
-		add_finisher(show_display_placements);
+  		if(!finisher_added)
+			add_finisher(show_display_placements);
+  		finisher_added=true;
 #endif
 	}
 	reset();
@@ -196,9 +201,6 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
 void PlacementMgr::ss(){ 
 	index=0;
 	hits=0;
-}
-void PlacementMgr::end(){ 
-	//cout<<"placement tests:"<<index<<" hits:"<<hits;
 }
 //-------------------------------------------------------------
 // PlacementMgr::make()	virtual factory method to make Placement

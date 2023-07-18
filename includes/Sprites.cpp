@@ -141,6 +141,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	ht_bias=0;
 	lat_bias=0;
 	rand_flip_prob=0.5;
+	variability=1;
 	
 	set_ntest(TEST_NEIGHBORS);
 }
@@ -451,7 +452,15 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 void Sprite::reset()
 {
 	sprites.free();
+#ifdef GLOBAL_HASH
 	PlacementMgr::free_htable();
+#else
+	TerrainProperties *tp=Td.tp;
+	for(int i=0;i<tp->sprites.size;i++){
+		Sprite *sprite=tp->sprites[i];
+		sprite->mgr()->free_htable();
+	}
+#endif
 }
 
 void Sprite::set_image(Image *i, int d){
@@ -466,6 +475,11 @@ void Sprite::set_image(Image *i, int d){
 //-------------------------------------------------------------
 void Sprite::collect()
 {
+#ifdef TEST_PTS
+	if(tests>0)
+		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
+#endif
+
 #ifdef SHOW_STATS	
 	int trys=0;
 	int visits=0;
@@ -473,13 +487,18 @@ void Sprite::collect()
 	int bad_valid=0;
 	int bad_active=0;
 	int bad_pts=0;
-	double ave_pts=0;
+	int new_sprites=0;
 #endif	
+#ifdef GLOBAL_HASH
 	PlacementMgr::ss();
 	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
-#ifdef TEST_PTS
-	if(tests>0)
-	cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
+#else
+	TerrainProperties *tp=Td.tp;
+	for(int i=0;i<tp->sprites.size;i++){
+		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_sprites=0;
+		Sprite *sprite=tp->sprites[i];
+		sprite->mgr()->ss();
+		SpritePoint *s=(SpritePoint*)sprite->mgr()->next();
 #endif
 	while(s){
 #ifdef SHOW_STATS
@@ -503,36 +522,42 @@ void Sprite::collect()
 			double ht=s->ht;
 #endif			
 			Point center=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius);
-
 			Point vp=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
-     
-			double d=vp.length(); // distance
-			
+			double d=vp.length(); // distance	
 			double r=TheMap->radius*s->radius;
 			double f=TheScene->wscale*r/d;
 		    double pts=f;
-		   
 		    double minv=lerp(pts,min_render_pts,10*min_render_pts,1,2*MIN_VISITS); 
-#ifdef TEST_PTS
-		    bool pts_test=pts>=min_render_pts;
-#else
 		    bool pts_test=true;
-#endif
-#ifdef SHOW_STATS		    
-		    if(pts_test && s->visits>=minv){
-				sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
-				ave_pts+=pts;
-		    }
-		    else
+#ifdef TEST_PTS
+		    if(pts<min_render_pts){
+		    	pts_test=false;
 		    	bad_pts++;
-#else
-		    if(pts_test && s->visits>=minv)
-		    	sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
+		    }
 #endif
+		    if(pts_test && s->visits>=minv){
+		    	new_sprites++;
+		    	sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
+		    }
 		}
+#ifdef GLOBAL_HASH
 		s=PlacementMgr::next();
-	}
-	PlacementMgr::end();
+	  }
+#else 
+		s=sprite->mgr()->next();
+	  }	
+#ifdef SHOW_STATS
+	double usage=100.0*trys/PlacementMgr::hashsize;
+	double badvis=100.0*bad_visits/trys;
+	double badactive=100.0*bad_active/trys;
+	double badpts=100.0*bad_pts/trys;
+	cout<<sprite->name()<<" sprites "<<new_sprites<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<endl;
+#endif
+
+	} // next sprite
+#endif
+	//}
+    cout<<"total sprites collected:"<<sprites.size<<endl;
 	sprites.sort();
 #ifdef SHOW
 	//int pnrt_num=sprites.size-1;
@@ -542,21 +567,6 @@ void Sprite::collect()
 		cout<<i<<" ";
 		sprites[i]->print();	
 	}
-#endif
-#ifdef SHOW_STATS
-	double winsize=640*480;
-	double usage=100.0*trys/PlacementMgr::hashsize;
-	double badvis=100.0*bad_visits/trys;
-	double badactive=100.0*bad_active/trys;
-	double badpts=100.0*bad_pts/trys;
-	double avepts=ave_pts/sprites.size;
-	double proj=0.8*avepts;
-	double coverage=100.0*proj*proj*sprites.size/winsize;
-	double overlap=lerp(coverage,0,100,1,4);
-
-	cout<<" sprites "<<sprites.size<<" %cov:"<<coverage/overlap<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<endl;
-#else
-	cout<<" sprites collected:"<<sprites.size<<endl;
 #endif
 }
 //-------------------------------------------------------------
