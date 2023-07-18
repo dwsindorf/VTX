@@ -26,6 +26,10 @@
 //   - possibly because spread in xy uses same ht as first level ?
 // 7) sometimes see grid like artifact (sprites arranged in lines)
 //   - reduced by increasing roff2 (but decreases density)
+// 8) drag and drop doesn't work
+//   - preceeding Sprite in file lacks "+"
+// 9) with multiple sprites in file changing the size of one affects the coverage of others
+// 10) density test doesn't seem to reject any instances
 // TODO
 // 1) change sprite point size with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
@@ -42,7 +46,8 @@
 //    - shadows (~DONE)
 //    - haze (~DONE)
 //    - fog
-// 10) create sprite wxWidgets gui
+// 10) create sprite wxWidgets gui (DONE)
+// 11) add support for Noise expr in density 
 //************************************************************
 // classes SpritePoint, SpriteMgr
 //************************************************************
@@ -51,6 +56,7 @@ extern double Hscale, Drop, MaxSize,Height,Phi;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
+extern NameList<LongSym*> POpts;
 
 extern void inc_tabs();
 extern void dec_tabs();
@@ -63,8 +69,8 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=1.0;    // move to argument ?
-static double ht_offset=0.7; // move to argument ?
+static double thresh=0.5;    // move to argument ?
+static double ht_offset=0.9; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -72,7 +78,7 @@ static double ht_offset=0.7; // move to argument ?
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
-static double min_render_pts=1; // for render
+static double min_render_pts=3; // for render
 static double min_adapt_pts=15; // increase resolution only around nearby sprites
 
 static int cnt=0;
@@ -90,6 +96,7 @@ static int hits=0;
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
+#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
 static void show_stats()
@@ -644,8 +651,11 @@ void TNsprite::init()
 	}
 	if(sprite==0)
 		sprite=new Sprite(image,type,this);
-	smgr->init();
- 	smgr->set_first(1);
+	//if(!Td.get_flag(CFIRST)){
+		smgr->set_first(1);
+		smgr->init();
+  		//Td.set_flag(CFIRST);
+	//}
 
 	TNplacements::init();
 }
@@ -663,6 +673,9 @@ void TNsprite::set_id(int i){
 void TNsprite::eval()
 {	
 	SINIT;
+	if(!isEnabled()){
+		return;
+	}
 	if(CurrentScope->rpass()){
 		int size=Td.tp->sprites.size;
 		set_id(size);
@@ -702,9 +715,7 @@ void TNsprite::eval()
 	MaxSize=mgr->maxsize;
 	radius=TheMap->radius;
 	TerrainProperties *tp=TerrainData::tp;
-	
-	//cout<<Height<<endl;
-	
+		
 	mgr->type=type;
 	if(smgr->slope_bias){
 		double slope=zslope();
@@ -763,6 +774,22 @@ void TNsprite::setName(char *s)
 }
 
 //-------------------------------------------------------------
+// TNsprite::optionString() get option string
+//-------------------------------------------------------------
+int TNsprite::optionString(char *c)
+{
+    c[0]=0;
+	for(int i=0;i<POpts.size;i++){
+    	if(type & POpts[i]->value){
+			if(c[0]>0)
+				strcat(c,"|");
+   			strcat(c,POpts[i]->name());
+   		}
+	}
+	return c[0];  
+}
+
+//-------------------------------------------------------------
 // TNtexture::valueString() node value substring
 //-------------------------------------------------------------
 void TNsprite::valueString(char *s)
@@ -795,6 +822,19 @@ void TNsprite::save(FILE *f)
 	fprintf(f,"%s",buff);
 	if(right)
 		right->save(f);
+}
+
+//-------------------------------------------------------------
+// TNfunc::save() archive the node
+//-------------------------------------------------------------
+void TNsprite::saveNode(FILE *f)
+{
+	char buff[1024];
+	buff[0]=0;
+	valueString(buff);
+	//if(addtabs)
+	    fprintf(f,"\n%s",tabs);
+	fprintf(f,"%s",buff);
 }
 
 //-------------------------------------------------------------

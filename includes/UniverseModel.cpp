@@ -202,7 +202,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Texture(\"jupiter\",TEX,1,2,1,0,1,2,0.5,0)\n");
 		break;
 	case TN_SPRITE:
-		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,0.0001,1,1,1)\n");
+		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,1e-6,1,1,1,0,0,0)\n");
 		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");

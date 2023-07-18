@@ -126,8 +126,8 @@ public:
 	const char *typeName ()	{ return "sprite";}
 	const char *symbol()	{ return "Sprite";}
 
-	bool isLeaf()			{ return false;}
-	int linkable()          { return 1;}
+	bool isLeaf()			{ return true;}
+	int linkable()          { return 0;}
 	void setName(char*);
 	void valueString(char *);
 	void save(FILE*);
@@ -137,6 +137,9 @@ public:
 	void getSpritesDir(int dim,char*dir);
 	void getSpritesFilePath(char*name,int dim,char *dir);
 	char *getSpritesFile(GLuint &dim);
+	char *nodeName()  { return sprites_file;}
+	int optionString(char *);
+	void saveNode(FILE *f);
 
 };
 

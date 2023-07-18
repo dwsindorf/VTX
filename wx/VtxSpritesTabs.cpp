@@ -20,14 +20,16 @@
 #undef LABEL2
 #define LABEL2 60
 
+//extern VtxSceneDialog *sceneDialog;
+
 wxString selections[]={"0","1","2","3","4","5","6","7","8"};
 
 //########################### VtxSpritesTabs Class ########################
 
 enum{
-	OBJ_SHOW,
-	OBJ_DELETE,
-	OBJ_SAVE,
+	ID_ENABLE,
+	ID_DELETE,
+	ID_SAVE,
     ID_FILELIST,
     ID_SIZE_SLDR,
     ID_SIZE_TEXT,
@@ -55,8 +57,9 @@ IMPLEMENT_CLASS(VtxSpritesTabs, VtxTabsMgr )
 
 BEGIN_EVENT_TABLE(VtxSpritesTabs, VtxTabsMgr)
 
-EVT_MENU(OBJ_DELETE,VtxSpritesTabs::OnDelete)
-EVT_MENU(OBJ_SAVE,VtxSpritesTabs::OnSave)
+EVT_MENU(ID_DELETE,VtxSpritesTabs::OnDelete)
+EVT_MENU(ID_ENABLE,VtxSpritesTabs::OnEnable)
+EVT_MENU(ID_SAVE,VtxSpritesTabs::OnSave)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSpritesTabs::OnAddItem)
 EVT_CHOICE(ID_SPRITES_DIM,VtxSpritesTabs::OnDimSelect)
 EVT_CHOICE(ID_SPRITES_VIEW,VtxSpritesTabs::OnViewSelect)
@@ -249,10 +252,10 @@ int VtxSpritesTabs::showMenu(bool expanded){
 	menu_action=TABS_NONE;
 	wxMenu menu;
 
-	menu.AppendCheckItem(OBJ_SHOW,wxT("Enable"));
+	menu.AppendCheckItem(ID_ENABLE,wxT("Enable"));
 	menu.AppendSeparator();
-	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
+	menu.Append(ID_DELETE,wxT("Delete"));
+	menu.Append(ID_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=sceneDialog->getAddMenu(object());
 
@@ -301,8 +304,10 @@ void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	//cout<<"VtxSpritesTabs::OnDimSelect "<<dim<<endl;
 	makeFileList(dim,"");
 	select->Set(dim*dim,selections);
+	update_needed=true;
 	select->SetSelection(0);
-	getObjAttributes();
+	setObjAttributes();
+
 }
 
 void VtxSpritesTabs::makeFileList(int dim,wxString name){
@@ -339,8 +344,9 @@ void VtxSpritesTabs::makeFileList(int dim,wxString name){
  	}
  	if(image_name.IsEmpty())
  		image_name=choices->GetStringSelection();
-
- 	choices->SetStringSelection(image_name);
+ 	//sceneDialog->setNodeName((char*)image_name.ToAscii());
+ 	sprites_file=image_name;
+ 	choices->SetStringSelection(sprites_file);
  	select->SetSelection(0);
  	//setObjAttributes();
 }
@@ -417,6 +423,7 @@ void VtxSpritesTabs::setObjAttributes(){
 	obj->applyExpr();
 	TheView->set_changed_detail();
 	TheScene->rebuild();
+	sceneDialog->setNodeName((char*)image_name.ToAscii());
 
 	update_needed=false;
 }
@@ -433,7 +440,7 @@ void VtxSpritesTabs::OnChangedFile(wxCommandEvent& event){
 	image_path="";
 	image_name=choices->GetStringSelection();
 	invalidateObject();
-	
+		
 }
 void VtxSpritesTabs::OnViewSelect(wxCommandEvent& event){
 	changed_cell_expr=true;

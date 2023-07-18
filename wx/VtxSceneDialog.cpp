@@ -353,7 +353,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	        TheScene->rebuild_all();
 	        rebuildObjectTree();
 	        selectObject(newobj);
-	        setNodeName(sym->name());
+	       // setNodeName(sym->name());
 		}
 		break;
 	}
