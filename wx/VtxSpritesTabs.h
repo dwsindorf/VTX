@@ -48,9 +48,9 @@ protected:
 	ExprSliderCtrl *DeltaSizeSlider;
 	ExprSliderCtrl *LevelDeltaSlider;
 	ExprSliderCtrl *DensitySlider;
-	SliderCtrl *SlopeBiasSlider;
-	SliderCtrl *PhiBiasSlider;
-	SliderCtrl *HtBiasSlider;
+	ExprSliderCtrl *SlopeBiasSlider;
+	ExprSliderCtrl *PhiBiasSlider;
+	ExprSliderCtrl *HtBiasSlider;
 
 	bool changed_cell_expr;
 	uint image_dim;

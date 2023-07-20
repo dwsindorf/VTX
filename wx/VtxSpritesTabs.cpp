@@ -125,13 +125,13 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 
     // size
 	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Ave(ft)",LABEL2, VALUE2,SLIDER2);
-	SizeSlider->setRange(0.1,100);
-	SizeSlider->setValue(1.0);
+	SizeSlider->setRange(1,200);
+	SizeSlider->setValue(10.0);
 
 	size->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta(%)",LABEL2,VALUE2,SLIDER2);
-	DeltaSizeSlider->setRange(0.0,200);
+	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta",LABEL2,VALUE2,SLIDER2);
+	DeltaSizeSlider->setRange(0.0,2);
 	DeltaSizeSlider->setValue(0.0);
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -150,9 +150,9 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 	
 	distro->AddSpacer(95);
 	
-	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Delta(%)",LABEL2,VALUE2,SLIDER2);
-	LevelDeltaSlider->setRange(0.0,100);
-	LevelDeltaSlider->setValue(100);
+	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Delta",LABEL2,VALUE2,SLIDER2);
+	LevelDeltaSlider->setRange(0.0,2);
+	LevelDeltaSlider->setValue(0.5);
 	distro->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	distro->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
@@ -168,7 +168,7 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 	DensitySlider->setValue(1.0);
 	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
-	SlopeBiasSlider=new SliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
+	SlopeBiasSlider=new ExprSliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
 	SlopeBiasSlider->setRange(-2,2);
 	SlopeBiasSlider->setValue(0.0);
 
@@ -178,13 +178,13 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	PhiBiasSlider=new SliderCtrl(panel,ID_PHI_BIAS_SLDR,"Latitude",LABEL2,VALUE2,SLIDER2);
+	PhiBiasSlider=new ExprSliderCtrl(panel,ID_PHI_BIAS_SLDR,"Latitude",LABEL2,VALUE2,SLIDER2);
 	PhiBiasSlider->setRange(-2,2);
 	PhiBiasSlider->setValue(0.0);
 
 	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	HtBiasSlider=new SliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
+	HtBiasSlider=new ExprSliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
 	HtBiasSlider->setRange(-2,2);
 	HtBiasSlider->setValue(0.0);
 
@@ -362,13 +362,16 @@ wxString VtxSpritesTabs::exprString(){
 	sprintf(p,"Sprite(\"%s\",FLIP|NOLOD,",(const char*)sprites_file.ToAscii());
 	sprintf(p+strlen(p),"%d,",m_orders->GetSelection()+1);
 	sprintf(p+strlen(p),"%g,",FEET*SizeSlider->getValue()/obj->radius);
-	sprintf(p+strlen(p),"%g,",DeltaSizeSlider->getValue()/100);
-	sprintf(p+strlen(p),"%g,",LevelDeltaSlider->getValue()/100);
-	sprintf(p+strlen(p),"%g,",DensitySlider->getValue());
-	sprintf(p+strlen(p),"%g,",SlopeBiasSlider->getValue());
-	sprintf(p+strlen(p),"%g,",HtBiasSlider->getValue());
-	sprintf(p+strlen(p),"%g)\n",PhiBiasSlider->getValue());
- 	return wxString(p);
+	wxString s(p);
+
+	s+=DeltaSizeSlider->getText()+",";
+	s+=LevelDeltaSlider->getText()+",";
+	s+=DensitySlider->getText()+",";
+	s+=SlopeBiasSlider->getText()+",";
+	s+=HtBiasSlider->getText()+",";
+	s+=PhiBiasSlider->getText();
+	s+=")";
+ 	return wxString(s);
 }
 
 void VtxSpritesTabs::getObjAttributes(){
@@ -378,6 +381,8 @@ void VtxSpritesTabs::getObjAttributes(){
 	update_needed=false;
 
 	TNsprite *obj=object();
+	SpriteMgr *mgr=(SpriteMgr*)obj->mgr;
+
 	uint dim=0;
 	sprites_file=obj->getSpritesFile(dim);
 	sprites_dim->SetSelection(dim-1);
@@ -386,16 +391,47 @@ void VtxSpritesTabs::getObjAttributes(){
 	setImagePanel();
 	setViewPanel();
 	
-	SpriteMgr *smgr=(SpriteMgr*)obj->mgr;
+	m_orders->SetSelection(mgr->levels-1);
+	double maxsize=mgr->maxsize;
+	SizeSlider->setValue(mgr->maxsize*obj->radius/FEET);
+
+	TNarg &args=*((TNarg *)obj->left);
+	TNode *a=args[2];
+
+	if(a)
+		DeltaSizeSlider->setValue(a);
+	else
+		DeltaSizeSlider->setValue(mgr->mult);
+
+	a=args[3];
+	if(a)
+		LevelDeltaSlider->setValue(a);
+	else
+		LevelDeltaSlider->setValue(mgr->level_mult);
 	
-	m_orders->SetSelection(smgr->levels-1);
-	SizeSlider->setValue(smgr->maxsize*obj->radius/FEET);
-	DeltaSizeSlider->setValue(smgr->mult*100);
-	LevelDeltaSlider->setValue(smgr->level_mult*100);
-	DensitySlider->setValue(obj->maxdensity);
-	SlopeBiasSlider->setValue(smgr->slope_bias);
-	HtBiasSlider->setValue(smgr->ht_bias);
-	PhiBiasSlider->setValue(smgr->lat_bias);
+	a=args[4];
+	if(a)
+		DensitySlider->setValue(a);
+	else
+		DensitySlider->setValue(obj->maxdensity);
+
+	a=args[5];
+	if(a)
+		SlopeBiasSlider->setValue(a);
+	else
+		SlopeBiasSlider->setValue(mgr->slope_bias);
+
+	a=args[6];
+	if(a)
+		HtBiasSlider->setValue(a);
+	else
+		HtBiasSlider->setValue(mgr->ht_bias);
+
+	a=args[7];
+	if(a)
+		PhiBiasSlider->setValue(a);
+	else
+		PhiBiasSlider->setValue(mgr->lat_bias);
 	
 	wxString s=exprString();
 	cout<<"get:"<<s.ToAscii()<<endl;
@@ -403,9 +439,6 @@ void VtxSpritesTabs::getObjAttributes(){
 
 void VtxSpritesTabs::setObjAttributes(){
 	cout<<"VtxSpritesTabs::setObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
-
-//	if(!update_needed)
-//		return;
 	wxString str=choices->GetStringSelection();
 	if(str!=wxEmptyString){
 		object()->setSpritesImage((char*)str.ToAscii());

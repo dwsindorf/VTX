@@ -29,6 +29,7 @@
 // 8) drag and drop doesn't work
 //   - preceeding Sprite in file lacks "+"
 // 9) with multiple sprites in file changing the size of one affects the coverage of others
+//   - FIXED need to have separate hash table to each sprite type
 // 10) density test doesn't seem to reject any instances
 // TODO
 // 1) change sprite point size with distance (DONE)
@@ -47,7 +48,7 @@
 //    - haze (~DONE)
 //    - fog
 // 10) create sprite wxWidgets gui (DONE)
-// 11) add support for Noise expr in density 
+// 11) add support for Noise expr in density (DONE)
 //************************************************************
 // classes SpritePoint, SpriteMgr
 //************************************************************
@@ -69,7 +70,7 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=0.5;    // move to argument ?
+static double thresh=1;    // move to argument ?
 static double ht_offset=0.9; // move to argument ?
 
 //static double roff_value=0;
@@ -78,7 +79,7 @@ static double ht_offset=0.9; // move to argument ?
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
-static double min_render_pts=3; // for render
+static double min_render_pts=2; // for render
 static double min_adapt_pts=15; // increase resolution only around nearby sprites
 
 static int cnt=0;
@@ -142,6 +143,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	lat_bias=0;
 	rand_flip_prob=0.5;
 	variability=1;
+	dexpr=0;
 	
 	set_ntest(TEST_NEIGHBORS);
 }
@@ -511,7 +513,6 @@ void Sprite::collect()
 		if(!s->flags.s.active)
 			bad_active++;
 #endif	
-		
 		if(s->visits>=1 && s->flags.s.valid && s->flags.s.active){
 			Point4D	p(s->center);
 			Point pp=Point(p.x,p.y,p.z);
@@ -702,7 +703,7 @@ void TNsprite::eval()
 
 	htval=Height;
 	ncalls++;
-
+	
 	double arg[10];
 	INIT;
 	TNarg &args=*((TNarg *)left);
@@ -716,6 +717,14 @@ void TNsprite::eval()
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
 	if(n>2) mgr->mult=arg[2];			// random scale multiplier
 	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	
+//	if(n>4){
+//		maxdensity=arg[4];
+//		TNode *argexpr=args[4];          // density expr
+//	    if(argexpr && argexpr->typeValue() != ID_CONST)
+//		    smgr->dexpr=argexpr;
+//	}
+
 	if(n>4) maxdensity=arg[4];
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];

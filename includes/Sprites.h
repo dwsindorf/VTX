@@ -53,7 +53,6 @@ public:
 
 };
 
-
 class SpriteMgr : public PlacementMgr
 {
 protected:
@@ -67,7 +66,7 @@ public:
 	double ht_bias;
 	double lat_bias;
 	double rand_flip_prob;
-
+	
 	~SpriteMgr();
 	SpriteMgr(int);
 

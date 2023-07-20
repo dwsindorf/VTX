@@ -424,11 +424,17 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 #ifdef DEBUG_PLACEMENTS
 	cmade++;
 #endif
-    if(!mgr.dexpr && mgr.density<1){
-	    if(rands[hid]+0.5>mgr.density)
-		    return;
-	}
-
+	double dns=mgr.density;
+//	if(mgr.dexpr){
+//		SPUSH;
+//		mgr.dexpr->eval();
+//		dns+=S0.s;
+//		dns=clamp(dns,0,1);
+//		SPOP;	
+//	}
+//	if(rands[hid]+0.5>dns)
+//		return;
+	
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
@@ -445,12 +451,13 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		CurrentScope->revaluate();
 		mgr.dexpr->eval();
 		TheNoise.pop();
-		double f=S0.s;
+		dns+=S0.s;
 		SPOP;
 		CurrentScope->revaluate();
-		if(rands[hid]+0.5>f)
-		    return;
-	}		
+		dns=clamp(dns,0,1);
+	}
+	if(rands[hid]+0.5>dns)
+		return;
 
 	d=fabs(p.length()-1);
 	double rf=1-mgr.mult;
