@@ -19,7 +19,7 @@ uniform sampler2DRect FBOTex4;
 #define SHADOWTEX FBOTex3
 
 //uniform float INVROWS;
-//uniform float ROWS;
+uniform float ROWS;
 
 uniform vec4 Diffuse;
 uniform vec4 Shadow;
@@ -51,21 +51,20 @@ vec3 setLighting(vec3 BaseColor) {
 vec2 sprite(float index){
     vec2 l_uv=gl_PointCoord.xy;
     
-    float rows=SpriteVars.y;
+    //float rows=4;//SpriteVars.y;
+     float rows=Constants1.g;
     
     // apply random reflection
     if(Constants1.r>0.1)
        l_uv.x=1.0-l_uv.x;
-
-    int y=index/rows;
-    int x=index-rows*y;
+    //int y1=index/rows;
+    //int y=rows-y1-1.0;
+    //int x=index-rows*y1+0.1;
+    int x=Constants1.b+0.1;
+    int y=Constants1.w+0.1;
 	vec2 pt3=l_uv+vec2(x,y);
-	//pt3.y-=0.5;
-	//pt3.y=max(pt3.y,0);
-	//pt3.y*=2;
 	
 	pt3/=rows;
-	//pt3.x*=2;
     	
 	return pt3;
 }

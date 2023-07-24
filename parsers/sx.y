@@ -496,8 +496,8 @@ texture_expr
 	| YY_TEXTURE '(' item_name ',' arg_list ')'
     						{ $$=new TNtexture($3,0,$5);APOP;}
 sprite_expr
-	: YY_SPRITE '(' item_name ',' arg_list ')'
-    						{ $$=new TNsprite($3,0, $5,0);APOP;}
+	: YY_SPRITE '(' item_name ','  ptype ',' arg_list ')' expr
+    						{ $$=new TNsprite($3, $5, $7, $9);APOP;}
     | YY_SPRITE '(' item_name ','  ptype ',' arg_list ')'
     						{ $$=new TNsprite($3, $5, $7,0);APOP;}
     						

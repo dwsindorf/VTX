@@ -26,11 +26,11 @@
 //   - possibly because spread in xy uses same ht as first level ?
 // 7) sometimes see grid like artifact (sprites arranged in lines)
 //   - reduced by increasing roff2 (but decreases density)
-// 8) drag and drop doesn't work
-//   - preceeding Sprite in file lacks "+"
+// 8) drag and drop doesn't work (FIXED)
+//   - preceding Sprite in file lacks "+" fixed by allowing alt form of constructor
 // 9) with multiple sprites in file changing the size of one affects the coverage of others
 //   - FIXED need to have separate hash table to each sprite type
-// 10) density test doesn't seem to reject any instances
+// 10) density test doesn't seem to reject any instances (FIXED)
 // TODO
 // 1) change sprite point size with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
@@ -40,8 +40,7 @@
 // 6) implement multiple sprite lookup from single image (DONE)
 // 7) implement random horizontal flip of sprite image (DONE)
 //    - in fragment shader use vec2(1-l_uv.x,l_uv.y) based on random variable
-// 8) implement environmental density (ht,slope) as in Texture class
-//    - slope (DONE)
+// 8) implement environmental density (ht,slope) as in Texture class (DONE)
 // 9) implement lighting
 //    - star distance + time of day (DONE)
 //    - shadows (~DONE)
@@ -49,6 +48,7 @@
 //    - fog
 // 10) create sprite wxWidgets gui (DONE)
 // 11) add support for Noise expr in density (DONE)
+// 12) allow only selected sprite to be rendered (checkbox)
 //************************************************************
 // classes SpritePoint, SpriteMgr
 //************************************************************
@@ -71,7 +71,7 @@ static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1;    // move to argument ?
-static double ht_offset=0.9; // move to argument ?
+static double ht_offset=1.0; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -80,7 +80,7 @@ static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
 static double min_render_pts=2; // for render
-static double min_adapt_pts=15; // increase resolution only around nearby sprites
+static double min_adapt_pts=5; // increase resolution only around nearby sprites
 
 static int cnt=0;
 static int tests=0;
@@ -144,7 +144,8 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	rand_flip_prob=0.5;
 	variability=1;
 	dexpr=0;
-	
+	instance=0;
+	select_bias=0;
 	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
@@ -291,26 +292,39 @@ bool SpriteMgr::setProgram(){
 	int flip=0;
 	for(int i=n-1;i>=0;i--){
 		SpriteData *s=Sprite::sprites[i];
-		int id=s->get_id();
+		int id=s->instance;//s->get_id();
 		Point t=s->center;
 		double pts=s->pntsize;
-		
+				
 		// random reflection - based on sprite hash table center position
 		Point4DL pp=s->point;
 		if(s->flip())
 			flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
 		
-		double x=Random(pp.x,pp.y,pp.z)+0.5;
+		double x=Random(pp.x,pp.y,pp.z);//+0.5;
 		double rv=s->variability*x;
 		pts*=1+rv;
 		
 		double sel=0.1;	
+		double r=0;
+
 		if(s->sprites_dim>1){ // random selection in multirow sprites image
-			double r=sel=Random(pp.x+1,pp.y+1,pp.z+1)+0.5;
-			sel=r*(s->sprites_dim*s->sprites_dim)-1;		
+			r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
+			r=clamp(r,-1,1);
+			int nn=(s->sprites_dim*s->sprites_dim)-1;
+			double sid=s->get_id();
+			sel=s->select_bias*sid+(1-s->select_bias)*r*nn+0.5;
+			sel=clamp(sel,0,nn);
 		}
-		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, s->sprites_dim, pts, sel);
-		glVertexAttrib4d(GLSLMgr::CommonID1, flip, 0, 0, 0);
+		int rows=s->sprites_dim;
+	    int y1=sel/rows;
+	    int sy=rows-y1-1.0;
+	    int sx=sel-rows*y1;//+0.1;
+	    
+	    //cout<<(int)sel<<" "<<sx<<" "<<sy<<" "<<r<<endl;
+
+		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
+		glVertexAttrib4d(GLSLMgr::CommonID1, flip, rows, sx, sy);
 		
 		Point pn=Point(pp.x,pp.y,pp.z);
 		Point ppn=pn.normalize();
@@ -346,6 +360,9 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 	sprites_dim=mgr.sprites_dim;
 	variability=mgr.mult;
 	rand_flip_prob=mgr.rand_flip_prob;
+	select_bias=mgr.select_bias;
+	instance=mgr.instance;
+	//cout<<instance<<" ";
 
 	flags.s.active=false;
 }
@@ -421,6 +438,8 @@ SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
 	visits=pnt->visits;
 	variability=pnt->variability;
 	rand_flip_prob=pnt->rand_flip_prob;
+	select_bias=pnt->select_bias;
+	instance=pnt->instance;
 }
 
 void SpriteData::print(){
@@ -621,14 +640,16 @@ bool Sprite::initProgram(){
 //************************************************************
 // TNsprite class
 //************************************************************
-TNsprite::TNsprite(char *s, int opts,  TNode *l, TNode *r) : TNplacements(opts|SPRITES|NOLOD,l,r,0)
+TNsprite::TNsprite(char *s, int opts,  TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
 	set_collapsed();
+ 	type=opts|SPRITES|NOLOD;
+ 	//cout<<"TNsprite ID="<<get_id()<<endl;
 	setName(s);
 	FREE(s);
 	image=0;
 	sprite=0;
-    mgr=new SpriteMgr(type);
+    mgr=new SpriteMgr(SPRITES|NOLOD);
 }
 
 //-------------------------------------------------------------
@@ -640,10 +661,30 @@ TNsprite::~TNsprite()
 }
 
 //-------------------------------------------------------------
+// TNsprite::applyExpr() apply expr value
+//-------------------------------------------------------------
+void TNsprite::applyExpr()
+{
+   if(expr){
+	    TNsprite* sprt=(TNsprite*)expr;
+	    type=sprt->type;
+	    mgr->type=type;
+		DFREE(left);
+		left=expr->left;
+		left->setParent(this);
+		expr=0;
+	}
+	if(right)
+		right->applyExpr();
+ }
+//-------------------------------------------------------------
 // TNsprite::init() initialize the node
 //-------------------------------------------------------------
 void TNsprite::init()
 {
+	if(right)
+    	right->init();
+
 	cout<<"TNsprite::init"<<endl;
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 	if(!image){
@@ -662,19 +703,18 @@ void TNsprite::init()
 	}
 	if(sprite==0)
 		sprite=new Sprite(image,type,this);
-	//if(!Td.get_flag(CFIRST)){
-		smgr->set_first(1);
-		smgr->init();
-  		//Td.set_flag(CFIRST);
-	//}
-
+	smgr->set_first(1);
+	smgr->init();
 	TNplacements::init();
 }
+
 void TNsprite::set_id(int i){
-	instance=i;
-	TNplacements::set_id(i);
-	if(sprite)
-		sprite->set_id(i);
+	//instance=i;
+	BIT_OFF(type,PID);
+	type|=i&PID;
+	//TNplacements::set_id(i);
+	//if(sprite)
+	//	sprite->set_id(i);
 }
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
@@ -685,15 +725,28 @@ void TNsprite::eval()
 {	
 	SINIT;
 	if(!isEnabled()){
+		if(right)
+			right->eval();
 		return;
 	}
 	if(CurrentScope->rpass()){
 		int size=Td.tp->sprites.size;
-		set_id(size);
+		instance=size;
+		//cout<<instance<<" ";
+
+		mgr->instance=instance;
+
+		if(sprite)
+			sprite->set_id(size);
+		//set_id(size);
 		Td.add_sprite(sprite);
+		if(right)
+			right->eval();
 		return;
 	}	
 	if(!CurrentScope->spass()){
+		if(right)
+			right->eval();
 		return;
 	}
 	
@@ -717,18 +770,11 @@ void TNsprite::eval()
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
 	if(n>2) mgr->mult=arg[2];			// random scale multiplier
 	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	
-//	if(n>4){
-//		maxdensity=arg[4];
-//		TNode *argexpr=args[4];          // density expr
-//	    if(argexpr && argexpr->typeValue() != ID_CONST)
-//		    smgr->dexpr=argexpr;
-//	}
-
 	if(n>4) maxdensity=arg[4];
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
+	if(n>8) smgr->select_bias=arg[8];
 	
 	density=maxdensity;
 	MaxSize=mgr->maxsize;
@@ -737,8 +783,12 @@ void TNsprite::eval()
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
-		double slope=zslope();
-		double f=2*lerp(8*fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+		double slope=8*zslope();
+		double f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+#ifdef DEBUG_SLOPE_BIAS
+		if(ncalls%100==0)
+			cout<<"slope:"<<slope<<" f:"<<f<<endl;
+#endif
 		density+=f;
 	}
 	if(smgr->ht_bias){
@@ -764,6 +814,7 @@ void TNsprite::eval()
 	hits=0;
 	cval=0;
 	scnt=0;
+	//cout<<instance<<" ";
 
 	smgr->eval();  // calls SpritePoint.set_terrain
    
@@ -797,15 +848,7 @@ void TNsprite::setName(char *s)
 //-------------------------------------------------------------
 int TNsprite::optionString(char *c)
 {
-    c[0]=0;
-	for(int i=0;i<POpts.size;i++){
-    	if(type & POpts[i]->value){
-			if(c[0]>0)
-				strcat(c,"|");
-   			strcat(c,POpts[i]->name());
-   		}
-	}
-	return c[0];  
+	return TNplacements::optionString(c);
 }
 
 //-------------------------------------------------------------
@@ -880,7 +923,7 @@ int TNsprite::getFilePath(char*name,char *dir){
 	char path[512];
 	path[0]=0;
 
-	for(int i=0;i<2;i++){
+	for(int i=0;i<4;i++){
 		getSpritesFilePath(name,i+1,dir);
 		sprintf(path,"%s.png",dir);
 		if(FileUtil::fileExists(path)){
@@ -900,7 +943,10 @@ void TNsprite::getSpritesDir(int dim, char*dir){
   	default:
   	case 1: strcpy(dimdir,"1x"); break;
   	case 2: strcpy(dimdir,"4x"); break;
-  	}
+  	case 3: strcpy(dimdir,"9x"); break;
+  	case 4: strcpy(dimdir,"16x"); break;
+
+ 	}
  	sprintf(dir,"%s/Textures/Sprites/%s",base,dimdir);
 }
 

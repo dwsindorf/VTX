@@ -20,12 +20,14 @@ public:
 	int sprites_dim;
 	double variability;
 	double rand_flip_prob;
+	double select_bias;
+
+	int instance;
 
 	SpritePoint(SpriteMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 	void dump();
 	void reset();
-
 };
 
 class SpriteData
@@ -39,6 +41,8 @@ public:
 	double pntsize;
 	double variability;
 	double rand_flip_prob;
+	double select_bias;
+	int instance;
 
 	int sprites_dim;
 	int visits;
@@ -50,7 +54,6 @@ public:
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
 	int flip()				    { return type & FLIP;}
-
 };
 
 class SpriteMgr : public PlacementMgr
@@ -66,6 +69,7 @@ public:
 	double ht_bias;
 	double lat_bias;
 	double rand_flip_prob;
+	double select_bias;
 	
 	~SpriteMgr();
 	SpriteMgr(int);
@@ -115,6 +119,8 @@ public:
 	char *nodeName()  { return sprites_file;}
 	int optionString(char *);
 	void saveNode(FILE *f);
+	void applyExpr();	   
+
 
 };
 

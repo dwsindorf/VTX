@@ -425,16 +425,6 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	cmade++;
 #endif
 	double dns=mgr.density;
-//	if(mgr.dexpr){
-//		SPUSH;
-//		mgr.dexpr->eval();
-//		dns+=S0.s;
-//		dns=clamp(dns,0,1);
-//		SPOP;	
-//	}
-//	if(rands[hid]+0.5>dns)
-//		return;
-	
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
@@ -513,9 +503,8 @@ void Placement::reset(){
 //************************************************************
 TNplacements::TNplacements(int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b) 
 {
-
 	int id=type&PID;
-	if(id==0){
+ 	if(id==0){
 		id=place_gid++;
 		id=id&PID;
 		BIT_OFF(type,PID);

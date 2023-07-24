@@ -22,7 +22,7 @@
 
 //extern VtxSceneDialog *sceneDialog;
 
-wxString selections[]={"0","1","2","3","4","5","6","7","8"};
+wxString selections[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
 
 //########################### VtxSpritesTabs Class ########################
 
@@ -49,6 +49,8 @@ enum{
     ID_PHI_BIAS_TEXT,
     ID_HT_BIAS_SLDR,
     ID_HT_BIAS_TEXT,
+    ID_SEL_BIAS_SLDR,
+    ID_SEL_BIAS_TEXT,
 	ID_SPRITES_DIM,
 	ID_SPRITES_VIEW,
 };
@@ -72,6 +74,7 @@ SET_SLIDER_EVENTS(DENSITY,VtxSpritesTabs,Density)
 SET_SLIDER_EVENTS(SLOPE_BIAS,VtxSpritesTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxSpritesTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxSpritesTabs,HtBias)
+SET_SLIDER_EVENTS(SEL_BIAS,VtxSpritesTabs,SelBias)
 
 END_EVENT_TABLE()
 
@@ -213,9 +216,9 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,2);
 
-	wxString offsets[]={"1x","4x","9x"};
+	wxString offsets[]={"1x","4x","9x","16x"};
 
-	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),2, offsets);
+	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
 	sprites_dim->SetSelection(1);
 	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
 
@@ -230,7 +233,13 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 
 	//type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
 	hline->Add(select,0,wxALIGN_LEFT|wxALL,2);
+	
+	SelBiasSlider=new ExprSliderCtrl(panel,ID_SEL_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	SelBiasSlider->setRange(0,1);
+	SelBiasSlider->setValue(0.0);
 
+	hline->Add(SelBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
 	image_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
 
@@ -296,6 +305,7 @@ void VtxSpritesTabs::setViewPanel(){
 		cout<<"setting type panel:"<<cell_window->getName()<<endl;
 
 		changed_cell_expr=false;
+		//setObjAttributes();
 	}
 }
 void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
@@ -307,7 +317,6 @@ void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	update_needed=true;
 	select->SetSelection(0);
 	setObjAttributes();
-
 }
 
 void VtxSpritesTabs::makeFileList(int dim,wxString name){
@@ -347,8 +356,7 @@ void VtxSpritesTabs::makeFileList(int dim,wxString name){
  	//sceneDialog->setNodeName((char*)image_name.ToAscii());
  	sprites_file=image_name;
  	choices->SetStringSelection(sprites_file);
- 	select->SetSelection(0);
- 	//setObjAttributes();
+ 	//select->SetSelection(0);
 }
 
 void VtxSpritesTabs::OnChangedLevels(wxCommandEvent& event){
@@ -358,8 +366,9 @@ void VtxSpritesTabs::OnChangedLevels(wxCommandEvent& event){
 wxString VtxSpritesTabs::exprString(){
 	char p[1024]="";
 	TNsprite *obj=object();
+	int sel=select->GetSelection();
 
-	sprintf(p,"Sprite(\"%s\",FLIP|NOLOD,",(const char*)sprites_file.ToAscii());
+	sprintf(p,"Sprite(\"%s\",ID%d|FLIP|NOLOD,",(const char*)sprites_file.ToAscii(),sel);
 	sprintf(p+strlen(p),"%d,",m_orders->GetSelection()+1);
 	sprintf(p+strlen(p),"%g,",FEET*SizeSlider->getValue()/obj->radius);
 	wxString s(p);
@@ -369,7 +378,8 @@ wxString VtxSpritesTabs::exprString(){
 	s+=DensitySlider->getText()+",";
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
-	s+=PhiBiasSlider->getText();
+	s+=PhiBiasSlider->getText()+",";
+	s+=SelBiasSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -387,6 +397,10 @@ void VtxSpritesTabs::getObjAttributes(){
 	sprites_file=obj->getSpritesFile(dim);
 	sprites_dim->SetSelection(dim-1);
 	makeFileList(dim,sprites_file);
+	int id=obj->get_id();
+	//cout<<id<<endl;
+	select->SetSelection(id);
+	
 	choices->SetStringSelection(sprites_file);
 	setImagePanel();
 	setViewPanel();
@@ -432,7 +446,13 @@ void VtxSpritesTabs::getObjAttributes(){
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
-	
+
+	a=args[8];
+	if(a)
+		SelBiasSlider->setValue(a);
+	else
+		SelBiasSlider->setValue(mgr->select_bias);
+
 	wxString s=exprString();
 	cout<<"get:"<<s.ToAscii()<<endl;
 }
@@ -478,5 +498,6 @@ void VtxSpritesTabs::OnChangedFile(wxCommandEvent& event){
 void VtxSpritesTabs::OnViewSelect(wxCommandEvent& event){
 	changed_cell_expr=true;
 	setViewPanel();
+	invalidateRender();
 }
 

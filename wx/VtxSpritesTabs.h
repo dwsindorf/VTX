@@ -51,6 +51,7 @@ protected:
 	ExprSliderCtrl *SlopeBiasSlider;
 	ExprSliderCtrl *PhiBiasSlider;
 	ExprSliderCtrl *HtBiasSlider;
+	ExprSliderCtrl *SelBiasSlider;
 
 	bool changed_cell_expr;
 	uint image_dim;
@@ -79,6 +80,7 @@ public:
 	DEFINE_SLIDER_EVENTS(SlopeBias)
 	DEFINE_SLIDER_EVENTS(PhiBias)
 	DEFINE_SLIDER_EVENTS(HtBias)
+	DEFINE_SLIDER_EVENTS(SelBias)
 	DECLARE_EVENT_TABLE()
 };
 
