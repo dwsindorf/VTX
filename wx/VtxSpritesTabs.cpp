@@ -208,13 +208,13 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
     wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	wxStaticText *lbl=new wxStaticText(panel,-1,"File",wxDefaultPosition,wxSize(25,-1));
-	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 8);
+	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 	//hline->AddSpacer(5);
 
     choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
     choices->SetSelection(0);
 
-	hline->Add(choices,0,wxALIGN_LEFT|wxALL,2);
+	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
 
 	wxString offsets[]={"1x","4x","9x","16x"};
 
@@ -222,23 +222,23 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	sprites_dim->SetSelection(1);
 	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
 
-	lbl=new wxStaticText(panel,-1,"View",wxDefaultPosition,wxSize(25,-1));
-	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 8);
+	lbl=new wxStaticText(panel,-1,"Center",wxDefaultPosition,wxSize(40,-1));
+	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 
-	select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(55,-1),2, selections);
+	select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(40,-1),2, selections);
 	select->SetSelection(0);
 
 	//select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(55,-1));
 	//select->SetSelection(0);
 
 	//type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
-	hline->Add(select,0,wxALIGN_LEFT|wxALL,2);
+	hline->Add(select,0,wxALIGN_LEFT|wxALL,1);
 	
-	SelBiasSlider=new ExprSliderCtrl(panel,ID_SEL_BIAS_SLDR,"Bias",LABEL2,VALUE2,SLIDER2);
+	SelBiasSlider=new ExprSliderCtrl(panel,ID_SEL_BIAS_SLDR,"Bias",30,40,SLIDER2);
 	SelBiasSlider->setRange(0,1);
 	SelBiasSlider->setValue(0.0);
 
-	hline->Add(SelBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(SelBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,2);
 	
 	image_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);

@@ -265,9 +265,9 @@ void ViewFrame::save(FILE *fp,FrameMgr *mgr)
 		fprintf(fp,"%sfov=%g;\n",tabs,fov);
 	if(gstride){
 		if(gstride>LY)
-			fprintf(fp,"%sspeed=%g ly;\n",tabs,gstride/LY);
+			fprintf(fp,"%sgstride=%g ly;\n",tabs,gstride/LY);
 		else
-			fprintf(fp,"%sspeed=%g;\n",tabs,gstride);
+			fprintf(fp,"%sgstride=%g;\n",tabs,gstride);
 	}
 	if(msg){
 		fprintf(fp,"%smessage=\"%s\";\n",tabs,msg);
@@ -355,11 +355,11 @@ void ViewFrame::save(FILE *fp,View *v,FrameMgr *mgr)
 		sprintf(tmp+strlen(tmp),"%sskew=%g;\n",tabs,view_skew);
 	if(NEQ(fov , v->fov))
 		sprintf(tmp+strlen(tmp),"%sfov=%g;\n",tabs,fov);
-	if(NEQ(gstride , v->speed)){
+	if(NEQ(gstride , v->gstride)){
 		if(gstride>LY)
-			sprintf(tmp+strlen(tmp),"%sspeed=%g ly;\n",tabs,gstride/LY);
+			sprintf(tmp+strlen(tmp),"%sgstride=%g ly;\n",tabs,gstride/LY);
 		else
-			sprintf(tmp+strlen(tmp),"%sspeed=%g;\n",tabs,gstride);
+			sprintf(tmp+strlen(tmp),"%sgstride=%g;\n",tabs,gstride);
 	}
 	if(NEQ(vstride , v->vstride))
 		sprintf(tmp+strlen(tmp),"%svstride=%g;\n",tabs,vstride);

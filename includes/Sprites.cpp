@@ -71,7 +71,7 @@ static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1;    // move to argument ?
-static double ht_offset=1.0; // move to argument ?
+static double ht_offset=1.1; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -80,7 +80,7 @@ static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
 static double min_render_pts=2; // for render
-static double min_adapt_pts=5; // increase resolution only around nearby sprites
+static double min_adapt_pts=5; //  for adapt - increase resolution only around nearby sprites
 
 static int cnt=0;
 static int tests=0;
@@ -246,13 +246,14 @@ bool SpriteMgr::setProgram(){
 	if(!program)
 		return false;
 	glEnable(GL_TEXTURE_2D);
-    //glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
+   
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glEnable(GL_BLEND);
 	glEnable(GL_POINT_SPRITE);
 	glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
 	glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,GL_LOWER_LEFT);
+	glDisable(GL_POINT_SMOOTH);
+
 	GLSLVarMgr vars;
 	
 	Planetoid *orb=(Planetoid*)TheScene->viewobj;
@@ -307,21 +308,27 @@ bool SpriteMgr::setProgram(){
 		
 		double sel=0.1;	
 		double r=0;
+		double sid=0;
+		double nn=(s->sprites_dim*s->sprites_dim);
+		double sb=0;
 
 		if(s->sprites_dim>1){ // random selection in multirow sprites image
 			r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
 			r=clamp(r,-1,1);
-			int nn=(s->sprites_dim*s->sprites_dim)-1;
-			double sid=s->get_id();
-			sel=s->select_bias*sid+(1-s->select_bias)*r*nn+0.5;
-			sel=clamp(sel,0,nn);
+			sid=s->get_id();
+			sb=(1-s->select_bias)*r*(nn);
+			sel=sid+sb+0.5;
+			sel=sel>nn?sel-nn:sel;
+			
+			sel=sel<0?nn+sel:sel;
+			sel=clamp(sel,0,nn-1);
 		}
 		int rows=s->sprites_dim;
 	    int y1=sel/rows;
 	    int sy=rows-y1-1.0;
 	    int sx=sel-rows*y1;//+0.1;
 	    
-	    //cout<<(int)sel<<" "<<sx<<" "<<sy<<" "<<r<<endl;
+	    //cout<<(int)sid<<" "<<(int)sel<<" "<<r<<" "<<sb<<endl;
 
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
 		glVertexAttrib4d(GLSLMgr::CommonID1, flip, rows, sx, sy);

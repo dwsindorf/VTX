@@ -1475,7 +1475,7 @@ void Scene::eval_view()
 		spoint=data.p;
 	if(vars.get_local("speed",data)){
 		speed=data.s;
-		vstride=gstride=speed;
+		//vstride=gstride=speed;
 	}
 	ViewFrame *frame;
 	if(mopen())
