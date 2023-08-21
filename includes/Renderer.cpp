@@ -201,7 +201,7 @@ void Renderer::resize(int w, int h)
 	current_width=w;
 	current_ht=h;
 	setViewPort(w,h);
-    printf("Renderer::resize(%d,%d)\n",w,h);
+    //printf("Renderer::resize(%d,%d)\n",w,h);
 	GLSLMgr::initFrameBuffer();
 
 }

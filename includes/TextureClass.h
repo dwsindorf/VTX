@@ -76,7 +76,7 @@ public:
 	int tid;
 	int cid;
 	TNode  *expr;
-
+	
 	int style()				{ switch(options & STYLE){
 								default:
 								case MODULATE    : return GL_MODULATE;
@@ -106,7 +106,7 @@ public:
 	int txtype()			{ return type;}
 	int width()				{ return image()->width;}
 	int height()			{ return image()->height;}
-	bool alpha_enabled()	{ return options & RGBA;}
+	bool alpha_image()	    { return (image()->gltype()==GL_RGBA)?true:false;}
 	bool normalize()	    { return options & NORM;}
 	const void *pixels();
 	Image *image();

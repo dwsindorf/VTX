@@ -5,7 +5,10 @@
 #include <math.h>
 #include "defs.h"
 #define RNDERR 1e-12
+#define INTERR 2
+#define LDIFF(x,y)(fabs((x)-(y)))
 #define DEQ(x,y) (fabs((x)-(y))<RNDERR)
+#define LEQ(x,y) (abs((x)-(y))<INTERR)
 class Point
 {
 public:
@@ -132,8 +135,10 @@ public:
 	Point4DL(int a, int b, int c, int d){
 	    x=a;y=b;z=c;w=d;
 	}
-	int operator==(Point4DL&p)		{ return (x==p.x)&&(y==p.y)&&(z==p.z)&&(w==p.w);}
-	int operator!=(Point4DL&p)		{ return (x!=p.x)||(y!=p.y)||(z!=p.z)||(w!=p.w);}
+	bool almost_equal(Point4DL&p)   { return (LDIFF(x,p.x)+ LDIFF(y,p.y) + LDIFF(z,p.z))<INTERR;}
+	bool equals(Point4DL p)         { return (x==p.x)&&(y==p.y)&&(z==p.z)&&(w==p.w);}
+	bool operator==(Point4DL&p)		{ return equals(p);}
+	bool operator!=(Point4DL&p)		{ return !equals(p);}
 };
 
 class Point4D
@@ -192,6 +197,7 @@ public:
 	Point4D fract()                 { Point4D p=floor(); return *this-p;}
 
 	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
+	Point toPoint()                 { return Point(x,x,z);}
 
 
 	void print();

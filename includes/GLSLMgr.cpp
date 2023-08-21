@@ -21,6 +21,8 @@ extern Point MapPt;
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
+//#define SHOW_GLSTATS
+
 //#define DEBUG_FBO
 //#define DEBUG_CLR
 
@@ -145,7 +147,7 @@ void GLSLMgr::makeTexDefsFile(){
    	strcat(path,"set_tex.frag");
 	FILE *fp=fopen(path,"wb");
 	if(!fp){
-		cout << "file write error"<< endl;
+		 cout<< "GLSLMgr::makeTexDefsFile file write error"<< endl;
 	    return;
 	}
 	fprintf(fp,"#if NTEXS >0\n");
@@ -514,28 +516,31 @@ void GLSLMgr::initGL(int w, int h){
 		if(GLSupport::geometry_shader())
 			strcat(extString2,"#extension GL_EXT_geometry_shader4 : enable\n");
 	}
+#ifdef SHOW_GLSTATS
 	cout << verString;
 	if(strlen(extString1)>0)
 		cout << extString1;
 	if(strlen(extString2)>0)
 		cout << extString2;
-
+#endif
 	vars.newBoolVar(FBOREAD,false);
 	vars.newBoolVar(FBOWRITE,false);
 	//float fmax = pow(2.0,13.0);
 	unused_tex_units=max_tex_id;
-	cout << "total  tex units:"<< max_tex_units << endl;
-	cout << "unused tex units:"<< max_tex_id << endl;
 	GLint maxAttach = 0;
 	glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttach );
-	cout << "max color buffer attachments:"<< maxAttach << endl;
 	int maxVaryingFloats;
 	glGetIntegerv (GL_MAX_VARYING_FLOATS_ARB, &maxVaryingFloats );
-	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
 	GLint maxGeomVertices;
 	glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &maxGeomVertices );
-	printf("max geometry output vetices = %d\n",maxGeomVertices);
 
+#ifdef SHOW_GLSTATS
+	cout << "total  tex units:"<< max_tex_units << endl;
+	cout << "unused tex units:"<< max_tex_id << endl;
+	cout << "max color buffer attachments:"<< maxAttach << endl;
+	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
+	printf("max geometry output vetices = %d\n",maxGeomVertices);
+#endif
 	//gl_MaxGeometryOutputVertices
 
 	makeTexDefsFile();
@@ -610,7 +615,7 @@ void GLSLMgr::initPerlinTexture()
     // Create and load the textures (generated, not read from a file)
     if(PerlinTextureID>0)
     	return;
-     cout << "GLSLMgr::initPerlinTexture" << endl;
+     //cout << "GLSLMgr::initPerlinTexture" << endl;
 
     glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(PERLINTEX));
     glGenTextures(1, &PerlinTextureID); // Generate a unique texture ID
@@ -639,7 +644,7 @@ void GLSLMgr::initPermTexture()
     if(permTextureID>0)
     	return;
 
-    cout << "GLSLMgr::initPermTexture" << endl;
+    //cout << "GLSLMgr::initPermTexture" << endl;
 
     glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(PERMTEX));
 
@@ -676,7 +681,7 @@ void GLSLMgr::initGradTexture()
     if(gradTextureID>0)
     	return;
     char *pixels;
-    cout << "GLSLMgr::initGradTexture" << endl;
+    //cout << "GLSLMgr::initGradTexture" << endl;
     pixels=NoiseFunc::makeGradTexureImage();
 
     glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(GRADTEX)); // Activate a different texture unit
@@ -833,7 +838,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	}
 	else{
 		glUseProgramObjectARB(programHandle());
-#ifdef DEBUG_SHADER_ERRORS
+		
+//#define SHOW_SHADER_WARNINGS
+#ifdef SHOW_SHADER_WARNINGS
 		if(first){
 			showShaderLog("vertex program: ", program->vertex_shader);
 			showShaderLog("fragment program: ",program->fragment_shader);

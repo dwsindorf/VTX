@@ -4,7 +4,7 @@
 #include "TerrainClass.h"
 #include "GLSLMgr.h"
 #include "RenderOptions.h"
-
+#include "Sprites.h"
 #include <iostream>
 #include <math.h>
 
@@ -87,6 +87,7 @@ int  TerrainData::zlevels=0;
 int TerrainData::datacnt=0;
 int TerrainData::flags=0;
 int TerrainData::tids=0;
+int TerrainData::sids=0;
 int TerrainData::pass=0;
 
 double TerrainData::level=0;
@@ -113,6 +114,23 @@ double TerrainData::texht=0;
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
 
+//-------------------------------------------------------------
+//TerrainData::rectangular() map point on 1,1,1, cube
+//-------------------------------------------------------------
+Point	TerrainData::rectangular(double t, double p)
+{
+	TheNoise.offset=0.5;
+	TheNoise.scale=0.5;
+	TheNoise.phi=p;
+	TheNoise.theta=t;
+	Point pt(t,p,0.5);
+	pt=pt.rectangular();
+	return (pt+0.5);
+}
+void TerrainData::add_sprite(Sprite *t)
+{
+	tp->sprites.add(t);
+}
 void TerrainData::add_texture(Texture *t)
 {
 	// add new texture to last property only
@@ -266,7 +284,7 @@ void TerrainData::end()
 //************************************************************
 int TerrainProperties::nid=0;
 int TerrainProperties::tid=0;
-
+int TerrainProperties::sid=0;
 TerrainProperties::TerrainProperties(int t)
 {
 	id=t;
@@ -281,6 +299,7 @@ TerrainProperties::TerrainProperties(int t)
 }
 TerrainProperties::~TerrainProperties(){
 	textures.reset();
+	sprites.reset();
 	noise.reset();
 }
 void TerrainProperties::initProgram(){
@@ -340,5 +359,7 @@ void TerrainProperties::setProgram(){
 void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
+	sprites.reset();
 }
+
 

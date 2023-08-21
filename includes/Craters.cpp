@@ -12,6 +12,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 //#define DEBUG_CRATERS
+//#define TEST
 
 static 	TerrainData Td;
 extern double Hscale,Height;
@@ -24,6 +25,7 @@ public:
     double h;
     double b;
     double r;
+    double d;
     double value()   { return v;}
 };
 static CraterData   cdata[256];
@@ -32,8 +34,17 @@ static int          ccnt;
 static double  cmax;
 static double  cmin;
 static double  cval;
+static double  dval;
 static double  aht;
 static double  bht;
+
+#ifdef TEST
+static double thresh=1.0;
+#else
+static double thresh=1.5;
+#endif
+static double roff_value=0.5*PI;
+static double roff2_value=1;
 
 static CraterMgr s_cm(FINAL);    // static finalizer
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
@@ -82,6 +93,12 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
  	noise_vertical=1;
   	noise_radial=1;
   	rnoise=vnoise=0;
+	roff=roff_value;
+	roff2=roff2_value;
+
+#ifdef TEST
+  	//set_ntest(0);
+#endif
 }
 CraterMgr::~CraterMgr()
 {
@@ -119,6 +136,7 @@ void CraterMgr::reset()
     	cval=0;
    		cmax=0;
    		cmin=10;
+   		dval=0;
    	}
 }
 
@@ -163,8 +181,9 @@ void CraterMgr::eval()
 	PlacementMgr::eval();
 	cmin=size<cmin?size:cmin;
 	cmax=maxsize>cmax?maxsize:cmax;
+	aht=bht=0;
 
-	if(!first())
+	if(!first()||!ccnt)
 	    return;
 
 	for(i=0;i<ccnt;i++){
@@ -173,8 +192,7 @@ void CraterMgr::eval()
 	clist.size=ccnt;
 	clist.sort();
 
-	aht=bht=0;
-
+	
 	for(i=0;i<ccnt;i++){
 	    double f=clist.base[i]->f;
 	    double r=clist.base[i]->r;
@@ -182,6 +200,9 @@ void CraterMgr::eval()
 	    double h=clist.base[i]->h*a;
 	    double b=clist.base[ccnt-i-1]->b;
 		cval+=f;
+		//dval=clist.base[i]->d>dval?clist.base[i]->d:dval;
+		dval=clist.base[i]->d;
+
 		if(options & MAXA)
 		    aht=h>aht?h:aht;
 		else
@@ -214,7 +235,7 @@ Crater::Crater(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 //-------------------------------------------------------------
 // Crater::set_terrain()	impact terrain
 //-------------------------------------------------------------
-void Crater::set_terrain(PlacementMgr &pmgr)
+bool Crater::set_terrain(PlacementMgr &pmgr)
 {
 	double d,rr=0,vn=0,f,c=0,r;
 	double drop,rise,scale,b,h,a=0;
@@ -222,10 +243,8 @@ void Crater::set_terrain(PlacementMgr &pmgr)
 
 	d=pmgr.mpt.distance(center);
 	d=d/radius;
-
-	if(d>1.5)
-		return;
-
+	if(d>thresh)
+		return false;
 	CraterMgr &mgr=(CraterMgr&)pmgr;
 
 	scale=100*mgr.ampl*radius;
@@ -298,9 +317,11 @@ void Crater::set_terrain(PlacementMgr &pmgr)
  	cdata[ccnt].h=h;
  	cdata[ccnt].f=f;
   	cdata[ccnt].b=b;
+  	cdata[ccnt].d=d;
   	cdata[ccnt].r=radius;
   	if(ccnt<255)
   	    ccnt++;
+  	return true;
 }
 
 //************************************************************
@@ -572,7 +593,14 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
-	
-	//TheNoise.set(pv);
+#ifdef TEST
+	S0.set_cvalid();
+	if(fabs(dval)>0)
+		S0.c=Color(1-dval,0,1);
+	else
+		S0.c=Color(1,1,0);
+	Td.c=S0.c;
+	Td.set_cvalid();
+#endif
 
 }

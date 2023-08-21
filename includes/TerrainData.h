@@ -18,6 +18,7 @@ class TNtexture;
 class TNsubr;
 class TNvar;
 class Texture;
+class Sprite;
 class TerrainProperties;
 class TNnoise;
 class TNcolor;
@@ -144,6 +145,7 @@ public:
 	static int datacnt;
 	static int flags;
 	static int tids;
+	static int sids;
 	static int pass;
 
 	static TerrainProperties *tp;
@@ -152,6 +154,8 @@ public:
 	static void set_flag(int i)    { BIT_ON(flags,i);}
 	static void clr_flag(int i)    { BIT_OFF(flags,i);}
 	static int get_flag(int i)		{ return flags&i;}
+
+	static Point	rectangular(double t, double p);
 
 	void insert_strata(TerrainData &);
 	void begin();
@@ -193,6 +197,7 @@ public:
 	void next_id()          { set_id(tids++);}
 	TerrainProperties		*add_id();
 	static void add_texture(Texture *);
+	static void add_sprite(Sprite *);
 	static void add_TNnoise(TNnoise *);
 	static void add_TNcolor(TNcolor *);
 	static void add_TNdensity(TNdensity *);
@@ -322,6 +327,7 @@ public:
 	Color color;
 	int callList;
 	Array<Texture*> textures;
+	Array<Sprite*> sprites;
 	Array<TNnoise*> noise;
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
@@ -332,6 +338,7 @@ public:
 
 	static int nid;
 	static int tid;
+	static int sid;
 	static int pass;
 
 	TerrainProperties(int);

@@ -8,7 +8,7 @@
 #include "Perlin.h"
 
 const int PERMSIZE=1024*32;
-//const int PERMSIZE=1024*64;
+//const int PERMSIZE=2048*64;
 const int PMASK=PERMSIZE-1;
 
 class Noise;

@@ -75,8 +75,7 @@ void main(void) {
     //color.rgb=mix(color.rgb,fcolor1.rgb,1-Emission.a);
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
-    color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));
-    
+    color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));  
 #endif
 	gl_FragData[0] = color;
 	//gl_FragData[0] = vec4(Constants1.g,0,0,1);

@@ -16,7 +16,7 @@ extern double ptable[];
 static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
-static RockMgr s_rm(FINAL); // static finalizer
+static RockMgr *s_rm; // static finalizer
 //************************************************************
 // RockMgr class
 //************************************************************
@@ -81,7 +81,7 @@ Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 //-------------------------------------------------------------
 // Rock::set_terrain()	impact terrain
 //-------------------------------------------------------------
-void Rock::set_terrain(PlacementMgr &pmgr)
+bool Rock::set_terrain(PlacementMgr &pmgr)
 {
 	double d=pmgr.mpt.distance(center);
 	double r,z,rm=0;
@@ -111,8 +111,11 @@ void Rock::set_terrain(PlacementMgr &pmgr)
 	}
 	d+=rm;
 	r-=rm;
-	if(d<radius)
+	bool active=false;
+	if(d<radius){
 		S0.set_flag(ROCKBODY);
+		active=true;
+	}
 
 	/*
 	if(d>r)
@@ -129,6 +132,7 @@ void Rock::set_terrain(PlacementMgr &pmgr)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
     if(z>mgr.ht)
         mgr.ht=z;
+    return active;
 }
 
 //************************************************************

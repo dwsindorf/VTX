@@ -164,7 +164,7 @@ bool VtxFunctDialog::setFunct(wxString token, wxString val){
 	}
 	int t=tn->typeValue();
 	if(functs.find(t) == functs.end()){
-		cout << "dialog for id : "<< t << " not yet supported" <<endl;
+		cout << "dialog for function id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
 	symbol=token;

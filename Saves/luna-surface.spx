@@ -15,7 +15,7 @@ Scene() {
 		tilt=-2;
 		angle=7;
 		fov=35.4957;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{

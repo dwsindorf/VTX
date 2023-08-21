@@ -167,6 +167,7 @@ public:
 	void set_cpass()	        { flags.htpass=2;}
 	void set_rpass()	        { flags.htpass=3;}
 	void set_tpass()	        { flags.htpass=4;}
+	void set_spass()	        { flags.htpass=5;}
 
 	int passmode()				{ return flags.htpass;}
 	void set_passmode(int m)     { flags.htpass=m;}
@@ -175,6 +176,8 @@ public:
 	int cpass()				    { return flags.htpass==2;}
 	int rpass()				    { return flags.htpass==3;}
 	int tpass()				    { return flags.htpass==4;}
+	int spass()				    { return flags.htpass==5;}
+
 
 	void set_init_mode(int c)	{ flags.init=c;}
 	int init_mode()			    { return flags.init;}
@@ -240,7 +243,6 @@ protected:
 	NodeIF *object;
 	int     dflag;
 public:
-	Point	rectangular(double t, double p);
 
 	LinkedList<TNode*>      exprs;
 	LinkedList<TNode*>      inodes;

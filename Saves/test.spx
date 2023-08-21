@@ -1,66 +1,23 @@
 Scene() {
 	View{
-		view=ORBITAL;
-		phi=-8.3606;
-		theta=358.726;
-		height=0.00604486;
-		gndlvl=-242501 ft;
-		time=65278;
-		vstride=586570;
+		view=SURFACE;
+		phi=19.6006;
+		theta=29.6702;
+		height=420.72 ft;
+		gndlvl=987.173 ft;
+		time=200264;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=90;
-		pitch=-90;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400019;
+		heading=1;
+		tilt=8;
+		angle=48;
 		fov=35;
 		speed=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=0.00604561;
-		gndlvl=-246464 ft;
-	}
-	View{
-		height=0.00636901;
-		gndlvl=-284437 ft;
-	}
-	View{
-		time=32746.6;
-	}
-	View{
-		delt=20000;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0103151;
-	}
-	View{
-		height=0.00643256;
-		hstride=2;
-		minr=0.00394613;
-		radius=0.0103787;
-	}
-	View{
-		view=SURFACE;
-		phi=-14.0625;
-		theta=37.9688;
-		height=52800 ft;
-		gndlvl=-359.346 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-		hstride=1;
-		radius=0.00400993;
-	}
-	View{
-		height=14.0179 miles;
-		time=62000;
-		delt=1000;
-		heading=-38;
-		tilt=1;
-		minr=0.00399993;
-		radius=0.00401395;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -91,33 +48,24 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.004,159.581) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
-					hscale=0.001;
+					hscale=0.0015;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2,1,1,0,0)+craters(ID2,1,0.419321,0.2,0.8,1,0.8,1,1,0.2,1,0.8,0.6,0.2,0))+
-								Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0);
+						terrain=
+								Sprite("tree_sprite",10,1e-05,1,1,1)+
+								Sprite("tree_sprite2",1,1e-05,1,0.5,1)+Z(noise(GRADIENT|NLOD|SQR,5.1,7.4,0.59,0.5,2.22,1,4,0,0,1e-06))+Color(0.584314,0.482353,0.376471,1);
 					}
-					Sky(0.0042) {
-						color=Color(0,0.58,0.89);
+					Sky(0.0041029) {
+						color=Color(0.5,0.9,1);
 						day=24;
-						density=0.51388;
-						haze.color=Color(1,1,0.88);
-						haze.height=0.52;
-						haze.max=15.085 miles;
-						haze.value=1;
-						name="BlueSky";
-						night.color=Color(0,0,0);
-						resolution=4;
-						sky.grad=0.877953;
+						density=0.2;
+						haze.grad=0.45206;
+						name="Sky";
 						specular=Color(1,1,1);
-						twilight=Color(0.5,0,0.25);
-						twilight.max=0.389724;
-						twilight.min=-0.240551;
 						year=100;
 					}
 				}

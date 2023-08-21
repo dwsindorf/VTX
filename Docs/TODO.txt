@@ -51,6 +51,15 @@ IV. Vegetation
    - set transparency to 100% for background parts of image
    - use placement method in VTX (as for craters and rocks) to assign spawn positions of plants
    - use billbord method (as in 3d cloud option) for rendering
+   details
+   - new clases SpritePoint, SpriteData, Sprite, TNsprite
+   - in Map.adapt collect sorted list of sprite positions for each terrain id
+     o saved in Sprite class
+   - in Map.render_shaded call new render_sprites function after rendering surface nodes
+   - textures generated in Tp->setProgram
+   - iterate trough sprites list and draw billboards over existing image buffer (overlay)
+     o first test use point sprites vs billboards
+     
  3) auto-generate random plants using procedural techniques
    proposal
    - use fractalization techniques to render trees etc. forking branches and leaves in a heirachical manner

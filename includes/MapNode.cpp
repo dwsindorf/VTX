@@ -9,6 +9,7 @@
 #include "Effects.h"
 #include "matrix.h"
 #include "Perlin.h"
+#include "Sprites.h"
 
 extern double Theta, Phi, Height,Rscale,Margin;
 extern Point MapPt;
@@ -729,7 +730,9 @@ void MapNode::recalc2()
 		mdctr=&data;
 		mdctr->invalidate();
 		TheMap->object->set_surface(Td);
+		
 		data.free();
+		
 		data.init_terrain_data(Td,0);
 		//if(Td.get_flag(INMARGIN))
 	   // 	set_margin(1);
@@ -1282,7 +1285,7 @@ int MapNode::gradchk()
 {
     return 0;
 }
-#define TEST_VISIT
+//#define TEST_VISIT
 //-------------------------------------------------------------
 // MapNode::visit()	visit terminal nodes only and apply function
 //-------------------------------------------------------------
@@ -1889,7 +1892,7 @@ Color MapNode::Tcolor(MapData *d) {
     case VNODES:                  	// '3'
     {
         if (partvis())
-            c = Color(1, 1, 0);
+            c = Color(0, 1, 0);
         else if (hidden())
             c = Color(0, 0, 1);
         else if (invisible() && rnode && dnode)
@@ -2228,6 +2231,7 @@ void MapNode::Svertex(MapData*dn) {
 		dpfactor=rampstep(0,1.0,norm.dot(dv),0.2,1);
 	//}
 	// reduce max orders with distance
+    Point mp=d->mpoint();
 	double depth = TheScene->vpoint.distance(d->mpoint());
 	double dfactor=0.5*GLSLMgr::wscale/depth;
 
@@ -2249,7 +2253,20 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d);
-
+//#define COLOR_SPRITES	
+#ifdef COLOR_SPRITES
+	double t=d->theta();
+	double p=d->phi();
+	Point pnt=Td.rectangular(t,p);
+	TheNoise.set(pnt);
+	MapPt=pt;
+	Height=d->Ht();
+	for (int j = 0; j < tp->sprites.size; j++) {
+		Sprite *ts=tp->sprites[j];
+		if(visible())				
+			ts->eval();		
+	}
+#endif
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
 			find_neighbors();
@@ -2281,7 +2298,6 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				if(tx->a_data){
 					t = d->texture(index);
-					//cout<<t<<endl;
 					if(tx->d_data)
 						t*=d->mdata();
 					A[texid]=clamp(t,0.0,1.0);
@@ -2515,6 +2531,7 @@ void MapNode::init_map_data(MapData *md)
 	Td.clr_flag(FNOREC);
 
 	mdctr=md;
+
 	TheMap->object->set_surface(Td);
 	md->init_terrain_data(Td,0);
 	//if(Td.get_flag(INMARGIN))
@@ -2527,4 +2544,50 @@ void MapNode::init_map_data(MapData *md)
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
 		set_need_recalc(1);
 }
+double MapNode::value()
+{
+	return point().length();
+}
+void MapNode::evalsprites()
+{
+	TerrainProperties *tp=TerrainData::tp;
+
+	MapData *d=&data;
+
+	double t=d->theta();
+	double p=d->phi();
+	
+	Point pt=Td.rectangular(t, p);
+	//TheNoise.set(pt);
+	//Height=d->Ht();
+    double  aveht=d->Ht();
+    
+    Point pnt=d->point();
+	int nct=find_neighbors(); // also used for slope
+//#define AVE_PTS
+#ifdef AVE_PTS
+ 	for(int i=0;i<nct;i++){
+		MapData *md=mapdata[i];
+		aveht+=md->Ht();
+		double t=md->theta();
+		double p=md->phi();
+		Point pt1=Td.rectangular(t, p);
+		pt=pt+Td.rectangular(t, p);
+		pnt=pnt+mapdata[i]->point();
+	}
+    double a=1.0/(1+nct);
+	aveht*=a;
+	pt=pt*a;
+#endif
+	Height=aveht;
+	MapPt=pnt;
+	TheNoise.set(pt);
+
+	for(tp->sid=0;tp->sid<tp->sprites.size;tp->sid++){
+		Td.clr_flag(SFIRST);
+		Sprite *sprite=tp->sprites[tp->sid];
+		sprite->eval();
+	}	
+}
+
 

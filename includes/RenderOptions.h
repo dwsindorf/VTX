@@ -106,7 +106,6 @@ enum{ // flags
 	BUMPMAPS		= 0x00000400,
 	DRAW_NVIS		= 0x00000800,
 	STARTEX		    = 0x00001000,
-	SPECTEX		    = 0x00002000,
 	RAYTRACE		= 0x00004000,
 	MULTITEXS		= 0x00008000,
 	GEOMETRY		= 0x00010000,
@@ -119,7 +118,6 @@ enum{ // flags
 					|TEXTURES
 					|BUMPMAPS
 					|WATERSHOW
-					|SPECTEX
 					|RAYTRACE
 					|MULTITEXS
 					|STARTEX
@@ -208,9 +206,6 @@ public:
 
 	void set_geometry(int c)	{ BIT_SET(renderflags,GEOMETRY,c);}
 	int  geometry()				{ return renderflags & GEOMETRY?1:0;}
-
-	void set_spectex(int c)		{ BIT_SET(renderflags,SPECTEX,c);}
-	int  spectex()				{ return renderflags & SPECTEX?1:0;}
 
 	void set_lighting(int c)	{ BIT_SET(renderflags,LIGHTSHADING,c);}
 	int  lighting()				{ return renderflags & LIGHTSHADING?1:0;}

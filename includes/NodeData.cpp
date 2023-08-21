@@ -6,12 +6,15 @@
 #include "RenderOptions.h"
 #include "Effects.h"
 #include "matrix.h"
+#include "Sprites.h"
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
 extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt;
 extern double  zslope();
 extern int test_flag;
+extern Point MapPt;
+
 
 static TerrainData Td;
 //**************** static and private *********************
@@ -247,6 +250,10 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
+#define TEST_SPRITES
+#define SPRITES_DENSITY
+//#define SPRITES_COLOR
+//#define TEST_CRATERS
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -287,21 +294,41 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.water())
 		nw=1;
 
+	if(td.cvalid())
+		nc=1;
+
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
         s2=new MapData(lt.lvalue(),lp.lvalue());
 	    s2->init_terrain_data(*td.data[pass],pass+1);
 	    setLinks(1);
     }
-
+    
 	Height=td.p.z;
 
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];
 
+#ifdef TEST_CRATERS
+	nc=1;
+#endif
+	int pm=CurrentScope->passmode();
+	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
+#ifdef TEST_SPRITES
+	if(do_sprites){
+#ifdef SPRITES_COLOR
+		nc=1;
+#endif
+#ifdef SPRITES_DENSITY
+		nf=1;
+#endif
+	}
+#endif
+
 	a=b=0;
 
 	setTextures(tp->textures.size?1:0);
+	setSprites(tp->sprites.size?1:0);
 	int nbumps=0;
 	int nmaps=0;
 
@@ -314,9 +341,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	setBumpmaps(nbumps?1:0);
 	setHmaps(nmaps?1:0);
-
-	if(td.cvalid())
-		nc=1;
+	
 	if(td.p.y != 0.0)
 	    nd=3;
 	else if(td.p.x != 0.0)
@@ -357,6 +382,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			TheMap->set_erosion(1);
 	}
 	double h=Ht();
+
 	a=TSTART;
 
 	for(i=0;i<tp->textures.size;i++){
@@ -368,7 +394,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 				setTexture(tex->avalue,a);
 		}
 		else if(tex->a_data){
-			//cout<<tex->t<<endl;
 			setTexture(tex->avalue,a);
 		}
 		if(md)
@@ -390,15 +415,36 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	//if(mdata()<0.75)
 	//	set_edge(1);
 
-	//TheMap->hmax=h>TheMap->hmax?h:TheMap->hmax;
-	//TheMap->hmin=h<TheMap->hmin?h:TheMap->hmin;
-//cout<<mdata()<<endl;
 	set_type(td.type());
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
 #endif
+#ifdef TEST_SPRITES
+	if(!do_sprites)
+		return;
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+
+    MapPt=point();
+    Td.density=0;
+    Td.diffuse=Color(1,1,1);
+	for(i=0;i<tp->sprites.size;i++){
+		
+		Sprite *sprite=tp->sprites[i];
+		sprite->eval();
+#ifdef SPRITES_DENSITY
+		setDensity(Td.density);
+#endif
+#ifdef SPRITES_COLOR
+		setColor(Td.diffuse);
+#endif
+	}
+	CurrentScope->set_passmode(mode);
+
+#endif
+
 }
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)

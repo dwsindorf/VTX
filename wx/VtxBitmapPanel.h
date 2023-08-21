@@ -23,6 +23,8 @@ public:
 
 	void setImage(wxString);
 	void setScaledImage(wxString);
+	void setScaledImage(wxString,wxBitmapType);
+
 	bool scaleImage();
 
 	void OnPaint(wxPaintEvent& event);
@@ -30,6 +32,7 @@ public:
 	bool tileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);
 	bool getSubImage(const wxRect& rect, const wxBitmap& bitmap);
 	bool setSubImage(const wxRect& rect);
+	bool setSubImage(const wxRect& rect,wxBitmapType type);
 	bool imageOk()  { return m_bitmap.IsOk();}
 	char *getName() { return (char*)m_name.ToAscii();}
 	void setName(char *name) { m_name=name;}

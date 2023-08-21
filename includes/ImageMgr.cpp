@@ -28,7 +28,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 
 int icnt1=0;
 int icnt2=0;
@@ -178,6 +178,8 @@ void ImageSym::print()
         printf("%-5s","MAP");
     if(info&IMTYPE==IMPORT)
         printf("%-5s","IMPORT");
+    if(info&IMTYPE==SPRITE)
+        printf("%-5s","SPRITE");
     if(info&SPX){
         printf("%-5s","SPX");
         if(info&BANDS)
@@ -269,7 +271,9 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	int norm=opts&NORM;
 	int invt=opts&INVT;
 	int gray=opts&GRAY;
-	bool gradient=(opts&ACHNL)>0 && grad!=0;
+	bool gradient=!gray && (grad!=0);
+	//bool gradient=grad!=0;
+
 	int achnl=((opts&ACHNL) && (opts&T1D))||(opts&BUMP);
 	TNode *rvalue=0;
 	TNode *gvalue=0;
@@ -868,6 +872,12 @@ int ImageReader::getFileInfo(char *name)
    		info |=IMPORT;
    		return info;
    	}
+	sprintf(dir,"%s%sTextures%sSprites%s",base,File.separator,File.separator,File.separator);
+	info=getFileInfo(name,dir);
+   	if(info){
+   		info |=SPRITE;
+   		return info;
+   	}
 	sprintf(dir,"%s%sTextures%sMaps%s",base,File.separator,File.separator,File.separator);
 	info=getFileInfo(name,dir);
 	if(info)
@@ -943,6 +953,10 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			break;
 		case IMPORT:
 			if((info&IMTYPE) != IMPORT)
+				continue;
+			break;
+		case SPRITE:
+			if((info&IMTYPE) != SPRITE)
 				continue;
 			break;
 
@@ -1290,6 +1304,10 @@ Image *ImageReader::open(char *name)
 	Image *image=open(name, dir);
 	if(image)
 		return image;
+	sprintf(dir,"%s%sTextures%sSprites%s%s",base,d,d,d,name);
+	image=open(name, dir);
+	if(image)
+		return image;
 	sprintf(dir,"%s%sTextures%sImages%s%s",base,d,d,d,name);
 	image=open(name, dir);
 	if(image)
@@ -1340,7 +1358,7 @@ Image *ImageReader::openPngFile(char *name,char *path)
 	int height=0;
 	int comps=0;
 	GLubyte *pxls=readPngFile(cpath,width,height,comps);
-	cout<<"reading png image "<<path<<" comps="<<comps<<endl;
+	//cout<<"reading png image "<<path<<" comps="<<comps<<endl;
     if(pxls){
 		image=new Image((Color*)pxls,width,height);
 		image->set_global(1);
@@ -1402,6 +1420,10 @@ void ImageReader::printImageInfo(char *f)
 //-------------------------------------------------------------
 Image *ImageReader::openBmpFile(char *name,char *path)
 {
+<<<<<<< HEAD
+=======
+	//BITMAPINFO	*info=0;
+>>>>>>> 081b54a0a86c743d2b3f4d015ca5fdf9736fdcf5
 	void *bits;
 	void *pxls;
 	Image *image=0;
@@ -1472,7 +1494,7 @@ void ImageReader::save(char *f, Image *image)
 	char path[256];
 
 #ifdef DEBUG_IMAGES
-	printf("%-20s SAVING IMAGE %s\n","ImageReader",f);
+	printf("%-20s SAVING IMAGE %s %s\n","ImageReader",image->alpha()?"RGBA":"RGB",f);
 #endif
 
 	getImagePath(f,path);

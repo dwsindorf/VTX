@@ -91,6 +91,7 @@ enum standard_keys{
 	KEY_RENDER_DEPTH 	= 'w',
 	KEY_RENDER_MIX 	    = 'c',
 	KEY_RENDER_TEXTURES = 'x',
+	KEY_RENDER_SPRITES  = 'X',
 	KEY_RENDER_SPECULAR = 'Y',
 	KEY_RENDER_BUMPS    = 'b',
 	KEY_RENDER_REFLECT 	= 'r',
@@ -104,7 +105,7 @@ enum standard_keys{
 	KEY_RENDER_FACE     = 'F',
     KEY_RENDER_AA       = 'a',
     KEY_RENDER_HDR      = 'm',
-    KEY_RENDER_GEOMETRY = 'X',
+    KEY_RENDER_GEOMETRY = '$',
 
 	KEY_ADAPT_OVERLAP   = 'o',
 	KEY_ADAPT_LOD       = 'e',

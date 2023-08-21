@@ -490,7 +490,7 @@ void VtxScene::setCenterText(wxString& msg)
 //-------------------------------------------------------------
 void VtxScene::drawCenterText(wxString& msg)
 {
-    cout <<"VtxScene::center_tex "<<msg<<endl;
+    //cout <<"VtxScene::center_tex "<<msg<<endl;
     wxPaintDC dc(this);
     glDrawBuffer(GL_BACK);
 	
@@ -539,11 +539,9 @@ if(draw_cnt==0)
     SetCurrent();
     if(!TheScene){
     	clear_canvas();
-        cout<<"set_fonts"<<endl;
+        //cout<<"set_fonts"<<endl;
         set_fonts(); // set fonts for opengl text
-        cout<<"make_scene start"<<endl;
         make_scene();
-        cout<<"make_scene end"<<endl;
     }
     draw_cnt++;
     Refresh();
@@ -737,7 +735,7 @@ void VtxScene::make_scene()
     TheScene->resize(width,height);
 
     state=0;
-    cout<< "VtxScene: # key cmnds="<<nargs<<endl;
+    //cout<< "VtxScene: # key cmnds="<<nargs<<endl;
 
     for (i = 0; i < nargs; i++){
         kif.standard_key(state, sargs[i]);

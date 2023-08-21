@@ -6,14 +6,14 @@ Scene() {
 		height=5235.83 ft;
 		gndlvl=-1618.84 ft;
 		time=472179;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;
 		minh=1.89394e-09;
 		tilt=-15;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{

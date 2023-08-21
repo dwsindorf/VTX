@@ -707,7 +707,7 @@ void Noise::init()
 			perm[i] = perm[j = IntRand() % mod];
 			perm[j] = k;
 		}
-		printf("Noise::init n %d\n",nfact);
+		//printf("Noise::init n %d\n",nfact);
 		//init_noise(RandSeed);
 		init_flag=0;
 	}

@@ -5,7 +5,7 @@
 //#define LDRTEST
 
 #define SAMPLES_COUNT 64
-#define SAMPLES_COUNT_DIV2 32
+#define SAMPLES_COUNT_DIV2 32.0
 #define INV_SAMPLES_COUNT (1.0f/SAMPLES_COUNT);
 
 uniform sampler2DRect FBOTex1;
@@ -56,13 +56,13 @@ void main(void) {
  	float shadow = 0.0;
 	float x,y;
 	int i,j;
-    float flag1=0;
-    float flag2=1;   
+    float flag1=0.0;
+    float flag2=1.0;   
     float blur=fwidth*views;
     // reset "already processed" flag on last view for next light
     float fview=(view+1.0)/views;
 	if(fview>0.99)
-		fview=0;
+		fview=0.0;
     
     vec4 lastview=texture2DRect(FBOTex3, gl_FragCoord.xy); // shadow accumulator
     if(lastview.z>0.1){ // if already processed return last view result
@@ -71,9 +71,9 @@ void main(void) {
     }
     vec4 sc = ShadowCoord/ShadowCoord.w ; // transform pixel to light view
     // discard if transformed pixel is offscreen in light view
-    if(sc.x>xmax || sc.x<0)
+    if(sc.x>xmax || sc.x<0.0)
     	discard;
-    if(sc.y>ymax || sc.y<0)
+    if(sc.y>ymax || sc.y<0.0)
     	discard;
     	
    // if(sc.z>zmax || sc.z<zmin)
@@ -94,7 +94,7 @@ void main(void) {
 		float LdotN  = dot(light,normal);
 #endif
 #ifdef JITTER
-	    vec3 jcoord=vec3(gl_FragCoord.xy,0);
+	    vec3 jcoord=vec3(gl_FragCoord.xy,0.0);
 #ifdef JITTER_TEST
 		for(i=0;i<4;i++){
 			vec4 offset=texture3D(JitterMap,jcoord)*blur;

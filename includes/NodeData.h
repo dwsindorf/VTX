@@ -215,6 +215,7 @@ public:
 typedef struct mpdata {
 	unsigned int  type	    : 8;	// type code
 	unsigned int  textures	: 1;	// textures (flag)
+	unsigned int  sprites	: 1;	// sprites (flag)
 	unsigned int  bumpmaps	: 1;	// bumpmaps (flag)
 	unsigned int  links     : 1;	// link to more MapData (0..1)
 	unsigned int  colors	: 1;	// colors (0..1)
@@ -230,7 +231,7 @@ typedef struct mpdata {
 	unsigned int  hmaps	    : 1;	// hmap flag
 	unsigned int  mdata	    : 1;	// margin flag
 	unsigned int  edge	    : 1;	// edge flag
-	unsigned int  unused	: 3;	// unassigned
+	unsigned int  unused	: 2;	// unassigned
 } mpdata;
 
 
@@ -292,6 +293,7 @@ public:
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}
+	void setSprites(int n)		{ flags.s.sprites=n;}
 	void setBumpmaps(int n)		{ flags.s.bumpmaps=n;}
 	void setHmaps(int n)		{ flags.s.hmaps=n;}
 	void setMdata(int n)		{ flags.s.mdata=n;}

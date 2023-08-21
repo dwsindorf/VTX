@@ -15,7 +15,7 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.3;
 	}
 	View{

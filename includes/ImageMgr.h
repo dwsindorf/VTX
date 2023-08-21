@@ -56,8 +56,7 @@ enum  {
 	TEX         = 0x00002000,   // default
 	BUMP	    = 0x00004000, 	// bump map flag
 	HMAP   	    = 0x00008000,
-	RANDOMIZE   = 0x00010000,   // random flip
-	RGBA        = 0x00020000, 	// generate texture alpha from intensity
+	RANDOMIZE   = 0x00020000,   // random flip
 	SEXPR       = 0x00040000, 	// S expression in argument list
 	AEXPR       = 0x00080000, 	// T expression in argument list
 	TXOPTS	    = 0x000fffA0, 	// texture opts mask
@@ -77,12 +76,13 @@ enum  {
 	IMAGE   	= 0x20000000,
 	SPX     	= 0x40000000,
 	IMPORT   	= 0x80000000,
+	SPRITE   	= 0x80000001,
 	MAP   	    = 0x80000002,
 	IMOPTS 		= 0xff000000,
 	IOPTS 	    = TXOPTS|INOPTS,
 	IFTYPE 		= BUMP|TEX|HMAP|SPX,
 	SPXTYPE 	= BANDS|IMAGE,
-	IMTYPE 	    = IMPORT|MAP,
+	IMTYPE 	    = IMPORT|MAP|SPRITE,
 	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|T1D|T2D
 
 };

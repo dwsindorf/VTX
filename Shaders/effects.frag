@@ -64,7 +64,7 @@ void main(void) {
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
 		d=haze_grad==0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0);
-		h=haze_ampl*Haze.a*pow(d,2*haze_grad);
+		h=haze_ampl*Haze.a*pow(d,8*haze_grad);
 #endif
 #ifdef WATER
 		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
@@ -156,7 +156,7 @@ void main(void) {
 #endif
  	}
 	gl_FragData[0]=vec4(color,1.0);	
-	//gl_FragData[0]=vec4(h,0,0,1.0);	
+	//gl_FragData[0]=vec4(d,0,0,1.0);	
 	
     gl_FragData[1]=fcolor2;
 }

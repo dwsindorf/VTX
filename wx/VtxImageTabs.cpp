@@ -202,7 +202,7 @@ void VtxImageTabs::makeRevertList(){
 // VtxImageTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxImageTabs::makeImageList(){
-	cout<<"VtxImageTabs::makeImageList()"<<endl;
+	//cout<<"VtxImageTabs::makeImageList()"<<endl;
     images.makeImagelist();
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(type, list);
@@ -481,11 +481,11 @@ int VtxImageTabs::rebuild(){
 	//cout << buff << endl;
 	if(isModified()){
 		BIT_ON(n->opts,CHANGED);
-		cout<<"rebuilding image"<<endl;
+		//cout<<"rebuilding image"<<endl;
 	}
 	else{
 		BIT_OFF(n->opts,CHANGED);
-		cout<<"loading previous image "<<istr<<endl;
+		//cout<<"loading previous image "<<istr<<endl;
 	}
 	n->init();
 	int opts=n->opts;

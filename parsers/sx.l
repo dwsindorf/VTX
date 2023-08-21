@@ -102,6 +102,8 @@ static LongSym keytbl[]={
 	{"Point",		YY_POINT},
 	{"Z",           YY_POINT},
 	{"Texture",		YY_TEXTURE},
+	{"Sprite",		YY_SPRITE},
+	
 	{"Density",		YY_DENSITY},	
 		
 	{"debug",		YY_DEBUG},	
@@ -272,7 +274,7 @@ static void init_parser()
  * =========================================================================*/
 void destroy_parser()
 {
-    printf("destroy_parser() %d\n",LexSymbols.size);
+    //printf("destroy_parser() %d\n",LexSymbols.size);
     LexSymbols.free();
 }
 

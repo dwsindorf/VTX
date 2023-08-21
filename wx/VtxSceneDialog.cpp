@@ -43,11 +43,12 @@
 #include "VtxGalaxyTabs.h"
 #include "VtxFractalTabs.h"
 #include "VtxHaloTabs.h"
+#include "VtxSpritesTabs.h"
 
 
 //#define PRINT_TREE
 
-#define DEBUG_SELECT
+//#define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
@@ -139,6 +140,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_CLOUDS,VtxCloudsTabs)
 	SET_TABS_OBJECT(TN_SKY,VtxSkyTabs)
 	SET_TABS_OBJECT(TN_TEXTURE,VtxTexTabs)
+	SET_TABS_OBJECT(TN_SPRITE,VtxSpritesTabs)
 	SET_TABS_OBJECT(TN_COLOR,VtxColorTabs)
 	SET_TABS_OBJECT(TN_POINT,VtxPointTabs)
 	SET_TABS_OBJECT(TN_GLOSS,VtxGlossTabs)
@@ -322,7 +324,9 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		break;
 	case TABS_REPLACE:
 		if(newobj){
+#ifdef DEBUG_TREE_ACTIONS
 			cout<<"replace in tree "<<newobj<<endl;
+#endif
 			replaceSelected(newobj);
 		}
 		break;
@@ -339,7 +343,9 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	case TABS_ADD:
 		if(newobj){
 			newobj->setRandom(rand_flag);
+#ifdef DEBUG_TREE_ACTIONS
 			cout<<"add to tree "<<newobj<<endl;
+#endif
 			newobj=addToTree(newobj,id);
 			if(newobj->newViewObj()){
 				ObjectNode *obj=newobj;
@@ -351,7 +357,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	        TheScene->rebuild_all();
 	        rebuildObjectTree();
 	        selectObject(newobj);
-	        setNodeName(sym->name());
+	       // setNodeName(sym->name());
 		}
 		break;
 	}
@@ -428,7 +434,9 @@ void VtxSceneDialog::OnBeginDrag(wxTreeEvent&event){
 //       the problem.
 //-------------------------------------------------------------
 void VtxSceneDialog::OnBeginCopyDrag(wxTreeEvent&event){
+#ifdef DEBUG_TREE_ACTIONS
 	cout << "begin rt-mouse copy drag " << event.GetKeyEvent().ControlDown() << endl;
+#endif
 	selectedId=event.GetItem();
 	copying=true;
 	event.Allow();
@@ -471,7 +479,9 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 		}
 	}
 	if(type){
+#ifdef DEBUG_TREE_ACTIONS
 		cout << "Ok to drop " << sstr << " at " << dstr << endl;
+#endif
 		char path[256];
 	    File.getBaseDirectory(path);
 	    File.addToPath(path,File.system);
@@ -495,9 +505,10 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 		selectObject(newobj);
 		setNodeName(sname);
 	}
+#ifdef DEBUG_TREE_ACTIONS
 	else
 		cout << "Can't drop " << sstr << " at " << dstr << endl;
-
+#endif
     //treepanel->SelectItem(dstId);
 	copying=false;
 
@@ -524,9 +535,9 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 	TreeNode *tnode=node->tnode;
 	TreeNode *tree_node;
 	NodeIF *dstObj=tnode->node;
-	
+#ifdef DEBUG_TREE_ACTIONS	
 	cout<<"add proto valid:"<<newObj->protoValid()<<" "<<newObj<<endl;
-
+#endif
 	wxTreeItemId itemId=dstId;
 	if (expanded || (empty && !dstObj->isLeaf())) {
 		if (num_children) {
@@ -541,33 +552,42 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 					tree_node=TheScene->model->addToTree(tnode, 0, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, 0, tree_node);
+#ifdef DEBUG_TREE_ACTIONS
 					cout<<"2nd child < first : insert"<<endl;
+#endif
 				}
 				else{ // add new child after last child with lower level
+#ifdef DEBUG_TREE_ACTIONS
 					cout<<"add new child after last child with lower level"<<endl;
 					cout<<"parent="<<dstObj->typeName()<<" newobj="<<newObj->typeName()<<" childobj="<<obj->typeName()<<endl;
+#endif
 					newObj=dstObj->addAfter(obj, newObj);
 					tree_node=TheScene->model->addToTree(tnode, data, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, addId, tree_node);
 				}
 			} else { // insert before first child with a higher level
+#ifdef DEBUG_TREE_ACTIONS
 				cout<<"insert before first child with a higher level"<<endl;
+#endif
 				newObj=dstObj->addAfter(obj, newObj);
 				tree_node=TheScene->model->addToTree(tnode, data, newObj);
 				TheScene->setPrototype(dstObj, newObj);
 				addToTree(dstId, addId, tree_node);
 			}
 		} else { // no previous children: insert as first child
+#ifdef DEBUG_TREE_ACTIONS
 			cout<<"no previous children: insert as first child"<<endl;
+#endif
 			newObj=dstObj->addChild(newObj);
 			tree_node=TheScene->model->addToTree(tnode, newObj);
 			TheScene->setPrototype(dstObj, newObj);
 			addToTree(dstId, tree_node);
 		}
 	} else {
+#ifdef DEBUG_TREE_ACTIONS
 		cout<<"insert new child in parent branch after the selected child"<<endl;
-
+#endif
 		// insert new child in parent branch after the selected child,
 		// usually a sibling of the same type (e.g. texture, layer)
 		wxTreeItemId pid=treepanel->GetItemParent(dstId);
@@ -579,8 +599,9 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 
 		// make a TreeNode from newobj insert it in the TreeNode tree
 		tree_node=TheScene->model->addToTree(tree_parent, tnode, newObj);
+#ifdef DEBUG_TREE_ACTIONS
 		cout<<"add 2 proto valid:"<<newObj->protoValid()<<endl;
-
+#endif
 		TheScene->setPrototype(tree_parent->node, newObj);
 		// add new node to wxTreeCntrl
 		addToTree(pid, dstId, tree_node);
@@ -593,10 +614,12 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 //-------------------------------------------------------------
 bool VtxSceneDialog::setTabs(int t){
 	if(tabs.find(t) == tabs.end()){
-		cout << "dialog for id : "<< t << " not yet supported" <<endl;
+		cout << "dialog for class id : "<< t << " not yet supported" <<endl;
 		return false;
 	}
+#ifdef DEBUG_TREE_ACTIONS
 	cout<<"VtxSceneDialog::setTabs "<<selected->name()<<" "<<selected->node<<endl;
+#endif
 	VtxTabsMgr* mgr=tabs[t];
 	mgr->setSelected(selected);
 	//mgr->updateControls();
@@ -735,7 +758,9 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 	bool expanded=treepanel->IsExpanded(item);
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
+#ifdef DEBUG_TREE_ACTIONS
 	cout<<" newobj:"<<newobj<<" oldobj:"<<oldobj<<endl;
+#endif
 	bool vo=(oldobj==TheScene->viewobj);
 	if(vo)
 	   TheScene->viewobj=(ObjectNode *)newobj;  	
@@ -851,7 +876,7 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 
 	if(n==node){
 		selectedId=parent;
-#ifdef DEBUG_SELECT
+#ifdef DEBUG_TREE_ACTIONS
 		cout << node->typeName();
 		if(strlen(tnode->label()))
 			cout <<"<"<<tnode->label() <<">";

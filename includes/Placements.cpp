@@ -26,11 +26,11 @@ extern int hits,visits;
 #define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD          // turn on to get lod info
+//#define USE_HASHTABLE
  
 static TerrainData Td;
 extern double ptable[];
 extern double Hscale;
-const double roff=0.5*PI;
 
 double MaxSize;
 
@@ -44,9 +44,7 @@ static int	chits=0,cvisits=0,crejects=0;
 static int	nhits=0,nmisses=0,nvisits=0,nrejects=0;
 static int  cmade=0,cfreed=0;
 
-void init_display_placements()
-{
-}
+static PlacementMgr s_mgr=0;
 
 void show_display_placements()
 {
@@ -70,8 +68,9 @@ static LongSym popts[]={
 	{"MAXHT",		MAXHT},
 	{"MAXA",		MAXA},
 	{"MAXB",		MAXB},
-	{"NPROJ",		NPROJ},
+	{"NOLOD",		NOLOD},
 	{"CNORM",		CNORM},
+	{"FLIP",		FLIP},
 	{"NNBRS",		NNBRS}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
@@ -84,20 +83,37 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 //	arg[2]  mult			size multiplier per level
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
+#ifdef GLOBAL_HASH
+
 Placement **PlacementMgr::hash=0;
-int PlacementMgr::last_id=0;
+int PlacementMgr::index=0;
+int PlacementMgr::hits=0;
+#endif
+LinkedList<Placement*> PlacementMgr::list;
+int PlacementMgr::hashsize=PERMSIZE;
+
 PlacementMgr::PlacementMgr(int i)
 {
 	type=i&PID;
     options=i&(~PID);
 	flags.l=0;
+	instance=0;
 
 	levels=5;
 	maxsize=0.01;
 	mult=0.8;
+	level_mult=0.8;
 	density=0.8;    			
   	dexpr=0;
   	base=0;
+#ifndef GLOBAL_HASH
+  	hash=0;
+  	hashsize=PERMSIZE;
+  	index=0;
+#endif
+  	hits=0;
+  	roff=0.5*PI;
+  	roff2=1;
 
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
@@ -112,26 +128,19 @@ PlacementMgr::~PlacementMgr()
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::free()\n");
 #endif
-		for(int i=0;i<PERMSIZE;i++){
-			h=hash[i];
-			if(h){
-#ifdef DEBUG_PLACEMENTS
-				cfreed++;
-#endif
-				delete h;
-				hash[i]=0;
-			}
-		}
+  		free_htable();
 		FREE(hash);
 	}
 }
+
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
 //-------------------------------------------------------------
 void PlacementMgr::free_htable()
 {
 	Placement *h;
-	for(int i=0;i<PERMSIZE;i++){
+	cfreed=0;
+	for(int i=0;i<hashsize;i++){
 		h=hash[i];
 		if(h){
 #ifdef DEBUG_PLACEMENTS
@@ -141,6 +150,7 @@ void PlacementMgr::free_htable()
 			hash[i]=0;
 		}
 	}
+	//cout<<"PlacementMgr::free_htable freed:"<<cfreed<<endl;
 }
 
 //-------------------------------------------------------------
@@ -148,6 +158,16 @@ void PlacementMgr::free_htable()
 //-------------------------------------------------------------
 void PlacementMgr::reset()
 {
+	for(int i=0;i<hashsize;i++){
+		Placement *h=hash[i];
+		if(h){
+			h->reset();
+		}		
+	}
+	list.reset();
+	chits=cvisits=crejects=0;
+	nhits=nmisses=nvisits=nrejects=0;
+	cmade=cfreed=0;
 }
 
 //-------------------------------------------------------------
@@ -155,16 +175,19 @@ void PlacementMgr::reset()
 //-------------------------------------------------------------
 void PlacementMgr::init()
 {
+	static bool finisher_added=false;
 	if(hash==0){
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
 #endif
-  		CALLOC(PERMSIZE,Placement*,hash);
+  		CALLOC(hashsize+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
-		add_initializer(init_display_placements);
-		add_finisher(show_display_placements);
+  		if(!finisher_added)
+			add_finisher(show_display_placements);
+  		finisher_added=true;
 #endif
 	}
+	reset();
 }
 
 //-------------------------------------------------------------
@@ -175,6 +198,40 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
     return new Placement(*this,p,n);
 }
 
+void PlacementMgr::ss(){ 
+	index=0;
+	hits=0;
+}
+//-------------------------------------------------------------
+// PlacementMgr::make()	virtual factory method to make Placement
+//-------------------------------------------------------------
+Placement *PlacementMgr::next()
+{
+	if(!hash || index>=hashsize)
+		return 0;
+	Placement *h=hash[index];
+	while(!h && index<hashsize-1){
+		index++;
+		h=hash[index];
+	}
+	index++;
+	hits++;
+    return h;
+}
+void PlacementMgr::dump(){
+	if(!hash)
+		return;
+	int cnt=0;
+	for(int i=0;i<hashsize;i++){
+		Placement *h=hash[i];
+		if(h){
+			h->dump();
+			cnt++;
+		}		
+	}
+	cout<<"num placements="<<cnt<<endl;
+	
+}
 //-------------------------------------------------------------
 // PlacementMgr::eval()	modulate terrain
 //-------------------------------------------------------------
@@ -190,14 +247,16 @@ void PlacementMgr::eval()
 
 	if(TheNoise.noise3D())
 		 pv.w=0;
-	
+	double l=pv.length();
 	pv=pv.normalize();  // project on unit sphere
 
-	msize=ntest()?maxsize:maxsize*4;
-	for(lvl=0,size=msize;lvl<levels;size*=0.5*(mult+1),lvl++){
+	msize=maxsize;//ntest()?maxsize:maxsize*4;
+	for(lvl=0,size=msize;lvl<levels;size*=0.5*(level_mult+1),lvl++){
+		if(!valid())
+			continue;
 
 #ifdef PLACEMENTS_LOD
-		if(!CurrentScope->init_mode() && Adapt.lod()){
+		if(!CurrentScope->init_mode()&&lod()&& Adapt.lod()){
 		    double x=ptable[(int)Td.level];
 #ifdef DEBUG_LOD
 		    place_visits++;
@@ -216,8 +275,7 @@ void PlacementMgr::eval()
 
 		int seed=lvl*131+id;
 		    
-        //if(lvl>0 && !ntest()){   
-        if(lvl>0){   
+        if(lvl>0&&roff>0){   
 		    set_offset_valid(1);
 			offset.x=roff*SRAND(1);
 			offset.y=roff*SRAND(2);
@@ -241,38 +299,28 @@ void PlacementMgr::eval()
 		            FLOOR(p.w));
 		if(TheNoise.noise3D())
 		    p.w=0;
-
+		
 		int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
 		if(TheNoise.noise4D())
 			n=PERM(pc.w+n);
 
 		Placement *h=hash[n];
-		
-#ifdef DEBUG_PLACEMENTS
 		cvisits++;
-#endif
-		if(!h || h->point!=pc || h->type !=type){
+		if(!h|| h->point!=pc || h->type !=type){
 			Placement *c=make(pc,n);
 			if(h){
-#ifdef DEBUG_PLACEMENTS
 				cfreed++;
-#endif
 				delete h;
 			}
 			h=c;
 			hash[n]=h;
 		}
-#ifdef DEBUG_PLACEMENTS
 		else
 			chits++;
-#endif        
 		if(h->radius>0.0)
 		  	h->set_terrain(*this);
-#ifdef DEBUG_PLACEMENTS
 		else
 			crejects++;
-#endif
-
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
@@ -281,9 +329,7 @@ void PlacementMgr::eval()
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;
-#ifdef DEBUG_PLACEMENTS
 					cfreed++;
-#endif
 					delete h;
 				}
 			}
@@ -374,14 +420,11 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	double d,r,pf=1;
 	radius=0.0;
 	users=0;
+	flags.l=0;
 #ifdef DEBUG_PLACEMENTS
 	cmade++;
 #endif
-    if(!mgr.dexpr && mgr.density<1){
-	    if(rands[hid]+0.5>mgr.density)
-		    return;
-	}
-
+	double dns=mgr.density;
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
@@ -398,12 +441,13 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		CurrentScope->revaluate();
 		mgr.dexpr->eval();
 		TheNoise.pop();
-		double f=S0.s;
+		dns+=S0.s;
 		SPOP;
 		CurrentScope->revaluate();
-		if(rands[hid]+0.5>f)
-		    return;
-	}		
+		dns=clamp(dns,0,1);
+	}
+	if(rands[hid]+0.5>dns)
+		return;
 
 	d=fabs(p.length()-1);
 	double rf=1-mgr.mult;
@@ -419,39 +463,48 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		r=0.25*mgr.size*(1-URAND(1)*rf);
 		pf=0.8*mgr.size-r;
 	}
-	p.x+=pf*SRAND(2);
-	p.y+=pf*SRAND(3);
-	p.z+=pf*SRAND(4);
-	if(TheNoise.noise4D())
-		p.w+=pf*SRAND(5);
-	else
-	    p.w=0;
+	pf*=mgr.roff2;
+	if(pf>0){
+		p.x+=pf*SRAND(2);
+		p.y+=pf*SRAND(3);
+		p.z+=pf*SRAND(4);
+		if(TheNoise.noise4D())
+			p.w+=pf*SRAND(5);
+		else
+			p.w=0;
+	}
 	p=p.normalize();
     if(mgr.offset_valid())
 	   	p=p+mgr.offset;
-
 	if(TheNoise.noise3D())
 	    p.w=0;
 	center=p;
 	radius=r;
+	flags.s.valid=true;
 }
 
 //-------------------------------------------------------------
 // Placement::set_terrain()	impact terrain
 //-------------------------------------------------------------
-void Placement::set_terrain(PlacementMgr &mgr)
+bool Placement::set_terrain(PlacementMgr &mgr)
 {
-  // extended classes must override this
+    // extended classes must override this
+	return false;
 }
 
+void Placement::dump(){
+	// extended classes can override this
+}
+void Placement::reset(){
+	flags.l=0;
+}
 //************************************************************
 // TNplacements class
 //************************************************************
 TNplacements::TNplacements(int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b) 
 {
-
 	int id=type&PID;
-	if(id==0){
+ 	if(id==0){
 		id=place_gid++;
 		id=id&PID;
 		BIT_OFF(type,PID);
@@ -570,7 +623,11 @@ void TNplacements::eval()
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2) mgr->mult=arg[2];			// scale multiplier per level
+	if(n>2){
+		double randscale=arg[2];		// random scale multiplier
+		mgr->mult=randscale;            // in same level
+		mgr->level_mult=randscale;      // reduce size per level
+	}
 	
 	if(mgr->dexpr==0){
 		dexpr=args[3];
@@ -579,17 +636,12 @@ void TNplacements::eval()
 		    mgr->density=S0.s;
 		}
 	}
-	//MaxSize=mgr->maxsize/Hscale;
+	
 	MaxSize=mgr->maxsize;
-	if(!mgr->ntest())
-	    MaxSize+=4;
 
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize+
 					1/mgr->mult
 					);
-	mgr->id=(int)hashcode+mgr->type+hashcode*TheNoise.rseed;
-//cout<<hashcode<<endl;
-	//mgr->id=(int)(hashcode*(1+mgr->type+TheNoise.rseed));
-	
+	mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
 }

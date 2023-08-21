@@ -12,7 +12,7 @@ class Crater : public Placement
 protected:
 public:
 	Crater(PlacementMgr&, Point4DL&,int);
-	void set_terrain(PlacementMgr &mgr);
+	bool set_terrain(PlacementMgr &mgr);
 };
 
 class CraterMgr : public PlacementMgr 

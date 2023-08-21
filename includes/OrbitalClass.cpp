@@ -2808,7 +2808,7 @@ double *Star::temps=0;
 // the star type will be a product of it's stellar frequency and relative brightness
 // (e.g. close in red stars, further out blue stars)
 //-------------------------------------------------------------
-#define SHOW_PROBABILITIES
+//#define SHOW_PROBABILITIES
 void Star::make_temps_table(){
 	num_temps=expand_factor;
 	MALLOC(num_temps,double,temps);
@@ -5340,6 +5340,8 @@ int  Sky::scale(double &zn, double &zf)
     	Raster.twilite_dph=twilite_dph;
     	Raster.twilite_max=twilite_max;
     	Raster.twilite_min=twilite_min;
+    	
+    	Raster.setParams();
 
     	Point p=point.mm(TheScene->invViewMatrix);
     	p=p.mm(TheScene->viewMatrix);

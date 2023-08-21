@@ -10,13 +10,14 @@
 #include "GLSLMgr.h"
 #include "FileUtil.h"
 #include "TerrainClass.h"
+#include "Sprites.h"
 static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
-
+#define RENDER_SPRITES
 #define RENDERLIST(i,j,func) \
 	if(use_call_lists && tid_lists[i]){ \
 		if(callLists[i][j]==0) { \
@@ -309,6 +310,7 @@ void Map::clearLists() {
 			callLists[i][j] = 0;
 		}
 	}
+	set_first(true);
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -435,7 +437,7 @@ void Map::set_scene()
 
 	// estimate horizon distance
 
-	r=TheScene->radius-gndlvl+50*MILES;
+	r=TheScene->radius-gndlvl+10*MILES;
 	d=radius;
 	d=r*r-d*d;
 	TheScene->elevation=TheScene->radius-radius;
@@ -494,7 +496,6 @@ void Map::reset_texs()
 {
 	GLSLMgr::clearTexs();
 	ntexs=1;
-
 }
 
 //-------------------------------------------------------------
@@ -582,6 +583,7 @@ void Map::render()
 	    if(TheScene->bounds==&vbounds)
 	    	render_bounds();
 	}
+	set_first(false);
 }
 
 //-------------------------------------------------------------
@@ -704,6 +706,7 @@ void Map::render_zvals()
 {
 	make_current();
 
+	cout<<"Map::render_zval"<<endl;
 	GLSLMgr::beginRender();
 	//glFlush();
 //#ifndef WINDOWS
@@ -1122,6 +1125,8 @@ void Map::render_ids()
 
 	Raster.surface=1; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
+		//cout<<"Map::render_ids "<<tid<<endl;
+
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
@@ -1136,7 +1141,7 @@ void Map::render_ids()
 		setProgram();
 		npole->render_ids();
     }
-
+    tid=0;
 	glFinish();
 	glFlush();
 	Raster.read_ids();
@@ -1213,17 +1218,23 @@ void Map::render_shaded()
 			else
 				Lights.setEmission(Td.emission);
 			glColor4d(tp->color.red(),tp->color.green(),tp->color.blue(),tp->color.alpha());
+ 
 			if(!object->setProgram())
 				continue;
-
 			texture=0;
 			total_rpasses++;
+
 			if(render_triangles()){
 				RENDER_TRIANGLES(SHADER_LISTS,tid);
 			}
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
+	        set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
+#ifdef RENDER_SPRITES
+			if(sprites())
+				render_sprites();
+#endif
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
@@ -1234,7 +1245,7 @@ void Map::render_shaded()
 	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
 	if(show_water){
 #ifdef DEBUG_RENDER
-		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;water
+		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
 #endif
 		tid=WATER;
 		tp=Td.properties[tid];
@@ -1359,7 +1370,7 @@ void Map::render_texs(){
 		// if first texture has alpha<1 need separate pass for color
 		// otherwise object will be transparant
 
-		int aflag=texture && texture->alpha_enabled() && !transparant();
+		int aflag=texture && texture->alpha_image() && !transparant();
 
         //cout<<" Map::render_texs:"<<stexs<<endl;
 
@@ -1399,6 +1410,51 @@ void Map::render_texs(){
 		}
 		reset_texs();
 	}
+}
+
+//-------------------------------------------------------------
+// Map::render_sprites()	render sprites
+//-------------------------------------------------------------
+static LinkedList<MapNode*> node_list;
+static int test_cnt;
+static void collect_nodes(MapNode *n)
+{
+	if(n->visible()){
+		node_list.add(n);
+    }
+}
+
+void Map::render_sprites(){
+	reset_texs();
+	if(first()){
+		double d0=clock();
+		test_cnt=0;
+		node_list.reset();
+		npole->visit(&collect_nodes);
+		ValueList<MapNode*> sorted;
+		sorted.set(node_list);
+		sorted.sort();
+		double d1=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+		Sprite::reset();
+		int mode=CurrentScope->passmode();
+		CurrentScope->set_spass();
+		sorted.ss();
+		int n=sorted.size;
+		// collect far to near so overwrites in hash table preserve nearest
+		for(int i=0;i<n;i++){
+			MapNode *node=sorted[n-i-1];
+			node->evalsprites();
+		}
+		double d2=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+		//npole->visit(&MapNode::evalsprites);
+		Sprite::collect();
+		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+
+		cout<<"Map::render_sprites tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+
+		CurrentScope->set_passmode(mode);
+	}
+	SpriteMgr::setProgram();
 }
 
 //-------------------------------------------------------------
@@ -1713,7 +1769,7 @@ void Map::make_visbox()
 		    r[i]=r[i].mm(imat);
 
 		//vbounds.zn=0.5*rbounds.zn;
-	   // cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
+	    //cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
 		//if(TheScene->viewobj==object)
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=rbounds.zn;
@@ -1823,7 +1879,7 @@ void Map::adapt()
 	idtest=idmap();
 	//double sfact=0.3*object->resolution()*TheScene->cellsize;
 	double sfact=conv()*Adapt.conv()*0.5*sqrt(object->resolution()*TheScene->cellsize);
-	if(TheScene->changed_file()){
+	if(TheScene->changed_file()||TheScene->changed_detail()){
 		sfact*=0.5;
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
@@ -1859,6 +1915,7 @@ void Map::adapt()
 				npole->visit(&MapNode::sizechk);
 				npole->visit(&MapNode::balance);
 			}
+
 			ADAPT_CYCLE; // squares pass
 			ADAPT_CYCLE; // diamonds pass
 
@@ -1915,6 +1972,7 @@ void Map::adapt()
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
 	}
+	
 	//find_limits();
 }
 
@@ -2248,7 +2306,7 @@ void Map::make_triangle_lists() {
 	   triangles.sort();
 #if DEBUG_TRIANGLES >1
 	   double d2=(double)clock();
-	   cout << "Map::sort :"<< (double)(d2 - d1)/CLOCKS_PER_SEC<< endl;
+	   cout << "Map::sort :"<< (double)1000.0*(d2 - d1)/CLOCKS_PER_SEC<< endl;
 #endif
 	}
 	else if(render_triangles())
@@ -2279,7 +2337,7 @@ void Map::make_triangle_lists() {
 		triangle_list.free();
 #if DEBUG_TRIANGLES >0
 	if(TheScene->viewobj==object){
-	cout << "Map::triangles overhead:"<< (clock()-d0)/CLOCKS_PER_SEC << " ms"<< endl;
+	cout << "Map::triangles overhead:"<< 1000.0*(clock()-d0)/CLOCKS_PER_SEC << " ms"<< endl;
 	}
 #endif
 

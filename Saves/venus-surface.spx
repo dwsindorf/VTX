@@ -11,13 +11,20 @@ Scene() {
 		astride=1;
 		zoom=0.003;
 		minh=1.13636e-09;
-		minr=0.00299117;
 		heading=8;
 		tilt=-4;
 		angle=-1;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=29000.4 ft;
+		time=2.72299e+06;
+		heading=13;
+		tilt=-7;
+		angle=-3;
+		minr=0.00299117;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -71,7 +78,7 @@ Scene() {
 					fog.glow=0.13158;
 					fog.max=10208.3 ft;
 					fog.min=208.34 ft;
-					fog.value=0.54902;
+					fog.value=1;
 					fog.vmax=-17361.2 ft;
 					fog.vmin=-20000 ft;
 					hscale=0.002;
@@ -92,8 +99,8 @@ Scene() {
 					Surface{
 						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
-								Texture("jupiter",BORDER|TEX,577315,1.02776,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
-								Texture("eroded",BUMP|TEX,683.359,-0.22208,2,0,5,2,0.5,0,0,0,0,0)+
+								Texture("jupiter",BORDER|LINEAR|TEX,577315,1.36508,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
+								Texture("eroded",BUMP,683.359,-0.22208,2,0,5,2,0.5,0,0,0,0,0)+
 								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-4,1.02776,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
 								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,1,0.66,0.45,0));
 					}

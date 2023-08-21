@@ -6,7 +6,7 @@ Scene() {
 		height=305.357 ft;
 		gndlvl=-36528.5 ft;
 		time=34168.8;
-		vstride=586570;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=1;
@@ -15,7 +15,7 @@ Scene() {
 		tilt=-7;
 		angle=-1;
 		fov=35;
-		speed=586570;
+		speed=0.02;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{

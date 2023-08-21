@@ -259,7 +259,7 @@ void VtxCratersFunct::AddShapeTab(wxWindow *panel){
 
 }
 void VtxCratersFunct::setFunction(wxString f){
-	TNcraters *tc=(TNcraters*)TheScene->parse_node(f.ToAscii());
+	TNcraters *tc=(TNcraters*)TheScene->parse_node((char*)f.ToAscii());
 	if(!tc)
 		return;
 
@@ -415,7 +415,7 @@ void VtxCratersFunct::getFunction(){
 	s+=")";
 	//cout << s << endl;
 
-	TNcraters *tn=(TNcraters*)TheScene->parse_node(s.ToAscii());
+	TNcraters *tn=(TNcraters*)TheScene->parse_node((char*)s.ToAscii());
 	if(!tn){
 		return;
 	}
