@@ -106,7 +106,7 @@ bool VtxApp::OnInit()
 
     //printf("long=%d int=%d\n",sizeof(long),sizeof(int));
     frame->start_timer(repeat_rate); // the first tick builds the "scene" object
-    cout<<"VtxApp::OnInit"<<endl;
+    //cout<<"VtxApp::OnInit"<<endl;
     return true;
 }
 

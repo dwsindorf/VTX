@@ -150,7 +150,7 @@ void PlacementMgr::free_htable()
 			hash[i]=0;
 		}
 	}
-	cout<<"PlacementMgr::free_htable freed:"<<cfreed<<endl;
+	//cout<<"PlacementMgr::free_htable freed:"<<cfreed<<endl;
 }
 
 //-------------------------------------------------------------

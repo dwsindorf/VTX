@@ -125,7 +125,7 @@ UINT CreateOpenGLFont(LPSTR font, int height, bool bold, int id)	// Build Our Bi
 
 	// Now we actually need to create the font.  We use a windows function called:
 	// CreateFont() that returns a handle to a font (HFONT).
-	cout<<"CreateOpenGLFont "<<id<<endl;
+	//cout<<"CreateOpenGLFont "<<id<<endl;
     int mkbold=bold?FW_BOLD:FW_NORMAL;
 	hFont = CreateFont(height,						    // Our desired HEIGHT of the font
 						0,								// The WIDTH (If we leave this zero it will pick the best width depending on the height)

@@ -1358,7 +1358,7 @@ Image *ImageReader::openPngFile(char *name,char *path)
 	int height=0;
 	int comps=0;
 	GLubyte *pxls=readPngFile(cpath,width,height,comps);
-	cout<<"reading png image "<<path<<" comps="<<comps<<endl;
+	//cout<<"reading png image "<<path<<" comps="<<comps<<endl;
     if(pxls){
 		image=new Image((Color*)pxls,width,height);
 		image->set_global(1);

@@ -70,8 +70,8 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-static double thresh=1;    // move to argument ?
-static double ht_offset=1.1; // move to argument ?
+static double thresh=1.0;    // move to argument ?
+static double ht_offset=0.5; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -90,14 +90,14 @@ static int dns_fails=0;
 static TerrainData Td;
 static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
-#define DEBUG_PMEM
+//#define DEBUG_PMEM
 
 #define USE_AVEHT
 //#define SHOW
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
-#define SHOW_STATS
+//#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
 static void show_stats()
@@ -507,15 +507,15 @@ void Sprite::collect()
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
 #endif
-
+	//cout<<"znear:"<< TheScene->znear<<" zfar:"<<TheScene->zfar<<" "<<TheScene->zfar/TheScene->znear<<endl;
+	int new_sprites=0;
+	int bad_pts=0;
 #ifdef SHOW_STATS	
 	int trys=0;
 	int visits=0;
 	int bad_visits=0;
 	int bad_valid=0;
 	int bad_active=0;
-	int bad_pts=0;
-	int new_sprites=0;
 #endif	
 #ifdef GLOBAL_HASH
 	PlacementMgr::ss();
@@ -523,7 +523,9 @@ void Sprite::collect()
 #else
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->sprites.size;i++){
+#ifdef SHOW_STATS	
 		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_sprites=0;
+#endif
 		Sprite *sprite=tp->sprites[i];
 		sprite->mgr()->ss();
 		SpritePoint *s=(SpritePoint*)sprite->mgr()->next();
@@ -692,7 +694,7 @@ void TNsprite::init()
 	if(right)
     	right->init();
 
-	cout<<"TNsprite::init"<<endl;
+	//cout<<"TNsprite::init"<<endl;
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 	if(!image){
 		char path[512];
@@ -806,8 +808,9 @@ void TNsprite::eval()
 		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
 		density+=f;
 	}
-
+    density*=maxdensity;
 	density=clamp(density,0,1);
+	density=sqrt(density);
 
 	mgr->density=density;
 	double hashcode=(mgr->levels+

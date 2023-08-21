@@ -274,7 +274,7 @@ static void init_parser()
  * =========================================================================*/
 void destroy_parser()
 {
-    printf("destroy_parser() %d\n",LexSymbols.size);
+    //printf("destroy_parser() %d\n",LexSymbols.size);
     LexSymbols.free();
 }
 

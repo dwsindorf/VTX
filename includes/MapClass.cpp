@@ -437,7 +437,7 @@ void Map::set_scene()
 
 	// estimate horizon distance
 
-	r=TheScene->radius-gndlvl+50*MILES;
+	r=TheScene->radius-gndlvl+10*MILES;
 	d=radius;
 	d=r*r-d*d;
 	TheScene->elevation=TheScene->radius-radius;
@@ -1769,7 +1769,7 @@ void Map::make_visbox()
 		    r[i]=r[i].mm(imat);
 
 		//vbounds.zn=0.5*rbounds.zn;
-	   // cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
+	    //cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
 		//if(TheScene->viewobj==object)
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=rbounds.zn;
@@ -1879,7 +1879,7 @@ void Map::adapt()
 	idtest=idmap();
 	//double sfact=0.3*object->resolution()*TheScene->cellsize;
 	double sfact=conv()*Adapt.conv()*0.5*sqrt(object->resolution()*TheScene->cellsize);
-	if(TheScene->changed_file()){
+	if(TheScene->changed_file()||TheScene->changed_detail()){
 		sfact*=0.5;
 		max_cycles*=2;
 		//cout<<"new file"<<endl;

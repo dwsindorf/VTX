@@ -918,7 +918,7 @@ void RasterMgr::shadow_light()
 void RasterMgr::resize_idtbl(int size)
 {
 	if(size > idsize){
-		printf("realloc ids %d\n",size);
+		//printf("realloc ids %d\n",size);
 		REALLOC(size,MapNode*,idtbl);
 		idsize=size;
 	}
@@ -931,7 +931,7 @@ void RasterMgr::alloc_idtbl(int size)
 {
 	FREE(idtbl)
 	MALLOC(size,MapNode*,idtbl);
-	printf("alloc ids %d\n",size);
+	//printf("alloc ids %d\n",size);
 	idsize=size;
 	reset_idtbl();
 }

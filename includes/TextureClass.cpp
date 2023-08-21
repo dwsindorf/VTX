@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-#define DEBUG_TEXTURES
+//#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -241,7 +241,7 @@ void Texture::begin() {
 		bool norm=normalize();
 		bool set_alpha=shader_pass || alpha_image;
 		
-		cout<<"2d:"<< image()->tx2d()<< " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		//cout<<"2d:"<< image()->tx2d()<< " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
 		for (int i = 0; i < h; i++){
 			for (int j = 0; j< w ; j++) {
