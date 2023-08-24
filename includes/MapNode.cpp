@@ -1855,6 +1855,7 @@ void MapNode::render_vertex()
 	glEnd();
 }
 
+#define TEST_ERODE
 //-------------------------------------------------------------
 // MapNode::Tcolor() test color for output
 //-------------------------------------------------------------
@@ -1940,6 +1941,7 @@ Color MapNode::Tcolor(MapData *d) {
            //    c = c.blend(Color(1, 0, 0), 1);
             if (data.margin())
                 c = c.blend(Color(0, 0, 1), 1);
+        }
 #else
       	   c = Color(data.mdata(), 0, 0);
 #endif
@@ -1951,9 +1953,9 @@ Color MapNode::Tcolor(MapData *d) {
      double s = 2*sediment();
      c = Color(1, 1, 1);
      if (s > 0)
-         c = c.blend(Color(0, 0, 1), s);
+        c = c.blend(Color(0, 0, 1), s);
      else
-         c = c.blend(Color(1, 0, 0), -s);
+        c = c.blend(Color(1, 0, 0), -s);
 #else
        if (Raster.surface == 2)
           c = Color(0, 1, 1);

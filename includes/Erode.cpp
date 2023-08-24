@@ -170,7 +170,11 @@ void TNerode::eval() {
     double args[8];
     int n = getargs(arg, args, 8);
 
-
+    if(CurrentScope->rpass()){
+    	if(right)
+    		right->eval();
+    	return;
+    }
 
     //unsigned int begin = (unsigned int) (2.0 * args[0]);
 
@@ -184,24 +188,21 @@ void TNerode::eval() {
     double lower=upper-dt;
 
     double slope_ampl = n > idx ? args[idx++] : 1.0;
-    double slope_drop = n > idx ? args[idx++] : 0.1; // max slope
-    double slope_min = n > idx ? args[idx++] : 0.25; // max slope
+    double slope_drop = n > idx ? args[idx++] : 0.1; // slope drop
+    double slope_min = n > idx ? args[idx++] : 0.25; // min slope
     double ds = n > idx ? args[idx++] : 3; // lower threshold
     double slope_max = slope_min+ds; // max slope
 
     double ave=0;
     if(transport>0)
         ave=transport*ave_sediment();
-
-
     if (right) {
-         right->eval();
-         Td.rock = S0.pvalid()?S0.p.z:S0.s;
+        right->eval();
+        Td.rock = S0.pvalid()?S0.p.z:S0.s;
+    }
+    double z = Td.rock+ave;
 
-     }
-     double z = Td.rock+ave;
-
-     int l1 = begin;
+    int l1 = begin;
     //int l2=begin+orders;
     l1=l1>MAXLVLS?MAXLVLS:l1;
     //l2=l2>MAXLVLS?MAXLVLS:l2;
@@ -212,9 +213,7 @@ void TNerode::eval() {
     double s=0;
 
     if (level >= l1) {
-
         CELLSLOPE(rock(),s);
-
         s*=TheMap->hscale;//*INV2PI;
 
          if (options & SQR)
