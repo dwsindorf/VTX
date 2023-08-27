@@ -1420,10 +1420,7 @@ void ImageReader::printImageInfo(char *f)
 //-------------------------------------------------------------
 Image *ImageReader::openBmpFile(char *name,char *path)
 {
-<<<<<<< HEAD
-=======
 	//BITMAPINFO	*info=0;
->>>>>>> 081b54a0a86c743d2b3f4d015ca5fdf9736fdcf5
 	void *bits;
 	void *pxls;
 	Image *image=0;
