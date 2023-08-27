@@ -2274,7 +2274,7 @@ void Scene::adapt()
 #if defined(WIN32) || defined(WIN7)
    bool swap_on_update=true;
 #else
-   bool swap_on_update=false;
+   bool swap_on_update=true;
 #endif
 void Scene::render()
 {

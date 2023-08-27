@@ -437,7 +437,7 @@ void Map::set_scene()
 
 	// estimate horizon distance
 
-	r=TheScene->radius-gndlvl+10*MILES;
+	r=TheScene->radius-gndlvl+50*MILES;
 	d=radius;
 	d=r*r-d*d;
 	TheScene->elevation=TheScene->radius-radius;

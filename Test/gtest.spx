@@ -1,0 +1,90 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=7.67395;
+		theta=312.429;
+		height=208.052 ft;
+		gndlvl=10490.2 ft;
+		time=88529.8;
+		heading=200;
+		tilt=-20;
+		angle=-95;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=208.059 ft;
+	}
+	View{
+		height=10698.2 ft;
+		gndlvl=0.0209804 ft;
+		tilt=-17;
+		angle=-94;
+	}
+	View{
+		height=10694.9 ft;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(0.98,0.92,0.79);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(0.98,0.95,0.77,0.95);
+						color2=Color(0.97,0.67,0.03);
+					}
+				}
+				Planet(0.004,100) {
+					day=24;
+					diffuse=Color(1,1,1,0.48);
+					resolution=4;
+					shadow=Color(0,0,0,0.51);
+					specular=Color(1,1,1,0.76);
+					year=100;
+					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.992,0.773,0.004));
+					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
+					Surface{
+						terrain=
+								Texture("saturn3",BORDER|TEX,25267.6,1.30436,1,0,1,2,1,0,0,1,-0.44444,0.33332)+
+								Texture("eroded",BUMP,6912.54,1.42032,1,0,10.3062,2,0.91836,0)+Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.24,1,0)+noise(GRADIENT|FS|SCALE,20,3.7,1,0.5,2,0.13,1,0,0));
+					}
+					Sky(0.0041029) {
+						color=Color(0.82,0.98,0.98);
+						day=24;
+						density=0.2;
+						haze.color=Color(1,0.96,0.6);
+						haze.grad=0.43288;
+						haze.value=1;
+						night.color=Color(0,0.31,1,0);
+						shine=2.92377;
+						specular=Color(1,1,1);
+						twilight=Color(0.33,0,1);
+						twilight.max=0.379151;
+						twilight.min=-0.446273;
+					}
+				}
+			}
+		}
+	}
+}

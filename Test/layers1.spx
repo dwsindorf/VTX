@@ -1,0 +1,140 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-42.8219;
+		theta=315.176;
+		height=498.441 miles;
+		gndlvl=2909.91 ft;
+		time=-7024.8;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=498.146 miles;
+		gndlvl=4466.51 ft;
+	}
+	View{
+		phi=-41.9678;
+		theta=315.439;
+		height=26389.7 ft;
+		gndlvl=14761.9 ft;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=14027 ft;
+		heading=33;
+		tilt=-16;
+		angle=-1;
+	}
+	View{
+		height=30060.9 ft;
+		heading=58;
+	}
+	View{
+		view=ORBITAL;
+		height=0.0072;
+		gndlvl=-0.196095 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(100) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.11,0) {
+					color=Color(1,1,0.95);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					name="Sol";
+					specular=Color(1,1,1);
+					Surface{
+						m1=0.5*noise(GRADIENT|UNS,3,6,0.2)*noise(GRADIENT|UNS,8,6,0.3);
+						terrain=color-Color(0,m1,m1);
+					}
+					Corona(6.11) {
+						color1=Color(1,1,1,0.7);
+						color2=Color(1,1,0.7);
+					}
+				}
+				Planet(0.0036,85) {
+					day=23.934;
+					hscale=0.003;
+					name="Earth";
+					phase=50;
+					shine=10;
+					specular=Color(1,1,1,0.5);
+					tilt=23.45;
+					year=365.26;
+					albedo=0.5;
+					wl=water.level*GTOL;
+					bands("strata1",64,0.5,Color(1,0.8,0.2),0.8,RAND);
+					bands("strata2",64,0.4,Color(0.1,0.4,0.1),0.1,RAND);
+					bands("strata3",64,0.5,Color(0.5,0.5,0.5));
+					bands("strata4",64,0.1,Color(0.5,0,0),0.1,RAND);
+					Surface{
+						mp=noise(1,12,0.3,0.2);
+						c1=-0.9;
+						l2=noise(GRADIENT|RO1,2,5);
+						mr1=noise(GRADIENT|NABS|SQR|UNS|RO1,8,10,0.2,0.4);
+						mr2=noise(GRADIENT|NABS|NEG|SQR|UNS|RO2,8,12,0.2,0.4);
+						mrp=clamp(2*noise(GRADIENT|UNS,6,7,0.3),0,1);
+						z1=noise(GRADIENT|NABS|SQR|UNS,9,6,0.4,0.5);
+						z2=noise(GRADIENT|NABS|SQR|UNS,6,6,0.5,0.5);
+						z3=2*mr2*(1-mrp)+mr1*mrp+mrp-0.5;
+						z4=noise(GRADIENT|NABS|SQR|UNS|RO2,6,12,0.5,0.1);
+						z5=z4+c1;
+						m1=noise(3,2);
+						terrain=map(mp,0,1,0.2)
+								layer(MORPH,0,0.2)
+									[Color(0.7,0.7,0)
+									+gloss(0)
+									+
+									Texture("strata1",S|TEX,HT,1,1,1,0,1,2,1,0)+Z(0.2*z1)
+									]
+								layer(MORPH,0,0.1,0.2)
+									[
+									Texture("strata2",S|TEX,HT*10,1,1,1,0,1,2,1,0)+gloss(1,10)
+									+Color(0,0.5,0.5)
+									+Z(0.2*z2)
+									]
+								layer(MORPH,0,0.1,0.2)
+									[gloss(0)
+									+
+									Texture("strata3",S|TEX,HT,1,1,1,0,1,2,1,0)+Color(0.7,0.7,0.7)
+									+Z(0.3*z3)
+									]
+								layer(MORPH,0)
+									[
+									Texture("strata4",S|TEX,HT,1,1,1,0,1,2,1,0)+Color(0.7,0,0)
+									+gloss(1,0.25)
+									+Z(0.5*z4)
+									]
+								;
+					}
+				}
+			}
+		}
+	}
+}
