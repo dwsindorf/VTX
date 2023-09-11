@@ -1,23 +1,216 @@
 Scene() {
 	View{
-		view=SURFACE;
-		phi=19.6006;
-		theta=29.6702;
-		height=420.72 ft;
-		gndlvl=987.173 ft;
-		time=200264;
-		vstride=0.02;
+		view=ORBITAL;
+		phi=-8.3606;
+		theta=358.726;
+		height=0.00604486;
+		gndlvl=-242501 ft;
+		time=65278;
+		vstride=1;
 		hstride=1;
 		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.00604561;
+		gndlvl=-246464 ft;
+	}
+	View{
+		height=0.00636901;
+		gndlvl=-284437 ft;
+	}
+	View{
+		time=32746.6;
+	}
+	View{
+		delt=20000;
+	}
+	View{
+		phi=-37.3481;
+		height=0.00624086;
+	}
+	View{
+		view=SURFACE;
+		phi=-40.4297;
+		theta=12.6562;
+		height=10 miles;
+		gndlvl=26805 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-40.4328;
+		theta=12.6545;
+		height=45049.3 ft;
+		heading=61;
+		tilt=-17;
+		angle=-7;
+	}
+	View{
+		phi=-40.0012;
+		theta=13.3044;
+		height=2609.84 ft;
+		gndlvl=-20054.2 ft;
+		heading=0;
+		tilt=-15;
+		angle=0;
+	}
+	View{
+		height=20.8157 miles;
+		heading=50;
+		tilt=-20;
+	}
+	View{
+		phi=-39.7375;
+		theta=13.6725;
+		height=1543.03 ft;
+		gndlvl=35510 ft;
+		heading=0;
+		tilt=-15;
+	}
+	View{
+		height=14.234 miles;
+		heading=47;
+	}
+	View{
+		view=ORBITAL;
+		theta=13.6917;
+		height=0.006;
+		gndlvl=35472 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-45.7031;
+		theta=20.3906;
+		height=10 miles;
+		gndlvl=-2112 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		phi=-45.835;
+		theta=20.8521;
+		height=1410.66 ft;
+		gndlvl=-4224 ft;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-0.016896 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-46.4063;
+		theta=9.84375;
+		height=10 miles;
+		gndlvl=30185.3 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=67.9242 miles;
+		heading=25;
+	}
+	View{
+		phi=-44.7803;
+		theta=14.0186;
+		height=13048.3 ft;
+		gndlvl=-3839.83 ft;
+		heading=0;
+	}
+	View{
+		theta=14.0168;
+		height=37801.8 ft;
+		heading=1;
+		angle=-3;
+	}
+	View{
+		phi=-44.8462;
+		theta=14.3262;
+		height=960.228 ft;
+		gndlvl=-8404.03 ft;
+		heading=0;
+		angle=0;
+	}
+	View{
+		height=67.9802 miles;
+		heading=13;
+	}
+	View{
+		phi=-43.418;
+		theta=18.457;
+		height=12763 ft;
+		gndlvl=-12575.2 ft;
+		heading=0;
+	}
+	View{
+		height=20709.5 ft;
+		heading=20;
+		tilt=-13;
+		angle=1;
+		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
-		minr=0.00400019;
-		heading=1;
-		tilt=8;
-		angle=48;
-		fov=35;
-		speed=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+		radius=0.00400154;
+	}
+	View{
+		heading=18;
+		hstride=2;
+		minr=0.00399762;
+	}
+	View{
+		phi=-43.4073;
+		theta=18.5415;
+		height=262.346 ft;
+		gndlvl=-1066.87 ft;
+		heading=0;
+		tilt=-15;
+		angle=0;
+		hstride=1;
+		radius=0.00399985;
+	}
+	View{
+		theta=18.5413;
+		height=2337.94 ft;
+		heading=-2;
+		tilt=-7;
+		angle=-11;
+		hstride=2;
+		minr=0.0039998;
+		radius=0.00400024;
+	}
+	View{
+		phi=-43.4169;
+		theta=18.582;
+		height=135.423 ft;
+		gndlvl=-2409.77 ft;
+		heading=0;
+		tilt=-15;
+		angle=0;
+		hstride=1;
+		radius=0.00399957;
+	}
+	View{
+		height=189.602 ft;
+		tilt=-6;
+		angle=1;
+		minr=0.00399954;
+		radius=0.00399958;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -48,25 +241,17 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,159.581) {
+				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
-					hscale=0.0015;
+					hscale=0.002;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=
-								Sprite("tree_sprite",10,1e-05,1,1,1)+
-								Sprite("tree_sprite2",1,1e-05,1,0.5,1)+Z(noise(GRADIENT|NLOD|SQR,5.1,7.4,0.59,0.5,2.22,1,4,0,0,1e-06))+Color(0.584314,0.482353,0.376471,1);
-					}
-					Sky(0.0041029) {
-						color=Color(0.5,0.9,1);
-						day=24;
-						density=0.2;
-						haze.grad=0.45206;
-						name="Sky";
-						specular=Color(1,1,1);
-						year=100;
+						terrain=erode(0.74,1,0.23,0.1,1,10,0,0.3)
+								Texture("jupiter",S|TEX,0.1*HT+noise(GRADIENT|UNS,0,3,0.46,0.2,2,1),0.9999,1.24848,1,0,1,2,1,0)+
+								Texture("usgs10m-1",HMAP,1,1,1,0,1.5,2,0.5,0,2,-0.55556,0,0,0,0)+Z(noise(GRADIENT|NLOD|SQR|UNS,5.5,10.8,1,0.41,2.22,0.15,1,0,0,1e-06));
 					}
 				}
 			}

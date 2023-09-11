@@ -1,39 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=36.0022;
-		theta=353.815;
-		height=2399.07 ft;
-		gndlvl=168868 ft;
-		time=76263.4;
-		vstride=1;
+		phi=33.8102;
+		theta=354.209;
+		height=43.8866 miles;
+		gndlvl=91709.4 ft;
+		time=33736.6;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=25;
-		tilt=-15;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00401737;
+		heading=18;
+		tilt=-14;
+		angle=-11;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=18067.3 ft;
-		gndlvl=190011 ft;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00403941;
-	}
-	View{
-		height=25.3508 miles;
-		time=33736.6;
-		delt=2000;
-		heading=50;
-		tilt=-9;
-		angle=-2;
-		minr=0.00403599;
-		radius=0.00406134;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -67,11 +51,12 @@ Scene() {
 				Planet(0.004,40) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
+					hscale=0.004;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(10*erode(SS,1,0,2,0.1,1,0.1,0.2,3)noise(GRADIENT|SQR,1,16,0.5,0.5,2,10,1,0,-2))+
+						terrain=Z(erode(SS,1,1,1.13,0.34,1,0,0.2,3)noise(GRADIENT|SQR|UNS,2.1,16,0.78,0.42,2.17,1,1,0,0,1e-06))+
 								Texture("jupiter",S,HT,0.5,1.29032,1,0,1,2,1,0);
 					}
 				}

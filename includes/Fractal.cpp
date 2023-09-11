@@ -347,3 +347,19 @@ void TNfractal::propertyString(char *s)
 	}
 	strcat(s,")");
 }
+
+//-------------------------------------------------------------
+// TNfunc::applyExpr() apply expr value
+//-------------------------------------------------------------
+void TNfractal::applyExpr()
+{
+    if(expr){
+    	options=((TNfractal*)expr)->options;
+        DFREE(left);
+        left=expr->left;
+        left->setParent(this);
+        expr=0;
+    }
+    if(right)
+        right->applyExpr();
+}

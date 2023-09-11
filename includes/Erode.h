@@ -33,6 +33,7 @@ public:
 	void save(FILE*);
 	const char *typeName ()	{ return "erode";}
 	void propertyString(char *s);
+	void applyExpr();
 };
 
 #endif

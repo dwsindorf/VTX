@@ -97,6 +97,24 @@ bool VtxFractalTabs::Create(wxWindow* parent,
     return true;
 }
 
+int VtxFractalTabs::showMenu(bool expanded){
+
+	menu_action=TABS_NONE;
+	wxMenu menu;
+
+	menu.AppendCheckItem(ID_ENABLE,wxT("Enable"));
+	menu.AppendSeparator();
+	menu.Append(ID_DELETE,wxT("Delete"));
+
+	PopupMenu(&menu);
+	return menu_action;
+}
+
+void VtxFractalTabs::updateControls(){
+	if(update_needed){
+		getObjAttributes();
+	}
+}
 void VtxFractalTabs::AddControlsTab(wxWindow *panel){
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(topSizer);
@@ -195,26 +213,6 @@ void VtxFractalTabs::AddControlsTab(wxWindow *panel){
     options->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 
 	boxSizer->Add(options,0,wxALIGN_LEFT|wxALL,0);
-
-}
-
-int VtxFractalTabs::showMenu(bool expanded){
-
-	menu_action=TABS_NONE;
-	wxMenu menu;
-
-	menu.AppendCheckItem(ID_ENABLE,wxT("Enable"));
-	menu.AppendSeparator();
-	menu.Append(ID_DELETE,wxT("Delete"));
-
-	PopupMenu(&menu);
-	return menu_action;
-}
-
-void VtxFractalTabs::updateControls(){
-	if(update_needed){
-		getObjAttributes();
-	}
 }
 
 void VtxFractalTabs::getObjAttributes(){

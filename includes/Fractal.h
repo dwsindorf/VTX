@@ -21,6 +21,7 @@ public:
 	int typeValue()			{ return ID_FCHNL;}
 	const char *typeName ()	{ return "fractal";}
 	void propertyString(char *s);
+	void applyExpr();
 };
 
 

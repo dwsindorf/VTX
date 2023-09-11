@@ -42,6 +42,7 @@
 #include "VtxSystemTabs.h"
 #include "VtxGalaxyTabs.h"
 #include "VtxFractalTabs.h"
+#include "VtxErodeTabs.h"
 #include "VtxHaloTabs.h"
 #include "VtxSpritesTabs.h"
 
@@ -155,6 +156,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_SYSTEM,VtxSystemTabs)
 	SET_TABS_OBJECT(TN_GALAXY,VtxGalaxyTabs)
 	SET_TABS_OBJECT(TN_FCHNL,VtxFractalTabs)
+	SET_TABS_OBJECT(TN_ERODE,VtxErodeTabs)
 
 	currentTabs=TN_SCENE;
 	lastTabs=TN_SCENE;

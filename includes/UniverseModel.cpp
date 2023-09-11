@@ -229,7 +229,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"fractal(SS|SQR,14,3,0.1,0.1)\n");
 		break;
 	case TN_ERODE:
-		sprintf(tmp,"erode(4,6,1)\n");
+		sprintf(tmp,"erode(1,0,1,0.1,1,1,0,5)\n");
 		break;
 	case TN_GLOSS:
 		sprintf(tmp,"gloss(1,1)\n");
@@ -491,6 +491,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		//if(actionmode==DROPPING)
 		//	break;
 
+		if(!obj->hasChild(ID_ERODE))
+			list.add(getObjectSymbol(TN_ERODE));
 		if(!obj->hasChild(ID_FCHNL))
 			list.add(getObjectSymbol(TN_FCHNL));
 		if(!obj->hasChild(ID_FOG))

@@ -2,6 +2,34 @@
 #include "NodeData.h"
 #include "Erode.h"
 
+// Erosion algorithms - non uniform grid
+// I. Simple height function
+//  algorithm:
+//  - move material (sediment) from high to low areas
+//  implementation:
+//  - generate terrain normally until some sub-division threshold is reached level=l1
+//  - if height(z) < some max value(zmax) and > some min value(zmin) decrease z proportional to z - zmin
+//  effects: 
+//  - produces cliff like structures when z is between zmin and zmax
+//  - otherwise terrain is unchanged
+//  - doesn't require addition data other than unmodified height function (rock)
+// II. Thermal erosion
+// alorithm:
+// - "slump" terrain to constrain max slope to some critical angle (e.g. 45 degrees)
+// III. Hydrolic erosion
+// alorithm:
+// - carry "sediment" from high to low height areas using water model
+// - each vertex needs water value, sediment value, current height (+hardness), slope (2d)
+// - if slope > threshold && water value> threshold, remove material (sediment) from vertex (decrease ht)
+// - otherwise, if sediment > water carry limit, deposit sediment at vertex (increase ht)
+// - at each vertex move sediment and water between 4 neighboring vertexes (use delta ht, slope to determine outcome)
+// - "evaporate" some of the water (decrease carry capacity)
+// - continue until 
+// challenges:
+// - most published algorithms use iterative methods to move material around in a fixed grid
+// - with dynamically generated vertexes this may be more problematic
+
+
 //**************** extern API area ************************
 extern NameList<LongSym*> NOpts;
 
@@ -156,31 +184,46 @@ void TNerode::propertyString(char *s)
 }
 
 //-------------------------------------------------------------
+// TNfunc::applyExpr() apply expr value
+//-------------------------------------------------------------
+void TNerode::applyExpr()
+{
+    if(expr){
+    	options=((TNerode*)expr)->options;
+        DFREE(left);
+        left=expr->left;
+        left->setParent(this);
+        expr=0;
+    }
+    if(right)
+        right->applyExpr();
+}
+
+//-------------------------------------------------------------
 // TNerode::eval() evaluate the node
 //-------------------------------------------------------------
-
 void TNerode::eval() {
     INIT;
-    Td.hardness = 0.5;
-    Td.sediment = 0;
-    Td.erosion = 1;
-    Td.set_flag(EVALUE);
 
     TNarg *arg = (TNarg*) left;
-    double args[8];
-    int n = getargs(arg, args, 8);
+    double args[11];
+    int n = getargs(arg, args, 10);
+    Td.hardness = 0.5;
+     Td.sediment = 0;
+     Td.erosion = 1;
+     Td.set_flag(EVALUE);
 
-    if(CurrentScope->rpass()){
+    if(!isEnabled() || CurrentScope->rpass()){
     	if(right)
     		right->eval();
     	return;
     }
 
-    //unsigned int begin = (unsigned int) (2.0 * args[0]);
-
     int idx=0;
-    //unsigned int begin = (unsigned int) (2.0 * args[idx++]);
-    unsigned int begin=1;
+    unsigned int begin=30;
+   // unsigned int begin = (unsigned int) (2.0 * args[idx++]);
+  //  unsigned int orders = (unsigned int) (2.0 * args[idx++]);
+   // unsigned int begin=1;
     double fill_ampl = n > idx ? args[idx++] : 1.0;
     double transport = n > idx ? args[idx++] : 0.0;
     double upper = n > idx ? args[idx++] : 0.2; // upper height threshold
@@ -200,21 +243,23 @@ void TNerode::eval() {
         right->eval();
         Td.rock = S0.pvalid()?S0.p.z:S0.s;
     }
-    double z = Td.rock+ave;
+    double z = Td.rock;//+ave;
 
     int l1 = begin;
-    //int l2=begin+orders;
-    l1=l1>MAXLVLS?MAXLVLS:l1;
-    //l2=l2>MAXLVLS?MAXLVLS:l2;
+//    int l2=begin+orders;
+//    l1=l1>MAXLVLS?MAXLVLS:l1;
+//    l2=l2>MAXLVLS?MAXLVLS:l2;
     int level = (int) Td.level;
 
     double drop=0;
-    double sed = 0;
+    double sed = 0;//ave;
     double s=0;
-
-    if (level >= l1) {
+    slope_min/=TheMap->hscale;
+    slope_max/=TheMap->hscale;
+   // if (level >= l1 /*&& level<l2*/) {
+    	//if(level<l2){
         CELLSLOPE(rock(),s);
-        s*=TheMap->hscale;//*INV2PI;
+       s*=TheMap->hscale;//*INV2PI;
 
          if (options & SQR)
              s = s * s;
@@ -222,22 +267,22 @@ void TNerode::eval() {
              drop=slope_ampl*smoothstep(slope_min, slope_max, s,0,slope_drop);
          else
              drop=slope_ampl*rampstep(slope_min, slope_max, s,0,slope_drop);
-
+        drop*=TheMap->hscale;
+       sed-=drop;
         //double ave = ave_sediment();
         //sed = ave;
 
         //double absz = fabs(z);
-
-        z+=drop;
+        //z+=drop;
 
        // if (thresh < lim) {
-        if (z < upper){
-            sed=fill_ampl*rampstep(lower, upper, z,lower-z, 0);
-        }
+       // if (z < upper){
+        	//sed=fill_ampl*(upper-z);
+            sed+=fill_ampl*rampstep(lower, upper, z,lower-z, 0);
+        //}
         //else
         //    sed = 0;
-        sed-=drop;
-
+ 
 
 //            if (z - drop < thresh)
 //                sed = thresh - drop;
@@ -253,10 +298,11 @@ void TNerode::eval() {
 //			mapdata[i]->invalidate();
 //		}
 //		sed=sed-delta;
+    	//}
         z += sed;
-        drop=s;
+//        drop=s;
 
-   }
+   //}
    if (S0.pvalid())
        S0.p.z=z;
    else
