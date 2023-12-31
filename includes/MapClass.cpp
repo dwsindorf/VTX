@@ -11,6 +11,7 @@
 #include "FileUtil.h"
 #include "TerrainClass.h"
 #include "Sprites.h"
+#include "Plants.h"
 static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
@@ -1231,8 +1232,9 @@ void Map::render_shaded()
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
 	        set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
+	        bool plants=tp->plants.size>0&& TheScene->viewobj==object;
 #ifdef RENDER_SPRITES
-			if(sprites())
+			if(sprites()||plants)
 				render_sprites();
 #endif
 			GLSLMgr::setTessLevel(tesslevel);
@@ -1426,6 +1428,8 @@ static void collect_nodes(MapNode *n)
 
 void Map::render_sprites(){
 	reset_texs();
+	TerrainProperties *tp=Td.tp;
+
 	if(first()){
 		double d0=clock();
 		test_cnt=0;
@@ -1436,6 +1440,7 @@ void Map::render_sprites(){
 		sorted.sort();
 		double d1=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 		Sprite::reset();
+		Plant::reset();
 		int mode=CurrentScope->passmode();
 		CurrentScope->set_spass();
 		sorted.ss();
@@ -1446,15 +1451,18 @@ void Map::render_sprites(){
 			node->evalsprites();
 		}
 		double d2=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
-		//npole->visit(&MapNode::evalsprites);
 		Sprite::collect();
+		Plant::collect();
 		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 
 		cout<<"Map::render_sprites tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}
-	SpriteMgr::setProgram();
+	if(tp->sprites.size)
+		SpriteMgr::setProgram();
+	if(tp->plants.size)
+		PlantMgr::setProgram();
 }
 
 //-------------------------------------------------------------

@@ -131,6 +131,10 @@ void TerrainData::add_sprite(Sprite *t)
 {
 	tp->sprites.add(t);
 }
+void TerrainData::add_plant(Plant *t)
+{
+	tp->plants.add(t);
+}
 void TerrainData::add_texture(Texture *t)
 {
 	// add new texture to last property only

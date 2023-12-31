@@ -103,6 +103,10 @@ static LongSym keytbl[]={
 	{"Z",           YY_POINT},
 	{"Texture",		YY_TEXTURE},
 	{"Sprite",		YY_SPRITE},
+	{"Plant",		YY_ROOT},
+	{"Branch",		YY_BRANCH},
+	{"Leaf",		YY_LEAF},
+	
 	
 	{"Density",		YY_DENSITY},	
 		

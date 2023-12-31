@@ -10,10 +10,10 @@
 #include "matrix.h"
 #include "Perlin.h"
 #include "Sprites.h"
+#include "Plants.h"
 
 extern double Theta, Phi, Height,Rscale,Margin;
 extern Point MapPt;
-
 
 #define VCLIP     // enable viewobj clip  test
 #define PCLIP     // enable parent sphere clip  test
@@ -2589,6 +2589,11 @@ void MapNode::evalsprites()
 		Td.clr_flag(SFIRST);
 		Sprite *sprite=tp->sprites[tp->sid];
 		sprite->eval();
+	}
+	for(tp->sid=0;tp->sid<tp->plants.size;tp->sid++){
+		Td.clr_flag(SFIRST);
+		Plant *plant=tp->plants[tp->sid];
+		plant->eval();
 	}	
 }
 

@@ -241,9 +241,11 @@ void TNerode::eval() {
         ave=transport*ave_sediment();
     if (right) {
         right->eval();
+        //Td.p.z= S0.pvalid()?S0.p.z:S0.s;
         Td.rock = S0.pvalid()?S0.p.z:S0.s;
     }
-    double z = Td.rock;//+ave;
+    //double z = Td.p.z;//+ave;
+   double z = Td.rock;//+ave;
 
     int l1 = begin;
 //    int l2=begin+orders;
@@ -258,6 +260,7 @@ void TNerode::eval() {
     slope_max/=TheMap->hscale;
    // if (level >= l1 /*&& level<l2*/) {
     	//if(level<l2){
+       // CELLSLOPE(Ht(),s);
         CELLSLOPE(rock(),s);
        s*=TheMap->hscale;//*INV2PI;
 

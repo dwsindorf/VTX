@@ -14,6 +14,7 @@ using namespace std;
 #include "Rocks.h"
 #include "Craters.h"
 #include "Sprites.h"
+#include "Plants.h"
 #include "Fractal.h"
 #include "Erode.h"
 #include "Layers.h"
@@ -114,6 +115,7 @@ void set_orbital(Orbital *orb){
 %token YY_TERRAIN YY_IMAGE YY_BANDS
 %token YY_MIX YY_WATER YY_CRATERS YY_MAP YY_TEXTURE YY_FRACTAL YY_FOG YY_SPRITE
 %token YY_ERODE YY_HARDNESS YY_GLOSS YY_SNOW YY_ROCKS YY_COLORS YY_BASE YY_CLOUDS
+%token YY_ROOT YY_BRANCH YY_LEAF
 %token OR AND EQ NE GE LE
 
 %token <s> NAME STRING
@@ -125,6 +127,7 @@ void set_orbital(Orbital *orb){
 %type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
 %type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr
+%type <n> root_expr branch_expr leaf_expr
 %type <n> inode_expr image image_expr bands_expr
 %type <n> expr_item var_expr set_surface colors_expr
 %type <l> ntype ltype itype ptype
@@ -499,8 +502,25 @@ sprite_expr
 	: YY_SPRITE '(' item_name ','  ptype ',' arg_list ')' expr
     						{ $$=new TNsprite($3, $5, $7, $9);APOP;}
     | YY_SPRITE '(' item_name ','  ptype ',' arg_list ')'
-    						{ $$=new TNsprite($3, $5, $7,0);APOP;}
-    						
+  						{ $$=new TNsprite($3, $5, $7,0);APOP;}
+leaf_expr
+    : YY_LEAF '(' arg_list ')' {$$=0;}
+    | YY_LEAF '(' item_name ',' arg_list ')' {$$=0;}
+
+branch_expr
+    : YY_BRANCH '(' arg_list ')' {$$=0;}
+    | YY_BRANCH '(' arg_list ')' branch_expr {$$=0;}
+    | YY_BRANCH '(' arg_list ')' leaf_expr {$$=0;}
+	
+root_expr
+    : YY_ROOT '(' arg_list ')'
+    						{ $$=new TNplant(0, $3, 0);APOP;}
+    | YY_ROOT '(' item_name ',' arg_list ')'
+    						{ $$=new TNplant($3, $5, 0);APOP;}
+    | YY_ROOT '(' item_name ',' arg_list ')' expr
+    						{ $$=new TNplant($3, $5, $7);APOP;}
+    | YY_ROOT '(' arg_list ')' expr
+    						{ $$=new TNplant(0, $3, $5);APOP;}
 
 item_name
     : NAME                  { $$=$1;}
@@ -520,7 +540,10 @@ expr
     | clouds_expr           { $$=$1;}
     | fog_expr         		{ $$=$1;}
     | texture_expr          { $$=$1;}
-    | sprite_expr           { $$=$1;}   
+    | sprite_expr           { $$=$1;}
+    | root_expr             { $$=$1;}
+    | branch_expr           { $$=$1;}
+    | leaf_expr             { $$=$1;}
     | map_expr              { $$=$1;}
     | color_expr            { $$=$1;}
     | density_expr          { $$=$1;}  

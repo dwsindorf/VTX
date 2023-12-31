@@ -15,8 +15,10 @@ enum {
     PID 		= 0x00000fff,
 	CRATERS 	= 0x00001000,
     ROCKS   	= 0x00002000,
-    CLOUDS   	= 0x00004000,
-    SPRITES   	= 0x00008000,
+    CLOUDS   	= 0x00003000,
+    SPRITES   	= 0x00004000,
+    PLANTS   	= 0x00005000,
+
     PLACETYPE   = 0x0000f000,
     FLIP        = 0x00010000,
 

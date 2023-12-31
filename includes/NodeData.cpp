@@ -7,6 +7,7 @@
 #include "Effects.h"
 #include "matrix.h"
 #include "Sprites.h"
+#include "Plants.h"
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
@@ -251,9 +252,12 @@ Point MapData::tvector()
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
 #define TEST_SPRITES
-#define SPRITES_DENSITY
-//#define SPRITES_COLOR
+#define TEST_PLANTS
 //#define TEST_CRATERS
+#define TEST_DENSITY
+
+//#define TEST_COLOR
+
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
@@ -309,17 +313,29 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];
 
-#ifdef TEST_CRATERS
+#if defined TEST_CRATERS 
 	nc=1;
 #endif
 	int pm=CurrentScope->passmode();
 	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
-#ifdef TEST_SPRITES
+#if defined TEST_SPRITES
 	if(do_sprites){
-#ifdef SPRITES_COLOR
+#if defined TEST_COLOR
 		nc=1;
 #endif
-#ifdef SPRITES_DENSITY
+#if defined TEST_DENSITY
+		nf=1;
+#endif
+	}
+#endif
+
+#ifdef TEST_PLANTS
+	bool do_plants=tp->plants.size>0&& TheScene->viewobj==TheMap->object;
+	if(do_plants){
+#ifdef TEST_COLOR
+		nc=1;
+#endif
+#ifdef TEST_DENSITY
 		nf=1;
 #endif
 	}
@@ -412,39 +428,50 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.get_flag(INMARGIN))
 		set_margin(1);
 
-	//if(mdata()<0.75)
-	//	set_edge(1);
-
 	set_type(td.type());
     if(td.datacnt && pass<td.datacnt)
 		setLink(s2);
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
 #endif
-#ifdef TEST_SPRITES
-	if(!do_sprites)
-		return;
 	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();
-
-    MapPt=point();
-    Td.density=0;
-    Td.diffuse=Color(1,1,1);
-	for(i=0;i<tp->sprites.size;i++){
-		
-		Sprite *sprite=tp->sprites[i];
-		sprite->eval();
-#ifdef SPRITES_DENSITY
-		setDensity(Td.density);
-#endif
-#ifdef SPRITES_COLOR
-		setColor(Td.diffuse);
-#endif
+#ifdef TEST_SPRITES
+	if(do_sprites){
+		CurrentScope->set_spass();
+		MapPt=point();
+		Td.density=0;
+		Td.diffuse=Color(1,1,1);
+		for(i=0;i<tp->sprites.size;i++){
+			Sprite *sprite=tp->sprites[i];
+			sprite->eval();
+	#ifdef TEST_DENSITY
+			setDensity(Td.density);
+	#endif
+	#ifdef TEST_COLOR
+			setColor(Td.diffuse);
+	#endif
+		}
 	}
-	CurrentScope->set_passmode(mode);
-
 #endif
-
+#ifdef TEST_PLANTS
+	if(do_plants){
+		CurrentScope->set_spass();
+		MapPt=point();
+		Td.density=0;
+		Td.diffuse=Color(1,1,1);
+		for(i=0;i<tp->plants.size;i++){
+			Plant *plant=tp->plants[i];
+			plant->eval();
+	#ifdef TEST_DENSITY
+			setDensity(Td.density);
+	#endif
+	#ifdef TEST_COLOR
+			setColor(Td.diffuse);
+	#endif
+		}
+	}
+#endif
+	CurrentScope->set_passmode(mode);
 }
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)
