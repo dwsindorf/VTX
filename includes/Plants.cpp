@@ -33,7 +33,7 @@ static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1.0;    // move to argument ?
-static double ht_offset=2; // move to argument ?
+static double ht_offset=1; // move to argument ?
 
 //static double roff_value=0;
 //static double roff2_value=0.05*PI;
@@ -223,6 +223,8 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
 	
+	//vars.newFloatVec("vpoint",TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0);
+
 	double zn=TheScene->znear;
 	double zf=TheScene->zfar;
 	double ws1=1/zn;
@@ -234,6 +236,9 @@ bool PlantMgr::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
+	//GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
+
+	//glVertexAttrib4d(GLSLMgr::CommonID2, TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0); // Constants1
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
 	
@@ -242,38 +247,46 @@ bool PlantMgr::setProgram(){
 		tp->plants[i]->setProgram();
 	}
 	
-	glLineWidth(5.0f);
-	glColor4d(0,0,1,1);
-	glPointSize(5.0f);
 	int n=Plant::plants.size;
 	int l=lastn;
 	lastn=0;
 	// TODO: 
-	// 1. create a STABLE random offset for top of line 
+	// 1. create a STABLE random offset for top of line (DONE)
 	//    get unique noise value for each plant
-	//     - use base point with truncated precision to reduce jitter
-	//    rotate top by random angle and radius (spherical)
-	//    convert back to cartesion
+	//     - use point projected on unit sphere vs point that includes ht
+	// 2) tesselerize top bottom points into triangle fan vs lines (DONE)
+	//    - convert 3d point to screen space in shader
+	//    - offset x by +- point size
+	// 3) use geometry shader vs CPU to generate triangles
+	// 4) create a random 3-point spline vs simple line segments in CPU
+	// 5) use geometry shader for above
 	for(int i=n-1;i>=0;i--){
 		PlantData *s=Plant::plants[i];
 		int id=s->get_id();
-		Point top=s->center; // with ht offset
+		Point bot=s->base; // surface point
+				
+		double l=bot.length();
+		double ht=l-TheMap->radius;
+		
+		Point top=bot*(1+s->radius);
+
 		Point4D npt;
 		lastn=0;
 		Point pp=Point(s->point.x,s->point.y,s->point.x);
 		
 		double r=Random(pp);
-		lastn=10000*r;
-		//cout<<lastn<<endl;
+		lastn=10000*r+id;
 		
 		glVertexAttrib4d(GLSLMgr::CommonID1, s->pntsize, 0,0, 0); // Constants1
 
-		top.x+=1e-9*RAND(lastn++);
-		top.y+=1e-9*RAND(lastn++);
-		top.z+=1e-9*RAND(lastn++);
+		top.x+=2e-9*RAND(lastn++);
+		top.y+=2e-9*RAND(lastn++);
+		top.z+=2e-9*RAND(lastn++);
+		
+		top=top-TheScene->vpoint;
+		bot=bot-TheScene->vpoint;
 		
 		glColor4d(URAND(lastn++),URAND(lastn++),URAND(lastn++),1);
-		Point bot=s->base;   // without ht offset
 		glBegin(GL_TRIANGLE_FAN);
 		glVertex4d(top.x,top.y,top.z,0);
 		glVertex4d(top.x,top.y,top.z,1);
@@ -284,7 +297,6 @@ bool PlantMgr::setProgram(){
 		
 	}
 	lastn=l;
-	
 	return true;
 }
 //-------------------------------------------------------------
@@ -373,14 +385,14 @@ void PlantPoint::dump(){
 	}
 }
 //==================== PlantData ===============================
-PlantData::PlantData(PlantPoint *pnt,Point bp,Point vp, double d, double ps){
+PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps){
 	type=pnt->type;
 	ht=pnt->ht;
 	
 	point=pnt->point;
 	
 	aveht=pnt->aveht/pnt->wtsum;
-	center=vp;
+	//center=tp;
 	base=bp;
 	
 	radius=pnt->radius;
@@ -485,11 +497,9 @@ void Plant::collect()
 #else
 			double ht=s->ht;
 #endif			
-			Point center=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius);
-			Point vp=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
-			Point base=TheMap->point(ps.x, ps.y,ht);
-			Point bp=Point(-base.x,base.y,-base.z)-TheScene->xpoint;
-			double d=bp.length(); // distance	
+			Point base=TheMap->point(ps.x, ps.y,ht); // spherical-to-rectangular
+			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
+			double d=bp.distance(TheScene->vpoint);  // distance	
 			double r=TheMap->radius*s->radius;
 			double f=TheScene->wscale*r/d;
 		    double pts=f;
@@ -503,7 +513,7 @@ void Plant::collect()
 #endif
 		    if(pts_test && s->visits>=minv){
 		    	new_plants++;
-		    	plants.add(new PlantData((PlantPoint*)s,bp,vp,d,pts));
+		    	plants.add(new PlantData((PlantPoint*)s,bp,d,pts));
 		    }
 		}
 #ifdef GLOBAL_HASH

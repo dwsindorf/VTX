@@ -4,17 +4,16 @@
 varying vec4 EyeDirection;
 varying vec4 Normal;
 varying vec4 Position;
-
+attribute vec4 vpoint;
 varying vec4 Color;
+
+//attribute vec4 CommonAttributes2;
 
 varying vec4 PlantVars;
 varying vec4 Constants1;
 
 void main(void) {
-	//EyeDirection=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
-	//gl_Position = ftransform();
-	
-	vec4 vertex=vec4(gl_Vertex.xyz,1.0);
+	vec4 vertex=vec4(gl_Vertex.xyz,1.0);//-CommonAttributes2; //-TheScene->vpoint
 	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
 	vec3 ps = proj.xyz/proj.w;
 	EyeDirection=-(gl_ModelViewMatrix * vertex); // do view rotation

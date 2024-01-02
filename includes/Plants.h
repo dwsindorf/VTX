@@ -48,9 +48,8 @@ public:
 	int plants_dim;
 	int visits;
 	Point4DL point;
-	Point center;
 	Point base;
-	PlantData(PlantPoint*,Point, Point,double,double);
+	PlantData(PlantPoint*,Point, double,double);
 	double value() { return distance;}
 	void print();
 	int get_id()				{ return type&PID;}
