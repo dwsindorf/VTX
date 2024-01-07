@@ -499,7 +499,7 @@ public:
 	virtual void setExpr(char *c);
 	virtual TNode *getExprNode()            { return expr;}
 	virtual int isExprNode()                { return 1;}
-	virtual void setName(char *s) { strncpy(name_str,s,63);}
+	virtual void setName(char *s) { if(s)strncpy(name_str,s,63);else name_str[0]=0;}
 	virtual char *nodeName()  { return name_str;}
 
 };

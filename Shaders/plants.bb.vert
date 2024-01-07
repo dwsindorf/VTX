@@ -18,17 +18,18 @@ void main(void) {
 	vec3 ps = proj.xyz/proj.w;
 	EyeDirection=-(gl_ModelViewMatrix * vertex); // do view rotation
 	
-	float offset=0.0005*CommonAttributes1.r;  // screen space
+	float offset=CommonAttributes1.r;  // screen space
+	float taper=CommonAttributes1.g;  // screen space
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	
 	if(gl_Vertex.w<0.5){
-    	gl_Position = vec4(ps.x-0.5*offset,ps.y,ps.z,1);
+    	gl_Position = vec4(ps.x-taper*offset,ps.y,ps.z,1); // top-left
     }
     else if(gl_Vertex.w<1.5){
-    	gl_Position = vec4(ps.x+0.5*offset,ps.y,ps.z,1);
+    	gl_Position = vec4(ps.x+taper*offset,ps.y,ps.z,1); // top-right
     }
     else if(gl_Vertex.w<2.5){
-    	gl_Position = vec4(ps.x+offset,ps.y,ps.z,1);
+    	gl_Position = vec4(ps.x+offset,ps.y,ps.z,1);  // bot-right
     }
     else{
     	gl_Position = vec4(ps.x-offset,ps.y,ps.z,1);

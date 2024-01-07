@@ -1031,7 +1031,7 @@ depend:;
 ../Debug/Rocks.o:	Rocks.cpp
 ../Debug/SceneClass.o:	SceneClass.cpp
 ../Debug/Sprites.o:	Sprites.cpp
-../Debug/Plants.o:	Plants.cpp
+../Debug/Plants.o:	Plants.cpp Plants.h
 ../Debug/TerrainClass.o:	TerrainClass.cpp
 ../Debug/TerrainData.o:	TerrainData.cpp
 ../Debug/TerrainMgr.o:	TerrainMgr.cpp
@@ -1082,7 +1082,7 @@ depend:;
 ../Release/Rocks.o:	Rocks.cpp
 ../Release/SceneClass.o:	SceneClass.cpp
 ../Release/Sprites.o:	Sprites.cpp
-../Release/Plants.o:	Plants.cpp
+../Release/Plants.o:	Plants.cpp Plants.h
 ../Release/TerrainClass.o:	TerrainClass.cpp
 ../Release/TerrainData.o:	TerrainData.cpp
 ../Release/TerrainMgr.o:	TerrainMgr.cpp

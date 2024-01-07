@@ -1073,6 +1073,8 @@ int TNfunc::getChildren(LinkedList<NodeIF*>&l)
 void TNfunc::save(FILE *f)
 {
 	fprintf(f,"%s(",symbol());
+	if(strlen(name_str))
+		fprintf(f,"\"%s\",",name_str);
 	if(left)
 		left->save(f);
 	fprintf(f,")\n%s",tabs);
@@ -1086,6 +1088,8 @@ void TNfunc::save(FILE *f)
 void TNfunc::saveNode(FILE *f)
 {
 	fprintf(f,"%s(",symbol());
+	if(strlen(name_str))
+		fprintf(f,"\"%s\",",name_str);
 	if(left)
 		left->save(f);
 	fprintf(f,")\n");

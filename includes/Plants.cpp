@@ -59,6 +59,7 @@ static int hits=0;
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
+#define DRAW_LINES
 //#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
@@ -89,13 +90,14 @@ static int          scnt;
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
-PlantMgr::PlantMgr(int i) : PlacementMgr(i)
+PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 {
 #ifdef DUMP
 	if(!s_mgr)
 		add_finisher(show_stats);
 #endif
 	type|=SPRITES;
+	plant=p;
 	s_mgr=this;
 	roff=roff_value;
 	roff2=roff2_value;
@@ -203,8 +205,11 @@ bool PlantMgr::setProgram(){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
 	GLSLMgr::setDefString(defs);
-	
+#ifdef DRAW_LINES
+	GLSLMgr::loadProgram("plants.lines.vert","plants.frag");
+#else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
+#endif
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
@@ -249,7 +254,6 @@ bool PlantMgr::setProgram(){
 	
 	int n=Plant::plants.size;
 	int l=lastn;
-	lastn=0;
 	// TODO: 
 	// 1. create a STABLE random offset for top of line (DONE)
 	//    get unique noise value for each plant
@@ -262,39 +266,22 @@ bool PlantMgr::setProgram(){
 	// 5) use geometry shader for above
 	for(int i=n-1;i>=0;i--){
 		PlantData *s=Plant::plants[i];
+		//if(s->mgr && s->mgr->plant && s->mgr->plant->branch){
+			//cout<<"branch exists"<<endl;
+		//}
 		int id=s->get_id();
-		Point bot=s->base; // surface point
-				
-		double l=bot.length();
-		double ht=l-TheMap->radius;
 		
-		Point top=bot*(1+s->radius);
-
-		Point4D npt;
-		lastn=0;
+		TNplant *plant=s->mgr->plant;
+		plant->base=s->base;
+		plant->size=s->radius; // placement size
+		plant->pntsize=s->pntsize;
+		
 		Point pp=Point(s->point.x,s->point.y,s->point.x);
 		
 		double r=Random(pp);
-		lastn=10000*r+id;
+		lastn=256*r+id;
 		
-		glVertexAttrib4d(GLSLMgr::CommonID1, s->pntsize, 0,0, 0); // Constants1
-
-		top.x+=2e-9*RAND(lastn++);
-		top.y+=2e-9*RAND(lastn++);
-		top.z+=2e-9*RAND(lastn++);
-		
-		top=top-TheScene->vpoint;
-		bot=bot-TheScene->vpoint;
-		
-		glColor4d(URAND(lastn++),URAND(lastn++),URAND(lastn++),1);
-		glBegin(GL_TRIANGLE_FAN);
-		glVertex4d(top.x,top.y,top.z,0);
-		glVertex4d(top.x,top.y,top.z,1);
-		glVertex4d(bot.x,bot.y,bot.z,2);
-		glVertex4d(bot.x,bot.y,bot.z,3);
-	
-		glEnd();
-		
+		plant->setProgram();
 	}
 	lastn=l;
 	return true;
@@ -310,7 +297,7 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 //************************************************************
 // class PlantPoint
 //************************************************************
-PlantPoint::PlantPoint(PlantMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
+PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
 	ht=0;
 	aveht=0;
@@ -319,11 +306,13 @@ PlantPoint::PlantPoint(PlantMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 	visits=0;
 	hits=0;
 	mind=1e16;
-	plants_dim=mgr.plants_dim;
-	variability=mgr.mult;
-	rand_flip_prob=mgr.rand_flip_prob;
-	select_bias=mgr.select_bias;
-	instance=mgr.instance;
+	mgr=&m;
+	
+	plants_dim=m.plants_dim;
+	variability=m.mult;
+	rand_flip_prob=m.rand_flip_prob;
+	select_bias=m.select_bias;
+	instance=m.instance;
 	//cout<<instance<<" ";
 
 	flags.s.active=false;
@@ -404,6 +393,7 @@ PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps){
 	rand_flip_prob=pnt->rand_flip_prob;
 	select_bias=pnt->select_bias;
 	instance=pnt->instance;
+	mgr=pnt->mgr;
 }
 
 void PlantData::print(){
@@ -578,11 +568,14 @@ bool Plant::initProgram(){
 TNplant::TNplant(char *s, TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
 	set_collapsed();
- 	//cout<<"TNplant ID="<<get_id()<<endl;
 	setName(s);
 	FREE(s);
 	plant=0;
-    mgr=new PlantMgr(PLANTS|NOLOD);
+	branch=0;
+    mgr=new PlantMgr(PLANTS|NOLOD,this);
+    if(r && r->typeValue() == ID_BRANCH) {
+       branch=(TNbranch*)r;
+    }
 }
 
 //-------------------------------------------------------------
@@ -614,8 +607,6 @@ void TNplant::applyExpr()
 //-------------------------------------------------------------
 void TNplant::init()
 {
-	if(right)
-    	right->init();
 
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
@@ -624,10 +615,26 @@ void TNplant::init()
 	smgr->set_first(1);
 	smgr->init();
 	TNplacements::init();
+	double arg[10];
+	INIT;
+	TNarg &args=*((TNarg *)left);
+	int n=getargs(&args,arg,9);
+	
+	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
+	if(n>1) mgr->maxsize=arg[1];     	// size of largest 
+	if(n>2) mgr->mult=arg[2];			// random scale multiplier
+	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	if(n>4) maxdensity=arg[4];
+	if(n>5) smgr->slope_bias=arg[5];
+	if(n>6) smgr->ht_bias=arg[6];
+	if(n>7) smgr->lat_bias=arg[7];
+	if(n>8) smgr->select_bias=arg[8];
+	
+	if(right)
+	   right->init();
 }
 
 void TNplant::set_id(int i){
-	//instance=i;
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
@@ -654,42 +661,19 @@ void TNplant::eval()
 			plant->set_id(size);
 		
 		Td.add_plant(plant);
-		if(right)
-			right->eval();
 		return;
 	}	
 	if(!CurrentScope->spass()){
-		if(right)
-			right->eval();
 		return;
 	}
-	
+
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
 	htval=Height;
 	ncalls++;
 	
-	double arg[10];
-	INIT;
-	TNarg &args=*((TNarg *)left);
-	TNode *dexpr;
-	
-	int n=getargs(&args,arg,9);
-	
-	double density=1;
-
-	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest 
-	if(n>2) mgr->mult=arg[2];			// random scale multiplier
-	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) maxdensity=arg[4];
-	if(n>5) smgr->slope_bias=arg[5];
-	if(n>6) smgr->ht_bias=arg[6];
-	if(n>7) smgr->lat_bias=arg[7];
-	if(n>8) smgr->select_bias=arg[8];
-	
-	density=maxdensity;
+	double density=maxdensity;
 	MaxSize=mgr->maxsize;
 	radius=TheMap->radius;
 	TerrainProperties *tp=TerrainData::tp;
@@ -747,25 +731,17 @@ void TNplant::eval()
 		Td.density+=lerp(cval,0,0.2,0,.05*x);
 #endif
 	}
+	if(right)
+		right->eval();
  }
-//-------------------------------------------------------------
-// TNinode::setName() set name
-//-------------------------------------------------------------
-void TNplant::setName(char *s)
-{
-	if(s)
-		strcpy(plants_file,s);
-	else
-		plants_file[0]=0;
-}
 
 //-------------------------------------------------------------
 // TNtexture::valueString() node value substring
 //-------------------------------------------------------------
 void TNplant::valueString(char *s)
 {
-	if(strlen(plants_file)>0)
-		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),plants_file);
+	if(strlen(name_str)>0)
+		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
 	else
 		sprintf(s+strlen(s),"%s(",symbol());
 
@@ -795,7 +771,7 @@ void TNplant::save(FILE *f)
 }
 
 //-------------------------------------------------------------
-// TNfunc::save() archive the node
+// TNplant::save() archive the node
 //-------------------------------------------------------------
 void TNplant::saveNode(FILE *f)
 {
@@ -807,4 +783,159 @@ void TNplant::saveNode(FILE *f)
 	fprintf(f,"%s",buff);
 }
 
+bool TNplant::setProgram(){
+	if(branch){
+		branch->setProgram();
+		return true;
+	}
+	return false;
+}
 
+//===================== TNbranch ==============================
+//************************************************************
+// TNbranch class
+//************************************************************
+TNbranch::TNbranch(char *s, TNode *l, TNode *r) : TNfunc(l,r)
+{
+	set_collapsed();
+	setName(s);
+	FREE(s);
+	levels=2;
+	taper=0.5;
+	trunk_size=1;
+	trunk_offset=4;
+	max_splits=2;
+
+	split_freq=0.0;
+	branch_size=0.1;
+	branch_offset=1;
+}
+
+void TNbranch::init(){
+	double arg[10];
+	INIT;
+	TNarg &args=*((TNarg *)left);
+	int n=getargs(&args,arg,9);
+	
+	if(n>0)levels=(int)arg[0];
+	if(n>1)taper=arg[1];
+	if(n>2)trunk_size=arg[2];
+	if(n>3)trunk_offset=arg[3];
+	if(n>4)max_splits=arg[4];
+	if(n>5)split_freq=arg[5];
+
+	if(n>6)branch_size=arg[6];
+	if(n>7)branch_offset=arg[7];
+		
+	if(right)
+		right->init();
+}
+
+TNplant* TNbranch::getRoot() {
+	NodeIF *p = getParent();
+	if (p && p->typeValue() == ID_PLANT) {
+		return (TNplant*)p;
+	}
+	return 0;
+}
+void TNbranch::eval(){
+	//cout<<"TNbranch::eval"<<endl;
+	if(!isEnabled()){
+		return;
+	}
+	if(!CurrentScope->spass()){
+		return;
+	}
+	TNplant *root=getRoot();
+	if(!root || !isEnabled()){
+		return;
+	}
+}
+
+
+bool TNbranch::setProgram(){
+	TNplant *plant=getRoot();
+	if(!plant){
+		cout<<"TNbranch::setProgram error parent does not exist"<<endl;
+		return false;
+	}
+	double length=plant->base.length();
+	double ht=length-plant->radius;
+    Point bot=plant->base;	
+	double size=length*trunk_size*plant->size;
+	double width=0.0005*plant->pntsize;
+	Point top=bot*(1+size); // starting trunk size
+	Point p1=bot;
+	Point p2=top;
+	//levels=1;
+	glColor4d(URAND(lastn++),URAND(lastn++),URAND(lastn++),1);
+#ifdef DRAW_LINES
+	glLineWidth(2.0f);
+#endif
+	glVertexAttrib4d(GLSLMgr::CommonID1, width, taper,0, 0); // Constants1
+
+	double offset=1e-9*trunk_offset;
+		
+	emit(p1,p2-p1,size,width,offset,0);
+
+	return true;
+}
+
+void TNbranch::emit(Point b, Point v,double size, double width, double offset, int lvl){
+	v=v.normalize();
+	v=v*size;
+	v.x+=offset*RAND(lastn++);
+	v.y+=offset*RAND(lastn++);
+	v.z+=offset*RAND(lastn++);
+	Point p2=b+v;
+	
+	Point bot=p2; // new base
+	
+	p2=p2-TheScene->vpoint;
+	Point p1=b-TheScene->vpoint;
+#ifdef DRAW_LINES
+	glBegin(GL_LINES);
+	glVertex3dv(&(p1.x));
+	glVertex3dv(&(p2.x));
+	glEnd();
+#else
+	glVertexAttrib4d(GLSLMgr::CommonID1, width, taper,0, 0); // Constants1
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex4d(p2.x,p2.y,p2.z,0);
+	glVertex4d(p2.x,p2.y,p2.z,1);
+	glVertex4d(p1.x,p1.y,p1.z,2);
+	glVertex4d(p1.x,p1.y,p1.z,3);	
+	glEnd();
+#endif
+	//return bot;
+	
+	int splits=max_splits*URAND(lastn++)+1;
+	int lev=lvl+1;
+	cout<<"emit "<<lev<<endl;
+
+	if(lev<levels){
+		width*=taper;
+		for(int i=0;i<splits;i++){
+			emit(bot,bot-b,size,width,offset,lev);
+		}
+	}
+	//return bot;
+}
+void TNbranch::emitTrunk(Point b, Point v,double size, double width, double r, int lvl){
+
+}
+void TNbranch::emitBranch(Point b, Point v,double size, double width, double r, int lvl){
+
+}
+void TNbranch::valueString(char *s){
+	TNfunc::valueString(s);
+}
+void TNbranch::save(FILE *f){
+	TNfunc::save(f);	
+}
+void TNbranch::saveNode(FILE *f){
+	TNfunc::saveNode(f);
+}
+void TNbranch::applyExpr(){
+	
+}

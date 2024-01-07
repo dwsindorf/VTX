@@ -508,8 +508,10 @@ leaf_expr
     | YY_LEAF '(' item_name ',' arg_list ')' {$$=0;}
 
 branch_expr
-    : YY_BRANCH '(' arg_list ')' {$$=0;}
-    | YY_BRANCH '(' arg_list ')' branch_expr {$$=0;}
+    : YY_BRANCH '(' arg_list ')'
+    						{ $$=new TNbranch(0, $3, 0);APOP;}
+    | YY_BRANCH '(' item_name ',' arg_list ')'
+    						{ $$=new TNbranch($3, $5, 0);APOP;}
     | YY_BRANCH '(' arg_list ')' leaf_expr {$$=0;}
 	
 root_expr
@@ -517,9 +519,9 @@ root_expr
     						{ $$=new TNplant(0, $3, 0);APOP;}
     | YY_ROOT '(' item_name ',' arg_list ')'
     						{ $$=new TNplant($3, $5, 0);APOP;}
-    | YY_ROOT '(' item_name ',' arg_list ')' expr
+    | YY_ROOT '(' item_name ',' arg_list ')' branch_expr
     						{ $$=new TNplant($3, $5, $7);APOP;}
-    | YY_ROOT '(' arg_list ')' expr
+    | YY_ROOT '(' arg_list ')' branch_expr
     						{ $$=new TNplant(0, $3, $5);APOP;}
 
 item_name

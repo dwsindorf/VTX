@@ -7,6 +7,7 @@
 
 class PlantMgr;
 class TNplant;
+class TNbranch;
 class Plant;
 
 class PlantPoint : public Placement
@@ -22,6 +23,7 @@ public:
 	double variability;
 	double rand_flip_prob;
 	double select_bias;
+	PlantMgr *mgr;
 
 	int instance;
 
@@ -49,6 +51,8 @@ public:
 	int visits;
 	Point4DL point;
 	Point base;
+	PlantMgr *mgr;
+	
 	PlantData(PlantPoint*,Point, double,double);
 	double value() { return distance;}
 	void print();
@@ -62,6 +66,7 @@ class PlantMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
+	TNplant *plant;
 
 	Color c;
 	int plants_dim;
@@ -73,7 +78,7 @@ public:
 	double select_bias;
 	
 	~PlantMgr();
-	PlantMgr(int);
+	PlantMgr(int,TNplant*);
 
 	void init();
 	void eval();
@@ -88,14 +93,15 @@ public:
 class TNplant : public TNplacements
 {
 protected:
-	char plants_file[256];
-
 public:
-
 	int instance;
 	Plant *plant;
+	TNbranch *branch;
 	double radius;
+	double size;
+	double pntsize;
 	double maxdensity;
+	Point base;
 	TNplant(char *s, TNode *l, TNode *r);
 	~TNplant();
 	void eval();
@@ -106,15 +112,52 @@ public:
 
 	bool isLeaf()			{ return true;}
 	int linkable()          { return 0;}
-	void setName(char*);
+	//void setName(char*);
 	void valueString(char *);
 	void save(FILE*);
 	void set_id(int i);
-	char *nodeName()  { return plants_file;}
+	//char *nodeName()  { return plants_file;}
 	void saveNode(FILE *f);
-	void applyExpr();	   
+	void applyExpr();
+	bool setProgram();
 };
 
+//************************************************************
+// Class TNbranch
+//************************************************************
+class TNbranch : public TNfunc
+{
+protected:
+	void emit(Point b, Point v,double w, double t, double r, int lvl);
+	void emitTrunk(Point b, Point v,double w, double t, double r, int lvl);
+	void emitBranch(Point b, Point v,double w, double t, double r, int lvl);
+public:
+	int levels;
+	double taper;
+	double split_freq;
+	double max_splits;
+
+	double trunk_size; // trunk and main branches
+	double trunk_offset;
+
+	double branch_size; // small branches
+	double branch_offset;
+	
+	TNbranch(char *s, TNode *l, TNode *r);
+	
+	int typeValue()			{ return ID_BRANCH;}
+	const char *typeName ()	{ return "branch";}
+	const char *symbol()	{ return "Branch";}
+	
+	void eval();
+	void init();
+	void valueString(char *);
+	void save(FILE*);
+	void saveNode(FILE *f);
+	void applyExpr();
+	bool setProgram();
+	TNplant *getRoot();
+};
 class Plant
 {
 public:
