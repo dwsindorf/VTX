@@ -60,6 +60,7 @@ static int hits=0;
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
 #define DRAW_LINES
+#define DRAW_TRIANGLES
 //#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
@@ -203,13 +204,19 @@ bool PlantMgr::setProgram(){
     bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
-
-	GLSLMgr::setDefString(defs);
-#ifdef DRAW_LINES
-	GLSLMgr::loadProgram("plants.lines.vert","plants.frag");
-#else
-	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
+	
+#ifdef DRAW_TRIANGLES
+	sprintf(defs+strlen(defs),"#define DRAW_TRIANGLES\n");
 #endif
+#ifdef DRAW_LINES
+	sprintf(defs+strlen(defs),"#define DRAW_LINES\n");
+#endif
+	GLSLMgr::setDefString(defs);
+//#ifdef DRAW_LINES
+//	GLSLMgr::loadProgram("plants.lines.vert","plants.frag");
+//#else
+	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
+//#endif
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
@@ -241,7 +248,7 @@ bool PlantMgr::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
-	//GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
+	GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
 
 	//glVertexAttrib4d(GLSLMgr::CommonID2, TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0); // Constants1
 	GLSLMgr::setProgram();
@@ -254,6 +261,8 @@ bool PlantMgr::setProgram(){
 	
 	int n=Plant::plants.size;
 	int l=lastn;
+	
+	glEnable(GL_BLEND);
 	// TODO: 
 	// 1. create a STABLE random offset for top of line (DONE)
 	//    get unique noise value for each plant
@@ -863,25 +872,25 @@ bool TNbranch::setProgram(){
 	double ht=length-plant->radius;
     Point bot=plant->base;	
 	double size=length*trunk_size*plant->size;
-	double width=0.0005*plant->pntsize;
 	Point top=bot*(1+size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
 	//levels=1;
-	glColor4d(URAND(lastn++),URAND(lastn++),URAND(lastn++),1);
-#ifdef DRAW_LINES
-	glLineWidth(2.0f);
-#endif
-	glVertexAttrib4d(GLSLMgr::CommonID1, width, taper,0, 0); // Constants1
-
+    color=Color(URAND(lastn++),URAND(lastn++),URAND(lastn++));
+	
+//#ifdef DRAW_LINES
+//	double line_width=0.1*plant->pntsize;
+//#else
+//	double width=0.0005*plant->pntsize;
+//#endif
+    double width=plant->pntsize;
 	double offset=1e-9*trunk_offset;
 		
-	emit(p1,p2-p1,size,width,offset,0);
-
+	emit(p1,p2-p1,p2,size,width,offset,0);
 	return true;
 }
 
-void TNbranch::emit(Point b, Point v,double size, double width, double offset, int lvl){
+void TNbranch::emit(Point b, Point v,Point l,double size, double width, double offset, int lvl){
 	v=v.normalize();
 	v=v*size;
 	v.x+=offset*RAND(lastn++);
@@ -889,34 +898,56 @@ void TNbranch::emit(Point b, Point v,double size, double width, double offset, i
 	v.z+=offset*RAND(lastn++);
 	Point p2=b+v;
 	
-	Point bot=p2; // new base
-	
+	Point bot=p2; // new base	
 	p2=p2-TheScene->vpoint;
 	Point p1=b-TheScene->vpoint;
+
+	Point q=TheScene->project(v);
+	double a=-atan2(q.y/q.z,q.x/q.z);
+	double alpha=PI/2-a;
+	double x=cos(alpha);
+	double y=sin(alpha);
+	
 #ifdef DRAW_LINES
+    glColor4d(0,0,0,1);
+    glLineWidth(1);
+	//glLineWidth(0.1*width);
 	glBegin(GL_LINES);
-	glVertex3dv(&(p1.x));
-	glVertex3dv(&(p2.x));
-	glEnd();
-#else
-	glVertexAttrib4d(GLSLMgr::CommonID1, width, taper,0, 0); // Constants1
-	glBegin(GL_TRIANGLE_FAN);
+	glVertex4d(p1.x,p1.y,p1.z,0);
 	glVertex4d(p2.x,p2.y,p2.z,0);
-	glVertex4d(p2.x,p2.y,p2.z,1);
-	glVertex4d(p1.x,p1.y,p1.z,2);
-	glVertex4d(p1.x,p1.y,p1.z,3);	
 	glEnd();
 #endif
-	//return bot;
-	
+	double off=0.001*width;
+#ifdef DRAW_TRIANGLES
+	glColor4d(color.red(),color.green(),color.blue(),0.5);
+	double botx=x*off; 
+	double boty=y*off;
+	double topx=x*off*taper;
+	double topy=y*off*taper;
+	if(lvl==0)
+		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+	else
+		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, l.x, l.y); // Constants1
+	// eliminate billboard gap in sequential levels
+	//  - set bottom offsets for next level to = top offsets for previous level
+	l.x=topx;
+	l.y=topy;
+
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex4d(p2.x,p2.y,p2.z,1);
+	glVertex4d(p2.x,p2.y,p2.z,2);
+	glVertex4d(p1.x,p1.y,p1.z,3);
+	glVertex4d(p1.x,p1.y,p1.z,4);
+	glEnd();
+#endif
 	int splits=max_splits*URAND(lastn++)+1;
+	splits=splits>max_splits?max_splits:splits;
 	int lev=lvl+1;
-	cout<<"emit "<<lev<<endl;
 
 	if(lev<levels){
 		width*=taper;
 		for(int i=0;i<splits;i++){
-			emit(bot,bot-b,size,width,offset,lev);
+			emit(bot,bot-b,l, size,width,offset,lev);
 		}
 	}
 	//return bot;

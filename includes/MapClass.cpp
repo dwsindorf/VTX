@@ -1459,10 +1459,11 @@ void Map::render_sprites(){
 
 		CurrentScope->set_passmode(mode);
 	}
-	if(tp->sprites.size)
-		SpriteMgr::setProgram();
 	if(tp->plants.size)
 		PlantMgr::setProgram();
+	if(tp->sprites.size)
+		SpriteMgr::setProgram();
+
 }
 
 //-------------------------------------------------------------

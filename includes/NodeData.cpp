@@ -256,7 +256,7 @@ Point MapData::tvector()
 //#define TEST_CRATERS
 #define TEST_DENSITY
 
-//#define TEST_COLOR
+#define TEST_COLOR
 
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
