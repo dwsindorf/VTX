@@ -129,8 +129,7 @@ class TNbranch : public TNfunc
 {
 protected:
 	void emit(Point b, Point v,Point l, double w, double t, double r, int lvl);
-	void emitTrunk(Point b, Point v,double w, double t, double r, int lvl);
-	void emitBranch(Point b, Point v,double w, double t, double r, int lvl);
+	
 public:
 	int levels;
 	double taper;

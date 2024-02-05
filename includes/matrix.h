@@ -4,8 +4,8 @@
 #ifndef _MATRIX
 #define _MATRIX
 
-#include <math.h>
-#include <stdio.h>
+//#include <math.h>
+//#include <stdio.h>
 
 void mcpy(double *a, double *b, int n);
 int  minv(double *b, double *a, int n);

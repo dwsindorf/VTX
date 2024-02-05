@@ -59,7 +59,7 @@ static int hits=0;
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
-#define DRAW_LINES
+//#define DRAW_LINES
 #define DRAW_TRIANGLES
 //#define SHOW_STATS
 //#define DUMP
@@ -194,7 +194,7 @@ bool PlantMgr::valid()
 
 bool PlantMgr::setProgram(){
 	TerrainProperties *tp=Td.tp;
-	cout<<"PlantMgr::setProgram()"<<endl;
+	//cout<<"PlantMgr::setProgram()"<<endl;
 	
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
@@ -208,9 +208,9 @@ bool PlantMgr::setProgram(){
 #ifdef DRAW_TRIANGLES
 	sprintf(defs+strlen(defs),"#define DRAW_TRIANGLES\n");
 #endif
-#ifdef DRAW_LINES
-	sprintf(defs+strlen(defs),"#define DRAW_LINES\n");
-#endif
+//#ifdef DRAW_LINES
+//	sprintf(defs+strlen(defs),"#define DRAW_LINES\n");
+//#endif
 	GLSLMgr::setDefString(defs);
 //#ifdef DRAW_LINES
 //	GLSLMgr::loadProgram("plants.lines.vert","plants.frag");
@@ -556,7 +556,7 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
-	cout<<"TODO Plant::setProgram()"<<endl;
+	//cout<<"TODO Plant::setProgram()"<<endl;
 //	char str[MAXSTR];
 //	
 //	GLSLVarMgr vars;
@@ -908,37 +908,54 @@ void TNbranch::emit(Point b, Point v,Point l,double size, double width, double o
 	double x=cos(alpha);
 	double y=sin(alpha);
 	
+	Color c=color;
+	double d=(double)lvl/levels;
+	//c=color.darken(d);
+	glColor4d(c.red(),c.green(),c.blue(),1);
+
 #ifdef DRAW_LINES
-    glColor4d(0,0,0,1);
-    glLineWidth(1);
-	//glLineWidth(0.1*width);
+    //glColor4d(0,0,0,1);
+    //glLineWidth(1);
+	glLineWidth(width);
 	glBegin(GL_LINES);
 	glVertex4d(p1.x,p1.y,p1.z,0);
 	glVertex4d(p2.x,p2.y,p2.z,0);
 	glEnd();
 #endif
-	double off=0.001*width;
+	double off=width/TheScene->wscale;
 #ifdef DRAW_TRIANGLES
-	glColor4d(color.red(),color.green(),color.blue(),0.5);
-	double botx=x*off; 
-	double boty=y*off;
-	double topx=x*off*taper;
-	double topy=y*off*taper;
-	if(lvl==0)
+	
+	if(width>=2){
+		double botx=x*off; 
+		double boty=y*off;
+		double topx=x*off*taper;
+		double topy=y*off*taper;
+		if(lvl>0){
+			botx=l.x;
+			boty=l.y;
+		}
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
-	else
-		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, l.x, l.y); // Constants1
-	// eliminate billboard gap in sequential levels
-	//  - set bottom offsets for next level to = top offsets for previous level
-	l.x=topx;
-	l.y=topy;
-
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex4d(p2.x,p2.y,p2.z,1);
-	glVertex4d(p2.x,p2.y,p2.z,2);
-	glVertex4d(p1.x,p1.y,p1.z,3);
-	glVertex4d(p1.x,p1.y,p1.z,4);
-	glEnd();
+		// eliminate billboard gap in sequential levels
+		//  - set bottom offsets for next level to = top offsets for previous level
+		l.x=topx;
+		l.y=topy;
+			
+		glBegin(GL_TRIANGLE_FAN);	
+		glVertex4d(p2.x,p2.y,p2.z,1);	
+		glVertex4d(p2.x,p2.y,p2.z,2);
+		glVertex4d(p1.x,p1.y,p1.z,3);		
+		glVertex4d(p1.x,p1.y,p1.z,4);
+		glEnd();
+	}
+	else{
+		 //glLineWidth(1);
+		//glColor4d(0,0,0,1);
+		glLineWidth(0.5*width);
+		glBegin(GL_LINES);
+		glVertex4d(p1.x,p1.y,p1.z,0);
+		glVertex4d(p2.x,p2.y,p2.z,0);
+		glEnd();
+	}
 #endif
 	int splits=max_splits*URAND(lastn++)+1;
 	splits=splits>max_splits?max_splits:splits;
@@ -952,12 +969,7 @@ void TNbranch::emit(Point b, Point v,Point l,double size, double width, double o
 	}
 	//return bot;
 }
-void TNbranch::emitTrunk(Point b, Point v,double size, double width, double r, int lvl){
 
-}
-void TNbranch::emitBranch(Point b, Point v,double size, double width, double r, int lvl){
-
-}
 void TNbranch::valueString(char *s){
 	TNfunc::valueString(s);
 }

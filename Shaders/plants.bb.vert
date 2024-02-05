@@ -28,21 +28,39 @@ void main(void) {
 	float botx=CommonAttributes1.b;
 	float boty=CommonAttributes1.a;
 	
+	float dx=topx-botx;
+	//dx=dx*dx*dx;
+	float dy=topy-boty;
+	
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
+	
+	vec3 norm;
 
 #ifdef DRAW_TRIANGLES
 	gl_Position = vec4(ps.x,ps.y,ps.z,1);
 
-	if(gl_Vertex.w<0.5)
+	if(gl_Vertex.w<0.5){
+	 norm=vec3(-dx,topy,ps.z);
     	gl_Position = vec4(ps.x,ps.y,ps.z,1); // top-left
-	else if(gl_Vertex.w<1.5)
-    	gl_Position = vec4(ps.x-topx,ps.y-topy,ps.z,1); // top-left       	  
-    else if(gl_Vertex.w<2.5)
-    	gl_Position = vec4(ps.x+topx,ps.y+topy,ps.z,1); // top-right   	  
-    else if(gl_Vertex.w<3.5)
-    	gl_Position = vec4(ps.x+botx,ps.y+boty,ps.z,1);  // bot-right   	
-    else
+    }
+	else if(gl_Vertex.w<1.5){
+	    norm=vec3(-dx,-dy,ps.z);
+    	gl_Position = vec4(ps.x-topx,ps.y-topy,ps.z,1); // top-left  
+    }     	  
+    else if(gl_Vertex.w<2.5){
+     	norm=vec3(dx,dy,ps.z);
+    	gl_Position = vec4(ps.x+topx,ps.y+topy,ps.z,1); // top-right  
+    } 	  
+    else if(gl_Vertex.w<3.5){
+        norm=vec3(dx,dy,ps.z);
+    	gl_Position = vec4(ps.x+botx,ps.y+boty,ps.z,1);  // bot-right  
+    } 	
+    else{
+    	norm=vec3(-dx,-dy,ps.z);
     	gl_Position = vec4(ps.x-botx,ps.y-boty,ps.z,1);  // bot-left 
+    }
+    norm=normalize(norm);
+    Normal.xyz = gl_NormalMatrix * norm;
 #else
 	gl_Position = vec4(ps.x,ps.y,ps.z,1); // lines only
 #endif
