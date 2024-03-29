@@ -15,7 +15,7 @@
 // classes PlantPoint, PlantMgr
 //************************************************************
 
-extern double Hscale, Drop, MaxSize,Height,Phi;
+extern double Hscale, Drop, MaxSize,Height,Phi,Density;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -52,6 +52,10 @@ static int dns_fails=0;
 static TerrainData Td;
 static PlantMgr *s_mgr=0; // static finalizer
 static int hits=0;
+static int branch_nodes;
+static int trunk_nodes;
+static int line_nodes;
+
 //#define DEBUG_PMEM
 
 #define USE_AVEHT
@@ -59,8 +63,9 @@ static int hits=0;
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
-//#define DRAW_LINES
+//#define LINES_ONLY
 #define DRAW_TRIANGLES
+#define TRIANGLE_LINES
 //#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
@@ -193,6 +198,9 @@ bool PlantMgr::valid()
 }
 
 bool PlantMgr::setProgram(){
+	branch_nodes=0;
+	trunk_nodes=0;
+	line_nodes=0;
 	TerrainProperties *tp=Td.tp;
 	//cout<<"PlantMgr::setProgram()"<<endl;
 	
@@ -208,11 +216,11 @@ bool PlantMgr::setProgram(){
 #ifdef DRAW_TRIANGLES
 	sprintf(defs+strlen(defs),"#define DRAW_TRIANGLES\n");
 #endif
-//#ifdef DRAW_LINES
-//	sprintf(defs+strlen(defs),"#define DRAW_LINES\n");
+//#ifdef LINES_ONLY
+//	sprintf(defs+strlen(defs),"#define LINES_ONLY\n");
 //#endif
 	GLSLMgr::setDefString(defs);
-//#ifdef DRAW_LINES
+//#ifdef LINES_ONLY
 //	GLSLMgr::loadProgram("plants.lines.vert","plants.frag");
 //#else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
@@ -234,7 +242,8 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
-	
+	vars.newBoolVar("lighting",Render.lighting());
+
 	//vars.newFloatVec("vpoint",TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0);
 
 	double zn=TheScene->znear;
@@ -248,9 +257,8 @@ bool PlantMgr::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
-	GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
+	//GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
 
-	//glVertexAttrib4d(GLSLMgr::CommonID2, TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0); // Constants1
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
 	
@@ -293,6 +301,7 @@ bool PlantMgr::setProgram(){
 		plant->setProgram();
 	}
 	lastn=l;
+	cout<<"trunks:"<<trunk_nodes<< " branches:"<<branch_nodes<<" lines:"<<line_nodes<<endl;
 	return true;
 }
 //-------------------------------------------------------------
@@ -449,6 +458,7 @@ void Plant::reset()
 //-------------------------------------------------------------
 void Plant::collect()
 {
+
 #ifdef TEST_PTS
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
@@ -543,6 +553,7 @@ void Plant::collect()
 		plants[i]->print();	
 	}
 #endif
+	
 }
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
@@ -662,13 +673,10 @@ void TNplant::eval()
 	}
 	if(CurrentScope->rpass()){
 		int size=Td.tp->plants.size;
-		instance=size;
-	
+		instance=size;	
 		mgr->instance=instance;
-
 		if(plant)
-			plant->set_id(size);
-		
+			plant->set_id(size);		
 		Td.add_plant(plant);
 		return;
 	}	
@@ -737,7 +745,7 @@ void TNplant::eval()
 #ifdef DENSITY_TEST
 		x=1/(cval+1e-6);
 		x=x*x;//*x*x;
-		Td.density+=lerp(cval,0,0.2,0,.05*x);
+		Td.density+=lerp(cval,0,0.2,0,0.05*x);
 #endif
 	}
 	if(right)
@@ -804,40 +812,56 @@ bool TNplant::setProgram(){
 //************************************************************
 // TNbranch class
 //************************************************************
-TNbranch::TNbranch(char *s, TNode *l, TNode *r) : TNfunc(l,r)
+TNbranch::TNbranch(char *s, TNode *l, TNode *r) : TNbase(0,l,0,r)
 {
 	set_collapsed();
 	setName(s);
 	FREE(s);
-	levels=2;
-	taper=0.5;
-	trunk_size=1;
-	trunk_offset=4;
-	max_splits=2;
+	levels=4;
+	trunk_size=3;
+	trunk_width_taper=0.75;
+	trunk_size_taper=0.95;
 
-	split_freq=0.0;
-	branch_size=0.1;
-	branch_offset=1;
+	trunk_offset=0.25;
+	max_trunk_splits=2;
+	max_branch_splits=4;
+
+	split_probability=0.8;
+	branch_probability=0.9;
+	branch_size=1;
+	branch_offset=2.5;
+	branch_width_taper=0.75;
+	branch_size_taper=0.95;
+	
+	first_branch_bias=1.0;
+	branch_flatness=0.0;
+
 }
 
 void TNbranch::init(){
-	double arg[10];
+	double arg[15];
 	INIT;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,9);
+	int n=getargs(&args,arg,15);
 	
 	if(n>0)levels=(int)arg[0];
-	if(n>1)taper=arg[1];
-	if(n>2)trunk_size=arg[2];
-	if(n>3)trunk_offset=arg[3];
-	if(n>4)max_splits=arg[4];
-	if(n>5)split_freq=arg[5];
-
-	if(n>6)branch_size=arg[6];
-	if(n>7)branch_offset=arg[7];
-		
-	if(right)
-		right->init();
+	if(n>1)max_trunk_splits=arg[1];
+	if(n>2)max_branch_splits=arg[2];
+	if(n>3)split_probability=arg[3];
+	if(n>4)branch_probability=arg[4];
+	if(n>5)first_branch_bias=arg[5];
+	if(n>6)branch_flatness=arg[6];
+	if(n>7)trunk_size=arg[7];
+	if(n>8)trunk_offset=arg[8];
+	if(n>9)trunk_width_taper=arg[9];
+	if(n>10)trunk_size_taper=arg[10];	
+	if(n>11)branch_size=arg[11];
+	if(n>12)branch_offset=arg[12];
+	if(n>13)branch_width_taper=arg[13];
+	if(n>14)branch_size_taper=arg[14];
+	
+	//if(right)
+	//	right->init();
 }
 
 TNplant* TNbranch::getRoot() {
@@ -861,7 +885,6 @@ void TNbranch::eval(){
 	}
 }
 
-
 bool TNbranch::setProgram(){
 	TNplant *plant=getRoot();
 	if(!plant){
@@ -870,50 +893,123 @@ bool TNbranch::setProgram(){
 	}
 	double length=plant->base.length();
 	double ht=length-plant->radius;
-    Point bot=plant->base;	
+    Point bot=plant->base;
+
+    norm=bot.normalize();
+    
 	double size=length*trunk_size*plant->size;
 	Point top=bot*(1+size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
-	//levels=1;
-    color=Color(URAND(lastn++),URAND(lastn++),URAND(lastn++));
-	
-//#ifdef DRAW_LINES
-//	double line_width=0.1*plant->pntsize;
-//#else
-//	double width=0.0005*plant->pntsize;
-//#endif
+	INIT;	
+	if(base){
+		base->eval();
+	}
     double width=plant->pntsize;
-	double offset=1e-9*trunk_offset;
-		
-	emit(p1,p2-p1,p2,size,width,offset,0);
+	double offset=trunk_offset;
+
+	emit(TRUNK,p1,p2-p1,p2,length*plant->size,width,offset,0);
+	
 	return true;
 }
 
-void TNbranch::emit(Point b, Point v,Point l,double size, double width, double offset, int lvl){
+Point tangent(Point n)
+{
+	
+	Point v=n.spherical();
+	double dphi=0.001; // a small offset
+
+	Point p1=Point(v.x,v.y+dphi,0);
+	Point p2=Point(v.x,v.y-dphi,0);
+	Point V1 = p2 - p1;
+	return V1.normalize();
+}
+void TNbranch::emit(type t,Point b, Point v,Point l,double size, double width, double offset, int lvl){
+	if(lvl>=levels)
+		return;
+#ifdef TRIANGLE_LINES
+	if(width<0.5)
+		return;
+#else
+	if(width<2)
+		return;
+#endif
+	
+	bool trunk=(t==TRUNK);
+	double sfact=trunk?trunk_size:branch_size;
+
+	
+	size*=1+0.25*offset*RAND(lastn++);
+	
+	// TODO: 
+	// 1) get random vector in a tangent plane 
+	//   - in model space create new spherical point (use base point,theta,phi,r=1)
+	//   - create new point with small phi,theta offset 
+	//   - subtract to get tangent vector
+	//   - rotate tangent vector around base vector by a random angle
+	// 2)use flatness factor to lerp between random vertical vector and random tangent vector
+	// 3)use sameness factor to lerp between last vector and vector generated above
+	
+	// note: plant base = vector normal to surface
+
+	double vert=1;
+	
 	v=v.normalize();
-	v=v*size;
+	
 	v.x+=offset*RAND(lastn++);
 	v.y+=offset*RAND(lastn++);
 	v.z+=offset*RAND(lastn++);
-	Point p2=b+v;
 	
+	v=v.normalize();
+	if(!trunk){		
+		Point n=norm+b;
+		n=n.normalize();
+		Point tp1=n.cross(v);
+		Point vp=tp1.cross(n);
+		vp=vp.normalize(); // projection of v along surface
+		vert=v.dot(vp);
+	
+		Point v1=v*(1-branch_flatness);
+		Point v2=vp*branch_flatness;
+		
+		v=v1+v2;
+	}
+	
+	v=v*size*sfact; // v = direction along last branch
+	
+	Point p2=b+v;	
 	Point bot=p2; // new base	
+			
 	p2=p2-TheScene->vpoint;
 	Point p1=b-TheScene->vpoint;
-
-	Point q=TheScene->project(v);
+	Point q=TheScene->project(v); // convert model to screen space
 	double a=-atan2(q.y/q.z,q.x/q.z);
 	double alpha=PI/2-a;
 	double x=cos(alpha);
 	double y=sin(alpha);
 	
-	Color c=color;
-	double d=(double)lvl/levels;
-	//c=color.darken(d);
-	glColor4d(c.red(),c.green(),c.blue(),1);
+	v=bot-b; // new vector
+	
+	Color c=Color(0.0,0.0,0.0);
+	double d=((double)lvl)/levels;
+	Density=trunk?0:vert;
+//	if(!trunk && width<1)
+//		Density=1;
+	
+	INIT;	
+	if(base){
+		base->eval();
+		if(S0.cvalid()){
+		  c=S0.c;
+		}
+	}
+	//c=c.mix(Color(1,0,0),1-vert);
+	if(trunk)
+		glColor4d(0,1,0,1);
+	else
+	glColor4d(c.red(),c.green(),c.blue(),1);	  
 
-#ifdef DRAW_LINES
+#ifdef LINES_ONLY
     //glColor4d(0,0,0,1);
     //glLineWidth(1);
 	glLineWidth(width);
@@ -924,60 +1020,115 @@ void TNbranch::emit(Point b, Point v,Point l,double size, double width, double o
 #endif
 	double off=width/TheScene->wscale;
 #ifdef DRAW_TRIANGLES
-	
-	if(width>=2){
+#ifdef TRIANGLE_LINES	
+	if(width>=1){
+#endif		
 		double botx=x*off; 
 		double boty=y*off;
-		double topx=x*off*taper;
-		double topy=y*off*taper;
+		double topx;
+		double topy;
+		if(trunk){
+			trunk_nodes++;
+			topx=x*off*trunk_width_taper;
+			topy=y*off*trunk_width_taper;
+		}
+		else{
+			branch_nodes++;
+			topx=x*off*branch_width_taper;
+			topy=y*off*branch_width_taper;
+			
+		}
 		if(lvl>0){
 			botx=l.x;
 			boty=l.y;
 		}
-		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
 		// eliminate billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		l.x=topx;
 		l.y=topy;
-			
+		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+		
 		glBegin(GL_TRIANGLE_FAN);	
 		glVertex4d(p2.x,p2.y,p2.z,1);	
 		glVertex4d(p2.x,p2.y,p2.z,2);
 		glVertex4d(p1.x,p1.y,p1.z,3);		
 		glVertex4d(p1.x,p1.y,p1.z,4);
 		glEnd();
+	
+#ifdef TRIANGLE_LINES
 	}
-	else{
-		 //glLineWidth(1);
-		//glColor4d(0,0,0,1);
-		glLineWidth(0.5*width);
+	else if(width>=0.5){
+		line_nodes++;
+		glLineWidth(width);
 		glBegin(GL_LINES);
 		glVertex4d(p1.x,p1.y,p1.z,0);
 		glVertex4d(p2.x,p2.y,p2.z,0);
 		glEnd();
 	}
 #endif
-	int splits=max_splits*URAND(lastn++)+1;
-	splits=splits>max_splits?max_splits:splits;
+#endif
 	int lev=lvl+1;
-
 	if(lev<levels){
-		width*=taper;
-		for(int i=0;i<splits;i++){
-			emit(bot,bot-b,l, size,width,offset,lev);
+		double total_splits=max_branch_splits+max_trunk_splits;
+		double r=split_probability*total_splits*(1+split_probability*RAND(lastn++));
+	
+		int splits=r>=1?r:1;
+		
+		double trunk_probability=1-branch_probability;
+		int trunk_splits=0;
+		int branch_splits=0;
+		
+		if(trunk){
+			trunk_splits=splits*trunk_probability;
+			trunk_splits=trunk_splits>=1?trunk_splits:1;
+			trunk_splits=trunk_splits>max_trunk_splits?max_trunk_splits:trunk_splits;
+			branch_splits=splits-trunk_splits;
+		}
+		else{
+			trunk_splits=0;
+			branch_splits=splits;
+		}
+		branch_splits=branch_splits>max_branch_splits?max_branch_splits:branch_splits;
+
+		for(int i=0;i<trunk_splits;i++){
+			width*=trunk_width_taper;
+			size*=trunk_size_taper;
+			emit(TRUNK,bot,v,l, size,width,trunk_offset,lev);
+		}
+		for(int i=0;i<branch_splits;i++){
+			double f=trunk?branch_offset:first_branch_bias*branch_offset;
+			width*=branch_width_taper;
+			size*=branch_size_taper;
+			emit(BRANCH,bot,v,l, size,width,f,lev);
 		}
 	}
 	//return bot;
 }
 
 void TNbranch::valueString(char *s){
-	TNfunc::valueString(s);
+	if(strlen(name_str)>0)
+		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
+	else
+		sprintf(s+strlen(s),"%s(",symbol());
+	TNbase::valueString(s);
 }
 void TNbranch::save(FILE *f){
-	TNfunc::save(f);	
+	if(strlen(name_str)>0)
+		fprintf(f,"%s(\"%s\",",symbol(),name_str);
+	else
+		fprintf(f,"%s(",symbol());
+	if(left)
+		left->save(f);
+	fprintf(f,")");
+	if(base){
+		fprintf(f,"[");
+		base->save(f);
+		fprintf(f,"]");
+	}
+
 }
 void TNbranch::saveNode(FILE *f){
-	TNfunc::saveNode(f);
+	TNbase::saveNode(f);
 }
 void TNbranch::applyExpr(){
 	

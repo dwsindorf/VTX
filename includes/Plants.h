@@ -102,6 +102,7 @@ public:
 	double pntsize;
 	double maxdensity;
 	Point base;
+	
 	TNplant(char *s, TNode *l, TNode *r);
 	~TNplant();
 	void eval();
@@ -125,24 +126,36 @@ public:
 //************************************************************
 // Class TNbranch
 //************************************************************
-class TNbranch : public TNfunc
+class TNbranch : public TNbase
 {
 protected:
-	void emit(Point b, Point v,Point l, double w, double t, double r, int lvl);
-	
+	enum type {
+		TRUNK,
+		BRANCH
+	};
+	void emit(type,Point b, Point v,Point l, double w, double t, double r, int lvl);
 public:
 	int levels;
-	double taper;
-	double split_freq;
-	double max_splits;
+	double split_probability;
+	double branch_probability;
+	double first_branch_bias;
+	double branch_flatness;
+	
+	Point norm;
+	double max_trunk_splits;
+	double max_branch_splits;
 	
 	Color color;
 
 	double trunk_size; // trunk and main branches
 	double trunk_offset;
-
-	double branch_size; // small branches
+	double trunk_width_taper;
+	double trunk_size_taper; 
+	
+	double branch_size; // branches
 	double branch_offset;
+	double branch_width_taper;
+	double branch_size_taper; // small branches
 	
 	TNbranch(char *s, TNode *l, TNode *r);
 	

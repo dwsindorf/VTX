@@ -19,18 +19,14 @@ void main(void) {
 	vec3 ps = proj.xyz/proj.w;
 	EyeDirection=-(gl_ModelViewMatrix * vertex); // do view rotation
 	
-	//float xoffset=offset*CommonAttributes1.b;
-	//float yoffset=offset*CommonAttributes1.w;
-	//float taper=CommonAttributes1.g;  // screen space
 	
 	float topx=CommonAttributes1.r;
 	float topy=CommonAttributes1.g;
 	float botx=CommonAttributes1.b;
 	float boty=CommonAttributes1.a;
 	
-	float dx=topx-botx;
-	//dx=dx*dx*dx;
-	float dy=topy-boty;
+	float dx2=10*topx;
+	float dx1=10*botx;
 	
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	
@@ -39,24 +35,24 @@ void main(void) {
 #ifdef DRAW_TRIANGLES
 	gl_Position = vec4(ps.x,ps.y,ps.z,1);
 
-	if(gl_Vertex.w<0.5){
-	 norm=vec3(-dx,topy,ps.z);
+	if(gl_Vertex.w<0.5){ // lines
+	 	norm=vec3(dx1,topy,1);
     	gl_Position = vec4(ps.x,ps.y,ps.z,1); // top-left
     }
 	else if(gl_Vertex.w<1.5){
-	    norm=vec3(-dx,-dy,ps.z);
+	    norm=vec3(dx2,0,1);
     	gl_Position = vec4(ps.x-topx,ps.y-topy,ps.z,1); // top-left  
     }     	  
     else if(gl_Vertex.w<2.5){
-     	norm=vec3(dx,dy,ps.z);
+     	norm=vec3(-dx2,0,1);
     	gl_Position = vec4(ps.x+topx,ps.y+topy,ps.z,1); // top-right  
     } 	  
     else if(gl_Vertex.w<3.5){
-        norm=vec3(dx,dy,ps.z);
+        norm=vec3(-dx1,0,1);
     	gl_Position = vec4(ps.x+botx,ps.y+boty,ps.z,1);  // bot-right  
     } 	
     else{
-    	norm=vec3(-dx,-dy,ps.z);
+    	norm=vec3(dx1,0,1);
     	gl_Position = vec4(ps.x-botx,ps.y-boty,ps.z,1);  // bot-left 
     }
     norm=normalize(norm);

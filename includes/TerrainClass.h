@@ -39,8 +39,8 @@ public:
 class TNstring : public TNode
 {
 public:
-	char *value;
-	TNstring(char *c) 		{ value=c;}
+	char value[512];
+	TNstring(char *c) 		{ strcpy(value,c);}
 	~TNstring();
 	void dump()				{ printf("string: %s\n",value);}
 	void eval();

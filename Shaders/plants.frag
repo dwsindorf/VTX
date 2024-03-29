@@ -25,6 +25,8 @@ uniform float haze_grad;
 uniform float ws1;
 uniform float ws2;
 
+uniform bool lighting;
+
 #define DEPTH   gl_FragCoord.z
 
 varying vec4 Color;
@@ -37,6 +39,7 @@ vec3 setLighting(vec3 BaseColor) {
 		float LdotN     = dot(light,Normal.xyz);// for day side diffuse lighting
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = LdotN*amplitude;
+		lpn=clamp(lpn,0,1);
 	
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 	}
@@ -49,6 +52,7 @@ vec3 setLighting(vec3 BaseColor) {
 // ########## main section #########################
 void main(void) {
 	vec4 color =Color;
+	if(lighting)
     color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;

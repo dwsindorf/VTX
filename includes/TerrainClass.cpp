@@ -198,8 +198,8 @@ NameList<LongSym*> NGlobals(gtypes,sizeof(gtypes)/sizeof(LongSym));
 //************************************************************
 TNstring::~TNstring()
 {
-	FREE(value);
-	value=0;
+//	FREE(value);
+//	value=0;
 }
 void TNstring::eval()
 {
