@@ -94,6 +94,8 @@ class TNplant : public TNplacements
 {
 protected:
 public:
+	Point norm;
+
 	int instance;
 	Plant *plant;
 	TNbranch *branch;
@@ -131,7 +133,8 @@ class TNbranch : public TNbase
 protected:
 	enum type {
 		TRUNK,
-		BRANCH
+		BRANCH,
+		FIRST_BRANCH
 	};
 	void emit(type,Point b, Point v,Point l, double w, double t, double r, int lvl);
 public:

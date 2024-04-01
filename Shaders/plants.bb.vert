@@ -33,25 +33,21 @@ void main(void) {
 	vec3 norm;
 
 #ifdef DRAW_TRIANGLES
-	gl_Position = vec4(ps.x,ps.y,ps.z,1);
+	//gl_Position = vec4(ps.x,ps.y,ps.z,1);
 
-	if(gl_Vertex.w<0.5){ // lines
-	 	norm=vec3(dx1,topy,1);
-    	gl_Position = vec4(ps.x,ps.y,ps.z,1); // top-left
-    }
-	else if(gl_Vertex.w<1.5){
+	if(gl_Vertex.w<1.5){ // 1
 	    norm=vec3(dx2,0,1);
     	gl_Position = vec4(ps.x-topx,ps.y-topy,ps.z,1); // top-left  
     }     	  
-    else if(gl_Vertex.w<2.5){
+    else if(gl_Vertex.w<2.5){  // 2
      	norm=vec3(-dx2,0,1);
     	gl_Position = vec4(ps.x+topx,ps.y+topy,ps.z,1); // top-right  
     } 	  
-    else if(gl_Vertex.w<3.5){
+    else if(gl_Vertex.w<3.5){  // 3
         norm=vec3(-dx1,0,1);
     	gl_Position = vec4(ps.x+botx,ps.y+boty,ps.z,1);  // bot-right  
     } 	
-    else{
+    else  if(gl_Vertex.w<4.5) {  //4
     	norm=vec3(dx1,0,1);
     	gl_Position = vec4(ps.x-botx,ps.y-boty,ps.z,1);  // bot-left 
     }
