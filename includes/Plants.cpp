@@ -8,6 +8,7 @@
 #include "FileUtil.h"
 #include "GLSLMgr.h"
 #include "Effects.h"
+#include "TerrainClass.h"
 
 // BUGS/problems
 
@@ -575,11 +576,17 @@ bool Plant::initProgram(){
 //************************************************************
 // TNplant class
 //************************************************************
-TNplant::TNplant(char *s, TNode *l, TNode *r) : TNplacements(0,l,r,0)
+TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
-	set_collapsed();
-	setName(s);
-	FREE(s);
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;	
+	}
 	plant=0;
 	branch=0;
     mgr=new PlantMgr(PLANTS|NOLOD,this);
@@ -1040,11 +1047,19 @@ void TNstem::saveNode(FILE *f){
 //************************************************************
 // TNbranch class
 //************************************************************
-TNbranch::TNbranch(char *s, TNode *l, TNode *r) : TNbase(0,l,0,r)
+TNbranch::TNbranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 {
 	set_collapsed();
-	setName(s);
-	FREE(s);
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;	
+	}
+
 	levels=4;
 	trunk_size=2;
 	trunk_width_taper=0.75;

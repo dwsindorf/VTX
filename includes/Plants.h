@@ -199,7 +199,7 @@ public:
 	double branch_width_taper;
 	double branch_size_taper; // small branches
 	
-	TNbranch(char *s, TNode *l, TNode *r);
+	TNbranch(TNode *l, TNode *r, TNode *b);
 	
 	int typeValue()			{ return ID_BRANCH;}
 	const char *typeName ()	{ return "branch";}

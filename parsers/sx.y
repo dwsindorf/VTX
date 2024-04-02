@@ -509,24 +509,17 @@ leaf_expr
 
 branch_expr
     : YY_BRANCH '(' arg_list ')'
-    						{ $$=new TNbranch(0, $3, 0);APOP;}
+    						{ $$=new TNbranch($3, 0, 0);APOP;}
     | YY_BRANCH '(' arg_list ')' '[' expr ']'
-    						{ $$=new TNbranch(0, $3, $6);APOP;}
-    | YY_BRANCH '(' item_name ',' arg_list ')'
-    						{ $$=new TNbranch($3, $5, 0);APOP;}
-    | YY_BRANCH '(' item_name ',' arg_list ')' '[' expr ']'
-    						{ $$=new TNbranch($3, $5, $8);APOP;}
-    | YY_BRANCH '(' arg_list ')' leaf_expr {$$=0;}
-	
+    						{ $$=new TNbranch($3, $6, 0);APOP;}
+    | YY_BRANCH '(' arg_list ')' '[' expr ']' expr
+    						{ $$=new TNbranch($3, $6, $8);APOP;}	
 root_expr
     : YY_ROOT '(' arg_list ')'
-    						{ $$=new TNplant(0, $3, 0);APOP;}
-    | YY_ROOT '(' item_name ',' arg_list ')'
-    						{ $$=new TNplant($3, $5, 0);APOP;}
-    | YY_ROOT '(' item_name ',' arg_list ')' branch_expr
-    						{ $$=new TNplant($3, $5, $7);APOP;}
+    						{ $$=new TNplant($3, 0);APOP;}
+ 
     | YY_ROOT '(' arg_list ')' branch_expr
-    						{ $$=new TNplant(0, $3, $5);APOP;}
+    						{ $$=new TNplant($3, $5);APOP;}
 
 item_name
     : NAME                  { $$=$1;}
