@@ -103,9 +103,10 @@ public:
 	double size;
 	double pntsize;
 	double maxdensity;
+	int branch_levels;
 	Point base;
 	
-	TNplant(char *s, TNode *l, TNode *r);
+	TNplant(TNode *l, TNode *r);
 	~TNplant();
 	void eval();
 	void init();
@@ -126,25 +127,63 @@ public:
 };
 
 //************************************************************
+// Class TNstem
+//************************************************************
+class TNstem : public TNbase
+{
+	int level;
+public:
+	int max_splits;
+	double length; // trunk and main branches
+	double first_bias;
+	double randomness;
+	double sameness;
+	double flatness;
+	double size_taper;
+	double width_taper;
+	
+	TNstem(TNode *l, TNode *r, TNode *b);
+	
+	int typeValue()			{ return ID_STEM;}
+	const char *typeName ()	{ return "stem";}
+	const char *symbol()	{ return "Stem";}
+	
+	void init();
+	void valueString(char *);
+	void save(FILE*);
+	void saveNode(FILE *f);
+	
+	virtual void emit(Point b, Point v,Point l, double w, double t, int lvl);
+	
+	TNplant *getRoot();
+
+};
+
+//************************************************************
+// Class TNLeaf
+//************************************************************
+class TNLeaf : public TNstem
+{
+};
+//************************************************************
 // Class TNbranch
 //************************************************************
 class TNbranch : public TNbase
 {
 protected:
+public:
 	enum type {
 		TRUNK,
 		BRANCH,
 		FIRST_BRANCH
 	};
 	void emit(type,Point b, Point v,Point l, double w, double t, double r, int lvl);
-public:
 	int levels;
 	double split_probability;
 	double branch_probability;
 	double first_branch_bias;
 	double branch_flatness;
 	
-	Point norm;
 	double max_trunk_splits;
 	double max_branch_splits;
 	

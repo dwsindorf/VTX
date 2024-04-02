@@ -564,19 +564,12 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
-	//cout<<"TODO Plant::setProgram()"<<endl;
-//	char str[MAXSTR];
-//	
-//	GLSLVarMgr vars;
-//	GLhandleARB program=GLSLMgr::programHandle();
-//	vars.setProgram(program);
-//	vars.loadVars();
-
 	return true;
 }
 bool Plant::initProgram(){
 	return false;
 }
+
 
 //===================== TNplant ==============================
 //************************************************************
@@ -632,20 +625,21 @@ void TNplant::init()
 	smgr->set_first(1);
 	smgr->init();
 	TNplacements::init();
-	double arg[10];
+	double arg[11];
 	INIT;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,9);
+	int n=getargs(&args,arg,11);
 	
-	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest 
-	if(n>2) mgr->mult=arg[2];			// random scale multiplier
-	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) maxdensity=arg[4];
-	if(n>5) smgr->slope_bias=arg[5];
-	if(n>6) smgr->ht_bias=arg[6];
-	if(n>7) smgr->lat_bias=arg[7];
-	if(n>8) smgr->select_bias=arg[8];
+	if(n>0) branch_levels=(int)arg[0]; 	// branch levels
+	if(n>1) mgr->levels=(int)arg[1]; 	// scale levels
+	if(n>2) mgr->maxsize=arg[2];     	// size of largest 
+	if(n>3) mgr->mult=arg[3];			// random scale multiplier
+	if(n>4) mgr->level_mult=arg[4];     // scale multiplier per level
+	if(n>5) maxdensity=arg[5];
+	if(n>6) smgr->slope_bias=arg[6];
+	if(n>7) smgr->ht_bias=arg[7];
+	if(n>8) smgr->lat_bias=arg[8];
+	if(n>9) smgr->select_bias=arg[9];
 	
 	if(right)
 	   right->init();
@@ -798,14 +792,250 @@ void TNplant::saveNode(FILE *f)
 }
 
 bool TNplant::setProgram(){
-	if(branch){
-		branch->setProgram();
-		return true;
-	}
-	return false;
+	if(!branch)
+		return false;
+	
+	branch->setProgram();
+	double length=base.length();
+		
+	Point bot=base;
+	
+	norm=bot.normalize();
+		
+	double branch_size=length*size*branch->trunk_size;
+	Point top=bot*(1+branch_size); // starting trunk size
+	Point p1=bot;
+	Point p2=top;
+		
+	double width=pntsize;
+	double offset=branch->trunk_offset;
+	
+	Point tip;
+	tip.x=width/TheScene->wscale;
+	tip.y=0;
+
+	branch->emit(branch->TRUNK,p1,p2-p1,tip,length*size,width,offset,0);
+
+	//branch->setProgram();
+	return true;
+
 }
 
+//===================== TNstem ==============================
 
+//************************************************************
+// Class TNstem
+//************************************************************
+
+//************************************************************
+// TNstem class
+//************************************************************
+TNstem::TNstem(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
+{
+	set_collapsed();
+	//setName(s);
+	//FREE(s);
+	level=0;
+	length=2;
+	width_taper=0.75;
+	size_taper=0.95;
+	randomness=0.25;
+	max_splits=2;
+	first_bias=1.0;
+	flatness=0.0;
+	sameness=1.0;
+
+}
+void TNstem::init(){
+	double arg[10];
+	INIT;
+	TNarg &args=*((TNarg *)left);
+	int n=getargs(&args,arg,10);
+	if(n>0)length=arg[0];
+	if(n>1)max_splits=arg[1];
+	if(n>2)randomness=arg[2];
+	if(n>3)sameness=arg[3];
+	if(n>5)flatness=arg[5];
+	if(n>6)width_taper=arg[6];
+	if(n>7)size_taper=arg[7];
+}
+
+void TNstem::emit(Point start, Point vec,Point tip,double size, double width, int lvl){
+    int maxlevels=getRoot()->branch_levels;
+	if(lvl>=maxlevels)
+		return;
+#ifdef TRIANGLE_LINES
+	if(width<0.5)
+		return;
+#else
+	if(width<2)
+		return;
+#endif
+	double topx=0;
+	double topy=0;
+	double botx=1; 
+	double boty=1;
+	
+	bool first=(level==0);
+	
+	double offset=first?randomness*first_bias:randomness;
+	
+	size*=1+0.25*offset*RAND(lastn++);
+	
+	Point v=vec.normalize();
+		
+	v.x+=offset*RAND(lastn++);
+	v.y+=offset*RAND(lastn++);
+	v.z+=offset*RAND(lastn++);
+	
+	v=v.normalize();
+	if(flatness>0){
+		Point n=getRoot()->norm+start;
+		n=n.normalize();
+		Point tp1=n.cross(v);
+		Point vp=tp1.cross(n);
+		double f=flatness;
+		if(first)
+			f*=first_bias;
+		vp=vp.normalize(); // projection of v along surface
+		Point v1=v*(1-f);
+		Point v2=vp*f;
+	}
+	v=v*size; // v = direction along last branch
+		
+	Point p2=start+v;	
+	Point bot=p2; // new base	
+			
+	p2=p2-TheScene->vpoint;
+	Point p1=start-TheScene->vpoint;
+	
+	v=bot-start; // new vector
+	
+	Color c=Color(0.1,0.5,0.0);
+	Density=1;
+	INIT;	
+	if(base){ // optional color, texture etc []
+		base->eval();
+		if(S0.cvalid())
+		  c=S0.c;
+	}
+
+	glColor4d(c.red(),c.green(),c.blue(),1);	  
+	double off=width/TheScene->wscale;
+	int lev=lvl;
+#ifdef LINES_ONLY
+ 	glLineWidth(width);
+	glBegin(GL_LINES);
+	glVertex4d(p1.x,p1.y,p1.z,0);
+	glVertex4d(p2.x,p2.y,p2.z,0);
+	glEnd();
+#else
+#ifdef DRAW_TRIANGLES
+#ifdef TRIANGLE_LINES	
+	if(width>=1){
+#endif
+		Point q=TheScene->project(v); // convert model to screen space
+		double a=atan2(q.y/q.z,q.x/q.z);
+		double x=-sin(a);
+		double y=cos(a);
+			
+		botx=x*off; 
+		boty=y*off;
+		
+		topx=x*off*width_taper;
+		topy=y*off*width_taper;
+		
+		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+		glDisable(GL_CULL_FACE);
+		
+		glBegin(GL_TRIANGLES);
+		// 1) cover rectangle by drawing 2 triangles starting at top-left			
+		glVertex4d(p2.x,p2.y,p2.z,1);
+		glVertex4d(p2.x,p2.y,p2.z,2);
+		glVertex4d(p1.x,p1.y,p1.z,3);
+		
+		glVertex4d(p2.x,p2.y,p2.z,1);
+		glVertex4d(p1.x,p1.y,p1.z,3);
+		glVertex4d(p1.x,p1.y,p1.z,4);
+		
+		// 2) cover same rectangle by drawing 2 different triangles starting at bot-left	
+		glVertex4d(p1.x,p1.y,p1.z,4);
+		glVertex4d(p2.x,p2.y,p2.z,1);
+		glVertex4d(p2.x,p2.y,p2.z,2);
+		
+		glVertex4d(p1.x,p1.y,p1.z,4);
+		glVertex4d(p2.x,p2.y,p2.z,2);
+		glVertex4d(p1.x,p1.y,p1.z,3);
+
+		glEnd();		
+		lev++;		
+#ifdef TRIANGLE_LINES
+	}
+	else if(width>=0.5){
+		glColor4d(0.1,0.5,0,1);
+		line_nodes++;
+		glLineWidth(width);
+		glBegin(GL_LINES);
+		glVertex4d(p1.x,p1.y,p1.z,0);
+		glVertex4d(p2.x,p2.y,p2.z,0);
+		glEnd();
+		lev+=2;
+	}
+#endif
+#endif
+#endif
+	if(lev<maxlevels){
+		double r=randomness*max_splits*(1+0.5*randomness*RAND(lastn++));
+		int splits=r>=1?r:1;
+		
+		for(int i=0;i<splits;i++){
+			width*=width_taper;
+			size*=size_taper;
+			emit(bot,v,tip,size,width,lev);
+		}
+		
+		if(right && right->typeValue() == ID_STEM){
+			TNstem *child=(TNstem*)right;
+			child->emit(bot,v,tip, size,width,lev);		
+		}	
+	}
+	level++;
+}
+
+TNplant* TNstem::getRoot() {
+	NodeIF *p = getParent();
+	while (p && p->typeValue() != ID_PLANT) {
+		p=p->getParent();
+	}
+	if(p && p->typeValue() == ID_PLANT)
+		return p;
+	return 0;
+}
+void TNstem::valueString(char *s){
+	if(strlen(name_str)>0)
+		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
+	else
+		sprintf(s+strlen(s),"%s(",symbol());
+	TNbase::valueString(s);
+}
+void TNstem::save(FILE *f){
+	fprintf(f,"\n%s",tabs);
+	if(strlen(name_str)>0)
+		fprintf(f,"%s(\"%s\",",symbol(),name_str);
+	else
+		fprintf(f,"%s(",symbol());
+	if(left)
+		left->save(f);
+	fprintf(f,")");
+	if(base){
+		fprintf(f,"[");
+		base->save(f);
+		fprintf(f,"]");
+	}
+}
+void TNstem::saveNode(FILE *f){
+	TNbase::saveNode(f);
+}
 //===================== TNbranch ==============================
 //************************************************************
 // TNbranch class
@@ -864,55 +1094,18 @@ void TNbranch::init(){
 
 TNplant* TNbranch::getRoot() {
 	NodeIF *p = getParent();
-	if (p && p->typeValue() == ID_PLANT) {
-		return (TNplant*)p;
+	while (p && p->typeValue() != ID_PLANT) {
+		p=p->getParent();
 	}
+	if(p && p->typeValue() == ID_PLANT)
+		return p;
 	return 0;
 }
 void TNbranch::eval(){
-	if(!isEnabled()){
-		return;
-	}
-	if(!CurrentScope->spass()){
-		return;
-	}
-	TNplant *root=getRoot();
-	if(!root || !isEnabled()){
-		return;
-	}
+
 }
 
 bool TNbranch::setProgram(){
-	
-	TNplant *plant=getRoot();
-	if(!plant){
-		cout<<"TNbranch::setProgram error parent does not exist"<<endl;
-		return false;
-	}
-	double length=plant->base.length();
-	
-	//double ht=length-plant->radius;
-    Point bot=plant->base;
-
-    norm=bot.normalize();
-    
-	double size=length*trunk_size*plant->size;
-	Point top=bot*(1+size); // starting trunk size
-	Point p1=bot;
-	Point p2=top;
-	INIT;	
-	if(base){
-		base->eval();
-	}
-    double width=plant->pntsize;
-	double offset=trunk_offset;
-	
-	Point tip;
-	tip.x=width/TheScene->wscale;
-	tip.y=0;
-
-	emit(TRUNK,p1,p2-p1,tip,length*plant->size,width,offset,0);
-	
 	return true;
 }
 
@@ -958,7 +1151,7 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 	
 	v=v.normalize();
 	if(!trunk){		
-		Point n=norm+start;
+		Point n=getRoot()->norm+start;
 		n=n.normalize();
 		Point tp1=n.cross(v);
 		Point vp=tp1.cross(n);
@@ -983,13 +1176,7 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 	
 	Color c=Color(0.1,0.5,0.0);
 	double d=((double)lvl)/levels;
-	//if(trunk)
-		Density=1;
-//	else if(first)
-//		Density=0;
-	///else
-	//	Density=0.5;
-	
+	Density=1;
 	INIT;	
 	if(base){ // optional color, texture etc []
 		base->eval();
@@ -997,25 +1184,17 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 		  c=S0.c;
 	}
 
-//	if(trunk)
-//		glColor4d(0,1,0,0.1);
-//	else if(first)
-//		glColor4d(0,0,1,1);	
-//	else
-		glColor4d(c.red(),c.green(),c.blue(),1);	  
+	glColor4d(c.red(),c.green(),c.blue(),1);	  
 	double off=width/TheScene->wscale;
 	int lev=lvl;
 #ifdef LINES_ONLY
-    //glColor4d(0,0,0,1);
-    //glLineWidth(1);
-	glLineWidth(width);
+ 	glLineWidth(width);
 	glBegin(GL_LINES);
 	glVertex4d(p1.x,p1.y,p1.z,0);
 	glVertex4d(p2.x,p2.y,p2.z,0);
 	glEnd();
 #else
 #ifdef DRAW_TRIANGLES
-	
 #ifdef TRIANGLE_LINES	
 	if(width>=1){
 #endif	
@@ -1027,9 +1206,7 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 		double a=atan2(q.y/q.z,q.x/q.z);
 		double x=-sin(a);
 		double y=cos(a);
-			
-		botx=x*off; 
-		boty=y*off;
+
 		if(trunk){
 			trunk_nodes++;
 			topx=x*off*trunk_width_taper;
