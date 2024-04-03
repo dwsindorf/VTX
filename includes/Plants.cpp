@@ -10,6 +10,10 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
+#define NEW_BRANCH
+#define COLOR_TEST
+#define DENSITY_TEST
+
 // BUGS/problems
 
 //************************************************************
@@ -588,11 +592,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 		delete arg;	
 	}
 	plant=0;
-	branch=0;
     mgr=new PlantMgr(PLANTS|NOLOD,this);
-    if(r && r->typeValue() == ID_BRANCH) {
-       branch=(TNbranch*)r;
-    }
 }
 
 //-------------------------------------------------------------
@@ -659,8 +659,6 @@ void TNplant::set_id(int i){
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node
 //-------------------------------------------------------------
-#define COLOR_TEST
-#define DENSITY_TEST
 void TNplant::eval()
 {	
 	SINIT;
@@ -799,75 +797,90 @@ void TNplant::saveNode(FILE *f)
 }
 
 bool TNplant::setProgram(){
-	if(!branch)
-		return false;
-	
-	branch->setProgram();
+
 	double length=base.length();
 		
 	Point bot=base;
 	
 	norm=bot.normalize();
-		
-	double branch_size=length*size*branch->trunk_size;
+#ifdef NEW_BRANCH
+	TNBranch *branch=0;
+	if(right && right->typeValue() == ID_BRANCH) 
+	    branch=(TNBranch*)right;
+#else
+	TNbranch *branch=0;
+	if(right && right->typeValue() == ID_BRANCH) 
+	    branch=(TNbranch*)right;
+#endif
+	else
+		return false;
+
+	double branch_size=length*size*branch->length;
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
 		
 	double width=pntsize;
-	double offset=branch->trunk_offset;
 	
 	Point tip;
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
+#ifdef NEW_BRANCH
+	branch->emit(p1,p2-p1,tip,length*size,width,0);
+#else
+	branch->emit(branch->TRUNK,p1,p2-p1,tip,length*size,width,branch->randomness,0);
+#endif
 
-	branch->emit(branch->TRUNK,p1,p2-p1,tip,length*size,width,offset,0);
-
-	//branch->setProgram();
 	return true;
 
 }
 
-//===================== TNstem ==============================
+//===================== TNBranch ==============================
 
 //************************************************************
-// Class TNstem
+// TNBranch class
 //************************************************************
-
-//************************************************************
-// TNstem class
-//************************************************************
-TNstem::TNstem(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
+TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 {
 	set_collapsed();
-	//setName(s);
-	//FREE(s);
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		if(left)
+			left->setParent(this);
+		arg->right=0;
+		delete arg;	
+	}
 	level=0;
 	length=2;
 	width_taper=0.75;
-	size_taper=0.95;
+	length_taper=0.95;
 	randomness=0.25;
-	max_splits=2;
-	first_bias=1.0;
+	max_splits=4;
+	first_bias=1;
 	flatness=0.0;
-	sameness=1.0;
+	sameness=0.75;
 
 }
-void TNstem::init(){
+void TNBranch::init(){
 	double arg[10];
+	if(!left)
+		return;
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,10);
-	if(n>0)length=arg[0];
-	if(n>1)max_splits=arg[1];
+	if(n>0)max_splits=arg[0];
+	if(n>1)length=arg[1];
 	if(n>2)randomness=arg[2];
 	if(n>3)sameness=arg[3];
-	if(n>5)flatness=arg[5];
-	if(n>6)width_taper=arg[6];
-	if(n>7)size_taper=arg[7];
+	if(n>4)flatness=arg[4];
+	if(n>5)width_taper=arg[5];
+	if(n>6)length_taper=arg[6];
 }
 
-void TNstem::emit(Point start, Point vec,Point tip,double size, double width, int lvl){
+void TNBranch::emit(Point start, Point vec,Point tip,double size, double width, int lvl){
     int maxlevels=getRoot()->branch_levels;
 	if(lvl>=maxlevels)
 		return;
@@ -908,7 +921,7 @@ void TNstem::emit(Point start, Point vec,Point tip,double size, double width, in
 		Point v1=v*(1-f);
 		Point v2=vp*f;
 	}
-	v=v*size; // v = direction along last branch
+	v=v*size*length; // v = direction along last branch
 		
 	Point p2=start+v;	
 	Point bot=p2; // new base	
@@ -952,8 +965,21 @@ void TNstem::emit(Point start, Point vec,Point tip,double size, double width, in
 		topx=x*off*width_taper;
 		topy=y*off*width_taper;
 		
+		botx=tip.x;
+		boty=tip.y;
+		
+		// fix billboard gap in sequential levels
+		//  - set bottom offsets for next level to = top offsets for previous level
+		tip.x=topx;
+		tip.y=topy;
+		
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
 		glDisable(GL_CULL_FACE);
+		
+		if(test3){ // @ key - draw lines
+			glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+			glLineWidth(2);	
+		}
 		
 		glBegin(GL_TRIANGLES);
 		// 1) cover rectangle by drawing 2 triangles starting at top-left			
@@ -974,7 +1000,11 @@ void TNstem::emit(Point start, Point vec,Point tip,double size, double width, in
 		glVertex4d(p2.x,p2.y,p2.z,2);
 		glVertex4d(p1.x,p1.y,p1.z,3);
 
-		glEnd();		
+		glEnd();
+		if(test3){
+			glPolygonMode(GL_FRONT,GL_FILL);
+			glPolygonMode(GL_BACK,GL_FILL);
+		}
 		lev++;		
 #ifdef TRIANGLE_LINES
 	}
@@ -992,24 +1022,24 @@ void TNstem::emit(Point start, Point vec,Point tip,double size, double width, in
 #endif
 #endif
 	if(lev<maxlevels){
-		double r=randomness*max_splits*(1+0.5*randomness*RAND(lastn++));
+		double r=max_splits*(1+0.5*randomness*RAND(lastn++));
 		int splits=r>=1?r:1;
-		
+		splits=splits>max_splits?max_splits:splits;
 		for(int i=0;i<splits;i++){
 			width*=width_taper;
-			size*=size_taper;
+			size*=length_taper;
 			emit(bot,v,tip,size,width,lev);
 		}
 		
-		if(right && right->typeValue() == ID_STEM){
-			TNstem *child=(TNstem*)right;
+		if(right && right->typeValue() == ID_BRANCH){
+			TNBranch *child=(TNBranch*)right;
 			child->emit(bot,v,tip, size,width,lev);		
 		}	
 	}
 	level++;
 }
 
-TNplant* TNstem::getRoot() {
+TNplant* TNBranch::getRoot() {
 	NodeIF *p = getParent();
 	while (p && p->typeValue() != ID_PLANT) {
 		p=p->getParent();
@@ -1018,21 +1048,23 @@ TNplant* TNstem::getRoot() {
 		return p;
 	return 0;
 }
-void TNstem::valueString(char *s){
+void TNBranch::valueString(char *s){
 	if(strlen(name_str)>0)
 		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
 	else
 		sprintf(s+strlen(s),"%s(",symbol());
 	TNbase::valueString(s);
 }
-void TNstem::save(FILE *f){
+void TNBranch::save(FILE *f){
 	fprintf(f,"\n%s",tabs);
 	if(strlen(name_str)>0)
-		fprintf(f,"%s(\"%s\",",symbol(),name_str);
+		fprintf(f,"%s(\"%s\"",symbol(),name_str);
 	else
 		fprintf(f,"%s(",symbol());
-	if(left)
+	if(left){
+		fprintf(f,",");
 		left->save(f);
+	}
 	fprintf(f,")");
 	if(base){
 		fprintf(f,"[");
@@ -1040,7 +1072,7 @@ void TNstem::save(FILE *f){
 		fprintf(f,"]");
 	}
 }
-void TNstem::saveNode(FILE *f){
+void TNBranch::saveNode(FILE *f){
 	TNbase::saveNode(f);
 }
 //===================== TNbranch ==============================
@@ -1055,56 +1087,55 @@ TNbranch::TNbranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	if(node->typeValue() == ID_STRING){		
 		setName(((TNstring*)node)->value);
 		left=arg->next();
-		left->setParent(this);
+		if(left)
+			left->setParent(this);
 		arg->right=0;
 		delete arg;	
 	}
 
-	levels=4;
-	trunk_size=2;
-	trunk_width_taper=0.75;
-	trunk_size_taper=0.95;
-
-	trunk_offset=0.25;
-	max_trunk_splits=2;
-	max_branch_splits=4;
-
-	split_probability=0.8;
-	branch_probability=0.9;
-	branch_size=1.5;
-	branch_offset=2.5;
-	branch_width_taper=0.75;
-	branch_size_taper=0.9;
+	maxlevels=4;
+	length=2;
+	width_taper=0.75;
+	length_taper=0.95;
+	randomness=0.25;
+	max_splits=2;
+	first_bias=1.0;
 	
-	first_branch_bias=1.0;
+	split_probability=1;
+	max_branch_splits=4;
+	branch_probability=0;
+	branch_length=1.5;
+	branch_randomness=2.5;
+	branch_width_taper=0.75;
+	branch_length_taper=0.9;	
 	branch_flatness=0.0;
-
 }
 
 void TNbranch::init(){
 	double arg[15];
+	if(!left)
+		return;
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,15);
 	
-	if(n>0)levels=(int)arg[0];
-	if(n>1)max_trunk_splits=arg[1];
-	if(n>2)max_branch_splits=arg[2];
-	if(n>3)split_probability=arg[3];
-	if(n>4)branch_probability=arg[4];
-	if(n>5)first_branch_bias=arg[5];
-	if(n>6)branch_flatness=arg[6];
-	if(n>7)trunk_size=arg[7];
-	if(n>8)trunk_offset=arg[8];
-	if(n>9)trunk_width_taper=arg[9];
-	if(n>10)trunk_size_taper=arg[10];	
-	if(n>11)branch_size=arg[11];
-	if(n>12)branch_offset=arg[12];
-	if(n>13)branch_width_taper=arg[13];
-	if(n>14)branch_size_taper=arg[14];
+	if(n>0)max_splits=arg[0];
+	if(n>1)max_branch_splits=arg[1];
+	if(n>2)split_probability=arg[2];
+	if(n>3)branch_probability=arg[3];
+	if(n>4)first_bias=arg[4];
+	if(n>5)branch_flatness=arg[5];
+	if(n>6)length=arg[6];
+	if(n>7)randomness=arg[7];
+	if(n>8)width_taper=arg[8];
+	if(n>9)length_taper=arg[9];	
+	if(n>10)branch_length=arg[10];
+	if(n>11)branch_randomness=arg[11];
+	if(n>12)branch_width_taper=arg[12];
+	if(n>13)branch_length_taper=arg[13];
 	
-	//if(right)
-	//	right->init();
+	maxlevels=getRoot()->branch_levels;
+
 }
 
 TNplant* TNbranch::getRoot() {
@@ -1126,7 +1157,7 @@ bool TNbranch::setProgram(){
 
 
 void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, double width, double offset, int lvl){
-	if(lvl>=levels)
+	if(lvl>=maxlevels)
 		return;
 #ifdef TRIANGLE_LINES
 	if(width<0.5)
@@ -1140,24 +1171,12 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 	double botx=1; 
 	double boty=1;
 
-	//Point v=end-start;
 	bool trunk=(typ==TRUNK);
-	double sfact=trunk?trunk_size:branch_size;
+	double sfact=trunk?length:branch_length;
 	bool first=(typ==FIRST_BRANCH);
 	Point newtip;
 	size*=1+0.25*offset*RAND(lastn++);
-	
-	// TODO: 
-	// 1) get random vector in a tangent plane 
-	//   - in model space create new spherical point (use base point,theta,phi,r=1)
-	//   - create new point with small phi,theta offset 
-	//   - subtract to get tangent vector
-	//   - rotate tangent vector around base vector by a random angle
-	// 2)use flatness factor to lerp between random vertical vector and random tangent vector
-	// 3)use sameness factor to lerp between last vector and vector generated above
-	
-	// note: plant base = vector normal to surface
-	
+		
 	Point v=vec.normalize();
 	
 	v.x+=offset*RAND(lastn++);
@@ -1172,7 +1191,7 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 		Point vp=tp1.cross(n);
 		double f=branch_flatness;
 		if(first)
-			f*=first_branch_bias;
+			f*=first_bias;
 		vp=vp.normalize(); // projection of v along surface
 		Point v1=v*(1-f);
 		Point v2=vp*f;
@@ -1190,7 +1209,7 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 	v=bot-start; // new vector
 	
 	Color c=Color(0.1,0.5,0.0);
-	double d=((double)lvl)/levels;
+	double d=((double)lvl)/maxlevels;
 	Density=1;
 	INIT;	
 	if(base){ // optional color, texture etc []
@@ -1224,8 +1243,8 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 
 		if(trunk){
 			trunk_nodes++;
-			topx=x*off*trunk_width_taper;
-			topy=y*off*trunk_width_taper;
+			topx=x*off*width_taper;
+			topy=y*off*width_taper;
 		}
 		else{
 			branch_nodes++;
@@ -1304,8 +1323,8 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 #endif
 #endif
 	//int lev=lvl+1;
-	if(lev<levels){
-		double total_splits=max_branch_splits+max_trunk_splits;
+	if(lev<maxlevels){
+		double total_splits=max_branch_splits+max_splits;
 		double r=split_probability*total_splits*(1+0.5*split_probability*RAND(lastn++));
 	
 		int splits=r>=1?r:1;
@@ -1324,18 +1343,18 @@ void TNbranch::emit(type typ,Point start, Point vec,Point tip,double size, doubl
 			branch_splits=splits;//*first_branch_bias;
 		}
 		branch_splits=branch_splits>max_branch_splits?max_branch_splits:branch_splits;
-		trunk_splits=trunk_splits>max_trunk_splits?max_trunk_splits:trunk_splits;
+		trunk_splits=trunk_splits>max_splits?max_splits:trunk_splits;
 		for(int i=0;i<trunk_splits;i++){
-			width*=trunk_width_taper;
-			size*=trunk_size_taper;
-			emit(TRUNK,bot,v,tip, size,width,trunk_offset,lev);
+			width*=width_taper;
+			size*=length_taper;
+			emit(TRUNK,bot,v,tip, size,width,randomness,lev);
 		}
 		
 		for(int i=0;i<branch_splits;i++){
 			int t=trunk?FIRST_BRANCH:BRANCH;
-			double f=trunk?branch_offset:first_branch_bias*branch_offset;
+			double f=trunk?branch_randomness:first_bias*branch_randomness;
 			width*=branch_width_taper;
-			size*=branch_size_taper;
+			size*=branch_length_taper;
 			emit(t,bot,v,tip, size,width,f,lev);
 		}
 	}
@@ -1351,18 +1370,19 @@ void TNbranch::valueString(char *s){
 void TNbranch::save(FILE *f){
 	fprintf(f,"\n%s",tabs);
 	if(strlen(name_str)>0)
-		fprintf(f,"%s(\"%s\",",symbol(),name_str);
+		fprintf(f,"%s(\"%s\"",symbol(),name_str);
 	else
 		fprintf(f,"%s(",symbol());
-	if(left)
+	if(left){
+		fprintf(f,",");
 		left->save(f);
+	}
 	fprintf(f,")");
 	if(base){
 		fprintf(f,"[");
 		base->save(f);
 		fprintf(f,"]");
 	}
-
 }
 void TNbranch::saveNode(FILE *f){
 	TNbase::saveNode(f);

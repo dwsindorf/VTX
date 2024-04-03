@@ -129,7 +129,7 @@ public:
 //************************************************************
 // Class TNstem
 //************************************************************
-class TNstem : public TNbase
+class TNBranch : public TNbase
 {
 	int level;
 public:
@@ -139,14 +139,14 @@ public:
 	double randomness;
 	double sameness;
 	double flatness;
-	double size_taper;
+	double length_taper;
 	double width_taper;
 	
-	TNstem(TNode *l, TNode *r, TNode *b);
+	TNBranch(TNode *l, TNode *r, TNode *b);
 	
-	int typeValue()			{ return ID_STEM;}
-	const char *typeName ()	{ return "stem";}
-	const char *symbol()	{ return "Stem";}
+	int typeValue()			{ return ID_BRANCH;}
+	const char *typeName ()	{ return "branch";}
+	const char *symbol()	{ return "Branch";}
 	
 	void init();
 	void valueString(char *);
@@ -162,7 +162,7 @@ public:
 //************************************************************
 // Class TNLeaf
 //************************************************************
-class TNLeaf : public TNstem
+class TNLeaf : public TNBranch
 {
 };
 //************************************************************
@@ -178,26 +178,26 @@ public:
 		FIRST_BRANCH
 	};
 	void emit(type,Point b, Point v,Point l, double w, double t, double r, int lvl);
-	int levels;
+	int maxlevels;
 	double split_probability;
 	double branch_probability;
-	double first_branch_bias;
+	double first_bias;
 	double branch_flatness;
 	
-	double max_trunk_splits;
+	double max_splits;
 	double max_branch_splits;
 	
 	Color color;
 
-	double trunk_size; // trunk and main branches
-	double trunk_offset;
-	double trunk_width_taper;
-	double trunk_size_taper; 
+	double length; // trunk and main branches
+	double randomness;
+	double width_taper;
+	double length_taper; 
 	
-	double branch_size; // branches
-	double branch_offset;
+	double branch_length; // branches
+	double branch_randomness;
 	double branch_width_taper;
-	double branch_size_taper; // small branches
+	double branch_length_taper; // small branches
 	
 	TNbranch(TNode *l, TNode *r, TNode *b);
 	
