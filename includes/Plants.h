@@ -5,6 +5,8 @@
 
 #include "Placements.h"
 
+#define TNBRANCH TNBranch
+
 class PlantMgr;
 class TNplant;
 class TNbranch;
@@ -95,6 +97,7 @@ class TNplant : public TNplacements
 protected:
 public:
 	Point norm;
+	int level;
 
 	int instance;
 	Plant *plant;
@@ -103,7 +106,7 @@ public:
 	double size;
 	double pntsize;
 	double maxdensity;
-	int branch_levels;
+	int max_levels;
 	Point base;
 	
 	TNplant(TNode *l, TNode *r);
@@ -131,13 +134,16 @@ public:
 //************************************************************
 class TNBranch : public TNbase
 {
-	int level;
 public:
-	int max_splits;
-	double length; // trunk and main branches
+	int maxlevels;
+	int level;
+	static int branches;
+	static int lines;
+	double max_splits;
+	double length; // trunk and main level
 	double first_bias;
 	double randomness;
-	double sameness;
+	double divergence;
 	double flatness;
 	double length_taper;
 	double width_taper;
@@ -149,11 +155,13 @@ public:
 	const char *symbol()	{ return "Branch";}
 	
 	void init();
+	void eval();
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
 	
-	virtual void emit(Point b, Point v,Point l, double w, double t, int lvl);
+	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
+	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	
 	TNplant *getRoot();
 
@@ -165,55 +173,7 @@ public:
 class TNLeaf : public TNBranch
 {
 };
-//************************************************************
-// Class TNbranch
-//************************************************************
-class TNbranch : public TNbase
-{
-protected:
-public:
-	enum type {
-		TRUNK,
-		BRANCH,
-		FIRST_BRANCH
-	};
-	void emit(type,Point b, Point v,Point l, double w, double t, double r, int lvl);
-	int maxlevels;
-	double split_probability;
-	double branch_probability;
-	double first_bias;
-	double branch_flatness;
-	
-	double max_splits;
-	double max_branch_splits;
-	
-	Color color;
 
-	double length; // trunk and main branches
-	double randomness;
-	double width_taper;
-	double length_taper; 
-	
-	double branch_length; // branches
-	double branch_randomness;
-	double branch_width_taper;
-	double branch_length_taper; // small branches
-	
-	TNbranch(TNode *l, TNode *r, TNode *b);
-	
-	int typeValue()			{ return ID_BRANCH;}
-	const char *typeName ()	{ return "branch";}
-	const char *symbol()	{ return "Branch";}
-	
-	void eval();
-	void init();
-	void valueString(char *);
-	void save(FILE*);
-	void saveNode(FILE *f);
-	void applyExpr();
-	bool setProgram();
-	TNplant *getRoot();
-};
 class Plant
 {
 public:

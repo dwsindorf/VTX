@@ -25,8 +25,8 @@ void main(void) {
 	float botx=CommonAttributes1.b;
 	float boty=CommonAttributes1.a;
 	
-	float dx2=10*topx;
-	float dx1=10*botx;
+	float dx2=5*topx;
+	float dx1=5*botx;
 	
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	
