@@ -89,6 +89,7 @@ public:
 	void reset();
 };
 
+#define MAX_BRANCHES 6
 //************************************************************
 // Class TNplant
 //************************************************************
@@ -98,6 +99,7 @@ protected:
 public:
 	Point norm;
 	int level;
+	static int stats[MAX_BRANCHES][2];
 
 	int instance;
 	Plant *plant;
@@ -107,7 +109,7 @@ public:
 	double pntsize;
 	double maxdensity;
 	int max_levels;
-	Point base;
+	Point base_point;
 	
 	TNplant(TNode *l, TNode *r);
 	~TNplant();
@@ -127,18 +129,24 @@ public:
 	void saveNode(FILE *f);
 	void applyExpr();
 	bool setProgram();
+	
+	static int max_branches;
+	static void clearStats();
+	static void showStats();
+	static void addBranch(int id);
+	static void addLine(int id);
 };
 
 //************************************************************
-// Class TNstem
+// Class TNBranch
 //************************************************************
 class TNBranch : public TNbase
 {
 public:
-	int maxlevels;
-	int level;
-	static int branches;
-	static int lines;
+	int max_plant_levels;
+	int min_level;
+	int max_level;
+	int branch_id;
 	double max_splits;
 	double length; // trunk and main level
 	double first_bias;

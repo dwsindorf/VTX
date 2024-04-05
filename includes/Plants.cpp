@@ -14,10 +14,26 @@
 #define DENSITY_TEST
 
 #define FIRST  1
-#define TRUNK  2
-#define BRANCH 4
 
+// TODO: 
+// 1) In multi-branch cases allow for smaller branch forks from parent stem
+//    - currently new branch base width is defined by width of parent's "tip"
+//    - modify starting width using child branch size;
+// 2) In multi-branch cases may need a minimum level to start producing new branches (?)
+//    - would like to see child branches form only towards the tip of parent branches
+// 3) add support for textures
+// 4) add support for bump shading from textures
+// 5) use a spline function when connecting levels on same branch
+//   - generate additional line segments between segment end points (no need for branching)
+// 6) better lighting model for branches
+//   - currently only uses x-direction in screen space
+//   - works good for vertical trunks but makes horizontal branches look flat
+//   - idea:incorporate delta-y to get better effect ?
+// 7) go to a true 3-d model vs. lines with rendered billboards in screen space
+	
 // BUGS/problems
+// 1) see a lot of jitter on branches when moving around
+//   - may need to pre-generate a list of random values instead of using lastn++ in emit function
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -59,7 +75,7 @@ static int pts_fails=0;
 static int dns_fails=0;
 
 static TerrainData Td;
-static PlantMgr *s_mgr=0; // static finalizer
+static PlantMgr *s_mgr=0;
 static int hits=0;
 static int branch_nodes;
 static int trunk_nodes;
@@ -209,9 +225,6 @@ bool PlantMgr::valid()
 bool PlantMgr::setProgram(){
 	//glShadeModel(GL_FLAT);
 	
-	TNBranch::branches=0;
-	TNBranch::lines=0;
-
 	branch_nodes=0;
 	trunk_nodes=0;
 	line_nodes=0;
@@ -278,25 +291,14 @@ bool PlantMgr::setProgram(){
 	int l=lastn;
 	
 	glEnable(GL_BLEND);
-	// TODO: 
-	// 1. create a STABLE random offset for top of line (DONE)
-	//    get unique noise value for each plant
-	//     - use point projected on unit sphere vs point that includes ht
-	// 2) tesselerize top bottom points into triangle fan vs lines (DONE)
-	//    - convert 3d point to screen space in shader (problem with precision)
-	//    - offset x by +- point size
-	// 3) use geometry shader vs CPU to generate triangles (problem with precision if not in eye space)
-	// 4) create a 3-point spline vs simple line segments in CPU
-	// 5) use geometry shader for above
-	
-	
+	TNplant::clearStats();
 	for(int i=n-1;i>=0;i--){
 		PlantData *s=Plant::plants[i];
 		
 		int id=s->get_id();
 		
 		TNplant *plant=s->mgr->plant;
-		plant->base=s->base;
+		plant->base_point=s->base;
 		plant->size=s->radius; // placement size
 		plant->pntsize=s->pntsize;
 		
@@ -308,7 +310,9 @@ bool PlantMgr::setProgram(){
 		plant->setProgram();
 	}
 	lastn=l;
-	cout<<"branches:"<<TNBranch::branches<<" lines:"<<TNBranch::lines<<endl;
+	TNplant::showStats();
+	
+	//cout<<"branches:"<<TNBranch::branches<<" lines:"<<TNBranch::lines<<endl;
 	return true;
 }
 //-------------------------------------------------------------
@@ -582,6 +586,8 @@ bool Plant::initProgram(){
 
 
 //===================== TNplant ==============================
+int TNplant::stats[MAX_BRANCHES][2];
+int TNplant::max_branches=0;
 //************************************************************
 // TNplant class
 //************************************************************
@@ -597,6 +603,8 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 		delete arg;	
 	}
 	plant=0;
+	level=0;
+	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
 
@@ -629,14 +637,14 @@ void TNplant::applyExpr()
 //-------------------------------------------------------------
 void TNplant::init()
 {
-
 	PlantMgr *smgr=(PlantMgr*)mgr;
-
+    level=0;
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->set_first(1);
 	smgr->init();
-	TNplacements::init();
+	
+	//TNplacements::init();
 	double arg[11];
 	INIT;
 	TNarg &args=*((TNarg *)left);
@@ -667,9 +675,9 @@ void TNplant::set_id(int i){
 void TNplant::eval()
 {	
 	SINIT;
+	if(right)
+		right->eval();
 	if(!isEnabled()){
-		if(right)
-			right->eval();
 		return;
 	}
 	if(CurrentScope->rpass()){
@@ -678,14 +686,12 @@ void TNplant::eval()
 		mgr->instance=instance;
 		if(plant)
 			plant->set_id(size);		
-		Td.add_plant(plant);
+		Td.add_plant(plant);		
 		return;
 	}	
 	if(!CurrentScope->spass()){
 		return;
 	}
-	if(right)
-			right->eval();
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
@@ -750,9 +756,29 @@ void TNplant::eval()
 		Td.density+=lerp(cval,0,0.2,0,0.05*x);
 #endif
 	}
-//	if(right)
-//		right->eval();
  }
+
+void TNplant::clearStats(){
+	max_branches=0;
+	for(int i=0;i<MAX_BRANCHES;i++){
+		stats[i][0]=stats[i][1]=0;
+	}
+}
+void TNplant::showStats(){
+	for(int i=0;i<max_branches;i++){
+		cout<<i<<" branches:"<<stats[i][0]<<" lines:"<<stats[i][1]<<endl;
+	}
+}
+void TNplant::addLine(int id){
+	if(id>=max_branches)
+		max_branches++;
+	stats[id][1]++;	
+}
+void TNplant::addBranch(int id){
+	if(id>=max_branches)
+		max_branches++;
+	stats[id][0]++;	
+}
 
 //-------------------------------------------------------------
 // TNtexture::valueString() node value substring
@@ -804,9 +830,9 @@ void TNplant::saveNode(FILE *f)
 
 bool TNplant::setProgram(){
 
-	double length=base.length();
+	double length=base_point.length();
 		
-	Point bot=base;
+	Point bot=base_point;
 	
 	norm=bot.normalize();
 
@@ -827,9 +853,7 @@ bool TNplant::setProgram(){
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
 
-	//branch->emit(TRUNK,p1,p2-p1,tip,length*size,width,0);
-	branch->fork(0,p1,p2-p1,tip,length*size,width,0);
-
+	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
 
 	return true;
 
@@ -840,8 +864,6 @@ bool TNplant::setProgram(){
 // TNBranch class
 //************************************************************
 
-int TNBranch::branches=0;
-int TNBranch::lines=0;
 TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 {
 	set_collapsed();
@@ -863,14 +885,16 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	first_bias=0;
 	flatness=0.9;
 	divergence=0.75;
+	min_level=0;
+	max_level=0;
 }
 void TNBranch::init(){
-	double arg[10];
+	double arg[12];
 	if(!left)
 		return;
 	INIT;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,10);
+	int n=getargs(&args,arg,11);
 	if(n>0)max_splits=arg[0];
 	if(n>1)length=arg[1];
 	if(n>2)randomness=arg[2];
@@ -879,27 +903,39 @@ void TNBranch::init(){
 	if(n>5)width_taper=arg[5];
 	if(n>6)length_taper=arg[6];	
 	if(n>7)first_bias=arg[7];
+	if(n>8)min_level=arg[8];
+	if(n>9)max_level=arg[9];
 	
 	TNplant *root=getRoot();
-	maxlevels=root->max_levels;
-	level=root->level;
+	max_plant_levels=root->max_levels;
+	branch_id=root->level;
 	root->level+=1;
+	//cout<<"min_level="<<min_level<<" max_level="<<max_level<<endl;
 	
 	if(right)
 		right->init();
 }
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
-	if(lvl>=maxlevels)
+	if(lvl>=max_plant_levels)
+		return;
+	if(lvl<min_level)
+		return;
+	if(max_level>0 && lvl>max_level)
 		return;
 	int splits=max_splits*(1+0.5*randomness*RAND(lastn++));
 	if(first_bias) // add more branches at start of branch fork
 		splits*=first_bias;
+	splits=splits<1?1:splits;
 	for(int i=0;i<splits;i++){
 		emit(opt,start,vec,tip,size*length_taper,width*width_taper,lvl);
 	}
 }
 void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
-	if(lvl>=maxlevels)
+	if(lvl>=max_plant_levels)
+		return;
+	if(lvl<min_level)
+		return;
+	if(max_level>0 && lvl>max_level)
 		return;
 #ifdef TRIANGLE_LINES
 	if(width<0.5)
@@ -908,7 +944,8 @@ void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, doubl
 	if(width<2)
 		return;
 #endif
-	branches++;
+	//branches++;
+	getRoot()->addBranch(branch_id);
 	double topx=0;
 	double topy=0;
 	double botx=1; 
@@ -952,7 +989,7 @@ void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, doubl
 	v=bot-start; // new vector
 	
 	Color c=Color(0.1,0.5,0.0);
-	Density=1;
+	Density=((double)lvl)/max_plant_levels;
 	INIT;	
 	if(base){ // optional color, texture etc []
 		base->eval();
@@ -1011,7 +1048,9 @@ void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, doubl
 		glVertex4d(p1.x,p1.y,p1.z,3);
 		glVertex4d(p1.x,p1.y,p1.z,4);
 		
-		// 2) cover same rectangle by drawing 2 different triangles starting at bot-left	
+		// Note: shouldn't need to do this but otherwise half of the quad sometimes isn't drawn (??)
+		
+		// 2) cover same rectangle again by drawing 2 different triangles starting at bot-left	
 		glVertex4d(p1.x,p1.y,p1.z,4);
 		glVertex4d(p2.x,p2.y,p2.z,1);
 		glVertex4d(p2.x,p2.y,p2.z,2);
@@ -1030,7 +1069,8 @@ void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, doubl
 	}
 	else if(width>=0.5){
 		//glColor4d(0.1,0.5,0,1);
-		lines++;
+		getRoot()->addLine(branch_id);
+		//lines++;
 		glLineWidth(width);
 		glBegin(GL_LINES);
 		glVertex4d(p1.x,p1.y,p1.z,0);
@@ -1041,8 +1081,10 @@ void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, doubl
 #endif
 #endif
 #endif
-	if(lev<maxlevels){
+	if(lev<max_plant_levels){
 		int splits=max_splits*(1+0.5*randomness*RAND(lastn++));
+		if(first && first_bias)
+			splits*=first_bias;
 		splits=splits>=1?splits:1;
 		for(int i=0;i<splits;i++){
 			width*=width_taper;
