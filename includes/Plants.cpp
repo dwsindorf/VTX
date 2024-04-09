@@ -999,14 +999,17 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	if (first && first_bias)
 		splits *= first_bias;
 	splits = splits >= 1 ? splits : 1;
+	double scale=1.0;
+	if(first){
+		scale=length*getRoot()->size/size/TheScene->wscale;
+		scale=scale>1?1:scale;
+		width*=scale;
+	}
 
 	if (width < MIN_DRAW_WIDTH) {
 		getRoot()->addSkipped(branch_id);
 		randval += 5;
 	} else {
-		double scale=1.0;
-		if(first)
-			scale=length*getRoot()->size/size/TheScene->wscale;
 	
 		double offset = divergence; // how much to deviate from last segment direction
 		offset *= first ? first_bias : 1.0;
@@ -1015,8 +1018,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 
 		v = vec.normalize();
         // add a random offset to first branch split
+		double b = randomness*URAND(randval);
 		if(first){
-			double b = 0.5*randomness*URAND(randval);
 			b=b<=1?b:1;				
 		 	start=start-v*b*size * length;
 		}
@@ -1072,8 +1075,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 #ifdef TRIANGLE_LINES	
 	if (width > MIN_TRIANGLE_WIDTH) {
 #endif
-		if(/**/terminal &&(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
-			//c=Color(1,0,0);
+		if(/*terminal &&*/(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
+			c=Color(1,0,0);
 			getRoot()->addTerminal(branch_id);
 		}
 		//if(first)
@@ -1136,9 +1139,9 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		}
 #ifdef TRIANGLE_LINES
 	} else if (width >= MIN_LINE_WIDTH) {
-		if(/**/terminal &&(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
+		if(/*terminal &&*/(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
 			getRoot()->addTerminal(branch_id);
-			//c=Color(1,0,0);
+			c=Color(1,0,0);
 		}
 
 		glColor4d(c.red(), c.green(), c.blue(), 1);
