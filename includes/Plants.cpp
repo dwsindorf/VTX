@@ -897,7 +897,7 @@ bool TNplant::setProgram(){
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
 	//double f=width*pow(branch->width_taper,n)
- 	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
+ 	branch->fork(0,p1,p2-p1,tip,length*size,width,0);
 
 	return true;
 
@@ -1003,7 +1003,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	if (width < MIN_DRAW_WIDTH) {
 		getRoot()->addSkipped(branch_id);
 		randval += 5;
-	} else {		
+	} else {
+		double scale=1.0;
+		if(first)
+			scale=length*getRoot()->size/size/TheScene->wscale;
+	
 		double offset = divergence; // how much to deviate from last segment direction
 		offset *= first ? first_bias : 1.0;
 
@@ -1011,19 +1015,18 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 
 		v = vec.normalize();
         // add a random offset to first branch split
-		double b = randomness*URAND(randval); 
-		if(first && b<=1)
-		 start=start-v*b*size * length;
+		if(first){
+			double b = 0.5*randomness*URAND(randval);
+			b=b<=1?b:1;				
+		 	start=start-v*b*size * length;
+		}
 
 		v.x += offset * SRAND(randval);
 		v.y += offset * SRAND(randval);
 		v.z += offset * SRAND(randval);
 
-		
 		v = v.normalize();
-		
-		//start=start-jnt;
-		
+				
 		if (flatness > 0) {
 			Point n = getRoot()->norm + start;
 			n = n.normalize();
@@ -1070,9 +1073,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	if (width > MIN_TRIANGLE_WIDTH) {
 #endif
 		if(/**/terminal &&(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
-			c=Color(1,0,0);
+			//c=Color(1,0,0);
 			getRoot()->addTerminal(branch_id);
 		}
+		//if(first)
+		//	c=Color(0,0,1);
 		getRoot()->addBranch(branch_id);
 
 		glColor4d(c.red(), c.green(), c.blue(), 1);
@@ -1084,12 +1089,12 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		botx = x * off;
 		boty = y * off;
 
-		topx = x * off * width_taper;
-		topy = y * off * width_taper;
-
-		botx = tip.x;
-		boty = tip.y;
-
+		topx = x * off * width_taper*scale;
+		topy = y * off * width_taper*scale;
+        
+		botx = tip.x*scale;
+		boty = tip.y*scale;
+		
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		tip.x = topx;
@@ -1133,7 +1138,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	} else if (width >= MIN_LINE_WIDTH) {
 		if(/**/terminal &&(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
 			getRoot()->addTerminal(branch_id);
-			c=Color(1,0,0);
+			//c=Color(1,0,0);
 		}
 
 		glColor4d(c.red(), c.green(), c.blue(), 1);
