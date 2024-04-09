@@ -13,14 +13,27 @@
 #define COLOR_TEST
 #define DENSITY_TEST
 
+#define SRAND(x) 	(rands[PERM((x++))])
+#define URAND(x) 	(rands[PERM((x++))]+0.5)
+
+
 #define FIRST  1
 
 // TODO: 
-// 1) In multi-branch cases allow for smaller branch forks from parent stem
-//    - currently new branch base width is defined by width of parent's "tip"
-//    - modify starting width using child branch size;
-// 2) In multi-branch cases may need a minimum level to start producing new branches (?)
-//    - would like to see child branches form only towards the tip of parent branches
+// 1) Better branching model
+//  Currently all branches spawn from the same point in screen space
+//  Improve this by trying the following:
+//  a)allow branches to spawn at random locations along parent stem vector
+//  b)don't require branch starting width to be the same as parents width
+//    - scale next segment width based on random factor or (multi-branch case) size of child branch
+//    - in screen space offset origin of new fork on a line between parents tip xy left and right
+//    - make sure new tip base is contained within parent's top tip
+//  c) modify branch z position based on dot-product with new branch vector with eye vector 
+//     - add z distance to back facing branches (-dp) to simulate parent branch width
+// 2) In multi-branch cases have a minimum level to start producing new branches and max level to stop
+//    - min level prevents branches from forming lower in parent trunk
+//    - child branches should form only towards the tip of parent branches
+//    - Label branch ends as "terminal" if next level would be below width of branch level thresholds
 // 3) add support for textures
 // 4) add support for bump shading from textures
 // 5) use a spline function when connecting levels on same branch
@@ -33,7 +46,11 @@
 	
 // BUGS/problems
 // 1) see a lot of jitter on branches when moving around
-//   - may need to pre-generate a list of random values instead of using lastn++ in emit function
+//   problem traced to starting width variation based on position
+//   - if width is used for early exit this results in different number of RAND calls
+//     for the same plant which changes "seed" value resulting in a different branching pattern
+//   - solution (workaround)not use width as an exit criteria but reduce overhead by bypassing
+//     drawing and calculation sections in emit
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -93,6 +110,15 @@ static int line_nodes;
 #define TRIANGLE_LINES
 //#define SHOW_STATS
 //#define DUMP
+#ifdef TRIANGLE_LINES
+#define MIN_TRIANGLE_WIDTH 2.0
+#define MIN_LINE_WIDTH 1.0
+#define MIN_DRAW_WIDTH MIN_LINE_WIDTH
+#else
+#define MIN_TRIANGLE_WIDTH 1.0
+#define MIN_DRAW_WIDTH MIN_TRIANGLE_WIDTH
+
+#endif
 #ifdef DUMP
 static void show_stats()
 {
@@ -102,6 +128,7 @@ static void show_stats()
 }
 #endif
 
+static int randval=0;
 class SData {
 public:
     double v;
@@ -288,7 +315,7 @@ bool PlantMgr::setProgram(){
 	}
 	
 	int n=Plant::plants.size;
-	int l=lastn;
+	int l=randval;
 	
 	glEnable(GL_BLEND);
 	TNplant::clearStats();
@@ -304,12 +331,20 @@ bool PlantMgr::setProgram(){
 		
 		Point pp=Point(s->point.x,s->point.y,s->point.x);
 		
-		double r=Random(pp);
-		lastn=256*r+id;
 		
+		double r=Random(pp);
+		randval=256*r+id;
+		int l=randval;
+//		int oldforks=TNplant::stats[0][0];
+			
 		plant->setProgram();
+//		int forks=TNplant::stats[0][0]-oldforks;
+//		if(i<3){
+//		    cout<<i<<" "<<l<<" "<<randval<<" "<<forks<<endl;
+//		}
+		
 	}
-	lastn=l;
+	randval=l;
 	TNplant::showStats();
 	
 	//cout<<"branches:"<<TNBranch::branches<<" lines:"<<TNBranch::lines<<endl;
@@ -586,7 +621,7 @@ bool Plant::initProgram(){
 
 
 //===================== TNplant ==============================
-int TNplant::stats[MAX_BRANCHES][2];
+int TNplant::stats[MAX_BRANCHES][4];
 int TNplant::max_branches=0;
 //************************************************************
 // TNplant class
@@ -603,7 +638,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 		delete arg;	
 	}
 	plant=0;
-	level=0;
+	levels=0;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -638,7 +673,7 @@ void TNplant::applyExpr()
 void TNplant::init()
 {
 	PlantMgr *smgr=(PlantMgr*)mgr;
-    level=0;
+    levels=0;
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->set_first(1);
@@ -761,12 +796,12 @@ void TNplant::eval()
 void TNplant::clearStats(){
 	max_branches=0;
 	for(int i=0;i<MAX_BRANCHES;i++){
-		stats[i][0]=stats[i][1]=0;
+		stats[i][0]=stats[i][1]=stats[i][2]=stats[i][3]=0;
 	}
 }
 void TNplant::showStats(){
 	for(int i=0;i<max_branches;i++){
-		cout<<i<<" branches:"<<stats[i][0]<<" lines:"<<stats[i][1]<<endl;
+		cout<<i<<" branches:"<<stats[i][0]<<" lines:"<<stats[i][1]<<" terminals:"<<stats[i][2]<<" skipped:"<<stats[i][3]<<endl;
 	}
 }
 void TNplant::addLine(int id){
@@ -779,7 +814,16 @@ void TNplant::addBranch(int id){
 		max_branches++;
 	stats[id][0]++;	
 }
-
+void TNplant::addTerminal(int id){
+	if(id>=max_branches)
+		max_branches++;
+	stats[id][2]++;	
+}
+void TNplant::addSkipped(int id){
+	if(id>=max_branches)
+		max_branches++;
+	stats[id][3]++;	
+}
 //-------------------------------------------------------------
 // TNtexture::valueString() node value substring
 //-------------------------------------------------------------
@@ -852,8 +896,8 @@ bool TNplant::setProgram(){
 	Point tip;
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
-
-	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
+	//double f=width*pow(branch->width_taper,n)
+ 	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
 
 	return true;
 
@@ -908,194 +952,212 @@ void TNBranch::init(){
 	
 	TNplant *root=getRoot();
 	max_plant_levels=root->max_levels;
-	branch_id=root->level;
-	root->level+=1;
+	branch_id=root->levels;
+	root->levels+=1;
 	//cout<<"min_level="<<min_level<<" max_level="<<max_level<<endl;
 	
 	if(right)
 		right->init();
 }
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
-	if(lvl>=max_plant_levels)
-		return;
 	if(lvl<min_level)
 		return;
-	if(max_level>0 && lvl>max_level)
-		return;
-	int splits=max_splits*(1+0.5*randomness*RAND(lastn++));
+	maxlvl=max_plant_levels;
+	maxlvl=(max_level>0&&max_level<maxlvl)?max_level:maxlvl;
+   
+    if(lvl>maxlvl)
+    	return;
+    width*=width_taper;
+    size*=length_taper;
+    
+	int splits=max_splits*(1+0.5*randomness*SRAND(randval));
 	if(first_bias) // add more branches at start of branch fork
 		splits*=first_bias;
 	splits=splits<1?1:splits;
 	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,size*length_taper,width*width_taper,lvl);
+		emit(opt,start,vec,tip,size,width,lvl);
 	}
 }
-void TNBranch::emit(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
-	if(lvl>=max_plant_levels)
+void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
+		double width, int lvl) {
+	if (lvl < min_level)
 		return;
-	if(lvl<min_level)
+	if (lvl > maxlvl) {
 		return;
-	if(max_level>0 && lvl>max_level)
-		return;
-#ifdef TRIANGLE_LINES
-	if(width<0.5)
-		return;
-#else
-	if(width<2)
-		return;
-#endif
-	//branches++;
-	getRoot()->addBranch(branch_id);
-	double topx=0;
-	double topy=0;
-	double botx=1; 
-	double boty=1;
-	
-	bool first=(opt&FIRST);
-		
-	double offset=divergence; // how much to deviate from last segment direction
-	offset*=first?first_bias:1.0;
-	
-	size*=1+0.25*randomness*RAND(lastn++);
-	
-	Point v=vec.normalize();
-		
-	v.x+=offset*RAND(lastn++);
-	v.y+=offset*RAND(lastn++);
-	v.z+=offset*RAND(lastn++);
-	
-	v=v.normalize();
-	if(flatness>0){
-		Point n=getRoot()->norm+start;
-		n=n.normalize();
-		Point tp1=n.cross(v);
-		Point vp=tp1.cross(n);
-		double f=flatness;
-		if(first && first_bias)
-			f/=first_bias;
-		vp=vp.normalize(); // projection of v along surface
-		Point v1=v*(1-f);
-		Point v2=vp*f;
-		v=v1+v2;
 	}
-	v=v*size*length; // v = direction along last branch
-		
-	Point p2=start+v;	
-	Point bot=p2; // new base	
-			
-	p2=p2-TheScene->vpoint;
-	Point p1=start-TheScene->vpoint;
-	
-	v=bot-start; // new vector
-	
-	Color c=Color(0.1,0.5,0.0);
-	Density=((double)lvl)/max_plant_levels;
-	INIT;	
-	if(base){ // optional color, texture etc []
-		base->eval();
-		if(S0.cvalid())
-		  c=S0.c;
-	}
+	double topx = 0;
+	double topy = 0;
+	double botx = 1;
+	double boty = 1;
+	Point v, p1, p2, bot;
+	Color c;
+	int lev = lvl;
+	lev++;
+	bool terminal=branch_id==getRoot()->levels-1;
+	bool first = (opt & FIRST);
+	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
+	if (first && first_bias)
+		splits *= first_bias;
+	splits = splits >= 1 ? splits : 1;
 
-	glColor4d(c.red(),c.green(),c.blue(),1);	  
-	double off=width/TheScene->wscale;
-	int lev=lvl;
+	if (width < MIN_DRAW_WIDTH) {
+		getRoot()->addSkipped(branch_id);
+		randval += 5;
+	} else {		
+		double offset = divergence; // how much to deviate from last segment direction
+		offset *= first ? first_bias : 1.0;
+
+		size *= 1 + 0.25 * randomness * SRAND(randval);
+
+		v = vec.normalize();
+        // add a random offset to first branch split
+		double b = randomness*URAND(randval); 
+		if(first && b<=1)
+		 start=start-v*b*size * length;
+
+		v.x += offset * SRAND(randval);
+		v.y += offset * SRAND(randval);
+		v.z += offset * SRAND(randval);
+
+		
+		v = v.normalize();
+		
+		//start=start-jnt;
+		
+		if (flatness > 0) {
+			Point n = getRoot()->norm + start;
+			n = n.normalize();
+			Point tp1 = n.cross(v);
+			Point vp = tp1.cross(n);
+			double f = flatness;
+			if (first && first_bias)
+				f /= first_bias;
+			vp = vp.normalize(); // projection of v along surface
+			Point v1 = v * (1 - f);
+			Point v2 = vp * f;
+			v = v1 + v2;
+		}
+		v = v * size * length; // v = direction along last branch
+		
+		p2 = start + v; //new top
+		bot = p2; // new base	
+
+		p2 = p2 - TheScene->vpoint;
+		p1 = start - TheScene->vpoint;
+
+		v = bot - start; // new vector
+
+		c = Color(0.1, 0.5, 0.0);
+
+		Density = ((double) lev) / max_plant_levels;
+		INIT;
+		if (base) { // optional color, texture etc []
+			base->eval();
+			if (S0.cvalid())
+			c=S0.c;
+		}
+		double off = width / TheScene->wscale;
 #ifdef LINES_ONLY
- 	glLineWidth(width);
-	glBegin(GL_LINES);
-	glVertex4d(p1.x,p1.y,p1.z,0);
-	glVertex4d(p2.x,p2.y,p2.z,0);
-	glEnd();
-#else
-#ifdef DRAW_TRIANGLES
-#ifdef TRIANGLE_LINES	
-	if(width>=1){
-#endif
-		Point q=TheScene->project(v); // convert model to screen space
-		double a=atan2(q.y/q.z,q.x/q.z);
-		double x=-sin(a);
-		double y=cos(a);
-			
-		botx=x*off; 
-		boty=y*off;
-		
-		topx=x*off*width_taper;
-		topy=y*off*width_taper;
-		
-		botx=tip.x;
-		boty=tip.y;
-		
-		// fix billboard gap in sequential levels
-		//  - set bottom offsets for next level to = top offsets for previous level
-		tip.x=topx;
-		tip.y=topy;
-		
-		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
-		glDisable(GL_CULL_FACE);
-		
-		if(test3){ // @ key - draw lines
-			glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-			glLineWidth(2);	
-		}
-		
-		glBegin(GL_TRIANGLES);
-		// 1) cover rectangle by drawing 2 triangles starting at top-left			
-		glVertex4d(p2.x,p2.y,p2.z,1);
-		glVertex4d(p2.x,p2.y,p2.z,2);
-		glVertex4d(p1.x,p1.y,p1.z,3);
-		
-		glVertex4d(p2.x,p2.y,p2.z,1);
-		glVertex4d(p1.x,p1.y,p1.z,3);
-		glVertex4d(p1.x,p1.y,p1.z,4);
-		
-		// Note: shouldn't need to do this but otherwise half of the quad sometimes isn't drawn (??)
-		
-		// 2) cover same rectangle again by drawing 2 different triangles starting at bot-left	
-		glVertex4d(p1.x,p1.y,p1.z,4);
-		glVertex4d(p2.x,p2.y,p2.z,1);
-		glVertex4d(p2.x,p2.y,p2.z,2);
-		
-		glVertex4d(p1.x,p1.y,p1.z,4);
-		glVertex4d(p2.x,p2.y,p2.z,2);
-		glVertex4d(p1.x,p1.y,p1.z,3);
-
-		glEnd();
-		if(test3){
-			glPolygonMode(GL_FRONT,GL_FILL);
-			glPolygonMode(GL_BACK,GL_FILL);
-		}
-		lev++;		
-#ifdef TRIANGLE_LINES
-	}
-	else if(width>=0.5){
-		//glColor4d(0.1,0.5,0,1);
-		getRoot()->addLine(branch_id);
-		//lines++;
+		glColor4d(c.red(), c.green(), c.blue(), 1);
 		glLineWidth(width);
 		glBegin(GL_LINES);
 		glVertex4d(p1.x,p1.y,p1.z,0);
 		glVertex4d(p2.x,p2.y,p2.z,0);
 		glEnd();
-		lev+=2;
+#else
+#ifdef DRAW_TRIANGLES
+#ifdef TRIANGLE_LINES	
+	if (width > MIN_TRIANGLE_WIDTH) {
+#endif
+		if(/**/terminal &&(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
+			c=Color(1,0,0);
+			getRoot()->addTerminal(branch_id);
+		}
+		getRoot()->addBranch(branch_id);
+
+		glColor4d(c.red(), c.green(), c.blue(), 1);
+		Point q = TheScene->project(v); // convert model to screen space
+		double a = atan2(q.y / q.z, q.x / q.z);
+		double x = -sin(a);
+		double y = cos(a);
+
+		botx = x * off;
+		boty = y * off;
+
+		topx = x * off * width_taper;
+		topy = y * off * width_taper;
+
+		botx = tip.x;
+		boty = tip.y;
+
+		// fix billboard gap in sequential levels
+		//  - set bottom offsets for next level to = top offsets for previous level
+		tip.x = topx;
+		tip.y = topy;
+
+		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+		glDisable(GL_CULL_FACE);
+
+		if (test3) { // @ key - draw lines
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glLineWidth(2);
+		}
+
+		glBegin(GL_TRIANGLES);
+		// 1) cover rectangle by drawing 2 triangles starting at top-left			
+		glVertex4d(p2.x, p2.y, p2.z, 1);
+		glVertex4d(p2.x, p2.y, p2.z, 2);
+		glVertex4d(p1.x, p1.y, p1.z, 3);
+
+		glVertex4d(p2.x, p2.y, p2.z, 1);
+		glVertex4d(p1.x, p1.y, p1.z, 3);
+		glVertex4d(p1.x, p1.y, p1.z, 4);
+
+		// Note: shouldn't need to do this but otherwise half of the quad sometimes isn't drawn (??)
+
+		// 2) cover same rectangle again by drawing 2 different triangles starting at bot-left	
+		glVertex4d(p1.x, p1.y, p1.z, 4);
+		glVertex4d(p2.x, p2.y, p2.z, 1);
+		glVertex4d(p2.x, p2.y, p2.z, 2);
+
+		glVertex4d(p1.x, p1.y, p1.z, 4);
+		glVertex4d(p2.x, p2.y, p2.z, 2);
+		glVertex4d(p1.x, p1.y, p1.z, 3);
+
+		glEnd();
+		if (test3) {
+			glPolygonMode(GL_FRONT, GL_FILL);
+			glPolygonMode(GL_BACK, GL_FILL);
+		}
+#ifdef TRIANGLE_LINES
+	} else if (width >= MIN_LINE_WIDTH) {
+		if(/**/terminal &&(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
+			getRoot()->addTerminal(branch_id);
+			c=Color(1,0,0);
+		}
+
+		glColor4d(c.red(), c.green(), c.blue(), 1);
+
+		//glColor4d(0.1,0.5,0,1);
+		getRoot()->addLine(branch_id);
+		glLineWidth(width);
+		glBegin(GL_LINES);
+		glVertex4d(p1.x, p1.y, p1.z, 0);
+		glVertex4d(p2.x, p2.y, p2.z, 0);
+		glEnd();
 	}
 #endif
 #endif
 #endif
-	if(lev<max_plant_levels){
-		int splits=max_splits*(1+0.5*randomness*RAND(lastn++));
-		if(first && first_bias)
-			splits*=first_bias;
-		splits=splits>=1?splits:1;
-		for(int i=0;i<splits;i++){
-			width*=width_taper;
-			size*=length_taper;
-			emit(0,bot,v,tip,size,width,lev);
-		}
-		
-		if(right && right->typeValue() == ID_BRANCH){
-			TNBranch *child=(TNBranch*)right;
-			child->fork(FIRST,bot,v,tip, size,width,lev);		
-		}	
+	}
+	width *= width_taper;
+	size *= length_taper;
+	for (int i = 0; i < splits; i++) {
+		emit(0, bot, v, tip, size, width, lev);
+	}
+	if (right && right->typeValue() == ID_BRANCH) {
+		TNBranch *child = (TNBranch*) right;
+		child->fork(FIRST, bot, v, tip, size, width, lev);
 	}
 }
 

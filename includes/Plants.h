@@ -98,8 +98,8 @@ class TNplant : public TNplacements
 protected:
 public:
 	Point norm;
-	int level;
-	static int stats[MAX_BRANCHES][2];
+	int levels;
+	static int stats[MAX_BRANCHES][4];
 
 	int instance;
 	Plant *plant;
@@ -135,6 +135,8 @@ public:
 	static void showStats();
 	static void addBranch(int id);
 	static void addLine(int id);
+	static void addTerminal(int id);
+	static void addSkipped(int id);
 };
 
 //************************************************************
@@ -143,6 +145,7 @@ public:
 class TNBranch : public TNbase
 {
 public:
+	int maxlvl;
 	int max_plant_levels;
 	int min_level;
 	int max_level;
