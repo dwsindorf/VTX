@@ -21,10 +21,6 @@ public:
 	double dist;
 	int hits;
 	int visits;
-	int plants_dim;
-	double variability;
-	double rand_flip_prob;
-	double select_bias;
 	PlantMgr *mgr;
 
 	int instance;
@@ -44,12 +40,8 @@ public:
 	double ht;
 	double aveht;
 	double pntsize;
-	double variability;
-	double rand_flip_prob;
-	double select_bias;
 	int instance;
 
-	int plants_dim;
 	int visits;
 	Point4DL point;
 	Point base;
@@ -71,14 +63,11 @@ public:
 	TNplant *plant;
 
 	Color c;
-	int plants_dim;
-	double variability;
 	double slope_bias;
 	double ht_bias;
 	double lat_bias;
-	double rand_flip_prob;
-	double select_bias;
-	
+	double threshold;
+
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
 
@@ -108,6 +97,7 @@ public:
 	double size;
 	double pntsize;
 	double maxdensity;
+
 	int max_levels;
 	Point base_point;
 	
@@ -158,6 +148,8 @@ public:
 	double flatness;
 	double length_taper;
 	double width_taper;
+	
+	TNplant *root;
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	

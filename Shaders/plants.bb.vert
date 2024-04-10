@@ -12,13 +12,11 @@ varying vec4 Color;
 varying vec4 PlantVars;
 varying vec4 Constants1;
 
-#define XY_OFFSETS
 void main(void) {
 	vec4 vertex=vec4(gl_Vertex.xyz,1.0);//-CommonAttributes2; //-TheScene->vpoint
 	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
 	vec3 ps = proj.xyz/proj.w;
 	EyeDirection=-(gl_ModelViewMatrix * vertex); // do view rotation
-	
 	
 	float topx=CommonAttributes1.r;
 	float topy=CommonAttributes1.g;
@@ -33,9 +31,10 @@ void main(void) {
 	vec3 norm;
 
 #ifdef DRAW_TRIANGLES
-	//gl_Position = vec4(ps.x,ps.y,ps.z,1);
-
-	if(gl_Vertex.w<1.5){ // 1
+	if(gl_Vertex.w<0.5){ // 0
+		gl_Position = vec4(ps.x,ps.y,ps.z,1);
+	}
+	else if(gl_Vertex.w<1.5){ // 1
 	    norm=vec3(dx2,0,1);
     	gl_Position = vec4(ps.x-topx,ps.y-topy,ps.z,1); // top-left  
     }     	  
