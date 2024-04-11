@@ -33,15 +33,13 @@
 // 1) Better branching model (DONE)
 //  Currently all branches spawn from the same point in screen space
 //  Improve this by trying the following:
-//  a)allow branches to spawn at random locations along parent stem vector
-//  b)don't require branch starting width to be the same as parents width
-//    - scale next segment width based on random factor or (multi-branch case) size of child branch
-//    - in screen space offset origin of new fork on a line between parents tip xy left and right
-//    - make sure new tip base is contained within parent's top tip
+//  a) allow branches to spawn at random locations along parent stem vector (DONE)
+//    - set 'start' position somewhere between top and base using random variable
+//  b) don't require branch starting width to be the same as parents width (DONE)
+//    - scale next segment width based on size of child branch
 //  c) In multi-branch cases have a minimum level to start producing new branches and max level to stop
 //    - min level prevents branches from forming lower in parent trunk
 //    - child branches should form only towards the tip of parent branches
-//    - Label branch ends as "terminal" if next level would be below width of branch level thresholds
 // 2) implement geometry shader to improve performance
 //    - pass in vectors in screen space (bot, top) of line
 //    - pass in constants delta width
@@ -72,6 +70,8 @@
 //     o jitter not observed
 // 2) don't get enough plants generated - not all color spots produce a new plant (??)
 //     o workaround: added extra argument in TNplant to increase size of "dot" (threshold)
+// 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
+//    - may be fixed by implementing leaf class and rendering leafsa at all terminal nodes ?eclipse
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -114,9 +114,22 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-//#define DEBUG_PMEM
+//#define NO_EXIT // performance test 
 //#define NO_DRAW // performance test 
 //#define NO_CALC // performance test 
+// overhead measurements (plant-pines threshold=2)
+// 1) NO_EXIT+NO_DRAW+NO_CALC - fps ~16
+// 2) NO_EXIT only: fps ~8 (scene rendered)
+// 3) NO_EXIT+NO_DRAW: fps ~10 (marginal improvement if render bypassed)
+// 4) NO_DRAW+NO_CALC (early exit only): fps ~60
+// 5) NO_DRAW only (calc active + early exit) : fps ~30
+// 6) none (early exit only): fps ~16 (scene rendered)
+// observations:
+// 1) early exit improves speedup the most by 2-4x
+// 2) render overhead ~2x
+// 3) calc overhead ~2x
+
+//#define DEBUG_PMEM
 #define USE_AVEHT
 //#define SHOW
 #define MIN_VISITS 2
@@ -1002,7 +1015,9 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	if (width < MIN_DRAW_WIDTH) {
 		root->addSkipped(branch_id);
 		randval += 5;
+#ifndef NO_EXIT
 		return;
+#endif
 	} else {
 #ifndef NO_CALC	
 		double offset = divergence; // how much to deviate from last segment direction
