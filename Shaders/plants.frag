@@ -2,12 +2,8 @@
 #include "common.h"
 #include "utils.h"
 
-varying vec4 PlantVars;
-//varying vec4 Constants1;
-
 varying vec4 Normal;
 varying vec4 EyeDirection;
-varying vec4 Position;
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -33,9 +29,9 @@ varying vec4 Color;
 
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
-
+    
 	for(int i=0;i<NLIGHTS;i++){
-		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
+		vec3 light      = normalize(gl_LightSource[i].position.xyz);
 		float LdotN     = dot(light,Normal.xyz);// for day side diffuse lighting
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = LdotN*amplitude;

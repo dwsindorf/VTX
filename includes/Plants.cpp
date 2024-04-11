@@ -17,6 +17,7 @@
 #define URAND(x) 	(rands[PERM((x++))]+0.5)
 
 #define FIRST  1
+
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -37,12 +38,11 @@
 //    - set 'start' position somewhere between top and base using random variable
 //  b) don't require branch starting width to be the same as parents width (DONE)
 //    - scale next segment width based on size of child branch
-//  c) In multi-branch cases have a minimum level to start producing new branches and max level to stop
+//  c) In multi-branch cases have a minimum level to start producing new branches and max level to stop (DONE)
 //    - min level prevents branches from forming lower in parent trunk
 //    - child branches should form only towards the tip of parent branches
-// 2) implement geometry shader to improve performance
+// 2) implement geometry shader to improve performance (DONE)
 //    - pass in vectors in screen space (bot, top) of line
-//    - pass in constants delta width
 //    - calculate screen space rectangle (or line)
 //    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures
@@ -72,6 +72,9 @@
 //     o workaround: added extra argument in TNplant to increase size of "dot" (threshold)
 // 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
 //    - may be fixed by implementing leaf class and rendering leafsa at all terminal nodes ?eclipse
+// 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments
+//    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
+//    - oddly, setting glLineWidth to 1.0 (vs. width) resulted in a speedup from ~15 fps to ~25 fps
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -129,26 +132,26 @@ static int line_nodes;
 // 2) render overhead ~2x
 // 3) calc overhead ~2x
 
-//#define DEBUG_PMEM
 #define USE_AVEHT
-//#define SHOW
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
 #define SHOW_STATS
 //#define DUMP
+//#define SHOW
+//#define DEBUG_PMEM
 
-//#define LINES_ONLY
-#define DRAW_TRIANGLES
+//#define LINES_ONLY  //16.3 fps
+#define GS_SHADER // 19.6 fps
+
 #define TRIANGLE_LINES
-
-#ifdef TRIANGLE_LINES
-#define MIN_TRIANGLE_WIDTH 2.0
+#define MIN_DRAW_WIDTH 1.0
 #define MIN_LINE_WIDTH 1.0
-#define MIN_DRAW_WIDTH MIN_LINE_WIDTH
+
+#ifdef TRIANGLE_LINES  // 17.7 fps
+	#define MIN_TRIANGLE_WIDTH 2.0
 #else
-#define MIN_TRIANGLE_WIDTH 1.0
-#define MIN_DRAW_WIDTH MIN_TRIANGLE_WIDTH
+	#define MIN_TRIANGLE_WIDTH 1.0
 #endif
 
 #ifdef DUMP
@@ -296,15 +299,23 @@ bool PlantMgr::setProgram(){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
 #ifndef LINES_ONLY
-#ifdef DRAW_TRIANGLES
 	sprintf(defs+strlen(defs),"#define DRAW_TRIANGLES\n");
 #endif
-#endif
 	GLSLMgr::setDefString(defs);
+#ifdef GS_SHADER
+	GLSLMgr::input_type=GL_LINES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+	GLSLMgr::tesslevel=0;
+	GLSLMgr::max_output=5;  // special case
+	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
+#else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
+#endif
 	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program)
+	if(!program){
+		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
 		return false;
+	}
 
 	GLSLVarMgr vars;
 	
@@ -334,7 +345,6 @@ bool PlantMgr::setProgram(){
 	vars.setProgram(program);
 	vars.loadVars();
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
-	//GLSLMgr::CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
 
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
@@ -897,7 +907,8 @@ bool TNplant::setProgram(){
 	Point tip;
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
-	
+	glDisable(GL_CULL_FACE);
+
  	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
 
 	return true;
@@ -1083,7 +1094,6 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		glEnd();
 		//}
 #else
-#ifdef DRAW_TRIANGLES
 #ifdef TRIANGLE_LINES	
 	if (width > MIN_TRIANGLE_WIDTH) {
 #endif
@@ -1113,12 +1123,17 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		tip.x = topx;
 		tip.y = topy;
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
-		glDisable(GL_CULL_FACE);
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glLineWidth(2);
-		}
+		}	
+#ifdef GS_SHADER
+		glBegin(GL_LINES);
+		glVertex4d(p1.x, p1.y, p1.z, 1);
+		glVertex4d(p2.x, p2.y, p2.z, 2);
+		glEnd();
+#else
  		// TODO let geometry shader do this
 		glBegin(GL_TRIANGLES);
 		// 1) cover rectangle by drawing 2 triangles starting at top-left			
@@ -1140,11 +1155,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		glVertex4d(p1.x, p1.y, p1.z, 4);
 		glVertex4d(p2.x, p2.y, p2.z, 2);
 		glVertex4d(p1.x, p1.y, p1.z, 3);
-
 		glEnd();
+
+#endif
 		if (test3) {
-			glPolygonMode(GL_FRONT, GL_FILL);
-			glPolygonMode(GL_BACK, GL_FILL);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 #endif
 #ifdef TRIANGLE_LINES
@@ -1152,19 +1167,23 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		root->addLine(branch_id);
 #ifndef NO_DRAW
 		if(/*terminal &&*/(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
-			root->addTerminal(branch_id);
-			//c=Color(0,1,0);
+			root->addTerminal(branch_id);		
 		}
-		glColor4d(c.red(), c.green(), c.blue(), 1);
+		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
+		glLineWidth(1);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//c=Color(1,0,0);
 
-		glLineWidth(width);
+		glColor4d(c.red(), c.green(), c.blue(), 1);
 		glBegin(GL_LINES);
 		glVertex4d(p1.x, p1.y, p1.z, 0);
 		glVertex4d(p2.x, p2.y, p2.z, 0);
 		glEnd();
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 #endif
 	}
-#endif
 #endif
 #endif
 	}
