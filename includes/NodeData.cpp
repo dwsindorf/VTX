@@ -458,7 +458,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		CurrentScope->set_spass();
 		MapPt=point();
 		Td.density=0;
-		Td.diffuse=Color(1,1,1);
+        if(!do_sprites)
+			Td.diffuse=Color(1,1,1);
+
 		for(i=0;i<tp->plants.size;i++){
 			Plant *plant=tp->plants[i];
 			plant->eval();

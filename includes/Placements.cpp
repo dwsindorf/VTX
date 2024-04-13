@@ -26,7 +26,6 @@ extern int hits,visits;
 #define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD          // turn on to get lod info
-//#define USE_HASHTABLE
  
 static TerrainData Td;
 extern double ptable[];
@@ -83,14 +82,8 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 //	arg[2]  mult			size multiplier per level
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
-#ifdef GLOBAL_HASH
 
-Placement **PlacementMgr::hash=0;
-int PlacementMgr::index=0;
-int PlacementMgr::hits=0;
-#endif
 LinkedList<Placement*> PlacementMgr::list;
-int PlacementMgr::hashsize=PERMSIZE;
 
 PlacementMgr::PlacementMgr(int i)
 {
@@ -106,11 +99,11 @@ PlacementMgr::PlacementMgr(int i)
 	density=0.8;    			
   	dexpr=0;
   	base=0;
-#ifndef GLOBAL_HASH
+
   	hash=0;
   	hashsize=PERMSIZE;
   	index=0;
-#endif
+
   	hits=0;
   	roff=0.5*PI;
   	roff2=1;
@@ -418,7 +411,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
     type=mgr.type;
 	hid=n;
 	double d,r,pf=1;
-	radius=0.0;
+	radius=mgr.size;
 	users=0;
 	flags.l=0;
 #ifdef DEBUG_PLACEMENTS

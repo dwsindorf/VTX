@@ -19,7 +19,7 @@ public:
 	double aveht;
 	double wtsum;
 	double dist;
-	int hits;
+	int place_hits;
 	int visits;
 	PlantMgr *mgr;
 
@@ -67,6 +67,8 @@ public:
 	double ht_bias;
 	double lat_bias;
 	double threshold;
+	double scale;
+
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);

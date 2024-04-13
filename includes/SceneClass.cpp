@@ -3134,7 +3134,7 @@ void Scene::show_mode_info()
             draw_string(MENU_COLOR," 3: cells");
             draw_string(MENU_COLOR," 4: raster");
             draw_string(MENU_COLOR," 5: stars");
-            draw_string(MENU_COLOR," 6: craters");
+            draw_string(MENU_COLOR," 6: placements");
             draw_string(MENU_COLOR," 7: terrain");
         }
         break;

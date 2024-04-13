@@ -480,15 +480,11 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 void Sprite::reset()
 {
 	sprites.free();
-#ifdef GLOBAL_HASH
-	PlacementMgr::free_htable();
-#else
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->sprites.size;i++){
 		Sprite *sprite=tp->sprites[i];
 		sprite->mgr()->free_htable();
 	}
-#endif
 }
 
 void Sprite::set_image(Image *i, int d){
@@ -517,10 +513,7 @@ void Sprite::collect()
 	int bad_valid=0;
 	int bad_active=0;
 #endif	
-#ifdef GLOBAL_HASH
-	PlacementMgr::ss();
-	SpritePoint *s=(SpritePoint*)PlacementMgr::next();
-#else
+
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->sprites.size;i++){
 #ifdef SHOW_STATS	
@@ -529,7 +522,6 @@ void Sprite::collect()
 		Sprite *sprite=tp->sprites[i];
 		sprite->mgr()->ss();
 		SpritePoint *s=(SpritePoint*)sprite->mgr()->next();
-#endif
 	while(s){
 #ifdef SHOW_STATS
 		trys++;
@@ -569,10 +561,7 @@ void Sprite::collect()
 		    	sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
 		    }
 		}
-#ifdef GLOBAL_HASH
-		s=PlacementMgr::next();
-	  }
-#else 
+
 		s=sprite->mgr()->next();
 	  }	
 #ifdef SHOW_STATS
@@ -584,7 +573,6 @@ void Sprite::collect()
 #endif
 
 	} // next sprite
-#endif
 	//}
     cout<<"total sprites collected:"<<sprites.size<<endl;
 	sprites.sort();

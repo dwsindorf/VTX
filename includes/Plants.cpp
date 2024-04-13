@@ -13,6 +13,10 @@
 #define COLOR_TEST
 #define DENSITY_TEST
 
+#define SHOW_STATS
+#define SHOW_BRANCH_STATS
+//#define DEBUG_SLOPE_BIAS
+
 #define SRAND(x) 	(rands[PERM((x++))])
 #define URAND(x) 	(rands[PERM((x++))]+0.5)
 
@@ -46,20 +50,26 @@
 //    - calculate screen space rectangle (or line)
 //    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures
-// 4) add support for bump shading from textures
+//    - add support for bump shading from textures
+// 4) implement TNleaf class
+//    - only generate leaves at end of "terminal" branches
+//    - may use a point sprite implementation (probably need to sort in this case)
+//    - possible to instead use a simple geometry model (single triangle with color ?)
 // 5) use a spline function when connecting levels on same branch
 //   - generate additional line segments between segment end points (no need for branching)
 // 6) better lighting model for branches
 //   - currently only uses x-direction in screen space
 //   - works good for vertical trunks but makes horizontal branches look flat
 //   - idea:incorporate delta-y to get better effect ?
-// 7) go to a TRUE 3-d model vs. lines with rendered billboards in screen space
+// 7) add curvature to branches by implementing a spline function
+//   - for efficiency probably best done in a geometry shader
+// 8) go to a TRUE 3-d model vs. lines with rendered billboards in screen space
 	
 // BUGS/problems
 // 1) see a lot of jitter on branches when moving around (FIXED)
-//   problem traced to starting width variation based on position (size of dot)
+//   problem traced to starting width variation based on position (size of dot as viewpoint changes)
 //   - if width is used for early exit this results in different number of RAND calls
-//     for the same plant which changes "seed" value resulting in a different branching pattern
+//     for the same plant which changes the "seed" value resulting in a different branching pattern
 //   - workaround: don't use width as an exit criteria - but reduce overhead by bypassing
 //     drawing and calculation sections in emit if width <1
 //     o this only improves speedup marginally (overhead mainly due to stack pushes ?)
@@ -68,17 +78,17 @@
 //     o decreases "skipped" calls 4-7 fold
 //     o speed up ~2x
 //     o jitter not observed
-// 2) don't get enough plants generated - not all color spots produce a new plant (??)
-//     o workaround: added extra argument in TNplant to increase size of "dot" (threshold)
+// 2) don't get enough plants generated - not all color spots produce a new plant
+//     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
+//     o improvement: moving visits++ before threshold test in set_terrain
 // 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
-//    - may be fixed by implementing leaf class and rendering leafsa at all terminal nodes ?eclipse
+//    - may be fixed by implementing leaf class and rendering leafs at all terminal nodes ?
 // 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments
 //    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
 //    - oddly, setting glLineWidth to 1.0 (vs. width) resulted in a speedup from ~15 fps to ~25 fps
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
-
 extern double Hscale, Drop, MaxSize,Height,Phi,Density;
 extern double ptable[];
 extern Point MapPt;
@@ -90,6 +100,8 @@ extern void dec_tabs();
 extern char   tabs[];
 extern int addtabs;
 
+static int draw_count;
+
 extern int test3;
 static double sval=0;
 static double cval=0;
@@ -97,7 +109,6 @@ static double mind=0;
 static double htval=0;
 static int ncalls=0;
 static int nhits=0;
-//static double thresh=2.0;    // move to argument ?
 
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
@@ -132,11 +143,23 @@ static int line_nodes;
 // 2) render overhead ~2x
 // 3) calc overhead ~2x
 
+static double size_scale=0.5;
+
+// scale=0.5 fps=18
+//0 branches:497 lines:540 terminals:255 skipped:125
+//1 branches:23292 lines:80003 terminals:56675 skipped:58778
+//2 branches:35913 lines:139913 terminals:82969 skipped:108323
+
+// scale=1 159 plants fps=25
+// 0 branches:1064 lines:470 terminals:279 skipped:69
+// 1 branches:23557 lines:79239 terminals:56379 skipped:61851
+// 2 branches:11917 lines:61732 terminals:41420 skipped:129587
+
+
 #define USE_AVEHT
-#define MIN_VISITS 2
+#define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
-#define SHOW_STATS
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -145,13 +168,13 @@ static int line_nodes;
 #define GS_SHADER // 19.6 fps
 
 #define TRIANGLE_LINES
-#define MIN_DRAW_WIDTH 1.0
-#define MIN_LINE_WIDTH 1.0
+#define MIN_DRAW_WIDTH size_scale
+#define MIN_LINE_WIDTH size_scale
 
 #ifdef TRIANGLE_LINES  // 17.7 fps
-	#define MIN_TRIANGLE_WIDTH 2.0
+	#define MIN_TRIANGLE_WIDTH 2
 #else
-	#define MIN_TRIANGLE_WIDTH 1.0
+	#define MIN_TRIANGLE_WIDTH 1
 #endif
 
 #ifdef DUMP
@@ -170,8 +193,9 @@ public:
     double f;
     double value()   { return v;}
 };
-static SData   sdata[256];
-static ValueList<SData*> slist(sdata,256);
+#define SDATA_SIZE 1024
+static SData   sdata[SDATA_SIZE];
+static ValueList<SData*> slist(sdata,SDATA_SIZE);
 static int          scnt;
 
 //************************************************************
@@ -201,6 +225,8 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	dexpr=0;
 	instance=0;
 	threshold=1;
+	scale=1;
+
 	set_ntest(TEST_NEIGHBORS);
 }
 PlantMgr::~PlantMgr()
@@ -371,7 +397,9 @@ bool PlantMgr::setProgram(){
 		plant->setProgram();
 	}
 	randval=l;
+#ifdef SHOW_BRANCH_STATS
 	TNplant::showStats();
+#endif
 	return true;
 }
 //-------------------------------------------------------------
@@ -392,7 +420,7 @@ PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 	wtsum=0;
 	dist=1e16;
 	visits=0;
-	hits=0;
+	place_hits=0;
 	mind=1e16;
 	mgr=&m;
 	
@@ -410,12 +438,13 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 	d=d/radius;
 	PlantMgr &mgr=(PlantMgr&)pmgr;
 	sval=0;
-	
+	visits++;
+
 	double thresh=mgr.threshold;
 	
 	if(d>thresh)
 		return false;
-	visits++;
+
     flags.s.active=true;
 	sval=lerp(d,0,thresh,0,1);
 
@@ -428,13 +457,13 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 		ht=Height;
 		dist=d;
 		mind=d;
-		hits++;
+		place_hits++;
 	}
-	::hits++;
+	hits++;
 
  	sdata[scnt].v=hid;
    	sdata[scnt].f=sval;
-  	if(scnt<255)
+  	if(scnt<SDATA_SIZE)
   	    scnt++;
 	return true;
 }
@@ -442,7 +471,7 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 void PlantPoint::reset(){
 	flags.s.active=0;
 	visits=0;
-	hits=0;
+	place_hits=0;
 	dist=1e6;
 	aveht=0;
 	wtsum=0;
@@ -453,7 +482,7 @@ void PlantPoint::dump(){
 		p=center;
 		char msg[256];
 		char vh[32];
-		sprintf(vh,"%d:%d",visits,hits);
+		sprintf(vh,"%d:%d",visits,place_hits);
 		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
 		cout<<msg<<endl;
 	}
@@ -480,7 +509,7 @@ void PlantData::print(){
 	char msg[256];
 	Point pp=Point(point.x,point.y,point.z);
 	double h=TheMap->radius*TheMap->hscale;
-	sprintf(msg,"visits:%-1d x:%d y:%d z:%d ht:%-1.4f aveht:%-1.4f dist:%g",visits,point.x,point.y,point.z,h*ht/FEET,h*aveht/FEET,distance/FEET);
+	sprintf(msg,"visits:%-1d ht:%-1.4f aveht:%-1.4f dist:%g",visits,h*ht/FEET,h*aveht/FEET,distance/FEET);
 	cout<<msg<<endl;
 	
 }
@@ -500,15 +529,12 @@ Plant::Plant(int l, TNode *e)
 void Plant::reset()
 {
 	plants.free();
-#ifdef GLOBAL_HASH
-	PlacementMgr::free_htable();
-#else
+
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->plants.size;i++){
 		Plant *plant=tp->plants[i];
 		plant->mgr()->free_htable();
 	}
-#endif
 }
 
 //-------------------------------------------------------------
@@ -530,10 +556,7 @@ void Plant::collect()
 	int bad_valid=0;
 	int bad_active=0;
 #endif	
-#ifdef GLOBAL_HASH
-	PlacementMgr::ss();
-	PlantPoint *s=(PlantPoint*)PlacementMgr::next();
-#else
+
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->plants.size;i++){
 #ifdef SHOW_STATS	
@@ -542,7 +565,6 @@ void Plant::collect()
 		Plant *plant=tp->plants[i];
 		plant->mgr()->ss();
 		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
-#endif
 	while(s){
 #ifdef SHOW_STATS
 		trys++;
@@ -582,22 +604,17 @@ void Plant::collect()
 		    	plants.add(new PlantData((PlantPoint*)s,bp,d,pts));
 		    }
 		}
-#ifdef GLOBAL_HASH
-		s=PlacementMgr::next();
-	  }
-#else 
 		s=plant->mgr()->next();
 	  }	
 #ifdef SHOW_STATS
-	double usage=100.0*trys/PlacementMgr::hashsize;
+	double usage=100.0*trys/plant->mgr()->hashsize;
 	double badvis=100.0*bad_visits/trys;
 	double badactive=100.0*bad_active/trys;
 	double badpts=100.0*bad_pts/trys;
-	cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<endl;
+	cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
 #endif
 
 	} // next plant
-#endif
 	//}
     cout<<"total plants collected:"<<plants.size<<endl;
 	plants.sort();
@@ -650,6 +667,13 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	}
 	plant=0;
 	levels=0;
+	pntsize=0;
+	maxdensity=0;
+	max_levels=0;
+	radius=0;
+	size=0;
+	instance=0;
+	branch=0;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -688,6 +712,7 @@ void TNplant::init()
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->set_first(1);
+	//smgr->setHashsize(2*PERMSIZE);
 	smgr->init();
 	
 	//TNplacements::init();
@@ -703,9 +728,10 @@ void TNplant::init()
 	if(n>4) mgr->level_mult=arg[4];     // scale multiplier per level
 	if(n>5) maxdensity=arg[5];
 	if(n>6) smgr->threshold=arg[6];
-	if(n>7) smgr->slope_bias=arg[7];
-	if(n>8) smgr->ht_bias=arg[8];
-	if(n>9) smgr->lat_bias=arg[9];
+	if(n>7) smgr->scale=arg[7];
+	if(n>8) smgr->slope_bias=arg[8];
+	if(n>9) smgr->ht_bias=arg[9];
+	if(n>10) smgr->lat_bias=arg[10];
 	
 	if(right)
 	   right->init();
@@ -790,10 +816,10 @@ void TNplant::eval()
 		nhits++;
 		double x=1-cval;
 #ifdef COLOR_TEST
-		if(instance==0)
-			c=Color(x,0,1);
-		else
-			c=Color(x,1,0);
+//		if(instance==0)
+//			c=Color(x,0,1);
+//		else
+			c=Color(0,x,1);
 		Td.diffuse=Td.diffuse.mix(c,0.9);
 #endif
 #ifdef DENSITY_TEST
@@ -883,9 +909,11 @@ void TNplant::saveNode(FILE *f)
 	fprintf(f,"%s",buff);
 }
 
-bool TNplant::setProgram(){
 
-	double length=base_point.length();
+bool TNplant::setProgram(){
+	size_scale=((PlantMgr *)mgr)->scale;
+
+	double length=size_scale*size*base_point.length();
 		
 	Point bot=base_point;
 	
@@ -897,19 +925,22 @@ bool TNplant::setProgram(){
 	else
 		return false;
 
-	double branch_size=length*size*branch->length;
+	double branch_size=length*branch->length;
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
 		
-	double width=pntsize;
+	double width=size_scale*pntsize;
+	
+	//cout << length<<" "<<width<<endl;
+
 	
 	Point tip;
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
 	glDisable(GL_CULL_FACE);
 
- 	branch->fork(FIRST,p1,p2-p1,tip,length*size,width,0);
+ 	branch->fork(FIRST,p1,p2-p1,tip,length,width,0);
 
 	return true;
 
@@ -1017,7 +1048,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	splits = splits >= 1 ? splits : 1;
 	double scale=1.0;
 	if(first && lvl>0){
-		scale=length*root->size/size/TheScene->wscale;
+		scale=size_scale*length*root->size/size/TheScene->wscale;
 		scale=scale>1?1:scale;
 		scale=scale<0?0:scale;
 		width*=scale;
@@ -1041,7 +1072,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		double b = randomness*URAND(randval);
 		if(first && lvl>0){
 			b=b<=1?b:1;				
-		 	start=start-v*b*size * length;
+		 	start=start-v*b*size*length;
 		}
 
 		v.x += offset * SRAND(randval);
@@ -1168,11 +1199,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 #ifndef NO_DRAW
 		if(/*terminal &&*/(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
 			root->addTerminal(branch_id);		
+			c=Color(0,1,0);
 		}
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glLineWidth(1);
+		glLineWidth(size_scale);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//c=Color(1,0,0);
 
 		glColor4d(c.red(), c.green(), c.blue(), 1);
 		glBegin(GL_LINES);

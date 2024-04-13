@@ -135,7 +135,7 @@ showenv:;   @echo "CFLAGS = $(CFLAGS)"
 			@echo "LFLAGS = $(LFLAGS)"
 			@echo "INCS = $(INCS)"
 			@echo "PLATFORM = $(PLATFORM)"
-#			@echo "PATH = $(PATH)"
+			@echo "PATH = $(PATH)"
 			@echo "LIBS = `wx-config --libs --gl_libs` $(LIBS)"
 			@echo "WXFLAGS = `wx-config --cxxflags`"
 			
