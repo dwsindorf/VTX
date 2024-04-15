@@ -67,8 +67,6 @@ public:
 	double ht_bias;
 	double lat_bias;
 	double threshold;
-	double scale;
-
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
@@ -99,6 +97,8 @@ public:
 	double size;
 	double pntsize;
 	double maxdensity;
+	double size_scale;
+	double norm_scale;
 
 	int max_levels;
 	Point base_point;
@@ -121,6 +121,7 @@ public:
 	void saveNode(FILE *f);
 	void applyExpr();
 	bool setProgram();
+	void emit();
 	
 	static int max_branches;
 	static void clearStats();
@@ -151,7 +152,11 @@ public:
 	double length_taper;
 	double width_taper;
 	
+	Texture *texture;
+	TNcolor *color;
 	TNplant *root;
+	
+	char texname[256];
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	
@@ -164,6 +169,8 @@ public:
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
+	
+	bool setProgram();
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);

@@ -92,6 +92,9 @@ static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
 //#define DEBUG_PMEM
 
+//#define COLOR_TEST
+#define DENSITY_TEST
+
 #define USE_AVEHT
 //#define SHOW
 #define MIN_VISITS 2
@@ -716,8 +719,6 @@ void TNsprite::set_id(int i){
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
-#define COLOR_TEST
-#define DENSITY_TEST
 void TNsprite::eval()
 {	
 	SINIT;

@@ -118,6 +118,7 @@ class TNcolor : public TNvector
 {
 public:
 	TNcolor(TNode *r) : TNvector(r) {}
+	void dump()				{ printf("%s()\n",symbol());}
 	void eval();
 	void init();
 	int typeValue()			{ return ID_COLOR;}

@@ -49,6 +49,7 @@ public:
 	static void init3DNoiseTexture();
 
 	static void showShaderLog(char *hdr, GLhandleARB);
+	static int checkForErrors();
 	static char defString[4096];
 	static char verString[256];
 	static char extString1[256];

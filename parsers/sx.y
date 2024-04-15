@@ -510,9 +510,9 @@ leaf_expr
 branch_expr
     : YY_BRANCH '(' arg_list ')'
     						{ $$=new TNBRANCH($3, 0, 0);APOP;}
-    | YY_BRANCH '(' arg_list ')' '[' expr ']'
+    | YY_BRANCH '(' arg_list ')' '[' arg_list ']'
     						{ $$=new TNBRANCH($3, $6, 0);APOP;}
-    | YY_BRANCH '(' arg_list ')' '[' expr ']' expr
+    | YY_BRANCH '(' arg_list ')' '[' arg_list ']' expr
     						{ $$=new TNBRANCH($3, $6, $8);APOP;}	
     | YY_BRANCH '(' arg_list ')' expr
     						{ $$=new TNBRANCH($3, 0, $5);APOP;}	

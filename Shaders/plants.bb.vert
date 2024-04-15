@@ -2,9 +2,9 @@
 #include "attributes.vert"
 
 varying vec4 EyeDirection;
-varying vec4 Normal;
-attribute vec4 vpoint;
+varying vec3 Norm;
 varying vec4 Color;
+varying vec3 pnorm;
 
 void main(void) {
 	vec4 vertex=vec4(gl_Vertex.xyz,1.0);//-CommonAttributes2; //-TheScene->vpoint
@@ -17,10 +17,11 @@ void main(void) {
 	float botx=CommonAttributes1.b;
 	float boty=CommonAttributes1.a;
 	
-	float dx2=20*topx;
-	float dx1=20*botx;
+	float nscale=TextureAttributes.w;
+	float dx2=nscale*topx;
+	float dx1=nscale*botx;
 	
-	Normal.xyz = gl_NormalMatrix * gl_Normal;
+	Norm.xyz = gl_NormalMatrix * gl_Normal;
 	
 	vec3 norm;
 
@@ -45,14 +46,10 @@ void main(void) {
     	gl_Position = vec4(ps.x-botx,ps.y-boty,ps.z,1);  // bot-left 
     }
     norm=normalize(norm);
-    Normal.xyz = gl_NormalMatrix * norm;
+    pnorm=gl_NormalMatrix * norm;
 #else
 	gl_Position = vec4(ps.x,ps.y,ps.z,1); // lines only
 #endif
-	//Position = EyeDirection;
-
-	//PlantVars=TextureAttributes;
-	//Constants1=CommonAttributes1;
 	Color=gl_Color;
 
 }

@@ -34,8 +34,8 @@ vec3 setLighting(vec3 BaseColor) {
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light      = normalize(gl_LightSource[i].position.xyz);
 		float LdotN     = dot(light,Norm.xyz);// for day side diffuse lighting
-		float Ldotn     = dot(light,pnorm.xyz);// for day side diffuse lighting
-        float f=Ldotn*max(LdotN,0.0);
+		//float Ldotn     = dot(light,pnorm.xyz);// for day side diffuse lighting
+        float f=max(LdotN,0.0);
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = f*amplitude;
 		lpn=clamp(lpn,0.0,1.0);
@@ -46,31 +46,13 @@ vec3 setLighting(vec3 BaseColor) {
 	return TotalDiffuse;
 }
 
+
 //-------------------------------------------------------------
 
 // ########## main section #########################
 void main(void) {
 	vec4 color =Color;
-	if(lighting)
-    color.rgb=setLighting(color.rgb);
-#ifdef SHADOWS
-     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     color.rgb=mix(color.rgb,color.rgb,Shadow.rgb,shadow*Shadow.a);
-#endif  
-    //float depth=gl_FragCoord.z;
-
-#ifdef HAZE
-
-	float z=DEPTH; // depth buffer
-	float depth=1.0/(ws2*z+ws1); // distance
-	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
-	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
-	// works for haze factor > ~0.1
-	color.rgb=mix(color.rgb,Haze.rgb,h);
-	// improves result for haze factor <0.1 but creates edge artifacts at mid distances
-	float p=lerp(h,0.0,0.8,1.0,0.001); // hack !
-	color.a=pow(color.a,p);
-#endif
+	 color.rgb=setLighting(color.rgb);
     
  	gl_FragData[0]=color;
 	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag

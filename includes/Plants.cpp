@@ -89,7 +89,7 @@
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
-extern double Hscale, Drop, MaxSize,Height,Phi,Density;
+extern double Hscale, Drop, MaxSize,Height,Phi,Density,Randval;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -112,9 +112,7 @@ static int nhits=0;
 
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
-
-static double min_render_pts=1; // for render
-static double min_adapt_pts=5; //  for adapt - increase resolution only around nearby plants
+static double ht_offset=0.01;
 
 static int cnt=0;
 static int tests=0;
@@ -144,6 +142,7 @@ static int line_nodes;
 // 3) calc overhead ~2x
 
 static double size_scale=0.5;
+static double min_draw_width=1;
 
 // scale=0.5 fps=18
 //0 branches:497 lines:540 terminals:255 skipped:125
@@ -155,6 +154,8 @@ static double size_scale=0.5;
 // 1 branches:23557 lines:79239 terminals:56379 skipped:61851
 // 2 branches:11917 lines:61732 terminals:41420 skipped:129587
 
+static double min_render_pts=1; // for render
+static double min_adapt_pts=5; //  for adapt - increase resolution only around nearby plants
 
 #define USE_AVEHT
 #define MIN_VISITS 1
@@ -165,11 +166,11 @@ static double size_scale=0.5;
 //#define DEBUG_PMEM
 
 //#define LINES_ONLY  //16.3 fps
-#define GS_SHADER // 19.6 fps
+//#define GS_SHADER // 19.6 fps
 
 #define TRIANGLE_LINES
-#define MIN_DRAW_WIDTH size_scale
-#define MIN_LINE_WIDTH size_scale
+#define MIN_DRAW_WIDTH min_draw_width
+#define MIN_LINE_WIDTH MIN_DRAW_WIDTH
 
 #ifdef TRIANGLE_LINES  // 17.7 fps
 	#define MIN_TRIANGLE_WIDTH 2
@@ -225,7 +226,8 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	dexpr=0;
 	instance=0;
 	threshold=1;
-	scale=1;
+	//size_scale=1;
+	//norm_scale=100;
 
 	set_ntest(TEST_NEIGHBORS);
 }
@@ -310,6 +312,8 @@ bool PlantMgr::valid()
 
 bool PlantMgr::setProgram(){
 	
+	//GLSLMgr::checkForErrors();
+
 	branch_nodes=0;
 	trunk_nodes=0;
 	line_nodes=0;
@@ -329,14 +333,18 @@ bool PlantMgr::setProgram(){
 #endif
 	GLSLMgr::setDefString(defs);
 #ifdef GS_SHADER
+
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	GLSLMgr::tesslevel=0;
 	GLSLMgr::max_output=5;  // special case
-	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
+	
+	GLSLMgr::loadProgram("plants.gs.vert","plants.test.frag","plants.geom");
 #else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
 #endif
+	
+
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program){
 		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
@@ -346,6 +354,7 @@ bool PlantMgr::setProgram(){
 	GLSLVarMgr vars;
 	
 	Planetoid *orb=(Planetoid*)TheScene->viewobj;
+	
 	Color diffuse=orb->diffuse;
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
@@ -357,8 +366,8 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
 	vars.newBoolVar("lighting",Render.lighting());
-
-	//vars.newFloatVec("vpoint",TheScene->vpoint.x,TheScene->vpoint.y,TheScene->vpoint.z,0);
+	
+	//vars.newFloatVar("norm_scale",200);
 
 	double zn=TheScene->znear;
 	double zf=TheScene->zfar;
@@ -369,8 +378,10 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("ws2",ws2);
 
 	vars.setProgram(program);
+	
 	vars.loadVars();
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
+	//glVertexAttrib4d(GLSLMgr::CommonID1, ht, depth,transmission, d); // Constants1
 
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
@@ -378,8 +389,27 @@ bool PlantMgr::setProgram(){
 	int n=Plant::plants.size;
 	int l=randval;
 	
+	switch(TheScene->quality){
+	case DRAFT:
+		min_draw_width=1;
+		break;
+	case NORMAL:
+		min_draw_width=0.75;
+		break;
+	case HIGH:
+		min_draw_width=0.5;
+		break;
+	case BEST:
+		min_draw_width=0.25;
+		break;	
+	}
+	
+	for(int i=0;i<tp->plants.size;i++){
+		tp->plants[i]->setProgram();
+	}
 	glEnable(GL_BLEND);
 	TNplant::clearStats();
+
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
 		
@@ -394,12 +424,13 @@ bool PlantMgr::setProgram(){
 		
 		double r=Random(pp);
 		randval=256*r+id;
-		plant->setProgram();
+		plant->emit();
 	}
 	randval=l;
 #ifdef SHOW_BRANCH_STATS
 	TNplant::showStats();
 #endif
+
 	return true;
 }
 //-------------------------------------------------------------
@@ -542,7 +573,7 @@ void Plant::reset()
 //-------------------------------------------------------------
 void Plant::collect()
 {
-
+	
 #ifdef TEST_PTS
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
@@ -567,8 +598,7 @@ void Plant::collect()
 		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
 	while(s){
 #ifdef SHOW_STATS
-		trys++;
-		
+		trys++;		
 		if(s->visits<MIN_VISITS)
 			bad_visits++;
 		if(!s->flags.s.valid)
@@ -585,7 +615,7 @@ void Plant::collect()
 #else
 			double ht=s->ht;
 #endif			
-			Point base=TheMap->point(ps.x, ps.y,ht); // spherical-to-rectangular
+			Point base=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius); // spherical-to-rectangular
 			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
 			double d=bp.distance(TheScene->vpoint);  // distance	
 			double r=TheMap->radius*s->radius;
@@ -641,7 +671,7 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
-	return true;
+	return expr->setProgram();
 }
 bool Plant::initProgram(){
 	return false;
@@ -674,6 +704,8 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	size=0;
 	instance=0;
 	branch=0;
+	size_scale=1;
+	norm_scale=100;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -727,8 +759,8 @@ void TNplant::init()
 	if(n>3) mgr->mult=arg[3];			// random scale multiplier
 	if(n>4) mgr->level_mult=arg[4];     // scale multiplier per level
 	if(n>5) maxdensity=arg[5];
-	if(n>6) smgr->threshold=arg[6];
-	if(n>7) smgr->scale=arg[7];
+	if(n>6) norm_scale=arg[6];
+	if(n>7) size_scale=arg[7];
 	if(n>8) smgr->slope_bias=arg[8];
 	if(n>9) smgr->ht_bias=arg[9];
 	if(n>10) smgr->lat_bias=arg[10];
@@ -910,40 +942,50 @@ void TNplant::saveNode(FILE *f)
 }
 
 
-bool TNplant::setProgram(){
-	size_scale=((PlantMgr *)mgr)->scale;
-
-	double length=size_scale*size*base_point.length();
-		
-	Point bot=base_point;
+void TNplant::emit(){
+	lastn=randval;
+	Randval=URAND(lastn);
 	
+	::size_scale=size_scale;
+	double length=size_scale*size*base_point.length();	
+	Point bot=base_point;
 	norm=bot.normalize();
-
-	TNBRANCH *branch=0;
+	glNormal3dv(norm.values());
+			
+	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
-	    branch=(TNBRANCH*)right;
-	else
-		return false;
+		first_branch=(TNBRANCH*)right;
 
-	double branch_size=length*branch->length;
+	double branch_size=length*first_branch->length;
+
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
 		
 	double width=size_scale*pntsize;
 	
-	//cout << length<<" "<<width<<endl;
-
-	
 	Point tip;
 	tip.x=width/TheScene->wscale;
 	tip.y=0;
 	glDisable(GL_CULL_FACE);
+	
+	first_branch->fork(FIRST,p1,p2-p1,tip,length,width,0);
+	
+}
 
- 	branch->fork(FIRST,p1,p2-p1,tip,length,width,0);
+bool TNplant::setProgram(){
 
+	TNBRANCH *first_branch=(TNBRANCH*)right;
+	if(right && right->typeValue() == ID_BRANCH) 
+		first_branch=(TNBRANCH*)right;
+	else
+		return false;
+	TNBRANCH *branch=first_branch;
+	while(branch && branch->typeValue() == ID_BRANCH){
+		branch->setProgram();
+		branch=branch->right;
+	}
 	return true;
-
 }
 
 //===================== TNBranch ==============================
@@ -978,6 +1020,9 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	min_level=0;
 	max_level=0;
 	root=0;
+	texture=0;
+	color=0;
+	texname[0]=0;
 
 }
 void TNBranch::init(){
@@ -1005,6 +1050,26 @@ void TNBranch::init(){
 	
 	if(right)
 		right->init();
+	if(base){
+		TNarg *base_arg=((TNarg *)base);
+		while(base_arg){
+			TNode *node=base_arg->left;
+			if(node->typeValue()==ID_COLOR){
+				color=node;
+			}
+			if(node->typeValue()==ID_STRING){
+				strcpy(texname,((TNstring*)node)->value);
+				// TODO collect a texture here
+			}			
+			base_arg=base_arg->next();
+		}
+	}
+}
+
+bool TNBranch::setProgram(){
+	cout<<"branch::setProgram "<<root->nodeName()<<" id:"<< branch_id<<" tex:"<<texname<<endl;
+	return true;
+	
 }
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
 	if(lvl<min_level)
@@ -1017,7 +1082,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, doubl
     
     int l=randval;
     
-	int splits=max_splits*(1+0.5*randomness*SRAND(randval));
+	double splits=max_splits*(1+0.5*randomness*SRAND(randval));
 	if(first_bias) // add more branches at start of new branch fork
 		splits*=first_bias;
 	splits=splits<1?1:splits;
@@ -1035,6 +1100,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	}
 	int lev = lvl;
 	lev++;
+
 	bool first = (opt & FIRST);
 	double topx = 0;
 	double topy = 0;
@@ -1062,6 +1128,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 #endif
 	} else {
 #ifndef NO_CALC	
+		Density = ((double) lvl) / maxlvl;
+
 		double offset = divergence; // how much to deviate from last segment direction
 		offset *= first ? first_bias : 1.0;
 
@@ -1104,15 +1172,6 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 
 		v = bot - start; // new vector
 
-		c = Color(0.1, 0.5, 0.0);
-
-		Density = ((double) lev) / max_plant_levels;
-		INIT;
-		if (base) { // optional color, texture etc []
-			base->eval();
-			if (S0.cvalid())
-			c=S0.c;
-		}
 		double off = width / TheScene->wscale;
 #endif
 #ifdef LINES_ONLY
@@ -1131,8 +1190,12 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		root->addBranch(branch_id);
 #ifndef NO_DRAW
 		if(/*terminal &&*/(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
-			//c=Color(0,1,0);
+			Density=1;
 			root->addTerminal(branch_id);
+		}
+		if (color) { // optional color, texture etc []
+			color->eval();
+			c=S0.c;
 		}
 		glColor4d(c.red(), c.green(), c.blue(), 1);
 		Point q = TheScene->project(v); // convert model to screen space
@@ -1154,6 +1217,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		tip.x = topx;
 		tip.y = topy;
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0, root->norm_scale); // Constants1
+
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1199,10 +1264,14 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 #ifndef NO_DRAW
 		if(/*terminal &&*/(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
 			root->addTerminal(branch_id);		
-			c=Color(0,1,0);
+			Density=1;
+		}
+		if (color) {
+			color->eval();
+			c=S0.c;
 		}
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glLineWidth(size_scale);
+		glLineWidth(MIN_LINE_WIDTH);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		glColor4d(c.red(), c.green(), c.blue(), 1);

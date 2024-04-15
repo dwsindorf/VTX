@@ -745,24 +745,68 @@ void GLSLMgr::init3DNoiseTexture()
 void GLSLMgr::showShaderLog(char *hdr, GLhandleARB id)
 {
 	char tmp[4096];
-	glGetInfoLogARB(id, sizeof(tmp), 0, tmp);
+	glGetShaderInfoLog(id, sizeof(tmp), 0, tmp);
 	if(strlen(tmp)>0)
 		cout << hdr <<  tmp << endl;
 }
+//-------------------------------------------------------------
+// GLSLMgr::showShaderLog() show shader build status
+//-------------------------------------------------------------
+int GLSLMgr::checkForErrors()
+{
+	GLenum lastError=GL_NO_ERROR;
+	int errs=0;
+			
+	while ((lastError = glGetError()) != GL_NO_ERROR) {
+		errs++;
+		switch (lastError)
+		{
+		  case GL_INVALID_ENUM:
+			  cout<<"GL_INVALID_ENUM"<<endl;
+			break;
 
+		  case GL_INVALID_VALUE:
+			  cout<<"GL_INVALID_VALUE"<<endl;
+			break;
+
+		  case GL_INVALID_OPERATION:
+			  cout<<"GL_INVALID_OPERATION"<<endl;
+			break;
+
+		  case GL_STACK_OVERFLOW:
+			cout<<"GL_STACK_OVERFLOW"<<endl;
+			break;
+
+		  case GL_STACK_UNDERFLOW:
+			cout<< "GL_STACK_UNDERFLOW"<<endl;
+			break;
+
+		  case GL_OUT_OF_MEMORY:
+			  cout<<"GL_OUT_OF_MEMORY"<<endl;
+			break;
+		  default:
+			  cout<<"Unspecified error code:"<<lastError<<endl;
+			  break;
+
+		}
+	}
+	return errs;
+	//else
+	//	cout<<"no errors detected"<<endl;
+}
 //-------------------------------------------------------------
 // GLSLMgr::loadProgram() set active shader program
 //-------------------------------------------------------------
 bool GLSLMgr::loadProgram(char *vshader,char *fshader){
-	buildProgram(vshader,fshader,"");
-	return true;
+	return buildProgram(vshader,fshader,"");
+	//return true;
 }
 //-------------------------------------------------------------
 // GLSLMgr::loadProgram() set active shader program
 //-------------------------------------------------------------
 bool GLSLMgr::loadProgram(char *vshader,char *fshader,char *gshader){
-	buildProgram(vshader,fshader,gshader);
-	return true;
+	return buildProgram(vshader,fshader,gshader);
+	//return true;
 }
 //-------------------------------------------------------------
 // GLSLMgr::setMaxOutput() set max vertexs in geometry shader
@@ -822,13 +866,15 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_OUTPUT_TYPE_EXT,output_type);
 	}
-
 	if(!program->linked && !program->errors){
 		link();
 	}
+	
+
 	if(program->errors){
 		if(first){
 			cout << "ERRORS in: "<< program->name() << endl;
+			checkForErrors();
 			showShaderLog("vertex program: ", program->vertex_shader);
 			showShaderLog("fragment program: ",program->fragment_shader);
 		}

@@ -33,7 +33,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -124,6 +124,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	GRPD,
 	GDPR,
 	RAND,
+	RANDVAL,
 	LVL,
 	GTOL,
 	LTOG,
@@ -139,6 +140,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	CIRRUS,
 	CUMULUS,
 	CTYPES,
+
 };
 enum {		// CTypes cloud options
 };
@@ -173,6 +175,7 @@ static LongSym gtypes[]={
 	{"RPD",			GRPD},
 	{"DPR",			GDPR},
 	{"RAND",		RAND},
+	{"RANDVAL",		RANDVAL},
 	{"LVL",			LVL},
 	{"GTOL",		GTOL},
 	{"LTOG",		LTOG},
@@ -348,6 +351,10 @@ void TNglobal::eval()
 		break;
 	case RAND:
 		S0.s=RANDID;
+		break;
+	case RANDVAL:
+		S0.s=Randval;
+		S0.set_constant();
 		break;
 	case LVL:
 		S0.s=0.5*S0.level;
