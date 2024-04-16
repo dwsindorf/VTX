@@ -1,22 +1,17 @@
 #extension GL_EXT_geometry_shader : enable
 #extension GL_EXT_geometry_shader4 : enable
 
-varying in vec4 Color_G[1];
-varying in vec4 Norm_G[1];
-varying in vec4 EyeDirection_G[1];
-varying in vec4 Factors[1];
-varying in vec4 TexVars[1];
+varying in vec4 Color_G[];
+varying in vec4 Normal_G[];
+varying in vec4 Factors[];
+varying in vec4 TexVars[];
 
-varying out vec4 EyeDirection;
-varying out vec4 Norm;
+varying out vec4 Normal;
 varying out vec4 Color;
-varying out vec4 pnorm;
+varying out vec3 pnorm;
 
 void main(void) {
 
-	Norm=Norm_G[0];
- 
-	EyeDirection=EyeDirection_G[0];
 	Color=Color_G[0];
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
@@ -28,6 +23,8 @@ void main(void) {
 	float boty=Factors[0].a;
 	
 	float nscale=TexVars[0].w;
+	
+	Normal.xyz=Normal_G[0].xyz;
 	
 	float dx2=nscale*topx;
 	float dx1=nscale*botx;

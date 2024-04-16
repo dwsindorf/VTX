@@ -1,8 +1,7 @@
 #include "attributes.h"
 #include "attributes.vert"
 
-varying vec4 EyeDirection;
-varying vec3 Norm;
+varying vec4 Normal;
 varying vec4 Color;
 varying vec3 pnorm;
 
@@ -10,7 +9,6 @@ void main(void) {
 	vec4 vertex=vec4(gl_Vertex.xyz,1.0);//-CommonAttributes2; //-TheScene->vpoint
 	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
 	vec3 ps = proj.xyz/proj.w;
-	EyeDirection=-(gl_ModelViewMatrix * vertex); // do view rotation
 	
 	float topx=CommonAttributes1.r;
 	float topy=CommonAttributes1.g;
@@ -20,8 +18,8 @@ void main(void) {
 	float nscale=TextureAttributes.w;
 	float dx2=nscale*topx;
 	float dx1=nscale*botx;
-	
-	Norm.xyz = gl_NormalMatrix * gl_Normal;
+		
+	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	
 	vec3 norm;
 

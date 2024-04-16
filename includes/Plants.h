@@ -66,7 +66,6 @@ public:
 	double slope_bias;
 	double ht_bias;
 	double lat_bias;
-	double threshold;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
@@ -112,12 +111,10 @@ public:
 	const char *symbol()	{ return "Plant";}
 
 	bool isLeaf()			{ return true;}
-	int linkable()          { return 0;}
-	//void setName(char*);
+	int linkable()          { return 1;}
 	void valueString(char *);
 	void save(FILE*);
 	void set_id(int i);
-	//char *nodeName()  { return plants_file;}
 	void saveNode(FILE *f);
 	void applyExpr();
 	bool setProgram();
@@ -153,7 +150,6 @@ public:
 	double width_taper;
 	
 	Texture *texture;
-	TNcolor *color;
 	TNplant *root;
 	
 	char texname[256];
@@ -171,6 +167,9 @@ public:
 	void saveNode(FILE *f);
 	
 	bool setProgram();
+	
+	Texture *getTexture();
+	Color getColor();
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);

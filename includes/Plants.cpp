@@ -86,6 +86,8 @@
 // 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments
 //    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
 //    - oddly, setting glLineWidth to 1.0 (vs. width) resulted in a speedup from ~15 fps to ~25 fps
+// 5) GS_SHADER doesn't work after last changes (get link error for program GL_INVALID_ENUM) (FIXED)
+//    - fixed by changing "varying in vec4 Normal_G[1]" etc. to "varying in vec4 Normal_G[]" etc.
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -113,7 +115,7 @@ static int nhits=0;
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 static double ht_offset=0.01;
-
+static double threshold=1;
 static int cnt=0;
 static int tests=0;
 static int pts_fails=0;
@@ -141,7 +143,7 @@ static int line_nodes;
 // 2) render overhead ~2x
 // 3) calc overhead ~2x
 
-static double size_scale=0.5;
+static double size_scale=1;
 static double min_draw_width=1;
 
 // scale=0.5 fps=18
@@ -166,7 +168,7 @@ static double min_adapt_pts=5; //  for adapt - increase resolution only around n
 //#define DEBUG_PMEM
 
 //#define LINES_ONLY  //16.3 fps
-//#define GS_SHADER // 19.6 fps
+#define GS_SHADER // 19.6 fps
 
 #define TRIANGLE_LINES
 #define MIN_DRAW_WIDTH min_draw_width
@@ -225,9 +227,6 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	lat_bias=0;
 	dexpr=0;
 	instance=0;
-	threshold=1;
-	//size_scale=1;
-	//norm_scale=100;
 
 	set_ntest(TEST_NEIGHBORS);
 }
@@ -339,12 +338,11 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::tesslevel=0;
 	GLSLMgr::max_output=5;  // special case
 	
-	GLSLMgr::loadProgram("plants.gs.vert","plants.test.frag","plants.geom");
+	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
 #else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
 #endif
 	
-
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program){
 		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
@@ -380,8 +378,6 @@ bool PlantMgr::setProgram(){
 	vars.setProgram(program);
 	
 	vars.loadVars();
-	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
-	//glVertexAttrib4d(GLSLMgr::CommonID1, ht, depth,transmission, d); // Constants1
 
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
@@ -470,14 +466,12 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 	PlantMgr &mgr=(PlantMgr&)pmgr;
 	sval=0;
 	visits++;
-
-	double thresh=mgr.threshold;
 	
-	if(d>thresh)
+	if(d>threshold)
 		return false;
 
     flags.s.active=true;
-	sval=lerp(d,0,thresh,0,1);
+	sval=lerp(d,0,threshold,0,1);
 
     double wt=1/(0.01+sval);
     aveht+=Height*wt;
@@ -969,6 +963,8 @@ void TNplant::emit(){
 	tip.y=0;
 	glDisable(GL_CULL_FACE);
 	
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,norm_scale); // Constants1
+
 	first_branch->fork(FIRST,p1,p2-p1,tip,length,width,0);
 	
 }
@@ -1021,7 +1017,6 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	max_level=0;
 	root=0;
 	texture=0;
-	color=0;
 	texname[0]=0;
 
 }
@@ -1050,26 +1045,45 @@ void TNBranch::init(){
 	
 	if(right)
 		right->init();
-	if(base){
-		TNarg *base_arg=((TNarg *)base);
-		while(base_arg){
-			TNode *node=base_arg->left;
-			if(node->typeValue()==ID_COLOR){
-				color=node;
-			}
-			if(node->typeValue()==ID_STRING){
-				strcpy(texname,((TNstring*)node)->value);
-				// TODO collect a texture here
-			}			
-			base_arg=base_arg->next();
-		}
-	}
+	getTexture();
+
 }
 
 bool TNBranch::setProgram(){
 	cout<<"branch::setProgram "<<root->nodeName()<<" id:"<< branch_id<<" tex:"<<texname<<endl;
 	return true;
 	
+}
+
+Texture *TNBranch::getTexture(){
+	Texture *tex=0;
+	if(base){
+		TNarg *arg=((TNarg *)base);
+		while(arg){
+			TNode *node=arg->left;
+			if(node->typeValue()==ID_STRING){
+				strcpy(texname,((TNstring*)node)->value);
+				// TODO collect a texture here
+			}			
+			arg=arg->next();
+		}
+	}
+	return tex;
+}
+Color TNBranch::getColor(){
+	Color c(1,1,1);
+	TNarg *arg;
+	if(base){
+		arg=(TNarg*)base;
+		while(arg){
+			S0.clr_cvalid();
+			arg->left->eval();
+			if(S0.cvalid())
+				return S0.c;
+			arg=arg->next();
+		}
+	}
+	return c;	
 }
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
 	if(lvl<min_level)
@@ -1137,9 +1151,9 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 
 		v = vec.normalize();
         // add a random offset to first branch split
-		double b = randomness*URAND(randval);
-		if(first && lvl>0){
-			b=b<=1?b:1;				
+		double b = randomness * URAND(randval);
+		if(/*first &&*/ lvl>0){
+			b=b<=1?b:1;
 		 	start=start-v*b*size*length;
 		}
 
@@ -1155,8 +1169,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 			Point tp1 = n.cross(v);
 			Point vp = tp1.cross(n);
 			double f = flatness;
-			if (first && first_bias)
-				f /= first_bias;
+			//if (first && first_bias)
+			//	f /= first_bias;
 			vp = vp.normalize(); // projection of v along surface
 			Point v1 = v * (1 - f);
 			Point v2 = vp * f;
@@ -1193,10 +1207,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 			Density=1;
 			root->addTerminal(branch_id);
 		}
-		if (color) { // optional color, texture etc []
-			color->eval();
-			c=S0.c;
-		}
+		c=getColor();
 		glColor4d(c.red(), c.green(), c.blue(), 1);
 		Point q = TheScene->project(v); // convert model to screen space
 		double a = atan2(q.y / q.z, q.x / q.z);
@@ -1217,8 +1228,6 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		tip.x = topx;
 		tip.y = topy;
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0, root->norm_scale); // Constants1
-
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1266,10 +1275,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 			root->addTerminal(branch_id);		
 			Density=1;
 		}
-		if (color) {
-			color->eval();
-			c=S0.c;
-		}
+		c=getColor();
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
 		glLineWidth(MIN_LINE_WIDTH);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

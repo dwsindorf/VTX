@@ -272,8 +272,8 @@ RasterMgr::RasterMgr()
 	haze_color=Color(1,1,1);
 	haze_value=0;
 	haze_grad = 0.5;
-	haze_min=100*FEET;
-	haze_max=10*MILES;
+	haze_min=10*FEET;
+	haze_max=1*MILES;
 	haze_zfar=MILES;
 
 	fog_color=Color(1,1,1);

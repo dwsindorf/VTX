@@ -206,7 +206,6 @@ TNstring::~TNstring()
 }
 void TNstring::eval()
 {
-	INIT;
 	S0.string=value;
 	S0.set_strvalid();
 }

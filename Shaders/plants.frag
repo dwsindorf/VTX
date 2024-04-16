@@ -2,9 +2,8 @@
 #include "common.h"
 #include "utils.h"
 
-varying vec3 Norm;
+varying vec4 Normal;
 varying vec3 pnorm;
-varying vec4 EyeDirection;
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -33,7 +32,7 @@ vec3 setLighting(vec3 BaseColor) {
     
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light      = normalize(gl_LightSource[i].position.xyz);
-		float LdotN     = dot(light,Norm.xyz);// for day side diffuse lighting
+		float LdotN     = dot(light,Normal.xyz);// for day side diffuse lighting
 		float Ldotn     = dot(light,pnorm.xyz);// for day side diffuse lighting
         float f=Ldotn*max(LdotN,0.0);
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
@@ -65,11 +64,7 @@ void main(void) {
 	float depth=1.0/(ws2*z+ws1); // distance
 	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
 	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
-	// works for haze factor > ~0.1
 	color.rgb=mix(color.rgb,Haze.rgb,h);
-	// improves result for haze factor <0.1 but creates edge artifacts at mid distances
-	float p=lerp(h,0.0,0.8,1.0,0.001); // hack !
-	color.a=pow(color.a,p);
 #endif
     
  	gl_FragData[0]=color;
