@@ -1,23 +1,36 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55601;
+		phi=-5.55632;
 		theta=24.4363;
-		height=50.4154 ft;
-		gndlvl=10512.5 ft;
-		time=200678;
-		vstride=0.02;
+		height=11.9089 ft;
+		gndlvl=10532.2 ft;
+		time=380926;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00400199;
-		heading=110;
-		tilt=7;
-		angle=-2;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=18;
+		tilt=-14;
+		angle=13;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		heading=3;
+		angle=17;
+	}
+	View{
+		time=380931;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.004002;
+	}
+	View{
+		minr=0.004002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -48,25 +61,23 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,159.581) {
+				Planet(0.004,100) {
 					day=24;
-					diffuse=Color(1,1,1,0.58);
+					diffuse=Color(1,1,1,0.71);
 					hscale=0.001;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",10,1,1e-06,0.8,0.9,0.05)
-								Branch("trunk",1,2,0.1,0.1,0,0.85,0.95,0)[Color(0.5,0.25,0)]
-								Branch("branch",2.2,1,2,2,0.7,0.8,0.8,6)[Color(1,0.5,0)]
-								Branch("branch",1,0.5,3,1,0.7,0.9,0.95,3,5)[Color(0,0.5,0)];
+								Plant("name",12,1,2e-07,0.8,0.9,0.2,50,0.5)
+								Branch("trunk",2.3,1,1,0.7,0.1,0.83,1,1)[Color(0.25+RANDVAL*DENSITY,DENSITY,0.25*RANDVAL*DENSITY)];
 					}
-					Sky(0.0041029) {
+					Sky(0.00410952) {
 						color=Color(0,0.58,0.89);
 						day=24;
-						density=0.51388;
+						density=0.49206;
 						haze.color=Color(1,1,0.88);
-						haze.grad=0.0685;
+						haze.grad=0.03;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;

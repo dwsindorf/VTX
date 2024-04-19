@@ -796,7 +796,7 @@ void ExprMgr::init()
 
 	CurrentScope=this;
 	set_init_mode(1);
-
+	
 	//vars.free();
 
 	exprs.ss();

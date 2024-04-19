@@ -5,6 +5,7 @@
 #include "GLSLMgr.h"
 #include "RenderOptions.h"
 #include "Sprites.h"
+#include "Plants.h"
 #include <iostream>
 #include <math.h>
 

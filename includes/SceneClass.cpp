@@ -753,6 +753,7 @@ void Scene::wrect(int l,int w ,int b,int h)
 	aspect=(double)w/(double)h;
 	getViewport(viewport);
 	wscale=0.5*viewport[3]/tan(RPD*fov/2);
+	//cout<<aspect<<" "<<wscale<<" "<<aspect/wscale<<endl;
 }
 
 //-------------------------------------------------------------

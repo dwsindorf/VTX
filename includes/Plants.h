@@ -78,6 +78,7 @@ public:
 };
 
 #define MAX_BRANCHES 6
+
 //************************************************************
 // Class TNplant
 //************************************************************
@@ -86,10 +87,10 @@ class TNplant : public TNplacements
 protected:
 public:
 	Point norm;
-	int levels;
-	static int stats[MAX_BRANCHES][4];
+	int branches;
+	int stats[MAX_BRANCHES][4];
 
-	int instance;
+	int plant_id;
 	Plant *plant;
 	TNbranch *branch;
 	double radius;
@@ -98,6 +99,8 @@ public:
 	double maxdensity;
 	double size_scale;
 	double norm_scale;
+	double width_scale;
+	static int textures;
 
 	int max_levels;
 	Point base_point;
@@ -120,13 +123,12 @@ public:
 	bool setProgram();
 	void emit();
 	
-	static int max_branches;
-	static void clearStats();
-	static void showStats();
-	static void addBranch(int id);
-	static void addLine(int id);
-	static void addTerminal(int id);
-	static void addSkipped(int id);
+	void clearStats();
+	void showStats();
+	void addBranch(int id);
+	void addLine(int id);
+	void addTerminal(int id);
+	void addSkipped(int id);
 };
 
 //************************************************************
@@ -148,13 +150,18 @@ public:
 	double flatness;
 	double length_taper;
 	double width_taper;
-	
-	Texture *texture;
+	unsigned int texture_id;
+	int texid;
+
+	Image *image;
 	TNplant *root;
 	
+	int instance;
+
 	char texname[256];
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
+	~TNBranch();
 	
 	int typeValue()			{ return ID_BRANCH;}
 	const char *typeName ()	{ return "branch";}
@@ -165,11 +172,15 @@ public:
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
+	void getTexDir(char*dir);
+	void getTexFilePath(char*name,char *dir);
 	
 	bool setProgram();
 	
-	Texture *getTexture();
-	Color getColor();
+	void setTexture();
+	void setColor();
+	void invalidateTexture();
+	void setImage(char *);
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
@@ -203,6 +214,8 @@ public:
 	void print();
 	bool setProgram();
 	bool initProgram();
+	void clearStats();
+	void showStats();
 	int get_id()				{ return plant_id;}
 	void set_id(int i)			{ plant_id=i;}
 	static void reset();

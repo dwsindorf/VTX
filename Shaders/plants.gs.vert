@@ -5,7 +5,7 @@ attribute vec4 TextureAttributes;
 varying vec4 Normal_G;
 varying vec4 Color_G;
 varying vec4 Factors;
-varying vec4 TexVars;
+varying vec4 TexVars_G;
 
 void main(void) {
 	
@@ -18,7 +18,7 @@ void main(void) {
 
 	Color_G=gl_Color;
 	Factors=CommonAttributes1;	
-	TexVars=TextureAttributes;
+	TexVars_G=TextureAttributes;
 	
 }
 

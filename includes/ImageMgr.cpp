@@ -1108,6 +1108,22 @@ void ImageReader::makeImagelist()
 			}
 		}
 		flist.free();
+		
+		sprintf(sdir,"%s%sTextures%sPlants%sBranch",base,File.separator,File.separator,File.separator);
+		File.getFileNameList(sdir,"*.bmp",flist);
+		File.getFileNameList(sdir,"*.jpg",flist);
+		File.getFileNameList(sdir,"*.jpeg",flist);
+		File.getFileNameList(sdir,"*.png",flist);
+
+		flist.ss();
+		while((sym=flist++)){
+			if(!images.inlist(sym->name())){
+				is=getImageInfo(sym->name());
+				images.add(is);
+				images.sort();
+			}
+		}
+		flist.free();
 		//init=0;
 		validate();
 	}
@@ -1186,17 +1202,18 @@ Image *ImageReader::load(char *f,TNinode *n)
 //-------------------------------------------------------------
 Image *ImageReader::load(char *f,int mode)
 {
-    char name[256];
+    char name[512];
     hashName(f,mode,name);
     Image *image=find(name);
     if(image)
 		return image;
     image=open(name);
-
-	ImageSym *is=getImageInfo(name);
-	addImage(is->text,is->info,is->istring,image);
-
-	delete is;
+    //if(image){
+		ImageSym *is=getImageInfo(name);
+		addImage(is->text,is->info,is->istring,image);
+	
+		delete is;
+    //}
     return image;
 }
 
@@ -1305,6 +1322,10 @@ Image *ImageReader::open(char *name)
 	if(image)
 		return image;
 	sprintf(dir,"%s%sTextures%sSprites%s%s",base,d,d,d,name);
+	image=open(name, dir);
+	if(image)
+		return image;
+	sprintf(dir,"%s%sTextures%sPlants%sBranch%s%s",base,d,d,d,d,name);
 	image=open(name, dir);
 	if(image)
 		return image;

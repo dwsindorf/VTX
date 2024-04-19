@@ -20,8 +20,8 @@
 #define SRAND(x) 	(rands[PERM((x++))])
 #define URAND(x) 	(rands[PERM((x++))]+0.5)
 
-#define FIRST  1
-
+#define FIRST_FORK  1
+#define FIRST_EMIT  2
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -59,7 +59,7 @@
 //   - generate additional line segments between segment end points (no need for branching)
 // 6) better lighting model for branches
 //   - currently only uses x-direction in screen space
-//   - works good for vertical trunks but makes horizontal branches look flat
+//   - works good for vertical trunks but makes horizontal  look flat
 //   - idea:incorporate delta-y to get better effect ?
 // 7) add curvature to branches by implementing a spline function
 //   - for efficiency probably best done in a geometry shader
@@ -82,12 +82,22 @@
 //     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
 //     o improvement: moving visits++ before threshold test in set_terrain
 // 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
-//    - may be fixed by implementing leaf class and rendering leafs at all terminal nodes ?
+//    - may be fixed later by implementing leaf class and rendering leafs at all terminal nodes ?
 // 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments
 //    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
 //    - oddly, setting glLineWidth to 1.0 (vs. width) resulted in a speedup from ~15 fps to ~25 fps
 // 5) GS_SHADER doesn't work after last changes (get link error for program GL_INVALID_ENUM) (FIXED)
 //    - fixed by changing "varying in vec4 Normal_G[1]" etc. to "varying in vec4 Normal_G[]" etc.
+// 6) multiple plants don't stack if "+" used to connect
+//    - Preceding plant loses last branch
+//    - works OK without "+" connection
+// 7) problems with textures
+//   - if TRIANGLE_LINES is defined lines are drawn lighter than quads
+//     o need a way to match normals for the two cases
+//   - if tex string defined but no texture generated plant isn't drawn
+//   - need a way to mix color and texture
+
+
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -170,7 +180,7 @@ static double min_adapt_pts=5; //  for adapt - increase resolution only around n
 //#define LINES_ONLY  //16.3 fps
 #define GS_SHADER // 19.6 fps
 
-#define TRIANGLE_LINES
+//#define TRIANGLE_LINES
 #define MIN_DRAW_WIDTH min_draw_width
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
 
@@ -312,13 +322,21 @@ bool PlantMgr::valid()
 bool PlantMgr::setProgram(){
 	
 	//GLSLMgr::checkForErrors();
+	TerrainProperties *tp=Td.tp;
+	
+	TNplant::textures=0;
+	
+	for(int i=0;i<tp->plants.size;i++){
+		tp->plants[i]->setProgram();
+	}
 
 	branch_nodes=0;
 	trunk_nodes=0;
 	line_nodes=0;
-	TerrainProperties *tp=Td.tp;
 	
 	char defs[1024]="";
+	sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
+
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
 	if(Render.haze())
 		sprintf(defs+strlen(defs),"#define HAZE\n");
@@ -390,21 +408,18 @@ bool PlantMgr::setProgram(){
 		min_draw_width=1;
 		break;
 	case NORMAL:
-		min_draw_width=0.75;
-		break;
-	case HIGH:
 		min_draw_width=0.5;
 		break;
+	case HIGH:
+		min_draw_width=0.3;
+		break;
 	case BEST:
-		min_draw_width=0.25;
+		min_draw_width=0.2;
 		break;	
 	}
 	
-	for(int i=0;i<tp->plants.size;i++){
-		tp->plants[i]->setProgram();
-	}
 	glEnable(GL_BLEND);
-	TNplant::clearStats();
+	//TNplant::clearStats();
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
@@ -424,7 +439,9 @@ bool PlantMgr::setProgram(){
 	}
 	randval=l;
 #ifdef SHOW_BRANCH_STATS
-	TNplant::showStats();
+	for(int i=0;i<tp->plants.size;i++){
+		tp->plants[i]->showStats();
+	}
 #endif
 
 	return true;
@@ -554,6 +571,7 @@ Plant::Plant(int l, TNode *e)
 void Plant::reset()
 {
 	plants.free();
+	TNplant::textures=0;
 
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->plants.size;i++){
@@ -665,16 +683,21 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
+	clearStats();
 	return expr->setProgram();
 }
 bool Plant::initProgram(){
 	return false;
 }
-
+void Plant::clearStats(){
+	expr->clearStats();
+}
+void Plant::showStats(){
+	expr->showStats();
+}
 
 //===================== TNplant ==============================
-int TNplant::stats[MAX_BRANCHES][4];
-int TNplant::max_branches=0;
+int TNplant::textures=0;
 //************************************************************
 // TNplant class
 //************************************************************
@@ -690,16 +713,16 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 		delete arg;	
 	}
 	plant=0;
-	levels=0;
+	branches=0;
 	pntsize=0;
 	maxdensity=0;
 	max_levels=0;
 	radius=0;
 	size=0;
-	instance=0;
+	plant_id=0;
 	branch=0;
 	size_scale=1;
-	norm_scale=100;
+	norm_scale=5;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -734,7 +757,7 @@ void TNplant::applyExpr()
 void TNplant::init()
 {
 	PlantMgr *smgr=(PlantMgr*)mgr;
-    levels=0;
+    branches=0;
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->set_first(1);
@@ -758,7 +781,7 @@ void TNplant::init()
 	if(n>8) smgr->slope_bias=arg[8];
 	if(n>9) smgr->ht_bias=arg[9];
 	if(n>10) smgr->lat_bias=arg[10];
-	
+
 	if(right)
 	   right->init();
 }
@@ -780,8 +803,8 @@ void TNplant::eval()
 	}
 	if(CurrentScope->rpass()){
 		int size=Td.tp->plants.size;
-		instance=size;	
-		mgr->instance=instance;
+		plant_id=size;	
+		mgr->instance=plant_id;
 		if(plant)
 			plant->set_id(size);		
 		Td.add_plant(plant);		
@@ -827,7 +850,7 @@ void TNplant::eval()
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
 					+11*tp->id
-					+7*instance
+					+7*plant_id
 					);
 	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
 	
@@ -857,34 +880,26 @@ void TNplant::eval()
  }
 
 void TNplant::clearStats(){
-	max_branches=0;
 	for(int i=0;i<MAX_BRANCHES;i++){
 		stats[i][0]=stats[i][1]=stats[i][2]=stats[i][3]=0;
 	}
 }
 void TNplant::showStats(){
-	for(int i=0;i<max_branches;i++){
-		cout<<i<<" branches:"<<stats[i][0]<<" lines:"<<stats[i][1]<<" terminals:"<<stats[i][2]<<" skipped:"<<stats[i][3]<<endl;
+	cout <<"plant "<<plant_id<<" branches="<<branches<<endl;
+	for(int i=0;i<branches;i++){
+		cout<<"plant["<<name_str<<"] branch["<<i<<"] polygons:"<<stats[i][0]<<" lines:"<<stats[i][1]<<" terminals:"<<stats[i][2]<<" skipped:"<<stats[i][3]<<endl;
 	}
 }
 void TNplant::addLine(int id){
-	if(id>=max_branches)
-		max_branches++;
 	stats[id][1]++;	
 }
 void TNplant::addBranch(int id){
-	if(id>=max_branches)
-		max_branches++;
 	stats[id][0]++;	
 }
 void TNplant::addTerminal(int id){
-	if(id>=max_branches)
-		max_branches++;
 	stats[id][2]++;	
 }
 void TNplant::addSkipped(int id){
-	if(id>=max_branches)
-		max_branches++;
 	stats[id][3]++;	
 }
 //-------------------------------------------------------------
@@ -935,7 +950,6 @@ void TNplant::saveNode(FILE *f)
 	fprintf(f,"%s",buff);
 }
 
-
 void TNplant::emit(){
 	lastn=randval;
 	Randval=URAND(lastn);
@@ -955,8 +969,8 @@ void TNplant::emit(){
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
-		
-	double width=size_scale*pntsize;
+	
+	double width=width_scale*size_scale*pntsize;
 	
 	Point tip;
 	tip.x=width/TheScene->wscale;
@@ -965,11 +979,14 @@ void TNplant::emit(){
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,norm_scale); // Constants1
 
-	first_branch->fork(FIRST,p1,p2-p1,tip,length,width,0);
+	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,width,0);
 	
 }
 
 bool TNplant::setProgram(){
+	// compensate for changes in scene fov and aspect to keep ht/width constant	
+	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
+	cout<<"width_scale:"<<width_scale<<endl;
 
 	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
@@ -1016,9 +1033,13 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	min_level=0;
 	max_level=0;
 	root=0;
-	texture=0;
+	image=0;
 	texname[0]=0;
-
+	texture_id=0;
+	texid=-1;
+	instance=0;
+}
+TNBranch::~TNBranch(){	
 }
 void TNBranch::init(){
 	double arg[12];
@@ -1040,50 +1061,106 @@ void TNBranch::init(){
 	
 	root=getRoot();
 	max_plant_levels=root->max_levels;
-	branch_id=root->levels;
-	root->levels+=1;
+	branch_id=root->branches;
+	root->branches+=1;
+	setTexture();
 	
 	if(right)
 		right->init();
-	getTexture();
-
 }
 
+void TNBranch::invalidateTexture(){
+	if(texture_id){
+		glDeleteTextures(1,&texture_id);
+		texture_id=0;
+	}
+}
 bool TNBranch::setProgram(){
-	cout<<"branch::setProgram "<<root->nodeName()<<" id:"<< branch_id<<" tex:"<<texname<<endl;
-	return true;
-	
+	if(!image || !image->valid()){
+		cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:" <<texid<<endl;
+		return false;
+	}	
+	texid=root->textures++;
+	char str[MAXSTR];
+	glActiveTexture(GL_TEXTURE0+texid);
+	if(texture_id==0){
+		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
+		bool alpha_image=image->alpha_image();
+		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_image<<endl;
+
+		glGenTextures(1, &texture_id); // Generate a unique texture ID
+		cout<<"generating texture id="<<texture_id<<endl;
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, -1);
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		int w=image->width;
+		int h=image->height;
+		unsigned char* pixels=(unsigned char*)image->data;
+		if(alpha_image || rgba_image)
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+		else
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);		
+	}
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	GLhandleARB program=GLSLMgr::programHandle();
+	sprintf(str,"samplers2d[%d]",texid);  
+	glUniform1iARB(glGetUniformLocationARB(program,str),texid);
+	cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:"<< texid<<" image:"<<texname<<" texture_id:" <<texture_id<<endl;
+		
+	return true;	
 }
 
-Texture *TNBranch::getTexture(){
-	Texture *tex=0;
+//-------------------------------------------------------------
+// TNBranch::setImage(char *name) set image texture
+//-------------------------------------------------------------
+void TNBranch::setImage(char *name){
+	if(strcmp(name,texname)){
+		if(image)
+			delete image;
+		invalidateTexture();
+		strcpy(texname,name);				
+		image=images.load(texname,JPG|BMP);
+		if(image)
+			cout<<"image created for "<<texname<<endl;
+		else
+			cout<<"image file "<<texname<<" not found"<<endl;
+	}
+}
+
+void TNBranch::setTexture(){
 	if(base){
 		TNarg *arg=((TNarg *)base);
 		while(arg){
 			TNode *node=arg->left;
 			if(node->typeValue()==ID_STRING){
-				strcpy(texname,((TNstring*)node)->value);
-				// TODO collect a texture here
+				setImage(((TNstring*)node)->value);
+				if(image){
+					texid=root->textures;
+					root->textures++;
+				}
+				return;
 			}			
 			arg=arg->next();
 		}
 	}
-	return tex;
 }
-Color TNBranch::getColor(){
-	Color c(1,1,1);
+void TNBranch::setColor(){
 	TNarg *arg;
 	if(base){
 		arg=(TNarg*)base;
 		while(arg){
 			S0.clr_cvalid();
 			arg->left->eval();
-			if(S0.cvalid())
-				return S0.c;
+			if(S0.cvalid()){
+				glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), 1);
+			}
 			arg=arg->next();
 		}
 	}
-	return c;	
 }
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
 	if(lvl<min_level)
@@ -1115,20 +1192,21 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	int lev = lvl;
 	lev++;
 
-	bool first = (opt & FIRST);
+	bool first_fork = (opt == FIRST_FORK);
+	bool first_emit = (opt == FIRST_EMIT);
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
 	double boty = 1;
 	Point v, p1, p2, bot;
 	Color c;
-	bool terminal=branch_id==root->levels-1;
+	bool terminal=branch_id==root->branches-1;
 	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
 
 	splits = splits >= 1 ? splits : 1;
 	double scale=1.0;
-	if(first && lvl>0){
-		scale=size_scale*length*root->size/size/TheScene->wscale;
+	if(first_fork && lvl>0){
+		scale=size_scale*length*root->size/size/TheScene->wscale/root->width_scale;
 		scale=scale>1?1:scale;
 		scale=scale<0?0:scale;
 		width*=scale;
@@ -1145,18 +1223,18 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		Density = ((double) lvl) / maxlvl;
 
 		double offset = divergence; // how much to deviate from last segment direction
-		offset *= first ? first_bias : 1.0;
+		offset *= first_fork ? first_bias : 1.0;
 
 		size *= 1 + 0.25 * randomness * SRAND(randval);
-
+        
 		v = vec.normalize();
-        // add a random offset to first branch split
-		double b = randomness * URAND(randval);
-		if(/*first &&*/ lvl>0){
+        // add a random offset to each branch split
+		double rb=randomness>1?1:randomness;
+		double b = rb * URAND(randval);
+		if(!first_emit && lvl>0){ // keep at least one child branch at end of parent
 			b=b<=1?b:1;
-		 	start=start-v*b*size*length;
+		 	start=start-vec*b;
 		}
-
 		v.x += offset * SRAND(randval);
 		v.y += offset * SRAND(randval);
 		v.z += offset * SRAND(randval);
@@ -1187,6 +1265,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		v = bot - start; // new vector
 
 		double off = width / TheScene->wscale;
+		
+
 #endif
 #ifdef LINES_ONLY
 		//if (width >= MIN_LINE_WIDTH) {
@@ -1207,8 +1287,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 			Density=1;
 			root->addTerminal(branch_id);
 		}
-		c=getColor();
-		glColor4d(c.red(), c.green(), c.blue(), 1);
+		setColor();
+		
 		Point q = TheScene->project(v); // convert model to screen space
 		double a = atan2(q.y / q.z, q.x / q.z);
 		double x = -sin(a);
@@ -1228,6 +1308,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		tip.x = topx;
 		tip.y = topy;
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1
+		
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, texid,root->norm_scale); // Constants1
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1253,13 +1335,13 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		// Note: shouldn't need to do this but otherwise half of the quad sometimes isn't drawn (??)
 
 		// 2) cover same rectangle again by drawing 2 different triangles starting at bot-left	
-		glVertex4d(p1.x, p1.y, p1.z, 4);
-		glVertex4d(p2.x, p2.y, p2.z, 1);
-		glVertex4d(p2.x, p2.y, p2.z, 2);
-
-		glVertex4d(p1.x, p1.y, p1.z, 4);
-		glVertex4d(p2.x, p2.y, p2.z, 2);
-		glVertex4d(p1.x, p1.y, p1.z, 3);
+//		glVertex4d(p1.x, p1.y, p1.z, 4);
+//		glVertex4d(p2.x, p2.y, p2.z, 1);
+//		glVertex4d(p2.x, p2.y, p2.z, 2);
+//
+//		glVertex4d(p1.x, p1.y, p1.z, 4);
+//		glVertex4d(p2.x, p2.y, p2.z, 2);
+//		glVertex4d(p1.x, p1.y, p1.z, 3);
 		glEnd();
 
 #endif
@@ -1275,12 +1357,13 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 			root->addTerminal(branch_id);		
 			Density=1;
 		}
-		c=getColor();
+		setColor();
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, texid,0); // Constants1
+
 		glLineWidth(MIN_LINE_WIDTH);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		glColor4d(c.red(), c.green(), c.blue(), 1);
 		glBegin(GL_LINES);
 		glVertex4d(p1.x, p1.y, p1.z, 0);
 		glVertex4d(p2.x, p2.y, p2.z, 0);
@@ -1296,11 +1379,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	width *= width_taper;
 	size *= length_taper;
 	for (int i = 0; i < splits; i++) {
-		emit(0, bot, v, tip, size, width, lev);
+		emit(i+2, bot, v, tip, size, width, lev);
 	}
 	if (right && right->typeValue() == ID_BRANCH) {
 		TNBranch *child = (TNBranch*) right;
-		child->fork(FIRST, bot, v, tip, size, width, lev);
+		child->fork(FIRST_FORK, bot, v, tip, size, width, lev);
 	}
 }
 
@@ -1345,4 +1428,16 @@ void TNBranch::saveNode(FILE *f){
 void TNBranch::eval(){
 	if(right)
 		right->eval();
+}
+void TNBranch::getTexDir(char*dir){
+	char base[256];
+	char dimdir[32];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Textures/Plants/Branch",base);
+}
+
+void TNBranch::getTexFilePath(char*name,char *dir){
+	char basedir[512];
+	getTexDir(basedir);
+  	sprintf(dir,"%s/%s.JPG",basedir,name);
 }

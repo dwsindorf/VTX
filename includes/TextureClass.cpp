@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-//#define DEBUG_TEXTURES
+#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -65,6 +65,9 @@ Texture::Texture(Image *i, int l, TNode *e)
 	tid=0;
 	s=0;
 	t=0;
+#ifdef DEBUG_TEXTURES
+	cout<<"new Texture "<<timage->height<<"x"<<timage->width<<endl;
+#endif
 }
 
 //-------------------------------------------------------------
@@ -72,6 +75,10 @@ Texture::Texture(Image *i, int l, TNode *e)
 //-------------------------------------------------------------
 Texture::~Texture()
 {
+#ifdef DEBUG_TEXTURES
+	cout<<"deleting Texture "<<timage->height<<"x"<<timage->width<<endl;
+#endif
+
 	del();
 }
 
