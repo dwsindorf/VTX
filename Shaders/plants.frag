@@ -17,6 +17,7 @@ uniform sampler2DRect FBOTex4;
 #define SHADOWTEX FBOTex3
 
 uniform vec4 Diffuse;
+uniform vec4 Ambient;
 uniform vec4 Shadow;
 uniform vec4 Haze;
 uniform float haze_zfar;
@@ -28,6 +29,7 @@ uniform float ws2;
 uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
+#define PNORM   TexVars.w
 
 varying vec4 Color;
 
@@ -35,20 +37,24 @@ vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
     
 	for(int i=0;i<NLIGHTS;i++){
-		vec3 light= normalize(gl_LightSource[i].position.xyz);		
+		vec3 light= normalize(gl_LightSource[i].position.xyz);
 		float LdotN= dot(light,Normal.xyz);// for day side diffuse lighting
 		float f=max(LdotN,0.0);
+		float g=f;
 		if(TexVars.w>0){
 			float Ldotn = dot(light,pnorm.xyz);// for branch lighting
-        	f*=Ldotn;
+			float h=f-0.01*TexVars.w*Ldotn;
+			h=clamp(h,0,1);
+			g=lerp(f,0,1,f,h);
+        	f=g;
         }
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = f*amplitude;
-		lpn=clamp(lpn,0.0,1.0);
-	
+		//lpn=clamp(f,0.0,1.0);
+	    //BaseColor=vec3(f,0,0);
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 	}
-	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
+	vec3 TotalDiffuse = BaseColor*diffuse*Diffuse.a+Ambient*Ambient.a;
 	return TotalDiffuse;
 }
 
@@ -56,14 +62,27 @@ vec3 setLighting(vec3 BaseColor) {
 
 // ########## main section #########################
 void main(void) {
-	vec4 color =Color;
+	vec4 color = Color;
 #if NTEXS >0
-	int i=TexVars.b;
-	if(i>=0){
+	int texid=TexVars.b;
+	int copt=TexVars.g;
+	
+	if(texid>=0){
 		vec2 l_uv=gl_TexCoord[0].xy;
-  		color=texture2D(samplers2d[i],l_uv);
+  		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
+  		if(copt>0){
+  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); // new color = texture color where texture a>0
+  			if(copt>1)
+				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
+			else
+				color.rgb=ncolor.rgb;				
+		}
+		else
+			color.rgb=tcolor.rgb;
+			
 	}
 #endif
+	color.a=1;
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS

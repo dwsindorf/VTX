@@ -85,7 +85,7 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 
 LinkedList<Placement*> PlacementMgr::list;
 
-PlacementMgr::PlacementMgr(int i)
+PlacementMgr::PlacementMgr(int i, int h)
 {
 	type=i&PID;
     options=i&(~PID);
@@ -101,7 +101,7 @@ PlacementMgr::PlacementMgr(int i)
   	base=0;
 
   	hash=0;
-  	hashsize=PERMSIZE;
+  	hashsize=h;
   	index=0;
 
   	hits=0;
@@ -110,6 +110,10 @@ PlacementMgr::PlacementMgr(int i)
 
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
+}
+
+PlacementMgr::PlacementMgr(int i):PlacementMgr(i,PERMSIZE)
+{	
 }
 
 PlacementMgr::~PlacementMgr()

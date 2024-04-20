@@ -125,6 +125,7 @@ public:
 	const char *typeName ()	{ return "color";}
 	const char *symbol();
 	bool initProgram();
+	int comps();
 
 	void addToken(LinkedList<TNode*>&);
 	TNode *operator[](int i);

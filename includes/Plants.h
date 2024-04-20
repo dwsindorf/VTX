@@ -97,7 +97,7 @@ public:
 	double size;
 	double pntsize;
 	double maxdensity;
-	double size_scale;
+	double base_drop;
 	double norm_scale;
 	double width_scale;
 	static int textures;
@@ -152,6 +152,7 @@ public:
 	double width_taper;
 	unsigned int texture_id;
 	int texid;
+	int color_flags;
 
 	Image *image;
 	TNplant *root;
@@ -179,6 +180,7 @@ public:
 	
 	void setTexture();
 	void setColor();
+	void setColorFlags();
 	void invalidateTexture();
 	void setImage(char *);
 	

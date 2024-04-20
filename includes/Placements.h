@@ -151,6 +151,7 @@ public:
 	double  ht;
 	double  msize;
 
+	PlacementMgr(int,int);
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
 

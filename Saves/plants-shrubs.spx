@@ -3,25 +3,21 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55632;
 		theta=24.4363;
-		height=11.9089 ft;
+		height=18.1199 ft;
 		gndlvl=10532.2 ft;
 		time=380926;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
+		zoom=0.004;
+		minh=1.13636e-09;
 		minr=0.004002;
-		heading=18;
-		tilt=-14;
-		angle=13;
+		heading=27;
+		tilt=-15;
+		angle=12;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		heading=3;
-		angle=17;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -60,7 +56,7 @@ Scene() {
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",12,1,2e-07,0.8,0.9,0.2,50,0.5)
+								Plant("name",12,1,1e-07,1,1,0.05,50)
 								Branch("trunk",2.3,1,1,0.7,0.1,0.83,1,1)[Color(0.25+RANDVAL*DENSITY,DENSITY,0.25*RANDVAL*DENSITY)];
 					}
 					Sky(0.00410952) {

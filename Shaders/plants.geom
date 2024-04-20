@@ -29,7 +29,6 @@ void main(void) {
 
 	TexVars=TexVars_G[0];
 	
-	
 	float dx2=nscale*topx;
 	float dx1=nscale*botx;
 	
@@ -64,13 +63,15 @@ void main(void) {
     gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
     EmitVertex(); 
  
+  EndPrimitive();
+  /*
   	norm=vec3(dx2,0.0,1.0);
 	norm=normalize(norm);
     pnorm.xyz = gl_NormalMatrix * norm;
     gl_TexCoord[0].xy=vec2(0,0);
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left  
     EmitVertex();
-
+*/
     //EndPrimitive();
     
 }
