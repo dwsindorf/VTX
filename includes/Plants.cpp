@@ -49,21 +49,22 @@
 //    - pass in vectors in screen space (bot, top) of line
 //    - calculate screen space rectangle (or line)
 //    - produce vertex's to draw rectangle (or line)
-// 3) add support for textures
-//    - add support for bump shading from textures
-// 4) implement TNleaf class
+// 3) add support for textures (DONE)
+// 4) add support for bump shading from textures
+// 5) implement TNleaf class
 //    - only generate leaves at end of "terminal" branches
 //    - may use a point sprite implementation (probably need to sort in this case)
 //    - possible to instead use a simple geometry model (single triangle with color ?)
-// 5) use a spline function when connecting levels on same branch
+// 6) use a spline function when connecting levels on same branch
 //   - generate additional line segments between segment end points (no need for branching)
-// 6) better lighting model for branches
+// 7) better lighting model for branches
 //   - currently only uses x-direction in screen space
 //   - works good for vertical trunks but makes horizontal  look flat
 //   - idea:incorporate delta-y to get better effect ?
-// 7) add curvature to branches by implementing a spline function
+// 8) add curvature to branches by implementing a spline function
 //   - for efficiency probably best done in a geometry shader
-// 8) go to a TRUE 3-d model vs. lines with rendered billboards in screen space
+
+// 9) use lists to increase render speed
 	
 // BUGS/problems
 // 1) see a lot of jitter on branches when moving around (FIXED)
@@ -124,7 +125,7 @@ static int nhits=0;
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 static double ht_offset=0.0;
-static double threshold=2;
+static double threshold=1;
 static int cnt=0;
 static int tests=0;
 static int pts_fails=0;
@@ -165,7 +166,7 @@ static double min_draw_width=1;
 // 2 branches:11917 lines:61732 terminals:41420 skipped:129587
 
 static double min_render_pts=1; // for render
-static double min_adapt_pts=2; //  for adapt - increase resolution only around nearby plants
+static double min_adapt_pts=3; //  for adapt - increase resolution only around nearby plants
 
 #define USE_AVEHT
 #define MIN_VISITS 1
@@ -724,7 +725,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	plant_id=0;
 	branch=0;
 	base_drop=0;
-	norm_scale=50;
+	norm_scale=20;
 	width_scale=1;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
@@ -1173,7 +1174,7 @@ void TNBranch::setColorFlags(){
 }
 void TNBranch::setColor(){
 	TNarg *arg;
-	if(base){
+	if(base && color_flags){
 		arg=(TNarg*)base;
 		while(arg){
 			S0.clr_cvalid();

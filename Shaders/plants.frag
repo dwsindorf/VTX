@@ -6,7 +6,7 @@
 uniform sampler2D samplers2d[NTEXS];
 #endif
 varying vec4 Normal;
-varying vec4 pnorm;
+//varying vec4 pnorm;
 varying vec4 TexVars;
 
 uniform sampler2DRect FBOTex1;
@@ -29,7 +29,6 @@ uniform float ws2;
 uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
-#define PNORM   TexVars.w
 
 varying vec4 Color;
 
@@ -39,19 +38,9 @@ vec3 setLighting(vec3 BaseColor) {
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light= normalize(gl_LightSource[i].position.xyz);
 		float LdotN= dot(light,Normal.xyz);// for day side diffuse lighting
-		float f=max(LdotN,0.0);
-		float g=f;
-		if(TexVars.w>0){
-			float Ldotn = dot(light,pnorm.xyz);// for branch lighting
-			float h=f-0.01*TexVars.w*Ldotn;
-			h=clamp(h,0,1);
-			g=lerp(f,0,1,f,h);
-        	f=g;
-        }
+		float f=max(LdotN,0.0);	
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = f*amplitude;
-		//lpn=clamp(f,0.0,1.0);
-	    //BaseColor=vec3(f,0,0);
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 	}
 	vec3 TotalDiffuse = BaseColor*diffuse*Diffuse.a+Ambient*Ambient.a;
@@ -70,16 +59,15 @@ void main(void) {
 	if(texid>=0){
 		vec2 l_uv=gl_TexCoord[0].xy;
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
-  		if(copt>0){
-  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); // new color = texture color where texture a>0
-  			if(copt>1)
+  		if(copt>0){    // new color = blend color and texture where texture.a >0
+  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); 
+  			if(copt>1) // new color = blend color and ncolor where color.a >0
 				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
-			else
+			else // no alpha in color
 				color.rgb=ncolor.rgb;				
 		}
-		else
-			color.rgb=tcolor.rgb;
-			
+		else // texture only
+			color.rgb=tcolor.rgb;		
 	}
 #endif
 	color.a=1;
@@ -96,8 +84,7 @@ void main(void) {
 	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
 	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
 	color.rgb=mix(color.rgb,Haze.rgb,h);
-#endif
-    
+#endif 
  	gl_FragData[0]=color;
 	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
 

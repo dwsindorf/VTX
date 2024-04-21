@@ -3,75 +3,21 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55633;
 		theta=24.4366;
-		height=11.9089 ft;
+		height=20.8972 ft;
 		gndlvl=10512.5 ft;
-		time=200845;
-		vstride=1;
+		time=200812;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=123;
-		tilt=-21;
-		angle=-4;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400199;
+		heading=141;
+		tilt=1;
+		angle=-19;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=6 ft;
-		heading=108;
-		tilt=-16;
-	}
-	View{
-		height=11.9089 ft;
-		time=200848;
-		heading=121;
-		tilt=-19;
-	}
-	View{
-		time=200850;
-	}
-	View{
-		time=200856;
-	}
-	View{
-		time=200859;
-	}
-	View{
-		time=200864;
-	}
-	View{
-		height=24.2674 ft;
-		tilt=-15;
-	}
-	View{
-		time=200867;
-		tilt=-9;
-	}
-	View{
-		time=200871;
-	}
-	View{
-		time=200876;
-	}
-	View{
-		height=17.5626 ft;
-		time=200881;
-	}
-	View{
-		height=17.377 ft;
-		time=200883;
-		tilt=-11;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400199;
-	}
-	View{
-		height=43.0436 ft;
-		time=200894;
-		minr=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -110,8 +56,11 @@ Scene() {
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("bush",12,1,2e-07,0.8,0.5,0.2,50,0,0,0,0.5)
-								Branch("stem",1,0.125,1,0.4,0.1,0.8,1.2,100)[Color(0.8*DENSITY+0.5*RANDVAl,0.3+RANDVAL*DENSITY,0.3*RANDVAL*(1-DENSITY))];
+								Plant("pine",10,1,1e-06,0.8,0.9,0.05,50)
+								Branch("trunk",1,2,0.1,0.1,0,0.85,0.95,0)["Cracks1",Color(0.5,0.25,0,DENSITY)]
+								Branch("branch",2.2,1,2,2,0.7,0.8,0.8,6)[Color(0.4,0.7*DENSITY,0)]
+								Plant("bush",8,2,3e-07,0.8,0.5,0.2,50)
+								Branch("stem",2.3,0.4,2,0.7,0.1,0.7,0.98,6)["test1",Color(1-0.3*RANDVAL,DENSITY,0.2*RANDVAL+0.7*DENSITY)];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);
