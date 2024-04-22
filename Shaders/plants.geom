@@ -8,32 +8,65 @@ varying in vec4 TexVars_G[];
 
 varying out vec4 Normal;
 varying out vec4 Color;
-//varying out vec4 pnorm;
 varying out vec4 TexVars;
 
 #define PI		3.14159265359
-// TODO: Hermite spline 
-//  o pre-generate 4x4 spline matrix M (pass in via fixed constant uniform)
+// Hermite spline (TODO) 
+// To smooth branch curves and add possible speedup (fewer opengl vertexes needed) 
+//  o pre-generate 4x4 spline matrix M (pass in via fixed mat3 constant or uniform)
 //    - M = [2,-2,1,1][-3,3,-2,-1][0,0,1,0][1,0,0,0]
 //  o for each line segment pass in two points (P0,P1) and 2 vectors (V0,V1) 
 //    - in next line segment P0,V0 assigned to P1,V1 of previous segment (in opengl)
 //  o angle calculation needed at top and bottom for width 
 //    - bottom angle obtained from angle between v1 and v0
-//    - assume top angle 90 degrees from top vector/point in screen space pi/2-atan2(dv1.y,dv1.x)
+//    - assume top angle 90 degrees from top vector/point in screen space PI/2-atan2(dv1.y,dv1.x)
 //    - also need width values for top and bottom (also passed in)
 //  o generate a set of n intermediate points for each spline segment (n>=1)
-//   - use TxMxPV to calculate points (T=[t^3,t^2,t,1] M=hermite matrix(fixed), PV=[P0,P1,V0,V1)
+//   - use TxMxPV to calculate points T=[t^3,t^2,t,1] M=hermite matrix(fixed), PV=[P0,P1,V0,V1)
 //   - may be able to parametize "t" 0..1 (e.g 0,1/4,1/2,3/4) 
 //   - use intermediate points and last point to draw multiple polygon segments (like below)
 //   - for each new "t" point V(t) = P(t)-P(t-1) W(t) = pi/2-atan2(dv1.y,dv1.x)
-//    - construct polygon using W(t) and W(t-1)
+//   - construct polygon using W(t) and W(t-1)
 //  o Note: only need to create spline for main branches 
 //   - for forked side branches start a new spline curve at branching start point
+// Bumpmap textures (TODO)
+//  o In geometry shade generate Transpose matrix (TX) and output it to fragment shader
+//   - calculate normal(N)vector using current method
+//   - construct Tangent vector T using dy (i.e. delta-y in screen space) could be constant vector
+//   - construct binormal vector (B) using TxN
+//   - normalize all vectors
+//   - construct TX matrix mat3(T, B, N)
+//   - pass TX to fragment shader
+//  o In fragment shader constuct dx and dy vectors from texture
+//   - read parameters from uniform float variables 
+//     offset: small svalue (e.g. 1.0/image_width)
+//     bump_ampl: how much intensity to apply (TBD)
+//   - calculate ave intensity of texture:
+//     vec2 l_uv=gl_TexCoord[0].xy;
+//     vec4 tval=texture2D(samplers2d[texid],l_uv);
+//     float tva=(tval.x+tval.y+tval.z)/3.0;
+//   - construct 2d delta vectors in x and y by fetching texture after applying a small offset
+//	   ds=vec2(l_uv.x+offset,l_uv.y); 
+//     dt=vec2(l_uv.x,l_uv.y+offset)
+//     vec4 tcs=texture2D(samplers2d[texid],ds);
+//     vec4 tct=texture2D(samplers2d[texid],dt);
+//     float tsa=(tcs.x+tcs.y+tcs.z)/3.0;
+//     float tta=(tct.x+tct.y+tct.z)/3.0;
+//  o construct delta vector 
+//	 - vec3 tc=vec3(tsa-tva,tta-tva, 0.0);
+//  o calculate bump intensity my multipying tc with TX
+//   - vec3 bv=bump_ampl*TX*tc;
+//  o calculate lighting contribution from bump
+//   - vec3 bmp  = -gl_NormalMatrix*bv;
+//   - vec3 normal  = normalize(Normal.xyz+bmp);
+//   - use normal (vs Normal) in lighting calculation
+//  o possible speedup by generating a separate intensity texture in opengl ?
+//   - could use pixel intensity vs average values calculated in shader
 void main(void) {
 
 	Color=Color_G[0];
 	
-	 vec4 pnorm;
+	vec4 pnorm;
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;

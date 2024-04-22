@@ -92,10 +92,9 @@
 // 6) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
-// 7) problems with textures
+// 7) problems with textures (FIXED)
 //   - normal hack doesn't work unless light direction is some range of values
 //     o plants rendered too dark or black in daylight (usually twilight)
-//   - need a way to mix color and texture
 
 
 //************************************************************
@@ -889,7 +888,6 @@ void TNplant::clearStats(){
 	}
 }
 void TNplant::showStats(){
-	cout <<"plant "<<plant_id<<" branches="<<branches<<endl;
 	for(int i=0;i<branches;i++){
 		cout<<"plant["<<name_str<<"] branch["<<i<<"] polygons:"<<stats[i][0]<<" lines:"<<stats[i][1]<<" terminals:"<<stats[i][2]<<" skipped:"<<stats[i][3]<<endl;
 	}
@@ -989,7 +987,6 @@ void TNplant::emit(){
 bool TNplant::setProgram(){
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
-	cout<<"width_scale:"<<width_scale<<endl;
 
 	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
