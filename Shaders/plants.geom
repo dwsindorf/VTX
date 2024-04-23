@@ -9,7 +9,8 @@ varying in vec4 TexVars_G[];
 varying out vec4 Normal;
 varying out vec4 Color;
 varying out vec4 TexVars;
-varying out vec3 Pnorm;
+
+uniform float norm_scale;
 
 #define PI		3.14159265359
 // Hermite spline (TODO) 
@@ -66,6 +67,9 @@ varying out vec3 Pnorm;
 void main(void) {
 
 	Color=Color_G[0];
+	
+	vec4 pnorm;
+
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
 		
@@ -73,34 +77,41 @@ void main(void) {
 	float topy=Factors[0].g;
 	float botx=Factors[0].b;
 	float boty=Factors[0].a;
+	
+	float nscale=TexVars_G[0].w;
 
 	TexVars=TexVars_G[0];
 	
 	float dx2=topx;
 	float dx1=botx;
-		
+	
+	vec3 norm;
     // draw a polygon
     
-	Pnorm=vec3(dx2,0,0);
-    Normal.xyz=Normal_G[0].xyz;
+	norm=vec3(dx2,0,0);
+    pnorm.xyz = gl_NormalMatrix * norm;
+    Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
     gl_TexCoord[0].xy=vec2(0,0);
     EmitVertex();
    
-    Pnorm=vec3(-dx2,0,0);
-    Normal.xyz=Normal_G[0].xyz;
+    norm=vec3(-dx2,0,0);
+    pnorm.xyz = gl_NormalMatrix * norm;
+    Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_Position = vec4(ps2.x+topx,ps2.y+topy,ps2.z,1); // top-right  
     gl_TexCoord[0].xy=vec2(1,0);
     EmitVertex();
         
-    Pnorm=vec3(dx1,0.0,0);
-    Normal.xyz=Normal_G[0].xyz;
+    norm=vec3(dx1,0.0,0);
+    pnorm.xyz = gl_NormalMatrix * norm;
+    Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_TexCoord[0].xy=vec2(0,1);
     gl_Position = vec4(ps1.x-botx,ps1.y-boty,ps1.z,1);  // bot-left 
     EmitVertex();
     
-    Pnorm=vec3(-dx1,0.0,0);
-    Normal.xyz=Normal_G[0].xyz;
+    norm=vec3(-dx1,0.0,0);
+    pnorm.xyz = gl_NormalMatrix * norm;
+    Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_TexCoord[0].xy=vec2(1,1);
     gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
     EmitVertex(); 

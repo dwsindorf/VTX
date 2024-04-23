@@ -6,7 +6,7 @@
 uniform sampler2D samplers2d[NTEXS];
 #endif
 varying vec4 Normal;
-varying vec3 Pnorm;
+//varying vec4 pnorm;
 varying vec4 TexVars;
 
 uniform sampler2DRect FBOTex1;
@@ -27,40 +27,42 @@ uniform float ws1;
 uniform float ws2;
 uniform float bump_ampl;
 uniform float bump_delta;
-uniform float norm_scale;
+
 uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
 
 varying vec4 Color;
+varying vec3 T;
 
 vec3 test;
 
+#define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(){
 	vec3 normal=Normal.xyz;
 #ifdef BUMPS
 	int texid=TEXID;
-	float delta=5e-3;
+	float delta=2e-3;
 	vec2 l_uv=gl_TexCoord[0].xy;
 	vec4 tval=texture2D(samplers2d[texid],l_uv);
-	float tva=(tval.x+tval.y+tval.z)/3.0;
+	float tva=AVE(tval);
 	vec2 ds=vec2(l_uv.x+delta,l_uv.y);
 	vec2 dt=vec2(l_uv.x,l_uv.y+delta);
 	vec4 tcs=texture2D(samplers2d[texid],ds);
 	vec4 tct=texture2D(samplers2d[texid],dt);
-	float tsa=(tcs.x+tcs.y+tcs.z)/3.0;
-	float tta=(tct.x+tct.y+tct.z)/3.0;
+	float tsa=AVE(tcs);
+	float tta=AVE(tct);
 	vec3 tc=vec3(tsa-tva,tta-tva, 0.0);
-	vec3 pn=gl_NormalMatrix * Pnorm;
-	vec3 N=normalize(pn);
+	
+	vec3 N=normalize(normal);
 	vec3 tangent=(vec3(0,1,0));	
 	vec3 binormal=normalize(cross(tangent,N));
 	mat3 trans_mat=(mat3(tangent, binormal, N));
-	vec3 bv=10*trans_mat*tc;
+	vec3 bv=(0.01/delta)*trans_mat*(tc);
 	vec3 bmp  = gl_NormalMatrix*bv;
-	normal  = bmp+max(Normal.xyz,norm_scale*Pnorm);
-	test=(normal);
+	normal  = Normal.xyz+bmp;
+	test=normalize(tc);
 #endif
 	return normal;
 }

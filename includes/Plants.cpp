@@ -1085,7 +1085,6 @@ void TNBranch::invalidateTexture(){
 }
 bool TNBranch::setProgram(){
 	if(!image || !image->valid()){
-		//cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:" <<texid<<endl;
 		return false;
 	}	
 	texid=root->textures++;
