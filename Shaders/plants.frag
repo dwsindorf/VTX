@@ -27,6 +27,7 @@ uniform float ws1;
 uniform float ws2;
 uniform float bump_ampl;
 uniform float bump_delta;
+uniform float norm_scale;
 
 uniform bool lighting;
 
@@ -34,16 +35,20 @@ uniform bool lighting;
 #define TEXID   TexVars.b
 
 varying vec4 Color;
-varying vec3 T;
+varying vec3 Pnorm;
+varying vec3 Snorm;
+
 
 vec3 test;
 
 #define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(){
-	vec3 normal=Normal.xyz;
+	vec3 bn=norm_scale*gl_NormalMatrix * Pnorm;
+	vec3 normal=Snorm-bn;
+	
 #ifdef BUMPS
 	int texid=TEXID;
-	float delta=2e-3;
+	float delta=bump_delta;
 	vec2 l_uv=gl_TexCoord[0].xy;
 	vec4 tval=texture2D(samplers2d[texid],l_uv);
 	float tva=AVE(tval);
@@ -55,13 +60,11 @@ vec3 getNormal(){
 	float tta=AVE(tct);
 	vec3 tc=vec3(tsa-tva,tta-tva, 0.0);
 	
-	vec3 N=normalize(normal);
-	vec3 tangent=(vec3(0,1,0));	
-	vec3 binormal=normalize(cross(tangent,N));
-	mat3 trans_mat=(mat3(tangent, binormal, N));
-	vec3 bv=(0.01/delta)*trans_mat*(tc);
-	vec3 bmp  = gl_NormalMatrix*bv;
-	normal  = Normal.xyz+bmp;
+	vec3 tangent=vec3(0,1,0);	
+	vec3 binormal=cross(tangent,normal);
+	mat3 trans_mat=mat3(tangent, binormal, normal);
+	vec3 bv=(bump_ampl/delta)*trans_mat*(tc);
+	normal  += bv;
 	test=normalize(tc);
 #endif
 	return normal;

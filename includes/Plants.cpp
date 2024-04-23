@@ -84,17 +84,18 @@
 //     o improvement: moving visits++ before threshold test in set_terrain
 // 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
 //    - may be fixed later by implementing leaf class and rendering leafs at all terminal nodes ?
-// 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments
+// 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments (FIXED)
 //    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
-//    - oddly, setting glLineWidth to 1.0 (vs. width) resulted in a speedup from ~15 fps to ~25 fps
+//    - oddly, setting glLineWidth to 1.0 (vs. variable width) resulted in a speedup from ~15 fps to ~25 fps
 // 5) GS_SHADER doesn't work after last changes (get link error for program GL_INVALID_ENUM) (FIXED)
 //    - fixed by changing "varying in vec4 Normal_G[1]" etc. to "varying in vec4 Normal_G[]" etc.
 // 6) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
-// 7) problems with textures (FIXED)
-//   - normal hack doesn't work unless light direction is some range of values
-//     o plants rendered too dark or black in daylight (usually twilight)
+// 7) problems with normals (FIXED)
+//   - normal hack doesn't work unless light direction is some range of values (FIXED)
+//   - get some illumination on one side of branches during night
+//     o try reducing diffuse illumination based on time of day
 
 
 //************************************************************
@@ -384,9 +385,9 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
-	vars.newFloatVar("bump_delta",1e-6);
-	vars.newFloatVar("bump_ampl",1);
-	vars.newFloatVar("norm_scale",20);
+	vars.newFloatVar("bump_delta",2e-3);
+	vars.newFloatVar("bump_ampl",0.05);
+	vars.newFloatVar("norm_scale",40);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
@@ -729,7 +730,6 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	plant_id=0;
 	branch=0;
 	base_drop=0;
-	norm_scale=20;
 	width_scale=1;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
@@ -784,11 +784,10 @@ void TNplant::init()
 	if(n>3) mgr->mult=arg[3];			// random scale multiplier
 	if(n>4) mgr->level_mult=arg[4];     // scale multiplier per level
 	if(n>5) maxdensity=arg[5];
-	if(n>6) norm_scale=arg[6];
-	if(n>7) smgr->slope_bias=arg[7];
-	if(n>8) smgr->ht_bias=arg[8];
-	if(n>9) smgr->lat_bias=arg[9];
-	if(n>10) base_drop=arg[10];
+	if(n>6) smgr->slope_bias=arg[6];
+	if(n>7) smgr->ht_bias=arg[7];
+	if(n>8) smgr->lat_bias=arg[8];
+	if(n>9) base_drop=arg[9];
 
 	if(right)
 	   right->init();
@@ -983,7 +982,7 @@ void TNplant::emit(){
 	tip.y=0;
 	glDisable(GL_CULL_FACE);
 	
-	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,norm_scale); // Constants1
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	
 	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,width,0);
 	
@@ -1333,7 +1332,7 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		tip.y = topy;
 		
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,root->norm_scale); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,0); // Constants1
 		
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

@@ -9,6 +9,8 @@ varying in vec4 TexVars_G[];
 varying out vec4 Normal;
 varying out vec4 Color;
 varying out vec4 TexVars;
+varying out vec3 Pnorm;
+varying out vec3 Snorm;
 
 uniform float norm_scale;
 
@@ -85,10 +87,13 @@ void main(void) {
 	float dx2=topx;
 	float dx1=botx;
 	
+	Snorm=Normal_G[0].xyz;
+	
 	vec3 norm;
     // draw a polygon
     
 	norm=vec3(dx2,0,0);
+	Pnorm=norm;
     pnorm.xyz = gl_NormalMatrix * norm;
     Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
@@ -96,6 +101,7 @@ void main(void) {
     EmitVertex();
    
     norm=vec3(-dx2,0,0);
+    Pnorm=norm;
     pnorm.xyz = gl_NormalMatrix * norm;
     Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_Position = vec4(ps2.x+topx,ps2.y+topy,ps2.z,1); // top-right  
@@ -103,6 +109,7 @@ void main(void) {
     EmitVertex();
         
     norm=vec3(dx1,0.0,0);
+    Pnorm=norm;
     pnorm.xyz = gl_NormalMatrix * norm;
     Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_TexCoord[0].xy=vec2(0,1);
@@ -110,6 +117,7 @@ void main(void) {
     EmitVertex();
     
     norm=vec3(-dx1,0.0,0);
+    Pnorm=norm;
     pnorm.xyz = gl_NormalMatrix * norm;
     Normal.xyz=Normal_G[0].xyz-nscale*pnorm;
     gl_TexCoord[0].xy=vec2(1,1);

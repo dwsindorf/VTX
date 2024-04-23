@@ -98,7 +98,6 @@ public:
 	double pntsize;
 	double maxdensity;
 	double base_drop;
-	double norm_scale;
 	double width_scale;
 	static int textures;
 
