@@ -335,6 +335,8 @@ bool PlantMgr::setProgram(){
 	
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
+	if(TNplant::textures>0 && Render.bumps())
+		sprintf(defs+strlen(defs),"#define BUMPS\n",TNplant::textures);
 
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
 	if(Render.haze())
@@ -382,6 +384,9 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
+	vars.newFloatVar("bump_delta",1e-6);
+	vars.newFloatVar("bump_ampl",1);
+	vars.newFloatVar("norm_scale",20);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
