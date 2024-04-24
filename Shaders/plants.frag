@@ -5,9 +5,6 @@
 #if NTEXS >0
 uniform sampler2D samplers2d[NTEXS];
 #endif
-varying vec4 Normal;
-//varying vec4 pnorm;
-varying vec4 TexVars;
 
 uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
@@ -15,6 +12,7 @@ uniform sampler2DRect FBOTex3;
 uniform sampler2DRect FBOTex4;
 
 #define SHADOWTEX FBOTex3
+#define LINE_MODE   8
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
@@ -28,23 +26,25 @@ uniform float ws2;
 uniform float bump_ampl;
 uniform float bump_delta;
 uniform float norm_scale;
-
 uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
+#define LINE    TexVars.w
 
 varying vec4 Color;
 varying vec3 Pnorm;
-varying vec3 Snorm;
-
+varying vec3 Normal;
+varying vec4 TexVars;
 
 vec3 test;
 
 #define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(){
-	vec3 bn=norm_scale*gl_NormalMatrix * Pnorm;
-	vec3 normal=Snorm-bn;
+	vec3 bn=norm_scale*Pnorm;
+	vec3 normal=Normal-bn;
+	if(LINE)
+		return normal;
 	
 #ifdef BUMPS
 	int texid=TEXID;
@@ -64,7 +64,7 @@ vec3 getNormal(){
 	vec3 binormal=cross(tangent,normal);
 	mat3 trans_mat=mat3(tangent, binormal, normal);
 	vec3 bv=(bump_ampl/delta)*trans_mat*(tc);
-	normal  += bv;
+	normal += bv;
 	test=normalize(tc);
 #endif
 	return normal;

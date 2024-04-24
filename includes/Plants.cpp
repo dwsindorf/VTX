@@ -22,6 +22,9 @@
 
 #define FIRST_FORK  1
 #define FIRST_EMIT  2
+#define LAST_EMIT   4
+#define LINE_MODE   8
+
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -50,7 +53,7 @@
 //    - calculate screen space rectangle (or line)
 //    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures (DONE)
-// 4) add support for bump shading from textures
+// 4) add support for bump shading for textures (DONE)
 // 5) implement TNleaf class
 //    - only generate leaves at end of "terminal" branches
 //    - may use a point sprite implementation (probably need to sort in this case)
@@ -59,12 +62,13 @@
 //   - generate additional line segments between segment end points (no need for branching)
 // 7) better lighting model for branches
 //   - currently only uses x-direction in screen space
-//   - works good for vertical trunks but makes horizontal  look flat
+//   - works good for vertical trunks but makes horizontal look flat
 //   - idea:incorporate delta-y to get better effect ?
 // 8) add curvature to branches by implementing a spline function
 //   - for efficiency probably best done in a geometry shader
-
 // 9) use lists to increase render speed
+// 10)generate wxWidgets classes for plants
+//    - optional support preview window with option to save generated imaged as sprites
 	
 // BUGS/problems
 // 1) see a lot of jitter on branches when moving around (FIXED)
@@ -86,7 +90,7 @@
 //    - may be fixed later by implementing leaf class and rendering leafs at all terminal nodes ?
 // 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments (FIXED)
 //    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
-//    - oddly, setting glLineWidth to 1.0 (vs. variable width) resulted in a speedup from ~15 fps to ~25 fps
+//    - surprisingly, setting glLineWidth to 1.0 (vs. variable width) resulted in a speedup from ~15 fps to ~25 fps
 // 5) GS_SHADER doesn't work after last changes (get link error for program GL_INVALID_ENUM) (FIXED)
 //    - fixed by changing "varying in vec4 Normal_G[1]" etc. to "varying in vec4 Normal_G[]" etc.
 // 6) multiple plants don't stack if "+" used to connect
@@ -352,12 +356,10 @@ bool PlantMgr::setProgram(){
 #endif
 	GLSLMgr::setDefString(defs);
 #ifdef GS_SHADER
-
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	GLSLMgr::tesslevel=0;
-	GLSLMgr::max_output=5;  // special case
-	
+	GLSLMgr::max_output=4;  // special case
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
 #else
 	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
@@ -387,7 +389,7 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
 	vars.newFloatVar("bump_delta",2e-3);
 	vars.newFloatVar("bump_ampl",0.05);
-	vars.newFloatVar("norm_scale",40);
+	vars.newFloatVar("norm_scale",30);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
@@ -1215,9 +1217,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	}
 	int lev = lvl;
 	lev++;
+	
+	int mode=opt;
 
-	bool first_fork = (opt == FIRST_FORK);
-	bool first_emit = (opt == FIRST_EMIT);
+	bool first_fork = (opt & FIRST_FORK);
+	bool first_emit = (opt & FIRST_EMIT);
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1304,11 +1308,14 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 #endif
 		root->addBranch(branch_id);
 #ifndef NO_DRAW
-		if(/*terminal &&*/(width*width_taper<MIN_TRIANGLE_WIDTH || lev>maxlvl) ){
+		if(width*width_taper<MIN_LINE_WIDTH || lev>maxlvl){
 			Density=1;
-			root->addTerminal(branch_id);
+			mode|=LAST_EMIT;
+			//root->addTerminal(branch_id);
+			//glColor4d(1, 1, 0, 1);
 		}
-		setColor();
+		//else
+			setColor();
 		// TODO move this to shader ?
 		Point q = TheScene->project(v); // convert model to screen space
 		double a = atan2(q.y / q.z, q.x / q.z);
@@ -1361,19 +1368,26 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		if (test3) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
+		if(mode & LAST_EMIT)
+			return;
+
 #endif
 #ifdef TRIANGLE_LINES
 	} 
 	else if (width >= MIN_LINE_WIDTH) {
 		root->addLine(branch_id);
+		mode|=LINE_MODE;
 #ifndef NO_DRAW
-		if(/*terminal &&*/(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl)){
-			root->addTerminal(branch_id);		
+		if(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl){
+			root->addTerminal(branch_id);
+			mode|=LAST_EMIT;
 			Density=1;
+			//glColor4d(1, 0, 0, 1);
 		}
-		setColor();
+		//else
+			setColor();
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,0); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,LINE_MODE); // Constants1
 
 		glLineWidth(MIN_LINE_WIDTH);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1384,7 +1398,8 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		glEnd();
 		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+		if(mode & LAST_EMIT)
+			return;
 #endif
 	}
 #endif
@@ -1392,9 +1407,11 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	}
 	width *= width_taper;
 	size *= length_taper;
-	for (int i = 0; i < splits; i++) {
-		emit(i+2, bot, v, tip, size, width, lev);
+	emit(FIRST_EMIT, bot, v, tip, size, width, lev);
+	for (int i = 1; i < splits; i++) {
+		emit(0, bot, v, tip, size, width, lev);
 	}
+	
 	if (right && right->typeValue() == ID_BRANCH) {
 		TNBranch *child = (TNBranch*) right;
 		child->fork(FIRST_FORK, bot, v, tip, size, width, lev);
