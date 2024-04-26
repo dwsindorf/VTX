@@ -841,9 +841,7 @@ int ImageReader::getFileInfo(char *name, char *dir)
 	sprintf(path,"%s%s.jpg",dir,name);
 	if(File.fileExists(path))
 		info|=JPG;
-	sprintf(path,"%s%s.jpeg",dir,name);
-	if(File.fileExists(path))
-		info|=JPG;
+	
 	sprintf(path,"%s%s.png",dir,name);
 		if(File.fileExists(path))
 			info|=JPG;
@@ -1049,8 +1047,6 @@ void ImageReader::imagedir(char *dir)
 //-------------------------------------------------------------
 void ImageReader::makeImagelist()
 {
-    //static int init=1;
-
     if(invalid()){
 		char base[256];
 		char sdir[512];
@@ -1081,7 +1077,6 @@ void ImageReader::makeImagelist()
 		sprintf(sdir,"%s%sTextures%sImages",base,File.separator,File.separator);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.jpeg",flist);
 		File.getFileNameList(sdir,"*.png",flist);
 
 		flist.ss();
@@ -1096,7 +1091,6 @@ void ImageReader::makeImagelist()
 		sprintf(sdir,"%s%sTextures%sMaps",base,File.separator,File.separator);
 		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.jpeg",flist);
 		File.getFileNameList(sdir,"*.png",flist);
 
 		flist.ss();
@@ -1107,14 +1101,11 @@ void ImageReader::makeImagelist()
 				images.sort();
 			}
 		}
-		flist.free();
 		
+		flist.free();	
 		sprintf(sdir,"%s%sTextures%sPlants%sBranch",base,File.separator,File.separator,File.separator);
-		File.getFileNameList(sdir,"*.bmp",flist);
 		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.jpeg",flist);
 		File.getFileNameList(sdir,"*.png",flist);
-
 		flist.ss();
 		while((sym=flist++)){
 			if(!images.inlist(sym->name())){
@@ -1123,6 +1114,20 @@ void ImageReader::makeImagelist()
 				images.sort();
 			}
 		}
+		
+		flist.free();	
+		sprintf(sdir,"%s%sTextures%sPlants%Leaf",base,File.separator,File.separator,File.separator);
+		File.getFileNameList(sdir,"*.jpg",flist);
+		File.getFileNameList(sdir,"*.png",flist);
+		flist.ss();
+		while((sym=flist++)){
+			if(!images.inlist(sym->name())){
+				is=getImageInfo(sym->name());
+				images.add(is);
+				images.sort();
+			}
+		}
+
 		flist.free();
 		//init=0;
 		validate();

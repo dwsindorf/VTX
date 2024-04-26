@@ -9,7 +9,8 @@
 
 class PlantMgr;
 class TNplant;
-class TNbranch;
+class TNBranch;
+class TNLeaf;
 class Plant;
 
 class PlantPoint : public Placement
@@ -88,11 +89,12 @@ protected:
 public:
 	Point norm;
 	int branches;
-	int stats[MAX_BRANCHES][4];
+	int stats[MAX_BRANCHES][5];
 
 	int plant_id;
 	Plant *plant;
-	TNbranch *branch;
+	TNBranch *branch;
+	TNLeaf *leaf;
 	double radius;
 	double size;
 	double pntsize;
@@ -121,12 +123,14 @@ public:
 	void applyExpr();
 	bool setProgram();
 	void emit();
+	void getLeaf();
 	
 	void clearStats();
 	void showStats();
 	void addBranch(int id);
 	void addLine(int id);
 	void addTerminal(int id);
+	void addLeaf(int id);
 	void addSkipped(int id);
 };
 
@@ -161,22 +165,21 @@ public:
 	char texname[256];
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
-	~TNBranch();
 	
-	int typeValue()			{ return ID_BRANCH;}
-	const char *typeName ()	{ return "branch";}
-	const char *symbol()	{ return "Branch";}
+	virtual int typeValue()	  { return ID_BRANCH;}
+	virtual char *typeName () { return "branch";}
+	virtual char *symbol()	  { return "Branch";}
 	
-	void init();
+	virtual void init();
 	void eval();
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
-	void getTexDir(char*dir);
-	void getTexFilePath(char*name,char *dir);
+	virtual void getTexDir(char*dir);	
+	virtual bool setProgram();
 	
-	bool setProgram();
-	
+	bool isLeaf()   { return typeValue()==ID_LEAF;}
+	bool isBranch() { return typeValue()==ID_BRANCH;}
 	void setTexture();
 	void setColor();
 	void setColorFlags();
@@ -185,7 +188,7 @@ public:
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
-	
+	virtual Point setVector(Point vec, Point start);
 	TNplant *getRoot();
 
 };
@@ -195,6 +198,16 @@ public:
 //************************************************************
 class TNLeaf : public TNBranch
 {
+public:
+	TNLeaf(TNode *l, TNode *r, TNode *b);
+
+	int typeValue()		{ return ID_LEAF;}
+	char *typeName ()	{ return "leaf";}
+	char *symbol()		{ return "Leaf";}
+	void init();
+	void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
+	void getTexDir(char*dir);
+
 };
 
 class Plant

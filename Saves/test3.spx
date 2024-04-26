@@ -1,28 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55624;
-		theta=24.4365;
-		height=36.5337 ft;
-		gndlvl=10512.5 ft;
-		time=649172;
-		vstride=1;
+		phi=-5.55508;
+		theta=24.4369;
+		height=16.7675 ft;
+		gndlvl=10453.2 ft;
+		time=115959;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=140;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400198;
+		heading=-15;
 		tilt=-7;
-		angle=-7;
+		angle=50;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		tilt=-10;
-		angle=-8;
-		minr=0.00400199;
-		radius=0.004002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -53,20 +48,19 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,159.581) {
+				Planet(0.004,48.5724) {
 					day=24;
-					diffuse=Color(1,1,1,0.58);
+					diffuse=Color(1,1,1,0.69);
 					hscale=0.001;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("pine",10,1,1e-06,0.8,0.9,0.05,50)
-								Branch("trunk",1,2,0.1,0.1,0,0.85,0.95,0)["Bark1"]
-								Branch("branch",2.7,2,1,2,0.7,0.5,0.5,3)["Bark1"]
-								Branch("branch",1.4,2,1,2,0.7,0.8,0.8,6)["Bark1",Color(0.2,DENSITY,0.2,2*DENSITY)]
-								Plant("bush",8,2,3e-07,0.8,0.5,0.2,20)
-								Branch("stem",2,0.4,2,0.7,0.1,0.7,0.98,6)["test1",Color(1-0.3*RANDVAL,DENSITY,0.2*RANDVAL+0.7*DENSITY)];
+								Plant("test",10,1,1e-06,0.8,0.9,0.05)
+								Branch("trunk",1,2,0.1,0.1,0,0.85,0.95)["Cracks1",Color(0.5,0.25,0)]
+								Branch("branch",2,1.1,2,1,0.5,0.75,0.75,6)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
+								Branch("stem",2,0.4,3,1,0,0.75,0.7,1)[Color(0,0.25*DENSITY,0)]
+								Leaf("leaf",1,0.5,3,1,0,0.7,0.7,1)[Color(0,1,0.01)];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

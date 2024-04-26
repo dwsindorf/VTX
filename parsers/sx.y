@@ -504,18 +504,20 @@ sprite_expr
     | YY_SPRITE '(' item_name ','  ptype ',' arg_list ')'
   						{ $$=new TNsprite($3, $5, $7,0);APOP;}
 leaf_expr
-    : YY_LEAF '(' arg_list ')' {$$=0;}
-    | YY_LEAF '(' item_name ',' arg_list ')' {$$=0;}
+    : YY_LEAF '(' arg_list ')' 
+    						{$$=new TNLeaf($3, 0, 0);APOP;}
+    | YY_LEAF '(' arg_list ')' '[' arg_list ']'
+    						{ $$=new TNLeaf($3, $6, 0);APOP;}
 
 branch_expr
     : YY_BRANCH '(' arg_list ')'
-    						{ $$=new TNBRANCH($3, 0, 0);APOP;}
+    						{ $$=new TNBranch($3, 0, 0);APOP;}
     | YY_BRANCH '(' arg_list ')' '[' arg_list ']'
-    						{ $$=new TNBRANCH($3, $6, 0);APOP;}
+    						{ $$=new TNBranch($3, $6, 0);APOP;}
     | YY_BRANCH '(' arg_list ')' '[' arg_list ']' expr
-    						{ $$=new TNBRANCH($3, $6, $8);APOP;}	
+    						{ $$=new TNBranch($3, $6, $8);APOP;}	
     | YY_BRANCH '(' arg_list ')' expr
-    						{ $$=new TNBRANCH($3, 0, $5);APOP;}	
+    						{ $$=new TNBranch($3, 0, $5);APOP;}	
 root_expr
     : YY_ROOT '(' arg_list ')'
     						{ $$=new TNplant($3, 0);APOP;}

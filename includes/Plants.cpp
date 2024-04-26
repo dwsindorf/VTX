@@ -23,7 +23,8 @@
 #define FIRST_FORK  1
 #define FIRST_EMIT  2
 #define LAST_EMIT   4
-#define LINE_MODE   8
+
+#define LINE_MODE   1
 
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -56,8 +57,10 @@
 // 4) add support for bump shading for textures (DONE)
 // 5) implement TNleaf class
 //    - only generate leaves at end of "terminal" branches
-//    - may use a point sprite implementation (probably need to sort in this case)
-//    - possible to instead use a simple geometry model (single triangle with color ?)
+//    - if a texture is present may use a point sprite implementation 
+//      o probably need to sort if the texture has an alpha channel
+//    - could instead use a simple geometry model (single triangle with color ?)
+//    - should also allow branch-like forking prior to applying (optional) texture (as a point sprite) or shape geometry
 // 6) use a spline function when connecting levels on same branch
 //   - generate additional line segments between segment end points (no need for branching)
 // 7) better lighting model for branches
@@ -142,33 +145,7 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-//#define NO_EXIT // performance test 
-//#define NO_DRAW // performance test 
-//#define NO_CALC // performance test 
-// overhead measurements (plant-pines threshold=2)
-// 1) NO_EXIT+NO_DRAW+NO_CALC - fps ~16
-// 2) NO_EXIT only: fps ~8 (scene rendered)
-// 3) NO_EXIT+NO_DRAW: fps ~10 (marginal improvement if render bypassed)
-// 4) NO_DRAW+NO_CALC (early exit only): fps ~60
-// 5) NO_DRAW only (calc active + early exit) : fps ~30
-// 6) none (early exit only): fps ~16 (scene rendered)
-// observations:
-// 1) early exit improves speedup the most by 2-4x
-// 2) render overhead ~2x
-// 3) calc overhead ~2x
-
 static double min_draw_width=1;
-
-// scale=0.5 fps=18
-//0 branches:497 lines:540 terminals:255 skipped:125
-//1 branches:23292 lines:80003 terminals:56675 skipped:58778
-//2 branches:35913 lines:139913 terminals:82969 skipped:108323
-
-// scale=1 159 plants fps=25
-// 0 branches:1064 lines:470 terminals:279 skipped:69
-// 1 branches:23557 lines:79239 terminals:56379 skipped:61851
-// 2 branches:11917 lines:61732 terminals:41420 skipped:129587
-
 static double min_render_pts=1; // for render
 static double min_adapt_pts=3; //  for adapt - increase resolution only around nearby plants
 
@@ -180,19 +157,10 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define SHOW
 //#define DEBUG_PMEM
 
-//#define LINES_ONLY  //16.3 fps
-#define GS_SHADER // 19.6 fps
 
-//#define LINE_TEST
-#define TRIANGLE_LINES
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-
-#ifdef TRIANGLE_LINES  // 17.7 fps
-	#define MIN_TRIANGLE_WIDTH 2*MIN_DRAW_WIDTH
-#else
-	#define MIN_TRIANGLE_WIDTH MIN_LINE_WIDTH
-#endif
+#define MIN_TRIANGLE_WIDTH 2*MIN_DRAW_WIDTH
 
 #ifdef DUMP
 static void show_stats()
@@ -351,19 +319,13 @@ bool PlantMgr::setProgram(){
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
-#ifndef LINES_ONLY
-	sprintf(defs+strlen(defs),"#define DRAW_TRIANGLES\n");
-#endif
 	GLSLMgr::setDefString(defs);
-#ifdef GS_SHADER
+
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	GLSLMgr::tesslevel=0;
-	GLSLMgr::max_output=4;  // special case
+	//GLSLMgr::max_output=4;  // special case
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
-#else
-	GLSLMgr::loadProgram("plants.bb.vert","plants.frag");
-#endif
 	
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program){
@@ -388,8 +350,8 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
 	vars.newFloatVar("bump_delta",2e-3);
-	vars.newFloatVar("bump_ampl",0.05);
-	vars.newFloatVar("norm_scale",30);
+	vars.newFloatVar("bump_ampl",0.1);
+	vars.newFloatVar("norm_scale",50);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
@@ -731,6 +693,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	size=0;
 	plant_id=0;
 	branch=0;
+	leaf=0;
 	base_drop=0;
 	width_scale=1;
 	
@@ -793,8 +756,18 @@ void TNplant::init()
 
 	if(right)
 	   right->init();
+	getLeaf();
 }
 
+void TNplant::getLeaf() {
+	TNBranch *p = (TNBranch*)right;
+	while (p && p->typeValue() != ID_LEAF) {
+		p=p->right;
+	}
+	if(p && p->typeValue() == ID_LEAF)
+		leaf=(TNLeaf*)p;
+	
+}
 void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
@@ -890,12 +863,18 @@ void TNplant::eval()
 
 void TNplant::clearStats(){
 	for(int i=0;i<MAX_BRANCHES;i++){
-		stats[i][0]=stats[i][1]=stats[i][2]=stats[i][3]=0;
+		for(int j=0;j<5;j++)
+			stats[i][j]=0;
 	}
 }
 void TNplant::showStats(){
 	for(int i=0;i<branches;i++){
-		cout<<"plant["<<name_str<<"] branch["<<i<<"] polygons:"<<stats[i][0]<<" lines:"<<stats[i][1]<<" terminals:"<<stats[i][2]<<" skipped:"<<stats[i][3]<<endl;
+		cout<<"plant["<<name_str<<"] branch["<<i<<"] polygons:"<<stats[i][0]
+	    <<" lines:"<<stats[i][1]
+		<<" terminals:"<<stats[i][2]
+		<<" skipped:"<<stats[i][3]
+		<<" leafs:"<<stats[i][4]
+		<<endl;
 	}
 }
 void TNplant::addLine(int id){
@@ -909,6 +888,9 @@ void TNplant::addTerminal(int id){
 }
 void TNplant::addSkipped(int id){
 	stats[id][3]++;	
+}
+void TNplant::addLeaf(int id){
+	stats[id][4]++;	
 }
 //-------------------------------------------------------------
 // TNtexture::valueString() node value substring
@@ -970,7 +952,8 @@ void TNplant::emit(){
 	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
 		first_branch=(TNBRANCH*)right;
-
+	else
+		return;
 	double branch_size=length*first_branch->length;
 
 	Point top=bot*(1+branch_size); // starting trunk size
@@ -1046,8 +1029,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	instance=0;
 	color_flags=0;
 }
-TNBranch::~TNBranch(){	
-}
+
 void TNBranch::init(){
 	double arg[12];
 	if(!left)
@@ -1117,7 +1099,7 @@ bool TNBranch::setProgram(){
 	GLhandleARB program=GLSLMgr::programHandle();
 	sprintf(str,"samplers2d[%d]",texid);  
 	glUniform1iARB(glGetUniformLocationARB(program,str),texid);
-	cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:"<< texid<<" image:"<<texname<<" texture_id:" <<texture_id<<endl;
+	//cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:"<< texid<<" image:"<<texname<<" texture_id:" <<texture_id<<endl;
 		
 	return true;	
 }
@@ -1191,9 +1173,8 @@ void TNBranch::setColor(){
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
 	if(lvl<min_level)
 		return;
-	maxlvl=max_plant_levels;
-	maxlvl=(max_level>0&&max_level<maxlvl)?max_level:maxlvl;
-   
+	maxlvl=(max_level>0&&max_level<max_plant_levels)?max_level:max_plant_levels;
+	
     if(lvl>maxlvl)
     	return;
     
@@ -1208,18 +1189,44 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, doubl
 	}
 	randval=l;
 }
-void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
+
+Point TNBranch::setVector(Point vec, Point start){
+
+	Point v = vec.normalize();
+	
+	v.x += divergence * SRAND(randval);
+	v.y += divergence * SRAND(randval);
+	v.z += divergence * SRAND(randval);
+
+	v = v.normalize();
+
+	if (flatness > 0) {
+		Point n = root->norm + start;
+		n = n.normalize();
+		Point tp1 = n.cross(v);
+		Point vp = tp1.cross(n);
+		double f = flatness;
+		vp = vp.normalize(); // projection of v along surface
+		Point v1 = v * (1 - f);
+		Point v2 = vp * f;
+		v = v1 + v2;
+	}
+	return v;
+
+}
+
+void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		double width, int lvl) {
 	if (lvl < min_level)
 		return;
-	if (lvl > maxlvl) {
+	if (lvl > maxlvl)
 		return;
-	}
+	
 	int lev = lvl;
 	lev++;
 	
-	int mode=opt;
-
+	int mode = opt;
+	
 	bool first_fork = (opt & FIRST_FORK);
 	bool first_emit = (opt & FIRST_EMIT);
 	double topx = 0;
@@ -1228,94 +1235,55 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	double boty = 1;
 	Point v, p1, p2, bot;
 	Color c;
-	bool terminal=branch_id==root->branches-1;
+	bool terminal = branch_id == root->branches - 1;
 	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
-
+	
 	splits = splits >= 1 ? splits : 1;
-	double scale=1.0;
-	if(first_fork && lvl>0){
-		scale=length*root->size/size/TheScene->wscale/root->width_scale;
-		scale=scale>1?1:scale;
-		scale=scale<0?0:scale;
-		width*=scale;
+	double scale = 1.0;
+	if (first_fork && lvl > 0) {
+		scale = length * root->size / size / TheScene->wscale
+				/ root->width_scale;
+		scale = scale > 1 ? 1 : scale;
+		scale = scale < 0 ? 0 : scale;
+		width *= scale;
 	}
-
+	
 	if (width < MIN_DRAW_WIDTH) {
 		root->addSkipped(branch_id);
-		randval += 5;
-#ifndef NO_EXIT
+		//randval += 5;
 		return;
-#endif
-	} else {
-#ifndef NO_CALC	
-		Density = ((double) lvl) / maxlvl;
+	} 
+	Point start=svec;
+	Density = ((double) lvl) / maxlvl;
+	// add a random offset to each branch split
+	double rb = randomness > 1 ? 1 : randomness;
+	double b = rb * URAND(randval);
+	if (!first_emit && lvl > 0) { // keep at least one child branch at end of parent
+		b = b <= 1 ? b : 1;
+		start = svec - vec * b;
+	}
+	v=setVector(vec,start);
+	
+	size *= 1 + 0.25 * randomness * SRAND(randval);
+	v = v * size * length; // v = direction along last branch
 
-		double offset = divergence; // how much to deviate from last segment direction
-		//offset *= first_fork ? first_bias : 1.0;
+	p2 = start + v; //new top
+	bot = p2; // new base	
 
-		size *= 1 + 0.25 * randomness * SRAND(randval);
-        
-		v = vec.normalize();
-        // add a random offset to each branch split
-		double rb=randomness>1?1:randomness;
-		double b = rb * URAND(randval);
-		if(!first_emit && lvl>0){ // keep at least one child branch at end of parent
-			b=b<=1?b:1;
-		 	start=start-vec*b;
-		}
-		v.x += offset * SRAND(randval);
-		v.y += offset * SRAND(randval);
-		v.z += offset * SRAND(randval);
+	p2 = p2 - TheScene->vpoint;
+	p1 = start - TheScene->vpoint;
 
-		v = v.normalize();
-				
-		if (flatness > 0) {
-			Point n = root->norm + start;
-			n = n.normalize();
-			Point tp1 = n.cross(v);
-			Point vp = tp1.cross(n);
-			double f = flatness;
-			//if (first && first_bias)
-			//	f /= first_bias;
-			vp = vp.normalize(); // projection of v along surface
-			Point v1 = v * (1 - f);
-			Point v2 = vp * f;
-			v = v1 + v2;
-		}
-		v = v * size * length; // v = direction along last branch
-		
-		p2 = start + v; //new top
-		bot = p2; // new base	
+	v = bot - start; // new vector
 
-		p2 = p2 - TheScene->vpoint;
-		p1 = start - TheScene->vpoint;
-
-		v = bot - start; // new vector
-
-#endif
-#ifdef LINES_ONLY
-		//if (width >= MIN_LINE_WIDTH) {
-		glColor4d(c.red(), c.green(), c.blue(), 1);
-		glLineWidth(width);
-		glBegin(GL_LINES);
-		glVertex4d(p1.x,p1.y,p1.z,0);
-		glVertex4d(p2.x,p2.y,p2.z,0);
-		glEnd();
-		//}
-#else
-#ifdef TRIANGLE_LINES	
 	if (width > MIN_TRIANGLE_WIDTH) {
-#endif
 		root->addBranch(branch_id);
-#ifndef NO_DRAW
-		if(width*width_taper<MIN_LINE_WIDTH || lev>maxlvl){
-			Density=1;
-			mode|=LAST_EMIT;
-			//root->addTerminal(branch_id);
-			//glColor4d(1, 1, 0, 1);
+		setColor();
+		if (width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
+			Density = 1;
+			mode |= LAST_EMIT;
+			root->addTerminal(branch_id);
 		}
-		//else
-			setColor();
+		// calculate (fake) width perpendicular to branch vector
 		// TODO move this to shader ?
 		Point q = TheScene->project(v); // convert model to screen space
 		double a = atan2(q.y / q.z, q.x / q.z);
@@ -1327,67 +1295,44 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		botx = x * off;
 		boty = y * off;
 
+		// decrease width at end of vector
 		topx = x * off * width_taper * scale;
 		topy = y * off * width_taper * scale;
-        
-		botx = tip.x*scale;
-		boty = tip.y*scale;
-		
+
+		botx = tip.x * scale;
+		boty = tip.y * scale;
+
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		tip.x = topx;
 		tip.y = topy;
-		
+
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,0); // Constants1
-		
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid, 0); // Constants1
+
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glLineWidth(2);
-		}	
-#ifdef GS_SHADER
+		}
+
 		glBegin(GL_LINES);
 		glVertex4d(p1.x, p1.y, p1.z, 1);
 		glVertex4d(p2.x, p2.y, p2.z, 2);
 		glEnd();
-#else
- 		// TODO let geometry shader do this
-		glBegin(GL_TRIANGLES);
-		// 1) cover rectangle by drawing 2 triangles starting at top-left			
-		glVertex4d(p2.x, p2.y, p2.z, 1);
-		glVertex4d(p2.x, p2.y, p2.z, 2);
-		glVertex4d(p1.x, p1.y, p1.z, 3);
 
-		glVertex4d(p2.x, p2.y, p2.z, 1);
-		glVertex4d(p1.x, p1.y, p1.z, 3);
-		glVertex4d(p1.x, p1.y, p1.z, 4);
-
-		glEnd();
-
-#endif
-		if (test3) {
+		if (test3) 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-		if(mode & LAST_EMIT)
-			return;
-
-#endif
-#ifdef TRIANGLE_LINES
-	} 
-	else if (width >= MIN_LINE_WIDTH) {
+	} else if (width >= MIN_LINE_WIDTH) {
 		root->addLine(branch_id);
-		mode|=LINE_MODE;
-#ifndef NO_DRAW
-		if(width*width_taper<MIN_LINE_WIDTH  || lev>maxlvl){
+		Density = 1;
+		setColor();
+		if (width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
 			root->addTerminal(branch_id);
-			mode|=LAST_EMIT;
-			Density=1;
-			//glColor4d(1, 0, 0, 1);
+			mode |= LAST_EMIT;
 		}
-		//else
-			setColor();
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,LINE_MODE); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,
+				LINE_MODE); // Constants1
 
 		glLineWidth(MIN_LINE_WIDTH);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1395,15 +1340,14 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 		glBegin(GL_LINES);
 		glVertex4d(p1.x, p1.y, p1.z, 0);
 		glVertex4d(p2.x, p2.y, p2.z, 0);
-		glEnd();
-		
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		if(mode & LAST_EMIT)
-			return;
-#endif
+		glEnd();	
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
 	}
-#endif
-#endif
+	
+	if (mode & LAST_EMIT) {
+		if (root->leaf && root->leaf != this)
+			root->leaf->emit(FIRST_FORK, bot, v, tip, size, width, lev);
+		return;
 	}
 	width *= width_taper;
 	size *= length_taper;
@@ -1411,7 +1355,6 @@ void TNBranch::emit(int opt, Point start, Point vec, Point tip, double size,
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, size, width, lev);
 	}
-	
 	if (right && right->typeValue() == ID_BRANCH) {
 		TNBranch *child = (TNBranch*) right;
 		child->fork(FIRST_FORK, bot, v, tip, size, width, lev);
@@ -1466,9 +1409,50 @@ void TNBranch::getTexDir(char*dir){
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Branch",base);
 }
-
-void TNBranch::getTexFilePath(char*name,char *dir){
-	char basedir[512];
-	getTexDir(basedir);
-  	sprintf(dir,"%s/%s.JPG",basedir,name);
+//===================== TNleaf ==============================
+//************************************************************
+// TNLeaf class
+//************************************************************
+TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
+	
 }
+
+void TNLeaf::emit(int opt, Point start, Point vec, Point tip, double size,
+		double width, int lvl) {
+	Point v=setVector(vec,start);
+	size *= 1 + 0.25 * randomness * SRAND(randval);
+	v = v * size * length; // v = direction along last branch
+
+	Point p1 = start - TheScene->vpoint;
+	Point p2 = start + v- TheScene->vpoint; //new top
+
+	root->addLine(branch_id);
+	Density = 1;
+	setColor();
+	root->addLeaf(branch_id);
+
+	glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,
+			LINE_MODE); // Constants1
+
+	glLineWidth(MIN_LINE_WIDTH);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glBegin(GL_LINES);
+	glVertex4d(p1.x, p1.y, p1.z, 0);
+	glVertex4d(p2.x, p2.y, p2.z, 0);
+	glEnd();
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+}
+void TNLeaf::getTexDir(char*dir){
+	char base[256];
+	char dimdir[32];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Textures/Plants/Leaf",base);
+}
+void TNLeaf::init(){
+	TNBranch::init();
+}
+

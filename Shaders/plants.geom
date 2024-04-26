@@ -32,14 +32,7 @@ uniform float norm_scale;
 //   - construct polygon using W(t) and W(t-1)
 //  o Note: only need to create spline for main branches 
 //   - for forked side branches start a new spline curve at branching start point
-// Bumpmap textures (TODO)
-//  o In geometry shade generate Transpose matrix (TX) and output it to fragment shader
-//   - calculate normal(N)vector using current method
-//   - construct Tangent vector T using dy (i.e. delta-y in screen space) could be constant vector
-//   - construct binormal vector (B) using TxN
-//   - normalize all vectors
-//   - construct TX matrix mat3(T, B, N)
-//   - pass TX to fragment shader
+// Bumpmap textures (DONE)
 //  o In fragment shader constuct dx and dy vectors from texture
 //   - read parameters from uniform float variables 
 //     bump_delta: small svalue (e.g. 1.0/image_width)
@@ -65,9 +58,27 @@ uniform float norm_scale;
 //   - use normal (vs Normal) in lighting calculation
 //  o possible speedup by generating a separate intensity texture in opengl ?
 //   - could use pixel intensity vs average values calculated in shader
-void main(void) {
+// Leaf Support
+//  o For leafs change shape so that instead of a rectangle, a "diamond" pattern is rendered ?
+//  o Add option to render Texture as a point sprite 
 
-	Color=Color_G[0];
+ // draw a line
+void emitLine(){
+ 
+    // need at least 3 vertexes for line strip
+    Pnorm=gl_NormalMatrix*vec3(1e-7,0,0);
+     gl_Position = gl_PositionIn[1]; // top
+    EmitVertex();
+    EmitVertex();
+    
+    gl_Position = gl_PositionIn[0]; // bottom
+    EmitVertex();
+    
+	EndPrimitive();
+ }
+ 
+ // draw a polygon
+void emitRectangle(){
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
@@ -76,15 +87,9 @@ void main(void) {
 	float topy=Factors[0].g;
 	float botx=Factors[0].b;
 	float boty=Factors[0].a;
-
-	TexVars=TexVars_G[0];
 	
 	float dx2=topx;
 	float dx1=botx;
-	
-	Normal.xyz=Normal_G[0].xyz;
-	
-    // draw a polygon
     
 	Pnorm=gl_NormalMatrix*vec3(dx2,0,0);
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
@@ -106,7 +111,20 @@ void main(void) {
     gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
     EmitVertex(); 
  
-  	EndPrimitive();
-  
+    EndPrimitive();
+}
+
+void main(void) {
+    if(length(gl_PositionIn[1]-gl_PositionIn[0])>2)
+    	return;
+ 	Color=Color_G[0];
+	Normal.xyz=Normal_G[0].xyz;
+	TexVars=TexVars_G[0];
+    int mode=TexVars_G[0].w;
+    
+    if(mode<0.1)
+    	emitRectangle();
+    else
+   		emitLine();
 }
 
