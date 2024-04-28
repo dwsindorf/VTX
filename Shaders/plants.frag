@@ -32,7 +32,7 @@ uniform float twilite_max;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
-#define LINE    TexVars.w
+#define LINE    TexVars.w<0.5
 
 varying vec4 Color;
 varying vec3 Pnorm;
@@ -75,8 +75,8 @@ vec3 setLighting(vec3 BaseColor) {
  	for(int i=0;i<NLIGHTS;i++){
  		vec3 light= normalize(gl_LightSource[i].position.xyz);
  		float LdotR= dot(light,Normal);// day side diffuse lighting
-		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band
-		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5);
+		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band 
+		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5); // reduce branch shadow in daylight
  		vec3 normal=getNormal(nscale*day_lighting);
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;

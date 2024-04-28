@@ -24,7 +24,9 @@
 #define FIRST_EMIT  2
 #define LAST_EMIT   4
 
-#define LINE_MODE   1
+#define LINE_MODE   0
+#define POLY_MODE   1
+#define LEAF_MODE   2
 
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -1319,7 +1321,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		tip.y = topy;
 		double nscale=lerp(width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, 0); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, POLY_MODE); // Constants1
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

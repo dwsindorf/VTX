@@ -152,8 +152,9 @@ void main(void) {
     int mode=TexVars_G[0].w;
     
     if(mode<0.1)
-    	emitRectangle();
+    	emitLine();
     else
-   		emitLine();
+    	emitRectangle();
+ 
 }
 
