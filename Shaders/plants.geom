@@ -32,6 +32,9 @@ uniform float norm_scale;
 //   - construct polygon using W(t) and W(t-1)
 //  o Note: only need to create spline for main branches 
 //   - for forked side branches start a new spline curve at branching start point
+//  o more work to do to generate width and normals for spline seqments 
+//   - pass in width values for top and bottom anchor points
+//   - for each calclated point use linear interpolation from anchor points
 // Bumpmap textures (DONE)
 //  o In fragment shader constuct dx and dy vectors from texture
 //   - read parameters from uniform float variables 
@@ -61,13 +64,20 @@ uniform float norm_scale;
 // Leaf Support
 //  o For leafs change shape so that instead of a rectangle, a "diamond" pattern is rendered ?
 //  o Add option to render Texture as a point sprite 
+// Shader width calculation (vs Opengl)
+//  - need to pass in width at top and bottom (w1,w2)
+//  - can calculate angle of current vector by subtracting input points (p2,p1)
+//  - but also need vec3 of previous point (p0) to calculate offset angle for bottom
+//  - so for shader to work need to pass in 3 vs 2 points (GL_TRIANGLE vs GL_LINE)
+// 
 
  // draw a line
 void emitLine(){
+ 	float nscale=TexVars.r;
  
     // need at least 3 vertexes for line strip
-    Pnorm=gl_NormalMatrix*vec3(1e-7,0,0);
-     gl_Position = gl_PositionIn[1]; // top
+    Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
+    gl_Position = gl_PositionIn[1]; // top
     EmitVertex();
     EmitVertex();
     
@@ -77,8 +87,10 @@ void emitLine(){
 	EndPrimitive();
  }
  
- // draw a polygon
+//#define TEST_CALC 
+// draw a polygon
 void emitRectangle(){
+	float nscale=TexVars.r;
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
@@ -88,25 +100,42 @@ void emitRectangle(){
 	float botx=Factors[0].b;
 	float boty=Factors[0].a;
 	
-	float dx2=topx;
-	float dx1=botx;
-    
-	Pnorm=gl_NormalMatrix*vec3(dx2,0,0);
+    vec2 v2=nscale*normalize(vec2(topx,topy));
+    vec2 v1=nscale*normalize(vec2(botx,boty));
+   
+ #ifdef TEST_CALC   
+ // compare angles calculated from (normalized) input points
+ // and (normalized) xy coordinates of width vector (top only)
+    vec2 v=(ps1.xy-ps2.xy); // note: reversed bot-top !
+    v=normalize(v);
+	double a=atan2(v.y,v.x);		 	
+ 	
+	float x = -sin(a);  // same calculation as in opengl code
+	float y = cos(a);   // 
+		
+	vec2 vv=vec2(topy,topx); // could pass in single width float value;
+ 	float l=length(vv);
+ 	 	
+ 	topx=(l*x); // this seems to kinda work but see gaps in branch segments
+ 	topy=(l*y);
+  	 	
+  #endif 	
+ 	Pnorm=gl_NormalMatrix*vec3(v2,0);
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
     gl_TexCoord[0].xy=vec2(0,0);
     EmitVertex();
    
-    Pnorm=gl_NormalMatrix*vec3(-dx2,0,0);
+    Pnorm=gl_NormalMatrix*vec3(-v2,0);
     gl_Position = vec4(ps2.x+topx,ps2.y+topy,ps2.z,1); // top-right  
     gl_TexCoord[0].xy=vec2(1,0);
     EmitVertex();
         
-    Pnorm=gl_NormalMatrix*vec3(dx1,0.0,0);
+    Pnorm=gl_NormalMatrix*vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,1);
     gl_Position = vec4(ps1.x-botx,ps1.y-boty,ps1.z,1);  // bot-left 
     EmitVertex();
     
-    Pnorm=gl_NormalMatrix*vec3(-dx1,0.0,0);
+    Pnorm=gl_NormalMatrix*vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,1);
     gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
     EmitVertex(); 

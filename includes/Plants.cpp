@@ -99,10 +99,11 @@
 // 6) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
-// 7) problems with normals (FIXED)
+// 7) problems with normals 
 //   - normal hack doesn't work unless light direction is some range of values (FIXED)
-//   - get some illumination on one side of branches during night
-//     o try reducing diffuse illumination based on time of day
+//   - get some illumination on one side of branches during night (FIXED)
+//     o multiplied intensity by horizon band (time of day)
+//   - need to lighten dark side of branches (during day time only)
 
 
 //************************************************************
@@ -306,6 +307,9 @@ bool PlantMgr::setProgram(){
 	trunk_nodes=0;
 	line_nodes=0;
 	
+	double twilite_min=-0.2; // full night
+	double twilite_max=0.2;  // full day
+	
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
 	if(TNplant::textures>0 && Render.bumps())
@@ -349,9 +353,10 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
-	vars.newFloatVar("bump_delta",2e-3);
-	vars.newFloatVar("bump_ampl",0.1);
-	vars.newFloatVar("norm_scale",50);
+	vars.newFloatVar("bump_delta",1e-3);
+	vars.newFloatVar("bump_ampl",0.05);
+	vars.newFloatVar("twilite_min",twilite_min);
+	vars.newFloatVar("twilite_max",twilite_max);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
@@ -670,6 +675,8 @@ void Plant::showStats(){
 
 //===================== TNplant ==============================
 int TNplant::textures=0;
+double TNplant::norm_max=2;
+double TNplant::norm_min=1e-5;
 //************************************************************
 // TNplant class
 //************************************************************
@@ -1239,20 +1246,25 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
 	
 	splits = splits >= 1 ? splits : 1;
-	double scale = 1.0;
+	double size_scale = 1.0;
+	double parent_width=width;
+	double child_width=width;
 	if (first_fork && lvl > 0) {
-		scale = length * root->size / size / TheScene->wscale
-				/ root->width_scale;
-		scale = scale > 1 ? 1 : scale;
-		scale = scale < 0 ? 0 : scale;
-		width *= scale;
+		double parent_length=size * TheScene->wscale* root->width_scale/root->size;
+		size_scale = length / parent_length;
+		//cout<<branch_id<<" "<<size_scale<<endl;
+		size_scale = size_scale > 1 ? 1 : size_scale;
+		size_scale = size_scale < 0 ? 0 : size_scale;
+		child_width*=size_scale;
+
+		//width *= size_scale;
 	}
 	
-	if (width < MIN_DRAW_WIDTH) {
+	if (child_width < MIN_DRAW_WIDTH) {
 		root->addSkipped(branch_id);
-		//randval += 5;
 		return;
 	} 
+	
 	Point start=svec;
 	Density = ((double) lvl) / maxlvl;
 	// add a random offset to each branch split
@@ -1289,26 +1301,25 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		double a = atan2(q.y / q.z, q.x / q.z);
 		double x = -sin(a);
 		double y = cos(a);
-
-		double off = width / TheScene->wscale;
-
-		botx = x * off;
-		boty = y * off;
-
+	
+		double off = child_width / TheScene->wscale;
+		
+		double f=URAND(randval);
+	
 		// decrease width at end of vector
-		topx = x * off * width_taper * scale;
-		topy = y * off * width_taper * scale;
-
-		botx = tip.x * scale;
-		boty = tip.y * scale;
-
+		topx = x * off * width_taper;// * size_scale;
+		topy = y * off * width_taper;// * size_scale;
+	
+		botx = tip.x * size_scale;
+		boty = tip.y * size_scale;
+	
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		tip.x = topx;
 		tip.y = topy;
-
+		double nscale=lerp(width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid, 0); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, 0); // Constants1
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1319,9 +1330,9 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		glVertex4d(p1.x, p1.y, p1.z, 1);
 		glVertex4d(p2.x, p2.y, p2.z, 2);
 		glEnd();
-
-		if (test3) 
+		if (test3)  // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
 	} else if (width >= MIN_LINE_WIDTH) {
 		root->addLine(branch_id);
 		Density = 1;
@@ -1331,7 +1342,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 			mode |= LAST_EMIT;
 		}
 		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, TNplant::norm_min, color_flags, texid,
 				LINE_MODE); // Constants1
 
 		glLineWidth(MIN_LINE_WIDTH);
@@ -1342,14 +1353,13 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		glVertex4d(p2.x, p2.y, p2.z, 0);
 		glEnd();	
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
-	}
-	
+	}	
 	if (mode & LAST_EMIT) {
 		if (root->leaf && root->leaf != this)
-			root->leaf->emit(FIRST_FORK, bot, v, tip, size, width, lev);
+			root->leaf->fork(FIRST_FORK, bot, v, tip, size, width, lev-1);
 		return;
 	}
-	width *= width_taper;
+	width = child_width*width_taper;
 	size *= length_taper;
 	emit(FIRST_EMIT, bot, v, tip, size, width, lev);
 	for (int i = 1; i < splits; i++) {

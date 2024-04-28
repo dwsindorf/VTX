@@ -101,6 +101,8 @@ public:
 	double maxdensity;
 	double base_drop;
 	double width_scale;
+	static double norm_max;
+	static double norm_min;
 	static int textures;
 
 	int max_levels;

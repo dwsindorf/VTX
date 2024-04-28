@@ -27,6 +27,8 @@ uniform float bump_ampl;
 uniform float bump_delta;
 uniform float norm_scale;
 uniform bool lighting;
+uniform float twilite_min;
+uniform float twilite_max;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
@@ -41,11 +43,10 @@ vec3 test;
 
 #define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(){
-	vec3 bn=norm_scale*Pnorm;
+	vec3 bn=Pnorm;
 	vec3 normal=Normal-bn;
 	if(LINE)
 		return normal;
-	
 #ifdef BUMPS
 	int texid=TEXID;
 	float delta=bump_delta;
@@ -65,21 +66,23 @@ vec3 getNormal(){
 	mat3 trans_mat=mat3(tangent, binormal, normal);
 	vec3 bv=(bump_ampl/delta)*trans_mat*(tc);
 	normal += bv;
-	test=normalize(tc);
 #endif
 	return normal;
 }
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
-    vec3 normal=getNormal();
-	for(int i=0;i<NLIGHTS;i++){
-		vec3 light= normalize(gl_LightSource[i].position.xyz);
-		float LdotN= dot(light,normal);// for day side diffuse lighting
-		float f=max(LdotN,0.0);	
-		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
-		float lpn       = f*amplitude;
+ 	for(int i=0;i<NLIGHTS;i++){
+ 		vec3 light= normalize(gl_LightSource[i].position.xyz);
+ 		vec3 normal=getNormal();
+		float LdotR= dot(light,Normal);// day side diffuse lighting
+		float horizon   = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band
+ 		float LdotN= dot(light,normal);// includes fake normal and bumpmap
+		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
+		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
+		//test=vec3(lpn,0,0);		
 	}
+	
 	vec3 TotalDiffuse = BaseColor*diffuse*Diffuse.a+Ambient*Ambient.a;
 	return TotalDiffuse;
 }
@@ -122,7 +125,9 @@ void main(void) {
 	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 #endif 
-//color=vec4(test.x,test.y,test.z,1);
+	test=vec3(TexVars.r,0,TexVars.w);
+
+//color=vec4(test.x,0,0,1);
  	gl_FragData[0]=color;
 	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
 
