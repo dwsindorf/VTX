@@ -42,8 +42,8 @@ varying vec4 TexVars;
 vec3 test;
 
 #define AVE(v) (v.x+v.y+v.z)
-vec3 getNormal(){
-	vec3 bn=Pnorm;
+vec3 getNormal(float nscale){
+	vec3 bn=gl_NormalMatrix*nscale*Pnorm;
 	vec3 normal=Normal-bn;
 	if(LINE)
 		return normal;
@@ -71,14 +71,16 @@ vec3 getNormal(){
 }
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
+	float nscale=TexVars.r;
  	for(int i=0;i<NLIGHTS;i++){
  		vec3 light= normalize(gl_LightSource[i].position.xyz);
- 		vec3 normal=getNormal();
-		float LdotR= dot(light,Normal);// day side diffuse lighting
-		float horizon   = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band
+ 		float LdotR= dot(light,Normal);// day side diffuse lighting
+		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band
+		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5);
+ 		vec3 normal=getNormal(nscale*day_lighting);
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
-		float lpn       = LdotN*intensity*horizon;
+		float lpn       = LdotN*intensity*night_lighting;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 		//test=vec3(lpn,0,0);		
 	}

@@ -100,8 +100,8 @@ void emitRectangle(){
 	float botx=Factors[0].b;
 	float boty=Factors[0].a;
 	
-    vec2 v2=nscale*normalize(vec2(topx,topy));
-    vec2 v1=nscale*normalize(vec2(botx,boty));
+    vec2 v2=normalize(vec2(topx,topy));
+    vec2 v1=normalize(vec2(botx,boty));
    
  #ifdef TEST_CALC   
  // compare angles calculated from (normalized) input points
@@ -120,22 +120,22 @@ void emitRectangle(){
  	topy=(l*y);
   	 	
   #endif 	
- 	Pnorm=gl_NormalMatrix*vec3(v2,0);
+ 	Pnorm=vec3(v2,0);
     gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
     gl_TexCoord[0].xy=vec2(0,0);
     EmitVertex();
    
-    Pnorm=gl_NormalMatrix*vec3(-v2,0);
+    Pnorm=vec3(-v2,0);
     gl_Position = vec4(ps2.x+topx,ps2.y+topy,ps2.z,1); // top-right  
     gl_TexCoord[0].xy=vec2(1,0);
     EmitVertex();
         
-    Pnorm=gl_NormalMatrix*vec3(v1,0);
+    Pnorm=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,1);
     gl_Position = vec4(ps1.x-botx,ps1.y-boty,ps1.z,1);  // bot-left 
     EmitVertex();
     
-    Pnorm=gl_NormalMatrix*vec3(-v1,0);
+    Pnorm=vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,1);
     gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
     EmitVertex(); 
