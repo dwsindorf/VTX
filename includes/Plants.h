@@ -149,6 +149,7 @@ public:
 	int branch_id;
 	double max_splits;
 	double length; // trunk and main level
+	double width; // trunk and main level	
 	double first_bias;
 	double randomness;
 	double divergence;

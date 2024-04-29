@@ -3,7 +3,7 @@
 
 varying in vec4 Color_G[];
 varying in vec4 Normal_G[];
-varying in vec4 Factors[];
+varying in vec4 Constants1[];
 varying in vec4 TexVars_G[];
 
 varying out vec4 Color;
@@ -69,7 +69,17 @@ uniform float norm_scale;
 //  - can calculate angle of current vector by subtracting input points (p2,p1)
 //  - but also need vec3 of previous point (p0) to calculate offset angle for bottom
 //  - so for shader to work need to pass in 3 vs 2 points (GL_TRIANGLE vs GL_LINE)
-// 
+//  o test code
+//    vec2 v=(ps1.xy-ps2.xy); // note: reversed bot-top !
+//    v=normalize(v);
+//	  double a=atan2(v.y,v.x);		 	
+//	  float x = -sin(a);  // same calculation as in opengl code
+//	  float y = cos(a);	
+//	  vec2 vv=vec2(topy,topx); // could pass in single width float value;
+//	  float l=length(vv);	 	
+// 	  topx=(l*x); // this seems to kinda work but see gaps in branch segments
+// 	  topy=(l*y);
+
 
  // draw a line
 void emitLine(){
@@ -87,57 +97,49 @@ void emitLine(){
 	EndPrimitive();
  }
  
-//#define TEST_CALC 
 // draw a polygon
 void emitRectangle(){
-	float nscale=TexVars.r;
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
-		
-	float topx=Factors[0].r;
-	float topy=Factors[0].g;
-	float botx=Factors[0].b;
-	float boty=Factors[0].a;
 	
+	float top_offset=gl_PositionIn[1].w;
+	float bot_offset=gl_PositionIn[0].w;
+ 	
+	float topx=Constants1[0].r;
+	float topy=Constants1[0].g;
+	float botx=Constants1[0].b;
+	float boty=Constants1[0].a;
+	
+	vec2 vtop=vec2(topx,topy);
+    vec2 vbot=vec2(botx,boty);
+
     vec2 v2=normalize(vec2(topx,topy));
     vec2 v1=normalize(vec2(botx,boty));
-   
- #ifdef TEST_CALC   
- // compare angles calculated from (normalized) input points
- // and (normalized) xy coordinates of width vector (top only)
-    vec2 v=(ps1.xy-ps2.xy); // note: reversed bot-top !
-    v=normalize(v);
-	double a=atan2(v.y,v.x);		 	
- 	
-	float x = -sin(a);  // same calculation as in opengl code
-	float y = cos(a);   // 
-		
-	vec2 vv=vec2(topy,topx); // could pass in single width float value;
- 	float l=length(vv);
- 	 	
- 	topx=(l*x); // this seems to kinda work but see gaps in branch segments
- 	topy=(l*y);
-  	 	
-  #endif 	
+    
+    vec2 top_left=vtop*(1+top_offset);
+    vec2 top_right=vtop*(1-top_offset);
+    vec2 bot_left=vbot*(1+bot_offset);
+    vec2 bot_right=vbot*(1-bot_offset);
+    
  	Pnorm=vec3(v2,0);
-    gl_Position = vec4(ps2.x-topx,ps2.y-topy,ps2.z,1); // top-left
+    gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
     gl_TexCoord[0].xy=vec2(0,0);
     EmitVertex();
    
     Pnorm=vec3(-v2,0);
-    gl_Position = vec4(ps2.x+topx,ps2.y+topy,ps2.z,1); // top-right  
+    gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-left
     gl_TexCoord[0].xy=vec2(1,0);
     EmitVertex();
         
     Pnorm=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,1);
-    gl_Position = vec4(ps1.x-botx,ps1.y-boty,ps1.z,1);  // bot-left 
+    gl_Position = vec4(ps1.xy-bot_left,ps1.z,1);  // bot-left 
     EmitVertex();
     
     Pnorm=vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,1);
-    gl_Position = vec4(ps1.x+botx,ps1.y+boty,ps1.z,1);  // bot-right 
+    gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-left 
     EmitVertex(); 
  
     EndPrimitive();

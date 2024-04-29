@@ -969,16 +969,17 @@ void TNplant::emit(){
 	Point p1=bot;
 	Point p2=top;
 	
-	double width=width_scale*pntsize;
+	double start_width=width_scale*pntsize;
 	
 	Point tip;
-	tip.x=width/TheScene->wscale;
+	tip.x=first_branch->width*start_width/TheScene->wscale;
 	tip.y=0;
+	tip.z=0;
 	glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	
-	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,width,0);
+	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,start_width,0);
 	
 }
 
@@ -1021,6 +1022,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	maxlvl=0;
 	branch_id=0;
 	length=2;
+	width=1;
 	width_taper=0.75;
 	length_taper=0.95;
 	randomness=0.25;
@@ -1048,14 +1050,15 @@ void TNBranch::init(){
 	int n=getargs(&args,arg,11);
 	if(n>0)max_splits=arg[0];
 	if(n>1)length=arg[1];
-	if(n>2)randomness=arg[2];
-	if(n>3)divergence=arg[3];
-	if(n>4)flatness=arg[4];
-	if(n>5)width_taper=arg[5];
-	if(n>6)length_taper=arg[6];	
-	if(n>7)first_bias=arg[7];
-	if(n>8)min_level=arg[8];
-	if(n>9)max_level=arg[9];
+	if(n>2)width=arg[2];
+	if(n>3)randomness=arg[3];
+	if(n>4)divergence=arg[4];
+	if(n>5)flatness=arg[5];
+	if(n>6)width_taper=arg[6];
+	if(n>7)length_taper=arg[7];	
+	if(n>8)first_bias=arg[8];
+	if(n>9)min_level=arg[9];
+	if(n>10)max_level=arg[10];
 	
 	root=getRoot();
 	max_plant_levels=root->max_levels;
@@ -1179,7 +1182,7 @@ void TNBranch::setColor(){
 		}
 	}
 }
-void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, double width, int lvl){
+void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	if(lvl<min_level)
 		return;
 	maxlvl=(max_level>0&&max_level<max_plant_levels)?max_level:max_plant_levels;
@@ -1188,13 +1191,14 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double size, doubl
     	return;
     
     int l=randval;
+    w*=width;
     
 	double splits=max_splits*(1+0.5*randomness*SRAND(randval));
 	if(first_bias) // add more branches at start of new branch fork
 		splits*=first_bias;
 	splits=splits<1?1:splits;
 	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,size,width,lvl);
+		emit(opt,start,vec,tip,s,w,lvl);
 	}
 	randval=l;
 }
@@ -1224,8 +1228,8 @@ Point TNBranch::setVector(Point vec, Point start){
 
 }
 
-void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
-		double width, int lvl) {
+void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_size,
+		double parent_width, int lvl) {
 	if (lvl < min_level)
 		return;
 	if (lvl > maxlvl)
@@ -1249,17 +1253,16 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 	
 	splits = splits >= 1 ? splits : 1;
 	double size_scale = 1.0;
-	double parent_width=width;
-	double child_width=width;
+	double child_width=parent_width;
+	double child_size=parent_size;
+	double top_offset=0;
 	if (first_fork && lvl > 0) {
-		double parent_length=size * TheScene->wscale* root->width_scale/root->size;
+		double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
 		size_scale = length / parent_length;
-		//cout<<branch_id<<" "<<size_scale<<endl;
 		size_scale = size_scale > 1 ? 1 : size_scale;
 		size_scale = size_scale < 0 ? 0 : size_scale;
 		child_width*=size_scale;
-
-		//width *= size_scale;
+		
 	}
 	
 	if (child_width < MIN_DRAW_WIDTH) {
@@ -1275,11 +1278,15 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 	if (!first_emit && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
 		start = svec - vec * b;
+		//if(first_fork)
+			top_offset=1;
+			
 	}
+	//rand_offset=RAND(randval)/size_scale;
 	v=setVector(vec,start);
 	
-	size *= 1 + 0.25 * randomness * SRAND(randval);
-	v = v * size * length; // v = direction along last branch
+	child_size *= 1 + 0.25 * randomness * SRAND(randval);
+	v = v * child_size * length; // v = direction along last branch
 
 	p2 = start + v; //new top
 	bot = p2; // new base	
@@ -1289,10 +1296,10 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 
 	v = bot - start; // new vector
 
-	if (width > MIN_TRIANGLE_WIDTH) {
+	if (child_width > MIN_TRIANGLE_WIDTH) {
 		root->addBranch(branch_id);
 		setColor();
-		if (width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
+		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
 			Density = 1;
 			mode |= LAST_EMIT;
 			root->addTerminal(branch_id);
@@ -1307,39 +1314,42 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 		double off = child_width / TheScene->wscale;
 		
 		double f=URAND(randval);
-	
 		// decrease width at end of vector
 		topx = x * off * width_taper;// * size_scale;
 		topy = y * off * width_taper;// * size_scale;
 	
 		botx = tip.x * size_scale;
 		boty = tip.y * size_scale;
+		
+		double bot_offset= tip.z;
 	
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		tip.x = topx;
 		tip.y = topy;
-		double nscale=lerp(width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+		tip.z = top_offset;
+		 
+		double nscale=lerp(child_width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, POLY_MODE); // Constants1
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, POLY_MODE);
 
 		if (test3) { // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(2);
+			glLineWidth(1);
 		}
 
 		glBegin(GL_LINES);
-		glVertex4d(p1.x, p1.y, p1.z, 1);
-		glVertex4d(p2.x, p2.y, p2.z, 2);
+		glVertex4d(p1.x, p1.y, p1.z, bot_offset);
+		glVertex4d(p2.x, p2.y, p2.z, top_offset);
 		glEnd();
 		if (test3)  // @ key - draw lines
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
-	} else if (width >= MIN_LINE_WIDTH) {
+	} else if (child_width >= MIN_LINE_WIDTH) {
 		root->addLine(branch_id);
 		Density = 1;
 		setColor();
-		if (width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
+		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
 			root->addTerminal(branch_id);
 			mode |= LAST_EMIT;
 		}
@@ -1358,18 +1368,18 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double size,
 	}	
 	if (mode & LAST_EMIT) {
 		if (root->leaf && root->leaf != this)
-			root->leaf->fork(FIRST_FORK, bot, v, tip, size, width, lev-1);
+			root->leaf->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev-1);
 		return;
 	}
-	width = child_width*width_taper;
-	size *= length_taper;
-	emit(FIRST_EMIT, bot, v, tip, size, width, lev);
+	child_width *= width_taper;
+	child_size *= length_taper;
+	emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 	for (int i = 1; i < splits; i++) {
-		emit(0, bot, v, tip, size, width, lev);
+		emit(0, bot, v, tip, child_size, child_width, lev);
 	}
 	if (right && right->typeValue() == ID_BRANCH) {
 		TNBranch *child = (TNBranch*) right;
-		child->fork(FIRST_FORK, bot, v, tip, size, width, lev);
+		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	}
 }
 
@@ -1430,7 +1440,7 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 }
 
 void TNLeaf::emit(int opt, Point start, Point vec, Point tip, double size,
-		double width, int lvl) {
+		double parent_width, int lvl) {
 	Point v=setVector(vec,start);
 	size *= 1 + 0.25 * randomness * SRAND(randval);
 	v = v * size * length; // v = direction along last branch
