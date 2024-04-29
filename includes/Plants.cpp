@@ -1256,13 +1256,13 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	double child_width=parent_width;
 	double child_size=parent_size;
 	double top_offset=0;
+	double bot_offset=0;
 	if (first_fork && lvl > 0) {
 		double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
 		size_scale = length / parent_length;
 		size_scale = size_scale > 1 ? 1 : size_scale;
 		size_scale = size_scale < 0 ? 0 : size_scale;
-		child_width*=size_scale;
-		
+		child_width*=size_scale;		
 	}
 	
 	if (child_width < MIN_DRAW_WIDTH) {
@@ -1278,11 +1278,11 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	if (!first_emit && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
 		start = svec - vec * b;
-		//if(first_fork)
-			top_offset=1;
-			
+		bot_offset=RAND(randval)/size_scale;
+		top_offset=bot_offset;		
 	}
-	//rand_offset=RAND(randval)/size_scale;
+	else
+		bot_offset=tip.z;
 	v=setVector(vec,start);
 	
 	child_size *= 1 + 0.25 * randomness * SRAND(randval);
@@ -1321,7 +1321,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		botx = tip.x * size_scale;
 		boty = tip.y * size_scale;
 		
-		double bot_offset= tip.z;
+		//wbot_offset= tip.z;
 	
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
