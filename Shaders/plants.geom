@@ -87,11 +87,13 @@ void emitLine(){
  
     // need at least 3 vertexes for line strip
     Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
-    gl_Position = gl_PositionIn[1]; // top
+    gl_Position.xyz = gl_PositionIn[1].xyz; // top
+    gl_Position.w=1;
     EmitVertex();
     EmitVertex();
     
-    gl_Position = gl_PositionIn[0]; // bottom
+    gl_Position.xyz = gl_PositionIn[0].xyz; // top
+    gl_Position.w=1;
     EmitVertex();
     
 	EndPrimitive();
