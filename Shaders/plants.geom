@@ -80,10 +80,64 @@ uniform float norm_scale;
 // 	  topx=(l*x); // this seems to kinda work but see gaps in branch segments
 // 	  topy=(l*y);
 
+#define LEAF 2.1
+#define LINE 0.1
+#define RECTANGLE 1.1
 
  // draw a line
-void emitLine(){
- 	float nscale=TexVars.r;
+void emitLeaf(){
+	vec3 ps1=gl_PositionIn[0].xyz;	
+	vec3 ps2=gl_PositionIn[1].xyz;
+	
+	vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
+	
+	float top_offset=gl_PositionIn[1].w;
+	float bot_offset=gl_PositionIn[0].w;
+ 	
+	float topx=Constants1[0].r;
+	float topy=Constants1[0].g;
+	float botx=Constants1[0].b;
+	float boty=Constants1[0].a;
+	
+	vec2 vtop=vec2(topx,topy);
+    vec2 vbot=vec2(botx,boty);
+
+    vec2 v2=normalize(vec2(topx,topy));
+    vec2 v1=normalize(vec2(botx,boty));
+    
+    vec2 top_left=vtop*(1+top_offset);
+    vec2 top_right=vtop*(1-top_offset);
+    vec2 bot_left=vbot*(1+bot_offset);
+    vec2 bot_right=vbot*(1-bot_offset);
+       
+    vec2 vl=top_left;//0.5*(top_left+bot_left);
+    vec2 vr=bot_right;//0.5*(top_right+bot_right);
+    
+    Pnorm=vec3(-v2,0);
+    gl_Position = vec4(pa.xy-vl,pa.z,1); // left
+    gl_TexCoord[0].xy=vec2(1,0);
+    EmitVertex();
+    
+    Pnorm=vec3(v1,0);
+    gl_TexCoord[0].xy=vec2(0,1);
+    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
+    EmitVertex();
+    
+ 	Pnorm=vec3(v2,0);
+    gl_Position = vec4(ps1.xy,ps1.z,1); // bottom
+    gl_TexCoord[0].xy=vec2(0,0);
+    EmitVertex();
+      
+    Pnorm=vec3(-v1,0);
+    gl_TexCoord[0].xy=vec2(1,1);
+    gl_Position = vec4(pa.xy+vr,pa.z,1);  // right
+    EmitVertex(); 
+ 
+    EndPrimitive();
+ }
+ 
+ void emitLine(){
+ 	float nscale=1e-5;//TexVars.r;
  
     // need at least 3 vertexes for line strip
     Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
@@ -98,7 +152,6 @@ void emitLine(){
     
 	EndPrimitive();
  }
- 
 // draw a polygon
 void emitRectangle(){
 
@@ -155,10 +208,12 @@ void main(void) {
 	TexVars=TexVars_G[0];
     int mode=TexVars_G[0].w;
     
-    if(mode<0.1)
+    if(mode<LINE)
     	emitLine();
-    else
+    else if(mode<RECTANGLE)
     	emitRectangle();
+    else 
+    	emitLeaf();
  
 }
 

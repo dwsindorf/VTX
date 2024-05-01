@@ -111,7 +111,7 @@ Scene() {
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("bush",12,1,2e-07,0.8,0.5,0.2,50,0,0,0,0.5)
-								Branch("stem",1,0.125,1,0.4,0.1,0.8,1.2,100)[Color(0.8*DENSITY+0.5*RANDVAl,0.3+RANDVAL*DENSITY,0.3*RANDVAL*(1-DENSITY))];
+								Branch("stem",1,0.125,1,0.4,0.1,0.8,1.2,100)[Color(0.8*DENSITY+0.5*RANDVAl,0.3+IRAND*DENSITY,0.3*IRAND*(1-DENSITY))];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

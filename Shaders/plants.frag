@@ -127,7 +127,7 @@ void main(void) {
 	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 #endif 
-	test=vec3(TexVars.r,0,TexVars.w);
+	test=vec3(0.5*(TexVars.b+1),0,0);
 
 //color=vec4(test.x,0,0,1);
  	gl_FragData[0]=color;

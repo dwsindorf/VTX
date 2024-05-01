@@ -23,9 +23,10 @@
 #define FIRST_FORK  1
 #define FIRST_EMIT  2
 #define LAST_EMIT   4
+#define LAST_FORK   8
 
 #define LINE_MODE   0
-#define POLY_MODE   1
+#define RECT_MODE   1
 #define LEAF_MODE   2
 
 // Basic algorithm
@@ -46,7 +47,8 @@
 //  Improve this by trying the following:
 //  a) allow branches to spawn at random locations along parent stem vector (DONE)
 //    - set 'start' position somewhere between top and base using random variable
-//  b) don't require branch starting width to be the same as parents width (DONE)
+//  b) place new branches at random offsets from center of parent branches (DONE)
+//  c) don't require branch starting width to be the same as parents width (DONE)
 //    - scale next segment width based on size of child branch
 //  c) In multi-branch cases have a minimum level to start producing new branches and max level to stop (DONE)
 //    - min level prevents branches from forming lower in parent trunk
@@ -65,10 +67,10 @@
 //    - should also allow branch-like forking prior to applying (optional) texture (as a point sprite) or shape geometry
 // 6) use a spline function when connecting levels on same branch
 //   - generate additional line segments between segment end points (no need for branching)
-// 7) better lighting model for branches
-//   - currently only uses x-direction in screen space
-//   - works good for vertical trunks but makes horizontal look flat
-//   - idea:incorporate delta-y to get better effect ?
+// 7) better lighting model for branches (DONE)
+//   - normalize dx,dy vector in geometry shader (so all size branches get same effect)
+//     o But need to reduce or eliminate normal shading for small branches and lines (otherwise get dark pencil lines effect)
+//   - reduce normal shading during full daylight for more realistic back lighting
 // 8) add curvature to branches by implementing a spline function
 //   - for efficiency probably best done in a geometry shader
 // 9) use lists to increase render speed
@@ -106,12 +108,13 @@
 //   - get some illumination on one side of branches during night (FIXED)
 //     o multiplied intensity by horizon band (time of day)
 //   - need to lighten dark side of branches (during day time only)
+// 8) only get a single texture for all branches (first branch)
 
 
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
-extern double Hscale, Drop, MaxSize,Height,Phi,Density,Randval;
+extern double Hscale, Drop, MaxSize,Height,Phi,Density,Randval,Srand;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -119,10 +122,8 @@ extern NameList<LongSym*> POpts;
 
 extern void inc_tabs();
 extern void dec_tabs();
-extern char   tabs[];
+extern char tabs[];
 extern int addtabs;
-
-static int draw_count;
 
 extern int test3;
 static double sval=0;
@@ -160,10 +161,15 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define SHOW
 //#define DEBUG_PMEM
 
+//#define TRIANGLE_LINES
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 2*MIN_DRAW_WIDTH
+#ifdef TRIANGLE_LINES
+#define MIN_TRIANGLE_WIDTH 2
+#else
+#define MIN_TRIANGLE_WIDTH 2
+#endif
 
 #ifdef DUMP
 static void show_stats()
@@ -330,7 +336,6 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	GLSLMgr::tesslevel=0;
-	//GLSLMgr::max_output=4;  // special case
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
 	
 	GLhandleARB program=GLSLMgr::programHandle();
@@ -338,6 +343,14 @@ bool PlantMgr::setProgram(){
 		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
 		return false;
 	}
+	
+	char str[MAXSTR];
+
+	for(int i=0;i<TNplant::textures;i++){
+		sprintf(str,"samplers2d[%d]",i);
+		glUniform1iARB(glGetUniformLocationARB(program,str),i);
+	}
+
 
 	GLSLVarMgr vars;
 	
@@ -356,7 +369,7 @@ bool PlantMgr::setProgram(){
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
 	vars.newFloatVar("haze_ampl",Raster.haze_hf);
 	vars.newFloatVar("bump_delta",1e-3);
-	vars.newFloatVar("bump_ampl",0.05);
+	vars.newFloatVar("bump_ampl",0.025);
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 
@@ -701,7 +714,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	radius=0;
 	size=0;
 	plant_id=0;
-	branch=0;
+	last_branch=0;
 	leaf=0;
 	base_drop=0;
 	width_scale=1;
@@ -766,6 +779,7 @@ void TNplant::init()
 	if(right)
 	   right->init();
 	getLeaf();
+	getLastBranch();
 }
 
 void TNplant::getLeaf() {
@@ -775,7 +789,20 @@ void TNplant::getLeaf() {
 	}
 	if(p && p->typeValue() == ID_LEAF)
 		leaf=(TNLeaf*)p;
-	
+}
+
+void TNplant::getLastBranch() {
+	TNBranch *p = (TNBranch*)right;
+	TNBranch *n=p;
+	while (n && n->typeValue() == ID_BRANCH) {
+		TNBranch *t=n->right;
+		if(!t || t->typeValue()!=ID_BRANCH){
+			last_branch=n;
+			break;
+		}
+		n=n->right;
+	}
+
 }
 void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
@@ -993,7 +1020,7 @@ bool TNplant::setProgram(){
 	else
 		return false;
 	TNBRANCH *branch=first_branch;
-	while(branch && branch->typeValue() == ID_BRANCH){
+	while(branch && (branch->typeValue() == ID_BRANCH || branch->typeValue() == ID_LEAF)){
 		branch->setProgram();
 		branch=branch->right;
 	}
@@ -1091,7 +1118,7 @@ bool TNBranch::setProgram(){
 		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_image<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
-		cout<<"generating texture id="<<texture_id<<endl;
+		cout<<"generating texture id="<<texture_id<<" texid:"<<texid<<endl;
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, -1);
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
@@ -1108,10 +1135,6 @@ bool TNBranch::setProgram(){
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);		
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
-	GLhandleARB program=GLSLMgr::programHandle();
-	sprintf(str,"samplers2d[%d]",texid);  
-	glUniform1iARB(glGetUniformLocationARB(program,str),texid);
-	//cout<<"branch::setProgram "<<root->nodeName()<<" branch:"<<branch_id<<" texid:"<< texid<<" image:"<<texname<<" texture_id:" <<texture_id<<endl;
 		
 	return true;	
 }
@@ -1125,7 +1148,7 @@ void TNBranch::setImage(char *name){
 			delete image;
 		invalidateTexture();
 		strcpy(texname,name);				
-		image=images.load(texname,JPG|BMP);
+		image=images.load(texname,JPG);
 		if(image)
 			cout<<"image created for "<<texname<<endl;
 		else
@@ -1177,6 +1200,7 @@ void TNBranch::setColor(){
 			arg->left->eval();
 			if(S0.cvalid()){
 				glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
+				return;
 			}
 			arg=arg->next();
 		}
@@ -1257,8 +1281,9 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	double child_size=parent_size;
 	double top_offset=0;
 	double bot_offset=0;
-	if (first_fork && lvl > 0) {
-		double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
+	double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
+	double child_length=parent_length;
+	if (first_fork && lvl > 0) {	
 		size_scale = length / parent_length;
 		size_scale = size_scale > 1 ? 1 : size_scale;
 		size_scale = size_scale < 0 ? 0 : size_scale;
@@ -1269,7 +1294,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		root->addSkipped(branch_id);
 		return;
 	} 
-	
+	Srand=SRAND(randval);
 	Point start=svec;
 	Density = ((double) lvl) / maxlvl;
 	// add a random offset to each branch split
@@ -1295,15 +1320,36 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	p1 = start - TheScene->vpoint;
 
 	v = bot - start; // new vector
-
-	if (child_width > MIN_TRIANGLE_WIDTH) {
-		root->addBranch(branch_id);
-		setColor();
+	
+	// calculate (fake) width perpendicular to branch vector
+	// TODO move this to shader ?
+	if (child_width > MIN_LINE_WIDTH) {
+		double nscale=lerp(child_width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+		double off = child_width;
+		int mode=0;
+		int poly_mode=GL_FILL;
 		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
 			Density = 1;
-			mode |= LAST_EMIT;
+			mode = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
+
+        if(isPlantLeaf()){
+        	root->addLeaf(branch_id);
+        	mode=LEAF_MODE|LAST_EMIT;
+        	off=0.1*child_length* TheScene->wscale;
+        }
+        else if (child_width < MIN_TRIANGLE_WIDTH || test3){
+        	poly_mode=GL_LINE;
+        	mode|=LINE_MODE;
+        	root->addLine(branch_id);
+        }
+        else{
+        	mode|=RECT_MODE;
+			root->addBranch(branch_id);
+        }
+		setColor();
+			
 		// calculate (fake) width perpendicular to branch vector
 		// TODO move this to shader ?
 		Point q = TheScene->project(v); // convert model to screen space
@@ -1311,64 +1357,35 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		double x = -sin(a);
 		double y = cos(a);
 	
-		double off = child_width / TheScene->wscale;
+		off /= TheScene->wscale;
 		
-		double f=URAND(randval);
 		// decrease width at end of vector
 		topx = x * off * width_taper;// * size_scale;
 		topy = y * off * width_taper;// * size_scale;
 	
 		botx = tip.x * size_scale;
 		boty = tip.y * size_scale;
-		
-		//wbot_offset= tip.z;
-	
+			
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
 		tip.x = topx;
 		tip.y = topy;
 		tip.z = top_offset;
-		 
-		double nscale=lerp(child_width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+		
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, POLY_MODE);
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, mode);
 
-		if (test3) { // @ key - draw lines
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glLineWidth(1);
-		}
-
+		glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
+		
 		glBegin(GL_LINES);
 		glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 		glVertex4d(p2.x, p2.y, p2.z, top_offset);
 		glEnd();
-		if (test3)  // @ key - draw lines
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
-	} else if (child_width >= MIN_LINE_WIDTH) {
-		root->addLine(branch_id);
-		Density = 1;
-		setColor();
-		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
-			root->addTerminal(branch_id);
-			mode |= LAST_EMIT;
-		}
-		glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, TNplant::norm_min, color_flags, texid,
-				LINE_MODE); // Constants1
+	}
 
-		glLineWidth(MIN_LINE_WIDTH);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-		glBegin(GL_LINES);
-		glVertex4d(p1.x, p1.y, p1.z, 0);
-		glVertex4d(p2.x, p2.y, p2.z, 0);
-		glEnd();	
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);	
-	}	
 	if (mode & LAST_EMIT) {
-		if (root->leaf && root->leaf != this)
-			root->leaf->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev-1);
 		return;
 	}
 	child_width *= width_taper;
@@ -1377,7 +1394,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, child_size, child_width, lev);
 	}
-	if (right && right->typeValue() == ID_BRANCH) {
+	if (right && (right->typeValue() == ID_BRANCH || right->typeValue() == ID_LEAF)) {
 		TNBranch *child = (TNBranch*) right;
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	}
@@ -1425,12 +1442,7 @@ void TNBranch::eval(){
 	if(right)
 		right->eval();
 }
-void TNBranch::getTexDir(char*dir){
-	char base[256];
-	char dimdir[32];
-  	File.getBaseDirectory(base);
- 	sprintf(dir,"%s/Textures/Plants/Branch",base);
-}
+
 //===================== TNleaf ==============================
 //************************************************************
 // TNLeaf class
@@ -1439,41 +1451,6 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	
 }
 
-void TNLeaf::emit(int opt, Point start, Point vec, Point tip, double size,
-		double parent_width, int lvl) {
-	Point v=setVector(vec,start);
-	size *= 1 + 0.25 * randomness * SRAND(randval);
-	v = v * size * length; // v = direction along last branch
-
-	Point p1 = start - TheScene->vpoint;
-	Point p2 = start + v- TheScene->vpoint; //new top
-
-	root->addLine(branch_id);
-	Density = 1;
-	setColor();
-	root->addLeaf(branch_id);
-
-	glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0, 0, 0); // Constants1
-	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, texid,
-			LINE_MODE); // Constants1
-
-	glLineWidth(MIN_LINE_WIDTH);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	glBegin(GL_LINES);
-	glVertex4d(p1.x, p1.y, p1.z, 0);
-	glVertex4d(p2.x, p2.y, p2.z, 0);
-	glEnd();
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-}
-void TNLeaf::getTexDir(char*dir){
-	char base[256];
-	char dimdir[32];
-  	File.getBaseDirectory(base);
- 	sprintf(dir,"%s/Textures/Plants/Leaf",base);
-}
 void TNLeaf::init(){
 	TNBranch::init();
 }

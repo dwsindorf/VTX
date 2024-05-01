@@ -93,7 +93,7 @@ public:
 
 	int plant_id;
 	Plant *plant;
-	TNBranch *branch;
+	TNBranch *last_branch;
 	TNLeaf *leaf;
 	double radius;
 	double size;
@@ -126,6 +126,7 @@ public:
 	bool setProgram();
 	void emit();
 	void getLeaf();
+	void getLastBranch();
 	
 	void clearStats();
 	void showStats();
@@ -178,11 +179,10 @@ public:
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
-	virtual void getTexDir(char*dir);	
 	virtual bool setProgram();
 	
-	bool isLeaf()   { return typeValue()==ID_LEAF;}
-	bool isBranch() { return typeValue()==ID_BRANCH;}
+	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}
+	bool isPlantBranch() { return typeValue()==ID_BRANCH;}
 	void setTexture();
 	void setColor();
 	void setColorFlags();
@@ -208,9 +208,6 @@ public:
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
 	void init();
-	void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
-	void getTexDir(char*dir);
-
 };
 
 class Plant

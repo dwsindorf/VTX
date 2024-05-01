@@ -1116,7 +1116,7 @@ void ImageReader::makeImagelist()
 		}
 		
 		flist.free();	
-		sprintf(sdir,"%s%sTextures%sPlants%Leaf",base,File.separator,File.separator,File.separator);
+		sprintf(sdir,"%s%sTextures%sPlants%sLeaf",base,File.separator,File.separator,File.separator);
 		File.getFileNameList(sdir,"*.jpg",flist);
 		File.getFileNameList(sdir,"*.png",flist);
 		flist.ss();
@@ -1331,6 +1331,10 @@ Image *ImageReader::open(char *name)
 	if(image)
 		return image;
 	sprintf(dir,"%s%sTextures%sPlants%sBranch%s%s",base,d,d,d,d,name);
+	image=open(name, dir);
+	if(image)
+		return image;
+	sprintf(dir,"%s%sTextures%sPlants%sLeaf%s%s",base,d,d,d,d,name);
 	image=open(name, dir);
 	if(image)
 		return image;
