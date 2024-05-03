@@ -84,6 +84,22 @@ uniform float norm_scale;
 #define LINE 0.1
 #define RECTANGLE 1.1
 
+void emitLine(){
+ 	float nscale=1e-5;//TexVars.r;
+ 
+    // need at least 3 vertexes for line strip
+    Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
+    gl_Position.xyz = gl_PositionIn[1].xyz; // top
+    gl_Position.w=1;
+    EmitVertex();
+    EmitVertex();
+    
+    gl_Position.xyz = gl_PositionIn[0].xyz; // top
+    gl_Position.w=1;
+    EmitVertex();
+    
+	EndPrimitive();
+ }
  // draw a line
 void emitLeaf(){
 	vec3 ps1=gl_PositionIn[0].xyz;	
@@ -104,54 +120,33 @@ void emitLeaf(){
 
     vec2 v2=normalize(vec2(topx,topy));
     vec2 v1=normalize(vec2(botx,boty));
-    
-    vec2 top_left=vtop*(1+top_offset);
-    vec2 top_right=vtop*(1-top_offset);
-    vec2 bot_left=vbot*(1+bot_offset);
-    vec2 bot_right=vbot*(1-bot_offset);
-       
-    vec2 vl=top_left;//0.5*(top_left+bot_left);
-    vec2 vr=bot_right;//0.5*(top_right+bot_right);
-    
-    Pnorm=vec3(-v2,0);
-    gl_Position = vec4(pa.xy-vl,pa.z,1); // left
-    gl_TexCoord[0].xy=vec2(1,0);
-    EmitVertex();
-    
-    Pnorm=vec3(v1,0);
-    gl_TexCoord[0].xy=vec2(0,1);
-    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
-    EmitVertex();
-    
- 	Pnorm=vec3(v2,0);
-    gl_Position = vec4(ps1.xy,ps1.z,1); // bottom
-    gl_TexCoord[0].xy=vec2(0,0);
+           
+    vec2 va=0.5*(vtop+vbot);
+  
+  	Pnorm=vec3(v2,0);
+    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
+    gl_TexCoord[0].xy=vec2(0.5,1);
     EmitVertex();
       
     Pnorm=vec3(-v1,0);
-    gl_TexCoord[0].xy=vec2(1,1);
-    gl_Position = vec4(pa.xy+vr,pa.z,1);  // right
+    gl_TexCoord[0].xy=vec2(1,0.5);
+    gl_Position = vec4(pa.xy+va,pa.z,1);  // right
     EmitVertex(); 
- 
+    
+    Pnorm=vec3(-v2,0);
+    gl_Position = vec4(pa.xy-va,pa.z,1);  // left
+    gl_TexCoord[0].xy=vec2(0,0.5);
+    EmitVertex();
+    
+    Pnorm=vec3(v1,0);
+    gl_TexCoord[0].xy=vec2(0.5,0);
+    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
+    EmitVertex();
+     
     EndPrimitive();
  }
  
- void emitLine(){
- 	float nscale=1e-5;//TexVars.r;
  
-    // need at least 3 vertexes for line strip
-    Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
-    gl_Position.xyz = gl_PositionIn[1].xyz; // top
-    gl_Position.w=1;
-    EmitVertex();
-    EmitVertex();
-    
-    gl_Position.xyz = gl_PositionIn[0].xyz; // top
-    gl_Position.w=1;
-    EmitVertex();
-    
-	EndPrimitive();
- }
 // draw a polygon
 void emitRectangle(){
 
@@ -176,17 +171,7 @@ void emitRectangle(){
     vec2 top_right=vtop*(1-top_offset);
     vec2 bot_left=vbot*(1+bot_offset);
     vec2 bot_right=vbot*(1-bot_offset);
-    
- 	Pnorm=vec3(v2,0);
-    gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
-    gl_TexCoord[0].xy=vec2(0,0);
-    EmitVertex();
-   
-    Pnorm=vec3(-v2,0);
-    gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-left
-    gl_TexCoord[0].xy=vec2(1,0);
-    EmitVertex();
-        
+  
     Pnorm=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,1);
     gl_Position = vec4(ps1.xy-bot_left,ps1.z,1);  // bot-left 
@@ -194,8 +179,19 @@ void emitRectangle(){
     
     Pnorm=vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,1);
-    gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-left 
+    gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-right 
     EmitVertex(); 
+   
+ 	Pnorm=vec3(v2,0);
+    gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
+    gl_TexCoord[0].xy=vec2(0,0);
+    EmitVertex();
+   
+    Pnorm=vec3(-v2,0);
+    gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-right
+    gl_TexCoord[0].xy=vec2(1,0);
+    EmitVertex();
+        
  
     EndPrimitive();
 }

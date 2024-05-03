@@ -59,9 +59,9 @@
 //    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures (DONE)
 // 4) add support for bump shading for textures (DONE)
-// 5) implement TNleaf class
+// 5) implement TNLeaf class
 //    - only generate leaves at end of "terminal" branches
-//    - if a texture is present may use a point sprite implementation 
+//    - if a texture is present could use a point sprite implementation ?
 //      o probably need to sort if the texture has an alpha channel
 //    - could instead use a simple geometry model (single triangle with color ?)
 //    - should also allow branch-like forking prior to applying (optional) texture (as a point sprite) or shape geometry
@@ -108,8 +108,16 @@
 //   - get some illumination on one side of branches during night (FIXED)
 //     o multiplied intensity by horizon band (time of day)
 //   - need to lighten dark side of branches (during day time only)
-// 8) only get a single texture for all branches (first branch)
-
+// 8) only get a single texture for all branches (first branch) (FIXED)
+// 9) TNLeaf issues
+//   - fake width doesn't seem to be consistent with branch length 
+//     o need arbitrary multiplier (~10) otherwise leaves are too narrow
+//     o get large leaves on distance trees
+//   - Currently only a "diamond" shape is supported
+//     o need to extend this to more complex shapes
+//   - textures with an aplha channel don't work (no transparency support)
+//     o would probably need to sort by distance anyway
+//     o could try textures without alpha warped to leaf shape?
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -125,7 +133,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern int addtabs;
 
-extern int test3;
+extern int test3,test4;
 static double sval=0;
 static double cval=0;
 static double mind=0;
@@ -977,6 +985,9 @@ void TNplant::saveNode(FILE *f)
 }
 
 void TNplant::emit(){
+	// compensate for changes in scene fov and aspect to keep ht/width constant	
+	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
+
 	lastn=randval;
 	Randval=URAND(lastn);
 	
@@ -997,7 +1008,7 @@ void TNplant::emit(){
 	Point p2=top;
 	
 	double start_width=width_scale*pntsize;
-	
+		
 	Point tip;
 	tip.x=first_branch->width*start_width/TheScene->wscale;
 	tip.y=0;
@@ -1011,8 +1022,6 @@ void TNplant::emit(){
 }
 
 bool TNplant::setProgram(){
-	// compensate for changes in scene fov and aspect to keep ht/width constant	
-	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
 
 	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
@@ -1265,7 +1274,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	int mode = opt;
 	
 	bool first_fork = (opt & FIRST_FORK);
-	bool first_emit = (opt & FIRST_EMIT);
+	bool main_branch = (opt & FIRST_EMIT);
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1300,11 +1309,11 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	// add a random offset to each branch split
 	double rb = randomness > 1 ? 1 : randomness;
 	double b = rb * URAND(randval);
-	if (!first_emit && lvl > 0) { // keep at least one child branch at end of parent
+	if (!main_branch && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
 		start = svec - vec * b;
-		bot_offset=RAND(randval)/size_scale;
-		top_offset=bot_offset;		
+		bot_offset=0.5*width*RAND(randval)/size_scale;
+		top_offset=bot_offset;	
 	}
 	else
 		bot_offset=tip.z;
@@ -1321,50 +1330,60 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 
 	v = bot - start; // new vector
 	
-	// calculate (fake) width perpendicular to branch vector
-	// TODO move this to shader ?
 	if (child_width > MIN_LINE_WIDTH) {
-		double nscale=lerp(child_width,MIN_TRIANGLE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
-		double off = child_width;
-		int mode=0;
-		int poly_mode=GL_FILL;
-		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
-			Density = 1;
-			mode = LAST_EMIT;
-			root->addTerminal(branch_id);
-		}
-
-        if(isPlantLeaf()){
-        	root->addLeaf(branch_id);
-        	mode=LEAF_MODE|LAST_EMIT;
-        	off=0.1*child_length* TheScene->wscale;
-        }
-        else if (child_width < MIN_TRIANGLE_WIDTH || test3){
-        	poly_mode=GL_LINE;
-        	mode|=LINE_MODE;
-        	root->addLine(branch_id);
-        }
-        else{
-        	mode|=RECT_MODE;
-			root->addBranch(branch_id);
-        }
-		setColor();
-			
+		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+		double off = child_width/TheScene->wscale;
 		// calculate (fake) width perpendicular to branch vector
 		// TODO move this to shader ?
 		Point q = TheScene->project(v); // convert model to screen space
 		double a = atan2(q.y / q.z, q.x / q.z);
 		double x = -sin(a);
 		double y = cos(a);
-	
-		off /= TheScene->wscale;
-		
-		// decrease width at end of vector
-		topx = x * off * width_taper;// * size_scale;
-		topy = y * off * width_taper;// * size_scale;
+
+		topx = x * off * width_taper;
+		topy = y * off * width_taper;
 	
 		botx = tip.x * size_scale;
 		boty = tip.y * size_scale;
+
+		int shader_mode=0;
+		int poly_mode=GL_FILL;
+		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
+			Density = 1;
+			opt = LAST_EMIT;
+			root->addTerminal(branch_id);
+		}
+        if(isPlantLeaf()){
+        	root->addLeaf(branch_id);
+			off=20*a/TheScene->wscale;
+			topx = x*off;
+			topy = y*off;
+		
+			botx = tip.x;
+			boty = tip.y;
+			opt = LAST_EMIT;
+			if(test3)
+				shader_mode = LINE_MODE;
+			else
+				shader_mode = LEAF_MODE;
+        }     
+        else if (child_width < MIN_TRIANGLE_WIDTH){
+        	poly_mode=GL_LINE;
+        	shader_mode=LINE_MODE;
+        	root->addLine(branch_id);
+        }
+        else{
+        	shader_mode=RECT_MODE;
+			root->addBranch(branch_id);
+        }
+      
+        if (test3 || test4)
+            poly_mode=GL_LINE;
+        if (test4)
+            shader_mode = LINE_MODE;
+		setColor();
+					
+		// decrease width at end of vector
 			
 		// fix billboard gap in sequential levels
 		//  - set bottom offsets for next level to = top offsets for previous level
@@ -1373,7 +1392,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		tip.z = top_offset;
 		
 		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, mode);
+		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
 
 		glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 		
@@ -1384,8 +1403,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
 	}
-
-	if (mode & LAST_EMIT) {
+	if (opt & LAST_EMIT) {
 		return;
 	}
 	child_width *= width_taper;
