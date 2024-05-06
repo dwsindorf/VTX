@@ -169,15 +169,9 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define SHOW
 //#define DEBUG_PMEM
 
-//#define TRIANGLE_LINES
-
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#ifdef TRIANGLE_LINES
 #define MIN_TRIANGLE_WIDTH 2
-#else
-#define MIN_TRIANGLE_WIDTH 2
-#endif
 
 #ifdef DUMP
 static void show_stats()
@@ -327,10 +321,14 @@ bool PlantMgr::setProgram(){
 	double twilite_max=0.2;  // full day
 	
 	char defs[1024]="";
-	sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
-	if(TNplant::textures>0 && Render.bumps())
-		sprintf(defs+strlen(defs),"#define BUMPS\n",TNplant::textures);
-
+	if(Render.textures()){
+		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
+		if(TNplant::textures>0 && Render.bumps())
+			sprintf(defs+strlen(defs),"#define BUMPS\n",TNplant::textures);
+	}
+	else
+		sprintf(defs+strlen(defs),"#define NTEXS 0\n");
+		
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
 	if(Render.haze())
 		sprintf(defs+strlen(defs),"#define HAZE\n");
@@ -1279,7 +1277,11 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	double topy = 0;
 	double botx = 1;
 	double boty = 1;
-	Point v, p1, p2, bot;
+	Point v, p1, p2, bot,q;
+	double a,b,x,y,off;
+	int shader_mode=0;
+	int poly_mode=GL_FILL;
+
 	Color c;
 	bool terminal = branch_id == root->branches - 1;
 	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
@@ -1308,11 +1310,11 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	Density = ((double) lvl) / maxlvl;
 	// add a random offset to each branch split
 	double rb = randomness > 1 ? 1 : randomness;
-	double b = rb * URAND(randval);
+	b = rb * URAND(randval);
 	if (!main_branch && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
 		start = svec - vec * b;
-		bot_offset=0.5*width*RAND(randval)/size_scale;
+		bot_offset=RAND(randval)/size_scale;
 		top_offset=bot_offset;	
 	}
 	else
@@ -1332,40 +1334,26 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	
 	if (child_width > MIN_LINE_WIDTH) {
 		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
-		double off = child_width/TheScene->wscale;
-		// calculate (fake) width perpendicular to branch vector
-		// TODO move this to shader ?
-		Point q = TheScene->project(v); // convert model to screen space
-		double a = atan2(q.y / q.z, q.x / q.z);
-		double x = -sin(a);
-		double y = cos(a);
-
-		topx = x * off * width_taper;
-		topy = y * off * width_taper;
-	
-		botx = tip.x * size_scale;
-		boty = tip.y * size_scale;
-
-		int shader_mode=0;
-		int poly_mode=GL_FILL;
 		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
 			Density = 1;
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
         if(isPlantLeaf()){
+    		q = TheScene->project(v); // convert model to screen space
+    		a = atan2(q.y / q.z, q.x / q.z);
+    		x = -sin(a);
+    		y = cos(a);
+
         	root->addLeaf(branch_id);
-			off=20*a/TheScene->wscale;
+			off=10*child_width/TheScene->wscale;
 			topx = x*off;
 			topy = y*off;
 		
-			botx = tip.x;
-			boty = tip.y;
+			botx = topx;//tip.x;
+			boty = topy;//tip.y;
 			opt = LAST_EMIT;
-			if(test3)
-				shader_mode = LINE_MODE;
-			else
-				shader_mode = LEAF_MODE;
+			shader_mode=LEAF_MODE;
         }     
         else if (child_width < MIN_TRIANGLE_WIDTH){
         	poly_mode=GL_LINE;
@@ -1373,14 +1361,24 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
         	root->addLine(branch_id);
         }
         else{
+        	off = child_width/TheScene->wscale;
+    		q = TheScene->project(v); // convert model to screen space
+    		a = atan2(q.y / q.z, q.x / q.z);
+    		x = -sin(a);
+    		y = cos(a);
+
+        	topx = x * off * width_taper;
+        	topy = y * off * width_taper;
+        	botx = tip.x * size_scale;
+        	boty = tip.y * size_scale;
+
         	shader_mode=RECT_MODE;
 			root->addBranch(branch_id);
         }
-      
-        if (test3 || test4)
-            poly_mode=GL_LINE;
-        if (test4)
-            shader_mode = LINE_MODE;
+        if(test3 || test4)
+         	poly_mode=GL_LINE;    
+        if(test4)
+         	shader_mode = LINE_MODE;
 		setColor();
 					
 		// decrease width at end of vector

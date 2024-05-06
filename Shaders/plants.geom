@@ -116,7 +116,7 @@ void emitLeaf(){
 	float boty=Constants1[0].a;
 	
 	vec2 vtop=vec2(topx,topy);
-    vec2 vbot=vec2(botx,boty);
+    vec2 vbot=vtop;//vec2(botx,boty);
 
     vec2 v2=normalize(vec2(topx,topy));
     vec2 v1=normalize(vec2(botx,boty));

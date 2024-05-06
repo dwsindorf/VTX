@@ -33,6 +33,7 @@ uniform float twilite_max;
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
 #define LINE    TexVars.w<0.5
+#define LEAF    TexVars.w>1.5
 
 varying vec4 Color;
 varying vec3 Pnorm;
@@ -102,6 +103,8 @@ void main(void) {
 		vec2 l_uv=gl_TexCoord[0].xy;
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
   		if(copt>0){    // new color = blend color and texture where texture.a >0
+  		    if(TexVars.w>1.5)
+  		       color.a=tcolor.a;
   			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); 
   			if(copt>1) // new color = blend color and ncolor where color.a >0
 				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
@@ -109,10 +112,11 @@ void main(void) {
 				color.rgb=ncolor.rgb;				
 		}
 		else // texture only
-			color.rgb=tcolor.rgb;		
+			color=tcolor;		
 	}
 #endif
-	color.a=1;
+	if(TexVars.w<1.5)
+		color.a=1;
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
