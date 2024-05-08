@@ -417,6 +417,9 @@ bool PlantMgr::setProgram(){
 	glEnable(GL_BLEND);
 	//TNplant::clearStats();
 
+	TNLeaf::free();
+
+
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
 		
@@ -434,6 +437,9 @@ bool PlantMgr::setProgram(){
 		randval=256*r+id;
 		plant->emit();
 	}
+
+	TNLeaf::render();
+
 	randval=l;
 #ifdef SHOW_BRANCH_STATS
 	for(int i=0;i<tp->plants.size;i++){
@@ -1380,15 +1386,19 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 			setColor();
 			
 			int alpha=alpha_texture?4:0;
-				
-			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, alpha, 0); // Constants1		
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
 
-			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
-			glBegin(GL_LINES);
-			glVertex4d(p1.x, p1.y, p1.z, 0);
-			glVertex4d(p2.x, p2.y, p2.z, 0);
-			glEnd();
+			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
+				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode));
+			else{	
+				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
+	
+				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
+				glBegin(GL_LINES);
+				glVertex4d(p1.x, p1.y, p1.z, 0);
+				glVertex4d(p2.x, p2.y, p2.z, 0);
+				glEnd();
+			}
         }     
         else if (child_width > MIN_TRIANGLE_WIDTH){ // branch mode
 			root->addBranch(branch_id);
@@ -1505,7 +1515,29 @@ void TNBranch::eval(){
 //************************************************************
 ValueList<LeafData*> TNLeaf::leafs;
 
+double LeafData::distance() { 
+	return 0.5*(data[0].z+data[1].z);
+}
+
+void  LeafData::render(){
+	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x, data[2].y, 0, 0); // Constants1		
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[2].z, data[3].x, data[3].y, LEAF_MODE);
+
+	glPolygonMode(GL_FRONT_AND_BACK, data[3].z);			
+	glBegin(GL_LINES);
+	glVertex4d(data[0].x, data[0].y, data[0].z, 0);
+	glVertex4d(data[1].x, data[1].y, data[1].z, 0);
+	glEnd();
+
+}
+
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	
 }
-
+void TNLeaf::render(){
+	leafs.sort();
+	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
+		LeafData *s=TNLeaf::leafs[i];
+		s->render();
+	}
+}

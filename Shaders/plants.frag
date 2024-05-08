@@ -33,7 +33,6 @@ uniform float twilite_max;
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.b
 #define LINE    TexVars.w<0.5
-#define LEAF    TexVars.w>1.5
 
 varying vec4 Color;
 varying vec3 Pnorm;
@@ -127,11 +126,15 @@ void main(void) {
 #endif  
  
 #ifdef HAZE
+/*
 	float z=DEPTH; // depth buffer
 	float depth=1.0/(ws2*z+ws1); // distance
 	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
 	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
 	color.rgb=mix(color.rgb,Haze.rgb,h);
+	float p=lerp(h,0.0,0.8,1,0.001); // hack !
+	color.a=pow(color.a,p);
+	*/
 #endif 
 	test=vec3(0.5*(TexVars.b+1),0,0);
 

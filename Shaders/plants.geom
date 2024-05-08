@@ -108,7 +108,8 @@ void emitLeaf(){
 	 	
 	float topx=Constants1[0].r;
 	float topy=Constants1[0].g;
-	int rectmode=Constants1[0].b+0.1; // transparenct flag
+	int colmode=TexVars_G[0].g+0.1; // transparenct flag
+	int rectmode=colmode & 4;
 	
 	vec2 va=vec2(topx,topy);
     vec2 v2=normalize(va); 

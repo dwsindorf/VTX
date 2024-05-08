@@ -208,7 +208,9 @@ public:
 	LeafData(Point b,Point t, Point c, Point d){
 		data[0]=b;data[1]=t;data[2]=c;data[3]=d;
 	}
-	double value() { return data[0].z;}
+	double distance();
+	double value() { return distance();}
+	void render();
 };
 
 class TNLeaf : public TNBranch
@@ -220,7 +222,7 @@ public:
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
-	void render();	
+	static void render();	
 	static void collect(Point b,Point t, Point c, Point d){
 		leafs.add(new LeafData(b,t,c,d));
 	}
