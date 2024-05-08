@@ -1122,8 +1122,8 @@ bool TNBranch::setProgram(){
 	glActiveTexture(GL_TEXTURE0+texid);
 	if(texture_id==0){
 		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
-		bool alpha_image=image->alpha_image();
-//		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_image<<endl;
+		alpha_texture=image->alpha_image();
+		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
 		glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1136,9 +1136,8 @@ bool TNBranch::setProgram(){
 		int w=image->width;
 		int h=image->height;
 		unsigned char* pixels=(unsigned char*)image->data;
-		alpha_texture=(alpha_image || rgba_image)?true:false;
 
-		if(alpha_texture)
+		if(alpha_texture||rgba_image)
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);

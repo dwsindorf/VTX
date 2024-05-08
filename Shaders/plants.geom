@@ -108,7 +108,7 @@ void emitLeaf(){
 	 	
 	float topx=Constants1[0].r;
 	float topy=Constants1[0].g;
-	int rectmode=Constants1[0].b+0.1;
+	int rectmode=Constants1[0].b+0.1; // transparenct flag
 	
 	vec2 va=vec2(topx,topy);
     vec2 v2=normalize(va); 
@@ -119,27 +119,27 @@ void emitLeaf(){
    if(rectmode){
        vec2 vtop=vec2(topx,topy);
     
-	   gl_TexCoord[0].xy=vec2(0,1);
+	   gl_TexCoord[0].xy=vec2(0,0);
 	   gl_Position = vec4(ps1.xy-vtop,ps1.z,1);  // bot-left 
 	   EmitVertex();
 	    
-	   gl_TexCoord[0].xy=vec2(1,1);
+	   gl_TexCoord[0].xy=vec2(1,0);
 	   gl_Position = vec4(ps1.xy+vtop,ps1.z,1);  // bot-right 
 	   EmitVertex(); 
 	   
 	   gl_Position = vec4(ps2.xy-vtop,ps2.z,1); // top-left
-	   gl_TexCoord[0].xy=vec2(0,0);
+	   gl_TexCoord[0].xy=vec2(0,1);
 	   EmitVertex();
 	   
 	   gl_Position = vec4(ps2.xy+vtop,ps2.z,1); // top-right
-	   gl_TexCoord[0].xy=vec2(1,0);
+	   gl_TexCoord[0].xy=vec2(1,1);
 	   EmitVertex();
    }
    else{ 
    		vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
      
 	    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
-	    gl_TexCoord[0].xy=vec2(0.5,1);
+	    gl_TexCoord[0].xy=vec2(0.5,0);
 	    EmitVertex();
 	      
 	    gl_TexCoord[0].xy=vec2(1,0.5);
@@ -150,7 +150,7 @@ void emitLeaf(){
 	    gl_TexCoord[0].xy=vec2(0,0.5);
 	    EmitVertex();
 	    
-	    gl_TexCoord[0].xy=vec2(0.5,0);
+	    gl_TexCoord[0].xy=vec2(0.5,1);
 	    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
 	    EmitVertex();
     }
