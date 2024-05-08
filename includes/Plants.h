@@ -56,6 +56,7 @@ public:
 	int flip()				    { return type & FLIP;}
 };
 
+
 class PlantMgr : public PlacementMgr
 {
 protected:
@@ -160,6 +161,7 @@ public:
 	unsigned int texture_id;
 	int texid;
 	int color_flags;
+	bool alpha_texture;
 
 	Image *image;
 	TNplant *root;
@@ -199,16 +201,35 @@ public:
 //************************************************************
 // Class TNLeaf
 //************************************************************
+class LeafData
+{
+public:
+	Point data[4];
+	LeafData(Point b,Point t, Point c, Point d){
+		data[0]=b;data[1]=t;data[2]=c;data[3]=d;
+	}
+	double value() { return data[0].z;}
+};
+
 class TNLeaf : public TNBranch
 {
 public:
+	
 	TNLeaf(TNode *l, TNode *r, TNode *b);
 
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
-	void init();
+	void render();	
+	static void collect(Point b,Point t, Point c, Point d){
+		leafs.add(new LeafData(b,t,c,d));
+	}
+	static void free() { leafs.free();}
+	static void sort() { leafs.sort();}	
+	static ValueList<LeafData*> leafs;
+
 };
+
 
 class Plant
 {

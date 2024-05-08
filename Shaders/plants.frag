@@ -97,25 +97,27 @@ void main(void) {
 	vec4 color = Color;
 #if NTEXS >0
 	int texid=TEXID;
-	int copt=TexVars.g;
+	int copt=TexVars.g+0.1;
+	int aopt=copt & 4;
+	copt=copt&3;
 	
 	if(texid>=0){
 		vec2 l_uv=gl_TexCoord[0].xy;
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
   		if(copt>0){    // new color = blend color and texture where texture.a >0
-  		    if(TexVars.w>1.5)
-  		       color.a=tcolor.a;
-  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); 
-  			if(copt>1) // new color = blend color and ncolor where color.a >0
+  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); // ncolor=tcolor where tcolor.a>0
+  			if(copt>1) // color has alpha
 				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
 			else // no alpha in color
 				color.rgb=ncolor.rgb;				
+  		    if(aopt) // leaf
+  		       color.a=tcolor.a;
 		}
 		else // texture only
 			color=tcolor;		
 	}
 #endif
-	if(TexVars.w<1.5)
+	if(!aopt)
 		color.a=1;
 	if(lighting)
     	color.rgb=setLighting(color.rgb);

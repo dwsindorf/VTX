@@ -624,7 +624,7 @@ void Plant::collect()
 #else
 			double ht=s->ht;
 #endif			
-			Point base=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius); // spherical-to-rectangular
+			Point base=TheMap->point(ps.x, ps.y,ht); // spherical-to-rectangular
 			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
 			double d=bp.distance(TheScene->vpoint);  // distance	
 			double r=TheMap->radius*s->radius;
@@ -984,11 +984,11 @@ void TNplant::saveNode(FILE *f)
 
 void TNplant::emit(){
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
+	// note: width_scale == 1 for med and large 0.6629 for wide
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
 
 	lastn=randval;
 	Randval=URAND(lastn);
-	
 	double length=size*base_point.length();	
 	Point bot=base_point;
 	norm=bot.normalize();
@@ -1014,7 +1014,7 @@ void TNplant::emit(){
 	glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
-	
+	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,start_width,0);
 	
 }
@@ -1073,6 +1073,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	texid=-1;
 	instance=0;
 	color_flags=0;
+	alpha_texture=false;
 }
 
 void TNBranch::init(){
@@ -1122,10 +1123,9 @@ bool TNBranch::setProgram(){
 	if(texture_id==0){
 		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
 		bool alpha_image=image->alpha_image();
-		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_image<<endl;
+//		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_image<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
-		cout<<"generating texture id="<<texture_id<<" texid:"<<texid<<endl;
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, -1);
 		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
@@ -1136,10 +1136,15 @@ bool TNBranch::setProgram(){
 		int w=image->width;
 		int h=image->height;
 		unsigned char* pixels=(unsigned char*)image->data;
-		if(alpha_image || rgba_image)
+		alpha_texture=(alpha_image || rgba_image)?true:false;
+
+		if(alpha_texture)
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		else
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);		
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+		
+		cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
+
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 		
@@ -1213,27 +1218,6 @@ void TNBranch::setColor(){
 		}
 	}
 }
-void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
-	if(lvl<min_level)
-		return;
-	maxlvl=(max_level>0&&max_level<max_plant_levels)?max_level:max_plant_levels;
-	
-    if(lvl>maxlvl)
-    	return;
-    
-    int l=randval;
-    w*=width;
-    
-	double splits=max_splits*(1+0.5*randomness*SRAND(randval));
-	if(first_bias) // add more branches at start of new branch fork
-		splits*=first_bias;
-	splits=splits<1?1:splits;
-	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,s,w,lvl);
-	}
-	randval=l;
-}
-
 Point TNBranch::setVector(Point vec, Point start){
 
 	Point v = vec.normalize();
@@ -1259,12 +1243,42 @@ Point TNBranch::setVector(Point vec, Point start){
 
 }
 
+void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
+	if(lvl<min_level)
+		return;
+	maxlvl=(max_level>0&&max_level<max_plant_levels)?max_level:max_plant_levels;
+
+	bool end_branch = max_level>0 && max_level<max_plant_levels && lvl>max_level;
+
+//    if(lvl>maxlvl)
+//    	return;
+  
+	if(lvl>max_plant_levels)
+	   return;
+
+    int l=randval;
+    w*=width;
+    
+	double splits=1;
+	if(!end_branch){
+		splits=max_splits*(1+0.5*randomness*SRAND(randval));
+		if(first_bias) // add more branches at start of new branch fork
+			splits*=first_bias;
+		splits=splits<1?1:splits;
+	}
+	for(int i=0;i<splits;i++){
+		emit(opt,start,vec,tip,s,w,lvl);
+	}
+	randval=l;
+}
+
+
 void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_size,
 		double parent_width, int lvl) {
 	if (lvl < min_level)
 		return;
-	if (lvl > maxlvl)
-		return;
+	//if (lvl > maxlvl)
+	//	return;
 	
 	int lev = lvl;
 	lev++;
@@ -1273,6 +1287,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
+	bool end_branch = max_level>0 && max_level<max_plant_levels && lvl>max_level;
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1334,78 +1349,104 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	
 	if (child_width > MIN_LINE_WIDTH) {
 		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
-		if (child_width * width_taper < MIN_LINE_WIDTH || lev > maxlvl) {
+		if (child_width * width_taper < MIN_LINE_WIDTH) {
 			Density = 1;
 			opt = LAST_EMIT;
-			root->addTerminal(branch_id);
+			//root->addTerminal(branch_id);
 		}
-        if(isPlantLeaf()){
-    		q = TheScene->project(v); // convert model to screen space
+	    if(end_branch)
+			root->addTerminal(branch_id);
+	    else if(lvl > maxlvl) {
+			Density = 1;
+			opt = LAST_EMIT;
+	   }
+       if(isPlantLeaf()){  // leaf mode
+         	root->addLeaf(branch_id);
+   		    q = TheScene->project(v); // convert model to screen space
     		a = atan2(q.y / q.z, q.x / q.z);
     		x = -sin(a);
     		y = cos(a);
 
-        	root->addLeaf(branch_id);
-			off=10*child_width/TheScene->wscale;
+ 			off=10*child_width/TheScene->wscale;
+        	Density=10*off;
 			topx = x*off;
 			topy = y*off;
-		
-			botx = topx;//tip.x;
-			boty = topy;//tip.y;
-			opt = LAST_EMIT;
+			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
-        }     
-        else if (child_width < MIN_TRIANGLE_WIDTH){
-        	poly_mode=GL_LINE;
-        	shader_mode=LINE_MODE;
-        	root->addLine(branch_id);
-        }
-        else{
-        	off = child_width/TheScene->wscale;
-    		q = TheScene->project(v); // convert model to screen space
-    		a = atan2(q.y / q.z, q.x / q.z);
-    		x = -sin(a);
-    		y = cos(a);
-
-        	topx = x * off * width_taper;
-        	topy = y * off * width_taper;
-        	botx = tip.x * size_scale;
-        	boty = tip.y * size_scale;
-
-        	shader_mode=RECT_MODE;
-			root->addBranch(branch_id);
-        }
-        if(test3 || test4)
-         	poly_mode=GL_LINE;    
-        if(test4)
-         	shader_mode = LINE_MODE;
-		setColor();
-					
-		// decrease width at end of vector
+			if(test3 || test4)
+				poly_mode=GL_LINE;    
+		    if(test4)
+				shader_mode = LINE_MODE;
+		    
+			setColor();
 			
-		// fix billboard gap in sequential levels
-		//  - set bottom offsets for next level to = top offsets for previous level
-		tip.x = topx;
-		tip.y = topy;
-		tip.z = top_offset;
-		
-		glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-		glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
+			int alpha=alpha_texture?4:0;
+				
+			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, alpha, 0); // Constants1		
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
 
-		glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
-		
-		glBegin(GL_LINES);
-		glVertex4d(p1.x, p1.y, p1.z, bot_offset);
-		glVertex4d(p2.x, p2.y, p2.z, top_offset);
-		glEnd();
+			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
+			glBegin(GL_LINES);
+			glVertex4d(p1.x, p1.y, p1.z, 0);
+			glVertex4d(p2.x, p2.y, p2.z, 0);
+			glEnd();
+        }     
+        else if (child_width > MIN_TRIANGLE_WIDTH){ // branch mode
+			root->addBranch(branch_id);
+			off = child_width/TheScene->wscale;
+			q = TheScene->project(v); // convert model to screen space
+			a = atan2(q.y / q.z, q.x / q.z);
+			x = -sin(a);
+			y = cos(a);
+
+			topx = x * off * width_taper;
+			topy = y * off * width_taper;
+			botx = tip.x * size_scale;
+			boty = tip.y * size_scale;
+
+			shader_mode=RECT_MODE;
+			if(test3 || test4)
+				poly_mode=GL_LINE;    
+			if(test4)
+				shader_mode = LINE_MODE;
+			setColor();
+			
+			tip.x = topx;
+			tip.y = topy;
+			tip.z = top_offset;
+				
+			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
+
+			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
+			
+			glBegin(GL_LINES);
+			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
+			glVertex4d(p2.x, p2.y, p2.z, top_offset);
+			glEnd();
+        }
+        else{ // line mode
+        	root->addLine(branch_id);
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, LINE_MODE);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			
+			glBegin(GL_LINES);
+			glVertex4d(p1.x, p1.y, p1.z, 0);
+			glVertex4d(p2.x, p2.y, p2.z, 0);
+			glEnd();
+			setColor();
+        }
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		
+
 	}
 	if (opt & LAST_EMIT) {
 		return;
 	}
+	if(end_branch)
+		splits=1;
+	//else{
 	child_width *= width_taper;
 	child_size *= length_taper;
+	//}
 	emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, child_size, child_width, lev);
@@ -1463,11 +1504,9 @@ void TNBranch::eval(){
 //************************************************************
 // TNLeaf class
 //************************************************************
+ValueList<LeafData*> TNLeaf::leafs;
+
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	
-}
-
-void TNLeaf::init(){
-	TNBranch::init();
 }
 

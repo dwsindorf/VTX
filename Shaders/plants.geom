@@ -80,9 +80,10 @@ uniform float norm_scale;
 // 	  topx=(l*x); // this seems to kinda work but see gaps in branch segments
 // 	  topy=(l*y);
 
-#define LEAF 2.1
-#define LINE 0.1
-#define RECTANGLE 1.1
+#define LINE 0
+#define BRANCH 1
+#define LEAF   2
+#define XPLEAF 3
 
 void emitLine(){
  	float nscale=1e-5;//TexVars.r;
@@ -104,51 +105,62 @@ void emitLine(){
 void emitLeaf(){
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
-	
-	vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
-	
-	float top_offset=gl_PositionIn[1].w;
-	float bot_offset=gl_PositionIn[0].w;
- 	
+	 	
 	float topx=Constants1[0].r;
 	float topy=Constants1[0].g;
-	float botx=Constants1[0].b;
-	float boty=Constants1[0].a;
+	int rectmode=Constants1[0].b+0.1;
 	
-	vec2 vtop=vec2(topx,topy);
-    vec2 vbot=vtop;//vec2(botx,boty);
-
-    vec2 v2=normalize(vec2(topx,topy));
-    vec2 v1=normalize(vec2(botx,boty));
-           
-    vec2 va=0.5*(vtop+vbot);
-  
-  	Pnorm=vec3(v2,0);
-    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
-    gl_TexCoord[0].xy=vec2(0.5,1);
-    EmitVertex();
-      
-    Pnorm=vec3(-v1,0);
-    gl_TexCoord[0].xy=vec2(1,0.5);
-    gl_Position = vec4(pa.xy+va,pa.z,1);  // right
-    EmitVertex(); 
+	vec2 va=vec2(topx,topy);
+    vec2 v2=normalize(va); 
+    vec3 pc=vec3(gl_PositionIn[1].xyz-gl_PositionIn[0].xyz);
+    vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
+    Pnorm=0.25*normalize(cross(pc,vw));
+   
+   if(rectmode){
+       vec2 vtop=vec2(topx,topy);
     
-    Pnorm=vec3(-v2,0);
-    gl_Position = vec4(pa.xy-va,pa.z,1);  // left
-    gl_TexCoord[0].xy=vec2(0,0.5);
-    EmitVertex();
-    
-    Pnorm=vec3(v1,0);
-    gl_TexCoord[0].xy=vec2(0.5,0);
-    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
-    EmitVertex();
+	   gl_TexCoord[0].xy=vec2(0,1);
+	   gl_Position = vec4(ps1.xy-vtop,ps1.z,1);  // bot-left 
+	   EmitVertex();
+	    
+	   gl_TexCoord[0].xy=vec2(1,1);
+	   gl_Position = vec4(ps1.xy+vtop,ps1.z,1);  // bot-right 
+	   EmitVertex(); 
+	   
+	   gl_Position = vec4(ps2.xy-vtop,ps2.z,1); // top-left
+	   gl_TexCoord[0].xy=vec2(0,0);
+	   EmitVertex();
+	   
+	   gl_Position = vec4(ps2.xy+vtop,ps2.z,1); // top-right
+	   gl_TexCoord[0].xy=vec2(1,0);
+	   EmitVertex();
+   }
+   else{ 
+   		vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
+     
+	    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
+	    gl_TexCoord[0].xy=vec2(0.5,1);
+	    EmitVertex();
+	      
+	    gl_TexCoord[0].xy=vec2(1,0.5);
+	    gl_Position = vec4(pa.xy+va,pa.z,1);  // right
+	    EmitVertex(); 
+	    
+	    gl_Position = vec4(pa.xy-va,pa.z,1);  // left
+	    gl_TexCoord[0].xy=vec2(0,0.5);
+	    EmitVertex();
+	    
+	    gl_TexCoord[0].xy=vec2(0.5,0);
+	    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
+	    EmitVertex();
+    }
      
     EndPrimitive();
  }
  
- 
+
 // draw a polygon
-void emitRectangle(){
+void emitBranch(){
 
 	vec3 ps1=gl_PositionIn[0].xyz;	
 	vec3 ps2=gl_PositionIn[1].xyz;
@@ -191,8 +203,6 @@ void emitRectangle(){
     gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-right
     gl_TexCoord[0].xy=vec2(1,0);
     EmitVertex();
-        
- 
     EndPrimitive();
 }
 
@@ -202,12 +212,12 @@ void main(void) {
  	Color=Color_G[0];
 	Normal.xyz=Normal_G[0].xyz;
 	TexVars=TexVars_G[0];
-    int mode=TexVars_G[0].w;
+    int mode=TexVars_G[0].w+0.1;
     
-    if(mode<LINE)
+    if(mode==LINE)
     	emitLine();
-    else if(mode<RECTANGLE)
-    	emitRectangle();
+    else if(mode==BRANCH)
+    	emitBranch();
     else 
     	emitLeaf();
  
