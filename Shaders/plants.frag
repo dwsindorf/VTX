@@ -115,9 +115,9 @@ void main(void) {
 		else // texture only
 			color=tcolor;		
 	}
-#endif
 	if(!aopt)
 		color.a=1;
+#endif
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
@@ -134,7 +134,7 @@ void main(void) {
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 	float p=lerp(h,0.0,0.8,1,0.001); // hack !
 	color.a=pow(color.a,p);
-	*/
+*/	
 #endif 
 	test=vec3(0.5*(TexVars.b+1),0,0);
 

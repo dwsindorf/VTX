@@ -115,7 +115,7 @@ void emitLeaf(){
     vec2 v2=normalize(va); 
     vec3 pc=vec3(gl_PositionIn[1].xyz-gl_PositionIn[0].xyz);
     vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
-    Pnorm=0.25*normalize(cross(pc,vw));
+    Pnorm=0.1*normalize(cross(pc,vw));
    
    if(rectmode){
        vec2 vtop=vec2(topx,topy);

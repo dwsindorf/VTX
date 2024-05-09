@@ -17,8 +17,8 @@
 #define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 
-#define SRAND(x) 	(rands[PERM((x++))])
-#define URAND(x) 	(rands[PERM((x++))]+0.5)
+#define SRAND 	(rands[PERM((randval++))])
+#define URAND 	(rands[PERM((randval++))]+0.5)
 
 #define FIRST_FORK  1
 #define FIRST_EMIT  2
@@ -994,7 +994,7 @@ void TNplant::emit(){
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
 
 	lastn=randval;
-	Randval=URAND(lastn);
+	Randval=URAND;
 	double length=size*base_point.length();	
 	Point bot=base_point;
 	norm=bot.normalize();
@@ -1227,9 +1227,9 @@ Point TNBranch::setVector(Point vec, Point start){
 
 	Point v = vec.normalize();
 	
-	v.x += divergence * SRAND(randval);
-	v.y += divergence * SRAND(randval);
-	v.z += divergence * SRAND(randval);
+	v.x += divergence * SRAND;
+	v.y += divergence * SRAND;
+	v.z += divergence * SRAND;
 
 	v = v.normalize();
 
@@ -1262,11 +1262,11 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	   return;
 
     int l=randval;
-    w*=width;
+    //w*=width;
     
 	double splits=1;
 	if(!end_branch){
-		splits=max_splits*(1+0.5*randomness*SRAND(randval));
+		splits=max_splits*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			splits*=first_bias;
 		splits=splits<1?1:splits;
@@ -1274,7 +1274,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	for(int i=0;i<splits;i++){
 		emit(opt,start,vec,tip,s,w,lvl);
 	}
-	randval=l;
+	randval=l+1;
 }
 
 
@@ -1304,7 +1304,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 
 	Color c;
 	bool terminal = branch_id == root->branches - 1;
-	int splits = max_splits * (1 + 0.5 * randomness * SRAND(randval));
+	int splits = max_splits * (1 + 0.5 * randomness * SRAND);
 	
 	splits = splits >= 1 ? splits : 1;
 	double size_scale = 1.0;
@@ -1325,12 +1325,12 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		root->addSkipped(branch_id);
 		return;
 	} 
-	Srand=SRAND(randval);
+	Srand=SRAND;
 	Point start=svec;
 	Density = ((double) lvl) / maxlvl;
 	// add a random offset to each branch split
 	double rb = randomness > 1 ? 1 : randomness;
-	b = rb * URAND(randval);
+	b = rb * URAND;
 	if (!main_branch && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
 		start = svec - vec * b;
@@ -1341,7 +1341,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		bot_offset=tip.z;
 	v=setVector(vec,start);
 	
-	child_size *= 1 + 0.25 * randomness * SRAND(randval);
+	child_size *= 1 + 0.25 * randomness * SRAND;
 	v = v * child_size * length; // v = direction along last branch
 
 	p2 = start + v; //new top
@@ -1355,14 +1355,14 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	if (child_width > MIN_LINE_WIDTH) {
 		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		if (child_width * width_taper < MIN_LINE_WIDTH) {
-			Density = 1;
+			//Density = 1;
 			opt = LAST_EMIT;
 			//root->addTerminal(branch_id);
 		}
 	    if(end_branch)
 			root->addTerminal(branch_id);
 	    else if(lvl > maxlvl) {
-			Density = 1;
+			//Density = 1;
 			opt = LAST_EMIT;
 	   }
        if(isPlantLeaf()){  // leaf mode
@@ -1516,7 +1516,9 @@ void TNBranch::eval(){
 ValueList<LeafData*> TNLeaf::leafs;
 
 double LeafData::distance() { 
-	return 0.5*(data[0].z+data[1].z);
+	//return 0.5*(data[0].z+data[1].z);
+	return data[0].z;
+
 }
 
 void  LeafData::render(){
