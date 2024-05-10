@@ -22,7 +22,7 @@ void main(void) {
 	Constants1=CommonAttributes1;
 	vec4 c=vec4(CommonAttributes2.xyz,1.0);
 	vec4 cp=gl_ModelViewProjectionMatrix * c;
-	Constants2=vec4(cp.xyz/cp.w,1);
+	Constants2=vec4(cp.xyz/cp.w,CommonAttributes2.w);
 	TexVars_G=TextureAttributes;
 	
 }

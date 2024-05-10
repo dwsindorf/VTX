@@ -1896,7 +1896,7 @@ void Map::adapt()
    
 	if(ADAPT_NEEDED  || TheScene->changed_render() || (TheScene->changed_time() && TheScene->viewtype!=SURFACE))
 		clearLists();
-	if(!test2)
+	//if(!test2)
 	if(ADAPT_NEEDED) {
 		set_end_adapt(0);
 		converged=0;

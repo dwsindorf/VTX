@@ -144,7 +144,7 @@ void emitLeaf(){
     EndPrimitive();
  }
  
-void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 p0){
+void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 	vec3 ps1=p1.xyz;	
 	vec3 ps2=p2.xyz;
 	
@@ -168,22 +168,22 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 p0){
     vec2 bot_right=vbot*(1-bot_offset);
   
     Pnorm=vec3(v1,0);
-    gl_TexCoord[0].xy=vec2(0,1);
+    gl_TexCoord[0].xy=vec2(0,tx.w);
     gl_Position = vec4(ps1.xy-bot_left,ps1.z,1);  // bot-left 
     EmitVertex();
     
     Pnorm=vec3(-v1,0);
-    gl_TexCoord[0].xy=vec2(1,1);
+    gl_TexCoord[0].xy=vec2(1,tx.w);
     gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-right 
     EmitVertex(); 
    
  	Pnorm=vec3(v2,0);
-    gl_TexCoord[0].xy=vec2(0,0);
+    gl_TexCoord[0].xy=vec2(0,tx.y);
     gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
     EmitVertex();
    
     Pnorm=vec3(-v2,0);
-    gl_TexCoord[0].xy=vec2(1,0);
+    gl_TexCoord[0].xy=vec2(1,tx.y);
     gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-right
     EmitVertex();
     EndPrimitive();
@@ -195,7 +195,7 @@ void emitBranch(){
    vec4 p1=gl_PositionIn[0];
    vec4 p2=gl_PositionIn[1];
    vec4 c=Constants1[0];
-   emitRectangle(p1,p2,c,0);
+   emitRectangle(p1,p2,c,vec4(0,0,0,1));
 }
 
 mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
@@ -224,7 +224,6 @@ void emitSpline(){
 	float botx=Constants1[0].b;
 	float boty=Constants1[0].a;
 	
-	
     vec4 c=Constants1[0];
 	int nv=6;
 	float ds=0.5/nv;
@@ -243,8 +242,9 @@ void emitSpline(){
 		c=vec4(xy2, xy1);
 		vec3 t1=spline(s,p0,p1,p2);
 		vec3 t2=spline(s+ds,p0,p1,p2);
+		vec4 tx=vec4(0,f1,0,f2);
 		
-		emitRectangle(vec4(t1,off1),vec4(t2,off2),c,0);
+		emitRectangle(vec4(t1,off1),vec4(t2,off2),c,tx);
 		
 		s+=ds;
 	}

@@ -5,9 +5,6 @@
 #include "common.h"
 #include "utils.h"
 
-#ifdef TEST4
-//#define N3D
-#endif
 uniform vec3 center;
 uniform vec3 object;
 

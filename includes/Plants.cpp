@@ -140,7 +140,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern int addtabs;
 
-extern int test3,test4;
+extern int test2,test3,test4;
 static double sval=0;
 static double cval=0;
 static double mind=0;
@@ -1284,11 +1284,6 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	}
 	randval=l+1;
 }
-// http://abrobecker.free.fr/text/quad.htm
-//f(x)=a*x*x+b*x+c
-//c=p0
-//b=2*(p1-p0)
-//a=p2-2*p1+p0
 
 Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
   Point c=p0;
@@ -1433,13 +1428,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			topy = y * off * width_taper;
 			botx = tip.x * size_scale;
 			boty = tip.y * size_scale;
-#define SPLINE
-#define SHADER_TEST
-#ifdef SHADER_TEST
-			shader_mode=SPLINE_MODE;
-#else
-			shader_mode=RECT_MODE;
-#endif
+			shader_mode=Render.geometry()?SPLINE_MODE:RECT_MODE;
 			if(test3 || test4)
 				poly_mode=GL_LINE;    
 			if(test4)
@@ -1454,49 +1443,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 
-#ifdef SHADER_TEST
-			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants1		
+			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1	
+			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 1); // Constants2
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 			glVertex4d(p2.x, p2.y, p2.z, top_offset);
 			glEnd();
-#else
-#ifdef SPLINE
-			int nv=6;
-			double ds=0.5/nv;
-			double s=0.5;
-			double x=botx;
-			double y=boty;
-			double delta=1.0/nv;
-			for(int i=0;i<nv;i++){
-				double f1=i*delta;
-				double f2=(i+1)*delta;
-				double x1=(1-f1)*botx+f1*topx;
-				double y1=(1-f1)*boty+f1*topy;
-				double x2=(1-f2)*botx+f2*topx;
-				double y2=(1-f2)*boty+f2*topy;
-				double off1=(1-f1)*bot_offset+f1*top_offset;
-				double off2=(1-f2)*bot_offset+f2*top_offset;
-				glVertexAttrib4d(GLSLMgr::CommonID1, x2, y2, x1, y1); // Constants1		
-				Point t1=spline(s,p0,p1,p2);
-				Point t2=spline(s+ds,p0,p1,p2);
-				glBegin(GL_LINES);
-				glVertex4d(t1.x, t1.y, t1.z, off1);
-				glVertex4d(t2.x, t2.y, t2.z, off2);
-				glEnd();
-				s+=ds;
-			}
-#else
-			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
-			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants1		
-			glBegin(GL_LINES);
-			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
-			glVertex4d(p2.x, p2.y, p2.z, top_offset);
-			glEnd();
-
-#endif
-#endif
         }
         else{ // line mode
         	root->addLine(branch_id);
@@ -1509,17 +1461,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			setColor();
         }
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 	}
 	if (opt & LAST_EMIT) {
 		return;
 	}
 	if(end_branch)
 		splits=1;
-	//else{
+
 	child_width *= width_taper;
 	child_size *= length_taper;
-	//}
+
 	emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, child_size, child_width, lev);

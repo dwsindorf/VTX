@@ -3491,12 +3491,6 @@ bool Planetoid::setProgram(){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");
-	if(test4)
-	    sprintf(defs+strlen(defs),"#define TEST4 %d\n",test4);
-	if(test3)
-	    sprintf(defs+strlen(defs),"#define TEST3 %d\n",test3);
-	if(test2)
-	    sprintf(defs+strlen(defs),"#define TEST2 %d\n",test2);
 	if(TheScene->viewobj==this)
 	    sprintf(defs+strlen(defs),"#define VIEWOBJ\n");
 	if(Render.geometry() && tp->has_geometry())
