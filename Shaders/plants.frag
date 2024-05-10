@@ -94,11 +94,11 @@ vec3 setLighting(vec3 BaseColor) {
 // ########## main section #########################
 void main(void) {
 	vec4 color = Color;
-#if NTEXS >0
 	int texid=TEXID;
 	int copt=TexVars.g+0.1;
 	int aopt=copt & 4;
 	copt=copt&3;
+#if NTEXS >0
 	
 	if(texid>=0){
 		vec2 l_uv=gl_TexCoord[0].xy;
@@ -115,9 +115,9 @@ void main(void) {
 		else // texture only
 			color=tcolor;		
 	}
+#endif
 	if(!aopt)
 		color.a=1;
-#endif
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS

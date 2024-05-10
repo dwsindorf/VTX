@@ -195,6 +195,7 @@ public:
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual Point setVector(Point vec, Point start);
 	TNplant *getRoot();
+	Point spline(double t, Point p0, Point p1, Point p2);
 
 };
 

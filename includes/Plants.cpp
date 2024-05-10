@@ -10,6 +10,7 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
+
 #define COLOR_TEST
 //#define DENSITY_TEST
 
@@ -28,6 +29,8 @@
 #define LINE_MODE   0
 #define RECT_MODE   1
 #define LEAF_MODE   2
+#define SPLINE_MODE 3
+
 
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -65,8 +68,9 @@
 //      o probably need to sort if the texture has an alpha channel
 //    - could instead use a simple geometry model (single triangle with color ?)
 //    - should also allow branch-like forking prior to applying (optional) texture (as a point sprite) or shape geometry
-// 6) use a spline function when connecting levels on same branch
+// 6) use a spline function when connecting levels on same branch (WIP)
 //   - generate additional line segments between segment end points (no need for branching)
+//   - usinq quadratic interpolation from last 3 points to smooth transition
 // 7) better lighting model for branches (DONE)
 //   - normalize dx,dy vector in geometry shader (so all size branches get same effect)
 //     o But need to reduce or eliminate normal shading for small branches and lines (otherwise get dark pencil lines effect)
@@ -113,11 +117,14 @@
 //   - fake width doesn't seem to be consistent with branch length 
 //     o need arbitrary multiplier (~10) otherwise leaves are too narrow
 //     o get large leaves on distance trees
-//   - Currently only a "diamond" shape is supported
-//     o need to extend this to more complex shapes
-//   - textures with an aplha channel don't work (no transparency support)
-//     o would probably need to sort by distance anyway
-//     o could try textures without alpha warped to leaf shape?
+//   - textures with an aplha channel don't work (no transparency support) (FIXED)
+//     o need to sort by distance
+// 10) spline
+//   - smooth jagginess of branches by generating subsections using qadratic interpolation from last 3 points
+//     o currently implemented in opengl c++ code
+//     o TODO: move code to shader
+//   - get compression of textures in y direction 
+//     o need to change tex cords in geom shader
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -340,6 +347,7 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::setDefString(defs);
 
 	GLSLMgr::input_type=GL_LINES;
+	//GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	GLSLMgr::tesslevel=0;
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
@@ -1276,9 +1284,20 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	}
 	randval=l+1;
 }
+// http://abrobecker.free.fr/text/quad.htm
+//f(x)=a*x*x+b*x+c
+//c=p0
+//b=2*(p1-p0)
+//a=p2-2*p1+p0
 
+Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
+  Point c=p0;
+  Point b=p1*4-p0*3-p2;
+  Point a=p2*2+p0*2-p1*4;
+  return a*x*x+b*x+c;
+}
 
-void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_size,
+void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_size,
 		double parent_width, int lvl) {
 	if (lvl < min_level)
 		return;
@@ -1297,7 +1316,7 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	double topy = 0;
 	double botx = 1;
 	double boty = 1;
-	Point v, p1, p2, bot,q;
+	Point v, p0, p1, p2, bot,q;
 	double a,b,x,y,off;
 	int shader_mode=0;
 	int poly_mode=GL_FILL;
@@ -1326,14 +1345,14 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 		return;
 	} 
 	Srand=SRAND;
-	Point start=svec;
+	Point start=base;
 	Density = ((double) lvl) / maxlvl;
 	// add a random offset to each branch split
 	double rb = randomness > 1 ? 1 : randomness;
 	b = rb * URAND;
 	if (!main_branch && lvl > 0) { // keep at least one child branch at end of parent
 		b = b <= 1 ? b : 1;
-		start = svec - vec * b;
+		start = base - vec * b;
 		bot_offset=RAND(randval)/size_scale;
 		top_offset=bot_offset;	
 	}
@@ -1343,26 +1362,28 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 	
 	child_size *= 1 + 0.25 * randomness * SRAND;
 	v = v * child_size * length; // v = direction along last branch
+	
+	Point n0=base - vec; // previous base
+	Point n1=start;
+	Point n2=start + v;
 
-	p2 = start + v; //new top
-	bot = p2; // new base	
-
+	p2 = start + v; // new top
+	bot = p2;       // new base	
+    
+	p0 = n0-TheScene->vpoint;
 	p2 = p2 - TheScene->vpoint;
 	p1 = start - TheScene->vpoint;
-
 	v = bot - start; // new vector
 	
 	if (child_width > MIN_LINE_WIDTH) {
 		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		if (child_width * width_taper < MIN_LINE_WIDTH) {
-			//Density = 1;
 			opt = LAST_EMIT;
 			//root->addTerminal(branch_id);
 		}
 	    if(end_branch)
 			root->addTerminal(branch_id);
 	    else if(lvl > maxlvl) {
-			//Density = 1;
 			opt = LAST_EMIT;
 	   }
        if(isPlantLeaf()){  // leaf mode
@@ -1412,8 +1433,13 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 			topy = y * off * width_taper;
 			botx = tip.x * size_scale;
 			boty = tip.y * size_scale;
-
+#define SPLINE
+#define SHADER_TEST
+#ifdef SHADER_TEST
+			shader_mode=SPLINE_MODE;
+#else
 			shader_mode=RECT_MODE;
+#endif
 			if(test3 || test4)
 				poly_mode=GL_LINE;    
 			if(test4)
@@ -1423,16 +1449,54 @@ void TNBranch::emit(int opt, Point svec, Point vec, Point tip, double parent_siz
 			tip.x = topx;
 			tip.y = topy;
 			tip.z = top_offset;
-				
-			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
+
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
 
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
-			
+
+#ifdef SHADER_TEST
+			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
+			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants1		
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 			glVertex4d(p2.x, p2.y, p2.z, top_offset);
 			glEnd();
+#else
+#ifdef SPLINE
+			int nv=6;
+			double ds=0.5/nv;
+			double s=0.5;
+			double x=botx;
+			double y=boty;
+			double delta=1.0/nv;
+			for(int i=0;i<nv;i++){
+				double f1=i*delta;
+				double f2=(i+1)*delta;
+				double x1=(1-f1)*botx+f1*topx;
+				double y1=(1-f1)*boty+f1*topy;
+				double x2=(1-f2)*botx+f2*topx;
+				double y2=(1-f2)*boty+f2*topy;
+				double off1=(1-f1)*bot_offset+f1*top_offset;
+				double off2=(1-f2)*bot_offset+f2*top_offset;
+				glVertexAttrib4d(GLSLMgr::CommonID1, x2, y2, x1, y1); // Constants1		
+				Point t1=spline(s,p0,p1,p2);
+				Point t2=spline(s+ds,p0,p1,p2);
+				glBegin(GL_LINES);
+				glVertex4d(t1.x, t1.y, t1.z, off1);
+				glVertex4d(t2.x, t2.y, t2.z, off2);
+				glEnd();
+				s+=ds;
+			}
+#else
+			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1		
+			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants1		
+			glBegin(GL_LINES);
+			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
+			glVertex4d(p2.x, p2.y, p2.z, top_offset);
+			glEnd();
+
+#endif
+#endif
         }
         else{ // line mode
         	root->addLine(branch_id);
