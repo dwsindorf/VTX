@@ -43,7 +43,7 @@ enum special_keys {
 enum standard_keys{
 	KEY_HELP    		= '?',
 	KEY_TEST1    		= '/',
-	KEY_TEST2    		= '\'',
+	KEY_TEST2    		= '%',
     KEY_TEST3           = '@',
     KEY_TEST4           = '#',
 

@@ -31,7 +31,6 @@
 #define LEAF_MODE   2
 #define SPLINE_MODE 3
 
-
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -62,70 +61,35 @@
 //    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures (DONE)
 // 4) add support for bump shading for textures (DONE)
-// 5) implement TNLeaf class
+// 5) implement TNLeaf class (DONE)
 //    - only generate leaves at end of "terminal" branches
-//    - if a texture is present could use a point sprite implementation ?
-//      o probably need to sort if the texture has an alpha channel
-//    - could instead use a simple geometry model (single triangle with color ?)
-//    - should also allow branch-like forking prior to applying (optional) texture (as a point sprite) or shape geometry
 // 6) use a spline function when connecting levels on same branch (WIP)
 //   - generate additional line segments between segment end points (no need for branching)
 //   - usinq quadratic interpolation from last 3 points to smooth transition
-// 7) better lighting model for branches (DONE)
-//   - normalize dx,dy vector in geometry shader (so all size branches get same effect)
-//     o But need to reduce or eliminate normal shading for small branches and lines (otherwise get dark pencil lines effect)
-//   - reduce normal shading during full daylight for more realistic back lighting
-// 8) add curvature to branches by implementing a spline function
-//   - for efficiency probably best done in a geometry shader
-// 9) use lists to increase render speed
-// 10)generate wxWidgets classes for plants
+// 7) add curvature to branches by implementing a spline function (DONE)
+//   - for efficiency probably best done in a geometry shader (DONE)
+// 8) use lists to increase render speed
+// 9)generate wxWidgets classes for plants
 //    - optional support preview window with option to save generated imaged as sprites
 	
 // BUGS/problems
-// 1) see a lot of jitter on branches when moving around (FIXED)
-//   problem traced to starting width variation based on position (size of dot as viewpoint changes)
-//   - if width is used for early exit this results in different number of RAND calls
-//     for the same plant which changes the "seed" value resulting in a different branching pattern
-//   - workaround: don't use width as an exit criteria - but reduce overhead by bypassing
-//     drawing and calculation sections in emit if width <1
-//     o this only improves speedup marginally (overhead mainly due to stack pushes ?)
-//   - better: save and restore randval at start and end of fork function (plus early return if width<1)
-//     o no observable difference in result (surprising ?)
-//     o decreases "skipped" calls 4-7 fold
-//     o speed up ~2x
-//     o jitter not observed
-// 2) don't get enough plants generated - not all color spots produce a new plant
+// 1) don't get enough plants generated - not all color spots produce a new plant
 //     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
 //     o improvement: moving visits++ before threshold test in set_terrain
-// 3) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
+// 2) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
 //    - may be fixed later by implementing leaf class and rendering leafs at all terminal nodes ?
-// 4) 1 pixel rectangles rendered using GS_SHADER (or without TRIANGLE_LINES)show gaps in branch segments (FIXED)
-//    - fixed for GS_SHADER by setting glPolygonMode to GL_LINE when width <2 (i.e draw lines)
-//    - surprisingly, setting glLineWidth to 1.0 (vs. variable width) resulted in a speedup from ~15 fps to ~25 fps
-// 5) GS_SHADER doesn't work after last changes (get link error for program GL_INVALID_ENUM) (FIXED)
-//    - fixed by changing "varying in vec4 Normal_G[1]" etc. to "varying in vec4 Normal_G[]" etc.
-// 6) multiple plants don't stack if "+" used to connect
+// 3) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
-// 7) problems with normals 
-//   - normal hack doesn't work unless light direction is some range of values (FIXED)
-//   - get some illumination on one side of branches during night (FIXED)
-//     o multiplied intensity by horizon band (time of day)
-//   - need to lighten dark side of branches (during day time only)
-// 8) only get a single texture for all branches (first branch) (FIXED)
-// 9) TNLeaf issues
+// 4) TNLeaf issues
 //   - fake width doesn't seem to be consistent with branch length 
 //     o need arbitrary multiplier (~10) otherwise leaves are too narrow
-//     o get large leaves on distance trees
-//   - textures with an aplha channel don't work (no transparency support) (FIXED)
-//     o need to sort by distance
-// 10) spline
-//   - smooth jagginess of branches by generating subsections using qadratic interpolation from last 3 points
-//     o currently implemented in opengl c++ code
-//     o TODO: move code to shader
-//   - get compression of textures in y direction 
-//     o need to change tex cords in geom shader
-
+//     o need to base width of leaf on leaf length parameter vs branch width
+// 5) spline issues
+//   - offsets don't follow branch curvature when spline is applied
+//     o tried generating parent spline in opengl and using that for child start positions
+//      - but that didn't work because spline in shader uses points in screen space vs model space
+//     o could project points using modelviewproj matrix in c++
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -442,7 +406,7 @@ bool PlantMgr::setProgram(){
 		Point pp=Point(s->point.x,s->point.y,s->point.x);
 		
 		double r=Random(pp);
-		randval=256*r+id;
+		randval=256*fabs(r)+id;
 		plant->emit();
 	}
 
@@ -1001,7 +965,7 @@ void TNplant::emit(){
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
 
-	lastn=randval;
+	//lastn=randval;
 	Randval=URAND;
 	double length=size*base_point.length();	
 	Point bot=base_point;
@@ -1255,7 +1219,7 @@ Point TNBranch::setVector(Point vec, Point start){
 	return v;
 
 }
-
+static Point lastv;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	if(lvl<min_level)
 		return;
@@ -1318,9 +1282,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 	Color c;
 	bool terminal = branch_id == root->branches - 1;
-	int splits = max_splits * (1 + 0.5 * randomness * SRAND);
-	
-	splits = splits >= 1 ? splits : 1;
 	double size_scale = 1.0;
 	double child_width=parent_width;
 	double child_size=parent_size;
@@ -1342,33 +1303,43 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	Srand=SRAND;
 	Point start=base;
 	Density = ((double) lvl) / maxlvl;
-	// add a random offset to each branch split
-	double rb = randomness > 1 ? 1 : randomness;
-	b = rb * URAND;
-	if (!main_branch && lvl > 0) { // keep at least one child branch at end of parent
-		b = b <= 1 ? b : 1;
-		start = base - vec * b;
-		bot_offset=RAND(randval)/size_scale;
-		top_offset=bot_offset;	
-	}
-	else
-		bot_offset=tip.z;
-	v=setVector(vec,start);
+	p0=base-vec; // previous base
+	p1=base;     // new base
 	
 	child_size *= 1 + 0.25 * randomness * SRAND;
-	v = v * child_size * length; // v = direction along last branch
-	
-	Point n0=base - vec; // previous base
-	Point n1=start;
-	Point n2=start + v;
-
-	p2 = start + v; // new top
+	double cl=child_size * length;
+  
+    if (!main_branch && lvl > 0) {
+		// add a random offset to each branch split
+		double rb = randomness > 1 ? 1 : randomness;
+		b = rb * URAND;			
+		b = b <= 1 ? b : 1;
+		if(test2){ // try to correct for main branch curvature for start of side branches
+			//start=spline(0.5*(1-b),p0,p1,base+vec); // works: same as linear
+			start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
+		}
+		else{ // linear interpolation: no curvature correction
+			start = p1 - vec * b;
+		}
+		bot_offset=SRAND/size_scale;
+		top_offset=bot_offset;				
+		v=setVector(vec,start);
+		v = v * cl; // v = direction along last branch
+	}
+	else { // main branch
+    	bot_offset=tip.z;
+	    v=setVector(vec,start);
+		v = v * cl; // v = direction along last branch
+ 	    lastv=v; // save main branch end 
+   }
+ 		
+	p2  = start + v; // new top
 	bot = p2;       // new base	
-    
-	p0 = n0-TheScene->vpoint;
-	p2 = p2 - TheScene->vpoint;
-	p1 = start - TheScene->vpoint;
-	v = bot - start; // new vector
+	
+	p0 = p0-TheScene->vpoint;   
+	p1 = start-TheScene->vpoint;
+	p2 = p2-TheScene->vpoint;
+	v = bot-start; // new vector
 	
 	if (child_width > MIN_LINE_WIDTH) {
 		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
@@ -1387,11 +1358,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
     		a = atan2(q.y / q.z, q.x / q.z);
     		x = -sin(a);
     		y = cos(a);
-
- 			off=10*child_width/TheScene->wscale;
-        	Density=10*off;
-			topx = x*off;
-			topy = y*off;
+			double depth=TheScene->vpoint.distance(bot);
+			child_size = length*FEET/12; // inches
+			child_size *= 1 + 0.25 * randomness * SRAND;
+			double ext=TheMap->radius*TheScene->wscale*child_size/depth;
+			//ext=TheScene->wscale*(size()/depth); // perspective scaling
+ 
+        	//Density=pow(parent_length,0.125);
+        	//cout<<Srand<<endl;
+			topx = x*ext;
+			topy = width*y*ext;
 			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
 			if(test3 || test4)
@@ -1400,11 +1376,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				shader_mode = LINE_MODE;
 		    
 			setColor();
-			
+			Color c=S0.c;
+
 			int alpha=alpha_texture?4:0;
 
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode));
+				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode),c);
 			else{	
 				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
@@ -1444,7 +1421,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 
 			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1	
-			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 1); // Constants2
+			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, bot_offset); // Constants2
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 			glVertex4d(p2.x, p2.y, p2.z, top_offset);
@@ -1465,6 +1442,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	if (opt & LAST_EMIT) {
 		return;
 	}
+	int splits = max_splits * (1 + 0.5 * randomness * SRAND);	
+	splits = splits >= 1 ? splits : 1;
+
 	if(end_branch)
 		splits=1;
 
@@ -1539,7 +1519,7 @@ double LeafData::distance() {
 void  LeafData::render(){
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x, data[2].y, 0, 0); // Constants1		
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[2].z, data[3].x, data[3].y, LEAF_MODE);
-
+	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
 	glPolygonMode(GL_FRONT_AND_BACK, data[3].z);			
 	glBegin(GL_LINES);
 	glVertex4d(data[0].x, data[0].y, data[0].z, 0);
