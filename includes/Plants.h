@@ -80,6 +80,7 @@ public:
 };
 
 #define MAX_BRANCHES 6
+#define MAX_PLANT_DATA 7
 
 //************************************************************
 // Class TNplant
@@ -90,7 +91,7 @@ protected:
 public:
 	Point norm;
 	int branches;
-	int stats[MAX_BRANCHES][5];
+	int stats[MAX_BRANCHES][MAX_PLANT_DATA];
 
 	int plant_id;
 	Plant *plant;
@@ -108,6 +109,7 @@ public:
 
 	int max_levels;
 	Point base_point;
+	int rendered;
 	
 	TNplant(TNode *l, TNode *r);
 	~TNplant();
@@ -135,6 +137,7 @@ public:
 	void addLine(int id);
 	void addTerminal(int id);
 	void addLeaf(int id);
+	void addSpline(int id);
 	void addSkipped(int id);
 };
 

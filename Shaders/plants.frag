@@ -23,7 +23,7 @@ uniform float haze_ampl;
 uniform float haze_grad;
 uniform float ws1;
 uniform float ws2;
-uniform float bump_ampl;
+//uniform float bump_ampl;
 uniform float bump_delta;
 uniform float norm_scale;
 uniform bool lighting;
@@ -35,7 +35,7 @@ uniform float twilite_max;
 #define LINE    TexVars.w<0.5
 
 varying vec4 Color;
-varying vec3 Pnorm;
+varying vec4 Pnorm;
 varying vec3 Normal;
 varying vec4 TexVars;
 
@@ -43,11 +43,12 @@ vec3 test;
 
 #define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(float nscale){
-	vec3 bn=gl_NormalMatrix*nscale*Pnorm;
+	vec3 bn=gl_NormalMatrix*nscale*Pnorm.xyz;
 	vec3 normal=Normal-bn;
 	if(LINE)
 		return normal;
 #ifdef BUMPS
+    float bump_ampl=Pnorm.w;
 	int texid=TEXID;
 	float delta=bump_delta;
 	vec2 l_uv=gl_TexCoord[0].xy;

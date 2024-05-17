@@ -68,8 +68,9 @@
 //   - usinq quadratic interpolation from last 3 points to smooth transition
 // 7) add curvature to branches by implementing a spline function (DONE)
 //   - for efficiency probably best done in a geometry shader (DONE)
-// 8) use lists to increase render speed
-// 9)generate wxWidgets classes for plants
+// 8) try point-sprite model for leaves (see below)
+// 9) use lists to increase render speed
+// 10) generate wxWidgets classes for plants
 //    - optional support preview window with option to save generated imaged as sprites
 	
 // BUGS/problems
@@ -85,11 +86,25 @@
 //   - fake width doesn't seem to be consistent with branch length 
 //     o need arbitrary multiplier (~10) otherwise leaves are too narrow
 //     o need to base width of leaf on leaf length parameter vs branch width
+//   - found problem that rectangles were not being created correctly (slanted edges)
+//     o fixed by creating projected vector in eye space vs. model space
+//     o also fixes width/length problem (narrow leaves)
+//   ! but lines projected to or away from eye are smaller than those tangent to eye (at same depth)
+//     o so leaves are drawn with different sizes depending on orientation
+//     o overall effect is ok, models young and older leaves on same branch but would be better to be
+//       able to control this
+//     o one idea is to use point sprites with vector angle used to map texture lookup (like in clouds)
+//       all leaves would then be same size at same distance 
+//   - depth ordering of leafs by distance doesn't always work (transparency wrong for some leafs)
+//     o may also be fixed by using sprites vs rectangles/
 // 5) spline issues
 //   - offsets don't follow branch curvature when spline is applied
 //     o tried generating parent spline in opengl and using that for child start positions
 //      - but that didn't work because spline in shader uses points in screen space vs model space
 //     o could project points using modelviewproj matrix in c++
+//   - too much curvature on initial branch from trunk
+// 6) width offset sometimes disconnects branches from parent
+//   - also, direction of side branch should be on same side as offset
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -143,6 +158,7 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
 #define MIN_TRIANGLE_WIDTH 2
+#define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 #ifdef DUMP
 static void show_stats()
@@ -461,6 +477,8 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 	
 	if(d>threshold)
 		return false;
+	if(!flags.s.valid)
+		return false;
 
     flags.s.active=true;
 	sval=lerp(d,0,threshold,0,1);
@@ -702,6 +720,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	leaf=0;
 	base_drop=0;
 	width_scale=1;
+	rendered=0;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -883,35 +902,41 @@ void TNplant::eval()
 
 void TNplant::clearStats(){
 	for(int i=0;i<MAX_BRANCHES;i++){
-		for(int j=0;j<5;j++)
+		for(int j=0;j<MAX_PLANT_DATA;j++)
 			stats[i][j]=0;
 	}
 }
 void TNplant::showStats(){
 	for(int i=0;i<branches;i++){
-		cout<<"plant["<<name_str<<"] branch["<<i<<"] polygons:"<<stats[i][0]
-	    <<" lines:"<<stats[i][1]
-		<<" terminals:"<<stats[i][2]
-		<<" skipped:"<<stats[i][3]
-		<<" leafs:"<<stats[i][4]
+		cout<<"plant["<<name_str<<"] branch["<<i<<"]"
+		<<" skipped:"<<stats[i][0]
+		<<" terminal:"<<stats[i][1]
+	    <<" lines:"<<stats[i][2]
+		<<" polygons:"<<stats[i][3]
+		<<" splines:"<<stats[i][4]
+		<<" leafs:"<<stats[i][5]
 		<<endl;
 	}
 }
-void TNplant::addLine(int id){
-	stats[id][1]++;	
-}
-void TNplant::addBranch(int id){
+void TNplant::addSkipped(int id){
 	stats[id][0]++;	
 }
 void TNplant::addTerminal(int id){
+	stats[id][1]++;	
+}
+void TNplant::addLine(int id){
 	stats[id][2]++;	
 }
-void TNplant::addSkipped(int id){
+void TNplant::addBranch(int id){
 	stats[id][3]++;	
 }
-void TNplant::addLeaf(int id){
+void TNplant::addSpline(int id){
 	stats[id][4]++;	
 }
+void TNplant::addLeaf(int id){
+	stats[id][5]++;	
+}
+
 //-------------------------------------------------------------
 // TNtexture::valueString() node value substring
 //-------------------------------------------------------------
@@ -964,7 +989,7 @@ void TNplant::emit(){
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
-
+    rendered=0;
 	//lastn=randval;
 	Randval=URAND;
 	double length=size*base_point.length();	
@@ -994,6 +1019,7 @@ void TNplant::emit(){
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,start_width,0);
+	//cout<<rendered<<endl;
 	
 }
 
@@ -1315,8 +1341,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
 		if(test2){ // try to correct for main branch curvature for start of side branches
-			//start=spline(0.5*(1-b),p0,p1,base+vec); // works: same as linear
-			start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
+			start=spline(0.5*(1-b),p0,p1,base+vec); // works: same as linear
+			//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
 		}
 		else{ // linear interpolation: no curvature correction
 			start = p1 - vec * b;
@@ -1342,32 +1368,41 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	v = bot-start; // new vector
 	
 	if (child_width > MIN_LINE_WIDTH) {
-		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 		if (child_width * width_taper < MIN_LINE_WIDTH) {
 			opt = LAST_EMIT;
-			//root->addTerminal(branch_id);
-		}
-	    if(end_branch)
 			root->addTerminal(branch_id);
-	    else if(lvl > maxlvl) {
+		}
+		if(!end_branch && lvl > maxlvl) {
 			opt = LAST_EMIT;
 	   }
        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
-   		    q = TheScene->project(v); // convert model to screen space
-    		a = atan2(q.y / q.z, q.x / q.z);
-    		x = -sin(a);
+         	// o this doesn't work
+   		    //  q = TheScene->project(v); // convert model to screen space
+    		//  a = atan2(q.y / q.z, q.x / q.z);
+         	// o need to first project model vector end points to screen space and then subtract to get screen space vector 
+    		Point pt1=TheScene->project(p1);
+    		pt1.x/=pt1.z;
+    		pt1.y/=pt1.z;
+       	    Point pt2=TheScene->project(p2);
+        	pt2.x/=pt2.z;
+        	pt2.y/=pt2.z;
+        	Point pl=pt1-pt2;
+    		a = atan2(pl.y, pl.x);
+ 
+     		x = -sin(a);
     		y = cos(a);
+		
 			double depth=TheScene->vpoint.distance(bot);
 			child_size = length*FEET/12; // inches
 			child_size *= 1 + 0.25 * randomness * SRAND;
-			double ext=TheMap->radius*TheScene->wscale*child_size/depth;
-			//ext=TheScene->wscale*(size()/depth); // perspective scaling
+			//double ext=4*TheMap->radius*TheScene->wscale*child_size/depth;
+			
+			double ext=1e-3*pl.length();//4*TheMap->radius*TheScene->wscale*child_size/depth;
  
-        	//Density=pow(parent_length,0.125);
-        	//cout<<Srand<<endl;
-			topx = x*ext;
-			topy = width*y*ext;
+ 			topx = x*ext;
+			topy = y*ext;
+
 			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
 			if(test3 || test4)
@@ -1379,12 +1414,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			Color c=S0.c;
 
 			int alpha=alpha_texture?4:0;
+			root->rendered++;
+			double nscale=0.01;
 
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode),c);
-			else{	
+			else{
 				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
+				//glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, 4, texid, shader_mode);
 	
 				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 				glBegin(GL_LINES);
@@ -1392,12 +1430,21 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				glVertex4d(p2.x, p2.y, p2.z, 0);
 				glEnd();
 			}
+
         }     
         else if (child_width > MIN_TRIANGLE_WIDTH){ // branch mode
-			root->addBranch(branch_id);
+    		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+
 			off = child_width/TheScene->wscale;
-			q = TheScene->project(v); // convert model to screen space
-			a = atan2(q.y / q.z, q.x / q.z);
+			Point pt1=TheScene->project(p1);
+			pt1.x/=pt1.z;
+			pt1.y/=pt1.z;
+			Point pt2=TheScene->project(p2);
+			pt2.x/=pt2.z;
+			pt2.y/=pt2.z;
+			Point pl=pt1-pt2;
+			a = atan2(pl.y, pl.x);
+
 			x = -sin(a);
 			y = cos(a);
 
@@ -1405,7 +1452,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			topy = y * off * width_taper;
 			botx = tip.x * size_scale;
 			boty = tip.y * size_scale;
-			shader_mode=Render.geometry()?SPLINE_MODE:RECT_MODE;
+			shader_mode=RECT_MODE;
+			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
+				shader_mode=SPLINE_MODE;
+				root->addSpline(branch_id);
+			}
+			else
+				root->addBranch(branch_id);
+				
 			if(test3 || test4)
 				poly_mode=GL_LINE;    
 			if(test4)
@@ -1415,7 +1469,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			tip.x = topx;
 			tip.y = topy;
 			tip.z = top_offset;
-
+			root->rendered++;
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
 
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
@@ -1428,6 +1482,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			glEnd();
         }
         else{ // line mode
+        	double nscale=TNplant::norm_min;
+        	root->rendered++;
         	root->addLine(branch_id);
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, LINE_MODE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			

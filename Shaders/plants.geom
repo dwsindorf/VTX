@@ -10,7 +10,7 @@ varying in vec4 TexVars_G[];
 varying out vec4 Color;
 varying out vec4 TexVars;
 varying out vec3 Normal;
-varying out vec3 Pnorm;
+varying out vec4 Pnorm;
 
 #define PI		3.14159265359
 // spline (DONE) 
@@ -35,7 +35,8 @@ void emitLine(){
  	float nscale=1e-5;//TexVars.r;
  
     // need at least 3 vertexes for line strip
-    Pnorm=gl_NormalMatrix*vec3(nscale,0,0);
+    Pnorm.xyz=gl_NormalMatrix*vec3(nscale,0,0);
+    Pnorm.w=0;
     gl_Position.xyz = gl_PositionIn[1].xyz; // top
     gl_Position.w=1;
     EmitVertex();
@@ -61,8 +62,9 @@ void emitLeaf(){
     vec2 v2=normalize(va); 
     vec3 pc=vec3(gl_PositionIn[1].xyz-gl_PositionIn[0].xyz);
     vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
-    Pnorm=0.1*normalize(cross(pc,vw));
-   
+    Pnorm.xyz=0.05*normalize(cross(pc,vw));
+    Pnorm.w=0.005;
+     
    if(rectmode){
        vec2 vtop=vec2(topx,topy);
     
@@ -127,22 +129,22 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
     vec2 bot_left=vbot*(1+bot_offset);
     vec2 bot_right=vbot*(1-bot_offset);
   
-    Pnorm=vec3(v1,0);
+    Pnorm.xyz=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,tx.w);
     gl_Position = vec4(ps1.xy-bot_left,ps1.z,1);  // bot-left 
     EmitVertex();
     
-    Pnorm=vec3(-v1,0);
+    Pnorm.xyz=vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,tx.w);
     gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-right 
     EmitVertex(); 
    
- 	Pnorm=vec3(v2,0);
+ 	Pnorm.xyz=vec3(v2,0);
     gl_TexCoord[0].xy=vec2(0,tx.y);
     gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
     EmitVertex();
    
-    Pnorm=vec3(-v2,0);
+    Pnorm.xyz=vec3(-v2,0);
     gl_TexCoord[0].xy=vec2(1,tx.y);
     gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-right
     EmitVertex();
@@ -151,6 +153,8 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 
 // draw a branch as a polygon
 void emitBranch(){
+   Pnorm.w=0.025;
+
    vec4 p1=gl_PositionIn[0];
    vec4 p2=gl_PositionIn[1];
    vec4 c=Constants1[0];
@@ -167,6 +171,7 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 
 // draw a branch as a spline
 void emitSpline(){
+   Pnorm.w=0.025;
    
     vec4 p1=gl_PositionIn[0];
     vec4 p2=gl_PositionIn[1];  
@@ -177,7 +182,7 @@ void emitSpline(){
 	float botx=Constants1[0].b;
 	float boty=Constants1[0].a;
 	
-	int nv=6;
+	int nv=8;
 	float ds=0.5/nv;
 	float s=0.5;
 
