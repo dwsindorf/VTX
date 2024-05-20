@@ -97,7 +97,7 @@ void main(void) {
 	vec4 color = Color;
 	int texid=TEXID;
 	int copt=TexVars.g+0.1;
-	int aopt=copt & 4;
+	int aopt=copt> 3;
 	copt=copt&3;
 #if NTEXS >0
 	

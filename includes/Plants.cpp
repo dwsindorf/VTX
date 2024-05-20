@@ -86,17 +86,21 @@
 //   - fake width doesn't seem to be consistent with branch length 
 //     o need arbitrary multiplier (~10) otherwise leaves are too narrow
 //     o need to base width of leaf on leaf length parameter vs branch width
+//   - depth ordering of leafs by distance doesn't always work (transparency wrong for some leafs)
 //   - found problem that rectangles were not being created correctly (slanted edges)
 //     o fixed by creating projected vector in eye space vs. model space
 //     o also fixes width/length problem (narrow leaves)
-//   ! but lines projected to or away from eye are smaller than those tangent to eye (at same depth)
-//     o so leaves are drawn with different sizes depending on orientation
+//     o but lines projected to or away from eye are smaller than those tangent to eye (at same depth)
+//       so leaves are drawn with different sizes depending on orientation
 //     o overall effect is ok, models young and older leaves on same branch but would be better to be
 //       able to control this
 //     o one idea is to use point sprites with vector angle used to map texture lookup (like in clouds)
-//       all leaves would then be same size at same distance 
-//   - depth ordering of leafs by distance doesn't always work (transparency wrong for some leafs)
-//     o may also be fixed by using sprites vs rectangles/
+//       all leaves would then be same size at same distance (see next)
+//   - instead of point sprites tried using a fixed size rectangle and rotating the image to the angle
+//     defined by the base vector
+//     o works somewhat but need to set the end of the leaf to the center of the image and increase the image size
+//       so that the rotated leaf isn't clipped
+//     o also, rotation angle doesn't always seem correct and changes with aspect ratio
 // 5) spline issues
 //   - offsets don't follow branch curvature when spline is applied
 //     o tried generating parent spline in opengl and using that for child start positions
@@ -1378,8 +1382,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
          	// o this doesn't work
-   		    //  q = TheScene->project(v); // convert model to screen space
-    		//  a = atan2(q.y / q.z, q.x / q.z);
+   		      q = TheScene->project(v); // convert model to screen space
+    		  double qa = atan2(q.y / q.z, q.x / q.z);
          	// o need to first project model vector end points to screen space and then subtract to get screen space vector 
     		Point pt1=TheScene->project(p1);
     		pt1.x/=pt1.z;
@@ -1390,19 +1394,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	Point pl=pt1-pt2;
     		a = atan2(pl.y, pl.x);
  
-     		x = -sin(a);
-    		y = cos(a);
-		
-			double depth=TheScene->vpoint.distance(bot);
-			child_size = length*FEET/12; // inches
-			child_size *= 1 + 0.25 * randomness * SRAND;
-			//double ext=4*TheMap->radius*TheScene->wscale*child_size/depth;
-			
-			double ext=1e-3*pl.length();//4*TheMap->radius*TheScene->wscale*child_size/depth;
- 
- 			topx = x*ext;
-			topy = y*ext;
-
 			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
 			if(test3 || test4)
@@ -1412,8 +1403,26 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		    
 			setColor();
 			Color c=S0.c;
+			int alpha=0;
+#define TEST
+#ifdef TEST
+			double depth=TheScene->vpoint.distance(bot);
+			child_size = length*FEET/12; // inches
+			child_size *= 1 + 0.25 * randomness * SRAND;
 
-			int alpha=alpha_texture?4:0;
+			alpha=alpha_texture?8:0;
+			topx=qa;
+			topy=8*TheMap->radius*TheScene->wscale*child_size/depth;
+#else
+			double ext=1e-3*pl.length();//4*TheMap->radius*TheScene->wscale*child_size/depth;
+      		x = -sin(a);
+    		y = cos(a);
+
+ 			topx = x*ext;
+			topy = y*ext;
+
+			alpha=alpha_texture?4:0;
+#endif
 			root->rendered++;
 			double nscale=0.01;
 
