@@ -1404,34 +1404,24 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			setColor();
 			Color c=S0.c;
 			int alpha=0;
-#define TEST
-#ifdef TEST
+
 			double depth=TheScene->vpoint.distance(bot);
 			child_size = length*FEET/12; // inches
-			child_size *= 1 + 0.25 * randomness * SRAND;
-
-			alpha=alpha_texture?8:0;
-			topx=qa;
-			topy=8*TheMap->radius*TheScene->wscale*child_size/depth;
-#else
-			double ext=1e-3*pl.length();//4*TheMap->radius*TheScene->wscale*child_size/depth;
-      		x = -sin(a);
-    		y = cos(a);
-
- 			topx = x*ext;
-			topy = y*ext;
+			child_size *= 1 + 0.5 * randomness * SRAND;
 
 			alpha=alpha_texture?4:0;
-#endif
+			topx=a;
+			topy=root->width_scale*2*TheMap->radius*TheScene->wscale*child_size/depth;
 			root->rendered++;
 			double nscale=0.01;
 
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode),c);
 			else{
+				glColor4d(0, 0, 1,1);
 				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
-				//glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, 4, texid, shader_mode);
+				
 	
 				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 				glBegin(GL_LINES);
