@@ -65,7 +65,7 @@ void emitLeaf(){
     Pnorm.xyz=0.05*normalize(cross(pc,vw));
     Pnorm.w=0.005;
      
-   if(rectmode){
+   if(rectmode){ // use a rectangle (for transparent textures)
        float ta=Constants1[0].r+PI/2; // position angle
   	   float ps=Constants1[0].g; // size
    	   float cc=cos(ta);
@@ -91,7 +91,7 @@ void emitLeaf(){
 	   EmitVertex();
 
    }
-   else {
+   else { // use a diamond shape for solid textures
    		vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
      
 	    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
@@ -112,7 +112,8 @@ void emitLeaf(){
     }  
     EndPrimitive();
  }
- 
+
+// branches  
 void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 	vec3 ps1=p1.xyz;	
 	vec3 ps2=p2.xyz;

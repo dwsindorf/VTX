@@ -130,6 +130,7 @@ public:
 	void emit();
 	void getLeaf();
 	void getLastBranch();
+	void getMaxLevels();
 	
 	void clearStats();
 	void showStats();
@@ -148,7 +149,7 @@ class TNBranch : public TNbase
 {
 public:
 	int maxlvl;
-	int max_plant_levels;
+	int level;
 	int min_level;
 	int max_level;
 	int branch_id;

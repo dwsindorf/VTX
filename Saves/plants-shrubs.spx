@@ -56,8 +56,8 @@ Scene() {
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",12,1,1e-07,1,1,0.05)
-								Branch("trunk",2.3,1,1,1,0.7,0.1,0.83,1,1)[Color(0.25+IRAND*DENSITY,DENSITY,0.25*IRAND*DENSITY)];
+								Plant("name",1,1e-07,1,1,0.05)
+								Branch("trunk",12,2.3,1,1,1,0.7,0.1,0.83,1,1)[Color(0.25+IRAND*DENSITY,DENSITY,0.25*IRAND*DENSITY)];
 					}
 					Sky(0.00410952) {
 						color=Color(0,0.58,0.89);

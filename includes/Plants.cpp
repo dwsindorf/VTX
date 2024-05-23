@@ -772,23 +772,35 @@ void TNplant::init()
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,11);
 	
-	if(n>0) max_levels=(int)arg[0]; 	// branch levels
-	if(n>1) mgr->levels=(int)arg[1]; 	// scale levels
-	if(n>2) mgr->maxsize=arg[2];     	// size of largest 
-	if(n>3) mgr->mult=arg[3];			// random scale multiplier
-	if(n>4) mgr->level_mult=arg[4];     // scale multiplier per level
-	if(n>5) maxdensity=arg[5];
-	if(n>6) smgr->slope_bias=arg[6];
-	if(n>7) smgr->ht_bias=arg[7];
-	if(n>8) smgr->lat_bias=arg[8];
-	if(n>9) base_drop=arg[9];
+	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
+	if(n>1) mgr->maxsize=arg[1];     	// size of largest 
+	if(n>2) mgr->mult=arg[2];			// random scale multiplier
+	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	if(n>4) maxdensity=arg[4];
+	if(n>5) smgr->slope_bias=arg[5];
+	if(n>6) smgr->ht_bias=arg[6];
+	if(n>7) smgr->lat_bias=arg[7];
+	if(n>8) base_drop=arg[8];
 
 	if(right)
 	   right->init();
+	getMaxLevels();
 	getLeaf();
 	getLastBranch();
 }
 
+void TNplant::getMaxLevels() {
+	max_levels=0;
+	TNBranch *p = (TNBranch*)right;
+	while (p) {
+		if(p->typeValue() == ID_LEAF)
+			max_levels++;
+		if(p->typeValue() == ID_BRANCH)
+			max_levels+=((TNBranch *)p)->max_level;
+		p=p->right;
+	}
+	cout<<"max_levels="<<max_levels<<endl;
+}
 void TNplant::getLeaf() {
 	TNBranch *p = (TNBranch*)right;
 	while (p && p->typeValue() != ID_LEAF) {
@@ -809,7 +821,6 @@ void TNplant::getLastBranch() {
 		}
 		n=n->right;
 	}
-
 }
 void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
@@ -1060,7 +1071,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 		arg->right=0;
 		delete arg;	
 	}
-	max_plant_levels=0;
+	level=0;
 	maxlvl=0;
 	branch_id=0;
 	length=2;
@@ -1073,7 +1084,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	flatness=0.9;
 	divergence=0.75;
 	min_level=0;
-	max_level=0;
+	max_level=1;
 	root=0;
 	image=0;
 	texname[0]=0;
@@ -1091,20 +1102,20 @@ void TNBranch::init(){
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,11);
-	if(n>0)max_splits=arg[0];
-	if(n>1)length=arg[1];
-	if(n>2)width=arg[2];
-	if(n>3)randomness=arg[3];
-	if(n>4)divergence=arg[4];
-	if(n>5)flatness=arg[5];
-	if(n>6)width_taper=arg[6];
-	if(n>7)length_taper=arg[7];	
-	if(n>8)first_bias=arg[8];
-	if(n>9)min_level=arg[9];
-	if(n>10)max_level=arg[10];
+	if(n>0)max_level=arg[0];
+	if(n>1)max_splits=arg[1];
+	if(n>2)length=arg[2];
+	if(n>3)width=arg[3];
+	if(n>4)randomness=arg[4];
+	if(n>5)divergence=arg[5];
+	if(n>6)flatness=arg[6];
+	if(n>7)width_taper=arg[7];
+	if(n>8)length_taper=arg[8];	
+	if(n>9)first_bias=arg[9];
+	if(n>10)min_level=arg[10];
 	
 	root=getRoot();
-	max_plant_levels=root->max_levels;
+	level=0;
 	branch_id=root->branches;
 	root->branches+=1;
 	setTexture();
@@ -1249,36 +1260,6 @@ Point TNBranch::setVector(Point vec, Point start){
 	return v;
 
 }
-static Point lastv;
-void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
-	if(lvl<min_level)
-		return;
-	maxlvl=(max_level>0&&max_level<max_plant_levels)?max_level:max_plant_levels;
-
-	bool end_branch = max_level>0 && max_level<max_plant_levels && lvl>max_level;
-
-//    if(lvl>maxlvl)
-//    	return;
-  
-	if(lvl>max_plant_levels)
-	   return;
-
-    int l=randval;
-    //w*=width;
-    
-	double splits=1;
-	if(!end_branch){
-		splits=max_splits*(1+0.5*randomness*SRAND);
-		if(first_bias) // add more branches at start of new branch fork
-			splits*=first_bias;
-		splits=splits<1?1:splits;
-	}
-	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,s,w,lvl);
-	}
-	randval=l+1;
-}
-
 Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
   Point c=p0;
   Point b=p1*4-p0*3-p2;
@@ -1286,12 +1267,42 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
   return a*x*x+b*x+c;
 }
 
+static Point lastv;
+void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
+	if(lvl<min_level)
+		return;
+	maxlvl=max_level;
+	level=0;
+
+	//bool end_branch = lvl==max_level;
+
+//    if(lvl>maxlvl)
+//    	return;
+  
+	if(lvl>root->max_levels)
+	   return;
+
+    int l=randval;
+    //w*=width;
+    
+	double splits=1;
+	//if(!end_branch){
+		splits=max_splits*(1+0.5*randomness*SRAND);
+		if(first_bias) // add more branches at start of new branch fork
+			splits*=first_bias;
+		splits=splits<1?1:splits;
+	//}
+	for(int i=0;i<splits;i++){
+		emit(opt,start,vec,tip,s,w,lvl);
+	}
+	randval=l+1;
+}
+
+
 void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_size,
 		double parent_width, int lvl) {
 	if (lvl < min_level)
 		return;
-	//if (lvl > maxlvl)
-	//	return;
 	
 	int lev = lvl;
 	lev++;
@@ -1300,7 +1311,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
-	bool end_branch = max_level>0 && max_level<max_plant_levels && lvl>max_level;
+	bool end_branch = lvl==max_level;
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1382,8 +1393,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
          	// o this doesn't work
-   		      q = TheScene->project(v); // convert model to screen space
-    		  double qa = atan2(q.y / q.z, q.x / q.z);
+   		    //  q = TheScene->project(v); // convert model to screen space
+    		//  double qa = atan2(q.y / q.z, q.x / q.z);
          	// o need to first project model vector end points to screen space and then subtract to get screen space vector 
     		Point pt1=TheScene->project(p1);
     		pt1.x/=pt1.z;
@@ -1418,11 +1429,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode),c);
 			else{
-				glColor4d(0, 0, 1,1);
 				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
 				
-	
 				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, 0);
