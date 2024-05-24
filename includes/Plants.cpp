@@ -25,6 +25,7 @@
 #define FIRST_EMIT  2
 #define LAST_EMIT   4
 #define LAST_FORK   8
+#define BASE_FORK   16
 
 #define LINE_MODE   0
 #define RECT_MODE   1
@@ -1033,7 +1034,7 @@ void TNplant::emit(){
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
-	first_branch->fork(FIRST_FORK,p1,p2-p1,tip,length,start_width,0);
+	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 	//cout<<rendered<<endl;
 	
 }
@@ -1271,16 +1272,19 @@ static Point lastv;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	if(lvl<min_level)
 		return;
-	maxlvl=max_level;
-	level=0;
+	maxlvl=max_level+1;
+	//if(opt&FIRST_FORK)
+		level=1;
+	//else
+	//	level=lvl;
 
 	//bool end_branch = lvl==max_level;
 
 //    if(lvl>maxlvl)
 //    	return;
   
-	if(lvl>root->max_levels)
-	   return;
+	//if(lvl>root->max_levels)
+	//   return;
 
     int l=randval;
     //w*=width;
@@ -1293,7 +1297,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		splits=splits<1?1:splits;
 	//}
 	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,s,w,lvl);
+		emit(opt,start,vec,tip,s,w,level);
 	}
 	randval=l+1;
 }
@@ -1301,9 +1305,10 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 
 void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_size,
 		double parent_width, int lvl) {
-	if (lvl < min_level)
-		return;
-	
+//	if (lvl < min_level)
+//		return;
+
+
 	int lev = lvl;
 	lev++;
 	
@@ -1311,7 +1316,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
-	bool end_branch = lvl==max_level;
+	bool last_level = lev==maxlvl;
+//	if (lev > maxlvl)
+//		return;
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1322,7 +1329,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	int poly_mode=GL_FILL;
 
 	Color c;
-	bool terminal = branch_id == root->branches - 1;
+	bool final_branch = branch_id == root->branches - 1;
+	if(right && right->typeValue() == ID_LEAF)
+		final_branch=true;
 	double size_scale = 1.0;
 	double child_width=parent_width;
 	double child_size=parent_size;
@@ -1343,7 +1352,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	} 
 	Srand=SRAND;
 	Point start=base;
-	Density = ((double) lvl) / maxlvl;
+	Density = ((double) lev) / maxlvl;
 	p0=base-vec; // previous base
 	p1=base;     // new base
 	
@@ -1381,15 +1390,18 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	p1 = start-TheScene->vpoint;
 	p2 = p2-TheScene->vpoint;
 	v = bot-start; // new vector
-	
+	bool branch_tip=false;
 	if (child_width > MIN_LINE_WIDTH) {
 		if (child_width * width_taper < MIN_LINE_WIDTH) {
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
-		if(!end_branch && lvl > maxlvl) {
+		if(!last_level && lvl > maxlvl) 
 			opt = LAST_EMIT;
-	   }
+	   branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
+	  // if(branch_tip)
+	//	   root->addTerminal(branch_id);
+		   
        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
          	// o this doesn't work
@@ -1472,8 +1484,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				poly_mode=GL_LINE;    
 			if(test4)
 				shader_mode = LINE_MODE;
+
 			setColor();
-			
+//			if(branch_tip)
+//				glColor4d(1, 1, 1, 1);
+
 			tip.x = topx;
 			tip.y = topy;
 			tip.z = top_offset;
@@ -1493,23 +1508,33 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	double nscale=TNplant::norm_min;
         	root->rendered++;
         	root->addLine(branch_id);
+        	setColor();
+//        	if(branch_tip){
+//				glLineWidth(8.0);
+//				glColor4d(0, 1, 1, 1);
+//			}
+//			else
+//				glLineWidth(1.0);
+
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, LINE_MODE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, 0);
 			glVertex4d(p2.x, p2.y, p2.z, 0);
 			glEnd();
-			setColor();
         }
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if (opt & LAST_EMIT) {
+	if(branch_tip && right && right->typeValue() == ID_LEAF)
+		((TNLeaf*) right)->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+		
+	if (opt & LAST_EMIT) 
 		return;
-	}
+	
 	int splits = max_splits * (1 + 0.5 * randomness * SRAND);	
 	splits = splits >= 1 ? splits : 1;
 
-	if(end_branch)
+	if(last_level)
 		splits=1;
 
 	child_width *= width_taper;
@@ -1519,10 +1544,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, child_size, child_width, lev);
 	}
-	if (right && (right->typeValue() == ID_BRANCH || right->typeValue() == ID_LEAF)) {
-		TNBranch *child = (TNBranch*) right;
-		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
-	}
+	if (!right || right->typeValue() != ID_BRANCH)
+		return;
+	TNBranch *child = (TNBranch*) right;
+	child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+	
 }
 
 TNplant* TNBranch::getRoot() {
