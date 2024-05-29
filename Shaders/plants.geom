@@ -58,57 +58,75 @@ void emitLeaf(){
 	int colmode=TexVars_G[0].g+0.1; // transparenct flag
 	int rectmode=colmode & 4;
 	
-	vec2 va=vec2(topx,topy);
-    vec2 v2=normalize(va); 
-    vec3 pc=vec3(gl_PositionIn[1].xyz-gl_PositionIn[0].xyz);
     vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
-    Pnorm.xyz=0.05*normalize(cross(pc,vw));
-    Pnorm.w=0.005;
-     
-   if(rectmode){ // use a rectangle (for transparent textures)
-       float ta=Constants1[0].r+PI/2; // position angle
-  	   float ps=Constants1[0].g; // size
-   	   float cc=cos(ta);
-	   float ss=sin(ta);
-	   vec4 v=ps*normalize(gl_PositionIn[1]-gl_PositionIn[0]);
-	   	   		   
-	   vec4 pa=gl_PositionIn[0]+v;
-	   mat2  M=ps*mat2(cc,ss,-ss,cc);
-	   gl_Position = vec4(pa.xy+M*vec2(-1,-1),pa.z,1);   // bottom-left   
+    float ps=Constants1[0].g; // size
+    vec4 v=ps*normalize(gl_PositionIn[1]-gl_PositionIn[0]); 
+    vec4 pa=gl_PositionIn[0]+v;// end
+ 
+ 	float ta=Constants1[0].r+PI/2; // position angle
+	float cc=cos(ta);
+	float ss=sin(ta);    	   		   
+	mat2  M=ps*mat2(cc,ss,-ss,cc);
+	
+	vec2 tang=M*vec2(-1,-1)-M*vec2(1,-1);
+	vec3 t=normalize(vec3(tang,pa.z));
+    Pnorm.xyz=normalize(cross(pa,t));
+    Pnorm.w=0.01;
+    
+       
+    if(rectmode){ // use a rectangle (for transparent textures)
+       float w=2*TexVars.r;
+    
+  	   gl_Position = vec4(pa.xy+M*vec2(-w,-1),pa.z,1);   // bottom-left   
 	   gl_TexCoord[0].xy=vec2(0,0);
 	   EmitVertex();
 
-	   gl_Position = vec4(pa.xy+M*vec2(1,-1),pa.z,1);   // bot-right
+	   gl_Position = vec4(pa.xy+M*vec2(w,-1),pa.z,1);   // bot-right
 	   gl_TexCoord[0].xy=vec2(1,0);
 	   EmitVertex(); 
 	   
-	   gl_Position = vec4(pa.xy+M*vec2(-1,1),pa.z,1);   // top-left	    
+	   gl_Position = vec4(pa.xy+M*vec2(-w,1),pa.z,1);   // top-left	    
 	   gl_TexCoord[0].xy=vec2(0,1);
 	   EmitVertex();
 	   
-	   gl_Position = vec4(pa.xy+M*vec2(1,1),pa.z,1);   // top-right	    
+	   gl_Position = vec4(pa.xy+M*vec2(w,1),pa.z,1);   // top-right	    
 	   gl_TexCoord[0].xy=vec2(1,1);
 	   EmitVertex();
-
    }
-   else { // use a diamond shape for solid textures
-   		vec4 pa=0.5*(gl_PositionIn[0]+gl_PositionIn[1]);
-     
-	    gl_Position = vec4(ps1.xy,ps1.z,1);   // bottom
-	    gl_TexCoord[0].xy=vec2(0.5,0);
-	    EmitVertex();
+   else { // use a diamond shape for solid textures or color only
+       float w=TexVars.r;
+    
+ 	   gl_Position = vec4(pa.xy+M*vec2(0,-1),pa.z,1);   // bottom       
+	   gl_TexCoord[0].xy=vec2(0.5,0);
+	   EmitVertex();
+	   
+	   gl_Position = vec4(pa.xy+M*vec2(0.9*w,-0.8),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(1,0.25);
+	   EmitVertex(); 
+
+	   gl_Position = vec4(pa.xy+M*vec2(-0.9*w,-0.8),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(0,0.25);
+	   EmitVertex(); 
 	      
-	    gl_TexCoord[0].xy=vec2(1,0.5);
-	    gl_Position = vec4(pa.xy+va,pa.z,1);  // right
-	    EmitVertex(); 
+	   gl_Position = vec4(pa.xy+M*vec2(w,-0.5),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(1,0.5);
+	   EmitVertex(); 
 	    
-	    gl_Position = vec4(pa.xy-va,pa.z,1);  // left
-	    gl_TexCoord[0].xy=vec2(0,0.5);
-	    EmitVertex();
+	   gl_Position = vec4(pa.xy+M*vec2(-w,-0.5),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(0,0.5);
+	   EmitVertex();
+
+	   gl_Position = vec4(pa.xy+M*vec2(0.7*w,-0.25),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(1,0.5);
+	   EmitVertex(); 
 	    
-	    gl_TexCoord[0].xy=vec2(0.5,1);
-	    gl_Position = vec4(ps2.xy,ps2.z,1);  // top 
-	    EmitVertex();
+	   gl_Position = vec4(pa.xy+M*vec2(-0.7*w,-0.25),pa.z,1);
+	   gl_TexCoord[0].xy=vec2(0,0.5);
+	   EmitVertex();
+	    
+	   gl_Position = vec4(pa.xy,pa.z,1);   // top
+	   gl_TexCoord[0].xy=vec2(0.5,1);
+	   EmitVertex();
     }  
     EndPrimitive();
  }
@@ -179,7 +197,7 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 
 // draw a branch as a spline
 void emitSpline(){
-   Pnorm.w=0.025;
+    Pnorm.w=0.025;
    
     vec4 p1=gl_PositionIn[0];
     vec4 p2=gl_PositionIn[1];  

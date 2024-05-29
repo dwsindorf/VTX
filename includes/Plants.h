@@ -107,7 +107,6 @@ public:
 	static double norm_min;
 	static int textures;
 
-	int max_levels;
 	Point base_point;
 	int rendered;
 	
@@ -130,8 +129,6 @@ public:
 	void emit();
 	void getLeaf();
 	void getLastBranch();
-	void getMaxLevels();
-	
 	void clearStats();
 	void showStats();
 	void addBranch(int id);
@@ -197,7 +194,7 @@ public:
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
-	virtual Point setVector(Point vec, Point start);
+	virtual Point setVector(Point vec, Point start, int lvl);
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 

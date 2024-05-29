@@ -1,20 +1,20 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55632;
-		theta=24.4363;
-		height=18.1199 ft;
-		gndlvl=10532.2 ft;
+		phi=-5.55619;
+		theta=24.4365;
+		height=39.1194 ft;
+		gndlvl=10514.8 ft;
 		time=380926;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.004;
 		minh=1.13636e-09;
-		minr=0.004002;
-		heading=27;
+		minr=0.00400199;
+		heading=8;
 		tilt=-15;
-		angle=12;
+		angle=1;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
@@ -56,8 +56,8 @@ Scene() {
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",1,1e-07,1,1,0.05)
-								Branch("trunk",12,2.3,1,1,1,0.7,0.1,0.83,1,1)[Color(0.25+IRAND*DENSITY,DENSITY,0.25*IRAND*DENSITY)];
+								Plant("name",1,1e-06,1,1,0.3)
+								Branch("trunk",12,2.3,0.1,1,1,0.7,0.1,0.75,1.1)[Color(0.25+IRAND*DENSITY,0.8*DENSITY,0.25+0.1*IRAND*DENSITY)];
 					}
 					Sky(0.00410952) {
 						color=Color(0,0.58,0.89);

@@ -717,7 +717,6 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	branches=0;
 	pntsize=0;
 	maxdensity=0;
-	max_levels=0;
 	radius=0;
 	size=0;
 	plant_id=0;
@@ -785,23 +784,11 @@ void TNplant::init()
 
 	if(right)
 	   right->init();
-	getMaxLevels();
+
 	getLeaf();
 	getLastBranch();
 }
 
-void TNplant::getMaxLevels() {
-	max_levels=0;
-	TNBranch *p = (TNBranch*)right;
-	while (p) {
-		if(p->typeValue() == ID_LEAF)
-			max_levels++;
-		if(p->typeValue() == ID_BRANCH)
-			max_levels+=((TNBranch *)p)->max_level;
-		p=p->right;
-	}
-	cout<<"max_levels="<<max_levels<<endl;
-}
 void TNplant::getLeaf() {
 	TNBranch *p = (TNBranch*)right;
 	while (p && p->typeValue() != ID_LEAF) {
@@ -1237,7 +1224,7 @@ void TNBranch::setColor(){
 		}
 	}
 }
-Point TNBranch::setVector(Point vec, Point start){
+Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
 	
@@ -1246,17 +1233,38 @@ Point TNBranch::setVector(Point vec, Point start){
 	v.z += divergence * SRAND;
 
 	v = v.normalize();
+	if(flatness==0)
+		return v;
+	double g=flatness;
+	if(lvl>1)
+		g=fabs(flatness);
 
-	if (flatness > 0) {
+	if (g > 0) {
 		Point n = root->norm + start;
 		n = n.normalize();
 		Point tp1 = n.cross(v);
 		Point vp = tp1.cross(n);
-		double f = flatness;
+		double f = g;
 		vp = vp.normalize(); // projection of v along surface
 		Point v1 = v * (1 - f);
 		Point v2 = vp * f;
 		v = v1 + v2;
+	}
+	else {
+		Point n = root->norm + start;
+		n = n.normalize();
+		Point vp;
+		double s=SRAND;
+		if(s>0)
+		 vp= n.cross(v);
+		else
+		 vp= v.cross(n);
+		double f = -g;
+		vp = vp.normalize(); // projection of v along surface
+		Point v1 = v * (1 - f);
+		Point v2 = vp * f;
+		v = v1 + v2;
+	
 	}
 	return v;
 
@@ -1273,19 +1281,8 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	if(lvl<min_level)
 		return;
 	maxlvl=max_level+1;
-	//if(opt&FIRST_FORK)
-		level=1;
-	//else
-	//	level=lvl;
 
-	//bool end_branch = lvl==max_level;
-
-//    if(lvl>maxlvl)
-//    	return;
-  
-	//if(lvl>root->max_levels)
-	//   return;
-
+	level=1;
     int l=randval;
     //w*=width;
     
@@ -1308,8 +1305,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 //	if (lvl < min_level)
 //		return;
 
-
 	int lev = lvl;
+	//level=lev;
 	lev++;
 	
 	int mode = opt;
@@ -1373,12 +1370,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		}
 		bot_offset=SRAND/size_scale;
 		top_offset=bot_offset;				
-		v=setVector(vec,start);
+		v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
 	}
 	else { // main branch
     	bot_offset=tip.z;
-	    v=setVector(vec,start);
+	    v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
  	    lastv=v; // save main branch end 
    }
@@ -1396,11 +1393,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
-		if(!last_level && lvl > maxlvl) 
+		//if(!last_level && lvl > maxlvl) 
+		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
 	   branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
-	  // if(branch_tip)
-	//	   root->addTerminal(branch_id);
 		   
        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
@@ -1415,7 +1411,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	pt2.x/=pt2.z;
         	pt2.y/=pt2.z;
         	Point pl=pt1-pt2;
-    		a = atan2(pl.y, pl.x);
+    		double angle = atan2(pl.y, pl.x);
  
 			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
@@ -1433,16 +1429,17 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			child_size *= 1 + 0.5 * randomness * SRAND;
 
 			alpha=alpha_texture?4:0;
-			topx=a;
-			topy=root->width_scale*2*TheMap->radius*TheScene->wscale*child_size/depth;
-			root->rendered++;
-			double nscale=0.01;
+			double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
+			double width_ratio=0.5*width;
+			//cout<<width_ratio<<endl;
 
+			root->rendered++;
+	
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-				TNLeaf::collect(p1,p2,Point(topx,topy,nscale),Point(color_flags|alpha, texid, poly_mode),c);
+				TNLeaf::collect(p1,p2,Point(angle,size,width_ratio),Point(color_flags|alpha, texid, poly_mode),c);
 			else{
-				glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, 0, 0); // Constants1		
-				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags|alpha, texid, shader_mode);
+				glVertexAttrib4d(GLSLMgr::CommonID1, angle, size, 0, 0); // Constants1		
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags|alpha, texid, shader_mode);
 				
 				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 				glBegin(GL_LINES);
@@ -1486,8 +1483,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				shader_mode = LINE_MODE;
 
 			setColor();
-//			if(branch_tip)
-//				glColor4d(1, 1, 1, 1);
 
 			tip.x = topx;
 			tip.y = topy;
@@ -1509,12 +1504,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	root->rendered++;
         	root->addLine(branch_id);
         	setColor();
-//        	if(branch_tip){
-//				glLineWidth(8.0);
-//				glColor4d(0, 1, 1, 1);
-//			}
-//			else
-//				glLineWidth(1.0);
 
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, LINE_MODE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			
@@ -1547,6 +1536,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	if (!right || right->typeValue() != ID_BRANCH)
 		return;
 	TNBranch *child = (TNBranch*) right;
+
 	child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	
 }
