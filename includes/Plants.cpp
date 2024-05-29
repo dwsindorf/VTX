@@ -1278,7 +1278,15 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 
 static Point lastv;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
-	if(lvl<min_level)
+	int minlvl=0;
+	if(min_level<0){
+		TNBranch *parent=getParent();
+		if(parent->typeValue()==ID_BRANCH)
+			minlvl=parent->max_level+min_level+1;
+	}
+	else if(min_level>0)
+		minlvl=min_level;
+	if(lvl<minlvl)
 		return;
 	maxlvl=max_level+1;
 
