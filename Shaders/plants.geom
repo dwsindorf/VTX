@@ -141,14 +141,14 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 	
 	vec2 vtop=vec2(topx,topy);
     vec2 vbot=vec2(botx,boty);
-
-    vec2 v2=normalize(vec2(topx,topy));
-    vec2 v1=normalize(vec2(botx,boty));
-    
+ 
     vec2 top_left=vtop*(1+top_offset);
     vec2 top_right=vtop*(1-top_offset);
     vec2 bot_left=vbot*(1+bot_offset);
     vec2 bot_right=vbot*(1-bot_offset);
+    
+    vec2 v2=normalize(vec2(topx,topy));
+    vec2 v1=normalize(vec2(botx,boty));
   
     Pnorm.xyz=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,tx.w);
@@ -174,8 +174,8 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 
 vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 	
-	float w2=c.b;     // top width
-	float w1=c.g;     // bottom width
+	float w2=c.g;     // top width
+	float w1=c.r;     // bottom width
      
     vec3 v1=p1.xyz-p0.xyz;
     vec3 v2=p2.xyz-p1.xyz;
@@ -192,15 +192,11 @@ vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 	float boty = y1 * w1;	
 	float topx = x2 * w2;
 	float topy = y2 * w2;
-	
+
 	vec4 cc=vec4(topx,topy,botx,boty);
 	return cc;
 }
-void emitPolygon(vec4 p0,vec4 p1,vec4 p2, vec4 c, vec4 tx){
-    vec4 cc=calcOffsets(p0,p1,p2,c);
-	emitRectangle(p1,p2,cc,tx);
 
-}
 // draw a branch as a polygon
 void emitBranch(){
    Pnorm.w=0.025;
@@ -208,10 +204,10 @@ void emitBranch(){
    vec4 p1=gl_PositionIn[0];
    vec4 p2=gl_PositionIn[1];
    vec4 c=Constants1[0];
-
    vec4 p0=Constants2[0];
-   emitPolygon(p0,p1,p2,c,vec4(0,0,0,1));
-}
+   vec4 cc=calcOffsets(p0,p1,p2,c);
+   emitRectangle(p1,p2,cc,vec4(0,0,0,1));
+ }
 
 mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
 vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
@@ -272,6 +268,5 @@ void main(void) {
     	emitBranch();
     else
         emitSpline(); 
-
 }
 

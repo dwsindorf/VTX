@@ -1465,23 +1465,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         else if (child_width > MIN_TRIANGLE_WIDTH){ // branch mode
     		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
 
-			off = child_width/TheScene->wscale;
-			Point pt1=TheScene->project(p1);
-			pt1.x/=pt1.z;
-			pt1.y/=pt1.z;
-			Point pt2=TheScene->project(p2);
-			pt2.x/=pt2.z;
-			pt2.y/=pt2.z;
-			Point pl=pt1-pt2;
-			a = atan2(pl.y, pl.x);
+			double w1 = child_width/TheScene->wscale;
+			double w2 = w1*width_taper;
 
-			x = -sin(a);
-			y = cos(a);
-
-			topx = x * off * width_taper;
-			topy = y * off * width_taper;
-			botx = tip.x * size_scale;
-			boty = tip.y * size_scale;
 //			Point pt=Point(botx,boty,pt1.z);
 //			Point pp=TheScene->unProject(pt);
 //			cout<<"x:"<<pp.x<<" y:"<<pp.y<<" z:"<<pp.z<<" r:"<<pp.x/pp.z<<endl;
@@ -1508,7 +1494,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 
-			glVertexAttrib4d(GLSLMgr::CommonID1, a, off, off * width_taper, 0); // Constants1	
+			glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, bot_offset,top_offset); // Constants1	
 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
