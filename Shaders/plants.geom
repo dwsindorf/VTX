@@ -51,8 +51,6 @@ void emitLine(){
  
 // draw a leaf
 void emitLeaf(){
-	vec3 ps1=gl_PositionIn[0].xyz;	
-	vec3 ps2=gl_PositionIn[1].xyz;
 	float topx=Constants1[0].r;
 	float topy=Constants1[0].g;
 	int colmode=TexVars_G[0].g+0.1; // transparenct flag
@@ -72,8 +70,7 @@ void emitLeaf(){
 	vec3 t=normalize(vec3(tang,pa.z));
     Pnorm.xyz=normalize(cross(pa,t));
     Pnorm.w=0.01;
-    
-       
+         
     if(rectmode){ // use a rectangle (for transparent textures)
        float w=2*TexVars.r;
     
@@ -133,8 +130,6 @@ void emitLeaf(){
 
 // branches  
 void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
-	vec3 ps1=p1.xyz;	
-	vec3 ps2=p2.xyz;
 	
 	float bot_offset=p1.w;
 	float top_offset=p2.w;
@@ -157,26 +152,55 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
   
     Pnorm.xyz=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,tx.w);
-    gl_Position = vec4(ps1.xy-bot_left,ps1.z,1);  // bot-left 
+    gl_Position = vec4(p1.xy-bot_left,p1.z,1);  // bot-left 
     EmitVertex();
     
     Pnorm.xyz=vec3(-v1,0);
     gl_TexCoord[0].xy=vec2(1,tx.w);
-    gl_Position = vec4(ps1.xy+bot_right,ps1.z,1);  // bot-right 
+    gl_Position = vec4(p1.xy+bot_right,p1.z,1);  // bot-right 
     EmitVertex(); 
    
  	Pnorm.xyz=vec3(v2,0);
     gl_TexCoord[0].xy=vec2(0,tx.y);
-    gl_Position = vec4(ps2.xy-top_left,ps2.z,1); // top-left
+    gl_Position = vec4(p2.xy-top_left,p2.z,1); // top-left
     EmitVertex();
    
     Pnorm.xyz=vec3(-v2,0);
     gl_TexCoord[0].xy=vec2(1,tx.y);
-    gl_Position = vec4(ps2.xy+top_right,ps2.z,1); // top-right
+    gl_Position = vec4(p2.xy+top_right,p2.z,1); // top-right
     EmitVertex();
     EndPrimitive();
 }
 
+vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
+	
+	float w2=c.b;     // top width
+	float w1=c.g;     // bottom width
+     
+    vec3 v1=p1.xyz-p0.xyz;
+    vec3 v2=p2.xyz-p1.xyz;
+    
+    float a1 = atan2(v1.y, v1.x);       
+	float a2 = atan2(v2.y, v2.x);
+	
+    float x1 = -sin(a1);
+	float y1 = cos(a1);
+    float x2 = -sin(a2);
+	float y2 = cos(a2);
+     	
+	float botx = x1 * w1;
+	float boty = y1 * w1;	
+	float topx = x2 * w2;
+	float topy = y2 * w2;
+	
+	vec4 cc=vec4(topx,topy,botx,boty);
+	return cc;
+}
+void emitPolygon(vec4 p0,vec4 p1,vec4 p2, vec4 c, vec4 tx){
+    vec4 cc=calcOffsets(p0,p1,p2,c);
+	emitRectangle(p1,p2,cc,tx);
+
+}
 // draw a branch as a polygon
 void emitBranch(){
    Pnorm.w=0.025;
@@ -184,7 +208,9 @@ void emitBranch(){
    vec4 p1=gl_PositionIn[0];
    vec4 p2=gl_PositionIn[1];
    vec4 c=Constants1[0];
-   emitRectangle(p1,p2,c,vec4(0,0,0,1));
+
+   vec4 p0=Constants2[0];
+   emitPolygon(p0,p1,p2,c,vec4(0,0,0,1));
 }
 
 mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
@@ -200,13 +226,15 @@ void emitSpline(){
     Pnorm.w=0.025;
    
     vec4 p1=gl_PositionIn[0];
-    vec4 p2=gl_PositionIn[1];  
-      
+    vec4 p2=gl_PositionIn[1];       
     vec4 p0=Constants2[0];
-    float topx=Constants1[0].r;
-	float topy=Constants1[0].g;
-	float botx=Constants1[0].b;
-	float boty=Constants1[0].a;
+ 
+    vec4 cc=calcOffsets(p0,p1,p2,Constants1[0]);
+    
+    float topx=cc.r;
+	float topy=cc.g;
+	float botx=cc.b;
+	float boty=cc.a;
 	
 	int nv=8;
 	float ds=0.5/nv;
@@ -238,11 +266,12 @@ void main(void) {
     
     if(mode==LINE)
     	emitLine();
-    else if(mode==BRANCH)
-    	emitBranch();
     else if(mode==LEAF)
     	emitLeaf();
+    else if(mode==BRANCH)
+    	emitBranch();
     else
         emitSpline(); 
+
 }
 

@@ -32,6 +32,7 @@
 #define LEAF_MODE   2
 #define SPLINE_MODE 3
 
+//#define TEST
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -313,6 +314,9 @@ bool PlantMgr::setProgram(){
 	double twilite_max=0.2;  // full day
 	
 	char defs[1024]="";
+#ifdef TEST
+	sprintf(defs,"#define TEST\n");
+#endif
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
 		if(TNplant::textures>0 && Render.bumps())
@@ -1285,7 +1289,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 			minlvl=parent->max_level+min_level+1;
 	}
 	else if(min_level>0)
-		minlvl=min_level;
+		minlvl=min_level+1;
 	if(lvl<minlvl)
 		return;
 	maxlvl=max_level+1;
@@ -1370,12 +1374,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
 		if(test2){ // try to correct for main branch curvature for start of side branches
-			start=spline(0.5*(1-b),p0,p1,base+vec); // works: same as linear
+			start=spline(0.5*(1-b),p0,p1,base+vec); // works: but same as linear
 			//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
 		}
 		else{ // linear interpolation: no curvature correction
 			start = p1 - vec * b;
 		}
+		SRAND;
 		bot_offset=SRAND/size_scale;
 		top_offset=bot_offset;				
 		v=setVector(vec,start,lvl);
@@ -1390,11 +1395,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
  		
 	p2  = start + v; // new top
 	bot = p2;       // new base	
-	
 	p0 = p0-TheScene->vpoint;   
 	p1 = start-TheScene->vpoint;
 	p2 = p2-TheScene->vpoint;
 	v = bot-start; // new vector
+
 	bool branch_tip=false;
 	if (child_width > MIN_LINE_WIDTH) {
 		if (child_width * width_taper < MIN_LINE_WIDTH) {
@@ -1477,6 +1482,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			topy = y * off * width_taper;
 			botx = tip.x * size_scale;
 			boty = tip.y * size_scale;
+//			Point pt=Point(botx,boty,pt1.z);
+//			Point pp=TheScene->unProject(pt);
+//			cout<<"x:"<<pp.x<<" y:"<<pp.y<<" z:"<<pp.z<<" r:"<<pp.x/pp.z<<endl;
+//          r~=-0.154 dz=+-dw/0.154
+
 			shader_mode=RECT_MODE;
 			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
 				shader_mode=SPLINE_MODE;
@@ -1484,7 +1494,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			}
 			else
 				root->addBranch(branch_id);
-				
 			if(test3 || test4)
 				poly_mode=GL_LINE;    
 			if(test4)
@@ -1497,11 +1506,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			tip.z = top_offset;
 			root->rendered++;
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
-
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 
-			glVertexAttrib4d(GLSLMgr::CommonID1, topx, topy, botx, boty); // Constants1	
-			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, bot_offset); // Constants2
+			glVertexAttrib4d(GLSLMgr::CommonID1, a, off, off * width_taper, 0); // Constants1	
+			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 			glVertex4d(p2.x, p2.y, p2.z, top_offset);
