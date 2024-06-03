@@ -58,10 +58,12 @@ void emitLeaf(){
 	
     vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
     float ps=Constants1[0].g; // size
-    vec4 v=ps*normalize(gl_PositionIn[1]-gl_PositionIn[0]); 
-    vec4 pa=gl_PositionIn[0]+v;// end
- 
- 	float ta=Constants1[0].r+PI/2; // position angle
+    vec4 v=normalize(gl_PositionIn[1]-gl_PositionIn[0]); 
+    vec4 pa=gl_PositionIn[0]+ps*v;// end
+    
+    float a = atan2(v.y, v.x);       
+    float ta = a-PI/2;
+    
 	float cc=cos(ta);
 	float ss=sin(ta);    	   		   
 	mat2  M=ps*mat2(cc,ss,-ss,cc);

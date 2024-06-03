@@ -1242,34 +1242,27 @@ Point TNBranch::setVector(Point vec, Point start, int lvl){
 	double g=flatness;
 	if(lvl>1)
 		g=fabs(flatness);
-
+	Point n = root->norm + start;
+	n = n.normalize();
+	Point vp;
+	double f = g;
 	if (g > 0) {
-		Point n = root->norm + start;
-		n = n.normalize();
-		Point tp1 = n.cross(v);
-		Point vp = tp1.cross(n);
-		double f = g;
-		vp = vp.normalize(); // projection of v along surface
-		Point v1 = v * (1 - f);
-		Point v2 = vp * f;
-		v = v1 + v2;
+		Point tp1 = n.cross(v); 
+		vp = tp1.cross(n);
 	}
 	else {
-		Point n = root->norm + start;
-		n = n.normalize();
-		Point vp;
 		double s=SRAND;
 		if(s>0)
 		 vp= n.cross(v);
 		else
 		 vp= v.cross(n);
-		double f = -g;
-		vp = vp.normalize(); // projection of v along surface
-		Point v1 = v * (1 - f);
-		Point v2 = vp * f;
-		v = v1 + v2;
-	
+		f = -g;
 	}
+	vp = vp.normalize(); // projection of v along surface
+	Point v1 = v * (1 - f);
+	Point v2 = vp * f;
+	v = v1 + v2;
+
 	return v;
 
 }
@@ -1314,11 +1307,8 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 
 void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_size,
 		double parent_width, int lvl) {
-//	if (lvl < min_level)
-//		return;
 
 	int lev = lvl;
-	//level=lev;
 	lev++;
 	
 	int mode = opt;
@@ -1326,8 +1316,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
 	bool last_level = lev==maxlvl;
-//	if (lev > maxlvl)
-//		return;
+
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
@@ -1349,7 +1338,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
 	double child_length=parent_length;
 	if (first_fork && lvl > 0) {	
-		size_scale = length / parent_length;
+		size_scale = length/parent_length;
 		size_scale = size_scale > 1 ? 1 : size_scale;
 		size_scale = size_scale < 0 ? 0 : size_scale;
 		child_width*=size_scale;		
@@ -1381,8 +1370,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			start = p1 - vec * b;
 		}
 		SRAND;
-		bot_offset=SRAND/size_scale;
-		top_offset=bot_offset;				
+		// TODO: set max offset proportional parent_width/child_width
+		double dw=(parent_width-child_width)/parent_width;
+		bot_offset=dw*SRAND/size_scale;
+		top_offset=bot_offset;	
+		//cout<<dw<<" "<<bot_offset<<" "<<size_scale<<endl;
+
 		v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
 	}
@@ -1409,23 +1402,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		//if(!last_level && lvl > maxlvl) 
 		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
-	   branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
+	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
 		   
-       if(isPlantLeaf()){  // leaf mode
+        if(isPlantLeaf()){  // leaf mode
          	root->addLeaf(branch_id);
-         	// o this doesn't work
-   		    //  q = TheScene->project(v); // convert model to screen space
-    		//  double qa = atan2(q.y / q.z, q.x / q.z);
-         	// o need to first project model vector end points to screen space and then subtract to get screen space vector 
-    		Point pt1=TheScene->project(p1);
-    		pt1.x/=pt1.z;
-    		pt1.y/=pt1.z;
-       	    Point pt2=TheScene->project(p2);
-        	pt2.x/=pt2.z;
-        	pt2.y/=pt2.z;
-        	Point pl=pt1-pt2;
-    		double angle = atan2(pl.y, pl.x);
  
+         	double angle=0;
 			opt = LAST_EMIT;		
 			shader_mode=LEAF_MODE;
 			if(test3 || test4)
@@ -1444,14 +1426,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			alpha=alpha_texture?4:0;
 			double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
 			double width_ratio=0.5*width;
-			//cout<<width_ratio<<endl;
 
 			root->rendered++;
 	
 			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-				TNLeaf::collect(p1,p2,Point(angle,size,width_ratio),Point(color_flags|alpha, texid, poly_mode),c);
+				TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags|alpha, texid, poly_mode),c);
 			else{
-				glVertexAttrib4d(GLSLMgr::CommonID1, angle, size, 0, 0); // Constants1		
+				glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags|alpha, texid, shader_mode);
 				
 				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
@@ -1468,10 +1449,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			double w1 = child_width/TheScene->wscale;
 			double w2 = w1*width_taper;
 
+			// for 3d calculate equivalent dz for dw 
 //			Point pt=Point(botx,boty,pt1.z);
 //			Point pp=TheScene->unProject(pt);
 //			cout<<"x:"<<pp.x<<" y:"<<pp.y<<" z:"<<pp.z<<" r:"<<pp.x/pp.z<<endl;
-//          r~=-0.154 dz=+-dw/0.154
+//          so ratio~=-0.154 dz ~= dw/0.154
 
 			shader_mode=RECT_MODE;
 			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
