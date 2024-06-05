@@ -4,13 +4,15 @@
 varying in vec4 Color_G[];
 varying in vec4 Normal_G[];
 varying in vec4 Constants1[];
-varying in vec4 Constants2[];
+varying in vec4 P0[];
 varying in vec4 TexVars_G[];
 
 varying out vec4 Color;
 varying out vec4 TexVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
+
+vec4 Pos0,Pos1,Pos2;
 
 #define PI		3.14159265359
 // spline (DONE) 
@@ -25,10 +27,11 @@ varying out vec4 Pnorm;
 //  - but also need vec3 of previous point (p0) to calculate offset angle for bottom
 //  - so for shader to work need to pass in 3 vs 2 points (GL_TRIANGLE vs GL_LINE)
 
-#define LINE 0
+#define LINE   0
 #define BRANCH 1
 #define LEAF   2
 #define SPLINE 3
+#define THREED 4
 
 // draw a line
 void emitLine(){
@@ -37,12 +40,12 @@ void emitLine(){
     // need at least 3 vertexes for line strip
     Pnorm.xyz=gl_NormalMatrix*vec3(nscale,0,0);
     Pnorm.w=0;
-    gl_Position.xyz = gl_PositionIn[1].xyz; // top
+    gl_Position.xyz = Pos2.xyz; // top
     gl_Position.w=1;
     EmitVertex();
     EmitVertex();
     
-    gl_Position.xyz = gl_PositionIn[0].xyz; // top
+    gl_Position.xyz = Pos1.xyz; // top
     gl_Position.w=1;
     EmitVertex();
     
@@ -56,10 +59,10 @@ void emitLeaf(){
 	int colmode=TexVars_G[0].g+0.1; // transparenct flag
 	int rectmode=colmode & 4;
 	
-    vec3 vw=vec3(topx,topy,gl_PositionIn[1].z);   
+    vec3 vw=vec3(topx,topy,Pos2.z);   
     float ps=Constants1[0].g; // size
-    vec4 v=normalize(gl_PositionIn[1]-gl_PositionIn[0]); 
-    vec4 pa=gl_PositionIn[0]+ps*v;// end
+    vec4 v=normalize(Pos2-Pos1); 
+    vec4 pa=Pos1+ps*v;// end
     
     float a = atan2(v.y, v.x);       
     float ta = a-PI/2;
@@ -171,7 +174,7 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
     gl_TexCoord[0].xy=vec2(1,tx.y);
     gl_Position = vec4(p2.xy+top_right,p2.z,1); // top-right
     EmitVertex();
-    EndPrimitive();
+    //EndPrimitive();
 }
 
 vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
@@ -203,10 +206,10 @@ vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 void emitBranch(){
    Pnorm.w=0.025;
 
-   vec4 p1=gl_PositionIn[0];
-   vec4 p2=gl_PositionIn[1];
+   vec4 p1=Pos1;
+   vec4 p2=Pos2;
    vec4 c=Constants1[0];
-   vec4 p0=Constants2[0];
+   vec4 p0=Pos0;
    vec4 cc=calcOffsets(p0,p1,p2,c);
    emitRectangle(p1,p2,cc,vec4(0,0,0,1));
  }
@@ -223,9 +226,9 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 void emitSpline(){
     Pnorm.w=0.025;
    
-    vec4 p1=gl_PositionIn[0];
-    vec4 p2=gl_PositionIn[1];       
-    vec4 p0=Constants2[0];
+    vec4 p1=Pos1;
+    vec4 p2=Pos2;       
+    vec4 p0=Pos0;
  
     vec4 cc=calcOffsets(p0,p1,p2,Constants1[0]);
     
@@ -234,7 +237,7 @@ void emitSpline(){
 	float botx=cc.b;
 	float boty=cc.a;
 	
-	int nv=8;
+	int nv=4;
 	float ds=0.5/nv;
 	float s=0.5;
 
@@ -254,8 +257,130 @@ void emitSpline(){
 		s+=ds;
 	}	
 }
+vec4 project(vec4 pnt){
+	vec4 vertex=vec4(pnt.xyz,1.0);
+	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
+	return vec4(proj.xyz/proj.w,pnt.w);
+}
+
+// given two points p1 and p2 create a vector out
+// that is perpendicular to (p2-p1)
+vec3 createPerp(vec3 p1, vec3 p2)
+{
+  vec3 invec = normalize(p2 - p1);
+  vec3 ret = cross( invec, vec3(0.0, 0.0, 1.0) );
+  if ( length(ret) == 0.0 )
+     ret = cross( invec, vec3(0.0, 1.0, 0.0) );
+  return ret;
+}
+
+void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
+{
+   vec4 p1,p2,proj;
+
+   float r1=5e-9*c.x;
+   float r2=5e-9*c.y;
+   float t1=c.z;
+   float t2=c.w;
+   Pnorm.w=0.02;
+   vec3 axis1 = pnt1.xyz - pnt0.xyz;
+   vec3 axis2 = pnt2.xyz - pnt1.xyz;
+
+   vec3 tx1 = createPerp( pnt1.xyz, pnt0.xyz );
+   vec3 ty1 = cross( normalize(axis1), tx1 );
+
+   vec3 tx2 = createPerp( pnt2.xyz, pnt1.xyz );
+   vec3 ty2 = cross( normalize(axis2), tx2 );
+   int segs = 8;
+   float f=1.0 /(segs-1);
+   for(int i=0; i<segs; i++) {
+      float a = i*f;
+      float ca = cos(2.0 * PI*a); 
+      float sa = sin(2.0 * PI*a);
+      vec3 n1 = vec3( ca*tx1.x + sa*ty1.x,
+                     ca*tx1.y + sa*ty1.y,
+                     ca*tx1.z + sa*ty1.z );
+      
+      vec3 n2 = vec3( ca*tx2.x + sa*ty2.x,
+                     ca*tx2.y + sa*ty2.y,
+                     ca*tx2.z + sa*ty2.z );
+      Pnorm.xyz=n1.xyz;
+      
+      gl_TexCoord[0].xy=vec2(a,0);
+
+      p1.xyz = pnt1.xyz+r1*n1;
+      proj = gl_ModelViewProjectionMatrix * vec4(p1.xyz, 1.0);
+      gl_Position =vec4(proj.xyz/proj.w,1);
+      //gl_Position = project(p1);
+      EmitVertex();
+      
+      gl_TexCoord[0].xy=vec2(a,1);
+      Pnorm.xyz=n2.xyz;
+      p2.xyz = pnt2.xyz + r2*n2;
+      proj = gl_ModelViewProjectionMatrix * vec4(p2.xyz, 1.0);
+      gl_Position = vec4(proj.xyz/proj.w,1);
+      //gl_Position = proj;
+      //gl_Position = project(p2);
+      EmitVertex();
+        
+   }
+   EndPrimitive();   
+   
+}
+// draw a branch as a spline
+
+void emit3dSpline(){
+
+	vec4 c=Constants1[0];
+	vec4 p0=P0[0];
+	vec4 p1=gl_PositionIn[0];
+	vec4 p2=gl_PositionIn[1];
+	float r1=c.r;
+	float r2=c.g;
+ 	vec4 d;
+
+	int nv=2;
+	float ds=0.5/nv;
+	float s=0.5;
+    vec4 s0,s1,s2;
+    s0=p0;
+	float delta=1.0/nv;
+	for(int i=0;i<nv;i++){
+		float f1=i*delta;
+		float f2=(i+1)*delta;
+		d.x=(1-f1)*r1+f1*r2;
+		d.y=(1-f2)*r1+f2*r2;
+		d.z=f1;
+		d.w=f2;
+		
+		s1=spline(s,p0,p1,p2);
+		s2=spline(s+ds,p0,p1,p2);
+		drawCone(s0,s1,s2,d);
+		s0=s1;
+		s+=ds;
+	}	
+}
+
+void emit3d(){
+   Pnorm.w=0.025;
+   vec4 c=Constants1[0];
+   vec4 p0=P0[0];
+   vec4 p1=gl_PositionIn[0];
+   vec4 p2=gl_PositionIn[1];
+   vec4 d;
+   d.x=c.r;
+   d.y=c.g;
+   d.z=0;
+   d.w=1;
+   drawCone(p0,p1,p2,d);
+   //drawCone(p1,p2,1e-9,1e-9);
+   
+}
 void main(void) {
-    if(length(gl_PositionIn[1]-gl_PositionIn[0])>2)
+    Pos0=project(P0[0]);
+    Pos1=project(gl_PositionIn[0]);
+    Pos2=project(gl_PositionIn[1]);
+    if(length(Pos2-Pos1)>2)
     	return;
  	Color=Color_G[0];
 	Normal.xyz=Normal_G[0].xyz;
@@ -266,9 +391,16 @@ void main(void) {
     	emitLine();
     else if(mode==LEAF)
     	emitLeaf();
+#ifdef TEST
     else if(mode==BRANCH)
-    	emitBranch();
+    	emit3d();
+    else
+    	emit3dSpline();
+#else
+    else if(mode==BRANCH)
+        emitBranch(); 
     else
         emitSpline(); 
+#endif
 }
 

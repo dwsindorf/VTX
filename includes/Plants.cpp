@@ -31,8 +31,9 @@
 #define RECT_MODE   1
 #define LEAF_MODE   2
 #define SPLINE_MODE 3
+#define THREED_MODE 4
 
-//#define TEST
+#define TEST
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -314,9 +315,10 @@ bool PlantMgr::setProgram(){
 	double twilite_max=0.2;  // full day
 	
 	char defs[1024]="";
-#ifdef TEST
+//#ifdef TEST
+	if(test2)
 	sprintf(defs,"#define TEST\n");
-#endif
+//#endif
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
 		if(TNplant::textures>0 && Render.bumps())
@@ -338,7 +340,8 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::input_type=GL_LINES;
 	//GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	GLSLMgr::tesslevel=0;
+	GLSLMgr::tesslevel=8;
+	GLSLMgr::max_output=128;  // special case
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
 	
 	GLhandleARB program=GLSLMgr::programHandle();
@@ -1362,13 +1365,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
-		if(test2){ // try to correct for main branch curvature for start of side branches
-			start=spline(0.5*(1-b),p0,p1,base+vec); // works: but same as linear
+		//if(test2){ // try to correct for main branch curvature for start of side branches
+		//	start=spline(0.5*(1-b),p0,p1,base+vec); // works: but same as linear
 			//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
-		}
-		else{ // linear interpolation: no curvature correction
+		//}
+		//else{ // linear interpolation: no curvature correction
 			start = p1 - vec * b;
-		}
+		//}
 		SRAND;
 		// TODO: set max offset proportional parent_width/child_width
 		double dw=(parent_width-child_width)/parent_width;
@@ -1448,6 +1451,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 			double w1 = child_width/TheScene->wscale;
 			double w2 = w1*width_taper;
+			//cout<<parent_length<<endl;
 
 			// for 3d calculate equivalent dz for dw 
 //			Point pt=Point(botx,boty,pt1.z);
@@ -1457,7 +1461,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 			shader_mode=RECT_MODE;
 			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
+//#ifdef TEST
+//				shader_mode=THREED_MODE;
+//#else
 				shader_mode=SPLINE_MODE;
+//#endif
 				root->addSpline(branch_id);
 			}
 			else
