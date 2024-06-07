@@ -224,8 +224,8 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 
 // draw a branch as a spline
 void emitSpline(){
-    Pnorm.w=0.025;
-   
+ 
+    Pnorm.w=0.025;  
     vec4 p1=Pos1;
     vec4 p2=Pos2;       
     vec4 p0=Pos0;
@@ -256,6 +256,7 @@ void emitSpline(){
 		emitRectangle(t1,t2,c,tx);	
 		s+=ds;
 	}	
+
 }
 vec4 project(vec4 pnt){
 	vec4 vertex=vec4(pnt.xyz,1.0);
@@ -277,12 +278,12 @@ vec3 createPerp(vec3 p1, vec3 p2)
 void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 {
    vec4 p1,p2,proj;
-
-   float r1=5e-9*c.x;
-   float r2=5e-9*c.y;
+   float scale=6e-7;
+   float r1=scale*c.x;
+   float r2=scale*c.y;
    float t1=c.z;
    float t2=c.w;
-   Pnorm.w=0.02;
+   Pnorm.w=0.01;
    vec3 axis1 = pnt1.xyz - pnt0.xyz;
    vec3 axis2 = pnt2.xyz - pnt1.xyz;
 
@@ -291,8 +292,15 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 
    vec3 tx2 = createPerp( pnt2.xyz, pnt1.xyz );
    vec3 ty2 = cross( normalize(axis2), tx2 );
-   int segs = 8;
+#ifndef OGL_SPLINE
+   int segs = 7;
+#else
+   int segs = 16;
+#endif
    float f=1.0 /(segs-1);
+   float delta=1.0/segs;
+   float tex1=t1;
+   float df=0;
    for(int i=0; i<segs; i++) {
       float a = i*f;
       float ca = cos(2.0 * PI*a); 
@@ -304,28 +312,26 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
       vec3 n2 = vec3( ca*tx2.x + sa*ty2.x,
                      ca*tx2.y + sa*ty2.y,
                      ca*tx2.z + sa*ty2.z );
-      Pnorm.xyz=n1.xyz;
+      Pnorm.xyz=-n1.xyz;
       
-      gl_TexCoord[0].xy=vec2(a,0);
+      gl_TexCoord[0].xy=vec2(2*a,t1);
 
       p1.xyz = pnt1.xyz+r1*n1;
-      proj = gl_ModelViewProjectionMatrix * vec4(p1.xyz, 1.0);
-      gl_Position =vec4(proj.xyz/proj.w,1);
-      //gl_Position = project(p1);
+      p1.w=1;
+     // proj = gl_ModelViewProjectionMatrix * vec4(p1.xyz, 1.0);
+      //gl_Position =proj;//vec4(proj.xyz,1);
+      gl_Position = project(p1);
       EmitVertex();
       
-      gl_TexCoord[0].xy=vec2(a,1);
-      Pnorm.xyz=n2.xyz;
+      gl_TexCoord[0].xy=vec2(2*a,t2);
+      Pnorm.xyz=-n2.xyz;
       p2.xyz = pnt2.xyz + r2*n2;
-      proj = gl_ModelViewProjectionMatrix * vec4(p2.xyz, 1.0);
-      gl_Position = vec4(proj.xyz/proj.w,1);
-      //gl_Position = proj;
-      //gl_Position = project(p2);
+      p2.w=1;
+      gl_Position = project(p2);
       EmitVertex();
         
    }
-   EndPrimitive();   
-   
+   //EndPrimitive();     
 }
 // draw a branch as a spline
 
@@ -335,16 +341,20 @@ void emit3dSpline(){
 	vec4 p0=P0[0];
 	vec4 p1=gl_PositionIn[0];
 	vec4 p2=gl_PositionIn[1];
+#ifdef OGL_SPLINE
+	drawCone(p0,p1,p2,c);
+#else
+	
 	float r1=c.r;
 	float r2=c.g;
  	vec4 d;
 
-	int nv=2;
+	int nv=3;
 	float ds=0.5/nv;
 	float s=0.5;
     vec4 s0,s1,s2;
     s0=p0;
-	float delta=1.0/nv;
+	float delta=1.0/(nv);
 	for(int i=0;i<nv;i++){
 		float f1=i*delta;
 		float f2=(i+1)*delta;
@@ -358,11 +368,11 @@ void emit3dSpline(){
 		drawCone(s0,s1,s2,d);
 		s0=s1;
 		s+=ds;
-	}	
+	}
+#endif
 }
 
-void emit3d(){
-   Pnorm.w=0.025;
+void emitBranch3d(){
    vec4 c=Constants1[0];
    vec4 p0=P0[0];
    vec4 p1=gl_PositionIn[0];
@@ -370,11 +380,9 @@ void emit3d(){
    vec4 d;
    d.x=c.r;
    d.y=c.g;
-   d.z=0;
-   d.w=1;
+   d.z=c.b;
+   d.w=c.w;
    drawCone(p0,p1,p2,d);
-   //drawCone(p1,p2,1e-9,1e-9);
-   
 }
 void main(void) {
     Pos0=project(P0[0]);
@@ -391,11 +399,16 @@ void main(void) {
     	emitLine();
     else if(mode==LEAF)
     	emitLeaf();
-#ifdef TEST
+#ifdef ENABLE_3D
+ #ifndef OGL_SPLINE
     else if(mode==BRANCH)
-    	emit3d();
+    	emitBranch3d();
     else
     	emit3dSpline();
+ #else
+ 	else
+ 		emitBranch3d(); 
+ #endif
 #else
     else if(mode==BRANCH)
         emitBranch(); 

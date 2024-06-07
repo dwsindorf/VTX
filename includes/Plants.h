@@ -103,9 +103,11 @@ public:
 	double maxdensity;
 	double base_drop;
 	double width_scale;
+	double size_scale;
 	static double norm_max;
 	static double norm_min;
 	static int textures;
+	static bool threed;
 
 	Point base_point;
 	int rendered;

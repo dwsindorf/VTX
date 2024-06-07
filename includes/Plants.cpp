@@ -33,7 +33,8 @@
 #define SPLINE_MODE 3
 #define THREED_MODE 4
 
-#define TEST
+#define ENABLE_3D
+#define OGL_SPLINE
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -44,8 +45,9 @@
 // 3) in screen space either a line (with width) or a polygon is drawn between connecting branch points
 // 4) if a polygon is used base and tip parameter points are calculated based on the angle of the branch
 //    - distance between tip points is less than that between base points to simulate branch taper
-// 5) lighting (branch curvature) is emulated by changing normal from left to right along branch
+// 5) in 2d mode lighting (branch curvature) is emulated by changing normal from left to right along branch
 //   - in the center normal faces directly out to eye
+//   - in 3d mode surface normals of cone side panels are used to generate a more accurate shading model
 // TODO: 
 // 1) Better branching model (DONE)
 //  Currently all branches spawn from the same point in screen space
@@ -53,6 +55,7 @@
 //  a) allow branches to spawn at random locations along parent stem vector (DONE)
 //    - set 'start' position somewhere between top and base using random variable
 //  b) place new branches at random offsets from center of parent branches (DONE)
+//    - not implemented in 3d mode
 //  c) don't require branch starting width to be the same as parents width (DONE)
 //    - scale next segment width based on size of child branch
 //  c) In multi-branch cases have a minimum level to start producing new branches and max level to stop (DONE)
@@ -66,14 +69,13 @@
 // 4) add support for bump shading for textures (DONE)
 // 5) implement TNLeaf class (DONE)
 //    - only generate leaves at end of "terminal" branches
-// 6) use a spline function when connecting levels on same branch (WIP)
+// 6) use a spline function when connecting levels on same branch (DONE)
 //   - generate additional line segments between segment end points (no need for branching)
-//   - usinq quadratic interpolation from last 3 points to smooth transition
-// 7) add curvature to branches by implementing a spline function (DONE)
-//   - for efficiency probably best done in a geometry shader (DONE)
-// 8) try point-sprite model for leaves (see below)
-// 9) use lists to increase render speed
-// 10) generate wxWidgets classes for plants
+//   - use quadratic interpolation from last 3 points to smooth transition
+// 7) implement 3d branches (DONE)
+//   - generate a "cone" for each branch vector in geometry shader
+// 8) use lists to increase render speed
+// 9) generate wxWidgets classes for plants
 //    - optional support preview window with option to save generated imaged as sprites
 	
 // BUGS/problems
@@ -105,13 +107,12 @@
 //       so that the rotated leaf isn't clipped
 //     o also, rotation angle doesn't always seem correct and changes with aspect ratio
 // 5) spline issues
-//   - offsets don't follow branch curvature when spline is applied
-//     o tried generating parent spline in opengl and using that for child start positions
-//      - but that didn't work because spline in shader uses points in screen space vs model space
-//     o could project points using modelviewproj matrix in c++
-//   - too much curvature on initial branch from trunk
+//   - offsets don't follow branch curvature when spline is applied (2d only)
+//   - too much curvature on initial branch from trunk ?
 // 6) width offset sometimes disconnects branches from parent
 //   - also, direction of side branch should be on same side as offset
+// 7) 3d issues
+//   - branch dimensions and shapes change when aspect ratio and size of window are changed 
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -315,10 +316,14 @@ bool PlantMgr::setProgram(){
 	double twilite_max=0.2;  // full day
 	
 	char defs[1024]="";
-//#ifdef TEST
-	if(test2)
-	sprintf(defs,"#define TEST\n");
-//#endif
+
+	if(TNplant::threed)
+		sprintf(defs,"#define ENABLE_3D\n");
+
+#ifdef	OGL_SPLINE
+	sprintf(defs+strlen(defs),"#define OGL_SPLINE\n");
+#endif
+
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
 		if(TNplant::textures>0 && Render.bumps())
@@ -706,6 +711,7 @@ void Plant::showStats(){
 int TNplant::textures=0;
 double TNplant::norm_max=2;
 double TNplant::norm_min=1e-5;
+bool TNplant::threed=true;
 //************************************************************
 // TNplant class
 //************************************************************
@@ -731,6 +737,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	leaf=0;
 	base_drop=0;
 	width_scale=1;
+	size_scale=1;
 	rendered=0;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
@@ -827,6 +834,10 @@ void TNplant::set_id(int i){
 void TNplant::eval()
 {	
 	SINIT;
+	if(test2)
+		threed=false;
+	else
+		threed=true;
 	if(right)
 		right->eval();
 	if(!isEnabled()){
@@ -1013,13 +1024,17 @@ void TNplant::emit(){
 	else
 		return;
 	double branch_size=length*first_branch->length;
+	//cout<<width_scale<<endl;
 
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
+	//cout<<TheScene->wscale<<endl;
+	//size_scale=pntsize/TheScene->wscale/first_branch->length;
+	//double start_width=size_scale*first_branch->length;
 	
-	double start_width=width_scale*pntsize;
-		
+	double start_width=width_scale*pntsize*first_branch->length;
+	size_scale=	width_scale*pntsize;
 	Point tip;
 	tip.x=first_branch->width*start_width/TheScene->wscale;
 	tip.y=0;
@@ -1069,7 +1084,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	level=0;
 	maxlvl=0;
 	branch_id=0;
-	length=2;
+	length=1;
 	width=1;
 	width_taper=0.75;
 	length_taper=0.95;
@@ -1365,13 +1380,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
-		//if(test2){ // try to correct for main branch curvature for start of side branches
-		//	start=spline(0.5*(1-b),p0,p1,base+vec); // works: but same as linear
-			//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
-		//}
-		//else{ // linear interpolation: no curvature correction
-			start = p1 - vec * b;
-		//}
+		start = p1 - vec * b;
+
 		SRAND;
 		// TODO: set max offset proportional parent_width/child_width
 		double dw=(parent_width-child_width)/parent_width;
@@ -1451,21 +1461,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 			double w1 = child_width/TheScene->wscale;
 			double w2 = w1*width_taper;
-			//cout<<parent_length<<endl;
-
-			// for 3d calculate equivalent dz for dw 
-//			Point pt=Point(botx,boty,pt1.z);
-//			Point pp=TheScene->unProject(pt);
-//			cout<<"x:"<<pp.x<<" y:"<<pp.y<<" z:"<<pp.z<<" r:"<<pp.x/pp.z<<endl;
-//          so ratio~=-0.154 dz ~= dw/0.154
 
 			shader_mode=RECT_MODE;
 			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
-//#ifdef TEST
-//				shader_mode=THREED_MODE;
-//#else
 				shader_mode=SPLINE_MODE;
-//#endif
 				root->addSpline(branch_id);
 			}
 			else
@@ -1483,14 +1482,64 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			root->rendered++;
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, texid, shader_mode);
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
+            if(root->threed){
+             	w1/=root->size_scale;
+            	w2/=root->size_scale;
+            }
+  			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+#ifdef OGL_SPLINE
+  			 bool ogl_spline=true;
+#else
+  			 bool ogl_spline=false;
+#endif  
+			if (root->threed && shader_mode == SPLINE_MODE && ogl_spline) {
+				// note: implementing this code in the shader may be a bit faster but:
+				// 1) in 3d we run out of shader resources (max components) unless the product
+				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
+				// 2) get miss-aligment between branch segments because can't set terminal vector (v)
+				//    to direction of spline end (no access to ogl parameters from shader)
+				int nv = 4;
+				double ds = 0.5 / nv;
+				double s = 0.5;
+				double r1 = w1;
+				double r2 = w2;
+				Point t0, t1, t2;
+				t0 = p0;
+				double delta = 1.0 / (nv);
+				double f1,f2,dx,dy;
 
-			glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, bot_offset,top_offset); // Constants1	
-			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-			glBegin(GL_LINES);
-			glVertex4d(p1.x, p1.y, p1.z, bot_offset);
-			glVertex4d(p2.x, p2.y, p2.z, top_offset);
-			glEnd();
-        }
+				for (int i = 0; i < nv; i++) {
+					f1 = i * delta;
+					f2 = (i + 1) * delta;
+					dx = (1 - f1) * r1 + f1 * r2;
+					dy = (1 - f2) * r1 + f2 * r2;
+					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z, 0); // Constants2
+
+					t1 = spline(s, p0, p1, p2);
+					t2 = spline(s + ds, p0, p1, p2);
+					glBegin(GL_LINES);
+					glVertex4d(t1.x, t1.y, t1.z, 0);
+					glVertex4d(t2.x, t2.y, t2.z, 0);
+					glEnd();
+					t0 = t1;
+					s += ds;
+				}
+				v=t2-t1;
+				v=v.normalize();
+				v=v*cl;
+				w1=dx;
+				w2=dy;
+                bot=t2+TheScene->vpoint;
+    
+			} else {
+				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1	           	
+				glBegin(GL_LINES);
+				glVertex4d(p1.x, p1.y, p1.z, bot_offset);
+				glVertex4d(p2.x, p2.y, p2.z, top_offset);
+				glEnd();
+			}
+		}
         else{ // line mode
         	double nscale=TNplant::norm_min;
         	root->rendered++;

@@ -21,7 +21,7 @@ extern Point MapPt;
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
 #define DEBUG_SHADERS
-//#define SHOW_GLSTATS
+#define SHOW_GLSTATS
 
 //#define DEBUG_FBO
 //#define DEBUG_CLR
@@ -534,12 +534,16 @@ void GLSLMgr::initGL(int w, int h){
 	GLint maxGeomVertices;
 	glGetIntegerv( GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT, &maxGeomVertices );
 
+	GLint maxGeomComponents;
+	glGetIntegerv( GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS, &maxGeomComponents );
+
 #ifdef SHOW_GLSTATS
 	cout << "total  tex units:"<< max_tex_units << endl;
 	cout << "unused tex units:"<< max_tex_id << endl;
 	cout << "max color buffer attachments:"<< maxAttach << endl;
 	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
 	printf("max geometry output vetices = %d\n",maxGeomVertices);
+	printf("max geometry output components = %d\n",maxGeomComponents);
 #endif
 	//gl_MaxGeometryOutputVertices
 
@@ -861,6 +865,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	if(!program->compiled && !program->errors)
 		compile();
 	if(geom && !program->errors){
+		
 		cout<<"GLSLMgr - setting tesslevel:"<<tesslevel<<" max_outputs:"<<max_output<<endl;
 		glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);
