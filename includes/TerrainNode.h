@@ -469,10 +469,10 @@ public:
 class TNfunc : public TNbinary
 {
 protected:
-    char name_str[64];
     char token[64];
 	TNfunc  *expr;
 public:
+    char name_str[64];
 	TNfunc(TNode *l, TNode *r) :  TNbinary(l,r) {token[0]=0;expr=0;name_str[0]=0;}
 	~TNfunc();
 	virtual bool hasChildren();

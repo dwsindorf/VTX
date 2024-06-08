@@ -51,7 +51,10 @@ enum tree_codes{
 	TN_GLOSS  	    = 0x0026,
 	TN_BASE  	    = 0x0027,
 	TN_CLOUD  		= 0x0028,
-	TN_SPRITE  	    = 0x0029
+	TN_SPRITE  	    = 0x0029,
+	TN_PLANT  	    = 0x002a,
+	TN_PLANT_BRANCH = 0x002b,
+	TN_PLANT_LEAF  	= 0x002c
 };
 
 class UniverseModel : public Model

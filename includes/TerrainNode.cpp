@@ -1102,6 +1102,10 @@ void TNfunc::propertyString(char *s)
 {
 	sprintf(s+strlen(s),"%s(",symbol());
 	TNarg *arg=(TNarg*)left;
+	if(strlen(name_str)){
+		sprintf(s+strlen(s),"\"%s\",",name_str);
+		arg=arg->next();
+	}
 	while(arg){
 		arg->valueString(s);
 		arg=arg->next();

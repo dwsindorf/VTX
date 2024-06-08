@@ -204,6 +204,9 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	case TN_SPRITE:
 		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,1e-6,1,1,1,0,0,0)\n");
 		break;
+	case TN_PLANT:
+		sprintf(tmp,"Plant(\"plant\",1,1.2e-06,0.8,0.9,0.05)\n");
+		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");
 		break;
@@ -289,6 +292,12 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("Texture",type);
 	case TN_SPRITE:
 		return new ModelSym("Sprite",type);
+	case TN_PLANT:
+		return new ModelSym("Plant",type);
+	case TN_PLANT_BRANCH:
+		return new ModelSym("Branch",type);
+	case TN_PLANT_LEAF:
+		return new ModelSym("Leaf",type);
 	case TN_POINT:
 		return new ModelSym("Point",type);
 	case TN_DENSITY:
@@ -435,10 +444,16 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(obj->collapsed() && obj->getParent())
 			return getAddList(obj->getParent(),list);
 		break;
+	case TN_PLANT:
+		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
+		break;
+	case TN_PLANT_BRANCH:
+		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
+		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
+		break;
+	case TN_PLANT_LEAF:
+		break;
 	case TN_MAP:
-		//if(obj->collapsed()&& obj->hasChildren() && obj->getParent())
-		//	return getAddList(obj->getParent(),list);
-		//list.add(getObjectSymbol(TN_LAYER));
 		list.add(new ModelSym("Layer",TN_LAYER));
 		break;
 	case TN_LAYER:
@@ -454,6 +469,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 				list.add(getObjectSymbol(TN_GLOSS));
 			list.add(getObjectSymbol(TN_TEXTURE));
 			list.add(getObjectSymbol(TN_SPRITE));
+			list.add(getObjectSymbol(TN_PLANT));
 			//list.add(getObjectSymbol(TN_BASE));
 			//list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
@@ -480,6 +496,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			return getAddList(obj->getParent(),list);
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_SPRITE));
+		list.add(getObjectSymbol(TN_PLANT));
 		list.add(getObjectSymbol(TN_POINT));
 
 		if(!obj->hasChild(ID_COLOR))
@@ -518,6 +535,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_SPRITE));
+		list.add(getObjectSymbol(TN_PLANT));
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_COLOR));
 		list.add(getObjectSymbol(TN_GLOSS));
@@ -684,6 +702,9 @@ void UniverseModel::setType(NodeIF *node)
 		case ID_SPRITE:
 			node->setFlag(TN_SPRITE);
 			break;
+		case ID_PLANT:
+			node->setFlag(TN_PLANT);
+			break;
 		case ID_TEXTURE:
 			{
 				TNtexture *tex=(TNtexture *)node;
@@ -784,6 +805,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_CRATERS:
 	case TN_TEXTURE:
 	case TN_SPRITE:
+	case TN_PLANT:
 	case TN_FOG:
 	case TN_SNOW:
 	case TN_ERODE:

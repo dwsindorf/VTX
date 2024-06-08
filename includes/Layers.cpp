@@ -1,4 +1,4 @@
-#include "TerrainMgr.h"
+#include "TerrainClass.h"
 #include "Layers.h"
 #include "MapNode.h"
 #include "MapClass.h"
@@ -48,6 +48,16 @@ NameList<LongSym*> LOpts(lopts,sizeof(lopts)/sizeof(LongSym));
 //************************************************************
 TNmap::TNmap(TNode *l, TNode *r) :  TNfunc(l,r)
 {
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;	
+	}
+
 	margin=0.1;
 	mdrop=DFLT_DROP;
 	mmorph=0;
@@ -294,7 +304,7 @@ void TNmap::eval()
 		double args[6];
 		int n=0;
   		TNarg *arg=(TNarg*)left;
-
+ 
 		if(arg)
 			n=getargs(arg,args,6);
 		mht=n>0?args[0]:0;
