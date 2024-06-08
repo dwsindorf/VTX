@@ -75,6 +75,9 @@
 // 7) implement 3d branches (DONE)
 //   - generate a "cone" for each branch vector in geometry shader
 // 8) use lists to increase render speed
+//   - display lists actually degrade performance (at least when the vertex count is high)
+//   - COMPILE followed by callList step very costly compared to just rendering directly (10x worse ?)
+//   - if COMPILE skipped (just callList) performance is about the same as direct render for small model
 // 9) generate wxWidgets classes for plants
 //    - optional support preview window with option to save generated imaged as sprites
 	
@@ -113,6 +116,12 @@
 //   - also, direction of side branch should be on same side as offset
 // 7) 3d issues
 //   - branch dimensions and shapes change when aspect ratio and size of window are changed 
+//   - initial width way too thick in some cases
+// Limitations
+// 1) currently implemented in render pass so can't project shadows 
+//   - for 3d mode could generate plants (at least branches) prior to shadow pass
+//   - lists would be a good thing to use for this (could recall them during render pass)
+
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -420,10 +429,18 @@ bool PlantMgr::setProgram(){
 	}
 	
 	glEnable(GL_BLEND);
+	glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	//TNplant::clearStats();
 
+//#define USE_CALL_LISTS
+#ifdef USE_CALL_LISTS
+	if(TheMap->callLists[PLANT_LISTS][0]==0){
+		TheMap->callLists[PLANT_LISTS][0]=glGenLists(1);
+	glNewList(TheMap->callLists[PLANT_LISTS][0], GL_COMPILE);
+#endif
 	TNLeaf::free();
-
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
@@ -435,6 +452,7 @@ bool PlantMgr::setProgram(){
 		plant->size=s->radius; // placement size
 		plant->base_point=s->base*(1-plant->size*plant->base_drop);
 		plant->pntsize=s->pntsize;
+		plant->distance=s->distance;
 		
 		Point pp=Point(s->point.x,s->point.y,s->point.x);
 		
@@ -442,15 +460,20 @@ bool PlantMgr::setProgram(){
 		randval=256*fabs(r)+id;
 		plant->emit();
 	}
-
 	TNLeaf::render();
-
-	randval=l;
 #ifdef SHOW_BRANCH_STATS
 	for(int i=0;i<tp->plants.size;i++){
 		tp->plants[i]->showStats();
 	}
 #endif
+
+#ifdef USE_CALL_LISTS
+		glEndList();
+	}
+	glCallList(TheMap->callLists[PLANT_LISTS][0]);
+#endif
+
+	randval=l;
 
 	return true;
 }
@@ -642,6 +665,7 @@ void Plant::collect()
 			double d=bp.distance(TheScene->vpoint);  // distance	
 			double r=TheMap->radius*s->radius;
 			double f=TheScene->wscale*r/d;
+			//cout<<r<<" "<<f<<" "<<r/f<<endl;
 		    double pts=f;
 		    double minv=MIN_VISITS; 
 		    bool pts_test=true;
@@ -667,8 +691,7 @@ void Plant::collect()
 	cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
 #endif
 
-	} // next plant
-	//}
+	}
     cout<<"total plants collected:"<<plants.size<<endl;
 	plants.sort();
 #ifdef SHOW
@@ -739,6 +762,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	width_scale=1;
 	size_scale=1;
 	rendered=0;
+	distance=0;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -1024,22 +1048,20 @@ void TNplant::emit(){
 	else
 		return;
 	double branch_size=length*first_branch->length;
-	//cout<<width_scale<<endl;
+	//cout<<first_branch->width<<endl;
 
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
-	//cout<<TheScene->wscale<<endl;
-	//size_scale=pntsize/TheScene->wscale/first_branch->length;
 	//double start_width=size_scale*first_branch->length;
-	
+	// pntsize= TheMap->radius*radius/distance
+	// start_width=TheMap->radius*radius*width_scale*first_branch->length
 	double start_width=width_scale*pntsize*first_branch->length;
-	size_scale=	width_scale*pntsize;
+	size_scale=	pntsize*width_scale/first_branch->length;
 	Point tip;
-	tip.x=first_branch->width*start_width/TheScene->wscale;
+	tip.x=start_width;///TheScene->wscale;
 	tip.y=0;
 	tip.z=0;
-	glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;

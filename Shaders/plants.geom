@@ -204,7 +204,7 @@ vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 
 // draw a branch as a polygon
 void emitBranch(){
-   Pnorm.w=0.025;
+   Pnorm.w=0.05;
 
    vec4 p1=Pos1;
    vec4 p2=Pos2;
@@ -225,7 +225,7 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 // draw a branch as a spline
 void emitSpline(){
  
-    Pnorm.w=0.025;  
+    Pnorm.w=0.05;  
     vec4 p1=Pos1;
     vec4 p2=Pos2;       
     vec4 p0=Pos0;
@@ -283,7 +283,7 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    float r2=scale*c.y;
    float t1=c.z;
    float t2=c.w;
-   Pnorm.w=0.01;
+   Pnorm.w=0.02;
    vec3 axis1 = pnt1.xyz - pnt0.xyz;
    vec3 axis2 = pnt2.xyz - pnt1.xyz;
 

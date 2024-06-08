@@ -254,7 +254,7 @@ Point MapData::tvector()
 #define TEST_SPRITES
 #define TEST_PLANTS
 //#define TEST_CRATERS
-#define TEST_DENSITY
+//#define TEST_DENSITY
 
 #define TEST_COLOR
 

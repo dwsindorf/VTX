@@ -21,7 +21,8 @@ class Triangle;
 		RASTER_LISTS = 1,
 		NORMAL_LISTS = 2,
 		ZVAL_LISTS = 3,
-		LISTTYPES = 4,
+		PLANT_LISTS = 4,
+		LISTTYPES = 5,
 		MAXLISTS=32,
 	};
 

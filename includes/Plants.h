@@ -100,6 +100,7 @@ public:
 	double radius;
 	double size;
 	double pntsize;
+	double distance;
 	double maxdensity;
 	double base_drop;
 	double width_scale;

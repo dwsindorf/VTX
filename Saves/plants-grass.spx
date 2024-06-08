@@ -3,7 +3,7 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55633;
 		theta=24.4366;
-		height=43.546 ft;
+		height=30.7292 ft;
 		gndlvl=10512.5 ft;
 		time=200873;
 		vstride=0.02;
@@ -12,9 +12,9 @@ Scene() {
 		zoom=0.004;
 		minh=1.13636e-09;
 		minr=0.00400199;
-		heading=138;
-		tilt=-14;
-		angle=-23;
+		heading=151;
+		tilt=-11;
+		angle=-19;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
@@ -56,8 +56,8 @@ Scene() {
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("bush",1,2e-07,0.8,0.5,0.2,0,0,0,0.5)
-								Branch("stem",10,1,0.1,1,1,0.4,0.1,0.8,1.3,100)[Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY))];
+								Plant("bush",1,2e-07,0.8,0.5,0.2,0,0,0,1.4)
+								Branch("stem",10,1,0.3,1,1,0.4,0.1,0.8,1.2,100)[Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY))];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);
