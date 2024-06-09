@@ -121,7 +121,7 @@ public:
 	const char *typeName ()	{ return "plant";}
 	const char *symbol()	{ return "Plant";}
 
-	bool isLeaf()			{ return true;}
+	bool isLeaf()			{ return false;}
 	int linkable()          { return 1;}
 	void valueString(char *);
 	void save(FILE*);
@@ -194,6 +194,9 @@ public:
 	void setColorFlags();
 	void invalidateTexture();
 	void setImage(char *);
+	bool isLeaf()			{ return false;}
+	//int linkable()          { return 1;}
+
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
@@ -236,6 +239,10 @@ public:
 	static void free() { leafs.free();}
 	static void sort() { leafs.sort();}	
 	static ValueList<LeafData*> leafs;
+	
+	bool isLeaf()			{ return true;}
+	int linkable()          { return false;}
+
 
 };
 

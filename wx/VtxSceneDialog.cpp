@@ -46,8 +46,9 @@
 #include "VtxHaloTabs.h"
 #include "VtxSpritesTabs.h"
 #include "VtxPlantTabs.h"
+#include "VtxBranchTabs.h"
 
-//#define PRINT_TREE
+#define PRINT_TREE
 
 //#define DEBUG_TREE_ACTIONS
 
@@ -143,6 +144,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_TEXTURE,VtxTexTabs)
 	SET_TABS_OBJECT(TN_SPRITE,VtxSpritesTabs)
 	SET_TABS_OBJECT(TN_PLANT,VtxPlantTabs)
+	SET_TABS_OBJECT(TN_PLANT_BRANCH,VtxBranchTabs)
 	SET_TABS_OBJECT(TN_COLOR,VtxColorTabs)
 	SET_TABS_OBJECT(TN_POINT,VtxPointTabs)
 	SET_TABS_OBJECT(TN_GLOSS,VtxGlossTabs)

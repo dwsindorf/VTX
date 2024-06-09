@@ -1113,7 +1113,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	randomness=0.25;
 	max_splits=4;
 	first_bias=0;
-	flatness=0.9;
+	flatness=0.0;
 	divergence=0.75;
 	min_level=0;
 	max_level=1;

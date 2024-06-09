@@ -70,6 +70,7 @@ SRC_FILES        = \
              VtxHaloTabs.cpp \
              VtxSpritesTabs.cpp \
              VtxPlantTabs.cpp \
+             VtxBranchTabs.cpp \
 
 OBJS= $(SRC_FILES:%.cpp=$(OBJDIR)/%.o)
 
@@ -2148,6 +2149,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Debug/VtxHaloTabs.o:	VtxHaloTabs.cpp
 ../Debug/VtxSpritesTabs.o:	VtxSpritesTabs.cpp
 ../Debug/VtxPlantTabs.o:	VtxPlantTabs.cpp
+../Debug/VtxBranchTabs.o:	VtxBranchTabs.cpp
 ../Release/VtxBandsTabs.o: VtxBandsTabs.cpp
 ../Release/VtxCloudsTabs.o: VtxCloudsTabs.cpp
 ../Release/VtxColorTabs.o: VtxColorTabs.cpp
@@ -2195,6 +2197,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Release/VtxHaloTabs.o: VtxHaloTabs.cpp
 ../Release/VtxSpritesTabs.o: VtxSpritesTabs.cpp
 ../Release/VtxPlantTabs.o: VtxPlantTabs.cpp
+../Release/VtxBranchTabs.o: VtxBranchTabs.cpp
 ../Debug/VtxBandsTabs.o:	VtxBandsTabs.cpp
 ../Debug/VtxCloudsTabs.o:	VtxCloudsTabs.cpp
 ../Debug/VtxColorTabs.o:	VtxColorTabs.cpp

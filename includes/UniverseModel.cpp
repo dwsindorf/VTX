@@ -444,9 +444,6 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(obj->collapsed() && obj->getParent())
 			return getAddList(obj->getParent(),list);
 		break;
-	case TN_PLANT:
-		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
-		break;
 	case TN_PLANT_BRANCH:
 		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
 		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
@@ -525,6 +522,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_SNOW:
 	case TN_TEXTURE:
 	case TN_SPRITE:
+	case TN_PLANT:
 	case TN_POINT:
 	case TN_COLOR:
 	case TN_GLOSS:
@@ -656,6 +654,14 @@ void UniverseModel::setType(NodeIF *node)
 			node->setFlag(TN_MAP);
 			node->setFlag(TN_BRANCH);
 			break;
+		case ID_PLANT:
+			node->setFlag(TN_PLANT);
+			node->setFlag(TN_BRANCH);
+			break;
+		case ID_BRANCH:
+			node->setFlag(TN_PLANT_BRANCH);
+			node->setFlag(TN_HIDEFLAG);
+			break;
 		case ID_FOG:
 			node->setFlag(TN_FOG);
 			break;
@@ -701,9 +707,6 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_SPRITE:
 			node->setFlag(TN_SPRITE);
-			break;
-		case ID_PLANT:
-			node->setFlag(TN_PLANT);
 			break;
 		case ID_TEXTURE:
 			{
@@ -876,6 +879,10 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		break;
 	case TN_LAYER:
     	if(ptype!=TN_MAP)
+  			parent=parent->getParent();
+		break;
+	case TN_PLANT_BRANCH:
+    	if(ptype!=TN_PLANT)
   			parent=parent->getParent();
 		break;
 	}

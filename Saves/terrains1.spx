@@ -391,7 +391,8 @@ Scene() {
 						terrain=fog(noise(GRADIENT|SQR|UNS,8,5,0.5)*(1-DEPTH))
 								water(noise(GRADIENT|NABS|SCALE|SQR,22,3.2,0.7,0.5,2,0.1,1,0.59,0))
 								snow(-3,0.1,1,0.88,0.9,0.14)
-								fractal(14,3,0.1,0.1)map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,2)
+								fractal(14,3,0.1,0.1)
+								map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,2)
 								layer("shore",MORPH,0,0.5-0.3*noise(GRADIENT|RO1,3,7,0.4,0.2))
 									[rocks(ID2,2,0.0001,0.73,0.43,0.2,0.3,0.5,noise(GRADIENT|NABS|NEG|SQR,1,8,0,0.3,2.1,0.8,-0.15,1,0))[
 									Texture("lava2",NORM|S,0.1*BMPHT,0.0625,1.10812,1,0,1,2,1)+

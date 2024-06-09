@@ -522,7 +522,7 @@ root_expr
     : YY_ROOT '(' arg_list ')'
     						{ $$=new TNplant($3, 0);APOP;}
  
-    | YY_ROOT '(' arg_list ')' branch_expr
+    | YY_ROOT '(' arg_list ')' expr
     						{ $$=new TNplant($3, $5);APOP;}
 
 item_name
