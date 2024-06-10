@@ -171,14 +171,14 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
  	
     level->Add(new wxStaticText(panel,-1,"Max",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
-    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),10, levels);
+    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),11, levels);
     m_max_level->SetSelection(1);
     
     level->Add(m_max_level, 0, wxALIGN_LEFT|wxALL, 3);
 
     level->Add(new wxStaticText(panel,-1,"Min",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
-    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),10, levels);
+    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),11, levels);
     m_min_level->SetSelection(0);
     
     level->Add(m_min_level, 0, wxALIGN_LEFT|wxALL, 3);
@@ -344,8 +344,7 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 }
 void VtxBranchTabs::makeFileList(wxString name){
 	char sdir[512];
-   // cout<<"VtxSpritesTabs::makeFileList "<<name<<" "<<dim<<endl;
-	object()->getImageDir(0,sdir);
+ 	object()->getImageDir(0,sdir);
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
@@ -369,11 +368,9 @@ void VtxBranchTabs::makeFileList(wxString name){
 	choices->Append(files);
 	if(image_name.IsEmpty())
 		choices->SetSelection(0);
-	//update_needed=true;
 
  	if(image_name.IsEmpty())
  		image_name=choices->GetStringSelection();
- 	//sceneDialog->setNodeName((char*)image_name.ToAscii());
   	choices->SetStringSelection(image_name);
 
 }
@@ -463,10 +460,12 @@ void VtxBranchTabs::setObjAttributes(){
 		obj->setImage((char*)image_name.ToAscii());
 		setImagePanel();
 	}
-	wxString expr=getExpr();
+	wxString expr=getColorExpr();
 	char *cstr=(char*)expr.ToAscii();
     //TNcolor *color=getColorFromExpr();
     obj->setColorExpr(cstr);
+    obj->setExpr((char*)s.ToAscii());
+	obj->applyExpr();
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
@@ -485,68 +484,23 @@ void VtxBranchTabs::getObjAttributes(){
 	update_needed=false;
 
 	TNBranch *obj=object();
+	obj->initArgs();
 
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
-	m_max_level->SetSelection(obj->max_level);
+	m_max_level->SetSelection((int)obj->max_level);
 	m_min_level->SetSelection(obj->min_level);
+	SplitsSlider->setValue(obj->max_splits);
+	LengthSlider->setValue(obj->length);
+	WidthSlider->setValue(obj->width);
+	RandSlider->setValue(obj->randomness);
+	DivergenceSlider->setValue(obj->divergence);
+	FlatnessSlider->setValue(obj->flatness);
+	WidthTaperSlider->setValue(obj->width_taper);
+	LengthTaperSlider->setValue(obj->length_taper);
+	FirstBiasSlider->setValue(obj->first_bias);
 
-	TNarg &args=*((TNarg *)obj->left);
-	TNode *a=args[1];
-
-	if(a)
-		SplitsSlider->setValue(a);
-	else
-		SplitsSlider->setValue(1);
-
-	a=args[2];
-	if(a)
-		LengthSlider->setValue(a);
-	else
-		LengthSlider->setValue(1);
-	
-	a=args[3];
-	if(a)
-		WidthSlider->setValue(a);
-	else
-		WidthSlider->setValue(1);
-
-	a=args[4];
-	if(a)
-		RandSlider->setValue(a);
-	else
-		RandSlider->setValue(1);
-
-	a=args[5];
-	if(a)
-		DivergenceSlider->setValue(a);
-	else
-		DivergenceSlider->setValue(0.5);
-
-	a=args[6];
-	if(a)
-		FlatnessSlider->setValue(a);
-	else
-		FlatnessSlider->setValue(0.0);
-
-	a=args[7];
-	if(a)
-		WidthTaperSlider->setValue(a);
-	else
-		WidthTaperSlider->setValue(0.75);
-
-	a=args[8];
-	if(a)
-		LengthTaperSlider->setValue(a);
-	else
-		LengthTaperSlider->setValue(0.75);
-
-	a=args[9];
-	if(a)
-		FirstBiasSlider->setValue(a);
-	else
-		FirstBiasSlider->setValue(0.0);
 	
 	image_name=obj->getImageName();
 	makeFileList(image_name);
@@ -583,7 +537,7 @@ void VtxBranchTabs::getObjAttributes(){
 
 }
 
-wxString VtxBranchTabs::getExpr(){
+wxString VtxBranchTabs::getColorExpr(){
 	char red[MAXSTR]="0.0";
 	char green[MAXSTR]="0.0";
 	char blue[MAXSTR]="0.0";
@@ -602,7 +556,7 @@ wxString VtxBranchTabs::getExpr(){
 }
 
 TNcolor* VtxBranchTabs::getColorFromExpr(){
-	wxString expr=getExpr();
+	wxString expr=getColorExpr();
 	TNcolor *tnode=(TNcolor*)TheScene->parse_node((char *)expr.ToAscii());
 	return tnode;
 }
@@ -683,7 +637,7 @@ void VtxBranchTabs::OnRevert(wxCommandEvent& event){
 	//m_last_expr=new_expr;
 }
 void VtxBranchTabs::saveLastExpr(){
-    m_last_expr=getExpr();
+    m_last_expr=getColorExpr();
 }
 void VtxBranchTabs::OnChangedExpr(wxCommandEvent& event){
 	setColorFromExpr();

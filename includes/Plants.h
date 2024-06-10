@@ -183,7 +183,8 @@ public:
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
 	
-	virtual void init();
+	void init();
+	virtual void initArgs();
 	void eval();
 	void valueString(char *);
 	void save(FILE*);

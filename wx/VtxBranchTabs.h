@@ -74,7 +74,7 @@ protected:
 	bool revert_needed;
 	wxString m_last_expr;
 	    
-    wxString getExpr();
+    wxString getColorExpr();
 	void setColorFromExpr();
 	void setExprFromColor();
 	TNcolor* getColorFromExpr();
