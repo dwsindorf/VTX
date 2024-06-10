@@ -114,7 +114,6 @@ TNode *TNmap::operator[](int i)
 NodeIF *TNmap::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
-
 	if(x->typeValue()!=ID_LAYER){
 		int t=MESH;
 		if(right)

@@ -852,6 +852,15 @@ void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
+int TNplant::getChildren(LinkedList<NodeIF*>&l){
+	if(right && right->typeValue()==ID_BRANCH){
+		l.add(right);
+		return 1;
+	}
+	return 0;
+
+	//return TNfunc::getChildren(l);
+}
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node
 //-------------------------------------------------------------
@@ -1120,11 +1129,15 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	root=0;
 	image=0;
 	texname[0]=0;
+	colorexpr[0]=0;
 	texture_id=0;
 	texid=-1;
 	instance=0;
 	color_flags=0;
+	color=0;
 	alpha_texture=false;
+	getTextureName();
+	getColorString();
 }
 
 void TNBranch::init(){
@@ -1150,7 +1163,13 @@ void TNBranch::init(){
 	level=0;
 	branch_id=root->branches;
 	root->branches+=1;
-	setTexture();
+	//setTexture();
+	setColorFromExpr();
+	if(base){
+		delete base;
+		base=0;
+	}
+
 	setColorFlags();
 	//cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
 	
@@ -1206,19 +1225,52 @@ bool TNBranch::setProgram(){
 //-------------------------------------------------------------
 void TNBranch::setImage(char *name){
 	if(strcmp(name,texname)){
-		if(image)
-			delete image;
-		invalidateTexture();
+		//if(image)
+		//	delete image;
 		strcpy(texname,name);				
-		image=images.load(texname,JPG);
-		if(image)
-			cout<<"image created for "<<texname<<endl;
+		Image *simage=images.load(texname,BMP|JPG);
+		if(simage)
+			cout<<"image loaded for "<<texname<<endl;
 		else
 			cout<<"image file "<<texname<<" not found"<<endl;
+		image=simage;
+		invalidateTexture();
 	}
 }
+void TNBranch::setColorFromExpr(){
+	if(strlen(colorexpr)){
+		if(color)
+			delete color;
+		color=(TNcolor*)TheScene->parse_node(colorexpr);
+	}
+}
+void TNBranch::setColorExpr(char *expr){
+	if(strcmp(expr,colorexpr)){
+		strcpy(colorexpr,expr);
+		setColorFromExpr();
+	}
+	
+}
+void TNBranch::setColor(TNcolor* c){
+	if(color)
+		delete color;
+	color=c;
+}
+TNcolor* TNBranch::getColor(){
+	return color;
+}
 
-void TNBranch::setTexture(){
+void TNBranch::getImageDir(int dim,char *dir){
+	char base[256];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Textures/Plants/Branch",base);
+}
+void TNBranch::getImageFilePath(char* name,int dim,char *dir){
+	char dimdir[512];
+	getImageDir(dim,dimdir);
+  	sprintf(dir,"%s/%s",dimdir,name);
+}
+void TNBranch::getTextureName(){
 	if(base){
 		TNarg *arg=((TNarg *)base);
 		while(arg){
@@ -1235,37 +1287,36 @@ void TNBranch::setTexture(){
 		}
 	}
 }
-void TNBranch::setColorFlags(){
-	TNarg *arg;
-	color_flags=0;
-	Density=0;
+void TNBranch::getColorString (){
 	if(base){
-		arg=(TNarg*)base;
+		TNarg *arg=((TNarg *)base);
 		while(arg){
-			if(arg->left->typeValue()==ID_COLOR){		
-				color_flags=1;
-				int comps=((TNcolor*)arg->left)->comps();
-				if(comps==4)
-					color_flags=2;
+			TNode *node=arg->left;
+			if(node->typeValue()==ID_COLOR){
+				node->valueString(colorexpr);
+				//setColorFromExpr();
+				cout<<colorexpr<<endl;
 				return;
-			}
+			}			
 			arg=arg->next();
 		}
 	}
+
+}
+void TNBranch::setColorFlags(){
+	color_flags=0;
+	if(color){
+		color_flags=1;
+		int comps=color->comps();
+		if(comps==4)
+			color_flags=2;		
+	}
 }
 void TNBranch::setColor(){
-	TNarg *arg;
-	if(base && color_flags){
-		arg=(TNarg*)base;
-		while(arg){
-			S0.clr_cvalid();
-			arg->left->eval();
-			if(S0.cvalid()){
-				glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
-				return;
-			}
-			arg=arg->next();
-		}
+	if(color){
+		S0.clr_cvalid();
+		color->eval();
+		glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
 	}
 }
 Point TNBranch::setVector(Point vec, Point start, int lvl){
@@ -1631,9 +1682,15 @@ void TNBranch::save(FILE *f){
 		left->save(f);
 	}
 	fprintf(f,")");
-	if(base){
+	if(strlen(texname)||strlen(colorexpr)){
 		fprintf(f,"[");
-		base->save(f);
+		if(strlen(texname)){
+			fprintf(f,"\"%s\"",texname);
+			if(strlen(colorexpr))
+				fprintf(f,",");				
+		}
+		if(strlen(colorexpr))
+			fprintf(f,"%s",colorexpr);
 		fprintf(f,"]");
 	}
 	if(right)
@@ -1647,6 +1704,14 @@ void TNBranch::eval(){
 		right->eval();
 }
 
+int TNBranch::getChildren(LinkedList<NodeIF*>&l){
+//	if(right && right->typeValue()!=ID_PLANT){
+//		l.add(right);
+//		return 1;
+//	}
+//	return 0;
+	return TNfunc::getChildren(l);
+}
 //===================== TNleaf ==============================
 //************************************************************
 // TNLeaf class
@@ -1680,4 +1745,9 @@ void TNLeaf::render(){
 		LeafData *s=TNLeaf::leafs[i];
 		s->render();
 	}
+}
+void TNLeaf::getImageDir(int dim,char *dir){
+	char base[256];
+  	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Textures/Plants/Leaf",base);
 }

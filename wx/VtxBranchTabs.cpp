@@ -2,6 +2,8 @@
 #include "VtxBranchTabs.h"
 #include "VtxSceneDialog.h"
 #include "AdaptOptions.h"
+#include "FileUtil.h"
+#include <TerrainClass.h>
 
 
 #include <wx/filefn.h>
@@ -46,6 +48,14 @@ enum{
 	ID_FIRST_BIAS_SLDR,
 	ID_FIRST_BIAS_TEXT,
 	ID_FROM_END,
+	ID_FILELIST,
+    ID_RED,
+    ID_GREEN,
+    ID_BLUE,
+    ID_ALPHA,
+    ID_COL,
+    ID_REVERT
+
 };
 
 #define NAME_WIDTH  50
@@ -70,6 +80,7 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxBranchTabs::OnAddItem)
 
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
+EVT_CHOICE(ID_FILELIST,VtxBranchTabs::OnChangedFile)
 
 SET_SLIDER_EVENTS(SPLITS,VtxBranchTabs,Splits)
 SET_SLIDER_EVENTS(LENGTH,VtxBranchTabs,Length)
@@ -80,6 +91,13 @@ SET_SLIDER_EVENTS(FLATNESS,VtxBranchTabs,Flatness)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxBranchTabs,WidthTaper)
 SET_SLIDER_EVENTS(LENGTH_TAPER,VtxBranchTabs,LengthTaper)
 SET_SLIDER_EVENTS(FIRST_BIAS,VtxBranchTabs,FirstBias)
+
+EVT_TEXT_ENTER(ID_RED,VtxBranchTabs::OnChangedExpr)
+EVT_TEXT_ENTER(ID_GREEN,VtxBranchTabs::OnChangedExpr)
+EVT_TEXT_ENTER(ID_BLUE,VtxBranchTabs::OnChangedExpr)
+EVT_TEXT_ENTER(ID_ALPHA,VtxBranchTabs::OnChangedExpr)
+EVT_COLOURPICKER_CHANGED(ID_COL,VtxBranchTabs::OnChangedColor)
+EVT_BUTTON(ID_REVERT,VtxBranchTabs::OnRevert)
 
 END_EVENT_TABLE()
 
@@ -108,6 +126,13 @@ bool VtxBranchTabs::Create(wxWindow* parent,
  	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
  	AddPropertiesTab(page);
     AddPage(page,wxT("Properties"),true);
+    page=new wxPanel(this,wxID_ANY);
+	AddImageTab(page);
+    AddPage(page,wxT("Texture"),false);
+    page=new wxPanel(this,wxID_ANY);
+	AddColorTab(page);
+    AddPage(page,wxT("Color"),false);
+
     return true;
 }
 
@@ -244,6 +269,146 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 }
 
+void VtxBranchTabs::AddImageTab(wxWindow *panel){
+	
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+    wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+
+	wxStaticBoxSizer* image_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Image"));
+
+	wxStaticText *lbl=new wxStaticText(panel,-1,"File",wxDefaultPosition,wxSize(25,-1));
+	image_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
+	//hline->AddSpacer(5);
+
+    choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    choices->SetSelection(0);
+
+    image_cntrls->Add(choices,0,wxALIGN_LEFT|wxALL,1);
+    boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
+    
+    image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Preview"));
+	image_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(400,400));
+	image_sizer->Add(image_window, 0, wxALIGN_LEFT|wxALL,2);
+
+	boxSizer->Add(image_sizer,0,wxALIGN_LEFT|wxALL,0);
+
+}
+void VtxBranchTabs::AddColorTab(wxWindow *panel){
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+
+	m_r_expr = new ExprTextCtrl(panel,ID_RED,"",0,TABS_WIDTH-60-TABS_BORDER);
+	m_g_expr = new ExprTextCtrl(panel,ID_GREEN,"",0,TABS_WIDTH-60-TABS_BORDER);
+	m_b_expr = new ExprTextCtrl(panel,ID_BLUE,"",0,TABS_WIDTH-60-TABS_BORDER);
+	m_a_expr = new ExprTextCtrl(panel,ID_ALPHA,"",0,TABS_WIDTH-60-TABS_BORDER);
+
+    wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	hline->Add(new wxStaticText(panel, -1, "Red", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(m_r_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	hline->Add(new wxStaticText(panel, -1, "Green", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(m_g_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	hline->Add(new wxStaticText(panel, -1, "Blue", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(m_b_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	hline->Add(new wxStaticText(panel, -1, "Alpha", wxDefaultPosition, wxSize(50,-1)),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(m_a_expr->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	wxColor col("RGB(255,255,255)");
+	//wxStaticText *label=new wxStaticText(panel,-1,"Auto" ,wxDefaultPosition,wxSize(50,-1));
+	//hline->Add(label,0,wxALIGN_LEFT|wxALL,0);
+	//m_auto_check=new wxCheckBox(panel, ID_AUTO, "");
+	//hline->Add(m_auto_check,0,wxALIGN_LEFT|wxALL,4);
+	m_color_chooser=new wxColourPickerCtrl(panel,ID_COL,col,wxDefaultPosition, wxSize(50,-1));
+	hline->Add(m_color_chooser,0,wxALIGN_LEFT|wxALL,4);
+	m_revert=new wxButton(panel,ID_REVERT,"Revert",wxDefaultPosition, wxSize(50,-1));
+	hline->Add(m_revert,0,wxALIGN_LEFT|wxALL,4);
+	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	//revert_needed=false;
+	//m_revert->Enable(revert_needed);
+
+}
+void VtxBranchTabs::makeFileList(wxString name){
+	char sdir[512];
+   // cout<<"VtxSpritesTabs::makeFileList "<<name<<" "<<dim<<endl;
+	object()->getImageDir(0,sdir);
+
+ 	wxDir dir(sdir);
+ 	if ( !dir.IsOpened() )
+ 	{
+ 	    // deal with the error here - wxDir would already log an error message
+ 	    // explaining the exact reason of the failure
+ 	    return;
+ 	}
+ 	image_name=name;
+	files.Clear();
+	wxString filename;
+	bool cont = dir.GetFirst(&filename);
+	while ( cont ) {
+		filename=filename.Before('.');
+		files.Add(filename);
+		cont = dir.GetNext(&filename);
+		cout<<filename<<endl;
+	}
+	files.Sort();
+	choices->Clear();
+	choices->Append(files);
+	if(image_name.IsEmpty())
+		choices->SetSelection(0);
+	//update_needed=true;
+
+ 	if(image_name.IsEmpty())
+ 		image_name=choices->GetStringSelection();
+ 	//sceneDialog->setNodeName((char*)image_name.ToAscii());
+  	choices->SetStringSelection(image_name);
+
+}
+
+void VtxBranchTabs::OnChangedFile(wxCommandEvent& event){
+	setObjAttributes();	
+}
+void VtxBranchTabs::setImagePanel(){
+	char dir[512];
+	char path[512];
+	char sdir[512]={0};
+
+	object()->getImageFilePath((char*)image_name.ToAscii(),0,dir);
+	sprintf(path,"%s.jpg",dir);
+	if(FileUtil::fileExists(path)){
+		strcpy(sdir,path);
+		image_window->setScaledImage(sdir,wxBITMAP_TYPE_JPEG);
+	}
+	else{
+		sprintf(path,"%s.bmp",dir);
+		if(FileUtil::fileExists(path)){
+			strcpy(sdir,path);	
+			image_window->setScaledImage(sdir,wxBITMAP_TYPE_BMP);
+		}
+	}
+	cout<<"path:"<<path<<" sdir:"<<sdir<<endl;
+	if(strlen(sdir)==0)
+		return;
+	wxString ipath(sdir);
+	if(ipath!=image_path){
+		image_path=ipath;
+	}
+
+}
+
 void VtxBranchTabs::updateControls(){
 	if(update_needed){
 		getObjAttributes();
@@ -291,14 +456,21 @@ void VtxBranchTabs::setObjAttributes(){
 	TNBranch *obj=object();
 
 	wxString s=exprString();
-	
+
+	wxString str=choices->GetStringSelection();
+	if(str!=wxEmptyString){
+		image_name=str;
+		obj->setImage((char*)image_name.ToAscii());
+		setImagePanel();
+	}
+	wxString expr=getExpr();
+	char *cstr=(char*)expr.ToAscii();
+    //TNcolor *color=getColorFromExpr();
+    obj->setColorExpr(cstr);
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
-	cout<<"set:"<<s.ToAscii()<<endl;
-
-	obj->setExpr((char*)s.ToAscii());
-	obj->applyExpr();
+	cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
 	TheView->set_changed_detail();
 	TheScene->rebuild();
 
@@ -375,8 +547,150 @@ void VtxBranchTabs::getObjAttributes(){
 		FirstBiasSlider->setValue(a);
 	else
 		FirstBiasSlider->setValue(0.0);
+	
+	image_name=obj->getImageName();
+	makeFileList(image_name);
+	setImagePanel();
+	
+	TNcolor *tnode=obj->getColor();
+    if(tnode){
+		char red[128]={0};
+		char green[128]={0};
+		char blue[128]={0};
+		char alpha[128]={0};
+	
+		TNarg &args=*((TNarg *)tnode->right);
+	
+		args[0]->valueString(red);
+		args[1]->valueString(green);
+		args[2]->valueString(blue);
+		if(args[3])
+			args[3]->valueString(alpha);
+		else
+			strcpy(alpha,"1.0");
+	
+		m_r_expr->SetValue(red);
+		m_g_expr->SetValue(green);
+		m_b_expr->SetValue(blue);
+		m_a_expr->SetValue(alpha);
+	
+		setColorFromExpr();
+		saveLastExpr();
+    }
+    
+	update_needed=false;
+
 
 }
 
+wxString VtxBranchTabs::getExpr(){
+	char red[MAXSTR]="0.0";
+	char green[MAXSTR]="0.0";
+	char blue[MAXSTR]="0.0";
+	char alpha[MAXSTR]="1.0";
+	if(strlen(m_r_expr->GetValue().ToAscii()))
+		strcpy(red,m_r_expr->GetValue().ToAscii());
+	if(strlen(m_g_expr->GetValue().ToAscii()))
+		strcpy(green,m_g_expr->GetValue().ToAscii());
+	if(strlen(m_b_expr->GetValue().ToAscii()))
+		strcpy(blue,m_b_expr->GetValue().ToAscii());
+	if(strlen(m_a_expr->GetValue().ToAscii()))
+		strcpy(alpha,m_a_expr->GetValue().ToAscii());
+	char cstr[MAXSTR];
+	sprintf(cstr,"Color(%s,%s,%s,%s)\n",red,green,blue,alpha);
+    return wxString(cstr);
+}
 
+TNcolor* VtxBranchTabs::getColorFromExpr(){
+	wxString expr=getExpr();
+	TNcolor *tnode=(TNcolor*)TheScene->parse_node((char *)expr.ToAscii());
+	return tnode;
+}
+void VtxBranchTabs::setColorFromExpr(){
+	TNcolor *tnode=getColorFromExpr();
+	if(tnode){
+		TNarg &args=*((TNarg *)tnode->right);
+		args[0]->eval();
+		bool cflag=S0.constant()?true:false;
+		unsigned char r=(unsigned char)(S0.s*255);
+		args[1]->eval();
+		cflag=S0.constant()?cflag:false;
+		unsigned char g=(unsigned char)(S0.s*255);
+		args[2]->eval();
+		cflag=S0.constant()?cflag:false;
+		unsigned char b=(unsigned char)(S0.s*255);
+		if(args[3]){
+			args[3]->eval();
+			cflag=S0.constant()?cflag:false;
+		}
+		wxColor col(r,g,b);
+		m_color_chooser->SetColour(col);
+		delete tnode;
+	}
+}
+
+void VtxBranchTabs::restoreLastExpr(){
+	char cstr[MAXSTR];
+	strcpy(cstr,m_last_expr.ToAscii());
+	if(strlen(cstr)){
+		TNcolor *tnode=(TNcolor*)TheScene->parse_node(cstr);
+		if(tnode){
+			char red[128]={0};
+			char green[128]={0};
+			char blue[128]={0};
+			char alpha[128]={0};
+			TNarg &args=*((TNarg *)tnode->right);
+			args[0]->valueString(red);
+			args[1]->valueString(green);
+			args[2]->valueString(blue);
+			if(args[3])
+				args[3]->valueString(alpha);
+			else
+				strcpy(alpha,"1.0");
+			m_r_expr->SetValue(red);
+			m_g_expr->SetValue(green);
+			m_b_expr->SetValue(blue);
+			m_a_expr->SetValue(alpha);
+			delete tnode;
+		}
+	}
+	setObjAttributes();	
+}
+void VtxBranchTabs::setExprFromColor(){
+	char red[128]={0};
+	char green[128]={0};
+	char blue[128]={0};
+	wxColor col=m_color_chooser->GetColour();
+	Color c;
+	c.set_rb(col.Red());
+	c.set_gb(col.Green());
+	c.set_bb(col.Blue());
+	sprintf(red,"%g",c.red());
+	sprintf(green,"%g",c.green());
+	sprintf(blue,"%g",c.blue());
+	m_r_expr->SetValue(red);
+	m_g_expr->SetValue(green);
+	m_b_expr->SetValue(blue);
+	m_a_expr->SetValue("1.0");
+}
+
+void VtxBranchTabs::OnRevert(wxCommandEvent& event){
+	//wxString new_expr=getExpr();
+	restoreLastExpr();
+	//invalidateObject();
+	setColorFromExpr();
+	setObjAttributes();
+	//m_last_expr=new_expr;
+}
+void VtxBranchTabs::saveLastExpr(){
+    m_last_expr=getExpr();
+}
+void VtxBranchTabs::OnChangedExpr(wxCommandEvent& event){
+	setColorFromExpr();
+	setObjAttributes();
+}
+void VtxBranchTabs::OnChangedColor(wxColourPickerEvent& event){
+	setExprFromColor();
+	setObjAttributes();
+}
 

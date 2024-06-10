@@ -140,6 +140,7 @@ public:
 	void addLeaf(int id);
 	void addSpline(int id);
 	void addSkipped(int id);
+	int getChildren(LinkedList<NodeIF*>&l);
 };
 
 //************************************************************
@@ -169,10 +170,12 @@ public:
 
 	Image *image;
 	TNplant *root;
+	TNcolor *color;
 	
 	int instance;
 
 	char texname[256];
+	char colorexpr[256];
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	
@@ -189,11 +192,19 @@ public:
 	
 	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}
 	bool isPlantBranch() { return typeValue()==ID_BRANCH;}
-	void setTexture();
+	void getTextureName();
+	void getColorString();
+	void setColorExpr(char *s);
+	char *getColorExpr(){return colorexpr;}
+	void setColorFromExpr();
 	void setColor();
+	void setColor(TNcolor*);
+	TNcolor* getColor();
 	void setColorFlags();
 	void invalidateTexture();
 	void setImage(char *);
+	char *getImageName(){return texname;}
+	void getImageFilePath(char*name,int dim,char *dir);
 	bool isLeaf()			{ return false;}
 	//int linkable()          { return 1;}
 
@@ -201,8 +212,10 @@ public:
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual Point setVector(Point vec, Point start, int lvl);
+	virtual void getImageDir(int dim,char *);
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
+	int getChildren(LinkedList<NodeIF*>&l);
 
 };
 
@@ -242,6 +255,8 @@ public:
 	
 	bool isLeaf()			{ return true;}
 	int linkable()          { return false;}
+
+	void getImageDir(int dim,char *);
 
 
 };
