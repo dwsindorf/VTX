@@ -7,18 +7,6 @@
 
 #include <Plants.h>
 
-//	if(n>0)max_level=arg[0];
-//	if(n>1)max_splits=arg[1];
-//	if(n>2)length=arg[2];
-//	if(n>3)width=arg[3];
-//	if(n>4)randomness=arg[4];
-//	if(n>5)divergence=arg[5];
-//	if(n>6)flatness=arg[6];
-//	if(n>7)width_taper=arg[7];
-//	if(n>8)length_taper=arg[8];	
-//	if(n>9)first_bias=arg[9];
-//	if(n>10)min_level=arg[10];
-
 class VtxBranchTabs : public VtxTabsMgr
 
 {
@@ -63,6 +51,9 @@ protected:
 	SliderCtrl   *FlatnessSlider;
 	
 	wxCheckBox *m_from_end;
+	wxCheckBox *m_enable;
+	wxCheckBox *m_tex_enable;
+	wxCheckBox *m_col_enable;
 	wxChoice *choices;
 	
 	ExprTextCtrl *m_r_expr;

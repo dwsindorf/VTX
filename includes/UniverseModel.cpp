@@ -894,8 +894,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);
      	}
-   	//if(ptype==TN_PLANT_BRANCH)
-  		//	parent=parent->getParent();
 		break;
 	}
 	ptype=parent->getFlag(TN_TYPES);

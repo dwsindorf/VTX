@@ -177,11 +177,19 @@ public:
 	char texname[256];
 	char colorexpr[256];
 	
+	bool tex_enabled;
+	bool col_enabled;
+	
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	
 	virtual int typeValue()	  { return ID_BRANCH;}
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
+	
+	void setTexEnabled(bool b){tex_enabled=b;}
+	void setColEnabled(bool b){col_enabled=b;}
+	bool isColEnabled() { return col_enabled;}
+	bool isTexEnabled() { return tex_enabled;}
 	
 	void init();
 	virtual void initArgs();

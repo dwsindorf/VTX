@@ -45,11 +45,11 @@ vec3 test;
 vec3 getNormal(float nscale){
 	vec3 bn=gl_NormalMatrix*nscale*Pnorm.xyz;
 	vec3 normal=Normal-bn;
-	if(LINE)
+	int texid=TEXID;
+	if(LINE || texid<0)
 		return normal;
 #ifdef BUMPS
     float bump_ampl=Pnorm.w;
-	int texid=TEXID;
 	float delta=bump_delta;
 	vec2 l_uv=gl_TexCoord[0].xy;
 	vec4 tval=texture2D(samplers2d[texid],l_uv);

@@ -24,7 +24,8 @@ enum{
 	ID_ENABLE,
 	ID_DELETE,
 	ID_SAVE,
-
+	ID_TEX_ENABLE,
+	ID_COL_ENABLE,
 	ID_NAME_TEXT,
     ID_MAX_LEVEL,
 	ID_MIN_LEVEL,
@@ -77,6 +78,10 @@ EVT_MENU(ID_DELETE,VtxBranchTabs::OnDelete)
 EVT_MENU(ID_ENABLE,VtxBranchTabs::OnEnable)
 EVT_MENU(ID_SAVE,VtxBranchTabs::OnSave)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxBranchTabs::OnAddItem)
+
+EVT_CHECKBOX(ID_FROM_END,VtxBranchTabs::OnChanged)
+EVT_CHECKBOX(ID_TEX_ENABLE,VtxBranchTabs::OnChanged)
+EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
 
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
@@ -286,6 +291,11 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
     choices->SetSelection(0);
 
     image_cntrls->Add(choices,0,wxALIGN_LEFT|wxALL,1);
+    
+    m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Enable");
+    m_tex_enable->SetValue(true);
+    image_cntrls->Add(m_tex_enable,0,wxALIGN_LEFT|wxALL,4);
+
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     
     image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Preview"));
@@ -337,6 +347,10 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 	hline->Add(m_color_chooser,0,wxALIGN_LEFT|wxALL,4);
 	m_revert=new wxButton(panel,ID_REVERT,"Revert",wxDefaultPosition, wxSize(50,-1));
 	hline->Add(m_revert,0,wxALIGN_LEFT|wxALL,4);
+    m_col_enable=new wxCheckBox(panel, ID_COL_ENABLE, "Enable");
+    m_col_enable->SetValue(true);
+	hline->Add(m_col_enable,0,wxALIGN_LEFT|wxALL,4);
+
 	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	//revert_needed=false;
 	//m_revert->Enable(revert_needed);
@@ -455,14 +469,15 @@ void VtxBranchTabs::setObjAttributes(){
 	wxString s=exprString();
 
 	wxString str=choices->GetStringSelection();
-	if(str!=wxEmptyString){
-		image_name=str;
-		obj->setImage((char*)image_name.ToAscii());
-		setImagePanel();
-	}
+	image_name=str;
+	obj->setImage((char*)image_name.ToAscii());
+	setImagePanel();
+
 	wxString expr=getColorExpr();
 	char *cstr=(char*)expr.ToAscii();
-    //TNcolor *color=getColorFromExpr();
+	obj->setTexEnabled(m_tex_enable->GetValue());
+	obj->setColEnabled(m_col_enable->GetValue());
+	
     obj->setColorExpr(cstr);
     obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
@@ -538,6 +553,7 @@ void VtxBranchTabs::getObjAttributes(){
 }
 
 wxString VtxBranchTabs::getColorExpr(){
+	char cstr[MAXSTR]={0};
 	char red[MAXSTR]="0.0";
 	char green[MAXSTR]="0.0";
 	char blue[MAXSTR]="0.0";
@@ -550,7 +566,6 @@ wxString VtxBranchTabs::getColorExpr(){
 		strcpy(blue,m_b_expr->GetValue().ToAscii());
 	if(strlen(m_a_expr->GetValue().ToAscii()))
 		strcpy(alpha,m_a_expr->GetValue().ToAscii());
-	char cstr[MAXSTR];
 	sprintf(cstr,"Color(%s,%s,%s,%s)\n",red,green,blue,alpha);
     return wxString(cstr);
 }
@@ -629,9 +644,7 @@ void VtxBranchTabs::setExprFromColor(){
 }
 
 void VtxBranchTabs::OnRevert(wxCommandEvent& event){
-	//wxString new_expr=getExpr();
 	restoreLastExpr();
-	//invalidateObject();
 	setColorFromExpr();
 	setObjAttributes();
 	//m_last_expr=new_expr;
