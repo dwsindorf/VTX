@@ -205,7 +205,13 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,1e-6,1,1,1,0,0,0)\n");
 		break;
 	case TN_PLANT:
-		sprintf(tmp,"Plant(\"plant\",1,1.2e-06,0.8,0.9,0.05)\n");
+		sprintf(tmp,"Plant(1,1e-06)");
+		break;
+	case TN_PLANT_BRANCH:
+		sprintf(tmp,"Branch(12,1,1,1)\n");
+		break;
+	case TN_PLANT_LEAF:
+		sprintf(tmp,"Leaf(1,1,10)\n");
 		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");
@@ -452,6 +458,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		break;
 	case TN_PLANT:
 		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
+		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_MAP:
 		list.add(new ModelSym("Layer",TN_LAYER));
@@ -664,6 +671,10 @@ void UniverseModel::setType(NodeIF *node)
 			node->setFlag(TN_PLANT_BRANCH);
 			node->setFlag(TN_HIDEFLAG);
 			break;
+		case ID_LEAF:
+			node->setFlag(TN_PLANT_LEAF);
+			node->setFlag(TN_HIDEFLAG);
+			break;
 		case ID_FOG:
 			node->setFlag(TN_FOG);
 			break;
@@ -795,8 +806,12 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 //-------------------------------------------------------------
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
-	if(actionmode==DROPPING && child)
+	//if(actionmode==DROPPING && child)
+	if(child)
 		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
+	else
+		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child=0"<<endl;
+
 
     int branch=node->getFlag(NODE_BRANCH);
 	TreeNode *root=new TreeNode(node);
@@ -811,6 +826,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_TEXTURE:
 	case TN_SPRITE:
 	case TN_PLANT_BRANCH:
+	case TN_PLANT_LEAF:
 	case TN_FOG:
 	case TN_SNOW:
 	case TN_ERODE:
@@ -884,6 +900,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
   			parent=parent->getParent();
 		break;
 	case TN_PLANT_BRANCH:
+	case TN_PLANT_LEAF:
     	while(ptype!=TN_PLANT){
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);

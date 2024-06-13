@@ -78,7 +78,7 @@ vec3 setLighting(vec3 BaseColor) {
  		float LdotR= dot(light,Normal);// day side diffuse lighting
 		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band 
 		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5); // reduce branch shadow in daylight
- 		vec3 normal=getNormal(nscale*day_lighting);
+ 		vec3 normal=getNormal(nscale);
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*night_lighting;
@@ -97,7 +97,7 @@ void main(void) {
 	vec4 color = Color;
 	int texid=TEXID;
 	int copt=TexVars.g+0.1;
-	int aopt=copt> 3;
+	int aopt=copt&4;
 	copt=copt&3;
 #if NTEXS >0
 	

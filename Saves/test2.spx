@@ -1,77 +1,43 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55633;
-		theta=24.4366;
-		height=11.9089 ft;
-		gndlvl=10512.5 ft;
-		time=200845;
+		phi=-5.5552;
+		theta=24.437;
+		height=16.8601 ft;
+		gndlvl=10466.8 ft;
+		time=804291;
 		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
 		minh=1.89394e-09;
-		heading=123;
-		tilt=-21;
-		angle=-4;
+		heading=10;
+		tilt=-19;
+		angle=5;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=6 ft;
-		heading=108;
-		tilt=-16;
+		time=18843.4;
+		heading=24;
+		tilt=-21;
+		angle=3;
 	}
 	View{
-		height=11.9089 ft;
-		time=200848;
-		heading=121;
-		tilt=-19;
-	}
-	View{
-		time=200850;
-	}
-	View{
-		time=200856;
-	}
-	View{
-		time=200859;
-	}
-	View{
-		time=200864;
-	}
-	View{
-		height=24.2674 ft;
+		heading=32;
 		tilt=-15;
-	}
-	View{
-		time=200867;
-		tilt=-9;
-	}
-	View{
-		time=200871;
-	}
-	View{
-		time=200876;
-	}
-	View{
-		height=17.5626 ft;
-		time=200881;
-	}
-	View{
-		height=17.377 ft;
-		time=200883;
-		tilt=-11;
+		angle=-8;
 		vstride=0.02;
 		zoom=0.004;
 		minh=1.13636e-09;
 		radius=0.00400199;
 	}
 	View{
-		height=43.0436 ft;
-		time=200894;
-		minr=0.00400199;
+		heading=45;
+		tilt=-14;
+		angle=-20;
+		minr=0.00400198;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -102,16 +68,21 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,159.581) {
+				Planet(0.004,48.5724) {
 					day=24;
-					diffuse=Color(1,1,1,0.58);
+					diffuse=Color(1,1,1,0.69);
 					hscale=0.001;
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
-						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("bush",12,1,2e-07,0.8,0.5,0.2,50,0,0,0,0.5)
-								Branch("stem",1,0.125,1,0.4,0.1,0.8,1.2,100)[Color(0.8*DENSITY+0.5*RANDVAl,0.3+IRAND*DENSITY,0.3*IRAND*(1-DENSITY))];
+						terrain=
+								Plant(1,1.09436e-06,0.8,0.2,0.1,0,0,0,0)
+								Branch(6,3.5,1.07,1,0.73,1,0.19,0.41,0.84,4,-0)["treebark1",Color(0.1*DENSITY,0.5*RED,0,DENSITY)]
+								Leaf(1,1,4.6,0.71,0.97,1,0.5,0.5,1,-1)["Leaf3",Color(URAND,RED,0,URAND)]
+								Plant("test",1,3.18819e-06,0.8,0.9,0.05,0,0,0,0)
+								Branch("trunk",12,1,1,1,0.1,0.1,0,0.85,1)["Cracks1",Color(0.5,0.25,0)]
+								Branch("branch",12,2,0.6,1,1,1,0.4,0.84,0.84,3)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
+								Leaf("leaf",1,1,12.2,0.31,1)["Leaf3",Color(0.5*URAND+0.25,0.5*RED,0,0.5*URAND)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

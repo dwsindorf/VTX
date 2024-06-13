@@ -73,13 +73,12 @@ IMPLEMENT_CLASS(VtxBranchTabs, VtxTabsMgr )
 BEGIN_EVENT_TABLE(VtxBranchTabs, VtxTabsMgr)
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxBranchTabs::OnNameText)
 
-
 EVT_MENU(ID_DELETE,VtxBranchTabs::OnDelete)
 EVT_MENU(ID_ENABLE,VtxBranchTabs::OnEnable)
 EVT_MENU(ID_SAVE,VtxBranchTabs::OnSave)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxBranchTabs::OnAddItem)
 
-EVT_CHECKBOX(ID_FROM_END,VtxBranchTabs::OnChanged)
+EVT_CHECKBOX(ID_FROM_END,VtxBranchTabs::OnChangedLevels)
 EVT_CHECKBOX(ID_TEX_ENABLE,VtxBranchTabs::OnChanged)
 EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
 
@@ -409,15 +408,20 @@ void VtxBranchTabs::setImagePanel(){
 			strcpy(sdir,path);	
 			image_window->setScaledImage(sdir,wxBITMAP_TYPE_BMP);
 		}
+		else{
+			sprintf(path,"%s.png",dir);
+			if(FileUtil::fileExists(path)){
+				strcpy(sdir,path);	
+				image_window->setScaledImage(sdir,wxBITMAP_TYPE_PNG);
+			}
+		}
 	}
-	cout<<"path:"<<path<<" sdir:"<<sdir<<endl;
 	if(strlen(sdir)==0)
 		return;
 	wxString ipath(sdir);
 	if(ipath!=image_path){
 		image_path=ipath;
 	}
-
 }
 
 void VtxBranchTabs::updateControls(){
@@ -522,14 +526,13 @@ void VtxBranchTabs::getObjAttributes(){
 	setImagePanel();
 	
 	TNcolor *tnode=obj->getColor();
-    if(tnode){
-		char red[128]={0};
-		char green[128]={0};
-		char blue[128]={0};
-		char alpha[128]={0};
-	
+
+	char red[128]="0";
+	char green[128]="0";
+	char blue[128]="0";
+	char alpha[128]="0";
+	if(tnode){
 		TNarg &args=*((TNarg *)tnode->right);
-	
 		args[0]->valueString(red);
 		args[1]->valueString(green);
 		args[2]->valueString(blue);
@@ -537,19 +540,19 @@ void VtxBranchTabs::getObjAttributes(){
 			args[3]->valueString(alpha);
 		else
 			strcpy(alpha,"1.0");
-	
-		m_r_expr->SetValue(red);
-		m_g_expr->SetValue(green);
-		m_b_expr->SetValue(blue);
-		m_a_expr->SetValue(alpha);
-	
-		setColorFromExpr();
-		saveLastExpr();
-    }
-    
+	}
+	else{
+		m_col_enable->SetValue(false);
+	}
+	m_r_expr->SetValue(red);
+	m_g_expr->SetValue(green);
+	m_b_expr->SetValue(blue);
+	m_a_expr->SetValue(alpha);
+
+	setColorFromExpr();
+	saveLastExpr();
+   
 	update_needed=false;
-
-
 }
 
 wxString VtxBranchTabs::getColorExpr(){
@@ -566,7 +569,7 @@ wxString VtxBranchTabs::getColorExpr(){
 		strcpy(blue,m_b_expr->GetValue().ToAscii());
 	if(strlen(m_a_expr->GetValue().ToAscii()))
 		strcpy(alpha,m_a_expr->GetValue().ToAscii());
-	sprintf(cstr,"Color(%s,%s,%s,%s)\n",red,green,blue,alpha);
+	sprintf(cstr,"Color(%s,%s,%s,%s)",red,green,blue,alpha);
     return wxString(cstr);
 }
 

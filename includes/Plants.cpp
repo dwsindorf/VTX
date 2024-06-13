@@ -34,7 +34,6 @@
 #define THREED_MODE 4
 
 #define ENABLE_3D
-#define OGL_SPLINE
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
 //    Primary task is to generate a set of surface positions to spawn plant instances
@@ -328,10 +327,6 @@ bool PlantMgr::setProgram(){
 
 	if(TNplant::threed)
 		sprintf(defs,"#define ENABLE_3D\n");
-
-#ifdef	OGL_SPLINE
-	sprintf(defs+strlen(defs),"#define OGL_SPLINE\n");
-#endif
 
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
@@ -752,9 +747,9 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	plant=0;
 	branches=0;
 	pntsize=0;
-	maxdensity=0;
+	maxdensity=0.1;
 	radius=0;
-	size=0;
+	size=1e-6;
 	plant_id=0;
 	last_branch=0;
 	leaf=0;
@@ -853,13 +848,13 @@ void TNplant::set_id(int i){
 	type|=i&PID;
 }
 int TNplant::getChildren(LinkedList<NodeIF*>&l){
-	if(right && right->typeValue()==ID_BRANCH){
-		l.add(right);
-		return 1;
-	}
-	return 0;
+//	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF)){
+//		l.add(right);
+//		return 1;
+//	}
+//	return 0;
 
-	//return TNfunc::getChildren(l);
+	return TNfunc::getChildren(l);
 }
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node
@@ -1037,8 +1032,38 @@ void TNplant::saveNode(FILE *f)
 	//if(addtabs)
 	    fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
+	//TNbase::saveNode(f);
+	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
+		right->saveNode(f);
+
 }
 
+NodeIF *TNplant::removeNode(){
+	NodeIF *p=getParent();
+	NodeIF *child=0;
+	if(p->typeValue()!=ID_ROOT){
+		child=p->removeChild(this);
+	}
+	TNBranch *branch=(TNBranch*)right;
+	if(!branch)
+	   return this;
+
+	TNode *next=0;
+	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
+		next=branch->right;
+		branch->right=0;
+		delete branch;
+		branch=next;
+	}
+	right=0;
+	if(next){
+		if(p->typeValue()!=ID_ROOT)
+	    	p->addChild(next);
+		else
+			p->replaceChild(this,next);
+	}
+	return this;
+}
 void TNplant::emit(){
 	if(!isEnabled())
 		return;
@@ -1137,8 +1162,8 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
 	instance=0;
 	color_flags=0;
 	color=0;
-	setColEnabled(true);
-	setTexEnabled(true);
+	col_enabled=true;
+	tex_enabled=true;
 	alpha_texture=false;
 	getTextureName();
 	getColorString();
@@ -1162,9 +1187,8 @@ void TNBranch::init(){
 		delete base;
 		base=0;
 	}
-
 	setColorFlags();
-	//cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
+	cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
 	
 	if(right)
 		right->init();
@@ -1310,7 +1334,7 @@ void TNBranch::getColorString (){
 			if(node->typeValue()==ID_COLOR){
 				node->valueString(colorexpr);
 				//setColorFromExpr();
-				cout<<colorexpr<<endl;
+				//cout<<colorexpr<<endl;
 				return;
 			}			
 			arg=arg->next();
@@ -1318,23 +1342,37 @@ void TNBranch::getColorString (){
 	}
 
 }
+
+bool TNBranch::colValid(){
+	return strlen(colorexpr)>0?true:false;
+}
+bool TNBranch::texValid(){
+	return texid>0;
+}
+
 void TNBranch::setColorFlags(){
 	color_flags=0;
-	if(color){
+	if(color && col_enabled){
 		color_flags=1;
 		int comps=color->comps();
-		if(comps==4)
-			color_flags=2;		
+		TNarg &args=*((TNarg *)color->right);
+		char alpha[256]={0};
+		if(args[3])
+			args[3]->valueString(alpha);
+		if(comps==4 && strcmp(alpha,"0"))
+			color_flags=2;
 	}
+	if(texid>=0 && tex_enabled)
+		color_flags|=4; // rect mode
 }
 void TNBranch::setColor(){
-	if(color && isColEnabled()){
+	if(color && col_enabled){
 		S0.clr_cvalid();
 		color->eval();
 		glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
 	}
 	else{
-		glColor4d(0, 0, 0,0);
+		glColor4d(0, 0, 0, 0);
 	}
 }
 Point TNBranch::setVector(Point vec, Point start, int lvl){
@@ -1497,8 +1535,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	p2 = p2-TheScene->vpoint;
 	v = bot-start; // new vector
 	
-	int tid=isTexEnabled()?texid:-1;
-
+	int tid=tex_enabled?texid:-1;
 
 	bool branch_tip=false;
 	if (child_width > MIN_LINE_WIDTH) {
@@ -1506,49 +1543,50 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
-		//if(!last_level && lvl > maxlvl) 
 		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
 		   
         if(isPlantLeaf()  && isEnabled()){  // leaf mode
-         	root->addLeaf(branch_id);
- 
-         	double angle=0;
-			opt = LAST_EMIT;		
-			shader_mode=LEAF_MODE;
-			if(test3 || test4)
-				poly_mode=GL_LINE;    
-		    if(test4)
-				shader_mode = LINE_MODE;
-		    
-			setColor();
-			Color c=S0.c;
-			int alpha=0;
-
-			double depth=TheScene->vpoint.distance(bot);
-			child_size = length*FEET/12; // inches
-			child_size *= 1 + 0.5 * randomness * SRAND;
-
-			alpha=alpha_texture?4:0;
-			double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
-			double width_ratio=0.5*width;
-
-			root->rendered++;
-
-			if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-				TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags|alpha, tid, poly_mode),c);
-			else{
-				glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
-				glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags|alpha, tid, shader_mode);
+        	double density = 1-max_splits;
+        	if(URAND>density){
+				root->addLeaf(branch_id);
+	 
+				double angle=0;
+				opt = LAST_EMIT;		
+				shader_mode=LEAF_MODE;
+				if(test3 || test4)
+					poly_mode=GL_LINE;    
+				if(test4)
+					shader_mode = LINE_MODE;
 				
-				glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
-				glBegin(GL_LINES);
-				glVertex4d(p1.x, p1.y, p1.z, 0);
-				glVertex4d(p2.x, p2.y, p2.z, 0);
-				glEnd();
-			}
-
+				setColor();
+				Color c=S0.c;
+				int alpha=0;
+	
+				double depth=TheScene->vpoint.distance(bot);
+				child_size = length*FEET/12; // inches
+				child_size *= 1 + 0.5 * randomness * SRAND;
+	
+				alpha=alpha_texture&&tex_enabled?4:0;
+				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
+				double width_ratio=0.5*width;
+	
+				root->rendered++;
+	
+				if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
+					TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags, tid, poly_mode),c);
+				else{
+					glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
+					glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags, tid, shader_mode);
+					
+					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
+					glBegin(GL_LINES);
+					glVertex4d(p1.x, p1.y, p1.z, 0);
+					glVertex4d(p2.x, p2.y, p2.z, 0);
+					glEnd();
+				}
+        	}
         }     
         else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()){ // branch mode
     		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
@@ -1580,13 +1618,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
              	w1/=root->size_scale;
             	w2/=root->size_scale;
             }
-  			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-#ifdef OGL_SPLINE
-  			 bool ogl_spline=true;
-#else
-  			 bool ogl_spline=false;
-#endif  
-			if (root->threed && shader_mode == SPLINE_MODE && ogl_spline) {
+   			
+			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1608,7 +1641,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
-					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z, 0); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z, 0.02); // Constants2
 
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
@@ -1627,7 +1660,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
                 bot=t2+TheScene->vpoint;
     
 			} else if(isEnabled()) {
-				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1	           	
+				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
+	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 				glVertex4d(p2.x, p2.y, p2.z, top_offset);
@@ -1641,6 +1675,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	setColor();
 
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, LINE_MODE);
+ 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, 0);
@@ -1699,18 +1735,19 @@ void TNBranch::save(FILE *f){
 	else
 		fprintf(f,"%s(",symbol());
 	if(left){
-		fprintf(f,",");
+		if(strlen(name_str)>0)
+			fprintf(f,",");
 		left->save(f);
 	}
 	fprintf(f,")");
-	if(strlen(texname)||strlen(colorexpr)){
+	if((strlen(texname)&&tex_enabled) ||(strlen(colorexpr)&& col_enabled)){
 		fprintf(f,"[");
-		if(strlen(texname)){
+		if(strlen(texname)&&tex_enabled){
 			fprintf(f,"\"%s\"",texname);
-			if(strlen(colorexpr))
+			if(strlen(colorexpr)&& col_enabled)
 				fprintf(f,",");				
 		}
-		if(strlen(colorexpr))
+		if(strlen(colorexpr)&& col_enabled)
 			fprintf(f,"%s",colorexpr);
 		fprintf(f,"]");
 	}
@@ -1719,6 +1756,11 @@ void TNBranch::save(FILE *f){
 }
 void TNBranch::saveNode(FILE *f){
 	TNbase::saveNode(f);
+	if(right &&(right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
+		right->saveNode(f);
+}
+NodeIF *TNBranch::removeNode(){
+	return TNfunc::removeNode();
 }
 void TNBranch::eval(){
 	if(right)
@@ -1726,11 +1768,6 @@ void TNBranch::eval(){
 }
 
 int TNBranch::getChildren(LinkedList<NodeIF*>&l){
-//	if(right && right->typeValue()!=ID_PLANT){
-//		l.add(right);
-//		return 1;
-//	}
-//	return 0;
 	return TNfunc::getChildren(l);
 }
 //===================== TNleaf ==============================
@@ -1771,4 +1808,8 @@ void TNLeaf::getImageDir(int dim,char *dir){
 	char base[256];
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Leaf",base);
+}
+
+void TNLeaf::saveNode(FILE *f){
+	TNbase::saveNode(f);
 }

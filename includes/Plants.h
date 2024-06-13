@@ -141,6 +141,7 @@ public:
 	void addSpline(int id);
 	void addSkipped(int id);
 	int getChildren(LinkedList<NodeIF*>&l);
+	NodeIF *removeNode();
 };
 
 //************************************************************
@@ -186,17 +187,19 @@ public:
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
 	
-	void setTexEnabled(bool b){tex_enabled=b;}
-	void setColEnabled(bool b){col_enabled=b;}
+	void setTexEnabled(bool b){tex_enabled=b;setColorFlags();}
+	void setColEnabled(bool b){col_enabled=b;setColorFlags();}
 	bool isColEnabled() { return col_enabled;}
 	bool isTexEnabled() { return tex_enabled;}
-	
+	bool colValid();
+	bool texValid();
 	void init();
 	virtual void initArgs();
 	void eval();
 	void valueString(char *);
 	void save(FILE*);
 	void saveNode(FILE *f);
+	virtual NodeIF *removeNode();
 	virtual bool setProgram();
 	
 	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}
@@ -262,8 +265,8 @@ public:
 	static void sort() { leafs.sort();}	
 	static ValueList<LeafData*> leafs;
 	
-	bool isLeaf()			{ return true;}
-	int linkable()          { return false;}
+	bool isLeaf()			{ return false;}
+	void saveNode(FILE *f);
 
 	void getImageDir(int dim,char *);
 

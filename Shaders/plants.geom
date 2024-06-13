@@ -15,23 +15,12 @@ varying out vec4 Pnorm;
 vec4 Pos0,Pos1,Pos2;
 
 #define PI		3.14159265359
-// spline (DONE) 
-//  o Smooth branch curves and add possible speedup (fewer opengl vertexes needed)
-// Bumpmap textures (DONE)
-// Leaf Support (DONE)
-//  o For transparent leafs a rectangle billboard is rendered
-//  o For non-transparent leafs a "diamond" billboard is rendered
-// Shader width calculation (vs Opengl)
-//  - need to pass in width at top and bottom (w1,w2)
-//  - can calculate angle of current vector by subtracting input points (p2,p1)
-//  - but also need vec3 of previous point (p0) to calculate offset angle for bottom
-//  - so for shader to work need to pass in 3 vs 2 points (GL_TRIANGLE vs GL_LINE)
 
 #define LINE   0
 #define BRANCH 1
 #define LEAF   2
 #define SPLINE 3
-#define THREED 4
+
 
 // draw a line
 void emitLine(){
@@ -54,12 +43,9 @@ void emitLine(){
  
 // draw a leaf
 void emitLeaf(){
-	float topx=Constants1[0].r;
-	float topy=Constants1[0].g;
 	int colmode=TexVars_G[0].g+0.1; // transparenct flag
 	int rectmode=colmode & 4;
 	
-    vec3 vw=vec3(topx,topy,Pos2.z);   
     float ps=Constants1[0].g; // size
     vec4 v=normalize(Pos2-Pos1); 
     vec4 pa=Pos1+ps*v;// end
@@ -292,11 +278,9 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 
    vec3 tx2 = createPerp( pnt2.xyz, pnt1.xyz );
    vec3 ty2 = cross( normalize(axis2), tx2 );
-#ifndef OGL_SPLINE
-   int segs = 7;
-#else
+   
    int segs = 16;
-#endif
+
    float f=1.0 /(segs-1);
    float delta=1.0/segs;
    float tex1=t1;
@@ -333,44 +317,6 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    }
    //EndPrimitive();     
 }
-// draw a branch as a spline
-
-void emit3dSpline(){
-
-	vec4 c=Constants1[0];
-	vec4 p0=P0[0];
-	vec4 p1=gl_PositionIn[0];
-	vec4 p2=gl_PositionIn[1];
-#ifdef OGL_SPLINE
-	drawCone(p0,p1,p2,c);
-#else
-	
-	float r1=c.r;
-	float r2=c.g;
- 	vec4 d;
-
-	int nv=3;
-	float ds=0.5/nv;
-	float s=0.5;
-    vec4 s0,s1,s2;
-    s0=p0;
-	float delta=1.0/(nv);
-	for(int i=0;i<nv;i++){
-		float f1=i*delta;
-		float f2=(i+1)*delta;
-		d.x=(1-f1)*r1+f1*r2;
-		d.y=(1-f2)*r1+f2*r2;
-		d.z=f1;
-		d.w=f2;
-		
-		s1=spline(s,p0,p1,p2);
-		s2=spline(s+ds,p0,p1,p2);
-		drawCone(s0,s1,s2,d);
-		s0=s1;
-		s+=ds;
-	}
-#endif
-}
 
 void emitBranch3d(){
    vec4 c=Constants1[0];
@@ -400,15 +346,8 @@ void main(void) {
     else if(mode==LEAF)
     	emitLeaf();
 #ifdef ENABLE_3D
- #ifndef OGL_SPLINE
-    else if(mode==BRANCH)
-    	emitBranch3d();
-    else
-    	emit3dSpline();
- #else
  	else
  		emitBranch3d(); 
- #endif
 #else
     else if(mode==BRANCH)
         emitBranch(); 
