@@ -103,6 +103,8 @@ EVT_TEXT_ENTER(ID_ALPHA,VtxBranchTabs::OnChangedExpr)
 EVT_COLOURPICKER_CHANGED(ID_COL,VtxBranchTabs::OnChangedColor)
 EVT_BUTTON(ID_REVERT,VtxBranchTabs::OnRevert)
 
+SET_FILE_EVENTS(VtxBranchTabs)
+
 END_EVENT_TABLE()
 
 
@@ -148,7 +150,6 @@ int VtxBranchTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(ID_ENABLE,wxT("Enable"));
 	menu.AppendSeparator();
 	menu.Append(ID_DELETE,wxT("Delete"));
-	menu.Append(ID_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=sceneDialog->getAddMenu(object());
 
@@ -156,6 +157,8 @@ int VtxBranchTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+
+	sceneDialog->AddFileMenu(menu,object_node->node);
 
 	PopupMenu(&menu);
 	return menu_action;
@@ -167,22 +170,31 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
-    
+ 
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2+10,VALUE2+SLIDER2);
+
+	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
     // levels
     
     wxBoxSizer *level = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Level"));
- 	wxString levels[]={"0","1","2","3","4","5","6","7","8","9","10"};
+	level->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+ 	wxString levels[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
  	
     level->Add(new wxStaticText(panel,-1,"Max",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
-    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),11, levels);
+    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),16, levels);
     m_max_level->SetSelection(1);
     
     level->Add(m_max_level, 0, wxALIGN_LEFT|wxALL, 3);
 
     level->Add(new wxStaticText(panel,-1,"Min",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
-    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),11, levels);
+    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),16, levels);
     m_min_level->SetSelection(0);
     
     level->Add(m_min_level, 0, wxALIGN_LEFT|wxALL, 3);
@@ -204,8 +216,9 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
     // size
     
     wxBoxSizer *size = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Size"));
+	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	LengthSlider=new SliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
 	LengthSlider->setRange(0.1,2);
@@ -239,6 +252,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	// other
 
 	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Other"));
+	other->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
@@ -505,9 +519,8 @@ void VtxBranchTabs::getObjAttributes(){
 	TNBranch *obj=object();
 	obj->initArgs();
 
-	if(strlen(obj->name_str))
-		sceneDialog->setNodeName(obj->name_str);
-
+	object_name->SetValue(obj->nodeName());
+	
 	m_max_level->SetSelection((int)obj->max_level);
 	m_min_level->SetSelection(obj->min_level);
 	SplitsSlider->setValue(obj->max_splits);

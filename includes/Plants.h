@@ -200,6 +200,7 @@ public:
 	void save(FILE*);
 	void saveNode(FILE *f);
 	virtual NodeIF *removeNode();
+	virtual NodeIF *replaceNode(NodeIF *c);
 	virtual bool setProgram();
 	
 	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}

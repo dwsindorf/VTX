@@ -507,21 +507,21 @@ leaf_expr
     : YY_LEAF '(' arg_list ')' 
     						{$$=new TNLeaf($3, 0, 0);APOP;}
     | YY_LEAF '(' arg_list ')' '[' arg_list ']'
-    						{ $$=new TNLeaf($3, $6, 0);APOP;}
+    						{ $$=new TNLeaf($3, 0, $6);APOP;}
     | YY_LEAF '(' arg_list ')' '[' arg_list ']' expr
-    						{ $$=new TNLeaf($3, $6, $8);APOP;}	
+    						{ $$=new TNLeaf($3, $8, $6);APOP;}	
     | YY_LEAF '(' arg_list ')' expr
-    						{ $$=new TNLeaf($3, 0, $5);APOP;}	
+    						{ $$=new TNLeaf($3, $5, 0);APOP;}	
 
 branch_expr
     : YY_BRANCH '(' arg_list ')'
     						{ $$=new TNBranch($3, 0, 0);APOP;}
     | YY_BRANCH '(' arg_list ')' '[' arg_list ']'
-    						{ $$=new TNBranch($3, $6, 0);APOP;}
+    						{ $$=new TNBranch($3, 0, $6);APOP;}
     | YY_BRANCH '(' arg_list ')' '[' arg_list ']' expr
-    						{ $$=new TNBranch($3, $6, $8);APOP;}	
+    						{ $$=new TNBranch($3, $8, $6);APOP;}	
     | YY_BRANCH '(' arg_list ')' expr
-    						{ $$=new TNBranch($3, 0, $5);APOP;}	
+    						{ $$=new TNBranch($3, $5, 0);APOP;}	
 root_expr
     : YY_ROOT '(' arg_list ')'
     						{ $$=new TNplant($3, 0);APOP;}

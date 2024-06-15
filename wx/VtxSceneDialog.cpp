@@ -51,7 +51,7 @@
 
 #define PRINT_TREE
 
-//#define DEBUG_TREE_ACTIONS
+#define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5

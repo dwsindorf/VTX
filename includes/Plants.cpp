@@ -33,6 +33,7 @@
 #define SPLINE_MODE 3
 #define THREED_MODE 4
 
+#define EYE_BASED
 #define ENABLE_3D
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -1022,7 +1023,7 @@ void TNplant::save(FILE *f)
 }
 
 //-------------------------------------------------------------
-// TNplant::save() archive the node
+// TNplant::saveNode() archive the node
 //-------------------------------------------------------------
 void TNplant::saveNode(FILE *f)
 {
@@ -1033,11 +1034,17 @@ void TNplant::saveNode(FILE *f)
 	    fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
 	//TNbase::saveNode(f);
-	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
-		right->saveNode(f);
+	TNBranch *branch=right;
+	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
+		branch->saveNode(f);
+		branch=branch->right;
+	}
 
 }
 
+//-------------------------------------------------------------
+// TNplant::removeNode() delete or replace
+//-------------------------------------------------------------
 NodeIF *TNplant::removeNode(){
 	NodeIF *p=getParent();
 	NodeIF *child=0;
@@ -1064,6 +1071,9 @@ NodeIF *TNplant::removeNode(){
 	}
 	return this;
 }
+//-------------------------------------------------------------
+// TNplant::emit() build the branch structure
+//-------------------------------------------------------------
 void TNplant::emit(){
 	if(!isEnabled())
 		return;
@@ -1076,6 +1086,7 @@ void TNplant::emit(){
 	double length=size*base_point.length();	
 	Point bot=base_point;
 	norm=bot.normalize();
+	bot;
 	glNormal3dv(norm.values());
 			
 	TNBRANCH *first_branch=(TNBRANCH*)right;
@@ -1087,8 +1098,13 @@ void TNplant::emit(){
 	//cout<<first_branch->width<<endl;
 
 	Point top=bot*(1+branch_size); // starting trunk size
+#ifdef EYE_BASED
+	Point p1=bot-TheScene->vpoint;
+	Point p2=top-TheScene->vpoint;
+#else
 	Point p1=bot;
 	Point p2=top;
+#endif
 	//double start_width=size_scale*first_branch->length;
 	// pntsize= TheMap->radius*radius/distance
 	// start_width=TheMap->radius*radius*width_scale*first_branch->length
@@ -1098,7 +1114,7 @@ void TNplant::emit(){
 	tip.x=start_width;///TheScene->wscale;
 	tip.y=0;
 	tip.z=0;
-	
+
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
@@ -1126,7 +1142,7 @@ bool TNplant::setProgram(){
 // TNBranch class
 //************************************************************
 
-TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,b,r)
+TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 {
 	set_collapsed();
 	TNarg *arg=left;
@@ -1421,6 +1437,10 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 }
 
 static Point lastv;
+static Point lastb;
+static Point M0,M1,M2;
+
+static bool main_fork=false;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	int minlvl=0;
 	if(min_level<0){
@@ -1457,6 +1477,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 	int lev = lvl;
 	lev++;
+	//cout<<base.distance(TheScene->vpoint)<<" "<<base.length()<<endl;
 	
 	int mode = opt;
 	
@@ -1503,20 +1524,25 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	child_size *= 1 + 0.25 * randomness * SRAND;
 	double cl=child_size * length;
-  
     if (!main_branch && lvl > 0) {
 		// add a random offset to each branch split
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
-		start = p1 - vec * b;
+//#define TEST
+#ifdef TEST	
+    	//	start=spline(0.5*(1-b),base-vec,base,base+lastv); // works: but same as linear
+	    start=spline(0.5*(1-b),p0,p1,p1+vec); // works: but same as linear
+  		//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
 
+#else
+			start = p1 - vec * b;
+#endif
 		SRAND;
 		// TODO: set max offset proportional parent_width/child_width
 		double dw=(parent_width-child_width)/parent_width;
 		bot_offset=dw*SRAND/size_scale;
 		top_offset=bot_offset;	
-		//cout<<dw<<" "<<bot_offset<<" "<<size_scale<<endl;
 
 		v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
@@ -1530,11 +1556,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
  		
 	p2  = start + v; // new top
 	bot = p2;       // new base	
+	p1 = start;
+#ifndef EYE_BASED
+	p1 = p1-TheScene->vpoint;
 	p0 = p0-TheScene->vpoint;   
-	p1 = start-TheScene->vpoint;
 	p2 = p2-TheScene->vpoint;
-	v = bot-start; // new vector
-	
+#endif	
 	int tid=tex_enabled?texid:-1;
 
 	bool branch_tip=false;
@@ -1563,8 +1590,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				setColor();
 				Color c=S0.c;
 				int alpha=0;
-	
+#ifdef EYE_BASED
+				double depth=bot.length();
+#else
 				double depth=TheScene->vpoint.distance(bot);
+#endif
 				child_size = length*FEET/12; // inches
 				child_size *= 1 + 0.5 * randomness * SRAND;
 	
@@ -1655,9 +1685,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				v=t2-t1;
 				v=v.normalize();
 				v=v*cl;
+
+                bot=t2;
+#ifndef EYE_BASED
+                bot=bot+TheScene->vpoint;
+#endif
 				w1=dx;
 				w2=dy;
-                bot=t2+TheScene->vpoint;
     
 			} else if(isEnabled()) {
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
@@ -1755,13 +1789,48 @@ void TNBranch::save(FILE *f){
 		right->save(f);
 }
 void TNBranch::saveNode(FILE *f){
-	TNbase::saveNode(f);
-	if(right &&(right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
-		right->saveNode(f);
+	fprintf(f,"%s(",symbol());
+	if(strlen(name_str))
+		fprintf(f,"\"%s\",",name_str);
+	if(left)
+		left->save(f);
+	fprintf(f,")");
+	if((strlen(texname)&&tex_enabled) ||(strlen(colorexpr)&& col_enabled)){
+		fprintf(f,"[");
+		if(strlen(texname)&&tex_enabled){
+			fprintf(f,"\"%s\"",texname);
+			if(strlen(colorexpr)&& col_enabled)
+				fprintf(f,",");				
+		}
+		if(strlen(colorexpr)&& col_enabled)
+			fprintf(f,"%s",colorexpr);
+		fprintf(f,"]");
+	}
+
 }
 NodeIF *TNBranch::removeNode(){
 	return TNfunc::removeNode();
 }
+//-------------------------------------------------------------
+// TNlayer::replaceNode
+//-------------------------------------------------------------
+NodeIF *TNBranch::replaceNode(NodeIF *c){
+	if(!c || c->typeValue()!=ID_BRANCH)
+		return 0;
+	if(left)
+		delete left;
+	if(base)
+		delete base;
+	TNBranch *newbranch=(TNBranch *)c;
+	left=newbranch->left;
+	left->setParent(this);
+	base=newbranch->base;
+	setName(newbranch->nodeName());
+	base->setParent(this);
+	init();
+	return this;
+}
+
 void TNBranch::eval(){
 	if(right)
 		right->eval();
@@ -1811,5 +1880,5 @@ void TNLeaf::getImageDir(int dim,char *dir){
 }
 
 void TNLeaf::saveNode(FILE *f){
-	TNbase::saveNode(f);
+	TNBranch::saveNode(f);
 }

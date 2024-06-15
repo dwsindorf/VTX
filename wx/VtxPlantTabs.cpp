@@ -76,6 +76,8 @@ SET_SLIDER_EVENTS(PHI_BIAS,VtxPlantTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxPlantTabs,HtBias)
 SET_SLIDER_EVENTS(DROP,VtxPlantTabs,Drop)
 
+SET_FILE_EVENTS(VtxPlantTabs)
+
 END_EVENT_TABLE()
 
 VtxPlantTabs::VtxPlantTabs(wxWindow* parent,
@@ -121,6 +123,7 @@ int VtxPlantTabs::showMenu(bool expanded){
 		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
+	sceneDialog->AddFileMenu(menu,object_node->node);
 
 	PopupMenu(&menu);
 	return menu_action;
@@ -132,7 +135,15 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
-    
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2+10,VALUE2+SLIDER2);
+
+	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
     wxBoxSizer *size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Size"));
 
     // size
@@ -173,7 +184,7 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	
 	wxStaticBoxSizer* density = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density"));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Coverage",LABEL2,VALUE2,SLIDER2);
 	DensitySlider->setRange(0.0,1.0);
@@ -287,8 +298,7 @@ void VtxPlantTabs::getObjAttributes(){
 	TNplant *obj=object();
 	PlantMgr *mgr=(PlantMgr*)obj->mgr;
 
-	if(strlen(obj->name_str))
-		sceneDialog->setNodeName(obj->name_str);
+	object_name->SetValue(obj->nodeName());
 
 	m_orders->SetSelection(mgr->levels-1);
 	double maxsize=mgr->maxsize;
