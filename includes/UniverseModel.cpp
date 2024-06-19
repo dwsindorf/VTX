@@ -807,10 +807,10 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
 	//if(actionmode==DROPPING && child)
-	if(child)
-		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
-	else
-		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child=0"<<endl;
+//	if(child)
+//		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
+//	else
+//		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child=0"<<endl;
 
 
     int branch=node->getFlag(NODE_BRANCH);

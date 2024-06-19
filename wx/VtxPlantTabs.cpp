@@ -44,6 +44,8 @@ enum{
     ID_HT_BIAS_TEXT,
 	ID_DROP_SLDR,
 	ID_DROP_TEXT,
+	ID_3D,
+	ID_SPLINE,
 };
 
 #define NAME_WIDTH  50
@@ -227,7 +229,7 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	DropSlider->setValue(0.0);
 	
 	other->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
+	
 	other->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
 

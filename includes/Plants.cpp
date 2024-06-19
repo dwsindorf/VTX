@@ -15,7 +15,7 @@
 //#define DENSITY_TEST
 
 #define SHOW_STATS
-#define SHOW_BRANCH_STATS
+//#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 
 #define SRAND 	(rands[PERM((randval++))])
@@ -33,7 +33,7 @@
 #define SPLINE_MODE 3
 #define THREED_MODE 4
 
-#define EYE_BASED
+
 #define ENABLE_3D
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -54,6 +54,7 @@
 //  Improve this by trying the following:
 //  a) allow branches to spawn at random locations along parent stem vector (DONE)
 //    - set 'start' position somewhere between top and base using random variable
+//    - problem: in spline mode placements don't follow curve
 //  b) place new branches at random offsets from center of parent branches (DONE)
 //    - not implemented in 3d mode
 //  c) don't require branch starting width to be the same as parents width (DONE)
@@ -62,39 +63,34 @@
 //    - min level prevents branches from forming lower in parent trunk
 //    - child branches should form only towards the tip of parent branches
 // 2) implement geometry shader to improve performance (DONE)
-//    - pass in vectors in screen space (bot, top) of line
-//    - calculate screen space rectangle (or line)
-//    - produce vertex's to draw rectangle (or line)
 // 3) add support for textures (DONE)
+//   - optional: texture scale
 // 4) add support for bump shading for textures (DONE)
+//   - optional: bump amplitude
 // 5) implement TNLeaf class (DONE)
 //    - only generate leaves at end of "terminal" branches
 // 6) use a spline function when connecting levels on same branch (DONE)
 //   - generate additional line segments between segment end points (no need for branching)
 //   - use quadratic interpolation from last 3 points to smooth transition
 // 7) implement 3d branches (DONE)
-//   - generate a "cone" for each branch vector in geometry shader
-// 8) use lists to increase render speed
+//   - generate a "cone" for each branch vector in geometry shader (16 side panels)
+// 8) use lists to increase render speed (WONT DO)
 //   - display lists actually degrade performance (at least when the vertex count is high)
 //   - COMPILE followed by callList step very costly compared to just rendering directly (10x worse ?)
 //   - if COMPILE skipped (just callList) performance is about the same as direct render for small model
-// 9) generate wxWidgets classes for plants
-//    - optional support preview window with option to save generated imaged as sprites
+// 9) generate wxWidgets classes for plants (DONE)
+// 10) add supprt for shadows
+//  - 3d mode only
 	
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
 //     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
 //     o improvement: moving visits++ before threshold test in set_terrain
 // 2) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
-//    - may be fixed later by implementing leaf class and rendering leafs at all terminal nodes ?
 // 3) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
 // 4) TNLeaf issues
-//   - fake width doesn't seem to be consistent with branch length 
-//     o need arbitrary multiplier (~10) otherwise leaves are too narrow
-//     o need to base width of leaf on leaf length parameter vs branch width
-//   - depth ordering of leafs by distance doesn't always work (transparency wrong for some leafs)
 //   - found problem that rectangles were not being created correctly (slanted edges)
 //     o fixed by creating projected vector in eye space vs. model space
 //     o also fixes width/length problem (narrow leaves)
@@ -102,25 +98,18 @@
 //       so leaves are drawn with different sizes depending on orientation
 //     o overall effect is ok, models young and older leaves on same branch but would be better to be
 //       able to control this
-//     o one idea is to use point sprites with vector angle used to map texture lookup (like in clouds)
-//       all leaves would then be same size at same distance (see next)
-//   - instead of point sprites tried using a fixed size rectangle and rotating the image to the angle
-//     defined by the base vector
-//     o works somewhat but need to set the end of the leaf to the center of the image and increase the image size
-//       so that the rotated leaf isn't clipped
-//     o also, rotation angle doesn't always seem correct and changes with aspect ratio
+//     o rotation angle doesn't always seem correct and changes with aspect ratio
 // 5) spline issues
-//   - offsets don't follow branch curvature when spline is applied (2d only)
-//   - too much curvature on initial branch from trunk ?
-// 6) width offset sometimes disconnects branches from parent
-//   - also, direction of side branch should be on same side as offset
-// 7) 3d issues
-//   - branch dimensions and shapes change when aspect ratio and size of window are changed 
-//   - initial width way too thick in some cases
+//   - offsets don't follow branch curvature when spline is applied
+//   - offset sometimes disconnects branches from parent
+// 6) 3d issues
+//   - branch dimensions and shapes change when aspect ratio and size of window are changed (scales ok in 2d)
+//   - trunk size can be very different between 2d and 3d
+// 7) GUI issues
+//   - adding a plant sometimes puts branch on lower plant
 // Limitations
 // 1) currently implemented in render pass so can't project shadows 
 //   - for 3d mode could generate plants (at least branches) prior to shadow pass
-//   - lists would be a good thing to use for this (could recall them during render pass)
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -136,7 +125,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern int addtabs;
 
-extern int test2,test3,test4;
+extern int test1,test2,test3,test4;
 static double sval=0;
 static double cval=0;
 static double mind=0;
@@ -207,6 +196,7 @@ static int          scnt;
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
+bool PlantMgr::use_lists=false;
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
 #ifdef DUMP
@@ -310,6 +300,7 @@ bool PlantMgr::setProgram(){
 	
 	//GLSLMgr::checkForErrors();
 	TerrainProperties *tp=Td.tp;
+	
 	
 	TNplant::textures=0;
 	
@@ -429,14 +420,41 @@ bool PlantMgr::setProgram(){
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//TNplant::clearStats();
-
+	//double d0=clock();
 //#define USE_CALL_LISTS
 #ifdef USE_CALL_LISTS
-	if(TheMap->callLists[PLANT_LISTS][0]==0){
-		TheMap->callLists[PLANT_LISTS][0]=glGenLists(1);
-	glNewList(TheMap->callLists[PLANT_LISTS][0], GL_COMPILE);
+	if(use_lists){
+		if(TheMap->callLists[PLANT_LISTS][0]==0){
+			TheMap->callLists[PLANT_LISTS][0]=glGenLists(1);
+			glNewList(TheMap->callLists[PLANT_LISTS][0], GL_COMPILE);
+		}
+		render();
+		glEndList();
+	    glCallList(TheMap->callLists[PLANT_LISTS][0]);
+	}
+	else{
+		 render();
+	}
+#else
+	render();
 #endif
+#ifdef SHOW_BRANCH_STATS
+	for(int i=0;i<tp->plants.size;i++){
+		tp->plants[i]->showStats();
+	}
+#endif
+
+	randval=l;
+//	double dt=clock()-d0; // total
+//	dt/=CLOCKS_PER_SEC;
+//	cout<<"Plants::render time "<<dt<<" "<<TheScene->render_time<<endl;
+	return true;
+}
+
+void PlantMgr::render(){
+	double d0=clock();
 	TNLeaf::free();
+	int n=Plant::plants.size;
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
@@ -444,7 +462,7 @@ bool PlantMgr::setProgram(){
 		int id=s->get_id();
 		
 		TNplant *plant=s->mgr->plant;
-		//cout<<plant->size<<" "<<plant->size*plant->base_drop<<endl;
+
 		plant->size=s->radius; // placement size
 		plant->base_point=s->base*(1-plant->size*plant->base_drop);
 		plant->pntsize=s->pntsize;
@@ -456,22 +474,8 @@ bool PlantMgr::setProgram(){
 		randval=256*fabs(r)+id;
 		plant->emit();
 	}
+	double dp=clock();
 	TNLeaf::render();
-#ifdef SHOW_BRANCH_STATS
-	for(int i=0;i<tp->plants.size;i++){
-		tp->plants[i]->showStats();
-	}
-#endif
-
-#ifdef USE_CALL_LISTS
-		glEndList();
-	}
-	glCallList(TheMap->callLists[PLANT_LISTS][0]);
-#endif
-
-	randval=l;
-
-	return true;
 }
 //-------------------------------------------------------------
 // PlantMgr::make() factory method to make Placement
@@ -731,6 +735,8 @@ int TNplant::textures=0;
 double TNplant::norm_max=2;
 double TNplant::norm_min=1e-5;
 bool TNplant::threed=true;
+bool TNplant::spline=true;
+
 //************************************************************
 // TNplant class
 //************************************************************
@@ -796,8 +802,11 @@ void TNplant::init()
     branches=0;
 	if(plant==0)
 		plant=new Plant(type,this);
-	smgr->set_first(1);
+	//else
+	//	return;
 	//smgr->setHashsize(2*PERMSIZE);
+	//if(smgr->first())
+	//	return;
 	smgr->init();
 	
 	//TNplacements::init();
@@ -821,6 +830,8 @@ void TNplant::init()
 
 	getLeaf();
 	getLastBranch();
+	//cout<<"plant.init"<<endl;
+	smgr->set_first(1);
 }
 
 void TNplant::getLeaf() {
@@ -863,10 +874,6 @@ int TNplant::getChildren(LinkedList<NodeIF*>&l){
 void TNplant::eval()
 {	
 	SINIT;
-	if(test2)
-		threed=false;
-	else
-		threed=true;
 	if(right)
 		right->eval();
 	if(!isEnabled()){
@@ -1098,13 +1105,11 @@ void TNplant::emit(){
 	//cout<<first_branch->width<<endl;
 
 	Point top=bot*(1+branch_size); // starting trunk size
-#ifdef EYE_BASED
-	Point p1=bot-TheScene->vpoint;
-	Point p2=top-TheScene->vpoint;
-#else
 	Point p1=bot;
 	Point p2=top;
-#endif
+	p1=p1-TheScene->vpoint;
+	p2=p2-TheScene->vpoint;
+	
 	//double start_width=size_scale*first_branch->length;
 	// pntsize= TheMap->radius*radius/distance
 	// start_width=TheMap->radius*radius*width_scale*first_branch->length
@@ -1204,7 +1209,7 @@ void TNBranch::init(){
 		base=0;
 	}
 	setColorFlags();
-	cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
+	//cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
 	
 	if(right)
 		right->init();
@@ -1246,7 +1251,7 @@ bool TNBranch::setProgram(){
 	if(texture_id==0){
 		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
 		alpha_texture=image->alpha_image();
-		cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
+		//cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
 		glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1265,7 +1270,7 @@ bool TNBranch::setProgram(){
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 		
-		cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
+		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
 
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1282,10 +1287,10 @@ void TNBranch::setImage(char *name){
 		//	delete image;
 		strcpy(texname,name);				
 		Image *simage=images.load(texname,BMP|JPG);
-		if(simage)
-			cout<<"image loaded for "<<texname<<endl;
-		else
-			cout<<"image file "<<texname<<" not found"<<endl;
+//		if(simage)
+//			cout<<"image loaded for "<<texname<<endl;
+//		else
+//			cout<<"image file "<<texname<<" not found"<<endl;
 		image=simage;
 		invalidateTexture();
 	}
@@ -1349,8 +1354,6 @@ void TNBranch::getColorString (){
 			TNode *node=arg->left;
 			if(node->typeValue()==ID_COLOR){
 				node->valueString(colorexpr);
-				//setColorFromExpr();
-				//cout<<colorexpr<<endl;
 				return;
 			}			
 			arg=arg->next();
@@ -1529,11 +1532,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
-//#define TEST
+#define TEST
 #ifdef TEST	
-    	//	start=spline(0.5*(1-b),base-vec,base,base+lastv); // works: but same as linear
-	    start=spline(0.5*(1-b),p0,p1,p1+vec); // works: but same as linear
-  		//start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
+	    //start=spline(0.5*(1-b),p0,p1,p1+vec); // works: but same as linear
+  		start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
 
 #else
 			start = p1 - vec * b;
@@ -1557,11 +1559,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	p2  = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
-#ifndef EYE_BASED
-	p1 = p1-TheScene->vpoint;
-	p0 = p0-TheScene->vpoint;   
-	p2 = p2-TheScene->vpoint;
-#endif	
 	int tid=tex_enabled?texid:-1;
 
 	bool branch_tip=false;
@@ -1590,11 +1587,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				setColor();
 				Color c=S0.c;
 				int alpha=0;
-#ifdef EYE_BASED
 				double depth=bot.length();
-#else
-				double depth=TheScene->vpoint.distance(bot);
-#endif
 				child_size = length*FEET/12; // inches
 				child_size *= 1 + 0.5 * randomness * SRAND;
 	
@@ -1625,7 +1618,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			double w2 = w1*width_taper;
 
 			shader_mode=RECT_MODE;
-			if(Render.geometry() && child_width > MIN_SPLINE_WIDTH){
+			if(TNplant::spline && child_width > MIN_SPLINE_WIDTH){
 				shader_mode=SPLINE_MODE;
 				root->addSpline(branch_id);
 			}
@@ -1687,9 +1680,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				v=v*cl;
 
                 bot=t2;
-#ifndef EYE_BASED
-                bot=bot+TheScene->vpoint;
-#endif
 				w1=dx;
 				w2=dy;
     

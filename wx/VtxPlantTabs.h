@@ -31,10 +31,15 @@ protected:
 
 	SliderCtrl *DropSlider;
 	
+	wxCheckBox *m_3d;
+	wxCheckBox *m_spline;
+	wxCheckBox *m_lines;
+	
     wxString exprString();
 
     void OnChangedLevels(wxCommandEvent& event);
-
+    void OnChangedDim(wxCommandEvent& event);
+    void OnChangedSpline(wxCommandEvent& event);
 
 public:
 	VtxPlantTabs(wxWindow* parent,

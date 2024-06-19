@@ -1455,7 +1455,7 @@ void Map::render_sprites(){
 		Plant::collect();
 		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 
-		cout<<"Map::render_sprites tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+		cout<<"Map::placements tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}

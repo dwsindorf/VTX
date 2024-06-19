@@ -388,7 +388,7 @@ void VtxBranchTabs::makeFileList(wxString name){
 		filename=filename.Before('.');
 		files.Add(filename);
 		cont = dir.GetNext(&filename);
-		cout<<filename<<endl;
+		//cout<<filename<<endl;
 	}
 	files.Sort();
 	choices->Clear();
@@ -502,7 +502,7 @@ void VtxBranchTabs::setObjAttributes(){
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
-	cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
+	//cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
 	TheView->set_changed_detail();
 	TheScene->rebuild();
 
@@ -540,10 +540,10 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	TNcolor *tnode=obj->getColor();
 
-	char red[128]="0";
-	char green[128]="0";
-	char blue[128]="0";
-	char alpha[128]="0";
+	char red[128]={0};
+	char green[128]={0};
+	char blue[128]={0};
+	char alpha[128]={0};
 	if(tnode){
 		TNarg &args=*((TNarg *)tnode->right);
 		args[0]->valueString(red);
@@ -556,6 +556,10 @@ void VtxBranchTabs::getObjAttributes(){
 	}
 	else{
 		m_col_enable->SetValue(false);
+		strcpy(red,"0.0");
+		strcpy(green,"0.0");
+		strcpy(blue,"0.0");
+		strcpy(alpha,"1.0");
 	}
 	m_r_expr->SetValue(red);
 	m_g_expr->SetValue(green);

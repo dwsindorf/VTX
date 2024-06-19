@@ -42,10 +42,11 @@ enum special_keys {
 
 enum standard_keys{
 	KEY_HELP    		= '?',
-	KEY_TEST1    		= '/',
+	KEY_TEST1    		= '$',
 	KEY_TEST2    		= '%',
     KEY_TEST3           = '@',
     KEY_TEST4           = '#',
+    KEY_TEST5           = '&',
 
 	KEY_DEFAULT         = 'Q',
 
@@ -105,7 +106,7 @@ enum standard_keys{
 	KEY_RENDER_FACE     = 'F',
     KEY_RENDER_AA       = 'a',
     KEY_RENDER_HDR      = 'm',
-    KEY_RENDER_GEOMETRY = '$',
+    KEY_RENDER_GEOMETRY = '^',
 
 	KEY_ADAPT_OVERLAP   = 'o',
 	KEY_ADAPT_LOD       = 'e',

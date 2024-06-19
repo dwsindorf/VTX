@@ -63,7 +63,7 @@ void emitLeaf(){
     Pnorm.w=0.01;
          
     if(rectmode){ // use a rectangle (for transparent textures)
-       float w=2*TexVars.r;
+       float w=TexVars.r;
     
   	   gl_Position = vec4(pa.xy+M*vec2(-w,-1),pa.z,1);   // bottom-left   
 	   gl_TexCoord[0].xy=vec2(0,0);

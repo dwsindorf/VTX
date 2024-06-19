@@ -12,6 +12,7 @@
 #include "FrameClass.h"
 #include "Octree.h"
 #include "MapClass.h"
+#include "Plants.h"
 
 #include <stdio.h>
 #include <iostream>
@@ -39,6 +40,7 @@ void KeyIF::get_state(unsigned &state)
 }
 
 extern int clouds_mode;
+extern int test1;
 extern int test2;
 extern int test3;
 extern int test4;
@@ -66,39 +68,18 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		break;
 
 	case KEY_TEST1:
-		if(TheView->autoh())
-			TheView->clr_autoh();
-		else
-			TheView->set_autoh();
-//		switch(test1){
-//		case 0: // billboards
-//			if(TheScene->geometry_shader()){
-//				cout << "geometry"<<endl;
-//				test1=2;
-//			}
-//			else{
-//				cout << "triangles"<<endl;
-//				test1=3;
-//			}
-//			break;
-//		case 2: // geometry
-//			cout << "triangles"<<endl;
-//			test1=3;
-//			break;
-//		case 3: // triangles
-//			cout << "billboards"<<endl;
-//			test1=0;
-//			break;
-//		}
+		test1=test1?0:1;
+		cout << "test1="<<test1<<endl;
+		TNplant::spline=test1?true:false;
+        TheScene->set_changed_render();
          TheScene->set_changed_render();
 
 		break;
-	case KEY_TEST2:
+	case KEY_TEST2:		
 		test2=test2?0:1;
-        //Raster.set_filter_show(!Raster.filter_show());
+		TNplant::threed=test2?true:false;
 		cout << "test2="<<test2<<endl;
         TheScene->set_changed_render();
-        //TheScene->rebuild_all();
 		break;
 
 	case KEY_TEST3:
@@ -112,6 +93,13 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		test4=test4?0:1;
         //Raster.set_filter_show(!Raster.filter_show());
 		cout << "test4="<<test4<<endl;
+        TheScene->set_changed_detail();
+		break;
+	case KEY_TEST5:
+		PlantMgr::use_lists=PlantMgr::use_lists?false:true;
+		cout << "PlantMgr::use_lists="<<PlantMgr::use_lists<<endl;
+
+        //Raster.set_filter_show(!Raster.filter_show());
         TheScene->set_changed_detail();
 		break;
 	case KEY_RAND_SEED:

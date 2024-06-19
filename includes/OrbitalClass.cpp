@@ -39,6 +39,7 @@ static void show_render_state(Object3D *obj){
 #endif
 }
 
+int test1=0;
 int test2=0;
 int test3=0;
 int test4=0;

@@ -77,6 +77,9 @@ public:
 	static bool setProgram();
 	bool valid();
 	void reset();
+	static void render();
+	static bool use_lists;
+
 };
 
 #define MAX_BRANCHES 6
@@ -109,6 +112,7 @@ public:
 	static double norm_min;
 	static int textures;
 	static bool threed;
+	static bool spline;
 
 	Point base_point;
 	int rendered;

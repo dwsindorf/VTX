@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-#define DEBUG_TEXTURES
+//#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
