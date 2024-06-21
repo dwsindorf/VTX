@@ -68,6 +68,7 @@ public:
 	double slope_bias;
 	double ht_bias;
 	double lat_bias;
+	static bool shadow_mode;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
@@ -78,6 +79,8 @@ public:
 	bool valid();
 	void reset();
 	static void render();
+	static void render_shadows();
+	
 	static bool use_lists;
 
 };

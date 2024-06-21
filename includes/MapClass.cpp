@@ -548,6 +548,8 @@ void Map::render()
 			render_raster();
 		else if(Render.draw_normals())
 			shadow_normals();
+		set_first(false);
+        
 		return;
 	}
 
@@ -756,6 +758,7 @@ void Map::render_zvals()
 	    if(Render.draw_szvals())
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 	    npole->render_vertex();
+		PlantMgr::render_shadows();
 	}
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
@@ -767,6 +770,7 @@ void Map::render_zvals()
 
 	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
+	
 	//Render.popmode();
 //	glDrawBuffer(GL_BACK);
 //#ifdef WINDOWS
@@ -1233,10 +1237,8 @@ void Map::render_shaded()
 			}
 	        set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
 	        bool plants=tp->plants.size>0&& TheScene->viewobj==object;
-#ifdef RENDER_SPRITES
 			if(sprites()||plants)
 				render_sprites();
-#endif
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();

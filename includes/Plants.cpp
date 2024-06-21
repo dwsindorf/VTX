@@ -197,6 +197,7 @@ static int          scnt;
 //
 //-------------------------------------------------------------
 bool PlantMgr::use_lists=false;
+bool PlantMgr::shadow_mode=false;
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
 #ifdef DUMP
@@ -297,15 +298,48 @@ bool PlantMgr::valid()
 }
 
 bool PlantMgr::setProgram(){
-	
+
+	GLSLMgr::input_type=GL_LINES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+	GLSLMgr::tesslevel=8;
+	GLSLMgr::max_output=128;
+
 	//GLSLMgr::checkForErrors();
+	char defs[1024]="";
+
 	TerrainProperties *tp=Td.tp;
-	
+	if(shadow_mode){
+		min_draw_width=1;
+		GLSLMgr::loadProgram("plants.gs.shadows.vert","plants.shadows.frag","plants.shadows.geom");			
+		GLhandleARB program=GLSLMgr::programHandle();
+		if(!program){
+			cout<<"PlantMgr::setProgram - failed to load program"<<endl;
+			return false;
+		}
+		int l=randval;
+		render();
+		randval=l;
+	}
 	
 	TNplant::textures=0;
 	
 	for(int i=0;i<tp->plants.size;i++){
 		tp->plants[i]->setProgram();
+	}
+
+	switch(TheScene->quality){
+	case DRAFT:
+		min_draw_width=1;
+		break;
+	case NORMAL:
+		min_draw_width=0.65;
+		break;
+	case HIGH:
+		min_draw_width=0.5;
+		break;
+	case BEST:
+		min_draw_width=0.25;
+		break;	
 	}
 
 	branch_nodes=0;
@@ -315,7 +349,6 @@ bool PlantMgr::setProgram(){
 	double twilite_min=-0.2; // full night
 	double twilite_max=0.2;  // full day
 	
-	char defs[1024]="";
 
 	if(TNplant::threed)
 		sprintf(defs,"#define ENABLE_3D\n");
@@ -338,11 +371,6 @@ bool PlantMgr::setProgram(){
 
 	GLSLMgr::setDefString(defs);
 
-	GLSLMgr::input_type=GL_LINES;
-	//GLSLMgr::input_type=GL_TRIANGLES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	GLSLMgr::tesslevel=8;
-	GLSLMgr::max_output=128;
 	GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants.geom");
 	
 	GLhandleARB program=GLSLMgr::programHandle();
@@ -400,20 +428,6 @@ bool PlantMgr::setProgram(){
 	int n=Plant::plants.size;
 	int l=randval;
 	
-	switch(TheScene->quality){
-	case DRAFT:
-		min_draw_width=1;
-		break;
-	case NORMAL:
-		min_draw_width=0.65;
-		break;
-	case HIGH:
-		min_draw_width=0.5;
-		break;
-	case BEST:
-		min_draw_width=0.25;
-		break;	
-	}
 	
 	glEnable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
@@ -451,6 +465,21 @@ bool PlantMgr::setProgram(){
 	return true;
 }
 
+void PlantMgr::render_shadows(){
+	if(!TNplant::threed)
+		return;
+	shadow_mode=true;
+	//TODO: simplified emit model for shadows
+	// - 3d only
+	// - no leaves
+	// - 4 vs 16 panels per branch
+	// - large branches only
+	// - simplified shaders
+	// cout<<"NUM PLANTS="<<Plant::plants.size<<endl;
+	// 
+	setProgram();
+	shadow_mode=false;
+}
 void PlantMgr::render(){
 	double d0=clock();
 	TNLeaf::free();
@@ -474,8 +503,8 @@ void PlantMgr::render(){
 		randval=256*fabs(r)+id;
 		plant->emit();
 	}
-	double dp=clock();
-	TNLeaf::render();
+	if(!shadow_mode)
+		TNLeaf::render();
 }
 //-------------------------------------------------------------
 // PlantMgr::make() factory method to make Placement
@@ -1571,7 +1600,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
 		   
-        if(isPlantLeaf()  && isEnabled()){  // leaf mode
+        if(!PlantMgr::shadow_mode && isPlantLeaf() && isEnabled()){  // leaf mode
         	double density = 1-max_splits;
         	if(URAND>density){
 				root->addLeaf(branch_id);
@@ -1642,7 +1671,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
             	w2/=root->size_scale;
             }
    			
-			if (root->threed && shader_mode == SPLINE_MODE) {
+			if (!PlantMgr::shadow_mode&& root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1683,7 +1712,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				w1=dx;
 				w2=dy;
     
-			} else if(isEnabled()) {
+			} else if(isEnabled()) { // shadow_mode
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);
@@ -1692,7 +1721,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				glEnd();
 			}
 		}
-        else if(isEnabled()){ // line mode
+        else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
         	double nscale=TNplant::norm_min;
         	root->rendered++;
         	root->addLine(branch_id);
