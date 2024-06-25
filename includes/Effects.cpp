@@ -151,8 +151,11 @@ void EffectsMgr::setProgram(int type){
 #endif
 	char defs[512]="";
 	switch(type){
+	case PLANT_ZVALS:
 	case SHADOW_ZVALS:
-		if(TheMap && TheMap->hasGeometry()){
+		if(type==PLANT_ZVALS)
+			GLSLMgr::loadProgram("plants.gs.zvals.vert","plants.zvals.frag","plants.zvals.geom");
+		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
 		    GLSLMgr::loadProgram("shadows.gs.vert","shadows_zvals.frag","shadows_zvals.geom");
@@ -163,7 +166,7 @@ void EffectsMgr::setProgram(int type){
 		vars.newBoolVar("lighting",false);
 
 		break;
-
+	case PLANT_SHADOWS:
 	case SHADOWS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
@@ -171,7 +174,9 @@ void EffectsMgr::setProgram(int type){
 			sprintf(defs+strlen(defs),"#define SHADOW_TEST\n");
 
 		GLSLMgr::setDefString(defs);
-		if(TheMap && TheMap->hasGeometry()){
+		if(type==PLANT_SHADOWS)
+			GLSLMgr::loadProgram("plants.gs.zvals.vert","shadows.frag","plants.shadows.geom");
+		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
 			GLSLMgr::loadProgram("shadows.gs.vert","shadows.frag","shadows.geom");

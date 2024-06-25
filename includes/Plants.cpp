@@ -107,10 +107,6 @@
 //   - trunk size can be very different between 2d and 3d
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
-// 8) shadows
-//   - plants can't cast shadow on other plants (self-shadowing)
-//   - FIXME: if self-shadowing is enabled zbuffer generated in shadow pass doesn't contain plants 
-//          so shadows show though branches sky etc.
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -447,34 +443,24 @@ bool PlantMgr::setProgram(){
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
+	shadow_mode=true;
+	GLSLMgr::input_type=GL_LINES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+	min_draw_width=1;
+	Raster.setProgram(Raster.PLANT_SHADOWS);	
+	render();
+	shadow_mode=false;
+
 }
 void PlantMgr::render_zvals(){
 	if(!TNplant::threed)
 		return;
-
 	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	
-	cout<<"PlantMgr::render_zvals"<<endl;
-
-	//TODO: simplified emit model for shadows
-	// - 3d only
-	// - no leaves
-	// - 4 vs 16 panels per branch
-	// - large branches only
-	// - simplified shaders
-	// cout<<"NUM PLANTS="<<Plant::plants.size<<endl;
-	// 
 
 	min_draw_width=1;
-	GLSLMgr::loadProgram("plants.gs.zvals.vert","plants.zvals.frag","plants.zvals.geom");			
-	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program){
-		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
-		return;
-	}
-	GLSLMgr::setProgram();
+	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	render();
 	shadow_mode=false;
