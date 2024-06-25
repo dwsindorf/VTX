@@ -79,6 +79,7 @@ public:
 	bool valid();
 	void reset();
 	static void render();
+	static void render_zvals();
 	static void render_shadows();
 	
 	static bool use_lists;

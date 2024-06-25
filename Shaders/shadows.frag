@@ -3,6 +3,7 @@
 #define JITTER
 #define JITTER_TEST
 //#define LDRTEST
+//#define _NORMALS_
 
 #define SAMPLES_COUNT 64
 #define SAMPLES_COUNT_DIV2 32.0

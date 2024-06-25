@@ -11,7 +11,7 @@
 #include "TerrainClass.h"
 
 
-#define COLOR_TEST
+//#define COLOR_TEST
 //#define DENSITY_TEST
 
 #define SHOW_STATS
@@ -107,10 +107,10 @@
 //   - trunk size can be very different between 2d and 3d
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
-// Limitations
-// 1) currently implemented in render pass so can't project shadows 
-//   - for 3d mode could generate plants (at least branches) prior to shadow pass
-
+// 8) shadows
+//   - plants can't cast shadow on other plants (self-shadowing)
+//   - FIXME: if self-shadowing is enabled zbuffer generated in shadow pass doesn't contain plants 
+//          so shadows show though branches sky etc.
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -163,7 +163,7 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 2
+#define MIN_TRIANGLE_WIDTH 1
 #define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 #ifdef DUMP
@@ -298,28 +298,14 @@ bool PlantMgr::valid()
 }
 
 bool PlantMgr::setProgram(){
+	TerrainProperties *tp=Td.tp;
 
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	GLSLMgr::tesslevel=8;
-	GLSLMgr::max_output=128;
 
 	//GLSLMgr::checkForErrors();
 	char defs[1024]="";
 
-	TerrainProperties *tp=Td.tp;
-	if(shadow_mode){
-		min_draw_width=1;
-		GLSLMgr::loadProgram("plants.gs.shadows.vert","plants.shadows.frag","plants.shadows.geom");			
-		GLhandleARB program=GLSLMgr::programHandle();
-		if(!program){
-			cout<<"PlantMgr::setProgram - failed to load program"<<endl;
-			return false;
-		}
-		int l=randval;
-		render();
-		randval=l;
-	}
 	
 	TNplant::textures=0;
 	
@@ -349,7 +335,6 @@ bool PlantMgr::setProgram(){
 	double twilite_min=-0.2; // full night
 	double twilite_max=0.2;  // full day
 	
-
 	if(TNplant::threed)
 		sprintf(defs,"#define ENABLE_3D\n");
 
@@ -365,8 +350,8 @@ bool PlantMgr::setProgram(){
 	if(Render.haze())
 		sprintf(defs+strlen(defs),"#define HAZE\n");
 
-    bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
-	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
+    bool do_shadows=Raster.shadows();
+	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
 	GLSLMgr::setDefString(defs);
@@ -385,7 +370,6 @@ bool PlantMgr::setProgram(){
 		sprintf(str,"samplers2d[%d]",i);
 		glUniform1iARB(glGetUniformLocationARB(program,str),i);
 	}
-
 
 	GLSLVarMgr vars;
 	
@@ -427,11 +411,6 @@ bool PlantMgr::setProgram(){
 		
 	int n=Plant::plants.size;
 	int l=randval;
-	
-	
-	glEnable(GL_BLEND);
-	glDisable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//TNplant::clearStats();
 	//double d0=clock();
@@ -468,7 +447,17 @@ bool PlantMgr::setProgram(){
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
+}
+void PlantMgr::render_zvals(){
+	if(!TNplant::threed)
+		return;
+
 	shadow_mode=true;
+	GLSLMgr::input_type=GL_LINES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+	
+	cout<<"PlantMgr::render_zvals"<<endl;
+
 	//TODO: simplified emit model for shadows
 	// - 3d only
 	// - no leaves
@@ -477,13 +466,29 @@ void PlantMgr::render_shadows(){
 	// - simplified shaders
 	// cout<<"NUM PLANTS="<<Plant::plants.size<<endl;
 	// 
-	setProgram();
+
+	min_draw_width=1;
+	GLSLMgr::loadProgram("plants.gs.zvals.vert","plants.zvals.frag","plants.zvals.geom");			
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program){
+		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
+		return;
+	}
+	GLSLMgr::setProgram();
+
+	render();
 	shadow_mode=false;
 }
 void PlantMgr::render(){
 	double d0=clock();
+	int l=randval;
 	TNLeaf::free();
 	int n=Plant::plants.size;
+	
+	glEnable(GL_BLEND);
+	if(!shadow_mode)
+		glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
@@ -505,6 +510,8 @@ void PlantMgr::render(){
 	}
 	if(!shadow_mode)
 		TNLeaf::render();
+	randval=l;
+
 }
 //-------------------------------------------------------------
 // PlantMgr::make() factory method to make Placement
@@ -1671,7 +1678,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
             	w2/=root->size_scale;
             }
    			
-			if (!PlantMgr::shadow_mode&& root->threed && shader_mode == SPLINE_MODE) {
+			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1712,7 +1719,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				w1=dx;
 				w2=dy;
     
-			} else if(isEnabled()) { // shadow_mode
+			} else if(isEnabled()) { 
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);

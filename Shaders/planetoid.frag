@@ -140,8 +140,8 @@ void main(void) {
     }
 #endif
 #ifdef SHADOWS
-    float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
+    //float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+    //color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
     //color.rgb = gl_FragCoord.xyz;
     //color.rgb=vec3(shadow,0,0);
 #endif    

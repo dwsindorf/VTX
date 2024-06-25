@@ -284,7 +284,7 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    float f=1.0 /(segs-1);
    float delta=1.0/segs;
    float tex1=t1;
-   float df=0;
+
    for(int i=0; i<segs; i++) {
       float a = i*f;
       float ca = cos(2.0 * PI*a); 
@@ -302,8 +302,7 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 
       p1.xyz = pnt1.xyz+r1*n1;
       p1.w=1;
-     // proj = gl_ModelViewProjectionMatrix * vec4(p1.xyz, 1.0);
-      //gl_Position =proj;//vec4(proj.xyz,1);
+ 
       gl_Position = project(p1);
       EmitVertex();
       
@@ -312,10 +311,8 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
       p2.xyz = pnt2.xyz + r2*n2;
       p2.w=1;
       gl_Position = project(p2);
-      EmitVertex();
-        
+      EmitVertex();     
    }
-   //EndPrimitive();     
 }
 
 void emitBranch3d(){

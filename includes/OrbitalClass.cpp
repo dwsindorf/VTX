@@ -3541,12 +3541,15 @@ bool Planetoid::setProgram(){
 		return false;
 
 	GLSLVarMgr vars;
+	double shadow_intensity=shadow_color.alpha();
+	shadow_intensity*=lerp(Raster.ldp,-1,0,0.25,1);
+	//cout<<Raster.ldp<<" "<<shadow_intensity<<endl;
 	Point p=point.mm(TheScene->invViewMatrix);
 	vars.newFloatVec("object",p.x,p.y,p.z); // global
 	p=p.mm(TheScene->viewMatrix);
 	vars.newFloatVec("center",p.x,p.y,p.z);
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
-	vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_color.alpha());
+	vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_intensity);
 	vars.newBoolVar("lighting",Render.lighting());
 	vars.newFloatVar("sky_alpha",sky_alpha);
     vars.newFloatVar("haze_zfar",haze_zfar);

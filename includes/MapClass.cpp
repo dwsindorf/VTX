@@ -300,7 +300,6 @@ Map::~Map()
 // Map::clearLists() clear call lists
 //-------------------------------------------------------------
 void Map::clearLists() {
-	//cout << "Map::clearLists()"<<endl;
 	for (int i = 0; i < LISTTYPES; i++) {
 		for (int j = 0; j < MAXLISTS; j++) {
 			if (callLists[i][j] > 0) {
@@ -548,7 +547,7 @@ void Map::render()
 			render_raster();
 		else if(Render.draw_normals())
 			shadow_normals();
-		set_first(false);
+		//set_first(false);
         
 		return;
 	}
@@ -697,6 +696,7 @@ void Map::shadow_normals()
 	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
+	    PlantMgr::render_shadows();
 	}
 
 	Render.popmode();
@@ -709,7 +709,6 @@ void Map::render_zvals()
 {
 	make_current();
 
-	cout<<"Map::render_zval"<<endl;
 	GLSLMgr::beginRender();
 	//glFlush();
 //#ifndef WINDOWS
@@ -757,8 +756,9 @@ void Map::render_zvals()
 	        continue;
 	    if(Render.draw_szvals())
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);
+	    
 	    npole->render_vertex();
-		PlantMgr::render_shadows();
+		PlantMgr::render_zvals();
 	}
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
@@ -1461,8 +1461,9 @@ void Map::render_sprites(){
 
 		CurrentScope->set_passmode(mode);
 	}
-	if(tp->plants.size)
+	if(tp->plants.size){
 		PlantMgr::setProgram();
+	}
 	if(tp->sprites.size)
 		SpriteMgr::setProgram();
 

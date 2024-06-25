@@ -519,6 +519,7 @@ void EffectsMgr::render_shadows(){
 		if(!light()->isEnabled())
 			continue;
 		shadow_intensity=Lights.intensityFraction(light(),TheScene->shadowobj->point);
+		//shadow_intensity*=lerp(ldp,-0.5,-1,1,0.5);
 		//cout << shadow_intensity << endl;
 		init_view();
 		j=0;

@@ -123,7 +123,9 @@ void main(void) {
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     color.rgb=mix(color.rgb,color.rgb,Shadow.rgb,shadow*Shadow.a);
+     //color.rgb=vec3(shadow,0,0);//mix(color.rgb,Shadow.rgb,0.5*shadow*Shadow.a);
+     color.rgb=mix(color.rgb,Shadow.rgb,0.5*shadow*Shadow.a);
+     
 #endif  
  
 #ifdef HAZE

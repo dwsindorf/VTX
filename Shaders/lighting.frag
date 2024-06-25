@@ -40,7 +40,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	float illumination = gl_FrontMaterial.emission.a;
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
-    float shadow_diffuse=lerp(Shadow.a,0.0,1.0,1.0,shadow);
+    float shadow_diffuse=lerp(Shadow.a,0.0,1.0,1,shadow);
     float shadow_specular=shadow;//lerp(shadow,0.2,1.0,0.0,shadow);
 #else
 	float shadow_diffuse=1.0;

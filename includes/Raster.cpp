@@ -412,7 +412,9 @@ bool RasterMgr::twilight(){
 		return true;
     //if(Lights.numLights()>1)
     //	return true;
-	if(ldp<=0 && ldp>-0.7)
+	//cout<<ldp<<endl;
+	//if(ldp<=0 && ldp>-0.7) // reject night time and midday
+	if(ldp<=0) // reject night time only
 		return true;
 	return false;
 }
