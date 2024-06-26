@@ -19,7 +19,8 @@ EffectsMgr Raster;	// one and only global object
 #define SMAPTEXID   1
 #define JMAPTEXID   2
 //#define DEBUG_EFFECTS
-static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH"};
+
+static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH","PLANT_ZVALS","PLANT_SHADOWS"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
 //  2. vfog (vertical)
@@ -154,7 +155,7 @@ void EffectsMgr::setProgram(int type){
 	case PLANT_ZVALS:
 	case SHADOW_ZVALS:
 		if(type==PLANT_ZVALS)
-			GLSLMgr::loadProgram("plants.gs.zvals.vert","plants.zvals.frag","plants.zvals.geom");
+			GLSLMgr::loadProgram("plants.shadows.gs.vert","shadows_zvals.frag","plants.shadows.geom");
 		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
@@ -167,6 +168,7 @@ void EffectsMgr::setProgram(int type){
 
 		break;
 	case PLANT_SHADOWS:
+		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	case SHADOWS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
@@ -175,7 +177,7 @@ void EffectsMgr::setProgram(int type){
 
 		GLSLMgr::setDefString(defs);
 		if(type==PLANT_SHADOWS)
-			GLSLMgr::loadProgram("plants.gs.zvals.vert","shadows.frag","plants.shadows.geom");
+			GLSLMgr::loadProgram("plants.shadows.gs.vert","shadows.frag","plants.shadows.geom");
 		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();

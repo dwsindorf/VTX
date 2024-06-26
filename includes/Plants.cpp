@@ -107,6 +107,9 @@
 //   - trunk size can be very different between 2d and 3d
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
+// 8) shadows
+//   - projection of shadows with thin lines is wrong (shadows criss-crossed with white lines ?)
+//   - get crash on loading a new program file if shadows are enabled
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -443,10 +446,10 @@ bool PlantMgr::setProgram(){
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
-	shadow_mode=true;
+	//shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	min_draw_width=1;
+	//min_draw_width=1;
 	Raster.setProgram(Raster.PLANT_SHADOWS);	
 	render();
 	shadow_mode=false;
@@ -455,11 +458,11 @@ void PlantMgr::render_shadows(){
 void PlantMgr::render_zvals(){
 	if(!TNplant::threed)
 		return;
-	shadow_mode=true;
+	//shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	min_draw_width=1;
+	//min_draw_width=1;
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	render();
@@ -472,8 +475,8 @@ void PlantMgr::render(){
 	int n=Plant::plants.size;
 	
 	glEnable(GL_BLEND);
-	if(!shadow_mode)
-		glDisable(GL_CULL_FACE);
+	//if(!shadow_mode)
+	//	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
@@ -1624,12 +1627,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				else{
 					glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags, tid, shader_mode);
-					
+					glDisable(GL_CULL_FACE);
 					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 					glBegin(GL_LINES);
 					glVertex4d(p1.x, p1.y, p1.z, 0);
 					glVertex4d(p2.x, p2.y, p2.z, 0);
 					glEnd();
+					glEnable(GL_CULL_FACE);
 				}
         	}
         }     
@@ -1664,7 +1668,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
             	w2/=root->size_scale;
             }
    			
-			if (root->threed && shader_mode == SPLINE_MODE) {
+			if (!PlantMgr::shadow_mode && root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1879,11 +1883,13 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	
 }
 void TNLeaf::render(){
+	glDisable(GL_CULL_FACE);
 	leafs.sort();
 	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
 		LeafData *s=TNLeaf::leafs[i];
 		s->render();
 	}
+	glEnable(GL_CULL_FACE);
 }
 void TNLeaf::getImageDir(int dim,char *dir){
 	char base[256];
