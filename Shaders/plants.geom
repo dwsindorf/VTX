@@ -65,11 +65,11 @@ void emitLeaf(){
     if(rectmode){ // use a rectangle (for transparent textures)
        float w=TexVars.r;
     
-  	   gl_Position = vec4(pa.xy+M*vec2(-w,-1),pa.z,1);   // bottom-left   
+  	   gl_Position = vec4(pa.xy+M*vec2(-w,-1),Pos1.z,1);   // bottom-left   
 	   gl_TexCoord[0].xy=vec2(0,0);
 	   EmitVertex();
 
-	   gl_Position = vec4(pa.xy+M*vec2(w,-1),pa.z,1);   // bot-right
+	   gl_Position = vec4(pa.xy+M*vec2(w,-1),Pos1.z,1);   // bot-right
 	   gl_TexCoord[0].xy=vec2(1,0);
 	   EmitVertex(); 
 	   
@@ -84,11 +84,11 @@ void emitLeaf(){
    else { // use a diamond shape for solid textures or color only
        float w=TexVars.r;
     
- 	   gl_Position = vec4(pa.xy+M*vec2(0,-1),pa.z,1);   // bottom       
+ 	   gl_Position = vec4(pa.xy+M*vec2(0,-1),Pos1.z,1);   // bottom       
 	   gl_TexCoord[0].xy=vec2(0.5,0);
 	   EmitVertex();
 	   
-	   gl_Position = vec4(pa.xy+M*vec2(0.9*w,-0.8),pa.z,1);
+	   gl_Position = vec4(pa.xy+M*vec2(0.9*w,-0.8),Pos1.z,1);
 	   gl_TexCoord[0].xy=vec2(1,0.25);
 	   EmitVertex(); 
 

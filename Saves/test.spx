@@ -28,10 +28,6 @@ Scene() {
 		heading=155;
 		tilt=-10;
 		angle=-28;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.004002;
 	}
 	View{
 		time=122600;
@@ -39,6 +35,15 @@ Scene() {
 		heading=181;
 		tilt=4;
 		angle=-27;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.004002;
+	}
+	View{
+		height=30.3427 ft;
+		tilt=5;
+		angle=-29;
 		minr=0.00400199;
 	}
 	Universe {
@@ -74,7 +79,7 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.7);
 					hscale=0.001;
-					shadow=Color(0,0,0);
+					shadow=Color(0,0,0,0.76);
 					year=100;
 					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{

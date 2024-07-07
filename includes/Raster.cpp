@@ -295,7 +295,7 @@ RasterMgr::RasterMgr()
 	shadow_dscale=1.0;
 	shadow_dpmin=0.0;
 	shadow_dpmax=0.5;
-	shadow_fov=1.0;
+	shadow_fov=0.5;
 	shadow_dov=1.0;
 	shadow_vbias=2;
 	shadow_vshift=0.0;
@@ -310,7 +310,7 @@ RasterMgr::RasterMgr()
 	shadow_color=Color(0,0,0);
 	shadow_value=1;
 	shadow_zfactor=0.05;
-	shadow_blur=2.0;
+	shadow_blur=1.0;
 	shadow_test=2;
 	set_bgshadows(0);
 

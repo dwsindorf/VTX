@@ -85,6 +85,7 @@ public:
 	double albedo;
 	double shine;
 	double sunset;
+	double shadow_intensity;
 
 	void pushSeed();
 	void popSeed();

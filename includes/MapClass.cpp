@@ -311,6 +311,7 @@ void Map::clearLists() {
 		}
 	}
 	set_first(true);
+	//Plant::reset();
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -758,7 +759,8 @@ void Map::render_zvals()
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 	    
 	    npole->render_vertex();
-		PlantMgr::render_zvals();
+	    if(Render.draw_szvals())
+			PlantMgr::render_zvals();
 	}
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
@@ -1235,10 +1237,12 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-	        set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
-	        bool plants=tp->plants.size>0&& TheScene->viewobj==object;
-			if(sprites()||plants)
-				render_sprites();
+			if(!TheScene->select_mode()){
+				set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
+				bool plants=tp->plants.size>0&& TheScene->viewobj==object;
+				if(sprites()||plants)
+					render_sprites();
+			}
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();

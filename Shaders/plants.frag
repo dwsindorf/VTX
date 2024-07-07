@@ -123,13 +123,13 @@ void main(void) {
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     //color.rgb=vec3(shadow,0,0);//mix(color.rgb,Shadow.rgb,0.5*shadow*Shadow.a);
-     color.rgb=mix(color.rgb,Shadow.rgb,0.5*shadow*Shadow.a);
+     //color.rgb=vec3(0,DEPTH,0);//mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
+     color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
      
 #endif  
  
 #ifdef HAZE
-/*
+
 	float z=DEPTH; // depth buffer
 	float depth=1.0/(ws2*z+ws1); // distance
 	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
@@ -137,7 +137,6 @@ void main(void) {
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 	float p=lerp(h,0.0,0.8,1,0.001); // hack !
 	color.a=pow(color.a,p);
-*/	
 #endif 
 	test=vec3(0.5*(TexVars.b+1),0,0);
 

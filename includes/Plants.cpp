@@ -15,7 +15,7 @@
 //#define DENSITY_TEST
 
 #define SHOW_STATS
-//#define SHOW_BRANCH_STATS
+#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 
 #define SRAND 	(rands[PERM((randval++))])
@@ -108,8 +108,15 @@
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
 // 8) shadows
-//   - projection of shadows with thin lines is wrong (shadows criss-crossed with white lines ?)
-//   - get crash on loading a new program file if shadows are enabled
+//   - get crash on loading a new program file if shadows are enabled (fixed)
+//   - need to rebuild plants if new file loaded, branch length changes etc.
+//   - shadow views inefficient for plants (closest view too far away if view angle too high)
+//   o shadows generated for leaves
+//    - shape not correct (size,width ratio not followed)
+//    - projection not correct (too horizontal)
+//   o shadows generated for lines
+//    - can't see unless line width increased >1  
+
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -158,11 +165,11 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define TEST_PTS 
 //#define DUMP
 //#define SHOW
-//#define DEBUG_PMEM
+#define DEBUG_PMEM
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 1
+#define MIN_TRIANGLE_WIDTH 2*MIN_DRAW_WIDTH
 #define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 #ifdef DUMP
@@ -236,6 +243,7 @@ void PlantMgr::init()
   	printf("PlantMgr::init()\n");
 #endif
 	PlacementMgr::init();
+	//Plant::reset();
 	ncalls=0;
 	nhits=0;
 	cnt=0;
@@ -261,9 +269,11 @@ void PlantMgr::eval(){
 
 void PlantMgr::reset(){
 	PlacementMgr::reset();
+	//Plant::reset();
 	tests=pts_fails=dns_fails=0;
 	cval=0;
 	scnt=0;
+	//cout<<"PlantMgr::reset()"<<endl;
 }
 //-------------------------------------------------------------
 // PlantPoint::set_terrain()	impact terrain
@@ -378,10 +388,13 @@ bool PlantMgr::setProgram(){
 	Color ambient=orb->ambient;
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
+		
+	double shadow_intensity=orb->shadow_intensity;
+
 	
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
 	vars.newFloatVec("Ambient",ambient.red(),ambient.green(),ambient.blue(),ambient.alpha());
-	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow.alpha());
+	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
 	vars.newFloatVar("haze_grad",Raster.haze_grad);
@@ -446,10 +459,10 @@ bool PlantMgr::setProgram(){
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
-	//shadow_mode=true;
+	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	//min_draw_width=1;
+	//min_draw_width=2;
 	Raster.setProgram(Raster.PLANT_SHADOWS);	
 	render();
 	shadow_mode=false;
@@ -458,11 +471,11 @@ void PlantMgr::render_shadows(){
 void PlantMgr::render_zvals(){
 	if(!TNplant::threed)
 		return;
-	//shadow_mode=true;
+	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	//min_draw_width=1;
+	//min_draw_width=2;
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	render();
@@ -475,8 +488,7 @@ void PlantMgr::render(){
 	int n=Plant::plants.size;
 	
 	glEnable(GL_BLEND);
-	//if(!shadow_mode)
-	//	glDisable(GL_CULL_FACE);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
@@ -824,14 +836,14 @@ void TNplant::applyExpr()
 void TNplant::init()
 {
 	PlantMgr *smgr=(PlantMgr*)mgr;
-    branches=0;
 	if(plant==0)
 		plant=new Plant(type,this);
 	//else
 	//	return;
 	//smgr->setHashsize(2*PERMSIZE);
-	//if(smgr->first())
-	//	return;
+	if(smgr->first())
+		return;
+    branches=0;
 	smgr->init();
 	
 	//TNplacements::init();
@@ -1410,6 +1422,8 @@ void TNBranch::setColorFlags(){
 		color_flags|=4; // rect mode
 }
 void TNBranch::setColor(){
+	if(PlantMgr::shadow_mode)
+		return;
 	if(color && col_enabled){
 		S0.clr_cvalid();
 		color->eval();
@@ -1595,8 +1609,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
-		   
-        if(!PlantMgr::shadow_mode && isPlantLeaf() && isEnabled()){  // leaf mode
+//#define NO_LEAF_SHADOW		   
+        if(isPlantLeaf() && isEnabled()){  // leaf mode
+#ifdef NO_LEAF_SHADOWS
+        	if(PlantMgr::shadow_mode){
+        		randval+=2;
+        	}
+        	else{
+#else
         	double density = 1-max_splits;
         	if(URAND>density){
 				root->addLeaf(branch_id);
@@ -1617,12 +1637,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				child_size *= 1 + 0.5 * randomness * SRAND;
 	
 				alpha=alpha_texture&&tex_enabled?4:0;
-				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
 				double width_ratio=0.5*width;
-	
+
+				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
+				if(PlantMgr::shadow_mode){
+					size=100*root->width_scale*TheMap->radius*TheScene->wscale*child_size/root->size_scale;
+					//size*=2e-6/root->size_scale;
+				}
 				root->rendered++;
-	
-				if(shader_mode==LEAF_MODE && poly_mode==GL_FILL)
+
+				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 					TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags, tid, poly_mode),c);
 				else{
 					glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
@@ -1636,6 +1660,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 					glEnable(GL_CULL_FACE);
 				}
         	}
+#endif
+#ifdef NO_LEAF_SHADOWS
+        	}
+#endif
         }     
         else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()){ // branch mode
     		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
@@ -1667,8 +1695,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
              	w1/=root->size_scale;
             	w2/=root->size_scale;
             }
-   			
-			if (!PlantMgr::shadow_mode && root->threed && shader_mode == SPLINE_MODE) {
+			if (/*!PlantMgr::shadow_mode &&*/ root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1718,22 +1745,29 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				glEnd();
 			}
 		}
+//#define NO_LINE_SHADOW
+#ifdef NO_LINE_SHADOW		   
         else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
+#else
+         else if(isEnabled()){ // line mode
+#endif
         	double nscale=TNplant::norm_min;
         	root->rendered++;
         	root->addLine(branch_id);
         	setColor();
-
+        	if (PlantMgr::shadow_mode)
+				glLineWidth(2);
+			glDisable(GL_CULL_FACE);
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, LINE_MODE);
- 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);			
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, 0);
 			glVertex4d(p2.x, p2.y, p2.z, 0);
 			glEnd();
         }
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_CULL_FACE);
+		glLineWidth(1);
 	}
 	if(branch_tip && right && right->typeValue() == ID_LEAF)
 		((TNLeaf*) right)->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);

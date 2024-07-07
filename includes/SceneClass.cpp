@@ -15,6 +15,7 @@
 #include "TerrainClass.h"
 #include "MapNode.h"
 #include "KeyIF.h"
+#include "Plants.h"
 #include <math.h>
 #include <stdio.h>
 #include <GLSLMgr.h>
@@ -912,6 +913,7 @@ void Scene::rebuild_all(){
 	Render.invalidate_textures();
 	Adapt.set_maxcycles(50);
 	GLSLMgr::clearTexs();
+	Plant::reset();
 	Renderer::rebuild_all();
 }
 
@@ -1984,7 +1986,7 @@ void Scene::select()
 		}
 #endif
 	    bgpass=FG0;
-	    set_select_node();
+	    set_select_mode();
 	    pass_group();
 
 	    obj=select_pass();
@@ -2006,7 +2008,7 @@ void Scene::select()
 	if(focusobj){
 	    if(focusobj==viewobj){
 			bgpass=FG0;
-			set_select_node();
+			set_select_mode();
 			pass_group();
 			obj=select_pass();
 	    	if(obj)
@@ -2032,7 +2034,7 @@ void Scene::select()
     focusobj=0;
 	if(passlist.size){
 		focusobj=(ObjectNode*)passlist.first();
-		set_select_node();
+		set_select_mode();
 		id=(int)select_pass();
 		obj=(ObjectNode*)Raster.get_data(id);
 		if(obj){

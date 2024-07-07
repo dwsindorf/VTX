@@ -3,70 +3,21 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55619;
 		theta=24.4365;
-		height=39.1194 ft;
+		height=8.94003 ft;
 		gndlvl=10514.8 ft;
 		time=380926;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		heading=8;
-		tilt=-15;
-		angle=1;
+		zoom=0.004;
+		minh=1.13636e-09;
+		minr=0.00400199;
+		heading=95;
+		tilt=-25;
+		angle=-26;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		tilt=-23;
-	}
-	View{
-		height=73.7883 ft;
-		tilt=-29;
-	}
-	View{
-		tilt=-44;
-		angle=-3;
-	}
-	View{
-		height=41.9833 ft;
-		tilt=-17;
-		angle=-8;
-	}
-	View{
-		tilt=-25;
-		angle=-18;
-	}
-	View{
-		heading=37;
-		tilt=-29;
-		angle=-28;
-	}
-	View{
-		height=51.8548 ft;
-		tilt=-26;
-		angle=-27;
-	}
-	View{
-		height=18.7863 ft;
-		heading=89;
-		tilt=-16;
-		angle=-24;
-	}
-	View{
-		height=6 ft;
-	}
-	View{
-		height=8.94003 ft;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400199;
-	}
-	View{
-		heading=78;
-		minr=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {

@@ -234,7 +234,7 @@ public:
 	void rebuild_all();
 
 	void set_select_object()	{ rmode=SELECT_OBJ;}
-	void set_select_node()		{ rmode=SELECT_NODE;}
+	void set_select_mode()		{ rmode=SELECT_NODE;}
 	void set_render_mode()		{ rmode=RENDER;}
 	void set_adapt_mode()		{ rmode=ADAPT;}
 	void set_shadows_mode()		{ rmode=SHADOWS;}
