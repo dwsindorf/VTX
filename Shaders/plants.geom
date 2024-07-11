@@ -1,6 +1,7 @@
 #extension GL_EXT_geometry_shader : enable
 #extension GL_EXT_geometry_shader4 : enable
 
+
 varying in vec4 Color_G[];
 varying in vec4 Normal_G[];
 varying in vec4 Constants1[];
@@ -21,37 +22,77 @@ vec4 Pos0,Pos1,Pos2;
 #define LEAF   2
 #define SPLINE 3
 
+float scale=6e-7;
+
+
+vec4 project(vec4 pnt){
+	vec4 vertex=vec4(pnt.xyz,1.0);
+	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
+	return vec4(proj.xyz/proj.w,pnt.w);
+}
+
+// given two points p1 and p2 create a vector out
+// that is perpendicular to (p2-p1)
+vec3 createPerp(vec3 p1, vec3 p2)
+{
+  vec3 invec = normalize(p2 - p1);
+  vec3 ret = cross( invec, vec3(0.0, 0.0, 1.0) );
+  if ( length(ret) == 0.0 )
+     ret = cross( invec, vec3(0.0, 1.0, 0.0) );
+  return ret;
+}
+
+void projectVertex(vec3 v){
+   vec4 p=vec4(v,1.0);
+   gl_Position = project(p);
+   EmitVertex();  
+}
+
+void emitVertex(vec3 v){
+   vec4 p=vec4(v,1.0);
+   gl_Position = p;
+   EmitVertex();  
+}
+void produceTxVertex(vec2 tx,vec3 v){
+ //    gl_TexCoord[0].xy=vec2(tx.x,1.0-tx.y);
+  gl_TexCoord[0].xy=tx;
+  emitVertex(v);
+}
 
 // draw a line
 void emitLine(){
- 	float nscale=1e-5;//TexVars.r;
- 
-    // need at least 3 vertexes for line strip
-    Pnorm.xyz=gl_NormalMatrix*vec3(nscale,0,0);
-    Pnorm.w=0;
-    gl_Position.xyz = Pos2.xyz; // top
-    gl_Position.w=1;
-    EmitVertex();
-    EmitVertex();
-    
-    gl_Position.xyz = Pos1.xyz; // top
-    gl_Position.w=1;
-    EmitVertex();
-    
-	EndPrimitive();
+    emitVertex(Pos2);
+    emitVertex(Pos1); 
+    emitVertex(Pos2);
  }
  
 // draw a leaf
+// notes:
+// 1) leaf points and vectors are first projected onto the screen
+//    a texture box is created in screen space alligned with the normalized projected vector
+//    the size of the box is scaled based on eye distance
+//    the box is emitted as is without projection
+// 2) the y coord of leaf textures is inverted (1-x) 
+// 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
 void emitLeaf(){
-	int colmode=TexVars_G[0].g+0.1; // transparenct flag
+    
+
+	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 	
-    float ps=Constants1[0].g; // size
+    float ps=2*Constants1[0].g; // size
+#ifndef TEST_VIEW
+    vec4 pp=gl_ModelViewProjectionMatrix * gl_PositionIn[0];
+    ps/=pp.w;
+#else
+	ps*=1e8;
+#endif
     vec4 v=normalize(Pos2-Pos1); 
     vec4 pa=Pos1+ps*v;// end
-    
+  
+    v=normalize(v);
     float a = atan2(v.y, v.x);       
-    float ta = a-PI/2;
+    float ta =a-PI/2;
     
 	float cc=cos(ta);
 	float ss=sin(ta);    	   		   
@@ -61,60 +102,26 @@ void emitLeaf(){
 	vec3 t=normalize(vec3(tang,pa.z));
     Pnorm.xyz=normalize(cross(pa,t));
     Pnorm.w=0.01;
-         
+    float w=TexVars.r;
+    
+    vec3 p1=Pos1;
+	vec3 p2=pa;
+           
     if(rectmode){ // use a rectangle (for transparent textures)
-       float w=TexVars.r;
-    
-  	   gl_Position = vec4(pa.xy+M*vec2(-w,-1),Pos1.z,1);   // bottom-left   
-	   gl_TexCoord[0].xy=vec2(0,0);
-	   EmitVertex();
-
-	   gl_Position = vec4(pa.xy+M*vec2(w,-1),Pos1.z,1);   // bot-right
-	   gl_TexCoord[0].xy=vec2(1,0);
-	   EmitVertex(); 
-	   
-	   gl_Position = vec4(pa.xy+M*vec2(-w,1),pa.z,1);   // top-left	    
-	   gl_TexCoord[0].xy=vec2(0,1);
-	   EmitVertex();
-	   
-	   gl_Position = vec4(pa.xy+M*vec2(w,1),pa.z,1);   // top-right	    
-	   gl_TexCoord[0].xy=vec2(1,1);
-	   EmitVertex();
-   }
+        produceTxVertex(vec2(0.0,0.0),vec3(p1.xy+M*vec2(-w,-1),p1.z));   // bottom          
+		produceTxVertex(vec2(1.0,0.0),vec3(p1.xy+M*vec2(w,-1),p1.z));
+		produceTxVertex(vec2(0.0,1.0),vec3(p1.xy+M*vec2(-w,0),p2.z));   
+		produceTxVertex(vec2(1.0,1.0),vec3(p1.xy+M*vec2(w,0),p2.z));    
+    }
    else { // use a diamond shape for solid textures or color only
-       float w=TexVars.r;
-    
- 	   gl_Position = vec4(pa.xy+M*vec2(0,-1),Pos1.z,1);   // bottom       
-	   gl_TexCoord[0].xy=vec2(0.5,0);
-	   EmitVertex();
-	   
-	   gl_Position = vec4(pa.xy+M*vec2(0.9*w,-0.8),Pos1.z,1);
-	   gl_TexCoord[0].xy=vec2(1,0.25);
-	   EmitVertex(); 
-
-	   gl_Position = vec4(pa.xy+M*vec2(-0.9*w,-0.8),pa.z,1);
-	   gl_TexCoord[0].xy=vec2(0,0.25);
-	   EmitVertex(); 
-	      
-	   gl_Position = vec4(pa.xy+M*vec2(w,-0.5),pa.z,1);
-	   gl_TexCoord[0].xy=vec2(1,0.5);
-	   EmitVertex(); 
-	    
-	   gl_Position = vec4(pa.xy+M*vec2(-w,-0.5),pa.z,1);
-	   gl_TexCoord[0].xy=vec2(0,0.5);
-	   EmitVertex();
-
-	   gl_Position = vec4(pa.xy+M*vec2(0.7*w,-0.25),pa.z,1);
-	   gl_TexCoord[0].xy=vec2(1,0.5);
-	   EmitVertex(); 
-	    
-	   gl_Position = vec4(pa.xy+M*vec2(-0.7*w,-0.25),pa.z,1);
-	   gl_TexCoord[0].xy=vec2(0,0.5);
-	   EmitVertex();
-	    
-	   gl_Position = vec4(pa.xy,pa.z,1);   // top
-	   gl_TexCoord[0].xy=vec2(0.5,1);
-	   EmitVertex();
+   		produceTxVertex(vec2(0.50,0.0),vec3(p1.xy+M*vec2(0,-1),mix(p1.z,p2.z,0.0)));   // bottom          
+		produceTxVertex(vec2(1.0,0.25),vec3(p1.xy+M*vec2(0.9*w,-0.8),mix(p1.z,p2.z,0.2)));
+		produceTxVertex(vec2(0.0,0.25),vec3(p1.xy+M*vec2(-0.9*w,-0.8),mix(p1.z,p2.z,0.2)));   
+		produceTxVertex(vec2(1.0,0.50),vec3(p1.xy+M*vec2(w,-0.5),mix(p1.z,p2.z,0.5)));  
+		produceTxVertex(vec2(0.0,0.50),vec3(p1.xy+M*vec2(-w,-0.5),mix(p1.z,p2.z,0.5))); 
+		produceTxVertex(vec2(0.75,0.75),vec3(p1.xy+M*vec2(0.75*w,-0.25),mix(p1.z,p2.z,0.75)));    
+		produceTxVertex(vec2(0.25,0.75),vec3(p1.xy+M*vec2(-0.75*w,-0.25),mix(p1.z,p2.z,0.75)));   
+		produceTxVertex(vec2(0.50,1.0),vec3(p1.xy,mix(p1.z,p2.z,1.0)));   // top
     }  
     EndPrimitive();
  }
@@ -243,22 +250,6 @@ void emitSpline(){
 		s+=ds;
 	}	
 
-}
-vec4 project(vec4 pnt){
-	vec4 vertex=vec4(pnt.xyz,1.0);
-	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
-	return vec4(proj.xyz/proj.w,pnt.w);
-}
-
-// given two points p1 and p2 create a vector out
-// that is perpendicular to (p2-p1)
-vec3 createPerp(vec3 p1, vec3 p2)
-{
-  vec3 invec = normalize(p2 - p1);
-  vec3 ret = cross( invec, vec3(0.0, 0.0, 1.0) );
-  if ( length(ret) == 0.0 )
-     ret = cross( invec, vec3(0.0, 1.0, 0.0) );
-  return ret;
 }
 
 void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)

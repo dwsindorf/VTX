@@ -13,7 +13,7 @@ varying in vec4 P0[];
 
 vec3 Pos0,Pos1,Pos2;
 
-  float scale=6e-7;
+ float scale=6e-7;
 
 
 #define PI		3.14159265359
@@ -53,40 +53,43 @@ void produceVertex(vec3 v){
 
 // draw a line
 void emitLine(){
-
     produceVertex(Pos2);
     produceVertex(Pos1); 
     produceVertex(Pos2);
- }
+}
 
 // draw a leaf
 void emitLeaf(){
+
 	float w=TexVars_G[0].r;
 	
-    float ps=Constants1[0].g; // size
     vec3 v=normalize(Pos2-Pos1); 
-    vec3 pa=Pos1+ps*v;// end
     
     vec3 t = createPerp(Pos2, Pos1);
-    vec3 p = cross(v, normalize(t) );  
+    vec3 p = cross(v, normalize(t) ); 
+    p = cross(p,Pos0 ); 
   
     float a = atan2(v.y, v.x);       
     float ta = a-PI/2;
     
+    float ps=2*Constants1[0].g; // size
+    vec3 pa=Pos1+ps*v;// end
+   
 	float cc=cos(ta);
 	float ss=sin(ta);    	   		   
 	mat2  M=ps*mat2(cc,ss,-ss,cc);
 	vec3 p1=Pos1;
 	vec3 p2=pa;
-	             
+	
 	produceVertex(vec3(p1.xy+M*vec2(0,-1),mix(p1.z,p2.z,0.0)));   // bottom          
 	produceVertex(vec3(p1.xy+M*vec2(0.9*w,-0.8),mix(p1.z,p2.z,0.2)));
 	produceVertex(vec3(p1.xy+M*vec2(-0.9*w,-0.8),mix(p1.z,p2.z,0.2)));   
 	produceVertex(vec3(p1.xy+M*vec2(w,-0.5),mix(p1.z,p2.z,0.5)));  
 	produceVertex(vec3(p1.xy+M*vec2(-w,-0.5),mix(p1.z,p2.z,0.5))); 
-	produceVertex(vec3(p1.xy+M*vec2(0.7*w,-0.25),mix(p1.z,p2.z,0.75)));    
-	produceVertex(vec3(p1.xy+M*vec2(-0.7*w,-0.25),mix(p1.z,p2.z,0.75)));   
+	produceVertex(vec3(p1.xy+M*vec2(0.75*w,-0.25),mix(p1.z,p2.z,0.75)));    
+	produceVertex(vec3(p1.xy+M*vec2(-0.75*w,-0.25),mix(p1.z,p2.z,0.75)));   
 	produceVertex(vec3(p1.xy,mix(p1.z,p2.z,1.0)));   // top
+
  }
  
 void emitCone()
@@ -105,7 +108,7 @@ void emitCone()
    vec3 tx2 = createPerp(Pos2, Pos1);
    vec3 ty2 = cross(normalize(axis2), tx2 );
    
-   int segs = 8;
+   int segs = 4;
 
    float f=1.0 /(segs-1);
    float delta=1.0/segs;

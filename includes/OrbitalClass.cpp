@@ -2179,7 +2179,6 @@ void Spheroid::set_focus(Point &selm)
 
 	glLineWidth(1.0f);
 
-
 	glFlush();
 	if(lflag==GL_TRUE)
 		glEnable(GL_LIGHTING);

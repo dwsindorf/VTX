@@ -577,8 +577,10 @@ void Sprite::collect()
 
 	} // next sprite
 	//}
-    cout<<"total sprites collected:"<<sprites.size<<endl;
-	sprites.sort();
+	if(sprites.size){
+    	cout<<"total sprites collected:"<<sprites.size<<endl;
+ 		sprites.sort();
+	}
 #ifdef SHOW
 	//int pnrt_num=sprites.size-1;
 	int pnrt_num=min(2,sprites.size-1);

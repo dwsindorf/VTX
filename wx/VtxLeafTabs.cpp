@@ -408,6 +408,8 @@ void VtxLeafTabs::setObjAttributes(){
 		sceneDialog->setNodeName(obj->name_str);
 
 	//cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
+	obj->initArgs();
+
 	TheView->set_changed_detail();
 	TheScene->rebuild();
 
