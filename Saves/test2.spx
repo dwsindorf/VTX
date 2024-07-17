@@ -6,18 +6,169 @@ Scene() {
 		height=33.1464 ft;
 		gndlvl=10466.8 ft;
 		time=40200.6;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00400198;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=-51;
 		tilt=-15;
 		angle=25;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		tilt=-22;
+	}
+	View{
+		angle=27;
+	}
+	View{
+		heading=-26;
+		tilt=-13;
+	}
+	View{
+		phi=-5.55496;
+		theta=24.4369;
+		heading=-47;
+		tilt=-12;
+		angle=19;
+	}
+	View{
+		phi=-5.55483;
+		theta=24.4367;
+		height=52.9626 ft;
+		heading=-46;
+		tilt=-24;
+		angle=17;
+	}
+	View{
+		tilt=-18;
+		angle=20;
+	}
+	View{
+		height=88.6155 ft;
+		heading=-30;
+		tilt=-31;
+		angle=12;
+	}
+	View{
+		tilt=-24;
+		angle=3;
+	}
+	View{
+		heading=12;
+		tilt=-40;
+		angle=-30;
+	}
+	View{
+		tilt=-24;
+		angle=-34;
+	}
+	View{
+		phi=-5.5548;
+		theta=24.4369;
+		height=22.1092 ft;
+		tilt=-13;
+		angle=-37;
+	}
+	View{
+		tilt=-5;
+		angle=-25;
+	}
+	View{
+		time=44335;
+		heading=19;
+		tilt=-28;
+		angle=-81;
+	}
+	View{
+		heading=103;
+		tilt=-10;
+		angle=-103;
+	}
+	View{
+		heading=33;
+		tilt=-21;
+		angle=-120;
+	}
+	View{
+		tilt=-22;
+		angle=-121;
+	}
+	View{
+		time=38092.6;
+		heading=105;
+		tilt=-24;
+		angle=-151;
+	}
+	View{
+		tilt=-10;
+		angle=-147;
+	}
+	View{
+		tilt=-11;
+		angle=-151;
+	}
+	View{
+		tilt=-22;
+	}
+	View{
+		tilt=-15;
+	}
+	View{
+		tilt=-16;
+		angle=-153;
+	}
+	View{
+		tilt=-14;
+	}
+	View{
+		tilt=-11;
+		angle=-149;
+	}
+	View{
+		tilt=-12;
+	}
+	View{
+		tilt=-15;
+	}
+	View{
+		time=40173.4;
+		heading=130;
+		tilt=-23;
+		angle=-162;
+	}
+	View{
+		time=44855.2;
+		heading=89;
+		tilt=-17;
+		angle=-177;
+	}
+	View{
+		tilt=-20;
+		angle=-172;
+	}
+	View{
+		heading=92;
+		tilt=-23;
+		angle=-179;
+	}
+	View{
+		height=61.9883 ft;
+		heading=96;
+		tilt=-37;
+		angle=-188;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400199;
+	}
+	View{
+		tilt=-32;
+		angle=-182;
+		minr=0.00400198;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -59,7 +210,7 @@ Scene() {
 						terrain=
 								Plant("Shrub1",1,1.09436e-06,0.8,0.2,0.1,0,0,0,0)
 								Branch(7,2.6,1,1,1,1,0.19,0.5,0.86,10.4,-0)["treebark2",Color(0.1*DENSITY,0.5*RED,0,DENSITY)]
-								Leaf("Leaf",1,1,12.2,1,0)["Lilac",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
+								Leaf("Leaf",1,0.1,12.2,1,0)["Needles1",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

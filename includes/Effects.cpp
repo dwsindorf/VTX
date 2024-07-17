@@ -11,7 +11,7 @@
 #include "GLSLVars.h"
 #include "defs.h"
 
-extern int test3;
+extern int test3,test5;
 
 EffectsMgr Raster;	// one and only global object
 
@@ -153,6 +153,8 @@ void EffectsMgr::setProgram(int type){
 	char defs[512]="";
 	switch(type){
 	case PLANT_ZVALS:
+		if(test5)
+			sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
 	case SHADOW_ZVALS:
 		if(type==PLANT_ZVALS)
 			GLSLMgr::loadProgram("plants.shadows.gs.vert","shadows_zvals.frag","plants.shadows.geom");
@@ -168,6 +170,8 @@ void EffectsMgr::setProgram(int type){
 
 		break;
 	case PLANT_SHADOWS:
+		if(test5)
+			sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	case SHADOWS:
 		if(shadow_proj)

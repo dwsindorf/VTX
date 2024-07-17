@@ -10,6 +10,8 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
+//#define LEAF_TEST
+
 
 //#define COLOR_TEST
 //#define DENSITY_TEST
@@ -131,7 +133,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern int addtabs;
 
-extern int test1,test2,test3,test4;
+extern int test1,test2,test3,test4,test5;
 static double sval=0;
 static double cval=0;
 static double mind=0;
@@ -346,6 +348,8 @@ bool PlantMgr::setProgram(){
 	
 	if(TNplant::threed)
 		sprintf(defs,"#define ENABLE_3D\n");
+    if(test5)
+		sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
 
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
@@ -1169,6 +1173,7 @@ void TNplant::emit(){
 	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 	//cout<<rendered<<endl;
+	//TheScene->vpoint.print("\n");
 	
 }
 
@@ -1647,19 +1652,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				alpha=alpha_texture&&tex_enabled?4:0;
 				double width_ratio=0.5*width;
 
-				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size/depth;
-				if(PlantMgr::shadow_mode || TheScene->light_view()|| TheScene->test_view()){
-					size=20*root->width_scale*TheMap->radius*TheScene->wscale*child_size/root->size_scale;
-					//size*=2e-6/root->size_scale;
-				}
-				else
-					size=root->width_scale*TheMap->radius*TheScene->wscale*child_size;
+				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size;
+
+				if(test5 && PlantMgr::shadow_mode || TheScene->light_view()|| TheScene->test_view())
+					size*=20/root->size_scale;
 				root->rendered++;
 
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 					TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags, tid, poly_mode),c);
 				else{
-					p0=root->norm;
+					p0=TheScene->vpoint;
 					glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
 		 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags, tid, shader_mode);
@@ -1912,6 +1914,8 @@ double LeafData::distance() {
 }
 
 void  LeafData::render(){
+	Point p0=TheScene->vpoint;
+	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x, data[2].y, 0, 0); // Constants1		
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[2].z, data[3].x, data[3].y, LEAF_MODE);
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());

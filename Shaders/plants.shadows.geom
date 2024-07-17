@@ -13,9 +13,8 @@ varying in vec4 P0[];
 
 vec3 Pos0,Pos1,Pos2;
 
- float scale=6e-7;
-
-
+float scale=6e-7;
+ 
 #define PI		3.14159265359
 
 #define LINE   0
@@ -57,41 +56,6 @@ void emitLine(){
     produceVertex(Pos1); 
     produceVertex(Pos2);
 }
-
-// draw a leaf
-void emitLeaf(){
-
-	float w=TexVars_G[0].r;
-	
-    vec3 v=normalize(Pos2-Pos1); 
-    
-    vec3 t = createPerp(Pos2, Pos1);
-    vec3 p = cross(v, normalize(t) ); 
-    p = cross(p,Pos0 ); 
-  
-    float a = atan2(v.y, v.x);       
-    float ta = a-PI/2;
-    
-    float ps=2*Constants1[0].g; // size
-    vec3 pa=Pos1+ps*v;// end
-   
-	float cc=cos(ta);
-	float ss=sin(ta);    	   		   
-	mat2  M=ps*mat2(cc,ss,-ss,cc);
-	vec3 p1=Pos1;
-	vec3 p2=pa;
-	
-	produceVertex(vec3(p1.xy+M*vec2(0,-1),mix(p1.z,p2.z,0.0)));   // bottom          
-	produceVertex(vec3(p1.xy+M*vec2(0.9*w,-0.8),mix(p1.z,p2.z,0.2)));
-	produceVertex(vec3(p1.xy+M*vec2(-0.9*w,-0.8),mix(p1.z,p2.z,0.2)));   
-	produceVertex(vec3(p1.xy+M*vec2(w,-0.5),mix(p1.z,p2.z,0.5)));  
-	produceVertex(vec3(p1.xy+M*vec2(-w,-0.5),mix(p1.z,p2.z,0.5))); 
-	produceVertex(vec3(p1.xy+M*vec2(0.75*w,-0.25),mix(p1.z,p2.z,0.75)));    
-	produceVertex(vec3(p1.xy+M*vec2(-0.75*w,-0.25),mix(p1.z,p2.z,0.75)));   
-	produceVertex(vec3(p1.xy,mix(p1.z,p2.z,1.0)));   // top
-
- }
- 
 void emitCone()
 {
    vec4 c=Constants1[0];
@@ -133,11 +97,72 @@ void emitCone()
    }
 }
 
+// draw a leaf
+
+void emitLeaf(){
+#ifndef LEAF_TEST
+	Pos0=P0[0];
+	Pos1=gl_PositionIn[0];
+	Pos2=gl_PositionIn[1];
+
+	vec3 p1,p2;
+   
+	vec3 v=normalize(Pos2-Pos1);   
+	float ps=Constants1[0].g; // size
+	vec3 Pos2=Pos1+ps*v;// end
+ 
+	vec3 tx2 = cross(v, normalize(Pos2) ); // perpendicular to eye direction
+	vec3 tx1 = cross(v, normalize(Pos1) );
+    
+    float w=ps*TexVars_G[0].r;
+    
+	produceVertex(Pos1); // bot
+	produceVertex(mix(Pos1,Pos2,0.2)+0.9*w*tx1); // mid-right
+	produceVertex(mix(Pos1,Pos2,0.2)-0.9*w*tx1); // mid-right		
+	produceVertex(mix(Pos1,Pos2,0.5)+w*tx1); // mid-right
+	produceVertex(mix(Pos1,Pos2,0.5)-w*tx2); // mid-left
+	produceVertex(Pos2); // top	
+	
+
+#else
+
+	float w=TexVars_G[0].r;
+	
+    vec3 v=normalize(Pos2-Pos1); 
+    
+    vec3 t = createPerp(Pos2, Pos1);
+    vec3 p = cross(v, normalize(t) ); 
+    p = cross(p,Pos0 ); 
+  
+    float a = atan2(p.y, p.x);       
+    float ta = a-PI/2;
+    
+    float ps=2*Constants1[0].g; // size
+    vec3 pa=Pos1+ps*v;// end
+   
+	float cc=cos(ta);
+	float ss=sin(ta);    	   		   
+	mat2  M=ps*mat2(cc,ss,-ss,cc);
+	vec3 p1=Pos1;
+	vec3 p2=pa;
+	
+	produceVertex(vec3(p1.xy+M*vec2(0,-1),mix(p1.z,p2.z,0.0)));   // bottom          
+	produceVertex(vec3(p1.xy+M*vec2(0.9*w,-0.8),mix(p1.z,p2.z,0.2)));
+	produceVertex(vec3(p1.xy+M*vec2(-0.9*w,-0.8),mix(p1.z,p2.z,0.2)));   
+	produceVertex(vec3(p1.xy+M*vec2(w,-0.5),mix(p1.z,p2.z,0.5)));  
+	produceVertex(vec3(p1.xy+M*vec2(-w,-0.5),mix(p1.z,p2.z,0.5))); 
+	produceVertex(vec3(p1.xy,mix(p1.z,p2.z,1.0)));   // top
+#endif
+
+ }
+ 
+
+
 void main(void) {
     Pos0=P0[0].xyz;
     Pos1=gl_PositionIn[0].xyz;
     Pos2=gl_PositionIn[1].xyz;
-   // if(length(project(Pos2)-project(Pos1))>2)
+    //if(length(project(Pos2)-project(Pos1))>2)
     //	return;
     int mode=TexVars_G[0].w+0.1;    
     if(mode==LINE)

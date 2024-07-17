@@ -96,8 +96,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST5:
-		PlantMgr::use_lists=PlantMgr::use_lists?false:true;
-		cout << "PlantMgr::use_lists="<<PlantMgr::use_lists<<endl;
+		test5=test5?0:1;
+		cout << "test5="<<test5<<endl;
+		//PlantMgr::use_lists=PlantMgr::use_lists?false:true;
+		//cout << "PlantMgr::use_lists="<<PlantMgr::use_lists<<endl;
 
         //Raster.set_filter_show(!Raster.filter_show());
         TheScene->set_changed_detail();
