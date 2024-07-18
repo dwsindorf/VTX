@@ -153,8 +153,6 @@ void EffectsMgr::setProgram(int type){
 	char defs[512]="";
 	switch(type){
 	case PLANT_ZVALS:
-		if(test5)
-			sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
 	case SHADOW_ZVALS:
 		if(type==PLANT_ZVALS)
 			GLSLMgr::loadProgram("plants.shadows.gs.vert","shadows_zvals.frag","plants.shadows.geom");

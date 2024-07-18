@@ -35,6 +35,10 @@ enum{
     ID_LENGTH_TEXT,
     ID_WIDTH_SLDR,
     ID_WIDTH_TEXT,
+    ID_WIDTH_TAPER_SLDR,
+    ID_WIDTH_TAPER_TEXT,
+    ID_LENGTH_TAPER_SLDR,
+    ID_LENGTH_TAPER_TEXT,
     ID_RAND_SLDR,
     ID_RAND_TEXT,
 	ID_FILELIST,
@@ -78,6 +82,8 @@ SET_SLIDER_EVENTS(DENSITY,VtxLeafTabs,Density)
 SET_SLIDER_EVENTS(LENGTH,VtxLeafTabs,Length)
 SET_SLIDER_EVENTS(WIDTH,VtxLeafTabs,Width)
 SET_SLIDER_EVENTS(RAND,VtxLeafTabs,Rand)
+SET_SLIDER_EVENTS(WIDTH_TAPER,VtxLeafTabs,WidthTaper)
+SET_SLIDER_EVENTS(LENGTH_TAPER,VtxLeafTabs,LengthTaper)
 
 EVT_TEXT_ENTER(ID_RED,VtxLeafTabs::OnChangedExpr)
 EVT_TEXT_ENTER(ID_GREEN,VtxLeafTabs::OnChangedExpr)
@@ -168,7 +174,7 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	LengthSlider=new SliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
-	LengthSlider->setRange(1,20);
+	LengthSlider->setRange(1,50);
 	LengthSlider->setValue(1);
 
 	size->Add(LengthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -184,21 +190,39 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 
 	// other
 
-	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Other"));
+	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Other"));
 	other->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-	
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
 	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 
-	other->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
 	DensitySlider->setRange(0,1);
 	DensitySlider->setValue(1);
 
-	other->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
+	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
 
+	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	WidthTaperSlider=new SliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	WidthTaperSlider->setRange(0.1,1);
+	WidthTaperSlider->setValue(0.8);
+	hline->Add(WidthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	LengthTaperSlider=new SliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Shadow",LABEL2,VALUE2,SLIDER2);
+	LengthTaperSlider->setRange(0.1,1);
+	LengthTaperSlider->setValue(0.8);
+	hline->Add(LengthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
+
+	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
 	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
 
 }
@@ -378,7 +402,11 @@ wxString VtxLeafTabs::exprString(){
 	s+=DensitySlider->getText()+",";
 	s+=LengthSlider->getText()+",";
 	s+=WidthSlider->getText()+",";
-	s+=RandSlider->getText();//+",";
+	s+=RandSlider->getText()+",";
+	s+="1.0,"; // TODO divergence ?
+	s+="0.0,"; // TODO flatness ?
+	s+=WidthTaperSlider->getText()+",";
+	s+=LengthTaperSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -432,6 +460,9 @@ void VtxLeafTabs::getObjAttributes(){
 	LengthSlider->setValue(obj->length);
 	WidthSlider->setValue(obj->width);
 	RandSlider->setValue(obj->randomness);
+	LengthTaperSlider->setValue(obj->length_taper);
+	WidthTaperSlider->setValue(obj->width_taper);
+
 	image_name=obj->getImageName();
 	makeFileList(image_name);
 	setImagePanel();

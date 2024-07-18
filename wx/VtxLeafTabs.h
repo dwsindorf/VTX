@@ -43,6 +43,9 @@ protected:
 	SliderCtrl   *DensitySlider;
 	SliderCtrl   *LengthSlider;
 	SliderCtrl   *WidthSlider;
+	SliderCtrl   *LengthTaperSlider;
+	SliderCtrl   *WidthTaperSlider;
+
 	SliderCtrl   *RandSlider;
 	
 	wxCheckBox *m_enable;
@@ -90,6 +93,8 @@ public:
 	DEFINE_SLIDER_EVENTS(Length)
 	DEFINE_SLIDER_EVENTS(Width)
 	DEFINE_SLIDER_EVENTS(Rand)
+	DEFINE_SLIDER_EVENTS(WidthTaper)
+	DEFINE_SLIDER_EVENTS(LengthTaper)
 
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();

@@ -83,12 +83,11 @@ void emitLine(){
 //    the box is emitted as is without projection
 // 2) the y coord of leaf textures is inverted (1-x) 
 // 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
-//#define TEST
+
 void emitLeaf(){
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 
-#ifndef LEAF_TEST
 	Pos0=P0[0];
 	Pos1=gl_PositionIn[0];
 	Pos2=gl_PositionIn[1];
@@ -96,13 +95,13 @@ void emitLeaf(){
 	vec3 p1,p2;
    
 	vec3 v=normalize(Pos2-Pos1);   
-	float ps=Constants1[0].g; // size
+	float ps=Constants1[0].w; // size
 	vec3 Pos2=Pos1+ps*v;// end
  
 	vec3 tx2 = cross(v, normalize(Pos2) ); // perpendicular to eye direction
 	vec3 tx1 = cross(v, normalize(Pos1) );
     
-    float w=ps*TexVars.r;
+    float w=ps*Constants1[0].z;
 	Pnorm.xyz=normalize(cross(v, tx1 ));
 	Pnorm.w=0.01;
 	if(rectmode){ // use a rectangle (for transparent textures){
@@ -112,58 +111,18 @@ void emitLeaf(){
 		produceTVertex(vec2(1.0,1.0),Pos2+w*tx2); // top-right
 	}
 	else{
+	    float taper=Constants1[0].x;
+	
+	    float w1=w;
+        float w2=taper*w;
+	
 		produceTVertex(vec2(0.50,0.0),Pos1); // bot
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)+0.9*w*tx1); // mid-right
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)-0.9*w*tx1); // mid-right		
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.5)+w*tx1); // mid-right
-		produceTVertex(vec2(0.0,1.0),mix(Pos1,Pos2,0.5)-w*tx2); // mid-left
+		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)+w1*tx1); // mid-right
+		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)-w1*tx1); // mid-right		
+		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.5)+w2*tx1); // mid-right
+		produceTVertex(vec2(0.0,1.0),mix(Pos1,Pos2,0.5)-w2*tx2); // mid-left
 		produceTVertex(vec2(0.50,1.0),Pos2); // top	
 	}
-
-#else   
-	
-    float ps=2*Constants1[0].g; // size
-#ifndef TEST_VIEW
-    vec4 pp=gl_ModelViewProjectionMatrix * gl_PositionIn[0];
-    ps/=pp.w;
-#else
-	ps*=1e8;
-#endif
-    vec4 v=normalize(Pos2-Pos1); 
-    vec4 pa=Pos1+ps*v;// end
-  
-    v=normalize(v);
-    float a = atan2(v.y, v.x);       
-    float ta =a-PI/2;
-    
-	float cc=cos(ta);
-	float ss=sin(ta);    	   		   
-	mat2  M=ps*mat2(cc,ss,-ss,cc);
-	
-	vec2 tang=M*vec2(-1,-1)-M*vec2(1,-1);
-	vec3 t=normalize(vec3(tang,pa.z));
-    Pnorm.xyz=normalize(cross(pa,t));
-    Pnorm.w=0.01;
-    float w=TexVars.r;
-    
-    vec3 p1=Pos1;
-	vec3 p2=pa;
-           
-    if(rectmode){ // use a rectangle (for transparent textures)
-        produceTxVertex(vec2(0.0,0.0),vec3(p1.xy+M*vec2(-w,-1),p1.z));   // bot-left          
-		produceTxVertex(vec2(1.0,0.0),vec3(p1.xy+M*vec2(w,-1),p1.z));    // bot-right
-		produceTxVertex(vec2(0.0,1.0),vec3(p1.xy+M*vec2(-w,0),p2.z));    // top-left 
-		produceTxVertex(vec2(1.0,1.0),vec3(p1.xy+M*vec2(w,0),p2.z));     // top-right
-    }
-   else { // use a diamond shape for solid textures or color only
-   		produceTxVertex(vec2(0.50,0.0),vec3(p1.xy+M*vec2(0,-1),p1.z));   // bottom          
-		produceTxVertex(vec2(1.0,0.25),vec3(p1.xy+M*vec2(0.9*w,-0.8),mix(p1.z,p2.z,0.2)));
-		produceTxVertex(vec2(0.0,0.25),vec3(p1.xy+M*vec2(-0.9*w,-0.8),mix(p1.z,p2.z,0.2)));   
-		produceTxVertex(vec2(1.0,0.50),vec3(p1.xy+M*vec2(w,-0.5),mix(p1.z,p2.z,0.5)));  
-		produceTxVertex(vec2(0.0,0.50),vec3(p1.xy+M*vec2(-w,-0.5),mix(p1.z,p2.z,0.5))); 
-		produceTxVertex(vec2(0.50,1.0),vec3(p1.xy,p2.z));   // top
-    }  
-    #endif
     EndPrimitive();
  }
 

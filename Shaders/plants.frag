@@ -31,7 +31,7 @@ uniform float twilite_min;
 uniform float twilite_max;
 
 #define DEPTH   gl_FragCoord.z
-#define TEXID   TexVars.b
+#define TEXID   TexVars.z
 #define LINE    TexVars.w<0.5
 
 varying vec4 Color;
@@ -96,7 +96,7 @@ vec3 setLighting(vec3 BaseColor) {
 void main(void) {
 	vec4 color = Color;
 	int texid=TEXID;
-	int copt=TexVars.g+0.1;
+	int copt=TexVars.y+0.1;
 	int aopt=copt&4;
 	copt=copt&3;
 #if NTEXS >0

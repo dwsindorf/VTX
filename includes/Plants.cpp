@@ -10,9 +10,6 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-//#define LEAF_TEST
-
-
 //#define COLOR_TEST
 //#define DENSITY_TEST
 
@@ -110,12 +107,9 @@
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
 // 8) shadows
-//   - get crash on loading a new program file if shadows are enabled (fixed)
-//   - need to rebuild plants if new file loaded, branch length changes etc.
-//   - shadow views inefficient for plants (closest view too far away if view angle too high)
 //   o shadows generated for leaves
-//    - shape not correct (size,width ratio not followed)
-//    - projection not correct (too horizontal)
+//    - projection not correct (too small)
+//    - get white silhouette around leaves with complex alpha component(e.g pine needles)
 //   o shadows generated for lines
 //    - can't see unless line width increased >1  
 
@@ -348,9 +342,6 @@ bool PlantMgr::setProgram(){
 	
 	if(TNplant::threed)
 		sprintf(defs,"#define ENABLE_3D\n");
-    if(test5)
-		sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
-
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",TNplant::textures);
 		if(TNplant::textures>0 && Render.bumps())
@@ -909,12 +900,6 @@ void TNplant::set_id(int i){
 	type|=i&PID;
 }
 int TNplant::getChildren(LinkedList<NodeIF*>&l){
-//	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF)){
-//		l.add(right);
-//		return 1;
-//	}
-//	return 0;
-
 	return TNfunc::getChildren(l);
 }
 //-------------------------------------------------------------
@@ -1333,14 +1318,8 @@ bool TNBranch::setProgram(){
 //-------------------------------------------------------------
 void TNBranch::setImage(char *name){
 	if(strcmp(name,texname)){
-		//if(image)
-		//	delete image;
 		strcpy(texname,name);				
 		Image *simage=images.load(texname,BMP|JPG);
-//		if(simage)
-//			cout<<"image loaded for "<<texname<<endl;
-//		else
-//			cout<<"image file "<<texname<<" not found"<<endl;
 		image=simage;
 		invalidateTexture();
 	}
@@ -1606,7 +1585,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	    v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
  	    lastv=v; // save main branch end 
-   }
+    }
  		
 	p2  = start + v; // new top
 	bot = p2;       // new base	
@@ -1654,17 +1633,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size;
 
-				if(test5 && PlantMgr::shadow_mode || TheScene->light_view()|| TheScene->test_view())
-					size*=20/root->size_scale;
 				root->rendered++;
 
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-					TNLeaf::collect(p1,p2,Point(0,size,width_ratio),Point(color_flags, tid, poly_mode),c);
+					TNLeaf::collect(p1,p2,Point(width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
 				else{
-					p0=TheScene->vpoint;
-					glVertexAttrib4d(GLSLMgr::CommonID1, 0, size, 0, 0); // Constants1		
-		 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-					glVertexAttrib4d(GLSLMgr::TexCoordsID, width_ratio, color_flags, tid, shader_mode);
+					glVertexAttrib4d(GLSLMgr::CommonID1, width_taper,length_taper, width_ratio, size); // Constants1		
+					glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
 					glDisable(GL_CULL_FACE);
 					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 					glBegin(GL_LINES);
@@ -1708,7 +1683,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
              	w1/=root->size_scale;
             	w2/=root->size_scale;
             }
-			if (/*!PlantMgr::shadow_mode &&*/ root->threed && shader_mode == SPLINE_MODE) {
+			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1778,7 +1753,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         }
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
-		//glLineWidth(1);
 	}
 	TNBranch *child = (TNBranch*) right;
 	
@@ -1912,14 +1886,13 @@ double LeafData::distance() {
 	return data[0].z;
 
 }
+// TNLeaf::collect(p1,p2,Point(width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
 
 void  LeafData::render(){
-	Point p0=TheScene->vpoint;
-	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x, data[2].y, 0, 0); // Constants1		
-	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[2].z, data[3].x, data[3].y, LEAF_MODE);
+	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x,data[2].y,data[2].z,data[3].z); // taper, compression, width_ratio,size		
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, data[3].x, data[3].y, LEAF_MODE); //0,color_flags,size
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
-	glPolygonMode(GL_FRONT_AND_BACK, data[3].z);			
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);			
 	glBegin(GL_LINES);
 	glVertex4d(data[0].x, data[0].y, data[0].z, 0);
 	glVertex4d(data[1].x, data[1].y, data[1].z, 0);
@@ -1928,6 +1901,8 @@ void  LeafData::render(){
 }
 
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
+	width_taper=0.8;
+	length_taper=0.9;
 	min_level=-1;
 }
 void TNLeaf::render(){

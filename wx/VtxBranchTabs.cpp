@@ -256,7 +256,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Randomness",LABEL2, VALUE2,SLIDER2);
+	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,2);
 	RandSlider->setValue(1);
 
@@ -535,7 +535,6 @@ void VtxBranchTabs::getObjAttributes(){
 	LengthTaperSlider->setValue(obj->length_taper);
 	FirstBiasSlider->setValue(obj->first_bias);
 
-	
 	image_name=obj->getImageName();
 	makeFileList(image_name);
 	setImagePanel();
