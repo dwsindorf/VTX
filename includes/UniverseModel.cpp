@@ -665,7 +665,7 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_PLANT:
 			node->setFlag(TN_PLANT);
-			node->setFlag(TN_BRANCH);		
+			//node->setFlag(TN_BRANCH);		
 			break;
 		case ID_BRANCH:
 			node->setFlag(TN_PLANT_BRANCH);

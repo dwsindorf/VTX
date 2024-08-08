@@ -74,7 +74,23 @@ void emitLine(){
     emitVertex(Pos1); 
     emitVertex(Pos2);
  }
- 
+#define MAT_MUL
+vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
+#ifdef MAT_MUL
+   mat4 M=mat4(1,0,0,0,
+               -3,3,0,0,
+               3,-6,3,0,
+               -1,3,-3,1
+               );               
+   mat4 P=mat4(P0,P1,P2,P3);
+   vec4 X=vec4(1,t,t*t,t*t*t);
+   mat4 MP=mul(P,M);
+   return (MP*X);
+#else
+   return (P0 + (P1*3 -3*P0)*t + (P2*3 -6*P1 +3*P0)*t*t + (P3 -3*P2 +3*P1 -P0)*t*t*t);
+#endif
+}
+
 // draw a leaf
 // notes:
 // 1) leaf points and vectors are first projected onto the screen
@@ -88,18 +104,15 @@ void emitLeaf(){
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 
-	Pos0=P0[0];
 	Pos1=gl_PositionIn[0];
 	Pos2=gl_PositionIn[1];
-
-	vec3 p1,p2;
    
-	vec3 v=normalize(Pos2-Pos1);   
+	vec3 v=normalize(Pos2.xyz-Pos1.xyz);   
 	float ps=Constants1[0].w; // size
-	vec3 Pos2=Pos1+ps*v;// end
+	Pos2=vec4(Pos1.xyz+ps*v,1);
  
-	vec3 tx2 = cross(v, normalize(Pos2) ); // perpendicular to eye direction
-	vec3 tx1 = cross(v, normalize(Pos1) );
+	vec3 tx2 = cross(v, normalize(Pos2.xyz) ); // perpendicular to eye direction
+	vec3 tx1 = cross(v, normalize(Pos1.xyz) );
     
     float w=ps*Constants1[0].z;
 	Pnorm.xyz=normalize(cross(v, tx1 ));
@@ -115,15 +128,38 @@ void emitLeaf(){
 	
 	    float w1=w;
         float w2=taper*w;
-	
-		produceTVertex(vec2(0.50,0.0),Pos1); // bot
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)+w1*tx1); // mid-right
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.2)-w1*tx1); // mid-right		
-		produceTVertex(vec2(1.0,0.0),mix(Pos1,Pos2,0.5)+w2*tx1); // mid-right
-		produceTVertex(vec2(0.0,1.0),mix(Pos1,Pos2,0.5)-w2*tx2); // mid-left
-		produceTVertex(vec2(0.50,1.0),Pos2); // top	
+         
+        float b1=0.1;
+        float b2=0.9;
+
+		w1=w1*1.5;
+		w2=w2*1.5;
+        float s=w1*1.4;
+        Pos1.w=0;
+        Pos2.w=0;
+        int nodes=8;
+        vec4 t1=vec4(tx1,1);
+        vec4 t2=vec4(tx2,1);
+        vec4 x1=mix(Pos1,Pos2,b1);
+        vec4 x2=mix(Pos1,Pos2,b2);
+        vec4 s1p=x1+w1*t1;
+        vec4 s1m=x1-w1*t1;
+        vec4 s2p=x2+w2*t2;
+        vec4 s2m=x2-w2*t2;
+        
+        float dt=1.0/nodes;
+        float t=dt;
+        
+        produceTVertex(vec2(0.5,0.0),Pos1); // bot
+        for(int i=0;i<nodes-1;i++){
+          vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
+          produceTVertex(vec2(p.w/s+0.5,t),p);
+          p=bezier(t,Pos1,s1m,s2m,Pos2);
+          produceTVertex(vec2(p.w/s+0.5,t),p);
+          t+=dt;
+        }
+        produceTVertex(vec2(0.5,1.0),Pos2); // top      
 	}
-    EndPrimitive();
  }
 
 // branches  
@@ -207,7 +243,7 @@ void emitBranch(){
    emitRectangle(p1,p2,cc,vec4(0,0,0,1));
  }
 
-mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
+//mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
 vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
   vec4 c=p0;
   vec4 b=p1*4.0-p0*3.0-p2;

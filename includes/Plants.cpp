@@ -10,7 +10,7 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-//#define COLOR_TEST
+#define COLOR_TEST
 //#define DENSITY_TEST
 
 //#define SHOW_STATS
@@ -106,12 +106,16 @@
 //   - trunk size can be very different between 2d and 3d
 // 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant
+//   - adding plant to terrain puts following elements in a sub-group
+//     o removing also removes sub-group elements
+//   - deleting branch can cause crash
+//   - adding branch to (empty) plant causes crash
 // 8) shadows
 //   o shadows generated for leaves
 //    - projection not correct (too small)
 //    - get white silhouette around leaves with complex alpha component(e.g pine needles)
 //   o shadows generated for lines
-//    - can't see unless line width increased >1  
+//    - can't see unless line width increased >1
 
 //************************************************************
 // classes PlantPoint, PlantMgr
@@ -460,7 +464,7 @@ void PlantMgr::render_shadows(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	//min_draw_width=2;
 	Raster.setProgram(Raster.PLANT_SHADOWS);
-	glLineWidth(3);
+	glLineWidth(2);
 	render();
 	glLineWidth(1);
 	shadow_mode=false;
@@ -474,6 +478,7 @@ void PlantMgr::render_zvals(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
 	//min_draw_width=2;
+	glLineWidth(2);
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	render();
@@ -485,7 +490,7 @@ void PlantMgr::render(){
 	TNLeaf::free();
 	int n=Plant::plants.size;
 	
-	glLineWidth(2);
+	glLineWidth(1);
 
 	
 	glEnable(GL_BLEND);
@@ -1410,7 +1415,7 @@ void TNBranch::setColorFlags(){
 		if(comps==4 && strcmp(alpha,"0"))
 			color_flags=2;
 	}
-	if(texid>=0 && tex_enabled)
+	if(texid>=0 && tex_enabled && alpha_texture)
 		color_flags|=4; // rect mode
 }
 void TNBranch::setColor(){
@@ -1511,6 +1516,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 	int lev = lvl;
 	lev++;
+	if(!root)
+		init();
 	//cout<<base.distance(TheScene->vpoint)<<" "<<base.length()<<endl;
 	
 	int mode = opt;
@@ -1623,12 +1630,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				
 				setColor();
 				Color c=S0.c;
-				int alpha=0;
+				//int alpha=0;
 				double depth=bot.length();
 				child_size = length*FEET/12; // inches
 				child_size *= 1 + 0.5 * randomness * SRAND;
 	
-				alpha=alpha_texture&&tex_enabled?4:0;
+				//alpha=alpha_texture&&tex_enabled?4:0;
 				double width_ratio=0.5*width;
 
 				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size;
@@ -1636,9 +1643,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				root->rendered++;
 
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-					TNLeaf::collect(p1,p2,Point(width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
+					TNLeaf::collect(p1,p2,Point(1-width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
 				else{
-					glVertexAttrib4d(GLSLMgr::CommonID1, width_taper,length_taper, width_ratio, size); // Constants1		
+					glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,length_taper, width_ratio, size); // Constants1		
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
 					glDisable(GL_CULL_FACE);
 					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
@@ -1882,11 +1889,8 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 ValueList<LeafData*> TNLeaf::leafs;
 
 double LeafData::distance() { 
-	//return 0.5*(data[0].z+data[1].z);
-	return data[0].z;
-
+	return data[1].length();
 }
-// TNLeaf::collect(p1,p2,Point(width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
 
 void  LeafData::render(){
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[2].x,data[2].y,data[2].z,data[3].z); // taper, compression, width_ratio,size		

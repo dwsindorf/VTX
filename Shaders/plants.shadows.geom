@@ -11,7 +11,7 @@ varying in vec4 TexVars_G[];
 
 varying in vec4 P0[];
 
-vec3 Pos0,Pos1,Pos2;
+vec4 Pos0,Pos1,Pos2;
 
 float scale=6e-7;
  
@@ -63,13 +63,13 @@ void emitCone()
    float r1=scale*c.x;
    float r2=scale*c.y;
 
-   vec3 axis1 = Pos1 - Pos0;
-   vec3 axis2 = Pos2 - Pos1;
+   vec3 axis1 = Pos1.xyz - Pos0.xyz;
+   vec3 axis2 = Pos2.xyz - Pos1.xyz;
 
-   vec3 tx1 = createPerp(Pos1, Pos0);
+   vec3 tx1 = createPerp(Pos1.xyz, Pos0.xyz);
    vec3 ty1 = cross(normalize(axis1), tx1 );
 
-   vec3 tx2 = createPerp(Pos2, Pos1);
+   vec3 tx2 = createPerp(Pos2.xyz, Pos1.xyz);
    vec3 ty2 = cross(normalize(axis2), tx2 );
    
    int segs = 4;
@@ -97,21 +97,35 @@ void emitCone()
    }
 }
 
-// draw a leaf
+#define MAT_MUL
+
+vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
+#ifdef MAT_MUL
+   mat4 M=mat4(1,0,0,0,
+               -3,3,0,0,
+               3,-6,3,0,
+               -1,3,-3,1
+               );
+               
+   mat4 P=mat4(P0,P1,P2,P3);
+   vec4 X=vec4(1,t,t*t,t*t*t);
+   mat4 MP=mul(P,M);
+   return (MP*X);
+#else
+   return (P0 + (P1*3 -3*P0)*t + (P2*3 -6*P1 +3*P0)*t*t + (P3 -3*P2 +3*P1 -P0)*t*t*t);
+#endif
+}
 
 void emitLeaf(){
-	Pos0=P0[0];
 	Pos1=gl_PositionIn[0];
 	Pos2=gl_PositionIn[1];
 
-	vec3 p1,p2;
-   
-	vec3 v=normalize(Pos2-Pos1);   
+	vec3 v=normalize(Pos2.xyz-Pos1.xyz);   
 	float ps=Constants1[0].w; // size
-	vec3 Pos2=Pos1+ps*v;// end
+	Pos2=vec4(Pos1.xyz+ps*v,1);
  
-	vec3 tx2 = cross(v, normalize(Pos2) ); // perpendicular to eye direction
-	vec3 tx1 = cross(v, normalize(Pos1) );
+	vec3 tx2 = cross(v, normalize(Pos2.xyz) ); // perpendicular to eye direction
+	vec3 tx1 = cross(v, normalize(Pos1.xyz) );
     
     float w=ps*Constants1[0].z; // width_ratio
     
@@ -119,23 +133,42 @@ void emitLeaf(){
     float compression=Constants1[0].y;
     
     float w1=compression*w;
-    float w2=compression*taper*w;
+    float w2=taper*w1;
     
-	produceVertex(Pos1); // bot
-	produceVertex(mix(Pos1,Pos2,0.2)+w1*tx1); // mid-right
-	produceVertex(mix(Pos1,Pos2,0.2)-w1*tx1); // mid-right		
-	produceVertex(mix(Pos1,Pos2,0.5)+w2*tx1); // mid-right
-	produceVertex(mix(Pos1,Pos2,0.5)-w2*tx2); // mid-left
-	produceVertex(Pos2); // top	
-	
+    float b1=0.1;
+    float b2=0.9;
+
+	w1=w1*1.5;
+	w2=w2*1.5;
+
+    int nodes=6;
+    vec4 t1=vec4(tx1,1.0);
+    vec4 t2=vec4(tx2,1.0);
+    vec4 x1=mix(Pos1,Pos2,b1);
+    vec4 x2=mix(Pos1,Pos2,b2);
+    vec4 s1p=x1+w1*t1;
+    vec4 s1m=x1-w1*t1;
+    vec4 s2p=x2+w2*t2;
+    vec4 s2m=x2-w2*t2;
+    
+    float dt=1.0/nodes;
+    float t=dt;
+
+    produceVertex(Pos1); // bot
+    for(int i=0;i<nodes-1;i++){
+      produceVertex(bezier(t,Pos1,s1p,s2p,Pos2));
+      produceVertex(bezier(t,Pos1,s1m,s2m,Pos2));
+      t+=dt;
+    }
+    produceVertex(Pos2); // top      
  }
  
 
 
 void main(void) {
-    Pos0=P0[0].xyz;
-    Pos1=gl_PositionIn[0].xyz;
-    Pos2=gl_PositionIn[1].xyz;
+    Pos0=P0[0];
+    Pos1=gl_PositionIn[0];
+    Pos2=gl_PositionIn[1];
     //if(length(project(Pos2)-project(Pos1))>2)
     //	return;
     int mode=TexVars_G[0].w+0.1;    

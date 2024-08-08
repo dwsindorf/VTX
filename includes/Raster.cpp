@@ -10,7 +10,7 @@
 #include "GLSLMgr.h"
 
 #define OPTIMIZE
-
+#define DEBUG_SHADOWS
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
 extern double lsin(double t);
@@ -589,7 +589,7 @@ void RasterMgr::set_light_view()
 	r=shadow_vzf-shadow_vzn;
     r=y>r?y:r;
 
-   	s=2000*r;
+   	s=200*r;
 
 	e=c+cl*s;
     d=e.distance(c);
@@ -618,7 +618,7 @@ void RasterMgr::set_light_view()
     f=sf*shadow_zfactor/shadow_vzf;
 	s_zmin=f*shadow_zmin;
 	s_zmax=s_zmin+f*shadow_zmax;
-#ifdef DEBUF_SHADOWS
+#ifdef DEBUG_SHADOWS
 	char tmp[256];
 	sprintf(tmp,"# %d d %g h %g w %g y %g zn %g zf %g fov %g",shadow_vcnt,d,h,w,y,zn,zf,fov);
 	cout << tmp <<endl;

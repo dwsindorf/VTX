@@ -94,6 +94,7 @@ vec3 setLighting(vec3 BaseColor) {
 
 // ########## main section #########################
 void main(void) {
+	//vec4 color = vec4(pow(DEPTH,15.0),0,0,1);//Color;
 	vec4 color = Color;
 	int texid=TEXID;
 	int copt=TexVars.y+0.1;

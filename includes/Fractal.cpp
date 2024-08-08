@@ -66,7 +66,7 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 //-------------------------------------------------------------
 void TNfractal::eval()
 {
-	if(!isEnabled() || Td.get_flag(FVALUE) || TheScene->viewtype != SURFACE){
+	if(!isEnabled() || Td.get_flag(FVALUE)){
 		if(right)
 			right->eval();
 		return;

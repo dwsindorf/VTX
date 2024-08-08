@@ -130,7 +130,10 @@ public:
 	const char *symbol()	{ return "Plant";}
 
 	bool isLeaf()			{ return false;}
-	int linkable()          { return 1;}
+	int linkable()          { return 0;}
+
+	//bool isLeaf()			{ return false;}
+	//int linkable()          { return 1;}
 	void valueString(char *);
 	void save(FILE*);
 	void set_id(int i);
