@@ -49,9 +49,9 @@
 #include "VtxBranchTabs.h"
 #include "VtxLeafTabs.h"
 
-//#define PRINT_TREE
+#define PRINT_TREE
 
-//#define DEBUG_TREE_ACTIONS
+#define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
@@ -761,6 +761,7 @@ NodeIF *VtxSceneDialog::deleteSelected(){
 // VtxSceneDialog::replaceSelected() replace selected node
 //-------------------------------------------------------------
 void VtxSceneDialog::replaceSelected(NodeIF *newobj){
+	TheScene->model->setActionMode(Model::REPLACING);
 	wxTreeItemId item=treepanel->GetSelection();
 	bool expanded=treepanel->IsExpanded(item);
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);

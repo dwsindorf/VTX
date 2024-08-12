@@ -97,14 +97,14 @@ class Model
 protected:
 public:
 	enum {
-		ADDING,DROPPING
+		ADDING,DROPPING,REPLACING
 	};
 	int actionmode;
 	void setActionMode(int m) { actionmode=m;}
 	int getActionMode()       {return actionmode;}
 	int dropping()            { return actionmode==DROPPING;}
 	int adding()               { return actionmode==ADDING;}
-
+	int replacing()               { return actionmode==REPLACING;}
     int countNodes(TreeNode *);
 	TreeNode *getNode(TreeNode *,NodeIF *);
     void visit(TreeNode *root, void (*func)(TreeNode *));

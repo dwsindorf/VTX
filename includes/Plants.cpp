@@ -10,7 +10,7 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-#define COLOR_TEST
+//#define COLOR_TEST
 //#define DENSITY_TEST
 
 //#define SHOW_STATS
@@ -819,6 +819,9 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 //-------------------------------------------------------------
 TNplant::~TNplant()
 {
+	cout<<"TNplant::~TNplant()"<<endl;
+//	TerrainProperties *tp=Td.tp;
+//	tp->plants.remove(plant);
 	DFREE(plant);
 }
 
@@ -849,8 +852,8 @@ void TNplant::init()
 	//else
 	//	return;
 	//smgr->setHashsize(2*PERMSIZE);
-	if(smgr->first())
-		return;
+	//if(smgr->first())
+	//	return;
     branches=0;
 	smgr->init();
 	
@@ -1092,6 +1095,9 @@ void TNplant::saveNode(FILE *f)
 // TNplant::removeNode() delete or replace
 //-------------------------------------------------------------
 NodeIF *TNplant::removeNode(){
+	cout<<"TNplant::removeNode()"<<endl;
+	//DFREE(plant);
+
 	NodeIF *p=getParent();
 	NodeIF *child=0;
 	if(p->typeValue()!=ID_ROOT){
@@ -1115,6 +1121,10 @@ NodeIF *TNplant::removeNode(){
 		else
 			p->replaceChild(this,next);
 	}
+	TerrainProperties *tp=Td.tp;
+	tp->plants.remove(plant);
+	plant=0;
+
 	return this;
 }
 //-------------------------------------------------------------
@@ -1858,7 +1868,7 @@ NodeIF *TNBranch::removeNode(){
 // TNlayer::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNBranch::replaceNode(NodeIF *c){
-	if(!c || c->typeValue()!=ID_BRANCH)
+	if(!c || c->typeValue()!=typeValue())
 		return 0;
 	if(left)
 		delete left;
@@ -1869,7 +1879,8 @@ NodeIF *TNBranch::replaceNode(NodeIF *c){
 	left->setParent(this);
 	base=newbranch->base;
 	setName(newbranch->nodeName());
-	base->setParent(this);
+	if(base)
+		base->setParent(this);
 	init();
 	return this;
 }
@@ -1922,8 +1933,4 @@ void TNLeaf::getImageDir(int dim,char *dir){
 	char base[256];
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Leaf",base);
-}
-
-void TNLeaf::saveNode(FILE *f){
-	TNBranch::saveNode(f);
 }

@@ -132,8 +132,6 @@ public:
 	bool isLeaf()			{ return false;}
 	int linkable()          { return 0;}
 
-	//bool isLeaf()			{ return false;}
-	//int linkable()          { return 1;}
 	void valueString(char *);
 	void save(FILE*);
 	void set_id(int i);
@@ -230,7 +228,7 @@ public:
 	char *getImageName(){return texname;}
 	void getImageFilePath(char*name,int dim,char *dir);
 	bool isLeaf()			{ return false;}
-	//int linkable()          { return 1;}
+	int linkable()          { return 0;}
 
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
@@ -277,11 +275,7 @@ public:
 	static void sort() { leafs.sort();}	
 	static ValueList<LeafData*> leafs;
 	
-	bool isLeaf()			{ return false;}
-	void saveNode(FILE *f);
-
 	void getImageDir(int dim,char *);
-
 
 };
 

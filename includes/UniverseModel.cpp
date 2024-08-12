@@ -458,7 +458,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		break;
 	case TN_PLANT:
 		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
-		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
+		//list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_MAP:
 		list.add(new ModelSym("Layer",TN_LAYER));
@@ -535,18 +535,14 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_POINT:
 	case TN_COLOR:
 	case TN_GLOSS:
-	//case TN_WATER:
 	case TN_FCHNL:
-
 		if(actionmode!=DROPPING)
 			break;
 		list.add(getObjectSymbol(TN_TEXTURE));
 		list.add(getObjectSymbol(TN_SPRITE));
-		//list.add(getObjectSymbol(TN_PLANT));
 		list.add(getObjectSymbol(TN_POINT));
 		list.add(getObjectSymbol(TN_COLOR));
 		list.add(getObjectSymbol(TN_GLOSS));
-		//list.add(getObjectSymbol(TN_WATER));
 		list.add(getObjectSymbol(TN_SNOW));
 		list.add(getObjectSymbol(TN_FCHNL));
 
@@ -665,15 +661,16 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_PLANT:
 			node->setFlag(TN_PLANT);
-			//node->setFlag(TN_BRANCH);		
+			//node->setFlag(TN_BRANCH);
+			//node->setFlag(TN_HIDEFLAG);	
 			break;
 		case ID_BRANCH:
 			node->setFlag(TN_PLANT_BRANCH);
-			node->setFlag(TN_HIDEFLAG);
+			//node->setFlag(TN_HIDEFLAG);
 			break;
 		case ID_LEAF:
 			node->setFlag(TN_PLANT_LEAF);
-			node->setFlag(TN_HIDEFLAG);
+			//node->setFlag(TN_HIDEFLAG);
 			break;
 		case ID_FOG:
 			node->setFlag(TN_FOG);
@@ -871,6 +868,11 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		}
 		break;
 	case TN_COMP:
+		while(parent && parent->getParent() && /*!replacing() &&*/ ptype!=TN_SURFACE && ptype!=TN_COMP){
+			cout<<parent->name()<<endl;
+		  	parent=parent->getParent();
+		  	ptype=parent->getFlag(TN_TYPES);
+		}
 	    if(!node->getFlag(TN_BRANCH))
 			node->setFlag(NODE_HIDE,getFlag(parent,TN_HIDEFLAG));
 		root->setName("group");
@@ -899,21 +901,30 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
     	if(ptype!=TN_MAP)
   			parent=parent->getParent();
 		break;
-	case TN_PLANT_BRANCH:
 	case TN_PLANT_LEAF:
-    	while(ptype!=TN_PLANT){
+//	   	while(parent && parent->getParent() && ptype!=TN_PLANT_BRANCH){
+//	  		parent=parent->getParent();
+//	  		ptype=parent->getFlag(TN_TYPES);
+//	     }
+		break;
+
+	case TN_PLANT_BRANCH:
+    	while(parent && parent->getParent() && ptype!=TN_PLANT){
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);
      	}
 		break;
 	case TN_PLANT:
-    	while(ptype!=TN_SURFACE){
+    	while(parent && parent->getParent() && ptype!=TN_SURFACE){
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);
      	}
 		break;
 	}
 	ptype=parent->getFlag(TN_TYPES);
+#ifdef DEBUG_ADD_TO_TREE
+	cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<endl;
+#endif
 	if(parent && node->getFlag(NODE_HIDE)){
         delete root;
         root=parent;
