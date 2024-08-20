@@ -1119,10 +1119,10 @@ NodeIF *TNplant::removeNode(){
 // TNplant::addChild
 //-------------------------------------------------------------
 NodeIF *TNplant::addChild(NodeIF *n){
-	//cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
+	cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
 	if(n->typeValue()==ID_BRANCH)
 		return TNfunc::addChild(n);
-	else if(n->typeValue()==ID_PLANT){
+	else /*if(n->typeValue()==ID_PLANT)*/{
 		TNunary *nlast=lastChild();
 		nlast->right=n;
 	}
@@ -1142,7 +1142,6 @@ NodeIF *TNplant::replaceNode(NodeIF *n){
 int TNplant::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
-
 
 //-------------------------------------------------------------
 // TNplant::emit() build the branch structure
