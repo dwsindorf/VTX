@@ -118,7 +118,7 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 		if(!dropping()){
 			((Corona*)child)->size=psize*6;
 			((Corona*)child)->size*=1+0.25*SRand();
-		}
+		}			
 		((Corona*)child)->ht=((Corona*)child)->size-psize;
 
 		break;
@@ -457,7 +457,10 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_PLANT_LEAF:
 		break;
 	case TN_PLANT:
-		list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
+		if(obj->collapsed())
+			list.add(new ModelSym("Plant",TN_PLANT));
+		else
+			list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
 		//list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_MAP:
@@ -784,6 +787,7 @@ TreeNode *UniverseModel::insertInTree(TreeNode *parent, NodeIF *node)
 			parent->setFlag(TN_INVALID);
 		}
 		break;
+	case TN_PLANT:
 	case TN_ROCKS:
 		node->setFlag(NODE_BRANCH);
 		break;
@@ -803,18 +807,22 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 //-------------------------------------------------------------
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
-	//if(actionmode==DROPPING && child)
-//	if(child)
-//		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName()<<endl;
-//	else
-//		cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child=0"<<endl;
+	TreeNode *init_parent=parent;
+//#define DEBUG_ADD_TO_TREE
+#ifdef DEBUG_ADD_TO_TREE
+	if(child)
+		cout<<" parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName();
+	else
+		cout<<" parent="<<parent->node->typeName()<<"<"<<parent->label()<<"> newobj="<<node->typeName()<<"<"<<node->nodeName()<<">";
 
-
+#endif
     int branch=node->getFlag(NODE_BRANCH);
 	TreeNode *root=new TreeNode(node);
 	setType(node);
 
 	int ptype=parent->getFlag(TN_TYPES);
+	int ntype=node->getFlag(TN_TYPES);
+
 	switch(ptype){
 	case TN_DENSITY:
 	case TN_POINT:
@@ -822,8 +830,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_CRATERS:
 	case TN_TEXTURE:
 	case TN_SPRITE:
-	case TN_PLANT_BRANCH:
-	case TN_PLANT_LEAF:
 	case TN_FOG:
 	case TN_SNOW:
 	case TN_ERODE:
@@ -833,23 +839,47 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_FCHNL:
 		parent=parent->getParent();
 		break;
+	case TN_PLANT_LEAF:
+		parent=parent->getParent();
+		ptype=parent->getFlag(TN_TYPES);
+		while(parent && (ptype==TN_PLANT_BRANCH ||ptype==TN_PLANT_LEAF ||ptype==TN_PLANT)){
+			parent=parent->getParent();
+			if(parent)
+				ptype=parent->getFlag(TN_TYPES);
+		}
+		break;
+	case TN_PLANT_BRANCH:
+		parent=parent->getParent();
+		ptype=parent->getFlag(TN_TYPES);
+		if(ntype==TN_PLANT_LEAF || ntype==TN_PLANT_BRANCH){
+			while(parent && ptype==TN_PLANT_BRANCH ){
+				parent=parent->getParent();
+				if(parent)
+					ptype=parent->getFlag(TN_TYPES);
+			}
+			break;
+		}
+		while(parent && (ptype==TN_PLANT_BRANCH ||ptype==TN_PLANT_LEAF ||ptype==TN_PLANT)){
+			parent=parent->getParent();
+			if(parent)
+				ptype=parent->getFlag(TN_TYPES);
+		}
+		break;
+	case TN_PLANT:
+		break;
 	case TN_ROCKS:
 	    if(!branch)
 			parent=parent->getParent();
 		break;
 	case TN_SKY:
-		//return root;
 		break;
 	case TN_CLOUD:
 		parent=parent->getParent();
 		break;
 	case TN_CORONA:
 	case TN_HALO:
-		//if(actionmode==DROPPING)
-		//parent=parent->getParent();
 		break;
 	}
-	int ntype=node->getFlag(TN_TYPES);
 	ptype=parent->getFlag(TN_TYPES);
 	switch(ntype){
 	case TN_SURFACE:
@@ -868,11 +898,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		}
 		break;
 	case TN_COMP:
-		while(parent && parent->getParent() && /*!replacing() &&*/ ptype!=TN_SURFACE && ptype!=TN_COMP){
-			cout<<parent->name()<<endl;
-		  	parent=parent->getParent();
-		  	ptype=parent->getFlag(TN_TYPES);
-		}
 	    if(!node->getFlag(TN_BRANCH))
 			node->setFlag(NODE_HIDE,getFlag(parent,TN_HIDEFLAG));
 		root->setName("group");
@@ -894,25 +919,15 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		break;
 	case TN_TEXTURE:
 		root->setName("texture");
-//		if(parent->getFlag(TN_TYPES)==TN_RING)
-//			node->setFlag(NODE_HIDE);
 		break;
 	case TN_LAYER:
     	if(ptype!=TN_MAP)
   			parent=parent->getParent();
 		break;
 	case TN_PLANT_LEAF:
-//	   	while(parent && parent->getParent() && ptype!=TN_PLANT_BRANCH){
-//	  		parent=parent->getParent();
-//	  		ptype=parent->getFlag(TN_TYPES);
-//	     }
 		break;
 
 	case TN_PLANT_BRANCH:
-    	while(parent && parent->getParent() && ptype!=TN_PLANT){
-  			parent=parent->getParent();
-  			ptype=parent->getFlag(TN_TYPES);
-     	}
 		break;
 	case TN_PLANT:
     	while(parent && parent->getParent() && ptype!=TN_SURFACE){
@@ -923,7 +938,10 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	}
 	ptype=parent->getFlag(TN_TYPES);
 #ifdef DEBUG_ADD_TO_TREE
-	cout<<"parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<endl;
+	if(init_parent !=parent)
+		cout<<" parent="<<parent->node->typeName()<<"<"<<parent->label()<<"> newobj="<<node->typeName()<<"<"<<node->nodeName()<<">"<<endl;
+	else
+		cout<<endl;
 #endif
 	if(parent && node->getFlag(NODE_HIDE)){
         delete root;
@@ -942,6 +960,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		if(node->getChildren(children)){
 			NodeIF *child;
 			children.ss();
+			int i=0;
 			while(child=children++){
 				addToTree(root,child);
 			}

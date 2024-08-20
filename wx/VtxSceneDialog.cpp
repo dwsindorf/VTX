@@ -556,12 +556,12 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 			if (addId==first) { // first child > new child or one child
 				if(dstObj->typeLevel()>=newObj->typeLevel()){ // 2nd child < first : insert
 					newObj=dstObj->addAfter(0, newObj);
+#ifdef DEBUG_TREE_ACTIONS
+					cout<<"2nd child < first : insert "<<newObj->typeName()<<" after "<<dstObj->typeName()<<endl;
+#endif
 					tree_node=TheScene->model->addToTree(tnode, 0, newObj);
 					TheScene->setPrototype(dstObj, newObj);
 					addToTree(dstId, 0, tree_node);
-#ifdef DEBUG_TREE_ACTIONS
-					cout<<"2nd child < first : insert"<<endl;
-#endif
 				}
 				else{ // add new child after last child with lower level
 #ifdef DEBUG_TREE_ACTIONS
@@ -767,7 +767,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *oldobj=node->getObject();
 #ifdef DEBUG_TREE_ACTIONS
-	cout<<" newobj:"<<newobj<<" oldobj:"<<oldobj<<endl;
+	cout<<" newobj:"<<newobj->typeName()<<" oldobj:"<<oldobj->typeName()<<endl;
 #endif
 	bool vo=(oldobj==TheScene->viewobj);
 	if(vo)
@@ -775,7 +775,6 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     newobj=oldobj->replaceNode(newobj);
     int type=newobj->getFlag(TN_TYPES);
 	TheScene->regroup();
-    
 
     TheScene->rebuild_all();
     rebuildObjectTree();

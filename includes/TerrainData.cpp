@@ -306,6 +306,7 @@ TerrainProperties::~TerrainProperties(){
 	textures.reset();
 	sprites.reset();
 	noise.reset();
+	plants.reset();
 }
 void TerrainProperties::initProgram(){
 	//Texture::reset();
@@ -365,6 +366,7 @@ void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
 	sprites.reset();
+	plants.reset();
 }
 
 

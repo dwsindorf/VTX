@@ -57,7 +57,8 @@ TNmap::TNmap(TNode *l, TNode *r) :  TNfunc(l,r)
 		arg->right=0;
 		delete arg;	
 	}
-
+    layers=0;
+    mht=0;
 	margin=0.1;
 	mdrop=DFLT_DROP;
 	mmorph=0;
@@ -477,7 +478,7 @@ void TNmap::eval()
     }
     if(Td.margin<1){
     	int id=1+Td.zlevel[0].id(); // get properties for top layer
-		if(Td.zlevel[0].properties[id]->ntexs){
+		if(id<Td.zlevel[0].properties.size && Td.zlevel[0].properties[id]->ntexs){
 	    	int tid=Td.zlevel[0].properties[id]->ntexs-1; // top texture in layer
 			FColor  avec=Td.zlevel[0].properties[id]->textures[tid]->aveColor;
 			Color c=Color(avec.red(),avec.green(),avec.blue());

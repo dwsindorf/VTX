@@ -165,7 +165,7 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define TEST_PTS 
 //#define DUMP
 //#define SHOW
-#define DEBUG_PMEM
+//#define DEBUG_PMEM
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
@@ -787,6 +787,8 @@ bool TNplant::spline=true;
 //************************************************************
 TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
+	set_collapsed();
+
 	TNarg *arg=left;
 	TNarg *node=arg->left;
 	if(node->typeValue() == ID_STRING){		
@@ -803,8 +805,6 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	radius=0;
 	size=1e-6;
 	plant_id=0;
-	last_branch=0;
-	leaf=0;
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
@@ -819,9 +819,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 //-------------------------------------------------------------
 TNplant::~TNplant()
 {
-	cout<<"TNplant::~TNplant()"<<endl;
-//	TerrainProperties *tp=Td.tp;
-//	tp->plants.remove(plant);
+	//cout<<"TNplant::~TNplant()"<<endl;
 	DFREE(plant);
 }
 
@@ -876,39 +874,12 @@ void TNplant::init()
 	if(right)
 	   right->init();
 
-	getLeaf();
-	getLastBranch();
-	//cout<<"plant.init"<<endl;
 	smgr->set_first(1);
 }
 
-void TNplant::getLeaf() {
-	TNBranch *p = (TNBranch*)right;
-	while (p && p->typeValue() != ID_LEAF) {
-		p=p->right;
-	}
-	if(p && p->typeValue() == ID_LEAF)
-		leaf=(TNLeaf*)p;
-}
-
-void TNplant::getLastBranch() {
-	TNBranch *p = (TNBranch*)right;
-	TNBranch *n=p;
-	while (n && n->typeValue() == ID_BRANCH) {
-		TNBranch *t=n->right;
-		if(!t || t->typeValue()!=ID_BRANCH){
-			last_branch=n;
-			break;
-		}
-		n=n->right;
-	}
-}
 void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
-}
-int TNplant::getChildren(LinkedList<NodeIF*>&l){
-	return TNfunc::getChildren(l);
 }
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node
@@ -938,6 +909,8 @@ void TNplant::eval()
 
 	htval=Height;
 	ncalls++;
+	
+	INIT;
 	
 	double density=maxdensity;
 	MaxSize=mgr->maxsize;
@@ -1088,16 +1061,30 @@ void TNplant::saveNode(FILE *f)
 		branch->saveNode(f);
 		branch=branch->right;
 	}
+}
 
+//-------------------------------------------------------------
+// TNplant::lastChild
+//-------------------------------------------------------------
+NodeIF *TNplant::lastChild(){
+	TNBranch *p = (TNBranch*)right;
+	TNBranch *n=p;
+	while (n && (n->typeValue() == ID_BRANCH || n->typeValue() == ID_LEAF)) {
+		TNBranch *t=n->right;
+		if(!t || (t->typeValue()!=ID_BRANCH && t->typeValue()!=ID_LEAF)){
+			p=n;
+			break;
+		}
+		n=n->right;
+	}
+	return p;
 }
 
 //-------------------------------------------------------------
 // TNplant::removeNode() delete or replace
 //-------------------------------------------------------------
 NodeIF *TNplant::removeNode(){
-	cout<<"TNplant::removeNode()"<<endl;
-	//DFREE(plant);
-
+	//cout<<"TNplant::removeNode()"<<endl;
 	NodeIF *p=getParent();
 	NodeIF *child=0;
 	if(p->typeValue()!=ID_ROOT){
@@ -1124,9 +1111,39 @@ NodeIF *TNplant::removeNode(){
 	TerrainProperties *tp=Td.tp;
 	tp->plants.remove(plant);
 	plant=0;
-
 	return this;
 }
+
+
+//-------------------------------------------------------------
+// TNplant::addChild
+//-------------------------------------------------------------
+NodeIF *TNplant::addChild(NodeIF *n){
+	//cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
+	if(n->typeValue()==ID_BRANCH)
+		return TNfunc::addChild(n);
+	else if(n->typeValue()==ID_PLANT){
+		TNunary *nlast=lastChild();
+		nlast->right=n;
+	}
+	return this;
+}
+
+//-------------------------------------------------------------
+// TNplant::replaceNode
+//-------------------------------------------------------------
+NodeIF *TNplant::replaceNode(NodeIF *n){
+	//cout<<"TNplant::replaceNode()"<<endl;
+	removeNode();
+	NodeIF *p=getParent();
+    p->addChild(n);
+	return this;
+}
+int TNplant::getChildren(LinkedList<NodeIF*>&l){
+	return TNfunc::getChildren(l);
+}
+
+
 //-------------------------------------------------------------
 // TNplant::emit() build the branch structure
 //-------------------------------------------------------------
@@ -1260,6 +1277,15 @@ void TNBranch::init(){
 	}
 	setColorFlags();
 	//cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
+//	NodeIF *p=getParent();
+//	if(right){
+//		int ptype=p->typeValue();
+//		while(p && p->getParent() && (ptype==ID_PLANT || ptype==ID_BRANCH)){
+//			p=p->getParent();
+//			ptype=p->typeValue();			
+//		}
+//		right->setParent(p);
+//	}
 	
 	if(right)
 		right->init();
@@ -1865,7 +1891,7 @@ NodeIF *TNBranch::removeNode(){
 	return TNfunc::removeNode();
 }
 //-------------------------------------------------------------
-// TNlayer::replaceNode
+// TNBranch::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNBranch::replaceNode(NodeIF *c){
 	if(!c || c->typeValue()!=typeValue())
