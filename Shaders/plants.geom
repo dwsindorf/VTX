@@ -291,7 +291,9 @@ void emitSpline(){
 void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 {
    vec4 p1,p2,proj;
-   float scale=6e-7;
+
+    //float scale=1e-2;
+  float scale=5e-7;
    float r1=scale*c.x;
    float r2=scale*c.y;
    float t1=c.z;
@@ -306,7 +308,7 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    vec3 tx2 = createPerp( pnt2.xyz, pnt1.xyz );
    vec3 ty2 = cross( normalize(axis2), tx2 );
    
-   int segs = 16;
+   int segs = 8;
 
    float f=1.0 /(segs-1);
    float delta=1.0/segs;

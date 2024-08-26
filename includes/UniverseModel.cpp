@@ -457,9 +457,9 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 	case TN_PLANT_LEAF:
 		break;
 	case TN_PLANT:
-		if(obj->collapsed())
-			list.add(new ModelSym("Plant",TN_PLANT));
-		else
+//		if(obj->collapsed())
+//			list.add(new ModelSym("Plant",TN_PLANT));
+//		else
 			list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
 		//list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
@@ -664,16 +664,12 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_PLANT:
 			node->setFlag(TN_PLANT);
-			//node->setFlag(TN_BRANCH);
-			//node->setFlag(TN_HIDEFLAG);	
 			break;
 		case ID_BRANCH:
 			node->setFlag(TN_PLANT_BRANCH);
-			//node->setFlag(TN_HIDEFLAG);
 			break;
 		case ID_LEAF:
 			node->setFlag(TN_PLANT_LEAF);
-			//node->setFlag(TN_HIDEFLAG);
 			break;
 		case ID_FOG:
 			node->setFlag(TN_FOG);
@@ -866,6 +862,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		}
 		break;
 	case TN_PLANT:
+		//parent=parent->getParent();
 		break;
 	case TN_ROCKS:
 	    if(!branch)

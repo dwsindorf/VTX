@@ -1429,7 +1429,7 @@ void TNwater::eval()
 	 }
 	 else {    // terrain is above water with water as surface 2
 		 for(int i=0;i<rccnt;i++){
-	   		if(mapdata[i]->water()){
+	   		if(mapdata[i] && mapdata[i]->water()){
 				if(S0.datacnt<MAX_TDATA)
 					S0.data[S0.datacnt++]=&water;
 				else

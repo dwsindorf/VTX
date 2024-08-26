@@ -714,9 +714,6 @@ void TNsprite::set_id(int i){
 	//instance=i;
 	BIT_OFF(type,PID);
 	type|=i&PID;
-	//TNplacements::set_id(i);
-	//if(sprite)
-	//	sprite->set_id(i);
 }
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node

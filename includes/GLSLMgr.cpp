@@ -817,8 +817,8 @@ bool GLSLMgr::loadProgram(char *vshader,char *fshader,char *gshader){
 //-------------------------------------------------------------
 void GLSLMgr::setTessLevel(int n){
 	max_output=(n+1)*(n+3);
-	//if(n != tesslevel)
-	//	cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
+	if(n != tesslevel)
+		cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
 	tesslevel=n;
 }
 //-------------------------------------------------------------
@@ -864,7 +864,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 
 	if(!program->compiled && !program->errors)
 		compile();
-	if(geom && !program->errors){		
+	if(geom && !program->errors){	
 		//cout<<"GLSLMgr - setting tesslevel:"<<tesslevel<<" max_outputs:"<<max_output<<endl;
 		glProgramParameteriEXT(program->program, GL_GEOMETRY_VERTICES_OUT_EXT, max_output);
 		glProgramParameteriEXT(program->program,GL_GEOMETRY_INPUT_TYPE_EXT,input_type);

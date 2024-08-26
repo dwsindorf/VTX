@@ -2555,6 +2555,8 @@ void MapNode::evalsprites()
 	TerrainProperties *tp=TerrainData::tp;
 
 	MapData *d=&data;
+	
+	d=d->surface1();
 
 	double t=d->theta();
 	double p=d->phi();

@@ -5822,6 +5822,7 @@ void Sky::map_color(MapData*d,Color &c)
 #define CLOUDS_NO_SHADER   3
 
 int clouds_mode=CLOUDS_GS_SHADER;
+//int clouds_mode=CLOUDS_POINTS;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
@@ -6282,7 +6283,7 @@ bool CloudLayer::setProgram(){
 			GLSLMgr::input_type=GL_POINTS;
 			GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 			GLSLMgr::tesslevel=0;
-			GLSLMgr::max_output=4;  // special case
+			//GLSLMgr::max_output=4;  // special case
 			GLSLMgr::loadProgram("clouds.gs.vert","clouds.3d.frag","clouds.geom");
 			break;
 		case CLOUDS_NO_SHADER:

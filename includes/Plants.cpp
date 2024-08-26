@@ -10,12 +10,15 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-//#define COLOR_TEST
+#define COLOR_TEST
 //#define DENSITY_TEST
 
 //#define SHOW_STATS
 //#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
+//#define PSCALE TheMap->radius
+#define PSCALE 0.004
+
 
 #define SRAND 	(rands[PERM((randval++))])
 #define URAND 	(rands[PERM((randval++))]+0.5)
@@ -31,7 +34,6 @@
 #define LEAF_MODE   2
 #define SPLINE_MODE 3
 #define THREED_MODE 4
-
 
 #define ENABLE_3D
 // Basic algorithm
@@ -116,7 +118,15 @@
 //    - get white silhouette around leaves with complex alpha component(e.g pine needles)
 //   o shadows generated for lines
 //    - can't see unless line width increased >1
-
+// 9) Shape
+//   o plant shape doesn't scale correctly with size 
+//   - sometimes branches are too wide (WRT) length when plant is added to surface
+//   o fixed: caused by plant scale and width dependent on orbital size (map->radius)
+//   - replaced map->radius with fixed constant (4e-3)
+// 10) plant branches disappear if 3d-clouds are present
+//   o fixed: removed call to GLSLMgr::max_output=4 in CloadLayer setProgram
+// 11) misc: plants are generated on or below water
+//   - need to not gen plants in water
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -312,10 +322,8 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	//GLSLMgr::checkForErrors();
 	char defs[1024]="";
 
-	
 	TNplant::textures=0;
 	
 	for(int i=0;i<tp->plants.size;i++){
@@ -492,7 +500,6 @@ void PlantMgr::render(){
 	
 	glLineWidth(1);
 
-	
 	glEnable(GL_BLEND);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -706,8 +713,10 @@ void Plant::collect()
 			Point base=TheMap->point(ps.x, ps.y,ht); // spherical-to-rectangular
 			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
 			double d=bp.distance(TheScene->vpoint);  // distance	
-			double r=TheMap->radius*s->radius;
+			double r=PSCALE*s->radius;
+			//double r=1e-3*s->radius;
 			double f=TheScene->wscale*r/d;
+			//cout<<PSCALE<<endl;
 			//cout<<r<<" "<<f<<" "<<r/f<<endl;
 		    double pts=f;
 		    double minv=MIN_VISITS; 
@@ -844,19 +853,15 @@ void TNplant::applyExpr()
 //-------------------------------------------------------------
 void TNplant::init()
 {
+	if(right)
+	   right->init();
 	PlantMgr *smgr=(PlantMgr*)mgr;
 	if(plant==0)
 		plant=new Plant(type,this);
-	//else
-	//	return;
-	//smgr->setHashsize(2*PERMSIZE);
-	//if(smgr->first())
-	//	return;
     branches=0;
 	smgr->init();
 	
-	//TNplacements::init();
-	double arg[11];
+    double arg[11];
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,11);
@@ -870,9 +875,6 @@ void TNplant::init()
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
 	if(n>8) base_drop=arg[8];
-
-	if(right)
-	   right->init();
 
 	smgr->set_first(1);
 }
@@ -892,13 +894,15 @@ void TNplant::eval()
 	if(!isEnabled()){
 		return;
 	}
+	if(Td.tp->id==WATER)
+		return;
 	if(CurrentScope->rpass()){
 		int size=Td.tp->plants.size;
 		plant_id=size;	
 		mgr->instance=plant_id;
 		if(plant)
 			plant->set_id(size);		
-		Td.add_plant(plant);		
+		Td.add_plant(plant);
 		return;
 	}	
 	if(!CurrentScope->spass()){
@@ -907,6 +911,8 @@ void TNplant::eval()
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
+	//cout<<Height<<endl;
+	
 	htval=Height;
 	ncalls++;
 	
@@ -914,7 +920,7 @@ void TNplant::eval()
 	
 	double density=maxdensity;
 	MaxSize=mgr->maxsize;
-	radius=TheMap->radius;
+	radius=PSCALE;
 	TerrainProperties *tp=TerrainData::tp;
 		
 	mgr->type=type;
@@ -1068,6 +1074,8 @@ void TNplant::saveNode(FILE *f)
 //-------------------------------------------------------------
 NodeIF *TNplant::lastChild(){
 	TNBranch *p = (TNBranch*)right;
+	if(!right)
+		return this;
 	TNBranch *n=p;
 	while (n && (n->typeValue() == ID_BRANCH || n->typeValue() == ID_LEAF)) {
 		TNBranch *t=n->right;
@@ -1119,10 +1127,10 @@ NodeIF *TNplant::removeNode(){
 // TNplant::addChild
 //-------------------------------------------------------------
 NodeIF *TNplant::addChild(NodeIF *n){
-	cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
+	//cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
 	if(n->typeValue()==ID_BRANCH)
 		return TNfunc::addChild(n);
-	else /*if(n->typeValue()==ID_PLANT)*/{
+	else {
 		TNunary *nlast=lastChild();
 		nlast->right=n;
 	}
@@ -1155,7 +1163,9 @@ void TNplant::emit(){
     rendered=0;
 	//lastn=randval;
 	Randval=URAND;
-	double length=size*base_point.length();	
+	double length=size*PSCALE;	
+	//double length=size*base_point.length();	
+	//cout<<size<<" "<<size<<" "<<length<<endl;
 	Point bot=base_point;
 	norm=bot.normalize();
 	bot;
@@ -1175,18 +1185,19 @@ void TNplant::emit(){
 	p1=p1-TheScene->vpoint;
 	p2=p2-TheScene->vpoint;
 	
-	//double start_width=size_scale*first_branch->length;
-	// pntsize= TheMap->radius*radius/distance
-	// start_width=TheMap->radius*radius*width_scale*first_branch->length
+	//double start_width=width_scale*pntsize*first_branch->length;
+	//size_scale=	pntsize*width_scale;
+
 	double start_width=width_scale*pntsize*first_branch->length;
-	size_scale=	pntsize*width_scale/first_branch->length;
+	size_scale=	pntsize*width_scale;///radius;
+
 	Point tip;
-	tip.x=start_width;///TheScene->wscale;
+	tip.x=start_width/width_scale;
 	tip.y=0;
 	tip.z=0;
 
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
-	//cout<<TheMap->radius*base_point.length()*start_width/length/TheScene->wscale<<endl;
+	//cout<<PSCALE*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 	//cout<<rendered<<endl;
 	//TheScene->vpoint.print("\n");
@@ -1275,16 +1286,6 @@ void TNBranch::init(){
 		base=0;
 	}
 	setColorFlags();
-	//cout<<"plant:"<<root->nodeName()<<" branch:"<<nodeName()<<" texid:"<<texid<<" color_flags:"<<color_flags<<endl;
-//	NodeIF *p=getParent();
-//	if(right){
-//		int ptype=p->typeValue();
-//		while(p && p->getParent() && (ptype==ID_PLANT || ptype==ID_BRANCH)){
-//			p=p->getParent();
-//			ptype=p->typeValue();			
-//		}
-//		right->setParent(p);
-//	}
 	
 	if(right)
 		right->init();
@@ -1605,7 +1606,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
-#define TEST
+
 #ifdef TEST	
 	    //start=spline(0.5*(1-b),p0,p1,p1+vec); // works: but same as linear
   		start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
@@ -1673,7 +1674,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				//alpha=alpha_texture&&tex_enabled?4:0;
 				double width_ratio=0.5*width;
 
-				double size=root->width_scale*TheMap->radius*TheScene->wscale*child_size;
+				double size=root->width_scale*PSCALE*TheScene->wscale*child_size;
+				//double size=root->width_scale*1e-5*TheScene->wscale*child_size;
 
 				root->rendered++;
 
@@ -1722,8 +1724,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, shader_mode);
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
             if(root->threed){
-             	w1/=root->size_scale;
-            	w2/=root->size_scale;
+             	//w1=root->size;
+             	//w1=parent_size/PSCALE;
+            	//w2=w1*width_taper;
+             	w1=w1/root->size_scale;
+            	w2=w2/root->size_scale;
             }
 			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:

@@ -285,7 +285,7 @@ void VtxPlantTabs::setObjAttributes(){
 	obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
 	TheView->set_changed_detail();
-	TheScene->rebuild();
+	TheScene->rebuild_all();
 
 	update_needed=false;
 }
