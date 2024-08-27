@@ -13,7 +13,9 @@ varying in vec4 P0[];
 
 vec4 Pos0,Pos1,Pos2;
 
-float scale=6e-7;
+//float scale=6e-7;
+float scale=1;
+
  
 #define PI		3.14159265359
 
@@ -32,7 +34,7 @@ vec4 project(vec4 pnt){
 vec3 createPerp(vec3 p1, vec3 p2)
 {
   vec3 invec = normalize(p2 - p1);
-  vec3 ret = cross( invec, vec3(0.0, 0.0, 1.0) );
+  vec3 ret = cross( invec, vec3(1.0, 0.0, 0.0) );
   if ( length(ret) == 0.0 )
      ret = cross( invec, vec3(0.0, 1.0, 0.0) );
   return ret;
@@ -163,8 +165,6 @@ void emitLeaf(){
     produceVertex(Pos2); // top      
  }
  
-
-
 void main(void) {
     Pos0=P0[0];
     Pos1=gl_PositionIn[0];

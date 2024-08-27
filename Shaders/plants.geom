@@ -36,7 +36,7 @@ vec4 project(vec4 pnt){
 vec3 createPerp(vec3 p1, vec3 p2)
 {
   vec3 invec = normalize(p2 - p1);
-  vec3 ret = cross( invec, vec3(0.0, 0.0, 1.0) );
+  vec3 ret = cross( invec, vec3(1.0, 0.0, 0.0) );
   if ( length(ret) == 0.0 )
      ret = cross( invec, vec3(0.0, 1.0, 0.0) );
   return ret;
@@ -292,8 +292,8 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 {
    vec4 p1,p2,proj;
 
-    //float scale=1e-2;
-  float scale=5e-7;
+   float scale=1;
+   //float scale=5e-7;
    float r1=scale*c.x;
    float r2=scale*c.y;
    float t1=c.z;

@@ -472,7 +472,7 @@ void PlantMgr::render_shadows(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	//min_draw_width=2;
 	Raster.setProgram(Raster.PLANT_SHADOWS);
-	glLineWidth(2);
+	glLineWidth(3);
 	render();
 	glLineWidth(1);
 	shadow_mode=false;
@@ -486,10 +486,11 @@ void PlantMgr::render_zvals(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
 	//min_draw_width=2;
-	glLineWidth(2);
+	glLineWidth(3);
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	render();
+	glLineWidth(1);
 	shadow_mode=false;
 }
 void PlantMgr::render(){
@@ -498,7 +499,7 @@ void PlantMgr::render(){
 	TNLeaf::free();
 	int n=Plant::plants.size;
 	
-	glLineWidth(1);
+	//glLineWidth(1);
 
 	glEnable(GL_BLEND);
 
@@ -1184,12 +1185,9 @@ void TNplant::emit(){
 	Point p2=top;
 	p1=p1-TheScene->vpoint;
 	p2=p2-TheScene->vpoint;
-	
-	//double start_width=width_scale*pntsize*first_branch->length;
-	//size_scale=	pntsize*width_scale;
 
 	double start_width=width_scale*pntsize*first_branch->length;
-	size_scale=	pntsize*width_scale;///radius;
+	size_scale=	pntsize*width_scale/size;
 
 	Point tip;
 	tip.x=start_width/width_scale;
@@ -1197,10 +1195,7 @@ void TNplant::emit(){
 	tip.z=0;
 
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
-	//cout<<PSCALE*base_point.length()*start_width/length/TheScene->wscale<<endl;
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
-	//cout<<rendered<<endl;
-	//TheScene->vpoint.print("\n");
 	
 }
 
@@ -1279,7 +1274,6 @@ void TNBranch::init(){
 	level=0;
 	branch_id=root->branches;
 	root->branches+=1;
-	//setTexture();
 	setColorFromExpr();
 	if(base){
 		delete base;
@@ -1666,17 +1660,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				
 				setColor();
 				Color c=S0.c;
-				//int alpha=0;
+			
 				double depth=bot.length();
 				child_size = length*FEET/12; // inches
 				child_size *= 1 + 0.5 * randomness * SRAND;
 	
-				//alpha=alpha_texture&&tex_enabled?4:0;
 				double width_ratio=0.5*width;
-
 				double size=root->width_scale*PSCALE*TheScene->wscale*child_size;
-				//double size=root->width_scale*1e-5*TheScene->wscale*child_size;
-
+	
 				root->rendered++;
 
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
@@ -1721,12 +1712,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			tip.y = topy;
 			tip.z = top_offset;
 			root->rendered++;
+			if(poly_mode==GL_LINE || PlantMgr::shadow_mode)
+ 				glDisable(GL_CULL_FACE);
+
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, shader_mode);
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
             if(root->threed){
-             	//w1=root->size;
-             	//w1=parent_size/PSCALE;
-            	//w2=w1*width_taper;
              	w1=w1/root->size_scale;
             	w2=w2/root->size_scale;
             }
@@ -1771,7 +1762,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				w1=dx;
 				w2=dy;
     
-			} else if(isEnabled()) { 
+			} else if(isEnabled()) { // lines
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);
@@ -1822,7 +1813,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	for (int i = 1; i < splits; i++) {
 		emit(0, bot, v, tip, child_size, child_width, lev);
 	}
-	if (!right/* || right->typeValue() != ID_BRANCH*/)
+	if (!right)
 		return;
 
 	child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
