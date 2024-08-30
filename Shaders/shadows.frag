@@ -1,7 +1,7 @@
 #include "utils.h"
 
 #define JITTER
-#define JITTER_TEST
+//#define JITTER_TEST
 //#define LDRTEST
 //#define _NORMALS_
 
@@ -38,7 +38,6 @@ uniform float shadow_intensity;
 uniform int light_index;
 
 uniform float rscale;
-
 
 #ifdef USING_PROJ
 #define LOOKUP(OFFSET) shadow2DRectProj(ShadowMap, ShadowCoord + vec4((OFFSET)/shadowmap_ratio, 0, 0)).w;

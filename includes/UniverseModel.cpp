@@ -455,6 +455,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_PLANT_LEAF:
+		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_PLANT:
 //		if(obj->collapsed())
@@ -838,7 +839,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_PLANT_LEAF:
 		parent=parent->getParent();
 		ptype=parent->getFlag(TN_TYPES);
-		while(parent && (ptype==TN_PLANT_BRANCH ||ptype==TN_PLANT_LEAF ||ptype==TN_PLANT)){
+		while(parent && (ptype==TN_PLANT_BRANCH ||ptype==TN_PLANT_LEAF)){
 			parent=parent->getParent();
 			if(parent)
 				ptype=parent->getFlag(TN_TYPES);

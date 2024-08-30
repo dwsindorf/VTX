@@ -308,7 +308,7 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    vec3 tx2 = createPerp( pnt2.xyz, pnt1.xyz );
    vec3 ty2 = cross( normalize(axis2), tx2 );
    
-   int segs = 8;
+   int segs = 16;
 
    float f=1.0 /(segs-1);
    float delta=1.0/segs;

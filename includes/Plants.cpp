@@ -12,8 +12,9 @@
 
 #define COLOR_TEST
 //#define DENSITY_TEST
+#define LEAF_SHADOW_TEST
 
-//#define SHOW_STATS
+#define SHOW_STATS
 //#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
@@ -499,8 +500,6 @@ void PlantMgr::render(){
 	TNLeaf::free();
 	int n=Plant::plants.size;
 	
-	//glLineWidth(1);
-
 	glEnable(GL_BLEND);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -523,8 +522,10 @@ void PlantMgr::render(){
 		randval=256*fabs(r)+id;
 		plant->emit();
 	}
+#ifndef LEAF_SHADOW)TEST
 	if(!shadow_mode)
 		TNLeaf::render();
+#endif
 	randval=l;
 
 }
@@ -1596,20 +1597,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	child_size *= 1 + 0.25 * randomness * SRAND;
 	double cl=child_size * length;
     if (!main_branch && lvl > 0) {
-		// add a random offset to each branch split
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
 
-#ifdef TEST	
-	    //start=spline(0.5*(1-b),p0,p1,p1+vec); // works: but same as linear
-  		start=spline(0.5*(1-b),p0,p1,base+lastv);         // doesn't work
-
-#else
-			start = p1 - vec * b;
-#endif
+		start = p1 - vec * b;
 		SRAND;
-		// TODO: set max offset proportional parent_width/child_width
 		double dw=(parent_width-child_width)/parent_width;
 		bot_offset=dw*SRAND/size_scale;
 		top_offset=bot_offset;	
@@ -1638,7 +1631,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
-//#define NO_LEAF_SHADOWS		   
+#define NO_LEAF_SHADOWS		   
         if(isPlantLeaf() && isEnabled()){  // leaf mode
 #ifdef NO_LEAF_SHADOWS
         	if(PlantMgr::shadow_mode){
@@ -1670,11 +1663,17 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 				root->rendered++;
 
+#ifndef	LEAF_SHADOW_TEST
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
 					TNLeaf::collect(p1,p2,Point(1-width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
 				else{
 					glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,length_taper, width_ratio, size); // Constants1		
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
+#else
+					glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0.5*size, 0, 1); // Constants1
+					glVertexAttrib4d(GLSLMgr::TexCoordsID, 1, color_flags, tid, RECT_MODE);
+		 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+#endif
 					glDisable(GL_CULL_FACE);
 					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
 					glBegin(GL_LINES);
@@ -1682,10 +1681,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 					glVertex4d(p2.x, p2.y, p2.z, 0);
 					glEnd();
 					glEnable(GL_CULL_FACE);
-				}
-        	}
+#ifndef	LEAF_SHADOW_TEST
+       		    }
+#endif
+        	}       
 #ifdef NO_LEAF_SHADOWS
-        	}
+        	}       	
 #endif
         }     
         else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()){ // branch mode
@@ -1693,6 +1694,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 			double w1 = child_width/TheScene->wscale;
 			double w2 = w1*width_taper;
+			
+			//glDisable(GL_CULL_FACE);
 
 			shader_mode=RECT_MODE;
 			if(TNplant::spline && child_width > MIN_SPLINE_WIDTH){
@@ -1762,7 +1765,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				w1=dx;
 				w2=dy;
     
-			} else if(isEnabled()) { // lines
+			} else if(isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);
@@ -1794,8 +1797,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	}
 	TNBranch *child = (TNBranch*) right;
 	
-	if(branch_tip && child && child->typeValue() == ID_LEAF)
-		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+	//if(branch_tip && child && child->typeValue() == ID_LEAF)
+	//	child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 		
 	if (opt & LAST_EMIT) 
 		return;

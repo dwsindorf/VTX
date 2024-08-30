@@ -16,7 +16,7 @@ static bool debug_call_lists=false;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
-#define DEBUG_RENDER
+//#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 #define RENDER_SPRITES
 #define RENDERLIST(i,j,func) \
