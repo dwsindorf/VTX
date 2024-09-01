@@ -10,9 +10,9 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-#define COLOR_TEST
+//#define COLOR_TEST
 //#define DENSITY_TEST
-#define LEAF_SHADOW_TEST
+//#define LEAF_SHADOW_TEST
 
 #define SHOW_STATS
 //#define SHOW_BRANCH_STATS
@@ -1094,7 +1094,6 @@ NodeIF *TNplant::lastChild(){
 // TNplant::removeNode() delete or replace
 //-------------------------------------------------------------
 NodeIF *TNplant::removeNode(){
-	//cout<<"TNplant::removeNode()"<<endl;
 	NodeIF *p=getParent();
 	NodeIF *child=0;
 	if(p->typeValue()!=ID_ROOT){
@@ -1129,7 +1128,6 @@ NodeIF *TNplant::removeNode(){
 // TNplant::addChild
 //-------------------------------------------------------------
 NodeIF *TNplant::addChild(NodeIF *n){
-	//cout<<"TNplant::addChild() "<<nodeName()<<" "<<n->nodeName()<<endl;
 	if(n->typeValue()==ID_BRANCH)
 		return TNfunc::addChild(n);
 	else {
@@ -1143,7 +1141,6 @@ NodeIF *TNplant::addChild(NodeIF *n){
 // TNplant::replaceNode
 //-------------------------------------------------------------
 NodeIF *TNplant::replaceNode(NodeIF *n){
-	//cout<<"TNplant::replaceNode()"<<endl;
 	removeNode();
 	NodeIF *p=getParent();
     p->addChild(n);
@@ -1163,11 +1160,10 @@ void TNplant::emit(){
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
     rendered=0;
-	//lastn=randval;
+
 	Randval=URAND;
 	double length=size*PSCALE;	
-	//double length=size*base_point.length();	
-	//cout<<size<<" "<<size<<" "<<length<<endl;
+
 	Point bot=base_point;
 	norm=bot.normalize();
 	bot;
@@ -1179,7 +1175,6 @@ void TNplant::emit(){
 	else
 		return;
 	double branch_size=length*first_branch->length;
-	//cout<<"TNplant::emit()"<<endl;
 
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
@@ -1424,7 +1419,6 @@ void TNBranch::getColorString (){
 			arg=arg->next();
 		}
 	}
-
 }
 
 bool TNBranch::colValid(){
@@ -1526,15 +1520,14 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 
 	level=1;
     int l=randval;
-    //w*=width;
     
 	double splits=1;
-	//if(!end_branch){
+	if(isPlantBranch()){
 		splits=max_splits*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			splits*=first_bias;
 		splits=splits<1?1:splits;
-	//}
+	}
 	for(int i=0;i<splits;i++){
 		emit(opt,start,vec,tip,s,w,level);
 	}
@@ -1549,7 +1542,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	lev++;
 	if(!root)
 		init();
-	//cout<<base.distance(TheScene->vpoint)<<" "<<base.length()<<endl;
 	
 	int mode = opt;
 	
@@ -1631,7 +1623,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		if(lev >= maxlvl) 
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
-#define NO_LEAF_SHADOWS		   
+//#define NO_LEAF_SHADOWS		   
         if(isPlantLeaf() && isEnabled()){  // leaf mode
 #ifdef NO_LEAF_SHADOWS
         	if(PlantMgr::shadow_mode){
@@ -1665,9 +1657,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 #ifndef	LEAF_SHADOW_TEST
 				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-					TNLeaf::collect(p1,p2,Point(1-width_taper,length_taper,width_ratio),Point(color_flags, tid, size),c);
+					TNLeaf::collect(p1,p2,Point(1-width_taper,max_level,width_ratio),Point(color_flags, tid, size),c);
 				else{
-					glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,length_taper, width_ratio, size); // Constants1		
+					glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,max_level, width_ratio, size); // Constants1		
 					glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
 #else
 					glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0.5*size, 0, 1); // Constants1
@@ -1695,8 +1687,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			double w1 = child_width/TheScene->wscale;
 			double w2 = w1*width_taper;
 			
-			//glDisable(GL_CULL_FACE);
-
 			shader_mode=RECT_MODE;
 			if(TNplant::spline && child_width > MIN_SPLINE_WIDTH){
 				shader_mode=SPLINE_MODE;
@@ -1797,8 +1787,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	}
 	TNBranch *child = (TNBranch*) right;
 	
-	//if(branch_tip && child && child->typeValue() == ID_LEAF)
-	//	child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+	if(branch_tip && child && child->typeValue() == ID_LEAF)
+		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 		
 	if (opt & LAST_EMIT) 
 		return;

@@ -22,9 +22,6 @@ vec4 Pos0,Pos1,Pos2;
 #define LEAF   2
 #define SPLINE 3
 
-float scale=6e-7;
-
-
 vec4 project(vec4 pnt){
 	vec4 vertex=vec4(pnt.xyz,1.0);
 	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
@@ -99,31 +96,25 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 //    the box is emitted as is without projection
 // 2) the y coord of leaf textures is inverted (1-x) 
 // 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
-
-void emitLeaf(){
+void drawLeaf(vec3 tx, vec3 p1, vec3 v)
+{
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 
-	Pos1=gl_PositionIn[0];
-	Pos2=gl_PositionIn[1];
-   
-	vec3 v=normalize(Pos2.xyz-Pos1.xyz);   
+	vec4 Pos1=vec4(p1,0);
 	float ps=Constants1[0].w; // size
-	Pos2=vec4(Pos1.xyz+ps*v,1);
- 
-	vec3 tx2 = cross(v, normalize(Pos2.xyz) ); // perpendicular to eye direction
-	vec3 tx1 = cross(v, normalize(Pos1.xyz) );
+	vec4 Pos2=vec4(Pos1.xyz+ps*v,1);
     
     float w=ps*Constants1[0].z;
-	Pnorm.xyz=normalize(cross(v, tx1 ));
+	Pnorm.xyz=normalize(cross(v, tx ));
 	Pnorm.w=0.01;
 	if(rectmode){ // use a rectangle (for transparent textures){
-		produceTVertex(vec2(0.0,0.0),Pos1-w*tx1); // bot-left
-		produceTVertex(vec2(1.0,0.0),Pos1+w*tx1); // bot-right
-		produceTVertex(vec2(0.0,1.0),Pos2-w*tx2); // top-left
-		produceTVertex(vec2(1.0,1.0),Pos2+w*tx2); // top-right
+		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
+		produceTVertex(vec2(1.0,0.0),Pos1+w*tx); // bot-right
+		produceTVertex(vec2(0.0,1.0),Pos2-w*tx); // top-left
+		produceTVertex(vec2(1.0,1.0),Pos2+w*tx); // top-right
 	}
-	else{
+	else{ // leaf shape
 	    float taper=Constants1[0].x;
 	
 	    float w1=w;
@@ -138,14 +129,13 @@ void emitLeaf(){
         Pos1.w=0;
         Pos2.w=0;
         int nodes=8;
-        vec4 t1=vec4(tx1,1);
-        vec4 t2=vec4(tx2,1);
+        vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
         vec4 x2=mix(Pos1,Pos2,b2);
         vec4 s1p=x1+w1*t1;
         vec4 s1m=x1-w1*t1;
-        vec4 s2p=x2+w2*t2;
-        vec4 s2m=x2-w2*t2;
+        vec4 s2p=x2+w2*t1;
+        vec4 s2m=x2-w2*t1;
         
         float dt=1.0/nodes;
         float t=dt;
@@ -160,8 +150,37 @@ void emitLeaf(){
         }
         produceTVertex(vec2(0.5,1.0),Pos2); // top      
 	}
- }
+	EndPrimitive();
+}
 
+void emitLeaf(){
+	int segs=2;
+   vec3 p1=gl_PositionIn[0].xyz;
+   vec3 p2=gl_PositionIn[1].xyz;
+   vec3 eye=normalize(p1); // eye
+   vec3 v=normalize(p2.xyz-p1.xyz);   
+   vec3 tx = cross(v, eye );// perpendicular to eye and v
+   if(segs==1)
+   	drawLeaf(tx,p1,v);
+   else{
+    float f=0.8;
+    vec3 w1=cross(v,eye);
+    vec3 r=(1-f)*w1+f*v;
+    tx=cross(r, eye );
+   	drawLeaf(tx,p1,r);
+ 
+     vec3 tx = r-p2;
+    vec3 ty = cross(v, r );
+    float a=0.5;
+    float ca = cos(2.0 * PI*a); 
+    float sa = sin(2.0 * PI*a);
+    p2 = r * ca + sa*cross(r, v) + (v * dot(r, v)) * (1 - ca);  
+    v=p2-p1;
+    tx=cross(v, eye );
+    drawLeaf(tx,p1,v);
+
+   }
+}
 // branches  
 void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
 	
@@ -203,9 +222,10 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
     gl_TexCoord[0].xy=vec2(1,tx.y);
     gl_Position = vec4(p2.xy+top_right,p2.z,1); // top-right
     EmitVertex();
-    //EndPrimitive();
+
 }
 
+// 2d only
 vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 	
 	float w2=c.g;     // top width
@@ -231,7 +251,7 @@ vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 	return cc;
 }
 
-// draw a branch as a polygon
+// draw a branch as a polygon (2d)
 void emitBranch(){
    Pnorm.w=0.05;
 
@@ -251,7 +271,7 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
   return a*x*x+b*x+c;
 }
 
-// draw a branch as a spline
+// draw a branch as a spline (2d only)
 void emitSpline(){
  
     Pnorm.w=0.05;  
@@ -288,14 +308,13 @@ void emitSpline(){
 
 }
 
+// 3d only
 void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
 {
    vec4 p1,p2,proj;
 
-   float scale=1;
-   //float scale=5e-7;
-   float r1=scale*c.x;
-   float r2=scale*c.y;
+   float r1=c.x;
+   float r2=c.y;
    float t1=c.z;
    float t2=c.w;
    Pnorm.w=0.02;
@@ -311,8 +330,6 @@ void drawCone(vec4 pnt0, vec4 pnt1, vec4 pnt2, vec4 c)
    int segs = 16;
 
    float f=1.0 /(segs-1);
-   float delta=1.0/segs;
-   float tex1=t1;
 
    for(int i=0; i<segs; i++) {
       float a = i*f;
@@ -360,8 +377,7 @@ void main(void) {
     Pos0=project(P0[0]);
     Pos1=project(gl_PositionIn[0]);
     Pos2=project(gl_PositionIn[1]);
-    //if(length(Pos2-Pos1)>2)
-    //	return;
+
  	Color=Color_G[0];
 	Normal.xyz=Normal_G[0].xyz;
 	TexVars=TexVars_G[0];
