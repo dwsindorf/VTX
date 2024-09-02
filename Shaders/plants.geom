@@ -101,7 +101,7 @@ void drawLeaf(vec3 tx, vec3 p1, vec3 v)
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 
-	vec4 Pos1=vec4(p1,0);
+	vec4 Pos1=vec4(p1,1);
 	float ps=Constants1[0].w; // size
 	vec4 Pos2=vec4(Pos1.xyz+ps*v,1);
     
@@ -128,7 +128,7 @@ void drawLeaf(vec3 tx, vec3 p1, vec3 v)
         float s=w1*1.4;
         Pos1.w=0;
         Pos2.w=0;
-        int nodes=8;
+        int nodes=4;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
         vec4 x2=mix(Pos1,Pos2,b2);
@@ -154,31 +154,33 @@ void drawLeaf(vec3 tx, vec3 p1, vec3 v)
 }
 
 void emitLeaf(){
-	int segs=2;
+   int segs=3;
+   
    vec3 p1=gl_PositionIn[0].xyz;
    vec3 p2=gl_PositionIn[1].xyz;
-   vec3 eye=normalize(p1); // eye
-   vec3 v=normalize(p2.xyz-p1.xyz);   
-   vec3 tx = cross(v, eye );// perpendicular to eye and v
+   vec3 eye=normalize(p2); // eye
+   vec3 v=normalize(p2.xyz-p1.xyz);  
+   
+   float tilt=0.5; // divergence
    if(segs==1)
-   	drawLeaf(tx,p1,v);
-   else{
-    float f=0.8;
-    vec3 w1=cross(v,eye);
-    vec3 r=(1-f)*w1+f*v;
-    tx=cross(r, eye );
-   	drawLeaf(tx,p1,r);
- 
-     vec3 tx = r-p2;
-    vec3 ty = cross(v, r );
-    float a=0.5;
+      tilt=0;
+  
+   vec3 w1=normalize(cross(v,eye));
+   vec3 r=tilt*w1+(1-tilt)*v;
+   
+   float f=1.0 /segs;
+   
+   for(int i=0; i<segs; i++) {
+    float a = i*f;
     float ca = cos(2.0 * PI*a); 
     float sa = sin(2.0 * PI*a);
-    p2 = r * ca + sa*cross(r, v) + (v * dot(r, v)) * (1 - ca);  
-    v=p2-p1;
-    tx=cross(v, eye );
-    drawLeaf(tx,p1,v);
+ 
+    p2 = r * ca + sa*cross(v, r) + (v * dot(v, r)) * (1 - ca);  
+    vec3 x=p2-p1;
 
+    vec3 tx=normalize(cross(x, eye ));
+    drawLeaf(tx,p1,x);
+ 
    }
 }
 // branches  
