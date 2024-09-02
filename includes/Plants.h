@@ -186,6 +186,7 @@ public:
 	char colorexpr[256];
 	
 	bool tex_enabled;
+	bool shape_enabled;
 	bool col_enabled;
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
@@ -196,8 +197,10 @@ public:
 	
 	void setTexEnabled(bool b){tex_enabled=b;setColorFlags();}
 	void setColEnabled(bool b){col_enabled=b;setColorFlags();}
+	void setShapeEnabled(bool b){shape_enabled=b;setColorFlags();}
 	bool isColEnabled() { return col_enabled;}
 	bool isTexEnabled() { return tex_enabled;}
+	bool isShapeEnabled() { return shape_enabled;}
 	bool colValid();
 	bool texValid();
 	void init();
@@ -225,9 +228,6 @@ public:
 	void setImage(char *);
 	char *getImageName(){return texname;}
 	void getImageFilePath(char*name,int dim,char *dir);
-//	bool isLeaf()			{ return false;}
-//	int linkable()          { return 0;}
-
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);

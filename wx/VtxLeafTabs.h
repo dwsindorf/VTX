@@ -36,21 +36,19 @@ protected:
 	
     void OnChangedFile(wxCommandEvent& event);
 
-	
-	wxChoice *m_min_level;
-	wxChoice *m_max_level;
+	wxChoice *m_segs;
 
 	SliderCtrl   *DensitySlider;
 	SliderCtrl   *LengthSlider;
 	SliderCtrl   *WidthSlider;
-	SliderCtrl   *LengthTaperSlider;
+	SliderCtrl   *DivergenceSlider;
 	SliderCtrl   *WidthTaperSlider;
-
 	SliderCtrl   *RandSlider;
 	
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
 	wxCheckBox *m_col_enable;
+	wxCheckBox *m_shape_enable;
 	wxChoice *choices;
 	
 	ExprTextCtrl *m_r_expr;
@@ -94,7 +92,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Width)
 	DEFINE_SLIDER_EVENTS(Rand)
 	DEFINE_SLIDER_EVENTS(WidthTaper)
-	DEFINE_SLIDER_EVENTS(LengthTaper)
+	DEFINE_SLIDER_EVENTS(Divergence)
 
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();

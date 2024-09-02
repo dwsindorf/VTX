@@ -13,7 +13,7 @@ varying in vec4 P0[];
 
 vec4 Pos0,Pos1,Pos2;
 
-//float scale=6e-7;
+
 float scale=1;
 
  
@@ -62,8 +62,8 @@ void emitCone()
 {
    vec4 c=Constants1[0];
    vec3 p1,p2;
-   float r1=scale*c.x;
-   float r2=scale*c.y;
+   float r1=c.x;
+   float r2=c.y;
 
    vec3 axis1 = Pos1.xyz - Pos0.xyz;
    vec3 axis2 = Pos2.xyz - Pos1.xyz;
@@ -132,9 +132,8 @@ void emitLeaf(){
     float w=ps*Constants1[0].z; // width_ratio
     
     float taper=Constants1[0].x;
-    float compression=Constants1[0].y;
     
-    float w1=compression*w;
+    float w1=w;
     float w2=taper*w1;
     
     float b1=0.1;

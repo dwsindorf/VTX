@@ -111,15 +111,18 @@ void main(void) {
 				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
 			else // no alpha in color
 				color.rgb=ncolor.rgb;				
-  		    if(aopt) // leaf
+  		    //if(aopt) // leaf
   		       color.a=tcolor.a;
 		}
 		else // texture only
 			color=tcolor;		
 	}
+	//else
+	//	color.a=1;
+	   
 #endif
-	if(!aopt)
-		color.a=1;
+	//if(!aopt)
+	//	color.a=1;
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS

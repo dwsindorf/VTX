@@ -96,10 +96,15 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 //    the box is emitted as is without projection
 // 2) the y coord of leaf textures is inverted (1-x) 
 // 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
-void drawLeaf(vec3 tx, vec3 p1, vec3 v)
+//void drawLeaf(vec3 tx, vec3 p1, vec3 v)
+void drawLeaf(vec3 p1, vec3 p2)
 {
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
+	
+	vec3 v=normalize(p2-p1);
+	vec3 eye=normalize(p1); // eye
+    vec3 tx=normalize(cross(v, eye ));
 
 	vec4 Pos1=vec4(p1,1);
 	float ps=Constants1[0].w; // size
@@ -128,7 +133,7 @@ void drawLeaf(vec3 tx, vec3 p1, vec3 v)
         float s=w1*1.4;
         Pos1.w=0;
         Pos2.w=0;
-        int nodes=4;
+        int nodes=8;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
         vec4 x2=mix(Pos1,Pos2,b2);
@@ -154,34 +159,9 @@ void drawLeaf(vec3 tx, vec3 p1, vec3 v)
 }
 
 void emitLeaf(){
-   int segs=3;
-   
    vec3 p1=gl_PositionIn[0].xyz;
    vec3 p2=gl_PositionIn[1].xyz;
-   vec3 eye=normalize(p2); // eye
-   vec3 v=normalize(p2.xyz-p1.xyz);  
-   
-   float tilt=0.5; // divergence
-   if(segs==1)
-      tilt=0;
-  
-   vec3 w1=normalize(cross(v,eye));
-   vec3 r=tilt*w1+(1-tilt)*v;
-   
-   float f=1.0 /segs;
-   
-   for(int i=0; i<segs; i++) {
-    float a = i*f;
-    float ca = cos(2.0 * PI*a); 
-    float sa = sin(2.0 * PI*a);
- 
-    p2 = r * ca + sa*cross(v, r) + (v * dot(v, r)) * (1 - ca);  
-    vec3 x=p2-p1;
-
-    vec3 tx=normalize(cross(x, eye ));
-    drawLeaf(tx,p1,x);
- 
-   }
+   drawLeaf(p1,p2);
 }
 // branches  
 void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){

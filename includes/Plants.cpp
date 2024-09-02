@@ -12,7 +12,6 @@
 
 //#define COLOR_TEST
 //#define DENSITY_TEST
-//#define LEAF_SHADOW_TEST
 
 #define SHOW_STATS
 //#define SHOW_BRANCH_STATS
@@ -1253,6 +1252,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	color=0;
 	col_enabled=true;
 	tex_enabled=true;
+	shape_enabled=false;
 	alpha_texture=false;
 	getTextureName();
 	getColorString();
@@ -1300,7 +1300,7 @@ void TNBranch::initArgs(){
 	if(n>9)first_bias=arg[9];
 	if(n>10)min_level=arg[10];
 }
-
+//Leaf("Leaf2",2,1,5,1,0,1,0,1,1)
 void TNBranch::invalidateTexture(){
 	if(texture_id){
 		glDeleteTextures(1,&texture_id);
@@ -1440,7 +1440,7 @@ void TNBranch::setColorFlags(){
 		if(comps==4 && strcmp(alpha,"0"))
 			color_flags=2;
 	}
-	if(texid>=0 && tex_enabled && alpha_texture)
+	if(texid>=0 && tex_enabled && alpha_texture && !shape_enabled)
 		color_flags|=4; // rect mode
 }
 void TNBranch::setColor(){
@@ -1458,6 +1458,9 @@ void TNBranch::setColor(){
 Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
+	
+	if(isPlantLeaf())
+		return v;
 	
 	v.x += divergence * SRAND;
 	v.y += divergence * SRAND;
@@ -1654,28 +1657,37 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				double size=root->width_scale*PSCALE*TheScene->wscale*child_size;
 	
 				root->rendered++;
-
-#ifndef	LEAF_SHADOW_TEST
-				if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-					TNLeaf::collect(p1,p2,Point(1-width_taper,max_level,width_ratio),Point(color_flags, tid, size),c);
-				else{
-					glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,max_level, width_ratio, size); // Constants1		
-					glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
-#else
-					glVertexAttrib4d(GLSLMgr::CommonID1, 0, 0.5*size, 0, 1); // Constants1
-					glVertexAttrib4d(GLSLMgr::TexCoordsID, 1, color_flags, tid, RECT_MODE);
-		 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-#endif
-					glDisable(GL_CULL_FACE);
-					glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
-					glBegin(GL_LINES);
-					glVertex4d(p1.x, p1.y, p1.z, 0);
-					glVertex4d(p2.x, p2.y, p2.z, 0);
-					glEnd();
-					glEnable(GL_CULL_FACE);
-#ifndef	LEAF_SHADOW_TEST
+				
+				int segs=max_level;
+				double tilt=divergence;
+				double f=1.0/segs;
+				
+				Point eye=p2.normalize();
+				Point v=p2-p1;
+				v=v.normalize();
+				Point t=v.cross(eye);
+				t=t.normalize();
+				Point r=t*tilt+v*(1-tilt);
+				
+				for(int i=0; i<segs; i++) {
+				    double a = i*f;
+				    double ca = cos(2.0 * PI*a); 
+				    double sa = sin(2.0 * PI*a);
+				    p2 = r*ca + v.cross(r)*sa + v*v.dot(r)*(1.0 - ca);
+					if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
+						TNLeaf::collect(p1,p2,Point(1-width_taper,1,width_ratio),Point(color_flags, tid, size),c);
+					else{
+						glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,1, width_ratio, size); // Constants1		
+						glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
+						glDisable(GL_CULL_FACE);
+						glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
+						glBegin(GL_LINES);
+						glVertex4d(p1.x, p1.y, p1.z, 0);
+						glVertex4d(p2.x, p2.y, p2.z, 0);
+						glEnd();
+						glEnable(GL_CULL_FACE);
+					}
        		    }
-#endif
         	}       
 #ifdef NO_LEAF_SHADOWS
         	}       	
@@ -1931,7 +1943,7 @@ void  LeafData::render(){
 
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	width_taper=0.8;
-	length_taper=0.9;
+	length_taper=1;
 	min_level=-1;
 }
 void TNLeaf::render(){
