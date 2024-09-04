@@ -107,10 +107,9 @@ void drawLeaf(vec3 pv,vec3 p1, vec3 p2)
     vec3 te=cross(tx,eye);
  
 	vec4 Pos1=vec4(p1,1);
-	float ps=Constants1[0].w; // size
  	vec4 Pos2=vec4(p2,1);
+    float w=Constants1[0].y;
     
-    float w=ps*Constants1[0].z;
 	Pnorm.xyz=normalize(cross(v, tx ));
 	Pnorm.w=0.01; // bump
 	if(rectmode){ // use a rectangle (for transparent textures){

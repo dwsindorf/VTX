@@ -119,21 +119,22 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 }
 
 void emitLeaf(){
-	Pos1=gl_PositionIn[0];
-	Pos2=gl_PositionIn[1];
+    vec3 pv=P0[0].xyz;
+	vec3 p1=gl_PositionIn[0].xyz;
+	vec3 p2=gl_PositionIn[1].xyz;
 
 	vec3 v=normalize(Pos2.xyz-Pos1.xyz);   
-	float ps=Constants1[0].w; // size
-	Pos2=vec4(Pos1.xyz+ps*v,1);
- 
+	
+	vec4 Pos1=vec4(p1,1);
+	vec4 Pos2=vec4(p2,1);
+	
 	vec3 tx2 = cross(v, normalize(Pos2.xyz) ); // perpendicular to eye direction
 	vec3 tx1 = cross(v, normalize(Pos1.xyz) );
-    
-    float w=ps*Constants1[0].z; // width_ratio
-    
+	
     float taper=Constants1[0].x;
+    float width=Constants1[0].y;
     
-    float w1=w;
+    float w1=width;
     float w2=taper*w1;
     
     float b1=0.1;

@@ -134,6 +134,7 @@
 // 12) clusters
 //   - not all leaves are in the same plane
 //   - transparency not perfect
+//   * fixed: was using tilted vector for branch direction
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -1670,16 +1671,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				double f=1.0/segs;
 				
 				Point eye=p1.normalize(); // base of branch
-				//Point eye=Point(1.0, 0.0, 0.0); // base of branch
                 eye=eye.normalize();
 				Point v=p2-p1;  // branch direction
 				v=v.normalize();
-				Point t=v.cross(eye);  // plane perpendicular to branch direction and eye
-				t=t.cross(v);  // offset 90 degrees from view plane
+				Point t=v.cross(eye);  // vector in a plane perpendicular to branch and eye (but edge on)
+				t=t.cross(v);          // offset 90 degrees from view plane 
 				t=t.normalize();
 				Point r=t*tilt+v*(1-tilt);
 				r=r.normalize();
-                p0=p2;
+                Point pv=p2;
 
 				for(int i=0; i<segs; i++) {
 					root->addLeaf(branch_id);
@@ -1688,13 +1688,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				    double sa = sin(2.0 * PI*a);
 				    Point pr = r*ca + v.cross(r)*sa + v*v.dot(r)*(1.0 - ca);
 				    pr=pr.normalize();
-				    //p2 = r*ca + v.cross(r)*sa + v*v.dot(r)*(1.0 - ca);
 				    p2=p1+pr*size;
 					if(!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL)
-						TNLeaf::collect(p0,p1,p2,Point(1-width_taper,1,width_ratio),Point(color_flags, tid, size),c);
+						TNLeaf::collect(pv,p1,p2,Point(1-width_taper,width_ratio*size,0),Point(color_flags, tid, size),c);
 					else{
 	 					glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-						glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,1, width_ratio, size); // Constants1		
+						glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,width_ratio*size,0,0); // Constants1		
 						glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
 						glDisable(GL_CULL_FACE);
 						glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
