@@ -88,6 +88,11 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 #endif
 }
 
+vec3 OrthoNormalVector(vec3 v) {
+  float g = v.z>0?1.0:-1.0;
+  float h = v.z + g;
+  return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
+}
 // draw a leaf
 // notes:
 // 1) leaf points and vectors are first projected onto the screen
@@ -96,7 +101,6 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 //    the box is emitted as is without projection
 // 2) the y coord of leaf textures is inverted (1-x) 
 // 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
-//void drawLeaf(vec3 tx, vec3 p1, vec3 v)
 void drawLeaf(vec3 p1, vec3 p2)
 {
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
@@ -112,7 +116,7 @@ void drawLeaf(vec3 p1, vec3 p2)
     
     float w=ps*Constants1[0].z;
 	Pnorm.xyz=normalize(cross(v, tx ));
-	Pnorm.w=0.01;
+	Pnorm.w=0.01; // bump
 	if(rectmode){ // use a rectangle (for transparent textures){
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
 		produceTVertex(vec2(1.0,0.0),Pos1+w*tx); // bot-right

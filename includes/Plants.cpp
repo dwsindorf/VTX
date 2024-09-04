@@ -65,9 +65,9 @@
 //    - child branches should form only towards the tip of parent branches
 // 2) implement geometry shader to improve performance (DONE)
 // 3) add support for textures (DONE)
-//   - optional: texture scale
+//   - optional: texture scale ?
 // 4) add support for bump shading for textures (DONE)
-//   - optional: bump amplitude
+//   - optional: user control of bump amplitude ?
 // 5) implement TNLeaf class (DONE)
 //    - only generate leaves at end of "terminal" branches
 // 6) use a spline function when connecting levels on same branch (DONE)
@@ -80,8 +80,12 @@
 //   - COMPILE followed by callList step very costly compared to just rendering directly (10x worse ?)
 //   - if COMPILE skipped (just callList) performance is about the same as direct render for small model
 // 9) generate wxWidgets classes for plants (DONE)
-// 10) add supprt for shadows
+// 10) add support for shadows (DONE)
 //  - 3d mode only
+// 11) leaves
+//    - leaf clusters (DONE)
+//    - save/restore enable states for tex,col and shape
+//    - change DENSITY to go 0-1 from base to tip
 	
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
@@ -93,8 +97,8 @@
 //    - works OK without "+" connection
 // 4) TNLeaf issues
 //   - found problem that rectangles were not being created correctly (slanted edges)
-//     o fixed by creating projected vector in eye space vs. model space
-//     o also fixes width/length problem (narrow leaves)
+//     * fixed by creating projected vector in eye space vs. model space
+//     * also fixes width/length problem (narrow leaves)
 //     o but lines projected to or away from eye are smaller than those tangent to eye (at same depth)
 //       so leaves are drawn with different sizes depending on orientation
 //     o overall effect is ok, models young and older leaves on same branch but would be better to be
@@ -106,8 +110,8 @@
 // 6) 3d issues
 //   - branch dimensions and shapes change when aspect ratio and size of window are changed (scales ok in 2d)
 //   - trunk size can be very different between 2d and 3d
-// 7) GUI issues
-//   - adding a plant sometimes puts branch on lower plant
+// 7) GUI issues (mostly fixed)
+//   - adding a plant sometimes puts branch on lower plant 
 //   - adding plant to terrain puts following elements in a sub-group
 //     o removing also removes sub-group elements
 //   - deleting branch can cause crash
@@ -121,12 +125,15 @@
 // 9) Shape
 //   o plant shape doesn't scale correctly with size 
 //   - sometimes branches are too wide (WRT) length when plant is added to surface
-//   o fixed: caused by plant scale and width dependent on orbital size (map->radius)
+//   * fixed: caused by plant scale and width dependent on orbital size (map->radius)
 //   - replaced map->radius with fixed constant (4e-3)
 // 10) plant branches disappear if 3d-clouds are present
 //   o fixed: removed call to GLSLMgr::max_output=4 in CloadLayer setProgram
-// 11) misc: plants are generated on or below water
-//   - need to not gen plants in water
+// 11) plants are generated on or below water
+//   - need to not generate plants in water
+// 12) clusters
+//   - not all leaves are in the same plane
+//   - transparency not perfect
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -1300,7 +1307,7 @@ void TNBranch::initArgs(){
 	if(n>9)first_bias=arg[9];
 	if(n>10)min_level=arg[10];
 }
-//Leaf("Leaf2",2,1,5,1,0,1,0,1,1)
+
 void TNBranch::invalidateTexture(){
 	if(texture_id){
 		glDeleteTextures(1,&texture_id);
@@ -1634,13 +1641,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
         	}
         	else{
 #endif
-        	double density = 1-max_splits;
-        	if(URAND>density){
-				root->addLeaf(branch_id);
-	 
-				double angle=0;
-				opt = LAST_EMIT;		
+            double rv=URAND;
+            double sv=SRAND;
+			opt = LAST_EMIT;
+        	double dv = 1-max_splits;
+        	if(rv>dv){
 				shader_mode=LEAF_MODE;
+				
 				if(test3 || test4)
 					poly_mode=GL_LINE;    
 				if(test4)
@@ -1651,7 +1658,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			
 				double depth=bot.length();
 				child_size = length*FEET/12; // inches
-				child_size *= 1 + 0.5 * randomness * SRAND;
+				child_size *= 1 + 0.5 * randomness * sv;
 	
 				double width_ratio=0.5*width;
 				double size=root->width_scale*PSCALE*TheScene->wscale*child_size;
@@ -1662,14 +1669,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				double tilt=divergence;
 				double f=1.0/segs;
 				
-				Point eye=p2.normalize();
-				Point v=p2-p1;
+				Point eye=p2.normalize(); // tip of branch
+				Point v=p2-p1;  // branch direction
 				v=v.normalize();
-				Point t=v.cross(eye);
+				Point t=v.cross(eye);  // plane perpendicular to branch direction and eye
 				t=t.normalize();
 				Point r=t*tilt+v*(1-tilt);
 				
 				for(int i=0; i<segs; i++) {
+					root->addLeaf(branch_id);
 				    double a = i*f;
 				    double ca = cos(2.0 * PI*a); 
 				    double sa = sin(2.0 * PI*a);
@@ -1780,7 +1788,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 #ifdef NO_LINE_SHADOW		   
         else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
 #else
-         else if(isEnabled()){ // line mode
+        else if(isEnabled()){ // line mode
 #endif
         	double nscale=TNplant::norm_min;
         	root->rendered++;
@@ -1926,7 +1934,9 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 ValueList<LeafData*> TNLeaf::leafs;
 
 double LeafData::distance() { 
-	return data[1].length();
+	//cout<<data[0].length()<<" "<<TheScene->epoint.distance(data[0])<<endl;
+	return TheScene->vpoint.distance(data[1]);
+	//return data[0].length();
 }
 
 void  LeafData::render(){

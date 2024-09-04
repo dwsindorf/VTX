@@ -421,10 +421,10 @@ wxString VtxLeafTabs::exprString(){
 	s+=LengthSlider->getText()+",";
 	s+=WidthSlider->getText()+",";
 	s+=RandSlider->getText()+",";
-	s+=DivergenceSlider->getText()+",";
+	s+=DivergenceSlider->getText()+","; // leaf angle from stem vector
 	s+="0.0,"; // TODO flatness ?
-	s+=WidthTaperSlider->getText()+",";
-	s+="1.0"; // TODO shadow
+	s+=WidthTaperSlider->getText()+","; // width_taper
+	s+="1.0"; // length_taper (unused)
 	s+=")";
  	return wxString(s);
 }
@@ -483,8 +483,6 @@ void VtxLeafTabs::getObjAttributes(){
 	RandSlider->setValue(obj->randomness);
 	DivergenceSlider->setValue(obj->divergence);
 	WidthTaperSlider->setValue(obj->width_taper);
-	
-	
 
 	image_name=obj->getImageName();
 	makeFileList(image_name);
