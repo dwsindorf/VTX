@@ -94,25 +94,21 @@ vec3 OrthoNormalVector(vec3 v) {
   return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
 }
 // draw a leaf
-// notes:
-// 1) leaf points and vectors are first projected onto the screen
-//    a texture box is created in screen space alligned with the normalized projected vector
-//    the size of the box is scaled based on eye distance
-//    the box is emitted as is without projection
-// 2) the y coord of leaf textures is inverted (1-x) 
-// 3) leaf textures are drawn "flat" towards the eye to avoid compression at narrow angles
-void drawLeaf(vec3 p1, vec3 p2)
-{
+void drawLeaf(vec3 pv,vec3 p1, vec3 p2)
+{   
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 	
-	vec3 v=normalize(p2-p1);
+	vec3 v=normalize(pv-p1);
+	vec3 pr=normalize(p2-p1);
 	vec3 eye=normalize(p1); // eye
-    vec3 tx=normalize(cross(v, eye ));
-
+    vec3 tx=normalize(cross(v, pr ));
+    tx=tx-p1;
+    vec3 te=cross(tx,eye);
+ 
 	vec4 Pos1=vec4(p1,1);
 	float ps=Constants1[0].w; // size
-	vec4 Pos2=vec4(Pos1.xyz+ps*v,1);
+ 	vec4 Pos2=vec4(p2,1);
     
     float w=ps*Constants1[0].z;
 	Pnorm.xyz=normalize(cross(v, tx ));
@@ -163,9 +159,10 @@ void drawLeaf(vec3 p1, vec3 p2)
 }
 
 void emitLeaf(){
+   vec3 pv=P0[0].xyz;
    vec3 p1=gl_PositionIn[0].xyz;
    vec3 p2=gl_PositionIn[1].xyz;
-   drawLeaf(p1,p2);
+   drawLeaf(pv,p1,p2);
 }
 // branches  
 void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){

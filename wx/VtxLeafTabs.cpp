@@ -225,7 +225,7 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	hline->Add(WidthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2,VALUE2,SLIDER2);
-	DivergenceSlider->setRange(0.1,1);
+	DivergenceSlider->setRange(0.0,1);
 	DivergenceSlider->setValue(1);
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
 
