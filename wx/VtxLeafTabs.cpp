@@ -446,9 +446,9 @@ void VtxLeafTabs::setObjAttributes(){
 	char *cstr=(char*)expr.ToAscii();
 	
     obj->setColorExpr(cstr);
- 	obj->setTexEnabled(m_tex_enable->GetValue());
-	obj->setColEnabled(m_col_enable->GetValue());
-	obj->setShapeEnabled(m_shape_enable->GetValue());
+ 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
+	obj->setColEnabled((bool)m_col_enable->GetValue());
+	obj->setShapeEnabled((bool)m_shape_enable->GetValue());
     obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
 	if(strlen(obj->name_str))
@@ -510,8 +510,8 @@ void VtxLeafTabs::getObjAttributes(){
 		strcpy(blue,"1.0");
 		strcpy(alpha,"0.0");
 	}
-	m_col_enable->SetValue(obj->colValid());
-	m_tex_enable->SetValue(obj->texValid());
+	m_col_enable->SetValue(obj->isColEnabled());
+	m_tex_enable->SetValue(obj->isTexEnabled());
 	m_shape_enable->SetValue(obj->isShapeEnabled());
 
 	m_r_expr->SetValue(red);

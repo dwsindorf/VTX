@@ -200,7 +200,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
     level->Add(m_min_level, 0, wxALIGN_LEFT|wxALL, 3);
     
     m_from_end=new wxCheckBox(panel, ID_FROM_END, "From End");
-    m_from_end->SetValue(true);
+    m_from_end->SetValue(false);
 	level->Add(m_from_end, 0, wxALIGN_LEFT|wxALL,8);
 
     level->AddSpacer(10);
@@ -493,8 +493,8 @@ void VtxBranchTabs::setObjAttributes(){
 
 	wxString expr=getColorExpr();
 	char *cstr=(char*)expr.ToAscii();
-	obj->setTexEnabled(m_tex_enable->GetValue());
-	obj->setColEnabled(m_col_enable->GetValue());
+	obj->setTexEnabled((bool)m_tex_enable->GetValue());
+	obj->setColEnabled((bool)m_col_enable->GetValue());
 	
     obj->setColorExpr(cstr);
     obj->setExpr((char*)s.ToAscii());
@@ -524,7 +524,12 @@ void VtxBranchTabs::getObjAttributes(){
 	object_name->SetValue(obj->nodeName());
 	
 	m_max_level->SetSelection((int)obj->max_level);
-	m_min_level->SetSelection(obj->min_level);
+	int minlevel=obj->min_level;
+	m_min_level->SetSelection(abs(obj->min_level));
+	if(minlevel<0)
+		m_from_end->SetValue(true);
+	else
+		m_from_end->SetValue(false);		
 	SplitsSlider->setValue(obj->max_splits);
 	LengthSlider->setValue(obj->length);
 	WidthSlider->setValue(obj->width);
@@ -556,7 +561,7 @@ void VtxBranchTabs::getObjAttributes(){
 			strcpy(alpha,"1.0");
 	}
 	else{
-		m_col_enable->SetValue(false);
+		//m_col_enable->SetValue(false);
 		strcpy(red,"0.0");
 		strcpy(green,"0.0");
 		strcpy(blue,"0.0");
@@ -569,6 +574,10 @@ void VtxBranchTabs::getObjAttributes(){
 
 	setColorFromExpr();
 	saveLastExpr();
+	
+	m_col_enable->SetValue(obj->isColEnabled());
+	m_tex_enable->SetValue(obj->isTexEnabled());
+
    
 	update_needed=false;
 }

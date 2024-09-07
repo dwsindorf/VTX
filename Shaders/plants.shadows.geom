@@ -143,7 +143,7 @@ void emitLeaf(){
 	w1=w1*1.5;
 	w2=w2*1.5;
 
-    int nodes=6;
+    int nodes=8;
     vec4 t1=vec4(tx1,1.0);
     vec4 t2=vec4(tx2,1.0);
     vec4 x1=mix(Pos1,Pos2,b1);

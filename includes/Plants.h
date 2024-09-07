@@ -265,6 +265,7 @@ public:
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
+	static bool collect_mode;
 	static void render();	
 	static void collect(Point p0,Point p1,Point p2, Point f, Point d,Color c){
 		leafs.add(new LeafData(p0,p1,p2,f,d,c));

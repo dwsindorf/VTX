@@ -775,7 +775,7 @@ void RasterMgr::shadow_view()
 	//set_top();
 	//surface=1;
 	Render.set_back();
-    glPolygonOffset(2.0f, 1.0f);
+   // glPolygonOffset(2.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	TheScene->shadows_zvals();
