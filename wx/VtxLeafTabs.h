@@ -43,6 +43,7 @@ protected:
 	SliderCtrl   *WidthSlider;
 	SliderCtrl   *DivergenceSlider;
 	SliderCtrl   *WidthTaperSlider;
+	SliderCtrl   *LengthTaperSlider;
 	SliderCtrl   *RandSlider;
 	
 	wxCheckBox *m_enable;
@@ -92,6 +93,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Width)
 	DEFINE_SLIDER_EVENTS(Rand)
 	DEFINE_SLIDER_EVENTS(WidthTaper)
+	DEFINE_SLIDER_EVENTS(LengthTaper)
 	DEFINE_SLIDER_EVENTS(Divergence)
 
     void OnChanged(wxCommandEvent& event){

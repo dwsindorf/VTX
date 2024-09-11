@@ -2683,7 +2683,7 @@ void Spheroid::init_view()
 	TheScene->maxht=mht;
 	TheScene->zoom=size;
 
-	TheScene->minh=6*FEET;
+	TheScene->minh=3*FEET;
 	TheScene->maxr=2*size;
 	TheScene->hstride=1;
 	TheScene->vstride=0.02;

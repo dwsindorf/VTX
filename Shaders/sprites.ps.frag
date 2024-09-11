@@ -82,8 +82,9 @@ void main(void) {
  	color.rgb=setLighting(color.rgb);
  	//color.rgb=mix(color.rgb,Haze.rgb,gl_FragCoord.z);
 #ifdef SHADOWS
-     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     color.rgb=mix(color.rgb,color.rgb,Shadow.rgb,shadow*Shadow.a);
+    float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+    float a=shadow*Shadow.a;
+    color.rgb=mix(color.rgb,color.rgb,Shadow.rgb,shadow*Shadow.a);
 #endif  
     //float depth=gl_FragCoord.z;
 

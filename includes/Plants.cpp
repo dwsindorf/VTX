@@ -11,7 +11,7 @@
 #include "TerrainClass.h"
 
 //#define COLOR_TEST
-//#define DENSITY_TEST
+#define DENSITY_TEST
 
 #define SHOW_STATS
 //#define SHOW_BRANCH_STATS
@@ -110,7 +110,7 @@
 // 6) 3d issues
 //   - branch dimensions and shapes change when aspect ratio and size of window are changed (scales ok in 2d)
 //   - trunk size can be very different between 2d and 3d
-// 7) GUI issues (mostly fixed)
+// 7) GUI issues
 //   - adding a plant sometimes puts branch on lower plant 
 //   - adding plant to terrain puts following elements in a sub-group
 //     o removing also removes sub-group elements
@@ -137,6 +137,11 @@
 //   - not all leaves are in the same plane
 //   * fixed: was using tilted vector for branch direction
 //   - transparency not perfect
+// 13) leaves don't show on far plants (branches show but have no foliage)
+//   * improved
+// 14) when multiple leaves are present secondary leaves are not connected to branch (suspended in air)
+//   * improved: shortened vector connecting previous node by 90%
+
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -175,7 +180,7 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double min_draw_width=1;
+static double min_draw_width=0.5;
 static double min_render_pts=1; // for render
 static double min_adapt_pts=3; //  for adapt - increase resolution only around nearby plants
 
@@ -187,9 +192,9 @@ static double min_adapt_pts=3; //  for adapt - increase resolution only around n
 //#define SHOW
 //#define DEBUG_PMEM
 
-#define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
+#define MIN_DRAW_WIDTH 0.75*min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 2*MIN_DRAW_WIDTH
+#define MIN_TRIANGLE_WIDTH 2*MIN_LINE_WIDTH
 #define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 #ifdef DUMP
@@ -222,7 +227,6 @@ static int          scnt;
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
-bool PlantMgr::use_lists=false;
 bool PlantMgr::shadow_mode=false;
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
@@ -446,18 +450,14 @@ bool PlantMgr::setProgram(){
 	double d0=clock();
 //#define USE_CALL_LISTS
 #ifdef USE_CALL_LISTS
-	if(use_lists){
-		if(TheMap->callLists[PLANT_LISTS][0]==0){
-			TheMap->callLists[PLANT_LISTS][0]=glGenLists(1);
-			glNewList(TheMap->callLists[PLANT_LISTS][0], GL_COMPILE);
-		}
+	if(TheMap->callLists[PLANT_LISTS][0]==0){
+		cout<<"new plants call list"<<endl;
+		TheMap->callLists[PLANT_LISTS][0]=glGenLists(1);
+		glNewList(TheMap->callLists[PLANT_LISTS][0], GL_COMPILE);
 		render();
 		glEndList();
-	    glCallList(TheMap->callLists[PLANT_LISTS][0]);
 	}
-	else{
-		 render();
-	}
+	glCallList(TheMap->callLists[PLANT_LISTS][0]);
 #else
 	render();
 #endif
@@ -482,11 +482,11 @@ void PlantMgr::render_shadows(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	//min_draw_width=2;
 	Raster.setProgram(Raster.PLANT_SHADOWS);
-	glLineWidth(3);
+	//glLineWidth(2);
 	//glPolygonOffset (0.0f, 0.0f);
 	
 	render();
-	glLineWidth(1);
+	//glLineWidth(1);
 	shadow_mode=false;
 
 }
@@ -498,7 +498,7 @@ void PlantMgr::render_zvals(){
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
 	//min_draw_width=2;
-	glLineWidth(3);
+	//glLineWidth(2);
 
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
@@ -976,6 +976,7 @@ void TNplant::eval()
 	if(hits>0){ // inside target radius
 		nhits++;
 		double x=1-cval;
+
 #ifdef COLOR_TEST
 //		if(instance==0)
 //			c=Color(x,0,1);
@@ -986,7 +987,9 @@ void TNplant::eval()
 #ifdef DENSITY_TEST
 		x=1/(cval+1e-6);
 		x=x*x;//*x*x;
+		//Td.density+=x;//lerp(cval,0,0.2,0,0.05*x);
 		Td.density+=lerp(cval,0,0.2,0,0.05*x);
+		//cout<<Td.density<<endl;
 #endif
 	}
  }
@@ -1492,7 +1495,7 @@ Point TNBranch::setVector(Point vec, Point start, int lvl){
 		Point tp1 = n.cross(v); 
 		vp = tp1.cross(n);
 	}
-	else {
+	else { // alternate sides randomly
 		double s=SRAND;
 		if(s>0)
 		 vp= n.cross(v);
@@ -1515,21 +1518,17 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
   return a*x*x+b*x+c;
 }
 
-static Point lastv;
-static Point lastb;
-static Point M0,M1,M2;
-
 static bool main_fork=false;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	int minlvl=0;
-	if(min_level<0){
+	if(min_level<-0.1){
 		TNBranch *parent=getParent();
 		if(parent->typeValue()==ID_BRANCH)
 			minlvl=parent->max_level+min_level+1;
 	}
 	else if(min_level>0)
 		minlvl=min_level+1;
-	if(lvl<minlvl)
+	if(!isPlantLeaf() &&lvl<minlvl)
 		return;
 	maxlvl=max_level+1;
 
@@ -1573,9 +1572,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	int shader_mode=0;
 	int poly_mode=GL_FILL;
 
+	TNBranch *child = (TNBranch*) right;
+	
 	Color c;
 	bool final_branch = branch_id == root->branches - 1;
-	if(right && right->typeValue() == ID_LEAF)
+	if(isPlantLeaf() || (right && right->typeValue() == ID_LEAF))
 		final_branch=true;
 	double size_scale = 1.0;
 	double child_width=parent_width;
@@ -1595,6 +1596,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		root->addSkipped(branch_id);
 		return;
 	} 
+
 	Srand=SRAND;
 	Point start=base;
 	Density = ((double) lev) / maxlvl;
@@ -1603,7 +1605,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	child_size *= 1 + 0.25 * randomness * SRAND;
 	double cl=child_size * length;
-    if (!main_branch && lvl > 0 /*&& !isPlantLeaf()*/) {
+    if (!main_branch && lvl > 0 && !isPlantLeaf()) {
 		double rb = randomness > 1 ? 1 : randomness;
 		b = rb * URAND;			
 		b = b <= 1 ? b : 1;
@@ -1621,9 +1623,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
     	bot_offset=tip.z;
 	    v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
- 	    lastv=v; // save main branch end 
     }
- 		
+    //TNBranch *parent=getParent();
+    if (isPlantLeaf()&& child && child->isPlantLeaf())
+    	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
 	p2  = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
@@ -1631,7 +1634,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 	bool branch_tip=false;
 	if (child_width > MIN_LINE_WIDTH) {
-		if (child_width * width_taper < MIN_LINE_WIDTH) {
+		if (!isPlantLeaf() && child_width * width_taper < MIN_LINE_WIDTH) {
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
@@ -1802,7 +1805,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 #ifdef NO_LINE_SHADOW		   
         else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
 #else
-        else if(isEnabled()){ // line mode
+        else if(isEnabled()){ // line mode > MIN_DRAW_WIDTH
 #endif
         	double nscale=TNplant::norm_min;
         	root->rendered++;
@@ -1819,10 +1822,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
 	}
-	TNBranch *child = (TNBranch*) right;
 	
-	if(branch_tip && child && child->typeValue() == ID_LEAF)
+	
+	if(branch_tip && child && child->typeValue() == ID_LEAF){
 		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+	}
 		
 	if (opt & LAST_EMIT) 
 		return;

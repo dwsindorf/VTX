@@ -742,7 +742,7 @@ void Scene::init_view()
 	bgpass=0;
 	size=1;
 	minr=0;
-	minh=10*FEET;
+	minh=5*FEET;
 	maxr=size;
 }
 

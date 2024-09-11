@@ -6,18 +6,34 @@ Scene() {
 		height=30.7293 ft;
 		gndlvl=10432.3 ft;
 		time=115622;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00400198;
+		zoom=1;
+		minh=1.89394e-09;
 		heading=75;
 		tilt=-23;
 		angle=-52;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		phi=-5.55558;
+		height=27.2907 ft;
+		time=115628;
+		heading=62;
+		tilt=-18;
+		angle=-60;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400198;
+	}
+	View{
+		tilt=-21;
+		angle=-62;
+		minr=0.00400198;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -57,9 +73,9 @@ Scene() {
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("test",1,1.5e-06,0.8,0.9,0.05)
-								Branch("trunk",8,1,1.2,1,0.1,0.1,0,0.85,0.95)["Cracks1",Color(0.5,0.25,0)]
-								Branch("branch",8,2.4,0.8,1,1,1,-0.5,0.75,0.8,2,1)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
-								Branch("twig",3,2,0.5,1,1,1,-0.7,0.7,0.9,15,-1)[Color(0.1*(1-0.5*URAND),0.1+0.2*DENSITY*URAND,0.1*IRAND)];
+								Branch("trunk",8,1,1,0.99,0.1,0.1,0,0.85,0.95,0,0)["Cracks1",Color(0.5,0.25,0,0.5)]
+								Branch("branch",8,2.4,0.64,0.59,0.48,0.57,-0.4,0.67,0.79,3,1)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
+								Branch("needle",3,2,0.5,1,1,1,-0.7,0.7,0.74,10,-1)["Cracks1",Color(0.1*(1-0.5*URAND),0.1+0.2*DENSITY*URAND,0.1*IRAND,1)];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

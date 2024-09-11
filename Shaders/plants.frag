@@ -119,7 +119,6 @@ void main(void) {
 	}
 	//else
 	//	color.a=1;
-	   
 #endif
 	//if(!aopt)
 	//	color.a=1;
@@ -127,7 +126,6 @@ void main(void) {
     	color.rgb=setLighting(color.rgb);
 #ifdef SHADOWS
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     //color.rgb=vec3(0,DEPTH,0);//mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
  

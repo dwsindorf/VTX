@@ -805,7 +805,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
 	TreeNode *init_parent=parent;
-//#define DEBUG_ADD_TO_TREE
+#define DEBUG_ADD_TO_TREE
 #ifdef DEBUG_ADD_TO_TREE
 	if(child)
 		cout<<" parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName();
@@ -837,14 +837,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		parent=parent->getParent();
 		break;
 	case TN_PLANT_LEAF:
-		parent=parent->getParent();
-		ptype=parent->getFlag(TN_TYPES);
-		while(parent && (ptype==TN_PLANT_BRANCH ||ptype==TN_PLANT_LEAF)){
-			parent=parent->getParent();
-			if(parent)
-				ptype=parent->getFlag(TN_TYPES);
-		}
-		break;
 	case TN_PLANT_BRANCH:
 		parent=parent->getParent();
 		ptype=parent->getFlag(TN_TYPES);
@@ -863,7 +855,8 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		}
 		break;
 	case TN_PLANT:
-		//parent=parent->getParent();
+		if(ntype!=TN_PLANT_BRANCH)
+			parent=parent->getParent();
 		break;
 	case TN_ROCKS:
 	    if(!branch)
@@ -877,6 +870,8 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_CORONA:
 	case TN_HALO:
 		break;
+    
+
 	}
 	ptype=parent->getFlag(TN_TYPES);
 	switch(ntype){
@@ -937,7 +932,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	ptype=parent->getFlag(TN_TYPES);
 #ifdef DEBUG_ADD_TO_TREE
 	if(init_parent !=parent)
-		cout<<" parent="<<parent->node->typeName()<<"<"<<parent->label()<<"> newobj="<<node->typeName()<<"<"<<node->nodeName()<<">"<<endl;
+		cout<<" new parent="<<parent->node->typeName()<<"<"<<parent->label()<<">"<<endl;
 	else
 		cout<<endl;
 #endif

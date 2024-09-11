@@ -271,7 +271,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergece",LABEL2, VALUE2,SLIDER2);
+	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2, VALUE2,SLIDER2);
 	DivergenceSlider->setRange(0,1);
 	DivergenceSlider->setValue(1.0);
 
