@@ -86,6 +86,9 @@
 //    - leaf clusters (DONE)
 //    - save/restore enable states for tex,col and shape
 //    - change DENSITY to go 0-1 from base to tip
+//    - need method to make leaves alternate sides
+//    - support multiple leaf clusters per new branch (first bias)
+//    - way to vary leaf projection between eye plane and plane perpendicular to branch (flatness)
 	
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
@@ -532,6 +535,7 @@ void PlantMgr::render(){
 		
 		double r=Random(pp);
 		randval=256*fabs(r)+id;
+		plant->seed=URAND;
 		plant->emit();
 	}
 	if(TNLeaf::collect_mode)
@@ -1174,7 +1178,7 @@ void TNplant::emit(){
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
     rendered=0;
-
+    
 	Randval=URAND;
 	double length=size*PSCALE;	
 
@@ -1196,13 +1200,15 @@ void TNplant::emit(){
 	p1=p1-TheScene->vpoint;
 	p2=p2-TheScene->vpoint;
 
-	double start_width=width_scale*pntsize*first_branch->length;
+	double start_width=width_scale*pntsize*first_branch->length*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 
 	Point tip;
 	tip.x=start_width/width_scale;
 	tip.y=0;
 	tip.z=0;
+	
+	TNLeaf::left_side=0;
 
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
@@ -1217,6 +1223,7 @@ bool TNplant::setProgram(){
 	else
 		return false;
 	TNBRANCH *branch=first_branch;
+	//randval=1;
 	while(branch && (branch->typeValue() == ID_BRANCH || branch->typeValue() == ID_LEAF)){
 		branch->setProgram();
 		branch=branch->right;
@@ -1473,10 +1480,7 @@ void TNBranch::setColor(){
 Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
-	
-	if(isPlantLeaf())
-		return v;
-	
+		
 	v.x += divergence * SRAND;
 	v.y += divergence * SRAND;
 	v.z += divergence * SRAND;
@@ -1521,6 +1525,9 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 static bool main_fork=false;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	int minlvl=0;
+	
+
+	//TNLeaf::left_side=0;
 	if(min_level<-0.1){
 		TNBranch *parent=getParent();
 		if(parent->typeValue()==ID_BRANCH)
@@ -1536,14 +1543,24 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
     int l=randval;
     
 	double splits=1;
+
 	if(isPlantBranch()){
 		splits=max_splits*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			splits*=first_bias;
 		splits=splits<1?1:splits;
+		for(int i=0;i<splits;i++){
+			emit(opt,start,vec,tip,s,w,1);
+		}
 	}
-	for(int i=0;i<splits;i++){
-		emit(opt,start,vec,tip,s,w,level);
+	else{
+		TNLeaf *leaf=this;
+		leaf->phase=root->seed;
+		splits+=first_bias;
+		for(int i=0;i<splits;i++){
+			emit(opt,start,vec,tip,s,w,i);
+		}
+
 	}
 	randval=l+1;
 }
@@ -1561,7 +1578,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
-	bool last_level = lev==maxlvl;
+	bool last_level = (lev==maxlvl);
 
 	double topx = 0;
 	double topy = 0;
@@ -1605,9 +1622,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	
 	child_size *= 1 + 0.25 * randomness * SRAND;
 	double cl=child_size * length;
-    if (!main_branch && lvl > 0 && !isPlantLeaf()) {
-		double rb = randomness > 1 ? 1 : randomness;
-		b = rb * URAND;			
+    if (!main_branch /*&& lvl > 0 && !isPlantLeaf()*/) {
+    	if(isPlantLeaf()){
+    		b=((double) lvl) / (first_bias+1);
+    	}
+    	else{
+			double rb = randomness > 1 ? 1 : randomness;
+			b = rb * URAND;			
+    	}
 		b = b <= 1 ? b : 1;
 
 		start = p1 - vec * b;
@@ -1624,7 +1646,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 	    v=setVector(vec,start,lvl);
 		v = v * cl; // v = direction along last branch
     }
-    //TNBranch *parent=getParent();
+    //set leaf offset from previous leaf (e.g. so flowers don't intersect leaves)
     if (isPlantLeaf()&& child && child->isPlantLeaf())
     	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
 	p2  = start + v; // new top
@@ -1638,7 +1660,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
-		if(lev >= maxlvl) 
+		if(!isPlantLeaf() && lev >= maxlvl) 
 			opt = LAST_EMIT;
 	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
 //#define NO_LEAF_SHADOWS		   
@@ -1651,7 +1673,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 #endif
             double rv=URAND;
             double sv=SRAND;
-			opt = LAST_EMIT;
+			//opt = LAST_EMIT;
         	double dv = 1-max_splits;
         	if(rv>dv){
 				shader_mode=LEAF_MODE;
@@ -1689,17 +1711,25 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				Point r=t*tilt+v*(1-tilt);
 				r=r.normalize();
                 Point pv=p2;
+                
+                TNLeaf *leaf=this;
+                double phase=leaf->phase;
+            	if((leaf->left_side&1)==0)
+            	 phase+=0.5;
+             	leaf->left_side++;
+             	double length=1;//pow(length_taper,lvl);
+        		//cout<<lvl<<" "<<first_bias<<" "<<length<<endl;
 
 				for(int i=0; i<segs; i++) {
 					root->addLeaf(branch_id);
-				    double a = i*f;
+				    double a = i*f+phase;
 				    double ca = cos(2.0 * PI*a); 
 				    double sa = sin(2.0 * PI*a);
 				    Point pr = r*ca + v.cross(r)*sa + v*v.dot(r)*(1.0 - ca);
 				    pr=pr.normalize();
-				    p2=p1+pr*size;
+				    p2=p1+pr*size*length;
 					if(TNLeaf::collect_mode)
-						TNLeaf::collect(pv,p1,p2,Point(1-width_taper,width_ratio*size,0),Point(color_flags, tid, size),c);
+						TNLeaf::collect(p0,p1,p2,Point(1-width_taper,width_ratio*size*length,0),Point(color_flags, tid, size*length),c);
 					else{
 	 					glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 						glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,width_ratio*size,0,0); // Constants1		
@@ -1823,31 +1853,30 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		glEnable(GL_CULL_FACE);
 	}
 	
-	
-	if(branch_tip && child && child->typeValue() == ID_LEAF){
-		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
-	}
+//	
+//	if(branch_tip && child && child->typeValue() == ID_LEAF){
+//		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+//	}
 		
 	if (opt & LAST_EMIT) 
 		return;
+	if(!isPlantLeaf()) {
+		int splits = max_splits * (1 + 0.5 * randomness * SRAND);	
+		splits = splits >= 1 ? splits : 1;
 	
-	int splits = max_splits * (1 + 0.5 * randomness * SRAND);	
-	splits = splits >= 1 ? splits : 1;
-
-	if(last_level)
-		splits=1;
-
-	child_width *= width_taper;
-	child_size *= length_taper;
-
-	emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
-	for (int i = 1; i < splits; i++) {
-		emit(0, bot, v, tip, child_size, child_width, lev);
+		if(last_level)
+			splits=1;
+	
+		child_width *= width_taper;
+		child_size *= length_taper;
+	
+		emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
+		for (int i = 1; i < splits; i++) {
+			emit(0, bot, v, tip, child_size, child_width, lev);
+		}
 	}
-	if (!right)
-		return;
-
-	child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+	if (child)		
+		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	
 }
 
@@ -1971,11 +2000,12 @@ void  LeafData::render(){
 }
 
 bool TNLeaf::collect_mode=true;
-
+int TNLeaf::left_side=0;
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	width_taper=0.8;
 	length_taper=1;
 	min_level=-1;
+	phase=0;
 }
 void TNLeaf::render(){
 	glDisable(GL_CULL_FACE);
@@ -1990,4 +2020,10 @@ void TNLeaf::getImageDir(int dim,char *dir){
 	char base[256];
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Leaf",base);
+}
+
+Point TNLeaf::setVector(Point vec, Point start, int lvl){
+	Point v = vec.normalize();
+	return v;
+
 }

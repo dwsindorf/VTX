@@ -94,17 +94,16 @@ vec3 OrthoNormalVector(vec3 v) {
   return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
 }
 // draw a leaf
-void drawLeaf(vec3 pv,vec3 p1, vec3 p2)
+void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 {   
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
 	
-	vec3 v=normalize(pv-p1);
+	vec3 v=normalize(p1-p0);
 	vec3 pr=normalize(p2-p1);
-	vec3 eye=normalize(p1); // eye
     vec3 tx=normalize(cross(v, pr ));
+
     tx=tx-p1;
-    vec3 te=cross(tx,eye);
  
 	vec4 Pos1=vec4(p1,1);
  	vec4 Pos2=vec4(p2,1);

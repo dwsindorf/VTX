@@ -107,6 +107,7 @@ public:
 	double base_drop;
 	double width_scale;
 	double size_scale;
+	double seed;
 	static double norm_max;
 	static double norm_min;
 	static int textures;
@@ -258,6 +259,9 @@ class TNLeaf : public TNBranch
 public:
 	
 	TNLeaf(TNode *l, TNode *r, TNode *b);
+	
+	static int left_side;
+	double phase;
 
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
@@ -272,6 +276,7 @@ public:
 	static ValueList<LeafData*> leafs;
 	
 	void getImageDir(int dim,char *);
+	virtual Point setVector(Point vec, Point start, int lvl);
 
 };
 
