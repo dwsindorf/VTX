@@ -1209,7 +1209,7 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
-
+	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 	
@@ -1525,8 +1525,6 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 static bool main_fork=false;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	int minlvl=0;
-	
-
 	//TNLeaf::left_side=0;
 	if(min_level<-0.1){
 		TNBranch *parent=getParent();
@@ -1539,28 +1537,30 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		return;
 	maxlvl=max_level+1;
 
-	level=1;
+    //cout<<endl;
+
+	level=0;
     int l=randval;
     
-	double splits=1;
+	double n=1;
 
 	if(isPlantBranch()){
-		splits=max_splits*(1+0.5*randomness*SRAND);
+		n=max_splits*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
-			splits*=first_bias;
-		splits=splits<1?1:splits;
-		for(int i=0;i<splits;i++){
+			n*=first_bias;
+		n=n<1?1:n;
+		for(int i=0;i<n;i++){
+			level=0;
 			emit(opt,start,vec,tip,s,w,1);
 		}
 	}
 	else{
 		TNLeaf *leaf=this;
-		leaf->phase=root->seed;
-		splits+=first_bias;
-		for(int i=0;i<splits;i++){
+		leaf->phase=root->seed; // random phase
+		n+=first_bias;
+		for(int i=0;i<n;i++){
 			emit(opt,start,vec,tip,s,w,i);
 		}
-
 	}
 	randval=l+1;
 }
@@ -1571,8 +1571,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 
 	int lev = lvl;
 	lev++;
+
 	if(!root)
 		init();
+    level++;
 	
 	int mode = opt;
 	
@@ -1647,8 +1649,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 		v = v * cl; // v = direction along last branch
     }
     //set leaf offset from previous leaf (e.g. so flowers don't intersect leaves)
-    if (isPlantLeaf()&& child && child->isPlantLeaf())
-    	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
+   // if (isPlantLeaf()&& child && child->isPlantLeaf())
+  //  	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
 	p2  = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
@@ -1713,13 +1715,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
                 Point pv=p2;
                 
                 TNLeaf *leaf=this;
+                TNBranch *branch=getParent();
                 double phase=leaf->phase;
             	if((leaf->left_side&1)==0)
             	 phase+=0.5;
              	leaf->left_side++;
-             	double length=1;//pow(length_taper,lvl);
-        		//cout<<lvl<<" "<<first_bias<<" "<<length<<endl;
-
+             	// taper the size of a leaf from start to end of parent branch
+             	double length=pow(length_taper,branch->level);
+                // clusters
 				for(int i=0; i<segs; i++) {
 					root->addLeaf(branch_id);
 				    double a = i*f+phase;
@@ -1857,26 +1860,25 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 //	if(branch_tip && child && child->typeValue() == ID_LEAF){
 //		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 //	}
-		
+
 	if (opt & LAST_EMIT) 
 		return;
+	if (child)		
+		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if(!isPlantLeaf()) {
-		int splits = max_splits * (1 + 0.5 * randomness * SRAND);	
-		splits = splits >= 1 ? splits : 1;
+		int n = max_splits * (1 + 0.5 * randomness * SRAND);	
+		n = n >= 1 ? n : 1;
 	
 		if(last_level)
-			splits=1;
-	
+			n=1;
 		child_width *= width_taper;
 		child_size *= length_taper;
 	
 		emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
-		for (int i = 1; i < splits; i++) {
+		for (int i = 1; i < n; i++) {
 			emit(0, bot, v, tip, child_size, child_width, lev);
 		}
 	}
-	if (child)		
-		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	
 }
 

@@ -37,6 +37,7 @@ protected:
     void OnChangedFile(wxCommandEvent& event);
 
 	wxChoice *m_segs;
+	wxChoice *m_secs;
 
 	SliderCtrl   *DensitySlider;
 	SliderCtrl   *LengthSlider;
