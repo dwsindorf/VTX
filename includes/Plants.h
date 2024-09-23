@@ -169,6 +169,7 @@ public:
 	double flatness;
 	double length_taper;
 	double width_taper;
+	double offset;
 	unsigned int texture_id;
 	int texid;
 	int color_flags;
@@ -186,6 +187,7 @@ public:
 	bool tex_enabled;
 	bool shape_enabled;
 	bool col_enabled;
+	bool shadow_enabled;
 	
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	
@@ -196,9 +198,11 @@ public:
 	void setTexEnabled(bool b){tex_enabled=b;setColorFlags();}
 	void setColEnabled(bool b){col_enabled=b;setColorFlags();}
 	void setShapeEnabled(bool b){shape_enabled=b;setColorFlags();}
+	void setShadowEnabled(bool b){shadow_enabled=b;}
 	bool isColEnabled() { return col_enabled;}
 	bool isTexEnabled() { return tex_enabled;}
 	bool isShapeEnabled() { return shape_enabled;}
+	bool isShadowEnabled() { return shadow_enabled;}
 	bool colValid();
 	bool texValid();
 	void init();

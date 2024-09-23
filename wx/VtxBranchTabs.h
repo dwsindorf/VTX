@@ -49,6 +49,7 @@ protected:
 	SliderCtrl   *FirstBiasSlider;
 	SliderCtrl   *DivergenceSlider;
 	SliderCtrl   *FlatnessSlider;
+	SliderCtrl   *OffsetSlider;
 	
 	wxCheckBox *m_from_end;
 	wxCheckBox *m_enable;
@@ -101,6 +102,7 @@ public:
 	DEFINE_SLIDER_EVENTS(WidthTaper)
 	DEFINE_SLIDER_EVENTS(LengthTaper)
 	DEFINE_SLIDER_EVENTS(FirstBias)
+	DEFINE_SLIDER_EVENTS(Offset)
 
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();

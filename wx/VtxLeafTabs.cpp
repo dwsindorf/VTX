@@ -26,6 +26,7 @@ enum{
 	ID_SAVE,
 	ID_TEX_ENABLE,
 	ID_SHAPE_ENABLE,
+	ID_SHADOW_ENABLE,
 	ID_COL_ENABLE,
 	ID_NAME_TEXT,
     ID_SEGS,
@@ -42,6 +43,8 @@ enum{
     ID_LENGTH_TAPER_TEXT,
     ID_DIVERGENCE_SLDR,
     ID_DIVERGENCE_TEXT,
+    ID_FLATNESS_SLDR,
+    ID_FLATNESS_TEXT,
     ID_RAND_SLDR,
     ID_RAND_TEXT,
 	ID_FILELIST,
@@ -77,6 +80,7 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxLeafTabs::OnAddItem)
 EVT_CHECKBOX(ID_TEX_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_COL_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_SHAPE_ENABLE,VtxLeafTabs::OnChanged)
+EVT_CHECKBOX(ID_SHADOW_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHOICE(ID_FILELIST,VtxLeafTabs::OnChangedFile)
 
 EVT_CHOICE(ID_SEGS,VtxLeafTabs::OnChanged)
@@ -89,6 +93,7 @@ SET_SLIDER_EVENTS(RAND,VtxLeafTabs,Rand)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxLeafTabs,WidthTaper)
 SET_SLIDER_EVENTS(LENGTH_TAPER,VtxLeafTabs,LengthTaper)
 SET_SLIDER_EVENTS(DIVERGENCE,VtxLeafTabs,Divergence)
+SET_SLIDER_EVENTS(FLATNESS,VtxLeafTabs,Flatness)
 
 EVT_TEXT_ENTER(ID_RED,VtxLeafTabs::OnChangedExpr)
 EVT_TEXT_ENTER(ID_GREEN,VtxLeafTabs::OnChangedExpr)
@@ -185,19 +190,14 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline->Add(m_secs, 0, wxALIGN_LEFT|wxALL, 5);
 	
-	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2-10, VALUE2,SLIDER2);
-	DensitySlider->setRange(0,1);
-	DensitySlider->setValue(1);
-
-	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
 
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
-    // size
+    // shape
     
-    wxBoxSizer *size = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Size"));
-	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+    wxBoxSizer *shape = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Shape"));
+    shape->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
     
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
@@ -211,44 +211,70 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	LengthTaperSlider->setValue(0.5);
 	hline->Add(LengthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	size->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Variability",LABEL2, VALUE2,SLIDER2);
+	WidthSlider=new SliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
+	WidthSlider->setRange(0.1,1);
+	WidthSlider->setValue(1);
+	
+	hline->Add(WidthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+		
+	WidthTaperSlider=new SliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	WidthTaperSlider->setRange(0.1,1);
+	WidthTaperSlider->setValue(0.8);
+
+	hline->Add(WidthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);
+	
+	// randomness
+	
+	wxBoxSizer *variability = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Variability"));
+	variability->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	    
+    hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
+	DensitySlider->setRange(0,1);
+	DensitySlider->setValue(1);
+
+	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Size",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	variability->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	boxSizer->Add(variability,0,wxALIGN_LEFT|wxALL,0);
+	
+	// orientation
+	
+	wxBoxSizer *orientation = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Orientation"));
+	orientation->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2,VALUE2,SLIDER2);
 	DivergenceSlider->setRange(0.0,1);
 	DivergenceSlider->setValue(1);
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	size->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	FlatnessSlider=new SliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
+	FlatnessSlider->setRange(0.0,1);
+	FlatnessSlider->setValue(1);
+	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	orientation->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	boxSizer->Add(orientation,0,wxALIGN_LEFT|wxALL,0);
+
 	
-	hline = new wxBoxSizer(wxHORIZONTAL);
-
-	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
-
-	// shape
-
-	wxStaticBoxSizer* shape = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Shape"));
-	shape->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-
-	WidthSlider=new SliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
-	WidthSlider->setRange(0.1,1);
-	WidthSlider->setValue(1);
-	
-	shape->Add(WidthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-		
-	WidthTaperSlider=new SliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
-	WidthTaperSlider->setRange(0.1,1);
-	WidthTaperSlider->setValue(0.8);
-
-	shape->Add(WidthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
-	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -277,6 +303,10 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     m_shape_enable=new wxCheckBox(panel, ID_SHAPE_ENABLE, "Shape");
     m_shape_enable->SetValue(true);
     image_cntrls->Add(m_shape_enable,0,wxALIGN_LEFT|wxALL,4);
+
+    m_shadow_enable=new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
+    m_shadow_enable->SetValue(true);
+    image_cntrls->Add(m_shadow_enable,0,wxALIGN_LEFT|wxALL,4);
 
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     
@@ -437,11 +467,11 @@ wxString VtxLeafTabs::exprString(){
 	s+=WidthSlider->getText()+",";
 	s+=RandSlider->getText()+",";
 	s+=DivergenceSlider->getText()+","; // leaf angle from stem vector
-	s+="0.0,"; // TODO flatness ?
+	s+=FlatnessSlider->getText()+",";   // leaf orientation to eye
 	s+=WidthTaperSlider->getText()+","; // width_taper
 	s+=LengthTaperSlider->getText()+","; // length_taper
 	cnt = m_secs->GetSelection();
-		sprintf(tmp,"%d",cnt+1);
+		sprintf(tmp,"%d",cnt);
 	s+=wxString(tmp);
 	s+=")";
  	return wxString(s);
@@ -467,6 +497,7 @@ void VtxLeafTabs::setObjAttributes(){
  	obj->setTexEnabled((bool)m_tex_enable->GetValue());
 	obj->setColEnabled((bool)m_col_enable->GetValue());
 	obj->setShapeEnabled((bool)m_shape_enable->GetValue());
+	obj->setShadowEnabled((bool)m_shadow_enable->GetValue());
     obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
 	if(strlen(obj->name_str))
@@ -500,6 +531,7 @@ void VtxLeafTabs::getObjAttributes(){
 	WidthSlider->setValue(obj->width);
 	RandSlider->setValue(obj->randomness);
 	DivergenceSlider->setValue(obj->divergence);
+	FlatnessSlider->setValue(obj->flatness);
 	WidthTaperSlider->setValue(obj->width_taper);
 	LengthTaperSlider->setValue(obj->length_taper);
 	m_secs->SetSelection(obj->first_bias);
@@ -533,6 +565,7 @@ void VtxLeafTabs::getObjAttributes(){
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
 	m_shape_enable->SetValue(obj->isShapeEnabled());
+	m_shadow_enable->SetValue(obj->isShadowEnabled());
 
 	m_r_expr->SetValue(red);
 	m_g_expr->SetValue(green);

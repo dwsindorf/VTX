@@ -98,8 +98,10 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 {   
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
-	
-	vec3 v=normalize(p1-p0);
+	float f=Constants1[0].z;
+	vec3 v1=normalize(p1-p0);
+	vec3 v2=normalize(p1);
+	vec3 v=(1-f)*v1+f*v2;
 	vec3 pr=normalize(p2-p1);
     vec3 tx=normalize(cross(v, pr ));
 
@@ -358,6 +360,11 @@ void main(void) {
     Pos0=project(P0[0]);
     Pos1=project(gl_PositionIn[0]);
     Pos2=project(gl_PositionIn[1]);
+    
+    if(length(Pos2)>2)
+       return;
+    if(length(Pos1)>2)
+       return;   
 
  	Color=Color_G[0];
 	Normal.xyz=Normal_G[0].xyz;

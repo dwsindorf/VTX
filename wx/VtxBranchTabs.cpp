@@ -31,6 +31,8 @@ enum{
 	ID_MIN_LEVEL,
     ID_SPLITS_SLDR,
     ID_SPLITS_TEXT,
+    ID_OFFSET_SLDR,
+    ID_OFFSET_TEXT,
     ID_LENGTH_SLDR,
     ID_LENGTH_TEXT,
     ID_WIDTH_SLDR,
@@ -95,6 +97,7 @@ SET_SLIDER_EVENTS(FLATNESS,VtxBranchTabs,Flatness)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxBranchTabs,WidthTaper)
 SET_SLIDER_EVENTS(LENGTH_TAPER,VtxBranchTabs,LengthTaper)
 SET_SLIDER_EVENTS(FIRST_BIAS,VtxBranchTabs,FirstBias)
+SET_SLIDER_EVENTS(OFFSET,VtxBranchTabs,Offset)
 
 EVT_TEXT_ENTER(ID_RED,VtxBranchTabs::OnChangedExpr)
 EVT_TEXT_ENTER(ID_GREEN,VtxBranchTabs::OnChangedExpr)
@@ -202,19 +205,29 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
     m_from_end=new wxCheckBox(panel, ID_FROM_END, "From End");
     m_from_end->SetValue(false);
 	level->Add(m_from_end, 0, wxALIGN_LEFT|wxALL,8);
-
-    level->AddSpacer(10);
-    
-	SplitsSlider=new SliderCtrl(panel,ID_SPLITS_SLDR,"Splits",LABEL1, VALUE2,SLIDER2);
-	SplitsSlider->setRange(1,10);
-	SplitsSlider->setValue(1);
-
-	level->Add(SplitsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
 	
 	boxSizer->Add(level,0,wxALIGN_LEFT|wxALL,0);
+	
+	wxStaticBoxSizer* splits = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Splits"));
+	splits->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
-    // size
-    
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	FirstBiasSlider=new SliderCtrl(panel,ID_FIRST_BIAS_SLDR,"First",LABEL2,VALUE2,SLIDER2);
+	FirstBiasSlider->setRange(1,100);
+	FirstBiasSlider->setValue(1);
+	hline->Add(FirstBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	SplitsSlider=new SliderCtrl(panel,ID_SPLITS_SLDR,"Later",LABEL2,VALUE2,SLIDER2);
+	SplitsSlider->setRange(1,10);
+	SplitsSlider->setValue(1);
+	hline->Add(SplitsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	splits->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+		
+	boxSizer->Add(splits,0,wxALIGN_LEFT|wxALL,0);
+
+
     wxBoxSizer *size = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Size"));
 	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -251,22 +264,23 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	// other
 
-	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Other"));
+	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Dispersion"));
 	other->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
 	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
-	RandSlider->setRange(0,2);
+	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 
 	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FirstBiasSlider=new SliderCtrl(panel,ID_FIRST_BIAS_SLDR,"FirstBias",LABEL2,VALUE2,SLIDER2);
-	FirstBiasSlider->setRange(1,100);
-	FirstBiasSlider->setValue(1);
-	hline->Add(FirstBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
+	OffsetSlider=new SliderCtrl(panel,ID_OFFSET_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
+	OffsetSlider->setRange(0,1);
+	OffsetSlider->setValue(1);
+
+	hline->Add(OffsetSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -283,7 +297,9 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
 	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
+	
 
 }
 
@@ -470,10 +486,11 @@ wxString VtxBranchTabs::exprString(){
 	s+=FirstBiasSlider->getText()+",";
 	int minlvl=m_min_level->GetSelection();
 	if(m_from_end->GetValue())
-		sprintf(p,"-%d",minlvl);
+		sprintf(p,"-%d,",minlvl);
 	else
-		sprintf(p,"%d",minlvl);
+		sprintf(p,"%d,",minlvl);
 	s+=p;
+	s+=OffsetSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -539,6 +556,7 @@ void VtxBranchTabs::getObjAttributes(){
 	WidthTaperSlider->setValue(obj->width_taper);
 	LengthTaperSlider->setValue(obj->length_taper);
 	FirstBiasSlider->setValue(obj->first_bias);
+	OffsetSlider->setValue(obj->offset);
 
 	image_name=obj->getImageName();
 	makeFileList(image_name);

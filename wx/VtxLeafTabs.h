@@ -45,11 +45,13 @@ protected:
 	SliderCtrl   *DivergenceSlider;
 	SliderCtrl   *WidthTaperSlider;
 	SliderCtrl   *LengthTaperSlider;
+	SliderCtrl   *FlatnessSlider;
 	SliderCtrl   *RandSlider;
 	
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
 	wxCheckBox *m_col_enable;
+	wxCheckBox *m_shadow_enable;
 	wxCheckBox *m_shape_enable;
 	wxChoice *choices;
 	
@@ -96,6 +98,7 @@ public:
 	DEFINE_SLIDER_EVENTS(WidthTaper)
 	DEFINE_SLIDER_EVENTS(LengthTaper)
 	DEFINE_SLIDER_EVENTS(Divergence)
+	DEFINE_SLIDER_EVENTS(Flatness)
 
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();

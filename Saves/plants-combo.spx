@@ -33,13 +33,10 @@ Scene() {
 		heading=109;
 		tilt=-32;
 		angle=-28;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.004002;
 	}
 	View{
 		minr=0.00400199;
+		radius=0.004002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -79,12 +76,12 @@ Scene() {
 					Surface{
 						terrain=
 								Plant("apple",2,9.4697e-07,1.65,1.4,0.1,0,0,0,0)
-								Branch("trunk",12,2,0.52,0.77,0.1,0.1,0,0.64,0.86,0,-0)["Cracks1",Color(0.5,0.25,0,DENSITY)]
-								Branch("branch",12,2,1.07,1,0.38,1,0.21,0.69,0.7,2,-0)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
+								Branch("trunk",12,2,0.52,0.77,0.1,0.1,0,0.64,0.86,0,0,1)["Cracks1",Color(0.5,0.25,0,DENSITY)]
+								Branch("branch",12,2,1.07,1,0.41,1,0.21,0.69,0.7,2,0,1)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
 								Leaf("leaf",1,0.41,4,1,0.25,1,0,0.8,1)["Leaf2",Color(URAND,0.8*URAND,0,0.3)]
 								Leaf("flower",1,0.05,7,0.75,0,1,0,0.8,1)["CrabApple"]
 								Plant("Grass1",1,9.4697e-08,0.8,0.5,0.78,-0.8,0,0,0.22)
-								Branch("stem",10,1,0.3,1,1,0.4,0.1,0.8,1.2,100)[Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY))]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
+								Branch("stem",10,1,0.3,1,0.6,0.4,0.1,0.8,1.2,100,0,1)["Cracks1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),1)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

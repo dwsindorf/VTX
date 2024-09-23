@@ -120,8 +120,11 @@
 //   - deleting branch can cause crash
 //   - adding branch to (empty) plant causes crash
 // 8) shadows
+//   o don't show or ill defined unless view range is small (e.g. no distant hills)
+//    - need to add extra shadow view that only includes visible or near plants
 //   o shadows generated for leaves
 //    - projection not correct (too small)
+//    - no shadow if flatness=1 (orientation 100% towards eye)
 //    - get white silhouette around leaves on ground shadows
 //    - get black silhouette around leaves against sky
 //    - sometimes get small shadow of same leaf at leaf base
@@ -1200,7 +1203,7 @@ void TNplant::emit(){
 	p1=p1-TheScene->vpoint;
 	p2=p2-TheScene->vpoint;
 
-	double start_width=width_scale*pntsize*first_branch->length*first_branch->width;
+	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 
 	Point tip;
@@ -1263,6 +1266,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	divergence=0.75;
 	min_level=0;
 	max_level=1;
+	offset=1;
 	root=0;
 	image=0;
 	texname[0]=0;
@@ -1275,6 +1279,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	col_enabled=true;
 	tex_enabled=true;
 	shape_enabled=false;
+	shadow_enabled=true;
 	alpha_texture=false;
 	getTextureName();
 	getColorString();
@@ -1304,12 +1309,12 @@ void TNBranch::init(){
 }
 
 void TNBranch::initArgs(){
-	double arg[12];
+	double arg[13];
 	if(!left)
 		return;
 	INIT;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,11);
+	int n=getargs(&args,arg,12);
 	if(n>0)max_level=arg[0];
 	if(n>1)max_splits=arg[1];
 	if(n>2)length=arg[2];
@@ -1321,6 +1326,7 @@ void TNBranch::initArgs(){
 	if(n>8)length_taper=arg[8];	
 	if(n>9)first_bias=arg[9];
 	if(n>10)min_level=arg[10];
+	if(n>11)offset=arg[11];
 }
 
 void TNBranch::invalidateTexture(){
@@ -1461,6 +1467,8 @@ void TNBranch::setColorFlags(){
 			args[3]->valueString(alpha);
 		if(comps==4 && strcmp(alpha,"0"))
 			color_flags=2;
+		else
+			color_flags=0;
 	}
 	if(texid>=0 && tex_enabled && alpha_texture && !shape_enabled)
 		color_flags|=4; // rect mode
@@ -1545,13 +1553,14 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		n=max_splits*(1+0.5*randomness*SRAND);
+		n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
+		//n=max_splits;//*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			n*=first_bias;
 		n=n<1?1:n;
 		for(int i=0;i<n;i++){
 			level=0;
-			emit(opt,start,vec,tip,s,w,1);
+			emit(opt,start,vec,tip,s,w*width,1);
 		}
 	}
 	else{
@@ -1566,207 +1575,206 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 }
 
 
-void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_size,
-		double parent_width, int lvl) {
+void TNBranch::emit(int opt, Point base, Point vec, Point tip,
+		double parent_size, double parent_width, int lvl) {
 
 	int lev = lvl;
 	lev++;
 
-	if(!root)
+	if (!root)
 		init();
-    level++;
-	
+	level++;
+
 	int mode = opt;
-	
+
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
-	bool last_level = (lev==maxlvl);
+	bool last_level = (lev == maxlvl);
 
 	double topx = 0;
 	double topy = 0;
 	double botx = 1;
 	double boty = 1;
-	Point v, p0, p1, p2, bot,q;
-	double a,b,x,y,off;
-	int shader_mode=0;
-	int poly_mode=GL_FILL;
+	Point v, p0, p1, p2, bot, q;
+	double a, b, x, y, off;
+	int shader_mode = 0;
+	int poly_mode = GL_FILL;
 
 	TNBranch *child = (TNBranch*) right;
-	
+
 	Color c;
 	bool final_branch = branch_id == root->branches - 1;
-	if(isPlantLeaf() || (right && right->typeValue() == ID_LEAF))
-		final_branch=true;
+	if (isPlantLeaf() || (right && right->typeValue() == ID_LEAF))
+		final_branch = true;
 	double size_scale = 1.0;
-	double child_width=parent_width;
-	double child_size=parent_size;
-	double top_offset=0;
-	double bot_offset=0;
-	double parent_length=parent_size * TheScene->wscale* root->width_scale/root->size;
-	double child_length=parent_length;
-	if (first_fork && lvl > 0) {	
-		size_scale = length/parent_length;
+	double child_width = parent_width;
+	double child_size = parent_size;
+	double top_offset = 0;
+	double bot_offset = 0;
+	double parent_length = parent_size * TheScene->wscale * root->width_scale
+			/ root->size;
+	double child_length = parent_length;
+	if (first_fork && lvl > 0) {
+		size_scale = length / parent_length;
 		size_scale = size_scale > 1 ? 1 : size_scale;
 		size_scale = size_scale < 0 ? 0 : size_scale;
-		child_width*=size_scale;		
+		child_width *= size_scale;
 	}
-	
+
 	if (child_width < MIN_DRAW_WIDTH) {
 		root->addSkipped(branch_id);
 		return;
-	} 
+	}
 
-	Srand=SRAND;
-	Point start=base;
+	Srand = SRAND;
+	Point start = base;
 	Density = ((double) lev) / maxlvl;
-	p0=base-vec; // previous base
-	p1=base;     // new base
-	
+	p0 = base - vec; // previous base
+	p1 = base;     // new base
+
 	child_size *= 1 + 0.25 * randomness * SRAND;
-	double cl=child_size * length;
-    if (!main_branch /*&& lvl > 0 && !isPlantLeaf()*/) {
-    	if(isPlantLeaf()){
-    		b=((double) lvl) / (first_bias+1);
-    	}
-    	else{
-			double rb = randomness > 1 ? 1 : randomness;
-			b = rb * URAND;			
-    	}
+	double cl = child_size * length;
+	if (!main_branch) {
+		if (isPlantLeaf()) {
+			b = ((double) lvl) / (first_bias + 1);
+		} else {
+			b = offset*URAND;
+		}
 		b = b <= 1 ? b : 1;
 
 		start = p1 - vec * b;
 		SRAND;
-		double dw=(parent_width-child_width)/parent_width;
-		bot_offset=dw*SRAND/size_scale;
-		top_offset=bot_offset;	
+		double dw = (parent_width - child_width) / parent_width;
+		bot_offset = dw * SRAND / size_scale;
+		top_offset = bot_offset;
 
-		v=setVector(vec,start,lvl);
+		v = setVector(vec, start, lvl);
+		v = v * cl; // v = direction along last branch
+	} else { // main branch
+		bot_offset = tip.z;
+		v = setVector(vec, start, lvl);
 		v = v * cl; // v = direction along last branch
 	}
-	else { // main branch
-    	bot_offset=tip.z;
-	    v=setVector(vec,start,lvl);
-		v = v * cl; // v = direction along last branch
-    }
-    //set leaf offset from previous leaf (e.g. so flowers don't intersect leaves)
-   // if (isPlantLeaf()&& child && child->isPlantLeaf())
-  //  	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
-	p2  = start + v; // new top
+	//set leaf offset from previous leaf (e.g. so flowers don't intersect leaves)
+	// if (isPlantLeaf()&& child && child->isPlantLeaf())
+	//  	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
+	p2 = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
-	int tid=tex_enabled?texid:-1;
+	int tid = tex_enabled ? texid : -1;
 
-	bool branch_tip=false;
+	bool branch_tip = false;
 	if (child_width > MIN_LINE_WIDTH) {
 		if (!isPlantLeaf() && child_width * width_taper < MIN_LINE_WIDTH) {
 			opt = LAST_EMIT;
 			root->addTerminal(branch_id);
 		}
-		if(!isPlantLeaf() && lev >= maxlvl) 
+		if (!isPlantLeaf() && lev >= maxlvl)
 			opt = LAST_EMIT;
-	    branch_tip=final_branch && (last_level || (opt&LAST_EMIT));
-//#define NO_LEAF_SHADOWS		   
-        if(isPlantLeaf() && isEnabled()){  // leaf mode
-#ifdef NO_LEAF_SHADOWS
-        	if(PlantMgr::shadow_mode){
-        		randval+=2;
-        	}
-        	else{
-#endif
-            double rv=URAND;
-            double sv=SRAND;
-			//opt = LAST_EMIT;
-        	double dv = 1-max_splits;
-        	if(rv>dv){
-				shader_mode=LEAF_MODE;
-				
-				if(test3 || test4)
-					poly_mode=GL_LINE;    
-				if(test4)
-					shader_mode = LINE_MODE;
-				
-				setColor();
-				Color c=S0.c;
-			
-				double depth=bot.length();
-				child_size = length*FEET/12; // inches
-				child_size *= 1 + 0.5 * randomness * sv;
-	
-				double width_ratio=0.5*width;
-				double size=root->width_scale*PSCALE*TheScene->wscale*child_size;
-	
-				root->rendered++;
-				
-				int segs=max_level;
-				double tilt=divergence+1e-4; // meta-stable if tilt=0;
-				double f=1.0/segs;
-				
-				TNLeaf::collect_mode=!PlantMgr::shadow_mode && shader_mode==LEAF_MODE && poly_mode==GL_FILL;
-				
-				Point eye=p1.normalize(); // base of branch
-                eye=eye.normalize();
-				Point v=p2-p1;  // branch direction
-				v=v.normalize();
-				Point t=v.cross(eye);  // vector in a plane perpendicular to branch and eye (but edge on)
-				t=t.cross(v);          // offset 90 degrees from view plane 
-				t=t.normalize();
-				Point r=t*tilt+v*(1-tilt);
-				r=r.normalize();
-                Point pv=p2;
-                
-                TNLeaf *leaf=this;
-                TNBranch *branch=getParent();
-                double phase=leaf->phase;
-            	if((leaf->left_side&1)==0)
-            	 phase+=0.5;
-             	leaf->left_side++;
-             	// taper the size of a leaf from start to end of parent branch
-             	double length=pow(length_taper,branch->level);
-                // clusters
-				for(int i=0; i<segs; i++) {
-					root->addLeaf(branch_id);
-				    double a = i*f+phase;
-				    double ca = cos(2.0 * PI*a); 
-				    double sa = sin(2.0 * PI*a);
-				    Point pr = r*ca + v.cross(r)*sa + v*v.dot(r)*(1.0 - ca);
-				    pr=pr.normalize();
-				    p2=p1+pr*size*length;
-					if(TNLeaf::collect_mode)
-						TNLeaf::collect(p0,p1,p2,Point(1-width_taper,width_ratio*size*length,0),Point(color_flags, tid, size*length),c);
-					else{
-	 					glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-						glVertexAttrib4d(GLSLMgr::CommonID1, 1-width_taper,width_ratio*size,0,0); // Constants1		
-						glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, color_flags, tid, shader_mode);
-						glDisable(GL_CULL_FACE);
-						glPolygonMode(GL_FRONT_AND_BACK, poly_mode);			
-						glBegin(GL_LINES);
-						glVertex4d(p1.x, p1.y, p1.z, 0);
-						glVertex4d(p2.x, p2.y, p2.z, 0);
-						glEnd();
-						glEnable(GL_CULL_FACE);
-					}
-       		    }
-        	}       
-#ifdef NO_LEAF_SHADOWS
-        	}       	
-#endif
-        }     
-        else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()){ // branch mode
-    		double nscale=lerp(child_width,MIN_LINE_WIDTH,10*MIN_TRIANGLE_WIDTH,TNplant::norm_min,TNplant::norm_max);
+		branch_tip = final_branch && (last_level || (opt & LAST_EMIT));
 
-			double w1 = child_width/TheScene->wscale;
-			double w2 = w1*width_taper;
-			
-			shader_mode=RECT_MODE;
-			if(TNplant::spline && child_width > MIN_SPLINE_WIDTH){
-				shader_mode=SPLINE_MODE;
-				root->addSpline(branch_id);
+		if (isPlantLeaf() && isEnabled()) {  // leaf mode
+			if (PlantMgr::shadow_mode && !shadow_enabled)
+				randval += 2;
+			else {
+				double rv = URAND;
+				double sv = SRAND;
+				//opt = LAST_EMIT;
+				double dv = 1 - max_splits;
+				if (rv > dv) {
+					shader_mode = LEAF_MODE;
+					if (test3 || test4)
+						poly_mode = GL_LINE;
+					if (test4)
+						shader_mode = LINE_MODE;
+
+					setColor();
+					Color c = S0.c;
+
+					double depth = bot.length();
+					child_size = length * FEET / 12; // inches
+					child_size *= 1 + 0.5 * randomness * sv;
+
+					double width_ratio = 0.5 * width;
+					double size = root->width_scale * PSCALE * TheScene->wscale
+							* child_size;
+
+					root->rendered++;
+
+					int segs = max_level;
+					double tilt = divergence;// + 1e-4; // meta-stable if tilt=0;
+					double f = 1.0 / segs;
+
+					TNLeaf::collect_mode = !PlantMgr::shadow_mode
+							&& shader_mode == LEAF_MODE && poly_mode == GL_FILL;
+
+					Point eye = p1.normalize(); // base of branch
+					eye = eye.normalize();
+					Point v = p2 - p1;  // branch direction
+					v = v.normalize();
+					Point t = v.cross(eye); // vector in a plane perpendicular to branch and eye (but edge on)
+					t = t.cross(v);        // offset 90 degrees from view plane 
+					t = t.normalize();
+					Point r = t * tilt + v * (1 - tilt);
+					r = r.normalize();
+					Point pv = p2;
+
+					TNLeaf *leaf = this;
+					TNBranch *branch = getParent();
+					double phase = leaf->phase;
+					if ((leaf->left_side & 1) == 0)
+						phase += 0.5;
+					leaf->left_side++;
+					// taper the size of a leaf from start to end of parent branch
+					double length = pow(length_taper, branch->level);
+					double orientation=flatness+1e-3;
+					// clusters
+					for (int i = 0; i < segs; i++) {
+						root->addLeaf(branch_id);
+						double a = i * f + phase;
+						double ca = cos(2.0 * PI * a);
+						double sa = sin(2.0 * PI * a);
+						Point pr = r * ca + v.cross(r) * sa
+								+ v * v.dot(r) * (1.0 - ca);
+						pr = pr.normalize();
+						p2 = p1 + pr * size * length;
+						if (TNLeaf::collect_mode)
+							TNLeaf::collect(p0, p1, p2,
+									Point(1 - width_taper,width_ratio * size * length, orientation),
+									Point(color_flags, tid, size * length), c);
+						else {
+							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
+							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * size, orientation, 0); // Constants1		
+							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
+							glDisable(GL_CULL_FACE);
+							glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
+							glBegin(GL_LINES);
+							glVertex4d(p1.x, p1.y, p1.z, 0);
+							glVertex4d(p2.x, p2.y, p2.z, 0);
+							glEnd();
+							glEnable(GL_CULL_FACE);
+						}
+					}
+				}
+
 			}
-			else
+		} else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
+			double nscale = lerp(child_width, MIN_LINE_WIDTH,
+					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
+					TNplant::norm_max);
+
+			double w1 = child_width / TheScene->wscale;
+			double w2 = w1 * width_taper;
+
+			shader_mode = RECT_MODE;
+			if (TNplant::spline && child_width > MIN_SPLINE_WIDTH) {
+				shader_mode = SPLINE_MODE;
+				root->addSpline(branch_id);
+			} else
 				root->addBranch(branch_id);
-			if(test3 || test4)
-				poly_mode=GL_LINE;    
-			if(test4)
+			if (test3 || test4)
+				poly_mode = GL_LINE;
+			if (test4)
 				shader_mode = LINE_MODE;
 
 			setColor();
@@ -1775,15 +1783,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 			tip.y = topy;
 			tip.z = top_offset;
 			root->rendered++;
-			if(poly_mode==GL_LINE /*|| PlantMgr::shadow_mode*/)
- 				glDisable(GL_CULL_FACE);
+			if (poly_mode == GL_LINE /*|| PlantMgr::shadow_mode*/)
+				glDisable(GL_CULL_FACE);
 
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, shader_mode);
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,
+					shader_mode);
 			glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
-            if(root->threed){
-             	w1=w1/root->size_scale;
-            	w2=w2/root->size_scale;
-            }
+			if (root->threed) {
+				w1 = w1 / root->size_scale;
+				w2 = w2 / root->size_scale;
+			}
 			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
@@ -1798,7 +1807,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 				Point t0, t1, t2;
 				t0 = p0;
 				double delta = 1.0 / (nv);
-				double f1,f2,dx,dy;
+				double f1, f2, dx, dy;
 
 				for (int i = 0; i < nv; i++) {
 					f1 = i * delta;
@@ -1806,7 +1815,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
-					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z, 0.02); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,
+							0.02); // Constants2
 
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
@@ -1817,17 +1827,17 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 					t0 = t1;
 					s += ds;
 				}
-				v=t2-t1;
-				v=v.normalize();
-				v=v*cl;
+				v = t2 - t1;
+				v = v.normalize();
+				v = v * cl;
 
-                bot=t2;
-				w1=dx;
-				w2=dy;
-    
-			} else if(isEnabled()) { // no spline
+				bot = t2;
+				w1 = dx;
+				w2 = dy;
+
+			} else if (isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
-	 			glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 				glVertex4d(p2.x, p2.y, p2.z, top_offset);
@@ -1838,48 +1848,49 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip, double parent_siz
 #ifdef NO_LINE_SHADOW		   
         else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
 #else
-        else if(isEnabled()){ // line mode > MIN_DRAW_WIDTH
+		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
 #endif
-        	double nscale=TNplant::norm_min;
-        	root->rendered++;
-        	root->addLine(branch_id);
-        	setColor();
- 			glDisable(GL_CULL_FACE);
-			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, LINE_MODE);
+			double nscale = TNplant::norm_min;
+			root->rendered++;
+			root->addLine(branch_id);
+			setColor();
+			glDisable(GL_CULL_FACE);
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,
+					LINE_MODE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glBegin(GL_LINES);
 			glVertex4d(p1.x, p1.y, p1.z, 0);
 			glVertex4d(p2.x, p2.y, p2.z, 0);
 			glEnd();
-        }
+		}
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
 	}
-	
+
 //	
 //	if(branch_tip && child && child->typeValue() == ID_LEAF){
 //		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 //	}
 
-	if (opt & LAST_EMIT) 
+	if (opt & LAST_EMIT)
 		return;
-	if (child)		
+	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
-	if(!isPlantLeaf()) {
-		int n = max_splits * (1 + 0.5 * randomness * SRAND);	
+	if (!isPlantLeaf()) {
+		int n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
 		n = n >= 1 ? n : 1;
-	
-		if(last_level)
-			n=1;
+
+		if (last_level)
+			n = 1;
 		child_width *= width_taper;
 		child_size *= length_taper;
-	
+
 		emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 		for (int i = 1; i < n; i++) {
 			emit(0, bot, v, tip, child_size, child_width, lev);
 		}
 	}
-	
+
 }
 
 TNplant* TNBranch::getRoot() {
@@ -2007,6 +2018,7 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	width_taper=0.8;
 	length_taper=1;
 	min_level=-1;
+	flatness=0.2;
 	phase=0;
 }
 void TNLeaf::render(){

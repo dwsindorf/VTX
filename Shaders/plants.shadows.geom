@@ -119,17 +119,21 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 }
 
 void emitLeaf(){
-    vec3 pv=P0[0].xyz;
+    vec3 p0=P0[0].xyz;
 	vec3 p1=gl_PositionIn[0].xyz;
 	vec3 p2=gl_PositionIn[1].xyz;
-
-	vec3 v=normalize(Pos2.xyz-Pos1.xyz);   
+	
+	float f=0;//Constants1[0].z;
+	
+	vec3 v1=normalize(p1-p0);
+	vec3 v2=normalize(p1);
+	vec3 v=(1-f)*v1+f*v2;
 	
 	vec4 Pos1=vec4(p1,1);
 	vec4 Pos2=vec4(p2,1);
 	
-	vec3 tx2 = cross(v, normalize(Pos2.xyz) ); // perpendicular to eye direction
-	vec3 tx1 = cross(v, normalize(Pos1.xyz) );
+	vec3 tx2 = cross(v, normalize(p2) ); // perpendicular to eye direction
+	vec3 tx1 = cross(v, normalize(p1) );
 	
     float taper=Constants1[0].x;
     float width=Constants1[0].y;
@@ -169,8 +173,10 @@ void main(void) {
     Pos0=P0[0];
     Pos1=gl_PositionIn[0];
     Pos2=gl_PositionIn[1];
-    //if(length(project(Pos2)-project(Pos1))>2)
-    //	return;
+     if(length(Pos2)>2)
+       return;
+    if(length(Pos1)>2)
+       return;   
     int mode=TexVars_G[0].w+0.1;    
     if(mode==LINE)
     	emitLine();
