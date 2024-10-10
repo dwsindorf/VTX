@@ -1,6 +1,8 @@
 #extension GL_EXT_geometry_shader : enable
 #extension GL_EXT_geometry_shader4 : enable
 
+
+#include "utils.h"
 #ifdef SHADOWS
 varying vec4 ShadowCoord;
 varying vec4 EyeDirection;
@@ -127,6 +129,7 @@ void emitLeaf(){
 	
 	vec3 v1=normalize(p1-p0);
 	vec3 v2=normalize(p1);
+	
 	vec3 v=(1-f)*v1+f*v2;
 	
 	vec4 Pos1=vec4(p1,1);
@@ -159,14 +162,62 @@ void emitLeaf(){
     
     float dt=1.0/nodes;
     float t=dt;
+//#define TEST3D
+#ifdef TEST3D // 3d mode
+		vec3 tx = createPerp(p2, p1);
+		vec3 ty = cross(v2, tx);
+		 // max vertexes supported by gpu
+        int segs=4;
+        nodes=5;
+        f=1.0 /(segs);
+        float ws=0.5; // compression factor
+  		for(int i=0; i<segs; i++) {
+	      float a = i*f;
+	      float f1,f2;
+	      // rotated curve	
+	      float ca = cos(2*PI*a);
+	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
+	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
+	      float sa = sin(2*PI*a);
+	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
+	      vec4 nx=vec4(na1,1);
 
+	      s1p=x1+f1*nx;
+          s2p=x2+f2*nx; 
+          
+	      // rotated curve (next step)
+          a = (i+1)*f;
+          ca = cos(2*PI*a); 
+	      sa = sin(2*PI*a);
+	      na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
+	      nx=vec4(na1,1);
+	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
+	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
+	      
+          s1m=x1+f1*nx;
+	      s2m=x2+f2*nx;
+	      
+          t=0;                	                     
+	      produceVertex(Pos1); // bot
+	      for(int i=0;i<nodes-1;i++){
+	          vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
+	          produceVertex(p);
+	          p=bezier(t,Pos1,s1m,s2m,Pos2);
+	          produceVertex(p);
+	          t+=dt;
+	      }
+	      produceVertex(Pos2); // top
+	      EndPrimitive();
+      }
+ #else
     produceVertex(Pos1); // bot
     for(int i=0;i<nodes-1;i++){
       produceVertex(bezier(t,Pos1,s1p,s2p,Pos2));
       produceVertex(bezier(t,Pos1,s1m,s2m,Pos2));
       t+=dt;
     }
-    produceVertex(Pos2); // top      
+    produceVertex(Pos2); // top  
+    #endif     
  }
  
 void main(void) {

@@ -13,7 +13,7 @@
 //#define COLOR_TEST
 #define DENSITY_TEST
 
-#define SHOW_STATS
+//#define SHOW_STATS
 //#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius

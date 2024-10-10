@@ -134,6 +134,7 @@ public:
 	static GLdouble vproj[16];
 	static GLdouble ivproj[16];
 	static GLdouble ivpmat[16];
+
 	RasterMgr();
 	~RasterMgr();
     void set_defaults();
@@ -233,15 +234,15 @@ public:
 	double shadow_dpmax;
 
 	double shadow_vsteps;
-	double shadow_vsteps_bg;
 	double shadow_vbias;
-	double shadow_vbias_bg;
-	double shadow_vshift;
-	double shadow_vshift_bg;
 	double shadow_fov;
-	double shadow_fov_bg;
 	double shadow_dov;
-	double shadow_dov_bg;
+	
+	double light_fov;
+	double light_offset;
+	double light_extent;
+	double light_aspect;
+	Point light_normal;
 
 	int	   shadow_edge_min;
 	int	   shadow_edge_width;
@@ -449,6 +450,7 @@ public:
 	int  next_view();
 	int  more_views();
 	void set_light_view();
+	void init_light_view();
  	void init_view();
  	void clr_checked();
 	void reset();

@@ -580,7 +580,7 @@ void EffectsMgr::render_shadows(){
 			enableShadowMap(false);
 			setProgram(SHADOWS_FINISH);
 			GLSLMgr::drawFrameBuffer();
-
+        
 			next_view();
 
 			j++;

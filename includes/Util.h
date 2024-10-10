@@ -63,6 +63,14 @@ public:
 	    BMAX.x=BMAX.y=BMAX.z=-lim;
 	    _valid=0;
 	}
+	void eval()      {
+		eval(b[0]);
+		eval(b[1]);
+		eval(b[2]);
+		eval(b[4]);
+		eval(b[6]);
+		eval(b[7]);
+	}
 	void eval(Point p)      {
 	    if(p.x<BMIN.x) BMIN.x=p.x;
 	    if(p.y<BMIN.y) BMIN.y=p.y;

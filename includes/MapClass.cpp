@@ -1660,7 +1660,7 @@ void Map::render_bounds()
 	    return;
 
 	box=rbounds.box();
-
+	
 	glGetBooleanv(GL_LIGHTING,&lflag);
 	glDisable(GL_LIGHTING);
 
@@ -1790,7 +1790,7 @@ void Map::make_visbox()
 		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=rbounds.zn;
 		vbounds.zf=rbounds.zf;
-
+		
 		// quick fix for zf clipped by water surface :
 		// make sure zf-zn >= max water transparency depth
 
