@@ -805,7 +805,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
 	TreeNode *init_parent=parent;
-#define DEBUG_ADD_TO_TREE
+//#define DEBUG_ADD_TO_TREE
 #ifdef DEBUG_ADD_TO_TREE
 	if(child)
 		cout<<" parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName();

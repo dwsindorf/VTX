@@ -382,7 +382,7 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	ShadowBlurSlider=new SliderCtrl(panel,ID_SHADOW_BLUR_SLDR,"Blur",LABEL2,VALUE2,SLIDER2);
-	ShadowBlurSlider->setRange(0.25,8.0);
+	ShadowBlurSlider->setRange(0.1,2.0);
 	ShadowBlurSlider->slider->SetToolTip("Soften Shadow Edges");
 
 	hline->Add(ShadowBlurSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

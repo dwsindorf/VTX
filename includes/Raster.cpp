@@ -18,7 +18,7 @@ extern double lcos(double t);
 extern double Rand();
 extern int  RandSeed;
 extern void Srand(int);
-extern int hits,visits;
+extern int hits,visits,test5;
 extern double Theta, Phi,Rscale;
 extern Point MapPt;
 
@@ -35,7 +35,6 @@ static int shadow_lights=0;
 static int wRefl, wCol, wUnmod;
 static MinMax mm1,mm2,mm3,mm4;
 static int lighting_mode;
-static double vbias;
 
 static bool raster_init = true;
 
@@ -308,10 +307,10 @@ RasterMgr::RasterMgr()
 	shadow_color=Color(0,0,0);
 	shadow_value=1;
 	shadow_zfactor=0.05;
-	shadow_blur=1.0;
+	shadow_blur=0.2;
 	shadow_test=2;
 	
-	light_offset=200;
+	light_offset=1000;
 	
 	set_bgshadows(0);
 
@@ -492,24 +491,17 @@ void RasterMgr::init_shadows()
 //				w1=vmax/(n*sum(vbias^i))
 //-------------------------------------------------------------
 void RasterMgr::init_view()
-{
-	double z=0,sum=1,n,shift,vsteps;
-	double smax=shadow_vmax;
-	double smin=shadow_vmin;
-	vsteps=shadow_vsteps;
-	vbias=shadow_vbias;
-	
-	z=pow(vbias,vsteps-1);
+{	
 	shadow_zrange=shadow_vzf-shadow_vzn;
 	//shadow_vstep=smax/z;
-	shadow_vstep=(shadow_vmax-shadow_vmin)/z;
-	//cout<<z<<" "<<shadow_vstep<<endl;
+	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias,shadow_vsteps-1);
+	cout<<"init view "<<shadow_vzn<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
 	shadow_vleft=shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
 	//	shadow_vright=smax;
 	shadow_vcnt=0;
-	init_light_view();
+	//init_light_view();
 }
 
 //-------------------------------------------------------------
@@ -520,61 +512,47 @@ void RasterMgr::init_view()
 int RasterMgr::next_view()
 {
 	//shadow_vleft=shadow_vright;
-	shadow_vstep*=vbias;
+	shadow_vstep*=shadow_vbias;
 	shadow_vright=shadow_vleft+shadow_vstep;
-
-//	if(shadow_vright>=shadow_vmax)
-//		shadow_vright=shadow_vmax;
-//
-//	if(single_view())
-//		shadow_vleft=shadow_vmax;
 	shadow_vcnt++;
 	shadow_count++;
     //cout<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
 
 	return shadow_vcnt;
 }
+
+//------------------------------------------------------------
+// void RasterMgr::set_light_view()	 called at start of each view
+// TODO: need better light view algorithm
 //-------------------------------------------------------------
-// void RasterMgr::init_light_view()
-//-------------------------------------------------------------
-void RasterMgr::init_light_view()
+void RasterMgr::set_light_view()
 {
-	double w,h,r,d,y,f,z;
+	double f,z,r,y,d,w;
     Point c,e,n,cv,l,cl;
-	double ymax=shadow_vsize;
 
-	double aspect=TheScene->aspect;
-	double dov=1,fov_step,dov_step;
-	dov_step=shadow_dov;
-	fov_step=shadow_fov;
-
-	dov=dov_step;
-	light_fov=fov_step;
     l=light()->point;
-	w=shadow_vmax-shadow_vmin;
-	//h=2*shadow_vright*tan(RPD*0.5*TheScene->fov);
-	cv=TheScene->cpoint-TheScene->epoint;
+
+	cv=TheScene->cpoint-TheScene->epoint; // center to eye
 	cv=cv.normalize();
 	if(farview())
 		c=cv*TheScene->height; // center light view at shadow obj surface
 	else
-		c=cv*(shadow_vleft+0.5*w);
+		c=cv*(shadow_vleft); // keep light centered at eye location
 
-	y=w;
-
-	if(y>ymax)
-	    y=ymax;
 	cl=(l-c).normalize();
-
-	r=shadow_vzf-shadow_vzn;
-    y=y>r?y:r;
-
-   	d=light_offset*y;
-	e=c+cl*d;
-   
-	light_fov=2*DPR*atan(0.5*y/d);
 	
-	zn=d-4*dov*r;
+	w=shadow_vmax-shadow_vmin; // from bounds
+	r=shadow_vzf-shadow_vzn;
+    y=w>r?w:r;
+    
+   	d=light_offset*y;
+    e=c+cl*d;
+	
+    n=TheScene->npoint.normalize(); // NB
+    
+    double fov=1.5*DPR*atan2(y,d);
+    
+    fov/=pow(shadow_vbias/shadow_fov,shadow_vsteps-shadow_vcnt-1);
 
 	double s1,s2;
  	Point sp=TheScene->shadowobj->point;
@@ -584,100 +562,18 @@ void RasterMgr::init_light_view()
  	    if(z1<zn)
  	         zn=z1;
 	}
+	zn=d-4*shadow_dov*r;
 	if(zn<r)
 		zn=r;
 	zf=d+shadow_dov*r;
 
-	n=TheScene->npoint.normalize(); // NB
-    double sf=farview()?2:1;
-    f=sf*shadow_zfactor/shadow_vzf;
-	s_zmin=f*shadow_zmin;
-	s_zmax=s_zmin+f*shadow_zmax;
-	TheScene->perspective(light_fov, aspect, zn, zf, e, c, n);
-
- 	TheScene->getMatrix(GL_PROJECTION,sproj);
-
-	CMmmul(vpmat,sproj,smat,4);
-	
-	Bounds vb=*TheScene->bounds; // copy
-
-	Point np=vb.heightEdge();
-	np=np.normalize();
-
-    // get look matrix for bounds z values (l.s.)
-
-	GLdouble look[16];
-	TheScene->lookat(e,c,n);
-	TheScene->getMatrix(GL_MODELVIEW, look);
-	TheScene->loadIdentity();
-
-	// transform bounds into light screen space (-1..1)
-
-    for(int i=0;i<vb.size();i++){
-        z=-vb.b[i].mz(look);
-        vb.b[i]=vb.b[i].mm(sproj)/z;
-    }
-    if(!farview())
-    	light_extent=vb.extent(); // transformed bounds
-    else
-    	light_extent=1;
-    light_fov*=light_extent;
-    
-	light_normal=TheScene->npoint.normalize(); // NB
-	light_aspect=TheScene->aspect;
-
-	//vb.dump();
-	//Point np= light_normal.mm(sproj);///z;
-	//np=np.normalize();
-    //light_normal=np;
-	    //np=lim.normal();
-	//	if(a>1)
-	//		TheScene->perspective(fov/a, a*aspect, zn, zf, e, c, n);
-
-}
-
-//------------------------------------------------------------
-// void RasterMgr::set_light_view()	 called at start of each view
-// TODO: need better light view algorithm
-//-------------------------------------------------------------
-void RasterMgr::set_light_view()
-{
-	double f,z;
-    Point c,e,n,cv,l,cl;
-	double ymax=shadow_vsize;
-
-    l=light()->point;
-	double w=shadow_vmax-shadow_vmin; // from bounds
-
-//	h=2*shadow_vright*tan(RPD*0.5*TheScene->fov);
-	cv=TheScene->cpoint-TheScene->epoint; // center to eye
-	cv=cv.normalize();
-	if(farview())
-		c=cv*TheScene->height; // center light view at shadow obj surface
-	else
-	    c=cv*shadow_vleft; // keep light centered at eye location
-
-	//y=h>w?h:w;
-
-	//if(y>ymax)
-	//    y=ymax;
-	cl=(l-c).normalize();
-
-	double r=shadow_vzf-shadow_vzn; // bounds
-   	double s=light_offset*r;
-
-	e=c+cl*s;
-
-    double fov=light_fov*pow(shadow_fov,shadow_vsteps-shadow_vcnt-1);
-    
-	TheScene->perspective(fov, light_aspect, zn, zf, e, c,light_normal);
-
-	TheScene->getMatrix(GL_PROJECTION, sproj);
+	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c,n);
+	TheScene->getMatrix(GL_PROJECTION,sproj);
 	CMmmul(vpmat,sproj,smat,4);
 
 #ifdef DEBUG_SHADOWS
 	char tmp[256];
-	sprintf(tmp,"#%d zn %g zf %g fov %g",shadow_vcnt,zn,zf,fov);
+	sprintf(tmp,"#%d zn %g zf %g ratio %g fov %g",shadow_vcnt,zn,zf,zf/zn,fov);
 	cout << tmp <<endl;
 #endif 
 }

@@ -104,17 +104,17 @@ public:
 	    b[9]=b[9].normalize();
 	    return b;
 	}
-	double width(){
-	    return b[0].distance(b[1]);
+	double depth(){
+	    return b[4].distance(b[0]);
 	}
 	double height(){
 	    return b[0].distance(b[3]);
 	}
-	double depth(){
-	    return b[0].distance(b[4]);
+	double width(){
+	    return b[4].distance(b[5]);
 	}
 	double aspect(){
-	    return width()/height();
+	    return depth()/width();
 	}
 	void scale(double s){
 	    for(int i=0;i<10;i++)
@@ -124,7 +124,7 @@ public:
 	    return b[3]-b[0];
 	}
 	Point widthEdge(){
-	    return b[1]-b[0];
+	    return b[5]-b[4];
 	}
 	Point depthEdge(){
 	    return b[4]-b[0];
@@ -140,6 +140,7 @@ public:
 	void dump(){
 	    printf("  zn  %-12g zf %-12g ex %g\n",zn,zf,extent());
 	    printf("   h  %-12g  w %-12g  d %g\n",height(),width(),depth());
+#ifdef PRINT_ALL
 	    printf("b[0]  %-12g    %-12g    %g\n",b[0].x,b[0].y,b[0].z);
 	    printf("b[1]  %-12g    %-12g    %g\n",b[1].x,b[1].y,b[1].z);
 	    printf("b[2]  %-12g    %-12g    %g\n",b[2].x,b[2].y,b[2].z);
@@ -150,6 +151,7 @@ public:
 	    printf("b[7]  %-12g    %-12g    %g\n",b[7].x,b[7].y,b[7].z);
 	    printf("cntr  %-12g    %-12g    %g\n",b[8].x,b[8].y,b[8].z);
 	    printf("norm  %-12g    %-12g    %g\n",b[9].x,b[9].y,b[9].z);
+#endif
 	}
 };
 

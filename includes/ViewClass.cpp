@@ -1027,7 +1027,9 @@ void View::lookat(Point &e,Point &c, Point &n)
     Point up=n.normalize();
 
 	Point s=f.cross(up);
+	s=s.normalize();
 	Point u=s.cross(f);
+	u=u.normalize();
 
 	M[0]=s.x;  M[4]=s.y;  M[8]=s.z;   M[12]=0;
 	M[1]=u.x;  M[5]=u.y;  M[9]=u.z;   M[13]=0;

@@ -168,8 +168,6 @@ void EffectsMgr::setProgram(int type){
 
 		break;
 	case PLANT_SHADOWS:
-		if(test5)
-			sprintf(defs+strlen(defs),"#define LEAF_TEST\n");
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	case SHADOWS:
 		if(shadow_proj)

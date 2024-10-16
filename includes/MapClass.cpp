@@ -1679,7 +1679,7 @@ void Map::render_bounds()
 
 	// draw top of box
 
-	glColor4d(1,0,1,1);
+	glColor4d(1,0,0,1);
 
 	glBegin(GL_LINE_LOOP);
 
@@ -1690,11 +1690,13 @@ void Map::render_bounds()
 	glEnd();
 
 	// connect top/bottom
+	glColor4d(1,0,1,1);
 
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(box+0));
 	glVertex3dv((double*)(box+4));
 	glEnd();
+
 
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(box+1));
@@ -1709,6 +1711,18 @@ void Map::render_bounds()
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(box+3));
 	glVertex3dv((double*)(box+7));
+	glEnd();
+
+	glColor4d(0,1,0,1);  // width
+	glBegin(GL_LINES);
+	glVertex3dv((double*)(box+4));
+	glVertex3dv((double*)(box+5));
+	glEnd();
+
+	glColor4d(0,1,1,1); // depth
+	glBegin(GL_LINES);
+	glVertex3dv((double*)(box+4));
+	glVertex3dv((double*)(box+0));
 	glEnd();
 
 	glColor4d(0,1,1,1);
@@ -1769,7 +1783,7 @@ void Map::make_visbox()
 				rbounds.zf=1.2*zf;
 	    	}
 	    	else{
-				rbounds.zn=0.5*zn;
+				rbounds.zn=0.1*zn;
 				rbounds.zf=1.2*zf;
 	    	}
 	    }

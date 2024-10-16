@@ -238,11 +238,7 @@ public:
 	double shadow_fov;
 	double shadow_dov;
 	
-	double light_fov;
 	double light_offset;
-	double light_extent;
-	double light_aspect;
-	Point light_normal;
 
 	int	   shadow_edge_min;
 	int	   shadow_edge_width;
@@ -450,7 +446,6 @@ public:
 	int  next_view();
 	int  more_views();
 	void set_light_view();
-	void init_light_view();
  	void init_view();
  	void clr_checked();
 	void reset();

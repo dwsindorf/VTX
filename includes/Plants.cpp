@@ -187,13 +187,13 @@ static int trunk_nodes;
 static int line_nodes;
 
 static double min_draw_width=0.5;
-static double min_render_pts=1; // for render
-static double min_adapt_pts=3; //  for adapt - increase resolution only around nearby plants
+static double min_render_pts=2; // for render
+static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
+#define TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -765,8 +765,9 @@ void Plant::collect()
 
 	}
 	if(plants.size){
-    	cout<<"total plants collected:"<<plants.size<<endl;
 		plants.sort();
+		double range=plants[plants.size-1]->value()-plants[0]->value();
+    	cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
 	}
 #ifdef SHOW
 	//int pnrt_num=plants.size-1;

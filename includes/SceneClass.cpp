@@ -2751,7 +2751,7 @@ void Scene::render_light_view()
 		Raster.set_light(Lights.size-1);
 	else
 		Raster.set_light(0);
-	if(changed_model() || !Raster.more_views() || Raster.shadow_count==0)
+	if(changed_model() || !Raster.more_views()/* || Raster.shadow_count==0*/)
 		Raster.init_view();
 	//cout << "light view:"<<Raster.shadow_vcnt<<endl;
 
