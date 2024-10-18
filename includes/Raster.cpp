@@ -310,8 +310,6 @@ RasterMgr::RasterMgr()
 	shadow_blur=0.2;
 	shadow_test=2;
 	
-	light_offset=1000;
-	
 	set_bgshadows(0);
 
 	// filter parameters
@@ -494,9 +492,9 @@ void RasterMgr::init_view()
 {	
 	shadow_zrange=shadow_vzf-shadow_vzn;
 	//shadow_vstep=smax/z;
-	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias,shadow_vsteps-1);
-	cout<<"init view "<<shadow_vzn<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
-	shadow_vleft=shadow_vmin;
+	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias/shadow_fov,shadow_vsteps-1);
+	cout<<"init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
+	shadow_vleft=2*shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
 	//	shadow_vright=smax;
@@ -512,12 +510,12 @@ void RasterMgr::init_view()
 int RasterMgr::next_view()
 {
 	//shadow_vleft=shadow_vright;
-	shadow_vstep*=shadow_vbias;
+	shadow_vstep*=shadow_vbias/shadow_fov;
 	shadow_vright=shadow_vleft+shadow_vstep;
+   cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
 	shadow_vcnt++;
 	shadow_count++;
-    //cout<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
-
+ 
 	return shadow_vcnt;
 }
 
@@ -529,6 +527,8 @@ void RasterMgr::set_light_view()
 {
 	double f,z,r,y,d,w;
     Point c,e,n,cv,l,cl;
+    double light_offset=1000; // moves light away from surface
+    double fov_scale=1;
 
     l=light()->point;
 
@@ -537,7 +537,7 @@ void RasterMgr::set_light_view()
 	if(farview())
 		c=cv*TheScene->height; // center light view at shadow obj surface
 	else
-		c=cv*(shadow_vleft); // keep light centered at eye location
+		c=cv*0.5*(shadow_vleft+shadow_vright); // keep light centered at eye location
 
 	cl=(l-c).normalize();
 	
@@ -550,7 +550,7 @@ void RasterMgr::set_light_view()
 	
     n=TheScene->npoint.normalize(); // NB
     
-    double fov=1.5*DPR*atan2(y,d);
+    double fov=fov_scale*DPR*atan2(y,d);
     
     fov/=pow(shadow_vbias/shadow_fov,shadow_vsteps-shadow_vcnt-1);
 

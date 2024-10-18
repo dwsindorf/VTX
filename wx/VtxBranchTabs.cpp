@@ -473,6 +473,10 @@ wxString VtxBranchTabs::exprString(){
 		sprintf(p+strlen(p),"\"%s\",",obj->name_str);
 	}
 
+	obj->setTexEnabled((bool)m_tex_enable->GetValue());
+	obj->setColEnabled((bool)m_col_enable->GetValue());
+	int enables=obj->enables;
+	
 	sprintf(p+strlen(p),"%d,",m_max_level->GetSelection());
 	wxString s(p);
 	s+=SplitsSlider->getText()+",";
@@ -491,6 +495,8 @@ wxString VtxBranchTabs::exprString(){
 		sprintf(p,"%d,",minlvl);
 	s+=p;
 	s+=OffsetSlider->getText();
+	sprintf(p,",%d",enables);
+	s+=wxString(p);
 	s+=")";
  	return wxString(s);
 }
@@ -510,8 +516,6 @@ void VtxBranchTabs::setObjAttributes(){
 
 	wxString expr=getColorExpr();
 	char *cstr=(char*)expr.ToAscii();
-	obj->setTexEnabled((bool)m_tex_enable->GetValue());
-	obj->setColEnabled((bool)m_col_enable->GetValue());
 	
     obj->setColorExpr(cstr);
     obj->setExpr((char*)s.ToAscii());

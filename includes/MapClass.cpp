@@ -1713,13 +1713,13 @@ void Map::render_bounds()
 	glVertex3dv((double*)(box+7));
 	glEnd();
 
-	glColor4d(0,1,0,1);  // width
+	//glColor4d(0,1,0,1);  // width
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(box+4));
 	glVertex3dv((double*)(box+5));
 	glEnd();
 
-	glColor4d(0,1,1,1); // depth
+	//glColor4d(0,1,1,1); // depth
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(box+4));
 	glVertex3dv((double*)(box+0));
@@ -1729,7 +1729,7 @@ void Map::render_bounds()
 	p2=TheScene->epoint;
 
     p1=TheScene->vcpoint;
-    p2=TheScene->vpoint;
+   // p2=TheScene->vpoint;
 
 	glBegin(GL_LINES);
 	glVertex3dv((double*)(&p1));

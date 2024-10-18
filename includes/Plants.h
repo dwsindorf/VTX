@@ -4,6 +4,7 @@
 #define _PLANTS
 
 #include "Placements.h"
+#include "defs.h"
 
 #define TNBRANCH TNBranch
 
@@ -154,11 +155,22 @@ public:
 //************************************************************
 class TNBranch : public TNbase
 {
+protected:w
+	enum flags{
+		TEX=1,
+		COL=2,
+		SHAPE=4,
+		SHADOW=8,
+		ALL=TEX|COL|SHAPE|SHADOW
+	};
+
 public:
+
 	int maxlvl;
 	int level;
 	int min_level;
 	int max_level;
+	int enables;
 	int branch_id;
 	double max_splits;
 	double length; // trunk and main level
@@ -183,26 +195,21 @@ public:
 
 	char texname[256];
 	char colorexpr[256];
-	
-	bool tex_enabled;
-	bool shape_enabled;
-	bool col_enabled;
-	bool shadow_enabled;
-	
+		
 	TNBranch(TNode *l, TNode *r, TNode *b);
 	
 	virtual int typeValue()	  { return ID_BRANCH;}
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
 	
-	void setTexEnabled(bool b){tex_enabled=b;setColorFlags();}
-	void setColEnabled(bool b){col_enabled=b;setColorFlags();}
-	void setShapeEnabled(bool b){shape_enabled=b;setColorFlags();}
-	void setShadowEnabled(bool b){shadow_enabled=b;}
-	bool isColEnabled() { return col_enabled;}
-	bool isTexEnabled() { return tex_enabled;}
-	bool isShapeEnabled() { return shape_enabled;}
-	bool isShadowEnabled() { return shadow_enabled;}
+	void setTexEnabled(bool b){BIT_SET(enables,flags::TEX,b);setColorFlags();}
+	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
+	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
+	void setShadowEnabled(bool b){BIT_SET(enables,flags::SHADOW,b);}
+	bool isColEnabled() { return BIT_TST(enables,flags::COL);}
+	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
+	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
+	bool isShadowEnabled() { return BIT_TST(enables,flags::SHADOW);}
 	bool colValid();
 	bool texValid();
 	void init();

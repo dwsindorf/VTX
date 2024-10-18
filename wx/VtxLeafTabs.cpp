@@ -171,7 +171,7 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
  
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",40,60);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",40,80);
 
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -216,7 +216,7 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
 	WidthSlider=new SliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
-	WidthSlider->setRange(0.1,1);
+	WidthSlider->setRange(0.2,5);
 	WidthSlider->setValue(1);
 	
 	hline->Add(WidthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -457,7 +457,13 @@ wxString VtxLeafTabs::exprString(){
 	}
 
 	wxString s(p);
-	
+
+ 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
+	obj->setColEnabled((bool)m_col_enable->GetValue());
+	obj->setShapeEnabled((bool)m_shape_enable->GetValue());
+	obj->setShadowEnabled((bool)m_shadow_enable->GetValue());
+	int enables=obj->enables;
+
 	char tmp[32];
 	int cnt = m_segs->GetSelection();
 	sprintf(tmp,"%d",cnt+1);
@@ -471,9 +477,12 @@ wxString VtxLeafTabs::exprString(){
 	s+=WidthTaperSlider->getText()+","; // width_taper
 	s+=LengthTaperSlider->getText()+","; // length_taper
 	cnt = m_secs->GetSelection();
-		sprintf(tmp,"%d",cnt);
+		sprintf(tmp,"%d,",cnt);
+	s+=wxString(tmp);
+	sprintf(tmp,"0,0,%d",enables);
 	s+=wxString(tmp);
 	s+=")";
+	cout<<s<<endl;
  	return wxString(s);
 }
 
@@ -494,10 +503,6 @@ void VtxLeafTabs::setObjAttributes(){
 	char *cstr=(char*)expr.ToAscii();
 	
     obj->setColorExpr(cstr);
- 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
-	obj->setColEnabled((bool)m_col_enable->GetValue());
-	obj->setShapeEnabled((bool)m_shape_enable->GetValue());
-	obj->setShadowEnabled((bool)m_shadow_enable->GetValue());
     obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
 	if(strlen(obj->name_str))

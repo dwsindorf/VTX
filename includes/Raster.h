@@ -238,8 +238,6 @@ public:
 	double shadow_fov;
 	double shadow_dov;
 	
-	double light_offset;
-
 	int	   shadow_edge_min;
 	int	   shadow_edge_width;
 	int	   shadow_vcnt;

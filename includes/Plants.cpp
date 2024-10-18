@@ -84,11 +84,12 @@
 //  - 3d mode only
 // 11) leaves
 //    - leaf clusters (DONE)
-//    - save/restore enable states for tex,col and shape
 //    - change DENSITY to go 0-1 from base to tip
-//    - need method to make leaves alternate sides
+//    - method to make leaves alternate sides
 //    - support multiple leaf clusters per new branch (first bias)
-//    - way to vary leaf projection between eye plane and plane perpendicular to branch (flatness)
+//    - vary leaf projection between eye plane and plane perpendicular to branch (flatness) DONE
+//    - use image aspect to correctly set length to width ratio
+//    - support NxN leaf textures (same as for sprites)
 	
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
@@ -1277,10 +1278,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	instance=0;
 	color_flags=0;
 	color=0;
-	col_enabled=true;
-	tex_enabled=true;
-	shape_enabled=false;
-	shadow_enabled=true;
+	enables=flags::ALL;
 	alpha_texture=false;
 	getTextureName();
 	getColorString();
@@ -1310,12 +1308,13 @@ void TNBranch::init(){
 }
 
 void TNBranch::initArgs(){
-	double arg[13];
+	double arg[14];
 	if(!left)
 		return;
 	INIT;
+	enables=flags::ALL;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,12);
+	int n=getargs(&args,arg,13);
 	if(n>0)max_level=arg[0];
 	if(n>1)max_splits=arg[1];
 	if(n>2)length=arg[2];
@@ -1328,6 +1327,7 @@ void TNBranch::initArgs(){
 	if(n>9)first_bias=arg[9];
 	if(n>10)min_level=arg[10];
 	if(n>11)offset=arg[11];
+	if(n>12)enables=arg[12];
 }
 
 void TNBranch::invalidateTexture(){
@@ -1459,7 +1459,7 @@ bool TNBranch::texValid(){
 
 void TNBranch::setColorFlags(){
 	color_flags=0;
-	if(color && col_enabled){
+	if(color && isColEnabled()){
 		color_flags=1;
 		int comps=color->comps();
 		TNarg &args=*((TNarg *)color->right);
@@ -1471,13 +1471,13 @@ void TNBranch::setColorFlags(){
 		else
 			color_flags=0;
 	}
-	if(texid>=0 && tex_enabled && alpha_texture && !shape_enabled)
+	if(texid>=0 && isTexEnabled() && alpha_texture && !isShapeEnabled())
 		color_flags|=4; // rect mode
 }
 void TNBranch::setColor(){
 	if(PlantMgr::shadow_mode)
 		return;
-	if(color && col_enabled){
+	if(color && isColEnabled()){
 		S0.clr_cvalid();
 		color->eval();
 		glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
@@ -1657,12 +1657,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		v = v * cl; // v = direction along last branch
 	}
 	//set leaf offset from previous leaf (e.g. so flowers don't intersect leaves)
-	// if (isPlantLeaf()&& child && child->isPlantLeaf())
-	//  	v=v*child->length_taper; // why does reducing v only affect child leaf offset?
+	if (isPlantLeaf()&& child && child->isPlantLeaf())
+	  	//v=v*child->length_taper; // why does reducing v only affect child leaf offset?
+  		v=v*0.1; // why does reducing v only affect child leaf offset?
 	p2 = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
-	int tid = tex_enabled ? texid : -1;
+	int tid = isTexEnabled() ? texid : -1;
 
 	bool branch_tip = false;
 	if (child_width > MIN_LINE_WIDTH) {
@@ -1675,7 +1676,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		branch_tip = final_branch && (last_level || (opt & LAST_EMIT));
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
-			if (PlantMgr::shadow_mode && !shadow_enabled)
+			if (PlantMgr::shadow_mode && ! isShadowEnabled())
 				randval += 2;
 			else {
 				double rv = URAND;
@@ -1697,6 +1698,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					child_size *= 1 + 0.5 * randomness * sv;
 
 					double width_ratio = 0.5 * width;
+					if(image)
+						width_ratio/=image->aspect();
 					double size = root->width_scale * PSCALE * TheScene->wscale
 							* child_size;
 
