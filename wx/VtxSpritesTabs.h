@@ -20,8 +20,8 @@ protected:
 	void AddImageTab(wxWindow *panel);
 	void AddDistribTab(wxWindow *panel);
 	TNsprite *object() 	{ return ((TNsprite *)object_node->node);}
-	Sprite *sprite() 		{ return object()->sprite;}
-	void makeFileList(int,wxString);
+	Sprite *sprite() 	{ return object()->sprite;}
+	void makeFileList(wxString,wxString);
 	void getObjAttributes();
 	void setObjAttributes();
 	void setImagePanel();
@@ -35,6 +35,7 @@ protected:
 
 	wxChoice *sprites_dim;
 	wxString sprites_file;
+	wxString sprites_dir;
 	wxArrayString files;
 	wxChoice *choices;
 	wxChoice *select;
@@ -55,6 +56,7 @@ protected:
 
 	bool changed_cell_expr;
 	uint image_dim;
+	uint image_center;
 	wxString image_name;
 public:
 	VtxSpritesTabs(wxWindow* parent,

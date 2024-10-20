@@ -103,9 +103,11 @@ bool VtxSpritesTabs::Create(wxWindow* parent,
     image_path="";
     changed_cell_expr=true;
     image_dim=0;
+    image_center=0;
     image_name="";
     sprites_file="";
-        
+    
+      
 	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
 	
     AddDistribTab(page);
@@ -215,8 +217,12 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
     choices->SetSelection(0);
 
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
-
-	wxString offsets[]={"1x","4x","9x","16x"};
+    int num_dirs=SpriteMgr::sprite_dirs.size;
+	cout<<"num sprites="<<num_dirs<<endl;
+ 
+	wxString offsets[num_dirs];
+	for(int i=i;i<num_dirs;i++)
+		offsets[i]=SpriteMgr::sprite_dirs[i]->name();
 
 	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
 	sprites_dim->SetSelection(1);
@@ -228,10 +234,6 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(40,-1),2, selections);
 	select->SetSelection(0);
 
-	//select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(55,-1));
-	//select->SetSelection(0);
-
-	//type_expr = new ExprTextCtrl(panel,ID_TYPE_EXPR,"",0,TABS_WIDTH-60-TABS_BORDER);
 	hline->Add(select,0,wxALIGN_LEFT|wxALL,1);
 	
 	SelBiasSlider=new ExprSliderCtrl(panel,ID_SEL_BIAS_SLDR,"Bias",30,40,SLIDER2);
@@ -278,22 +280,28 @@ int VtxSpritesTabs::showMenu(bool expanded){
 }
 
 void VtxSpritesTabs::setImagePanel(){
-	char sdir[256];
-	object()->getSpritesFilePath((char*)image_name.ToAscii(),image_dim,sdir);
+	char sdir[512];
+	char *name=(char*)image_name.ToAscii();
+	TNsprite *obj=object();
+	obj->getSpritesFilePath(name,sdir);
+
 	strcat(sdir,".png");
 	wxString path(sdir);
-	if(sdir!=image_path){
+	if(sdir!=image_path || obj->get_id() != image_center){
 		image_window->setScaledImage(sdir,wxBITMAP_TYPE_PNG);
 		cell_window->setName((char*)path.ToAscii());
-		cout<<"setting image panel:"<<sdir<<endl;
+		//cout<<"--setting image panel:"<<sdir<<endl;
 		changed_cell_expr=true;
 		image_path=sdir;
+		image_center=obj->get_id();
 	}
 }
 
 void VtxSpritesTabs::setViewPanel(){
 	if(image_window->imageOk()&&changed_cell_expr){
 		GLuint dim=sprites_dim->GetSelection()+1;
+		wxString name=sprites_dim->GetString(dim-1);
+		
 		int cell=select->GetCurrentSelection();
 		int y=cell/dim;
 		int x=cell-y*dim;
@@ -302,7 +310,7 @@ void VtxSpritesTabs::setViewPanel(){
 		wxRect r(x,y,dim,dim);
 		cell_window->setSubImage(r,wxBITMAP_TYPE_PNG);
 		cell_window->scaleImage();
-		cout<<"setting type panel:"<<cell_window->getName()<<endl;
+		//cout<<"setting type panel:"<<cell_window->getName()<<endl;
 
 		changed_cell_expr=false;
 		//setObjAttributes();
@@ -310,19 +318,28 @@ void VtxSpritesTabs::setViewPanel(){
 }
 void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=sprites_dim->GetSelection();
+	wxString str=sprites_dim->GetString(dim);
 	dim+=1;
-	//cout<<"VtxSpritesTabs::OnDimSelect "<<dim<<endl;
-	makeFileList(dim,"");
-	select->Set(dim*dim,selections);
+	
+	int rows=0;
+	int cols=0;
+	
+	TNsprite::getSpritesDims((char*)str.ToAscii(),&rows,&cols);
+	
+	// TODO: set rows and cols based on image subdirectory string
+	//cout<<"VtxSpritesTabs::OnDimSelect "<<dim<<" "<<str<<endl;
+	makeFileList(str,"");
+	select->Set(rows*cols,selections);
 	update_needed=true;
 	select->SetSelection(0);
 	setObjAttributes();
 }
 
-void VtxSpritesTabs::makeFileList(int dim,wxString name){
+void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
-   // cout<<"VtxSpritesTabs::makeFileList "<<name<<" "<<dim<<endl;
-	object()->getSpritesDir(dim,sdir);
+	char *wstr=(char*)wdir.ToAscii();
+	object()->getSpritesDirPath(wstr,sdir);
+    //cout<<"VtxSpritesTabs::makeFileList "<<wstr<<":::"<<name<<" dir:"<<sdir<<endl;
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
@@ -332,6 +349,7 @@ void VtxSpritesTabs::makeFileList(int dim,wxString name){
  	    return;
  	}
  	image_name=name;
+ 	int dim=sprites_dim->GetSelection();
  	if(dim != image_dim){
 		files.Clear();
 		wxString filename;
@@ -340,7 +358,6 @@ void VtxSpritesTabs::makeFileList(int dim,wxString name){
 			filename=filename.Before('.');
 			files.Add(filename);
 			cont = dir.GetNext(&filename);
-			cout<<filename<<endl;
 		}
 		files.Sort();
 		choices->Clear();
@@ -387,16 +404,24 @@ wxString VtxSpritesTabs::exprString(){
 void VtxSpritesTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
-	cout<<"VtxSpritesTabs::getObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
+	//cout<<"VtxSpritesTabs::getObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
 	update_needed=false;
 
 	TNsprite *obj=object();
 	SpriteMgr *mgr=(SpriteMgr*)obj->mgr;
 
-	uint dim=0;
-	sprites_file=obj->getSpritesFile(dim);
-	sprites_dim->SetSelection(dim-1);
-	makeFileList(dim,sprites_file);
+	uint rows=0;
+	uint cols=0;
+	obj->getSpritesDims(rows,cols);
+	sprites_file=obj->getSpritesFile();
+	sprites_dir=obj->getSpritesDir();
+	
+	int ns=sprites_dim->FindString(sprites_dir, false);
+	//cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<rows<<"x"<<cols<<endl;
+	sprites_dim->SetSelection(ns);
+	
+	makeFileList(sprites_dir,sprites_file);
+	
 	int id=obj->get_id();
 	//cout<<id<<endl;
 	select->SetSelection(id);
@@ -454,11 +479,11 @@ void VtxSpritesTabs::getObjAttributes(){
 		SelBiasSlider->setValue(mgr->select_bias);
 
 	wxString s=exprString();
-	cout<<"get:"<<s.ToAscii()<<endl;
+	//cout<<"get:"<<s.ToAscii()<<endl;
 }
 
 void VtxSpritesTabs::setObjAttributes(){
-	cout<<"VtxSpritesTabs::setObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
+	//cout<<"VtxSpritesTabs::setObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
 	wxString str=choices->GetStringSelection();
 	if(str!=wxEmptyString){
 		object()->setSpritesImage((char*)str.ToAscii());
@@ -470,7 +495,7 @@ void VtxSpritesTabs::setObjAttributes(){
 
 	wxString s=exprString();
 
-	cout<<"set:"<<s.ToAscii()<<endl;
+	//cout<<"set:"<<s.ToAscii()<<endl;
 
 	obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
@@ -482,7 +507,7 @@ void VtxSpritesTabs::setObjAttributes(){
 }
 
 void VtxSpritesTabs::updateControls(){
-	cout<<"VtxSpritesTabs::updateControls "<<update_needed<<endl;
+	//cout<<"VtxSpritesTabs::updateControls "<<update_needed<<endl;
 	if(update_needed){
 		getObjAttributes();
 	}

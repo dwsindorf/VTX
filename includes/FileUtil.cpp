@@ -346,10 +346,12 @@ void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 {
 	char path[MAXSTR];
 	struct _finddata_t c_file;
-    long hFile;
+    long long hFile;
+
 	sprintf(path,"%s%s%s",dir,separator,"*");
     if((hFile = _findfirst(path, &c_file)) == -1)
 		return;
+    
 	if(c_file.attrib & _A_SUBDIR && c_file.name[0]!='.'){
 		sprintf(path,"%s%s%s",dir,separator,c_file.name);
 		list.add(new ModelSym(c_file.name,path));
@@ -357,7 +359,34 @@ void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 	while(_findnext(hFile, &c_file) == 0){
 		if((c_file.attrib & _A_SUBDIR  && c_file.name[0]!='.')){
 			sprintf(path,"%s%s%s",dir,separator,c_file.name);
+			
 			list.add(new ModelSym(c_file.name,path));
+		}
+	}
+	_findclose(hFile);
+}
+
+//-------------------------------------------------------------
+// FileUtil::getDirectoryList() get list of subdirectories
+//-------------------------------------------------------------
+void FileUtil::getDirectoryList(char *dir,ValueList<FileData*>&list)
+{
+	char path[MAXSTR];
+	struct _finddata_t c_file;
+    long long hFile;
+
+	sprintf(path,"%s%s%s",dir,separator,"*");
+    if((hFile = _findfirst(path, &c_file)) == -1)
+		return;
+    
+	if(c_file.attrib & _A_SUBDIR && c_file.name[0]!='.'){
+		sprintf(path,"%s%s%s",dir,separator,c_file.name);
+		list.add(new FileData(c_file.name,path));
+	}
+	while(_findnext(hFile, &c_file) == 0){
+		if((c_file.attrib & _A_SUBDIR  && c_file.name[0]!='.')){
+			sprintf(path,"%s%s%s",dir,separator,c_file.name);			
+			list.add(new FileData(c_file.name,path));
 		}
 	}
 	_findclose(hFile);

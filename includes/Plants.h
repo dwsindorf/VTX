@@ -155,7 +155,7 @@ public:
 //************************************************************
 class TNBranch : public TNbase
 {
-protected:w
+protected:
 	enum flags{
 		TEX=1,
 		COL=2,

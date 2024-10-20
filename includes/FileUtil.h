@@ -17,6 +17,34 @@ enum {
    FILE_AVI = 3
 };
 
+class FileData {
+	char   _name[256];
+	char   _path[1024];
+	long   _hash_name;
+	void getHashName(){
+		_hash_name = 0;
+		for (size_t i = 0; i < strlen(_name); ++i)
+			_hash_name += (_name[i] - '0') * static_cast<int>(i + 1);
+	}
+
+public:
+	FileData(const char *n) {
+		strcpy(_name,n);
+		_path[0]=0;
+		getHashName();
+	}
+	FileData(const char *n, const char *p) {
+		strcpy(_name,n);
+		strcpy(_path,p);
+		getHashName();
+	}
+	double value(){return _hash_name;}
+	int isFile() { return _path[0];}
+	char *name() { return _name;}
+	char *path() { return _path;}
+	void setPath(char *p) {strcpy(_path,p);}
+};
+
 class FileUtil
 {
 public:
@@ -50,6 +78,8 @@ public:
 	static void getParentDirectory(char *s,char *d);
 	static void getFileNameList(char *dir,const char *ext,LinkedList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,LinkedList<ModelSym*>&list);
+	static void getDirectoryList(char *dir,ValueList<FileData*>&list);
+
 	static int isEmptyDirectory(char *dir);
 	static void getFileName(char *s,char *d);
 	static void getFilePath(char *dir,char *path);

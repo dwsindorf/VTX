@@ -499,7 +499,6 @@ void RasterMgr::init_view()
 	//if(shadow_vright>smax)
 	//	shadow_vright=smax;
 	shadow_vcnt=0;
-	//init_light_view();
 }
 
 //-------------------------------------------------------------

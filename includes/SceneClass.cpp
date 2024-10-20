@@ -15,6 +15,7 @@
 #include "TerrainClass.h"
 #include "MapNode.h"
 #include "KeyIF.h"
+#include "Sprites.h"
 #include "Plants.h"
 #include <math.h>
 #include <stdio.h>
@@ -243,6 +244,7 @@ Scene::Scene(Model *m)
 	vmode=VLOG;
 	rseed=0;
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
+	SpriteMgr::getSpriteDirs();
 }
 
 Scene::~Scene()
@@ -695,6 +697,7 @@ void Scene::init()
 	Render.set_multitexs(0);
 	set_movie((char*)dflt_movie_name);
 	read_prefs();
+
 }
 
 //-------------------------------------------------------------

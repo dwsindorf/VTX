@@ -4,6 +4,7 @@
 #define _SPRITES
 
 #include "Placements.h"
+#include "FileUtil.h"
 
 class SpriteMgr;
 class TNsprite;
@@ -61,6 +62,8 @@ class SpriteMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
+	static ValueList<FileData*> sprite_dirs;
+	static void getSpriteDirs();
 
 	Color c;
 	int sprites_dim;
@@ -88,10 +91,11 @@ class TNsprite : public TNplacements
 {
 protected:
 	char sprites_file[256];
+	char sprites_dir[256];
 
 public:
-	GLuint sprites_dim;
-
+	GLuint sprites_rows;
+	GLuint sprites_cols;
 	int instance;
 	Image *image;
 	Sprite *sprite;
@@ -112,16 +116,16 @@ public:
 	void save(FILE*);
 	void setSpritesImage(char *name);
 	void set_id(int i);
-	int getFilePath(char*name,char *path);
-	void getSpritesDir(int dim,char*dir);
-	void getSpritesFilePath(char*name,int dim,char *dir);
-	char *getSpritesFile(GLuint &dim);
+	bool getSpritesFilePath(char*name,char *path);
+	void getSpritesDirPath(char *dir,char *path);
+	char *getSpritesFile();
+	char *getSpritesDir();
+	void getSpritesDims(GLuint &rows,GLuint &cols);
+	static void getSpritesDims(char *str, GLuint *rows,GLuint *cols);
 	char *nodeName()  { return sprites_file;}
 	int optionString(char *);
 	void saveNode(FILE *f);
-	void applyExpr();	   
-
-
+	void applyExpr();
 };
 
 class Sprite
@@ -132,7 +136,8 @@ public:
 	TNsprite  *expr;
 	unsigned int texture_id;
 	unsigned int sprite_id;
-	GLuint sprites_dim;
+	GLuint rows;
+	GLuint cols;
 
 	bool   valid;
 	static ValueList<SpriteData*> sprites;
@@ -147,7 +152,7 @@ public:
 	bool initProgram();
 	int get_id()				{ return sprite_id;}
 	void set_id(int i)			{ sprite_id=i;}
-	void set_image(Image *, int );
+	void set_image(Image *, int r, int c);
 	static void reset();
 	static void collect();
 };

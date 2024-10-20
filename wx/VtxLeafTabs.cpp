@@ -482,7 +482,6 @@ wxString VtxLeafTabs::exprString(){
 	sprintf(tmp,"0,0,%d",enables);
 	s+=wxString(tmp);
 	s+=")";
-	cout<<s<<endl;
  	return wxString(s);
 }
 

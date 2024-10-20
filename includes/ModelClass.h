@@ -24,7 +24,7 @@ class ModelSym {
 	char   _name[256];
 public:
 	int   value;
-	char   path[256];
+	char   path[1024];
 	ModelSym(const char *n, int v) {
 		value=v;
 		strcpy(_name,n);
