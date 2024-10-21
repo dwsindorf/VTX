@@ -104,6 +104,8 @@ bool VtxSpritesTabs::Create(wxWindow* parent,
     changed_cell_expr=true;
     image_dim=0;
     image_center=0;
+    image_rows=0;
+    image_cols=0;
     image_name="";
     sprites_file="";
     
@@ -218,11 +220,12 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
     int num_dirs=SpriteMgr::sprite_dirs.size;
-	cout<<"num sprites="<<num_dirs<<endl;
+	//cout<<"num sprites="<<num_dirs<<endl;
  
 	wxString offsets[num_dirs];
-	for(int i=i;i<num_dirs;i++)
+	for(int i=i;i<num_dirs;i++){
 		offsets[i]=SpriteMgr::sprite_dirs[i]->name();
+	}
 
 	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
 	sprites_dim->SetSelection(1);
@@ -283,7 +286,7 @@ void VtxSpritesTabs::setImagePanel(){
 	char sdir[512];
 	char *name=(char*)image_name.ToAscii();
 	TNsprite *obj=object();
-	obj->getSpritesFilePath(name,sdir);
+	obj->getImageFilePath(name,sdir);
 
 	strcat(sdir,".png");
 	wxString path(sdir);
@@ -319,17 +322,12 @@ void VtxSpritesTabs::setViewPanel(){
 void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=sprites_dim->GetSelection();
 	wxString str=sprites_dim->GetString(dim);
-	dim+=1;
+	object()->getImageDims((char*)str.ToAscii(),image_rows,image_cols);
 	
-	int rows=0;
-	int cols=0;
-	
-	TNsprite::getSpritesDims((char*)str.ToAscii(),&rows,&cols);
-	
-	// TODO: set rows and cols based on image subdirectory string
-	//cout<<"VtxSpritesTabs::OnDimSelect "<<dim<<" "<<str<<endl;
+	//cout<<"VtxSpritesTabs::OnDimSelect "<<image_rows*image_cols<<" "<<str<<endl;
+	int n=image_rows*image_cols;
 	makeFileList(str,"");
-	select->Set(rows*cols,selections);
+	select->Set(n,selections);
 	update_needed=true;
 	select->SetSelection(0);
 	setObjAttributes();
@@ -338,7 +336,7 @@ void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
 	char *wstr=(char*)wdir.ToAscii();
-	object()->getSpritesDirPath(wstr,sdir);
+	object()->getImageDirPath(wstr,sdir);
     //cout<<"VtxSpritesTabs::makeFileList "<<wstr<<":::"<<name<<" dir:"<<sdir<<endl;
 
  	wxDir dir(sdir);
@@ -349,8 +347,13 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
  	    return;
  	}
  	image_name=name;
+ 	uint rows=0;
+ 	uint cols=0;
  	int dim=sprites_dim->GetSelection();
- 	if(dim != image_dim){
+ 	wxString str=sprites_dim->GetString(dim);
+ 	object()->getImageDims((char*)str.ToAscii(),rows,cols);
+ 	
+ 	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
 		files.Clear();
 		wxString filename;
 		bool cont = dir.GetFirst(&filename);
@@ -363,7 +366,10 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 		choices->Clear();
 		choices->Append(files);
 		image_dim=dim;
-		select->Set(dim*dim,selections);
+		image_rows=rows;
+		image_cols=cols;
+		int n=image_rows*image_cols;
+		select->Set(n,selections);
 		if(image_name.IsEmpty())
 			choices->SetSelection(0);
 		//update_needed=true;
@@ -373,7 +379,6 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
  	//sceneDialog->setNodeName((char*)image_name.ToAscii());
  	sprites_file=image_name;
  	choices->SetStringSelection(sprites_file);
- 	//select->SetSelection(0);
 }
 
 void VtxSpritesTabs::OnChangedLevels(wxCommandEvent& event){
@@ -404,20 +409,20 @@ wxString VtxSpritesTabs::exprString(){
 void VtxSpritesTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
-	//cout<<"VtxSpritesTabs::getObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
+	//cout<<"VtxSpritesTabs::getObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<<endl;
 	update_needed=false;
 
 	TNsprite *obj=object();
 	SpriteMgr *mgr=(SpriteMgr*)obj->mgr;
 
-	uint rows=0;
-	uint cols=0;
-	obj->getSpritesDims(rows,cols);
-	sprites_file=obj->getSpritesFile();
-	sprites_dir=obj->getSpritesDir();
+	//uint rows=0;
+	//uint cols=0;
+	obj->getImageDims(image_rows,image_cols);
+	sprites_file=obj->getImageFile();
+	sprites_dir=obj->getImageDir();
 	
 	int ns=sprites_dim->FindString(sprites_dir, false);
-	//cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<rows<<"x"<<cols<<endl;
+	cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<image_rows<<"x"<<image_cols<<endl;
 	sprites_dim->SetSelection(ns);
 	
 	makeFileList(sprites_dir,sprites_file);

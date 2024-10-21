@@ -83,6 +83,7 @@ typedef union place_mgr_flags_u {
 class PlacementMgr
 {
 protected:
+	
 	place_mgr_flags_u flags;
 
 	Placement  **hash;

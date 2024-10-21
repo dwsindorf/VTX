@@ -121,6 +121,20 @@ static SData   sdata[256];
 static ValueList<SData*> slist(sdata,256);
 static int          scnt;
 
+//ValueList<FileData*> SpriteImageMgr::sprite_dirs;
+
+void SpriteImageMgr::setImageBaseDir(){
+	static char base[512];
+	static char dir[512];
+	File.getBaseDirectory(base);
+ 	sprintf(dir,"%s/Textures/Sprites",base);
+ 	//MALLOC(strlen(dir),char,base_dir);
+ 	strcpy(base_dir,dir);
+ 	cout<<"base dir="<<dir<<endl;
+}
+
+SpriteImageMgr sprites_mgr; // global image manager
+
 //************************************************************
 // SpriteMgr class
 //************************************************************
@@ -130,6 +144,7 @@ static int          scnt;
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
+
 ValueList<FileData*> SpriteMgr::sprite_dirs;
 SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 {
@@ -150,6 +165,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	dexpr=0;
 	instance=0;
 	select_bias=0;
+	sprites_dim=0;
 	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
@@ -170,7 +186,6 @@ void SpriteMgr::getSpriteDirs(){
 	char path[512];
   	File.getBaseDirectory(base);
 	sprintf(dir,"%s/Textures/Sprites",base);
-	cout<<"dir="<<dir<<endl;
 
 	File.getDirectoryList(dir,sprite_dirs);
 	//cout<<"size="<<sprite_dirs.size<<endl;
@@ -178,7 +193,7 @@ void SpriteMgr::getSpriteDirs(){
 	for(int i=0;i<sprite_dirs.size;i++){
 		sprintf(path,"%s/%s",dir,sprite_dirs[i]->name());
 		sprite_dirs[i]->setPath(path);
-		cout<<sprite_dirs[i]->path()<<endl;
+		//cout<<sprite_dirs[i]->path()<<endl;
 	}
 }
 //-------------------------------------------------------------
@@ -496,7 +511,7 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 	texture_id=0;
     image=i;
 	expr=e;
-	rows=((TNsprite *)e)->sprites_rows;
+	rows=((TNsprite *)e)->getImageRows();
 	valid=false;
 }
 
@@ -665,6 +680,7 @@ bool Sprite::initProgram(){
 //************************************************************
 TNsprite::TNsprite(char *s, int opts,  TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
+    setImageMgr(&sprites_mgr);
 	set_collapsed();
  	type=opts|SPRITES|NOLOD;
  	//cout<<"TNsprite ID="<<get_id()<<endl;
@@ -710,17 +726,18 @@ void TNsprite::init()
 
 	//cout<<"TNsprite::init"<<endl;
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
+	char *file=getImageFile();
 	if(!image){
 		char path[512];
-		if(getSpritesFilePath(sprites_file,path)){
-			image=images.open(sprites_file,path);
+		if(getImageFilePath(file,path)){
+			image=images.open(file,path);
 			if(image)
 				cout<<"Sprite image found:"<<path<<endl;
 		}
 	}
-	smgr->sprites_dim=sprites_rows;
+	smgr->sprites_dim=getImageRows();
 	if(!image){
-		printf("TNsprites ERROR image %s not found\n",sprites_file);
+		printf("TNsprites ERROR image %s not found\n",file);
 		return;
 	}
 	if(sprite==0)
@@ -853,13 +870,6 @@ void TNsprite::eval()
 #endif
 	}
  }
-//-------------------------------------------------------------
-// TNinode::setName() set name
-//-------------------------------------------------------------
-void TNsprite::setName(char *s)
-{
-	strcpy(sprites_file,s);
-}
 
 //-------------------------------------------------------------
 // TNsprite::optionString() get option string
@@ -874,7 +884,7 @@ int TNsprite::optionString(char *c)
 //-------------------------------------------------------------
 void TNsprite::valueString(char *s)
 {
-	sprintf(s+strlen(s),"%s(\"%s\",",symbol(),sprites_file);
+	sprintf(s+strlen(s),"%s(\"%s\",",symbol(),getImageFile());
 	char opts[64];
 	opts[0]=0;
 	if(optionString(opts))
@@ -917,70 +927,139 @@ void TNsprite::saveNode(FILE *f)
 	fprintf(f,"%s",buff);
 }
 
+#define USE_IMGR
+//-------------------------------------------------------------
+// TNinode::setName() set name
+//-------------------------------------------------------------
+void TNsprite::setName(char *s)
+{
+#ifdef USE_IMGR
+	strcpy(image_file,s);
+#else
+	strcpy(sprites_file,s);
+#endif
+}
+
+char *TNsprite::nodeName()  { 
+#ifdef USE_IMGR
+	return image_file;
+#else
+	return sprites_file;
+#endif
+}
+
+int TNsprite::getImageRows(){
+#ifdef USE_IMGR
+	return getRows();
+#else
+	return sprites_rows;
+#endif
+}
+int TNsprite::getImageCols(){
+#ifdef USE_IMGR
+	return getCols();
+#else
+	return sprites_cols;
+#endif
+}
+
 //-------------------------------------------------------------
 // TNsprite::setSpritesTexture() set sprite image texture
 //-------------------------------------------------------------
 void TNsprite::setSpritesImage(char *name){
+#ifdef USE_IMGR
+	setImage(name);
+	if(image){
+		cout<<"Sprite image found:"<<name<<endl;
+		sprite->set_image(image,image_rows,image_cols);
+	}
+#else
 	if(strcmp(name,sprites_file)){
 		setName(name);
 		char path[512];
-		if(getSpritesFilePath(sprites_file,path)){
+		if(getImageFilePath(sprites_file,path)){
 			delete image;
 			image=images.open(sprites_file,path);
 			if(image){
-				cout<<"Sprite image found:"<<path<<endl;
 				sprite->set_image(image,sprites_rows,sprites_cols);
 			}
 		}
 	}
+#endif
 }
 
-bool TNsprite::getSpritesFilePath(char*name,char *dir){
+bool TNsprite::getImageFilePath(char*name,char *dir){
+#ifdef USE_IMGR
+	return ImageInfo::getFilePath(name, dir);
+#else
 	sprites_rows=0;
 	sprites_cols=0;
 	sprites_dir[0]=0;
-	char dimdir[32];
+
 	char base[256];
 	char sdir[32];
 	char path[512];
 	path[0]=0;
 	File.getBaseDirectory(base);
 	
-	int rows=0;
-	int cols=0;
+	uint rows=0;
+	uint cols=0;
+	ImageMgr *imgr=getImageMgr();
 	for(int i=0;i<SpriteMgr::sprite_dirs.size;i++){
 		strcpy(sdir,SpriteMgr::sprite_dirs[i]->name());
-		getSpritesDims(sdir,&rows,&cols);
-		//sscanf(sdir,"%dx%d",&rows,&cols);
+		getImageDims(sdir,rows,cols);
 		sprintf(dir,"%s/Textures/Sprites/%s/%s",base,sdir,name);
 		sprintf(path,"%s.png",dir);
 		if(FileUtil::fileExists(path)){
 			strcpy(sprites_dir,sdir);
-			//cout<<rows<<"x"<<cols<<" sprite file found at:"<<dir<<endl;
 			sprites_rows=rows;
 			sprites_cols=cols;
 			return true;
 		}
 	}
 	return false;
+#endif
 }
 
-void TNsprite::getSpritesDirPath(char *dir, char *path){
+void TNsprite::getImageDirPath(char *dir, char *path){
+#ifdef USE_IMGR
+	getDirPath(dir,path);
+#else
 	char base[512];
 	File.getBaseDirectory(base);
  	sprintf(path,"%s/Textures/Sprites/%s",base,dir);
+#endif
 }
 
-char *TNsprite::getSpritesFile(){
+char *TNsprite::getImageFile(){
+#ifdef USE_IMGR
+	return getFile();
+#else
 	return sprites_file;
+#endif
 }
-char *TNsprite::getSpritesDir(){
+char *TNsprite::getImageDir(){
+#ifdef USE_IMGR
+	return getDir();
+#else
 	return sprites_dir;
+#endif
 }
-void TNsprite::getSpritesDims(GLuint &rows,GLuint &cols){
+void TNsprite::getImageDims(uint &rows,uint &cols){
+#ifdef USE_IMGR
+	getDims(rows,cols);
+#else
 	rows=sprites_rows;
 	cols=sprites_cols;
+#endif
 }
-void TNsprite::getSpritesDims(char *s,GLuint *rows,GLuint *cols){
-	sscanf(s,"%dx%d",rows,cols);
+void TNsprite::getImageDims(char *s,uint &rows,uint &cols){
+#ifdef USE_IMGR
+	getDims(s,rows,cols);
+#else
+	int i=0,j=0;
+	sscanf(s,"%dx%d",&i,&j);
+	rows=i;
+	cols=j;
+#endif
 }

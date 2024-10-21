@@ -56,6 +56,16 @@ public:
 	int get_class()				{ return type&PLACETYPE;}
 	int flip()				    { return type & FLIP;}
 };
+class SpriteImageMgr : public ImageMgr
+{
+public:
+	SpriteImageMgr() : ImageMgr(){
+		setImageBaseDir();
+		getImageDirs();
+	};
+	void setImageBaseDir();
+};
+extern SpriteImageMgr sprites_mgr;
 
 class SpriteMgr : public PlacementMgr
 {
@@ -87,17 +97,18 @@ public:
 //************************************************************
 // Class TNsprite
 //************************************************************
-class TNsprite : public TNplacements
+class TNsprite : public TNplacements, public ImageInfo
 {
 protected:
 	char sprites_file[256];
 	char sprites_dir[256];
 
 public:
-	GLuint sprites_rows;
-	GLuint sprites_cols;
+
+	uint sprites_cols;
+	uint sprites_rows;
 	int instance;
-	Image *image;
+	//Image *image;
 	Sprite *sprite;
 	double radius;
 	double maxdensity;
@@ -116,13 +127,15 @@ public:
 	void save(FILE*);
 	void setSpritesImage(char *name);
 	void set_id(int i);
-	bool getSpritesFilePath(char*name,char *path);
-	void getSpritesDirPath(char *dir,char *path);
-	char *getSpritesFile();
-	char *getSpritesDir();
-	void getSpritesDims(GLuint &rows,GLuint &cols);
-	static void getSpritesDims(char *str, GLuint *rows,GLuint *cols);
-	char *nodeName()  { return sprites_file;}
+	bool getImageFilePath(char*name,char *path);
+	void getImageDirPath(char *dir,char *path);
+	char *getImageFile();
+	char *getImageDir();
+	void getImageDims(GLuint &rows,uint &cols);
+	void getImageDims(char *str, uint &rows,uint &cols);
+	char *nodeName();
+	int getImageRows();
+	int getImageCols();
 	int optionString(char *);
 	void saveNode(FILE *f);
 	void applyExpr();
@@ -136,8 +149,8 @@ public:
 	TNsprite  *expr;
 	unsigned int texture_id;
 	unsigned int sprite_id;
-	GLuint rows;
-	GLuint cols;
+	uint rows;
+	uint cols;
 
 	bool   valid;
 	static ValueList<SpriteData*> sprites;

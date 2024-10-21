@@ -245,6 +245,7 @@ Scene::Scene(Model *m)
 	rseed=0;
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
 	SpriteMgr::getSpriteDirs();
+	//sprites_mgr.getImageDirs();
 }
 
 Scene::~Scene()

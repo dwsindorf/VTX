@@ -56,6 +56,8 @@ protected:
 
 	bool changed_cell_expr;
 	uint image_dim;
+	uint image_rows;
+	uint image_cols;
 	uint image_center;
 	wxString image_name;
 public:

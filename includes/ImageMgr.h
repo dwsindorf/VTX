@@ -7,6 +7,7 @@
 #include "defs.h"
 #include "ColorClass.h"
 #include "ListClass.h"
+#include "FileUtil.h"
 
 class TNarg;
 class TNode;
@@ -261,5 +262,116 @@ public:
 };
 
 extern ImageReader images;
+
+class ImageMgr {
+protected:
+	char base_dir[256];
+public:	
+	ValueList<FileData*> image_dirs;
+	
+	virtual void setImageBaseDir(){
+		base_dir[0]=0;
+	}
+	char *getImageBaseDir(){return base_dir;}
+	
+	void getImageDirs(){
+	    if(image_dirs.size>0)
+	    	return;
+		File.getDirectoryList(getImageBaseDir(),image_dirs);
+		cout<<"size="<<image_dirs.size<<endl;
+		image_dirs.sort();		
+	}
+};
+class ImageInfo {
+protected:
+	char image_file[256];
+	char image_dir[256];
+	
+	ImageMgr *image_mgr;
+public:
+	uint image_cols;
+	uint image_rows;
+	
+	Image *image;
+
+	ImageInfo(){
+		image_file[0]=0;
+		image_dir[0]=0;
+		image_cols=0;
+		image_rows=0;
+		image_mgr=0;
+		image=0;
+	}
+	void setImageName(char *s){
+		strcpy(image_file,s);
+	}
+	int getRows(){return image_rows;}
+	int getCols() {return image_cols;}
+	void setImageMgr(ImageMgr *m){image_mgr=m;}
+	ImageMgr *getImageMgr(){return image_mgr;}
+	
+	void getDims(uint &rows,uint &cols){
+		rows=image_rows;
+		cols=image_cols;
+	}
+	
+	void getDims(char *s,uint &rows,uint &cols){
+		int i=0,j=0;
+		sscanf(s,"%dx%d",&i,&j);
+		rows=i;
+		cols=j;
+	}
+	void setImage(char *name){
+		if(strcmp(name,image_file)){
+			setImageName(name);
+			char path[512];
+			if(getFilePath(image_file,path)){
+				delete image;
+				image=images.open(image_file,path);
+				if(image){
+					cout<<"image found:"<<path<<endl;
+				}
+			}
+		}
+	}
+	bool getFilePath(char*name,char *dir){
+		if(image_mgr==0)
+			return false;
+		image_rows=0;
+		image_cols=0;
+		image_dir[0]=0;
+		char dimdir[32];
+		char base[256];
+		char sdir[32];
+		char path[512];
+		path[0]=0;
+
+		uint rows=0;
+		uint cols=0;
+		for(int i=0;i<image_mgr->image_dirs.size;i++){
+			strcpy(sdir,image_mgr->image_dirs[i]->name());
+			getDims(sdir,rows,cols);
+			sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
+			sprintf(path,"%s.png",dir);
+			if(FileUtil::fileExists(path)){
+				strcpy(image_dir,sdir);
+				image_rows=rows;
+				image_cols=cols;
+				return true;
+			}
+		}
+		return false;
+	}
+	char *getBaseDir(){
+		return image_mgr->getImageBaseDir();
+	}
+	void getDirPath(char *dir,char *path){
+		sprintf(path,"%s/%s",getBaseDir(),dir);
+	}
+	char *getFile() { return image_file;}
+	char *getDir()  { return image_dir;}
+
+};
+
 #endif
 
