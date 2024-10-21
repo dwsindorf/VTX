@@ -72,9 +72,6 @@ class SpriteMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
-	static ValueList<FileData*> sprite_dirs;
-	static void getSpriteDirs();
-
 	Color c;
 	int sprites_dim;
 	double variability;
@@ -99,16 +96,9 @@ public:
 //************************************************************
 class TNsprite : public TNplacements, public ImageInfo
 {
-protected:
-	char sprites_file[256];
-	char sprites_dir[256];
-
 public:
-
-	uint sprites_cols;
-	uint sprites_rows;
 	int instance;
-	//Image *image;
+
 	Sprite *sprite;
 	double radius;
 	double maxdensity;
@@ -127,15 +117,7 @@ public:
 	void save(FILE*);
 	void setSpritesImage(char *name);
 	void set_id(int i);
-	bool getImageFilePath(char*name,char *path);
-	void getImageDirPath(char *dir,char *path);
-	char *getImageFile();
-	char *getImageDir();
-	void getImageDims(GLuint &rows,uint &cols);
-	void getImageDims(char *str, uint &rows,uint &cols);
 	char *nodeName();
-	int getImageRows();
-	int getImageCols();
 	int optionString(char *);
 	void saveNode(FILE *f);
 	void applyExpr();

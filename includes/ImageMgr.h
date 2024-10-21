@@ -305,17 +305,17 @@ public:
 	void setImageName(char *s){
 		strcpy(image_file,s);
 	}
-	int getRows(){return image_rows;}
-	int getCols() {return image_cols;}
+	int getImageRows(){return image_rows;}
+	int getImageCols() {return image_cols;}
 	void setImageMgr(ImageMgr *m){image_mgr=m;}
 	ImageMgr *getImageMgr(){return image_mgr;}
 	
-	void getDims(uint &rows,uint &cols){
+	void getImageDims(uint &rows,uint &cols){
 		rows=image_rows;
 		cols=image_cols;
 	}
 	
-	void getDims(char *s,uint &rows,uint &cols){
+	void getImageDims(char *s,uint &rows,uint &cols){
 		int i=0,j=0;
 		sscanf(s,"%dx%d",&i,&j);
 		rows=i;
@@ -325,7 +325,7 @@ public:
 		if(strcmp(name,image_file)){
 			setImageName(name);
 			char path[512];
-			if(getFilePath(image_file,path)){
+			if(getImageFilePath(image_file,path)){
 				delete image;
 				image=images.open(image_file,path);
 				if(image){
@@ -334,7 +334,7 @@ public:
 			}
 		}
 	}
-	bool getFilePath(char*name,char *dir){
+	bool getImageFilePath(char*name,char *dir){
 		if(image_mgr==0)
 			return false;
 		image_rows=0;
@@ -350,7 +350,7 @@ public:
 		uint cols=0;
 		for(int i=0;i<image_mgr->image_dirs.size;i++){
 			strcpy(sdir,image_mgr->image_dirs[i]->name());
-			getDims(sdir,rows,cols);
+			getImageDims(sdir,rows,cols);
 			sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
 			sprintf(path,"%s.png",dir);
 			if(FileUtil::fileExists(path)){
@@ -365,11 +365,11 @@ public:
 	char *getBaseDir(){
 		return image_mgr->getImageBaseDir();
 	}
-	void getDirPath(char *dir,char *path){
+	void getImageDirPath(char *dir,char *path){
 		sprintf(path,"%s/%s",getBaseDir(),dir);
 	}
-	char *getFile() { return image_file;}
-	char *getDir()  { return image_dir;}
+	char *getImageFile() { return image_file;}
+	char *getImageDir()  { return image_dir;}
 
 };
 

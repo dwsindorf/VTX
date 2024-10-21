@@ -219,12 +219,13 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
     choices->SetSelection(0);
 
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
-    int num_dirs=SpriteMgr::sprite_dirs.size;
-	//cout<<"num sprites="<<num_dirs<<endl;
+    //int num_dirs=SpriteMgr::sprite_dirs.size;
+	int num_dirs=sprites_mgr.image_dirs.size;
+	cout<<"VtxSpritesTabs num sprites="<<num_dirs<<endl;
  
 	wxString offsets[num_dirs];
 	for(int i=i;i<num_dirs;i++){
-		offsets[i]=SpriteMgr::sprite_dirs[i]->name();
+		offsets[i]=sprites_mgr.image_dirs[i]->name();
 	}
 
 	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
