@@ -323,7 +323,7 @@ void VtxSpritesTabs::setViewPanel(){
 void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=sprites_dim->GetSelection();
 	wxString str=sprites_dim->GetString(dim);
-	object()->getImageDims((char*)str.ToAscii(),image_rows,image_cols);
+	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
 	
 	//cout<<"VtxSpritesTabs::OnDimSelect "<<image_rows*image_cols<<" "<<str<<endl;
 	int n=image_rows*image_cols;
@@ -352,7 +352,7 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
  	uint cols=0;
  	int dim=sprites_dim->GetSelection();
  	wxString str=sprites_dim->GetString(dim);
- 	object()->getImageDims((char*)str.ToAscii(),rows,cols);
+ 	object()->getImageDims((char*)str.ToAscii(),cols,rows);
  	
  	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
 		files.Clear();
@@ -418,7 +418,7 @@ void VtxSpritesTabs::getObjAttributes(){
 
 	//uint rows=0;
 	//uint cols=0;
-	obj->getImageDims(image_rows,image_cols);
+	obj->getImageDims(image_cols,image_rows);
 	sprites_file=obj->getImageFile();
 	sprites_dir=obj->getImageDir();
 	

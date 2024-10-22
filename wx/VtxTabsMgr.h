@@ -16,6 +16,10 @@
 #include <wx/gdicmn.h>
 #include <wx/notebook.h>
 #include <wx/dynarray.h>
+#include <wx/choice.h>
+#include <wx/sizer.h>
+#include <wx/windowid.h>
+#include <wx/panel.h>
 
 #include "VtxControls.h"
 #include "SceneClass.h"

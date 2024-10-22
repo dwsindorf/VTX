@@ -310,12 +310,12 @@ public:
 	void setImageMgr(ImageMgr *m){image_mgr=m;}
 	ImageMgr *getImageMgr(){return image_mgr;}
 	
-	void getImageDims(uint &rows,uint &cols){
+	void getImageDims(uint &cols,uint &rows){
 		rows=image_rows;
 		cols=image_cols;
 	}
 	
-	void getImageDims(char *s,uint &rows,uint &cols){
+	void getImageDims(char *s,uint &cols,uint &rows){
 		int i=0,j=0;
 		sscanf(s,"%dx%d",&i,&j);
 		rows=i;
