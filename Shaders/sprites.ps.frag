@@ -51,20 +51,18 @@ vec3 setLighting(vec3 BaseColor) {
 vec2 sprite(float index){
     vec2 l_uv=gl_PointCoord.xy;
     
-    //float rows=4;//SpriteVars.y;
-     float rows=Constants1.g;
-    
-    // apply random reflection
-    if(Constants1.r>0.1)
+    if(Constants1.r>0.1)  // apply random reflection
        l_uv.x=1.0-l_uv.x;
-    //int y1=index/rows;
-    //int y=rows-y1-1.0;
-    //int x=index-rows*y1+0.1;
-    int x=Constants1.b+0.1;
-    int y=Constants1.w+0.1;
+    float rows=SpriteVars.g;
+    float cols=Constants1.g;  
+    
+    vec2 scale=vec2(cols,rows);
+         
+    float x=Constants1.b;
+    float y=Constants1.w;
 	vec2 pt3=l_uv+vec2(x,y);
 	
-	pt3/=rows;
+	pt3/=scale;
     	
 	return pt3;
 }

@@ -318,8 +318,8 @@ public:
 	void getImageDims(char *s,uint &cols,uint &rows){
 		int i=0,j=0;
 		sscanf(s,"%dx%d",&i,&j);
-		rows=i;
-		cols=j;
+		rows=j;
+		cols=i;
 	}
 	void setImage(char *name){
 		if(strcmp(name,image_file)){
@@ -350,7 +350,7 @@ public:
 		uint cols=0;
 		for(int i=0;i<image_mgr->image_dirs.size;i++){
 			strcpy(sdir,image_mgr->image_dirs[i]->name());
-			getImageDims(sdir,rows,cols);
+			getImageDims(sdir,cols,rows);
 			sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
 			sprintf(path,"%s.png",dir);
 			if(FileUtil::fileExists(path)){

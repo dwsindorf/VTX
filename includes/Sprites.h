@@ -18,7 +18,9 @@ public:
 	double dist;
 	int hits;
 	int visits;
-	int sprites_dim;
+	int sprites_rows;
+	int sprites_cols;
+
 	double variability;
 	double rand_flip_prob;
 	double select_bias;
@@ -45,7 +47,9 @@ public:
 	double select_bias;
 	int instance;
 
-	int sprites_dim;
+	int sprites_rows;
+	int sprites_cols;
+
 	int visits;
 	Point4DL point;
 	Point center;
@@ -73,7 +77,8 @@ protected:
 public:
 	Placement *make(Point4DL&,int);
 	Color c;
-	int sprites_dim;
+	int sprites_rows;
+	int sprites_cols;
 	double variability;
 	double slope_bias;
 	double ht_bias;

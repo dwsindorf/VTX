@@ -165,7 +165,8 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	dexpr=0;
 	instance=0;
 	select_bias=0;
-	sprites_dim=0;
+	sprites_rows=0;
+	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
 }
 SpriteMgr::~SpriteMgr()
@@ -328,10 +329,12 @@ bool SpriteMgr::setProgram(){
 		double sel=0.1;	
 		double r=0;
 		double sid=0;
-		double nn=(s->sprites_dim*s->sprites_dim);
+	    int rows=s->sprites_rows;
+	    int cols=s->sprites_cols;
+		double nn=(rows*cols);
 		double sb=0;
 
-		if(s->sprites_dim>1){ // random selection in multirow sprites image
+		if(nn>1){ // random selection in multirow sprites image
 			r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
 			r=clamp(r,-1,1);
 			sid=s->get_id();
@@ -342,15 +345,23 @@ bool SpriteMgr::setProgram(){
 			sel=sel<0?nn+sel:sel;
 			sel=clamp(sel,0,nn-1);
 		}
-		int rows=s->sprites_dim;
-	    int y1=sel/rows;
-	    int sy=rows-y1-1.0;
-	    int sx=sel-rows*y1;//+0.1;
+		
+		int sy=sel/cols;
+		int sx=sel-sy*rows;
+		
+		sy=rows-sy-1; // invert y
 	    
+	    //int y1=sel/dim;
+	    //int sy=dim-y1-1.0;
+	    //int sx=sel-dim*y1;//+0.1;
+	    
+	   // cout<<"rows:"<<rows<<" cols:"<<cols<<" sel:"<<(int)sel<<" sy:"<<sy<<" sx:"<<sx<<" sb:"<<sb<<endl;
+    
 	    //cout<<(int)sid<<" "<<(int)sel<<" "<<r<<" "<<sb<<endl;
-
+        //double fx=((double)sx)/dim;
+       // double fy=((double)sy)/dim;
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
-		glVertexAttrib4d(GLSLMgr::CommonID1, flip, rows, sx, sy);
+		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
 		
 		Point pn=Point(pp.x,pp.y,pp.z);
 		Point ppn=pn.normalize();
@@ -383,7 +394,8 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 	visits=0;
 	hits=0;
 	mind=1e16;
-	sprites_dim=mgr.sprites_dim;
+	sprites_rows=mgr.sprites_rows;
+	sprites_cols=mgr.sprites_cols;
 	variability=mgr.mult;
 	rand_flip_prob=mgr.rand_flip_prob;
 	select_bias=mgr.select_bias;
@@ -460,7 +472,8 @@ SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
 	radius=pnt->radius;
     pntsize=ps;
  	distance=d;//TheScene->vpoint.distance(t);
- 	sprites_dim=pnt->sprites_dim;
+ 	sprites_cols=pnt->sprites_cols;
+ 	sprites_rows=pnt->sprites_rows;
 	visits=pnt->visits;
 	variability=pnt->variability;
 	rand_flip_prob=pnt->rand_flip_prob;
@@ -493,6 +506,7 @@ Sprite::Sprite(Image *i, int l, TNode *e)
     image=i;
 	expr=e;
 	rows=((TNsprite *)e)->getImageRows();
+	cols=((TNsprite *)e)->getImageCols();
 	valid=false;
 }
 
@@ -632,7 +646,7 @@ bool Sprite::setProgram(){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+        double aspect=((double)rows/cols);
 		int w=image->width;
 		int h=image->height;
 		unsigned char* pixels=(unsigned char*)image->data;
@@ -712,11 +726,15 @@ void TNsprite::init()
 		char path[512];
 		if(getImageFilePath(file,path)){
 			image=images.open(file,path);
-			if(image)
+			if(image){
 				cout<<"Sprite image found:"<<path<<endl;
+			}
 		}
 	}
-	smgr->sprites_dim=getImageRows();
+	smgr->sprites_rows=getImageRows();
+	smgr->sprites_cols=getImageCols();
+	
+	//cout<<smgr->sprites_cols<<"x"<<smgr->sprites_rows<<endl;
 	if(!image){
 		printf("TNsprites ERROR image %s not found\n",file);
 		return;
@@ -926,7 +944,6 @@ char *TNsprite::nodeName()  {
 void TNsprite::setSpritesImage(char *name){
 	setImage(name);
 	if(image){
-		cout<<"Sprite image found:"<<name<<endl;
 		sprite->set_image(image,image_rows,image_cols);
 	}
 }

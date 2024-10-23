@@ -221,14 +221,14 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
     //int num_dirs=SpriteMgr::sprite_dirs.size;
 	int num_dirs=sprites_mgr.image_dirs.size;
-	cout<<"VtxSpritesTabs num sprites="<<num_dirs<<endl;
+	//cout<<"VtxSpritesTabs num sprites="<<num_dirs<<endl;
  
 	wxString offsets[num_dirs];
 	for(int i=i;i<num_dirs;i++){
 		offsets[i]=sprites_mgr.image_dirs[i]->name();
 	}
 
-	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
+	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
 	sprites_dim->SetSelection(1);
 	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
 
@@ -303,15 +303,17 @@ void VtxSpritesTabs::setImagePanel(){
 
 void VtxSpritesTabs::setViewPanel(){
 	if(image_window->imageOk()&&changed_cell_expr){
-		GLuint dim=sprites_dim->GetSelection()+1;
-		wxString name=sprites_dim->GetString(dim-1);
-		
+		GLuint sel=sprites_dim->GetSelection();
+		wxString str=sprites_dim->GetString(sel);
+		uint rows;
+		uint cols;
+		object()->getImageDims((char*)str.ToAscii(),cols,rows);
 		int cell=select->GetCurrentSelection();
-		int y=cell/dim;
-		int x=cell-y*dim;
-		//cout<<"cell:"<<cell<<" x:"<<x<<" y:"<<y<<endl;
+		int y=cell/cols;
+		int x=cell-y*rows;
+		cout<<str<<" cols:"<<cols<<" rows:"<<rows<<" cell:"<<cell<<" x:"<<x<<" y:"<<y<<endl;
 
-		wxRect r(x,y,dim,dim);
+		wxRect r(x,y,cols,rows);
 		cell_window->setSubImage(r,wxBITMAP_TYPE_PNG);
 		cell_window->scaleImage();
 		//cout<<"setting type panel:"<<cell_window->getName()<<endl;
