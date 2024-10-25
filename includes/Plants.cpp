@@ -225,6 +225,8 @@ static SData   sdata[SDATA_SIZE];
 static ValueList<SData*> slist(sdata,SDATA_SIZE);
 static int          scnt;
 
+//LeafImageMgr leaf_mgr; // global image manager
+
 //************************************************************
 // PlantMgr class
 //************************************************************
@@ -1189,7 +1191,7 @@ void TNplant::emit(){
 
 	Point bot=base_point;
 	norm=bot.normalize();
-	bot;
+
 	glNormal3dv(norm.values());
 			
 	TNBRANCH *first_branch=(TNBRANCH*)right;
@@ -1221,14 +1223,12 @@ void TNplant::emit(){
 }
 
 bool TNplant::setProgram(){
-
 	TNBRANCH *first_branch=(TNBRANCH*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
 		first_branch=(TNBRANCH*)right;
 	else
 		return false;
 	TNBRANCH *branch=first_branch;
-	//randval=1;
 	while(branch && (branch->typeValue() == ID_BRANCH || branch->typeValue() == ID_LEAF)){
 		branch->setProgram();
 		branch=branch->right;
@@ -1346,7 +1346,7 @@ bool TNBranch::setProgram(){
 	if(texture_id==0){
 		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
 		alpha_texture=image->alpha_image();
-		//cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
+		//wcout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
 		glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1365,7 +1365,7 @@ bool TNBranch::setProgram(){
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 		
-		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
+		//cout<<"generating texture "<<texname<<" "<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<" w:"<<w<<" h:"<<h<<endl;
 
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1376,7 +1376,7 @@ bool TNBranch::setProgram(){
 //-------------------------------------------------------------
 // TNBranch::setImage(char *name) set image texture
 //-------------------------------------------------------------
-void TNBranch::setImage(char *name){
+void TNBranch::setPlantImage(char *name){
 	if(strcmp(name,texname)){
 		strcpy(texname,name);				
 		Image *simage=images.load(texname,BMP|JPG);
@@ -1409,14 +1409,14 @@ TNcolor* TNBranch::getColor(){
 	return color;
 }
 
-void TNBranch::getImageDir(int dim,char *dir){
+void TNBranch::getPlantImageDir(int dim,char *dir){
 	char base[256];
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Branch",base);
 }
-void TNBranch::getImageFilePath(char* name,int dim,char *dir){
+void TNBranch::getPlantFilePath(char* name,int dim,char *dir){
 	char dimdir[512];
-	getImageDir(dim,dimdir);
+	getPlantImageDir(dim,dimdir);
   	sprintf(dir,"%s/%s",dimdir,name);
 }
 void TNBranch::getTextureName(){
@@ -1425,7 +1425,7 @@ void TNBranch::getTextureName(){
 		while(arg){
 			TNode *node=arg->left;
 			if(node->typeValue()==ID_STRING){
-				setImage(((TNstring*)node)->value);
+				setPlantImage(((TNstring*)node)->value);
 				if(image){
 					texid=root->textures;
 					root->textures++;
@@ -1798,6 +1798,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w2 = w2 / root->size_scale;
 			}
 			if (root->threed && shader_mode == SPLINE_MODE) {
+
 				// note: implementing this code in the shader may be a bit faster but:
 				// 1) in 3d we run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
@@ -1894,7 +1895,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			emit(0, bot, v, tip, child_size, child_width, lev);
 		}
 	}
-
 }
 
 TNplant* TNBranch::getRoot() {
@@ -2019,6 +2019,7 @@ void  LeafData::render(){
 bool TNLeaf::collect_mode=true;
 int TNLeaf::left_side=0;
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
+	//setImageMgr(&leaf_mgr);
 	width_taper=0.8;
 	length_taper=1;
 	min_level=-1;
@@ -2034,7 +2035,7 @@ void TNLeaf::render(){
 	}
 	glEnable(GL_CULL_FACE);
 }
-void TNLeaf::getImageDir(int dim,char *dir){
+void TNLeaf::getPlantImageDir(int dim,char *dir){
 	char base[256];
   	File.getBaseDirectory(base);
  	sprintf(dir,"%s/Textures/Plants/Leaf",base);

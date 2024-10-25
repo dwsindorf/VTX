@@ -265,9 +265,9 @@ extern ImageReader images;
 
 class ImageMgr {
 protected:
-	char base_dir[256];
+	char base_dir[512];
 public:	
-	ValueList<FileData*> image_dirs;
+	ValueList<FileData*> image_dirs;	
 	
 	virtual void setImageBaseDir(){
 		base_dir[0]=0;
@@ -284,8 +284,8 @@ public:
 };
 class ImageInfo {
 protected:
-	char image_file[256];
-	char image_dir[256];
+	char image_file[64];
+	char image_dir[64];
 	
 	ImageMgr *image_mgr;
 public:
@@ -321,48 +321,11 @@ public:
 		rows=j;
 		cols=i;
 	}
-	void setImage(char *name){
-		if(strcmp(name,image_file)){
-			setImageName(name);
-			char path[512];
-			if(getImageFilePath(image_file,path)){
-				delete image;
-				image=images.open(image_file,path);
-				if(image){
-					cout<<"image found:"<<path<<endl;
-				}
-			}
-		}
-	}
-	bool getImageFilePath(char*name,char *dir){
-		if(image_mgr==0)
-			return false;
-		image_rows=0;
-		image_cols=0;
-		image_dir[0]=0;
-		char dimdir[32];
-		char base[256];
-		char sdir[32];
-		char path[512];
-		path[0]=0;
-
-		uint rows=0;
-		uint cols=0;
-		for(int i=0;i<image_mgr->image_dirs.size;i++){
-			strcpy(sdir,image_mgr->image_dirs[i]->name());
-			getImageDims(sdir,cols,rows);
-			sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
-			sprintf(path,"%s.png",dir);
-			if(FileUtil::fileExists(path)){
-				strcpy(image_dir,sdir);
-				image_rows=rows;
-				image_cols=cols;
-				return true;
-			}
-		}
-		return false;
-	}
+	void setImage(char *name);
+	bool getImageFilePath(char*name,char *dir);
 	char *getBaseDir(){
+		if(!image_mgr)
+			return "..";
 		return image_mgr->getImageBaseDir();
 	}
 	void getImageDirPath(char *dir,char *path){

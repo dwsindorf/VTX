@@ -370,7 +370,7 @@ void VtxLeafTabs::AddColorTab(wxWindow *panel){
 }
 void VtxLeafTabs::makeFileList(wxString name){
 	char sdir[512];
- 	object()->getImageDir(0,sdir);
+ 	object()->getPlantImageDir(0,sdir);
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
@@ -409,7 +409,7 @@ void VtxLeafTabs::setImagePanel(){
 	char path[512];
 	char sdir[512]={0};
 
-	object()->getImageFilePath((char*)image_name.ToAscii(),0,dir);
+	object()->getPlantFilePath((char*)image_name.ToAscii(),0,dir);
 	sprintf(path,"%s.jpg",dir);
 	if(FileUtil::fileExists(path)){
 		strcpy(sdir,path);
@@ -495,7 +495,7 @@ void VtxLeafTabs::setObjAttributes(){
 
 	wxString str=choices->GetStringSelection();
 	image_name=str;
-	obj->setImage((char*)image_name.ToAscii());
+	obj->setPlantImage((char*)image_name.ToAscii());
 	setImagePanel();
 
 	wxString expr=getColorExpr();
@@ -540,7 +540,7 @@ void VtxLeafTabs::getObjAttributes(){
 	LengthTaperSlider->setValue(obj->length_taper);
 	m_secs->SetSelection(obj->first_bias);
 
-	image_name=obj->getImageName();
+	image_name=obj->getPlantImageName();
 	makeFileList(image_name);
 	setImagePanel();
 	

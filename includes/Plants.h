@@ -58,6 +58,22 @@ public:
 };
 
 
+class LeafImageMgr : public ImageMgr
+{
+public:
+	LeafImageMgr() : ImageMgr(){
+		setImageBaseDir();
+		getImageDirs();
+	}
+	void setImageBaseDir(){
+		char base[512];
+		File.getBaseDirectory(base);
+	 	sprintf(base_dir,"%s/Textures/Plants/Leaf",base);
+	  	cout<<"leaf base dir="<<base_dir<<endl;
+	}
+};
+extern LeafImageMgr leaf_mgr;
+
 class PlantMgr : public PlacementMgr
 {
 protected:
@@ -234,14 +250,14 @@ public:
 	TNcolor* getColor();
 	void setColorFlags();
 	void invalidateTexture();
-	void setImage(char *);
-	char *getImageName(){return texname;}
-	void getImageFilePath(char*name,int dim,char *dir);
+	void setPlantImage(char *);
+	char *getPlantImageName(){return texname;}
 	
+	virtual void getPlantFilePath(char*name,int dim,char *dir);	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual Point setVector(Point vec, Point start, int lvl);
-	virtual void getImageDir(int dim,char *);
+	virtual void getPlantImageDir(int dim,char *);
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
@@ -286,7 +302,7 @@ public:
 	static void sort() { leafs.sort();}	
 	static ValueList<LeafData*> leafs;
 	
-	void getImageDir(int dim,char *);
+	void getPlantImageDir(int dim,char *);
 	virtual Point setVector(Point vec, Point start, int lvl);
 
 };

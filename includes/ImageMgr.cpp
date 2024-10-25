@@ -1549,3 +1549,44 @@ void ImageReader::save(char *f, Image *image)
 	   File.deleteFile(path);
 }
 
+void ImageInfo::setImage(char *name){
+	if(strcmp(name,image_file)){
+		setImageName(name);
+		char path[512];
+		if(getImageFilePath(image_file,path)){
+			delete image;
+			image=images.open(image_file,path);
+			if(image){
+				cout<<"image found:"<<path<<endl;
+			}
+		}
+	}
+}
+bool ImageInfo::getImageFilePath(char*name,char *dir){
+	if(image_mgr==0)
+		return false;
+	image_rows=0;
+	image_cols=0;
+	image_dir[0]=0;
+	char dimdir[32];
+	char base[256];
+	char sdir[32];
+	char path[512];
+	path[0]=0;
+
+	uint rows=0;
+	uint cols=0;
+	for(int i=0;i<image_mgr->image_dirs.size;i++){
+		strcpy(sdir,image_mgr->image_dirs[i]->name());
+		getImageDims(sdir,cols,rows);
+		sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
+		sprintf(path,"%s.png",dir);
+		if(FileUtil::fileExists(path)){
+			strcpy(image_dir,sdir);
+			image_rows=rows;
+			image_cols=cols;
+			return true;
+		}
+	}
+	return false;
+}
