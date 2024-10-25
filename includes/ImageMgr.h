@@ -329,10 +329,14 @@ public:
 		return image_mgr->getImageBaseDir();
 	}
 	void getImageDirPath(char *dir,char *path){
-		sprintf(path,"%s/%s",getBaseDir(),dir);
+		if(dir)
+			sprintf(path,"%s/%s",getBaseDir(),dir);
+		else
+			sprintf(path,"%s",getBaseDir());		
 	}
 	char *getImageFile() { return image_file;}
 	char *getImageDir()  { return image_dir;}
+	bool imageFileExists(char *name,char *base);
 
 };
 

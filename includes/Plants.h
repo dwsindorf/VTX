@@ -74,6 +74,21 @@ public:
 };
 extern LeafImageMgr leaf_mgr;
 
+class BranchImageMgr : public ImageMgr
+{
+public:
+	BranchImageMgr() : ImageMgr(){
+		setImageBaseDir();
+		getImageDirs();
+	}
+	void setImageBaseDir(){
+		char base[512];
+		File.getBaseDirectory(base);
+	 	sprintf(base_dir,"%s/Textures/Plants/Branch",base);
+	  	cout<<"branch base dir="<<base_dir<<endl;
+	}
+};
+extern BranchImageMgr branch_mgr;
 class PlantMgr : public PlacementMgr
 {
 protected:
@@ -169,7 +184,7 @@ public:
 //************************************************************
 // Class TNBranch
 //************************************************************
-class TNBranch : public TNbase
+class TNBranch : public TNbase, public ImageInfo
 {
 protected:
 	enum flags{
@@ -203,13 +218,13 @@ public:
 	int color_flags;
 	bool alpha_texture;
 
-	Image *image;
+	//Image *image;
 	TNplant *root;
 	TNcolor *color;
 	
 	int instance;
 
-	char texname[256];
+	//char texname[256];
 	char colorexpr[256];
 		
 	TNBranch(TNode *l, TNode *r, TNode *b);
@@ -251,13 +266,10 @@ public:
 	void setColorFlags();
 	void invalidateTexture();
 	void setPlantImage(char *);
-	char *getPlantImageName(){return texname;}
 	
-	virtual void getPlantFilePath(char*name,int dim,char *dir);	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual Point setVector(Point vec, Point start, int lvl);
-	virtual void getPlantImageDir(int dim,char *);
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
@@ -279,6 +291,7 @@ public:
 	double distance();
 	double value() { return distance();}
 	void render();
+
 };
 
 class TNLeaf : public TNBranch
@@ -302,8 +315,9 @@ public:
 	static void sort() { leafs.sort();}	
 	static ValueList<LeafData*> leafs;
 	
-	void getPlantImageDir(int dim,char *);
-	virtual Point setVector(Point vec, Point start, int lvl);
+	//void getPlantImageDir(int dim,char *);
+	Point setVector(Point vec, Point start, int lvl);
+	//char *getPlantImageName();
 
 };
 

@@ -33,15 +33,14 @@ protected:
     
     wxString exprString();
 
-	wxChoice *sprites_dim;
 	wxString sprites_file;
 	wxString sprites_dir;
 	wxArrayString files;
-	wxChoice *choices;
+	wxChoice *m_dim_choice;
+	wxChoice *m_file_choice;
 	wxChoice *select;
 	VtxBitmapPanel *image_window;
 	wxStaticBoxSizer *image_sizer;
-	wxString image_path;
 	VtxBitmapPanel *cell_window;
 	
 	wxChoice *m_orders;
@@ -60,6 +59,7 @@ protected:
 	uint image_cols;
 	uint image_center;
 	wxString image_name;
+	wxString image_path;
 public:
 	VtxSpritesTabs(wxWindow* parent,
 			wxWindowID id,

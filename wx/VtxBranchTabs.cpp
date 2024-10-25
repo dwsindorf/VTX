@@ -387,7 +387,7 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 }
 void VtxBranchTabs::makeFileList(wxString name){
 	char sdir[512];
- 	object()->getPlantImageDir(0,sdir);
+ 	object()->getImageDirPath(0,sdir);
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
@@ -426,7 +426,9 @@ void VtxBranchTabs::setImagePanel(){
 	char path[512];
 	char sdir[512]={0};
 
-	object()->getPlantFilePath((char*)image_name.ToAscii(),0,dir);
+	//object()->getPlantFilePath((char*)image_name.ToAscii(),0,dir);
+	object()->getImageFilePath((char*)image_name.ToAscii(),dir);
+
 	sprintf(path,"%s.jpg",dir);
 	if(FileUtil::fileExists(path)){
 		strcpy(sdir,path);
@@ -562,7 +564,7 @@ void VtxBranchTabs::getObjAttributes(){
 	FirstBiasSlider->setValue(obj->first_bias);
 	OffsetSlider->setValue(obj->offset);
 
-	image_name=obj->getPlantImageName();
+	image_name=obj->getImageFile();
 	makeFileList(image_name);
 	setImagePanel();
 	

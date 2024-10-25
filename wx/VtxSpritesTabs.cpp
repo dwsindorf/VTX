@@ -215,10 +215,10 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 	//hline->AddSpacer(5);
 
-    choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
-    choices->SetSelection(0);
+    m_file_choice=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    m_file_choice->SetSelection(0);
 
-	hline->Add(choices,0,wxALIGN_LEFT|wxALL,1);
+	hline->Add(m_file_choice,0,wxALIGN_LEFT|wxALL,1);
     //int num_dirs=SpriteMgr::sprite_dirs.size;
 	int num_dirs=sprites_mgr.image_dirs.size;
 	//cout<<"VtxSpritesTabs num sprites="<<num_dirs<<endl;
@@ -228,9 +228,9 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 		offsets[i]=sprites_mgr.image_dirs[i]->name();
 	}
 
-	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
-	sprites_dim->SetSelection(1);
-	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
+	m_dim_choice=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
+	m_dim_choice->SetSelection(1);
+	hline->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,0);
 
 	lbl=new wxStaticText(panel,-1,"Center",wxDefaultPosition,wxSize(40,-1));
 	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
@@ -303,8 +303,8 @@ void VtxSpritesTabs::setImagePanel(){
 
 void VtxSpritesTabs::setViewPanel(){
 	if(image_window->imageOk()&&changed_cell_expr){
-		GLuint sel=sprites_dim->GetSelection();
-		wxString str=sprites_dim->GetString(sel);
+		GLuint sel=m_dim_choice->GetSelection();
+		wxString str=m_dim_choice->GetString(sel);
 		uint rows;
 		uint cols;
 		object()->getImageDims((char*)str.ToAscii(),cols,rows);
@@ -316,18 +316,15 @@ void VtxSpritesTabs::setViewPanel(){
 		wxRect r(x,y,cols,rows);
 		cell_window->setSubImage(r,wxBITMAP_TYPE_PNG);
 		cell_window->scaleImage();
-		//cout<<"setting type panel:"<<cell_window->getName()<<endl;
 
 		changed_cell_expr=false;
-		//setObjAttributes();
 	}
 }
 void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
-	int dim=sprites_dim->GetSelection();
-	wxString str=sprites_dim->GetString(dim);
+	int dim=m_dim_choice->GetSelection();
+	wxString str=m_dim_choice->GetString(dim);
 	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
 	
-	//cout<<"VtxSpritesTabs::OnDimSelect "<<image_rows*image_cols<<" "<<str<<endl;
 	int n=image_rows*image_cols;
 	makeFileList(str,"");
 	select->Set(n,selections);
@@ -340,7 +337,6 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
 	char *wstr=(char*)wdir.ToAscii();
 	object()->getImageDirPath(wstr,sdir);
-    //cout<<"VtxSpritesTabs::makeFileList "<<wstr<<":::"<<name<<" dir:"<<sdir<<endl;
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
@@ -352,8 +348,8 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
  	image_name=name;
  	uint rows=0;
  	uint cols=0;
- 	int dim=sprites_dim->GetSelection();
- 	wxString str=sprites_dim->GetString(dim);
+ 	int dim=m_dim_choice->GetSelection();
+ 	wxString str=m_dim_choice->GetString(dim);
  	object()->getImageDims((char*)str.ToAscii(),cols,rows);
  	
  	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
@@ -366,22 +362,20 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 			cont = dir.GetNext(&filename);
 		}
 		files.Sort();
-		choices->Clear();
-		choices->Append(files);
+		m_file_choice->Clear();
+		m_file_choice->Append(files);
 		image_dim=dim;
 		image_rows=rows;
 		image_cols=cols;
 		int n=image_rows*image_cols;
 		select->Set(n,selections);
 		if(image_name.IsEmpty())
-			choices->SetSelection(0);
-		//update_needed=true;
+			m_file_choice->SetSelection(0);
  	}
  	if(image_name.IsEmpty())
- 		image_name=choices->GetStringSelection();
- 	//sceneDialog->setNodeName((char*)image_name.ToAscii());
+ 		image_name=m_file_choice->GetStringSelection();
  	sprites_file=image_name;
- 	choices->SetStringSelection(sprites_file);
+ 	m_file_choice->SetStringSelection(sprites_file);
 }
 
 void VtxSpritesTabs::OnChangedLevels(wxCommandEvent& event){
@@ -412,29 +406,26 @@ wxString VtxSpritesTabs::exprString(){
 void VtxSpritesTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
-	//cout<<"VtxSpritesTabs::getObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<<endl;
 	update_needed=false;
 
 	TNsprite *obj=object();
 	SpriteMgr *mgr=(SpriteMgr*)obj->mgr;
 
-	//uint rows=0;
-	//uint cols=0;
 	obj->getImageDims(image_cols,image_rows);
 	sprites_file=obj->getImageFile();
 	sprites_dir=obj->getImageDir();
 	
-	int ns=sprites_dim->FindString(sprites_dir, false);
-	cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<image_rows<<"x"<<image_cols<<endl;
-	sprites_dim->SetSelection(ns);
+	int ns=m_dim_choice->FindString(sprites_dir, false);
+	cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<image_cols<<"x"<<image_rows<<endl;
+	m_dim_choice->SetSelection(ns);
 	
 	makeFileList(sprites_dir,sprites_file);
 	
 	int id=obj->get_id();
-	//cout<<id<<endl;
+
 	select->SetSelection(id);
 	
-	choices->SetStringSelection(sprites_file);
+	m_file_choice->SetStringSelection(sprites_file);
 	setImagePanel();
 	setViewPanel();
 	
@@ -487,12 +478,10 @@ void VtxSpritesTabs::getObjAttributes(){
 		SelBiasSlider->setValue(mgr->select_bias);
 
 	wxString s=exprString();
-	//cout<<"get:"<<s.ToAscii()<<endl;
 }
 
 void VtxSpritesTabs::setObjAttributes(){
-	//cout<<"VtxSpritesTabs::setObjAttributes file:"<<sprites_file<<" update_needed:"<<update_needed<< endl;
-	wxString str=choices->GetStringSelection();
+	wxString str=m_file_choice->GetStringSelection();
 	if(str!=wxEmptyString){
 		object()->setSpritesImage((char*)str.ToAscii());
 		setImagePanel();
@@ -502,8 +491,6 @@ void VtxSpritesTabs::setObjAttributes(){
 	SpriteMgr *smgr=(SpriteMgr*)obj->mgr;
 
 	wxString s=exprString();
-
-	//cout<<"set:"<<s.ToAscii()<<endl;
 
 	obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
@@ -515,7 +502,6 @@ void VtxSpritesTabs::setObjAttributes(){
 }
 
 void VtxSpritesTabs::updateControls(){
-	//cout<<"VtxSpritesTabs::updateControls "<<update_needed<<endl;
 	if(update_needed){
 		getObjAttributes();
 	}
@@ -524,7 +510,7 @@ void VtxSpritesTabs::updateControls(){
 void VtxSpritesTabs::OnChangedFile(wxCommandEvent& event){
 	changed_cell_expr=true;
 	image_path="";
-	image_name=choices->GetStringSelection();
+	image_name=m_file_choice->GetStringSelection();
 	invalidateObject();
 		
 }

@@ -48,6 +48,8 @@ enum{
     ID_RAND_SLDR,
     ID_RAND_TEXT,
 	ID_FILELIST,
+	ID_DIMLIST,
+
     ID_RED,
     ID_GREEN,
     ID_BLUE,
@@ -82,6 +84,7 @@ EVT_CHECKBOX(ID_COL_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_SHAPE_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_SHADOW_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHOICE(ID_FILELIST,VtxLeafTabs::OnChangedFile)
+EVT_CHOICE(ID_DIMLIST,VtxLeafTabs::OnDimSelect)
 
 EVT_CHOICE(ID_SEGS,VtxLeafTabs::OnChanged)
 EVT_CHOICE(ID_SECS,VtxLeafTabs::OnChanged)
@@ -128,6 +131,13 @@ bool VtxLeafTabs::Create(wxWindow* parent,
 {
     if (!VtxTabsMgr::Create(parent, id, pos, size,  style,name))
         return false;
+    image_path="";
+    image_dim=0;
+    image_center=0;
+    image_rows=0;
+    image_cols=0;
+    image_name="";
+
  	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
  	AddPropertiesTab(page);
     AddPage(page,wxT("Properties"),true);
@@ -291,10 +301,22 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
 	image_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 	//hline->AddSpacer(5);
 
-    choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
-    choices->SetSelection(0);
+    m_file_choice=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    m_file_choice->SetSelection(0);
+    image_cntrls->Add(m_file_choice,0,wxALIGN_LEFT|wxALL,1);
+    
+    int num_dirs=leaf_mgr.image_dirs.size;
+    
+	wxString offsets[num_dirs];
+	for(int i=i;i<num_dirs;i++){
+		offsets[i]=leaf_mgr.image_dirs[i]->name();
+	}
 
-    image_cntrls->Add(choices,0,wxALIGN_LEFT|wxALL,1);
+    m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
+    m_dim_choice->SetSelection(0);
+    image_cntrls->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,1);
+
+
     
     m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Texture");
     m_tex_enable->SetValue(true);
@@ -368,36 +390,63 @@ void VtxLeafTabs::AddColorTab(wxWindow *panel){
 	//m_revert->Enable(revert_needed);
 
 }
-void VtxLeafTabs::makeFileList(wxString name){
+
+void VtxLeafTabs::OnDimSelect(wxCommandEvent& event){
+	int dim=m_dim_choice->GetSelection();
+	wxString str=m_dim_choice->GetString(dim);
+	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
+	
+	int n=image_rows*image_cols;
+	makeFileList(str,"");
+	//select->Set(n,selections);
+	update_needed=true;
+	//select->SetSelection(0);
+	setObjAttributes();
+}
+
+void VtxLeafTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
- 	object()->getPlantImageDir(0,sdir);
+	char *wstr=(char*)wdir.ToAscii();
+	object()->getImageDirPath(wstr,sdir);
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
  	{
  	    // deal with the error here - wxDir would already log an error message
  	    // explaining the exact reason of the failure
+ 		cout<<"makeFileList error"<<sdir<<endl;
  	    return;
  	}
  	image_name=name;
-	files.Clear();
-	wxString filename;
-	bool cont = dir.GetFirst(&filename);
-	while ( cont ) {
-		filename=filename.Before('.');
-		files.Add(filename);
-		cont = dir.GetNext(&filename);
-		//cout<<filename<<endl;
-	}
-	files.Sort();
-	choices->Clear();
-	choices->Append(files);
-	if(image_name.IsEmpty())
-		choices->SetSelection(0);
-
+ 	uint rows=0;
+ 	uint cols=0;
+ 	int dim=m_dim_choice->GetSelection();
+ 	wxString str=m_dim_choice->GetString(dim);
+ 	object()->getImageDims((char*)str.ToAscii(),cols,rows);
+ 	
+ 	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
+		files.Clear();
+		wxString filename;
+		bool cont = dir.GetFirst(&filename);
+		while ( cont ) {
+			filename=filename.Before('.');
+			files.Add(filename);
+			cont = dir.GetNext(&filename);
+		}
+		files.Sort();
+		m_file_choice->Clear();
+		m_file_choice->Append(files);
+		image_dim=dim;
+		image_rows=rows;
+		image_cols=cols;
+		int n=image_rows*image_cols;
+		//select->Set(n,selections);
+		if(image_name.IsEmpty())
+			m_file_choice->SetSelection(0);
+ 	}
  	if(image_name.IsEmpty())
- 		image_name=choices->GetStringSelection();
-  	choices->SetStringSelection(image_name);
+ 		image_name=m_file_choice->GetStringSelection();
+ 	m_file_choice->SetStringSelection(image_name);
 
 }
 
@@ -409,7 +458,8 @@ void VtxLeafTabs::setImagePanel(){
 	char path[512];
 	char sdir[512]={0};
 
-	object()->getPlantFilePath((char*)image_name.ToAscii(),0,dir);
+	object()->getImageFilePath((char*)image_name.ToAscii(),dir);
+
 	sprintf(path,"%s.jpg",dir);
 	if(FileUtil::fileExists(path)){
 		strcpy(sdir,path);
@@ -493,7 +543,7 @@ void VtxLeafTabs::setObjAttributes(){
 
 	wxString s=exprString();
 
-	wxString str=choices->GetStringSelection();
+	wxString str=m_file_choice->GetStringSelection();
 	image_name=str;
 	obj->setPlantImage((char*)image_name.ToAscii());
 	setImagePanel();
@@ -507,7 +557,6 @@ void VtxLeafTabs::setObjAttributes(){
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
-	//cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
 	obj->initArgs();
 
 	TheView->set_changed_detail();
@@ -527,6 +576,12 @@ void VtxLeafTabs::getObjAttributes(){
 	obj->initArgs();
 
 	object_name->SetValue(obj->nodeName());
+	image_name=obj->getImageFile();
+	image_dir=obj->getImageDir();
+	//obj->getImageDims(image_cols,image_rows);
+	
+	//int ns=m_dim_choice->FindString(image_dir, false);
+	//cout<<ns<<" "<<image_dir<<"/"<<image_name<<" "<<image_cols<<"x"<<image_rows<<endl;
 	
 	m_segs->SetSelection(obj->max_level-1);
 
@@ -540,8 +595,7 @@ void VtxLeafTabs::getObjAttributes(){
 	LengthTaperSlider->setValue(obj->length_taper);
 	m_secs->SetSelection(obj->first_bias);
 
-	image_name=obj->getPlantImageName();
-	makeFileList(image_name);
+	makeFileList(image_dir,image_name);
 	setImagePanel();
 	
 	TNcolor *tnode=obj->getColor();

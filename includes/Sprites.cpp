@@ -124,10 +124,13 @@ static int          scnt;
 //ValueList<FileData*> SpriteImageMgr::sprite_dirs;
 
 void SpriteImageMgr::setImageBaseDir(){
-	char base[512];
+	static char base[512];
+	static char dir[512];
 	File.getBaseDirectory(base);
- 	sprintf(base_dir,"%s/Textures/Sprites",base);
-  	cout<<"sprite base dir="<<base_dir<<endl;
+ 	sprintf(dir,"%s/Textures/Sprites",base);
+ 	//MALLOC(strlen(dir),char,base_dir);
+ 	strcpy(base_dir,dir);
+ 	cout<<"base dir="<<dir<<endl;
 }
 
 SpriteImageMgr sprites_mgr; // global image manager
@@ -716,7 +719,6 @@ void TNsprite::init()
 	if(right)
     	right->init();
 
-	//cout<<"TNsprite::init"<<endl;
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 	char *file=getImageFile();
 	if(!image){
@@ -922,6 +924,7 @@ void TNsprite::saveNode(FILE *f)
 	fprintf(f,"%s",buff);
 }
 
+#define USE_IMGR
 //-------------------------------------------------------------
 // TNinode::setName() set name
 //-------------------------------------------------------------

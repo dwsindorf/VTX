@@ -13,18 +13,11 @@ class VtxLeafTabs : public VtxTabsMgr
 	DECLARE_CLASS(VtxLeafTabs)
 
 protected:
-	wxString image_name;
-	wxArrayString files;
-	VtxBitmapPanel *image_window;
-	wxStaticBoxSizer *image_sizer;
-	wxString image_path;
-
-
 	TNLeaf *object() 	{ return (TNLeaf *)object_node->node;}
 	void AddPropertiesTab(wxWindow *panel);
 	void AddImageTab(wxWindow *panel);
 	void AddColorTab(wxWindow *panel);
-	void makeFileList(wxString);
+	void makeFileList(wxString,wxString);
 	void setImagePanel();
     void invalidateObject(){
     	object()->invalidate();
@@ -33,8 +26,12 @@ protected:
     }
 	void getObjAttributes();
 	void setObjAttributes();
-	
+	void OnDimSelect(wxCommandEvent& event);
     void OnChangedFile(wxCommandEvent& event);
+
+	wxArrayString files;
+	VtxBitmapPanel *image_window;
+	wxStaticBoxSizer *image_sizer;
 
 	wxChoice *m_segs;
 	wxChoice *m_secs;
@@ -53,7 +50,8 @@ protected:
 	wxCheckBox *m_col_enable;
 	wxCheckBox *m_shadow_enable;
 	wxCheckBox *m_shape_enable;
-	wxChoice *choices;
+	wxChoice   *m_file_choice;
+	wxChoice   *m_dim_choice;
 	
 	ExprTextCtrl *m_r_expr;
 	ExprTextCtrl *m_g_expr;
@@ -71,6 +69,14 @@ protected:
 
 	void saveLastExpr();
 	void restoreLastExpr();
+	
+	uint image_dim;
+	uint image_rows;
+	uint image_cols;
+	uint image_center;
+	wxString image_name;
+	wxString image_dir;
+	wxString image_path;
 
 public:
 	VtxLeafTabs(wxWindow* parent,

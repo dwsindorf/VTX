@@ -225,8 +225,8 @@ static SData   sdata[SDATA_SIZE];
 static ValueList<SData*> slist(sdata,SDATA_SIZE);
 static int          scnt;
 
-//LeafImageMgr leaf_mgr; // global image manager
-
+LeafImageMgr leaf_mgr; // global image manager
+BranchImageMgr branch_mgr; // global image manager
 //************************************************************
 // PlantMgr class
 //************************************************************
@@ -1243,6 +1243,7 @@ bool TNplant::setProgram(){
 
 TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 {
+	setImageMgr(&branch_mgr);
 	set_collapsed();
 	TNarg *arg=left;
 	TNarg *node=arg->left;
@@ -1271,7 +1272,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	offset=1;
 	root=0;
 	image=0;
-	texname[0]=0;
+	image_file[0]=0;
 	colorexpr[0]=0;
 	texture_id=0;
 	texid=-1;
@@ -1280,7 +1281,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	color=0;
 	enables=flags::ALL;
 	alpha_texture=false;
-	getTextureName();
+	//getTextureName();
 	getColorString();
 	setEnabled(true);
 }
@@ -1290,6 +1291,7 @@ void TNBranch::init(){
 	if(!left)
 		return;
 	INIT;
+	getTextureName();
 	initArgs();
 	
 	root=getRoot();
@@ -1346,7 +1348,7 @@ bool TNBranch::setProgram(){
 	if(texture_id==0){
 		bool rgba_image=(image->gltype()==GL_RGBA)?true:false;
 		alpha_texture=image->alpha_image();
-		//wcout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
+		//cout<<"rgba_image="<<rgba_image<<" alpha_image="<<alpha_texture<<endl;
 
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
 		glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1365,7 +1367,7 @@ bool TNBranch::setProgram(){
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 		
-		//cout<<"generating texture "<<texname<<" "<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<" w:"<<w<<" h:"<<h<<endl;
+		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
 
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -1377,12 +1379,9 @@ bool TNBranch::setProgram(){
 // TNBranch::setImage(char *name) set image texture
 //-------------------------------------------------------------
 void TNBranch::setPlantImage(char *name){
-	if(strcmp(name,texname)){
-		strcpy(texname,name);				
-		Image *simage=images.load(texname,BMP|JPG);
-		image=simage;
+	setImage(name);
+	if(image)
 		invalidateTexture();
-	}
 }
 void TNBranch::setColorFromExpr(){
 	if(color){
@@ -1409,16 +1408,11 @@ TNcolor* TNBranch::getColor(){
 	return color;
 }
 
-void TNBranch::getPlantImageDir(int dim,char *dir){
-	char base[256];
-  	File.getBaseDirectory(base);
- 	sprintf(dir,"%s/Textures/Plants/Branch",base);
-}
-void TNBranch::getPlantFilePath(char* name,int dim,char *dir){
-	char dimdir[512];
-	getPlantImageDir(dim,dimdir);
-  	sprintf(dir,"%s/%s",dimdir,name);
-}
+//void TNBranch::getPlantFilePath(char* name,int dim,char *dir){
+//	char dimdir[512];
+//	getPlantImageDir(dim,dimdir);
+//  	sprintf(dir,"%s/%s",dimdir,name);
+//}
 void TNBranch::getTextureName(){
 	if(base){
 		TNarg *arg=((TNarg *)base);
@@ -1925,10 +1919,10 @@ void TNBranch::save(FILE *f){
 		left->save(f);
 	}
 	fprintf(f,")");
-	if((strlen(texname)) ||(strlen(colorexpr))){
+	if((strlen(image_file)) ||(strlen(colorexpr))){
 		fprintf(f,"[");
-		if(strlen(texname)){
-			fprintf(f,"\"%s\"",texname);
+		if(strlen(image_file)){
+			fprintf(f,"\"%s\"",image_file);
 			if(strlen(colorexpr))
 				fprintf(f,",");				
 		}
@@ -1946,10 +1940,10 @@ void TNBranch::saveNode(FILE *f){
 	if(left)
 		left->save(f);
 	fprintf(f,")");
-	if(strlen(texname) ||(strlen(colorexpr))){
+	if(strlen(image_file) ||(strlen(colorexpr))){
 		fprintf(f,"[");
-		if(strlen(texname)){
-			fprintf(f,"\"%s\"",texname);
+		if(strlen(image_file)){
+			fprintf(f,"\"%s\"",image_file);
 			if(strlen(colorexpr))
 				fprintf(f,",");				
 		}
@@ -1991,6 +1985,7 @@ void TNBranch::eval(){
 int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
+
 //===================== TNleaf ==============================
 //************************************************************
 // TNLeaf class
@@ -2019,7 +2014,7 @@ void  LeafData::render(){
 bool TNLeaf::collect_mode=true;
 int TNLeaf::left_side=0;
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
-	//setImageMgr(&leaf_mgr);
+	setImageMgr(&leaf_mgr);
 	width_taper=0.8;
 	length_taper=1;
 	min_level=-1;
@@ -2035,11 +2030,7 @@ void TNLeaf::render(){
 	}
 	glEnable(GL_CULL_FACE);
 }
-void TNLeaf::getPlantImageDir(int dim,char *dir){
-	char base[256];
-  	File.getBaseDirectory(base);
- 	sprintf(dir,"%s/Textures/Plants/Leaf",base);
-}
+
 
 Point TNLeaf::setVector(Point vec, Point start, int lvl){
 	Point v = vec.normalize();

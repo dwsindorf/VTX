@@ -1554,7 +1554,8 @@ void ImageInfo::setImage(char *name){
 		setImageName(name);
 		char path[512];
 		if(getImageFilePath(image_file,path)){
-			delete image;
+			if(image)
+				delete image;
 			image=images.open(image_file,path);
 			if(image){
 				cout<<"image found:"<<path<<endl;
@@ -1562,29 +1563,51 @@ void ImageInfo::setImage(char *name){
 		}
 	}
 }
-bool ImageInfo::getImageFilePath(char*name,char *dir){
+bool ImageInfo::imageFileExists(char*name,char *basedir){
+	char dir[512];
+	sprintf(dir,"%s/%s.png",basedir,name);
+	if(FileUtil::fileExists(dir))
+		return true;
+	sprintf(dir,"%s/%s.jpg",basedir,name);
+	if(FileUtil::fileExists(dir))
+		return true;
+	sprintf(dir,"%s/%s.bmp",basedir,name);
+	if(FileUtil::fileExists(dir))
+		return true;
+	return false;
+}
+bool ImageInfo::getImageFilePath(char *name,char *dir){
 	if(image_mgr==0)
 		return false;
-	image_rows=0;
-	image_cols=0;
-	image_dir[0]=0;
+	image_rows=1;
+	image_cols=1;
+	image_dir[0]=0; //subdir
 	char dimdir[32];
-	char base[256];
-	char sdir[32];
+	char base[256]; // basedir
+	char sdir[32];  // subdir
 	char path[512];
-	path[0]=0;
 
+	path[0]=0;
+	if(image_mgr->image_dirs.size==0){
+		sprintf(path,"%s",getBaseDir());
+		if(imageFileExists(name,getBaseDir())){
+			sprintf(dir,"%s/%s",path,name);
+			return true;
+		}
+		else
+			return false;
+	}
 	uint rows=0;
 	uint cols=0;
 	for(int i=0;i<image_mgr->image_dirs.size;i++){
 		strcpy(sdir,image_mgr->image_dirs[i]->name());
-		getImageDims(sdir,cols,rows);
-		sprintf(dir,"%s/%s/%s",getBaseDir(),sdir,name);
-		sprintf(path,"%s.png",dir);
-		if(FileUtil::fileExists(path)){
+		sprintf(path,"%s/%s",getBaseDir(),sdir);
+		if(imageFileExists(name,path)){
 			strcpy(image_dir,sdir);
+			getImageDims(sdir,cols,rows);
 			image_rows=rows;
 			image_cols=cols;
+			sprintf(dir,"%s/%s",path,name);
 			return true;
 		}
 	}
