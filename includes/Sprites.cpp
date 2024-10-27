@@ -308,7 +308,6 @@ bool SpriteMgr::setProgram(){
 	
 	glBegin(GL_POINTS);
 	
-	// render the sprites
 	int n=Sprite::sprites.size;
 	int flip=0;
 	for(int i=n-1;i>=0;i--){
@@ -350,16 +349,10 @@ bool SpriteMgr::setProgram(){
 		int sx=sel-sy*rows;
 		
 		sy=rows-sy-1; // invert y
-	    
-	    //int y1=sel/dim;
-	    //int sy=dim-y1-1.0;
-	    //int sx=sel-dim*y1;//+0.1;
-	    
+	    	    
 	   // cout<<"rows:"<<rows<<" cols:"<<cols<<" sel:"<<(int)sel<<" sy:"<<sy<<" sx:"<<sx<<" sb:"<<sb<<endl;
     
 	    //cout<<(int)sid<<" "<<(int)sel<<" "<<r<<" "<<sb<<endl;
-        //double fx=((double)sx)/dim;
-       // double fy=((double)sy)/dim;
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
 		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
 		

@@ -38,9 +38,26 @@ varying vec4 Color;
 varying vec4 Pnorm;
 varying vec3 Normal;
 varying vec4 TexVars;
+varying vec4 ImageVars;
 
 vec3 test;
 
+vec2 sprite(vec2 l_uv){
+    
+    float cols=ImageVars.x;  
+    float rows=ImageVars.y;
+    float index=ImageVars.z;
+     
+    vec2 scale=vec2(cols,rows);
+         
+    float x=ImageVars.z;
+    float y=ImageVars.w;
+	vec2 pt3=l_uv+vec2(x,y);
+	
+	pt3/=scale;
+    	
+	return pt3;
+}
 #define AVE(v) (v.x+v.y+v.z)
 vec3 getNormal(float nscale){
 	vec3 bn=gl_NormalMatrix*nscale*Pnorm.xyz;
@@ -51,7 +68,7 @@ vec3 getNormal(float nscale){
 #ifdef BUMPS
     float bump_ampl=Pnorm.w;
 	float delta=bump_delta;
-	vec2 l_uv=gl_TexCoord[0].xy;
+	vec2 l_uv=sprite(gl_TexCoord[0].xy);
 	vec4 tval=texture2D(samplers2d[texid],l_uv);
 	float tva=AVE(tval);
 	vec2 ds=vec2(l_uv.x+delta,l_uv.y);
@@ -103,7 +120,7 @@ void main(void) {
 #if NTEXS >0
 	
 	if(texid>=0){
-		vec2 l_uv=gl_TexCoord[0].xy;
+		vec2 l_uv=sprite(gl_TexCoord[0].xy);
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
   		if(copt>0){    // new color = blend color and texture where texture.a >0
   			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); // ncolor=tcolor where tcolor.a>0

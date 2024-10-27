@@ -6,11 +6,13 @@
 varying in vec4 Color_G[];
 varying in vec4 Normal_G[];
 varying in vec4 Constants1[];
+varying in vec4 ImageVars_G[];
 varying in vec4 P0[];
 varying in vec4 TexVars_G[];
 
 varying out vec4 Color;
 varying out vec4 TexVars;
+varying out vec4 ImageVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
 
@@ -418,6 +420,7 @@ void main(void) {
  	Color=Color_G[0];
 	Normal.xyz=Normal_G[0].xyz;
 	TexVars=TexVars_G[0];
+	ImageVars=ImageVars_G[0];
     int mode=TexVars_G[0].w+0.1;
     
     if(mode==LINE)

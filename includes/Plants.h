@@ -282,10 +282,10 @@ public:
 class LeafData
 {
 public:
-	Point data[5];
+	Point4D data[6];
 	Color c;
-	LeafData(Point p0,Point p1,Point p2, Point f, Point d, Color col){
-		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;
+	LeafData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
+		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
 		c=col;
 	}
 	double distance();
@@ -308,8 +308,8 @@ public:
 	char *symbol()		{ return "Leaf";}
 	static bool collect_mode;
 	static void render();	
-	static void collect(Point p0,Point p1,Point p2, Point f, Point d,Color c){
-		leafs.add(new LeafData(p0,p1,p2,f,d,c));
+	static void collect(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+		leafs.add(new LeafData(p0,p1,p2,f,d,s,c));
 	}
 	static void free() { leafs.free();}
 	static void sort() { leafs.sort();}	

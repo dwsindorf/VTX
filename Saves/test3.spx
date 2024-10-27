@@ -54,16 +54,27 @@ Scene() {
 		height=7.40732 ft;
 		tilt=-12;
 		angle=26;
+	}
+	View{
+		tilt=-14;
+		angle=25;
+	}
+	View{
+		phi=0.230743;
+		height=9.06001 ft;
+	}
+	View{
+		height=10.5894 ft;
+		tilt=-17;
+		angle=22;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.0039994;
 	}
 	View{
-		height=7.3613 ft;
-		time=29249.2;
-		tilt=-8;
-		angle=31;
+		height=4.37972 ft;
+		tilt=-6;
 		minr=0.0039994;
 	}
 	Galaxy(20000) {
@@ -126,9 +137,9 @@ Scene() {
 					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
 					terrain=
-							Plant("bush",1,9.4697e-08,1,0.5,0.05,0,0,0,0)
-							Branch("stem",5,1,2,0.26,0,0.11,0,0.73,1,1,0,1)["Cracks1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
-							Leaf("Leaf2",1,1,11.9,0.41,1,0.6,1,0.19,1,0)["barberry-1",Color(1,0.501961,0,0.4)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
+							Plant("bush",1,9.4697e-08,1,0.5,0.03,0,0,0,0)
+							Branch("stem",5,1,2,0.26,0,0.11,0,0.57,0.76,1,0,1,15)["Cracks1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
+							Leaf("leaf",4,1,15,1.7,0,0.51,0.68,0.64,0.66,1,0,0,13)["barberry-4x1",Color(1,0.501961,0,0.4)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
 				}
 				Sky(0.0041) {
 					color=Color(0.4,0.9,1);

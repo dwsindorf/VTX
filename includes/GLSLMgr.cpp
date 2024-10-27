@@ -39,6 +39,7 @@ char 			GLSLMgr::extString2[256]="";
 GLint 			GLSLMgr::TexCoordsID=-1;
 GLint 			GLSLMgr::CommonID1=-1;
 GLint 			GLSLMgr::CommonID2=-1;
+GLint 			GLSLMgr::CommonID3=-1;
 GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
 GLint 			GLSLMgr::position1ID=-1;
@@ -840,6 +841,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 
 	CommonID1=-1;
 	CommonID2=-1;
+	CommonID3=-1;
 
 	program=shaders.inlist(tmp);
 
@@ -906,7 +908,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 void GLSLMgr::setProgram(){
 	GLhandleARB program=programHandle();
  	CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
- 	CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants1
+ 	CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants2
+ 	CommonID3=glGetAttribLocation(program,"CommonAttributes3"); // Constants3
+
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
 	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2

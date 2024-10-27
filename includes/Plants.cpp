@@ -1727,6 +1727,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					double length = pow(length_taper, branch->level);
 					double orientation=flatness+1e-3;
 					// clusters
+					//cout<<"image cols:"<<image_cols<<" rows:"<<image_rows<<endl;
 					for (int i = 0; i < segs; i++) {
 						root->addLeaf(branch_id);
 						double a = i * f + phase;
@@ -1736,11 +1737,19 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 								+ v * v.dot(r) * (1.0 - ca);
 						pr = pr.normalize();
 						p2 = p1 + pr * size * length;
+						int rc=image_cols*image_rows;
+						int sel=0;
+						if(rc>1){
+							sel=URAND*rc;
+							//cout<<sel<<endl;
+						}
+						Point4D sd(image_cols,image_rows,sel,0);
 						if (TNLeaf::collect_mode)
-							TNLeaf::collect(p0, p1, p2,
-									Point(1 - width_taper,width_ratio * size * length, orientation),
-									Point(color_flags, tid, size * length), c);
+							TNLeaf::collect(Point4D(p0), Point4D(p1), Point4D(p2),
+									Point4D(1 - width_taper,width_ratio * size * length/rc, orientation),
+									Point4D(color_flags, tid, size * length), sd,c);
 						else {
+							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * size, orientation, 0); // Constants1		
 							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
@@ -1814,8 +1823,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
-					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,
-							0.02); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,0.02); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID3, 1, 1, 0,0); // Constants2
 
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
@@ -1837,6 +1846,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			} else if (isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+				glVertexAttrib4d(GLSLMgr::CommonID3, 1, 1, 0,0); // Constants2
+
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, bot_offset);
 				glVertex4d(p2.x, p2.y, p2.z, top_offset);
@@ -1999,6 +2010,7 @@ double LeafData::distance() {
 }
 
 void  LeafData::render(){
+	glVertexAttrib4d(GLSLMgr::CommonID3, data[5].x, data[5].y, data[5].z, data[5].w); // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID2, data[0].x, data[0].y, data[0].z, 0); // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[4].z); // taper, compression, width_ratio,size		
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, data[4].x, data[4].y, LEAF_MODE); //0,color_flags,size

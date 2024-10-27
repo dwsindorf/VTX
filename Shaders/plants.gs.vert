@@ -1,11 +1,13 @@
 
 attribute vec4 CommonAttributes1;
 attribute vec4 CommonAttributes2;
+attribute vec4 CommonAttributes3;
 attribute vec4 TextureAttributes;
 
 varying vec4 Normal_G;
 varying vec4 Color_G;
 varying vec4 Constants1;
+varying vec4 ImageVars_G;
 varying vec4 P0;
 varying vec4 TexVars_G;
 
@@ -16,6 +18,7 @@ void main(void) {
 	TexVars_G=TextureAttributes;
     gl_Position=gl_Vertex;
     P0=CommonAttributes2;
+    ImageVars_G=CommonAttributes3;
  	
 }
 

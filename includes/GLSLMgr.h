@@ -83,6 +83,7 @@ public:
 	static GLint TexCoordsID;
 	static GLint CommonID1;
 	static GLint CommonID2;
+	static GLint CommonID3;
 	static GLint attributes3ID;
 	static GLint attributes4ID;
 	static GLint position1ID;
