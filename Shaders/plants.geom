@@ -96,7 +96,7 @@ vec3 OrthoNormalVector(vec3 v) {
   float h = v.z + g;
   return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
 }
-//#define TEST
+
 // draw a leaf
 void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 {   
@@ -151,14 +151,13 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         float t=dt;
 //#define TEST3D
 #ifdef TEST3D
-        int segs = 5;
+        int segs = 3;
+        nodes=5;
 	    float f=1.0 /(segs-1);
         
 		tx = createPerp(p2, p1);
 		ty = cross(v2, tx);
-        segs=4;
-        nodes=5;
-        float ws=0.5;
+         float ws=0.5;
         f=1.0 /(segs);
   		for(int i=0; i<segs; i++) {
 	      float a = i*f;

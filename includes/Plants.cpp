@@ -1742,16 +1742,22 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						if(rc>1){
 							sel=URAND*rc;
 							//cout<<sel<<endl;
+							//sel=0;
 						}
-						Point4D sd(image_cols,image_rows,sel,0);
+						int sy=sel/image_cols;
+						int sx=sel-sy*image_rows;
+						
+						sy=image_rows-sy-1; // invert y
+
+						Point4D sd(image_cols,image_rows,sx,sy);
 						if (TNLeaf::collect_mode)
 							TNLeaf::collect(Point4D(p0), Point4D(p1), Point4D(p2),
-									Point4D(1 - width_taper,width_ratio * size * length/rc, orientation),
+									Point4D(1 - width_taper,width_ratio * size * length/image_cols, orientation),
 									Point4D(color_flags, tid, size * length), sd,c);
 						else {
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
-							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * size, orientation, 0); // Constants1		
+							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * size/image_cols, orientation, 0); // Constants1		
 							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
 							glDisable(GL_CULL_FACE);
 							glPolygonMode(GL_FRONT_AND_BACK, poly_mode);

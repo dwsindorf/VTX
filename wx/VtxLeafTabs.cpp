@@ -200,7 +200,11 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline->Add(m_secs, 0, wxALIGN_LEFT|wxALL, 5);
 	
+	m_shadow_enable=new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
+	m_shadow_enable->SetValue(true);
+	hline->Add(m_shadow_enable, 0, wxALIGN_LEFT|wxALL, 5);
 
+	
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -217,7 +221,7 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	hline->Add(LengthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	LengthTaperSlider=new SliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
-	LengthTaperSlider->setRange(0.1,1);
+	LengthTaperSlider->setRange(0.0,1);
 	LengthTaperSlider->setValue(0.5);
 	hline->Add(LengthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -325,10 +329,6 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     m_shape_enable=new wxCheckBox(panel, ID_SHAPE_ENABLE, "Shape");
     m_shape_enable->SetValue(true);
     image_cntrls->Add(m_shape_enable,0,wxALIGN_LEFT|wxALL,4);
-
-    m_shadow_enable=new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
-    m_shadow_enable->SetValue(true);
-    image_cntrls->Add(m_shadow_enable,0,wxALIGN_LEFT|wxALL,4);
 
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     
@@ -525,7 +525,8 @@ wxString VtxLeafTabs::exprString(){
 	s+=DivergenceSlider->getText()+","; // leaf angle from stem vector
 	s+=FlatnessSlider->getText()+",";   // leaf orientation to eye
 	s+=WidthTaperSlider->getText()+","; // width_taper
-	s+=LengthTaperSlider->getText()+","; // length_taper
+	sprintf(tmp,"%g,",1.0-LengthTaperSlider->getValue());
+	s+=wxString(tmp);
 	cnt = m_secs->GetSelection();
 		sprintf(tmp,"%d,",cnt);
 	s+=wxString(tmp);
@@ -578,9 +579,8 @@ void VtxLeafTabs::getObjAttributes(){
 	object_name->SetValue(obj->nodeName());
 	image_name=obj->getImageFile();
 	image_dir=obj->getImageDir();
-	//obj->getImageDims(image_cols,image_rows);
 	
-	//int ns=m_dim_choice->FindString(image_dir, false);
+	m_dim_choice->SetStringSelection(image_dir);
 	//cout<<ns<<" "<<image_dir<<"/"<<image_name<<" "<<image_cols<<"x"<<image_rows<<endl;
 	
 	m_segs->SetSelection(obj->max_level-1);
@@ -592,7 +592,7 @@ void VtxLeafTabs::getObjAttributes(){
 	DivergenceSlider->setValue(obj->divergence);
 	FlatnessSlider->setValue(obj->flatness);
 	WidthTaperSlider->setValue(obj->width_taper);
-	LengthTaperSlider->setValue(obj->length_taper);
+	LengthTaperSlider->setValue(1.0-obj->length_taper);
 	m_secs->SetSelection(obj->first_bias);
 
 	makeFileList(image_dir,image_name);
