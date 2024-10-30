@@ -18,6 +18,7 @@
 #undef LABEL2
 #define LABEL2 60
 
+static wxString selections[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
 
 //########################### VtxLeafTabs Class ########################
 enum{
@@ -31,6 +32,7 @@ enum{
 	ID_NAME_TEXT,
     ID_SEGS,
     ID_SECS,
+    ID_CENTER,
     ID_DENSITY_SLDR,
     ID_DENSITY_TEXT,
     ID_LENGTH_SLDR,
@@ -287,9 +289,6 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	orientation->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	boxSizer->Add(orientation,0,wxALIGN_LEFT|wxALL,0);
-
-	
-
 }
 
 void VtxLeafTabs::AddImageTab(wxWindow *panel){
@@ -319,10 +318,8 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
     m_dim_choice->SetSelection(0);
     image_cntrls->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,1);
-
-
-    
-    m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Texture");
+ 
+    m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Enable");
     m_tex_enable->SetValue(true);
     image_cntrls->Add(m_tex_enable,0,wxALIGN_LEFT|wxALL,4);
 
@@ -398,9 +395,7 @@ void VtxLeafTabs::OnDimSelect(wxCommandEvent& event){
 	
 	int n=image_rows*image_cols;
 	makeFileList(str,"");
-	//select->Set(n,selections);
 	update_needed=true;
-	//select->SetSelection(0);
 	setObjAttributes();
 }
 
@@ -440,7 +435,6 @@ void VtxLeafTabs::makeFileList(wxString wdir,wxString name){
 		image_rows=rows;
 		image_cols=cols;
 		int n=image_rows*image_cols;
-		//select->Set(n,selections);
 		if(image_name.IsEmpty())
 			m_file_choice->SetSelection(0);
  	}
@@ -525,8 +519,7 @@ wxString VtxLeafTabs::exprString(){
 	s+=DivergenceSlider->getText()+","; // leaf angle from stem vector
 	s+=FlatnessSlider->getText()+",";   // leaf orientation to eye
 	s+=WidthTaperSlider->getText()+","; // width_taper
-	sprintf(tmp,"%g,",1.0-LengthTaperSlider->getValue());
-	s+=wxString(tmp);
+	s+=LengthTaperSlider->getText()+",";
 	cnt = m_secs->GetSelection();
 		sprintf(tmp,"%d,",cnt);
 	s+=wxString(tmp);
@@ -592,10 +585,11 @@ void VtxLeafTabs::getObjAttributes(){
 	DivergenceSlider->setValue(obj->divergence);
 	FlatnessSlider->setValue(obj->flatness);
 	WidthTaperSlider->setValue(obj->width_taper);
-	LengthTaperSlider->setValue(1.0-obj->length_taper);
+	LengthTaperSlider->setValue(obj->length_taper);
 	m_secs->SetSelection(obj->first_bias);
 
 	makeFileList(image_dir,image_name);
+
 	setImagePanel();
 	
 	TNcolor *tnode=obj->getColor();

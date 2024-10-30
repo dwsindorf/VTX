@@ -38,7 +38,7 @@ protected:
 	wxArrayString files;
 	wxChoice *m_dim_choice;
 	wxChoice *m_file_choice;
-	wxChoice *select;
+	wxChoice *m_select;
 	VtxBitmapPanel *image_window;
 	wxStaticBoxSizer *image_sizer;
 	VtxBitmapPanel *cell_window;

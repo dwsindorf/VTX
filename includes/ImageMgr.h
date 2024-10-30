@@ -291,6 +291,7 @@ protected:
 public:
 	uint image_cols;
 	uint image_rows;
+	uint image_center;
 	
 	Image *image;
 
@@ -299,12 +300,15 @@ public:
 		image_dir[0]=0;
 		image_cols=0;
 		image_rows=0;
+		image_center=0;
 		image_mgr=0;
 		image=0;
 	}
 	void setImageName(char *s){
 		strcpy(image_file,s);
 	}
+	int getImageCenter(){return image_center;}
+	void setImageCenter(uint i){image_center=i;}
 	int getImageRows(){return image_rows;}
 	int getImageCols() {return image_cols;}
 	void setImageMgr(ImageMgr *m){image_mgr=m;}

@@ -49,15 +49,45 @@ Scene() {
 	View{
 		tilt=-19;
 		angle=39;
+	}
+	View{
+		height=7.40732 ft;
+		tilt=-12;
+		angle=26;
+	}
+	View{
+		tilt=-14;
+		angle=25;
+	}
+	View{
+		phi=0.230743;
+		height=9.06001 ft;
+	}
+	View{
+		height=10.5894 ft;
+		tilt=-17;
+		angle=22;
+	}
+	View{
+		height=4.37972 ft;
+		tilt=-6;
+	}
+	View{
+		phi=0.230752;
+		height=3 ft;
+		heading=44;
+		tilt=-1;
+		angle=20;
+	}
+	View{
+		heading=29;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.0039994;
 	}
 	View{
-		height=7.40732 ft;
-		tilt=-12;
-		angle=26;
+		heading=27;
 		minr=0.0039994;
 	}
 	Galaxy(20000) {
@@ -120,9 +150,10 @@ Scene() {
 					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
 					terrain=
-							Plant("bush",1,9.4697e-08,1,0.5,0.05,0,0,0,0)
-							Branch("stem",5,1,2,0.26,0,0.11,0,0.57,0.76,1,0)["Cracks1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
-							Leaf("Leaf2",2,1,5,1,0,0.6,0,0.19,1)["Leaf",Color(1,0.501961,0,0.4)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
+							Plant("bush",1,9.4697e-08,1,0.5,0.01,0,0,0,0)
+							Branch("stem",5,2.4,2,0.26,0,0.73,0.06,0.57,0.76,1,0,1,15)["treebark1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
+							Branch("twig",5,1.5,1,1,0.25,0.84,0.17,0.9,0.8,3,0,1,15)["treebark2",Color(0.94902,0.737255,0.301961,1)]
+							Leaf("leaf",1,0.02,0.7,1,0.24,0.25,0.78,0.3,0,0,0,0,13)["leafs-2x2",Color(1,0.501961,0,0.4)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
 				}
 				Sky(0.0041) {
 					color=Color(0.4,0.9,1);

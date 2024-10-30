@@ -22,7 +22,7 @@
 
 //extern VtxSceneDialog *sceneDialog;
 
-wxString selections[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+static wxString selections[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
 
 //########################### VtxSpritesTabs Class ########################
 
@@ -235,10 +235,10 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	lbl=new wxStaticText(panel,-1,"Center",wxDefaultPosition,wxSize(40,-1));
 	hline->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 
-	select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(40,-1),2, selections);
-	select->SetSelection(0);
+	m_select=new wxChoice(panel, ID_SPRITES_VIEW, wxDefaultPosition,wxSize(40,-1),2, selections);
+	m_select->SetSelection(0);
 
-	hline->Add(select,0,wxALIGN_LEFT|wxALL,1);
+	hline->Add(m_select,0,wxALIGN_LEFT|wxALL,1);
 	
 	SelBiasSlider=new ExprSliderCtrl(panel,ID_SEL_BIAS_SLDR,"Bias",30,40,SLIDER2);
 	SelBiasSlider->setRange(0,1);
@@ -308,7 +308,7 @@ void VtxSpritesTabs::setViewPanel(){
 		uint rows;
 		uint cols;
 		object()->getImageDims((char*)str.ToAscii(),cols,rows);
-		int cell=select->GetCurrentSelection();
+		int cell=m_select->GetCurrentSelection();
 		int y=cell/cols;
 		int x=cell-y*rows;
 		cout<<str<<" cols:"<<cols<<" rows:"<<rows<<" cell:"<<cell<<" x:"<<x<<" y:"<<y<<endl;
@@ -327,9 +327,9 @@ void VtxSpritesTabs::OnDimSelect(wxCommandEvent& event){
 	
 	int n=image_rows*image_cols;
 	makeFileList(str,"");
-	select->Set(n,selections);
+	m_select->Set(n,selections);
 	update_needed=true;
-	select->SetSelection(0);
+	m_select->SetSelection(0);
 	setObjAttributes();
 }
 
@@ -368,7 +368,7 @@ void VtxSpritesTabs::makeFileList(wxString wdir,wxString name){
 		image_rows=rows;
 		image_cols=cols;
 		int n=image_rows*image_cols;
-		select->Set(n,selections);
+		m_select->Set(n,selections);
 		if(image_name.IsEmpty())
 			m_file_choice->SetSelection(0);
  	}
@@ -385,7 +385,7 @@ void VtxSpritesTabs::OnChangedLevels(wxCommandEvent& event){
 wxString VtxSpritesTabs::exprString(){
 	char p[1024]="";
 	TNsprite *obj=object();
-	int sel=select->GetSelection();
+	int sel=m_select->GetSelection();
 
 	sprintf(p,"Sprite(\"%s\",ID%d|FLIP|NOLOD,",(const char*)sprites_file.ToAscii(),sel);
 	sprintf(p+strlen(p),"%d,",m_orders->GetSelection()+1);
@@ -423,7 +423,7 @@ void VtxSpritesTabs::getObjAttributes(){
 	
 	int id=obj->get_id();
 
-	select->SetSelection(id);
+	m_select->SetSelection(id);
 	
 	m_file_choice->SetStringSelection(sprites_file);
 	setImagePanel();

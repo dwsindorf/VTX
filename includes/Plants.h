@@ -130,6 +130,7 @@ public:
 	int stats[MAX_BRANCHES][MAX_PLANT_DATA];
 
 	int plant_id;
+	int instance;
 	Plant *plant;
 	double radius;
 	double size;
