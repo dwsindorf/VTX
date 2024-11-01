@@ -214,6 +214,7 @@ public:
 	double length_taper;
 	double width_taper;
 	double offset;
+	double bias;
 	unsigned int texture_id;
 	int texid;
 	int color_flags;

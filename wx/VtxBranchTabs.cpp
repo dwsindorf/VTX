@@ -39,6 +39,8 @@ enum{
     ID_WIDTH_TEXT,
     ID_RAND_SLDR,
     ID_RAND_TEXT,
+	ID_BIAS_SLDR,
+	ID_BIAS_TEXT,
     ID_DIVERGENCE_SLDR,
     ID_DIVERGENCE_TEXT,
 
@@ -52,6 +54,8 @@ enum{
 	ID_FIRST_BIAS_TEXT,
 	ID_FROM_END,
 	ID_FILELIST,
+	ID_DIMLIST,
+
     ID_RED,
     ID_GREEN,
     ID_BLUE,
@@ -87,11 +91,13 @@ EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_FILELIST,VtxBranchTabs::OnChangedFile)
+EVT_CHOICE(ID_DIMLIST,VtxBranchTabs::OnDimSelect)
 
 SET_SLIDER_EVENTS(SPLITS,VtxBranchTabs,Splits)
 SET_SLIDER_EVENTS(LENGTH,VtxBranchTabs,Length)
 SET_SLIDER_EVENTS(WIDTH,VtxBranchTabs,Width)
 SET_SLIDER_EVENTS(RAND,VtxBranchTabs,Rand)
+SET_SLIDER_EVENTS(BIAS,VtxBranchTabs,Bias)
 SET_SLIDER_EVENTS(DIVERGENCE,VtxBranchTabs,Divergence)
 SET_SLIDER_EVENTS(FLATNESS,VtxBranchTabs,Flatness)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxBranchTabs,WidthTaper)
@@ -299,8 +305,6 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
 	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
-	
-
 }
 
 void VtxBranchTabs::AddImageTab(wxWindow *panel){
@@ -316,14 +320,29 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
 	image_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
 	//hline->AddSpacer(5);
 
-    choices=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
-    choices->SetSelection(0);
-
-    image_cntrls->Add(choices,0,wxALIGN_LEFT|wxALL,1);
+    m_file_choice=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    m_file_choice->SetSelection(0);
+    image_cntrls->Add(m_file_choice,0,wxALIGN_LEFT|wxALL,1);
+  
+    int num_dirs=branch_mgr.image_dirs.size;
     
+	wxString offsets[num_dirs];
+	for(int i=i;i<num_dirs;i++){
+		offsets[i]=branch_mgr.image_dirs[i]->name();
+	}
+
+    m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
+    m_dim_choice->SetSelection(0);
+    image_cntrls->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,1);
+
     m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Enable");
     m_tex_enable->SetValue(true);
     image_cntrls->Add(m_tex_enable,0,wxALIGN_LEFT|wxALL,4);
+
+	BiasSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Center",40, VALUE2,SLIDER2);
+	BiasSlider->setRange(0,1);
+	BiasSlider->setValue(0.5);
+	image_cntrls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,1);
 
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     
@@ -385,36 +404,61 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 	//m_revert->Enable(revert_needed);
 
 }
-void VtxBranchTabs::makeFileList(wxString name){
+
+void VtxBranchTabs::OnDimSelect(wxCommandEvent& event){
+	int dim=m_dim_choice->GetSelection();
+	wxString str=m_dim_choice->GetString(dim);
+	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
+	
+	int n=image_rows*image_cols;
+	makeFileList(str,"");
+	update_needed=true;
+	setObjAttributes();
+}
+
+void VtxBranchTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
- 	object()->getImageDirPath(0,sdir);
+	char *wstr=(char*)wdir.ToAscii();
+	object()->getImageDirPath(wstr,sdir);
 
  	wxDir dir(sdir);
  	if ( !dir.IsOpened() )
  	{
  	    // deal with the error here - wxDir would already log an error message
  	    // explaining the exact reason of the failure
+ 		cout<<"makeFileList error"<<sdir<<endl;
  	    return;
  	}
  	image_name=name;
-	files.Clear();
-	wxString filename;
-	bool cont = dir.GetFirst(&filename);
-	while ( cont ) {
-		filename=filename.Before('.');
-		files.Add(filename);
-		cont = dir.GetNext(&filename);
-		//cout<<filename<<endl;
-	}
-	files.Sort();
-	choices->Clear();
-	choices->Append(files);
-	if(image_name.IsEmpty())
-		choices->SetSelection(0);
+ 	uint rows=0;
+ 	uint cols=0;
+ 	int dim=m_dim_choice->GetSelection();
+ 	wxString str=m_dim_choice->GetString(dim);
+ 	object()->getImageDims((char*)str.ToAscii(),cols,rows);
+ 	
+ 	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
+		files.Clear();
+		wxString filename;
+		bool cont = dir.GetFirst(&filename);
+		while ( cont ) {
+			filename=filename.Before('.');
+			files.Add(filename);
+			cont = dir.GetNext(&filename);
+		}
+		files.Sort();
+		m_file_choice->Clear();
+		m_file_choice->Append(files);
+		image_dim=dim;
+		image_rows=rows;
+		image_cols=cols;
+		int n=image_rows*image_cols;
+		if(image_name.IsEmpty())
+			m_file_choice->SetSelection(0);
+ 	}
 
  	if(image_name.IsEmpty())
- 		image_name=choices->GetStringSelection();
-  	choices->SetStringSelection(image_name);
+ 		image_name=m_file_choice->GetStringSelection();
+  	m_file_choice->SetStringSelection(image_name);
 
 }
 
@@ -496,8 +540,9 @@ wxString VtxBranchTabs::exprString(){
 	else
 		sprintf(p,"%d,",minlvl);
 	s+=p;
-	s+=OffsetSlider->getText();
-	sprintf(p,",%d",enables);
+	s+=OffsetSlider->getText()+",";
+	s+=BiasSlider->getText()+",";
+	sprintf(p,"%d",enables);
 	s+=wxString(p);
 	s+=")";
  	return wxString(s);
@@ -511,7 +556,7 @@ void VtxBranchTabs::setObjAttributes(){
 
 	wxString s=exprString();
 
-	wxString str=choices->GetStringSelection();
+	wxString str=m_file_choice->GetStringSelection();
 	image_name=str;
 	obj->setPlantImage((char*)image_name.ToAscii());
 	setImagePanel();
@@ -565,7 +610,12 @@ void VtxBranchTabs::getObjAttributes(){
 	OffsetSlider->setValue(obj->offset);
 
 	image_name=obj->getImageFile();
-	makeFileList(image_name);
+	image_dir=obj->getImageDir();
+	
+	m_dim_choice->SetStringSelection(image_dir);
+	cout<<"Branch "<<image_dir<<"/"<<image_name<<endl;
+
+	makeFileList(image_dir,image_name);
 	setImagePanel();
 	
 	TNcolor *tnode=obj->getColor();

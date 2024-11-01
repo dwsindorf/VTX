@@ -1283,6 +1283,7 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	color_flags=0;
 	color=0;
 	enables=flags::ALL;
+	bias=0;
 	alpha_texture=false;
 	//getTextureName();
 	getColorString();
@@ -1332,7 +1333,8 @@ void TNBranch::initArgs(){
 	if(n>9)first_bias=arg[9];
 	if(n>10)min_level=arg[10];
 	if(n>11)offset=arg[11];
-	if(n>12)enables=arg[12];
+	if(n>12)bias=arg[12];
+	if(n>13)enables=arg[13];
 }
 
 void TNBranch::invalidateTexture(){
@@ -1550,7 +1552,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
+		int n = max_splits*(randomness*SRAND+1)+0.4;
 		//n=max_splits;//*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			n*=first_bias;
@@ -1586,7 +1588,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
-	bool last_level = (lev == maxlvl);
 
 	double topx = 0;
 	double topy = 0;
@@ -1615,7 +1616,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double pd=1;
 
 	if(isPlantBranch()){
-		int n = (int)max_splits;
+		int n = (int)max_splits+0.4;
 		pw=pow(n,max_level);
 		pw=pw<max_level?max_level:pw;
 		pd = ((double) level) / pw;
@@ -1634,26 +1635,21 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->addSkipped(branch_id);
 			return;
 		}
-		Density = ((double) lev) / maxlvl;
+		//Density = ((double) lev) / maxlvl;
 		// if(root->instance==0)
 		//cout<<nodeName()<<" "<<level<<" "<<max_splits<<" "<<max_level<<" "<<pw<<" "<<Density<<endl;
-
 	}
 	else{
 		TNBranch *branch = getParent();
-		int n = (int)branch->max_splits;
+		int n = (int)branch->max_splits+0.4;
 		pw=pow(n,branch->max_level);
 		pw=pw<branch->max_level?branch->max_level:pw;
 		pd = ((double) branch->level) / pw;
-
-//		pw=pow(branch->max_splits,branch->max_level);
-//		pd=branch->level/pw;
-		Density=pd;
 		// if(root->instance==0)
 		//cout<<nodeName()<<" "<<branch->level<<" "<<branch->max_splits<<" "<<branch->max_level<<" "<<pw<<" "<<Density<<endl;
 	}
+	Density=pd;
 	
-
 	Srand = SRAND;
 	Point start = base;
 	
@@ -1691,8 +1687,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	bot = p2;       // new base	
 	p1 = start;
 	int tid = isTexEnabled() ? texid : -1;
-
-	bool branch_tip = false;
 	if (child_width > MIN_LINE_WIDTH) {
 		if (!isPlantLeaf() && child_width * width_taper < MIN_LINE_WIDTH) {
 			opt = LAST_EMIT;
@@ -1700,20 +1694,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		}
 		if (!isPlantLeaf() && lev >= pw)
 			opt = LAST_EMIT;
-		branch_tip = final_branch && (last_level || (opt & LAST_EMIT));
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && ! isShadowEnabled())
 				randval += 3;
 			else {
-
-				//double rv = bp*URAND;
-				double rv = URAND;
-				double sv = SRAND;
-				double ur = URAND;
-				opt = LAST_EMIT;
-				double dv = 1 - max_splits;
-				if (rv > dv) {
+				double rv = URAND; // density
+				double sv = SRAND; // size
+				double sr = SRAND; // bias;
+				if (rv > 1 - max_splits) { // skip render if density test fails
 					shader_mode = LEAF_MODE;
 					if (test3 || test4)
 						poly_mode = GL_LINE;
@@ -1752,25 +1741,20 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					r = r.normalize();
 					Point pv = p2;
 
+					 // alternate leaf side on branch
 					TNLeaf *leaf = this;
 					double phase = leaf->phase;
 					if ((leaf->left_side & 1) == 0)
 						phase += 0.5;
 					leaf->left_side++;
-					// taper the size of a leaf from start to end of parent branch
-					//double length = 1;//pow(length_taper, branch->level);
+					
 					double orientation=flatness+1e-3;
-					double lt=first_bias?lerp(lvl,0,first_bias,length_taper,1):1;
 					double bt=lerp(pd,0,1,1,1-length_taper);
 					bt=bt<0?0:bt;
-					//double as=lt*bt;
-					double asize=size * bt;
-                    if(root->instance==0){
-                      //c.print();
-					  //cout<<pd<<" "<<bt<<" "<<asize<<endl;
-                    }
 
-					// clusters
+					double asize=size * bt;
+                   
+					// leaf clusters
 					//cout<<"image cols:"<<image_cols<<" rows:"<<image_rows<<endl;
 					for (int i = 0; i < segs; i++) {
 						root->addLeaf(branch_id);
@@ -1781,13 +1765,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 								+ v * v.dot(r) * (1.0 - ca);
 						pr = pr.normalize();
 						p2 = p1 + pr * asize;
-						int rc=image_cols*image_rows;
+						int rc=image_cols*image_rows-1;
 						int sel=0;
-						if(rc>1){
-							//sel=(branch->level-1)%rc;//ur*rc;
-							sel=ur*rc;
-							//cout<<sel<<endl;
-							//sel=0;
+						if(rc>0){
+							sel=(2*sr*randomness+bias)*rc;
+							sel=clamp(sel,0,rc);
 						}
 						int sy=sel/image_cols;
 						int sx=sel-sy*image_rows;
@@ -1837,7 +1819,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				shader_mode = LINE_MODE;
 
 			setColor();
-			//glColor4d(pw, 0, 0, 1);
 
 			tip.x = topx;
 			tip.y = topy;
@@ -1853,10 +1834,24 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w1 = w1 / root->size_scale;
 				w2 = w2 / root->size_scale;
 			}
-			if (root->threed && shader_mode == SPLINE_MODE) {
+			int rc=image_cols*image_rows-1;
+			int sel=bias*rc;
+//			double sr=SRAND;
+//			if(rc>0){
+//				sel=(2*sr*randomness+bias)*rc;
+//				sel=clamp(sel,0,rc);
+//			}
+			int sy=sel/image_cols;
+			int sx=sel-sy*image_rows;
+			//double aspect=((double)image_cols)/image_rows;
+			
+			sy=image_rows-sy-1; // invert y
+			Point4D sd(image_cols,image_rows,sx,sy);
+			//sd.print();
 
-				// note: implementing this code in the shader may be a bit faster but:
-				// 1) in 3d we run out of shader resources (max components) unless the product
+			if (root->threed && shader_mode == SPLINE_MODE) {
+				// note: first implemented this code in the shader and was a bit faster but:
+				// 1) in 3d run out of shader resources (max components) unless the product
 				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
 				// 2) get miss-aligment between branch segments because can't set terminal vector (v)
 				//    to direction of spline end (no access to ogl parameters from shader)
@@ -1875,9 +1870,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					f2 = (i + 1) * delta;
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
+					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
 					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,0.02); // Constants2
-					glVertexAttrib4d(GLSLMgr::CommonID3, 1, 1, 0,0); // Constants2
 
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
@@ -1899,7 +1894,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			} else if (isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
 				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
-				glVertexAttrib4d(GLSLMgr::CommonID3, 1, 1, 0,0); // Constants2
+				glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, bot_offset);
@@ -1929,29 +1924,18 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
 	}
-
-//	
-//	if(isPlantBranch() && (opt & LAST_EMIT) && child && child->typeValue() == ID_LEAF){
-//		cout<<"LEAF EMIT"<<endl;
-//		child->emit(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
-//	}
-
 	//if (opt & LAST_EMIT)
 	//	return;
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (isPlantBranch() ) {
-		int n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
-		//int n = max_splits*lerp(randomness,0.0,1.0,1.0,1-0.25*URAND);
+		//int n = lerp(randomness,0.0,1.0,max_splits,max_splits+randomness*SRAND+0.5);
+		int n = max_splits*(randomness*SRAND+1)+0.4;
 		n = n >= 1 ? n : 1;
 
-		//if (last_level)
-		//	n = 1;
 		child_width *= width_taper;
 		child_size *= length_taper;
-		//if (child_width > MIN_LINE_WIDTH && (lev <= pw)){
 		if (n>=1 && child_width > MIN_LINE_WIDTH){
-
 			emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 			for (int i = 1; i < n; i++) {
 				emit(0, bot, v, tip, child_size, child_width, lev);

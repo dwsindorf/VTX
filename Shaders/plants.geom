@@ -348,7 +348,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    float r2=c.y;
    float t1=c.z;
    float t2=c.w;
-   Pnorm.w=0.02;
+   Pnorm.w=0.005;
    vec3 v1 = normalize(p1 - p0);
    vec3 v2 = normalize(p2 - p1);
 
@@ -361,11 +361,11 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    int segs = 16;
 
    float f=1.0 /(segs-1);
-
+   float p=0.25;
    for(int i=0; i<segs; i++) {
       float a = i*f;
-      float ca = cos(2.0 * PI*a); 
-      float sa = sin(2.0 * PI*a);
+      float ca = cos(2.0 * PI*(a+p)); 
+      float sa = sin(2.0 * PI*(a+p));
       vec3 n1 = vec3(ca*tx1.x + sa*ty1.x,
                      ca*tx1.y + sa*ty1.y,
                      ca*tx1.z + sa*ty1.z);
@@ -375,7 +375,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
                      ca*tx2.z + sa*ty2.z);
       Pnorm.xyz=-n1;
       
-      gl_TexCoord[0].xy=vec2(2*a,t1);
+      gl_TexCoord[0].xy=vec2(a,t1);
 
       pt1.xyz = p1+r1*n1;
       pt1.w=1;
@@ -383,7 +383,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
       gl_Position = project(pt1);
       EmitVertex();
       
-      gl_TexCoord[0].xy=vec2(2*a,t2);
+      gl_TexCoord[0].xy=vec2(a,t2);
       Pnorm.xyz=-n2.xyz;
       pt2.xyz = p2 + r2*n2;
       pt2.w=1;

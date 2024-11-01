@@ -12,7 +12,15 @@ class VtxLeafTabs : public VtxTabsMgr
 {
 	DECLARE_CLASS(VtxLeafTabs)
 
-protected:
+protected:	
+	uint image_dim;
+	uint image_rows;
+	uint image_cols;
+	uint image_center;
+	wxString image_name;
+	wxString image_dir;
+	wxString image_path;
+
 	TNLeaf *object() 	{ return (TNLeaf *)object_node->node;}
 	void AddPropertiesTab(wxWindow *panel);
 	void AddImageTab(wxWindow *panel);
@@ -44,6 +52,7 @@ protected:
 	SliderCtrl   *LengthTaperSlider;
 	SliderCtrl   *FlatnessSlider;
 	SliderCtrl   *RandSlider;
+	SliderCtrl   *BiasSlider;
 	
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
@@ -61,7 +70,7 @@ protected:
 	wxButton *m_revert;
 	bool revert_needed;
 	wxString m_last_expr;
-	    
+
     wxString getColorExpr();
 	void setColorFromExpr();
 	void setExprFromColor();
@@ -70,13 +79,6 @@ protected:
 	void saveLastExpr();
 	void restoreLastExpr();
 	
-	uint image_dim;
-	uint image_rows;
-	uint image_cols;
-	uint image_center;
-	wxString image_name;
-	wxString image_dir;
-	wxString image_path;
 
 public:
 	VtxLeafTabs(wxWindow* parent,
@@ -101,6 +103,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Length)
 	DEFINE_SLIDER_EVENTS(Width)
 	DEFINE_SLIDER_EVENTS(Rand)
+	DEFINE_SLIDER_EVENTS(Bias)
 	DEFINE_SLIDER_EVENTS(WidthTaper)
 	DEFINE_SLIDER_EVENTS(LengthTaper)
 	DEFINE_SLIDER_EVENTS(Divergence)

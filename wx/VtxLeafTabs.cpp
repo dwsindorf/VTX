@@ -49,6 +49,8 @@ enum{
     ID_FLATNESS_TEXT,
     ID_RAND_SLDR,
     ID_RAND_TEXT,
+	ID_BIAS_SLDR,
+	ID_BIAS_TEXT,
 	ID_FILELIST,
 	ID_DIMLIST,
 
@@ -95,6 +97,7 @@ SET_SLIDER_EVENTS(DENSITY,VtxLeafTabs,Density)
 SET_SLIDER_EVENTS(LENGTH,VtxLeafTabs,Length)
 SET_SLIDER_EVENTS(WIDTH,VtxLeafTabs,Width)
 SET_SLIDER_EVENTS(RAND,VtxLeafTabs,Rand)
+SET_SLIDER_EVENTS(BIAS,VtxLeafTabs,Bias)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxLeafTabs,WidthTaper)
 SET_SLIDER_EVENTS(LENGTH_TAPER,VtxLeafTabs,LengthTaper)
 SET_SLIDER_EVENTS(DIVERGENCE,VtxLeafTabs,Divergence)
@@ -195,17 +198,20 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline->Add(m_segs, 0, wxALIGN_LEFT|wxALL, 5);
 
-	hline->Add(new wxStaticText(panel,-1,"X",wxDefaultPosition,wxSize(10,-1)), 0, wxALIGN_LEFT|wxALL, 5);
+	hline->Add(new wxStaticText(panel,-1,"X",wxDefaultPosition,wxSize(6,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
 	m_secs=new wxChoice(panel, ID_SECS, wxDefaultPosition,wxSize(40,-1),10, segs);
 	m_secs->SetSelection(0);
 
 	hline->Add(m_secs, 0, wxALIGN_LEFT|wxALL, 5);
 	
-	m_shadow_enable=new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
-	m_shadow_enable->SetValue(true);
-	hline->Add(m_shadow_enable, 0, wxALIGN_LEFT|wxALL, 5);
+	m_shape_enable = new wxCheckBox(panel, ID_SHAPE_ENABLE, "Shape");
+	m_shape_enable->SetValue(true);
+	hline->Add(m_shape_enable, 0, wxALIGN_LEFT | wxALL, 7);
 
+	m_shadow_enable = new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
+	m_shadow_enable->SetValue(true);
+	hline->Add(m_shadow_enable, 0, wxALIGN_LEFT | wxALL, 7);
 	
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
@@ -253,14 +259,14 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	variability->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	    
     hline = new wxBoxSizer(wxHORIZONTAL);
-	
+
 	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
 	DensitySlider->setRange(0,1);
 	DensitySlider->setValue(1);
-
+	
 	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Size",LABEL2, VALUE2,SLIDER2);
+	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -301,10 +307,10 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer* image_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Image"));
 
 	wxStaticText *lbl=new wxStaticText(panel,-1,"File",wxDefaultPosition,wxSize(25,-1));
-	image_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxALL, 1);
+	image_cntrls->Add(lbl, 0, wxALIGN_LEFT|wxALL,2);
 	//hline->AddSpacer(5);
 
-    m_file_choice=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(130,-1));
+    m_file_choice=new wxChoice(panel,ID_FILELIST,wxPoint(-1,4),wxSize(110,-1));
     m_file_choice->SetSelection(0);
     image_cntrls->Add(m_file_choice,0,wxALIGN_LEFT|wxALL,1);
     
@@ -322,11 +328,11 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Enable");
     m_tex_enable->SetValue(true);
     image_cntrls->Add(m_tex_enable,0,wxALIGN_LEFT|wxALL,4);
-
-    m_shape_enable=new wxCheckBox(panel, ID_SHAPE_ENABLE, "Shape");
-    m_shape_enable->SetValue(true);
-    image_cntrls->Add(m_shape_enable,0,wxALIGN_LEFT|wxALL,4);
-
+    
+	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Center",40, VALUE2,SLIDER2);
+	BiasSlider->setRange(0,1);
+	BiasSlider->setValue(0.5);
+	image_cntrls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,1);
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     
     image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Preview"));
@@ -520,10 +526,12 @@ wxString VtxLeafTabs::exprString(){
 	s+=FlatnessSlider->getText()+",";   // leaf orientation to eye
 	s+=WidthTaperSlider->getText()+","; // width_taper
 	s+=LengthTaperSlider->getText()+",";
-	cnt = m_secs->GetSelection();
+	cnt = m_secs->GetSelection();  // first bias
 		sprintf(tmp,"%d,",cnt);
 	s+=wxString(tmp);
-	sprintf(tmp,"0,0,%d",enables);
+	s+="0,0,"; // minlvl, offset
+	s+=BiasSlider->getText()+",";
+	sprintf(tmp,"%d",enables);
 	s+=wxString(tmp);
 	s+=")";
  	return wxString(s);
@@ -574,7 +582,7 @@ void VtxLeafTabs::getObjAttributes(){
 	image_dir=obj->getImageDir();
 	
 	m_dim_choice->SetStringSelection(image_dir);
-	//cout<<ns<<" "<<image_dir<<"/"<<image_name<<" "<<image_cols<<"x"<<image_rows<<endl;
+	cout<<"Leaf "<<image_dir<<"/"<<image_name<<endl;
 	
 	m_segs->SetSelection(obj->max_level-1);
 
@@ -586,10 +594,10 @@ void VtxLeafTabs::getObjAttributes(){
 	FlatnessSlider->setValue(obj->flatness);
 	WidthTaperSlider->setValue(obj->width_taper);
 	LengthTaperSlider->setValue(obj->length_taper);
+	BiasSlider->setValue(obj->bias);
 	m_secs->SetSelection(obj->first_bias);
 
 	makeFileList(image_dir,image_name);
-
 	setImagePanel();
 	
 	TNcolor *tnode=obj->getColor();
