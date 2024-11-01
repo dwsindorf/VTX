@@ -1320,7 +1320,7 @@ void TNBranch::initArgs(){
 	INIT;
 	enables=flags::ALL;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,13);
+	int n=getargs(&args,arg,14);
 	if(n>0)max_level=arg[0];
 	if(n>1)max_splits=arg[1];
 	if(n>2)length=arg[2];
@@ -1344,6 +1344,7 @@ void TNBranch::invalidateTexture(){
 	}
 }
 bool TNBranch::setProgram(){
+	
 	if(!image || !image->valid()){
 		return false;
 	}	
@@ -1636,8 +1637,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			return;
 		}
 		//Density = ((double) lev) / maxlvl;
-		// if(root->instance==0)
-		//cout<<nodeName()<<" "<<level<<" "<<max_splits<<" "<<max_level<<" "<<pw<<" "<<Density<<endl;
 	}
 	else{
 		TNBranch *branch = getParent();
@@ -1645,8 +1644,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		pw=pow(n,branch->max_level);
 		pw=pw<branch->max_level?branch->max_level:pw;
 		pd = ((double) branch->level) / pw;
-		// if(root->instance==0)
-		//cout<<nodeName()<<" "<<branch->level<<" "<<branch->max_splits<<" "<<branch->max_level<<" "<<pw<<" "<<Density<<endl;
 	}
 	Density=pd;
 	
@@ -1835,15 +1832,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w2 = w2 / root->size_scale;
 			}
 			int rc=image_cols*image_rows-1;
-			int sel=bias*rc;
-//			double sr=SRAND;
-//			if(rc>0){
-//				sel=(2*sr*randomness+bias)*rc;
-//				sel=clamp(sel,0,rc);
-//			}
+			//int sel=bias*rc;
+			int sel=0;
+			double sr=Randval-0.5;
+			if(rc>0){
+				sel=(sr*randomness+bias)*rc;
+				sel=clamp(sel,0,rc);
+			}
 			int sy=sel/image_cols;
 			int sx=sel-sy*image_rows;
-			//double aspect=((double)image_cols)/image_rows;
 			
 			sy=image_rows-sy-1; // invert y
 			Point4D sd(image_cols,image_rows,sx,sy);

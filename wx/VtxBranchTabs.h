@@ -44,16 +44,16 @@ protected:
 	wxChoice *m_min_level;
 	wxChoice *m_max_level;
 
-	SliderCtrl   *SplitsSlider;
-	SliderCtrl   *LengthSlider;
-	SliderCtrl   *LengthTaperSlider;
-	SliderCtrl   *WidthSlider;
-	SliderCtrl   *WidthTaperSlider;
-	SliderCtrl   *RandSlider;
-	SliderCtrl   *FirstBiasSlider;
-	SliderCtrl   *DivergenceSlider;
-	SliderCtrl   *FlatnessSlider;
-	SliderCtrl   *OffsetSlider;
+	ExprSliderCtrl   *SplitsSlider;
+	ExprSliderCtrl   *LengthSlider;
+	ExprSliderCtrl   *LengthTaperSlider;
+	ExprSliderCtrl   *WidthSlider;
+	ExprSliderCtrl   *WidthTaperSlider;
+	ExprSliderCtrl   *RandSlider;
+	ExprSliderCtrl   *FirstBiasSlider;
+	ExprSliderCtrl   *DivergenceSlider;
+	ExprSliderCtrl   *FlatnessSlider;
+	ExprSliderCtrl   *OffsetSlider;
 	ExprSliderCtrl *BiasSlider;
 
 	wxCheckBox *m_from_end;

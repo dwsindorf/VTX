@@ -219,12 +219,12 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	FirstBiasSlider=new SliderCtrl(panel,ID_FIRST_BIAS_SLDR,"First",LABEL2,VALUE2,SLIDER2);
+	FirstBiasSlider=new ExprSliderCtrl(panel,ID_FIRST_BIAS_SLDR,"First",LABEL2,VALUE2,SLIDER2);
 	FirstBiasSlider->setRange(1,100);
 	FirstBiasSlider->setValue(1);
 	hline->Add(FirstBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	SplitsSlider=new SliderCtrl(panel,ID_SPLITS_SLDR,"Later",LABEL2,VALUE2,SLIDER2);
+	SplitsSlider=new ExprSliderCtrl(panel,ID_SPLITS_SLDR,"Later",LABEL2,VALUE2,SLIDER2);
 	SplitsSlider->setRange(1,10);
 	SplitsSlider->setValue(1);
 	hline->Add(SplitsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -239,13 +239,13 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	LengthSlider=new SliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
+	LengthSlider=new ExprSliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
 	LengthSlider->setRange(0.1,2);
 	LengthSlider->setValue(1);
 
 	hline->Add(LengthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	LengthTaperSlider=new SliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	LengthTaperSlider=new ExprSliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
 	LengthTaperSlider->setRange(0.1,1);
 	LengthTaperSlider->setValue(0.8);
 	hline->Add(LengthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -254,13 +254,13 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	WidthSlider=new SliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
+	WidthSlider=new ExprSliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
 	WidthSlider->setRange(0.1,1);
 	WidthSlider->setValue(1);
 
 	hline->Add(WidthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	WidthTaperSlider=new SliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	WidthTaperSlider=new ExprSliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
 	WidthTaperSlider->setRange(0.1,1);
 	WidthTaperSlider->setValue(0.8);
 	hline->Add(WidthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -275,13 +275,13 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	RandSlider=new ExprSliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 
 	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	OffsetSlider=new SliderCtrl(panel,ID_OFFSET_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
+	OffsetSlider=new ExprSliderCtrl(panel,ID_OFFSET_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
 	OffsetSlider->setRange(0,1);
 	OffsetSlider->setValue(1);
 
@@ -291,13 +291,13 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2, VALUE2,SLIDER2);
+	DivergenceSlider=new ExprSliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2, VALUE2,SLIDER2);
 	DivergenceSlider->setRange(0,1);
 	DivergenceSlider->setValue(1.0);
 
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FlatnessSlider=new SliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
+	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
 	FlatnessSlider->setRange(0,1);
 	FlatnessSlider->setValue(0.0);
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -571,7 +571,7 @@ void VtxBranchTabs::setObjAttributes(){
 		sceneDialog->setNodeName(obj->name_str);
 
 	//cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
-	obj->initArgs();
+	//obj->initArgs();
 
 	TheView->set_changed_detail();
 	TheScene->rebuild();
@@ -597,7 +597,11 @@ void VtxBranchTabs::getObjAttributes(){
 	if(minlevel<0)
 		m_from_end->SetValue(true);
 	else
-		m_from_end->SetValue(false);		
+		m_from_end->SetValue(false);
+
+	TNarg &args=*((TNarg *)obj->left);
+	TNode *a=args[12];
+
 	SplitsSlider->setValue(obj->max_splits);
 	LengthSlider->setValue(obj->length);
 	WidthSlider->setValue(obj->width);
@@ -608,6 +612,11 @@ void VtxBranchTabs::getObjAttributes(){
 	LengthTaperSlider->setValue(obj->length_taper);
 	FirstBiasSlider->setValue(obj->first_bias);
 	OffsetSlider->setValue(obj->offset);
+	
+	if(a)
+		BiasSlider->setValue(a);
+	else
+		BiasSlider->setValue(obj->bias);
 
 	image_name=obj->getImageFile();
 	image_dir=obj->getImageDir();

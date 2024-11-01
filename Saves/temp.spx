@@ -1,119 +1,27 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=0.230734;
+		phi=0.230743;
 		theta=102.245;
-		height=6 ft;
+		height=4.37972 ft;
 		gndlvl=-3186.78 ft;
-		time=11040.4;
-		vstride=1;
+		time=11406.4;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		tilt=-19;
-		angle=8;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.0039994;
+		heading=22;
+		tilt=-5;
+		angle=46;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=8.93999 ft;
-		time=11194;
-		tilt=-23;
-		angle=14;
-	}
-	View{
-		height=4.12809 ft;
-		heading=35;
-		tilt=-10;
-		angle=42;
-	}
-	View{
-		tilt=-5;
-		angle=48;
-	}
-	View{
-		tilt=-3;
-		angle=52;
-	}
-	View{
-		height=6 ft;
-		tilt=-8;
-		angle=50;
-	}
-	View{
-		tilt=-13;
-		angle=44;
-	}
-	View{
-		tilt=-19;
-		angle=39;
-	}
-	View{
-		height=7.40732 ft;
-		tilt=-12;
-		angle=26;
-	}
-	View{
-		tilt=-14;
-		angle=25;
-	}
-	View{
-		phi=0.230743;
-		height=9.06001 ft;
-	}
-	View{
-		height=10.5894 ft;
-		tilt=-17;
-		angle=22;
-	}
-	View{
-		tilt=-26;
-		angle=11;
-	}
-	View{
-		height=5.77213 ft;
-		tilt=-15;
-		angle=4;
-	}
-	View{
-		tilt=-11;
-		angle=14;
-	}
-	View{
-		tilt=-14;
-		angle=13;
-	}
-	View{
-		height=8.82758 ft;
-		tilt=-15;
-		angle=19;
-	}
-	View{
-		tilt=0;
-		angle=37;
-	}
-	View{
-		tilt=-16;
-		angle=38;
-	}
-	View{
-		height=4.37972 ft;
-		time=11406.4;
-		heading=22;
-		tilt=-5;
-	}
-	View{
-		tilt=-10;
+		tilt=2;
 		angle=47;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.0039994;
-	}
-	View{
-		minr=0.0039994;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -179,8 +87,8 @@ Scene() {
 							Plant("Grass1",1,2.36742e-08,0.8,0.5,0.29,0,0,0,2)
 							Branch("Stem",7,1.6,0.88,1,1,0.4,0.1,0.7,1,20,0,1,15)["Cracks1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),1)]
 							Plant("Aspen",1,9.4697e-08,1,0.5,0.03,0,0,0,0)
-							Branch("stem",7,1.6,4,0.26,1,0.17,0,0.8,0.9,1,-1,1,13)["aspen7",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
-							Branch(6,2.4,1.79,1,0.37,0.92,0.16,0.51,0.8,4,2,1,13)["aspen7",Color(0,0,0,1)]
+							Branch("stem",7,1,5,0.26,1,0.17,0,0.8,0.9,1,-1,0.7,0.41,13)["aspens-8x1",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
+							Branch(6,2.4,1.79,1,0.37,0.92,0.16,0.51,0.8,4,2,1,13,13)["aspens-8x1",Color(0,0,0,1)]
 							Leaf("Leaf2",1,2,2,1,0,1,0,0.8,0.9,0,0,1,5)["Leaf2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
 				}
 				Sky(0.0041) {
