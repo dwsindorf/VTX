@@ -42,6 +42,12 @@ vec3 createPerp(vec3 p1, vec3 p2)
   return ret;
 }
 
+vec3 OrthoNormalVector(vec3 v) {
+  float g = v.z>0?1.0:-1.0;
+  float h = v.z + g;
+  return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
+}
+
 void projectVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = project(p);
@@ -91,11 +97,6 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 #endif
 }
 
-vec3 OrthoNormalVector(vec3 v) {
-  float g = v.z>0?1.0:-1.0;
-  float h = v.z + g;
-  return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
-}
 
 // draw a leaf
 void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
@@ -117,7 +118,7 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
     float w=Constants1[0].y;
 
 	Pnorm.xyz=normalize(cross(v, tx ));
-	Pnorm.w=0.01; // bump
+	Pnorm.w=P0[0].w; // bump
      vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
@@ -282,7 +283,7 @@ vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
 
 // draw a branch as a polygon (2d)
 void emitBranch(){
-   Pnorm.w=0.05;
+   Pnorm.w=0.01;
 
    vec4 p1=Pos1;
    vec4 p2=Pos2;
@@ -303,7 +304,7 @@ vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
 // draw a branch as a spline (2d only)
 void emitSpline(){
  
-    Pnorm.w=0.05;  
+    Pnorm.w=0.01;  
     vec4 p1=Pos1;
     vec4 p2=Pos2;       
     vec4 p0=Pos0;
@@ -348,20 +349,25 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    float r2=c.y;
    float t1=c.z;
    float t2=c.w;
-   Pnorm.w=0.005;
+   Pnorm.w=P0[0].w;
    vec3 v1 = normalize(p1 - p0);
    vec3 v2 = normalize(p2 - p1);
 
-   vec3 tx1 = createPerp(p1, p0);
+	vec3 tx1=OrthoNormalVector(v1);
+   //vec3 tx1 = createPerp(p1, p0);
    vec3 ty1 = cross(v1, tx1);
 
-   vec3 tx2 = createPerp(p2, p1);
+   vec3 tx2 = OrthoNormalVector(v2);
+   //   vec3 tx2 = createPerp(p2, p1);
+   
    vec3 ty2 = cross(v2, tx2);
+   int dim=ImageVars_G[0].x*ImageVars_G[0].y+0.1;
+   float scale=dim>1?1.0:2.0;
    
    int segs = 16;
 
    float f=1.0 /(segs-1);
-   float p=0.25;
+   float p=0.25;//-0.35;
    for(int i=0; i<segs; i++) {
       float a = i*f;
       float ca = cos(2.0 * PI*(a+p)); 
@@ -375,7 +381,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
                      ca*tx2.z + sa*ty2.z);
       Pnorm.xyz=-n1;
       
-      gl_TexCoord[0].xy=vec2(a,t1);
+      gl_TexCoord[0].xy=vec2(scale*a,t1);
 
       pt1.xyz = p1+r1*n1;
       pt1.w=1;
@@ -383,7 +389,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
       gl_Position = project(pt1);
       EmitVertex();
       
-      gl_TexCoord[0].xy=vec2(a,t2);
+      gl_TexCoord[0].xy=vec2(scale*a,t2);
       Pnorm.xyz=-n2.xyz;
       pt2.xyz = p2 + r2*n2;
       pt2.w=1;

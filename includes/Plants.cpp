@@ -148,7 +148,18 @@
 //   * improved
 // 14) when multiple leaves are present secondary leaves are not connected to branch (suspended in air)
 //   * improved: shortened vector connecting previous node by 90%
-
+//
+// NOTES to self
+// 1) Branch texture images
+//   - If created from a photo will only be able to see front half of full 3d wrap
+//   - so to better emulate 3d need to multiply xz tex coords by 2 to wrap image around branch
+//     o note:assumes image has been reflection tiled 
+//   - this works for normal images but for multidim sprite panels sometimes get a visual discontinuity 
+//     o note: ogl isn't able to wrap borders of interior images to avoid this
+//   - one solution is to start with a phase away from the viewpoint and only use a 1x multplier
+//     o this hides the discontinuity but we loose half the available image content (since half is hidden behind the branch)
+//   - one workaround is to duplicate each sub-image before generating the sprite panel image
+//     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
 // classes PlantPoint, PlantMgr
 //************************************************************
@@ -1186,7 +1197,8 @@ void TNplant::emit(){
 		return;
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
 	// note: width_scale == 1 for med and large 0.6629 for wide
-	width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
+	//width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
+	width_scale=800/TheScene->wscale;
     rendered=0;
     
 	Randval=URAND;
@@ -1212,6 +1224,8 @@ void TNplant::emit(){
 
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
+	
+    //cout<<TheScene->aspect<<" "<<width_scale<<" "<<start_width<<" "<<size_scale<<endl;
 
 	Point tip;
 	tip.x=start_width/width_scale;
@@ -1553,7 +1567,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		int n = max_splits*(randomness*SRAND+1)+0.4;
+		n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
 		//n=max_splits;//*(1+0.5*randomness*SRAND);
 		if(first_bias) // add more branches at start of new branch fork
 			n*=first_bias;
@@ -1685,20 +1699,21 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	p1 = start;
 	int tid = isTexEnabled() ? texid : -1;
 	if (child_width > MIN_LINE_WIDTH) {
-		if (!isPlantLeaf() && child_width * width_taper < MIN_LINE_WIDTH) {
-			opt = LAST_EMIT;
-			root->addTerminal(branch_id);
+		TNarg &args=*((TNarg *)left);
+		TNode *a=args[12];
+		double bf=Randval*randomness+bias;
+		if(a){
+			a->eval();
+			if(!S0.constant())
+				bf=S0.s;
 		}
-		if (!isPlantLeaf() && lev >= pw)
-			opt = LAST_EMIT;
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && ! isShadowEnabled())
-				randval += 3;
+				randval += 2;
 			else {
 				double rv = URAND; // density
 				double sv = SRAND; // size
-				double sr = SRAND; // bias;
 				if (rv > 1 - max_splits) { // skip render if density test fails
 					shader_mode = LEAF_MODE;
 					if (test3 || test4)
@@ -1765,7 +1780,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						int rc=image_cols*image_rows-1;
 						int sel=0;
 						if(rc>0){
-							sel=(2*sr*randomness+bias)*rc;
+							sel=2*bf*rc;
 							sel=clamp(sel,0,rc);
 						}
 						int sy=sel/image_cols;
@@ -1775,13 +1790,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						sy=image_rows-sy-1; // invert y
 
 						Point4D sd(image_cols,image_rows,sx,sy);
+						Point4D P0(p0);
+						P0.w=0.01;
 						if (TNLeaf::collect_mode)
 							TNLeaf::collect(Point4D(p0), Point4D(p1), Point4D(p2),
 									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation),
 									Point4D(color_flags, tid, asize), sd,c);
 						else {
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
-							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
+							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, P0.w); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, 0); // Constants1		
 							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
 							glDisable(GL_CULL_FACE);
@@ -1832,11 +1849,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w2 = w2 / root->size_scale;
 			}
 			int rc=image_cols*image_rows-1;
-			//int sel=bias*rc;
+
 			int sel=0;
-			double sr=Randval-0.5;
 			if(rc>0){
-				sel=(sr*randomness+bias)*rc;
+				double sr=Randval-0.5;
+				sel=(bf)*rc;
 				sel=clamp(sel,0,rc);
 			}
 			int sy=sel/image_cols;
@@ -1845,6 +1862,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			sy=image_rows-sy-1; // invert y
 			Point4D sd(image_cols,image_rows,sx,sy);
 			//sd.print();
+            double bump=0.002;
 
 			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: first implemented this code in the shader and was a bit faster but:
@@ -1861,15 +1879,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				t0 = p0;
 				double delta = 1.0 / (nv);
 				double f1, f2, dx, dy;
-
-				for (int i = 0; i < nv; i++) {
+ 				for (int i = 0; i < nv; i++) {
 					f1 = i * delta;
 					f2 = (i + 1) * delta;
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
-					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
-					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,0.02); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,bump); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
@@ -1890,7 +1907,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			} else if (isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
-				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, bump); // Constants2
 				glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 
 				glBegin(GL_LINES);
@@ -1921,13 +1938,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
 	}
-	//if (opt & LAST_EMIT)
-	//	return;
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (isPlantBranch() ) {
-		//int n = lerp(randomness,0.0,1.0,max_splits,max_splits+randomness*SRAND+0.5);
-		int n = max_splits*(randomness*SRAND+1)+0.4;
+		int n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
+		//int n = max_splits*lerp(randomness,0.0,1.0,1.0,1-0.25*URAND);
 		n = n >= 1 ? n : 1;
 
 		child_width *= width_taper;

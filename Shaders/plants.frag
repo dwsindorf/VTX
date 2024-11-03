@@ -46,7 +46,6 @@ vec2 sprite(vec2 l_uv){
     
     float cols=ImageVars.x;  
     float rows=ImageVars.y;
-    float sel=ImageVars.z;
      
     vec2 scale=vec2(cols,rows);
          

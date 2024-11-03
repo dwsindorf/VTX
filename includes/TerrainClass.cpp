@@ -357,15 +357,15 @@ void TNglobal::eval()
 		break;
 	case IRAND:
 		S0.s=Randval;
-		S0.set_constant();
+		//S0.set_constant();
 		break;
 	case URAND:
 		S0.s=Srand+0.5;
-		S0.set_constant();
+		//S0.set_constant();
 		break;
 	case SRAND:
 		S0.s=Srand;
-		S0.set_constant();
+		//S0.set_constant();
 		break;
 	case LVL:
 		S0.s=0.5*S0.level;

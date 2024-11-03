@@ -62,7 +62,11 @@ public:
 		p.z=(x*m[2]+y*m[6]+z*m[10]+m[14]);
 		return p;
 	}
-
+	Point OrthoNormal(Point v) {
+	  double g = v.z>0?1.0:-1.0;
+	  double h = v.z + g;
+	  return Point(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
+	}
 	double mx(double *m)		{  return x*m[0]+y*m[4]+z*m[8]+m[12];}
 	double my(double *m)		{  return x*m[1]+y*m[5]+z*m[9]+m[13];}
 	double mz(double *m)		{  return x*m[2]+y*m[6]+z*m[10]+m[14];}

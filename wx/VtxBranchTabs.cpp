@@ -225,7 +225,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	hline->Add(FirstBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	SplitsSlider=new ExprSliderCtrl(panel,ID_SPLITS_SLDR,"Later",LABEL2,VALUE2,SLIDER2);
-	SplitsSlider->setRange(1,10);
+	SplitsSlider->setRange(1,3);
 	SplitsSlider->setValue(1);
 	hline->Add(SplitsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
