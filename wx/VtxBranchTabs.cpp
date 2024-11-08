@@ -697,7 +697,7 @@ void VtxBranchTabs::getObjAttributes(){
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
     int m=obj->getDroopMode();
-    cout<<"mode="<<m<<endl;
+    //cout<<"mode="<<m<<endl;
 	m_droop->SetSelection(m);
    
 	update_needed=false;

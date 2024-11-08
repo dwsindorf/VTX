@@ -61,7 +61,7 @@ Scene() {
 					Surface{
 						terrain=
 								Plant("Shrub1",1,2.36742e-07,0.8,0.2,0.05,0,0,0,0)
-								Branch(7,2.24,1.88,0.9,0.22,1,0.19,0.5,0.86,20,0,1,0,15)["treebark2",Color(0.1*DENSITY,0.5*RED,0,DENSITY)]
+								Branch(7,2.24,1.88,0.9,0.22,1,0.19,0.5,0.86,20,0,1,0,15)["treebark2",Color(0.1*LVL,0.5*RED,0,LVL)]
 								Leaf("Leaf",1,1,4,1,0,0.75,0,0.8,1,0,0,0,IRAND,15)["leafs-2x2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {

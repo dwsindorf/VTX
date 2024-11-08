@@ -91,9 +91,9 @@ Scene() {
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("test",1,1.5e-06,0.8,0.9,0.05)
-								Branch("trunk",8,1,1,0.61,0,0.1,0,0.76,0.95,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,DENSITY)]
-								Branch("branch",8,2.7,0.64,0.34,0,0.9,0.48,0.67,0.79,12,1,1,0,15)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]
-								Branch("needle",3,1,0.5,0.99,1,1,0.24,0.6,0.6,10.4,-1,0.7,15,15)["Cracks1",Color(0.1*(1-0.5*URAND),0.1+0.2*DENSITY*URAND,0.1*IRAND,1)];
+								Branch("trunk",8,1,1,0.61,0,0.1,0,0.76,0.95,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
+								Branch("branch",8,2.7,0.64,0.34,0,0.9,0.48,0.67,0.79,12,1,1,0,15)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
+								Branch("needle",3,1,0.5,0.99,1,1,0.24,0.6,0.6,10.4,-1,0.7,15,15)["Cracks1",Color(0.1*(1-0.5*URAND),0.1+0.2*LVL*URAND,0.1*IRAND,1)];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

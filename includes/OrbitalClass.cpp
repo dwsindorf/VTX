@@ -4032,7 +4032,7 @@ void Planetoid::set_lighting(){
 // Tcalc     174      496     21      -42      -180
 // delta     -2       21      6        18       -1
 //-------------------------------------------------------------
-//#define DEBUG_TEMP
+#define DEBUG_TEMP
 void Planetoid::calcTemperature() {
 
 	if(System::TheSystem==0){
