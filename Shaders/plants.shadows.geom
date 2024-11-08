@@ -42,6 +42,12 @@ vec3 createPerp(vec3 p1, vec3 p2)
   return ret;
 }
 
+vec3 OrthoNormalVector(vec3 v) {
+  float g = v.z>0?1.0:-1.0;
+  float h = v.z + g;
+  return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
+}
+
 void produceVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = project(p);
@@ -67,16 +73,18 @@ void emitCone()
    float r1=c.x;
    float r2=c.y;
 
-   vec3 axis1 = Pos1.xyz - Pos0.xyz;
-   vec3 axis2 = Pos2.xyz - Pos1.xyz;
+   vec3 v1 = normalize(Pos1.xyz - Pos0.xyz);
+   vec3 v2 = normalize(Pos2.xyz - Pos1.xyz);
 
-   vec3 tx1 = createPerp(Pos1.xyz, Pos0.xyz);
-   vec3 ty1 = cross(normalize(axis1), tx1 );
+ 	vec3 tx1=OrthoNormalVector(v1);
+  // vec3 tx1 = createPerp(Pos1.xyz, Pos0.xyz);
+   vec3 ty1 = cross(normalize(v1), tx1 );
 
-   vec3 tx2 = createPerp(Pos2.xyz, Pos1.xyz);
-   vec3 ty2 = cross(normalize(axis2), tx2 );
+   vec3 tx2 = OrthoNormalVector(v2);
+  // vec3 tx2 = createPerp(Pos2.xyz, Pos1.xyz);
+   vec3 ty2 = cross(normalize(v2), tx2 );
    
-   int segs = 4;
+   int segs = 8;
 
    float f=1.0 /(segs-1);
    float delta=1.0/segs;

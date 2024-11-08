@@ -2389,7 +2389,7 @@ void Scene::render()
 		output_text(); // on-screen info
 
 		set_action("Ready");
-    	if(/*changed_detail() ||*/ automv())
+    	if(changed_detail() || automv())
     		set_moved();
     	else
     		clr_moved();

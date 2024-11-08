@@ -223,12 +223,12 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
     
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	LengthSlider=new SliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
+	LengthSlider=new ExprSliderCtrl(panel,ID_LENGTH_SLDR,"Length",LABEL2, VALUE2,SLIDER2);
 	LengthSlider->setRange(1,50);
 	LengthSlider->setValue(1);
 	hline->Add(LengthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	LengthTaperSlider=new SliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	LengthTaperSlider=new ExprSliderCtrl(panel,ID_LENGTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
 	LengthTaperSlider->setRange(0.0,1);
 	LengthTaperSlider->setValue(0.5);
 	hline->Add(LengthTaperSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -237,13 +237,13 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	WidthSlider=new SliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
+	WidthSlider=new ExprSliderCtrl(panel,ID_WIDTH_SLDR,"Width",LABEL2, VALUE2,SLIDER2);
 	WidthSlider->setRange(0.2,5);
 	WidthSlider->setValue(1);
 	
 	hline->Add(WidthSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 		
-	WidthTaperSlider=new SliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
+	WidthTaperSlider=new ExprSliderCtrl(panel,ID_WIDTH_TAPER_SLDR,"Taper",LABEL2,VALUE2,SLIDER2);
 	WidthTaperSlider->setRange(0.1,1);
 	WidthTaperSlider->setValue(0.8);
 
@@ -260,13 +260,13 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	    
     hline = new wxBoxSizer(wxHORIZONTAL);
 
-	DensitySlider=new SliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
 	DensitySlider->setRange(0,1);
 	DensitySlider->setValue(1);
 	
 	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	RandSlider=new SliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	RandSlider=new ExprSliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
 	RandSlider->setRange(0,1);
 	RandSlider->setValue(1);
 	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -282,12 +282,12 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	DivergenceSlider=new SliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2,VALUE2,SLIDER2);
+	DivergenceSlider=new ExprSliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2,VALUE2,SLIDER2);
 	DivergenceSlider->setRange(0.0,1);
 	DivergenceSlider->setValue(1);
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FlatnessSlider=new SliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
+	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
 	FlatnessSlider->setRange(0.0,1);
 	FlatnessSlider->setValue(1);
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -329,7 +329,7 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     m_tex_enable->SetValue(true);
     image_cntrls->Add(m_tex_enable,0,wxALIGN_LEFT|wxALL,4);
     
-	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Center",40, VALUE2,SLIDER2);
+	BiasSlider=new ExprSliderCtrl(panel,ID_BIAS_SLDR,"Center",40, VALUE2,SLIDER2);
 	BiasSlider->setRange(0,1);
 	BiasSlider->setValue(0.5);
 	image_cntrls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,1);
@@ -559,6 +559,7 @@ void VtxLeafTabs::setObjAttributes(){
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
+	obj->getArgs();
 	obj->initArgs();
 
 	TheView->set_changed_detail();
@@ -576,25 +577,56 @@ void VtxLeafTabs::getObjAttributes(){
 
 	TNLeaf *obj=object();
 	obj->initArgs();
+	
+	TNarg &args=*((TNarg *)obj->left);
 
 	object_name->SetValue(obj->nodeName());
 	image_name=obj->getImageFile();
 	image_dir=obj->getImageDir();
 	
 	m_dim_choice->SetStringSelection(image_dir);
-	cout<<"Leaf "<<image_dir<<"/"<<image_name<<endl;
+
 	
 	m_segs->SetSelection(obj->max_level-1);
 
-	DensitySlider->setValue(obj->max_splits);
-	LengthSlider->setValue(obj->length);
-	WidthSlider->setValue(obj->width);
-	RandSlider->setValue(obj->randomness);
-	DivergenceSlider->setValue(obj->divergence);
-	FlatnessSlider->setValue(obj->flatness);
-	WidthTaperSlider->setValue(obj->width_taper);
-	LengthTaperSlider->setValue(obj->length_taper);
-	BiasSlider->setValue(obj->bias);
+    if(args[1])
+	   DensitySlider->setValue(args[1]);
+	else
+	   DensitySlider->setValue(obj->max_splits);
+    if(args[2])
+    	LengthSlider->setValue(args[2]);
+	else
+		LengthSlider->setValue(obj->length);
+    if(args[3])
+    	WidthSlider->setValue(args[3]);
+ 	else
+ 		WidthSlider->setValue(obj->width);
+    if(args[4])
+    	RandSlider->setValue(args[4]);
+ 	else
+ 		RandSlider->setValue(obj->randomness);
+    if(args[5])
+    	DivergenceSlider->setValue(args[5]);
+ 	else
+ 		DivergenceSlider->setValue(obj->divergence);
+    if(args[6])
+    	FlatnessSlider->setValue(args[6]);
+  	else
+  		FlatnessSlider->setValue(obj->flatness);
+    if(args[7])
+    	WidthTaperSlider->setValue(args[7]);
+  	else
+  		WidthTaperSlider->setValue(obj->width_taper);
+    if(args[8])
+    	LengthTaperSlider->setValue(args[8]);
+  	else
+  		LengthTaperSlider->setValue(obj->length_taper);
+	if(args[12])
+		BiasSlider->setValue(args[12]);
+	else
+		BiasSlider->setValue(obj->bias);
+
+	//BiasSlider->setValue(obj->bias);
 	m_secs->SetSelection(obj->first_bias);
 
 	makeFileList(image_dir,image_name);

@@ -33,7 +33,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -368,7 +368,7 @@ void TNglobal::eval()
 		//S0.set_constant();
 		break;
 	case LVL:
-		S0.s=0.5*S0.level;
+		S0.s=Level;
 		break;
 	case GTOL:
 		S0.s=Gscale;

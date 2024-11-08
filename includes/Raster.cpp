@@ -10,7 +10,7 @@
 #include "GLSLMgr.h"
 
 #define OPTIMIZE
-#define DEBUG_SHADOWS
+//#define DEBUG_SHADOWS
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
 extern double lsin(double t);
@@ -492,8 +492,10 @@ void RasterMgr::init_view()
 {	
 	shadow_zrange=shadow_vzf-shadow_vzn;
 	//shadow_vstep=smax/z;
+	shadow_vsteps=(int)shadow_vsteps;
+	
 	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias/shadow_fov,shadow_vsteps-1);
-	cout<<"init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
+	//cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
 	shadow_vleft=2*shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
@@ -511,7 +513,7 @@ int RasterMgr::next_view()
 	//shadow_vleft=shadow_vright;
 	shadow_vstep*=shadow_vbias/shadow_fov;
 	shadow_vright=shadow_vleft+shadow_vstep;
-   cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
+  // cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
 	shadow_vcnt++;
 	shadow_count++;
  

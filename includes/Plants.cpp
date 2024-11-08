@@ -13,12 +13,19 @@
 //#define COLOR_TEST
 #define DENSITY_TEST
 
-//#define SHOW_STATS
-//#define SHOW_BRANCH_STATS
+#define USE_AVEHT
+#define MIN_VISITS 1
+#define TEST_NEIGHBORS 1
+//#define TEST_PTS 
+//#define DUMP
+//#define SHOW
+//#define DEBUG_PMEM
+
+#define SHOW_PLANT_STATS
+#define SHOW_BRANCH_STATS
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
-
 
 #define SRAND 	(rands[PERM((randval++))])
 #define URAND 	(rands[PERM((randval++))]+0.5)
@@ -66,8 +73,8 @@
 // 2) implement geometry shader to improve performance (DONE)
 // 3) add support for textures (DONE)
 //   - optional: texture scale ?
-// 4) add support for bump shading for textures (DONE)
-//   - optional: user control of bump amplitude ?
+// 4) add support for phase shading for textures (DONE)
+//   - optional: user control of phase amplitude ?
 // 5) implement TNLeaf class (DONE)
 //    - only generate leaves at end of "terminal" branches
 // 6) use a spline function when connecting levels on same branch (DONE)
@@ -151,19 +158,18 @@
 //
 // NOTES to self
 // 1) Branch texture images
-//   - If created from a photo will only be able to see front half of full 3d wrap
-//   - so to better emulate 3d need to multiply xz tex coords by 2 to wrap image around branch
-//     o note:assumes image has been reflection tiled 
+//   - If tiled image is created from a photo it will only show the front half of full 3d map
+//   - to emulate 3d need to multiply xz tex coords by 2 (maps 2 copies of tiled image around branch)
 //   - this works for normal images but for multidim sprite panels sometimes get a visual discontinuity 
-//     o note: ogl isn't able to wrap borders of interior images to avoid this
-//   - one solution is to start with a phase away from the viewpoint and only use a 1x multplier
+//     o ogl doesn't seem to be able to wrap borders of interior images to avoid this
+//   - one idea is to start with a phase away from the viewpoint and only use a 1to1 multplier
 //     o this hides the discontinuity but we loose half the available image content (since half is hidden behind the branch)
-//   - one workaround is to duplicate each sub-image before generating the sprite panel image
+//     o wrapping image this way also results in a 2x horizontal distortion
+//   - a workaround is to duplicate and combine each sub-image before generating the sprite panel image
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
-// classes PlantPoint, PlantMgr
-//************************************************************
-extern double Hscale, Drop, MaxSize,Height,Phi,Density,Randval,Srand;
+
+extern double Hscale, Drop, MaxSize,Height,Phi,Level,Randval,Srand;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -202,13 +208,6 @@ static double min_draw_width=0.5;
 static double min_render_pts=2; // for render
 static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
-#define USE_AVEHT
-#define MIN_VISITS 1
-#define TEST_NEIGHBORS 1
-#define TEST_PTS 
-//#define DUMP
-//#define SHOW
-//#define DEBUG_PMEM
 
 #define MIN_DRAW_WIDTH 0.75*min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
@@ -710,7 +709,7 @@ void Plant::collect()
 #endif
 	int new_plants=0;
 	int bad_pts=0;
-#ifdef SHOW_STATS	
+#ifdef SHOW_PLANT_STATS	
 	int trys=0;
 	int visits=0;
 	int bad_visits=0;
@@ -720,14 +719,14 @@ void Plant::collect()
 
 	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->plants.size;i++){
-#ifdef SHOW_STATS	
+#ifdef SHOW_PLANT_STATS	
 		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_plants=0;
 #endif
 		Plant *plant=tp->plants[i];
 		plant->mgr()->ss();
 		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
 	while(s){
-#ifdef SHOW_STATS
+#ifdef SHOW_PLANT_STATS
 		trys++;		
 		if(s->visits<MIN_VISITS)
 			bad_visits++;
@@ -770,7 +769,7 @@ void Plant::collect()
 		}
 		s=plant->mgr()->next();
 	  }	
-#ifdef SHOW_STATS
+#ifdef SHOW_PLANT_STATS
 	double usage=100.0*trys/plant->mgr()->hashsize;
 	double badvis=100.0*bad_visits/trys;
 	double badactive=100.0*bad_active/trys;
@@ -1233,9 +1232,11 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
+	glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
+	glEnable(GL_CULL_FACE);
 	
 }
 
@@ -1309,6 +1310,8 @@ void TNBranch::init(){
 	if(!left)
 		return;
 	INIT;
+	if(arglist.size==0)
+		getArgs();
 	getTextureName();
 	initArgs();
 	
@@ -1325,6 +1328,24 @@ void TNBranch::init(){
 	
 	if(right)
 		right->init();
+}
+
+void TNBranch::setDroopMode(int m){
+	switch(m){
+	default:
+	case 0: MSK_SET(enables,DROOP,DROOP_FLAT);break;
+	case 1: MSK_SET(enables,DROOP,DROOP_DROP);break;
+	case 2: MSK_SET(enables,DROOP,DROOP_RAISE);break;
+	}
+	cout<<"enables="<<m<<" "<<enables<<endl;
+}
+int TNBranch::getDroopMode(){
+	switch(enables&DROOP){
+	default:
+	case DROOP_FLAT: return 0;
+	case DROOP_DROP:  return 1;
+	case DROOP_RAISE:  return 2;
+	}
 }
 
 void TNBranch::initArgs(){
@@ -1428,6 +1449,24 @@ TNcolor* TNBranch::getColor(){
 	return color;
 }
 
+void TNBranch::getArgs(){
+	TNarg *arg=((TNarg *)left);
+	arglist.reset();
+	while(arg){
+		arglist.add(arg);
+		arg=arg->next();
+	}
+	cout<<arglist.size<<endl;
+}
+double TNBranch::evalArg(int i, double d){
+	TNarg *arg=arglist[i];
+	if(arg){
+		arg->eval();
+		if(!S0.constant())
+			return S0.s;
+	}
+	return d;
+}
 //void TNBranch::getPlantFilePath(char* name,int dim,char *dir){
 //	char dimdir[512];
 //	getPlantImageDir(dim,dimdir);
@@ -1503,24 +1542,36 @@ void TNBranch::setColor(){
 Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
-		
-	v.x += divergence * SRAND;
-	v.y += divergence * SRAND;
-	v.z += divergence * SRAND;
+	
+	double d=evalArg(5,divergence);
+	v.x += d * SRAND;
+	v.y += d * SRAND;
+	v.z += d * SRAND;
+	
+	int m=getDroopMode();
 
 	v = v.normalize();
 	if(flatness==0)
 		return v;
-	double g=flatness;
+	double g=evalArg(6,flatness);
 	if(lvl>1)
 		g=fabs(flatness);
-	Point n = root->norm + start;
+	Point n;
+	if(m==2)
+		n=start-root->norm;
+	else
+		n=start + root->norm;
+	//Point n = start-root->norm;// + start;
 	n = n.normalize();
 	Point vp;
 	double f = g;
 	if (g > 0) {
-		Point tp1 = n.cross(v); 
-		vp = tp1.cross(n);
+		if(m==0){
+			Point tp1 = n.cross(v);
+			vp = tp1.cross(n);
+		}
+		else
+			vp = n;		
 	}
 	else { // alternate sides randomly
 		double s=SRAND;
@@ -1567,10 +1618,10 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
+		n = first_bias*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
 		//n=max_splits;//*(1+0.5*randomness*SRAND);
-		if(first_bias) // add more branches at start of new branch fork
-			n*=first_bias;
+		//if(first_bias) // add more branches at start of new branch fork
+		//	n*=first_bias;
 		n=n<1?1:n;
 		for(int i=0;i<n;i++){
 			level=0;
@@ -1614,7 +1665,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	int poly_mode = GL_FILL;
 
 	TNBranch *child = (TNBranch*) right;
-
 	Color c;
 	bool final_branch = branch_id == root->branches - 1;
 	if (isPlantLeaf() || (right && right->typeValue() == ID_LEAF))
@@ -1635,13 +1685,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		pw=pow(n,max_level);
 		pw=pw<max_level?max_level:pw;
 		pd = ((double) level) / pw;
-		if (first_fork && lvl > 0) {
-			size_scale = length / parent_length;
-			size_scale = size_scale > 1 ? 1 : size_scale;
-			size_scale = size_scale < 0 ? 0 : size_scale;
-			child_width *= size_scale;
-		}
-	
+		TNBranch *parent=getParent();
+
+		if (first_fork && lvl > 0  && parent->typeValue()==ID_BRANCH){
+			child_width *= parent->width_taper;
+	    }
 		if (child_width < MIN_DRAW_WIDTH) {
 			root->addSkipped(branch_id);
 			return;
@@ -1650,7 +1698,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->addSkipped(branch_id);
 			return;
 		}
-		//Density = ((double) lev) / maxlvl;
+		Level = ((double) lev) / maxlvl;
 	}
 	else{
 		TNBranch *branch = getParent();
@@ -1658,8 +1706,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		pw=pow(n,branch->max_level);
 		pw=pw<branch->max_level?branch->max_level:pw;
 		pd = ((double) branch->level) / pw;
+		Level=pd;
 	}
-	Density=pd;
 	
 	Srand = SRAND;
 	Point start = base;
@@ -1697,16 +1745,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	p2 = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
+	TNarg &args=*((TNarg *)left);
+	
 	int tid = isTexEnabled() ? texid : -1;
 	if (child_width > MIN_LINE_WIDTH) {
-		TNarg &args=*((TNarg *)left);
-		TNode *a=args[12];
-		double bf=Randval*randomness+bias;
-		if(a){
-			a->eval();
-			if(!S0.constant())
-				bf=S0.s;
-		}
+		if (isPlantBranch() && lev >maxlvl)
+			opt = LAST_EMIT;
+		double bf=evalArg(12,Randval*randomness+bias);
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && ! isShadowEnabled())
@@ -1714,7 +1759,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			else {
 				double rv = URAND; // density
 				double sv = SRAND; // size
-				if (rv > 1 - max_splits) { // skip render if density test fails
+				double df = evalArg(1,max_splits);
+				if (rv > 1 - df) { // skip render if density test fails
 					shader_mode = LEAF_MODE;
 					if (test3 || test4)
 						poly_mode = GL_LINE;
@@ -1780,7 +1826,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						int rc=image_cols*image_rows-1;
 						int sel=0;
 						if(rc>0){
-							sel=2*bf*rc;
+							sel=bf*rc;
 							sel=clamp(sel,0,rc);
 						}
 						int sy=sel/image_cols;
@@ -1801,16 +1847,18 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, P0.w); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, 0); // Constants1		
 							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
-							glDisable(GL_CULL_FACE);
+							//glDisable(GL_CULL_FACE);
 							glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 							glBegin(GL_LINES);
 							glVertex4d(p1.x, p1.y, p1.z, 0);
 							glVertex4d(p2.x, p2.y, p2.z, 0);
 							glEnd();
-							glEnable(GL_CULL_FACE);
+							//glEnable(GL_CULL_FACE);
 						}
 					}
 				}
+				else
+					root->addSkipped(branch_id);
 
 			}
 		} else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
@@ -1838,8 +1886,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			tip.y = topy;
 			tip.z = top_offset;
 			root->rendered++;
-			if (poly_mode == GL_LINE /*|| PlantMgr::shadow_mode*/)
-				glDisable(GL_CULL_FACE);
+			//if (poly_mode == GL_LINE)
+			//	glDisable(GL_CULL_FACE);
 
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,
 					shader_mode);
@@ -1862,7 +1910,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			sy=image_rows-sy-1; // invert y
 			Point4D sd(image_cols,image_rows,sx,sy);
 			//sd.print();
-            double bump=0.002;
+            double phase=0.5*Randval;//0.002;
 
 			if (root->threed && shader_mode == SPLINE_MODE) {
 				// note: first implemented this code in the shader and was a bit faster but:
@@ -1885,7 +1933,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dx = (1 - f1) * r1 + f1 * r2;
 					dy = (1 - f2) * r1 + f2 * r2;
 					glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
-					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,bump); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,phase); // Constants2
 					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 
 					t1 = spline(s, p0, p1, p2);
@@ -1907,7 +1955,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			} else if (isEnabled()) { // no spline
 				glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
-				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, bump); // Constants2
+				glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, phase); // Constants2
 				glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 
 				glBegin(GL_LINES);
@@ -1926,7 +1974,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->rendered++;
 			root->addLine(branch_id);
 			setColor();
-			glDisable(GL_CULL_FACE);
+			//glDisable(GL_CULL_FACE);
 			glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,
 					LINE_MODE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1936,8 +1984,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			glEnd();
 		}
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 	}
+	if (opt & LAST_EMIT)
+		return;
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (isPlantBranch() ) {

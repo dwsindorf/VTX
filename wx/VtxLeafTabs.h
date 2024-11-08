@@ -44,15 +44,15 @@ protected:
 	wxChoice *m_segs;
 	wxChoice *m_secs;
 
-	SliderCtrl   *DensitySlider;
-	SliderCtrl   *LengthSlider;
-	SliderCtrl   *WidthSlider;
-	SliderCtrl   *DivergenceSlider;
-	SliderCtrl   *WidthTaperSlider;
-	SliderCtrl   *LengthTaperSlider;
-	SliderCtrl   *FlatnessSlider;
-	SliderCtrl   *RandSlider;
-	SliderCtrl   *BiasSlider;
+	ExprSliderCtrl   *DensitySlider;
+	ExprSliderCtrl   *LengthSlider;
+	ExprSliderCtrl   *WidthSlider;
+	ExprSliderCtrl   *DivergenceSlider;
+	ExprSliderCtrl   *WidthTaperSlider;
+	ExprSliderCtrl   *LengthTaperSlider;
+	ExprSliderCtrl   *FlatnessSlider;
+	ExprSliderCtrl   *RandSlider;
+	ExprSliderCtrl   *BiasSlider;
 	
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;

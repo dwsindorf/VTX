@@ -390,7 +390,7 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	ShadowResSlider=new SliderCtrl(panel,ID_SHADOW_RES_SLDR,"Views",LABEL2,VALUE2,SLIDER2);
 	ShadowResSlider->setRange(1,10);
 	ShadowResSlider->slider->SetToolTip("Number of Light source views");
-	ShadowResSlider->format=wxString("%0.0f");
+	ShadowResSlider->format=wxString("%1.0f");
 
 	hline->Add(ShadowResSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 

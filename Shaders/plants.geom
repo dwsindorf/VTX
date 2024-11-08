@@ -349,7 +349,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    float r2=c.y;
    float t1=c.z;
    float t2=c.w;
-   Pnorm.w=P0[0].w;
+   Pnorm.w=0.002;//P0[0].w;
    vec3 v1 = normalize(p1 - p0);
    vec3 v2 = normalize(p2 - p1);
 
@@ -364,10 +364,10 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    int dim=ImageVars_G[0].x*ImageVars_G[0].y+0.1;
    float scale=dim>1?1.0:2.0;
    
-   int segs = 16;
+   int segs = 8;
 
    float f=1.0 /(segs-1);
-   float p=0.25;//-0.35;
+   float p=P0[0].w;//-0.35;
    for(int i=0; i<segs; i++) {
       float a = i*f;
       float ca = cos(2.0 * PI*(a+p)); 

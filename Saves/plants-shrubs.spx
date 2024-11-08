@@ -21,14 +21,16 @@ Scene() {
 	View{
 		tilt=-22;
 		angle=-31;
+	}
+	View{
+		tilt=-26;
+		angle=-32;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400199;
 	}
 	View{
-		tilt=-26;
-		angle=-32;
 		minr=0.00400199;
 	}
 	Universe {
@@ -69,7 +71,7 @@ Scene() {
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("name",1,5e-07,1,1,0.4,0,0,0,0)
-								Branch("trunk",12,2.5,0.3,1,0,0.95,0.1,0.7,0.95,0,0,1)["Cracks1",Color(0.25+IRAND*DENSITY,0.8*DENSITY,0.25+0.1*IRAND*DENSITY,1)];
+								Branch("trunk",12,2.5,0.3,1,0,0.95,0.1,0.7,0.95,2,0,1,0,15)["Cracks1",Color(0.25+IRAND*DENSITY,0.8*DENSITY,0.25+0.1*IRAND*DENSITY,1)];
 					}
 					Sky(0.00410952) {
 						color=Color(0,0.58,0.89);

@@ -189,15 +189,18 @@ class TNBranch : public TNbase, public ImageInfo
 {
 protected:
 	enum flags{
-		TEX=1,
-		COL=2,
-		SHAPE=4,
-		SHADOW=8,
+		TEX=0x1,
+		COL=0x2,
+		SHAPE=0x4,
+		SHADOW=0x8,
+		DROOP_FLAT=0,
+		DROOP_DROP=0x10,
+		DROOP_RAISE=0x20,
+		DROOP=DROOP_DROP|DROOP_RAISE|DROOP_FLAT,
 		ALL=TEX|COL|SHAPE|SHADOW
 	};
-
 public:
-
+	Array<TNode *>arglist;
 	int maxlvl;
 	int level;
 	int min_level;
@@ -230,7 +233,9 @@ public:
 	char colorexpr[256];
 		
 	TNBranch(TNode *l, TNode *r, TNode *b);
-	
+
+    void getArgs();
+
 	virtual int typeValue()	  { return ID_BRANCH;}
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
@@ -239,6 +244,8 @@ public:
 	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
 	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
 	void setShadowEnabled(bool b){BIT_SET(enables,flags::SHADOW,b);}
+	void setDroopMode(int m);
+	int getDroopMode();
 	bool isColEnabled() { return BIT_TST(enables,flags::COL);}
 	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
 	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
@@ -268,6 +275,7 @@ public:
 	void setColorFlags();
 	void invalidateTexture();
 	void setPlantImage(char *);
+	double evalArg(int id, double d);
 	
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);

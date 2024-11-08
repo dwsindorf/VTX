@@ -305,7 +305,7 @@ bool SpriteMgr::setProgram(){
 		TerrainProperties::sid=i;
 		tp->sprites[i]->setProgram();
 	}
-	
+	//glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);
 	
 	int n=Sprite::sprites.size;

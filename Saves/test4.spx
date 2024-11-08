@@ -1,23 +1,134 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=0.239103;
-		theta=102.117;
+		phi=0.230734;
+		theta=102.245;
 		height=6 ft;
-		gndlvl=-3104.6 ft;
+		gndlvl=-3186.78 ft;
 		time=11040.4;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00399941;
-		heading=50;
-		tilt=-14;
-		angle=-82;
+		zoom=1;
+		minh=9.4697e-10;
+		tilt=-19;
+		angle=8;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=8.93999 ft;
+		time=11194;
+		tilt=-23;
+		angle=14;
+	}
+	View{
+		height=4.12809 ft;
+		heading=35;
+		tilt=-10;
+		angle=42;
+	}
+	View{
+		tilt=-5;
+		angle=48;
+	}
+	View{
+		tilt=-3;
+		angle=52;
+	}
+	View{
+		height=6 ft;
+		tilt=-8;
+		angle=50;
+	}
+	View{
+		tilt=-13;
+		angle=44;
+	}
+	View{
+		tilt=-19;
+		angle=39;
+	}
+	View{
+		height=7.40732 ft;
+		tilt=-12;
+		angle=26;
+	}
+	View{
+		tilt=-14;
+		angle=25;
+	}
+	View{
+		phi=0.230743;
+		height=9.06001 ft;
+	}
+	View{
+		height=10.5894 ft;
+		tilt=-17;
+		angle=22;
+	}
+	View{
+		height=4.37972 ft;
+		tilt=-6;
+	}
+	View{
+		phi=0.230752;
+		height=3 ft;
+		heading=44;
+		tilt=-1;
+		angle=20;
+	}
+	View{
+		heading=29;
+	}
+	View{
+		heading=27;
+	}
+	View{
+		tilt=4;
+		angle=18;
+	}
+	View{
+		tilt=1;
+	}
+	View{
+		tilt=3;
+		angle=19;
+	}
+	View{
+		phi=0.230758;
+		heading=39;
+	}
+	View{
+		heading=32;
+	}
+	View{
+		heading=27;
+	}
+	View{
+		tilt=-1;
+		angle=13;
+	}
+	View{
+		height=18.6122 ft;
+		time=12080.8;
+		tilt=-4;
+		angle=21;
+	}
+	View{
+		tilt=-6;
+		angle=35;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.0039994;
+	}
+	View{
+		height=21.8238 ft;
+		heading=42;
+		tilt=-3;
+		minr=0.0039994;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -60,7 +171,7 @@ Scene() {
 				fog.vmin=1000 ft;
 				hscale=0.0001;
 				ocean.level=1388.8 ft;
-				shadow=Color(0,0,0);
+				shadow=Color(0,0,0,0.71);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
@@ -78,10 +189,14 @@ Scene() {
 					ripples=0.0002*noise(20,2);
 					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
-					terrain=Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06))+
-							Plant("bush",1,4.73485e-07,0.29,0.5,1,0,0,0,0)
-							Branch("stem",5,1.5,0.34,1,2,1,0,0.57,0.57,4.1,-0)[Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]
-							Leaf("Leaf2",1,1,6,1,0,1,0,0.97,1)["Needles1",Color(1,0.501961,0,0.2)];
+					terrain=
+							Sprite("grass2x2",FLIP|NOLOD,5,4.73485e-07,1,1,1,0,0,0,0)
+							Plant("Grass1",1,9.4697e-08,0.8,0.5,0.35,0,0,0,1.4)
+							Branch("Stem",10,1,0.3,1,1,0.4,0.1,0.8,1.2,100)[Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY))]
+							Plant("Pine3",1,1.2e-06,0.8,0.9,0.05)
+							Branch("trunk",10,1,1,1,0.1,0.1,0,0.8,0.95,0,0,1,0,15)["pinebark1",Color(0.5,0.25,0,DENSITY)]
+							Branch("branch",9,2,0.8,0.7,1,1,0.7,0.8,0.75,6,2,1,0.18,15)["pinebark1",Color(0.0627451,0.0627451,0.0627451,0.3)]
+							Leaf("Leaf2",1,0.25,10.3,1,0,0.21,0.47,0.8,0.9,1,0,0,0,1)["needles-2x2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Color(0.752941,0.752941,0.752941,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
 				}
 				Sky(0.0041) {
 					color=Color(0.4,0.9,1);

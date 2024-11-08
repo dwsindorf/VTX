@@ -43,6 +43,7 @@ protected:
 	
 	wxChoice *m_min_level;
 	wxChoice *m_max_level;
+	wxChoice *m_droop;
 
 	ExprSliderCtrl   *SplitsSlider;
 	ExprSliderCtrl   *LengthSlider;

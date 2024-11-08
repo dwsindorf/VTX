@@ -46,6 +46,7 @@ enum{
 
     ID_FLATNESS_SLDR,
     ID_FLATNESS_TEXT,
+	ID_DROOP,
     ID_WIDTH_TAPER_SLDR,
     ID_WIDTH_TAPER_TEXT,
     ID_LENGTH_TAPER_SLDR,
@@ -90,6 +91,7 @@ EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
 
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
+EVT_CHOICE(ID_DROOP,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_FILELIST,VtxBranchTabs::OnChangedFile)
 EVT_CHOICE(ID_DIMLIST,VtxBranchTabs::OnDimSelect)
 
@@ -297,10 +299,14 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Flatness",LABEL2,VALUE2,SLIDER2);
+	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Droop",LABEL2,VALUE2,70);
 	FlatnessSlider->setRange(0,1);
 	FlatnessSlider->setValue(0.0);
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	wxString droop_modes[]={"0","+","-"};
+	m_droop=new wxChoice(panel, ID_DROOP, wxDefaultPosition,wxSize(40,-1),3, droop_modes);
+	m_droop->SetSelection(0);
+	hline->Add(m_droop, 0, wxALIGN_LEFT|wxALL, 3);
 	
 	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
@@ -521,6 +527,8 @@ wxString VtxBranchTabs::exprString(){
 
 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
 	obj->setColEnabled((bool)m_col_enable->GetValue());
+	int m=m_droop->GetSelection();
+	obj->setDroopMode(m);
 	int enables=obj->enables;
 	
 	sprintf(p+strlen(p),"%d,",m_max_level->GetSelection());
@@ -571,8 +579,8 @@ void VtxBranchTabs::setObjAttributes(){
 		sceneDialog->setNodeName(obj->name_str);
 
 	//cout<<"set:"<<s.ToAscii()<<" image:"<<(char*)image_name.ToAscii()<<" color:"<<cstr<<endl;
-	//obj->initArgs();
-
+	obj->getArgs();
+    obj->initArgs();
 	TheView->set_changed_detail();
 	TheScene->rebuild();
 
@@ -600,21 +608,49 @@ void VtxBranchTabs::getObjAttributes(){
 		m_from_end->SetValue(false);
 
 	TNarg &args=*((TNarg *)obj->left);
-	TNode *a=args[12];
 
-	SplitsSlider->setValue(obj->max_splits);
-	LengthSlider->setValue(obj->length);
-	WidthSlider->setValue(obj->width);
-	RandSlider->setValue(obj->randomness);
-	DivergenceSlider->setValue(obj->divergence);
-	FlatnessSlider->setValue(obj->flatness);
-	WidthTaperSlider->setValue(obj->width_taper);
-	LengthTaperSlider->setValue(obj->length_taper);
-	FirstBiasSlider->setValue(obj->first_bias);
-	OffsetSlider->setValue(obj->offset);
-	
-	if(a)
-		BiasSlider->setValue(a);
+    if(args[1])
+    	SplitsSlider->setValue(args[1]);
+	else
+		SplitsSlider->setValue(obj->max_splits);
+    if(args[2])
+     	LengthSlider->setValue(args[2]);
+ 	else
+ 		LengthSlider->setValue(obj->length);
+     if(args[3])
+     	WidthSlider->setValue(args[3]);
+  	else
+  		WidthSlider->setValue(obj->width);
+     if(args[4])
+     	RandSlider->setValue(args[4]);
+  	else
+  		RandSlider->setValue(obj->randomness);
+    if(args[5])
+     	DivergenceSlider->setValue(args[5]);
+  	else
+  		DivergenceSlider->setValue(obj->divergence);
+    if(args[6])
+     	FlatnessSlider->setValue(args[6]);
+   	else
+   		FlatnessSlider->setValue(obj->flatness);
+    if(args[7])
+     	WidthTaperSlider->setValue(args[7]);
+   	else
+   		WidthTaperSlider->setValue(obj->width_taper);
+    if(args[8])
+     	LengthTaperSlider->setValue(args[8]);
+   	else
+   		LengthTaperSlider->setValue(obj->length_taper);
+    if(args[9])
+    	FirstBiasSlider->setValue(args[9]);
+   	else
+   		FirstBiasSlider->setValue(obj->first_bias);
+    if(args[11])
+    	OffsetSlider->setValue(args[11]);
+   	else
+   		OffsetSlider->setValue(obj->offset);		
+	if(args[12])
+		BiasSlider->setValue(args[12]);
 	else
 		BiasSlider->setValue(obj->bias);
 
@@ -622,7 +658,7 @@ void VtxBranchTabs::getObjAttributes(){
 	image_dir=obj->getImageDir();
 	
 	m_dim_choice->SetStringSelection(image_dir);
-	cout<<"Branch "<<image_dir<<"/"<<image_name<<endl;
+	//cout<<"Branch "<<image_dir<<"/"<<image_name<<endl;
 
 	makeFileList(image_dir,image_name);
 	setImagePanel();
@@ -660,7 +696,9 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
-
+    int m=obj->getDroopMode();
+    cout<<"mode="<<m<<endl;
+	m_droop->SetSelection(m);
    
 	update_needed=false;
 }

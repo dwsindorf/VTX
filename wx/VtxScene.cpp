@@ -742,6 +742,7 @@ void VtxScene::make_scene()
     }
     kif.get_state(state);
     TheScene->set_changed_detail();
+    TheScene->set_changed_render();
     TheScene->clr_autotm();
 
     sceneDialog->rebuildObjectTree();
@@ -1070,7 +1071,6 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 
    // if(!TheScene->suspended())
     int moved=TheScene->moved();
-    
     TheScene->render();
     if(TheScene->automv()||TheScene->autotm()||moved)
     	sceneDialog->updateTabs();
