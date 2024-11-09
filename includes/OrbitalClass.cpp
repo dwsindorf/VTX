@@ -3351,13 +3351,27 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	water_specular=def_water_specular;
 	water_shine=def_water_shine;
 	water_specular=def_water_specular;
+	water_clarity=def_water_clarity;
+	water_mix=def_water_mix;
+	
+	ocean_state=def_ocean_state;
+	ocean_auto=true;
 
 	ice_color1=def_ice_color1;
 	ice_color2=def_ice_color2;
 	ice_specular=def_ice_specular;
+	ice_clarity=def_ice_clarity;
 	ice_shine=def_ice_shine;
+	ice_mix=def_ice_mix;
+	terrain_type=ROCKY;
 
 	fog_color=def_fog_color;
+	fog_glow=def_fog_glow;
+	fog_value=def_fog_value;
+	fog_vmax=def_fog_vmax;
+	fog_vmin=def_fog_vmin;
+	fog_max=def_fog_max;
+	fog_min=def_fog_min;
 
 	temperature=100;
 
@@ -3661,7 +3675,7 @@ int Planetoid::render_pass()
 			clear_pass(BG2);
 		}
 	else
-		clear_pass(BG4);
+		clear_pass(BG3);
 	if(selected() && map->visbumps() && Render.bumps())
 	    	Raster.set_bumptexs(1);
 	
@@ -4032,11 +4046,10 @@ void Planetoid::set_lighting(){
 // Tcalc     174      496     21      -42      -180
 // delta     -2       21      6        18       -1
 //-------------------------------------------------------------
-#define DEBUG_TEMP
+//#define DEBUG_TEMP
 void Planetoid::calcTemperature() {
 
 	if(System::TheSystem==0){
-		cout<<"no system"<<endl;
 		return;
 	}
 	Orbital *obj;
@@ -4887,7 +4900,7 @@ void Planetoid::newRocky(Planetoid *planet){
 
 	planet->calcTemperature();
 		
-	cout<<"temp:"<<planet->temperature<<" radius:"<<planet->orbit_radius<<endl;
+	//cout<<"temp:"<<planet->temperature<<" radius:"<<planet->orbit_radius<<endl;
 	if(planet->temperature<400){ // boiling point K
 		s[0]=lerp(planet->temperature,200,373,-0.6,-1.7);
 		str+=randFeature(RND_SNOW);

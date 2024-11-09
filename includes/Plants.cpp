@@ -23,6 +23,7 @@
 
 #define SHOW_PLANT_STATS
 #define SHOW_BRANCH_STATS
+//#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -234,7 +235,7 @@ public:
 static SData   sdata[SDATA_SIZE];
 static ValueList<SData*> slist(sdata,SDATA_SIZE);
 static int          scnt;
-
+static bool update_needed=true;;
 LeafImageMgr leaf_mgr; // global image manager
 BranchImageMgr branch_mgr; // global image manager
 //************************************************************
@@ -466,7 +467,6 @@ bool PlantMgr::setProgram(){
 	int l=randval;
 
 	//TNplant::clearStats();
-	double d0=clock();
 //#define USE_CALL_LISTS
 #ifdef USE_CALL_LISTS
 	if(TheMap->callLists[PLANT_LISTS][0]==0){
@@ -480,19 +480,23 @@ bool PlantMgr::setProgram(){
 #else
 	render();
 #endif
-#ifdef SHOW_BRANCH_STATS
+
+	randval=l;
+	return true;
+}
+
+void PlantMgr::clearStats(){
+	TerrainProperties *tp=Td.tp;
+	for(int i=0;i<tp->plants.size;i++){
+		tp->plants[i]->clearStats();
+	}
+}
+void PlantMgr::showStats(){
+	TerrainProperties *tp=Td.tp;
 	for(int i=0;i<tp->plants.size;i++){
 		tp->plants[i]->showStats();
 	}
-	double dt=clock()-d0; // total
-	dt/=CLOCKS_PER_SEC;
-	cout<<"Plants number:"<<n<<" render time:"<<dt<<" ms"<<endl;
-#endif
-	return true;
-
-	randval=l;
 }
-
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
@@ -526,10 +530,15 @@ void PlantMgr::render_zvals(){
 	shadow_mode=false;
 }
 void PlantMgr::render(){
-	//double d0=clock();
 	int l=randval;
-	TNLeaf::free();
+	//update_needed=(TheScene->changed_detail()||TheScene->moved()||test3||test4||test5)&&!shadow_mode;
+	update_needed=(TheScene->changed_detail()||TheScene->moved()||test3||test4||test5);
+	if(update_needed){
+		TNLeaf::free();
+		clearStats();
+	}
 	int n=Plant::plants.size;
+	double d0=clock();
 	
 	glEnable(GL_BLEND);
 
@@ -555,11 +564,21 @@ void PlantMgr::render(){
 		plant->instance=i;
 		plant->emit();
 	}
+	double dt1=clock()-d0; // total
 	if(TNLeaf::collect_mode)
 		TNLeaf::render();
-
+	double dt2=clock()-d0; // total
 	randval=l;
-
+#ifdef SHOW_BRANCH_STATS
+    if(update_needed)
+		showStats();
+#endif
+#ifdef SHOW_BRANCH_TIMING
+	double ttm=dt2/CLOCKS_PER_SEC;
+	double ltm=(dt2-dt1)/CLOCKS_PER_SEC;
+	double btm=ttm-ltm;
+	cout<<"render time leafs:"<<ltm<<" branches:"<<btm<<" total:"<<ttm<<" s"<<endl;
+#endif
 }
 //-------------------------------------------------------------
 // PlantMgr::make() factory method to make Placement
@@ -806,7 +825,6 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
-	clearStats();
 	return expr->setProgram();
 }
 bool Plant::initProgram(){
@@ -1019,6 +1037,8 @@ void TNplant::eval()
  }
 
 void TNplant::clearStats(){
+	if(!update_needed)
+		return;
 	for(int i=0;i<MAX_BRANCHES;i++){
 		for(int j=0;j<MAX_PLANT_DATA;j++)
 			stats[i][j]=0;
@@ -1037,21 +1057,27 @@ void TNplant::showStats(){
 	}
 }
 void TNplant::addSkipped(int id){
+	if(update_needed)
 	stats[id][0]++;	
 }
 void TNplant::addTerminal(int id){
+	if(update_needed)
 	stats[id][1]++;	
 }
 void TNplant::addLine(int id){
+	if(update_needed)
 	stats[id][2]++;	
 }
 void TNplant::addBranch(int id){
+	if(update_needed)
 	stats[id][3]++;	
 }
 void TNplant::addSpline(int id){
+	if(update_needed)
 	stats[id][4]++;	
 }
 void TNplant::addLeaf(int id){
+	if(update_needed)
 	stats[id][5]++;	
 }
 
@@ -1746,7 +1772,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	bot = p2;       // new base	
 	p1 = start;
 	TNarg &args=*((TNarg *)left);
-	
+
 	int tid = isTexEnabled() ? texid : -1;
 	if (child_width > MIN_LINE_WIDTH) {
 		if (isPlantBranch() && lev >maxlvl)
@@ -1756,7 +1782,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && ! isShadowEnabled())
 				randval += 2;
-			else {
+			else 
+				if(update_needed){
 				double rv = URAND; // density
 				double sv = SRAND; // size
 				double df = evalArg(1,max_splits);
@@ -1766,8 +1793,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						poly_mode = GL_LINE;
 					if (test4)
 						shader_mode = LINE_MODE;
-					setColor();
-					Color c = S0.c;
+					Color c(1,1,1);
+					if(color && isColEnabled()){
+						S0.clr_cvalid();
+						color->eval();
+						c = S0.c;
+					}
 
 					double depth = bot.length();
 					child_size = length * FEET / 12; // inches
@@ -1784,7 +1815,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					int segs = max_level;
 					double tilt = divergence;// + 1e-4; // meta-stable if tilt=0;
 					double f = 1.0 / segs;
-
+					//TNLeaf::collect_mode = shader_mode == LEAF_MODE && poly_mode == GL_FILL;
+                    if(!update_needed && PlantMgr::shadow_mode)
+                    	cout<<" update shadows ?"<<endl;
 					TNLeaf::collect_mode = !PlantMgr::shadow_mode
 							&& shader_mode == LEAF_MODE && poly_mode == GL_FILL;
 
@@ -1813,7 +1846,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					double asize=size * bt;
                    
 					// leaf clusters
-					//cout<<"image cols:"<<image_cols<<" rows:"<<image_rows<<endl;
+					
 					for (int i = 0; i < segs; i++) {
 						root->addLeaf(branch_id);
 						double a = i * f + phase;
@@ -1841,19 +1874,19 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						if (TNLeaf::collect_mode)
 							TNLeaf::collect(Point4D(p0), Point4D(p1), Point4D(p2),
 									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation),
-									Point4D(color_flags, tid, asize), sd,c);
+									Point4D(color_flags, tid, asize,LEAF_MODE), sd,c);
 						else {
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, P0.w); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, 0); // Constants1		
 							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shader_mode);
-							//glDisable(GL_CULL_FACE);
+							
 							glPolygonMode(GL_FRONT_AND_BACK, poly_mode);
 							glBegin(GL_LINES);
 							glVertex4d(p1.x, p1.y, p1.z, 0);
 							glVertex4d(p2.x, p2.y, p2.z, 0);
 							glEnd();
-							//glEnable(GL_CULL_FACE);
+
 						}
 					}
 				}
@@ -2117,7 +2150,7 @@ void  LeafData::render(){
 	glVertexAttrib4d(GLSLMgr::CommonID3, data[5].x, data[5].y, data[5].z, data[5].w); // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID2, data[0].x, data[0].y, data[0].z, 0); // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[4].z); // taper, compression, width_ratio,size		
-	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, data[4].x, data[4].y, LEAF_MODE); //0,color_flags,size
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, data[4].x, data[4].y, data[4].w); //0,color_flags,size,shader_mode
 	glColor4d(c.red(), c.green(), c.blue(), c.alpha());
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);			
 	glBegin(GL_LINES);

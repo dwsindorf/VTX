@@ -70,7 +70,11 @@ public:
 	double parentSize(){
 		return ((Planet*)(object()->getParent()))->size;
 	}
-
+	void OnSliderValue(SliderCtrl *s, double &var){
+		VtxTabsMgr::OnSliderValue(s,var);
+		TheScene->set_changed_detail();
+		TheScene->rebuild_all();
+	}
 	void updateControls();
     void OnHeightSlider(wxScrollEvent& event){
     	double val;
@@ -186,21 +190,39 @@ public:
 
     //DEFINE_SLIDER_VAR_EVENTS(Density,object()->density);
 	void OnEndFracGHGSlider(wxScrollEvent &event){
-
+		//TheScene->rebuild_all();
 	}
 	void OnFracGHGSlider(wxScrollEvent& event){
 		FracGHGSlider->setValueFromSlider();
 	    double var=FracGHGSlider->getValue();
 	    object()->ghg_fraction=var/100;
-	    TheView->set_changed_render();
+	    TheView->set_changed_detail();
+	    TheScene->rebuild_all();
 	 }
 	void OnFracGHGText(wxCommandEvent& event){
 		FracGHGSlider->setValueFromText();
     	double var=FracGHGSlider->getValue();
     	object()->ghg_fraction=var/100;
-    	TheView->set_changed_render();
+    	TheView->set_changed_detail();
+    	TheScene->rebuild_all();
 	}
-    DEFINE_SLIDER_VAR_EVENTS(Pressure,object()->pressure);
+	
+	void OnEndPressureSlider(wxScrollEvent &event){
+		//TheScene->rebuild_all();
+	}
+	void OnPressureSlider(wxScrollEvent& event){
+		PressureSlider->setValueFromSlider();
+		object()->pressure=PressureSlider->getValue();
+	    TheView->set_changed_detail();
+	    TheScene->rebuild_all();
+	 }
+	void OnPressureText(wxCommandEvent& event){
+		PressureSlider->setValueFromText();
+    	object()->pressure=PressureSlider->getValue();
+    	TheView->set_changed_detail();
+    	TheScene->rebuild_all();
+    }
+   // DEFINE_SLIDER_VAR_EVENTS(Pressure,object()->pressure);
 
     //DEFINE_SLIDER_VAR_EVENTS(FracGHG,object()->ghg_fraction);
 

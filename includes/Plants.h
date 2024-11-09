@@ -113,6 +113,8 @@ public:
 	static void render();
 	static void render_zvals();
 	static void render_shadows();
+	static void clearStats();
+	static void showStats();
 };
 
 #define MAX_BRANCHES 6
