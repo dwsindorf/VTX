@@ -23,7 +23,7 @@
 
 #define SHOW_PLANT_STATS
 #define SHOW_BRANCH_STATS
-#define SHOW_BRANCH_TIMING
+//#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -536,7 +536,8 @@ void PlantMgr::render(){
 	int n=Plant::plants.size;
 	double d0=clock();
 	
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if(!shadow_mode)
+		glEnable(GL_BLEND);
 
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
@@ -1809,11 +1810,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					int segs = max_level;
 					double tilt = divergence;// + 1e-4; // meta-stable if tilt=0;
 					double f = 1.0 / segs;
-                    //if(PlantMgr::shadow_mode)
-                    //	cout<<" update shadows ?"<<endl;
-//					TNLeaf::collect_mode = !PlantMgr::shadow_mode && 
-//							shader_mode == LEAF_MODE && poly_mode == GL_FILL;
-					Point eye = p1.normalize(); // base of branch
+ 					Point eye = p1.normalize(); // base of branch
 					eye = eye.normalize();
 					Point v = p2 - p1;  // branch direction
 					v = v.normalize();
@@ -1863,7 +1860,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						Point4D sd(image_cols,image_rows,sx,sy);
 						if(TNLeaf::collect_mode)
 							TNLeaf::collect(Point4D(p0), Point4D(p1), Point4D(p2),
-									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,0),
+									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
 									Point4D(color_flags, tid, poly_mode,shader_mode), sd,c);
 						else {
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
@@ -2135,14 +2132,17 @@ double BranchData::distance() {
 }
 
 void  BranchData::render(){
+	int enables=data[3].w;
+	if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(enables))
+		return;
 	Point4D sd=data[5];
 	Point4D p0=data[0];
-	
-	glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants2
-	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0); // Constants2
+		
+	glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0);   // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,0); // taper, compression, width_ratio,size		
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, data[4].x, data[4].y, data[4].w); //0,color_flags,size,shader_mode
-	if(!PlantMgr::shadow_mode)
+	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
 		glColor4d(c.red(), c.green(), c.blue(), c.alpha());
 	glPolygonMode(GL_FRONT_AND_BACK, data[4].z);			
 	glBegin(GL_LINES);

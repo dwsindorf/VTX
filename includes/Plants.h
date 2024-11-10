@@ -250,6 +250,7 @@ public:
 	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
 	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
 	bool isShadowEnabled() { return BIT_TST(enables,flags::SHADOW);}
+	static bool isShadowEnabled(int t) { return BIT_TST(t,flags::SHADOW);}
 	bool colValid();
 	bool texValid();
 	void init();
