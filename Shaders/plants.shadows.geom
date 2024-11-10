@@ -3,11 +3,11 @@
 
 
 #include "utils.h"
-#ifdef SHADOWS
+//#ifdef SHADOWS
 varying vec4 ShadowCoord;
 varying vec4 EyeDirection;
 uniform mat4 smat;
-#endif
+//#endif
 varying in vec4 Constants1[];
 varying in vec4 TexVars_G[];
 
@@ -51,11 +51,11 @@ vec3 OrthoNormalVector(vec3 v) {
 void produceVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = project(p);
-#ifdef SHADOWS
+//#ifdef SHADOWS
    vec4 VertexPosition=(gl_ModelViewMatrix * p);
    ShadowCoord=smat * VertexPosition;
    EyeDirection=-(gl_ModelViewMatrix * p);
-#endif   
+//#endif   
    EmitVertex();  
 }
 

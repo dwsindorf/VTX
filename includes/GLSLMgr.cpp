@@ -890,7 +890,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	}
 	else{
 		glUseProgramObjectARB(programHandle());
-		
+#ifdef DEBUG_HADER_LOAD
+		cout<<"using shader "<<program->name()<<endl;
+#endif		
 //#define SHOW_SHADER_WARNINGS
 #ifdef SHOW_SHADER_WARNINGS
 		if(first){

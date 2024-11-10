@@ -1473,7 +1473,8 @@ void Map::render_sprites(){
 		}
 	}
 	if(tp->plants.size){
-		PlantMgr::setProgram();
+		if(PlantMgr::setProgram())
+			PlantMgr::render();
 	}
 
 }

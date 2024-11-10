@@ -118,7 +118,7 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
     float w=Constants1[0].y;
 
 	Pnorm.xyz=normalize(cross(v, tx ));
-	Pnorm.w=P0[0].w; // bump
+	Pnorm.w=0.01;//P0[0].w; // bump
      vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left

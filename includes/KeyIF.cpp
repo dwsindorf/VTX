@@ -85,15 +85,15 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_TEST3:
 		test3=test3?0:1;
  		cout << "test3="<<test3<<endl;
-        TheScene->set_changed_detail();
-        TheScene->rebuild_all();
+        TheScene->set_changed_render();
+        //TheScene->rebuild_all();
 		break;
 
 	case KEY_TEST4:
 		test4=test4?0:1;
         //Raster.set_filter_show(!Raster.filter_show());
 		cout << "test4="<<test4<<endl;
-        TheScene->set_changed_detail();
+        TheScene->set_changed_render();
 		break;
 	case KEY_TEST5:
 		test5=test5?0:1;

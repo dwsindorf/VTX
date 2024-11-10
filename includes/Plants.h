@@ -225,13 +225,11 @@ public:
 	int color_flags;
 	bool alpha_texture;
 
-	//Image *image;
 	TNplant *root;
 	TNcolor *color;
 	
 	int instance;
 
-	//char texname[256];
 	char colorexpr[256];
 		
 	TNBranch(TNode *l, TNode *r, TNode *b);
@@ -291,12 +289,12 @@ public:
 //************************************************************
 // Class TNLeaf
 //************************************************************
-class LeafData
+class BranchData
 {
 public:
 	Point4D data[6];
 	Color c;
-	LeafData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
+	BranchData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
 		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
 		c=col;
 	}
@@ -319,13 +317,14 @@ public:
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
 	static bool collect_mode;
+	static bool sorted;
 	static void render();	
 	static void collect(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-		leafs.add(new LeafData(p0,p1,p2,f,d,s,c));
+		leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 	}
 	static void free() { leafs.free();}
 	static void sort() { leafs.sort();}	
-	static ValueList<LeafData*> leafs;
+	static ValueList<BranchData*> leafs;
 	
 	//void getPlantImageDir(int dim,char *);
 	Point setVector(Point vec, Point start, int lvl);
