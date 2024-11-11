@@ -185,6 +185,25 @@ public:
 };
 
 //************************************************************
+// Class TNLeaf
+//************************************************************
+class BranchData
+{
+public:
+	Point4D data[6];
+	Color c;
+	BranchData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
+		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
+		c=col;
+	}
+	double distance();
+	double value() { return distance();}
+	void render();
+
+};
+
+
+//************************************************************
 // Class TNBranch
 //************************************************************
 class TNBranch : public TNbase, public ImageInfo
@@ -199,10 +218,25 @@ protected:
 		DROOP_DROP=0x10,
 		DROOP_RAISE=0x20,
 		DROOP=DROOP_DROP|DROOP_RAISE|DROOP_FLAT,
-		ALL=TEX|COL|SHAPE|SHADOW
+		ENABLES=TEX|COL|SHAPE|SHADOW,
+		LEAFS=0x01,
+		BRANCHES=0x02,
+		LINE_MODE=0x00,
+		RECT_MODE=0x01,
+		LEAF_MODE=0x02,
+		SPLINE_MODE=0x03,
+		THREED_MODE=0x04,
+		SHADER_MODE=LINE_MODE|RECT_MODE|LEAF_MODE|SPLINE_MODE|THREED_MODE,
+		POLY_FILL=0x08,
+		POLY_LINE=0x10,
+		POLY_MODE=POLY_FILL|POLY_LINE
+
 	};
 public:
 	Array<TNode *>arglist;
+	static ValueList<BranchData*> branches;
+	static int collect_mode;
+
 	int maxlvl;
 	int level;
 	int min_level;
@@ -239,7 +273,20 @@ public:
 	virtual int typeValue()	  { return ID_BRANCH;}
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
+
+	static void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
+	}
+    
+	static void setCollectLeafs(bool b){BIT_SET(collect_mode,flags::LEAFS,b);}
+	static void setCollectBranches(bool b){BIT_SET(collect_mode,flags::BRANCHES,b);}
+	static bool isCollectLeafsSet(){return BIT_TST(collect_mode,flags::LEAFS);}
+	static bool isCollectBranchesSet(){return BIT_TST(collect_mode,flags::BRANCHES);}
+	static void freeBranches() {branches.free();}
+	static void renderBranches();
 	
+	static int polyMode(int m) { return m&POLY_LINE?GL_LINE:GL_FILL;}
+	static int shaderMode(int m) { return m&SHADER_MODE;}
 	void setTexEnabled(bool b){BIT_SET(enables,flags::TEX,b);setColorFlags();}
 	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
 	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
@@ -284,25 +331,6 @@ public:
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
-
-};
-
-//************************************************************
-// Class TNLeaf
-//************************************************************
-class BranchData
-{
-public:
-	Point4D data[6];
-	Color c;
-	BranchData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
-		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
-		c=col;
-	}
-	double distance();
-	double value() { return distance();}
-	void render();
-
 };
 
 class TNLeaf : public TNBranch
@@ -317,19 +345,17 @@ public:
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
-	static bool collect_mode;
 	static bool sorted;
-	static void render();	
-	static void collect(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+	static void renderLeafs();	
+	static void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
 		leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 	}
-	static void free() { leafs.free();}
-	static void sort() { leafs.sort();}	
+
+	static void freeLeafs() {leafs.free();}
+	static void sortLeafs() {leafs.sort();}
 	static ValueList<BranchData*> leafs;
 	
-	//void getPlantImageDir(int dim,char *);
 	Point setVector(Point vec, Point start, int lvl);
-	//char *getPlantImageName();
 
 };
 

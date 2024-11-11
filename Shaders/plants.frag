@@ -88,7 +88,7 @@ vec3 getNormal(float nscale){
 }
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
-	float nscale=TexVars.r;
+	float nscale=TexVars.x;
  	for(int i=0;i<NLIGHTS;i++){
  		vec3 light= normalize(gl_LightSource[i].position.xyz);
  		float LdotR= dot(light,Normal);// day side diffuse lighting
@@ -155,7 +155,7 @@ void main(void) {
 	float p=lerp(h,0.0,0.8,1,0.001); // hack !
 	color.a=pow(color.a,p);
 #endif 
-	test=vec3(0.5*(TexVars.b+1),0,0);
+//	test=vec3(0.5*(TexVars.z+1),0,0);
 
 //color=vec4(test.x,0,0,1);
  	gl_FragData[0]=color;
