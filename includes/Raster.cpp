@@ -627,7 +627,7 @@ void RasterMgr::render_shadows()
 			cnt++;
 		}
 		shadow_light();
-
+		shadow_vcnt=0;
 		if(!all_lights())
 			break;
 	}

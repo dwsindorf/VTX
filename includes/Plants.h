@@ -101,6 +101,7 @@ public:
 	double ht_bias;
 	double lat_bias;
 	static bool shadow_mode;
+	static int shadow_count;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);

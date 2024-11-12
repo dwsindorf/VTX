@@ -12,6 +12,7 @@
 
 //#define COLOR_TEST
 #define DENSITY_TEST
+#define ENABLE_DATA_CACHING
 
 #define USE_AVEHT
 #define MIN_VISITS 1
@@ -21,9 +22,9 @@
 //#define SHOW
 //#define DEBUG_PMEM
 
-#define SHOW_PLANT_STATS
-#define SHOW_BRANCH_STATS
-//#define SHOW_BRANCH_TIMING
+//#define SHOW_PLANT_STATS
+//#define SHOW_BRANCH_STATS
+#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -36,12 +37,6 @@
 #define LAST_EMIT   4
 #define LAST_FORK   8
 #define BASE_FORK   16
-
-//#define LINE_MODE   0
-//#define RECT_MODE   1
-//#define LEAF_MODE   2
-//#define SPLINE_MODE 3
-//#define THREED_MODE 4
 
 #define ENABLE_3D
 // Basic algorithm
@@ -91,14 +86,21 @@
 // 10) add support for shadows (DONE)
 //  - 3d mode only
 // 11) leaves
-//    - leaf clusters (DONE)
-//    - change DENSITY to go 0-1 from base to tip
-//    - method to make leaves alternate sides
-//    - support multiple leaf clusters per new branch (first bias)
-//    - vary leaf projection between eye plane and plane perpendicular to branch (flatness) DONE
-//    - use image aspect to correctly set length to width ratio
-//    - support NxN leaf textures (same as for sprites)
-	
+//  - leaf clusters (DONE)
+//  - change DENSITY to go 0-1 from base to tip
+//  - method to make leaves alternate sides
+//  - support multiple leaf clusters per new branch (first bias)
+//  - vary leaf projection between eye plane and plane perpendicular to branch (flatness) DONE
+//  - use image aspect to correctly set length to width ratio
+//  - support NxN leaf textures (same as for sprites)
+// 12) branch data caching
+//   if scene changes generate an array of cached data for each branch and leaf by traversing the plant tree
+//   else play out the array using simple opengl calls
+//   results:
+//   - render time improves with/without shadows if scene is stationary with changing time (e.g. 20 vs 50 ms)
+//   - but degradation in performance if moving (e.g 120 vs 50 ms)
+//    o need to traverse plant tree but extra overhead required to free and build cache
+//   - also see a subtle change in lighting if caching is enabled (a lighter lighter or darker depending on tod)
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
 //     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
@@ -253,6 +255,7 @@ BranchImageMgr branch_mgr; // global image manager
 //
 //-------------------------------------------------------------
 bool PlantMgr::shadow_mode=false;
+int PlantMgr::shadow_count=0;
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
 #ifdef DUMP
@@ -298,6 +301,7 @@ void PlantMgr::init()
 	cnt=0;
 	ss();
   	reset();
+  	shadow_count=0;
  }
 
 void PlantMgr::eval(){	
@@ -359,6 +363,7 @@ bool PlantMgr::setProgram(){
 	//cout<<"PlantMgr::setProgram"<<endl;
 	if(shadow_mode)
 		return false;
+	shadow_count=0;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	TerrainProperties *tp=Td.tp;
@@ -501,6 +506,7 @@ void PlantMgr::render_shadows(){
 	//glLineWidth(2);
 	//glPolygonOffset (0.0f, 0.0f);
 	
+	shadow_count++;
 	render();
 	//glLineWidth(1);
 	shadow_mode=false;
@@ -518,26 +524,35 @@ void PlantMgr::render_zvals(){
 
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
+	shadow_count++;
 	render();
-	glLineWidth(1);
+	//glLineWidth(1);
 	shadow_mode=false;
 }
 void PlantMgr::render(){
 	int l=randval;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| test5);
 	TNBranch::setCollectLeafs(!test5);
+	TNBranch::setCollectBranches(!test5);
+	double t0=clock();
+	double t1;
+	double t2;
+	double t3;
+	if(!test5 && shadow_mode&&shadow_count>1)
+		update_needed=false;
 
 	if(update_needed){
 		TNLeaf::freeLeafs();
+		TNBranch::freeBranches();
 		clearStats();
 		TNLeaf::sorted=false;
 	}
+	t1=clock();
 	int n=Plant::plants.size;
-	double d0=clock();
 	
 	if(!shadow_mode)
 		glEnable(GL_BLEND);
-
+	if(update_needed)
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
 		
@@ -558,29 +573,50 @@ void PlantMgr::render(){
 		plant->instance=i;
 		plant->emit();
 	}
-	double dt1=clock()-d0; // total
+	t2=clock(); // total
 	
-	if(TNBranch::isCollectLeafsSet()){
-		if(!TNLeaf::sorted){
-			TNLeaf::sortLeafs();
-			TNLeaf::sorted=true;
+	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
+		if(!shadow_mode)
+			setProgram();
+		if(TNBranch::isCollectBranchesSet()){
+			TNBranch::renderBranches();
 		}
-        if(!shadow_mode)
-        	setProgram();
-		TNLeaf::renderLeafs();
+		if(TNBranch::isCollectLeafsSet()){
+			if(!TNLeaf::sorted){
+				TNLeaf::sortLeafs();
+				TNLeaf::sorted=true;
+			}
+			TNLeaf::renderLeafs();
+		}
 	}
-	double dt2=clock()-d0; // total
+	t3=clock(); // total
 	randval=l;
 #ifdef SHOW_BRANCH_STATS
     if(update_needed)
 		showStats();
 #endif
 #ifdef SHOW_BRANCH_TIMING
-	double ttm=1000*dt2/CLOCKS_PER_SEC;
-	double ltm=1000*(dt2-dt1)/CLOCKS_PER_SEC;
-	double btm=ttm-ltm;
-	cout<<"render time leafs:"<<ltm<<" branches:"<<btm<<" total:"<<ttm<<" ms"<<endl;
+    static double dt1,dt2,dt3,dt4;
+    
+    bool init_acum=(shadow_count==1&&(Raster.shadows()))||(!Raster.shadows());
+    bool show_acum=(shadow_count==2*Raster.shadow_vsteps)||(!Raster.shadows());
+	if(init_acum){
+		dt1=dt2=dt3=dt4=0;
+	}
+	double ftm=1000*(t1-t0)/CLOCKS_PER_SEC;
+	double ctm=1000*(t2-t1)/CLOCKS_PER_SEC;
+	double rtm=1000*(t3-t2)/CLOCKS_PER_SEC;
+	double ttm=1000*(t3-t0)/CLOCKS_PER_SEC;
+	
+	dt1+=ftm;
+	dt2+=ctm;
+	dt3+=rtm;
+	dt4+=ttm;		
+	
+	if(show_acum)
+		cout<<shadow_count<<" time free:"<<dt1<<" collect:"<<dt2<<" render:"<<dt3<<" total:"<<dt4<<" ms"<<endl;
 #endif
+	update_needed=false;
 }
 //-------------------------------------------------------------
 // PlantMgr::make() factory method to make Placement
@@ -802,7 +838,7 @@ void Plant::collect()
 	if(plants.size){
 		plants.sort();
 		double range=plants[plants.size-1]->value()-plants[0]->value();
-    	cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
+    	//cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
 	}
 #ifdef SHOW
 	//int pnrt_num=plants.size-1;
@@ -813,6 +849,7 @@ void Plant::collect()
 		plants[i]->print();	
 	}
 #endif
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	
 }
 //-------------------------------------------------------------
@@ -1367,7 +1404,7 @@ void TNBranch::setDroopMode(int m){
 	case 1: MSK_SET(enables,DROOP,DROOP_DROP);break;
 	case 2: MSK_SET(enables,DROOP,DROOP_RAISE);break;
 	}
-	cout<<"enables="<<m<<" "<<enables<<endl;
+	//cout<<"enables="<<m<<" "<<enables<<endl;
 }
 int TNBranch::getDroopMode(){
 	switch(enables&DROOP){
@@ -1803,8 +1840,14 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						poly_mode = POLY_LINE;
 					if (test4)
 						shader_mode = LINE_MODE;
-					setColor();
-					c = S0.c;
+					c=Color(1,1,1);
+					if(color && isColEnabled()){
+						S0.clr_cvalid();
+						color->eval();
+						c = S0.c;
+					}
+	
+					//setColor();
 
 					double depth = bot.length();
 					child_size = length * FEET / 12; // inches
@@ -1858,21 +1901,21 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						p2 = p1 + pr * asize;
 						
 						double aspect=((double)image_cols)/image_rows;
-						int mode=poly_mode|shader_mode;
-						int glmode=polyMode(mode);
-						int smode=shaderMode(mode);
+						int psmode=poly_mode|shader_mode;
 						
 						if(isCollectLeafsSet())
 							TNLeaf::collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
 									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-									Point4D(0,color_flags, tid, mode), sd,c);
+									Point4D(0,color_flags, tid, psmode), sd,c);
 						else {
+							glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
+
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, 0); // Constants1		
-							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, smode); 
+							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shaderMode(psmode)); 
 							
-							glPolygonMode(GL_FRONT_AND_BACK, glmode);
+							glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
 							glBegin(GL_LINES);
 							glVertex4d(p1.x, p1.y, p1.z, 0);
 							glVertex4d(p2.x, p2.y, p2.z, 0);
@@ -1899,7 +1942,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			} else
 				root->addBranch(branch_id);
 			if (test3 || test4)
-				poly_mode = POLY_LINE;//GL_LINE;
+				poly_mode = POLY_LINE;
 			if (test4)
 				shader_mode = LINE_MODE;
 
@@ -1918,11 +1961,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
             double phase=0.5*Randval;
 
 			int psmode=poly_mode|shader_mode;
-			int glmode=polyMode(psmode);
-			int smode=shaderMode(psmode);
 			if(!isCollectBranchesSet()){
-				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, smode);
-				glPolygonMode(GL_FRONT_AND_BACK, glmode);
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, shaderMode(psmode));
+				glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
 			}
 
 			if (root->threed && shader_mode == SPLINE_MODE) {
@@ -1938,10 +1979,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				double r2 = w2;
 				Point t0, t1, t2;
 				t0 = p0;
-				Point4D T0(p0);
-				T0.w=phase;
 				double delta = 1.0 / (nv);
 				double f1, f2, dx, dy;
+				Point4D T0;
  				for (int i = 0; i < nv; i++) {
 					f1 = i * delta;
 					f2 = (i + 1) * delta;
@@ -1949,13 +1989,16 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dy = (1 - f2) * r1 + f2 * r2;
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
-					if(isCollectBranchesSet())
-					    TNBranch::collectBranches(T0, Point4D(p1), Point4D(p2),
+					T0=Point4D(t0.x, t0.y, t0.z,phase);
+			
+					if(isCollectBranchesSet()){
+					    TNBranch::collectBranches(T0, Point4D(t1), Point4D(t2),
 						Point4D(dx, dy, f1, f2),
 						Point4D(nscale,color_flags, tid, psmode), sd,c);
+					}
 					else {			
 						glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
-						glVertexAttrib4d(GLSLMgr::CommonID2, t0.x, t0.y, t0.z,phase); // Constants2
+						glVertexAttrib4d(GLSLMgr::CommonID2, T0.x, T0.y, T0.z,phase); // Constants2
 						glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
 	
 						glBegin(GL_LINES);
@@ -1976,12 +2019,17 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			} else if (isEnabled()) { // no spline
 				Point4D P0(p0);
+				Point4D P1(p1);
+				Point4D P2(p2);
 				P0.w=phase;
+				P1.w=bot_offset;
+				P2.w=top_offset;
 
-				if(isCollectBranchesSet())
-					TNBranch::collectBranches(P0, Point4D(p1), Point4D(p2),
+				if(isCollectBranchesSet()){
+					TNBranch::collectBranches(P0, P1, P2,
 					Point4D(w1, w2, 0, 1),
-					Point4D(nscale,color_flags, tid, mode), sd,c);
+					Point4D(nscale,color_flags, tid, psmode), sd,c);
+				}
 				else {	
 					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 					glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, phase); // Constants2
@@ -2005,6 +2053,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->addLine(branch_id);
 			setColor();
 			c = S0.c;
+			//glColor4d(c.red(), c.green(), c.blue(), 1);
 
 			poly_mode = POLY_LINE;
 			shader_mode = LINE_MODE;
@@ -2012,12 +2061,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			if(isCollectBranchesSet()){
 				TNBranch::collectBranches(Point4D(p0), Point4D(p1), Point4D(p2),
-				Point4D(0, 0, 0, 1),
+				Point4D(0, 0, 0, 0),
 				Point4D(nscale,color_flags, tid, psmode), sd,c);
 			}
 			else{			
-				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,LINE_MODE);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,shaderMode(psmode));
+				glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
 				glBegin(GL_LINES);
 				glVertex4d(p1.x, p1.y, p1.z, 0);
 				glVertex4d(p2.x, p2.y, p2.z, 0);
@@ -2161,23 +2210,23 @@ double BranchData::distance() {
 }
 
 void  BranchData::render(){
-	//int enables=data[3].w;
-	//if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(enables))
-	//	return;
 	Point4D sd=data[5];
 	Point4D p0=data[0];
+	int polymode=TNBranch::polyMode(data[4].w);
 		
 	glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
-	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, 0);   // Constants2
+	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
 	glVertexAttrib4d(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size		
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, TNBranch::shaderMode(data[4].w)); //nscale,color_flags,tid,shader_mode
 	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
 		glColor4d(c.red(), c.green(), c.blue(), c.alpha());
-	glPolygonMode(GL_FRONT_AND_BACK, TNBranch::polyMode(data[4].z));			
+	glPolygonMode(GL_FRONT_AND_BACK, polymode);			
 	glBegin(GL_LINES);
 	glVertex4d(data[1].x, data[1].y, data[1].z, 0);
 	glVertex4d(data[2].x, data[2].y, data[2].z, 0);
 	glEnd();
+	if(polymode!=GL_FILL)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 }
 

@@ -99,7 +99,7 @@ static int hits=0;
 //#define SHOW
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
-#define TEST_PTS 
+//#define TEST_PTS 
 //#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
@@ -602,7 +602,7 @@ void Sprite::collect()
 	} // next sprite
 	//}
 	if(sprites.size){
-    	cout<<"total sprites collected:"<<sprites.size<<endl;
+    	//cout<<"total sprites collected:"<<sprites.size<<endl;
  		sprites.sort();
 	}
 #ifdef SHOW

@@ -162,9 +162,11 @@ void PlacementMgr::reset()
 		}		
 	}
 	list.reset();
+#ifdef DEBUG_PLACEMENTS
 	chits=cvisits=crejects=0;
 	nhits=nmisses=nvisits=nrejects=0;
 	cmade=cfreed=0;
+#endif
 }
 
 //-------------------------------------------------------------
