@@ -18,10 +18,10 @@ typedef struct renderdata {
 	unsigned int  fogsel	: 2;	// fog options
 	unsigned int  colors	: 4;	// colors test mode
 	unsigned int  water	    : 2;	// water mode
-	unsigned int  display	: 7;	// info select
+	unsigned int  display	: 8;	// info select
 	unsigned int  valid	    : 1;	// unassigned
 	unsigned int  lmode	    : 2;	// light mode
-	unsigned int  unused	: 14;	// options
+	unsigned int  unused	: 13;	// options
 } renderdata;
 
 enum{ //light mode
@@ -73,7 +73,7 @@ enum{  //fogsel
 	POW			    = 0x03
 	};
 
-enum{  // info displayay options
+enum{  // info display options
 	OBJINFO			= 0x01,
 	MAPINFO			= 0x02,
 	OCTINFO			= 0x04,
@@ -81,7 +81,8 @@ enum{  // info displayay options
 	TRNINFO         = 0x10,
 	RASTINFO		= 0x20,
 	NODEINFO		= 0x40,
-	ALLINFO         = 0x7f
+	PLANTINFO		= 0x80,
+	ALLINFO         = 0xff
 	};
 
 class RenderOptions
@@ -191,6 +192,7 @@ public:
 	void set_display(int c)     { BIT_ON(info.display,c);}
 	void clr_display(int c)     { BIT_OFF(info.display,c);}
 	int  display(int c)			{ return info.display & c?1:0;}
+	int  display()			    { return info.display;}
 
 	void set_dealias(int c)		{ BIT_SET(renderflags,DEALIAS,c);}
 	int  dealias()				{ return renderflags & DEALIAS?1:0;}

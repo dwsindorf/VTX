@@ -14,6 +14,10 @@ class TNBranch;
 class TNLeaf;
 class Plant;
 
+#define MAX_BRANCHES 6
+#define MAX_PLANT_DATA 7
+#define PLANT_STATS 6
+
 class PlantPoint : public Placement
 {
 public:
@@ -95,6 +99,8 @@ protected:
 public:
 	Placement *make(Point4DL&,int);
 	TNplant *plant;
+	static int stats[PLANT_STATS];
+	static double render_time;
 
 	Color c;
 	double slope_bias;
@@ -102,6 +108,8 @@ public:
 	double lat_bias;
 	static bool shadow_mode;
 	static int shadow_count;
+	static double pmax;
+	static double pmin;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
@@ -115,11 +123,10 @@ public:
 	static void render_zvals();
 	static void render_shadows();
 	static void clearStats();
+	static void collectStats();
 	static void showStats();
 };
 
-#define MAX_BRANCHES 6
-#define MAX_PLANT_DATA 7
 
 //************************************************************
 // Class TNplant
@@ -275,9 +282,7 @@ public:
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
 
-	static void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
-	}
+	static void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
     
 	static void setCollectLeafs(bool b){BIT_SET(collect_mode,flags::LEAFS,b);}
 	static void setCollectBranches(bool b){BIT_SET(collect_mode,flags::BRANCHES,b);}
@@ -348,9 +353,7 @@ public:
 	char *symbol()		{ return "Leaf";}
 	static bool sorted;
 	static void renderLeafs();	
-	static void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-		leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-	}
+	static void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
 
 	static void freeLeafs() {leafs.free();}
 	static void sortLeafs() {leafs.sort();}

@@ -412,7 +412,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case '8':
 		switch(state&FN_TYPES){
 		case FN_INFO:
- 			print_strings=print_strings?0:1;
+ 			Render.clr_display(ALLINFO);
+			Render.set_display(PLANTINFO);
+			TheScene->set_changed_render();
+ 			//print_strings=print_strings?0:1;
 			break;
         case FN_NCOL:
             Render.set_colors(SNODES);

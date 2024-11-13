@@ -71,11 +71,12 @@ enum {
 	MOPEN     = 0x00000020,
 	HELP      = 0x00000040,
     DFLT      = 0x00000000,
-    VIEWS     = 0x00000080,
-	MOVIE     = 0x00000100,
-	NCOLS     = 0x00000200,
+    VIEWS     = 0x00000100,
+	MOVIE     = 0x00000200,
+	NCOLS     = 0x00000300,
 	INFO      = 0x00000400,
-	TEST      = 0x00000800,
+	TEST      = 0x00000500,
+	PLANT     = 0x00000600,
 	VLOG      = 0x00001000,
 	LOG       = 0x00002000,
 	VIDEO     = 0x00004000,
@@ -84,7 +85,7 @@ enum {
 	AUTOGRID  = 0x00020000,
 
 	VMODE     = LOG|PATH|VIDEO,
-	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST
+	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST|PLANT
 };
 
 #define BEGIN_TIMING double start,duration;start=clock();

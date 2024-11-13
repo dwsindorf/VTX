@@ -33,7 +33,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -108,6 +108,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	SLOPE,
 	RADIUS,
 	DENSITY,
+	RANGE,
 	RED,
 	GREEN,
 	BLUE,
@@ -161,6 +162,7 @@ static LongSym gtypes[]={
 	{"SLOPE",		SLOPE},
 	{"RADIUS",		RADIUS},
 	{"DENSITY",		DENSITY},
+	{"RANGE",		RANGE},
 	{"RED",			RED},
 	{"GREEN",		GREEN},
 	{"BLUE",		BLUE},
@@ -342,6 +344,10 @@ void TNglobal::eval()
 	case DENSITY:
 		//Td.set_flag(SNOISEFLAG);
 		S0.s=Density;
+		break;
+	case RANGE:
+		//Td.set_flag(SNOISEFLAG);
+		S0.s=Range;
 		break;
 	case GPI:
 		S0.s=PI;

@@ -17,14 +17,14 @@
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
+#define TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
 
 //#define SHOW_PLANT_STATS
 //#define SHOW_BRANCH_STATS
-#define SHOW_BRANCH_TIMING
+//#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -87,12 +87,12 @@
 //  - 3d mode only
 // 11) leaves
 //  - leaf clusters (DONE)
-//  - change DENSITY to go 0-1 from base to tip
-//  - method to make leaves alternate sides
-//  - support multiple leaf clusters per new branch (first bias)
+//  - change DENSITY to go 0-1 from base to tip (DONE)
+//  - method to make leaves alternate sides (DONE)
+//  - support multiple leaf clusters per new branch (first bias) DONE
 //  - vary leaf projection between eye plane and plane perpendicular to branch (flatness) DONE
 //  - use image aspect to correctly set length to width ratio
-//  - support NxN leaf textures (same as for sprites)
+//  - support NxN leaf textures (same as for sprites) DONE
 // 12) branch data caching
 //   if scene changes generate an array of cached data for each branch and leaf by traversing the plant tree
 //   else play out the array using simple opengl calls
@@ -101,11 +101,13 @@
 //   - but degradation in performance if moving (e.g 120 vs 50 ms)
 //    o need to traverse plant tree but extra overhead required to free and build cache
 //   - also see a subtle change in lighting if caching is enabled (a lighter lighter or darker depending on tod)
+//
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
 //     o improvement: added extra argument in TNplant to increase size of "dot" (threshold test)
 //     o improvement: moving visits++ before threshold test in set_terrain
 // 2) far away plants (e.g. trees) look "denuded" (i.e. lack foliage) because smaller branches arn't drawn
+//    - workaround: increase branch width with distance (using new RANGE variable)
 // 3) multiple plants don't stack if "+" used to connect
 //    - Preceding plant loses last branch
 //    - works OK without "+" connection
@@ -177,7 +179,7 @@
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
 
-extern double Hscale, Drop, MaxSize,Height,Phi,Level,Randval,Srand;
+extern double Hscale, Drop, MaxSize,Height,Phi,Level,Randval,Srand,Range;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -216,10 +218,9 @@ static double min_draw_width=0.5;
 static double min_render_pts=2; // for render
 static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
-
-#define MIN_DRAW_WIDTH 0.75*min_draw_width // varies with scene quality
+#define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 2*MIN_LINE_WIDTH
+#define MIN_TRIANGLE_WIDTH 3*MIN_LINE_WIDTH
 #define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 #ifdef DUMP
@@ -245,6 +246,16 @@ static int          scnt;
 static bool update_needed=true;;
 LeafImageMgr leaf_mgr; // global image manager
 BranchImageMgr branch_mgr; // global image manager
+
+void show_plant_info()
+{
+	if(!Render.display(PLANTINFO))
+		return;
+	TheScene->draw_string(HDR1_COLOR,"------- plants ---------------------");
+	TheScene->draw_string(DATA_COLOR,"plants:%d branches:%d leaves:%d render:%3.1f ms",
+			PlantMgr::stats[0],PlantMgr::stats[1],PlantMgr::stats[2],PlantMgr::render_time);
+	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
+}
 //************************************************************
 // PlantMgr class
 //************************************************************
@@ -256,11 +267,15 @@ BranchImageMgr branch_mgr; // global image manager
 //-------------------------------------------------------------
 bool PlantMgr::shadow_mode=false;
 int PlantMgr::shadow_count=0;
+int PlantMgr::stats[PLANT_STATS];
+double PlantMgr::render_time;
+double PlantMgr::pmax=1;
+double PlantMgr::pmin=0;;
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
 #ifdef DUMP
 	if(!s_mgr)
-		add_finisher(show_stats);
+		add_finisher();
 #endif
 	type|=SPRITES;
 	plant=p;
@@ -291,6 +306,7 @@ PlantMgr::~PlantMgr()
 //-------------------------------------------------------------
 void PlantMgr::init()
 {
+	static bool finisher_added=false;
 #ifdef DEBUG_PMEM
   	printf("PlantMgr::init()\n");
 #endif
@@ -302,7 +318,11 @@ void PlantMgr::init()
 	ss();
   	reset();
   	shadow_count=0;
- }
+	if(!finisher_added)
+		add_finisher(show_plant_info);
+	finisher_added=true;
+
+}
 
 void PlantMgr::eval(){	
 	PlacementMgr::eval(); 
@@ -495,6 +515,24 @@ void PlantMgr::showStats(){
 		tp->plants[i]->showStats();
 	}
 }
+void PlantMgr::collectStats(){
+	TerrainProperties *tp=Td.tp;
+	for(int i=0;i<PLANT_STATS;i++){
+		stats[i]=0;
+	}
+	stats[0]=tp->plants.size;
+	for(int i=0;i<tp->plants.size;i++){
+		TNplant *plant=tp->plants[i]->expr;
+		for(int j=0;j<plant->branches;j++){
+			stats[1]+=plant->stats[j][2]; // lines
+			stats[1]+=plant->stats[j][3]; // polygons
+			stats[1]+=plant->stats[j][4]; // splines
+			stats[2]+=plant->stats[j][5]; // leaves
+		}
+	}
+
+}
+
 void PlantMgr::render_shadows(){
 	if(!TNplant::threed)
 		return;
@@ -519,26 +557,25 @@ void PlantMgr::render_zvals(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	//min_draw_width=2;
-	//glLineWidth(2);
-
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	shadow_count++;
 	render();
-	//glLineWidth(1);
+
 	shadow_mode=false;
 }
 void PlantMgr::render(){
 	int l=randval;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| test5);
-	TNBranch::setCollectLeafs(!test5);
+	//TNBranch::setCollectLeafs(!test5);
+	TNBranch::setCollectLeafs(true);
 	TNBranch::setCollectBranches(!test5);
+
 	double t0=clock();
 	double t1;
 	double t2;
 	double t3;
-	if(!test5 && shadow_mode&&shadow_count>1)
+	if(!test5 && Raster.shadows()&&shadow_count>1)
 		update_needed=false;
 
 	if(update_needed){
@@ -555,7 +592,8 @@ void PlantMgr::render(){
 	if(update_needed)
 	for(int i=n-1;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
-		
+		Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
+		//cout<<s->distance/PlantMgr::pmax<<" "<<Range<<endl;
 		int id=s->get_id();
 		
 		TNplant *plant=s->mgr->plant;
@@ -591,11 +629,13 @@ void PlantMgr::render(){
 	}
 	t3=clock(); // total
 	randval=l;
+	//if(Render.display(PLANTINFO))
+		collectStats();
+		
 #ifdef SHOW_BRANCH_STATS
     if(update_needed)
 		showStats();
 #endif
-#ifdef SHOW_BRANCH_TIMING
     static double dt1,dt2,dt3,dt4;
     
     bool init_acum=(shadow_count==1&&(Raster.shadows()))||(!Raster.shadows());
@@ -612,9 +652,11 @@ void PlantMgr::render(){
 	dt2+=ctm;
 	dt3+=rtm;
 	dt4+=ttm;		
-	
-	if(show_acum)
+	render_time=dt4;
+#ifdef SHOW_BRANCH_TIMING	
+	if(show_acum){
 		cout<<shadow_count<<" time free:"<<dt1<<" collect:"<<dt2<<" render:"<<dt3<<" total:"<<dt4<<" ms"<<endl;
+	}
 #endif
 	update_needed=false;
 }
@@ -837,8 +879,10 @@ void Plant::collect()
 	}
 	if(plants.size){
 		plants.sort();
-		double range=plants[plants.size-1]->value()-plants[0]->value();
-    	//cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
+		PlantMgr::pmin=plants[0]->value();
+		PlantMgr::pmax=plants[plants.size-1]->value();
+ 		double range=PlantMgr::pmax-PlantMgr::pmin;
+   		cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
 	}
 #ifdef SHOW
 	//int pnrt_num=plants.size-1;
@@ -1324,7 +1368,7 @@ bool TNplant::setProgram(){
 // TNBranch class
 //************************************************************
 int TNBranch::collect_mode=0;
-ValueList<BranchData*> TNBranch::branches;
+ValueList<BranchData*> TNBranch::branches(100,1000);
 
 TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 {
@@ -1686,9 +1730,10 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		//if(first_bias) // add more branches at start of new branch fork
 		//	n*=first_bias;
 		n=n<1?1:n;
+		double we=evalArg(3,width);
 		for(int i=0;i<n;i++){
 			level=0;
-			emit(opt,start,vec,tip,s,w*width,1);
+			emit(opt,start,vec,tip,s,w*we,1);
 		}
 	}
 	else{
@@ -2191,6 +2236,9 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
 
+void TNBranch::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
 void TNBranch::renderBranches(){
 	glDisable(GL_CULL_FACE);
 	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
@@ -2203,7 +2251,7 @@ void TNBranch::renderBranches(){
 //************************************************************
 // TNLeaf class
 //************************************************************
-ValueList<BranchData*> TNLeaf::leafs;
+ValueList<BranchData*> TNLeaf::leafs(100,1000);
 
 double BranchData::distance() { 
 	return data[2].length();
@@ -2240,6 +2288,11 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	flatness=0.2;
 	phase=0;
 }
+
+void TNLeaf::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
+
 void TNLeaf::renderLeafs(){
 	glDisable(GL_CULL_FACE);
 	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest

@@ -3141,6 +3141,7 @@ void Scene::show_mode_info()
             draw_string(MENU_COLOR," 5: stars");
             draw_string(MENU_COLOR," 6: placements");
             draw_string(MENU_COLOR," 7: terrain");
+            draw_string(MENU_COLOR," 8: plants");
         }
         break;
     case NCOLS:
