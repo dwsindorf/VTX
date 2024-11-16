@@ -90,7 +90,9 @@ protected:
     void find_neighbors(Placement *);
 
 public:
-	//static	int		last_id;
+	enum test{
+		TEST_COLOR=1,TEST_DENSITY=2
+	};
 	double			size;
 	double 			roff;
 	double 			roff2;
@@ -174,8 +176,8 @@ protected:
 public:
     PlacementMgr *mgr;
 	TNplacements(int t, TNode *l, TNode *r, TNode *b);
-
 	virtual ~TNplacements();
+	
 	virtual void reset();
 	virtual void eval();
 	virtual void init();

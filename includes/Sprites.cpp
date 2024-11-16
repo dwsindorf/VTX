@@ -99,7 +99,7 @@ static int hits=0;
 //#define SHOW
 #define MIN_VISITS 2
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
+#define TEST_PTS 
 //#define SHOW_STATS
 //#define DUMP
 #ifdef DUMP
@@ -144,7 +144,7 @@ SpriteImageMgr sprites_mgr; // global image manager
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
-
+int SpriteMgr::adapt_tests=test::TEST_DENSITY;
 //ValueList<FileData*> SpriteMgr::sprite_dirs;
 SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 {
@@ -526,7 +526,7 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 void Sprite::collect()
 {
-#ifdef TEST_PTS
+#ifdef DEBUG_TEST_PTS
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
 #endif
@@ -846,18 +846,18 @@ void TNsprite::eval()
 	if(hits>0){ // inside target radius
 		nhits++;
 		double x=1-cval;
-#ifdef COLOR_TEST
-		if(instance==0)
-			c=Color(x,0,1);
-		else
-			c=Color(x,1,0);
-		Td.diffuse=Td.diffuse.mix(c,0.5);
-#endif
-#ifdef DENSITY_TEST
-		x=1/(cval+1e-6);
-		x=x*x;//*x*x;
-		Td.density+=lerp(cval,0,0.2,0,.05*x);
-#endif
+		if(SpriteMgr::testColor()){
+		//	if(instance==0)
+		//		c=Color(x,0,1);
+		//	else
+				c=Color(x,0,0);
+			Td.diffuse=Td.diffuse.mix(c,0.5);
+		}
+		if(SpriteMgr::testDensity()){
+			x=1/(cval+1e-6);
+			x=x*x;//*x*x;
+			Td.density+=lerp(cval,0,0.2,0,.05*x);
+		}
 	}
  }
 

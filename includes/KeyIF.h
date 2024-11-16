@@ -42,11 +42,11 @@ enum special_keys {
 
 enum standard_keys{
 	KEY_HELP    		= '?',
-	KEY_TEST1    		= '$',
-	KEY_TEST2    		= '%',
-    KEY_TEST3           = '@',
-    KEY_TEST4           = '#',
-    KEY_TEST5           = '&',
+	KEY_TEST1    		= '!',
+	KEY_TEST2    		= '@',
+    KEY_TEST3           = '#',
+    KEY_TEST4           = '$',
+    KEY_TEST5           = '%',
 
 	KEY_DEFAULT         = 'Q',
 
@@ -82,7 +82,7 @@ enum standard_keys{
 	KEY_VIEW_HORZ  		= 'H',
 
     KEY_RASTER_SHADOW_MAP = '\\',
-    KEY_RASTER_LINES    = '!',
+    KEY_RASTER_LINES    = '&',
 
 	KEY_RENDER_SHADED   = 'S',
 	KEY_RENDER_SOLID   	= 'N',

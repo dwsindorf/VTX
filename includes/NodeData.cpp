@@ -251,12 +251,12 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
-//#define TEST_SPRITES
+#define TEST_SPRITES
 #define TEST_PLANTS
 //#define TEST_CRATERS
 #define TEST_DENSITY
 
-//#define TEST_COLOR
+#define TEST_COLOR
 
 void MapData::init_terrain_data(TerrainData &td,int pass)
 {
@@ -297,9 +297,16 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	if(td.water())
 		nw=1;
-
-	if(td.cvalid())
+    bool color_valid=false;
+    bool color_test=false;
+    bool density_test=false;
+    
+    Color c;
+	if(td.cvalid()){
+		color_valid=true;
+		c=td.c;
 		nc=1;
+	}
 
 	setLinks(0);
     if(td.datacnt && pass<td.datacnt){
@@ -317,31 +324,25 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	nc=1;
 #endif
 	int pm=CurrentScope->passmode();
+#ifdef TEST_SPRITES
 	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
-#if defined TEST_SPRITES
 	if(do_sprites){
-#if defined TEST_COLOR
-		nc=1;
-#endif
-#if defined TEST_DENSITY
-		nf=1;
-#endif
+		if(SpriteMgr::testColor())
+			nc=1;
+		if(SpriteMgr::testDensity())
+			nf=1;
 	}
 #endif
-
-#ifdef TEST_PLANTS
 	bool do_plants=tp->plants.size>0&& TheScene->viewobj==TheMap->object;
 	if(do_plants){
-#ifdef TEST_COLOR
-		nc=1;
-#endif
-#ifdef TEST_DENSITY
-		nf=1;
-#endif
+		if(PlantMgr::testColor())
+			nc=1;
+		if(PlantMgr::testDensity())
+			nf=1;
 	}
-#endif
 
 	a=b=0;
+
 
 	setTextures(tp->textures.size?1:0);
 	setSprites(tp->sprites.size?1:0);
@@ -367,6 +368,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	setDims(nd);
 	setColors(nc);
+
 	set_has_density(nf);
 	set_has_ocean(nw);
 
@@ -435,44 +437,58 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	point_=TheMap->point(theta(),phi(),h);
 #endif
 	int mode=CurrentScope->passmode();
+
 #ifdef TEST_SPRITES
-	if(do_sprites){
+    if(do_sprites){
 		CurrentScope->set_spass();
 		MapPt=point();
-		Td.density=0;
-		Td.diffuse=Color(1,1,1);
+		if(SpriteMgr::testDensity()){
+			Td.density=0;
+			density_test=true;
+		}
+		if(SpriteMgr::testColor()){
+			if(color_valid)
+				Td.diffuse=c;
+			else
+				Td.diffuse=Color(1,1,1);
+			color_test=true;
+		}
 		for(i=0;i<tp->sprites.size;i++){
 			Sprite *sprite=tp->sprites[i];
 			sprite->eval();
-	#ifdef TEST_DENSITY
-			setDensity(Td.density);
-	#endif
-	#ifdef TEST_COLOR
-			setColor(Td.diffuse);
-	#endif
+			if(SpriteMgr::testDensity())
+				setDensity(Td.density);
+			if(SpriteMgr::testColor())
+				setColor(Td.diffuse);
 		}
 	}
 #endif
-#ifdef TEST_PLANTS
 	if(do_plants){
 		CurrentScope->set_spass();
 		MapPt=point();
-		Td.density=0;
-        if(!do_sprites)
-			Td.diffuse=Color(1,1,1);
-
+		double density=0;
+		if(density_test)
+			density=Td.density;
+		if(PlantMgr::testDensity()&&!density_test)
+			Td.density=0;
+		if(PlantMgr::testColor()&&!color_test){
+			if(color_valid)
+				Td.diffuse=c;
+			else
+				Td.diffuse=Color(1,1,1);
+		}
 		for(i=0;i<tp->plants.size;i++){
 			Plant *plant=tp->plants[i];
 			plant->eval();
-	#ifdef TEST_DENSITY
-			setDensity(Td.density);
-	#endif
-	#ifdef TEST_COLOR
-			setColor(Td.diffuse);
-	#endif
+			if(PlantMgr::testDensity())
+				setDensity(Td.density+density);
+			if(PlantMgr::testColor()){
+				
+				setColor(Td.diffuse);
+			}
 		}
 	}
-#endif
+
 	CurrentScope->set_passmode(mode);
 }
 //-------------------------------------------------------------

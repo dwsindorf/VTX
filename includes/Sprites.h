@@ -77,6 +77,13 @@ protected:
 public:
 	Placement *make(Point4DL&,int);
 	Color c;
+	static int adapt_tests;
+
+	static void setColorTest(bool b) { BIT_SET(adapt_tests,TEST_COLOR,b);}
+	static void setDensityTest(bool b) { BIT_SET(adapt_tests,TEST_DENSITY,b);}
+	static bool testColor()  { return BIT_TST(adapt_tests,TEST_COLOR);}
+	static bool testDensity()  { return BIT_TST(adapt_tests,TEST_DENSITY);}
+
 	int sprites_rows;
 	int sprites_cols;
 	double variability;

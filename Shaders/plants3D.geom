@@ -31,29 +31,11 @@ vec4 project(vec4 pnt){
 	return vec4(proj.xyz/proj.w,pnt.w);
 }
 
-// given two points p1 and p2 create a vector out
-// that is perpendicular to (p2-p1)
-vec3 createPerp(vec3 p1, vec3 p2)
-{
-  vec3 invec = normalize(p2 - p1);
-  vec3 ret = cross( invec, vec3(1.0, 0.0, 0.0) );
-  if ( length(ret) == 0.0 )
-     ret = cross( invec, vec3(0.0, 1.0, 0.0) );
-  return ret;
-}
-
 vec3 OrthoNormalVector(vec3 v) {
   float g = v.z>0?1.0:-1.0;
   float h = v.z + g;
   return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
 }
-
-void projectVertex(vec3 v){
-   vec4 p=vec4(v,1.0);
-   gl_Position = project(p);
-   EmitVertex();  
-}
-
 void emitVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = p;
@@ -97,7 +79,6 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 #endif
 }
 
-
 // draw a leaf
 void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 {   
@@ -118,7 +99,7 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
     float w=Constants1[0].y;
 
 	Pnorm.xyz=normalize(cross(v, tx ));
-	Pnorm.w=0.01;//P0[0].w; // bump
+	Pnorm.w=0.001;//P0[0].w; // bump
      vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
@@ -155,10 +136,9 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         int segs = 3;
         nodes=5;
 	    float f=1.0 /(segs-1);
-        
-		tx = createPerp(p2, p1);
+        tx = OrthoNormalVector(v2);
 		ty = cross(v2, tx);
-         float ws=0.5;
+        float ws=0.5;
         f=1.0 /(segs);
   		for(int i=0; i<segs; i++) {
 	      float a = i*f;
@@ -211,132 +191,6 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 	}
 	EndPrimitive();
 }
-// branches  
-void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
-	
-	float bot_offset=p1.w;
-	float top_offset=p2.w;
- 	
-	float topx=c.r;
-	float topy=c.g;
-	float botx=c.b;
-	float boty=c.a;
-	
-	vec2 vtop=vec2(topx,topy);
-    vec2 vbot=vec2(botx,boty);
- 
-    vec2 top_left=vtop*(1+top_offset);
-    vec2 top_right=vtop*(1-top_offset);
-    vec2 bot_left=vbot*(1+bot_offset);
-    vec2 bot_right=vbot*(1-bot_offset);
-    
-    vec2 v2=normalize(vec2(topx,topy));
-    vec2 v1=normalize(vec2(botx,boty));
-  
-    Pnorm.xyz=vec3(v1,0);
-    gl_TexCoord[0].xy=vec2(0,tx.w);
-    gl_Position = vec4(p1.xy-bot_left,p1.z,1);  // bot-left 
-    EmitVertex();
-    
-    Pnorm.xyz=vec3(-v1,0);
-    gl_TexCoord[0].xy=vec2(1,tx.w);
-    gl_Position = vec4(p1.xy+bot_right,p1.z,1);  // bot-right 
-    EmitVertex(); 
-   
- 	Pnorm.xyz=vec3(v2,0);
-    gl_TexCoord[0].xy=vec2(0,tx.y);
-    gl_Position = vec4(p2.xy-top_left,p2.z,1); // top-left
-    EmitVertex();
-   
-    Pnorm.xyz=vec3(-v2,0);
-    gl_TexCoord[0].xy=vec2(1,tx.y);
-    gl_Position = vec4(p2.xy+top_right,p2.z,1); // top-right
-    EmitVertex();
-
-}
-
-// 2d only
-vec4 calcOffsets(vec4 p0,vec4 p1,vec4 p2, vec4 c){
-	
-	float w2=c.g;     // top width
-	float w1=c.r;     // bottom width
-     
-    vec3 v1=p1.xyz-p0.xyz;
-    vec3 v2=p2.xyz-p1.xyz;
-    
-    float a1 = atan2(v1.y, v1.x);       
-	float a2 = atan2(v2.y, v2.x);
-	
-    float x1 = -sin(a1);
-	float y1 = cos(a1);
-    float x2 = -sin(a2);
-	float y2 = cos(a2);
-     	
-	float botx = x1 * w1;
-	float boty = y1 * w1;	
-	float topx = x2 * w2;
-	float topy = y2 * w2;
-
-	vec4 cc=vec4(topx,topy,botx,boty);
-	return cc;
-}
-
-// draw a branch as a polygon (2d)
-void emitBranch(){
-   Pnorm.w=0.01;
-
-   vec4 p1=Pos1;
-   vec4 p2=Pos2;
-   vec4 c=Constants1[0];
-   vec4 p0=Pos0;
-   vec4 cc=calcOffsets(p0,p1,p2,c);
-   emitRectangle(p1,p2,cc,vec4(0,0,0,1));
- }
-
-//mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
-vec4 spline(float x, vec4 p0, vec4 p1, vec4 p2){
-  vec4 c=p0;
-  vec4 b=p1*4.0-p0*3.0-p2;
-  vec4 a=p2*2.0+p0*2.0-p1*4.0;
-  return a*x*x+b*x+c;
-}
-
-// draw a branch as a spline (2d only)
-void emitSpline(){
- 
-    Pnorm.w=0.01;  
-    vec4 p1=Pos1;
-    vec4 p2=Pos2;       
-    vec4 p0=Pos0;
- 
-    vec4 cc=calcOffsets(p0,p1,p2,Constants1[0]);
-    
-    float topx=cc.r;
-	float topy=cc.g;
-	float botx=cc.b;
-	float boty=cc.a;
-	
-	int nv=4;
-	float ds=0.5/nv;
-	float s=0.5;
-
-	float delta=1.0/nv;
-	vec2 bot=vec2(botx,boty);
-	vec2 top=vec2(topx,topy);
-	for(int i=0;i<nv;i++){
-		float f1=i*delta;
-		float f2=(i+1)*delta;
-		vec2 xy1=(1-f1)*bot+f1*top;
-		vec2 xy2=(1-f2)*bot+f2*top;
-		vec4 c=vec4(xy2, xy1);
-		vec4 t1=spline(s,p0,p1,p2);
-		vec4 t2=spline(s+ds,p0,p1,p2);
-		vec4 tx=vec4(0,f1,0,f2);
-		emitRectangle(t1,t2,c,tx);	
-		s+=ds;
-	}	
-
-}
 
 // 3d only
 void drawCone(vec3 p0, vec3 p1, vec3 p2)
@@ -353,12 +207,9 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    vec3 v1 = normalize(p1 - p0);
    vec3 v2 = normalize(p2 - p1);
 
-	vec3 tx1=OrthoNormalVector(v1);
-   //vec3 tx1 = createPerp(p1, p0);
+   vec3 tx1 = OrthoNormalVector(v1);
    vec3 ty1 = cross(v1, tx1);
-
    vec3 tx2 = OrthoNormalVector(v2);
-   //   vec3 tx2 = createPerp(p2, p1);
    
    vec3 ty2 = cross(v2, tx2);
    int dim=ImageVars_G[0].x*ImageVars_G[0].y+0.1;

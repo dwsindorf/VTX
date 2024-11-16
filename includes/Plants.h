@@ -16,7 +16,7 @@ class Plant;
 
 #define MAX_BRANCHES 6
 #define MAX_PLANT_DATA 7
-#define PLANT_STATS 6
+#define PLANT_STATS 7
 
 class PlantPoint : public Placement
 {
@@ -102,6 +102,20 @@ public:
 	static int stats[PLANT_STATS];
 	static double render_time;
 
+	static int adapt_tests;
+
+	static bool threed;
+	static bool spline;
+	static bool poly_lines;
+	static bool shader_lines;
+	static bool no_cache;
+	static int textures;
+
+	static void setColorTest(bool b) { BIT_SET(adapt_tests,TEST_COLOR,b);}
+	static void setDensityTest(bool b) { BIT_SET(adapt_tests,TEST_DENSITY,b);}
+	static bool testColor()  { return BIT_TST(adapt_tests,TEST_COLOR);}
+	static bool testDensity()  { return BIT_TST(adapt_tests,TEST_DENSITY);}
+
 	Color c;
 	double slope_bias;
 	double ht_bias;
@@ -153,9 +167,6 @@ public:
 	double seed;
 	static double norm_max;
 	static double norm_min;
-	static int textures;
-	static bool threed;
-	static bool spline;
 
 	Point base_point;
 	int rendered;
@@ -323,7 +334,7 @@ public:
 	void setColorExpr(char *s);
 	char *getColorExpr(){return colorexpr;}
 	void setColorFromExpr();
-	void setColor();
+	void setColor(bool b);
 	void setColor(TNcolor*);
 	TNcolor* getColor();
 	void setColorFlags();

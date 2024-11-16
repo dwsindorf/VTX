@@ -66,42 +66,29 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		TheScene->set_help(!TheScene->help());
 		TheScene->set_changed_render();
 		break;
-
 	case KEY_TEST1:
-		test1=test1?0:1;
-		cout << "test1="<<test1<<endl;
-		TNplant::spline=test1?true:false;
-        TheScene->set_changed_render();
-         TheScene->set_changed_render();
-
+		PlantMgr::threed=PlantMgr::threed?false:true;
+		cout<<"PlantMgr::threed="<<PlantMgr::threed<<endl;
+        TheScene->set_changed_detail();
 		break;
 	case KEY_TEST2:		
-		test2=test2?0:1;
-		TNplant::threed=test2?true:false;
-		cout << "test2="<<test2<<endl;
-        TheScene->set_changed_render();
+		PlantMgr::no_cache=PlantMgr::no_cache?false:true;
+		cout<<"PlantMgr::no_cache="<<PlantMgr::no_cache<<endl;
+        TheScene->set_changed_detail();
 		break;
-
 	case KEY_TEST3:
-		test3=test3?0:1;
- 		cout << "test3="<<test3<<endl;
-        TheScene->set_changed_render();
-        //TheScene->rebuild_all();
+		PlantMgr::shader_lines=PlantMgr::shader_lines?false:true;
+		cout<<"PlantMgr::shader_lines="<<PlantMgr::shader_lines<<endl;
+         TheScene->set_changed_detail();
 		break;
-
 	case KEY_TEST4:
-		test4=test4?0:1;
-        //Raster.set_filter_show(!Raster.filter_show());
-		cout << "test4="<<test4<<endl;
-        TheScene->set_changed_render();
+		PlantMgr::poly_lines=PlantMgr::poly_lines?false:true;
+		cout<<"PlantMgr::poly_lines="<<PlantMgr::poly_lines<<endl;
+	    TheScene->set_changed_detail();
 		break;
 	case KEY_TEST5:
-		test5=test5?0:1;
-		cout << "test5="<<test5<<endl;
-		//PlantMgr::use_lists=PlantMgr::use_lists?false:true;
-		//cout << "PlantMgr::use_lists="<<PlantMgr::use_lists<<endl;
-
-        //Raster.set_filter_show(!Raster.filter_show());
+		PlantMgr::spline=PlantMgr::spline?false:true;
+		cout<<"PlantMgr::spline="<<PlantMgr::spline<<endl;
         TheScene->set_changed_detail();
 		break;
 	case KEY_RAND_SEED:
@@ -245,8 +232,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
             TheScene->set_changed_detail();
             break;
 		case FN_INFO:
-			Render.clr_display(ALLINFO);
-			Render.set_display(OBJINFO);
+			if(!Render.display(OBJINFO))
+				Render.set_display(OBJINFO);
+			else
+				Render.clr_display(OBJINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -273,8 +262,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case '2':
 		switch(state&FN_TYPES){
 		case FN_INFO:
-			Render.clr_display(ALLINFO);
-			Render.set_display(MAPINFO);
+			if(!Render.display(MAPINFO))
+				Render.set_display(MAPINFO);
+			else
+				Render.clr_display(MAPINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -304,8 +295,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 			TheScene->set_changed_render();
 			break;
 		case FN_INFO:
-			Render.clr_display(ALLINFO);
-			Render.set_display(NODEINFO);
+			if(!Render.display(NODEINFO))
+				Render.set_display(NODEINFO);
+			else
+				Render.clr_display(NODEINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -327,8 +320,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 			TheScene->set_changed_render();
 			break;
 		case FN_INFO:
-			Render.clr_display(ALLINFO);
-			Render.set_display(RASTINFO);
+			if(!Render.display(RASTINFO))
+				Render.set_display(RASTINFO);
+			else
+				Render.clr_display(RASTINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -353,8 +348,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 			TheScene->set_changed_render();
 			break;
 		case FN_INFO:
-			Render.clr_display(ALLINFO);
-			Render.set_display(OCTINFO);
+			if(!Render.display(OCTINFO))
+				Render.set_display(OCTINFO);
+			else
+				Render.clr_display(OCTINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -373,8 +370,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case '6':
 		switch(state&FN_TYPES){
 		case FN_INFO:
- 			Render.clr_display(ALLINFO);
-			Render.set_display(CRTRINFO);
+			if(!Render.display(CRTRINFO))
+				Render.set_display(CRTRINFO);
+			else
+				Render.clr_display(CRTRINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -393,8 +392,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case '7':
 		switch(state&FN_TYPES){
 		case FN_INFO:
- 			Render.clr_display(ALLINFO);
-			Render.set_display(TRNINFO);
+			if(!Render.display(TRNINFO))
+				Render.set_display(TRNINFO);
+			else
+				Render.clr_display(TRNINFO);
 			TheScene->set_changed_render();
 			break;
 		case FN_NCOL:
@@ -412,8 +413,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case '8':
 		switch(state&FN_TYPES){
 		case FN_INFO:
- 			Render.clr_display(ALLINFO);
-			Render.set_display(PLANTINFO);
+			if(!Render.display(PLANTINFO))
+				Render.set_display(PLANTINFO);
+			else
+				Render.clr_display(PLANTINFO);
 			TheScene->set_changed_render();
  			//print_strings=print_strings?0:1;
 			break;
