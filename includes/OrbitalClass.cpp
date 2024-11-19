@@ -39,11 +39,6 @@ static void show_render_state(Object3D *obj){
 #endif
 }
 
-int test1=0;
-int test2=0;
-int test3=0;
-int test4=0;
-int test5=0;
 #ifndef WRITE_STAR_DATA
 #include "star_data.h"
 #endif

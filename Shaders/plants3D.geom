@@ -34,7 +34,7 @@ vec4 project(vec4 pnt){
 vec3 OrthoNormalVector(vec3 v) {
   float g = v.z>0?1.0:-1.0;
   float h = v.z + g;
-  return vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x);
+  return normalize(vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x));
 }
 void emitVertex(vec3 v){
    vec4 p=vec4(v,1.0);
@@ -56,12 +56,6 @@ void produceTVertex(vec2 tx,vec3 v){
   gl_TexCoord[0].xy=tx;
   produceVertex(v);
 }
-// draw a line
-void emitLine(){
-    emitVertex(Pos2);
-    emitVertex(Pos1); 
-    emitVertex(Pos2);
- }
 #define MAT_MUL
 vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 #ifdef MAT_MUL
@@ -98,9 +92,10 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
  	vec4 Pos2=vec4(p2,0);
     float w=Constants1[0].y;
 
-	Pnorm.xyz=normalize(cross(v, tx ));
+	Pnorm.xyz=-normalize(cross(v, tx ));
+
 	Pnorm.w=0.001;//P0[0].w; // bump
-     vec3 ty = cross(v, tx);
+    vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
 		produceTVertex(vec2(1.0,0.0),Pos1+w*tx); // bot-right
@@ -116,10 +111,10 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         float b1=0.1;
         float b2=0.9;
 
-		w1=w1*1.5;
-		w2=w2*1.5;
-        float s=w1*1.4;
-        
+       float s=w1*1.5;
+		//w1=w1*1.5;
+		//w2=w2*1.5;
+         
         int nodes=6;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
@@ -133,24 +128,37 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         float t=dt;
 //#define TEST3D
 #ifdef TEST3D
+		TexVars=TexVars_G[0];
+		Color=Color_G[0];
         int segs = 3;
-        nodes=5;
+        nodes=6;
 	    float f=1.0 /(segs-1);
         tx = OrthoNormalVector(v2);
-		ty = cross(v2, tx);
-        float ws=0.5;
+        //tx=normalize(cross(eye, v2));
+        
+		//ty = cross(v2, tx);
+		ty = cross(tx, v2);
+		
+        float ws=1;
         f=1.0 /(segs);
+        
   		for(int i=0; i<segs; i++) {
 	      float a = i*f;
 	      float f1=w1;
 	      float f2=w2;
-	      //Color=vec4(a,0,0,1);
 	      float ca = cos(2*PI*a);
+	      float sa = sin(2*PI*a);
 	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
 	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
-	      float sa = sin(2*PI*a);
-	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
-	      vec4 nx=vec4(na1,1);
+
+	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,
+	      				  ca*tx.y + sa*ty.y,
+	                      ca*tx.z + sa*ty.z);
+
+		  Pnorm.xyz=-na1;
+ 
+	      vec4 nx=vec4(na1,-1);
+	      
 	      s1p=x1+f1*nx;
           s2p=x2+f2*nx;
           t=0;
@@ -158,26 +166,29 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
           a = (i+1)*f;
           ca = cos(2*PI*a); 
 	      sa = sin(2*PI*a);
-	      na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
+	      na1 = vec3(ca*tx.x + sa*ty.x,
+	                 ca*tx.y + sa*ty.y,
+	                 ca*tx.z + sa*ty.z);
 	      nx=vec4(na1,1);
 	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
 	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
 	      
           s1m=x1+f1*nx;
 	      s2m=x2+f2*nx;
- 	                 	                     
+	       	                 	                     
 	      produceTVertex(vec2(0.5,0.0),Pos1); // bot
+	      vec4 pp0=Pos2;
 	      for(int i=0;i<nodes-1;i++){
-	          vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
-	          produceTVertex(vec2(p.w/s+0.5,t),p);
-	          p=bezier(t,Pos1,s1m,s2m,Pos2);
-	          produceTVertex(vec2(p.w/s+0.5,t),p);
+	          vec4 pp1=bezier(t,Pos1,s1p,s2p,Pos2);
+	          produceTVertex(vec2(pp1.w/s+0.5,t),pp1);
+	          vec4 pp2=bezier(t,Pos1,s1m,s2m,Pos2);
+	          produceTVertex(vec2(pp2.w/s+0.5,t),pp2);
 	          t+=dt;
 	      }
 	      produceTVertex(vec2(0.5,1.0),Pos2); // top
 	      EndPrimitive();
       }
- #else    
+#else    
       produceTVertex(vec2(0.5,0.0),Pos1); // bot
       for(int i=0;i<nodes-1;i++){
           vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
@@ -192,7 +203,6 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 	EndPrimitive();
 }
 
-// 3d only
 void drawCone(vec3 p0, vec3 p1, vec3 p2)
 {
    vec4 c=Constants1[0];
@@ -241,7 +251,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
       EmitVertex();
       
       gl_TexCoord[0].xy=vec2(scale*a,t2);
-      Pnorm.xyz=-n2.xyz;
+      //Pnorm.xyz=-n2;
       pt2.xyz = p2 + r2*n2;
       pt2.w=1;
       gl_Position = project(pt2);
@@ -249,7 +259,7 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
    }
 }
 
-void emitBranch3d(){
+void emitBranch(){
    vec3 p0=P0[0].xyz;
    vec3 p1=gl_PositionIn[0].xyz;
    vec3 p2=gl_PositionIn[1].xyz;
@@ -262,6 +272,13 @@ void emitLeaf(){
    vec3 p2=gl_PositionIn[1].xyz;
    drawLeaf(p0,p1,p2);
 }
+
+// draw a line
+void emitLine(){
+    emitVertex(Pos2);
+    emitVertex(Pos1); 
+    emitVertex(Pos2);
+ }
 
 void main(void) {
     Pos0=project(P0[0]);
@@ -283,14 +300,7 @@ void main(void) {
     	emitLine();
     else if(mode==LEAF)
     	emitLeaf();
-#ifdef ENABLE_3D
  	else
- 		emitBranch3d(); 
-#else
-    else if(mode==BRANCH)
-        emitBranch(); 
-    else
-        emitSpline(); 
-#endif
+ 		emitBranch(); 
 }
 

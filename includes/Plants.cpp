@@ -392,8 +392,13 @@ bool PlantMgr::valid()
 
 bool PlantMgr::setProgram(){
 	//cout<<"PlantMgr::setProgram"<<endl;
+	extern int test7;
 	if(shadow_mode)
 		return false;
+//	if(test7)
+//		glCullFace(GL_BACK);
+//	else
+//	glCullFace(GL_FRONT);
 	shadow_count=0;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
@@ -428,8 +433,8 @@ bool PlantMgr::setProgram(){
 	double twilite_min=-0.2; // full night
 	double twilite_max=0.2;  // full day
 	
-	if(threed)
-		sprintf(defs,"#define ENABLE_3D\n");
+	if(test7)
+		sprintf(defs,"#define TEST3D\n");
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",PlantMgr::textures);
 		if(PlantMgr::textures>0 && Render.bumps())
@@ -560,6 +565,7 @@ void PlantMgr::render_shadows(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	//min_draw_width=2;
+	
 	Raster.setProgram(Raster.PLANT_SHADOWS);
 	//glLineWidth(2);
 	//glPolygonOffset (0.0f, 0.0f);
@@ -1363,11 +1369,11 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	
 }
 
@@ -1938,8 +1944,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					 // alternate leaf side on branch
 					TNLeaf *leaf = this;
 					double phase = leaf->phase;
-					if ((leaf->left_side & 1) == 0)
+					double nscale=-1;
+					if ((leaf->left_side & 1) == 0){
 						phase += 0.5;
+					}
 					leaf->left_side++;
 					
 					double orientation=flatness+1e-3;
@@ -1962,18 +1970,17 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						
 						double aspect=((double)image_cols)/image_rows;
 						int psmode=poly_mode|shader_mode;
-						
 						if(isCollectLeafsSet())
 							TNLeaf::collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
 									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-									Point4D(0,color_flags, tid, psmode), sd,c);
+									Point4D(nscale,color_flags, tid, psmode), sd,c);
 						else {
 							glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), S0.c.alpha());
 
 							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
 							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, enables); // Constants1		
-							glVertexAttrib4d(GLSLMgr::TexCoordsID, 0,color_flags, tid, shaderMode(psmode)); 
+							glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale,color_flags, tid, shaderMode(psmode)); 
 							
 							glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
 							glBegin(GL_LINES);

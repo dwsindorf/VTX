@@ -1,0 +1,93 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-5.55443;
+		theta=24.4378;
+		height=24.6179 ft;
+		gndlvl=10453.1 ft;
+		time=23525.2;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=5.68182e-10;
+		heading=47;
+		tilt=15;
+		angle=-8;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		phi=-5.55444;
+		height=31.5508 ft;
+		heading=45;
+		tilt=5;
+		angle=-9;
+		minr=0.00400198;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,48.5724) {
+					day=24;
+					diffuse=Color(1,1,1,0.69);
+					hscale=0.001;
+					year=100;
+					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
+					Surface{
+						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
+								Plant("ash",1,1e-06,0.8,0.9,0.05)
+								Branch("trunk",10,1,1,0.54,0.1,0.1,0,0.85,0.95,0,0,1,15,15)["treebark2",Color(0.5,0.25,0,LVL)]
+								Branch("branch",8,2.1,1,0.4,0.51,0.89,0.51,0.69,0.69,4,0,0.84,15,15)["treebark1",Color(0.1,0.1,0.01,2*LVL)]
+								Branch("stem",6,2,1.16,0.59,1,1,0,0.75,0.54,1,0,0.25,15,15)["Cracks1",Color(0.25+0.25*LVL,0.5*RED,0,1)]
+								Leaf("leaf",1,0.14,4,1,1,0.41,0.89,0.8,1,1,0,0,0.93,13)["leafs-2x2",Color(URAND,URAND,0,0.5)];
+					}
+					Sky(0.0041029) {
+						color=Color(0,0.58,0.89);
+						day=24;
+						density=0.51388;
+						haze.color=Color(1,1,0.88);
+						haze.grad=0.0685;
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						name="BlueSky";
+						night.color=Color(0,0,0,0.9);
+						resolution=4;
+						specular=Color(1,1,1);
+						twilight.max=1;
+						twilight.min=-1;
+						year=100;
+					}
+				}
+			}
+		}
+	}
+}

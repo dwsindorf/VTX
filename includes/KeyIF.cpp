@@ -40,12 +40,14 @@ void KeyIF::get_state(unsigned &state)
 }
 
 extern int clouds_mode;
-extern int test1;
-extern int test2;
-extern int test3;
-extern int test4;
-extern int test5;
-
+int test1=0;
+int test2=0;
+int test3=0;
+int test4=0;
+int test5=0;
+int test6=0;
+int test7=0;
+int test8=0;
 //-------------------------------------------------------------
 // KeyIF::standard_key() process ascii key code function
 //-------------------------------------------------------------
@@ -90,6 +92,23 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		PlantMgr::spline=PlantMgr::spline?false:true;
 		cout<<"PlantMgr::spline="<<PlantMgr::spline<<endl;
         TheScene->set_changed_detail();
+		break;
+	case KEY_TEST6:
+		PlantMgr::setColorTest(!PlantMgr::testColor());
+		cout<<"PlantMgr::testColor="<<PlantMgr::testColor()<<endl;
+		TheScene->rebuild_all();
+		//test6=test6?0:1;
+		//cout<<"test6="<<test6<<endl;
+		break;
+	case KEY_TEST7:
+		test7=test7?0:1;
+		cout<<"test7="<<test7<<endl;
+		TheScene->set_moved();
+		TheScene->set_changed_render();
+		break;
+	case KEY_TEST8:
+		test8=test8?0:1;
+		cout<<"test8="<<test8<<endl;
 		break;
 	case KEY_RAND_SEED:
 		TheScene->setRandomSeed();
@@ -655,20 +674,20 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		break;
 
     // misc.
-	case KEY_WRITE_JPEG:
-		TheScene->jpeg_save((char*)"image");
-		break;
-	case KEY_READ_JPEG:
-		TheScene->jpeg_show((char*)"image");
-		break;
-	case KEY_WRITE_SAVE:
-		File.makeFilePath(File.saves,(char*)"save.spx",path);
-		TheScene->save(path);
-		break;
-	case KEY_OPEN_SAVE:
-		File.makeFilePath(File.saves,(char*)"save.spx",path);
-		TheScene->open(path);
-		break;
+//	case KEY_WRITE_JPEG:
+//		TheScene->jpeg_save((char*)"image");
+//		break;
+//	case KEY_READ_JPEG:
+//		TheScene->jpeg_show((char*)"image");
+//		break;
+//	case KEY_WRITE_SAVE:
+//		File.makeFilePath(File.saves,(char*)"save.spx",path);
+//		TheScene->save(path);
+//		break;
+//	case KEY_OPEN_SAVE:
+//		File.makeFilePath(File.saves,(char*)"save.spx",path);
+//		TheScene->open(path);
+//		break;
 
 	//Adapt options
 

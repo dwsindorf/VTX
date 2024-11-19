@@ -47,6 +47,9 @@ enum standard_keys{
     KEY_TEST3           = '#',
     KEY_TEST4           = '$',
     KEY_TEST5           = '%',
+    KEY_TEST6           = '^',
+    KEY_TEST7           = '&',
+    KEY_TEST8           = '*',
 
 	KEY_DEFAULT         = 'Q',
 
@@ -82,7 +85,7 @@ enum standard_keys{
 	KEY_VIEW_HORZ  		= 'H',
 
     KEY_RASTER_SHADOW_MAP = '\\',
-    KEY_RASTER_LINES    = '&',
+    KEY_RASTER_LINES    = 'k',
 
 	KEY_RENDER_SHADED   = 'S',
 	KEY_RENDER_SOLID   	= 'N',
@@ -106,7 +109,7 @@ enum standard_keys{
 	KEY_RENDER_FACE     = 'F',
     KEY_RENDER_AA       = 'a',
     KEY_RENDER_HDR      = 'm',
-    KEY_RENDER_GEOMETRY = '^',
+    KEY_RENDER_GEOMETRY = 'j',
 
 	KEY_ADAPT_OVERLAP   = 'o',
 	KEY_ADAPT_LOD       = 'e',
@@ -117,12 +120,12 @@ enum standard_keys{
 	KEY_ADAPT_BEST      = 'A',
 	KEY_ADAPT_HIGH      = 'B',
 	KEY_ADAPT_MED       = 'C',
-	KEY_ADAPT_LOW       = 'D',
+	KEY_ADAPT_LOW       = 'D'
 
-	KEY_WRITE_JPEG      = 'j',
-	KEY_READ_JPEG       = 'J',
-	KEY_WRITE_SAVE      = 'k',
-	KEY_OPEN_SAVE       = 'K'
+//	KEY_WRITE_JPEG      = 'j',
+//	KEY_READ_JPEG       = 'J',
+//	KEY_WRITE_SAVE      = 'k',
+//	KEY_OPEN_SAVE       = 'K'
 
 };
 

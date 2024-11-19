@@ -1,0 +1,2 @@
+
+Plant("Aspen",1,9.4697e-08,1,0.5,0.03,0,0,0,0)Branch("stem",7,1.6,4,0.26,1,0.17,0,0.8,0.9,1,-1,1,13)["aspen4",Color(0.4*DENSITY+0.2*IRAND,0.1+0.6*IRAND*DENSITY,0.3*IRAND*(1-DENSITY),0.7)]Branch(6,2.4,1.79,1,0.37,0.92,0.16,0.51,0.8,4,2,1,13)["aspen3",Color(0,0,0,1)]Leaf("Leaf2",1,2,1,1,0,1,0,0.8,0.9,0,0,1,9)["leafs-2x2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]

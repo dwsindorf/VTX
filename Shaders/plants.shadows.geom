@@ -155,8 +155,8 @@ void emitLeaf(){
     float b1=0.1;
     float b2=0.9;
 
-	w1=w1*1.5;
-	w2=w2*1.5;
+	//w1=w1*1.5;
+	//w2=w2*1.5;
 
     int nodes=8;
     vec4 t1=vec4(tx1,1.0);
@@ -172,13 +172,13 @@ void emitLeaf(){
     float t=dt;
 //#define TEST3D
 #ifdef TEST3D // 3d mode
-		vec3 tx = createPerp(p2, p1);
+		vec3 tx = OrthoNormalVector(v2);
 		vec3 ty = cross(v2, tx);
 		 // max vertexes supported by gpu
-        int segs=4;
-        nodes=5;
+        int segs=3;
+        nodes=6;
         f=1.0 /(segs);
-        float ws=0.5; // compression factor
+        float ws=1; // compression factor
   		for(int i=0; i<segs; i++) {
 	      float a = i*f;
 	      float f1,f2;
@@ -187,7 +187,9 @@ void emitLeaf(){
 	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
 	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
 	      float sa = sin(2*PI*a);
-	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
+	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,
+	                      ca*tx.y + sa*ty.y,
+	                      ca*tx.z + sa*ty.z);
 	      vec4 nx=vec4(na1,1);
 
 	      s1p=x1+f1*nx;
@@ -197,7 +199,9 @@ void emitLeaf(){
           a = (i+1)*f;
           ca = cos(2*PI*a); 
 	      sa = sin(2*PI*a);
-	      na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
+	      na1 = vec3(ca*tx.x + sa*ty.x,
+	                 ca*tx.y + sa*ty.y,
+	                 ca*tx.z + sa*ty.z);
 	      nx=vec4(na1,1);
 	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
 	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
