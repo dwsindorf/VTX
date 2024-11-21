@@ -13,10 +13,14 @@
 #define LINE_WIDTH BOX_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 30
 
-#define VALUE1 50
-#define LABEL1 30
 #undef LABEL2
 #define LABEL2 60
+#define LABEL1 30
+
+#undef VALUE2
+#define VALUE2 80
+#undef SLIDER2
+#define SLIDER2 60
 
 
 //########################### VtxBranchTabs Class ########################
@@ -299,7 +303,7 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 
 	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Droop",LABEL2,VALUE2,70);
+	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Droop",LABEL2,VALUE2-10,50);
 	FlatnessSlider->setRange(0,1);
 	FlatnessSlider->setValue(0.0);
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

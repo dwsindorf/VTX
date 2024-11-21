@@ -3,7 +3,7 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55629;
 		theta=24.4365;
-		height=25.8302 ft;
+		height=22.1894 ft;
 		gndlvl=10512.5 ft;
 		time=200826;
 		vstride=0.02;
@@ -12,9 +12,9 @@ Scene() {
 		zoom=0.004;
 		minh=5.68182e-10;
 		minr=0.00400199;
-		heading=133;
-		tilt=-5;
-		angle=-11;
+		heading=138;
+		tilt=3;
+		angle=-12;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
@@ -58,7 +58,7 @@ Scene() {
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("pine",1,1.2e-06,0.8,0.9,0.05)
 								Branch("trunk",12,1,0.79,1,0.43,0.05,0,0.84,0.96,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
-								Branch("branch",9,2.08,0.55,0.26+RANGE,0.13,2,0.67,0.77,0.84,12,2,0.89,15,15)["Cracks1",Color(0.3,0.6*LVL,0,0.5*LVL)]
+								Branch("branch",9,2.08,0.55,0.26,0.13,2,0.67,0.77,0.84,12,3,0.89,15,15)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]
 								Plant("bush",2,6.1553e-07,0.8,0.5,0.4,0,0,0,0.75)
 								Branch("stem",10,2.4,0.25,1,1,0.9,0.1,0.7,1,6,0,1,15,15)["Cracks1",Color(0.6-0.3*IRAND,0.4*LVL+0.3,0.2*IRAND+0.25*LVL+0.2,1)];
 					}
