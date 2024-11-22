@@ -25,14 +25,19 @@ Scene() {
 		heading=-20;
 		tilt=-8;
 		angle=8;
+	}
+	View{
+		tilt=-3;
+		angle=9;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400204;
 	}
 	View{
-		tilt=-3;
-		angle=9;
+		heading=-41;
+		tilt=-5;
+		angle=31;
 		minr=0.00400204;
 	}
 	Universe {
@@ -74,8 +79,8 @@ Scene() {
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("test",1,1e-06,0.8,0.9,0.05)
 								Branch("trunk",12,1,1,0.7,0.1,0.1,0,0.8,0.97,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
-								Branch("branch",9,2.1,0.8,0.47,0.6,1,0.4,0.71,0.8,10.4,2,1,15,15)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
-								Leaf("leaf",1,1,4,2,0,0.7,0.68,0.8,0.16,0,0,0,3,15)["needles-2x2",Color(0.15,0.2,0,0.25*URAND)];
+								Branch("branch",9,2,0.8,0.47,0.6,1,0.4,0.71,0.8,10,2,0.97,15,15,0,0.48)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
+								Leaf("leaf",1,2,3,2,0.55,0.7,0.68,0.8,0.16,0,0,0,3,11,0,0.1)["needles-2x2",Color(0.15,0.2,0,0.25*URAND)];
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

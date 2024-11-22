@@ -51,6 +51,9 @@ protected:
 	ExprSliderCtrl   *WidthTaperSlider;
 	ExprSliderCtrl   *LengthTaperSlider;
 	ExprSliderCtrl   *FlatnessSlider;
+	ExprSliderCtrl   *CurvatureSlider;
+	ExprSliderCtrl   *OffsetSlider;
+
 	ExprSliderCtrl   *RandSlider;
 	ExprSliderCtrl   *BiasSlider;
 	
@@ -108,6 +111,8 @@ public:
 	DEFINE_SLIDER_EVENTS(LengthTaper)
 	DEFINE_SLIDER_EVENTS(Divergence)
 	DEFINE_SLIDER_EVENTS(Flatness)
+	DEFINE_SLIDER_EVENTS(Curvature)
+	DEFINE_SLIDER_EVENTS(Offset)
 
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();

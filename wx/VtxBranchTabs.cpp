@@ -33,31 +33,32 @@ enum{
 	ID_NAME_TEXT,
     ID_MAX_LEVEL,
 	ID_MIN_LEVEL,
-    ID_SPLITS_SLDR,
-    ID_SPLITS_TEXT,
-    ID_OFFSET_SLDR,
-    ID_OFFSET_TEXT,
+    ID_SPLITS,
     ID_LENGTH_SLDR,
     ID_LENGTH_TEXT,
     ID_WIDTH_SLDR,
     ID_WIDTH_TEXT,
-    ID_RAND_SLDR,
-    ID_RAND_TEXT,
-	ID_BIAS_SLDR,
-	ID_BIAS_TEXT,
-    ID_DIVERGENCE_SLDR,
-    ID_DIVERGENCE_TEXT,
-
-    ID_FLATNESS_SLDR,
-    ID_FLATNESS_TEXT,
-	ID_DROOP,
     ID_WIDTH_TAPER_SLDR,
     ID_WIDTH_TAPER_TEXT,
     ID_LENGTH_TAPER_SLDR,
     ID_LENGTH_TAPER_TEXT,
-	ID_FIRST_BIAS_SLDR,
-	ID_FIRST_BIAS_TEXT,
+    ID_RAND_SLDR,
+    ID_RAND_TEXT,
+    ID_DENSITY_SLDR,
+    ID_DENSITY_TEXT,
+	ID_BIAS_SLDR,
+	ID_BIAS_TEXT,
+    ID_OFFSET_SLDR,
+    ID_OFFSET_TEXT,
+    ID_DIVERGENCE_SLDR,
+    ID_DIVERGENCE_TEXT,
+    ID_FLATNESS_SLDR,
+    ID_FLATNESS_TEXT,
+    ID_CURVATURE_SLDR,
+    ID_CURVATURE_TEXT,
+	ID_FIRST_BIAS,
 	ID_FROM_END,
+	ID_10X,
 	ID_FILELIST,
 	ID_DIMLIST,
 
@@ -90,26 +91,28 @@ EVT_MENU(ID_SAVE,VtxBranchTabs::OnSave)
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxBranchTabs::OnAddItem)
 
 EVT_CHECKBOX(ID_FROM_END,VtxBranchTabs::OnChangedLevels)
+EVT_CHECKBOX(ID_10X,VtxBranchTabs::OnChangedLevels)
 EVT_CHECKBOX(ID_TEX_ENABLE,VtxBranchTabs::OnChanged)
 EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
 
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
-EVT_CHOICE(ID_DROOP,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_FILELIST,VtxBranchTabs::OnChangedFile)
 EVT_CHOICE(ID_DIMLIST,VtxBranchTabs::OnDimSelect)
+EVT_CHOICE(ID_SPLITS,VtxBranchTabs::OnChangedLevels)
+EVT_CHOICE(ID_FIRST_BIAS,VtxBranchTabs::OnChangedLevels)
 
-SET_SLIDER_EVENTS(SPLITS,VtxBranchTabs,Splits)
+SET_SLIDER_EVENTS(DENSITY,VtxBranchTabs,Density)
 SET_SLIDER_EVENTS(LENGTH,VtxBranchTabs,Length)
 SET_SLIDER_EVENTS(WIDTH,VtxBranchTabs,Width)
 SET_SLIDER_EVENTS(RAND,VtxBranchTabs,Rand)
 SET_SLIDER_EVENTS(BIAS,VtxBranchTabs,Bias)
+SET_SLIDER_EVENTS(OFFSET,VtxBranchTabs,Offset)
 SET_SLIDER_EVENTS(DIVERGENCE,VtxBranchTabs,Divergence)
-SET_SLIDER_EVENTS(FLATNESS,VtxBranchTabs,Flatness)
 SET_SLIDER_EVENTS(WIDTH_TAPER,VtxBranchTabs,WidthTaper)
 SET_SLIDER_EVENTS(LENGTH_TAPER,VtxBranchTabs,LengthTaper)
-SET_SLIDER_EVENTS(FIRST_BIAS,VtxBranchTabs,FirstBias)
-SET_SLIDER_EVENTS(OFFSET,VtxBranchTabs,Offset)
+SET_SLIDER_EVENTS(FLATNESS,VtxBranchTabs,Flatness)
+SET_SLIDER_EVENTS(CURVATURE,VtxBranchTabs,Curvature)
 
 EVT_TEXT_ENTER(ID_RED,VtxBranchTabs::OnChangedExpr)
 EVT_TEXT_ENTER(ID_GREEN,VtxBranchTabs::OnChangedExpr)
@@ -195,50 +198,44 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
     // levels
     
-    wxBoxSizer *level = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Level"));
+    wxBoxSizer *level = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Levels"));
 	level->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
- 	wxString levels[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+ 	wxString levels[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"};
  	
-    level->Add(new wxStaticText(panel,-1,"Max",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
+    level->Add(new wxStaticText(panel,-1,"Max",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxUP, 4);
 
-    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),16, levels);
+    m_max_level=new wxChoice(panel, ID_MAX_LEVEL, wxDefaultPosition,wxSize(50,-1),21, levels);
     m_max_level->SetSelection(1);
     
     level->Add(m_max_level, 0, wxALIGN_LEFT|wxALL, 3);
 
-    level->Add(new wxStaticText(panel,-1,"Min",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxALL, 4);
+    level->Add(new wxStaticText(panel,-1,"Min",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxUP, 4);
 
-    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),16, levels);
-    m_min_level->SetSelection(0);
-    
+    m_min_level=new wxChoice(panel, ID_MIN_LEVEL, wxDefaultPosition,wxSize(50,-1),21, levels);
+    m_min_level->SetSelection(0);    
     level->Add(m_min_level, 0, wxALIGN_LEFT|wxALL, 3);
     
-    m_from_end=new wxCheckBox(panel, ID_FROM_END, "From End");
+    m_from_end=new wxCheckBox(panel, ID_FROM_END, "End");
     m_from_end->SetValue(false);
-	level->Add(m_from_end, 0, wxALIGN_LEFT|wxALL,8);
+	level->Add(m_from_end, 0, wxALIGN_LEFT|wxALL,4);
+	
+    level->Add(new wxStaticText(panel,-1,"First",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxUP, 4);	
+	m_first_choice=new wxChoice(panel, ID_FIRST_BIAS, wxDefaultPosition,wxSize(50,-1),21, levels);
+	m_first_choice->SetSelection(0);
+	level->Add(m_first_choice, 0, wxALIGN_LEFT|wxALL,3);
+
+    m_10x=new wxCheckBox(panel, ID_10X, "x10");
+    m_10x->SetValue(false);
+	level->Add(m_10x, 0, wxALIGN_LEFT|wxALL,4);
+
+    level->Add(new wxStaticText(panel,-1,"Later",wxDefaultPosition,wxSize(LABEL1,-1)), 0, wxALIGN_LEFT|wxUP, 4);	
+	m_splits_choice=new wxChoice(panel, ID_SPLITS, wxDefaultPosition,wxSize(50,-1),4, levels);
+	m_splits_choice->SetSelection(0);
+	level->Add(m_splits_choice, 0, wxALIGN_LEFT|wxALL,3);
+
 	
 	boxSizer->Add(level,0,wxALIGN_LEFT|wxALL,0);
-	
-	wxStaticBoxSizer* splits = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Splits"));
-	splits->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-
-	hline = new wxBoxSizer(wxHORIZONTAL);
-	
-	FirstBiasSlider=new ExprSliderCtrl(panel,ID_FIRST_BIAS_SLDR,"First",LABEL2,VALUE2,SLIDER2);
-	FirstBiasSlider->setRange(1,100);
-	FirstBiasSlider->setValue(1);
-	hline->Add(FirstBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	SplitsSlider=new ExprSliderCtrl(panel,ID_SPLITS_SLDR,"Later",LABEL2,VALUE2,SLIDER2);
-	SplitsSlider->setRange(1,3);
-	SplitsSlider->setValue(1);
-	hline->Add(SplitsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	splits->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-		
-	boxSizer->Add(splits,0,wxALIGN_LEFT|wxALL,0);
-
 
     wxBoxSizer *size = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Size"));
 	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
@@ -274,47 +271,58 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	size->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 
-	// other
+	// dispersion
 
-	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Dispersion"));
-	other->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	wxStaticBoxSizer* dispersion = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Dispersion"));
+	dispersion->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
+	DivergenceSlider=new ExprSliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2, VALUE2,SLIDER2);
+	DivergenceSlider->setRange(0,1);
+	DivergenceSlider->setValue(1.0);
+
+	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
-	RandSlider=new ExprSliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
-	RandSlider->setRange(0,1);
-	RandSlider->setValue(1);
-
-	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
 	OffsetSlider=new ExprSliderCtrl(panel,ID_OFFSET_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
 	OffsetSlider->setRange(0,1);
 	OffsetSlider->setValue(1);
 
 	hline->Add(OffsetSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-	
+	dispersion->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	DivergenceSlider=new ExprSliderCtrl(panel,ID_DIVERGENCE_SLDR,"Divergence",LABEL2, VALUE2,SLIDER2);
-	DivergenceSlider->setRange(0,1);
-	DivergenceSlider->setValue(1.0);
+	RandSlider=new ExprSliderCtrl(panel,ID_RAND_SLDR,"Random",LABEL2, VALUE2,SLIDER2);
+	RandSlider->setRange(0,1);
+	RandSlider->setValue(1);
 
-	hline->Add(DivergenceSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(RandSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Droop",LABEL2,VALUE2-10,50);
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2, VALUE2,SLIDER2);
+	DensitySlider->setRange(0,1);
+	DensitySlider->setValue(1);
+
+	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	dispersion->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(dispersion,0,wxALIGN_LEFT|wxALL,0);
+	
+	wxStaticBoxSizer* curvature = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Curvature"));
+	curvature->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Amplitude",LABEL2, VALUE2,SLIDER2);
 	FlatnessSlider->setRange(0,1);
 	FlatnessSlider->setValue(0.0);
 	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	wxString droop_modes[]={"0","+","-"};
-	m_droop=new wxChoice(panel, ID_DROOP, wxDefaultPosition,wxSize(40,-1),3, droop_modes);
-	m_droop->SetSelection(0);
-	hline->Add(m_droop, 0, wxALIGN_LEFT|wxALL, 3);
+
+	CurvatureSlider=new ExprSliderCtrl(panel,ID_CURVATURE_SLDR,"Direction",LABEL2, VALUE2,SLIDER2);
+	CurvatureSlider->setRange(-1,1);
+	CurvatureSlider->setValue(0.0);
+	hline->Add(CurvatureSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
-	other->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-	
-	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
+	curvature->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(curvature,0,wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxBranchTabs::AddImageTab(wxWindow *panel){
@@ -397,10 +405,7 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	wxColor col("RGB(255,255,255)");
-	//wxStaticText *label=new wxStaticText(panel,-1,"Auto" ,wxDefaultPosition,wxSize(50,-1));
-	//hline->Add(label,0,wxALIGN_LEFT|wxALL,0);
-	//m_auto_check=new wxCheckBox(panel, ID_AUTO, "");
-	//hline->Add(m_auto_check,0,wxALIGN_LEFT|wxALL,4);
+
 	m_color_chooser=new wxColourPickerCtrl(panel,ID_COL,col,wxDefaultPosition, wxSize(50,-1));
 	hline->Add(m_color_chooser,0,wxALIGN_LEFT|wxALL,4);
 	m_revert=new wxButton(panel,ID_REVERT,"Revert",wxDefaultPosition, wxSize(50,-1));
@@ -410,9 +415,6 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 	hline->Add(m_col_enable,0,wxALIGN_LEFT|wxALL,4);
 
 	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
-	//revert_needed=false;
-	//m_revert->Enable(revert_needed);
-
 }
 
 void VtxBranchTabs::OnDimSelect(wxCommandEvent& event){
@@ -531,13 +533,14 @@ wxString VtxBranchTabs::exprString(){
 
 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
 	obj->setColEnabled((bool)m_col_enable->GetValue());
-	int m=m_droop->GetSelection();
-	obj->setDroopMode(m);
+//	int m=m_droop->GetSelection();
+//	obj->setDroopMode(m);
 	int enables=obj->enables;
 	
 	sprintf(p+strlen(p),"%d,",m_max_level->GetSelection());
 	wxString s(p);
-	s+=SplitsSlider->getText()+",";
+	sprintf(p,"%d,",m_splits_choice->GetSelection());
+	s+=wxString(p);
 	s+=LengthSlider->getText()+",";
 	s+=WidthSlider->getText()+",";
 	s+=RandSlider->getText()+",";
@@ -545,7 +548,11 @@ wxString VtxBranchTabs::exprString(){
 	s+=FlatnessSlider->getText()+",";
 	s+=WidthTaperSlider->getText()+",";
 	s+=LengthTaperSlider->getText()+",";
-	s+=FirstBiasSlider->getText()+",";
+	if(m_10x->GetValue())
+		sprintf(p,"%d,",m_first_choice->GetSelection()*10);
+	else
+		sprintf(p,"%d,",m_first_choice->GetSelection());
+	s+=wxString(p);
 	int minlvl=m_min_level->GetSelection();
 	if(m_from_end->GetValue())
 		sprintf(p,"-%d,",minlvl);
@@ -554,8 +561,10 @@ wxString VtxBranchTabs::exprString(){
 	s+=p;
 	s+=OffsetSlider->getText()+",";
 	s+=BiasSlider->getText()+",";
-	sprintf(p,"%d",enables);
+	sprintf(p,"%d,",enables);
 	s+=wxString(p);
+	s+=CurvatureSlider->getText()+",";
+	s+=DensitySlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -612,11 +621,9 @@ void VtxBranchTabs::getObjAttributes(){
 		m_from_end->SetValue(false);
 
 	TNarg &args=*((TNarg *)obj->left);
+	
+	m_splits_choice->SetSelection(obj->max_splits);
 
-    if(args[1])
-    	SplitsSlider->setValue(args[1]);
-	else
-		SplitsSlider->setValue(obj->max_splits);
     if(args[2])
      	LengthSlider->setValue(args[2]);
  	else
@@ -645,10 +652,18 @@ void VtxBranchTabs::getObjAttributes(){
      	LengthTaperSlider->setValue(args[8]);
    	else
    		LengthTaperSlider->setValue(obj->length_taper);
-    if(args[9])
-    	FirstBiasSlider->setValue(args[9]);
-   	else
-   		FirstBiasSlider->setValue(obj->first_bias);
+    
+    int bias=obj->first_bias;
+    int biasx10=bias/10;
+    if(biasx10){
+    	m_10x->SetValue(true);
+    	m_first_choice->SetSelection(biasx10);
+    }
+    else{
+    	m_10x->SetValue(false);
+    	m_first_choice->SetSelection(bias);
+    }
+
     if(args[11])
     	OffsetSlider->setValue(args[11]);
    	else
@@ -658,11 +673,20 @@ void VtxBranchTabs::getObjAttributes(){
 	else
 		BiasSlider->setValue(obj->bias);
 
+    if(args[14])
+    	CurvatureSlider->setValue(args[14]);
+   	else
+   		CurvatureSlider->setValue(obj->curvature);		
+	if(args[15])
+		DensitySlider->setValue(args[15]);
+	else
+		DensitySlider->setValue(obj->density);
+
 	image_name=obj->getImageFile();
 	image_dir=obj->getImageDir();
 	
 	m_dim_choice->SetStringSelection(image_dir);
-	//cout<<"Branch "<<image_dir<<"/"<<image_name<<endl;
+
 
 	makeFileList(image_dir,image_name);
 	setImagePanel();
@@ -700,9 +724,9 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
-    int m=obj->getDroopMode();
+    //int m=obj->getDroopMode();
     //cout<<"mode="<<m<<endl;
-	m_droop->SetSelection(m);
+	//m_droop->SetSelection(m);
    
 	update_needed=false;
 }

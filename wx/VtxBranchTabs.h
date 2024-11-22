@@ -43,26 +43,28 @@ protected:
 	
 	wxChoice *m_min_level;
 	wxChoice *m_max_level;
-	wxChoice *m_droop;
 
-	ExprSliderCtrl   *SplitsSlider;
 	ExprSliderCtrl   *LengthSlider;
 	ExprSliderCtrl   *LengthTaperSlider;
 	ExprSliderCtrl   *WidthSlider;
 	ExprSliderCtrl   *WidthTaperSlider;
 	ExprSliderCtrl   *RandSlider;
-	ExprSliderCtrl   *FirstBiasSlider;
+	ExprSliderCtrl   *DensitySlider;
 	ExprSliderCtrl   *DivergenceSlider;
 	ExprSliderCtrl   *FlatnessSlider;
+	ExprSliderCtrl   *CurvatureSlider;
 	ExprSliderCtrl   *OffsetSlider;
-	ExprSliderCtrl *BiasSlider;
+	ExprSliderCtrl   *BiasSlider;
 
 	wxCheckBox *m_from_end;
+	wxCheckBox *m_10x;
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
 	wxCheckBox *m_col_enable;
 	wxChoice   *m_file_choice;
 	wxChoice   *m_dim_choice;
+	wxChoice   *m_splits_choice;
+	wxChoice   *m_first_choice;
 	
 	ExprTextCtrl *m_r_expr;
 	ExprTextCtrl *m_g_expr;
@@ -101,7 +103,7 @@ public:
 	void updateControls();
 	int showMenu(bool);
 	
-	DEFINE_SLIDER_EVENTS(Splits)
+
 	DEFINE_SLIDER_EVENTS(Length)
 	DEFINE_SLIDER_EVENTS(Width)
 	DEFINE_SLIDER_EVENTS(Rand)
@@ -110,7 +112,8 @@ public:
 	DEFINE_SLIDER_EVENTS(Flatness)
 	DEFINE_SLIDER_EVENTS(WidthTaper)
 	DEFINE_SLIDER_EVENTS(LengthTaper)
-	DEFINE_SLIDER_EVENTS(FirstBias)
+	DEFINE_SLIDER_EVENTS(Density)
+	DEFINE_SLIDER_EVENTS(Curvature)
 	DEFINE_SLIDER_EVENTS(Offset)
 
     void OnChanged(wxCommandEvent& event){

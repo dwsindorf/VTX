@@ -233,10 +233,6 @@ protected:
 		COL=0x2,
 		SHAPE=0x4,
 		SHADOW=0x8,
-		DROOP_FLAT=0,
-		DROOP_DROP=0x10,
-		DROOP_RAISE=0x20,
-		DROOP=DROOP_DROP|DROOP_RAISE|DROOP_FLAT,
 		ENABLES=TEX|COL|SHAPE|SHADOW,
 		LEAFS=0x01,
 		BRANCHES=0x02,
@@ -262,10 +258,10 @@ public:
 	int max_level;
 	int enables;
 	int branch_id;
-	double max_splits;
+	int max_splits;
+	int first_bias;
 	double length; // trunk and main level
 	double width; // trunk and main level	
-	double first_bias;
 	double randomness;
 	double divergence;
 	double flatness;
@@ -273,6 +269,8 @@ public:
 	double width_taper;
 	double offset;
 	double bias;
+	double curvature;
+	double density;
 	unsigned int texture_id;
 	int texid;
 	int color_flags;
@@ -308,8 +306,6 @@ public:
 	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
 	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
 	void setShadowEnabled(bool b){BIT_SET(enables,flags::SHADOW,b);}
-	void setDroopMode(int m);
-	int getDroopMode();
 	bool isColEnabled() { return BIT_TST(enables,flags::COL);}
 	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
 	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}

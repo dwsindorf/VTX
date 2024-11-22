@@ -1425,6 +1425,8 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	max_splits=4;
 	first_bias=0;
 	flatness=0.0;
+	curvature=0;
+	density=1;
 	divergence=0.75;
 	min_level=0;
 	max_level=1;
@@ -1471,32 +1473,14 @@ void TNBranch::init(){
 		right->init();
 }
 
-void TNBranch::setDroopMode(int m){
-	switch(m){
-	default:
-	case 0: MSK_SET(enables,DROOP,DROOP_FLAT);break;
-	case 1: MSK_SET(enables,DROOP,DROOP_DROP);break;
-	case 2: MSK_SET(enables,DROOP,DROOP_RAISE);break;
-	}
-	//cout<<"enables="<<m<<" "<<enables<<endl;
-}
-int TNBranch::getDroopMode(){
-	switch(enables&DROOP){
-	default:
-	case DROOP_FLAT: return 0;
-	case DROOP_DROP:  return 1;
-	case DROOP_RAISE:  return 2;
-	}
-}
-
 void TNBranch::initArgs(){
-	double arg[14];
+	double arg[16];
 	if(!left)
 		return;
 	INIT;
 	enables=flags::ENABLES;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,14);
+	int n=getargs(&args,arg,16);
 	if(n>0)max_level=arg[0];
 	if(n>1)max_splits=arg[1];
 	if(n>2)length=arg[2];
@@ -1511,7 +1495,8 @@ void TNBranch::initArgs(){
 	if(n>11)offset=arg[11];
 	if(n>12)bias=arg[12];
 	if(n>13)enables=arg[13];
-}
+	if(n>14)curvature=arg[14];
+	if(n>15)density=arg[15];}
 
 void TNBranch::invalidateTexture(){
 	if(texture_id){
@@ -1677,6 +1662,7 @@ void TNBranch::setColor(bool set){
 		glColor4d(1, 1, 1, 1);
 	}
 }
+
 Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
@@ -1686,43 +1672,29 @@ Point TNBranch::setVector(Point vec, Point start, int lvl){
 	v.y += d * SRAND;
 	v.z += d * SRAND;
 	
-	int m=getDroopMode();
-
-	v = v.normalize();
-	if(flatness==0)
+	v = v.normalize(); // branch direction
+	double g=evalArg(6,flatness); // magnitude
+	double c=evalArg(14,curvature);
+	if(g==0)
 		return v;
-	double g=evalArg(6,flatness);
-	if(lvl>1)
-		g=fabs(flatness);
-	Point n;
-	if(m==2)
-		n=start-root->norm;
+
+	c=clamp(c,-1,1);
+	Point np,nm,vp,vf,v1,v2;
+
+	nm=start-root->norm;
+	np=start+root->norm;
+	np=np.normalize();
+	nm=nm.normalize();
+
+	vp=np.cross(v);
+    vp = vp.cross(np); // flat
+    vp = vp.normalize(); // projection of v along surface
+	v1 = v * (1 - g); 
+	if(c>0)
+		v2=np*c+vp*(1-c);
 	else
-		n=start + root->norm;
-	//Point n = start-root->norm;// + start;
-	n = n.normalize();
-	Point vp;
-	double f = g;
-	if (g > 0) {
-		if(m==0){
-			Point tp1 = n.cross(v);
-			vp = tp1.cross(n);
-		}
-		else
-			vp = n;		
-	}
-	else { // alternate sides randomly
-		double s=SRAND;
-		if(s>0)
-		 vp= n.cross(v);
-		else
-		 vp= v.cross(n);
-		f = -g;
-	}
-	vp = vp.normalize(); // projection of v along surface
-	Point v1 = v * (1 - f);
-	Point v2 = vp * f;
-	v = v1 + v2;
+		v2=vp*(1+c)-nm*c;
+	v = v1 + v2*g;
 
 	return v;
 
@@ -1760,7 +1732,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		n = first_bias*lerp(randomness,0.0,1.0,1.0,URAND+0.25);
+		n = first_bias*lerp(density,0.0,1.0,SRAND+0.25,1.0);
 		//n=max_splits;//*(1+0.5*randomness*SRAND);
 		//if(first_bias) // add more branches at start of new branch fork
 		//	n*=first_bias;
@@ -1777,7 +1749,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	else{
 		TNLeaf *leaf=this;
 		leaf->phase=root->seed; // random phase
-		n+=first_bias;
+		n+=max_splits;
 		for(int i=0;i<n;i++){
 			emit(opt,start,vec,tip,s,w,lvl);
 		}
@@ -1856,7 +1828,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double cl = child_size * evalArg(2,length);
 	if (!main_branch) {
 		if (isPlantLeaf()) {
-			b=offset*(1.0-(double)level/(first_bias + 1));
+			b=offset*(1.0-(double)level/(max_splits + 1));
 			//b = lerp(first_bias,0,1,0,Level);//(lvl-1.0) / (first_bias + 1);
 			//b=1-Level;
 			//cout<<first_bias<<" "<<lvl<<" "<<maxlvl<<" "<<level<<" "<<b<<endl;
@@ -1909,7 +1881,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			else if(update_needed){
 				double rv = URAND; // density
 				double sv = SRAND; // size
-				double df = evalArg(1,max_splits);
+				double df = evalArg(15,density);
 				if (rv > 1 - df) { // skip render if density test fails
 					shader_mode = LEAF_MODE;
 					if (PlantMgr::shader_lines)
@@ -2153,9 +2125,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	if (opt & LAST_EMIT)
 		return;
 	if (isPlantBranch() ) {
-		int n = max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
+		double n = max_splits*lerp(density,0.0,1.0,SRAND+0.5,1.0);
+		//double m = 4*density*SRAND+0.5;//max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
+		//m=clamp(m,-1,1);
+		//int n = max_splits+m;
+		//n=clamp(n,1,max_splits+1);
+		//cout<<n<<endl;
 		//int n = max_splits*lerp(randomness,0.0,1.0,1.0,1-0.25*URAND);
 		n = n >= 1 ? n : 1;
+		//cout<<m<<" "<<n<<endl;
 
 		child_width *= evalArg(7,width_taper);
 		child_size *= evalArg(8,length_taper);
