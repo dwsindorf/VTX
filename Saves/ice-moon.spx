@@ -59,7 +59,7 @@ Scene() {
 					specular=Color(1,0.96,0.86,0.61);
 					sunset=0.01;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("neptune",ACHNL,64,0.14286,0.19354,Color(1,1,1,0.192),Color(0.031,0.216,0.251),
 						Color(0.012,0.38,0.522),
 						Color(0.769,0.933,0.973),

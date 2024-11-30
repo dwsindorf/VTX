@@ -10,7 +10,7 @@ Planet(0.0021,205.8) {
 	specular=Color(1,1,1,0.39);
 	tilt=25;
 	year=687;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=snow(-2.2,1.7,0.49,-0.43,1,-0.14)
 				Z(craters(ID4,6,0.000622518,0.2,0.2,0.05,1,1,1,0.1,1,0.8,0.61,0.42,0))+fractal(SQR|SS,12.5,13,0.05,0.5,2,0.1,0.1,0,0.28,0.1)

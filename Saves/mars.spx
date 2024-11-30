@@ -66,7 +66,7 @@ Scene() {
 					specular=Color(1,1,1,0.39);
 					tilt=10;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
 						Color(0.302,0.082,0.082));
 					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));

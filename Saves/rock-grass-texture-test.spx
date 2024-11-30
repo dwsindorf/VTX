@@ -201,7 +201,7 @@ Scene() {
 					water.color2=Color(0.02,0.24,0.22);
 					water.shine=100;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("alpine",ACHNL|CLAMP|NORM|REFLECT,64,0.1,0.721569,Color(0,0,0,0.722),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),

@@ -146,13 +146,13 @@ public:
     void OnAlbedoSlider(wxScrollEvent& event){
     	AlbedoSlider->setValueFromSlider();
     	OnSliderValue(AlbedoSlider, object()->albedo);
-    	object()->calcTemperature();
+    	object()->calcAveTemperature();
     	setTemp();
 		invalidateRender();
 	}
     void OnAlbedoText (wxCommandEvent& event){
     	OnSliderText( AlbedoSlider, object()->albedo);
-    	object()->calcTemperature();
+    	object()->calcAveTemperature();
     	setTemp();
 		invalidateRender();
 	}

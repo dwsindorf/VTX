@@ -51,7 +51,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.001;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Sprite("baretree3",FLIP|NOLOD,1,4.26136e-05,1,1,1,0,0,0,0)+

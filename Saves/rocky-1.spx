@@ -125,7 +125,7 @@ Scene() {
 					resolution=4;
 					rseed=0.390003;
 					year=94.5544;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("tmp/P2456",NORM|REFLECT,64,0.178001,0.460939,Color(0.675,0.361,0.302),Color(0.329,0.329,0.235),
 						Color(1,1,0.867),
 						Color(1,1,0.718),
@@ -158,7 +158,7 @@ Scene() {
 					name="Rocky";
 					rseed=0.732438;
 					year=341.049;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("tmp/P1746",NORM|REFLECT,64,0.158139,0.305164,Color(0.937,0.412,0.204),Color(0.306,0.306,0.184),
 						Color(1,1,0.808),
 						Color(1,1,0.604),
@@ -231,7 +231,7 @@ Scene() {
 					water.color2=Color(0.48,0.58,0.78);
 					water.shine=50;
 					year=616.554;
-					ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("tmp/P16397",NORM|REFLECT,64,0.273813,0.425513,Color(0.067,0.227,0.271),Color(0.024,0.4,0.478),
 						Color(0.788,0.89,1),
 						Color(0.957,1,0.973));

@@ -399,7 +399,7 @@ Scene() {
 					haze.min=5e-05;
 					haze.value=1;
 					water.reflectivity=0.7;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					bands("tidal",ACHNL|CLAMP,64,0.14814,0.219608,RAND,Color(0,0.294,0.094),
 						Color(0.2,0.4,0.094,0.694),
@@ -463,7 +463,7 @@ Scene() {
 						name="Luna";
 						phase=100;
 						year=17;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						Surface{
 							terrain=Z(craters(ID4,4,0.3,0.2,0.9)
 									0.5*noise(GRADIENT|UNS,1,6,0.7)*noise(10,4))+Color(1-PZ,RED,RED);

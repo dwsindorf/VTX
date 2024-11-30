@@ -87,7 +87,7 @@ Scene() {
 					water.color2=Color(0.08,0.22,0.27);
 					water.shine=100;
 					year=400;
-					ocean.expr=-0.5*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("earth-like",ACHNL|CLAMP,128,0.33928,0.53226,Color(0.624,0.612,0.576,0.529),Color(0,0.106,0.024),
 						Color(0.082,0.082,0.082),
 						Color(0.286,0.49,0),

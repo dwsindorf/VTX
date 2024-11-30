@@ -33,7 +33,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range,Temp;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -105,6 +105,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	PHI,
 	LAT,
 	EQU,
+	TEMP,
 	SLOPE,
 	RADIUS,
 	DENSITY,
@@ -159,6 +160,7 @@ static LongSym gtypes[]={
 	{"PHI",			PHI},
 	{"LAT",			LAT},
 	{"EQU",			EQU},
+	{"TEMP",		TEMP},
 	{"SLOPE",		SLOPE},
 	{"RADIUS",		RADIUS},
 	{"DENSITY",		DENSITY},
@@ -337,6 +339,12 @@ void TNglobal::eval()
 	case EQU:
 		S0.s=2*fabs(Phi/180);
 		S0.s=clamp(1-S0.s,0,1);
+		break;
+	case TEMP:
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		S0.s=Temp;///100.0;
+		//S0.s=S0.s<0?0:S0.s;
 		break;
 	case RADIUS:
 		S0.s=Radius;
@@ -1759,6 +1767,7 @@ bool TNsnow::initProgram(){
 	int id=texture->num_coords;//texture->tid;
 
 	sprintf(defs,"#define TX%d\n",id);
+	sprintf(defs+strlen(defs),"#define PTEST\n");
 
 	texture->cid=Texture::num_coords;
 	int n=getargs(arg,args,7);
@@ -1771,12 +1780,18 @@ bool TNsnow::initProgram(){
     texture->bump_damp=depth;
     texture->bias=bias;
 
+    Planetoid *orb=(Planetoid *)getOrbital(this);
+	double tbias=orb->tilt_bias();
+	//cout<<"orbit_angle:"<<orbit_angle<<" tbias:"<<tbias<<endl;
+	//vars.newFloatVar("tbias",tbias);
+  
     texture->bump_bias=bmpht;
     texture->height_bias=ht;
     texture->slope_bias=slope;
+    texture->tilt_bias=tbias;
     texture->phi_bias=lat;
     texture->texamp=1;
-
+ 
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
 	strcat(GLSLMgr::defString,defs);
 	return true;

@@ -62,6 +62,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	phi_bias=0;
 	height_bias=0;
 	slope_bias=0;
+	tilt_bias=0;
 	tid=0;
 	s=0;
 	t=0;
@@ -392,6 +393,12 @@ bool Texture::setProgram(){
 
  	float near_bias=mipmap()?0:1;
  	float far_bias=mipmap()?0:1;
+ 	float tbias=0;
+ 	
+//	Planetoid *orb=(Planetoid *)TNode::getOrbital(get_root());
+//	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
+//		
+//	}
 
   	//sprintf(str,"tex2d[%d].id",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 	sprintf(str,"tex2d[%d].texamp",tid);   		glUniform1fARB(glGetUniformLocationARB(program,str),tex_ampl);
@@ -406,13 +413,13 @@ bool Texture::setProgram(){
 	sprintf(str,"tex2d[%d].orders_atten",tid);  glUniform1fARB(glGetUniformLocationARB(program,str),orders_atten);
 	sprintf(str,"tex2d[%d].logf",tid);          glUniform1fARB(glGetUniformLocationARB(program,str),logf);
 	sprintf(str,"tex2d[%d].dlogf",tid);         glUniform1fARB(glGetUniformLocationARB(program,str),dlogf);
-	sprintf(str,"tex2d[%d].phi_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),20*phi_bias);
+	sprintf(str,"tex2d[%d].phi_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),50*phi_bias);
 	sprintf(str,"tex2d[%d].height_bias",tid);   glUniform1fARB(glGetUniformLocationARB(program,str),height_bias/Rscale);
 	sprintf(str,"tex2d[%d].bump_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),bump_bias);
 	sprintf(str,"tex2d[%d].slope_bias",tid);    glUniform1fARB(glGetUniformLocationARB(program,str),slope_bias);
 	sprintf(str,"tex2d[%d].far_bias",tid);      glUniform1fARB(glGetUniformLocationARB(program,str),far_bias);
 	sprintf(str,"tex2d[%d].near_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),near_bias);
-
+    sprintf(str,"tex2d[%d].tilt_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),tilt_bias);
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 #ifdef DEBUG_TEXTURES

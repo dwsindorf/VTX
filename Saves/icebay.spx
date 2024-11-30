@@ -231,7 +231,7 @@ Scene() {
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				wl=water.level*GTOL;
-				ocean.expr=-0.5*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.4,1,0,0);
+				ocean.expr=noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.4,1,0,0);
 				bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 					Color(0.2,0.4,0.094),
 					Color(0.294,0.494,0),

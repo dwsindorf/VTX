@@ -109,7 +109,7 @@ Scene() {
 				haze.max=5e-05;
 				haze.min=5e-06;
 				haze.value=1;
-				ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+				ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 				bands("lava",ACHNL,128,0.42222,0.776471,Color(0.176,0.176,0.204,0.776),Color(0.09,0.09,0.09),
 					Color(0.576,0.024,0.024));
 				image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));

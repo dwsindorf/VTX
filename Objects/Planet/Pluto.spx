@@ -9,7 +9,7 @@ Planet(0.000737,3670) {
 	skew=17.2;
 	specular=Color(1,1,1,0.93);
 	year=90560;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	image("pluto-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"pluto");
 	bands("pluto",ACHNL|CLAMP,64,Color(0.133,0.078,0.071),Color(0.792,0.369,0.161),Color(0.859,0.875,0.945),Color(0.745,0.8,0.867,0.89),
 		Color(0.522,0.424,0.424),
@@ -42,7 +42,7 @@ Planet(0.000737,3670) {
 		name="Charon";
 		phase=313.256;
 		year=30;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	}
 }
 

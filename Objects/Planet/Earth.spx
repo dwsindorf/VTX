@@ -19,7 +19,7 @@ Planet(0.003,93) {
 	water.level=3.78788e-08;
 	water.shine=68.056;
 	year=365;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
 				fractal(SQR|SS,14,8,0.05,0.5,3,0.1,0,1,1,1)snow(-1.1,0.7,0.25,-0.3,1,0.3)
@@ -86,7 +86,7 @@ Planet(0.003,93) {
 		shine=3.02106;
 		specular=Color(1,1,1,0.28);
 		year=27;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 		Surface{
 			terrain=fractal(SQR|SS,12.5,10,0,0.4,1.13,0.2,0,0,1,0)

@@ -195,7 +195,7 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 
 	TiltSlider = new SliderCtrl(panel, ID_TILT_SLDR, "Tilt", LABEL2S, VALUE2,
 			SLIDER2);
-	TiltSlider->setRange(0, 360);
+	TiltSlider->setRange(-90, 90);
 	TiltSlider->setValue(0.0);
 
 	hline->Add(TiltSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
@@ -324,7 +324,7 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 
 void VtxPlanetTabs::setTemp() {
 	Planetoid *obj = (Planetoid*) object();
-    obj->calcTemperature();
+    obj->calcAveTemperature();
 
 	char type_str[256];
 	double tc=obj->temperature-273;

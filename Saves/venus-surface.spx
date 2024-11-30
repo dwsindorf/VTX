@@ -89,7 +89,7 @@ Scene() {
 					specular=Color(1,1,1,0.11);
 					tilt=10;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					bands("test",REFLECT,16,0.19354,0.46774,RAND,Color(1,0.89,0.49),
 						Color(0.988,0.808,0.439),

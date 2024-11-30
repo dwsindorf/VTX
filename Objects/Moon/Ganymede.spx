@@ -3,7 +3,7 @@ Moon(0.000816,0.665) {
 	name="Ganymede";
 	phase=313.256;
 	year=7;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=
 				Texture("mercury",BORDER|TEX,156305,2,1,0,1,2,0.5,0,0,0.15872,-0.6032,-0.92064)+

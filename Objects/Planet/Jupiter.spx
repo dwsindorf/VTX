@@ -11,7 +11,7 @@ Planet(0.0434,460) {
 	specular=Color(1,1,1,0.5);
 	tilt=10.0008;
 	year=4380;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=
 				Texture("jupiter-4k",BUMP|TEX,1,1.5,2,0,1,2,0.67346,0,0,0,0,0);
@@ -55,7 +55,7 @@ Planet(0.0434,460) {
 		water.level=-1.89394e-06;
 		water.shine=52.778;
 		year=1.8;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 			Color(0.502,0.251,0),
 			Color(0.141,0,0));
@@ -106,7 +106,7 @@ Planet(0.0434,460) {
 		shine=8.56316;
 		specular=Color(1,1,1,0.38);
 		year=3.5;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
 		Surface{
 			terrain=fractal(SQR|SS,12,12,0.1,1,3,0.2,0.25,1,0.38,1)
@@ -138,7 +138,7 @@ Planet(0.0434,460) {
 		name="Ganymede";
 		phase=313.256;
 		year=7;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 			Color(0.502,0.502,0.502),
 			Color(0.063,0.063,0.063),
@@ -171,7 +171,7 @@ Planet(0.0434,460) {
 		name="Calisto";
 		phase=313.256;
 		year=17;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("calisto",ACHNL,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
 			Color(0.522,0.345,0.227),
 			Color(0.753,0.753,0.753),

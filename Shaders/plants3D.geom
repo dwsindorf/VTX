@@ -78,9 +78,9 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 {   
 	int colmode=TexVars_G[0].g+0.1; // transparency flag
 	int rectmode=colmode & 4;
-	float g=Constants1[0].z;
-	vec3 v1=normalize(p1-p0);
-	vec3 v2=normalize(p2-p1);
+	float g=Constants1[0].z; //flatness
+	vec3 v1=normalize(p1-p0); // branch vector
+	vec3 v2=normalize(p2-p1); // leaf vector
 	vec3 eye=normalize(p1);
 	vec3 v=(1-g)*v1+g*eye;
 
@@ -126,69 +126,7 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         
         float dt=1.0/nodes;
         float t=dt;
-//#define TEST3D
-#ifdef TEST3D
-		TexVars=TexVars_G[0];
-		Color=Color_G[0];
-        int segs = 3;
-        nodes=6;
-	    float f=1.0 /(segs-1);
-        tx = OrthoNormalVector(v2);
-        //tx=normalize(cross(eye, v2));
-        
-		//ty = cross(v2, tx);
-		ty = cross(tx, v2);
-		
-        float ws=1;
-        f=1.0 /(segs);
-        
-  		for(int i=0; i<segs; i++) {
-	      float a = i*f;
-	      float f1=w1;
-	      float f2=w2;
-	      float ca = cos(2*PI*a);
-	      float sa = sin(2*PI*a);
-	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
-	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
 
-	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,
-	      				  ca*tx.y + sa*ty.y,
-	                      ca*tx.z + sa*ty.z);
-
-		  Pnorm.xyz=-na1;
- 
-	      vec4 nx=vec4(na1,-1);
-	      
-	      s1p=x1+f1*nx;
-          s2p=x2+f2*nx;
-          t=0;
-          // rotate curve one step
-          a = (i+1)*f;
-          ca = cos(2*PI*a); 
-	      sa = sin(2*PI*a);
-	      na1 = vec3(ca*tx.x + sa*ty.x,
-	                 ca*tx.y + sa*ty.y,
-	                 ca*tx.z + sa*ty.z);
-	      nx=vec4(na1,1);
-	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
-	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
-	      
-          s1m=x1+f1*nx;
-	      s2m=x2+f2*nx;
-	       	                 	                     
-	      produceTVertex(vec2(0.5,0.0),Pos1); // bot
-	      vec4 pp0=Pos2;
-	      for(int i=0;i<nodes-1;i++){
-	          vec4 pp1=bezier(t,Pos1,s1p,s2p,Pos2);
-	          produceTVertex(vec2(pp1.w/s+0.5,t),pp1);
-	          vec4 pp2=bezier(t,Pos1,s1m,s2m,Pos2);
-	          produceTVertex(vec2(pp2.w/s+0.5,t),pp2);
-	          t+=dt;
-	      }
-	      produceTVertex(vec2(0.5,1.0),Pos2); // top
-	      EndPrimitive();
-      }
-#else    
       produceTVertex(vec2(0.5,0.0),Pos1); // bot
       for(int i=0;i<nodes-1;i++){
           vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
@@ -198,7 +136,6 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
           t+=dt;
       }
       produceTVertex(vec2(0.5,1.0),Pos2); // top
-#endif 
 	}
 	EndPrimitive();
 }

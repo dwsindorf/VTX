@@ -52,7 +52,7 @@ Scene() {
 					phase=104.076;
 					shine=6.48785;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=map(noise(1,5),0,0,0)
 								layer(MESH,0)

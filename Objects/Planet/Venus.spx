@@ -20,7 +20,7 @@ Planet(0.003,66) {
 	specular=Color(1,1,1,0.31);
 	tilt=10;
 	year=100;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 	Surface{
 		terrain=fractal(SQR|SS,15.6,3,0.1,0.1,2,0.1,0,0,1,0)fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))

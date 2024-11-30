@@ -77,7 +77,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.7);
 					hscale=0.001;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Plant("apple",2,9.4697e-07,1.65,1.4,0.1,0,0,0,0)

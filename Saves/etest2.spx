@@ -53,7 +53,7 @@ Scene() {
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.004;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=Z(erode(SQR|SS,0.9,0.13,1,0.34,1,1,0,5)noise(GRADIENT|SQR|UNS,2.1,16,0.78,0.42,2.17,1,1,0,0,1e-06))+

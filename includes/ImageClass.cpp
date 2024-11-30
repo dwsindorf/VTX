@@ -886,6 +886,15 @@ void TNtexture::eval()
     texture->height_bias=hbias;
     texture->bump_bias=bbias;
     texture->slope_bias=sbias;
+    
+    double tbias=0;
+
+	Planetoid *orb=(Planetoid *)TNode::getOrbital(this);
+	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
+		if(opts&TBIAS)
+			tbias=orb->tilt_bias();
+	}
+	texture->tilt_bias=tbias;
 
     //if(texture->t1d())
     //cout<<"offset:"<<bias<<" p:"<<pbias<<" h:"<<hbias<<" b:"<<bbias<<" s:"<<sbias<<endl;

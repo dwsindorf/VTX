@@ -13,7 +13,7 @@ Planet(0.034,911) {
 	c1=Color(1,0.9,0.3);
 	c2=Color(1,0.6,0);
 	c3=Color(0.7,0.4,0);
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=
 				Texture("saturn-8k",BUMP|TEX,0.707107,4.22208,2,0,1,2,0.5,0,0,0,0,0);
@@ -124,7 +124,7 @@ Planet(0.034,911) {
 		phase=313.256;
 		specular=Color(1,1,1);
 		year=1.37;
-		ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+		ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 		bands("blue-white-tan",ACHNL|CLAMP,64,0,0.411765,Color(1,1,1,0.412),Color(0.008,0.522,0.824,0.376),
 			Color(0.314,0.675,0.973),
 			Color(0.722,0.875,0.976),

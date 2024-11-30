@@ -554,7 +554,6 @@ wxString VtxLeafTabs::exprString(){
 	s+=CurvatureSlider->getText()+",";
 	s+=DensitySlider->getText();
 	s+=")";
-	cout<<s<<endl;
  	return wxString(s);
 }
 

@@ -106,7 +106,7 @@ Scene() {
 				specular=Color(1,1,1,0.05);
 				tilt=5.0688;
 				year=300;
-				ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+				ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 				Surface{
 					p=noise(3,17);
 					m1=noise(GRADIENT|NABS|SQR,8,4);
@@ -158,7 +158,7 @@ Scene() {
 					haze.max=6e-05;
 					haze.min=2e-05;
 					haze.value=1;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						m1=noise(GRADIENT|UNS,1,5,0.47,0.4,2)+0.71;
 						m2=0.5*noise(GRADIENT|NABS|NEG|SQR,8,16,0.2,0.5);

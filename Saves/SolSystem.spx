@@ -84,7 +84,7 @@ Scene() {
 					specular=Color(1,0.96,0.86,0.41);
 					sunset=0.01;
 					year=87.97;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 					Surface{
@@ -116,7 +116,7 @@ Scene() {
 					specular=Color(1,1,1,0.31);
 					tilt=10;
 					year=100;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=fractal(SQR|SS,15.6,3,0.1,0.1,2,0.1,0,0,1,0)fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
@@ -181,7 +181,7 @@ Scene() {
 					water.level=3.78788e-08;
 					water.shine=68.056;
 					year=365;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
 								fractal(SQR|SS,14,8,0.05,0.5,3,0.1,0,1,1,1)snow(-1.1,0.7,0.25,-0.3,1,0.3)
@@ -248,7 +248,7 @@ Scene() {
 						shine=3.02106;
 						specular=Color(1,1,1,0.28);
 						year=27;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 						Surface{
 							terrain=fractal(SQR|SS,12.5,10,0,0.4,1.13,0.2,0,0,1,0)
@@ -269,7 +269,7 @@ Scene() {
 					specular=Color(1,1,1,0.39);
 					tilt=25;
 					year=687;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
 						Color(0.302,0.082,0.082));
 					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
@@ -314,7 +314,7 @@ Scene() {
 					specular=Color(1,1,1,0.5);
 					tilt=10.0008;
 					year=4380;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("jupiter-4k",BUMP|TEX,1,1.5,2,0,1,2,0.67346,0,0,0,0,0);
@@ -358,7 +358,7 @@ Scene() {
 						water.level=-1.89394e-06;
 						water.shine=52.778;
 						year=1.8;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 							Color(0.502,0.251,0),
 							Color(0.141,0,0));
@@ -409,7 +409,7 @@ Scene() {
 						shine=8.56316;
 						specular=Color(1,1,1,0.38);
 						year=3.5;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
 						Surface{
 							terrain=fractal(SQR|SS,12,12,0.1,1,3,0.2,0.25,1,0.38,1)
@@ -441,7 +441,7 @@ Scene() {
 						name="Ganymede";
 						phase=313.256;
 						year=7;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 							Color(0.502,0.502,0.502),
 							Color(0.063,0.063,0.063),
@@ -474,7 +474,7 @@ Scene() {
 						name="Calisto";
 						phase=313.256;
 						year=17;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("calisto",ACHNL,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
 							Color(0.522,0.345,0.227),
 							Color(0.753,0.753,0.753),
@@ -503,7 +503,7 @@ Scene() {
 					c1=Color(1,0.9,0.3);
 					c2=Color(1,0.6,0);
 					c3=Color(0.7,0.4,0);
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("saturn-8k",BUMP|TEX,0.707107,4.22208,2,0,1,2,0.5,0,0,0,0,0);
@@ -614,7 +614,7 @@ Scene() {
 						phase=313.256;
 						specular=Color(1,1,1);
 						year=1.37;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("blue-white-tan",ACHNL|CLAMP,64,0,0.411765,Color(1,1,1,0.412),Color(0.008,0.522,0.824,0.376),
 							Color(0.314,0.675,0.973),
 							Color(0.722,0.875,0.976),
@@ -658,7 +658,7 @@ Scene() {
 					specular=Color(1,1,1,0.46);
 					tilt=98;
 					year=30687;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("blue-white",ACHNL|NORM,64,Color(0.502,0.973,1),Color(0.231,0.514,1),Color(1,1,1));
 					Surface{
 						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
@@ -702,7 +702,7 @@ Scene() {
 					specular=Color(1,1,1);
 					tilt=28;
 					year=59800;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("neptune-2k",BUMP|LINEAR|TEX,1,0,2,0,1,1.90568,1,0,0,0,0,0);
@@ -736,7 +736,7 @@ Scene() {
 					skew=17.2;
 					specular=Color(1,1,1,0.93);
 					year=90560;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					image("pluto-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"pluto");
 					bands("pluto",ACHNL|CLAMP,64,Color(0.133,0.078,0.071),Color(0.792,0.369,0.161),Color(0.859,0.875,0.945),Color(0.745,0.8,0.867,0.89),
 						Color(0.522,0.424,0.424),
@@ -769,7 +769,7 @@ Scene() {
 						name="Charon";
 						phase=313.256;
 						year=30;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
 						Surface{
 							terrain=fractal(SQR|SS,12,7.8,0.1,0.2,2,0.5,0,0,1,0)

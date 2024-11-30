@@ -179,7 +179,7 @@
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
 
-extern double Hscale, Drop, MaxSize,Height,Phi,Level,Randval,Srand,Range;
+extern double Drop, MaxSize,Height,Phi,Level,Randval,Srand,Range,Temp;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -1112,6 +1112,7 @@ void TNplant::eval()
 		density+=f;
 	}
 	if(smgr->lat_bias){
+		//double f=lerp(Temp,0,10,-smgr->lat_bias,smgr->lat_bias);
 		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
 		density+=f;
 	}
@@ -1667,12 +1668,17 @@ Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	Point v = vec.normalize();
 	
-	double d=evalArg(5,divergence);
-	v.x += d * SRAND;
-	v.y += d * SRAND;
-	v.z += d * SRAND;
+	if(isPlantBranch()){
+		double d=evalArg(5,divergence);
+		v.x += d * SRAND;
+		v.y += d * SRAND;
+		v.z += d * SRAND;
+		v = v.normalize(); // branch direction
+	}
 	
-	v = v.normalize(); // branch direction
+//	if(isPlantLeaf())
+//	return v;
+			
 	double g=evalArg(6,flatness); // magnitude
 	double c=evalArg(14,curvature);
 	if(g==0)
@@ -1680,20 +1686,29 @@ Point TNBranch::setVector(Point vec, Point start, int lvl){
 
 	c=clamp(c,-1,1);
 	Point np,nm,vp,vf,v1,v2;
-
-	nm=start-root->norm;
-	np=start+root->norm;
+    Point rn=root->norm;
+    double dp=1-v.dot(rn);
+    if(dp<1e-3){
+    	rn=rn+Point(1e-3,2e-4,1e-3);
+    }
+	nm=start-rn;
+	np=start+rn;
 	np=np.normalize();
 	nm=nm.normalize();
-
-	vp=np.cross(v);
-    vp = vp.cross(np); // flat
-    vp = vp.normalize(); // projection of v along surface
+    
+	if(isPlantLeaf())
+		vp=v;
+	else{
+		vp=np.cross(v);
+    	vp = vp.cross(np); // flat
+ 	}
+   	vp = vp.normalize(); 
 	v1 = v * (1 - g); 
-	if(c>0)
-		v2=np*c+vp*(1-c);
+	double f=abs(c);
+	if(c>=0)
+		v2=np*f+vp*(1-f);
 	else
-		v2=vp*(1+c)-nm*c;
+		v2=nm*f+vp*(1-f);
 	v = v1 + v2*g;
 
 	return v;
@@ -1732,10 +1747,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	double n=1;
 
 	if(isPlantBranch()){
-		n = first_bias*lerp(density,0.0,1.0,SRAND+0.25,1.0);
-		//n=max_splits;//*(1+0.5*randomness*SRAND);
-		//if(first_bias) // add more branches at start of new branch fork
-		//	n*=first_bias;
+		n = first_bias*lerp(density,0.0,1.0,2*SRAND+0.25,1.0);
 		n=n<1?1:n;
 		double we=evalArg(3,width);
 				
@@ -1784,7 +1796,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
 		poly_mode = POLY_LINE;
 
-	TNBranch *child = (TNBranch*) right;
+	TNBranch *parent=getParent();
+	TNBranch *child = 0;
+	if(right && (right->typeValue()==ID_BRANCH || right->typeValue()==ID_LEAF))
+		child=(TNBranch *)right;
 	Color c;
 	double size_scale = 1.0;
 	double child_width = parent_width;
@@ -1796,7 +1811,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double child_length = parent_length;
 	double pw=1;
 	double pd=1;
-		TNBranch *parent=getParent();
 
 	if(isPlantBranch()){
 		int n = (int)max_splits+0.4;
@@ -1903,7 +1917,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					root->rendered++;
 
 					int segs = max_level;
-					double tilt = divergence;// + 1e-4; // meta-stable if tilt=0;
+					double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
 					double f = 1.0 / segs;
  					Point eye = p1.normalize(); // base of branch
 					eye = eye.normalize();
@@ -2097,7 +2111,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->addLine(branch_id);
 			setColor(nocache);
 			c = S0.c;
-			//glColor4d(c.red(), c.green(), c.blue(), 1);
 
 			poly_mode = POLY_LINE;
 			shader_mode = LINE_MODE;
@@ -2117,24 +2130,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				glEnd();
 			}
 		}
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
 	}
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (opt & LAST_EMIT)
 		return;
 	if (isPlantBranch() ) {
-		double n = max_splits*lerp(density,0.0,1.0,SRAND+0.5,1.0);
-		//double m = 4*density*SRAND+0.5;//max_splits*lerp(randomness,0.0,1.0,1.0,URAND+0.5);
-		//m=clamp(m,-1,1);
-		//int n = max_splits+m;
-		//n=clamp(n,1,max_splits+1);
-		//cout<<n<<endl;
-		//int n = max_splits*lerp(randomness,0.0,1.0,1.0,1-0.25*URAND);
+		double n = max_splits*lerp(density,0.0,1.0,2*SRAND+0.25,1.0);
 		n = n >= 1 ? n : 1;
-		//cout<<m<<" "<<n<<endl;
-
+	
 		child_width *= evalArg(7,width_taper);
 		child_size *= evalArg(8,length_taper);
 		if (n>=1 && child_width > MIN_LINE_WIDTH){
@@ -2316,7 +2320,6 @@ void TNLeaf::renderLeafs(){
 
 
 Point TNLeaf::setVector(Point vec, Point start, int lvl){
-	Point v = vec.normalize();
-	return v;
+	return TNBranch::setVector(vec,start,lvl);
 
 }

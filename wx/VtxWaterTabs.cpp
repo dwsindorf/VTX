@@ -10,7 +10,7 @@ enum {GAS=0,LIQUID=1,SOLID,AUTO=2};
 
 static char*    def_water_func="noise(GRADIENT|SCALE|RO1,16,3,-0.02,0.5,2,0.05,1,0,0)";
 static char*    def_ice_func="noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
-static char*    def_transition_func="-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
+static char*    def_transition_func="noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
 
 static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
 static double gas_temps[]={-196,-163,-78,-10,100};
@@ -373,7 +373,7 @@ void VtxWaterTabs::OnAutoState(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	bool autoset=event.IsChecked();
 	orb->ocean_auto=autoset;
-	orb->calcTemperature();
+	orb->calcAveTemperature();
 }
 
 void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
@@ -385,7 +385,7 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	orb->ocean_liquid_temp=LiquidTempSlider->getValue();
 	orb->ocean_solid_temp=SolidTempSlider->getValue();
-	orb->calcTemperature();
+	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
 }
@@ -403,7 +403,7 @@ void VtxWaterTabs::OnSetState(wxCommandEvent& event){
 			TheScene->rebuild();
 		}
     }
-	orb->calcTemperature();
+	orb->calcAveTemperature();
 }
 
 void VtxWaterTabs::updateControls(){

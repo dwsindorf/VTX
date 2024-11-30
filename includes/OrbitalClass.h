@@ -677,6 +677,8 @@ public:
 	double     fog_value;
 	double     fog_glow;
 	double     temperature;
+	double 	   surface_temp;
+
 	static int planet_id;
 	static int moon_cnt;
 	static int planet_cnt;
@@ -714,7 +716,11 @@ public:
 	virtual double calc_delt();
 	double calc_time(double t);
 	void set_time(double t);
-	virtual void calcTemperature();
+	virtual void calcAveTemperature();
+	void setOceanState(double t);
+	virtual double calcLocalTemperature(double phi);
+	virtual double tilt_bias();
+	virtual void animate();
 	virtual bool liquid();
 	virtual bool solid();
 	virtual bool gas();

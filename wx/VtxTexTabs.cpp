@@ -30,6 +30,7 @@ enum{
     ID_FILELIST,
     ID_CLAMP,
     ID_NORMALIZE,
+    ID_SEASONAL,
     ID_RANDOMIZE,
     ID_TEXBUMP,
     ID_TEXCOLOR,
@@ -94,6 +95,7 @@ EVT_RADIOBOX(ID_INTERP, VtxTexTabs::OnModeChanged)
 EVT_CHECKBOX(ID_CLAMP,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_NORMALIZE,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_RANDOMIZE,VtxTexTabs::OnTexChanged)
+EVT_CHECKBOX(ID_SEASONAL,VtxTexTabs::OnTexChanged)
 
 EVT_CHECKBOX(ID_TEXCOLOR,VtxTexTabs::OnTexChanged)
 EVT_CHECKBOX(ID_TEXBUMP,VtxTexTabs::OnTexChanged)
@@ -330,12 +332,12 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
     wxString lmodes[]={"Nearest","Linear","Mip"};
-    interp_mode=new wxRadioBox(panel,ID_INTERP,wxT("Interpolation"),wxPoint(-1,-1),wxSize(220, 44),3,
+    interp_mode=new wxRadioBox(panel,ID_INTERP,wxT("Interpolation"),wxPoint(-1,-1),wxSize(190, 44),3,
     		lmodes,3,wxRA_SPECIFY_COLS);
     interp_mode->SetSelection(2);
     hline->Add(interp_mode, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxStaticBoxSizer* texmap = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Tiling"));
+	wxStaticBoxSizer* texmap = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Options"));
 	m_clamp_check=new wxCheckBox(panel, ID_CLAMP, "Clamp");
 	texmap->Add(m_clamp_check, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -344,6 +346,9 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	m_rand_check=new wxCheckBox(panel, ID_NORMALIZE, "Dealias");
 	texmap->Add(m_rand_check, 0, wxALIGN_LEFT|wxALL,0);
+	
+	m_tilt_check=new wxCheckBox(panel, ID_SEASONAL, "Seasonal");
+	texmap->Add(m_tilt_check, 0, wxALIGN_LEFT|wxALL,0);
 
     wxSize size=interp_mode->GetMinSize();
 	texmap->SetMinSize(wxSize(BOX_WIDTH-200,size.GetHeight()));
@@ -480,6 +485,7 @@ void VtxTexTabs::saveState(int which){
 	state[which].interp_state=interp_mode->GetSelection();
 	state[which].clamp=m_clamp_check->GetValue();
 	state[which].randomize=m_rand_check->GetValue();
+	state[which].tilt_enable=m_tilt_check->GetValue();
 	state[which].norm=m_norm_check->GetValue();
 	state[which].tex_enable=m_tex_check->GetValue();
 	state[which].bump_enable=m_bump_check->GetValue();
@@ -509,6 +515,7 @@ void VtxTexTabs::restoreState(int which){
 	m_clamp_check->SetValue(state[which].clamp);
 	m_norm_check->SetValue(state[which].norm);
 	m_rand_check->SetValue(state[which].randomize);
+	m_tilt_check->SetValue(state[which].tilt_enable);
 	OrdersSlider->setValue(state[which].orders);
 	OrdersDeltaSlider->setValue(state[which].orders_delta);
 	OrdersAttenSlider->setValue(state[which].orders_atten);
@@ -820,6 +827,10 @@ void VtxTexTabs::setObjAttributes(){
 		BIT_ON(opts,RANDOMIZE);
 	else
 		BIT_OFF(opts,RANDOMIZE);
+	if(m_tilt_check->GetValue())
+		BIT_ON(opts,TBIAS);
+	else
+		BIT_OFF(opts,TBIAS);
 
 	if(!m_bump_check->GetValue())
 		BIT_OFF(opts,BUMP);
@@ -962,6 +973,7 @@ void VtxTexTabs::getObjAttributes(){
 	m_clamp_check->SetValue((opts&BORDER)?true:false);
 	m_norm_check->SetValue((opts&NORM)?true:false);
 	m_rand_check->SetValue((opts&RANDOMIZE)?true:false);
+	m_tilt_check->SetValue((opts&TBIAS)?true:false);
 
 	TNarg &args=*((TNarg *)tnode->right);
 

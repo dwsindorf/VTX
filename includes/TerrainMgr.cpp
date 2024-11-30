@@ -26,7 +26,7 @@ extern int hits,visits,misses;
 // externs used in TerrainClass.cpp
 
 Point           MapPt;
-double          Theta,Phi,Height=0.0,PX,PY,Radius=0,Density=0,Range=0,MaxHt=0,MinHt=0,FHt=0,Randval=0,Srand=0,Level=0;
+double          Theta,Phi,Temp=0,MapTemp=0,Height=0.0,PX,PY,Radius=0,Density=0,Range=0,MaxHt=0,MinHt=0,FHt=0,Randval=0,Srand=0,Level=0;
 Scope          *CurrentScope;
 
 void NodeIF::setRands(){
@@ -1438,6 +1438,11 @@ void TerrainMgr::set_surface(TerrainData &data)
 	double phi=data.p.y;
 	Theta=theta;   // sign change at theta=0
 	Phi=phi;
+	Planetoid *orb=(Planetoid *)TNode::getOrbital(get_root());
+	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON))
+		Temp=orb->calcLocalTemperature(phi);
+	else
+		Temp=0;
 	Height=0;
 	Drop=Margin=0;
 	data.density=0.0;

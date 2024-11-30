@@ -22,7 +22,7 @@ Moon(0.0011,0.2) {
 	water.level=-1.89394e-06;
 	water.shine=52.778;
 	year=10;
-	ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 		Color(0.502,0.251,0),
 		Color(0.141,0,0));

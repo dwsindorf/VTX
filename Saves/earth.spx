@@ -82,7 +82,7 @@ Scene() {
 					water.level=3.78788e-08;
 					water.shine=19.048;
 					year=365;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),
@@ -158,7 +158,7 @@ Scene() {
 						resolution=4;
 						rseed=2.34627;
 						year=30;
-						ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						Surface{
 							terrain=
 									Texture("luna",BORDER|BUMP|HMAP|TEX,1,-4,2,0,1,2,0.5,0,1,0.5);

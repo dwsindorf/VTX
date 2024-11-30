@@ -818,8 +818,8 @@ bool GLSLMgr::loadProgram(char *vshader,char *fshader,char *gshader){
 //-------------------------------------------------------------
 void GLSLMgr::setTessLevel(int n){
 	max_output=(n+1)*(n+3);
-	if(n != tesslevel)
-		cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
+	//if(n != tesslevel)
+	//	cout <<"GLSLMgr::setTessLevel "<<n<<" max_output="<<max_output<<endl;
 	tesslevel=n;
 }
 //-------------------------------------------------------------

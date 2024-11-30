@@ -2,7 +2,7 @@
 #include "VtxSnowTabs.h"
 
 #define LABEL_WIDTH 40
-#define VALUE_WIDTH 40
+#define VALUE_WIDTH 60
 #define SLIDER_WIDTH 90
 #define LINE_WIDTH TABS_WIDTH-2*TABS_BORDER
 
@@ -98,7 +98,7 @@ void VtxSnowTabs::AddControlsTab(wxWindow *panel){
     hline = new wxBoxSizer(wxHORIZONTAL);
 
     LatSlider=new SliderCtrl(panel,ID_LAT_SLDR,"Lat",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);
-    LatSlider->setRange(-1.0,1.0);
+    LatSlider->setRange(0.0,1.0);
     hline->Add(LatSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
     SlopeSlider=new SliderCtrl(panel,ID_SLOPE_SLDR,"Slope",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH);

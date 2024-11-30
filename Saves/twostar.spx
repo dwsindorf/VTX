@@ -112,7 +112,7 @@ Scene() {
 					specular=Color(1,1,1,0.57);
 					sunset=0.01;
 					year=87.97;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 						Color(0.502,0.502,0.502),
 						Color(0.063,0.063,0.063),

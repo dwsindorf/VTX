@@ -1,40 +1,29 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=34.2338;
-		theta=193.598;
-		height=792.178 ft;
-		gndlvl=-1224.04 ft;
-		time=10212.8;
-		vstride=1;
+		phi=54.0967;
+		theta=201.665;
+		height=21765.1 ft;
+		gndlvl=969.615 ft;
+		time=4.9125e+07;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=-94;
-		tilt=-5;
-		angle=12;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00400018;
+		heading=72;
+		tilt=-14;
+		angle=-23;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=802.823 ft;
-	}
-	View{
-		time=63901;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00399992;
-	}
-	View{
-		height=1752.57 ft;
-		heading=-64;
-		tilt=-15;
-		angle=35;
-		minr=0.00399977;
-		radius=0.0040001;
+		height=17791.7 ft;
+		time=4.91133e+07;
+		heading=39;
+		radius=0.00400355;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -65,9 +54,8 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,80) {
+				Planet(0.004,85) {
 					albedo=0.42;
-					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.005;
 					ice.albedo=0.09722;
@@ -77,14 +65,17 @@ Scene() {
 					ocean.auto=1;
 					ocean.level=-1000 ft;
 					ocean.name="methane";
-					skew=30.483;
+					ocean.state=2;
+					phase=197.417;
+					rot_phase=46.4544;
+					tilt=-40;
 					water.albedo=1;
 					water.clarity=213.667 ft;
 					water.color1=Color(0.68,0.95,0.95);
 					water.color2=Color(0.03,0.25,0.07);
 					water.shine=100;
 					year=100;
-					ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
+					ocean.expr=noise(GRADIENT|NLOD,8.6,18.3,1,0.71,2,1,1,0,0,1e-06);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
@@ -93,11 +84,11 @@ Scene() {
 					}
 					Sky(0.0042) {
 						color=Color(0.56,0.72,0.97);
-						day=24;
 						density=0.52778;
 						name="Sky";
 						rseed=0.636572;
 						specular=Color(1,1,1);
+						tilt=-40;
 						year=100;
 					}
 				}

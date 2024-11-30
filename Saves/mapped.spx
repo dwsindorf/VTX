@@ -110,7 +110,7 @@ Scene() {
 					specular=Color(1,0.96,0.86,0.25);
 					sunset=0.01;
 					year=87.97;
-					ocean.expr=-0.3*LAT+noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("fake1",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,10,0,0,0,0,0)+Z(craters(ID1,4,0.002,0.05,1,0.32,0.72,0.8,1,0.5,1,0.8,0.6,0.2,0)

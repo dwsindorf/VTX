@@ -23,6 +23,7 @@ struct tex2d_info {
 	float slope_bias; 	 // slope bias
 	float near_bias; 	 // low frequency bias bias
 	float far_bias; 	 // high frequency bias bias
+	float tilt_bias;     // tilt bias	
 	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture	
 };
@@ -40,6 +41,15 @@ vec4 textureTile(int id, in vec2 uv , float mm)
    return texture(samplers2d[id], uv,mm);
 }
 
+
+float phiFunc(int id){
+//#ifdef PTEST
+	float tf=sin(PHI-0.5+tex2d[id].tilt_bias);
+//#else
+//	float tf=PHI-0.5;
+//#endif
+	return tf*tf;
+}
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0
 #define SET_ATTRIB(ATTR) \
@@ -63,11 +73,11 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	bump_ampl = tex2d[i].bumpamp; \
     bump_delta = tex2d[i].bump_delta; \
 	bump_bias=bmpht*tex2d[i].bump_bias; \
-    phi_bias=tex2d[i].phi_bias*pow(abs(PHI-0.5),2); \
+    phi_bias=tex2d[i].phi_bias*phiFunc(i); \
     height_bias=HT*tex2d[i].height_bias;\
     slope_factor=abs(tex2d[i].slope_bias); \
     slope_bias=2*lerp(8*slope_factor*Tangent.z,0,1,-tex2d[i].slope_bias,tex2d[i].slope_bias); \
-    env_bias=phi_bias+bump_bias+height_bias+slope_bias;\
+    env_bias=phi_bias+height_bias+bump_bias+slope_bias;\
 	if(tex2d[i].t1d) { \
 	    coords.x+=env_bias; \
 	} \
@@ -144,6 +154,7 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 	int tid=0; \
 	float orders_delta = 1.0;  \
 	float alpha = 1.0;  \
+	float phi = PHI-0.5;  \
 	float cmix = 1.0;  \
     float attrib=0.0; \
     vec2 coords; \
