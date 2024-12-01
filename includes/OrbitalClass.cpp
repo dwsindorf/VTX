@@ -3897,7 +3897,7 @@ void Planetoid::adapt_object()
 	double p=TheScene->phi;
 	
 	debug_temp=DEBUG_TEMP;
-	surface_temp=calcLocalTemperature(p);
+	surface_temp=calcLocalTemperature(p)+273;
 	debug_temp=false;
     double dt=fabs(last_temp-surface_temp);
 	if(dt>0.1 /*|| (std::signbit(surface_temp) != std::signbit(last_temp))*/){

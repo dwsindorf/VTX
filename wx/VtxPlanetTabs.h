@@ -18,6 +18,8 @@ protected:
 	SliderCtrl *HscaleSlider;
 	SliderCtrl *ShineSlider;
 	SliderCtrl *AlbedoSlider;
+	SliderCtrl *SeasonSlider;
+	SliderCtrl *TempSlider;
 
 	ColorSlider *AmbientSlider;
 	ColorSlider *SpecularSlider;
@@ -155,6 +157,8 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
 	DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)
+	DEFINE_SLIDER_VAR_EVENTS(Season,object()->season_factor)
+	DEFINE_SLIDER_VAR_EVENTS(Temp,object()->temp_factor)
 	//DEFINE_SLIDER_VAR_EVENTS(Albedo,object()->albedo)
 
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)

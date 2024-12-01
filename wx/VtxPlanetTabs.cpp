@@ -36,6 +36,10 @@ enum {
 	ID_SHINE_TEXT,
 	ID_ALBEDO_SLDR,
 	ID_ALBEDO_TEXT,
+	ID_SEASON_SLDR,
+	ID_SEASON_TEXT,
+	ID_TEMP_SLDR,
+	ID_TEMP_TEXT,
 	ID_AMBIENT_SLDR,
 	ID_AMBIENT_TEXT,
 	ID_AMBIENT_COLOR,
@@ -75,6 +79,8 @@ SET_SLIDER_EVENTS(ORBIT_TILT,VtxPlanetTabs,OrbitTilt)
 SET_SLIDER_EVENTS(ORBIT_PHASE,VtxPlanetTabs,OrbitPhase)
 SET_SLIDER_EVENTS(SHINE,VtxPlanetTabs,Shine)
 SET_SLIDER_EVENTS(ALBEDO,VtxPlanetTabs,Albedo)
+SET_SLIDER_EVENTS(SEASON,VtxPlanetTabs,Season)
+SET_SLIDER_EVENTS(TEMP,VtxPlanetTabs,Temp)
 
 SET_COLOR_EVENTS(AMBIENT,VtxPlanetTabs,Ambient)
 SET_COLOR_EVENTS(EMISSION,VtxPlanetTabs,Emission)
@@ -157,12 +163,12 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 			wxT("Object"));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2 + 10,
-			VALUE2 + SLIDER2);
+	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	hline->AddSpacer(10);
+	//hline->AddSpacer(10);
 
-	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temperature",100,VALUE2+SLIDER2);
+
+	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"",0,60);
 	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
@@ -262,6 +268,29 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 	orbit_cntrls->SetMinSize(wxSize(TABS_WIDTH - TABS_BORDER, -1));
 
 	boxSizer->Add(orbit_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
+	
+	wxBoxSizer *season_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
+			wxT("Variability"));
+	season_cntrls->SetMinSize(wxSize(TABS_WIDTH - TABS_BORDER, -1));
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	SeasonSlider = new SliderCtrl(panel, ID_SEASON_SLDR, "Season", LABEL2B,
+			VALUE2, SLIDER2);
+	SeasonSlider->setRange(0.0, 1);
+	SeasonSlider->setValue(0.1);
+	hline->Add(SeasonSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	TempSlider = new SliderCtrl(panel, ID_TEMP_SLDR, "Temp", LABEL2S,
+			VALUE2, SLIDER2);
+	TempSlider->setRange(0.0, 1);
+	TempSlider->setValue(0.01);
+	hline->Add(TempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	season_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	boxSizer->Add(season_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
+
+
 }
 void VtxPlanetTabs::AddLightingTab(wxWindow *panel) {
 	wxBoxSizer *topSizer = new wxBoxSizer(wxVERTICAL);
@@ -325,15 +354,12 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 void VtxPlanetTabs::setTemp() {
 	Planetoid *obj = (Planetoid*) object();
 	static double last_temp=-1000;
-    //obj->calcAveTemperature();
+    
     double new_temp=obj->getTemperature();
     
     if(fabs(new_temp-last_temp)>0.5){
 		char type_str[256]={0};
 		obj->getTempString(type_str);
-		//double tc=obj->temperature-273;
-		//double tf=tc*9.4/5.0+32;
-		sprintf(type_str,"%d C (%d F)",(int)K2C(new_temp),(int)K2F(new_temp));
 		object_type->SetValue(type_str);
 		last_temp=new_temp;
     }
@@ -356,6 +382,8 @@ void VtxPlanetTabs::updateControls() {
 	updateSlider(YearSlider, obj->year);
 	updateSlider(ShineSlider, obj->shine);
 	updateSlider(AlbedoSlider, obj->albedo);
+	updateSlider(SeasonSlider, obj->season_factor);
+	updateSlider(TempSlider, obj->temp_factor);
 	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
 
 	updateColor(AmbientSlider, obj->ambient);
