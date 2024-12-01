@@ -607,6 +607,7 @@ NodeIF *Scene::replaceChild(NodeIF *c,NodeIF *n){
 //-------------------------------------------------------------
 void Scene::show_status(int which)
 {
+	char date[256]={0};
 	switch(which){
 	case INFO_POSITION:
 	case INFO_ELEVATION:
@@ -643,6 +644,12 @@ void Scene::show_status(int which)
 			    set_status("H: %-5.0f V: %-5.0f ft/s",delh/FEET,delv/FEET);
 		}
 		break;
+	case INFO_DATE:
+		if(viewobj && (viewobj->type()==ID_PLANET ||  viewobj->type()==ID_MOON)){
+			((Orbital*)viewobj)->getDateString(date);
+			set_status(date);
+			break;
+		}
 	case INFO_TIME:
 		set_status("TM: %-6.0f",time);
 		break;
@@ -850,7 +857,7 @@ void Scene::open(char *fn)
 			viewobj=frame->vobj;
 		frame->restore(this);
 	}
-	//cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
+	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
 	scene_objects=total_objs();
 

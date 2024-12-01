@@ -523,7 +523,7 @@ void VtxScene::update_status()
 {
 	TheScene->show_info(INFO_TIME);
 	TheScene->show_status(INFO_POSITION);
-    TheScene->show_status(INFO_TIME);
+    TheScene->show_status(INFO_DATE);
     showFPS();
  }
 

@@ -101,7 +101,9 @@ public:
 
 	virtual void setName(char *c);
 	virtual char *getName();
-
+	virtual void getDateString(char *);
+	virtual void getTempString(char *);
+	virtual double getTemperature();
     virtual bool randomize();
     virtual bool canRandomize() { return true;}
     virtual void setDefault();
@@ -668,7 +670,6 @@ public:
 	double 	   ice_specular;
 	double 	   ice_shine;
 
-
 	Color 	   fog_color;
 	double     fog_min;
 	double     fog_max;
@@ -678,6 +679,8 @@ public:
 	double     fog_glow;
 	double     temperature;
 	double 	   surface_temp;
+	double 	   season_factor;
+	double 	   temp_factor;
 
 	static int planet_id;
 	static int moon_cnt;
@@ -702,6 +705,9 @@ public:
 	~Planetoid();
 	const char *name()			{ return "Planetoid";}
 	virtual int  type()					{ return ID_PLANET;}
+	virtual void getDateString(char *);
+	virtual void getTempString(char *);
+
 	virtual void set_lighting();
     virtual void map_color(MapData*,Color&);
 	virtual void set_vars();
@@ -719,6 +725,7 @@ public:
 	virtual void calcAveTemperature();
 	void setOceanState(double t);
 	virtual double calcLocalTemperature(double phi);
+	virtual double getTemperature();
 	virtual double tilt_bias();
 	virtual void animate();
 	virtual bool liquid();

@@ -21,9 +21,9 @@ extern void setCenterText(char *text);
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
-//#define DEBUG_TEMP
+#define DEBUG_TEMP false;
 
-//static bool debug_temp=DEBUG_TEMP;
+static bool debug_temp=DEBUG_TEMP;
 
 extern const char *pstg[];
 
@@ -216,6 +216,10 @@ int Orbital::getChildren(LinkedList<NodeIF*>&l){
     n+=ObjectNode::getChildren(l);
 	return n;
 }
+void Orbital::getDateString(char *s) {*s=0;}
+void Orbital::getTempString(char *s) {*s=0;}
+double Orbital::getTemperature() {return 0;}
+
 void Orbital::free() {}
 void Orbital::set_surface(TerrainData &d){}
 void Orbital::set_mode(int d) {}
@@ -574,6 +578,7 @@ void Orbital::animate()
 		rot_angle=P360(rot_phase+360*cycles);
 	}
 }
+
 
 //-------------------------------------------------------------
 // Orbital::set_ref() move to orbital position
@@ -3373,6 +3378,8 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 
 	temperature=100;
 	surface_temp=0;
+	season_factor=0.5;
+	temp_factor=0.1;
 
 #ifdef DEBUG_BASE_OBJS
 	printf("Planetoid\n");
@@ -3640,6 +3647,11 @@ bool Planetoid::setProgram(){
 	return true;
 }
 
+
+void Planetoid::animate(){
+	Orbital::animate();
+}
+
 //-------------------------------------------------------------
 // Planetoid::adapt_pass() select for scene pass
 //-------------------------------------------------------------
@@ -3881,12 +3893,15 @@ void Planetoid::adapt_object()
 	calcAveTemperature();
 	static double last_temp=-1;
 		
-	double p=TheScene->surface_view()?TheScene->phi:70;
+	//double p=TheScene->surface_view()?TheScene->phi:70;
+	double p=TheScene->phi;
 	
+	debug_temp=DEBUG_TEMP;
 	surface_temp=calcLocalTemperature(p);
+	debug_temp=false;
     double dt=fabs(last_temp-surface_temp);
 	if(dt>0.1 /*|| (std::signbit(surface_temp) != std::signbit(last_temp))*/){
-		cout<<"Phase:"<<orbit_angle<<" Temp:"<<surface_temp<<" Tave:"<<temperature<<" dt:"<<dt<<endl;
+		//cout<<"Phase:"<<(orbit_angle/360)<<" Temp:"<<surface_temp<<" Tave:"<<temperature<<" dt:"<<dt<<endl;
 		invalidate();
 		TheScene->rebuild();
 		last_temp=surface_temp;
@@ -4046,7 +4061,39 @@ void Planetoid::set_lighting(){
 }
 
 //-------------------------------------------------------------
-// Planetoid::calcTemperature() calculate ave surface temperature
+// Planetoid::tilt_bias() get seasonal light variation
+//-------------------------------------------------------------
+double Planetoid::tilt_bias(){
+	return season_factor*RPD*tilt*cos(RPD*(orbit_angle));
+}
+
+//-------------------------------------------------------------
+// Planetoid::getDate() get date string
+//-------------------------------------------------------------
+void Planetoid::getDateString(char *s){
+	static char *months[]={"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
+	double angle=orbit_angle/360;
+	double month=fmod(angle*12,12);
+	double day=(angle*360-((int)month)*30);
+	sprintf(s,"%-3s %-2d",months[(int)month],(int)day);
+}
+
+double Planetoid::getTemperature(){
+	if(TheScene->viewobj==this && TheScene->surface_view())
+		return surface_temp;
+	else
+		return temperature;
+}
+//-------------------------------------------------------------
+// Planetoid::getDate() get temperature string
+//-------------------------------------------------------------
+void Planetoid::getTempString(char *s){
+	double t=getTemperature();
+	sprintf(s,"%d C (%d F)",(int)K2C(t),(int)K2F(t));
+}
+
+//-------------------------------------------------------------
+// Planetoid::calcAveTemperature() calculate ave surface temperature
 // -increases for: %green house gas, pressure, temp of star
 // -decreases for: distance from star, albedo
 //-------------------------------------------------------------
@@ -4107,26 +4154,17 @@ void Planetoid::calcAveTemperature() {
 	//cout<<"ocean state="<<ocean_state<<" temp:"<<temp<<" solid:"<<ocean_solid_temp<<" liquid:"<<ocean_liquid_temp<<endl;
 }
 
-void Planetoid::animate(){
-	Orbital::animate();
-}
-
-static double C2F(double t){
-	return t*9.4/5.0+32;
-}
-static double TF(double s){
-	return 0.1*s*s;
-}
-
-double Planetoid::tilt_bias(){
-	return RPD*tilt*cos(RPD*(orbit_angle));
-}
+//-------------------------------------------------------------
+// Orbital::calcLocalTemperature() calculate temperature at surface
+//-------------------------------------------------------------
 double Planetoid::calcLocalTemperature(double phi){
+	double tmod=0.1;
 	double Tave=temperature; // K
 	double g=RPD*phi+tilt_bias();
 	double s=sin(g);
-	double ds=Tave*TF(s);
+	double ds=Tave*temp_factor*s*s;
 	double t=Tave-ds-273; // C
+	char date[256]={0};
 	if(ocean_auto){
 		if (t <= ocean_solid_temp)
 			ocean_state = SOLID;
@@ -4136,13 +4174,11 @@ double Planetoid::calcLocalTemperature(double phi){
 			ocean_state = GAS;
 	}
 	Raster.frozen=ocean_state==SOLID?true:false;
-#ifdef DEBUG_TEMP
-	//if(TheScene->render_mode())
-	cout<<" A:"<<orbit_angle<<" Phi:"<<phi<<" Temp:"<<t<<" ice:"<<Raster.frozen<<endl;
-#endif
-
+	if(debug_temp){
+		getDateString(date);
+		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<phi<<" Tb:"<<tilt_bias()<<" Tf:"<<ds/Tave<<" Temp:"<<t<<endl;
+	}
 	return t;
-
 }
 int  Planetoid::getOceanFunction(char *buff){
 	buff[0]=0;
@@ -4170,7 +4206,6 @@ void  Planetoid::setOceanFunction(char *expr){
     	var=addExprVar("ocean.expr",expr);
 	} else
 		var->setExpr(expr);
-
     var->applyExpr();
     ocean_expr=var->right;
 }

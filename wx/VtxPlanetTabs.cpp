@@ -324,13 +324,19 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 
 void VtxPlanetTabs::setTemp() {
 	Planetoid *obj = (Planetoid*) object();
-    obj->calcAveTemperature();
-
-	char type_str[256];
-	double tc=obj->temperature-273;
-	double tf=tc*9.4/5.0+32;
-	sprintf(type_str,"%d C (%d F)",(int)tc,(int)(tf));
-	object_type->SetValue(type_str);
+	static double last_temp=-1000;
+    //obj->calcAveTemperature();
+    double new_temp=obj->getTemperature();
+    
+    if(fabs(new_temp-last_temp)>0.5){
+		char type_str[256]={0};
+		obj->getTempString(type_str);
+		//double tc=obj->temperature-273;
+		//double tf=tc*9.4/5.0+32;
+		sprintf(type_str,"%d C (%d F)",(int)K2C(new_temp),(int)K2F(new_temp));
+		object_type->SetValue(type_str);
+		last_temp=new_temp;
+    }
 }
 void VtxPlanetTabs::updateControls() {
 	if (changing)

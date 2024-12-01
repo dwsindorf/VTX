@@ -43,11 +43,8 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 
 
 float phiFunc(int id){
-//#ifdef PTEST
-	float tf=sin(PHI-0.5+tex2d[id].tilt_bias);
-//#else
-//	float tf=PHI-0.5;
-//#endif
+	float p=PI*(PHI-0.5);
+	float tf=sin(p+tex2d[id].tilt_bias);
 	return tf*tf;
 }
 #define BIAS vec2(tex2d[tid].bias,0.0)
