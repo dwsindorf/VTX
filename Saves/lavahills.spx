@@ -6,16 +6,16 @@ Scene() {
 		height=6 ft;
 		gndlvl=-4350.6 ft;
 		time=17912.8;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=-46;
 		tilt=-3;
 		angle=10;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -23,18 +23,20 @@ Scene() {
 		heading=-56;
 		tilt=1;
 		angle=6;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00399919;
 	}
 	View{
 		height=241.453 ft;
 		heading=-30;
 		tilt=-3;
 		angle=-9;
-		minr=0.00399918;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		radius=0.00399922;
+	}
+	View{
+		time=17985.6;
+		minr=0.00399918;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -76,6 +78,7 @@ Scene() {
 					fog.vmin=-1000 ft;
 					ocean.level=-6111.18 ft;
 					resolution=2.37142;
+					rot_phase=87.0984;
 					shadow=Color(0.04,0.04,0.05,0.8);
 					shine=9.20157;
 					specular=Color(1,1,1,0.05);

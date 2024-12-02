@@ -3,46 +3,20 @@ Scene() {
 		view=SURFACE;
 		phi=-30.7946;
 		theta=350.959;
-		height=9608.83 ft;
+		height=8657.04 ft;
 		gndlvl=22054.2 ft;
-		time=50648.8;
+		time=65589.8;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00400418;
 		heading=-65;
 		tilt=-14;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=9608.8 ft;
-	}
-	View{
-		height=9216.2 ft;
-	}
-	View{
-		height=8820.21 ft;
-		tilt=-15;
-		angle=1;
-	}
-	View{
-		time=36208;
-		tilt=-9;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400585;
-	}
-	View{
-		height=8657.04 ft;
-		time=36387.2;
-		tilt=-14;
-		angle=0;
-		minr=0.00400418;
-		radius=0.00400582;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -66,7 +40,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -76,12 +50,14 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.05);
 					day=24;
+					rot_phase=58.068;
 					shadow=Color(0,0,0,0.4);
 					shine=6.24298;
 					specular=Color(1,1,1,0.07);
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),

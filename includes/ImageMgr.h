@@ -279,7 +279,7 @@ public:
 	    if(image_dirs.size>0)
 	    	return;
 		File.getDirectoryList(getImageBaseDir(),image_dirs);
-		cout<<"size="<<image_dirs.size<<endl;
+		//cout<<"size="<<image_dirs.size<<endl;
 		image_dirs.sort();		
 	}
 };

@@ -2349,7 +2349,7 @@ void Spheroid::set_tilt()
 void Spheroid::set_rotation()
 {
 	if(rot_angle)
-	    TheScene->rotate(rot_angle,0,1,0);	// rotate ccw
+	    TheScene->rotate(-rot_angle,0,1,0);	// rotate ccw
 }
 
 //-------------------------------------------------------------
@@ -3380,6 +3380,8 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	surface_temp=0;
 	season_factor=0.5;
 	temp_factor=0.1;
+	last_dt=0;
+	last_temp=0;
 
 #ifdef DEBUG_BASE_OBJS
 	printf("Planetoid\n");
@@ -3891,7 +3893,7 @@ void Planetoid::adapt_object()
 	if(!isEnabled())
 		return;
 	calcAveTemperature();
-	static double last_temp=-1;
+	//static double last_temp=-1;
 		
 	//double p=TheScene->surface_view()?TheScene->phi:70;
 	double p=TheScene->phi;
@@ -3901,9 +3903,12 @@ void Planetoid::adapt_object()
 	debug_temp=false;
     double dt=fabs(last_temp-surface_temp);
 	if(dt>0.1 /*|| (std::signbit(surface_temp) != std::signbit(last_temp))*/){
-		//cout<<"Phase:"<<(orbit_angle/360)<<" Temp:"<<surface_temp<<" Tave:"<<temperature<<" dt:"<<dt<<endl;
-		invalidate();
-		TheScene->rebuild();
+		bool have_ocean=water();
+		cout<<"Phase:"<<(orbit_angle/360)<<" Temp:"<<surface_temp<<" Tave:"<<temperature<<" dt:"<<dt<<" ocean:"<<have_ocean<<endl;
+		if(have_ocean){
+			invalidate();
+			TheScene->rebuild();
+		}
 		last_temp=surface_temp;
 	}
 
@@ -4054,8 +4059,6 @@ void Planetoid::set_lighting(){
 	Raster.ice_shine=ice_shine;
 	Raster.ice_specular=ice_specular;
 
-	//Raster.sky_color.print();
-	//Raster.blend_color.print();
 	Lights.modDiffuse(Raster.sky_color);
 	Lights.modSpecular(Raster.blend_color);
 }
@@ -4074,8 +4077,18 @@ void Planetoid::getDateString(char *s){
 	static char *months[]={"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
 	double angle=orbit_angle/360;
 	double month=fmod(angle*12,12);
-	double day=(angle*360-((int)month)*30);
-	sprintf(s,"%-3s %-2d",months[(int)month],(int)day);
+	double day=(angle*360-((int)month)*30)+1;
+	double dt=calc_delt();
+	double dd=-dt*24;
+	//double dd=fabs(dt*24);
+
+    char *apm=fabs(dd)<12?"am":"pm";
+    int dap=fabs(dd);
+    int min=60*(fabs(dd)-dap);
+     
+    dap=dap>12?dap-12:dap;
+
+	sprintf(s,"%-3s %-2d %-2d:%-2d %s",months[(int)month],(int)day,dap,min,apm);
 }
 
 double Planetoid::getTemperature(){
@@ -4219,6 +4232,10 @@ double  Planetoid::evalOceanFunction(){
 	}
 	return t;
 }
+
+bool Planetoid::water(){	
+	return terrain.hasChild(ID_WATER);
+}
 //-------------------------------------------------------------
 // Planetoid::liquid() return true if not ocean_auto and state=liquid
 //-------------------------------------------------------------
@@ -4278,16 +4295,25 @@ double Planetoid::liquidToGas(){
 	return f;
 }
 
+double Planetoid::dlt(){
+	if(Lights.numLights()==0)
+		return 0;
+	Point pl=Lights[0]->point.mm(TheScene->InvModelMatrix.values());
+	double tl=pl.spherical().x;
+	double tv=TheScene->theta;
+	double dv=tv-tl;
+	return dv;
+}
 //-------------------------------------------------------------
 // Planetoid::calc_delt() determine (normalized) position of the sun.
 //-------------------------------------------------------------
 double Planetoid::calc_delt()
 {
-	Point pl=Lights[0]->point.mm(TheScene->InvModelMatrix.values());
+	double dv=dlt();
+	double wt=unwrap(last_dt,dv);
 
-	double tl=pl.spherical().x;
-	double tv=TheScene->theta;
-	double del=P360(tv-tl)/360;
+	double del=P360(wt)/360;
+	last_dt=wt;
 	return del;
 }
 

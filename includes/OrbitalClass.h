@@ -681,6 +681,8 @@ public:
 	double 	   surface_temp;
 	double 	   season_factor;
 	double 	   temp_factor;
+	double 	   last_dt;
+	double 	   last_temp;
 
 	static int planet_id;
 	static int moon_cnt;
@@ -720,6 +722,7 @@ public:
     virtual void render_object();
 	virtual bool setProgram();
 	virtual double calc_delt();
+	virtual double dlt();
 	double calc_time(double t);
 	void set_time(double t);
 	virtual void calcAveTemperature();
@@ -731,6 +734,7 @@ public:
 	virtual bool liquid();
 	virtual bool solid();
 	virtual bool gas();
+	virtual bool water();
 	virtual int getOceanFunction(char *buff);
 	virtual void setOceanFunction(char *expr);
 	virtual double evalOceanFunction();

@@ -859,6 +859,7 @@ void Scene::open(char *fn)
 	}
 	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
+
 	scene_objects=total_objs();
 
 	status=stat;
@@ -891,6 +892,12 @@ void Scene::open(char *fn)
 	}
 
 	locate_objs();
+	set_lights();
+	if(viewobj && (viewobj->type()==ID_PLANET || viewobj->type()==ID_MOON)){
+		Planetoid *planet=(Planetoid*)viewobj;
+		planet->last_dt=planet->dlt();
+	}
+
 	auto_stride();
 	clr_automv();
     double tm=clock();
@@ -1547,6 +1554,7 @@ void Scene::change_view(int v)
 
 	viewtype=v;
 
+	cout<<"Scene::change_view"<<" "<<viewobj<<endl;
 	//vobj=viewobj;
 
 	set_changed_detail();

@@ -73,7 +73,7 @@ public:
 		char base[512];
 		File.getBaseDirectory(base);
 	 	sprintf(base_dir,"%s/Textures/Plants/Leaf",base);
-	  	cout<<"leaf base dir="<<base_dir<<endl;
+	  	//cout<<"leaf base dir="<<base_dir<<endl;
 	}
 };
 extern LeafImageMgr leaf_mgr;
@@ -89,7 +89,7 @@ public:
 		char base[512];
 		File.getBaseDirectory(base);
 	 	sprintf(base_dir,"%s/Textures/Plants/Branch",base);
-	  	cout<<"branch base dir="<<base_dir<<endl;
+	  	//cout<<"branch base dir="<<base_dir<<endl;
 	}
 };
 extern BranchImageMgr branch_mgr;

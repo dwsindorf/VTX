@@ -92,6 +92,12 @@ inline char *newstr(char *a){
 	return b;
 }
 
+inline double unwrap(double a, double b){
+	double d=b-a;
+	d=d>=180?d-360:(d<=-180? d+360:d);
+	return a+d;
+}
+
 inline double round(double f,int n){
 	static double digits[]={1,10,1e2,1e3,1e4,1e5,1e6,1e7,1e8};
 	if(n<0||n>8)

@@ -392,7 +392,6 @@ void RasterMgr::modulate(Color &c)
 }
 
 void RasterMgr::set_ldp(double dp){
-	ldp=dp;
   	if(dp>0){ 	
   		hdr_min_delta=lerp(dp,0,0.5,0,-2);
 	    //dmax=lerp(dp,0,0.5,0,0.5);
