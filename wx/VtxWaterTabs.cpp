@@ -205,7 +205,7 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
     wxString modes[]={"Gas", "Liquid","Solid"};
 
-    State=new wxRadioBox(panel,ID_SHOW_STATE,wxT("State"),wxPoint(-1,-1),wxSize(-1,-1),3,
+    State=new wxRadioBox(panel,ID_SHOW_STATE,wxT(""),wxPoint(-1,-1),wxSize(-1,40),3,
        		modes,3,wxRA_SPECIFY_COLS);
     hline->Add(State, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -215,12 +215,12 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	auto_state=new wxCheckBox(panel, ID_AUTO_STATE, "Auto");
 
-	default_state->Add(auto_state, 0, wxALIGN_LEFT | wxALL, 0);
+	default_state->Add(auto_state, 0, wxALIGN_LEFT | wxALL, 5);
 
 	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"",0,200);
 
 	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	hline->Add(default_state, 0, wxALIGN_LEFT | wxALL, 0);
+	hline->Add(default_state, 0, wxALIGN_LEFT|wxTOP, 0);
 
     boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -228,10 +228,10 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",100,280);
 
-	hline->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	hline->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 5);
 
 	default_mod=new wxButton(panel,ID_DEFAULT_MOD,"Default",wxDefaultPosition,wxSize(60,25));
-	hline->Add(default_mod,0,wxALIGN_LEFT|wxALL,2);
+	hline->Add(default_mod,0,wxALIGN_LEFT|wxALL,5);
 
 
 	//default_state->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
@@ -344,13 +344,15 @@ void VtxWaterTabs::OnUpdateState(wxUpdateUIEvent &event) {
 	getDefaultState();
 	bool auto_state_enabled=auto_state->IsChecked();
 	Planetoid *orb=getOrbital();
-
-	if(auto_state_enabled)
-		State->SetSelection(orb->ocean_state);
+    int state=orb->ocean_state;
+    static int oldstate=-1;
+	if(auto_state_enabled && oldstate!=state)
+		State->SetSelection(state);
+	oldstate=state;
 }
 
 void VtxWaterTabs::getDefaultState() {
-
+    static wxString oldtstr;
 	Planetoid *obj=getOrbital();
    // obj->calcTemperature();
     char state_str[256];
@@ -366,7 +368,10 @@ void VtxWaterTabs::getDefaultState() {
 	else
 		strcpy(state_str,"Gas");
 	sprintf(type_str,"%d C (%s)",(int)tc,state_str);
-	planet_temp->SetValue(type_str);
+	wxString tstr(type_str);
+	if(oldtstr!=tstr)
+		planet_temp->SetValue(type_str);
+	oldtstr=tstr;
 }
 
 void VtxWaterTabs::OnAutoState(wxCommandEvent& event){
@@ -383,8 +388,8 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
     SolidTempSlider->setValue(solid);
     LiquidTempSlider->setValue(liquid);
 	Planetoid *orb=getOrbital();
-	orb->ocean_liquid_temp=LiquidTempSlider->getValue();
-	orb->ocean_solid_temp=SolidTempSlider->getValue();
+	orb->ocean_liquid_temp=LiquidTempSlider->getValue()+273;
+	orb->ocean_solid_temp=SolidTempSlider->getValue()+273;
 	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -449,8 +454,8 @@ void VtxWaterTabs::setObjAttributes(){
 	int state=State->GetSelection();
     orb->ocean_state=state;
 
-	orb->ocean_liquid_temp=LiquidTempSlider->getValue();
-	orb->ocean_solid_temp=SolidTempSlider->getValue();
+	orb->ocean_liquid_temp=LiquidTempSlider->getValue()+273;
+	orb->ocean_solid_temp=SolidTempSlider->getValue()+273;
 
 	orb->water_color1=LiquidReflectSlider->getColor();
 	orb->water_color1.set_alpha(LiquidReflectSlider->getValue());
@@ -516,8 +521,8 @@ void VtxWaterTabs::getObjAttributes(){
 	State->SetSelection(orb->ocean_state);
 
 	object_name->SetValue(orb->ocean_name);
-	LiquidTempSlider->setValue(orb->ocean_liquid_temp);
-	SolidTempSlider->setValue(orb->ocean_solid_temp);
+	LiquidTempSlider->setValue(orb->ocean_liquid_temp-273);
+	SolidTempSlider->setValue(orb->ocean_solid_temp-273);
 
 	LevelSlider->setValue(orb->ocean_level/FEET);
 

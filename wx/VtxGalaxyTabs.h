@@ -165,7 +165,7 @@ public:
 		delete ColorExpr;
 		delete CMixSlider;
 		delete CBiasSlider;
-		delete object_type;
+		delete temp_state;
 	}
 
 	int showMenu(bool);

@@ -142,8 +142,8 @@ void VtxStarTabs::AddObjectTab(wxWindow *panel){
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	hline->AddSpacer(10);
 
-	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Type",LABEL2S,VALUE2+SLIDER2);
-	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Type",LABEL2S,VALUE2+SLIDER2);
+	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
     object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -266,7 +266,7 @@ void VtxStarTabs::setTypeString(){
 	object()->getStarData(&temp, type);
 	char type_str[256];
 	sprintf(type_str,"%s     %d K",type,(int)temp);
-	object_type->SetValue(type_str);
+	temp_state->SetValue(type_str);
 }
 void VtxStarTabs::updateControls(){
 

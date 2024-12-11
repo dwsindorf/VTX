@@ -26,9 +26,13 @@ protected:
 	ColorSlider *EmissionSlider;
 	ColorSlider *DiffuseSlider;
 	ColorSlider *ShadowSlider;
+	
+	wxButton	*tidal_lock;
+	wxCheckBox  *seasonal;
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
+	void OnTidalLock(wxCommandEvent& event);
 	void setTemp();
 
 public:
@@ -121,7 +125,18 @@ public:
 		TheView->set_changed_detail();
 		TheScene->rebuild();
 	}
-
+//	void OnCelsius(wxCommandEvent& event){
+//		Planetoid *obj = object();
+//		obj->celsius=event.IsChecked();
+//		setTemp();
+//		//TheView->set_changed_render();		
+//	}
+	void OnSeasonal(wxCommandEvent& event){
+		Planetoid *obj = object();
+		obj->seasonal=event.IsChecked();
+		setTemp();
+		TheView->set_changed_detail();		
+	}
 	void OnEndOrbitRadiusSlider(wxScrollEvent &event) {}
 
     void OnOrbitRadiusSlider(wxScrollEvent& event){
@@ -149,6 +164,20 @@ public:
     	setTemp();
 		invalidateRender();
 	}
+    void invalidate(){
+        object()->invalidate();
+        TheView->set_changed_detail();
+    }
+    void OnSliderText(SliderCtrl *s, double &var){
+       s->setValueFromText();
+       var=s->getValue();
+       invalidate();
+    }
+    void OnSliderValue(SliderCtrl *s, double &var){
+        s->setValueFromSlider();
+        var=s->getValue();
+        invalidate();
+    }
 
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
@@ -159,6 +188,7 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)
 	DEFINE_SLIDER_VAR_EVENTS(Season,object()->season_factor)
 	DEFINE_SLIDER_VAR_EVENTS(Temp,object()->temp_factor)
+	
 	//DEFINE_SLIDER_VAR_EVENTS(Albedo,object()->albedo)
 
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)

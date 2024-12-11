@@ -14,7 +14,7 @@ VtxTabsMgr::VtxTabsMgr(wxWindow* parent,
 
 	object_node=0;
 	object_name=0;
-	object_type=0;
+	temp_state=0;
   	update_needed=true;
 	Show(false);
 }

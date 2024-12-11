@@ -61,7 +61,7 @@ View::View()
 	suspend_cnt=0;
 #ifdef MATRIX_MGR
 	modelMgr=new MatrixMgr(32);
-	projMgr=new MatrixMgr(4);
+	projMgr=new MatrixMgr(8);
 #else
 	modelMgr=0;
 	projMgr=0;

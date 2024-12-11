@@ -18,7 +18,6 @@
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
 
-
 int noise_hits=0;
 int noise_misses=0;
 int noise_visits=0;
@@ -707,7 +706,7 @@ void Noise::init()
 			perm[i] = perm[j = IntRand() % mod];
 			perm[j] = k;
 		}
-		//printf("Noise::init n %d\n",nfact);
+		printf("Noise::init n %d\n",nfact);
 		//init_noise(RandSeed);
 		init_flag=0;
 	}
@@ -718,7 +717,7 @@ void Noise::init()
 //-------------------------------------------------------------
 double Noise::value(int i)
 {
-	if(!init_flag)
+	if(init_flag)
 		init();
 	double freq;
 	int type=ntype();
@@ -898,7 +897,7 @@ void Noise::distort(int type,double distortion){
 double Noise::multinoise(int type, int nargs, double *args)
 {
 	const double VMAX=0.5;
-	if(!init_flag)
+	if(init_flag)
 		init();
 #ifdef DEBUG_NOISE_EVAL
 	double start_time=clock();
@@ -907,7 +906,14 @@ double Noise::multinoise(int type, int nargs, double *args)
 	double H=dflt_H;
 	double L=dflt_L;
 
-    double result,signal,weight,bias,gain,val=0,fact;
+    double result=0;
+    double signal=0;
+    double weight=0;
+    double bias=0;
+    double gain=0;
+    double val=0;
+    double fact=0;
+	double last_val=0;
 
 	bias=nargs>2?args[2]:1.0;  // homogeneity
 
@@ -931,7 +937,6 @@ double Noise::multinoise(int type, int nargs, double *args)
 
 	if(frac2>0)
 		end++;
-	double last_val=0;
 
 	if(mode()==GETLIMS){
 	    double mn=start;
@@ -941,7 +946,6 @@ double Noise::multinoise(int type, int nargs, double *args)
 	    max_order=mx>max_order?mx:max_order;
 	}
 
-    result=0;
     gain=1-bias;
     weight=1;
 

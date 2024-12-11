@@ -132,8 +132,8 @@ Point Point::spherical()
 {
 	double t,p,r;
 	r=sqrt(x*x+y*y+z*z);
-	p=asin(y/r)/RPD;
-	t=atan2(-z,x)/RPD;
+	t=asin(y/r)*DPR;
+	p=atan2(-z,x)*DPR;
 	return Point(t,p,r);
 }
 

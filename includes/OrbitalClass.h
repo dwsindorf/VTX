@@ -502,6 +502,8 @@ public:
 	void map_color(MapData*,Color&);
 	void render_object();
 	void adapt_object();
+	double   getHeatCalacity();
+
 	void set_vars();
 	void get_vars();
 	void set_ref();
@@ -646,10 +648,11 @@ public:
 
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
+	int        terrain_type;
 	double 	   ocean_level;
 	int        ocean_state;
-	int        ocean_auto;
-	int        terrain_type;
+	bool       ocean_auto;
+	bool       seasonal;
 
 	double     ocean_solid_temp;
 	double     ocean_liquid_temp;
@@ -680,10 +683,11 @@ public:
 	double     temperature;
 	double 	   surface_temp;
 	double 	   season_factor;
+	double     heat_factor;
 	double 	   temp_factor;
 	double 	   last_dt;
 	double 	   last_temp;
-
+	
 	static int planet_id;
 	static int moon_cnt;
 	static int planet_cnt;
@@ -723,18 +727,20 @@ public:
 	virtual bool setProgram();
 	virtual double calc_delt();
 	virtual double dlt();
-	double calc_time(double t);
-	void set_time(double t);
+	virtual double calc_time(double t);
+	virtual void set_time(double t);
 	virtual void calcAveTemperature();
-	void setOceanState(double t);
-	virtual double calcLocalTemperature(double phi);
+	virtual double calcLocalTemperature();
 	virtual double getTemperature();
 	virtual double tilt_bias();
+	virtual double season_bias();
 	virtual void animate();
 	virtual bool liquid();
 	virtual bool solid();
 	virtual bool gas();
 	virtual bool water();
+	virtual bool tidalLocked();
+	virtual void setTidalLocked();
 	virtual int getOceanFunction(char *buff);
 	virtual void setOceanFunction(char *expr);
 	virtual double evalOceanFunction();
@@ -792,6 +798,7 @@ public:
 	const char *name()			{ return "Moon";}
 	int  type()					{ return ID_MOON;}
 	void newInstance();
+	void set_tilt();
 	NodeIF *getInstance(NodeIF *prev);
 };
 

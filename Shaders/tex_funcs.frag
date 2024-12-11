@@ -43,9 +43,10 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 
 
 float phiFunc(int id){
-	float p=PI*(PHI-0.5);
-	float tf=sin(p+tex2d[id].tilt_bias);
-	return tf*tf;
+	//float p=PI*(PHI-0.5);
+	//float tf=sin(p+tex2d[id].tilt_bias);
+	//return tf*tf;
+	return SFACT;
 }
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0

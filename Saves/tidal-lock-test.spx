@@ -6,17 +6,149 @@ Scene() {
 		height=0.0102692;
 		gndlvl=12851.1 ft;
 		time=9.29996e+07;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00400244;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-91;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		phi=-2.80022;
+		theta=204.374;
+		height=0.0102776;
+		time=9.37796e+07;
+		delt=200000;
+	}
+	View{
+		theta=271.734;
+	}
+	View{
+		theta=315.103;
+	}
+	View{
+		theta=329.867;
+	}
+	View{
+		theta=258.816;
+	}
+	View{
+		theta=267.121;
+		pitch=-90;
+	}
+	View{
+		phi=2.73621;
+		theta=263.43;
+		time=1.0144e+08;
+	}
+	View{
+		theta=266.198;
+		time=1.0598e+08;
+		pitch=-87;
+	}
+	View{
+		time=1.1108e+08;
+	}
+	View{
+		phi=-3.72468;
+		theta=229.286;
+		height=0.0102918;
+		time=1.1368e+08;
+		pitch=-91;
+	}
+	View{
+		time=1.1386e+08;
+	}
+	View{
+		time=1.1422e+08;
+	}
+	View{
+		time=1.1556e+08;
+	}
+	View{
+		time=1.1578e+08;
+	}
+	View{
+		time=1.1604e+08;
+	}
+	View{
+		phi=-5.57043;
+		height=0.0102931;
+		time=1.1704e+08;
+	}
+	View{
+		theta=228.363;
+		time=1.1778e+08;
+		pitch=-93;
+	}
+	View{
+		theta=227.44;
+		pitch=-90;
+	}
+	View{
+		phi=-5.56473;
+		height=0.0102191;
+		time=1.2935e+08;
+		delt=100000;
+	}
+	View{
+		view=SURFACE;
+		phi=18.9844;
+		theta=227.109;
+		height=52800 ft;
+		gndlvl=-34341.1 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		time=1.2943e+08;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=0.00086516 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+	}
+	View{
+		time=1.3805e+08;
+	}
+	View{
+		phi=24.1724;
+		time=1.4564e+08;
+	}
+	View{
+		phi=38.8717;
+		time=1.4682e+08;
+	}
+	View{
+		phi=13.7964;
+		time=1.5062e+08;
+	}
+	View{
+		phi=1.68639;
+		theta=203.777;
+		height=0.00798371;
+		time=1.5161e+08;
+		pitch=-91;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.0119837;
+	}
+	View{
+		phi=1.62632;
+		theta=207.437;
+		height=0.00770838;
+		time=1.6227e+08;
+		minr=0.004;
+		radius=0.0117084;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -40,7 +172,7 @@ Scene() {
 				name="RedStar";
 				resolution=4;
 				specular=Color(1,1,1);
-				temperature=2629.76;
+				temperature=2265.11;
 				Surface{
 					terrain=
 							Texture("sol",TEX,1,1.58332,1,0,1,2,0.5,0,0,0,0,0)+Color(0.976471,0.933333,0.611765,1);
@@ -54,12 +186,11 @@ Scene() {
 				Corona(3.36944) {
 					color1=Color(0.95,0.98,0.51);
 					color2=Color(1,0.04,0);
-					gradient=1;
 					name="c2";
 					noise.expr=noise(GRADIENT|NABS|SQR|UNS,2.1,2,1,0.21,2,1,1,0,-0.7);
 				}
 			}
-			Planet(0.004,20) {
+			Planet(0.004,70) {
 				albedo=0.147491;
 				ambient=Color(1,1,1,0.04);
 				day=240;
@@ -73,11 +204,13 @@ Scene() {
 				ice.color2=Color(0.81,0.84,0.98);
 				ice.shine=48.612;
 				ocean.auto=1;
-				ocean.level=-10000 ft;
-				ocean.state=0;
+				ocean.level=1388.8 ft;
+				ocean.state=2;
 				shadow=Color(0,0,0,0.56);
 				shine=10.9372;
 				specular=Color(1,1,1,0.37);
+				temp.factor=1;
+				tilt=40;
 				water.albedo=1;
 				water.clarity=154.307 ft;
 				water.color1=Color(0.68,0.94,0.93,0.01);
@@ -87,35 +220,35 @@ Scene() {
 				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				wl=water.level*GTOL;
-				ocean.expr=scurve(LONG-0.99,-0.8,0.4)+noise(GRADIENT|NLOD|NNORM|SCALE,4.9,13,1,0.5,2,0.51,1,0,0)-0.1*LAT;
-				bands("tidal-locked",ACHNL|CLAMP|NORM,128,0.06452,0.0784314,RAND,Color(0.729,0.878,0.973),
+				ocean.expr=0.5*TAVE*(lerp(LONG,0.7,0.95,-0.4,3))+noise(GRADIENT|NLOD|NNORM|RO4,4.5,13,1,0.51,1.8,20,1,0,-0.2,1e-06);
+				bands("tidal-locked",ACHNL|CLAMP|NORM,256,0.06452,0.0784314,Color(0.71,0.631,0.561,0.078),Color(0.722,0.875,0.973),
 					Color(1,1,1),
 					Color(1,0.969,0.875),
 					Color(0.024,0.424,0.055),
-					Color(0.867,0.831,0.016),
+					Color(0.867,0.824,0.016),
 					Color(0.973,0.718,0.424),
-					Color(0.973,0.875,0.427),
+					Color(0.973,0.875,0.424),
 					Color(0.208,0,0.024),
-					Color(0.337,0.294,0.031),
-					Color(0.478,0.455,0.455),
-					Color(0.373,0.039,0.039),
-					Color(0.141,0,0,0.58));
+					Color(0.325,0.282,0.024),
+					Color(0.475,0.455,0.455),
+					Color(0.373,0.027,0.027),
+					Color(0.129,0,0,0.573));
 				Surface{
 					terrain=ocean(0.002*noise(GRADIENT,15.2,6,1,0.5,2,0.34,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
-							Z(fractal(SQR|SS,14,14,0.1,1.02,1.84,0.15,0.68,0.16,0.32,0.29)noise(GRADIENT|SQR,1.8,14.2,0.5,0.1,2.1,1,1,0.23,0))+
-							Texture("tidal-locked",BORDER|S|TEX,scurve(LONG-0.5,-0.2)+noise(GRADIENT|SCALE,4.3,10.4,1,0.5,2,1,1,0,-0.3),18.4878,1.05556,0,0.66672,1,2,1,0,-0.05,0.11112,0.1,0)+
+							Z(fractal(SQR|SS,14,14,0.1,1.02,1.84,0.15,0.68,0.16,0.32,0.29)noise(GRADIENT|SQR|RO2,1.8,14.2,0.5,0.1,2.1,1,1,0.23,0,1e-06))+
+							Texture("tidal-locked",BORDER|NORM|S|TBIAS|TEX,noise(GRADIENT|SCALE,2.4,10.4,1,0.5,2,1,1,0,-0.3,1e-06)+2*TEMP/TAVE,18.4878,2,0,0.44448,1,2,1,0,-1.49208,0.28568,0.1,-0.0952)+
 							Texture("rock_stones",BUMP|RANDOMIZE|TEX,8.97866,-1.33344,2,0,10.3331,2,0.88888,0,0,0,0,0);
 				}
 				Clouds(0.0040786) {
 					crot=1;
-					day=1000;
-					diffuse=Color(1,0.97,0.91);
+					day=24;
+					diffuse=Color(0.94,0.8,0.47);
 					name="2D-yellow";
 					resolution=4;
-					rseed=0.01105;
-					specular=Color(1,1,1);
+					rseed=0.124856;
+					specular=Color(1,0.71,0.09);
 					Surface{
-						terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|SQR,1,6.4,1,0.5,2.06,1,1,0,0.8)));
+						terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|SQR|RO2,1,6,1,0.5,2,1,1,0,0.8,1e-06)));
 					}
 				}
 				Sky(0.0042) {
@@ -131,6 +264,7 @@ Scene() {
 					resolution=4;
 					shine=0.279242;
 					specular=Color(1,1,1);
+					tilt=40;
 					twilight=Color(0,0.47,1);
 					twilight.max=0.492922;
 					twilight.min=-0.239383;

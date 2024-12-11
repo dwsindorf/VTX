@@ -75,6 +75,7 @@ enum {
     ID_CONTOUR_COLOR,
     ID_AUTOGRID,
     ID_TEXT_COLOR,
+	ID_TEMPMODE,
 
     ID_ADAPT_OCCLUSION,
     ID_ADAPT_CURVATURE,
@@ -98,6 +99,8 @@ EVT_UPDATE_UI(ID_DRAWTYPE, VtxSceneTabs::OnUpdateDrawMode)
 
 EVT_RADIOBOX(ID_QUALITY, VtxSceneTabs::OnQuality)
 EVT_UPDATE_UI(ID_QUALITY, VtxSceneTabs::OnUpdateQuality)
+
+EVT_RADIOBOX(ID_TEMPMODE, VtxSceneTabs::OnTempMode)
 
 EVT_RADIOBOX(ID_LMODE, VtxSceneTabs::OnLightMode)
 EVT_UPDATE_UI(ID_LMODE, VtxSceneTabs::OnUpdateLightMode)
@@ -426,6 +429,8 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
 	topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
 
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	
 	wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Special Options"));
 
 	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Grid");
@@ -439,13 +444,20 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	m_autogrid=new wxCheckBox(panel, ID_AUTOGRID, "Auto");
 	m_autogrid->SetToolTip("Autoset intervals");
 	check_options->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,1);
+	
+	hline->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
 
-	boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
-	check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	wxString tmodes[]={"K","C","F"};
+	tempmode=new wxRadioBox(panel,ID_TEMPMODE,wxT(""),wxPoint(-1,-1),wxSize(-1,40),3,tmodes,3,wxRA_SPECIFY_COLS);
+
+	hline->Add(tempmode,0,wxALIGN_LEFT|wxALL,1);
+
+	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	boxSizer->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	wxStaticBoxSizer* grid_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Lines"));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	GridSpacingSlider=new SliderCtrl(panel,ID_GRID_SPACING_SLDR,"Grid",LABEL2,VALUE2,SLIDER2);
 	GridSpacingSlider->setRange(0.1,10);
@@ -692,6 +704,10 @@ void VtxSceneTabs::OnQuality(wxCommandEvent& event){
 	int mode=event.GetSelection();
 	TheScene->set_quality(mode);
 }
+void VtxSceneTabs::OnTempMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	TheScene->set_tempmode(mode);
+}
 void VtxSceneTabs::OnUpdateQuality(wxUpdateUIEvent& event){
 	int mode=TheScene->quality;
 	quality->SetSelection(mode);
@@ -760,6 +776,8 @@ void VtxSceneTabs::updateControls(){
 	updateSlider(ShadowResSlider,Raster.shadow_vsteps);
 	updateSlider(ShadowFovSlider,Raster.shadow_fov);
 	updateSlider(ShadowDovSlider,Raster.shadow_dov);
+	
+	tempmode->SetSelection(TheScene->tempmode());
 }
 void VtxSceneTabs::OnTimeScale(wxCommandEvent& event){
 	if(TheScene->motion()) changing=true;

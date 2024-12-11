@@ -58,12 +58,23 @@ uniform vec4 IceColor2;
 uniform float water_clarity;
 uniform float ice_clarity;
 
+
 #ifdef GRID
+vec2 spherical(vec3 rec)
+{
+	float t,p,r;
+	r=length(rec);
+	t=asin(rec.y/r)*DPR;
+	p=atan(-rec.z,rec.x)*DPR;
+	return vec2(t,p);
+}
 uniform vec4 phi_color;
 uniform vec4 theta_color;
 uniform float grid_spacing;
 vec3 addGrid(vec3 color){
-    vec2 p = vec2(THETA,PHI)*180;
+	vec3 pm=(Vertex1-0.5)*2;
+	vec2 p=spherical(pm);
+    //vec2 p = vec2(THETA,PHI)*180;
     vec2 f  = abs(fract (p/grid_spacing));
     vec2 df = 4*fwidth(p/grid_spacing);
     vec2 g = smoothstep(-df,df , f);

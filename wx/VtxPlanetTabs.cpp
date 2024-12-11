@@ -17,6 +17,8 @@ enum {
 	ID_HSCALE_SLDR,
 	ID_HSCALE_TEXT,
 	ID_TYPE_TEXT,
+	ID_TIDAL_LOCK,
+	ID_SEASONAL,
 
 	ID_ORBIT_RADIUS_SLDR,
 	ID_ORBIT_RADIUS_TEXT,
@@ -65,6 +67,8 @@ IMPLEMENT_CLASS(VtxPlanetTabs, wxNotebook)
 BEGIN_EVENT_TABLE(VtxPlanetTabs, wxNotebook)
 
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxPlanetTabs::OnNameText)
+//EVT_CHECKBOX(ID_CELSIUS,VtxPlanetTabs::OnCelsius)
+EVT_CHECKBOX(ID_SEASONAL,VtxPlanetTabs::OnSeasonal)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxPlanetTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxPlanetTabs,Size)
@@ -87,6 +91,7 @@ SET_COLOR_EVENTS(EMISSION,VtxPlanetTabs,Emission)
 SET_COLOR_EVENTS(SPECULAR,VtxPlanetTabs,Specular)
 SET_COLOR_EVENTS(DIFFUSE,VtxPlanetTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxPlanetTabs,Shadow)
+EVT_BUTTON(ID_TIDAL_LOCK,VtxPlanetTabs::OnTidalLock)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxPlanetTabs::OnAddItem)
 
@@ -163,14 +168,21 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 			wxT("Object"));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2,100);
+	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", 40,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	//hline->AddSpacer(10);
 
+	tidal_lock=new wxButton(panel,ID_TIDAL_LOCK,"TidalLock",wxDefaultPosition,wxSize(60,25));
+	hline->Add(tidal_lock,0,wxALIGN_LEFT|wxALL,0);
+	
+	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temp",30,80);
+	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"",0,60);
-	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+//	celsius=new wxCheckBox(panel, ID_CELSIUS, "Celsius");
+//	hline->Add(celsius,0, wxALIGN_LEFT|wxALL,5);
 
+	seasonal=new wxCheckBox(panel, ID_SEASONAL, "Seasonal");
+	hline->Add(seasonal,0, wxALIGN_LEFT|wxALL,5);
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -330,6 +342,12 @@ void VtxPlanetTabs::AddLightingTab(wxWindow *panel) {
 	boxSizer->Add(color_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
 }
 
+void VtxPlanetTabs::OnTidalLock(wxCommandEvent& event){
+	Planetoid *obj = (Planetoid*) object();
+	obj->setTidalLocked();
+	obj->invalidate();
+	TheScene->rebuild();
+}
 void VtxPlanetTabs::OnViewObj(wxCommandEvent &event) {
 	if (!is_viewobj()) {
 		double tm = (1 - object()->calc_delt());
@@ -353,16 +371,17 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 
 void VtxPlanetTabs::setTemp() {
 	Planetoid *obj = (Planetoid*) object();
-	static double last_temp=-1000;
-    
-    double new_temp=obj->getTemperature();
-    
-    if(fabs(new_temp-last_temp)>0.5){
-		char type_str[256]={0};
-		obj->getTempString(type_str);
-		object_type->SetValue(type_str);
-		last_temp=new_temp;
+	static wxString oldtstr;
+ 	char temp_str[256]={0};
+	obj->getTempString(temp_str);
+	wxString tstr(temp_str);
+     
+    if(oldtstr!=tstr){
+    	//cout<<temp_str<<endl;
+		temp_state->SetValue(temp_str);
+		oldtstr=tstr;
     }
+ 
 }
 void VtxPlanetTabs::updateControls() {
 	if (changing)
@@ -391,6 +410,7 @@ void VtxPlanetTabs::updateControls() {
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider, obj->diffuse);
 	updateColor(ShadowSlider, obj->shadow_color);
+	seasonal->SetValue(obj->seasonal);
 
 	object_name->SetValue(object_node->node->nodeName());
 }

@@ -178,7 +178,7 @@ protected:
 	TreeNode *object_node;
 	TextCtrl *object_name;
 
-	StaticTextCtrl *object_type;
+	StaticTextCtrl *temp_state;
 
 	bool update_needed;
 	bool changing;

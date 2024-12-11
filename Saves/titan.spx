@@ -6,20 +6,30 @@ Scene() {
 		height=2912.67 ft;
 		gndlvl=3763.11 ft;
 		time=27688.6;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.002;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=2;
 		tilt=2;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
 	}
 	View{
 		heading=4;
+		vstride=0.02;
+		zoom=0.002;
+		minh=5.68182e-10;
+		radius=0.00200126;
+	}
+	View{
+		height=3970.31 ft;
+		heading=30;
+		tilt=-4;
 		minr=0.00200071;
+		radius=0.00200146;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -61,7 +71,6 @@ Scene() {
 					ambient=Color(1,1,1,0.04);
 					day=20;
 					name="Saturn";
-					ocean.level=0 ft;
 					phase=60;
 					shadow=Color(0,0,0,0.24);
 					shine=1.63453;
@@ -82,6 +91,14 @@ Scene() {
 						resolution=3;
 						rseed=0.584485;
 						shadow=Color(0,0,0,0.8);
+						bands("saturn-ring",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
+							Color(0.576,0.514,0.455),
+							Color(0.573,0.506,0.467),
+							Color(0.204,0.141,0.106,0.369),
+							Color(0.373,0.337,0.29),
+							Color(0.357,0.322,0.294),
+							Color(0.573,0.506,0.467),
+							Color(0.349,0.302,0.267));
 						Surface{
 							terrain=
 									Texture("saturn-ring",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,0.333087,1,0,1,2,1,0,0,0,0,0);
@@ -107,7 +124,7 @@ Scene() {
 						ocean.level=4000 ft;
 						ocean.liquid=-163;
 						ocean.solid=-182;
-						phase=155;
+						phase=280.001;
 						shadow=Color(0,0,0);
 						tilt=-10;
 						water.clarity=1000 ft;

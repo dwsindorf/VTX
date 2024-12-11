@@ -84,7 +84,6 @@ enum {
 	PATH      = 0x00008000,
 	REVERSE   = 0x00010000,
 	AUTOGRID  = 0x00020000,
-
 	VMODE     = LOG|PATH|VIDEO,
 	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST|PLANT
 };
@@ -138,6 +137,7 @@ public:
 	double      contour_spacing;
 	bool        enable_contours;
 	bool        enable_grid;
+	int         temp_mode;
 	bool        prefs_mode;
 
 	NameList<NameSym*>frame_files;
@@ -176,6 +176,8 @@ public:
 	void set_autogrid(bool b)   { BIT_SET(vmode,AUTOGRID,b);}
 	bool autogrid()				{ return vmode & AUTOGRID;}
 
+	int tempmode()			   {  return temp_mode;}
+	void set_tempmode(int i)   {  temp_mode=i;}
 	void set_focus_object(int i){ self=i;set_changed_render();}
 
 	bool inside_sky();

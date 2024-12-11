@@ -161,13 +161,13 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Object"));
 
     wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2 + 10,
-			VALUE2 + SLIDER2);
+	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2,100);
+
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	hline->AddSpacer(10);
 
-	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temperature",100,VALUE2+SLIDER2);
-	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"",0,60);
+	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -311,14 +311,17 @@ void VtxMoonTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 
 void VtxMoonTabs::setTemp() {
 	Planetoid *obj = (Planetoid*) object();
-    obj->calcAveTemperature();
-	char type_str[256];
-	double tc=obj->temperature-273;
-	double tf=tc*9.4/5.0+32;
-	sprintf(type_str,"%d C (%d F)",(int)tc,(int)(tf));
-	object_type->SetValue(type_str);
+	static double last_temp=-1000;
+    
+    double new_temp=obj->surface_temp;
+    
+    if(fabs(new_temp-last_temp)>0.5){
+		char type_str[256]={0};
+		obj->getTempString(type_str);
+		temp_state->SetValue(type_str);
+		last_temp=new_temp;
+    }
 }
-
 void VtxMoonTabs::updateControls(){
 	Moon *obj=object();
 

@@ -313,6 +313,7 @@ public:
 	virtual void save(FILE*);
 	virtual bool hasChildren();
 	virtual bool hasChild(int );
+	virtual bool hasChild(int t, bool enabled);
 	virtual int getChildren(LinkedList<NodeIF*>&l);
 	virtual int typeValue()				{ return ID_TNMGR;}
 	virtual const char *typeName()		{ return "Surface";}

@@ -57,7 +57,7 @@ typedef unsigned int uint;
 #define VERR0(s)		VERR(s); return 0;
 
 #include <malloc.h>
-#define MALLOC(a,b,c)   if((c=(b*)malloc((a)*sizeof(b)))==NULL) {printf("malloc error\n");exit(1);}
+#define MALLOC(a,b,c)   if((c=(b*)malloc((a)*sizeof(b)))==0) {printf("malloc error\n");exit(1);}
 
 #define CALLOC(a,b,c)   if((c=(b*)calloc((a)*sizeof(b),1))==NULL)\
   							{printf("calloc error\n");exit(1);}

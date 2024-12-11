@@ -5,9 +5,37 @@
 
 #include "PointClass.h"
 #include <math.h>
+#include <iostream>
+#include <list>
 
 const double lim=1e33;
 
+class Averager {
+	double total;
+	int aves;
+	std::list<double> vals;
+public:
+	int cnt;
+	Averager(int num_aves){
+		aves=num_aves;
+		total=0;
+	}
+	void reset(){
+		vals.clear();
+		cnt=0;
+		total=0;
+	}
+	double getAve(double d){
+		if(vals.size()==aves){
+			total-=vals.front();
+			vals.pop_front();
+			cnt++;
+		}
+		vals.push_back(d);
+		total+=d;
+		return total/vals.size();
+	}
+};
 class MinMax
 {
 public:
@@ -183,6 +211,7 @@ inline std::string gets(char *s[], int n, double r) {
 	nt=nt>n-1?n-1:nt;
 	return std::string(s[nt]);
 }
+
 
 #endif
 

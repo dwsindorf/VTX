@@ -12,7 +12,7 @@
 #include "Sprites.h"
 #include "Plants.h"
 
-extern double Theta, Phi, Height,Rscale,Margin;
+extern double Theta, Phi, Height,Rscale,Margin,Sfact,Temp;
 extern Point MapPt;
 
 #define VCLIP     // enable viewobj clip  test
@@ -2121,6 +2121,7 @@ void MapNode::setVertexAttributes(MapData*d){
 	Point pm=d->mpoint();
 	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
+
 	// set pm to Vertex1 in shaders
 	// - pm contains just the (rectangularized) phi&theta values of the point
 
@@ -2240,18 +2241,21 @@ void MapNode::Svertex(MapData*dn) {
 	double max_orders =log2(dfactor);
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
+	Phi=d->phi();
+	Theta=d->theta();
 	double g=d->type();
 	if(Raster.surface==2)
 		g=d->ocean();
 	else
 	    g+=3;
 	
-	//if(TheMap->object!=TheScene->viewobj)
-	//	g = 0;
-
+	Planetoid *orb=(Planetoid *)TheMap->object;
+	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON))
+		orb->calcLocalTemperature();
 	double ht=d->Z()*Rscale;  // global units (MM)
+	//cout<<Sfact<<endl;
 	if (GLSLMgr::CommonID1 >= 0){
-		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), theta);
+		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), Sfact);
 	}
 
 	setVertexAttributes(d);

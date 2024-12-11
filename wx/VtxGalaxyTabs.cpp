@@ -643,8 +643,8 @@ void VtxGalaxyTabs::AddPropertiesTab(wxWindow *panel){
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	hline->AddSpacer(5);
 
-	object_type=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Type",LABEL2S,VALUE1+SLIDER2);
-	hline->Add(object_type->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Type",LABEL2S,VALUE1+SLIDER2);
+	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	hline->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
@@ -807,7 +807,7 @@ void VtxGalaxyTabs::getObjAttributes()
 	updateSlider(CellSizeSlider,galaxy->detail);
 
 	object_name->SetValue(object_node->node->nodeName());
-	object_type->SetValue((char*)tree->typeName());
+	temp_state->SetValue((char*)tree->typeName());
 
 	updateSlider(OriginXSlider,galaxy->origin.x/LY);
 	updateSlider(OriginYSlider,galaxy->origin.y/LY);

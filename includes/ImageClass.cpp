@@ -36,6 +36,7 @@ static LongSym iopts[]={
 	{"BUMP",	BUMP},
 	{"HMAP",	HMAP},
 	{"TEX",		TEX},
+	{"TBIAS",	TBIAS},
 	{"DECAL",	DECAL},
 	{"LINEAR",	INTERP},
 	{"NEAREST",	NEAREST},
@@ -892,7 +893,7 @@ void TNtexture::eval()
 	Planetoid *orb=(Planetoid *)TNode::getOrbital(this);
 	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
 		if(opts&TBIAS)
-			tbias=orb->tilt_bias();
+			tbias=orb->season_bias();
 	}
 	texture->tilt_bias=tbias;
 

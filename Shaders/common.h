@@ -39,7 +39,8 @@ uniform float freqmip;
 #define FHT Constants1.x
 
 #define DENSITY Constants1.z
-#define THETA Constants1.a
+//#define THETA Constants1.a
+#define SFACT Constants1.a
 #define PHI Vertex1.y
 
 

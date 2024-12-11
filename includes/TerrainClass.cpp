@@ -33,7 +33,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range,Temp;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range,Temp,Tave,Tsol,Tgas;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -106,6 +106,9 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	LAT,
 	EQU,
 	TEMP,
+	TAVE,
+	TSOL,
+	TGAS,
 	SLOPE,
 	RADIUS,
 	DENSITY,
@@ -161,6 +164,9 @@ static LongSym gtypes[]={
 	{"LAT",			LAT},
 	{"EQU",			EQU},
 	{"TEMP",		TEMP},
+	{"TAVE",		TAVE},
+	{"TSOL",		TSOL},
+	{"TGAS",		TGAS},
 	{"SLOPE",		SLOPE},
 	{"RADIUS",		RADIUS},
 	{"DENSITY",		DENSITY},
@@ -319,10 +325,10 @@ void TNglobal::eval()
 	case LNG:
 		if(CurrentScope->texture())
 			S0.set_inactive();
-		S0.s=Theta/180-1;
+		//S0.s=Theta/180-1;
 		S0.s=cos(0.5*RPD*(Theta+90));
 		S0.s=fabs(S0.s);//fabs(sin(PI*S0.s));
-		//cout<<S0.s<<endl;
+		//cout<<Theta<<" "<<S0.s<<endl;
 		break;
 	case PHI:
 		if(CurrentScope->texture())
@@ -344,7 +350,21 @@ void TNglobal::eval()
 		if(CurrentScope->texture())
 			S0.set_inactive();
 		S0.s=Temp;///100.0;
-		//S0.s=S0.s<0?0:S0.s;
+		break;
+	case TAVE:
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		S0.s=Tave;
+		break;
+	case TSOL:
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		S0.s=Tsol;
+		break;
+	case TGAS:
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		S0.s=Tgas;
 		break;
 	case RADIUS:
 		S0.s=Radius;
@@ -1746,7 +1766,7 @@ void TNsnow::init()
 		}
 		if(!image)
 			return;
-		int opts=ACHNL|BORDER|BUMP|TEX|INTERP;
+		int opts=ACHNL|BORDER|BUMP|TEX|INTERP|TBIAS;
 	    texture=new Texture(image,opts,this);
 	    texture->orders=1;
 	    texture->scale=0.5;
@@ -1781,14 +1801,15 @@ bool TNsnow::initProgram(){
     texture->bias=bias;
 
     Planetoid *orb=(Planetoid *)getOrbital(this);
-	double tbias=orb->tilt_bias();
+	//double tbias=SFact;//orb->season_bias();
+	//Sact=tbias;
 	//cout<<"orbit_angle:"<<orbit_angle<<" tbias:"<<tbias<<endl;
 	//vars.newFloatVar("tbias",tbias);
   
     texture->bump_bias=bmpht;
     texture->height_bias=ht;
     texture->slope_bias=slope;
-    texture->tilt_bias=tbias;
+    texture->tilt_bias=1;
     texture->phi_bias=lat;
     texture->texamp=1;
  

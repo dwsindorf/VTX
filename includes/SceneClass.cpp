@@ -444,6 +444,7 @@ void Scene::set_prefs(){
 	PVSET("grid_spacing",grid_spacing,1);
 	PVSET("contour_spacing",contour_spacing,1000);
 	PVSET("autogrid",autogrid(),0);
+	PVSET("tempmode",temp_mode,0);
 }
 
 //-------------------------------------------------------------
@@ -464,6 +465,8 @@ void Scene::get_prefs(){
     	set_autogrid(Td.s);
     else
     	set_autogrid(0);
+    
+	PVGET("tempmode",temp_mode,0);
 
 	syscolor[INFO_COLOR]=text_color;
 }

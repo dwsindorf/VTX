@@ -18,10 +18,13 @@ extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
 extern void setCenterText(char *text);
 
+extern double Theta,Phi,Radius,Sfact;
+
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
-#define DEBUG_TEMP false;
+#define DEBUG_TEMP true;
+#define DEBUG_AVE_TEMP
 
 static bool debug_temp=DEBUG_TEMP;
 
@@ -46,7 +49,7 @@ static void show_render_state(Object3D *obj){
 #include "star_data.h"
 #endif
 
-extern double Gscale,Hscale,Rscale,Temp;
+extern double Gscale,Hscale,Rscale,Temp,Tave,Tsol,Tgas,Sfact;
 extern void inc_tabs();
 extern void dec_tabs();
 extern char tabs[];
@@ -63,8 +66,8 @@ extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double sc
 
 static TerrainSym *ts=0;
 static TerrainData Td;
-static double 	def_ocean_solid=0;
-static double 	def_ocean_liquid=100;
+static double 	def_ocean_solid=273;
+static double 	def_ocean_liquid=373;
 enum {GAS=0,LIQUID=1,SOLID=2};
 static int       def_ocean_state=LIQUID;
 static int       def_ocean_auto=0;
@@ -97,6 +100,8 @@ static double  	def_fog_vmin=0;
 static double  	def_fog_vmax=1000*FEET;
 static double  	def_fog_value=0;
 static double  	def_fog_glow=0.2;
+static double  	def_temp_factor=0.1;
+static double  	def_season_factor=0.5;
 
 static Color 	def_twilite_color=BLACK;
 static double	def_twilite_value=1;
@@ -797,7 +802,6 @@ void DensityCloud::render()
 //-------------------------------------------------------------
 void DensityCloud::set_surface(TerrainData &data)
 {
-	extern double Theta,Phi,Radius;
 
 	Point ps=data.p.spherical();
 
@@ -2343,6 +2347,8 @@ void Spheroid::set_tilt()
 	}
 }
 
+
+
 //-------------------------------------------------------------
 // Spheroid::set_rotation() rotate about axis (day)
 //-------------------------------------------------------------
@@ -2378,7 +2384,6 @@ bool Spheroid::hasChildren()
 {
 	return true;
 }
-
 //-------------------------------------------------------------
 // Spheroid::getChildren
 //-------------------------------------------------------------
@@ -3346,8 +3351,8 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	//hscale=0.004;
 	ocean_level=0;
 	ocean_name[0]=0;
-	ocean_solid_temp=0;
-	ocean_liquid_temp=100;
+	ocean_solid_temp=273;
+	ocean_liquid_temp=373;
 	ocean_expr=0;
 	water_color1=def_water_color1;
 	water_color2=def_water_color2;
@@ -3379,9 +3384,11 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	temperature=100;
 	surface_temp=0;
 	season_factor=0.5;
+	heat_factor=0.5;
 	temp_factor=0.1;
 	last_dt=0;
 	last_temp=0;
+	seasonal=false;
 
 #ifdef DEBUG_BASE_OBJS
 	printf("Planetoid\n");
@@ -3443,6 +3450,8 @@ void Planetoid::get_vars()
 	
 	ocean_expr=var->right;
 
+	VGET("season.factor",season_factor,def_season_factor);
+	VGET("temp.factor",temp_factor,def_temp_factor);
 	VGET("fog.value",fog_value,def_fog_value);
 	VGET("fog.glow",fog_glow,def_fog_glow);
 	if(exprs.get_local("fog.color",Td)){
@@ -3473,6 +3482,9 @@ void Planetoid::set_vars()
 	VSET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	VSET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
 	exprs.set_var("ocean.name",ocean_name,ocean_name[0]!=0);
+	
+	VSET("season.factor",season_factor,def_season_factor);
+	VSET("temp.factor",temp_factor,def_temp_factor);
 	
     CSET("water.color1",water_color1,def_water_color1);
     CSET("water.color2",water_color2,def_water_color2);
@@ -3890,27 +3902,36 @@ void Planetoid::init_render()
 
 void Planetoid::adapt_object()
 {
+	static Averager averager(3);
+
 	if(!isEnabled())
 		return;
 	calcAveTemperature();
-	//static double last_temp=-1;
-		
+	Tave=temperature;
+	Tsol=ocean_solid_temp;
+	Tgas=ocean_liquid_temp;	
 	//double p=TheScene->surface_view()?TheScene->phi:70;
 	double p=TheScene->phi;
-	
+	Phi=TheScene->phi;
+	Theta=TheScene->theta;
+
 	debug_temp=DEBUG_TEMP;
-	surface_temp=calcLocalTemperature(p)+273;
+	double t=calcLocalTemperature();
+	
+	double ave=averager.getAve(t);
+
+	surface_temp=ave;  // K
+	
+	//cout<<t<<" "<<ave<<" "<<averager.cnt<<endl;
+
 	debug_temp=false;
     double dt=fabs(last_temp-surface_temp);
-	if(dt>0.1 /*|| (std::signbit(surface_temp) != std::signbit(last_temp))*/){
-		bool have_ocean=water();
-		cout<<"Phase:"<<(orbit_angle/360)<<" Temp:"<<surface_temp<<" Tave:"<<temperature<<" dt:"<<dt<<" ocean:"<<have_ocean<<endl;
-		if(have_ocean){
-			invalidate();
-			TheScene->rebuild();
-		}
-		last_temp=surface_temp;
+	if(dt>0.1 && water()){
+		invalidate();
+		//TheScene->set_changed_detail();
+		TheScene->rebuild();
 	}
+	last_temp=surface_temp;
 
 	Raster.frozen=ocean_state==SOLID?true:false;
 
@@ -3924,9 +3945,7 @@ void Planetoid::adapt_object()
 	Raster.ice_color2=ice_color2;
 	Raster.ice_clarity=ice_clarity;
     
-	//pushSeed();
     Spheroid::adapt_object();
-     //popSeed();
 }
 
 
@@ -3940,7 +3959,6 @@ void Planetoid::render_object()
 	Raster.init_lights(1);
 	show_render_state(this);
 	Temp=surface_temp;
-	//cout<<Temp<<endl;
 	
     if(TheScene->bgpass==BG4){
 		map->set_mask(1);
@@ -3976,12 +3994,18 @@ void Planetoid::render_object()
 //-------------------------------------------------------------
 void Planetoid::set_surface(TerrainData &data)
 {
+	if(water()){
+		Theta=data.p.x;
+		Phi=data.p.y;
+		Temp=calcLocalTemperature();
+	}
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
 		data.ocean=solidToLiquid()+0.99;
 	}
-	else
+	else{
 		data.ocean=0;
+	}
 }
 
 //-------------------------------------------------------------
@@ -4067,7 +4091,24 @@ void Planetoid::set_lighting(){
 // Planetoid::tilt_bias() get seasonal light variation
 //-------------------------------------------------------------
 double Planetoid::tilt_bias(){
-	return season_factor*RPD*tilt*cos(RPD*(orbit_angle));
+	double a=orbit_angle;
+	if(type()==ID_MOON)
+		a=((Planetoid *)getParent())->orbit_angle;
+	return season_factor*RPD*tilt*cos(RPD*(a));
+}
+
+double Planetoid::season_bias(){
+	return (Temp/temperature-1);
+}
+bool Planetoid::tidalLocked(){
+	double f=day/year/24;
+	if(fabs(1-f)<1e-3)
+		return true;
+	return false;
+}
+void Planetoid::setTidalLocked(){
+	year=day/24;
+	rot_phase=0;
 }
 
 //-------------------------------------------------------------
@@ -4075,20 +4116,24 @@ double Planetoid::tilt_bias(){
 //-------------------------------------------------------------
 void Planetoid::getDateString(char *s){
 	static char *months[]={"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
-	double angle=orbit_angle/360;
+	double angle=orbit_angle;
+	if(type()==ID_MOON)
+		orbit_angle=((Planetoid *)getParent())->orbit_angle;
+	angle/=360;
 	double month=fmod(angle*12,12);
 	double day=(angle*360-((int)month)*30)+1;
 	double dt=calc_delt();
 	double dd=-dt*24;
 	//double dd=fabs(dt*24);
+	char *locked=tidalLocked()?"L":" ";
 
-    char *apm=fabs(dd)<12?"am":"pm";
+    char *apm=fabs(dd)<12?"AM":"PM";
     int dap=fabs(dd);
     int min=60*(fabs(dd)-dap);
      
     dap=dap>12?dap-12:dap;
 
-	sprintf(s,"%-3s %-2d %-2d:%-2d %s",months[(int)month],(int)day,dap,min,apm);
+	sprintf(s,"%-3s %-2d %2d:%02d %s %s",months[(int)month],(int)day,dap,min,apm,locked);
 }
 
 double Planetoid::getTemperature(){
@@ -4101,8 +4146,21 @@ double Planetoid::getTemperature(){
 // Planetoid::getDate() get temperature string
 //-------------------------------------------------------------
 void Planetoid::getTempString(char *s){
-	double t=getTemperature();
-	sprintf(s,"%d C (%d F)",(int)K2C(t),(int)K2F(t));
+	double at=temperature;//getTemperature();
+	double lt=surface_temp;//getTemperature();
+	int tmode=TheScene->tempmode();
+	switch(tmode){
+	case 0:
+		sprintf(s,"%3.1f(%3.1f) K",at,lt);
+		break;
+	case 1:
+		sprintf(s,"%3.1f(%3.1f) C",K2C(at),K2C(lt));
+		break;
+	case 2:
+		sprintf(s,"%3.1f(%3.1f) F",K2F(at),K2F(lt));
+		break;
+	}
+
 }
 
 //-------------------------------------------------------------
@@ -4127,15 +4185,13 @@ void Planetoid::calcAveTemperature() {
 	}
 	Orbital *obj;
 	
-	double g = 0;
+	heat_factor = 1;
 	children.ss();
-	while ((obj = (Orbital*) children++)) {
-		if (obj->type() == ID_SKY) {
-			Sky *sky = (Sky*) obj;
-			g = pow(sky->pressure, 1.5) * sky->ghg_fraction;
-		}
-	}
-	g = 0.4 * pow(g, 0.25);
+	Sky *sky = (Sky*) getChild(ID_SKY);
+	if(sky)
+		heat_factor=sky->getHeatCalacity();
+	//cout<<g<<endl;
+	//g = 0.4 * pow(g, 0.25);
 	char str[1024];
 	str[0]=0;
 	
@@ -4145,6 +4201,9 @@ void Planetoid::calcAveTemperature() {
 
 	System::TheSystem->children.ss();
 	temperature = 0;
+	double Tp=0;
+	double Tg=0;
+	
 	while ((obj = (Orbital*) System::TheSystem->children++)) {
 		if (obj->type() == ID_STAR) {
 			double d = radius-((Star*)obj)->size;//point.distance(obj->point);// - obj->size - size;
@@ -4152,16 +4211,16 @@ void Planetoid::calcAveTemperature() {
 			//cout<<"distance:"<<d<<endl;
 			double f = 0.452; // constant relating star to planet temp
 			double a = pow(1 - albedo, 0.25);
-			double Tp = Ts * f * a / sqrt(d);
-			double Tg = Tp * g; //Tp*pow(tg,0.25);
+			Tp= Ts * f * a / sqrt(d);
+			Tg = Tp * heat_factor; //Tp*pow(tg,0.25);
 			temperature += Tp + Tg;
 		}
 	}
 
 #ifdef DEBUG_AVE_TEMP
-	double tc=temperature-273;
+	double tc=temperature;
 	double tf=tc*9.4/5.0+32;
-	sprintf(str,"temperature %d K %d C (%d F)",(int)temperature, (int)tc,(int)(tf));
+	sprintf(str,"Temp:%-3.0f Tp:%-2.0f Tg:%-2.1f g:%f",temperature,Tp,Tg,heat_factor);
 	cout<<str<<endl;
 #endif
 	//cout<<"ocean state="<<ocean_state<<" temp:"<<temp<<" solid:"<<ocean_solid_temp<<" liquid:"<<ocean_liquid_temp<<endl;
@@ -4169,15 +4228,38 @@ void Planetoid::calcAveTemperature() {
 
 //-------------------------------------------------------------
 // Orbital::calcLocalTemperature() calculate temperature at surface
+// if planet tilt exists adjusts latitude bias as a function of "season"
+// - if ocean exists this function is called for every vertex to set water state
+// - also called once per render pass to set texture latitude bias
+// limitations:
+// - doesn't work for moons (orbits planet not star)
+// - doesn't work tidal locked planets (need theta dependence)
+// another idea to try
+// use light-normal dot product averaged over day to estimate temperature
+// - for per vertex case need to sample at least 4 light vector values day phase (0,90,180,270)
+// o scene->pushMatrix()
+// o for each phase
+//   - add/subtract calculated delta time to scene->time
+//   - call scene->animate() and scene->setLights()
+//   - calculate light/normal dp (add to sum)
+//    * could use surface normal vs face normal
+// o determine temperature from dp sum
+//    * at equator sum should be ~0 at poles dp sum varies by season
 //-------------------------------------------------------------
-double Planetoid::calcLocalTemperature(double phi){
-	double tmod=0.1;
-	double Tave=temperature; // K
-	double g=RPD*phi+tilt_bias();
+double Planetoid::calcLocalTemperature(){
+	double tave=temperature; // K
+	double tb=tilt_bias();
+	double g=RPD*Phi+tb;
 	double s=sin(g);
-	double ds=Tave*temp_factor*s*s;
-	double t=Tave-ds-273; // C
-	char date[256]={0};
+	double ds=tave*temp_factor*s*s;
+	double t=tave-ds; // C
+	double f=evalOceanFunction();
+	double dt=-cos(RPD*dlt()); // ~ time of day
+	double df=t*dt*day/year/24;
+	double hf=df*lerp(heat_factor,0,2.25,0.5,0);
+	t+=f;
+	t+=hf;
+	Sfact=t/temperature-1;
 	if(ocean_auto){
 		if (t <= ocean_solid_temp)
 			ocean_state = SOLID;
@@ -4188,8 +4270,9 @@ double Planetoid::calcLocalTemperature(double phi){
 	}
 	Raster.frozen=ocean_state==SOLID?true:false;
 	if(debug_temp){
+		char date[256]={0};
 		getDateString(date);
-		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<phi<<" Tb:"<<tilt_bias()<<" Tf:"<<ds/Tave<<" Temp:"<<t<<endl;
+		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<Phi<<" Ta:"<<tave<<" f:"<<f<<" sf:"<<Sfact<<" Temp:"<<t<<endl;
 	}
 	return t;
 }
@@ -4228,13 +4311,13 @@ double  Planetoid::evalOceanFunction(){
 	 if(ocean_expr){
 		 ocean_expr->eval();
 		 t=S0.s+1;
-		// cout<<S0.s<<" "<<t<<endl;
+		 //cout<<S0.s<<" "<<t<<endl;
 	}
 	return t;
 }
 
 bool Planetoid::water(){	
-	return terrain.hasChild(ID_WATER);
+	return terrain.hasChild(ID_WATER,true);
 }
 //-------------------------------------------------------------
 // Planetoid::liquid() return true if not ocean_auto and state=liquid
@@ -4271,7 +4354,8 @@ double Planetoid::solidToLiquid(){
 	if(!ocean_auto){
 		return ocean_state==SOLID?1:0;
 	}
-	double temp=Temp+evalOceanFunction();//-273;	
+	//double f=evalOceanFunction();
+	double temp=Temp;//+f;//-273;	
 	double dt=smoothstep(ocean_solid_temp,ocean_solid_temp+0.0005*(ocean_liquid_temp-ocean_solid_temp),temp,1.0,0);
 	//cout<<dt<<" "<<temp<<endl;
 	return dt;
@@ -4287,20 +4371,21 @@ double Planetoid::liquidToGas(){
 	}
 	TheNoise.maxampl=0.0;
 
-	double temp=Temp+evalOceanFunction();//-273;
+	double temp=Temp;//+evalOceanFunction();//-273;
 	if (temp > ocean_liquid_temp){
-		f=smoothstep(temp,ocean_liquid_temp,1.1*ocean_liquid_temp,0.0,1);
+		f=smoothstep(temp,0.95*ocean_liquid_temp,1.1*ocean_liquid_temp,0.0,1);
 	}
 	TheNoise.maxampl=1;
 	return f;
 }
 
 double Planetoid::dlt(){
+	extern Point    MapPt;
 	if(Lights.numLights()==0)
 		return 0;
 	Point pl=Lights[0]->point.mm(TheScene->InvModelMatrix.values());
 	double tl=pl.spherical().x;
-	double tv=TheScene->theta;
+	double tv=Theta;//TheScene->theta;
 	double dv=tv-tl;
 	return dv;
 }
@@ -4309,11 +4394,12 @@ double Planetoid::dlt(){
 //-------------------------------------------------------------
 double Planetoid::calc_delt()
 {
+
 	double dv=dlt();
 	double wt=unwrap(last_dt,dv);
-
 	double del=P360(wt)/360;
 	last_dt=wt;
+	//cout<<wt<<" "<<ave<<endl;
 	return del;
 }
 
@@ -4359,7 +4445,6 @@ int Planetoid::planet_cnt=0;
 int Planetoid::moon_cnt=0;
 int Planetoid::layer_cnt=0;
 int Planetoid::num_layers=1;
-
 
 int Planetoid::tcount=0;
 double Planetoid::planet_orbit=0;
@@ -5192,6 +5277,21 @@ void Moon::newInstance(){
 	setProtoValid(true);
 	setNewViewObj(true);
 }
+//-------------------------------------------------------------
+// Spheroid::set_tilt() 	set axial tilt
+//-------------------------------------------------------------
+void Moon::set_tilt()
+{
+	//return Spheroid::set_tilt();
+	//TODO: fix set_tilt for clouds
+	if(tilt){
+		// tilt and freeze pole orientation
+		// axis always points in same direction globally
+		// but rotation axis transfers from x to z during orbit
+		Planetoid *planet=(Planetoid *)getParent();
+		TheScene->rotate(-tilt,cos(planet->orbit_angle*RPD),0,sin(planet->orbit_angle*RPD));
+	}
+}
 //************************************************************
 // Shell class
 //************************************************************
@@ -5397,6 +5497,11 @@ NodeIF *Sky::getInstance(){
 	lastn=getRandValue()*1271;
 	Orbital::setRands();
 	return newInstance();
+}
+
+double Sky::getHeatCalacity() {
+	double g = pow(pressure, 1.5) * ghg_fraction;
+	return  0.4 * pow(g, 0.25);
 }
 
 //-------------------------------------------------------------
@@ -6219,17 +6324,16 @@ void CloudLayer::render()
 	if(Raster.auximage()) {// skip surface fog/water effects
 		return;
 	}
-	set_ref();
 	if(included()){
 		show_render_state(this);
 		map->lighting=1;
 		glDepthMask(GL_FALSE);
 
 		TheScene->pushMatrix();
+		set_ref();
 		set_tilt();
 		set_rotation();
 
-		//setMatrix();
 		setMatrix();
 		bool v3d=threeD()&& Render.draw_shaded();
 		glActiveTexture(GL_TEXTURE0);
