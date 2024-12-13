@@ -125,17 +125,12 @@ public:
 		TheView->set_changed_detail();
 		TheScene->rebuild();
 	}
-//	void OnCelsius(wxCommandEvent& event){
-//		Planetoid *obj = object();
-//		obj->celsius=event.IsChecked();
-//		setTemp();
-//		//TheView->set_changed_render();		
-//	}
 	void OnSeasonal(wxCommandEvent& event){
 		Planetoid *obj = object();
 		obj->seasonal=event.IsChecked();
 		setTemp();
-		TheView->set_changed_detail();		
+		TheView->set_changed_detail();	
+		obj->invalidate();
 	}
 	void OnEndOrbitRadiusSlider(wxScrollEvent &event) {}
 

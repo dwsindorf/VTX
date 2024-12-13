@@ -898,6 +898,7 @@ void Scene::open(char *fn)
 	set_lights();
 	if(viewobj && (viewobj->type()==ID_PLANET || viewobj->type()==ID_MOON)){
 		Planetoid *planet=(Planetoid*)viewobj;
+		planet->set_lighting();
 		planet->last_dt=planet->dlt();
 	}
 

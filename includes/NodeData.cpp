@@ -343,7 +343,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	a=b=0;
 
-
 	setTextures(tp->textures.size?1:0);
 	setSprites(tp->sprites.size?1:0);
 	int nbumps=0;

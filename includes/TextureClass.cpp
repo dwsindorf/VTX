@@ -421,6 +421,7 @@ bool Texture::setProgram(){
 	sprintf(str,"tex2d[%d].near_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),near_bias);
     sprintf(str,"tex2d[%d].tilt_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),tilt_bias);
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
+    sprintf(str,"tex2d[%d].seasonal",tid);      glUniform1iARB(glGetUniformLocationARB(program,str),seasonal());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
 #ifdef DEBUG_TEXTURES
     cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;

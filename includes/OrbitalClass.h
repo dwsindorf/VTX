@@ -687,6 +687,7 @@ public:
 	double 	   temp_factor;
 	double 	   last_dt;
 	double 	   last_temp;
+	double     light_theta;
 	
 	static int planet_id;
 	static int moon_cnt;
@@ -711,10 +712,12 @@ public:
 	~Planetoid();
 	const char *name()			{ return "Planetoid";}
 	virtual int  type()					{ return ID_PLANET;}
+	virtual void setDateString();
 	virtual void getDateString(char *);
 	virtual void getTempString(char *);
 
 	virtual void set_lighting();
+	virtual void set_tod();
     virtual void map_color(MapData*,Color&);
 	virtual void set_vars();
 	virtual void get_vars();
@@ -731,7 +734,6 @@ public:
 	virtual void set_time(double t);
 	virtual void calcAveTemperature();
 	virtual double calcLocalTemperature();
-	virtual double getTemperature();
 	virtual double tilt_bias();
 	virtual double season_bias();
 	virtual void animate();

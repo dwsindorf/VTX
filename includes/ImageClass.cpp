@@ -862,7 +862,6 @@ void TNtexture::eval()
 	if(CurrentScope->zpass() && hmapActive() && hmval==0)
 		return;
 
-
 	texture->scale=f;
 	texture->s=s;
 	texture->t=t;
@@ -888,13 +887,13 @@ void TNtexture::eval()
     texture->bump_bias=bbias;
     texture->slope_bias=sbias;
     
-    double tbias=0;
+    double tbias=1;
 
-	Planetoid *orb=(Planetoid *)TNode::getOrbital(this);
-	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
-		if(opts&TBIAS)
-			tbias=orb->season_bias();
-	}
+//	Planetoid *orb=(Planetoid *)TNode::getOrbital(this);
+//	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
+//		if(opts&TBIAS)
+//			tbias=1.0;//orb->season_bias();
+//	}
 	texture->tilt_bias=tbias;
 
     //if(texture->t1d())

@@ -2251,7 +2251,7 @@ void MapNode::Svertex(MapData*dn) {
 	
 	Planetoid *orb=(Planetoid *)TheMap->object;
 	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON))
-		orb->calcLocalTemperature();
+		orb->calcLocalTemperature(); // sets Sfact
 	double ht=d->Z()*Rscale;  // global units (MM)
 	//cout<<Sfact<<endl;
 	if (GLSLMgr::CommonID1 >= 0){

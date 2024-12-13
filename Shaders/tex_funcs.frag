@@ -26,6 +26,7 @@ struct tex2d_info {
 	float tilt_bias;     // tilt bias	
 	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture	
+	bool  seasonal;      // seasonal	
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
@@ -46,7 +47,10 @@ float phiFunc(int id){
 	//float p=PI*(PHI-0.5);
 	//float tf=sin(p+tex2d[id].tilt_bias);
 	//return tf*tf;
-	return SFACT;
+	if(tex2d[id].seasonal)
+		return SFACT;
+	else
+		return PHI;
 }
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0

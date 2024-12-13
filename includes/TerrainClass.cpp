@@ -1787,7 +1787,7 @@ bool TNsnow::initProgram(){
 	int id=texture->num_coords;//texture->tid;
 
 	sprintf(defs,"#define TX%d\n",id);
-	sprintf(defs+strlen(defs),"#define PTEST\n");
+	//sprintf(defs+strlen(defs),"#define PTEST\n");
 
 	texture->cid=Texture::num_coords;
 	int n=getargs(arg,args,7);
@@ -1810,7 +1810,7 @@ bool TNsnow::initProgram(){
     texture->height_bias=ht;
     texture->slope_bias=slope;
     texture->tilt_bias=1;
-    texture->phi_bias=lat;
+    texture->phi_bias=-lat;
     texture->texamp=1;
  
 	sprintf(defs+strlen(defs),"#define C%d CS%d\n",id,texture->num_coords++);
