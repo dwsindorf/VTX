@@ -7,6 +7,7 @@
 #include "LightClass.h"
 #include "ObjectClass.h"
 #include "TerrainMgr.h"
+#include "States.h"
 
 class ExprMgr;
 class TNode;
@@ -635,7 +636,7 @@ public:
 	static CloudLayer *newInstance(bool is3d);
 
 };
-
+/*
 class MaterialState {
 public:
 	MaterialState(){}
@@ -709,14 +710,17 @@ public:
 	static char *getDfltOceanExpr();
 	static char *getDfltOceanSolidExpr();
 	static char *getDfltOceanLiquidExpr();
+	
+	static void init();
+	
+	static Array<OceanState *>oceanTypes;
 
 	void print();
 };
-
+*/
 //************************************************************
 // Planet class
 //************************************************************
-//#define NUM_OCEAN_TYPES 6
 class Planetoid : public Spheroid
 {
 protected:
@@ -724,9 +728,8 @@ protected:
 public:
 	enum {GASGIANT,OCEANIC,ROCKY,ICY,VOLCANIC};
 	
-	static Array<OceanState *>oceanTypes;
 	static std::string randFeature(int type);
-    OceanState oceanState;
+    //OceanState oceanState;
     OceanState *ocean;
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
@@ -753,7 +756,6 @@ public:
 	double 	   last_dt;
 	double 	   last_temp;
 	double     light_theta;
-
 
 	int getOceanFunction(char *buff);
 	void setOceanFunction(char *expr);

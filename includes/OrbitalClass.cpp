@@ -65,12 +65,9 @@ extern void d2f(double doubleValue, float  &floatHigh, float &floatLow,double sc
 
 static TerrainSym *ts=0;
 static TerrainData Td;
-static double 	def_ocean_solid=273;
-static double 	def_ocean_liquid=373;
 enum {GAS=0,LIQUID=1,SOLID=2};
 static int       def_ocean_state=LIQUID;
 static int       def_ocean_auto=0;
-
 
 static Color 	def_haze_color=WHITE;
 static double  	def_haze_value=0;
@@ -3326,61 +3323,11 @@ int Star::render_pass()
 //************************************************************
 // Planetoid class (moons & planets)
 //************************************************************
-static const char *def_ocean_expr="noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
-
-static char* def_liquid_func="noise(GRADIENT|NABS|SQR|RO1,0.7,10,1,0.5,2.22,1,1,0,0,1e-06)";
-static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
-static char* def_ocean_func="noise(GRADIENT|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
-Array<OceanState*> Planetoid::oceanTypes(6);
-
-static MaterialState H2O_liquid(C2K(0),Color(0,1,1,0.2),Color(0.1,0.1,0.5),500*FEET,0.95,0.8,10);
-static MaterialState H2O_solid(C2K(100),Color(1,1,1,0.6),Color(0.400,0.675,0.8),1*FEET,0.95,0.8,10);
-static OceanState Water("water",&H2O_liquid,&H2O_solid);
-
-MaterialState::MaterialState(double t,Color c1, Color c2,double c, double m, double sp, double sh){
-	color1=c1;color2=c2,clarity=c;mix=m,specular=sp;shine=sh;temp=t;
-	expr[0]=0;
-}
-void MaterialState::print(char *s){
-	char str[512];
-	sprintf(str,"%s Temp:%-4.0fC Color1(%1.2f,%1.2f,%1.2f,%1.2f) Color2(%1.2f,%1.2f,%1.2f,%1.2f)",s,K2C(temp),
-			color1.red(),color1.green(),color1.blue(),color1.alpha(),
-			color2.red(),color2.green(),color2.blue(),color2.alpha());
-	cout<<str<<endl;
-	cout<<expr<<endl;
-}
-OceanState::OceanState(char *n, MaterialState *m1, MaterialState *m2){
-	strcpy(name,n);
-	liquid=*m1;
-	solid=*m2;
-	liquid.setExpr(def_liquid_func);
-	solid.setExpr(def_solid_func);
-	
-}
-void OceanState::print(){
-	cout<<name<<endl;
-	liquid.print("liquid");
-	solid.print("solid ");
-}
-char *OceanState::getDfltOceanLiquidExpr(){
-	return def_liquid_func;	
-}
-char *OceanState::getDfltOceanSolidExpr(){
-	return def_solid_func;	
-}
-char *OceanState::getDfltOceanExpr(){
-	return def_ocean_func;	
-}
 
 Planetoid::Planetoid(Orbital *m, double s, double r) :
 	Spheroid(m,s,r)
 {
-
-	if(oceanTypes.size==0){
-		oceanTypes.add(&Water);
-	}
-	oceanState=*oceanTypes[0];
-	ocean=&oceanState;
+	ocean=OceanState::oceanTypes[0];
 
 	ocean_level=0;
 	ocean_expr=0;
@@ -3417,15 +3364,6 @@ Planetoid::~Planetoid()
 #endif
 }
 
-//char *Planetoid::getDfltOceanLiquidExpr(){
-//	return def_liquid_func;	
-//}
-//char *Planetoid::getDfltOceanSolidExpr(){
-//	return def_solid_func;	
-//}
-//char *Planetoid::getDfltOceanExpr(){
-//	return def_ocean_func;	
-//}
 //-------------------------------------------------------------
 // char *getDfltOceanLiquidExpr();get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -3466,11 +3404,12 @@ void Planetoid::get_vars()
 	MVGET("ocean.liquid",solid.temp);
 		
 	if(exprs.get_local("ocean.name",Td))
-		oceanState.setName(Td.string);
+		ocean->setName(Td.string);
 
 	TNvar *var=exprs.getVar((char*)"ocean.expr");
 	if(!var){
-		var=addExprVar("ocean.expr",def_ocean_expr);
+		//var=addExprVar("ocean.expr",def_ocean_expr);
+		var=addExprVar("ocean.expr",OceanState::getDfltOceanExpr());
 		var->eval();
 	}
 	else
@@ -3587,7 +3526,7 @@ bool Planetoid::setProgram(){
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
 	}
-	double clarity=oceanState.waterClarity();
+	double clarity=ocean->waterClarity();
  	if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
  		clarity*=20;
     
@@ -3976,15 +3915,15 @@ void Planetoid::adapt_object()
 
 	Raster.frozen=ocean_state==SOLID?true:false;
 
-    Td.clarity=oceanState.waterClarity();
+    Td.clarity=ocean->waterClarity();
 	Raster.sea_level=ocean_level;
-	Raster.water_color1=oceanState.waterColor1();
-	Raster.water_color2=oceanState.waterColor2();
-	Raster.water_clarity=oceanState.waterClarity();
+	Raster.water_color1=ocean->waterColor1();
+	Raster.water_color2=ocean->waterColor2();
+	Raster.water_clarity=ocean->waterClarity();
 
-	Raster.ice_color1=oceanState.iceColor1();
-	Raster.ice_color2=oceanState.iceColor2();
-	Raster.ice_clarity=oceanState.iceClarity();
+	Raster.ice_color1=ocean->iceColor1();
+	Raster.ice_color2=ocean->iceColor2();
+	Raster.ice_clarity=ocean->iceClarity();
     
     Spheroid::adapt_object();
 }

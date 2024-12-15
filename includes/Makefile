@@ -69,6 +69,7 @@ HDR_FILES = AdaptOptions.h \
 			Rocks.h \
 			SceneClass.h \
 			Sprites.h \
+			States.h \
 			TerrainClass.h \
 			TerrainData.h \
 			TerrainMgr.h \
@@ -121,6 +122,7 @@ SRC_FILES=  AdaptOptions.cpp \
 			Rocks.cpp \
 			SceneClass.cpp \
 			Sprites.cpp \
+			States.cpp \
 			Plants.cpp \
 			TerrainClass.cpp \
 			TerrainData.cpp \
@@ -831,6 +833,7 @@ depend:;
 ../Debug/Rocks.o:	Rocks.cpp
 ../Debug/SceneClass.o:	SceneClass.cpp
 ../Debug/Sprites.o:	Sprites.cpp
+../Debug/States.o:	States.cpp
 ../Debug/TerrainClass.o:	TerrainClass.cpp
 ../Debug/TerrainData.o:	TerrainData.cpp
 ../Debug/TerrainMgr.o:	TerrainMgr.cpp
@@ -881,6 +884,7 @@ depend:;
 ../Release/Rocks.o:	Rocks.cpp
 ../Release/SceneClass.o:	SceneClass.cpp
 ../Release/Sprites.o:	Sprites.cpp
+../Release/States.o:	States.cpp
 ../Release/TerrainClass.o:	TerrainClass.cpp
 ../Release/TerrainData.o:	TerrainData.cpp
 ../Release/TerrainMgr.o:	TerrainMgr.cpp

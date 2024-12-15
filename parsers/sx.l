@@ -106,7 +106,9 @@ static LongSym keytbl[]={
 	{"Plant",		YY_ROOT},
 	{"Branch",		YY_BRANCH},
 	{"Leaf",		YY_LEAF},
-	
+
+	{"Ocean",		YY_OCEAN},
+	{"state",		YY_STATE},
 	
 	{"Density",		YY_DENSITY},	
 		
