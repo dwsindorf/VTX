@@ -127,12 +127,12 @@ public:
     }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->setWaterColor2(LiquidTransmitSlider->getColor());
+		orb->ocean->setWaterColor2(LiquidTransmitSlider->getColor());
     	invalidateRender();
     }
     void OnLiquidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->setWaterColor1(LiquidReflectSlider->getColor());
+		orb->ocean->setWaterColor1(LiquidReflectSlider->getColor());
     	invalidateRender();
     }
 
@@ -144,12 +144,12 @@ public:
 
     void OnSolidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->setIceColor2(SolidTransmitSlider->getColor());
+		orb->ocean->setIceColor2(SolidTransmitSlider->getColor());
     	invalidateRender();
     }
     void OnSolidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->setIceColor1(SolidReflectSlider->getColor());
+		orb->ocean->setIceColor1(SolidReflectSlider->getColor());
     	invalidateRender();
     }
 

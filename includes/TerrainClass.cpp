@@ -1380,6 +1380,8 @@ bool TNnoise::setProgram(){
 void TNwater::eval()
 {
 	Planetoid *obj=(Planetoid*)(TheMap->object);
+	if(!ocean)
+		ocean=obj->ocean;
 	if(CurrentScope->rpass() || !isEnabled()){
 		if(right){
 			INIT;
@@ -1480,6 +1482,8 @@ void TNwater::saveNode(FILE *f)
 {
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	fprintf(f,"water(");
+	
+	//OceanState *ocean=orb->ocean;
 
 	TNarg &arg=*((TNarg*)left);
 
@@ -1490,26 +1494,26 @@ void TNwater::saveNode(FILE *f)
 		arg[0]->save(f);
 	else
 		fprintf(f,"1.0",tmp);
-	Color color=orb->waterColor1();
+	Color color=ocean->waterColor1();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	color=orb->waterColor2();
+	color=ocean->waterColor2();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	fprintf(f,",%g,%g,%g",orb->waterClarity()/FEET,orb->waterShine(),orb->waterSpecular());
+	fprintf(f,",%g,%g,%g",ocean->waterClarity()/FEET,ocean->waterShine(),ocean->waterSpecular());
 	fprintf(f,")\n");
 	fprintf(f,"ice(");
 	if(n>1)
 		arg[1]->save(f);
 	else
 		fprintf(f,"1.0",tmp);
-	color=orb->iceColor1();
+	color=ocean->iceColor1();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	color=orb->iceColor2();
+	color=ocean->iceColor2();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	fprintf(f,",%g,%g,%g",orb->iceClarity()/FEET,orb->iceShine(),orb->iceSpecular());
+	fprintf(f,",%g,%g,%g",ocean->iceClarity()/FEET,ocean->iceShine(),ocean->iceSpecular());
 	fprintf(f,")\n");
 }
 //-------------------------------------------------------------
@@ -1531,6 +1535,7 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 		cout<<"TNwater::replaceNode wrong type "<<typeValue()<<":"<<c->typeValue()<<end;
 		return 0;
 	}
+	//OceanState *ocean=orb->ocean;
 
 	TNfunc *water_func=(TNfunc*)c;
 	TNfunc *ice_func=water_func->right;		
@@ -1550,32 +1555,30 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 
 	int n=getargs(water_args,arglist,6);
 
-	//cout <<"water_args="<<n<<endl;
-
 	if(n>1)
-		orb->setWaterColor1(arglist[1].c);
+		ocean->setWaterColor1(arglist[1].c);
 	if(n>2)
-		orb->setWaterColor2(arglist[2].c);
+		ocean->setWaterColor2(arglist[2].c);
 	if(n>3)
-		orb->setWaterClarity(arglist[3].s*FEET);
+		ocean->setWaterClarity(arglist[3].s*FEET);
 	if(n>4)
-		orb->setWaterShine(arglist[4].s);
+		ocean->setWaterShine(arglist[4].s);
 	if(n>5)
-		orb->setWaterSpecular(arglist[5].s);
+		ocean->setWaterSpecular(arglist[5].s);
 
 	n=getargs(ice_args,arglist,6);
 	//cout <<"ice_args="<<n<<endl;
 
 	if(n>1)
-		orb->setIceColor1(arglist[1].c);
+		ocean->setIceColor1(arglist[1].c);
 	if(n>2)
-		orb->setIceColor2(arglist[2].c);
+		ocean->setIceColor2(arglist[2].c);
 	if(n>3)
-		orb->setIceClarity(arglist[3].s*FEET);
+		ocean->setIceClarity(arglist[3].s*FEET);
 	if(n>4)
-		orb->setIceShine(arglist[4].s);
+		ocean->setIceShine(arglist[4].s);
 	if(n>5)
-		orb->setIceSpecular(arglist[5].s);
+		ocean->setIceSpecular(arglist[5].s);
 
 	left=(TNarg*)water_noise;
 	

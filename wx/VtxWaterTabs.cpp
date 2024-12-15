@@ -389,8 +389,10 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
     SolidTempSlider->setValue(solid);
     LiquidTempSlider->setValue(liquid);
 	Planetoid *orb=getOrbital();
-	orb->setOceanGasTemp(LiquidTempSlider->getValue());
-	orb->setOceanLiquidTemp(SolidTempSlider->getValue());
+	OceanState *ocean=orb->ocean;
+
+	ocean->setOceanGasTemp(LiquidTempSlider->getValue());
+	ocean->setOceanLiquidTemp(SolidTempSlider->getValue());
 	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -433,7 +435,7 @@ void VtxWaterTabs::OnUpdateEnable(wxUpdateUIEvent& event) {
 void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
 
 	Planetoid *orb=getOrbital();
-	OceanFunction->SetValue(orb->getDfltOceanExpr());
+	OceanFunction->SetValue(OceanState::getDfltOceanExpr());
 	//orb->setOceanFunction(def_transition_func);
 	orb->invalidate();
 	TheScene->rebuild();
@@ -441,14 +443,14 @@ void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
 
 void VtxWaterTabs::OnSetDefaultLiquid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
-	LiquidFunction->SetValue(orb->getDfltOceanLiquidExpr());
+	LiquidFunction->SetValue(OceanState::getDfltOceanLiquidExpr());
 	setObjAttributes();
 	orb->invalidate();
 	TheScene->rebuild();
 }
 void VtxWaterTabs::OnSetDefaultSolid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
-	SolidFunction->SetValue(orb->getDfltOceanSolidExpr());
+	SolidFunction->SetValue(OceanState::getDfltOceanSolidExpr());
 	setObjAttributes();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -461,35 +463,38 @@ void VtxWaterTabs::setObjAttributes(){
 	TNwater *tnode=water();
 
 	Planetoid *orb=getOrbital();
+	OceanState *ocean=orb->ocean;
 
 	char *s=object_name->GetValue().ToAscii();
 	if(s)
-		orb->setOceanName(s);
+		ocean->setOceanName(s);
 
 	int state=State->GetSelection();
-    orb->ocean_state=state;
+	
 
-	orb->setOceanGasTemp(LiquidTempSlider->getValue());
-	orb->setOceanLiquidTemp(SolidTempSlider->getValue());
+    orb->ocean_state=state;
+	orb->ocean_level=LevelSlider->getValue()*FEET;
+
+    ocean->setOceanGasTemp(LiquidTempSlider->getValue());
+    ocean->setOceanLiquidTemp(SolidTempSlider->getValue());
     Color wc=LiquidReflectSlider->getColor();
     wc.set_alpha(LiquidReflectSlider->getValue());
-	orb->setWaterColor1(wc);
+    ocean->setWaterColor1(wc);
 	wc=LiquidTransmitSlider->getColor();
 	wc.set_alpha(LiquidReflectSlider->getValue());
-	orb->setWaterColor2(wc);
-	orb->setWaterClarity(LiquidTransmitSlider->getValue()*FEET);
-	orb->setWaterShine(LiquidShineSlider->getValue());
-	orb->setWaterSpecular(LiquidAlbedoSlider->getValue());
-	orb->ocean_level=LevelSlider->getValue()*FEET;
+	ocean->setWaterColor2(wc);
+	ocean->setWaterClarity(LiquidTransmitSlider->getValue()*FEET);
+	ocean->setWaterShine(LiquidShineSlider->getValue());
+	ocean->setWaterSpecular(LiquidAlbedoSlider->getValue());
     wc=SolidReflectSlider->getColor();
     wc.set_alpha(SolidReflectSlider->getValue());
-	orb->setIceColor1(wc);
-	orb->setIceColor2(SolidTransmitSlider->getColor());
-	orb->setIceClarity(SolidTransmitSlider->getValue()*FEET);
-	orb->setIceShine(SolidShineSlider->getValue());
-	orb->setIceSpecular(SolidAlbedoSlider->getValue());
+    ocean->setIceColor1(wc);
+    ocean->setIceColor2(SolidTransmitSlider->getColor());
+    ocean->setIceClarity(SolidTransmitSlider->getValue()*FEET);
+    ocean->setIceShine(SolidShineSlider->getValue());
+    ocean->setIceSpecular(SolidAlbedoSlider->getValue());
 
-	orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
+    orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
 
 	wxString str="ocean(";
 	str+=LiquidFunction->GetValue();
@@ -517,11 +522,13 @@ void VtxWaterTabs::getObjAttributes(){
 		return;
 	Planetoid *orb=getOrbital();
 	TNwater *tnode=water();
+	
+	OceanState *ocean=orb->ocean;
 
 	TNarg *arg=(TNarg*)tnode->left;
 
-	LiquidFunction->SetValue(orb->getOceanLiquidExpr());
-	SolidFunction->SetValue(orb->getOceanSolidExpr());
+	LiquidFunction->SetValue(ocean->getOceanLiquidExpr());
+	SolidFunction->SetValue(ocean->getOceanSolidExpr());
 
 	if(arg){
 		LiquidFunction->SetValue(arg);
@@ -533,33 +540,33 @@ void VtxWaterTabs::getObjAttributes(){
 		}
 	}
  	char buff[256];
-	orb->getOceanFunction(buff);
+ 	orb->getOceanFunction(buff);
 
 	OceanFunction->SetValue(buff);
 
 	State->SetSelection(orb->ocean_state);
 
-	object_name->SetValue(orb->getOceanName());
-	LiquidTempSlider->setValue(orb->oceanGasTemp()-273);
-	SolidTempSlider->setValue(orb->oceanLiquidTemp()-273);
+	object_name->SetValue(ocean->getOceanName());
+	LiquidTempSlider->setValue(ocean->oceanGasTemp()-273);
+	SolidTempSlider->setValue(ocean->oceanLiquidTemp()-273);
 
 	LevelSlider->setValue(orb->ocean_level/FEET);
 
-	LiquidTransmitSlider->setColor(orb->waterColor2());
-	LiquidTransmitSlider->setValue(orb->waterClarity()/FEET);
-	LiquidReflectSlider->setColor(orb->waterColor1());
-	LiquidReflectSlider->setValue(orb->waterColor1().alpha());
+	LiquidTransmitSlider->setColor(ocean->waterColor2());
+	LiquidTransmitSlider->setValue(ocean->waterClarity()/FEET);
+	LiquidReflectSlider->setColor(ocean->waterColor1());
+	LiquidReflectSlider->setValue(ocean->waterColor1().alpha());
 
-	LiquidShineSlider->setValue(orb->waterShine());
-	LiquidAlbedoSlider->setValue(orb->waterSpecular());
+	LiquidShineSlider->setValue(ocean->waterShine());
+	LiquidAlbedoSlider->setValue(ocean->waterSpecular());
 
-	SolidTransmitSlider->setColor(orb->iceColor2());
-	SolidTransmitSlider->setValue(orb->iceClarity()/FEET);
-	SolidReflectSlider->setColor(orb->iceColor1());
-	SolidReflectSlider->setValue(orb->iceColor1().alpha());
+	SolidTransmitSlider->setColor(ocean->iceColor2());
+	SolidTransmitSlider->setValue(ocean->iceClarity()/FEET);
+	SolidReflectSlider->setColor(ocean->iceColor1());
+	SolidReflectSlider->setValue(ocean->iceColor1().alpha());
 
-	SolidShineSlider->setValue(orb->iceShine());
-	SolidAlbedoSlider->setValue(orb->iceSpecular());
+	SolidShineSlider->setValue(ocean->iceShine());
+	SolidAlbedoSlider->setValue(ocean->iceSpecular());
 
 	auto_state->SetValue(orb->ocean_auto);
 

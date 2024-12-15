@@ -663,6 +663,53 @@ public:
 	MaterialState solid;
 	void setName(char *e){ strcpy(name,e);}
 	char *getName(){ return name;}
+	void setWaterColor1(Color c) 	{liquid.color1=c;}
+	void setWaterColor2(Color c) 	{liquid.color2=c;}
+	void setIceColor1(Color c)   	{solid.color1=c;}
+	void setIceColor2(Color c)   	{solid.color2=c;}
+	Color waterColor1()          	{return liquid.color1;}
+	Color waterColor2()          	{return liquid.color2;}
+	Color iceColor1()			 	{return solid.color1;}
+	Color iceColor2()			 	{return solid.color2;}
+
+	double waterClarity()		 	{return liquid.clarity;}
+	double waterMix()			 	{return liquid.mix;}
+	double waterSpecular()       	{return liquid.specular;}
+	double waterShine()			 	{return liquid.shine;}
+	void setWaterClarity(double f)  {liquid.clarity=f;}
+	void setWaterMix(double f)      {liquid.mix=f;}
+	void setWaterSpecular(double f) {liquid.specular=f;}
+	void setWaterShine(double f) 	{liquid.shine=f;}
+
+	double iceClarity()				{return solid.clarity;}
+	double iceMix()					{return solid.mix;}
+	double iceSpecular()			{return solid.specular;}
+	double iceShine()				{return solid.shine;}
+	void setIceClarity(double f)	{solid.clarity=f;}
+	void setIceMix(double f)		{solid.mix=f;}
+	void setIceSpecular(double f)	{solid.specular=f;}
+	void setIceShine(double f)		{solid.shine=f;}
+	
+	double oceanLiquidTemp()        { return liquid.temp;}
+	double oceanGasTemp()           { return solid.temp;}
+	void setOceanLiquidTemp(double f) { liquid.temp=C2K(f);}
+	void setOceanGasTemp(double f)    { solid.temp=C2K(f);}
+	
+	char *getOceanName()            { return getName();}
+	void setOceanName(char *s)      { setName(s);}
+
+	char *getOceanLiquidExpr()      { return liquid.getExpr();}
+	void setOceanLiquidExpr(char *s){ liquid.setExpr(s);}
+
+	char *getOceanSolidExpr()      { return solid.getExpr();}
+	void setOceanSolidExpr(char *s){ solid.setExpr(s);}
+
+	//int getOceanFunction(char *buff);
+	//void setOceanFunction(char *expr);
+	static char *getDfltOceanExpr();
+	static char *getDfltOceanSolidExpr();
+	static char *getDfltOceanLiquidExpr();
+
 	void print();
 };
 
@@ -680,6 +727,7 @@ public:
 	static Array<OceanState *>oceanTypes;
 	static std::string randFeature(int type);
     OceanState oceanState;
+    OceanState *ocean;
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
 	int        terrain_type;
@@ -705,54 +753,10 @@ public:
 	double 	   last_dt;
 	double 	   last_temp;
 	double     light_theta;
-	
-	void setWaterColor1(Color c) 	{oceanState.liquid.color1=c;}
-	void setWaterColor2(Color c) 	{oceanState.liquid.color2=c;}
-	void setIceColor1(Color c)   	{oceanState.solid.color1=c;}
-	void setIceColor2(Color c)   	{oceanState.solid.color2=c;}
-	Color waterColor1()          	{return oceanState.liquid.color1;}
-	Color waterColor2()          	{return oceanState.liquid.color2;}
-	Color iceColor1()			 	{return oceanState.solid.color1;}
-	Color iceColor2()			 	{return oceanState.solid.color2;}
 
-	double waterClarity()		 	{return oceanState.liquid.clarity;}
-	double waterMix()			 	{return oceanState.liquid.mix;}
-	double waterSpecular()       	{return oceanState.liquid.specular;}
-	double waterShine()			 	{return oceanState.liquid.shine;}
-	void setWaterClarity(double f)  {oceanState.liquid.clarity=f;}
-	void setWaterMix(double f)      {oceanState.liquid.mix=f;}
-	void setWaterSpecular(double f) {oceanState.liquid.specular=f;}
-	void setWaterShine(double f) 	{oceanState.liquid.shine=f;}
 
-	double iceClarity()				{return oceanState.solid.clarity;}
-	double iceMix()					{return oceanState.solid.mix;}
-	double iceSpecular()			{return oceanState.solid.specular;}
-	double iceShine()				{return oceanState.solid.shine;}
-	void setIceClarity(double f)	{oceanState.solid.clarity=f;}
-	void setIceMix(double f)		{oceanState.solid.mix=f;}
-	void setIceSpecular(double f)	{oceanState.solid.specular=f;}
-	void setIceShine(double f)		{oceanState.solid.shine=f;}
-	
-	double oceanLiquidTemp()        { return oceanState.liquid.temp;}
-	double oceanGasTemp()           { return oceanState.solid.temp;}
-	void setOceanLiquidTemp(double f) { oceanState.liquid.temp=C2K(f);}
-	void setOceanGasTemp(double f)    { oceanState.solid.temp=C2K(f);}
-	
-	char *getOceanName()            { return oceanState.getName();}
-	void setOceanName(char *s)      { oceanState.setName(s);}
-
-	char *getOceanLiquidExpr()      { return oceanState.liquid.getExpr();}
-	void setOceanLiquidExpr(char *s){ oceanState.liquid.setExpr(s);}
-	char *getDfltOceanLiquidExpr();
-
-	char *getOceanSolidExpr()      { return oceanState.solid.getExpr();}
-	void setOceanSolidExpr(char *s){ oceanState.solid.setExpr(s);}
-	char *getDfltOceanSolidExpr();
-	
-	char *getDfltOceanExpr();
 	int getOceanFunction(char *buff);
 	void setOceanFunction(char *expr);
-
 
 	static int planet_id;
 	static int moon_cnt;

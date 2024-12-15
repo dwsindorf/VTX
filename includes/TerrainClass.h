@@ -13,6 +13,7 @@ class TNarg;
 class Image;
 class Texture;
 class Object3D;
+class OceanState;
 
 // TNpoint codes
 
@@ -211,7 +212,10 @@ public:
 class TNwater : public TNfunc
 {
 public:
-	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {}
+	OceanState *ocean;
+	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {
+		ocean=0;
+	}
 	
 	void eval();
 	void saveNode(FILE *);
