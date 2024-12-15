@@ -64,6 +64,8 @@ protected:
 	wxChoice   *Composition;
 	wxRadioBox *State;
 	wxButton	*default_mod;
+	wxButton	*default_liquid;
+	wxButton	*default_solid;
 
 public:
 	VtxWaterTabs(wxWindow* parent,
@@ -104,8 +106,8 @@ public:
     void OnChangeComposition(wxCommandEvent& event);
     void OnAutoState(wxCommandEvent& event);
     void OnSetDefaultMod(wxCommandEvent& event);
-
-
+    void OnSetDefaultLiquid(wxCommandEvent& event);
+    void OnSetDefaultSolid(wxCommandEvent& event);
     void OnSetState(wxCommandEvent& event);
 
     void OnSurfaceFunctionEnter(wxCommandEvent& event){
@@ -125,12 +127,12 @@ public:
     }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->water_color2=LiquidTransmitSlider->getColor();
+		orb->setWaterColor2(LiquidTransmitSlider->getColor());
     	invalidateRender();
     }
     void OnLiquidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->water_color1=LiquidReflectSlider->getColor();
+		orb->setWaterColor1(LiquidReflectSlider->getColor());
     	invalidateRender();
     }
 
@@ -142,12 +144,12 @@ public:
 
     void OnSolidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->ice_color2=SolidTransmitSlider->getColor();
+		orb->setIceColor2(SolidTransmitSlider->getColor());
     	invalidateRender();
     }
     void OnSolidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
 		Planetoid *orb=getOrbital();
-		orb->ice_color1=SolidReflectSlider->getColor();
+		orb->setIceColor1(SolidReflectSlider->getColor());
     	invalidateRender();
     }
 

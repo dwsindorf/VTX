@@ -1490,26 +1490,26 @@ void TNwater::saveNode(FILE *f)
 		arg[0]->save(f);
 	else
 		fprintf(f,"1.0",tmp);
-	Color color=orb->water_color1;
+	Color color=orb->waterColor1();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	color=orb->water_color2;
+	color=orb->waterColor2();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	fprintf(f,",%g,%g,%g",orb->water_clarity/FEET,orb->water_shine,orb->water_specular);
+	fprintf(f,",%g,%g,%g",orb->waterClarity()/FEET,orb->waterShine(),orb->waterSpecular());
 	fprintf(f,")\n");
 	fprintf(f,"ice(");
 	if(n>1)
 		arg[1]->save(f);
 	else
 		fprintf(f,"1.0",tmp);
-	color=orb->ice_color1;
+	color=orb->iceColor1();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	color=orb->ice_color2;
+	color=orb->iceColor2();
 	color.toString(tmp);
 	fprintf(f,",%s",tmp);
-	fprintf(f,",%g,%g,%g",orb->ice_clarity/FEET,orb->ice_shine,orb->ice_specular);
+	fprintf(f,",%g,%g,%g",orb->iceClarity()/FEET,orb->iceShine(),orb->iceSpecular());
 	fprintf(f,")\n");
 }
 //-------------------------------------------------------------
@@ -1553,29 +1553,29 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	//cout <<"water_args="<<n<<endl;
 
 	if(n>1)
-		orb->water_color1=arglist[1].c;
+		orb->setWaterColor1(arglist[1].c);
 	if(n>2)
-		orb->water_color2=arglist[2].c;
+		orb->setWaterColor2(arglist[2].c);
 	if(n>3)
-		orb->water_clarity=arglist[3].s*FEET;
+		orb->setWaterClarity(arglist[3].s*FEET);
 	if(n>4)
-		orb->water_shine=arglist[4].s;
+		orb->setWaterShine(arglist[4].s);
 	if(n>5)
-		orb->water_specular=arglist[5].s;
+		orb->setWaterSpecular(arglist[5].s);
 
 	n=getargs(ice_args,arglist,6);
 	//cout <<"ice_args="<<n<<endl;
 
 	if(n>1)
-		orb->ice_color1=arglist[1].c;
+		orb->setIceColor1(arglist[1].c);
 	if(n>2)
-		orb->ice_color2=arglist[2].c;
+		orb->setIceColor2(arglist[2].c);
 	if(n>3)
-		orb->ice_clarity=arglist[3].s*FEET;
+		orb->setIceClarity(arglist[3].s*FEET);
 	if(n>4)
-		orb->ice_shine=arglist[4].s;
+		orb->setIceShine(arglist[4].s);
 	if(n>5)
-		orb->ice_specular=arglist[5].s;
+		orb->setIceSpecular(arglist[5].s);
 
 	left=(TNarg*)water_noise;
 	

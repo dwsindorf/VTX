@@ -6,7 +6,7 @@ Scene() {
 	enable_grid=0;
 	grid_spacing=1000;
 	phi_color=Color(0.45,0.82,0.09);
-	tempmode=1;
+	tempmode=0;
 	text_color=Color(1,1,1);
 	theta_color=Color(0.2,0.4,0.64);
 	temp_mode=2;

@@ -6,12 +6,6 @@
 #include <wx/filefn.h>
 #include <wx/dir.h>
 
-enum {GAS=0,LIQUID=1,SOLID,AUTO=2};
-
-static char*    def_water_func="noise(GRADIENT|SCALE|RO1,16,3,-0.02,0.5,2,0.05,1,0,0)";
-static char*    def_ice_func="noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
-static char*    def_transition_func="noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
-
 static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
 static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
@@ -28,6 +22,8 @@ enum{
     ID_LEVEL_TEXT,
     ID_OCEAN_FUNCTION_TEXT,
 	ID_DEFAULT_MOD,
+	ID_DEFAULT_LIQUID,
+	ID_DEFAULT_SOLID,
     ID_LIQUID_SURFACE_TEXT,
     ID_LIQUID_TRANSMIT_SLDR,
     ID_LIQUID_TRANSMIT_TEXT,
@@ -97,7 +93,8 @@ EVT_TEXT_ENTER(ID_SOLID_SURFACE_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 EVT_TEXT_ENTER(ID_OCEAN_FUNCTION_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 
 EVT_BUTTON(ID_DEFAULT_MOD,VtxWaterTabs::OnSetDefaultMod)
-
+EVT_BUTTON(ID_DEFAULT_LIQUID,VtxWaterTabs::OnSetDefaultLiquid)
+EVT_BUTTON(ID_DEFAULT_SOLID,VtxWaterTabs::OnSetDefaultSolid)
 EVT_CHOICE(ID_COMPOSITION, VtxWaterTabs::OnChangeComposition)
 
 EVT_MENU(ID_SHOW,VtxWaterTabs::OnEnable)
@@ -233,10 +230,6 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 	default_mod=new wxButton(panel,ID_DEFAULT_MOD,"Default",wxDefaultPosition,wxSize(60,25));
 	hline->Add(default_mod,0,wxALIGN_LEFT|wxALL,5);
 
-
-	//default_state->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-
-
     boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 
@@ -249,8 +242,12 @@ void VtxWaterTabs::AddLiquidTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxStaticBoxSizer* surface = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
-	LiquidFunction=new ExprTextCtrl(panel,ID_LIQUID_SURFACE_TEXT,"waves",LABEL2S,EXPR_WIDTH);
+	LiquidFunction=new ExprTextCtrl(panel,ID_LIQUID_SURFACE_TEXT,"function",LABEL2S,EXPR_WIDTH);
 	surface->Add(LiquidFunction->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	
+	default_liquid=new wxButton(panel,ID_DEFAULT_LIQUID,"Default",wxDefaultPosition,wxSize(60,25));
+	surface->Add(default_liquid,0,wxALIGN_LEFT|wxALL,5);
+	
 	surface->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(surface, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -295,6 +292,10 @@ void VtxWaterTabs::AddSolidTab(wxWindow *panel){
     wxStaticBoxSizer* surface = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
 	SolidFunction=new ExprTextCtrl(panel,ID_SOLID_SURFACE_TEXT,"function",LABEL2S,EXPR_WIDTH);
 	surface->Add(SolidFunction->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	
+	default_solid=new wxButton(panel,ID_DEFAULT_SOLID,"Default",wxDefaultPosition,wxSize(60,25));
+	surface->Add(default_solid,0,wxALIGN_LEFT|wxALL,5);
+
 	surface->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(surface, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -388,8 +389,8 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
     SolidTempSlider->setValue(solid);
     LiquidTempSlider->setValue(liquid);
 	Planetoid *orb=getOrbital();
-	orb->ocean_liquid_temp=LiquidTempSlider->getValue()+273;
-	orb->ocean_solid_temp=SolidTempSlider->getValue()+273;
+	orb->setOceanGasTemp(LiquidTempSlider->getValue());
+	orb->setOceanLiquidTemp(SolidTempSlider->getValue());
 	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -432,12 +433,26 @@ void VtxWaterTabs::OnUpdateEnable(wxUpdateUIEvent& event) {
 void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
 
 	Planetoid *orb=getOrbital();
-	OceanFunction->SetValue(def_transition_func);
-	orb->setOceanFunction(def_transition_func);
+	OceanFunction->SetValue(orb->getDfltOceanExpr());
+	//orb->setOceanFunction(def_transition_func);
 	orb->invalidate();
 	TheScene->rebuild();
 }
 
+void VtxWaterTabs::OnSetDefaultLiquid(wxCommandEvent& event){
+	Planetoid *orb=getOrbital();
+	LiquidFunction->SetValue(orb->getDfltOceanLiquidExpr());
+	setObjAttributes();
+	orb->invalidate();
+	TheScene->rebuild();
+}
+void VtxWaterTabs::OnSetDefaultSolid(wxCommandEvent& event){
+	Planetoid *orb=getOrbital();
+	SolidFunction->SetValue(orb->getDfltOceanSolidExpr());
+	setObjAttributes();
+	orb->invalidate();
+	TheScene->rebuild();
+}
 //-------------------------------------------------------------
 // VtxWaterTabs::setObjAttributes() when switched out
 //-------------------------------------------------------------
@@ -449,28 +464,30 @@ void VtxWaterTabs::setObjAttributes(){
 
 	char *s=object_name->GetValue().ToAscii();
 	if(s)
-		strncpy(orb->ocean_name,s,64);
+		orb->setOceanName(s);
 
 	int state=State->GetSelection();
     orb->ocean_state=state;
 
-	orb->ocean_liquid_temp=LiquidTempSlider->getValue()+273;
-	orb->ocean_solid_temp=SolidTempSlider->getValue()+273;
-
-	orb->water_color1=LiquidReflectSlider->getColor();
-	orb->water_color1.set_alpha(LiquidReflectSlider->getValue());
-	orb->water_color2=LiquidTransmitSlider->getColor();
-	orb->water_clarity=LiquidTransmitSlider->getValue()*FEET;
-	orb->water_shine=LiquidShineSlider->getValue();
-	orb->water_specular=LiquidAlbedoSlider->getValue();
+	orb->setOceanGasTemp(LiquidTempSlider->getValue());
+	orb->setOceanLiquidTemp(SolidTempSlider->getValue());
+    Color wc=LiquidReflectSlider->getColor();
+    wc.set_alpha(LiquidReflectSlider->getValue());
+	orb->setWaterColor1(wc);
+	wc=LiquidTransmitSlider->getColor();
+	wc.set_alpha(LiquidReflectSlider->getValue());
+	orb->setWaterColor2(wc);
+	orb->setWaterClarity(LiquidTransmitSlider->getValue()*FEET);
+	orb->setWaterShine(LiquidShineSlider->getValue());
+	orb->setWaterSpecular(LiquidAlbedoSlider->getValue());
 	orb->ocean_level=LevelSlider->getValue()*FEET;
-
-	orb->ice_color1=SolidReflectSlider->getColor();
-	orb->ice_color1.set_alpha(SolidReflectSlider->getValue());
-	orb->ice_color2=SolidTransmitSlider->getColor();
-	orb->ice_clarity=SolidTransmitSlider->getValue()*FEET;
-	orb->ice_shine=SolidShineSlider->getValue();
-	orb->ice_specular=SolidAlbedoSlider->getValue();
+    wc=SolidReflectSlider->getColor();
+    wc.set_alpha(SolidReflectSlider->getValue());
+	orb->setIceColor1(wc);
+	orb->setIceColor2(SolidTransmitSlider->getColor());
+	orb->setIceClarity(SolidTransmitSlider->getValue()*FEET);
+	orb->setIceShine(SolidShineSlider->getValue());
+	orb->setIceSpecular(SolidAlbedoSlider->getValue());
 
 	orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
 
@@ -498,49 +515,51 @@ void VtxWaterTabs::setObjAttributes(){
 void VtxWaterTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
+	Planetoid *orb=getOrbital();
 	TNwater *tnode=water();
 
 	TNarg *arg=(TNarg*)tnode->left;
 
-	LiquidFunction->SetValue(def_water_func);
-	SolidFunction->SetValue(def_ice_func);
+	LiquidFunction->SetValue(orb->getOceanLiquidExpr());
+	SolidFunction->SetValue(orb->getOceanSolidExpr());
 
 	if(arg){
 		LiquidFunction->SetValue(arg);
+   		//orb->setOceanLiquidExpr((char *)LiquidFunction->GetValue().ToAscii());
 		arg=arg->next();
-		if(arg)
-			SolidFunction->SetValue(arg);
+		if(arg){
+ 			SolidFunction->SetValue(arg);
+   			//orb->setOceanSolidExpr((char *)LiquidFunction->GetValue().ToAscii());
+		}
 	}
-	Planetoid *orb=getOrbital();
-
-	char buff[256];
+ 	char buff[256];
 	orb->getOceanFunction(buff);
 
 	OceanFunction->SetValue(buff);
 
 	State->SetSelection(orb->ocean_state);
 
-	object_name->SetValue(orb->ocean_name);
-	LiquidTempSlider->setValue(orb->ocean_liquid_temp-273);
-	SolidTempSlider->setValue(orb->ocean_solid_temp-273);
+	object_name->SetValue(orb->getOceanName());
+	LiquidTempSlider->setValue(orb->oceanGasTemp()-273);
+	SolidTempSlider->setValue(orb->oceanLiquidTemp()-273);
 
 	LevelSlider->setValue(orb->ocean_level/FEET);
 
-	LiquidTransmitSlider->setColor(orb->water_color2);
-	LiquidTransmitSlider->setValue(orb->water_clarity/FEET);
-	LiquidReflectSlider->setColor(orb->water_color1);
-	LiquidReflectSlider->setValue(orb->water_color1.alpha());
+	LiquidTransmitSlider->setColor(orb->waterColor2());
+	LiquidTransmitSlider->setValue(orb->waterClarity()/FEET);
+	LiquidReflectSlider->setColor(orb->waterColor1());
+	LiquidReflectSlider->setValue(orb->waterColor1().alpha());
 
-	LiquidShineSlider->setValue(orb->water_shine);
-	LiquidAlbedoSlider->setValue(orb->water_specular);
+	LiquidShineSlider->setValue(orb->waterShine());
+	LiquidAlbedoSlider->setValue(orb->waterSpecular());
 
-	SolidTransmitSlider->setColor(orb->ice_color2);
-	SolidTransmitSlider->setValue(orb->ice_clarity/FEET);
-	SolidReflectSlider->setColor(orb->ice_color1);
-	SolidReflectSlider->setValue(orb->ice_color1.alpha());
+	SolidTransmitSlider->setColor(orb->iceColor2());
+	SolidTransmitSlider->setValue(orb->iceClarity()/FEET);
+	SolidReflectSlider->setColor(orb->iceColor1());
+	SolidReflectSlider->setValue(orb->iceColor1().alpha());
 
-	SolidShineSlider->setValue(orb->ice_shine);
-	SolidAlbedoSlider->setValue(orb->ice_specular);
+	SolidShineSlider->setValue(orb->iceShine());
+	SolidAlbedoSlider->setValue(orb->iceSpecular());
 
 	auto_state->SetValue(orb->ocean_auto);
 

@@ -69,6 +69,7 @@ typedef unsigned int uint;
 #define DFREE(a)   	if(a) {delete a;a=0;}
 
 #define K2C(t)      ((t)-273)
+#define C2K(t)      ((t)+273)
 #define C2F(t)      ((t)*9.4/5.0+32)
 #define K2F(t)      (K2C(t)*9.4/5.0+32)
 

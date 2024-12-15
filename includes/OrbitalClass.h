@@ -636,16 +636,50 @@ public:
 
 };
 
+class MaterialState {
+public:
+	MaterialState(){}
+	MaterialState(double t,Color c1, Color c2,double c, double m, double sp, double sh);
+	Color color1;
+	Color color2;
+	double clarity;
+	double mix;
+	double specular;
+	double shine;
+	double temp;
+	char expr[512];
+    void setExpr(char *e){ strcpy(expr,e);}
+    char *getExpr(){ return expr;}
+	void print(char *suffix);
+};
+
+class OceanState {
+public:
+	OceanState(){}
+	OceanState(char *n, MaterialState *m1, MaterialState *m2);
+	char name[256];
+	
+	MaterialState liquid;
+	MaterialState solid;
+	void setName(char *e){ strcpy(name,e);}
+	char *getName(){ return name;}
+	void print();
+};
+
 //************************************************************
 // Planet class
 //************************************************************
+//#define NUM_OCEAN_TYPES 6
 class Planetoid : public Spheroid
 {
+protected:
+
 public:
 	enum {GASGIANT,OCEANIC,ROCKY,ICY,VOLCANIC};
 	
+	static Array<OceanState *>oceanTypes;
 	static std::string randFeature(int type);
-
+    OceanState oceanState;
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
 	int        terrain_type;
@@ -654,24 +688,7 @@ public:
 	bool       ocean_auto;
 	bool       seasonal;
 
-	double     ocean_solid_temp;
-	double     ocean_liquid_temp;
-	char       ocean_name[maxstr];
 	TNode     *ocean_expr;
-
-	Color 	   water_color1;
-	Color 	   water_color2;
-	double 	   water_clarity;
-	double 	   water_mix;
-	double 	   water_specular;
-	double 	   water_shine;
-
-	Color 	   ice_color1;
-	Color 	   ice_color2;
-	double 	   ice_clarity;
-	double 	   ice_mix;
-	double 	   ice_specular;
-	double 	   ice_shine;
 
 	Color 	   fog_color;
 	double     fog_min;
@@ -689,6 +706,54 @@ public:
 	double 	   last_temp;
 	double     light_theta;
 	
+	void setWaterColor1(Color c) 	{oceanState.liquid.color1=c;}
+	void setWaterColor2(Color c) 	{oceanState.liquid.color2=c;}
+	void setIceColor1(Color c)   	{oceanState.solid.color1=c;}
+	void setIceColor2(Color c)   	{oceanState.solid.color2=c;}
+	Color waterColor1()          	{return oceanState.liquid.color1;}
+	Color waterColor2()          	{return oceanState.liquid.color2;}
+	Color iceColor1()			 	{return oceanState.solid.color1;}
+	Color iceColor2()			 	{return oceanState.solid.color2;}
+
+	double waterClarity()		 	{return oceanState.liquid.clarity;}
+	double waterMix()			 	{return oceanState.liquid.mix;}
+	double waterSpecular()       	{return oceanState.liquid.specular;}
+	double waterShine()			 	{return oceanState.liquid.shine;}
+	void setWaterClarity(double f)  {oceanState.liquid.clarity=f;}
+	void setWaterMix(double f)      {oceanState.liquid.mix=f;}
+	void setWaterSpecular(double f) {oceanState.liquid.specular=f;}
+	void setWaterShine(double f) 	{oceanState.liquid.shine=f;}
+
+	double iceClarity()				{return oceanState.solid.clarity;}
+	double iceMix()					{return oceanState.solid.mix;}
+	double iceSpecular()			{return oceanState.solid.specular;}
+	double iceShine()				{return oceanState.solid.shine;}
+	void setIceClarity(double f)	{oceanState.solid.clarity=f;}
+	void setIceMix(double f)		{oceanState.solid.mix=f;}
+	void setIceSpecular(double f)	{oceanState.solid.specular=f;}
+	void setIceShine(double f)		{oceanState.solid.shine=f;}
+	
+	double oceanLiquidTemp()        { return oceanState.liquid.temp;}
+	double oceanGasTemp()           { return oceanState.solid.temp;}
+	void setOceanLiquidTemp(double f) { oceanState.liquid.temp=C2K(f);}
+	void setOceanGasTemp(double f)    { oceanState.solid.temp=C2K(f);}
+	
+	char *getOceanName()            { return oceanState.getName();}
+	void setOceanName(char *s)      { oceanState.setName(s);}
+
+	char *getOceanLiquidExpr()      { return oceanState.liquid.getExpr();}
+	void setOceanLiquidExpr(char *s){ oceanState.liquid.setExpr(s);}
+	char *getDfltOceanLiquidExpr();
+
+	char *getOceanSolidExpr()      { return oceanState.solid.getExpr();}
+	void setOceanSolidExpr(char *s){ oceanState.solid.setExpr(s);}
+	char *getDfltOceanSolidExpr();
+	
+	char *getDfltOceanExpr();
+	int getOceanFunction(char *buff);
+	void setOceanFunction(char *expr);
+
+
 	static int planet_id;
 	static int moon_cnt;
 	static int planet_cnt;
@@ -711,7 +776,7 @@ public:
 	Planetoid(Orbital *m, double s, double r);
 	~Planetoid();
 	const char *name()			{ return "Planetoid";}
-	virtual int  type()					{ return ID_PLANET;}
+	virtual int  type()			{ return ID_PLANET;}
 	virtual void setDateString();
 	virtual void getDateString(char *);
 	virtual void getTempString(char *);
@@ -733,7 +798,7 @@ public:
 	virtual double calc_time(double t);
 	virtual void set_time(double t);
 	virtual void calcAveTemperature();
-	virtual double calcLocalTemperature();
+	virtual double calcLocalTemperature(bool w);
 	virtual double tilt_bias();
 	virtual double season_bias();
 	virtual void animate();
@@ -743,8 +808,6 @@ public:
 	virtual bool water();
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();
-	virtual int getOceanFunction(char *buff);
-	virtual void setOceanFunction(char *expr);
 	virtual double evalOceanFunction();
 	virtual double solidToLiquid();
 	virtual double liquidToGas();
@@ -768,6 +831,7 @@ public:
 	virtual Sky *newSky();
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
+
 };
 
 //************************************************************

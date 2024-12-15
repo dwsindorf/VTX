@@ -1558,7 +1558,7 @@ void Scene::change_view(int v)
 
 	viewtype=v;
 
-	cout<<"Scene::change_view"<<" "<<viewobj<<endl;
+	//cout<<"Scene::change_view"<<" "<<viewobj<<endl;
 	//vobj=viewobj;
 
 	set_changed_detail();

@@ -25,7 +25,6 @@
 #define PVGET(name,value,init) if(prefs.get_local(name,Td)) value=Td.s; else value=init
 #define PCGET(name,value,init) if(prefs.get_local(name,Td)) value=Td.c; else value=init
 
-
 class Model;
 class TreeNode;
 class FrameMgr;

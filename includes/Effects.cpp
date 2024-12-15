@@ -243,7 +243,7 @@ void EffectsMgr::setProgram(int type){
 		c=sky_color;
 
 		vars.newFloatVec("WaterSky",c.red(),c.green(),c.blue(),c.alpha());
-
+        
 		vars.newFloatVec("WaterColor1",water_color1.red(),water_color1.green(),water_color1.blue(),water_color1.alpha());
 		vars.newFloatVec("WaterColor2",water_color2.red(),water_color2.green(),water_color2.blue(),water_color2.alpha());
 		vars.newFloatVec("IceColor1",ice_color1.red(),ice_color1.green(),ice_color1.blue(),ice_color1.alpha());
