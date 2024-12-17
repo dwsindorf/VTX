@@ -1481,6 +1481,12 @@ void TNwater::eval()
 void TNwater::saveNode(FILE *f)
 {
 	Planetoid *orb=(Planetoid *)getOrbital(this);
+	//if(!ocean)
+	ocean=orb->ocean;
+	ocean->saveNode(f);
+
+	/*
+	Planetoid *orb=(Planetoid *)getOrbital(this);
 	fprintf(f,"water(");
 	
 	//OceanState *ocean=orb->ocean;
@@ -1515,12 +1521,82 @@ void TNwater::saveNode(FILE *f)
 	fprintf(f,",%s",tmp);
 	fprintf(f,",%g,%g,%g",ocean->iceClarity()/FEET,ocean->iceShine(),ocean->iceSpecular());
 	fprintf(f,")\n");
+	*/
 }
 //-------------------------------------------------------------
 // TNwater::replaceNode
 //-------------------------------------------------------------
+#define TEST
 NodeIF *TNwater::replaceNode(NodeIF *c){
-	//cout<<"TNwater::replaceNode:"<<this<<" "<<c<<" r:"<<right<<endl;
+	char str[1024];
+	str[0]=0;
+#ifdef TEST
+	TerrainData arglist[8];
+	if(getParent()==0){
+	   cout<<"TNwater::replaceNode parent=0"<<end;
+	   return 0;
+	}
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	if(!orb){
+		cout<<"TNwater::replaceNode orb=0"<<end;
+		return 0;
+	}
+	if(c->typeValue()!=ID_OCEAN){
+		cout<<"TNwater::replaceNode wrong type "<<typeValue()<<":"<<c->typeValue()<<end;
+		return 0;
+	}
+	TNnoise *ice_noise;
+	TNnoise *water_noise;
+	TNarg *water_args;
+	TNarg *ice_args;
+	OceanState *newOcean=(OceanState *)c;
+	water_args=(TNarg *)newOcean->liquid->right;
+	water_noise=(TNnoise *)water_args->index(6);
+	ice_args=(TNarg *)newOcean->solid->right;
+	ice_noise=(TNnoise *)ice_args->index(6);
+
+	int n=getargs(water_args,arglist,6);
+	ocean=orb->ocean;
+	delete left;
+
+	if(n>0)
+		ocean->setWaterColor1(arglist[0].c);
+	if(n>1)
+		ocean->setWaterColor2(arglist[1].c);
+	if(n>2)
+		ocean->setOceanGasTemp(arglist[2].s);
+	if(n>3)
+		ocean->setWaterClarity(arglist[3].s*FEET);
+	if(n>4)
+		ocean->setWaterShine(arglist[4].s);
+	if(n>5)
+		ocean->setWaterSpecular(arglist[5].s);
+
+	n=getargs(ice_args,arglist,6);
+
+	if(n>0)
+		ocean->setIceColor1(arglist[0].c);
+	if(n>1)
+		ocean->setIceColor2(arglist[1].c);
+	if(n>2)
+		ocean->setOceanSolidTemp(arglist[2].s);
+	if(n>3)
+		ocean->setIceClarity(arglist[3].s*FEET);
+	if(n>4)
+		ocean->setIceShine(arglist[4].s);
+	if(n>5)
+		ocean->setIceSpecular(arglist[5].s);
+
+	left=(TNarg*)water_noise;
+	
+	((TNarg*)left)->right=ice_noise;
+	TNode *rem=ice_noise->right;
+    if(rem){
+		ice_noise->right=0;
+    	delete rem;
+    }
+	return this;
+#else
 	TerrainData arglist[8];
 	if(getParent()==0){
 	   cout<<"TNwater::replaceNode parent=0"<<end;
@@ -1535,25 +1611,18 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 		cout<<"TNwater::replaceNode wrong type "<<typeValue()<<":"<<c->typeValue()<<end;
 		return 0;
 	}
-	//OceanState *ocean=orb->ocean;
+	ocean=orb->ocean;
 
 	TNfunc *water_func=(TNfunc*)c;
 	TNfunc *ice_func=water_func->right;		
-	TNnoise *water_noise=(TNnoise *)water_func->left;
-	
-	delete left;
-	
-	if(!ice_func){ // replace with converted function 
-		left=(TNarg*)water_noise;
-		return this;
-	}
-	
+	TNnoise *water_noise=(TNnoise *)water_func->left;	
 	TNnoise *ice_noise=(TNnoise *)ice_func->left;
 	
 	TNarg *water_args=(TNarg*)water_noise; // first arg (noise expr)	
 	TNarg *ice_args=(TNarg*)ice_noise; // first arg (noise expr)
 
 	int n=getargs(water_args,arglist,6);
+	delete left;
 
 	if(n>1)
 		ocean->setWaterColor1(arglist[1].c);
@@ -1588,6 +1657,7 @@ NodeIF *TNwater::replaceNode(NodeIF *c){
 	ice_noise->right=0;
     delete rem;
 	return this;
+#endif
 }
 
 NodeIF *TNwater::newInstance(){

@@ -706,7 +706,7 @@ void Scene::init()
 	Render.set_multitexs(0);
 	set_movie((char*)dflt_movie_name);
 	read_prefs();
-	OceanState::init();
+	OceanState::setDefaults();
 
 }
 

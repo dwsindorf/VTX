@@ -108,7 +108,8 @@ static LongSym keytbl[]={
 	{"Leaf",		YY_LEAF},
 
 	{"Ocean",		YY_OCEAN},
-	{"state",		YY_STATE},
+	{"liquid",		YY_LIQUID},
+	{"solid",		YY_SOLID},
 	
 	{"Density",		YY_DENSITY},	
 		

@@ -15,6 +15,7 @@ using namespace std;
 #include "Craters.h"
 #include "Sprites.h"
 #include "Plants.h"
+#include "States.h"
 #include "Fractal.h"
 #include "Erode.h"
 #include "Layers.h"
@@ -116,7 +117,7 @@ void set_orbital(Orbital *orb){
 %token YY_MIX YY_WATER YY_CRATERS YY_MAP YY_TEXTURE YY_FRACTAL YY_FOG YY_SPRITE
 %token YY_ERODE YY_HARDNESS YY_GLOSS YY_SNOW YY_ROCKS YY_COLORS YY_BASE YY_CLOUDS
 %token YY_ROOT YY_BRANCH YY_LEAF YY_STEM
-%token YY_OCEAN YY_STATE
+%token YY_OCEAN YY_LIQUID YY_SOLID
 %token OR AND EQ NE GE LE
 
 %token <s> NAME STRING
@@ -125,6 +126,7 @@ void set_orbital(Orbital *orb){
 
 %type <d> value positive negative
 %type <n> expr water_expr craters_expr color_expr density_expr layer_expr fog_expr
+%type <n> ocean_expr liquid_expr solid_expr
 %type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
 %type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr
@@ -538,6 +540,7 @@ item_name
 
 expr
     : water_expr        	{ $$=$1;}
+    | ocean_expr            { $$=$1;}
     | erosion_expr          { $$=$1;}
     | hardness_expr         { $$=$1;}
     | gloss_expr            { $$=$1;}
@@ -611,6 +614,17 @@ expr
     						{ $$=new TNwater($3,$5);APOP;}
     | YY_WATER '(' arg_list ')'
     						{ $$=new TNwater($3,0);APOP;}
+
+liquid_expr
+    : YY_LIQUID '(' arg_list ')'
+    						{ $$=new LiquidState($3);}
+solid_expr
+    : YY_SOLID '(' arg_list ')'
+    						{ $$=new SolidState($3);}
+
+ocean_expr
+    : YY_OCEAN '(' arg_list ')' '[' liquid_expr ',' solid_expr ']'
+    						{ $$=new OceanState($3,$6,$8);APOP;}
  
  clouds_expr
     : YY_CLOUDS '(' arg_list ')' expr

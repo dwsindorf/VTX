@@ -392,7 +392,7 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
 	OceanState *ocean=orb->ocean;
 
 	ocean->setOceanGasTemp(LiquidTempSlider->getValue());
-	ocean->setOceanLiquidTemp(SolidTempSlider->getValue());
+	ocean->setOceanSolidTemp(SolidTempSlider->getValue());
 	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -470,13 +470,12 @@ void VtxWaterTabs::setObjAttributes(){
 		ocean->setOceanName(s);
 
 	int state=State->GetSelection();
-	
 
     orb->ocean_state=state;
 	orb->ocean_level=LevelSlider->getValue()*FEET;
 
     ocean->setOceanGasTemp(LiquidTempSlider->getValue());
-    ocean->setOceanLiquidTemp(SolidTempSlider->getValue());
+    ocean->setOceanSolidTemp(SolidTempSlider->getValue());
     Color wc=LiquidReflectSlider->getColor();
     wc.set_alpha(LiquidReflectSlider->getValue());
     ocean->setWaterColor1(wc);
@@ -495,6 +494,10 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setIceSpecular(SolidAlbedoSlider->getValue());
 
     orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
+    
+    ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
+    ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());
+    update_needed=true;
 
 	wxString str="ocean(";
 	str+=LiquidFunction->GetValue();
@@ -548,7 +551,7 @@ void VtxWaterTabs::getObjAttributes(){
 
 	object_name->SetValue(ocean->getOceanName());
 	LiquidTempSlider->setValue(ocean->oceanGasTemp()-273);
-	SolidTempSlider->setValue(ocean->oceanLiquidTemp()-273);
+	SolidTempSlider->setValue(ocean->oceanSolidTemp()-273);
 
 	LevelSlider->setValue(orb->ocean_level/FEET);
 

@@ -3383,25 +3383,22 @@ void Planetoid::get_vars()
 	VGET("ocean.state",ocean_state,def_ocean_state);
 	VGET("ocean.auto",ocean_auto,def_ocean_auto);
 	
-	MVGET("ocean.solid",solid.temp);
-	MVGET("ocean.liquid",liquid.temp);
-	MNGET("ocean.name",name);
+	MVGET("ocean.solid",solid->temp);
+	MVGET("ocean.liquid",liquid->temp);
+	MNGET("ocean.name",nodeName());
 	
-	MCGET("water.color1",liquid.color1);
-	MCGET("water.color2",liquid.color2);
-	MVGET("water.clarity",liquid.clarity);
-	MVGET("water.mix",liquid.mix);
-	MVGET("water.albedo",liquid.specular);
-	MVGET("water.shine",liquid.shine);
-	MCGET("ice.color1",solid.color1);
-	MCGET("ice.color2",solid.color2);
-	MVGET("ice.clarity",solid.clarity);
-	MVGET("ice.mix",solid.mix);
-	MVGET("ice.albedo",solid.specular);
-	MVGET("ice.shine",solid.shine);
-
-	MVGET("ocean.solid",liquid.temp);
-	MVGET("ocean.liquid",solid.temp);
+	MCGET("water.color1",liquid->color1);
+	MCGET("water.color2",liquid->color2);
+	MVGET("water.clarity",liquid->clarity);
+	MVGET("water.mix",liquid->mix);
+	MVGET("water.albedo",liquid->specular);
+	MVGET("water.shine",liquid->shine);
+	MCGET("ice.color1",solid->color1);
+	MCGET("ice.color2",solid->color2);
+	MVGET("ice.clarity",solid->clarity);
+	MVGET("ice.mix",solid->mix);
+	MVGET("ice.albedo",solid->specular);
+	MVGET("ice.shine",solid->shine);
 		
 	if(exprs.get_local("ocean.name",Td))
 		ocean->setName(Td.string);
@@ -3452,7 +3449,7 @@ void Planetoid::set_vars()
 	USET("ocean.level",ocean_level,0,"ft");
 	//VSET("ocean.solid",ocean_solid_temp,def_ocean_solid);
 	
-	MVSET("ocean.solid",oceanLiquidTemp());
+	MVSET("ocean.solid",oceanSolidTemp());
 	MVSET("ocean.liquid",oceanGasTemp());
 
 	//VSET("ocean.liquid",ocean_liquid_temp,def_ocean_liquid);
@@ -3886,7 +3883,7 @@ void Planetoid::adapt_object()
 	set_tod();
 	calcAveTemperature();
 	Tave=temperature;
-	Tsol=ocean->oceanLiquidTemp();
+	Tsol=ocean->oceanSolidTemp();
 	Tgas=ocean->oceanGasTemp();	
 	
 	double p=TheScene->phi;
@@ -4253,7 +4250,7 @@ double Planetoid::calcLocalTemperature(bool w){
 	Sfact=K2C(t)/K2C(temperature)-1;
 	Temp=t;
 	if(ocean_auto){
-		if (t <= ocean->oceanLiquidTemp())
+		if (t <= ocean->oceanSolidTemp())
 			ocean_state = SOLID;
 		else if (t <= ocean->oceanGasTemp())
 			ocean_state = LIQUID;
@@ -4263,7 +4260,7 @@ double Planetoid::calcLocalTemperature(bool w){
 	Raster.frozen=ocean_state==SOLID?true:false;
 	if(w && water() &&ocean_expr){
 		f=evalOceanFunction();
-		hf=lerp(TheScene->elevation/MILES,100,5000,1,10);		
+		hf=lerp(TheScene->elevation/MILES,100,5000,1,2);		
 		t+=hf*f;
 	}
 	if(debug_temp){
@@ -4351,7 +4348,7 @@ double Planetoid::solidToLiquid(){
 	}
 	//double f=evalOceanFunction();
 	double temp=Temp;//+f;//-273;	
-	double dt=smoothstep(ocean->oceanLiquidTemp(),ocean->oceanLiquidTemp()+0.0005*(ocean->oceanGasTemp()-ocean->oceanLiquidTemp()),temp,1.0,0);
+	double dt=smoothstep(ocean->oceanSolidTemp(),ocean->oceanSolidTemp()+0.0005*(ocean->oceanGasTemp()-ocean->oceanSolidTemp()),temp,1.0,0);
 	//cout<<dt<<" "<<temp<<endl;
 	return dt;
 }
