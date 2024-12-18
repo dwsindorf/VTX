@@ -22,7 +22,6 @@ public:
 
     void setExpr(char *e){ strcpy(expr,e);}
     char *getExpr(){ return expr;}
-	void print(char *suffix);
 	void valueString(char *s);
 	void saveNode(FILE *);
 
@@ -33,6 +32,8 @@ public:
 	LiquidState(TNode *a);
 	const char *symbol()	{ return "liquid";}
 	int typeValue()			{ return ID_LIQUID;}
+	static void newInstance(char *);
+	static NodeIF *newInstance();
 };
 class SolidState : public MaterialState {
 public:
@@ -40,11 +41,12 @@ public:
 	SolidState(TNode *a);
 	const char *symbol()	{ return "solid";}
 	int typeValue()			{ return ID_SOLID;}
+	static void newInstance(char *);
+	static NodeIF *newInstance();
 };
 class OceanState  : public TNfunc {
 public:
 	OceanState(TNode *l, LiquidState *m1, SolidState *m2);
-
 	int typeValue()			{ return ID_OCEAN;}
 
 	LiquidState *liquid;
@@ -58,7 +60,7 @@ public:
 	Color iceColor1()			 	{return solid->color1;}
 	Color iceColor2()			 	{return solid->color2;}
 
-	double waterClarity()		 	{return liquid->clarity;}
+	double waterClarity()		 	{return liquid->clarity*FEET;}
 	double waterMix()			 	{return liquid->mix;}
 	double waterSpecular()       	{return liquid->specular;}
 	double waterShine()			 	{return liquid->shine;}
@@ -67,7 +69,7 @@ public:
 	void setWaterSpecular(double f) {liquid->specular=f;}
 	void setWaterShine(double f) 	{liquid->shine=f;}
 
-	double iceClarity()				{return solid->clarity;}
+	double iceClarity()				{return solid->clarity*FEET;}
 	double iceMix()					{return solid->mix;}
 	double iceSpecular()			{return solid->specular;}
 	double iceShine()				{return solid->shine;}
@@ -98,8 +100,8 @@ public:
 	static Array<OceanState *>oceanTypes;
 	static void setDefaults();
 	void saveNode(FILE *);
-
-	void print();
+	
+	static NodeIF *newInstance();
 };
 
 #endif

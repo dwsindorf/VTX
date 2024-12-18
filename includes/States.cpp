@@ -2,31 +2,36 @@
 #include "SceneClass.h"
 #include "TerrainClass.h"
 
-//water(noise(GRADIENT|SCALE,17.7,3,-0.34,0.5,2.08,0.22,1,0,0),Color(0.827,0.863,0.996),Color(0.027,0.247,0.220),762.618,100,1)
-//ice(noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0),Color(1.000,1.000,1.000,0.173),Color(0.400,0.667,0.808),15.8451,15.278,0.625)
-//Ocean("H2O")[liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),0.00,500.00,0.80,10.00,noise(GRADIENT|NABS|SQR|RO1,0.7,10,1,0.5,2.22,1,1,0,0,1e-06)),
-//solid(Color(1,1,1,0.6),Color(0.4,0.675,0.8),100.00,1.00,0.80,10.00,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))]
-
 static char* def_liquid_func="noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0)";
 static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
 static char* def_ocean_func="noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06)";
 //noise(GRADIENT|RO1,2,10,1,0.5,2,1,1,0,0,1e-06)
 Array<OceanState*> OceanState::oceanTypes(6);
 
-static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),100,500,0.95,100,1)";
+static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),100,300,0.95,100,1)";
 static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),0,1.0,0.95,0.8,0.6)";
 
+//#define TEST
 void OceanState::setDefaults(){
 	char str[1024];
 	sprintf(str,"Ocean(\"%s\")[%s,%s]","H2O",H2O_liq_str,H2O_sol_str);
-	cout<<str<<endl;
+	//cout<<str<<endl;
 	if(oceanTypes.size==0){
-		OceanState *test=(OceanState*)TheScene->parse_node((char*)str);
+		OceanState *water=(OceanState*)TheScene->parse_node((char*)str);
+		if(water){
+			str[0]=0;
+			water->valueString(str);
+			cout<<str<<endl;
+			oceanTypes.add(water);
+		}
+#ifdef TEST	
+		OceanState *test=OceanState::newInstance();
 		if(test){
-			oceanTypes.add(test);
+			str[0]=0;
 			test->valueString(str);
 			cout<<str<<endl;
 		}
+#endif		
 	}
 }
 MaterialState::MaterialState(): TNunary(0){}
@@ -51,55 +56,125 @@ MaterialState::MaterialState(TNode *r) : TNunary(r){
 	double vals[6];
 	TNarg *a=args.index(2);
 	int n=getargs(a,vals,6);
-	temp=C2K(vals[0]);
-	clarity=vals[1]*FEET;
+	temp=vals[0];
+	clarity=vals[1];
 	mix=vals[2];
-	specular=vals[3];
-	shine=vals[4];
+	shine=vals[3];
+	specular=vals[4];
 	expr[0]=0;
 }
 
 LiquidState::LiquidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[8]){
-		args[8]->valueString(expr);
-	}
+	if(args[7])
+		args[7]->valueString(expr);
 	else
 		setExpr(def_liquid_func);
 }
+void LiquidState::newInstance(char *buff){
+	char cstr[256];
+	cstr[0]=0;
+
+	Color tc=Color(0.5+3*r[4],0.5+r[5],0.6*r[5]);
+	Color mix=Color(0.4+2*r[7],0.5*r[8],0.1+0.3*r[9]);
+	
+	Color c1=tc.darken(0.7+0.1*s[2]);
+	Color c2=tc.lighten(0.5+0.1*s[3]);
+
+	std::string water="liquid(";
+
+	Color b=Color("Color(0.8,0.9,1)");
+	b=b.mix(mix,0.8*r[2]);
+	b.set_alpha(0.2);
+	b.toString(cstr);
+	water+=cstr;
+	water+=",";
+	b=Color("Color(0.2,0.4,0.5)");
+	b=b.mix(c1,0.8*r[2]);
+	b=b.darken(0.3);
+	b.toString(cstr);
+	water+=cstr;
+	water+=",100,300,0.95,100,1,";
+	water+=def_liquid_func;
+	water+=")";
+	strcpy(buff,water.c_str());
+	//cout<<buff<<endl;
+}
+NodeIF *LiquidState::newInstance(){
+	char buff[1024];
+	buff[0]=0;
+	newInstance(buff);
+	NodeIF *c=TheScene->parse_node(buff);
+	return c;	
+}
 SolidState::SolidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[8])
-		args[8]->valueString(expr);
+	if(args[7])
+		args[7]->valueString(expr);
 	else
 		setExpr(def_solid_func);
+}
+
+void SolidState::newInstance(char *buff){
+	char cstr[256];
+	cstr[0]=buff[0]=0;
+
+	Color tc=Color(0.5+3*r[4],0.5+r[5],0.6*r[5]);
+	Color c2=tc.lighten(0.5+0.1*s[3]);
+
+	std::string ice="solid(";
+	Color b=Color("Color(1.000,1.000,1.000,0.173)");
+	b=b.mix(c2,0.1*r[2]);
+	b.toString(cstr);
+	ice+=cstr;
+	ice+=",";
+	b=Color("Color(0.4,0.8,0.8)");
+	b=b.mix(tc,0.5*r[2]);
+	b.toString(cstr);
+	ice+=cstr;
+	ice+=",100,0.3,40,1,";
+	ice+=def_solid_func;
+	ice+=")";
+	
+	strcpy(buff,ice.c_str());
+	cout<<buff<<endl;
 
 }
-void MaterialState::print(char *s){
-	char str[512];
-	sprintf(str,"%s Temp:%-4.0fC Color1(%1.2f,%1.2f,%1.2f,%1.2f) Color2(%1.2f,%1.2f,%1.2f,%1.2f)",s,K2C(temp),
-			color1.red(),color1.green(),color1.blue(),color1.alpha(),
-			color2.red(),color2.green(),color2.blue(),color2.alpha());
-	cout<<str<<endl;
-	cout<<expr<<endl;
+NodeIF *SolidState::newInstance(){
+	char buff[1024];
+	buff[0]=0;
+	newInstance(buff);
+	NodeIF *c=TheScene->parse_node(buff);
+	return c;	
+}
+NodeIF *OceanState::newInstance(){
+	char buff[1024];
+	char lbuff[1024];
+	char sbuff[1024];
+	buff[0]=lbuff[0]=sbuff[0]=0;
+	LiquidState::newInstance(lbuff);
+	SolidState::newInstance(sbuff);
+    sprintf(buff,"Ocean(\"test\")[%s,\n%s]",lbuff,sbuff);
+    cout<<"OceanState::newInstance"<<endl;
+
+    NodeIF *c=TheScene->parse_node(buff);
+	return c;
 }
 void MaterialState::valueString(char *s){
 	char col1[256]={0};
 	char col2[256]={0};
+	color1.toString(col1);
+	color2.toString(col2);
 	
-	TNarg &args=*((TNarg *)right);
-	args[0]->valueString(col1);
-	args[1]->valueString(col2);
-	double arg[6];
-	TNarg *a=args.index(2);
-	int n=getargs(a,arg,6);
 	if(strlen(name)>0)
-		sprintf(s,"%s(\"%s\",%s,%s,%1.2f,%1.2f,%1.2f,%1.2f",symbol(),name,col1,col2,arg[0],arg[1],arg[3],arg[4],arg[5]);
+		sprintf(s,"%s(\"%s\",%s,%s,%g,%g,%g,%g,%g",symbol(),name,col1,col2,temp,clarity,mix,shine,specular);
 	else
-		sprintf(s,"%s(%s,%s,%1.2f,%1.2f,%1.2f,%1.2f",symbol(),col1,col2,arg[0],arg[1],arg[3],arg[4],arg[5]);
+		sprintf(s,"%s(%s,%s,%g,%g,%g,%g,%g",symbol(),col1,col2,temp,clarity,mix,shine,specular);
 	if(strlen(expr)>0)
 		sprintf(s+strlen(s),",%s",expr);
+
 	sprintf(s+strlen(s),")",expr);
+
 }
 void MaterialState::saveNode(FILE *f){
 	char str[1024];
@@ -128,16 +203,14 @@ void OceanState::saveNode(FILE *f){
 	char str[2048];
 	str[0]=0;
 	valueString(str);
-	cout<<str<<endl;
 	fprintf(f,"%s",str);
 }
-void OceanState::print(){
-	liquid->print("liquid");
-	solid->print("solid ");
-}
+
 void OceanState::valueString(char *s){
-	char str1[256];
-	char str2[256];
+	char str1[512];
+	char str2[512];
+	str1[0]=0;
+	str2[0]=0;
 	liquid->valueString(str1);
 	solid->valueString(str2);
 	sprintf(s,"Ocean(\"%s\")[%s,\n%s]",nodeName(),str1,str2);
@@ -151,3 +224,4 @@ char *OceanState::getDfltOceanSolidExpr(){
 char *OceanState::getDfltOceanExpr(){
 	return def_ocean_func;	
 }
+

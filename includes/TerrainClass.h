@@ -212,10 +212,7 @@ public:
 class TNwater : public TNfunc
 {
 public:
-	OceanState *ocean;
-	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {
-		ocean=0;
-	}
+	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {}
 	
 	void eval();
 	void saveNode(FILE *);
@@ -223,7 +220,8 @@ public:
 	int typeValue()			{ return ID_WATER;}
 	const char *typeName ()	{ return "ocean";}
 	NodeIF *getInstance();
-	static NodeIF *newInstance();
+	void setNoiseExprs(OceanState *s);
+	
 };
 
 //************************************************************

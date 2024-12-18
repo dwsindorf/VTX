@@ -247,7 +247,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"base(0)\n");
 		break;
 	case TN_WATER:
-		sprintf(tmp,"ocean(0.0)\n");
+		sprintf(tmp,"ocean(%s,%s)\n",OceanState::getDfltOceanLiquidExpr(),OceanState::getDfltOceanSolidExpr());
 		break;
 	case TN_COLOR:
 		sprintf(tmp,"Color(1,1,1)\n");

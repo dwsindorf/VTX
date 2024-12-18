@@ -617,10 +617,10 @@ expr
 
 liquid_expr
     : YY_LIQUID '(' arg_list ')'
-    						{ $$=new LiquidState($3);}
+    						{ $$=new LiquidState($3);APOP;}
 solid_expr
     : YY_SOLID '(' arg_list ')'
-    						{ $$=new SolidState($3);}
+    						{ $$=new SolidState($3);APOP;}
 
 ocean_expr
     : YY_OCEAN '(' arg_list ')' '[' liquid_expr ',' solid_expr ']'

@@ -126,14 +126,10 @@ public:
     	invalidateObject();
     }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
-		Planetoid *orb=getOrbital();
-		orb->ocean->setWaterColor2(LiquidTransmitSlider->getColor());
-    	invalidateRender();
+    	setObjAttributes();
     }
     void OnLiquidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
-		Planetoid *orb=getOrbital();
-		orb->ocean->setWaterColor1(LiquidReflectSlider->getColor());
-    	invalidateRender();
+    	setObjAttributes();
     }
 
 	DEFINE_SLIDER_EVENTS(LiquidTemp)
@@ -143,13 +139,11 @@ public:
 	DEFINE_SLIDER_EVENTS(LiquidShine)
 
     void OnSolidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
-		Planetoid *orb=getOrbital();
-		orb->ocean->setIceColor2(SolidTransmitSlider->getColor());
+    	setObjAttributes();
     	invalidateRender();
     }
     void OnSolidReflectColor(wxColourPickerEvent& WXUNUSED(event)){
-		Planetoid *orb=getOrbital();
-		orb->ocean->setIceColor1(SolidReflectSlider->getColor());
+    	setObjAttributes();
     	invalidateRender();
     }
 

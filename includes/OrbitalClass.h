@@ -657,6 +657,7 @@ public:
 	int        ocean_state;
 	bool       ocean_auto;
 	bool       seasonal;
+	bool       have_water;
 
 	TNode     *ocean_expr;
 
@@ -705,7 +706,8 @@ public:
 	virtual void setDateString();
 	virtual void getDateString(char *);
 	virtual void getTempString(char *);
-
+    virtual void setOcean(OceanState *s);
+    virtual OceanState *getOcean();
 	virtual void set_lighting();
 	virtual void set_tod();
     virtual void map_color(MapData*,Color&);
@@ -731,6 +733,7 @@ public:
 	virtual bool solid();
 	virtual bool gas();
 	virtual bool water();
+	virtual void checkForOcean();
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();
 	virtual double evalOceanFunction();

@@ -389,7 +389,7 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
     SolidTempSlider->setValue(solid);
     LiquidTempSlider->setValue(liquid);
 	Planetoid *orb=getOrbital();
-	OceanState *ocean=orb->ocean;
+	OceanState *ocean=orb->getOcean();
 
 	ocean->setOceanGasTemp(LiquidTempSlider->getValue());
 	ocean->setOceanSolidTemp(SolidTempSlider->getValue());
@@ -461,10 +461,11 @@ void VtxWaterTabs::OnSetDefaultSolid(wxCommandEvent& event){
 void VtxWaterTabs::setObjAttributes(){
 	update_needed=true;
 	TNwater *tnode=water();
+	char tstr[256]={0};
 
 	Planetoid *orb=getOrbital();
-	OceanState *ocean=orb->ocean;
-
+	OceanState *ocean=orb->getOcean();
+	
 	char *s=object_name->GetValue().ToAscii();
 	if(s)
 		ocean->setOceanName(s);
@@ -478,8 +479,10 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setOceanSolidTemp(SolidTempSlider->getValue());
     Color wc=LiquidReflectSlider->getColor();
     wc.set_alpha(LiquidReflectSlider->getValue());
+    wc.toString(tstr);
+
     ocean->setWaterColor1(wc);
-	wc=LiquidTransmitSlider->getColor();
+ 	wc=LiquidTransmitSlider->getColor();
 	wc.set_alpha(LiquidReflectSlider->getValue());
 	ocean->setWaterColor2(wc);
 	ocean->setWaterClarity(LiquidTransmitSlider->getValue()*FEET);
@@ -506,7 +509,7 @@ void VtxWaterTabs::setObjAttributes(){
 	str+=")";
 	str+="\n";
 
-	char p[256];
+	char p[512];
 	strcpy(p,str.ToAscii());
 	tnode->setExpr(p);
 	if(tnode->getExprNode()==0)
@@ -526,7 +529,7 @@ void VtxWaterTabs::getObjAttributes(){
 	Planetoid *orb=getOrbital();
 	TNwater *tnode=water();
 	
-	OceanState *ocean=orb->ocean;
+	OceanState *ocean=orb->getOcean();
 
 	TNarg *arg=(TNarg*)tnode->left;
 
@@ -535,11 +538,11 @@ void VtxWaterTabs::getObjAttributes(){
 
 	if(arg){
 		LiquidFunction->SetValue(arg);
-   		//orb->setOceanLiquidExpr((char *)LiquidFunction->GetValue().ToAscii());
+		ocean->setOceanLiquidExpr((char *)LiquidFunction->GetValue().ToAscii());
 		arg=arg->next();
 		if(arg){
  			SolidFunction->SetValue(arg);
-   			//orb->setOceanSolidExpr((char *)LiquidFunction->GetValue().ToAscii());
+ 			ocean->setOceanSolidExpr((char *)SolidFunction->GetValue().ToAscii());
 		}
 	}
  	char buff[256];
