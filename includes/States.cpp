@@ -8,8 +8,8 @@ static char* def_ocean_func="noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06)";
 //noise(GRADIENT|RO1,2,10,1,0.5,2,1,1,0,0,1e-06)
 Array<OceanState*> OceanState::oceanTypes(6);
 
-static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),100,300,0.95,100,1)";
-static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),0,1.0,0.95,0.8,0.6)";
+static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),373,300,0.95,100,1,10)";
+static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),273,1.0,0.95,0.8,0.6,1)";
 
 //#define TEST
 void OceanState::setDefaults(){
@@ -61,6 +61,7 @@ MaterialState::MaterialState(TNode *r) : TNunary(r){
 	mix=vals[2];
 	shine=vals[3];
 	specular=vals[4];
+	trans_temp=vals[5];
 	expr[0]=0;
 }
 
@@ -94,7 +95,7 @@ void LiquidState::newInstance(char *buff){
 	b=b.darken(0.3);
 	b.toString(cstr);
 	water+=cstr;
-	water+=",100,300,0.95,100,1,";
+	water+=",373,300,0.95,100,1,10,";
 	water+=def_liquid_func;
 	water+=")";
 	strcpy(buff,water.c_str());
@@ -132,7 +133,7 @@ void SolidState::newInstance(char *buff){
 	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
-	ice+=",100,0.3,40,1,";
+	ice+=",273,1.0,0.95,40,1,1,";
 	ice+=def_solid_func;
 	ice+=")";
 	

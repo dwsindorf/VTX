@@ -19,8 +19,9 @@ uniform float twilite_min;
 uniform float twilite_max;
 uniform float twilite_dph; // dot product between point-center light-point at horizon
 uniform vec3 center;
-
 uniform vec4 WaterSky;
+
+#ifdef WATER
 
 uniform vec4 WaterColor2;
 uniform vec4 WaterColor1;
@@ -37,7 +38,7 @@ uniform float ice_saturation;
 uniform float ice_clarity;
 uniform float ice_mix;
 uniform float ice_dpr;
-
+#endif
 
 //uniform float water_dpr;
 uniform float dpm;
@@ -122,16 +123,18 @@ void main(void) {
 		specular    = pow(max(sdp,0.0), gl_FrontMaterial.shininess);
 		Specular    = gl_LightSource[i].specular.rgb*specular*shadow_specular;		
 	}
+	float clarity=1;
 	float wf=lerp(type,1,2,0,1);
+#ifdef WATER
 	vec3 Color1 = mix(WaterColor1,IceColor1,wf);
 	vec3 Color2 = mix(WaterColor2,IceColor2,wf);
 	
 	float reflection=mix(water_reflection,ice_reflection,wf);
 	float saturation=mix(water_saturation,ice_saturation,wf);
-	float clarity=mix(water_clarity,ice_clarity,wf);
+	clarity=mix(water_clarity,ice_clarity,wf);
 	float cmix=mix(water_mix,ice_mix,wf);
 	float dpr=0.5*mix(water_dpr,ice_dpr,wf);
-	
+#endif	
 	float reflect1=dot(normal,eye); // reflection angle
 	float depth=gl_FragCoord.z; // water
 	float z=fcolor2.g;  // land

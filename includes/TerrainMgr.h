@@ -208,6 +208,7 @@ public:
 	virtual TerrainSym *set_var(const char*,Point);
 	virtual TerrainSym *set_var(const char*,Color);
 
+	virtual TerrainSym *hide_var(const char*);
 	virtual TerrainSym *set_var(const char*,char*,int);
 	virtual TerrainSym *set_var(const char*,double,int);
 	virtual TerrainSym *set_var(const char*,Point,int);
@@ -263,6 +264,7 @@ public:
 	TNode  *add_expr(char *, TNode *r);
 	TNvar  *setVar(char *s, char *);
 	TNvar  *removeVar(char *);
+	TNvar  *removeExprVar(char *);
 	TNvar  *getVar(char *);
 
 	TNode    *add_image(TNode *r);
@@ -281,7 +283,8 @@ public:
 	virtual NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	virtual void invalidate();
 	virtual TNvar *get_expr(char*);
-
+	virtual TNvar *getExprVal(char*, TerrainData &f);
+	virtual TNvar *setExprVal(char*, TerrainData &f);
 	virtual void applyVarExprs();
 	virtual void clearVarExprs();
 	virtual void applyVarExpr(char *);

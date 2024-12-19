@@ -16,7 +16,6 @@ protected:
 		NodeIF *obj=water();
 		while(obj && !(obj->typeValue() & ID_ORBITAL))
 			obj=obj->getParent();
-
 		return (Planetoid*)obj;
 	}
 
@@ -26,7 +25,6 @@ protected:
 
     void invalidateObject(){
     	water()->invalidate();
-    	setObjAttributes();
     	TheView->set_changed_detail();
     	TheScene->rebuild();
     }
@@ -46,15 +44,19 @@ protected:
 	SliderCtrl   *LevelSlider;
 
 	SliderCtrl   *LiquidTempSlider;
+	SliderCtrl   *LiquidTransTempSlider;
 	SliderCtrl   *LiquidAlbedoSlider;
 	SliderCtrl   *LiquidShineSlider;
+	SliderCtrl   *LiquidMixSlider;
 	ExprTextCtrl *LiquidFunction;
 	ColorSlider  *LiquidTransmitSlider;
 	ColorSlider  *LiquidReflectSlider;
 
 	SliderCtrl   *SolidTempSlider;
+	SliderCtrl   *SolidTransTempSlider;
 	SliderCtrl   *SolidAlbedoSlider;
 	SliderCtrl   *SolidShineSlider;
+	SliderCtrl   *SolidMixSlider;
 	ExprTextCtrl *SolidFunction;
 	ColorSlider  *SolidTransmitSlider;
 	ColorSlider  *SolidReflectSlider;
@@ -90,6 +92,7 @@ public:
 		delete LiquidTransmitSlider;
 		delete LiquidReflectSlider;
 		delete LiquidTempSlider;
+		delete LiquidTransTempSlider;
 
 		delete SolidAlbedoSlider;
 		delete SolidShineSlider;
@@ -97,6 +100,7 @@ public:
 		delete SolidTransmitSlider;
 		delete SolidReflectSlider;
 		delete SolidTempSlider;
+		delete SolidTransTempSlider;
 		delete OceanFunction;
 	}
 	void updateControls();
@@ -111,19 +115,19 @@ public:
     void OnSetState(wxCommandEvent& event);
 
     void OnSurfaceFunctionEnter(wxCommandEvent& event){
-     	invalidateObject();
+    	setObjAttributes();
     }
 
     void OnEndLevelSlider(wxScrollEvent& event){
     	LevelSlider->setValueFromSlider();
-    	invalidateObject();
+    	setObjAttributes();
     }
     void OnLevelSlider(wxScrollEvent& event){
     	LevelSlider->setValueFromSlider();
     }
     void OnLevelText(wxCommandEvent& event){
     	LevelSlider->setValueFromText();
-    	invalidateObject();
+    	setObjAttributes();
     }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
     	setObjAttributes();
@@ -133,6 +137,8 @@ public:
     }
 
 	DEFINE_SLIDER_EVENTS(LiquidTemp)
+	DEFINE_SLIDER_EVENTS(LiquidTransTemp)
+	DEFINE_SLIDER_EVENTS(LiquidMix)
 	DEFINE_SLIDER_EVENTS(LiquidReflect)
 	DEFINE_SLIDER_EVENTS(LiquidTransmit)
     DEFINE_SLIDER_EVENTS(LiquidAlbedo)
@@ -148,6 +154,8 @@ public:
     }
 
 	DEFINE_SLIDER_EVENTS(SolidTemp)
+	DEFINE_SLIDER_EVENTS(SolidTransTemp)
+	DEFINE_SLIDER_EVENTS(SolidMix)
 	DEFINE_SLIDER_EVENTS(SolidReflect)
 	DEFINE_SLIDER_EVENTS(SolidTransmit)
     DEFINE_SLIDER_EVENTS(SolidAlbedo)

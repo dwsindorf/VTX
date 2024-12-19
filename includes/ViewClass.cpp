@@ -41,6 +41,7 @@ static DoubleSym units[]={
 	{"mm",			MM},
 	{"au",			AU},
 	{"bm",			BM},
+	{"bm",			BM},
 	{"ly",			LY}
 };
 NameList<DoubleSym*> Units(units,sizeof(units)/sizeof(DoubleSym));

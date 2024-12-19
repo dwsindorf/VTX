@@ -37,6 +37,10 @@ enum{
     ID_LIQUID_ALBEDO_TEXT,
     ID_LIQUID_TEMP_SLDR,
     ID_LIQUID_TEMP_TEXT,
+    ID_LIQUID_TRANS_TEMP_SLDR,
+    ID_LIQUID_TRANS_TEMP_TEXT,
+    ID_LIQUID_MIX_SLDR,
+    ID_LIQUID_MIX_TEXT,
 
     ID_SOLID_SURFACE_TEXT,
     ID_SOLID_TRANSMIT_SLDR,
@@ -51,6 +55,10 @@ enum{
     ID_SOLID_ALBEDO_TEXT,
     ID_SOLID_TEMP_SLDR,
     ID_SOLID_TEMP_TEXT,
+    ID_SOLID_TRANS_TEMP_SLDR,
+    ID_SOLID_TRANS_TEMP_TEXT,
+    ID_SOLID_MIX_SLDR,
+    ID_SOLID_MIX_TEXT,
 
 
 };
@@ -79,6 +87,8 @@ SET_COLOR_EVENTS(LIQUID_REFLECT,VtxWaterTabs,LiquidReflect)
 SET_SLIDER_EVENTS(LIQUID_SHINE,VtxWaterTabs,LiquidShine)
 SET_SLIDER_EVENTS(LIQUID_ALBEDO,VtxWaterTabs,LiquidAlbedo)
 SET_SLIDER_EVENTS(LIQUID_TEMP,VtxWaterTabs,LiquidTemp)
+SET_SLIDER_EVENTS(LIQUID_TRANS_TEMP,VtxWaterTabs,LiquidTransTemp)
+SET_SLIDER_EVENTS(LIQUID_MIX,VtxWaterTabs,LiquidMix)
 
 EVT_TEXT_ENTER(ID_LIQUID_SURFACE_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 
@@ -87,6 +97,8 @@ SET_COLOR_EVENTS(SOLID_REFLECT,VtxWaterTabs,SolidReflect)
 SET_SLIDER_EVENTS(SOLID_SHINE,VtxWaterTabs,SolidShine)
 SET_SLIDER_EVENTS(SOLID_ALBEDO,VtxWaterTabs,SolidAlbedo)
 SET_SLIDER_EVENTS(SOLID_TEMP,VtxWaterTabs,SolidTemp)
+SET_SLIDER_EVENTS(SOLID_TRANS_TEMP,VtxWaterTabs,SolidTransTemp)
+SET_SLIDER_EVENTS(SOLID_MIX,VtxWaterTabs,SolidMix)
 
 EVT_TEXT_ENTER(ID_SOLID_SURFACE_TEXT,VtxWaterTabs::OnSurfaceFunctionEnter)
 
@@ -133,14 +145,15 @@ bool VtxWaterTabs::Create(wxWindow* parent,
  	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
  	AddPropertiesTab(page);
     AddPage(page,wxT("Properties"),true);
+    
+	page = new wxPanel(this, wxID_ANY);
+	AddSolidTab(page);
+	AddPage(page,wxT("Solid"),false);
 
 	page = new wxPanel(this, wxID_ANY);
 	AddLiquidTab(page);
 	AddPage(page,wxT("Liquid"),false);
 
-	page = new wxPanel(this, wxID_ANY);
-	AddSolidTab(page);
-	AddPage(page,wxT("Solid"),false);
 
     return true;
 }
@@ -171,33 +184,6 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	boxSizer->Add(object_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
 
-	wxBoxSizer *temp_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
-			wxT("Temperature (C)"));
-
-
-	hline = new wxBoxSizer(wxHORIZONTAL);
-
-	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),5, types);
-	Composition->SetSelection(4);
-
-	hline->Add(Composition, 0, wxALIGN_LEFT | wxALL, 0);
-
-	LiquidTempSlider = new SliderCtrl(panel, ID_LIQUID_TEMP_SLDR, "Gas", 30,
-			VALUE2, 80);
-	LiquidTempSlider->setRange(-1000, 1000);
-	LiquidTempSlider->setValue(100.0);
-
-	hline->Add(LiquidTempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-
-	SolidTempSlider = new SliderCtrl(panel, ID_SOLID_TEMP_SLDR, "Liquid", 50,
-			VALUE2, 80);
-	SolidTempSlider->setRange(-1000, 1000);
-	SolidTempSlider->setValue(0.0);
-
-	hline->Add(SolidTempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	temp_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
-	boxSizer->Add(temp_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
-
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
     wxString modes[]={"Gas", "Liquid","Solid"};
@@ -216,22 +202,29 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	planet_temp=new StaticTextCtrl(panel,ID_PLANET_TEMP_TEXT,"",0,200);
 
-	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 2);
 	hline->Add(default_state, 0, wxALIGN_LEFT|wxTOP, 0);
 
     boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
-	hline = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *presets = new wxStaticBoxSizer(wxHORIZONTAL, panel,
+			wxT("Presets"));
 
-	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",100,280);
+	//hline = new wxBoxSizer(wxHORIZONTAL);
 
-	hline->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 5);
+	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),5, types);
+	Composition->SetSelection(4);
+	presets->Add(Composition, 0, wxALIGN_LEFT | wxALL, 2);
 
-	default_mod=new wxButton(panel,ID_DEFAULT_MOD,"Default",wxDefaultPosition,wxSize(60,25));
-	hline->Add(default_mod,0,wxALIGN_LEFT|wxALL,5);
+	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",80,150);
 
-    boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+	presets->Add(OceanFunction->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
+	default_mod=new wxButton(panel,ID_DEFAULT_MOD,"Default",wxDefaultPosition,wxSize(50,25));
+	presets->Add(default_mod,0,wxALIGN_LEFT|wxALL,0);
+	presets->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+
+    boxSizer->Add(presets, 0, wxALIGN_LEFT | wxALL, 0);
 
 }
 void VtxWaterTabs::AddLiquidTab(wxWindow *panel){
@@ -242,12 +235,16 @@ void VtxWaterTabs::AddLiquidTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxStaticBoxSizer* surface = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
-	LiquidFunction=new ExprTextCtrl(panel,ID_LIQUID_SURFACE_TEXT,"function",LABEL2S,EXPR_WIDTH);
+	LiquidFunction=new ExprTextCtrl(panel,ID_LIQUID_SURFACE_TEXT,"Modulation",LABEL2,EXPR_WIDTH);
 	surface->Add(LiquidFunction->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
 	default_liquid=new wxButton(panel,ID_DEFAULT_LIQUID,"Default",wxDefaultPosition,wxSize(60,25));
-	surface->Add(default_liquid,0,wxALIGN_LEFT|wxALL,5);
-	
+	surface->Add(default_liquid,0,wxALIGN_LEFT|wxALL,0);
+
+	LiquidMixSlider = new SliderCtrl(panel,ID_LIQUID_MIX_SLDR,"Mix",30,VALUE,SLIDER2);
+	LiquidMixSlider->setRange(0,1.0);
+	surface->Add(LiquidMixSlider->getSizer(), 0, wxALIGN_LEFT|wxLEFT,5);
+
 	surface->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(surface, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -273,13 +270,28 @@ void VtxWaterTabs::AddLiquidTab(wxWindow *panel){
     LiquidShineSlider->setRange(0,100.0);
     specular->Add(LiquidShineSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
-
     LiquidAlbedoSlider = new SliderCtrl(panel,ID_LIQUID_ALBEDO_SLDR,"albedo",LABEL2S,VALUE,SLIDER2);
     LiquidAlbedoSlider->setRange(0,1.0);
     specular->Add(LiquidAlbedoSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
     specular->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(specular, 0, wxALIGN_LEFT|wxALL,0);
+    
+    wxStaticBoxSizer* temperature = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Temperature"));
+
+	LiquidTempSlider = new SliderCtrl(panel, ID_LIQUID_TEMP_SLDR, "Gas", LABEL2,VALUE,SLIDER2);
+	LiquidTempSlider->setRange(-1000, 1000);
+	LiquidTempSlider->setValue(100.0);
+	temperature->Add(LiquidTempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+
+	LiquidTransTempSlider = new SliderCtrl(panel,ID_LIQUID_TRANS_TEMP_SLDR,"Trans",LABEL2S,VALUE,SLIDER2);
+	LiquidTransTempSlider->setRange(0,10.0);
+	temperature->Add(LiquidTransTempSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	temperature->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+    boxSizer->Add(temperature, 0, wxALIGN_LEFT|wxALL,0);
+
 }
 
 void VtxWaterTabs::AddSolidTab(wxWindow *panel){
@@ -290,11 +302,15 @@ void VtxWaterTabs::AddSolidTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
     wxStaticBoxSizer* surface = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
-	SolidFunction=new ExprTextCtrl(panel,ID_SOLID_SURFACE_TEXT,"function",LABEL2S,EXPR_WIDTH);
+	SolidFunction=new ExprTextCtrl(panel,ID_SOLID_SURFACE_TEXT,"Modulation",LABEL2,EXPR_WIDTH);
 	surface->Add(SolidFunction->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
 	default_solid=new wxButton(panel,ID_DEFAULT_SOLID,"Default",wxDefaultPosition,wxSize(60,25));
-	surface->Add(default_solid,0,wxALIGN_LEFT|wxALL,5);
+	surface->Add(default_solid,0,wxALIGN_LEFT|wxALL,0);
+
+	SolidMixSlider = new SliderCtrl(panel,ID_SOLID_MIX_SLDR,"Mix",30,VALUE,SLIDER2);
+	SolidMixSlider->setRange(0,1.0);
+	surface->Add(SolidMixSlider->getSizer(), 0, wxALIGN_LEFT|wxLEFT,5);
 
 	surface->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(surface, 0, wxALIGN_LEFT|wxALL,0);
@@ -327,6 +343,23 @@ void VtxWaterTabs::AddSolidTab(wxWindow *panel){
 
     specular->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
     boxSizer->Add(specular, 0, wxALIGN_LEFT|wxALL,0);
+ 
+    wxStaticBoxSizer* temperature = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Temperature"));
+
+	SolidTempSlider = new SliderCtrl(panel, ID_SOLID_TEMP_SLDR, "Liquid", LABEL2,VALUE,SLIDER2);
+	SolidTempSlider->setRange(-1000, 1000);
+	SolidTempSlider->setValue(0.0);
+	temperature->Add(SolidTempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+
+	SolidTransTempSlider = new SliderCtrl(panel,ID_SOLID_TRANS_TEMP_SLDR,"Trans",LABEL2S,VALUE,SLIDER2);
+	SolidTransTempSlider->setRange(0,10.0);
+	temperature->Add(SolidTransTempSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	temperature->SetMinSize(wxSize(LINE_WIDTH,LINE_HEIGHT));
+    boxSizer->Add(temperature, 0, wxALIGN_LEFT|wxALL,0);
+
+    
 }
 
 int VtxWaterTabs::showMenu(bool expanded){
@@ -360,7 +393,7 @@ void VtxWaterTabs::getDefaultState() {
 	char type_str[256];
     double solid_temp=SolidTempSlider->getValue();
     double liquid_temp=LiquidTempSlider->getValue();
-	double tc=obj->temperature-273;
+	double tc=obj->surface_temp-273;
 
 	if(tc<=solid_temp)
 		strcpy(state_str,"Solid");
@@ -391,8 +424,8 @@ void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	OceanState *ocean=orb->getOcean();
 
-	ocean->setOceanGasTemp(LiquidTempSlider->getValue());
-	ocean->setOceanSolidTemp(SolidTempSlider->getValue());
+	ocean->setOceanGasTemp(LiquidTempSlider->getValue()+273);
+	ocean->setOceanSolidTemp(SolidTempSlider->getValue()+273);
 	orb->calcAveTemperature();
 	orb->invalidate();
 	TheScene->rebuild();
@@ -433,10 +466,9 @@ void VtxWaterTabs::OnUpdateEnable(wxUpdateUIEvent& event) {
 }
 
 void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
-
 	Planetoid *orb=getOrbital();
 	OceanFunction->SetValue(OceanState::getDfltOceanExpr());
-	//orb->setOceanFunction(def_transition_func);
+	setObjAttributes();
 	orb->invalidate();
 	TheScene->rebuild();
 }
@@ -475,50 +507,39 @@ void VtxWaterTabs::setObjAttributes(){
     orb->ocean_state=state;
 	orb->ocean_level=LevelSlider->getValue()*FEET;
 
-    ocean->setOceanGasTemp(LiquidTempSlider->getValue());
-    ocean->setOceanSolidTemp(SolidTempSlider->getValue());
+    ocean->setOceanGasTemp(LiquidTempSlider->getValue()+273);
+    ocean->setOceanSolidTemp(SolidTempSlider->getValue()+273);
+    ocean->setOceanGasTransTemp(LiquidTransTempSlider->getValue());
+    ocean->setOceanSolidTransTemp(SolidTransTempSlider->getValue());
     Color wc=LiquidReflectSlider->getColor();
     wc.set_alpha(LiquidReflectSlider->getValue());
     wc.toString(tstr);
 
     ocean->setWaterColor1(wc);
  	wc=LiquidTransmitSlider->getColor();
-	wc.set_alpha(LiquidReflectSlider->getValue());
 	ocean->setWaterColor2(wc);
-	ocean->setWaterClarity(LiquidTransmitSlider->getValue()*FEET);
+	ocean->setWaterClarity(LiquidTransmitSlider->getValue());
 	ocean->setWaterShine(LiquidShineSlider->getValue());
 	ocean->setWaterSpecular(LiquidAlbedoSlider->getValue());
+	ocean->setWaterMix(LiquidMixSlider->getValue());
+	
     wc=SolidReflectSlider->getColor();
-    wc.set_alpha(SolidReflectSlider->getValue());
     ocean->setIceColor1(wc);
     ocean->setIceColor2(SolidTransmitSlider->getColor());
-    ocean->setIceClarity(SolidTransmitSlider->getValue()*FEET);
+    ocean->setIceClarity(SolidTransmitSlider->getValue());
     ocean->setIceShine(SolidShineSlider->getValue());
     ocean->setIceSpecular(SolidAlbedoSlider->getValue());
+    ocean->setIceMix(SolidMixSlider->getValue());
 
     orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
     
     ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
     ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());
-    update_needed=true;
 
-	wxString str="ocean(";
-	str+=LiquidFunction->GetValue();
-	str+=",";
-	str+=SolidFunction->GetValue();
-	str+=")";
-	str+="\n";
+    tnode->setNoiseExprs(ocean);
+ 
+	invalidateObject();
 
-	char p[512];
-	strcpy(p,str.ToAscii());
-	tnode->setExpr(p);
-	if(tnode->getExprNode()==0)
-		update_needed=true;
-	else{
-		update_needed=false;
-		tnode->applyExpr();
-	}
-	invalidateRender();
 }
 //-------------------------------------------------------------
 // VtxWaterTabs::getObjAttributes() when switched in
@@ -555,6 +576,9 @@ void VtxWaterTabs::getObjAttributes(){
 	object_name->SetValue(ocean->getOceanName());
 	LiquidTempSlider->setValue(ocean->oceanGasTemp()-273);
 	SolidTempSlider->setValue(ocean->oceanSolidTemp()-273);
+	
+	LiquidTransTempSlider->setValue(ocean->oceanGasTransTemp());
+	SolidTransTempSlider->setValue(ocean->oceanSolidTransTemp());
 
 	LevelSlider->setValue(orb->ocean_level/FEET);
 
@@ -565,6 +589,7 @@ void VtxWaterTabs::getObjAttributes(){
 
 	LiquidShineSlider->setValue(ocean->waterShine());
 	LiquidAlbedoSlider->setValue(ocean->waterSpecular());
+	LiquidMixSlider->setValue(ocean->waterMix());
 
 	SolidTransmitSlider->setColor(ocean->iceColor2());
 	SolidTransmitSlider->setValue(ocean->iceClarity()/FEET);
@@ -573,7 +598,7 @@ void VtxWaterTabs::getObjAttributes(){
 
 	SolidShineSlider->setValue(ocean->iceShine());
 	SolidAlbedoSlider->setValue(ocean->iceSpecular());
-
+	SolidMixSlider->setValue(ocean->iceMix());
 	auto_state->SetValue(orb->ocean_auto);
 
 	update_needed=false;

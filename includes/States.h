@@ -17,6 +17,7 @@ public:
 	double specular;
 	double shine;
 	double temp;
+	double trans_temp;
 	void setName(char *e){ strcpy(name,e);}
 	char *getName(){ return name;}
 
@@ -51,6 +52,8 @@ public:
 
 	LiquidState *liquid;
 	SolidState *solid;
+	char expr[512];
+
 	void setWaterColor1(Color c) 	{liquid->color1=c;}
 	void setWaterColor2(Color c) 	{liquid->color2=c;}
 	void setIceColor1(Color c)   	{solid->color1=c;}
@@ -80,8 +83,13 @@ public:
 	
 	double oceanSolidTemp()        { return solid->temp;}
 	double oceanGasTemp()           { return liquid->temp;}
-	void setOceanSolidTemp(double f) { solid->temp=C2K(f);}
-	void setOceanGasTemp(double f)    { liquid->temp=C2K(f);}
+	void setOceanSolidTemp(double f) { solid->temp=f;}
+	void setOceanGasTemp(double f)   { liquid->temp=f;}
+	
+	double oceanSolidTransTemp()    { return solid->trans_temp;}
+	double oceanGasTransTemp()      { return liquid->trans_temp;}
+	void setOceanSolidTransTemp(double f) { solid->trans_temp=f;}
+	void setOceanGasTransTemp(double f)   { liquid->trans_temp=f;}
 	
 	char *getOceanName()            { return getName();}
 	void setOceanName(char *s)      { setName(s);}

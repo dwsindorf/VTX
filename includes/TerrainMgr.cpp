@@ -486,6 +486,17 @@ TerrainSym *Scope::set_var(const char *s, char *d)
 //-------------------------------------------------------------
 // Scope::set_var() set variable value
 //-------------------------------------------------------------
+TerrainSym *Scope::hide_var(const char *s)
+{
+	TerrainSym *ts=get_var(s);
+	if(ts)
+	    ts->set_show(false);
+	return ts;
+}
+
+//-------------------------------------------------------------
+// Scope::set_var() set variable value
+//-------------------------------------------------------------
 TerrainSym *Scope::set_var(const char *s, double d, int b)
 {
 	TerrainSym *ts=set_var(s,d);
@@ -775,6 +786,31 @@ TNvar *ExprMgr::get_expr(char *s)
 }
 
 //-------------------------------------------------------------
+// Scope::get_local() get variable value
+//-------------------------------------------------------------
+TNvar *ExprMgr::getExprVal(char *s, TerrainData &f)
+{
+	TNvar *expr=get_expr(s);
+	if(expr){
+		expr->eval();
+		return expr;
+	}
+	return 0;
+}
+
+//-------------------------------------------------------------
+// Scope::get_local() get variable value
+//-------------------------------------------------------------
+TNvar *ExprMgr::setExprVal(char *s, TerrainData &f)
+{
+	TNvar *expr=get_expr(s);
+	if(expr){
+		expr->eval();
+		return expr;
+	}
+	return 0;
+}
+//-------------------------------------------------------------
 // ExprMgr::revaluate() invalidate vars
 //-------------------------------------------------------------
 void ExprMgr::revaluate()
@@ -1014,11 +1050,24 @@ TNvar *ExprMgr::removeVar(char *s){
 	var=getVar(s);
 	if(!var)
 	    return 0;
+	cout<<"free:"<<s<<endl;
 	exprs.remove(var);
 	vars.remove(ts);
 	return var;
 }
 
+//-------------------------------------------------------------
+// ExprMgr::removeVar() remove a variable
+//-------------------------------------------------------------
+TNvar *ExprMgr::removeExprVar(char *s){
+    TNvar *var=0;
+	var=getVar(s);
+	if(!var)
+	    return 0;
+	//cout<<"free:"<<s<<endl;
+	exprs.remove(var);
+	return var;
+}
 //-------------------------------------------------------------
 // ExprMgr::getVar() find a variable
 //-------------------------------------------------------------
