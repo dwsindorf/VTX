@@ -6,7 +6,8 @@
 #include <wx/filefn.h>
 #include <wx/dir.h>
 
-static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
+//static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
+static wxString types[]={"Water","SO2","CO2", "CH4","N2"};
 static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
 
@@ -213,7 +214,7 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 	//hline = new wxBoxSizer(wxHORIZONTAL);
 
 	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),5, types);
-	Composition->SetSelection(4);
+	Composition->SetSelection(0);
 	presets->Add(Composition, 0, wxALIGN_LEFT | wxALL, 2);
 
 	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",80,150);
@@ -417,18 +418,13 @@ void VtxWaterTabs::OnAutoState(wxCommandEvent& event){
 
 void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
     int n = Composition->GetSelection();
-    double solid=solid_temps[n];
-    double liquid=gas_temps[n];
-    SolidTempSlider->setValue(solid);
-    LiquidTempSlider->setValue(liquid);
 	Planetoid *orb=getOrbital();
-	OceanState *ocean=orb->getOcean();
+    orb->setOcean(OceanState::oceanTypes[n]);
+    orb->set_ocean_vars();
+    orb->invalidate();
+    TheScene->rebuild();
 
-	ocean->setOceanGasTemp(LiquidTempSlider->getValue()+273);
-	ocean->setOceanSolidTemp(SolidTempSlider->getValue()+273);
-	orb->calcAveTemperature();
-	orb->invalidate();
-	TheScene->rebuild();
+	getObjAttributes();
 }
 
 void VtxWaterTabs::OnSetState(wxCommandEvent& event){
@@ -436,15 +432,8 @@ void VtxWaterTabs::OnSetState(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	bool autoset=auto_state->IsChecked();
 	orb->ocean_auto=autoset;
-	int oldstate=orb->ocean_state;
-	if(!autoset){
-		orb->ocean_state=state;
-		if(oldstate!=state){
-			orb->invalidate();
-			TheScene->rebuild();
-		}
-    }
-	orb->calcAveTemperature();
+	setObjAttributes();
+
 }
 
 void VtxWaterTabs::updateControls(){
@@ -469,23 +458,23 @@ void VtxWaterTabs::OnSetDefaultMod(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	OceanFunction->SetValue(OceanState::getDfltOceanExpr());
 	setObjAttributes();
-	orb->invalidate();
-	TheScene->rebuild();
+	//orb->invalidate();
+	//TheScene->rebuild();
 }
 
 void VtxWaterTabs::OnSetDefaultLiquid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	LiquidFunction->SetValue(OceanState::getDfltOceanLiquidExpr());
 	setObjAttributes();
-	orb->invalidate();
-	TheScene->rebuild();
+	//orb->invalidate();
+	//TheScene->rebuild();
 }
 void VtxWaterTabs::OnSetDefaultSolid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	SolidFunction->SetValue(OceanState::getDfltOceanSolidExpr());
 	setObjAttributes();
-	orb->invalidate();
-	TheScene->rebuild();
+	//orb->invalidate();
+	//TheScene->rebuild();
 }
 //-------------------------------------------------------------
 // VtxWaterTabs::setObjAttributes() when switched out
@@ -531,7 +520,7 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setIceSpecular(SolidAlbedoSlider->getValue());
     ocean->setIceMix(SolidMixSlider->getValue());
 
-    orb->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
+    ocean->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
     
     ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
     ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());
@@ -566,8 +555,8 @@ void VtxWaterTabs::getObjAttributes(){
  			ocean->setOceanSolidExpr((char *)SolidFunction->GetValue().ToAscii());
 		}
 	}
- 	char buff[256];
- 	orb->getOceanFunction(buff);
+ 	char buff[1024];
+ 	ocean->getOceanFunction(buff);
 
 	OceanFunction->SetValue(buff);
 

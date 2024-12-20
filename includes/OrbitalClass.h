@@ -659,8 +659,6 @@ public:
 	bool       seasonal;
 	bool       have_water;
 
-	TNode     *ocean_expr;
-
 	Color 	   fog_color;
 	double     fog_min;
 	double     fog_max;
@@ -676,9 +674,6 @@ public:
 	double 	   last_dt;
 	double 	   last_temp;
 	double     light_theta;
-
-	int getOceanFunction(char *buff);
-	void setOceanFunction(char *expr);
 
 	static int planet_id;
 	static int moon_cnt;
@@ -713,6 +708,8 @@ public:
     virtual void map_color(MapData*,Color&);
 	virtual void set_vars();
 	virtual void get_vars();
+	virtual void set_ocean_vars();
+	virtual void get_ocean_vars();
 	virtual void render();
 	virtual int adapt_pass();
 	virtual int render_pass();
@@ -736,7 +733,6 @@ public:
 	virtual void checkForOcean();
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();
-	virtual double evalOceanFunction();
 	virtual double solidToLiquid();
 	virtual double liquidToGas();
     virtual void set_view_info();

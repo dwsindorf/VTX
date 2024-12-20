@@ -2,28 +2,52 @@
 #include "SceneClass.h"
 #include "TerrainClass.h"
 
-static char* def_liquid_func="noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0)";
-static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0)";
+static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0)";
+static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15,9,0.1,0.4,1.8,0.73,-0.34,0,0)";
 static char* def_ocean_func="noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06)";
-//noise(GRADIENT|RO1,2,10,1,0.5,2,1,1,0,0,1e-06)
+
 Array<OceanState*> OceanState::oceanTypes(6);
+static double gas_temps[]={-196,-163,-78,-10,100};
+static double solid_temps[]={-210,-182,-79,-72,0,};
 
-static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),373,300,0.95,100,1,10)";
-static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),273,1.0,0.95,0.8,0.6,1)";
+static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),373,300,0.95,100,1,10,noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0))";
+static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),273,1.0,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15.2,9,0.1,0.4,1.84,0.73,-0.34,0,0))";
+static char *SO2_liq_str="liquid(Color(0.9,0.9,0.8,0.522),Color(0.447,0.435,0.512),263,1000,0.8,71,1,10,noise(GRADIENT|SCALE,19,3,1,0.5,2,0.11,1,0,0))";
+static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
+static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10)";
+static char *CO2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),195,1.0,0.95,0.8,0.6,1)";
+static char *CH4_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),110,300,0.95,100,1,10)";
+static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,1)";
+static char *N2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),77,300,0.95,100,1,10)";
+static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,1)";
 
+OceanState *OceanState::makeDefaultState(char *n,char *f,char *liq,char *sol){
+	char str[1024];
+	str[0]=0;
+	//sprintf(str,"Ocean(\"%s\")[%s,%s]",n,liq,sol);
+	//OceanState *s=(OceanState*)TheScene->parse_node((char*)str);
+//	if(f)
+//		s->setOceanFunction(f);
+//	else
+//		s->setOceanFunction(def_ocean_func);
+	if(f)
+		sprintf(str,"Ocean(\"%s\",%s)[%s,%s]",n,f,liq,sol);
+	else
+		sprintf(str,"Ocean(\"%s\",%s)[%s,%s]",n,def_ocean_func,liq,sol);
+	OceanState *s=(OceanState*)TheScene->parse_node((char*)str);
+	return s;
+}
 //#define TEST
 void OceanState::setDefaults(){
 	char str[1024];
-	sprintf(str,"Ocean(\"%s\")[%s,%s]","H2O",H2O_liq_str,H2O_sol_str);
 	//cout<<str<<endl;
 	if(oceanTypes.size==0){
-		OceanState *water=(OceanState*)TheScene->parse_node((char*)str);
-		if(water){
-			str[0]=0;
-			water->valueString(str);
-			cout<<str<<endl;
-			oceanTypes.add(water);
-		}
+		oceanTypes.add(makeDefaultState("Water",0,H2O_liq_str,H2O_sol_str));
+		oceanTypes.add(makeDefaultState("SO2",0,SO2_liq_str,SO2_sol_str));
+		oceanTypes.add(makeDefaultState("CO2",0,CO2_liq_str,CO2_sol_str));
+		oceanTypes.add(makeDefaultState("CH4",0,CH4_liq_str,CO2_sol_str));
+		oceanTypes.add(makeDefaultState("N2",0,N2_liq_str,N2_sol_str));
+	}
 #ifdef TEST	
 		OceanState *test=OceanState::newInstance();
 		if(test){
@@ -31,8 +55,7 @@ void OceanState::setDefaults(){
 			test->valueString(str);
 			cout<<str<<endl;
 		}
-#endif		
-	}
+#endif	
 }
 MaterialState::MaterialState(): TNunary(0){}
 MaterialState::MaterialState(TNode *r) : TNunary(r){
@@ -53,7 +76,7 @@ MaterialState::MaterialState(TNode *r) : TNunary(r){
 	args[1]->eval();
 	color2=S0.c;
 	
-	double vals[6];
+	double vals[7];
 	TNarg *a=args.index(2);
 	int n=getargs(a,vals,6);
 	temp=vals[0];
@@ -187,6 +210,8 @@ void MaterialState::saveNode(FILE *f){
 OceanState::OceanState(TNode *l,LiquidState *m1, SolidState *m2): TNfunc(l,0){
 	TNarg *arg=left;
 	TNarg *node=arg->left;
+	expr[0]=0;
+	setName("Ocean");
 	if(node->typeValue() == ID_STRING){		
 		setName(((TNstring*)node)->value);
 		left=arg->next();
@@ -196,8 +221,53 @@ OceanState::OceanState(TNode *l,LiquidState *m1, SolidState *m2): TNfunc(l,0){
 		}
 		delete arg;	
 	}
+	if(left){
+		left->valueString(expr);
+		//delete left;
+		left=0;
+	}
+	else{
+		strcpy(expr,def_ocean_func);
+	}
+	//strcpy(expr,def_ocean_func);
 	liquid=m1;
 	solid=m2;
+	ocean_expr=0;
+	//ocean_expr=TheScene->parse_node(expr);
+}
+
+void  OceanState::getOceanFunction(char *buff){
+	strcpy(buff,expr);
+}
+
+bool  OceanState::setOceanFunction(char *e){
+	TNode *n=TheScene->parse_node(e);
+	if(n){
+		DFREE(ocean_expr);
+		strcpy(expr,e);
+		ocean_expr=n;
+		return true;
+	}
+	else
+		return false;
+}		
+
+char *OceanState::getOceanExpr(){
+	if(!ocean_expr)
+		ocean_expr=TheScene->parse_node(expr);
+	return expr;		
+}
+void OceanState::setOceanExpr(){
+	if(!ocean_expr)
+		ocean_expr=TheScene->parse_node(expr);
+}
+double  OceanState::evalOceanFunction(){
+	double t=1;
+	if(!ocean_expr)
+		ocean_expr=TheScene->parse_node(expr);
+	ocean_expr->eval();
+	t=S0.s;
+	return t;
 }
 
 void OceanState::saveNode(FILE *f){
@@ -214,7 +284,9 @@ void OceanState::valueString(char *s){
 	str2[0]=0;
 	liquid->valueString(str1);
 	solid->valueString(str2);
-	sprintf(s,"Ocean(\"%s\")[%s,\n%s]",nodeName(),str1,str2);
+	sprintf(s,"Ocean(\"%s\",%s)[%s,\n%s]",nodeName(),expr,str1,str2);
+	//sprintf(s,"Ocean(\"%s\")[%s,\n%s]",nodeName(),str1,str2);
+
 }
 char *OceanState::getDfltOceanLiquidExpr(){
 	return def_liquid_func;	

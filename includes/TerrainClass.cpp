@@ -1401,7 +1401,8 @@ void TNwater::eval()
 	SeaLevel=Raster.sea_level*Gscale;
 
 	// drop sealevel as liquid turns to gas
-	SeaLevel-=obj->liquidToGas();
+	double gf=obj->liquidToGas();
+	SeaLevel-=5*gf;
 
 	water.InitS();
 

@@ -52,7 +52,11 @@ public:
 
 	LiquidState *liquid;
 	SolidState *solid;
+	TNode  *ocean_expr;
 	char expr[512];
+	enum Types {H20,SO2,CO2,CH4,N2};
+
+	double evalOceanFunction();
 
 	void setWaterColor1(Color c) 	{liquid->color1=c;}
 	void setWaterColor2(Color c) 	{liquid->color2=c;}
@@ -91,7 +95,7 @@ public:
 	void setOceanSolidTransTemp(double f) { solid->trans_temp=f;}
 	void setOceanGasTransTemp(double f)   { liquid->trans_temp=f;}
 	
-	char *getOceanName()            { return getName();}
+	char *getOceanName()            { return nodeName();}
 	void setOceanName(char *s)      { setName(s);}
 
 	char *getOceanLiquidExpr()      { return liquid->getExpr();}
@@ -101,9 +105,15 @@ public:
 	void setOceanSolidExpr(char *s){ solid->setExpr(s);}
 	void valueString(char *s);
 
+	void getOceanFunction(char *buff);
+	bool setOceanFunction(char *expr);
+	char *getOceanExpr();
+	void setOceanExpr();
+	
 	static char *getDfltOceanExpr();
 	static char *getDfltOceanSolidExpr();
 	static char *getDfltOceanLiquidExpr();
+	static OceanState *makeDefaultState(char *,char*,char *,char *);
 	
 	static Array<OceanState *>oceanTypes;
 	static void setDefaults();

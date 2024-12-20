@@ -409,7 +409,7 @@ void VtxNoiseFunct::setTypeControls(int type)
 	m_animate->SetValue((type & TA)?true:false);
 	m_domain->SetSelection(type & ROFF);
 	
-	cout<<"VtxNoiseFunct "<<(type & TA)<<endl;
+	//cout<<"VtxNoiseFunct "<<(type & TA)<<endl;
 	
 	if(type & FS)
 		m_mode->SetSelection(1);	

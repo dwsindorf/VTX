@@ -3,27 +3,21 @@ Scene() {
 		view=SURFACE;
 		phi=4.74334;
 		theta=349.229;
-		height=4835.74 ft;
+		height=4384.42 ft;
 		gndlvl=-4236.44 ft;
-		time=477909;
+		time=2.37411e+06;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.000207;
-		minh=1.13636e-09;
-		heading=1;
-		tilt=-7;
+		minh=5.68182e-10;
+		minr=0.000206198;
+		heading=3;
+		tilt=-9;
 		angle=2;
 		fov=25;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		height=4384.42 ft;
-		time=478000;
-		heading=3;
-		minr=0.000206199;
-		radius=0.000207028;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -47,7 +41,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -56,7 +50,6 @@ Scene() {
 				}
 				Planet(0.0434,484) {
 					albedo=1;
-					ambient=Color(1,1,1,0.02);
 					day=24;
 					ocean.level=88503.5 ft;
 					phase=24.9984;
@@ -68,6 +61,7 @@ Scene() {
 					specular=Color(1,1,1,0.71);
 					tilt=10.0008;
 					year=4380;
+					ocean.expr=noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06);
 					Surface{
 						terrain=
 								Texture("jupiter1",BUMP|TEX,1,0.2,2,0,2.95936,2,0.67346,0,0,0,0,0);
@@ -94,14 +88,21 @@ Scene() {
 						day=24;
 						hscale=0.00396936;
 						ice.albedo=1;
+						ice.clarity=1 ft;
 						ice.color1=Color(0.73,0.82,0.97,0.42);
 						ice.color2=Color(0.84,0.91,0.96);
+						ice.mix=0.95;
 						ice.shine=41.666;
 						name="Europa";
 						ocean.auto=1;
 						ocean.level=-4166.8 ft;
+						ocean.liquid=373;
+						ocean.liquid.trans=10;
+						ocean.solid=273;
+						ocean.solid.trans=1;
 						ocean.state=2;
-						phase=145.001;
+						phase=62.856;
+						rot_phase=245.714;
 						rseed=0.561332;
 						shadow=Color(0,0,0,0.91);
 						shine=3.02106;
@@ -112,8 +113,10 @@ Scene() {
 						water.color1=Color(1,1,1,0.92);
 						water.color2=Color(0.17,0.48,1);
 						water.level=-7.89167e-07;
+						water.mix=0.95;
 						water.shine=48.612;
 						year=100;
+						ocean.expr=noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06);
 						bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 							Color(0.173,0,0.055),
 							Color(0.075,0.02,0.02));
