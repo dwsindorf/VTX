@@ -1682,10 +1682,6 @@ bool TNsnow::initProgram(){
     texture->bias=bias;
 
     Planetoid *orb=(Planetoid *)getOrbital(this);
-	//double tbias=SFact;//orb->season_bias();
-	//Sact=tbias;
-	//cout<<"orbit_angle:"<<orbit_angle<<" tbias:"<<tbias<<endl;
-	//vars.newFloatVar("tbias",tbias);
   
     texture->bump_bias=bmpht;
     texture->height_bias=ht;

@@ -1,8 +1,8 @@
-layer("lava",MESH,0)
-	[Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1))
-	+Color(0.529412,0.521569,0.521569,1)
+layer("lava",MESH|FSQR,0,0.27,0,0)
+	[
+	Texture("lava2",BORDER|TEX,1105.9,2,1,-2.33328,1,2,0.5,0,0,0,-1.61112,0)+gloss(1,1.66064)
 	+
-	Texture("lava",BORDER|S|TEX,noise(GRADIENT,7,5,1,0.5,2,0,1,0,0),1024,1,0.9576,0,1,2,1,0,0,1,-0.27776,1)+
-	Texture("Lava1",BORDER|NORM|TEX,2048,2,0.2,4,2,2.22448,1,0,0,0,0,0)+
-	Texture("cracks2",BUMP,537.269,0.88896,2,0,7.33312,2.05552,0.98612,0,0,0,0,0)]
+	Texture("io",BORDER|BUMP,1,0,1.08332,0,1,1.90568,0.86792,0,0,0,0,0)+
+	Texture("coldlava",BUMP|RANDOMIZE,205.145,1,2,0,4.33312,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR,19.5,2,1,0.5,2,0.39,1,0,0.4))
+	]
 

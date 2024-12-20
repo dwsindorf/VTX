@@ -24,12 +24,6 @@ static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.
 OceanState *OceanState::makeDefaultState(char *n,char *f,char *liq,char *sol){
 	char str[1024];
 	str[0]=0;
-	//sprintf(str,"Ocean(\"%s\")[%s,%s]",n,liq,sol);
-	//OceanState *s=(OceanState*)TheScene->parse_node((char*)str);
-//	if(f)
-//		s->setOceanFunction(f);
-//	else
-//		s->setOceanFunction(def_ocean_func);
 	if(f)
 		sprintf(str,"Ocean(\"%s\",%s)[%s,%s]",n,f,liq,sol);
 	else

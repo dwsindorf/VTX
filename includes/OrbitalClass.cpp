@@ -4347,10 +4347,8 @@ double Planetoid::solidToLiquid(){
 	if(!ocean_auto){
 		return ocean_state==SOLID?1:0;
 	}
-	//double f=evalOceanFunction();
 	double temp=Temp;//+f;//-273;	
 	double trans=ocean->oceanSolidTemp()+ocean->oceanSolidTransTemp();
-	//double dt=smoothstep(ocean->oceanSolidTemp(),ocean->oceanSolidTemp()+0.0005*(ocean->oceanGasTemp()-ocean->oceanSolidTemp()),temp,1.0,0);
 	double dt=smoothstep(ocean->oceanSolidTemp(),trans,temp,1.0,0);
 	//cout<<dt<<" "<<ocean->oceanSolidTransTemp()<<endl;
 	return dt;
