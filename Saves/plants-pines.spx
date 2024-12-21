@@ -11,13 +11,17 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400199;
 		heading=132;
 		tilt=6;
 		angle=-11;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		tilt=3;
+		angle=-10;
+		minr=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -52,6 +56,7 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.7);
 					hscale=0.001;
+					rot_phase=226.454;
 					year=100;
 					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{

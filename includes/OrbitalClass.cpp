@@ -23,10 +23,10 @@ extern double Theta,Phi,Radius,Sfact;
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
-#define DEBUG_TEMP false
+#define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
 
-static bool debug_temp=DEBUG_TEMP;
+static int debug_temp=DEBUG_TEMP;
 
 extern const char *pstg[];
 
@@ -3380,6 +3380,36 @@ void Planetoid::setOcean(OceanState *s){
 OceanState *Planetoid::getOcean() {
 	return ocean;
 }
+
+
+void Planetoid::setOceanExpr(char *expr){
+	if(!water())
+		return;
+	ocean->setOceanFunction(expr);
+}
+
+void Planetoid::setOceanExpr(){
+  if(water()) { 
+	  TNvar *var=exprs.getVar((char*)"ocean.expr");
+	  var->setExpr(ocean->getOceanExpr());
+	  var->applyExpr();
+  } else 
+	  exprs.hide_var("ocean.expr");
+}
+
+void Planetoid::getOceanExpr(){		
+	TNvar *var=exprs.getVar((char*)"ocean.expr");
+	if(!var){
+		var=addExprVar("ocean.expr",ocean->getOceanExpr());
+		var->eval();
+	}
+	else{
+		char buff[256]={0};
+		var->eval();
+		var->valueString(buff);
+		ocean->setOceanFunction(buff);
+	}
+}
 //-------------------------------------------------------------
 // get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -3387,8 +3417,11 @@ OceanState *Planetoid::getOcean() {
 #define MVGET(name,value) if(exprs.get_local(name,Td)) if(water())ocean->value=Td.s
 #define MCGET(name,value) if(exprs.get_local(name,Td)) if(water())ocean->value=Td.c
 #define MNGET(name,value) if(exprs.get_local(name,Td)) if(water())strncpy(ocean->value,Td.string,maxstr)
+
 void Planetoid::get_ocean_vars()
 {
+	getOceanExpr();
+
 	if(exprs.get_local("water.level",Td))
 		ocean_level=Td.s;
 	else if(exprs.get_local("ocean.level",Td))
@@ -3397,7 +3430,6 @@ void Planetoid::get_ocean_vars()
 		ocean_level=0;
 	VGET("ocean.state",ocean_state,def_ocean_state);
 	VGET("ocean.auto",ocean_auto,def_ocean_auto);
-	//if(water()){
 	MVGET("ocean.solid",solid->temp);
 	MVGET("ocean.liquid",liquid->temp);
 	MVGET("ocean.solid.trans",solid->trans_temp);
@@ -3417,26 +3449,43 @@ void Planetoid::get_ocean_vars()
 	MVGET("ice.albedo",solid->specular);
 	MVGET("ice.shine",solid->shine);
 		
-	TNvar *var=exprs.getVar((char*)"ocean.expr");
-	if(!var){
-		var=addExprVar("ocean.expr",ocean->getOceanExpr());
-		var->eval();
-	}
-	else{
-		char buff[256]={0};
-		var->eval();
-		var->valueString(buff);
-		//cout<<"OCEAN.EXPR:"<<buff<<endl;
-		ocean->setOceanFunction(buff);
-	}
+}
+#define MCSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
+#define MVSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
+#define MUSET(name,value,u) if(water()) { ts=exprs.set_var(name,ocean->value); ts->units=u;} else exprs.hide_var(name)
+
+void Planetoid::set_ocean_vars(){
 	
-	//ocean_expr=var->right;
+	setOceanExpr();
+	
+	VSET("ocean.state",ocean_state,def_ocean_state);
+	VSET("ocean.auto",ocean_auto,def_ocean_auto);
+	USET("ocean.level",ocean_level,0,"ft");
+	
+	MVSET("ocean.solid",oceanSolidTemp());
+	MVSET("ocean.liquid",oceanGasTemp());
+	MVSET("ocean.solid.trans",oceanSolidTransTemp());
+	MVSET("ocean.liquid.trans",oceanGasTransTemp());
+
+	MCSET("water.color1",waterColor1());
+	MCSET("water.color2",waterColor2());
+	MVSET("water.mix",waterMix());
+	MVSET("water.albedo",waterSpecular());
+	MVSET("water.shine",waterShine());
+	MUSET("water.clarity",waterClarity(),"ft");
+    MCSET("ice.color1",iceColor1());
+    MCSET("ice.color2",iceColor2());
+	MUSET("ice.clarity",iceClarity(),"ft");
+	MVSET("ice.mix",iceMix());
+	MVSET("ice.albedo",iceSpecular());
+	MVSET("ice.shine",iceShine());
+
 }
 void Planetoid::get_vars()
 {
 	checkForOcean();
 	if(ocean==0)
-		setOcean(OceanState::oceanTypes[0]);
+		setOcean(OceanState::oceanTypes[OceanState::Types::H2O]);
 
 	Spheroid::get_vars();
 	get_ocean_vars();
@@ -3461,32 +3510,7 @@ void Planetoid::get_vars()
 //-------------------------------------------------------------
 // Planetoid::set_vars() set common variables
 //-------------------------------------------------------------
-#define MCSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
-#define MVSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
-#define MUSET(name,value,u) if(water()) { ts=exprs.set_var(name,ocean->value); ts->units=u;} else exprs.hide_var(name)
-void Planetoid::set_ocean_vars(){
-	VSET("ocean.state",ocean_state,def_ocean_state);
-	VSET("ocean.auto",ocean_auto,def_ocean_auto);
-	USET("ocean.level",ocean_level,0,"ft");
-	MVSET("ocean.solid",oceanSolidTemp());
-	MVSET("ocean.liquid",oceanGasTemp());
-	MVSET("ocean.solid.trans",oceanSolidTransTemp());
-	MVSET("ocean.liquid.trans",oceanGasTransTemp());
 
-	MCSET("water.color1",waterColor1());
-	MCSET("water.color2",waterColor2());
-	MVSET("water.mix",waterMix());
-	MVSET("water.albedo",waterSpecular());
-	MVSET("water.shine",waterShine());
-	MUSET("water.clarity",waterClarity(),"ft");
-    MCSET("ice.color1",iceColor1());
-    MCSET("ice.color2",iceColor2());
-	MUSET("ice.clarity",iceClarity(),"ft");
-	MVSET("ice.mix",iceMix());
-	MVSET("ice.albedo",iceSpecular());
-	MVSET("ice.shine",iceShine());
-
-}
 void Planetoid::set_vars()
 {
 	checkForOcean();
@@ -3927,11 +3951,10 @@ void Planetoid::adapt_object()
 	
 	surface_temp=t;  // K
 	
-	debug_temp=false;
     double dt=fabs(last_temp-surface_temp);
     setDateString();
 	if(dt>0.25){
-		if(debug_temp){
+		if(debug_temp>0){
 			char date[256]={0};
 			getDateString(date);
 			cout<<"rebuild "<<date<<" "<<t<<" "<<last_temp<<" "<<dt<<endl;
@@ -3941,6 +3964,7 @@ void Planetoid::adapt_object()
 		TheScene->rebuild();
 	last_temp=surface_temp;
 	}
+	debug_temp=0;
 
 	Raster.frozen=ocean_state==SOLID?true:false;
     if(water()){
@@ -4267,7 +4291,7 @@ void Planetoid::calcAveTemperature() {
 //-------------------------------------------------------------
 double Planetoid::calcLocalTemperature(bool w){
 	double tave=temperature; // K
-	double s,ds=0,f,df=1,dt,hf;
+	double s,ds=0,f,df=1,dt,hf=1;
 	double g=RPD*Phi;
 	double t=tave;
 	if(seasonal){
@@ -4295,10 +4319,12 @@ double Planetoid::calcLocalTemperature(bool w){
 	Raster.frozen=ocean_state==SOLID?true:false;
 	if(w && ocean->ocean_expr){
 		f=ocean->evalOceanFunction();
-		hf=lerp(TheScene->elevation/MILES,100,5000,1,2);		
-		t+=hf*f;
+		hf=lerp(TheScene->elevation/MILES,5,5000,1,2);
+		double gf=Temp > ocean->oceanGasTemp()?liquidToGas():1;		
+		//cout<<hf<<" "<<gf<<endl;
+		t+=gf*hf*f;
 	}
-	if(debug_temp){
+	if(debug_temp>1){
 		char date[256]={0};
 		getDateString(date);
 		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<Phi<<" Ta:"<<K2C(tave)<<" f:"<<f<<" sf:"<<Sfact<<" Temp:"<<K2C(t)<<endl;
@@ -4350,7 +4376,6 @@ double Planetoid::solidToLiquid(){
 	double temp=Temp;//+f;//-273;	
 	double trans=ocean->oceanSolidTemp()+ocean->oceanSolidTransTemp();
 	double dt=smoothstep(ocean->oceanSolidTemp(),trans,temp,1.0,0);
-	//cout<<dt<<" "<<ocean->oceanSolidTransTemp()<<endl;
 	return dt;
 }
 

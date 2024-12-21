@@ -241,11 +241,11 @@ void EffectsMgr::setProgram(int type){
 		c=sky_color;
         
 		vars.newFloatVec("WaterSky",c.red(),c.green(),c.blue(),c.alpha());
-		if(do_water)
-			sprintf(defs+strlen(defs),"#define WATER\n");
+		//if(do_water)
+		//	sprintf(defs+strlen(defs),"#define WATER\n");
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("auximage.vert","auximage.frag");
-        if(do_water){
+       
 		vars.newFloatVec("WaterColor1",water_color1.red(),water_color1.green(),water_color1.blue(),water_color1.alpha());
 		vars.newFloatVec("WaterColor2",water_color2.red(),water_color2.green(),water_color2.blue(),water_color2.alpha());
 		vars.newFloatVec("IceColor1",ice_color1.red(),ice_color1.green(),ice_color1.blue(),ice_color1.alpha());
@@ -265,9 +265,9 @@ void EffectsMgr::setProgram(int type){
 
 		vars.newFloatVar("water_dpr",water_dpr*water_color1.alpha());
 		vars.newFloatVar("ice_dpr",water_dpr*ice_color1.alpha());
-        
+		
 		vars.newFloatVar("dpm",water_dpm);
-        }
+      
 		vars.newFloatVar("twilite_min",twilite_min);
 		vars.newFloatVar("twilite_max",twilite_max);
 		vars.newFloatVar("twilite_dph",twilite_dph);

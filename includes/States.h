@@ -1,8 +1,9 @@
-#ifndef _ID_STATES
-#define _ID_STATES
+#ifndef _ID_STATES_CLASS
+#define _ID_STATES_CLASS
 
 #include "TerrainMgr.h"
 
+#define NUM_OCEAN_TYPES 5
 class MaterialState : public TNunary {
 public:
 	char name[256];
@@ -54,7 +55,8 @@ public:
 	SolidState *solid;
 	TNode  *ocean_expr;
 	char expr[512];
-	enum Types {H20,SO2,CO2,CH4,N2};
+	
+	enum Types {H2O,SO2,CO2,CH4,N2};
 
 	double evalOceanFunction();
 
@@ -116,6 +118,7 @@ public:
 	static OceanState *makeDefaultState(char *,char*,char *,char *);
 	
 	static Array<OceanState *>oceanTypes;
+	static char *oceanNames[NUM_OCEAN_TYPES];
 	static void setDefaults();
 	void saveNode(FILE *);
 	

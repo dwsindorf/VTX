@@ -7,7 +7,7 @@
 #include <wx/dir.h>
 
 //static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
-static wxString types[]={"Water","SO2","CO2", "CH4","N2"};
+//static wxString types[]={"Water","SO2","CO2", "CH4","N2"};
 static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
 
@@ -210,10 +210,16 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 
 	wxBoxSizer *presets = new wxStaticBoxSizer(wxHORIZONTAL, panel,
 			wxT("Presets"));
-
-	//hline = new wxBoxSizer(wxHORIZONTAL);
-
-	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),5, types);
+ //   int num_types=5;
+    int num_types=NUM_OCEAN_TYPES;
+    cout<<"num typrs:"<<num_types<<endl;
+	wxString types[num_types];
+	for(int i=0;i<num_types;i++){
+		cout<<"name:"<<OceanState::oceanNames[i]<<endl;
+		types[i]=OceanState::oceanNames[i];
+	}
+	
+	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),num_types, types);
 	Composition->SetSelection(0);
 	presets->Add(Composition, 0, wxALIGN_LEFT | wxALL, 2);
 
@@ -520,7 +526,7 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setIceSpecular(SolidAlbedoSlider->getValue());
     ocean->setIceMix(SolidMixSlider->getValue());
 
-    ocean->setOceanFunction((char*)OceanFunction->GetValue().ToAscii());
+    orb->setOceanExpr((char*)OceanFunction->GetValue().ToAscii());
     
     ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
     ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());

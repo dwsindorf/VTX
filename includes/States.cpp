@@ -4,14 +4,15 @@
 
 static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0)";
 static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15,9,0.1,0.4,1.8,0.73,-0.34,0,0)";
-static char* def_ocean_func="noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06)";
+static char* def_ocean_func="noise(GRADIENT,8.6,18.3,1,0.71,2,1,1,0,0,1e-06)";
 
-Array<OceanState*> OceanState::oceanTypes(6);
+Array<OceanState*> OceanState::oceanTypes(NUM_OCEAN_TYPES);
+char *OceanState::oceanNames[]={"Water","SO2","CO2","CH4","N2"};
 static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
 
 static char *H2O_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),373,300,0.95,100,1,10,noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0))";
-static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),273,1.0,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15.2,9,0.1,0.4,1.84,0.73,-0.34,0,0))";
+static char *H2O_sol_str="solid(Color(1,1,1,0.6),Color(0.84,0.91,0.96),273,1.0,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15.2,9,0.1,0.4,1.84,0.73,-0.34,0,0))";
 static char *SO2_liq_str="liquid(Color(0.9,0.9,0.8,0.522),Color(0.447,0.435,0.512),263,1000,0.8,71,1,10,noise(GRADIENT|SCALE,19,3,1,0.5,2,0.11,1,0,0))";
 static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
 static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10)";
@@ -36,11 +37,11 @@ void OceanState::setDefaults(){
 	char str[1024];
 	//cout<<str<<endl;
 	if(oceanTypes.size==0){
-		oceanTypes.add(makeDefaultState("Water",0,H2O_liq_str,H2O_sol_str));
-		oceanTypes.add(makeDefaultState("SO2",0,SO2_liq_str,SO2_sol_str));
-		oceanTypes.add(makeDefaultState("CO2",0,CO2_liq_str,CO2_sol_str));
-		oceanTypes.add(makeDefaultState("CH4",0,CH4_liq_str,CO2_sol_str));
-		oceanTypes.add(makeDefaultState("N2",0,N2_liq_str,N2_sol_str));
+		oceanTypes.add(makeDefaultState(oceanNames[H2O],0,H2O_liq_str,H2O_sol_str));
+		oceanTypes.add(makeDefaultState(oceanNames[SO2],0,SO2_liq_str,SO2_sol_str));
+		oceanTypes.add(makeDefaultState(oceanNames[CO2],0,CO2_liq_str,CO2_sol_str));
+		oceanTypes.add(makeDefaultState(oceanNames[CH4],0,CH4_liq_str,CO2_sol_str));
+		oceanTypes.add(makeDefaultState(oceanNames[N2],0,N2_liq_str,N2_sol_str));
 	}
 #ifdef TEST	
 		OceanState *test=OceanState::newInstance();
@@ -185,9 +186,9 @@ void MaterialState::valueString(char *s){
 	color2.toString(col2);
 	
 	if(strlen(name)>0)
-		sprintf(s,"%s(\"%s\",%s,%s,%g,%g,%g,%g,%g",symbol(),name,col1,col2,temp,clarity,mix,shine,specular);
+		sprintf(s,"%s(\"%s\",%s,%s,%g,%g,%g,%g,%g,%g",symbol(),name,col1,col2,temp,clarity,mix,shine,specular,trans_temp);
 	else
-		sprintf(s,"%s(%s,%s,%g,%g,%g,%g,%g",symbol(),col1,col2,temp,clarity,mix,shine,specular);
+		sprintf(s,"%s(%s,%s,%g,%g,%g,%g,%g,%g",symbol(),col1,col2,temp,clarity,mix,shine,specular,trans_temp);
 	if(strlen(expr)>0)
 		sprintf(s+strlen(s),",%s",expr);
 

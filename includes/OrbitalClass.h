@@ -730,6 +730,9 @@ public:
 	virtual bool solid();
 	virtual bool gas();
 	virtual bool water();
+	virtual void getOceanExpr();
+	virtual void setOceanExpr();
+	virtual void setOceanExpr(char *);
 	virtual void checkForOcean();
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();

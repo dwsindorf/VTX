@@ -691,7 +691,7 @@ void VtxScene::make_scene()
     TheScene=new Scene(new UniverseModel());
     Perlin::seed=1;
 	GLSLMgr::initGL(width,height);
-    
+	
     if(!sceneDialog){
     	sceneDialog=new VtxSceneDialog(this);
     	sceneDialog->SetIcon(wxIcon(objectdlg_xpm));

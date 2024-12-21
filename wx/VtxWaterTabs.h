@@ -4,6 +4,7 @@
 #include "VtxTabsMgr.h"
 
 #include <TerrainClass.h>
+#include <States.h>
 class VtxWaterTabs : public VtxTabsMgr
 
 {
