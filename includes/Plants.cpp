@@ -881,7 +881,7 @@ void Plant::collect()
 #else
 			double ht=s->ht;
 #endif			
-			Point base=TheMap->point(ps.x, ps.y,ht); // spherical-to-rectangular
+			Point base=TheMap->point(ps.y, ps.x,ht); // spherical-to-rectangular
 			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
 			double d=bp.distance(TheScene->vpoint);  // distance	
 			double r=PSCALE*s->radius;

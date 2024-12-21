@@ -1,0 +1,254 @@
+Scene() {
+	drawmode=1;
+	View{
+		view=SURFACE;
+		phi=16.6937;
+		theta=346.283;
+		height=11.2413 ft;
+		time=0;
+		heading=65;
+		tilt=-15;
+		fov=35;
+		speed=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=899.706 ft;
+	}
+	View{
+		height=3012.38 ft;
+	}
+	View{
+		height=10138.5 ft;
+	}
+	View{
+		height=10841.4 ft;
+	}
+	View{
+		height=723.344 ft;
+	}
+	View{
+		height=13710.8 ft;
+	}
+	View{
+		height=499.087 ft;
+	}
+	View{
+		height=163.323 ft;
+	}
+	View{
+		phi=16.6992;
+		theta=346.284;
+		height=20.3651 ft;
+	}
+	View{
+		height=4860.09 ft;
+	}
+	View{
+		height=38907.7 ft;
+		time=344;
+	}
+	View{
+		height=0.00189441;
+		time=56970;
+		tilt=-90;
+	}
+	View{
+		time=76221.2;
+	}
+	View{
+		phi=22.5;
+		theta=5.625;
+		height=52800 ft;
+		tilt=-15;
+	}
+	View{
+		height=125.158 ft;
+		time=48532;
+		tilt=-35;
+		angle=-20;
+	}
+	View{
+		height=46.4303 ft;
+		tilt=-25;
+		angle=-25;
+	}
+	View{
+		height=114.687 ft;
+		heading=35;
+		tilt=-20;
+		angle=-45;
+	}
+	View{
+		height=540.003 ft;
+	}
+	View{
+		height=51.449 ft;
+		angle=-90;
+	}
+	View{
+		height=49.8823 ft;
+	}
+	View{
+		height=27.0496 ft;
+	}
+	View{
+		height=42.3766 ft;
+	}
+	View{
+		height=37.3162 ft;
+	}
+	View{
+		height=17.3848 ft;
+	}
+	View{
+		height=26.6283 ft;
+	}
+	View{
+		height=60.5865 ft;
+		tilt=-35;
+	}
+	View{
+		height=22.9877 ft;
+		tilt=-20;
+	}
+	View{
+		height=17.7975 ft;
+	}
+	View{
+		height=12.8456 ft;
+	}
+	View{
+		height=17.2353 ft;
+		tilt=-25;
+		angle=-100;
+	}
+	View{
+		height=17.3342 ft;
+		tilt=-15;
+	}
+	View{
+		height=11.3514 ft;
+	}
+	View{
+		height=10.0054 ft;
+	}
+	View{
+		height=431.239 ft;
+		tilt=-5;
+	}
+	View{
+		height=380.225 ft;
+	}
+	View{
+		height=250.738 ft;
+	}
+	View{
+		height=12.6021 ft;
+	}
+	View{
+		height=10.6356 ft;
+	}
+	View{
+		height=10.0133 ft;
+	}
+	View{
+		height=10 ft;
+	}
+	View{
+		height=10.0406 ft;
+	}
+	View{
+		height=21.8205 ft;
+	}
+	View{
+		height=13.7843 ft;
+	}
+	View{
+		height=13.9418 ft;
+	}
+	View{
+		height=26.0128 ft;
+	}
+	View{
+		height=338.871 ft;
+	}
+	View{
+		height=10.088 ft;
+	}
+	View{
+		height=10.0136 ft;
+		tilt=-20;
+		angle=-105;
+	}
+	View{
+		height=6.50331 ft;
+		heading=40;
+	}
+	View{
+		height=6.04499 ft;
+		angle=-100;
+	}
+	View{
+		height=6.02268 ft;
+		tilt=-40;
+		angle=-130;
+	}
+	View{
+		height=6 ft;
+		time=50206;
+		heading=55;
+		tilt=-20;
+		angle=-135;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.001,40) {
+					ambient=Color(1,1,1,0.05);
+					day=24;
+					resolution=4;
+					shine=18.2309;
+					specular=Color(1,1,1);
+					year=100;
+					albedo=1;
+					bands("saturn2",ACHNL|NORM,128,0.37736,0.56604,Color(0.941,0.941,0.941,0.565),Color(0.502,1,0.502),
+						Color(0.675,0.4,0),
+						Color(1,0.875,0.275),
+						Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.996,0.773,0.004));
+					Surface{
+						terrain=
+								Texture("saturn2",BORDER|BUMP|LINEAR|S|TEX,noise(GRADIENT|FS|NABS|SCALE|SQR|UNS,18,10,0,0.89,2.2,0.78,-0.36,0,0),17493.1,0.1,2,0.18464,1,2.28304,1,0);
+					}
+				}
+			}
+		}
+	}
+}

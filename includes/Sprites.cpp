@@ -569,7 +569,7 @@ void Sprite::collect()
 #else
 			double ht=s->ht;
 #endif			
-			Point center=TheMap->point(ps.x, ps.y,ht+s->radius*ht_offset/TheMap->radius);
+			Point center=TheMap->point(ps.y, ps.x,ht+s->radius*ht_offset/TheMap->radius);
 			Point vp=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
 			double d=vp.length(); // distance	
 			double r=TheMap->radius*s->radius;

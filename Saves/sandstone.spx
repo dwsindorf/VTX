@@ -1,0 +1,95 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-30.2571;
+		theta=350.901;
+		height=842.14 ft;
+		gndlvl=2271.28 ft;
+		time=91099;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=1.13636e-09;
+		heading=-75;
+		tilt=-10;
+		angle=5;
+		fov=35;
+		speed=0.02;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=1881.32 ft;
+		minr=0.00400043;
+		radius=0.00400079;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6540.73;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.1);
+					day=24;
+					resolution=1.83718;
+					shadow=Color(0,0,0,0.8);
+					shine=4.20808;
+					specular=Color(1,1,1,0.39);
+					year=100;
+					haze.height=0.66;
+					haze.value=0.4;
+					image("voronoi",INVT|NORM,256,256,noise(VORONOI|RO1,2,1,0.37,0.27,2.1,1,1,1,0));
+					Surface{
+						terrain=
+								Texture("tanlayers",BUMP|S|TEX,0.01*noise(GRADIENT|NABS,6,9,1,0.5,2,0.15,1,0,0)+0.001*noise(GRADIENT|FS,20.1,5,1,0.5,2,0.12,1,0,0),261.017,0.49696,2,-3.11104,4,2,1,0,0,2,0.77776,0)+
+								Texture("voronoi",BUMP,48.4022,-0.66656,1,0,10,2,1,0,0,0,0,0)+Z(noise(GRADIENT|NABS,8,12,0.35,0.95,2.1));
+					}
+					Sky(0.00419081) {
+						color=Color(0,0.58,0.89,0.97);
+						day=24;
+						density=0;
+						haze.color=Color(1,1,0.88);
+						haze.grad=0.9;
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						specular=Color(1,1,1);
+						year=100;
+					}
+					Clouds(0.00407746) {
+						crot=1;
+						emission=Color(1,1,1,0.3);
+						specular=Color(1,1,1);
+						Surface{
+							terrain=Color(1,1,1,noise(GRADIENT|FS,3,9,1,0.5,2));
+						}
+					}
+				}
+			}
+		}
+	}
+}

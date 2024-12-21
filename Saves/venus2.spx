@@ -1,0 +1,136 @@
+Scene() {
+	View{
+		view=ORBITAL;
+		phi=3.12803;
+		theta=199.065;
+		height=0.00485501;
+		gndlvl=8801.98 ft;
+		time=24812.8;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=90;
+		pitch=-90;
+		fov=35;
+		speed=0.02;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=0.00485655;
+		gndlvl=676.055 ft;
+	}
+	View{
+		phi=19.1441;
+		theta=259.184;
+		height=0.00485577;
+		gndlvl=4789.68 ft;
+	}
+	View{
+		theta=243.138;
+		height=0.00485569;
+		gndlvl=5212.96 ft;
+		time=25222.4;
+	}
+	View{
+		phi=11.1283;
+		theta=179.048;
+		height=0.00485613;
+		gndlvl=2886.27 ft;
+		time=35462.4;
+	}
+	View{
+		theta=179.033;
+		height=0.00485683;
+		gndlvl=-792 ft;
+		time=36896;
+	}
+	View{
+		theta=188.885;
+		height=0.00679719;
+		gndlvl=9753.75 ft;
+		pitch=-89;
+		vstride=0.02;
+		zoom=0.003;
+		minh=1.13636e-09;
+		radius=0.00979904;
+	}
+	View{
+		time=66867.4;
+		minr=0.00300185;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.5,0.01) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					name="Sol";
+					specular=Color(1,1,1);
+					temperature=6000;
+					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+						Color(0.467,0,0),
+						Color(0.294,0.016,0.071),
+						Color(0.137,0.024,0.188),
+						Color(0.027,0.02,0.141),
+						Color(0.008,0,0));
+					Surface{
+						terrain=
+								Texture("star1",BORDER|S,noise(GRADIENT|FS|NABS|SQR,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);
+					}
+					Corona(8.11) {
+						color1=Color(1,1,0.8,0.8);
+						color2=Color(1,1,0.7);
+					}
+				}
+				Planet(0.003,50) {
+					albedo=0.1;
+					day=30;
+					diffuse=Color(1,1,1,0.5);
+					name="Venus";
+					ocean.level=0 ft;
+					resolution=4;
+					shine=1.37856;
+					specular=Color(1,1,1,0.42);
+					tilt=10;
+					year=100;
+					Surface{
+						terrain=craters(ID1,2,0.1,0.1,1,1,0.8)
+								Z(0.1*noise(GRADIENT|NABS|NEG|SQR,11,4,0.5,0.5))+Color(noise(GRADIENT|UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);
+					}
+					Clouds(0.0031) {
+						albedo=0.1;
+						crot=1;
+						day=30;
+						hscale=0.05;
+						resolution=4;
+						shine=24.0815;
+						specular=Color(1,1,1,0.1);
+						Surface{
+							terrain=Color(twist(0.2,noise(GRADIENT|FS|NABS|SQR|UNS,0.5,5.1,0.15,0.36,2.13,0.55,0.21,0,0)),0.8*RED,0.3*RED,1);
+						}
+					}
+				}
+			}
+		}
+	}
+}

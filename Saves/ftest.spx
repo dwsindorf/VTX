@@ -1,0 +1,114 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-5.55629;
+		theta=24.4365;
+		height=20.8972 ft;
+		gndlvl=10512.5 ft;
+		time=200826;
+		vstride=1;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=132;
+		tilt=5;
+		angle=-17;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		heading=145;
+		tilt=2;
+	}
+	View{
+		height=33.6187 ft;
+		time=43294.6;
+		heading=155;
+		tilt=-10;
+		angle=-28;
+	}
+	View{
+		time=122600;
+		delt=2000;
+		heading=181;
+		tilt=4;
+		angle=-27;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.004002;
+	}
+	View{
+		height=30.3427 ft;
+		tilt=5;
+		angle=-29;
+		minr=0.00400199;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,90) {
+					day=24;
+					diffuse=Color(1,1,1,0.7);
+					hscale=0.001;
+					shadow=Color(0,0,0,0.76);
+					year=100;
+					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
+					Surface{
+						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
+								Plant("pine",1,1.2e-06,0.8,0.9,0.05)
+								Branch("trunk",10,1,1,1,0.1,0.1,0,0.8,0.95)["Cracks1",Color(0.5,0.25,0,DENSITY)]
+								Branch("branch",9,2.5,0.8,0.7,1,2,0.7,0.8,0.75,6,2)["Cracks1",Color(0.3,0.6*DENSITY,0,0.5*DENSITY)]
+								Plant("bush",2,5e-07,0.8,0.5,0.4,0,0,0,0.75)
+								Branch("stem",10,2.3,0.25,1,2,0.9,0.1,0.7,1,6)[Color(0.8-0.3*IRAND,0.7*DENSITY,0.2*IRAND+0.5*DENSITY)];
+					}
+					Sky(0.0041029) {
+						color=Color(0,0.58,0.89);
+						day=24;
+						density=0.51388;
+						haze.color=Color(1,1,0.88);
+						haze.grad=0.0685;
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						name="BlueSky";
+						night.color=Color(0,0,0,0.9);
+						resolution=4;
+						specular=Color(1,1,1);
+						twilight.max=1;
+						twilight.min=-1;
+						year=100;
+					}
+				}
+			}
+		}
+	}
+}

@@ -10,7 +10,7 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=336;
 		tilt=-2;
 		angle=-24;
@@ -23,17 +23,18 @@ Scene() {
 		heading=312;
 		tilt=-4;
 		angle=-35;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0039931;
 	}
 	View{
 		height=18.1202 ft;
 		heading=317;
 		tilt=1;
-		minr=0.00399308;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		radius=0.00399309;
+	}
+	View{
+		minr=0.00399308;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -68,9 +69,9 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.002;
+					rot_phase=220.644;
 					specular=Color(1,1,1,0.03);
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),

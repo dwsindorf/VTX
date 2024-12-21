@@ -1,0 +1,135 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=7.55533;
+		theta=312.774;
+		height=45.626 ft;
+		gndlvl=10535.5 ft;
+		time=83490.4;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=1.89394e-09;
+		heading=-80;
+		tilt=-15;
+		fov=35;
+		speed=0.02;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=148.903 ft;
+		gndlvl=10543.7 ft;
+		tilt=-5;
+	}
+	View{
+		height=154.975 ft;
+		gndlvl=10519.5 ft;
+	}
+	View{
+		height=159.374 ft;
+	}
+	View{
+		height=778.176 ft;
+		time=31758.4;
+		heading=-115;
+		tilt=3;
+	}
+	View{
+		height=1590.54 ft;
+		time=65384.2;
+		heading=-36;
+		tilt=1;
+		vstride=0.02;
+		zoom=0.004;
+		minh=1.13636e-09;
+		radius=0.00400229;
+	}
+	View{
+		time=25826.2;
+		minr=0.00400199;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=DENSITY;
+			color.list=Colors(
+				Color(0.502,0.000,0.251),
+				Color(0.000,0.000,1.000),
+				Color(0.000,0.722,1.000),
+				Color(0.502,1.000,1.000),
+				Color(1.000,0.275,0.000),
+				Color(1.000,0.702,0.200),
+				Color(1.000,1.000,0.400),
+				Color(1.000,1.000,0.702)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(0.98,0.92,0.79);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=5396.28;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(0.98,0.95,0.77,0.95);
+						color2=Color(0.97,0.67,0.03);
+					}
+				}
+				Planet(0.004,100) {
+					ambient=Color(1,1,1,0.08);
+					day=24;
+					ocean.level=0 ft;
+					shine=3.81307;
+					specular=Color(1,1,1,0.65);
+					year=100;
+					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.992,0.773,0.004));
+					image("eroded",NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1));
+					Surface{
+						terrain=
+								Texture("saturn3",BORDER|TEX,19865.8,1.30436,1,-1.66672,1,2,1,0,0,1,1,0.05556)+
+								Texture("eroded",BUMP,16384,1.42032,1,0,9.33328,2.11112,0.91836,0,0,0,0,0)+Z(noise(GRADIENT|SQR,9.2,14.2,0.71,0.59,2,1,-0.14,1,0));
+					}
+					Sky(0.0041029) {
+						color=Color(0.82,0.98,0.98);
+						day=24;
+						density=0.22222;
+						haze.color=Color(1,0.96,0.6);
+						haze.grad=0.21952;
+						haze.value=1;
+						night.color=Color(0,0,0);
+						resolution=4;
+						rseed=0.869905;
+						shine=2.92377;
+						specular=Color(1,1,1);
+						twilight=Color(0.08,0,0.24);
+						twilight.max=1;
+						twilight.min=-1;
+						year=100;
+					}
+					Clouds(0.00407481) {
+						ambient=Color(1,1,1,0.18);
+						crot=1;
+						diffuse=Color(1,1,1,0.47);
+						diffusion=0.2096;
+						emission=Color(1,1,1,0.04);
+						hscale=0.05;
+						resolution=3;
+						rot_phase=61.02;
+						rseed=0.977999;
+						shine=77.7857;
+						specular=Color(1,1,1,0);
+						Surface{
+							terrain=clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+									Z(0.2*noise(GRADIENT|SQR,5,12,0.6,0.5,2,1,1,0,0.1))+Color(1+4*HT,RED,RED,1);
+						}
+					}
+				}
+			}
+		}
+	}
+}
