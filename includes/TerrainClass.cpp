@@ -1402,9 +1402,10 @@ void TNwater::eval()
 
 	S0.datacnt=0;
 	SeaLevel=Raster.sea_level*Gscale;
+	double temp=obj->calcLocalTemperature(true);
 
 	// drop sealevel as liquid turns to gas
-	double gf=obj->liquidToGas();
+	double gf=obj->liquidToGas(temp);
 	SeaLevel-=5*gf;
 
 	water.InitS();
@@ -1419,7 +1420,7 @@ void TNwater::eval()
     	//if(n==2 && !obj->liquid()){
     		arg[1]->eval();
     		double lvl2=S0.s;
-    		double f=obj->solidToLiquid();
+    		double f=obj->solidToLiquid(temp);
     		slvl=f*lvl2+(1-f)*lvl1;
     	//}
 		SeaLevel+=slvl;

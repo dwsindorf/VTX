@@ -133,8 +133,6 @@ public:
 	virtual void saveNode(FILE *f);
 	virtual void setParent(NodeIF *p)   { parent=p;}
 	virtual NodeIF *getParent()			{ return parent;}
-	virtual double calcLocalTemperature(double phi){ return 0;}
-
 };
 
 //************************************************************

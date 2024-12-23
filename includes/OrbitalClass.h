@@ -725,7 +725,6 @@ public:
 	virtual void calcAveTemperature();
 	virtual double calcLocalTemperature(bool w);
 	virtual double tilt_bias();
-	virtual double season_bias();
 	virtual void animate();
 	virtual bool liquid();
 	virtual bool solid();
@@ -737,8 +736,8 @@ public:
 	virtual void checkForOcean();
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();
-	virtual double solidToLiquid();
-	virtual double liquidToGas();
+	virtual double solidToLiquid(double t);
+	virtual double liquidToGas(double t);
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
 	static void newRocky(Planetoid *);

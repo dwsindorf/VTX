@@ -4029,14 +4029,10 @@ void Planetoid::render_object()
 //-------------------------------------------------------------
 void Planetoid::set_surface(TerrainData &data)
 {
-	if(water()){
-		Theta=data.p.x;
-		Phi=data.p.y;
-		Temp=calcLocalTemperature(true);
-	}
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		data.ocean=solidToLiquid()+1;
+		Temp=calcLocalTemperature(true);
+		data.ocean=solidToLiquid(Temp)+1;
 	}
 	else{
 		data.ocean=0;
@@ -4144,9 +4140,6 @@ double Planetoid::tilt_bias(){
 	return season_factor*RPD*tilt*cos(RPD*(a));
 }
 
-double Planetoid::season_bias(){
-	return (Temp/temperature-1);
-}
 bool Planetoid::tidalLocked(){
 	double f=day/year/24;
 	if(fabs(1-f)<1e-4)
@@ -4309,14 +4302,12 @@ double Planetoid::calcLocalTemperature(bool w){
 	ds=tave*temp_factor*s*s;
 	t-=ds; // C
 	Sfact=K2C(t)/K2C(temperature)-1;
+
+	Temp=t;
 	if(w && ocean->ocean_expr){
 		f=ocean->evalOceanFunction();
-		//hf=lerp(TheScene->elevation/MILES,10,5000,1,2);
-		double gf=t > ocean->oceanGasTemp()?liquidToGas():1;		
-		//cout<<hf<<" "<<gf<<endl;
-		//t+=gf*hf*f;
+		double gf=t > ocean->oceanGasTemp()?liquidToGas(t):1;		
 		t+=gf*f;
-
 	}
 	if(debug_temp>1){
 		char date[256]={0};
@@ -4373,31 +4364,32 @@ bool Planetoid::gas(){
 //-------------------------------------------------------------
 // Planetoid::solidToLiquid() return smooth transition between solid and liquid states (1..0)
 //-------------------------------------------------------------
-double Planetoid::solidToLiquid(){
+double Planetoid::solidToLiquid(double t){
 	if(!ocean_auto){
 		return ocean_state==SOLID?1:0;
 	}
-	double temp=Temp;//+f;//-273;	
+	//calcLocalTemperature(true);
+	Temp=t;//calcLocalTemperature(true);//Temp;//
 	double trans=ocean->oceanSolidTemp()+ocean->oceanSolidTransTemp();
-	double dt=smoothstep(ocean->oceanSolidTemp(),trans,temp,1.0,0);
+	double dt=smoothstep(ocean->oceanSolidTemp(),trans,Temp,1.0,0);
 	return dt;
 }
 
 //-------------------------------------------------------------
 // Planetoid::liquidToGas() return smooth transition between liquid and gas states (0..1)
 //-------------------------------------------------------------
-double Planetoid::liquidToGas(){
+double Planetoid::liquidToGas(double t){
 	double f=0;
 	if(!ocean_auto){
 		return ocean_state==GAS?1:0;
 	}
 	//TheNoise.maxampl=0.0;
 
-	double temp=Temp;//+evalOceanFunction();//-273;
-	if (temp > ocean->oceanGasTemp()){
+	//double temp=Temp;//+evalOceanFunction();//-273;
+	if (Temp > ocean->oceanGasTemp()){
 		double trans=ocean->oceanGasTemp()+ocean->oceanGasTransTemp();
 		//f=smoothstep(temp,ocean->oceanGasTemp(),1.1*ocean->oceanGasTemp(),0.0,1);
-		f=smoothstep(temp,ocean->oceanGasTemp(),trans,0.0,1);
+		f=smoothstep(Temp,ocean->oceanGasTemp(),trans,0.0,1);
 	}
 	//TheNoise.maxampl=1;
 	return f;

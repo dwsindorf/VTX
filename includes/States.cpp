@@ -6,6 +6,7 @@ static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0)";
 static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15,9,0.1,0.4,1.8,0.73,-0.34,0,0)";
 static char* def_ocean_func="noise(GRADIENT,6,14,0.5,0.5,2,1,1,0,0,1e-06)";
 
+//ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
 Array<OceanState*> OceanState::oceanTypes(NUM_OCEAN_TYPES);
 char *OceanState::oceanNames[]={"Water","SO2","CO2","CH4","N2"};
 static double gas_temps[]={-196,-163,-78,-10,100};

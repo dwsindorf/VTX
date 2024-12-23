@@ -888,16 +888,7 @@ void TNtexture::eval()
     texture->slope_bias=sbias;
     
     double tbias=1;
-
-//	Planetoid *orb=(Planetoid *)TNode::getOrbital(this);
-//	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
-//		if(opts&TBIAS)
-//			tbias=1.0;//orb->season_bias();
-//	}
 	texture->tilt_bias=tbias;
-
-    //if(texture->t1d())
-    //cout<<"offset:"<<bias<<" p:"<<pbias<<" h:"<<hbias<<" b:"<<bbias<<" s:"<<sbias<<endl;
 
 	S0.clr_svalid();
 	if(hmapActive() && hmval!=0){
@@ -933,16 +924,10 @@ void TNtexture::eval()
 		}
 		texture->scale=scale;
 		double h=z+texture->hmap_bias;
-		TerrainData::texht+=h;
-	    //if(texture->t2d())
-	    //   cout<<"phi:"<<Phi<<" p:"<<p<<" hmb:"<<hmb<<" hb:"<<hb<<endl;
-
 		S0.p.z=h;
 		S0.set_pvalid();
 		S0.clr_svalid();
 	}
-	 //  cout<<"TNtexture::eval() "<<texture->s<<endl;
-
 }
 
 #define SEXPR 1
