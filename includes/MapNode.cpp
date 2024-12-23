@@ -1855,7 +1855,15 @@ void MapNode::render_vertex()
 	glEnd();
 }
 
-#define TEST_ERODE
+static double state=0;
+static bool iso=false;
+static void Test(MapNode *n)
+{
+	double test=n->ocean();
+	if(fabs(test-state)>0.25)
+		iso=true;
+}
+//#define TEST_ERODE
 //-------------------------------------------------------------
 // MapNode::Tcolor() test color for output
 //-------------------------------------------------------------
@@ -1871,11 +1879,20 @@ Color MapNode::Tcolor(MapData *d) {
     case CNODES:					// '2'
     {
     	double g=d->type();
-    		if(Raster.surface==2)
-    			g=d->ocean();
-    		else
+    		if(Raster.surface==2){
+    			state=ocean();
+    			iso=false;
+     			CWcycle(Test);
+    			if(iso)
+    				c=Color(1,0,0);
+    			else
+    				c=Color(0,0,1);
+    		}
+    		else{
     		    g+=3;
-    	 c = Adapt.tcolor(g);
+    		    c=WHITE;
+    	 		//c = Adapt.tcolor(g);
+    		}
     	        break;
     }
 //        double depth;
@@ -1943,7 +1960,9 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-      	   c = Color(data.mdata(), 0, 0);
+      	  c = Color(data.mdata(), 0, 0);
+      	 if (data.margin())
+      	     c = c.blend(Color(0, 0, 1), 1);
 #endif
         }
         break;
@@ -1957,10 +1976,10 @@ Color MapNode::Tcolor(MapData *d) {
      else
         c = c.blend(Color(1, 0, 0), -s);
 #else
-       if (Raster.surface == 2)
-          c = Color(0, 1, 1);
-       else if (data.margin())
+       if (data.margin())
  		   c = Color(1, 0, 0);
+       else if (Raster.surface == 2)
+          c = Color(0, 1, 1);
 	   else if (data.edge())
 		   c = Color(0, 0, 1);
 	   else

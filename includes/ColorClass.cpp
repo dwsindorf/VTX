@@ -93,9 +93,9 @@ Color::Color(char *s)
 void Color::toString(char *s)
 {
 	if(hasAlpha())
-		sprintf(s,"Color(%0.3f,%0.3f,%0.3f,%0.3f)",red(),green(),blue(),alpha());
+		sprintf(s,"Color(%0.2f,%0.2f,%0.2f,%0.2f)",red(),green(),blue(),alpha());
 	else
-		sprintf(s,"Color(%0.3f,%0.3f,%0.3f)",red(),green(),blue());
+		sprintf(s,"Color(%0.2f,%0.2f,%0.2f)",red(),green(),blue());
 }
 
 void  Color::floatArray(float *f)

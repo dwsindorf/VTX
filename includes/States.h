@@ -50,6 +50,7 @@ class OceanState  : public TNfunc {
 public:
 	OceanState(TNode *l, LiquidState *m1, SolidState *m2);
 	int typeValue()			{ return ID_OCEAN;}
+	double rseed;
 
 	LiquidState *liquid;
 	SolidState *solid;
@@ -121,6 +122,10 @@ public:
 	static char *oceanNames[NUM_OCEAN_TYPES];
 	static void setDefaults();
 	void saveNode(FILE *);
+	
+	bool randomize();
+	void setRseed(double s) {rseed=s;}
+	double getRseed() {return rseed;}
 	
 	static NodeIF *newInstance();
 };

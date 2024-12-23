@@ -863,7 +863,6 @@ void Scene::open(char *fn)
 	}
 	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
-
 	scene_objects=total_objs();
 
 	status=stat;
@@ -896,6 +895,7 @@ void Scene::open(char *fn)
 	}
 
 	locate_objs();
+    //cout<<"open:"<<endl;
 	set_lights();
 	if(viewobj && (viewobj->type()==ID_PLANET || viewobj->type()==ID_MOON)){
 		Planetoid *planet=(Planetoid*)viewobj;
@@ -2324,6 +2324,9 @@ void Scene::render()
 
 		GLSLMgr::clearTexs();
 
+	    set_adapt_mode();
+
+	    //cout<<"render:"<<endl;
 		set_lights();
 		Raster.manageBuffers();
 		rendered_objects=0;
@@ -2348,7 +2351,6 @@ void Scene::render()
 				break;
 			}
 		}
-	    set_adapt_mode();
 	    SET_SHOWINFO;
 	    if(info_enabled)
 		    draw_string(HDR1_COLOR,"------- adapt -------------------");
@@ -2493,6 +2495,7 @@ void Scene::render_shadows()
     int bgs=Raster.shadows() && Raster.bgshadows() && !light_view() && !test_view();
 
     locate_objs();
+    //cout<<"render_shadows:"<<endl;
 	set_lights();
 
 	bounds=viewobj->bounds();
@@ -2614,6 +2617,8 @@ void Scene::render_objects()
 	pass_init();
 	bgpass=0;
 	locate_objs();
+    //cout<<"render_objects:"<<endl;
+
 	set_lights();
 
 	// render foreground

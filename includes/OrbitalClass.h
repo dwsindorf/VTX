@@ -704,6 +704,7 @@ public:
     virtual void setOcean(OceanState *s);
     virtual OceanState *getOcean();
 	virtual void set_lighting();
+	virtual void set_lights();
 	virtual void set_tod();
     virtual void map_color(MapData*,Color&);
 	virtual void set_vars();

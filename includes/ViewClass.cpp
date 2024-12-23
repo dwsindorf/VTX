@@ -421,7 +421,6 @@ void View::setMatrix()
 	ModelViewProjMatrix.setValues(pm);
 	minv(pm,pm,4);
 	InvModelViewProjMatrix.setValues(pm);
-
 }
 
 //-------------------------------------------------------------

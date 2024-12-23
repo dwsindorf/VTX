@@ -2046,7 +2046,7 @@ void RasterMgr::manageBuffers()
 void RasterMgr::init_render()
 {
 	do_hdr=hdr();
-	do_water=Render.show_water() && waterpass() && (TheScene->viewtype==SURFACE);
+	do_water=Render.show_water() && waterpass() && (TheScene->viewtype==SURFACE) && Render.draw_shaded();
 	do_depth=do_water && water_depth();
 	do_reflect=do_water && (reflections() || water_modulation());
 	do_shadows=Lights.size && shadows() && Render.lighting();

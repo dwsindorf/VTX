@@ -215,12 +215,14 @@ public:
 	TNwater(TNode *l, TNode *r) : TNfunc(l,r) {}
 	
 	void eval();
+	void save(FILE *);
 	void saveNode(FILE *);
 	NodeIF *replaceNode(NodeIF *c);
 	int typeValue()			{ return ID_WATER;}
 	const char *typeName ()	{ return "ocean";}
 	NodeIF *getInstance();
 	void setNoiseExprs(OceanState *s);
+	bool randomize();
 	
 };
 

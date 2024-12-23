@@ -1386,7 +1386,10 @@ void TNwater::eval()
 		}
 		return;
 	}
-
+    double newseed=obj->ocean->getRseed();	
+    double oldseed=Noise::rseed;
+    if(newseed>0)
+    	Noise::rseed=newseed;
 	S0.set_flag(WATERFLAG);
 
 	double dz=0;
@@ -1413,14 +1416,16 @@ void TNwater::eval()
     	arg[0]->eval();
     	double lvl1=S0.s;
     	double slvl=lvl1;
-    	if(n==2 && !obj->liquid()){
+    	//if(n==2 && !obj->liquid()){
     		arg[1]->eval();
     		double lvl2=S0.s;
     		double f=obj->solidToLiquid();
     		slvl=f*lvl2+(1-f)*lvl1;
-    	}
+    	//}
 		SeaLevel+=slvl;
 	}
+    Noise::rseed=oldseed;
+
 	INIT;
 
 	if(right)
@@ -1442,12 +1447,19 @@ void TNwater::eval()
 	water.clr_cvalid();
 	water.set_water();
 	water.depth=WaterDepth/Gscale;
-
-	//if(CurrentScope->zpass())
-	//	return;
-
-	// S0 = terrain surface
-	S0.clr_flag(INMARGIN);
+	double mf=fabs(dz)/Gscale;
+	double mv=rampstep(0,2*Raster.water_clarity,mf,0,1);
+	//cout<<mf<<" "<<mf/Raster.water_clarity<<" "<<mv<<endl;
+ 
+	if(mv>=1){
+		water.clr_flag(INMARGIN);
+		S0.clr_flag(INMARGIN);
+	}
+	else{
+	   water.set_flag(INMARGIN);
+	   S0.set_flag(INMARGIN);
+	}
+//		S0.set_flag(INMARGIN);
     if(dz>=0 || geom){  // terrain is below water
 		if(S0.datacnt<MAX_TDATA)
 			S0.datacnt++;
@@ -1458,8 +1470,8 @@ void TNwater::eval()
 		S0.data[0]=&s2;
 		S0.copy(water);
 		//if(dz<m)
-	    if(f<1 && !geom)
-			S0.set_flag(INMARGIN);
+	    //if(f<0.1 && !geom)
+		//	S0.set_flag(INMARGIN);
 	 }
 	 else {    // terrain is above water with water as surface 2
 		 for(int i=0;i<rccnt;i++){
@@ -1479,9 +1491,29 @@ void TNwater::eval()
 void TNwater::saveNode(FILE *f)
 {
 	Planetoid *orb=(Planetoid *)getOrbital(this);
-	//ocean=orb->ocean;
+	orb->ocean->setName(nodeName());
 	orb->ocean->saveNode(f);
+}
 
+bool TNwater::randomize(){
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	orb->ocean->randomize();
+	orb->invalidate();
+	TheScene->rebuild();
+	return true;
+}
+
+//-------------------------------------------------------------
+// TNwater::save() archive the node
+//-------------------------------------------------------------
+void TNwater::save(FILE *f)
+{
+	fprintf(f,"%s(",symbol());
+	if(left)
+		left->save(f);
+	fprintf(f,")\n%s",tabs);
+	if(right)
+		right->save(f);
 }
 void TNwater::setNoiseExprs(OceanState *s){
 	char str[1024];
@@ -1489,7 +1521,6 @@ void TNwater::setNoiseExprs(OceanState *s){
 	sprintf(str,"ocean(%s,%s)\n",s->getOceanLiquidExpr(),s->getOceanSolidExpr());
 	setExpr(str);
 	applyExpr();
-
 }
 //-------------------------------------------------------------
 // TNwater::replaceNode
@@ -1524,9 +1555,13 @@ NodeIF *TNwater::getInstance(){
 	setRands();	
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	OceanState *state=OceanState::newInstance();
+
 	setNoiseExprs(state);
 	orb->setOcean(state);
+
 	replaceNode(state);
+	orb->ocean->rseed=getRandValue()*1117;
+
 	lastn=last;
 
 	return this;

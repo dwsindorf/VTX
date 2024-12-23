@@ -1273,7 +1273,6 @@ void Galaxy::select()
 //-------------------------------------------------------------
 void Galaxy::adapt()
 {
-
  	if(isEnabled() && TheScene->far_pass()){
 		set_ref();
 		set_point();
@@ -3323,7 +3322,6 @@ int Star::render_pass()
 //************************************************************
 // Planetoid class (moons & planets)
 //************************************************************
-
 Planetoid::Planetoid(Orbital *m, double s, double r) :
 	Spheroid(m,s,r)
 {
@@ -3373,7 +3371,6 @@ void Planetoid::setOcean(OceanState *s){
 	ocean=state;
 	ocean->setOceanExpr();
 	cout<<"setOcean:"<<ocean<<" "<<ocean->expr<<endl;
-	cout<<str<<endl;
 
 }
 
@@ -3430,11 +3427,14 @@ void Planetoid::get_ocean_vars()
 		ocean_level=0;
 	VGET("ocean.state",ocean_state,def_ocean_state);
 	VGET("ocean.auto",ocean_auto,def_ocean_auto);
+	
+	MNGET("ocean.name",name_str);
+	MVGET("ocean.rseed",rseed);
+
 	MVGET("ocean.solid",solid->temp);
 	MVGET("ocean.liquid",liquid->temp);
 	MVGET("ocean.solid.trans",solid->trans_temp);
 	MVGET("ocean.liquid.trans",liquid->trans_temp);
-	MNGET("ocean.name",nodeName());
 	
 	MCGET("water.color1",liquid->color1);
 	MCGET("water.color2",liquid->color2);
@@ -3453,32 +3453,33 @@ void Planetoid::get_ocean_vars()
 #define MCSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
 #define MVSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
 #define MUSET(name,value,u) if(water()) { ts=exprs.set_var(name,ocean->value); ts->units=u;} else exprs.hide_var(name)
+#define MNSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
 
 void Planetoid::set_ocean_vars(){
 	
-	setOceanExpr();
-	
+	setOceanExpr();	
 	VSET("ocean.state",ocean_state,def_ocean_state);
 	VSET("ocean.auto",ocean_auto,def_ocean_auto);
 	USET("ocean.level",ocean_level,0,"ft");
 	
-	MVSET("ocean.solid",oceanSolidTemp());
-	MVSET("ocean.liquid",oceanGasTemp());
-	MVSET("ocean.solid.trans",oceanSolidTransTemp());
-	MVSET("ocean.liquid.trans",oceanGasTransTemp());
+	MVSET("ocean.rseed",rseed);
+	MVSET("ocean.solid",solid->temp);
+	MVSET("ocean.liquid",liquid->temp);
+	MVSET("ocean.solid.trans",solid->trans_temp);
+	MVSET("ocean.liquid.trans",liquid->trans_temp);
 
-	MCSET("water.color1",waterColor1());
-	MCSET("water.color2",waterColor2());
-	MVSET("water.mix",waterMix());
-	MVSET("water.albedo",waterSpecular());
-	MVSET("water.shine",waterShine());
-	MUSET("water.clarity",waterClarity(),"ft");
-    MCSET("ice.color1",iceColor1());
-    MCSET("ice.color2",iceColor2());
-	MUSET("ice.clarity",iceClarity(),"ft");
-	MVSET("ice.mix",iceMix());
-	MVSET("ice.albedo",iceSpecular());
-	MVSET("ice.shine",iceShine());
+	MCSET("water.color1",liquid->color1);
+	MCSET("water.color2",liquid->color2);
+	MVSET("water.mix",liquid->mix);
+	MVSET("water.albedo",liquid->specular);
+	MVSET("water.shine",liquid->shine);
+	MUSET("water.clarity",liquid->clarity*FEET,"ft");
+    MCSET("ice.color1",solid->color1);
+    MCSET("ice.color2",solid->color2);
+	MUSET("ice.clarity",solid->clarity*FEET,"ft");
+	MVSET("ice.mix",solid->mix);
+	MVSET("ice.albedo",solid->specular);
+	MVSET("ice.shine",solid->shine);
 
 }
 void Planetoid::get_vars()
@@ -3899,9 +3900,9 @@ void Planetoid::init_render()
 
 	//Raster.water_reflect=water_reflectance;
 	Raster.water_clarity=clarity;
-	Raster.water_mix=ocean->waterMix();
+	Raster.water_mix=ocean->liquid->mix;
 	Raster.ice_clarity=ocean->iceClarity();
-	Raster.ice_mix=ocean->iceMix();
+	Raster.ice_mix=ocean->solid->mix;
 
 	//Raster.water_saturation=water_saturation;
  	}
@@ -3934,13 +3935,12 @@ void Planetoid::adapt_object()
 {
 	if(!isEnabled())
 		return;
-	//set_lighting();
+
 	checkForOcean();
-	set_tod();
 	calcAveTemperature();
 	Tave=temperature;
-	//Tsol=ocean->oceanSolidTemp();
-	//Tgas=ocean->oceanGasTemp();	
+	Tsol=ocean->oceanSolidTemp();
+	Tgas=ocean->oceanGasTemp();	
 	
 	double p=TheScene->phi;
 	Phi=TheScene->phi;
@@ -3960,23 +3960,23 @@ void Planetoid::adapt_object()
 			cout<<"rebuild "<<date<<" "<<t<<" "<<last_temp<<" "<<dt<<endl;
 		}
 		invalidate();
-		//TheScene->set_changed_detail();
+		TheScene->set_changed_detail();
 		TheScene->rebuild();
-	last_temp=surface_temp;
+		last_temp=surface_temp;
 	}
 	debug_temp=0;
 
 	Raster.frozen=ocean_state==SOLID?true:false;
     if(water()){
-    Td.clarity=ocean->waterClarity();
-	Raster.sea_level=ocean_level;
-	Raster.water_color1=ocean->waterColor1();
-	Raster.water_color2=ocean->waterColor2();
-	Raster.water_clarity=ocean->waterClarity();
-
-	Raster.ice_color1=ocean->iceColor1();
-	Raster.ice_color2=ocean->iceColor2();
-	Raster.ice_clarity=ocean->iceClarity();
+		Td.clarity=ocean->waterClarity();
+		Raster.sea_level=ocean_level;
+		Raster.water_color1=ocean->waterColor1();
+		Raster.water_color2=ocean->waterColor2();
+		Raster.water_clarity=ocean->waterClarity();
+	
+		Raster.ice_color1=ocean->iceColor1();
+		Raster.ice_color2=ocean->iceColor2();
+		Raster.ice_clarity=ocean->iceClarity();
     }
     Spheroid::adapt_object();
 }
@@ -4003,23 +4003,22 @@ void Planetoid::render_object()
 	}
 	else /*if(water())*/{
 		if(water()){
-		Raster.sea_level=ocean_level;
-		Color c= ocean->iceColor1();
-		Raster.modulate(c);
-		c.set_alpha(ocean->iceColor1().alpha());
-		Raster.ice_color1=c;
-		c=ocean->iceColor2();
-		Raster.modulate(c);
-		Raster.ice_color2=c;
-		c=ocean->waterColor1();
-		Raster.modulate(c);
-		c.set_alpha(ocean->waterColor1().alpha());
-		Raster.water_color1=c;
-		c=ocean->waterColor2();
-		Raster.modulate(c);
-		Raster.water_color2=c;
+			Raster.sea_level=ocean_level;
+			Color c= ocean->iceColor1();
+			Raster.modulate(c);
+			c.set_alpha(ocean->iceColor1().alpha());
+			Raster.ice_color1=c;
+			c=ocean->iceColor2();
+			Raster.modulate(c);
+			Raster.ice_color2=c;
+			c=ocean->waterColor1();
+			Raster.modulate(c);
+			c.set_alpha(ocean->waterColor1().alpha());
+			Raster.water_color1=c;
+			c=ocean->waterColor2();
+			Raster.modulate(c);
+			Raster.water_color2=c;
 		}
-		//set_tod();
 		Spheroid::render_object();
 	}
 
@@ -4037,7 +4036,7 @@ void Planetoid::set_surface(TerrainData &data)
 	}
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
-		data.ocean=solidToLiquid()+0.99;
+		data.ocean=solidToLiquid()+1;
 	}
 	else{
 		data.ocean=0;
@@ -4108,10 +4107,16 @@ void Planetoid::map_color(MapData*d,Color &c)
 	}
 }
 
+void Planetoid::set_lights(){
+	if(TheScene->adapt_mode()){
+		set_tod();
+	}
+}
 void Planetoid::set_tod(){
 	Point light_point=Lights[0]->point.mm(TheScene->InvModelMatrix.values());
 	Point ls=light_point.spherical();
 	light_theta=ls.y;
+	//cout<<"light_theta:"<<light_theta<<endl;
 }
 //-------------------------------------------------------------
 // Planetoid::set_lighting()  set light attributes
@@ -4120,15 +4125,13 @@ void Planetoid::set_lighting(){
     Orbital::set_lighting();
     Lights.setAttenuation(point);
     if(water()){
-	Raster.water_shine=ocean->waterShine();
-	Raster.water_specular=ocean->waterSpecular();
-	Raster.ice_shine=ocean->iceShine();
-	Raster.ice_specular=ocean->iceSpecular();
+		Raster.water_shine=ocean->waterShine();
+		Raster.water_specular=ocean->waterSpecular();
+		Raster.ice_shine=ocean->iceShine();
+		Raster.ice_specular=ocean->iceSpecular();
     }
 	Lights.modDiffuse(Raster.sky_color);
 	Lights.modSpecular(Raster.blend_color);
-	
-    //set_tod();
 }
 
 //-------------------------------------------------------------
@@ -4163,7 +4166,6 @@ void Planetoid::getDateString(char *s){
 // Planetoid::getDate() get date string
 //-------------------------------------------------------------
 void Planetoid::setDateString(){
-	//set_tod();
 	static char *months[]={"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
 	double angle=orbit_angle;
 	if(type()==ID_MOON)
@@ -4307,7 +4309,20 @@ double Planetoid::calcLocalTemperature(bool w){
 	ds=tave*temp_factor*s*s;
 	t-=ds; // C
 	Sfact=K2C(t)/K2C(temperature)-1;
-	Temp=t;
+	if(w && ocean->ocean_expr){
+		f=ocean->evalOceanFunction();
+		//hf=lerp(TheScene->elevation/MILES,10,5000,1,2);
+		double gf=t > ocean->oceanGasTemp()?liquidToGas():1;		
+		//cout<<hf<<" "<<gf<<endl;
+		//t+=gf*hf*f;
+		t+=gf*f;
+
+	}
+	if(debug_temp>1){
+		char date[256]={0};
+		getDateString(date);
+		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<Phi<<" Ta:"<<K2C(tave)<<" f:"<<f<<" sf:"<<Sfact<<" Temp:"<<K2C(t)<<endl;
+	}
 	if(ocean_auto){
 		if (t <= ocean->oceanSolidTemp())
 			ocean_state = SOLID;
@@ -4317,18 +4332,7 @@ double Planetoid::calcLocalTemperature(bool w){
 			ocean_state = GAS;
 	}
 	Raster.frozen=ocean_state==SOLID?true:false;
-	if(w && ocean->ocean_expr){
-		f=ocean->evalOceanFunction();
-		hf=lerp(TheScene->elevation/MILES,5,5000,1,2);
-		double gf=Temp > ocean->oceanGasTemp()?liquidToGas():1;		
-		//cout<<hf<<" "<<gf<<endl;
-		t+=gf*hf*f;
-	}
-	if(debug_temp>1){
-		char date[256]={0};
-		getDateString(date);
-		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<Phi<<" Ta:"<<K2C(tave)<<" f:"<<f<<" sf:"<<Sfact<<" Temp:"<<K2C(t)<<endl;
-	}
+	Temp=t;
 	return t;
 }
 
@@ -4387,7 +4391,7 @@ double Planetoid::liquidToGas(){
 	if(!ocean_auto){
 		return ocean_state==GAS?1:0;
 	}
-	TheNoise.maxampl=0.0;
+	//TheNoise.maxampl=0.0;
 
 	double temp=Temp;//+evalOceanFunction();//-273;
 	if (temp > ocean->oceanGasTemp()){
@@ -4395,7 +4399,7 @@ double Planetoid::liquidToGas(){
 		//f=smoothstep(temp,ocean->oceanGasTemp(),1.1*ocean->oceanGasTemp(),0.0,1);
 		f=smoothstep(temp,ocean->oceanGasTemp(),trans,0.0,1);
 	}
-	TheNoise.maxampl=1;
+	//TheNoise.maxampl=1;
 	return f;
 }
 
@@ -4412,7 +4416,6 @@ double Planetoid::dlt(){
 //-------------------------------------------------------------
 double Planetoid::calc_delt()
 {
-	//set_tod();
 	double dv=dlt();
 	double wt=unwrap(last_dt,dv);
 	double del=P360(wt)/360;
@@ -5012,8 +5015,6 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	planet->ocean_auto=1;
 	state->setOceanFunction((char*)randFeature(RND_OCEAN_EXPR).c_str());
 
-	//props->left=0;
-	
 	popInstance(planet);
 	
 	return std::string(buff);
