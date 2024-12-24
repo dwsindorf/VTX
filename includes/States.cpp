@@ -3,8 +3,8 @@
 #include "TerrainClass.h"
 
 static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0)";
-static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15,9,0.1,0.4,1.8,0.73,-0.34,0,0)";
-static char* def_ocean_func="noise(GRADIENT,6,14,0.5,0.5,2,1,1,0,0,1e-06)";
+static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.0,1e-06)";
+static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,1e-06)";
 
 //ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
 Array<OceanState*> OceanState::oceanTypes(NUM_OCEAN_TYPES);
@@ -13,15 +13,15 @@ static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
 
 static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93),Color(0.00,0.16,0.16),373,300,0.95,100,1,10,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
-static char *H2O_sol_str="solid(Color(1.00,1.00,1.00),Color(0.41,0.79,0.78),273,1,0.95,40,1,0.2,noise(GRADIENT|NABS|SCALE|SQR,15,9,0.1,0.4,1.8,0.73,-0.34,0,0))";
+static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.40,0.67,0.80),273,1,0.95,0.8,0.1,0.05,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.005,1e-06))";
 static char *SO2_liq_str="liquid(Color(0.9,0.9,0.8,0.522),Color(0.447,0.435,0.512),263,1000,0.8,71,1,10,noise(GRADIENT|SCALE,19,3,1,0.5,2,0.11,1,0,0))";
-static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
+static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,0.1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
 static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10)";
-static char *CO2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),195,1.0,0.95,0.8,0.6,1)";
+static char *CO2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),195,1.0,0.95,0.8,0.6,0.2)";
 static char *CH4_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),110,300,0.95,100,1,10)";
-static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,1)";
+static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,0.2)";
 static char *N2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),77,300,0.95,100,1,10)";
-static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,1)";
+static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,0.2)";
 
 //************************************************************
 // OceanState
@@ -87,7 +87,7 @@ double  OceanState::evalOceanFunction(){
 	if(!ocean_expr)
 		ocean_expr=TheScene->parse_node(expr);
     double oldseed=Noise::rseed;
-    if(rseed>0)
+    //if(rseed>0)
     	Noise::rseed=rseed;
 
 	ocean_expr->eval();
@@ -133,7 +133,7 @@ NodeIF *OceanState::newInstance(){
 	buff[0]=lbuff[0]=sbuff[0]=0;
 	LiquidState::newInstance(lbuff);
 	SolidState::newInstance(sbuff);
-	double seed=getRandValue()*1115;
+	double seed=getRandValue();
     sprintf(buff,"Ocean(\"Sea\",%s,%g)[\n%s,\n%s]",def_ocean_func,seed,lbuff,sbuff);
     cout<<"OceanState::newInstance\n"<<buff<<endl;
     OceanState *c=TheScene->parse_node(buff);
@@ -302,7 +302,7 @@ void SolidState::newInstance(char *buff){
 	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
-	ice+=",273,1.0,0.95,40,1,1,";
+	ice+=",273,1.0,0.95,40,1,0.2,";
 	ice+=def_solid_func;
 	ice+=")";
 	

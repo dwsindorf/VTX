@@ -1561,7 +1561,7 @@ NodeIF *TNwater::getInstance(){
 	orb->setOcean(state);
 
 	replaceNode(state);
-	orb->ocean->rseed=getRandValue()*1117;
+	orb->ocean->rseed=getRandValue();
 
 	lastn=last;
 
