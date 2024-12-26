@@ -832,7 +832,7 @@ void ExprMgr::init()
 
 	CurrentScope=this;
 	set_init_mode(1);
-	
+
 	//vars.free();
 
 	exprs.ss();
@@ -844,12 +844,12 @@ void ExprMgr::init()
 	    }
 	    else
 	        var->set_constant(1);
-#ifdef DEBUG_INIT
+//#ifdef DEBUG_INIT
 // 		if(var->constant())
 //	    	printf("const expr %s %g\n",var->name,S0.s);
 //	    else
 //	    	printf("init expr %s %g\n",var->name,S0.s);
-#endif
+//#endif
     }
 	inodes.ss();
 	TNinode *image;

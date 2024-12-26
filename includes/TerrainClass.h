@@ -202,6 +202,7 @@ public:
 	void propertyString(char *);
 	bool setProgram();
 	void addToken(LinkedList<TNode*>&);
+	static std::string randomize(char *src,double f,double t);
 };
 
 //~~~~~~~~~~~~~~~~~ binary nodes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

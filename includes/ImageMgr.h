@@ -8,6 +8,7 @@
 #include "ColorClass.h"
 #include "ListClass.h"
 #include "FileUtil.h"
+#include "Util.h"
 
 class TNarg;
 class TNode;

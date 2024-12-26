@@ -138,6 +138,8 @@ public:
 	bool        enable_grid;
 	int         temp_mode;
 	bool        prefs_mode;
+	static TimeIt timer;
+
 
 	NameList<NameSym*>frame_files;
 	char        filename[256];

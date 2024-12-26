@@ -86,6 +86,7 @@ typedef struct name {			/* gp management structure			*/\
 #define P360(p) (fmod(p,360))
 #define P180(p) (fmod(p,180))
 
+
 inline char *newstr(char *a){
 	char *b;
 	MALLOC(strlen(a)+1,char,b);

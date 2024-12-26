@@ -60,8 +60,6 @@ enum{
     ID_SOLID_TRANS_TEMP_TEXT,
     ID_SOLID_MIX_SLDR,
     ID_SOLID_MIX_TEXT,
-
-
 };
 
 #define EXPR_WIDTH  140
@@ -527,9 +525,14 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setIceMix(SolidMixSlider->getValue());
 
     orb->setOceanExpr((char*)OceanFunction->GetValue().ToAscii());
-    
+ 
+
     ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
     ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());
+//	cout<<"VtxWaterTabs::setObjAttributes() "<<ocean->getOceanSolidExpr()<<endl;
+
+	//cout<<ocean<<" VtxWaterTabs::setObjAttributes() "<<ocean->getOceanSolidExpr()<<endl;
+	//cout<<ocean<<" VtxWaterTabs::setObjAttributes() "<<ocean->getOceanLiquidExpr()<<endl;
 
     tnode->setNoiseExprs(ocean);
  
@@ -551,16 +554,18 @@ void VtxWaterTabs::getObjAttributes(){
 
 	LiquidFunction->SetValue(ocean->getOceanLiquidExpr());
 	SolidFunction->SetValue(ocean->getOceanSolidExpr());
-
-	if(arg){
-		LiquidFunction->SetValue(arg);
-		ocean->setOceanLiquidExpr((char *)LiquidFunction->GetValue().ToAscii());
-		arg=arg->next();
-		if(arg){
- 			SolidFunction->SetValue(arg);
- 			ocean->setOceanSolidExpr((char *)SolidFunction->GetValue().ToAscii());
-		}
-	}
+	
+	//cout<<ocean<<" VtxWaterTabs::getObjAttributes() "<<ocean->getOceanSolidExpr()<<endl;
+	//cout<<ocean<<" VtxWaterTabs::getObjAttributes() "<<ocean->getOceanLiquidExpr()<<endl;
+//	if(arg){
+//		LiquidFunction->SetValue(arg);
+//		ocean->setOceanLiquidExpr((char *)LiquidFunction->GetValue().ToAscii());
+//		arg=arg->next();
+//		if(arg){
+// 			SolidFunction->SetValue(arg);
+// 			ocean->setOceanSolidExpr((char *)SolidFunction->GetValue().ToAscii());
+//		}
+//	}
  	char buff[1024];
  	ocean->getOceanFunction(buff);
 

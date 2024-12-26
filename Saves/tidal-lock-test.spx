@@ -6,11 +6,11 @@ Scene() {
 		height=0.0060157;
 		gndlvl=0.00487382 ft;
 		time=4.0355e+08;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -20,20 +20,20 @@ Scene() {
 	View{
 		theta=211.019;
 		pitch=-87;
-		hstride=2;
-		minr=0.004;
 	}
 	View{
 		height=0.008;
 		pitch=-90;
-		hstride=1;
-		radius=0.012;
 	}
 	View{
 		phi=17.6859;
 		theta=211.879;
 		height=0.00800966;
 		pitch=-92;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.004;
 		radius=0.0120097;
 	}
 	Universe {
@@ -42,14 +42,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -81,6 +81,7 @@ Scene() {
 					ocean.liquid=373;
 					ocean.liquid.trans=10;
 					ocean.name="methane";
+					ocean.rseed=0;
 					ocean.solid=273;
 					ocean.solid.trans=1;
 					ocean.state=2;
@@ -88,12 +89,12 @@ Scene() {
 					season.factor=0.63492;
 					temp.factor=0.51612;
 					tilt=20;
-					water.albedo=1;
+					water.albedo=0.9365;
 					water.clarity=213.667 ft;
 					water.color1=Color(0.68,0.95,0.95);
 					water.color2=Color(0.03,0.25,0.07);
 					water.mix=0.95;
-					water.shine=100;
+					water.shine=6.35;
 					year=0.793667;
 					ocean.expr=noise(GRADIENT|RO1,2.4,11.5,1,0.6,2,0.64,1,0,0,1e-06);
 					bands("tidal-locked",ACHNL|CLAMP|NORM,128,0.06452,0.0784314,RAND,Color(0.729,0.878,0.973),
@@ -110,7 +111,7 @@ Scene() {
 						Color(0.141,0,0,0.58));
 					Surface{
 						terrain=snow(-1.8,1.6,0.63,-0.3,1,0.08)
-								ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
+								ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.005,1e-06))
 								
 								Texture("tidal-locked",BORDER|S|TBIAS|TEX,noise(GRADIENT|SCALE,2.7,10.4,1,0.5,2,0.2,1,0,0,1e-06),30.9636,2,0,0.5,1,2,1,0,0.1,0.2,0.03176,-0.15872)+Z(noise(GRADIENT|NABS|SQR,1.5,16,0.84,0.5,2.08,1,1,0,0.5,1e-06));
 					}

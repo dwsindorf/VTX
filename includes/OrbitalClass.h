@@ -737,6 +737,7 @@ public:
 	virtual bool tidalLocked();
 	virtual void setTidalLocked();
 	virtual double solidToLiquid(double t);
+	virtual double oceanState();
 	virtual double liquidToGas(double t);
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);

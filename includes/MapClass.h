@@ -67,7 +67,6 @@ protected:
 	MapNode *spole;
 	MapNode *last;
 	int mcount,mcreated,mdeleted;
-	
     double _conv;
 
 	static int tesslevel;

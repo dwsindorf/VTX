@@ -242,7 +242,6 @@ bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
 int Map::tesslevel=4;
 int Map::maxtesslevel=5;
-
 Map::Map(double r)
 {
 	static int init_flag=1;
@@ -1889,8 +1888,11 @@ void Map::adapt()
     if(Adapt.never())
 	   return;
 	mcreated=mdeleted=mcount=cycles=0;
-	if(!npole)
+	bool first_make=false;
+	if(!npole){
+		first_make=true;
 		make();
+	}
 	if(Adapt.uniform())
 		set_grid(Adapt.grid_depth());
 	else
@@ -2007,6 +2009,9 @@ void Map::adapt()
 	}
 	if(object==TheScene->viewobj && Render.display(TRNINFO)){
 		show_terrain_info();
+	}
+	if(first_make){
+		first_make=false;
 	}
 	
 	//find_limits();

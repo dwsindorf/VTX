@@ -1169,6 +1169,31 @@ void TNnoise::init()
 	clr_normalized();
 }
 
+std::string TNnoise::randomize(char *src,double f,double t){
+	char opts[64];
+	double args[16];
+	TNnoise *noise=TheScene->parse_node(src);
+	std::string str("noise(");
+	if(t<0.01){
+	  noise->optionString(opts);
+	  str+=opts;
+	}
+	else{
+		str+=Noise::getNtype(r[5]*r[5]*t);
+		str+=Noise::getNopts(r[3]*t);
+	}
+	int n=getargs(noise->right,args,16);
+	char tmp[64];
+	for(int i=0;i<n;i++){
+		args[i]+=f*s[i]*fabs(args[i]);
+		sprintf(tmp,",%1.2f",args[i]);		
+		str+=tmp;
+	}
+	str+=")";
+	return str;
+	
+//
+}
 //-------------------------------------------------------------
 // TNnoise::eval() evaluate the node
 //-------------------------------------------------------------
@@ -1366,6 +1391,7 @@ bool TNnoise::setProgram(){
 	return true;
 }
 
+
 //************************************************************
 // TNbinary classes
 //************************************************************
@@ -1406,7 +1432,7 @@ void TNwater::eval()
 
 	// drop sealevel as liquid turns to gas
 	double gf=obj->liquidToGas(temp);
-	SeaLevel-=5*gf;
+	SeaLevel-=2*gf;
 
 	water.InitS();
 
@@ -1417,12 +1443,12 @@ void TNwater::eval()
     	arg[0]->eval();
     	double lvl1=S0.s;
     	double slvl=lvl1;
-    	//if(n==2 && !obj->liquid()){
+    	if(n==2 && !obj->liquid()){
     		arg[1]->eval();
     		double lvl2=S0.s;
     		double f=obj->solidToLiquid(temp);
     		slvl=f*lvl2+(1-f)*lvl1;
-    	//}
+    	}
 		SeaLevel+=slvl;
 	}
     Noise::rseed=oldseed;

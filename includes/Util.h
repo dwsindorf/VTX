@@ -10,6 +10,38 @@
 
 const double lim=1e33;
 
+class TimeIt {
+	double tstart;
+	double tlast;
+	char name[256];
+public:
+	TimeIt(){
+		tstart=tlast=0;
+		strcat(name,"Timeit");
+	}
+	TimeIt(char *n){
+		strcat(name,n);
+		tstart=tlast=0;
+	}
+	void start(){
+		cout<<name<<" Timer Start"<<endl;
+		tstart=clock();
+		tlast=tstart;
+	}
+	double getTime(){
+		return (clock()-tstart)/CLOCKS_PER_SEC;
+	}
+	void showTime(char *v){
+		//if(!tstart)
+		//	return;
+		double tm=clock();
+		double dt=(tm-tlast)/CLOCKS_PER_SEC;
+		double tt=(tm-tstart)/CLOCKS_PER_SEC;
+		tlast=tm;
+		cout<<name<<" "<<v<<" "<<tt<<"["<<dt<<"] sec"<<endl;
+	}
+};
+
 class Averager {
 	double total;
 	int aves;

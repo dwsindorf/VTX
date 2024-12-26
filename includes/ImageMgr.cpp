@@ -1170,12 +1170,6 @@ Image *ImageReader::load(char *f,TNinode *n)
     hashName(f,info,name);
     ImageSym *is=getImageInfo(name);
 
-    // see if spx file exits
-
-	if(!is->istring){
-		delete is;
-		return 0;      // no spx file TNinode needs to build
-	}
 	char buff[4096];
 	buff[0]=0;
 
@@ -1190,7 +1184,10 @@ Image *ImageReader::load(char *f,TNinode *n)
 
 	strcat(buff,"\n");
 
-	if(strcmp(is->istring,buff)!=0){
+	if(is->istring && strcmp(is->istring,buff)!=0){
+#ifdef DEBUG_IMAGES
+	printf("%-20s SPX CHANGED - REBUILD NEEDED %s\n","ImageReader",name);
+#endif
 		delete is;
 		return 0;      // changed: builder needs to rebuild
 	}
@@ -1413,8 +1410,9 @@ Image *ImageReader::openJpgFile(char *name,char *path)
 	if (fp == NULL){
 		sprintf(cpath,"%s.jpeg",path);
 		fp=fopen(cpath, "rb");
-		if (fp == NULL)
+		if (fp == NULL){
 		    return 0;
+		}
 	}
 
 	fclose(fp);
@@ -1430,7 +1428,7 @@ Image *ImageReader::openJpgFile(char *name,char *path)
 			image->set_alpha_image(1);
 		else
 			image->set_alpha_image(0);
-    }   
+    }  
 	return image;	
 }
 
@@ -1451,6 +1449,7 @@ void ImageReader::printImageInfo(char *f)
 Image *ImageReader::openBmpFile(char *name,char *path)
 {
 	//BITMAPINFO	*info=0;
+
 	void *bits;
 	void *pxls;
 	Image *image=0;
@@ -1509,7 +1508,6 @@ Image *ImageReader::openBmpFile(char *name,char *path)
 		FREE(bits);
 		image->set_alpha(1);
 	}
-
 	return image;
 }
 

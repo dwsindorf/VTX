@@ -134,8 +134,9 @@ NodeIF *OceanState::newInstance(){
 	LiquidState::newInstance(lbuff);
 	SolidState::newInstance(sbuff);
 	double seed=getRandValue();
-    sprintf(buff,"Ocean(\"Sea\",%s,%g)[\n%s,\n%s]",def_ocean_func,seed,lbuff,sbuff);
-    cout<<"OceanState::newInstance\n"<<buff<<endl;
+	std::string ebuff=TNnoise::randomize(def_ocean_func,0.2,0);
+    sprintf(buff,"Ocean(\"Sea\",%s,%g)[\n%s,\n%s]",ebuff.c_str(),seed,lbuff,sbuff);
+    //cout<<"OceanState::newInstance\n"<<buff<<endl;
     OceanState *c=TheScene->parse_node(buff);
  	return c;
 }
@@ -232,8 +233,8 @@ void MaterialState::saveNode(FILE *f){
 //************************************************************
 LiquidState::LiquidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[7])
-		args[7]->valueString(expr);
+	if(args[8])
+		args[8]->valueString(expr);
 	else
 		setExpr(def_liquid_func);
 }
@@ -261,10 +262,9 @@ void LiquidState::newInstance(char *buff){
 	b.toString(cstr);
 	water+=cstr;
 	water+=",373,300,0.95,100,1,10,";
-	water+=def_liquid_func;
+	water+=TNnoise::randomize(def_liquid_func,0.7,0.0);//def_liquid_func;
 	water+=")";
 	strcpy(buff,water.c_str());
-	//cout<<buff<<endl;
 }
 NodeIF *LiquidState::newInstance(){
 	char buff[1024];
@@ -279,10 +279,11 @@ NodeIF *LiquidState::newInstance(){
 //************************************************************
 SolidState::SolidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[7])
-		args[7]->valueString(expr);
+	if(args[8])
+		args[8]->valueString(expr);
 	else
 		setExpr(def_solid_func);
+	//cout<<expr<<endl;
 }
 
 void SolidState::newInstance(char *buff){
@@ -303,12 +304,9 @@ void SolidState::newInstance(char *buff){
 	b.toString(cstr);
 	ice+=cstr;
 	ice+=",273,1.0,0.95,40,1,0.2,";
-	ice+=def_solid_func;
+	ice+=TNnoise::randomize(def_solid_func,0.8,0.0);
 	ice+=")";
-	
 	strcpy(buff,ice.c_str());
-	cout<<buff<<endl;
-
 }
 NodeIF *SolidState::newInstance(){
 	char buff[1024];

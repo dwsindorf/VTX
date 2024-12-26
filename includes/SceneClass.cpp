@@ -221,6 +221,7 @@ static int total_objs()
 //************************************************************
 // Scene class
 //************************************************************
+TimeIt Scene::timer("Scene");
 Scene::Scene(Model *m)
 {
 	model=m;
@@ -838,7 +839,11 @@ void Scene::save(FILE *fp)
 //-------------------------------------------------------------
 void Scene::open(char *fn)
 {
+	reset();
+
 	timing_start=clock();
+	timer.start();
+
 	int stat=status;
 	images.clear_flags();
 	Noise::resetStats();
@@ -847,6 +852,7 @@ void Scene::open(char *fn)
 	reset();
 	init_for_open();
 	model->parse(fn);
+
 	eval_exprs();
 
     ViewFrame *frame;
@@ -876,6 +882,7 @@ void Scene::open(char *fn)
 	selobj=focusobj=0;
 	objects->visitAll(&Object3D::clr_groups);
 	objects->visitAll(&Object3D::init);
+
 	if(viewobj){
 	    radius=height+gndlvl+viewobj->radius();
 		viewobj->init_view();
@@ -927,7 +934,6 @@ void Scene::open(char *fn)
 void Scene::rebuild_all(){
 	//Noise::resetStats();
 	//timing_start=clock();
-
 	extern void init_test_params();
 	init_test_params();
 	init_for_rebuild();
@@ -982,6 +988,7 @@ void Scene::movie_clr()
     set_frame(movie->at());
 	delete last;
     set_moved();
+
 }
 
 //-------------------------------------------------------------
@@ -2304,6 +2311,7 @@ void Scene::adapt()
 void Scene::render()
 {
     scene_rendered=0;
+
 	if(!suspended())
 	    animate();
 	int update_needed=
@@ -2314,6 +2322,7 @@ void Scene::render()
 			||changed_render();
 
 	if(!suspended() && (update_needed || self)){
+
 		setContext();
 		init_for_cycle();
 		scene_rendered=1;
@@ -2357,7 +2366,7 @@ void Scene::render()
 		if(changed_detail() || moved())
 			set_action("Adapting");
 		adapt();
-
+	
 		set_action("Rendering");
     	adapt_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 
@@ -2378,6 +2387,7 @@ void Scene::render()
 		if(info_enabled && adapt_info)
 			draw_string(HDR1_COLOR,"------- render -------------------");
 	 	GLSLMgr::setFBOReset();
+	 
 
 		render_shadows();
 
@@ -2396,13 +2406,15 @@ void Scene::render()
     	render_time=(double)(clock() - start)/CLOCKS_PER_SEC;
     	render_time-=adapt_time;
     	adapt_time+=build_time;
+    	//cout<<"map rebuild time="<<Map::timer.getTime()<<" sec"<<endl; 
+
 #ifdef DEBUG_TIMING
     	if(timing_start){
 			build_time=(double)(clock() - timing_start)/CLOCKS_PER_SEC;
 			printf("build tm: %-2.1f\n",build_time);
 			Noise::showStats();
 			timing_start=0;
-    	}
+   		}
         show_info(INFO_TIME);
 #endif
     	build_time=0;
@@ -2428,6 +2440,7 @@ void Scene::render()
 	clr_eyeref();
 	if(autotm())
 		set_changed_time();
+
 }
 
 //-------------------------------------------------------------
