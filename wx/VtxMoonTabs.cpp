@@ -18,6 +18,8 @@ enum{
 	ID_HSCALE_SLDR,
 	ID_HSCALE_TEXT,
 	ID_TYPE_TEXT,
+	ID_TIDAL_LOCK,
+	ID_SEASONAL,
 
     ID_ORBIT_RADIUS_SLDR,
     ID_ORBIT_RADIUS_TEXT,
@@ -37,6 +39,11 @@ enum{
     ID_SHINE_TEXT,
 	ID_ALBEDO_SLDR,
 	ID_ALBEDO_TEXT,
+	ID_SEASON_SLDR,
+	ID_SEASON_TEXT,
+	ID_TEMP_SLDR,
+	ID_TEMP_TEXT,
+
     ID_AMBIENT_SLDR,
     ID_AMBIENT_TEXT,
     ID_AMBIENT_COLOR,
@@ -76,12 +83,15 @@ SET_SLIDER_EVENTS(ORBIT_TILT,VtxMoonTabs,OrbitTilt)
 SET_SLIDER_EVENTS(ORBIT_PHASE,VtxMoonTabs,OrbitPhase)
 SET_SLIDER_EVENTS(SHINE,VtxMoonTabs,Shine)
 SET_SLIDER_EVENTS(ALBEDO,VtxMoonTabs,Albedo)
+SET_SLIDER_EVENTS(SEASON,VtxMoonTabs,Season)
+SET_SLIDER_EVENTS(TEMP,VtxMoonTabs,Temp)
 
 SET_COLOR_EVENTS(AMBIENT,VtxMoonTabs,Ambient)
 SET_COLOR_EVENTS(EMISSION,VtxMoonTabs,Emission)
 SET_COLOR_EVENTS(SPECULAR,VtxMoonTabs,Specular)
 SET_COLOR_EVENTS(DIFFUSE,VtxMoonTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxMoonTabs,Shadow)
+EVT_BUTTON(ID_TIDAL_LOCK,VtxMoonTabs::OnTidalLock)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxMoonTabs::OnAddItem)
 
@@ -161,13 +171,17 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
     wxBoxSizer* object_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Object"));
 
     wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", LABEL2,100);
-
+	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", 40,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	hline->AddSpacer(10);
 
-	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"",0,60);
+	tidal_lock=new wxButton(panel,ID_TIDAL_LOCK,"TidalLock",wxDefaultPosition,wxSize(60,25));
+	hline->Add(tidal_lock,0,wxALIGN_LEFT|wxALL,0);
+
+	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temp",30,80);
 	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	seasonal=new wxCheckBox(panel, ID_SEASONAL, "Seasonal");
+	hline->Add(seasonal,0, wxALIGN_LEFT|wxALL,5);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -259,6 +273,28 @@ void VtxMoonTabs::AddObjectTab(wxWindow *panel){
 	orbit_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(orbit_cntrls, 0, wxALIGN_LEFT|wxALL,0);
+	
+	wxBoxSizer *season_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
+			wxT("Variability"));
+	season_cntrls->SetMinSize(wxSize(TABS_WIDTH - TABS_BORDER, -1));
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	SeasonSlider = new SliderCtrl(panel, ID_SEASON_SLDR, "Season", LABEL2B,
+			VALUE2, SLIDER2);
+	SeasonSlider->setRange(0.0, 1);
+	SeasonSlider->setValue(0.1);
+	hline->Add(SeasonSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	TempSlider = new SliderCtrl(panel, ID_TEMP_SLDR, "Temp", LABEL2S,
+			VALUE2, SLIDER2);
+	TempSlider->setRange(0.0, 1);
+	TempSlider->setValue(0.01);
+	hline->Add(TempSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+
+	season_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	boxSizer->Add(season_cntrls, 0, wxALIGN_LEFT | wxALL, 0);
+
 }
 void VtxMoonTabs::AddLightingTab(wxWindow *panel){
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
@@ -295,6 +331,12 @@ void VtxMoonTabs::AddLightingTab(wxWindow *panel){
 
 }
 
+void VtxMoonTabs::OnTidalLock(wxCommandEvent& event){
+	Planetoid *obj = (Planetoid*) object();
+	obj->setTidalLocked();
+	obj->invalidate();
+	TheScene->rebuild();
+}
 void VtxMoonTabs::OnViewObj(wxCommandEvent& event){
 	if(!is_viewobj()){
 		TheScene->set_viewobj(object());
@@ -310,16 +352,15 @@ void VtxMoonTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 
 
 void VtxMoonTabs::setTemp() {
-	Planetoid *obj = (Planetoid*) object();
-	static double last_temp=-1000;
-    
-    double new_temp=obj->surface_temp;
-    
-    if(fabs(new_temp-last_temp)>0.5){
-		char type_str[256]={0};
-		obj->getTempString(type_str);
-		temp_state->SetValue(type_str);
-		last_temp=new_temp;
+	Planetoid *obj = object();
+	static wxString oldtstr;
+ 	char temp_str[256]={0};
+	obj->getTempString(temp_str);
+	wxString tstr(temp_str);
+     
+    if(oldtstr!=tstr){
+ 		temp_state->SetValue(temp_str);
+		oldtstr=tstr;
     }
 }
 void VtxMoonTabs::updateControls(){
@@ -339,12 +380,15 @@ void VtxMoonTabs::updateControls(){
 	updateSlider(ShineSlider,obj->shine);
 	updateSlider(AlbedoSlider, obj->albedo);
 	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
+	updateSlider(SeasonSlider, obj->season_factor);
+	updateSlider(TempSlider, obj->temp_factor);
 
 	updateColor(AmbientSlider,obj->ambient);
 	updateColor(EmissionSlider,obj->emission);
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider,obj->diffuse);
 	updateColor(ShadowSlider,obj->shadow_color);
+	seasonal->SetValue(obj->seasonal);
 
 	object_name->SetValue(object_node->node->nodeName());
 }

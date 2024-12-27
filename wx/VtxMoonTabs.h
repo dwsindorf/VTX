@@ -18,6 +18,8 @@ protected:
 	SliderCtrl *HscaleSlider;
 	SliderCtrl *ShineSlider;
 	SliderCtrl *AlbedoSlider;
+	SliderCtrl *SeasonSlider;
+	SliderCtrl *TempSlider;
 
 	ColorSlider *AmbientSlider;
 	ColorSlider *SpecularSlider;
@@ -25,8 +27,13 @@ protected:
 	ColorSlider *DiffuseSlider;
 	ColorSlider *ShadowSlider;
 
+	wxButton	*tidal_lock;
+	wxCheckBox  *seasonal;
+
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
+	void OnTidalLock(wxCommandEvent& event);
+
 	void setTemp();
 
 public:
@@ -52,6 +59,8 @@ public:
 		delete DiffuseSlider;
 		delete ShadowSlider;
 		delete HscaleSlider;
+		delete SeasonSlider;
+		delete TempSlider;
 	}
 	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
 			wxDefaultPosition, const wxSize &size = wxDefaultSize, long style =
@@ -124,6 +133,13 @@ public:
 		TheScene->rebuild();
 	}
 
+	void OnSeasonal(wxCommandEvent& event){
+		Planetoid *obj = object();
+		obj->seasonal=event.IsChecked();
+		setTemp();
+		TheView->set_changed_detail();	
+		obj->invalidate();
+	}
 	void OnEndOrbitRadiusSlider(wxScrollEvent &event) {
 		Spheroid *obj = object();
 		double val = OrbitRadiusSlider->getValue();
@@ -164,7 +180,9 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Year,object()->year)
 	DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)
-	//DEFINE_SLIDER_VAR_EVENTS(Albedo,object()->albedo)
+	DEFINE_SLIDER_VAR_EVENTS(Season,object()->season_factor)
+	DEFINE_SLIDER_VAR_EVENTS(Temp,object()->temp_factor)
+	
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)

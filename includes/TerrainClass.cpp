@@ -1432,7 +1432,8 @@ void TNwater::eval()
 
 	// drop sealevel as liquid turns to gas
 	double gf=obj->liquidToGas(temp);
-	SeaLevel-=2*gf;
+	double vf=0.5*obj->ocean->liquid->volatility;
+	SeaLevel-=vf*gf;
 
 	water.InitS();
 
@@ -1466,7 +1467,6 @@ void TNwater::eval()
 	WaterHeight=dz/Gscale;
 
 	double cmix=WaterDepth/Gscale;
-	double f=rampstep(0,2*Raster.water_clarity,cmix,1,0);
 	water.p.z=SeaLevel;
 
 	water.clr_svalid();
@@ -1476,17 +1476,15 @@ void TNwater::eval()
 	water.depth=WaterDepth/Gscale;
 	double mf=fabs(dz)/Gscale;
 	double mv=rampstep(0,2*Raster.water_clarity,mf,0,1);
-	//cout<<mf<<" "<<mf/Raster.water_clarity<<" "<<mv<<endl;
  
 	if(mv>=1){
 		water.clr_flag(INMARGIN);
 		S0.clr_flag(INMARGIN);
 	}
 	else{
-	   water.set_flag(INMARGIN);
-	   S0.set_flag(INMARGIN);
+	   	water.set_flag(INMARGIN);
+	    S0.set_flag(INMARGIN);
 	}
-//		S0.set_flag(INMARGIN);
     if(dz>=0 || geom){  // terrain is below water
 		if(S0.datacnt<MAX_TDATA)
 			S0.datacnt++;
@@ -1496,9 +1494,6 @@ void TNwater::eval()
 		s2.copy(S0);
 		S0.data[0]=&s2;
 		S0.copy(water);
-		//if(dz<m)
-	    //if(f<0.1 && !geom)
-		//	S0.set_flag(INMARGIN);
 	 }
 	 else {    // terrain is above water with water as surface 2
 		 for(int i=0;i<rccnt;i++){

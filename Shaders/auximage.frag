@@ -125,7 +125,13 @@ void main(void) {
 
 	vec3 Color1 = mix(WaterColor1,IceColor1,wf);
 	vec3 Color2 = mix(WaterColor2,IceColor2,wf);
-	
+#define TEST
+#ifdef TEST
+	if(type<0.5){
+		float df=1.0-type;
+		Color2.xyz=Color2.xyz*df;
+	}
+#endif	
 	float reflection=mix(water_reflection,ice_reflection,wf);
 	float saturation=mix(water_saturation,ice_saturation,wf);
 	clarity=mix(water_clarity,ice_clarity,wf);

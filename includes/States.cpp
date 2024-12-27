@@ -3,25 +3,23 @@
 #include "TerrainClass.h"
 
 static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0)";
-static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.0,1e-06)";
-static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,1e-06)";
+static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.0,0)";
+static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0)";
 
 //ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
 Array<OceanState*> OceanState::oceanTypes(NUM_OCEAN_TYPES);
 char *OceanState::oceanNames[]={"Water","SO2","CO2","CH4","N2"};
-static double gas_temps[]={-196,-163,-78,-10,100};
-static double solid_temps[]={-210,-182,-79,-72,0,};
 
-static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93),Color(0.00,0.16,0.16),373,300,0.95,100,1,10,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
-static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.40,0.67,0.80),273,1,0.95,0.8,0.1,0.05,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.005,1e-06))";
-static char *SO2_liq_str="liquid(Color(0.9,0.9,0.8,0.522),Color(0.447,0.435,0.512),263,1000,0.8,71,1,10,noise(GRADIENT|SCALE,19,3,1,0.5,2,0.11,1,0,0))";
-static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,0.1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
-static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10)";
-static char *CO2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),195,1.0,0.95,0.8,0.6,0.2)";
-static char *CH4_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),110,300,0.95,100,1,10)";
-static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,0.2)";
-static char *N2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),77,300,0.95,100,1,10)";
-static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,0.2)";
+static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93),Color(0.00,0.16,0.16),373,300,0.95,100,1,50,1,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
+static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.40,0.67,0.80),273,1,0.95,0.8,0.1,0.05,0.5,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.02,0))";
+static char *SO2_liq_str="liquid(Color(0.9,0.9,0.8,0.522),Color(0.447,0.435,0.512),263,1000,0.8,71,1,20,4,noise(GRADIENT|SCALE,19,3,1,0.5,2,0.11,1,0,0))";
+static char *SO2_sol_str="solid(Color(1.000,0.95,0.8,0.769),Color(0.784,0.700,0.716),201,5,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|SCALE|SQR,15,8.6,0.1,0.4,1.8,0.2,0.6))";
+static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10,10)";
+static char *CO2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),195,1.0,0.95,0.8,0.6,0.2,1)";
+static char *CH4_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),110,300,0.95,100,1,10,10)";
+static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,0.2,1)";
+static char *N2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),77,300,0.95,100,1,10,10)";
+static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,0.2,1)";
 
 //************************************************************
 // OceanState
@@ -194,15 +192,19 @@ MaterialState::MaterialState(TNode *r) : TNunary(r){
 	args[1]->eval();
 	color2=S0.c;
 	
-	double vals[7];
+	double vals[8];
 	TNarg *a=args.index(2);
-	int n=getargs(a,vals,6);
+	int n=getargs(a,vals,7);
 	temp=vals[0];
 	clarity=vals[1];
 	mix=vals[2];
 	shine=vals[3];
 	specular=vals[4];
 	trans_temp=vals[5];
+	if(n>6)
+		volatility=vals[6];
+	else
+		volatility=1;
 	expr[0]=0;
 }
 void MaterialState::valueString(char *s){
@@ -212,9 +214,9 @@ void MaterialState::valueString(char *s){
 	color2.toString(col2);
 	
 	if(strlen(name)>0)
-		sprintf(s,"%s(\"%s\",%s,%s,%g,%g,%g,%g,%g,%g",symbol(),name,col1,col2,temp,clarity,mix,shine,specular,trans_temp);
+		sprintf(s,"%s(\"%s\",%s,%s,%g,%g,%g,%g,%g,%g,%g",symbol(),name,col1,col2,temp,clarity,mix,shine,specular,trans_temp,volatility);
 	else
-		sprintf(s,"%s(%s,%s,%g,%g,%g,%g,%g,%g",symbol(),col1,col2,temp,clarity,mix,shine,specular,trans_temp);
+		sprintf(s,"%s(%s,%s,%g,%g,%g,%g,%g,%g,%g",symbol(),col1,col2,temp,clarity,mix,shine,specular,trans_temp,volatility);
 	if(strlen(expr)>0)
 		sprintf(s+strlen(s),",%s",expr);
 
@@ -233,8 +235,9 @@ void MaterialState::saveNode(FILE *f){
 //************************************************************
 LiquidState::LiquidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[8])
-		args[8]->valueString(expr);
+	int n=numargs(right);
+	if(args[n-1])
+		args[n-1]->valueString(expr);
 	else
 		setExpr(def_liquid_func);
 }
@@ -261,7 +264,7 @@ void LiquidState::newInstance(char *buff){
 	b=b.darken(0.3*r[4]);
 	b.toString(cstr);
 	water+=cstr;
-	water+=",373,300,0.95,100,1,10,";
+	water+=",373,300,0.95,100,1,10,1,";
 	water+=TNnoise::randomize(def_liquid_func,0.7,0.0);//def_liquid_func;
 	water+=")";
 	strcpy(buff,water.c_str());
@@ -279,8 +282,9 @@ NodeIF *LiquidState::newInstance(){
 //************************************************************
 SolidState::SolidState(TNode *a) : MaterialState(a){
 	TNarg &args=*((TNarg *)right);
-	if(args[8])
-		args[8]->valueString(expr);
+	int n=numargs(right);
+	if(args[n-1])
+		args[n-1]->valueString(expr);
 	else
 		setExpr(def_solid_func);
 	//cout<<expr<<endl;
@@ -303,7 +307,7 @@ void SolidState::newInstance(char *buff){
 	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
-	ice+=",273,1.0,0.95,40,1,0.2,";
+	ice+=",273,1.0,0.95,40,1,0.2,1,";
 	ice+=TNnoise::randomize(def_solid_func,0.8,0.0);
 	ice+=")";
 	strcpy(buff,ice.c_str());

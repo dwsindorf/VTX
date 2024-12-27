@@ -6,15 +6,15 @@ Scene() {
 		height=0.00419489;
 		gndlvl=-5530.96 ft;
 		time=68352.4;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -26,7 +26,7 @@ Scene() {
 		view=SURFACE;
 		phi=-15.8203;
 		theta=139.219;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=9152.07 ft;
 		heading=0;
 		pitch=0;
@@ -59,7 +59,7 @@ Scene() {
 		view=SURFACE;
 		phi=-17.2266;
 		theta=136.406;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=10799.1 ft;
 		heading=0;
 		pitch=0;
@@ -108,56 +108,38 @@ Scene() {
 	View{
 		theta=150.257;
 		height=0.00371116;
-		vstride=0.02;
-		zoom=0.002;
-		minh=1.13636e-09;
-		radius=0.00570832;
 	}
 	View{
 		theta=146.931;
 		height=0.00360974;
-		hstride=2;
-		minr=0.00199716;
-		radius=0.00560689;
 	}
 	View{
 		height=0.00367661;
-		radius=0.00567377;
 	}
 	View{
 		view=SURFACE;
 		phi=-22.5;
 		theta=151.172;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=393.599 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		hstride=1;
-		radius=0.00201007;
 	}
 	View{
 		height=34548.1 ft;
-		hstride=2;
-		minr=0.00200008;
-		radius=0.00200662;
 	}
 	View{
 		phi=-22.6181;
 		theta=151.529;
 		height=749.15 ft;
 		gndlvl=129.695 ft;
-		hstride=1;
-		radius=0.00200017;
 	}
 	View{
 		height=1854.68 ft;
 		heading=-39;
 		tilt=-10;
 		angle=1;
-		hstride=2;
-		minr=0.00200003;
-		radius=0.00200038;
 	}
 	View{
 		view=ORBITAL;
@@ -169,9 +151,14 @@ Scene() {
 		pitch=-90;
 		tilt=0;
 		angle=0;
-		hstride=1;
-		minr=0.00200005;
+		vstride=0.02;
+		zoom=0.002;
+		minh=5.68182e-10;
 		radius=0.00500005;
+	}
+	View{
+		theta=154.655;
+		minr=0.00200005;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -179,14 +166,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(1.5,0) {
@@ -195,7 +182,7 @@ Scene() {
 					emission=Color(1,1,0.93);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6638.1;
+					temperature=5773.8;
 					bands("star1",ACHNL|CLAMP,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.463,0.039,0.122),
 						Color(0.024,0.02,0.125));
@@ -226,10 +213,17 @@ Scene() {
 					ice.clarity=15.8451 ft;
 					ice.color1=Color(1,1,1,0.17);
 					ice.color2=Color(0.4,0.67,0.81);
+					ice.mix=0.95;
 					ice.shine=15.278;
 					name="Mars";
 					ocean.auto=1;
+					ocean.liquid=373;
+					ocean.liquid.trans=10;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.trans=0.05;
 					ocean.state=2;
+					rot_phase=98.712;
 					shadow=Color(0,0,0,0.84);
 					shine=5.56269;
 					specular=Color(1,1,1,0.08);
@@ -238,6 +232,7 @@ Scene() {
 					water.clarity=762.618 ft;
 					water.color1=Color(0.82,0.86,0.99);
 					water.color2=Color(0.02,0.11,0.24);
+					water.mix=0.95;
 					water.shine=100;
 					year=687;
 					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);

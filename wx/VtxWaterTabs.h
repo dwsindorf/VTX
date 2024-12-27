@@ -44,6 +44,7 @@ protected:
 
 	SliderCtrl   *LevelSlider;
 
+	SliderCtrl   *LiquidVolSlider;
 	SliderCtrl   *LiquidTempSlider;
 	SliderCtrl   *LiquidTransTempSlider;
 	SliderCtrl   *LiquidAlbedoSlider;
@@ -53,6 +54,7 @@ protected:
 	ColorSlider  *LiquidTransmitSlider;
 	ColorSlider  *LiquidReflectSlider;
 
+	SliderCtrl   *SolidVolSlider;
 	SliderCtrl   *SolidTempSlider;
 	SliderCtrl   *SolidTransTempSlider;
 	SliderCtrl   *SolidAlbedoSlider;
@@ -94,6 +96,7 @@ public:
 		delete LiquidReflectSlider;
 		delete LiquidTempSlider;
 		delete LiquidTransTempSlider;
+		delete LiquidVolSlider;
 
 		delete SolidAlbedoSlider;
 		delete SolidShineSlider;
@@ -102,6 +105,7 @@ public:
 		delete SolidReflectSlider;
 		delete SolidTempSlider;
 		delete SolidTransTempSlider;
+		delete SolidVolSlider;
 		delete OceanFunction;
 	}
 	void updateControls();
@@ -144,6 +148,7 @@ public:
 	DEFINE_SLIDER_EVENTS(LiquidTransmit)
     DEFINE_SLIDER_EVENTS(LiquidAlbedo)
 	DEFINE_SLIDER_EVENTS(LiquidShine)
+	DEFINE_SLIDER_EVENTS(LiquidVol)
 
     void OnSolidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
     	setObjAttributes();
@@ -161,6 +166,7 @@ public:
 	DEFINE_SLIDER_EVENTS(SolidTransmit)
     DEFINE_SLIDER_EVENTS(SolidAlbedo)
 	DEFINE_SLIDER_EVENTS(SolidShine)
+	DEFINE_SLIDER_EVENTS(SolidVol)
 
 	DECLARE_EVENT_TABLE()
 };

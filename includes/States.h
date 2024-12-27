@@ -19,6 +19,8 @@ public:
 	double shine;
 	double temp;
 	double trans_temp;
+	double volatility;
+
 	void setName(char *e){ strcpy(name,e);}
 	char *getName(){ return name;}
 
@@ -61,43 +63,6 @@ public:
 
 	double evalOceanFunction();
 
-	void setWaterColor1(Color c) 	{liquid->color1=c;}
-	void setWaterColor2(Color c) 	{liquid->color2=c;}
-	void setIceColor1(Color c)   	{solid->color1=c;}
-	void setIceColor2(Color c)   	{solid->color2=c;}
-	Color waterColor1()          	{return liquid->color1;}
-	Color waterColor2()          	{return liquid->color2;}
-	Color iceColor1()			 	{return solid->color1;}
-	Color iceColor2()			 	{return solid->color2;}
-
-	double waterClarity()		 	{return liquid->clarity*FEET;}
-	double waterMix()			 	{return liquid->mix;}
-	double waterSpecular()       	{return liquid->specular;}
-	double waterShine()			 	{return liquid->shine;}
-	void setWaterClarity(double f)  {liquid->clarity=f;}
-	void setWaterMix(double f)      {liquid->mix=f;}
-	void setWaterSpecular(double f) {liquid->specular=f;}
-	void setWaterShine(double f) 	{liquid->shine=f;}
-
-	double iceClarity()				{return solid->clarity*FEET;}
-	double iceMix()					{return solid->mix;}
-	double iceSpecular()			{return solid->specular;}
-	double iceShine()				{return solid->shine;}
-	void setIceClarity(double f)	{solid->clarity=f;}
-	void setIceMix(double f)		{solid->mix=f;}
-	void setIceSpecular(double f)	{solid->specular=f;}
-	void setIceShine(double f)		{solid->shine=f;}
-	
-	double oceanSolidTemp()        { return solid->temp;}
-	double oceanGasTemp()           { return liquid->temp;}
-	void setOceanSolidTemp(double f) { solid->temp=f;}
-	void setOceanGasTemp(double f)   { liquid->temp=f;}
-	
-	double oceanSolidTransTemp()    { return solid->trans_temp;}
-	double oceanGasTransTemp()      { return liquid->trans_temp;}
-	void setOceanSolidTransTemp(double f) { solid->trans_temp=f;}
-	void setOceanGasTransTemp(double f)   { liquid->trans_temp=f;}
-	
 	char *getOceanName()            { return nodeName();}
 	void setOceanName(char *s)      { setName(s);}
 

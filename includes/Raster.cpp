@@ -1078,18 +1078,14 @@ void RasterMgr::vertex(MapNode *node)
 	Point pt=d->point();
 	Texture *t;
     Color c=WHITE;
-//#define TEST
+
 	switch(render_type()){
 	case SHADERS:
 		{
 			double type=0,vfog=0;
 			if(TheMap->object==TheScene->viewobj){
 				if(d->type()==WATER)
-#ifdef TEST
-					type=d->ocean()-1;
-#else				
-				type=d->ocean();
-#endif
+					type=d->ocean();
 				else
 					type=d->type()+2;
 				//type = (d->type()+1.5); // note: for water floor(g)=1;

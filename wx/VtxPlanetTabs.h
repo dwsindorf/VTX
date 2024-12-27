@@ -56,7 +56,8 @@ public:
 		delete EmissionSlider;
 		delete DiffuseSlider;
 		delete ShadowSlider;
-		delete HscaleSlider;
+		delete SeasonSlider;
+		delete TempSlider;
 	}
 	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
 			wxDefaultPosition, const wxSize &size = wxDefaultSize, long style =
@@ -184,8 +185,6 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Season,object()->season_factor)
 	DEFINE_SLIDER_VAR_EVENTS(Temp,object()->temp_factor)
 	
-	//DEFINE_SLIDER_VAR_EVENTS(Albedo,object()->albedo)
-
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)

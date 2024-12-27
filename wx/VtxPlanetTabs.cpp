@@ -170,16 +170,12 @@ void VtxPlanetTabs::AddObjectTab(wxWindow *panel) {
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", 40,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	//hline->AddSpacer(10);
 
 	tidal_lock=new wxButton(panel,ID_TIDAL_LOCK,"TidalLock",wxDefaultPosition,wxSize(60,25));
 	hline->Add(tidal_lock,0,wxALIGN_LEFT|wxALL,0);
 	
 	temp_state=new StaticTextCtrl(panel,ID_TYPE_TEXT,"Temp",30,80);
 	hline->Add(temp_state->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-//	celsius=new wxCheckBox(panel, ID_CELSIUS, "Celsius");
-//	hline->Add(celsius,0, wxALIGN_LEFT|wxALL,5);
 
 	seasonal=new wxCheckBox(panel, ID_SEASONAL, "Seasonal");
 	hline->Add(seasonal,0, wxALIGN_LEFT|wxALL,5);
@@ -370,15 +366,14 @@ void VtxPlanetTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 }
 
 void VtxPlanetTabs::setTemp() {
-	Planetoid *obj = (Planetoid*) object();
+	Planetoid *obj = object();
 	static wxString oldtstr;
  	char temp_str[256]={0};
 	obj->getTempString(temp_str);
 	wxString tstr(temp_str);
      
     if(oldtstr!=tstr){
-    	//cout<<temp_str<<endl;
-		temp_state->SetValue(temp_str);
+ 		temp_state->SetValue(temp_str);
 		oldtstr=tstr;
     }
  
@@ -401,9 +396,9 @@ void VtxPlanetTabs::updateControls() {
 	updateSlider(YearSlider, obj->year);
 	updateSlider(ShineSlider, obj->shine);
 	updateSlider(AlbedoSlider, obj->albedo);
+	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
 	updateSlider(SeasonSlider, obj->season_factor);
 	updateSlider(TempSlider, obj->temp_factor);
-	updateSlider(HscaleSlider, obj->hscale * 1e-3/MILES);
 
 	updateColor(AmbientSlider, obj->ambient);
 	updateColor(EmissionSlider, obj->emission);
