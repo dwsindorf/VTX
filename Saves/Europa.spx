@@ -11,12 +11,14 @@ Scene() {
 		astride=1;
 		zoom=0.000207;
 		minh=5.68182e-10;
-		minr=0.000207001;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
+	}
+	View{
+		minr=0.000207001;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -87,22 +89,14 @@ Scene() {
 						name="Europa";
 						ocean.level=-6666.79 ft;
 						ocean.liquid=195;
-						ocean.liquid.albedo=1;
-						ocean.liquid.clarity=300 ft;
 						ocean.liquid.color1=Color(0,1,1,0.2);
 						ocean.liquid.color2=Color(0.1,0.1,0.5);
-						ocean.liquid.mix=0.95;
-						ocean.liquid.shine=100;
 						ocean.liquid.trans=10;
 						ocean.liquid.volatility=10;
-						ocean.rseed=0;
 						ocean.solid=195;
 						ocean.solid.albedo=0.6;
-						ocean.solid.clarity=1 ft;
 						ocean.solid.color1=Color(1,1,1,0.6);
 						ocean.solid.color2=Color(0.4,0.67,0.8);
-						ocean.solid.mix=0.95;
-						ocean.solid.shine=0.8;
 						ocean.solid.trans=0.2;
 						ocean.solid.volatility=1;
 						phase=59.9976;

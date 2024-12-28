@@ -2,78 +2,22 @@ Scene() {
 	View{
 		view=SURFACE;
 		phi=20.2808;
-		theta=16.9712;
-		height=5235.83 ft;
-		gndlvl=-1618.84 ft;
-		time=472179;
-		vstride=1;
+		theta=16.9699;
+		height=5353.09 ft;
+		gndlvl=1290.67 ft;
+		time=22962.4;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		tilt=-15;
+		zoom=0.001;
+		minh=5.68182e-10;
+		minr=0.00100025;
+		heading=-1;
+		tilt=-2;
+		angle=5;
 		fov=35;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		height=5235.73 ft;
-		gndlvl=-1618.74 ft;
-	}
-	View{
-		height=4821.07 ft;
-		gndlvl=-1093.5 ft;
-		time=770177;
-		delt=2000;
-		tilt=-3;
-		angle=-1;
-	}
-	View{
-		theta=16.9699;
-		height=4835 ft;
-		gndlvl=1292.14 ft;
-		time=57000;
-		heading=-1;
-		angle=2;
-	}
-	View{
-		height=4836.47 ft;
-		gndlvl=1290.67 ft;
-		time=57500;
-		tilt=0;
-		angle=-1;
-	}
-	View{
-		tilt=4;
-		angle=0;
-	}
-	View{
-		time=22362.4;
-	}
-	View{
-		height=4834.94 ft;
-		tilt=5;
-		angle=-1;
-	}
-	View{
-		time=22962.4;
-		tilt=6;
-		angle=1;
-	}
-	View{
-		tilt=1;
-		angle=4;
-		vstride=0.02;
-		zoom=0.001;
-		minh=5.68182e-10;
-		radius=0.00100116;
-	}
-	View{
-		height=5353.09 ft;
-		tilt=-2;
-		angle=5;
-		minr=0.00100025;
-		radius=0.00100126;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -104,7 +48,7 @@ Scene() {
 				day=1;
 				diffuse=Color(1,1,1,0.54);
 				emission=Color(1,1,1,0.05);
-				ocean.level=2.08693e-312 ft;
+				ocean.auto=1;
 				rot_phase=65.916;
 				shadow=Color(0,0,0,0.43);
 				specular=Color(1,1,1,0.05);
@@ -144,32 +88,12 @@ Scene() {
 					fog.min=1000 ft;
 					fog.vmax=2000 ft;
 					hscale=0.0008;
-					ice.albedo=0.1;
-					ice.clarity=1 ft;
-					ice.color1=Color(1,1,1,0.8);
-					ice.color2=Color(0.6,0.7,0.8);
-					ice.mix=0.95;
-					ice.shine=0.8;
-					ice.volatility=0.5;
 					ocean.level=1300 ft;
-					ocean.liquid=373;
-					ocean.liquid.trans=50;
-					ocean.rseed=0;
-					ocean.solid=273;
-					ocean.solid.trans=0.05;
 					phase=154.289;
 					rot_phase=45.7128;
 					shadow=Color(0,0,0);
 					shine=16.4793;
 					specular=Color(1,1,1,0.56);
-					water.albedo=1;
-					water.clarity=300 ft;
-					water.color1=Color(0.67,0.93,0.93);
-					water.color2=Color(0,0.16,0.16);
-					water.level=2.46212e-07;
-					water.mix=0.95;
-					water.shine=100;
-					water.volatility=1;
 					year=11;
 					haze.color=Color(0.7,0.5,1);
 					haze.max=6e-05;

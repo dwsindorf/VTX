@@ -1,0 +1,160 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=16.1719;
+		theta=198.281;
+		height=13.1981 miles;
+		gndlvl=2415.35 ft;
+		time=1.87947e+08;
+		vstride=0.02;
+		hstride=1;
+		astride=1;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00400046;
+		heading=43;
+		tilt=-15;
+		fov=35;
+		gstride=586570;
+		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	Galaxy(20000) {
+		origin=Point(4000,0,0);
+		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+		color.expr=1*DENSITY;
+		color.list=Colors(
+			Color(0.50,0.00,0.25),
+			Color(0.00,0.00,1.00),
+			Color(0.00,0.72,1.00),
+			Color(0.50,1.00,1.00),
+			Color(1.00,0.27,0.00),
+			Color(1.00,0.70,0.20),
+			Color(1.00,1.00,0.40),
+			Color(1.00,1.00,0.70)
+			);
+		System(10) {
+			Star(1.5,0) {
+				color=Color(1,1,0.8);
+				day=100;
+				diffuse=Color(1,1,1);
+				emission=Color(1,1,1);
+				name="YellowStar";
+				rseed=0.5725;
+				specular=Color(1,1,1);
+				temperature=6000;
+				bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					Color(0.467,0,0),
+					Color(0.29,0.016,0.071),
+					Color(0,0,0),
+					Color(1,1,1));
+				Surface{
+					terrain=
+							Texture("star1",BORDER|S|TEX,noise(GRADIENT|FS|NABS|SQR,1,10,-0.34,0.46,2,1,1,0,-0.1),1.6922,1.3212,1.05456,0.11104,2,2,1,0,0,0,-0.55552,0)+
+							Texture("Cracks1",BUMP,14.5304,1,2,0,1,2,0.5,0,0,0,0,0);
+				}
+				Corona(7.8099) {
+					color1=Color(1,0.95,0);
+					color2=Color(0.53,0.06,0);
+					name="Outer";
+					noise.expr=noise(GRADIENT|SCALE|RO1,1.5,2,1,0.5,2,1,1,0,0);
+				}
+				Corona(2.82057) {
+					color1=Color(0.97,0.95,0.91);
+					color2=Color(0.94,0.96,0.11);
+					name="Inner";
+					noise.expr=noise(GRADIENT|NABS|NEG|SCALE,1.2,4.8,0.66,0.5,2,1,1,0,0.8)-1.5*PHI;
+				}
+				Halo(1.5) {
+					color1=Color(1,0.74,0.18);
+					color2=Color(0.96,0.82,0.17,0.53);
+					gradient=0.9164;
+					name="Halo";
+				}
+			}
+			Planet(0.004,207.134) {
+				albedo=0.147491;
+				ambient=Color(1,1,1,0.04);
+				day=24;
+				fog.min=100 ft;
+				fog.value=1;
+				fog.vmax=2000 ft;
+				fog.vmin=1000 ft;
+				hscale=0.002;
+				ocean.auto=1;
+				ocean.level=1388.8 ft;
+				ocean.liquid=263;
+				ocean.liquid.clarity=10 ft;
+				ocean.liquid.color1=Color(0.98,0.87,0.72,0.51);
+				ocean.liquid.color2=Color(0.96,0.97,0.57);
+				ocean.liquid.mix=0.8;
+				ocean.liquid.shine=71;
+				ocean.liquid.trans=20;
+				ocean.liquid.volatility=4;
+				ocean.solid=201;
+				ocean.solid.albedo=0.6;
+				ocean.solid.clarity=5 ft;
+				ocean.solid.color1=Color(1,0.8,0.22,0.76);
+				ocean.solid.color2=Color(0.78,0.7,0.71);
+				ocean.solid.trans=0.1;
+				ocean.solid.volatility=1;
+				ocean.state=2;
+				season.factor=0.63492;
+				shadow=Color(0,0,0,0.56);
+				shine=10.9372;
+				specular=Color(1,1,1,0.37);
+				temp.factor=0.20968;
+				tilt=20;
+				year=63.5;
+				twilight=Color(0.5,0.3,0.1);
+				ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
+				bands("tidal-locked",ACHNL|CLAMP|NORM,128,0.06452,0.0784314,RAND,Color(0.729,0.878,0.973),
+					Color(1,1,1),
+					Color(1,0.969,0.875),
+					Color(0.024,0.424,0.055),
+					Color(0.867,0.831,0.016),
+					Color(0.973,0.718,0.424),
+					Color(0.973,0.875,0.427),
+					Color(0.208,0,0.024),
+					Color(0.337,0.294,0.031),
+					Color(0.478,0.455,0.455),
+					Color(0.373,0.039,0.039),
+					Color(0.141,0,0,0.58));
+				Surface{
+					terrain=ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0,nan))
+							Z(fractal(SQR|SS,14,14,0.1,1.02,1.84,0.15,0.68,0.16,0.32,0.29)noise(GRADIENT|SQR,1.8,14.2,0.5,0.1,2.1,1,1,0.23,0))+
+							Texture("tidal-locked",BORDER|S|TBIAS|TEX,noise(GRADIENT|SCALE,2.7,10.4,1,0.5,2,0,1,0,-0.3,1e-06),18.4878,1.05556,0,1,1,2,1,0,1,0.15872,0.1,0.0952)+
+							Texture("rock_stones",BUMP|RANDOMIZE|TEX,8.97866,-1.33344,2,0,10.3331,2,0.88888,0,0,0,0,0);
+				}
+				Clouds(0.0040786) {
+					crot=1;
+					day=1000;
+					diffuse=Color(1,0.97,0.91);
+					name="2D-yellow";
+					resolution=4;
+					rseed=0.01105;
+					specular=Color(1,1,1);
+					Surface{
+						terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|SQR,1,6.4,1,0.5,2.06,1,1,0,0.8)));
+					}
+				}
+				Sky(0.0042) {
+					color=Color(0.4,0.9,1);
+					day=24;
+					density=0.47222;
+					haze.grad=0.5244;
+					haze.max=5.6818 miles;
+					haze.value=1;
+					night.color=Color(0,0,0);
+					resolution=4;
+					shine=0.279242;
+					specular=Color(1,1,1);
+					tilt=20;
+					twilight=Color(0,0.47,1);
+					twilight.max=0.492922;
+					twilight.min=-0.239383;
+					year=63.5;
+				}
+			}
+		}
+	}
+}

@@ -3,38 +3,23 @@ Scene() {
 		view=SURFACE;
 		phi=-0.0823387;
 		theta=90.6039;
-		height=649.017 ft;
+		height=812.979 ft;
 		gndlvl=2569.13 ft;
 		time=6192.28;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=25;
-		tilt=-10;
-		angle=1;
+		zoom=0.001;
+		minh=5.68182e-10;
+		heading=27;
+		tilt=-12;
+		angle=4;
 		fov=35;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		delt=200;
-	}
-	View{
-		height=538.683 ft;
-	}
-	View{
-		height=812.979 ft;
-		tilt=-12;
-		angle=4;
-		vstride=0.02;
-		zoom=0.001;
-		minh=5.68182e-10;
-		radius=0.00100064;
-	}
-	View{
-		heading=26;
+		heading=28;
 		minr=0.00100049;
 	}
 	Galaxy(20000) {
@@ -82,37 +67,11 @@ Scene() {
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				ocean.level=1388.8 ft;
-				ocean.liquid=373;
-				ocean.liquid.albedo=1;
-				ocean.liquid.clarity=300 ft;
-				ocean.liquid.color1=Color(0.67,0.93,0.93);
-				ocean.liquid.color2=Color(0,0.16,0.16);
-				ocean.liquid.mix=0.95;
-				ocean.liquid.shine=100;
-				ocean.liquid.trans=50;
-				ocean.liquid.volatility=1;
-				ocean.rseed=0;
-				ocean.solid=273;
-				ocean.solid.albedo=0.1;
-				ocean.solid.clarity=1 ft;
-				ocean.solid.color1=Color(1,1,1,0.8);
-				ocean.solid.color2=Color(0.6,0.7,0.8);
-				ocean.solid.mix=0.95;
-				ocean.solid.shine=0.8;
-				ocean.solid.trans=0.05;
-				ocean.solid.volatility=0.5;
 				shadow=Color(0,0,0,0.51);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
 				year=30;
-				ice.albedo=0.1;
-				ice.clarity=1.89394e-10;
-				ice.color1=Color(1,1,1,0.8);
-				ice.color2=Color(0.6,0.7,0.8);
-				ice.mix=0.95;
-				ice.shine=0.8;
-				ice.volatility=0.5;
 				twilight=Color(0.5,0.3,0.1);
 				ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 				bands("dessert",ACHNL,128,0.07142,0.6,Color(1,0.635,0.086,0.6),Color(1,0.886,0.486),
@@ -126,7 +85,7 @@ Scene() {
 					m3=noise(8,6,0.5,0.5,2);
 					z1=fractal(SQR|SS,14,14,0,3,3,0.15,0.68,0.13,0.35,0.52)m1;
 					terrain=fog(2*noise(8,5))
-							ocean(0.0002*noise(20,2))
+							ocean(noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0,0))
 							Z(0.5*z1)+
 							Texture("dessert",NORM|S|TEX,0,256,2,2,1.77776,1,2,1,0,0,1,0.19444,0.25)+
 							Texture("cracks2",BUMP,1105.9,-0.22208,1,0,10,2.29232,1,0,0,0,0,0)+

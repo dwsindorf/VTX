@@ -6,11 +6,11 @@ Scene() {
 		height=0.006;
 		gndlvl=792.454 ft;
 		time=56000;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
@@ -19,7 +19,11 @@ Scene() {
 	}
 	View{
 		phi=-25.3773;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		minr=0.00400015;
+		radius=0.0100002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -55,25 +59,6 @@ Scene() {
 					day=24;
 					hscale=0.002;
 					ocean.auto=1;
-					ocean.liquid=373;
-					ocean.liquid.albedo=1;
-					ocean.liquid.clarity=300 ft;
-					ocean.liquid.color1=Color(0.67,0.93,0.93);
-					ocean.liquid.color2=Color(0,0.16,0.16);
-					ocean.liquid.mix=0.95;
-					ocean.liquid.shine=100;
-					ocean.liquid.trans=50;
-					ocean.liquid.volatility=1;
-					ocean.rseed=0;
-					ocean.solid=273;
-					ocean.solid.albedo=0.1;
-					ocean.solid.clarity=1 ft;
-					ocean.solid.color1=Color(1,1,1,0.8);
-					ocean.solid.color2=Color(0.6,0.7,0.8);
-					ocean.solid.mix=0.95;
-					ocean.solid.shine=0.8;
-					ocean.solid.trans=0.05;
-					ocean.solid.volatility=0.5;
 					ocean.state=2;
 					shadow=Color(0,0,0,0.2);
 					specular=Color(1,1,1,0.13);

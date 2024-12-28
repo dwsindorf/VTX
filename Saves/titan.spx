@@ -3,33 +3,20 @@ Scene() {
 		view=SURFACE;
 		phi=-2.87797;
 		theta=58.7459;
-		height=2912.67 ft;
+		height=3970.31 ft;
 		gndlvl=3763.11 ft;
 		time=27688.6;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=2;
-		tilt=2;
+		zoom=0.002;
+		minh=5.68182e-10;
+		minr=0.00200071;
+		heading=30;
+		tilt=-4;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		heading=4;
-		vstride=0.02;
-		zoom=0.002;
-		minh=5.68182e-10;
-		radius=0.00200126;
-	}
-	View{
-		height=3970.31 ft;
-		heading=30;
-		tilt=-4;
-		minr=0.00200071;
-		radius=0.00200146;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -38,14 +25,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				name="Solor";
@@ -71,6 +58,7 @@ Scene() {
 					ambient=Color(1,1,1,0.04);
 					day=20;
 					name="Saturn";
+					ocean.auto=1;
 					phase=60;
 					shadow=Color(0,0,0,0.24);
 					shine=1.63453;
@@ -80,7 +68,6 @@ Scene() {
 					c1=Color(1,0.9,0.3);
 					c2=Color(1,0.6,0);
 					c3=Color(0.7,0.4,0);
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("saturn-8k",BUMP|TEX,0.707107,4.22208,2,0,1,2,0.5,0,0,0,0,0);
@@ -115,23 +102,18 @@ Scene() {
 						fog.vmax=4055.6 ft;
 						fog.vmin=1000 ft;
 						hscale=0.001;
-						ice.albedo=0.375;
-						ice.clarity=149.371 ft;
-						ice.color1=Color(1,1,1,0.74);
-						ice.color2=Color(0.25,0.16,0.13);
-						ice.shine=37.5;
 						name="Titan";
 						ocean.level=4000 ft;
 						ocean.liquid=-163;
+						ocean.liquid.clarity=1000 ft;
+						ocean.liquid.color1=Color(1,0.63,0.25,0.82);
+						ocean.liquid.color2=Color(0.13,0,0.25);
 						ocean.solid=-182;
 						phase=280.001;
 						shadow=Color(0,0,0);
 						tilt=-10;
-						water.clarity=1000 ft;
-						water.color1=Color(1,0.63,0.25,0.82);
-						water.color2=Color(0.13,0,0.25);
 						year=17;
-						ocean.expr=1;
+						ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
 							Color(0.7,0.4,0),

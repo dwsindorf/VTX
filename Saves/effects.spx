@@ -10,13 +10,15 @@ Scene() {
 		astride=1;
 		zoom=0.002;
 		minh=5.68182e-10;
-		minr=0.002;
 		heading=12;
 		tilt=-3;
 		angle=1;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.002;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -60,25 +62,6 @@ Scene() {
 					fog.vmin=972.2 ft;
 					hscale=0.005;
 					ocean.level=649.2 ft;
-					ocean.liquid=373;
-					ocean.liquid.albedo=1;
-					ocean.liquid.clarity=300 ft;
-					ocean.liquid.color1=Color(0.67,0.93,0.93);
-					ocean.liquid.color2=Color(0,0.16,0.16);
-					ocean.liquid.mix=0.95;
-					ocean.liquid.shine=100;
-					ocean.liquid.trans=50;
-					ocean.liquid.volatility=1;
-					ocean.rseed=0;
-					ocean.solid=273;
-					ocean.solid.albedo=0.1;
-					ocean.solid.clarity=1 ft;
-					ocean.solid.color1=Color(1,1,1,0.8);
-					ocean.solid.color2=Color(0.6,0.7,0.8);
-					ocean.solid.mix=0.95;
-					ocean.solid.shine=0.8;
-					ocean.solid.trans=0.05;
-					ocean.solid.volatility=0.5;
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;

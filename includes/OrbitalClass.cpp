@@ -3464,9 +3464,9 @@ void Planetoid::get_ocean_vars()
 	MVGET("ocean.solid.volatility",solid->volatility);
 		
 }
-#define MCSET(name,value) exprs.set_var(name,ocean->value,water())
-#define MVSET(name,value) exprs.set_var(name,ocean->value,water())
-#define MUSET(name,value,u) { ts=exprs.set_var(name,ocean->value,water()); ts->units=u;}
+#define MCSET(name,value) exprs.set_var(name,ocean->value,water()&& (ODEF->value != ocean->value))
+#define MVSET(name,value) exprs.set_var(name,ocean->value,water() && (ODEF->value != ocean->value))
+#define MUSET(name,value,u) { ts=exprs.set_var(name,ocean->value,water() &&(ODEF->value != ocean->value)); ts->units=u;}
 #define MNSET(name,value) exprs.set_var(name,ocean->value,water())
 
 #define WCSET(name,value) exprs.set_var(name,ocean->value,0)
@@ -3517,12 +3517,14 @@ void Planetoid::set_ocean_vars(){
 	MVSET("ocean.solid.volatility",solid->volatility);
 
 }
+#define ODEF OceanState::oceanTypes[OceanState::Types::H2O]
+
 void Planetoid::get_vars()
 {
 	Spheroid::get_vars();
 	checkForOcean();
 	if(ocean==0)
-		setOcean(OceanState::oceanTypes[OceanState::Types::H2O]);
+		setOcean(ODEF);
     if(water())
 		get_ocean_vars();
 

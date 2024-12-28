@@ -10,13 +10,13 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=0.001;
-		minh=1.13636e-09;
+		minh=5.68182e-10;
 		minr=0.00100001;
-		heading=153;
+		heading=145;
 		tilt=-9;
 		angle=1;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	Galaxy(20000) {
@@ -24,14 +24,14 @@ Scene() {
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
-			Color(0.502,0.000,0.251),
-			Color(0.000,0.000,1.000),
-			Color(0.000,0.722,1.000),
-			Color(0.502,1.000,1.000),
-			Color(1.000,0.275,0.000),
-			Color(1.000,0.702,0.200),
-			Color(1.000,1.000,0.400),
-			Color(1.000,1.000,0.702)
+			Color(0.50,0.00,0.25),
+			Color(0.00,0.00,1.00),
+			Color(0.00,0.72,1.00),
+			Color(0.50,1.00,1.00),
+			Color(1.00,0.27,0.00),
+			Color(1.00,0.70,0.20),
+			Color(1.00,1.00,0.40),
+			Color(1.00,1.00,0.70)
 			);
 		System(10) {
 			Star(1,0) {
@@ -40,7 +40,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6540.73;
+				temperature=6000;
 				Surface{
 					m1=noise(GRADIENT|UNS,3,6,0.2);
 					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
@@ -59,11 +59,10 @@ Scene() {
 			Planet(0.001,100) {
 				ambient=Color(1,1,1,0.1);
 				day=5;
-				fog.color=Color(1,1,1,0.75);
 				fog.glow=0.50878;
 				fog.max=10236.1 ft;
 				fog.min=236.12 ft;
-				fog.value=0.75;
+				fog.value=0.74902;
 				fog.vmax=7500 ft;
 				fog.vmin=1388.8 ft;
 				hscale=0.002;
@@ -72,14 +71,9 @@ Scene() {
 				shine=6.18712;
 				specular=Color(1,1,1,0.25);
 				tilt=10;
-				water.albedo=1;
-				water.clarity=48.952 ft;
-				water.color1=Color(0.68,0.94,0.93,0.54);
-				water.color2=Color(0,0.3,0.3);
 				year=30;
-				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
-				wl=water.level*GTOL;
+				ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 				bands("alpine",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),
 					Color(0.2,0.4,0.1,0.7),
 					Color(0.3,0.5,0,0.7),
