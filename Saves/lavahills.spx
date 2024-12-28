@@ -3,40 +3,21 @@ Scene() {
 		view=SURFACE;
 		phi=-28.4199;
 		theta=345.017;
-		height=6 ft;
+		height=241.453 ft;
 		gndlvl=-4350.6 ft;
-		time=17912.8;
-		vstride=1;
+		time=17985.6;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=-46;
-		tilt=-3;
-		angle=10;
-		fov=35;
-		gstride=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=57.4986 ft;
-		heading=-56;
-		tilt=1;
-		angle=6;
-	}
-	View{
-		height=241.453 ft;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00399918;
 		heading=-30;
 		tilt=-3;
 		angle=-9;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00399922;
-	}
-	View{
-		time=17985.6;
-		minr=0.00399918;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -44,14 +25,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -77,16 +58,30 @@ Scene() {
 					fog.vmax=3905.6 ft;
 					fog.vmin=-1000 ft;
 					ocean.level=-6111.18 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=244.276 ft;
+					ocean.liquid.color1=Color(0.68,0.95,0.95);
+					ocean.liquid.color2=Color(0.03,0.25,0.07);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=73.584;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					resolution=2.37142;
 					rot_phase=87.0984;
 					shadow=Color(0.04,0.04,0.05,0.8);
 					shine=9.20157;
 					specular=Color(1,1,1,0.05);
-					water.clarity=244.276 ft;
-					water.color1=Color(0.68,0.95,0.95);
-					water.color2=Color(0.03,0.25,0.07);
-					water.level=-1.15742e-06;
-					water.shine=73.584;
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;

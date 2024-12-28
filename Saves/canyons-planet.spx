@@ -6,49 +6,39 @@ Scene() {
 		height=0.006;
 		gndlvl=-17984.2 ft;
 		time=28792;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.0039966;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
 		view=SURFACE;
 		phi=52.7344;
 		theta=15.4688;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-30230.5 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		radius=0.00400427;
 	}
 	View{
 		height=10.4063 miles;
-		hstride=2;
-		minr=0.00399428;
-		radius=0.00400468;
 	}
 	View{
 		phi=53.1189;
 		theta=17.655;
 		height=5104.05 ft;
 		gndlvl=-31269.1 ft;
-		hstride=1;
-		radius=0.00399504;
 	}
 	View{
 		height=5786 ft;
 		tilt=-14;
-		hstride=2;
-		minr=0.00399408;
-		radius=0.00399517;
 	}
 	View{
 		view=ORBITAL;
@@ -58,35 +48,26 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.00999422;
 	}
 	View{
 		view=SURFACE;
 		phi=47.8125;
 		theta=16.5234;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-83223.1 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.00399422;
-		radius=0.00399424;
 	}
 	View{
 		phi=47.7452;
 		theta=16.989;
 		height=1350.15 ft;
 		gndlvl=-93704.3 ft;
-		minr=0.00398424;
-		radius=0.00398251;
 	}
 	View{
 		height=6450.32 ft;
 		tilt=-12;
-		hstride=2;
-		minr=0.00398225;
-		radius=0.00398347;
 	}
 	View{
 		phi=47.7411;
@@ -94,15 +75,11 @@ Scene() {
 		height=270.49 ft;
 		gndlvl=-95724.4 ft;
 		tilt=-15;
-		hstride=1;
-		radius=0.00398192;
 	}
 	View{
 		heading=-38;
 		tilt=3;
 		angle=1;
-		hstride=2;
-		minr=0.00398187;
 	}
 	View{
 		view=ORBITAL;
@@ -114,9 +91,14 @@ Scene() {
 		pitch=-90;
 		tilt=0;
 		angle=0;
-		hstride=1;
-		minr=0.00398189;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		radius=0.00998189;
+	}
+	View{
+		phi=47.7396;
+		minr=0.00398189;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -124,14 +106,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -140,7 +122,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);

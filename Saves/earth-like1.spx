@@ -26,7 +26,7 @@ Scene() {
 		view=SURFACE;
 		phi=-15.8203;
 		theta=139.219;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=9152.07 ft;
 		heading=0;
 		pitch=0;
@@ -59,7 +59,7 @@ Scene() {
 		view=SURFACE;
 		phi=-17.2266;
 		theta=136.406;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=10799.1 ft;
 		heading=0;
 		pitch=0;
@@ -120,7 +120,7 @@ Scene() {
 		view=SURFACE;
 		phi=-22.5;
 		theta=151.172;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=393.599 ft;
 		heading=0;
 		pitch=0;
@@ -151,13 +151,15 @@ Scene() {
 		pitch=-90;
 		tilt=0;
 		angle=0;
+	}
+	View{
+		theta=154.655;
 		vstride=0.02;
 		zoom=0.002;
 		minh=5.68182e-10;
 		radius=0.00500005;
 	}
 	View{
-		theta=154.655;
 		minr=0.00200005;
 	}
 	Universe {
@@ -204,38 +206,40 @@ Scene() {
 						noise.expr=noise(SIMPLEX|NABS|NLOD,1.8,7,-0.54,0.2,2,1,1,0,0);
 					}
 				}
-				Planet(0.002,150) {
+				Planet(0.002,90) {
 					albedo=0.25;
 					ambient=Color(1,1,1,0.01);
 					day=24;
 					hscale=0.002;
-					ice.albedo=0.625;
-					ice.clarity=15.8451 ft;
-					ice.color1=Color(1,1,1,0.17);
-					ice.color2=Color(0.4,0.67,0.81);
-					ice.mix=0.95;
-					ice.shine=15.278;
 					name="Mars";
 					ocean.auto=1;
 					ocean.liquid=373;
-					ocean.liquid.trans=10;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=300 ft;
+					ocean.liquid.color1=Color(0.67,0.93,0.93);
+					ocean.liquid.color2=Color(0,0.16,0.16);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
 					ocean.rseed=0;
 					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
 					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					ocean.state=2;
 					rot_phase=98.712;
 					shadow=Color(0,0,0,0.84);
 					shine=5.56269;
 					specular=Color(1,1,1,0.08);
 					tilt=-24;
-					water.albedo=1;
-					water.clarity=762.618 ft;
-					water.color1=Color(0.82,0.86,0.99);
-					water.color2=Color(0.02,0.11,0.24);
-					water.mix=0.95;
-					water.shine=100;
 					year=687;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 					bands("alpine",ACHNL|CLAMP,256,0.33928,0.37096,Color(0.91,0.702,0.471,0.369),Color(0,0.106,0.024),
 						Color(0.2,0.4,0.082,0.682),
 						Color(0.282,0.482,0,0.682),

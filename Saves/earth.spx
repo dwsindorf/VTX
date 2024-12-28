@@ -10,12 +10,12 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=0.003;
-		minh=1.13636e-09;
+		minh=5.68182e-10;
 		minr=0.003;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
@@ -26,14 +26,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(1.5,0) {
@@ -71,18 +71,30 @@ Scene() {
 					hscale=0.002;
 					ocean.auto=1;
 					ocean.level=200 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=0.4127;
+					ocean.liquid.clarity=140.76 ft;
+					ocean.liquid.color1=Color(0.01,0.21,0.31);
+					ocean.liquid.color2=Color(0.12,0.19,0.39);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=19.048;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					shadow=Color(0,0,0,0.36);
 					shine=9.75019;
 					specular=Color(1,1,1,0.13);
 					tilt=-17;
-					water.albedo=0.4127;
-					water.clarity=140.76 ft;
-					water.color1=Color(0.01,0.21,0.31);
-					water.color2=Color(0.12,0.19,0.39);
-					water.level=3.78788e-08;
-					water.shine=19.048;
 					year=365;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),
@@ -154,11 +166,11 @@ Scene() {
 						day=24;
 						hscale=0.001;
 						name="MoonMap";
+						ocean.auto=1;
 						phase=139.997;
 						resolution=4;
 						rseed=2.34627;
 						year=30;
-						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						Surface{
 							terrain=
 									Texture("luna",BORDER|BUMP|HMAP|TEX,1,-4,2,0,1,2,0.5,0,1,0.5);

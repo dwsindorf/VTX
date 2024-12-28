@@ -1,172 +1,36 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=0.230734;
+		phi=0.230758;
 		theta=102.245;
-		height=6 ft;
+		height=21.8238 ft;
 		gndlvl=-3186.78 ft;
-		time=11040.4;
-		vstride=1;
+		time=12000.8;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		tilt=-19;
-		angle=8;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.0039994;
+		heading=30;
+		angle=42;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=8.93999 ft;
-		time=11194;
-		tilt=-23;
-		angle=14;
-	}
-	View{
-		height=4.12809 ft;
-		heading=35;
-		tilt=-10;
-		angle=42;
-	}
-	View{
-		tilt=-5;
-		angle=48;
-	}
-	View{
-		tilt=-3;
-		angle=52;
-	}
-	View{
-		height=6 ft;
-		tilt=-8;
-		angle=50;
-	}
-	View{
-		tilt=-13;
-		angle=44;
-	}
-	View{
-		tilt=-19;
-		angle=39;
-	}
-	View{
-		height=7.40732 ft;
-		tilt=-12;
-		angle=26;
-	}
-	View{
-		tilt=-14;
-		angle=25;
-	}
-	View{
-		phi=0.230743;
-		height=9.06001 ft;
-	}
-	View{
-		height=10.5894 ft;
-		tilt=-17;
-		angle=22;
-	}
-	View{
-		height=4.37972 ft;
-		tilt=-6;
-	}
-	View{
-		phi=0.230752;
-		height=3 ft;
-		heading=44;
-		tilt=-1;
-		angle=20;
-	}
-	View{
-		heading=29;
-	}
-	View{
-		heading=27;
-	}
-	View{
-		tilt=4;
-		angle=18;
-	}
-	View{
-		tilt=1;
-	}
-	View{
-		tilt=3;
-		angle=19;
-	}
-	View{
-		phi=0.230758;
-		heading=39;
-	}
-	View{
-		heading=32;
-	}
-	View{
-		heading=27;
-	}
-	View{
-		tilt=-1;
-		angle=13;
-	}
-	View{
-		height=18.6122 ft;
-		time=12080.8;
-		tilt=-4;
-		angle=21;
-	}
-	View{
-		tilt=-6;
-		angle=35;
-	}
-	View{
-		height=21.8238 ft;
-		heading=42;
-		tilt=-3;
-	}
-	View{
-		time=13000;
-		heading=20;
-		tilt=-1;
-	}
-	View{
-		time=12000;
-	}
-	View{
-		heading=30;
-		angle=38;
-	}
-	View{
-		angle=42;
-	}
-	View{
-		time=12000.8;
-		tilt=-4;
-	}
-	View{
-		tilt=0;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.0039994;
-	}
-	View{
-		minr=0.0039994;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=DENSITY;
 		color.list=Colors(
-			Color(0.502,0.000,0.251),
-			Color(0.000,0.000,1.000),
-			Color(0.000,0.722,1.000),
-			Color(0.502,1.000,1.000),
-			Color(1.000,0.275,0.000),
-			Color(1.000,0.702,0.200),
-			Color(1.000,1.000,0.400),
-			Color(1.000,1.000,0.702)
+			Color(0.50,0.00,0.25),
+			Color(0.00,0.00,1.00),
+			Color(0.00,0.72,1.00),
+			Color(0.50,1.00,1.00),
+			Color(1.00,0.27,0.00),
+			Color(1.00,0.70,0.20),
+			Color(1.00,1.00,0.40),
+			Color(1.00,1.00,0.70)
 			);
 		System(10) {
 			Star(1,0) {
@@ -194,25 +58,15 @@ Scene() {
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				hscale=0.0001;
-				ocean.level=1388.8 ft;
+				ocean.auto=1;
+				ocean.state=2;
 				shadow=Color(0,0,0,0.71);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
-				water.albedo=1;
-				water.clarity=48.952 ft;
-				water.color1=Color(0.68,0.94,0.93,0.54);
-				water.color2=Color(0,0.3,0.3);
-				water.level=2.6303e-07;
 				year=30;
-				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
-				wl=water.level*GTOL;
-				ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 				Surface{
-					ripples=0.0002*noise(20,2);
-					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
-					m3=noise(8,6,0.5,0.5,2);
 					terrain=
 							Sprite("grass2x2",FLIP|NOLOD,4,9.4697e-07,1.02,0.95,1,0,0,0,0)
 							Plant("Grass1",1,9.4697e-08,0.8,0.5,0.35,0,0,0,1.4)

@@ -25,14 +25,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -50,7 +50,8 @@ Scene() {
 				}
 				Planet(0.0434,484) {
 					albedo=1;
-					ocean.level=-10000 ft;
+					ocean.auto=1;
+					ocean.state=2;
 					phase=24.9984;
 					resolution=2;
 					rot_phase=180;
@@ -60,7 +61,6 @@ Scene() {
 					specular=Color(1,1,1);
 					tilt=10.0008;
 					year=4380;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=
 								Texture("jupiter1",BUMP|TEX,1,0.2,2,0,2.95936,2,0.67346,0,0,0,0,0);
@@ -94,15 +94,14 @@ Scene() {
 						fog.vmin=17000 ft;
 						hscale=0.004;
 						name="Io";
-						ocean.level=-10000 ft;
+						ocean.auto=1;
+						ocean.state=2;
 						rot_phase=79.9992;
 						rseed=0.561332;
 						shine=8.56316;
 						skew=10.0008;
 						specular=Color(1,1,1,0.59);
-						water.level=-1.89394e-06;
 						year=10;
-						ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 						bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 							Color(0.502,0.251,0),
 							Color(0.141,0,0));

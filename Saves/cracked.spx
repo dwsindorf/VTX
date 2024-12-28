@@ -87,7 +87,6 @@ Scene() {
 					shine=38.6458;
 					specular=Color(1,1,1);
 					sunset=0.01;
-					water.albedo=0.73;
 					year=83.34;
 					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0,0.251,0,0.451),

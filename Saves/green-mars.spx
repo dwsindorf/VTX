@@ -1,28 +1,22 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-16.3353;
-		theta=137.173;
-		height=0.0039174;
+		phi=-12.8932;
+		theta=132.02;
+		height=0.0039198;
 		gndlvl=-15020.4 ft;
 		time=215336;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.002;
-		minh=1.13636e-09;
-		heading=90;
-		pitch=-89;
-		fov=35;
-		speed=0.02;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		phi=-12.032;
-		theta=130.299;
-		height=0.0039219;
+		minh=5.68182e-10;
 		minr=0.00199716;
-		radius=0.00591906;
+		heading=90;
+		pitch=-91;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -30,14 +24,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(1.5,0) {
@@ -73,26 +67,35 @@ Scene() {
 					ambient=Color(1,1,1,0.01);
 					day=24;
 					hscale=0.01;
-					ice.albedo=0.625;
-					ice.clarity=15.8451 ft;
-					ice.color1=Color(1,1,1,0.17);
-					ice.color2=Color(0.4,0.67,0.81);
-					ice.shine=15.278;
 					name="Mars";
 					ocean.auto=1;
-					ocean.level=-10000 ft;
+					ocean.level=-5862 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=300 ft;
+					ocean.liquid.color1=Color(0.67,0.93,0.93);
+					ocean.liquid.color2=Color(0,0.16,0.16);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					ocean.state=2;
 					shadow=Color(0,0,0,0.84);
 					shine=5.56269;
 					specular=Color(1,1,1,0.08);
 					tilt=-24;
-					water.albedo=1;
-					water.clarity=762.618 ft;
-					water.color1=Color(0.44,0.56,1);
-					water.color2=Color(0.02,0.24,0.22);
-					water.shine=100;
 					year=687;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
+					ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 					bands("alpine",ACHNL|CLAMP,256,0.10714,0.219608,Color(0.91,0.702,0.471,0.22),Color(0,0.106,0.031),
 						Color(0.2,0.4,0.09,0.69),
 						Color(0.29,0.49,0,0.69),
@@ -104,8 +107,8 @@ Scene() {
 						Color(0.953,0.757,0.173,0),
 						Color(1,1,1));
 					Surface{
-						terrain=ocean(noise(GRADIENT|SCALE,17.7,3,-0.34,0.5,2.08,0.22,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
-								snow(-0.3,2.2,0.61,0.17,1,0.82)
+						terrain=ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.02,0))
+								snow(-0.3,-1.2,0.61,0.17,1,0.82)
 								Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
 								fractal(SQR|SS,14.1,11.1,0,0.1,3,0.24,0.08,0.42,0.35,0)noise(GRADIENT|NABS|SCALE|SQR,19,6,1,0.5,1.58,0.54,1,0,0,1e-06)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
 								Texture("alpine",BORDER|TEX,1,0.97224,1,-0.8,1,2,0.5,0,-0.2,1.44448,-0.5,-0.4)+
@@ -127,13 +130,13 @@ Scene() {
 						color=Color(0,0.47,0.9);
 						day=24;
 						density=0.23612;
-						ghg_fraction=0.1;
+						ghg_fraction=0.4;
 						haze.color=Color(1,1,1,0.67);
 						haze.grad=0.86586;
 						haze.value=0.666667;
 						name="Sky";
 						night.color=Color(0,0,0,0.6);
-						pressure=0.3;
+						pressure=4;
 						resolution=4;
 						rseed=1.58657;
 						sky.grad=2;

@@ -6,35 +6,29 @@ Scene() {
 		height=0.00669572;
 		gndlvl=-43494.6 ft;
 		time=44615.8;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
 		height=0.00682557;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0108173;
 	}
 	View{
 		view=SURFACE;
 		phi=2.46094;
 		theta=77.3438;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-100042 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.00399176;
-		radius=0.00399105;
 	}
 	View{
 		view=ORBITAL;
@@ -43,27 +37,20 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		minr=0.00398105;
-		radius=0.012;
 	}
 	View{
 		view=SURFACE;
 		phi=0.703125;
 		theta=73.125;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-42801.3 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.004;
-		radius=0.00400189;
 	}
 	View{
 		height=14.8895 miles;
 		heading=40;
-		hstride=2;
-		minr=0.00399189;
-		radius=0.00400678;
 	}
 	View{
 		phi=1.20575;
@@ -71,15 +58,10 @@ Scene() {
 		height=2465.41 ft;
 		gndlvl=-28916.6 ft;
 		heading=0;
-		hstride=1;
-		radius=0.00399499;
 	}
 	View{
 		height=2876.2 ft;
 		tilt=-13;
-		hstride=2;
-		minr=0.00399452;
-		radius=0.00399507;
 	}
 	View{
 		view=ORBITAL;
@@ -90,33 +72,23 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.00999431;
 	}
 	View{
 		height=0.00669871;
-		hstride=2;
-		minr=0.00399431;
-		radius=0.010693;
 	}
 	View{
 		view=SURFACE;
 		phi=-26.0156;
 		theta=78.0469;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-44487.4 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		hstride=1;
-		radius=0.00400157;
 	}
 	View{
 		height=10.2013 miles;
 		heading=6;
-		hstride=2;
-		minr=0.00399158;
-		radius=0.00400178;
 	}
 	View{
 		phi=-25.6805;
@@ -124,15 +96,10 @@ Scene() {
 		height=4468.42 ft;
 		gndlvl=-47856.6 ft;
 		heading=0;
-		hstride=1;
-		radius=0.00399178;
 	}
 	View{
 		height=14758.9 ft;
 		tilt=-13;
-		hstride=2;
-		minr=0.00399094;
-		radius=0.00399373;
 	}
 	View{
 		view=ORBITAL;
@@ -143,32 +110,22 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.00999095;
 	}
 	View{
 		height=0.0072261;
-		hstride=2;
-		minr=0.00399095;
-		radius=0.011217;
 	}
 	View{
 		view=SURFACE;
 		phi=-46.4063;
 		theta=98.4375;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-46105 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		hstride=1;
-		radius=0.00400127;
 	}
 	View{
 		height=10.6129 miles;
-		hstride=2;
-		minr=0.00399127;
-		radius=0.00400188;
 	}
 	View{
 		view=ORBITAL;
@@ -179,37 +136,28 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.00999058;
 	}
 	View{
 		height=0.00606221;
-		minr=0.00399058;
-		radius=0.0100528;
 	}
 	View{
 		height=0.00618746;
 		time=53398.2;
 		delt=2000;
-		radius=0.010178;
 	}
 	View{
 		view=SURFACE;
 		phi=-22.5;
 		theta=140.273;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-50126.9 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		radius=0.00400051;
 	}
 	View{
 		height=40.9471 miles;
 		heading=-14;
-		hstride=2;
-		minr=0.00399051;
-		radius=0.00403145;
 	}
 	View{
 		view=ORBITAL;
@@ -220,26 +168,19 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.00998984;
 	}
 	View{
 		view=SURFACE;
 		phi=-16.875;
 		theta=126.562;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-37544.6 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.00398984;
-		radius=0.00400289;
 	}
 	View{
 		height=10.2012 miles;
-		hstride=2;
-		minr=0.00399289;
-		radius=0.00400309;
 	}
 	View{
 		view=ORBITAL;
@@ -248,27 +189,20 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.012;
 	}
 	View{
 		view=SURFACE;
 		phi=-11.9531;
 		theta=114.609;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-51385.9 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.004;
-		radius=0.00400027;
 	}
 	View{
 		height=13.7528 miles;
 		heading=-11;
-		hstride=2;
-		minr=0.00399027;
-		radius=0.00400402;
 	}
 	View{
 		phi=-12.4146;
@@ -276,16 +210,11 @@ Scene() {
 		height=3595.35 ft;
 		gndlvl=-52259.1 ft;
 		heading=0;
-		hstride=1;
-		radius=0.00399078;
 	}
 	View{
 		height=4001.09 ft;
 		heading=15;
 		tilt=-12;
-		hstride=2;
-		minr=0.0039901;
-		radius=0.00399086;
 	}
 	View{
 		view=ORBITAL;
@@ -294,29 +223,22 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		radius=0.012;
 	}
 	View{
 		view=SURFACE;
 		phi=-21.7969;
 		theta=151.172;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-58481.5 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.004;
-		radius=0.00399892;
 	}
 	View{
 		phi=-21.8163;
 		theta=151.239;
 		height=15.9605 miles;
 		heading=-16;
-		hstride=2;
-		minr=0.00398893;
-		radius=0.00400488;
 	}
 	View{
 		phi=-21.9287;
@@ -324,16 +246,11 @@ Scene() {
 		height=1628.71 ft;
 		gndlvl=-46206.7 ft;
 		heading=0;
-		hstride=1;
-		radius=0.00399156;
 	}
 	View{
 		height=11635.8 ft;
 		tilt=-13;
 		angle=1;
-		hstride=2;
-		minr=0.00399125;
-		radius=0.00399345;
 	}
 	View{
 		phi=-21.9424;
@@ -342,21 +259,15 @@ Scene() {
 		gndlvl=-46513.2 ft;
 		tilt=-15;
 		angle=0;
-		hstride=1;
-		radius=0.0039915;
 	}
 	View{
 		height=40183.9 ft;
 		heading=-19;
 		tilt=-7;
-		hstride=2;
-		minr=0.00399119;
-		radius=0.0039988;
 	}
 	View{
 		height=48076.3 ft;
 		heading=5;
-		radius=0.0040003;
 	}
 	View{
 		phi=-21.731;
@@ -365,15 +276,10 @@ Scene() {
 		gndlvl=-58129.3 ft;
 		heading=0;
 		tilt=-15;
-		hstride=1;
-		radius=0.00398939;
 	}
 	View{
 		height=2147.13 ft;
 		tilt=-6;
-		hstride=2;
-		minr=0.00398899;
-		radius=0.0039894;
 	}
 	View{
 		phi=-21.7337;
@@ -381,8 +287,6 @@ Scene() {
 		height=470.717 ft;
 		gndlvl=-58756.3 ft;
 		tilt=-15;
-		hstride=1;
-		radius=0.00398896;
 	}
 	View{
 		view=ORBITAL;
@@ -391,26 +295,19 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		minr=0.00398887;
-		radius=0.012;
 	}
 	View{
 		view=SURFACE;
 		phi=-38.3203;
 		theta=152.93;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-47036.4 ft;
 		heading=0;
 		pitch=0;
 		tilt=-15;
-		minr=0.004;
-		radius=0.00400109;
 	}
 	View{
 		height=10.2013 miles;
-		hstride=2;
-		minr=0.00399109;
-		radius=0.00400129;
 	}
 	View{
 		view=ORBITAL;
@@ -419,9 +316,14 @@ Scene() {
 		heading=90;
 		pitch=-90;
 		tilt=0;
-		hstride=1;
-		minr=0.004;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		radius=0.012;
+	}
+	View{
+		phi=-39.1022;
+		minr=0.004;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -429,14 +331,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -445,7 +347,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -455,20 +357,30 @@ Scene() {
 				Planet(0.004,100) {
 					day=24;
 					hscale=0.00101;
-					ice.albedo=0.625;
-					ice.clarity=15.8451 ft;
-					ice.color1=Color(1,1,1,0.17);
-					ice.color2=Color(0.4,0.67,0.81);
-					ice.shine=15.278;
 					ocean.level=-50000 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=300 ft;
+					ocean.liquid.color1=Color(0.67,0.93,0.93);
+					ocean.liquid.color2=Color(0,0.16,0.16);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					shadow=Color(0,0,0,0.31);
 					specular=Color(1,1,1,0.13);
-					water.albedo=1;
-					water.clarity=762.618 ft;
-					water.color1=Color(0.82,0.86,0.99);
-					water.color2=Color(0.02,0.18,0.24);
-					water.shine=100;
 					year=100;
+					ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 					bands("dessert",ACHNL|NORM|REFLECT,128,0.14286,0.596078,Color(1,0.624,0.075,0.596),Color(1,0.875,0.475),
 						Color(0.165,0,0),
 						Color(0,0,0));

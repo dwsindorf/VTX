@@ -9,16 +9,14 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=0.002;
-		minh=1.13636e-09;
-		heading=12;
-		tilt=6;
-		angle=-8;
-		fov=35;
-		speed=0.02;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
+		minh=5.68182e-10;
 		minr=0.002;
+		heading=12;
+		tilt=-3;
+		angle=1;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -26,14 +24,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -42,7 +40,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -62,13 +60,28 @@ Scene() {
 					fog.vmin=972.2 ft;
 					hscale=0.005;
 					ocean.level=649.2 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=300 ft;
+					ocean.liquid.color1=Color(0.67,0.93,0.93);
+					ocean.liquid.color2=Color(0,0.16,0.16);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
-					water.albedo=1;
-					water.clarity=1000 ft;
-					water.color1=Color(0.95,1,0);
-					water.shine=29.166;
 					year=100;
 					Surface{
 						terrain=fog(noise(GRADIENT,8.2,3.9,1,0.5,2.24,1,1,0,0))
@@ -96,7 +109,7 @@ Scene() {
 						day=13.888;
 						hscale=0.0001;
 						name="Moon";
-						ocean.level=0 ft;
+						ocean.auto=1;
 						phase=310.003;
 						rseed=1.44467;
 						skew=43.7508;

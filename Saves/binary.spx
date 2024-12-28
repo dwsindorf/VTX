@@ -8,15 +8,23 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=0.01;
-		minr=10;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		angle=-90;
 		fov=35;
-		speed=0.02;
-		delt=20000;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1;
+	}
+	View{
+		height=217.524;
+		minh=0.01;
+		minr=10;
+		radius=217.524;
+	}
+	View{
+		phi=88.9;
+		theta=1.13753e-13;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -24,28 +32,28 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
-			System(63.1694) {
+			System(72.5081) {
 				origin=Point(5.77976,-2.38609,-2.53634);
 				rseed=-0.364817;
 				Star(4.16222,30) {
 					color=Color(1,1,0.8);
 					day=0.112699;
 					diffuse=Color(1,1,1);
+					eccentricity=0.95;
 					emission=Color(1,1,1);
 					name="YellowStar";
 					rseed=0.379939;
 					specular=Color(1,1,1);
 					temperature=6000;
-					eccentricity=0.95;
 					year=5;
 					bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
@@ -60,14 +68,12 @@ Scene() {
 					Corona(10.4721) {
 						color1=Color(1,0.95,0);
 						color2=Color(0.53,0.06,0);
-						gradient=1;
 						name="Outer";
 						noise.expr=noise(GRADIENT|SCALE|RO1,1.5,2,1,0.5,2,1,1,0,0);
 					}
 					Corona(5.48279) {
 						color1=Color(0.97,0.95,0.91);
 						color2=Color(0.94,0.96,0.11);
-						gradient=1;
 						name="Inner";
 						noise.expr=noise(GRADIENT|NABS|NEG|SCALE,1.2,4.8,0.66,0.5,2,1,1,0,0.8)-1.5*PHI;
 					}
@@ -94,13 +100,11 @@ Scene() {
 					Corona(16.5491) {
 						color1=Color(0.5,1,1);
 						color2=Color(0,0,1);
-						gradient=1;
 						name="outer";
 					}
 					Corona(5.06178) {
 						color1=Color(1,1,1);
 						color2=Color(0.8,0.94,0.98);
-						gradient=1;
 						name="inner";
 						noise.expr=noise(GRADIENT|NABS|SCALE,2.7,2,1,0.5,2,1,1,0,0);
 					}

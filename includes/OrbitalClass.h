@@ -64,7 +64,6 @@ protected:
 	double rseed;
 
 public:
-
 	ExprMgr exprs;
 	double rot_angle;
 	double orbit_angle;    // time dependent rotation angle

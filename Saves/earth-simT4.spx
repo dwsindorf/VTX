@@ -6,27 +6,26 @@ Scene() {
 		height=0.0015;
 		gndlvl=2395.17 ft;
 		time=5884;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
 		height=0.00162617;
-		vstride=0.02;
-		zoom=0.001;
-		minh=1.13636e-09;
-		radius=0.00262662;
 	}
 	View{
 		height=0.00204488;
 		time=10000;
+		vstride=0.02;
+		zoom=0.001;
+		minh=5.68182e-10;
 		minr=0.00100045;
 		radius=0.00304533;
 	}
@@ -35,14 +34,14 @@ Scene() {
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
-			Color(0.502,0.000,0.251),
-			Color(0.000,0.000,1.000),
-			Color(0.000,0.722,1.000),
-			Color(0.502,1.000,1.000),
-			Color(1.000,0.275,0.000),
-			Color(1.000,0.702,0.200),
-			Color(1.000,1.000,0.400),
-			Color(1.000,1.000,0.702)
+			Color(0.50,0.00,0.25),
+			Color(0.00,0.00,1.00),
+			Color(0.00,0.72,1.00),
+			Color(0.50,1.00,1.00),
+			Color(1.00,0.27,0.00),
+			Color(1.00,0.70,0.20),
+			Color(1.00,1.00,0.40),
+			Color(1.00,1.00,0.70)
 			);
 		System(10) {
 			Star(1.5,0) {
@@ -52,7 +51,7 @@ Scene() {
 				emission=Color(1,1,0.93);
 				name="Sol";
 				specular=Color(1,1,1);
-				temperature=5819.04;
+				temperature=5773.8;
 				bands("star1",ACHNL|CLAMP,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 					Color(0.463,0.039,0.122),
 					Color(0.024,0.02,0.125));
@@ -64,14 +63,12 @@ Scene() {
 				Corona(8.39661) {
 					color1=Color(1,1,1);
 					color2=Color(1,0.8,0.09);
-					gradient=1;
 					name="Corona";
 					noise.expr=noise(GRADIENT|NABS|NLOD|SQR|UNS,1.5,3.9,0.07,0.5,2,0.44,1,0,-0.2);
 				}
 				Corona(2.96745) {
 					color1=Color(1,1,0.89);
 					color2=Color(0.97,0.99,0.59);
-					gradient=1;
 					name="flares";
 					noise.expr=noise(SIMPLEX|NABS|NLOD,1.8,7,-0.54,0.2,2,1,1,0,0);
 				}
@@ -86,18 +83,32 @@ Scene() {
 				fog.vmax=7361.2 ft;
 				hscale=0.002;
 				name="EarthLikeT4";
+				ocean.liquid=373;
+				ocean.liquid.albedo=1;
+				ocean.liquid.clarity=300 ft;
+				ocean.liquid.color1=Color(0.67,0.93,0.93);
+				ocean.liquid.color2=Color(0,0.16,0.16);
+				ocean.liquid.mix=0.95;
+				ocean.liquid.shine=100;
+				ocean.liquid.trans=50;
+				ocean.liquid.volatility=1;
+				ocean.rseed=0;
+				ocean.solid=273;
+				ocean.solid.albedo=0.1;
+				ocean.solid.clarity=1 ft;
+				ocean.solid.color1=Color(1,1,1,0.8);
+				ocean.solid.color2=Color(0.6,0.7,0.8);
+				ocean.solid.mix=0.95;
+				ocean.solid.shine=0.8;
+				ocean.solid.trans=0.05;
+				ocean.solid.volatility=0.5;
 				shadow=Color(0,0,0.1,0.7);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
-				water.albedo=1;
-				water.clarity=792.288 ft;
-				water.color1=Color(0.08,0.46,0.65,0.54);
-				water.color2=Color(0,0.1,0.3);
 				year=30;
-				water.reflectivity=0.5;
 				twilight=Color(0.5,0.3,0.1);
-				wl=water.level*GTOL;
+				ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 				bands("mercury",128,0,0.6,RAND,Color(1,0.875,0.275,0.475),
 					Color(1,0.6,0,0.475),
 					Color(0.675,0.4,0,0.475),
@@ -121,7 +132,7 @@ Scene() {
 					Color(0.58,0.024,0.024));
 				Surface{
 					terrain=fog(2*noise(GRADIENT|NABS|UNS,8,5,1,0.5,2,1,1,0,-1.8))
-							water(noise(GRADIENT|NABS|SCALE,18,3,1,0.5,2,0.2,1,0,0))
+							ocean(noise(GRADIENT|NABS|SCALE,18,3,1,0.5,2,0.2,1,0,0))
 							snow(-8,2,1,-0.61,0.74,0.11)
 							fractal(14.5,6.4,0.1,0.4,0.3,0.2,0.77,0.71,0.55,0.1)map(noise(GRADIENT,0,15,0.3,0.1,2,1,1,0,0)*(1+2*LAT),-0.22,2,4)
 							layer("seacliffs",MORPH|FSQR,1,0.44,0,0.58)
@@ -178,6 +189,7 @@ Scene() {
 					twilight=Color(0,0.47,1);
 					twilight.max=0.710247;
 					twilight.min=-0.0462142;
+					year=30;
 				}
 			}
 		}

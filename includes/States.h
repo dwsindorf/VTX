@@ -3,7 +3,7 @@
 
 #include "TerrainMgr.h"
 
-#define NUM_OCEAN_TYPES 5
+#define NUM_OCEAN_TYPES 7
 class MaterialState : public TNunary {
 public:
 	char name[256];
@@ -59,7 +59,7 @@ public:
 	TNode  *ocean_expr;
 	char expr[512];
 	
-	enum Types {H2O,SO2,CO2,CH4,N2};
+	enum Types {LAV,SLF,H2O,SO2,CO2,CH4,N2};
 
 	double evalOceanFunction();
 

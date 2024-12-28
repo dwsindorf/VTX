@@ -3419,10 +3419,12 @@ void Planetoid::getOceanExpr(){
 void Planetoid::get_ocean_vars()
 {
 	getOceanExpr();
+	cout<<"get ocean vars:"<<name()<<" have water:"<<water()<<endl;
 
-	if(exprs.get_local("water.level",Td))
-		ocean_level=Td.s;
-	else if(exprs.get_local("ocean.level",Td))
+//	if(exprs.get_local("water.level",Td))
+//		ocean_level=Td.s;
+//	else 
+	if(exprs.get_local("ocean.level",Td))
 		ocean_level=Td.s;
 	else
 		ocean_level=0;
@@ -3444,58 +3446,85 @@ void Planetoid::get_ocean_vars()
 	MVGET("water.albedo",liquid->specular);
 	MVGET("water.shine",liquid->shine);
 	MVGET("water.volatility",liquid->volatility);
-	MCGET("ice.color1",solid->color1);
-	MCGET("ice.color2",solid->color2);
-	MDGET("ice.clarity",solid->clarity,FEET);
-	MVGET("ice.mix",solid->mix);
-	MVGET("ice.albedo",solid->specular);
-	MVGET("ice.shine",solid->shine);
-	MVGET("ice.volatility",solid->volatility);
+
+	MCGET("ocean.liquid.color1",liquid->color1);
+	MCGET("ocean.liquid.color2",liquid->color2);
+	MDGET("ocean.liquid.clarity",liquid->clarity,FEET);
+	MVGET("ocean.liquid.mix",liquid->mix);
+	MVGET("ocean.liquid.albedo",liquid->specular);
+	MVGET("ocean.liquid.shine",liquid->shine);
+	MVGET("ocean.liquid.volatility",liquid->volatility);
+
+	MCGET("ocean.solid.color1",solid->color1);
+	MCGET("ocean.solid.color2",solid->color2);
+	MDGET("ocean.solid.clarity",solid->clarity,FEET);
+	MVGET("ocean.solid.mix",solid->mix);
+	MVGET("ocean.solid.albedo",solid->specular);
+	MVGET("ocean.solid.shine",solid->shine);
+	MVGET("ocean.solid.volatility",solid->volatility);
 		
 }
-#define MCSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
-#define MVSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
-#define MUSET(name,value,u) if(water()) { ts=exprs.set_var(name,ocean->value); ts->units=u;} else exprs.hide_var(name)
-#define MNSET(name,value) if(water()) exprs.set_var(name,ocean->value); else exprs.hide_var(name)
+#define MCSET(name,value) exprs.set_var(name,ocean->value,water())
+#define MVSET(name,value) exprs.set_var(name,ocean->value,water())
+#define MUSET(name,value,u) { ts=exprs.set_var(name,ocean->value,water()); ts->units=u;}
+#define MNSET(name,value) exprs.set_var(name,ocean->value,water())
+
+#define WCSET(name,value) exprs.set_var(name,ocean->value,0)
+#define WVSET(name,value) exprs.set_var(name,ocean->value,0)
+#define WUSET(name,value,u) { ts=exprs.set_var(name,ocean->value,0); ts->units=u;}
 
 void Planetoid::set_ocean_vars(){
 	
 	setOceanExpr();	
+	
+	cout<<"set ocean vars:"<<name()<<" have water:"<<water()<<endl;
+
+	WCSET("water.color1",liquid->color1);
+	WCSET("water.color2",liquid->color2);
+	WVSET("water.clarity",liquid->clarity);
+	WVSET("water.mix",liquid->mix);
+	WVSET("water.albedo",liquid->specular);
+	WVSET("water.shine",liquid->shine);
+	WVSET("water.volatility",liquid->volatility);
+	WVSET("water.level",liquid->shine);
+	WVSET("water.reflectivity",liquid->shine);
+
 	VSET("ocean.state",ocean_state,def_ocean_state);
 	VSET("ocean.auto",ocean_auto,def_ocean_auto);
 	USET("ocean.level",ocean_level,0,"ft");
 	
 	MVSET("ocean.rseed",rseed);
+		
 	MVSET("ocean.solid",solid->temp);
 	MVSET("ocean.liquid",liquid->temp);
 	MVSET("ocean.solid.trans",solid->trans_temp);
 	MVSET("ocean.liquid.trans",liquid->trans_temp);
 
-	MCSET("water.color1",liquid->color1);
-	MCSET("water.color2",liquid->color2);
-	MVSET("water.mix",liquid->mix);
-	MVSET("water.albedo",liquid->specular);
-	MVSET("water.shine",liquid->shine);
-	MVSET("water.volatility",liquid->volatility);
-
-	MUSET("water.clarity",liquid->clarity*FEET,"ft");
-    MCSET("ice.color1",solid->color1);
-    MCSET("ice.color2",solid->color2);
-	MUSET("ice.clarity",solid->clarity*FEET,"ft");
-	MVSET("ice.mix",solid->mix);
-	MVSET("ice.albedo",solid->specular);
-	MVSET("ice.shine",solid->shine);
-	MVSET("ice.volatility",solid->volatility);
+	MCSET("ocean.liquid.color1",liquid->color1);
+	MCSET("ocean.liquid.color2",liquid->color2);
+	MVSET("ocean.liquid.mix",liquid->mix);
+	MVSET("ocean.liquid.albedo",liquid->specular);
+	MVSET("ocean.liquid.shine",liquid->shine);
+	MVSET("ocean.liquid.volatility",liquid->volatility);
+	MUSET("ocean.liquid.clarity",liquid->clarity*FEET,"ft");
+	
+    MCSET("ocean.solid.color1",solid->color1);
+    MCSET("ocean.solid.color2",solid->color2);
+	MUSET("ocean.solid.clarity",solid->clarity*FEET,"ft");
+	MVSET("ocean.solid.mix",solid->mix);
+	MVSET("ocean.solid.albedo",solid->specular);
+	MVSET("ocean.solid.shine",solid->shine);
+	MVSET("ocean.solid.volatility",solid->volatility);
 
 }
 void Planetoid::get_vars()
 {
+	Spheroid::get_vars();
 	checkForOcean();
 	if(ocean==0)
 		setOcean(OceanState::oceanTypes[OceanState::Types::H2O]);
-
-	Spheroid::get_vars();
-	get_ocean_vars();
+    if(water())
+		get_ocean_vars();
 
 	VGET("season.factor",season_factor,def_season_factor);
 	VGET("temp.factor",temp_factor,def_temp_factor);
@@ -3520,8 +3549,8 @@ void Planetoid::get_vars()
 
 void Planetoid::set_vars()
 {
-	checkForOcean();
     Spheroid::set_vars();
+	checkForOcean();
 
 	set_ocean_vars();
 	

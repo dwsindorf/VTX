@@ -2,67 +2,23 @@ Scene() {
 	drawmode=1;
 	View{
 		view=SURFACE;
-		phi=-2.51457e-07;
-		theta=225;
-		height=52800 ft;
-		time=800051;
+		phi=0.094025;
+		theta=225.453;
+		height=29854.2 ft;
+		gndlvl=1 ft;
+		time=766000;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=1.89394e-09;
-		tilt=5;
-		angle=-10;
-		fov=35;
-		speed=0.02;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=836.838 ft;
-	}
-	View{
-		height=8084.17 ft;
-	}
-	View{
-		height=4499.58 ft;
-		time=891208;
-		tilt=6;
-	}
-	View{
-		height=41692.9 ft;
-		gndlvl=-3290.71 ft;
-		heading=5;
-		tilt=-3;
-		angle=-6;
-	}
-	View{
-		height=51363.6 ft;
-		gndlvl=-2726.76 ft;
-		tilt=-4;
-		angle=-2;
-	}
-	View{
-		phi=0.094025;
-		theta=225.453;
-		height=27576.3 ft;
-		gndlvl=1 ft;
-		heading=8;
-		tilt=2;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.004;
+		heading=23;
+		tilt=-2;
 		angle=-10;
 		fov=37.6781;
-	}
-	View{
-		height=29854.2 ft;
-		heading=11;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00400565;
-	}
-	View{
-		time=766000;
-		delt=10000;
-		minr=0.004;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -70,14 +26,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -97,16 +53,30 @@ Scene() {
 					day=24;
 					hscale=0.001;
 					ocean.level=1 ft;
+					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=1000 ft;
+					ocean.liquid.color1=Color(0,1,0.56);
+					ocean.liquid.color2=Color(0,0.15,0.11);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
+					ocean.liquid.trans=50;
+					ocean.liquid.volatility=1;
+					ocean.rseed=0;
+					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
+					ocean.solid.trans=0.05;
+					ocean.solid.volatility=0.5;
 					resolution=3;
+					rot_phase=203.227;
 					shadow=Color(0,0,0.19,0.8);
 					shine=2.91188;
 					specular=Color(1,1,1,0);
-					water.albedo=1;
-					water.clarity=1000 ft;
-					water.color1=Color(0,1,0.56);
-					water.color2=Color(0,0.15,0.11);
-					water.level=1.89394e-10;
-					water.shine=100;
 					year=100;
 					Surface{
 						terrain=ocean(0)
@@ -117,7 +87,8 @@ Scene() {
 						ambient=Color(1,1,1,0.36);
 						day=11;
 						name="Luna";
-						ocean.level=408989 ft;
+						ocean.auto=1;
+						ocean.state=0;
 						phase=82.2888;
 						shine=0.5;
 						specular=Color(1,1,1,0);

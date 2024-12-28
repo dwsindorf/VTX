@@ -6,43 +6,50 @@ Scene() {
 		height=649.017 ft;
 		gndlvl=2569.13 ft;
 		time=6192.28;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=25;
 		tilt=-10;
 		angle=1;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
 		delt=200;
-		vstride=0.02;
-		zoom=0.001;
-		minh=1.13636e-09;
-		radius=0.00100061;
 	}
 	View{
 		height=538.683 ft;
+	}
+	View{
+		height=812.979 ft;
+		tilt=-12;
+		angle=4;
+		vstride=0.02;
+		zoom=0.001;
+		minh=5.68182e-10;
+		radius=0.00100064;
+	}
+	View{
+		heading=26;
 		minr=0.00100049;
-		radius=0.00100059;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 		color.expr=1*DENSITY;
 		color.list=Colors(
-			Color(0.502,0.000,0.251),
-			Color(0.000,0.000,1.000),
-			Color(0.000,0.722,1.000),
-			Color(0.502,1.000,1.000),
-			Color(1.000,0.275,0.000),
-			Color(1.000,0.702,0.200),
-			Color(1.000,1.000,0.400),
-			Color(1.000,1.000,0.702)
+			Color(0.50,0.00,0.25),
+			Color(0.00,0.00,1.00),
+			Color(0.00,0.72,1.00),
+			Color(0.50,1.00,1.00),
+			Color(1.00,0.27,0.00),
+			Color(1.00,0.70,0.20),
+			Color(1.00,1.00,0.40),
+			Color(1.00,1.00,0.70)
 			);
 		System(10) {
 			Star(1,0) {
@@ -51,7 +58,7 @@ Scene() {
 				diffuse=Color(1,1,1);
 				emission=Color(1,1,1);
 				specular=Color(1,1,1);
-				temperature=6540.73;
+				temperature=6000;
 				Surface{
 					m1=noise(GRADIENT|UNS,3,6,0.2);
 					m1=0.2*m1*noise(GRADIENT|UNS,8,6,0.3);
@@ -75,19 +82,39 @@ Scene() {
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				ocean.level=1388.8 ft;
+				ocean.liquid=373;
+				ocean.liquid.albedo=1;
+				ocean.liquid.clarity=300 ft;
+				ocean.liquid.color1=Color(0.67,0.93,0.93);
+				ocean.liquid.color2=Color(0,0.16,0.16);
+				ocean.liquid.mix=0.95;
+				ocean.liquid.shine=100;
+				ocean.liquid.trans=50;
+				ocean.liquid.volatility=1;
+				ocean.rseed=0;
+				ocean.solid=273;
+				ocean.solid.albedo=0.1;
+				ocean.solid.clarity=1 ft;
+				ocean.solid.color1=Color(1,1,1,0.8);
+				ocean.solid.color2=Color(0.6,0.7,0.8);
+				ocean.solid.mix=0.95;
+				ocean.solid.shine=0.8;
+				ocean.solid.trans=0.05;
+				ocean.solid.volatility=0.5;
 				shadow=Color(0,0,0,0.51);
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
-				water.albedo=1;
-				water.clarity=48.952 ft;
-				water.color1=Color(0.68,0.94,0.93,0.54);
-				water.color2=Color(0,0.3,0.3);
-				water.level=2.6303e-07;
 				year=30;
-				water.reflectivity=0.5;
+				ice.albedo=0.1;
+				ice.clarity=1.89394e-10;
+				ice.color1=Color(1,1,1,0.8);
+				ice.color2=Color(0.6,0.7,0.8);
+				ice.mix=0.95;
+				ice.shine=0.8;
+				ice.volatility=0.5;
 				twilight=Color(0.5,0.3,0.1);
-				wl=water.level*GTOL;
+				ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
 				bands("dessert",ACHNL,128,0.07142,0.6,Color(1,0.635,0.086,0.6),Color(1,0.886,0.486),
 					Color(0.165,0,0),
 					Color(0,0,0));

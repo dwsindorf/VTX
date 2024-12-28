@@ -9,7 +9,8 @@
 #include <iostream>
 #include <math.h>
 
-//#define DEBUG_VARS  // show var status on save
+//#define DEBUG_EXPR_VARS  // show var status on save
+//#define DEBUG_TD_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
 //#define DEBUG_IMAGES
 //#define DEBUG_VALIDATE
@@ -936,23 +937,26 @@ void ExprMgr::save_selected(FILE *f)
 		    var->save(f);
 	}
 
-#ifdef DEBUG_VARS
+#ifdef DEBUG_TD_VARS
 	vars.ss();
 	while(ts=vars++){
 	    if(!ts->do_show() || ts->do_eval())
-	        printf("\thide var %s\n",ts->name());
+	        printf("\tTD hide var %s\n",ts->name());
 	    else
-	        printf("\tshow var %s\n",ts->name());
-	}
-	exprs.ss();
-	while((var=(TNvar*)exprs++)>0){
-	    if(var->do_show())
-	        printf("\tshow expr %s\n",var->name());
-		else
-	        printf("\thide expr %s\n",var->name());
+	        printf("\tTD show var %s\n",ts->name());
 	}
 #endif
+#ifdef DEBUG_EXPR_VARS
+	exprs.ss();
+	while(var=(TNvar*)exprs++){
+	    if(var->do_show())
+	        printf("\texpr show expr %s\n",var->name());
+		else
+	        printf("\texpr hide expr %s\n",var->name());
+	}
+
     exprs.ptr=ptr;
+#endif
 
 }
 

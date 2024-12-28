@@ -1,64 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=54.0967;
-		theta=201.665;
-		height=21765.1 ft;
-		gndlvl=969.615 ft;
-		time=4.9125e+07;
-		vstride=1;
+		phi=54.1104;
+		theta=202.146;
+		height=11888.7 ft;
+		gndlvl=-1072.63 ft;
+		time=4.91133e+07;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=72;
-		tilt=-14;
-		angle=-23;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.0039998;
+		heading=59;
+		tilt=-19;
+		angle=2;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=17791.7 ft;
-		time=4.91133e+07;
-		heading=39;
-	}
-	View{
-		height=20457.5 ft;
-	}
-	View{
-		phi=54.1028;
-		theta=201.673;
-		tilt=-9;
-		angle=-31;
-	}
-	View{
-		phi=54.1104;
-		theta=202.146;
-		height=22499.8 ft;
-		gndlvl=-1072.63 ft;
-	}
-	View{
-		height=6367.89 ft;
-		heading=85;
-		tilt=-31;
-		angle=2;
-	}
-	View{
-		height=11888.7 ft;
-		heading=59;
-		tilt=-19;
-		angle=13;
-	}
-	View{
-		angle=2;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00400205;
-	}
-	View{
-		minr=0.0039998;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -93,29 +52,32 @@ Scene() {
 					albedo=0.42;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.005;
-					ice.albedo=0.09722;
-					ice.clarity=1 ft;
-					ice.color1=Color(1,1,1,0.8);
-					ice.color2=Color(0.4,0.67,0.8);
-					ice.mix=0.95;
-					ice.shine=0.8;
 					ocean.auto=1;
 					ocean.level=-1000 ft;
 					ocean.liquid=373;
+					ocean.liquid.albedo=1;
+					ocean.liquid.clarity=300 ft;
+					ocean.liquid.color1=Color(0.67,0.93,0.93);
+					ocean.liquid.color2=Color(0,0.16,0.16);
+					ocean.liquid.mix=0.95;
+					ocean.liquid.shine=100;
 					ocean.liquid.trans=10;
-					ocean.name="methane";
+					ocean.liquid.volatility=1;
+					ocean.name="sea";
+					ocean.rseed=0;
 					ocean.solid=273;
+					ocean.solid.albedo=0.1;
+					ocean.solid.clarity=1 ft;
+					ocean.solid.color1=Color(1,1,1,0.8);
+					ocean.solid.color2=Color(0.6,0.7,0.8);
+					ocean.solid.mix=0.95;
+					ocean.solid.shine=0.8;
 					ocean.solid.trans=0.5;
+					ocean.solid.volatility=0.5;
 					ocean.state=2;
 					phase=197.417;
 					rot_phase=46.4544;
 					tilt=-40;
-					water.albedo=1;
-					water.clarity=300 ft;
-					water.color1=Color(0.67,0.93,0.93);
-					water.color2=Color(0,0.16,0.16);
-					water.mix=0.95;
-					water.shine=100;
 					year=100;
 					ocean.expr=noise(GRADIENT|NLOD,8.6,14,0.59,0.5,2,0.8,4,1,0,1e-06);
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));

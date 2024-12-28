@@ -6,22 +6,22 @@ Scene() {
 		height=0.00867082;
 		gndlvl=3635.44 ft;
 		time=53021.8;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
 		view=SURFACE;
 		phi=-2.46094;
 		theta=177.539;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=5175.54 ft;
 		heading=0;
 		pitch=0;
@@ -42,7 +42,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=177.188;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=10957.5 ft;
 		heading=0;
 		pitch=0;
@@ -78,7 +78,7 @@ Scene() {
 		view=SURFACE;
 		phi=11.6016;
 		theta=163.477;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=2752.42 ft;
 		heading=0;
 		pitch=0;
@@ -110,18 +110,12 @@ Scene() {
 	}
 	View{
 		time=43000;
-		vstride=0.02;
-		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.0040081;
 	}
 	View{
 		phi=8.42722;
 		theta=166.217;
 		height=39174.1 ft;
 		heading=-30;
-		minr=0.00400111;
-		radius=0.00400853;
 	}
 	View{
 		phi=8.40398;
@@ -129,13 +123,18 @@ Scene() {
 		height=27194.4 ft;
 		time=45000;
 		heading=-42;
-		hstride=2;
-		radius=0.00400626;
 	}
 	View{
 		height=26378.7 ft;
 		heading=-38;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
 		radius=0.00400611;
+	}
+	View{
+		heading=-39;
+		minr=0.00400111;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -143,14 +142,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -159,7 +158,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);

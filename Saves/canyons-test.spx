@@ -6,15 +6,15 @@ Scene() {
 		height=0.00604486;
 		gndlvl=-242501 ft;
 		time=65278;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -62,7 +62,7 @@ Scene() {
 		view=SURFACE;
 		phi=-12.6563;
 		theta=0;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=49816 ft;
 		heading=0;
 		pitch=0;
@@ -101,7 +101,7 @@ Scene() {
 		view=SURFACE;
 		phi=-22.5;
 		theta=90;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-111228 ft;
 		heading=0;
 		pitch=0;
@@ -128,7 +128,7 @@ Scene() {
 		view=SURFACE;
 		phi=-30.9375;
 		theta=94.9219;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-85732.7 ft;
 		heading=0;
 		pitch=0;
@@ -152,7 +152,7 @@ Scene() {
 		view=SURFACE;
 		phi=-35.1563;
 		theta=92.8125;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-62198.5 ft;
 		heading=0;
 		pitch=0;
@@ -184,9 +184,12 @@ Scene() {
 		height=0.00769434;
 		vstride=0.02;
 		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00398862;
+		minh=5.68182e-10;
 		radius=0.011683;
+	}
+	View{
+		phi=-35.988;
+		minr=0.00398862;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -194,14 +197,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -210,7 +213,7 @@ Scene() {
 					shadow=Color(0,0,0);
 					specular=Color(1,1,1);
 					symmetry=0.95;
-					temperature=6540.73;
+					temperature=6000;
 					light=Color(1,1,1);
 					Corona(4) {
 						color1=Color(1,1,1,0.95);
@@ -220,7 +223,6 @@ Scene() {
 				Planet(0.004,100) {
 					day=24;
 					hscale=0.008;
-					ocean.level=0 ft;
 					specular=Color(1,1,1,0.31);
 					year=100;
 					bands("grad",ACHNL|NORM|REFLECT,16,0.03572,0.40322,Color(0,0,0,0.4),Color(1,0.529,0),
@@ -231,8 +233,7 @@ Scene() {
 						Color(1,1,1));
 					Surface{
 						terrain=
-								Texture("grad",BORDER|NORM|TEX,0.9999,2,1,0.55552,1,2,1,0,0,-0.16664,0,0)
-								+Z(min(noise(GRADIENT|NABS|NEG|NNORM|SQR,0.5,14.8,0.17,0.51,2.7,1,1,0,2,1e-06),0));
+								Texture("grad",BORDER|NORM|TEX,0.9999,2,1,0.55552,1,2,1,0,0,-0.16664,0,0)+Z(min(noise(GRADIENT|NABS|NEG|NNORM|SQR,0.5,14.8,0.17,0.51,2.7,1,1,0,2,1e-06),0));
 					}
 				}
 			}

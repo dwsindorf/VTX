@@ -6,8 +6,6 @@
 #include <wx/filefn.h>
 #include <wx/dir.h>
 
-//static wxString types[]={"Nitrogen","Methane","CO2", "SO2","Water"};
-//static wxString types[]={"Water","SO2","CO2", "CH4","N2"};
 static double gas_temps[]={-196,-163,-78,-10,100};
 static double solid_temps[]={-210,-182,-79,-72,0,};
 
@@ -223,7 +221,7 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 	}
 	
 	Composition=new wxChoice(panel, ID_COMPOSITION, wxDefaultPosition,wxSize(95,-1),num_types, types);
-	Composition->SetSelection(0);
+	Composition->SetSelection(OceanState::H2O);
 	presets->Add(Composition, 0, wxALIGN_LEFT | wxALL, 2);
 
 	OceanFunction=new ExprTextCtrl(panel,ID_OCEAN_FUNCTION_TEXT,"Modulation",80,150);
