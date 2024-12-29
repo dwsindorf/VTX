@@ -1,4 +1,2 @@
 
-Plant("Pine1",1,1.2e-06,0.8,0.9,0.05)
-Branch("trunk",10,1,1,1,0.1,0.1,0,0.8,0.95)["Cracks1",Color(0.5,0.25,0,DENSITY)]
-Branch("branch",9,2.5,0.8,0.7,1,2,0.7,0.8,0.75,6,2)["Cracks1",Color(0.3,0.6*DENSITY,0,0.5*DENSITY)]
+Plant("Pine1",1,1.2e-06,0.8,0.9,0.05)Branch("trunk",12,1,0.79,1,0.43,0.05,0,0.84,0.96,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]Branch("branch",9,2,0.55,0.26,0.13,2,0.67,0.77,0.84,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]

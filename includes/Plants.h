@@ -6,8 +6,6 @@
 #include "Placements.h"
 #include "defs.h"
 
-#define TNBRANCH TNBranch
-
 class PlantMgr;
 class TNplant;
 class TNBranch;
@@ -197,6 +195,7 @@ public:
 	void addSpline(int id);
 	void addSkipped(int id);
 	int getChildren(LinkedList<NodeIF*>&l);
+	bool randomize();
 	NodeIF *removeNode();
 	NodeIF *replaceNode(NodeIF *c);
 	NodeIF *addChild(NodeIF *n);
@@ -311,6 +310,8 @@ public:
 	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
 	bool isShadowEnabled() { return BIT_TST(enables,flags::SHADOW);}
 	static bool isShadowEnabled(int t) { return BIT_TST(t,flags::SHADOW);}
+	static bool isColEnabled(int t) { return BIT_TST(t,flags::COL);}
+	static bool isTexEnabled(int t) { return BIT_TST(t,flags::TEX);}	
 	bool colValid();
 	bool texValid();
 	void init();
@@ -344,6 +345,10 @@ public:
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
+	static TNBranch *randomize(TNBranch *src, double f);
+	virtual bool randomize();
+	virtual void propertyString(char *s);
+
 };
 
 class TNLeaf : public TNBranch

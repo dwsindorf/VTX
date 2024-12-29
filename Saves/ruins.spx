@@ -76,11 +76,6 @@ Scene() {
 					specular=Color(1,1,1,0.4);
 					tilt=-24;
 					year=400;
-					ice.albedo=0.625;
-					ice.clarity=3.00097e-09;
-					ice.color1=Color(1,1,1,0.17);
-					ice.color2=Color(0.4,0.67,0.81);
-					ice.shine=15.278;
 					bands("earth-like",ACHNL|CLAMP,16,0.25,0.2742,Color(0.624,0.612,0.573,0.271),Color(0,0.106,0.024),
 						Color(0.075,0.075,0.075),
 						Color(0.278,0.482,0),

@@ -3408,6 +3408,8 @@ void Planetoid::getOceanExpr(){
 		ocean->setOceanFunction(buff);
 	}
 }
+#define ODEF OceanState::oceanTypes[OceanState::Types::H2O]
+
 //-------------------------------------------------------------
 // get_vars()  reserve interactive variables
 //-------------------------------------------------------------
@@ -3517,7 +3519,6 @@ void Planetoid::set_ocean_vars(){
 	MVSET("ocean.solid.volatility",solid->volatility);
 
 }
-#define ODEF OceanState::oceanTypes[OceanState::Types::H2O]
 
 void Planetoid::get_vars()
 {

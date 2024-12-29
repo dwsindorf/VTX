@@ -83,7 +83,7 @@ class NodeIF
 {
 protected:
 public:
-	static const int RANDS=10;
+	static const int RANDS=16;
 	static double r[RANDS];
 	static double s[RANDS];
 	
