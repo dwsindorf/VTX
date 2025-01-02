@@ -52,6 +52,7 @@ char *FileUtil::plants=(char*)"Plants";
 char *FileUtil::branches=(char*)"Branch";
 char *FileUtil::leaves=(char*)"Leaf";
 char *FileUtil::tmp=(char*)"tmp";
+char *FileUtil::imports=(char*)"Images";
 
 //-------------------------------------------------------------
 // FileUtil::FileUtil() constructor
@@ -101,13 +102,13 @@ void FileUtil::getTmpDir(char *dir)
 //-------------------------------------------------------------
 // FileUtil::getImagesDir get images directory
 //-------------------------------------------------------------
-void FileUtil::getImagesDir(char *dir)
+void FileUtil::getImportsDir(char *dir)
 {
 	char path[MAXSTR];
 	char sdir[MAXSTR];
   	getBaseDirectory(path);
 	addToPath(path,textures);
-	addToPath(path,images);
+	addToPath(path,imports);
 	strcat(path,separator);
 	strcpy(dir,path);
 }
@@ -311,7 +312,7 @@ void FileUtil::getParentDirectory(char *s, char *buff)
 //-------------------------------------------------------------
 int FileUtil::isEmptyDirectory(char *dir)
 {
-	LinkedList<ModelSym*>list;
+	ValueList<FileData*>list;
 	getDirectoryList(dir,list);
 	if(list.size==0)
 		return 0;
@@ -421,33 +422,7 @@ int FileUtil::fileExists(char *f)
 }
 
 //-------------------------------------------------------------
-// FileUtil::getDirectoryList() get list of subdirectories
-//-------------------------------------------------------------
-void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
-{
-	char path[MAXSTR];
-	struct _finddata_t c_file;
-    long long hFile;
-
-	sprintf(path,"%s%s%s",dir,separator,"*");
-    if((hFile = _findfirst(path, &c_file)) == -1)
-		return;
-    
-	if(c_file.attrib & _A_SUBDIR && c_file.name[0]!='.'){
-		sprintf(path,"%s%s%s",dir,separator,c_file.name);
-		list.add(new ModelSym(c_file.name,path));
-	}
-	while(_findnext(hFile, &c_file) == 0){
-		if((c_file.attrib & _A_SUBDIR  && c_file.name[0]!='.')){
-			sprintf(path,"%s%s%s",dir,separator,c_file.name);		
-			list.add(new ModelSym(c_file.name,path));
-		}
-	}
-	_findclose(hFile);
-}
-
-//-------------------------------------------------------------
-// FileUtil::getDirectoryList() get list of subdirectories
+// FileUtil::getDirectoryList() get list of sub-directories
 //-------------------------------------------------------------
 void FileUtil::getDirectoryList(char *dir,ValueList<FileData*>&list)
 {

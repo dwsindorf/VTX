@@ -83,10 +83,16 @@ public:
 		setImageBaseDir();
 		getImageDirs();
 	}
+	void setImageBaseDir(char *c){
+		ImageMgr::setImageBaseDir(c);
+		//getImageDirs();
+	}
 	void setImageBaseDir(){
-		char base[512];
-		File.getBaseDirectory(base);
-	 	sprintf(base_dir,"%s/Textures/Plants/Branch",base);
+		File.getBranchesDir(base_dir);
+		getImageDirs();
+		//char base[512];
+		//File.getBaseDirectory(base);
+	 	//sprintf(base_dir,"%s/Textures/Plants/Branch",base);
 	  	//cout<<"branch base dir="<<base_dir<<endl;
 	}
 };

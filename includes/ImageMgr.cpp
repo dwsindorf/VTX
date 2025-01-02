@@ -28,7 +28,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 //#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
@@ -937,7 +937,7 @@ uint ImageReader::getFileInfo(char *name, char *dir)
    	info=getImageInfo(name,dir);
    	if(info)
    		return info;
-   	File.getImagesDir(dir);
+   	File.getImportsDir(dir);
 	info=getImageInfo(name,dir);
    	if(info){
    		info |=IMPORT;
@@ -1227,7 +1227,7 @@ void ImageReader::makeImagelist()
 	  	File.getBitmapsDir(sdir);
 	  	addImages(sdir);
 	  	
-	  	File.getImagesDir(sdir);
+	  	File.getImportsDir(sdir);
 	  	addImages(sdir);
 	  	
 	  	File.getMapsDir(sdir);
@@ -1674,6 +1674,9 @@ void ImageReader::getImageDims(char *s,uint &cols,uint &rows){
 	cols=i;
 }
 
+char *ImageMgr::Istr="Tex";
+char *ImageMgr::Bstr="Spx";
+
 void ImageInfo::setImage(char *name){
 	if(strcmp(name,image_file)){
 		setImageName(name);
@@ -1682,9 +1685,10 @@ void ImageInfo::setImage(char *name){
 			if(image)
 				delete image;
 			image=images.open(image_file,path);
-			if(image){
+			if(image)
 				cout<<"image found:"<<path<<endl;
-			}
+			else
+				cout<<"image not found:"<<path<<endl;
 		}
 	}
 }
@@ -1735,6 +1739,12 @@ bool ImageInfo::getImageFilePath(char *name,char *dir){
 			sprintf(dir,"%s/%s",path,name);
 			return true;
 		}
+	}
+	File.getImportsDir(path);
+	if(imageFileExists(name,path)){
+		strcpy(image_dir,ImageMgr::Istr);
+		sprintf(dir,"%s%s",path,name);
+		return true;
 	}
 	return false;
 }

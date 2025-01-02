@@ -458,7 +458,6 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	pref_options->Add(m_keeptmps,0,wxALIGN_LEFT|wxALL,1);
 
 	hline->Add(pref_options,0,wxALIGN_LEFT|wxALL,0);
-	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	wxString tmodes[]={"K","C","F"};
 	tempmode=new wxRadioBox(panel,ID_TEMPMODE,wxT(""),wxPoint(-1,-1),wxSize(-1,40),3,tmodes,3,wxRA_SPECIFY_COLS);
@@ -466,7 +465,6 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	hline->Add(tempmode,0,wxALIGN_LEFT|wxALL,1);
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-	
 	boxSizer->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	wxStaticBoxSizer* grid_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Lines"));

@@ -59,6 +59,7 @@ public:
 	static char *shaders;
 	static char *textures;
 	static char *images;
+	static char *imports;
 	static char *maps;
 	static char *sprites;
 	static char *plants;
@@ -73,7 +74,7 @@ public:
 	static void getBitmapsDir(char *dir);
 	static void getTmpDir(char *dir);
 	static void getShadersDir(char *dir);
-	static void getImagesDir(char *dir);
+	static void getImportsDir(char *dir);
 	static void getMapsDir(char *dir);
 	static void getSpritesDir(char *dir);
 	static void getBranchesDir(char *dir);
@@ -90,8 +91,6 @@ public:
 	static void getParentDirectory(char *s,char *d);
 	static void getFileNameList(char *dir,const char *ext,LinkedList<ModelSym*>&list);
 	static void getFileNameList(char *dir,const char *ext,NameList<ModelSym*>&list);
-	static void getDirectoryList(char *dir,LinkedList<ModelSym*>&list);
-	//static void getDirectoryList(char *dir,NameList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,ValueList<FileData*>&list);
 
 	static int isEmptyDirectory(char *dir);

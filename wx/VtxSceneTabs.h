@@ -32,9 +32,11 @@ protected:
 	SliderCtrl *RateSlider;
 	SliderCtrl *FOVSlider;
 	SliderCtrl *LODSlider;
+	SliderCtrl *GeomSlider;
 
 	wxRadioBox *drawmode;
 	wxRadioBox *lightmode;
+	wxRadioBox *filtermode;
 	wxRadioBox *quality;
 	wxRadioBox *tempmode;
 

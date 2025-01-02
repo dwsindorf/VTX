@@ -288,18 +288,24 @@ protected:
 public:	
 	ValueList<FileData*> image_dirs;	
 	
-	virtual void setImageBaseDir(){
-		base_dir[0]=0;
+	virtual void setImageBaseDir(){}
+	void setImageBaseDir(char *b){
+		strcpy(base_dir,b);
+		getImageDirs();
 	}
-	char *getImageBaseDir(){return base_dir;}
-	
+	char *getImageBaseDir(){
+		return base_dir;
+	}	
 	void getImageDirs(){
-	    if(image_dirs.size>0)
-	    	return;
+	   if(image_dirs.size>0)
+		   image_dirs.free();
 		File.getDirectoryList(getImageBaseDir(),image_dirs);
-		//cout<<"size="<<image_dirs.size<<endl;
 		image_dirs.sort();		
 	}
+	
+	static char *Istr;
+	static char *Bstr;
+
 };
 class ImageInfo {
 protected:
@@ -337,7 +343,6 @@ public:
 		rows=image_rows;
 		cols=image_cols;
 	}
-	
 	void getImageDims(char *s,uint &cols,uint &rows){
 		int i=0,j=0;
 		sscanf(s,"%dx%d",&i,&j);
@@ -360,6 +365,7 @@ public:
 	char *getImageFile() { return image_file;}
 	char *getImageDir()  { return image_dir;}
 	bool imageFileExists(char *name,char *base);
+
 
 };
 

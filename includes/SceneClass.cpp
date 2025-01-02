@@ -844,6 +844,7 @@ void Scene::open(char *fn)
 {
 	reset();
 
+	set_action("Building..");
 	timing_start=clock();
 	timer.start();
 

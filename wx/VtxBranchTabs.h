@@ -14,8 +14,8 @@ class VtxBranchTabs : public VtxTabsMgr
 
 protected:
 	uint image_dim;
-	uint image_rows;
-	uint image_cols;
+//	uint image_rows;
+//	uint image_cols;
 	uint image_center;
 	wxString image_name;
 	wxString image_dir;
