@@ -32,11 +32,9 @@ protected:
 	SliderCtrl *RateSlider;
 	SliderCtrl *FOVSlider;
 	SliderCtrl *LODSlider;
-	SliderCtrl *GeomSlider;
 
 	wxRadioBox *drawmode;
 	wxRadioBox *lightmode;
-	wxRadioBox *filtermode;
 	wxRadioBox *quality;
 	wxRadioBox *tempmode;
 
@@ -54,6 +52,7 @@ protected:
 	wxCheckBox *m_grid;
 	wxCheckBox *m_contours;
 	wxCheckBox *m_autogrid;
+	wxCheckBox *m_keeptmps;
 
 	wxCheckBox *m_occlusion;
 	wxCheckBox *m_clip;
@@ -247,6 +246,9 @@ public:
        	TheScene->set_changed_render();
     }
 
+    void OnKeepTmps(wxCommandEvent& event){
+    	TheScene->keep_tmps=event.IsChecked();
+    }
     void OnForwardTime(wxCommandEvent& event){
     	TheScene->time_direction=event.IsChecked()?1:-1;
     }

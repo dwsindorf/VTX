@@ -102,6 +102,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		break;
 	case KEY_TEST7:
 		test7=test7?0:1;
+		//PlantMgr::no_cache=test7;
 		cout<<"test7="<<test7<<endl;
 		TheScene->set_moved();
 		TheScene->set_changed_render();

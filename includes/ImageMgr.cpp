@@ -28,7 +28,8 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
+//#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -112,34 +113,36 @@ Color *test2d(int h, int w, Color c)
 ImageSym::ImageSym(char *t, Image *i)
 {
 	image=i;
-	text=istring=0;
+	text=istring=path=0;
 	setName(t);
 }
 
-ImageSym::ImageSym(char *t, int i)
+ImageSym::ImageSym(char *t, uint i)
 {
 	image=0;
-	text=istring=0;
+	text=istring=path=0;
 	setName(t);
 	info=i;
 }
 
-ImageSym::ImageSym(int m, char *t, Image *i, char *s)
+ImageSym::ImageSym(int m, char *t, Image *i, char *s, char *p)
 {
 	image=i;
 	info=m;
-	text=istring=0;
+	text=istring=path=0;
 	setName(t);
 	setIstring(s);
+	setPath(p);
 }
 
 ImageSym::ImageSym(ImageSym *is)
 {
 	image=0;
-	text=istring=0;
+	text=istring=path=0;
 	info=is->info;
 	setName(is->text);
 	setIstring(is->istring);
+	setPath(is->path);
 }
 
 ImageSym::~ImageSym()
@@ -147,6 +150,7 @@ ImageSym::~ImageSym()
 	FREE(text);
 	FREE(istring);
     DFREE(image);
+    DFREE(path);
 }
 void ImageSym::setName(char *t)
 {
@@ -164,40 +168,78 @@ void ImageSym::setIstring(char *s)
 		strcpy(istring,s);
 	}
 }
+void ImageSym::setPath(char *t)
+{
+	FREE(path);
+	if(t){
+		MALLOC(strlen(t)+1,char,path);
+		strcpy(path,t);
+	}
+}
+//-------------------------------------------------------------
+// ImageSym::print   print info
+//-------------------------------------------------------------
+void ImageSym::infoString(char *buff)
+{
+	int m=0;
+	char tmp[MAXSTR];
+	char nstr[64];
+	tmp[0]=0;
+    images.unhashName(name(),m,nstr);
+    sprintf(tmp,"%-20s",nstr);
+    switch(info&IMTYPE){
+    case MAP:
+    	sprintf(tmp+strlen(tmp),"%s","MAP");
+    	break;
+    case IMPORT:
+    	sprintf(tmp+strlen(tmp),"%s","IMPORT");
+    	break;
+    case SPX:
+    	sprintf(tmp+strlen(tmp),"%s","SPX");
+		if(info&BANDS)
+			sprintf(tmp+strlen(tmp),"%s","|BANDS");
+		else if(info&IMAGE)
+			sprintf(tmp+strlen(tmp),"%s","|IMAGE");
+			if(info&T1D)
+			sprintf(tmp+strlen(tmp),"%s","|1D");
+		else
+			sprintf(tmp+strlen(tmp),"%s","|2D");
+		if(info&BUMP)
+			sprintf(tmp+strlen(tmp),"%s","|BUMP");
+    	break;
+    case SPRITE:
+    	sprintf(tmp+strlen(tmp),"%s","SPRITE");
+    	break;
+    case BRANCH:
+    	sprintf(tmp+strlen(tmp),"%s","BRANCH");
+    	break;
+    case LEAF:
+    	sprintf(tmp+strlen(tmp),"%s","LEAF");
+    	break;
+    }
 
+    if(info & TILED){
+    	uint rows=0;
+    	uint cols=0;
+    	ImageReader::getImageDims(info,cols,rows);
+    	sprintf(tmp+strlen(tmp),"|%dx%d",cols,rows);
+    } 
+    switch(info&FTYPE){
+      	case BMP:sprintf(tmp+strlen(tmp),"%s","|BMP");break;
+      	case JPG:sprintf(tmp+strlen(tmp),"%s","|JPG");break;
+      	case PNG:sprintf(tmp+strlen(tmp),"%s","|PNG");break;
+    }
+    sprintf(buff,"%-40s %s",tmp,path);
+    //sprintf(tmp+strlen(tmp),"\n");
+}
 //-------------------------------------------------------------
 // ImageSym::print   print info
 //-------------------------------------------------------------
 void ImageSym::print()
 {
-    char tmp[256];
-    int m=0;
-    images.unhashName(name(),m,tmp);
-    printf("%-10s",tmp);
-    if(info&IMTYPE==MAP)
-        printf("%-5s","MAP");
-    if(info&IMTYPE==IMPORT)
-        printf("%-5s","IMPORT");
-    if(info&IMTYPE==SPRITE)
-        printf("%-5s","SPRITE");
-    if(info&SPX){
-        printf("%-5s","SPX");
-        if(info&BANDS)
-        	printf("%-6s","BANDS");
-    	else if(info&IMAGE)
-        	printf("%-6s","IMAGE");
-   	 	if(info&T1D)
-        	printf("%-5s","1D");
-    	else
-        	printf("%-5s","2D");
-    	if((m&BUMP) || (info&BUMP))
-        	printf("%-5s","BUMP");
-    }
-    if(info&BMP)
-        printf("%-5s","BMP");
-    else if(info&JPG)
-        printf("%-5s","JPG");
-    printf("\n");
+    char tmp[512];
+    infoString(tmp);
+    printf("%s\n",tmp);
 }
 
 //************************************************************
@@ -825,10 +867,10 @@ void ImageReader::clear_flags()
 //-------------------------------------------------------------
 // ImageReader::getFileInfo   get file info
 //-------------------------------------------------------------
-int ImageReader::getFileInfo(char *name, char *dir)
+uint ImageReader::getImageInfo(char *name, char *dir)
 {
     char path[512];
-    int info=0;
+    uint info=0;
 
 	sprintf(path,"%s%s.spx",dir,name);
 	if(File.fileExists(path))
@@ -843,53 +885,110 @@ int ImageReader::getFileInfo(char *name, char *dir)
 		info|=JPG;
 	
 	sprintf(path,"%s%s.png",dir,name);
-		if(File.fileExists(path))
-			info|=JPG;
+	if(File.fileExists(path))
+		info|=PNG;
 	return info;
+}
+
+void ImageReader::getImageDims(uint info, uint &cols,uint &rows){
+	cols=info&IMCOLS;
+	rows=(info&IMROWS)>>4;
+}
+void ImageReader::setImageDims(uint &info, uint cols,uint rows){
+	MSK_SET(info,IMCOLS,cols);
+	MSK_SET(info,IMROWS,rows<<4);
 }
 
 //-------------------------------------------------------------
 // ImageReader::getFileInfo   get file info
 //-------------------------------------------------------------
-int ImageReader::getFileInfo(char *name)
+uint ImageReader::getTiledImageInfo(char *name, char *dir)
 {
-    char dir[512];
-    char base[512];
-    int info=0;
+	ValueList<FileData*> image_dirs;	
+	File.getDirectoryList(dir,image_dirs);
+	char sdir[256];  // subdir
+	char path[512];
+	
+	uint info=0;
+	uint rows=0;
+	uint cols=0;
+	for(int i=0;i<image_dirs.size;i++){
+		strcpy(sdir,image_dirs[i]->name());
+		sprintf(path,"%s%s%s",dir,image_dirs[i]->name(),File.separator);
+		info=getImageInfo(name,path); // type
+		if(info){
+			getImageDims(sdir,cols,rows);
+			setImageDims(info,cols,rows);
+			sprintf(dir,"%s",path);
+			break;
+		}
+	}
+	return info;
 
-  	File.getBaseDirectory(base);
-	sprintf(dir,"%s%sBitmaps%s",base,File.separator,File.separator);
+}
+//-------------------------------------------------------------
+// ImageReader::getFileInfo   get file info
+//-------------------------------------------------------------
+uint ImageReader::getFileInfo(char *name, char *dir)
+{
+    uint info=0;
 
-   	//getImagePath(name,dir); // Bitmaps
-   	info=getFileInfo(name,dir);
+  	File.getBitmapsDir(dir);
+   	info=getImageInfo(name,dir);
    	if(info)
    		return info;
-	sprintf(dir,"%s%sTextures%sImages%s",base,File.separator,File.separator,File.separator);
-	info=getFileInfo(name,dir);
+   	File.getImagesDir(dir);
+	info=getImageInfo(name,dir);
    	if(info){
    		info |=IMPORT;
    		return info;
    	}
-	sprintf(dir,"%s%sTextures%sSprites%s",base,File.separator,File.separator,File.separator);
-	info=getFileInfo(name,dir);
+	File.getMapsDir(dir);
+	info=getImageInfo(name,dir);
+	if(info){
+		info|=MAP;
+		return info;
+	}
+	File.getSpritesDir(dir);
+	info=getTiledImageInfo(name,dir);
    	if(info){
    		info |=SPRITE;
    		return info;
    	}
-	sprintf(dir,"%s%sTextures%sMaps%s",base,File.separator,File.separator,File.separator);
-	info=getFileInfo(name,dir);
-	if(info)
-		info|=MAP;
-	return info;
+   	File.getBranchesDir(dir);
+	info=getTiledImageInfo(name,dir);
+   	if(info){
+   		info |=BRANCH;
+   		return info;
+   	}
+   	File.getLeavesDir(dir);
+	info=getTiledImageInfo(name,dir);
+   	if(info){
+   		info |=LEAF;
+   		return info;
+   	}
 }
 
+uint ImageReader::getFileInfo(char *name){
+	char dir[512];
+	dir[0]=0;
+	uint info=getFileInfo(name, dir);
+//#ifdef DEBUG_IMAGE_INFO
+//	char tmp[512];
+//	sprintf(tmp,"0x%08X %s%s ",info,dir,name);
+//	cout<<tmp<<endl;
+//#endif
+	return info;
+}
 //-------------------------------------------------------------
 // ImageReader::getImageInfo   get info for saved image
 //-------------------------------------------------------------
 ImageSym *ImageReader::getImageInfo(char *name)
 {
+	char dir[MAXSTR];
+	dir[0]=0;
     char *spx=0;
-	int info=getFileInfo(name);
+ 	uint info=getFileInfo(name,dir);
 	if(info & SPX){
 		spx=readSpxFile(name);
 		if(spx){
@@ -902,12 +1001,12 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	   		     else
 	   		         info|=T2D;
 	   		     info|=TEX;
-
 	   		     delete n;
 	        }
 	    }
 	}
-	ImageSym *is=new ImageSym(info,name,0,spx);
+	ImageSym *is=new ImageSym(info,name,0,spx,dir);
+	//is->setPath(dir);
 	FREE(spx);
 	return is;
 }
@@ -922,7 +1021,7 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 	//cout<<"ImageReader::getImageInfo"<<endl;
 	for(int i=0;i<images.size;i++){
 		is=images[i];
-	    int info=is->info;
+	    uint info=is->info;
 	    int spx_type=mode&(SPXTYPE);
 
 	    int dmode=mode&(T1D|T2D);
@@ -957,6 +1056,14 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			if((info&IMTYPE) != SPRITE)
 				continue;
 			break;
+		case BRANCH:
+			if((info&IMTYPE) != BRANCH)
+				continue;
+			break;
+		case LEAF:
+			if((info&IMTYPE) != LEAF)
+				continue;
+			break;
 
 		}
 		if(dmode && dmode != (T1D|T2D)){
@@ -974,9 +1081,6 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 				BIT_ON(is->info,CHANGED);
 		}
 		ImageSym *nis=new ImageSym(is);
-#ifdef DEBUG_IMAGES
-		//printf("adding image info for:%-25s 0x%-8X\n",nis->name(),nis->info);
-#endif
 		list.add(nis);
 	}
 }
@@ -1045,91 +1149,94 @@ void ImageReader::imagedir(char *dir)
 //-------------------------------------------------------------
 // ImageReader::makeImagelist make image list
 //-------------------------------------------------------------
+void ImageReader::addImages(char *dir){
+	NameList<ModelSym*>flist;
+	char sdir[MAXSTR];
+	ModelSym* sym;
+	ImageSym *is;
+	
+	File.getFileNameList(dir,"*.spx",flist);
+	File.getFileNameList(dir,"*.bmp",flist);
+	File.getFileNameList(dir,"*.jpg",flist);
+	File.getFileNameList(dir,"*.png",flist);
+
+	while((sym=flist++)){
+		if(!images.inlist(sym->name())){
+			is=getImageInfo(sym->name());
+			images.add(is);
+		}
+	}
+	images.sort();
+	flist.free();
+}
+
+//-------------------------------------------------------------
+// ImageReader::makeImagelist make image list
+//-------------------------------------------------------------
+void ImageReader::addTiledImages(char *dir){
+	ValueList<FileData*> image_dirs;
+	NameList<ModelSym*>flist;
+	ModelSym* sym;
+	ImageSym *is;
+
+	char path[MAXSTR];
+	char sdir[256];
+
+	uint rows=0;
+	uint cols=0;
+
+	File.getDirectoryList(dir,image_dirs);
+	for(int i=0;i<image_dirs.size;i++){
+		strcpy(sdir,image_dirs[i]->name());
+		sprintf(path,"%s%s%s",dir,sdir,File.separator);
+		File.getFileNameList(path,"*.bmp",flist);
+		File.getFileNameList(path,"*.jpg",flist);
+		File.getFileNameList(path,"*.png",flist);
+		while((sym=flist++)){
+			char *name=sym->name();
+			if(!images.inlist(name)){
+				is=getImageInfo(name);
+				getImageDims(sdir,cols,rows);
+				setImageDims(is->info,cols,rows);
+				images.add(is);
+			}	
+		}
+		images.sort();
+		flist.free();
+		//addImages(path);
+	}
+}
+
+//-------------------------------------------------------------
+// ImageReader::makeImagelist make image list
+//-------------------------------------------------------------
 void ImageReader::makeImagelist()
 {
     if(invalid()){
-		char base[256];
-		char sdir[512];
+		char sdir[MAXSTR];
 
-		LinkedList<ModelSym*>flist;
-		ModelSym* sym;
-		ImageSym *is;
+		File.getSpritesDir(sdir);
+	  	addTiledImages(sdir);
 
-		// on first call get info for all BitMaps
+	  	File.getBranchesDir(sdir);
+	  	addTiledImages(sdir);
 
-	  	File.getBaseDirectory(base);
-
-		sprintf(sdir,"%s%sBitmaps",base,File.separator);
-		File.getFileNameList(sdir,"*.spx",flist);
-		File.getFileNameList(sdir,"*.bmp",flist);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.jpeg",flist);
-
-		flist.ss();
-		while((sym=flist++)){
-			if(!images.inlist(sym->name())){
-				is=getImageInfo(sym->name());
-				images.add(is);
-				images.sort();
-			}
-		}
-		flist.free();
-		sprintf(sdir,"%s%sTextures%sImages",base,File.separator,File.separator);
-		File.getFileNameList(sdir,"*.bmp",flist);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
-
-		flist.ss();
-		while((sym=flist++)){
-			if(!images.inlist(sym->name())){
-				is=getImageInfo(sym->name());
-				images.add(is);
-				images.sort();
-			}
-		}
-		flist.free();
-		sprintf(sdir,"%s%sTextures%sMaps",base,File.separator,File.separator);
-		File.getFileNameList(sdir,"*.bmp",flist);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
-
-		flist.ss();
-		while((sym=flist++)){
-			if(!images.inlist(sym->name())){
-				is=getImageInfo(sym->name());
-				images.add(is);
-				images.sort();
-			}
-		}
-		
-		flist.free();	
-		sprintf(sdir,"%s%sTextures%sPlants%sBranch",base,File.separator,File.separator,File.separator);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
-		flist.ss();
-		while((sym=flist++)){
-			if(!images.inlist(sym->name())){
-				is=getImageInfo(sym->name());
-				images.add(is);
-				images.sort();
-			}
-		}
-		
-		flist.free();	
-		sprintf(sdir,"%s%sTextures%sPlants%sLeaf",base,File.separator,File.separator,File.separator);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
-		flist.ss();
-		while((sym=flist++)){
-			if(!images.inlist(sym->name())){
-				is=getImageInfo(sym->name());
-				images.add(is);
-				images.sort();
-			}
-		}
-
-		flist.free();
-		//init=0;
+	  	File.getLeavesDir(sdir);
+	  	addTiledImages(sdir);
+  	
+	  	File.getBitmapsDir(sdir);
+	  	addImages(sdir);
+	  	
+	  	File.getImagesDir(sdir);
+	  	addImages(sdir);
+	  	
+	  	File.getMapsDir(sdir);
+	  	addImages(sdir);
+	  	
+		//images.sort();
+#ifdef DEBUG_IMAGE_INFO
+		showImageInfo();
+#endif
 		validate();
 	}
 }
@@ -1193,7 +1300,7 @@ Image *ImageReader::load(char *f,TNinode *n)
 	}
     
 	Image *image=open(name);
-	addImage(name,is->info,buff,image);
+	addImage(name,is->info,buff,image,is->path);
 
 	delete is;
 	return image;
@@ -1212,7 +1319,7 @@ Image *ImageReader::load(char *f,int mode)
     image=open(name);
     //if(image){
 		ImageSym *is=getImageInfo(name);
-		addImage(is->text,is->info,is->istring,image);
+		addImage(is->text,is->info,is->istring,image,is->path);
 	
 		delete is;
     //}
@@ -1237,14 +1344,19 @@ void ImageReader::save(char *f, Image *image, TNinode *n)
     char name[256];
 	hashName(f,info,name);
 	saveSpxFile(name,buff);
-	addImage(name,info,buff,image);
+	//char dir[MAXSTR];
+    //File.getBitmapsDir(dir);
+	//addImage(name,info,buff,image,dir);
     save(name,image);
+    ImageSym *is=ImageReader::getImageInfo(name);
+    if(is)
+    	addImage(name,info,buff,image,is->path);
 }
 
 //-------------------------------------------------------------
 // ImageReader::addImage      add image to image list
 //-------------------------------------------------------------
-void ImageReader::addImage(char *name, int m, char *vstr, Image *im)
+void ImageReader::addImage(char *name, int m, char *vstr, Image *im, char *p)
 {
     ImageSym *is=images.inlist(name);
 	if(is){
@@ -1253,9 +1365,10 @@ void ImageReader::addImage(char *name, int m, char *vstr, Image *im)
 		is->image=im;
 		is->setIstring(vstr);
 		is->setName(name);
+		is->setPath(p);
 	}
 	else{
-		is=new ImageSym(m,name,im,vstr);
+		is=new ImageSym(m,name,im,vstr,p);
 		images.add(is);
 		images.sort();
 	}
@@ -1432,7 +1545,14 @@ Image *ImageReader::openJpgFile(char *name,char *path)
 	return image;	
 }
 
-
+void ImageReader::showImageInfo(){
+    char tmp[512];
+  
+	for(int i=0;i<images.size;i++){
+		images[i]->infoString(tmp);
+		cout << tmp<<endl;
+	}
+}
 //-------------------------------------------------------------
 // ImageReader::printImageInfo   print file info
 //-------------------------------------------------------------
@@ -1545,6 +1665,13 @@ void ImageReader::save(char *f, Image *image)
 	}
 	else
 	   File.deleteFile(path);
+}
+
+void ImageReader::getImageDims(char *s,uint &cols,uint &rows){
+	int i=0,j=0;
+	sscanf(s,"%dx%d",&i,&j);
+	rows=j;
+	cols=i;
 }
 
 void ImageInfo::setImage(char *name){

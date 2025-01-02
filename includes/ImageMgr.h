@@ -70,22 +70,28 @@ enum  {
 	NEWIMG      = 0x00200000,   // image is new
 	CHANGED     = 0x00400000,   // image is modified
 
-	T1D	        = 0x01000000, 	// 1D flag
-	T2D	        = 0x02000000, 	// 2D flag
-	DIMS 		= T1D|T2D,
-	BMP    	    = 0x04000000,
-	JPG     	= 0x08000000,
 	BANDS   	= 0x10000000,
 	IMAGE   	= 0x20000000,
-	SPX     	= 0x40000000,
-	IMPORT   	= 0x80000000,
-	SPRITE   	= 0x80000001,
-	MAP   	    = 0x80000002,
-	IMOPTS 		= 0xff000000,
+	T1D	        = 0x40000000, 	// 1D flag
+	T2D	        = 0x80000000, 	// 2D flag
+	BMP    	    = 0x00000100,
+	JPG     	= 0x00000200,
+	PNG     	= 0x00000300,
+	TILED 	    = 0x04000000,
+	IMCOLS      = 0x0000000f,
+	IMROWS      = 0x000000f0,
+	SPX     	= 0x01000000,
+	IMPORT   	= 0x02000000,
+	MAP   	    = 0x03000000,
+	SPRITE   	= 0x04000000,
+	BRANCH      = 0x05000000,
+	LEAF        = 0x06000000,
+	DIMS 		= T1D|T2D,
 	IOPTS 	    = TXOPTS|INOPTS,
-	IFTYPE 		= BUMP|TEX|HMAP|SPX,
+	FTYPE       = BMP|JPG|PNG,
+	IFTYPE 		= BUMP|TEX|HMAP,
 	SPXTYPE 	= BANDS|IMAGE,
-	IMTYPE 	    = IMPORT|MAP|SPRITE,
+	IMTYPE 	    = 0x07000000,
 	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|T1D|T2D
 
 };
@@ -188,20 +194,23 @@ public:
 //************************************************************
 class ImageSym {
 public:
-	int 			   info;
+	uint 			   info;
 	Image 			   *image;
 	char			   *text;
 	char			   *istring;
+	char			   *path;
 	char *name()		{ return (char*)text;}
 	int  cmp(char *s)	{ return strcmp(text,s);}
 	ImageSym(char *t, Image *i);
-	ImageSym(char *t, int i);
+	ImageSym(char *t, uint i);
 	ImageSym(ImageSym *i);
-	ImageSym(int m, char *t, Image *i,char *s);
+	ImageSym(int m, char *t, Image *i,char *s,char *p);
 	~ImageSym();
 	void setName(char *t);
 	void setIstring(char *t);
+	void setPath(char *t);
 	void print();
+	void infoString(char *);
 };
 
 //************************************************************
@@ -215,20 +224,23 @@ class ImageReader
 	};
 
 	int   flags;
-	void addImage(char *f, int m, char *is, Image *im);
+	void addImage(char *f, int m, char *is, Image *im, char *p);
+
 public:
 	NameList<ImageSym*>   images;
 
 	ImageReader();
 	~ImageReader();
 
-	int getFileInfo(char *f);
-	int getFileInfo(char *f,char *dir);
+	uint getFileInfo(char *f);
+	uint getImageInfo(char *f,char *dir);
+	uint getTiledImageInfo(char *f,char *dir);
+	uint getFileInfo(char *n,char *d);
 	void hashName(char *f, int &m, char *fn);
 	void unhashName(char *f, int &m, char *fn);
 	ImageSym *getImageInfo(char *f);
 	void printImageInfo(char *f);
-
+	void showImageInfo();
 	void set_building(int i)     { BIT_SET(flags,BUILDING,i);}
 	int building()               { return flags&BUILDING;}
 
@@ -260,7 +272,12 @@ public:
 	void getImagePath(char *f,char *d);
 	void printImageInfo(int);
 	void makeImagelist();
+	void addImages(char *base);
+	void addTiledImages(char *base);
 	void clear_flags();
+	static void getImageDims(char *s,uint &cols,uint &rows);
+	static void getImageDims(uint info, uint &cols,uint &rows);
+	static void setImageDims(uint &info, uint cols,uint rows);
 };
 
 extern ImageReader images;

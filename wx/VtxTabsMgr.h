@@ -271,9 +271,9 @@ public:
 	int menu_action;
 
 	TreeNode *getTreeNode()     { return object_node;}
-	NodeIF * getObject()        { return object_node->node;}
-	bool isEnabled()     		{ return object_node->isEnabled();}
-	void setEnabled(bool b) 	{ object_node->setEnabled(b);}
+	NodeIF * getObject()        { if(object_node) return object_node->node;else return 0;}
+	bool isEnabled()     		{ if(object_node) return object_node->isEnabled();else return false;}
+	void setEnabled(bool b) 	{ if(object_node) object_node->setEnabled(b);}
 
 	VtxTabsMgr(wxWindow* parent,
 			wxWindowID id,

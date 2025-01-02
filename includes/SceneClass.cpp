@@ -245,6 +245,7 @@ Scene::Scene(Model *m)
 	vmode=VLOG;
 	rseed=0;
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
+	keep_tmps=true;
 }
 
 Scene::~Scene()
@@ -445,7 +446,8 @@ void Scene::set_prefs(){
 	PVSET("grid_spacing",grid_spacing,1);
 	PVSET("contour_spacing",contour_spacing,1000);
 	PVSET("autogrid",autogrid(),0);
-	PVSET("tempmode",temp_mode,0);
+	PVSET("temp_mode",temp_mode,0);
+	PVSET("keep_tmps",keep_tmps,1);
 }
 
 //-------------------------------------------------------------
@@ -461,14 +463,15 @@ void Scene::get_prefs(){
 	PVGET("enable_grid",enable_grid,1);
 	PVGET("grid_spacing",grid_spacing,1);
 	PVGET("contour_spacing",contour_spacing,1000);
+	PVGET("temp_mode",temp_mode,0);
+	PVGET("temp_mode",temp_mode,0);
+	PVGET("keep_tmps",keep_tmps,1);
 
     if(prefs.get_local("autogrid",Td))
     	set_autogrid(Td.s);
     else
     	set_autogrid(0);
     
-	PVGET("tempmode",temp_mode,0);
-
 	syscolor[INFO_COLOR]=text_color;
 }
 
@@ -1207,9 +1210,10 @@ void Scene::delete_movie_dir(char *s)
 void Scene::delete_tmpfiles()
 {
 	char dir[MAXSTR];
-	FileUtil::getBitmapsDir(dir);
-	File.addToPath(dir,"tmp");
-	File.deleteDirectoryFiles(dir,(char*)"*.*");
+	if(!keeptmps()){
+		FileUtil::getTmpDir(dir);
+		File.deleteDirectoryFiles(dir,(char*)"*.*");
+	}
 	FileUtil::getShadersDir(dir);
 	File.deleteDirectoryFiles(dir,(char*)"*.debug");
 }

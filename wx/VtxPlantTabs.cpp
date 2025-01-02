@@ -45,7 +45,9 @@ enum{
 	ID_DROP_SLDR,
 	ID_DROP_TEXT,
 	ID_3D,
-	ID_SPLINE,
+	ID_SPLINES,
+	ID_LINES,
+	ID_SHOW_ONE,
 };
 
 #define NAME_WIDTH  50
@@ -77,6 +79,11 @@ SET_SLIDER_EVENTS(SLOPE_BIAS,VtxPlantTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxPlantTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxPlantTabs,HtBias)
 SET_SLIDER_EVENTS(DROP,VtxPlantTabs,Drop)
+
+EVT_CHECKBOX(ID_3D,VtxPlantTabs::OnChangedDisplay)
+EVT_CHECKBOX(ID_LINES,VtxPlantTabs::OnChangedDisplay)
+EVT_CHECKBOX(ID_SPLINES,VtxPlantTabs::OnChangedDisplay)
+EVT_CHECKBOX(ID_SHOW_ONE,VtxPlantTabs::OnChangedDisplay)
 
 SET_FILE_EVENTS(VtxPlantTabs)
 
@@ -139,10 +146,26 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2+10,VALUE2+SLIDER2);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",50,120);
 
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	m_skeleton=new wxCheckBox(panel, ID_3D, "Skeleton");
+	m_skeleton->SetValue(true);
+	hline->Add(m_skeleton, 0, wxALIGN_LEFT|wxALL,5);
+	
+	m_lines=new wxCheckBox(panel, ID_LINES, "Lines");
+	m_lines->SetValue(false);
+	hline->Add(m_lines, 0, wxALIGN_LEFT|wxALL,5);
 
+	m_splines=new wxCheckBox(panel, ID_SPLINES, "Splines");
+	m_splines->SetValue(true);
+	hline->Add(m_splines, 0, wxALIGN_LEFT|wxALL,5);
+
+	m_show_one=new wxCheckBox(panel, ID_SPLINES, "ShowOne");
+	m_show_one->SetValue(false);
+	hline->Add(m_show_one, 0, wxALIGN_LEFT|wxALL,5);
+	
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
@@ -243,6 +266,19 @@ void VtxPlantTabs::updateControls(){
 
 void VtxPlantTabs::OnChangedLevels(wxCommandEvent& event){
 	setObjAttributes();
+}
+void VtxPlantTabs::OnChangedDisplay(wxCommandEvent& event){
+	PlantMgr::shader_lines=m_skeleton->GetValue();
+	PlantMgr::spline=m_splines->GetValue();
+	PlantMgr::poly_lines=m_lines->GetValue();
+	PlantMgr::show_one=m_show_one->GetValue();
+	TheScene->set_changed_detail();
+}
+void VtxPlantTabs::getDisplayState(){
+	m_skeleton->SetValue(PlantMgr::shader_lines);
+	m_splines->SetValue(PlantMgr::spline);
+	m_lines->SetValue(PlantMgr::poly_lines);
+	m_show_one->SetValue(PlantMgr::show_one);
 }
 wxString VtxPlantTabs::exprString(){
 	char p[1024]="";
@@ -349,6 +385,9 @@ void VtxPlantTabs::getObjAttributes(){
 		DropSlider->setValue(a);
 	else
 		DropSlider->setValue(mgr->plant->base_drop);
+	
+    getDisplayState();
+
 
 }
 

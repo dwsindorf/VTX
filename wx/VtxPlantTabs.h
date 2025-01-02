@@ -10,6 +10,7 @@ class VtxPlantTabs : public VtxTabsMgr
 
 protected:
 	TNplant *object() 	{ return ((TNplant *)object_node->node);}
+	void getDisplayState();
 	void AddDistribTab(wxWindow *panel);
 	void getObjAttributes();
 	void setObjAttributes();
@@ -31,16 +32,17 @@ protected:
 
 	SliderCtrl *DropSlider;
 	
-	wxCheckBox *m_3d;
-	wxCheckBox *m_spline;
+	wxCheckBox *m_skeleton;
+	wxCheckBox *m_splines;
 	wxCheckBox *m_lines;
+	wxCheckBox *m_show_one;
 	
     wxString exprString();
 
     void OnChangedLevels(wxCommandEvent& event);
     void OnChangedDim(wxCommandEvent& event);
     void OnChangedSpline(wxCommandEvent& event);
-
+    void OnChangedDisplay(wxCommandEvent& event);
 public:
 	VtxPlantTabs(wxWindow* parent,
 			wxWindowID id,

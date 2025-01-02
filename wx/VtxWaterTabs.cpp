@@ -216,7 +216,7 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
     cout<<"num typrs:"<<num_types<<endl;
 	wxString types[num_types];
 	for(int i=0;i<num_types;i++){
-		cout<<"name:"<<OceanState::oceanNames[i]<<endl;
+		//cout<<"name:"<<OceanState::oceanNames[i]<<endl;
 		types[i]=OceanState::oceanNames[i];
 	}
 	

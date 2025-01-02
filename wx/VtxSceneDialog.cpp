@@ -240,7 +240,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	wxMouseState state=::wxGetMouseState();
 	if(state.ControlDown())
 		return;
-
+    //cout<<"VtxSceneDialog::OnTreeMenuSelect"<<endl;
 	wxTreeItemId id=event.GetItem();
 
 	TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(id);
@@ -251,13 +251,19 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	bool empty=!treepanel->ItemHasChildren(id);
 	int type=data->getFlag(TN_TYPES);
 
-	if(tabs.find(type) == tabs.end())
+	if(tabs.find(type) == tabs.end()){
+		TheScene->unsuspend();
 		return;
+	}
 
 	VtxTabsMgr* mgr=tabs[type];
 
 	NodeIF *newobj=0;
 	NodeIF *obj=mgr->getObject();
+	if(!obj){
+		TheScene->unsuspend();
+		return;
+	}
 	if(expanded  && !empty)
 		obj->set_expanded();
 	else
@@ -422,11 +428,11 @@ void VtxSceneDialog::OnBeginDrag(wxTreeEvent&event){
 	//cout << "begin move drag " << event.GetKeyEvent().ControlDown() << endl;
 	wxMouseState state=::wxGetMouseState();
 	if(state.ControlDown()){
-		//cout << "begin copy drag " << event.GetKeyEvent().ControlDown() << endl;
+		cout << "begin copy drag " << event.GetKeyEvent().ControlDown() << endl;
 		copying=true;
 	}
 	else{
-		//cout << "begin move drag " << event.GetKeyEvent().ControlDown() << endl;
+		cout << "begin move drag " << event.GetKeyEvent().ControlDown() << endl;
 		copying=false;
 	}
 
@@ -459,10 +465,12 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
     TreeDataNode *src_node=(TreeDataNode*)treepanel->GetItemData(srcId);
     if(!dst_node||!src_node)
     	return;
-
+    cout<<"VtxSceneDialog::OnEndDrag"<<endl;
 	LinkedList<ModelSym*> list;
 	NodeIF *dst=dst_node->getObject();
 	NodeIF *src=src_node->getObject();
+	if(!dst || !src)
+		return;
 
 	bool expanded=treepanel->IsExpanded(dstId);
 	bool empty=!treepanel->ItemHasChildren(dstId);
@@ -475,7 +483,7 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 	list.ss();
 	ModelSym *sym=0;
 	wxString sstr=src_node->getLabel();
-	char sname[64];
+	char sname[256];
 	strcpy(sname,src_node->tnode->node->nodeName());
 	wxString dstr=dst_node->getName();
 	int type=0;

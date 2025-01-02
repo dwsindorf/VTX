@@ -6,11 +6,11 @@ Scene() {
 		height=18.8227 ft;
 		gndlvl=10512.5 ft;
 		time=200826;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=132;
 		tilt=6;
 		angle=-11;
@@ -19,9 +19,10 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		tilt=3;
-		angle=-10;
+		tilt=5;
+		angle=-5;
 		minr=0.00400199;
+		radius=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -29,14 +30,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -56,15 +57,15 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.7);
 					hscale=0.001;
+					ocean.auto=1;
 					rot_phase=226.454;
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,7,9.5,1,0.8,2,0.4,1,0,0);
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
 								Plant("pine",1,1.2e-06,0.8,0.9,0.05)
-								Branch("trunk",12,1,0.79,1,0.43,0.05,0,0.84,0.96,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
+								Branch("trunk",12,1,0.79,0.59,0.43,0.05,0,0.84,0.96,0,0,1,0,15,0,1)["Cracks1",Color(0.5,0.25,0,LVL)]
 								Branch("branch",9,2,0.55,0.26,0.13,2,0.67,0.77,0.84,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]
-								Plant("bush",2,6.1553e-07,0.8,0.5,0.4,0,0,0,0.75)
+								Plant("bush",2,6.1553e-07,0.8,0.5,0.4,0,0,0,0.19)
 								Branch("stem",10,2.4,0.25,1,1,0.9,0.1,0.7,1,6,0,1,15,15)["Cracks1",Color(0.6-0.3*IRAND,0.4*LVL+0.3,0.2*IRAND+0.25*LVL+0.2,1)];
 					}
 					Sky(0.0041029) {

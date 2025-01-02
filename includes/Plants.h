@@ -122,6 +122,7 @@ public:
 	static int shadow_count;
 	static double pmax;
 	static double pmin;
+	static bool show_one;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);

@@ -126,6 +126,9 @@ SET_FILE_EVENTS(VtxBranchTabs)
 END_EVENT_TABLE()
 
 
+static wxString Istr="Tex";
+static wxString Gstr="Spx";
+
 VtxBranchTabs::VtxBranchTabs(wxWindow* parent,
 		wxWindowID id,
 		const wxPoint& pos,
@@ -342,12 +345,15 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
     m_file_choice->SetSelection(0);
     image_cntrls->Add(m_file_choice,0,wxALIGN_LEFT|wxALL,1);
   
-    int num_dirs=branch_mgr.image_dirs.size;
+    int num_dirs=branch_mgr.image_dirs.size+2;
     
 	wxString offsets[num_dirs];
-	for(int i=i;i<num_dirs;i++){
+	int i=0;
+	for(int i=0;i<num_dirs-2;i++){
 		offsets[i]=branch_mgr.image_dirs[i]->name();
 	}
+	offsets[i++]=Istr;
+	offsets[i++]=Gstr;
 
     m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
     m_dim_choice->SetSelection(0);
@@ -420,8 +426,10 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 void VtxBranchTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=m_dim_choice->GetSelection();
 	wxString str=m_dim_choice->GetString(dim);
-	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
-	
+	image_rows=image_cols=1;
+	if(str!=Istr && str!=Gstr){
+		ImageReader::getImageDims((char*)str.ToAscii(),image_cols,image_rows);
+	}	
 	int n=image_rows*image_cols;
 	makeFileList(str,"");
 	update_needed=true;
@@ -434,19 +442,27 @@ void VtxBranchTabs::makeFileList(wxString wdir,wxString name){
 	object()->getImageDirPath(wstr,sdir);
 
  	wxDir dir(sdir);
- 	if ( !dir.IsOpened() )
- 	{
- 	    // deal with the error here - wxDir would already log an error message
- 	    // explaining the exact reason of the failure
- 		cout<<"makeFileList error"<<sdir<<endl;
- 	    return;
- 	}
+// 	if ( !dir.IsOpened() )
+// 	{
+// 	    // deal with the error here - wxDir would already log an error message
+// 	    // explaining the exact reason of the failure
+// 		cout<<"makeFileList error"<<sdir<<endl;
+// 	    return;
+// 	}
  	image_name=name;
- 	uint rows=0;
- 	uint cols=0;
+ 	uint rows=1;
+ 	uint cols=1;
  	int dim=m_dim_choice->GetSelection();
  	wxString str=m_dim_choice->GetString(dim);
- 	object()->getImageDims((char*)str.ToAscii(),cols,rows);
+	if(str==Istr){
+ 		ImageReader::getImageDims((char*)str.ToAscii(),cols,rows);
+ 	}	
+	else if(str==Gstr){
+ 		ImageReader::getImageDims((char*)str.ToAscii(),cols,rows);
+ 	}
+	else{
+ 		ImageReader::getImageDims((char*)str.ToAscii(),cols,rows);
+ 	}
  	
  	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
 		files.Clear();
@@ -480,36 +496,35 @@ void VtxBranchTabs::OnChangedFile(wxCommandEvent& event){
 void VtxBranchTabs::setImagePanel(){
 	char dir[512];
 	char path[512];
-	char sdir[512]={0};
+	char name[256];
 
-	//object()->getPlantFilePath((char*)image_name.ToAscii(),0,dir);
-	object()->getImageFilePath((char*)image_name.ToAscii(),dir);
+	strcpy(name,(char*)image_name.ToAscii());
+	
+	ImageSym *is=images.getImageInfo(name);
+	uint info=images.getFileInfo(name,path);
+	strcat(path,name);
+	switch(info & FTYPE){
+	case PNG:
+		strcat(path,".png");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_PNG);	
+		break;
+	case JPG:
+		strcat(path,".jpg");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_JPEG);	
+		break;
+	case BMP:
+		strcat(path,"bmp");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_BMP);	
+		break;
+	}
+	char tmp[512];
+	sprintf(tmp,"0x%08X %s ",info,path);
+	cout<<"BranchTabs info:"<<tmp<<endl;
 
-	sprintf(path,"%s.jpg",dir);
-	if(FileUtil::fileExists(path)){
-		strcpy(sdir,path);
-		image_window->setScaledImage(sdir,wxBITMAP_TYPE_JPEG);
-	}
-	else{
-		sprintf(path,"%s.bmp",dir);
-		if(FileUtil::fileExists(path)){
-			strcpy(sdir,path);	
-			image_window->setScaledImage(sdir,wxBITMAP_TYPE_BMP);
-		}
-		else{
-			sprintf(path,"%s.png",dir);
-			if(FileUtil::fileExists(path)){
-				strcpy(sdir,path);	
-				image_window->setScaledImage(sdir,wxBITMAP_TYPE_PNG);
-			}
-		}
-	}
-	if(strlen(sdir)==0)
-		return;
-	wxString ipath(sdir);
+	wxString ipath(path);
 	if(ipath!=image_path){
 		image_path=ipath;
-	}
+	}	
 }
 
 void VtxBranchTabs::updateControls(){
@@ -687,7 +702,6 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	m_dim_choice->SetStringSelection(image_dir);
 
-
 	makeFileList(image_dir,image_name);
 	setImagePanel();
 	
@@ -724,9 +738,6 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
-    //int m=obj->getDroopMode();
-    //cout<<"mode="<<m<<endl;
-	//m_droop->SetSelection(m);
    
 	update_needed=false;
 }

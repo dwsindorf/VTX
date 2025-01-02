@@ -212,9 +212,9 @@ void emitLeaf(){
 
 // draw a line
 void emitLine(){
-    emitVertex(Pos2);
-    emitVertex(Pos1); 
-    emitVertex(Pos2);
+    emitVertex(Pos2.xyz);
+    emitVertex(Pos1.xyz); 
+    emitVertex(Pos2.xyz);
  }
 
 void main(void) {

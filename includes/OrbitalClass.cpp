@@ -3479,7 +3479,7 @@ void Planetoid::set_ocean_vars(){
 	
 	setOceanExpr();	
 	
-	cout<<"set ocean vars:"<<name()<<" have water:"<<water()<<endl;
+	//cout<<"set ocean vars:"<<name()<<" have water:"<<water()<<endl;
 
 	WCSET("water.color1",liquid->color1);
 	WCSET("water.color2",liquid->color2);
@@ -3987,7 +3987,7 @@ void Planetoid::adapt_object()
 	
     double dt=fabs(last_temp-surface_temp);
     setDateString();
-	if(dt>0.25){
+	if(water() && dt>0.25){
 		if(debug_temp>0){
 			char date[256]={0};
 			getDateString(date);

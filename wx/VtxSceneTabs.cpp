@@ -65,6 +65,8 @@ enum {
     ID_SHOW_GRID,
     ID_GRID_SPACING_SLDR,
     ID_GRID_SPACING_TEXT,
+	
+	ID_KEEP_TMPS,
 
     ID_PHI_COLOR,
     ID_THETA_COLOR,
@@ -196,6 +198,8 @@ EVT_COLOURPICKER_CHANGED(ID_TEXT_COLOR,VtxSceneTabs::OnTextColor)
 EVT_CHECKBOX(ID_AUTOGRID,VtxSceneTabs::OnAutogrid)
 EVT_UPDATE_UI(ID_CONTOUR_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
+
+EVT_CHECKBOX(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
 
 END_EVENT_TABLE()
 
@@ -431,9 +435,9 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 	
-	wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Special Options"));
+	wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Grid Options"));
 
-	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Grid");
+	m_grid=new wxCheckBox(panel, ID_SHOW_GRID, "Map");
 	m_grid->SetToolTip("Draw Long/Lat lines");
 	check_options->Add(m_grid,0,wxALIGN_LEFT|wxALL,1);
 
@@ -446,6 +450,15 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	check_options->Add(m_autogrid,0,wxALIGN_LEFT|wxALL,1);
 	
 	hline->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
+	
+	wxStaticBoxSizer* pref_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Preferences"));
+	
+	m_keeptmps=new wxCheckBox(panel, ID_KEEP_TMPS, "Keep Tmps");
+	m_keeptmps->SetToolTip("Keep auto-generated Images");
+	pref_options->Add(m_keeptmps,0,wxALIGN_LEFT|wxALL,1);
+
+	hline->Add(pref_options,0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
 	wxString tmodes[]={"K","C","F"};
 	tempmode=new wxRadioBox(panel,ID_TEMPMODE,wxT(""),wxPoint(-1,-1),wxSize(-1,40),3,tmodes,3,wxRA_SPECIFY_COLS);
@@ -453,6 +466,7 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	hline->Add(tempmode,0,wxALIGN_LEFT|wxALL,1);
 
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
 	boxSizer->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	wxStaticBoxSizer* grid_controls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Lines"));
@@ -754,6 +768,7 @@ void VtxSceneTabs::updateControls(){
 	m_grid->SetValue(TheScene->enable_grid);
 	m_contours->SetValue(TheScene->enable_contours);
 	m_autogrid->SetValue(TheScene->autogrid());
+	m_keeptmps->SetValue(TheScene->keep_tmps);
 
 	updateSlider(GridSpacingSlider,TheScene->grid_spacing);
 	updateSlider(ContourSpacingSlider,TheScene->contour_spacing);

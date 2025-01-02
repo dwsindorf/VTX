@@ -1695,11 +1695,7 @@ void TNsnow::init()
 				image=new Image(color,2*NALPHA,1);
 				image->set_alpha(1);
 				images.save("snow",image);
-				//cout <<"building Snow Image"<<endl;
 			}
-//			else{
-//				cout <<"loading Snow Image"<<endl;
-//			}
 			image->set_accessed(true);
 		}
 		if(!image)

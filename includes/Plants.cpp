@@ -20,6 +20,7 @@
 //#define SHOW
 //#define DEBUG_PMEM
 
+//#define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
 //#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
@@ -101,6 +102,17 @@
 //   - but degradation in performance if moving (e.g 120 vs 50 ms)
 //    o need to traverse plant tree but extra overhead required to free and build cache
 //   - also see a subtle change in lighting if caching is enabled (a lighter lighter or darker depending on tod)
+// 13) random plants
+//   - implement "randomize" function that tweaks control parameters (WIP)
+//   - generate random plants for procedural instance cases (e.g. new planet)
+//     o may need separate prototypes for trees, bushes grasses
+//       - then randomize the prototype
+//     o generate textures randomly using procedural methods
+// 14) texture lookup from other directories
+//   - if texture not found in expected base directory look in bitmaps and imports directories
+//     o if found populate search tree with other images from that directory
+//     o add "Textures" and "Bitmaps" to end of directory list (1x1 etc)
+
 //
 // BUGS/problems
 // 1) don't get enough plants generated - not all color spots produce a new plant
@@ -219,10 +231,13 @@ static double min_draw_width=0.5;
 static double min_render_pts=2; // for render
 static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
+static double tfactor=2;
+static double sfactor=4;
+
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH 3*MIN_LINE_WIDTH
-#define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
+#define MIN_TRIANGLE_WIDTH tfactor*MIN_LINE_WIDTH
+#define MIN_SPLINE_WIDTH sfactor*MIN_LINE_WIDTH
 
 #ifdef DUMP
 static void show_stats()
@@ -257,7 +272,7 @@ void show_plant_info()
 	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d render:%3.1f ms",
 			PlantMgr::stats[0],PlantMgr::stats[1],PlantMgr::stats[2],PlantMgr::render_time);
 	TheScene->draw_string(DATA_COLOR,"drawn:%d lines:%d polygons:%d splines:%d",
-			PlantMgr::stats[6],PlantMgr::stats[3],PlantMgr::stats[4],PlantMgr::stats[5]);
+			PlantMgr::show_one?1:PlantMgr::stats[6],PlantMgr::stats[3],PlantMgr::stats[4],PlantMgr::stats[5]);
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
 //************************************************************
@@ -281,6 +296,7 @@ bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
 bool PlantMgr::shader_lines=false;
 bool PlantMgr::no_cache=false;
+bool PlantMgr::show_one=false;
 int PlantMgr::textures=0;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
@@ -414,16 +430,24 @@ bool PlantMgr::setProgram(){
 
 	switch(TheScene->quality){
 	case DRAFT:
-		min_draw_width=1;
+		min_draw_width=1.5;
+		tfactor=3;
+		sfactor=6;
 		break;
 	case NORMAL:
-		min_draw_width=0.65;
+		tfactor=2;
+		sfactor=3;
+		min_draw_width=1;
 		break;
 	case HIGH:
-		min_draw_width=0.5;
+		tfactor=2;
+		sfactor=2;
+		min_draw_width=0.75;
 		break;
 	case BEST:
-		min_draw_width=0.25;
+		tfactor=2;
+		sfactor=2;
+		min_draw_width=0.5;
 		break;	
 	}
 
@@ -594,8 +618,8 @@ void PlantMgr::render_zvals(){
 void PlantMgr::render(){
 	oldmode=0;
 	int l=randval;
-	//nocache=TheScene->automv()||PlantMgr::no_cache;
-	nocache=PlantMgr::no_cache;
+	nocache=TheScene->automv()||PlantMgr::no_cache;
+	//nocache=PlantMgr::no_cache;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
 	//TNBranch::setCollectLeafs(!test5);
 	TNBranch::setCollectLeafs(true);
@@ -622,8 +646,10 @@ void PlantMgr::render(){
 	
 	if(!shadow_mode)
 		glEnable(GL_BLEND);
+	int start=show_one?0:n-1;
+	
 	if(update_needed)
-	for(int i=n-1;i>=0;i--){ // Farthest to closest
+	for(int i=start;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
 		Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
 		Range=sqrt(Range);
@@ -1374,11 +1400,11 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
-	//glDisable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	
 }
 
@@ -2118,7 +2144,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		}
 //#define NO_LINE_SHADOW
 #ifdef NO_LINE_SHADOW		   
-        else if(!PlantMgr::shadow_mode && isEnabled()){ // line mode
+        else if(!PlantMgr::shadow_mode && isEnabled()){ // branches line mode
 #else
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
 #endif
@@ -2137,7 +2163,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				Point4D(0, 0, 0, 0),
 				Point4D(nscale,color_flags, tid, psmode), sd,c);
 			}
-			else{			
+			else{	
+				//glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,shaderMode(psmode));
 				glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
 				glBegin(GL_LINES);
@@ -2267,7 +2294,7 @@ bool TNBranch::randomize(){
 	double newarg[18]={0};
 	int n=getargs(left,orgarg,17);
 			
-	double f=2*orgarg[4];
+	double f=orgarg[4];
 	
 	if(strlen(name_str)>0)
 		sprintf(tmp,"%s(\"%s\",",symbol(),name_str);
@@ -2322,8 +2349,9 @@ bool TNBranch::randomize(){
 		str+=tmp;
 	}
 	str+=")";
-
+#ifdef DEBUG_RANDOMIZE
 	cout<<"old:"<<buff<<"\nnew:"<<str<<endl;
+#endif
 	sprintf(tmp,str.c_str());
 	TNBranch *newbranch=TheScene->parse_node(tmp);
 	tmp[0]=0;
@@ -2415,8 +2443,7 @@ void  BranchData::render(){
 
 	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
-	else 
-	if(polymode!=oldmode)
+	else if(polymode!=oldmode)
 		glPolygonMode(GL_FRONT_AND_BACK, polymode);	
 	glBegin(GL_LINES);
 	glVertex4d(data[1].x, data[1].y, data[1].z, 0);

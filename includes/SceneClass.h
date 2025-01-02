@@ -76,7 +76,6 @@ enum {
 	NCOLS     = 0x00000300,
 	INFO      = 0x00000400,
 	TEST      = 0x00000500,
-	PLANT     = 0x00000600,
 	VLOG      = 0x00001000,
 	LOG       = 0x00002000,
 	VIDEO     = 0x00004000,
@@ -84,7 +83,7 @@ enum {
 	REVERSE   = 0x00010000,
 	AUTOGRID  = 0x00020000,
 	VMODE     = LOG|PATH|VIDEO,
-	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST|PLANT
+	FUNCTION  = MOVIE|VIEWS|NCOLS|INFO|TEST
 };
 
 #define BEGIN_TIMING double start,duration;start=clock();
@@ -135,6 +134,7 @@ public:
 	double      grid_spacing;
 	double      contour_spacing;
 	bool        enable_contours;
+	bool        keep_tmps;
 	bool        enable_grid;
 	int         temp_mode;
 	bool        prefs_mode;
@@ -179,12 +179,16 @@ public:
 
 	int tempmode()			   {  return temp_mode;}
 	void set_tempmode(int i)   {  temp_mode=i;}
+
+	int keeptmps()			   {  return keep_tmps;}
+	void set_keeptmps(bool b)  {  keep_tmps=b;}
+
 	void set_focus_object(int i){ self=i;set_changed_render();}
 
 	bool inside_sky();
 	bool containsViewobj(ObjectNode *obj);
 
-	void		set_view();
+	void set_view();
 	void set_movie(char *s);
 	char *movie_name()			{ return moviename;}
 

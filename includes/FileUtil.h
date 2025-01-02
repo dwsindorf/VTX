@@ -54,18 +54,30 @@ public:
 	static char *system;
 	static char *saves;
 	static char *objects;
-	static char *images;
 	static char *movies;
 	static char *bitmaps;
 	static char *shaders;
+	static char *textures;
+	static char *images;
+	static char *maps;
+	static char *sprites;
+	static char *plants;
+	static char *branches;
+	static char *leaves;
+	static char *tmp;
 
 	static void getSystemDir(char *dir);
 	static void getSavesDir(char *dir);
 	static void getObjectsDir(char *dir);
-	static void getImagesDir(char *dir);
 	static void getMoviesDir(char *dir);
 	static void getBitmapsDir(char *dir);
+	static void getTmpDir(char *dir);
 	static void getShadersDir(char *dir);
+	static void getImagesDir(char *dir);
+	static void getMapsDir(char *dir);
+	static void getSpritesDir(char *dir);
+	static void getBranchesDir(char *dir);
+	static void getLeavesDir(char *dir);
 
 	static void getCurrentDirectory(char *dir);
 	static bool setCurrentDirectory(char *dir);
@@ -77,7 +89,9 @@ public:
 	static int makeSubDirectory(char *pdir, char *sdir, char *buff);
 	static void getParentDirectory(char *s,char *d);
 	static void getFileNameList(char *dir,const char *ext,LinkedList<ModelSym*>&list);
+	static void getFileNameList(char *dir,const char *ext,NameList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,LinkedList<ModelSym*>&list);
+	//static void getDirectoryList(char *dir,NameList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,ValueList<FileData*>&list);
 
 	static int isEmptyDirectory(char *dir);

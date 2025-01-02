@@ -41,10 +41,17 @@ char *FileUtil::ext=(char*)".spx";
 char *FileUtil::system=(char*)"System";
 char *FileUtil::saves=(char*)"Saves";
 char *FileUtil::objects=(char*)"Objects";
-char *FileUtil::images=(char*)"Images";
 char *FileUtil::movies=(char*)"Movies";
 char *FileUtil::bitmaps=(char*)"Bitmaps";
 char *FileUtil::shaders=(char*)"Shaders";
+char *FileUtil::textures=(char*)"Textures";
+char *FileUtil::images=(char*)"Images";
+char *FileUtil::maps=(char*)"Maps";
+char *FileUtil::sprites=(char*)"Sprites";
+char *FileUtil::plants=(char*)"Plants";
+char *FileUtil::branches=(char*)"Branch";
+char *FileUtil::leaves=(char*)"Leaf";
+char *FileUtil::tmp=(char*)"tmp";
 
 //-------------------------------------------------------------
 // FileUtil::FileUtil() constructor
@@ -70,21 +77,95 @@ void FileUtil::getSystemDir(char *dir)
 //-------------------------------------------------------------
 void FileUtil::getBitmapsDir(char *dir)
 {
+	char path[MAXSTR];
 	char base[MAXSTR];
 	char tmp[MAXSTR];
   	getBaseDirectory(base);
-	makeSubDirectory(base,bitmaps,dir);
-	makeSubDirectory(dir,"tmp",tmp);
+	makeSubDirectory(base,bitmaps,path);
+	//makeSubDirectory(path,"tmp",tmp);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+//-------------------------------------------------------------
+// FileUtil::getBitmapsDir get bitmaps directory
+//-------------------------------------------------------------
+void FileUtil::getTmpDir(char *dir)
+{
+	char base[MAXSTR];;
+	char path[MAXSTR];
+	getBitmapsDir(base);
+	makeSubDirectory(base,tmp,path);
+	strcat(path,separator);
+	strcpy(dir,path);
 }
 //-------------------------------------------------------------
 // FileUtil::getImagesDir get images directory
 //-------------------------------------------------------------
 void FileUtil::getImagesDir(char *dir)
 {
-	char base[MAXSTR];
-  	getBaseDirectory(base);
-	makeSubDirectory(base,images,dir);
+	char path[MAXSTR];
+	char sdir[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,images);
+	strcat(path,separator);
+	strcpy(dir,path);
 }
+//-------------------------------------------------------------
+// FileUtil::getMapsDir get Maps directory
+//-------------------------------------------------------------
+void FileUtil::getMapsDir(char *dir)
+{
+	char path[MAXSTR];
+	char sdir[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,maps);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+
+//-------------------------------------------------------------
+// FileUtil::getSpritesDir get sprites images directory
+//-------------------------------------------------------------
+void FileUtil::getSpritesDir(char *dir)
+{
+	char path[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,sprites);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+
+//-------------------------------------------------------------
+// FileUtil::getSpritesDir get branches images directory
+//-------------------------------------------------------------
+void FileUtil::getBranchesDir(char *dir)
+{	
+	char path[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,plants);
+	addToPath(path,branches);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+
+//-------------------------------------------------------------
+// FileUtil::getSpritesDir get branches images directory
+//-------------------------------------------------------------
+void FileUtil::getLeavesDir(char *dir)
+{
+	char path[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,plants);
+	addToPath(path,leaves);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+
 //-------------------------------------------------------------
 // FileUtil::getMoviesDir get movies directory
 //-------------------------------------------------------------
@@ -358,8 +439,7 @@ void FileUtil::getDirectoryList(char *dir,LinkedList<ModelSym*>&list)
 	}
 	while(_findnext(hFile, &c_file) == 0){
 		if((c_file.attrib & _A_SUBDIR  && c_file.name[0]!='.')){
-			sprintf(path,"%s%s%s",dir,separator,c_file.name);
-			
+			sprintf(path,"%s%s%s",dir,separator,c_file.name);		
 			list.add(new ModelSym(c_file.name,path));
 		}
 	}
@@ -395,6 +475,39 @@ void FileUtil::getDirectoryList(char *dir,ValueList<FileData*>&list)
 //-------------------------------------------------------------
 // FileUtil::getFileNameList() get list of files in directory
 //-------------------------------------------------------------
+void FileUtil::getFileNameList(char *dir,const char *xt,NameList<ModelSym*>&list)
+{
+	char cdir[MAXSTR];
+	char name[MAXSTR];
+	char path[MAXSTR];
+	GetCurrentDirectory(MAXSTR,cdir);
+	::SetCurrentDirectory(dir);
+	WIN32_FIND_DATA data;
+
+	HANDLE hndl=FindFirstFile(xt,&data);
+	int morefiles=(hndl!=INVALID_HANDLE_VALUE);
+	while(morefiles){
+		getFileName(data.cFileName,name);
+		if(strlen(name) && name[0] !='.'){
+			char c=dir[strlen(dir)-1];
+			if(c==separator[0])
+				sprintf(path,"%s%s",dir,data.cFileName);
+			else				
+				sprintf(path,"%s%s%s",dir,separator,data.cFileName);
+			if(!list.inlist(name)){
+				ModelSym *sym=new ModelSym(name,path);
+				list.add(sym);
+			}
+		}
+		morefiles=FindNextFile(hndl,&data);
+	}
+	FindClose(hndl);
+	::SetCurrentDirectory(cdir);
+	list.sort();
+}
+//-------------------------------------------------------------
+// FileUtil::getFileNameList() get list of files in directory
+//-------------------------------------------------------------
 void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&list)
 {
 	char cdir[MAXSTR];
@@ -409,7 +522,11 @@ void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&li
 	while(morefiles){
 		getFileName(data.cFileName,name);
 		if(strlen(name) && name[0] !='.'){
-			sprintf(path,"%s%s%s",dir,separator,data.cFileName);
+			char c=dir[strlen(dir)-1];
+			if(c==separator[0])
+				sprintf(path,"%s%s",dir,data.cFileName);
+			else				
+				sprintf(path,"%s%s%s",dir,separator,data.cFileName);
 			ModelSym *sym=new ModelSym(name,path);
 			list.add(sym);
 		}
