@@ -468,6 +468,7 @@ public:
 	char *substr(T v, char *s)	{	return strstr(v->name(),s);}
 	int cmp(T val1, T val2)		{	return strcmp(val1->name(), val2->name());}
 	int cmp(char *s, T val2)	{	return strcmp(s, val2->name());}
+	bool sorted;
 
 	// merge
 

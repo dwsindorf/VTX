@@ -77,21 +77,23 @@ enum  {
 	BMP    	    = 0x00000100,
 	JPG     	= 0x00000200,
 	PNG     	= 0x00000300,
-	TILED 	    = 0x04000000,
+	BMPA     	= 0x00000400,
+	TILED 	    = 0x08000000,
 	IMCOLS      = 0x0000000f,
 	IMROWS      = 0x000000f0,
 	SPX     	= 0x01000000,
 	IMPORT   	= 0x02000000,
 	MAP   	    = 0x03000000,
-	SPRITE   	= 0x04000000,
-	BRANCH      = 0x05000000,
-	LEAF        = 0x06000000,
+	HTMAP  	    = 0x04000000,
+	SPRITE   	= 0x08000000,
+	BRANCH      = 0x09000000,
+	LEAF        = 0x0A000000,
 	DIMS 		= T1D|T2D,
 	IOPTS 	    = TXOPTS|INOPTS,
 	FTYPE       = BMP|JPG|PNG,
 	IFTYPE 		= BUMP|TEX|HMAP,
 	SPXTYPE 	= BANDS|IMAGE,
-	IMTYPE 	    = 0x07000000,
+	IMTYPE 	    = 0x0f000000,
 	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|T1D|T2D
 
 };
@@ -209,6 +211,12 @@ public:
 	void setName(char *t);
 	void setIstring(char *t);
 	void setPath(char *t);
+	std::string fullPath();
+	std::string basePath();
+	std::string namePath();
+	std::string infoString();
+	std::string nameString();
+	std::string toString();
 	void print();
 	void infoString(char *);
 };
@@ -239,6 +247,7 @@ public:
 	void hashName(char *f, int &m, char *fn);
 	void unhashName(char *f, int &m, char *fn);
 	ImageSym *getImageInfo(char *f);
+	ImageSym *imageInfo(char *f);
 	void printImageInfo(char *f);
 	void showImageInfo();
 	void set_building(int i)     { BIT_SET(flags,BUILDING,i);}

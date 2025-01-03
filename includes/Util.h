@@ -24,7 +24,7 @@ public:
 		tstart=tlast=0;
 	}
 	void start(){
-		cout<<name<<" Timer Start"<<endl;
+//		cout<<name<<" Timer Start"<<endl;
 		tstart=clock();
 		tlast=tstart;
 	}

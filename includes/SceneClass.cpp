@@ -711,6 +711,8 @@ void Scene::init()
 	set_movie((char*)dflt_movie_name);
 	read_prefs();
 	OceanState::setDefaults();
+	images.invalidate();
+	images.makeImagelist();
 
 }
 
@@ -871,7 +873,7 @@ void Scene::open(char *fn)
 			viewobj=frame->vobj;
 		frame->restore(this);
 	}
-	cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
+	//cout<<viewobj->typeName() << "  ht:"<<height/FEET<<" gndlvl:"<<gndlvl/FEET<<endl;
 
 	scene_objects=total_objs();
 

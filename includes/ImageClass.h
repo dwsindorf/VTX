@@ -40,6 +40,7 @@ public:
 	virtual void eval();
 	virtual int itype()        { return 0;}
 	virtual int t1d()          { return opts&T1D;}
+	virtual int alpha()        { return opts&ACHNL;}
 	virtual bool texActive();
 	virtual bool bumpActive();
 	virtual bool hmapActive();

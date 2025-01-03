@@ -60,6 +60,7 @@ public:
 	static char *textures;
 	static char *images;
 	static char *imports;
+	static char *hmaps;
 	static char *maps;
 	static char *sprites;
 	static char *plants;
@@ -75,6 +76,7 @@ public:
 	static void getTmpDir(char *dir);
 	static void getShadersDir(char *dir);
 	static void getImportsDir(char *dir);
+	static void getHmapsDir(char *dir);
 	static void getMapsDir(char *dir);
 	static void getSpritesDir(char *dir);
 	static void getBranchesDir(char *dir);

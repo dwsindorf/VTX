@@ -53,6 +53,7 @@ char *FileUtil::branches=(char*)"Branch";
 char *FileUtil::leaves=(char*)"Leaf";
 char *FileUtil::tmp=(char*)"tmp";
 char *FileUtil::imports=(char*)"Images";
+char *FileUtil::hmaps=(char*)"Hmaps";
 
 //-------------------------------------------------------------
 // FileUtil::FileUtil() constructor
@@ -109,6 +110,19 @@ void FileUtil::getImportsDir(char *dir)
   	getBaseDirectory(path);
 	addToPath(path,textures);
 	addToPath(path,imports);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
+//-------------------------------------------------------------
+// FileUtil::getHmapsDir get hmaps directory
+//-------------------------------------------------------------
+void FileUtil::getHmapsDir(char *dir)
+{
+	char path[MAXSTR];
+	char sdir[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,hmaps);
 	strcat(path,separator);
 	strcpy(dir,path);
 }
