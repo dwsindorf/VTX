@@ -28,8 +28,8 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
-#define DEBUG_IMAGE_INFO
+//#define DEBUG_IMAGES
+//#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -957,11 +957,18 @@ uint ImageReader::getTiledImageInfo(char *name, char *dir)
 uint ImageReader::getFileInfo(char *name, char *dir)
 {
     uint info=0;
+//	cout <<name<<endl;
 
   	File.getBitmapsDir(dir);
    	info=getImageInfo(name,dir);
    	if(info)
    		return info;
+  	File.getTmpDir(dir);
+   	info=getImageInfo(name,dir);
+   	if(info){
+    	return info;
+   	}
+
    	File.getImportsDir(dir);
 	info=getImageInfo(name,dir);
    	if(info){
@@ -992,6 +999,8 @@ uint ImageReader::getFileInfo(char *name, char *dir)
    		info |=LEAF;
    		return info;
    	}
+   	return 0;
+
 }
 
 uint ImageReader::getFileInfo(char *name){
@@ -1018,6 +1027,7 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	if(pos !=std::string::npos){
 		return 0;
 	}
+	//cout<<name<<endl;
 	uint info=getFileInfo(name,dir);
 	if(info & SPX){
 		spx=readSpxFile(name);
@@ -1191,14 +1201,14 @@ void ImageReader::addImages(char *dir){
 
 	while((sym=flist++)){
 		if(!images.inlist(sym->name())){
-			//cout<<"adding "<<sym->name()<<endl;
+			//cout<<"testing "<<sym->name()<<endl;
 			is=getImageInfo(sym->name());
 			if(is){
 				images.add(is);
-				images.sort();
 			}
 		}
 	}
+	images.sort();
 	flist.free();
 }
 
@@ -1231,10 +1241,9 @@ void ImageReader::addTiledImages(char *dir){
 				getImageDims(sdir,cols,rows);
 				setImageDims(is->info,cols,rows);
 				images.add(is);
-				images.sort();
-
 			}	
 		}
+		images.sort();
 		flist.free();
 	}
 }
@@ -1245,6 +1254,9 @@ void ImageReader::addTiledImages(char *dir){
 void ImageReader::makeImagelist()
 {
     if(invalid()){
+    	static TimeIt timer;
+    	timer.start();
+
 		char sdir[MAXSTR];
 
 		File.getSpritesDir(sdir);
@@ -1254,11 +1266,14 @@ void ImageReader::makeImagelist()
 	  	addTiledImages(sdir);
 
 	  	File.getLeavesDir(sdir);
-	  	addTiledImages(sdir);
-  	
+	  	addTiledImages(sdir); 	
+
 	  	File.getBitmapsDir(sdir);
 	  	addImages(sdir);
-	  	
+
+	  	File.getTmpDir(sdir);
+	  	addImages(sdir);
+
 	  	File.getImportsDir(sdir);
 	  	addImages(sdir);
 	  	
@@ -1266,6 +1281,9 @@ void ImageReader::makeImagelist()
 	  	addImages(sdir);
 	  	
 		//images.sort();
+	  	
+		timer.showTime("makeImagelist");
+		cout<<"number of images="<<images.size<<endl;
 #ifdef DEBUG_IMAGE_INFO
 		showImageInfo();
 #endif
@@ -1401,7 +1419,7 @@ void ImageReader::addImage(char *name, int m, char *vstr, Image *im, char *p)
 	else{
 		is=new ImageSym(m,name,im,vstr,p);
 		images.add(is);
-		images.sort();
+		//images.sort();
 	}
 }
 
@@ -1456,7 +1474,7 @@ char *ImageReader::readSpxFile(char *name)
 //-------------------------------------------------------------
 // ImageReader::open read an image from a file
 //-------------------------------------------------------------
-Image *ImageReader::open(char *name)
+Image *ImageReader::open(char *fname)
 {
 	char dir[512];
 	Image *im=0;
@@ -1466,6 +1484,12 @@ Image *ImageReader::open(char *name)
 	static TimeIt timer;
 	timer.start();
 #endif
+	std::string tmp(fname);
+	size_t pos=tmp.find("tmp/");
+	if(pos !=std::string::npos){
+		tmp=tmp.erase(pos, strlen("tmp/"));
+	}
+    char *name=tmp.c_str();
 	ImageSym *is=imageInfo(name);
 	if(is){
 		strcat(dir,is->namePath().c_str());

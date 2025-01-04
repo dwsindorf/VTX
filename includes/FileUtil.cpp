@@ -84,7 +84,6 @@ void FileUtil::getBitmapsDir(char *dir)
 	char tmp[MAXSTR];
   	getBaseDirectory(base);
 	makeSubDirectory(base,bitmaps,path);
-	//makeSubDirectory(path,"tmp",tmp);
 	strcat(path,separator);
 	strcpy(dir,path);
 }
@@ -98,6 +97,7 @@ void FileUtil::getTmpDir(char *dir)
 	getBitmapsDir(base);
 	makeSubDirectory(base,tmp,path);
 	strcat(path,separator);
+	//cout<<"TMP ="<<path<<endl;F
 	strcpy(dir,path);
 }
 //-------------------------------------------------------------
