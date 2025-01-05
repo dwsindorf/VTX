@@ -169,6 +169,7 @@ bool VtxTexTabs::Create(wxWindow* parent,
 	saveState(TYPE_2D);
 	saveState(TYPE_IMPORT);
 	saveState(TYPE_MAP);
+	saveState(TYPE_HTMAP);
 
     return true;
 }
@@ -218,17 +219,6 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxBitmap bmp(image_dialog_xpm);
 	m_edit_button=new wxBitmapButton(panel,ID_SHOW_IMAGE_EDIT,bmp,wxDefaultPosition,wxSize(28,28));
 	image_controls->Add(m_edit_button,0,wxALIGN_LEFT|wxALL,0);
-
-//	m_1D_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
-//	m_2D_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
-//	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Tex"),wxDefaultPosition,wxDefaultSize);
-//	m_map_button=new wxRadioButton(panel,ID_SHOW_MAP,wxT("Map"),wxDefaultPosition,wxDefaultSize);
-//
-//
-//	image_controls->Add(m_1D_button,0,wxALIGN_LEFT|wxALL,0);
-//	image_controls->Add(m_2D_button,0,wxALIGN_LEFT|wxALL,0);
-//	image_controls->Add(m_img_button,0,wxALIGN_LEFT|wxALL,0);
-//	image_controls->Add(m_map_button,0,wxALIGN_LEFT|wxALL,0);
 
 	wxString modes[]={"1D","2D","Tex","Map","HMap"};
 
@@ -283,7 +273,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-10,10);
+	HmapAmpSlider->setRange(-50,50);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
