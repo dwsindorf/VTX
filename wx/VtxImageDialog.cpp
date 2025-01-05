@@ -102,6 +102,9 @@ wxString  VtxImageDialog::getSelection(){
 	case TYPE_MAP:
 		name=m_map_tabs->getSelection();
 		break;
+	case TYPE_HTMAP:
+		name=m_hmap_tabs->getSelection();
+		break;
 	}
 	return name;
 }
@@ -188,11 +191,13 @@ bool VtxImageDialog::Create( wxWindow* parent,
 	m_2D_tabs=new VtxImageTabs(m_tabs,wxID_ANY);
     m_img_tabs=new VtxImportTabs(m_tabs,IMPORT,wxID_ANY);
     m_map_tabs=new VtxImportTabs(m_tabs,MAP,wxID_ANY);
+    m_hmap_tabs=new VtxImportTabs(m_tabs,HTMAP,wxID_ANY);
 
  	m_tabs->AddPage(m_1D_tabs,wxT("1D"),true);
  	m_tabs->AddPage(m_2D_tabs,wxT("2D"),false);
  	m_tabs->AddPage(m_img_tabs,wxT("Img"),false);
  	m_tabs->AddPage(m_map_tabs,wxT("Map"),false);
+ 	m_tabs->AddPage(m_hmap_tabs,wxT("HMap"),false);
 
 	topSizer->Add(m_tabs,0,wxALIGN_LEFT|wxALL);
 
@@ -243,6 +248,9 @@ bool VtxImageDialog::Show(wxString name, int type){
 	case TYPE_MAP:
 		m_map_tabs->setSelection(name);
 		break;
+	case TYPE_HTMAP:
+		m_hmap_tabs->setSelection(name);
+		break;
 	}
 	return Show(true);
 }
@@ -252,6 +260,7 @@ void VtxImageDialog::Invalidate(){
 	m_1D_tabs->Invalidate();
 	m_img_tabs->Invalidate();
 	m_map_tabs->Invalidate();
+	m_hmap_tabs->Invalidate();
 }
 
 void VtxImageDialog::OnOk(wxCommandEvent& event){
@@ -286,6 +295,12 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_save->Enable(m_map_tabs->canSave());
 		m_new->Enable(m_map_tabs->canSave());
 		break;
+	case TYPE_HTMAP:
+		m_revert->Enable(m_hmap_tabs->canRevert());
+		m_delete->Enable(m_hmap_tabs->canDelete());
+		m_save->Enable(m_hmap_tabs->canSave());
+		m_new->Enable(m_hmap_tabs->canSave());
+		break;
 	}
 
 }
@@ -317,6 +332,9 @@ void VtxImageDialog::OnRevert(wxCommandEvent &event){
 	case TYPE_MAP:
 		m_map_tabs->Revert();
 		break;
+	case TYPE_HTMAP:
+		m_hmap_tabs->Revert();
+		break;
 	}
 }
 void VtxImageDialog::OnDelete(wxCommandEvent &event){
@@ -332,6 +350,9 @@ void VtxImageDialog::OnDelete(wxCommandEvent &event){
 		break;
 	case TYPE_MAP:
 		m_map_tabs->Delete();
+		break;
+	case TYPE_HTMAP:
+		m_hmap_tabs->Delete();
 		break;
 	}
 }
@@ -360,6 +381,12 @@ void VtxImageDialog::UpdateControls(){
 		m_delete->Enable(m_map_tabs->canDelete());
 		m_save->Enable(m_map_tabs->canSave());
 		m_new->Enable(m_map_tabs->canSave());
+		break;
+	case TYPE_HTMAP:
+		m_revert->Enable(m_hmap_tabs->canRevert());
+		m_delete->Enable(m_hmap_tabs->canDelete());
+		m_save->Enable(m_hmap_tabs->canSave());
+		m_new->Enable(m_hmap_tabs->canSave());
 		break;
 	}
 	Refresh();

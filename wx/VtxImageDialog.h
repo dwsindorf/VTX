@@ -32,7 +32,8 @@ enum {
 	TYPE_1D=0,
 	TYPE_2D=1,
 	TYPE_IMPORT=2,
-	TYPE_MAP=3
+	TYPE_MAP=3,
+	TYPE_HTMAP=4
 };
 
 class VtxImageDialog : public wxFrame
@@ -46,6 +47,7 @@ class VtxImageDialog : public wxFrame
 	VtxBandsTabs *m_1D_tabs;
 	VtxImportTabs *m_img_tabs;
 	VtxImportTabs *m_map_tabs;
+	VtxImportTabs *m_hmap_tabs;
 	
 	wxButton *m_save;
 	wxButton *m_revert;

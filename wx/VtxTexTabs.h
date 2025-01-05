@@ -47,7 +47,7 @@ class VtxTexTabs : public VtxTabsMgr
 {
 
 	DECLARE_CLASS(VtxTexTabs)
-
+ 
 protected:
 	void saveState(int which);
 	void restoreState(int which);
@@ -82,8 +82,9 @@ protected:
 
 	wxArrayString files;
 	wxChoice *choices;
+	wxChoice *mode;
 
-	tex_state state[4];
+	tex_state state[5];
 
 	int m_image_type;
 	bool m_invert;
@@ -113,10 +114,10 @@ protected:
 	ExprTextCtrl *m_alpha_expr;
 
 	wxBitmapButton *m_edit_button;
-	wxRadioButton *m_2D_button;
-	wxRadioButton *m_1D_button;
-	wxRadioButton *m_img_button;
-	wxRadioButton *m_map_button;
+//	wxRadioButton *m_2D_button;
+//	wxRadioButton *m_1D_button;
+//	wxRadioButton *m_img_button;
+//	wxRadioButton *m_map_button;
 
 	wxCheckBox *m_tex_check;
 	wxCheckBox *m_bump_check;
@@ -238,6 +239,7 @@ public:
 			invalidateObject();
 	}
 
+	void OnModeSelect(wxCommandEvent& event);
 	DEFINE_SLIDER_EVENTS(Start)
 	DEFINE_SLIDER_EVENTS(Bias)
 	DEFINE_SLIDER_EVENTS(Alpha)
@@ -252,10 +254,6 @@ public:
 	DEFINE_SLIDER_EVENTS(SlopeBias)
 
     void OnFileSelect(wxCommandEvent& event);
-    void OnShowBands(wxCommandEvent& event);
-    void OnShowImage(wxCommandEvent& event);
-    void OnShowImport(wxCommandEvent& event);
-    void OnShowMap(wxCommandEvent& event);
     void OnImageEdit(wxCommandEvent& event);
 	DECLARE_EVENT_TABLE()
 };

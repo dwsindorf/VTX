@@ -28,6 +28,7 @@ enum{
 	OBJ_SAVE,
 	ID_INTERP,
     ID_FILELIST,
+    ID_MODE,
     ID_CLAMP,
     ID_NORMALIZE,
     ID_SEASONAL,
@@ -119,11 +120,12 @@ SET_SLIDER_EVENTS(ORDERS_ATTEN,VtxTexTabs,OrdersAtten)
 SET_SLIDER_EVENTS(DAMP,VtxTexTabs,BumpDamp)
 
 EVT_CHOICE(ID_FILELIST,VtxTexTabs::OnFileSelect)
+EVT_CHOICE(ID_MODE,VtxTexTabs::OnModeSelect)
 
-EVT_RADIOBUTTON(ID_SHOW_BANDS, VtxTexTabs::OnShowBands)
-EVT_RADIOBUTTON(ID_SHOW_IMAGE, VtxTexTabs::OnShowImage)
-EVT_RADIOBUTTON(ID_SHOW_IMPORT, VtxTexTabs::OnShowImport)
-EVT_RADIOBUTTON(ID_SHOW_MAP, VtxTexTabs::OnShowMap)
+//EVT_RADIOBUTTON(ID_SHOW_BANDS, VtxTexTabs::OnShowBands)
+//EVT_RADIOBUTTON(ID_SHOW_IMAGE, VtxTexTabs::OnShowImage)
+//EVT_RADIOBUTTON(ID_SHOW_IMPORT, VtxTexTabs::OnShowImport)
+//EVT_RADIOBUTTON(ID_SHOW_MAP, VtxTexTabs::OnShowMap)
 
 EVT_BUTTON(ID_SHOW_IMAGE_EDIT, VtxTexTabs::OnImageEdit)
 
@@ -208,22 +210,31 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	choices->SetSelection(0);
 	image_controls->Add(choices,0,wxALIGN_LEFT|wxALL,2);
 
+	//m_image_height=new wxChoice(panel, ID_IMAGE_HEIGHT, wxDefaultPosition,wxSize(60,-1),11, sizes);
+
+
 	m_image_window = new VtxImageWindow(panel,wxID_ANY,wxDefaultPosition,wxSize(100,26));
 	image_controls->Add(m_image_window, 0, wxALIGN_LEFT|wxALL,2);
 	wxBitmap bmp(image_dialog_xpm);
 	m_edit_button=new wxBitmapButton(panel,ID_SHOW_IMAGE_EDIT,bmp,wxDefaultPosition,wxSize(28,28));
 	image_controls->Add(m_edit_button,0,wxALIGN_LEFT|wxALL,0);
 
-	m_1D_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
-	m_2D_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
-	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Tex"),wxDefaultPosition,wxDefaultSize);
-	m_map_button=new wxRadioButton(panel,ID_SHOW_MAP,wxT("Map"),wxDefaultPosition,wxDefaultSize);
+//	m_1D_button=new wxRadioButton(panel,ID_SHOW_BANDS,wxT("1D"),wxDefaultPosition,wxDefaultSize,wxRB_GROUP);
+//	m_2D_button=new wxRadioButton(panel,ID_SHOW_IMAGE,wxT("2D"),wxDefaultPosition,wxDefaultSize);
+//	m_img_button=new wxRadioButton(panel,ID_SHOW_IMPORT,wxT("Tex"),wxDefaultPosition,wxDefaultSize);
+//	m_map_button=new wxRadioButton(panel,ID_SHOW_MAP,wxT("Map"),wxDefaultPosition,wxDefaultSize);
+//
+//
+//	image_controls->Add(m_1D_button,0,wxALIGN_LEFT|wxALL,0);
+//	image_controls->Add(m_2D_button,0,wxALIGN_LEFT|wxALL,0);
+//	image_controls->Add(m_img_button,0,wxALIGN_LEFT|wxALL,0);
+//	image_controls->Add(m_map_button,0,wxALIGN_LEFT|wxALL,0);
 
+	wxString modes[]={"1D","2D","Tex","Map","HMap"};
 
-	image_controls->Add(m_1D_button,0,wxALIGN_LEFT|wxALL,0);
-	image_controls->Add(m_2D_button,0,wxALIGN_LEFT|wxALL,0);
-	image_controls->Add(m_img_button,0,wxALIGN_LEFT|wxALL,0);
-	image_controls->Add(m_map_button,0,wxALIGN_LEFT|wxALL,0);
+	mode=new wxChoice(panel,ID_MODE,wxDefaultPosition,wxSize(60,-1),5,modes);
+	mode->SetSelection(0);
+	image_controls->Add(mode,0,wxALIGN_LEFT|wxALL,2);
 
 	image_controls->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT));
 
@@ -427,6 +438,9 @@ void VtxTexTabs::makeFileList(){
 	case TYPE_MAP:
 		info=MAP;
 		break;
+	case TYPE_HTMAP:
+		info=HTMAP;
+		break;
 	}
     images.makeImagelist();
 
@@ -451,6 +465,7 @@ void VtxTexTabs::makeFileList(){
 	choices->SetSelection(index);
 	//set_image();
 }
+
 void VtxTexTabs::OnFileSelect(wxCommandEvent& event){
 	int i=choices->GetCurrentSelection();
     m_name=files[i];
@@ -526,18 +541,10 @@ void VtxTexTabs::restoreState(int which){
 	set_image();
 }
 
-void VtxTexTabs::OnShowImport(wxCommandEvent& event){
-	get_files(TYPE_IMPORT);
-}
-void VtxTexTabs::OnShowMap(wxCommandEvent& event){
-	get_files(TYPE_MAP);
-}
+void VtxTexTabs::OnModeSelect(wxCommandEvent& event){
+	int m=mode->GetSelection();
+	get_files(m);
 
-void VtxTexTabs::OnShowBands(wxCommandEvent& event){
-	get_files(TYPE_1D);
-}
-void VtxTexTabs::OnShowImage(wxCommandEvent& event){
-	get_files(TYPE_2D);
 }
 
 void VtxTexTabs::get_files(int type){
@@ -993,33 +1000,24 @@ void VtxTexTabs::getObjAttributes(){
 	if(m_type & SPX){
 		if(m_type&BANDS){
 			m_image_type=TYPE_1D;
-			m_img_button->SetValue(false);
-			m_map_button->SetValue(false);
-			m_1D_button->SetValue(true);
-			m_2D_button->SetValue(false);
+			mode->SetSelection(TYPE_1D);
 		}
 		else if(m_type&IMAGE){
-			m_img_button->SetValue(false);
-			m_1D_button->SetValue(false);
-			m_2D_button->SetValue(true);
-			m_map_button->SetValue(false);
 			m_image_type=TYPE_2D;
+			mode->SetSelection(TYPE_2D);
 		}
 	}
 	else if((m_type & IMTYPE) == MAP){
-		m_1D_button->SetValue(false);
-		m_2D_button->SetValue(false);
-		m_img_button->SetValue(false);
-		m_map_button->SetValue(true);
+		mode->SetSelection(TYPE_MAP);
 		m_image_type=TYPE_MAP;
 	}
+	else if((m_type & IMTYPE) == HTMAP){
+		mode->SetSelection(TYPE_HTMAP);
+		m_image_type=TYPE_HTMAP;
+	}
 	else{
-		m_1D_button->SetValue(false);
-		m_2D_button->SetValue(false);
-		m_img_button->SetValue(true);
-		m_map_button->SetValue(false);
+		mode->SetSelection(TYPE_IMPORT);
 		m_image_type=TYPE_IMPORT;
-
 	}
 	set_start(args[i++]);
 

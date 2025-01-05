@@ -29,7 +29,7 @@ extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
 //#define DEBUG_IMAGES
-//#define DEBUG_IMAGE_INFO
+#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -186,6 +186,9 @@ void ImageSym::infoString(char *tmp)
     case MAP:
     	sprintf(tmp+strlen(tmp),"%s","MAP");
     	break;
+    case HTMAP:
+     	sprintf(tmp+strlen(tmp),"%s","HTMAP");
+     	break;
     case IMPORT:
     	sprintf(tmp+strlen(tmp),"%s","IMPORT");
     	break;
@@ -981,6 +984,12 @@ uint ImageReader::getFileInfo(char *name, char *dir)
 		info|=MAP;
 		return info;
 	}
+	File.getHmapsDir(dir);
+	info=getImageInfo(name,dir);
+	if(info){
+		info|=HTMAP;
+		return info;
+	}
 	File.getSpritesDir(dir);
 	info=getTiledImageInfo(name,dir);
    	if(info){
@@ -1086,6 +1095,10 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		switch(mode&IMTYPE){
 		case MAP:
 			if((info&IMTYPE) != MAP)
+				continue;
+			break;
+		case HTMAP:
+			if((info&IMTYPE) != HTMAP)
 				continue;
 			break;
 		case IMPORT:
@@ -1279,7 +1292,10 @@ void ImageReader::makeImagelist()
 	  	
 	  	File.getMapsDir(sdir);
 	  	addImages(sdir);
-	  	
+
+	  	File.getHmapsDir(sdir);
+	  	addImages(sdir);
+
 		//images.sort();
 	  	
 		timer.showTime("makeImagelist");
