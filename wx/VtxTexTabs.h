@@ -114,10 +114,6 @@ protected:
 	ExprTextCtrl *m_alpha_expr;
 
 	wxBitmapButton *m_edit_button;
-//	wxRadioButton *m_2D_button;
-//	wxRadioButton *m_1D_button;
-//	wxRadioButton *m_img_button;
-//	wxRadioButton *m_map_button;
 
 	wxCheckBox *m_tex_check;
 	wxCheckBox *m_bump_check;

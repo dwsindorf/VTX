@@ -13,9 +13,7 @@ class VtxBranchTabs : public VtxTabsMgr
 	DECLARE_CLASS(VtxBranchTabs)
 
 protected:
-	uint image_dim;
-//	uint image_rows;
-//	uint image_cols;
+	uint m_image_dim;
 	uint image_center;
 	wxString image_name;
 	wxString image_dir;
@@ -73,9 +71,11 @@ protected:
 	wxColourPickerCtrl *m_color_chooser;
 	
 	wxButton *m_revert;
-	bool revert_needed;
+	bool m_revert_needed;
 	wxString m_last_expr;
-	    
+	uint m_image_type;
+	uint m_image_info;
+   
     wxString getColorExpr();
 	void setColorFromExpr();
 	void setExprFromColor();

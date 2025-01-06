@@ -1,6 +1,8 @@
 
 #include "VtxBranchTabs.h"
 #include "VtxSceneDialog.h"
+#include "VtxImageDialog.h"
+
 #include "AdaptOptions.h"
 #include "FileUtil.h"
 #include <TerrainClass.h>
@@ -160,7 +162,8 @@ bool VtxBranchTabs::Create(wxWindow* parent,
 	AddColorTab(page);
     AddPage(page,wxT("Color"),false);
     
-    image_dim=-1;
+    m_image_dim=-1;
+    m_image_type=TYPE_BRANCH;
 
     return true;
 }
@@ -349,15 +352,15 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
   
     int num_dirs=branch_mgr.image_dirs.size;
     
-	wxString offsets[num_dirs+1];
+	wxString offsets[num_dirs+2];
 	int i=0;
 	for(i=0;i<num_dirs;i++){
 		offsets[i]=branch_mgr.image_dirs[i]->name();
 	}
 	offsets[i++]=ImageMgr::Istr;
-	//offsets[i++]=Gstr;
+	offsets[i++]=ImageMgr::Bstr;
 
-    m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs+1, offsets);
+    m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs+2, offsets);
     m_dim_choice->SetSelection(0);
     image_cntrls->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,1);
 
@@ -446,39 +449,62 @@ void VtxBranchTabs::makeFileList(wxString wdir,wxString name){
  	int dim=m_dim_choice->GetSelection();
  	wxString str=m_dim_choice->GetString(dim);
  	
-	NameList<ModelSym*>flist;
+//	NameList<ModelSym*>flist;
 
 	if(str==ImageMgr::Istr){ // Imports
-		File.getImportsDir(sdir);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
+//		File.getImportsDir(sdir);
+//		File.getFileNameList(sdir,"*.bmp",flist);
+//		File.getFileNameList(sdir,"*.jpg",flist);
+//		File.getFileNameList(sdir,"*.png",flist);
+		m_image_type=TYPE_IMPORT;
+		m_image_info=IMPORT;
  	}	
-//	else if(str==Gstr){ //Bitmaps
+//	else if(str==ImageMgr::Bstr){ //Bitmaps
 //		File.getBitmapsDir(sdir);
 //		File.getFileNameList(sdir,"*.bmp",flist);
 //		branch_mgr.setImageBaseDir(sdir);
-//		//ImageReader::getImageDims((char*)str.ToAscii(),cols,rows);
+//		m_image_type=TYPE_2D;
+//		m_image_info=IMAGE|SPX;
 // 	}
 	else{
-		object()->getImageDirPath(wstr,sdir);
-		File.getFileNameList(sdir,"*.jpg",flist);
-		File.getFileNameList(sdir,"*.png",flist);
+		m_image_type=TYPE_BRANCH;
+		m_image_info=BRANCH;
+		uint rows;
+		uint cols;
+//		ImageReader::getImageDims((char*)str.mb_str(),cols,rows);
+//		ImageReader::setImageDims(m_image_info, cols,rows);
+//		
+		char tmp[512];
+		sprintf(tmp,"%s %d %d 0x%0.8X",str.mb_str(),cols,rows,m_image_info);
+//		cout<<tmp<<endl;
+//		
+//		object()->getImageDirPath(wstr,sdir);
+//		File.getFileNameList(sdir,"*.jpg",flist);
+//		File.getFileNameList(sdir,"*.png",flist);
  	}
+	
+	LinkedList<ImageSym *> list;
+	images.getImageInfo(m_image_info, list);
+	cout<<"images found="<<list.size<<endl;
+//	for(int i=0;i<list.size;i++){
+//		cout<<list[i]->fullPath()<<endl;
+//	}
+
  	wxDir dir(sdir);
 	
- 	if(dim!=image_dim){
- 		flist.sort();
-		files.Clear();
+ 	if(dim!=m_image_dim){
+ //		flist.sort();
+//		files.Clear();
 		wxString filename;
-		for(int i=0;i<flist.size;i++){
-			filename=flist[i]->name();
+		for(int i=0;i<list.size;i++){
+			filename=list[i]->name();
 			files.Add(filename);
 		}
 		m_file_choice->Clear();
 		m_file_choice->Append(files);
 		if(image_name.IsEmpty())
 			m_file_choice->SetSelection(0);
-		image_dim=dim;
+		m_image_dim=dim;
  	}
 
  	if(image_name.IsEmpty())
@@ -500,6 +526,7 @@ void VtxBranchTabs::setImagePanel(){
 	ImageSym *is=images.getImageInfo(name);
 	uint info=images.getFileInfo(name,path);
 	strcat(path,name);
+	
 	switch(info & FTYPE){
 	case PNG:
 		strcat(path,".png");
@@ -510,7 +537,7 @@ void VtxBranchTabs::setImagePanel(){
 		image_window->setScaledImage(path,wxBITMAP_TYPE_JPEG);	
 		break;
 	case BMP:
-		strcat(path,"bmp");
+		strcat(path,".bmp");
 		image_window->setScaledImage(path,wxBITMAP_TYPE_BMP);	
 		break;
 	}
@@ -691,11 +718,33 @@ void VtxBranchTabs::getObjAttributes(){
 		DensitySlider->setValue(obj->density);
 
 	image_name=obj->getImageFile();
-	image_dir=obj->getImageDir();
-	if(image_dir==ImageMgr::Istr)
+	ImageSym *is=images.getImageInfo(image_name.mb_str());
+	std::string tmp=is->toString();
+	cout<<tmp<<endl;
+	if((is->info&IMTYPE) == IMPORT){
+		cout<<"IMPORT"<<endl;
 		m_dim_choice->SetStringSelection(ImageMgr::Istr);
-	else
-		m_dim_choice->SetStringSelection(image_dir);
+	}
+	if((is->info&IMTYPE) == SPX){
+		cout<<"SPX"<<endl;
+		m_dim_choice->SetStringSelection(ImageMgr::Bstr);
+	}
+	else{
+		uint rows;
+		uint cols;		
+		ImageReader::getImageDims(is->info,cols,rows);
+		char tmp[64];
+		sprintf(tmp,"%dx%d",cols,rows);
+		m_dim_choice->SetStringSelection(tmp);
+		cout<<tmp<<" "<<obj->getImageDir()<<endl;
+	}
+	image_dir=m_dim_choice->GetStringSelection();
+	
+//	image_dir=obj->getImageDir();
+//	if(image_dir==ImageMgr::Istr)
+//		m_dim_choice->SetStringSelection(ImageMgr::Istr);
+//	else
+//		m_dim_choice->SetStringSelection(image_dir);
 
 	makeFileList(image_dir,image_name);
 	setImagePanel();

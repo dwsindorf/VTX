@@ -28,7 +28,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 #define DEBUG_IMAGE_INFO
 
 int icnt1=0;
@@ -258,7 +258,7 @@ std::string ImageSym::infoString(){
 }
 std::string ImageSym::toString(){
 	char tmp[MAXSTR];
-	sprintf(tmp,"%-20s %-20s %s",nameString().c_str(),infoString().c_str(),basePath().c_str());
+	sprintf(tmp,"%-20s %-20s %s",nameString().c_str(),infoString().c_str(),fullPath().c_str());
 	return std::string(tmp);
 }
 //-------------------------------------------------------------
@@ -1067,6 +1067,7 @@ ImageSym *ImageReader::getImageInfo(char *name)
 void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 {
 	ImageSym *is;
+	bool test=false;
 	
 	for(int i=0;i<images.size;i++){
 		is=images[i];
@@ -1112,6 +1113,11 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		case BRANCH:
 			if((info&IMTYPE) != BRANCH)
 				continue;
+			test=((mode & IMDIMS) == (info & IMDIMS));
+			if(!test)
+				continue;
+//			cout<<is->name()<<" "<<(mode & IMDIMS)<<" "<<(info & IMDIMS)<<" "<<test<<endl;
+//			cout <<"adding "<<is->name()<<endl;
 			break;
 		case LEAF:
 			if((info&IMTYPE) != LEAF)
@@ -1799,6 +1805,12 @@ bool ImageInfo::getImageFilePath(char *name,char *dir){
 	File.getImportsDir(path);
 	if(imageFileExists(name,path)){
 		strcpy(image_dir,ImageMgr::Istr);
+		sprintf(dir,"%s%s",path,name);
+		return true;
+	}
+	File.getBitmapsDir(path);
+	if(imageFileExists(name,path)){
+		strcpy(image_dir,ImageMgr::Bstr);
 		sprintf(dir,"%s%s",path,name);
 		return true;
 	}

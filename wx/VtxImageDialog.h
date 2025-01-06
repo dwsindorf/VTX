@@ -33,7 +33,9 @@ enum {
 	TYPE_2D=1,
 	TYPE_IMPORT=2,
 	TYPE_MAP=3,
-	TYPE_HTMAP=4
+	TYPE_HTMAP=4,
+	TYPE_BRANCH=5,
+	TYPE_LEAF=6
 };
 
 class VtxImageDialog : public wxFrame
