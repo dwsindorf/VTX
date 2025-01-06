@@ -288,6 +288,8 @@ public:
 	static void getImageDims(char *s,uint &cols,uint &rows);
 	static void getImageDims(uint info, uint &cols,uint &rows);
 	static void setImageDims(uint &info, uint cols,uint rows);
+	static void setImageDims(uint &info, char *s);
+	static void getImageDims(uint info, char *s);
 };
 
 extern ImageReader images;

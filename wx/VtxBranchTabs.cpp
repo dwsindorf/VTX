@@ -431,11 +431,6 @@ void VtxBranchTabs::AddColorTab(wxWindow *panel){
 void VtxBranchTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=m_dim_choice->GetSelection();
 	wxString str=m_dim_choice->GetString(dim);
-	//image_rows=image_cols=1;
-	//if(str!=Istr && str!=Gstr){
-	//if(str!=ImageMgr::Istr){
-	//	ImageReader::getImageDims((char*)str.ToAscii(),image_cols,image_rows);
-	//}	
 	makeFileList(str,"");
 	update_needed=true;
 	setObjAttributes();
@@ -448,69 +443,43 @@ void VtxBranchTabs::makeFileList(wxString wdir,wxString name){
  	image_name=name;
  	int dim=m_dim_choice->GetSelection();
  	wxString str=m_dim_choice->GetString(dim);
- 	
-//	NameList<ModelSym*>flist;
 
-	if(str==ImageMgr::Istr){ // Imports
-//		File.getImportsDir(sdir);
-//		File.getFileNameList(sdir,"*.bmp",flist);
-//		File.getFileNameList(sdir,"*.jpg",flist);
-//		File.getFileNameList(sdir,"*.png",flist);
+ 	if(str==ImageMgr::Istr){ // Imports
 		m_image_type=TYPE_IMPORT;
 		m_image_info=IMPORT;
  	}	
-//	else if(str==ImageMgr::Bstr){ //Bitmaps
-//		File.getBitmapsDir(sdir);
-//		File.getFileNameList(sdir,"*.bmp",flist);
-//		branch_mgr.setImageBaseDir(sdir);
-//		m_image_type=TYPE_2D;
-//		m_image_info=IMAGE|SPX;
-// 	}
+	else if(str==ImageMgr::Bstr){ //Bitmaps
+		m_image_type=TYPE_2D;
+		m_image_info=IMAGE|SPX;
+ 	}
 	else{
 		m_image_type=TYPE_BRANCH;
 		m_image_info=BRANCH;
-		uint rows;
-		uint cols;
-//		ImageReader::getImageDims((char*)str.mb_str(),cols,rows);
-//		ImageReader::setImageDims(m_image_info, cols,rows);
-//		
-		char tmp[512];
-		sprintf(tmp,"%s %d %d 0x%0.8X",str.mb_str(),cols,rows,m_image_info);
-//		cout<<tmp<<endl;
-//		
-//		object()->getImageDirPath(wstr,sdir);
-//		File.getFileNameList(sdir,"*.jpg",flist);
-//		File.getFileNameList(sdir,"*.png",flist);
+		ImageReader::setImageDims(m_image_info, (char*)str.mb_str());	
  	}
 	
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(m_image_info, list);
-	cout<<"images found="<<list.size<<endl;
-//	for(int i=0;i<list.size;i++){
-//		cout<<list[i]->fullPath()<<endl;
-//	}
 
  	wxDir dir(sdir);
-	
+  	
  	if(dim!=m_image_dim){
- //		flist.sort();
-//		files.Clear();
+		files.Clear();
 		wxString filename;
+		m_file_choice->Clear();
 		for(int i=0;i<list.size;i++){
 			filename=list[i]->name();
 			files.Add(filename);
 		}
-		m_file_choice->Clear();
 		m_file_choice->Append(files);
-		if(image_name.IsEmpty())
-			m_file_choice->SetSelection(0);
 		m_image_dim=dim;
  	}
-
- 	if(image_name.IsEmpty())
+	if(image_name.IsEmpty()){
+		m_file_choice->SetSelection(0);
  		image_name=m_file_choice->GetStringSelection();
-  	m_file_choice->SetStringSelection(image_name);
-
+	}
+	else
+  		m_file_choice->SetStringSelection(image_name);
 }
 
 void VtxBranchTabs::OnChangedFile(wxCommandEvent& event){
@@ -541,9 +510,9 @@ void VtxBranchTabs::setImagePanel(){
 		image_window->setScaledImage(path,wxBITMAP_TYPE_BMP);	
 		break;
 	}
-	char tmp[512];
-	sprintf(tmp,"0x%08X %s ",info,path);
-	cout<<"BranchTabs info:"<<tmp<<endl;
+//	char tmp[512];
+//	sprintf(tmp,"0x%08X %s ",info,path);
+//	cout<<"BranchTabs info:"<<tmp<<endl;
 
 	wxString ipath(path);
 	if(ipath!=image_path){
@@ -719,32 +688,17 @@ void VtxBranchTabs::getObjAttributes(){
 
 	image_name=obj->getImageFile();
 	ImageSym *is=images.getImageInfo(image_name.mb_str());
-	std::string tmp=is->toString();
-	cout<<tmp<<endl;
-	if((is->info&IMTYPE) == IMPORT){
-		cout<<"IMPORT"<<endl;
+
+	if((is->info&IMTYPE) == IMPORT)
 		m_dim_choice->SetStringSelection(ImageMgr::Istr);
-	}
-	if((is->info&IMTYPE) == SPX){
-		cout<<"SPX"<<endl;
+	if((is->info&IMTYPE) == SPX)
 		m_dim_choice->SetStringSelection(ImageMgr::Bstr);
-	}
 	else{
-		uint rows;
-		uint cols;		
-		ImageReader::getImageDims(is->info,cols,rows);
-		char tmp[64];
-		sprintf(tmp,"%dx%d",cols,rows);
+		char tmp[32];
+		ImageReader::getImageDims(is->info,tmp);
 		m_dim_choice->SetStringSelection(tmp);
-		cout<<tmp<<" "<<obj->getImageDir()<<endl;
 	}
 	image_dir=m_dim_choice->GetStringSelection();
-	
-//	image_dir=obj->getImageDir();
-//	if(image_dir==ImageMgr::Istr)
-//		m_dim_choice->SetStringSelection(ImageMgr::Istr);
-//	else
-//		m_dim_choice->SetStringSelection(image_dir);
 
 	makeFileList(image_dir,image_name);
 	setImagePanel();
@@ -766,7 +720,6 @@ void VtxBranchTabs::getObjAttributes(){
 			strcpy(alpha,"1.0");
 	}
 	else{
-		//m_col_enable->SetValue(false);
 		strcpy(red,"0.0");
 		strcpy(green,"0.0");
 		strcpy(blue,"0.0");
@@ -881,7 +834,6 @@ void VtxBranchTabs::OnRevert(wxCommandEvent& event){
 	restoreLastExpr();
 	setColorFromExpr();
 	setObjAttributes();
-	//m_last_expr=new_expr;
 }
 void VtxBranchTabs::saveLastExpr(){
     m_last_expr=getColorExpr();

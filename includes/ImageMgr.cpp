@@ -29,7 +29,7 @@ extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
 #define DEBUG_IMAGES
-#define DEBUG_IMAGE_INFO
+//#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -927,6 +927,20 @@ void ImageReader::setImageDims(uint &info, uint cols,uint rows){
 	MSK_SET(info,IMROWS,rows<<4);
 }
 
+void ImageReader::setImageDims(uint &info, char *s){
+	uint rows=0;
+	uint cols=0;
+	sscanf(s,"%dx%d",&cols,&rows);
+	setImageDims(info,cols,rows);
+}
+void ImageReader::getImageDims(uint info, char *s){
+	uint rows=0;
+	uint cols=0;
+	getImageDims(info, cols,rows);
+	char tmp[32];
+	sprintf(s,"%dx%d",cols,rows);
+}
+
 //-------------------------------------------------------------
 // ImageReader::getFileInfo   get file info
 //-------------------------------------------------------------
@@ -1747,10 +1761,6 @@ void ImageInfo::setImage(char *name){
 			if(image)
 				delete image;
 			image=images.open(image_file,path);
-			if(image)
-				cout<<"image found:"<<path<<endl;
-			else
-				cout<<"image not found:"<<path<<endl;
 		}
 	}
 }
