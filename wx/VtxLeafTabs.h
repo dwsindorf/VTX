@@ -60,7 +60,7 @@ protected:
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
 	wxCheckBox *m_col_enable;
-	wxCheckBox *m_shadow_enable;
+	wxCheckBox *m_rand_enable;
 	wxCheckBox *m_shape_enable;
 	wxChoice   *m_file_choice;
 	wxChoice   *m_dim_choice;

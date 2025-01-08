@@ -29,7 +29,7 @@ enum{
 	ID_SAVE,
 	ID_TEX_ENABLE,
 	ID_SHAPE_ENABLE,
-	ID_SHADOW_ENABLE,
+	ID_RAND_ENABLE,
 	ID_COL_ENABLE,
 	ID_NAME_TEXT,
     ID_SEGS,
@@ -92,7 +92,7 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxLeafTabs::OnAddItem)
 EVT_CHECKBOX(ID_TEX_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_COL_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHECKBOX(ID_SHAPE_ENABLE,VtxLeafTabs::OnChanged)
-EVT_CHECKBOX(ID_SHADOW_ENABLE,VtxLeafTabs::OnChanged)
+EVT_CHECKBOX(ID_RAND_ENABLE,VtxLeafTabs::OnChanged)
 EVT_CHOICE(ID_FILELIST,VtxLeafTabs::OnChangedFile)
 EVT_CHOICE(ID_DIMLIST,VtxLeafTabs::OnDimSelect)
 
@@ -217,9 +217,9 @@ void VtxLeafTabs::AddPropertiesTab(wxWindow *panel){
 	m_shape_enable->SetValue(true);
 	hline->Add(m_shape_enable, 0, wxALIGN_LEFT | wxALL, 7);
 
-	m_shadow_enable = new wxCheckBox(panel, ID_SHADOW_ENABLE, "Shadow");
-	m_shadow_enable->SetValue(true);
-	hline->Add(m_shadow_enable, 0, wxALIGN_LEFT | wxALL, 7);
+	m_rand_enable = new wxCheckBox(panel, ID_RAND_ENABLE, "Randomize");
+	m_rand_enable->SetValue(true);
+	hline->Add(m_rand_enable, 0, wxALIGN_LEFT | wxALL, 7);
 	
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
@@ -529,7 +529,7 @@ wxString VtxLeafTabs::exprString(){
  	obj->setTexEnabled((bool)m_tex_enable->GetValue());
 	obj->setColEnabled((bool)m_col_enable->GetValue());
 	obj->setShapeEnabled((bool)m_shape_enable->GetValue());
-	obj->setShadowEnabled((bool)m_shadow_enable->GetValue());
+	obj->setRandEnabled((bool)m_rand_enable->GetValue());
 	int enables=obj->enables;
 
 	char tmp[32];
@@ -686,7 +686,7 @@ void VtxLeafTabs::getObjAttributes(){
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
 	m_shape_enable->SetValue(obj->isShapeEnabled());
-	m_shadow_enable->SetValue(obj->isShadowEnabled());
+	m_rand_enable->SetValue(obj->isRandEnabled());
 
 	m_r_expr->SetValue(red);
 	m_g_expr->SetValue(green);

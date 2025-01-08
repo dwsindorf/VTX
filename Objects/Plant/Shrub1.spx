@@ -1,2 +1,0 @@
-
-Plant("Shrub1",1,1.09436e-06,0.8,0.2,0.1,0,0,0,0)Branch("Branch",7,3,1,1,1,1,0.19,0.53,0.9,4,-0)["treebark2",Color(0.1*DENSITY,0.5*RED,0,DENSITY)]Leaf("Leaf",1,2,5.5,1,0)["Leaf2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]

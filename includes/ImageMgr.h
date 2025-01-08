@@ -317,10 +317,6 @@ public:
 		File.getDirectoryList(getImageBaseDir(),image_dirs);
 		image_dirs.sort();		
 	}
-	
-	static char *Istr;
-	static char *Bstr;
-
 };
 class ImageInfo {
 protected:

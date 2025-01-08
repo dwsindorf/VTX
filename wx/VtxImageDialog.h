@@ -68,6 +68,8 @@ class VtxImageDialog : public wxFrame
 	wxString getSelection();
 
 public:
+	static 	wxString type_names[];
+
 	VtxImageDialog(wxWindow *parent,
 			wxWindowID id= wxID_ANY,
 			const wxString &caption= wxT(""),

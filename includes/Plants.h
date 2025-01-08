@@ -207,6 +207,9 @@ public:
 	NodeIF *replaceNode(NodeIF *c);
 	NodeIF *addChild(NodeIF *n);
 	NodeIF *lastChild();
+	NodeIF *getInstance();
+	NodeIF *getInstance(NodeIF *prev);
+
 };
 
 //************************************************************
@@ -235,11 +238,12 @@ class TNBranch : public TNbase, public ImageInfo
 {
 protected:
 	enum flags{
-		TEX=0x1,
-		COL=0x2,
-		SHAPE=0x4,
-		SHADOW=0x8,
-		ENABLES=TEX|COL|SHAPE|SHADOW,
+		TEX=0x01,
+		COL=0x02,
+		SHAPE=0x04,
+		SHADOW=0x08,
+		RANDOMIZE=0x10,
+		ENABLES=TEX|COL|SHAPE|SHADOW|RANDOMIZE,
 		LEAFS=0x01,
 		BRANCHES=0x02,
 		LINE_MODE=0x00,
@@ -312,10 +316,12 @@ public:
 	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
 	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
 	void setShadowEnabled(bool b){BIT_SET(enables,flags::SHADOW,b);}
+	void setRandEnabled(bool b){BIT_SET(enables,flags::RANDOMIZE,b);}
 	bool isColEnabled() { return BIT_TST(enables,flags::COL);}
 	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
 	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
 	bool isShadowEnabled() { return BIT_TST(enables,flags::SHADOW);}
+	bool isRandEnabled() { return BIT_TST(enables,flags::RANDOMIZE);}
 	static bool isShadowEnabled(int t) { return BIT_TST(t,flags::SHADOW);}
 	static bool isColEnabled(int t) { return BIT_TST(t,flags::COL);}
 	static bool isTexEnabled(int t) { return BIT_TST(t,flags::TEX);}	

@@ -164,6 +164,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 {
 	tmp[0]=0;
 	char buff[MAXSTR];
+	static uint stype=0;
 
 	switch(type&TN_TYPES){
 	case TN_GALAXY:
@@ -206,10 +207,21 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Sprite(\"firs2x2\",FLIP|NOLOD,1,1e-6,1,1,1,0,0,0)\n");
 		break;
 	case TN_PLANT:
-		sprintf(tmp,"Plant(1,1e-06)");
+		{
+		char bstr1[256];
+		char bstr2[256];
+		stype=0;
+		getPrototype(TN_PLANT_BRANCH,bstr1);
+		stype=1;
+		getPrototype(TN_PLANT_BRANCH,bstr2);
+		sprintf(tmp,"Plant(1,1e-06)%s%sLeaf(3,1,4,1,1)",bstr1,bstr2);
+		}
 		break;
 	case TN_PLANT_BRANCH:
-		sprintf(tmp,"Branch(12,1,1,1)\n");
+		if(stype==0)
+			sprintf(tmp,"Branch(12,1,1,1,1)[\"Bark1\",Color(0.5,0.4,0.1,LVL)]\n");
+		else
+			sprintf(tmp,"Branch(5,2,1.14,0.5,1)[\"Bark1\",Color(0.1,0.4,0.1,LVL)]\n");			
 		break;
 	case TN_PLANT_LEAF:
 		sprintf(tmp,"Leaf(1,1,10)\n");

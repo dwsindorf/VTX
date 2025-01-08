@@ -29,7 +29,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 //#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
@@ -1754,9 +1754,6 @@ void ImageReader::getImageDims(char *s,uint &cols,uint &rows){
 	cols=i;
 }
 
-char *ImageMgr::Istr="Tex";
-char *ImageMgr::Bstr="Spx";
-
 void ImageInfo::setImage(char *name){
 	if(strcmp(name,image_file)){
 		setImageName(name);
@@ -1783,10 +1780,10 @@ bool ImageInfo::getImageFilePath(char *name,char *dir){
 		strcpy(image_dir,pd);
 		ImageReader::getImageDims(pd,image_cols,image_rows);
 	}
-	else if((is->info & IMTYPE)==IMPORT)
-		strcpy(image_dir,ImageMgr::Istr);
-	else if((is->info & IMTYPE)==SPX)
-		strcpy(image_dir,ImageMgr::Bstr);
+//	else if((is->info & IMTYPE)==IMPORT)
+//		strcpy(image_dir,ImageMgr::Istr);
+//	else if((is->info & IMTYPE)==SPX)
+//		strcpy(image_dir,ImageMgr::Bstr);
 	return true;
 
 }

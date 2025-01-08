@@ -87,6 +87,8 @@ VtxImageDialog::VtxImageDialog( wxWindow* parent,
     Create(parent, id, caption, pos,wxSize(DLG_WIDTH,DLG_HEIGHT), style);
 }
 
+wxString VtxImageDialog::type_names[]={"1D","2D","Tex","Map","HMap"};
+
 wxString  VtxImageDialog::getSelection(){
 	wxString name;
 	switch(m_type){

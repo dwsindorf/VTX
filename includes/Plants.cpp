@@ -1433,6 +1433,14 @@ bool TNplant::randomize(){
 	}
 	return false;
 }
+NodeIF *TNplant::getInstance(NodeIF *parent){
+	randomize();
+	return this;
+}
+NodeIF *TNplant::getInstance(){
+	cout<<"TNplant::getInstance()"<<endl;
+	return this;
+}
 //===================== TNBranch ==============================
 //************************************************************
 // TNBranch class
@@ -1461,9 +1469,9 @@ TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 	width=1;
 	width_taper=0.75;
 	length_taper=0.95;
-	randomness=0.25;
-	max_splits=4;
-	first_bias=0;
+	randomness=1;
+	max_splits=5;
+	first_bias=2;
 	flatness=0.0;
 	curvature=0;
 	density=1;
@@ -2282,6 +2290,10 @@ TNBranch *TNBranch::randomize(TNBranch *src, double f){
 }
 
 bool TNBranch::randomize(){
+	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
+		(TNBranch*)right->randomize();
+	if(!isRandEnabled() || !isEnabled())
+		return false;
 	int nsave=lastn;
 	lastn=getRandValue()*123;
 	setRands();
@@ -2301,8 +2313,6 @@ bool TNBranch::randomize(){
 	else
 		sprintf(tmp,"%s(",symbol());
 	std::string str(tmp);
-	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
-		(TNBranch*)right->randomize();
 
 	TNode *sav=right;
 	right=0;
@@ -2338,7 +2348,7 @@ bool TNBranch::randomize(){
 	}
 	newarg[5]=orgarg[5]*(1+f*s[5]);
 	newarg[6]=orgarg[6]*(1+f*s[6]);
-	newarg[9]=orgarg[9]+f*s[12];
+	newarg[9]=orgarg[9]+max(3*f*s[9],1.0);
 	newarg[11]=orgarg[11]*(1+f*s[11]);
 	newarg[12]=orgarg[12]*(1+f*s[12]);
 	newarg[14]=clamp(orgarg[14]+0.25*f*s[14],-1,1);
@@ -2349,6 +2359,35 @@ bool TNBranch::randomize(){
 		str+=tmp;
 	}
 	str+=")";
+	uint info;
+	int ityp=4*r[8];
+	switch(ityp){
+	default:
+	case 0:
+		info=IMAGE|SPX;
+		break;
+	case 1:
+		info=IMPORT;
+		break;
+	case 2:
+		info=BRANCH|0x11;
+		break;
+	}
+	LinkedList<ImageSym *> list;
+	images.getImageInfo(info, list);
+	
+	int indx=list.size*r[9];
+	char *tname=list[indx]->name();
+	
+	cout<<"randomize "<<tname<<endl;
+	setPlantImage(tname);
+	
+//	for(int i=0;i<list.size;i++){
+//		cout<<list[i]->name()<<endl;
+//	}
+
+
+
 #ifdef DEBUG_RANDOMIZE
 	cout<<"old:"<<buff<<"\nnew:"<<str<<endl;
 #endif

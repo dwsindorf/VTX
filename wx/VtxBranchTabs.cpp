@@ -30,6 +30,7 @@ enum{
 	ID_ENABLE,
 	ID_DELETE,
 	ID_SAVE,
+	ID_RAND_ENABLE,
 	ID_TEX_ENABLE,
 	ID_COL_ENABLE,
 	ID_NAME_TEXT,
@@ -96,6 +97,7 @@ EVT_CHECKBOX(ID_FROM_END,VtxBranchTabs::OnChangedLevels)
 EVT_CHECKBOX(ID_10X,VtxBranchTabs::OnChangedLevels)
 EVT_CHECKBOX(ID_TEX_ENABLE,VtxBranchTabs::OnChanged)
 EVT_CHECKBOX(ID_COL_ENABLE,VtxBranchTabs::OnChanged)
+EVT_CHECKBOX(ID_RAND_ENABLE,VtxBranchTabs::OnChanged)
 
 EVT_CHOICE(ID_MIN_LEVEL,VtxBranchTabs::OnChangedLevels)
 EVT_CHOICE(ID_MAX_LEVEL,VtxBranchTabs::OnChangedLevels)
@@ -126,10 +128,6 @@ EVT_BUTTON(ID_REVERT,VtxBranchTabs::OnRevert)
 SET_FILE_EVENTS(VtxBranchTabs)
 
 END_EVENT_TABLE()
-
-
-//static wxString Istr="<Tex>";
-//static wxString Gstr="<Spx>";
 
 VtxBranchTabs::VtxBranchTabs(wxWindow* parent,
 		wxWindowID id,
@@ -163,7 +161,6 @@ bool VtxBranchTabs::Create(wxWindow* parent,
     AddPage(page,wxT("Color"),false);
     
     m_image_dim=-1;
-    m_image_type=TYPE_BRANCH;
 
     return true;
 }
@@ -201,6 +198,10 @@ void VtxBranchTabs::AddPropertiesTab(wxWindow *panel){
 	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2+10,VALUE2+SLIDER2);
 
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+    m_rand_enable=new wxCheckBox(panel, ID_RAND_ENABLE, "Randomize");
+    m_rand_enable->SetValue(true);
+    hline->Add(m_rand_enable,0,wxALIGN_LEFT|wxALL,4);
 
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
@@ -357,8 +358,9 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
 	for(i=0;i<num_dirs;i++){
 		offsets[i]=branch_mgr.image_dirs[i]->name();
 	}
-	offsets[i++]=ImageMgr::Istr;
-	offsets[i++]=ImageMgr::Bstr;
+
+	offsets[i++]=VtxImageDialog::type_names[TYPE_2D];
+	offsets[i++]=VtxImageDialog::type_names[TYPE_IMPORT];
 
     m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs+2, offsets);
     m_dim_choice->SetSelection(0);
@@ -376,7 +378,7 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
     image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Preview"));
 
-	image_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(400,400));
+	image_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(500,500));
 	image_sizer->Add(image_window, 0, wxALIGN_LEFT|wxALL,2);
 	boxSizer->Add(image_sizer,0,wxALIGN_LEFT|wxALL,0);
 
@@ -442,23 +444,17 @@ void VtxBranchTabs::makeFileList(wxString wdir,wxString name){
  	image_name=name;
  	int dim=m_dim_choice->GetSelection();
  	wxString str=m_dim_choice->GetString(dim);
+ 	uint image_info=BRANCH;
 
- 	if(str==ImageMgr::Istr){ // Imports
-		m_image_type=TYPE_IMPORT;
-		m_image_info=IMPORT;
- 	}	
-	else if(str==ImageMgr::Bstr){ //Bitmaps
-		m_image_type=TYPE_2D;
-		m_image_info=IMAGE|SPX;
- 	}
-	else{
-		m_image_type=TYPE_BRANCH;
-		m_image_info=BRANCH;
-		ImageReader::setImageDims(m_image_info, (char*)str.mb_str());	
- 	}
-	
+ 	if(str==VtxImageDialog::type_names[TYPE_IMPORT]) // Imports
+		image_info=IMPORT;
+ 	else if(str==VtxImageDialog::type_names[TYPE_2D]) //2d Bitmaps
+		image_info=IMAGE|SPX;
+ 	else
+		ImageReader::setImageDims(image_info, (char*)str.mb_str());	
+ 	
 	LinkedList<ImageSym *> list;
-	images.getImageInfo(m_image_info, list);
+	images.getImageInfo(image_info, list);
 
  	wxDir dir(sdir);
   	
@@ -509,15 +505,12 @@ void VtxBranchTabs::setImagePanel(){
 		image_window->setScaledImage(path,wxBITMAP_TYPE_BMP);	
 		break;
 	}
-//	char tmp[512];
-//	sprintf(tmp,"0x%08X %s ",info,path);
-//	cout<<"BranchTabs info:"<<tmp<<endl;
 }
 
 void VtxBranchTabs::updateControls(){
-	if(update_needed){
+	//if(update_needed){
 		getObjAttributes();
-	}
+	//}
 }
 
 void VtxBranchTabs::OnChangedLevels(wxCommandEvent& event){
@@ -533,6 +526,7 @@ wxString VtxBranchTabs::exprString(){
 		sprintf(p+strlen(p),"\"%s\",",obj->name_str);
 	}
 
+	obj->setRandEnabled((bool)m_rand_enable->GetValue());
 	obj->setTexEnabled((bool)m_tex_enable->GetValue());
 	obj->setColEnabled((bool)m_col_enable->GetValue());
 	int enables=obj->enables;
@@ -601,8 +595,8 @@ void VtxBranchTabs::setObjAttributes(){
 // VtxBranchTabs::getObjAttributes() when switched in
 //-------------------------------------------------------------
 void VtxBranchTabs::getObjAttributes(){
-	if(!update_needed)
-		return;
+	//if(!update_needed)
+	//	return;
 	update_needed=false;
 
 	TNBranch *obj=object();
@@ -684,9 +678,9 @@ void VtxBranchTabs::getObjAttributes(){
 	ImageSym *is=images.getImageInfo(image_name.mb_str());
 
 	if((is->info&IMTYPE) == IMPORT)
-		m_dim_choice->SetStringSelection(ImageMgr::Istr);
+		m_dim_choice->SetStringSelection(VtxImageDialog::type_names[TYPE_IMPORT]);
 	if((is->info&IMTYPE) == SPX)
-		m_dim_choice->SetStringSelection(ImageMgr::Bstr);
+		m_dim_choice->SetStringSelection(VtxImageDialog::type_names[TYPE_2D]);
 	else{
 		char tmp[32];
 		ImageReader::getImageDims(is->info,tmp);
@@ -729,6 +723,7 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	m_col_enable->SetValue(obj->isColEnabled());
 	m_tex_enable->SetValue(obj->isTexEnabled());
+	m_rand_enable->SetValue(obj->isRandEnabled());
    
 	update_needed=false;
 }

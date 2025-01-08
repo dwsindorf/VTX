@@ -122,11 +122,6 @@ SET_SLIDER_EVENTS(DAMP,VtxTexTabs,BumpDamp)
 EVT_CHOICE(ID_FILELIST,VtxTexTabs::OnFileSelect)
 EVT_CHOICE(ID_MODE,VtxTexTabs::OnModeSelect)
 
-//EVT_RADIOBUTTON(ID_SHOW_BANDS, VtxTexTabs::OnShowBands)
-//EVT_RADIOBUTTON(ID_SHOW_IMAGE, VtxTexTabs::OnShowImage)
-//EVT_RADIOBUTTON(ID_SHOW_IMPORT, VtxTexTabs::OnShowImport)
-//EVT_RADIOBUTTON(ID_SHOW_MAP, VtxTexTabs::OnShowMap)
-
 EVT_BUTTON(ID_SHOW_IMAGE_EDIT, VtxTexTabs::OnImageEdit)
 
 END_EVENT_TABLE()
@@ -220,9 +215,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	m_edit_button=new wxBitmapButton(panel,ID_SHOW_IMAGE_EDIT,bmp,wxDefaultPosition,wxSize(28,28));
 	image_controls->Add(m_edit_button,0,wxALIGN_LEFT|wxALL,0);
 
-	wxString modes[]={"1D","2D","Tex","Map","HMap"};
-
-	mode=new wxChoice(panel,ID_MODE,wxDefaultPosition,wxSize(60,-1),5,modes);
+	mode=new wxChoice(panel,ID_MODE,wxDefaultPosition,wxSize(60,-1),5,VtxImageDialog::type_names);
 	mode->SetSelection(0);
 	image_controls->Add(mode,0,wxALIGN_LEFT|wxALL,2);
 

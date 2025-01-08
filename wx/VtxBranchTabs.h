@@ -60,6 +60,8 @@ protected:
 	wxCheckBox *m_enable;
 	wxCheckBox *m_tex_enable;
 	wxCheckBox *m_col_enable;
+	wxCheckBox *m_rand_enable;
+
 	wxChoice   *m_file_choice;
 	wxChoice   *m_dim_choice;
 	wxChoice   *m_splits_choice;
@@ -74,8 +76,6 @@ protected:
 	wxButton *m_revert;
 	bool m_revert_needed;
 	wxString m_last_expr;
-	uint m_image_type;
-	uint m_image_info;
    
     wxString getColorExpr();
 	void setColorFromExpr();

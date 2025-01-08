@@ -1,2 +1,0 @@
-
-Plant("CrabApple",2,9.4697e-07,1.65,1.4,0.1,0,0,0,0)Branch("trunk",12,2,0.52,0.77,0.1,0.1,0,0.64,0.86,0,-0)["Cracks1",Color(0.5,0.25,0,DENSITY)]Branch("branch",12,2,1.07,1,0.38,1,0.21,0.69,0.7,2,-0)["Cracks1",Color(0.1,0.1,0.01,2*DENSITY)]Leaf("leaf",1,0.41,4,1,0.25,1,0,0.8,0.9)["Leaf2",Color(URAND,0.8*URAND,0,0.3)]Leaf("flower",1,0.05,7,0.75,0,1,0,0.8,0.8)["CrabApple"]
