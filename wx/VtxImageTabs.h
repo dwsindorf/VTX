@@ -79,7 +79,10 @@ public:
 
     void Invalidate();
     int rebuild();
-
+    void setImageName(wxString s);
+    void setImageName(char *n);
+    char *getImageName();
+   
     void setSelection(wxString name);
     wxString getSelection(){return m_file_menu->GetStringSelection();}
 

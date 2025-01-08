@@ -37,6 +37,7 @@ protected:
 
 	wxArrayString files;
 	VtxBitmapPanel *image_window;
+
 	wxStaticBoxSizer *image_sizer;
 	
 	wxChoice *m_min_level;

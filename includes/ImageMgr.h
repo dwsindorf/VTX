@@ -215,6 +215,7 @@ public:
 	std::string fullPath();
 	std::string basePath();
 	std::string namePath();
+	std::string parentDir();
 	std::string infoString();
 	std::string nameString();
 	std::string toString();
@@ -273,7 +274,9 @@ public:
 	Image *openJpgFile(char *name,char *path);
 	Image *openPngFile(char *name,char *path);
 
+	char *readSpxPath(char *f, char *path);
 	char *readSpxFile(char *f);
+	char *readSpxFile(char *f, char *path);
 	int saveSpxFile(char *name, char *buff);
 
 	void save(char *f, Image *i);
@@ -376,8 +379,6 @@ public:
 	}
 	char *getImageFile() { return image_file;}
 	char *getImageDir()  { return image_dir;}
-	bool imageFileExists(char *name,char *base);
-
 
 };
 

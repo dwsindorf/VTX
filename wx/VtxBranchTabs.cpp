@@ -374,11 +374,10 @@ void VtxBranchTabs::AddImageTab(wxWindow *panel){
 	image_cntrls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,1);
 
     boxSizer->Add(image_cntrls,0,wxALIGN_LEFT|wxALL,0);
-    
     image_sizer=new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Preview"));
+
 	image_window = new VtxBitmapPanel(panel,wxID_ANY,wxDefaultPosition,wxSize(400,400));
 	image_sizer->Add(image_window, 0, wxALIGN_LEFT|wxALL,2);
-
 	boxSizer->Add(image_sizer,0,wxALIGN_LEFT|wxALL,0);
 
 }
@@ -513,11 +512,6 @@ void VtxBranchTabs::setImagePanel(){
 //	char tmp[512];
 //	sprintf(tmp,"0x%08X %s ",info,path);
 //	cout<<"BranchTabs info:"<<tmp<<endl;
-
-	wxString ipath(path);
-	if(ipath!=image_path){
-		image_path=ipath;
-	}	
 }
 
 void VtxBranchTabs::updateControls(){

@@ -97,7 +97,7 @@ void FileUtil::getTmpDir(char *dir)
 	getBitmapsDir(base);
 	makeSubDirectory(base,tmp,path);
 	strcat(path,separator);
-	//cout<<"TMP ="<<path<<endl;F
+	//cout<<"TMP ="<<path<<endl;
 	strcpy(dir,path);
 }
 //-------------------------------------------------------------

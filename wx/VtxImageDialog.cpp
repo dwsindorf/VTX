@@ -256,11 +256,13 @@ bool VtxImageDialog::Show(wxString name, int type){
 }
 
 void VtxImageDialog::Invalidate(){
-	m_2D_tabs->Invalidate();
-	m_1D_tabs->Invalidate();
-	m_img_tabs->Invalidate();
-	m_map_tabs->Invalidate();
-	m_hmap_tabs->Invalidate();
+	if(IsShown()){
+		m_2D_tabs->Invalidate();
+		m_1D_tabs->Invalidate();
+		m_img_tabs->Invalidate();
+		m_map_tabs->Invalidate();
+		m_hmap_tabs->Invalidate();
+	}
 }
 
 void VtxImageDialog::OnOk(wxCommandEvent& event){

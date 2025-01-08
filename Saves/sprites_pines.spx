@@ -3,21 +3,49 @@ Scene() {
 		view=SURFACE;
 		phi=-44.9451;
 		theta=25.7032;
-		height=13.9546 ft;
+		height=18.0888 ft;
 		gndlvl=-36528.5 ft;
 		time=34168.8;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00399308;
-		heading=271;
-		tilt=-7;
+		zoom=1;
+		minh=9.4697e-10;
+		heading=336;
+		tilt=-2;
 		angle=-24;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=86.4499 ft;
+		heading=312;
+		tilt=-4;
+		angle=-35;
+	}
+	View{
+		height=18.1202 ft;
+		heading=317;
+		tilt=1;
+	}
+	View{
+		tilt=-2;
+		angle=-34;
+	}
+	View{
+		tilt=-5;
+	}
+	View{
+		tilt=-9;
+		angle=-35;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.00399309;
+	}
+	View{
+		minr=0.00399308;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -25,14 +53,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -52,10 +80,12 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.002;
+					ocean.auto=1;
+					ocean.state=0;
+					rot_phase=220.644;
 					specular=Color(1,1,1,0.03);
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
+					bands("alpine2",ACHNL|BLEND|CLAMP|DECAL|NEAREST|NORM|REPLACE,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
 						Color(0.522,0.322,0.02),

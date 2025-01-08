@@ -65,7 +65,7 @@ VtxImageTabs::VtxImageTabs(wxWindow* parent,
 	type=IMAGE|SPX;
 	image_list=0;
 	revert_list=0;
-	m_name="";
+	setImageName("");
 	gradient_list=0;
 }
 
@@ -213,8 +213,8 @@ void VtxImageTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
-//		int smode=m_showmode->GetSelection();
-//		if(smode==0 || is->info&(INUSE|NEWIMG))
+		//int smode=m_showmode->GetSelection();
+		//if(is->info&(INUSE|NEWIMG))
 			m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
@@ -223,7 +223,7 @@ void VtxImageTabs::makeImageList(){
 	}
 	if(m_file_menu->GetCount()>0){
 		m_file_menu->SetSelection(index);
-		m_name=m_file_menu->GetStringSelection();
+		setImageName(m_file_menu->GetStringSelection());
 	}
 }
 
@@ -357,7 +357,7 @@ void VtxImageTabs::displayImage(char *name){
 	if(!is && image_list->size){
 		is=image_list->base[0];
 		m_file_menu->SetSelection(0);
-		m_name=m_file_menu->GetStringSelection();
+		setImageName(m_file_menu->GetStringSelection());
 	}
 	if(!is)
 		return;
@@ -501,7 +501,6 @@ void VtxImageTabs::setObjAttributes(){
 	int opts=rebuild();
 	int map_type=opts&IMAP;
 	int display_mode=map_type==SMAP?VtxImageWindow::SCALE:VtxImageWindow::TILE;
-    
 	m_image_window->setImage(m_name.ToAscii(),display_mode);
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();
@@ -556,14 +555,14 @@ void VtxImageTabs::OnChanged(wxCommandEvent& event){
 }
 
 void VtxImageTabs::OnFileSelect(wxCommandEvent& event){
-	m_name=m_file_menu->GetStringSelection();
+	setImageName(m_file_menu->GetStringSelection());
     displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
 
 void VtxImageTabs::setSelection(wxString name){
 	m_file_menu->SetStringSelection(name);
-	m_name=m_file_menu->GetStringSelection();
+	setImageName(m_file_menu->GetStringSelection());
     displayImage((char*)m_name.ToAscii());
 	imageDialog->UpdateControls();
 }
@@ -625,7 +624,7 @@ bool VtxImageTabs::Clone(wxString new_name,bool rename){
 			images.removeAll((char*)m_name.ToAscii());
 
 		n->init();
-		m_name=new_name;
+		setImageName(new_name);
 		makeImageList();
 		makeRevertList();
 		displayImage((char*)m_name.ToAscii());
@@ -633,6 +632,15 @@ bool VtxImageTabs::Clone(wxString new_name,bool rename){
 		return true;	
 	}
 	return false;	
+}
+char *VtxImageTabs::getImageName(){
+	return m_name.mb_str();
+}
+void VtxImageTabs::setImageName(char *s){
+	m_name=wxString(s);
+}
+void VtxImageTabs::setImageName(wxString s){
+	m_name=s;
 }
 bool VtxImageTabs::New(wxString name){
 	return Clone(name,false);	
@@ -668,7 +676,7 @@ bool VtxImageTabs::canRevert(){
 void VtxImageTabs::Delete(){
 	if(canDelete()){
 		images.removeAll((char*)m_name.ToAscii());
-		m_name="";
+		setImageName("");
 		makeImageList();
 		displayImage((char*)m_name.ToAscii());
 		imageDialog->UpdateControls();

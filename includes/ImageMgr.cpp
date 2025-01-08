@@ -14,6 +14,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+#define TEST
 //#define USE_WX_BITMAP
 
 ImageReader images; // global image manager
@@ -198,7 +199,7 @@ void ImageSym::infoString(char *tmp)
 			sprintf(tmp+strlen(tmp),"%s","|BANDS");
 		else if(info&IMAGE)
 			sprintf(tmp+strlen(tmp),"%s","|IMAGE");
-			if(info&T1D)
+		if(info&T1D)
 			sprintf(tmp+strlen(tmp),"%s","|1D");
 		else
 			sprintf(tmp+strlen(tmp),"%s","|2D");
@@ -250,6 +251,14 @@ std::string ImageSym::basePath(){
 }
 std::string ImageSym::namePath(){
 	return basePath()+nameString();
+}
+std::string ImageSym::parentDir(){
+	std::string str=basePath();
+	size_t pos = str.find_last_of(File.separator);
+	str=str.substr(0,pos);
+	pos = str.find_last_of(File.separator);
+	std::string sstr=str.substr(pos+1, std::string::npos);
+	return sstr;
 }
 std::string ImageSym::infoString(){
 	char buff[MAXSTR];
@@ -952,15 +961,12 @@ uint ImageReader::getTiledImageInfo(char *name, char *dir)
 	char path[512];
 	
 	uint info=0;
-	uint rows=0;
-	uint cols=0;
 	for(int i=0;i<image_dirs.size;i++){
 		strcpy(sdir,image_dirs[i]->name());
 		sprintf(path,"%s%s%s",dir,image_dirs[i]->name(),File.separator);
 		info=getImageInfo(name,path); // type
 		if(info){
-			getImageDims(sdir,cols,rows);
-			setImageDims(info,cols,rows);
+			setImageDims(info,sdir);
 			sprintf(dir,"%s",path);
 			break;
 		}
@@ -1050,10 +1056,9 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	if(pos !=std::string::npos){
 		return 0;
 	}
-	//cout<<name<<endl;
 	uint info=getFileInfo(name,dir);
 	if(info & SPX){
-		spx=readSpxFile(name);
+		spx=readSpxPath(name,dir);
 		if(spx){
 		    info |=SPX;
 	    	TNinode *n=(TNinode*)TheScene->parse_node(spx);
@@ -1086,64 +1091,40 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 	for(int i=0;i<images.size;i++){
 		is=images[i];
 	    uint info=is->info;
-	    int spx_type=mode&(SPXTYPE);
+	    if((mode&IMTYPE) != (info &  IMTYPE))
+	    	continue;
 
-	    int dmode=mode&(T1D|T2D);
-	    int is_spx=mode&(SPX);
-
-		if(is_spx && !(info & SPX)){
-			continue;
-		}
-		if(!is_spx && (info & SPX)){
-			continue;
-		}
-		switch(mode&SPXTYPE){
-		case IMAGE:
-			if((info&SPXTYPE) != IMAGE)
-				continue;
-			break;
-		case BANDS:
-			if((info&SPXTYPE) != BANDS)
-				continue;
-			break;
-		}
 		switch(mode&IMTYPE){
-		case MAP:
-			if((info&IMTYPE) != MAP)
-				continue;
+		case SPX:
+			{
+				if(!(info & SPX))
+					continue;
+				switch(mode&SPXTYPE){
+				case IMAGE:
+					if((info&SPXTYPE) != IMAGE)
+						continue;
+					break;
+				case BANDS:
+					if((info&SPXTYPE) != BANDS)
+						continue;
+					break;
+				}
+			    int dmode=mode&(T1D|T2D);
+				if(dmode && dmode != (T1D|T2D)){
+					if((mode & T1D) && !(info & T1D))
+						continue;
+					else if((mode & T2D) && !(info & T2D))
+						continue;
+				}				
+			}
 			break;
-		case HTMAP:
-			if((info&IMTYPE) != HTMAP)
-				continue;
-			break;
-		case IMPORT:
-			if((info&IMTYPE) != IMPORT)
-				continue;
-			break;
+		case LEAF:
 		case SPRITE:
-			if((info&IMTYPE) != SPRITE)
-				continue;
-			break;
 		case BRANCH:
-			if((info&IMTYPE) != BRANCH)
-				continue;
 			test=((mode & IMDIMS) == (info & IMDIMS));
 			if(!test)
 				continue;
-//			cout<<is->name()<<" "<<(mode & IMDIMS)<<" "<<(info & IMDIMS)<<" "<<test<<endl;
-//			cout <<"adding "<<is->name()<<endl;
 			break;
-		case LEAF:
-			if((info&IMTYPE) != LEAF)
-				continue;
-			break;
-
-		}
-		if(dmode && dmode != (T1D|T2D)){
-			if((mode & T1D) && !(info & T1D))
-				continue;
-			else if((mode & T2D) && !(info & T2D))
-				continue;
 		}
 		if(is->image){
 			if(is->image->accessed())
@@ -1481,14 +1462,33 @@ int ImageReader::saveSpxFile(char *name, char *buff)
 //-------------------------------------------------------------
 // ImageReader::readSpxFile      read an spx file
 //-------------------------------------------------------------
+char *ImageReader::readSpxPath(char *name, char *dir)
+{
+	char path[512];
+	strcpy(path,dir);
+   	strcat(path,name);
+    return readSpxFile(name, path);
+}
+//-------------------------------------------------------------
+// ImageReader::readSpxFile      read an spx file
+//-------------------------------------------------------------
 char *ImageReader::readSpxFile(char *name)
 {
-	char path[256];
+	char path[512];
+	getImagePath(name,path);
+    return readSpxFile(name, path);
+}
+//-------------------------------------------------------------
+// ImageReader::readSpxFile      read an spx file
+//-------------------------------------------------------------
+char *ImageReader::readSpxFile(char *name, char *path)
+{
+//	char path[256];
+//	getImagePath(name,path);
 	FILE *fp=0;
 
 	char *buff=0;
 
-	getImagePath(name,path);
 	strcat(path,File.ext);
 	fp=fopen(path,"rb");
 	if(!fp)
@@ -1516,7 +1516,7 @@ Image *ImageReader::open(char *fname)
 	Image *im=0;
 	
 	dir[0]=0;
-#ifdef TEST
+#ifdef TIME_OPEN
 	static TimeIt timer;
 	timer.start();
 #endif
@@ -1533,7 +1533,10 @@ Image *ImageReader::open(char *fname)
 	}
 	else
 		cout<<"Image not Found "<<name<<endl;
-#ifdef TEST
+	if(!im)
+		cout<<"Image not opened "<<name<<endl;
+		
+#ifdef TIME_OPEN
 	timer.showTime("open");
 #endif
 	return im;
@@ -1660,8 +1663,9 @@ Image *ImageReader::openBmpFile(char *name,char *path)
  	sprintf(cpath,"%s.bmp",path);
 
  	FILE *fp=fopen(cpath, "rb");
-	if (fp == NULL)
+	if (fp == 0){
 	    return 0;
+	}
 	fclose(fp);
 #ifdef DEBUG_IMAGES
 	printf("%-20s READING IMAGE %s\n","ImageReader",name);
@@ -1764,65 +1768,25 @@ void ImageInfo::setImage(char *name){
 		}
 	}
 }
-bool ImageInfo::imageFileExists(char*name,char *basedir){
-	char dir[512];
-	sprintf(dir,"%s/%s.png",basedir,name);
-	if(FileUtil::fileExists(dir))
-		return true;
-	sprintf(dir,"%s/%s.jpg",basedir,name);
-	if(FileUtil::fileExists(dir))
-		return true;
-	sprintf(dir,"%s/%s.bmp",basedir,name);
-	if(FileUtil::fileExists(dir))
-		return true;
-	return false;
-}
+
 bool ImageInfo::getImageFilePath(char *name,char *dir){
 	if(image_mgr==0)
 		return false;
 	image_rows=1;
 	image_cols=1;
-	image_dir[0]=0; //subdir
-	char dimdir[32];
-	char base[256]; // basedir
-	char sdir[32];  // subdir
-	char path[512];
 
-	path[0]=0;
-	if(image_mgr->image_dirs.size==0){
-		sprintf(path,"%s",getBaseDir());
-		if(imageFileExists(name,getBaseDir())){
-			sprintf(dir,"%s/%s",path,name);
-			return true;
-		}
-		else
-			return false;
+	ImageSym *is=images.getImageInfo(name);
+	strcpy(dir,is->namePath().c_str());
+	if(is->info & TILED){
+		std::string str=is->parentDir();
+		char *pd=str.c_str();
+		strcpy(image_dir,pd);
+		ImageReader::getImageDims(pd,image_cols,image_rows);
 	}
-	uint rows=0;
-	uint cols=0;
-	for(int i=0;i<image_mgr->image_dirs.size;i++){
-		strcpy(sdir,image_mgr->image_dirs[i]->name());
-		sprintf(path,"%s/%s",getBaseDir(),sdir);
-		if(imageFileExists(name,path)){
-			strcpy(image_dir,sdir);
-			getImageDims(sdir,cols,rows);
-			image_rows=rows;
-			image_cols=cols;
-			sprintf(dir,"%s/%s",path,name);
-			return true;
-		}
-	}
-	File.getImportsDir(path);
-	if(imageFileExists(name,path)){
+	else if((is->info & IMTYPE)==IMPORT)
 		strcpy(image_dir,ImageMgr::Istr);
-		sprintf(dir,"%s%s",path,name);
-		return true;
-	}
-	File.getBitmapsDir(path);
-	if(imageFileExists(name,path)){
+	else if((is->info & IMTYPE)==SPX)
 		strcpy(image_dir,ImageMgr::Bstr);
-		sprintf(dir,"%s%s",path,name);
-		return true;
-	}
-	return false;
+	return true;
+
 }
