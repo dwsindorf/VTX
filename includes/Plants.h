@@ -358,7 +358,6 @@ public:
 	TNplant *getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
-	static TNBranch *randomize(TNBranch *src, double f);
 	virtual bool randomize();
 	virtual void propertyString(char *s);
 

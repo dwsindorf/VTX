@@ -1121,9 +1121,8 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		case LEAF:
 		case SPRITE:
 		case BRANCH:
-			test=((mode & IMDIMS) == (info & IMDIMS));
-			if(!test)
-				continue;
+			if((mode & IMDIMS) && (mode & IMDIMS) != (info & IMDIMS))
+			 	continue;
 			break;
 		}
 		if(is->image){

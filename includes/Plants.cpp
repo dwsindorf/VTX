@@ -135,6 +135,7 @@
 // 5) spline issues
 //   - offsets don't follow branch curvature when spline is applied
 //   - offset sometimes disconnects branches from parent
+//   - sometimes get a twist in middle of spline (180 phase shist ?)
 // 6) 3d issues
 //   - branch dimensions and shapes change when aspect ratio and size of window are changed (scales ok in 2d)
 //   - trunk size can be very different between 2d and 3d
@@ -2276,18 +2277,6 @@ void TNBranch::saveNode(FILE *f){
 NodeIF *TNBranch::removeNode(){
 	return TNfunc::removeNode();
 }
-TNBranch *TNBranch::randomize(TNBranch *src, double f){
-//	double args[16];
-//	int n=getargs(src->left,args,16);
-//	std::string str("Branch(");
-//	for(int i=0;i<n;i++){
-//		args[i]+=f*s[i]*fabs(args[i]);
-//		sprintf(tmp,",%1.2f",args[i]);		
-//		str+=tmp;
-//	}
-//	str+=")";
-	return src;
-}
 
 bool TNBranch::randomize(){
 	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
@@ -2360,18 +2349,23 @@ bool TNBranch::randomize(){
 	}
 	str+=")";
 	uint info;
-	int ityp=4*r[8];
-	switch(ityp){
-	default:
-	case 0:
-		info=IMAGE|SPX;
-		break;
-	case 1:
-		info=IMPORT;
-		break;
-	case 2:
-		info=BRANCH|0x11;
-		break;
+	if(isPlantBranch()){
+		int ityp=4*r[8];
+		switch(ityp){
+		case 0:
+			info=IMAGE|SPX;
+			break;
+		case 1:
+			info=IMPORT;
+			break;
+		default:
+		case 2:
+			info=BRANCH;
+			break;
+		}
+	}
+	else{
+		info=LEAF;
 	}
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(info, list);
@@ -2381,10 +2375,6 @@ bool TNBranch::randomize(){
 	
 	cout<<"randomize "<<tname<<endl;
 	setPlantImage(tname);
-	
-//	for(int i=0;i<list.size;i++){
-//		cout<<list[i]->name()<<endl;
-//	}
 
 
 
