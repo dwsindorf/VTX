@@ -1,32 +1,6 @@
 // ModelClass.cpp
 #define HIDE_UNIVERSE
 
-#define INIT_GLOBAL  	0
-#define INIT_SYSTEM1  	1
-#define INIT_STAR1    	2
-#define INIT_MERCURY  	3
-#define INIT_VENUS  	4
-#define INIT_EARTH   	5
-#define INIT_JUPITER 	6
-#define INIT_SATURN  	7
-#define INIT_TITAN  	8
-#define INIT_SYSTEM2  	9
-#define INIT_STAR2  	10
-
-#define INIT_MODE    INIT_SYSTEM1
-//#define INIT_MODE    INIT_SYSTEM2
-//#define INIT_MODE    INIT_STAR1
-//#define INIT_MODE    INIT_STAR2
-//#define INIT_MODE    INIT_EARTH
-//#define INIT_MODE    INIT_MERCURY
-//#define INIT_MODE    INIT_VENUS
-//#define INIT_MODE    INIT_JUPITER
-//#define INIT_MODE    INIT_SATURN
-//#define INIT_MODE    INIT_TITAN
-
-//#define  INIT_SURFACE
-
-
 #include "UniverseModel.h"
 #include "OrbitalClass.h"
 #include "TerrainClass.h"
@@ -210,21 +184,23 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		{
 		char bstr1[256];
 		char bstr2[256];
+		char lstr[256];
 		stype=0;
 		getPrototype(TN_PLANT_BRANCH,bstr1);
 		stype=1;
 		getPrototype(TN_PLANT_BRANCH,bstr2);
-		sprintf(tmp,"Plant(1,1e-06)%s%sLeaf(3,1,4,1,1)",bstr1,bstr2);
+		getPrototype(TN_PLANT_LEAF,lstr);
+		sprintf(tmp,"Plant(1,1e-06)%s%s%s",bstr1,bstr2,lstr);
 		}
 		break;
 	case TN_PLANT_BRANCH:
 		if(stype==0)
 			sprintf(tmp,"Branch(12,1,1,1,1)[\"Bark1\",Color(0.5,0.4,0.1,LVL)]\n");
 		else
-			sprintf(tmp,"Branch(5,2,1.14,0.5,1)[\"Bark1\",Color(0.1,0.4,0.1,LVL)]\n");			
+			sprintf(tmp,"Branch(6,2,2,0.5,1,1,0,0.6,0.8,2)[\"Bark1\",Color(0.1,0.4,0.1,LVL)]\n");			
 		break;
 	case TN_PLANT_LEAF:
-		sprintf(tmp,"Leaf(1,1,10)\n");
+		sprintf(tmp,"Leaf(4,1,10,2,1)[\"Leaf\",Color(0.5*URAND+0.25,0.5*RED,0,0.2*URAND)]\n");
 		break;
 	case TN_MAP:
 		sprintf(tmp,"map(noise(1,5))\n");
@@ -395,6 +371,64 @@ int UniverseModel::getSaveList(NodeIF *obj,LinkedList<ModelSym*>&list)
 }
 
 //-------------------------------------------------------------
+// UniverseModel::getObjectSymbol() return object's dir symbol
+//-------------------------------------------------------------
+ModelSym* UniverseModel::getTypeSymbol(int type){
+    switch(type){
+	case GN_RANDOM:
+		return new ModelSym("<Random>",type);
+	case GN_TREE:
+		return new ModelSym("Tree",type);
+	case GN_BUSH:
+		return new ModelSym("Bush",type);
+	case GN_GRASS:
+		return new ModelSym("Grass",type);
+	case GN_GASSY:
+		return new ModelSym("GasGiant",type);
+	case GN_ROCKY:
+		return new ModelSym("Rocky",type);
+	case GN_ICY:
+		return new ModelSym("Icy",type);
+	case GN_SINGLE:
+		return new ModelSym("Single",type);
+	case GN_BINARY:
+		return new ModelSym("Binary",type);
+	case GN_TRIPLE:
+		return new ModelSym("Triple",type);
+	case GN_QUAD:
+		return new ModelSym("Quad",type);
+   }
+}
+//-------------------------------------------------------------
+// UniverseModel::TypeTypeList() return list of generated objects
+//-------------------------------------------------------------
+void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
+{
+	switch(type&TN_TYPES){
+	default:
+		break;
+	case TN_PLANET:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_GASSY));
+		list.add(getTypeSymbol(GN_ROCKY));
+		list.add(getTypeSymbol(GN_ICY));
+		break;
+	case TN_PLANT:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_TREE));
+		list.add(getTypeSymbol(GN_BUSH));
+		list.add(getTypeSymbol(GN_GRASS));
+		break;
+	case TN_STAR:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_SINGLE));
+		list.add(getTypeSymbol(GN_BINARY));
+		list.add(getTypeSymbol(GN_TRIPLE));
+		list.add(getTypeSymbol(GN_QUAD));
+		break;
+	}
+}
+//-------------------------------------------------------------
 // UniverseModel::getAddList() return list of addable objects
 //-------------------------------------------------------------
 int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
@@ -471,9 +505,9 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
 	case TN_PLANT:
-//		if(obj->collapsed())
-//			list.add(new ModelSym("Plant",TN_PLANT));
-//		else
+		if(obj->collapsed())
+			list.add(new ModelSym("Plant",TN_PLANT));
+		else
 			list.add(new ModelSym("Branch",TN_PLANT_BRANCH));
 		//list.add(new ModelSym("Leaf",TN_PLANT_LEAF));
 		break;
@@ -1056,7 +1090,6 @@ NodeIF *UniverseModel::open_node(NodeIF *parent,char *fn)
 //************************************************************
 // default systems
 //************************************************************
-
 char UniverseModel::default_galaxy[]=""
 " Scene() {\n"
 " 	View{\n"
@@ -1081,476 +1114,3 @@ char UniverseModel::default_galaxy[]=""
 "	}\n"
 "}\n";
 
-// this model can be build without any resource (object) files
-// - created if vtx is called without a file argument
-// - #define INIT_XXX above to set initial view to desired object (defaults to Sol System)
-char UniverseModel::default_model[]=""
-" Scene() {	\n"
-"	View { \n"
-"		time=20000; \n"
-#if INIT_MODE == INIT_GLOBAL
-"		view=GLOBAL; \n"
-"       origin=Point(18000 ly,0.01,0.01);\n"
-#else
-"		view=ORBITAL;\n"
-"		heading=90;\n"
-"		pitch=-90;\n"
-"		gndlvl=0 ft;\n"
-"		phi=0;\n"
-"	    theta=300.00;\n"
-#if INIT_MODE == INIT_SYSTEM1
-"		height=30;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2;\n"
-#elif INIT_MODE == INIT_SYSTEM2
-"		height=30 miles;\n"
-"		viewobj=Universe.1.Galaxy.1.System.1;\n"
-#elif INIT_MODE == INIT_STAR1
-"		radius=1.11;\n"
-"		height=4;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Star.1;\n"
-#elif INIT_MODE == INIT_STAR2
-"		radius=2;\n"
-"		height=4;\n"
-"		viewobj=Universe.1.Galaxy.1.System.1.Star.2;\n"
-#elif INIT_MODE == INIT_MERCURY
-"		radius=0.0015;\n"
-"		height=5000 miles;\n"
-"	    theta=302.554;\n"
-"    	phi=5;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.1;\n"
-#elif INIT_MODE == INIT_VENUS
-"		radius=0.003;\n"
-"		height=5000 miles;\n"
-"		gndlvl=5872 ft;\n"
-"	    theta=145;\n"
-"    	phi=0;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.2;\n"
-#elif INIT_MODE == INIT_EARTH
-#ifdef INIT_SURFACE
-"		view=SURFACE;\n"
-"		tilt=15;\n"
-"		height=3339.85 ft;\n"
-#else
-"		height=5000 miles;\n"
-#endif
-"		time=230125;\n"
-"		phi=18.031;\n"
-"		theta=49.15;\n"
-"		radius=0.0036;\n"
-"		gndlvl=800 ft;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.3;\n"
-#elif INIT_MODE == INIT_JUPITER
-"		radius=0.04;\n"
-"		height=70000 miles;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.5;\n"
-#elif INIT_MODE == INIT_SATURN
-"		theta=180;\n"
-"		phi=15;\n"
-"		radius=0.034;\n"
-"		height=80000 miles;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.6;\n"
-#elif INIT_MODE == INIT_TITAN
-"		view=SURFACE;\n"
-"		phi=21.84;\n"
-"		theta=68.6;\n"
-"		heading=0;\n"
-"		time=29830;\n"
-"		tilt=15;\n"
-"		radius=0.002;\n"
-"		height=7363.53 ft;\n"
-"		gndlvl=1145.82 ft;\n"
-"		viewobj=Universe.1.Galaxy.1.System.2.Planet.6.Moon.1;\n"
-#endif
-#endif
-"	} \n"
-"   Universe { \n"
-"   Galaxy(20000){ \n"
-"     name=\"Milky Way\";\n"
-"     origin=Point(20000,0,0);\n"
-"	  noise.expr=noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5);\n"
-"	  System(1000) {\n"
-"       name=\"Centari\";\n"
-"       origin=Point(-2004,0, 2);\n"
-"		Star(0.5,10) {\n"
-"           name=\"Alpha Centari\";\n"
-"           color=Color(1,1,0.7);\n"
-"           symmetry=0.95;\n"
-"           day=100;\n"
-"           year=100;\n"
-"           Surface {\n"
-"				mc=0.2*noise(UNS,3,6,0.2)*noise(UNS,8,6,0.3);\n"
-"				surface=Color(1,1-mc,0.7-mc);\n"
-"			}\n"
-"			Corona(3) {\n"
-"				gradient=0.7;\n"
-"				color1=Color(1,0,0,0.2);\n"
-"				color2=Color(1,1,0.9,0.9);\n"
-"			}\n"
-"		}\n"
-"		Star(2,10) {\n"
-"           name=\"Beta Centari\";\n"
-"           color=Color(0.7,0.8,1);\n"
-"           symmetry=0.95;\n"
-"           day=33;\n"
-"           year=100;\n"
-"           phase=180;\n"
-"           Surface {\n"
-"				mc=0.5*noise(UNS,3,6,0.2)*noise(UNS,8,6,0.3);\n"
-"				surface=Color(0.7-mc,0.7-mc,1);\n"
-"			}\n"
-"			Corona(5) {\n"
-"				color1=Color(0.7,1,1,0.9);\n"
-"				color2=Color(0.9,1,1,0.7);\n"
-"			}\n"
-"		}\n"
-"	  }\n"
-"	  System(1000) {\n"
-"       name=\"Solar\";\n"
-"       origin=Point(-2000,0, 0);\n"
-"		Star(1.5,0.01) {\n"
-"           name=\"Sol\";\n"
-"           color=Color(1,1,0.8);\n"
-"           day=100;\n"
-"			bands(\"star1\",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),\n"
-"				Color(1,0.769,0.122),\n"
-"				Color(1,0.353,0.275),\n"
-"				Color(0.702,0.361,0.016),\n"
-"				Color(0.467,0,0),\n"
-"				Color(0.294,0.016,0.071),\n"
-"				Color(0.137,0.024,0.188),\n"
-"				Color(0.027,0.02,0.141),\n"
-"				Color(0.008,0,0));\n"
-"           Surface {\n"
-"				terrain=\n"
-"					Texture(\"star1\",BORDER|S,noise(NABS|SQR|FS,1,10,0,0.4),1.6922,1.3212,1.05456,0.0616,2,2);\n"
-"			}\n"
-"			Corona(8.11) {\n"
-"				color1=Color(1,1,0.8,0.8);\n"
-"				color2=Color(1,1,0.7,1);\n"
-"			}\n"
-"		}\n"
-"		Planet(0.0015,36) {\n"
-"			ambient=Color(0.94,0.95,0.95,0);\n"
-"			day=58.65;\n"
-"			diffuse=Color(0.87,0.89,0.99);\n"
-"			name=\"Mercury\";\n"
-"			shadow=Color(0,0,0,0.95);\n"
-"			shine=8.77663;\n"
-"			specular=Color(1,0.96,0.86);\n"
-"			sunset=0.01;\n"
-"			year=87.97;\n"
-"			albedo=0.73;\n"
-"			image(\"ridges\",INVT|NORM,256,256,noise(NABS|SQR|NEG|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));\n"
-"			image(\"craters3\",NORM,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));\n"
-"			bands(\"mercury\",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),\n"
-"				Color(0.502,0.502,0.502),\n"
-"				Color(0.063,0.063,0.063),\n"
-"				Color(0.502,0.502,0.502));\n"
-"			Surface{\n"
-"				terrain=Z(craters(ID1,4,0.2,0.05,1,0.75,1,0.8,1,0.5,1,0.8,0.6,0.2)\n"
-"						noise(UNS|RO1,1,5,0.5,0.2))+\n"
-"						Texture(\"ridges\",BUMP|TEX,34.2968,-1.32072,1,0.67696,10,2.20752,0.92452,0)+\n"
-"						Texture(\"craters3\",BUMP|TEX|S,noise(2.8,4.6,0.06,0.3,2,0.05,1,0.41,0.2),1.92319,0.94336,2,0.30768,4,2.7,1,0)+\n"
-"						Texture(\"Shist1\",BORDER|BUMP,6822.1,0.66664,2,0,7.33984,2.13208,1,0)+\n"
-"						Texture(\"mercury\",BORDER|LINEAR|S,BMPHT,1,0.90568,0.32728,0.6792,1,2,1,0);\n"
-"			}\n"
-"		}\n"
-"		Planet(0.003,50) {\n"
-"			day=30;\n"
-"			diffuse=Color(1,1,1,0.5);\n"
-"			name=\"Venus\";\n"
-"			resolution=4;\n"
-"			shine=1.37856;\n"
-"			specular=Color(1,1,1,0.42);\n"
-"			tilt=10;\n"
-"			year=100;\n"
-"			albedo=0.1;\n"
-"			Surface{\n"
-"				terrain=craters(ID1,2,0.1,0.1,1,1,0.8)\n"
-"						Z(0.1*noise(NABS|SQR|NEG,11,4,0.5,0.5))+Color(noise(UNS,2.4,2.8,0,1,2,1,1,0,0),0.8*RED,0.3*RED,1);\n"
-"			}\n"
-"			Clouds(0.0031) {\n"
-"				crot=1;\n"
-"				day=30;\n"
-"				diffuse=Color(1,1,1,0.59);\n"
-"				resolution=4;\n"
-"				shine=20;\n"
-"				specular=Color(1,1,1);\n"
-"				albedo=0.1;\n"
-"				bands(\"yellow-white\",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),\n"
-"					Color(0.502,0.251,0),\n"
-"					Color(0.141,0,0));\n"
-"				Surface{\n"
-"					terrain=Texture(\"yellow-white\",BORDER|BUMP|S,twist(-0.3,noise(NABS|SQR|NEG|FS|UNS,0,5,0,0.47,1.87,1,0,0,0)+noise(FS,2.8,5,1,0.6,2,0.17,0.13,0,0)),0.5,0.005,1,2.96768,1,1.58064,1,0);\n"
-"				}\n"
-"			}\n"
-"		}\n"
-"		Planet(0.0036,85) {  \n"
-"		    day=23.934;\n"
-"		    name=\"Earth\";\n"
-"		    phase=50;\n"
-"		    shadow=Color(0,0,0,0.6);\n"
-"		    tilt=23.45;\n"
-"		    water.clarity=200 ft;\n"
-"		    water.color1=Color(0,0.7,1,0.2);\n"
-"		    water.color2=Color(0,0,0.6);\n"
-"		    water.level=1000 ft;\n"
-"		    water.reflectivity=0.7;\n"
-"		    fog.vmin=water.level;\n"
-"		    fog.vmax=fog.vmin+200 ft;\n"
-"		    fog.max=1200 ft;\n"
-"		    fog.min=100 ft;\n"
-"		    fog.value=0.94902;\n"
-"		    year=365.26;\n"
-"		    bands(\"strata1\",8,0.1,Color(1,0.9,0.5),0.2,RAND);\n"
-"		    bands(\"strata2\",64,0.3,Color(0.2,0.4,0.2),0.1,RAND);\n"
-"		    bands(\"strata3\",128,0.2,Color(0.8,0.7,0.2),0.3,RAND);\n"
-"		    bands(\"strata4\",64,0.5,Color(0.5,0.5,0.5),0.2,RAND);\n"
-"		    bands(\"lava\",64,0.1,0.2,Color(0.1,0.1,0.2,0.4),Color(0.1,0.1,0.1,0.5));\n"
-"			image(\"eroded\",TILE|BUMP|NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));\n"
-"		    bands(\"grass\",CLAMP,32,0.1,0.1,RAND,Color(0,0.3,0.1,1),\n"
-"		        Color(0.2,0.4,0.1,1),\n"
-"		        Color(0.3,0.5,0,1),\n"
-"		        Color(0.4,0.5,0,1),\n"
-"		        Color(0.4,0.5,0,0));\n"
-"		    bands(\"alpine\",CLAMP,16,0.1,0.1,RAND,Color(0,0.3,0.1,1),\n"
-"		        Color(0.2,0.4,0.1,0.7),\n"
-"		        Color(0.3,0.5,0,0.7),\n"
-"		        Color(0.4,0.5,0,0.7),\n"
-"		        Color(0.4,0.4,0.1,0.7),\n"
-"		        Color(0.2,0.3,0.3,0.7),\n"
-"		        Color(0.3,0.4,0.2,0.7),\n"
-"		        Color(0.4,0.5,0,0.7),\n"
-"		        Color(0.4,0.5,0,0));\n"
-"		    Surface{\n"
-"		        env=0.3*(1+0.5*noise(SQR|UNS,15,3,0.3,0.1))*(1+0.5*LAT)*(1+0.2*SLOPE);\n"
-"		        terrain=fog(noise(SQR|UNS,8,5,0.5)*(1-DEPTH))\n"
-"		        		water(0.01*noise(NABS|SQR|SCALE,16,6,0.4,0.2)+0.01*noise(SCALE,22,2,0.7))\n"
-"		        		snow(0.8,0.25,0.5,0.25)\n"
-"		        		map(noise(1,15,0.3,0.1)*(1+2*LAT),-0.6,2)\n"
-"		        		layer(MORPH,0,0.5-0.3*noise(RO1,3,7,0.4,0.2))[\n"
-"		        			rocks(2,0.0001,0.73,1,0.13,0.25,0.2,noise(NABS|SQR|NEG,0,6,0.5,0.5,2))[\n"
-"								Texture(\"eroded\",BUMP,100000,1)\n"
-"								+gloss(3.4,2.5,1)\n"
-"								+Color(0,1,0.72,1)\n"
-"							]\n"
-"							Z(0.2*noise(NABS|SQR|SQR|UNS,9,15,0.5,0.5))\n"
-"		        			+Texture(\"strata1\",S,noise(9,15,0.4,0.5))\n"
-"		        			+Color(0.9,0.9,0.7)\n"
-"		        			]\n"
-"		        		layer(MORPH,0,0.2-0.4*noise(RO2,2,8,0.2,0.1),0.3)\n"
-"		        			[Z(0.2*noise(NABS|SQR|UNS,6,18,0.5,0.5))\n"
-"		        			+Texture(\"grass\",CLAMP,(0.1+HT)*env)\n"
-"		        			+gloss(0.5)\n"
-"		        			]\n"
-"						layer(MORPH,0,0.1+0.2*noise(RO3,3,7,0.3,0.1))\n"
-"		        			[Z(0.6*craters(MAXHT,2,0.004,0.2,1,1,1,0.5,0.5,5,0.1,0.2,0,0))\n"
-"		        			+Texture(\"lava\",S,HT*(1-0.1*SLOPE))\n"
-"		        			+Color(noise(1,15,0.3,0.1)+0.2*noise(RO2,2,8,0.2,0.1)+0.2,RED,RED)\n"
-"		        			+gloss(1.5)\n"
-"		        			]\n"
-"		        		layer(MORPH,0,0.2-0.5*noise(RO1,3,7,0.4,0.2))\n"
-"		        			[Point(0.6*noise(SQR|RO2,8,12,0.5,0.4),0,0.4*noise(NABS|SQR,8,14,0.2,0.5)+0.7*PX)\n"
-"		        			+Texture(\"strata3\",S,HT+0.3*noise(9,15,0.4,0.5))\n"
-"		        			+Color(1,1-0.5*abs(2*PX),GREEN-0.3)\n"
-"		        			+Texture(\"alpine\",CLAMP,(0.1+HT)*env)\n"
-"		        			]\n"
-"		        		layer(MORPH,0,0.3-0.4*noise(RO3,3,7,0.3,0.1))\n"
-"		        			[Z(0.14*noise(SCALE|SS,18,5,1,0.5,2)+0.3*fractal(SS|SQR,14,18,0.15,2,3,0.74,0.32)noise(UNS,10,4,0.3,0.5,2))\n"
-"		        			+Texture(\"strata4\",S,5*HT+0.5*noise(NABS|SQR|SQR|UNS,9,15,0.5,0.5))\n"
-"		        			+Texture(\"alpine\",CLAMP,(0.1+HT)*env)\n"
-"		        			+Color(1-noise(1,15,0.3,0.1)+0.2*noise(RO2,2,8,0.2,0.1)+0.2,RED,RED)\n"
-"		        			]\n"
-"		        		layer(MORPH,0)\n"
-"		        			[Z(0.1*noise(NABS|SQR|SQR|UNS,9,15,0.5,0.5)+0.1)\n"
-"		        			+Texture(\"strata1\",S,HT)\n"
-"		        			+Texture(\"alpine\",CLAMP,(0.1+HT)*env)\n"
-"		        			+Color(1,1,0.8)\n"
-"		        			]\n"
-"		          ;\n"
-"			}\n"
-"			Clouds(0.0036+10 miles) {\n"
-"				albedo=0.8;\n"
-"				shine=1;\n"
-"				tilt=10;\n"
-"				day=20;\n"
-"				Surface {\n"
-"					density=noise(NXY,2,10,0.9,0.2,2,1-LAT-0.1*noise(2,9,1,1,2));\n"
-"					surface=Color(1-0.1*density,RED,RED,density+0.5);\n"
-"				}\n"
-"			}\n"
-"			Sky(0.0036+100 miles) {\n"
-"				haze.color=Color(1,0.9,0.8);\n"
-"				haze.max=100 miles;\n"
-"				haze.min=50 miles;\n"
-"				haze.value=1;\n"
-"				twilight=Color(0.9,0.3,0.7,0.9);\n"
-"				albedo=0.6;\n"
-"				density=0.05;\n"
-"				color=Color(0.67,1,1,0.95);\n"
-"			}\n"
-"			Moon(0.001,0.1) {\n"
-"               name=\"Luna\";\n"
-"				color=Color(1,1,1);\n"
-"               phase=100;\n"
-"               year=29.5;\n"
-"               day=29.5;\n"
-"				shadow=Color(0,0,0,0.9);\n"
-"               Surface {\n"
-"                   surface=craters(4,0.3,0.2,0.9)\n"
-"					        Z(0.5*noise(UNS,1,6,0.7)*noise(10,4))\n"
-"					        +Color(1-PZ,RED,RED);\n"
-"               }\n"
-"           }\n"
-"		}\n"
-"		Planet(0.002,120) {\n"
-"			day=30;\n"
-"			fog.color=Color(1,0.7,0.2);\n"
-"			fog.value=1;\n"
-"			fog.vmax=5000 ft;\n"
-"			fog.vmin=1000 ft;\n"
-"			name=\"Mars\";\n"
-"			phase=104.075;\n"
-"			year=400;\n"
-"			image(\"mars1\",TILE,256,256,Color(0.2+noise(NABS|NEG|SQR|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED));\n"
-"			image(\"mars2\",TILE,256,256,Color(0.2+noise(NABS|NEG|SQR|UNS,0,9,0.96,0.5,2.1),0.5*RED,0.2*RED,0.7));\n"
-"			image(\"cracks\",TILE|BUMP|INVT,256,256,noise(NABS|SQR,1,5,0.3));\n"
-"			image(\"eroded\",TILE|BUMP|NORM,256,256,noise(NABS|SQR|NEG|UNS,1,5,0.6,0.1));\n"
-"			Surface{\n"
-"				b1=0.1*noise(UNS,3,9,1,0.5,2);\n"
-"				terrain=snow(0.75,0.25,0.5,0.25)\n"
-"					fog(1-1.2*noise(UNS,7,8,0.61,0.5,2))\n"
-"					map(noise(UNS,2,6,1,0.5,2),0,1,0.5)\n"
-"					layer(MORPH,0,0.51+noise(RO1,1,3,0.2,0.2,2),0.5,0,0)\n"
-"						[craters(7,0.3,0.2,0.5,0.5,1,1,1,0.3,1,0.8,0.6,0.2)\n"
-"						Z(noise(UNS|RO1,1,5,0.5,0.2)+0.2*noise(NABS|SQR,13,4,0.5,0.2))\n"
-"						+Color(0.7,RED,RED)\n"
-"						+Texture(\"mars1\",S,2)\n"
-"						+Texture(\"cracks\",BUMP,40,0.2)\n"
-"						]\n"
-"					layer(MORPH,0,0.36,0.5,0,0)\n"
-"						[Z(0.1*noise(NABS|SQR,10,11,0.5,0.4,2)+b1)\n"
-"						+Color(1,0.75,0.0039,1)\n"
-"						+Texture(\"mars2\",S,2)\n"
-"						]\n"
-"					layer(MORPH,0,0.1)\n"
-"						[rocks(1,1e-005,0.8,0.31,0.36,0.1,0.33,noise(0,2))[Color(1,0.5,0.25,1)\n"
-"						+Texture(\"mars2\",200000)\n"
-"						+Texture(\"cracks\",BUMP,600000,0.26)\n"
-"						+Z(b1)\n"
-"						]\n"
-"						Color(1,0.5,0,1)\n"
-"						+Z(b1+0.49*noise(NABS|SQR|NEG|SCALE,16,8,0.3,0.5,2))\n"
-"						+Texture(\"mars2\",2)\n"
-"						+Texture(\"eroded\",BUMP,200000,0.66)\n"
-"						]\n"
-"					;\n"
-"			}\n"
-"			Sky(0.00212088) {\n"
-"				color=Color(0.01,0.69,0.99);\n"
-"				density=0.12;\n"
-"				emission=Color(1,1,1,0);\n"
-"				twilight=Color(0.5,0,0.25);\n"
-"				twilight.max=0.2958;\n"
-"				twilight.min=-0.2958;\n"
-"				haze.color=Color(1,1,0.5);\n"
-"				haze.max=50 miles;\n"
-"				haze.min=2 miles;\n"
-"				haze.value=1;\n"
-"			}\n"
-"		}\n"
-"		Planet(0.04,442) {\n"
-"           name=\"Jupiter\";\n"
-"			year=1000;\n"
-"			day=12;\n"
-"			phase=140;\n"
-"			tilt=3;\n"
-"			bands(\"jupiter\",64,0.2,Color(1.0,0.9,0.5),0.6,Color(1.0,0.3,0.1));\n"
-"			Surface{\n"
-"				surface=Texture(\"jupiter\",REPEAT,PHI+0.005*noise(3,17))\n"
-"				        +Color(1,1,0.6)\n"
-"				        +Z(noise(6,4));\n"
-"			}\n"
-"			Sky(0.0401) {\n"
-"				density=0.1;\n"
-"				color=Color(0.0,0.9,0.9,0.3);\n"
-"			}\n"
-"       }\n"
-"		Planet(0.034,803) {\n"
-"           name=\"Saturn\";\n"
-"			year=600;\n"
-"			day=20;\n"
-"			tilt=25;\n"
-"			phase=60;\n"
-"			shadow=Color(0.2,0.2,0,0.5);\n"
-"			c1=Color(1.0,0.9,0.3);\n"
-"			c2=Color(1.0,0.6,0.0);\n"
-"			c3=Color(0.7,0.4,0.0);\n"
-"			bands(\"saturn\",64,0.5,0.3,RAND,c1,c2,c3,c1);\n"
-"			Surface{\n"
-"				surface=Texture(\"saturn\",REPEAT,2*PHI+0.01*noise(3,17));\n"
-"			}\n"
-"			Sky(0.0342) {\n"
-"				density=0.1;\n"
-"				color=Color(0.0,0.9,0.9,0.3);\n"
-"			}\n"
-"			Ring(0.045,0.013) {\n"
-"				bands(\"rings\",64,0.5,0.6,RAND,Color(0.9,0.9,0.5,0.4));\n"
-"				emission=Color(1,1,1,0.8);\n"
-"				terrain=Texture(\"rings\",REPEAT,PHI);\n"
-"			}\n"
-"			Ring(0.060,0.010) {\n"
-"				bands(\"rings\",64,0.5,0.5,RAND,Color(0.9,0.6,0.5,0.4),Color(1,1,0.3,0.5));\n"
-"				emission=Color(1,1,1,0.8);\n"
-"				terrain=Texture(\"rings\",REPEAT,PHI);\n"
-"			}\n"
-"			Moon(0.002,0.10) {\n"
-"               name=\"Titan\";\n"
-"				phase=155;\n"
-"				tilt=-10;\n"
-"				year=17;\n"
-"				day=11;\n"
-"				fog.color=Color(0.8,0.0,0.0,0.6);\n"
-"				fog.max=5000 ft;\n"
-"				fog.min=1000 ft;\n"
-"				fog.vmin=600 ft;\n"
-"				fog.vmax=800 ft;\n"
-"				shadow=Color(0,0,0,0.7);\n"
-"				bands(\"tmap1\",32,0.1,Color(0.5,0.5,0.5),0.5,RAND);\n"
-"				image(\"bmap1\",TILE|BUMP,1,256,noise(NABS|SQR,3,3,0.5,0.5));\n"
-"               Surface {\n"
-"						zf=fractal(SS|SQR,14,9,0.2,2,2,0.6,1)craters(1,0.1,0.1,1,0.9);\n"
-"						surface=fog(1-1.5*noise(UNS,7,4,1))\n"
-"                               map(noise(UNS,0,9,1))\n"
-"							    layer(MORPH,0,0.2)\n"
-"							        [ Z(zf+0.3*noise(8,4,0.4))\n"
-"							         +Texture(\"tmap1\",REPEAT,HT+0.5*noise(7,7,0.6))\n"
-"							         +Texture(\"bmap1\",BUMP,HT+0.1*noise(8,7,0.6),2,0.1)\n"
-"                                   ]\n"
-"							    layer(MORPH)\n"
-"							        [Z(0.1*noise(NABS|SQR,10,5,0.5,0.5))\n"
-"							         +Color(1,1-10*PZ,0.2)\n"
-"							        ];\n"
-"               }\n"
-"				Clouds(0.00201) {\n"
-"					tilt=-8;\n"
-"					day=10;\n"
-"					gmax=2;\n"
-"					Surface {\n"
-"						surface=Color(1-0.9*noise(UNS,3,8),0.6*RED,0.2,RED);\n"
-"					}\n"
-"				}\n"
-"				Sky(0.00202) {\n"
-"					twilight=Color(0.5,0.3,0.1,0.4);\n"
-"					density=0.3;\n"
-"					color=Color(0.5,0.1,0,0.9);\n"
-"					haze.color=Color(0.4,0,0.3);\n"
-"					haze.max=300 miles;\n"
-"					haze.min=50 miles;\n"
-"				}\n"
-"			}\n"
-"		}\n"
-"    }\n"
-"  }\n"
-" }\n"
-"}\n";

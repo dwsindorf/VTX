@@ -12,7 +12,7 @@ uniform sampler2DRect FBOTex3;
 uniform sampler2DRect FBOTex4;
 
 #define SHADOWTEX FBOTex3
-#define LINE_MODE   8
+
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
@@ -32,7 +32,12 @@ uniform float twilite_max;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.z
-#define LINE    TexVars.w<0.5
+
+#define LINE    0
+#define BRANCH  1
+#define LEAF    2
+#define SPLINE  3
+#define MODE    (int)(TexVars.w+0.1)
 
 varying vec4 Color;
 varying vec4 Pnorm;
@@ -62,7 +67,7 @@ vec3 getNormal(float nscale){
 	vec3 bn=gl_NormalMatrix*nscale*Pnorm.xyz;
 	vec3 normal=Normal-bn;
 	int texid=TEXID;
-	if(LINE || texid<0)
+	if(MODE==LINE || texid<0)
 		return normal;
 #ifdef BUMPS
     float bump_ampl=Pnorm.w;
@@ -131,10 +136,12 @@ void main(void) {
   		       color.a=tcolor.a;
 		}
 		else // texture only
-			color=tcolor;		
+			color=tcolor;
+		if(MODE != LEAF)
+		   color.a=1;	
 	}
-	//else
-	//	color.a=1;
+	else
+		color.a=1;
 #endif
 	//if(!aopt)
 	//	color.a=1;

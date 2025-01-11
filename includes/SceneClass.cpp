@@ -323,15 +323,16 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 }
 
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
-
-	cout<<"Scene::makeObject "<<obj->getParent()->typeName()<<" "<<obj->typeName()<<" "<<type<<endl;
-	
-	NodeIF *m=getPrototype(obj,type);
-	NodeIF *n=m->getInstance(obj);
+	int ttype=type&TN_TYPES;
+	int gtype=type&GN_TYPES;
+	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<endl;
+	NodeIF *m=getPrototype(obj,ttype);
+	NodeIF *p=obj->getParent();
+	NodeIF *n=m->getInstance(obj,gtype);
 	
 	if(n){
-		n->setType(type);
-		n->setParent(obj);
+		n->setType(ttype);
+		n->setParent(p);
 	}
 	if(m!=n)
 		delete m;

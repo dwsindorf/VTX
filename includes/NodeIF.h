@@ -19,7 +19,8 @@ enum {
 	TN_VOXEL        = 0x00008000,
 	TN_FLAGS  	    = 0x0000ff00,
 	TN_TYPES  	    = 0x000000ff,
-	TN_ALL          = TN_FLAGS|TN_TYPES
+	GN_TYPES  	    = 0x00ff0000,
+	TN_ALL          = TN_FLAGS|TN_TYPES|GN_TYPES
 };
 
 // bits that control randomization behavior
@@ -120,6 +121,7 @@ public:
 	void setNewViewObj(bool b)      { if(b) setFlag(RND_SETVIEW); else clrFlag(RND_SETVIEW); }
 	bool newViewObj()             { return getFlag(RND_SETVIEW) ? true:false;}
 
+	virtual bool canGenerate()  { return true;}
 	virtual bool canRandomize() { return false;}
 	virtual bool randomize()    { return false;}
 	virtual void setRseed(double s) {}
@@ -127,6 +129,7 @@ public:
 	virtual void setDefault()   { }
 	virtual NodeIF *getInstance() {return this;}
 	virtual NodeIF *getInstance(NodeIF *prev) {return getInstance();}
+	virtual NodeIF *getInstance(NodeIF *prev,int m) {return getInstance(prev);}
 
 	virtual bool isAnimating()         { return getFlag(RTM_ANIMATE) ? true:false;}
 	virtual void setAnimating(bool b)  { if(b) setFlag(RTM_ANIMATE); else clrFlag(RTM_ANIMATE);}

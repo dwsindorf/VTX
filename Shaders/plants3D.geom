@@ -32,7 +32,7 @@ vec4 project(vec4 pnt){
 }
 
 vec3 OrthoNormalVector(vec3 v) {
-  float g = v.z>0?1.0:-1.0;
+  float g = 1;//v.z>0?1.0:-1.0;
   float h = v.z + g;
   return normalize(vec3(g - v.x*v.x/h, -v.x*v.y/h, -v.x));
 }

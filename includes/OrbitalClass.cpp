@@ -3078,6 +3078,10 @@ NodeIF *Star::getInstance(){
 	lastn=Rand()*1715;
 	Star *star=newInstance();
 	star->setNewViewObj(true);
+	images.invalidate();
+
+	images.makeImagelist();
+
 	return star;
 }
 

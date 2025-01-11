@@ -135,7 +135,7 @@
 // 5) spline issues
 //   - offsets don't follow branch curvature when spline is applied
 //   - offset sometimes disconnects branches from parent
-//   - sometimes get a twist in middle of spline (180 phase shist ?)
+//   - sometimes get a twist in middle of spline (180 phase shift ?)
 // 6) 3d issues
 //   - branch dimensions and shapes change when aspect ratio and size of window are changed (scales ok in 2d)
 //   - trunk size can be very different between 2d and 3d
@@ -2375,9 +2375,6 @@ bool TNBranch::randomize(){
 	
 	cout<<"randomize "<<tname<<endl;
 	setPlantImage(tname);
-
-
-
 #ifdef DEBUG_RANDOMIZE
 	cout<<"old:"<<buff<<"\nnew:"<<str<<endl;
 #endif
@@ -2406,6 +2403,7 @@ bool TNBranch::randomize(){
 		return false;
 	}
 }
+
 //-------------------------------------------------------------
 // TNBranch::replaceNode
 //-------------------------------------------------------------

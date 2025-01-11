@@ -360,7 +360,7 @@ public:
 	int getChildren(LinkedList<NodeIF*>&l);
 	virtual bool randomize();
 	virtual void propertyString(char *s);
-
+	virtual bool canGenerate()  { return false;}
 };
 
 class TNLeaf : public TNBranch

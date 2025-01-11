@@ -135,7 +135,9 @@ public:
 	virtual int getReplaceList(NodeIF*,LinkedList<ModelSym*>&list);
 
 	virtual ModelSym* getObjectSymbol(int);
+	virtual ModelSym* getTypeSymbol(int);
 
+	virtual void getTypeList(int,LinkedList<ModelSym*>&list);
 	virtual void getFileList(int type,LinkedList<ModelSym*>&list);
 	virtual void getObjectDirectory(int type,char *dir);
 	virtual void getFullPath(ModelSym*,char*);
