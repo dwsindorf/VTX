@@ -294,7 +294,6 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 			sym=flist[ival];
 			rand_flag=true;
 		}
-		cout<<"OnTreeMenuSelect:"<<sym->value<<" "<<obj->getFlag(TN_TYPES)<<endl;
 
 		if(sym){
 			sbuff[0]=0;
@@ -375,8 +374,8 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		}
 		break;
 	}
-	//add_list.free();
-	//replace_list.free();
+	add_list.free();
+	replace_list.free();
 	TheScene->unsuspend();
 }
 
@@ -527,7 +526,6 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 #endif
     //treepanel->SelectItem(dstId);
 	copying=false;
-    if(list.size>0)
     list.free();
 }
 //-------------------------------------------------------------
@@ -792,10 +790,12 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 
     selectObject(newobj);
     item=treepanel->GetSelection();
+    //node=(TreeDataNode*)treepanel->GetItemData(item);
+    //node->setObject(newobj);
 
 	if(expanded)
 		treepanel->Expand(item);
- 
+    //setTabs(type);
 }
 
 //#define DEBUG_TREE
@@ -1009,37 +1009,37 @@ void VtxSceneDialog::saveSelected(){
 wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
+ 	LinkedList<ModelSym*>tlist;
+
 	submenu->Append(TABS_ADD|i++,"Simple");
-	type_list.free();
-	TheScene->model->getTypeList(sym->value,type_list);
-	//if(obj->canGenerate()){
-	if(type_list.size){
-		type_list.ss();
+	
+	TheScene->model->getTypeList(sym->value,tlist);
+	if(tlist.size){
+		tlist.ss();
 		wxMenu *tmenu=new wxMenu();
-		while((fsym=type_list++)){
+		while(fsym=tlist++){
 			fsym->value|=sym->value;
-			//cout<<"name:"<<fsym->name()<<endl;
 			tmenu->Append(TABS_ADD|i++,fsym->name());
 			add_list.add(fsym);
 		}
 		submenu->AppendSubMenu(tmenu,"Generate");
+		//tlist.free();
 	}
 	else 
 		submenu->Append(TABS_ADD|i++,"Generate");
-	//}
 
  	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(sym->value,flist);
 	if(flist.size>0){
 		submenu->AppendSeparator();
 		flist.ss();
-
 		add_list.add(new ModelSym("<Random>",sym->value));
 		submenu->Append(TABS_ADD|i++,"<Random>");
 		while((fsym=flist++)){
 			add_list.add(fsym);
 			submenu->Append(TABS_ADD|i++,fsym->name());
 		}
+		//flist.free();
 	}
 	return submenu;
 }
@@ -1058,22 +1058,18 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	int type=obj->getFlag(TN_TYPES);
 	
 	cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
-	if(replace_list.size>0)
- 		replace_list.free();
+	
+ 	replace_list.free();
 	ModelSym* sym=TheScene->model->getObjectSymbol(type);
 	replace_list.add(sym);
-	
-	if(type_list.size>0)
-		type_list.free();	
-	TheScene->model->getTypeList(type,type_list);
-
 	submenu->Append(TABS_REPLACE|i++,"Simple");
-	//if(obj->canGenerate()){
-		//submenu->Append(TABS_REPLACE|i++,"Generate");
-	if(type_list.size){
-		type_list.ss();
+	
+	LinkedList<ModelSym*>tlist;
+	TheScene->model->getTypeList(type,tlist);
+	if(tlist.size){
+		tlist.ss();
 		wxMenu *typemenu=new wxMenu();
-		while((fsym=type_list++)){
+		while(fsym=tlist++){
 			fsym->value|=sym->value;
 			replace_list.add(fsym);
 			typemenu->Append(TABS_REPLACE|i++,fsym->name());
@@ -1082,14 +1078,9 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	}
 	else
 		replace_list.add(new ModelSym("Generate",type));
-	//}
 	submenu->AppendSeparator();
 
-	//if(obj->canGenerate()){
-	//	replace_list.add(new ModelSym("Generate",type));
-	//}
 	LinkedList<ModelSym*>flist;
-
 	TheScene->model->getFileList(type,flist);
 
 	if(flist.size!=0){
@@ -1131,11 +1122,9 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 //-------------------------------------------------------------
 wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 	LinkedList<ModelSym*> dlist;
-	cout<<"getAddMenu:"<<obj->typeName()<<endl;
-    add_list.free();
+	add_list.free();
 	TheScene->model->setActionMode(Model::ADDING);
 	TheScene->model->getAddList(obj,dlist);
-
 	add_list.ss();
 	dlist.ss();
 	ModelSym *sym;

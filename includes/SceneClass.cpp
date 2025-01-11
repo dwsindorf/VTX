@@ -326,7 +326,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
 	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<endl;
-	NodeIF *m=getPrototype(obj,ttype);
+	NodeIF *m=getPrototype(obj,type);
 	NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,gtype);
 	

@@ -35,6 +35,9 @@ public:
 		strcpy(_name,n);
 		strcpy(path,p);
 	}
+	~ModelSym(){
+		//cout<<"~ModelSym() "<<_name<<endl;
+	}
 	int isFile() { return path[0];}
 	char *name() { return _name;}
 };

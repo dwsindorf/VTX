@@ -438,7 +438,9 @@ public:
     void setRadiance(Color c);
     void getStarData(double *d, char *m);
     NodeIF *getInstance();
+    NodeIF *getInstance(int type);
     static Star *newInstance();
+    static Star *newInstance(int);
     static void random(double &temp, double &r, Color &color);
     static TNinode *image(Color color);
     static TNtexture *texture();

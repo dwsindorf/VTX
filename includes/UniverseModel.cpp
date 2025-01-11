@@ -139,8 +139,11 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	tmp[0]=0;
 	char buff[MAXSTR];
 	static uint stype=0;
+	int ttype=type&TN_TYPES;
+	int gtype=type&GN_TYPES;
+	cout<<"getPrototype t:"<<ttype<<" g:"<<gtype<<endl;
 
-	switch(type&TN_TYPES){
+	switch(ttype){
 	case TN_GALAXY:
 		sprintf(tmp,"Galaxy(10000) {}\n");
 		break;
@@ -406,6 +409,11 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 {
 	switch(type&TN_TYPES){
 	default:
+		break;
+	case TN_MOON:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_ROCKY));
+		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANET:
 		list.add(getTypeSymbol(GN_RANDOM));

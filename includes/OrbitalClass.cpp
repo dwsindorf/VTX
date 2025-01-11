@@ -3004,13 +3004,54 @@ void Star::getStarData(double *d, char *m){
 	strcpy(m,startype);
 }
 
+NodeIF *Star::getInstance(int gtype){
+	System  *system=getParent();
+	int num=1;
+	switch(gtype){
+		case GN_RANDOM:num=1;break;
+		case GN_SINGLE:num=1;break;
+		case GN_BINARY:num=2;break;
+		case GN_TRIPLE:num=3;break;
+		case GN_QUAD:num=4;break;
+	}
+	Star *star;
+	for(int i=0;i<num;i++){
+		star=newInstance(gtype);
+		if(num==1)
+			star->orbit_radius=0;
+		system->addChild(star);
+	}
+	System::building_system=false;
+	system->adjustOrbits();
+	return star;
+
+}
+//-------------------------------------------------------------
+// Star::setInstance()  generate a random instance
+//-------------------------------------------------------------
+NodeIF *Star::getInstance(){
+	lastn=Rand()*1715;
+	Star *star=newInstance();
+	star->setNewViewObj(true);
+	images.invalidate();
+
+	images.makeImagelist();
+
+	return star;
+}
 //-------------------------------------------------------------
 // Star::setInstance()  generate a random instance
 //-------------------------------------------------------------
 Star *Star::newInstance(){
+	return newInstance(0);
+}
+//-------------------------------------------------------------
+// Star::setInstance()  generate a random instance
+//-------------------------------------------------------------
+Star *Star::newInstance(int gtype){
 	Star *star;
 
-	star=(Star *)TheScene->getPrototype(0,TN_STAR);
+	star=(Star *)TheScene->getPrototype(0,TN_STAR|gtype);
 	star_id=lastn;
 	star->setRseed(URAND(lastn++));
 
@@ -3071,19 +3112,7 @@ Star *Star::newInstance(){
     return star;
 }
 
-//-------------------------------------------------------------
-// Star::setInstance()  generate a random instance
-//-------------------------------------------------------------
-NodeIF *Star::getInstance(){
-	lastn=Rand()*1715;
-	Star *star=newInstance();
-	star->setNewViewObj(true);
-	images.invalidate();
 
-	images.makeImagelist();
-
-	return star;
-}
 
 double Star::max_height(){
 	return 1e-10;
