@@ -255,8 +255,8 @@ void Model::getTypeList(int type,LinkedList<ModelSym*>&list){}
 void Model::getFileList(int type,LinkedList<ModelSym*>&list){}
 
 void Model::getObjectDirectory(int type,char *dir){}
-ModelSym* Model::getObjectSymbol(int type){return 0;}
-ModelSym* Model::getTypeSymbol(int type){return 0;}
+//ModelSym* Model::getObjectSymbol(int type){return 0;}
+//ModelSym* Model::getTypeSymbol(int type){return 0;}
 void Model::make(FILE *file){}
 void Model::make_libraries(int i) {}
 

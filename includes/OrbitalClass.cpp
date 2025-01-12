@@ -27,6 +27,7 @@ extern double Theta,Phi,Radius,Sfact;
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
 
+#define TDIR tmp/
 static int debug_temp=DEBUG_TEMP;
 
 extern const char *pstg[];
@@ -1943,8 +1944,7 @@ System *System::newInstance(){
 	int planets=system->m_planets;
 	building_system=true;
 	for(int i=0;i<stars;i++){
-		Star *star=Star::newInstance();
-		
+		Star *star=Star::newInstance();	
 		if(stars==1)
 			star->orbit_radius=0;
 		lastn++;
@@ -2496,7 +2496,7 @@ void Spheroid::adapt()
 void Spheroid::save(FILE *fp)
 {
 	fprintf(fp,"%s%s",tabs,name());
-	terrain.validateTextures();
+	//terrain.validateTextures();
 	Orbital::save(fp);
 	terrain.save(fp);
 	ObjectNode::save(fp);
@@ -2776,6 +2776,9 @@ Color Star::star_color[Star::ntypes]={
 		Color(0.6,0.8,1.000),  // B
 		Color(0.5,0.7,1.000)}; // O
 #endif	
+enum type{
+	ST_RED=0,ST_YELLOW=2,ST_WHITE=3, ST_BLUE=5
+};
 char Star::star_class[Star::ntypes]={'M','K','G','F','A','B','O'};
 double Star::star_temp[Star::ntypes]={2000,3500,5000,6000,7500,10000,30000};//surface temperature
 double Star::star_luminocity[Star::ntypes]={0.04,0.4,1.2,6,40,5e4,1e6}; //brightness vs sun
@@ -2890,6 +2893,14 @@ double Star::star_size(double temp){
 //-------------------------------------------------------------
 // - return temperature radius and color
 //-------------------------------------------------------------
+void Star::type(int index,double &temp, double &radius, Color &color){
+   temp=temps[index];
+   radius=star_size(temp);
+   color=star_color[index];
+   //char str[128];
+   // c.toString(str);
+	   //cout<<"r:"<<z<<" t:"<<temp<<" "<<str<<endl;
+}
 void Star::random(double &temp, double &radius, Color &color){
    double p=URAND(lastn++);
    int index=p*num_temps;
@@ -2918,7 +2929,6 @@ void Star::random(double &temp, double &radius, Color &color){
    // c.toString(str);
    //cout<<"r:"<<z<<" t:"<<temp<<" "<<str<<endl;
 }
-
 //-------------------------------------------------------------
 // TNinode *Star::image(Color tc) generate a 1D texture image from color
 //-------------------------------------------------------------
@@ -3005,24 +3015,8 @@ void Star::getStarData(double *d, char *m){
 }
 
 NodeIF *Star::getInstance(int gtype){
-	System  *system=getParent();
-	int num=1;
-	switch(gtype){
-		case GN_RANDOM:num=1;break;
-		case GN_SINGLE:num=1;break;
-		case GN_BINARY:num=2;break;
-		case GN_TRIPLE:num=3;break;
-		case GN_QUAD:num=4;break;
-	}
-	Star *star;
-	for(int i=0;i<num;i++){
-		star=newInstance(gtype);
-		if(num==1)
-			star->orbit_radius=0;
-		system->addChild(star);
-	}
-	System::building_system=false;
-	system->adjustOrbits();
+    Star *star=newInstance(gtype);
+    star->randomize();
 	return star;
 
 }
@@ -3057,13 +3051,32 @@ Star *Star::newInstance(int gtype){
 
 	double t=0,r=0;
 	Color c;
-	random(t,r,c);
+	double cf;
+	switch(gtype){
+	default:
+	case GN_RANDOM:
+		random(t,r,c);
+	    cf=1.2+URAND(lastn++);
+		c=c.intensify(cf);
+		break;
+	case GN_RED_STAR:
+		type(ST_RED,t,r,c);
+		break;
+	case GN_YELLOW_STAR:
+		type(ST_YELLOW,t,r,c);
+		break;
+	case GN_WHITE_STAR:
+		type(ST_WHITE,t,r,c);
+		break;
+	case GN_BLUE_STAR:
+		type(ST_BLUE,t,r,c);
+		break;
+	}
 	star->temperature=t;
 	star->emission=c;
 	star->size=r;
+	
     star->children.ss();
-    double cf=1.2+URAND(lastn++);
-	c=c.intensify(cf);
 
     TNinode *img=image(c);
     Render.invalidate_textures();
@@ -3366,7 +3379,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	
 	ocean_state=def_ocean_state;
 	ocean_auto=true;
-	terrain_type=ROCKY;
+	terrain_type=GN_ROCKY;
 
 	fog_color=def_fog_color;
 	fog_glow=def_fog_glow;
@@ -3512,8 +3525,6 @@ void Planetoid::set_ocean_vars(){
 	
 	setOceanExpr();	
 	
-	//cout<<"set ocean vars:"<<name()<<" have water:"<<water()<<endl;
-
 	WCSET("water.color1",liquid->color1);
 	WCSET("water.color2",liquid->color2);
 	WVSET("water.clarity",liquid->clarity);
@@ -4584,35 +4595,54 @@ Planet::~Planet()
 #endif
 }
 
-NodeIF *Planet::getInstance(NodeIF *prev){
+
+NodeIF *Planet::getInstance(NodeIF *prev,int gtype){
 	planet_cnt++;
+	Planet *planet=(Planet*)prev;
 	lastn=getRandValue()*1234;
 	setRands();
+	//setRseed(r[0]);
 	setParent(prev->getParent());
-	orbit_radius=((Planet *)prev)->orbit_radius;
-	newInstance();
+	orbit_radius=planet->orbit_radius;
+	newInstance(gtype);
+	//if(planet->terrain_type==gtype)
+		size=planet->size;
 	return this;
 }
-void Planet::newInstance(){
-	planet_id=planet_cnt+lastn;
-	setRseed(r[0]);
-	//planet->orbit_radius=1.3*(planet_orbit+20+50*r[4]);
-	//planet->orbit_distance=planet->orbit_radius;
-
-	if(s[0]>0){
+void Planet::newInstance(int gtype){
+	//initInstance();
+    int n=2*s[2];
+	switch(gtype){
+	default:
+	case GN_RANDOM:
+		if(n<0)
+			newInstance(GN_GASSY);
+		else if(n<0.15)
+			newInstance(GN_ICY);
+		else if(n<0.5)
+			newInstance(GN_OCEANIC);
+		else
+			newInstance(GN_ROCKY);
+		break;		
+	case GN_GASSY:
+		planet_id=planet_cnt+lastn;
 		size=0.03*(1+0.7*s[1]);
 		newGasGiant(this);
+		break;
+	case GN_ICY:
+	case GN_OCEANIC:
+	case GN_ROCKY:
+		planet_id=planet_cnt+lastn;
+		//size=0.001*(0.8+5*r[1]);
+		newRocky(this,gtype);
+		break;
 	}
-	else{
-		size=0.001*(0.8+5*r[1]);
-		newRocky(this);
-	}
+	
 	symmetry=1;
 	set_geometry();
 	setProtoValid(true);
-
 	setNewViewObj(true);
-	//return planet;
+	cout<<"Planet::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<endl;
 }
 
 enum orbital_features{
@@ -4671,7 +4701,7 @@ Color Planetoid::colors[COLORS];
 
 void Planetoid::initInstance(){
 	setRands();
-	if(terrain_type==ICY)
+	if(terrain_type==GN_ICY)
 		setIceColors();
 	else
 		setColors();
@@ -4991,9 +5021,9 @@ std::string Planetoid::randFeature(int type) {
 	return str;
 }
 
-void Planet::newRocky(Planet *planet){
+void Planet::newRocky(Planet *planet,int gtype){
 	cout<<"new Rocky Planet"<<endl;
-	Planetoid::newRocky(planet);
+	Planetoid::newRocky(planet,gtype);
 	planet->day=24*(4+3*s[5]);
 	planet->year=planet->day*(1+3*r[3]);
 	planet->tilt=50*r[8];
@@ -5018,7 +5048,7 @@ std::string Planetoid::newHmapTex(Planetoid *planet){
 	TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 	himg->init();
 	planet->add_image(himg);
-	if(planet->terrain_type==ICY){
+	if(planet->terrain_type==GN_ICY){
 		r[9]*=2;
 		r[6]*=2;
 	}
@@ -5038,7 +5068,7 @@ std::string Planetoid::newGlobalTex(Planetoid *planet){
 std::string Planetoid::newDualGlobalTex(Planetoid *planet){
 	char buff[2048];
 	pushInstance(planet);
-	if(planet->terrain_type==ICY){
+	if(planet->terrain_type==GN_ICY){
 		r[5]*=0.25;
 		r[6]*=0.25;
 	}
@@ -5126,7 +5156,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	str+="+Z(";
 	if(r[8]>0.5)
 		str+=randFeature(RND_VOLCANOS);
-	if(planet->terrain_type==OCEANIC){
+	if(planet->terrain_type==GN_OCEANIC){
 		if(r[7]>0.5){
 			r[6]*=0.5;
 			r[7]*=0.5;
@@ -5149,7 +5179,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	return str;
 	
 }
-void Planetoid::newRocky(Planetoid *planet){
+void Planetoid::newRocky(Planetoid *planet, int gtype){
 	char surface[2048];
 	char buff[4098];
 	int nsave=lastn;
@@ -5157,8 +5187,26 @@ void Planetoid::newRocky(Planetoid *planet){
 	ncount=0;
 	Sky *sky=0;
 	str="";
+	planet->terrain_type=gtype;
 	
-	if (r[2] > 0.1 && planet->size >= 0.001) {
+	//planet->setName("Rocky");
+
+    switch(gtype){
+    case GN_ROCKY:
+    	break;
+    case GN_ICY:
+		str+=newOcean(planet);
+    	break;
+    case GN_OCEANIC:
+		str+=newOcean(planet);
+    	break;
+    default:
+    case GN_RANDOM:
+   		planet->calcAveTemperature();
+   		planet->size=0.03*(1+0.7*s[1]);
+		break;
+    }
+	if (gtype==GN_OCEANIC || (r[2] > 0.1 && planet->size >= 0.001)) {
 		sky= planet->newSky();
 		planet->addChild(sky);
 		if (sky->pressure >= 0.1) {
@@ -5169,41 +5217,35 @@ void Planetoid::newRocky(Planetoid *planet){
 				clouds = planet->newClouds(true);
 				planet->addChild(clouds);				
 			}
-		}
-		
+		}		
 		planet->shadow_color.set_alpha(0.5);
 	}
-	//planet->setName("Rocky");
-	planet->terrain_type=ROCKY;
-
-	planet->calcAveTemperature();
-		
-	//cout<<"temp:"<<planet->temperature<<" radius:"<<planet->orbit_radius<<endl;
-	if(planet->temperature<400){ // boiling point K
+	if(gtype==GN_RANDOM && planet->temperature<400){ // boiling point K
 		s[0]=lerp(planet->temperature,200,373,-0.6,-1.7);
-		str+=randFeature(RND_SNOW);
-        if(s[1]>0){
-        	s[0]=lerp(planet->temperature,300,400,0,-50000);
-        	if(sky || planet->temperature<300){
-        		if(planet->temperature<300){
-        			if(s[1]>0.6)
-        				str+=newOcean(planet);
-            		planet->terrain_type=ICY;
-        		}
-        		else{
-            		str+=newOcean(planet);
-            		planet->terrain_type=OCEANIC;
-        		}
-        	}
-        }
+		if(s[1]>0){
+			s[0]=lerp(planet->temperature,300,400,0,-50000);
+			if(sky || planet->temperature<300){
+				if(planet->temperature<300){
+					if(s[1]>0.6)
+						str+=newOcean(planet);
+					planet->terrain_type=GN_ICY;
+				}
+				else{
+					str+=randFeature(RND_SNOW);
+					str+=newOcean(planet);
+					planet->terrain_type=GN_OCEANIC;
+				}
+			}
+		}
 	}
-	double lf=planet->terrain_type==ICY?1.5:3.9;
+
+	double lf=planet->terrain_type==GN_ICY?1.5:3.9;
 	num_layers=lf*r[0]*r[0]+1;
-	r[7]*=(planet->terrain_type==ROCKY)?3:1;
+	r[7]*=(planet->terrain_type==GN_ROCKY)?3:1;
 	//if(num_layers<4)
-	if(planet->terrain_type==OCEANIC)
+	if(planet->terrain_type==GN_OCEANIC)
 		r[6]*=0.2;
-	else if(planet->terrain_type==ICY)
+	else if(planet->terrain_type==GN_ICY)
 		r[6]=1;
 	else
 		r[6]=0.5;
@@ -5225,7 +5267,7 @@ void Planetoid::newRocky(Planetoid *planet){
 	else
 	    cout<<"error building planet surface"<<endl;
 	
-	if(planet->typeValue()==ID_PLANET){
+	if(gtype==GN_RANDOM && planet->typeValue()==ID_PLANET){
 		int moons=r[7]*2.1;
 		moon_cnt=0;
 		for(int i=0;i<moons;i++){
@@ -5235,18 +5277,19 @@ void Planetoid::newRocky(Planetoid *planet){
 	char pname[64];
 	switch(planet->terrain_type){
 	default:
-	case ROCKY:
+	case GN_ROCKY:
 		sprintf(pname,"Rocky-l%d",num_layers);
 		break;
-	case OCEANIC:
+	case GN_OCEANIC:
 		sprintf(pname,"Oceanic-l%d",num_layers);
 		break;
-	case ICY:
+	case GN_ICY:
 		sprintf(pname,"Icy-l%d",num_layers);
 		break;
 	}
 	planet->setName(pname);
 	planet_id=planet_cnt+lastn;
+	planet->get_vars();
 	Render.invalidate_textures();
 	images.invalidate();
 	images.makeImagelist();
@@ -5277,7 +5320,7 @@ void Planet::newGasGiant(Planet *planet){
 	planet->year=planet->day*(1+3*r[3]);
 	planet->detail=4;
 	
-	planet->terrain_type=GASGIANT;
+	planet->terrain_type=GN_GASSY;
 
 	char buff[4096];
 

@@ -47,6 +47,7 @@ static LongSym iopts[]={
 	{"BORDER",	BORDER},
 	{"S",		SEXPR},
 	{"A",		AEXPR},
+	{"TMP",	    TMP},
 	{"RANDOMIZE",	RANDOMIZE},
 
 };

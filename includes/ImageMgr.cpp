@@ -29,8 +29,8 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-//#define DEBUG_IMAGES
-//#define DEBUG_IMAGE_INFO
+#define DEBUG_IMAGES
+#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -1281,10 +1281,10 @@ void ImageReader::makeImagelist()
 	  	File.getLeavesDir(sdir);
 	  	addTiledImages(sdir); 	
 
-	  	File.getBitmapsDir(sdir);
-	  	addImages(sdir);
-
 	  	File.getTmpDir(sdir);
+	  	addImages(sdir);
+	  	
+	  	File.getBitmapsDir(sdir);
 	  	addImages(sdir);
 
 	  	File.getImportsDir(sdir);
@@ -1513,7 +1513,6 @@ Image *ImageReader::open(char *fname)
 {
 	char dir[512];
 	Image *im=0;
-	
 	dir[0]=0;
 #ifdef TIME_OPEN
 	static TimeIt timer;

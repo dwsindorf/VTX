@@ -69,6 +69,7 @@ enum  {
 	INUSE       = 0x00100000,   // image is in use
 	NEWIMG      = 0x00200000,   // image is new
 	CHANGED     = 0x00400000,   // image is modified
+	TMP         = 0x00800000,   // image is tmp
 
 	BANDS   	= 0x10000000,
 	IMAGE   	= 0x20000000,

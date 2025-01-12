@@ -343,6 +343,7 @@ bool Scene::containsViewobj(ObjectNode *obj){
 	return ((Orbital *)obj)->containsViewobj();
 }
 
+
 //-------------------------------------------------------------
 // Scene::setSeed() set a random seed
 //-------------------------------------------------------------
@@ -790,7 +791,7 @@ void Scene::save()
 //-------------------------------------------------------------
 void Scene::show()
 {
- 	save(stdout);
+ 	//save(stdout);
 }
 
 //-------------------------------------------------------------
@@ -814,13 +815,10 @@ void Scene::save(FILE *fp)
 	ViewFrame *last_view=views->at();
 	ViewFrame *frame;
 	last_view->save(this);
-
 	//cout<< "save ht:"<<height/FEET<<" last:"<<last_view->point.z/FEET<<endl;
-
 	fprintf(fp,"Scene() {\n");
 	inc_tabs();
 	exprs.save(fp);
-
 	views->ss();
 	frame=views->incr();
 	int i=0;
@@ -835,7 +833,6 @@ void Scene::save(FILE *fp)
 	objects->save(fp);
 	dec_tabs();
 	fprintf(fp,"}\n");
-
 	views->setFrame(last_view);
 	last_view->restore(this);
 }
@@ -845,6 +842,7 @@ void Scene::save(FILE *fp)
 //-------------------------------------------------------------
 void Scene::open(char *fn)
 {
+	cout<<"Open"<<endl;
 	reset();
 
 	set_action("Building..");
@@ -939,6 +937,7 @@ void Scene::open(char *fn)
 // Scene::rebuild_all() rebuild
 //-------------------------------------------------------------
 void Scene::rebuild_all(){
+	cout<<"Rebuild_all"<<endl;
 	//Noise::resetStats();
 	//timing_start=clock();
 	extern void init_test_params();

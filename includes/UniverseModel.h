@@ -66,13 +66,14 @@ enum gen_codes{
 	GN_GASSY  		= 0x0040000,
 	GN_ROCKY  		= 0x0050000,
 	GN_ICY  		= 0x0060000,
-	GN_PLANET  		= GN_GASSY|GN_ROCKY|GN_ICY,
-	GN_MOON  		= GN_GASSY|GN_ROCKY|GN_ICY,
-	GN_SINGLE       = 0x0070000,
-	GN_BINARY       = 0x0080000,
-	GN_TRIPLE       = 0x0090000,
-	GN_QUAD         = 0x00a0000,
-	GN_STAR         = GN_SINGLE|GN_BINARY|GN_TRIPLE|GN_QUAD,
+	GN_OCEANIC      = 0x0070000,
+	GN_PLANET  		= GN_GASSY|GN_ROCKY|GN_ICY|GN_OCEANIC,
+	GN_MOON  		= GN_GASSY|GN_ROCKY|GN_ICY|GN_OCEANIC,
+	GN_RED_STAR     = 0x00a0000,
+	GN_YELLOW_STAR  = 0x00b0000,
+	GN_WHITE_STAR   = 0x00c0000,
+	GN_BLUE_STAR    = 0x00d0000,
+	GN_STAR         = GN_YELLOW_STAR|GN_WHITE_STAR|GN_BLUE_STAR|GN_RED_STAR,
 
 };
 class UniverseModel : public Model
@@ -95,8 +96,8 @@ public:
 	int getAddList(NodeIF*,LinkedList<ModelSym*>&list);
 	int getSaveList(NodeIF*,LinkedList<ModelSym*>&list);
 	int getReplaceList(NodeIF*,LinkedList<ModelSym*>&list);
-	ModelSym* getObjectSymbol(int);
-	ModelSym* getTypeSymbol(int);
+	static ModelSym* getObjectSymbol(int);
+	static ModelSym* getTypeSymbol(int);
 	void getTypeList(int type,LinkedList<ModelSym*>&list);
 	void getFileList(int type,LinkedList<ModelSym*>&list);
 	void getObjectDirectory(int type,char *dir);
@@ -104,5 +105,6 @@ public:
 	TreeNode *buildTree(NodeIF *);
 	void setType(NodeIF *);
 	NodeIF *open_node(NodeIF *parent,char *s);
+	static std::string typeSymbol(int type);
 };
 #endif

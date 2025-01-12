@@ -13,7 +13,7 @@
 //#define DEBUG_TD_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
 //#define DEBUG_IMAGES
-//#define DEBUG_VALIDATE
+#define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
 
@@ -1369,7 +1369,6 @@ void TerrainMgr::validateTextures()
     if(!parent || !root)
         return;
 	CurrentScope=this;
-	
 
 	textures.reset();
 	root->visit(get_textures);

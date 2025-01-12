@@ -967,7 +967,7 @@ void VtxSceneDialog::saveSelected(){
     wxTreeItemId item = treepanel->GetSelection();
     TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(item);
     NodeIF *obj=node->getObject();
-    ModelSym* sym=TheScene->model->getObjectSymbol(obj->getFlag(TN_TYPES));
+    ModelSym* sym=UniverseModel::getObjectSymbol(obj->getFlag(TN_TYPES));
 
     char *name=obj->getName();
     if(name && strlen(name)>0)
@@ -1060,7 +1060,7 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
 	
  	replace_list.free();
-	ModelSym* sym=TheScene->model->getObjectSymbol(type);
+	ModelSym* sym=UniverseModel::getObjectSymbol(type);
 	replace_list.add(sym);
 	submenu->Append(TABS_REPLACE|i++,"Simple");
 	

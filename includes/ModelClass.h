@@ -137,8 +137,8 @@ public:
 	virtual int getSaveList(NodeIF*,LinkedList<ModelSym*>&list);
 	virtual int getReplaceList(NodeIF*,LinkedList<ModelSym*>&list);
 
-	virtual ModelSym* getObjectSymbol(int);
-	virtual ModelSym* getTypeSymbol(int);
+	//virtual ModelSym* getObjectSymbol(int);
+	//virtual ModelSym* getTypeSymbol(int);
 
 	virtual void getTypeList(int,LinkedList<ModelSym*>&list);
 	virtual void getFileList(int type,LinkedList<ModelSym*>&list);

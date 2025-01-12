@@ -439,9 +439,11 @@ public:
     void getStarData(double *d, char *m);
     NodeIF *getInstance();
     NodeIF *getInstance(int type);
+    NodeIF *getInstance(NodeIF *prev,int m) {return getInstance(m);}
     static Star *newInstance();
     static Star *newInstance(int);
     static void random(double &temp, double &r, Color &color);
+    static void type(int i,double &temp, double &r, Color &color);
     static TNinode *image(Color color);
     static TNtexture *texture();
 };
@@ -646,7 +648,6 @@ class Planetoid : public Spheroid
 protected:
 
 public:
-	enum {GASGIANT,OCEANIC,ROCKY,ICY,VOLCANIC};
 	
 	static std::string randFeature(int type);
     //OceanState oceanState;
@@ -742,7 +743,8 @@ public:
 	virtual double liquidToGas(double t);
     virtual void set_view_info();
 	virtual void set_surface(TerrainData&);
-	static void newRocky(Planetoid *);
+	static void newRocky(Planetoid *, int gtype);
+	static void newRocky(Planetoid *) { newRocky(0);}
 	static std::string newLocalTex(Planetoid *);
 	static std::string newGlobalTex(Planetoid *);
 	static std::string newDualGlobalTex(Planetoid *);
@@ -774,10 +776,13 @@ public:
 
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
-	NodeIF *getInstance(NodeIF *prev);
-	void newInstance();
+	NodeIF *getInstance(NodeIF *prev) { return getInstance(prev,0);}
+    NodeIF *getInstance(NodeIF *prev,int m);
+	void newInstance() {newInstance(0);}
+    void newInstance(int g);
 	static void newGasGiant(Planet *);
-	static void newRocky(Planet *);
+	static void newRocky(Planet *,int gtype);
+	static void newRocky(Planet *) {newRocky(0);};
 	void addMoon();
 };
 

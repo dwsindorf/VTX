@@ -213,6 +213,7 @@ void VtxImageTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
+		//cout<<is->name()<<endl;
 		//int smode=m_showmode->GetSelection();
 		//if(is->info&(INUSE|NEWIMG))
 			m_file_menu->Append(is->name());

@@ -390,17 +390,25 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("GasGiant",type);
 	case GN_ROCKY:
 		return new ModelSym("Rocky",type);
+	case GN_OCEANIC:
+		return new ModelSym("Oceanic",type);
 	case GN_ICY:
 		return new ModelSym("Icy",type);
-	case GN_SINGLE:
-		return new ModelSym("Single",type);
-	case GN_BINARY:
-		return new ModelSym("Binary",type);
-	case GN_TRIPLE:
-		return new ModelSym("Triple",type);
-	case GN_QUAD:
-		return new ModelSym("Quad",type);
+	case GN_RED_STAR:
+		return new ModelSym("Red",type);
+	case GN_YELLOW_STAR:
+		return new ModelSym("Yellow",type);
+	case GN_WHITE_STAR:
+		return new ModelSym("White",type);
+	case GN_BLUE_STAR:
+		return new ModelSym("Blue",type);
    }
+}
+std::string UniverseModel::typeSymbol(int type){
+	ModelSym *tmp=getTypeSymbol(type);
+	std::string str(tmp->name());
+	delete tmp;
+	return str;
 }
 //-------------------------------------------------------------
 // UniverseModel::TypeTypeList() return list of generated objects
@@ -413,12 +421,14 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 	case TN_MOON:
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_ROCKY));
+		list.add(getTypeSymbol(GN_OCEANIC));
 		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANET:
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_GASSY));
 		list.add(getTypeSymbol(GN_ROCKY));
+		list.add(getTypeSymbol(GN_OCEANIC));
 		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANT:
@@ -429,10 +439,10 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		break;
 	case TN_STAR:
 		list.add(getTypeSymbol(GN_RANDOM));
-		list.add(getTypeSymbol(GN_SINGLE));
-		list.add(getTypeSymbol(GN_BINARY));
-		list.add(getTypeSymbol(GN_TRIPLE));
-		list.add(getTypeSymbol(GN_QUAD));
+		list.add(getTypeSymbol(GN_RED_STAR));
+		list.add(getTypeSymbol(GN_YELLOW_STAR));
+		list.add(getTypeSymbol(GN_WHITE_STAR));
+		list.add(getTypeSymbol(GN_BLUE_STAR));
 		break;
 	}
 }
