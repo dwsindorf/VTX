@@ -51,7 +51,6 @@ char *FileUtil::sprites=(char*)"Sprites";
 char *FileUtil::plants=(char*)"Plants";
 char *FileUtil::branches=(char*)"Branch";
 char *FileUtil::leaves=(char*)"Leaf";
-char *FileUtil::tmp=(char*)"tmp";
 char *FileUtil::imports=(char*)"Images";
 char *FileUtil::hmaps=(char*)"Hmaps";
 
@@ -85,19 +84,6 @@ void FileUtil::getBitmapsDir(char *dir)
   	getBaseDirectory(base);
 	makeSubDirectory(base,bitmaps,path);
 	strcat(path,separator);
-	strcpy(dir,path);
-}
-//-------------------------------------------------------------
-// FileUtil::getBitmapsDir get bitmaps directory
-//-------------------------------------------------------------
-void FileUtil::getTmpDir(char *dir)
-{
-	char base[MAXSTR];;
-	char path[MAXSTR];
-	getBitmapsDir(base);
-	makeSubDirectory(base,tmp,path);
-	strcat(path,separator);
-	//cout<<"TMP ="<<path<<endl;
 	strcpy(dir,path);
 }
 //-------------------------------------------------------------

@@ -57,6 +57,7 @@ protected:
 	wxCheckBox *m_nearest_check;
 	wxCheckBox *m_alpha_check;
 	wxCheckBox *m_reflect_check;
+	wxCheckBox *m_show_tmps;
 
 	wxButton *m_next_colors;
 	wxButton *m_prev_colors;
@@ -109,6 +110,7 @@ public:
     void OnNextColors(wxCommandEvent& event);
     void OnPrevColors(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event);
+    void OnShowTmps(wxCommandEvent& event);
     void OnFileSelect(wxCommandEvent& event);
     void OnImageSize(wxCommandEvent& event);
 

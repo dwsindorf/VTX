@@ -419,7 +419,6 @@ void VtxFrame::OnClose( wxCloseEvent& WXUNUSED(event) )
 //-------------------------------------------------------------
 void VtxFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 {
-    cout << "OnExit" << endl;
     //m_canvas->quit();
     Close(true);
 }

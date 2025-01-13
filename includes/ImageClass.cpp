@@ -242,6 +242,7 @@ void TNinode::optionString(char *c)
 //************************************************************
 // Class TNbands
 //************************************************************
+bool TNbands::show_tmps=true;
 TNbands::TNbands(char *s, int l, TNode *r) : TNinode(s,l,r)
 {
 	opts|=BANDS|T1D|BMP|SPX;
@@ -496,6 +497,7 @@ void TNbands::init()
 //************************************************************
 // Class TNimage
 //************************************************************
+bool TNimage::show_tmps=true;
 TNimage::TNimage(char *s, int l, TNode *r) : TNinode(s,l,r)
 {
 	opts|=IMAGE|BMP|JPG|SPX;

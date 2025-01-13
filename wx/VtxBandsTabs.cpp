@@ -28,6 +28,7 @@ enum{
     ID_MOD_SLDR,
     ID_MOD_TEXT,
     ID_COLORS,
+	ID_SHOW_TMPS,
 };
 
 #define VALUE1   60
@@ -60,6 +61,7 @@ EVT_CHECKBOX(ID_CLAMP,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_REFLECT,VtxBandsTabs::OnChanged)
+EVT_CHECKBOX(ID_SHOW_TMPS,VtxBandsTabs::OnShowTmps)
 
 EVT_CHOICE(ID_FILELIST,VtxBandsTabs::OnFileSelect)
 EVT_CHOICE(ID_IMAGE_SIZE, VtxBandsTabs::OnImageSize)
@@ -149,6 +151,9 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
     image_options->Add(m_norm_check, 0, wxALIGN_LEFT|wxALL,5);
     m_invert_check=new wxCheckBox(panel, ID_INVERT, "Invert");
     image_options->Add(m_invert_check, 0, wxALIGN_LEFT|wxALL,5);
+
+    m_show_tmps=new wxCheckBox(panel, ID_SHOW_TMPS, "Show Tmps");
+    image_options->Add(m_show_tmps, 0, wxALIGN_LEFT|wxALL,5);
 
     image_options->SetMinSize(wxSize(TABS_WIDTH-w,h));
 
@@ -367,6 +372,8 @@ void VtxBandsTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
+		if(!TNbands::show_tmps && (is->info & TMP))
+			continue;
 		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
@@ -421,7 +428,7 @@ void VtxBandsTabs::setObjAttributes(){
 	else
 		setModified(true);
 	Render.invalidate_textures();
-
+    TNbands::show_tmps=m_show_tmps->GetValue();
 	update_needed=false;
 	imageDialog->UpdateControls();
 }
@@ -680,6 +687,7 @@ void VtxBandsTabs::displayImage(char *name){
 void VtxBandsTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
+	m_show_tmps->SetValue(TNbands::show_tmps);
 	makeImageList();
 	displayImage((char*)m_name.ToAscii());
 }
@@ -696,8 +704,6 @@ void VtxBandsTabs::makeNewImage(char *name, char *iexpr){
 	displayImage(name);
 }
 
-
-
 //-------------------------------------------------------------
 // VtxBandsTabs::OnChanged() generic handler attribute change event
 //-------------------------------------------------------------
@@ -705,6 +711,13 @@ void VtxBandsTabs::OnChanged(wxCommandEvent& event){
 	setObjAttributes();
 }
 
+//-------------------------------------------------------------
+// VtxBandsTabs::OnShowTmps() handler for image show event
+//-------------------------------------------------------------
+void VtxBandsTabs::OnShowTmps(wxCommandEvent& event){
+	TNbands::show_tmps=m_show_tmps->GetValue();
+	makeImageList();
+}
 //-------------------------------------------------------------
 // VtxBandsTabs::OnFileSelect() handler for image file select event
 //-------------------------------------------------------------

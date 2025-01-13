@@ -27,7 +27,7 @@ extern double Theta,Phi,Radius,Sfact;
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
 
-#define TDIR tmp/
+
 static int debug_temp=DEBUG_TEMP;
 
 extern const char *pstg[];
@@ -2935,7 +2935,7 @@ void Star::random(double &temp, double &radius, Color &color){
 TNinode *Star::image(Color tc){
 	char buff[2048];
 
-	sprintf(buff,"bands(\"tmp/S%d\",CLAMP,16",star_id);
+	sprintf(buff,"bands(\"S%d\",TMP|CLAMP,16",star_id);
 	Color colors[5];
 	colors[0]=tc.lighten(0.75);
 	colors[1]=tc.lighten(0.5);
@@ -2968,7 +2968,7 @@ TNtexture *Star::texture(){
  char buff[256];
  char noise_expr[128];
  sprintf(noise_expr,"noise(%s|FS|NABS|SQR|UNS|TA|RO1,0.9,8.9,0.9,0.01,2.06,1,1,0,%g,1e-6)",ntype[nt],offset[nt]);
- sprintf(buff,"Texture(\"tmp/S%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
+ sprintf(buff,"Texture(\"S%d\",BORDER|S|TEX,%s,0.5,2,1,0,1,2,1,0.9,0,0,0,0)",star_id,noise_expr);
  TNtexture *nc=(TNtexture*)TheScene->parse_node(buff);
  return nc;
 }
@@ -4762,17 +4762,17 @@ std::string Planetoid::randFeature(int type) {
 	char buff[4096];
 	switch(type){
 	case RND_TEXNAME:
-		str="\"tmp/P";
+		str="\"P";
 		str+=std::to_string(planet_id);
 		str+="\"";
 		break;
 	case RND_HTEXNAME:
-		str="\"tmp/H";
+		str="\"H";
 		str+=std::to_string(planet_id);
 		str+="\"";
 		break;
 	case RND_LTEXNAME:
-		str="\"tmp/L";
+		str="\"L";
 		str+=std::to_string(planet_id);
 		str+="\"";
 		break;
@@ -4869,7 +4869,7 @@ std::string Planetoid::randFeature(int type) {
 	case RND_BANDS:
 		str="bands(";
 		str+=randFeature(RND_TEXNAME);
-		str+=",NORM|REFLECT,64,";
+		str+=",TMP|NORM|REFLECT,64,";
 		str+=std::to_string(0.3*r[5]); // random
 		str+=",";
 		str+=std::to_string(0.5*r[6]); // mix
@@ -4919,7 +4919,7 @@ std::string Planetoid::randFeature(int type) {
 	case RND_LOCAL_IMAGE:
 		str="image(";
 		str+=randFeature(RND_LTEXNAME);
-		str+=",ACHNL|NORM,256,256,";
+		str+=",TMP|ACHNL|NORM,256,256,";
 		if(s[7]>0.0)
 			str+=randFeature(RND_HCRATERS);
 		else
@@ -4943,7 +4943,7 @@ std::string Planetoid::randFeature(int type) {
 	case RND_HMAP_IMAGE:
 		str="image(";
 		str+=randFeature(RND_HTEXNAME);
-		str+=",GRAY|NORM,256,256,";
+		str+=",TMP|GRAY|NORM,256,256,";
 		if(r[7]>0.8)
 			str+=randFeature(RND_HCRATERS);
 		else if(r[7]>0.6)
@@ -5354,7 +5354,7 @@ void Planet::newGasGiant(Planet *planet){
     double delf=2.2+s[6];
     double dela=0.4+r[9];
 
-    sprintf(buff,"Texture(\"tmp/P%d\",S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
+    sprintf(buff,"Texture(\"P%d\",S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
     		planet_id,0.5+0.5*s[3],noise_expr1,noise_expr2,noise_expr3,
 			scale,bump,ampl,offset,levels,delf,dela);
 
@@ -7948,7 +7948,7 @@ Ring *Ring::newInstance(){
 	
 	char buff[2048];
 
-	sprintf(buff,"bands(\"tmp/R%d\",NORM|REFLECT,64,%g,%g",ring_id,0.2+0.1*s[0],0.4+0.2*s[1]);
+	sprintf(buff,"bands(\"R%d\",TMP|NORM|REFLECT,64,%g,%g",ring_id,0.2+0.1*s[0],0.4+0.2*s[1]);
 
 	for(int i=0;i<ncolors;i++){
 		Color c=colors[i];
@@ -7961,7 +7961,7 @@ Ring *Ring::newInstance(){
 	Render.invalidate_textures();
 	ring->add_image(img);
 	
-	sprintf(buff,"Texture(\"tmp/R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,%g,1,0,1,2,1,0,0,0,0,0)",ring_id,0.1+r[0]);
+	sprintf(buff,"Texture(\"R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,%g,1,0,1,2,1,0,0,0,0,0)",ring_id,0.1+r[0]);
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
 	if(tex){

@@ -41,6 +41,7 @@ public:
 	virtual int itype()        { return 0;}
 	virtual int t1d()          { return opts&T1D;}
 	virtual int alpha()        { return opts&ACHNL;}
+	virtual int tmp()          { return opts&TMP;}
 	virtual bool texActive();
 	virtual bool bumpActive();
 	virtual bool hmapActive();
@@ -94,6 +95,8 @@ public:
     const char *typeName()	    { return "image";}
 	const char *symbol()	    { return "image";}
 	int itype()					{ return IMAGE;}
+	static bool show_tmps;
+
 };
 
 //************************************************************
@@ -112,6 +115,8 @@ public:
     void valueString(char *);
 	int itype()					{ return BANDS;}
 	int t1d()					{ return 1;}
+	static bool show_tmps;
+
 };
 
 #endif

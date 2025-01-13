@@ -66,14 +66,12 @@ public:
 	static char *plants;
 	static char *branches;
 	static char *leaves;
-	static char *tmp;
 
 	static void getSystemDir(char *dir);
 	static void getSavesDir(char *dir);
 	static void getObjectsDir(char *dir);
 	static void getMoviesDir(char *dir);
 	static void getBitmapsDir(char *dir);
-	static void getTmpDir(char *dir);
 	static void getShadersDir(char *dir);
 	static void getImportsDir(char *dir);
 	static void getHmapsDir(char *dir);

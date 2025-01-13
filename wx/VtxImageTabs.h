@@ -42,6 +42,7 @@ protected:
 	wxCheckBox *m_norm_check;
 	wxCheckBox *m_invert_check;
 	wxCheckBox *m_grays_check;
+	wxCheckBox *m_show_tmps;
 
 	ExprTextCtrl *m_image_expr;
 	wxChoice *m_image_width;
@@ -90,6 +91,7 @@ public:
     void OnChanged(wxCommandEvent& event);
     void OnGradientMode(wxCommandEvent& event);
     void OnGraysMode(wxCommandEvent& event);
+    void OnShowTmps(wxCommandEvent& event);
 
     void OnFileSelect(wxCommandEvent& event);
     void OnGradientSelect(wxCommandEvent& event);

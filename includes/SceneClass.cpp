@@ -852,7 +852,6 @@ void Scene::open(char *fn)
 	int stat=status;
 	images.clear_flags();
 	Noise::resetStats();
-	delete_tmpfiles();
 
 	reset();
 	init_for_open();
@@ -1212,11 +1211,19 @@ void Scene::delete_movie_dir(char *s)
 //-------------------------------------------------------------
 void Scene::delete_tmpfiles()
 {
-	char dir[MAXSTR];
+	cout<<"Scene::delete_tmpfiles"<<endl;
 	if(!keeptmps()){
-		FileUtil::getTmpDir(dir);
-		File.deleteDirectoryFiles(dir,(char*)"*.*");
+		cout<<"Scene::deleting tmp images"<<endl;
+		LinkedList<ImageSym *> list;
+		images.getImageInfo(TMP|SPX, list);
+		for(int i=0;i<list.size;i++){
+			char *str=list[i]->fullPath().c_str();
+			File.deleteFile(str);
+			//cout <<list[i]->fullPath()<<endl;
+		}
+		list.free();
 	}
+	char dir[MAXSTR];
 	FileUtil::getShadersDir(dir);
 	File.deleteDirectoryFiles(dir,(char*)"*.debug");
 }

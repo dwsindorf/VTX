@@ -30,7 +30,7 @@ extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
 #define DEBUG_IMAGES
-#define DEBUG_IMAGE_INFO
+//#define DEBUG_IMAGE_INFO
 
 int icnt1=0;
 int icnt2=0;
@@ -195,6 +195,8 @@ void ImageSym::infoString(char *tmp)
     	break;
     case SPX:
     	sprintf(tmp+strlen(tmp),"%s","SPX");
+		if(info&TMP)
+			sprintf(tmp+strlen(tmp),"%s","|TMP");
 		if(info&BANDS)
 			sprintf(tmp+strlen(tmp),"%s","|BANDS");
 		else if(info&IMAGE)
@@ -205,7 +207,7 @@ void ImageSym::infoString(char *tmp)
 			sprintf(tmp+strlen(tmp),"%s","|2D");
 		if(info&BUMP)
 			sprintf(tmp+strlen(tmp),"%s","|BUMP");
-    	break;
+   	break;
     case SPRITE:
     	sprintf(tmp+strlen(tmp),"%s","SPRITE");
     	break;
@@ -986,11 +988,6 @@ uint ImageReader::getFileInfo(char *name, char *dir)
    	info=getImageInfo(name,dir);
    	if(info)
    		return info;
-  	File.getTmpDir(dir);
-   	info=getImageInfo(name,dir);
-   	if(info){
-    	return info;
-   	}
 
    	File.getImportsDir(dir);
 	info=getImageInfo(name,dir);
@@ -1064,6 +1061,8 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	    	TNinode *n=(TNinode*)TheScene->parse_node(spx);
 	   		if(n){
 	   		     info |=n->itype();
+	   		     if(n->tmp())
+	   		    	info|=TMP;
 	   		     if(n->t1d())
 	   		         info|=T1D;
 	   		     else
@@ -1099,6 +1098,11 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			{
 				if(!(info & SPX))
 					continue;
+				if(mode & TMP){
+					if(!(info & TMP))
+						continue;
+					break;
+				}
 				switch(mode&SPXTYPE){
 				case IMAGE:
 					if((info&SPXTYPE) != IMAGE)
@@ -1281,9 +1285,6 @@ void ImageReader::makeImagelist()
 	  	File.getLeavesDir(sdir);
 	  	addTiledImages(sdir); 	
 
-	  	File.getTmpDir(sdir);
-	  	addImages(sdir);
-	  	
 	  	File.getBitmapsDir(sdir);
 	  	addImages(sdir);
 
@@ -1509,7 +1510,7 @@ char *ImageReader::readSpxFile(char *name, char *path)
 //-------------------------------------------------------------
 // ImageReader::open read an image from a file
 //-------------------------------------------------------------
-Image *ImageReader::open(char *fname)
+Image *ImageReader::open(char *name)
 {
 	char dir[512];
 	Image *im=0;
@@ -1518,12 +1519,6 @@ Image *ImageReader::open(char *fname)
 	static TimeIt timer;
 	timer.start();
 #endif
-	std::string tmp(fname);
-	size_t pos=tmp.find("tmp/");
-	if(pos !=std::string::npos){
-		tmp=tmp.erase(pos, strlen("tmp/"));
-	}
-    char *name=tmp.c_str();
 	ImageSym *is=imageInfo(name);
 	if(is){
 		strcat(dir,is->namePath().c_str());

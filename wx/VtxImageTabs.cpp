@@ -24,7 +24,8 @@ enum{
     ID_IMAGE_HEIGHT,
     ID_IMAGE_MAP,
 	ID_GRADIENT,
-	ID_GRADIENT_LIST
+	ID_GRADIENT_LIST,
+	ID_SHOW_TMPS,
 };
 
 #define LABEL1 50
@@ -48,6 +49,7 @@ EVT_CHECKBOX(ID_GRADIENT,VtxImageTabs::OnGradientMode)
 
 EVT_CHOICE(ID_FILELIST,VtxImageTabs::OnFileSelect)
 EVT_CHOICE(ID_GRADIENT_LIST,VtxImageTabs::OnGradientSelect)
+EVT_CHECKBOX(ID_SHOW_TMPS,VtxImageTabs::OnShowTmps)
 
 END_EVENT_TABLE()
 
@@ -104,6 +106,11 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
 	m_image_map=new wxChoice(panel, ID_IMAGE_MAP, wxDefaultPosition,wxSize(100,-1),4, maps);
 	m_image_map->SetSelection(0);
 	hline->Add(m_image_map,0,wxALIGN_LEFT|wxALL,0);
+	
+    m_show_tmps=new wxCheckBox(panel, ID_SHOW_TMPS, "Show Tmps");
+    hline->Add(m_show_tmps, 0, wxALIGN_LEFT|wxALL,5);
+
+
 	fileio->Add(hline,0,wxALIGN_LEFT|wxALL);
 
 	fileio->SetMinSize(wxSize(TABS_WIDTH,-1));
@@ -199,6 +206,14 @@ void VtxImageTabs::makeRevertList(){
 }
 
 //-------------------------------------------------------------
+// VtxBandsTabs::OnShowTmps() handler for image show event
+//-------------------------------------------------------------
+void VtxImageTabs::OnShowTmps(wxCommandEvent& event){
+	TNimage::show_tmps=m_show_tmps->GetValue();
+	makeImageList();
+	makeGradientsList();
+}
+//-------------------------------------------------------------
 // VtxImageTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxImageTabs::makeImageList(){
@@ -213,10 +228,9 @@ void VtxImageTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
-		//cout<<is->name()<<endl;
-		//int smode=m_showmode->GetSelection();
-		//if(is->info&(INUSE|NEWIMG))
-			m_file_menu->Append(is->name());
+		if(!TNimage::show_tmps && (is->info & TMP))
+			continue;
+		m_file_menu->Append(is->name());
 	}
 	int index=m_file_menu->FindString(m_name);
 	if(index== wxNOT_FOUND){
@@ -266,6 +280,8 @@ void VtxImageTabs::makeGradientsList(){
     m_gradient_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*gradient_list)++)){
+		if(!TNimage::show_tmps && (is->info & TMP))
+			continue;
 		m_gradient_file_menu->Append(is->name());
 	}
 	m_gradient_file_menu->SetSelection(0);
@@ -330,6 +346,7 @@ void VtxImageTabs::Invalidate(){
 void VtxImageTabs::getObjAttributes(){
 	//if(!update_needed)
 	//	return;
+	TNimage::show_tmps=m_show_tmps->GetValue();
 	makeImageList();
 	makeGradientsList();
 	displayImage((char*)m_name.ToAscii());
@@ -499,6 +516,7 @@ int VtxImageTabs::rebuild(){
 void VtxImageTabs::setObjAttributes(){
 	if(!update_needed)
 		return;
+	TNimage::show_tmps=m_show_tmps->GetValue();
 	int opts=rebuild();
 	int map_type=opts&IMAP;
 	int display_mode=map_type==SMAP?VtxImageWindow::SCALE:VtxImageWindow::TILE;
