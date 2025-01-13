@@ -227,6 +227,7 @@ bool VtxImageDialog::Show(const bool b){
 		m_2D_tabs->updateControls();
 		m_img_tabs->updateControls();
 		m_map_tabs->updateControls();
+		m_hmap_tabs->updateControls();
 		UpdateControls();
 	}
 	return wxFrame::Show(b);

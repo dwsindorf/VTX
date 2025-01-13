@@ -13,7 +13,8 @@
 enum {
 	OBJ_DELETE,
     ID_DRAWTYPE,
-    ID_QUALITY,
+    ID_RENDER_QUALITY,
+    ID_GENERATE_QUALITY,
     ID_LMODE,
     ID_ANIMATE,
 	ID_TIME_FORWARD,
@@ -99,8 +100,11 @@ EVT_UPDATE_UI(ID_TIME_FORWARD, VtxSceneTabs::OnUpdateTimeDirection)
 EVT_RADIOBOX(ID_DRAWTYPE, VtxSceneTabs::OnDrawMode)
 EVT_UPDATE_UI(ID_DRAWTYPE, VtxSceneTabs::OnUpdateDrawMode)
 
-EVT_RADIOBOX(ID_QUALITY, VtxSceneTabs::OnQuality)
-EVT_UPDATE_UI(ID_QUALITY, VtxSceneTabs::OnUpdateQuality)
+EVT_UPDATE_UI(ID_RENDER_QUALITY, VtxSceneTabs::OnUpdateRenderQuality)
+EVT_CHOICE(ID_RENDER_QUALITY,VtxSceneTabs::OnRenderQualitySelect)
+
+EVT_UPDATE_UI(ID_GENERATE_QUALITY, VtxSceneTabs::OnUpdateGenerateQuality)
+EVT_CHOICE(ID_GENERATE_QUALITY,VtxSceneTabs::OnGenerateQualitySelect)
 
 EVT_RADIOBOX(ID_TEMPMODE, VtxSceneTabs::OnTempMode)
 
@@ -546,11 +550,28 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 	detail_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(detail_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 
-    wxString qmodes[]={"Draft","Normal","High","Photo"};
-    quality=new wxRadioBox(panel,ID_QUALITY,wxT("Quality"),wxPoint(-1,-1),wxSize(TABS_WIDTH-TABS_BORDER,-1),4,
-    		qmodes,4,wxRA_SPECIFY_COLS);
+	wxStaticBoxSizer* quality_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Quality"));
 
-    boxSizer->Add(quality, 0, wxALIGN_LEFT|wxALL,0);
+	quality_options->Add(new wxStaticText(panel,-1,"Render",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxUP, 4);
+
+    wxString qmodes[]={"Draft","Normal","High","Photo"};
+    render_quality=new wxChoice(panel,ID_RENDER_QUALITY,wxDefaultPosition,wxSize(80,-1),4,qmodes);
+    render_quality->SetSelection(1);
+
+    quality_options->Add(render_quality, 0, wxALIGN_LEFT|wxALL,0);
+
+    wxString gmodes[]={"Low","Medium","High","Max"};
+    quality_options->AddSpacer(10);
+	quality_options->Add(new wxStaticText(panel,-1,"Generate",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxUP, 4);
+
+    generate_quality=new wxChoice(panel,ID_GENERATE_QUALITY,wxDefaultPosition,wxSize(80,-1),4,gmodes);
+    generate_quality->SetSelection(1);
+
+    quality_options->Add(generate_quality, 0, wxALIGN_LEFT|wxALL,0);
+
+    quality_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+	boxSizer->Add(quality_options, 0, wxALIGN_LEFT|wxALL,0);
 
     wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Adapt Tests"));
     m_occlusion=new wxCheckBox(panel, ID_ADAPT_OCCLUSION, "Occlusion");
@@ -712,23 +733,33 @@ void VtxSceneTabs::OnUpdateLightMode(wxUpdateUIEvent& event){
 	lightmode->SetSelection(mode);
 }
 
-void VtxSceneTabs::OnQuality(wxCommandEvent& event){
+void VtxSceneTabs::OnRenderQualitySelect(wxCommandEvent& event){
 	int mode=event.GetSelection();
 	TheScene->set_quality(mode);
 }
-void VtxSceneTabs::OnTempMode(wxCommandEvent& event){
-	int mode=event.GetSelection();
-	TheScene->set_tempmode(mode);
+void VtxSceneTabs::OnUpdateRenderQuality(wxUpdateUIEvent& event){
+	int mode=TheScene->render_quality;
+	if(mode!=render_quality->GetSelection())
+		render_quality->SetSelection(mode);
 }
-void VtxSceneTabs::OnUpdateQuality(wxUpdateUIEvent& event){
-	int mode=TheScene->quality;
-	quality->SetSelection(mode);
+void VtxSceneTabs::OnGenerateQualitySelect(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	TheScene->generate_quality=mode;
+}
+void VtxSceneTabs::OnUpdateGenerateQuality(wxUpdateUIEvent& event){
+	int mode=TheScene->generate_quality;
+	if(mode!=generate_quality->GetSelection())
+		generate_quality->SetSelection(mode);
 }
 void VtxSceneTabs::OnTesslevel(wxCommandEvent& event){
 	Map::setTessLevel(m_tesslevel->GetSelection()+1);
 	TheScene->set_changed_render();
 }
 
+void VtxSceneTabs::OnTempMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	TheScene->set_tempmode(mode);
+}
 void VtxSceneTabs::setObjAttributes(){
 	Scene *obj=object();
 	obj->tex_mip=TexMipSlider->getValue();

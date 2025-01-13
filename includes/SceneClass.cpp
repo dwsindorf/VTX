@@ -326,10 +326,15 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
 	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<endl;
+	set_action("Building..");
+
 	NodeIF *m=getPrototype(obj,type);
 	NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,gtype);
 	
+	images.invalidate();
+	images.makeImagelist();
+
 	if(n){
 		n->setType(ttype);
 		n->setParent(p);
@@ -715,7 +720,6 @@ void Scene::init()
 	OceanState::setDefaults();
 	images.invalidate();
 	images.makeImagelist();
-
 }
 
 //-------------------------------------------------------------
@@ -885,6 +889,7 @@ void Scene::open(char *fn)
 	clr_changed_marker();
 	selobj=focusobj=0;
 	objects->visitAll(&Object3D::clr_groups);
+	tmp_files=0;
 	objects->visitAll(&Object3D::init);
 
 	if(viewobj){
@@ -1226,6 +1231,9 @@ void Scene::delete_tmpfiles()
 	char dir[MAXSTR];
 	FileUtil::getShadersDir(dir);
 	File.deleteDirectoryFiles(dir,(char*)"*.debug");
+}
+bool Scene::has_tmpfiles(){
+	return tmp_files>0;
 }
 //-------------------------------------------------------------
 // Scene::delete_frames() delete movie frames
@@ -3065,9 +3073,9 @@ void Scene::set_quality(int q)
 		cellsize=2*dflt_cellsize;
 		break;
 	}
-	if(q<quality)
+	if(q<render_quality)
 	    rebuild_all();
-    quality=q;
+    render_quality=q;
 	set_changed_detail();
 }
 

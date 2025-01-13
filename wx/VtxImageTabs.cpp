@@ -228,7 +228,7 @@ void VtxImageTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
-		if(!TNimage::show_tmps && (is->info & TMP))
+		if(!m_show_tmps->GetValue() && (is->info & TMP))
 			continue;
 		m_file_menu->Append(is->name());
 	}
@@ -280,7 +280,7 @@ void VtxImageTabs::makeGradientsList(){
     m_gradient_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*gradient_list)++)){
-		if(!TNimage::show_tmps && (is->info & TMP))
+		if(!m_show_tmps->GetValue() && (is->info & TMP))
 			continue;
 		m_gradient_file_menu->Append(is->name());
 	}
@@ -346,7 +346,8 @@ void VtxImageTabs::Invalidate(){
 void VtxImageTabs::getObjAttributes(){
 	//if(!update_needed)
 	//	return;
-	TNimage::show_tmps=m_show_tmps->GetValue();
+	m_show_tmps->SetValue(TNimage::show_tmps||TheScene->tmp_files>0);
+	//TNimage::show_tmps=m_show_tmps->GetValue();
 	makeImageList();
 	makeGradientsList();
 	displayImage((char*)m_name.ToAscii());

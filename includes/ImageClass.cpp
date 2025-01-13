@@ -242,7 +242,7 @@ void TNinode::optionString(char *c)
 //************************************************************
 // Class TNbands
 //************************************************************
-bool TNbands::show_tmps=true;
+bool TNbands::show_tmps=false;
 TNbands::TNbands(char *s, int l, TNode *r) : TNinode(s,l,r)
 {
 	opts|=BANDS|T1D|BMP|SPX;
@@ -337,6 +337,9 @@ void TNbands::init()
 
 	if(S0.svalid())
 	    h=(int)S0.s;
+	
+	if(opts & TMP)
+		TheScene->tmp_files++;
 
 	Image *im=images.load(name,this);
 	if(im){
@@ -497,7 +500,7 @@ void TNbands::init()
 //************************************************************
 // Class TNimage
 //************************************************************
-bool TNimage::show_tmps=true;
+bool TNimage::show_tmps=false;
 TNimage::TNimage(char *s, int l, TNode *r) : TNinode(s,l,r)
 {
 	opts|=IMAGE|BMP|JPG|SPX;

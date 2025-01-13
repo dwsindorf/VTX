@@ -429,7 +429,7 @@ bool PlantMgr::setProgram(){
 		tp->plants[i]->setProgram();
 	}
 
-	switch(TheScene->quality){
+	switch(TheScene->render_quality){
 	case DRAFT:
 		min_draw_width=1.5;
 		tfactor=3;

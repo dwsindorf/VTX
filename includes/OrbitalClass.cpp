@@ -1968,6 +1968,9 @@ System *System::newInstance(){
 	}
     system->setProtoValid(true);
     Planetoid::planet_orbit=0;
+	images.invalidate();
+	images.makeImagelist();
+
     return system;
 }
 
@@ -4605,8 +4608,8 @@ NodeIF *Planet::getInstance(NodeIF *prev,int gtype){
 	setParent(prev->getParent());
 	orbit_radius=planet->orbit_radius;
 	newInstance(gtype);
-	//if(planet->terrain_type==gtype)
-		size=planet->size;
+	//if(!planet->terrain_type==GN_GASSY && gtype ==GN_GASSY)
+	//	size=planet->size;
 	return this;
 }
 void Planet::newInstance(int gtype){
@@ -4627,13 +4630,13 @@ void Planet::newInstance(int gtype){
 	case GN_GASSY:
 		planet_id=planet_cnt+lastn;
 		size=0.03*(1+0.7*s[1]);
-		newGasGiant(this);
+		newGasGiant(this,gtype);
 		break;
 	case GN_ICY:
 	case GN_OCEANIC:
 	case GN_ROCKY:
 		planet_id=planet_cnt+lastn;
-		//size=0.001*(0.8+5*r[1]);
+		size=0.001*(0.8+5*r[1]);
 		newRocky(this,gtype);
 		break;
 	}
@@ -4943,7 +4946,7 @@ std::string Planetoid::randFeature(int type) {
 	case RND_HMAP_IMAGE:
 		str="image(";
 		str+=randFeature(RND_HTEXNAME);
-		str+=",TMP|GRAY|NORM,256,256,";
+		str+=",TMP|GRAY|NORM|HMAP,256,256,";
 		if(r[7]>0.8)
 			str+=randFeature(RND_HCRATERS);
 		else if(r[7]>0.6)
@@ -5238,11 +5241,11 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 			}
 		}
 	}
-
+    
 	double lf=planet->terrain_type==GN_ICY?1.5:3.9;
-	num_layers=lf*r[0]*r[0]+1;
+	num_layers=lf*r[0]*r[0];
 	r[7]*=(planet->terrain_type==GN_ROCKY)?3:1;
-	//if(num_layers<4)
+	
 	if(planet->terrain_type==GN_OCEANIC)
 		r[6]*=0.2;
 	else if(planet->terrain_type==GN_ICY)
@@ -5251,6 +5254,10 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		r[6]=0.5;
 	//if(num_layers<3)
 		str+=randFeature(RND_FRACTAL);
+		
+	int max_layers=TheScene->generate_quality;
+	num_layers=num_layers>max_layers?max_layers:num_layers;
+	num_layers+=1;
 	str+=randFeature(RND_MAP);
 	
 	layer_cnt=0;
@@ -5267,11 +5274,13 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	else
 	    cout<<"error building planet surface"<<endl;
 	
-	if(gtype==GN_RANDOM && planet->typeValue()==ID_PLANET){
+	if(planet->typeValue()==ID_PLANET){
 		int moons=r[7]*2.1;
+		int max_moons=TheScene->generate_quality<BEST?1:2;
+		moons=moons>max_moons?max_moons:moons;
 		moon_cnt=0;
 		for(int i=0;i<moons;i++){
-			((Planet *)planet)->addMoon();			
+			((Planet *)planet)->addMoon(gtype);			
 		}
 	}
 	char pname[64];
@@ -5291,11 +5300,11 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	planet_id=planet_cnt+lastn;
 	planet->get_vars();
 	Render.invalidate_textures();
-	images.invalidate();
-	images.makeImagelist();
+	//images.invalidate();
+	//images.makeImagelist();
 }
 
-void Planet::addMoon(){
+void Planet::addMoon(int gtype){
 	cout<<"new Moon"<<endl;
 	Planet *moon=TheScene->getPrototype(this,ID_MOON);
 	moon->setParent(this);
@@ -5307,11 +5316,11 @@ void Planet::addMoon(){
 	moon->orbit_phase=360*r[7];
 	moon->tilt=60*r[8];
 	moon_cnt++;
-	newRocky(moon);
+	newRocky(moon,gtype);
 	addChild(moon);
 	popInstance(this);
 }
-void Planet::newGasGiant(Planet *planet){
+void Planet::newGasGiant(Planet *planet, int gtype){
 	cout<<"building new gas giant"<<endl;
 	planet->setName("Gaseous");
 	planet->setColors();
@@ -5359,7 +5368,7 @@ void Planet::newGasGiant(Planet *planet){
 			scale,bump,ampl,offset,levels,delf,dela);
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
-	 if(tex){
+	if(tex){
 	    planet->terrain.set_root(tex);
 	    planet->terrain.init();
 	 }
@@ -5368,6 +5377,9 @@ void Planet::newGasGiant(Planet *planet){
 
 	Sky *sky=planet->newSky();
 	planet->addChild(sky);
+	//Render.invalidate_textures();
+	//images.invalidate();
+	//images.makeImagelist();
 
 	bool has_rings=r[6]>0.8;
 	if(has_rings){
@@ -5375,9 +5387,12 @@ void Planet::newGasGiant(Planet *planet){
 		planet->addChild(ring);
 	}
 	int moons=r[7]*4;
+	int max_moons=TheScene->generate_quality;
+	moons=moons>max_moons?max_moons:moons;
+
 	moon_cnt=0;
 	for(int i=0;i<moons;i++){
-		planet->addMoon();		
+		planet->addMoon(gtype);		
 	}
 
 }

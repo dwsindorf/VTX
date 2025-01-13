@@ -138,8 +138,8 @@ public:
 	bool        enable_grid;
 	int         temp_mode;
 	bool        prefs_mode;
+	int         tmp_files;
 	static TimeIt timer;
-
 
 	NameList<NameSym*>frame_files;
 	char        filename[256];
@@ -310,6 +310,7 @@ public:
 	void show_status(int);
 	void show_info(int);
 	void delete_tmpfiles();
+	bool has_tmpfiles();
 
 	double get_expr(char *s);
 	void add_expr(char *s,double v);

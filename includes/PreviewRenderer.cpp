@@ -566,7 +566,7 @@ void PreviewRenderer::set_quality(int q)
 		resolution=5;
 		break;
 	}
-    quality=q;
+    render_quality=q;
 	set_changed_map(1);
 	set_changed_detail();
 }

@@ -205,6 +205,8 @@ void ImageSym::infoString(char *tmp)
 			sprintf(tmp+strlen(tmp),"%s","|1D");
 		else
 			sprintf(tmp+strlen(tmp),"%s","|2D");
+		if(info&HMAP)
+			sprintf(tmp+strlen(tmp),"%s","|HMAP");
 		if(info&BUMP)
 			sprintf(tmp+strlen(tmp),"%s","|BUMP");
    	break;
@@ -269,7 +271,7 @@ std::string ImageSym::infoString(){
 }
 std::string ImageSym::toString(){
 	char tmp[MAXSTR];
-	sprintf(tmp,"%-20s %-20s %s",nameString().c_str(),infoString().c_str(),fullPath().c_str());
+	sprintf(tmp,"%-20s %-30s %s",nameString().c_str(),infoString().c_str(),fullPath().c_str());
 	return std::string(tmp);
 }
 //-------------------------------------------------------------
@@ -1067,6 +1069,9 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	   		         info|=T1D;
 	   		     else
 	   		         info|=T2D;
+	   		     if(n->hmapActive())
+	   		    	info|=HMAP;
+	   		    	 
 	   		     info|=TEX;
 				 if(n->alpha())
 					info|=BMPA;
@@ -1119,7 +1124,9 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 						continue;
 					else if((mode & T2D) && !(info & T2D))
 						continue;
-				}				
+				}
+				if((mode & HMAP) && !(info & HMAP))
+					continue;
 			}
 			break;
 		case LEAF:
@@ -1141,6 +1148,18 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 		list.add(nis);
 	}
 }
+
+
+//-------------------------------------------------------------
+// Scene::delete_tmpfiles() tmp files
+//-------------------------------------------------------------
+//void ImageReader::check_tmpfiles()
+//{
+//	LinkedList<ImageSym *> list;
+//	images.getImageInfo(TMP|SPX, list);
+//    tmp_files=list.size;
+//    list.free();    	
+//}
 
 //-------------------------------------------------------------
 // ImageReader::removeAll      remove an image + all image files
@@ -1510,6 +1529,7 @@ char *ImageReader::readSpxFile(char *name, char *path)
 //-------------------------------------------------------------
 // ImageReader::open read an image from a file
 //-------------------------------------------------------------
+//#define TIME_OPEN
 Image *ImageReader::open(char *name)
 {
 	char dir[512];
@@ -1523,15 +1543,15 @@ Image *ImageReader::open(char *name)
 	if(is){
 		strcat(dir,is->namePath().c_str());
 		im=open(name, dir);	
-	}
-	else
-		cout<<"Image not Found "<<name<<endl;
-	if(!im)
-		cout<<"Image not opened "<<name<<endl;
-		
 #ifdef TIME_OPEN
 	timer.showTime("open");
 #endif
+	}
+//	else
+//		cout<<"Image not Found "<<name<<endl;
+//	if(!im)
+//		cout<<"Image not opened "<<name<<endl;
+		
 	return im;
 }
 

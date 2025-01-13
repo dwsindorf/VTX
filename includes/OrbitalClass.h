@@ -780,10 +780,11 @@ public:
     NodeIF *getInstance(NodeIF *prev,int m);
 	void newInstance() {newInstance(0);}
     void newInstance(int g);
-	static void newGasGiant(Planet *);
+	static void newGasGiant(Planet *,int gtype);
+	static void newGasGiant(Planet *) {newGasGiant(0);};
 	static void newRocky(Planet *,int gtype);
 	static void newRocky(Planet *) {newRocky(0);};
-	void addMoon();
+	void addMoon(int gtype);
 };
 
 //************************************************************

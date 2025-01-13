@@ -372,7 +372,7 @@ void VtxBandsTabs::makeImageList(){
     m_file_menu->Clear();
 	ImageSym *is;
 	while((is=(*image_list)++)){
-		if(!TNbands::show_tmps && (is->info & TMP))
+		if(!m_show_tmps->GetValue() && (is->info & TMP))
 			continue;
 		m_file_menu->Append(is->name());
 	}
@@ -687,7 +687,9 @@ void VtxBandsTabs::displayImage(char *name){
 void VtxBandsTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
-	m_show_tmps->SetValue(TNbands::show_tmps);
+	//cout<<"num tmps="<<TheScene->tmp_files<<endl;
+	//m_show_tmps->SetValue(TNbands::show_tmps);
+	m_show_tmps->SetValue(TNbands::show_tmps||TheScene->tmp_files>0);
 	makeImageList();
 	displayImage((char*)m_name.ToAscii());
 }

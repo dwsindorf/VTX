@@ -39,7 +39,8 @@ public:
 	double 		color_mip;
 	double 		bump_mip;
 	double 		freq_mip;
-	int         quality;
+	int         render_quality;
+	int         generate_quality;
 	int         small_width,small_ht;
 	int         med_width,med_ht;
 	int         big_width,big_ht;
@@ -82,6 +83,6 @@ public:
 	virtual void rebuild();
 	virtual void rebuild_all();
 	virtual void render_objects();
-	virtual void set_quality(int i) 	{ quality=i;}
+	virtual void set_quality(int i) 	{ render_quality=i;}
 };
 #endif

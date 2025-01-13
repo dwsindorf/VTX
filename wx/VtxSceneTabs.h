@@ -37,8 +37,11 @@ protected:
 	wxRadioBox *drawmode;
 	wxRadioBox *lightmode;
 	wxRadioBox *filtermode;
-	wxRadioBox *quality;
+
 	wxRadioBox *tempmode;
+	
+	wxChoice *render_quality;
+	wxChoice *generate_quality;
 
 	wxCheckBox *m_forward_time;
 
@@ -130,9 +133,12 @@ public:
     void OnLightMode(wxCommandEvent& event);
     void OnUpdateLightMode(wxUpdateUIEvent& event);
 
-    void OnQuality(wxCommandEvent& event);
-    void OnUpdateQuality(wxUpdateUIEvent& event);
-    
+    void OnRenderQualitySelect(wxCommandEvent& event);
+    void OnUpdateRenderQuality(wxUpdateUIEvent& event);
+ 
+    void OnGenerateQualitySelect(wxCommandEvent& event);
+    void OnUpdateGenerateQuality(wxUpdateUIEvent& event);
+
     void OnTempMode(wxCommandEvent& event);
 
     void OnEndTimeSlider(wxScrollEvent& event);
