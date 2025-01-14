@@ -12,7 +12,7 @@
 //#define DEBUG_EXPR_VARS  // show var status on save
 //#define DEBUG_TD_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 #define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
@@ -991,6 +991,7 @@ TNode *ExprMgr::add_expr(char *s,TNode *r)
 //-------------------------------------------------------------
 TNode *ExprMgr::add_image(TNode *r)
 {
+	//cout<<"ExprMgr adding:"<<((TNinode*)r)->name<<endl;
  	inodes.add(r);
  	return r;
 }
@@ -998,7 +999,7 @@ TNode *ExprMgr::add_image(TNode *r)
 //-------------------------------------------------------------
 // ExprMgr::get_image() get image expr
 //-------------------------------------------------------------
-TNinode *ExprMgr::get_image(char *s, int m)
+TNinode *ExprMgr::get_image(char *s)
 {
 	TNinode *image=0;
 	Node<TNode*> *ptr=inodes.ptr;
@@ -1006,10 +1007,9 @@ TNinode *ExprMgr::get_image(char *s, int m)
 
 	char name1[256];
 	char name2[256];
-	images.hashName(s,m,name1);
+	images.copyName(s,name1);
 	while((image=(TNinode*)inodes++)){
-	    int opts=image->opts;
-	    images.hashName(image->name,opts,name2);
+	    images.copyName(image->name,name2);
 		if(strcmp(name1,name2)==0)
 	    	break;
 	}
@@ -1378,50 +1378,52 @@ void TerrainMgr::validateTextures()
 	TNode    *tnode;
 	ExprMgr *imgr=(ExprMgr*)parent;
 
-#ifdef DEBUG_VALIDATE
-	cout<<"TerrainMgr::validateTextures() start images="<<imgr->inodes.size<<endl;
-#endif
 	imgr->inodes.ss();
 	while((tnode=imgr->inodes++))
 		tnode->NodeIF::invalidate();  // mark unused
 	imgr->inodes.ss();
 
-	// add new texture variables
+	// add new image variables if not present
 
 	while((tex=(TNtexture*)textures++)){
-		//if(!addTextureImage(tex->name))
-		//	continue;
-
-	    int opts=tex->opts;
-		inode=imgr->get_image(tex->name,opts);
+		inode=imgr->get_image(tex->name);
 		if(inode){
+			inode->validate();
 			if(inode->gradName()){
-				TNinode *gnode=imgr->get_image(inode->gradName(),opts);
-				if(gnode)
-					imgr->inodes.free((TNode*)gnode);
-		
-				addTextureImage(inode->gradName());
+				TNinode *gnode=imgr->get_image(inode->gradName());
+				if(gnode){
+					gnode->validate();
+				}
+				else{
+#ifdef DEBUG_VALIDATE
+					cout << "TerrainMgr::validateTextures - adding missing grad image:"<<inode->gradName()<<endl;
+#endif
+					addTextureImage(inode->gradName());
+				}
 			}			
-			imgr->inodes.free((TNode*)inode); // new	
-			//addTextureImage(tex->name);
 		}
-		addTextureImage(tex->name);
+		else{
+#ifdef DEBUG_VALIDATE
+    cout << "TerrainMgr::validateTextures - adding missing tex image: "<<tex->name<<endl;
+#endif
+			addTextureImage(tex->name);
+		}
 	}
 
 	// remove unused texture variables
 
 	imgr->inodes.ss();
-	while((tnode=imgr->inodes.at())){
-		if(tnode->NodeIF::invalid()){  // unused
+	while((inode=imgr->inodes.at())){
+		if(inode->NodeIF::invalid()){  // unused
+#ifdef DEBUG_VALIDATE
+    cout << "TerrainMgr::validateTextures - removing unused image: "<<inode->name<<endl;
+#endif
 			imgr->inodes.pop();
 			delete tnode;
 		}
 		else
 			imgr->inodes++;
 	}
-#ifdef DEBUG_VALIDATE	
-	cout<<"TerrainMgr::validateTextures() end images="<<imgr->inodes.size<<endl;
-#endif
 }
 
 bool TerrainMgr::addTextureImage(char *name){
@@ -1434,7 +1436,7 @@ bool TerrainMgr::addTextureImage(char *name){
 #ifdef DEBUG_IMAGES
     printf("%-20s ADDING TERRAIN IMAGE %s\n","TerrainMgr",name);
 #endif
-    tnode->init();
+    //tnode->init();
     imgr->add_image(tnode);
     FREE(s);
     return true;

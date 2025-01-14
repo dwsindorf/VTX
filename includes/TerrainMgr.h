@@ -268,7 +268,7 @@ public:
 	TNvar  *getVar(char *);
 
 	TNode    *add_image(TNode *r);
-	TNinode  *get_image(char *r, int m);
+	TNinode  *get_image(char *r);
 
 	// NodeIF methods
 

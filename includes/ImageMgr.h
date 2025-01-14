@@ -247,8 +247,7 @@ public:
 	uint getImageInfo(char *f,char *dir);
 	uint getTiledImageInfo(char *f,char *dir);
 	uint getFileInfo(char *n,char *d);
-	void hashName(char *f, int &m, char *fn);
-	void unhashName(char *f, int &m, char *fn);
+	void copyName(char *f, char *fn);
 	ImageSym *getImageInfo(char *f);
 	ImageSym *imageInfo(char *f);
 	void printImageInfo(char *f);

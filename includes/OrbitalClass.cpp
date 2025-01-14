@@ -223,7 +223,7 @@ TNode  *Orbital::add_image(TNode *r)
 }
 TNinode  *Orbital::get_image(char *s, int m)
 {
-	return exprs.get_image(s,m);
+	return exprs.get_image(s);
 }
 
 TNvar *Orbital::addExprVar(const char *name,const char *expr){
@@ -2499,7 +2499,7 @@ void Spheroid::adapt()
 void Spheroid::save(FILE *fp)
 {
 	fprintf(fp,"%s%s",tabs,name());
-	//terrain.validateTextures();
+	terrain.validateTextures();
 	Orbital::save(fp);
 	terrain.save(fp);
 	ObjectNode::save(fp);

@@ -1340,18 +1340,11 @@ void ImageReader::getImagePath(char *name,char *dir)
 //-------------------------------------------------------------
 // ImageReader::hashName   create a hash name
 //-------------------------------------------------------------
-void ImageReader::hashName(char *f,int &m,char *fn)
+void ImageReader::copyName(char *f,char *fn)
 {
     strcpy(fn,f);
- }
-
-//-------------------------------------------------------------
-// ImageReader::hashName   create a hash name
-//-------------------------------------------------------------
-void ImageReader::unhashName(char *f,int &m,char *fn)
-{
-	strcpy(fn,f);
 }
+
 
 //-------------------------------------------------------------
 // ImageReader::load   read an image from a file (TNimage.init)
@@ -1360,7 +1353,7 @@ Image *ImageReader::load(char *f,TNinode *n)
 {
     int info=n->opts;
     char name[256];
-    hashName(f,info,name);
+    copyName(f,name);
     ImageSym *is=getImageInfo(name);
 
 	char buff[4096];
@@ -1398,7 +1391,7 @@ Image *ImageReader::load(char *f,TNinode *n)
 Image *ImageReader::load(char *f,int mode)
 {
     char name[512];
-    hashName(f,mode,name);
+    copyName(f,name);
     Image *image=find(name);
     if(image)
 		return image;
@@ -1427,7 +1420,7 @@ void ImageReader::save(char *f, Image *image, TNinode *n)
 		n->valueString(buff);
     int info=n->opts;
     char name[256];
-	hashName(f,info,name);
+	copyName(f,name);
 	saveSpxFile(name,buff);
 	//char dir[MAXSTR];
     //File.getBitmapsDir(dir);

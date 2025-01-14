@@ -933,6 +933,9 @@ void Scene::open(char *fn)
 	clr_moved();
 	set_changed_detail();
 	Render.invalidate_textures();
+	images.invalidate();
+	images.makeImagelist();
+
 	GLSLMgr::clearTexs();
 	views_mark();
 }

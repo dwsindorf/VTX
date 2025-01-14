@@ -431,9 +431,8 @@ void VtxTexTabs::makeFileList(){
 	images.getImageInfo(info, list);
     files.Clear();
 	for(int i=0;i<list.size;i++){
-		int m;
 		char name[64];
-		images.unhashName(list[i]->name(),m,name);
+		images.copyName(list[i]->name(),name);
 		files.Add(name);
 	}
     files.Sort();
@@ -941,7 +940,7 @@ void VtxTexTabs::getObjAttributes(){
 
   	m_name=tnode->name;
 	char tname[256];
-    images.hashName(tnode->name,opts,tname);
+    images.copyName(tnode->name,tname);
 
 	ImageSym *is=images.getImageInfo(tname);
 	m_type=is->info;
