@@ -246,6 +246,7 @@ Scene::Scene(Model *m)
 	rseed=0;
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
 	keep_tmps=true;
+	tmp_files=0;
 }
 
 Scene::~Scene()
@@ -1220,14 +1221,20 @@ void Scene::delete_movie_dir(char *s)
 void Scene::delete_tmpfiles()
 {
 	cout<<"Scene::delete_tmpfiles"<<endl;
-	if(!keeptmps()){
+	if(!keeptmps() || !Planetoid::use_1d_tmps){
 		cout<<"Scene::deleting tmp images"<<endl;
 		LinkedList<ImageSym *> list;
-		images.getImageInfo(TMP|SPX, list);
+		images.getImageInfo(TMP|SPX|T1D, list);
 		for(int i=0;i<list.size;i++){
-			char *str=list[i]->fullPath().c_str();
-			File.deleteFile(str);
-			//cout <<list[i]->fullPath()<<endl;
+			char *name=list[i]->name();
+			if(name[0]=='H' || name[0]=='S' || name[0]=='R' || name[0]=='L')
+				continue;
+			std:string str=list[i]->namePath()+".spx";;
+			File.deleteFile(str.c_str());
+			//cout <<str.c_str()<<endl;
+			str=list[i]->namePath()+".bmp";
+			File.deleteFile(str.c_str());
+			//cout <<str.c_str()<<endl;
 		}
 		list.free();
 	}

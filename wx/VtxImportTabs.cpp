@@ -124,7 +124,7 @@ void VtxImportTabs::freeImageList() {
 // VtxImportTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxImportTabs::makeImageList(){
-    //images.makeImagelist();
+    images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(type, list);

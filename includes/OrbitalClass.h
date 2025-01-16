@@ -129,7 +129,7 @@ public:
 	virtual int type()		{ return ID_ORBITAL;}
 	virtual TNode *add_expr(int t, char *s, TNode *r);
 	virtual TNode    *add_image(TNode *r);
-	virtual TNinode  *get_image(char *r, int m);
+	virtual TNinode  *get_image(char *r);
 	virtual TNode *set_terrain(TNode *n);
 	virtual void set_surface(TerrainData&);
 	virtual void set_debug(int d);
@@ -682,6 +682,8 @@ public:
 	static int planet_cnt;
 	static int layer_cnt;
 	static int num_layers;
+	static bool use_2d_tmps;
+	static bool use_1d_tmps;
 
 	static int tcount;
 
@@ -754,6 +756,10 @@ public:
 	static std::string newHmapTex(Planetoid *);
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
+    static void makeLists();
+    //static char *getRandTexName();
+    //static char *getRandLayerTexName();
+    //static char *getRandHmapTexName();
 	void setColors();
 	void initInstance();
 	
@@ -762,7 +768,7 @@ public:
 	virtual Sky *newSky();
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
-
+	
 };
 
 //************************************************************
@@ -800,7 +806,9 @@ public:
 	int  type()					{ return ID_MOON;}
 	void newInstance();
 	void set_tilt();
-	NodeIF *getInstance(NodeIF *prev);
+	void newInstance(int gtype);
+    NodeIF *getInstance(NodeIF *prev,int m);
+
 };
 
 //************************************************************

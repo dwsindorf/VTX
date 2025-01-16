@@ -27,7 +27,6 @@ extern double Theta,Phi,Radius,Sfact;
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
 
-
 static int debug_temp=DEBUG_TEMP;
 
 extern const char *pstg[];
@@ -221,7 +220,7 @@ TNode  *Orbital::add_image(TNode *r)
 	TNode  *node=exprs.add_image(r);
 	return node;
 }
-TNinode  *Orbital::get_image(char *s, int m)
+TNinode  *Orbital::get_image(char *s)
 {
 	return exprs.get_image(s);
 }
@@ -4548,15 +4547,116 @@ void Planetoid::set_view_info()
 	}
 }
 
+
 int Planetoid::planet_id=0;
 int Planetoid::planet_cnt=0;
 int Planetoid::moon_cnt=0;
 int Planetoid::layer_cnt=0;
 int Planetoid::num_layers=1;
+bool Planetoid::use_2d_tmps=true;
+bool Planetoid::use_1d_tmps=false;
 
 int Planetoid::tcount=0;
 double Planetoid::planet_orbit=0;
 
+static NameList<ImageSym*> icy_list;
+static NameList<ImageSym*> rocky_list;
+static NameList<ImageSym*> gassy_list;
+
+//static NameList<ImageSym*> bands_list;
+static NameList<ImageSym*> hmaps_list;
+static NameList<ImageSym*> image_list;
+
+void Planetoid::makeLists(){
+	icy_list.free();
+	rocky_list.free();
+	gassy_list.free();
+	hmaps_list.free();
+	image_list.free();
+	LinkedList<ImageSym *> list;
+	//images.getImageInfo(TMP|SPX, list);
+	images.getImageInfo(IMAGE|SPX|T2D, list);
+	list.ss();
+	ImageSym *is=0;
+	char *name;
+	while(is=list++){
+		name=is->name();
+		if(name[0]=='H')
+			hmaps_list.add(is);
+		else
+			image_list.add(is);
+	}
+	list.reset();
+	images.getImageInfo(BANDS|SPX|T1D, list);
+	list.ss();
+	while(is=list++){
+		name=is->name();
+		if(name[0]=='S' || name[0]=='R' )
+			continue;
+		if(name[0]=='I')
+			icy_list.add(is);
+		else if(name[0]=='G')
+			gassy_list.add(is);
+		else if(name[0]=='P')	
+			rocky_list.add(is);
+	}
+	list.reset();
+	images.getImageInfo(HTMAP, list);
+	list.ss();
+	while(is=list++){
+		hmaps_list.add(is);
+	}
+	icy_list.sort();
+	gassy_list.sort();
+	rocky_list.sort();
+	hmaps_list.sort();
+	image_list.sort();
+	cout<<"Planetoid::makeLists()"
+			<<" P:"<<rocky_list.size
+			<<" I:"<<icy_list.size
+			<<" G:"<<gassy_list.size
+			<<" L:"<<image_list.size
+			<<" H:"<<hmaps_list.size
+			<<endl;
+//	bands_list.ss();
+//	int i=0;
+//	while(is=image_list++){
+//		cout<<i++<<" "<<is->name()<<endl;
+//	}
+}
+
+static char *getIcyTexName(){
+	int index=NodeIF::r[5]*icy_list.size;
+	char *name=icy_list[index]->name();
+	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<bands_list.size<<endl;
+	return name;
+}
+static char *getGassyTexName(){
+	int index=NodeIF::r[5]*gassy_list.size;
+	char *name=gassy_list[index]->name();
+	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<bands_list.size<<endl;
+	return name;
+}
+static char *getRockyTexName(){
+	int index=NodeIF::r[5]*rocky_list.size;
+	char *name=rocky_list[index]->name();
+	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<bands_list.size<<endl;
+	return name;
+}
+
+static char *getRandLayerTexName(){
+	int index=NodeIF::r[6]*image_list.size;
+	char *name=image_list[index]->name();
+	//cout<<"LTex Name="<<name<<" index="<<index<<":"<<image_list.size<<endl;
+	return name;
+}
+
+static char *getRandHmapTexName(){
+	int index=NodeIF::r[7]*hmaps_list.size;
+	char *name=hmaps_list[index]->name();
+	//cout<<"HTex Name="<<name<<" index="<<index<<":"<<hmaps_list.size<<endl;
+	return name;
+}
 Sky *Planetoid::newSky(){
 	Sky *sky=Sky::newInstance();
 	sky->size=1.05*size;
@@ -4598,36 +4698,35 @@ Planet::~Planet()
 #endif
 }
 
-
 NodeIF *Planet::getInstance(NodeIF *prev,int gtype){
 	planet_cnt++;
 	Planet *planet=(Planet*)prev;
 	lastn=getRandValue()*1234;
 	setRands();
-	//setRseed(r[0]);
 	setParent(prev->getParent());
 	orbit_radius=planet->orbit_radius;
 	newInstance(gtype);
-	//if(!planet->terrain_type==GN_GASSY && gtype ==GN_GASSY)
-	//	size=planet->size;
 	return this;
 }
+
 void Planet::newInstance(int gtype){
 	//initInstance();
-    int n=2*s[2];
+    double rs=2*s[4];
+	cout<<"Planet::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<" s:"<<rs<<endl;
 	switch(gtype){
 	default:
 	case GN_RANDOM:
-		if(n<0)
+		if(rs<0)
 			newInstance(GN_GASSY);
-		else if(n<0.15)
+		else if(rs<0.15)
 			newInstance(GN_ICY);
-		else if(n<0.5)
+		else if(rs<0.5)
 			newInstance(GN_OCEANIC);
 		else
 			newInstance(GN_ROCKY);
-		break;		
+		return;		
 	case GN_GASSY:
+		makeLists();
 		planet_id=planet_cnt+lastn;
 		size=0.03*(1+0.7*s[1]);
 		newGasGiant(this,gtype);
@@ -4635,6 +4734,7 @@ void Planet::newInstance(int gtype){
 	case GN_ICY:
 	case GN_OCEANIC:
 	case GN_ROCKY:
+		makeLists();
 		planet_id=planet_cnt+lastn;
 		size=0.001*(0.8+5*r[1]);
 		newRocky(this,gtype);
@@ -4645,7 +4745,6 @@ void Planet::newInstance(int gtype){
 	set_geometry();
 	setProtoValid(true);
 	setNewViewObj(true);
-	cout<<"Planet::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<endl;
 }
 
 enum orbital_features{
@@ -4702,6 +4801,8 @@ Color Planetoid::tc;
 int Planetoid::ncolors=6;
 Color Planetoid::colors[COLORS];
 
+static Planetoid *planetoid=0;
+
 void Planetoid::initInstance(){
 	setRands();
 	if(terrain_type==GN_ICY)
@@ -4711,6 +4812,7 @@ void Planetoid::initInstance(){
 }
 
 void Planetoid::setColors(){
+	static bool test=true;
 	double use_theme=r[7];
 	if(use_theme>0.8){
 		int index=(int)THEMES*r[8];
@@ -4722,11 +4824,11 @@ void Planetoid::setColors(){
 			tc.set_blue(tc.blue()+0.1*s[i+2]);
 			colors[i]=tc;		
 		}
-		//cout<<"theme "<<index<<endl;
+		cout<<"theme "<<index<<endl;
 	}
 	else{
 		ncolors=6;
-		tc=Color(0.5+3*r[4],0.4+2*r[5],0.8*r[5]);
+		tc=Color(0.5+3*r[4],0.4+2*r[5],0.6*r[5]);
 		mix=Color(0.4+2*r[7],0.5*r[8],0.2+0.3*r[9]);
 		colors[0]=mix;
 		colors[1]=tc.darken(0.75+0.2*s[2]);
@@ -4734,8 +4836,22 @@ void Planetoid::setColors(){
 		colors[3]=tc;
 		colors[4]=tc.darken(0.9+0.8*s[9]);
 		colors[5]=tc.lighten(0.9+0.8*s[6]);
-		//cout<<"random "<<endl;
-	}	
+		
+	}
+	for(int i=0;i<ncolors;i++){
+		cout<<" "<<r[i];
+		colors[i]=colors[i].desaturate(r[i]);
+	}
+	cout<<endl;
+//	if(test){
+//	    cout<<"random "<<endl;
+//		tc.print();
+//		Color nc=tc.desaturate(0.5);
+//		nc.print();
+//		cout<<endl;
+//	}
+//	test=false;
+
 }
 
 void Planetoid::setIceColors(){
@@ -4753,30 +4869,58 @@ void Planetoid::setIceColors(){
 		tc.set_blue(tc.blue()+0.2*s[i+2]);
 		colors[i]=tc;		
 	}
-	cout<<"setIceColors "<<endl;
+	//cout<<"setIceColors "<<endl;
 	
 }
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
 //-------------------------------------------------------------
+
 std::string Planetoid::randFeature(int type) {
 	int nt;
 	std::string str("");
 	char buff[4096];
 	switch(type){
-	case RND_TEXNAME:
-		str="\"P";
-		str+=std::to_string(planet_id);
+	case RND_TEXNAME:			
+		str="\"";
+
+		if(use_1d_tmps){
+			if(planetoid->terrain_type==GN_ICY)
+				str+=getIcyTexName();
+			else if(planetoid->terrain_type==GN_GASSY)
+				str+=getGassyTexName();
+			else
+				str+=getRockyTexName();								
+		}
+		else{
+			if(planetoid->terrain_type==GN_ICY)
+				str+="I";
+			else if(planetoid->terrain_type==GN_GASSY)
+				str+="G";
+			else
+				str+="P";					
+			str+=std::to_string(planet_id);
+		}
 		str+="\"";
 		break;
 	case RND_HTEXNAME:
-		str="\"H";
-		str+=std::to_string(planet_id);
+		str="\"";
+		if(use_2d_tmps)
+			str+=getRandHmapTexName();
+		else{
+			str+="H";
+			str+=std::to_string(planet_id);
+		}
 		str+="\"";
 		break;
 	case RND_LTEXNAME:
-		str="\"L";
-		str+=std::to_string(planet_id);
+		str="\"";
+		if(use_2d_tmps)
+			str+=getRandLayerTexName();
+		else{
+			str+="L";
+			str+=std::to_string(planet_id);
+		}
 		str+="\"";
 		break;
 	case RND_NOISEFUNC:
@@ -4897,13 +5041,15 @@ std::string Planetoid::randFeature(int type) {
 	case RND_GLOBAL_DUAL_TEX:
 		str="Texture(";
 		str+=randFeature(RND_TEXNAME);
-		str+=",A|NORM|TEX,";
+		str+=",A|NORM|BORDER|TEX,";
 		if(tcount>0)
 			str+="-";
 		str+=randFeature(RND_LAYER_VAR);
 		str+=",";
 		str+=std::to_string(pow(2,5+2*s[0])); // start
-		str+=",2,1,0,1,2,1,0.0,";
+		str+=",2,1,";
+		str+=std::to_string(0.5*r[8]); // offset
+		str+=",1,2,1,0.0,";
 		if(tcount>0)
 			str+="-0.05,-0.1,0.0,-0.07";
 		else
@@ -4913,9 +5059,11 @@ std::string Planetoid::randFeature(int type) {
 	case RND_GLOBAL_TEX:
 		str="Texture(";
 		str+=randFeature(RND_TEXNAME);
-		str+=",NORM|TEX,";
+		str+=",NORM|BORDER|TEX,";
 		str+=std::to_string(pow(2,6+4*s[0])); // start
-		str+=",2,1,0,1,2,1,0,0.02,0.2,0,";
+		str+=",2,1,";
+		str+=std::to_string(0.5*r[8]); // offset
+		str+=",1,2,1,0,0.02,0.2,0,";
 		str+=std::to_string(-0.1*r[9]); // slope bias
 		str+=")\n";
 		break;
@@ -5044,13 +5192,15 @@ void Planetoid::popInstance(Planetoid *planet){
 }
 
 std::string Planetoid::newHmapTex(Planetoid *planet){
-	cout<<"new Hmap"<<endl;
-	char buff[2048];
-	std::string str=randFeature(RND_HMAP_IMAGE);
-	strcpy(buff,str.c_str());	
-	TNinode *himg=(TNinode*)TheScene->parse_node(buff);
-	himg->init();
-	planet->add_image(himg);
+	std::string str;
+	if(!use_2d_tmps){
+		char buff[2048];
+		std::string str=randFeature(RND_HMAP_IMAGE);
+		strcpy(buff,str.c_str());	
+		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
+		himg->init();
+		planet->add_image(himg);
+	}
 	if(planet->terrain_type==GN_ICY){
 		r[9]*=2;
 		r[6]*=2;
@@ -5059,27 +5209,34 @@ std::string Planetoid::newHmapTex(Planetoid *planet){
 }
 
 std::string Planetoid::newGlobalTex(Planetoid *planet){
-	char buff[2048];	
-	std::string str = randFeature(RND_BANDS);
-	strcpy(buff, str.c_str());
-	TNinode *img = (TNinode*) TheScene->parse_node(buff);
-	img->init();
-	planet->add_image(img);
+	//cout<<"Planetoid::newGlobalTex"<<endl;
+	if(!use_1d_tmps){
+		char buff[2048];	
+		std::string str = randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		planet->add_image(img);
+	}
 	return randFeature(RND_GLOBAL_TEX);
 }
 
 std::string Planetoid::newDualGlobalTex(Planetoid *planet){
+	//cout<<"Planetoid::newDualGlobalTex"<<endl;
 	char buff[2048];
 	pushInstance(planet);
+	std::string str;
 	if(planet->terrain_type==GN_ICY){
 		r[5]*=0.25;
 		r[6]*=0.25;
 	}
-	std::string str = randFeature(RND_BANDS);
-	strcpy(buff, str.c_str());
-	TNinode *img = (TNinode*) TheScene->parse_node(buff);
-	img->init();
-	planet->add_image(img);	
+	if(!use_1d_tmps){
+		str = randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		planet->add_image(img);	
+	}
 	str=randFeature(RND_GLOBAL_DUAL_TEX);
     popInstance(planet);
 	return str;
@@ -5088,16 +5245,21 @@ std::string Planetoid::newDualGlobalTex(Planetoid *planet){
 std::string Planetoid::newLocalTex(Planetoid *planet){
 	char buff[2048];	
 	pushInstance(planet);
-	std::string str = randFeature(RND_BANDS);
-	strcpy(buff, str.c_str());
-	TNinode *img = (TNinode*) TheScene->parse_node(buff);
-	img->init();
-	planet->add_image(img);	
-	str=randFeature(RND_LOCAL_IMAGE);
-	strcpy(buff,str.c_str());	
-	TNinode *himg=(TNinode*)TheScene->parse_node(buff);
-	himg->init();
-	planet->add_image(himg);
+	std::string str;
+	if(!use_1d_tmps){
+		str = randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		planet->add_image(img);	
+	}
+	if(!use_2d_tmps){		
+		str=randFeature(RND_LOCAL_IMAGE);
+		strcpy(buff,str.c_str());	
+		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
+		himg->init();
+		planet->add_image(himg);
+	}
     str=randFeature(RND_LOCAL_TEX);
     popInstance(planet);
 	return str;
@@ -5140,7 +5302,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 1) pushinstance
 	// 2) for each layer
 	// 3) add layer header
-	if(s[2]>0.5)
+	if(s[2]>0.25)
 		str+=newGlobalTex(planet);
 	else{
 		planet->addTerrainVar(var_name.c_str(),randFeature(RND_GLOBAL_NOISE).c_str()); // need new variable
@@ -5191,6 +5353,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	Sky *sky=0;
 	str="";
 	planet->terrain_type=gtype;
+	planetoid=planet;
 	
 	//planet->setName("Rocky");
 
@@ -5206,7 +5369,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     default:
     case GN_RANDOM:
    		planet->calcAveTemperature();
-   		planet->size=0.03*(1+0.7*s[1]);
+   		//planet->size=0.03*(1+0.7*s[1]);
 		break;
     }
 	if (gtype==GN_OCEANIC || (r[2] > 0.1 && planet->size >= 0.001)) {
@@ -5305,7 +5468,6 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 }
 
 void Planet::addMoon(int gtype){
-	cout<<"new Moon"<<endl;
 	Planet *moon=TheScene->getPrototype(this,ID_MOON);
 	moon->setParent(this);
 	double max_size=0.2*size;
@@ -5316,6 +5478,7 @@ void Planet::addMoon(int gtype){
 	moon->orbit_phase=360*r[7];
 	moon->tilt=60*r[8];
 	moon_cnt++;
+	cout<<"new Moon size:"<<(moon->size/size)<<endl;
 	newRocky(moon,gtype);
 	addChild(moon);
 	popInstance(this);
@@ -5330,17 +5493,18 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	planet->detail=4;
 	
 	planet->terrain_type=GN_GASSY;
+	planetoid=planet;
 
 	char buff[4096];
-
-	std::string str=randFeature(RND_BANDS);
-	strcpy(buff,str.c_str());
-
-	TNinode *img=(TNinode*)TheScene->parse_node(buff);
-	img->init();
-	Render.invalidate_textures();
-	planet->add_image(img);
+	if(!use_1d_tmps){
+		std::string str=randFeature(RND_BANDS);
+		strcpy(buff,str.c_str());
 	
+		TNinode *img=(TNinode*)TheScene->parse_node(buff);
+		img->init();
+		Render.invalidate_textures();
+		planet->add_image(img);
+	}
 	std::string  noise_func=randFeature(RND_NOISEFUNC);
 	
 	char noise_expr1[2048];
@@ -5353,8 +5517,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	// storms
 	sprintf(noise_expr2,"%g*max(EQU*noise(SIMPLEX|FS|SCALE|SQR|RO1,1,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms);
 	double ripple=1+0.1*s[4];
-
-    sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,noise_func.c_str());
+     sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,noise_func.c_str());
     double scale=0.5+r[5];
     double ampl=1.5+0.5*r[6];
     double bump=-0.02;
@@ -5362,9 +5525,10 @@ void Planet::newGasGiant(Planet *planet, int gtype){
     double levels=2+r[8];
     double delf=2.2+s[6];
     double dela=0.4+r[9];
-
-    sprintf(buff,"Texture(\"P%d\",S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
-    		planet_id,0.5+0.5*s[3],noise_expr1,noise_expr2,noise_expr3,
+    char  *tname=randFeature(RND_TEXNAME).c_str();
+  
+    sprintf(buff,"Texture(%s,S|TEX|BUMP,%g*PHI+%s+%s+%s,%g,%g,%g,%g,%g,%g,%g,0,0,0,0,0)",
+    		tname,0.5+0.5*s[3],noise_expr1,noise_expr2,noise_expr3,
 			scale,bump,ampl,offset,levels,delf,dela);
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
@@ -5392,7 +5556,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	moon_cnt=0;
 	for(int i=0;i<moons;i++){
-		planet->addMoon(gtype);		
+		planet->addMoon(GN_RANDOM);		
 	}
 
 }
@@ -5413,22 +5577,26 @@ Moon::~Moon()
 #endif
 }
 
-NodeIF *Moon::getInstance(NodeIF *prev){
+NodeIF *Moon::getInstance(NodeIF *prev,int gtype){
 	lastn=getRandValue()*1234;
 	setRands();
 	setParent(prev->getParent());
-	size=((Planetoid *)prev)->size;
-	newInstance();
+	size=0.1*((Planetoid *)prev)->size;
+	size*=(1.00+0.9*s[7]);
+	newInstance(gtype);
 	return this;
 }
 
-void Moon::newInstance(){
-	initInstance();
+void Moon::newInstance(int gtype){
+	cout<<"Moon::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<endl;
+	makeLists();
+	//initInstance();
 	setRseed(r[0]);
-	newRocky(this);
+	newRocky(this,gtype);
 	setProtoValid(true);
 	setNewViewObj(true);
 }
+
 //-------------------------------------------------------------
 // Spheroid::set_tilt() 	set axial tilt
 //-------------------------------------------------------------

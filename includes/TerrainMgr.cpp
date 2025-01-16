@@ -12,8 +12,8 @@
 //#define DEBUG_EXPR_VARS  // show var status on save
 //#define DEBUG_TD_VARS  // show var status on save
 //#define DEBUG_INIT  // show var status on save
-#define DEBUG_IMAGES
-#define DEBUG_VALIDATE
+//#define DEBUG_IMAGES
+//#define DEBUG_VALIDATE
 extern void sx_error(char *msg,...);
 extern double Rand();
 
@@ -1004,13 +1004,8 @@ TNinode *ExprMgr::get_image(char *s)
 	TNinode *image=0;
 	Node<TNode*> *ptr=inodes.ptr;
 	inodes.ss();
-
-	char name1[256];
-	char name2[256];
-	images.copyName(s,name1);
 	while((image=(TNinode*)inodes++)){
-	    images.copyName(image->name,name2);
-		if(strcmp(name1,name2)==0)
+		if(strcmp(s,image->name)==0)
 	    	break;
 	}
     inodes.ptr=ptr;

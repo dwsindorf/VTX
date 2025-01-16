@@ -192,6 +192,92 @@ void Color::print()
 		printf("Color(%g,%g,%g)\n",red(),green(),blue());
 }
 
+Color  Color::RGBtoHSV(){
+    double r = red();
+    double g = green();
+    double b = blue();
+    
+    double s=0;
+    double v=0;
+    double h=0;
+
+    double max_val = std::max(r, std::max(g, b));
+    double min_val = std::min(r, std::min(g, b));
+    double delta = max_val - min_val;
+
+    v = max_val;
+    if (max_val == 0) {
+        s = 0;
+        h = 0; // Undefined, but we'll set it to 0
+    } else {
+        s = delta / max_val;
+
+        if (delta == 0) {
+            h = 0; // Undefined, but we'll set it to 0
+        } else {
+            if (max_val == r) {
+                h = (g - b) / delta;
+            } else if (max_val == g) {
+                h = 2 + (b - r) / delta;
+            } else {
+                h = 4 + (r - g) / delta;
+            }
+
+            h *= 60;
+            if (h < 0) {
+                h += 360;
+            }
+
+            h /= 360; // Normalize to [0, 1]
+        }
+    }
+     Color hsv(h,s,v);
+    // cout<<"RGB to HSV"<<endl;
+    // hsv.print();
+
+     return hsv;   
+
+}
+Color  Color::HSVtoRGB(){
+    double r=0;
+    double g=0;
+    double b=0;
+
+    double h = red();
+    double s = green();
+    double v = blue();
+
+    h *= 360; // Convert hue back to [0, 360]
+
+    int i = static_cast<int>(h / 60) % 6;
+    double f = h / 60 - i;
+    double p = v * (1 - s);
+    double q = v * (1 - f * s);
+    double t = v * (1 - (1 - f) * s);
+
+    switch (i) {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        case 5: r = v; g = p; b = q; break;
+    }
+    
+    Color rgb(r,g,b);
+    //cout<<"HSV to RGB"<<endl;
+
+   // rgb.print();
+
+    return rgb;
+}
+Color  Color::desaturate(double f){
+	Color hsv=RGBtoHSV();
+	double s=hsv.green()*(1-f);
+    hsv.set_green(s);    
+    return hsv.HSVtoRGB();
+}
+
 // FColor class
 
 FColor FColor::blend(Color c, double f)

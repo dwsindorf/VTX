@@ -236,6 +236,12 @@ bool VtxImageDialog::Show(const bool b){
 bool VtxImageDialog::Show(wxString name, int type){
 	m_type=type;
 	image_name=name;
+	m_1D_tabs->updateControls();
+	m_2D_tabs->updateControls();
+	m_img_tabs->updateControls();
+	m_map_tabs->updateControls();
+	m_hmap_tabs->updateControls();
+
 	m_tabs->SetSelection(m_type);
 	switch(m_type){
 	case TYPE_2D:

@@ -224,6 +224,9 @@ public:
 	Color contrast_color(Color fg,double ampl);
 	Color color()               { return Color(red(),blue(),green(),1.0);}
 	Color intensify(double f);
+	Color RGBtoHSV();
+	Color HSVtoRGB();
+	Color desaturate(double f);
 };
 
 //************************************************************

@@ -371,7 +371,7 @@ void VtxImageTabs::makeNewImage(char *name, char *iexpr){
 void VtxImageTabs::displayImage(char *name){
 
 	ImageSym *is=0;
-	if(name)
+	if(name && image_list->size)
 		is=image_list->inlist(name);
 	if(!is && image_list->size){
 		is=image_list->base[0];

@@ -431,9 +431,7 @@ void VtxTexTabs::makeFileList(){
 	images.getImageInfo(info, list);
     files.Clear();
 	for(int i=0;i<list.size;i++){
-		char name[64];
-		images.copyName(list[i]->name(),name);
-		files.Add(name);
+		files.Add(list[i]->name());
 	}
     files.Sort();
 	choices->Clear();
@@ -445,7 +443,6 @@ void VtxTexTabs::makeFileList(){
 	if(index== wxNOT_FOUND)
 		index=0;
 	choices->SetSelection(index);
-	//set_image();
 }
 
 void VtxTexTabs::OnFileSelect(wxCommandEvent& event){
@@ -940,7 +937,8 @@ void VtxTexTabs::getObjAttributes(){
 
   	m_name=tnode->name;
 	char tname[256];
-    images.copyName(tnode->name,tname);
+    //images.copyName(tnode->name,tname);
+	strcpy(tname,tnode->name);
 
 	ImageSym *is=images.getImageInfo(tname);
 	m_type=is->info;

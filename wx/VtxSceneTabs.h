@@ -44,6 +44,8 @@ protected:
 	wxChoice *generate_quality;
 
 	wxCheckBox *m_forward_time;
+	wxCheckBox *m_use_2d_tmps;
+	wxCheckBox *m_use_1d_tmps;
 
 	wxCheckBox *m_ave_check;
 	wxCheckBox *m_aa_check;
@@ -257,6 +259,12 @@ public:
     void OnKeepTmps(wxCommandEvent& event){
     	TheScene->keep_tmps=event.IsChecked();
     }
+    void OnUse2DTmps(wxCommandEvent& event){
+    	Planetoid::use_2d_tmps=event.IsChecked();
+    }
+    void OnUse1DTmps(wxCommandEvent& event){
+     	Planetoid::use_1d_tmps=event.IsChecked();
+     }
     void OnForwardTime(wxCommandEvent& event){
     	TheScene->time_direction=event.IsChecked()?1:-1;
     }

@@ -141,7 +141,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	static uint stype=0;
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
-	cout<<"getPrototype t:"<<ttype<<" g:"<<gtype<<endl;
+	//cout<<"getPrototype t:"<<ttype<<" g:"<<gtype<<endl;
 
 	switch(ttype){
 	case TN_GALAXY:
@@ -379,7 +379,7 @@ int UniverseModel::getSaveList(NodeIF *obj,LinkedList<ModelSym*>&list)
 ModelSym* UniverseModel::getTypeSymbol(int type){
     switch(type){
 	case GN_RANDOM:
-		return new ModelSym("<Random>",type);
+		return new ModelSym("[Random]",type);
 	case GN_TREE:
 		return new ModelSym("Tree",type);
 	case GN_BUSH:

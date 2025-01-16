@@ -130,7 +130,6 @@ void SpriteImageMgr::setImageBaseDir(){
  	sprintf(dir,"%s/Textures/Sprites",base);
  	//MALLOC(strlen(dir),char,base_dir);
  	strcpy(base_dir,dir);
- 	cout<<"base dir="<<dir<<endl;
 }
 
 SpriteImageMgr sprites_mgr; // global image manager

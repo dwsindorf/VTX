@@ -15,6 +15,8 @@ enum {
     ID_DRAWTYPE,
     ID_RENDER_QUALITY,
     ID_GENERATE_QUALITY,
+    ID_USE_1D_TMPS,
+	ID_USE_2D_TMPS,
     ID_LMODE,
     ID_ANIMATE,
 	ID_TIME_FORWARD,
@@ -178,11 +180,8 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSceneTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxSceneTabs::OnDelete)
 
 EVT_CHOICE(ID_TIME_SCALE, VtxSceneTabs::OnTimeScale)
-
 EVT_CHOICE(ID_RATE_SCALE, VtxSceneTabs::OnRateScale)
-
 EVT_CHOICE(ID_TESSLEVEL, VtxSceneTabs::OnTesslevel)
-
 
 SET_SLIDER_EVENTS(TEX_MIP,VtxSceneTabs,TexMip)
 SET_SLIDER_EVENTS(COLOR_MIP,VtxSceneTabs,ColorMip)
@@ -204,6 +203,8 @@ EVT_UPDATE_UI(ID_CONTOUR_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 
 EVT_CHECKBOX(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
+EVT_CHECKBOX(ID_USE_2D_TMPS,VtxSceneTabs::OnUse2DTmps)
+EVT_CHECKBOX(ID_USE_1D_TMPS,VtxSceneTabs::OnUse1DTmps)
 
 END_EVENT_TABLE()
 
@@ -552,7 +553,7 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
 	wxStaticBoxSizer* quality_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Quality"));
 
-	quality_options->Add(new wxStaticText(panel,-1,"Render",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxUP, 4);
+	quality_options->Add(new wxStaticText(panel,-1,"Render",wxDefaultPosition,wxSize(60,-1)), 0, wxALIGN_LEFT|wxUP, 4);
 
     wxString qmodes[]={"Draft","Normal","High","Photo"};
     render_quality=new wxChoice(panel,ID_RENDER_QUALITY,wxDefaultPosition,wxSize(80,-1),4,qmodes);
@@ -562,12 +563,21 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
     wxString gmodes[]={"Low","Medium","High","Max"};
     quality_options->AddSpacer(10);
-	quality_options->Add(new wxStaticText(panel,-1,"Generate",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxUP, 4);
+	quality_options->Add(new wxStaticText(panel,-1,"Generate",wxDefaultPosition,wxSize(60,-1)), 0, wxALIGN_LEFT|wxUP, 4);
 
     generate_quality=new wxChoice(panel,ID_GENERATE_QUALITY,wxDefaultPosition,wxSize(80,-1),4,gmodes);
     generate_quality->SetSelection(1);
-
     quality_options->Add(generate_quality, 0, wxALIGN_LEFT|wxALL,0);
+    quality_options->AddSpacer(5);
+
+    quality_options->Add(new wxStaticText(panel, -1, "Reuse Images", wxDefaultPosition, wxSize(50,-1)),5,wxALIGN_LEFT|wxTOP,5);
+
+    m_use_1d_tmps=new wxCheckBox(panel, ID_USE_1D_TMPS, "1d");
+    quality_options->Add(m_use_1d_tmps, 0, wxALIGN_LEFT|wxALL,4);
+   
+    m_use_2d_tmps=new wxCheckBox(panel, ID_USE_2D_TMPS, "2d");
+    quality_options->Add(m_use_2d_tmps, 0, wxALIGN_LEFT|wxALL,4);
+
 
     quality_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -820,6 +830,9 @@ void VtxSceneTabs::updateControls(){
 	updateSlider(ShadowResSlider,Raster.shadow_vsteps);
 	updateSlider(ShadowFovSlider,Raster.shadow_fov);
 	updateSlider(ShadowDovSlider,Raster.shadow_dov);
+	
+	m_use_2d_tmps->SetValue(Planetoid::use_2d_tmps);
+	m_use_1d_tmps->SetValue(Planetoid::use_1d_tmps);
 	
 	tempmode->SetSelection(TheScene->tempmode());
 }
