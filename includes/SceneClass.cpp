@@ -23,6 +23,8 @@
 
 #define JPEG
 
+#define SHOW_IMAGE_INFO
+
 #ifdef JPEG
   extern void writeJpegFile(char *,double d);
   extern void showJpegFile(char *);
@@ -245,7 +247,8 @@ Scene::Scene(Model *m)
 	vmode=VLOG;
 	rseed=0;
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
-	keep_tmps=true;
+	keep_tmps=ONLY_2D;
+	use_tmps=ONLY_2D;
 	tmp_files=0;
 }
 
@@ -456,6 +459,7 @@ void Scene::set_prefs(){
 	PVSET("autogrid",autogrid(),0);
 	PVSET("temp_mode",temp_mode,0);
 	PVSET("keep_tmps",keep_tmps,1);
+	PVSET("use_tmps",use_tmps,1);
 }
 
 //-------------------------------------------------------------
@@ -474,6 +478,7 @@ void Scene::get_prefs(){
 	PVGET("temp_mode",temp_mode,0);
 	PVGET("temp_mode",temp_mode,0);
 	PVGET("keep_tmps",keep_tmps,1);
+	PVGET("use_tmps",use_tmps,1);
 
     if(prefs.get_local("autogrid",Td))
     	set_autogrid(Td.s);
@@ -718,9 +723,16 @@ void Scene::init()
 	Render.set_multitexs(0);
 	set_movie((char*)dflt_movie_name);
 	read_prefs();
+
 	OceanState::setDefaults();
 	images.invalidate();
 	images.makeImagelist();
+	delete_tmpfiles();
+	images.makeImagelist();
+#ifdef SHOW_IMAGE_INFO
+	images.showImageInfo();
+#endif
+
 }
 
 //-------------------------------------------------------------
@@ -1220,24 +1232,44 @@ void Scene::delete_movie_dir(char *s)
 //-------------------------------------------------------------
 void Scene::delete_tmpfiles()
 {
-	cout<<"Scene::delete_tmpfiles"<<endl;
-	if(!keeptmps() || !Planetoid::use_1d_tmps){
-		cout<<"Scene::deleting tmp images"<<endl;
+
+	if(keep_tmps != ALL_TMPS){
+		if(keep_tmps==ONLY_2D)
+			cout<<"Scene::deleting 1D tmp files"<<endl;
+		else // NO_TMPS
+			cout<<"Scene::deleting ALL tmp files"<<endl;
+			
 		LinkedList<ImageSym *> list;
-		images.getImageInfo(TMP|SPX|T1D, list);
-		for(int i=0;i<list.size;i++){
-			char *name=list[i]->name();
-			if(name[0]=='H' || name[0]=='S' || name[0]=='R' || name[0]=='L')
+		if(keep_tmps==ONLY_2D)
+			images.getImageInfo(TMP|SPX|BANDS, list);
+		else
+			images.getImageInfo(TMP|SPX, list);
+		list.ss();
+		std:string str;
+		char *name=0;
+		ImageSym *is=list.at();
+		while(is=list++){
+			name=is->name();		
+			if(keep_tmps==ONLY_2D && (name[0]=='H' || name[0]=='L')){
 				continue;
-			std:string str=list[i]->namePath()+".spx";;
-			File.deleteFile(str.c_str());
-			//cout <<str.c_str()<<endl;
-			str=list[i]->namePath()+".bmp";
-			File.deleteFile(str.c_str());
-			//cout <<str.c_str()<<endl;
+			}
+			int err=0;
+			str=is->namePath()+".spx";
+			name=str.c_str();
+			err=File.deleteFile(name);
+			if(err)
+				cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
+			str=is->namePath()+".bmp";
+			name=str.c_str();
+			err=File.deleteFile(name);
+			if(err)
+				cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
 		}
 		list.free();
 	}
+	else
+		cout<<"Scene::keeping ALL tmp files" <<endl;
+		
 	char dir[MAXSTR];
 	FileUtil::getShadersDir(dir);
 	File.deleteDirectoryFiles(dir,(char*)"*.debug");

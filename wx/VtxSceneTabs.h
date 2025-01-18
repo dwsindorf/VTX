@@ -42,10 +42,10 @@ protected:
 	
 	wxChoice *render_quality;
 	wxChoice *generate_quality;
+	wxChoice *keep_tmps;
+	wxChoice *use_tmps;
 
 	wxCheckBox *m_forward_time;
-	wxCheckBox *m_use_2d_tmps;
-	wxCheckBox *m_use_1d_tmps;
 
 	wxCheckBox *m_ave_check;
 	wxCheckBox *m_aa_check;
@@ -59,7 +59,6 @@ protected:
 	wxCheckBox *m_grid;
 	wxCheckBox *m_contours;
 	wxCheckBox *m_autogrid;
-	wxCheckBox *m_keeptmps;
 
 	wxCheckBox *m_occlusion;
 	wxCheckBox *m_clip;
@@ -257,13 +256,10 @@ public:
     }
 
     void OnKeepTmps(wxCommandEvent& event){
-    	TheScene->keep_tmps=event.IsChecked();
+    	TheScene->keep_tmps=event.GetSelection();
     }
-    void OnUse2DTmps(wxCommandEvent& event){
-    	Planetoid::use_2d_tmps=event.IsChecked();
-    }
-    void OnUse1DTmps(wxCommandEvent& event){
-     	Planetoid::use_1d_tmps=event.IsChecked();
+    void OnUseTmps(wxCommandEvent& event){
+     	TheScene->use_tmps=event.GetSelection();
      }
     void OnForwardTime(wxCommandEvent& event){
     	TheScene->time_direction=event.IsChecked()?1:-1;

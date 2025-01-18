@@ -564,21 +564,24 @@ void TNimage::init()
 	arg=arg->next();
 	value=arg->left;
 	arg=arg->next();
+	bool changed=false;
 	if(arg && !(opts&GRAY)){
 		arg->eval();
 		if(S0.strvalid()){
 			if(gname && strcmp(gname,S0.string))
-				BIT_ON(opts,CHANGED);
+				//BIT_ON(opts,CHANGED);
+				changed=true;
 			setGName(S0.string);
 			grad=images.load(gname,BMP|JPG);
 		}
 	}
+	//if (!(opts & CHANGED)) {
 	if (!(opts & CHANGED)) {
 		im = images.load(name, this);
 		if (im) {
 #ifdef DEBUG_IMAGES
-			printf("%-20s LOADING SAVED %d X %d X %d IMAGE %s\n", "TNimage", w,
-					h, im->comps(), name);
+			printf("%-20s LOADING SAVED %d X %d X %d IMAGE %s %s\n", "TNimage", w,
+					h, im->comps(), name,gname);
 #endif
 			image = im;
 			return;

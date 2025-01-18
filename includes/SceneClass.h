@@ -61,6 +61,12 @@ enum{
 	SELECT_NODE
 };
 
+enum{
+	ALL_TMPS,
+	ONLY_2D,
+	NO_TMPS,
+};
+
 enum {
 	RECORD    = 0x00000001,
 	PLAY      = 0x00000002,
@@ -134,7 +140,8 @@ public:
 	double      grid_spacing;
 	double      contour_spacing;
 	bool        enable_contours;
-	bool        keep_tmps;
+	uint        keep_tmps;
+	uint        use_tmps;
 	bool        enable_grid;
 	int         temp_mode;
 	bool        prefs_mode;

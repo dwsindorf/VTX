@@ -66,36 +66,33 @@ enum  {
 
     // ImageMgr file options
 
-	INUSE       = 0x00100000,   // image is in use
-	NEWIMG      = 0x00200000,   // image is new
-	CHANGED     = 0x00400000,   // image is modified
-	TMP         = 0x00800000,   // image is tmp
+	BMP    	    = 0x00100000,
+	JPG     	= 0x00200000,
+	PNG     	= 0x00300000,
+	TMP         = 0x00400000,   // image is tmp
+	CHANGED     = 0x00800000,   // image is modified
 
-	BANDS   	= 0x10000000,
-	IMAGE   	= 0x20000000,
-	T1D	        = 0x40000000, 	// 1D flag
-	T2D	        = 0x80000000, 	// 2D flag
-	BMP    	    = 0x00000100,
-	JPG     	= 0x00000200,
-	PNG     	= 0x00000300,
-	BMPA     	= 0x00000400,
-	TILED 	    = 0x08000000,
 	IMCOLS      = 0x0000000f,
 	IMROWS      = 0x000000f0,
-	SPX     	= 0x01000000,
-	IMPORT   	= 0x02000000,
-	MAP   	    = 0x03000000,
-	HTMAP  	    = 0x04000000,
-	SPRITE   	= 0x08000000,
-	BRANCH      = 0x09000000,
-	LEAF        = 0x0A000000,
+	BANDS   	= 0x01000000,
+	IMAGE   	= 0x02000000,
+	T1D	        = 0x04000000, 	// 1D flag
+	T2D	        = 0x08000000, 	// 2D flag
+	SPX     	= 0x10000000,
+	IMPORT   	= 0x20000000,
+	MAP   	    = 0x30000000,
+	HTMAP  	    = 0x40000000,
+	TILED 	    = 0x50000000,
+	SPRITE   	= 0x60000000,
+	BRANCH      = 0x70000000,
+	LEAF        = 0x80000000,
 	IMDIMS 		= IMCOLS|IMROWS,
 	DIMS 		= T1D|T2D,
 	IOPTS 	    = TXOPTS|INOPTS|TMP,
 	FTYPE       = BMP|JPG|PNG,
 	IFTYPE 		= BUMP|TEX|HMAP,
 	SPXTYPE 	= BANDS|IMAGE,
-	IMTYPE 	    = 0x0f000000,
+	IMTYPE 	    = 0xf0000000,
 	ALLI    	= IFTYPE|SPXTYPE|IMTYPE|BUMP|T1D|T2D
 
 };

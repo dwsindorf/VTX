@@ -682,8 +682,6 @@ public:
 	static int planet_cnt;
 	static int layer_cnt;
 	static int num_layers;
-	static bool use_2d_tmps;
-	static bool use_1d_tmps;
 
 	static int tcount;
 

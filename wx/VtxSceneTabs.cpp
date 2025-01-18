@@ -15,8 +15,6 @@ enum {
     ID_DRAWTYPE,
     ID_RENDER_QUALITY,
     ID_GENERATE_QUALITY,
-    ID_USE_1D_TMPS,
-	ID_USE_2D_TMPS,
     ID_LMODE,
     ID_ANIMATE,
 	ID_TIME_FORWARD,
@@ -70,6 +68,7 @@ enum {
     ID_GRID_SPACING_TEXT,
 	
 	ID_KEEP_TMPS,
+	ID_USE_TMPS,
 
     ID_PHI_COLOR,
     ID_THETA_COLOR,
@@ -202,9 +201,8 @@ EVT_CHECKBOX(ID_AUTOGRID,VtxSceneTabs::OnAutogrid)
 EVT_UPDATE_UI(ID_CONTOUR_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 
-EVT_CHECKBOX(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
-EVT_CHECKBOX(ID_USE_2D_TMPS,VtxSceneTabs::OnUse2DTmps)
-EVT_CHECKBOX(ID_USE_1D_TMPS,VtxSceneTabs::OnUse1DTmps)
+EVT_CHOICE(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
+EVT_CHOICE(ID_USE_TMPS,VtxSceneTabs::OnUseTmps)
 
 END_EVENT_TABLE()
 
@@ -456,13 +454,8 @@ void VtxSceneTabs::AddOptionsTab(wxWindow *panel){
 	
 	hline->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
 	
-	wxStaticBoxSizer* pref_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Preferences"));
-	
-	m_keeptmps=new wxCheckBox(panel, ID_KEEP_TMPS, "Keep Tmps");
-	m_keeptmps->SetToolTip("Keep auto-generated Images");
-	pref_options->Add(m_keeptmps,0,wxALIGN_LEFT|wxALL,1);
+//	wxStaticBoxSizer* pref_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT(""));
 
-	hline->Add(pref_options,0,wxALIGN_LEFT|wxALL,0);
 
 	wxString tmodes[]={"K","C","F"};
 	tempmode=new wxRadioBox(panel,ID_TEMPMODE,wxT(""),wxPoint(-1,-1),wxSize(-1,40),3,tmodes,3,wxRA_SPECIFY_COLS);
@@ -530,54 +523,61 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
     wxBoxSizer *boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
 
-	wxBoxSizer* detail_ctrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Detail"));
+	wxBoxSizer* detail_ctrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Vertex Generation"));
+	
+	detail_ctrls->AddSpacer(5);
 
-	LODSlider=new SliderCtrl(panel,ID_LOD_SLDR,"CellSize",LABEL, VALUE,170);
+	detail_ctrls->Add(new wxStaticText(panel,-1,"Detail",wxDefaultPosition,wxSize(50,-1)), 0, wxALIGN_LEFT|wxTOP, 4);
+
+    wxString qmodes[]={"Draft","Normal","High","Photo"};
+    render_quality=new wxChoice(panel,ID_RENDER_QUALITY,wxDefaultPosition,wxSize(80,-1),4,qmodes);
+    render_quality->SetSelection(1);
+    detail_ctrls->Add(render_quality, 0, wxALIGN_LEFT|wxALL,0);
+
+	LODSlider=new SliderCtrl(panel,ID_LOD_SLDR,"CellSize",50, VALUE,60);
 	LODSlider->setRange(1,10);
 
-	detail_ctrls->Add(LODSlider->getSizer(),0,wxALIGN_LEFT|wxALL,5);
+	detail_ctrls->Add(LODSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	//LODSlider->setRange(20,75);
 
 	wxStaticText *lbl=new wxStaticText(panel,-1,"Geometry Level",wxDefaultPosition,wxSize(-1,-1));
-	detail_ctrls->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,5);
+	detail_ctrls->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
 
 	wxString offsets[]={"1","2","3","4","5","6"};
 
 	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(-1,-1),Map::maxtesslevel, offsets);
 	m_tesslevel->SetSelection(0);
 
-	detail_ctrls->Add(m_tesslevel,0,wxALIGN_LEFT|wxALL,5);
+	detail_ctrls->Add(m_tesslevel,0,wxALIGN_LEFT|wxALL,0);
 
 	detail_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(detail_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 
-	wxStaticBoxSizer* quality_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Quality"));
-
-	quality_options->Add(new wxStaticText(panel,-1,"Render",wxDefaultPosition,wxSize(60,-1)), 0, wxALIGN_LEFT|wxUP, 4);
-
-    wxString qmodes[]={"Draft","Normal","High","Photo"};
-    render_quality=new wxChoice(panel,ID_RENDER_QUALITY,wxDefaultPosition,wxSize(80,-1),4,qmodes);
-    render_quality->SetSelection(1);
-
-    quality_options->Add(render_quality, 0, wxALIGN_LEFT|wxALL,0);
+	wxStaticBoxSizer* quality_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Procedural Generation"));
+     quality_options->AddSpacer(5);
 
     wxString gmodes[]={"Low","Medium","High","Max"};
-    quality_options->AddSpacer(10);
-	quality_options->Add(new wxStaticText(panel,-1,"Generate",wxDefaultPosition,wxSize(60,-1)), 0, wxALIGN_LEFT|wxUP, 4);
+	quality_options->Add(new wxStaticText(panel,-1,"Detail",wxDefaultPosition,wxSize(50,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
 
     generate_quality=new wxChoice(panel,ID_GENERATE_QUALITY,wxDefaultPosition,wxSize(80,-1),4,gmodes);
     generate_quality->SetSelection(1);
     quality_options->Add(generate_quality, 0, wxALIGN_LEFT|wxALL,0);
     quality_options->AddSpacer(5);
+	wxString tmps[]={"All","2D","None"};
 
-    quality_options->Add(new wxStaticText(panel, -1, "Reuse Images", wxDefaultPosition, wxSize(50,-1)),5,wxALIGN_LEFT|wxTOP,5);
+    quality_options->Add(new wxStaticText(panel, -1, "Reuse Files", wxDefaultPosition, wxSize(70,-1)),0,wxALIGN_LEFT|wxTOP,4);
+	use_tmps=new wxChoice(panel, ID_USE_TMPS, wxDefaultPosition,wxSize(80,-1),3, tmps);
+	use_tmps->SetSelection(1);
+	use_tmps->SetToolTip("ReUse auto-generated Files");
+	quality_options->Add(use_tmps,0,wxALIGN_LEFT||wxTOP,4);
+    quality_options->AddSpacer(5);
 
-    m_use_1d_tmps=new wxCheckBox(panel, ID_USE_1D_TMPS, "1d");
-    quality_options->Add(m_use_1d_tmps, 0, wxALIGN_LEFT|wxALL,4);
-   
-    m_use_2d_tmps=new wxCheckBox(panel, ID_USE_2D_TMPS, "2d");
-    quality_options->Add(m_use_2d_tmps, 0, wxALIGN_LEFT|wxALL,4);
+    quality_options->Add(new wxStaticText(panel, -1, "Keep Files", wxDefaultPosition, wxSize(70,-1)),0,wxALIGN_LEFT|wxTOP,4);
 
+	keep_tmps=new wxChoice(panel, ID_KEEP_TMPS, wxDefaultPosition,wxSize(80,-1),3, tmps);
+	keep_tmps->SetSelection(1);
+	keep_tmps->SetToolTip("Keep auto-generated Files");
+	quality_options->Add(keep_tmps,0,wxALIGN_LEFT||wxTOP,4);
 
     quality_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -807,7 +807,8 @@ void VtxSceneTabs::updateControls(){
 	m_grid->SetValue(TheScene->enable_grid);
 	m_contours->SetValue(TheScene->enable_contours);
 	m_autogrid->SetValue(TheScene->autogrid());
-	m_keeptmps->SetValue(TheScene->keep_tmps);
+	keep_tmps->SetSelection(TheScene->keep_tmps);
+	use_tmps->SetSelection(TheScene->use_tmps);
 
 	updateSlider(GridSpacingSlider,TheScene->grid_spacing);
 	updateSlider(ContourSpacingSlider,TheScene->contour_spacing);
@@ -830,9 +831,6 @@ void VtxSceneTabs::updateControls(){
 	updateSlider(ShadowResSlider,Raster.shadow_vsteps);
 	updateSlider(ShadowFovSlider,Raster.shadow_fov);
 	updateSlider(ShadowDovSlider,Raster.shadow_dov);
-	
-	m_use_2d_tmps->SetValue(Planetoid::use_2d_tmps);
-	m_use_1d_tmps->SetValue(Planetoid::use_1d_tmps);
 	
 	tempmode->SetSelection(TheScene->tempmode());
 }

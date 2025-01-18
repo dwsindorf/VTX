@@ -516,7 +516,12 @@ void FileUtil::getFileNameList(char *dir,const char *xt,LinkedList<ModelSym*>&li
 //-------------------------------------------------------------
 int FileUtil::deleteFile(char *s)
 {
- 	return DeleteFile(s);
+	DWORD error;
+	if (!DeleteFile(s)) 
+	   error = GetLastError(); 
+	else 
+		return 0; 
+ 	return error;
 }
 
 //-------------------------------------------------------------

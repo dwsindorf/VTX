@@ -5,9 +5,10 @@ Scene() {
 	enable_contours=0;
 	enable_grid=0;
 	grid_spacing=1000;
-	keep_tmps=1;
+	keep_tmps=0;
 	phi_color=Color(0.45,0.82,0.09);
-	temp_mode=2;
+	temp_mode=1;
 	text_color=Color(1,1,1);
 	theta_color=Color(0.2,0.4,0.64);
+	use_tmps=1;
 }

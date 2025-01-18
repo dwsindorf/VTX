@@ -240,7 +240,7 @@ void VtxScene::quit()
 //	    int mode = Render.mode()&SHOW_FRONT;
 //		TheScene->add_expr("drawmode",(double)mode);
 		TheScene->save(path);
-		TheScene->delete_tmpfiles();
+//		TheScene->delete_tmpfiles();
 		set_key(KEY_CMND_QUIT);
 	}
 }

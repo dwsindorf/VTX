@@ -229,7 +229,7 @@ void ImageSym::infoString(char *tmp)
     } 
     switch(info&FTYPE){
       	case BMP:
-      		if(info & BMPA)
+      		if(info & ACHNL)
          		sprintf(tmp+strlen(tmp),"%s","|BMPA");
       		else
       			sprintf(tmp+strlen(tmp),"%s","|BMP");
@@ -1073,8 +1073,8 @@ ImageSym *ImageReader::getImageInfo(char *name)
 	   		    	info|=HMAP;
 	   		    	 
 	   		     info|=TEX;
-				 if(n->alpha())
-					info|=BMPA;
+				// if(n->alpha())
+				//	info|=BMPA;
 	   		     delete n;
 	        }
 	    }
@@ -1136,14 +1136,14 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			 	continue;
 			break;
 		}
-		if(is->image){
-			if(is->image->accessed())
-				BIT_ON(is->info,INUSE);
-			if(is->image->newimg())
-				BIT_ON(is->info,NEWIMG);
-			if(is->image->changed())
-				BIT_ON(is->info,CHANGED);
-		}
+//		if(is->image){
+//			if(is->image->accessed())
+//				BIT_ON(is->info,INUSE);
+//			if(is->image->newimg())
+//				BIT_ON(is->info,NEWIMG);
+//			if(is->image->changed())
+//				BIT_ON(is->info,CHANGED);
+//		}
 		ImageSym *nis=new ImageSym(is);
 		list.add(nis);
 	}
@@ -1361,7 +1361,7 @@ Image *ImageReader::load(char *f,TNinode *n)
 
 	if(is->istring && strcmp(is->istring,buff)!=0){
 #ifdef DEBUG_IMAGES
-	printf("%-20s SPX CHANGED - REBUILD NEEDED %s\n","ImageReader",name);
+	printf("%-20s SPX CHANGED - REBUILD NEEDED\n %s %s \n",name,buff,is->istring);
 #endif
 		delete is;
 		return 0;      // changed: builder needs to rebuild
