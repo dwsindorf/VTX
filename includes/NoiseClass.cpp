@@ -106,6 +106,7 @@ double getRandValue()
 	time_t ttime = std::time(0);
 	tm *local_time = localtime(&ttime);
 	double seed=Rand()+local_time->tm_min/60.0+local_time->tm_sec/60.0;
+	//cout<<seed<<endl;
 	return seed;
 }
 

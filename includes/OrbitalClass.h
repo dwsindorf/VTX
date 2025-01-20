@@ -90,7 +90,7 @@ public:
 	void pushSeed();
 	void popSeed();
 	void setSeed(double);
-
+	
 	Point  origin;
 
 	Orbital(double s);
@@ -98,7 +98,7 @@ public:
 	Orbital(Orbital *m, double s);
 	Orbital(Orbital *m, double s, double r);
 	virtual ~Orbital();
-
+	
 	virtual void setName(char *c);
 	virtual char *getName();
 	virtual void getDateString(char *);

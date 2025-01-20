@@ -7,7 +7,7 @@
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 //#define DEBUG_TEXS
 
 #ifdef _DEBUG
@@ -722,7 +722,7 @@ void TNtexture::init()
 {
     Image *timage=images.load(name,BMP);
 	if(!timage){
-	    printf("TNtexture ERROR image %s not found\n",name);
+	    //printf("TNtexture ERROR image %s not found\n",name);
 	    return;
 	}
 	if(Render.invalid_textures()){

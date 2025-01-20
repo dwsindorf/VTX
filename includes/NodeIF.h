@@ -92,6 +92,7 @@ public:
 	static int ncount;
 
 	static void setRands();
+	static bool fixed_rands;
 
     int nodeflags;
     NodeIF() { nodeflags=0;}

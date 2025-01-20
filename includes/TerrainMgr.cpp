@@ -31,14 +31,16 @@ double          Theta,Phi,Temp=0,Tave=0,Tsol=0,Tgas=0,Sfact=0,MapTemp=0,Height=0
 Scope          *CurrentScope;
 
 void NodeIF::setRands(){
+	if(!fixed_rands)
+	    lastn=getRandValue()*1234;
 	lastn++;
+	//cout<<lastn<<endl;
 	for(int i=0;i<RANDS;i++){
 		r[i]=URAND(lastn++);
 		s[i]=RAND(lastn++);
 	}
 }
-
-
+bool NodeIF::fixed_rands=false;
 int NodeIF::nsave=0;
 int NodeIF::ncount=0;
 

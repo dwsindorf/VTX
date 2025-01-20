@@ -12,7 +12,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 //#define DEBUG_CRATERS
-//#define TEST
+#define TEST
 
 static 	TerrainData Td;
 extern double Hscale,Height;
@@ -245,8 +245,10 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 	d=d/radius;
 	if(d>thresh)
 		return false;
+	cout<<d<<" "<<radius<<" "<<thresh<<endl;
 	CraterMgr &mgr=(CraterMgr&)pmgr;
-
+    
+	
 	scale=100*mgr.ampl*radius;
 	//scale=0.05*mgr.ampl*radius/Hscale;
 	rise=scale*mgr.rise;
@@ -541,10 +543,12 @@ void TNcraters::eval()
 
  	Impact=cval/cmax;
 #ifdef DEBUG_CRATERS
+ 	char buff[515];
 	static int maxcnt=0;
 	if(ccnt>maxcnt){
 	    maxcnt=ccnt;
-	    printf("maxcnt %d  cmax %g cmin %g\n",maxcnt,cmax,cmin);
+	    sprintf(buff,"maxcnt %d  cmax %g cmin %g\n",maxcnt,cmax,cmin);
+	    cout<<buff<<endl;
 	}
 #endif
 	double hb=0;
@@ -556,6 +560,7 @@ void TNcraters::eval()
 			hb=S0.s;
 	}
     hb+=cmgr->offset;
+    
 
     INIT;
     double ht=0;
@@ -577,12 +582,14 @@ void TNcraters::eval()
     else
  	    ht=h1+ht*impact;
     ht+=h2+hb;
+
     if(type & CNORM || images.building()){
         //double ampl=0.025*cmax/Hscale;
        double ampl=0.025*cmax;
+       double hh=ht;
        ht=(ht+ampl*cmgr->drop)/(ampl*cmgr->rise+ampl*cmgr->drop);
-    }
-	//else
+   }
+ 	//else
 	//	ht*=cmgr->ampl;
 	if(S0.pvalid()){
 		S0.p.z=ht;

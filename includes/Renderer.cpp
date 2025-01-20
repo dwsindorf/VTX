@@ -25,7 +25,7 @@ Renderer::Renderer()
 	tex_mip=color_mip=freq_mip=bump_mip=0;
 	ambient=ambient_min;
 	render_quality=NORMAL;
-	generate_quality=NORMAL;
+	generate_quality=DRAFT;
 	current_size=-1;
 #ifdef WINDOWS
 	hborder=108;

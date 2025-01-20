@@ -29,7 +29,7 @@ extern GLubyte *readPngFile(char *path,int &w, int &h, int &c);
 extern bool writeBmpFile(int w, int h,void *data, char *path, bool);
 extern bool writePngFile(int w, int h,void *data,void *adata,char *path,bool);
 
-#define DEBUG_IMAGES
+//#define DEBUG_IMAGES
 //#define DEBUG_IMAGE_INFO
 
 int icnt1=0;

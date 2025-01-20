@@ -23,7 +23,7 @@
 
 #define JPEG
 
-#define SHOW_IMAGE_INFO
+//#define SHOW_IMAGE_INFO
 
 #ifdef JPEG
   extern void writeJpegFile(char *,double d);
@@ -331,7 +331,8 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int gtype=type&GN_TYPES;
 	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<endl;
 	set_action("Building..");
-
+	setRseed(getRandValue());
+	lastn=rseed*123457;
 	NodeIF *m=getPrototype(obj,type);
 	NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,gtype);
