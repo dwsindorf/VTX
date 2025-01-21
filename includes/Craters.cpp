@@ -239,16 +239,16 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 {
 	double d,rr=0,vn=0,f,c=0,r;
 	double drop,rise,scale,b,h,a=0;
-	double max=1.2;
+	double max=1.0;
 
+	if(radius==0){
+		return false;
+	}
 	d=pmgr.mpt.distance(center);
 	d=d/radius;
 	if(d>thresh)
 		return false;
-	cout<<d<<" "<<radius<<" "<<thresh<<endl;
 	CraterMgr &mgr=(CraterMgr&)pmgr;
-    
-	
 	scale=100*mgr.ampl*radius;
 	//scale=0.05*mgr.ampl*radius/Hscale;
 	rise=scale*mgr.rise;
@@ -475,7 +475,7 @@ void TNcraters::eval()
     TNode *argexpr=args[4];   // ampl expr
     if(argexpr){
     	argexpr->eval();
-    	cmgr->ampl=S0.s;
+     	cmgr->ampl=S0.s;
     }
     argexpr=args[5];   // impact expr
     if(argexpr){

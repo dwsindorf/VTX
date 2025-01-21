@@ -417,7 +417,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
     type=mgr.type;
 	hid=n;
 	double d,r,pf=1;
-	radius=mgr.size;
+	radius=0;//mgr.size;
 	users=0;
 	flags.l=0;
 #ifdef DEBUG_PLACEMENTS
@@ -431,7 +431,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
     if(mgr.offset_valid())
 		p=p-mgr.offset;
 
-	p=(p+0.5)*mgr.size;
+ 	p=(p+0.5)*mgr.size;
 
 	if(mgr.dexpr){
 		Point4D p1=p*TheNoise.scale+TheNoise.offset;
@@ -479,6 +479,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	    p.w=0;
 	center=p;
 	radius=r;
+
 	flags.s.valid=true;
 }
 

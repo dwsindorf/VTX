@@ -64,8 +64,8 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 	if(!parent)
 		return 0;
 	int type=parent->typeClass();
-//	cout << "c:" << child->typeName() << endl;
-//	cout << "p:"<< parent->typeName() << endl;
+	cout << "c:" << child->typeName() << endl;
+	cout << "p:"<< parent->typeName() << endl;
 	if((type & ID_OBJECT)==0)
 		return 0;
 	if(child->protoValid())

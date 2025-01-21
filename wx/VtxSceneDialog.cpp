@@ -297,6 +297,11 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 
 		if(sym){
 			sbuff[0]=0;
+			if(menu_choice & TABS_REPLACE)
+				TheScene->model->setActionMode(Model::REPLACING);
+			else
+				TheScene->model->setActionMode(Model::ADDING);
+
 			if(sym->isFile()){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);

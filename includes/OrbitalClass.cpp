@@ -4736,7 +4736,7 @@ void Planet::newInstance(int gtype){
 	
 	symmetry=1;
 	set_geometry();
-	setProtoValid(true);
+	//setProtoValid(true);
 	setNewViewObj(true);
 }
 

@@ -329,11 +329,16 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
-	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<endl;
+	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<" "<<model->actionmode<<endl;
 	set_action("Building..");
 	setRseed(getRandValue());
 	lastn=rseed*123457;
 	NodeIF *m=getPrototype(obj,type);
+	if(model->actionmode==Model::REPLACING)
+		m->setProtoValid(true);
+	else
+		m->setProtoValid(false);
+			
 	NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,gtype);
 	
