@@ -139,9 +139,9 @@ protected:
 		if(format.Length()>0)
 			s = wxString::Format(format, tval);
 		else if(fabs(umax-umin)<4.0)
-			s = wxString::Format("%0.2f", tval);
+			s = wxString::Format("%0.3f", tval);
 		else if(fabs(umax-umin)<1000.0)
-			s = wxString::Format("%0.1f", tval);
+			s = wxString::Format("%0.2f", tval);
 		else
 			s = wxString::Format("%0.0f", tval);
 		return s;

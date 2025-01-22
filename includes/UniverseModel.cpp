@@ -390,6 +390,10 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("GasGiant",type);
 	case GN_ROCKY:
 		return new ModelSym("Rocky",type);
+	case GN_CRATERED:
+		return new ModelSym("Cratered",type);
+	case GN_VOLCANIC:
+		return new ModelSym("Volcanic",type);
 	case GN_OCEANIC:
 		return new ModelSym("Oceanic",type);
 	case GN_ICY:
@@ -422,6 +426,8 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_ROCKY));
 		list.add(getTypeSymbol(GN_OCEANIC));
+		list.add(getTypeSymbol(GN_CRATERED));
+		list.add(getTypeSymbol(GN_VOLCANIC));
 		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANET:
@@ -429,6 +435,8 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_GASSY));
 		list.add(getTypeSymbol(GN_ROCKY));
 		list.add(getTypeSymbol(GN_OCEANIC));
+		list.add(getTypeSymbol(GN_CRATERED));
+		list.add(getTypeSymbol(GN_VOLCANIC));
 		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANT:

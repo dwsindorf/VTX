@@ -524,7 +524,7 @@ void TNmap::eval()
 	if(!in_map)    // in case we were in another map on entry
 		S0.clr_flag(CLRTEXS);
 
-	if(Adapt.mindcnt()){
+	if(TheScene->viewtype ==SURFACE && Adapt.mindcnt()){
 		// minimize dual terrain nodes (edges only)
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection

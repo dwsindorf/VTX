@@ -12,7 +12,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 //#define DEBUG_CRATERS
-#define TEST
+//#define TEST
 
 static 	TerrainData Td;
 extern double Hscale,Height;

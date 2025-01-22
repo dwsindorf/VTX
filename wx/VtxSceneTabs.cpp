@@ -69,6 +69,7 @@ enum {
 	
 	ID_KEEP_TMPS,
 	ID_USE_TMPS,
+	ID_SET_LAYERS,
 
     ID_PHI_COLOR,
     ID_THETA_COLOR,
@@ -106,6 +107,9 @@ EVT_CHOICE(ID_RENDER_QUALITY,VtxSceneTabs::OnRenderQualitySelect)
 
 EVT_UPDATE_UI(ID_GENERATE_QUALITY, VtxSceneTabs::OnUpdateGenerateQuality)
 EVT_CHOICE(ID_GENERATE_QUALITY,VtxSceneTabs::OnGenerateQualitySelect)
+
+EVT_UPDATE_UI(ID_SET_LAYERS, VtxSceneTabs::OnUpdateSetLayers)
+EVT_CHOICE(ID_SET_LAYERS,VtxSceneTabs::OnSetLayersSelect)
 
 EVT_RADIOBOX(ID_TEMPMODE, VtxSceneTabs::OnTempMode)
 
@@ -554,27 +558,34 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 	boxSizer->Add(detail_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 
 	wxStaticBoxSizer* quality_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Procedural Generation"));
-     quality_options->AddSpacer(5);
+    quality_options->AddSpacer(5);
 
     wxString gmodes[]={"Low","Medium","High","Max"};
-	quality_options->Add(new wxStaticText(panel,-1,"Detail",wxDefaultPosition,wxSize(50,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
+	quality_options->Add(new wxStaticText(panel,-1,"Detail",wxDefaultPosition,wxSize(40,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
 
-    generate_quality=new wxChoice(panel,ID_GENERATE_QUALITY,wxDefaultPosition,wxSize(80,-1),4,gmodes);
+    generate_quality=new wxChoice(panel,ID_GENERATE_QUALITY,wxDefaultPosition,wxSize(70,-1),4,gmodes);
     generate_quality->SetSelection(1);
     quality_options->Add(generate_quality, 0, wxALIGN_LEFT|wxALL,0);
     quality_options->AddSpacer(5);
-	wxString tmps[]={"All","2D","None"};
+    
+    wxString lmodes[]={"Auto","1","2","3","4"};
+	quality_options->Add(new wxStaticText(panel,-1,"Layers",wxDefaultPosition,wxSize(50,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
+    set_layers=new wxChoice(panel,ID_SET_LAYERS,wxDefaultPosition,wxSize(60,-1),5,lmodes);
+    set_layers->SetSelection(0);
+    quality_options->Add(set_layers, 0, wxALIGN_LEFT|wxALL,0);
+    quality_options->AddSpacer(5);
 
-    quality_options->Add(new wxStaticText(panel, -1, "Reuse Files", wxDefaultPosition, wxSize(70,-1)),0,wxALIGN_LEFT|wxTOP,4);
-	use_tmps=new wxChoice(panel, ID_USE_TMPS, wxDefaultPosition,wxSize(80,-1),3, tmps);
+	wxString tmps[]={"All","2D","None"};
+    quality_options->Add(new wxStaticText(panel, -1, "Reuse", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP,4);
+	use_tmps=new wxChoice(panel, ID_USE_TMPS, wxDefaultPosition,wxSize(60,-1),3, tmps);
 	use_tmps->SetSelection(1);
 	use_tmps->SetToolTip("ReUse auto-generated Files");
 	quality_options->Add(use_tmps,0,wxALIGN_LEFT||wxTOP,4);
     quality_options->AddSpacer(5);
 
-    quality_options->Add(new wxStaticText(panel, -1, "Keep Files", wxDefaultPosition, wxSize(70,-1)),0,wxALIGN_LEFT|wxTOP,4);
+    quality_options->Add(new wxStaticText(panel, -1, "Keep", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP,4);
 
-	keep_tmps=new wxChoice(panel, ID_KEEP_TMPS, wxDefaultPosition,wxSize(80,-1),3, tmps);
+	keep_tmps=new wxChoice(panel, ID_KEEP_TMPS, wxDefaultPosition,wxSize(60,-1),3, tmps);
 	keep_tmps->SetSelection(1);
 	keep_tmps->SetToolTip("Keep auto-generated Files");
 	quality_options->Add(keep_tmps,0,wxALIGN_LEFT||wxTOP,4);
@@ -761,6 +772,17 @@ void VtxSceneTabs::OnUpdateGenerateQuality(wxUpdateUIEvent& event){
 	if(mode!=generate_quality->GetSelection())
 		generate_quality->SetSelection(mode);
 }
+
+void VtxSceneTabs::OnSetLayersSelect(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	Planetoid::set_layers=mode;
+}
+void VtxSceneTabs::OnUpdateSetLayers(wxUpdateUIEvent& event){
+	int mode=Planetoid::set_layers;
+	if(mode!=set_layers->GetSelection())
+		set_layers->SetSelection(mode);
+}
+
 void VtxSceneTabs::OnTesslevel(wxCommandEvent& event){
 	Map::setTessLevel(m_tesslevel->GetSelection()+1);
 	TheScene->set_changed_render();

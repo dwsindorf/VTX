@@ -42,6 +42,7 @@ protected:
 	
 	wxChoice *render_quality;
 	wxChoice *generate_quality;
+	wxChoice *set_layers;
 	wxChoice *keep_tmps;
 	wxChoice *use_tmps;
 
@@ -139,6 +140,9 @@ public:
  
     void OnGenerateQualitySelect(wxCommandEvent& event);
     void OnUpdateGenerateQuality(wxUpdateUIEvent& event);
+
+    void OnSetLayersSelect(wxCommandEvent& event);
+    void OnUpdateSetLayers(wxUpdateUIEvent& event);
 
     void OnTempMode(wxCommandEvent& event);
 
