@@ -748,6 +748,10 @@ void TNtexture::init()
 // special note: this node expr is called AFTER the terrain stack
 // is evaluated not in-line as other nodes. This is done so that
 // the final Ht etc. can be used in the texture calculation.
+// args: a=color_ampl, b=bump_ampl
+// name,opts[?BUMP][?HMAP][|S|A],[Sexpr],[Aexpr],start,BUMP?[a,b:a,b=0],
+// bias,num_orders,orders_delta,orders_ampl,bump_damp,HMAP?[hamp,hbias],
+// phi_bias,ht_bias,bump_bias,slope_bias
 //-------------------------------------------------------------
 void TNtexture::eval()
 {

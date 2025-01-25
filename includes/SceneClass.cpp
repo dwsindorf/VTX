@@ -1256,20 +1256,22 @@ void Scene::delete_tmpfiles()
 		ImageSym *is=list.at();
 		while(is=list++){
 			name=is->name();		
-			if(keep_tmps==ONLY_2D && (name[0]=='H' || name[0]=='L')){
+			if(keep_tmps==ONLY_2D && (name[0]=='H' || name[0]=='L'|| name[0]=='E')){
 				continue;
 			}
 			int err=0;
-			str=is->namePath()+".spx";
-			name=str.c_str();
-			err=File.deleteFile(name);
-			if(err)
-				cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
 			str=is->namePath()+".bmp";
 			name=str.c_str();
 			err=File.deleteFile(name);
 			if(err)
 				cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
+			else{
+				str=is->namePath()+".spx";
+				name=str.c_str();
+				err=File.deleteFile(name);
+				if(err)
+					cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
+			}
 		}
 		list.free();
 	}

@@ -746,13 +746,12 @@ public:
 	virtual void set_surface(TerrainData&);
 	static void newRocky(Planetoid *, int gtype);
 	static void newRocky(Planetoid *) { newRocky(0);}
-	static std::string newLocalTex(Planetoid *);
-	static std::string newGlobalTex(Planetoid *);
-	static std::string newDualGlobalTex(Planetoid *);
-	static std::string newOcean(Planetoid *);
 	static std::string newLayer(Planetoid *);
-
-	static std::string newHmapTex(Planetoid *);
+//	static std::string newLocalTex(Planetoid *);
+//	static std::string newGlobalTex(Planetoid *);
+//	static std::string newDualGlobalTex(Planetoid *);
+	static std::string newOcean(Planetoid *);
+//	static std::string newHmapTex(Planetoid *);
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
     static void makeLists();

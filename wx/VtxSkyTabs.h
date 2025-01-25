@@ -72,8 +72,8 @@ public:
 	}
 	void OnSliderValue(SliderCtrl *s, double &var){
 		VtxTabsMgr::OnSliderValue(s,var);
-		TheScene->set_changed_detail();
-		TheScene->rebuild_all();
+		//TheScene->set_changed_detail();
+		//TheScene->rebuild_all();
 	}
 	void updateControls();
     void OnHeightSlider(wxScrollEvent& event){

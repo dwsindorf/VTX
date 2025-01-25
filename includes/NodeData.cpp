@@ -319,6 +319,10 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];
+	if(!tp){
+		cout<<"ERROR tp=0! "<<ttype<<endl;
+		return;
+	}
 
 #if defined TEST_CRATERS 
 	nc=1;

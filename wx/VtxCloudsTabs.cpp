@@ -426,9 +426,9 @@ void VtxCloudsTabs::AddImagesTab(wxWindow *panel){
 	hline->Add(choices,0,wxALIGN_LEFT|wxALL,2);
 
 
-	wxString offsets[]={"1x","4x","9x","16x","25x"};
+	wxString offsets[]={"1x","4x","16x"};
 
-	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),4, offsets);
+	sprites_dim=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),3, offsets);
 	sprites_dim->SetSelection(3);
 	hline->Add(sprites_dim,0,wxALIGN_LEFT|wxALL,0);
 
@@ -473,9 +473,25 @@ void VtxCloudsTabs::OnChangedFile(wxCommandEvent& event){
 	invalidateObject();
 }
 
+int VtxCloudsTabs::getDim(){
+	int dim_sel=sprites_dim->GetSelection();
+	switch(dim_sel){
+	case 0: return 1;
+	case 1: return 2;
+	case 2: return 4;
+	default:
+		return 0;	
+	}
+}
+void VtxCloudsTabs::setDim(uint i){
+	switch(i){
+	case 1: sprites_dim->SetSelection(0);break;
+	case 2: sprites_dim->SetSelection(1);break;
+	case 4: sprites_dim->SetSelection(2);break;
+	}
+}
 void VtxCloudsTabs::OnDimSelect(wxCommandEvent& event){
-	int dim=sprites_dim->GetSelection();
-	dim+=1;
+	int dim=getDim();
 	makeFileList(dim,(char*)image_name.ToAscii());
 	invalidateObject();
 }
@@ -490,8 +506,6 @@ void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 			object()->deleteClouds();
 			object()->invalidate();
 			TheView->set_changed_detail();
-
-			//TheScene->rebuild_all();
 		}
 		break;
 	case 1: // 3d selected
@@ -515,7 +529,7 @@ void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 
 void VtxCloudsTabs::setTypePanel(){
 	if(image_window->imageOk()&&changed_cell_expr){
-		GLuint dim=sprites_dim->GetSelection()+1;
+		GLuint dim=getDim();
 		TNclouds *tnode=object()->getClouds();
 		double args[6];
 		getargs((TNarg*)tnode->left,args,3);
@@ -579,7 +593,7 @@ void VtxCloudsTabs::makeFileList(int dim,char * name){
 		image_dim=dim;
  	}
  	image_name=name;
- 	setObjAttributes();
+ 	//setObjAttributes();
 }
 
 //-------------------------------------------------------------
@@ -662,9 +676,9 @@ void VtxCloudsTabs::getObjAttributes(){
 	type_expr->SetValue(type);
 	uint dim=0;
 	char* sprites_file=obj->getSpritesFile(dim);
-
-
-	sprites_dim->SetSelection(dim-1);
+      
+	setDim(dim);
+	dim=getDim();
 	makeFileList(dim,sprites_file);
 	cout<<"file:"<<sprites_file<<" dim:"<<dim<<endl;
 	choices->SetStringSelection(sprites_file);
@@ -700,8 +714,7 @@ void VtxCloudsTabs::setObjAttributes(){
         TheScene->rebuild();
 	}
 	str=choices->GetStringSelection();
-	GLuint dim=sprites_dim->GetSelection();
-	dim+=1;
+	GLuint dim=getDim();
 	if(str!=wxEmptyString){
 		object()->setSpritesFile((char*)str.ToAscii(), dim);
 		setImagePanel();

@@ -69,7 +69,7 @@ protected:
     	if(texture())
     		texture()->invalidate();
     	TheView->set_changed_render();
-    	TheScene->rebuild();
+    	//TheScene->rebuild();
     }
     void invalidateRender(){
       	TheView->set_changed_render();

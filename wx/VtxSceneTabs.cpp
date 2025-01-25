@@ -830,7 +830,6 @@ void VtxSceneTabs::updateControls(){
 	m_contours->SetValue(TheScene->enable_contours);
 	m_autogrid->SetValue(TheScene->autogrid());
 	keep_tmps->SetSelection(TheScene->keep_tmps);
-	cout<<"Get "<<TheScene->use_tmps<<endl;
 	use_tmps->SetSelection(TheScene->use_tmps);
 
 	updateSlider(GridSpacingSlider,TheScene->grid_spacing);

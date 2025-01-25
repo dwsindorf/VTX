@@ -236,7 +236,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	//color_controls->SetMinSize(wxSize(205,BOX_HEIGHT));
 
 	BiasSlider=new SliderCtrl(panel,ID_BIAS_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
-	BiasSlider->setRange(-4.0,4.0);
+	BiasSlider->setRange(-2.0,2.0);
 	BiasSlider->setValue(0.0);
 	color_controls->Add(BiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -266,7 +266,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-50,50);
+	HmapAmpSlider->setRange(-2,2);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -425,7 +425,7 @@ void VtxTexTabs::makeFileList(){
 		info=HTMAP;
 		break;
 	}
-    images.makeImagelist();
+    //images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(info, list);
@@ -443,6 +443,7 @@ void VtxTexTabs::makeFileList(){
 	if(index== wxNOT_FOUND)
 		index=0;
 	choices->SetSelection(index);
+	list.free();
 }
 
 void VtxTexTabs::OnFileSelect(wxCommandEvent& event){

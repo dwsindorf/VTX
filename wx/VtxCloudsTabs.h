@@ -164,6 +164,9 @@ public:
         TheView->set_changed_detail();
         TheScene->rebuild();
 	}
+    
+    int getDim();
+    void setDim(uint i);
 
 	DEFINE_SLIDER_VAR_EVENTS(Tilt,object()->tilt)
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)

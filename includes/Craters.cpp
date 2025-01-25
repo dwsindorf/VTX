@@ -475,7 +475,7 @@ void TNcraters::eval()
     TNode *argexpr=args[4];   // ampl expr
     if(argexpr){
     	argexpr->eval();
-     	cmgr->ampl=S0.s;
+    	cmgr->ampl=S0.s;
     }
     argexpr=args[5];   // impact expr
     if(argexpr){
@@ -582,14 +582,12 @@ void TNcraters::eval()
     else
  	    ht=h1+ht*impact;
     ht+=h2+hb;
-
     if(type & CNORM || images.building()){
         //double ampl=0.025*cmax/Hscale;
        double ampl=0.025*cmax;
-       double hh=ht;
        ht=(ht+ampl*cmgr->drop)/(ampl*cmgr->rise+ampl*cmgr->drop);
-   }
- 	//else
+    }
+	//else
 	//	ht*=cmgr->ampl;
 	if(S0.pvalid()){
 		S0.p.z=ht;

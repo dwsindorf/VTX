@@ -148,7 +148,7 @@ void VtxSnowTabs::setObjAttributes(){
 	update_needed=true;
 	TNsnow *tnode=object();
 
-	//object()->invalidate();
+	object()->invalidate();
 
 	wxString str="snow(";
 	str+=ThreshSlider->getText();
