@@ -1669,6 +1669,8 @@ TNsnow::TNsnow(TNode *l, TNode *r) : TNfunc(l,r) {
 //-------------------------------------------------------------
 TNsnow::~TNsnow()
 {
+	//cout<<"~TNsnow()"<<endl;
+	DFREE(image);
 	DFREE(texture);
 }
 
@@ -1683,7 +1685,8 @@ void TNsnow::init()
 
 	if(!texture){
 		if(!image){
-			image=images.load("snow",BMP|JPG);
+			image=images.open("snow");
+			//image=images.load("snow",BMP|JPG);
 			if(!image){
 				Color *color=0;
 				MALLOC(2*NALPHA,Color,color);

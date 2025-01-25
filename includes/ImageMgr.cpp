@@ -291,6 +291,7 @@ Image::~Image()
 	FREE(data);
 }
 Image::Image()
+
 {
 	data=0;
 }
@@ -330,6 +331,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	FColor  fmin(lim,lim,lim);
 	double rh=0.5,rw=0.5;
 	
+	cout<<"Image(4)"<<endl;
 	Color *gcolors=0;
 	int gsize=0;
 
@@ -1240,6 +1242,7 @@ void ImageReader::addImages(char *dir){
 			is=getImageInfo(sym->name());
 			if(is){
 				images.add(is);
+				//images.sort();
 			}
 		}
 	}
@@ -1289,6 +1292,7 @@ void ImageReader::addTiledImages(char *dir){
 void ImageReader::makeImagelist()
 {
     if(invalid()){
+    	images.free();
     	static TimeIt timer;
     	timer.start();
 
@@ -1387,11 +1391,13 @@ Image *ImageReader::load(char *f,int mode)
     if(image)
 		return image;
     image=open(name);
-    //if(image){
+    if(image){
 		ImageSym *is=getImageInfo(name);
-		addImage(is->text,is->info,is->istring,image,is->path);	
-		delete is;
-    //}
+		if(is){
+			addImage(is->text,is->info,is->istring,image,is->path);	
+			delete is;
+		}
+    }
     return image;
 }
 

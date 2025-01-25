@@ -79,7 +79,6 @@ Texture::~Texture()
 #ifdef DEBUG_TEXTURES
 	cout<<"deleting Texture "<<timage->height<<"x"<<timage->width<<endl;
 #endif
-
 	del();
 }
 

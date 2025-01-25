@@ -342,6 +342,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,gtype);
 	
+	Render.invalidate_textures();
 	images.invalidate();
 	images.makeImagelist();
 
