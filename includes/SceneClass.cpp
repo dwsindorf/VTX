@@ -350,6 +350,9 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 		n->setType(ttype);
 		n->setParent(p);
 	}
+	//if(n->typeClass()==ID_ORBITAL)
+	//	set_viewobj((ObjectNode*)n);
+		
 	if(m!=n)
 		delete m;
 	return n;
@@ -1267,11 +1270,22 @@ void Scene::delete_tmpfiles()
 			if(err)
 				cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
 			else{
+				str=is->namePath()+"_alpha.bmp";
+			    name=str.c_str();
+			    if(File.fileExists(name)){
+					err=File.deleteFile(name);
+					if(err)
+						cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
+					else
+						cout<<"deleting"<<name<<endl;
+			    }
 				str=is->namePath()+".spx";
 				name=str.c_str();
 				err=File.deleteFile(name);
 				if(err)
 					cout<<"ERROR deleting"<<name<<" code:"<<err<<endl;
+				else
+					cout<<"deleting"<<name<<endl;
 			}
 		}
 		list.free();

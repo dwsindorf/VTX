@@ -631,10 +631,10 @@ void VtxScene::view_image(char *path,int type)
 void VtxScene::rebuild_all() {
     functDialog->clear();
     noiseDialog->clear();
-    sceneDialog->rebuildObjectTree();
     imageDialog->Invalidate();
     movieDialog->Invalidate();
     rebuild();
+    sceneDialog->rebuildObjectTree();
 }
 
 //-------------------------------------------------------------

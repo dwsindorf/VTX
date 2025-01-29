@@ -238,6 +238,15 @@ Color  Color::RGBtoHSV(){
      return hsv;   
 
 }
+Color Color::HSVtoRGB(double h,double s, double v){
+	double hue=fmod(h,1.0);
+	hue=hue<0?1+hue:hue;
+	double sat=s<0?0:s;
+	double val=v<0?0:v;
+	//cout<<h<<":"<<hue<<" s:"<<sat<<" v:"<<val<<endl;
+	Color c(hue,sat,val);
+	return c.HSVtoRGB();
+}
 Color  Color::HSVtoRGB(){
     double r=0;
     double g=0;

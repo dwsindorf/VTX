@@ -264,7 +264,6 @@ public:
     }
     void OnUseTmps(wxCommandEvent& event){
      	TheScene->use_tmps=event.GetSelection();
-     	cout<<"Set "<<TheScene->use_tmps<<endl;
      }
     void OnForwardTime(wxCommandEvent& event){
     	TheScene->time_direction=event.IsChecked()?1:-1;

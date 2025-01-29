@@ -87,6 +87,8 @@ class VtxSceneDialog : public wxFrame
 
 	void setTitle();
 	void updateControls();
+	
+	void setSelected(wxTreeItemId id);
 
 	void updateObjectTree(wxTreeItemId root);
 	void updateObjectTree();

@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifndef _COLORCLASS
 #define _COLORCLASS
@@ -226,6 +227,7 @@ public:
 	Color intensify(double f);
 	Color RGBtoHSV();
 	Color HSVtoRGB();
+	static Color HSVtoRGB(double h,double s, double v);
 	Color desaturate(double f);
 };
 

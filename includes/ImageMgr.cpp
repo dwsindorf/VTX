@@ -331,7 +331,6 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	FColor  fmin(lim,lim,lim);
 	double rh=0.5,rw=0.5;
 	
-	cout<<"Image(4)"<<endl;
 	Color *gcolors=0;
 	int gsize=0;
 

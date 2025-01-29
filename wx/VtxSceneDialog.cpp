@@ -51,7 +51,7 @@
 
 //#define PRINT_TREE
 
-//#define DEBUG_TREE_ACTIONS
+#define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
@@ -420,7 +420,7 @@ void VtxSceneDialog::removeMenuFile(int menu_id){
 void VtxSceneDialog::OnTreeSelect(wxTreeEvent&event){
 	if(rebuilding)
 		return;
-	selectedId=event.GetItem();
+	setSelected(event.GetItem());
 	TreeDataNode *node=(TreeDataNode*)treepanel->GetItemData(selectedId);
 	setTabs(node->tnode);
 	setTitle();
@@ -441,7 +441,7 @@ void VtxSceneDialog::OnBeginDrag(wxTreeEvent&event){
 		copying=false;
 	}
 
-	selectedId=event.GetItem();
+	setSelected(event.GetItem());
 	event.Allow();
 }
 //-------------------------------------------------------------
@@ -455,7 +455,7 @@ void VtxSceneDialog::OnBeginCopyDrag(wxTreeEvent&event){
 #ifdef DEBUG_TREE_ACTIONS
 	cout << "begin rt-mouse copy drag " << event.GetKeyEvent().ControlDown() << endl;
 #endif
-	selectedId=event.GetItem();
+	setSelected(event.GetItem());
 	copying=true;
 	event.Allow();
 }
@@ -677,7 +677,7 @@ wxTreeItemId VtxSceneDialog::addToTree(wxTreeItemId id, TreeNode *obj){
 		TreeDataNode *data=new TreeDataNode(obj);
 		itemId=treepanel->AppendItem(id,wxString(data->getLabel()),-1,-1,data);
 		if(TheScene->viewobj==obj->node)
-			selectedId=itemId;
+			setSelected(itemId);
 	}
 	for(int j=0;j<obj->numChildren();j++){
 		addToTree(itemId,(TreeNode*)obj->children[j]);
@@ -811,6 +811,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 //-------------------------------------------------------------
 void VtxSceneDialog::rebuildObjectTree(){
 	TheScene->suspend();
+	cout<<"rebuildObjectTree start"<<endl;
 	rebuilding=true;
 	treepanel->DeleteAllItems();
 	if(root)
@@ -823,7 +824,7 @@ void VtxSceneDialog::rebuildObjectTree(){
 
 	TreeDataNode *data=new TreeDataNode(root);
 	wxTreeItemId itemId=treepanel->AddRoot(data->getLabel(),-1,-1,data);
-	selectedId=itemId;
+	//selectedId=itemId;
 	for(int j=0;j<root->numChildren();j++){
 		addToTree(itemId,(TreeNode*)root->children[j]);
 	}
@@ -833,13 +834,19 @@ void VtxSceneDialog::rebuildObjectTree(){
 	rebuilding=false;
 	selected=root;
 	currentTabs=-1;
-	setTabs(selected->getFlag(TN_TYPES));
+	//setTabs(selected->getFlag(TN_TYPES));
 	//treepanel->CollapseAll();
+	cout<<"rebuildObjectTree 1"<<endl;
+
 	treepanel->SelectItem(selectedId);
+	cout<<"rebuildObjectTree 2"<<endl;
+
 	treepanel->EnsureVisible(selectedId);
 
     TheScene->set_changed_detail();
 	TheScene->unsuspend();
+    cout<<"rebuildObjectTree end"<<endl;
+
 }
 
 //-------------------------------------------------------------
@@ -888,7 +895,14 @@ void VtxSceneDialog::selectObject(NodeIF *n){
 	selectObject(treepanel->GetRootItem(),n);
 }
 
-void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
+void VtxSceneDialog::setSelected(wxTreeItemId id){
+	TreeDataNode *tdnode=(TreeDataNode*)treepanel->GetItemData(id);
+	TreeNode  *tnode=tdnode->tnode;
+	NodeIF *node=tnode->node;
+	cout<<"setSelected:"<< node->typeName()<<endl;
+	selectedId=id;
+}
+void VtxSceneDialog::VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child;
 	TreeDataNode *tdnode=(TreeDataNode*)treepanel->GetItemData(parent);
@@ -896,7 +910,7 @@ void VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){
 	NodeIF *node=tnode->node;
 
 	if(n==node){
-		selectedId=parent;
+		setSelected(parent);
 #ifdef DEBUG_TREE_ACTIONS
 		cout << node->typeName();
 		if(strlen(tnode->label()))
