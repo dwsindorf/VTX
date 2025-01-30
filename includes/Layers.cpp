@@ -599,6 +599,12 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 		arg->right=0;
 		delete arg;
 	}
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	while(base && (base->typeClass()==ID_IMAGE || base->typeClass()==ID_BANDS)){
+		TNinode *inode=(TNinode*)base;			
+		orb->add_image(inode);
+		base=((TNarg*)base)->next();
+	}
 	
 	map=0;
 	width=0.1;

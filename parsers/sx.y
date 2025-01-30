@@ -703,7 +703,6 @@ clouds_expr
     | YY_MIX '(' arg_list ')' '[' expr ']' expr
     						{ $$=new TNlayer($3,$8,$6);APOP;}
     | YY_MIX '(' arg_list ')'
- 
     						{ $$=new TNlayer($3,0,0);APOP;}
 
  ltype
