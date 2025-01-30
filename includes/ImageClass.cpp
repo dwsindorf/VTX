@@ -6,7 +6,6 @@
 #include "SceneClass.h"
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
-#include "Layers.h"
 
 //#define DEBUG_IMAGES
 //#define DEBUG_TEXS
@@ -66,15 +65,6 @@ extern int hits,visits,misses;
 
 static TerrainData Td;
 
-bool getLayer(TNode *p) {
-	while (p && (p->typeValue() == ID_BANDS ||  p->typeValue() == ID_IMAGE)) {
-		p=p->getParent();
-	}
-	if(p && p->typeValue() == ID_LAYER)
-		return true;
-	else
-		return false;
-}
 //************************************************************
 // Class TNinode
 //************************************************************
@@ -315,11 +305,7 @@ void TNbands::save(FILE *f)
 	}
 	if(n>4)
 	    dec_tabs();
-//	if(getLayer(this))
-//		fprintf(f,")");
-//	else		
-		fprintf(f,");\n");
-
+	fprintf(f,");\n");
 }
 
 //-------------------------------------------------------------
@@ -549,12 +535,7 @@ void TNimage::save(FILE *f)
 	    TNarg *arg=(TNarg*)right;
 		arg->save(f);
 	}
-//	if(getLayer(this))
-//		fprintf(f,")");
-//	else		
-		fprintf(f,");\n");
-
-	//fprintf(f,");\n");
+	fprintf(f,");\n");
 }
 
 //-------------------------------------------------------------

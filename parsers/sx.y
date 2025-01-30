@@ -122,18 +122,18 @@ void set_orbital(Orbital *orb){
 
 %token <s> NAME STRING
 %token <d> VALUE UNIT
-%token <l> NTYPE VTYPE GTYPE ITYPE LTYPE OTYPE PTYPE CTYPE ID
+%token <l> NTYPE VTYPE LTYPE GTYPE ITYPE OTYPE PTYPE CTYPE ID
 
 %type <d> value positive negative
 %type <n> expr water_expr craters_expr color_expr density_expr layer_expr fog_expr
 %type <n> ocean_expr liquid_expr solid_expr
 %type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
-%type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr ltype_expr
+%type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr
 %type <n> root_expr branch_expr leaf_expr
 %type <n> inode_expr image image_expr bands_expr
 %type <n> expr_item var_expr set_surface colors_expr
-%type <l> ntype itype ptype ltype
+%type <l> ntype ltype itype ptype
 %type <s> item_name
 
 /* precedence order */
@@ -567,7 +567,6 @@ expr
     | point_expr			{ $$=$1;}
     | subr_expr             { $$=$1;}
     | global_expr			{ $$=$1;}
-    | ltype_expr            { $$=$1;}
 	| group_expr			{ $$=$1;}
 	| var				    { $$=$1;}
 	| var_def				{ $$=$1;}
@@ -698,13 +697,26 @@ clouds_expr
     | YY_MAP '(' arg_list ')'
     						{ $$=new TNmap($3,0);APOP;}
  layer_expr
-    : YY_MIX '(' arg_list ')' '[' expr ']'
-    						{ $$=new TNlayer($3,0,$6);APOP;}
-    | YY_MIX '(' arg_list ')' '[' expr ']' expr
-    						{ $$=new TNlayer($3,$8,$6);APOP;}
-    | YY_MIX '(' arg_list ')'
-    						{ $$=new TNlayer($3,0,0);APOP;}
-
+    : YY_MIX '(' ltype ',' arg_list ')' '[' expr ']'
+    						{ $$=new TNlayer(0, $3,$5,0,$8);APOP;}
+    | YY_MIX '(' ltype ',' arg_list ')' '[' expr ']' expr
+    						{ $$=new TNlayer(0, $3,$5,$10,$8);APOP;}
+    | YY_MIX '(' ltype ',' arg_list ')'
+    						{ $$=new TNlayer(0, $3,$5,0,0);APOP;}
+    | YY_MIX '(' ltype ')'
+    						{ $$=new TNlayer(0, $3,0,0,0);}
+    | YY_MIX '(' ltype ')'  '[' expr ']'
+    						{ $$=new TNlayer(0, $3,0,0,$6);}		
+	| YY_MIX '(' item_name ',' ltype ',' arg_list ')' '[' expr ']'
+    						{ $$=new TNlayer($3, $5,$7,0,$10);APOP;}
+    | YY_MIX '(' item_name ',' ltype ',' arg_list ')' '[' expr ']' expr
+    						{ $$=new TNlayer($3, $5,$7,$12,$10);APOP;}
+    | YY_MIX '(' item_name ',' ltype ',' arg_list ')'
+    						{ $$=new TNlayer($3, $5, $7,0,0);APOP;}
+    | YY_MIX '(' item_name ',' ltype ')'
+    						{ $$=new TNlayer($3, $5,0,0,0);}
+    | YY_MIX '(' item_name ',' ltype ')'  '[' expr ']'
+    						{ $$=new TNlayer($3, $5,0,0,$8);}
  ltype
 	: LTYPE					{ $$=$1;}
 	| ltype '|' LTYPE		{ $$=$1|$3;}
@@ -718,9 +730,6 @@ clouds_expr
  const_expr
     : positive              { $$=new TNconst($1);}
 
- ltype_expr
-    : ltype                 { $$=new TNconst($1);}
- 
  string_expr
     : STRING                { $$=new TNstring($1);}
 
