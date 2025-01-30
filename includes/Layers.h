@@ -78,7 +78,7 @@ public:
 	double ramp;
 	int id;
 	int optionString(char *);
-	TNlayer(char *n, int t, TNode *l, TNode *r,TNode *b);
+	TNlayer(TNode *l, TNode *r,TNode *b);
 	void eval();
 	void save(FILE*);
 	void saveNode(FILE *f);

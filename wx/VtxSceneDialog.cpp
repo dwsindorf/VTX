@@ -837,7 +837,7 @@ void VtxSceneDialog::rebuildObjectTree(){
 	//setTabs(selected->getFlag(TN_TYPES));
 	//treepanel->CollapseAll();
 	cout<<"rebuildObjectTree 1"<<endl;
-
+	//setSelected(selectedId);
 	treepanel->SelectItem(selectedId);
 	cout<<"rebuildObjectTree 2"<<endl;
 
@@ -845,6 +845,7 @@ void VtxSceneDialog::rebuildObjectTree(){
 
     TheScene->set_changed_detail();
 	TheScene->unsuspend();
+	//TheScene->rebuild();
     cout<<"rebuildObjectTree end"<<endl;
 
 }

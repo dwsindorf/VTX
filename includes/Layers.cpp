@@ -116,10 +116,10 @@ NodeIF *TNmap::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
 	if(x->typeValue()!=ID_LAYER){
-		int t=MESH;
-		if(right)
-			t=((TNlayer*)right)->type;
-		n=new TNlayer(0,t, 0, right,n);
+//		int t=MESH;
+//		if(right)
+//			t=((TNlayer*)right)->type;
+//		n=new TNlayer(0,t, 0, right,n);
     	n->setParent(this);
     	right=n;
 	}
@@ -573,8 +573,33 @@ void TNmap::eval()
 //************************************************************
 // TNlayer class
 //************************************************************
-TNlayer::TNlayer(char *n, int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b)
+TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 {
+	left=l;
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	setName("");
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		cout<<"name="<<name_str<<endl;
+		arg->right=0;
+		delete arg;
+	}
+	arg=left;
+	node=arg->left;
+	if(node->typeValue() == ID_CONST){
+		node->eval();
+		type=(int)S0.s;
+		arg=left;
+		cout<<"type="<<type<<endl;
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;
+	}
+	
 	map=0;
 	width=0.1;
 	drop=DFLT_DROP;
@@ -582,11 +607,11 @@ TNlayer::TNlayer(char *n, int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b)
 	edge=0;
 	ramp=0;
 	id=0;
-	name_str[0]=0;
-	if(n){
-		strcpy(name_str,n);
-		::free(n);
-	}
+//	name_str[0]=0;
+//	if(n){
+//		strcpy(name_str,n);
+//		::free(n);
+//	}
 }
 
 //-------------------------------------------------------------
@@ -727,20 +752,20 @@ NodeIF *TNlayer::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
 	if(x->typeValue()!=ID_LAYER){
-		NodeIF *newbase=n;
-		while(n->typeValue()&ID_FUNC){
-			TNfunc *f=(TNfunc *)n;
-			n=f->right;
-			f->right=0;
-		}
-		if(newbase !=n)
-		    delete newbase;
-
-		int t=MESH;
-		if(right)
-			t=((TNlayer*)right)->type;
-		n=new TNlayer(0,t, 0, right,n);
-    	n->setParent(this);
+//		NodeIF *newbase=n;
+//		while(n->typeValue()&ID_FUNC){
+//			TNfunc *f=(TNfunc *)n;
+//			n=f->right;
+//			f->right=0;
+//		}
+//		if(newbase !=n)
+//		    delete newbase;
+//
+//		int t=MESH;
+//		if(right)
+//			t=((TNlayer*)right)->type;
+//		n=new TNlayer(0,t, 0, right,n);
+//    	n->setParent(this);
     	right=n;
 	}
 	else{
