@@ -761,6 +761,14 @@ void TNexpr::save(FILE *f)
 		right->save(f);
 }
 
+void TNexpr::saveNode(FILE *f)
+{
+	if(left)
+		left->saveNode(f);
+	fprintf(f,symbol());
+	if(right)
+		right->saveNode(f);
+}
 //-------------------------------------------------------------
 // TNexpr::addToken() add to token list
 //-------------------------------------------------------------

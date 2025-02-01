@@ -615,7 +615,6 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 //	}
 }
 void TNlayer::init(){
-	cout<<"TNlayer::init()"<<endl;
 	TNbase::init();
 	removeImages();
 }

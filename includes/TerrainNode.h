@@ -319,6 +319,7 @@ public:
 	virtual const char *typeName ()	{ return "expr";}
 	virtual int typeValue()		    { return ID_EXPR;}
 	virtual void addToken(LinkedList<TNode*>&);
+	void saveNode(FILE *f);
 	void save(FILE *f);
 	NodeIF* getValue()			{ return this;}
 };
