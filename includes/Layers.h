@@ -78,12 +78,15 @@ public:
 	double ramp;
 	int id;
 	int optionString(char *);
-	TNlayer(char *n, int t, TNode *l, TNode *r,TNode *b);
+	TNlayer(TNode *l, TNode *r,TNode *b);
 	void eval();
+	void removeImages();
+	void init();
 	void save(FILE*);
 	void saveNode(FILE *f);
 	NodeIF *replaceNode(NodeIF *c);
 	bool hasChild(int );
+	NodeIF *findChild(int );
 	int typeValue()			{ return ID_LAYER;}
 	const char *typeName()	{ return "layer";}
 	void valueString(char*);

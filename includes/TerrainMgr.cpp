@@ -1462,7 +1462,7 @@ void TerrainMgr::save(FILE *f)
 void TerrainMgr::saveNode(FILE *f)
 {
 	if(root && root->right)
-		root->right->save(f); // save entire tree
+		root->right->saveNode(f); // save entire tree
 }
 
 //-------------------------------------------------------------

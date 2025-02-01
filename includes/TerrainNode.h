@@ -146,6 +146,7 @@ public:
 	virtual ~TNunary();
 	virtual void eval();
 	virtual void init();
+	virtual void saveNode(FILE* f){ save(f);}
 	virtual void save(FILE*);
 	virtual void visit(void (*f) (TNode *));
 	virtual bool hasChildren();
@@ -256,6 +257,7 @@ public:
 	virtual void init();
 	virtual void eval();
 	virtual void save(FILE*);
+	virtual void saveNode(FILE*);
 	virtual void visit(void (*f) (TNode *));
 	virtual int typeValue()		{ return ID_BINARY;}
 	virtual bool hasChildren();

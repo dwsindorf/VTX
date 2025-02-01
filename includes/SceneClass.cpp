@@ -352,7 +352,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	}
 	//if(n->typeClass()==ID_ORBITAL)
 	//	set_viewobj((ObjectNode*)n);
-		
+	select_tree_node(n);
 	if(m!=n)
 		delete m;
 	return n;

@@ -6,8 +6,9 @@
 #include "SceneClass.h"
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
+#include "Layers.h"
 
-//#define DEBUG_IMAGES
+#define DEBUG_IMAGES
 //#define DEBUG_TEXS
 
 #ifdef _DEBUG
@@ -65,6 +66,15 @@ extern int hits,visits,misses;
 
 static TerrainData Td;
 
+static bool getLayer(TNode *p) {
+	while (p && (p->typeValue() != ID_LAYER)) {
+		p=p->getParent();
+	}
+	if(p && p->typeValue() == ID_LAYER)
+		return true;
+	else
+		return false;
+}
 //************************************************************
 // Class TNinode
 //************************************************************
@@ -281,6 +291,7 @@ void TNbands::save(FILE *f)
 {
     char buff[256];
     buff[0]=0;
+    bool inlayer=getLayer(this);
     optionString(buff);
     if(buff[0]==0)
 	    fprintf(f,"%s%s(\"%s\",",tabs,symbol(),name);
@@ -305,7 +316,11 @@ void TNbands::save(FILE *f)
 	}
 	if(n>4)
 	    dec_tabs();
-	fprintf(f,");\n");
+	if(inlayer)
+		fprintf(f,")");
+	else		
+		fprintf(f,");\n");
+
 }
 
 //-------------------------------------------------------------
@@ -521,9 +536,43 @@ TNimage::TNimage(char *s, int l, TNode *r) : TNinode(s,l,r)
 //-------------------------------------------------------------
 // TNimage::save() save the node
 //-------------------------------------------------------------
+void TNimage::saveNode(FILE *f) {
+	bool inlayer = getLayer(this);
+	if(!inlayer)
+		return;
+
+	char tmp[512];
+	tmp[0] = 0;
+	optionString(tmp);
+	if (tmp[0] == 0)
+		fprintf(f, "%s(\"%s\",", symbol(), name);
+	else
+		fprintf(f, "%s(\"%s\",%s", symbol(), name, tmp);
+
+	if (right) {
+		TNarg *arg = (TNarg*) right;
+		arg->save(f);
+	}
+	fprintf(f, ")+");
+}
+//-------------------------------------------------------------
+// TNimage::save() save the node
+//-------------------------------------------------------------
 void TNimage::save(FILE *f)
 {
-	char tmp[256];
+    bool inlayer=getLayer(this);
+	cout<<"TNimage::save inlayer"<<endl;
+
+    if(inlayer){
+    	TNode *p=getParent();
+    	if(p->typeValue()==ID_ADD){
+    		TNadd *a=(TNadd *)p;
+    		if(a)
+    			a->right->save(f);
+    	}
+    	return;
+    }
+	char tmp[512];
 	tmp[0]=0;
     optionString(tmp);
     if(tmp[0]==0)

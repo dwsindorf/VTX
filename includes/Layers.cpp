@@ -116,10 +116,10 @@ NodeIF *TNmap::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
 	if(x->typeValue()!=ID_LAYER){
-		int t=MESH;
-		if(right)
-			t=((TNlayer*)right)->type;
-		n=new TNlayer(0,t, 0, right,n);
+//		int t=MESH;
+//		if(right)
+//			t=((TNlayer*)right)->type;
+//		n=new TNlayer(0,t, 0, right,n);
     	n->setParent(this);
     	right=n;
 	}
@@ -573,8 +573,34 @@ void TNmap::eval()
 //************************************************************
 // TNlayer class
 //************************************************************
-TNlayer::TNlayer(char *n, int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b)
+TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 {
+	left=l;
+	TNarg *arg=left;
+	TNarg *node=arg->left;
+	setName("");
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		cout<<"name="<<name_str<<endl;
+		arg->right=0;
+		delete arg;
+	}
+	arg=left;
+	node=arg->left;
+	if(node->typeValue() == ID_CONST){
+		node->eval();
+		type=(int)S0.s;
+		arg=left;
+		cout<<"type="<<type<<endl;
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;
+	}
+	//removeImages();
+	
 	map=0;
 	width=0.1;
 	drop=DFLT_DROP;
@@ -582,13 +608,29 @@ TNlayer::TNlayer(char *n, int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b)
 	edge=0;
 	ramp=0;
 	id=0;
-	name_str[0]=0;
-	if(n){
-		strcpy(name_str,n);
-		::free(n);
+//	name_str[0]=0;
+//	if(n){
+//		strcpy(name_str,n);
+//		::free(n);
+//	}
+}
+void TNlayer::init(){
+	cout<<"TNlayer::init()"<<endl;
+	TNbase::init();
+	removeImages();
+}
+void TNlayer::removeImages(){
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	char buff[256];
+	
+	TNimage *inode=findChild(ID_IMAGE);
+	if(inode){
+		cout<<"adding image "<<inode->name<<endl;
+		orb->add_image(inode);
+		TNode *p=inode->getParent();
+		p->removeNode();
 	}
 }
-
 //-------------------------------------------------------------
 // TNlayer::valueString() write value string
 //-------------------------------------------------------------
@@ -665,6 +707,7 @@ void TNlayer::eval()
 //-------------------------------------------------------------
 static int find_type=0;
 static bool find_test=false;
+static NodeIF *find_obj;
 static void findType(NodeIF *obj)
 {
 	int type=obj->typeValue();
@@ -673,16 +716,23 @@ static void findType(NodeIF *obj)
 	else if(obj->typeValue()==find_type){
 		find_test=true;
 		obj->setFlag(NODE_STOP);
+		find_obj=obj;
 	}
 }
 bool TNlayer::hasChild(int type){
 	find_type=type;
 	find_test=false;
+	find_obj=0;
 	if(base)
 		base->visitNode(findType);
 	return find_test;
 }
 
+NodeIF *TNlayer::findChild(int type){
+	if(hasChild(type))
+		return find_obj;
+	return 0;
+}
 static bool enabled;
 static void enableTexture(NodeIF *obj)
 {
@@ -727,20 +777,20 @@ NodeIF *TNlayer::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
 	if(x->typeValue()!=ID_LAYER){
-		NodeIF *newbase=n;
-		while(n->typeValue()&ID_FUNC){
-			TNfunc *f=(TNfunc *)n;
-			n=f->right;
-			f->right=0;
-		}
-		if(newbase !=n)
-		    delete newbase;
-
-		int t=MESH;
-		if(right)
-			t=((TNlayer*)right)->type;
-		n=new TNlayer(0,t, 0, right,n);
-    	n->setParent(this);
+//		NodeIF *newbase=n;
+//		while(n->typeValue()&ID_FUNC){
+//			TNfunc *f=(TNfunc *)n;
+//			n=f->right;
+//			f->right=0;
+//		}
+//		if(newbase !=n)
+//		    delete newbase;
+//
+//		int t=MESH;
+//		if(right)
+//			t=((TNlayer*)right)->type;
+//		n=new TNlayer(0,t, 0, right,n);
+//    	n->setParent(this);
     	right=n;
 	}
 	else{
@@ -765,6 +815,7 @@ NodeIF *TNlayer::replaceNode(NodeIF *c){
 	base=newlayer->base;
 	setName(newlayer->getName());
 	base->setParent(this);
+	removeImages();
 	return this;
 }
 
@@ -811,7 +862,7 @@ void TNlayer::saveNode(FILE *f)
 	addtabs=1;
 	fprintf(f,"\n%s[",tabs);
 	if(base)
-		base->save(f);
+		base->saveNode(f);
 	dec_tabs();
 	fprintf(f,"]\n%s",tabs);
 	addtabs=0;
@@ -866,7 +917,18 @@ void TNlayer::propertyString(char *s)
 //-------------------------------------------------------------
 void TNlayer::save(FILE *f)
 {
-	saveNode(f);
+	char buff[256];
+	buff[0]=0;
+	propertyString(buff);
+	fprintf(f,"%s",buff);
+	inc_tabs();
+	addtabs=1;
+	fprintf(f,"\n%s[",tabs);
+	if(base)
+		base->save(f);
+	dec_tabs();
+	fprintf(f,"]\n%s",tabs);
+	addtabs=0;
 	if(right)
 		right->save(f);
 }

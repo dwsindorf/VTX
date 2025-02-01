@@ -595,6 +595,17 @@ void TNbinary::save(FILE *f)
 }
 
 //-------------------------------------------------------------
+// TNbinary::save() evaluate the node
+//-------------------------------------------------------------
+void TNbinary::saveNode(FILE *f)
+{
+	if(left)
+		left->saveNode(f);
+	if(right)
+		right->saveNode(f);
+}
+
+//-------------------------------------------------------------
 // TNbinary::removeChild
 //-------------------------------------------------------------
 NodeIF *TNbinary::removeChild(NodeIF *c){

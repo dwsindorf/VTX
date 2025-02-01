@@ -91,6 +91,7 @@ public:
 	TNimage(char *s, int l, TNode *r);
 	int typeValue()			    { return ID_IMAGE;}
 	void save(FILE *f);
+	void saveNode(FILE *f);
 	void init();
     const char *typeName()	    { return "image";}
 	const char *symbol()	    { return "image";}
