@@ -130,6 +130,7 @@ public:
 	virtual TNode *add_expr(int t, char *s, TNode *r);
 	virtual TNode    *add_image(TNode *r);
 	virtual TNinode  *get_image(char *r);
+	virtual TNinode  *replace_image(TNinode *i, TNinode *r);
 	virtual TNode *set_terrain(TNode *n);
 	virtual void set_surface(TerrainData&);
 	virtual void set_debug(int d);

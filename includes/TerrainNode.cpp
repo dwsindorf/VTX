@@ -595,17 +595,6 @@ void TNbinary::save(FILE *f)
 }
 
 //-------------------------------------------------------------
-// TNbinary::save() evaluate the node
-//-------------------------------------------------------------
-void TNbinary::saveNode(FILE *f)
-{
-	if(left)
-		left->saveNode(f);
-	if(right)
-		right->saveNode(f);
-}
-
-//-------------------------------------------------------------
 // TNbinary::removeChild
 //-------------------------------------------------------------
 NodeIF *TNbinary::removeChild(NodeIF *c){
@@ -761,14 +750,6 @@ void TNexpr::save(FILE *f)
 		right->save(f);
 }
 
-void TNexpr::saveNode(FILE *f)
-{
-	if(left)
-		left->saveNode(f);
-	fprintf(f,symbol());
-	if(right)
-		right->saveNode(f);
-}
 //-------------------------------------------------------------
 // TNexpr::addToken() add to token list
 //-------------------------------------------------------------

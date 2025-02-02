@@ -4,7 +4,7 @@
 #include "MapClass.h"
 #include "AdaptOptions.h"
 #include "ImageClass.h"
-
+#include "RenderOptions.h"
 #include "FileUtil.h"
 #include <iostream>
 
@@ -583,7 +583,7 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 		setName(((TNstring*)node)->value);
 		left=arg->next();
 		left->setParent(this);
-		cout<<"name="<<name_str<<endl;
+		//cout<<"name="<<name_str<<endl;
 		arg->right=0;
 		delete arg;
 	}
@@ -593,14 +593,12 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 		node->eval();
 		type=(int)S0.s;
 		arg=left;
-		cout<<"type="<<type<<endl;
+		//cout<<"type="<<type<<endl;
 		left=arg->next();
 		left->setParent(this);
 		arg->right=0;
 		delete arg;
 	}
-	//removeImages();
-	
 	map=0;
 	width=0.1;
 	drop=DFLT_DROP;
@@ -608,28 +606,9 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 	edge=0;
 	ramp=0;
 	id=0;
-//	name_str[0]=0;
-//	if(n){
-//		strcpy(name_str,n);
-//		::free(n);
-//	}
+
 }
-void TNlayer::init(){
-	TNbase::init();
-	removeImages();
-}
-void TNlayer::removeImages(){
-	Planetoid *orb=(Planetoid *)getOrbital(this);
-	char buff[256];
-	
-	TNimage *inode=findChild(ID_IMAGE);
-	if(inode){
-		cout<<"adding image "<<inode->name<<endl;
-		orb->add_image(inode);
-		TNode *p=inode->getParent();
-		p->removeNode();
-	}
-}
+
 //-------------------------------------------------------------
 // TNlayer::valueString() write value string
 //-------------------------------------------------------------
@@ -704,34 +683,118 @@ void TNlayer::eval()
 //-------------------------------------------------------------
 // TNlayer::hasChild return true if child exists
 //-------------------------------------------------------------
-static int find_type=0;
-static bool find_test=false;
-static NodeIF *find_obj;
-static void findType(NodeIF *obj)
-{
-	int type=obj->typeValue();
-	if(type==ID_ROCKS||type==ID_MAP)
-		obj->setFlag(NODE_STOP);
-	else if(obj->typeValue()==find_type){
-		find_test=true;
-		obj->setFlag(NODE_STOP);
-		find_obj=obj;
-	}
-}
-bool TNlayer::hasChild(int type){
-	find_type=type;
-	find_test=false;
-	find_obj=0;
-	if(base)
-		base->visitNode(findType);
-	return find_test;
+static LinkedList<TNtexture *> texs;
+static LinkedList<TNinode *> inodes;
+
+static void get_inode(NodeIF* n) {
+	if(n->typeValue()==ID_BANDS || n->typeValue()==ID_IMAGE)
+	    inodes.add((TNinode*)n);
 }
 
-NodeIF *TNlayer::findChild(int type){
-	if(hasChild(type))
-		return find_obj;
-	return 0;
+static void collectTexs(NodeIF *obj){
+	int type=obj->typeValue();
+	if(type==ID_TEXTURE)
+		texs.add((TNtexture *)obj);
 }
+//  save node
+void TNlayer::restoreTexs(){
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	inodes.reset();
+	base->visitNode(get_inode);
+	TNinode *inode,*rnode,*gnode;
+	inodes.ss();
+	while(inode=inodes++){
+		rnode=orb->get_image(inode->name);
+		if(rnode){
+			orb->replace_image(rnode,inode);
+			cout<<"replacing "<<inode->name<<endl;
+			delete rnode;
+		}
+		else{
+			orb->add_image(inode);
+			cout<<"adding "<<inode->name<<endl;
+		}
+		inode->removeNode();
+	}
+	Render.invalidate_textures();
+	images.invalidate();
+	images.makeImagelist();
+}
+void TNlayer::saveTexs(char *s){
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	char buff[1024];
+	texs.reset();
+	if(base)
+		base->visitNode(collectTexs);
+	texs.ss();
+	TNtexture *tex;
+	TNinode *inode,*gnode=0;
+	TNinode::inLayer=true;
+	while(tex=texs++){
+		inode=orb->get_image(tex->name);
+		if(inode){
+			if(inode->typeValue()==ID_IMAGE){
+				TNimage *image=(TNimage *)inode;
+				char *gname=image->gradName();
+				if(gname){
+					gnode=orb->get_image(gname);
+					if(gnode){
+						buff[0]=0;
+						gnode->valueString(buff);
+						sprintf(s+strlen(s),"\t%s+\n",buff);
+					}
+				}
+			}
+			buff[0]=0;
+			inode->valueString(buff);
+			sprintf(s+strlen(s),"\t%s+\n",buff);			
+		}
+	}
+	TNinode::inLayer=false;
+}
+//-------------------------------------------------------------
+// TNlayer::replaceChild replace content
+//-------------------------------------------------------------
+NodeIF *TNlayer::replaceChild(NodeIF *c,NodeIF *n)
+{
+	if(c!=this)
+		return TNbase::replaceChild(c,n);
+	if(!base){
+		base=(TNode*)n;
+		base->setParent(this);
+		return 0;
+	}
+	NodeIF *delobj=base;
+	base=(TNode*)n;
+	restoreTexs();
+	base->setParent(this);
+	return delobj;
+}
+
+//-------------------------------------------------------------
+// TNlayer::saveNode save the node
+//-------------------------------------------------------------
+void TNlayer::saveNode(FILE *f)
+{
+	char buff[4096];
+	buff[0]=0;
+	propertyString(buff);
+	fprintf(f,"%s",buff);
+	inc_tabs();
+	addtabs=1;
+	fprintf(f,"\n%s[",tabs);
+	buff[0]=0;
+	saveTexs(buff);
+	if(strlen(buff))
+		fprintf(f,"%s",buff);
+	if(base)
+		base->saveNode(f);
+	dec_tabs();
+	fprintf(f,"]\n%s",tabs);
+	addtabs=0;
+
+}
+
 static bool enabled;
 static void enableTexture(NodeIF *obj)
 {
@@ -749,24 +812,6 @@ void TNlayer::setEnabled(bool b){
 		return;
 	enabled=b;
 	base->visitNode(enableTexture);
-}
-
-//-------------------------------------------------------------
-// TNlayer::replaceChild replace content
-//-------------------------------------------------------------
-NodeIF *TNlayer::replaceChild(NodeIF *c,NodeIF *n)
-{
-	if(c!=this)
-		return TNbase::replaceChild(c,n);
-	if(!base){
-		base=(TNode*)n;
-		base->setParent(this);
-		return 0;
-	}
-	NodeIF *delobj=base;
-	base=(TNode*)n;
-	base->setParent(this);
-	return delobj;
 }
 
 //-------------------------------------------------------------
@@ -793,9 +838,15 @@ NodeIF *TNlayer::addChild(NodeIF *x)
     	right=n;
 	}
 	else{
-		n->setParent(this);
+		TNlayer *layer=(TNlayer *)n;
+		layer->setParent(this);
+		//cout<<"ACTION ="<<TheScene->model->actionmode<<endl;
+		if(TheScene->model->adding()){
+			layer->restoreTexs();
+			TheScene->model->clrActionMode();
+		}
 		if(right)
-			n->addChild(right);
+			layer->addChild(right);
 		right=n;
     }
 	return n;
@@ -814,7 +865,9 @@ NodeIF *TNlayer::replaceNode(NodeIF *c){
 	base=newlayer->base;
 	setName(newlayer->getName());
 	base->setParent(this);
-	removeImages();
+	restoreTexs();
+
+	//removeImages();
 	return this;
 }
 
@@ -848,24 +901,7 @@ void TNlayer::lower()
 	base->setParent(this);
 }
 
-//-------------------------------------------------------------
-// TNlayer::saveNode save the node
-//-------------------------------------------------------------
-void TNlayer::saveNode(FILE *f)
-{
-	char buff[256];
-	buff[0]=0;
-	propertyString(buff);
-	fprintf(f,"%s",buff);
-	inc_tabs();
-	addtabs=1;
-	fprintf(f,"\n%s[",tabs);
-	if(base)
-		base->saveNode(f);
-	dec_tabs();
-	fprintf(f,"]\n%s",tabs);
-	addtabs=0;
-}
+
 //-------------------------------------------------------------
 // TNlayer::setName() set name
 //-------------------------------------------------------------

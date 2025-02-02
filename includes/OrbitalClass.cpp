@@ -225,6 +225,9 @@ TNinode  *Orbital::get_image(char *s)
 {
 	return exprs.get_image(s);
 }
+TNinode  *Orbital::replace_image(TNinode *i, TNinode *r){
+	return exprs.replace_image(i,r);
+}
 
 TNvar *Orbital::addExprVar(const char *name,const char *expr){
 	char buff[2048];
@@ -5674,9 +5677,6 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	planet_id=planet_cnt+lastn;
 	planet->get_vars();
 
-//	Render.invalidate_textures();
-//	images.invalidate();
-//	images.makeImagelist();
 }
 
 void Planet::addMoon(int gtype){
@@ -5753,7 +5753,6 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	Sky *sky=planet->newSky();
 	planet->addChild(sky);
-	//Render.invalidate_textures();
 
 	bool has_rings=r[6]>0.8;
 	if(has_rings){

@@ -75,6 +75,8 @@ static bool getLayer(TNode *p) {
 	else
 		return false;
 }
+bool TNinode::inLayer=false;
+
 //************************************************************
 // Class TNinode
 //************************************************************
@@ -164,7 +166,10 @@ void TNinode::valueString(char *s)
 		if(arg)
 			strcat(s,",");
 	}
-	strcat(s,");\n");
+	if(inLayer)
+		strcat(s,")");
+	else
+		strcat(s,");\n");
 	setEnd(s);
 }
 
@@ -275,12 +280,18 @@ void TNbands::valueString(char *s)
 			strcat(s,",");
 			n++;
 			if(n>4){
-				strcat(s,"\n");
+				if(inLayer)
+					strcat(s,"\n\t");
+				else
+					strcat(s,"\n");
 				n=0;
 			}
 		}
 	}
-	strcat(s,");\n");
+	if(inLayer)
+		strcat(s,")");
+	else		
+		strcat(s,");\n");
 	setEnd(s);
 }
 
@@ -291,7 +302,7 @@ void TNbands::save(FILE *f)
 {
     char buff[256];
     buff[0]=0;
-    bool inlayer=getLayer(this);
+   // bool inlayer=getLayer(this);
     optionString(buff);
     if(buff[0]==0)
 	    fprintf(f,"%s%s(\"%s\",",tabs,symbol(),name);
@@ -316,10 +327,10 @@ void TNbands::save(FILE *f)
 	}
 	if(n>4)
 	    dec_tabs();
-	if(inlayer)
-		fprintf(f,")");
-	else		
-		fprintf(f,");\n");
+//	if(inLayer)
+//		fprintf(f,")+\n");
+//	else		
+	fprintf(f,");\n");
 
 }
 
@@ -536,42 +547,20 @@ TNimage::TNimage(char *s, int l, TNode *r) : TNinode(s,l,r)
 //-------------------------------------------------------------
 // TNimage::save() save the node
 //-------------------------------------------------------------
-void TNimage::saveNode(FILE *f) {
-	bool inlayer = getLayer(this);
-	if(!inlayer)
-		return;
-
-	char tmp[512];
-	tmp[0] = 0;
-	optionString(tmp);
-	if (tmp[0] == 0)
-		fprintf(f, "%s(\"%s\",", symbol(), name);
-	else
-		fprintf(f, "%s(\"%s\",%s", symbol(), name, tmp);
-
-	if (right) {
-		TNarg *arg = (TNarg*) right;
-		arg->save(f);
-	}
-	fprintf(f, ")+");
-}
-//-------------------------------------------------------------
-// TNimage::save() save the node
-//-------------------------------------------------------------
 void TNimage::save(FILE *f)
 {
-    bool inlayer=getLayer(this);
-	cout<<"TNimage::save inlayer"<<endl;
+    //bool inlayer=getLayer(this);
+	//cout<<"TNimage::save inlayer"<<endl;
 
-    if(inlayer){
-    	TNode *p=getParent();
-    	if(p->typeValue()==ID_ADD){
-    		TNadd *a=(TNadd *)p;
-    		if(a)
-    			a->right->save(f);
-    	}
-    	return;
-    }
+//    if(inlayer){
+//    	TNode *p=getParent();
+//    	if(p->typeValue()==ID_ADD){
+//    		TNadd *a=(TNadd *)p;
+//    		if(a)
+//    			a->right->save(f);
+//    	}
+//    	return;
+//    }
 	char tmp[512];
 	tmp[0]=0;
     optionString(tmp);

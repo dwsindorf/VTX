@@ -49,7 +49,7 @@
 #include "VtxBranchTabs.h"
 #include "VtxLeafTabs.h"
 
-#define PRINT_TREE
+//#define PRINT_TREE
 
 #define DEBUG_TREE_ACTIONS
 
@@ -625,6 +625,7 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 		// add new node to wxTreeCntrl
 		addToTree(pid, dstId, tree_node);
 	}
+	TheScene->model->clrActionMode();
 	return newObj;
 }
 
@@ -1096,8 +1097,8 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 		}
 		submenu->AppendSubMenu(typemenu,"Generate");
 	}
-	else
-		replace_list.add(new ModelSym("Generate",type));
+	//else
+	//	replace_list.add(new ModelSym("Generate",type));
 	submenu->AppendSeparator();
 
 	LinkedList<ModelSym*>flist;

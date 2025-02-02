@@ -269,6 +269,7 @@ public:
 
 	TNode    *add_image(TNode *r);
 	TNinode  *get_image(char *r);
+	TNinode  *replace_image(TNinode *i, TNinode *r);
 
 	// NodeIF methods
 

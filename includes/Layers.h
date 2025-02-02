@@ -80,13 +80,12 @@ public:
 	int optionString(char *);
 	TNlayer(TNode *l, TNode *r,TNode *b);
 	void eval();
-	void removeImages();
-	void init();
+
 	void save(FILE*);
 	void saveNode(FILE *f);
 	NodeIF *replaceNode(NodeIF *c);
-	bool hasChild(int );
-	NodeIF *findChild(int );
+	void restoreTexs();
+	void saveTexs(char *s);
 	int typeValue()			{ return ID_LAYER;}
 	const char *typeName()	{ return "layer";}
 	void valueString(char*);

@@ -28,6 +28,7 @@ public:
 	Image *image;
 	char  *name;
 	char  *gname;
+	static bool  inLayer;
 	TNinode(char *, int l, TNode *r);
 	virtual ~TNinode();
 	void setName(char*);
@@ -91,7 +92,6 @@ public:
 	TNimage(char *s, int l, TNode *r);
 	int typeValue()			    { return ID_IMAGE;}
 	void save(FILE *f);
-	void saveNode(FILE *f);
 	void init();
     const char *typeName()	    { return "image";}
 	const char *symbol()	    { return "image";}

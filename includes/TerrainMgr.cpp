@@ -1015,6 +1015,32 @@ TNinode *ExprMgr::get_image(char *s)
 }
 
 //-------------------------------------------------------------
+// ExprMgr::get_image() get image expr
+//-------------------------------------------------------------
+TNinode *ExprMgr::replace_image(TNinode *img, TNinode *r)
+{
+	TNinode *image=0;
+	TNinode *rimage=0;
+	Node<TNode*> *ptr=inodes.ptr;
+	inodes.ss();
+	char *rn=r->name;
+	
+	while((image=(TNinode*)inodes++)){
+		if(strcmp(r->name,image->name)==0){
+			rimage=image;
+	    	break;
+		}
+	}
+	if(rimage){
+		inodes.replace(rimage,r);
+	}
+	else
+		
+    inodes.ptr=ptr;
+    return rimage;
+}
+
+//-------------------------------------------------------------
 // ExprMgr::setVar() add or set a variable
 //-------------------------------------------------------------
 TNvar *ExprMgr::setVar(char *s, char *arg){
@@ -1462,7 +1488,7 @@ void TerrainMgr::save(FILE *f)
 void TerrainMgr::saveNode(FILE *f)
 {
 	if(root && root->right)
-		root->right->saveNode(f); // save entire tree
+		root->right->save(f); // save entire tree
 }
 
 //-------------------------------------------------------------
