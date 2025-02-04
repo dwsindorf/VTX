@@ -508,6 +508,8 @@ public:
 	void render_object();
 	void adapt_object();
 	double   getHeatCalacity();
+	
+	bool randomize();
 
 	void set_vars();
 	void get_vars();
@@ -517,8 +519,10 @@ public:
 	bool setProgram();
 	int scale(double&n, double&f);
 	bool adapt_needed() { return false;}
-	NodeIF *getInstance();
-	static Sky *newInstance();
+	NodeIF *getInstance(NodeIF *prev,int m);
+	static Sky *newInstance(int g);
+	static Sky *newInstance() {return newInstance(0);}
+
 };
 
 
@@ -651,7 +655,7 @@ protected:
 public:
 	
 	static std::string randFeature(int type);
-    //OceanState oceanState;
+ 
     OceanState *ocean;
 	enum {GAS=0,LIQUID=1,SOLID=2};
 
@@ -748,23 +752,17 @@ public:
 	static void newRocky(Planetoid *, int gtype);
 	static void newRocky(Planetoid *) { newRocky(0);}
 	static std::string newLayer(Planetoid *);
-//	static std::string newLocalTex(Planetoid *);
-//	static std::string newGlobalTex(Planetoid *);
-//	static std::string newDualGlobalTex(Planetoid *);
 	static std::string newOcean(Planetoid *);
-//	static std::string newHmapTex(Planetoid *);
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
     static void makeLists();
-    //static char *getRandTexName();
-    //static char *getRandLayerTexName();
-    //static char *getRandHmapTexName();
 	void setColors();
 	void initInstance();
 	
 	void setIceColors();
 
-	virtual Sky *newSky();
+	virtual Sky *newSky(int g);
+	virtual Sky *newSky() {return newSky(0);}
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
 	
@@ -781,9 +779,7 @@ public:
 
 	const char *name()			{ return "Planet";}
 	int  type()					{ return ID_PLANET;}
-	NodeIF *getInstance(NodeIF *prev) { return getInstance(prev,0);}
     NodeIF *getInstance(NodeIF *prev,int m);
-	void newInstance() {newInstance(0);}
     void newInstance(int g);
 	static void newGasGiant(Planet *,int gtype);
 	static void newGasGiant(Planet *) {newGasGiant(0);};

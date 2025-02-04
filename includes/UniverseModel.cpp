@@ -406,6 +406,14 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("White",type);
 	case GN_BLUE_STAR:
 		return new ModelSym("Blue",type);
+	case GN_WATER:
+		return new ModelSym("Water",type);
+	case GN_THIN:
+		return new ModelSym("Thin",type);
+	case GN_MED:
+		return new ModelSym("Medium",type);
+	case GN_DENSE:
+		return new ModelSym("Dense",type);
    }
 }
 std::string UniverseModel::typeSymbol(int type){
@@ -451,6 +459,16 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_YELLOW_STAR));
 		list.add(getTypeSymbol(GN_WHITE_STAR));
 		list.add(getTypeSymbol(GN_BLUE_STAR));
+		break;
+	case TN_WATER:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_WATER));
+		break;
+	case TN_SKY:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_THIN));
+		list.add(getTypeSymbol(GN_MED));
+		list.add(getTypeSymbol(GN_DENSE));
 		break;
 	}
 }

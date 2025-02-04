@@ -1,7 +1,7 @@
 Sky(0.001605) {
 	color=Color(1,0.8,0);
 	day=58.65;
-	density=0.31944;
+	density=1;
 	halo.color=Color(0.98,0.96,0.72,0.25);
 	haze.color=Color(0.98,0.91,0.79);
 	name="YellowSky";

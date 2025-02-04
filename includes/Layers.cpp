@@ -707,16 +707,21 @@ void TNlayer::restoreTexs(){
 		rnode=orb->get_image(inode->name);
 		if(rnode){
 			orb->replace_image(rnode,inode);
+			inode->init();
 			cout<<"replacing "<<inode->name<<endl;
 			delete rnode;
 		}
 		else{
 			orb->add_image(inode);
+			inode->init();
+
 			cout<<"adding "<<inode->name<<endl;
 		}
 		inode->removeNode();
 	}
+	cout<<"TNlayer::restoreTexs()"<<endl;
 	Render.invalidate_textures();
+	//orb->terrain.validateTextures();
 	images.invalidate();
 	images.makeImagelist();
 }

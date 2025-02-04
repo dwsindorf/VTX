@@ -296,6 +296,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		}
 
 		if(sym){
+			cout<<"SYM="<<sym->name()<<endl;
 			sbuff[0]=0;
 			if(menu_choice & TABS_REPLACE)
 				TheScene->model->setActionMode(Model::REPLACING);
@@ -308,7 +309,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 			}			
 			else if( name == "Simple")
 				newobj=TheScene->getPrototype(obj,sym->value);
-			else
+			else 
 				newobj=TheScene->makeObject(obj,sym->value);
 		}
 	}
@@ -1046,8 +1047,8 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
 		submenu->AppendSubMenu(tmenu,"Generate");
 		//tlist.free();
 	}
-	else 
-		submenu->Append(TABS_ADD|i++,"Generate");
+	//else 
+	//	submenu->Append(TABS_ADD|i++,"Generate");
 
  	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(sym->value,flist);

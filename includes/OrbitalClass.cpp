@@ -3445,8 +3445,12 @@ void Planetoid::setOceanExpr(char *expr){
 void Planetoid::setOceanExpr(){
   if(water()) { 
 	  TNvar *var=exprs.getVar((char*)"ocean.expr");
-	  var->setExpr(ocean->getOceanExpr());
-	  var->applyExpr();
+	  if(!var)
+		  getOceanExpr();
+	  else{
+	  	var->setExpr(ocean->getOceanExpr());
+	 	var->applyExpr();
+	  }
   } else 
 	  exprs.hide_var("ocean.expr");
 }
@@ -4670,8 +4674,8 @@ static char *getRandEmapTexName(){
 	//cout<<"HTex Name="<<name<<" index="<<index<<":"<<hmaps_list.size<<endl;
 	return name;
 }
-Sky *Planetoid::newSky(){
-	Sky *sky=Sky::newInstance();
+Sky *Planetoid::newSky(int g){
+	Sky *sky=Sky::newInstance(g);
 	sky->size=1.05*size;
 	sky->ht=sky->size-size;
 	return sky;
@@ -4808,7 +4812,8 @@ enum orbital_features{
 	RND_LAYER,
 	RND_LAYER_VAR,
 	RND_CLOUDS_2D,
-	RND_CLOUDS_3D
+	RND_CLOUDS_3D,
+	RND_SKY,
 };
 #define DESSERT_THEME     Color(0.9,0.8,0.7),Color(0.9,0.82,0.68),Color(0.62,0.52,0.44),Color(1,0.9,0.64)
 #define DRK_BROWN_THEME   Color(0,0,0),Color(0.675,0.4,0.1),Color(1,0.875,0.275),Color(0.4,0.251,0.1)
@@ -5602,23 +5607,20 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     case GN_CRATERED:
     case GN_ROCKY:
     	if(r[2] > 0.7 && planet->size >= 0.001){
-    		sky= planet->newSky();
-    		planet->addChild(sky);
+    		sky= planet->newSky(GN_THIN);
+   			planet->addChild(sky);
     		if (sky->pressure >= 0.5) {
     			CloudLayer *clouds=planet->newClouds(false);
     			planet->addChild(clouds);
     		}
-    	}
+     	}
     	break;
     case GN_ICY:
 		//str+=newOcean(planet);
     	break;
     case GN_OCEANIC:
 		str+=newOcean(planet);
-		sky= planet->newSky();
-		sky->pressure=1.0+0.5*s[5];
-		sky->ghg_fraction=0.01+0.02*r[6];
-
+		sky= planet->newSky(GN_MED);
 		planet->addChild(sky);
 		CloudLayer *clouds;
 		clouds = planet->newClouds(false);
@@ -5751,7 +5753,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	 else
 	    cout<<"error building planet texture"<<endl;
 
-	Sky *sky=planet->newSky();
+	Sky *sky=planet->newSky(GN_MED);
 	planet->addChild(sky);
 
 	bool has_rings=r[6]>0.8;
@@ -6021,46 +6023,65 @@ Sky::~Sky()
 	printf("~Sky\n");
 #endif
 }
-
-//-------------------------------------------------------------
-// Sky::getInstance()  generate a random instance
-//-------------------------------------------------------------
-NodeIF *Sky::getInstance(){
-	lastn=getRandValue()*1271;
-	Orbital::setRands();
-	return newInstance();
-}
-
 double Sky::getHeatCalacity() {
 	double g = pow(pressure, 1.5) * ghg_fraction;
 	return  0.4 * pow(g, 0.25);
 }
 
 //-------------------------------------------------------------
+// Sky::getInstance()  generate a random instance
+//-------------------------------------------------------------
+bool Sky::randomize(){	
+	setRseed(getRandValue());
+	setRands();
+	Color hsv=Color(0.5+0.3*s[2]+0.2*s[3],0.5,0.9);
+	Color c=hsv.HSVtoRGB();
+	set_color(c);
+	twilite_color=c.darken(0.8);
+	twilite_color=twilite_color.blend(Color(1,0,0),0.3);
+	Color sc=haze_color;
+	haze_color=haze_color.mix(c,0.1);
+
+	invalidate();
+	TheScene->set_changed_detail();
+	return true;
+}
+
+NodeIF *Sky::getInstance(NodeIF *prev,int gtype){
+	cout<<"Sky::getInstance"<<endl;
+	Sky *sky=newInstance(gtype);	
+	sky->setParent(prev->getParent());
+	return sky;
+}
+
+//-------------------------------------------------------------
 // Sky::newInstance()  generate a random instance
 //-------------------------------------------------------------
-Sky *Sky::newInstance(){
+Sky *Sky::newInstance(int gtype){
 	Sky *sky=TheScene->getPrototype(0,ID_SKY);
-	Color c(0.5+0.4*s[5],0.6+0.4*s[6],0.7+0.4*s[7]);
-	sky->set_color(c);
+	sky->randomize();
 	sky->detail=8;
 	double f=pow(r[3],3);
-	sky->pressure=lerp(f,0,1,0.1,4);
-	sky->density=lerp(f,0,1,0.05,0.5);
-	sky->haze_grad=lerp(f,0,1,0.8,0.1);
-	
-	sky->twilite_color=c.darken(0.8);
-	sky->twilite_color=sky->twilite_color.blend(Color(1,0,0),0.3);
-	Color sc=sky->haze_color;
-	sc=sc.mix(c,0.1);
-	sc.set_alpha(lerp(f,0,1,0.8,1));
-	//sc.set_alpha(1);
-
 	sky->ghg_fraction=r[4]*r[3]*r[5];
-
-	sky->haze_color=sc;
-	//cout<<"sky pressure:"<<sky->pressure<<endl;
-
+	switch(gtype){
+	case GN_THIN:
+		sky->pressure=lerp(f,0,1,0.01,0.5);
+		sky->density=lerp(f,0,1,0.02,0.1);
+		sky->haze_grad=lerp(f,0,1,0.8,1);
+		sky->_color.set_alpha(lerp(f,0,1,0.7,1));
+		break;
+	case GN_MED:
+		sky->pressure=lerp(f,0,1,0.5,2);
+		sky->density=lerp(f,0,1,0.1,0.5);
+		sky->haze_grad=lerp(f,0,1,0.5,0.2);
+		break;
+	case GN_DENSE:
+		sky->pressure=lerp(f,0,1,2,10);
+		sky->density=lerp(f,0,1,0.5,2);
+		sky->haze_grad=lerp(f,0,1,0.05,0.01);
+		break;
+	}
+	sky->set_vars();
 	return sky;
 }
 

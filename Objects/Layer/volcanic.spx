@@ -1,9 +1,0 @@
-layer("volcanic",MORPH,1,noise(GRADIENT|SCALE,5,2,1,0.5,2,1,1,0,0.6),0,0)
-	[gloss(0.53418,0.5)
-	+
-	Texture("lava",CLAMP|S|TEX,noise(GRADIENT|SCALE|UNS,5.6,2,1,0.5,2,1,1,0,0),1,1.33332,1,-1.33328,1,2,1,0,-0.38888,1.16664,0.55552,0.72224)+
-	Texture("Sand",BUMP|S,noise(3,2,1,0.5,2,1,1,0,0.2),16384,0.1,1.48648,0,5,2.6,1)+
-	Texture("ridges",TEX,4096,2,-1,0,8,2.3,0.85186,0,0,0,0,0)+Color(0.980392,0.921569,0.556863,1)
-	+Z(noise(GRADIENT|NABS|SCALE|SQR,7.9,10,0.07,0.38,2.1,0.72,1,0,0))
-	]
-

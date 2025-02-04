@@ -1073,7 +1073,7 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
    // if(!TheScene->suspended())
     int moved=TheScene->moved();
     TheScene->render();
-    if(TheScene->automv()||TheScene->autotm()||moved)
+    if(TheScene->automv()||TheScene->autotm()||moved||TheScene->changed_detail())
     	sceneDialog->updateTabs();
     if(scene_rendered)
          update_status();

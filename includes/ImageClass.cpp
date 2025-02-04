@@ -619,7 +619,7 @@ void TNimage::init()
 		if (im) {
 #ifdef DEBUG_IMAGES
 			printf("%-20s LOADING SAVED %d X %d X %d IMAGE %s %s\n", "TNimage", w,
-					h, im->comps(), name,gname);
+					h, im->comps(), name,gname?gname:"");
 #endif
 			image = im;
 			return;
