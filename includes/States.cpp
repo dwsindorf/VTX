@@ -3,7 +3,7 @@
 #include "TerrainClass.h"
 
 static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0,0)";
-static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0,0)";
+static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,12,12,0.1,0.4,1.84,0.73,-0.2,0,0.002,0)";
 static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0)";
 
 //ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
@@ -15,7 +15,7 @@ static char *LAV_sol_str="solid(Color(0.46,0.35,0.00,0.07),Color(0.30,0.30,0.30,
 static char *SLF_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),717,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SLF_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),388,1,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
 static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93),Color(0.00,0.16,0.16),373,300,0.95,100,1,50,1,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
-static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.60,0.7,0.80),273,1,0.95,0.8,0.1,0.05,0.5,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0.02,0))";
+static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.60,0.7,0.80),273,1,0.95,0.8,0.1,0.05,0.5,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0.001,0))";
 static char *SO2_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),263,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SO2_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),201,5,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
 static char *CO2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),195,300,0.95,100,1,10,10)";
@@ -309,12 +309,12 @@ void SolidState::newInstance(char *buff){
 	b.toString(cstr);
 	ice+=cstr;
 	ice+=",";
-	b=Color("Color(0.4,0.8,0.8)");
+	b=Color("Color(0.6,0.8,0.8)");
 	b=b.mix(tc,0.5*r[2]);
 	b.toString(cstr);
 	ice+=cstr;
 	ice+=",273,1.0,0.95,40,1,0.2,1,";
-	ice+=TNnoise::randomize(def_solid_func,0.8,0.0);
+	ice+=TNnoise::randomize(def_solid_func,0.8,0.4);
 	ice+=")";
 	strcpy(buff,ice.c_str());
 }

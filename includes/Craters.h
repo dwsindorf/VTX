@@ -35,6 +35,8 @@ public:
 	double  rise;
 	double  drop;
 	double  offset;
+	double  noise_bias;
+	double  noise_bias_min;
 		
 	Placement *make(Point4DL&,int);
 

@@ -24,6 +24,9 @@ protected:
 
 	ExprSliderCtrl *VNoiseSlider;
 	ExprSliderCtrl *RNoiseSlider;
+	ExprSliderCtrl *NoiseBiasSlider;
+	ExprSliderCtrl *NoiseBiasMinSlider;
+	
 	wxChoice *m_scale_exp;
 	wxChoice *m_orders;
 	wxChoice *m_seed;
@@ -56,6 +59,8 @@ public:
 		delete CenterSlider;
 		delete VNoiseSlider;
 		delete RNoiseSlider;
+		delete NoiseBiasSlider;
+		delete NoiseBiasMinSlider;
 	}
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(Density)
@@ -70,6 +75,8 @@ public:
 	DEFINE_SLIDER_EVENTS(RNoise)
 	DEFINE_SLIDER_EVENTS(VNoise)
 	DEFINE_SLIDER_EVENTS(Offset)
+	DEFINE_SLIDER_EVENTS(NoiseBias)
+	DEFINE_SLIDER_EVENTS(NoiseBiasMin)
 
     void OnChangeEvent(wxCommandEvent& event){
     	getFunction();

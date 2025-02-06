@@ -2,94 +2,73 @@ Scene() {
 	View{
 		view=ORBITAL;
 		phi=-8.3606;
-		theta=358.726;
-		height=0.00604486;
-		gndlvl=-242501 ft;
-		time=65278;
-		vstride=0.02;
+		theta=94.5234;
+		height=0.00755905;
+		gndlvl=-284437 ft;
+		time=136747;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		height=0.00604561;
-		gndlvl=-246464 ft;
-		speed=0.02;
+		phi=3.74075;
+		theta=124.777;
 	}
 	View{
-		height=0.00636901;
-		gndlvl=-284437 ft;
-		speed=0.02;
+		theta=125.641;
 	}
 	View{
-		time=32746.6;
-		speed=0.02;
+		height=0.00762688;
 	}
 	View{
-		delt=20000;
-		speed=0.02;
+		theta=96.1655;
 	}
 	View{
-		phi=-11.0262;
-		theta=-6.14506;
-		height=68.6374 miles;
+		theta=124.774;
+	}
+	View{
+		theta=116.105;
 		pitch=-89;
-		speed=0.02;
 	}
 	View{
-		view=SURFACE;
-		phi=-11.0248;
-		theta=353.873;
-		height=926.475 ft;
-		gndlvl=-12966.6 ft;
-		heading=0;
-		pitch=0;
-		tilt=-15;
-		speed=0.02;
+		theta=123.04;
 	}
 	View{
-		height=11.6155 miles;
-		tilt=-82;
-		angle=-2;
-		speed=0.02;
+		phi=4.60754;
+		theta=119.572;
+		height=0.00762807;
 	}
 	View{
-		heading=1;
-		speed=0.02;
+		phi=2.77955;
+		theta=120.505;
+		height=0.00805557;
+		pitch=-84;
 	}
 	View{
-		height=11.3834 miles;
-		speed=0.02;
+		theta=123.151;
+		pitch=-86;
 	}
 	View{
-		height=11.2657 miles;
-		speed=0.02;
-	}
-	View{
-		phi=-11.025;
-		theta=353.862;
-		height=15.1769 miles;
-		tilt=-83;
-		angle=0;
-		vstride=586570;
-	}
-	View{
-		height=13.7016 miles;
+		phi=-17.7652;
+		theta=123.883;
+		height=0.00245233;
+		pitch=-64;
 		vstride=0.02;
 		zoom=0.004;
-		minh=1.13636e-09;
-		radius=0.00401125;
+		minh=5.68182e-10;
+		radius=0.00639846;
 	}
 	View{
-		height=10.3298 miles;
-		minr=0.00399755;
-		radius=0.00400787;
+		theta=122.476;
+		pitch=-65;
+		minr=0.00394613;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -97,14 +76,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -124,12 +103,11 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.001;
+					ocean.auto=1;
+					ocean.state=0;
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
-						terrain=Z(craters(ID2,1,0.0001,1,1,1,0.8,0,0,0.2,1,0.8,0.6,0.2,0))+
-								Color(1,1,1);
+						terrain=Z(craters(ID2,1,0.9999,0.2,0.302,1,1,1,0,2.64,1,0.453,0.075,0.2,0))+Color(RADIUS,0,0,1);
 					}
 				}
 			}

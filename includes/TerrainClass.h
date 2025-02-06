@@ -179,6 +179,8 @@ protected:
         TNN_NORMALIZED  = 2
     };
 	void optionString(char *);
+	void getOpts(char *);
+	void getNtype(char *);
 	int flags;
 public:
 	double scale;

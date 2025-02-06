@@ -15,7 +15,7 @@ static char THIS_FILE[] = __FILE__;
 //#define TEST
 
 static 	TerrainData Td;
-extern double Hscale,Height;
+extern double Hscale,Height,Radius;
 double Impact=0;
 
 class CraterData {
@@ -89,6 +89,8 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
 	rise=0.5;
 	impact=0.8;
 	offset=0;
+	noise_bias=0.5;
+	noise_bias_min=0.0;
 	ampl=1;
  	noise_vertical=1;
   	noise_radial=1;
@@ -256,6 +258,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 
 	r=d;
 	double phid=0.5*PERM(hid);	  // 0-16k
+	double fr=0.25*lerp(d,thresh*mgr.noise_bias_min,thresh,mgr.noise_bias,1);
 	if(mgr.noise_radial>0){
 		SPUSH;
 		Point4D np=(mgr.mpt-center)*((d+0.25)/radius);
@@ -264,7 +267,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 		CurrentScope->revaluate();
 		mgr.rnoise->eval();
 		TheNoise.pop();
-		rr=0.25*mgr.noise_radial*S0.s;
+		rr=fr*mgr.noise_radial*S0.s;
 		SPOP;
 		r=d-rr;
 		if(!mgr.noise_vertical)
@@ -286,7 +289,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 		if(!mgr.noise_radial)
 			CurrentScope->revaluate();
 		mgr.vnoise->eval();
-		vn=0.25*mgr.noise_vertical*S0.s;
+		vn=fr*mgr.noise_vertical*S0.s;
 		TheNoise.pop();
 		SPOP;
 		CurrentScope->revaluate();
@@ -510,7 +513,7 @@ void TNcraters::eval()
 	TNarg *a=args.index(8);
 
 	if(a){                // geometry exprs
-		int n=getargs(a,arg,6);
+		int n=getargs(a,arg,8);
 		if(n>0) cmgr->rise=arg[0];        // rise factor
 		if(n>1) cmgr->drop=arg[1];        // drop factor
 		if(n>2){
@@ -526,6 +529,10 @@ void TNcraters::eval()
 			cmgr->ctr=arg[4];             // center peak radius
 		if(n>5)
 			cmgr->offset=arg[5];          // ht bias
+		if(n>6)
+			cmgr->noise_bias=arg[6];      // noise bias
+		if(n>7)
+			cmgr->noise_bias_min=arg[7];  // noise bias min
 	}
 	cmgr->reset();
 
@@ -598,6 +605,7 @@ void TNcraters::eval()
 		S0.set_svalid();
 	}
 	S0.clr_constant();
+	Radius=lerp(dval,0,1,0,1);
 #ifdef TEST
 	S0.set_cvalid();
 	if(fabs(dval)>0)

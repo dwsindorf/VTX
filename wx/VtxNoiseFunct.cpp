@@ -385,7 +385,8 @@ void VtxNoiseFunct::setFunction(wxString f){
 	a=args[9];
 	if(a){
 		a->eval();
-		rate=S0.s;
+		if(S0.s>0)
+			rate=S0.s;
 	}
 	getRate();
 

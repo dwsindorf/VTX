@@ -50,6 +50,10 @@ enum {
     ID_VNOISE_TEXT,
     ID_RNOISE_SLDR,
     ID_RNOISE_TEXT,
+    ID_NOISE_BIAS_SLDR,
+    ID_NOISE_BIAS_TEXT,
+    ID_NOISE_BIAS_MIN_SLDR,
+    ID_NOISE_BIAS_MIN_TEXT,
 };
 
 IMPLEMENT_CLASS(VtxCratersFunct, wxNotebook )
@@ -69,6 +73,8 @@ SET_SLIDER_EVENTS(CNTR,VtxCratersFunct,Center)
 SET_SLIDER_EVENTS(RNOISE,VtxCratersFunct,RNoise)
 SET_SLIDER_EVENTS(VNOISE,VtxCratersFunct,VNoise)
 SET_SLIDER_EVENTS(BIAS,VtxCratersFunct,Offset)
+SET_SLIDER_EVENTS(NOISE_BIAS,VtxCratersFunct,NoiseBias)
+SET_SLIDER_EVENTS(NOISE_BIAS_MIN,VtxCratersFunct,NoiseBiasMin)
 
 EVT_CHOICE(ID_SCALE_MULT, VtxCratersFunct::OnChangeEvent)
 EVT_CHOICE(ID_SEED, VtxCratersFunct::OnChangeEvent)
@@ -190,15 +196,31 @@ void VtxCratersFunct::AddCratersTab(wxWindow *panel){
 
 	boxSizer->Add(ampl,0,wxALIGN_LEFT|wxALL,0);
 
-    wxStaticBoxSizer* shape = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Noise"));
+    wxStaticBoxSizer* shape = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Noise"));
+    
+    wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	VNoiseSlider=new ExprSliderCtrl(panel,ID_VNOISE_SLDR,"Vertical",LABEL2, VALUE1,SLIDER2);
 	VNoiseSlider->setRange(0,1.0);
-	shape->Add(VNoiseSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	hline->Add(VNoiseSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	RNoiseSlider=new ExprSliderCtrl(panel,ID_RNOISE_SLDR,"Radial",LABEL1, VALUE1,SLIDER2);
 	RNoiseSlider->setRange(0,1.0);
-	shape->Add(RNoiseSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	hline->Add(RNoiseSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	NoiseBiasSlider=new ExprSliderCtrl(panel,ID_NOISE_BIAS_SLDR,"Taper",LABEL2, VALUE1,SLIDER2);
+	NoiseBiasSlider->setRange(0,1.0);
+	hline->Add(NoiseBiasSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	NoiseBiasMinSlider=new ExprSliderCtrl(panel,ID_NOISE_BIAS_MIN_SLDR,"Bias",LABEL1, VALUE1,SLIDER2);
+	hline->Add(NoiseBiasMinSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	NoiseBiasMinSlider->setRange(0,0.9);
+
+	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	shape->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);
@@ -358,6 +380,16 @@ void VtxCratersFunct::setFunction(wxString f){
 		OffsetSlider->setValue(a);
 	else
 		OffsetSlider->setValue(mgr->offset);
+	a=args[14];
+	if(a)
+		NoiseBiasSlider->setValue(a);
+	else
+		NoiseBiasSlider->setValue(mgr->noise_bias);
+	a=args[15];
+	if(a)
+		NoiseBiasMinSlider->setValue(a);
+	else
+		NoiseBiasMinSlider->setValue(mgr->noise_bias_min);
 
 	delete tc;
 
@@ -409,7 +441,9 @@ void VtxCratersFunct::getFunction(){
 	s+=RimSlider->getText()+",";
 	s+=FloorSlider->getText()+",";
 	s+=CenterSlider->getText()+",";
-	s+=OffsetSlider->getText();
+	s+=OffsetSlider->getText()+",";
+	s+=NoiseBiasSlider->getText()+",";
+	s+=NoiseBiasMinSlider->getText();
 
 
 	s+=")";

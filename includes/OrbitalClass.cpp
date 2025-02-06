@@ -5059,37 +5059,43 @@ std::string Planetoid::randFeature(int type) {
 	case RND_CRATERS:
 		mx=MAXS*size_scale+0.1*s[2];
 		md=0.1+0.5*AMPL*size_scale;
-		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0,2,0)",
+		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0.05,0,0,%1.2f,%1.2f)",
 		(int)(5+0.5*s[0]), // id
 		(int)(8+0.5*s[0]), // levels
-		(mx),   // max size
-		(0.3+0.5*s[3]),   // delta size
-		(0.1+0.6*PROB),   // probability
-		(md),   // depth
-		(0.3+0.3*r[6]),   // impact
-		1,(0.5+0.3*r[7]), // noise
-		(0.2+0.1*s[9]),   // rise
-		(md));            // drop
+		(mx),              // max size
+		(0.3+0.5*s[3]),    // delta size
+		(0.1+0.6*PROB),    // probability
+		(md),              // depth
+		(0.3+0.3*r[6]),    // impact
+		(0.9+0.3*s[7]),    // vnoise
+		(0.9+0.3*s[7]),    // rnoise
+		(0.2+0.1*s[9]),    // rise
+		(md),              // drop
+		(0.5+0.2*s[11]),   // noise bias
+		(0.4+0.2*s[10]));  // noise min
+
 		str+=buff;
 		PRNT_FEATURE("CRATERS")
 		break;
 	case RND_VOLCANOS:
 		mx=MAXS*size_scale+0.1*s[2];
 		mr=0.1+0.5*AMPL*size_scale;
-		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.05)",
+		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.05,0,%1.2f,%1.2f)",
 		(int)(2+0.5*s[0]), // rand id
 		(int)(8+0.5*s[0]), // levels
-		(mx),  // max size
-		(0.3+0.2*s[3]),  // delta size
-		(0.1+0.6*PROB),  // probability
-		(mr),  // depth
-		(0.2+0.1*s[6]),  // impact
-		(0.3+0.3*s[7]),  // noise
-		(0.3+0.3*s[7]),  // noise
-		(mr),            // rise
-		(0.1*r[9]),  // drop
-		(0.2+0.2*s[10]), // rim
-		(0.05+0.1*s[10]));// floor
+		(mx),              // max size
+		(0.3+0.2*s[3]),    // delta size
+		(0.1+0.6*PROB),    // probability
+		(mr),              // depth
+		(0.2+0.1*s[6]),    // impact
+		(0.9+0.3*s[7]),    // noise
+		(0.9+0.3*s[7]),    // noise
+		(mr),              // rise
+		(0.1*r[9]),        // drop
+		(0.2+0.2*s[10]),   // rim
+		(0.05+0.1*s[10]),  // floor
+		(0.3+0.2*s[11]),   // noise bias
+		(0.1+0.1*s[10]));  // noise min
 		str+=buff;
 		PRNT_FEATURE("VOLCANOS")
 		break;
@@ -6040,7 +6046,7 @@ bool Sky::randomize(){
 	twilite_color=c.darken(0.8);
 	twilite_color=twilite_color.blend(Color(1,0,0),0.3);
 	Color sc=haze_color;
-	haze_color=haze_color.mix(c,0.1);
+	haze_color=haze_color.mix(c,0.5);
 
 	invalidate();
 	TheScene->set_changed_detail();
@@ -6069,16 +6075,18 @@ Sky *Sky::newInstance(int gtype){
 		sky->density=lerp(f,0,1,0.02,0.1);
 		sky->haze_grad=lerp(f,0,1,0.8,1);
 		sky->_color.set_alpha(lerp(f,0,1,0.7,1));
+		sky->haze_color.set_alpha(lerp(f,0,1,0.1,0.5));
 		break;
 	case GN_MED:
 		sky->pressure=lerp(f,0,1,0.5,2);
 		sky->density=lerp(f,0,1,0.1,0.5);
 		sky->haze_grad=lerp(f,0,1,0.5,0.2);
+		sky->haze_color.set_alpha(lerp(f,0,1,0.5,0.8));
 		break;
 	case GN_DENSE:
 		sky->pressure=lerp(f,0,1,2,10);
 		sky->density=lerp(f,0,1,0.5,2);
-		sky->haze_grad=lerp(f,0,1,0.05,0.01);
+		sky->haze_grad=lerp(f,0,1,0.1,0.01);
 		break;
 	}
 	sky->set_vars();

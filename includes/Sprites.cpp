@@ -92,7 +92,7 @@ static SpriteMgr *s_mgr=0; // static finalizer
 static int hits=0;
 //#define DEBUG_PMEM
 
-#define COLOR_TEST
+//#define COLOR_TEST
 //#define DENSITY_TEST
 
 #define USE_AVEHT

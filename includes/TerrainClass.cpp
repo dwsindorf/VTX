@@ -1070,30 +1070,28 @@ void TNnoise::save(FILE *f)
 }
 
 //-------------------------------------------------------------
-// TNnoise::optionString() get option string
+// TNnoise::getNtype() get noise type string
 //-------------------------------------------------------------
-void TNnoise::optionString(char *c)
+void TNnoise::getNtype(char *c)
 {
-    c[0]=0;
-    if(type==0)
-        return;
 	int ntype=type&NTYPES;
-	int nopt=type&(NOPTS|0xf0);
-
-	int i;
-	int mask=0;
-	// get noise type
-	if(!ntype) // default
-		strcpy(c,"GRADIENT");
-	else{
-		for(i=0;i<NTypes.size;i++){
-			if(ntype==NTypes[i]->value){
-				strcpy(c,NTypes[i]->name());
-				break;
-			}
+	for(int i=0;i<NTypes.size;i++){
+		if(ntype==NTypes[i]->value){
+			strcpy(c,NTypes[i]->name());
+			break;
 		}
 	}
-	for(i=0;i<NOpts.size;i++){
+}
+
+//-------------------------------------------------------------
+// TNnoise::getOpts() get opts string
+//-------------------------------------------------------------
+void TNnoise::getOpts(char *c)
+{
+	int nopt=type&(NOPTS|0xf0);
+	int mask=0;
+
+ 	for(int i=0;i<NOpts.size;i++){
 	    int bit=NOpts[i]->value;
     	if((nopt & bit) && !(bit & mask)){
     	    if(c[0])
@@ -1107,6 +1105,17 @@ void TNnoise::optionString(char *c)
 	        strcat(c,"|");
 	    sprintf(c+strlen(c),"RO%d",rof);
 	}
+}
+//-------------------------------------------------------------
+// TNnoise::optionString() get option string
+//-------------------------------------------------------------
+void TNnoise::optionString(char *c)
+{
+    c[0]=0;
+    if(type==0)
+        return;
+    getNtype(c);
+    getOpts(c);
 }
 
 //-------------------------------------------------------------
@@ -1170,17 +1179,26 @@ void TNnoise::init()
 }
 
 std::string TNnoise::randomize(char *src,double f,double t){
-	char opts[64];
+	char opts[256];
 	double args[16];
+	opts[0]=0;
 	TNnoise *noise=TheScene->parse_node(src);
 	std::string str("noise(");
-	if(t<0.01){
-	  noise->optionString(opts);
-	  str+=opts;
+	if(t<0.1){
+		noise->optionString(opts);
+	    str+=opts;
+	}
+	else if(t<0.5){
+		str+=Noise::getNtype(r[5]);
+		noise->getOpts(opts);
+		if(strlen(opts)){
+			str+="|";
+			str+=opts;
+		}
 	}
 	else{
-		str+=Noise::getNtype(r[5]*r[5]*t);
-		str+=Noise::getNopts(r[3]*t);
+		str+=Noise::getNtype(r[5]);
+		str+=Noise::getNopts(r[3]);
 	}
 	int n=getargs(noise->right,args,16);
 	char tmp[64];
@@ -1190,6 +1208,7 @@ std::string TNnoise::randomize(char *src,double f,double t){
 		str+=tmp;
 	}
 	str+=")";
+	//cout<<str.c_str()<<endl;
 	return str;
 	
 //
