@@ -54,6 +54,7 @@ public:
 	bool randomize();
 	void setRandom(bool b);
 	void setDefault();
+	NodeIF *getInstance(NodeIF *prev);
 
 	bool canRandomize() { return true;}
 	bool isLeaf()		{ return false;}

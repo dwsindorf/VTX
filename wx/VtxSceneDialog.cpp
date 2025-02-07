@@ -588,7 +588,7 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 				}
 			} else { // insert before first child with a higher level
 #ifdef DEBUG_TREE_ACTIONS
-				cout<<"insert before first child with a higher level"<<endl;
+				cout<<"insert before first child with a higher level "<<dstObj->typeName()<<":"<<obj->typeName()<<endl;
 #endif
 				newObj=dstObj->addAfter(obj, newObj);
 				tree_node=TheScene->model->addToTree(tnode, data, newObj);

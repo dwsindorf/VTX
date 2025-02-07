@@ -620,6 +620,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_WATER));
 		if(!obj->hasChild(ID_SNOW))
 		    list.add(getObjectSymbol(TN_SNOW));
+		//list.add(getObjectSymbol(TN_LAYER));
 		if(!obj->hasChild(ID_MAP))
 			list.add(getObjectSymbol(TN_MAP));
 		list.add(getObjectSymbol(TN_ROCKS));
