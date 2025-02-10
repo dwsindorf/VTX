@@ -206,7 +206,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Leaf(4,1,10,2,1)[\"Leaf\",Color(0.5*URAND+0.25,0.5*RED,0,0.2*URAND)]\n");
 		break;
 	case TN_MAP:
-		sprintf(tmp,"map(noise(1,5))\n");
+		sprintf(tmp,"map(noise(GRADIENT,1,5,1,0.5,2,1,4),0,0,1)\n");
 		break;
 	case TN_LAYER:
 		sprintf(tmp,"layer(MORPH,0.1)[Z(0)]\n");

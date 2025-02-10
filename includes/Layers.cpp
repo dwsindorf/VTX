@@ -67,62 +67,6 @@ TNmap::TNmap(TNode *l, TNode *r) :  TNfunc(l,r)
 	msmooth=1;
 }
 
-//		NodeIF *newbase=n;
-//		while(n->typeValue()&ID_FUNC){
-//			TNfunc *f=(TNfunc *)n;
-//			n=f->right;
-//			f->right=0;
-//		}
-//		if(newbase !=n)
-//		    delete newbase;
-//
-//		int t=MESH;
-//		if(right)
-//			t=((TNlayer*)right)->type;
-//		n=new TNlayer(0,t, 0, right,n);
-//    	n->setParent(this);
-//if(obj->typeValue()==ID_NOISE){
-//	if(((TNnoise*)obj)->type & FS){
-//		s_noise=(TNnoise*)obj;
-//		obj->setFlag(NODE_STOP);
-//	}
-//}
-static NodeIF *enode=0;
-static void testNode(NodeIF *obj)
-{
-  int tval=obj->typeValue();
-  if((tval==ID_ROOT) || (tval&ID_FUNC))
-	  return;
-//  if(tval==ID_ROOT)
-//	  cout<<"Terrain:"<<obj->typeName()<<endl;
-//  else if(tval&ID_FUNC)
-//  		cout<<"func:"<<obj->typeName()<<endl;
-  else{
-	  enode=obj;
-	  obj->setFlag(NODE_STOP);
-  }
-}
-
-NodeIF *TNmap::getInstance(NodeIF *prev){
-	LinkedList<NodeIF*>l;
-	prev->getChildren(l);
-	enode=0;
-	if(l.size){
-		l[0]->visitNode(testNode);
-		//char tmp[256]={0};
-		if(enode){
-			// TODO
-			// get new layer prototype
-			// set layer base to enode
-			// get layer parent to this
-			//enode->printNode(tmp);
-			//cout<<"enode:"<<tmp<<endl;
-		}
-		
-	}
-	//cout<<"TNmap::getInstance "<<l.size<<" "<<l[0]->typeName()<<endl;
-	return this;
-}
 NodeIF *TNmap::replaceNode(NodeIF *c){
 	TNmap *newmap=(TNmap *)c;
 	NodeIF *newleft=newmap->left;
@@ -172,10 +116,7 @@ NodeIF *TNmap::addChild(NodeIF *x)
 {
 	TNode *n=(TNode *)x;
 	if(x->typeValue()!=ID_LAYER){
-//		int t=MESH;
-//		if(right)
-//			t=((TNlayer*)right)->type;
-//		n=new TNlayer(0,t, 0, right,n);
+		n=new TNlayer(0, right,n);
     	n->setParent(this);
     	right=n;
 	}
@@ -319,6 +260,7 @@ void TNmap::init()
 	while(layer && layer->typeValue()==ID_LAYER){
 	    layer->map=this;
 		layer=(TNlayer*)layer->right;
+		layers++;
 	}
 	TNfunc::init();
 }
@@ -629,32 +571,9 @@ void TNmap::eval()
 //************************************************************
 // TNlayer class
 //************************************************************
-TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
+TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MORPH,0,r,b)
 {
 	left=l;
-	TNarg *arg=left;
-	TNarg *node=arg->left;
-	setName("");
-	if(node->typeValue() == ID_STRING){		
-		setName(((TNstring*)node)->value);
-		left=arg->next();
-		left->setParent(this);
-		//cout<<"name="<<name_str<<endl;
-		arg->right=0;
-		delete arg;
-	}
-	arg=left;
-	node=arg->left;
-	if(node->typeValue() == ID_CONST){
-		node->eval();
-		type=(int)S0.s;
-		arg=left;
-		//cout<<"type="<<type<<endl;
-		left=arg->next();
-		left->setParent(this);
-		arg->right=0;
-		delete arg;
-	}
 	map=0;
 	width=0.1;
 	drop=DFLT_DROP;
@@ -662,7 +581,31 @@ TNlayer::TNlayer(TNode *l, TNode *r, TNode *b) : TNbase(MESH,0,r,b)
 	edge=0;
 	ramp=0;
 	id=0;
-
+	setName("");
+	if(left){
+		TNarg *arg=left;
+		TNarg *node=arg->left;
+		if(node->typeValue() == ID_STRING){		
+			setName(((TNstring*)node)->value);
+			left=arg->next();
+			left->setParent(this);
+			//cout<<"name="<<name_str<<endl;
+			arg->right=0;
+			delete arg;
+		}
+		arg=left;
+		node=arg->left;
+		if(node->typeValue() == ID_CONST){
+			node->eval();
+			type=(int)S0.s;
+			arg=left;
+			//cout<<"type="<<type<<endl;
+			left=arg->next();
+			left->setParent(this);
+			arg->right=0;
+			delete arg;
+		}
+	}
 }
 
 //-------------------------------------------------------------

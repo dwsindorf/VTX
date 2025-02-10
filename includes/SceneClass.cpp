@@ -348,7 +348,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 
 	if(n){
 		n->setType(ttype);
-		n->setParent(p);
+		//n->setParent(p);
 	}
 	//if(n->typeClass()==ID_ORBITAL)
 	//	set_viewobj((ObjectNode*)n);

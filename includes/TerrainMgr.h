@@ -113,6 +113,7 @@ public:
 	virtual const char *typeName()		{ return "terrain";}
 	virtual char *nodeName()			{ return (char*)"";}
 	virtual NodeIF *addChild(NodeIF *);
+	virtual NodeIF *removeChild(NodeIF *);
 	virtual NodeIF *addAfter(NodeIF *a,NodeIF *n);
 };
 

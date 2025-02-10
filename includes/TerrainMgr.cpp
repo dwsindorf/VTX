@@ -337,13 +337,24 @@ void TNroot::save(FILE *f)
 	dec_tabs();
 	dec_tabs();
 }
+//-------------------------------------------------------------
+// TNroot::removeChild() remove expression
+//-------------------------------------------------------------
+NodeIF *TNroot::removeChild(NodeIF *c)
+{
+	return TNunary::removeChild(c);
+}
 
 //-------------------------------------------------------------
 // TNroot::addChild
 //-------------------------------------------------------------
 NodeIF *TNroot::addChild(NodeIF *x)
 {
-	if(x->linkable()){
+	if(!right){
+		right=x;
+		x->setParent(this);
+	}
+	else if(x->linkable()){
     	x->setParent(this);
     	x->addChild(right);
     	right=(TNode*)x;
