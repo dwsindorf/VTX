@@ -106,6 +106,7 @@ public:
 	int getReplaceList(NodeIF*,LinkedList<ModelSym*>&list);
 	static ModelSym* getObjectSymbol(int);
 	static ModelSym* getTypeSymbol(int);
+	bool hasTypeList(int t);
 	void getTypeList(int type,LinkedList<ModelSym*>&list);
 	void getFileList(int type,LinkedList<ModelSym*>&list);
 	void getObjectDirectory(int type,char *dir);

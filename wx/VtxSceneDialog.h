@@ -145,10 +145,12 @@ public:
 	void addChildToSelected(TreeNode *,TreeNode *, int pos);
 	void addSiblingToSelected(TreeNode *,TreeNode *);
 	void setNodeName(char *s);
-
-	wxMenu *getFileMenu(ModelSym*,int &i);
+    
+	wxMenu *getFileMenu(ModelSym*,int &i, LinkedList<ModelSym*>&list);
+	wxMenu *getTypeMenu(ModelSym *,int &i, LinkedList<ModelSym*>&list);
 	void setModelSym(ModelSym*);
 
+	ModelSym *getSym(NodeIF *);
 	wxMenu *getReplaceMenu(wxMenu &menu,NodeIF *);
 	wxMenu *getRemoveMenu(NodeIF *);
 	wxMenu *getAddMenu(NodeIF *);

@@ -142,6 +142,7 @@ public:
 	//virtual ModelSym* getObjectSymbol(int);
 	//virtual ModelSym* getTypeSymbol(int);
 
+	virtual bool hasTypeList(int t) { return false;}
 	virtual void getTypeList(int,LinkedList<ModelSym*>&list);
 	virtual void getFileList(int type,LinkedList<ModelSym*>&list);
 	virtual void getObjectDirectory(int type,char *dir);

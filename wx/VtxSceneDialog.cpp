@@ -307,8 +307,6 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);
 			}			
-			else if( name == "Simple")
-				newobj=TheScene->getPrototype(obj,sym->value);
 			else 
 				newobj=TheScene->makeObject(obj,sym->value);
 		}
@@ -1025,98 +1023,109 @@ void VtxSceneDialog::saveSelected(){
     }
 }
 
+ModelSym *VtxSceneDialog::getSym(NodeIF *obj){
+	int type=obj->getFlag(TN_TYPES);		
+	return UniverseModel::getObjectSymbol(type);
+}
 //-------------------------------------------------------------
-// VtxSceneDialog::getFileMenu()
+// VtxSceneDialog::getTypeMenu()
 //-------------------------------------------------------------
-wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i){
-	wxMenu *submenu=new wxMenu();
-	ModelSym *fsym;
+wxMenu *VtxSceneDialog::getTypeMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&list){
  	LinkedList<ModelSym*>tlist;
-
-	submenu->Append(TABS_ADD|i++,"Simple");
-	
+	ModelSym *fsym;
 	TheScene->model->getTypeList(sym->value,tlist);
 	if(tlist.size){
 		tlist.ss();
 		wxMenu *tmenu=new wxMenu();
 		while(fsym=tlist++){
 			fsym->value|=sym->value;
-			tmenu->Append(TABS_ADD|i++,fsym->name());
-			add_list.add(fsym);
+			tmenu->Append(i++,fsym->name());
+			list.add(fsym);
 		}
-		submenu->AppendSubMenu(tmenu,"Generate");
-		//tlist.free();
+		return tmenu;
 	}
-	//else 
-	//	submenu->Append(TABS_ADD|i++,"Generate");
+	return 0;
+}
+
+//-------------------------------------------------------------
+// VtxSceneDialog::getFileMenu()
+//-------------------------------------------------------------
+wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&list){
+	ModelSym *fsym;
+	wxMenu *submenu=new wxMenu();
+ 	LinkedList<ModelSym*>tlist;
+	
+ 	//cout<<"sym:"<<sym->name()<<" i:"<<i<<endl;
+ 	if(!TheScene->model->hasTypeList(sym->value))
+		submenu->Append(i++,"Generate");
+ 	else{
+		wxMenu *tmenu=getTypeMenu(sym,++i,list);
+		submenu->AppendSubMenu(tmenu,"Generate");
+ 	}
 
  	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(sym->value,flist);
 	if(flist.size>0){
 		submenu->AppendSeparator();
 		flist.ss();
-		add_list.add(new ModelSym("<Random>",sym->value));
-		submenu->Append(TABS_ADD|i++,"<Random>");
+		list.add(new ModelSym("<Random>",sym->value));
+		submenu->Append(i++,"<Random>");
 		while((fsym=flist++)){
-			add_list.add(fsym);
-			submenu->Append(TABS_ADD|i++,fsym->name());
+			list.add(fsym);
+			submenu->Append(i++,fsym->name());
 		}
-		//flist.free();
 	}
 	return submenu;
 }
+
 //-------------------------------------------------------------
 // VtxSceneDialog::getOpenMenu()
 //-------------------------------------------------------------
 wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
-	wxMenu *submenu=new wxMenu();
 	ModelSym *fsym;
 	menu.Append(TABS_SAVE,wxT("Save.."));
 	menu.AppendSeparator();
 	menu.Append(TABS_RANDOMIZE, wxT("Randomize"));
 	menu.Append(TABS_DEFAULT, wxT("Default"));
 	menu.AppendSeparator();
-	int i=0;
-	int type=obj->getFlag(TN_TYPES);
-	
-	cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
-	
+	int i=TABS_REPLACE;
  	replace_list.free();
-	ModelSym* sym=UniverseModel::getObjectSymbol(type);
+	ModelSym* sym=getSym(obj);
 	replace_list.add(sym);
-	submenu->Append(TABS_REPLACE|i++,"Simple");
+
+	return getFileMenu(sym,i,replace_list);
+}
+
+//-------------------------------------------------------------
+// VtxSceneDialog::getAddMenu()
+// - add a submenu that contains a list of add objects
+//-------------------------------------------------------------
+wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
+	LinkedList<ModelSym*> dlist;
+	add_list.free();
+	TheScene->model->setActionMode(Model::ADDING);
+	TheScene->model->getAddList(obj,dlist);
+	add_list.ss();
+	dlist.ss();
 	
-	LinkedList<ModelSym*>tlist;
-	TheScene->model->getTypeList(type,tlist);
-	if(tlist.size){
-		tlist.ss();
-		wxMenu *typemenu=new wxMenu();
-		while(fsym=tlist++){
-			fsym->value|=sym->value;
-			replace_list.add(fsym);
-			typemenu->Append(TABS_REPLACE|i++,fsym->name());
-		}
-		submenu->AppendSubMenu(typemenu,"Generate");
+	cout<<"GetAddMenu:"<<obj->typeName()<<endl;
+
+	wxMenu *addmenu=new wxMenu();
+	int i=TABS_ADD;
+ 	while(sym=dlist++){
+		add_list.add(sym);
+		wxString label=sym->name();
+		wxMenu *submenu=getFileMenu(sym,i,add_list);
+		if(submenu)
+			addmenu->AppendSubMenu(submenu,label);
+		else
+			addmenu->Append(i++,label);
 	}
-	//else
-	//	replace_list.add(new ModelSym("Generate",type));
-	submenu->AppendSeparator();
-
-	LinkedList<ModelSym*>flist;
-	TheScene->model->getFileList(type,flist);
-
-	if(flist.size!=0){
-		replace_list.ss();
-		flist.ss();
-		replace_list.add(new ModelSym("<Random>",type));
-		submenu->Append(TABS_REPLACE|i++,"<Random>");
-
-		while((fsym=flist++)){
-			replace_list.add(fsym);
-			submenu->Append(TABS_REPLACE|i++,fsym->name());
-		}
+	if(i==TABS_ADD){
+		delete addmenu;
+		return 0;
 	}
-	return submenu;
+	return addmenu;
 }
 //-------------------------------------------------------------
 // VtxSceneDialog::getRemoveMenu()
@@ -1138,36 +1147,6 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 	return submenu;
 }
 
-//-------------------------------------------------------------
-// VtxSceneDialog::getAddMenu()
-// - add a submenu that contains a list of add objects
-//-------------------------------------------------------------
-wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
-	LinkedList<ModelSym*> dlist;
-	add_list.free();
-	TheScene->model->setActionMode(Model::ADDING);
-	TheScene->model->getAddList(obj,dlist);
-	add_list.ss();
-	dlist.ss();
-	ModelSym *sym;
-	wxMenu *addmenu=new wxMenu();
-	wxMenu *submenu;
-	int i=0;
-	while((sym=dlist++)){
-		add_list.add(sym);
-		wxString label=sym->name();
-		submenu=getFileMenu(sym,i);
-		if(submenu)
-			addmenu->AppendSubMenu(submenu,label);
-		else
-			addmenu->Append(TABS_ADD|i++,label);
-	}
-	if(i==0){
-		delete addmenu;
-		return 0;
-	}
-	return addmenu;
-}
 //-------------------------------------------------------------
 // VtxSceneDialog::AddFileMenu()
 //-------------------------------------------------------------

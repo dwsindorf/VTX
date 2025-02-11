@@ -422,6 +422,20 @@ std::string UniverseModel::typeSymbol(int type){
 	delete tmp;
 	return str;
 }
+
+bool UniverseModel::hasTypeList(int type){
+	switch(type&TN_TYPES){
+	default:
+		return false;
+	case TN_MOON:
+	case TN_PLANET:
+	case TN_PLANT:
+	case TN_STAR:
+	case TN_WATER:
+	case TN_SKY:
+		return true;
+	}
+}
 //-------------------------------------------------------------
 // UniverseModel::TypeTypeList() return list of generated objects
 //-------------------------------------------------------------
