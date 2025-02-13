@@ -144,13 +144,6 @@ bool VtxLeafTabs::Create(wxWindow* parent,
 {
     if (!VtxTabsMgr::Create(parent, id, pos, size,  style,name))
         return false;
-    image_path="";
-    image_dim=0;
-    image_center=0;
-    image_rows=0;
-    image_cols=0;
-    image_name="";
-
  	wxNotebookPage *page=new wxPanel(this,wxID_ANY);
  	AddPropertiesTab(page);
     AddPage(page,wxT("Properties"),true);
@@ -160,6 +153,8 @@ bool VtxLeafTabs::Create(wxWindow* parent,
     page=new wxPanel(this,wxID_ANY);
 	AddColorTab(page);
     AddPage(page,wxT("Color"),false);
+
+    m_image_dim=-1;
 
     return true;
 }
@@ -407,17 +402,11 @@ void VtxLeafTabs::AddColorTab(wxWindow *panel){
 	hline->Add(m_col_enable,0,wxALIGN_LEFT|wxALL,4);
 
 	boxSizer->Add(hline,0,wxALIGN_LEFT|wxALL,0);
-	//revert_needed=false;
-	//m_revert->Enable(revert_needed);
-
 }
 
 void VtxLeafTabs::OnDimSelect(wxCommandEvent& event){
 	int dim=m_dim_choice->GetSelection();
 	wxString str=m_dim_choice->GetString(dim);
-	object()->getImageDims((char*)str.ToAscii(),image_cols,image_rows);
-	
-	int n=image_rows*image_cols;
 	makeFileList(str,"");
 	update_needed=true;
 	setObjAttributes();
@@ -426,46 +415,36 @@ void VtxLeafTabs::OnDimSelect(wxCommandEvent& event){
 void VtxLeafTabs::makeFileList(wxString wdir,wxString name){
 	char sdir[512];
 	char *wstr=(char*)wdir.ToAscii();
-	object()->getImageDirPath(wstr,sdir);
 
- 	wxDir dir(sdir);
- 	if ( !dir.IsOpened() )
- 	{
- 	    // deal with the error here - wxDir would already log an error message
- 	    // explaining the exact reason of the failure
- 		cout<<"makeFileList error"<<sdir<<endl;
- 	    return;
- 	}
  	image_name=name;
- 	uint rows=0;
- 	uint cols=0;
  	int dim=m_dim_choice->GetSelection();
  	wxString str=m_dim_choice->GetString(dim);
- 	object()->getImageDims((char*)str.ToAscii(),cols,rows);
+ 	uint image_info=LEAF;
  	
- 	if(dim!=image_dim ||rows != image_rows || cols!=image_cols){
+ 	ImageReader::setImageDims(image_info, (char*)str.mb_str());	
+ 	
+	LinkedList<ImageSym *> list;
+	images.getImageInfo(image_info, list);
+
+ 	wxDir dir(sdir);
+  	
+ 	if(dim!=m_image_dim){
 		files.Clear();
 		wxString filename;
-		bool cont = dir.GetFirst(&filename);
-		while ( cont ) {
-			filename=filename.Before('.');
-			files.Add(filename);
-			cont = dir.GetNext(&filename);
-		}
-		files.Sort();
 		m_file_choice->Clear();
+		for(int i=0;i<list.size;i++){
+			filename=list[i]->name();
+			files.Add(filename);
+		}
 		m_file_choice->Append(files);
-		image_dim=dim;
-		image_rows=rows;
-		image_cols=cols;
-		int n=image_rows*image_cols;
-		if(image_name.IsEmpty())
-			m_file_choice->SetSelection(0);
+		m_image_dim=dim;
  	}
- 	if(image_name.IsEmpty())
+	if(image_name.IsEmpty()){
+		m_file_choice->SetSelection(0);
  		image_name=m_file_choice->GetStringSelection();
- 	m_file_choice->SetStringSelection(image_name);
-
+	}
+	else
+  		m_file_choice->SetStringSelection(image_name);
 }
 
 void VtxLeafTabs::OnChangedFile(wxCommandEvent& event){
@@ -474,34 +453,27 @@ void VtxLeafTabs::OnChangedFile(wxCommandEvent& event){
 void VtxLeafTabs::setImagePanel(){
 	char dir[512];
 	char path[512];
-	char sdir[512]={0};
+	char name[256];
 
-	object()->getImageFilePath((char*)image_name.ToAscii(),dir);
-
-	sprintf(path,"%s.jpg",dir);
-	if(FileUtil::fileExists(path)){
-		strcpy(sdir,path);
-		image_window->setScaledImage(sdir,wxBITMAP_TYPE_JPEG);
-	}
-	else{
-		sprintf(path,"%s.bmp",dir);
-		if(FileUtil::fileExists(path)){
-			strcpy(sdir,path);	
-			image_window->setScaledImage(sdir,wxBITMAP_TYPE_BMP);
-		}
-		else{
-			sprintf(path,"%s.png",dir);
-			if(FileUtil::fileExists(path)){
-				strcpy(sdir,path);	
-				image_window->setScaledImage(sdir,wxBITMAP_TYPE_PNG);
-			}
-		}
-	}
-	if(strlen(sdir)==0)
-		return;
-	wxString ipath(sdir);
-	if(ipath!=image_path){
-		image_path=ipath;
+	strcpy(name,(char*)image_name.ToAscii());
+	
+	ImageSym *is=images.getImageInfo(name);
+	uint info=images.getFileInfo(name,path);
+	strcat(path,name);
+	
+	switch(info & FTYPE){
+	case PNG:
+		strcat(path,".png");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_PNG);	
+		break;
+	case JPG:
+		strcat(path,".jpg");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_JPEG);	
+		break;
+	case BMP:
+		strcat(path,".bmp");
+		image_window->setScaledImage(path,wxBITMAP_TYPE_BMP);	
+		break;
 	}
 }
 
@@ -580,8 +552,7 @@ void VtxLeafTabs::setObjAttributes(){
 		sceneDialog->setNodeName(obj->name_str);
 
 	obj->getArgs();
-	obj->initArgs();
-
+    obj->initArgs();
 	TheView->set_changed_detail();
 	TheScene->rebuild();
 
@@ -656,8 +627,15 @@ void VtxLeafTabs::getObjAttributes(){
 	else
 	   DensitySlider->setValue(obj->density);
 
-	//BiasSlider->setValue(obj->bias);
-
+    image_name=obj->getImageFile();
+	ImageSym *is=images.getImageInfo(image_name.mb_str());
+	
+	char tmp[32];
+	ImageReader::getImageDims(is->info,tmp);
+	m_dim_choice->SetStringSelection(tmp);
+	
+	image_dir=m_dim_choice->GetStringSelection();
+	
 	makeFileList(image_dir,image_name);
 	setImagePanel();
 	

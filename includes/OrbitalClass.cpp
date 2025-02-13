@@ -92,7 +92,7 @@ static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
-static double	def_hscale=5e-4;
+static double	def_hscale=0.001;
 
 //************************************************************
 // Orbital class
@@ -1988,7 +1988,7 @@ System *System::newInstance(){
 Spheroid::Spheroid(Orbital *m, double s) :
 	Orbital(m,s,0)
 {
-    hscale=5e-4;
+    hscale=def_hscale;
 	terrain.parent=&exprs;   // Scope parent
 	terrain.setParent(this); // NodeIF parent
 	exprs.setParent(this);
@@ -1999,7 +1999,7 @@ Spheroid::Spheroid(Orbital *m, double s) :
 Spheroid::Spheroid(Orbital *m, double s, double r) :
 	Orbital(m,s,r)
 {
-    hscale=5e-4;
+    hscale=def_hscale;
 	map=new Map(s);
 	map->object=this;
 	set_geometry();
@@ -5382,7 +5382,7 @@ void Planet::newRocky(Planet *planet,int gtype){
 	planet->day=24*(4+3*s[5]);
 	planet->year=planet->day*(1+3*r[3]);
 	planet->tilt=50*r[8];
-	planet->hscale=0.002;
+	planet->hscale=def_hscale*(1+0.5*s[4]);
 }
 void Planetoid::pushInstance(Planetoid *planet){
 	nsave=lastn;
@@ -5498,7 +5498,7 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	planet->terrain.set_root(0);
 	planet->ocean_level=level;
 	planet->ocean_auto=1;
-	state->setOceanFunction((char*)randFeature(RND_OCEAN_EXPR).c_str());
+	//state->setOceanFunction((char*)randFeature(RND_OCEAN_EXPR).c_str());
 
 	popInstance(planet);
 	
@@ -5630,6 +5630,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		planet->addChild(sky);
 		CloudLayer *clouds;
 		clouds = planet->newClouds(false);
+		planet->addChild(clouds);	
 		if(sky->pressure >=1){
 			clouds = planet->newClouds(true);
 			planet->addChild(clouds);				

@@ -15,7 +15,8 @@
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-#define TEST_PTS 
+//#define TEST_PTS 
+//#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -25,7 +26,6 @@
 //#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
-//#define DEBUG_TEST_PTS 
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
 
@@ -228,7 +228,7 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double min_draw_width=0.5;
+static double min_draw_width=0.25;
 static double min_render_pts=2; // for render
 static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 

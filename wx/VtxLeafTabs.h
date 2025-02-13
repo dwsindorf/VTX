@@ -12,10 +12,8 @@ class VtxLeafTabs : public VtxTabsMgr
 {
 	DECLARE_CLASS(VtxLeafTabs)
 
-protected:	
-	uint image_dim;
-	uint image_rows;
-	uint image_cols;
+protected:
+	uint m_image_dim;
 	uint image_center;
 	wxString image_name;
 	wxString image_dir;

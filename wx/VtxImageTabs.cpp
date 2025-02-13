@@ -217,7 +217,7 @@ void VtxImageTabs::OnShowTmps(wxCommandEvent& event){
 // VtxImageTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxImageTabs::makeImageList(){
-	//cout<<"VtxImageTabs::makeImageList()"<<endl;
+	cout<<"VtxImageTabs::makeImageList()"<<endl;
     images.makeImagelist();
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(type, list);

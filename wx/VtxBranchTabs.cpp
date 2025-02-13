@@ -584,6 +584,7 @@ void VtxBranchTabs::setObjAttributes(){
 	obj->applyExpr();
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
+
 	obj->getArgs();
     obj->initArgs();
 	TheView->set_changed_detail();
