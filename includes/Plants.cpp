@@ -15,8 +15,8 @@
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
-//#define DEBUG_TEST_PTS 
+#define TEST_PTS 
+#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -228,7 +228,7 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double min_draw_width=0.25;
+static double min_draw_width=0.5;
 static double min_render_pts=2; // for render
 static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
@@ -653,9 +653,6 @@ void PlantMgr::render(){
 	for(int i=start;i>=0;i--){ // Farthest to closest
 		PlantData *s=Plant::plants[i];
 		Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
-		Range=sqrt(Range);
-		//Range=(s->distance)/(PlantMgr::pmax);//
-		//cout<<s->distance/PlantMgr::pmax<<" "<<Range<<endl;
 		int id=s->get_id();
 		
 		TNplant *plant=s->mgr->plant;
@@ -1124,7 +1121,7 @@ void TNplant::eval()
 	double density=maxdensity;
 	MaxSize=mgr->maxsize;
 	radius=PSCALE;
-	TerrainProperties *tp=TerrainData::tp;
+	TerrainProperties *tp=Td.tp;//TerrainData::tp;
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
@@ -1800,12 +1797,18 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		n = first_bias*lerp(density,0.0,1.0,2*SRAND+0.25,1.0);
 		n=n<1?1:n;
 		double we=evalArg(3,width);
+		
+		//if((opt & BASE_FORK)==0)
+			we*=lerp(w,1,10,5,1);
+		
+		we=we>1?1:we;
+		//cout<<w<<endl;
 				
-		if((opt & BASE_FORK)==0)
-			we+=Range;
+		//if((opt & BASE_FORK)==0)
+		//	we+=Range;
 		for(int i=0;i<n;i++){
 			level=0;
-			emit(opt,start,vec,tip,s,w*we,1);
+			emit(opt,start,vec,tip,s,we*w,1);
 		}
 	}
 	else{
