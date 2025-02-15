@@ -111,6 +111,8 @@ double TerrainData::depth=0;
 double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
+Array<Plant*> TerrainData::plants;
+Array<Sprite*> TerrainData::sprites;
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
@@ -130,11 +132,11 @@ Point	TerrainData::rectangular(double t, double p)
 }
 void TerrainData::add_sprite(Sprite *t)
 {
-	tp->sprites.add(t);
+	sprites.add(t);
 }
 void TerrainData::add_plant(Plant *t)
 {
-	tp->plants.add(t);
+	plants.add(t);
 }
 void TerrainData::add_texture(Texture *t)
 {
@@ -284,12 +286,13 @@ void TerrainData::end()
 		data[i-1]=&zlevel[datacnt];
 	}
 }
+int TerrainData::sid=0;
+
 //************************************************************
 // TerrainProperties class
 //************************************************************
 int TerrainProperties::nid=0;
 int TerrainProperties::tid=0;
-int TerrainProperties::sid=0;
 TerrainProperties::TerrainProperties(int t)
 {
 	id=t;
@@ -304,9 +307,7 @@ TerrainProperties::TerrainProperties(int t)
 }
 TerrainProperties::~TerrainProperties(){
 	textures.reset();
-	sprites.reset();
 	noise.reset();
-	plants.reset();
 }
 void TerrainProperties::initProgram(){
 	//Texture::reset();
@@ -365,8 +366,6 @@ void TerrainProperties::setProgram(){
 void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
-	sprites.reset();
-	plants.reset();
 }
 
 

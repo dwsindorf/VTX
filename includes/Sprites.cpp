@@ -249,7 +249,7 @@ bool SpriteMgr::valid()
 bool SpriteMgr::setProgram(){
 	TerrainProperties *tp=Td.tp;
 	char defs[1024]="";
-	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",tp->sprites.size);
+	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",Td.sprites.size);
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
 	if(Render.haze())
 		sprintf(defs+strlen(defs),"#define HAZE\n");
@@ -300,9 +300,9 @@ bool SpriteMgr::setProgram(){
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
-	for(int i=0;i<tp->sprites.size;i++){
-		TerrainProperties::sid=i;
-		tp->sprites[i]->setProgram();
+	for(int i=0;i<Td.sprites.size;i++){
+		TerrainData::sid=i;
+		Td.sprites[i]->setProgram();
 	}
 	//glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);
@@ -505,9 +505,9 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 void Sprite::reset()
 {
 	sprites.free();
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->sprites.size;i++){
-		Sprite *sprite=tp->sprites[i];
+	//TerrainProperties *tp=Td.tp;
+	for(int i=0;i<Td.sprites.size;i++){
+		Sprite *sprite=Td.sprites[i];
 		sprite->mgr()->free_htable();
 	}
 }
@@ -540,12 +540,12 @@ void Sprite::collect()
 	int bad_active=0;
 #endif	
 
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->sprites.size;i++){
+	//TerrainProperties *tp=Td.tp;
+	for(int i=0;i<Td.sprites.size;i++){
 #ifdef SHOW_STATS	
 		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_sprites=0;
 #endif
-		Sprite *sprite=tp->sprites[i];
+		Sprite *sprite=Td.sprites[i];
 		sprite->mgr()->ss();
 		SpritePoint *s=(SpritePoint*)sprite->mgr()->next();
 	while(s){
@@ -754,7 +754,7 @@ void TNsprite::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		int size=Td.tp->sprites.size;
+		int size=Td.sprites.size;
 		instance=size;
 		//cout<<instance<<" ";
 
@@ -803,7 +803,7 @@ void TNsprite::eval()
 	density=maxdensity;
 	MaxSize=mgr->maxsize;
 	radius=TheMap->radius;
-	TerrainProperties *tp=TerrainData::tp;
+	//TerrainProperties *tp=TerrainData::tp;
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
@@ -830,7 +830,7 @@ void TNsprite::eval()
 	mgr->density=density;
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
-					+11*tp->id
+					+11*Td.sid
 					+7*instance
 					);
 	mgr->id=(int)hashcode+mgr->type+SPRITES+hashcode*TheNoise.rseed;

@@ -329,7 +329,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 #endif
 	int pm=CurrentScope->passmode();
 #ifdef TEST_SPRITES
-	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&tp->sprites.size>0&& TheScene->viewobj==TheMap->object;
+	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&Td.sprites.size>0&& TheScene->viewobj==TheMap->object;
 	if(do_sprites){
 		if(SpriteMgr::testColor())
 			nc=1;
@@ -337,7 +337,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			nf=1;
 	}
 #endif
-	bool do_plants=tp->plants.size>0&& TheScene->viewobj==TheMap->object;
+	bool do_plants=Td.plants.size>0&& TheScene->viewobj==TheMap->object;
 	if(do_plants){
 		if(PlantMgr::testColor())
 			nc=1;
@@ -348,7 +348,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	a=b=0;
 
 	setTextures(tp->textures.size?1:0);
-	setSprites(tp->sprites.size?1:0);
+	//setSprites(tp->sprites.size?1:0);
 	int nbumps=0;
 	int nmaps=0;
 
@@ -456,8 +456,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 				Td.diffuse=Color(1,1,1);
 			color_test=true;
 		}
-		for(i=0;i<tp->sprites.size;i++){
-			Sprite *sprite=tp->sprites[i];
+		for(i=0;i<Td.sprites.size;i++){
+			Sprite *sprite=Td.sprites[i];
 			sprite->eval();
 			if(SpriteMgr::testDensity())
 				setDensity(Td.density);
@@ -480,8 +480,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			else
 				Td.diffuse=Color(1,1,1);
 		}
-		for(i=0;i<tp->plants.size;i++){
-			Plant *plant=tp->plants[i];
+		for(i=0;i<Td.plants.size;i++){
+			Plant *plant=Td.plants[i];
 			plant->eval();
 			if(PlantMgr::testDensity())
 				setDensity(Td.density+density);

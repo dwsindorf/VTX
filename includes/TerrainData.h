@@ -139,6 +139,10 @@ public:
 
 
 	static Array<TerrainProperties*>properties;
+	static Array<Plant*> plants;
+	static Array<Sprite*> sprites;
+	static int sid;
+
 
 	static TerrainData  *data[MAX_TDATA]; // second surface data
 	static TerrainData  zlevel[MAX_TDATA]; // zordered highest values
@@ -330,8 +334,8 @@ public:
 	Color color;
 	int callList;
 	Array<Texture*> textures;
-	Array<Plant*> plants;
-	Array<Sprite*> sprites;
+	//Array<Plant*> plants;
+	//Array<Sprite*> sprites;
 
 	Array<TNnoise*> noise;
 	TNcolor *tncolor;
@@ -343,7 +347,7 @@ public:
 
 	static int nid;
 	static int tid;
-	static int sid;
+	//static int sid;
 	static int pass;
 
 	TerrainProperties(int);

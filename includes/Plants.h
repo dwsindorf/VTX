@@ -396,7 +396,7 @@ public:
 	unsigned int plant_id;
 
 	bool   valid;
-	static ValueList<PlantData*> plants;
+	static ValueList<PlantData*> data;
 
 	Plant(int l, TNode *e);
 	

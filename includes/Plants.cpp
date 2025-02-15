@@ -420,13 +420,13 @@ bool PlantMgr::setProgram(){
 	shadow_count=0;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	TerrainProperties *tp=Td.tp;
+	//TerrainProperties *tp=Td.tp;
 	char defs[1024]="";
 
 	PlantMgr::textures=0;
 	
-	for(int i=0;i<tp->plants.size;i++){
-		tp->plants[i]->setProgram();
+	for(int i=0;i<Td.plants.size;i++){
+		Td.plants[i]->setProgram();
 	}
 
 	switch(TheScene->render_quality){
@@ -540,7 +540,7 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
 		
-	int n=Plant::plants.size;
+	int n=Plant::data.size;
 	int l=randval;
 
 	//render();
@@ -550,27 +550,24 @@ bool PlantMgr::setProgram(){
 }
 
 void PlantMgr::clearStats(){
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->plants.size;i++){
-		tp->plants[i]->clearStats();
+	for(int i=0;i<Td.plants.size;i++){
+		Td.plants[i]->clearStats();
 	}
 }
 void PlantMgr::showStats(){
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->plants.size;i++){
-		tp->plants[i]->showStats();
+	for(int i=0;i<Td.plants.size;i++){
+		Td.plants[i]->showStats();
 	}
 }
 void PlantMgr::collectStats(){
-	TerrainProperties *tp=Td.tp;
-	int n=Plant::plants.size;
+	int n=Plant::data.size;
 	for(int i=0;i<PLANT_STATS;i++){
 		stats[i]=0;
 	}
-	stats[0]=tp->plants.size;
+	stats[0]=Td.plants.size;
 	stats[6]=n;
-	for(int i=0;i<tp->plants.size;i++){
-		TNplant *plant=tp->plants[i]->expr;
+	for(int i=0;i<Td.plants.size;i++){
+		TNplant *plant=Td.plants[i]->expr;
 		for(int j=0;j<plant->branches;j++){
 			stats[1]+=plant->stats[j][2]; // lines
 			stats[3]+=plant->stats[j][2]; // lines
@@ -643,7 +640,7 @@ void PlantMgr::render(){
 		TNLeaf::sorted=false;
 	}
 	t1=clock();
-	int n=Plant::plants.size;
+	int n=Plant::data.size;
 	
 	if(!shadow_mode)
 		glEnable(GL_BLEND);
@@ -651,7 +648,7 @@ void PlantMgr::render(){
 	
 	if(update_needed)
 	for(int i=start;i>=0;i--){ // Farthest to closest
-		PlantData *s=Plant::plants[i];
+		PlantData *s=Plant::data[i];
 		Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
 		int id=s->get_id();
 		
@@ -835,7 +832,7 @@ void PlantData::print(){
 	
 }
 //===================== Plant ==============================
-ValueList<PlantData*> Plant::plants;
+ValueList<PlantData*> Plant::data;
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
@@ -849,12 +846,10 @@ Plant::Plant(int l, TNode *e)
 
 void Plant::reset()
 {
-	plants.free();
+	data.free();
 	PlantMgr::textures=0;
-
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->plants.size;i++){
-		Plant *plant=tp->plants[i];
+	for(int i=0;i<Td.plants.size;i++){
+		Plant *plant=Td.plants[i];
 		plant->mgr()->free_htable();
 	}
 }
@@ -879,12 +874,11 @@ void Plant::collect()
 	int bad_active=0;
 #endif	
 
-	TerrainProperties *tp=Td.tp;
-	for(int i=0;i<tp->plants.size;i++){
+	for(int i=0;i<Td.plants.size;i++){
 #ifdef SHOW_PLANT_STATS	
 		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_plants=0;
 #endif
-		Plant *plant=tp->plants[i];
+		Plant *plant=Td.plants[i];
 		plant->mgr()->ss();
 		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
 	while(s){
@@ -926,7 +920,7 @@ void Plant::collect()
 #endif
 		    if(pts_test && s->visits>=minv){
 		    	new_plants++;
-		    	plants.add(new PlantData((PlantPoint*)s,bp,d,pts));
+		    	data.add(new PlantData((PlantPoint*)s,bp,d,pts));
 		    }
 		}
 		s=plant->mgr()->next();
@@ -940,20 +934,20 @@ void Plant::collect()
 #endif
 
 	}
-	if(plants.size){
-		plants.sort();
-		PlantMgr::pmin=plants[0]->value();
-		PlantMgr::pmax=plants[plants.size-1]->value();
+	if(data.size){
+		data.sort();
+		PlantMgr::pmin=data[0]->value();
+		PlantMgr::pmax=data[data.size-1]->value();
  		double range=PlantMgr::pmax-PlantMgr::pmin;
    		//cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
 	}
 #ifdef SHOW
 	//int pnrt_num=plants.size-1;
-	int pnrt_num=min(2,plants.size-1);
+	int pnrt_num=min(2,data.size-1);
 
 	for(int i=pnrt_num;i>=0;i--){
 		cout<<i<<" ";
-		plants[i]->print();	
+		data[i]->print();	
 	}
 #endif
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1097,7 +1091,7 @@ void TNplant::eval()
 	if(Td.tp->id==WATER)
 		return;
 	if(CurrentScope->rpass()){
-		int size=Td.tp->plants.size;
+		int size=Td.plants.size;
 		plant_id=size;	
 		mgr->instance=plant_id;
 		if(plant)
@@ -1121,7 +1115,6 @@ void TNplant::eval()
 	double density=maxdensity;
 	MaxSize=mgr->maxsize;
 	radius=PSCALE;
-	TerrainProperties *tp=Td.tp;//TerrainData::tp;
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
@@ -1149,7 +1142,7 @@ void TNplant::eval()
 	mgr->density=density;
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
-					+11*tp->id
+					+11*Td.sid
 					+7*plant_id
 					);
 	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
@@ -1321,8 +1314,7 @@ NodeIF *TNplant::removeNode(){
 		else
 			p->replaceChild(this,next);
 	}
-	TerrainProperties *tp=Td.tp;
-	tp->plants.remove(plant);
+	Td.plants.remove(plant);
 	plant=0;
 	return this;
 }

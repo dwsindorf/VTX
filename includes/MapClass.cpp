@@ -310,7 +310,8 @@ void Map::clearLists() {
 		}
 	}
 	set_first(true);
-	//Plant::reset();
+	Plant::reset();
+	Td.plants.reset();
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -400,6 +401,7 @@ void Map::free()
 	}
 	clearLists();
 	triangles.free();
+	Td.plants.free();
 
 }
 
@@ -758,9 +760,9 @@ void Map::render_zvals()
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 	    
 	    npole->render_vertex();
-	    if(Render.draw_szvals())
-			PlantMgr::render_zvals();
 	}
+	if(Render.draw_szvals())
+		PlantMgr::render_zvals();
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
 		Raster.surface=2;  // water pass
@@ -1236,16 +1238,19 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-			if(!TheScene->select_mode()){
-				set_sprites(Raster.sprites()&&tp->sprites.size>0&& TheScene->viewobj==object);
-				bool plants=tp->plants.size>0&& TheScene->viewobj==object;
-				if(sprites()||plants)
-					render_sprites();
-			}
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
 		}
+		if(!TheScene->select_mode()){
+			//cout<<Td.plants.size<<" "<<Plant::data.size<<endl;
+			//set_sprites(Raster.sprites()&&Td.sprites.size>0&& TheScene->viewobj==object);
+			bool sprites=Td.sprites.size>0&& TheScene->viewobj==object;
+			bool plants=Td.plants.size>0&& TheScene->viewobj==object;
+			if(sprites||plants)
+				render_sprites();
+		}
+
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
     bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
@@ -1433,7 +1438,6 @@ static void collect_nodes(MapNode *n)
 
 void Map::render_sprites(){
 	reset_texs();
-	TerrainProperties *tp=Td.tp;
 
 	if(first()){
 		double d0=clock();
@@ -1464,14 +1468,15 @@ void Map::render_sprites(){
 
 		CurrentScope->set_passmode(mode);
 	}
-	if(tp->sprites.size){
+
+	if(Td.sprites.size){
 		SpriteMgr::setProgram();
-		if(tp->plants.size){
+		if(Td.plants.size){
 			GLSLMgr::clrDepthBuffer();
 			render_zvals();
 		}
 	}
-	if(tp->plants.size){
+	if(Td.plants.size){
 		if(PlantMgr::setProgram())
 			PlantMgr::render();
 	}

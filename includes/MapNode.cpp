@@ -2286,8 +2286,8 @@ void MapNode::Svertex(MapData*dn) {
 	TheNoise.set(pnt);
 	MapPt=pt;
 	Height=d->Ht();
-	for (int j = 0; j < tp->sprites.size; j++) {
-		Sprite *ts=tp->sprites[j];
+	for (int j = 0; j < Td.sprites.size; j++) {
+		Sprite *ts=Td.sprites[j];
 		if(visible())				
 			ts->eval();		
 	}
@@ -2575,12 +2575,11 @@ double MapNode::value()
 }
 void MapNode::evalsprites()
 {
-	TerrainProperties *tp=TerrainData::tp;
+	//TerrainProperties *tp=TerrainData::tp;
 
 	MapData *d=&data;
-	
 	d=d->surface1();
-
+    
 	double t=d->theta();
 	double p=d->phi();
 	
@@ -2610,14 +2609,14 @@ void MapNode::evalsprites()
 	MapPt=pnt;
 	TheNoise.set(pt);
 
-	for(tp->sid=0;tp->sid<tp->sprites.size;tp->sid++){
+	for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
 		Td.clr_flag(SFIRST);
-		Sprite *sprite=tp->sprites[tp->sid];
+		Sprite *sprite=Td.sprites[Td.sid];
 		sprite->eval();
 	}
-	for(tp->sid=0;tp->sid<tp->plants.size;tp->sid++){
+	for(Td.sid=0;Td.sid<Td.plants.size;Td.sid++){
 		Td.clr_flag(SFIRST);
-		Plant *plant=tp->plants[tp->sid];
+		Plant *plant=Td.plants[Td.sid];
 		plant->eval();
 	}	
 }
