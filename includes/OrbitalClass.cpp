@@ -92,7 +92,7 @@ static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
-static double	def_hscale=0.001;
+static double	def_hscale=0.0005;
 
 //************************************************************
 // Orbital class
@@ -4045,7 +4045,7 @@ void Planetoid::adapt_object()
 	
     double dt=fabs(last_temp-surface_temp);
     setDateString();
-	if(water() && dt>0.25){
+	if(seasonal && water() && dt>1){
 		if(debug_temp>0){
 			char date[256]={0};
 			getDateString(date);
@@ -4319,11 +4319,12 @@ void Planetoid::calcAveTemperature() {
 	}
 	Orbital *obj;
 	
-	heat_factor = 1;
+	heat_factor = 0;
 	children.ss();
 	Sky *sky = (Sky*) getChild(ID_SKY);
 	if(sky)
 		heat_factor=sky->getHeatCalacity();
+	//cout<<" "<<heat_factor<<endl;
 	//cout<<g<<endl;
 	//g = 0.4 * pow(g, 0.25);
 	char str[1024];

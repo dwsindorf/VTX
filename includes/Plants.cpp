@@ -15,8 +15,8 @@
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-#define TEST_PTS 
-#define DEBUG_TEST_PTS 
+//#define TEST_PTS 
+//#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -1021,7 +1021,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 //-------------------------------------------------------------
 TNplant::~TNplant()
 {
-	//cout<<"TNplant::~TNplant()"<<endl;
+	cout<<"TNplant::~TNplant()"<<endl;
 	DFREE(plant);
 }
 
@@ -1085,11 +1085,11 @@ void TNplant::eval()
 	SINIT;
 	if(right)
 		right->eval();
-	if(!isEnabled()){
+	if(!isEnabled() || TheScene->viewtype !=SURFACE){
 		return;
 	}
-	if(Td.tp->id==WATER)
-		return;
+	//if(Td.tp->id==WATER)
+	//	return;
 	if(CurrentScope->rpass()){
 		int size=Td.plants.size;
 		plant_id=size;	

@@ -369,7 +369,7 @@ public:
 	void set_inactive(bool b)  { info.s.inactive=b;}
 	bool inactive()  		{ return info.s.inactive;}
 	int type()				{ return info.s.type;}
-	void set_type(int i)    { info.s.type=i;}
+	void set_type(int i)    { info.s.type=i>=0?i:0;}
 	void initProgram();
 	void setProgram();
 	void reset();

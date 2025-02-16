@@ -277,6 +277,7 @@ void TNmap::eval()
 		S0.set_flag(CLRTEXS);
 		//if(Td.get_flag(FVALUE))
 		//	Td.set_flag(MULTILAYER);
+		int i=0;
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
 			layer->base->eval();
@@ -292,6 +293,7 @@ void TNmap::eval()
 				break;
 			if(layer->isEnabled())
 				Td.add_id();
+			i++;
 		}
 		if(!in_map)
 			S0.clr_flag(CLRTEXS);
@@ -522,7 +524,7 @@ void TNmap::eval()
 	if(!in_map)    // in case we were in another map on entry
 		S0.clr_flag(CLRTEXS);
 
-	if(TheScene->viewtype ==SURFACE && Adapt.mindcnt()){
+	if(/*TheScene->viewtype ==SURFACE &&*/ Adapt.mindcnt()){
 		// minimize dual terrain nodes (edges only)
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection

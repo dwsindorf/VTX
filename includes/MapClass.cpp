@@ -310,8 +310,8 @@ void Map::clearLists() {
 		}
 	}
 	set_first(true);
-	Plant::reset();
-	Td.plants.reset();
+	//Plant::reset();
+	//Td.plants.reset();
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -401,8 +401,6 @@ void Map::free()
 	}
 	clearLists();
 	triangles.free();
-	Td.plants.free();
-
 }
 
 //-------------------------------------------------------------
