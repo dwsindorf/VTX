@@ -3992,7 +3992,7 @@ void Planetoid::init_render()
  	if(water()){
 		clarity=ocean->liquid->clarity;
 		if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
-			clarity*=20;
+			clarity*=5;
 		Raster.water_clarity=clarity*FEET;
 		Raster.water_mix=ocean->liquid->mix;
 		Raster.ice_clarity=ocean->solid->clarity*FEET;

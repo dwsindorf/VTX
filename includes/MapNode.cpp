@@ -2576,6 +2576,8 @@ double MapNode::value()
 void MapNode::evalsprites()
 {
 	//TerrainProperties *tp=TerrainData::tp;
+	if(surface_water())
+		return;
 
 	MapData *d=&data;
 	d=d->surface1();
