@@ -335,7 +335,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			nf=1;
 	}
 #endif
-	bool do_plants=Td.plants.size>0&& TheScene->viewobj==TheMap->object;
+	bool do_plants=false;//Td.plants.size>0&& TheScene->viewobj==TheMap->object && (PlantMgr::testDensity()||PlantMgr::testColor());
 	if(do_plants){
 		if(PlantMgr::testColor())
 			nc=1;
@@ -465,7 +465,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 #endif
 	if(do_plants){
-		CurrentScope->set_spass();
+		//CurrentScope->set_spass();
 		MapPt=point();
 		double density=0;
 		if(density_test)
@@ -483,8 +483,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			plant->eval();
 			if(PlantMgr::testDensity())
 				setDensity(Td.density+density);
-			if(PlantMgr::testColor()){
-				
+			if(PlantMgr::testColor()){				
 				setColor(Td.diffuse);
 			}
 		}

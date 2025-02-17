@@ -291,7 +291,7 @@ int PlantMgr::stats[PLANT_STATS];
 double PlantMgr::render_time;
 double PlantMgr::pmax=1;
 double PlantMgr::pmin=0;
-int PlantMgr::adapt_tests=TEST_DENSITY;
+int PlantMgr::adapt_tests=0;//TEST_DENSITY;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
