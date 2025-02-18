@@ -317,6 +317,7 @@ public:
 	virtual void eval();
 	virtual void save(FILE*);
 	virtual bool hasChildren();
+	virtual TNode *getChild(int );
 	virtual bool hasChild(int );
 	virtual bool hasChild(int t, bool enabled);
 	virtual int getChildren(LinkedList<NodeIF*>&l);

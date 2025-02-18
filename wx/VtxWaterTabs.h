@@ -119,8 +119,9 @@ public:
     void OnSetDefaultSolid(wxCommandEvent& event);
     void OnSetState(wxCommandEvent& event);
 
-    void OnSurfaceFunctionEnter(wxCommandEvent& event){
+    void OnSurfaceFunctionEnter(wxCommandEvent& event){  	
     	setObjAttributes();
+    	invalidateObject();
     }
 
     void OnEndLevelSlider(wxScrollEvent& event){
@@ -133,6 +134,7 @@ public:
     void OnLevelText(wxCommandEvent& event){
     	LevelSlider->setValueFromText();
     	setObjAttributes();
+    	invalidateObject();
     }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
     	setObjAttributes();

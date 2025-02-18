@@ -224,6 +224,7 @@ public:
 	int typeValue()			{ return ID_WATER;}
 	const char *typeName ()	{ return "ocean";}
 	NodeIF *getInstance();
+	void getNoiseExprs(OceanState *s);
 	void setNoiseExprs(OceanState *s);
 	bool randomize();
 	

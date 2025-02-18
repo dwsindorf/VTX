@@ -1204,6 +1204,7 @@ bool TerrainMgr::hasChildren(){
 static int find_type=0;
 static bool find_test=false;
 static bool find_enabled=false;
+static TNode *find_child=0;
 
 static void findType(NodeIF *obj)
 {
@@ -1216,12 +1217,14 @@ static void findType(NodeIF *obj)
 		else
 			find_test=false;
 		obj->setFlag(NODE_STOP);
+		find_child=obj;
 	}
 }
 bool TerrainMgr::hasChild(int type){
 	find_type=type;
 	find_test=false;
 	find_enabled=false;
+	find_child=0;
 	visitNode(findType);
 	return find_test;
 }
@@ -1232,6 +1235,12 @@ bool TerrainMgr::hasChild(int type,bool enabled){
 	visitNode(findType);
 	return find_test;
 }
+TNode *TerrainMgr::getChild(int type){
+	if(hasChild(type))
+		return find_child;
+	return 0;
+}
+
 //-------------------------------------------------------------
 // TerrainMgr::NodeIF methods
 //-------------------------------------------------------------

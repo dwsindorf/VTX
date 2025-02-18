@@ -3467,6 +3467,13 @@ void Planetoid::getOceanExpr(){
 		var->valueString(buff);
 		ocean->setOceanFunction(buff);
 	}
+	if(water()){
+		TNwater *tnode=terrain.getChild(ID_WATER);
+		if(tnode)
+			tnode->getNoiseExprs(ocean);
+		else
+			cout<<"error getting water node"<<endl;
+	}
 }
 #define ODEF OceanState::oceanTypes[OceanState::Types::H2O]
 

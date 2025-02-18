@@ -488,14 +488,14 @@ void VtxWaterTabs::OnSetDefaultLiquid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	LiquidFunction->SetValue(OceanState::getDfltOceanLiquidExpr());
 	setObjAttributes();
-	//orb->invalidate();
+	orb->invalidate();
 	//TheScene->rebuild();
 }
 void VtxWaterTabs::OnSetDefaultSolid(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	SolidFunction->SetValue(OceanState::getDfltOceanSolidExpr());
 	setObjAttributes();
-	//orb->invalidate();
+	orb->invalidate();
 	//TheScene->rebuild();
 }
 //-------------------------------------------------------------
@@ -546,8 +546,10 @@ void VtxWaterTabs::setObjAttributes(){
     ocean->setOceanLiquidExpr((char*)LiquidFunction->GetValue().ToAscii());   
     ocean->setOceanSolidExpr((char*)SolidFunction->GetValue().ToAscii());
     tnode->setNoiseExprs(ocean);
+    
+    TheScene->set_changed_render();
  
-	invalidateObject();
+	//invalidateObject();
 
 }
 //-------------------------------------------------------------

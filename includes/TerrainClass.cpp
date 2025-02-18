@@ -1563,6 +1563,18 @@ void TNwater::setNoiseExprs(OceanState *s){
 	setExpr(str);
 	applyExpr();
 }
+void TNwater::getNoiseExprs(OceanState *s){
+	TNarg &arg=*((TNarg*)left);
+	char tmp[256];
+	tmp[0]=0;
+	arg[0]->valueString(tmp);
+	cout<<tmp<<endl;
+	s->setOceanLiquidExpr(tmp);
+	tmp[0]=0;
+	arg[1]->valueString(tmp);
+	cout<<tmp<<endl;
+	s->setOceanSolidExpr(tmp);
+}
 //-------------------------------------------------------------
 // TNwater::replaceNode
 //-------------------------------------------------------------
