@@ -13,6 +13,9 @@ public:
 	MaterialState(TNode *a);
 	Color color1;
 	Color color2;
+	TNcolor *color;
+	char colorexpr[256];
+
 	double clarity;
 	double mix;
 	double specular;
@@ -20,6 +23,10 @@ public:
 	double temp;
 	double trans_temp;
 	double volatility;
+	
+	void setColor(TNcolor*);
+	TNcolor* getColor();
+
 
 	void setName(char *e){ strcpy(name,e);}
 	char *getName(){ return name;}

@@ -2,9 +2,10 @@
 #include "SceneClass.h"
 #include "TerrainClass.h"
 
-static char* def_liquid_func="noise(GRADIENT|SCALE,18,3,1,0.5,2,0.11,1,0,0,0)";
+static char* def_liquid_func="noise(GRADIENT|SCALE,21,3,1,0.5,2,0.05,1,0,0,1e-06)";
 static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,12,12,0.1,0.4,1.84,0.73,-0.2,0,0.002,0)";
 static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0)";
+static char* def_ocean_color="Color(0,0,0,0)";
 
 //ocean.expr=-0.4*LAT+noise(GRADIENT|NNORM|SCALE,5,9.5,1,0.5,2,0.23,1,0,0,1e-06);
 Array<OceanState*> OceanState::oceanTypes(NUM_OCEAN_TYPES);
@@ -14,7 +15,7 @@ static char *LAV_liq_str="liquid(Color(0.97,0.98,0.71,0.20),Color(0.93,0.32,0.24
 static char *LAV_sol_str="solid(Color(0.46,0.35,0.00,0.07),Color(0.30,0.30,0.30,0.01),1000,0.01,0.4,17.46,0.5238,0.1,1,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0,1e-06))";
 static char *SLF_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),717,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SLF_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),388,1,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
-static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93),Color(0.00,0.16,0.16),373,300,0.95,100,1,50,1,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
+static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93,0.7),Color(0.00,0.16,0.16),373,300,0.8,100,1,50,1,noise(GRADIENT|SCALE,21,3,1,0.5,2,0.05,1,0,0))";
 static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.60,0.7,0.80),273,1,0.95,0.8,0.1,0.05,0.5,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0.001,0))";
 static char *SO2_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),263,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SO2_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),201,5,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
@@ -24,9 +25,6 @@ static char *CH4_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),110,300,0.9
 static char *CH4_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),91,1.0,0.95,0.8,0.6,0.2,1)";
 static char *N2_liq_str="liquid(Color(0,1,1,0.2),Color(0.1,0.1,0.5),77,300,0.95,100,1,10,10)";
 static char *N2_sol_str="solid(Color(1,1,1,0.6),Color(0.400,0.675,0.8),63,1.0,0.95,0.8,0.6,0.2,1)";
-
-//bad  ocean(noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0.001,0))
-//good ocean(noise(GRADIENT|SCALE,18.26,3.52,0.85,0.59,1.46,0.08,1.23,0,0,0),noise(SIMPLEX|NABS|SCALE|SQR,12.2,14.37,0.08,0.48,1.27,0.54,-0.15,0,0,0))
 
 //************************************************************
 // OceanState
@@ -109,13 +107,13 @@ void OceanState::saveNode(FILE *f){
 }
 
 void OceanState::valueString(char *s){
-	char str1[512];
-	char str2[512];
+	char str1[1024];
+	char str2[1024];
 	str1[0]=0;
 	str2[0]=0;
 	liquid->valueString(str1);
 	solid->valueString(str2);
-	sprintf(s,"Ocean(\"%s\",%s,%g)[\n%s,\n%s]",nodeName(),expr,rseed,str1,str2);
+	sprintf(s,"\nOcean(\"%s\",%s,%g)[\n%s,\n%s]",nodeName(),expr,rseed,str1,str2);
 }
 
 bool OceanState::randomize(){
@@ -215,6 +213,8 @@ MaterialState::MaterialState(TNode *r) : TNunary(r){
 	else
 		volatility=1;
 	expr[0]=0;
+	color=0;
+	colorexpr[0]=0;
 }
 void MaterialState::valueString(char *s){
 	char col1[256]={0};
@@ -232,8 +232,16 @@ void MaterialState::valueString(char *s){
 	sprintf(s+strlen(s),")",expr);
 
 }
+void MaterialState::setColor(TNcolor* c){
+	if(color)
+		delete color;
+	color=c;
+}
+TNcolor* MaterialState::getColor(){
+	return color;
+}
 void MaterialState::saveNode(FILE *f){
-	char str[1024];
+	char str[2048];
 	str[0]=0;
 	valueString(str);
 	fprintf(f,"%s",str);
@@ -251,7 +259,7 @@ LiquidState::LiquidState(TNode *a) : MaterialState(a){
 		setExpr(def_liquid_func);
 }
 void LiquidState::newInstance(char *buff){
-	char cstr[256];
+	char cstr[512];
 	cstr[0]=0;
 
 	Color tc=Color(0.5+3*r[4],0.5+r[5],0.6*r[5]);

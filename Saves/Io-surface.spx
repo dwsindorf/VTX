@@ -1,20 +1,19 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-38.6884;
+		phi=-38.6881;
 		theta=272.708;
-		height=2733.81 ft;
+		height=1009.77 ft;
 		gndlvl=13924.2 ft;
 		time=1.49822e+07;
 		vstride=0.02;
-		hstride=1;
+		hstride=2;
 		astride=1;
 		zoom=0.0011;
 		minh=5.68182e-10;
 		minr=0.00110264;
 		heading=37;
-		tilt=1;
-		angle=-22;
+		angle=-20;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
@@ -117,12 +116,12 @@ Scene() {
 										Texture("crusty2",BUMP|TEX,3683.85,0.5,0.38888,0,6.33328,2,0.5,0,0,0,0,0)+
 										Texture("rock_stones",BUMP|LINEAR|TEX,61.5847,0.5,2,0,6.33328,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,4,2,1,0.5,2,1,1,0,0)+0.2*craters(ID2,7,0.0375783,0.66,0.8,1,1,1,1,0.5,1,0.8,0.6,0.2,0))
 										]
-									layer("Lava",MESH|FSQR,0,0.27,0,0)
+									layer("lava2",MESH|FSQR,0,0.27,0,0)
 										[
-										Texture("lava2",BORDER|TEX,1105.9,2,1,-2.33328,1,2,0.5,0,0,0,-1.61112,0)+gloss(1,1.66064)
+										Texture("lava2",BORDER|TEX,368.112,1.20636,1,-1.49208,1,2,0.5,0,0,0.68252,-1,0)+gloss(1,1.66064)
 										+
 										Texture("io",BORDER|BUMP,1,0,1.08332,0,1,1.90568,0.86792,0,0,0,0,0)+
-										Texture("coldlava",BUMP|RANDOMIZE,205.145,1,2,0,4.33312,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR,19.5,2,1,0.5,2,0.39,1,0,0.4))
+										Texture("coldlava",BUMP|HMAP|RANDOMIZE|TEX,512,1,2,0,6.33328,2.07936,0.6508,0,0.5,0,0,0,0,0)+Z(noise(VORONOI|NABS|NEG|SCALE|SQR|UNS,11.99,7,0.589,0.5,2,0.548,0.1,0,0.4,1e-05))
 										]
 									;
 						}

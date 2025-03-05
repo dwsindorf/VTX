@@ -1568,11 +1568,9 @@ void TNwater::getNoiseExprs(OceanState *s){
 	char tmp[256];
 	tmp[0]=0;
 	arg[0]->valueString(tmp);
-	cout<<tmp<<endl;
 	s->setOceanLiquidExpr(tmp);
 	tmp[0]=0;
 	arg[1]->valueString(tmp);
-	cout<<tmp<<endl;
 	s->setOceanSolidExpr(tmp);
 }
 //-------------------------------------------------------------

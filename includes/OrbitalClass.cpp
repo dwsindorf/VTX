@@ -3462,7 +3462,7 @@ void Planetoid::getOceanExpr(){
 		var->eval();
 	}
 	else{
-		char buff[256]={0};
+		char buff[512]={0};
 		var->eval();
 		var->valueString(buff);
 		ocean->setOceanFunction(buff);
