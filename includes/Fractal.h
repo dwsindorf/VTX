@@ -14,8 +14,10 @@ protected:
 	void optionString(char *);
 public:
 	int options;
+	int chnl;
 	TNfractal(int l, TNode *a, TNode *r);
 	void eval();
+	void init();
 	void save(FILE*);
 	void valueString(char *s);
 	int typeValue()			{ return ID_FCHNL;}

@@ -1594,6 +1594,7 @@ void TerrainMgr::init()
 
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
+	Td.fids=0;
 
 	MapPt=Td.rectangular(0.0,0.0);
 	TheNoise.set(MapPt);

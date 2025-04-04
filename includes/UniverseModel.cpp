@@ -577,19 +577,18 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(new ModelSym("Layer",TN_LAYER));
 			//list.add(getObjectSymbol(TN_LAYER));
 		else{
-			if(!obj->hasChild(ID_POINT))
-				list.add(getObjectSymbol(TN_POINT));
 			if(!obj->hasChild(ID_COLOR))
 				list.add(getObjectSymbol(TN_COLOR));
 			if(!obj->hasChild(ID_GLOSS))
 				list.add(getObjectSymbol(TN_GLOSS));
+			if(!obj->hasChild(ID_FCHNL))
+				list.add(getObjectSymbol(TN_FCHNL));
+			list.add(getObjectSymbol(TN_POINT));
 			list.add(getObjectSymbol(TN_TEXTURE));
 			list.add(getObjectSymbol(TN_SPRITE));
 			list.add(getObjectSymbol(TN_PLANT));
-			//list.add(getObjectSymbol(TN_BASE));
 			//list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
-			//list.add(getObjectSymbol(TN_FCHNL));
 		}
 		break;
 

@@ -11,12 +11,14 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00394613;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00394613;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -47,10 +49,12 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,40) {
+				Planet(0.004,100) {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.001;
+					ocean.auto=1;
+					ocean.state=2;
 					year=100;
 					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{

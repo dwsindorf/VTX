@@ -4587,6 +4587,7 @@ static NameList<ImageSym*> gassy_list;
 static NameList<ImageSym*> hmaps_list;
 static NameList<ImageSym*> image_list;
 static NameList<ImageSym*> erode_list;
+static NameList<ImageSym*> surface_list;
 
 void Planetoid::makeLists(){
 	icy_list.free();
@@ -4595,6 +4596,7 @@ void Planetoid::makeLists(){
 	hmaps_list.free();
 	image_list.free();
 	erode_list.free();
+	surface_list.free();
 	LinkedList<ImageSym *> list;
 	//images.getImageInfo(TMP|SPX, list);
 	images.getImageInfo(TMP|SPX, list);
@@ -4623,6 +4625,13 @@ void Planetoid::makeLists(){
 		//erode_list.add(is);
 		hmaps_list.add(is);
 	}
+	list.reset();
+	images.getImageInfo(IMPORT, list);
+	list.ss();
+	while(is=list++){
+		surface_list.add(is);
+	}
+
 	icy_list.sort();
 	gassy_list.sort();
 	rocky_list.sort();
@@ -4670,6 +4679,12 @@ static char *getRandLayerTexName(){
 	return name;
 }
 
+static char *getSurfaceTexName(){
+	int index=NodeIF::r[8]*surface_list.size;
+	char *name=surface_list[index]->name();
+	cout<<"Surface T="<<name<<" index="<<index<<":"<<surface_list.size<<endl;
+	return name;
+}
 static char *getRandHmapTexName(){
 	int index=NodeIF::r[7]*hmaps_list.size;
 	char *name=hmaps_list[index]->name();
@@ -4782,6 +4797,7 @@ void Planet::newInstance(int gtype){
 enum orbital_features{
 	RND_TEXNAME,
 	RND_HTEXNAME,
+	RND_STEXNAME,
 	RND_LTEXNAME,
 	RND_ETEXNAME,
 	RND_NOISEFUNC,
@@ -4814,6 +4830,7 @@ enum orbital_features{
 	RND_TEX_NOISE,
 	RND_GLOBAL_DUAL_TEX,
 	RND_LOCAL_TEX,
+	RND_SURFACE_TEX,
 	RND_LOCAL_IMAGE,
 	RND_OCEAN_EXPR,
 	RND_MAP,
@@ -5034,6 +5051,11 @@ std::string Planetoid::randFeature(int type) {
 			str+="L";
 			str+=std::to_string(planet_id);
 		}
+		str+="\"";
+		break;
+	case RND_STEXNAME:
+		str="\"";
+		str+=getSurfaceTexName();
 		str+="\"";
 		break;
 	case RND_NOISEFUNC:
@@ -5293,20 +5315,32 @@ std::string Planetoid::randFeature(int type) {
 		str+=");\n";
 		keep_rands=false;
 		break;
+	case RND_SURFACE_TEX:
+		//keep_rands=true;
+		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE|TEX,%1.2f,%1.2f,2,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
+		randFeature(RND_STEXNAME).c_str(), // image name
+		pow(2,16+2*s[4]),   	// start,  // start
+		0.0+0.3*s[5],    	// bump ampl
+		(int)(6+2*s[7]),   	// num orders
+		2.1+0.2*s[8],      	// orders freq
+		0.1*s[9],  		// ht bias
+		0.3*s[10]  		// slope bias
+		);
+		str=buff;
+		PRNT_FEATURE("SURFACE_TEX")
+		break;	
 	case RND_ERODE_TEX:
 		//keep_rands=true;
 		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%1.2f,%1.2f,0,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
 		randFeature(RND_ETEXNAME).c_str(), // image name
 		pow(2,8+2*s[4]),   	// start,  // start
-		0.6+0.2*s[5],    	// bump ampl
+		0.2+0.1*s[5],    	// bump ampl
 		(int)(6+2*s[7]),   	// num orders
 		2.3+0.2*s[8],      	// orders freq
-		0.0+0.1*r[9],  		// ht bias
-		0.8+0.25*s[5]  		// slope bias
+		0.25*s[5]  		// slope bias
 		);
 		str=buff;
 		PRNT_FEATURE("EMAP_TEX")
-		//keep_rands=false;
 		break;
 		//Texture("MtAdamWA",BUMP|HMAP|LINEAR|RANDOMIZE|S,noise,2.27,0.14,0,0,5.97,2.21,0.9,0,1.09,0.7,0,0.5,0,0
 	case RND_HMAP_TEX:
@@ -5346,7 +5380,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(r[4]); // start
 		str+=",14,";
 		str+=std::to_string(r[4]); // homogeneity
-		str+=",0.5,2.3))";
+		str+=",0.5,2.3),0,0,1)";
 		//GRADIENT,0,14.13,1,0.5,2,1,4,0,0,1e-06
 		//str="map(noise(1,5))";
 		break;
@@ -5404,6 +5438,9 @@ void Planetoid::popInstance(Planetoid *planet){
 	lastn=nsave;
 }
 
+std::string newSurfaceTex(Planetoid *planet){
+	return Planetoid::randFeature(RND_SURFACE_TEX);
+}
 std::string newHmapTex(Planetoid *planet){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
@@ -5527,6 +5564,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 1) pushinstance
 	// 2) for each layer
 	// 3) add layer header
+	str+=randFeature(RND_FRACTAL);
 	if(s[2]>0.5)
 		str+=newGlobalTex(planet);
 	else{
@@ -5538,6 +5576,8 @@ std::string Planetoid::newLayer(Planetoid *planet){
 		planet->setColors();
 		str+=newDualGlobalTex(planet);
 	}
+	str+="+";
+	str+=newSurfaceTex(planet);
 	for(tcount=-1;tcount<2;tcount+=2){
 		str+="+";
 		str+=newLocalTex(planet);
@@ -5650,8 +5690,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
  		planet->shadow_color.set_alpha(0.5);
    		break;
     }
-	//if(num_layers<3)
-		str+=randFeature(RND_FRACTAL);
+	//str+=randFeature(RND_FRACTAL);
 	
     if(set_layers==0){
 		int max_layers=TheScene->generate_quality;	

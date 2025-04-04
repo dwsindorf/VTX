@@ -259,6 +259,7 @@ void TNunary::addToken(LinkedList<TNode*>&l)
 		right->addToken(l);
 }
 
+
 TNunary::~TNunary()
 {
 	DFREE(right);

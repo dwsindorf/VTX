@@ -25,6 +25,7 @@ class TNnoise;
 class TNcolor;
 class TNdensity;
 class TNpoint;
+class TNfractal;
 class TNclouds;
 
 extern int    tindex, mindex;
@@ -81,6 +82,7 @@ enum {   //Terrain and NodeData type flags
 };
 
 #define MAX_TDATA 	 5
+#define MAX_FDATA 	 4
 #define MAX_NOISE 	 4
 #define TZBAD       -100
 #define TZVALID(t)   t.p.z>TZBAD
@@ -122,7 +124,6 @@ public:
 	static Color		specular;  	// specular color
 	static double       density; 	// density (fog ..)
 	static double       ocean; 	    // water-ice
-	static double       fractal;    // fractal ht
 	static double       erosion; 	// erosion
 	static double       hardness;	// hardness
 	static double       sediment;	// sediment
@@ -136,13 +137,13 @@ public:
 	static TNclouds    *clouds;
 	static TerrainData  lower;   	// lower surface level
 	static double       texht;	    // height map texture
-
+	static double       fracval[MAX_FDATA];    // fractal ht
 
 	static Array<TerrainProperties*>properties;
 	static Array<Plant*> plants;
 	static Array<Sprite*> sprites;
 	static int sid;
-
+	static int fid;
 
 	static TerrainData  *data[MAX_TDATA]; // second surface data
 	static TerrainData  zlevel[MAX_TDATA]; // zordered highest values
@@ -151,6 +152,7 @@ public:
 	static int flags;
 	static int tids;
 	static int sids;
+	static int fids;
 	static int pass;
 
 	static TerrainProperties *tp;
@@ -204,6 +206,7 @@ public:
 	static void add_texture(Texture *);
 	static void add_sprite(Sprite *);
 	static void add_plant(Plant *);
+	static void add_fractal(TNfractal *);
 
 	static void add_TNnoise(TNnoise *);
 	static void add_TNcolor(TNcolor *);
@@ -246,7 +249,8 @@ public:
 	void init(){
 		reset();
 		clr_flags();
-		fractal=0;
+		for(int i=0;i>MAX_FDATA;i++)
+			fracval[i]=0;
 		level=0;
 	}
 	TerrainData() {InitAll();}

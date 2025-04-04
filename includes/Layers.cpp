@@ -6,6 +6,7 @@
 #include "ImageClass.h"
 #include "RenderOptions.h"
 #include "FileUtil.h"
+#include "Fractal.h"
 #include <iostream>
 
 int mindex=0;
@@ -280,6 +281,7 @@ void TNmap::eval()
 		int i=0;
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
+			
 			layer->base->eval();
 			Td.tp->ntexs=Td.tp->textures.size;
 
@@ -412,8 +414,8 @@ void TNmap::eval()
 		S0.clr_flag(ROCKLAYER);
 
 		layer->base->eval();
- 		if(!Td.get_flag(ROCKLAYER))
-			Td.set_flag(MULTILAYER);
+ 		//if(!Td.get_flag(ROCKLAYER))
+		//	Td.set_flag(MULTILAYER);  // used to turn off textures in margin
       	S0.p.z-=d;
        	if(S0.get_flag(LOWER))
        	    Td.lower.p.z-=d;
@@ -520,16 +522,15 @@ void TNmap::eval()
 		double z=d->Z();
 		ave+=z/mdcnt;
 	}
-	extern int test3;
 	if(!in_map)    // in case we were in another map on entry
 		S0.clr_flag(CLRTEXS);
 
-	if(/*TheScene->viewtype ==SURFACE &&*/ Adapt.mindcnt()){
+	if(Adapt.mindcnt()){
 		// minimize dual terrain nodes (edges only)
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection
 		// - special case tilted terrain ?
-/*
+#ifdef WHYTHIS
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){
 				break;
@@ -545,7 +546,7 @@ void TNmap::eval()
 				break;
 			}
 		}
-*/
+#endif
 		// 2) Remove ridge artifact at center of layer intersection
 		//    for some reason it looks like when dz~=0 "fractal" doesn't process the node
 		//    which leaves a "wall" in the center
@@ -696,6 +697,23 @@ static void collectTexs(NodeIF *obj){
 	int type=obj->typeValue();
 	if(type==ID_TEXTURE)
 		texs.add((TNtexture *)obj);
+}
+static int find_type=0;
+static TNode *find_node=0;
+static void findType(NodeIF *obj)
+{
+	if(obj->typeValue()==find_type){
+		find_node=obj;
+		obj->setFlag(NODE_STOP);
+	}
+}
+
+TNode *TNlayer::getChild(int type){
+	find_type=type;
+	find_node=0;
+	if(base)
+		base->visitNode(findType);
+	return find_node;
 }
 //  save node
 void TNlayer::restoreTexs(){

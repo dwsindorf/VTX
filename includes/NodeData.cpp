@@ -260,10 +260,10 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 {
 	int nd=0;
 	int nc=0;
-	int nf=0;
+	int dns=0;
 	int ne=0;
 	int ng=0;
-	int frac=0;
+	int nf=0;
 	int md=0;
 	int nw=0;
 
@@ -276,21 +276,22 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(td.get_flag(HIDDEN))
 		set_hidden(1);
-
-	if(td.get_flag(FVALUE))
-	    frac=1;
-	if(td.get_flag(MULTILAYER))
-		md=1;
+    
+	if(td.get_flag(FVALUE)){
+	    nf=Td.fids;
+	}
+	//if(td.get_flag(MULTILAYER))
+	//	md=1;
 	if(td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))
 	    ne=2;
 	if(td.get_flag(DVALUE)){
 		density=td.s;
-		nf=1;
+		dns=1;
 	}
 	else if(td.density!=0.0){
-		nf=1;
+		dns=1;
 		density=td.density;
 	}
 	if(td.water())
@@ -332,7 +333,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(SpriteMgr::testColor())
 			nc=1;
 		if(SpriteMgr::testDensity())
-			nf=1;
+			dns=1;
 	}
 #endif
 	//bool do_plants=false;//Td.plants.size>0&& TheScene->viewobj==TheMap->object && (PlantMgr::testDensity()||PlantMgr::testColor());
@@ -341,7 +342,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		if(PlantMgr::testColor())
 			nc=1;
 		if(PlantMgr::testDensity())
-			nf=1;
+			dns=1;
 	}
 
 	a=b=0;
@@ -371,14 +372,14 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	setDims(nd);
 	setColors(nc);
 
-	set_has_density(nf);
+	set_has_density(dns);
 	set_has_ocean(nw);
 
 	setEvals(ne);
-	setFchnls(frac);
+	setFchnls(nf);
 	setMdata(md);
 
-	int n=nc+nd+nw+ne+nf+frac+md+links();
+	int n=nc+nd+nw+ne+dns+nf+md+links();
 	a=tp->tsize();
 	setMemory(n,a);
 
@@ -388,7 +389,12 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	setZ(td.p.z);
 	setX(Pscale*td.p.x);
 	setY(Pscale*td.p.y);
-	setFractal(td.fractal);
+
+	for(int i=0;i<nf;i++){
+		setFractal(Td.fracval[i],i);
+	}
+
+	//setFractal(Td.fractal,Td.fid);
 	setMargin(td.margin);
 	if(td.water()){
 		setOcean(td.ocean);
@@ -488,7 +494,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			}
 		}
 	}
-
 	CurrentScope->set_passmode(mode);
 }
 //-------------------------------------------------------------

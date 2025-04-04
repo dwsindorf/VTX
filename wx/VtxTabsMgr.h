@@ -63,11 +63,28 @@
 		setObjAttributes(); \
 	}
 
+#define DEFINE_SLIDER_REBUILD_EVENTS(NAME) \
+    void OnEnd##NAME##Slider(wxScrollEvent& event){ \
+		NAME##Slider->setValueFromSlider(); \
+		setObjAttributes(); \
+		invalidateObject();\
+    	TheView->set_changed_detail(); \
+	} \
+    void On##NAME##Slider(wxScrollEvent& event){ \
+		NAME##Slider->setValueFromSlider(); \
+	} \
+    void On##NAME##Text (wxCommandEvent& event){ \
+		NAME##Slider->setValueFromText();\
+	    invalidateObject();\
+		setObjAttributes(); \
+    	TheView->set_changed_detail(); \
+	}
 #define DEFINE_SLIDER_ADAPT_EVENTS(NAME) \
     void OnEnd##NAME##Slider(wxScrollEvent& event){ \
 		NAME##Slider->setValueFromSlider(); \
 		changing=false; \
 		setObjAttributes(); \
+		invalidateObject();\
     	TheView->set_changed_detail(); \
 	} \
     void On##NAME##Slider(wxScrollEvent& event){ \
@@ -77,6 +94,7 @@
     void On##NAME##Text (wxCommandEvent& event){ \
 		if(TheScene->motion()) changing=true; \
 		NAME##Slider->setValueFromText();\
+	    invalidateObject();\
 		setObjAttributes(); \
     	TheView->set_changed_detail(); \
 	}

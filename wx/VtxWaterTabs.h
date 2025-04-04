@@ -124,18 +124,6 @@ public:
     	invalidateObject();
     }
 
-    void OnEndLevelSlider(wxScrollEvent& event){
-    	LevelSlider->setValueFromSlider();
-    	setObjAttributes();
-    }
-    void OnLevelSlider(wxScrollEvent& event){
-    	LevelSlider->setValueFromSlider();
-    }
-    void OnLevelText(wxCommandEvent& event){
-    	LevelSlider->setValueFromText();
-    	setObjAttributes();
-    	invalidateObject();
-    }
     void OnLiquidTransmitColor(wxColourPickerEvent& WXUNUSED(event)){
     	setObjAttributes();
     }
@@ -143,8 +131,10 @@ public:
     	setObjAttributes();
     }
 
-	DEFINE_SLIDER_EVENTS(LiquidTemp)
-	DEFINE_SLIDER_EVENTS(LiquidTransTemp)
+    DEFINE_SLIDER_REBUILD_EVENTS(Level)
+
+    DEFINE_SLIDER_REBUILD_EVENTS(LiquidTemp)
+    DEFINE_SLIDER_REBUILD_EVENTS(LiquidTransTemp)
 	DEFINE_SLIDER_EVENTS(LiquidMix)
 	DEFINE_SLIDER_EVENTS(LiquidReflect)
 	DEFINE_SLIDER_EVENTS(LiquidTransmit)
@@ -161,8 +151,8 @@ public:
     	invalidateRender();
     }
 
-	DEFINE_SLIDER_EVENTS(SolidTemp)
-	DEFINE_SLIDER_EVENTS(SolidTransTemp)
+    DEFINE_SLIDER_REBUILD_EVENTS(SolidTemp)
+	DEFINE_SLIDER_REBUILD_EVENTS(SolidTransTemp)
 	DEFINE_SLIDER_EVENTS(SolidMix)
 	DEFINE_SLIDER_EVENTS(SolidReflect)
 	DEFINE_SLIDER_EVENTS(SolidTransmit)

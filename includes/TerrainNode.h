@@ -134,6 +134,7 @@ public:
 	virtual void saveNode(FILE *f);
 	virtual void setParent(NodeIF *p)   { parent=p;}
 	virtual NodeIF *getParent()			{ return parent;}
+	virtual TNode *getChild(int t) { return 0;}
 };
 
 //************************************************************

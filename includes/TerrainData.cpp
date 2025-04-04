@@ -6,6 +6,7 @@
 #include "RenderOptions.h"
 #include "Sprites.h"
 #include "Plants.h"
+#include "Fractal.h"
 #include <iostream>
 #include <math.h>
 
@@ -89,10 +90,13 @@ int TerrainData::datacnt=0;
 int TerrainData::flags=0;
 int TerrainData::tids=0;
 int TerrainData::sids=0;
+int TerrainData::fids=0;
 int TerrainData::pass=0;
+int TerrainData::sid=0;
+int TerrainData::fid=0;
 
 double TerrainData::level=0;
-double TerrainData::fractal=0;
+double TerrainData::fracval[MAX_FDATA]={0};
 double TerrainData::density=0;
 double TerrainData::ocean=0;
 double TerrainData::erosion=0;
@@ -183,6 +187,11 @@ void TerrainData::add_TNclouds(TNclouds *t){
 	clouds=t;
 }
 
+void TerrainData::add_fractal(TNfractal *f){
+	f->chnl=fids;
+	if(fids<MAX_FDATA-1)
+		fids++;
+}
 void TerrainData::add_TNnoise(TNnoise *t){
 	tp=properties.last();
 	if(tp){
@@ -286,7 +295,6 @@ void TerrainData::end()
 		data[i-1]=&zlevel[datacnt];
 	}
 }
-int TerrainData::sid=0;
 
 //************************************************************
 // TerrainProperties class

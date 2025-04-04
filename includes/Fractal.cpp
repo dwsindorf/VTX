@@ -15,14 +15,14 @@ extern NameList<LongSym*> NOpts;
 #define smallest(x,y) x<y?x:y
 #define largest(x,y)  x>y?x:y
 
-double last_fractal=0;
+//double last_fractal=0;
 
 static 		TerrainData Td;
 const unsigned int 	MAXLVLS=63;
 
 //**************** static and private *********************
 
-#define NBRHT(n) mapdata[n]->fractal()
+#define NBRHT(n) mapdata[n]->fractal(chnl)
 
 extern double   ptable[],Hscale;
 
@@ -35,8 +35,17 @@ extern double   ptable[],Hscale;
 TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 {
     options=t;
+    chnl=0;
 }
 
+void TNfractal::init()
+{
+	if(isEnabled()){
+		Td.add_fractal(this);
+	}
+	TNfunc::init();
+
+}
 //-------------------------------------------------------------
 // TNfractal::eval() evaluate the node
 //-------------------------------------------------------------
@@ -66,13 +75,14 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 //-------------------------------------------------------------
 void TNfractal::eval()
 {
-	if(!isEnabled() || Td.get_flag(FVALUE)){
+	//if(!isEnabled() /*|| Td.get_flag(FVALUE)*/){
+	if(!isEnabled() || chnl>3){
 		if(right)
 			right->eval();
 		return;
 	}
-
-	Td.clr_flag(FVALUE);
+    
+ 	Td.clr_flag(FVALUE);
 	static int init=0;
 	static double facts[64];
 	double margin_scale=1;
@@ -185,41 +195,34 @@ void TNfractal::eval()
 		double fractal_ave=0;
 		double fractal_slope=0;
 
-		if(mdcnt>=2){
-			// calculate average ht in cell
-			if(!Td.get_flag(FFIRST)){
-				double f1=0.5,f2=0.5;
-				double s1,s2,s3,s4;
-				s1=mdctr->span(mapdata[0]);
-				s2=mdctr->span(mapdata[1]);
-				f1=s2/(s1+s2);
-				if(mdcnt==4){
-					s3=mdctr->span(mapdata[2]);
-					s4=mdctr->span(mapdata[3]);
-					f2=s4/(s3+s4);
-				}
-				switch(mdopt){
-				case 1:
-					if(mdcnt==4){
-						fractal_ave=f2*NBRHT(2)+(1-f2)*NBRHT(3);
-						break;
-					}
-				case 0:
-					fractal_ave=f1*NBRHT(0)+(1-f1)*NBRHT(1);
-					break;
-				case 2:
-					if(mdcnt==4)
-						fractal_ave=0.5*(f1*NBRHT(0)+(1-f1)*NBRHT(1)+f2*NBRHT(2)+(1-f2)*NBRHT(3));
-					else
-						fractal_ave=f1*NBRHT(0)+(1-f1)*NBRHT(1);
-					break;
-				}
+		if(mdcnt>=2){ // calculate average ht in cell
+			double f1=0.5,f2=0.5;
+			double s1,s2,s3,s4;
+			s1=mdctr->span(mapdata[0]);
+			s2=mdctr->span(mapdata[1]);
+			f1=s2/(s1+s2);
+			if(mdcnt==4){
+				s3=mdctr->span(mapdata[2]);
+				s4=mdctr->span(mapdata[3]);
+				f2=s4/(s3+s4);
 			}
-
-			if(sbias){
-
-				// calculate slope
-
+			switch(mdopt){
+			case 1:
+				if(mdcnt==4){
+					fractal_ave=f2*NBRHT(2)+(1-f2)*NBRHT(3);
+					break;
+				}
+			case 0:
+				fractal_ave=f1*NBRHT(0)+(1-f1)*NBRHT(1);
+				break;
+			case 2:
+				if(mdcnt==4)
+					fractal_ave=0.5*(f1*NBRHT(0)+(1-f1)*NBRHT(1)+f2*NBRHT(2)+(1-f2)*NBRHT(3));
+				else
+					fractal_ave=f1*NBRHT(0)+(1-f1)*NBRHT(1);
+				break;
+			}
+			if(sbias){ // calculate slope
 				switch(mdopt){
 				case 1:
 					if(mdcnt==4){
@@ -230,15 +233,14 @@ void TNfractal::eval()
 					fractal_slope=fabs(NBRHT(0)-NBRHT(1))/mapdata[0]->span(mapdata[1]);
 					break;
 				case 2:
-					CELLSLOPE(fractal(),fractal_slope);
+					CELLSLOPE(fractal(chnl),fractal_slope);
 					break;
 				}
 				fractal_slope*=margin_scale*TheMap->hscale;
 			}
 		}
 		f=fractal_ave;
-		Td.set_flag(FFIRST);
-
+	
 		if(level<l2){
 			t=(CELLSIZE(level)-t1)/t2;
 			if(options & SS)
@@ -267,11 +269,8 @@ void TNfractal::eval()
    	Td.set_flag(FVALUE);
 	if(options & NEG)
 	    f=-f;
-
-	Td.fractal=f;
-
-	last_fractal=f;
-
+	Td.fracval[chnl]=f;
+	
 	if(S0.pvalid())
 		S0.p.z=f;
 	else

@@ -101,6 +101,8 @@ public:
 	char *nodeName()  { return name_str;}
 	void setEnabled(bool b);
 	NodeIF *addChild(NodeIF *x);
+	TNode *getChild(int t);
+
 	friend class TNmap;
 	NodeIF *getInstance();
 
