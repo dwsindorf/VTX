@@ -221,7 +221,7 @@ typedef struct mpdata {
 	unsigned int  dims	    : 2;	// z, x, y (0..2)
 	unsigned int  density	: 1;	// fog/density (0..1)
 	unsigned int  ocean	    : 1;	// water-ice
-	unsigned int  fchnls	: 2;	// fractal data
+	unsigned int  fchnls	: 3;	// fractal data
 	unsigned int  evals	    : 2;	// erosion data (0..2)
 	unsigned int  tstart	: 4;	// texture data start
 	unsigned int  normal	: 1;	// normal flag
@@ -230,7 +230,7 @@ typedef struct mpdata {
 	unsigned int  hmaps	    : 1;	// hmap flag
 	unsigned int  mdata	    : 1;	// margin flag
 	unsigned int  edge	    : 1;	// edge flag
-	unsigned int  unused	: 3;	// unassigned
+	unsigned int  unused	: 2;	// unassigned
 } mpdata;
 
 
@@ -288,7 +288,7 @@ public:
 	void set_has_density(int n)	{ flags.s.density=n;}
 	void setFchnls(int n)		{ flags.s.fchnls=n;}
 	void setEvals(int n)		{ flags.s.evals=n;}
-	void set_has_ocean(int n)		{ flags.s.ocean=n;}
+	void set_has_ocean(int n)	{ flags.s.ocean=n;}
 	void setDims(int n)			{ flags.s.dims=n;}
 	void setColors(int n)		{ flags.s.colors=n;}
 	void setTextures(int n)		{ flags.s.textures=n;}

@@ -414,8 +414,8 @@ void TNmap::eval()
 		S0.clr_flag(ROCKLAYER);
 
 		layer->base->eval();
- 		//if(!Td.get_flag(ROCKLAYER))
-		//	Td.set_flag(MULTILAYER);  // used to turn off textures in margin
+ 		if(!Td.get_flag(ROCKLAYER))
+			Td.set_flag(MULTILAYER);  // used to turn off textures in margin
       	S0.p.z-=d;
        	if(S0.get_flag(LOWER))
        	    Td.lower.p.z-=d;
@@ -530,6 +530,7 @@ void TNmap::eval()
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection
 		// - special case tilted terrain ?
+#define WHYTHIS
 #ifdef WHYTHIS
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){

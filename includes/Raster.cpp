@@ -249,7 +249,7 @@ RasterMgr::RasterMgr()
 	// HDR parameters
 
 	hdr_min_base=7;
-	hdr_max_base=4;
+	hdr_max_base=3;
 
 	hdr_min_delta=0;
 	hdr_max_delta=0;

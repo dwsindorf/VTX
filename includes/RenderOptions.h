@@ -111,6 +111,7 @@ enum{ // flags
 	MULTITEXS		= 0x00008000,
 	GEOMETRY		= 0x00010000,
 	HMAPS		    = 0x00020000,
+	TEXBLEND		= 0x00040000,
 	DEFAULTS        = SMOOTH
 					|LIGHTSHADING
 					|HAZE
@@ -202,6 +203,9 @@ public:
 
 	void set_multitexs(int c)	{ BIT_SET(renderflags,MULTITEXS,c);}
 	int  multitexs()			{ return renderflags & MULTITEXS?1:0;}
+
+	void set_texblend(int c)	{ BIT_SET(renderflags,TEXBLEND,c);}
+	int  texblend()			    { return renderflags & TEXBLEND?1:0;}
 
 	void set_startex(int c)		{ BIT_SET(renderflags,STARTEX,c);}
 	int  startex()				{ return renderflags & STARTEX?1:0;}

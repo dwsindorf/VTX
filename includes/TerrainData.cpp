@@ -189,8 +189,9 @@ void TerrainData::add_TNclouds(TNclouds *t){
 
 void TerrainData::add_fractal(TNfractal *f){
 	f->chnl=fids;
-	if(fids<MAX_FDATA-1)
+	if(fids<MAX_FDATA)
 		fids++;
+	//cout<<f->chnl<<endl;
 }
 void TerrainData::add_TNnoise(TNnoise *t){
 	tp=properties.last();

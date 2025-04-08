@@ -26,7 +26,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_RENDER
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
-//#define DEBUG_GENERATE
+#define DEBUG_GENERATE
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -4804,6 +4804,12 @@ enum orbital_features{
 	RND_NOISEFUNC2,
 	RND_NOISEFUNC3,
 	RND_NOISEOPTS,
+	RND_SURFACE_GULLIES,
+	RND_SURFACE_VOLCANOS,
+	RND_SURFACE_RIDGES,
+	RND_SURFACE_CRATERS,
+	RND_SURFACE_PIMPLES,
+	RND_SURFACE_DIMPLES,
 	RND_SNOW,
 	RND_FRACTAL,
 	RND_FRACTAL_NOISE,
@@ -4830,6 +4836,7 @@ enum orbital_features{
 	RND_TEX_NOISE,
 	RND_GLOBAL_DUAL_TEX,
 	RND_LOCAL_TEX,
+	RND_SURFACE_BANDS,
 	RND_SURFACE_TEX,
 	RND_LOCAL_IMAGE,
 	RND_OCEAN_EXPR,
@@ -4908,7 +4915,7 @@ void Planetoid::setColors(){
 				hue=0.1+0.1*r[3];
 				mix=Color(0.2,0.2,0);
 			}
-			sat=0.3+0.1*s[4];
+			sat=0.4+0.1*s[4];
 			val=0.8+0.3*s[5];
 			mix=Color(0.2,0.2,0);
 			break;
@@ -4925,13 +4932,13 @@ void Planetoid::setColors(){
 			mix=Color(0.5,0.5,0);
 			break;
 		case GN_VOLCANIC:
-			hue=0.1+0.2*s[3];
-			sat=0.8+0.2*s[4];
-			val=0.8+0.3*s[5];			
+			hue=0.1+0.05*r[3];
+			sat=0.5+0.2*s[4];
+			val=0.5+0.2*s[5];			
 			break;
 		case GN_CRATERED:
 			hue=0.1+0.1*r[3];
-			sat=0.2+0.3*s[4];
+			sat=0.4+0.3*s[4];
 			val=0.8+0.3*s[5];			
 			break;
 		}
@@ -4981,9 +4988,14 @@ void Planetoid::setIceColors(){
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
 //-------------------------------------------------------------
-#define AMPL  r[12]
-#define PROB  r[13]
-#define MAXS  r[14]
+
+static double Ampl=0;
+static double Prob=0;
+static double Maxs=0;
+static double Noise=0;
+static double Lbias=0;
+static double Hbias=0;
+
 static bool keep_rands=false;
 static double size_scale=1;
 
@@ -4999,6 +5011,7 @@ std::string Planetoid::randFeature(int type) {
 		setRands();
 	std::string str("");
 	char buff[4096];
+	
 	switch(type){
 	case RND_TEXNAME:			
 		str="\"";
@@ -5076,31 +5089,37 @@ std::string Planetoid::randFeature(int type) {
 		str+=",0.3,0.8,-0.25,0.5,0.1)";
 		break;
 	case RND_FRACTAL_NOISE:
-		str="20+3*noise(";
+		str="18+2*noise(";
 		str+=randFeature(RND_NOISEFUNC3);
-		str+="|NLOD,8,5,0,0.5,2.2,1,4,0,0.0,1e-06)";
+		str+="|NLOD|UNS,8,12,0.5,0.5,2.2,1,4,0,0.0,1e-06)";
 		break;
+		//fractal(SQR|SS,18+2*noise(GRADIENT|NLOD|UNS,8,12,0.5,0.5,2.2,1,4,0,0,1e-06),8,0.019843,0.1,0.5,0.1,0,0,0.5,0)
 	case RND_FRACTAL:
 		str="fractal(SQR|SS,";
 		//str+=std::to_string((int)(18)); //start
 		str+=randFeature(RND_FRACTAL_NOISE);
-		str+=",4,0.1,0.0,1,0.1,0,0,1,0)";
+		str+=",8,";
+		str+=std::to_string(0.05-0.05*s[6]); // build
+		str+=",0.03,0.5,";
+		str+=std::to_string(0.05+0.05*s[6]);  //erode
+		str+=",0,0,0.5,0)";
+		break;
+	case RND_OCEAN_EXPR:
+		str="noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
 		break;
 	case RND_CRATERS:
-		mx=MAXS*size_scale+0.1*s[2];
-		md=0.1+0.5*AMPL*size_scale;
-		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0.05,0,0,%1.2f,%1.2f)",
+		sprintf(buff,"craters(ID%d,%d,%g,%g,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0.05,0,0,%1.2f,%1.2f)",
 		(int)(5+0.5*s[0]), // id
 		(int)(8+0.5*s[0]), // levels
-		(mx),              // max size
+		(Maxs),            // max size
 		(0.3+0.5*s[3]),    // delta size
-		(0.1+0.6*PROB),    // probability
-		(md),              // depth
+		(0.1+0.6*Prob),    // probability
+		(Ampl),            // depth
 		(0.3+0.3*r[6]),    // impact
-		(0.9+0.3*s[7]),    // vnoise
-		(0.9+0.3*s[7]),    // rnoise
+		Noise*(0.9+0.3*s[7]),    // vnoise
+		Noise*(0.9+0.3*s[7]),    // rnoise
 		(0.2+0.1*s[9]),    // rise
-		(md),              // drop
+		(Ampl),            // drop
 		(0.5+0.2*s[11]),   // noise bias
 		(0.4+0.2*s[10]));  // noise min
 
@@ -5108,19 +5127,17 @@ std::string Planetoid::randFeature(int type) {
 		PRNT_FEATURE("CRATERS")
 		break;
 	case RND_VOLCANOS:
-		mx=MAXS*size_scale+0.1*s[2];
-		mr=0.1+0.5*AMPL*size_scale;
-		sprintf(buff,"craters(ID%d,%d,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.05,0,%1.2f,%1.2f)",
+		 sprintf(buff,"craters(ID%d,%d,%g,%g,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.05,0,%1.2f,%1.2f)",
 		(int)(2+0.5*s[0]), // rand id
 		(int)(8+0.5*s[0]), // levels
-		(mx),              // max size
+		(Maxs),            // max size
 		(0.3+0.2*s[3]),    // delta size
-		(0.1+0.6*PROB),    // probability
-		(mr),              // depth
+		(0.1+0.6*Prob),    // probability
+		(Ampl),            // depth
 		(0.2+0.1*s[6]),    // impact
-		(0.9+0.3*s[7]),    // noise
-		(0.9+0.3*s[7]),    // noise
-		(mr),              // rise
+		Noise*(0.9+0.3*s[7]),    // noise
+		Noise*(0.9+0.3*s[7]),    // noise
+		(Ampl),            // rise
 		(0.1*r[9]),        // drop
 		(0.2+0.2*s[10]),   // rim
 		(0.05+0.1*s[10]),  // floor
@@ -5129,8 +5146,19 @@ std::string Planetoid::randFeature(int type) {
 		str+=buff;
 		PRNT_FEATURE("VOLCANOS")
 		break;
-	case RND_OCEAN_EXPR:
-		str="noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0)";
+	case RND_SURFACE_CRATERS:
+		Prob=r[12]; // probability
+		Ampl=0.1+r[13]; // ampl/rise/drop
+		Maxs=2e-6*(1+0.5*r[14]); // max size
+		str+=randFeature(RND_CRATERS);
+		//str="craters(ID2,4,2-06,0.2,0.5,1,0.8,0.6,0.7,1,1,0.7,0.4,0,0,1,0)";
+		break;
+	case RND_SURFACE_VOLCANOS:
+		Prob=r[12]; // probability
+		Ampl=6+r[13]; // ampl/rise/drop
+		Maxs=2e-6*(1+0.5*r[14]); // max size
+		str+=randFeature(RND_VOLCANOS);
+		//str="craters(ID2,4,2-06,0.2,0.5,1,0.8,0.6,0.7,6,0,0.2,0.06,0,0,1,0)";
 		break;
 	case RND_HCRATERS:
 		str="craters(ID";
@@ -5138,7 +5166,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=",2,";
 		str+=std::to_string(1+0.3*s[4]); // size
 		str+=",0.5,";  // delta size
-		str+=std::to_string(0.5+0.5*PROB);  // probability
+		str+=std::to_string(0.5+0.5*Prob);  // probability
 		str+=",0.9,1,1,1,";
 		str+=std::to_string(0.1+r[3]);  // height
 		str+=",0.5,0.75,0.5,0.2)";
@@ -5151,9 +5179,22 @@ std::string Planetoid::randFeature(int type) {
 		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|SQR|UNS,1,5,0.6,0.1)";
 		str=TNnoise::randomize(str.c_str(),0.3,0.0);
 		break;
+	case RND_SURFACE_GULLIES:
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE,22,4,0.041,0.5,2,0.04,0,0,0,1e-06)";
+		//str=TNnoise::randomize(str.c_str(),0.1,0.0);
+		break;
+	case RND_SURFACE_RIDGES:
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE,22,4,0.041,0.5,2,0.04,0,0,0,1e-06)";
+		break;
+	case RND_SURFACE_PIMPLES:
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|SQR,22,4,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
+		break;
+	case RND_SURFACE_DIMPLES:
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|SQR,22,4,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
+		//str=TNnoise::randomize(str.c_str(),0.1,0.0);
+		break;
 	case RND_HRIDGES:
 		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4)";
-		str=TNnoise::randomize(str.c_str(),0.3,0.0);
 		break;	
 	case RND_HROCKS:
 		str+="pow(";
@@ -5230,8 +5271,8 @@ std::string Planetoid::randFeature(int type) {
 		randFeature(RND_LAYER_VAR).c_str(),	// +- n	
 		pow(2,8+2*s[0]),  // start
 		(mr*r[7]),       // offset
-		mr*(0.05+0.1*s[8]),     // phi bias
-		(mr*0.02),        // ht bias
+		mr*(Lbias+0.01*s[8]),     // phi bias
+		(mr*(Hbias+0.01*s[9])),        // ht bias
 		0.1*(1+0.3*s[9]),  // bmp bias
 		-0.1*(1+0.5*s[10]) // slope bias
 		);
@@ -5241,13 +5282,13 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_GLOBAL_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,S|NORM|TEX,%s,%1.2f,2,1,%1.2f,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
+		sprintf(buff,"Texture(%s,NORM|TEX,%s,%1.2f,2,1,%1.2f,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
 		randFeature(RND_TEXNAME).c_str(), // image name
 		randFeature(RND_TEX_NOISE).c_str(), // noise
-		pow(2,8+4*s[0]),  // start
+		pow(2,8+2*s[0]),  // start
 		0.5*r[7],         // offset
-		0.05+0.1*s[8],     // phi bias
-		(0.03+0.01*s[9]), // ht bias
+		Lbias+0.01*s[8],     // phi bias
+		Hbias+0.01*s[9], // ht bias
 		0.05*(1+0.5*s[9]),     // bmp bias
 		-0.1*(1+0.5*s[10]) // slope bias
 		);
@@ -5317,10 +5358,10 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_SURFACE_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE|TEX,%1.2f,%1.2f,2,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
+		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%1.2f,%1.2f,2,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
 		randFeature(RND_STEXNAME).c_str(), // image name
-		pow(2,16+2*s[4]),   	// start,  // start
-		0.0+0.3*s[5],    	// bump ampl
+		pow(2,20+2*s[4]),   	// start,  // start
+		0.5*s[5],    	// bump ampl
 		(int)(6+2*s[7]),   	// num orders
 		2.1+0.2*s[8],      	// orders freq
 		0.1*s[9],  		// ht bias
@@ -5329,6 +5370,21 @@ std::string Planetoid::randFeature(int type) {
 		str=buff;
 		PRNT_FEATURE("SURFACE_TEX")
 		break;	
+	case RND_SURFACE_BANDS:
+		//keep_rands=true;
+		sprintf(buff,"Texture(%s,NORM|TEX,%1.2f,2,1,%1.2f,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
+		randFeature(RND_TEXNAME).c_str(), // image name
+		pow(2,22),  // start
+		0.5*s[6],         // offset
+		0.01*s[7],     // phi bias
+		0.01*s[8], // ht bias
+		0.05*(1+0.5*s[9]),     // bmp bias
+		0.05*(1+0.5*s[10]) // slope bias
+		);
+		str=buff;
+		PRNT_FEATURE("SURFACE_BANDS")
+		//keep_rands=false;
+		break;
 	case RND_ERODE_TEX:
 		//keep_rands=true;
 		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%1.2f,%1.2f,0,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
@@ -5342,7 +5398,6 @@ std::string Planetoid::randFeature(int type) {
 		str=buff;
 		PRNT_FEATURE("EMAP_TEX")
 		break;
-		//Texture("MtAdamWA",BUMP|HMAP|LINEAR|RANDOMIZE|S,noise,2.27,0.14,0,0,5.97,2.21,0.9,0,1.09,0.7,0,0.5,0,0
 	case RND_HMAP_TEX:
 		keep_rands=true;
 		sprintf(buff,"Texture(%s,HMAP|LINEAR|S|RANDOMIZE|BUMP,%s,%1.2f,%1.2f,0,0,%1.2f,%1.2f,%1.2f,0,%1.2f,%1.2f,0,0,0)",
@@ -5438,10 +5493,10 @@ void Planetoid::popInstance(Planetoid *planet){
 	lastn=nsave;
 }
 
-std::string newSurfaceTex(Planetoid *planet){
+static std::string newSurfaceTex(Planetoid *planet){
 	return Planetoid::randFeature(RND_SURFACE_TEX);
 }
-std::string newHmapTex(Planetoid *planet){
+static std::string newHmapTex(Planetoid *planet){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
@@ -5457,7 +5512,7 @@ std::string newHmapTex(Planetoid *planet){
 	}
 	return Planetoid::randFeature(RND_HMAP_TEX);
 }
-std::string newErodeTex(Planetoid *planet){
+static std::string newErodeTex(Planetoid *planet){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
@@ -5468,6 +5523,34 @@ std::string newErodeTex(Planetoid *planet){
 		planet->add_image(himg);
 	}
 	return Planetoid::randFeature(RND_ERODE_TEX);
+}
+static std::string newSurfaceBands(Planetoid *planet){
+	if(TheScene->use_tmps!=ALL_TMPS){
+		planet->setColors();
+		char buff[2048];	
+		std::string str = Planetoid::randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		planet->add_image(img);
+	}
+	return Planetoid::randFeature(RND_SURFACE_BANDS);
+}
+
+static std::string newDualGlobalTex(Planetoid *planet){
+	char buff[2048];
+	Planetoid::pushInstance(planet);
+	std::string str;
+	if(TheScene->use_tmps!=ALL_TMPS){
+		str = Planetoid::randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		planet->add_image(img);	
+	}
+	str=Planetoid::randFeature(RND_GLOBAL_DUAL_TEX);
+	Planetoid::popInstance(planet);
+	return str;
 }
 std::string newGlobalTex(Planetoid *planet){
 	if(TheScene->use_tmps!=ALL_TMPS){
@@ -5481,28 +5564,7 @@ std::string newGlobalTex(Planetoid *planet){
 	return Planetoid::randFeature(RND_GLOBAL_TEX);
 }
 
-std::string newDualGlobalTex(Planetoid *planet){
-	char buff[2048];
-	Planetoid::pushInstance(planet);
-	//planet->setColors();
-	std::string str;
-//	if(planet->terrain_type==GN_ICY){
-//		Planetoid::r[5]*=0.25;
-//		Planetoid::r[6]*=0.25;
-//	}
-	if(TheScene->use_tmps!=ALL_TMPS){
-		str = Planetoid::randFeature(RND_BANDS);
-		strcpy(buff, str.c_str());
-		TNinode *img = (TNinode*) TheScene->parse_node(buff);
-		img->init();
-		planet->add_image(img);	
-	}
-	str=Planetoid::randFeature(RND_GLOBAL_DUAL_TEX);
-	Planetoid::popInstance(planet);
-	return str;
-}
-
-std::string newLocalTex(Planetoid *planet){
+static std::string newLocalTex(Planetoid *planet){
 	char buff[2048];	
 	Planetoid::pushInstance(planet);
 	std::string str;
@@ -5524,6 +5586,7 @@ std::string newLocalTex(Planetoid *planet){
     Planetoid::popInstance(planet);
 	return str;
 }
+
 
 std::string Planetoid::newOcean(Planetoid *planet){	
 	cout<<"new Ocean"<<endl;
@@ -5550,6 +5613,99 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	return std::string(buff);
 }
 
+
+static std::string rndSurfaceNoise(double f){
+	if(f>0.75)
+		return Planetoid::randFeature(RND_SURFACE_RIDGES);
+	else if(f>0.5)
+		return Planetoid::randFeature(RND_SURFACE_GULLIES);
+	else if(f>0.25)
+		return Planetoid::randFeature(RND_SURFACE_DIMPLES);
+	else 
+		return Planetoid::randFeature(RND_SURFACE_PIMPLES);
+}
+
+std::string Planetoid::newSurfaceDetail(Planetoid *planet){
+	Prob=r[12]; // probability
+	Noise=0.1;
+
+	std::string str="Z(";	
+	switch(planet->terrain_type){
+	case GN_VOLCANIC:
+		Ampl=1+r[13]; // ampl/rise/drop
+		Maxs=1e-4*(1+0.5*r[14]); // max size
+		str+=randFeature(RND_VOLCANOS);
+		str+="+";
+		str+=rndSurfaceNoise(r[10]);
+		break;
+	case GN_CRATERED:
+		Ampl=2+0.5*r[13]; // ampl/rise/drop
+		Maxs=2e-5*(1+0.5*r[14]); // max size
+		str+=randFeature(RND_CRATERS);
+		str+="+";
+		str+=rndSurfaceNoise(r[10]);
+		break;
+	case GN_OCEANIC:
+	case GN_ROCKY:
+	case GN_ICY:
+		str+=rndSurfaceNoise(r[10]);
+		break;
+	}
+	str+=")+";
+	
+	str+=newSurfaceBands(planet);
+	str+="+";
+	return str;
+}
+
+std::string Planetoid::newGlobalDetail(Planetoid *planet){
+	std::string str="+Z(";	
+	Prob=r[12]; // probability
+	Ampl=r[13]*size_scale; // ampl/rise/drop
+	Maxs=r[14]*size_scale; // max size
+	Noise=1;
+
+	switch(planet->terrain_type){
+	case GN_OCEANIC:
+		Prob*=0.5; // probability
+		Ampl*=0.5; // ampl/rise/drop
+		Maxs*=0.5; // max size
+		if(r[10]>0.8)
+			str+=randFeature(RND_CRATERS);
+		else if(r[10]>0.6)
+			str+=randFeature(RND_VOLCANOS);
+		break;
+	case GN_ROCKY:
+		Prob*=0.5; // probability
+		Ampl*=0.5; // ampl/rise/drop
+		Maxs*=0.5; // max size
+		if(r[11]>0.8)
+			str+=randFeature(RND_CRATERS);
+		else if(r[10]>0.6)
+			str+=randFeature(RND_VOLCANOS);
+		break;
+	case GN_VOLCANIC:
+		keep_rands=true;
+		Ampl+=0.5; // ampl/rise/drop
+		Maxs+=0.5; // max size
+		str+=randFeature(RND_VOLCANOS);
+		break;
+	case GN_CRATERED:
+		keep_rands=true;
+		Ampl+=0.5; // ampl/rise/drop
+		Maxs+=0.2; // max size
+		str+=randFeature(RND_CRATERS);
+		break;
+	case GN_ICY:
+		if(r[11]>0.3)
+			str+=randFeature(RND_CRATERS);
+		break;
+	}
+	str+=randFeature(RND_MOUNTAINS);
+	str+="+";
+	str+=randFeature(RND_CANYONS);
+	return str;
+}
 std::string Planetoid::newLayer(Planetoid *planet){	
 	//cout<<"new Layer "<<layer_cnt<<endl;
 	std::string str;
@@ -5557,6 +5713,24 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	planet->setColors();
 	tcount=0;
 	layer_cnt++;
+	Lbias=0.1;
+	switch(planet->terrain_type){
+	case GN_VOLCANIC:
+		Hbias=0.005;
+		break;
+	case GN_CRATERED:
+		Hbias=0.01;
+		break;
+	case GN_OCEANIC:
+		Lbias=0.2;
+		Hbias=0.05;
+		break;
+	case GN_ROCKY:
+	case GN_ICY:
+		Lbias=0.1;
+		Hbias=0.05;
+		break;
+	}
 	std::string var_name=randFeature(RND_LAYER_VAR);
 
 	str=randFeature(RND_LAYER);
@@ -5564,6 +5738,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 1) pushinstance
 	// 2) for each layer
 	// 3) add layer header
+	str+=newSurfaceDetail(planet);
 	str+=randFeature(RND_FRACTAL);
 	if(s[2]>0.5)
 		str+=newGlobalTex(planet);
@@ -5587,51 +5762,10 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	str+=newErodeTex(planet);
 	str+="+";
 	str+=newHmapTex(planet);
-	str+="+Z(";
-	switch(planet->terrain_type){
-	case GN_OCEANIC:
-		PROB*=0.1; // probability
-		AMPL*=0.1; // ampl/rise/drop
-		MAXS*=0.1; // max size
-		if(r[10]>0.6)
-			str+=randFeature(RND_VOLCANOS);
-		if(r[10]>0.8)
-			str+=randFeature(RND_CRATERS);
-		break;
-	case GN_ROCKY:
-		PROB*=0.25; // probability
-		AMPL*=0.25; // rise/drop
-		MAXS*=0.25; // max size
-		if(r[10]>0.7)
-			str+=randFeature(RND_VOLCANOS);
-		if(r[11]>0.8)
-			str+=randFeature(RND_CRATERS);
-		break;
-	case GN_VOLCANIC:
-		keep_rands=true;
-		AMPL=AMPL+0.5;
-		MAXS=MAXS+0.2;
-		str+=randFeature(RND_VOLCANOS);
-		//keep_rands=false;
-		break;
-	case GN_CRATERED:
-		keep_rands=true;
-		AMPL=AMPL+0.5;
-		MAXS=MAXS+0.2;		
-			str+=randFeature(RND_CRATERS);
-		//keep_rands=false;
-		break;
-	case GN_ICY:
-		if(r[11]>0.3)
-			str+=randFeature(RND_CRATERS);
-		break;
-	}
-	str+=randFeature(RND_MOUNTAINS);
-	str+="+";
-	str+=randFeature(RND_CANYONS);
-    // ]
-	// popinstance
-	str+=")";
+	
+	str+=newGlobalDetail(planet);
+
+ 	str+=")";
 	str+="]";
 	popInstance(planet);
 	//cout<<"new Layer generated:"<<str.c_str()<<endl;

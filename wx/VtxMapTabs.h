@@ -24,6 +24,7 @@ protected:
 	ExprSliderCtrl   *BaseSlider;
 	ExprSliderCtrl   *MarginSlider;
 	wxRadioBox       *mergemode;
+	wxCheckBox       *texmerge;
 
 
 public:
@@ -52,6 +53,8 @@ public:
     void OnMergeMode(wxCommandEvent& event);
     void OnUpdateMergeMode(wxUpdateUIEvent& event);
 
+    void OnTexmerge(wxCommandEvent& event);
+    
 	DEFINE_SLIDER_EVENTS(Height)
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(Base)

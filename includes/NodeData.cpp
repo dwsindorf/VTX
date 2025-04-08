@@ -279,9 +279,10 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     
 	if(td.get_flag(FVALUE)){
 	    nf=Td.fids;
+	    //cout<<nf<<endl;
 	}
-	//if(td.get_flag(MULTILAYER))
-	//	md=1;
+	if(td.get_flag(MULTILAYER))
+		md=1;
 	if(td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))

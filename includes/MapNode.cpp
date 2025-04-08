@@ -2308,6 +2308,7 @@ void MapNode::Svertex(MapData*dn) {
 		int texid = 0;
 		double s = 0;
 		double t = 0;
+		double margin=Render.texblend()?d->mdata():1;
 		for (int j = 0; j < tp->textures.size; j++) {
 			s=t=0;
 			tx = tp->textures[j];
@@ -2324,12 +2325,12 @@ void MapNode::Svertex(MapData*dn) {
 				if(tx->a_data){
 					t = d->texture(index);
 					if(tx->d_data)
-						t*=d->mdata();
+						t*=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=d->mdata();
+					t=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
@@ -2343,12 +2344,12 @@ void MapNode::Svertex(MapData*dn) {
 				if(tx->a_data){
 					t = d->texture(index);
 					if(tx->d_data)
-						t*=d->mdata();
+						t*=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=d->mdata();
+					t=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}

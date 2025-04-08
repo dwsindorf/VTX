@@ -2,6 +2,7 @@
 #include "VtxMapTabs.h"
 #include "VtxSceneDialog.h"
 #include "AdaptOptions.h"
+#include "RenderOptions.h"
 
 
 #include <wx/filefn.h>
@@ -14,6 +15,7 @@ enum{
 	OBJ_SAVE,
 
     ID_MERGE_MODE,
+    ID_TEXMERGE,
 
 	ID_HEIGHT_SLDR,
     ID_HEIGHT_TEXT,
@@ -43,6 +45,7 @@ SET_SLIDER_EVENTS(HEIGHT,VtxMapTabs,Height)
 SET_SLIDER_EVENTS(SCALE,VtxMapTabs,Scale)
 SET_SLIDER_EVENTS(BASE,VtxMapTabs,Base)
 SET_SLIDER_EVENTS(MARGIN,VtxMapTabs,Margin)
+EVT_CHECKBOX(ID_TEXMERGE,VtxMapTabs::OnTexmerge)
 
 EVT_MENU(OBJ_DELETE,VtxMapTabs::OnDelete)
 EVT_MENU(OBJ_SHOW,VtxMapTabs::OnEnable)
@@ -142,6 +145,9 @@ void VtxMapTabs::AddMapTab(wxWindow *panel){
     //merge_cntrls->Add(mergemode, 0, wxALIGN_LEFT|wxALL,0);
 
 	topSizer->Add(mergemode, 0, wxALIGN_LEFT|wxALL, 5);
+	
+	texmerge=new wxCheckBox(panel, ID_TEXMERGE, "Blend Textures");
+	topSizer->Add(texmerge,0, wxALIGN_LEFT|wxALL,5);
 
 }
 
@@ -150,6 +156,7 @@ void VtxMapTabs::updateControls(){
 		getObjAttributes();
 	}
 }
+
 
 //-------------------------------------------------------------
 // VtxMapTabs::setObjAttributes() when switched out
@@ -209,6 +216,7 @@ void VtxMapTabs::getObjAttributes(){
 			}
 		}
 	}
+	texmerge->SetValue(Render.texblend());
 	update_needed=false;
 
 }
@@ -227,3 +235,7 @@ void VtxMapTabs::OnUpdateMergeMode(wxUpdateUIEvent& event){
 	mergemode->SetSelection(mode);
 }
 
+void VtxMapTabs::OnTexmerge(wxCommandEvent& event){
+	Render.set_texblend(texmerge->GetValue());
+	TheScene->set_changed_render();
+}

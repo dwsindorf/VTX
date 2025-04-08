@@ -753,6 +753,8 @@ public:
 	static void newRocky(Planetoid *) { newRocky(0);}
 	static std::string newLayer(Planetoid *);
 	static std::string newOcean(Planetoid *);
+	static std::string newSurfaceDetail(Planetoid *);
+	static std::string newGlobalDetail(Planetoid *);
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
     static void makeLists();
