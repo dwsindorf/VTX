@@ -564,7 +564,12 @@ NodeIF *VtxSceneDialog::addToTree(NodeIF *newObj, wxTreeItemId dstId) {
 			node=(TreeDataNode*)treepanel->GetItemData(addId);
 			TreeNode *data=getData(node);
 			NodeIF *obj=node->getObject();
+			char tmp[512];
+			
 			if (addId==first) { // first child > new child or one child
+				//sprintf(tmp,"parent %s:%X new %s:%X child %s:%X",
+				//dstObj->typeName(),dstObj->typeLevel(),newObj->typeName(),newObj->typeLevel(),obj->typeName(),obj->typeLevel());
+				//cout<<tmp<<endl;
 				if(dstObj->typeLevel()>=newObj->typeLevel()){ // 2nd child < first : insert
 					newObj=dstObj->addAfter(0, newObj);
 #ifdef DEBUG_TREE_ACTIONS

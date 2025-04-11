@@ -1175,74 +1175,7 @@ void TNplant::eval()
 	}
 	else if(CurrentScope->spass())
 		set_surface();
-//	if(!CurrentScope->spass()){
-//		return;
-//	}
-//	Color c =Color(1,1,1);
-//	PlantMgr *smgr=(PlantMgr*)mgr;
-//
-//	//cout<<Height<<endl;
-//	
-//	htval=Height;
-//	ncalls++;
-//	
-//	INIT;
-//	
-//	double density=maxdensity;
-//	MaxSize=mgr->maxsize;
-//	radius=PSCALE;
-//		
-//	mgr->type=type;
-//	if(smgr->slope_bias){
-//		double slope=8*zslope();
-//		double f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
-//#ifdef DEBUG_SLOPE_BIAS
-//		if(ncalls%100==0)
-//			cout<<"slope:"<<slope<<" f:"<<f<<endl;
-//#endif
-//		density+=f;
-//	}
-//	if(smgr->ht_bias){
-//		double f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
-//		density+=f;
-//	}
-//	if(smgr->lat_bias){
-//		//double f=lerp(Temp,0,10,-smgr->lat_bias,smgr->lat_bias);
-//		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
-//		density+=f;
-//	}
-//    density*=maxdensity;
-//	density=clamp(density,0,1);
-//	density=sqrt(density);
-//
-//	mgr->density=density;
-//	double hashcode=(mgr->levels+
-//		            1/mgr->maxsize
-//					+11*Td.sid
-//					+7*plant_id
-//					);
-//	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
-//	
-//	sval=0;
-//	hits=0;
-//	cval=0;
-//	scnt=0;
-//
-//	smgr->eval();  // calls PlantPoint.set_terrain
-//   
-//	if(hits>0) { // inside target radius
-//		nhits++;
-//		double x=1-cval;
-//		if(PlantMgr::testColor()) {
-//			c=Color(0,x,1);
-//			Td.diffuse=Td.diffuse.mix(c,0.5);
-//		}
-//		if(PlantMgr::testDensity()) {
-//			x=1/(cval+1e-6);
-//			x=x*x; //*x*x;
-//			Td.density+=lerp(cval,0,0.2,0,0.05*x);
-//		}
-//	}
+
  }
 
 void TNplant::clearStats(){

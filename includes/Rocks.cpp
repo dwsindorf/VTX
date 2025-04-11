@@ -33,7 +33,6 @@ static RockMgr *s_rm; // static finalizer
 TNode *RockMgr::default_noise=0;
 RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
-    //type=ROCKS;
 	noise_radial=1;
 	zcomp=0.1;
 	drop=0.1;
@@ -107,26 +106,16 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
  		TheNoise.pop();
  		rm=0.25*S0.s*mgr.noise_radial*radius;
  		SPOP;
- 		//CurrentScope->revaluate();
-	}
+ 	}
 	d+=rm;
 	r-=rm;
 	bool active=false;
 	if(d<radius){
+		if(!active)
 		S0.set_flag(ROCKBODY);
 		active=true;
 	}
 
-	/*
-	if(d>r)
-	    return;
-    //z=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale+mgr.base-mgr.drop*radius/Hscale;
-	double f=1-mgr.zcomp;
-    z=f*sqrt(r*r-d*d)/Hscale+mgr.base-0.5*mgr.zcomp*radius/Hscale;
-    if(z>mgr.ht)
-        mgr.ht=z;
-		*/
-    //z=mgr.base-0.5*mgr.zcomp*radius/Hscale;
     z=mgr.base-0.5*mgr.zcomp*r/Hscale;
 	if(r>d)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
@@ -216,6 +205,7 @@ NodeIF *TNrocks::addAfter(NodeIF *c,NodeIF *x){
 //-------------------------------------------------------------
 NodeIF *TNrocks::addChild(NodeIF *x){
 	TNode *node=(TNode*)x;
+	cout<<"rocks::addChild "<<x->typeName()<<end;
 	if(collapsed()){
 		if(right){
 			if(x->linkable()){
@@ -255,6 +245,7 @@ NodeIF *TNrocks::addChild(NodeIF *x){
 void TNrocks::init()
 {
 	RockMgr *rmgr=(RockMgr*)mgr;
+	//cout<<base->typeName()<<" "<<right->typeName()<<endl;
 	rmgr->init();
 	TNplacements::init();
 }
@@ -335,15 +326,13 @@ void TNrocks::eval()
 	if(!right)
 		ground.next_id();
 	if(base){
+		S0.p.z=0;
 		base->eval();
 		if(S0.svalid())
 		    S0.p.z=S0.s;
 		if(!S0.pvalid())
 			S0.p.z=ground.p.z;
-	//	rmgr->base=S0.p.z+S0.height-rmgr->drop*rmgr->maxsize/Hscale;
 		rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
-		//S0.p.z=rmgr->base;
-		//S0.p.z=0;
 	    rock.copy(S0);
 		if(right)
 			rock.next_id();
@@ -377,7 +366,7 @@ void TNrocks::eval()
 		if(z)
 			Td.lower.copy(rock);
 	}
-	//S0.set_flag(ROCKBODY);
+	S0.set_flag(ROCKBODY);
 
 	if(!z){ // image
  	    S0.s=S0.p.z;
@@ -386,12 +375,12 @@ void TNrocks::eval()
  	    S0.clr_cvalid();
  	    S0.clr_pvalid();
  	    S0.set_svalid();
- 		//S0.set_flag(ROCKLAYER);
+ 		S0.set_flag(ROCKLAYER);
  	    return;
  	}
 	if(S0.get_flag(CLRTEXS)){  // Map-layer mode (Map will adjust levels)
 		S0.set_flag(LOWER);
-		//S0.set_flag(ROCKLAYER);
+		S0.set_flag(ROCKLAYER);
 	    return;
  	}
 

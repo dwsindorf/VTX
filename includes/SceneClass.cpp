@@ -1677,7 +1677,7 @@ void Scene::change_view(int v)
 		view_tilt=0;
 		set_sidestep(1);
 		set_vstep(1);
-		Adapt.set_mindcnt(0);
+		//Adapt.set_mindcnt(0);
 		break;
 	case SURFACE:
 	    if(changed_view())
@@ -1689,7 +1689,7 @@ void Scene::change_view(int v)
 	    if(changed_view())
 			heading=0;
 		set_vstep(1);
-		Adapt.set_mindcnt(1);
+		//Adapt.set_mindcnt(1);
 		set_sidestep(0);
 		break;
 	}

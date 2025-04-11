@@ -346,8 +346,8 @@ void TNmap::eval()
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;
-	//if(Td.get_flag(!ROCKLAYER))
-	//	Td.set_flag(MULTILAYER);
+	if(Td.get_flag(!ROCKLAYER))
+		Td.set_flag(MULTILAYER);
 
 	while(layer && layer->typeValue()==ID_LAYER){
 		if(!layer->isEnabled()){
@@ -839,33 +839,26 @@ void TNlayer::setEnabled(bool b){
 	base->visitNode(enableTexture);
 }
 
+NodeIF *TNlayer::addAfter(NodeIF *child, NodeIF *n){
+	if(child && !n->linkable()){
+		return child->addChild(n);
+	}
+	else
+		return addChild(n);
+}
 //-------------------------------------------------------------
 // TNlayer::addChild
 //-------------------------------------------------------------
 NodeIF *TNlayer::addChild(NodeIF *x)
 {
-	TNode *n=(TNode *)x;
+	//cout<<"layer::addChild "<<x->typeName()<<" "<<base->typeName()<<endl;
+	TNode *n=(TNunary *)x;
 	if(x->typeValue()!=ID_LAYER){
-//		NodeIF *newbase=n;
-//		while(n->typeValue()&ID_FUNC){
-//			TNfunc *f=(TNfunc *)n;
-//			n=f->right;
-//			f->right=0;
-//		}
-//		if(newbase !=n)
-//		    delete newbase;
-//
-//		int t=MESH;
-//		if(right)
-//			t=((TNlayer*)right)->type;
-//		n=new TNlayer(0,t, 0, right,n);
-//    	n->setParent(this);
-    	right=n;
-	}
+		return TNbase::addChild(x);
+ 	}
 	else{
 		TNlayer *layer=(TNlayer *)n;
 		layer->setParent(this);
-		//cout<<"ACTION ="<<TheScene->model->actionmode<<endl;
 		if(TheScene->model->adding()){
 			layer->restoreTexs();
 			TheScene->model->clrActionMode();

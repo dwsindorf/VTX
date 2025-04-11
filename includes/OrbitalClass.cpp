@@ -5091,7 +5091,7 @@ std::string Planetoid::randFeature(int type) {
 	case RND_FRACTAL_NOISE:
 		str="18+2*noise(";
 		str+=randFeature(RND_NOISEFUNC3);
-		str+="|NLOD|UNS,8,12,0.5,0.5,2.2,1,4,0,0.0,1e-06)";
+		str+="|NLOD,12,12,0.5,0.5,2.2,1,4,0,0.0,1e-06)";
 		break;
 		//fractal(SQR|SS,18+2*noise(GRADIENT|NLOD|UNS,8,12,0.5,0.5,2.2,1,4,0,0,1e-06),8,0.019843,0.1,0.5,0.1,0,0,0.5,0)
 	case RND_FRACTAL:
@@ -5100,7 +5100,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=randFeature(RND_FRACTAL_NOISE);
 		str+=",8,";
 		str+=std::to_string(0.05-0.05*s[6]); // build
-		str+=",0.03,0.5,";
+		str+=",0.05,0.5,";
 		str+=std::to_string(0.05+0.05*s[6]);  //erode
 		str+=",0,0,0.5,0)";
 		break;
@@ -5253,28 +5253,29 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_TEX_NOISE:
 		keep_rands=true;
-		sprintf(buff,"noise(SIMPLEX,%1.2f,12,%1.2f,0.5,%1.2f,%1.2f,%1.2f,4,0,0,1e-6)",
-		1.0+s[7],     // start
+		sprintf(buff,"noise(SIMPLEX|SQR|UNS,0.5,12,%1.2f,0.5,%1.2f,%1.2f)",
+		//1.0+s[7],     // start
 		0.5+0.2*s[8], // homogeneity
-		2.3+0.5*s[9], // frequency
-		0.02+0.01*s[10]   // amplitude
+		2.1+0.2*s[9], // frequency
+		0.1+0.03*s[10]   // amplitude
 		);
 		str=buff;
 		break;
 	case RND_GLOBAL_DUAL_TEX:
 		keep_rands=true;
 		mr=tcount>1?-1:1;
-		sprintf(buff,"Texture(%s,A|S|NORM|TEX|TBIAS,%s,%s%s,%1.1f,2,1,%1.2f,1,2,1,0,%1.2f,%0.2f,%1.2f,%1.2f)",
+		//Texture("P2542",A|LINEAR|NORM|S|TEX,noise(SIMPLEX|SQR|UNS,0.5,12,0.48,0.5,2.15,0.11),n1,0.5,2,1,0.08,1,2,1,0,0.05,0.005,0.22,-0.11)
+		sprintf(buff,"Texture(%s,A|S|NORM|TEX|LINEAR,%s,%s%s,0.5,2,1,%g,1,2,1,0,%g,%g,%g,%g)",
 		randFeature(RND_TEXNAME).c_str(), // image name
 		randFeature(RND_TEX_NOISE).c_str(), // noise
 		tcount>0?"-":"",
 		randFeature(RND_LAYER_VAR).c_str(),	// +- n	
-		pow(2,8+2*s[0]),  // start
-		(mr*r[7]),       // offset
+		//pow(2,8+2*s[0]),  // start
+		mr*r[7],       // offset
 		mr*(Lbias+0.01*s[8]),     // phi bias
-		(mr*(Hbias+0.01*s[9])),        // ht bias
-		0.1*(1+0.3*s[9]),  // bmp bias
-		-0.1*(1+0.5*s[10]) // slope bias
+		mr*(Hbias+0.001*s[9]),        // ht bias
+		0.01*(1+0.3*s[9]),  // bmp bias
+		-0.05*(1+0.5*s[10]) // slope bias
 		);
 		PRNT_FEATURE("GLOBAL_DUAL_TEX")
 		str=std::string(buff);
@@ -5282,14 +5283,14 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_GLOBAL_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,NORM|TEX,%s,%1.2f,2,1,%1.2f,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
+		sprintf(buff,"Texture(%s,S|BORDER|NORM|LINEAR|TEX|TBIAS,%s,0.5,2,1,0,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
 		randFeature(RND_TEXNAME).c_str(), // image name
 		randFeature(RND_TEX_NOISE).c_str(), // noise
-		pow(2,8+2*s[0]),  // start
-		0.5*r[7],         // offset
-		Lbias+0.01*s[8],     // phi bias
-		Hbias+0.01*s[9], // ht bias
-		0.05*(1+0.5*s[9]),     // bmp bias
+		//pow(2,8+4*s[0]),  // start
+		//0.5*r[7],         // offset
+		-0.7+0.3*s[8],     // phi bias
+		(0.1+0.01*s[9]), // ht bias
+		0.1*(1+0.5*s[9]),     // bmp bias
 		-0.1*(1+0.5*s[10]) // slope bias
 		);
 		str=buff;
@@ -5314,13 +5315,13 @@ std::string Planetoid::randFeature(int type) {
 		//keep_rands=true;
 		str="Texture(";
 		str+=randFeature(RND_LTEXNAME);
-		str+=",BORDER|BUMP|NORM|RANDOMIZE|TEX,4096";
+		str+=",BORDER|BUMP|NORM|RANDOMIZE,4096";
 		str+=",0.1,2,0,7,";
 		str+=std::to_string(2+0.5*r[1]);    // freq
 		str+=",0.4,0,0,";
-		str+=std::to_string(0.2*tcount);  // ht bias
+		str+=std::to_string(0.1*r[2]*tcount);  // ht bias
 		str+=",0,";
-		str+=std::to_string(tcount); // slope bias
+		str+=std::to_string(0.1*r[6]*tcount); // slope bias
 		str+=")\n";
 		//keep_rands=false;
 		break;	
@@ -5358,12 +5359,12 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_SURFACE_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%1.2f,%1.2f,2,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
+		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%g,0.5,0,0,6,%g,0.5,0,0,%g,0,%g)",
 		randFeature(RND_STEXNAME).c_str(), // image name
 		pow(2,20+2*s[4]),   	// start,  // start
-		0.5*s[5],    	// bump ampl
-		(int)(6+2*s[7]),   	// num orders
-		2.1+0.2*s[8],      	// orders freq
+		//1,    	// bump ampl
+		//(int)(6+2*s[7]),   	// num orders
+		2.0+0.2*s[8],      	// orders freq
 		0.1*s[9],  		// ht bias
 		0.3*s[10]  		// slope bias
 		);
@@ -5371,15 +5372,16 @@ std::string Planetoid::randFeature(int type) {
 		PRNT_FEATURE("SURFACE_TEX")
 		break;	
 	case RND_SURFACE_BANDS:
+		//Texture("P1831",BORDER|NORM|TEX,1.04858e+06,2,1,0,1,2,1,0,0,0.0476,0.14284,0.1746)
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,NORM|TEX,%1.2f,2,1,%1.2f,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
+		sprintf(buff,"Texture(%s,NORM|TEX,%g,2,1,%g,1,2,1,0,%g,%g,%g,%g)",
 		randFeature(RND_TEXNAME).c_str(), // image name
-		pow(2,22),  // start
+		pow(2,21),  // start
 		0.5*s[6],         // offset
 		0.01*s[7],     // phi bias
 		0.01*s[8], // ht bias
-		0.05*(1+0.5*s[9]),     // bmp bias
-		0.05*(1+0.5*s[10]) // slope bias
+		0.01*s[9],     // bmp bias
+		0.1*(1+0.5*s[10]) // slope bias
 		);
 		str=buff;
 		PRNT_FEATURE("SURFACE_BANDS")
@@ -5387,7 +5389,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_ERODE_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%1.2f,%1.2f,0,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
+		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%g,%1.2f,0,0,%d,%1.2f,0.5,0,0,%1.2f,0,%1.2f)",
 		randFeature(RND_ETEXNAME).c_str(), // image name
 		pow(2,8+2*s[4]),   	// start,  // start
 		0.2+0.1*s[5],    	// bump ampl
@@ -5713,10 +5715,10 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	planet->setColors();
 	tcount=0;
 	layer_cnt++;
-	Lbias=0.1;
+	Lbias=0.05;
 	switch(planet->terrain_type){
 	case GN_VOLCANIC:
-		Hbias=0.005;
+		Hbias=0.001;
 		break;
 	case GN_CRATERED:
 		Hbias=0.01;
@@ -5727,8 +5729,8 @@ std::string Planetoid::newLayer(Planetoid *planet){
 		break;
 	case GN_ROCKY:
 	case GN_ICY:
-		Lbias=0.1;
-		Hbias=0.05;
+		Lbias=0.01;
+		Hbias=0.01;
 		break;
 	}
 	std::string var_name=randFeature(RND_LAYER_VAR);
@@ -5740,7 +5742,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 3) add layer header
 	str+=newSurfaceDetail(planet);
 	str+=randFeature(RND_FRACTAL);
-	if(s[2]>0.5)
+	if(planet->terrain_type==GN_OCEANIC /*|| s[2]>0.5*/)
 		str+=newGlobalTex(planet);
 	else{
 		planet->addTerrainVar(var_name.c_str(),randFeature(RND_GLOBAL_NOISE).c_str()); // need new variable

@@ -50,7 +50,7 @@ float phiFunc(int id){
 	if(tex2d[id].seasonal)
 		return SFACT;
 	else
-		return PHI;
+		return EQU;
 }
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0

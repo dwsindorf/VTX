@@ -29,6 +29,7 @@ uniform vec2 tc_offset[25];
 #ifdef FILTER1 
 #define BIG_KERNEL
 #endif
+//#undef BIG_KERNEL
 
 #ifdef ONEPASS
 #define IMAGE FBOTex1
