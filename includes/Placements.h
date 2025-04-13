@@ -62,7 +62,8 @@ public:
 	virtual void reset();
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
-	
+	void setActive(bool b)		{ flags.s.active=b;}
+	bool active()               { return flags.s.active;}
 };
 
 
@@ -86,13 +87,13 @@ protected:
 	
 	place_mgr_flags_u flags;
 
-	Placement  **hash;
     void find_neighbors(Placement *);
 
 public:
 	enum test{
 		TEST_COLOR=1,TEST_DENSITY=2
 	};
+	Placement  **hash;
 	double			size;
 	double 			roff;
 	double 			roff2;

@@ -96,7 +96,7 @@ PlacementMgr::PlacementMgr(int i, int h)
 	maxsize=0.01;
 	mult=0.8;
 	level_mult=0.8;
-	density=0.8;    			
+	density=0.0;    			
   	dexpr=0;
   	base=0;
 
@@ -623,16 +623,17 @@ void TNplacements::eval()
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2){
-		double randscale=arg[2];		// random scale multiplier
-		mgr->mult=randscale;            // in same level
-		mgr->level_mult=randscale;      // reduce size per level
-	}
+//	if(n>2){
+//		double randscale=arg[2];		// random scale multiplier
+//		mgr->mult=randscale;            // in same level
+//		mgr->level_mult=randscale;      // reduce size per level
+//	}
 	
 	if(mgr->dexpr==0){
 		dexpr=args[3];
 		if(dexpr){
 		    dexpr->eval();
+		    S0.s=clamp(S0.s,0,1);
 		    mgr->density=S0.s;
 		}
 	}

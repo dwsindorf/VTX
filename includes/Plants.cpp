@@ -772,7 +772,7 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
     wtsum+=wt;
 
 	if(d<dist){
-		ht=Height;
+		ht=Height; // closest to center
 		dist=d;
 		mind=d;
 		place_hits++;

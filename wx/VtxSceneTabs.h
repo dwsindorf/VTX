@@ -37,6 +37,8 @@ protected:
 	wxRadioBox *drawmode;
 	wxRadioBox *lightmode;
 	wxRadioBox *filtermode;
+	wxRadioBox *mergemode;
+
 
 	wxRadioBox *tempmode;
 	
@@ -355,6 +357,8 @@ public:
     	TheScene->set_autogrid(event.IsChecked());
     	TheScene->set_changed_render();
     }
+    void OnMergeMode(wxCommandEvent& event);
+    void OnUpdateMergeMode(wxUpdateUIEvent& event);
     void setObjAttributes();
 
     DEFINE_SLIDER_VAR_EVENTS(ShadowRes,Raster.shadow_vsteps)

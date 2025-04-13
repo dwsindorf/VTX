@@ -1035,8 +1035,8 @@ void TNgloss::eval()
 TNnoise::TNnoise(int t, TNode *a) : TNvector(a)
 {
 	type=t;
-	mx=-lim;
-	mn=lim;
+	mx=0;
+	mn=0;
 	ma=1.0;
 	mb=0;
 	id=-1;
@@ -1253,6 +1253,8 @@ void TNnoise::eval()
     	offset=args[8];
 	if(norm() && !normalized()){
 		TheNoise.get_minmax(ma,mb,type,n,args);
+		mx=ampl*ma;
+		mn=-ampl*ma;
 
 #ifdef DEBUG_NOISE
 		char buff[MAXSTR];

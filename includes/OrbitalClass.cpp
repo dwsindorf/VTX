@@ -5657,6 +5657,9 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 	
 	str+=newSurfaceBands(planet);
 	str+="+";
+	str+=newSurfaceTex(planet);
+	str+="+";
+
 	return str;
 }
 
@@ -5753,8 +5756,6 @@ std::string Planetoid::newLayer(Planetoid *planet){
 		planet->setColors();
 		str+=newDualGlobalTex(planet);
 	}
-	str+="+";
-	str+=newSurfaceTex(planet);
 	for(tcount=-1;tcount<2;tcount+=2){
 		str+="+";
 		str+=newLocalTex(planet);

@@ -16,6 +16,7 @@ enum {
     ID_RENDER_QUALITY,
     ID_GENERATE_QUALITY,
     ID_LMODE,
+	ID_MERGE_MODE,
     ID_ANIMATE,
 	ID_TIME_FORWARD,
     ID_TIME_SLDR,
@@ -207,6 +208,10 @@ EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 
 EVT_CHOICE(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
 EVT_CHOICE(ID_USE_TMPS,VtxSceneTabs::OnUseTmps)
+
+EVT_RADIOBOX(ID_MERGE_MODE, VtxSceneTabs::OnMergeMode)
+EVT_UPDATE_UI(ID_MERGE_MODE, VtxSceneTabs::OnUpdateMergeMode)
+
 
 END_EVENT_TABLE()
 
@@ -593,6 +598,8 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
     quality_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(quality_options, 0, wxALIGN_LEFT|wxALL,0);
+	
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
     wxStaticBoxSizer* check_options = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Adapt Tests"));
     m_occlusion=new wxCheckBox(panel, ID_ADAPT_OCCLUSION, "Occlusion");
@@ -610,9 +617,21 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 	m_curvature=new wxCheckBox(panel, ID_ADAPT_CURVATURE, "Curvature");
 	m_curvature->SetToolTip("Decrease resolution in smooth areas");
 	check_options->Add(m_curvature,0,wxALIGN_LEFT|wxALL,1);
+	hline->Add(check_options,0,wxALIGN_LEFT|wxALL,0);
+	
+    wxString mmodes[]={"Overlap","Merge"};
+    mergemode=new wxRadioBox(panel,ID_MERGE_MODE,wxT(""),wxPoint(-1,-1),wxSize(200,42),2,
+    		mmodes,2,wxRA_SPECIFY_COLS);
 
-    boxSizer->Add(check_options, 0, wxALIGN_LEFT|wxALL,0);
-    check_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+    //mergemode->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+    //merge_cntrls->Add(mergemode, 0, wxALIGN_LEFT|wxALL,0);
+
+    hline->Add(mergemode, 0, wxALIGN_LEFT|wxALL, 0);
+	
+	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+
+    boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
@@ -900,7 +919,16 @@ void VtxSceneTabs::OnTimeText(wxCommandEvent& event){
 	setTime();
 	//changing=false;
 }
+void VtxSceneTabs::OnMergeMode(wxCommandEvent& event){
+	int mode=event.GetSelection();
+	Adapt.set_mindcnt(mode);
+	TheScene->rebuild_all();
+}
 
+void VtxSceneTabs::OnUpdateMergeMode(wxUpdateUIEvent& event){
+	int mode=Adapt.mindcnt();
+	mergemode->SetSelection(mode);
+}
 void VtxSceneTabs::getTime(){
 //	if(!TheScene->autotm())
 //		return;

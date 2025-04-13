@@ -9,6 +9,7 @@
 #include "MapNode.h"
 #include "ModelClass.h"
 #include "AdaptOptions.h"
+#include "TerrainClass.h"
 
 extern double Hscale, Drop, MaxSize;
 extern double ptable[];
@@ -33,7 +34,7 @@ static RockMgr *s_rm; // static finalizer
 TNode *RockMgr::default_noise=0;
 RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
-	noise_radial=1;
+	noise_radial=0;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
@@ -84,14 +85,23 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 {
 	double d=pmgr.mpt.distance(center);
 	double r,z,rm=0;
-	//if(d>1.5*radius)
-	//	return;
 
 	RockMgr &mgr=(RockMgr&)pmgr;
+	double thresh=mgr.noise_radial;
+	double td=mgr.drop*mgr.maxsize;
+	double t=lerp(td,0,0.5,radius*(1+thresh),0);
 	r=radius;
+	//cout<<td<<" "<<td/radius<<endl;
+	//if(d>(1+thresh)*radius)
+	//if(!flags.s.valid)
+	//	return false;
 
- 	if(d<1.5*radius && mgr.noise_radial>0 && mgr.rnoise){
-  		SPUSH;
+	if(d>t)
+		return false;
+
+ 	//if(thresh>0 && d<radius*(1+thresh)){
+ 	if(thresh>0){
+ 		SPUSH;
 		Point4D np;
 		if(mgr.offset_valid())
 		    np=(mgr.mpt-mgr.offset)*(1/radius);
@@ -106,22 +116,22 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
  		TheNoise.pop();
  		rm=0.25*S0.s*mgr.noise_radial*radius;
  		SPOP;
+		d+=rm;
+		r-=rm;
  	}
-	d+=rm;
-	r-=rm;
-	bool active=false;
-	if(d<radius){
-		if(!active)
-		S0.set_flag(ROCKBODY);
-		active=true;
-	}
+	
+	z=mgr.base;
+	
+	S0.set_flag(ROCKBODY);
 
-    z=mgr.base-0.5*mgr.zcomp*r/Hscale;
+	setActive(true);
+
+    z-=0.5*mgr.zcomp*r/Hscale;
 	if(r>d)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
     if(z>mgr.ht)
         mgr.ht=z;
-    return active;
+    return true;
 }
 
 //************************************************************
@@ -205,7 +215,7 @@ NodeIF *TNrocks::addAfter(NodeIF *c,NodeIF *x){
 //-------------------------------------------------------------
 NodeIF *TNrocks::addChild(NodeIF *x){
 	TNode *node=(TNode*)x;
-	cout<<"rocks::addChild "<<x->typeName()<<end;
+	//cout<<"rocks::addChild "<<x->typeName()<<end;
 	if(collapsed()){
 		if(right){
 			if(x->linkable()){
@@ -248,6 +258,17 @@ void TNrocks::init()
 	//cout<<base->typeName()<<" "<<right->typeName()<<endl;
 	rmgr->init();
 	TNplacements::init();
+	TNarg &args=*((TNarg *)left);
+
+	if(args[7]){
+		rmgr->rnoise=args[7];
+		rmgr->rnoise->eval();
+		if(rmgr->rnoise->typeValue()==ID_NOISE){
+			TNnoise *noise=(TNnoise *)rmgr->rnoise;
+			rmgr->noise_radial=noise->mx;
+			rmgr->noise_radial=clamp(rmgr->noise_radial,0,0.5);
+		}
+	}
 }
 
 //-------------------------------------------------------------
@@ -306,13 +327,6 @@ void TNrocks::eval()
 
 	TNarg &args=*((TNarg *)left);
 
-	if(args[7]){
-		rmgr->noise_radial=1.0;
-		rmgr->rnoise=args[7];
-	}
-	else
-		rmgr->rnoise=0;
-
 	TNarg *a=args.index(4);
 	if(a){                // geometry exprs
 		double arg[3];
@@ -330,7 +344,9 @@ void TNrocks::eval()
 		base->eval();
 		if(S0.svalid())
 		    S0.p.z=S0.s;
-		if(!S0.pvalid())
+		else if(S0.pvalid())
+			S0.p.z=lerp(ampl,0,1,ground.p.z,S0.p.z);
+		else
 			S0.p.z=ground.p.z;
 		rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
 	    rock.copy(S0);
@@ -350,7 +366,7 @@ void TNrocks::eval()
 
 	INIT;
     //rock.p.z=-rmgr->ht;
-    rock.p.z=ampl*rmgr->ht;
+    rock.p.z=rmgr->ht;
 	Td.lower.p.z=TZBAD;
 
 

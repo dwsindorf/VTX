@@ -186,7 +186,7 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 
 
 	AmplSlider=new ExprSliderCtrl(panel,ID_AMPL_SLDR,"Gain",LABEL2, VALUE1,SLIDER2);
-	AmplSlider->setRange(-1.0,1.0);
+	AmplSlider->setRange(0.0,1.0);
 	ampl->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2S, VALUE1,SLIDER2);
