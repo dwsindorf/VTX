@@ -35,6 +35,7 @@ TNode *RockMgr::default_noise=0;
 RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
 	noise_radial=0;
+	max_radius=1;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
@@ -89,12 +90,8 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	RockMgr &mgr=(RockMgr&)pmgr;
 	double thresh=mgr.noise_radial;
 	double td=mgr.drop*mgr.maxsize;
-	double t=lerp(td,0,0.5,radius*(1+thresh),0);
+	double t=lerp(td,0,0.5,mgr.max_radius*radius*(1+thresh),0);
 	r=radius;
-	//cout<<td<<" "<<td/radius<<endl;
-	//if(d>(1+thresh)*radius)
-	//if(!flags.s.valid)
-	//	return false;
 
 	if(d>t)
 		return false;
@@ -157,6 +154,7 @@ void TNrocks::applyExpr()
         DFREE(left);
         left=rocks->left;
         left->setParent(this);
+        rocks->init();
 		delete mgr;
 		type=rocks->type;
 		mgr=rocks->mgr;
@@ -261,6 +259,9 @@ void TNrocks::init()
 	TNarg &args=*((TNarg *)left);
 
 	if(args[7]){
+		TNarg *tamp=args[6];
+		tamp->eval();
+		rmgr->max_radius=S0.s;
 		rmgr->rnoise=args[7];
 		rmgr->rnoise->eval();
 		if(rmgr->rnoise->typeValue()==ID_NOISE){
@@ -280,7 +281,6 @@ void TNrocks::eval()
 	static TerrainData ground;
 	int z=0,i;
 	double ht=0;
-	double ampl=1.0;
 	//if(CurrentScope->hpass()) // TODO: add support for htmap textures ?
 	//	return;
 
@@ -333,7 +333,6 @@ void TNrocks::eval()
 		int n=getargs(a,arg,3);
 		if(n>0) rmgr->zcomp=arg[0];      // compression factor
 		if(n>1) rmgr->drop=arg[1];       // drop factor
-		if(n>2) ampl=arg[2];             // ampl
 	}
 
 	INIT;
@@ -344,9 +343,7 @@ void TNrocks::eval()
 		base->eval();
 		if(S0.svalid())
 		    S0.p.z=S0.s;
-		else if(S0.pvalid())
-			S0.p.z=lerp(ampl,0,1,ground.p.z,S0.p.z);
-		else
+		if(!S0.pvalid())
 			S0.p.z=ground.p.z;
 		rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
 	    rock.copy(S0);
@@ -365,10 +362,8 @@ void TNrocks::eval()
 	 	CurrentScope->revaluate();
 
 	INIT;
-    //rock.p.z=-rmgr->ht;
     rock.p.z=rmgr->ht;
 	Td.lower.p.z=TZBAD;
-
 
 	if(S0.get_flag(ROCKBODY) && rock.p.z>ground.p.z){
 		S0.copy(rock);
@@ -399,7 +394,6 @@ void TNrocks::eval()
 		S0.set_flag(ROCKLAYER);
 	    return;
  	}
-
 
 	Td.begin();		
 

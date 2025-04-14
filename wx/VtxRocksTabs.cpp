@@ -165,7 +165,7 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 
 	size->Add(ScaleSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	wxString exps[]={"100","10","1","0.1","0.01","0.001","0.0001","0.00001","0.000001"};
+	wxString exps[]={"10","1","0.1","0.01","0.001","1e-4","1e-5","1e-6","1e-7"};
 	m_scale_exp=new wxChoice(panel, ID_SCALE_MULT, wxDefaultPosition,wxSize(70,-1),9, exps);
 	m_scale_exp->SetSelection(5);
 	size->Add(new wxStaticText(panel,-1,"X"), 0, wxALIGN_LEFT|wxALL, 4);
@@ -248,17 +248,12 @@ void VtxRocksTabs::getObjAttributes(){
 		a->eval();
 		maxsize=S0.s;
 	}
-	double v=maxsize;
-	int i=0;
-	double mul=10.0;
-	while(v<mul){
-		mul/=10;
-		i++;
-	}
-	mul*=10;
-	double f=fmod(v,mul)/mul;
-	m_scale_exp->SetSelection(i);
-	ScaleSlider->setValue(f);
+	double exp=floor(log10(maxsize));
+	uint indx=-exp;
+	double rem=0.1*maxsize/pow(10,exp);
+
+	m_scale_exp->SetSelection(indx);
+	ScaleSlider->setValue(rem);
 
 	a=args[2];
 	if(a)
@@ -284,7 +279,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(a)
 		AmplSlider->setValue(a);
 	else
-		AmplSlider->setValue(mgr->noise_radial);
+		AmplSlider->setValue(mgr->max_radius);
 	a=args[7];
 	if(a)
 		NoiseExpr->setValue(a);
@@ -316,7 +311,7 @@ void VtxRocksTabs::setObjAttributes(){
 	s+=wxString(id)+",";
 
 	double f=ScaleSlider->getValue();
-	int multiplier=-m_scale_exp->GetSelection()+2;
+	int multiplier=-m_scale_exp->GetSelection()+1;
 	double m=pow(10.0,multiplier);
 	char buff[256];
 	sprintf(buff,"%g",f*m);
@@ -340,7 +335,7 @@ void VtxRocksTabs::setObjAttributes(){
 	cout << s << endl;
 	s+="\n";
 
-	char p[512];
+	char p[1024];
 	strcpy(p,s.ToAscii());
 	tc->setExpr(p);
 	if(tc->getExprNode()==0)

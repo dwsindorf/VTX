@@ -96,7 +96,7 @@ PlacementMgr::PlacementMgr(int i, int h)
 	maxsize=0.01;
 	mult=0.8;
 	level_mult=0.8;
-	density=0.0;    			
+	density=1.0;    			
   	dexpr=0;
   	base=0;
 
@@ -307,6 +307,8 @@ void PlacementMgr::eval()
 		cvisits++;
 		if(!h|| h->point!=pc || h->type !=type){
 			Placement *c=make(pc,n);
+//			if(!c->flags.s.valid)
+//				continue;
 			if(h){
 				cfreed++;
 				delete h;
@@ -324,6 +326,8 @@ void PlacementMgr::eval()
 		  	find_neighbors(h);
 			list.ss();
 			while((h=list++)){
+//				if(!h->flags.s.valid)
+//					continue;
 		  		h->set_terrain(*this);
 		  		h->users--;
 				if(hash[h->hid]!=h){
@@ -623,11 +627,11 @@ void TNplacements::eval()
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-//	if(n>2){
-//		double randscale=arg[2];		// random scale multiplier
-//		mgr->mult=randscale;            // in same level
-//		mgr->level_mult=randscale;      // reduce size per level
-//	}
+	if(n>2){
+		double randscale=arg[2];		// random scale multiplier
+		mgr->mult=randscale;            // in same level
+		mgr->level_mult=randscale;      // reduce size per level
+	}
 	
 	if(mgr->dexpr==0){
 		dexpr=args[3];
