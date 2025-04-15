@@ -230,7 +230,7 @@ typedef struct mpdata {
 	unsigned int  hmaps	    : 1;	// hmap flag
 	unsigned int  mdata	    : 1;	// margin flag
 	unsigned int  edge	    : 1;	// edge flag
-	unsigned int  unused	: 2;	// unassigned
+	unsigned int  rock	    : 1;	// rock layer
 } mpdata;
 
 
@@ -279,6 +279,9 @@ public:
 	void set_margin(int n)		{ flags.s.margin=n;}
     void set_edge(int i)        { flags.s.edge=i;}
     int edge()                  { return flags.s.edge;}
+
+	int rock()					{ return flags.s.rock;}
+	void setRock(bool b)		{ flags.s.rock=b;}
 
 	int normal_valid()			{ return flags.s.normal;}
 	void set_normal_valid(int n){ flags.s.normal=n;}
@@ -381,7 +384,7 @@ public:
     double ocean()              { return flags.s.ocean?data[WSTART].d:0.0;}
     double mdata()              { return flags.s.mdata>0?data[MSTART].d:1.0;}
     double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
-    double rock()               { return flags.s.evals>0?data[ESTART].d:0.0;}
+    double solid()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double sediment()           { return flags.s.evals>1?data[ESTART+1].d:0.0;}
     double Z()                  { return flags.s.dims>0?data[ZSTART].d:0.0;}
     double X()                  { return flags.s.dims>1?data[ZSTART+1].d:0.0;}
@@ -398,7 +401,7 @@ public:
     void setFractal(double f,int i){ if(flags.s.fchnls) data[FSTART+i].d=f;}
     void setMargin(double f)    { if(flags.s.mdata>0) data[MSTART].d=f;}
     void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
-    void setRock(double f)      { if(flags.s.evals>0) data[ESTART].d=f;}
+    void setSolid(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
     void setSediment(double f)  { if(flags.s.evals>1) data[ESTART+1].d=f;}
     void setColor(Color c)      { if(flags.s.colors)  data[CSTART].ul=c.pack();}
     void setTexture(double t, int &a){

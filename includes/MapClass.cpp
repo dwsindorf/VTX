@@ -1429,7 +1429,8 @@ static LinkedList<MapNode*> node_list;
 static int test_cnt;
 static void collect_nodes(MapNode *n)
 {
-	if(n->visible()){
+	MapData *data=n->surface_data();
+	if(n->visible() && data && !data->rock()){
 		node_list.add(n);
     }
 }

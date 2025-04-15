@@ -295,6 +295,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		dns=1;
 		density=td.density;
 	}
+	setRock(td.get_flag(ROCKBODY));
 	if(td.water())
 		nw=1;
     bool color_valid=false;
@@ -404,7 +405,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		setDepth(td.depth);
 	else{
 		setSediment(td.sediment);
-		setRock(td.rock);
+		setSolid(td.rock);
 		if(ne>0)
 			TheMap->set_erosion(1);
 	}

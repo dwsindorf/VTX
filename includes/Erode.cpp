@@ -93,7 +93,7 @@ double eslope()
 {
     double smax=100;
     double s=0;
-    CELLSLOPE(rock(),s);
+    CELLSLOPE(solid(),s);
     //s=smoothstep(0,smax,s);
 
     double slope=TheMap->hscale*s*INV2PI;
@@ -261,7 +261,7 @@ void TNerode::eval() {
    // if (level >= l1 /*&& level<l2*/) {
     	//if(level<l2){
        // CELLSLOPE(Ht(),s);
-        CELLSLOPE(rock(),s);
+        CELLSLOPE(solid(),s);
        s*=TheMap->hscale;//*INV2PI;
 
          if (options & SQR)

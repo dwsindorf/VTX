@@ -585,8 +585,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 				list.add(getObjectSymbol(TN_FCHNL));
 			list.add(getObjectSymbol(TN_POINT));
 			list.add(getObjectSymbol(TN_TEXTURE));
-			list.add(getObjectSymbol(TN_SPRITE));
-			list.add(getObjectSymbol(TN_PLANT));
+			//list.add(getObjectSymbol(TN_SPRITE));
+			//list.add(getObjectSymbol(TN_PLANT));
 			//list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
 		}

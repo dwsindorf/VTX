@@ -1719,6 +1719,15 @@ void MapNode::render_cycle()
 		(n->*Dmid)();
 }
 
+MapData *MapNode::surface_data(){
+	MapData *d;
+	if(cdata)
+		d=cdata;
+	else
+		d=&data;
+
+    return surface_data(d);
+}
 //-------------------------------------------------------------
 // MapNode::render()	render the cell using open-gl triangles
 //-------------------------------------------------------------
@@ -1893,7 +1902,7 @@ Color MapNode::Tcolor(MapData *d) {
     		    c=WHITE;
     	 		//c = Adapt.tcolor(g);
     		}
-    	        break;
+    	    break;
     }
 //        double depth;
 //        double size = cell_size();
@@ -1960,9 +1969,13 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-      	  c = Color(data.mdata(), 0, 0);
-      	 if (data.margin())
-      	     c = c.blend(Color(0, 0, 1), 1);
+        if(d->rock())
+        	c = Color(0.5, 0.5, 0.5);
+        else
+        	c = Color(1, 1, 1);
+      	 //c = Color(data.mdata(), 0, 0);
+      	 //if (data.margin())
+      	 //    c = c.blend(Color(0, 0, 1), 1);
 #endif
         }
         break;
@@ -1989,7 +2002,6 @@ Color MapNode::Tcolor(MapData *d) {
         break;
     case RNODES:
     {
-
         Point *np = 0;
         MapData *md;
         if (cdata)
@@ -2035,7 +2047,6 @@ Color MapNode::Tcolor(MapData *d) {
     		tex->svalue=0;
     		tex->tvalue=0;
     		tex->scale=1;
-
 
         	double x,y;
         	tex->getTexCoords(x,y);

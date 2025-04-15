@@ -266,6 +266,7 @@ public:
     void set_cdata(int i)   { info.cdata=i;}
     MapData *ndata()        { return (info.cdata && cdata) ?cdata:&data;}
     static MapData *surface_data(MapData *d);
+    MapData *surface_data();
 
     // curvature test and status flags
 
@@ -356,7 +357,7 @@ public:
     double density()                { return data.density();}
     double ocean()                  { return data.ocean();}
     double sediment()               { return data.sediment();}
-    double rock()                   { return data.rock();}
+    double rock()                   { return data.solid();}
 
     void setGZ(double f)            { gval=f; }
     double getGZ()                  { return gval*Rscale;}

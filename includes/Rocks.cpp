@@ -366,8 +366,10 @@ void TNrocks::eval()
     rock.p.z=rmgr->ht;
 	Td.lower.p.z=TZBAD;
 
-	if(S0.get_flag(ROCKBODY) && rock.p.z>ground.p.z){
+	//if(S0.get_flag(ROCKBODY) && rock.p.z>ground.p.z){
+	if(rock.p.z>ground.p.z){		
 		S0.copy(rock);
+		S0.set_flag(ROCKBODY);
 		if(z)
 			Td.lower.copy(ground);
 	}
@@ -375,10 +377,11 @@ void TNrocks::eval()
 		if(rock.p.z>ground.p.z)
 			ground.p.z=rock.p.z;
 		S0.copy(ground);
+		S0.clr_flag(ROCKBODY);
 		if(z)
 			Td.lower.copy(rock);
 	}
-	S0.set_flag(ROCKBODY);
+	//S0.set_flag(ROCKBODY);
 
 	if(!z){ // image
  	    S0.s=S0.p.z;
