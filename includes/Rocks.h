@@ -25,7 +25,7 @@ public:
 	double  zcomp,drop;
 
 	double  noise_radial;
-	double  max_radius;
+	double  noise_ampl;
 	TNode   *rnoise;
 	~RockMgr();
 	RockMgr(int);

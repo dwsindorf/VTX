@@ -35,7 +35,7 @@ TNode *RockMgr::default_noise=0;
 RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
 	noise_radial=0;
-	max_radius=1;
+	noise_ampl=1;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
@@ -90,7 +90,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	RockMgr &mgr=(RockMgr&)pmgr;
 	double thresh=mgr.noise_radial;
 	double td=mgr.drop*mgr.maxsize;
-	double t=lerp(td,0,0.5,mgr.max_radius*radius*(1+thresh),0);
+	double t=lerp(td,0,1,radius*(1+thresh),0);
 	r=radius;
 
 	if(d>t)
@@ -111,7 +111,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
  		CurrentScope->revaluate();
  		mgr.rnoise->eval();
  		TheNoise.pop();
- 		rm=0.25*S0.s*mgr.noise_radial*radius;
+ 		rm=0.25*S0.s*mgr.noise_ampl*radius;
  		SPOP;
 		d+=rm;
 		r-=rm;
@@ -261,13 +261,14 @@ void TNrocks::init()
 	if(args[7]){
 		TNarg *tamp=args[6];
 		tamp->eval();
-		rmgr->max_radius=S0.s;
+		rmgr->noise_ampl=S0.s;
 		rmgr->rnoise=args[7];
 		rmgr->rnoise->eval();
 		if(rmgr->rnoise->typeValue()==ID_NOISE){
 			TNnoise *noise=(TNnoise *)rmgr->rnoise;
+			//cout<<noise->mx<<" "<<noise->mn<<endl;
 			rmgr->noise_radial=noise->mx;
-			rmgr->noise_radial=clamp(rmgr->noise_radial,0,0.5);
+			rmgr->noise_radial=clamp(rmgr->noise_radial,0,1.5);
 		}
 	}
 }

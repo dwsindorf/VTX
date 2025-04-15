@@ -279,7 +279,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(a)
 		AmplSlider->setValue(a);
 	else
-		AmplSlider->setValue(mgr->max_radius);
+		AmplSlider->setValue(mgr->noise_ampl);
 	a=args[7];
 	if(a)
 		NoiseExpr->setValue(a);
@@ -332,7 +332,7 @@ void VtxRocksTabs::setObjAttributes(){
 	}
 	s+=")";
 
-	cout << s << endl;
+	//cout << s << endl;
 	s+="\n";
 
 	char p[1024];
