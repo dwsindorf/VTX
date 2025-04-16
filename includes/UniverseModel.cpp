@@ -39,7 +39,23 @@ void UniverseModel::getFileList(int type,LinkedList<ModelSym*>&list)
 	getObjectDirectory(type,dir);
 	if(!dir[0])
 		return;
+	ValueList<FileData*> type_dirs;
+	NameList<ModelSym*>flist;
+
+	char path[MAXSTR];
+	char sdir[256];
+
+	File.getDirectoryList(dir,type_dirs);
+	
+	for(int i=0;i<type_dirs.size;i++){
+		char *name=type_dirs[i]->name();
+		char *path=type_dirs[i]->path();
+		ModelSym *sym=new ModelSym(name,path,true);
+		list.add(sym);
+	}
+
 	File.getFileNameList(dir,"*.spx",list);
+	cout<<"UniverseModel::getFileList dirs:"<<type_dirs.size<<" files:"<<list.size<<endl;
 }
 
 //-------------------------------------------------------------
@@ -382,8 +398,12 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("[Random]",type);
 	case GN_TREE:
 		return new ModelSym("Tree",type);
+	case GN_SHRUB:
+		return new ModelSym("Shrub",type);
 	case GN_BUSH:
 		return new ModelSym("Bush",type);
+	case GN_FLOWER:
+		return new ModelSym("Flower",type);
 	case GN_GRASS:
 		return new ModelSym("Grass",type);
 	case GN_GASSY:
@@ -464,7 +484,9 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 	case TN_PLANT:
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_TREE));
+		list.add(getTypeSymbol(GN_SHRUB));
 		list.add(getTypeSymbol(GN_BUSH));
+		list.add(getTypeSymbol(GN_FLOWER));
 		list.add(getTypeSymbol(GN_GRASS));
 		break;
 	case TN_STAR:

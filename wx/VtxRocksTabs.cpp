@@ -182,18 +182,14 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 
 
-    wxStaticBoxSizer* ampl = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Amplitude"));
+    wxStaticBoxSizer* ampl = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
 
-
-	AmplSlider=new ExprSliderCtrl(panel,ID_AMPL_SLDR,"Gain",LABEL2, VALUE1,SLIDER2);
+	AmplSlider=new ExprSliderCtrl(panel,ID_AMPL_SLDR,"Ampl",LABEL2, VALUE1,SLIDER2);
 	AmplSlider->setRange(0.0,1.0);
 	ampl->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-
-	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2S, VALUE1,SLIDER2);
-	DropSlider->setRange(0,0.5);
-	DropSlider->setValue(0.0);
-
-	ampl->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,120);
+	ampl->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	ampl->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -206,9 +202,13 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	FlatnessSlider->setValue(0.5);
 
 	shape->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2S, VALUE1,SLIDER2);
+	DropSlider->setRange(0,2);
+	DropSlider->setValue(0.0);
 
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Distort",LABEL2S,120);
-	shape->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	shape->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 
 	shape->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);

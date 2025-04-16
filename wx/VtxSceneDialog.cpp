@@ -1056,7 +1056,7 @@ wxMenu *VtxSceneDialog::getTypeMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 // VtxSceneDialog::getFileMenu()
 //-------------------------------------------------------------
 wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&list){
-	ModelSym *fsym;
+	ModelSym *fsym,*dsym;
 	wxMenu *submenu=new wxMenu();
  	LinkedList<ModelSym*>tlist;
 	
@@ -1069,15 +1069,32 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
  	}
 
  	LinkedList<ModelSym*>flist;
+ 	LinkedList<ModelSym*>dlist;
 	TheScene->model->getFileList(sym->value,flist);
 	if(flist.size>0){
+		flist.ss();
+		while((fsym=flist++)){
+			if(fsym->isDir()){
+				wxMenu *menu=new wxMenu();
+				dlist.reset();
+				File.getFileNameList(fsym->dir(),"*.spx",dlist);
+				dlist.ss();
+				while(dsym=dlist++){
+					menu->Append(i++,dsym->name());
+					list.add(dsym);
+				}
+				submenu->AppendSubMenu(menu,fsym->name());
+			}
+		}
 		submenu->AppendSeparator();
 		flist.ss();
 		list.add(new ModelSym("<Random>",sym->value));
 		submenu->Append(i++,"<Random>");
 		while((fsym=flist++)){
-			list.add(fsym);
-			submenu->Append(i++,fsym->name());
+			if(fsym->isFile()){
+				list.add(fsym);
+				submenu->Append(i++,fsym->name());
+			}
 		}
 	}
 	return submenu;
@@ -1097,6 +1114,9 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
  	replace_list.free();
 	ModelSym* sym=getSym(obj);
 	replace_list.add(sym);
+	
+	cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
+
 
 	return getFileMenu(sym,i,replace_list);
 }

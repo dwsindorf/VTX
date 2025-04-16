@@ -24,22 +24,37 @@ class ModelSym {
 	char   _name[256];
 public:
 	int   value;
+	bool  _isdir;
+	bool  _isfile;
 	char   path[1024];
 	ModelSym(const char *n, int v) {
 		value=v;
 		strcpy(_name,n);
+		_isdir=false;
+		_isfile=false;
 		path[0]=0;
 	}
 	ModelSym(const char *n, const char *p) {
 		value=0;
 		strcpy(_name,n);
 		strcpy(path,p);
+		_isdir=false;
+		_isfile=true;
 	}
+	ModelSym(const char *n, const char *p, bool isdir) {
+		value=0;
+		strcpy(_name,n);
+		strcpy(path,p);
+		_isdir=isdir;
+		_isfile=!isdir;
+	}	
 	~ModelSym(){
 		//cout<<"~ModelSym() "<<_name<<endl;
 	}
-	int isFile() { return path[0];}
+	int isFile() { return _isfile;}
+	int isDir() { return _isdir;}
 	char *name() { return _name;}
+	char *dir() { return path;}
 };
 
 class TreeNode
