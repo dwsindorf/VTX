@@ -288,10 +288,8 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		sym=list[menu_id];
 		wxString name(sym->name());
 		if(!sym->isFile() && name == "<Random>"){
-			LinkedList<ModelSym*>flist;
-			TheScene->model->getFileList(sym->value,flist);
-			int ival=std::rand() % flist.size;
-			sym=flist[ival];
+			int ival=std::rand() % replace_list.size;
+			sym=replace_list[ival];
 			rand_flag=true;
 		}
 
@@ -1016,6 +1014,7 @@ void VtxSceneDialog::saveSelected(){
                   );
     if (dialog.ShowModal() == wxID_OK) {
         strcpy(filename, dialog.GetFilename().ToAscii());
+        strcpy(dir, dialog.GetDirectory().ToAscii());
 
         File.getFileName(filename,filename);
         sprintf(path,"%s%s%s.spx",dir,"/",filename);
@@ -1166,7 +1165,14 @@ wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
 	replace_list++;
 
 	while((fsym=replace_list++)){
-		submenu->Append(TABS_REMOVE|i++,fsym->name());
+		if(fsym->isFile()){
+			char dir[256];
+			char label[256];
+			File.getParentDirName(fsym->dir(), dir);
+			sprintf(label,"%s/%s",dir,fsym->name());
+			submenu->Append(TABS_REMOVE|i,label);
+		}
+		i++;
 	}
 	replace_list.ss();
 	return submenu;

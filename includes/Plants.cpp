@@ -2274,7 +2274,7 @@ void TNBranch::saveNode(FILE *f){
 		}
 		if(strlen(colorexpr))
 			fprintf(f,"%s",colorexpr);
-		fprintf(f,"]");
+		fprintf(f,"]\n");
 	}
 
 }

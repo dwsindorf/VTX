@@ -89,6 +89,7 @@ public:
 	static int getSubDirectory(char *pdir, char *sdir, char *buff);
 	static int makeSubDirectory(char *pdir, char *sdir, char *buff);
 	static void getParentDirectory(char *s,char *d);
+	static void getParentDirName(char *s,char *d);
 	static void getFileNameList(char *dir,const char *ext,LinkedList<ModelSym*>&list);
 	static void getFileNameList(char *dir,const char *ext,NameList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,ValueList<FileData*>&list);

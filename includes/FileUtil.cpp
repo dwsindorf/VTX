@@ -306,7 +306,18 @@ void FileUtil::getParentDirectory(char *s, char *buff)
 	cptr[0]=0;
 	strcpy(buff,path);
 }
-
+//-------------------------------------------------------------
+// FileUtil::getParentDirectory() get parent directory path
+//-------------------------------------------------------------
+void FileUtil::getParentDirName(char *s, char *buff)
+{
+	std::string str=s;
+	size_t pos = str.find_last_of(File.separator);
+	str=str.substr(0,pos);
+	pos = str.find_last_of(File.separator);
+	std::string sstr=str.substr(pos+1, std::string::npos);
+	strcpy(buff,sstr.c_str());
+}
 //-------------------------------------------------------------
 // FileUtil::return 1 if directory is empty
 //-------------------------------------------------------------
