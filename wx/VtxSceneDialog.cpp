@@ -51,6 +51,8 @@
 
 //#define PRINT_TREE
 
+#define FTEST
+
 #define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
@@ -403,7 +405,8 @@ bool VtxSceneDialog::setTabs(TreeNode *new_select){
 // VtxSceneDialog::removeMenuFile() remove menu item from file system
 //-------------------------------------------------------------
 void VtxSceneDialog::removeMenuFile(int menu_id){
-	ModelSym* sym=replace_list[menu_id+3]; // skip over simple and random
+	ModelSym* sym=remove_list[menu_id];
+	//cout<<"remove "<<sym->name()<<" "<<sym->path<<endl;
 	if(sym->isFile()){
 		char sbuff[1024];
 		sbuff[0]=0;
@@ -1155,27 +1158,36 @@ wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 // VtxSceneDialog::getRemoveMenu()
 //-------------------------------------------------------------
 wxMenu *VtxSceneDialog::getRemoveMenu(NodeIF *obj){
-	int i=0;
-	replace_list.ss();
+	ModelSym *fsym,*dsym;
 	wxMenu *submenu=new wxMenu();
-	ModelSym *fsym;
-	// skip over simple, complex and random options
-	replace_list++;
-	replace_list++;
-	replace_list++;
-
-	while((fsym=replace_list++)){
-		if(fsym->isFile()){
-			char dir[256];
-			char label[256];
-			File.getParentDirName(fsym->dir(), dir);
-			sprintf(label,"%s/%s",dir,fsym->name());
-			submenu->Append(TABS_REMOVE|i,label);
+	ModelSym* sym=getSym(obj);
+	remove_list.free();
+ 	LinkedList<ModelSym*>flist;
+ 	LinkedList<ModelSym*>dlist;
+	TheScene->model->getFileList(sym->value,flist);
+	if(flist.size>0){
+		flist.ss();
+		int i=TABS_REMOVE;
+		while((fsym=flist++)){
+			if(fsym->isDir()){
+				wxMenu *menu=new wxMenu();
+				dlist.reset();
+				File.getFileNameList(fsym->dir(),"*.spx",dlist);
+				dlist.ss();
+				while(dsym=dlist++){
+					menu->Append(i++,dsym->name());
+					remove_list.add(dsym);
+				}
+				submenu->AppendSubMenu(menu,fsym->name());
+			}
+			else if(fsym->isFile()){
+				remove_list.add(fsym);
+				submenu->Append(i++,fsym->name());
+			}		
 		}
-		i++;
 	}
-	replace_list.ss();
 	return submenu;
+
 }
 
 //-------------------------------------------------------------

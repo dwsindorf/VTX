@@ -118,6 +118,7 @@ class VtxSceneDialog : public wxFrame
 public:
 	LinkedList<ModelSym*> add_list;
 	LinkedList<ModelSym*> replace_list;
+	LinkedList<ModelSym*> remove_list;
 
 	VtxSceneDialog(wxWindow *parent,
 			wxWindowID id= wxID_ANY,
