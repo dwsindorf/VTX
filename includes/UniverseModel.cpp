@@ -33,8 +33,7 @@ void UniverseModel::getFullPath(ModelSym *m,char *path)
 	}
 }
 
-void UniverseModel::getFileList(int type,LinkedList<ModelSym*>&list)
-{
+void UniverseModel::getDirList(int type,LinkedList<ModelSym*>&list){
 	char dir[MAXSTR];
 	getObjectDirectory(type,dir);
 	if(!dir[0])
@@ -53,9 +52,16 @@ void UniverseModel::getFileList(int type,LinkedList<ModelSym*>&list)
 		ModelSym *sym=new ModelSym(name,path,true);
 		list.add(sym);
 	}
+}
+void UniverseModel::getFileList(int type,LinkedList<ModelSym*>&list)
+{
+	char dir[MAXSTR];
+	getObjectDirectory(type,dir);
+	if(!dir[0])
+		return;
 
+	getDirList(type,list);
 	File.getFileNameList(dir,"*.spx",list);
-	cout<<"UniverseModel::getFileList dirs:"<<type_dirs.size<<" files:"<<list.size<<endl;
 }
 
 //-------------------------------------------------------------
@@ -393,7 +399,7 @@ int UniverseModel::getSaveList(NodeIF *obj,LinkedList<ModelSym*>&list)
 // UniverseModel::getObjectSymbol() return object's dir symbol
 //-------------------------------------------------------------
 ModelSym* UniverseModel::getTypeSymbol(int type){
-    switch(type){
+    switch(type&GN_TYPES){
 	case GN_RANDOM:
 		return new ModelSym("[Random]",type);
 	case GN_TREE:

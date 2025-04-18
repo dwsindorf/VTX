@@ -3025,8 +3025,8 @@ void Star::getStarData(double *d, char *m){
 	strcpy(m,startype);
 }
 
-NodeIF *Star::getInstance(int gtype){
-    Star *star=newInstance(gtype);
+NodeIF *Star::getInstance(int type){
+    Star *star=newInstance(type&GN_TYPES);
     star->randomize();
 	return star;
 
@@ -4738,7 +4738,7 @@ Planet::~Planet()
 #endif
 }
 
-NodeIF *Planet::getInstance(NodeIF *prev,int gtype){
+NodeIF *Planet::getInstance(NodeIF *prev,int type){
 	planet_cnt++;
 	Planet *planet=(Planet*)prev;
 	setRseed(getRandValue());
@@ -4746,14 +4746,14 @@ NodeIF *Planet::getInstance(NodeIF *prev,int gtype){
 	setRands();
 	setParent(prev->getParent());
 	orbit_radius=planet->orbit_radius;
-	newInstance(gtype);
+	newInstance(type&GN_TYPES);
 	return this;
 }
 
 void Planet::newInstance(int gtype){
 	//initInstance();
     double rs=2*s[4];
-	cout<<"Planet::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<" s:"<<rs<<endl;
+	cout<<"Planet::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<" s:"<<rs<<endl;
 	switch(gtype){
 	default:
 	case GN_RANDOM:
@@ -4943,7 +4943,7 @@ void Planetoid::setColors(){
 			break;
 		}
 #ifdef DEBUG_GENERATE
-		cout<<UniverseModel::typeSymbol(terrain_type).c_str()<<" H:"<<hue<<" S:"<<sat<<" V:"<<" "<<val<<endl;
+		cout<<TheScene->typeSymbol(terrain_type).c_str()<<" H:"<<hue<<" S:"<<sat<<" V:"<<" "<<val<<endl;
 #endif
 		//Color tv=Color(base+0.1*r[3],0.5+0.2*r[4],0.5+0.3*r[5]);
 		//Color tm =Color(base+0.2*s[3]+0.2,0.5+0.2*s[4],0.5+0.3*s[5]);
@@ -5865,7 +5865,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		}
 	}
 	char pname[64];
-	sprintf(pname,"%s-l%d",UniverseModel::typeSymbol(planet->terrain_type).c_str(),num_layers);
+	sprintf(pname,"%s-l%d",TheScene->typeSymbol(planet->terrain_type).c_str(),num_layers);
 	planet->setName(pname);
 	planet_id=planet_cnt+lastn;
 	planet->get_vars();
@@ -5982,18 +5982,18 @@ Moon::~Moon()
 #endif
 }
 
-NodeIF *Moon::getInstance(NodeIF *prev,int gtype){
+NodeIF *Moon::getInstance(NodeIF *prev,int type){
 	lastn=getRandValue()*1234;
 	setRands();
 	setParent(prev->getParent());
 	size=0.1*((Planetoid *)prev)->size;
 	size*=(1.00+0.9*s[7]);
-	newInstance(gtype);
+	newInstance(type&GN_TYPES);
 	return this;
 }
 
 void Moon::newInstance(int gtype){
-	cout<<"Moon::newInstance "<<UniverseModel::typeSymbol(gtype).c_str()<<endl;
+	cout<<"Moon::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<endl;
 	makeLists();
 	//initInstance();
 	setRseed(r[0]);
@@ -6238,9 +6238,9 @@ bool Sky::randomize(){
 	return true;
 }
 
-NodeIF *Sky::getInstance(NodeIF *prev,int gtype){
+NodeIF *Sky::getInstance(NodeIF *prev,int type){
 	cout<<"Sky::getInstance"<<endl;
-	Sky *sky=newInstance(gtype);	
+	Sky *sky=newInstance(type&GN_TYPES);	
 	sky->setParent(prev->getParent());
 	return sky;
 }

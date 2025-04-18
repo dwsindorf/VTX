@@ -289,6 +289,22 @@ int Scene::setPrototype(NodeIF *n, NodeIF *s){
 	return model->setPrototype(n,s);
 }
 
+std::string Scene::typeSymbol(int type){
+	return model->typeSymbol(type);
+}
+
+int Scene::getGtype(int type,char* name){
+	LinkedList<ModelSym*>list;
+	model->getTypeList(type,list);
+	list.ss();
+	ModelSym *is=list.at();
+    while(is=list++){
+    	if(strcmp(is->name(),name)==0){
+    		return is->value&GN_TYPES;
+    	}
+	}
+    return 0;
+}
 //-------------------------------------------------------------
 // Scene::getInstance() return prototype or randomly selected object
 //-------------------------------------------------------------
@@ -340,7 +356,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 		m->setProtoValid(false);
 			
 	NodeIF *p=obj->getParent();
-	NodeIF *n=m->getInstance(obj,gtype);
+	NodeIF *n=m->getInstance(obj,type);
 	
 	Render.invalidate_textures();
 	images.invalidate();

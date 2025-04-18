@@ -342,7 +342,9 @@ public:
 	NodeIF *removeChild(NodeIF *c);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
     NodeIF *getInstance(int t);
-
+    
+    std::string typeSymbol(int type);
+    int getGtype(int type,char* name);
 
 	int typeValue()							{ return ID_SCENE;}
 	const char *typeName()					{ return "Scene";}

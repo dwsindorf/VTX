@@ -60,30 +60,30 @@ enum tree_codes{
 enum gen_codes{
 	GN_RANDOM  		= 0x00000000,
 	GN_MISC  		= 0x00000001,
-	GN_TREE  		= 0x00001000,
-	GN_BUSH  		= 0x00002000,
-	GN_GRASS  		= 0x00003000,
-	GN_SHRUB  		= 0x00004000,
-	GN_FLOWER  		= 0x00005000,
+	GN_TREE  		= 0x00010000,
+	GN_BUSH  		= 0x00020000,
+	GN_GRASS  		= 0x00030000,
+	GN_SHRUB  		= 0x00040000,
+	GN_FLOWER  		= 0x00050000,
 	GN_PLANT  		= GN_TREE|GN_SHRUB|GN_BUSH|GN_FLOWER|GN_GRASS,
-	GN_GASSY  		= 0x00010000,
-	GN_CRATERED  	= 0x00020000,
-	GN_VOLCANIC  	= 0x00030000,
-	GN_ROCKY  		= 0x00050000,
-	GN_ICY  		= 0x00060000,
-	GN_OCEANIC      = 0x00070000,
+	GN_GASSY  		= 0x00060000,
+	GN_CRATERED  	= 0x00070000,
+	GN_VOLCANIC  	= 0x00080000,
+	GN_ROCKY  		= 0x00090000,
+	GN_ICY  		= 0x000a0000,
+	GN_OCEANIC      = 0x000b0000,
 	GN_PLANET  		= GN_GASSY|GN_ROCKY|GN_ICY|GN_CRATERED|GN_VOLCANIC|GN_OCEANIC,
 	GN_MOON  		= GN_ROCKY|GN_ICY|GN_CRATERED|GN_VOLCANIC|GN_OCEANIC,
-	GN_RED_STAR     = 0x000a0000,
-	GN_YELLOW_STAR  = 0x000b0000,
-	GN_WHITE_STAR   = 0x000c0000,
-	GN_BLUE_STAR    = 0x000d0000,
+	GN_RED_STAR     = 0x000c0000,
+	GN_YELLOW_STAR  = 0x000d0000,
+	GN_WHITE_STAR   = 0x000e0000,
+	GN_BLUE_STAR    = 0x000f0000,
 	GN_STAR         = GN_YELLOW_STAR|GN_WHITE_STAR|GN_BLUE_STAR|GN_RED_STAR,
-	GN_WATER        = 0x000e0000,
+	GN_WATER        = 0x00100000,
 	GN_OCEAN        = GN_WATER,
-	GN_THIN         = 0x00100000,
-	GN_MED          = 0x00200000,
-	GN_DENSE        = 0x00300000,
+	GN_THIN         = 0x00200000,
+	GN_MED          = 0x00300000,
+	GN_DENSE        = 0x00400000,
 	GN_SKY          = GN_THIN|GN_DENSE|GN_MED,
 
 };
@@ -112,11 +112,12 @@ public:
 	bool hasTypeList(int t);
 	void getTypeList(int type,LinkedList<ModelSym*>&list);
 	void getFileList(int type,LinkedList<ModelSym*>&list);
+	void getDirList(int type,LinkedList<ModelSym*>&list);
 	void getObjectDirectory(int type,char *dir);
 	void getFullPath(ModelSym*m,char *c);
 	TreeNode *buildTree(NodeIF *);
 	void setType(NodeIF *);
 	NodeIF *open_node(NodeIF *parent,char *s);
-	static std::string typeSymbol(int type);
+	std::string typeSymbol(int type);
 };
 #endif

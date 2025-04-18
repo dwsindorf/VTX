@@ -210,6 +210,7 @@ public:
 	NodeIF *lastChild();
 	NodeIF *getInstance();
 	NodeIF *getInstance(NodeIF *prev);
+	NodeIF *getInstance(NodeIF *prev, int m);
 
 };
 

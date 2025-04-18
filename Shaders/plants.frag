@@ -47,6 +47,38 @@ varying vec4 ImageVars;
 
 vec3 test;
 
+/*
+float sum( vec4 v ) { return v.x+v.y+v.z; }
+
+vec4 textureNoTile( int id, sampler2D samp, in vec2 x )
+{
+    // sample variation pattern    
+    float k = texture2D( samplers2d[id], 0.005*x ).x; // cheap (cache friendly) lookup    
+    
+    // compute index    
+    float index = k*8.0;
+    float i = floor( index );
+    float f = fract( index );
+
+    // offsets for the different virtual patterns    
+    vec2 offa = sin(vec2(3.0,7.0)*(i+0.0)); // can replace with any other hash    
+    vec2 offb = sin(vec2(3.0,7.0)*(i+1.0)); // can replace with any other hash    
+
+    // compute derivatives for mip-mapping    
+    vec2 dx = dFdx(x), dy = dFdy(x);
+    
+    // sample the two closest virtual patterns    
+    vec4 cola = textureGrad( samp, x + offa, dx, dy );
+    vec4 colb = textureGrad( samp, x + offb, dx, dy );
+
+    // interpolate between the two virtual patterns    
+
+    vec4 result=mix( cola, colb, smoothstep(0.2,0.8,f-0.1*sum(cola-colb)) );
+
+    return result;
+
+}
+*/
 vec2 sprite(vec2 l_uv){
     
     float cols=ImageVars.x;  
@@ -122,7 +154,6 @@ void main(void) {
 	int aopt=copt&4;
 	copt=copt&3;
 #if NTEXS >0
-	
 	if(texid>=0){
 		vec2 l_uv=sprite(gl_TexCoord[0].xy);
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);

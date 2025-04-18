@@ -296,7 +296,7 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		}
 
 		if(sym){
-			cout<<"SYM="<<sym->name()<<endl;
+			cout<<"SYM name:"<<sym->name()<<" value:"<<sym->value<<" dir:"<<sym->dir()<<endl;
 			sbuff[0]=0;
 			if(menu_choice & TABS_REPLACE)
 				TheScene->model->setActionMode(Model::REPLACING);
@@ -307,8 +307,10 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 				TheScene->model->getFullPath(sym,sbuff);
 				newobj=TheScene->open_node(obj,sbuff);
 			}			
-			else 
+			else {
+				sym->value|=TheScene->getGtype(sym->value,sym->name());
 				newobj=TheScene->makeObject(obj,sym->value);
+			}
 		}
 	}
 	switch(menu_choice){
@@ -801,13 +803,10 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 
     selectObject(newobj);
     item=treepanel->GetSelection();
-    //node=(TreeDataNode*)treepanel->GetItemData(item);
-    //node->setObject(newobj);
 
 	if(expanded)
 		treepanel->Expand(item);
-    //setTabs(type);
-}
+ }
 
 //#define DEBUG_TREE
 
@@ -840,10 +839,7 @@ void VtxSceneDialog::rebuildObjectTree(){
 	rebuilding=false;
 	selected=root;
 	currentTabs=-1;
-	//setTabs(selected->getFlag(TN_TYPES));
-	//treepanel->CollapseAll();
 	cout<<"rebuildObjectTree 1"<<endl;
-	//setSelected(selectedId);
 	treepanel->SelectItem(selectedId);
 	cout<<"rebuildObjectTree 2"<<endl;
 
@@ -851,7 +847,6 @@ void VtxSceneDialog::rebuildObjectTree(){
 
     TheScene->set_changed_detail();
 	TheScene->unsuspend();
-	//TheScene->rebuild();
     cout<<"rebuildObjectTree end"<<endl;
 
 }

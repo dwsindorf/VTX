@@ -5,15 +5,15 @@ Scene() {
 		theta=-200.886;
 		height=0.162539;
 		time=57966.4;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.034;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=90;
 		pitch=-94;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -21,8 +21,14 @@ Scene() {
 		theta=-195.889;
 		height=0.158502;
 		pitch=-93;
-		minr=0.034;
+		vstride=0.02;
+		zoom=0.034;
+		minh=5.68182e-10;
 		radius=0.192502;
+	}
+	View{
+		theta=-79.0039;
+		minr=0.034;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -31,14 +37,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				name="Solor";
@@ -50,7 +56,7 @@ Scene() {
 					emission=Color(1,1,1);
 					name="Sol";
 					specular=Color(1,1,1);
-					temperature=6540.73;
+					temperature=6000;
 					Surface{
 						mc=clamp(noise(GRADIENT|UNS,3,10,0.4,0.5)*noise(GRADIENT|NABS|UNS,8,10,0.5,0.5),0,1);
 						terrain=Color(1,1-0.3*mc,0.9-mc);
@@ -64,7 +70,8 @@ Scene() {
 					ambient=Color(1,1,1,0.04);
 					day=20;
 					name="Saturn";
-					ocean.level=0 ft;
+					ocean.auto=1;
+					ocean.state=2;
 					phase=60;
 					shadow=Color(0,0,0,0.24);
 					shine=1.63453;
@@ -82,7 +89,8 @@ Scene() {
 						ambient=Color(1,1,1,0.13);
 						day=30;
 						name="Moon";
-						ocean.level=0 ft;
+						ocean.auto=1;
+						ocean.state=2;
 						phase=183.398;
 						shadow=Color(0,0,0,0.58);
 						shine=9.23947;

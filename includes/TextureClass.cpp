@@ -371,7 +371,8 @@ bool Texture::setProgram(){
 	//float logf = log2(ts)+log2(orders_delta)-1+0.5*log2(height())+TheScene->freq_mip;
 
 	float dlogf=log2(orders_delta); //
-	float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
+	//float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
+	float hlog=0.25*log2(delta); // hack to reduce number of tex orders for larger images
 	float logf = log2(ts)+dlogf+hlog; // reduces tex max_orders set in MapNode::Svertex
 
 	TerrainProperties *tp=TerrainData::tp;

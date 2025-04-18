@@ -1432,14 +1432,46 @@ bool TNplant::randomize(){
 	}
 	return false;
 }
+NodeIF *TNplant::getInstance(){
+		return this;
+}
 NodeIF *TNplant::getInstance(NodeIF *parent){
 	randomize();
 	return this;
 }
-NodeIF *TNplant::getInstance(){
-	cout<<"TNplant::getInstance()"<<endl;
-	return this;
+
+NodeIF *TNplant::getInstance(NodeIF *parent, int type){
+	LinkedList<ModelSym*>list;
+	char name[256];
+	char path[512];
+	path[0]=0;
+	strcpy(name,TheScene->typeSymbol(type).c_str());
+	TheScene->model->getDirList(type,list);
+	list.ss();
+	ModelSym *is=list.at();
+    while(is=list++){
+    	if(strcmp(is->name(),name)==0){
+    		strcpy(path,is->dir());
+    		break;
+    	}
+	}
+ 	list.free();
+ 	TNplant *plant=this;
+    if(strlen(path)){
+    	File.getFileNameList(path,"*.spx",list);
+		int ival=std::rand() % list.size;
+		is=list[ival];
+		strcpy(name,is->name());
+		strcpy(path,is->dir());
+		plant=TheScene->open_node(0,path);
+		
+    }
+ 	cout<<"TNplant::getInstance{"<<name<<") path:"<<path<<endl;
+    list.free();
+	plant->randomize();
+	return plant;
 }
+
 //===================== TNBranch ==============================
 //************************************************************
 // TNBranch class
@@ -1581,7 +1613,7 @@ bool TNBranch::setProgram(){
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 		
-		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" alpha:"<<alpha_texture<<endl;
+		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" w:"<<w<<" h:"<<h<<endl;
 
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);

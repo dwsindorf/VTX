@@ -160,8 +160,11 @@ public:
 	virtual bool hasTypeList(int t) { return false;}
 	virtual void getTypeList(int,LinkedList<ModelSym*>&list);
 	virtual void getFileList(int type,LinkedList<ModelSym*>&list);
+	virtual void getDirList(int type,LinkedList<ModelSym*>&list);
 	virtual void getObjectDirectory(int type,char *dir);
 	virtual void getFullPath(ModelSym*,char*);
+	virtual std::string typeSymbol(int type);
+	virtual int getGtype(int type,char* name);
 
 	void setFlag(TreeNode *n,int f) { if(n)n->node->setFlag(f);}
 	void clrFlag(TreeNode *n,int f) { if(n)n->node->clrFlag(f);}

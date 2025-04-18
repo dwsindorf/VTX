@@ -34,12 +34,12 @@ vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
  
     float scale =0.7123*tex2d[id].scale;
     vec3 P=v1*scale;
-    float r=voronoi2d(P.xy);
-    //float r=noise3D(P).x; 
+    //float r=voronoi2d(P.xy);
+    float r=noise3D(P).x; 
      //float r= fnoise(P.xy);
     
     // compute index    
-    //float index = P1.x*8.0;
+
     float index =r*8.0;
     float i = floor( index );
     float f = fract( index );

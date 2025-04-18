@@ -253,6 +253,11 @@ int Model::getReplaceList(NodeIF *obj,LinkedList<ModelSym*>&list){return 0;}
 
 void Model::getTypeList(int type,LinkedList<ModelSym*>&list){}
 void Model::getFileList(int type,LinkedList<ModelSym*>&list){}
+void Model::getDirList(int type,LinkedList<ModelSym*>&list){}
+std::string Model::typeSymbol(int type){
+	return std::string("");
+}
+int Model::getGtype(int type,char* name){ return 0;}
 
 void Model::getObjectDirectory(int type,char *dir){}
 //ModelSym* Model::getObjectSymbol(int type){return 0;}
