@@ -1773,8 +1773,7 @@ bool ImageInfo::getImageFilePath(char *name,char *dir){
 
 	ImageSym *is=images.getImageInfo(name);
 	strcpy(dir,is->namePath().c_str());
-	int itype=is->info&IMTYPE;
-	if(itype==LEAF || itype==BRANCH){
+	if(is->info & TILED){
 		std::string str=is->parentDir();
 		char *pd=str.c_str();
 		strcpy(image_dir,pd);

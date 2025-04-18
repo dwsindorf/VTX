@@ -326,7 +326,7 @@ bool Texture::initProgram(){
 	int tid=TerrainProperties::tid;
 	if(tex_active && Render.textures())
 		sprintf(defs+strlen(defs),"#define T%d\n",tid);
-	if(orders>1)
+	//if(orders>1)
 		sprintf(defs+strlen(defs),"#define M%d\n",tid);
 	if(expr)
 		expr->initProgram();
