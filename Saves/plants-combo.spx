@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400199;
 		heading=109;
 		tilt=-30;
 		angle=-28;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -62,8 +64,8 @@ Scene() {
 								Branch("branch",8,2,1.07,0.64,0.41,1,0.21,0.69,0.7,20,0,1,0,15,0,0.21)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
 								Leaf("leaf",1,0,4,2,0.25,1,0,0.8,1,0,0,0,15,15,0,0.67)["Leaf2",Color(URAND,0.8*URAND,0,0.3)]
 								Leaf("flower",1,1,10,1,0,0.22,1,0.1,0,0,0,0.06,15,15,0,0.02)["CrabApple",Color(1,1,1,0)]
-								Plant("Grass1",1,9.4697e-08,0.8,0.5,0.78,-0.8,0,0,0.22)
-								Branch("stem",10,1,0.56,1,0.6,0.4,0.1,0.8,1.2,100,0,1,0,31,0,1)["Cracks1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
+								Plant("Grass1",1,9.4697e-08,0.8,0.5,0.429,-0.8,0,0,0.667)
+								Branch("stem",10,1,1,0.2,0.6,0.4,0.212,0.8,1,100,0,1,0,31,-0.03,1)["H3294",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

@@ -16,14 +16,14 @@
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
-//#define DEBUG_TEST_PTS 
+#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
 
 //#define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
-//#define SHOW_BRANCH_STATS
+#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
@@ -236,9 +236,9 @@ static double tfactor=2;
 static double sfactor=4;
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
-#define MIN_LINE_WIDTH MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH tfactor*MIN_LINE_WIDTH
-#define MIN_SPLINE_WIDTH sfactor*MIN_LINE_WIDTH
+#define MIN_LINE_WIDTH 0.25*MIN_DRAW_WIDTH
+#define MIN_TRIANGLE_WIDTH tfactor*min_draw_width
+#define MIN_SPLINE_WIDTH sfactor*min_draw_width
 
 #ifdef DUMP
 static void show_stats()
@@ -443,12 +443,12 @@ bool PlantMgr::setProgram(){
 	case HIGH:
 		tfactor=2;
 		sfactor=2;
-		min_draw_width=0.75;
+		min_draw_width=0.85;
 		break;
 	case BEST:
 		tfactor=2;
 		sfactor=2;
-		min_draw_width=0.5;
+		min_draw_width=0.7;
 		break;	
 	}
 
@@ -613,6 +613,7 @@ void PlantMgr::render_zvals(){
 
 	shadow_mode=false;
 }
+
 void PlantMgr::render(){
 	oldmode=0;
 	int l=randval;
@@ -633,7 +634,6 @@ void PlantMgr::render(){
 		update_needed=false;
 
 	if(update_needed){
-		//cout<<"update needed"<<endl;
 		TNLeaf::freeLeafs();
 		TNBranch::freeBranches();
 		clearStats();
@@ -645,28 +645,29 @@ void PlantMgr::render(){
 	if(!shadow_mode)
 		glEnable(GL_BLEND);
 	int start=show_one?0:n-1;
+	if(update_needed){
+		for(int i=start;i>=0;i--){ // Farthest to closest
+			PlantData *s=Plant::data[i];
+			Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
+			int id=s->get_id();
+			
+			TNplant *plant=s->mgr->plant;
 	
-	if(update_needed)
-	for(int i=start;i>=0;i--){ // Farthest to closest
-		PlantData *s=Plant::data[i];
-		Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
-		int id=s->get_id();
-		
-		TNplant *plant=s->mgr->plant;
-
-		plant->size=s->radius; // placement size
-		plant->base_point=s->base*(1-plant->size*plant->base_drop);
-		plant->pntsize=s->pntsize;
-		plant->distance=s->distance;
-		
-		Point pp=Point(s->point.x,s->point.y,s->point.x);
-		
-		double r=Random(pp);
-		randval=256*fabs(r)+id;
-		plant->seed=URAND;
-		plant->instance=i;
-		plant->emit();
+			plant->size=s->radius; // placement size
+			plant->base_point=s->base*(1-plant->size*plant->base_drop);
+			plant->pntsize=s->pntsize;
+			plant->distance=s->distance;
+			
+			Point pp=Point(s->point.x,s->point.y,s->point.x);
+			
+			double r=Random(pp);
+			randval=256*fabs(r)+id;
+			plant->seed=URAND;
+			plant->instance=i;
+			plant->emit();
+		}
 	}
+
 	t2=clock(); // total
 	
 	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
@@ -879,6 +880,7 @@ void Plant::collect()
 		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_plants=0;
 #endif
 		Plant *plant=Td.plants[i];
+		plant->expr->created=0;
 		plant->mgr()->ss();
 		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
 	while(s){
@@ -920,17 +922,19 @@ void Plant::collect()
 #endif
 		    if(pts_test && s->visits>=minv){
 		    	new_plants++;
+		    	if(plant)
+		    	plant->expr->created++;
 		    	data.add(new PlantData((PlantPoint*)s,bp,d,pts));
 		    }
 		}
 		s=plant->mgr()->next();
 	  }	
 #ifdef SHOW_PLANT_STATS
-	double usage=100.0*trys/plant->mgr()->hashsize;
-	double badvis=100.0*bad_visits/trys;
-	double badactive=100.0*bad_active/trys;
-	double badpts=100.0*bad_pts/trys;
-	cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
+		double usage=100.0*trys/plant->mgr()->hashsize;
+		double badvis=100.0*bad_visits/trys;
+		double badactive=100.0*bad_active/trys;
+		double badpts=100.0*bad_pts/trys;
+		cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
 #endif
 
 	}
@@ -1009,9 +1013,11 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	width_scale=1;
 	size_scale=1;
 	rendered=0;
+	created=0;
 	distance=0;
 	instance=0;
 	seed=0;
+	render_test=false;
 	
     mgr=new PlantMgr(PLANTS|NOLOD,this);
 }
@@ -1181,30 +1187,38 @@ void TNplant::eval()
 void TNplant::clearStats(){
 	//if(!update_needed)
 	//	return;
+	rendered=0;
+	render_test=false;
 	for(int i=0;i<MAX_BRANCHES;i++){
 		for(int j=0;j<MAX_PLANT_DATA;j++)
 			stats[i][j]=0;
 	}
 }
 void TNplant::showStats(){
+	cout<<"plant["<<name_str<<"] created["<<created<<"] rendered["<<rendered<<"]"<<endl;
+#ifdef SHOW_BRANCH_DATA
 	for(int i=0;i<branches;i++){
-		cout<<"plant["<<name_str<<"] branch["<<i<<"]"
+		cout<<"branch["<<i<<"]"
 		<<" skipped:"<<stats[i][0]
-		<<" terminal:"<<stats[i][1]
+		//<<" rendered:"<<stats[i][1]
 	    <<" lines:"<<stats[i][2]
 		<<" polygons:"<<stats[i][3]
 		<<" splines:"<<stats[i][4]
 		<<" leafs:"<<stats[i][5]
 		<<endl;
 	}
+#endif
 }
 void TNplant::addSkipped(int id){
 	if(update_needed)
 	stats[id][0]++;	
 }
-void TNplant::addTerminal(int id){
-	if(update_needed)
-	stats[id][1]++;	
+void TNplant::addRendered(){
+	if(update_needed){
+		//if(!render_test)
+		rendered++;
+		//render_test=true;
+	}
 }
 void TNplant::addLine(int id){
 	if(update_needed)
@@ -1365,8 +1379,7 @@ void TNplant::emit(){
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	//width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
 	width_scale=800/TheScene->wscale;
-    rendered=0;
-    
+     
 	Randval=URAND;
 	double length=size*PSCALE;	
 
@@ -1380,6 +1393,9 @@ void TNplant::emit(){
 		first_branch=(TNBranch*)right;
 	else
 		return;
+	
+	render_test=false;
+
 	double branch_size=length*first_branch->length;
 
 	Point top=bot*(1+branch_size); // starting trunk size
@@ -1404,6 +1420,8 @@ void TNplant::emit(){
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 	glEnable(GL_CULL_FACE);
+	if(render_test)
+		rendered++;
 	
 }
 
@@ -1831,14 +1849,12 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		n=n<1?1:n;
 		double we=evalArg(3,width);
 		
-		//if((opt & BASE_FORK)==0)
-			we*=lerp(w,1,10,5,1);
-		
-		we=we>1?1:we;
-		//cout<<w<<endl;
-				
-		//if((opt & BASE_FORK)==0)
-		//	we+=Range;
+		// increase width of branches wrt parent for more distant plants
+		// - otherwise only trunk is rendered and it appears "denuded"
+		if((opt & BASE_FORK)==0)
+			we*=lerp(w,1,10,3,1); // units are screen pixels
+			
+		we=we>1?1:we; // clamp branch width to parent width
 		for(int i=0;i<n;i++){
 			level=0;
 			emit(opt,start,vec,tip,s,we*w,1);
@@ -1855,7 +1871,6 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 	randval=l+1;
 }
 
-
 void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		double parent_size, double parent_width, int lvl) {
 
@@ -1870,6 +1885,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
+	//bool main_branch = (opt & BASE_FORK);
 
 	double topx = 0;
 	double topy = 0;
@@ -1897,7 +1913,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double child_length = parent_length;
 	double pw=1;
 	double pd=1;
-
+	
 	if(isPlantBranch()){
 		int n = (int)max_splits+0.4;
 		pw=pow(n,max_level);
@@ -1907,7 +1923,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		if (first_fork && lvl > 0  && parent->typeValue()==ID_BRANCH){
 			child_width *= parent->width_taper;
 	    }
-		if (child_width < MIN_DRAW_WIDTH) {
+		if (child_width < MIN_LINE_WIDTH) {
 			root->addSkipped(branch_id);
 			return;
 		}
@@ -1959,7 +1975,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	p1 = start;
 
 	int tid = isTexEnabled() ? texid : -1;
-	if (child_width > MIN_LINE_WIDTH) {
+
+	if (child_width >MIN_LINE_WIDTH) {
+		//if(!render_test)
+		//root->addRendered();
+		root->render_test=true;
 		if (isPlantBranch() && lev >maxlvl)
 			opt = LAST_EMIT;
 		double bf=evalArg(12,Randval*randomness+bias);
@@ -1974,6 +1994,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		
 		sy=image_rows-sy-1; // invert y
 		Point4D sd(image_cols,image_rows,sx,sy);
+		
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && !isShadowEnabled())
@@ -2000,7 +2021,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					double size = root->width_scale * PSCALE * TheScene->wscale
 							* child_size;
 
-					root->rendered++;
+					//root->rendered++;
 
 					int segs = max_level;
 					double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
@@ -2097,7 +2118,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			tip.x = topx;
 			tip.y = topy;
 			tip.z = top_offset;
-			root->rendered++;
+			//root->rendered++;
 
 			if (PlantMgr::threed) {
 				w1 = w1 / root->size_scale;
@@ -2194,7 +2215,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
 #endif
 			double nscale = TNplant::norm_min;
-			root->rendered++;
+			//root->rendered++;
 			root->addLine(branch_id);
 			setColor(nocache);
 			c = S0.c;
@@ -2229,7 +2250,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	
 		child_width *= evalArg(7,width_taper);
 		child_size *= evalArg(8,length_taper);
-		if (n>=1 && child_width > MIN_LINE_WIDTH){
+		if (n>=1 && child_width >MIN_LINE_WIDTH){
 			emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
 			for (int i = 1; i < n; i++) {
 				emit(0, bot, v, tip, child_size, child_width, lev);

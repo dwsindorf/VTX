@@ -174,7 +174,9 @@ public:
 	static double norm_min;
 
 	Point base_point;
+	int created;
 	int rendered;
+	bool render_test;
 	
 	TNplant(TNode *l, TNode *r);
 	~TNplant();
@@ -198,7 +200,7 @@ public:
 	void showStats();
 	void addBranch(int id);
 	void addLine(int id);
-	void addTerminal(int id);
+	void addRendered();
 	void addLeaf(int id);
 	void addSpline(int id);
 	void addSkipped(int id);
