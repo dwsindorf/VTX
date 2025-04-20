@@ -31,6 +31,7 @@ protected:
 	ExprSliderCtrl *HtBiasSlider;
 
 	SliderCtrl *DropSlider;
+	SliderCtrl *PixelsSlider;
 	
 	wxCheckBox *m_skeleton;
 	wxCheckBox *m_splines;
@@ -68,6 +69,7 @@ public:
 	DEFINE_SLIDER_EVENTS(PhiBias)
 	DEFINE_SLIDER_EVENTS(HtBias)
 	DEFINE_SLIDER_EVENTS(Drop)
+	DEFINE_SLIDER_EVENTS(Pixels)
 	DECLARE_EVENT_TABLE()
 };
 #endif /*PLANTTABS_H_*/

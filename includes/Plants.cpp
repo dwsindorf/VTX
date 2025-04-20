@@ -15,8 +15,8 @@
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-#define TEST_PTS 
-#define DEBUG_TEST_PTS 
+//#define TEST_PTS 
+//#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define SHOW
 //#define DEBUG_PMEM
@@ -234,9 +234,10 @@ static double min_adapt_pts=4; //  for adapt - increase resolution only around n
 
 static double tfactor=2;
 static double sfactor=4;
+static double dfactor=0.25;
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
-#define MIN_LINE_WIDTH 0.25*MIN_DRAW_WIDTH
+#define MIN_LINE_WIDTH dfactor*MIN_DRAW_WIDTH
 #define MIN_TRIANGLE_WIDTH tfactor*min_draw_width
 #define MIN_SPLINE_WIDTH sfactor*min_draw_width
 
@@ -429,28 +430,28 @@ bool PlantMgr::setProgram(){
 		Td.plants[i]->setProgram();
 	}
 
-	switch(TheScene->render_quality){
-	case DRAFT:
-		min_draw_width=1.5;
-		tfactor=3;
-		sfactor=6;
-		break;
-	case NORMAL:
-		tfactor=2;
-		sfactor=3;
-		min_draw_width=1;
-		break;
-	case HIGH:
-		tfactor=2;
-		sfactor=2;
-		min_draw_width=0.85;
-		break;
-	case BEST:
-		tfactor=2;
-		sfactor=2;
-		min_draw_width=0.7;
-		break;	
-	}
+//	switch(TheScene->render_quality){
+//	case DRAFT:
+//		min_draw_width=1.5;
+//		tfactor=3;
+//		sfactor=6;
+//		break;
+//	case NORMAL:
+//		tfactor=2;
+//		sfactor=3;
+//		min_draw_width=1;
+//		break;
+//	case HIGH:
+//		tfactor=2;
+//		sfactor=2;
+//		min_draw_width=0.85;
+//		break;
+//	case BEST:
+//		tfactor=2;
+//		sfactor=2;
+//		min_draw_width=0.7;
+//		break;	
+//	}
 
 	branch_nodes=0;
 	trunk_nodes=0;
@@ -1012,6 +1013,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
+	draw_scale=0.25;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1074,6 +1076,7 @@ void TNplant::init()
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
 	if(n>8) base_drop=arg[8];
+	if(n>9) draw_scale=arg[9];
 
 	smgr->set_first(1);
 }
@@ -1369,12 +1372,38 @@ int TNplant::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
 
+void TNplant::setScale(){
+	dfactor=draw_scale;
+	switch(TheScene->render_quality){
+	case DRAFT:
+		min_draw_width=1.5;
+		tfactor=3;
+		sfactor=6;
+		break;
+	case NORMAL:
+		tfactor=2;
+		sfactor=3;
+		min_draw_width=1;
+		break;
+	case HIGH:
+		tfactor=2;
+		sfactor=2;
+		min_draw_width=0.85;
+		break;
+	case BEST:
+		tfactor=2;
+		sfactor=2;
+		min_draw_width=0.7;
+		break;	
+	}
+}
 //-------------------------------------------------------------
 // TNplant::emit() build the branch structure
 //-------------------------------------------------------------
 void TNplant::emit(){
 	if(!isEnabled())
 		return;
+	setScale();
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
 	// note: width_scale == 1 for med and large 0.6629 for wide
 	//width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];

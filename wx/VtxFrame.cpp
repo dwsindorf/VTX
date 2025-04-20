@@ -643,6 +643,8 @@ void VtxFrame::OnSceneOpen(wxCommandEvent& WXUNUSED(event))
 //-------------------------------------------------------------
 void VtxFrame::OnSceneSave(wxCommandEvent& WXUNUSED(event))
 {
+	// following line prevents an annoying popup error even after a successful save
+	wxLogNull logNo;  // disable errors
 	char filename[64];
     char dir[256];
     filename[0]=0;

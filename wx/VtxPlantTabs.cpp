@@ -44,6 +44,8 @@ enum{
     ID_HT_BIAS_TEXT,
 	ID_DROP_SLDR,
 	ID_DROP_TEXT,
+	ID_PIXELS_SLDR,
+	ID_PIXELS_TEXT,
 	ID_3D,
 	ID_SPLINES,
 	ID_LINES,
@@ -79,6 +81,7 @@ SET_SLIDER_EVENTS(SLOPE_BIAS,VtxPlantTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxPlantTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxPlantTabs,HtBias)
 SET_SLIDER_EVENTS(DROP,VtxPlantTabs,Drop)
+SET_SLIDER_EVENTS(PIXELS,VtxPlantTabs,Pixels)
 
 EVT_CHECKBOX(ID_3D,VtxPlantTabs::OnChangedDisplay)
 EVT_CHECKBOX(ID_LINES,VtxPlantTabs::OnChangedDisplay)
@@ -245,14 +248,20 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	
 	// other
 	
-	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Other"));
+	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Other"));
 	
 	DropSlider=new SliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
 	DropSlider->setRange(0,2);
 	DropSlider->setValue(0.0);
 	
 	other->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
+
+	PixelsSlider=new SliderCtrl(panel,ID_PIXELS_SLDR,"Pixels",LABEL2, VALUE2,SLIDER2);
+	PixelsSlider->setRange(0.1,1);
+	PixelsSlider->setValue(0.0);
+
+	other->Add(PixelsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 	other->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
 
@@ -299,7 +308,8 @@ wxString VtxPlantTabs::exprString(){
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
-	s+=DropSlider->getText();
+	s+=DropSlider->getText()+",";
+	s+=PixelsSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -384,8 +394,14 @@ void VtxPlantTabs::getObjAttributes(){
 	if(a)
 		DropSlider->setValue(a);
 	else
-		DropSlider->setValue(mgr->plant->base_drop);
-	
+		DropSlider->setValue(obj->base_drop);
+
+	a=args[9];
+	if(a)
+		PixelsSlider->setValue(a);
+	else
+		PixelsSlider->setValue(obj->draw_scale);
+
     getDisplayState();
 
 

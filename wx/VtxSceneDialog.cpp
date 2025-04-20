@@ -1070,6 +1070,7 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 	TheScene->model->getFileList(sym->value,flist);
 	if(flist.size>0){
 		flist.ss();
+		submenu->AppendSeparator();
 		while((fsym=flist++)){
 			if(fsym->isDir()){
 				wxMenu *menu=new wxMenu();
@@ -1083,7 +1084,8 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 				submenu->AppendSubMenu(menu,fsym->name());
 			}
 		}
-		submenu->AppendSeparator();
+		if(dlist.size>0)
+			submenu->AppendSeparator();
 		flist.ss();
 		list.add(new ModelSym("<Random>",sym->value));
 		submenu->Append(i++,"<Random>");

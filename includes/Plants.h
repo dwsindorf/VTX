@@ -169,6 +169,7 @@ public:
 	double base_drop;
 	double width_scale;
 	double size_scale;
+	double draw_scale;
 	double seed;
 	static double norm_max;
 	static double norm_min;
@@ -197,6 +198,7 @@ public:
 	void getLeaf();
 	void getLastBranch();
 	void clearStats();
+	void setScale();
 	void showStats();
 	void addBranch(int id);
 	void addLine(int id);
