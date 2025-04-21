@@ -83,7 +83,7 @@ NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
 
-LinkedList<Placement*> PlacementMgr::list;
+//LinkedList<Placement*> PlacementMgr::list;
 
 PlacementMgr::PlacementMgr(int i, int h)
 {

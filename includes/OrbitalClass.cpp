@@ -5180,17 +5180,17 @@ std::string Planetoid::randFeature(int type) {
 		str=TNnoise::randomize(str.c_str(),0.3,0.0);
 		break;
 	case RND_SURFACE_GULLIES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE,22,4,0.041,0.5,2,0.04,0,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE,20,8,0.041,0.5,2,0.04,0,0,0,1e-06)";
 		//str=TNnoise::randomize(str.c_str(),0.1,0.0);
 		break;
 	case RND_SURFACE_RIDGES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE,22,4,0.041,0.5,2,0.04,0,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE,20,8,0.041,0.5,2,0.04,0,0,0,1e-06)";
 		break;
 	case RND_SURFACE_PIMPLES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|SQR,22,4,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|SQR,20,8,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
 		break;
 	case RND_SURFACE_DIMPLES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|SQR,22,4,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|SQR,20,8,0.2,0.5,2,0.05,-0.4,0,0,1e-06)";
 		//str=TNnoise::randomize(str.c_str(),0.1,0.0);
 		break;
 	case RND_HRIDGES:
@@ -5361,7 +5361,7 @@ std::string Planetoid::randFeature(int type) {
 		//keep_rands=true;
 		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%g,0.5,0,0,6,%g,0.5,0,0,%g,0,%g)",
 		randFeature(RND_STEXNAME).c_str(), // image name
-		pow(2,20+2*s[4]),   	// start,  // start
+		pow(2,18+s[4]),   	// start,  // start
 		//1,    	// bump ampl
 		//(int)(6+2*s[7]),   	// num orders
 		2.0+0.2*s[8],      	// orders freq
@@ -5380,7 +5380,7 @@ std::string Planetoid::randFeature(int type) {
 		0.5*s[6],         // offset
 		0.01*s[7],     // phi bias
 		0.01*s[8], // ht bias
-		0.01*s[9],     // bmp bias
+		0.1*(1+0.25*s[9]),     // bmp bias
 		0.1*(1+0.5*s[10]) // slope bias
 		);
 		str=buff;

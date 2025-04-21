@@ -338,11 +338,6 @@ void TNmap::eval()
 
 	int id=0;
 
-	#define CHKLOW \
-	        edge_layer->morph \
-	     && Td.zlevel[1].p.z>-10 \
-	     && !CurrentScope->zpass()
-
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;

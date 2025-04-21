@@ -3,7 +3,7 @@ Scene() {
 		view=SURFACE;
 		phi=-5.55633;
 		theta=24.4366;
-		height=30.7292 ft;
+		height=5.85856 ft;
 		gndlvl=10512.5 ft;
 		time=200873;
 		vstride=0.02;
@@ -11,19 +11,13 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		heading=151;
-		tilt=-15;
-		angle=-20;
-		fov=35;
-		gstride=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=5.85856 ft;
+		minr=0.00400199;
 		heading=174;
 		tilt=-4;
 		angle=-19;
-		minr=0.00400199;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -63,9 +57,9 @@ Scene() {
 					rot_phase=249.674;
 					year=100;
 					Surface{
-						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("bush",2,9.4697e-08,0.5,0.5,0.4,0,0,0,0.476)
-								Branch("stem",10,1,1,0.1,1,0.727,0.212,0.8,0.8,100,0,1,0,30,-0.212,1)["H3294",Color(0.5*LVL+0.2*IRAND,0.1+IRAND*LVL,0.1,1)];
+						terrain=
+								Plant("Yellow",1,9.4697e-08,0.8,0.5,0.3,0,0,0,0.54)
+								Branch("Stem",10,1,1,0.1,1,1,0.212,0.8,0.8,100,0,1,0,30,-0.091,1)["aspen1",Color(0.2+IRAND*LVL,RED,0.1*IRAND*(1-LVL),1)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

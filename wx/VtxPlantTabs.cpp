@@ -256,7 +256,7 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	
 	other->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	PixelsSlider=new SliderCtrl(panel,ID_PIXELS_SLDR,"Pixels",LABEL2, VALUE2,SLIDER2);
+	PixelsSlider=new SliderCtrl(panel,ID_PIXELS_SLDR,"MinSize",LABEL2, VALUE2,SLIDER2);
 	PixelsSlider->setRange(0.1,1);
 	PixelsSlider->setValue(0.0);
 

@@ -278,9 +278,10 @@ void TNrocks::init()
 //-------------------------------------------------------------
 void TNrocks::eval()
 {
-	static TerrainData rock;
-	static TerrainData ground;
-	int z=0,i;
+	TerrainData rock;
+	TerrainData ground;
+	int i;
+	bool inTerrain=false;
 	double ht=0;
 	//if(CurrentScope->hpass()) // TODO: add support for htmap textures ?
 	//	return;
@@ -312,11 +313,11 @@ void TNrocks::eval()
 		INIT;
 		right->eval();
 		ground.copy(S0);
-		z=S0.pvalid();
-		if(z)
+		inTerrain=S0.pvalid();
+		if(inTerrain)
 			ht=S0.p.z;
 		else
-			ht=S0.s;
+			ht=S0.s; // image
 		ground.p.z=ht;
 	}
 	else
@@ -351,7 +352,7 @@ void TNrocks::eval()
 		if(right)
 			rock.next_id();
 	}
-	
+	//cout<<S0.tids<<endl;
 	if(right)
 		ground.set_id(S0.tids);
 
@@ -370,7 +371,7 @@ void TNrocks::eval()
 	if(rock.p.z>ground.p.z){		
 		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
-		if(z)
+		if(inTerrain)
 			Td.lower.copy(ground);
 	}
 	else{
@@ -378,12 +379,11 @@ void TNrocks::eval()
 			ground.p.z=rock.p.z;
 		S0.copy(ground);
 		S0.clr_flag(ROCKBODY);
-		if(z)
+		if(inTerrain)
 			Td.lower.copy(rock);
 	}
-	//S0.set_flag(ROCKBODY);
 
-	if(!z){ // image
+	if(!inTerrain){ // image
  	    S0.s=S0.p.z;
  	    if(type & CNORM || images.building())
 	        S0.s*=2*Hscale/(1-rmgr->zcomp)/rmgr->maxsize;

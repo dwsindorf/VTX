@@ -234,7 +234,7 @@ static double min_adapt_pts=4; //  for adapt - increase resolution only around n
 
 static double tfactor=2;
 static double sfactor=4;
-static double dfactor=0.25;
+static double dfactor=0.5;
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH dfactor*MIN_DRAW_WIDTH
@@ -1013,7 +1013,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=0.25;
+	draw_scale=1;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1436,7 +1436,9 @@ void TNplant::emit(){
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 	
-    //cout<<TheScene->aspect<<" "<<width_scale<<" "<<start_width<<" "<<size_scale<<endl;
+	dfactor=draw_scale*lerp(pntsize,1,100,0.25,1);
+
+    //cout<<dfactor<<" "<<start_width<<" "<<size_scale<<endl;
 
 	Point tip;
 	tip.x=start_width/width_scale;

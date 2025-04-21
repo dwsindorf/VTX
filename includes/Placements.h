@@ -119,7 +119,7 @@ public:
 			init();
 		}
 	}
-	static LinkedList<Placement*> list;
+	LinkedList<Placement*> list;
 	virtual bool valid(){ return true;}
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
