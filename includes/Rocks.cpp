@@ -279,6 +279,7 @@ void TNrocks::init()
 //-------------------------------------------------------------
 void TNrocks::eval()
 {
+	//static int cnt=0;
 	TerrainData rock;
 	TerrainData ground;
 	int i;
@@ -323,12 +324,13 @@ void TNrocks::eval()
 	right->eval();
     if(Td.rid==0){
     	//if(!in_map)
-			S0.next_id();
+		S0.next_id();
 		Td.insert_strata(S0);
-		//Td.zlevel[0].copy(S0);
     }
-	//cout<<Td.rid<<endl;
+    //if(cnt%100==0)
+	//	cout<<Td.rid<<" "<<Td.tids<<endl;
     Td.rid++;
+    //cnt++;
     
     //S0.set_id(Td.tids);
 
