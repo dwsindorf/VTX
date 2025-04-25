@@ -1528,6 +1528,7 @@ void TerrainMgr::eval()
 	}
 
 	Td.reset();
+	Td.rid=0;
 	if(!root || !root->right)
 	    return;
 	root->right->eval();
@@ -1595,7 +1596,8 @@ void TerrainMgr::init()
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;
 	Td.fids=0;
-
+	Td.rids=0;
+	Td.rid=0;
 	MapPt=Td.rectangular(0.0,0.0);
 	TheNoise.set(MapPt);
 

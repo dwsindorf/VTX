@@ -142,6 +142,7 @@ TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r
 	if(arg && (arg->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
 	set_collapsed();
+	id=0;
 }
 
 //-------------------------------------------------------------
@@ -281,54 +282,64 @@ void TNrocks::eval()
 	TerrainData rock;
 	TerrainData ground;
 	int i;
-	bool inTerrain=false;
-	double ht=0;
-	//if(CurrentScope->hpass()) // TODO: add support for htmap textures ?
-	//	return;
 
 	if(!isEnabled()){
 		if(right)
 			right->eval();
 		return;
 	}
+
 	S0.set_flag(ROCKLAYER);
+	int in_map=S0.get_flag(CLRTEXS);
 
     if(CurrentScope->rpass()){
-		int in_map=S0.get_flag(CLRTEXS);
-		S0.set_flag(CLRTEXS);
- 		if(base){
-			base->eval();
-			Td.add_id();
-		}
-
+		INIT;
+		
 		if(right)
 			right->eval();
+		INIT;
+
+		Td.add_id();
+		id=Td.rids;
+		Td.rids++;
+		Td.tp->ntexs=0;
+		if(!in_map) 
+			S0.set_flag(CLRTEXS);
+
+ 		if(base)
+			base->eval();
+
 		if(!in_map)    // in case we were in another map on entry
 			S0.clr_flag(CLRTEXS);
        return;
     }
+    
+    if(!in_map && (Td.rid==0))
+    	Td.begin();
 	ground.p.z=0;
+	
+	
+	INIT;
+	right->eval();
+    if(Td.rid==0){
+    	//if(!in_map)
+			S0.next_id();
+		Td.insert_strata(S0);
+		//Td.zlevel[0].copy(S0);
+    }
+	//cout<<Td.rid<<endl;
+    Td.rid++;
+    
+    //S0.set_id(Td.tids);
 
-	if(right){
-		INIT;
-		right->eval();
-		ground.copy(S0);
-		inTerrain=S0.pvalid();
-		if(inTerrain)
-			ht=S0.p.z;
-		else
-			ht=S0.s; // image
-		ground.p.z=ht;
-	}
-	else
-		ground.copy(S0);
+ 	ground.copy(S0);
+    //INIT;
 
 	RockMgr *rmgr=(RockMgr*)mgr;
 
 	TNplacements::eval();  // evaluate common arguments
 
 	TNarg &args=*((TNarg *)left);
-
 	TNarg *a=args.index(4);
 	if(a){                // geometry exprs
 		double arg[3];
@@ -336,97 +347,38 @@ void TNrocks::eval()
 		if(n>0) rmgr->zcomp=arg[0];      // compression factor
 		if(n>1) rmgr->drop=arg[1];       // drop factor
 	}
+	
+	S0.p.z=0;
+	base->eval();
+	if(!S0.pvalid())
+		S0.p.z=ground.p.z;
+	rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
+	S0.next_id();
+	rock.copy(S0);
 
-	INIT;
-	if(!right)
-		ground.next_id();
-	if(base){
-		S0.p.z=0;
-		base->eval();
-		if(S0.svalid())
-		    S0.p.z=S0.s;
-		if(!S0.pvalid())
-			S0.p.z=ground.p.z;
-		rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
-	    rock.copy(S0);
-		if(right)
-			rock.next_id();
-	}
-	//cout<<S0.tids<<endl;
-	if(right)
-		ground.set_id(S0.tids);
-
-	INIT;
+	//INIT;
     rmgr->ht=mgr->base;
 	rmgr->eval();
 
 	if(rmgr->noise_radial)
 	 	CurrentScope->revaluate();
 
-	INIT;
+	//INIT;
     rock.p.z=rmgr->ht;
-	Td.lower.p.z=TZBAD;
 
-	//if(S0.get_flag(ROCKBODY) && rock.p.z>ground.p.z){
 	if(rock.p.z>ground.p.z){		
 		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
-		if(inTerrain)
-			Td.lower.copy(ground);
 	}
 	else{
-		if(rock.p.z>ground.p.z)
-			ground.p.z=rock.p.z;
 		S0.copy(ground);
 		S0.clr_flag(ROCKBODY);
-		if(inTerrain)
-			Td.lower.copy(rock);
 	}
-
-	if(!inTerrain){ // image
- 	    S0.s=S0.p.z;
- 	    if(type & CNORM || images.building())
-	        S0.s*=2*Hscale/(1-rmgr->zcomp)/rmgr->maxsize;
- 	    S0.clr_cvalid();
- 	    S0.clr_pvalid();
- 	    S0.set_svalid();
- 		S0.set_flag(ROCKLAYER);
- 	    return;
- 	}
-	if(S0.get_flag(CLRTEXS)){  // Map-layer mode (Map will adjust levels)
-		S0.set_flag(LOWER);
-		S0.set_flag(ROCKLAYER);
-	    return;
- 	}
-
-	Td.begin();		
-
-    Td.zlevel[0].copy(S0);
-	Td.insert_strata(Td.lower);
-
-	if(Adapt.mindcnt()){  // minimize dual terrain nodes (edges only)
-		for(i=0;i<rccnt;i++){
-			MapData *d=mapdata[i]->surface1();
-			if(d && (d->type()!=Td.zlevel[0].type())){
-			    Td.end();
-			    break;
-			}
-		}
-		for(i=1;i<MAX_TDATA;i++){
-			if(Td.zlevel[i].p.z<=TZBAD)
-				break;
-			double dx=fabs(Td.zlevel[i].p.x-S0.p.x);
-			double dy=fabs(Td.zlevel[i].p.y-S0.p.y);
-			double dmax=dx>dy?dx:dy;
-			double dz=S0.p.z-Td.zlevel[i].p.z;
-
-			if(fabs(dz)<dmax){
-			    Td.end();
-				break;
-			}
-		}
-	}
-	else
+	//cout<<S0.c.blue()<<endl;
+	S0.set_flag(LOWER);
+    Td.insert_strata(rock);
+	S0.set_flag(ROCKLAYER);
+    if(!in_map && (Td.rid==Td.rids))
 		Td.end();
 }
 //-------------------------------------------------------------

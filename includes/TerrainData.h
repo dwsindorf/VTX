@@ -144,6 +144,7 @@ public:
 	static Array<Sprite*> sprites;
 	static int sid;
 	static int fid;
+	static int rid;
 
 	static TerrainData  *data[MAX_TDATA]; // second surface data
 	static TerrainData  zlevel[MAX_TDATA]; // zordered highest values
@@ -152,6 +153,7 @@ public:
 	static int flags;
 	static int tids;
 	static int sids;
+	static int rids;
 	static int fids;
 	static int pass;
 

@@ -91,9 +91,11 @@ int TerrainData::flags=0;
 int TerrainData::tids=0;
 int TerrainData::sids=0;
 int TerrainData::fids=0;
+int TerrainData::rids=0;
 int TerrainData::pass=0;
 int TerrainData::sid=0;
 int TerrainData::fid=0;
+int TerrainData::rid=0;
 
 double TerrainData::level=0;
 double TerrainData::fracval[MAX_FDATA]={0};
