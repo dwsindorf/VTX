@@ -278,19 +278,18 @@ void TNrocks::init()
 //-------------------------------------------------------------
 void TNrocks::eval()
 {
-	//static int cnt=0;
 	TerrainData rock;
 	TerrainData ground;
 	int i;
+    bool first=right->typeValue()!=ID_ROCKS;
+    bool last=getParent()->typeValue()!=ID_ROCKS;
+	INIT;
 
 	if(!isEnabled()){
 		if(right)
 			right->eval();
 		return;
 	}
-
-    bool first=right->typeValue()!=ID_ROCKS;
-    bool last=getParent()->typeValue()!=ID_ROCKS;
 
 	S0.set_flag(ROCKLAYER);
 	int in_map=S0.get_flag(CLRTEXS);
@@ -322,15 +321,13 @@ void TNrocks::eval()
 	INIT;
 	right->eval();
     if(first){
-    	//if(!in_map)
 		S0.next_id();
+		S0.p.z-=Drop;
 		Td.insert_strata(S0);
     }
-     
-    //S0.set_id(Td.tids);
-
+ 
  	ground.copy(S0);
-    //INIT;
+    INIT;
 
 	RockMgr *rmgr=(RockMgr*)mgr;
 
@@ -345,7 +342,7 @@ void TNrocks::eval()
 		if(n>1) rmgr->drop=arg[1];       // drop factor
 	}
 	
-	S0.p.z=0;
+	INIT;
 	base->eval();
 	if(!S0.pvalid())
 		S0.p.z=ground.p.z;
@@ -353,14 +350,14 @@ void TNrocks::eval()
 	S0.next_id();
 	rock.copy(S0);
 
-	//INIT;
+	INIT;
     rmgr->ht=mgr->base;
 	rmgr->eval();
 
 	if(rmgr->noise_radial)
 	 	CurrentScope->revaluate();
 
-	//INIT;
+	INIT;
     rock.p.z=rmgr->ht;
 
 	if(rock.p.z>ground.p.z){		
@@ -371,11 +368,9 @@ void TNrocks::eval()
 		S0.copy(ground);
 		S0.clr_flag(ROCKBODY);
 	}
-	//cout<<S0.c.blue()<<endl;
-	S0.set_flag(LOWER);
+
     Td.insert_strata(rock);
-	S0.set_flag(ROCKLAYER);
-    
+	  
     if(!in_map && last)
     	Td.end();
 }

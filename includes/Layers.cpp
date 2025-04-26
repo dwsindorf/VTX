@@ -348,7 +348,6 @@ void TNmap::eval()
 			layer=(TNlayer*)layer->right;
 			continue;
 		}
-		S0.clr_flag(LOWER);
 		layer->map=this;
 	    S0.height=0;
 		layer->edge=edge;
@@ -409,15 +408,13 @@ void TNmap::eval()
 		S0.set_flag(CLRTEXS);
 
 		layer->base->eval(); // calls rocks
-      	S0.p.z-=d;
 		
- 		if(!Td.get_flag(ROCKLAYER))
+ 		if(!Td.get_flag(ROCKLAYER)){
+ 	      	S0.p.z-=d;
 			Td.set_flag(MULTILAYER);  // used to turn off textures in margin
-      	if(!S0.get_flag(LOWER))
       		S0.next_id();
+ 		}
 		Td.insert_strata(S0);
-		//if(S0.get_flag(LOWER))
- 		//	S0.next_id();				
 		last_layer=layer;
 		layer=(TNlayer*)layer->right;
 		id++;

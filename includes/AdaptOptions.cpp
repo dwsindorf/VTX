@@ -55,7 +55,7 @@ void AdaptOptions::set_defaults()
     set_conv(0.1);
     set_minext(2.50);
     set_mindz(0.5);
-    set_mindcnt(1);
+    set_mindcnt(0);
     set_back_test(0); // TODO: need to retest backfacing functions
    // set_overlap_test(0);
 }
