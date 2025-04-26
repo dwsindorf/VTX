@@ -142,7 +142,6 @@ TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r
 	if(arg && (arg->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
 	set_collapsed();
-	id=0;
 }
 
 //-------------------------------------------------------------
@@ -290,6 +289,9 @@ void TNrocks::eval()
 		return;
 	}
 
+    bool first=right->typeValue()!=ID_ROCKS;
+    bool last=getParent()->typeValue()!=ID_ROCKS;
+
 	S0.set_flag(ROCKLAYER);
 	int in_map=S0.get_flag(CLRTEXS);
 
@@ -301,8 +303,6 @@ void TNrocks::eval()
 		INIT;
 
 		Td.add_id();
-		id=Td.rids;
-		Td.rids++;
 		Td.tp->ntexs=0;
 		if(!in_map) 
 			S0.set_flag(CLRTEXS);
@@ -314,24 +314,19 @@ void TNrocks::eval()
 			S0.clr_flag(CLRTEXS);
        return;
     }
-    
-    if(!in_map && (Td.rid==0))
+        		
+    if(!in_map && first)
     	Td.begin();
 	ground.p.z=0;
 	
-	
 	INIT;
 	right->eval();
-    if(Td.rid==0){
+    if(first){
     	//if(!in_map)
 		S0.next_id();
 		Td.insert_strata(S0);
     }
-    //if(cnt%100==0)
-	//	cout<<Td.rid<<" "<<Td.tids<<endl;
-    Td.rid++;
-    //cnt++;
-    
+     
     //S0.set_id(Td.tids);
 
  	ground.copy(S0);
@@ -380,8 +375,9 @@ void TNrocks::eval()
 	S0.set_flag(LOWER);
     Td.insert_strata(rock);
 	S0.set_flag(ROCKLAYER);
-    if(!in_map && (Td.rid==Td.rids))
-		Td.end();
+    
+    if(!in_map && last)
+    	Td.end();
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists

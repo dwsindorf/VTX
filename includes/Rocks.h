@@ -39,7 +39,6 @@ public:
 class TNrocks : public TNplacements
 {
 public:
-	int id;
 	TNrocks(int t, TNode *l, TNode *r, TNode *b);
 	void eval();
 	void init();

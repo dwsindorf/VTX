@@ -281,7 +281,6 @@ void TNmap::eval()
 		int i=0;
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
-			
 			layer->base->eval();
 			Td.tp->ntexs=Td.tp->textures.size;
 
@@ -408,7 +407,6 @@ void TNmap::eval()
 	    S0.clr_flag(TEXFLAG);
 		S0.clr_flag(ROCKLAYER);
 		S0.set_flag(CLRTEXS);
-		Td.rid=0;
 
 		layer->base->eval(); // calls rocks
       	S0.p.z-=d;
