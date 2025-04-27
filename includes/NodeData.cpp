@@ -14,7 +14,7 @@ extern int     hits, misses, visits;
 extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt;
 extern double  zslope();
 extern int test_flag;
-extern Point MapPt;
+extern Point MapPt,Mpt;
 
 
 static TerrainData Td;
@@ -445,9 +445,11 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		setLink(s2);
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
+	Mpt=point();
+	//cout<<MapPt.length()<<endl;
+
 #endif
 	int mode=CurrentScope->passmode();
-
 #ifdef TEST_SPRITES
     if(do_sprites){
 		CurrentScope->set_spass();

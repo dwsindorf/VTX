@@ -3,20 +3,20 @@
 #include "TerrainMgr.h"
 #include "Placements.h"
 #include "AdaptOptions.h"
+#include "MapNode.h"
 #include "Util.h"
 #include "SceneClass.h"
 #include "RenderOptions.h"
-#include "Util.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
 
-int place_visits=0;
-int place_hits=0;
-int place_misses=0;
 int place_gid=0;
+//int vtests=0,pts_fails=0,dns_fails=0;
+
 extern int hits,visits;
 
 //************************************************************
@@ -26,6 +26,7 @@ extern int hits,visits;
 #define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD          // turn on to get lod info
+//#define DEBUG_HASH       //  turn on to get hash table stats
  
 static TerrainData Td;
 extern double ptable[];
@@ -39,9 +40,6 @@ double MaxSize;
 //     PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(n2+id)))
 // ~0.5 us on 330 MHz sparc
 
-static int	chits=0,cvisits=0,crejects=0;
-static int	nhits=0,nmisses=0,nvisits=0,nrejects=0;
-static int  cmade=0,cfreed=0;
 
 static PlacementMgr s_mgr=0;
 
@@ -49,16 +47,7 @@ void show_display_placements()
 {
 	if(!Render.display(CRTRINFO))
 		return;
-	TheScene->draw_string(HDR1_COLOR,"------- placements ---------------------");
-	TheScene->draw_string(DATA_COLOR,"created:%5.1f deleted:%5.1f active:%5.1f K",
-	    cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0);
-	if(cvisits)
-	TheScene->draw_string(DATA_COLOR,"chash visits: %5.1f K hits %2.1f %% rejects %2.1f %%",
-		(double)cvisits/1000,100.0*chits/cvisits,100.0*crejects/cvisits);
-	if(nvisits)
-	TheScene->draw_string(DATA_COLOR,"nhash visits: %5.1f K hits %2.1f %% rejects %2.1f %%",
-		(double)nvisits/1000,100.0*nhits/nvisits,100.0*nrejects/nvisits);
-	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
+	PlacementStats::exec();
 }
 
 #endif
@@ -74,6 +63,45 @@ static LongSym popts[]={
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 
+int PlacementStats::chits=0;
+int PlacementStats::cvisits=0;
+int PlacementStats::crejects=0;
+int PlacementStats::nhits=0;
+int PlacementStats::nmisses=0;
+int PlacementStats::nvisits=0;
+int PlacementStats::nrejects=0;
+int PlacementStats::cmade=0;
+int PlacementStats::cfreed=0;
+int PlacementStats::vtests=0;
+int PlacementStats::pts_fails=0;
+int PlacementStats::dns_fails=0;
+int PlacementStats::place_visits=0;
+int PlacementStats::place_hits=0;
+int PlacementStats::place_misses=0;
+
+void PlacementStats::exec(){
+	if(!Render.display(CRTRINFO))
+		return;
+	TheScene->draw_string(HDR1_COLOR,"------- placements ---------------------");
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f deleted:%5.1f active:%5.1f K",
+	    "created",cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0);
+	if(vtests)
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K fails pts %2.1f %% dns %2.1f %%",
+		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
+#ifdef DEBUG_LOD
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K passed %2.1f %% failed %2.1f %%",
+		"lod",(double)place_visits/1000,100.0*place_hits/place_visits,100.0*place_misses/place_visits);
+#endif
+#ifdef DEBUG_HASH
+	if(cvisits)
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K hits %2.1f %% rejects %2.1f %%",
+		"chash",(double)cvisits/1000,100.0*chits/cvisits,100.0*crejects/cvisits);
+	if(nvisits)
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K hits %2.1f %% rejects %2.1f %%",
+		"nhash",(double)nvisits/1000,100.0*nhits/nvisits,100.0*nrejects/nvisits);
+#endif
+	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
+}
 //************************************************************
 // PlacementMgr class
 //************************************************************
@@ -104,9 +132,11 @@ PlacementMgr::PlacementMgr(int i, int h)
   	hashsize=h;
   	index=0;
 
-  	hits=0;
+  	//hits=0;
   	roff=0.5*PI;
   	roff2=1;
+	render_ptsize=1;
+	adapt_ptsize=1;
 
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
@@ -136,12 +166,12 @@ PlacementMgr::~PlacementMgr()
 void PlacementMgr::free_htable()
 {
 	Placement *h;
-	cfreed=0;
+	Stats.cfreed=0;
 	for(int i=0;i<hashsize;i++){
 		h=hash[i];
 		if(h){
 #ifdef DEBUG_PLACEMENTS
-			cfreed++;
+			Stats.cfreed++;
 #endif
 			delete h;
 			hash[i]=0;
@@ -162,10 +192,12 @@ void PlacementMgr::reset()
 		}		
 	}
 	list.reset();
+	//PlacementStats::init();
 #ifdef DEBUG_PLACEMENTS
-	chits=cvisits=crejects=0;
-	nhits=nmisses=nvisits=nrejects=0;
-	cmade=cfreed=0;
+//	chits=cvisits=crejects=0;
+//	nhits=nmisses=nvisits=nrejects=0;
+//	valid_tests=valid_dns_fails=valid_pts_fails=0;
+//	cmade=cfreed=0;
 #endif
 }
 
@@ -181,9 +213,12 @@ void PlacementMgr::init()
 #endif
   		CALLOC(hashsize+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
-  		if(!finisher_added)
+  		if(!finisher_added){
+  			s_mgr=this;
 			add_finisher(show_display_placements);
+  		}
   		finisher_added=true;
+ 
 #endif
 	}
 	reset();
@@ -199,7 +234,7 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
 
 void PlacementMgr::ss(){ 
 	index=0;
-	hits=0;
+	//hits=0;
 }
 //-------------------------------------------------------------
 // PlacementMgr::make()	virtual factory method to make Placement
@@ -214,7 +249,7 @@ Placement *PlacementMgr::next()
 		h=hash[index];
 	}
 	index++;
-	hits++;
+	//hits++;
     return h;
 }
 void PlacementMgr::dump(){
@@ -230,6 +265,32 @@ void PlacementMgr::dump(){
 	}
 	cout<<"num placements="<<cnt<<endl;
 	
+}
+
+bool PlacementMgr::valid()
+{ 
+	extern Point Mpt;
+    if(!sizetest())
+    	return true;
+	double mps=render_ptsize;
+	if(TheScene->adapt_mode())
+		mps=adapt_ptsize;
+	Point pv=Mpt;
+	double d=pv.length();
+	
+	double r=TheMap->radius*size;
+	double f=TheScene->wscale*r/d;
+    double pts=f;
+    Stats.vtests++;
+    if(pts<mps){
+     	Stats.pts_fails++;
+       	return false;
+    } 
+    if(density<=0){
+     	Stats.dns_fails++;
+     	return false;
+    }
+	return true;
 }
 //-------------------------------------------------------------
 // PlacementMgr::eval()	modulate terrain
@@ -258,12 +319,12 @@ void PlacementMgr::eval()
 		if(!CurrentScope->init_mode()&&lod()&& Adapt.lod()){
 		    double x=ptable[(int)Td.level];
 #ifdef DEBUG_LOD
-		    place_visits++;
+		    Stats.place_visits++;
 		    if(x>LODSIZE){
-		        place_hits+=levels-lvl;
+		        Stats.place_hits+=levels-lvl;
 		        return;
 		    }
-		    place_misses++;
+		    Stats.place_misses++;
 #else
 		    if(x>LODSIZE)
 		        return;
@@ -304,24 +365,24 @@ void PlacementMgr::eval()
 			n=PERM(pc.w+n);
 
 		Placement *h=hash[n];
-		cvisits++;
+		Stats.cvisits++;
 		if(!h|| h->point!=pc || h->type !=type){
 			Placement *c=make(pc,n);
 //			if(!c->flags.s.valid)
 //				continue;
 			if(h){
-				cfreed++;
+				Stats.cfreed++;
 				delete h;
 			}
 			h=c;
 			hash[n]=h;
 		}
 		else
-			chits++;
+			Stats.chits++;
 		if(h->radius>0.0)
 		  	h->set_terrain(*this);
 		else
-			crejects++;
+			Stats.crejects++;
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
@@ -332,7 +393,7 @@ void PlacementMgr::eval()
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;
-					cfreed++;
+					Stats.cfreed++;
 					delete h;
 				}
 			}
@@ -375,19 +436,19 @@ void PlacementMgr::find_neighbors(Placement *placement)
 						n=PERM(pc.w+n);
 							
 #ifdef DEBUG_PLACEMENTS
-					nvisits++;
+					Stats.nvisits++;
 #endif
 					h=hash[n];
 					if(h&&h->users){
 #ifdef DEBUG_PLACEMENTS
-						nmisses++;
+						Stats.nmisses++;
 #endif
 						continue; // hash rehit (same id different nodes)
 					}
 					if(!h || h->point!=pc || h->type !=type){
 						if(h){
 #ifdef DEBUG_PLACEMENTS
-							cfreed++;
+							Stats.cfreed++;
 #endif
 							delete h;
 						}
@@ -396,7 +457,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
 					}
 #ifdef DEBUG_PLACEMENTS
 					else
-						nhits++;
+						Stats.nhits++;
 #endif
 					if(h->radius>0.0){
 						h->users++;
@@ -404,7 +465,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
 					}
 #ifdef DEBUG_PLACEMENTS
 					else
-					    nrejects++;
+					    Stats.nrejects++;
 #endif
 				}
 			}
@@ -425,7 +486,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 	users=0;
 	flags.l=0;
 #ifdef DEBUG_PLACEMENTS
-	cmade++;
+	mgr.Stats.cmade++;
 #endif
 	double dns=mgr.density;
 	Point4D	p(pt);
@@ -448,6 +509,7 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 		SPOP;
 		CurrentScope->revaluate();
 		dns=clamp(dns,0,1);
+		//mgr.density=dns;
 	}
 	if(rands[hid]+0.5>dns)
 		return;
@@ -633,14 +695,15 @@ void TNplacements::eval()
 		mgr->level_mult=randscale;      // reduce size per level
 	}
 	
-	if(mgr->dexpr==0){
+	//if(mgr->dexpr==0){
 		dexpr=args[3];
 		if(dexpr){
 		    dexpr->eval();
 		    S0.s=clamp(S0.s,0,1);
 		    mgr->density=S0.s;
+		    //cout<<mgr->density<<endl;
 		}
-	}
+	//}
 	
 	MaxSize=mgr->maxsize;
 

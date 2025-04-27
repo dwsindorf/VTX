@@ -5,6 +5,7 @@
 
 #include "TerrainMgr.h"
 #include "ImageMgr.h"
+#include "Util.h"
 
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
@@ -20,6 +21,7 @@ enum {
 
     PLACETYPE   = 0x0000f000,
     FLIP        = 0x00010000,
+    MINSIZE     = 0x00020000,
 
     NOLOD   	= 0x01000000,
     NNBRS   	= 0x02000000,
@@ -35,7 +37,7 @@ typedef struct place_flags {
 	unsigned int  users	     : 8;	// users
 	unsigned int  valid	     : 1;	// radius >0
 	unsigned int  active	 : 1;	// used
-	unsigned int  unused     : 22;	// unassigned bits
+	unsigned int  unused     : 21;	// unassigned bits
 } place_flags;
 
 typedef union place_flags_u {
@@ -43,6 +45,23 @@ typedef union place_flags_u {
 	int         		l;
 } place_flags_u;
 
+class PlacementStats : public StatCollector {
+public:
+	static int chits,cvisits,crejects;
+	static int nhits,nmisses,nvisits,nrejects;
+	static int cmade,cfreed;
+	static int vtests,pts_fails,dns_fails;
+	static int place_visits,place_hits,place_misses;
+
+	static void reset(){
+		chits=cvisits=crejects=0;
+		nhits=nmisses=nvisits=nrejects=0;
+		cmade=cfreed=0;
+		vtests=pts_fails=dns_fails=0;
+		place_visits=place_hits=place_misses=0;
+	}
+	static void exec();
+};
 class Placement
 {
 protected:
@@ -73,6 +92,7 @@ typedef struct place_mgr_flags {
 	unsigned int  joined	 : 1;	// joined mgr in pass
 	unsigned int  offset	 : 1;	// offset valid flag
 	unsigned int  finalizer  : 1;	// indicates static object
+	unsigned int  debug	     : 1;	// debug
 	unsigned int  unused     : 27;	// unassigned bits
 } place_mgr_flags;
 
@@ -97,12 +117,15 @@ public:
 	double			size;
 	double 			roff;
 	double 			roff2;
+	double 			render_ptsize;
+	double 			adapt_ptsize;
 	Point4D			mpt;
 	Point4D			offset;
 	int 			hashsize;	
 	int index;
-	int hits;
 	
+	PlacementStats Stats;
+
 	void free_htable();
 	Placement *next();
 	void ss();
@@ -120,13 +143,16 @@ public:
 		}
 	}
 	LinkedList<Placement*> list;
-	virtual bool valid(){ return true;}
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
+	bool sizetest()				{ return options & MINSIZE?true:false;}
 	int ntest()					{ return options & NNBRS?0:1;}
 	int lod()					{ return options & NOLOD?0:1;}
 	void set_margin(int i)   	{ flags.s.margin=i;}
 	int margin()				{ return flags.s.margin;}
+	void set_debug(int i)   	{ flags.s.debug=i;}
+	int debug()				    { return flags.s.debug;}
+
 	void set_first(int i)   	{ flags.s.first=i;}
 	int first()				    { return flags.s.first;}
 	void set_joined(int i)   	{ flags.s.joined=i;}
@@ -163,6 +189,8 @@ public:
 	virtual void init();
 	virtual void eval();
 	virtual void dump();
+	virtual bool valid();
+
 	virtual Placement *make(Point4DL&,int);
 
 	friend class Placement;

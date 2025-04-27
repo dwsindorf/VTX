@@ -32,13 +32,14 @@ static RockMgr *s_rm; // static finalizer
 //	arg[7]  noise_expr		noise function
 //-------------------------------------------------------------
 TNode *RockMgr::default_noise=0;
-RockMgr::RockMgr(int i) : PlacementMgr(i)
+RockMgr::RockMgr(int i) : PlacementMgr(i|MINSIZE)
 {
 	noise_radial=0;
 	noise_ampl=1;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
+	adapt_ptsize=2;
 }
 RockMgr::~RockMgr()
 {

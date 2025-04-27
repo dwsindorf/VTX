@@ -10,6 +10,10 @@
 
 const double lim=1e33;
 
+class StatCollector {
+public:
+	StatCollector(){}
+};
 class TimeIt {
 	double tstart;
 	double tlast;
