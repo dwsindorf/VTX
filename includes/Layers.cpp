@@ -330,7 +330,7 @@ void TNmap::eval()
 	TNlayer *edge_layer=layer;
 	TNlayer *top_layer=layer;
 
-	double f=0,d;
+	double f=0,d=0;
 	double edge=mbase;
 	double lowdz=-10;
 	Color  lowc;
@@ -356,50 +356,51 @@ void TNmap::eval()
 		layer->eval();
 	
 		edge_layer=layer;
-
-	    if(layer->right){
-			double w=layer->width;
-			double width=w>0?w:0;
-		    double h=-w/margin+1;
-		    double df=layer->ramp;
-
-			if(h<0)
-		    	h=0;
-			edge+=width;
-
-			if(id==0 && mht<edge)
-		    	f=0;
-			else if(mht>=layer->edge && mht<edge)
-		    	f=0;
-			else if(mht>edge)
-		    	f=(mht-edge)/margin;
-			else if(mht<layer->edge){
-		    	edge_layer=last_layer;
-		    	f=(layer->edge-mht)/margin;
-		    }
- 			if(edge_layer->type & FSQR)
- 			    f*=f;
- 			if(layer->type & FSQR)
- 			    h*=h;
- 			d=f*edge_layer->drop;
- 			if(h)
- 			    d+=2*h*layer->drop;
- 			if(df)
- 				d+=df*clamp(f,0,1)*edge_layer->drop;
-		}
-		else{  // last layer
-		    double df=layer->ramp;
-			if(mht>=edge)
-		    	f=0;
-			else if(mht<edge)
-		    	f=(edge-mht)/margin;
- 			if(layer->type & FSQR)
- 			    f*=f;
- 			d=f*layer->drop;
- 			//Margin=fabs((edge-mht)/margin);
- 			if(df)
- 				d+=df*clamp(f,0,1)*edge_layer->drop;
-		}
+        if(layers>1){
+			if(layer->right){
+				double w=layer->width;
+				double width=w>0?w:0;
+				double h=-w/margin+1;
+				double df=layer->ramp;
+	
+				if(h<0)
+					h=0;
+				edge+=width;
+	
+				if(id==0 && mht<edge)
+					f=0;
+				else if(mht>=layer->edge && mht<edge)
+					f=0;
+				else if(mht>edge)
+					f=(mht-edge)/margin;
+				else if(mht<layer->edge){
+					edge_layer=last_layer;
+					f=(layer->edge-mht)/margin;
+				}
+				if(edge_layer->type & FSQR)
+					f*=f;
+				if(layer->type & FSQR)
+					h*=h;
+				d=f*edge_layer->drop;
+				if(h)
+					d+=2*h*layer->drop;
+				if(df)
+					d+=df*clamp(f,0,1)*edge_layer->drop;
+			}
+			else{  // last layer
+				double df=layer->ramp;
+				if(mht>=edge)
+					f=0;
+				else if(mht<edge)
+					f=(edge-mht)/margin;
+				if(layer->type & FSQR)
+					f*=f;
+				d=f*layer->drop;
+				//Margin=fabs((edge-mht)/margin);
+				if(df)
+					d+=df*clamp(f,0,1)*edge_layer->drop;
+			}
+        }
 
     	INIT;
     	Drop=d;
