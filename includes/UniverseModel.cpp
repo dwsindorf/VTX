@@ -237,7 +237,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"craters(1,0.05,0.2)\n");
 		break;
 	case TN_ROCKS:
-		sprintf(tmp,"rocks(1,1e-6)[Color(0.5,0.5,0.5)]\n");
+		sprintf(tmp,"rocks(1,1e-7)[Color(0.5,0.5,0.5)]\n");
 		break;
 	case TN_FOG:
 		sprintf(tmp,"fog(0.0)\n");
@@ -434,12 +434,16 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("Blue",type);
 	case GN_WATER:
 		return new ModelSym("Water",type);
+	case GN_DENSE:
+		return new ModelSym("Dense",type);
 	case GN_THIN:
 		return new ModelSym("Thin",type);
 	case GN_MED:
 		return new ModelSym("Medium",type);
-	case GN_DENSE:
-		return new ModelSym("Dense",type);
+	case GN_LARGE:
+		return new ModelSym("Large",type);
+	case GN_SMALL:
+		return new ModelSym("Small",type);
    }
 }
 std::string UniverseModel::typeSymbol(int type){
@@ -459,6 +463,7 @@ bool UniverseModel::hasTypeList(int type){
 	case TN_STAR:
 	case TN_WATER:
 	case TN_SKY:
+	case TN_ROCKS:
 		return true;
 	}
 }
@@ -505,6 +510,12 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 	case TN_WATER:
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_WATER));
+		break;
+	case TN_ROCKS:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_LARGE));
+		list.add(getTypeSymbol(GN_MED));
+		list.add(getTypeSymbol(GN_SMALL));
 		break;
 	case TN_SKY:
 		list.add(getTypeSymbol(GN_RANDOM));
@@ -664,7 +675,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		//list.add(getObjectSymbol(TN_LAYER));
 		if(!obj->hasChild(ID_MAP))
 			list.add(getObjectSymbol(TN_MAP));
-		list.add(getObjectSymbol(TN_ROCKS));
+		//list.add(getObjectSymbol(TN_ROCKS));
 		break;
 	case TN_SNOW:
 	case TN_TEXTURE:

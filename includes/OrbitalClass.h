@@ -23,7 +23,8 @@ class TNclouds;
 class Sky;
 class Ring;
 class CloudLayer;
-
+class TNrocks;
+class TNplants;
 class Triangle;
 
 enum orbital_codes{
@@ -767,6 +768,9 @@ public:
 	virtual Sky *newSky() {return newSky(0);}
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
+	virtual TNrocks *newRocks(TNrocks *,int g);
+	virtual TNplants *newPlants(int g);
+
 	
 };
 

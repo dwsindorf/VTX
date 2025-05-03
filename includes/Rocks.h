@@ -51,6 +51,9 @@ public:
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	bool isLeaf()			{ return false;}
 	int linkable()      		    { return 1;}
+	NodeIF *getInstance(NodeIF *prev, int m);
+	TNrocks *newInstance(int m);
+	bool randomize();
 };
 
 #endif

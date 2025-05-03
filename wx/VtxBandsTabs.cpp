@@ -253,9 +253,9 @@ void VtxBandsTabs::AddBandsTab(wxPanel *panel){
 // VtxBandsTabs::updateControls() widget refresh handler
 //-------------------------------------------------------------
 void VtxBandsTabs::updateControls(){
-	if(update_needed){
+	//if(update_needed){
 		getObjAttributes();
-	}
+	//}
 }
 
 //-------------------------------------------------------------
@@ -359,7 +359,7 @@ void VtxBandsTabs::freeRevertList() {
 // VtxBandsTabs::makeImageList() build image file list
 //-------------------------------------------------------------
 void VtxBandsTabs::makeImageList(){
-	//cout<<"VtxBandsTabs::makeImageList()"<<endl;
+	cout<<"VtxBandsTabs::makeImageList()"<<endl;
 
     images.makeImagelist();
 
@@ -685,8 +685,8 @@ void VtxBandsTabs::displayImage(char *name){
 // VtxBandsTabs::getObjAttributes() called node when switched in
 //-------------------------------------------------------------
 void VtxBandsTabs::getObjAttributes(){
-	if(!update_needed)
-		return;
+	//if(!update_needed)
+	//	return;
 	//cout<<"num tmps="<<TheScene->tmp_files<<endl;
 	//m_show_tmps->SetValue(TNbands::show_tmps);
 	m_show_tmps->SetValue(TNbands::show_tmps||TheScene->tmp_files>0);

@@ -26,7 +26,7 @@ extern int hits,visits;
 #define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD          // turn on to get lod info
-//#define DEBUG_HASH       //  turn on to get hash table stats
+#define DEBUG_HASH       //  turn on to get hash table stats
  
 static TerrainData Td;
 extern double ptable[];
@@ -97,8 +97,8 @@ void PlacementStats::exec(){
 	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K hits %2.1f %% rejects %2.1f %%",
 		"chash",(double)cvisits/1000,100.0*chits/cvisits,100.0*crejects/cvisits);
 	if(nvisits)
-	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K hits %2.1f %% rejects %2.1f %%",
-		"nhash",(double)nvisits/1000,100.0*nhits/nvisits,100.0*nrejects/nvisits);
+	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K hits %2.1f %% misses %2.1f %%",
+		"nhash",(double)nvisits/1000,100.0*nhits/nvisits,100.0*nmisses/nvisits);
 #endif
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
@@ -270,8 +270,8 @@ void PlacementMgr::dump(){
 bool PlacementMgr::valid()
 { 
 	extern Point Mpt;
-    if(!sizetest())
-    	return true;
+    //if(!sizetest())
+    //	return true;
 	double mps=render_ptsize;
 	if(TheScene->adapt_mode())
 		mps=adapt_ptsize;
@@ -368,8 +368,11 @@ void PlacementMgr::eval()
 		Stats.cvisits++;
 		if(!h|| h->point!=pc || h->type !=type){
 			Placement *c=make(pc,n);
-//			if(!c->flags.s.valid)
-//				continue;
+			if(!c->flags.s.valid){
+				delete c;
+				Stats.crejects++;
+				continue;
+			}
 			if(h){
 				Stats.cfreed++;
 				delete h;
@@ -380,16 +383,18 @@ void PlacementMgr::eval()
 		else
 			Stats.chits++;
 		if(h->radius>0.0)
-		  	h->set_terrain(*this);
+		  	if(!h->set_terrain(*this))
+				Stats.crejects++;
 		else
 			Stats.crejects++;
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
 			while((h=list++)){
-//				if(!h->flags.s.valid)
-//					continue;
-		  		h->set_terrain(*this);
+				//if(!h->flags.s.valid)
+				//	continue;
+		  		if(!h->set_terrain(*this))
+		  			Stats.nmisses++;
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;

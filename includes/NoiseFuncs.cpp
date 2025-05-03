@@ -11,6 +11,8 @@
 #include <iostream>
 using namespace std;
 
+#define USE_LUT
+
 // BASE class
 
 int NoiseFunc::initialized=false;
@@ -750,9 +752,15 @@ double Voronoi::noise(double x, double y) {
 inline Point Voronoi::hashv3(Point p) {
 	Point p1;
 	pvmul3(p, hpnt, p1);
+#ifdef USE_LUT
+	double d1=lsin(p1.x);
+	double d2=lsin(p1.y);
+	double d3=lsin(p1.z);
+#else
 	double d1=sin(p1.x);
 	double d2=sin(p1.y);
 	double d3=sin(p1.z);
+#endif
 	Point p4= Point(d1,d2,d3);
 	return p4.fract();
 }
@@ -761,7 +769,9 @@ inline Point Voronoi::hashv3(Point p) {
 // Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
 //-------------------------------------------------------------
 double  Voronoi::noise(double x, double y, double z) {
-	//make_lut();
+#ifdef USE_LUT
+	make_lut();
+#endif
 	Point pnt=Point(x,y,z);
 	Point p = pnt.floor();
 	Point f = pnt.fract();
@@ -798,16 +808,25 @@ double  Voronoi::noise(double x, double y, double z) {
 inline Point4D Voronoi::hashv4(Point4D p) {
 	Point4D p1;
 	pvmul4(p, hpnt, p1);
+#ifdef USE_LUT
 	double d1=lsin(p1.x);
 	double d2=lsin(p1.y);
 	double d3=lsin(p1.z);
 	double d4=lsin(p1.w);
+#else
+	double d1=sin(p1.x);
+	double d2=sin(p1.y);
+	double d3=sin(p1.z);
+	double d4=sin(p1.w);
+#endif
 	Point4D p4= Point4D(d4,d3,d2,d1);
 	return p4.fract();
 }
 
 double Voronoi::noise(double x, double y, double z, double w) {
+#ifdef USE_LUT
 	make_lut();
+#endif
 	double result = 0;
 	Point4D pnt = Point4D(x,y,z,w);
 	Point4D p = pnt.floor();
@@ -836,5 +855,5 @@ double Voronoi::noise(double x, double y, double z, double w) {
 			}
 		}
 	}
-	return res.x;
+	return res.x-0.5;
 }

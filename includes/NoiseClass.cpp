@@ -13,7 +13,7 @@
 //#define LONGLONG // slower but allows freqs>2e9
 
 //#define DEBUG_NOISE_CACHE
-//#define DEBUG_NOISE_EVAL
+#define DEBUG_NOISE_EVAL
 
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
@@ -22,6 +22,8 @@ int noise_hits=0;
 int noise_misses=0;
 int noise_visits=0;
 int gradient_visits=0;
+int factor_hits=0;
+int factor_misses=0;
 double gradient_time=0;
 double gradient_time_per_octave=0;
 
@@ -39,7 +41,7 @@ int perm[PERMSIZE];
 double rands[PERMSIZE];
 int lastn=0;
 
-#define MAXSTATES 16
+#define MAXSTATES 32
 
 static int state=0;
 static int domain=0;
@@ -80,7 +82,7 @@ MinMax nvals,norms;
 #ifdef LONGLONG
 const double MAX_NOISE_FREQ=2e12;
 #else
-const double MAX_NOISE_FREQ=2e9;
+const double MAX_NOISE_FREQ=1e9;
 #endif
 
 static int idum=1;
@@ -353,14 +355,18 @@ public:
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 NoiseFactor::NoiseFactor(double h, double l)
 {
+	//no break   total:15.5 s per call:9.6 u per octave:0.9 u  
+	//with break total:15.4 s per call:9.5 u per octave:0.8 u 
     H=h;
     L=l;
     int i;
     double f=1.0;
 	//printf("H %g L %g\n",H,L);
 	for (i=0; i<NOISESIZE; i++) {
-	    //if(f>MAX_NOISE_FREQ)
-	    //    break;
+	    if(f>MAX_NOISE_FREQ){
+	    	//cout<< "break at "<<i<<" f="<<f<<endl;
+	        break;
+	    }
 		freqs[i]=f;
 		exps[i] = pow( f, -H );
 		//printf("%-2d %-12g %-12g %g\n",i,freqs[i],exps[i],exps[i]*freqs[i]);
@@ -494,10 +500,13 @@ void Noise::pop()
 //-------------------------------------------------------------
 // void set_factors(double h,double l) set current noise factors
 //-------------------------------------------------------------
+#define CACHE_FACTORS
 int Noise::set_factors(double h,double l)
 {
+#ifdef CACHE_FACTORS
     nfact=NFACTORMASK&(int)(h*101+l*23);
     if(!factors[nfact] || !factors[nfact]->equal(h,l)){
+    	factor_misses++;
         if(factors[nfact])
             delete factors[nfact];
         factors[nfact]=new NoiseFactor(h,l);
@@ -508,7 +517,11 @@ int Noise::set_factors(double h,double l)
         printf("new nfact H %g L %g id %-4d maxl %-2d maxf %g\n",h,l,nfact,maxl,maxf);
 #endif
     }
+    else
+    	factor_hits++;
     return factors[nfact]->maxorder;
+#else
+#endif
 }
 
 //-------------------------------------------------------------
@@ -568,8 +581,8 @@ void  Noise::showStats(){
 	    default:
 	    	strcat(tstr,"Perlin");
 	}
-	sprintf(buff,"%s MultiNoise calls:%d time total:%2.1f s per call:%2.1f u per octave:%2.1f u",
-			tstr,n,build_time,1e6*gtm/n,1e6*gtmp/n);
+	sprintf(buff,"%s MultiNoise calls:%d time total:%2.1f s per call:%2.1f u per octave:%2.1f u factors %g",
+			tstr,n,build_time,1e6*gtm/n,1e6*gtmp/n,100.0*factor_hits/(factor_hits+factor_misses));
 	cout<<buff<<endl;
 #endif
 #ifdef DEBUG_NOISE_CACHE

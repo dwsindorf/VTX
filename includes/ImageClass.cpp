@@ -630,12 +630,12 @@ void TNimage::init()
 
 	
 #ifdef DEBUG_IMAGES
-	Noise::resetStats();
+	//Noise::resetStats();
 	printf("%-20s BUILDING %d X %d IMAGE %s\n","TNimage",w,h,name);
 	im=new Image(opts,h,w,value,grad);
 	double build_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 	cout<< "image build time:"<<build_time<<endl;
-	Noise::showStats();
+	//Noise::showStats();
 #else
 	im=new Image(opts,h,w,value,grad);
 #endif

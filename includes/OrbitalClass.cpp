@@ -26,7 +26,8 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_RENDER
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
-#define DEBUG_GENERATE
+//#define DEBUG_GENERATE
+#define DEBUG_COLORS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -92,7 +93,7 @@ static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
-static double	def_hscale=0.0005;
+static double	def_hscale=0.001;
 
 //************************************************************
 // Orbital class
@@ -4704,6 +4705,20 @@ Sky *Planetoid::newSky(int g){
 	return sky;
 }
 
+// proto ->parent already set
+TNrocks *Planetoid::newRocks(TNrocks *proto,int g){
+	//Sky *sky=Sky::newInstance(g);
+	//sky->size=1.05*size;
+	//sky->ht=sky->size-size;
+	cout<<"Planetoid::newRocks "<<TheScene->typeSymbol(g).c_str()<<endl;
+	return proto;
+}
+TNplants *Planetoid::newPlants(int g){
+	//Sky *sky=Sky::newInstance(g);
+	//sky->size=1.05*size;
+	//sky->ht=sky->size-size;
+	return 0;
+}
 Ring *Planetoid::newRing(){
 	Ring *ring=Ring::newInstance();
 	ring->inner_radius=(1.2+0.3*r[4])*(size);
@@ -4881,6 +4896,8 @@ void Planetoid::setColors(){
 //		return;
 //	}
 	double use_theme=r[7];
+	Color g1,g2;
+	double bias=0;
 	if(terrain_type!=GN_ICY && use_theme>0.95){
 		int index=(int)THEMES*r[8];
 		ncolors=4;
@@ -4908,16 +4925,19 @@ void Planetoid::setColors(){
 			break;
 		case GN_OCEANIC:
 			if(tcount==0){
-				hue=0.2+0.2*s[3];
+				hue=0.2+0.1*s[3];
 				mix=Color(0.0,0.0,0);			
 			}
 			else{
 				hue=0.1+0.1*r[3];
 				mix=Color(0.2,0.2,0);
 			}
-			sat=0.4+0.1*s[4];
+			g1=Color(0.0,0.1,0.0);
+			g2=Color(0.3,0.2,0.0);
+			bias=0.1+0.8*r[6];
+			sat=0.6+0.1*s[4];
 			val=0.8+0.3*s[5];
-			mix=Color(0.2,0.2,0);
+			mix=Color(0.1,0.2,0);
 			break;
 		case GN_ICY:
 			hue=0.6+0.1*s[3];
@@ -4927,7 +4947,7 @@ void Planetoid::setColors(){
 			break;
 		case GN_GASSY:
 			hue=0.6+s[3];
-			sat=0.5+0.2*s[4];
+			sat=0.4+0.2*s[4];
 			val=0.8+0.2*s[5];
 			mix=Color(0.5,0.5,0);
 			break;
@@ -4957,17 +4977,37 @@ void Planetoid::setColors(){
 //		tc=Color(0.5+3*r[4],0.4+2*r[5],0.6*r[5]);
 //		mix=Color(0.5+2*r[7],0.5*r[8],0.2+0.3*r[9]);
 		colors[0]=mix;
-		colors[1]=tc.darken(0.5+0.2*s[6]);
-		colors[2]=tc.lighten(0.5+0.1*s[7]);
+		colors[1]=tc.darken(0.3+0.2*s[6]);
+		colors[2]=tc.lighten(0.3+0.1*s[7]);
 		colors[3]=tc;
-		colors[4]=tc.darken(0.5+0.3*s[8]);
-		colors[5]=tc.lighten(0.5+0.3*s[9]);
+		colors[4]=tc.darken(0.3+0.3*s[8]);
+		colors[5]=tc.lighten(0.3+0.3*s[9]);
+		if(bias){
+			double f=0;
+			double delta=2.0/6;
+			for(int i=0;i<6;i++){
+				if(i<3)
+					colors[i]=colors[i].mix(g1,bias*(1.0-i*(delta)));
+				else
+					colors[i]=colors[i].mix(g2,bias*(i*(delta)));
+			}
+		}
 	}
 	for(int i=0;i<ncolors;i++){
 		//cout<<" "<<r[i];
 		colors[i]=colors[i].desaturate(0.2*r[i]+0.1);
 	}
+#ifdef DEBUG_COLORS
+	char tmp[256];
+	if(bias)
+	cout<<"bias:"<<bias<<" ";
+	for(int i=0;i<ncolors;i++){
+		//cout<<" "<<r[i];
+		colors[i].toString(tmp);
+		cout<<tmp<<" ";
+	}
 	cout<<endl;
+#endif
 
 
 }
@@ -5077,10 +5117,10 @@ std::string Planetoid::randFeature(int type) {
 		str+="\"";
 		break;
 	case RND_NOISEFUNC:
-		str=Noise::getNtype(r[5]);
+		str=Noise::getNtype(0.6*r[5]);
 		break;
 	case RND_NOISEFUNC2:
-		str=Noise::getNtype(r[4]);
+		str=Noise::getNtype(0.6*r[4]);
 		break;
 	case RND_NOISEFUNC3:
 		str=Noise::getNtype(0.6*r[3]);
@@ -5094,7 +5134,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=",0.3,0.8,-0.25,0.5,0.1)";
 		break;
 	case RND_FRACTAL_NOISE:
-		str="18+2*noise(";
+		str="20+2*noise(";
 		str+=randFeature(RND_NOISEFUNC3);
 		str+="|NLOD,12,12,0.5,0.5,2.2,1,4,0,0.0,1e-06)";
 		break;
@@ -5114,7 +5154,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_CRATERS:
 		sprintf(buff,"craters(ID%d,%d,%g,%g,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0.05,0,0,%1.2f,%1.2f)",
-		(int)(5+0.5*s[0]), // id
+		(int)(5+0.5*s[1]), // id
 		(int)(8+0.5*s[0]), // levels
 		(Maxs),            // max size
 		(0.3+0.5*s[3]),    // delta size
@@ -5133,8 +5173,8 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_VOLCANOS:
 		 sprintf(buff,"craters(ID%d,%d,%g,%g,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.05,0,%1.2f,%1.2f)",
-		(int)(2+0.5*s[0]), // rand id
-		(int)(8+0.5*s[0]), // levels
+		(int)(5+0.25*s[2]), // rand id
+		(int)(8+0.5*s[4]), // levels
 		(Maxs),            // max size
 		(0.3+0.2*s[3]),    // delta size
 		(0.1+0.6*Prob),    // probability
@@ -5250,19 +5290,21 @@ std::string Planetoid::randFeature(int type) {
 	case RND_GLOBAL_NOISE:
 		str="noise(GRADIENT|SQR,";
 		str+=std::to_string(r[8]); // start
-		str+=",4.5,";
-		str+=std::to_string(0.1+s[8]); // homogeneity
-		str+=",0.29,";
-		str+=std::to_string(2.5+0.5*s[6]); // frequency
+		//str+=std::to_string(7+s[8]); // orders
+		str+=",7,";
+		//str+=std::to_string(0.5+s[8]); // homogeneity
+		str+="0.5,0.29,2.5";
+		//str+=std::to_string(2.5+0.5*s[6]); // frequency
 		str+=",2,4,0,0,1e-06)";
+		str=TNnoise::randomize(str.c_str(),0.3,0.0);
 		break;
 	case RND_TEX_NOISE:
 		keep_rands=true;
 		sprintf(buff,"noise(SIMPLEX|SQR|UNS,0.5,12,%1.2f,0.5,%1.2f,%1.2f)",
 		//1.0+s[7],     // start
-		0.5+0.2*s[8], // homogeneity
+		0.5+0.5*s[8], // homogeneity
 		2.1+0.2*s[9], // frequency
-		0.1+0.03*s[10]   // amplitude
+		0.5+0.1*s[10]   // amplitude
 		);
 		str=buff;
 		break;
@@ -5294,7 +5336,7 @@ std::string Planetoid::randFeature(int type) {
 		//pow(2,8+4*s[0]),  // start
 		//0.5*r[7],         // offset
 		-0.7+0.3*s[8],     // phi bias
-		(0.1+0.01*s[9]), // ht bias
+		(0.3+0.01*s[9]), // ht bias
 		0.1*(1+0.5*s[9]),     // bmp bias
 		-0.1*(1+0.5*s[10]) // slope bias
 		);
@@ -5335,9 +5377,9 @@ std::string Planetoid::randFeature(int type) {
 		str="image(";
 		str+=randFeature(RND_ETEXNAME);
 		str+=",TMP|GRAY|NORM,256,256,";
-		if(r[7]>0.8)
+		if(r[7]>0.6)
 			str+=randFeature(RND_HRIDGES);
-		else if(r[7]>0.2)
+		else if(r[7]>0.1)
 			str+=randFeature(RND_HERODED);
 		else
 			str+=randFeature(RND_HVORONI);	
@@ -5355,7 +5397,7 @@ std::string Planetoid::randFeature(int type) {
 			str+=randFeature(RND_HRIDGES);
 		else if(r[7]>0.4)
 			str+=randFeature(RND_HROCKS);
-		else if(r[7]>0.2)
+		else if(r[7]>0.1)
 			str+=randFeature(RND_HERODED);
 		else
 			str+=randFeature(RND_HVORONI);	
@@ -5398,7 +5440,7 @@ std::string Planetoid::randFeature(int type) {
 		pow(2,18),   	// start,  // start
 		//1,    	// bump ampl
 		//(int)(6+2*s[7]),   	// num orders
-		2.0+0.2*s[8],      	// orders freq
+		2.0,      	// orders freq
 		0.1*s[9],  		// ht bias
 		0.3*s[10]  		// slope bias
 		);
@@ -5544,7 +5586,7 @@ static std::string newSurfaceTex(Planetoid *planet){
 }
 static std::string newSurfaceBands(Planetoid *planet){
 	if(TheScene->use_tmps!=ALL_TMPS){
-		planet->setColors();
+		//planet->setColors();
 		char buff[2048];	
 		std::string str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());

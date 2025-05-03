@@ -2369,10 +2369,14 @@ void MapNode::Svertex(MapData*dn) {
 				tx->texCoords(GL_TEXTURE0 + tx->cid);
 			texid++;
 		}
-		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0)
+		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0){
 			glVertexAttrib4d(GLSLMgr::attributes3ID, A[0], A[1], A[2], A[3]);
-		if(GLSLMgr::attributes4ID >= 0 && num_attribs>0)
+			//cout<<"attributes3ID "<< A[0]<<" "<< A[1]<<" "<< A[2]<<" "<< A[3]<<endl;
+		}
+		if(GLSLMgr::attributes4ID >= 0 && num_attribs>4){
 			glVertexAttrib4d(GLSLMgr::attributes4ID, A[4], A[5], A[6], A[7]);
+			//cout<<"attributes4ID "<< A[4]<<" "<< A[5]<<" "<< A[6]<<" "<< A[7]<<endl;
+		}
 	}
 	glVertex3dv((double*)(&pt));
 }

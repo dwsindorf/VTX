@@ -1406,8 +1406,8 @@ void TNplant::emit(){
 	setScale();
 	// compensate for changes in scene fov and aspect to keep ht/width constant	
 	// note: width_scale == 1 for med and large 0.6629 for wide
-	//width_scale=0.834729*TheScene->wscale/TheScene->aspect/TheScene->viewport[3];
-	width_scale=800/TheScene->wscale;
+	width_scale=0.834729*TheScene->wscale*TheScene->aspect/TheScene->viewport[3];
+	//width_scale=800/TheScene->wscale;
      
 	Randval=URAND;
 	double length=size*PSCALE;	

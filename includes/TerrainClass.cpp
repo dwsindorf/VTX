@@ -1189,7 +1189,7 @@ std::string TNnoise::randomize(char *src,double f,double t){
 	    str+=opts;
 	}
 	else if(t<0.5){
-		str+=Noise::getNtype(r[5]);
+		str+=Noise::getNtype(0.9*r[5]);
 		noise->getOpts(opts);
 		if(strlen(opts)){
 			str+="|";
@@ -1197,7 +1197,7 @@ std::string TNnoise::randomize(char *src,double f,double t){
 		}
 	}
 	else{
-		str+=Noise::getNtype(r[5]);
+		str+=Noise::getNtype(0.9*r[5]);
 		str+=Noise::getNopts(r[3]);
 	}
 	int n=getargs(noise->right,args,16);

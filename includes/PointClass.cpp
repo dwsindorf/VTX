@@ -46,7 +46,10 @@ void make_lut()
 //-------------------------------------------------------------
 double lsin(double t)
 {
-	t= t - TWOPI * (int)( t * INV2PI);
+	t=fmod(t,TWOPI);
+	t=t<0?TWOPI+t:t;
+	t=t-floor(t);
+
 	double r;
 	int l;
 
@@ -76,6 +79,8 @@ double lsin(double t)
 double lcos(double t)
 {
 	t= t - TWOPI * (int)( t * INV2PI);
+	t=t>1?1:t;
+	t=t<0?0:t;
 
 #ifdef FULLSINE
 	return t > TWOPI ? lsin(t-TWOPI) : lsin(t+PIBY2);

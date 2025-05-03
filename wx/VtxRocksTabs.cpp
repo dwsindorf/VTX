@@ -94,13 +94,15 @@ int VtxRocksTabs::showMenu(bool expanded){
 
 	wxMenu menu;
 
-	menu.AppendCheckItem(OBJ_SHOW,wxT("Show"));
+	menu.AppendCheckItem(OBJ_SHOW,wxT("Enable"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
+	menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 
 	if(addmenu){
+		menu.AppendSeparator();
 		menu.AppendSubMenu(addmenu,"Add");
 	}
 
@@ -284,7 +286,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(a)
 		NoiseExpr->setValue(a);
 	else
-		NoiseExpr->SetValue(wxString("noise(HOMOGE,0,2)"));
+		NoiseExpr->SetValue(wxString("noise(GRADIENT|NLOD,0,2)"));
 
 	update_needed=false;
 

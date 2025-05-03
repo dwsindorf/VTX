@@ -32,14 +32,14 @@ static RockMgr *s_rm; // static finalizer
 //	arg[7]  noise_expr		noise function
 //-------------------------------------------------------------
 TNode *RockMgr::default_noise=0;
-RockMgr::RockMgr(int i) : PlacementMgr(i|MINSIZE)
+RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
 	noise_radial=0;
 	noise_ampl=1;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
-	adapt_ptsize=2;
+	adapt_ptsize=1;
 }
 RockMgr::~RockMgr()
 {
@@ -97,7 +97,6 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	if(d>t)
 		return false;
 
- 	//if(thresh>0 && d<radius*(1+thresh)){
  	if(thresh>0){
  		SPUSH;
 		Point4D np;
@@ -271,6 +270,9 @@ void TNrocks::init()
 			rmgr->noise_radial=noise->mx;
 			rmgr->noise_radial=clamp(rmgr->noise_radial,0,1.5);
 		}
+		else
+			rmgr->noise_radial=rmgr->noise_ampl;
+			
 	}
 }
 
@@ -360,8 +362,8 @@ void TNrocks::eval()
 
 	INIT;
     rock.p.z=rmgr->ht;
-
-	if(rock.p.z>ground.p.z){		
+    double delta=(rock.p.z-ground.p.z)/fabs(ground.p.z);
+	if(delta>0){		
 		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
 	}
@@ -369,8 +371,7 @@ void TNrocks::eval()
 		S0.copy(ground);
 		S0.clr_flag(ROCKBODY);
 	}
-
-    Td.insert_strata(rock);
+	Td.insert_strata(rock);
 	  
     if(!in_map && last)
     	Td.end();
@@ -395,3 +396,18 @@ bool TNrocks::hasChild(int type){
 	return find_test;
 }
 
+bool TNrocks::randomize(){
+}
+// called by VtxSceneDialog ->scene->makeObject
+// called by Scene->makeObject
+// this = prototype obj=parent(layer) m=GN_TYPE
+// this->setParent(obj) already set
+// VtxSceneDialog ->addtoTree(this)
+NodeIF *TNrocks::getInstance(NodeIF *obj, int m){	
+	return newInstance(m);
+}
+// this=prototype, this->parent=layer
+TNrocks *TNrocks::newInstance(int m){
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	return orb->newRocks(this, m);
+}

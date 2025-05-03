@@ -348,7 +348,7 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
-	cout<<"Scene::makeObject parent:"<<obj->getParent()->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<" "<<model->actionmode<<endl;
+	cout<<"Scene::makeObject insert at:"<<obj->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<" "<<model->actionmode<<endl;
 	set_action("Building..");
 	setRseed(getRandValue());
 	lastn=rseed*123457;
@@ -358,7 +358,7 @@ NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	else
 		m->setProtoValid(false);
 			
-	NodeIF *p=obj->getParent();
+	//NodeIF *p=obj->getParent();
 	NodeIF *n=m->getInstance(obj,type);
 	
 	Render.invalidate_textures();
@@ -996,7 +996,9 @@ void Scene::rebuild_all(){
 	Adapt.set_maxcycles(50);
 	GLSLMgr::clearTexs();
 	Plant::reset();
+	Noise::resetStats();
 	Renderer::rebuild_all();
+	timing_start=clock();
 }
 
 //-------------------------------------------------------------

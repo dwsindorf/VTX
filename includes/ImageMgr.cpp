@@ -334,7 +334,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	Color *gcolors=0;
 	int gsize=0;
 
-	Noise::resetStats();
+	//Noise::resetStats();
 	set_alpha_image(0);
 
 	int lod=Adapt.lod();
@@ -593,7 +593,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 			}
 		}
 	}
-	Noise::showStats();
+	//Noise::showStats();
 	TheNoise.set3D();
 	TheNoise.offset=0.5;
 	TheNoise.scale=0.5;

@@ -67,7 +67,7 @@ float phiFunc(int id){
 	last_color=color; \
 	alpha = tex2d[i].texamp; \
 	alpha_bias=Tangent.w-logf-colormip+tex2d[i].bias; /* larger with higher frequencies */  \
-	alpha_fade = lerp(alpha_bias,-6.0,1.0,tex2d[i].far_bias,1.0); /* fade high frequencies with distance */ \
+	alpha_fade = lerp(alpha_bias,-3.0,1.0,tex2d[i].far_bias,1.0); /* fade high frequencies with distance */ \
 	alpha_fade *= lerp(alpha_bias,10,17,1.0,tex2d[i].near_bias); /* fade low frequencies with closeness */ \
 	dlogf=tex2d[i].dlogf; \
 	last_bump=bump; \
@@ -97,6 +97,7 @@ float phiFunc(int id){
 #define BGN_ORDERS \
 	tex_orders=min(tex2d[tid].orders, Tangent.w-logf-freqmip+0.5); \
 	tex_n=int(tex_orders); \
+	tex_n=max(tex_orders,1); \
 	tex_rem=tex_orders-float(tex_n); \
 	tex_n=tex_rem>0.0?tex_n+1:tex_n; \
 	orders_delta=1.0; \

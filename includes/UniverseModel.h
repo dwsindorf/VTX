@@ -84,6 +84,10 @@ enum gen_codes{
 	GN_THIN         = 0x00200000,
 	GN_MED          = 0x00300000,
 	GN_DENSE        = 0x00400000,
+	GN_LARGE        = 0x00500000,
+	GN_SMALL        = 0x00600000,
+	GN_1D           = 0x00700000,
+	GN_2D           = 0x00800000,
 	GN_SKY          = GN_THIN|GN_DENSE|GN_MED,
 
 };
