@@ -205,7 +205,7 @@ bool GLSLProgram::buildShader(int id, char *defs, char* file) {
 	//shaderStrings[1] = (char*)GLSLMgr::extString1;
 	//shaderStrings[2] = (char*)GLSLMgr::extString2;
 	shaderStrings[0] = (char*)shaderAssembly;
-	glShaderSourceARB(id, 1, shaderStrings, NULL);
+	glShaderSourceARB(id, 1, shaderStrings, 0);
 
 	glCompileShaderARB(id);
 #ifdef DEBUG_SHADER_FILES
