@@ -49,6 +49,7 @@ public:
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	NodeIF *replaceNode(NodeIF *c);
 	bool isLeaf()			{ return false;}
 	int linkable()      		    { return 1;}
 	NodeIF *getInstance(NodeIF *prev, int m);

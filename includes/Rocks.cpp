@@ -10,6 +10,7 @@
 #include "ModelClass.h"
 #include "AdaptOptions.h"
 #include "TerrainClass.h"
+#include "UniverseModel.h"
 
 extern double Hscale, Drop, MaxSize;
 extern double ptable[];
@@ -178,6 +179,18 @@ NodeIF *TNrocks::replaceChild(NodeIF *c,NodeIF *n)
 }
 
 //-------------------------------------------------------------
+// TNrocks::replaceChild replace content
+//-------------------------------------------------------------
+NodeIF *TNrocks::replaceNode(NodeIF *c)
+{
+	((TNrocks*)c)->right=right;
+	((TNrocks*)c)->parent=parent;
+	parent->replaceChild(this,c);
+	delete base;
+	base=0;
+	return c;
+}
+//-------------------------------------------------------------
 // TNrocks::addAfter append x after base if c==this
 // - used when adding a TNnode object to a TerrainMgr stack
 // - always want to append other objects after Rocks in tree
@@ -284,7 +297,7 @@ void TNrocks::eval()
 	TerrainData rock;
 	TerrainData ground;
 	int i;
-    bool first=right->typeValue()!=ID_ROCKS;
+    bool first=(right && right->typeValue()!=ID_ROCKS);
     bool last=getParent()->typeValue()!=ID_ROCKS;
 	INIT;
 
@@ -396,8 +409,6 @@ bool TNrocks::hasChild(int type){
 	return find_test;
 }
 
-bool TNrocks::randomize(){
-}
 // called by VtxSceneDialog ->scene->makeObject
 // called by Scene->makeObject
 // this = prototype obj=parent(layer) m=GN_TYPE
@@ -406,8 +417,72 @@ bool TNrocks::randomize(){
 NodeIF *TNrocks::getInstance(NodeIF *obj, int m){	
 	return newInstance(m);
 }
+bool TNrocks::randomize(){
+	double f=0.2;
+	TNarg *arg=(TNarg*)left;
+	char buff[1024];
+	buff[0]=0;
+	arg=arg->index(1);
+	int i=0;
+	while(arg){
+		if(arg->left->typeValue()==ID_CONST){
+			TNconst *val=(TNconst*)arg->left;
+			//cout<<s[i]<<" before:"<<val->value;
+			val->value*=(1+f*s[i]);
+			//cout<<" after:"<<val->value<<endl;
+		}
+		else if(arg->left->typeValue()==ID_NOISE){
+			TNnoise *val=(TNnoise*)arg->left;
+			buff[0]=0;
+			val->valueString(buff);
+			//cout<<"before:"<<buff<<endl;
+			std::string str=TNnoise::randomize(buff,f,1);
+			TNnoise *newval=TheScene->parse_node(str.c_str());
+			arg->left=newval;
+			//cout<<"after:"<<str<<endl;
+			delete val;
+		}
+		i++;
+     	arg=arg->next();
+	}
+	return true;
+}
+
 // this=prototype, this->parent=layer
 TNrocks *TNrocks::newInstance(int m){
-	Planetoid *orb=(Planetoid *)getOrbital(this);
-	return orb->newRocks(this, m);
+	setRands();
+	int gtype=m&GN_TYPES;
+	LinkedList<ModelSym*>flist;
+	TheScene->model->getFileList(TN_ROCKS,flist);
+	int ival=std::rand() % flist.size;
+	ModelSym *sym=flist[ival];
+
+	char sbuff[1024];
+	TheScene->model->getFullPath(sym,sbuff);
+	TNrocks *rocks=TheScene->open_node(this,sbuff);
+	sbuff[0]=0;
+	
+	TNarg *arg=(TNarg*)rocks->left;
+	
+	double args[20];
+	
+	TNode* node=arg->index(1)->left;
+	if(node->typeValue()==ID_CONST){
+		TNconst *size=(TNconst*)node;
+		switch(gtype){
+		default:
+			break;
+		case GN_LARGE:
+			size->value=1e-5;
+			break;
+		case GN_MED:
+			size->value=1e-6;
+			break;
+		case GN_SMALL:
+			size->value=1e-7;
+			break;
+		}
+	}
+	rocks->randomize();
+	return rocks;
 }
