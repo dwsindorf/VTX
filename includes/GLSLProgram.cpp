@@ -7,8 +7,6 @@
 #define EXPAND_INCLUDES // Expand all #includes explicitly
 						// (avoids glsl's intermittent support for #include)
 #include <GLSLMgr.h>
-#include "FileUtil.h"
-
 
 //#define DEBUG_SHADER_WARNINGS
 

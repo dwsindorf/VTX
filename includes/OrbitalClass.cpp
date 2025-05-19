@@ -13,6 +13,7 @@
 #include "AdaptOptions.h"
 #include "FileUtil.h"
 #include "UniverseModel.h"
+#include "Rocks.h"
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
@@ -5685,10 +5686,25 @@ static std::string rndSurfaceNoise(double f){
 		return Planetoid::randFeature(RND_SURFACE_PIMPLES);
 }
 
+static std::string rndSurfaceRocks(int size){
+	TNrocks *rocks=TheScene->getPrototype(0,ID_ROCKS);
+	rocks=rocks->newInstance(size);
+	char buff[1024];
+	buff[0]=0;
+	rocks->valueString(buff);
+	std::string str(buff);
+	return str;
+}
 std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 	Prob=r[12]; // probability
 	Noise=0.1;
 	std::string str;
+	if(r[6]>0.8)
+		str+=rndSurfaceRocks(GN_LARGE);
+	if(r[7]>0.7)
+		str+=rndSurfaceRocks(GN_MED);
+	if(r[8]>0.5)
+		str+=rndSurfaceRocks(GN_SMALL);
 	str+=newSurfaceBands(planet);
 	str+="+";
 	str+=newSurfaceTex(planet);

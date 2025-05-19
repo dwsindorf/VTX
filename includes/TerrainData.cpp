@@ -338,6 +338,13 @@ void TerrainProperties::initProgram(){
 	sprintf(defs+strlen(defs),"#define NTEXS %d\n#define NBUMPS %d\n#define NVALS %d\n",
 			textures.size,bumps,nvals);
 
+	if(is_rock()){
+		glPolygonOffset(4.0f, 2.0f);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+	}
+	else{
+		 glDisable(GL_POLYGON_OFFSET_FILL);
+	}
 	if(noise.size && is_complex())
 		sprintf(defs+strlen(defs),"#define CPX\n");
 	if(rand)

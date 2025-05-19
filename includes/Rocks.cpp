@@ -318,6 +318,7 @@ void TNrocks::eval()
 		INIT;
 
 		Td.add_id();
+		Td.tp->set_rock(true);
 		Td.tp->ntexs=0;
 		if(!in_map) 
 			S0.set_flag(CLRTEXS);
@@ -368,7 +369,7 @@ void TNrocks::eval()
 
 	INIT;
     rmgr->ht=mgr->base;
-	rmgr->eval();
+	rmgr->eval();  // calls set_terrain sets mgr->ht
 
 	if(rmgr->noise_radial)
 	 	CurrentScope->revaluate();
@@ -376,7 +377,7 @@ void TNrocks::eval()
 	INIT;
     rock.p.z=rmgr->ht;
     double delta=(rock.p.z-ground.p.z)/fabs(ground.p.z);
-	if(delta>0){		
+	if(delta>0){
 		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
 	}
@@ -450,7 +451,7 @@ bool TNrocks::randomize(){
 
 // this=prototype, this->parent=layer
 TNrocks *TNrocks::newInstance(int m){
-	setRands();
+	NodeIF::setRands();
 	int gtype=m&GN_TYPES;
 	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(TN_ROCKS,flist);

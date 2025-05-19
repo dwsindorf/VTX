@@ -2,7 +2,7 @@
 
 #include "PointClass.h"
 #include "defs.h"
-//#define SINE_LUT
+#define SINE_LUT
 #define FULLSINE
 
 double TWOPI=2.0*PI;
@@ -11,15 +11,10 @@ double INV2PI=1.0/TWOPI;
 const double PIBY2=PI/2.0;
 const double DTOR=TWOPI/360.0;
 
-#ifdef FULLSINE
-const int   SINE_LUT_SIZE=65536;
+const int  SINE_LUT_SIZE=4096*4;
 const double SINE_LUT_STEP=SINE_LUT_SIZE/TWOPI;
-#else // HALFSINE
-const int   SINE_LUT_SIZE=65536/2;
-const double SINE_LUT_STEP=SINE_LUT_SIZE/PI;
-#endif
 
-static double lut[SINE_LUT_SIZE+1];
+static double lut[SINE_LUT_SIZE];
 static int sin_lut_flag=0;
 
 //-------------------------------------------------------------
@@ -30,14 +25,10 @@ void make_lut()
 	if(sin_lut_flag)
 		return;
 	cout << "building sin LUT"<<endl;
-	int i;
-	double 		scale;
-
-	scale=1.0/SINE_LUT_STEP;
-	
-	for(i=0;i<SINE_LUT_SIZE;i++)
-		lut[i]=sin(scale*i);
-	lut[SINE_LUT_SIZE]=sin(0.0);
+    for (int i = 0; i < SINE_LUT_SIZE; ++i) {
+        double angle = (TWOPI * i) / SINE_LUT_SIZE;
+        lut[i] = sin(angle);
+    }
 	sin_lut_flag=1;
 }
 
@@ -45,57 +36,32 @@ void make_lut()
 // lsin(): sin lut approximation to sin()
 //-------------------------------------------------------------
 double lsin(double t)
-{
-	t=fmod(t,TWOPI);
-	t=t<0?TWOPI+t:t;
-	t=t-floor(t);
+{	
+    // Wrap x into [0, TWO_PI)
+    double x = fmod(t, TWOPI);
+    if (x < 0) x += TWOPI;
 
-	double r;
-	int l;
+    // Scale to table index
+    double index = (x *INV2PI) * SINE_LUT_SIZE;
+    int f0 = (int)index;
+    int f1 = (f0 + 1) % SINE_LUT_SIZE;
+    double frac = index - f0;
 
-#ifdef FULLSINE
-	l=t*SINE_LUT_STEP;
-	r=t*SINE_LUT_STEP-l;
-	return lut[l]*(1.0-r)+lut[l+1]*r;
-#else // HALFSINE
-	if( t < 0)
-		t=t+TWOPI;
-	if( t>=PI){
-		t = t-PI;
-		l=(int)(t*SINE_LUT_STEP);
-		r=t*SINE_LUT_STEP-l;
-		return -(lut[l]*(1-r)+lut[l+1]*r);
-	}
-	else{
-		l=(int)(t*SINE_LUT_STEP);
-		r=t*SINE_LUT_STEP-l;
-		return lut[l]*(1-r)+lut[l+1]*r;
-	}
-#endif
+    // Linear interpolation
+    double ls=lut[f0] * (1.0 - frac) + lut[f1] * frac;
+//    double rs=sin(t);
+//    double delta=ls-rs;
+//	  cout<<delta<<endl;
+
+	return ls;
 }
 //-------------------------------------------------------------
 // lcos(): sin lut approximation to cos()
 //-------------------------------------------------------------
 double lcos(double t)
 {
-	t= t - TWOPI * (int)( t * INV2PI);
-	t=t>1?1:t;
-	t=t<0?0:t;
-
-#ifdef FULLSINE
-	return t > TWOPI ? lsin(t-TWOPI) : lsin(t+PIBY2);
-#else // HALFSINE
-	double f;
-	f=t+PIBY2;
-	if(f>=TWOPI)
-		f-=TWOPI;
-	return lsin(f);
-#endif
+	return lsin(t+PIBY2);
 }
-#ifdef SINE_LUT
-#define sin lsin
-#define cos lcos
-#endif
 
 //************************************************************
 // Point class
@@ -125,11 +91,23 @@ Point Point::rectangular()
 #ifdef SINE_LUT
 	if(!sin_lut_flag)
 		make_lut();
-#endif
+	f=z*lcos(p);
+	return Point(-f*lcos(t),z*lsin(p),f*lsin(t));
+#else
 	f=z*cos(p);
 	return Point(-f*cos(t),z*sin(p),f*sin(t));
+#endif
 }
 
+inline void cartesianToSpherical(double x, double y, double z,
+		double& r, double& t, double& p) {
+    r =sqrt(x * x + y * y + z * z);
+    if (r > 1e-8) 
+        t = acos(z / r);        // inclination
+    else 
+        t = 0.0f;
+    p = atan2(y, x);              // azimuth
+}
 //-------------------------------------------------------------
 // Point::spherical()	 cartesion-to-spherical conversion
 //-------------------------------------------------------------
@@ -207,8 +185,10 @@ Point4D Point4D::rectangular()
 #ifdef SINE_LUT
 	if(!sin_lut_flag)
 		make_lut();
-#endif
+	return Point4D(-w*lcos(t),z*lsin(p),w*lsin(t),-z*lcos(p));
+#else
 	return Point4D(-w*cos(t),z*sin(p),w*sin(t),-z*cos(p));
+#endif
 }
 
 //-------------------------------------------------------------
@@ -257,7 +237,10 @@ Point  LPoint::rectangular()
 #ifdef SINE_LUT
 	if(!sin_lut_flag) 
 		make_lut();
-#endif
+	f=zr*lcos(yr);
+	return Point(-f*lcos(xr),zr*lsin(yr),f*lsin(xr));
+#else
 	f=zr*cos(yr);
 	return Point(-f*cos(xr),zr*sin(yr),f*sin(xr));
+#endif
 }

@@ -324,6 +324,7 @@ typedef struct tpinfo {
 	unsigned int  inactive  : 1;	// hidden layer
 	unsigned int  geometry	: 1;	// use geometry shader (point noise)
 	unsigned int  complex	: 1;	// complex expression
+	unsigned int  rock	    : 1;	// rock layer
 	unsigned int  unused	: 5;	// unassigned
 } tpinfo;
 
@@ -362,6 +363,8 @@ public:
 
 	void set_complex(bool b) { info.s.complex=b;}
 	bool is_complex()  	    { return info.s.complex;}
+	void set_rock(bool b)    { info.s.rock=b;}
+	bool is_rock()  	    { return info.s.rock;}
 	void set_geometry(bool b) { info.s.geometry=b;}
 	bool has_geometry()  	{ return info.s.geometry;}
 	void set_color(bool b)  { info.s.color=b;}
