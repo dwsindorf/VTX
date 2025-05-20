@@ -2372,7 +2372,7 @@ bool TNBranch::randomize(){
 	if(!isRandEnabled() || !isEnabled())
 		return false;
 	int nsave=lastn;
-	lastn=getRandValue()*123;
+	lastn=getRandValue();//*123;
 	setRands();
 	lastn=nsave;
 

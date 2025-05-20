@@ -32,7 +32,7 @@ Scope          *CurrentScope;
 
 void NodeIF::setRands(){
 	if(!fixed_rands)
-	    lastn=getRandValue()*1234;
+	    lastn=getRandValue();//*1234;
 	lastn++;
 	//cout<<lastn<<endl;
 	for(int i=0;i<RANDS;i++){

@@ -339,7 +339,7 @@ void TerrainProperties::initProgram(){
 			textures.size,bumps,nvals);
 
 	if(is_rock()){
-		glPolygonOffset(4.0f, 2.0f);
+		glPolygonOffset(2.0f, 1.0f);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 	}
 	else{

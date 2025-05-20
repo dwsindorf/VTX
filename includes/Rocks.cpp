@@ -450,9 +450,18 @@ bool TNrocks::randomize(){
 }
 
 // this=prototype, this->parent=layer
+#define PLANET_ROCKS
 TNrocks *TNrocks::newInstance(int m){
 	NodeIF::setRands();
 	int gtype=m&GN_TYPES;
+#ifdef PLANET_ROCKS	
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	Planetoid::makeLists();
+	std::string str=Planetoid::newRocks(orb,gtype);
+
+	TNrocks *rocks=TheScene->parse_node(str.c_str());
+	rocks->setParent(parent);
+#else	
 	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(TN_ROCKS,flist);
 	int ival=std::rand() % flist.size;
@@ -484,6 +493,7 @@ TNrocks *TNrocks::newInstance(int m){
 			break;
 		}
 	}
+#endif
 	rocks->randomize();
 	return rocks;
 }

@@ -752,6 +752,7 @@ public:
 	virtual void set_surface(TerrainData&);
 	static void newRocky(Planetoid *, int gtype);
 	static void newRocky(Planetoid *) { newRocky(0);}
+	static std::string newRocks(Planetoid *,int);
 	static std::string newLayer(Planetoid *);
 	static std::string newOcean(Planetoid *);
 	static std::string newSurfaceDetail(Planetoid *);
@@ -768,7 +769,6 @@ public:
 	virtual Sky *newSky() {return newSky(0);}
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
-	virtual TNrocks *newRocks(TNrocks *,int g);
 	virtual TNplants *newPlants(int g);
 
 	

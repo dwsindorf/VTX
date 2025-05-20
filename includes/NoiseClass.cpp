@@ -105,11 +105,12 @@ void setRandSeed(int seed)
 //-------------------------------------------------------------
 double getRandValue()
 {
-	time_t ttime = std::time(0);
-	tm *local_time = localtime(&ttime);
-	double seed=Rand()+local_time->tm_min/60.0+local_time->tm_sec/60.0;
-	//cout<<seed<<endl;
-	return seed;
+//	time_t ttime = std::time(0);
+//	tm *local_time = localtime(&ttime);
+//	double seed=Rand()+local_time->tm_min/60.0+local_time->tm_sec/60.0;
+//	cout<<seed<<" "<<std::rand()<<endl;
+//	return seed;
+	return std::rand();
 }
 
 const int M  = 714025;
