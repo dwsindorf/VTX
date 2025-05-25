@@ -243,9 +243,9 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 	double drop,rise,scale,b,h,a=0;
 	double max=1.0;
 
-	if(radius==0){
+	if(radius==0)
 		return false;
-	}
+	
 	d=pmgr.mpt.distance(center);
 	d=d/radius;
 	if(d>thresh)

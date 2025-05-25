@@ -86,19 +86,23 @@ Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 //-------------------------------------------------------------
 bool Rock::set_terrain(PlacementMgr &pmgr)
 {
-	double d=pmgr.mpt.distance(center);
 	double r,z,rm=0;
+	if(radius==0)
+		return false;
 
 	RockMgr &mgr=(RockMgr&)pmgr;
+	
+	double d=pmgr.mpt.distance(center);
 	double thresh=mgr.noise_radial;
 	double td=mgr.drop*mgr.maxsize;
-	double t=lerp(td,0,1,radius*(1+thresh),0);
+	double t=1.5*radius;
+	//double t=lerp(td,0,1,radius*(1+thresh),0);
 	r=radius;
 
 	if(d>t)
 		return false;
 
- 	if(thresh>0){
+ 	if(mgr.noise_radial>0){
  		SPUSH;
 		Point4D np;
 		if(mgr.offset_valid())
@@ -301,7 +305,7 @@ void TNrocks::eval()
     bool last=getParent()->typeValue()!=ID_ROCKS;
 	INIT;
 
-	if(!isEnabled()){
+	if(!isEnabled() || TheScene->viewtype != SURFACE){
 		if(right)
 			right->eval();
 		return;
@@ -348,7 +352,7 @@ void TNrocks::eval()
 
 	RockMgr *rmgr=(RockMgr*)mgr;
 
-	TNplacements::eval();  // evaluate common arguments
+	TNplacements::eval();  // evaluate common arguments (0-3)
 
 	TNarg &args=*((TNarg *)left);
 	TNarg *a=args.index(4);
@@ -458,10 +462,10 @@ TNrocks *TNrocks::newInstance(int m){
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	Planetoid::makeLists();
 	std::string str=Planetoid::newRocks(orb,gtype);
-
 	TNrocks *rocks=TheScene->parse_node(str.c_str());
 	rocks->setParent(parent);
 #else	
+	// randomize random selection from objects/rocks
 	LinkedList<ModelSym*>flist;
 	TheScene->model->getFileList(TN_ROCKS,flist);
 	int ival=std::rand() % flist.size;

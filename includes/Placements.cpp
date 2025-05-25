@@ -701,6 +701,7 @@ void TNplacements::eval()
 	}
 	
 	//if(mgr->dexpr==0){
+	// probability
 		dexpr=args[3];
 		if(dexpr){
 		    dexpr->eval();
