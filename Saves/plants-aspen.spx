@@ -1,20 +1,19 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=0.230736;
-		theta=102.245;
-		height=8.92051 ft;
-		gndlvl=-3186.78 ft;
+		phi=0.230487;
+		theta=102.268;
+		height=19.5526 ft;
+		gndlvl=136.435 ft;
 		time=11406.4;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.0039994;
-		heading=-80;
-		tilt=5;
-		angle=126;
+		minr=0.00400003;
+		heading=-38;
+		tilt=-6;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;

@@ -22,10 +22,10 @@ public:
     static TNode *default_noise;
 	Placement *make(Point4DL&,int);
 
-	double  zcomp,drop;
+	double  zcomp,drop,rdist;
 
-	double  noise_radial;
 	double  noise_ampl;
+	double  rx,ry;
 	TNode   *rnoise;
 	~RockMgr();
 	RockMgr(int);

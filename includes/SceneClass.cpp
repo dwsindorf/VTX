@@ -1662,19 +1662,19 @@ void Scene::change_view(int v)
 //	if(focusobj && focusobj->type()==ID_GALAXY){
 //		v=GLOBAL;
 //	}
-    //if(viewtype!=v){
+    if(viewtype!=v){
         set_changed_view();
-        reset_stride();
-    //}
-    //else
-    //    clr_changed_view();
+    }
+    else
+        clr_changed_view();
+    reset_stride();
 
 	if(changed_marker())
     	views->add(this);
 
 	viewtype=v;
 
-	//cout<<"Scene::change_view"<<" "<<viewobj<<endl;
+	cout<<"Scene::change_view"<<" "<<viewobj<<endl;
 	//vobj=viewobj;
 
 	set_changed_detail();

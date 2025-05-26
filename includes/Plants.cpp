@@ -23,7 +23,7 @@
 
 //#define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
-#define SHOW_BRANCH_STATS
+//#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius

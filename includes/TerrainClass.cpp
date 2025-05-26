@@ -1288,10 +1288,7 @@ void TNnoise::eval()
 
     if(args[1]>0 && ampl>0)
 	  f=TheNoise.eval(type,n,args);
-    if(ampl==0)
-    	S0.s=offset;
-    else
-	    S0.s=f*ampl*ma+mb+offset;
+	S0.s=ampl*(f*ma+mb+offset);
 
 }
 

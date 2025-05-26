@@ -190,7 +190,7 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	AmplSlider->setRange(0.0,1.0);
 	ampl->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,120);
+	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,160);
 	ampl->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 
 	ampl->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
