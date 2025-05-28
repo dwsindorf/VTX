@@ -5067,6 +5067,7 @@ std::string Planetoid::randFeature(int type) {
 	std::string str("");
 	char buff[4096];
 	const char *linear=Nrocks?"|LINEAR":"";
+	const char *randtex=Nrocks?"":"|RANDOMIZE";
 	
 	switch(type){
 	case RND_TEXNAME:			
@@ -5443,8 +5444,9 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_SURFACE_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
+		sprintf(buff,"Texture(%s,BUMP%s,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
 		randFeature(RND_ETEXNAME).c_str(), // image name
+		randtex,
 		Nscale
 		);
 		str=buff;

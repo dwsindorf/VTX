@@ -663,7 +663,7 @@ void PlantMgr::render(){
 			plant->pntsize=s->pntsize;
 			plant->distance=s->distance;
 			
-			Point pp=Point(s->point.x,s->point.y,s->point.x);
+			Point pp=Point(s->point.x,s->point.y,s->point.z);
 			
 			double r=Random(pp);
 			randval=256*fabs(r)+id;
