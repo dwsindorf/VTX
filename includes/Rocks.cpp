@@ -95,7 +95,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	double thresh=mgr.noise_ampl;
 	double td=mgr.drop*mgr.maxsize;
-	double t=1.5*radius;
+	double t=1.75*radius;
 
 	r=radius;
 

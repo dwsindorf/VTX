@@ -132,6 +132,7 @@
 //     o overall effect is ok, models young and older leaves on same branch but would be better to be
 //       able to control this
 //     o rotation angle doesn't always seem correct and changes with aspect ratio
+//   - need to adjust leaf size based on plant size
 // 5) spline issues
 //   - offsets don't follow branch curvature when spline is applied
 //   - offset sometimes disconnects branches from parent
@@ -178,7 +179,10 @@
 //   o problems with shadows
 //   - if color not enabled get shadow everywhere and render times double
 //   - leaf shadows aren't rendered
-//   
+// 16) plants don't show on some layers in multi-layer maps
+//   - need to make plants a Terrain Properties feature rather than global ?
+// 17) plants grow through rocks
+//
 // NOTES to self
 // 1) Branch texture images
 //   - If tiled image is created from a photo it will only show the front half of full 3d map

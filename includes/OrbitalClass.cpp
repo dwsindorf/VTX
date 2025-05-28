@@ -3682,8 +3682,8 @@ bool Planetoid::setProgram(){
 	double clarity=0;
 	if(water()){
 		clarity=ocean->liquid->clarity;
-		if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
-			clarity*=2;
+		//if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
+		//	clarity*=2;
 	}
 	GLSLMgr::setDefString(defs);
 
@@ -4000,8 +4000,8 @@ void Planetoid::init_render()
     double clarity=0;// set water factors
  	if(water()){
 		clarity=ocean->liquid->clarity;
-		if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
-			clarity*=2;
+		//if(TheScene->viewobj!=this || TheScene->viewtype !=SURFACE)
+		//	clarity*=2;
 		Raster.water_clarity=clarity*FEET;
 		Raster.water_mix=ocean->liquid->mix;
 		Raster.ice_clarity=ocean->solid->clarity*FEET;
@@ -5232,6 +5232,7 @@ std::string Planetoid::randFeature(int type) {
 		Maxs=2e-6*(1+0.5*r[14]); // max size
 		str+=randFeature(RND_VOLCANOS);
 		break;
+		//Point(0,noise(SIMPLEX|NABS|NEG|NLOD|RO2,0,7,1,0.5,2,0.3,0,0,0,1e-06),noise(SIMPLEX|NABS|NEG|SQR,0,4,0.32,0.33,2.08,1,-0.32,0,0,0))
 	case RND_SURFACE_GULLIES:
 		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE,"+std::to_string(Nscale)+",8,0.041,0.5,2,"+std::to_string(Ampl)+",0,0,0,1e-06)";
 		break;
@@ -5442,7 +5443,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_SURFACE_TEX:
 		//keep_rands=true;
-		sprintf(buff,"Texture(%s,BUMP,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
+		sprintf(buff,"Texture(%s,BUMP|RANDOMIZE,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
 		randFeature(RND_ETEXNAME).c_str(), // image name
 		Nscale
 		);
@@ -5476,7 +5477,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(0.5+0.1*s[7]); // attenuation
 		str+=",";
 		str+=std::to_string(2.5+0.3*s[6]); // frequency
-		str+=",0.3,4,0,0)";
+		str+=",0.1,4,0,0)";
 		break;
 	case RND_MAP:
 		str="map(noise(";
@@ -5688,45 +5689,69 @@ static std::string rndSurfaceNoise(double f){
 		return Planetoid::randFeature(RND_SURFACE_PIMPLES);
 }
 
+static std::string rndTilted(){
+	double a=Ampl;
+	double n=Nscale;
+	std::string str="Point(";
+	//Nscale=floor(n-Planetoid::r[6]);
+	Ampl=a+0.25*Planetoid::s[6];
+	str+=rndSurfaceNoise(Planetoid::r[10]);
+	str+=",";
+	//Nscale=floor(n-Planetoid::r[7]);
+	Ampl=a+0.25*Planetoid::s[7];
+	str+=rndSurfaceNoise(Planetoid::r[11]);
+	str+=",";
+	Ampl=a;
+	//Nscale=n;
+	str+=rndSurfaceNoise(Planetoid::r[12]);
+	str+=")";
+	return str;
+}
 std::string Planetoid::newRocks(Planetoid *planet,int gtype){
 	pushInstance(planet);
 	Nrocks=true;
 	planet->setColors();
 	char buff[4096];
 	double size;
-	int scale;
-	Ampl=0.3;
+	int tex_scale;
+	Ampl=0.4;
 	Prob=0.1;
 	switch(gtype){
 	case GN_LARGE:
-		scale=20;
+		tex_scale=20;
 		size=1e-5;
 		Prob=0.1;
 		break;
 	case GN_MED:
-		scale=21;
+		tex_scale=21;
 		size=1e-6;
 		Prob=0.2;
 		break;
 	case GN_SMALL:
-		scale=22;
+		tex_scale=22;
 		size=1e-7;
 		Prob=0.5;
 		break;	
 	}
-	sprintf(buff,"rocks(ID1,3,%g,0.2,%g,0.3,0.05,0.512,",size,Prob);
+	double comp=0.1+0.1*s[7];
+	double drop=0.2-comp;
+	//sprintf(buff,"rocks(ID1,3,%g,0.2,%g,0.3,0.05,0.512,",size,Prob);
+	sprintf(buff,"rocks(ID1,3,%g,0.2,%g,%g,%g,0.512,",size,Prob,comp,drop);
 	std::string str=buff;
-	Nscale=2;
-	str+=rndSurfaceNoise(r[10]);
+	Nscale=1;
+	if(r[9]>0.75)
+		str+=rndTilted();
+	else		
+		str+=rndSurfaceNoise(r[10]);
 	str+=")[";
-	Nscale=pow(2,scale);
+	Nscale=pow(2,tex_scale);
 	str+=newSurfaceBands(planet);
 	str+="+";
 	str+=newSurfaceTex(planet);
 	str+="]";
 	Nrocks=false;
 	popInstance(planet);	
-//	cout<<str<<endl;
+	cout<<str<<endl;
 
 	return str;
 }
@@ -5760,7 +5785,7 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 		Maxs=1e-4*(1+0.5*r[14]); // max size
 		str+=randFeature(RND_VOLCANOS);
 		str+="+";
-		Ampl=0.1;
+		Ampl=0.05;
 		str+=rndSurfaceNoise(r[10]);
 		break;
 	case GN_CRATERED:
@@ -5768,13 +5793,13 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 		Maxs=2e-5*(1+0.5*r[14]); // max size
 		str+=randFeature(RND_CRATERS);
 		str+="+";
-		Ampl=0.1;
+		Ampl=0.05;
 		str+=rndSurfaceNoise(r[10]);
 		break;
 	case GN_OCEANIC:
 	case GN_ROCKY:
 	case GN_ICY:
-		Ampl=0.1;
+		Ampl=0.05;
 		str+=rndSurfaceNoise(r[10]);
 		break;
 	}

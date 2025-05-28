@@ -2597,6 +2597,10 @@ void MapNode::evalsprites()
 
 	MapData *d=&data;
 	d=d->surface1();
+	//Raster.surface=1;
+	//d=surface_data(d);
+	if(!d)
+		return;
     
 	double t=d->theta();
 	double p=d->phi();
