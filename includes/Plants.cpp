@@ -179,8 +179,7 @@
 //   o problems with shadows
 //   - if color not enabled get shadow everywhere and render times double
 //   - leaf shadows aren't rendered
-// 16) plants don't show on some layers in multi-layer maps
-//   - need to make plants a Terrain Properties feature rather than global ?
+// 16) plants don't show on some layers in multi-layer maps (fixed - use surface1 )
 // 17) plants grow through rocks
 //
 // NOTES to self
