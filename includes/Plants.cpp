@@ -12,6 +12,9 @@
 
 #define ENABLE_DATA_CACHING
 
+extern double lsin(double g);
+extern double lcos(double g);
+
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
@@ -21,10 +24,10 @@
 //#define SHOW
 //#define DEBUG_PMEM
 
-//#define DEBUG_RANDOMIZE
-//#define SHOW_PLANT_STATS
-//#define SHOW_BRANCH_STATS
-//#define SHOW_BRANCH_TIMING
+#define DEBUG_RANDOMIZE
+#define SHOW_PLANT_STATS
+#define SHOW_BRANCH_STATS
+#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -179,8 +182,7 @@
 //   o problems with shadows
 //   - if color not enabled get shadow everywhere and render times double
 //   - leaf shadows aren't rendered
-// 16) plants don't show on some layers in multi-layer maps (fixed - use surface1 )
-// 17) plants grow through rocks
+// 16) plants don't show on some layers in multi-layer maps (fixed - use surface1)
 //
 // NOTES to self
 // 1) Branch texture images
@@ -394,6 +396,7 @@ bool PlantMgr::valid()
 		mps=min_adapt_pts;
 	Point pv=MapPt;
 	double d=pv.length();
+	//d=d>1e-6?d:1e-6;
 	
 	double r=TheMap->radius*size;
 	double f=TheScene->wscale*r/d;
@@ -629,6 +632,7 @@ void PlantMgr::render(){
 	TNBranch::setCollectBranches(!nocache);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
 
 	double t0=clock();
 	double t1;
@@ -650,6 +654,10 @@ void PlantMgr::render(){
 		glEnable(GL_BLEND);
 	int start=show_one?0:n-1;
 	if(update_needed){
+		cout<<"PlantMgr::update start "<<start<<endl;
+		
+		glDisable(GL_CULL_FACE);
+
 		for(int i=start;i>=0;i--){ // Farthest to closest
 			PlantData *s=Plant::data[i];
 			Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
@@ -668,8 +676,11 @@ void PlantMgr::render(){
 			randval=256*fabs(r)+id;
 			plant->seed=URAND;
 			plant->instance=i;
+			//cout<<"emit "<<i<<":"<<start<<endl;
 			plant->emit();
 		}
+		glEnable(GL_CULL_FACE);
+		cout<<"PlantMgr::update end()"<<endl;
 	}
 
 	t2=clock(); // total
@@ -1016,7 +1027,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=1;
+	draw_scale=0.25;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1248,6 +1259,7 @@ void TNplant::addLeaf(int id){
 //-------------------------------------------------------------
 void TNplant::valueString(char *s)
 {
+	sprintf(s+strlen(s),"\n%s",tabs);
 	if(strlen(name_str)>0)
 		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
 	else
@@ -1261,6 +1273,12 @@ void TNplant::valueString(char *s)
 			strcat(s,",");
 	}
 	strcat(s,")");
+	TNBranch *branch=right;
+	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
+		sprintf(s+strlen(s),"\n%s",tabs);
+		branch->valueString(s);
+		branch=branch->right;
+	}
 }
 
 //-------------------------------------------------------------
@@ -1268,14 +1286,20 @@ void TNplant::valueString(char *s)
 //-------------------------------------------------------------
 void TNplant::save(FILE *f)
 {
-	char buff[1024];
+	char buff[4096];
 	buff[0]=0;
 	valueString(buff);
 	//if(addtabs)
-	    fprintf(f,"\n%s",tabs);
+	//fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
-	if(right)
-		right->save(f);
+	
+	TNBranch *branch=right;
+	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
+		branch=branch->right;
+	}
+	fprintf(f,"%s",tabs);
+    if(branch)
+    	branch->save(f);
 }
 
 //-------------------------------------------------------------
@@ -1289,12 +1313,13 @@ void TNplant::saveNode(FILE *f)
 	//if(addtabs)
 	    fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
+	cout<<"TNplant::saveNode "<<buff<<endl;
 	//TNbase::saveNode(f);
-	TNBranch *branch=right;
-	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
-		branch->saveNode(f);
-		branch=branch->right;
-	}
+//	TNBranch *branch=right;
+//	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
+//		branch->saveNode(f);
+//		branch=branch->right;
+//	}
 }
 
 //-------------------------------------------------------------
@@ -1449,11 +1474,11 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
 	
 	glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	if(render_test)
 		rendered++;
 	
@@ -1495,7 +1520,7 @@ NodeIF *TNplant::getInstance(NodeIF *parent){
 NodeIF *TNplant::getInstance(NodeIF *parent, int type){
 	LinkedList<ModelSym*>list;
 	char name[256];
-	char path[512];
+	char path[1024];
 	path[0]=0;
 	strcpy(name,TheScene->typeSymbol(type).c_str());
 	TheScene->model->getDirList(type,list);
@@ -1508,7 +1533,7 @@ NodeIF *TNplant::getInstance(NodeIF *parent, int type){
     	}
 	}
  	list.free();
- 	TNplant *plant=this;
+ 	TNplant *plant=0;
     if(strlen(path)){
     	File.getFileNameList(path,"*.spx",list);
 		int ival=std::rand() % list.size;
@@ -1519,6 +1544,9 @@ NodeIF *TNplant::getInstance(NodeIF *parent, int type){
 		
     }
  	cout<<"TNplant::getInstance{"<<name<<") path:"<<path<<endl;
+ 	path[0]=0;
+ 	plant->valueString(path);
+ 	cout<<"TNplant::getInstance "<<path<<endl;
     list.free();
 	plant->randomize();
 	return plant;
@@ -1586,7 +1614,7 @@ void TNBranch::init(){
 	INIT;
 	if(arglist.size==0)
 		getArgs();
-	getTextureName();
+	getTextureImage();
 	initArgs();
 	
 	root=getRoot();
@@ -1627,7 +1655,12 @@ void TNBranch::initArgs(){
 	if(n>12)bias=arg[12];
 	if(n>13)enables=arg[13];
 	if(n>14)curvature=arg[14];
-	if(n>15)density=arg[15];}
+	if(n>15)density=arg[15];
+	
+	getTextureName();
+	//cout<<"TNBranch::initArgs() "<<isRandEnabled()<<" "<<image_file<<endl;
+
+}
 
 void TNBranch::invalidateTexture(){
 	if(texture_id){
@@ -1725,17 +1758,36 @@ double TNBranch::evalArg(int i, double d){
 	return d;
 }
 
+void TNBranch::getTextureImage(){
+	if(base){
+		TNarg *arg=((TNarg *)base);
+		while(arg){
+			TNode *node=arg->left;
+			if(node->typeValue()==ID_STRING){
+//				setImageName(((TNstring*)node)->value);
+				setPlantImage(((TNstring*)node)->value);
+				if(image){
+					texid=PlantMgr::textures;
+					PlantMgr::textures++;
+				}
+				return;
+			}			
+			arg=arg->next();
+		}
+	}
+}
 void TNBranch::getTextureName(){
 	if(base){
 		TNarg *arg=((TNarg *)base);
 		while(arg){
 			TNode *node=arg->left;
 			if(node->typeValue()==ID_STRING){
-				setPlantImage(((TNstring*)node)->value);
-				if(image){
-					texid=PlantMgr::textures;
-					PlantMgr::textures++;
-				}
+				setImageName(((TNstring*)node)->value);
+//				setPlantImage(((TNstring*)node)->value);
+//				if(image){
+//					texid=PlantMgr::textures;
+//					PlantMgr::textures++;
+//				}
 				return;
 			}			
 			arg=arg->next();
@@ -2094,8 +2146,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					for (int i = 0; i < segs; i++) {
 						root->addLeaf(branch_id);
 						double a = i * f + phase;
-						double ca = cos(2.0 * PI * a);
-						double sa = sin(2.0 * PI * a);
+						double ca = COS(2.0 * PI * a);
+						double sa = SIN(2.0 * PI * a);
 						Point pr = r * ca + v.cross(r) * sa
 								+ v * v.dot(r) * (1.0 - ca);
 						pr = pr.normalize();
@@ -2311,14 +2363,33 @@ void TNBranch::propertyString(char *s){
 			strcat(s,",");
 	}
 }
+
 void TNBranch::valueString(char *s){
-	if(strlen(name_str)>0)
-		sprintf(s+strlen(s),"%s(\"%s\",",symbol(),name_str);
-	else
-		sprintf(s+strlen(s),"%s(",symbol());
-	TNbase::valueString(s);
+	sprintf(s+strlen(s),"%s(",symbol());
+	if(strlen(name_str))
+		sprintf(s+strlen(s),"\"%s\",",name_str);
+	
+	TNarg *arg=(TNarg*)left;
+	while(arg){
+		arg->valueString(s+strlen(s));
+		arg=arg->next();
+		if(arg)
+			strcat(s,",");
+	}
 	strcat(s,")");
+	if(strlen(image_file) ||(strlen(colorexpr))){
+		sprintf(s+strlen(s),"[");
+		if(strlen(image_file)){
+			sprintf(s+strlen(s),"\"%s\"",image_file);
+			if(strlen(colorexpr))
+				sprintf(s+strlen(s),",");				
+		}
+		if(strlen(colorexpr))
+			sprintf(s+strlen(s),"%s",colorexpr);
+		sprintf(s+strlen(s),"]");
+	}
 }
+
 void TNBranch::save(FILE *f){
 	fprintf(f,"\n%s",tabs);
 	if(strlen(name_str)>0)
@@ -2342,6 +2413,7 @@ void TNBranch::save(FILE *f){
 			fprintf(f,"%s",colorexpr);
 		fprintf(f,"]");
 	}
+	fprintf(f,"\n%s",tabs);
 	if(right)
 		right->save(f);
 }
@@ -2363,17 +2435,18 @@ void TNBranch::saveNode(FILE *f){
 			fprintf(f,"%s",colorexpr);
 		fprintf(f,"]\n");
 	}
-
 }
 NodeIF *TNBranch::removeNode(){
 	return TNfunc::removeNode();
 }
 
 bool TNBranch::randomize(){
+	initArgs();
 	if(right && (right->typeValue()==ID_BRANCH||right->typeValue()==ID_LEAF))
 		(TNBranch*)right->randomize();
 	if(!isRandEnabled() || !isEnabled())
 		return false;
+	
 	int nsave=lastn;
 	lastn=getRandValue();//*123;
 	setRands();
@@ -2420,18 +2493,19 @@ bool TNBranch::randomize(){
 	if(n>14)curvature=arg[14];
 	if(n>15)density=arg[15];}
 	*/
-	newarg[0]=clamp(orgarg[0]*(1+f*s[0]),3,15);
-	newarg[1]=orgarg[1];
-	if(isPlantBranch()){
-		newarg[2]=clamp(orgarg[2]*(1+f*s[2]),0.5,2);
-		newarg[3]=clamp(orgarg[3]*(1+f*s[3]),0.25,1.0);
-	}
-	newarg[5]=orgarg[5]*(1+f*s[5]);
-	newarg[6]=orgarg[6]*(1+f*s[6]);
-	newarg[9]=orgarg[9]+max(3*f*s[9],1.0);
-	newarg[11]=orgarg[11]*(1+f*s[11]);
-	newarg[12]=orgarg[12]*(1+f*s[12]);
-	newarg[14]=clamp(orgarg[14]+0.25*f*s[14],-1,1);
+//	newarg[0]=clamp(orgarg[0]*(1+f*s[0]),1,15);
+//	newarg[1]=orgarg[1];
+//	if(isPlantBranch()){
+//		newarg[2]=clamp(orgarg[2]*(1+f*s[2]),0.1,2);    // length
+//		newarg[3]=clamp(orgarg[3]*(1+f*s[3]),0.1,1.0);  // width
+//	}
+	newarg[5]=orgarg[5]*(1+f*s[5]);          // divergence
+	newarg[6]=orgarg[6]*(1+f*s[6]);          // flatness
+	newarg[9]=orgarg[9]+max(3*f*s[9],1.0);   // first_bias
+	newarg[11]=orgarg[11]*(1+f*s[11]);       // offset
+	newarg[12]=orgarg[12]*(1+f*s[12]);       // bias
+	newarg[14]=clamp(orgarg[14]+0.25*f*s[14],-1,1);      // curvature
+	newarg[15]=clamp(orgarg[15]*(1+0.5*f*s[15]),0.1,1);  // density
 	for(int i=0;i<n;i++){
 		sprintf(tmp,"%1.3g",newarg[i]);
 		if(i<n-1)
@@ -2458,6 +2532,15 @@ bool TNBranch::randomize(){
 	else{
 		info=LEAF;
 	}
+	TNcolor* color=getColor();
+	if(color){
+		TNcolor::rand_val=f;
+		color->randomize();
+		tmp[0]=0;
+		color->valueString(tmp);
+		setColorExpr(tmp);
+		//cout<<tmp<<endl;
+	}
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(info, list);
 	
@@ -2467,26 +2550,32 @@ bool TNBranch::randomize(){
 	cout<<"randomize "<<tname<<endl;
 	setPlantImage(tname);
 #ifdef DEBUG_RANDOMIZE
-	cout<<"old:"<<buff<<"\nnew:"<<str<<endl;
+	cout<<"old:"<<buff<<endl;
 #endif
 	sprintf(tmp,str.c_str());
 	TNBranch *newbranch=TheScene->parse_node(tmp);
 	tmp[0]=0;
 	
 	if(newbranch){
-		newbranch->valueString(tmp);
 		delete left;
 		left=newbranch->left;
 		left->setParent(this);
-		if(base)
-			delete base;
-		base=newbranch->base;
-		if(base)
-			base->setParent(this);		
+//		if(base)
+//			delete base;
+//		base=newbranch->base;
+//		if(base)
+//			base->setParent(this);	
+//		newbranch->base=base;
+		
 		if(right)
 			newbranch->right=right;	
 		getArgs();
 		initArgs();
+#ifdef DEBUG_RANDOMIZE
+		buff[0]=0;
+		newbranch->valueString(buff);
+	    cout<<"new:"<<buff<<endl;
+#endif
 		return true;
 	}
 	else{

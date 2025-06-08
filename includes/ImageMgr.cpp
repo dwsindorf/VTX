@@ -423,8 +423,8 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	for(y=y1,j=0;j<h;j++,y+=dy){
 		switch(mtype){
 		case TILE:
-	        vy=rh*sin(RPD*y);
-	        vw=-rh*cos(RPD*y);
+	        vy=rh*SIN(RPD*y);
+	        vw=-rh*COS(RPD*y);
 	        break;
 		default:
 		 	vy=y;
@@ -447,8 +447,8 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 				break;
 			case CMAP:
 			case TILE:
-				vx=-rw*cos(RPD*x);
-				vz=rw*sin(RPD*x);
+				vx=-rw*COS(RPD*x);
+				vz=rw*SIN(RPD*x);
 				break;
 			case PMAP:
 			default:

@@ -325,8 +325,8 @@ void TNglobal::eval()
 		if(CurrentScope->texture())
 			S0.set_inactive();
 		//S0.s=Theta/180-1;
-		S0.s=cos(0.5*RPD*(Theta+90));
-		S0.s=fabs(S0.s);//fabs(sin(PI*S0.s));
+		S0.s=COS(0.5*RPD*(Theta+90));
+		S0.s=fabs(S0.s);
 		//cout<<Theta<<" "<<S0.s<<endl;
 		break;
 	case PHI:
@@ -514,6 +514,28 @@ void TNcolor::init(){
 }
 const char *TNcolor::symbol(){
 	return "Color";
+}
+
+double TNcolor::rand_val=0;
+static void randVal(TNode* n)
+{
+	if(n->typeValue()==ID_CONST){
+		TNconst *c=(TNconst*)n;	
+		double f=(double)(std::rand())/RAND_MAX-0.5;
+		double v=c->value*(1+TNcolor::rand_val*f);
+		c->value=clamp(v,0,1);
+	}
+}
+bool TNcolor::randomize(){
+//	char before[258]={0};
+//	char after[256]={0};
+//	valueString(before);
+	TNarg *arg=(TNarg*)right;
+	arg->visit(randVal);
+//	valueString(after);
+//	cout<<"before:"<<before<<endl;
+//	cout<<"after:"<<after<<endl;
+	return true;
 }
 
 //-------------------------------------------------------------

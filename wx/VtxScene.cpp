@@ -362,8 +362,8 @@ void VtxScene::set_orbital_view()
 void VtxScene::set_surface_view()
 {
     set_key(KEY_VIEW_SURFACE);
-    TheScene->set_changed_detail();
-    TheScene->rebuild_all();
+    TheScene->set_moved();
+    //TheScene->rebuild_all();
 	//Adapt.set_maxcycles(50);
     //TheView->clr_autovh();
 }

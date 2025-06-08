@@ -208,6 +208,7 @@ NodeIF *TNrocks::replaceNode(NodeIF *c)
 	parent->replaceChild(this,c);
 	delete base;
 	base=0;
+	TheScene->rebuild_all();
 	return c;
 }
 //-------------------------------------------------------------

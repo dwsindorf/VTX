@@ -1816,7 +1816,7 @@ void TNsin::eval()
 	right->eval();
 	//S0.s=umod(S0.s,PIX2);
 	//S0.s=lsin(S0.s);
-	S0.s=sin(S0.s);
+	S0.s=SIN(S0.s);
 	S0.set_svalid();
 }
 
@@ -1840,7 +1840,7 @@ void TNcos::eval()
 	right->eval();
 	//S0.s=umod(S0.s,PIX2);
 	//S0.s=lcos(S0.s);
-	S0.s=cos(S0.s);
+	S0.s=COS(S0.s);
 	S0.set_svalid();
 }
 

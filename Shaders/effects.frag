@@ -54,7 +54,7 @@ void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // image
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
 	vec3 color = fcolor1.rgb;
-	float h,d;
+	float h,d,q=0,v=0;
 #ifdef SHADOW_TEST
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
 	return;
@@ -98,7 +98,7 @@ void main(void) {
 			float astep=dv*fov;
 			float theta=PI-2.0*acos(RDP);
 			int last_water=0;
-			for(int i=0;i<steps;i++){
+ 			for(int i=0;i<steps;i++){
 				float alpha=astep*i;
 				float beta=theta-alpha;
 				float t=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).r;
@@ -115,8 +115,8 @@ void main(void) {
 				float zb=1.0/(ws2*z+ws1);// zbuffer depth at y
 				float zr=z1*(cos(alpha)+sin(alpha)/tan(beta)); // depth of reflected ray at y
 				float dz=zb/zr;
-				if(dz<0.999){
-					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+i)).rgb;
+				if(dz>0 && dz<0.999){
+ 					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+i)).rgb;
 					break;
 				}
 			}
@@ -155,8 +155,9 @@ void main(void) {
 	color=mix(color,Haze.rgb*AMBIENT,h);
 #endif
  	}
+		
 	gl_FragData[0]=vec4(color,1.0);	
-	//gl_FragData[0]=vec4(d,0,0,1.0);	
+	//gl_FragData[0]=vec4(q,v,0,1.0);	
 	
     gl_FragData[1]=fcolor2;
 }

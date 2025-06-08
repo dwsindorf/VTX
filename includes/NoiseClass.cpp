@@ -421,7 +421,7 @@ char *Noise::ntypes[]={"GRADIENT","SIMPLEX","VORONOI"};
 char *Noise::nopts[]={"","|NABS","|SQR","|SQR|NABS","|NEG","|NABS|NEG","|SQR|NABS|NEG","|SQR|NEG"};
 
 std::string Noise::getNtype(double f){
-	return gets(ntypes,3,f);
+	return gets(ntypes,3,f*f);
 }
 std::string Noise::getNopts(double f){
 	return gets(nopts,8,f);
@@ -852,8 +852,8 @@ void Noise::distort(int type,double distortion){
 		pt=pt.normalize();
 		rad=(pt.x*pt.x+pt.y*pt.y);
 		angle=rad*distortion*2*PI;
-		s=sin(angle);
-		c=cos(angle);
+		s=SIN(angle);
+		c=COS(angle);
 		x=(pt.x*c-pt.y*s);
 		y=(pt.x*s+pt.y*c);
 		z=pt.z;
@@ -862,19 +862,19 @@ void Noise::distort(int type,double distortion){
 		p=RPD*P180(phi);
 		t=RPD*P360(theta+DPR*distortion);
 		if(noise3D())
-			a=r*cos(p);
-		x=-a*cos(t);
-		z=a*sin(t);
-		y=r*sin(p);
+			a=r*COS(p);
+		x=-a*COS(t);
+		z=a*SIN(t);
+		y=r*SIN(p);
 		break;
 	case NPHI:
 		t=RPD*P360(theta);
 		p=RPD*P180(phi+DPR*distortion);
 		if(noise3D())
-			a=r*cos(p);
-		x=-a*cos(t);
-		z=a*sin(t);
-		y=r*sin(p);
+			a=r*COS(p);
+		x=-a*COS(t);
+		z=a*SIN(t);
+		y=r*SIN(p);
 		break;
 	case NRADIUS:
 		a=distortion;

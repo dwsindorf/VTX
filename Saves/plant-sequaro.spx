@@ -1,20 +1,19 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=0.230943;
-		theta=102.245;
-		height=30.4187 ft;
-		gndlvl=-3186.78 ft;
+		phi=-2.8125;
+		theta=118.125;
+		height=36.0043 ft;
+		gndlvl=380.447 ft;
 		time=11194;
 		vstride=0.02;
-		hstride=1;
+		hstride=2;
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.0039994;
-		heading=53;
-		tilt=-4;
-		angle=57;
+		minr=0.00400007;
+		heading=-71;
+		tilt=-7;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
@@ -68,7 +67,8 @@ Scene() {
 				year=30;
 				twilight=Color(0.5,0.3,0.1);
 				Surface{
-					terrain=Plant("bush",1,1.39343e-06,1,0.5,0.08,0,0,0,0)
+					terrain=
+							Plant("bush",1,1.39343e-06,1,0.5,0.08,0,0,0,0)
 							Branch("stem",3,0,2,0.5,0,0,0,0.76,0.57,0,0,1,1,15)["sequaro1",Color(0,0.12549,0.0156863,0.5*IRAND)]
 							Branch(8,0,0.4,0.5,0,0.29,0.36,0.94,1,3,0,0.65,0,31,1,1)["sequaro1",Color(0,0.184314,0,0.5*IRAND)]Color(0.501961,0.501961,0,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06));
 				}

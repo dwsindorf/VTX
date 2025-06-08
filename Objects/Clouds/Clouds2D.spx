@@ -1,11 +1,11 @@
-Clouds(0.00118797) {
+Clouds(0.00717976) {
 	crot=1;
-	day=3.27758;
+	day=4.43323;
 	name="Clouds2D";
 	resolution=4;
 	rseed=1.40819;
 	Surface{
-		terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|NLOD|SCALE|SQR,1,10.37,1,0.603,2.406,1,1,0,0.69,1e-06))+noise(SIMPLEX|SCALE|SQR|RO1,0,8.5,0.589,0.11,2.078,0.863,4,0,0.75,1e-06));
+		terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|NABS|NLOD|SCALE|SQR,1,10.37,1,0.603,2.406,1,1,0,0.69,1e-06))+noise(SIMPLEX|FS|NABS|SCALE|SQR|RO1,0,17.5,1,0.397,2.078,1,4,0,1,1e-06));
 	}
 }
 

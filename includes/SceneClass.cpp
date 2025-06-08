@@ -348,7 +348,8 @@ NodeIF* Scene::getPrototype(NodeIF *obj, int type){
 NodeIF* Scene::makeObject(NodeIF *obj, int type){
 	int ttype=type&TN_TYPES;
 	int gtype=type&GN_TYPES;
-	cout<<"Scene::makeObject insert at:"<<obj->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<" "<<model->actionmode<<endl;
+	if(obj)
+		cout<<"Scene::makeObject insert at:"<<obj->typeName()<<" ttype:"<<ttype<<" gtype:"<<gtype<<" "<<model->actionmode<<endl;
 	set_action("Building..");
 	setRseed(getRandValue());
 	lastn=rseed*123457;
@@ -1674,7 +1675,7 @@ void Scene::change_view(int v)
 
 	viewtype=v;
 
-	cout<<"Scene::change_view"<<" "<<viewobj<<endl;
+	cout<<"Scene::change_view"<<" "<<changed_view()<<endl;
 	//vobj=viewobj;
 
 	set_changed_detail();

@@ -2,8 +2,6 @@
 
 #include "PointClass.h"
 #include "defs.h"
-#define SINE_LUT
-#define FULLSINE
 
 double TWOPI=2.0*PI;
 double INV2PI=1.0/TWOPI;
@@ -37,6 +35,7 @@ void make_lut()
 //-------------------------------------------------------------
 double lsin(double t)
 {	
+	make_lut();
     // Wrap x into [0, TWO_PI)
     double x = fmod(t, TWOPI);
     if (x < 0) x += TWOPI;
@@ -49,10 +48,6 @@ double lsin(double t)
 
     // Linear interpolation
     double ls=lut[f0] * (1.0 - frac) + lut[f1] * frac;
-//    double rs=sin(t);
-//    double delta=ls-rs;
-//	  cout<<delta<<endl;
-
 	return ls;
 }
 //-------------------------------------------------------------
@@ -60,6 +55,7 @@ double lsin(double t)
 //-------------------------------------------------------------
 double lcos(double t)
 {
+	make_lut();
 	return lsin(t+PIBY2);
 }
 
@@ -88,15 +84,8 @@ Point Point::rectangular()
 {
 	double t=RPD*x, p=RPD*y;
 	double f;
-#ifdef SINE_LUT
-	if(!sin_lut_flag)
-		make_lut();
-	f=z*lcos(p);
-	return Point(-f*lcos(t),z*lsin(p),f*lsin(t));
-#else
-	f=z*cos(p);
-	return Point(-f*cos(t),z*sin(p),f*sin(t));
-#endif
+	f=z*COS(p);
+	return Point(-f*COS(t),z*SIN(p),f*SIN(t));
 }
 
 inline void cartesianToSpherical(double x, double y, double z,
@@ -182,13 +171,7 @@ int Point::intersect_sphere(Point pr, Point ps, double rad, double &d1, double &
 Point4D Point4D::rectangular()
 {
 	double t=RPD*x, p=RPD*y;
-#ifdef SINE_LUT
-	if(!sin_lut_flag)
-		make_lut();
-	return Point4D(-w*lcos(t),z*lsin(p),w*lsin(t),-z*lcos(p));
-#else
-	return Point4D(-w*cos(t),z*sin(p),w*sin(t),-z*cos(p));
-#endif
+	return Point4D(-w*COS(t),z*SIN(p),w*SIN(t),-z*COS(p));
 }
 
 //-------------------------------------------------------------
@@ -234,13 +217,6 @@ Point  LPoint::rectangular()
 	double yr=PI*p.lvalue();
 	double zr=r.INV_SCALE*r.lvalue();
 	double f;
-#ifdef SINE_LUT
-	if(!sin_lut_flag) 
-		make_lut();
-	f=zr*lcos(yr);
-	return Point(-f*lcos(xr),zr*lsin(yr),f*lsin(xr));
-#else
-	f=zr*cos(yr);
-	return Point(-f*cos(xr),zr*sin(yr),f*sin(xr));
-#endif
+	f=zr*COS(yr);
+	return Point(-f*COS(xr),zr*SIN(yr),f*SIN(xr));
 }

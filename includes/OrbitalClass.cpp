@@ -14,6 +14,7 @@
 #include "FileUtil.h"
 #include "UniverseModel.h"
 #include "Rocks.h"
+#include "Plants.h"
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
@@ -21,14 +22,13 @@ extern void setCenterText(char *text);
 
 extern double Theta,Phi,Radius,Sfact;
 
-#define TEST
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
 #define DEBUG_TEMP 1
 #define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
-#define DEBUG_COLORS
+//#define DEBUG_COLORS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2406,6 +2406,7 @@ NodeIF *Spheroid::replaceNode(NodeIF *n){
 	NodeIF *newnode=NodeIF::replaceNode(n);
 	if(TheScene->viewobj==n)
 		TheScene->change_view(ORBITAL);
+	TheScene->rebuild_all();
 	return newnode;
 }
 
@@ -4398,13 +4399,13 @@ double Planetoid::calcLocalTemperature(bool w){
 	if(seasonal){
 		g+=tilt_bias();
 		if(tidalLocked()){
-			dt=-cos(RPD*dlt()); // ~ time of day
+			dt=-COS(RPD*dlt()); // ~ time of day
 			df=t*dt*day/year/24;
 			hf=df*lerp(heat_factor,0,2.25,0.5,0);
 			t+=hf;
 		}
 	}
-	s=sin(g);
+	s=SIN(g);
 	ds=tave*temp_factor*s*s;
 	t-=ds; // C
 	Sfact=K2C(t)/K2C(temperature)-1;
@@ -4932,7 +4933,7 @@ void Planetoid::setColors(){
 			val=0.8+0.3*s[5];
 			break;
 		case GN_OCEANIC:
-			if(tcount==0){
+			if(r[8]>=0.50){
 				hue=0.2+0.1*s[3];
 				mix=Color(0.0,0.0,0);			
 			}
@@ -5284,9 +5285,9 @@ std::string Planetoid::randFeature(int type) {
 		str="bands(";
 		str+=randFeature(RND_TEXNAME);
 		str+=",TMP|NORM|REFLECT,64,";
-		str+=std::to_string(0.1*r[5]); // random
+		str+=std::to_string(0.2*r[5]); // random
 		str+=",";
-		str+=std::to_string(0.5*r[6]); // mix
+		str+=std::to_string(0.7*r[6]); // mix
         buff[0]=0;
 		for(int i=0;i<ncolors;i++){
 			Color c=colors[i];
@@ -5313,7 +5314,7 @@ std::string Planetoid::randFeature(int type) {
 		//1.0+s[7],     // start
 		0.5+0.5*s[8], // homogeneity
 		2.1+0.2*s[9], // frequency
-		0.1+0.1*s[10]   // amplitude
+		0.5+0.1*s[10]   // amplitude
 		);
 		str=buff;
 		break;
@@ -5342,10 +5343,10 @@ std::string Planetoid::randFeature(int type) {
 		sprintf(buff,"Texture(%s,S|BORDER|NORM|LINEAR|TEX|TBIAS,%s,0.5,2,1,0,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)",
 		randFeature(RND_TEXNAME).c_str(), // image name
 		randFeature(RND_TEX_NOISE).c_str(), // noise
-		-0.7+0.3*s[8],     // phi bias
-		(0.3+0.01*s[9]),   // ht bias
-		0.1*(1+0.5*s[9]),  // bmp bias
-		-0.1*(1+0.5*s[10]) // slope bias
+		-0.3+0.2*s[8],     // phi bias
+		(0.05+0.01*s[9]),   // ht bias
+		0.05*(1+0.5*s[9]),  // bmp bias
+		-0.05*(1+0.5*s[10]) // slope bias
 		);
 		str=buff;
 		PRNT_FEATURE("GLOBAL_TEX")
@@ -5722,17 +5723,17 @@ std::string Planetoid::newRocks(Planetoid *planet,int gtype){
 	case GN_LARGE:
 		tex_scale=20;
 		size=1e-5;
-		Prob=0.1;
+		Prob=0.05;
 		break;
 	case GN_MED:
 		tex_scale=21;
 		size=1e-6;
-		Prob=0.2;
+		Prob=0.1;
 		break;
 	case GN_SMALL:
 		tex_scale=22;
 		size=1e-7;
-		Prob=0.5;
+		Prob=0.2;
 		break;	
 	}
 	double comp=0.1+0.1*s[7];
@@ -5892,8 +5893,9 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 3) add layer header
 	str+=newSurfaceDetail(planet);
 	str+=randFeature(RND_FRACTAL);
-	if(planet->terrain_type==GN_OCEANIC /*|| s[2]>0.5*/)
+	if(planet->terrain_type==GN_OCEANIC){
 		str+=newGlobalTex(planet);
+	}
 	else{
 		planet->addTerrainVar(var_name.c_str(),randFeature(RND_GLOBAL_NOISE).c_str()); // need new variable
 		tcount=0;
@@ -5923,6 +5925,17 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	return str;
 	
 }
+std::string newPlant(int gtype){
+	char buff[4096];
+	buff[0]=0;
+	std::string str;
+	TNplant *plant = TheScene->makeObject(0,TN_PLANT|gtype);
+	plant->valueString(buff);
+	str=buff;
+	cout<<buff<<endl;
+	return str;
+		
+}
 void Planetoid::newRocky(Planetoid *planet, int gtype){
 	char surface[5000];
 	char buff[10000];
@@ -5950,6 +5963,8 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     		if (sky->pressure >= 0.5) {
     			CloudLayer *clouds=planet->newClouds(false);
     			planet->addChild(clouds);
+    	 		if(r[7]>0.25)
+    	 			str+=newPlant(GN_GRASS);
     		}
      	}
     	break;
@@ -5957,22 +5972,27 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		//str+=newOcean(planet);
     	break;
     case GN_OCEANIC:
-		str+=newOcean(planet);
 		sky= planet->newSky(GN_MED);
 		planet->addChild(sky);
 		CloudLayer *clouds;
 		clouds = planet->newClouds(false);
 		planet->addChild(clouds);	
+		if(r[7]>0.1)
+ 			str+=newPlant(GN_GRASS);
+ 		if(r[7]>0.5)
+			str+=newPlant(GN_BUSH);
+		if(r[7]>0.9)
+			str+=newPlant(GN_TREE);
+		str+=newOcean(planet);
 		if(sky->pressure >=1){
 			clouds = planet->newClouds(true);
 			planet->addChild(clouds);				
 		}
 		planet->calcAveTemperature();
-		if(planet->temperature<400){
+		if(planet->temperature<400)
 			str+=randFeature(RND_SNOW);
-		}
  		planet->shadow_color.set_alpha(0.5);
-   		break;
+    	break;
     }
 	//str+=randFeature(RND_FRACTAL);
 	

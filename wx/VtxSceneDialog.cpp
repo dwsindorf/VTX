@@ -798,7 +798,8 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
     int type=newobj->getFlag(TN_TYPES);
 	TheScene->regroup();
 
-    TheScene->rebuild_all();
+    //TheScene->rebuild_all();
+    //TheScene->rebuild();
     rebuildObjectTree();
 
     selectObject(newobj);

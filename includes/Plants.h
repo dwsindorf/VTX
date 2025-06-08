@@ -346,6 +346,7 @@ public:
 	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}
 	bool isPlantBranch() { return typeValue()==ID_BRANCH;}
 	void getTextureName();
+	void getTextureImage();
 	void getColorString();
 	void setColorExpr(char *s);
 	char *getColorExpr(){return colorexpr;}

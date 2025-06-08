@@ -15,7 +15,7 @@ protected:
 	void getObjAttributes();
 	void setObjAttributes();
 	void invalidateObject(){
-	    object()->invalidate();
+	    //object()->invalidate();
 	    setObjAttributes();
 	    TheView->set_changed_render();
 	}

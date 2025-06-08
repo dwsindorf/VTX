@@ -1432,7 +1432,7 @@ static void collect_nodes(MapNode *n)
 	MapData *d=&n->data;
 	d=d->surface1();
 	
-	if(n->visible() && d && !d->rock()){
+	if(n->visible() && d && !d->rock() && !d->water()){
 		node_list.add(n);
     }
 }
@@ -2440,7 +2440,7 @@ void Map::render_triangle_list() {
 //-------------------------------------------------------------
 Point  RingMap::point(double t, double p, double r)
 {
-	return Point(t,0.0,radius+width*sin(RPD*fabs(p))).rectangular();
+	return Point(t,0.0,radius+width*SIN(RPD*fabs(p))).rectangular();
 }
 
 //-------------------------------------------------------------

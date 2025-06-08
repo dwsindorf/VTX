@@ -118,6 +118,7 @@ public:
 class TNcolor : public TNvector
 {
 public:
+	static double rand_val;
 	TNcolor(TNode *r) : TNvector(r) {}
 	void dump()				{ printf("%s()\n",symbol());}
 	void eval();
@@ -127,6 +128,7 @@ public:
 	const char *symbol();
 	bool initProgram();
 	int comps();
+	bool randomize();
 
 	void addToken(LinkedList<TNode*>&);
 	TNode *operator[](int i);

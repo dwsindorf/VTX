@@ -897,8 +897,8 @@ void DensityTree::init_node(OctNode *octnode)
 			f=f*f*f;
 		f=(mr-f)/mr;
 		double a=TWOPI*twist_angle*f;
-		double c=cos(a);
-		double s=sin(a);
+		double c=COS(a);
+		double s=SIN(a);
 		double x=p.x*c-p.z*s;
 		double z=p.x*s+p.z*c;
 		p.x=x;

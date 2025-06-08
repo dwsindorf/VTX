@@ -22,6 +22,17 @@ using namespace std;
 #define MAXSTR 1024
 #endif
 
+#define USE_LUT
+#ifdef USE_LUT
+extern double lsin(double g);
+extern double lcos(double g);
+#define SIN lsin
+#define COS lcos
+#else
+#define SIN sin
+#define COS cos
+#endif
+
 #define CCHAR2CHAR(f)  const_cast<char*>((f))
 //#define WXSTR2CHAR(f)  const_cast<char*>((f).ToAscii())
 
