@@ -347,7 +347,9 @@ void TNrocks::eval()
 	ground.p.z=0;
 	
 	INIT;
+	bool other_rock=false;
 	right->eval();
+	other_rock=S0.get_flag(ROCKBODY);
     if(first){
 		S0.next_id();
 		S0.p.z-=Drop;
@@ -402,6 +404,7 @@ void TNrocks::eval()
 	}
 	else{
 		S0.copy(ground);
+		if(!other_rock)
 		S0.clr_flag(ROCKBODY);
 	}
 	Td.insert_strata(rock);

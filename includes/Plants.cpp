@@ -167,8 +167,7 @@ extern double lcos(double g);
 //   - replaced map->radius with fixed constant (4e-3)
 // 10) plant branches disappear if 3d-clouds are present
 //   o fixed: removed call to GLSLMgr::max_output=4 in CloadLayer setProgram
-// 11) plants are generated on or below water
-//   - need to not generate plants in water
+// 11) plants are generated on or below water (fixed)
 // 12) clusters
 //   - not all leaves are in the same plane
 //   * fixed: was using tilted vector for branch direction

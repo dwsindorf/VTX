@@ -1878,7 +1878,7 @@ static void Test(MapNode *n)
 //-------------------------------------------------------------
 Color MapNode::Tcolor(MapData *d) {
     Color c = BLACK;
-
+ 
     double a = c.alpha();
     switch (Render.colors()) {
     case CSIZE:						// '1'
@@ -1969,8 +1969,8 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-        if(d->rock())
-        	c = Color(0.5, 0.5, 0.5);
+         if(d && d->rock())
+        	c = Color(1, 0.0, 0.0);
         else
         	c = Color(1, 1, 1);
       	 //c = Color(data.mdata(), 0, 0);

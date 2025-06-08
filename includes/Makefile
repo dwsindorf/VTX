@@ -566,7 +566,7 @@ depend:;
 ../Release/NodeData.o: AdaptOptions.h RenderOptions.h Effects.h Raster.h
 ../Release/NoiseClass.o: NoiseClass.h PointClass.h defs.h ListClass.h
 ../Release/NoiseClass.o: ColorClass.h GLheaders.h Perlin.h Util.h
-../Release/NoiseFuncs.o: ./NoiseFuncs.h Perlin.h
+../Release/NoiseFuncs.o: ./NoiseFuncs.h Perlin.h defs.h
 ../Release/ObjectClass.o: ViewClass.h LightClass.h ColorClass.h GLheaders.h
 ../Release/ObjectClass.o: PointClass.h defs.h ListClass.h ObjectClass.h
 ../Release/ObjectClass.o: GLglue.h NodeIF.h Util.h MatrixClass.h matrix.h
@@ -1035,7 +1035,7 @@ depend:;
 ../Debug/Rocks.o:	Rocks.cpp
 ../Debug/SceneClass.o:	SceneClass.cpp
 ../Debug/Sprites.o:	Sprites.cpp
-../Debug/Plants.o:	Plants.cpp Plants.h
+../Debug/Plants.o:	Plants.cpp Plants.h defs.h
 ../Debug/TerrainClass.o:	TerrainClass.cpp
 ../Debug/TerrainData.o:	TerrainData.cpp
 ../Debug/TerrainMgr.o:	TerrainMgr.cpp
@@ -1086,11 +1086,11 @@ depend:;
 ../Release/Rocks.o:	Rocks.cpp
 ../Release/SceneClass.o:	SceneClass.cpp
 ../Release/Sprites.o:	Sprites.cpp
-../Release/Plants.o:	Plants.cpp Plants.h
+../Release/Plants.o:	Plants.cpp Plants.h defs.h
 ../Release/TerrainClass.o:	TerrainClass.cpp
 ../Release/TerrainData.o:	TerrainData.cpp
 ../Release/TerrainMgr.o:	TerrainMgr.cpp
-../Release/TerrainNode.o:	TerrainNode.cpp
+../Release/TerrainNode.o:	TerrainNode.cpp defs.h
 ../Release/TextureClass.o:	TextureClass.cpp
 ../Release/TrackBall.o:	TrackBall.cpp
 ../Release/UniverseModel.o:	UniverseModel.cpp
