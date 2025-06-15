@@ -392,6 +392,7 @@ void RasterMgr::modulate(Color &c)
 }
 
 void RasterMgr::set_ldp(double dp){
+	ldp=dp;
   	if(dp>0){ 	
   		hdr_min_delta=lerp(dp,0,0.5,0,-2);
 	    //dmax=lerp(dp,0,0.5,0,0.5);
@@ -411,7 +412,7 @@ bool RasterMgr::twilight(){
     //	return true;
 	//cout<<ldp<<endl;
 	//if(ldp<=0 && ldp>-0.7) // reject night time and midday
-	if(ldp<=0) // reject night time only
+	if(ldp<=0.5) // reject night time only
 		return true;
 	return false;
 }
@@ -562,10 +563,11 @@ void RasterMgr::set_light_view()
  	    if(z1<zn)
  	         zn=z1;
 	}
-	zn=d-4*shadow_dov*r;
+ 	double dov=10*shadow_dov;
+	zn=d-4*dov*r;
 	if(zn<r)
 		zn=r;
-	zf=d+shadow_dov*r;
+	zf=d+dov*r;
 
 	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c,n);
 	TheScene->getMatrix(GL_PROJECTION,sproj);
@@ -2061,6 +2063,8 @@ void RasterMgr::init_render()
 void RasterMgr::setParams(){
 	double f=TheScene->height/TheScene->maxht;
 	double attn=rampstep(0,0.75,f,1,0);
+	double df=lerp(ldp,0,0.5,1,0.25);
+	attn*=df;
 	fog_vf=fog_value*Render.fog_value()*attn;
 	haze_hf=haze_value*Render.haze_value()*attn;
 }

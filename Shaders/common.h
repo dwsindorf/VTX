@@ -42,6 +42,7 @@ uniform float freqmip;
 //#define THETA Constants1.a
 #define SFACT Constants1.a
 #define PHI Vertex1.y
+#define THETA Vertex1.x
 
 
 #define PI		3.14159265359

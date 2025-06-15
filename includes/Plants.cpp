@@ -25,8 +25,8 @@ extern double lcos(double g);
 //#define DEBUG_PMEM
 
 #define DEBUG_RANDOMIZE
-#define SHOW_PLANT_STATS
-#define SHOW_BRANCH_STATS
+//#define SHOW_PLANT_STATS
+//#define SHOW_BRANCH_STATS
 #define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define PSCALE TheMap->radius
@@ -426,7 +426,7 @@ bool PlantMgr::setProgram(){
 	shadow_count=0;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	//TerrainProperties *tp=Td.tp;
+
 	char defs[1024]="";
 
 	PlantMgr::textures=0;
@@ -434,29 +434,6 @@ bool PlantMgr::setProgram(){
 	for(int i=0;i<Td.plants.size;i++){
 		Td.plants[i]->setProgram();
 	}
-
-//	switch(TheScene->render_quality){
-//	case DRAFT:
-//		min_draw_width=1.5;
-//		tfactor=3;
-//		sfactor=6;
-//		break;
-//	case NORMAL:
-//		tfactor=2;
-//		sfactor=3;
-//		min_draw_width=1;
-//		break;
-//	case HIGH:
-//		tfactor=2;
-//		sfactor=2;
-//		min_draw_width=0.85;
-//		break;
-//	case BEST:
-//		tfactor=2;
-//		sfactor=2;
-//		min_draw_width=0.7;
-//		break;	
-//	}
 
 	branch_nodes=0;
 	trunk_nodes=0;
@@ -653,8 +630,6 @@ void PlantMgr::render(){
 		glEnable(GL_BLEND);
 	int start=show_one?0:n-1;
 	if(update_needed){
-		cout<<"PlantMgr::update start "<<start<<endl;
-		
 		glDisable(GL_CULL_FACE);
 
 		for(int i=start;i>=0;i--){ // Farthest to closest
@@ -679,7 +654,6 @@ void PlantMgr::render(){
 			plant->emit();
 		}
 		glEnable(GL_CULL_FACE);
-		cout<<"PlantMgr::update end()"<<endl;
 	}
 
 	t2=clock(); // total
@@ -944,11 +918,13 @@ void Plant::collect()
 		s=plant->mgr()->next();
 	  }	
 #ifdef SHOW_PLANT_STATS
+	if(trys>0){
 		double usage=100.0*trys/plant->mgr()->hashsize;
 		double badvis=100.0*bad_visits/trys;
 		double badactive=100.0*bad_active/trys;
 		double badpts=100.0*bad_pts/trys;
 		cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
+	}
 #endif
 
 	}
@@ -1042,7 +1018,6 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 //-------------------------------------------------------------
 TNplant::~TNplant()
 {
-	cout<<"TNplant::~TNplant()"<<endl;
 	DFREE(plant);
 }
 
@@ -1146,6 +1121,13 @@ void TNplant::set_surface()
 	density=sqrt(density);
 
 	mgr->density=density;
+	
+	if(density<=0)
+		return;
+	
+	if(TheScene->adapt_mode() && TheMap->tid>0)
+		cout<<TheMap->tid<<" "<< mgr->density<<endl;
+
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
 					+11*Td.sid

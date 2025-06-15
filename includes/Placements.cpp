@@ -699,7 +699,6 @@ void TNplacements::eval()
 		mgr->mult=randscale;            // in same level
 		mgr->level_mult=randscale;      // reduce size per level
 	}
-	
 	//if(mgr->dexpr==0){
 	// probability
 		dexpr=args[3];

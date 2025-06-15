@@ -424,7 +424,7 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	hline->Add(ShadowFovSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	ShadowDovSlider=new SliderCtrl(panel,ID_SHADOW_DOV_SLDR,"DOV",LABEL2,VALUE2,SLIDER2);
-	ShadowDovSlider->setRange(0.5,1.5);
+	ShadowDovSlider->setRange(0.1,1.5);
 	ShadowDovSlider->slider->SetToolTip("Light source depth of view");
 
 	hline->Add(ShadowDovSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

@@ -3650,9 +3650,10 @@ bool Planetoid::setProgram(){
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	else
 		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
-    bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
-	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()||TheScene->viewobj==this))
+    bool do_shadows=Raster.shadows() && Raster.twilight();
+	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()||TheScene->viewobj==this)){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
+	}
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");
 	if(TheScene->viewobj==this)

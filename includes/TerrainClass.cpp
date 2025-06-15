@@ -132,6 +132,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	URAND,
 	SRAND,
 	LVL,
+	TID,
 	GTOL,
 	LTOG,
 	MAXSIZE,
@@ -190,6 +191,7 @@ static LongSym gtypes[]={
 	{"URAND",		URAND},
 	{"SRAND",		SRAND},
 	{"LVL",			LVL},
+	{"TID",			TID},
 	{"GTOL",		GTOL},
 	{"LTOG",		LTOG},
 	{"MAXSIZE",		MAXSIZE},
@@ -402,6 +404,9 @@ void TNglobal::eval()
 		break;
 	case LVL:
 		S0.s=Level;
+		break;
+	case TID:
+		S0.s=Td.tp->id;
 		break;
 	case GTOL:
 		S0.s=Gscale;

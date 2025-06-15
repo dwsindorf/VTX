@@ -1674,8 +1674,6 @@ void Scene::change_view(int v)
     	views->add(this);
 
 	viewtype=v;
-
-	cout<<"Scene::change_view"<<" "<<changed_view()<<endl;
 	//vobj=viewobj;
 
 	set_changed_detail();

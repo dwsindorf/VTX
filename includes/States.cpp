@@ -15,7 +15,7 @@ static char *LAV_liq_str="liquid(Color(0.97,0.98,0.71,0.20),Color(0.93,0.32,0.24
 static char *LAV_sol_str="solid(Color(0.46,0.35,0.00,0.07),Color(0.30,0.30,0.30,0.01),1000,0.01,0.4,17.46,0.5238,0.1,1,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0,1e-06))";
 static char *SLF_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),717,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SLF_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),388,1,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
-static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93,0.7),Color(0.00,0.16,0.16),373,300,0.8,100,1,50,1,noise(GRADIENT|SCALE,21,3,1,0.5,2,0.05,1,0,0))";
+static char *H2O_liq_str="liquid(Color(0.67,0.93,0.93,0.7),Color(0.00,0.16,0.16),373,50,0.8,100,1,50,1,noise(GRADIENT|SCALE,21,3,1,0.5,2,0.05,1,0,0))";
 static char *H2O_sol_str="solid(Color(1.00,1.00,1.00,0.80),Color(0.60,0.7,0.80),273,1,0.95,0.8,0.1,0.05,0.5,noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.3,0,0.001,0))";
 static char *SO2_liq_str="liquid(Color(0.98,0.87,0.72,0.51),Color(0.96,0.97,0.57),263,10,0.8,71,1,20,4,noise(GRADIENT|SCALE,17.4,3,1,0.5,2.08,0.11,1,0,0))";
 static char *SO2_sol_str="solid(Color(1.00,0.80,0.22,0.76),Color(0.78,0.70,0.71),201,5,0.95,0.8,0.6,0.1,1,noise(GRADIENT|NABS|NEG|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))";
@@ -281,7 +281,7 @@ void LiquidState::newInstance(char *buff){
 	b=b.darken(0.3*r[4]);
 	b.toString(cstr);
 	water+=cstr;
-	water+=",373,300,0.95,100,1,10,1,";
+	water+=",373,50,0.95,100,1,10,1,";
 	water+=TNnoise::randomize(def_liquid_func,0.1,0.0);//def_liquid_func;
 	water+=")";
 	strcpy(buff,water.c_str());
