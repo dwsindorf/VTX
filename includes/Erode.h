@@ -15,6 +15,7 @@ public:
 	double hardness;
 	TNhardness(TNode *l, TNode *r);
 	void eval();
+	void applyExpr();
 	int typeValue()			{ return ID_HARDNESS;}
 	const char *typeName ()	{ return "hardness";}
 };

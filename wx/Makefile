@@ -40,6 +40,7 @@ SRC_FILES        = \
 			 VtxFunctMgr.cpp \
              VtxGalaxyTabs.cpp \
              VtxGlossTabs.cpp \
+             VtxHardnessTabs.cpp \
 			 VtxImageWindow.cpp \
 			 VtxImportTabs.cpp \
 			 VtxImageDialog.cpp \
@@ -337,6 +338,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Debug/VtxGlossTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
 ../Debug/VtxGlossTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
 ../Debug/VtxGlossTabs.o: ../includes/TerrainClass.h
+../Debug/VtxHardnessTabs.o: VtxHardnessTabs.h VtxTabsMgr.h VtxControls.h
 ../Debug/VtxImageWindow.o: VtxImageWindow.h ../includes/ImageMgr.h
 ../Debug/VtxImageWindow.o: ../includes/GLheaders.h ../includes/defs.h
 ../Debug/VtxImageWindow.o: ../includes/ColorClass.h ../includes/ListClass.h
@@ -950,6 +952,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Release/VtxGlossTabs.o: ../includes/MatrixClass.h ../includes/matrix.h
 ../Release/VtxGlossTabs.o: ../includes/TrackBall.h ../includes/ModelClass.h
 ../Release/VtxGlossTabs.o: ../includes/TerrainClass.h
+../Release/VtxHardnessTabs.o: VtxHardnessTabs.h VtxTabsMgr.h VtxControls.h
 ../Release/VtxImageWindow.o: VtxImageWindow.h ../includes/ImageMgr.h
 ../Release/VtxImageWindow.o: ../includes/GLheaders.h ../includes/defs.h
 ../Release/VtxImageWindow.o: ../includes/ColorClass.h ../includes/ListClass.h

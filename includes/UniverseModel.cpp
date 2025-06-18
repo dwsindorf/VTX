@@ -242,6 +242,9 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	case TN_FOG:
 		sprintf(tmp,"fog(0.0)\n");
 		break;
+	case TN_HARDNESS:
+		sprintf(tmp,"hardness(0.0)\n");
+		break;
 	case TN_SNOW:
 		sprintf(tmp,"snow(0.2,0.7,1,1,1)\n");
 		break;
@@ -334,6 +337,8 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("Rocks",type);
 	case TN_FOG:
 		return new ModelSym("Fog",type);
+	case TN_HARDNESS:
+		return new ModelSym("Hardness",type);
 	case TN_WATER:
 		return new ModelSym("Ocean",type);
 	case TN_SNOW:
@@ -343,7 +348,7 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 	case TN_ERODE:
 		return new ModelSym("Erode",type);
 	case TN_GLOSS:
-		return new ModelSym("gloss",type);
+		return new ModelSym("Gloss",type);
 	case TN_BASE:
 		return new ModelSym("Base",type);
 	case TN_FCHNL:
@@ -630,6 +635,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 				list.add(getObjectSymbol(TN_COLOR));
 			if(!obj->hasChild(ID_GLOSS))
 				list.add(getObjectSymbol(TN_GLOSS));
+			if(!obj->hasChild(ID_HARDNESS))
+				list.add(getObjectSymbol(TN_HARDNESS));
 			if(!obj->hasChild(ID_FCHNL))
 				list.add(getObjectSymbol(TN_FCHNL));
 			list.add(getObjectSymbol(TN_POINT));
@@ -680,6 +687,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_FCHNL));
 		if(!obj->hasChild(ID_FOG))
 			list.add(getObjectSymbol(TN_FOG));
+		if(!obj->hasChild(ID_HARDNESS))
+			list.add(getObjectSymbol(TN_HARDNESS));
 		if(!obj->hasChild(ID_WATER))
 			list.add(getObjectSymbol(TN_WATER));
 		if(!obj->hasChild(ID_SNOW))
@@ -831,6 +840,9 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_FOG:
 			node->setFlag(TN_FOG);
+			break;
+		case ID_HARDNESS:
+			node->setFlag(TN_HARDNESS);
 			break;
 		case ID_CRATERS:
 			node->setFlag(TN_CRATERS);
@@ -985,6 +997,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_TEXTURE:
 	case TN_SPRITE:
 	case TN_FOG:
+	case TN_HARDNESS:
 	case TN_SNOW:
 	case TN_ERODE:
 	case TN_GLOSS:

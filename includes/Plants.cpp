@@ -27,8 +27,9 @@ extern double lcos(double g);
 #define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
 //#define SHOW_BRANCH_STATS
-#define SHOW_BRANCH_TIMING
+//#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
+//#define DEBUG_HARD_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
 
@@ -1009,7 +1010,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=1;
+	draw_scale=0.25;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1057,7 +1058,7 @@ void TNplant::init()
 		plant=new Plant(type,this);
 	smgr->init();
 	
-    double arg[11];
+    double arg[12];
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	int n=getargs(&args,arg,11);
@@ -1128,6 +1129,14 @@ void TNplant::set_surface()
 		//double f=lerp(Temp,0,10,-smgr->lat_bias,smgr->lat_bias);
 		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
 		density+=f;
+	}
+	if(smgr->hardness_bias){
+		double f=lerp(fabs(smgr->hardness_bias)*hardness,0,1,-smgr->hardness_bias,smgr->hardness_bias);
+#ifdef DEBUG_HARD_BIAS
+		if(ncalls%100==0)
+			cout<<"bias:"<<smgr->hardness_bias<<" hardness:"<<hardness<<" f:"<<f<<endl;
+#endif
+		density+=fabs(smgr->hardness_bias)*f;
 	}
     density*=maxdensity;
 	density=clamp(density,0,1);

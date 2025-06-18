@@ -29,6 +29,7 @@ protected:
 	ExprSliderCtrl *SlopeBiasSlider;
 	ExprSliderCtrl *PhiBiasSlider;
 	ExprSliderCtrl *HtBiasSlider;
+	ExprSliderCtrl *HardBiasSlider;
 
 	SliderCtrl *DropSlider;
 	SliderCtrl *PixelsSlider;
@@ -67,6 +68,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Density)
 	DEFINE_SLIDER_EVENTS(SlopeBias)
 	DEFINE_SLIDER_EVENTS(PhiBias)
+	DEFINE_SLIDER_EVENTS(HardBias)
 	DEFINE_SLIDER_EVENTS(HtBias)
 	DEFINE_SLIDER_EVENTS(Drop)
 	DEFINE_SLIDER_EVENTS(Pixels)

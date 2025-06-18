@@ -31,6 +31,7 @@
 #include "VtxSkyTabs.h"
 #include "VtxPointTabs.h"
 #include "VtxGlossTabs.h"
+#include "VtxHardnessTabs.h"
 #include "VtxLayerTabs.h"
 #include "VtxMapTabs.h"
 #include "VtxFogTabs.h"
@@ -152,6 +153,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_COLOR,VtxColorTabs)
 	SET_TABS_OBJECT(TN_POINT,VtxPointTabs)
 	SET_TABS_OBJECT(TN_GLOSS,VtxGlossTabs)
+	SET_TABS_OBJECT(TN_HARDNESS,VtxHardnessTabs)
 	SET_TABS_OBJECT(TN_LAYER,VtxLayerTabs)
 	SET_TABS_OBJECT(TN_MAP,VtxMapTabs)
 	SET_TABS_OBJECT(TN_FOG,VtxFogTabs)

@@ -125,6 +125,20 @@ void TNhardness::eval()
 	S0.set_hardness();
 }
 
+//-------------------------------------------------------------
+// TNfunc::applyExpr() apply expr value
+//-------------------------------------------------------------
+void TNhardness::applyExpr()
+{
+    if(expr){
+        DFREE(left);
+        left=expr->left;
+        left->setParent(this);
+        expr=0;
+    }
+    //if(right)
+    //    right->applyExpr();
+}
 //************************************************************
 // TNerode class
 //************************************************************
