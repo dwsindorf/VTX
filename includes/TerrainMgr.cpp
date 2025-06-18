@@ -27,7 +27,7 @@ extern int hits,visits,misses;
 // externs used in TerrainClass.cpp
 
 Point           MapPt,Mpt;
-double          Theta,Phi,Temp=0,Tave=0,Tsol=0,Tgas=0,Sfact=0,MapTemp=0,Height=0.0,PX,PY,Radius=0,Density=0,Range=0,MaxHt=0,MinHt=0,FHt=0,Randval=0,Srand=0,Level=0;
+double          Hardness,Theta,Phi,Temp=0,Tave=0,Tsol=0,Tgas=0,Sfact=0,MapTemp=0,Height=0.0,PX,PY,Radius=0,Density=0,Range=0,MaxHt=0,MinHt=0,FHt=0,Randval=0,Srand=0,Level=0;
 Scope          *CurrentScope;
 
 void NodeIF::setRands(){
@@ -1551,7 +1551,6 @@ void TerrainMgr::set_surface(TerrainData &data)
 	Drop=Margin=0;
 	data.density=0.0;
 	data.erosion=0.0;
-	data.hardness=0.0;
 	data.sediment=0.0;
 	data.height=0.0;
 	data.margin=0.0;

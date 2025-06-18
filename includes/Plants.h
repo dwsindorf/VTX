@@ -124,6 +124,7 @@ public:
 	double slope_bias;
 	double ht_bias;
 	double lat_bias;
+	double hardness_bias;
 	static bool shadow_mode;
 	static int shadow_count;
 	static double pmax;
@@ -194,6 +195,7 @@ public:
 	void saveNode(FILE *f);
 	void applyExpr();
 	bool setProgram();
+	void setNormal();
 	void emit();
 	void getLeaf();
 	void getLastBranch();

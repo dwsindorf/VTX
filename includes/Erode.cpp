@@ -111,15 +111,18 @@ TNhardness::TNhardness(TNode *l, TNode *r) : TNfunc(l,r) {}
 void TNhardness::eval()
 {
   	TNarg *arg=(TNarg*)left;
-	S0.hardness=0;
+	hardness=0;
 	if(arg){
 	    arg->eval();
-		S0.hardness=S0.s;
+		hardness=S0.s;
+		//cout<<"["<<S0.hardness<<"]";
 	}
 	INIT;
 	if(right){
 		right->eval();
 	}
+	S0.s=hardness;
+	S0.set_hardness();
 }
 
 //************************************************************
@@ -208,7 +211,6 @@ void TNerode::eval() {
     TNarg *arg = (TNarg*) left;
     double args[11];
     int n = getargs(arg, args, 10);
-    Td.hardness = 0.5;
      Td.sediment = 0;
      Td.erosion = 1;
      Td.set_flag(EVALUE);

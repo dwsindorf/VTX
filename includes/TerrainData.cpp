@@ -100,7 +100,6 @@ double TerrainData::fracval[MAX_FDATA]={0};
 double TerrainData::density=0;
 double TerrainData::ocean=0;
 double TerrainData::erosion=0;
-double TerrainData::hardness=0;
 double TerrainData::albedo=1;
 double TerrainData::shine=1;
 Color TerrainData::ambient=Color(1,1,1,0);

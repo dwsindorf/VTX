@@ -318,6 +318,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 	roff2=roff2_value;
 	level_mult=0.2;
 	slope_bias=0;
+	hardness_bias=0;
 	ht_bias=0;
 	lat_bias=0;
 	dexpr=0;
@@ -614,7 +615,7 @@ void PlantMgr::render(){
 	double t1;
 	double t2;
 	double t3;
-	if(!nocache && Raster.shadows()&&shadow_count>1)
+	if(!TheScene->moved() && !nocache && Raster.shadows()&&shadow_count>1)
 		update_needed=false;
 
 	if(update_needed){
@@ -655,6 +656,12 @@ void PlantMgr::render(){
 		}
 		glEnable(GL_CULL_FACE);
 	}
+	else{
+		PlantData *s=Plant::data[0];
+		TNplant *plant=s->mgr->plant;
+		plant->setNormal();
+	}
+		
 
 	t2=clock(); // total
 	
@@ -1002,7 +1009,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=0.25;
+	draw_scale=1;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1063,8 +1070,9 @@ void TNplant::init()
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
-	if(n>8) base_drop=arg[8];
-	if(n>9) draw_scale=arg[9];
+	if(n>8) smgr->hardness_bias=arg[8];
+	if(n>9) base_drop=arg[9];
+	if(n>10) draw_scale=arg[10];
 
 	smgr->set_first(1);
 }
@@ -1079,9 +1087,9 @@ void TNplant::set_id(int i){
 //-------------------------------------------------------------
 void TNplant::set_surface()
 {	
-//	if(Raster.surface==2)
-//		return;
-
+	if(Raster.surface==2)
+		return;
+    extern double Hardness;
 	SINIT;
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
@@ -1093,19 +1101,24 @@ void TNplant::set_surface()
 	
 	INIT;
 	
-	double density=maxdensity;
+	double density=1;
 	MaxSize=mgr->maxsize;
 	radius=PSCALE;
+	double hardness=Hardness;
+	
+	//cout<<Hardness<<endl;
+
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
 		double slope=8*zslope();
-		double f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+		double f=0.5+2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+		f=clamp(f,0,1);
+		density*=f;
 #ifdef DEBUG_SLOPE_BIAS
 		if(ncalls%100==0)
-			cout<<"slope:"<<slope<<" f:"<<f<<endl;
+			cout<<"slope:"<<slope<<" f:"<<f<<" d:"<<density<<endl;
 #endif
-		density+=f;
 	}
 	if(smgr->ht_bias){
 		double f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
@@ -1119,14 +1132,15 @@ void TNplant::set_surface()
     density*=maxdensity;
 	density=clamp(density,0,1);
 	density=sqrt(density);
+	
 
 	mgr->density=density;
 	
 	if(density<=0)
 		return;
 	
-	if(TheScene->adapt_mode() && TheMap->tid>0)
-		cout<<TheMap->tid<<" "<< mgr->density<<endl;
+//	if(TheScene->adapt_mode() && TheMap->tid>0)
+//		cout<<TheMap->tid<<" "<< mgr->density<<endl;
 
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
@@ -1177,8 +1191,8 @@ void TNplant::eval()
 		Td.add_plant(plant);
 		return;
 	}
-	else if(CurrentScope->spass())
-		set_surface();
+	//else if(CurrentScope->spass())
+	//	set_surface();
 
  }
 
@@ -1406,6 +1420,23 @@ void TNplant::setScale(){
 		break;	
 	}
 }
+
+//-------------------------------------------------------------
+// TNplant::setNormal() set glNormal
+//-------------------------------------------------------------
+void TNplant::setNormal(){
+	if(!isEnabled())
+		return;
+
+	Point bot=base_point;
+	Point norm=bot.normalize();
+	//cout<<endl;
+	//norm.print("");
+	
+	glNormal3dv(norm.values());
+
+}
+
 //-------------------------------------------------------------
 // TNplant::emit() build the branch structure
 //-------------------------------------------------------------
@@ -1423,7 +1454,7 @@ void TNplant::emit(){
 
 	Point bot=base_point;
 	norm=bot.normalize();
-
+	
 	glNormal3dv(norm.values());
 			
 	TNBranch *first_branch=(TNBranch*)right;
@@ -2165,7 +2196,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			double nscale = lerp(child_width, MIN_LINE_WIDTH,
 					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
 					TNplant::norm_max);
-
+			
 			double w1 = child_width / TheScene->wscale;
 			double w2 = w1 * (evalArg(7,width_taper));
 

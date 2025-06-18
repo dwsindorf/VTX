@@ -818,7 +818,8 @@ void VtxSceneTabs::setObjAttributes(){
 	obj->bump_mip=BumpMipSlider->getValue();
 	obj->freq_mip=FreqMipSlider->getValue();
 	Map::setTessLevel(m_tesslevel->GetSelection()+1);
-
+	Raster.hdr_min_base=HDRMinSlider->getValue();
+	Raster.hdr_max_base=HDRMaxSlider->getValue();
 	TheScene->set_changed_render();
 }
 void VtxSceneTabs::updateControls(){
@@ -835,8 +836,8 @@ void VtxSceneTabs::updateControls(){
 	LODSlider->setValue(obj->cellsize);
 	updateSlider(ColorAmpSlider,Raster.filter_color_ampl);
 	updateSlider(NormalAmpSlider,Raster.filter_normal_ampl);
-	updateSlider(HDRMinSlider,Raster.hdr_min);
-	updateSlider(HDRMaxSlider,Raster.hdr_max);
+	updateSlider(HDRMinSlider,Raster.hdr_min_base);
+	updateSlider(HDRMaxSlider,Raster.hdr_max_base);
 	m_aa_check->SetValue(Render.dealias());
 	m_show_check->SetValue(Raster.filter_show());
 	m_ave_check->SetValue(Render.avenorms());

@@ -12,7 +12,7 @@
 #include "Sprites.h"
 #include "Plants.h"
 
-extern double Theta, Phi, Height,Rscale,Margin,Sfact,Temp;
+extern double Theta, Phi, Height,Rscale,Margin,Sfact,Temp,Hardness;
 extern Point MapPt;
 
 #define VCLIP     // enable viewobj clip  test
@@ -55,6 +55,7 @@ double zslope()
 		return 0;
 	static double s=0;
 	if(!Td.get_flag(SFIRST)){
+	    //CELLSLOPE(surface1()->Z(),s);
 	    CELLSLOPE(Z(),s);
     	s*=TheMap->hscale*INV2PI;
 		Td.set_flag(SFIRST);
@@ -1969,10 +1970,18 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-         if(d && d->rock())
-        	c = Color(1, 0.0, 0.0);
-        else
-        	c = Color(1, 1, 1);
+//        if(d && d->rock())
+//        	c = Color(1, 0.0, 0.0);
+//        else
+//        	c = Color(1, 1, 1);
+        double s;
+         Td.clr_flag(SFIRST);
+         find_neighbors();
+         s=zslope();
+         //CELLSLOPE(Z(),s);
+         //s*=TheMap->hscale*INV2PI;
+         //cout<<s<<endl;
+         c=Color(2*s,0,0);
       	 //c = Color(data.mdata(), 0, 0);
       	 //if (data.margin())
       	 //    c = c.blend(Color(0, 0, 1), 1);
@@ -2595,6 +2604,9 @@ void MapNode::evalsprites()
 	if(surface_water())
 		return;
 
+    Td.clr_flag(SFIRST);
+    find_neighbors();
+
 	MapData *d=&data;
 	d=d->surface1();
 	//Raster.surface=1;
@@ -2609,11 +2621,11 @@ void MapNode::evalsprites()
 	//TheNoise.set(pt);
 	//Height=d->Ht();
     double  aveht=d->Ht();
-    
+     
     Point pnt=d->point();
-	int nct=find_neighbors(); // also used for slope
 //#define AVE_PTS
 #ifdef AVE_PTS
+	int nct=find_neighbors(); // also used for slope
  	for(int i=0;i<nct;i++){
 		MapData *md=mapdata[i];
 		aveht+=md->Ht();
@@ -2629,6 +2641,8 @@ void MapNode::evalsprites()
 #endif
 	Height=aveht;
 	MapPt=pnt;
+	Hardness=d->hardness();
+
 	TheNoise.set(pt);
 
 	for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){

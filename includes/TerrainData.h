@@ -111,7 +111,8 @@ protected:
 		CONST_FLAG  	= 0x0008,
 		STRING_FLAG 	= 0x0010,
 		IMAGE_FLAG 		= 0x0020,
-		INACTIVE_FLAG   = 0x0040
+		HARD_FLAG 		= 0x0040,
+		INACTIVE_FLAG   = 0x0080
 	};
 	tdu info;
 public:
@@ -125,7 +126,6 @@ public:
 	static double       density; 	// density (fog ..)
 	static double       ocean; 	    // water-ice
 	static double       erosion; 	// erosion
-	static double       hardness;	// hardness
 	static double       sediment;	// sediment
 	static double       clarity; 	// max water clarity
 	static double       rock;    	// rock
@@ -193,6 +193,10 @@ public:
 	void set_constant()		{ BIT_ON(info.s.flags,CONST_FLAG);}
 	void clr_constant()		{ BIT_OFF(info.s.flags,CONST_FLAG);}
 	int constant()		    { return info.s.flags & CONST_FLAG;}
+
+	void set_hardness()		{ BIT_ON(info.s.flags,HARD_FLAG);}
+	void clr_hardness()		{ BIT_OFF(info.s.flags,HARD_FLAG);}
+	int hardness()		    { return info.s.flags & HARD_FLAG;}
 
 	void set_inactive()		{ BIT_ON(info.s.flags,INACTIVE_FLAG);}
 	void clr_inactive()		{ BIT_OFF(info.s.flags,INACTIVE_FLAG);}

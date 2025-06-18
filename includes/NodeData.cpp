@@ -11,7 +11,7 @@
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
-extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt;
+extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt,Hardness;
 extern double  zslope();
 extern int test_flag;
 extern Point MapPt,Mpt;
@@ -283,7 +283,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	if(td.get_flag(MULTILAYER))
 		md=1;
-	if(td.depth)
+	if(td.hardness())
+		ne=1;
+	else if(td.depth)
 		ne=1;
 	if(td.get_flag(EVALUE))
 	    ne=2;
@@ -395,20 +397,21 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	for(int i=0;i<nf;i++){
 		setFractal(Td.fracval[i],i);
 	}
-
-	//setFractal(Td.fractal,Td.fid);
 	setMargin(td.margin);
 	if(td.water()){
 		setOcean(td.ocean);
 	}
-	if(td.water()||td.depth)
+    if(td.water()||td.depth)
 		setDepth(td.depth);
-	else{
-		setSediment(td.sediment);
+    else if(td.hardness())
+		setHardness(td.s);
+	else {
 		setSolid(td.rock);
+		setSediment(td.sediment);
 		if(ne>0)
 			TheMap->set_erosion(1);
 	}
+    Hardness=hardness();
 	double h=Ht();
 
 	a=TSTART;
@@ -488,6 +491,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 			else
 				Td.diffuse=Color(1,1,1);
 		}
+		if(PlantMgr::testDensity()||PlantMgr::testColor())
 		for(i=0;i<Td.plants.size;i++){
 			Plant *plant=Td.plants[i];
 			plant->eval();

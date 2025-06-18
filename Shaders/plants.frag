@@ -47,38 +47,7 @@ varying vec4 ImageVars;
 
 vec3 test;
 
-/*
-float sum( vec4 v ) { return v.x+v.y+v.z; }
 
-vec4 textureNoTile( int id, sampler2D samp, in vec2 x )
-{
-    // sample variation pattern    
-    float k = texture2D( samplers2d[id], 0.005*x ).x; // cheap (cache friendly) lookup    
-    
-    // compute index    
-    float index = k*8.0;
-    float i = floor( index );
-    float f = fract( index );
-
-    // offsets for the different virtual patterns    
-    vec2 offa = sin(vec2(3.0,7.0)*(i+0.0)); // can replace with any other hash    
-    vec2 offb = sin(vec2(3.0,7.0)*(i+1.0)); // can replace with any other hash    
-
-    // compute derivatives for mip-mapping    
-    vec2 dx = dFdx(x), dy = dFdy(x);
-    
-    // sample the two closest virtual patterns    
-    vec4 cola = textureGrad( samp, x + offa, dx, dy );
-    vec4 colb = textureGrad( samp, x + offb, dx, dy );
-
-    // interpolate between the two virtual patterns    
-
-    vec4 result=mix( cola, colb, smoothstep(0.2,0.8,f-0.1*sum(cola-colb)) );
-
-    return result;
-
-}
-*/
 vec2 sprite(vec2 l_uv){
     
     float cols=ImageVars.x;  
@@ -133,9 +102,12 @@ vec3 setLighting(vec3 BaseColor) {
 		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5); // reduce branch shadow in daylight
  		vec3 normal=getNormal(nscale*day_lighting);
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
-		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
+ 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*night_lighting;
+		lpn=clamp(lpn,0,5.0);
+		
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
+		//diffuse=clamp(diffuse,vec3(0),vec3(5));
 		//test=vec3(lpn,0,0);		
 	}
 	

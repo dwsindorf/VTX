@@ -1433,6 +1433,7 @@ static void collect_nodes(MapNode *n)
 	d=d->surface1();
 	
 	if(n->visible() && d && !d->rock() && !d->water()){
+	//cout<<d->hardness()<<endl;
 		node_list.add(n);
     }
 }

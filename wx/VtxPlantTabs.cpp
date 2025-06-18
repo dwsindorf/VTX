@@ -220,7 +220,7 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	SlopeBiasSlider=new ExprSliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
-	SlopeBiasSlider->setRange(-2,2);
+	SlopeBiasSlider->setRange(-1,1);
 	SlopeBiasSlider->setValue(0.0);
 
 	hline->Add(SlopeBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -308,6 +308,7 @@ wxString VtxPlantTabs::exprString(){
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
+	s+="0.0,"; // hardness
 	s+=DropSlider->getText()+",";
 	s+=PixelsSlider->getText();
 	s+=")";
@@ -389,14 +390,16 @@ void VtxPlantTabs::getObjAttributes(){
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
+	
+	// TODO : add hardness bias here
 
-	a=args[8];
+	a=args[9];
 	if(a)
 		DropSlider->setValue(a);
 	else
 		DropSlider->setValue(obj->base_drop);
 
-	a=args[9];
+	a=args[10];
 	if(a)
 		PixelsSlider->setValue(a);
 	else

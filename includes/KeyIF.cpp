@@ -555,7 +555,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_RENDER_TEXTURES:
 		Render.set_textures(!Render.textures());
 		TheScene->set_changed_render();
-        TheScene->set_changed_detail();
+        //TheScene->set_changed_detail();
 		break;
 	case KEY_RENDER_SPRITES:
 		Raster.set_sprites(!Raster.sprites());
@@ -598,7 +598,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_RENDER_BUMPS:
 		Render.set_bumps(!Render.bumps());
 		TheScene->set_changed_render();
-        TheScene->set_changed_detail();
+        //TheScene->set_changed_detail();
 
 		break;
 	case KEY_RENDER_SHADOWS:

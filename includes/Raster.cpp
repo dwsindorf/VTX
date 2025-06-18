@@ -393,17 +393,20 @@ void RasterMgr::modulate(Color &c)
 
 void RasterMgr::set_ldp(double dp){
 	ldp=dp;
-  	if(dp>0){ 	
-  		hdr_min_delta=lerp(dp,0,0.5,0,-2);
-	    //dmax=lerp(dp,0,0.5,0,0.5);
-    }
-    else {
-    	hdr_min_delta=lerp(dp,-1,-0.7,10,0);
-		//dmax=lerp(dp,-1,-0.5,-0.5,0);    	
-    }	
+	if(TheScene->viewtype==SURFACE){
+		if(dp>-0.2){ // brighten during twilite
+			hdr_min_delta=lerp(dp,-0.2,0.1,0,-8);
+			//dmax=lerp(dp,0,0.5,0,0.5);
+		}
+		else { // darken when full sun to reduce washout
+			hdr_min_delta=lerp(dp,-1,-0.7,10,0);
+			//dmax=lerp(dp,-1,-0.5,-0.5,0);    	
+		}	
+	}
   	hdr_min=hdr_min_delta+hdr_min_base;
+  	hdr_min=hdr_min<0.1?0.1:hdr_min;
   	hdr_max=hdr_max_delta+hdr_max_base;
-   // cout<<dp<<" "<<hdr_min<<" "<<hdr_max<<endl;
+    //cout<<dp<<" "<<hdr_min<<" "<<hdr_max<<endl;
 }
 bool RasterMgr::twilight(){
 	if(TheScene->viewtype!=SURFACE)

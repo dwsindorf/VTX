@@ -384,6 +384,7 @@ public:
     double ocean()              { return flags.s.ocean?data[WSTART].d:0.0;}
     double mdata()              { return flags.s.mdata>0?data[MSTART].d:1.0;}
     double depth()              { return flags.s.evals>0?data[ESTART].d:0.0;}
+    double hardness()           { return flags.s.evals>0?data[ESTART].d:0.0;}
     double solid()              { return flags.s.evals>0?data[ESTART].d:0.0;}
     double sediment()           { return flags.s.evals>1?data[ESTART+1].d:0.0;}
     double Z()                  { return flags.s.dims>0?data[ZSTART].d:0.0;}
@@ -401,6 +402,7 @@ public:
     void setFractal(double f,int i){ if(flags.s.fchnls) data[FSTART+i].d=f;}
     void setMargin(double f)    { if(flags.s.mdata>0) data[MSTART].d=f;}
     void setDepth(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
+    void setHardness(double f)  { if(flags.s.evals>0) data[ESTART].d=f;}
     void setSolid(double f)     { if(flags.s.evals>0) data[ESTART].d=f;}
     void setSediment(double f)  { if(flags.s.evals>1) data[ESTART+1].d=f;}
     void setColor(Color c)      { if(flags.s.colors)  data[CSTART].ul=c.pack();}
