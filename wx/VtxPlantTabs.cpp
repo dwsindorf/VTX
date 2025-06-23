@@ -177,7 +177,7 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 
     wxBoxSizer *distrib = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Distribution"));
 
-    distrib->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxALL, 4);
+    distrib->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
 	wxString orders[]={"1","2","3","4","5","6","7","8","9","10"};
 	m_orders=new wxChoice(panel, ID_LEVELS, wxDefaultPosition,wxSize(50,-1),10, orders);
@@ -186,13 +186,13 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	distrib->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
 
     // size
-	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Size",LABEL2, VALUE2,60);
+	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Size",40, VALUE2,60);
 	SizeSlider->setRange(1,200);
 	SizeSlider->setValue(10.0);
 
 	distrib->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2,VALUE2,60);
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",40,VALUE2,60);
 	DensitySlider->setRange(0.0,1.0);
 	DensitySlider->setValue(1.0);
 	distrib->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
@@ -237,13 +237,13 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
 	PhiBiasSlider=new ExprSliderCtrl(panel,ID_PHI_BIAS_SLDR,"Latitude",LABEL2,VALUE2,SLIDER2);
-	PhiBiasSlider->setRange(-2,2);
+	PhiBiasSlider->setRange(-1,1);
 	PhiBiasSlider->setValue(0.0);
 
 	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	HtBiasSlider=new ExprSliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
-	HtBiasSlider->setRange(-2,2);
+	HtBiasSlider->setRange(-1,1);
 	HtBiasSlider->setValue(0.0);
 
 	hline->Add(HtBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

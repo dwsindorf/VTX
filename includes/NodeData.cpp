@@ -11,7 +11,7 @@
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
-extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt,Hardness;
+extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt,Hardness,Phi;
 extern double  zslope();
 extern int test_flag;
 extern Point MapPt,Mpt;
@@ -319,6 +319,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     }
     
 	Height=td.p.z;
+	Phi=phi();
 
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];

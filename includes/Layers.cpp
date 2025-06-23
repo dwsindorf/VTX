@@ -1006,6 +1006,7 @@ NodeIF *TNlayer::getInstance(){
 	char buff[2048];
 		
 	Planetoid *orb=(Planetoid *)getOrbital(this);
+	orb->makeLists();
 	
 	std::string str=Planetoid::newLayer(orb);
 	strcpy(buff,str.c_str());

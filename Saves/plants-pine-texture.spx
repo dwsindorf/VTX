@@ -32,13 +32,15 @@ Scene() {
 		heading=4;
 		tilt=-10;
 		angle=3;
+	}
+	View{
+		height=32.9933 ft;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400204;
 	}
 	View{
-		height=32.9933 ft;
 		minr=0.00400204;
 	}
 	Universe {
@@ -80,7 +82,7 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("test",1,1e-06,0.8,0.9,0.01,0,0,0,0,0,1)
+								Plant("test",1,1e-06,0.8,0.9,0.1,0,0,0,0,0,1)
 								Branch("trunk",12,1,1.16,0.73,0.1,0.1,0,0.8,0.97,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
 								Branch("branch",5,2,0.76,0.33+2*RANGE,1,1,0.59,0.74,0.79,12,2,1,0,15)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
 								Leaf("leaf",1,0,6,0.75,0,0.32,1,0.1,0.21,0,0,0,0,11,0,1)["Needles1",Color(1,1,1,0)]								;

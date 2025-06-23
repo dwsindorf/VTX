@@ -425,6 +425,7 @@ void VtxLeafTabs::makeFileList(wxString wdir,wxString name){
  	
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(image_info, list);
+	//cout<<list.size<<endl;
 
  	wxDir dir(sdir);
   	

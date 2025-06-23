@@ -29,6 +29,9 @@ extern double lcos(double g);
 //#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
+//#define DEBUG_HT_BIAS
+//#define DEBUG_LAT_BIAS
+
 //#define DEBUG_HARD_BIAS
 //#define PSCALE TheMap->radius
 #define PSCALE 0.004
@@ -602,6 +605,9 @@ void PlantMgr::render_zvals(){
 void PlantMgr::render(){
 	oldmode=0;
 	int l=randval;
+	int n=Plant::data.size;
+	if(n==0)
+		return;
 	nocache=TheScene->automv()||PlantMgr::no_cache;
 	//nocache=PlantMgr::no_cache;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
@@ -610,7 +616,6 @@ void PlantMgr::render(){
 	TNBranch::setCollectBranches(!nocache);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
 
 	double t0=clock();
 	double t1;
@@ -626,7 +631,6 @@ void PlantMgr::render(){
 		TNLeaf::sorted=false;
 	}
 	t1=clock();
-	int n=Plant::data.size;
 	
 	if(!shadow_mode)
 		glEnable(GL_BLEND);
@@ -657,7 +661,7 @@ void PlantMgr::render(){
 		}
 		glEnable(GL_CULL_FACE);
 	}
-	else{
+	else {
 		PlantData *s=Plant::data[0];
 		TNplant *plant=s->mgr->plant;
 		plant->setNormal();
@@ -1010,7 +1014,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=0.25;
+	draw_scale=1;
 	rendered=0;
 	created=0;
 	distance=0;
@@ -1094,54 +1098,72 @@ void TNplant::set_surface()
 	SINIT;
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
-
-	//cout<<Height<<endl;
 	
 	htval=Height;
 	ncalls++;
 	
 	INIT;
 	
+	double b,f,h;
 	double density=1;
 	MaxSize=mgr->maxsize;
 	radius=PSCALE;
-	double hardness=Hardness;
 	
-	//cout<<Hardness<<endl;
-
-		
 	mgr->type=type;
 	if(smgr->slope_bias){
-		double slope=8*zslope();
-		double f=0.5+2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
-		f=clamp(f,0,1);
-		density*=f;
+		b=smgr->slope_bias;
+		h=4*zslope();
+		f=8*b * (h - 0.25);
+		f=clamp(f,-1,1);
+		density+=fabs(b)*f;
 #ifdef DEBUG_SLOPE_BIAS
 		if(ncalls%100==0)
-			cout<<"slope:"<<slope<<" f:"<<f<<" d:"<<density<<endl;
+			cout<<"bias:"<<b<<" slope:"<<h<<" f:"<<f<<" d:"<<density<<endl;
 #endif
 	}
 	if(smgr->ht_bias){
-		double f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
-		density+=f;
+		h=Height;
+		b=smgr->ht_bias;
+		f=b * (h - 0.5) - 0.5;
+		f=clamp(f,-1,1);
+		//f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
+		density+=fabs(b)*f;
+#ifdef DEBUG_HT_BIAS
+		if(ncalls%100==0)
+			cout<<"bias:"<<b<<" ht:"<<h<<" f:"<<f<<" d:"<<density<<endl;
+#endif
 	}
 	if(smgr->lat_bias){
-		//double f=lerp(Temp,0,10,-smgr->lat_bias,smgr->lat_bias);
-		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
-		density+=f;
+		h=fabs(2*Phi/180);
+		b=smgr->lat_bias;
+		f=2*b * (h - 0.5);
+		f=clamp(f,-1,1);
+		density+=fabs(b)*f;
+#ifdef DEBUG_LAT_BIAS
+		if(ncalls%100==0)
+			cout<<"bias:"<<b<<" h:"<<h<<" f:"<<f<<" d:"<<density<<endl;
+#endif
 	}
 	if(smgr->hardness_bias){
-		double f=lerp(fabs(smgr->hardness_bias)*hardness,0,1,-smgr->hardness_bias,smgr->hardness_bias);
+		b=smgr->hardness_bias;
+		h=Hardness;
+		f=b * (h - 0.5) - 0.5;
+		f=clamp(f,-1,1);
+		density+=fabs(b)*f;
 #ifdef DEBUG_HARD_BIAS
-		if(ncalls%100==0)
-			cout<<"bias:"<<smgr->hardness_bias<<" hardness:"<<hardness<<" f:"<<f<<endl;
+		static double lasth=0;
+		if(ncalls%100==0 && lasth !=hardness){
+			cout<<"bias:"<<b<<" hardness:"<<h<<" f:"<<f<<" d:"<<density<<endl;
+			lasth=hardness;
+		}
 #endif
-		density+=fabs(smgr->hardness_bias)*f;
 	}
     density*=maxdensity;
-	density=clamp(density,0,1);
-	density=sqrt(density);
+	//density=clamp(density,0,1);
+	//density=sqrt(density);
 	
+	density=clamp(density,0,1);
+
 
 	mgr->density=density;
 	
