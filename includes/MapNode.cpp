@@ -1074,7 +1074,7 @@ void MapNode::vischk()
 	if(Adapt.back_test()){
 		test_backfacing();
 		if(backfacing()){
-			cout << "." << endl;
+			//cout << "." << endl;
 		    //set_backfacing();
 		    return;
 		}
@@ -2605,7 +2605,7 @@ void MapNode::evalsprites()
 		return;
 
     Td.clr_flag(SFIRST);
-    find_neighbors();
+    int nct = find_neighbors();
 
 	MapData *d=&data;
 	d=d->surface1();
@@ -2621,11 +2621,10 @@ void MapNode::evalsprites()
 	//TheNoise.set(pt);
 	//Height=d->Ht();
     double  aveht=d->Ht();
-     
+    
     Point pnt=d->point();
-//#define AVE_PTS
+#define AVE_PTS
 #ifdef AVE_PTS
-	int nct=find_neighbors(); // also used for slope
  	for(int i=0;i<nct;i++){
 		MapData *md=mapdata[i];
 		aveht+=md->Ht();
