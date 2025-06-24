@@ -13,7 +13,7 @@ Scene() {
 		minh=5.68182e-10;
 		minr=0.00400199;
 		heading=174;
-		tilt=-4;
+		tilt=-6;
 		angle=-19;
 		fov=35;
 		gstride=586570;
@@ -58,8 +58,8 @@ Scene() {
 					year=100;
 					Surface{
 						terrain=
-								Plant("Yellow",1,9.4697e-08,0.8,0.5,0.3,0,0,0,0.54)
-								Branch("Stem",10,1,1,0.1,1,1,0.212,0.8,0.8,100,0,1,0,30,-0.091,1)["aspen1",Color(0.2+IRAND*LVL,RED,0.1*IRAND*(1-LVL),1)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
+								Plant("Yellow",1,9.4697e-08,0.8,0.5,0.3,0,0,0,0,0.444,1)
+								Branch("Stem",10,1,1,0.1,1,1,0.212,0.8,0.8,100,0,1,0,30,-0.091,1)["aspen1",Color(0.2+IRAND*LVL,RED,0.1*IRAND*(1-LVL),1)]								Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

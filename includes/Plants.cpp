@@ -10,8 +10,6 @@
 #include "Effects.h"
 #include "TerrainClass.h"
 
-#define ENABLE_DATA_CACHING
-
 extern double lsin(double g);
 extern double lcos(double g);
 
