@@ -18,7 +18,13 @@ Scene() {
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
+		phi=-37.6145;
+		theta=1.17604;
+		height=8681.58 ft;
+		time=500572;
+		heading=14;
 		minr=0.002;
+		radius=0.00200164;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -55,13 +61,13 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.85);
 					fog.color=Color(1,0.24,0.24);
-					fog.max=2888.86 ft;
+					fog.max=5904.66 ft;
 					fog.min=666.66 ft;
 					fog.value=1;
-					fog.vmax=3055.6 ft;
-					fog.vmin=972.2 ft;
-					hscale=0.005;
-					ocean.level=649.2 ft;
+					fog.vmax=6000 ft;
+					fog.vmin=5000 ft;
+					hscale=0.002;
+					ocean.level=5000 ft;
 					shine=5.56269;
 					specular=Color(1,1,1,0.27);
 					tilt=10;
@@ -93,6 +99,7 @@ Scene() {
 						hscale=0.0001;
 						name="Moon";
 						ocean.auto=1;
+						ocean.state=2;
 						phase=310.003;
 						rseed=1.44467;
 						skew=43.7508;

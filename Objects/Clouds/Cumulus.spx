@@ -1,17 +1,17 @@
-Clouds(0.004002) {
+Clouds(0.00505) {
 	ambient=Color(1,1,1,0.6);
 	crot=1;
-	day=0.5;
+	day=7.5272;
 	diffuse=Color(1,1,1,0.47);
 	diffusion=0.2096;
 	emission=Color(1,1,1,0.16);
 	name="Cumulus";
 	resolution=2;
-	rot_phase=121.932;
+	rot_phase=273.42;
 	shine=77.7857;
 	specular=Color(1,1,1,0);
 	Surface{
-		terrain=clouds(HT,-0.2*HT*(1-0.1*noise(NABS|SQR,9,4,0.1,0.6)),2+60*HT)
+		terrain=clouds(HT+noise(GRADIENT|SCALE,10.96,18.25,1,0.5,2,1,4,0,0,1e-06),-0.1*HT,2+60*HT)
 				Z(0.2*noise(SQR,5,12,0.6,0.5,2,1,1,0,0))+Color(1+4*HT,RED,RED,1);
 	}
 }

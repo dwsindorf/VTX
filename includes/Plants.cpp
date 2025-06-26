@@ -586,6 +586,8 @@ void PlantMgr::render_shadows(){
 
 }
 void PlantMgr::render_zvals(){
+	if(Td.plants.size==0)
+		return;
 	if(!threed)
 		return;
 	shadow_mode=true;

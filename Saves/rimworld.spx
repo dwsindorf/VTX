@@ -6,16 +6,16 @@ Scene() {
 		height=8505.92 ft;
 		gndlvl=335.532 ft;
 		time=3472.48;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
 		zoom=1;
-		minh=1.89394e-09;
+		minh=9.4697e-10;
 		heading=226;
 		tilt=3;
 		angle=-36;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.2.System.1.Planet.1;
 	}
 	View{
@@ -43,9 +43,12 @@ Scene() {
 		height=0.00681604;
 		vstride=0.02;
 		zoom=0.0015;
-		minh=1.13636e-09;
-		minr=0.0015;
+		minh=5.68182e-10;
 		radius=0.00831604;
+	}
+	View{
+		theta=45.2495;
+		minr=0.0015;
 	}
 	Universe {
 		Galaxy(9000) {
@@ -79,18 +82,18 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD|SQR,2,7,1,0.2,2,1,1,0,0)+0.5*noise(GRADIENT|NABS|NLOD|SQR|UNS,13,5,-0.78,0.5,2,1,1,0,0);
 			color.expr=pow(DENSITY,3)-RADIUS+noise(GRADIENT|NABS|SCALE|SQR|UNS,0,4,0.15,0.5,2.4,0.73,1,0,-0.5);
 			color.list=Colors(
-				Color(0.000,0.122,1.000,0.000),
-				Color(0.255,0.557,0.624),
-				Color(0.961,0.675,0.573),
-				Color(0.200,0.275,0.373),
-				Color(0.522,0.424,0.424),
-				Color(0.624,0.204,0.075,0.369),
-				Color(0.973,0.804,0.702,0.522),
-				Color(1.000,0.973,0.761),
-				Color(1.000,0.973,0.816),
-				Color(1.000,1.000,1.000)
+				Color(0.00,0.12,1.00,0.00),
+				Color(0.25,0.56,0.62),
+				Color(0.96,0.67,0.57),
+				Color(0.20,0.27,0.37),
+				Color(0.52,0.42,0.42),
+				Color(0.62,0.20,0.07,0.37),
+				Color(0.97,0.80,0.70,0.52),
+				Color(1.00,0.97,0.76),
+				Color(1.00,0.97,0.82),
+				Color(1.00,1.00,1.00)
 				);
-			bands("galaxytex",ACHNL|CLAMP,64,Color(0,0,0,0),Color(0.122,0.173,0.302,0.545),Color(0.627,0.675,0.875),Color(0.2,0.275,0.373,0),
+			bands("galaxytex",ACHNL|CLAMP|DECAL|REPLACE,64,Color(0,0,0,0),Color(0.122,0.173,0.302,0.545),Color(0.627,0.675,0.875),Color(0.2,0.275,0.373,0),
 				Color(0.522,0.424,0.427),
 				Color(0.875,0.718,0.675),
 				Color(0.973,0.804,0.702),
@@ -109,14 +112,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=DENSITY;
 			color.list=Colors(
-				Color(0.275,0.000,0.000),
-				Color(0.000,0.000,1.000),
-				Color(0.000,1.000,1.000),
-				Color(1.000,0.000,0.000),
-				Color(1.000,0.475,0.000),
-				Color(1.000,1.000,0.800),
-				Color(0.973,0.973,0.973),
-				Color(1.000,1.000,1.000)
+				Color(0.27,0.00,0.00),
+				Color(0.00,0.00,1.00),
+				Color(0.00,1.00,1.00),
+				Color(1.00,0.00,0.00),
+				Color(1.00,0.47,0.00),
+				Color(1.00,1.00,0.80),
+				Color(0.97,0.97,0.97),
+				Color(1.00,1.00,1.00)
 				);
 			System(1000) {
 				Star(0.3,0) {
@@ -130,20 +133,22 @@ Scene() {
 					}
 				}
 				Planet(0.0015,200) {
+					albedo=0.4;
 					ambient=Color(1,1,1,0.07);
 					day=1;
 					hscale=0.001;
+					ocean.auto=1;
+					ocean.state=2;
 					phase=320;
 					rot_phase=116.618;
 					shadow=Color(0,0,0,0.44);
 					shine=23.2085;
 					specular=Color(1,1,1,0.35);
 					year=30;
-					albedo=0.4;
-					bands("saturn3",ACHNL|NORM,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+					bands("saturn3",ACHNL|DECAL|NORM|REPLACE,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
 						Color(0.471,0.957,0.471,0.451),
 						Color(0.988,0.773,0.004));
-					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+					bands("dessert",ACHNL|DECAL|REPLACE,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
 						Color(0.302,0.082,0.082));
 					Surface{
 						mp=noise(0,10,1);
@@ -171,6 +176,7 @@ Scene() {
 						specular=Color(1,1,1);
 						twilight.max=0.179033;
 						twilight.min=-0.227325;
+						year=30;
 					}
 				}
 			}

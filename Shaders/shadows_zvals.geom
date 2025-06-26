@@ -20,7 +20,7 @@ uniform float rscale;
 varying vec4 Normal;
 vec4 gv=vec4(0);
 float g=0;
-
+vec3 v1;
 #if NVALS >0
 #include "noise_funcs.h"
 #endif

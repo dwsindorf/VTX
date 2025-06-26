@@ -1477,12 +1477,7 @@ void Map::render_sprites(){
 	}
 	if(Td.sprites.size){
 		SpriteMgr::setProgram();
-//		if(Td.plants.size){
-//			GLSLMgr::clrDepthBuffer();
-//			render_zvals();
-//		}
 	}
-
 }
 
 //-------------------------------------------------------------

@@ -6,17 +6,90 @@ Scene() {
 		height=8.51565 ft;
 		gndlvl=-3186.96 ft;
 		time=43814.8;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
-		minr=0.0039994;
+		zoom=1;
+		minh=9.4697e-10;
 		tilt=-21;
 		angle=2;
 		fov=33.5806;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		heading=1;
+	}
+	View{
+		view=ORBITAL;
+		height=0.008;
+		gndlvl=-0.000206597 ft;
+		heading=90;
+		pitch=-90;
+		tilt=0;
+		angle=0;
+	}
+	View{
+		view=SURFACE;
+		phi=-4.21875;
+		theta=111.094;
+		height=52800 ft;
+		gndlvl=-192.495 ft;
+		heading=0;
+		pitch=0;
+		tilt=-15;
+	}
+	View{
+		height=26400 ft;
+	}
+	View{
+		height=13200 ft;
+	}
+	View{
+		height=6600 ft;
+	}
+	View{
+		height=3300 ft;
+	}
+	View{
+		height=1650 ft;
+	}
+	View{
+		height=825 ft;
+	}
+	View{
+		height=412.5 ft;
+	}
+	View{
+		height=206.25 ft;
+	}
+	View{
+		height=103.125 ft;
+	}
+	View{
+		height=51.5625 ft;
+	}
+	View{
+		height=25.7812 ft;
+	}
+	View{
+		height=12.8906 ft;
+	}
+	View{
+		height=8.14171 ft;
+		time=45895.6;
+		tilt=-11;
+	}
+	View{
+		heading=14;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.00399997;
+	}
+	View{
+		heading=30;
+		minr=0.00399996;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -58,7 +131,8 @@ Scene() {
 				fog.vmax=2000 ft;
 				fog.vmin=1000 ft;
 				hscale=0.0001;
-				ocean.level=1388.8 ft;
+				ocean.auto=1;
+				ocean.state=2;
 				shine=10.9372;
 				specular=Color(1,1,1,0.47);
 				tilt=10;
@@ -69,11 +143,11 @@ Scene() {
 					m1=3*noise(GRADIENT|SQR|UNS,7.3,5.6,0.5,0.1,2.1,1,1,0.23,0);
 					m3=noise(8,6,0.5,0.5,2);
 					terrain=
-							Plant("daisy",1,4.73485e-08,1,0.5,0.05,0,0,0,0)
+							Plant("Daisy",2,4.73485e-08,1,0.5,0.02,0,0,0,0,0,1)
 							Branch("stem",7,1,2,1,0.4,0.11,0,0.5,1,1,-0)["treebark2",Color(0,0.501961,0,0.5)]
 							Branch(6,2,1.88,1,0.25,1,0,0.8,1,2,-0)["Cracks1",Color(0,0.501961,0,0.5)]
 							Leaf("leaf",1,1,2,0.64,1,0.49,0,0.8,1)["Leaf",Color(0,0.501961,0,1)]
-							Leaf("flower",10,0.33,1.5,1.3,0.16,0.73,0.4,0.34,0.24,0,0,0,0,13)["daisypetal",Color(1,1,1,0)]Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06))+
+							Leaf("flower",10,0,1.5,1.3,0.16,0.73,0.4,0.34,0.24,0,0,0,0,13,0,0.15)["daisypetal",Color(1,1,1,0)]							Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06))+
 							Texture("Bark1",TEX,3.22083e+06,1,1,0,1,2,0.5,0,0,0,0,0);
 				}
 				Sky(0.0041) {

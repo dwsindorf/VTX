@@ -266,7 +266,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-2,2);
+	HmapAmpSlider->setRange(-8,8);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 

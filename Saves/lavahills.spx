@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00399918;
 		heading=-30;
 		tilt=-3;
 		angle=-9;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00399918;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -71,7 +73,7 @@ Scene() {
 					haze.height=0.66;
 					haze.value=0.4;
 					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
+					bands("yellow-black",ACHNL|CLAMP|DECAL|NORM|REPLACE,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{
