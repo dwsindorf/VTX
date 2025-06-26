@@ -45,7 +45,32 @@ Scene() {
 		radius=0.00399309;
 	}
 	View{
+		phi=-45.2747;
+		theta=25.7465;
+		height=1313.6 ft;
+		gndlvl=-82035.2 ft;
+		tilt=-15;
+		angle=0;
+		hstride=2;
 		minr=0.00399308;
+		radius=0.00398471;
+	}
+	View{
+		heading=318;
+		minr=0.00398446;
+	}
+	View{
+		phi=-45.2799;
+		theta=25.753;
+		height=43.3495 ft;
+		gndlvl=-81947.5 ft;
+		radius=0.00398449;
+	}
+	View{
+		height=28.4762 ft;
+		heading=325;
+		tilt=-9;
+		minr=0.00398448;
 	}
 	Universe {
 		Galaxy(20000) {

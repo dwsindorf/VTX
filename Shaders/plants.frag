@@ -156,20 +156,19 @@ void main(void) {
 #endif  
  
 #ifdef HAZE
-
 	float z=DEPTH; // depth buffer
 	float depth=1.0/(ws2*z+ws1); // distance
 	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
-	float h=haze_ampl*Haze.a*pow(d,8.0*haze_grad); // same as in effects.frag
+	float h=haze_ampl*Haze.a*pow(d,10.0*haze_grad); // same as in effects.frag
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 	float p=lerp(h,0.0,0.8,1,0.001); // hack !
 	color.a=pow(color.a,p);
+	test=vec3(h,0,0);
 #endif 
-//	test=vec3(0.5*(TexVars.z+1),0,0);
 
 //color=vec4(test.x,0,0,1);
  	gl_FragData[0]=color;
-	gl_FragData[1]=vec4(3,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
+	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
 
 }
 // ########## end plants.frag #########################

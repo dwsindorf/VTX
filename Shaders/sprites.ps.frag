@@ -3,6 +3,8 @@
 #include "utils.h"
 
 uniform sampler2D samplers2d[NSPRITES];
+float twilite_min=-0.1;
+float twilite_max=0.2;
 
 varying vec4 SpriteVars;
 //varying vec4 Constants1;
@@ -32,17 +34,22 @@ uniform float ws2;
 
 #define DEPTH   gl_FragCoord.z
 
+vec3 test;
 
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
 
 	for(int i=0;i<NLIGHTS;i++){
-		vec3 light      = normalize(gl_LightSource[i].position.xyz+EyeDirection.xyz);
-		float LdotN     = dot(light,Normal.xyz);// for day side diffuse lighting
-		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
-		float lpn       = LdotN*amplitude;
+		vec3 light= normalize(gl_LightSource[i].position.xyz);
+		float LdotN= dot(light,Normal);// day side diffuse lighting
+		float night_lighting = lerp(LdotN,twilite_min,twilite_max,0.05,1.0); // twilite band 	
+		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
+		//float lpn       = LdotN*intensity*night_lighting;
+		float lpn       = intensity*night_lighting;
+		lpn=clamp(lpn,0,1.0);
 	
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
+		//test=vec3(lpn,0,0);	
 	}
 	vec3 TotalDiffuse = diffuse * BaseColor * Diffuse.a;
 	return TotalDiffuse;
@@ -100,13 +107,14 @@ void main(void) {
 	float z=DEPTH; // depth buffer
 	float depth=1.0/(ws2*z+ws1); // distance
 	float d=haze_grad==0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
-	float h=haze_ampl*Haze.a*pow(d,8*haze_grad); // same as in effects.frag
+	float h=haze_ampl*Haze.a*pow(d,10*haze_grad); // same as in effects.frag
 	// works for haze factor > ~0.1
 	color.rgb=mix(color.rgb,Haze.rgb,h);
 	// improves result for haze factor <0.1 but creates edge artifacts at mid distances
 	float p=lerp(h,0.0,0.8,1,0.001); // hack !
 	color.a=pow(color.a,p);
 #endif
+   //color=vec4(test.x,0,0,1);
     
  	gl_FragData[0]=color;
 	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag

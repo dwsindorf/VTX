@@ -1315,7 +1315,13 @@ void TNnoise::eval()
 
     if(args[1]>0 && ampl>0)
 	  f=TheNoise.eval(type,n,args);
-	S0.s=ampl*(f*ma+mb+offset);
+	  
+	 S0.s=ampl*(f*ma+mb+offset);
+    	
+//    if(ampl==0)
+//    	S0.s=offset;
+//    else
+//	    S0.s=f*ampl*ma+mb+offset;
 
 }
 
@@ -1590,14 +1596,19 @@ void TNwater::setNoiseExprs(OceanState *s){
 	applyExpr();
 }
 void TNwater::getNoiseExprs(OceanState *s){
-	TNarg &arg=*((TNarg*)left);
+	TNarg *arg=((TNarg*)left);
 	char tmp[256];
 	tmp[0]=0;
-	arg[0]->valueString(tmp);
-	s->setOceanLiquidExpr(tmp);
-	tmp[0]=0;
-	arg[1]->valueString(tmp);
-	s->setOceanSolidExpr(tmp);
+	if(arg){
+		arg->valueString(tmp);
+		s->setOceanLiquidExpr(tmp);
+		arg=arg->next();
+		if(arg){
+			tmp[0]=0;
+			arg->valueString(tmp);
+			s->setOceanSolidExpr(tmp);
+		}
+	}
 }
 //-------------------------------------------------------------
 // TNwater::replaceNode

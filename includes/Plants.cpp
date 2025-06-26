@@ -1459,8 +1459,8 @@ void TNplant::setNormal(){
 
 	Point bot=base_point;
 	Point norm=bot.normalize();
-	//cout<<endl;
-	//norm.print("");
+//	cout<<endl;
+//	norm.print("plant ");
 	
 	glNormal3dv(norm.values());
 

@@ -1471,16 +1471,16 @@ void Map::render_sprites(){
 		CurrentScope->set_passmode(mode);
 	}
 
-	if(Td.sprites.size){
-		SpriteMgr::setProgram();
-		if(Td.plants.size){
-			GLSLMgr::clrDepthBuffer();
-			render_zvals();
-		}
-	}
 	if(Td.plants.size){
 		if(PlantMgr::setProgram())
 			PlantMgr::render();
+	}
+	if(Td.sprites.size){
+		SpriteMgr::setProgram();
+//		if(Td.plants.size){
+//			GLSLMgr::clrDepthBuffer();
+//			render_zvals();
+//		}
 	}
 
 }

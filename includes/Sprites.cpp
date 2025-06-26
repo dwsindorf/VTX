@@ -309,14 +309,24 @@ bool SpriteMgr::setProgram(){
 	
 	int n=Sprite::sprites.size;
 	int flip=0;
+	Point4DL pp;
+	SpriteData *s=Sprite::sprites[0];
+	pp=s->point;
+	Point pn=Point(pp.x,pp.y,pp.z);
+	Point ppn=pn.normalize();
+	glNormal3dv(ppn.values());
+	
+//	cout<<endl;
+//	ppn.print("sprite ");
+
 	for(int i=n-1;i>=0;i--){
-		SpriteData *s=Sprite::sprites[i];
+		s=Sprite::sprites[i];
 		int id=s->instance;//s->get_id();
 		Point t=s->center;
 		double pts=s->pntsize;
 				
 		// random reflection - based on sprite hash table center position
-		Point4DL pp=s->point;
+		pp=s->point;
 		if(s->flip())
 			flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
 		
@@ -354,16 +364,20 @@ bool SpriteMgr::setProgram(){
 	    //cout<<(int)sid<<" "<<(int)sel<<" "<<r<<" "<<sb<<endl;
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
 		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
-		
-		Point pn=Point(pp.x,pp.y,pp.z);
-		Point ppn=pn.normalize();
 	    glVertex3dv(t.values());
-	    glNormal3dv(ppn.values());
+		
+//		Point pn=Point(pp.x,pp.y,pp.z);
+//		Point ppn=pn.normalize();
+//	    glNormal3dv(ppn.values());
+//	    
+//		cout<<endl;
+//		ppn.print(".");
+
 	    //if(i<10)
 		//printf("%d x:%-1.5g y:%-1.5g z:%-1.5g d:%-4.1f r:%-4.1f s:%-1.5f\n ",n-i,t.x,t.y,t.z,s->distance/FEET,s->radius/FEET);	
 	}
 	glEnd();
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	return true;
 }
 //-------------------------------------------------------------

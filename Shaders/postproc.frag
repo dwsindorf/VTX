@@ -128,8 +128,8 @@ void main(void) {
 #else
 	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.3, 0.59, 0.11));
 #endif
-   // if(ss>0)
-	exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
+    if(ss>0) // bypass HDR for background objects 
+		exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
 	
 	ave *= exposure;
 	color *= exposure;

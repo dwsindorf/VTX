@@ -1,9 +1,9 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-29.6804;
-		theta=345.025;
-		height=5904.45 ft;
+		phi=-29.6763;
+		theta=345.019;
+		height=4954.64 ft;
 		gndlvl=-4077.54 ft;
 		time=19396;
 		vstride=0.02;
@@ -12,12 +12,16 @@ Scene() {
 		zoom=0.004;
 		minh=5.68182e-10;
 		minr=0.00399923;
-		heading=144;
+		heading=145;
 		tilt=-7;
 		angle=-15;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		time=22484.8;
+		heading=151;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -51,10 +55,11 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.09);
 					day=24;
-					fog.color=Color(0.99,0.98,0.87);
+					fog.color=Color(0.99,0.98,0.87,0.82);
+					fog.glow=0.31578;
 					fog.max=20000 ft;
 					fog.min=10000 ft;
-					fog.value=1;
+					fog.value=0.8254;
 					fog.vmax=-2916.6 ft;
 					fog.vmin=-4722.2 ft;
 					ocean.level=-4339.6 ft;
@@ -67,10 +72,10 @@ Scene() {
 					haze.height=0.66;
 					haze.value=0.4;
 					ocean.expr=noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0);
-					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
+					bands("yellow-black",ACHNL|CLAMP|DECAL|NORM|REPLACE,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
-					bands("alpine",ACHNL|CLAMP|NORM,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
+					bands("alpine",ACHNL|CLAMP|DECAL|NORM|REPLACE,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),
 						Color(0.549,0.322,0.02),
@@ -83,7 +88,7 @@ Scene() {
 						Color(1,1,1));
 					Surface{
 						terrain=fog(noise(9.4,3.7,-1,1,2,1,1,0,0.6))
-								ocean(noise(GRADIENT|NABS|SCALE,20.4,3.9,1,0.5,2.08,1,1,0,0))
+								ocean(noise(GRADIENT|SCALE,21,3,1,0.5,2,0.02,1,0,0,1e-06),noise(GRADIENT|NABS|SCALE|SQR,12,12,0.1,0.4,1.84,0.73,-0.2,0,0.002,0))
 								
 								Texture("yellow-black",BORDER|TEX,8.97866,1,1,2.73008,1,2,1,0,0,2,-0.47224,-1)+
 								Texture("alpine",NORM|TEX,7585.35,1.69444,1,0.55552,1,3,1,0,0,1,0.22224,1.77776)+
@@ -95,6 +100,7 @@ Scene() {
 						color=Color(0,0.58,0.89,0.97);
 						day=24;
 						density=0;
+						haze.grad=0.31506;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;
