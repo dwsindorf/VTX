@@ -10,13 +10,17 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=0.004;
-		minh=1.13636e-09;
-		minr=0.00399989;
+		minh=5.68182e-10;
 		heading=90;
 		pitch=-90;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		phi=-15.1769;
+		theta=106.834;
+		minr=0.00399989;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -24,14 +28,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -49,12 +53,13 @@ Scene() {
 				}
 				Planet(0.004,100) {
 					day=24;
-					ocean.level=0 ft;
+					ocean.auto=1;
+					ocean.state=2;
 					resolution=4;
 					shine=22.9391;
 					specular=Color(1,1,1,0.96);
 					year=100;
-					bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
+					bands("yellow-black",ACHNL|CLAMP|DECAL|NORM|REPLACE,16,Color(0.969,0.91,0.616),Color(1,0.875,0.275),Color(0.929,0.486,0.043),Color(0.675,0.086,0.039),
 						Color(0.173,0,0.055),
 						Color(0.075,0.02,0.02));
 					Surface{

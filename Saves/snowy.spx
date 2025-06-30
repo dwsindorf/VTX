@@ -10,15 +10,19 @@ Scene() {
 		hstride=1;
 		astride=1;
 		zoom=0.004;
-		minh=1.13636e-09;
+		minh=5.68182e-10;
 		heading=91;
 		tilt=-2;
 		angle=11;
 		fov=35;
-		speed=586570;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
+		time=46415.8;
+		heading=92;
+		tilt=-5;
+		angle=7;
 		minr=0.0040012;
 	}
 	Universe {
@@ -27,14 +31,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				Star(0.5,0) {
@@ -60,12 +64,12 @@ Scene() {
 					fog.vmax=5740.8 ft;
 					fog.vmin=5000 ft;
 					hscale=0.002;
+					ocean.auto=1;
 					shadow=Color(0.03,0.03,0.09,0.44);
 					shine=1.95572;
 					specular=Color(1,1,1,0.22);
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,128,0.16666,0.572549,Color(0,0,0,0.573),Color(0.024,0.224,0.102),
+					bands("alpine2",ACHNL|CLAMP|DECAL|NEAREST|NORM|REPLACE,128,0.16666,0.572549,Color(0,0,0,0.573),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
 						Color(0.522,0.322,0.02,0.463),
@@ -76,7 +80,7 @@ Scene() {
 						Color(0.6,0.573,0.522,0.663),
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
-						terrain=snow(0.2,3,0,-0.82,1,-0.33)
+						terrain=snow(0.7,1.6,0,-0.5,1,0.111)
 								fog(noise(GRADIENT|UNS,3,2,1,0.5,2,1,1,0,0))
 								
 								Texture("alpine2",BORDER|TEX,61.5847,1,0.97296,0.11104,1,2,1,0,0,1.61112,0,0.38888)+

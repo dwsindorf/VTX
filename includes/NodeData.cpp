@@ -319,7 +319,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     }
     
 	Height=td.p.z;
-	Phi=phi();
 
 	int ttype=td.type();
 	TerrainProperties *tp=td.properties[ttype];
@@ -400,7 +399,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	setMargin(td.margin);
 	if(td.water()){
-		setOcean(td.ocean);
+		setOcean(td.ocean-1);
 	}
     if(td.water()||td.depth)
 		setDepth(td.depth);
@@ -414,6 +413,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
     Hardness=hardness();
 	double h=Ht();
+	Phi=phi();
 
 	a=TSTART;
 

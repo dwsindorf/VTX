@@ -3391,7 +3391,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	ocean_level=0;
 	
 	ocean_state=def_ocean_state;
-	ocean_auto=true;
+	ocean_auto=false;
 	terrain_type=GN_ROCKY;
 
 	fog_color=def_fog_color;
@@ -4135,7 +4135,12 @@ void Planetoid::set_surface(TerrainData &data)
 	Spheroid::set_surface(data);
 	if(data.type()==WATER){
 		Temp=calcLocalTemperature(true);
-		data.ocean=oceanState();
+		if(ocean_auto){
+			data.ocean=oceanState();
+		}
+		else{
+			data.ocean=ocean_state==SOLID?2:1;
+		}			
 	}
 	else{
 		data.ocean=0;
@@ -4422,6 +4427,7 @@ double Planetoid::calcLocalTemperature(bool w){
 		getDateString(date);
 		cout<<date<<" A:"<<orbit_angle<<" Phi:"<<Phi<<" Ta:"<<K2C(tave)<<" f:"<<f<<" sf:"<<Sfact<<" Temp:"<<K2C(t)<<endl;
 	}
+	//cout<<"ocean_state="<<ocean_state<<endl;
 	if(ocean_auto){
 		if (t <= ocean->solid->temp)
 			ocean_state = SOLID;

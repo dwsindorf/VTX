@@ -6,16 +6,16 @@ Scene() {
 		height=29017.9 ft;
 		gndlvl=-46631.2 ft;
 		time=2.72297e+06;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.003;
-		minh=1.13636e-09;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=8;
 		tilt=-4;
 		angle=-1;
 		fov=35;
-		speed=0.02;
+		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
@@ -24,7 +24,20 @@ Scene() {
 		heading=13;
 		tilt=-7;
 		angle=-3;
+		vstride=0.02;
+		zoom=0.003;
+		minh=5.68182e-10;
+		radius=0.00299666;
+	}
+	View{
+		height=29233.9 ft;
+		tilt=-10;
 		minr=0.00299117;
+		radius=0.00299671;
+	}
+	View{
+		phi=-41.5448;
+		theta=246.023;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -33,14 +46,14 @@ Scene() {
 			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
 			color.expr=1*DENSITY;
 			color.list=Colors(
-				Color(0.502,0.000,0.251),
-				Color(0.000,0.000,1.000),
-				Color(0.000,0.722,1.000),
-				Color(0.502,1.000,1.000),
-				Color(1.000,0.275,0.000),
-				Color(1.000,0.702,0.200),
-				Color(1.000,1.000,0.400),
-				Color(1.000,1.000,0.702)
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
 				);
 			System(1000) {
 				name="Solor";
@@ -53,7 +66,7 @@ Scene() {
 					name="Sol";
 					specular=Color(1,1,1);
 					temperature=6000;
-					bands("star1",ACHNL|CLAMP,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					bands("star1",ACHNL|CLAMP|DECAL|REPLACE,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.294,0.016,0.071),
 						Color(0.137,0.024,0.188),
@@ -83,26 +96,24 @@ Scene() {
 					fog.vmin=-20000 ft;
 					hscale=0.002;
 					name="Venus";
-					ocean.level=295046 ft;
+					ocean.auto=1;
+					ocean.state=0;
 					shadow=Color(0.21,0.17,0.04,0.31);
 					shine=16.4793;
 					specular=Color(1,1,1,0.11);
 					tilt=10;
 					year=100;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-					bands("test",REFLECT,16,0.19354,0.46774,RAND,Color(1,0.89,0.49),
-						Color(0.988,0.808,0.439),
-						Color(0.616,0.38,0.02),
-						Color(1,1,1));
-					image("eroded",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"test");
+					bands("dessert",ACHNL|BLEND|DECAL|NORM|REFLECT|REPLACE,128,0.14286,0.596078,Color(1,0.624,0.075,0.596),Color(1,0.875,0.475),
+						Color(0.165,0,0),
+						Color(0,0,0));
+					image("eroded",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"calisto");
 					Surface{
 						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
-								Texture("jupiter",BORDER|LINEAR|TEX,577315,1.36508,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
-								Texture("eroded",BUMP,683.359,-0.22208,2,0,5,2,0.5,0,0,0,0,0)+
-								Texture("rock_stones",BUMP|RANDOMIZE|TEX,2048,-4,1.02776,3.33328,4,2.4,0.93056,0,0,0.33332,0,0)+
-								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,11.8,0.17,0.28,2.2,1,0.66,0.45,0));
+								Texture("dessert",BORDER|LINEAR|TEX,577315,0.9524,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
+								Texture("eroded",BUMP|TEX,683.359,-0.2,2,0,5,2,0.5,0,0,0,0,0)+
+								Texture("rock_stones",BUMP|RANDOMIZE|TEX,4096,-4,1.02776,3.33328,4,2.2,0.93056,0,0,0.33332,0,0)+
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,13,0.2,0.25,2.2,1,0.66,0.45,0,1e-06));
 					}
 					Clouds(0.00305588) {
 						ambient=Color(1,1,0.5,0.07);
@@ -122,7 +133,8 @@ Scene() {
 						day=30;
 						density=0.56944;
 						ghg_fraction=0.95;
-						haze.color=Color(0.97,0.83,0.38,0.71);
+						haze.color=Color(0.97,0.83,0.38,0.9);
+						haze.grad=0.23288;
 						haze.value=1;
 						name="Sky";
 						night.color=Color(0,0,0);

@@ -55,7 +55,6 @@ double zslope()
 		return 0;
 	static double s=0;
 	if(!Td.get_flag(SFIRST)){
-	    //CELLSLOPE(surface1()->Z(),s);
 	    CELLSLOPE(Z(),s);
     	s*=TheMap->hscale*INV2PI;
 		Td.set_flag(SFIRST);

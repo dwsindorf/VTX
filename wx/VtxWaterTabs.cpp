@@ -436,6 +436,8 @@ void VtxWaterTabs::OnAutoState(wxCommandEvent& event){
 	bool autoset=event.IsChecked();
 	orb->ocean_auto=autoset;
 	orb->calcAveTemperature();
+	orb->invalidate();
+	TheScene->rebuild();
 }
 
 void VtxWaterTabs::OnChangeComposition(wxCommandEvent& event){
@@ -454,6 +456,9 @@ void VtxWaterTabs::OnSetState(wxCommandEvent& event){
 	Planetoid *orb=getOrbital();
 	bool autoset=auto_state->IsChecked();
 	orb->ocean_auto=autoset;
+    orb->invalidate();
+    TheScene->rebuild();
+
 	setObjAttributes();
 
 }

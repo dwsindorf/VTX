@@ -1,9 +1,9 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=31.9504;
-		theta=89.516;
-		height=2847.55 ft;
+		phi=31.9893;
+		theta=89.4839;
+		height=5172.67 ft;
 		gndlvl=-5222.73 ft;
 		time=2483.56;
 		vstride=0.02;
@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.001;
 		minh=5.68182e-10;
-		minr=0.000999011;
-		heading=166;
+		heading=135;
 		tilt=1;
 		angle=-18;
 		fov=35;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.000999011;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -64,17 +66,12 @@ Scene() {
 				specular=Color(1,1,1,0.27);
 				year=300;
 				water.color=Color(0,0.5,0.8);
-				bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+				bands("jupiter",BLEND|DECAL|REPLACE,64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 				Surface{
 					m1=noise(GRADIENT|NABS|NEG|SQR,8,14,0.2,0.5,2.1,0.24,1,0,0);
 					m2=noise(GRADIENT|SQR|RO1,8.8,14,0.3,0.5,2.1,0.88,1,0,0);
-					terrain=fractal(14,3,0.1,1.06,2,0.15,0,0,1,0)
-					        Point(
-					        noise(GRADIENT|NLOD|SQR,7.6,5.7,0.1,0.44,2,0.57,1,0,0),
-					        noise(GRADIENT|SQR,9.1,8,0.98,0.5,2,0.46,1,0,0),
-					        noise(SIMPLEX|NLOD|SQR,9.1,2,-0.39,0.44,2,0.74,1,0,0)
-					        )+
-							Texture("jupiter",BORDER|LINEAR|TEX,1,2,1,1.55552,1,2,0.5,0,0,2,-0.55552,-0.22224)+
+					terrain=fractal(14,3,0.1,1.06,2,0.15,0,0,1,0)Point(noise(GRADIENT|NLOD|SQR,7.6,5.7,0.1,0.44,2,0.57,1,0,0),noise(GRADIENT|SQR,9.1,8,0.98,0.5,2,0.46,1,0,0),noise(SIMPLEX|NLOD|SQR,9.1,2,-0.39,0.44,2,0.74,1,0,0))+
+							Texture("jupiter",LINEAR|TEX,1,2,1,1.55552,1,2,0.5,0,0,0,0.20636,0.23808)+
 							Texture("BrownStone",BUMP,422.264,1,1,0,2.66656,2,0.5,0,0,0,0,0)+gloss(0.51588,3.28577);
 				}
 				Clouds(0.00101) {

@@ -1090,7 +1090,7 @@ void RasterMgr::vertex(MapNode *node)
 			double type=0,vfog=0;
 			if(TheMap->object==TheScene->viewobj){
 				if(d->type()==WATER)
-					type=d->ocean();
+					type=d->ocean()+1;
 				else
 					type=d->type()+2;
 				//type = (d->type()+1.5); // note: for water floor(g)=1;
