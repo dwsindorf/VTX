@@ -2043,7 +2043,7 @@ void RasterMgr::manageBuffers()
 	pixels_valid=0;
 	filter_valid=0;
  	//printf("END RasterMgr::manageBuffers(%d)\n",npixels);
-
+ 
 }
 //-------------------------------------------------------------
 // RasterMgr::init_render()	collect enables for raster scans

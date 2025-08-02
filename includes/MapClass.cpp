@@ -696,8 +696,8 @@ void Map::shadow_normals()
 	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
-	    PlantMgr::render_shadows();
 	}
+	PlantMgr::render_shadows();
 
 	Render.popmode();
 }

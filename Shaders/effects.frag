@@ -59,7 +59,7 @@ void main(void) {
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
 	return;
 #endif
-	if(TYPE>0.5) { // TYPE=0 for sky or background
+	if(TYPE>0.6) { // TYPE=0 for sky or background
 		float z=DEPTH;
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
@@ -157,7 +157,7 @@ void main(void) {
  	}
 		
 	gl_FragData[0]=vec4(color,1.0);	
-	//gl_FragData[0]=vec4(q,v,0,1.0);	
+	//gl_FragData[0]=vec4(TYPE,0,0,1.0);	
 	
     gl_FragData[1]=fcolor2;
 }

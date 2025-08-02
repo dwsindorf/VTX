@@ -1,20 +1,20 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55619;
-		theta=24.4365;
-		height=21.6935 ft;
-		gndlvl=10514.8 ft;
-		time=380926;
+		phi=-5.55476;
+		theta=24.4369;
+		height=35.6386 ft;
+		gndlvl=10466.8 ft;
+		time=16762.6;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400199;
-		heading=95;
-		tilt=-30;
-		angle=-33;
+		minr=0.00400198;
+		heading=-32;
+		tilt=-22;
+		angle=-178;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
@@ -48,25 +48,27 @@ Scene() {
 						color2=Color(0,0,0);
 					}
 				}
-				Planet(0.004,100) {
+				Planet(0.004,48.5724) {
 					day=24;
-					diffuse=Color(1,1,1,0.71);
+					diffuse=Color(1,1,1,0.69);
 					hscale=0.001;
 					ocean.auto=1;
-					ocean.state=2;
-					rot_phase=220.644;
+					ocean.state=0;
+					rot_phase=156.773;
+					shadow=Color(0,0,0,0.82);
 					year=100;
 					Surface{
-						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",1,5e-07,1,1,0.4,0,0,0,0)
-								Branch("trunk",12,2.5,0.3,1,0,0.95,0.1,0.7,0.95,2,0,1,0,15)["Cracks1",Color(0.25+IRAND*LVL,0.8*LVL,0.25+0.1*IRAND*LVL,1)]								;
+						terrain=
+								Plant("Shrub1",1,2.36742e-07,0.8,0.2,0.05,0,0,0,0)
+								Branch(7,2.24,1.88,0.9,0.22,1,0.19,0.5,0.86,20,0,1,0,15)["treebark2",Color(0.1*LVL,0.5*RED,0,LVL)]
+								Leaf("Leaf",1,1,4,1,0,0.75,0,0.8,0.14,0,0,0,IRAND,15)["leafs-2x2",Color(0.5*URAND+0.25,0.5*RED,0,0.8*URAND)]Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}
-					Sky(0.00410952) {
+					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);
 						day=24;
-						density=0.49206;
+						density=0.51388;
 						haze.color=Color(1,1,0.88);
-						haze.grad=0.28768;
+						haze.grad=0.0685;
 						haze.height=0.52;
 						haze.max=15.085 miles;
 						haze.value=1;

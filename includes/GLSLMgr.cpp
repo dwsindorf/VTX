@@ -20,7 +20,7 @@ extern Point MapPt;
 
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
-#define DEBUG_SHADERS
+//#define DEBUG_SHADERS
 #define SHOW_GLSTATS
 
 //#define DEBUG_FBO
@@ -859,6 +859,9 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	}
 	else if(!program->compiled && !program->linked && !program->errors)
 		first=true;
+//	else{
+//		cout << "using shader :"<< program->name() << endl;
+//	}
 
 	if(strcmp(fshader,"noise3D.frag")==0){
 		init3DNoiseTexture();

@@ -128,7 +128,7 @@ void main(void) {
 #else
 	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.3, 0.59, 0.11));
 #endif
-    if(ss>0) // bypass HDR for background objects 
+    if(ss>0.5) // bypass HDR for background objects 
 		exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
 	
 	ave *= exposure;
@@ -136,7 +136,7 @@ void main(void) {
 	
 #endif
 #ifdef EDGES    
-    if(surface>0.5 && surface <1.9) // blur water
+    if(surface>0.6 && surface <1.9) // blur water
     	c*=10;
     float blend=(color_ampl*c+normal_ampl*dn+dt);
 #ifdef SHOW                          

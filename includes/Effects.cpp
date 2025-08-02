@@ -762,10 +762,10 @@ void EffectsMgr::create_jitter_lookup(int size, int samples_u, int samples_v)
 
 				// warp to disk
 				float d[4];
-				d[0] = sqrtf(v[1]) * cosf(2 * 3.1415926f * v[0]);
-				d[1] = sqrtf(v[1]) * sinf(2 * 3.1415926f * v[0]);
-				d[2] = sqrtf(v[3]) * cosf(2 * 3.1415926f * v[2]);
-				d[3] = sqrtf(v[3]) * sinf(2 * 3.1415926f * v[2]);
+				d[0] = sqrtf(v[1]) * COS(2 * 3.1415926f * v[0]);
+				d[1] = sqrtf(v[1]) * SIN(2 * 3.1415926f * v[0]);
+				d[2] = sqrtf(v[3]) * COS(2 * 3.1415926f * v[2]);
+				d[3] = sqrtf(v[3]) * SIN(2 * 3.1415926f * v[2]);
 
 				data[(k * size * size + j * size + i) * 4 + 0] = (signed char)(d[0] * 127);
 				data[(k * size * size + j * size + i) * 4 + 1] = (signed char)(d[1] * 127);

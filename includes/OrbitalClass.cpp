@@ -6004,8 +6004,8 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	//str+=randFeature(RND_FRACTAL);
 	
     if(set_layers==0){
-		int max_layers=TheScene->generate_quality;	
-		num_layers=num_layers>max_layers?max_layers:num_layers;
+    	num_layers=0.5+r[10]*TheScene->generate_quality;	
+		//num_layers=num_layers>max_layers?max_layers:num_layers;
 		num_layers+=1;
     }
     else

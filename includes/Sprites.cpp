@@ -248,6 +248,8 @@ bool SpriteMgr::valid()
 
 bool SpriteMgr::setProgram(){
 	TerrainProperties *tp=Td.tp;
+	if(!Sprite::sprites.size)
+		return false;
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",Td.sprites.size);
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);

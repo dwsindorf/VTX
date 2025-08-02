@@ -212,8 +212,11 @@ void emitLeaf(){
 
 // draw a line
 void emitLine(){
+    gl_TexCoord[0].xy=vec2(0,0);
     emitVertex(Pos2.xyz);
+    gl_TexCoord[0].xy=vec2(0,1);   
     emitVertex(Pos1.xyz); 
+    gl_TexCoord[0].xy=vec2(1,1);   
     emitVertex(Pos2.xyz);
  }
 

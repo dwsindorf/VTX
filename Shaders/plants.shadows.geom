@@ -51,11 +51,11 @@ vec3 OrthoNormalVector(vec3 v) {
 void produceVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = project(p);
-//#ifdef SHADOWS
+
    vec4 VertexPosition=(gl_ModelViewMatrix * p);
    ShadowCoord=smat * VertexPosition;
    EyeDirection=-(gl_ModelViewMatrix * p);
-//#endif   
+ 
    EmitVertex();  
 }
 
@@ -101,7 +101,7 @@ void emitCone()
                      ca*tx2.y + sa*ty2.y,
                      ca*tx2.z + sa*ty2.z );
    
-      p1 = Pos1+r1*n1;   
+      p1 = Pos1 + r1*n1;   
       produceVertex(p1);
 
       p2 = Pos2 + r2*n2;

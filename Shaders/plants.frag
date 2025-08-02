@@ -126,7 +126,7 @@ void main(void) {
 	int aopt=copt&4;
 	copt=copt&3;
 #if NTEXS >0
-	if(texid>=0){
+ 	if(texid>=0){
 		vec2 l_uv=sprite(gl_TexCoord[0].xy);
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
   		if(copt>0){    // new color = blend color and texture where texture.a >0
@@ -168,7 +168,7 @@ void main(void) {
 
 //color=vec4(test.x,0,0,1);
  	gl_FragData[0]=color;
-	gl_FragData[1]=vec4(0,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
+	gl_FragData[1]=vec4(0.1,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
 
 }
 // ########## end plants.frag #########################
