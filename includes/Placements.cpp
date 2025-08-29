@@ -333,7 +333,7 @@ void PlacementMgr::eval()
 #endif
 		//  offset domain to mis-register overlap of successive levels
 
-		int seed=lvl*131+id;
+		int seed=lvl*13+id;
 		    
         if(lvl>0&&roff>0){   
 		    set_offset_valid(1);
@@ -360,7 +360,11 @@ void PlacementMgr::eval()
 		if(TheNoise.noise3D())
 		    p.w=0;
 		
+		//cout<<lvl<<" "<<id<<" "<<lvl+id<<" "<<seed<<endl;
+		
 		int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
+		//cout<<lvl<<" "<<id<<" "<<lvl+id<<" "<<n<<endl;
+
 		if(TheNoise.noise4D())
 			n=PERM(pc.w+n);
 

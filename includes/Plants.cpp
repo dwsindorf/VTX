@@ -1444,12 +1444,12 @@ void TNplant::setScale(){
 	case HIGH:
 		tfactor=2;
 		sfactor=2;
-		min_draw_width=0.85;
+		min_draw_width=0.95;
 		break;
 	case BEST:
 		tfactor=2;
 		sfactor=2;
-		min_draw_width=0.7;
+		min_draw_width=0.9;
 		break;	
 	}
 }

@@ -756,8 +756,8 @@ void OctTree::draw_selpt()
 // DensityTree class
 //************************************************************
 
-const char *DensityTree::def_noise_expr="noise(NLOD,2,7,1,0.2)+0.1*noise(NLOD,14,5,0.5)\n";
-const char *DensityTree::def_color_expr="1.0*DENSITY\n";
+const char *DensityTree::def_noise_expr="noise(NLOD,2,7,1,0.2)+0.5*noise(NLOD,14,5,0.5)\n";
+const char *DensityTree::def_color_expr="DENSITY\n";
 const char *DensityTree::def_color_list=
 	"Colors("
 		"Color(0.502,0.000,0.251),"
@@ -767,7 +767,7 @@ const char *DensityTree::def_color_list=
 		"Color(1.000,0.300,0.000),"
 		"Color(1.000,0.702,0.200),"
 		"Color(1.000,1.000,0.400),"
-		"Color(1.000,1.000,0.702)"
+		"Color(1.000,1.000,0.902)"
 	")\n";
 
 //-------------------------------------------------------------
@@ -1488,9 +1488,9 @@ double StarTree::test_surface(Point &p)
 			return -sqrt(r*r+y*y);
 		}
 		if(r<=cb)
-			s=rampstep(0,cb,r,a1,a2)+pn;
+			s=smoothstep(0,cb,r,a1,a2)+pn;
 		else
-			s=rampstep(cb,sr,r,a2,0)+pn;
+			s=smoothstep(cb,sr,r,a2,0)+pn;
 
 	    return s-y;
 	}

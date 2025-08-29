@@ -6010,6 +6010,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     }
     else
     	num_layers=set_layers;
+    int layers=num_layers;
     //cout<<"layers="<<num_layers<<" "<<set_layers<<endl;
 	str+=randFeature(RND_MAP);
 	
@@ -6035,11 +6036,11 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		moons=moons>max_moons?max_moons:moons;
 		moon_cnt=0;
 		for(int i=0;i<moons;i++){
-			((Planet *)planet)->addMoon(gtype);			
+			((Planet *)planet)->addMoon(GN_RANDOM);			
 		}
 	}
 	char pname[64];
-	sprintf(pname,"%s-l%d",TheScene->typeSymbol(planet->terrain_type).c_str(),num_layers);
+	sprintf(pname,"%s-l%d",TheScene->typeSymbol(planet->terrain_type).c_str(),layers);
 	planet->setName(pname);
 	planet_id=planet_cnt+lastn;
 	planet->get_vars();
@@ -6057,6 +6058,18 @@ void Planet::addMoon(int gtype){
 	moon->orbit_phase=360*r[7];
 	moon->tilt=60*r[8];
 	moon_cnt++;
+	if(gtype==GN_RANDOM){
+		if(r[10]<0.2)
+		 	gtype=GN_VOLCANIC;
+		else if(r[10]<0.4)
+			gtype=GN_CRATERED;
+		else if(r[10]<0.6)
+			gtype=GN_ROCKY;
+		else if(r[10]<0.8)
+			gtype=GN_OCEANIC;
+		else
+			gtype=GN_ICY;
+	}
 	cout<<"new Moon size:"<<(moon->size/size)<<endl;
 	newRocky(moon,gtype);
 	addChild(moon);

@@ -958,7 +958,8 @@ void VtxGalaxyTabs::OnIrregular(wxCommandEvent& event)
 	Galaxy *galaxy=(Galaxy*)object();
 	StarTree *tree=(StarTree*)galaxy->tree;
 
-	tree->dispersion=2;
+	tree->dispersion=4;
+	tree->diffusion=4;
 	tree->compression=0.9;
 	tree->noise_vertical=0.05;
 	tree->noise_amplitude=1;
@@ -973,7 +974,6 @@ void VtxGalaxyTabs::OnIrregular(wxCommandEvent& event)
 	tree->density_value=0.4;
 	tree->center_radius=0.0;
 	tree->noise_cutoff=0.1;
-	tree->diffusion=0.1;
 	tree->noise_amplitude=1;
 	tree->shape_exterior=0.0001;
 	tree->shape_interior=0;
@@ -989,9 +989,9 @@ void VtxGalaxyTabs::OnSpiral(wxCommandEvent& event)
 	Galaxy *galaxy=(Galaxy*)object();
 	StarTree *tree=(StarTree*)galaxy->tree;
 
-	tree->dispersion=2;
-	tree->diffusion=0.05;
-	tree->compression=0.9;
+	tree->dispersion=4;
+	tree->diffusion=4;
+	tree->compression=0.6;
 	tree->noise_cutoff=0.07;
 	tree->noise_amplitude=1;
 	tree->noise_vertical=0.05;
@@ -1016,9 +1016,9 @@ void VtxGalaxyTabs::OnBarred(wxCommandEvent& event)
 	Galaxy *galaxy=(Galaxy*)object();
 	StarTree *tree=(StarTree*)galaxy->tree;
 
-	tree->dispersion=2;
-	tree->diffusion=0.01;
-	tree->compression=0.9;
+	tree->dispersion=4;
+	tree->diffusion=4;
+	tree->compression=0.6;
 	tree->noise_cutoff=0.0;
 	tree->noise_amplitude=1;
 	tree->noise_vertical=0.05;
