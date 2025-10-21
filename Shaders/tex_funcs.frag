@@ -74,15 +74,13 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #ifdef NOTILE
    if(tex2d[id].randomize)
        return textureNoTile(id, samplers2d[id], uv,mm);
-#else
-  #ifdef T3D
+#endif
+#ifdef T3D
 	return triplanarMap(id, uv,mm);
-  #else
+#else
 	return texture2D(samplers2d[id], uv,mm);
-  #endif
 #endif
 }
-
 float phiFunc(int id){
 	if(tex2d[id].seasonal)
 		return SFACT;

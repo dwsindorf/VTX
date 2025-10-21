@@ -175,7 +175,7 @@ void Texture::texCoords(int tchnl)
 {
 	double sv=0,tv=0;
 	getTexCoords(sv,tv);
-	glMultiTexCoord2d(tchnl,sv,tv);
+	glMultiTexCoord4d(tchnl,sv,tv,0,1);
 }
 
 //-------------------------------------------------------------
@@ -187,9 +187,9 @@ void Texture::bumpCoords(int tchnl,double x, double y)
 	double sv=0,tv=0;
 	getTexCoords(sv,tv);
 	if(t1d())
-		glMultiTexCoord2d(tchnl,sv+x,0);
+		glMultiTexCoord4d(tchnl,sv+x,0,0,1);
 	else
-		glMultiTexCoord2d(tchnl,sv+x,tv+y);
+		glMultiTexCoord4d(tchnl,sv+x,tv+y,0,1);
 }
 
 //-------------------------------------------------------------

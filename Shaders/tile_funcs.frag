@@ -31,7 +31,7 @@ float sum( vec4 v ) { return v.x+v.y+v.z; }
 //        3) impacts rendering speed by ~2-3x (slower)
 vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
 {
-    float scale =0.7123*tex2d[id].scale*0.01;
+    float scale =0.7123*tex2d[id].scale;
     vec3 P=v1*scale;
     //float r=voronoi2d(P.xy);
     float r=noise3D(P).x; 
