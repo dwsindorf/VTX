@@ -3773,6 +3773,7 @@ bool Planetoid::setProgram(){
 		vars.newFloatVar("ice_specular",ocean->solid->specular);
 	}
 	vars.newFloatVar("albedo",albedo);
+	vars.newFloatVar("rscale",Rscale);
 
 	tp->setProgram();
 

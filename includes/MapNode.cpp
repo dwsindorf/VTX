@@ -12,7 +12,7 @@
 #include "Sprites.h"
 #include "Plants.h"
 
-extern double Theta, Phi, Height,Rscale,Margin,Sfact,Temp,Hardness;
+extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness;
 extern Point MapPt;
 
 #define VCLIP     // enable viewobj clip  test
@@ -2151,15 +2151,29 @@ void MapNode::vertex(MapData*d)
 //-------------------------------------------------------------
 // MapNode::setVertexAttributes() set up cor shader noise
 //-------------------------------------------------------------
+//#define TEST
 void MapNode::setVertexAttributes(MapData*d){
 	if(!d)
 		return;
 	double depth = TheScene->vpoint.distance(d->mpoint());
-
 	Point pm=d->mpoint();
+#ifdef TEST // keep ht
+    static int cnt=0;
+	double scale=Gscale*Hscale;
+	pm=pm*scale;
+	double tscale=100;
+	
+	double tx = fmod(pm.x * tscale * 0.5, 1.0);
+	double ty = fmod(pm.y * tscale * 0.5, 1.0);
+	double tz = fmod(pm.z * tscale * 0.5, 1.0);
+	pm=Point(tx,ty,tz);
+	if(cnt%1000000==0)
+	  cout<<pm.x<<" "<<pm.y<<" "<<pm.z<<endl;
+    cnt++;
+#else
 	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
-
+#endif
 	// set pm to Vertex1 in shaders
 	// - pm contains just the (rectangularized) phi&theta values of the point
 

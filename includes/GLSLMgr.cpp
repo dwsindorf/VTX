@@ -20,7 +20,7 @@ extern Point MapPt;
 
 #define MINGLSLVERSION  120
 #define SIMPLEX_NOISE
-//#define DEBUG_SHADERS
+#define DEBUG_SHADERS
 #define SHOW_GLSTATS
 
 //#define DEBUG_FBO

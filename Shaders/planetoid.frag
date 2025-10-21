@@ -175,7 +175,9 @@ void main(void) {
 #endif
 
 	gl_FragData[0] = color;
-	//gl_FragData[0] = vec4(Constants1.g/3.0,0,0,1);
+	//gl_FragData[0] = abs(normalize(Normal));
+	//float ht=Constants1.x/rscale+1.0;
+	//gl_FragData[0] = vec4(ht*0.5,0,0,1);
 
 }
 // ########## end planetoid.frag #########################

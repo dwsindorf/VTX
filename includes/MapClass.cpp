@@ -1078,7 +1078,6 @@ bool Map::setProgram(){
 	}
 
 	//GLSLMgr::setFBORenderPass();
-
 	GLSLVarMgr vars;
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);

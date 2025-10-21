@@ -128,6 +128,20 @@ double Texture::getTexAmpl(int mode){
 }
 //-------------------------------------------------------------
 // Texture::getTexCoords() return texture lookup coordinates
+// void Texture::getTexCoords(double &x, double &y){
+//	 s = md->phi() / 180;
+//	 t = theta = md->theta() / 180.0 - 1;
+//	 double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
+//	 sv=s*sc-0.5;
+//	 tv=a*t*sc;
+//	 sf=svalue*sc-0.5;
+//	 sf=FLOOR(sf);
+//	 tf=a*tvalue*sc;
+//	 tf=FLOOR(tf);
+//	 x=tv-tf; // width lookup
+//	 y=sv-sf; // tx=s-0.5+1
+//}
+
 //-------------------------------------------------------------
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();

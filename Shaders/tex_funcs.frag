@@ -31,22 +31,59 @@ struct tex2d_info {
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
 
+float texht;
+
+// Convert spherical coordinates to 3D position
+vec3 sphericalToCartesian(float theta, float phi, float radius) {
+    float x = radius * sin(phi) * cos(theta);
+    float y = radius * cos(phi);  // Height/vertical
+    float z = radius * sin(phi) * sin(theta);
+    return vec3(x, y, z);
+}
+
+
+// Standalone triplanar texture sampling function
+// suffers from precision
+vec4 triplanarMap(int id, vec2 uv, float mm)
+{
+    // Normalize the normal
+	sampler2D samp=samplers2d[id];
+    vec3 N = normalize(Normal);
+    float s=tex2d[id].scale;
+    //vec3 V=Vertex1.xyz*tex2d[id].scale*0.5;
+    vec3 V = fract(Vertex1.xyz * s);
+    
+    // Calculate blend weights based on normal direction
+    vec3 blendWeights = abs(N);
+    blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
+    // Sample texture from 3 orthogonal planes
+    vec3 xProjection = texture2D(samp, V.yz,mm).rgb;
+    vec3 yProjection = texture2D(samp, V.xz,mm).rgb;
+    vec3 zProjection = texture2D(samp, V.xy,mm).rgb;
+    
+    vec3 blended=xProjection * blendWeights.x +yProjection * blendWeights.y +zProjection * blendWeights.z;
+    // Blend the three samples
+    return vec4(blended,1.0);
+}
+
 #include "tile_funcs.frag"
 
 vec4 textureTile(int id, in vec2 uv , float mm)
 {
+//#define T3D
 #ifdef NOTILE
    if(tex2d[id].randomize)
        return textureNoTile(id, samplers2d[id], uv,mm);
+#else
+  #ifdef T3D
+	return triplanarMap(id, uv,mm);
+  #else
+	return texture2D(samplers2d[id], uv,mm);
+  #endif
 #endif
-   return texture(samplers2d[id], uv,mm);
 }
 
-
 float phiFunc(int id){
-	//float p=PI*(PHI-0.5);
-	//float tf=sin(p+tex2d[id].tilt_bias);
-	//return tf*tf;
 	if(tex2d[id].seasonal)
 		return SFACT;
 	else
@@ -60,7 +97,7 @@ float phiFunc(int id){
 
 #define INIT_TEX(i,COORDS) \
   	tid = i; \
-	coords = COORDS; \
+	coords.xy = COORDS; \
 	scale=tex2d[i].scale; \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
@@ -160,7 +197,7 @@ float phiFunc(int id){
 	float phi = PHI-0.5;  \
 	float cmix = 1.0;  \
     float attrib=0.0; \
-    vec2 coords; \
+    vec4 coords; \
     vec2 offset=vec2(0.0); \
  	vec4 tval; \
 	vec4 tcolor; \
