@@ -1137,14 +1137,6 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			 	continue;
 			break;
 		}
-//		if(is->image){
-//			if(is->image->accessed())
-//				BIT_ON(is->info,INUSE);
-//			if(is->image->newimg())
-//				BIT_ON(is->info,NEWIMG);
-//			if(is->image->changed())
-//				BIT_ON(is->info,CHANGED);
-//		}
 		ImageSym *nis=new ImageSym(is);
 		list.add(nis);
 	}

@@ -205,10 +205,14 @@ void GLSLMgr::makeTexDefsFile(){
 		cout << "file write error"<< endl;
 	    return;
 	}
-	for(int i=0;i<n/2;i++){
-		fprintf(fp,"#define CS%d gl_TexCoord[%d].xy\n",i*2,i);
-		fprintf(fp,"#define CS%d gl_TexCoord[%d].zw\n",i*2+1,i);
-	}
+//	for(int i=0;i<n/2;i++){
+//		fprintf(fp,"#define CS%d gl_TexCoord[%d].xy\n",i*2,i);
+//		fprintf(fp,"#define CS%d gl_TexCoord[%d].zw\n",i*2+1,i);
+//	}
+	for(int i=0;i<n;i++){
+		fprintf(fp,"#define CS%d gl_TexCoord[%d]\n",i,i);
+	}	
+	
 	fclose(fp);
 
 	// make set_tex.vert
@@ -225,7 +229,7 @@ void GLSLMgr::makeTexDefsFile(){
 
 	for(int i=0;i<n;i++){
 		fprintf(fp,"#ifdef TX%d\n",i);
-		fprintf(fp,"    CS%d=gl_MultiTexCoord%d.xy;\n",i,i);
+		fprintf(fp,"    CS%d=gl_MultiTexCoord%d;\n",i,i);
 		fprintf(fp,"#endif\n");
 	}
 

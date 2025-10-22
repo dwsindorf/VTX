@@ -50,6 +50,7 @@ static LongSym iopts[]={
 	{"A",		AEXPR},
 	{"TMP",	    TMP},
 	{"RANDOMIZE",	RANDOMIZE},
+	{"TRIPLANAR",	TRIPLANAR}
 
 };
 NameList<LongSym*> IOpts(iopts,sizeof(iopts)/sizeof(LongSym));

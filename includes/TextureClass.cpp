@@ -14,13 +14,13 @@
 
 #include <math.h>
 
-extern double Theta, Phi,Rscale;
+extern double Theta, Phi,Rscale,Gscale,Hscale;
 static TerrainData Td;
 
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-//#define DEBUG_TEXTURES
+#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -126,22 +126,33 @@ double Texture::getTexAmpl(int mode){
 	return timage->value(mode, x,y);
 
 }
+
+//-------------------------------------------------------------
+// Texture::texCoords() set texture coordinates in OGL passes
+//-------------------------------------------------------------
+Point Texture::getTexCoords(Point p){
+	double wscale=Gscale*Hscale;
+	Point pm=p*wscale;
+	
+	
+	double tx = fmod(pm.x * scale * 0.5, 1.0);
+	double ty = fmod(pm.y * scale * 0.5, 1.0);
+	double tz = fmod(pm.z * scale * 0.5, 1.0);
+	pm=Point(tx,ty,tz);
+	return pm;
+}
+
+//-------------------------------------------------------------
+// Texture::texCoords() set texture coordinates in OGL passes
+//-------------------------------------------------------------
+void Texture::texCoords(int tchnl,Point p)
+{
+	Point tp=getTexCoords(p);
+	glMultiTexCoord4d(tchnl,tp.x,tp.y,tp.z,1);
+}
+
 //-------------------------------------------------------------
 // Texture::getTexCoords() return texture lookup coordinates
-// void Texture::getTexCoords(double &x, double &y){
-//	 s = md->phi() / 180;
-//	 t = theta = md->theta() / 180.0 - 1;
-//	 double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
-//	 sv=s*sc-0.5;
-//	 tv=a*t*sc;
-//	 sf=svalue*sc-0.5;
-//	 sf=FLOOR(sf);
-//	 tf=a*tvalue*sc;
-//	 tf=FLOOR(tf);
-//	 x=tv-tf; // width lookup
-//	 y=sv-sf; // tx=s-0.5+1
-//}
-
 //-------------------------------------------------------------
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
@@ -163,9 +174,19 @@ void Texture::getTexCoords(double &x, double &y){
 	else if(tv<0 && tf>=0)
 		tv+=a*2*sc;
 #endif
-#endif
 	x=tv-tf; // width lookup
 	y=sv-sf; // tx=s-0.5+1
+
+#else
+	x = fmod(sv, 1.0);
+	y = fmod(tv, 1.0);
+	//}
+	
+	//else x=y=0;
+#endif
+	//if(s!=svalue)
+	//cout<<s<<" "<<svalue<<endl;
+
 }
 
 //-------------------------------------------------------------
@@ -176,6 +197,7 @@ void Texture::texCoords(int tchnl)
 	double sv=0,tv=0;
 	getTexCoords(sv,tv);
 	glMultiTexCoord4d(tchnl,sv,tv,0,1);
+
 }
 
 //-------------------------------------------------------------
@@ -437,8 +459,9 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].seasonal",tid);      glUniform1iARB(glGetUniformLocationARB(program,str),seasonal());
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
+    sprintf(str,"tex2d[%d].triplanar",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),triplanar());
 #ifdef DEBUG_TEXTURES
-    cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" bias:"<<bias<<" scale:"<<scale<<" texamp:"<<tex_ampl<<" far_bias:"<<far_bias<<" near_bias:"<<near_bias<<endl;
+    cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" scale:"<<scale<<" triplanar:"<<triplanar()<<endl;
 #endif
     //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);

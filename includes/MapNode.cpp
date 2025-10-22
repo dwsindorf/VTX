@@ -2055,7 +2055,7 @@ Color MapNode::Tcolor(MapData *d) {
     		tex->svalue=0;
     		tex->tvalue=0;
     		tex->scale=1;
-
+ 
         	double x,y;
         	tex->getTexCoords(x,y);
         	int mode=tex->intrp();
@@ -2152,25 +2152,9 @@ void MapNode::vertex(MapData*d)
 // MapNode::setVertexAttributes() set up cor shader noise
 //-------------------------------------------------------------
 //#define TEST
-void MapNode::setVertexAttributes(MapData*d){
-	if(!d)
-		return;
-	double depth = TheScene->vpoint.distance(d->mpoint());
-	Point pm=d->mpoint();
-#ifdef TEST // keep ht
-    static int cnt=0;
-	double scale=Gscale*Hscale;
-	pm=pm*scale;
-	double tscale=100;
-	
-	double tx = fmod(pm.x * tscale * 0.5, 1.0);
-	double ty = fmod(pm.y * tscale * 0.5, 1.0);
-	double tz = fmod(pm.z * tscale * 0.5, 1.0);
-	pm=Point(tx,ty,tz);
-	if(cnt%1000000==0)
-	  cout<<pm.x<<" "<<pm.y<<" "<<pm.z<<endl;
-    cnt++;
-#else
+void MapNode::setVertexAttributes(Point pm){
+	double depth = TheScene->vpoint.distance(pm);
+#ifndef TEST // keep ht
 	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
 #endif
@@ -2194,7 +2178,7 @@ void MapNode::IDvertex(MapData*d)
 		return;
 	Point p=d->point();
 
-	setVertexAttributes(d);
+	setVertexAttributes(d->mpoint());
 
 	glVertex3dv((double*)(&p));  // contains Z() (global scale)
 }
@@ -2229,7 +2213,9 @@ void MapNode::vertexCN(MapData*d)
 //-------------------------------------------------------------
 void MapNode::vertexN(MapData*d)
 {
-	setVertexAttributes(surface_data(d));
+	MapData *ds=surface_data(d);
+
+	setVertexAttributes(ds->mpoint());
 
 	Point *p=normal(d);
 	if(p){
@@ -2310,7 +2296,7 @@ void MapNode::Svertex(MapData*dn) {
 		glVertexAttrib4d(GLSLMgr::CommonID1, ht, g,d->density(), Sfact);
 	}
 
-	setVertexAttributes(d);
+	setVertexAttributes(d->mpoint());
 //#define COLOR_SPRITES	
 #ifdef COLOR_SPRITES
 	double t=d->theta();
@@ -2387,8 +2373,12 @@ void MapNode::Svertex(MapData*dn) {
 					num_attribs++;
 				}
 			}
-			if(tx->cid>=0)
-				tx->texCoords(GL_TEXTURE0 + tx->cid);
+			if(tx->cid>=0){
+				if(tx->triplanar())
+					tx->texCoords(GL_TEXTURE0 + tx->cid,d->mpoint());
+				else
+					tx->texCoords(GL_TEXTURE0 + tx->cid);
+			}
 			texid++;
 		}
 		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0){

@@ -35,6 +35,8 @@ public:
 	Color   aveColor;
 	double  s;
 	double  t;
+	Point   p;
+	
 	double  scale;
     double  tvalue;
     double  svalue;
@@ -99,6 +101,7 @@ public:
     bool mipmap()              { return intrp()== GL_LINEAR_MIPMAP_LINEAR? true:false;}
 
 	bool randomized()       { return (options & RANDOMIZE)?true:false;}
+	bool triplanar()        { return (options & TRIPLANAR)?true:false;}
 	bool seasonal()         { return (options & TBIAS)?true:false;}
 	int wrap()				{ return options & BORDER ? GL_CLAMP_TO_EDGE:GL_REPEAT;}
 	int t1d()				{ return (width()==1 || height()==1)?1:0;}
@@ -115,9 +118,11 @@ public:
 	void begin();
 	void end();
 	void texCoords(int);
+	void texCoords(int,Point);
 	void bumpCoords(int,double s,double t);
 	void texCoords(int,double s,double t);
 	void getTexCoords(double& s, double & t);
+	Point getTexCoords(Point p);
 	double getTexAmpl(int mode);
 	void eval();
 

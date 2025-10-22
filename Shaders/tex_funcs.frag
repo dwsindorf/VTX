@@ -27,31 +27,21 @@ struct tex2d_info {
 	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture	
 	bool  seasonal;      // seasonal	
+	bool  triplanar;     // triplanar mapping	
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
 
-float texht;
-
-// Convert spherical coordinates to 3D position
-vec3 sphericalToCartesian(float theta, float phi, float radius) {
-    float x = radius * sin(phi) * cos(theta);
-    float y = radius * cos(phi);  // Height/vertical
-    float z = radius * sin(phi) * sin(theta);
-    return vec3(x, y, z);
-}
-
-
+//#define TEST
 // Standalone triplanar texture sampling function
 // suffers from precision
-vec4 triplanarMap(int id, vec2 uv, float mm)
+vec4 triplanarMap(int id, vec4 p, float mm)
 {
     // Normalize the normal
 	sampler2D samp=samplers2d[id];
     vec3 N = normalize(Normal);
     float s=tex2d[id].scale;
-    //vec3 V=Vertex1.xyz*tex2d[id].scale*0.5;
-    vec3 V = fract(Vertex1.xyz * s);
+    vec3 V=p.xyz;
     
     // Calculate blend weights based on normal direction
     vec3 blendWeights = abs(N);
@@ -70,16 +60,11 @@ vec4 triplanarMap(int id, vec2 uv, float mm)
 
 vec4 textureTile(int id, in vec2 uv , float mm)
 {
-//#define T3D
 #ifdef NOTILE
    if(tex2d[id].randomize)
        return textureNoTile(id, samplers2d[id], uv,mm);
 #endif
-#ifdef T3D
-	return triplanarMap(id, uv,mm);
-#else
 	return texture2D(samplers2d[id], uv,mm);
-#endif
 }
 float phiFunc(int id){
 	if(tex2d[id].seasonal)
@@ -95,7 +80,7 @@ float phiFunc(int id){
 
 #define INIT_TEX(i,COORDS) \
   	tid = i; \
-	coords.xy = COORDS; \
+	coords = COORDS; \
 	scale=tex2d[i].scale; \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
@@ -140,7 +125,10 @@ float phiFunc(int id){
 		
 #define APPLY_TEX \
 	    offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
-		tval=textureTile(tid,coords+offset,texmip); \
+		if(tex2d[tid].triplanar) \
+			tval=triplanarMap(tid,coords,texmip); \
+		else \
+			tval=textureTile(tid,coords+offset,texmip); \
 		alpha = tex2d[tid].texamp; \
 		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1); 
         //cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);

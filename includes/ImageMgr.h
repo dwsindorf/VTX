@@ -62,12 +62,11 @@ enum  {
 	RANDOMIZE   = 0x00020000,   // random flip
 	SEXPR       = 0x00040000, 	// S expression in argument list
 	AEXPR       = 0x00080000, 	// T expression in argument list
-	TXOPTS	    = 0x000fffA0, 	// texture opts mask
+	TRIPLANAR   = 0x00100000,   // use triplanar mapping
+	TXOPTS	    = 0x001fffA0, 	// texture opts mask
 
     // ImageMgr file options
 
-	INUSE       = 0x00100000,   // image is in use
-	NEWIMG      = 0x00200000,   // image is new
 	CHANGED     = 0x00400000,   // image is modified
 	TMP         = 0x00800000,   // image is tmp
 
