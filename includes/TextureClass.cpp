@@ -17,10 +17,10 @@
 extern double Theta, Phi,Rscale,Gscale,Hscale;
 static TerrainData Td;
 
-#define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
+//#define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-#define DEBUG_TEXTURES
+//#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -128,22 +128,17 @@ double Texture::getTexAmpl(int mode){
 }
 
 //-------------------------------------------------------------
-// Texture::texCoords() set texture coordinates in OGL passes
+// Texture::texCoords() set 2d texture coordinates
 //-------------------------------------------------------------
-Point Texture::getTexCoords(Point p){
-	double wscale=Gscale*Hscale;
-	Point pm=p*wscale;
-	
-	
-	double tx = fmod(pm.x * scale * 0.5, 1.0);
-	double ty = fmod(pm.y * scale * 0.5, 1.0);
-	double tz = fmod(pm.z * scale * 0.5, 1.0);
-	pm=Point(tx,ty,tz);
-	return pm;
-}
+void Texture::texCoords(int tchnl)
+{
+	double sv=0,tv=0;
+	getTexCoords(sv,tv);
+	glMultiTexCoord4d(tchnl,sv,tv,0,1);
 
+}
 //-------------------------------------------------------------
-// Texture::texCoords() set texture coordinates in OGL passes
+// Texture::texCoords() set 3d texture coordinates
 //-------------------------------------------------------------
 void Texture::texCoords(int tchnl,Point p)
 {
@@ -152,7 +147,28 @@ void Texture::texCoords(int tchnl,Point p)
 }
 
 //-------------------------------------------------------------
+// Texture::texCoords() set Triplanar texture coordinates 
+//-------------------------------------------------------------
+// note: we need to subtract the "floor" of the render_cycle "root" 
+// node texture coordinates from each "leaf" to avoid striping artifacts 
+// see note in following function for phi,theta mapping
+//-------------------------------------------------------------
+Point Texture::getTexCoords(Point pt){
+	double wscale=Gscale*Hscale*0.5;
+	Point pm=pt*wscale*scale;
+	Point pf=p*wscale*scale; // p=MapPt of root node
+	Point pr=pm-pf.floor();
+	return pr;
+}
+
+//-------------------------------------------------------------
 // Texture::getTexCoords() return texture lookup coordinates
+//-------------------------------------------------------------
+// note:svalue and tvalue contain the theta & phi values for the 
+// "root" node of render_cycle whereas s and t are the phi
+// and theta values of the "leaf" nodes. For some reason (??) we
+// need to subtract the floor of the root node from each leaf
+// to avoid stripping artifacts in the texture
 //-------------------------------------------------------------
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
@@ -178,27 +194,13 @@ void Texture::getTexCoords(double &x, double &y){
 	y=sv-sf; // tx=s-0.5+1
 
 #else
-	x = fmod(sv, 1.0);
-	y = fmod(tv, 1.0);
-	//}
-	
-	//else x=y=0;
+	sf=floor(svalue*sc-0.5);
+	tf=floor(a*tvalue*sc);
+	x=tv-tf;
+	y=sv-sf;
 #endif
-	//if(s!=svalue)
-	//cout<<s<<" "<<svalue<<endl;
-
 }
 
-//-------------------------------------------------------------
-// Texture::texCoords() set texture coordinates in OGL passes
-//-------------------------------------------------------------
-void Texture::texCoords(int tchnl)
-{
-	double sv=0,tv=0;
-	getTexCoords(sv,tv);
-	glMultiTexCoord4d(tchnl,sv,tv,0,1);
-
-}
 
 //-------------------------------------------------------------
 // Texture::bumpCoords() set texture coordinates for bumpmap

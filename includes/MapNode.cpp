@@ -1769,6 +1769,7 @@ void MapNode::render()
 	for(int i=0;i<TheMap->tp->textures.size;i++){
 		Texture *t;
 		t=TheMap->tp->textures[i];
+		t->p=MapPt;
 		if(t->t2d()){
 			t->svalue=Phi;
 			t->tvalue=Theta;
@@ -2279,7 +2280,7 @@ void MapNode::Svertex(MapData*dn) {
 	double max_orders =log2(dfactor);
 	double phi = d->phi() / 180;
 	double theta = d->theta() / 180.0 - 1;
-	Phi=d->phi();
+	Phi=d->phi();	
 	Theta=d->theta();
 	double g=d->type();
 	if(Raster.surface==2)

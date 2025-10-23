@@ -35,11 +35,12 @@ typedef struct tex_state {
 	uint clamp   		: 1;
 	uint norm   		: 1;
 	uint randomize   	: 1;
+	uint triplanar   	: 1;
 	uint alpha_enable   : 1;
 	uint tex_enable   	: 1;
 	uint bump_enable   	: 1;
 	uint hmap_enable   	: 1;
-	uint tilt_enable    : 1;
+	uint seasonal_enable    : 1;
 
 } tex_state;
 class VtxTexTabs : public VtxTabsMgr
@@ -124,7 +125,8 @@ protected:
 	wxCheckBox *m_clamp_check;
 	wxCheckBox *m_norm_check;
 	wxCheckBox *m_rand_check;
-	wxCheckBox *m_tilt_check;
+	wxCheckBox *m_seasonal_check;
+	wxCheckBox *m_triplanar_check;
 
 	void getObjAttributes();
 	void setObjAttributes();
