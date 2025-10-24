@@ -166,9 +166,20 @@ Point Texture::getTexCoords(Point pt){
 //-------------------------------------------------------------
 // note:svalue and tvalue contain the theta & phi values for the 
 // "root" node of render_cycle whereas s and t are the phi
-// and theta values of the "leaf" nodes. For some reason (??) we
-// need to subtract the floor of the root node from each leaf
-// to avoid stripping artifacts in the texture
+// and theta values of the "leaf" nodes. we need to subtract the 
+// floor of the root node from each leaf to avoid stripping artifacts 
+// in the texture 
+// explanation from "Claude" AI
+// BAD: Each vertex computes its own floor
+//  root_uv  = root_coord  - floor(root_coord);   // e.g., 1.8 - 1.0 = 0.8
+//  left_uv  = left_coord  - floor(left_coord);   // e.g., 1.9 - 1.0 = 0.9
+//  right_uv = right_coord - floor(right_coord);  // e.g., 2.1 - 2.0 = 0.1  ← WRAP!
+// GOOD: All vertices use the same reference
+//  float root_floor = floor(root_coord);
+//  root_uv  = root_coord  - root_floor;  // 1.8 - 1.0 = 0.8
+//  left_uv  = left_coord  - root_floor;  // 1.9 - 1.0 = 0.9
+//  right_uv = right_coord - root_floor;  // 2.1 - 1.0 = 1.1 <- smooth (no wrap)
+
 //-------------------------------------------------------------
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();

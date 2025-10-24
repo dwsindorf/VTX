@@ -151,12 +151,12 @@ void GLSLMgr::makeTexDefsFile(){
 		 cout<< "GLSLMgr::makeTexDefsFile file write error"<< endl;
 	    return;
 	}
-	fprintf(fp,"#if NTEXS >0\n");
-	fprintf(fp,"    TEX_VARS\n");
-	fprintf(fp,"#endif\n");
-	fprintf(fp,"#if NBUMPS >0\n");
-	fprintf(fp,"    BUMP_VARS\n");
-	fprintf(fp,"#endif\n");
+//	fprintf(fp,"#if NTEXS >0\n");
+//	fprintf(fp,"    TEX_VARS\n");
+//	fprintf(fp,"#endif\n");
+//	fprintf(fp,"#if NBUMPS >0\n");
+//	fprintf(fp,"    BUMP_VARS\n");
+//	fprintf(fp,"#endif\n");
 	fprintf(fp,"#if NVALS >0\n");
 	fprintf(fp,"    NOISE_VARS\n");
 	fprintf(fp,"#endif\n\n");

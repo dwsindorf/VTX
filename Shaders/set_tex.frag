@@ -1,9 +1,3 @@
-#if NTEXS >0
-    TEX_VARS
-#endif
-#if NBUMPS >0
-    BUMP_VARS
-#endif
 #if NVALS >0
     NOISE_VARS
 #endif

@@ -219,7 +219,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	image_controls->Add(mode,0,wxALIGN_LEFT|wxALL,2);
 
 	m_seasonal_check=new wxCheckBox(panel, ID_SEASONAL, "Seasonal");
-	image_controls->Add(m_seasonal_check, 0, wxALIGN_LEFT|wxALL,0);
+	image_controls->Add(m_seasonal_check, 0, wxALIGN_LEFT|wxALL,5);
 
 	image_controls->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT));
 

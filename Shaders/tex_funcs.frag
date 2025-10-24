@@ -31,10 +31,60 @@ struct tex2d_info {
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
+// static variables
+#define TEX_VARS \
+	int tid=0; \
+	float orders_delta = 1.0;  \
+	float alpha = 1.0;  \
+	float phi = PHI-0.5;  \
+	float cmix = 1.0;  \
+    float attrib=0.0; \
+    vec4 coords; \
+    vec2 offset=vec2(0.0); \
+ 	vec4 tval; \
+	vec4 tcolor; \
+    float alpha_fade=0.0; \
+    float delta; \
+    float bump_fade=1.0; \
+    float dlogf; \
+    float orders_bump=1e-3; \
+	float tex_orders=0.0; \
+	float tex_rem=0.0; \
+	float bump_max=0.0; \
+	float scale=1.0; \
+	float bump_bias=0; \
+	float slope_bias=0; \
+	float slope_factor=0; \
+	float height_bias=0; \
+	float phi_bias=0; \
+	float env_bias=0; \
+	float alpha_bias=0; \
+	int tex_n=0; \
+	vec4 last_color=vec4(0.0); \
+	float last_bmpht; \
+    vec3 last_bump=vec3(0.0);
 
-//#define TEST
-// Standalone triplanar texture sampling function
-// suffers from precision
+#define BUMP_VARS \
+	float tva; \
+    mat3 model=mat3(gl_ModelViewMatrix); \
+    vec3 tangent=normalize(vec3(Tangent.x,Tangent.y,0.0)); \
+    vec3 binormal=normalize(cross(tangent, Normal)); \
+    mat3 trans_mat=model*transpose(mat3(tangent, binormal, Normal));
+
+#if NTEXS >0
+TEX_VARS;
+#endif
+#if NBUMPS >0
+BUMP_VARS;
+#endif
+
+float phiFunc(int id){
+	if(tex2d[id].seasonal)
+		return SFACT;
+	else
+		return EQU;
+}
+
 vec4 triplanarMap(int id, vec4 p, float mm)
 {
     // Normalize the normal
@@ -62,16 +112,25 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 {
 #ifdef NOTILE
    if(tex2d[id].randomize)
-       return textureNoTile(id, samplers2d[id], uv,mm);
+       return textureNoTile(id, uv,mm);
 #endif
 	return texture2D(samplers2d[id], uv,mm);
 }
-float phiFunc(int id){
-	if(tex2d[id].seasonal)
-		return SFACT;
-	else
-		return EQU;
+#if NBUMPS >0
+vec3 getBump(int tid, vec4 coords,float mm){
+	float s=coords.x;
+	float t=coords.y;
+	orders_bump=tex2d[tid].orders_bump;
+	vec2 ds=vec2(s+orders_bump,t);
+	vec2 dt=vec2(s,t+orders_bump);
+	vec4 tcs=textureTile(tid,ds,mm);
+	vec4 tct=textureTile(tid,dt,mm);
+	float tsa=(tcs.x+tcs.y+tcs.z)/3.0;
+	float tta=(tct.x+tct.y+tct.z)/3.0;
+	return vec3(tsa-tva,tta-tva,0.0);
 }
+#endif
+
 #define BIAS vec2(tex2d[tid].bias,0.0)
 #define NOATTR 1.0
 #define SET_ATTRIB(ATTR) \
@@ -111,9 +170,6 @@ float phiFunc(int id){
         bump_ampl*=amplitude; \
     }
 
-//#define SET_TEX1D(X) \
-//	coords.x += (X)/scale;  // optional offset
-
 #define BGN_ORDERS \
 	tex_orders=min(tex2d[tid].orders, Tangent.w-logf-freqmip+0.5); \
 	tex_n=int(tex_orders); \
@@ -131,28 +187,16 @@ float phiFunc(int id){
 			tval=textureTile(tid,coords+offset,texmip); \
 		alpha = tex2d[tid].texamp; \
 		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1); 
-        //cmix = alpha_fade*amplitude*lerp(alpha,1.0,2.0,tval.a*alpha,1.0);
-		
+ 		
 #define SET_COLOR \
 		last_color=color; \
 		color.rgb=mix(color,tval, cmix); \
-		color.a=cmix;	
+		color.a=cmix;
 
 #define SET_BUMP \
 	    tva=(tval.x+tval.y+tval.z)/3.0;\
 		bump*=1.0-tva*tex2d[tid].bump_damp*bump_max; \
-		s=coords.x; \
-		t=coords.y; \
-		orders_bump=tex2d[tid].orders_bump; \
-		ds=vec2(s+orders_bump,t); \
-		dt=vec2(s,t+orders_bump); \
-		tcs=textureTile(tid,ds,texmip); \
-		tct=textureTile(tid,dt,texmip); \
-		tsa=(tcs.x+tcs.y+tcs.z)/3.0;\
-		tta=(tct.x+tct.y+tct.z)/3.0;\
-		tc2.x=tsa-tva; \
-		tc2.y=tta-tva; \
-		tc=vec3(tc2, 0.0); \
+		vec3 tc=getBump(tid,coords,texmip); \
 	    last_bump=bump; \
 	    last_bmpht=bmpht; \
 	    bump_fade = lerp(Tangent.w-logf-freqmip,-4.0,1.0,0.0,1.0); \
@@ -160,7 +204,7 @@ float phiFunc(int id){
 	    bump_max=max(bump_max,bump_fade); \
 		bump += bump_max*bump_ampl*trans_mat*tc; \
 		bmpht += b+(tva-0.5)*bump_ampl*orders_delta;
-		
+	
 #define NEXT_ORDER \
 		orders_delta /= tex2d[tid].orders_delta; \
 	    coords *= tex2d[tid].orders_delta; \
@@ -174,55 +218,5 @@ float phiFunc(int id){
 		bump=mix(last_bump,bump,tex_rem); \
 		bmpht=mix(last_bmpht,bmpht,tex_rem); \
 	} \
-
-
-#define TEX_VARS \
-	int tid=0; \
-	float orders_delta = 1.0;  \
-	float alpha = 1.0;  \
-	float phi = PHI-0.5;  \
-	float cmix = 1.0;  \
-    float attrib=0.0; \
-    vec4 coords; \
-    vec2 offset=vec2(0.0); \
- 	vec4 tval; \
-	vec4 tcolor; \
-    float alpha_fade=0.0; \
-    float delta; \
-    float bump_fade=1.0; \
-    float dlogf; \
-    float orders_bump=1e-3; \
-	float tex_orders=0.0; \
-	float tex_rem=0.0; \
-	float bump_max=0.0; \
-	float scale=1.0; \
-	float bump_bias=0; \
-	float slope_bias=0; \
-	float slope_factor=0; \
-	float height_bias=0; \
-	float phi_bias=0; \
-	float env_bias=0; \
-	float alpha_bias=0; \
-	int tex_n=0; \
-	vec4 last_color=vec4(0.0); \
-	float last_bmpht; \
-    vec3 last_bump=vec3(0.0); \
-	amplitude = 1.0; \
-	g=0.0; 	
-	
-#define BUMP_VARS \
-	float tva; \
-	float tsa; \
-	float tta; \
- 	vec2 tc2; \
- 	vec4 tcs; \
- 	vec4 tct; \
-	float s,t; \
-	vec3 tc; \
-	vec2 ds,dt; \
-    mat3 model=mat3(gl_ModelViewMatrix); \
-    vec3 tangent=normalize(vec3(Tangent.x,Tangent.y,0.0)); \
-    vec3 binormal=normalize(cross(tangent, normal)); \
-    mat3 trans_mat=model*transpose(mat3(tangent, binormal, normal));
 
 // ########## end tex_funcs.frag #########################

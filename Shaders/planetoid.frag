@@ -25,6 +25,7 @@ uniform float hdr_max;
 
 const float m2f=5280.0;
 
+
 // ########## Lighting section #########################
 
 #ifndef NLIGHTS
@@ -121,9 +122,15 @@ vec3 addContours(vec3 color){
 #if NTEXS >0
 #include "tex_funcs.frag"
 #endif
-
+//
+//#if NTEXS >0
+//	TEX_VARS
+//#endif
 // ########## main section #########################
 void main(void) {
+	amplitude = 1.0;
+	g=0.0; 	
+
 #ifdef NOTILE
     warmup();
 #endif

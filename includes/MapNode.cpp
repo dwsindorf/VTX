@@ -2152,10 +2152,10 @@ void MapNode::vertex(MapData*d)
 //-------------------------------------------------------------
 // MapNode::setVertexAttributes() set up cor shader noise
 //-------------------------------------------------------------
-//#define TEST
+#define KEEP_HT
 void MapNode::setVertexAttributes(Point pm){
 	double depth = TheScene->vpoint.distance(pm);
-#ifndef TEST // keep ht
+#ifndef KEEP_HT // keep ht
 	pm=pm.normalize();  // this gets rid of the Z() component
 	pm=pm*0.5+0.5;
 #endif
@@ -2215,6 +2215,10 @@ void MapNode::vertexCN(MapData*d)
 void MapNode::vertexN(MapData*d)
 {
 	MapData *ds=surface_data(d);
+	// BUG: when water is the top surface sometimes no ground is found ??
+	if(!ds){  
+		return;
+	}
 
 	setVertexAttributes(ds->mpoint());
 

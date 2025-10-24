@@ -29,13 +29,12 @@ float sum( vec4 v ) { return v.x+v.y+v.z; }
 //        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
 //           modified "Technique 3" to use perlin noise texture lookup for random index
 //        3) impacts rendering speed by ~2-3x (slower)
-vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
+vec4 textureNoTile( int id, in vec2 uv, float mm)
 {
+    sampler2D samp=samplers2d[id];
     float scale =0.7123*tex2d[id].scale;
     vec3 P=v1*scale;
-    //float r=voronoi2d(P.xy);
     float r=noise3D(P).x; 
-     //float r= fnoise(P.xy);
     
     // compute index    
 
@@ -45,21 +44,16 @@ vec4 textureNoTile( int id, sampler2D samp, in vec2 x , float mm)
 
     // offsets for the different virtual patterns    
     vec2 offa = sin(vec2(3.0,7.0)*(i+0.0)); // can replace with any other hash    
-    vec2 offb = sin(vec2(3.0,7.0)*(i+1.0)); // can replace with any other hash    
-
-    // compute derivatives for mip-mapping    
-    //vec2 dx = dFdx(x), dy = dFdy(x);
-    //vec4 cola = textureGrad( samp, x + offa, dx, dy );
-    //vec4 colb = textureGrad( samp, x + offb, dx, dy );
- 
-    vec4 cola = texture2D(samp, x + offa,mm);
-    vec4 colb = texture2D(samp, x + offb,mm); 
-    
+    vec2 offb = sin(vec2(3.0,7.0)*(i+1.0)); // can replace with any other hash   
+     
     // sample the two closest virtual patterns    
 
+    vec4 cola = texture2D(samp, uv + offa,mm);
+    vec4 colb = texture2D(samp, uv + offb,mm); 
+    
     // interpolate between the two virtual patterns    
 
-    vec4 result=mix( cola, colb, smoothstep(0.2,0.8,f-0.1*sum(cola-colb)) );
+    vec4 result=mix(cola, colb, smoothstep(0.2,0.8,f-0.1*sum(cola-colb)));
 
     return result;
 }
