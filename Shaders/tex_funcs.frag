@@ -85,13 +85,27 @@ float phiFunc(int id){
 		return EQU;
 }
 
-vec4 triplanarMap(int id, vec4 p, float mm)
+
+#include "tile_funcs.frag"
+
+
+#if NTEXS >0
+vec4 textureTile(int id, in vec2 uv , float mm)
+{
+#ifdef NOTILE
+   if(tex2d[id].randomize)
+       return textureNoTile(id, uv,mm);
+#endif
+	return texture2D(samplers2d[id], uv,mm);
+}
+
+vec4 triplanarMap(int id, vec4 pos, float mm)
 {
     // Normalize the normal
 	sampler2D samp=samplers2d[id];
     vec3 N = normalize(Normal);
-    float s=tex2d[id].scale;
-    vec3 V=p.xyz;
+    //float scale=tex2d[id].scale;
+    vec3 V=pos.xyz;
     
     // Calculate blend weights based on normal direction
     vec3 blendWeights = abs(N);
@@ -105,16 +119,21 @@ vec4 triplanarMap(int id, vec4 p, float mm)
     // Blend the three samples
     return vec4(blended,1.0);
 }
-
-#include "tile_funcs.frag"
-
-vec4 textureTile(int id, in vec2 uv , float mm)
-{
+vec4 getTex(int tid, vec4 coords, float mm){
+	if(tex2d[tid].triplanar){
 #ifdef NOTILE
-   if(tex2d[id].randomize)
-       return textureNoTile(id, uv,mm);
+   		if(tex2d[tid].randomize)
+       		return triplanarNoTile(tid, coords,mm);
 #endif
-	return texture2D(samplers2d[id], uv,mm);
+	 	return triplanarMap(tid,coords,mm);
+	}
+	else{
+#ifdef NOTILE
+	    if(tex2d[tid].randomize)
+           return textureNoTile(tid, coords.xy,mm);
+#endif
+	    return textureTile(tid,coords.xy,mm);
+	}
 }
 #if NBUMPS >0
 vec3 getBump(int tid, vec4 coords,float mm){
@@ -129,6 +148,8 @@ vec3 getBump(int tid, vec4 coords,float mm){
 	float tta=(tct.x+tct.y+tct.z)/3.0;
 	return vec3(tsa-tva,tta-tva,0.0);
 }
+#endif
+
 #endif
 
 #define BIAS vec2(tex2d[tid].bias,0.0)
@@ -181,10 +202,8 @@ vec3 getBump(int tid, vec4 coords,float mm){
 		
 #define APPLY_TEX \
 	    offset = vec2(g*tex2d[tid].texamp*tex2d[tid].scale); \
-		if(tex2d[tid].triplanar) \
-			tval=triplanarMap(tid,coords,texmip); \
-		else \
-			tval=textureTile(tid,coords+offset,texmip); \
+	    coords.xy+=offset; \
+	    tval=getTex(tid,coords,texmip); \
 		alpha = tex2d[tid].texamp; \
 		cmix = clamp(alpha_fade*amplitude*tval.a*alpha,0,1); 
  		

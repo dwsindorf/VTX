@@ -25,10 +25,47 @@ vec4 warmup(){
 }
 
 float sum( vec4 v ) { return v.x+v.y+v.z; }
+
+vec2 hash2(vec2 p) {
+    p = vec2(dot(p, vec2(127.1, 311.7)),
+             dot(p, vec2(269.5, 183.3)));
+    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+}
+
+// Simpler 2-sample version per plane
+vec4 textureNoTileSimple(sampler2D samp, vec2 uv, float mm) {
+    vec2 iuv = floor(uv);
+    vec2 fuv = fract(uv);
+    
+    // Just use integer part to offset
+    float k = hash2(iuv).x;
+    vec2 offset = vec2(0.5, 0.5) * k;
+    
+    return texture2D(samp, uv + offset, mm);
+}
+
+vec4 triplanarNoTile(int id, vec4 pos, float mm) {
+    sampler2D samp=samplers2d[id];
+    vec3 N = normalize(Normal);
+    vec3 V = pos.xyz;
+    
+    vec3 blendWeights = abs(N);
+    blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
+    
+    vec4 xProj = textureNoTileSimple(samp, V.yz, mm);
+    vec4 yProj = textureNoTileSimple(samp, V.xz, mm);
+    vec4 zProj = textureNoTileSimple(samp, V.xy, mm);
+    
+    return xProj * blendWeights.x +
+           yProj * blendWeights.y +
+           zProj * blendWeights.z;
+}
+
 // notes: 1) needs shader version 130 to compile (for textureGrad)
 //        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
 //           modified "Technique 3" to use perlin noise texture lookup for random index
 //        3) impacts rendering speed by ~2-3x (slower)
+
 vec4 textureNoTile( int id, in vec2 uv, float mm)
 {
     sampler2D samp=samplers2d[id];
