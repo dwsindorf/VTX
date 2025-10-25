@@ -101,21 +101,17 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 
 vec4 triplanarMap(int id, vec4 pos, float mm)
 {
-    // Normalize the normal
-	sampler2D samp=samplers2d[id];
-    vec3 N = normalize(Normal);
-    //float scale=tex2d[id].scale;
-    vec3 V=pos.xyz;
-    
-    // Calculate blend weights based on normal direction
+ 	sampler2D samp=samplers2d[id];
+    vec3 N = normalize(WorldNormal);
     vec3 blendWeights = abs(N);
+    vec3 V=pos.xyz; 
+    // Calculate blend weights based on normal direction
     blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
     // Sample texture from 3 orthogonal planes
-    vec3 xProjection = texture2D(samp, V.yz,mm).rgb;
-    vec3 yProjection = texture2D(samp, V.xz,mm).rgb;
-    vec3 zProjection = texture2D(samp, V.xy,mm).rgb;
-    
-    vec3 blended=xProjection * blendWeights.x +yProjection * blendWeights.y +zProjection * blendWeights.z;
+    vec3 xProj = texture2D(samp, V.yz,mm).rgb;
+    vec3 yProj = texture2D(samp, V.xz,mm).rgb;
+    vec3 zProj = texture2D(samp, V.xy,mm).rgb;
+    vec3 blended=xProj*blendWeights.x +yProj*blendWeights.y +zProj*blendWeights.z;    
     // Blend the three samples
     return vec4(blended,1.0);
 }

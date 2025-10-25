@@ -47,6 +47,7 @@ uniform float twilite_dph; // dot product between point-center light-point at ho
 uniform float shadow_darkness;
 varying vec4 EyeDirection;
 varying vec4 Normal;
+varying vec4 WorldNormal;
 
 
 uniform vec4 Diffuse;   // for some reason can't seem to set & use gl_FrontMaterial.diffuse ??
@@ -182,7 +183,7 @@ void main(void) {
 #endif
 
 	gl_FragData[0] = color;
-	//gl_FragData[0] = abs(normalize(Normal));
+	//gl_FragData[0] = abs(normalize(WorldNormal));
 	//float ht=Constants1.x/rscale+1.0;
 	//gl_FragData[0] = vec4(ht*0.5,0,0,1);
 

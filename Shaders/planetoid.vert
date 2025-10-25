@@ -18,6 +18,7 @@
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
+varying vec4 WorldNormal;
 
 //flat vec4 TestFlat;
 
@@ -26,6 +27,7 @@ void main(void) {
 	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
 	gl_Position = ftransform();
 
+	WorldNormal.xyz = gl_Normal;
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	Normal.w=0;
 

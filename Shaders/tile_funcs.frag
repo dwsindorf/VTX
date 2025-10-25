@@ -46,10 +46,10 @@ vec4 textureNoTileSimple(sampler2D samp, vec2 uv, float mm) {
 
 vec4 triplanarNoTile(int id, vec4 pos, float mm) {
     sampler2D samp=samplers2d[id];
-    vec3 N = normalize(Normal);
+    vec3 N = normalize(WorldNormal);
+    vec3 blendWeights = abs(N);
     vec3 V = pos.xyz;
     
-    vec3 blendWeights = abs(N);
     blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
     
     vec4 xProj = textureNoTileSimple(samp, V.yz, mm);

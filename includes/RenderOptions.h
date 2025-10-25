@@ -123,7 +123,7 @@ enum{ // flags
 					|RAYTRACE
 					|MULTITEXS
 					|STARTEX
-					|AVENORMS
+					//|AVENORMS
 					|DEALIAS
 					|GEOMETRY
 					|HMAPS
