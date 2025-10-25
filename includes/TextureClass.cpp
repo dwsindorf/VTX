@@ -154,7 +154,7 @@ void Texture::texCoords(int tchnl,Point p)
 // see note in following function for phi,theta mapping
 //-------------------------------------------------------------
 Point Texture::getTexCoords(Point pt){
-	double wscale=Gscale*Hscale*0.5;
+	double wscale=Gscale*Hscale*0.3;
 	Point pm=pt*wscale*scale;
 	Point pf=p*wscale*scale; // p=MapPt of root node
 	Point pr=pm-pf.floor();
@@ -179,7 +179,6 @@ Point Texture::getTexCoords(Point pt){
 //  root_uv  = root_coord  - root_floor;  // 1.8 - 1.0 = 0.8
 //  left_uv  = left_coord  - root_floor;  // 1.9 - 1.0 = 0.9
 //  right_uv = right_coord - root_floor;  // 2.1 - 1.0 = 1.1 <- smooth (no wrap)
-
 //-------------------------------------------------------------
 void Texture::getTexCoords(double &x, double &y){
 	double sf=0,tf=0,tv=0,sv=0,sc=scale,a=timage->aspect();
