@@ -90,15 +90,6 @@ float phiFunc(int id){
 
 
 #if NTEXS >0
-vec4 textureTile(int id, in vec2 uv , float mm)
-{
-#ifdef NOTILE
-   if(tex2d[id].randomize)
-       return textureNoTile(id, uv,mm);
-#endif
-	return texture2D(samplers2d[id], uv,mm);
-}
-
 vec4 triplanarMap(int id, vec4 pos, float mm)
 {
  	sampler2D samp=samplers2d[id];
@@ -115,24 +106,34 @@ vec4 triplanarMap(int id, vec4 pos, float mm)
     // Blend the three samples
     return vec4(blended,1.0);
 }
+
+vec4 textureTile(int id, in vec4 coords , float mm)
+{
+#ifdef NOTILE
+   	if(tex2d[tid].randomize)
+       	return triplanarNoTile(tid, coords,mm);
+#endif
+	return triplanarMap(tid,coords,mm);
+}
+
+vec4 textureTile(int id, in vec2 uv , float mm)
+{
+#ifdef NOTILE
+   if(tex2d[id].randomize)
+       return textureNoTile(id, uv,mm);
+#endif
+	return texture2D(samplers2d[id], uv,mm);
+}
+
+
 vec4 getTex(int tid, vec4 coords, float mm){
-	if(tex2d[tid].triplanar){
-#ifdef NOTILE
-   		if(tex2d[tid].randomize)
-       		return triplanarNoTile(tid, coords,mm);
-#endif
-	 	return triplanarMap(tid,coords,mm);
-	}
-	else{
-#ifdef NOTILE
-	    if(tex2d[tid].randomize)
-           return textureNoTile(tid, coords.xy,mm);
-#endif
-	    return textureTile(tid,coords.xy,mm);
-	}
+	if(tex2d[tid].triplanar)
+		return textureTile(tid,coords,mm);
+	else
+		return textureTile(tid, coords.xy,mm);
 }
 #if NBUMPS >0
-vec3 getBump(int tid, vec4 coords,float mm){
+vec3 getBump2d(int tid, vec4 coords,float mm){
 	float s=coords.x;
 	float t=coords.y;
 	orders_bump=tex2d[tid].orders_bump;
@@ -143,6 +144,70 @@ vec3 getBump(int tid, vec4 coords,float mm){
 	float tsa=(tcs.x+tcs.y+tcs.z)/3.0;
 	float tta=(tct.x+tct.y+tct.z)/3.0;
 	return vec3(tsa-tva,tta-tva,0.0);
+}
+vec3 getBumpTriplanar(int id, vec4 coords, float mm) {
+    vec3 N = normalize(WorldNormal);
+    
+    vec3 blendWeights = abs(N);
+    blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
+    
+    vec3 V = coords.xyz;  // Already scaled
+    float bump_delta = tex2d[id].orders_bump;  // Use the actual bump delta
+    
+    // ========== X Projection (YZ plane) ==========
+    vec2 uv_x = V.yz;
+    vec4 tc_x = textureTile(id, uv_x, mm);
+    vec4 tcs_x = textureTile(id, uv_x + vec2(bump_delta, 0.0), mm);
+    vec4 tct_x = textureTile(id, uv_x + vec2(0.0, bump_delta), mm);
+    
+    float tva_x = (tc_x.x + tc_x.y + tc_x.z) / 3.0;
+    float tsa_x = (tcs_x.x + tcs_x.y + tcs_x.z) / 3.0;
+    float tta_x = (tct_x.x + tct_x.y + tct_x.z) / 3.0;
+    
+    vec3 bump_x = vec3(tsa_x - tva_x, tta_x - tva_x, 0.0);
+    // Reorient to world space: YZ plane means normal along X
+    vec3 worldBump_x = vec3(0.0, bump_x.x, bump_x.y);
+    
+    // ========== Y Projection (XZ plane) ==========
+    vec2 uv_y = V.xz;
+    vec4 tc_y = textureTile(id, uv_y, mm);
+    vec4 tcs_y = textureTile(id, uv_y + vec2(bump_delta, 0.0), mm);
+    vec4 tct_y = textureTile(id, uv_y + vec2(0.0, bump_delta), mm);
+    
+    float tva_y = (tc_y.x + tc_y.y + tc_y.z) / 3.0;
+    float tsa_y = (tcs_y.x + tcs_y.y + tcs_y.z) / 3.0;
+    float tta_y = (tct_y.x + tct_y.y + tct_y.z) / 3.0;
+    
+    vec3 bump_y = vec3(tsa_y - tva_y, tta_y - tva_y, 0.0);
+    // Reorient to world space: XZ plane means normal along Y
+    vec3 worldBump_y = vec3(bump_y.x, 0.0, bump_y.y);
+    
+    // ========== Z Projection (XY plane) ==========
+    vec2 uv_z = V.xy;
+    vec4 tc_z = textureTile(id, uv_z, mm);
+    vec4 tcs_z = textureTile(id, uv_z + vec2(bump_delta, 0.0), mm);
+    vec4 tct_z = textureTile(id, uv_z + vec2(0.0, bump_delta), mm);
+    
+    float tva_z = (tc_z.x + tc_z.y + tc_z.z) / 3.0;
+    float tsa_z = (tcs_z.x + tcs_z.y + tcs_z.z) / 3.0;
+    float tta_z = (tct_z.x + tct_z.y + tct_z.z) / 3.0;
+    
+    vec3 bump_z = vec3(tsa_z - tva_z, tta_z - tva_z, 0.0);
+    // Already in world space for XY plane
+    
+    // Blend the three bump vectors
+    vec3 blendedBump = worldBump_x * blendWeights.x +
+                       worldBump_y * blendWeights.y +
+                       bump_z * blendWeights.z;
+    
+    return blendedBump;
+}
+
+vec3 getBump(int tid, vec4 coords,float mm){
+	if(tex2d[tid].triplanar)
+		return getBumpTriplanar(tid,coords,mm);
+	else
+		return getBump2d(tid,coords,mm);
 }
 #endif
 

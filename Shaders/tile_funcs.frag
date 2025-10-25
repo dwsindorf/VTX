@@ -26,6 +26,7 @@ vec4 warmup(){
 
 float sum( vec4 v ) { return v.x+v.y+v.z; }
 
+
 // notes: 1) needs shader version 130 to compile (for textureGrad)
 //        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
 //           modified "Technique 3" to use perlin noise texture lookup for random index
@@ -50,15 +51,20 @@ vec4 textureNoTile( int id, in vec2 uv, float mm)
      
     // sample the two closest virtual patterns    
 
-    vec4 cola = texture2D(samp, uv + offa,mm);
-    vec4 colb = texture2D(samp, uv + offb,mm); 
+    // compute derivatives for mip-mapping    
+    vec2 dx = dFdx(uv), dy = dFdy(uv);
     
+    // sample the two closest virtual patterns    
+    vec4 cola = textureGrad( samp, uv + offa, dx, dy );
+    vec4 colb = textureGrad( samp, uv + offb, dx, dy );
+
     // interpolate between the two virtual patterns    
 
     vec4 result=mix(cola, colb, smoothstep(0.2,0.8,f-0.1*sum(cola-colb)));
 
     return result;
 }
+
 vec4 triplanarNoTile(int id, vec4 pos, float mm) {
     sampler2D samp=samplers2d[id];
     vec3 N = normalize(WorldNormal);
