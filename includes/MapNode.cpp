@@ -2152,7 +2152,7 @@ void MapNode::vertex(MapData*d)
 //-------------------------------------------------------------
 // MapNode::setVertexAttributes() set up cor shader noise
 //-------------------------------------------------------------
-//#define KEEP_HT
+#define KEEP_HT
 void MapNode::setVertexAttributes(Point pm){
 	double depth = TheScene->vpoint.distance(pm);
 #ifndef KEEP_HT // keep ht
@@ -2161,17 +2161,9 @@ void MapNode::setVertexAttributes(Point pm){
 #else
 	double wscale=Gscale*Hscale;
 	pm=pm*wscale;
-	//cout<<wscale<<endl;
 #endif
 	// set pm to Vertex1 in shaders
 	// - pm contains just the (rectangularized) phi&theta values of the point
-	
-//	Point ps=pm.spherical();
-//	if(fabs(ps.y)<0.001){
-//		ps.print("\n S:");
-//		pm.print("\n R:");
-//	}
-	
 
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;

@@ -26,7 +26,6 @@ vec4 warmup(){
 
 float sum( vec4 v ) { return v.x+v.y+v.z; }
 
-
 // notes: 1) needs shader version 130 to compile (for textureGrad)
 //        2) ref https://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
 //           modified "Technique 3" to use perlin noise texture lookup for random index

@@ -289,6 +289,7 @@ vec3 getBump(int tid, vec4 coords,float mm){
 		orders_delta /= tex2d[tid].orders_delta; \
 	    coords *= tex2d[tid].orders_delta; \
 		amplitude *=tex2d[tid].orders_atten; \
+		bump_ampl *=amplitude; \
 		logf+=dlogf;
 
 #define END_ORDERS \
