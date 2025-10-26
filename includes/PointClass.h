@@ -23,6 +23,8 @@ public:
 									y=b;
 									z=c;
 								}
+	Point operator+(const Point& p) const {return Point(x+p.x, y+p.y, z+p.z);}
+	Point operator-(const Point& p) const {return Point(x-p.x, y-p.y, z-p.z);}
 	Point operator+(Point p)	{ return Point(x+p.x,y+p.y,z+p.z);}
 	Point operator+(double s)	{ return Point(x+s,y+s,z+s);}
 	Point operator-(Point p)	{ return Point(x-p.x,y-p.y,z-p.z);}
