@@ -17,7 +17,7 @@
 extern double Theta, Phi,Rscale,Gscale,Hscale;
 static TerrainData Td;
 
-//#define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
+#define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
 //#define DEBUG_TEXTURES
@@ -391,7 +391,7 @@ bool Texture::initProgram(){
 // - called AFTER shader program is created
 //-------------------------------------------------------------
 bool Texture::setProgram(){
-	GLhandleARB program=GLSLMgr::programHandle();
+	GLuint program=GLSLMgr::programHandle();
 	if(!program)
 		return false;
 	if(!tex_active&&!bump_active)

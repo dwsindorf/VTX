@@ -410,7 +410,7 @@ void GLSLVarMgr::loadProgram(){
 	}
 }
 
-void GLSLVarMgr::setProgram(GLhandleARB p){
+void GLSLVarMgr::setProgram(GLuint p){
 	UniformVar *var;
 	vars.ss();
 	while((var=vars++)){

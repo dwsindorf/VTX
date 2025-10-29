@@ -9,6 +9,7 @@
 
 //#if NVALS >0
 	Vertex1=Position1;
+	Vertex2=Position2;
 //#endif
 	Constants1=CommonAttributes1;
 // ########## end set_common.vert #########################

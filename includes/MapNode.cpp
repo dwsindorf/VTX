@@ -2246,11 +2246,10 @@ void MapNode::Svertex(MapData*dn) {
 	Point pt=d->point();
 
 	Point *n=0;
-	static Point norm;
+	static Point norm(1,0,0);
 
-	if(lighting){
+	//if(lighting)
 		n=normal(d);
-	}
 
 	Color c = d->color();
 
@@ -2263,7 +2262,6 @@ void MapNode::Svertex(MapData*dn) {
 
 	if(n){
 		norm=*n;
-		//norm.print("\n");
 		glNormal3dv(norm.values());
 	}
 
@@ -2383,8 +2381,11 @@ void MapNode::Svertex(MapData*dn) {
 				}
 			}
 			if(tx->cid>=0){
-				if(tx->triplanar())
-					tx->texCoords(GL_TEXTURE0 + tx->cid,d->point_);
+				if(tx->triplanar()){
+					tx->texCoords(GL_TEXTURE0 + tx->cid,d->point_);				
+					//setTexNormal(d->point(),tx->normalize());
+					setTexNormal(norm,tx->normalize());
+				}
 				else
 					tx->texCoords(GL_TEXTURE0 + tx->cid);
 			}

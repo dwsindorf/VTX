@@ -8,6 +8,7 @@ varying vec4 Color;
 
 //#if NVALS >0
 varying vec4 Vertex1;
+varying vec4 Vertex2;
 //#endif
 #if NTEXS >0
 varying vec4 Tangent;

@@ -430,7 +430,7 @@ public:
 	
 	virtual void loadProgram();
 	virtual void loadVars();
-	virtual void setProgram(GLhandleARB p);
+	virtual void setProgram(GLuint p);
 	
 	virtual UniformVar *addVar(char *key, UniformVar *var);
 	virtual UniformVar *getVar(char *key);

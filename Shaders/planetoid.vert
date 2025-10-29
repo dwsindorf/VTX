@@ -27,11 +27,12 @@ void main(void) {
 	EyeDirection=-(gl_ModelViewMatrix * gl_Vertex); // do view rotation
 	gl_Position = ftransform();
 
-	WorldNormal.xyz = gl_Normal;
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 	Normal.w=0;
 
 #include "set_common.vert"
+	WorldNormal.xyz = gl_Normal;//Vertex2;
+
 
 #include "set_tex.vert"
 #include "set_attributes.vert"
