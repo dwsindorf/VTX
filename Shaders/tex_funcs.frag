@@ -85,15 +85,12 @@ float phiFunc(int id){
 	else
 		return EQU;
 }
-
+#define SHARPEN
+//#define USE_DOMINANT
 
 #include "tile_funcs.frag"
 
-
 #if NTEXS >0
-
-#define SHARPEN
-//#define USE_DOMINANT
 
 vec4 triplanarMap(int id, vec4 pos, float mm)
 {
@@ -103,21 +100,9 @@ vec4 triplanarMap(int id, vec4 pos, float mm)
     vec3 N = normalize(WorldNormal);
     vec3 V=pos.xyz; 
     vec3 absN = abs(N);
-#ifdef USE_DOMINANT
-       if (absN.y > absN.x && absN.y > absN.z) {
-           // Y dominant - use XZ plane
-           return texture2D(samp, V.xz, mm);
-       } else if (absN.x > absN.z) {
-           // X dominant - use YZ plane
-           return texture2D(samp, V.yz, mm);
-       } else {
-           // Z dominant - use XY plane
-           return texture2D(samp, V.xy, mm);
-       }
-#else      
-     vec3 blendWeights = abs(N);
+    vec3 blendWeights = abs(N);
 #ifdef SHARPEN
-   blendWeights = pow(blendWeights, vec3(6.0)); // Increase power for sharper transition
+    blendWeights = pow(blendWeights, vec3(6.0)); // Increase power for sharper transition
 #endif
     // Calculate blend weights based on normal direction
     blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
@@ -128,8 +113,6 @@ vec4 triplanarMap(int id, vec4 pos, float mm)
     vec3 blended=xProj*blendWeights.x +yProj*blendWeights.y +zProj*blendWeights.z;    
     // Blend the three samples
     return vec4(blended,1.0);
-#endif
-   
 }
 
 vec4 textureTile(int id, in vec4 coords , float mm)

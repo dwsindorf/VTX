@@ -2381,11 +2381,8 @@ void MapNode::Svertex(MapData*dn) {
 				}
 			}
 			if(tx->cid>=0){
-				if(tx->triplanar()){
+				if(tx->triplanar())
 					tx->texCoords(GL_TEXTURE0 + tx->cid,d->point_);				
-					//setTexNormal(d->point(),tx->normalize());
-					setTexNormal(norm,tx->normalize());
-				}
 				else
 					tx->texCoords(GL_TEXTURE0 + tx->cid);
 			}
