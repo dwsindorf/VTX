@@ -7,6 +7,12 @@
 #include "ImageMgr.h"
 #include "Util.h"
 
+//#define DEBUG_CRATERS
+//#define TEST_SPRITES
+//#define TEST_PLANTS
+#define TEST_CRATERS
+#define TEST_ROCKS
+
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
 class PlacementMgr;
@@ -18,11 +24,15 @@ enum {
     CLOUDS   	= 0x00003000,
     SPRITES   	= 0x00004000,
     PLANTS   	= 0x00005000,
-
     PLACETYPE   = 0x0000f000,
+	
     FLIP        = 0x00010000,
     MINSIZE     = 0x00020000,
-
+    MC3D  	    = 0x00040000,
+	
+	COLOR_TEST  = 0x00100000,
+	DENSITY_TEST= 0x00200000,
+	
     NOLOD   	= 0x01000000,
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
@@ -83,6 +93,7 @@ public:
 	int get_class()				{ return type&PLACETYPE;}
 	void setActive(bool b)		{ flags.s.active=b;}
 	bool active()               { return flags.s.active;}
+	bool is3D()                 { return type&MC3D;}
 };
 
 
@@ -110,9 +121,7 @@ protected:
     void find_neighbors(Placement *);
 
 public:
-	enum test{
-		TEST_COLOR=1,TEST_DENSITY=2
-	};
+	
 	Placement  **hash;
 	double			size;
 	double 			roff;
@@ -148,6 +157,10 @@ public:
 	bool sizetest()				{ return options & MINSIZE?true:false;}
 	int ntest()					{ return options & NNBRS?0:1;}
 	int lod()					{ return options & NOLOD?0:1;}
+	bool testColor();
+	bool testDensity();
+	bool test()  				{ return testColor()||testDensity();}
+
 	void set_margin(int i)   	{ flags.s.margin=i;}
 	int margin()				{ return flags.s.margin;}
 	void set_debug(int i)   	{ flags.s.debug=i;}
@@ -220,6 +233,7 @@ public:
 	virtual int get_id();
 	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
 	int flip()				    { return type & FLIP;}
+	bool is3D()   { return type & MC3D;}
 
 };
 

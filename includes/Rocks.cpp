@@ -18,7 +18,12 @@ extern double ptable[];
 static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
-static RockMgr *s_rm; // static finalizer
+
+#ifdef TEST_ROCKS
+RockMgr g_rm(FINAL|COLOR_TEST); // static finalizer
+#else
+RockMgr g_rm(FINAL); // static finalizer
+#endif
 //************************************************************
 // RockMgr class
 //************************************************************
@@ -35,10 +40,13 @@ static RockMgr *s_rm; // static finalizer
 TNode *RockMgr::default_noise=0;
 RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
+	MSK_SET(type,PLACETYPE,ROCKS);
 	noise_ampl=1;
 	zcomp=0.1;
 	drop=0.1;
 	rnoise=0;
+	rdist=0;
+	pdist=1;
 	adapt_ptsize=1;
 	rx=ry=0;
 }
@@ -79,6 +87,7 @@ Placement *RockMgr::make(Point4DL &p, int n)
 //************************************************************
 Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
+	mcObject=0;
 }
 
 //-------------------------------------------------------------
@@ -87,10 +96,11 @@ Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 bool Rock::set_terrain(PlacementMgr &pmgr)
 {
 	double r,z,rm=0;
+	RockMgr &mgr=(RockMgr&)pmgr;
+	
+	mgr.pdist=1;
 	if(radius==0)
 		return false;
-
-	RockMgr &mgr=(RockMgr&)pmgr;
 	
 	double d=pmgr.mpt.distance(center);
 	double thresh=mgr.noise_ampl;
@@ -101,14 +111,13 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 
 	if(d>t)
 		return false;
+	
+	mgr.pdist=d/radius;
+	mgr.pdist=clamp(mgr.pdist,0,1);
+	//cout<<mgr.pdist<<endl;
 
  	if(mgr.noise_ampl>0){
  		double nf=mgr.noise_ampl*radius/Hscale;
-//		if(mgr.rnoise->typeValue()==ID_POINT){
-// 			mgr.rnoise->eval();
-//			mgr.rx=nf*S0.p.x;
-// 			mgr.ry=nf*S0.p.y; 	
-// 		}
  		SPUSH;
 		Point4D np;
 		if(mgr.offset_valid())
@@ -136,6 +145,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 		r-=rm;
  	}
 	mgr.rdist=d/r;
+	
 	d=clamp(d,0,1);
 	
 	z=mgr.base;
@@ -383,30 +393,30 @@ void TNrocks::eval()
 	INIT;
     rmgr->ht=mgr->base;
 	rmgr->eval();  // calls set_terrain sets mgr->ht
-	
-	//TNnoise *noise=(TNnoise *)rmgr->rnoise;
-	//noise->eval();
+	double x=rmgr->pdist;
  
 	if(rmgr->noise_ampl)
 	 	CurrentScope->revaluate();
-
-//	INIT;
     rock.p.z=rmgr->ht;
     double delta=(rock.p.z-ground.p.z)/fabs(ground.p.z);
 	if(delta>0){
  		rock.p.x=rmgr->rx*(1-rmgr->rdist);
  		rock.p.y=rmgr->ry*(1-rmgr->rdist);
- 		//rock.p.x=rmgr->rdist>=1?0:rock.p.x;
- 		//rock.p.y=rmgr->rdist>=1?0:rock.p.y;
-
-		S0.copy(rock);
+ 		if(g_rm.testColor()) 
+ 			rock.c=Color(1-x,0,x);
+ 		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
 	}
 	else{
+		if(g_rm.testColor()) 
+			ground.c=Color(1,1,0);
 		S0.copy(ground);
 		if(!other_rock)
-		S0.clr_flag(ROCKBODY);
+			S0.clr_flag(ROCKBODY);
 	}
+	if(g_rm.testColor())
+		S0.set_cvalid();
+	
 	Td.insert_strata(rock);
 	  
     if(!in_map && last)

@@ -11,7 +11,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-//#define DEBUG_CRATERS
 //#define TEST
 
 static 	TerrainData Td;
@@ -38,7 +37,7 @@ static double  dval;
 static double  aht;
 static double  bht;
 
-#ifdef TEST
+#ifdef TEST_CRATERS
 static double thresh=1.0;
 #else
 static double thresh=1.5;
@@ -46,7 +45,12 @@ static double thresh=1.5;
 static double roff_value=0.5*PI;
 static double roff2_value=1;
 
-static CraterMgr s_cm(FINAL);    // static finalizer
+#ifdef TEST_CRATERS
+CraterMgr g_cm(FINAL|COLOR_TEST); // static finalizer
+#else
+CraterMgr g_cm(FINAL); // static finalizer
+#endif
+
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
 static const char *def_rnoise_expr="noise(GRADIENT|NABS|RO1,0,14,0.5,0.6,2)\n";
@@ -81,7 +85,7 @@ TNode *CraterMgr::default_vnoise=0;
 
 CraterMgr::CraterMgr(int i) : PlacementMgr(i)
 {
-
+	MSK_SET(type,PLACETYPE,CRATERS);
 	rim=0.8;
 	flr=0.6;
 	ctr=0.2;
@@ -97,10 +101,6 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
   	rnoise=vnoise=0;
 	roff=roff_value;
 	roff2=roff2_value;
-
-#ifdef TEST
-  	//set_ntest(0);
-#endif
 }
 CraterMgr::~CraterMgr()
 {
@@ -606,14 +606,13 @@ void TNcraters::eval()
 	}
 	S0.clr_constant();
 	Radius=lerp(dval,0,1,0,1);
-#ifdef TEST
-	S0.set_cvalid();
-	if(fabs(dval)>0)
-		S0.c=Color(1-dval,0,1);
-	else
-		S0.c=Color(1,1,0);
-	Td.c=S0.c;
-	Td.set_cvalid();
-#endif
-
+    if(g_cm.testColor()){
+		S0.set_cvalid();
+		if(fabs(dval)>0)
+			S0.c=Color(1-dval,0,1);
+		else
+			S0.c=Color(1,1,0);
+		Td.c=S0.c;
+		Td.set_cvalid();
+    }
 }

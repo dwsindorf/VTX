@@ -43,6 +43,12 @@ extern double lcos(double g);
 #define LAST_FORK   8
 #define BASE_FORK   16
 
+#ifdef TEST_PLANTS
+PlantMgr g_pm(FINAL|DENSITY_TEST);
+#else
+PlantMgr g_pm(FINAL|DENSITY_TEST|COLOR_TEST);
+#endif
+
 #define ENABLE_3D
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -229,7 +235,6 @@ static int pts_fails=0;
 static int dns_fails=0;
 
 static TerrainData Td;
-static PlantMgr *s_mgr=0;
 static int hits=0;
 static int branch_nodes;
 static int trunk_nodes;
@@ -251,8 +256,7 @@ static double dfactor=0.5;
 #ifdef DUMP
 static void show_stats()
 {
-	if(s_mgr)
-		s_mgr->dump();
+	g_pm.dump();
 	cout<<"calls="<<ncalls<< " hits="<<nhits<<endl;
 }
 #endif
@@ -299,7 +303,6 @@ int PlantMgr::stats[PLANT_STATS];
 double PlantMgr::render_time;
 double PlantMgr::pmax=1;
 double PlantMgr::pmin=0;
-int PlantMgr::adapt_tests=TEST_DENSITY;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
@@ -307,16 +310,16 @@ bool PlantMgr::shader_lines=false;
 bool PlantMgr::no_cache=false;
 bool PlantMgr::show_one=false;
 int PlantMgr::textures=0;
+bool PlantMgr::first_instance=false;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
 #ifdef DUMP
-	if(!s_mgr)
+	if(!first_instance)
 		add_finisher();
 #endif
-	type|=SPRITES;
+	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-	s_mgr=this;
 	roff=roff_value;
 	roff2=roff2_value;
 	level_mult=0.2;
@@ -324,16 +327,19 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 	hardness_bias=0;
 	ht_bias=0;
 	lat_bias=0;
+	slope_bias=0;
 	dexpr=0;
 	instance=0;
-
+	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
+}
+PlantMgr::PlantMgr(int i) : PlantMgr(0,0)
+{
 }
 PlantMgr::~PlantMgr()
 {
   	if(finalizer()){
-  		s_mgr=0;
-#ifdef DEBUG_PMEM
+ #ifdef DEBUG_PMEM
   		printf("PlantMgr::free()\n");
 #endif
 	}
@@ -1161,20 +1167,12 @@ void TNplant::set_surface()
 #endif
 	}
     density*=maxdensity;
-	//density=clamp(density,0,1);
-	//density=sqrt(density);
-	
 	density=clamp(density,0,1);
-
-
 	mgr->density=density;
 	
 	if(density<=0)
 		return;
 	
-//	if(TheScene->adapt_mode() && TheMap->tid>0)
-//		cout<<TheMap->tid<<" "<< mgr->density<<endl;
-
 	double hashcode=(mgr->levels+
 		            1/mgr->maxsize
 					+11*Td.sid
@@ -1192,11 +1190,11 @@ void TNplant::set_surface()
 	if(hits>0) { // inside target radius
 		nhits++;
 		double x=1-cval;
-		if(PlantMgr::testColor()) {
+		if(smgr->testColor()) {
 			c=Color(0,x,1);
 			Td.diffuse=Td.diffuse.mix(c,0.5);
 		}
-		if(PlantMgr::testDensity()) {
+		if(smgr->testDensity()) {
 			x=1/(cval+1e-6);
 			x=x*x; //*x*x;
 			Td.density+=lerp(cval,0,0.2,0,0.05*x);

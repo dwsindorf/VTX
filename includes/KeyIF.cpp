@@ -94,11 +94,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST6:
-		PlantMgr::setColorTest(!PlantMgr::testColor());
-		cout<<"PlantMgr::testColor="<<PlantMgr::testColor()<<endl;
+		Render.set_color_test(!Render.color_test());
 		TheScene->rebuild_all();
-		//test6=test6?0:1;
-		//cout<<"test6="<<test6<<endl;
 		break;
 	case KEY_TEST7:
 		test7=test7?0:1;

@@ -106,19 +106,12 @@ public:
 	static int stats[PLANT_STATS];
 	static double render_time;
 
-	static int adapt_tests;
-
 	static bool threed;
 	static bool spline;
 	static bool poly_lines;
 	static bool shader_lines;
 	static bool no_cache;
 	static int textures;
-
-	static void setColorTest(bool b) { BIT_SET(adapt_tests,TEST_COLOR,b);}
-	static void setDensityTest(bool b) { BIT_SET(adapt_tests,TEST_DENSITY,b);}
-	static bool testColor()  { return BIT_TST(adapt_tests,TEST_COLOR);}
-	static bool testDensity()  { return BIT_TST(adapt_tests,TEST_DENSITY);}
 
 	Color c;
 	double slope_bias;
@@ -130,9 +123,11 @@ public:
 	static double pmax;
 	static double pmin;
 	static bool show_one;
+	static bool first_instance;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
+	PlantMgr(int);
 
 	void init();
 	void eval();

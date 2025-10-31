@@ -88,7 +88,13 @@ static int pts_fails=0;
 static int dns_fails=0;
 
 static TerrainData Td;
-static SpriteMgr *s_mgr=0; // static finalizer
+
+#ifdef TEST_SPRITES
+SpriteMgr g_sm(FINAL|DENSITY_TEST);
+#else
+SpriteMgr g_sm(FINAL|DENSITY_TEST|COLOR_TEST);
+#endif
+
 static int hits=0;
 //#define DEBUG_PMEM
 
@@ -105,8 +111,7 @@ static int hits=0;
 #ifdef DUMP
 static void show_stats()
 {
-	if(s_mgr)
-		s_mgr->dump();
+	g_sm.dump();
 	cout<<"calls="<<ncalls<< " hits="<<nhits<<endl;
 }
 #endif
@@ -143,7 +148,6 @@ SpriteImageMgr sprites_mgr; // global image manager
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
-int SpriteMgr::adapt_tests=test::TEST_DENSITY;
 //ValueList<FileData*> SpriteMgr::sprite_dirs;
 SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 {
@@ -151,8 +155,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	if(!s_mgr)
 		add_finisher(show_stats);
 #endif
-	type|=SPRITES;
-	s_mgr=this;
+	MSK_SET(type,PLACETYPE,SPRITES);
 	roff=roff_value;
 	roff2=roff2_value;
 	level_mult=0.2;
@@ -171,8 +174,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 SpriteMgr::~SpriteMgr()
 {
   	if(finalizer()){
-  		s_mgr=0;
-#ifdef DEBUG_PMEM
+ #ifdef DEBUG_PMEM
   		printf("SpriteMgr::free()\n");
 #endif
 	}
@@ -861,14 +863,14 @@ void TNsprite::eval()
 	if(hits>0){ // inside target radius
 		nhits++;
 		double x=1-cval;
-		if(SpriteMgr::testColor()){
+		if(smgr->testColor()){
 		//	if(instance==0)
 		//		c=Color(x,0,1);
 		//	else
 				c=Color(x,0,0);
 			Td.diffuse=Td.diffuse.mix(c,0.5);
 		}
-		if(SpriteMgr::testDensity()){
+		if(smgr->testDensity()){
 			x=1/(cval+1e-6);
 			x=x*x;//*x*x;
 			Td.density+=lerp(cval,0,0.2,0,.05*x);

@@ -112,7 +112,7 @@ double terrain3D(double x, double y, double z) {
 
 // Static variable definitions
 SurfaceFunction MarchingCubes::field = &noisySphere;
-MarchingCubes::FieldType MarchingCubes::field_type = MarchingCubes::TERRAIN;
+MarchingCubes::FieldType MarchingCubes::field_type = MarchingCubes::MC_TERRAIN;
 MarchingCubes::SceneType MarchingCubes::scene_type = MarchingCubes::OBJECT_GRID;
 Point MarchingCubes::currentObjectCenter;
 bool MarchingCubes::useSmoothedNormals = false;
@@ -133,17 +133,17 @@ MarchingCubesObject::~MarchingCubesObject() {
 
 void MarchingCubes::setField(FieldType newtype) {
     switch(newtype) {
-    case MarchingCubes::SPHERE:
+    case MarchingCubes::MC_SPHERE:
         field = sphere;
         break;
-    case MarchingCubes::CUBE:
+    case MarchingCubes::MC_CUBE:
         field = cube;
         break;
-    case MarchingCubes::TERRAIN:
+    case MarchingCubes::MC_TERRAIN:
         field = terrain3D;
         break;
     default:
-    case MarchingCubes::NOISY_SPHERE:
+    case MarchingCubes::MC_NOISY_SPHERE:
         field = noisySphere;
         break;
     }
@@ -162,8 +162,8 @@ Point MarchingCubes::interpolateVertex(const Point& p1, const Point& p2, double 
     );
 }
 
-void MarchingCubes::addTriangle(const Point& v1, const Point& v2, const Point& v3, std::vector<Triangle>& triangles) {
-    Triangle tri;
+void MarchingCubes::addTriangle(const Point& v1, const Point& v2, const Point& v3, std::vector<MCTriangle>& triangles) {
+    MCTriangle tri;
     tri.vertices[0] = v1;
     tri.vertices[1] = v2;
     tri.vertices[2] = v3;
@@ -179,7 +179,7 @@ void MarchingCubes::addTriangle(const Point& v1, const Point& v2, const Point& v
     triangles.push_back(tri);
 }
 
-void MarchingCubes::generateTrianglesForCube(int cubeIndex, const Point vertList[12], std::vector<Triangle>& triangles) {
+void MarchingCubes::generateTrianglesForCube(int cubeIndex, const Point vertList[12], std::vector<MCTriangle>& triangles) {
     for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
         if (i + 2 < 16 && triTable[cubeIndex][i+1] != -1 && triTable[cubeIndex][i+2] != -1) {
             addTriangle(vertList[triTable[cubeIndex][i]], 
@@ -190,13 +190,13 @@ void MarchingCubes::generateTrianglesForCube(int cubeIndex, const Point vertList
     }
 }
 
-std::vector<Triangle> MarchingCubes::generateMesh(
+std::vector<MCTriangle> MarchingCubes::generateMesh(
     MarchingCubesObject& obj,
     double minX, double maxX, double minY, double maxY, double minZ, double maxZ,
     int resolutionX, int resolutionY, int resolutionZ, double cubesize,
     double isolevel) {
 
-    std::vector<Triangle> triangles;
+    std::vector<MCTriangle> triangles;
     
     double stepX = (maxX - minX) / resolutionX;
     double stepY = (maxY - minY) / resolutionY;
@@ -269,7 +269,7 @@ std::vector<Triangle> MarchingCubes::generateMesh(
     // Stage 3: Marching cubes processing (unchanged)
 #pragma omp parallel
     {
-        std::vector<Triangle> localTriangles;
+        std::vector<MCTriangle> localTriangles;
         
         #pragma omp for collapse(3) schedule(dynamic, 2)
         for (int x = 0; x < resolutionX; x++) {
@@ -382,7 +382,7 @@ LODParameters LODCalculator::calculateLOD(const Point& objectCenter,
     
     // Use terrain LOD ONLY for terrain field type, regardless of scene type
     if (MarchingCubes::scene_type == MarchingCubes::OBJECT_GRID && 
-        MarchingCubes::field_type == MarchingCubes::TERRAIN) {
+        MarchingCubes::field_type == MarchingCubes::MC_TERRAIN) {
         // Hysteresis: add 10% buffer if transitioning to lower detail
         double hysteresis = 1.0f;
         if (currentResolution > 0) {
@@ -511,7 +511,7 @@ bool MarchingCubesObject::cubeIntersectsSurface(const Cube& cube, double isoleve
     return hasInside && hasOutside;
 }
 
-std::vector<Triangle> MarchingCubesObject::generateMeshWithSpatialCulling(
+std::vector<MCTriangle> MarchingCubesObject::generateMeshWithSpatialCulling(
     const Point& boundsMin, const Point& boundsMax,
     double cubeSize, int resolution, double isolevel) {
     
@@ -536,13 +536,13 @@ std::vector<Triangle> MarchingCubesObject::generateMeshWithSpatialCulling(
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - totalStart);
     stats.treetime = duration.count();
     
-    std::vector<Triangle> allTriangles;
+    std::vector<MCTriangle> allTriangles;
     allTriangles.reserve(activeCubes.size() * 2000);
     
     MarchingCubes mc;
     
     for (const Cube& cube : activeCubes) {
-        std::vector<Triangle> cubeTriangles = mc.generateMesh(
+        std::vector<MCTriangle> cubeTriangles = mc.generateMesh(
         	*this,
             cube.position.x, cube.position.x + cube.size,
             cube.position.y, cube.position.y + cube.size,
@@ -558,7 +558,7 @@ std::vector<Triangle> MarchingCubesObject::generateMeshWithSpatialCulling(
      
     return allTriangles;
 }
-const std::vector<Triangle>& MarchingCubesObject::generateMesh(const Point& viewpoint) {
+const std::vector<MCTriangle>& MarchingCubesObject::generateMesh(const Point& viewpoint) {
 	LODParameters newLod = LODCalculator::calculateLOD(center, size, viewpoint, lastResolution);
     
     bool lodChanged = (newLod.resolution != lastResolution);
@@ -577,9 +577,9 @@ const std::vector<Triangle>& MarchingCubesObject::generateMesh(const Point& view
     MarchingCubes::currentObjectCenter = center;
 
     lod = newLod;
-	bool noisy = MarchingCubes::field_type == MarchingCubes::TERRAIN
-			|| MarchingCubes::field_type == MarchingCubes::NOISY_SPHERE;
-	bool surface = MarchingCubes::field_type == MarchingCubes::TERRAIN
+	bool noisy = MarchingCubes::field_type == MarchingCubes::MC_TERRAIN
+			|| MarchingCubes::field_type == MarchingCubes::MC_NOISY_SPHERE;
+	bool surface = MarchingCubes::field_type == MarchingCubes::MC_TERRAIN
 			&& MarchingCubes::scene_type == MarchingCubes::OBJECT_GRID;
     
     double noisePadding = noisy?std::max(0.5, lod.cubeSize * 0.15):0;
@@ -608,7 +608,7 @@ const std::vector<Triangle>& MarchingCubesObject::generateMesh(const Point& view
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
     stats.runtime = duration.count();
     stats.trianglesGenerated = triangles.size();
-    stats.totalMemory = stats.trianglesGenerated*sizeof(Triangle);
+    stats.totalMemory = stats.trianglesGenerated*sizeof(MCTriangle);
     
     cachedMesh = std::move(triangles);
     meshCacheValid = true;
@@ -618,7 +618,7 @@ const std::vector<Triangle>& MarchingCubesObject::generateMesh(const Point& view
         
     return cachedMesh;
 }
-void MarchingCubesObject::keepLargestComponent(std::vector<Triangle>& triangles) {
+void MarchingCubesObject::keepLargestComponent(std::vector<MCTriangle>& triangles) {
 	//std::cout<<"culling floaters"<<std::endl;
 
     if (triangles.empty()) 
@@ -657,7 +657,7 @@ void MarchingCubesObject::keepLargestComponent(std::vector<Triangle>& triangles)
     stats.floaters = components.size() - 1;
     stats.largest = components[largestIdx].size();
 
-    std::vector<Triangle> filteredTriangles;
+    std::vector<MCTriangle> filteredTriangles;
     for (size_t triIdx : components[largestIdx]) {
         filteredTriangles.push_back(triangles[triIdx]);
     }
@@ -667,7 +667,7 @@ void MarchingCubesObject::keepLargestComponent(std::vector<Triangle>& triangles)
 
 void MarchingCubesObject::floodFillComponent(
     size_t startTriangle, 
-    std::vector<Triangle>& triangles,
+    std::vector<MCTriangle>& triangles,
     std::unordered_map<uint64_t, std::vector<size_t>>& vertexToTriangles,
     std::vector<bool>& visited, 
     std::vector<size_t>& component) {
@@ -696,13 +696,13 @@ void MarchingCubesObject::floodFillComponent(
     }
 }
 
-void MarchingCubesObject::generateSmoothNormals(std::vector<Triangle>& triangles) {
+void MarchingCubesObject::generateSmoothNormals(std::vector<MCTriangle>& triangles) {
     if (triangles.empty()) return;
     
     std::unordered_map<uint64_t, Point> normalAccumulator;
     
     for (size_t triIdx = 0; triIdx < triangles.size(); triIdx++) {
-        Triangle& tri = triangles[triIdx];
+        MCTriangle& tri = triangles[triIdx];
         
         Point edge1 = tri.vertices[1] - tri.vertices[0];
         Point edge2 = tri.vertices[2] - tri.vertices[0];
@@ -728,7 +728,7 @@ void MarchingCubesObject::generateSmoothNormals(std::vector<Triangle>& triangles
     }
     
     for (size_t triIdx = 0; triIdx < triangles.size(); triIdx++) {
-        Triangle& tri = triangles[triIdx];
+        MCTriangle& tri = triangles[triIdx];
         Point smoothNormal(0, 0, 0);
         
         for (int vertIdx = 0; vertIdx < 3; vertIdx++) {
@@ -740,7 +740,7 @@ void MarchingCubesObject::generateSmoothNormals(std::vector<Triangle>& triangles
     }
 }
 
-void MarchingCubesObject::saveOBJWithNormals(std::vector<Triangle>& triangles, const std::string& filename) {
+void MarchingCubesObject::saveOBJWithNormals(std::vector<MCTriangle>& triangles, const std::string& filename) {
     FILE* file = fopen(filename.c_str(), "w");
     
     if (!file) {
@@ -757,7 +757,7 @@ void MarchingCubesObject::saveOBJWithNormals(std::vector<Triangle>& triangles, c
     std::vector<Point> uniqueNormals;
     
     for (size_t t = 0; t < triangles.size(); t++) {
-        Triangle& tri = triangles[t];
+        MCTriangle& tri = triangles[t];
         for (int v = 0; v < 3; v++) {
         	uint64_t key = hashVertex(tri.vertices[v]);
             if (vertexIndexMap.find(key) == vertexIndexMap.end()) {
@@ -779,7 +779,7 @@ void MarchingCubesObject::saveOBJWithNormals(std::vector<Triangle>& triangles, c
     }
     
     for (size_t t = 0; t < triangles.size(); t++) {
-        Triangle& tri = triangles[t];
+        MCTriangle& tri = triangles[t];
         int idx[3];
         for (int v = 0; v < 3; v++) {
         	uint64_t key = hashVertex(tri.vertices[v]);
@@ -854,10 +854,10 @@ void MarchingCubesScene::addObject(Point center, Point size, std::string name) {
     }
 }
 
-std::vector<Triangle> MarchingCubesScene::generateScene() {
+std::vector<MCTriangle> MarchingCubesScene::generateScene() {
     auto sceneStart = std::chrono::high_resolution_clock::now();
     
-    std::vector<Triangle> allTriangles;
+    std::vector<MCTriangle> allTriangles;
     
     int cachedCount = 0;
     int regeneratedCount = 0;
@@ -888,7 +888,7 @@ std::vector<Triangle> MarchingCubesScene::generateScene() {
             auto objEnd = std::chrono::high_resolution_clock::now();
             cacheCheckTime += std::chrono::duration_cast<std::chrono::microseconds>(objEnd - objStart).count() / 1000.0;
             
-            const std::vector<Triangle>& objTriangles = obj->generateMesh(viewpoint);
+            const std::vector<MCTriangle>& objTriangles = obj->generateMesh(viewpoint);
             
             auto insertStart = std::chrono::high_resolution_clock::now();
             allTriangles.insert(allTriangles.end(), objTriangles.begin(), objTriangles.end());
@@ -908,7 +908,7 @@ std::vector<Triangle> MarchingCubesScene::generateScene() {
         if (wasCached)
         	continue;
         
-        const std::vector<Triangle>& objTriangles = obj->generateMesh(viewpoint);
+        const std::vector<MCTriangle>& objTriangles = obj->generateMesh(viewpoint);
         
 #ifdef PRINT_OBJ_STATS
         obj->printStats();
@@ -927,7 +927,7 @@ std::vector<Triangle> MarchingCubesScene::generateScene() {
     std::cout << "Total patches: " << objects.size() << std::endl;
     std::cout << "Cached: " << cachedCount << " patches, Regenerated: " << regeneratedCount<< std::endl; 
     std::cout << "LOD calculations: " << lodCalculationTime << " ms" << std::endl;
-    std::cout << "Triangle insertion: " << triangleInsertTime << " ms" << std::endl;
+    std::cout << "MCTriangle insertion: " << triangleInsertTime << " ms" << std::endl;
     std::cout << "Total scene time: " << totalSceneTime << " ms" << std::endl;
     
     return allTriangles;
@@ -948,7 +948,7 @@ void MarchingCubesScene::saveScene(const std::string& filename, bool includeMark
     
     fprintf(file, "# Mesh vertices\n");
     for (size_t t = 0; t < allTriangles.size(); t++) {
-        Triangle& tri = allTriangles[t];
+        MCTriangle& tri = allTriangles[t];
         for (int v = 0; v < 3; v++) {
             fprintf(file, "v %f %f %f\n", tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
         }
@@ -974,7 +974,7 @@ void MarchingCubesScene::saveScene(const std::string& filename, bool includeMark
     if (MarchingCubes::useSmoothedNormals) {
         fprintf(file, "# Normals\n");
         for (size_t t = 0; t < allTriangles.size(); t++) {
-            Triangle& tri = allTriangles[t];
+            MCTriangle& tri = allTriangles[t];
             for (int v = 0; v < 3; v++) {
                 fprintf(file, "vn %f %f %f\n", tri.normal.x, tri.normal.y, tri.normal.z);
             }
@@ -1032,7 +1032,7 @@ MarchingCubesScene::ScenePerformanceStats MarchingCubesScene::getPerformanceStat
         sceneStats.totalTriangles += obj->stats.trianglesGenerated;
         
         // Persistent memory = cached mesh + small corner cache
-        size_t meshMemory = obj->stats.trianglesGenerated * sizeof(Triangle);
+        size_t meshMemory = obj->stats.trianglesGenerated * sizeof(MCTriangle);
         
         totalPersistentMemory += meshMemory;
     }

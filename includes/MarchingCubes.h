@@ -44,7 +44,7 @@ struct Cube {
     Cube(Point pos, double s);
 };
 
-struct Triangle {
+struct MCTriangle {
     Point vertices[3];
     Point normal;
 };
@@ -86,22 +86,24 @@ struct GenerationStats {
 };
 class MarchingCubes {
 protected:
+	friend class MarchingCubesObject;
     static const int edgeTable[256];
     static const int triTable[256][16];
 
     Point interpolateVertex(const Point& p1, const Point& p2, double val1, double val2, double isolevel);
-    void addTriangle(const Point& v1, const Point& v2, const Point& v3, std::vector<Triangle>& triangles);
-    void generateTrianglesForCube(int cubeIndex, const Point vertList[12], std::vector<Triangle>& triangles);
+    void addTriangle(const Point& v1, const Point& v2, const Point& v3, std::vector<MCTriangle>& triangles);
+    void generateTrianglesForCube(int cubeIndex, const Point vertList[12], std::vector<MCTriangle>& triangles);
 public:
  
     static GenerationStats generationStats;
     
     static Point currentObjectCenter;
     static double isoLevel;
-  
+ 
     enum FieldType {
-        SPHERE, NOISY_SPHERE, CUBE, TERRAIN, INIT
+        MC_SPHERE, MC_NOISY_SPHERE, MC_CUBE, MC_TERRAIN, MC_ROCK
     };
+
     enum SceneType {
         SINGLE_OBJECT,
         MULTIPLE_OBJECTS,
@@ -117,7 +119,7 @@ public:
     static double baseResolution;
     static void setField(FieldType);
 
-    std::vector<Triangle> generateMesh(MarchingCubesObject&, double minX, double maxX, double minY, double maxY, double minZ, double maxZ,
+    std::vector<MCTriangle> generateMesh(MarchingCubesObject&, double minX, double maxX, double minY, double maxY, double minZ, double maxZ,
                                       int resolutionX, int resolutionY, int resolutionZ, double cubesize, 
                                       double isolevel = 0.0f);
 };
@@ -174,7 +176,7 @@ private:
     std::vector<Cube> subdivideVolume(const Point& boundsMin, const Point& boundsMax, double cubeSize);
     std::vector<Cube> cullEmptyCubes(const std::vector<Cube>& cubes, double isolevel);
     bool cubeIntersectsSurface(const Cube& cube, double isolevel);
-    std::vector<Triangle> generateMeshWithSpatialCulling(const Point& boundsMin, const Point& boundsMax,
+    std::vector<MCTriangle> generateMeshWithSpatialCulling(const Point& boundsMin, const Point& boundsMax,
                                                         double cubeSize, int resolution, double isolevel);
 
 public:
@@ -184,25 +186,25 @@ public:
 	int lastResolution;
 	double lastIsoValue;
     MarchingCubes::FieldType lastFieldType;
-    std::vector<Triangle> cachedMesh;
+    std::vector<MCTriangle> cachedMesh;
 
     MarchingCubesObject::MarchingCubesObject(Point pos, Point sz, std::string nm) 
         : center(pos), size(sz), name(nm), 
           meshCacheValid(false), lastResolution(-1), 
-          lastIsoValue(0.0f), lastFieldType(MarchingCubes::INIT){}  // Add this
+          lastIsoValue(0.0f), lastFieldType(MarchingCubes::MC_SPHERE){}  // Add this
     
     ~MarchingCubesObject(); 
     std::string getName() const;
     size_t getCacheSize() const;
     Point getCenter() const;
     Point getSize() const;
-    const std::vector<Triangle>& generateMesh(const Point& viewpoint);
-    void keepLargestComponent(std::vector<Triangle>& triangles);
-    void floodFillComponent(size_t startTriangle, std::vector<Triangle>& triangles,
+    const std::vector<MCTriangle>& generateMesh(const Point& viewpoint);
+    void keepLargestComponent(std::vector<MCTriangle>& triangles);
+    void floodFillComponent(size_t startTriangle, std::vector<MCTriangle>& triangles,
                            std::unordered_map<uint64_t, std::vector<size_t>>& vertexToTriangles,
                            std::vector<bool>& visited, std::vector<size_t>& component);
-    void generateSmoothNormals(std::vector<Triangle>& triangles);
-    void saveOBJWithNormals(std::vector<Triangle>& triangles, const std::string& filename);
+    void generateSmoothNormals(std::vector<MCTriangle>& triangles);
+    void saveOBJWithNormals(std::vector<MCTriangle>& triangles, const std::string& filename);
     void printStats();
     void resetStats();
     void clearCache();
@@ -240,7 +242,7 @@ public:
     void setViewpoint(Point vp);
     Point getViewpoint() const;
     void addObject(Point center, Point size, std::string name);
-    std::vector<Triangle> generateScene();
+    std::vector<MCTriangle> generateScene();
     void saveScene(const std::string& filename, bool includeMarkers = true);
     ScenePerformanceStats getPerformanceStats();
     void removeObject(const std::string &name);

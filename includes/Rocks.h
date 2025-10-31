@@ -4,13 +4,15 @@
 #define _ROCKS
 
 #include "Placements.h"
+#include "MarchingCubes.h"
 
 class RockMgr;
 
 class Rock : public Placement
 {
 protected:
-public:
+    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
+ public:
 	Rock(PlacementMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 };
@@ -22,7 +24,7 @@ public:
     static TNode *default_noise;
 	Placement *make(Point4DL&,int);
 
-	double  zcomp,drop,rdist;
+	double  zcomp,drop,rdist,pdist;
 
 	double  noise_ampl;
 	double  rx,ry;

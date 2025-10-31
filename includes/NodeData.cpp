@@ -8,6 +8,9 @@
 #include "matrix.h"
 #include "Sprites.h"
 #include "Plants.h"
+#include "Craters.h"
+#include "Rocks.h"
+
 //**************** extern API area ************************
 
 extern int     hits, misses, visits;
@@ -16,6 +19,10 @@ extern double  zslope();
 extern int test_flag;
 extern Point MapPt,Mpt;
 
+extern PlantMgr g_pm;
+extern CraterMgr g_cm;
+extern RockMgr g_rm;
+extern SpriteMgr g_sm;
 
 static TerrainData Td;
 //**************** static and private *********************
@@ -251,8 +258,6 @@ Point MapData::tvector()
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
-#define TEST_SPRITES
-//#define TEST_CRATERS
 
 //#define TEST_COLOR
 
@@ -327,32 +332,27 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		return;
 	}
 
-#if defined TEST_CRATERS 
-	nc=1;
-#endif
 	int pm=CurrentScope->passmode();
-#ifdef TEST_SPRITES
-	bool do_sprites=Raster.sprites()&&Raster.adapt_sprites()&&Td.sprites.size>0&& TheScene->viewobj==TheMap->object;
-	if(do_sprites){
-		if(SpriteMgr::testColor())
-			nc=1;
-		if(SpriteMgr::testDensity())
-			dns=1;
-	}
-#endif
-	//bool do_plants=false;//Td.plants.size>0&& TheScene->viewobj==TheMap->object && (PlantMgr::testDensity()||PlantMgr::testColor());
-	bool do_plants=Td.plants.size>0&& TheScene->viewobj==TheMap->object && (PlantMgr::testDensity()||PlantMgr::testColor());
-	if(do_plants){
-		if(PlantMgr::testColor())
-			nc=1;
-		if(PlantMgr::testDensity())
-			dns=1;
-	}
+	
+	bool test_plants=TheScene->viewobj==TheMap->object && g_pm.test();
+	bool test_plant_color=test_plants && g_pm.testColor();
+	bool test_plant_density=test_plants && g_pm.testDensity();
+
+	bool test_sprites=TheScene->viewobj==TheMap->object && g_sm.test();
+	bool test_sprite_color = test_sprites&& g_sm.testColor();
+	bool test_sprite_density = test_sprites&& g_sm.testDensity();
+	
+	bool test_craters=g_cm.testColor();
+	bool test_rocks=g_rm.testColor();
+	
+	if(test_sprite_color || test_plant_color ||test_rocks||test_craters)
+		nc=1;
+	if(test_sprite_density || test_plant_density)
+		dns=1;
 
 	a=b=0;
 
 	setTextures(tp->textures.size?1:0);
-	//setSprites(tp->sprites.size?1:0);
 	int nbumps=0;
 	int nmaps=0;
 
@@ -433,11 +433,9 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 	if(h>TheMap->hmax){
 		TheMap->hmax=h;
-		//cout<<"hmax="<<h<<endl;
 	}
 	if(h<TheMap->hmin){
 		TheMap->hmin=h;
-		//cout<<"min="<<h<<endl;
 	}
 	if(td.get_flag(INEDGE))
 		set_edge(1);
@@ -450,55 +448,50 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
 	Mpt=point();
-	//cout<<MapPt.length()<<endl;
-
 #endif
 	int mode=CurrentScope->passmode();
-#ifdef TEST_SPRITES
-    if(do_sprites){
+
+    if(test_sprites){
 		CurrentScope->set_spass();
 		MapPt=point();
-		if(SpriteMgr::testDensity()){
+		if(test_sprite_density){
 			Td.density=0;
-			sprites_density_test=true;
 		}
-		if(SpriteMgr::testColor()){
+		if(test_sprite_color){
 			if(color_valid)
 				Td.diffuse=c;
 			else
 				Td.diffuse=Color(1,1,1);
-			sprites_color_test=true;
 		}
 		for(i=0;i<Td.sprites.size;i++){
 			Sprite *sprite=Td.sprites[i];
 			sprite->eval();
-			if(SpriteMgr::testDensity())
+			if(test_sprite_density)
 				setDensity(Td.density);
-			if(SpriteMgr::testColor())
+			if(test_sprite_color)
 				setColor(Td.diffuse);
 		}
 	}
-#endif
-	if(do_plants){
+
+	if(test_plants){
 		MapPt=point();
 		double density=0;
 		if(sprites_density_test)
 			density=Td.density;
-		if(PlantMgr::testDensity()&&!sprites_density_test)
+		if(test_plant_density&&!test_sprite_density)
 			Td.density=0;
-		if(PlantMgr::testColor()&&!sprites_color_test){
+		if(test_plant_color&&!test_sprite_color){
 			if(color_valid)
 				Td.diffuse=c;
 			else
 				Td.diffuse=Color(1,1,1);
 		}
-		if(PlantMgr::testDensity()||PlantMgr::testColor())
 		for(i=0;i<Td.plants.size;i++){
 			Plant *plant=Td.plants[i];
 			plant->eval();
-			if(PlantMgr::testDensity())
+			if(test_plant_density)
 				setDensity(Td.density+density);
-			if(PlantMgr::testColor()){				
+			if(test_plant_color){				
 				setColor(Td.diffuse);
 			}
 		}

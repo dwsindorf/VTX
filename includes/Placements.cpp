@@ -59,7 +59,8 @@ static LongSym popts[]={
 	{"NOLOD",		NOLOD},
 	{"CNORM",		CNORM},
 	{"FLIP",		FLIP},
-	{"NNBRS",		NNBRS}
+	{"NNBRS",		NNBRS},
+	{"3D",		    MC3D}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 
@@ -159,6 +160,9 @@ PlacementMgr::~PlacementMgr()
 		FREE(hash);
 	}
 }
+
+bool PlacementMgr::testColor()  		{ return options & COLOR_TEST?Render.color_test():false;}
+bool PlacementMgr::testDensity()  		{ return options & DENSITY_TEST?true:false;}
 
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
@@ -359,8 +363,6 @@ void PlacementMgr::eval()
 		            FLOOR(p.w));
 		if(TheNoise.noise3D())
 		    p.w=0;
-		
-		//cout<<lvl<<" "<<id<<" "<<lvl+id<<" "<<seed<<endl;
 		
 		int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
 		//cout<<lvl<<" "<<id<<" "<<lvl+id<<" "<<n<<endl;
