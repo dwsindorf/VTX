@@ -25,7 +25,6 @@ public:
 	Placement *make(Point4DL&,int);
 
 	double  zcomp,drop,rdist,pdist;
-
 	double  noise_ampl;
 	double  rx,ry;
 	TNode   *rnoise;
@@ -33,6 +32,10 @@ public:
 	RockMgr(int);
 
 	void init();
+	void eval();
+	virtual bool testColor();
+	virtual bool testDensity();
+
 };
 
 //************************************************************

@@ -45,11 +45,6 @@ static double thresh=1.5;
 static double roff_value=0.5*PI;
 static double roff2_value=1;
 
-#ifdef TEST_CRATERS
-CraterMgr g_cm(FINAL|COLOR_TEST); // static finalizer
-#else
-CraterMgr g_cm(FINAL); // static finalizer
-#endif
 
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
@@ -101,6 +96,10 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
   	rnoise=vnoise=0;
 	roff=roff_value;
 	roff2=roff2_value;
+#ifdef TEST_CRATERS
+    set_testColor(true);
+#endif
+
 }
 CraterMgr::~CraterMgr()
 {
@@ -606,7 +605,7 @@ void TNcraters::eval()
 	}
 	S0.clr_constant();
 	Radius=lerp(dval,0,1,0,1);
-    if(g_cm.testColor()){
+    if(cmgr->testColor()){
 		S0.set_cvalid();
 		if(fabs(dval)>0)
 			S0.c=Color(1-dval,0,1);

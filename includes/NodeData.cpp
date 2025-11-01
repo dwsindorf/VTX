@@ -20,8 +20,6 @@ extern int test_flag;
 extern Point MapPt,Mpt;
 
 extern PlantMgr g_pm;
-extern CraterMgr g_cm;
-extern RockMgr g_rm;
 extern SpriteMgr g_sm;
 
 static TerrainData Td;
@@ -306,7 +304,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	if(td.water())
 		nw=1;
     bool color_valid=false;
-    bool sprites_color_test=false;
     bool sprites_density_test=false;
     
     Color c;
@@ -341,11 +338,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	bool test_sprites=TheScene->viewobj==TheMap->object && g_sm.test();
 	bool test_sprite_color = test_sprites&& g_sm.testColor();
 	bool test_sprite_density = test_sprites&& g_sm.testDensity();
-	
-	bool test_craters=g_cm.testColor();
-	bool test_rocks=g_rm.testColor();
-	
-	if(test_sprite_color || test_plant_color ||test_rocks||test_craters)
+		
+	if(test_sprite_color || test_plant_color )
 		nc=1;
 	if(test_sprite_density || test_plant_density)
 		dns=1;
@@ -475,9 +469,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 
 	if(test_plants){
 		MapPt=point();
-		double density=0;
-		if(sprites_density_test)
-			density=Td.density;
 		if(test_plant_density&&!test_sprite_density)
 			Td.density=0;
 		if(test_plant_color&&!test_sprite_color){

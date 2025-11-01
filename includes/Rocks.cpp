@@ -19,11 +19,31 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#ifdef TEST_ROCKS
-RockMgr g_rm(FINAL|COLOR_TEST); // static finalizer
-#else
-RockMgr g_rm(FINAL); // static finalizer
-#endif
+class SData {
+public:
+    double v;
+    double f;
+    double value()   { return v;}
+};
+
+#define SDATA_SIZE 256
+static SData   sdata[SDATA_SIZE];
+static ValueList<SData*> slist(sdata,SDATA_SIZE);
+static int          scnt;
+static double sval=0;
+static double cval=0;
+static int hits=0;
+
+// 3d rocks using marching cubes
+// TODO:
+// 1. generate color test if 3d flag is set (MC3D) - done
+// 2. set density gradient on surface if 3d (as in plants)
+// 3. if 3d don't generate a new layer (test color and density on surface layer)
+// 4. capture size and position information for placement
+// 5. create array of 3d rocks with placement and size info
+// 6. capture textures and color that would be set in MapData in 2d (like plants)
+// 7. for each layer and rock in layer emit rock as a marchingCubesObj
+
 //************************************************************
 // RockMgr class
 //************************************************************
@@ -49,6 +69,10 @@ RockMgr::RockMgr(int i) : PlacementMgr(i)
 	pdist=1;
 	adapt_ptsize=1;
 	rx=ry=0;
+#ifdef TEST_ROCKS
+    set_testColor(true);
+#endif
+
 }
 RockMgr::~RockMgr()
 {
@@ -82,6 +106,26 @@ Placement *RockMgr::make(Point4DL &p, int n)
     return new Rock(*this,p,n);
 }
 
+void RockMgr::eval(){	
+	PlacementMgr::eval(); 
+	
+	if(!first() || !scnt)
+	    return;
+	for(int i=0;i<scnt;i++){
+	    slist.base[i]=sdata+i;
+	}
+	slist.size=scnt;
+	slist.sort();
+	
+	cval=slist.base[scnt-1]->f;
+}
+bool RockMgr::testColor() { 
+	return PlacementMgr::testColor()?is3D():false;
+}
+bool RockMgr::testDensity(){ 
+	return PlacementMgr::testDensity();
+}
+
 //************************************************************
 // class Rock
 //************************************************************
@@ -97,12 +141,13 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 {
 	double r,z,rm=0;
 	RockMgr &mgr=(RockMgr&)pmgr;
-	
+	sval=0;	
 	mgr.pdist=1;
 	if(radius==0)
 		return false;
 	
 	double d=pmgr.mpt.distance(center);
+	
 	double thresh=mgr.noise_ampl;
 	double td=mgr.drop*mgr.maxsize;
 	double t=1.75*radius;
@@ -111,6 +156,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 
 	if(d>t)
 		return false;
+	sval=lerp(d/radius,0,1,0,1);
 	
 	mgr.pdist=d/radius;
 	mgr.pdist=clamp(mgr.pdist,0,1);
@@ -159,6 +205,13 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
     if(z>mgr.ht)
         mgr.ht=z;
+    
+ 	sdata[scnt].v=hid;
+   	sdata[scnt].f=sval;
+  	if(scnt<SDATA_SIZE)
+  	    scnt++;
+	hits++;
+
     return true;
 }
 
@@ -297,6 +350,7 @@ NodeIF *TNrocks::addChild(NodeIF *x){
 void TNrocks::init()
 {
 	RockMgr *rmgr=(RockMgr*)mgr;
+	//g_rm.set3D(is3D());
 	//cout<<base->typeName()<<" "<<right->typeName()<<endl;
 	rmgr->init();
 	TNplacements::init();
@@ -308,6 +362,7 @@ void TNrocks::init()
 		rmgr->noise_ampl=S0.s;
 		rmgr->rnoise=args[7];			
 	}
+	rmgr->set_first(1);
 }
 
 //-------------------------------------------------------------
@@ -371,8 +426,9 @@ void TNrocks::eval()
 
 	RockMgr *rmgr=(RockMgr*)mgr;
 
-	TNplacements::eval();  // evaluate common arguments (0-3)
 
+	TNplacements::eval(); // evaluate common arguments (0-3)
+	
 	TNarg &args=*((TNarg *)left);
 	TNarg *a=args.index(4);
 	if(a){                // geometry exprs
@@ -392,8 +448,12 @@ void TNrocks::eval()
 
 	INIT;
     rmgr->ht=mgr->base;
+	cval=0;
+	scnt=0;
+	sval=0;
+	hits=0;
+
 	rmgr->eval();  // calls set_terrain sets mgr->ht
-	double x=rmgr->pdist;
  
 	if(rmgr->noise_ampl)
 	 	CurrentScope->revaluate();
@@ -402,20 +462,29 @@ void TNrocks::eval()
 	if(delta>0){
  		rock.p.x=rmgr->rx*(1-rmgr->rdist);
  		rock.p.y=rmgr->ry*(1-rmgr->rdist);
- 		if(g_rm.testColor()) 
- 			rock.c=Color(1-x,0,x);
  		S0.copy(rock);
 		S0.set_flag(ROCKBODY);
 	}
 	else{
-		if(g_rm.testColor()) 
-			ground.c=Color(1,1,0);
 		S0.copy(ground);
 		if(!other_rock)
 			S0.clr_flag(ROCKBODY);
 	}
-	if(g_rm.testColor())
-		S0.set_cvalid();
+	if(rmgr->test() && hits>0) { // inside target radius
+		double x=1-cval;
+		if(rmgr->testColor()) {
+			S0.set_cvalid();
+			if(fabs(x)>0)
+				S0.c=Color(1-x,0,1);
+			else
+				S0.c=Color(1,1,0);	
+		}
+		if(rmgr->testDensity()) {
+			x=1/(cval+1e-6);
+			x=x*x; //*x*x;
+			Td.density+=lerp(cval,0,0.2,0,0.05*x);
+		}
+	}
 	
 	Td.insert_strata(rock);
 	  

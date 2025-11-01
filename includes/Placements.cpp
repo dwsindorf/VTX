@@ -60,7 +60,7 @@ static LongSym popts[]={
 	{"CNORM",		CNORM},
 	{"FLIP",		FLIP},
 	{"NNBRS",		NNBRS},
-	{"3D",		    MC3D}
+	{"MC3D",		MC3D}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 
@@ -125,7 +125,7 @@ PlacementMgr::PlacementMgr(int i, int h)
 	maxsize=0.01;
 	mult=0.8;
 	level_mult=0.8;
-	density=1.0;    			
+	density=1.0;
   	dexpr=0;
   	base=0;
 

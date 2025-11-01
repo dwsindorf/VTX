@@ -9,7 +9,7 @@
 
 //#define DEBUG_CRATERS
 //#define TEST_SPRITES
-//#define TEST_PLANTS
+#define TEST_PLANTS
 #define TEST_CRATERS
 #define TEST_ROCKS
 
@@ -72,6 +72,8 @@ public:
 	}
 	static void exec();
 };
+
+
 class Placement
 {
 protected:
@@ -94,6 +96,7 @@ public:
 	void setActive(bool b)		{ flags.s.active=b;}
 	bool active()               { return flags.s.active;}
 	bool is3D()                 { return type&MC3D;}
+	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 };
 
 
@@ -157,10 +160,13 @@ public:
 	bool sizetest()				{ return options & MINSIZE?true:false;}
 	int ntest()					{ return options & NNBRS?0:1;}
 	int lod()					{ return options & NOLOD?0:1;}
-	bool testColor();
-	bool testDensity();
+	virtual bool testColor();
+	virtual bool testDensity();
+	void set_testColor(bool b)	{ BIT_SET(options,COLOR_TEST,b);}
+	void set_testDensity(bool b){ BIT_SET(options,DENSITY_TEST,b);}
 	bool test()  				{ return testColor()||testDensity();}
-
+	bool is3D()                 { return options&MC3D;}
+	void set3D(bool b)          { BIT_SET(options,MC3D,b);}
 	void set_margin(int i)   	{ flags.s.margin=i;}
 	int margin()				{ return flags.s.margin;}
 	void set_debug(int i)   	{ flags.s.debug=i;}
@@ -233,7 +239,8 @@ public:
 	virtual int get_id();
 	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
 	int flip()				    { return type & FLIP;}
-	bool is3D()   { return type & MC3D;}
+	bool is3D()   				{ return type & MC3D;}
+	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 
 };
 

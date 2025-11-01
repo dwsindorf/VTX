@@ -44,9 +44,9 @@ extern double lcos(double g);
 #define BASE_FORK   16
 
 #ifdef TEST_PLANTS
-PlantMgr g_pm(FINAL|DENSITY_TEST);
-#else
 PlantMgr g_pm(FINAL|DENSITY_TEST|COLOR_TEST);
+#else
+PlantMgr g_pm(FINAL|DENSITY_TEST);
 #endif
 
 #define ENABLE_3D
@@ -268,6 +268,7 @@ public:
     double f;
     double value()   { return v;}
 };
+
 #define SDATA_SIZE 1024
 static SData   sdata[SDATA_SIZE];
 static ValueList<SData*> slist(sdata,SDATA_SIZE);
@@ -333,7 +334,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
 }
-PlantMgr::PlantMgr(int i) : PlantMgr(0,0)
+PlantMgr::PlantMgr(int i) : PlantMgr(i,0)
 {
 }
 PlantMgr::~PlantMgr()
@@ -378,10 +379,7 @@ void PlantMgr::eval(){
 	slist.size=scnt;
 	slist.sort();
 	
-	for(int i=0;i<scnt;i++){
-	   double f=slist.base[i]->f;
-	   cval=f;
-	}
+	cval=slist.base[scnt-1]->f;
 }
 
 void PlantMgr::reset(){
@@ -1190,11 +1188,11 @@ void TNplant::set_surface()
 	if(hits>0) { // inside target radius
 		nhits++;
 		double x=1-cval;
-		if(smgr->testColor()) {
+		if(g_pm.testColor()) {
 			c=Color(0,x,1);
 			Td.diffuse=Td.diffuse.mix(c,0.5);
 		}
-		if(smgr->testDensity()) {
+		if(g_pm.testDensity()) {
 			x=1/(cval+1e-6);
 			x=x*x; //*x*x;
 			Td.density+=lerp(cval,0,0.2,0,0.05*x);
@@ -1207,7 +1205,6 @@ void TNplant::set_surface()
 //-------------------------------------------------------------
 void TNplant::eval()
 {	
-	//SINIT;
 	if(right)
 		right->eval();
 	if(!isEnabled() || TheScene->viewtype !=SURFACE){
@@ -1222,9 +1219,6 @@ void TNplant::eval()
 		Td.add_plant(plant);
 		return;
 	}
-	//else if(CurrentScope->spass())
-	//	set_surface();
-
  }
 
 void TNplant::clearStats(){

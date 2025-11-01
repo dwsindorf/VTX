@@ -90,9 +90,9 @@ static int dns_fails=0;
 static TerrainData Td;
 
 #ifdef TEST_SPRITES
-SpriteMgr g_sm(FINAL|DENSITY_TEST);
-#else
 SpriteMgr g_sm(FINAL|DENSITY_TEST|COLOR_TEST);
+#else
+SpriteMgr g_sm(FINAL|DENSITY_TEST);
 #endif
 
 static int hits=0;
@@ -122,8 +122,10 @@ public:
     double f;
     double value()   { return v;}
 };
-static SData   sdata[256];
-static ValueList<SData*> slist(sdata,256);
+
+#define SDATA_SIZE 256
+static SData   sdata[SDATA_SIZE];
+static ValueList<SData*> slist(sdata,SDATA_SIZE);
 static int          scnt;
 
 //ValueList<FileData*> SpriteImageMgr::sprite_dirs;
