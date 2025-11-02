@@ -1970,18 +1970,19 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-//        if(d && d->rock())
-//        	c = Color(1, 0.0, 0.0);
-//        else
-//        	c = Color(1, 1, 1);
-        double s;
-         Td.clr_flag(SFIRST);
-         find_neighbors();
-         s=zslope();
+        if(d && d->rock())
+        	c = Color(1, 0.0, 0.0);
+        else
+        	c = Color(1, 1, 1);
+        //c.print();
+//        double s;
+//         Td.clr_flag(SFIRST);
+//         find_neighbors();
+//         s=zslope();
          //CELLSLOPE(Z(),s);
          //s*=TheMap->hscale*INV2PI;
          //cout<<s<<endl;
-         c=Color(2*s,0,0);
+         //c=Color(2*s,0,0);
       	 //c = Color(data.mdata(), 0, 0);
       	 //if (data.margin())
       	 //    c = c.blend(Color(0, 0, 1), 1);
@@ -2029,13 +2030,6 @@ Color MapNode::Tcolor(MapData *d) {
             double dp = norm.dot(vp);
             dp=dp<0?0:dp;
             c = Color(dp, 0, 0);
-
-//            if (dp < 0) {
-//                if (cdata)
-//                    c = Color(0, 0, 1);
-//                else
-//                    c = Color(1, 0, 0);
-//            }
         }
     }
         break;
@@ -2390,11 +2384,11 @@ void MapNode::Svertex(MapData*dn) {
 		}
 		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0){
 			glVertexAttrib4d(GLSLMgr::attributes3ID, A[0], A[1], A[2], A[3]);
-			//cout<<"attributes3ID "<< A[0]<<" "<< A[1]<<" "<< A[2]<<" "<< A[3]<<endl;
+			cout<<"attributes3ID "<< A[0]<<" "<< A[1]<<" "<< A[2]<<" "<< A[3]<<endl;
 		}
 		if(GLSLMgr::attributes4ID >= 0 && num_attribs>4){
 			glVertexAttrib4d(GLSLMgr::attributes4ID, A[4], A[5], A[6], A[7]);
-			//cout<<"attributes4ID "<< A[4]<<" "<< A[5]<<" "<< A[6]<<" "<< A[7]<<endl;
+			cout<<"attributes4ID "<< A[4]<<" "<< A[5]<<" "<< A[6]<<" "<< A[7]<<endl;
 		}
 	}
 	glVertex3dv((double*)(&pt));

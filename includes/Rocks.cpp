@@ -39,6 +39,8 @@ static int hits=0;
 // 1. generate color test if 3d flag is set (MC3D) - done
 // 2. set density gradient on surface if 3d (as in plants)
 // 3. if 3d don't generate a new layer (test color and density on surface layer)
+//    - deform surface like craters
+//    - need to collect textures and color separately
 // 4. capture size and position information for placement
 // 5. create array of 3d rocks with placement and size info
 // 6. capture textures and color that would be set in MapData in 2d (like plants)
@@ -123,7 +125,7 @@ bool RockMgr::testColor() {
 	return PlacementMgr::testColor()?is3D():false;
 }
 bool RockMgr::testDensity(){ 
-	return PlacementMgr::testDensity();
+	return is3D()?true:false;
 }
 
 //************************************************************
@@ -382,24 +384,24 @@ void TNrocks::eval()
 			right->eval();
 		return;
 	}
-
-	S0.set_flag(ROCKLAYER);
+   // if(!is3D())
+	//S0.set_flag(ROCKLAYER);
 	int in_map=S0.get_flag(CLRTEXS);
 
     if(CurrentScope->rpass()){
-		INIT;
-		
-		if(right)
+		INIT;		
+		if(right) // ground
 			right->eval();
 		INIT;
-
-		Td.add_id();
-		Td.tp->set_rock(true);
-		Td.tp->ntexs=0;
+        if(!is3D()){
+			Td.add_id();
+			Td.tp->set_rock(true);
+			Td.tp->ntexs=0;
+        }
+        Td.tp->set_rock(true);
 		if(!in_map) 
 			S0.set_flag(CLRTEXS);
-
- 		if(base)
+ 		if(base) // rock texs
 			base->eval();
 
 		if(!in_map)    // in case we were in another map on entry
@@ -407,25 +409,23 @@ void TNrocks::eval()
        return;
     }
         		
-    if(!in_map && first)
+    if(!in_map && first && !is3D())
     	Td.begin();
 	ground.p.z=0;
 	
 	INIT;
 	bool other_rock=false;
-	right->eval();
+	right->eval(); // ground
 	other_rock=S0.get_flag(ROCKBODY);
-    if(first){
+	S0.p.z-=Drop;
+    if(first && !is3D()){
 		S0.next_id();
-		S0.p.z-=Drop;
 		Td.insert_strata(S0);
     }
- 
  	ground.copy(S0);
     INIT;
 
 	RockMgr *rmgr=(RockMgr*)mgr;
-
 
 	TNplacements::eval(); // evaluate common arguments (0-3)
 	
@@ -439,13 +439,16 @@ void TNrocks::eval()
 	}
 	
 	INIT;
-	base->eval();
+	if(base){
+		base->eval();
+	}
 	if(!S0.pvalid())
 		S0.p.z=ground.p.z;
 	rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
-	S0.next_id();
+	if(!is3D())
+		S0.next_id();
 	rock.copy(S0);
-
+	
 	INIT;
     rmgr->ht=mgr->base;
 	cval=0;
@@ -462,10 +465,14 @@ void TNrocks::eval()
 	if(delta>0){
  		rock.p.x=rmgr->rx*(1-rmgr->rdist);
  		rock.p.y=rmgr->ry*(1-rmgr->rdist);
+ 		
  		S0.copy(rock);
-		S0.set_flag(ROCKBODY);
+ 		Td.tp->set_rock(true);
+ 		//if(!is3D())
+			S0.set_flag(ROCKBODY);
 	}
 	else{
+		Td.tp->set_rock(false);
 		S0.copy(ground);
 		if(!other_rock)
 			S0.clr_flag(ROCKBODY);
@@ -485,11 +492,11 @@ void TNrocks::eval()
 			Td.density+=lerp(cval,0,0.2,0,0.05*x);
 		}
 	}
-	
-	Td.insert_strata(rock);
-	  
-    if(!in_map && last)
-    	Td.end();
+	if(!is3D()){
+		Td.insert_strata(rock);		  
+		if(!in_map && last)
+			Td.end();
+	}
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists

@@ -9,8 +9,8 @@
 
 //#define DEBUG_CRATERS
 //#define TEST_SPRITES
-#define TEST_PLANTS
-#define TEST_CRATERS
+//#define TEST_PLANTS
+//#define TEST_CRATERS
 #define TEST_ROCKS
 
 //#define DEBUG_PMEM         // turn on for memory usage

@@ -44,6 +44,7 @@ public:
 class TNrocks : public TNplacements
 {
 public:
+	TerrainProperties *tp;
 	TNrocks(int t, TNode *l, TNode *r, TNode *b);
 	void eval();
 	void init();

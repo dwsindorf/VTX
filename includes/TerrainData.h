@@ -345,9 +345,6 @@ public:
 	Color color;
 	int callList;
 	Array<Texture*> textures;
-	//Array<Plant*> plants;
-	//Array<Sprite*> sprites;
-
 	Array<TNnoise*> noise;
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
