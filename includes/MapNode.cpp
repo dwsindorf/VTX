@@ -2148,14 +2148,14 @@ void MapNode::vertex(MapData*d)
 //-------------------------------------------------------------
 #define KEEP_HT
 void MapNode::setVertexAttributes(Point pm){
+	double wscale=Gscale*Hscale;
 	double depth = TheScene->vpoint.distance(pm);
 #ifndef KEEP_HT // keep ht
 	pm=pm.normalize();  // this gets rid of the Z() component
-	pm=pm*0.5+0.5;
 #else
-	double wscale=Gscale*Hscale;
 	pm=pm*wscale;
 #endif
+	pm=pm*0.5+0.5;
 	// set pm to Vertex1 in shaders
 	// - pm contains just the (rectangularized) phi&theta values of the point
 
@@ -2384,11 +2384,11 @@ void MapNode::Svertex(MapData*dn) {
 		}
 		if(GLSLMgr::attributes3ID >= 0 && num_attribs>0){
 			glVertexAttrib4d(GLSLMgr::attributes3ID, A[0], A[1], A[2], A[3]);
-			cout<<"attributes3ID "<< A[0]<<" "<< A[1]<<" "<< A[2]<<" "<< A[3]<<endl;
+			//cout<<"attributes3ID "<< A[0]<<" "<< A[1]<<" "<< A[2]<<" "<< A[3]<<endl;
 		}
 		if(GLSLMgr::attributes4ID >= 0 && num_attribs>4){
 			glVertexAttrib4d(GLSLMgr::attributes4ID, A[4], A[5], A[6], A[7]);
-			cout<<"attributes4ID "<< A[4]<<" "<< A[5]<<" "<< A[6]<<" "<< A[7]<<endl;
+			//cout<<"attributes4ID "<< A[4]<<" "<< A[5]<<" "<< A[6]<<" "<< A[7]<<endl;
 		}
 	}
 	glVertex3dv((double*)(&pt));

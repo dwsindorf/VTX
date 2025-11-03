@@ -485,10 +485,6 @@ static int test_process(int tesslevel){
 // GLSLMgr::InitGL() initialize openGL environment
 //-------------------------------------------------------------
 void GLSLMgr::initGL(int w, int h){
-	//test_geometry(4);
-	//int n=test_process(4);
-	//cout<<n<<endl;
-	//test_lookup(4);
 
 	GLSupport::gl_init();
 
@@ -544,7 +540,7 @@ void GLSLMgr::initGL(int w, int h){
 
 #ifdef SHOW_GLSTATS
 	cout << "total  tex units:"<< max_tex_units << endl;
-	cout << "unused tex units:"<< max_tex_id << endl;
+	cout << "unused tex units:"<< max_tex_id+1 << endl;
 	cout << "max color buffer attachments:"<< maxAttach << endl;
 	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
 	printf("max geometry output vetices = %d\n",maxGeomVertices);
