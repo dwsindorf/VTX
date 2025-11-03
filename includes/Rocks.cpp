@@ -384,8 +384,8 @@ void TNrocks::eval()
 			right->eval();
 		return;
 	}
-   // if(!is3D())
-	//S0.set_flag(ROCKLAYER);
+
+	S0.set_flag(ROCKLAYER);
 	int in_map=S0.get_flag(CLRTEXS);
 
     if(CurrentScope->rpass()){
