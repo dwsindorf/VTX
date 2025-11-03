@@ -208,7 +208,7 @@ vec3 getBumpTriplanar(int id, vec4 coords, float mm) {
                        worldBump_y * blendWeights.y +
                        bump_z * blendWeights.z;
     
-    return -blendedBump;
+    return blendedBump;
 }
 
 vec3 getBump(int tid, vec4 coords,float mm){

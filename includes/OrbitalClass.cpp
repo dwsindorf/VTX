@@ -5076,7 +5076,7 @@ std::string Planetoid::randFeature(int type) {
 	std::string str("");
 	char buff[4096];
 	const char *linear=Nrocks?"|LINEAR":"";
-	const char *randtex=Nrocks?"":"|RANDOMIZE";
+	const char *randtex=Nrocks?"|TRIPLANAR":"|RANDOMIZE";
 	
 	switch(type){
 	case RND_TEXNAME:			
@@ -5364,7 +5364,7 @@ std::string Planetoid::randFeature(int type) {
 		//keep_rands=true;
 		str="image(";
 		str+=randFeature(RND_LTEXNAME);
-		str+=",TMP|ACHNL|NORM,256,256,";
+		str+=",TMP|ACHNL|NORM|GRAY,256,256,";
 		if(s[7]>0.0)
 			str+=randFeature(RND_HCRATERS);
 		else
@@ -5467,7 +5467,7 @@ std::string Planetoid::randFeature(int type) {
 		randFeature(RND_HTEXNAME).c_str(), // image name
 		randFeature(RND_HMAP_TWIST).c_str(),
 		pow(2,1+0.5*s[4]),  // start
-		0.0,//+0.2*s[5],  // bump ampl
+		0.0,//+0.2*s[5],  // bump ampl BUMP causes shader link error
 		5+2*s[6],      // orders
 		2.3+0.2*s[7],  // freq
 		0.5+0.1*r[8],  // orders ampl
