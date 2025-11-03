@@ -5463,11 +5463,11 @@ std::string Planetoid::randFeature(int type) {
 		break;	
 	case RND_HMAP_TEX:
 		keep_rands=true;
-		sprintf(buff,"Texture(%s,HMAP|LINEAR|S|RANDOMIZE|BUMP,%s,%1.2f,%1.2f,0,0,%1.2f,%1.2f,%1.2f,0,%1.2f,%1.2f,0,0,0)",
+		sprintf(buff,"Texture(%s,HMAP|LINEAR|S|RANDOMIZE,%s,%1.2f,%1.2f,0,0,%1.2f,%1.2f,%1.2f,0,%1.2f,%1.2f,0,0,0)",
 		randFeature(RND_HTEXNAME).c_str(), // image name
 		randFeature(RND_HMAP_TWIST).c_str(),
 		pow(2,1+0.5*s[4]),  // start
-		0.0+0.2*s[5],  // bump ampl
+		0.0,//+0.2*s[5],  // bump ampl
 		5+2*s[6],      // orders
 		2.3+0.2*s[7],  // freq
 		0.5+0.1*r[8],  // orders ampl

@@ -205,7 +205,7 @@ public:
 	int type()				{ return info.s.type;}
 	void set_type(int i)     { info.s.type=i;}
 
-	int id()                { return info.s.type-ID0;}
+	int id()                { return (info.s.type&IDMAX)-ID0;}
 	void set_id(int i)      { info.s.type=(i&IDMAX)+ID0;}
 	void next_id()          { set_id(tids++);}
 	TerrainProperties		*add_id();
