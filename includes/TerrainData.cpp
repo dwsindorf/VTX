@@ -381,6 +381,7 @@ void TerrainProperties::setProgram(){
 void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
+	rocks.reset();
 }
 
 

@@ -33,6 +33,8 @@ public:
 
 	void init();
 	void eval();
+	void reset();
+
 	virtual bool testColor();
 	virtual bool testDensity();
 
@@ -44,9 +46,10 @@ public:
 class TNrocks : public TNplacements
 {
 public:
-	TerrainProperties *tp;
+	int rock_id;
 	TNrocks(int t, TNode *l, TNode *r, TNode *b);
 	void eval();
+	void eval3d();
 	void init();
 	bool hasChild(int );
 	void applyExpr();

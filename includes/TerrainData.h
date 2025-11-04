@@ -27,6 +27,7 @@ class TNdensity;
 class TNpoint;
 class TNfractal;
 class TNclouds;
+class TNrocks;
 
 extern int    tindex, mindex;
 
@@ -346,6 +347,7 @@ public:
 	int callList;
 	Array<Texture*> textures;
 	Array<TNnoise*> noise;
+	Array<TNrocks*> rocks;
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
 	TNdensity *tndensity;

@@ -99,6 +99,13 @@ void RockMgr::init()
 	}
 	PlacementMgr::init();
 }
+void RockMgr::reset(){
+	//PlacementMgr::reset();
+	cval=0;
+	scnt=0;
+	sval=0;
+	hits=0;
+}
 
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
@@ -367,136 +374,161 @@ void TNrocks::init()
 	rmgr->set_first(1);
 }
 
+
 //-------------------------------------------------------------
-// TNrocks::eval() evaluate the node
+// TNrocks::eval3d() evaluate the node
 //-------------------------------------------------------------
-void TNrocks::eval()
+void TNrocks::eval3d()
 {
-	TerrainData rock;
-	TerrainData ground;
-	int i;
-    bool first=(right && right->typeValue()!=ID_ROCKS);
-    bool last=getParent()->typeValue()!=ID_ROCKS;
-	INIT;
-
-	if(!isEnabled() || TheScene->viewtype != SURFACE){
-		if(right)
-			right->eval();
-		return;
-	}
-
-	S0.set_flag(ROCKLAYER);
-	int in_map=S0.get_flag(CLRTEXS);
-
-    if(CurrentScope->rpass()){
+	if(CurrentScope->rpass()){
 		INIT;		
 		if(right) // ground
 			right->eval();
 		INIT;
-        if(!is3D()){
-			Td.add_id();
-			Td.tp->set_rock(true);
-			Td.tp->ntexs=0;
-        }
-        Td.tp->set_rock(true);
-		if(!in_map) 
-			S0.set_flag(CLRTEXS);
- 		if(base) // rock texs
-			base->eval();
-
-		if(!in_map)    // in case we were in another map on entry
-			S0.clr_flag(CLRTEXS);
-       return;
-    }
-        		
-    if(!in_map && first && !is3D())
-    	Td.begin();
-	ground.p.z=0;
-	
-	INIT;
-	bool other_rock=false;
-	right->eval(); // ground
-	other_rock=S0.get_flag(ROCKBODY);
-	S0.p.z-=Drop;
-    if(first && !is3D()){
-		S0.next_id();
-		Td.insert_strata(S0);
-    }
- 	ground.copy(S0);
-    INIT;
-
+		int nrocks=Td.tp->rocks.size;
+		rock_id=nrocks;	
+		mgr->instance=rock_id;
+		//Td.tp->rocks.add(this);
+		return;
+	}
 	RockMgr *rmgr=(RockMgr*)mgr;
+	INIT;
+	if(right) // ground
+		right->eval();
+	TerrainData ground;
+	ground.copy(S0);
+	INIT;
 
 	TNplacements::eval(); // evaluate common arguments (0-3)
+ 	INIT;
 	
-	TNarg &args=*((TNarg *)left);
-	TNarg *a=args.index(4);
-	if(a){                // geometry exprs
-		double arg[3];
-		int n=getargs(a,arg,3);
-		if(n>0) rmgr->zcomp=arg[0];      // compression factor
-		if(n>1) rmgr->drop=arg[1];       // drop factor
+	if(rmgr->test()){
+		rmgr->reset();
+		rmgr->eval();  // calls set_terrain
+		double x=1-cval;
+		S0.copy(ground);
+		if(hits>0) { // inside target radius
+			if(rmgr->testColor()) {
+				S0.set_cvalid();
+				if(fabs(x)>0)
+					S0.c=Color(1-x,0,1);
+				else
+					S0.c=Color(1,1,0);	
+			}
+			if(rmgr->testDensity()) {
+				x=1/(cval+1e-6);
+				x=x*x; //*x*x;
+				Td.density+=lerp(cval,0,0.2,0,0.05*x);
+			}
+		}
+	}	
+}
+//-------------------------------------------------------------
+// TNrocks::eval() evaluate the node
+//-------------------------------------------------------------
+//#define TEST
+void TNrocks::eval() {
+	if (!isEnabled() || TheScene->viewtype != SURFACE) {
+		if (right)
+			right->eval();
+		return;
 	}
-	
-	INIT;
-	if(base){
-		base->eval();
+	if (is3D()) {
+		eval3d();
+		return;
 	}
-	if(!S0.pvalid())
-		S0.p.z=ground.p.z;
-	rmgr->base=S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
-	if(!is3D())
-		S0.next_id();
-	rock.copy(S0);
-	
-	INIT;
-    rmgr->ht=mgr->base;
-	cval=0;
-	scnt=0;
-	sval=0;
-	hits=0;
 
-	rmgr->eval();  // calls set_terrain sets mgr->ht
- 
-	if(rmgr->noise_ampl)
-	 	CurrentScope->revaluate();
-    rock.p.z=rmgr->ht;
-    double delta=(rock.p.z-ground.p.z)/fabs(ground.p.z);
-	if(delta>0){
- 		rock.p.x=rmgr->rx*(1-rmgr->rdist);
- 		rock.p.y=rmgr->ry*(1-rmgr->rdist);
- 		
- 		S0.copy(rock);
- 		Td.tp->set_rock(true);
- 		//if(!is3D())
-			S0.set_flag(ROCKBODY);
+	bool test = is3D();
+	TerrainData rock;
+	TerrainData ground;
+	int i;
+	bool first = (right && right->typeValue() != ID_ROCKS);
+	bool last = getParent()->typeValue() != ID_ROCKS;
+	INIT;
+	S0.set_flag(ROCKLAYER);
+	int in_map = S0.get_flag(CLRTEXS);
+
+	if (CurrentScope->rpass()) {
+		INIT;
+		if(right) // ground
+			right->eval();
+		INIT;
+		Td.add_id();
+		Td.tp->set_rock(true);
+		Td.tp->ntexs=0;
+		Td.tp->set_rock(true);
+		if(!in_map)
+		S0.set_flag(CLRTEXS);
+		if(base)// rock texs
+			base->eval();
+		if(!in_map)// in case we were in another map on entry
+			S0.clr_flag(CLRTEXS);
+		return;
 	}
-	else{
+
+	if (!in_map && first)
+		Td.begin();
+	ground.p.z = 0;
+
+	INIT;
+	bool other_rock = false;
+	if (right)
+		right->eval(); // ground
+	other_rock = S0.get_flag(ROCKBODY);
+	S0.p.z-=Drop;
+	if (first) {
+		S0.next_id();
+		Td.insert_strata(S0);
+	}
+	ground.copy(S0);
+	INIT;
+
+	RockMgr *rmgr = (RockMgr*) mgr;
+	TNplacements::eval(); // evaluate common arguments (0-3)
+	TNarg &args = *((TNarg*) left);
+	TNarg *a = args.index(4);
+	if (a) {                // geometry exprs
+		double arg[3];
+		int n = getargs(a, arg, 3);
+		if (n > 0)
+			rmgr->zcomp = arg[0];      // compression factor
+		if (n > 1)
+			rmgr->drop = arg[1];       // drop factor
+	}
+	INIT;
+	if (base)
+		base->eval();
+	if (!S0.pvalid())
+	S0.p.z=ground.p.z;
+	rmgr->base = S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
+	S0.next_id();
+	rock.copy(S0);
+	INIT;
+	rmgr->ht = mgr->base;
+	rmgr->eval();  // calls set_terrain sets mgr->ht
+
+	if (rmgr->noise_ampl)
+		CurrentScope->revaluate();
+	rock.p.z = rmgr->ht;
+	double delta = (rock.p.z - ground.p.z) / fabs(ground.p.z);
+	if (delta > 0) {
+		rock.p.x = rmgr->rx * (1 - rmgr->rdist);
+		rock.p.y = rmgr->ry * (1 - rmgr->rdist);
+		S0.copy(rock);
+		if (!test) {
+			Td.tp->set_rock(true);
+			S0.set_flag(ROCKBODY);
+		}
+	}
+	else {
 		Td.tp->set_rock(false);
 		S0.copy(ground);
 		if(!other_rock)
-			S0.clr_flag(ROCKBODY);
+		S0.clr_flag(ROCKBODY);
 	}
-	if(rmgr->test() && hits>0) { // inside target radius
-		double x=1-cval;
-		if(rmgr->testColor()) {
-			S0.set_cvalid();
-			if(fabs(x)>0)
-				S0.c=Color(1-x,0,1);
-			else
-				S0.c=Color(1,1,0);	
-		}
-		if(rmgr->testDensity()) {
-			x=1/(cval+1e-6);
-			x=x*x; //*x*x;
-			Td.density+=lerp(cval,0,0.2,0,0.05*x);
-		}
-	}
-	if(!is3D()){
-		Td.insert_strata(rock);		  
-		if(!in_map && last)
-			Td.end();
-	}
+	Td.insert_strata(rock);
+	if (!in_map && last)
+		Td.end();
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists
