@@ -76,7 +76,6 @@ public:
 
 class Placement
 {
-protected:
 public:
 	Point4DL  	point;   // hash point
 	Point4D     center;	 // surface projected point
@@ -84,6 +83,16 @@ public:
 	int			hid;     // hash id
 	int			type;    // type id
 	int			users;
+	double 		ht;
+	double 		aveht;
+	double 		wtsum;
+	double 		dist;
+	int 		hits;
+	int 		visits;
+	int 		instance;
+	int 		place_hits;
+	PlacementMgr *mgr;
+
 	place_flags_u flags;
 
 	Placement(PlacementMgr&, Point4DL&,int);
@@ -213,6 +222,32 @@ public:
 	virtual Placement *make(Point4DL&,int);
 
 	friend class Placement;
+};
+
+class PlaceData
+{
+public:
+	int    type;
+	double distance;
+	double radius;
+	double ht;
+	double aveht;
+	double pntsize;
+	int instance;
+	Point center;
+
+	int visits;
+	Point4DL point;
+	Point base;
+	
+	PlacementMgr *mgr;
+	
+	PlaceData(Placement*,Point, double,double);
+	double value() { return distance;}
+	void print();
+	int get_id()				{ return type&PID;}
+	int get_class()				{ return type&PLACETYPE;}
+	int flip()				    { return type & FLIP;}
 };
 
 //************************************************************

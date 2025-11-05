@@ -488,58 +488,67 @@ void PlacementMgr::find_neighbors(Placement *placement)
 //************************************************************
 // class Placement
 //************************************************************
-Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
+Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 {
-    type=mgr.type;
+	mgr=&pmgr;
+    type=mgr->type;
 	hid=n;
 	double d,r,pf=1;
-	radius=0;//mgr.size;
+	radius=0;//mgr->size;
 	users=0;
 	flags.l=0;
+	ht=0;
+	aveht=0;
+	wtsum=0;
+	dist=1e16;
+	visits=0;
+	hits=0;
+	place_hits=0;
+	instance=0;
+	
 #ifdef DEBUG_PLACEMENTS
-	mgr.Stats.cmade++;
+	mgr->Stats.cmade++;
 #endif
-	double dns=mgr.density;
+	double dns=mgr->density;
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
 	
-    if(mgr.offset_valid())
-		p=p-mgr.offset;
+    if(mgr->offset_valid())
+		p=p-mgr->offset;
 
- 	p=(p+0.5)*mgr.size;
+ 	p=(p+0.5)*mgr->size;
 
-	if(mgr.dexpr){
+	if(mgr->dexpr){
 		Point4D p1=p*TheNoise.scale+TheNoise.offset;
 	    SPUSH;
 		TheNoise.push(p1);
 		CurrentScope->revaluate();
-		mgr.dexpr->eval();
+		mgr->dexpr->eval();
 		TheNoise.pop();
 		dns+=S0.s;
 		SPOP;
 		CurrentScope->revaluate();
 		dns=clamp(dns,0,1);
-		//mgr.density=dns;
 	}
 	if(rands[hid]+0.5>dns)
 		return;
 
 	d=fabs(p.length()-1);
-	double rf=1-mgr.mult;
-	if(mgr.ntest()){
-		if(d>0.8*mgr.size)
+	double rf=1-mgr->mult;
+	if(mgr->ntest()){
+		if(d>0.8*mgr->size)
 			return;
-		r=0.5*mgr.size*(1-URAND(1)*rf);
-		pf=2*mgr.size-r;
+		r=0.5*mgr->size*(1-URAND(1)*rf);
+		pf=2*mgr->size-r;
 	}
 	else{
-		if(d>0.4*mgr.size)
+		if(d>0.4*mgr->size)
 			return;
-		r=0.25*mgr.size*(1-URAND(1)*rf);
-		pf=0.8*mgr.size-r;
+		r=0.25*mgr->size*(1-URAND(1)*rf);
+		pf=0.8*mgr->size-r;
 	}
-	pf*=mgr.roff2;
+	pf*=mgr->roff2;
 	if(pf>0){
 		p.x+=pf*SRAND(2);
 		p.y+=pf*SRAND(3);
@@ -550,8 +559,8 @@ Placement::Placement(PlacementMgr &mgr,Point4DL &pt, int n) : point(pt)
 			p.w=0;
 	}
 	p=p.normalize();
-    if(mgr.offset_valid())
-	   	p=p+mgr.offset;
+    if(mgr->offset_valid())
+	   	p=p+mgr->offset;
 	if(TheNoise.noise3D())
 	    p.w=0;
 	center=p;
@@ -575,6 +584,34 @@ void Placement::dump(){
 void Placement::reset(){
 	flags.l=0;
 }
+//==================== PlantData ===============================
+PlaceData::PlaceData(Placement *pnt,Point bp,double d, double ps){
+	type=pnt->type;
+	ht=pnt->ht;
+	
+	point=pnt->point;
+	center=bp;
+	
+	aveht=pnt->aveht/pnt->wtsum;
+	base=bp;
+	
+	radius=pnt->radius;
+    pntsize=ps;
+ 	distance=d;//TheScene->vpoint.distance(t);
+	visits=pnt->visits;
+	instance=pnt->instance;
+	mgr=pnt->mgr;
+}
+
+void PlaceData::print(){
+	char msg[256];
+	Point pp=Point(point.x,point.y,point.z);
+	double h=TheMap->radius*TheMap->hscale;
+	sprintf(msg,"visits:%-1d ht:%-1.4f aveht:%-1.4f dist:%g",visits,h*ht/FEET,h*aveht/FEET,distance/FEET);
+	cout<<msg<<endl;
+	
+}
+
 //************************************************************
 // TNplacements class
 //************************************************************

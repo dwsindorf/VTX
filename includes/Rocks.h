@@ -10,10 +10,16 @@ class RockMgr;
 
 class Rock : public Placement
 {
-protected:
-    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
  public:
 	Rock(PlacementMgr&, Point4DL&,int);
+	virtual bool set_terrain(PlacementMgr  &mgr);
+};
+
+class Rock3D : public Rock
+{
+ public:
+    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
+	Rock3D(PlacementMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
 };
 
@@ -22,8 +28,7 @@ class RockMgr : public PlacementMgr
 protected:
 public:
     static TNode *default_noise;
-	Placement *make(Point4DL&,int);
-
+	virtual Placement *make(Point4DL&,int);
 	double  zcomp,drop,rdist,pdist;
 	double  noise_ampl;
 	double  rx,ry;
@@ -31,12 +36,22 @@ public:
 	~RockMgr();
 	RockMgr(int);
 
-	void init();
+	virtual void init();
+};
+
+class Rock3DMgr : public RockMgr
+{
+protected:
+public:
+    //static TNode *default_noise;
+	Rock3DMgr(int);
+	Placement *make(Point4DL&,int);
+//	void init();
 	void eval();
 	void reset();
 
-	virtual bool testColor();
-	virtual bool testDensity();
+	bool testColor();
+	bool testDensity();
 
 };
 

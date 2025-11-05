@@ -71,10 +71,6 @@ RockMgr::RockMgr(int i) : PlacementMgr(i)
 	pdist=1;
 	adapt_ptsize=1;
 	rx=ry=0;
-#ifdef TEST_ROCKS
-    set_testColor(true);
-#endif
-
 }
 RockMgr::~RockMgr()
 {
@@ -84,6 +80,14 @@ RockMgr::~RockMgr()
 #endif
         DFREE(default_noise);
 	}
+}
+
+//-------------------------------------------------------------
+// RockMgr::make() factory method to make Placement
+//-------------------------------------------------------------
+Placement *RockMgr::make(Point4DL &p, int n)
+{
+    return new Rock(*this,p,n);
 }
 
 //-------------------------------------------------------------
@@ -99,52 +103,15 @@ void RockMgr::init()
 	}
 	PlacementMgr::init();
 }
-void RockMgr::reset(){
-	//PlacementMgr::reset();
-	cval=0;
-	scnt=0;
-	sval=0;
-	hits=0;
-}
-
-//-------------------------------------------------------------
-// RockMgr::make() factory method to make Placement
-//-------------------------------------------------------------
-Placement *RockMgr::make(Point4DL &p, int n)
-{
-    return new Rock(*this,p,n);
-}
-
-void RockMgr::eval(){	
-	PlacementMgr::eval(); 
-	
-	if(!first() || !scnt)
-	    return;
-	for(int i=0;i<scnt;i++){
-	    slist.base[i]=sdata+i;
-	}
-	slist.size=scnt;
-	slist.sort();
-	
-	cval=slist.base[scnt-1]->f;
-}
-bool RockMgr::testColor() { 
-	return PlacementMgr::testColor()?is3D():false;
-}
-bool RockMgr::testDensity(){ 
-	return is3D()?true:false;
-}
-
 //************************************************************
-// class Rock
+// Rock class
 //************************************************************
 Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
-	mcObject=0;
 }
 
 //-------------------------------------------------------------
-// Rock::set_terrain()	impact terrain
+// Rock::set_terrain()	impact terrain 
 //-------------------------------------------------------------
 bool Rock::set_terrain(PlacementMgr &pmgr)
 {
@@ -225,11 +192,95 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 }
 
 //************************************************************
+// Rock3DMgr class
+//************************************************************
+Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
+{
+	MSK_SET(type,PLACETYPE,ROCKS);
+#ifdef TEST_ROCKS
+    set_testColor(true);
+#endif
+
+}
+
+void Rock3DMgr::reset(){
+	//PlacementMgr::reset();
+	cval=0;
+	scnt=0;
+	sval=0;
+	hits=0;
+}
+
+void Rock3DMgr::eval(){	
+	PlacementMgr::eval(); 
+	
+	if(!first() || !scnt)
+	    return;
+	for(int i=0;i<scnt;i++){
+	    slist.base[i]=sdata+i;
+	}
+	slist.size=scnt;
+	slist.sort();
+	
+	cval=slist.base[scnt-1]->f;
+}
+
+//-------------------------------------------------------------
+// RockMgr::make() factory method to make Placement
+//-------------------------------------------------------------
+Placement *Rock3DMgr::make(Point4DL &p, int n)
+{
+    return new Rock3D(*this,p,n);
+}
+
+bool Rock3DMgr::testColor() { 
+	return PlacementMgr::testColor()?true:false;
+}
+bool Rock3DMgr::testDensity(){ 
+	return true;
+}
+//************************************************************
+// Rock3D class
+//************************************************************
+Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
+{
+	mcObject=0;
+}
+//-------------------------------------------------------------
+// Rock::set_terrain()	impact terrain
+//-------------------------------------------------------------
+bool Rock3D::set_terrain(PlacementMgr &pmgr)
+{
+	Rock3DMgr &mgr=(Rock3DMgr&)pmgr;
+	sval=0;	
+	mgr.pdist=1;
+	sval=0;
+	if(radius==0)
+		return false;
+
+	double d=pmgr.mpt.distance(center);
+	if(d>radius)
+		return false;
+	sval=lerp(d/radius,0,1,0,1);
+	setActive(true);
+
+	sdata[scnt].v=hid;
+   	sdata[scnt].f=sval;
+  	if(scnt<SDATA_SIZE)
+  	    scnt++;
+	hits++;
+    return true;
+}
+
+//************************************************************
 // TNrocks class
 //************************************************************
 TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r,b)
 {
-    mgr=new RockMgr(type);
+	if(is3D())
+		mgr=new Rock3DMgr(type);
+	else	
+    	mgr=new RockMgr(type);
 	TNarg &args=*((TNarg *)left);
 	TNode *arg=args[3];
 	if(arg && (arg->typeValue() != ID_CONST))
@@ -359,8 +410,6 @@ NodeIF *TNrocks::addChild(NodeIF *x){
 void TNrocks::init()
 {
 	RockMgr *rmgr=(RockMgr*)mgr;
-	//g_rm.set3D(is3D());
-	//cout<<base->typeName()<<" "<<right->typeName()<<endl;
 	rmgr->init();
 	TNplacements::init();
 	TNarg &args=*((TNarg *)left);
@@ -388,10 +437,11 @@ void TNrocks::eval3d()
 		int nrocks=Td.tp->rocks.size;
 		rock_id=nrocks;	
 		mgr->instance=rock_id;
-		//Td.tp->rocks.add(this);
+		Td.tp->rocks.add(this);
+		//cout<<rock_id<<endl;
 		return;
 	}
-	RockMgr *rmgr=(RockMgr*)mgr;
+	Rock3DMgr *rmgr=(RockMgr*)mgr;
 	INIT;
 	if(right) // ground
 		right->eval();
@@ -401,10 +451,10 @@ void TNrocks::eval3d()
 
 	TNplacements::eval(); // evaluate common arguments (0-3)
  	INIT;
+	rmgr->reset();
+	rmgr->eval();  // calls set_terrain
 	
 	if(rmgr->test()){
-		rmgr->reset();
-		rmgr->eval();  // calls set_terrain
 		double x=1-cval;
 		S0.copy(ground);
 		if(hits>0) { // inside target radius
@@ -426,7 +476,6 @@ void TNrocks::eval3d()
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node
 //-------------------------------------------------------------
-//#define TEST
 void TNrocks::eval() {
 	if (!isEnabled() || TheScene->viewtype != SURFACE) {
 		if (right)
