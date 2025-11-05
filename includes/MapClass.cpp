@@ -51,7 +51,7 @@ static void water_test(MapNode *n);
 
 //**************** extern API area ************************
 
-int hits,misses,visits;
+extern int hits,misses,visits;
 int             recalced=0;
 int      		tcreated = 0, tdeleted = 0, tcount=0;
 int 			tscnt=0;

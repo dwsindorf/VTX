@@ -42,6 +42,15 @@ enum {
     FINAL   	= 0x80000000
 };
 
+class SData {
+public:
+    double v;
+    double f;
+    double value()   { return v;}
+};
+
+#define SDATA_SIZE 256
+
 
 typedef struct place_flags {
 	unsigned int  users	     : 8;	// users
@@ -87,7 +96,7 @@ public:
 	double 		aveht;
 	double 		wtsum;
 	double 		dist;
-	int 		hits;
+	//int 		hits;
 	int 		visits;
 	int 		instance;
 	int 		place_hits;
@@ -142,7 +151,8 @@ public:
 	double 			adapt_ptsize;
 	Point4D			mpt;
 	Point4D			offset;
-	int 			hashsize;	
+	int 			hashsize;
+	int 			cnt;
 	int index;
 	
 	PlacementStats Stats;
@@ -278,6 +288,11 @@ public:
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 
 };
+
+extern SData   sdata[SDATA_SIZE];
+//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
+extern int  scnt,hits;
+extern double sval,cval,htval;
 
 #endif
 

@@ -17,7 +17,6 @@ static char THIS_FILE[] = __FILE__;
 int place_gid=0;
 //int vtests=0,pts_fails=0,dns_fails=0;
 
-extern int hits,visits;
 
 //************************************************************
 // classes Placable, PlacementMgr
@@ -30,7 +29,19 @@ extern int hits,visits;
  
 static TerrainData Td;
 extern double ptable[];
-extern double Hscale;
+extern double Hscale,Height;
+
+double sval=0;
+double cval=0;
+double htval=0;
+int    hits=0;
+int    misses;
+int    scnt=0;
+int    visits=0;
+
+//#define SDATA_SIZE 1024
+SData   sdata[SDATA_SIZE];
+ValueList<SData*> slist(sdata,SDATA_SIZE);
 
 double MaxSize;
 
@@ -196,13 +207,8 @@ void PlacementMgr::reset()
 		}		
 	}
 	list.reset();
-	//PlacementStats::init();
-#ifdef DEBUG_PLACEMENTS
-//	chits=cvisits=crejects=0;
-//	nhits=nmisses=nvisits=nrejects=0;
-//	valid_tests=valid_dns_fails=valid_pts_fails=0;
-//	cmade=cfreed=0;
-#endif
+	cval=0;
+	scnt=0;
 }
 
 //-------------------------------------------------------------
@@ -211,6 +217,7 @@ void PlacementMgr::reset()
 void PlacementMgr::init()
 {
 	static bool finisher_added=false;
+	cnt=0;
 	if(hash==0){
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
@@ -313,6 +320,11 @@ void PlacementMgr::eval()
 		 pv.w=0;
 	double l=pv.length();
 	pv=pv.normalize();  // project on unit sphere
+	
+	sval=0;
+	hits=0;
+	cval=0;
+	scnt=0;
 
 	msize=maxsize;//ntest()?maxsize:maxsize*4;
 	for(lvl=0,size=msize;lvl<levels;size*=0.5*(level_mult+1),lvl++){
@@ -393,6 +405,7 @@ void PlacementMgr::eval()
 				Stats.crejects++;
 		else
 			Stats.crejects++;
+
 		if(ntest()){
 		  	find_neighbors(h);
 			list.ss();
@@ -401,6 +414,7 @@ void PlacementMgr::eval()
 				//	continue;
 		  		if(!h->set_terrain(*this))
 		  			Stats.nmisses++;
+
 		  		h->users--;
 				if(hash[h->hid]!=h){
 				    hash[h->hid]=0;
@@ -411,6 +425,17 @@ void PlacementMgr::eval()
 			list.reset();
 		}
 	}
+
+	if(!first() || !scnt)
+	    return;
+	for(int i=0;i<scnt;i++){
+	    slist.base[i]=sdata+i;
+	}
+	slist.size=scnt;
+	slist.sort();
+	
+	cval=slist.base[scnt-1]->f;
+
 }
 
 //-------------------------------------------------------------
@@ -494,7 +519,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
     type=mgr->type;
 	hid=n;
 	double d,r,pf=1;
-	radius=0;//mgr->size;
+	radius=0;
 	users=0;
 	flags.l=0;
 	ht=0;
@@ -502,7 +527,6 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	wtsum=0;
 	dist=1e16;
 	visits=0;
-	hits=0;
 	place_hits=0;
 	instance=0;
 	
@@ -572,18 +596,66 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 //-------------------------------------------------------------
 // Placement::set_terrain()	impact terrain
 //-------------------------------------------------------------
-bool Placement::set_terrain(PlacementMgr &mgr)
+bool Placement::set_terrain(PlacementMgr &pmgr)
 {
-    // extended classes must override this
-	return false;
+	double d=pmgr.mpt.distance(center);
+	d=d/radius;
+
+	sval=0;
+	visits++;
+	
+	if(d>1.0)
+		return false;
+	if(!flags.s.valid)
+		return false;
+
+    flags.s.active=true;
+	sval=lerp(d,0,1.0,0,1);
+
+    double wt=1/(0.01+sval);
+    aveht+=Height*wt;	
+    wtsum+=wt;
+
+	if(d<dist){
+		ht=Height; // closest to center
+		dist=d;
+		place_hits++;
+	}
+	hits++;
+
+ 	sdata[scnt].v=hid;
+   	sdata[scnt].f=sval;
+  	if(scnt<SDATA_SIZE)
+  	    scnt++;
+	return true;
 }
 
-void Placement::dump(){
-	// extended classes can override this
-}
 void Placement::reset(){
-	flags.l=0;
+	flags.s.active=0;
+	visits=0;
+	place_hits=0;
+	dist=1e6;
+	aveht=0;
+	wtsum=0;
 }
+void Placement::dump(){
+	if(flags.s.valid && flags.s.active){
+		Point4D p(point);
+		p=center;
+		char msg[256];
+		char vh[32];
+		sprintf(vh,"%d:%d",visits,place_hits);
+		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",mgr->cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
+		cout<<msg<<endl;
+	}
+}
+
+//void Placement::dump(){
+//	// extended classes can override this
+//}
+//void Placement::reset(){
+//	flags.l=0;
+//}
 //==================== PlantData ===============================
 PlaceData::PlaceData(Placement *pnt,Point bp,double d, double ps){
 	type=pnt->type;
@@ -724,7 +796,7 @@ void TNplacements::init()
 }
 
 //-------------------------------------------------------------
-// TNplacements::eval() evaluate commom arguments
+// TNplacements::eval() evaluate common arguments
 //-------------------------------------------------------------
 void TNplacements::eval()
 {

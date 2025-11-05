@@ -19,44 +19,14 @@ class Plant;
 class PlantPoint : public Placement
 {
 public:
-	double ht;
-	double aveht;
-	double wtsum;
-	double dist;
-	int place_hits;
-	int visits;
-	PlantMgr *mgr;
-
-	int instance;
-
 	PlantPoint(PlantMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
-	void dump();
-	void reset();
 };
 
-class PlantData
+class PlantData : public PlaceData
 {
 public:
-	int    type;
-	double distance;
-	double radius;
-	double ht;
-	double aveht;
-	double pntsize;
-	int instance;
-
-	int visits;
-	Point4DL point;
-	Point base;
-	PlantMgr *mgr;
-	
 	PlantData(PlantPoint*,Point, double,double);
-	double value() { return distance;}
-	void print();
-	int get_id()				{ return type&PID;}
-	int get_class()				{ return type&PLACETYPE;}
-	int flip()				    { return type & FLIP;}
 };
 
 

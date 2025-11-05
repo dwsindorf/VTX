@@ -32,7 +32,7 @@ static ValueList<CraterData*> clist(cdata,256);
 static int          ccnt;
 static double  cmax;
 static double  cmin;
-static double  cval;
+//static double  cval;
 static double  dval;
 static double  aht;
 static double  bht;

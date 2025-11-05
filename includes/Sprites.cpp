@@ -64,10 +64,10 @@ extern void dec_tabs();
 extern char   tabs[];
 extern int addtabs;
 
-static double sval=0;
-static double cval=0;
+//static double sval=0;
+//static double cval=0;
 static double mind=0;
-static double htval=0;
+//static double htval=0;
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1.0;    // move to argument ?
@@ -95,7 +95,7 @@ SpriteMgr g_sm(FINAL|DENSITY_TEST|COLOR_TEST);
 SpriteMgr g_sm(FINAL|DENSITY_TEST);
 #endif
 
-static int hits=0;
+//static int hits=0;
 //#define DEBUG_PMEM
 
 //#define COLOR_TEST
@@ -116,17 +116,19 @@ static void show_stats()
 }
 #endif
 
-class SData {
-public:
-    double v;
-    double f;
-    double value()   { return v;}
-};
+//class SData {
+//public:
+//    double v;
+//    double f;
+//    double value()   { return v;}
+//};
 
-#define SDATA_SIZE 256
-static SData   sdata[SDATA_SIZE];
-static ValueList<SData*> slist(sdata,SDATA_SIZE);
-static int          scnt;
+//#define SDATA_SIZE 256
+//static SData   sdata[SDATA_SIZE];
+//static ValueList<SData*> slist(sdata,SDATA_SIZE);
+//static int          scnt;
+
+//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
 
 //ValueList<FileData*> SpriteImageMgr::sprite_dirs;
 
@@ -199,18 +201,18 @@ void SpriteMgr::init()
 
 void SpriteMgr::eval(){	
 	PlacementMgr::eval(); 
-	if(!first() || !scnt)
-	    return;
-	for(int i=0;i<scnt;i++){
-	    slist.base[i]=sdata+i;
-	}
-	slist.size=scnt;
-	slist.sort();
-	
-	for(int i=0;i<scnt;i++){
-	   double f=slist.base[i]->f;
-	   cval=f;
-	}
+//	if(!first() || !scnt)
+//	    return;
+//	for(int i=0;i<scnt;i++){
+//	    slist.base[i]=sdata+i;
+//	}
+//	slist.size=scnt;
+//	slist.sort();
+//	
+//	for(int i=0;i<scnt;i++){
+//	   double f=slist.base[i]->f;
+//	   cval=f;
+//	}
 }
 
 void SpriteMgr::reset(){

@@ -217,25 +217,26 @@ extern char tabs[];
 extern int addtabs;
 
 extern int test1,test2,test3,test4,test5;
-static double sval=0;
-static double cval=0;
-static double mind=0;
-static double htval=0;
+//static double sval=0;
+//static double cval=0;
+//static double htval=0;
+//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
+
 static int ncalls=0;
-static int nhits=0;
+//static int nhits=0;
 static int oldmode=0;
 
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 static double ht_offset=0.0;
 static double threshold=1;
-static int cnt=0;
+//static int cnt=0;
 static int tests=0;
 static int pts_fails=0;
 static int dns_fails=0;
 
 static TerrainData Td;
-static int hits=0;
+//static int hits=0;
 static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
@@ -262,17 +263,17 @@ static void show_stats()
 #endif
 
 static int randval=0;
-class SData {
-public:
-    double v;
-    double f;
-    double value()   { return v;}
-};
-
-#define SDATA_SIZE 1024
-static SData   sdata[SDATA_SIZE];
-static ValueList<SData*> slist(sdata,SDATA_SIZE);
-static int          scnt;
+//class SData {
+//public:
+//    double v;
+//    double f;
+//    double value()   { return v;}
+//};
+//
+//#define SDATA_SIZE 1024
+//static SData   sdata[SDATA_SIZE];
+//static ValueList<SData*> slist(sdata,SDATA_SIZE);
+//static int          scnt;
 static bool update_needed=true;
 static bool nocache=false;
 LeafImageMgr leaf_mgr; // global image manager
@@ -356,10 +357,8 @@ void PlantMgr::init()
   	printf("PlantMgr::init()\n");
 #endif
 	PlacementMgr::init();
-	//Plant::reset();
+
 	ncalls=0;
-	nhits=0;
-	cnt=0;
 	ss();
   	reset();
   	shadow_count=0;
@@ -371,24 +370,11 @@ void PlantMgr::init()
 
 void PlantMgr::eval(){	
 	PlacementMgr::eval(); 
-	if(!first() || !scnt)
-	    return;
-	for(int i=0;i<scnt;i++){
-	    slist.base[i]=sdata+i;
-	}
-	slist.size=scnt;
-	slist.sort();
-	
-	cval=slist.base[scnt-1]->f;
 }
 
 void PlantMgr::reset(){
 	PlacementMgr::reset();
-	//Plant::reset();
 	tests=pts_fails=dns_fails=0;
-	cval=0;
-	scnt=0;
-	//cout<<"PlantMgr::reset()"<<endl;
 }
 //-------------------------------------------------------------
 // PlantPoint::set_terrain()	impact terrain
@@ -649,8 +635,8 @@ void PlantMgr::render(){
 			PlantData *s=Plant::data[i];
 			Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
 			int id=s->get_id();
-			
-			TNplant *plant=s->mgr->plant;
+			PlantMgr *pmgr=(PlantMgr*)s->mgr;
+			TNplant *plant=pmgr->plant;
 	
 			plant->size=s->radius; // placement size
 			plant->base_point=s->base*(1-plant->size*plant->base_drop);
@@ -670,7 +656,8 @@ void PlantMgr::render(){
 	}
 	else {
 		PlantData *s=Plant::data[0];
-		TNplant *plant=s->mgr->plant;
+		PlantMgr *pmgr=(PlantMgr*)s->mgr;
+		TNplant *plant=pmgr->plant;
 		plant->setNormal();
 	}
 		
@@ -740,18 +727,6 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 //************************************************************
 PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
-	ht=0;
-	aveht=0;
-	wtsum=0;
-	dist=1e16;
-	visits=0;
-	place_hits=0;
-	mind=1e16;
-	mgr=&m;
-	
-	instance=m.instance;
-
-	flags.s.active=false;
 }
 
 //-------------------------------------------------------------
@@ -759,85 +734,12 @@ PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 //-------------------------------------------------------------
 bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 {
-	double d=pmgr.mpt.distance(center);
-	d=d/radius;
-	PlantMgr &mgr=(PlantMgr&)pmgr;
-	sval=0;
-	visits++;
-	
-	if(d>threshold)
-		return false;
-	if(!flags.s.valid)
-		return false;
-
-    flags.s.active=true;
-	sval=lerp(d,0,threshold,0,1);
-
-    double wt=1/(0.01+sval);
-    aveht+=Height*wt;
-	
-    wtsum+=wt;
-
-	if(d<dist){
-		ht=Height; // closest to center
-		dist=d;
-		mind=d;
-		place_hits++;
-	}
-	hits++;
-
- 	sdata[scnt].v=hid;
-   	sdata[scnt].f=sval;
-  	if(scnt<SDATA_SIZE)
-  	    scnt++;
-	return true;
-}
-
-void PlantPoint::reset(){
-	flags.s.active=0;
-	visits=0;
-	place_hits=0;
-	dist=1e6;
-	aveht=0;
-	wtsum=0;
-}
-void PlantPoint::dump(){
-	if(flags.s.valid && flags.s.active){
-		Point4D p(point);
-		p=center;
-		char msg[256];
-		char vh[32];
-		sprintf(vh,"%d:%d",visits,place_hits);
-		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
-		cout<<msg<<endl;
-	}
+	return Placement::set_terrain(pmgr);
 }
 //==================== PlantData ===============================
-PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps){
-	type=pnt->type;
-	ht=pnt->ht;
-	
-	point=pnt->point;
-	
-	aveht=pnt->aveht/pnt->wtsum;
-	base=bp;
-	
-	radius=pnt->radius;
-    pntsize=ps;
- 	distance=d;//TheScene->vpoint.distance(t);
-	visits=pnt->visits;
-	instance=pnt->instance;
-	mgr=pnt->mgr;
+PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps): PlaceData(pnt,bp,d,ps){
 }
 
-void PlantData::print(){
-	char msg[256];
-	Point pp=Point(point.x,point.y,point.z);
-	double h=TheMap->radius*TheMap->hscale;
-	sprintf(msg,"visits:%-1d ht:%-1.4f aveht:%-1.4f dist:%g",visits,h*ht/FEET,h*aveht/FEET,distance/FEET);
-	cout<<msg<<endl;
-	
-}
 //===================== Plant ==============================
 ValueList<PlantData*> Plant::data;
 //-------------------------------------------------------------
@@ -929,7 +831,7 @@ void Plant::collect()
 		    if(pts_test && s->visits>=minv){
 		    	new_plants++;
 		    	if(plant)
-		    	plant->expr->created++;
+		    		plant->expr->created++;
 		    	data.add(new PlantData((PlantPoint*)s,bp,d,pts));
 		    }
 		}
@@ -1177,16 +1079,10 @@ void TNplant::set_surface()
 					+7*plant_id
 					);
 	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
-	
-	sval=0;
-	hits=0;
-	cval=0;
-	scnt=0;
 
 	smgr->eval();  // calls PlantPoint.set_terrain
    
 	if(hits>0) { // inside target radius
-		nhits++;
 		double x=1-cval;
 		if(g_pm.testColor()) {
 			c=Color(0,x,1);
@@ -1198,7 +1094,6 @@ void TNplant::set_surface()
 			Td.density+=lerp(cval,0,0.2,0,0.05*x);
 		}
 	}
-
 }
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node

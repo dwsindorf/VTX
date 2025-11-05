@@ -46,9 +46,7 @@ public:
     //static TNode *default_noise;
 	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
-//	void init();
 	void eval();
-	void reset();
 
 	bool testColor();
 	bool testDensity();

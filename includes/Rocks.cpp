@@ -19,20 +19,16 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-class SData {
-public:
-    double v;
-    double f;
-    double value()   { return v;}
-};
 
-#define SDATA_SIZE 256
-static SData   sdata[SDATA_SIZE];
-static ValueList<SData*> slist(sdata,SDATA_SIZE);
-static int          scnt;
-static double sval=0;
-static double cval=0;
-static int hits=0;
+//#define SDATA_SIZE 256
+//static SData   sdata[SDATA_SIZE];
+//static ValueList<SData*> slist(sdata,SDATA_SIZE);
+//static int          scnt;
+//static double sval=0;
+//static double cval=0;
+//static int hits=0;
+//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
+
 
 // 3d rocks using marching cubes
 // TODO:
@@ -132,11 +128,9 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 
 	if(d>t)
 		return false;
-	sval=lerp(d/radius,0,1,0,1);
 	
 	mgr.pdist=d/radius;
 	mgr.pdist=clamp(mgr.pdist,0,1);
-	//cout<<mgr.pdist<<endl;
 
  	if(mgr.noise_ampl>0){
  		double nf=mgr.noise_ampl*radius/Hscale;
@@ -181,13 +175,6 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 		z+=(1-mgr.zcomp)*sqrt(r*r-d*d)/Hscale;
     if(z>mgr.ht)
         mgr.ht=z;
-    
- 	sdata[scnt].v=hid;
-   	sdata[scnt].f=sval;
-  	if(scnt<SDATA_SIZE)
-  	    scnt++;
-	hits++;
-
     return true;
 }
 
@@ -203,26 +190,8 @@ Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
 
 }
 
-void Rock3DMgr::reset(){
-	//PlacementMgr::reset();
-	cval=0;
-	scnt=0;
-	sval=0;
-	hits=0;
-}
-
 void Rock3DMgr::eval(){	
 	PlacementMgr::eval(); 
-	
-	if(!first() || !scnt)
-	    return;
-	for(int i=0;i<scnt;i++){
-	    slist.base[i]=sdata+i;
-	}
-	slist.size=scnt;
-	slist.sort();
-	
-	cval=slist.base[scnt-1]->f;
 }
 
 //-------------------------------------------------------------
@@ -251,25 +220,26 @@ Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
 //-------------------------------------------------------------
 bool Rock3D::set_terrain(PlacementMgr &pmgr)
 {
-	Rock3DMgr &mgr=(Rock3DMgr&)pmgr;
-	sval=0;	
-	mgr.pdist=1;
-	sval=0;
-	if(radius==0)
-		return false;
-
-	double d=pmgr.mpt.distance(center);
-	if(d>radius)
-		return false;
-	sval=lerp(d/radius,0,1,0,1);
-	setActive(true);
-
-	sdata[scnt].v=hid;
-   	sdata[scnt].f=sval;
-  	if(scnt<SDATA_SIZE)
-  	    scnt++;
-	hits++;
-    return true;
+	return Placement::set_terrain(pmgr);
+//	Rock3DMgr &mgr=(Rock3DMgr&)pmgr;
+//	sval=0;	
+//	mgr.pdist=1;
+//	sval=0;
+//	if(radius==0)
+//		return false;
+//
+//	double d=pmgr.mpt.distance(center);
+//	if(d>radius)
+//		return false;
+//	sval=lerp(d/radius,0,1,0,1);
+//	setActive(true);
+//
+//	sdata[scnt].v=hid;
+//   	sdata[scnt].f=sval;
+//  	if(scnt<SDATA_SIZE)
+//  	    scnt++;
+//	hits++;
+//    return true;
 }
 
 //************************************************************
@@ -286,6 +256,7 @@ TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r
 	if(arg && (arg->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
 	set_collapsed();
+	rock_id=0;
 }
 
 //-------------------------------------------------------------
@@ -420,7 +391,7 @@ void TNrocks::init()
 		rmgr->noise_ampl=S0.s;
 		rmgr->rnoise=args[7];			
 	}
-	rmgr->set_first(1);
+	mgr->set_first(1);
 }
 
 
@@ -451,9 +422,9 @@ void TNrocks::eval3d()
 
 	TNplacements::eval(); // evaluate common arguments (0-3)
  	INIT;
-	rmgr->reset();
-	rmgr->eval();  // calls set_terrain
-	
+		
+ 	rmgr->eval();
+
 	if(rmgr->test()){
 		double x=1-cval;
 		S0.copy(ground);
