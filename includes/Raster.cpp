@@ -18,7 +18,8 @@ extern double lcos(double t);
 extern double Rand();
 extern int  RandSeed;
 extern void Srand(int);
-extern int hits,visits,test5;
+//extern int hits,visits,test5;
+extern int test5;
 extern double Theta, Phi,Rscale;
 extern Point MapPt;
 

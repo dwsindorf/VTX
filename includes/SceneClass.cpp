@@ -45,7 +45,7 @@ double mark_stop=0;
 #define DEBUG_TIMING
 #define VERIFY_OPEN
 
-extern int hits,visits;
+//extern int hits,visits;
 extern int test3;
 
 static VFV initializers[32];
@@ -714,8 +714,8 @@ void Scene::show_status(int which)
 //-------------------------------------------------------------
 void Scene::show_info(int which)
 {
-	int svisits=visits;
-	int shits=hits;
+	int svisits=HashTable::visits;
+	int shits=HashTable::hits;
 	if(tnoise_visits){
 		svisits=tnoise_visits;
 		shits=tnoise_hits;

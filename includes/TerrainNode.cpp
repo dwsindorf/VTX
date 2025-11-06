@@ -11,7 +11,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 extern char tabs[];
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 extern Scope   *CurrentScope;
 extern int addtabs;

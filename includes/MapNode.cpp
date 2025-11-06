@@ -33,7 +33,7 @@ extern double INV2PI;
 
 //**************** extern API area ************************
 
-extern int hits,misses,visits;
+//extern int hits,misses,visits;
 extern double   ptable[];
 
 MapData        *mdcycle;

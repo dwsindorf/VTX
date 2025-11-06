@@ -63,7 +63,7 @@ static LongSym itypes[]={
 };
 NameList<LongSym*> ITypes(itypes,sizeof(itypes)/sizeof(LongSym));
 
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 static TerrainData Td;
 

@@ -79,7 +79,7 @@ static LongSym nopts[]={
 NameList<LongSym*> NOpts(nopts,sizeof(nopts)/sizeof(LongSym));
 
 extern double Pscale,Gscale,Radius,MaxSize;
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 static TerrainData Td;
 

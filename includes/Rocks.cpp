@@ -113,7 +113,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 {
 	double r,z,rm=0;
 	RockMgr &mgr=(RockMgr&)pmgr;
-	sval=0;	
+	
 	mgr.pdist=1;
 	if(radius==0)
 		return false;
@@ -187,7 +187,6 @@ Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
-
 }
 
 void Rock3DMgr::eval(){	
@@ -221,25 +220,6 @@ Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
 bool Rock3D::set_terrain(PlacementMgr &pmgr)
 {
 	return Placement::set_terrain(pmgr);
-//	Rock3DMgr &mgr=(Rock3DMgr&)pmgr;
-//	sval=0;	
-//	mgr.pdist=1;
-//	sval=0;
-//	if(radius==0)
-//		return false;
-//
-//	double d=pmgr.mpt.distance(center);
-//	if(d>radius)
-//		return false;
-//	sval=lerp(d/radius,0,1,0,1);
-//	setActive(true);
-//
-//	sdata[scnt].v=hid;
-//   	sdata[scnt].f=sval;
-//  	if(scnt<SDATA_SIZE)
-//  	    scnt++;
-//	hits++;
-//    return true;
 }
 
 //************************************************************
@@ -424,25 +404,8 @@ void TNrocks::eval3d()
  	INIT;
 		
  	rmgr->eval();
-
-	if(rmgr->test()){
-		double x=1-cval;
-		S0.copy(ground);
-		if(hits>0) { // inside target radius
-			if(rmgr->testColor()) {
-				S0.set_cvalid();
-				if(fabs(x)>0)
-					S0.c=Color(1-x,0,1);
-				else
-					S0.c=Color(1,1,0);	
-			}
-			if(rmgr->testDensity()) {
-				x=1/(cval+1e-6);
-				x=x*x; //*x*x;
-				Td.density+=lerp(cval,0,0.2,0,0.05*x);
-			}
-		}
-	}	
+	S0.copy(ground);
+	rmgr->setTests();
 }
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node

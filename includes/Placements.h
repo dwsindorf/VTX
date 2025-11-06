@@ -96,12 +96,10 @@ public:
 	double 		aveht;
 	double 		wtsum;
 	double 		dist;
-	//int 		hits;
 	int 		visits;
 	int 		instance;
 	int 		place_hits;
 	PlacementMgr *mgr;
-
 	place_flags_u flags;
 
 	Placement(PlacementMgr&, Point4DL&,int);
@@ -153,7 +151,12 @@ public:
 	Point4D			offset;
 	int 			hashsize;
 	int 			cnt;
-	int index;
+	int 			index;
+	
+	static SData   sdata[SDATA_SIZE];
+	static ValueList<SData*> slist;
+	static int  scnt,hits;
+	static double sval,cval,htval;
 	
 	PlacementStats Stats;
 
@@ -228,6 +231,8 @@ public:
 	virtual void eval();
 	virtual void dump();
 	virtual bool valid();
+	virtual void setTests();
+
 
 	virtual Placement *make(Point4DL&,int);
 
@@ -288,11 +293,6 @@ public:
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 
 };
-
-extern SData   sdata[SDATA_SIZE];
-//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
-extern int  scnt,hits;
-extern double sval,cval,htval;
 
 #endif
 

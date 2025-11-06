@@ -22,7 +22,7 @@ extern double Hscale,Rscale;
 extern double ptable[];
 double  Mheight,Drop,Margin;
 
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 static TerrainData Td;
 extern int addtabs;

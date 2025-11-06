@@ -13,7 +13,7 @@
 
 //**************** extern API area ************************
 
-extern int     hits, misses, visits;
+//extern int     hits, misses, visits;
 extern double  Rscale, Gscale, Pscale, Height,MaxHt,MinHt,FHt,Hardness,Phi;
 extern double  zslope();
 extern int test_flag;
@@ -77,6 +77,10 @@ void render_finish()
 	Render.validate_normals();
 #endif
 }
+
+int HashTable::hits=0;
+int HashTable::visits=0;
+int HashTable::misses=0;
 
 //************************************************************
 // MapData class

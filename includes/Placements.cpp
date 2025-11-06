@@ -31,17 +31,17 @@ static TerrainData Td;
 extern double ptable[];
 extern double Hscale,Height;
 
-double sval=0;
-double cval=0;
-double htval=0;
-int    hits=0;
+//double sval=0;
+//double cval=0;
+//double htval=0;
+//int    hits=0;
 int    misses;
-int    scnt=0;
+//int    scnt=0;
 int    visits=0;
 
 //#define SDATA_SIZE 1024
-SData   sdata[SDATA_SIZE];
-ValueList<SData*> slist(sdata,SDATA_SIZE);
+//SData   sdata[SDATA_SIZE];
+//ValueList<SData*> slist(sdata,SDATA_SIZE);
 
 double MaxSize;
 
@@ -123,7 +123,13 @@ void PlacementStats::exec(){
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
 
-//LinkedList<Placement*> PlacementMgr::list;
+SData  PlacementMgr::sdata[SDATA_SIZE];
+ValueList<SData*> PlacementMgr::slist(sdata,SDATA_SIZE);
+int PlacementMgr::scnt=0;
+int PlacementMgr::hits=0;
+double PlacementMgr::sval=0;
+double PlacementMgr::cval=0;
+double PlacementMgr::htval=0;
 
 PlacementMgr::PlacementMgr(int i, int h)
 {
@@ -235,6 +241,25 @@ void PlacementMgr::init()
 	reset();
 }
 
+void PlacementMgr::setTests() {
+	if(!test() || hits==0)
+		return;
+	double x=1-cval;
+	if(testColor()) {
+		S0.set_cvalid();
+		if(fabs(x)>0)
+			S0.c=Color(1-x,0,1);
+		else
+			S0.c=Color(1,1,0);
+		Td.diffuse=Td.diffuse.mix(S0.c,0.5);
+	}
+	if(testDensity()) {
+		x=1/(cval+1e-6);
+		x=x*x; //*x*x;
+		Td.density+=lerp(cval,0,0.2,0,0.05*x);
+	}
+}
+
 //-------------------------------------------------------------
 // PlacementMgr::make()	virtual factory method to make Placement
 //-------------------------------------------------------------
@@ -260,7 +285,6 @@ Placement *PlacementMgr::next()
 		h=hash[index];
 	}
 	index++;
-	//hits++;
     return h;
 }
 void PlacementMgr::dump(){
@@ -527,7 +551,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	wtsum=0;
 	dist=1e16;
 	visits=0;
-	place_hits=0;
+	//place_hits=0;
 	instance=0;
 	
 #ifdef DEBUG_PLACEMENTS
@@ -601,7 +625,7 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 
-	sval=0;
+	PlacementMgr::sval=0;
 	visits++;
 	
 	if(d>1.0)
@@ -610,9 +634,9 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 		return false;
 
     flags.s.active=true;
-	sval=lerp(d,0,1.0,0,1);
+    PlacementMgr::sval=lerp(d,0,1.0,0,1);
 
-    double wt=1/(0.01+sval);
+    double wt=1/(0.01+PlacementMgr::sval);
     aveht+=Height*wt;	
     wtsum+=wt;
 
@@ -621,12 +645,12 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 		dist=d;
 		place_hits++;
 	}
-	hits++;
+	PlacementMgr::hits++;
 
- 	sdata[scnt].v=hid;
-   	sdata[scnt].f=sval;
-  	if(scnt<SDATA_SIZE)
-  	    scnt++;
+	PlacementMgr::sdata[PlacementMgr::scnt].v=hid;
+	PlacementMgr::sdata[PlacementMgr::scnt].f=PlacementMgr::sval;
+  	if(PlacementMgr::scnt<SDATA_SIZE)
+  		PlacementMgr::scnt++;
 	return true;
 }
 

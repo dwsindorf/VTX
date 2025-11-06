@@ -18,7 +18,7 @@
 //#define DEBUG_STARS
 
 extern double Radius,Theta,Phi,Density;
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 static OctTree *octree=0;
 static MinMax mx1,mx2;

@@ -217,26 +217,21 @@ extern char tabs[];
 extern int addtabs;
 
 extern int test1,test2,test3,test4,test5;
-//static double sval=0;
-//static double cval=0;
-//static double htval=0;
-//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
 
 static int ncalls=0;
-//static int nhits=0;
 static int oldmode=0;
 
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 static double ht_offset=0.0;
 static double threshold=1;
-//static int cnt=0;
+
 static int tests=0;
 static int pts_fails=0;
 static int dns_fails=0;
 
 static TerrainData Td;
-//static int hits=0;
+
 static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
@@ -263,17 +258,7 @@ static void show_stats()
 #endif
 
 static int randval=0;
-//class SData {
-//public:
-//    double v;
-//    double f;
-//    double value()   { return v;}
-//};
-//
-//#define SDATA_SIZE 1024
-//static SData   sdata[SDATA_SIZE];
-//static ValueList<SData*> slist(sdata,SDATA_SIZE);
-//static int          scnt;
+
 static bool update_needed=true;
 static bool nocache=false;
 LeafImageMgr leaf_mgr; // global image manager
@@ -316,6 +301,10 @@ bool PlantMgr::first_instance=false;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 {
+#ifdef TEST_PLANTS
+    set_testColor(true);
+#endif
+
 #ifdef DUMP
 	if(!first_instance)
 		add_finisher();
@@ -1007,7 +996,7 @@ void TNplant::set_surface()
 	Color c =Color(1,1,1);
 	PlantMgr *smgr=(PlantMgr*)mgr;
 	
-	htval=Height;
+	PlacementMgr::htval=Height;
 	ncalls++;
 	
 	INIT;
@@ -1081,19 +1070,7 @@ void TNplant::set_surface()
 	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
 
 	smgr->eval();  // calls PlantPoint.set_terrain
-   
-	if(hits>0) { // inside target radius
-		double x=1-cval;
-		if(g_pm.testColor()) {
-			c=Color(0,x,1);
-			Td.diffuse=Td.diffuse.mix(c,0.5);
-		}
-		if(g_pm.testDensity()) {
-			x=1/(cval+1e-6);
-			x=x*x; //*x*x;
-			Td.density+=lerp(cval,0,0.2,0,0.05*x);
-		}
-	}
+	g_pm.setTests();
 }
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node

@@ -8,7 +8,7 @@
 
 extern Map     *TheMap;
 extern Point    MapPt;
-extern int hits,misses,visits;
+//extern int hits,misses,visits;
 
 extern NameList<LongSym*> NOpts;
 

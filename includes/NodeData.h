@@ -131,6 +131,9 @@ public:
 	Hdata *hdata;
 	int size;
 	int mask;
+	static int hits;
+	static int visits;
+	static int misses;
 	HashTable(int n) {
 		resize(n);
 		debug=0;
@@ -143,6 +146,7 @@ public:
 		delete []hdata;
 		hdata=0;
 	}
+	static void reset(){hits=visits=misses=0;}
 	void resize(int n){
 		if(hdata)
 			delete []hdata;

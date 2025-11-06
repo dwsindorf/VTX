@@ -64,17 +64,12 @@ extern void dec_tabs();
 extern char   tabs[];
 extern int addtabs;
 
-//static double sval=0;
-//static double cval=0;
 static double mind=0;
-//static double htval=0;
+
 static int ncalls=0;
 static int nhits=0;
 static double thresh=1.0;    // move to argument ?
 static double ht_offset=0.5; // move to argument ?
-
-//static double roff_value=0;
-//static double roff2_value=0.05*PI;
 
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
@@ -115,22 +110,6 @@ static void show_stats()
 	cout<<"calls="<<ncalls<< " hits="<<nhits<<endl;
 }
 #endif
-
-//class SData {
-//public:
-//    double v;
-//    double f;
-//    double value()   { return v;}
-//};
-
-//#define SDATA_SIZE 256
-//static SData   sdata[SDATA_SIZE];
-//static ValueList<SData*> slist(sdata,SDATA_SIZE);
-//static int          scnt;
-
-//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
-
-//ValueList<FileData*> SpriteImageMgr::sprite_dirs;
 
 void SpriteImageMgr::setImageBaseDir(){
 	static char base[512];
@@ -201,25 +180,11 @@ void SpriteMgr::init()
 
 void SpriteMgr::eval(){	
 	PlacementMgr::eval(); 
-//	if(!first() || !scnt)
-//	    return;
-//	for(int i=0;i<scnt;i++){
-//	    slist.base[i]=sdata+i;
-//	}
-//	slist.size=scnt;
-//	slist.sort();
-//	
-//	for(int i=0;i<scnt;i++){
-//	   double f=slist.base[i]->f;
-//	   cval=f;
-//	}
 }
 
 void SpriteMgr::reset(){
 	PlacementMgr::reset();
 	tests=pts_fails=dns_fails=0;
-	cval=0;
-	scnt=0;
 }
 //-------------------------------------------------------------
 // SpritePoint::set_terrain()	impact terrain
@@ -427,15 +392,15 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 	SpriteMgr &mgr=(SpriteMgr&)pmgr;
-	sval=0;
+	PlacementMgr::sval=0;
 	
 	if(d>thresh)
 		return false;
 	visits++;
     flags.s.active=true;
-	sval=lerp(d,0,thresh,0,1);
+    PlacementMgr::sval=lerp(d,0,thresh,0,1);
 
-    double wt=1/(0.01+sval);
+    double wt=1/(0.01+PlacementMgr::sval);
     aveht+=Height*wt;
 	
     wtsum+=wt;
@@ -444,14 +409,14 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 		ht=Height;
 		dist=d;
 		mind=d;
-		hits++;
+		PlacementMgr::hits++;
 	}
-	::hits++;
+	PlacementMgr::hits++;
 
- 	sdata[scnt].v=hid;
-   	sdata[scnt].f=sval;
-  	if(scnt<255)
-  	    scnt++;
+	PlacementMgr::sdata[PlacementMgr::scnt].v=hid;
+	PlacementMgr::sdata[PlacementMgr::scnt].f=PlacementMgr::sval;
+  	if(PlacementMgr::scnt<255)
+  		PlacementMgr::scnt++;
 	return true;
 }
 
@@ -800,7 +765,7 @@ void TNsprite::eval()
 
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
-	htval=Height;
+	PlacementMgr::htval=Height;
 	ncalls++;
 	
 	double arg[10];
@@ -857,29 +822,9 @@ void TNsprite::eval()
 					);
 	mgr->id=(int)hashcode+mgr->type+SPRITES+hashcode*TheNoise.rseed;
 	
-	sval=0;
-	hits=0;
-	cval=0;
-	scnt=0;
 
-	smgr->eval();  // calls SpritePoint.set_terrain
-   
-	if(hits>0){ // inside target radius
-		nhits++;
-		double x=1-cval;
-		if(smgr->testColor()){
-		//	if(instance==0)
-		//		c=Color(x,0,1);
-		//	else
-				c=Color(x,0,0);
-			Td.diffuse=Td.diffuse.mix(c,0.5);
-		}
-		if(smgr->testDensity()){
-			x=1/(cval+1e-6);
-			x=x*x;//*x*x;
-			Td.density+=lerp(cval,0,0.2,0,.05*x);
-		}
-	}
+	smgr->eval();  // calls SpritePoint.set_terrain	
+	g_sm.setTests();
  }
 
 //-------------------------------------------------------------

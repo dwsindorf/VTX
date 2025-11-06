@@ -22,7 +22,7 @@ extern void dec_tabs();
 extern char tabs[];
 extern double Pscale,Gscale,Drop,Margin;
 
-extern int hits,visits,misses;
+//extern int hits,visits,misses;
 
 // externs used in TerrainClass.cpp
 

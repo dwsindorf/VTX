@@ -33,7 +33,7 @@
 //**************** extern API area ************************
 extern NameList<LongSym*> NOpts;
 
-extern int hits,misses,visits;
+//extern int hits,misses,visits;
 static 			TerrainData Td;
 
 //**************** static and private *********************
