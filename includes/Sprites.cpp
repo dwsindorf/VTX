@@ -98,7 +98,7 @@ SpriteMgr g_sm(FINAL|DENSITY_TEST);
 
 #define USE_AVEHT
 //#define SHOW
-#define MIN_VISITS 2
+#define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
 //#define SHOW_STATS
@@ -153,6 +153,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	sprites_rows=0;
 	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
+	set_useaveht(true);
 }
 SpriteMgr::~SpriteMgr()
 {
@@ -283,7 +284,7 @@ bool SpriteMgr::setProgram(){
 	int n=Sprite::sprites.size;
 	int flip=0;
 	Point4DL pp;
-	SpriteData *s=Sprite::sprites[0];
+	SpriteData *s=(SpriteData*)Sprite::sprites[0];
 	pp=s->point;
 	Point pn=Point(pp.x,pp.y,pp.z);
 	Point ppn=pn.normalize();
@@ -293,7 +294,7 @@ bool SpriteMgr::setProgram(){
 //	ppn.print("sprite ");
 
 	for(int i=n-1;i>=0;i--){
-		s=Sprite::sprites[i];
+		s=(SpriteData*)Sprite::sprites[i];
 		int id=s->instance;//s->get_id();
 		Point t=s->center;
 		double pts=s->pntsize;
@@ -338,19 +339,8 @@ bool SpriteMgr::setProgram(){
 		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
 		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
 	    glVertex3dv(t.values());
-		
-//		Point pn=Point(pp.x,pp.y,pp.z);
-//		Point ppn=pn.normalize();
-//	    glNormal3dv(ppn.values());
-//	    
-//		cout<<endl;
-//		ppn.print(".");
-
-	    //if(i<10)
-		//printf("%d x:%-1.5g y:%-1.5g z:%-1.5g d:%-4.1f r:%-4.1f s:%-1.5f\n ",n-i,t.x,t.y,t.z,s->distance/FEET,s->radius/FEET);	
 	}
 	glEnd();
-	//glEnable(GL_DEPTH_TEST);
 	return true;
 }
 //-------------------------------------------------------------
@@ -360,28 +350,22 @@ Placement *SpriteMgr::make(Point4DL &p, int n)
 {
     return new SpritePoint(*this,p,n);
 }
+PlaceData *SpriteMgr::make(Placement*s,Point bp,double d,double pts){
+	Point xp=bp-TheScene->xpoint;
+	return new SpriteData((SpritePoint*)s,xp,d,pts);
+}
 
 //************************************************************
 // class SpritePoint
 //************************************************************
 SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 {
-	ht=0;
-	aveht=0;
-	wtsum=0;
-	dist=1e16;
-	visits=0;
-	hits=0;
-	mind=1e16;
 	sprites_rows=mgr.sprites_rows;
 	sprites_cols=mgr.sprites_cols;
 	variability=mgr.mult;
 	rand_flip_prob=mgr.rand_flip_prob;
 	select_bias=mgr.select_bias;
 	instance=mgr.instance;
-	//cout<<instance<<" ";
-
-	flags.s.active=false;
 }
 
 //-------------------------------------------------------------
@@ -420,60 +404,16 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 	return true;
 }
 
-void SpritePoint::reset(){
-	flags.s.active=0;
-	visits=0;
-	hits=0;
-	dist=1e6;
-	aveht=0;
-	wtsum=0;
-}
-void SpritePoint::dump(){
-	if(flags.s.valid && flags.s.active){
-		Point4D p(point);
-		p=center;
-		char msg[256];
-		char vh[32];
-		sprintf(vh,"%d:%d",visits,hits);
-		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
-		cout<<msg<<endl;
-	}
-}
 //==================== SpriteData ===============================
-SpriteData::SpriteData(SpritePoint *pnt,Point vp, double d, double ps){
-	type=pnt->type;
-	ht=pnt->ht;
-	
-	point=pnt->point;
-	
-	aveht=pnt->aveht/pnt->wtsum;
-	center=vp;
-	radius=pnt->radius;
-    pntsize=ps;
- 	distance=d;//TheScene->vpoint.distance(t);
- 	sprites_cols=pnt->sprites_cols;
+SpriteData::SpriteData(SpritePoint *pnt,Point bp, double d, double ps): PlaceData(pnt,bp,d,ps){
+  	sprites_cols=pnt->sprites_cols;
  	sprites_rows=pnt->sprites_rows;
-	visits=pnt->visits;
 	variability=pnt->variability;
 	rand_flip_prob=pnt->rand_flip_prob;
 	select_bias=pnt->select_bias;
-	instance=pnt->instance;
-}
-
-void SpriteData::print(){
-	char msg[256];
-	Point pp=Point(point.x,point.y,point.z);
-	//pp=pp.normalize();
-	//Point ps=pp.spherical();
-	double h=TheMap->radius*TheMap->hscale;
-	
-	//sprintf(msg,"visits:%-1d t:%-1.6g p:%-1.3g ht:%-1.4f aveht:%-1.4f dist:%g",visits,ps.x+180,ps.y,h*ht/FEET,h*aveht/FEET,distance/FEET);
-	sprintf(msg,"visits:%-1d x:%d y:%d z:%d ht:%-1.4f aveht:%-1.4f dist:%g",visits,point.x,point.y,point.z,h*ht/FEET,h*aveht/FEET,distance/FEET);
-	cout<<msg<<endl;
-	
 }
 //===================== Sprite ==============================
-ValueList<SpriteData*> Sprite::sprites;
+ValueList<PlaceData*> Sprite::sprites;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
@@ -512,89 +452,22 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 void Sprite::collect()
 {
+#define TEST
 #ifdef DEBUG_TEST_PTS
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
 #endif
-	//cout<<"znear:"<< TheScene->znear<<" zfar:"<<TheScene->zfar<<" "<<TheScene->zfar/TheScene->znear<<endl;
-	int new_sprites=0;
-	int bad_pts=0;
-#ifdef SHOW_STATS	
-	int trys=0;
-	int visits=0;
-	int bad_visits=0;
-	int bad_valid=0;
-	int bad_active=0;
-#endif	
-
-	//TerrainProperties *tp=Td.tp;
 	for(int i=0;i<Td.sprites.size;i++){
-#ifdef SHOW_STATS	
-		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_sprites=0;
-#endif
 		Sprite *sprite=Td.sprites[i];
-		sprite->mgr()->ss();
-		SpritePoint *s=(SpritePoint*)sprite->mgr()->next();
-	while(s){
-#ifdef SHOW_STATS
-		trys++;
-		
-		if(s->visits<MIN_VISITS)
-			bad_visits++;
-		if(!s->flags.s.valid)
-			bad_valid++;
-		if(!s->flags.s.active)
-			bad_active++;
-#endif	
-		if(s->visits>=1 && s->flags.s.valid && s->flags.s.active){
-			Point4D	p(s->center);
-			Point pp=Point(p.x,p.y,p.z);
-			Point ps=pp.spherical();
-#ifdef USE_AVEHT
-			double ht=s->aveht/s->wtsum;
-#else
-			double ht=s->ht;
-#endif			
-			Point center=TheMap->point(ps.y, ps.x,ht+s->radius*ht_offset/TheMap->radius);
-			Point vp=Point(-center.x,center.y,-center.z)-TheScene->xpoint; // why the 180 rotation around y axis ????
-			double d=vp.length(); // distance	
-			double r=TheMap->radius*s->radius;
-			double f=TheScene->wscale*r/d;
-		    double pts=f;
-		    double minv=lerp(pts,min_render_pts,10*min_render_pts,1,2*MIN_VISITS); 
-		    bool pts_test=true;
-#ifdef TEST_PTS
-		    if(pts<min_render_pts){
-		    	pts_test=false;
-		    	bad_pts++;
-		    }
-#endif
-		    if(pts_test && s->visits>=minv){
-		    	new_sprites++;
-		    	sprites.add(new SpriteData((SpritePoint*)s,vp,d,pts));
-		    }
-		}
-
-		s=sprite->mgr()->next();
-	  }	
-#ifdef SHOW_STATS
-	double usage=100.0*trys/PlacementMgr::hashsize;
-	double badvis=100.0*bad_visits/trys;
-	double badactive=100.0*bad_active/trys;
-	double badpts=100.0*bad_pts/trys;
-	cout<<sprite->name()<<" sprites "<<new_sprites<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<endl;
-#endif
-
+		SpriteMgr *mgr=sprite->mgr();
+		mgr->collect(sprites);
 	} // next sprite
-	//}
 	if(sprites.size){
-    	//cout<<"total sprites collected:"<<sprites.size<<endl;
- 		sprites.sort();
+  		sprites.sort();
 	}
 #ifdef SHOW
 	//int pnrt_num=sprites.size-1;
 	int pnrt_num=min(2,sprites.size-1);
-
 	for(int i=pnrt_num;i>=0;i--){
 		cout<<i<<" ";
 		sprites[i]->print();	

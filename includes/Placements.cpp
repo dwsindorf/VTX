@@ -31,18 +31,6 @@ static TerrainData Td;
 extern double ptable[];
 extern double Hscale,Height;
 
-//double sval=0;
-//double cval=0;
-//double htval=0;
-//int    hits=0;
-int    misses;
-//int    scnt=0;
-int    visits=0;
-
-//#define SDATA_SIZE 1024
-//SData   sdata[SDATA_SIZE];
-//ValueList<SData*> slist(sdata,SDATA_SIZE);
-
 double MaxSize;
 
 #ifdef DEBUG_PLACEMENTS
@@ -50,9 +38,6 @@ double MaxSize;
 // hash lookup overhead
 //     PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(n2+id)))
 // ~0.5 us on 330 MHz sparc
-
-
-static PlacementMgr s_mgr=0;
 
 void show_display_placements()
 {
@@ -130,6 +115,13 @@ int PlacementMgr::hits=0;
 double PlacementMgr::sval=0;
 double PlacementMgr::cval=0;
 double PlacementMgr::htval=0;
+int PlacementMgr::trys=0;
+int PlacementMgr::visits=0;
+int PlacementMgr::bad_visits=0;
+int PlacementMgr::bad_valid=0;
+int PlacementMgr::bad_active=0;
+int PlacementMgr::new_placements=0;
+int PlacementMgr::bad_pts=0;
 
 PlacementMgr::PlacementMgr(int i, int h)
 {
@@ -158,6 +150,8 @@ PlacementMgr::PlacementMgr(int i, int h)
 
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
+	minpts=2;
+
 }
 
 PlacementMgr::PlacementMgr(int i):PlacementMgr(i,PERMSIZE)
@@ -216,7 +210,10 @@ void PlacementMgr::reset()
 	cval=0;
 	scnt=0;
 }
-
+void PlacementMgr::resetAll()
+{
+	 trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_placements=0;
+}
 //-------------------------------------------------------------
 // PlacementMgr::init()	initialize hash tables
 //-------------------------------------------------------------
@@ -231,8 +228,7 @@ void PlacementMgr::init()
   		CALLOC(hashsize+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
   		if(!finisher_added){
-  			s_mgr=this;
-			add_finisher(show_display_placements);
+ 			add_finisher(show_display_placements);
   		}
   		finisher_added=true;
  
@@ -287,6 +283,62 @@ Placement *PlacementMgr::next()
 	index++;
     return h;
 }
+
+void PlacementMgr::collect(ValueList<PlaceData*> &data){
+    double PSCALE=0.004;
+    double minv=1;
+	ss();
+	Placement *s=next();
+	while (s) {
+		if (showstats()) {
+			trys++;
+			if (s->visits < minv)
+				bad_visits++;
+			if (!s->flags.s.valid)
+				bad_valid++;
+			if (!s->flags.s.active)
+				bad_active++;
+		}
+		bool valid = s->visits >= 1 && s->flags.s.valid && s->flags.s.active;
+		if (valid) {
+			Point4D p(s->center);
+			Point pp = Point(p.x, p.y, p.z);
+			Point ps = pp.spherical();
+			double ht = useaveht() ? s->aveht / s->wtsum : s->ht;
+			Point base = TheMap->point(ps.y, ps.x, ht); // spherical-to-rectangular
+			Point bp = Point(-base.x, base.y, -base.z); // Point.rectangular has 180 rotation around y
+			double d = bp.distance(TheScene->vpoint);  // distance	
+			double r = TheMap->radius * s->radius;
+			double pts = TheScene->wscale * r / d;
+			minv = 1;
+			if (testpts()) {
+				minv = lerp(pts, minpts, 10 * minpts, 1, 2 * minv);
+				if (pts < minpts) {
+					bad_pts++;
+					s = next();
+					continue;
+				}
+			}
+			if (s->visits >= minv) {
+				PlaceData *p = make(s, bp, d, pts);
+				data.add(p);
+			}
+		}
+		s = next();
+	}	
+	if(showstats() && trys>0){
+		double usage=100.0*trys/hashsize;
+		double badvis=100.0*bad_visits/trys;
+		double badactive=100.0*bad_active/trys;
+		double badpts=100.0*bad_pts/trys;
+		cout<<" new "<<new_placements<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
+	}
+	//cout<<"placement collected="<<data.size<<endl;
+}
+
+PlaceData *PlacementMgr::make(Placement*s,Point bp,double d,double pts){
+	return new PlaceData((Placement*)s,bp,d,pts);
+}
 void PlacementMgr::dump(){
 	if(!hash)
 		return;
@@ -298,8 +350,7 @@ void PlacementMgr::dump(){
 			cnt++;
 		}		
 	}
-	cout<<"num placements="<<cnt<<endl;
-	
+	cout<<"hash placements="<<cnt<<endl;	
 }
 
 bool PlacementMgr::valid()
@@ -534,6 +585,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
 	placement->users--;
 }
 
+
 //************************************************************
 // class Placement
 //************************************************************
@@ -551,8 +603,8 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	wtsum=0;
 	dist=1e16;
 	visits=0;
-	//place_hits=0;
-	instance=0;
+	place_hits=0;
+	instance=pmgr.instance;
 	
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
@@ -673,13 +725,6 @@ void Placement::dump(){
 		cout<<msg<<endl;
 	}
 }
-
-//void Placement::dump(){
-//	// extended classes can override this
-//}
-//void Placement::reset(){
-//	flags.l=0;
-//}
 //==================== PlantData ===============================
 PlaceData::PlaceData(Placement *pnt,Point bp,double d, double ps){
 	type=pnt->type;

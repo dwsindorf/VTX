@@ -8,7 +8,7 @@
 #include "Util.h"
 
 //#define DEBUG_CRATERS
-//#define TEST_SPRITES
+#define TEST_SPRITES
 //#define TEST_PLANTS
 //#define TEST_CRATERS
 #define TEST_ROCKS
@@ -123,13 +123,42 @@ typedef struct place_mgr_flags {
 	unsigned int  offset	 : 1;	// offset valid flag
 	unsigned int  finalizer  : 1;	// indicates static object
 	unsigned int  debug	     : 1;	// debug
-	unsigned int  unused     : 27;	// unassigned bits
+	unsigned int  testpts	 : 1;	// test point size
+	unsigned int  useaveht	 : 1;	// use average ht
+	unsigned int  showstats	 : 1;	// show statistics
+	unsigned int  unused     : 25;	// unassigned bits
 } place_mgr_flags;
 
 typedef union place_mgr_flags_u {
 	place_mgr_flags			s;
 	int         		l;
 } place_mgr_flags_u;
+
+class PlaceData
+{
+public:
+	int    type;
+	double distance;
+	double radius;
+	double ht;
+	double aveht;
+	double pntsize;
+	int instance;
+	Point center;
+
+	int visits;
+	Point4DL point;
+	Point base;
+	
+	PlacementMgr *mgr;
+	
+	PlaceData(Placement*,Point, double,double);
+	double value() { return distance;}
+	void print();
+	int get_id()				{ return type&PID;}
+	int get_class()				{ return type&PLACETYPE;}
+	int flip()				    { return type & FLIP;}
+};
 
 class PlacementMgr
 {
@@ -147,17 +176,20 @@ public:
 	double 			roff2;
 	double 			render_ptsize;
 	double 			adapt_ptsize;
+	double 			minpts;
+	
 	Point4D			mpt;
 	Point4D			offset;
 	int 			hashsize;
 	int 			cnt;
 	int 			index;
+	//ValueList<PlaceData*> data;
 	
 	static SData   sdata[SDATA_SIZE];
 	static ValueList<SData*> slist;
 	static int  scnt,hits;
+	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
 	static double sval,cval,htval;
-	
 	PlacementStats Stats;
 
 	void free_htable();
@@ -182,8 +214,6 @@ public:
 	bool sizetest()				{ return options & MINSIZE?true:false;}
 	int ntest()					{ return options & NNBRS?0:1;}
 	int lod()					{ return options & NOLOD?0:1;}
-	virtual bool testColor();
-	virtual bool testDensity();
 	void set_testColor(bool b)	{ BIT_SET(options,COLOR_TEST,b);}
 	void set_testDensity(bool b){ BIT_SET(options,DENSITY_TEST,b);}
 	bool test()  				{ return testColor()||testDensity();}
@@ -193,6 +223,12 @@ public:
 	int margin()				{ return flags.s.margin;}
 	void set_debug(int i)   	{ flags.s.debug=i;}
 	int debug()				    { return flags.s.debug;}
+	void set_showstats(int i)   { flags.s.showstats=i;}
+	int showstats()				{ return flags.s.showstats;}
+	void set_testpts(int i)   	{ flags.s.testpts=i;}
+	int testpts()				{ return flags.s.testpts;}
+	void set_useaveht(int i)   	{ flags.s.useaveht=i;}
+	int useaveht()				{ return flags.s.useaveht;}
 
 	void set_first(int i)   	{ flags.s.first=i;}
 	int first()				    { return flags.s.first;}
@@ -225,6 +261,7 @@ public:
 	PlacementMgr(int,int);
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
+	static void resetAll();
 
 	virtual void reset();
 	virtual void init();
@@ -232,38 +269,15 @@ public:
 	virtual void dump();
 	virtual bool valid();
 	virtual void setTests();
-
-
+	virtual bool testColor();
+	virtual bool testDensity();
+	virtual void collect(ValueList<PlaceData*> &data);
 	virtual Placement *make(Point4DL&,int);
+	virtual PlaceData *make(Placement*s,Point bp,double d,double pts);
 
 	friend class Placement;
 };
 
-class PlaceData
-{
-public:
-	int    type;
-	double distance;
-	double radius;
-	double ht;
-	double aveht;
-	double pntsize;
-	int instance;
-	Point center;
-
-	int visits;
-	Point4DL point;
-	Point base;
-	
-	PlacementMgr *mgr;
-	
-	PlaceData(Placement*,Point, double,double);
-	double value() { return distance;}
-	void print();
-	int get_id()				{ return type&PID;}
-	int get_class()				{ return type&PLACETYPE;}
-	int flip()				    { return type & FLIP;}
-};
 
 //************************************************************
 // Class TNplacements

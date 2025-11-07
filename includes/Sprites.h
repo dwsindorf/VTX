@@ -12,54 +12,30 @@ class TNsprite;
 class SpritePoint : public Placement
 {
 public:
-	double ht;
-	double aveht;
-	double wtsum;
-	double dist;
-	int hits;
-	int visits;
 	int sprites_rows;
 	int sprites_cols;
 
 	double variability;
 	double rand_flip_prob;
 	double select_bias;
-
-	int instance;
 
 	SpritePoint(SpriteMgr&, Point4DL&,int);
 	bool set_terrain(PlacementMgr  &mgr);
-	void dump();
-	void reset();
 };
 
-class SpriteData
+class SpriteData  : public PlaceData
 {
 public:
-	int    type;
-	double distance;
-	double radius;
-	double ht;
-	double aveht;
-	double pntsize;
 	double variability;
 	double rand_flip_prob;
 	double select_bias;
-	int instance;
 
 	int sprites_rows;
 	int sprites_cols;
 
-	int visits;
-	Point4DL point;
-	Point center;
 	SpriteData(SpritePoint*,Point,double,double);
-	double value() { return distance;}
-	void print();
-	int get_id()				{ return type&PID;}
-	int get_class()				{ return type&PLACETYPE;}
-	int flip()				    { return type & FLIP;}
 };
+
 class SpriteImageMgr : public ImageMgr
 {
 public:
@@ -76,6 +52,8 @@ class SpriteMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
+	PlaceData *make(Placement*s,Point bp,double d,double pts);
+
 	Color c;
 
 	int sprites_rows;
@@ -141,7 +119,7 @@ public:
 	uint cols;
 
 	bool   valid;
-	static ValueList<SpriteData*> sprites;
+	static ValueList<PlaceData*> sprites;
 
 	Sprite(Image *i, int l, TNode *e);
 	

@@ -323,6 +323,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
 	instance=0;
 	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
+	//set_testpts(1);
 }
 PlantMgr::PlantMgr(int i) : PlantMgr(i,0)
 {
@@ -365,6 +366,10 @@ void PlantMgr::reset(){
 	PlacementMgr::reset();
 	tests=pts_fails=dns_fails=0;
 }
+PlaceData *PlantMgr::make(Placement*s,Point bp,double d,double pts){
+	return new PlantData((PlantPoint*)s,bp,d,pts);
+}
+
 //-------------------------------------------------------------
 // PlantPoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
@@ -730,7 +735,7 @@ PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps): PlaceData(pn
 }
 
 //===================== Plant ==============================
-ValueList<PlantData*> Plant::data;
+ValueList<PlaceData*> Plant::data;
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
@@ -757,104 +762,30 @@ void Plant::reset()
 //-------------------------------------------------------------
 void Plant::collect()
 {
-	
 #ifdef DEBUG_TEST_PTS
 	if(tests>0)
 		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
-#endif
-	int new_plants=0;
-	int bad_pts=0;
-#ifdef SHOW_PLANT_STATS	
-	int trys=0;
-	int visits=0;
-	int bad_visits=0;
-	int bad_valid=0;
-	int bad_active=0;
-#endif	
-
+#endif  
 	for(int i=0;i<Td.plants.size;i++){
-#ifdef SHOW_PLANT_STATS	
-		trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_plants=0;
-#endif
+		PlacementMgr::resetAll();
 		Plant *plant=Td.plants[i];
 		plant->expr->created=0;
-		plant->mgr()->ss();
-		PlantPoint *s=(PlantPoint*)plant->mgr()->next();
-	while(s){
-#ifdef SHOW_PLANT_STATS
-		trys++;		
-		if(s->visits<MIN_VISITS)
-			bad_visits++;
-		if(!s->flags.s.valid)
-			bad_valid++;
-		if(!s->flags.s.active)
-			bad_active++;
-#endif	
-		if(s->visits>=1 && s->flags.s.valid && s->flags.s.active){
-			Point4D	p(s->center);
-			Point pp=Point(p.x,p.y,p.z);
-			Point ps=pp.spherical();
-#ifdef USE_AVEHT
-			double ht=s->aveht/s->wtsum;
-#else
-			double ht=s->ht;
-#endif			
-			Point base=TheMap->point(ps.y, ps.x,ht); // spherical-to-rectangular
-			Point bp=Point(-base.x,base.y,-base.z);  // Point.rectangular has 180 rotation around y
-			double d=bp.distance(TheScene->vpoint);  // distance	
-			double r=PSCALE*s->radius;
-			//double r=1e-3*s->radius;
-			double f=TheScene->wscale*r/d;
-			//cout<<PSCALE<<endl;
-			//cout<<r<<" "<<f<<" "<<r/f<<endl;
-		    double pts=f;
-		    double minv=MIN_VISITS; 
-		    bool pts_test=true;
-#ifdef TEST_PTS
-		    minv=lerp(pts,min_render_pts,10*min_render_pts,1,2*MIN_VISITS); 
-		    if(pts<min_render_pts){
-		    	pts_test=false;
-		    	bad_pts++;
-		    }
-#endif
-		    if(pts_test && s->visits>=minv){
-		    	new_plants++;
-		    	if(plant)
-		    		plant->expr->created++;
-		    	data.add(new PlantData((PlantPoint*)s,bp,d,pts));
-		    }
-		}
-		s=plant->mgr()->next();
-	  }	
-#ifdef SHOW_PLANT_STATS
-	if(trys>0){
-		double usage=100.0*trys/plant->mgr()->hashsize;
-		double badvis=100.0*bad_visits/trys;
-		double badactive=100.0*bad_active/trys;
-		double badpts=100.0*bad_pts/trys;
-		cout<<plant->name()<<" plants "<<new_plants<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
-	}
-#endif
-
+		plant->mgr()->collect(data);
 	}
 	if(data.size){
 		data.sort();
 		PlantMgr::pmin=data[0]->value();
 		PlantMgr::pmax=data[data.size-1]->value();
  		double range=PlantMgr::pmax-PlantMgr::pmin;
-   		//cout<<"plants collected:"<<plants.size<<" range:"<<range<<endl;
+   		cout<<"plants collected:"<<data.size<<" range:"<<range<<endl;
 	}
 #ifdef SHOW
-	//int pnrt_num=plants.size-1;
 	int pnrt_num=min(2,data.size-1);
-
 	for(int i=pnrt_num;i>=0;i--){
 		cout<<i<<" ";
 		data[i]->print();	
 	}
 #endif
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
 }
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string

@@ -19,17 +19,6 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-
-//#define SDATA_SIZE 256
-//static SData   sdata[SDATA_SIZE];
-//static ValueList<SData*> slist(sdata,SDATA_SIZE);
-//static int          scnt;
-//static double sval=0;
-//static double cval=0;
-//static int hits=0;
-//extern ValueList<SData*> slist(sdata,SDATA_SIZE);
-
-
 // 3d rocks using marching cubes
 // TODO:
 // 1. generate color test if 3d flag is set (MC3D) - done

@@ -72,6 +72,8 @@ class PlantMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
+	PlaceData *make(Placement*s,Point bp,double d,double pts);
+	
 	TNplant *plant;
 	static int stats[PLANT_STATS];
 	static double render_time;
@@ -370,7 +372,7 @@ public:
 	unsigned int plant_id;
 
 	bool   valid;
-	static ValueList<PlantData*> data;
+	static ValueList<PlaceData*> data;
 
 	Plant(int l, TNode *e);
 	
