@@ -146,7 +146,7 @@ PlacementMgr::PlacementMgr(int i, int h)
   	roff=0.5*PI;
   	roff2=1;
 	render_ptsize=1;
-	adapt_ptsize=1;
+	adapt_ptsize=2;
 
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
@@ -331,7 +331,7 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 		double badvis=100.0*bad_visits/trys;
 		double badactive=100.0*bad_active/trys;
 		double badpts=100.0*bad_pts/trys;
-		cout<<" new "<<new_placements<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
+		cout<<"collected "<<new_placements<<" tests:"<<trys<<" %hash:"<<usage<<" %inactive:"<<badactive<<" %small:"<<badpts<<" %visited:"<<100-badvis<<endl;
 	}
 	//cout<<"placement collected="<<data.size<<endl;
 }
@@ -355,23 +355,21 @@ void PlacementMgr::dump(){
 
 bool PlacementMgr::valid()
 { 
-	extern Point Mpt;
-    //if(!sizetest())
-    //	return true;
-	double mps=render_ptsize;
-	if(TheScene->adapt_mode())
-		mps=adapt_ptsize;
-	Point pv=Mpt;
-	double d=pv.length();
-	
-	double r=TheMap->radius*size;
-	double f=TheScene->wscale*r/d;
-    double pts=f;
-    Stats.vtests++;
-    if(pts<mps){
-     	Stats.pts_fails++;
-       	return false;
-    } 
+	if(testpts()){		
+		extern Point MapPt;
+		double mps=render_ptsize;
+		if(TheScene->adapt_mode())
+			mps=adapt_ptsize;
+		Point pv=MapPt;
+		double d=pv.length();		
+		double r=TheMap->radius*size;
+		double pts=TheScene->wscale*r/d;
+		Stats.vtests++;
+		if(pts<mps){
+			Stats.pts_fails++;
+			return false;
+		} 
+	}
     if(density<=0){
      	Stats.dns_fails++;
      	return false;

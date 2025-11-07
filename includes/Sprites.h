@@ -71,8 +71,6 @@ public:
 	void init();
 	void eval();
 	static bool setProgram();
-	bool valid();
-	void reset();
 };
 
 //************************************************************

@@ -177,7 +177,6 @@ public:
 	double 			render_ptsize;
 	double 			adapt_ptsize;
 	double 			minpts;
-	
 	Point4D			mpt;
 	Point4D			offset;
 	int 			hashsize;

@@ -74,8 +74,8 @@ static double ht_offset=0.5; // move to argument ?
 static double roff_value=1e-6;//0.5*PI;
 static double roff2_value=0.5;
 
-static double min_render_pts=2; // for render
-static double min_adapt_pts=5; //  for adapt - increase resolution only around nearby sprites
+static double min_render_pts=1; // for render
+static double min_adapt_pts=2; //  for adapt - increase resolution only around nearby sprites
 
 static int cnt=0;
 static int tests=0;
@@ -154,6 +154,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
 	set_useaveht(true);
+	set_testpts(true);
 }
 SpriteMgr::~SpriteMgr()
 {
@@ -181,41 +182,6 @@ void SpriteMgr::init()
 
 void SpriteMgr::eval(){	
 	PlacementMgr::eval(); 
-}
-
-void SpriteMgr::reset(){
-	PlacementMgr::reset();
-	tests=pts_fails=dns_fails=0;
-}
-//-------------------------------------------------------------
-// SpritePoint::set_terrain()	impact terrain
-//-------------------------------------------------------------
-bool SpriteMgr::valid()
-{ 
-    tests++;
-
-#ifdef TEST_PTS
-	double mps=min_render_pts;
-	if(TheScene->adapt_mode())
-		mps=min_adapt_pts;
-	Point pv=MapPt;
-	double d=pv.length();
-	
-	double r=TheMap->radius*size;
-	double f=TheScene->wscale*r/d;
-    double pts=f;
-    if(pts<mps){
-    	pts_fails++;
-    	return false;
-    }
-#endif  
-    // TODO set density biases here ?
-
-    if(density<=0){
-    	dns_fails++;
-    	return false;
-    }
-	return true;
 }
 
 bool SpriteMgr::setProgram(){
@@ -351,7 +317,7 @@ Placement *SpriteMgr::make(Point4DL &p, int n)
     return new SpritePoint(*this,p,n);
 }
 PlaceData *SpriteMgr::make(Placement*s,Point bp,double d,double pts){
-	Point xp=bp-TheScene->xpoint;
+	Point xp=bp-TheScene->xpoint; // TODO: Why only needed for sprites ?
 	return new SpriteData((SpritePoint*)s,xp,d,pts);
 }
 

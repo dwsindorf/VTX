@@ -362,46 +362,6 @@ void PlantMgr::eval(){
 	PlacementMgr::eval(); 
 }
 
-void PlantMgr::reset(){
-	PlacementMgr::reset();
-	tests=pts_fails=dns_fails=0;
-}
-PlaceData *PlantMgr::make(Placement*s,Point bp,double d,double pts){
-	return new PlantData((PlantPoint*)s,bp,d,pts);
-}
-
-//-------------------------------------------------------------
-// PlantPoint::set_terrain()	impact terrain
-//-------------------------------------------------------------
-bool PlantMgr::valid()
-{ 
-    tests++;
-   
-#ifdef TEST_PTS
-	double mps=min_render_pts;
-	if(TheScene->adapt_mode())
-		mps=min_adapt_pts;
-	Point pv=MapPt;
-	double d=pv.length();
-	//d=d>1e-6?d:1e-6;
-	
-	double r=TheMap->radius*size;
-	double f=TheScene->wscale*r/d;
-    double pts=f;
-    if(pts<mps){
-    	pts_fails++;
-    	return false;
-    }
-#endif  
-    // TODO set density biases here ?
-
-    if(density<=0){
-    	dns_fails++;
-    	return false;
-    }
-	return true;
-}
-
 bool PlantMgr::setProgram(){
 	//cout<<"PlantMgr::setProgram "<<Raster.shadows()<<endl;
 	extern int test7;
@@ -709,11 +669,15 @@ void PlantMgr::render(){
 	update_needed=false;
 }
 //-------------------------------------------------------------
-// PlantMgr::make() factory method to make Placement
+// PlantMgr::make() factory methods to make Placement
+// - derived classes my override
 //-------------------------------------------------------------
 Placement *PlantMgr::make(Point4DL &p, int n)
 {
     return new PlantPoint(*this,p,n);
+}
+PlaceData *PlantMgr::make(Placement*s,Point bp,double d,double pts){
+	return new PlantData((PlantPoint*)s,bp,d,pts);
 }
 
 //************************************************************
@@ -722,13 +686,12 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
 }
-
 //-------------------------------------------------------------
 // PlantPoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
 bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 {
-	return Placement::set_terrain(pmgr);
+	return Placement::set_terrain(pmgr); // use default method
 }
 //==================== PlantData ===============================
 PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps): PlaceData(pnt,bp,d,ps){
@@ -762,10 +725,6 @@ void Plant::reset()
 //-------------------------------------------------------------
 void Plant::collect()
 {
-#ifdef DEBUG_TEST_PTS
-	if(tests>0)
-		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
-#endif  
 	for(int i=0;i<Td.plants.size;i++){
 		PlacementMgr::resetAll();
 		Plant *plant=Td.plants[i];
