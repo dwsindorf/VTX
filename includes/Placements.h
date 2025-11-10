@@ -51,7 +51,6 @@ public:
 
 #define SDATA_SIZE 256
 
-
 typedef struct place_flags {
 	unsigned int  users	     : 8;	// users
 	unsigned int  valid	     : 1;	// radius >0
@@ -66,20 +65,21 @@ typedef union place_flags_u {
 
 class PlacementStats : public StatCollector {
 public:
-	static int chits,cvisits,crejects;
-	static int nhits,nmisses,nvisits,nrejects;
+	static int chits,cvisits,crejects,cchained;
+	static int nhits,nmisses,nvisits,nrejects,nchained;
 	static int cmade,cfreed;
 	static int vtests,pts_fails,dns_fails;
-	static int place_visits,place_hits,place_misses;
+	static int place_visits,lod_hits,lod_fails;
 
 	static void reset(){
-		chits=cvisits=crejects=0;
-		nhits=nmisses=nvisits=nrejects=0;
+		chits=cvisits=crejects=cchained=0;
+		nhits=nmisses=nvisits=nrejects=nchained=0;
 		cmade=cfreed=0;
 		vtests=pts_fails=dns_fails=0;
-		place_visits=place_hits=place_misses=0;
+		place_visits=lod_hits=lod_fails=0;
 	}
 	static void exec();
+	static void dump();
 };
 
 
@@ -91,16 +91,18 @@ public:
 	double		radius;  // radius
 	int			hid;     // hash id
 	int			type;    // type id
+	int			lvl;    // type id
 	int			users;
 	double 		ht;
-	double 		aveht;
-	double 		wtsum;
 	double 		dist;
+	double      pts;
 	int 		visits;
 	int 		instance;
-	int 		place_hits;
+	//int 		place_hits;
 	PlacementMgr *mgr;
 	place_flags_u flags;
+	
+	Placement* next;  // ⭐ ADD THIS - chain for collisions
 
 	Placement(PlacementMgr&, Point4DL&,int);
 
@@ -113,41 +115,22 @@ public:
 	bool active()               { return flags.s.active;}
 	bool is3D()                 { return type&MC3D;}
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
+	void setVertex();
 };
-
-
-typedef struct place_mgr_flags {
-	unsigned int  margin	 : 1;	// set margin bit
-	unsigned int  first	     : 1;	// first mgr in pass
-	unsigned int  joined	 : 1;	// joined mgr in pass
-	unsigned int  offset	 : 1;	// offset valid flag
-	unsigned int  finalizer  : 1;	// indicates static object
-	unsigned int  debug	     : 1;	// debug
-	unsigned int  testpts	 : 1;	// test point size
-	unsigned int  useaveht	 : 1;	// use average ht
-	unsigned int  showstats	 : 1;	// show statistics
-	unsigned int  unused     : 25;	// unassigned bits
-} place_mgr_flags;
-
-typedef union place_mgr_flags_u {
-	place_mgr_flags			s;
-	int         		l;
-} place_mgr_flags_u;
 
 class PlaceData
 {
 public:
+	Point4DL point;
+	int visits;
 	int    type;
 	double distance;
 	double radius;
 	double ht;
-	double aveht;
 	double pntsize;
 	int instance;
-	Point center;
+	Point vertex;
 
-	int visits;
-	Point4DL point;
 	Point base;
 	
 	PlacementMgr *mgr;
@@ -160,6 +143,24 @@ public:
 	int flip()				    { return type & FLIP;}
 };
 
+typedef struct place_mgr_flags {
+	unsigned int  margin	 : 1;	// set margin bit
+	unsigned int  first	     : 1;	// first mgr in pass
+	unsigned int  joined	 : 1;	// joined mgr in pass
+	unsigned int  offset	 : 1;	// offset valid flag
+	unsigned int  finalizer  : 1;	// indicates static object
+	unsigned int  debug	     : 1;	// debug
+	unsigned int  testpts	 : 1;	// test point size
+	unsigned int  showstats	 : 1;	// show statistics
+	unsigned int  unused     : 25;	// unassigned bits
+} place_mgr_flags;
+
+typedef union place_mgr_flags_u {
+	place_mgr_flags			s;
+	int         		l;
+} place_mgr_flags_u;
+
+
 class PlacementMgr
 {
 protected:
@@ -167,6 +168,7 @@ protected:
 	place_mgr_flags_u flags;
 
     void find_neighbors(Placement *);
+    Placement* currentChain;  // ⭐ Add this member variable
 
 public:
 	
@@ -193,20 +195,19 @@ public:
 
 	void free_htable();
 	Placement *next();
+	Placement *pop();
+	
 	void ss();
 	
 	int getHashsize(){
 		return hashsize;
 	}
-	void setHashsize(int n){
-		if(hash && hashsize !=n){
-			free_htable();
-			delete hash;
-			hash=0;
-			hashsize=n;
-			init();
-		}
+	void resetIterator() {
+	    index = 0;
+	    currentChain = nullptr;
 	}
+	void printChainStats();
+	int hashPoint(Point4DL& pc, int lvl, int id);
 	LinkedList<Placement*> list;
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
@@ -226,8 +227,6 @@ public:
 	int showstats()				{ return flags.s.showstats;}
 	void set_testpts(int i)   	{ flags.s.testpts=i;}
 	int testpts()				{ return flags.s.testpts;}
-	void set_useaveht(int i)   	{ flags.s.useaveht=i;}
-	int useaveht()				{ return flags.s.useaveht;}
 
 	void set_first(int i)   	{ flags.s.first=i;}
 	int first()				    { return flags.s.first;}
@@ -268,11 +267,13 @@ public:
 	virtual void dump();
 	virtual bool valid();
 	virtual void setTests();
-	virtual bool testColor();
-	virtual bool testDensity();
-	virtual void collect(ValueList<PlaceData*> &data);
+	virtual bool testColor();   // color node for debugging
+	virtual bool testDensity(); // add for detail to center to more accurately define seed position
+	virtual void collect(ValueList<PlaceData*> &data); // collect list of objects
 	virtual Placement *make(Point4DL&,int);
 	virtual PlaceData *make(Placement*s,Point bp,double d,double pts);
+	
+	Point getVertex(Placement *s,double &dist, double &pts);
 
 	friend class Placement;
 };

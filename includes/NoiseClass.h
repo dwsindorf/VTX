@@ -7,7 +7,13 @@
 #include "ListClass.h"
 #include "Perlin.h"
 
+#define LARGE_TBL
+
+#ifdef LARGE_TBL
+const int PERMSIZE=64*1024*32;
+#else
 const int PERMSIZE=1024*32;
+#endif
 //const int PERMSIZE=2048*64;
 const int PMASK=PERMSIZE-1;
 
@@ -237,7 +243,7 @@ protected:
     };
     static void   init();
     static double multinoise(int options, int n, double *s);
-    static double random(int options,int n, double *s);
+    //static double random(int options,int n, double *s);
     static double NoiseMinMax(double v);
     static double Noise1D(double v);
     static double Noise2D(double *v);

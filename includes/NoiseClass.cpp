@@ -5,6 +5,8 @@
 #include "Perlin.h"
 #include <ctime>
 #include <math.h>
+#include <unordered_set>
+#include <vector>
 #include "Util.h"
 
 
@@ -121,6 +123,7 @@ const int IC = 150889;
 // Rand()	portable random number generator
 //          values range from 0.0 to 1.0
 //-------------------------------------------------------------
+
 double Rand()
 {
 	static double iy,ir[98];
@@ -145,13 +148,35 @@ double Rand()
 	return iy/M;
 }
 
-//-------------------------------------------------------------
-// SRand()	portable random number generator
-//          values range from -1.0 to 1.0
-//-------------------------------------------------------------
-double SRand()
+double Rand2()
 {
-	return 2*(Rand()-0.5);
+    static const int64_t M = 2147483647LL;  // 2^31 - 1
+    static const int64_t A = 48271LL;
+    static int64_t idum = 1;
+    static int64_t iy = 0;
+    static int64_t ir[98];
+    
+    if(iff == 0) {
+        iff = 1;
+        if(idum <= 0) idum = 1;
+        
+        for(int j = 1; j <= 97; j++) {
+            idum = (A * idum) % M;
+            ir[j] = idum;
+        }
+        idum = (A * idum) % M;
+        iy = idum;
+    }
+    
+    int j = (int)(1 + 97.0 * iy / M);
+    if(j < 1) j = 1;
+    if(j > 97) j = 97;
+    
+    iy = ir[j];
+    idum = (A * idum) % M;
+    ir[j] = idum;
+    
+    return iy / (double)M;
 }
 
 //-------------------------------------------------------------
@@ -163,44 +188,12 @@ int IntRand()
 }
 
 //-------------------------------------------------------------
-//RandSum()	return sum of octaves (random noise)
+// SRand()	portable random number generator
+//          values range from -1.0 to 1.0
 //-------------------------------------------------------------
-static double RandSum(int nargs, double *args)
+double SRand()
 {
-	static double iy,ir[98];
-	static int flag=0,id=1;
-
-	double result=0,val,bias;
-	int start=(int)args[0];
-	int orders=(int)args[1];
-	unsigned int i,n;
-
-	n=start+orders;
-
-	bias=nargs>2?args[2]:1.0;
-
-	if(n<=0)
-		return 0;
-	if(flag==0){
-		flag=1;
-		if((id=(IC-id)%M) <0)
-			id=-id;
-		for(i=1;i<=97;i++) {
-			id=(IA*id+IC)%M;
-			ir[i]=id;
-		}
-		id=(IA*id+IC)%M;
-		iy=id;
-	}
-
-	for(i=start;i<n; i++){
-		val=ir[(int)(1+97.0*i/M)]/M;
-		if(i%2)
-			result += bias*val;
-		else
-			result += val;
-	}
-	return result;
+	return 2*(Rand()-0.5);
 }
 
 //-------------------------------------------------------------
@@ -695,12 +688,60 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
 	set_mode(oldmode);
 }
 
+void checkDuplicates(double* table, int size) {
+    std::unordered_set<double> seen;
+    int duplicates = 0;
+    
+    for(int i = 0; i < size; i++) {
+        if(!seen.insert(table[i]).second) {
+            duplicates++;
+        }
+    }
+    
+    printf("double table Total numbers: %d\n", size);
+    printf("Unique numbers: %d\n", (int)seen.size());
+    printf("Duplicates: %d\n", duplicates);
+    printf("Uniqueness: %.2f%%\n", 100.0 * seen.size() / size);
+}
+void checkDuplicates(int* table, int size) {
+    std::unordered_set<int> seen;
+    int duplicates = 0;
+    
+    for(int i = 0; i < size; i++) {
+        if(!seen.insert(table[i]).second) {
+            duplicates++;
+        }
+    }
+    
+    printf("int table Total numbers: %d\n", size);
+    printf("Unique numbers: %d\n", (int)seen.size());
+    printf("Duplicates: %d\n", duplicates);
+    printf("Uniqueness: %.2f%%\n", 100.0 * seen.size() / size);
+}
+
+void testRandPeriod() {
+    std::unordered_set<double> seen;
+    
+    // Reset your RNG
+    iff = 0;
+    idum = 1;
+    
+    for(int i = 0; i < 10000000; i++) {
+        double val = Rand2();
+        if(!seen.insert(val).second) {
+            printf("Period detected at iteration %d\n", i);
+            printf("Unique values before repeat: %d\n", (int)seen.size());
+            break;
+        }
+    }
+}
 //-------------------------------------------------------------
 // Noise::init()	make constant arrays
 //-------------------------------------------------------------
 void Noise::init()
 {
 	int i,j,k;
+	int duplicates = 0;
 	if(init_flag){
 		state=0;
 		set(0,0,0,0);
@@ -713,19 +754,25 @@ void Noise::init()
 
 		for(i=0;i<PERMSIZE;i++){
 			perm[i]=i;
-			rands[i]=(Rand()-0.5);
+			rands[i]=(Rand2()-0.5);
 		}
 
 		while (--i) {
 			k = perm[i];
-			perm[i] = perm[j = IntRand() % mod];
+			perm[i] = perm[j = (int)(rmax*Rand2()) % mod];
 			perm[j] = k;
 		}
 		printf("Noise::init n %d\n",nfact);
 		//init_noise(RandSeed);
 		init_flag=0;
 	}
+#ifdef CHECK_TABLES
+	checkDuplicates(perm,PERMSIZE); // all unique
+	checkDuplicates(rands,PERMSIZE); // all unique
+	testRandPeriod();
+#endif
 }
+
 
 //-------------------------------------------------------------
 // double value(int i) return noise value
@@ -1109,12 +1156,4 @@ double Noise::Simplex3D(double *d){
 //-------------------------------------------------------------
 double Noise::Simplex4D(double *d){
 	return Simplex::noise(d[0],d[1],d[2],d[3]);
-}
-
-//-------------------------------------------------------------
-// Noise::random()	return sum of octaves (random noise)
-//-------------------------------------------------------------
-double Noise::random(int options,int nargs, double *args)
-{
-	return RandSum(nargs, args);
 }

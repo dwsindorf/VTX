@@ -299,7 +299,7 @@ bool PlantMgr::show_one=false;
 int PlantMgr::textures=0;
 bool PlantMgr::first_instance=false;
 
-PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i,2*PERMSIZE)
+PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 {
 #ifdef TEST_PLANTS
     set_testColor(true);
@@ -809,7 +809,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	seed=0;
 	render_test=false;
 	
-    mgr=new PlantMgr(PLANTS|NOLOD,this);
+    mgr=new PlantMgr(PLANTS,this);
 }
 
 //-------------------------------------------------------------

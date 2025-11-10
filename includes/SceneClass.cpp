@@ -54,7 +54,7 @@ static VFV finishers[32];
 static int fins=0;
 static TerrainData Td;
 
-extern int place_visits,place_hits,place_misses,place_gid;
+extern int place_gid;
 extern int tnoise_visits,tnoise_hits,tnoise_visits;
 extern int recalced,tcreated, tdeleted, tcount;
 extern int vtests,dns_fails,pts_fails;
@@ -129,8 +129,6 @@ void init_for_cycle()
 void init_for_rebuild()
 {
 	PlacementStats::reset();
-    //place_visits=place_hits=place_misses=0;
-	//vtests=pts_fails=dns_fails=0;
     tnoise_visits=tnoise_hits=0;
 	recalced=tcreated=tdeleted=tcount=0;
 }

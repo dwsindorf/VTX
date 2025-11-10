@@ -1432,7 +1432,6 @@ static void collect_nodes(MapNode *n)
 	d=d->surface1();
 	
 	if(n->visible() && d && !d->rock() && !d->water()){
-	//cout<<d->hardness()<<endl;
 		node_list.add(n);
     }
 }
@@ -1447,7 +1446,7 @@ void Map::render_sprites(){
 		npole->visit(&collect_nodes);
 		ValueList<MapNode*> sorted;
 		sorted.set(node_list);
-		sorted.sort();
+		//sorted.sort();
 		double d1=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 		Sprite::reset();
 		Plant::reset();
@@ -1465,7 +1464,7 @@ void Map::render_sprites(){
 		Plant::collect();
 		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
 
-		//cout<<"Map::placements tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+		cout<<"Map::placements tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}

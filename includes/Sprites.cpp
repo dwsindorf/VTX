@@ -153,7 +153,6 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	sprites_rows=0;
 	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
-	set_useaveht(true);
 	set_testpts(true);
 }
 SpriteMgr::~SpriteMgr()
@@ -262,7 +261,7 @@ bool SpriteMgr::setProgram(){
 	for(int i=n-1;i>=0;i--){
 		s=(SpriteData*)Sprite::sprites[i];
 		int id=s->instance;//s->get_id();
-		Point t=s->center;
+		Point t=s->vertex;
 		double pts=s->pntsize;
 				
 		// random reflection - based on sprite hash table center position
@@ -349,11 +348,6 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 	visits++;
     flags.s.active=true;
     PlacementMgr::sval=lerp(d,0,thresh,0,1);
-
-    double wt=1/(0.01+PlacementMgr::sval);
-    aveht+=Height*wt;
-	
-    wtsum+=wt;
 
 	if(d<dist){
 		ht=Height;
@@ -495,13 +489,13 @@ TNsprite::TNsprite(char *s, int opts,  TNode *l, TNode *r) : TNplacements(0,l,r,
 {
     setImageMgr(&sprites_mgr);
 	set_collapsed();
- 	type=opts|SPRITES|NOLOD;
+ 	type=opts|SPRITES;
  	//cout<<"TNsprite ID="<<get_id()<<endl;
 	setName(s);
 	FREE(s);
 	image=0;
 	sprite=0;
-    mgr=new SpriteMgr(SPRITES|NOLOD);
+    mgr=new SpriteMgr(SPRITES);
 }
 
 //-------------------------------------------------------------
