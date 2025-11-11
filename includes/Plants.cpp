@@ -347,7 +347,6 @@ void PlantMgr::init()
 	PlacementMgr::init();
 
 	ncalls=0;
-	ss();
   	reset();
   	shadow_count=0;
 	if(!finisher_added)
@@ -585,23 +584,20 @@ void PlantMgr::render(){
 
 		for(int i=start;i>=0;i--){ // Farthest to closest
 			PlantData *s=Plant::data[i];
-			Range=(s->distance-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
+			Range=(s->dist-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
 			int id=s->get_id();
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
 	
 			plant->size=s->radius; // placement size
-			plant->base_point=s->base*(1-plant->size*plant->base_drop);
-			plant->pntsize=s->pntsize;
-			plant->distance=s->distance;
+			plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
+			plant->pntsize=s->pts;
+			plant->distance=s->dist;
 			
-			Point pp=Point(s->point.x,s->point.y,s->point.z);
-			
-			double r=Random(pp);
-			randval=256*fabs(r)+id;
+			randval=s->rval;
 			plant->seed=URAND;
 			plant->instance=i;
-			//cout<<"emit "<<i<<":"<<start<<endl;
+
 			plant->emit();
 		}
 		glEnable(GL_CULL_FACE);
@@ -674,9 +670,6 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 {
     return new PlantPoint(*this,p,n);
 }
-PlaceData *PlantMgr::make(Placement*s,Point bp,double d,double pts){
-	return new PlantData((PlantPoint*)s,bp,d,pts);
-}
 
 //************************************************************
 // class PlantPoint
@@ -692,8 +685,6 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 	return Placement::set_terrain(pmgr); // use default method
 }
 //==================== PlantData ===============================
-PlantData::PlantData(PlantPoint *pnt,Point bp,double d, double ps): PlaceData(pnt,bp,d,ps){
-}
 
 //===================== Plant ==============================
 ValueList<PlaceData*> Plant::data;

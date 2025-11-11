@@ -170,7 +170,6 @@ void SpriteMgr::init()
 	ncalls=0;
 	nhits=0;
 	cnt=0;
-	ss();
   	reset();
  }
 
@@ -243,28 +242,43 @@ bool SpriteMgr::setProgram(){
 	
 	int n=Sprite::sprites.size;
 	int flip=0;
-	Point4DL pp;
 	SpriteData *s=(SpriteData*)Sprite::sprites[0];
-	pp=s->point;
-	Point pn=Point(pp.x,pp.y,pp.z);
-	Point ppn=pn.normalize();
-	glNormal3dv(ppn.values());
+	//Point4DL pp=s->point;
+	//Point pn=Point(pp.x,pp.y,pp.z);
+	//Point ppn=pn.normalize();
+	//ppn.print(" ");
+//	glNormal3dv(ppn.values());
+
+	Point pv=s->normal;
+	//pv=pv.normalize();
 	
+	//Point p1=TheScene->vpoint-pv;
+	//Point p2=p1.cross(p1);
+	//p2=p2.normalize();
+	
+	//pvn.print("\n");
+	glNormal3dv(pv.values());
+
 //	cout<<endl;
-//	ppn.print("sprite ");
+	pv.print("\n");
 
 	for(int i=n-1;i>=0;i--){
 		s=(SpriteData*)Sprite::sprites[i];
 		int id=s->instance;//s->get_id();
 		Point t=s->vertex;
-		double pts=s->pntsize;
+		double pts=s->pts;
 				
 		// random reflection - based on sprite hash table center position
-		pp=s->point;
+
+		//pp=s->point;
+		int rval=s->rval;
+		//cout<<rval<<endl;
 		if(s->flip())
-			flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
+			//flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
+			flip=RANDVAL(rval)+0.5>s->rand_flip_prob?0:1;
 		
-		double x=Random(pp.x,pp.y,pp.z);//+0.5;
+		//double x=Random(pp.x,pp.y,pp.z);
+		double x=RANDVAL(rval);
 		double rv=s->variability*x;
 		pts*=1+rv;
 		
@@ -277,7 +291,8 @@ bool SpriteMgr::setProgram(){
 		double sb=0;
 
 		if(nn>1){ // random selection in multirow sprites image
-			r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
+			//r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
+			r=2*RANDVAL(rval);
 			r=clamp(r,-1,1);
 			sid=s->get_id();
 			sb=(1-s->select_bias)*r*(nn);
@@ -310,9 +325,15 @@ Placement *SpriteMgr::make(Point4DL &p, int n)
 {
     return new SpritePoint(*this,p,n);
 }
-PlaceData *SpriteMgr::make(Placement*s,Point bp,double d,double pts){
-	Point xp=bp-TheScene->xpoint; // TODO: Why only needed for sprites ?
-	return new SpriteData((SpritePoint*)s,xp,d,pts);
+//PlaceData *SpriteMgr::make(Placement*s,Point bp,double d,double pts){
+//	Point xp=bp-TheScene->xpoint; // TODO: Why only needed for sprites ?
+//	return new SpriteData((SpritePoint*)s,xp,d,pts);
+//}
+
+PlaceData *SpriteMgr::make(Placement*s){
+	s->setVertex();
+	//Point xp=bp-TheScene->xpoint; // TODO: Why only needed for sprites ?
+	return new SpriteData((SpritePoint*)s);
 }
 
 //************************************************************
@@ -360,13 +381,22 @@ bool SpritePoint::set_terrain(PlacementMgr &pmgr)
 }
 
 //==================== SpriteData ===============================
-SpriteData::SpriteData(SpritePoint *pnt,Point bp, double d, double ps): PlaceData(pnt,bp,d,ps){
-  	sprites_cols=pnt->sprites_cols;
- 	sprites_rows=pnt->sprites_rows;
-	variability=pnt->variability;
-	rand_flip_prob=pnt->rand_flip_prob;
-	select_bias=pnt->select_bias;
+//SpriteData::SpriteData(SpritePoint *s,Point bp, double d, double ps): PlaceData(s,bp,d,ps){
+//  	sprites_cols=s->sprites_cols;
+// 	sprites_rows=s->sprites_rows;
+//	variability=s->variability;
+//	rand_flip_prob=s->rand_flip_prob;
+//	select_bias=s->select_bias;
+//}
+SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
+	vertex=s->vertex-TheScene->xpoint; // TODO: Why only needed for sprites ?
+  	sprites_cols=s->sprites_cols;
+ 	sprites_rows=s->sprites_rows;
+	variability=s->variability;
+	rand_flip_prob=s->rand_flip_prob;
+	select_bias=s->select_bias;
 }
+
 //===================== Sprite ==============================
 ValueList<PlaceData*> Sprite::sprites;
 //-------------------------------------------------------------

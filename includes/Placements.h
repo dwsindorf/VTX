@@ -96,9 +96,11 @@ public:
 	double 		ht;
 	double 		dist;
 	double      pts;
+	double      rval;
 	int 		visits;
 	int 		instance;
-	//int 		place_hits;
+    Point       vertex;
+    Point       normal;
 	PlacementMgr *mgr;
 	place_flags_u flags;
 	
@@ -121,23 +123,20 @@ public:
 class PlaceData
 {
 public:
-	Point4DL point;
-	int visits;
 	int    type;
-	double distance;
+	double dist;
 	double radius;
 	double ht;
-	double pntsize;
+	double pts;
+	double rval;
 	int instance;
 	Point vertex;
-
-	Point base;
+	Point normal;
 	
 	PlacementMgr *mgr;
+	PlaceData(Placement*);
 	
-	PlaceData(Placement*,Point, double,double);
-	double value() { return distance;}
-	void print();
+	double value() { return dist;}
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
 	int flip()				    { return type & FLIP;}
@@ -168,8 +167,8 @@ protected:
 	place_mgr_flags_u flags;
 
     void find_neighbors(Placement *);
-    Placement* currentChain;  // ⭐ Add this member variable
-	int 			index;
+    static Placement* currentChain;  // ⭐ Add this member variable
+	static int 			index;
 
 public:
 	
@@ -178,7 +177,7 @@ public:
 	
 	static SData   sdata[SDATA_SIZE];
 	static ValueList<SData*> slist;
-	static int  scnt,hits;
+	static int  scnt,hits,lvl;
 	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
 	static double sval,cval,htval;
 	static LinkedList<Placement*> list;
@@ -190,11 +189,24 @@ public:
 	static int hashsize;
 	static double collect_minpts,adapt_ptsize,render_ptsize;
 
+	int		type;    // type id
+	int     options;
+	int		id;
+	int		instance;
+	double  maxsize;
+	int     levels;
+	double	mult;
+	double	level_mult;
+	double  density;
+	double  base;
+	double  ht;
+	double  msize;
+	TNode   *dexpr;
+
 	void free_htable();
 	
 	Placement *next();	
-	void ss();
-	void resetIterator() {
+	static void resetIterator() {
 	    index = 0;
 	    currentChain = nullptr;
 	}
@@ -231,20 +243,6 @@ public:
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
 
-	int		type;    // type id
-	int     options;
-	int		id;
-	int		instance;
-	int     lvl;
-	double  maxsize;
-	int     levels;
-	double	mult;
-	double	level_mult;
-	double  density;
-	double  base;
-	double  ht;
-	double  msize;
-	TNode   *dexpr;
 
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
@@ -260,9 +258,7 @@ public:
 	virtual bool testDensity(); // add for detail to center to more accurately define seed position
 	virtual void collect(ValueList<PlaceData*> &data); // collect list of objects
 	virtual Placement *make(Point4DL&,int);
-	virtual PlaceData *make(Placement*s,Point bp,double d,double pts);
-	
-	Point getVertex(Placement *s,double &dist, double &pts);
+	virtual PlaceData *make(Placement*s);
 
 	friend class Placement;
 };

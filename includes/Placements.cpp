@@ -25,7 +25,7 @@ static char THIS_FILE[] = __FILE__;
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 #define DEBUG_HASH         //  turn on to get hash table stats
-#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
+//#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
 //#define NO_CHAIN
 //#define OLD_HASH
 
@@ -164,6 +164,9 @@ int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=2;
 double PlacementMgr::collect_minpts=2;
+int PlacementMgr::lvl=0;
+Placement* PlacementMgr::currentChain=nullptr;  // ⭐ Add this member variable
+int PlacementMgr::index=0;
 
 PlacementMgr::PlacementMgr(int i)
 {
@@ -233,6 +236,7 @@ void PlacementMgr::free_htable()
 //-------------------------------------------------------------
 void PlacementMgr::reset()
 {
+	index=0;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain
@@ -415,34 +419,10 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
     return new Placement(*this,p,n);
 }
 
-void PlacementMgr::ss(){ 
-	index=0;
-}
-
-
-//-------------------------------------------------------------
-// PlacementMgr::getVertex() return Placement surface vertex position 
-//-------------------------------------------------------------
-Point PlacementMgr::getVertex(Placement *s, double &dist, double &pts) {
-	Point4D p(s->center);
-	Point pp = Point(p.x, p.y, p.z);
-	Point ps = pp.spherical();
-	double ht = s->ht;
-	Point base = TheMap->point(ps.y, ps.x, ht); // spherical-to-rectangular
-	Point bp = Point(-base.x, base.y, -base.z); // Point.rectangular has 180 rotation around y
-	double d = bp.distance(TheScene->vpoint);  // distance	
-	double r = TheMap->radius * s->radius;
-	pts = TheScene->wscale * r / d;
-	dist=d;
-	return bp;
-}
-
 //-------------------------------------------------------------
 // PlacementMgr::collect() collect list of valid placements 
 //-------------------------------------------------------------
 void PlacementMgr::collect(ValueList<PlaceData*> &data){
-    double minv=1;
-	ss();
 	resetIterator();
 	Placement *s=next();
 	while (s) {  // from hash table
@@ -457,22 +437,20 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 		}
 		bool valid = s->visits >= 1 && s->flags.s.valid && s->flags.s.active;
 		if (valid) {
-			double d;
-			double pts;
-			Point bp=getVertex(s,d,pts);
-			minv = 1;
+			s->setVertex();
+			double dist=s->dist;
+			double pts=s->pts;
+			Point vertex=s->vertex;			
 			if (testpts()) {  // reject small placements
 				if (pts < collect_minpts) {
 					bad_pts++;
 					s = next();
 					continue;
 				}
-				// tweak to make close nodes require more hits
-				//minv = lerp(pts, minpts, 10 * minpts, 1, 2); 
 			}
-			if (s->visits >= minv) { // all good, generate a new final object (copy constructor ?)
-				PlaceData *p = make(s, bp, d, pts); // may be overiden by extended classes
-				data.add(p);
+			if (s->visits >0) { // all good, generate a new final object (copy constructor ?)
+				PlaceData *p1 = make(s); // may be overiden by extended classes
+				data.add(p1);
 			}
 		}
 		s = next();
@@ -487,9 +465,10 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 	//cout<<"placement collected="<<data.size<<endl;
 }
 
-PlaceData *PlacementMgr::make(Placement*s,Point bp,double d,double pts){
-	return new PlaceData((Placement*)s,bp,d,pts);
+PlaceData *PlacementMgr::make(Placement*s){
+	return new PlaceData(s);
 }
+
 void PlacementMgr::dump(){
 	if(!hash)
 		return;
@@ -569,12 +548,7 @@ void PlacementMgr::eval()
          pv.w=0;
     double l=pv.length();
     pv=pv.normalize();
-    
-    if(hashsize==0){
-    	//cout<<"hash table empty !!"<<endl;
-    	return;
-    }
-    
+     
     sval=0;
     hits=0;
     cval=0;
@@ -820,7 +794,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	instance=pmgr.instance;
 	lvl=mgr->lvl;
 	pts=0;
-	
+	rval=0;	
 	next=0;
 	
 #ifdef DEBUG_PLACEMENTS
@@ -831,9 +805,12 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 
 	int seed=PERM(hid);
 	
-    //if(mgr->offset_valid())
-		p=p-mgr->offset;
-
+	Point pp=Point(point.x,point.y,point.z);
+	
+	r=Random(pp);
+	rval=256*fabs(r)+instance;
+	
+	p=p-mgr->offset;
  	p=(p+0.5)*mgr->size;
 
 	if(mgr->dexpr){  // density expr
@@ -878,8 +855,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 			p.w=0;
 	}
 	p=p.normalize();
-    //if(mgr->offset_valid())
-	   	p=p+mgr->offset;
+	p=p+mgr->offset;
 	if(TheNoise.noise3D())
 	    p.w=0;
 	center=p;
@@ -940,45 +916,34 @@ void Placement::dump(){
 }
 
 //-------------------------------------------------------------
-// PlacementMgr::getVertex() return Placement surface vertex position 
+// Placement::setVertex() set Placement surface vertex
 //-------------------------------------------------------------
 void Placement::setVertex() {
 	Point4D p(center);
 	Point pp = Point(p.x, p.y, p.z);
+	normal = pp.normalize();
 	Point ps = pp.spherical();
-	double ht = ht;
 	Point base = TheMap->point(ps.y, ps.x, ht); // spherical-to-rectangular
-	Point bp = Point(-base.x, base.y, -base.z); // Point.rectangular has 180 rotation around y
-	double d = bp.distance(TheScene->vpoint);  // distance	
+	vertex = Point(-base.x, base.y, -base.z);   // Point.rectangular has 180 rotation around y (??)
+	double d = vertex.distance(TheScene->vpoint);  // distance	
 	double r = TheMap->radius * radius;
 	pts = TheScene->wscale * r / d;
 	dist=d;
 }
 
 //==================== PlantData ===============================
-PlaceData::PlaceData(Placement *pnt,Point bp,double d, double ps){
+// copy constructor
+PlaceData::PlaceData(Placement *pnt){
 	type=pnt->type;
 	ht=pnt->ht;
-	
-	point=pnt->point;
-	vertex=bp;
-	
-	base=bp;
-	
+	vertex=pnt->vertex;
+	normal=pnt->normal;	
 	radius=pnt->radius;
-    pntsize=ps;
- 	distance=d;//TheScene->vpoint.distance(t);
-	visits=pnt->visits;
+    pts=pnt->pts;
+ 	dist=pnt->dist;//TheScene->vpoint.distance(t);
 	instance=pnt->instance;
 	mgr=pnt->mgr;
-}
-
-void PlaceData::print(){
-	char msg[256];
-	Point pp=Point(point.x,point.y,point.z);
-	double h=TheMap->radius*TheMap->hscale;
-	sprintf(msg,"visits:%-1d ht:%-1.4f aveht:%-1.4f dist:%g",visits,h*ht/FEET,h*ht/FEET,distance/FEET);
-	cout<<msg<<endl;
+	rval=pnt->rval;
 }
 
 //************************************************************

@@ -46,6 +46,7 @@ extern double rands[];
 extern int lastn;
 #define PERM(x) 	perm[((int)(x))&PMASK]
 #define RAND(x) 	(rands[PERM((x)+lastn)])
+#define RANDVAL(x) 	(rands[PERM((x++))])
 
 #define URAND(x) 	(rands[PERM((x)+lastn)]+0.5)
 #define LRAND 	    (rands[PERM((lastn++)+lastn)]+0.5)

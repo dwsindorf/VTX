@@ -25,10 +25,7 @@ public:
 
 class PlantData : public PlaceData
 {
-public:
-	PlantData(PlantPoint*,Point, double,double);
 };
-
 
 class LeafImageMgr : public ImageMgr
 {
@@ -72,30 +69,29 @@ class PlantMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
-	PlaceData *make(Placement*s,Point bp,double d,double pts);
 	
 	TNplant *plant;
 	static int stats[PLANT_STATS];
 	static double render_time;
-
 	static bool threed;
 	static bool spline;
 	static bool poly_lines;
 	static bool shader_lines;
 	static bool no_cache;
 	static int textures;
-
-	Color c;
-	double slope_bias;
-	double ht_bias;
-	double lat_bias;
-	double hardness_bias;
 	static bool shadow_mode;
 	static int shadow_count;
 	static double pmax;
 	static double pmin;
 	static bool show_one;
 	static bool first_instance;
+	
+	Color c;
+	double slope_bias;
+	double ht_bias;
+	double lat_bias;
+	double hardness_bias;
+
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);

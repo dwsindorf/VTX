@@ -33,7 +33,7 @@ public:
 	int sprites_rows;
 	int sprites_cols;
 
-	SpriteData(SpritePoint*,Point,double,double);
+	SpriteData(SpritePoint*s);
 };
 
 class SpriteImageMgr : public ImageMgr
@@ -52,7 +52,7 @@ class SpriteMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
-	PlaceData *make(Placement*s,Point bp,double d,double pts);
+	PlaceData *make(Placement*s);
 
 	Color c;
 
