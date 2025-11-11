@@ -42,9 +42,6 @@ static double thresh=1.0;
 #else
 static double thresh=1.5;
 #endif
-static double roff_value=0.5*PI;
-static double roff2_value=1;
-
 
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
@@ -94,8 +91,6 @@ CraterMgr::CraterMgr(int i) : PlacementMgr(i)
  	noise_vertical=1;
   	noise_radial=1;
   	rnoise=vnoise=0;
-	roff=roff_value;
-	roff2=roff2_value;
 #ifdef TEST_CRATERS
     set_testColor(true);
 #endif

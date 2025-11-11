@@ -54,7 +54,6 @@ RockMgr::RockMgr(int i) : PlacementMgr(i)
 	rnoise=0;
 	rdist=0;
 	pdist=1;
-	adapt_ptsize=1;
 	rx=ry=0;
 }
 RockMgr::~RockMgr()

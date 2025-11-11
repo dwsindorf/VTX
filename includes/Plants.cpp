@@ -221,8 +221,6 @@ extern int test1,test2,test3,test4,test5;
 static int ncalls=0;
 static int oldmode=0;
 
-static double roff_value=1e-6;//0.5*PI;
-static double roff2_value=0.5;
 static double ht_offset=0.0;
 static double threshold=1;
 
@@ -311,8 +309,8 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-	roff=roff_value;
-	roff2=roff2_value;
+//	roff=roff_value;
+//	roff2=roff2_value;
 	level_mult=0.2;
 	slope_bias=0;
 	hardness_bias=0;

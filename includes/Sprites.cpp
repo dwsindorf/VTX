@@ -71,9 +71,6 @@ static int nhits=0;
 static double thresh=1.0;    // move to argument ?
 static double ht_offset=0.5; // move to argument ?
 
-static double roff_value=1e-6;//0.5*PI;
-static double roff2_value=0.5;
-
 static double min_render_pts=1; // for render
 static double min_adapt_pts=2; //  for adapt - increase resolution only around nearby sprites
 
@@ -139,8 +136,6 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 		add_finisher(show_stats);
 #endif
 	MSK_SET(type,PLACETYPE,SPRITES);
-	roff=roff_value;
-	roff2=roff2_value;
 	level_mult=0.2;
 	slope_bias=0;
 	ht_bias=0;

@@ -169,21 +169,11 @@ protected:
 
     void find_neighbors(Placement *);
     Placement* currentChain;  // ⭐ Add this member variable
+	int 			index;
 
 public:
 	
 	Placement  **hash;
-	double			size;
-	double 			roff;
-	double 			roff2;
-	double 			render_ptsize;
-	double 			adapt_ptsize;
-	double 			minpts;
-	Point4D			mpt;
-	Point4D			offset;
-	int 			hashsize;
-	int 			cnt;
-	int 			index;
 	//ValueList<PlaceData*> data;
 	
 	static SData   sdata[SDATA_SIZE];
@@ -191,24 +181,25 @@ public:
 	static int  scnt,hits;
 	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
 	static double sval,cval,htval;
-	PlacementStats Stats;
+	static LinkedList<Placement*> list;
+	static PlacementStats Stats;
+	static Point4D	mpt;
+	static Point4D	offset;
+	static double roff,roff2;
+	static double size;
+	static int hashsize;
+	static double collect_minpts,adapt_ptsize,render_ptsize;
 
 	void free_htable();
-	Placement *next();
-	Placement *pop();
 	
+	Placement *next();	
 	void ss();
-	
-	int getHashsize(){
-		return hashsize;
-	}
 	void resetIterator() {
 	    index = 0;
 	    currentChain = nullptr;
 	}
 	void printChainStats();
 	int hashPoint(Point4DL& pc, int lvl, int id);
-	LinkedList<Placement*> list;
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
 	bool sizetest()				{ return options & MINSIZE?true:false;}
@@ -250,13 +241,11 @@ public:
 	double	mult;
 	double	level_mult;
 	double  density;
-	TNode   *dexpr;
 	double  base;
-
 	double  ht;
 	double  msize;
+	TNode   *dexpr;
 
-	PlacementMgr(int,int);
 	PlacementMgr(int);
 	virtual ~PlacementMgr();
 	static void resetAll();

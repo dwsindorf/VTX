@@ -25,7 +25,7 @@ static char THIS_FILE[] = __FILE__;
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 #define DEBUG_HASH         //  turn on to get hash table stats
-//#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
+#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
 //#define NO_CHAIN
 //#define OLD_HASH
 
@@ -36,6 +36,7 @@ extern double Hscale,Height;
 double MaxSize;
 
 int place_gid=0;
+static int 	cnt;
 
 #ifdef DEBUG_PLACEMENTS
 
@@ -140,6 +141,8 @@ void PlacementStats::dump(){
 
 SData  PlacementMgr::sdata[SDATA_SIZE];
 ValueList<SData*> PlacementMgr::slist(sdata,SDATA_SIZE);
+LinkedList<Placement*> PlacementMgr::list;
+PlacementStats PlacementMgr::Stats;
 int PlacementMgr::scnt=0;
 int PlacementMgr::hits=0;
 double PlacementMgr::sval=0;
@@ -152,8 +155,17 @@ int PlacementMgr::bad_valid=0;
 int PlacementMgr::bad_active=0;
 int PlacementMgr::new_placements=0;
 int PlacementMgr::bad_pts=0;
+Point4D	PlacementMgr::mpt;
+Point4D	PlacementMgr::offset;
+double PlacementMgr::roff=1e-6;
+double PlacementMgr::roff2=1.0;
+double PlacementMgr::size=0.0;
+int PlacementMgr::hashsize=HASHSIZE;
+double PlacementMgr::render_ptsize=1;
+double PlacementMgr::adapt_ptsize=2;
+double PlacementMgr::collect_minpts=2;
 
-PlacementMgr::PlacementMgr(int i, int h)
+PlacementMgr::PlacementMgr(int i)
 {
 	type=i&PID;
     options=i&(~PID);
@@ -169,23 +181,11 @@ PlacementMgr::PlacementMgr(int i, int h)
   	base=0;
 
   	hash=0;
-  	hashsize=h*HASHSIZE;
-  	index=0;
+   	index=0;
   	
-  	//hits=0;
-  	roff=0.5*PI;
-  	roff2=1;
-	render_ptsize=1;
-	adapt_ptsize=2;
-
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
-	minpts=2;
 
-}
-
-PlacementMgr::PlacementMgr(int i):PlacementMgr(i,1)
-{	
 }
 
 PlacementMgr::~PlacementMgr()
@@ -417,7 +417,6 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
 
 void PlacementMgr::ss(){ 
 	index=0;
-	//hits=0;
 }
 
 
@@ -463,7 +462,7 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 			Point bp=getVertex(s,d,pts);
 			minv = 1;
 			if (testpts()) {  // reject small placements
-				if (pts < minpts) {
+				if (pts < collect_minpts) {
 					bad_pts++;
 					s = next();
 					continue;
@@ -610,7 +609,7 @@ void PlacementMgr::eval()
         int seed=lvl*13+id;
             
         if(lvl>0 && roff>0){   
-            set_offset_valid(1);
+           // set_offset_valid(1);
             offset.x=roff*SRAND(1);
             offset.y=roff*SRAND(2);
             offset.z=roff*SRAND(3);
@@ -622,9 +621,10 @@ void PlacementMgr::eval()
             p=pv*(1.0/size)+offset;
         }
         else{
-            set_offset_valid(0);
+           // set_offset_valid(0);
             mpt=pv;     
             p=pv*(1.0/size);
+            offset.clear();
         }
         
         Point4DL pc(FLOOR(p.x),
@@ -636,13 +636,12 @@ void PlacementMgr::eval()
 
 #ifdef OLD_HASH
         int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
+        if(TheNoise.noise4D())
+            n=PERM(pc.w+n);
 #else
         int n=hashPoint(pc,lvl,id);
 #endif       
  
-        if(TheNoise.noise4D())
-            n=PERM(pc.w+n);
-
         // ⭐ MODIFIED: Search chain for matching placement
         Placement* h = hash[n];
         Placement* found = nullptr;
@@ -832,7 +831,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 
 	int seed=PERM(hid);
 	
-    if(mgr->offset_valid())
+    //if(mgr->offset_valid())
 		p=p-mgr->offset;
 
  	p=(p+0.5)*mgr->size;
@@ -879,7 +878,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 			p.w=0;
 	}
 	p=p.normalize();
-    if(mgr->offset_valid())
+    //if(mgr->offset_valid())
 	   	p=p+mgr->offset;
 	if(TheNoise.noise3D())
 	    p.w=0;
@@ -935,7 +934,7 @@ void Placement::dump(){
 		char msg[256];
 		char vh[32];
 		//sprintf(vh,"%d:%d",visits,place_hits);
-		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",mgr->cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
+		sprintf(msg,"%-3d %-2d %-8s dist:%-0.4f ht:%-1.6f x:%-1.5f y:%-1.5f z:%1.5f",cnt++,flags.l,vh,dist,ht,p.x,p.y,p.z);
 		cout<<msg<<endl;
 	}
 }

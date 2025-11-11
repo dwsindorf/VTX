@@ -204,6 +204,8 @@ public:
 
 	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
 	Point toPoint()                 { return Point(x,x,z);}
+	
+	void clear()					{x=y=z=w=0;}
 
 
 	void print();
