@@ -146,7 +146,7 @@ public:
 
     MapLink *split();
     void    sizechk();
-    void    evalsprites();
+    void    evalPlacements();
     int     curvechk();
     int     gradchk();
     void    vischk();

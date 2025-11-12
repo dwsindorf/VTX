@@ -25,7 +25,7 @@ static char THIS_FILE[] = __FILE__;
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 #define DEBUG_HASH         //  turn on to get hash table stats
-//#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
+#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
 //#define NO_CHAIN
 //#define OLD_HASH
 
@@ -44,14 +44,11 @@ static int 	cnt;
 //     PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(n2+id)))
 // ~0.5 us on 330 MHz sparc
 
-PlacementMgr *pmgr=nullptr;
-
 void show_display_placements()
 {
 	PlacementStats::dump();
 #ifdef DEBUG_HASH_CHAINS
-	if(pmgr!=nullptr)
-		pmgr->printChainStats();
+		PlacementMgr::printChainStats();
 #endif
 
 	if(!Render.display(CRTRINFO))
@@ -179,6 +176,7 @@ double PlacementMgr::collect_minpts=2;
 int PlacementMgr::lvl=0;
 Placement* PlacementMgr::currentChain=nullptr;  // ⭐ Add this member variable
 int PlacementMgr::index=0;
+Placement  **PlacementMgr::hash=0;
 
 PlacementMgr::PlacementMgr(int i)
 {
@@ -195,7 +193,7 @@ PlacementMgr::PlacementMgr(int i)
   	dexpr=0;
   	base=0;
 
-  	hash=0;
+  	//hash=0;
    	index=0;
   	
     set_first(0);
@@ -207,9 +205,6 @@ PlacementMgr::~PlacementMgr()
 {
 	Placement *h;
 	list.reset();
-	if(pmgr==this)
-		pmgr=nullptr;
-
   	if(hash && finalizer()){    
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::free()\n");
@@ -235,6 +230,8 @@ void PlacementMgr::setHashcode(){
 void PlacementMgr::free_htable()
 {
     Stats.cfreed=0;
+    if(!hash) 
+    	return;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain
@@ -255,6 +252,8 @@ void PlacementMgr::free_htable()
 void PlacementMgr::reset()
 {
 	index=0;
+    if(!hash) 
+    	return;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain
@@ -272,6 +271,10 @@ void PlacementMgr::reset()
 //-------------------------------------------------------------
 Placement *PlacementMgr::next()
 {
+ 	return next(0);
+}
+Placement *PlacementMgr::next(int type)
+{
    if(!hash)
 		return 0;
 	
@@ -285,7 +288,7 @@ Placement *PlacementMgr::next()
 	// Start from current index
 	while(index < hashsize){
 		Placement* h = hash[index];
-		if(h){
+		if(h && (h->type==type || type==0)){
 			currentChain = h;
 			index++;  // Advance for next call
 			return h;
@@ -297,6 +300,7 @@ Placement *PlacementMgr::next()
 	currentChain = nullptr;
 	return nullptr;
 }
+
 void PlacementMgr::resetAll()
 {
 	 trys=visits=bad_visits=bad_valid=bad_active=bad_pts=new_placements=0;
@@ -394,7 +398,6 @@ void PlacementMgr::init()
 {
 	static bool finisher_added=false;
 	cnt=0;
-	pmgr=this;
 	if(hash==0){
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
@@ -443,8 +446,12 @@ Placement *PlacementMgr::make(Point4DL &p, int n)
 //-------------------------------------------------------------
 void PlacementMgr::collect(ValueList<PlaceData*> &data){
 	resetIterator();
-	Placement *s=next();
+	Placement *s=next(); // get any type
 	while (s) {  // from hash table
+		if(s->type !=type){
+			s = next(type);
+			continue;
+		}
 		if (showstats()) {
 			trys++;
 			if (s->visits < minv)
@@ -463,7 +470,7 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 			if (testpts()) {  // reject small placements
 				if (pts < collect_minpts) {
 					bad_pts++;
-					s = next();
+					s = next(type);
 					continue;
 				}
 			}
@@ -472,7 +479,7 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 				data.add(p1);
 			}
 		}
-		s = next();
+		s = next(type);
 	}	
 	if(showstats() && trys>0){
 		double usage=100.0*trys/hashsize;
@@ -1012,7 +1019,7 @@ int TNplacements::get_id()
 //-------------------------------------------------------------
 void TNplacements::reset()
 {
-	mgr->free_htable();
+	PlacementMgr::free_htable();
 }
 
 //-------------------------------------------------------------

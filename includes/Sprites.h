@@ -118,7 +118,7 @@ public:
 	uint cols;
 
 	bool   valid;
-	static ValueList<PlaceData*> sprites;
+	static ValueList<PlaceData*> data;
 
 	Sprite(Image *i, int l, TNode *e);
 	

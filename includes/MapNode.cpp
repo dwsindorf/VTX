@@ -2602,9 +2602,9 @@ double MapNode::value()
 {
 	return point().length();
 }
-void MapNode::evalsprites()
+
+void MapNode::evalPlacements()
 {
-	//TerrainProperties *tp=TerrainData::tp;
 	if(surface_water())
 		return;
 
@@ -2613,8 +2613,6 @@ void MapNode::evalsprites()
 
 	MapData *d=&data;
 	d=d->surface1();
-	//Raster.surface=1;
-	//d=surface_data(d);
 	if(!d)
 		return;
     
@@ -2622,12 +2620,10 @@ void MapNode::evalsprites()
 	double p=d->phi();
 	
 	Point pt=Td.rectangular(t, p);
-	//TheNoise.set(pt);
-	//Height=d->Ht();
     double  aveht=d->Ht();
     
     Point pnt=d->point();
-#define AVE_PTS
+//#define AVE_PTS
 #ifdef AVE_PTS
  	for(int i=0;i<nct;i++){
 		MapData *md=mapdata[i];

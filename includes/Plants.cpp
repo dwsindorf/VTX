@@ -19,7 +19,6 @@ extern double lcos(double g);
 //#define TEST_PTS 
 //#define DEBUG_TEST_PTS 
 //#define DUMP
-//#define SHOW
 //#define DEBUG_PMEM
 
 #define DEBUG_RANDOMIZE
@@ -286,8 +285,6 @@ bool PlantMgr::shadow_mode=false;
 int PlantMgr::shadow_count=0;
 int PlantMgr::stats[PLANT_STATS];
 double PlantMgr::render_time;
-double PlantMgr::pmax=1;
-double PlantMgr::pmin=0;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
@@ -582,7 +579,6 @@ void PlantMgr::render(){
 
 		for(int i=start;i>=0;i--){ // Farthest to closest
 			PlantData *s=Plant::data[i];
-			Range=(s->dist-PlantMgr::pmin)/(PlantMgr::pmax-PlantMgr::pmin);//
 			int id=s->get_id();
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
@@ -701,10 +697,7 @@ void Plant::reset()
 {
 	data.free();
 	PlantMgr::textures=0;
-	for(int i=0;i<Td.plants.size;i++){
-		Plant *plant=Td.plants[i];
-		plant->mgr()->free_htable();
-	}
+	//PlantMgr::free_htable();
 }
 
 //-------------------------------------------------------------
@@ -720,18 +713,8 @@ void Plant::collect()
 	}
 	if(data.size){
 		data.sort();
-		PlantMgr::pmin=data[0]->value();
-		PlantMgr::pmax=data[data.size-1]->value();
- 		double range=PlantMgr::pmax-PlantMgr::pmin;
-   		cout<<"plants collected:"<<data.size<<" range:"<<range<<endl;
+   		cout<<"plants collected:"<<data.size<<endl;
 	}
-#ifdef SHOW
-	int pnrt_num=min(2,data.size-1);
-	for(int i=pnrt_num;i>=0;i--){
-		cout<<i<<" ";
-		data[i]->print();	
-	}
-#endif
 }
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string

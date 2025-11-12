@@ -94,7 +94,7 @@ SpriteMgr g_sm(FINAL|DENSITY_TEST);
 //#define DENSITY_TEST
 
 #define USE_AVEHT
-//#define SHOW
+#define SHOW
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
 #define TEST_PTS 
@@ -180,7 +180,7 @@ void SpriteMgr::eval(){
 
 bool SpriteMgr::setProgram(){
 	TerrainProperties *tp=Td.tp;
-	if(!Sprite::sprites.size)
+	if(!Sprite::data.size)
 		return false;
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",Td.sprites.size);
@@ -241,14 +241,14 @@ bool SpriteMgr::setProgram(){
 	//glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);
 	
-	int n=Sprite::sprites.size;
+	int n=Sprite::data.size;
 	bool flip=false;
-	SpriteData *s=(SpriteData*)Sprite::sprites[0];
+	SpriteData *s=(SpriteData*)Sprite::data[0];
 
 	glNormal3dv(s->normal.values());
 
 	for(int i=n-1;i>=0;i--){
-		s=(SpriteData*)Sprite::sprites[i];
+		s=(SpriteData*)Sprite::data[i];
 		int id=s->instance;//s->get_id();
 		Point t=s->vertex;
 		double pts=s->pts;
@@ -343,7 +343,7 @@ SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 }
 
 //===================== Sprite ==============================
-ValueList<PlaceData*> Sprite::sprites;
+ValueList<PlaceData*> Sprite::data;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
@@ -361,12 +361,8 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 
 void Sprite::reset()
 {
-	sprites.free();
-	//TerrainProperties *tp=Td.tp;
-	for(int i=0;i<Td.sprites.size;i++){
-		Sprite *sprite=Td.sprites[i];
-		//sprite->mgr()->free_htable();
-	}
+	data.free();
+	//PlacementMgr::free_htable();
 }
 
 void Sprite::set_image(Image *i, int r, int c){
@@ -390,19 +386,13 @@ void Sprite::collect()
 	for(int i=0;i<Td.sprites.size;i++){
 		Sprite *sprite=Td.sprites[i];
 		SpriteMgr *mgr=sprite->mgr();
-		mgr->collect(sprites);
+		mgr->collect(data);
 	} // next sprite
-	if(sprites.size){
-  		sprites.sort();
+	if(data.size){
+  		data.sort();
+   		cout<<"Sprites collected:"<<data.size<<endl;
+
 	}
-#ifdef SHOW
-	//int pnrt_num=sprites.size-1;
-	int pnrt_num=min(2,sprites.size-1);
-	for(int i=pnrt_num;i>=0;i--){
-		cout<<i<<" ";
-		sprites[i]->print();	
-	}
-#endif
 }
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string

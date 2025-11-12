@@ -1435,7 +1435,7 @@ static void collect_nodes(MapNode *n)
 		node_list.add(n);
     }
 }
-//#define SORT
+
 // nosort: Map::placements tid:1 nodes:32179 times gather:4 reset:35 eval:387 collect:126 total:552 ms
 // sort:   Map::placements tid:1 nodes:32179 times gather:3 reset:45 eval:430 collect:122 total:600 ms
 void Map::render_sprites(){
@@ -1448,28 +1448,21 @@ void Map::render_sprites(){
 		int n=node_list.size;
 		node_list.ss();	
 		double d1=clock();
-#ifdef SORT
-		ValueList<MapNode*> sorted;
-		sorted.set(node_list);
-		sorted.sort();
-		sorted.ss();
-#endif
-		Sprite::reset();
-		Plant::reset();
 		double dr=clock();
 		int mode=CurrentScope->passmode();
 		CurrentScope->set_spass();
+		
+		Sprite::reset();
+		Plant::reset();
+		PlacementMgr::free_htable();
 		for(int i=0;i<n;i++){
-#ifdef SORT
-			MapNode *node=sorted[n-i-1];
-#else
 			MapNode *node=node_list++;
-#endif
-			node->evalsprites();
+			node->evalPlacements();
 		}
-		double d2=clock();
 		Sprite::collect();
 		Plant::collect();
+		
+		double d2=clock();
 		double d3=1000.0*clock()/CLOCKS_PER_SEC;
 		cout<<"Map::placements tid:"<<tid<<" nodes:"<<node_list.size<<" times"
 				<<" gather:"<<1000*(d1-d0)/CLOCKS_PER_SEC

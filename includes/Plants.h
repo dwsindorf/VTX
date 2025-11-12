@@ -81,8 +81,6 @@ public:
 	static int textures;
 	static bool shadow_mode;
 	static int shadow_count;
-	static double pmax;
-	static double pmin;
 	static bool show_one;
 	static bool first_instance;
 	
@@ -357,7 +355,6 @@ public:
 	Point setVector(Point vec, Point start, int lvl);
 
 };
-
 
 class Plant
 {

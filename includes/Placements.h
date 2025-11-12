@@ -175,7 +175,7 @@ protected:
 
 public:
 	
-	Placement  **hash;
+	static Placement  **hash;
 	//ValueList<PlaceData*> data;
 	
 	static SData   sdata[SDATA_SIZE];
@@ -206,14 +206,15 @@ public:
 	double  msize;
 	TNode   *dexpr;
 
-	void free_htable();
+	static void free_htable();
 	
-	Placement *next();	
+	static Placement *next();
+	static Placement *next(int type);
 	static void resetIterator() {
 	    index = 0;
 	    currentChain = nullptr;
 	}
-	void printChainStats();
+	static void printChainStats();
 	int hashPoint(Point4DL& pc, int lvl, int id);
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}

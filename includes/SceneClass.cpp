@@ -890,6 +890,8 @@ void Scene::open(char *fn)
 	cout<<"Open"<<endl;
 	reset();
 
+	PlacementMgr::free_htable();
+	
 	set_action("Building..");
 	timing_start=clock();
 	timer.start();
