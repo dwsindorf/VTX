@@ -20,7 +20,6 @@ public:
 	double select_bias;
 
 	SpritePoint(SpriteMgr&, Point4DL&,int);
-	bool set_terrain(PlacementMgr  &mgr);
 };
 
 class SpriteData  : public PlaceData
@@ -34,6 +33,8 @@ public:
 	int sprites_cols;
 
 	SpriteData(SpritePoint*s);
+	int flip(){ return type & FLIP;}
+
 };
 
 class SpriteImageMgr : public ImageMgr

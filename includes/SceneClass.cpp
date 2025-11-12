@@ -2525,8 +2525,7 @@ void Scene::render()
         show_info(INFO_TIME);
 #endif
     	build_time=0;
-    	cout<<"Scene exec finishers"<<endl;
-		exec_finishers();
+ 		exec_finishers();
 
 		output_text(); // on-screen info
 

@@ -149,6 +149,7 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
 	set_testpts(true);
+	set_useaveht(false);
 }
 SpriteMgr::~SpriteMgr()
 {
@@ -241,26 +242,10 @@ bool SpriteMgr::setProgram(){
 	glBegin(GL_POINTS);
 	
 	int n=Sprite::sprites.size;
-	int flip=0;
+	bool flip=false;
 	SpriteData *s=(SpriteData*)Sprite::sprites[0];
-	//Point4DL pp=s->point;
-	//Point pn=Point(pp.x,pp.y,pp.z);
-	//Point ppn=pn.normalize();
-	//ppn.print(" ");
-//	glNormal3dv(ppn.values());
 
-	Point pv=s->normal;
-	//pv=pv.normalize();
-	
-	//Point p1=TheScene->vpoint-pv;
-	//Point p2=p1.cross(p1);
-	//p2=p2.normalize();
-	
-	//pvn.print("\n");
-	glNormal3dv(pv.values());
-
-//	cout<<endl;
-	pv.print("\n");
+	glNormal3dv(s->normal.values());
 
 	for(int i=n-1;i>=0;i--){
 		s=(SpriteData*)Sprite::sprites[i];
@@ -270,14 +255,11 @@ bool SpriteMgr::setProgram(){
 				
 		// random reflection - based on sprite hash table center position
 
-		//pp=s->point;
 		int rval=s->rval;
-		//cout<<rval<<endl;
-		if(s->flip())
-			//flip=Random(pp.x+2,pp.y+6,pp.z+10)+0.5>s->rand_flip_prob?0:1;
-			flip=RANDVAL(rval)+0.5>s->rand_flip_prob?0:1;
 		
-		//double x=Random(pp.x,pp.y,pp.z);
+		if(s->flip())
+			flip=RANDVAL(rval)+0.5>s->rand_flip_prob?false:true;
+		
 		double x=RANDVAL(rval);
 		double rv=s->variability*x;
 		pts*=1+rv;
@@ -290,15 +272,13 @@ bool SpriteMgr::setProgram(){
 		double nn=(rows*cols);
 		double sb=0;
 
-		if(nn>1){ // random selection in multirow sprites image
-			//r=2*Random(pp.x+1,pp.y+1,pp.z+1);//)+0.5;
+		if(nn>1){ // random selection in multi-row sprites image
 			r=2*RANDVAL(rval);
 			r=clamp(r,-1,1);
 			sid=s->get_id();
 			sb=(1-s->select_bias)*r*(nn);
 			sel=sid+sb+0.5;
-			sel=sel>nn?sel-nn:sel;
-			
+			sel=sel>nn?sel-nn:sel;		
 			sel=sel<0?nn+sel:sel;
 			sel=clamp(sel,0,nn-1);
 		}
@@ -352,42 +332,7 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 //-------------------------------------------------------------
 // SpritePoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
-bool SpritePoint::set_terrain(PlacementMgr &pmgr)
-{
-	double d=pmgr.mpt.distance(center);
-	d=d/radius;
-	SpriteMgr &mgr=(SpriteMgr&)pmgr;
-	PlacementMgr::sval=0;
-	
-	if(d>thresh)
-		return false;
-	visits++;
-    flags.s.active=true;
-    PlacementMgr::sval=lerp(d,0,thresh,0,1);
-
-	if(d<dist){
-		ht=Height;
-		dist=d;
-		mind=d;
-		PlacementMgr::hits++;
-	}
-	PlacementMgr::hits++;
-
-	PlacementMgr::sdata[PlacementMgr::scnt].v=hid;
-	PlacementMgr::sdata[PlacementMgr::scnt].f=PlacementMgr::sval;
-  	if(PlacementMgr::scnt<255)
-  		PlacementMgr::scnt++;
-	return true;
-}
-
-//==================== SpriteData ===============================
-//SpriteData::SpriteData(SpritePoint *s,Point bp, double d, double ps): PlaceData(s,bp,d,ps){
-//  	sprites_cols=s->sprites_cols;
-// 	sprites_rows=s->sprites_rows;
-//	variability=s->variability;
-//	rand_flip_prob=s->rand_flip_prob;
-//	select_bias=s->select_bias;
-//}
+//===================== SpriteData ==============================
 SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 	vertex=s->vertex-TheScene->xpoint; // TODO: Why only needed for sprites ?
   	sprites_cols=s->sprites_cols;
@@ -420,7 +365,7 @@ void Sprite::reset()
 	//TerrainProperties *tp=Td.tp;
 	for(int i=0;i<Td.sprites.size;i++){
 		Sprite *sprite=Td.sprites[i];
-		sprite->mgr()->free_htable();
+		//sprite->mgr()->free_htable();
 	}
 }
 
@@ -602,13 +547,12 @@ void TNsprite::eval()
 		int size=Td.sprites.size;
 		instance=size;
 		//cout<<instance<<" ";
-
 		mgr->instance=instance;
-
 		if(sprite)
 			sprite->set_id(size);
 		//set_id(size);
 		Td.add_sprite(sprite);
+		mgr->setHashcode();
 		if(right)
 			right->eval();
 		return;
@@ -648,7 +592,6 @@ void TNsprite::eval()
 	density=maxdensity;
 	MaxSize=mgr->maxsize;
 	radius=TheMap->radius;
-	//TerrainProperties *tp=TerrainData::tp;
 		
 	mgr->type=type;
 	if(smgr->slope_bias){
@@ -672,14 +615,7 @@ void TNsprite::eval()
 	density=clamp(density,0,1);
 	density=sqrt(density);
 
-	mgr->density=density;
-	double hashcode=(mgr->levels+
-		            1/mgr->maxsize
-					+11*Td.sid
-					+7*instance
-					);
-	mgr->id=(int)hashcode+mgr->type+SPRITES+hashcode*TheNoise.rseed;
-	
+	mgr->density=density;	
 
 	smgr->eval();  // calls SpritePoint.set_terrain	
 	g_sm.setTests();

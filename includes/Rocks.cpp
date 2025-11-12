@@ -171,7 +171,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 //************************************************************
 Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
 {
-	MSK_SET(type,PLACETYPE,ROCKS);
+	MSK_SET(type,PLACETYPE,MCROCKS);
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
@@ -377,7 +377,7 @@ void TNrocks::eval3d()
 		rock_id=nrocks;	
 		mgr->instance=rock_id;
 		Td.tp->rocks.add(this);
-		//cout<<rock_id<<endl;
+		mgr->setHashcode();
 		return;
 	}
 	Rock3DMgr *rmgr=(RockMgr*)mgr;
@@ -434,6 +434,7 @@ void TNrocks::eval() {
 			base->eval();
 		if(!in_map)// in case we were in another map on entry
 			S0.clr_flag(CLRTEXS);
+		mgr->setHashcode();
 		return;
 	}
 

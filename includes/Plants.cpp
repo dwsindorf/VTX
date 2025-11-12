@@ -309,8 +309,6 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-//	roff=roff_value;
-//	roff2=roff2_value;
 	level_mult=0.2;
 	slope_bias=0;
 	hardness_bias=0;
@@ -321,7 +319,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	instance=0;
 	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
-	//set_testpts(1);
+	set_testpts(1);
 }
 PlantMgr::PlantMgr(int i) : PlantMgr(i,0)
 {
@@ -940,14 +938,6 @@ void TNplant::set_surface()
 	
 	if(density<=0)
 		return;
-	
-	double hashcode=(mgr->levels+
-		            1/mgr->maxsize
-					+11*Td.sid
-					+7*plant_id
-					);
-	mgr->id=(int)hashcode+mgr->type+PLANTS+hashcode*TheNoise.rseed;
-
 	smgr->eval();  // calls PlantPoint.set_terrain
 	g_pm.setTests();
 }
@@ -968,6 +958,7 @@ void TNplant::eval()
 		if(plant)
 			plant->set_id(size);		
 		Td.add_plant(plant);
+		mgr->setHashcode();
 		return;
 	}
  }
@@ -1255,8 +1246,6 @@ void TNplant::emit(){
 	size_scale=	pntsize*width_scale/size;
 	
 	dfactor=draw_scale*lerp(pntsize,1,100,0.5,1);
-
-//    cout<<dfactor<<" "<<start_width<<" "<<size_scale<<endl;
 
 	Point tip;
 	tip.x=start_width/width_scale;

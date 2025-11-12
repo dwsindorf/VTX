@@ -44,12 +44,20 @@ static int 	cnt;
 //     PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(n2+id)))
 // ~0.5 us on 330 MHz sparc
 
+PlacementMgr *pmgr=nullptr;
+
 void show_display_placements()
 {
 	PlacementStats::dump();
+#ifdef DEBUG_HASH_CHAINS
+	if(pmgr!=nullptr)
+		pmgr->printChainStats();
+#endif
+
 	if(!Render.display(CRTRINFO))
 		return;
 	PlacementStats::exec();
+
 }
 
 #endif
@@ -93,9 +101,11 @@ void PlacementStats::exec(){
 	if(vtests)
 	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K fails pts %2.1f %% dns %2.1f %%",
 		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
+#ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
 	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K passed %2.1f %% failed %2.1f %%",
 		"lod",(double)place_visits/1000,100.0*lod_hits/place_visits,100.0*lod_fails/place_visits);
+#endif
 #endif
 #ifdef DEBUG_HASH
 	if(cvisits)
@@ -115,9 +125,11 @@ void PlacementStats::dump(){
 	if(vtests)
 	printf("%10s %5.1f K fails pts %2.1f %% dns %2.1f %%\n",
 		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
+#ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
 	printf("%10s %5.1f K passed %2.1f %% failed %2.1f %%\n",
 		"lod",(double)place_visits/1000,100.0*lod_hits/place_visits,100.0*lod_fails/place_visits);
+#endif
 #endif
 #ifdef DEBUG_HASH
 	if(cvisits)
@@ -195,27 +207,33 @@ PlacementMgr::~PlacementMgr()
 {
 	Placement *h;
 	list.reset();
+	if(pmgr==this)
+		pmgr=nullptr;
 
   	if(hash && finalizer()){    
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::free()\n");
 #endif
   		free_htable();
-		FREE(hash);
+ 		FREE(hash);
 	}
 }
 
 bool PlacementMgr::testColor()  		{ return options & COLOR_TEST?Render.color_test():false;}
 bool PlacementMgr::testDensity()  		{ return options & DENSITY_TEST?true:false;}
 
+void PlacementMgr::setHashcode(){
+	double hashcode=(levels+
+		            1/maxsize+
+					1/mult
+					);
+	id=(int)hashcode+type+instance+hashcode*TheNoise.rseed;
+}
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
 //-------------------------------------------------------------
 void PlacementMgr::free_htable()
 {
-#ifdef DEBUG_HASH_CHAINS
-	printChainStats();
-#endif
     Stats.cfreed=0;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
@@ -376,15 +394,16 @@ void PlacementMgr::init()
 {
 	static bool finisher_added=false;
 	cnt=0;
+	pmgr=this;
 	if(hash==0){
 #ifdef DEBUG_PMEM
   		printf("PlacementMgr::init()\n");
 #endif
   		CALLOC(hashsize+1,Placement*,hash);
 #ifdef DEBUG_PLACEMENTS
-  		if(!finisher_added){
+ 		if(!finisher_added){
  			add_finisher(show_display_placements);
-  		}
+   		}
   		finisher_added=true;
  
 #endif
@@ -624,7 +643,7 @@ void PlacementMgr::eval()
         
         // Search chain for existing placement with same point
         while(h){
-            if(h->point == pc && h->type == type && h->lvl ==lvl){
+        	if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
                 found = h;
                 Stats.chits++;
                 break;
@@ -725,7 +744,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
                     Placement* found = nullptr;
                     
                     while(h){
-                        if(h->point == pc && h->type == type && h->lvl ==lvl){
+                        if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
                             found = h;
                             if(found->users){
 #ifdef DEBUG_PLACEMENTS
@@ -796,6 +815,8 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	pts=0;
 	rval=0;	
 	next=0;
+	wtsum=0;
+	aveht=0;
 	
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
@@ -865,7 +886,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 }
 
 //-------------------------------------------------------------
-// Placement::set_terrain()	impact terrain (mayb be overridden)
+// Placement::set_terrain()	impact terrain (maybe overridden)
 //-------------------------------------------------------------
 bool Placement::set_terrain(PlacementMgr &pmgr)
 {
@@ -882,12 +903,19 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 
     flags.s.active=true;
     PlacementMgr::sval=lerp(d,0,1.0,0,1);
-
+    
+ 
  	if(d<dist){
 		ht=Height; // closest to center
 		dist=d;
-		//place_hits++;
 	}
+    if(pmgr.useaveht()){
+    	double wt=1/(0.01+PlacementMgr::sval);
+     	aveht+=Height*wt;	
+    	wtsum+=wt;
+		ht=aveht/wtsum;
+    }
+
 	PlacementMgr::hits++;
 
 	PlacementMgr::sdata[PlacementMgr::scnt].v=hid;
@@ -900,7 +928,6 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 void Placement::reset(){
 	flags.s.active=0;
 	visits=0;
-	//place_hits=0;
 	dist=1e6;
 }
 void Placement::dump(){
@@ -972,7 +999,7 @@ void TNplacements::set_id(int i)
 	BIT_OFF(type,PID);
 	type|=i&PID;
 	if(mgr)
-		mgr->set_id(type);
+		mgr->set_pid(type);
 }
 
 int TNplacements::get_id()
@@ -1089,10 +1116,10 @@ void TNplacements::eval()
 	
 	MaxSize=mgr->maxsize;
 
-	double hashcode=(mgr->levels+
-		            1/mgr->maxsize+
-					1/mgr->mult
-					);
-	mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
+//	double hashcode=(mgr->levels+
+//		            1/mgr->maxsize+
+//					1/mgr->mult
+//					);
+//	mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
 }
 

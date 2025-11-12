@@ -1435,36 +1435,49 @@ static void collect_nodes(MapNode *n)
 		node_list.add(n);
     }
 }
-
+//#define SORT
+// nosort: Map::placements tid:1 nodes:32179 times gather:4 reset:35 eval:387 collect:126 total:552 ms
+// sort:   Map::placements tid:1 nodes:32179 times gather:3 reset:45 eval:430 collect:122 total:600 ms
 void Map::render_sprites(){
 	reset_texs();
-
 	if(first()){
 		double d0=clock();
 		test_cnt=0;
 		node_list.reset();
 		npole->visit(&collect_nodes);
+		int n=node_list.size;
+		node_list.ss();	
+		double d1=clock();
+#ifdef SORT
 		ValueList<MapNode*> sorted;
 		sorted.set(node_list);
-		//sorted.sort();
-		double d1=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+		sorted.sort();
+		sorted.ss();
+#endif
 		Sprite::reset();
 		Plant::reset();
+		double dr=clock();
 		int mode=CurrentScope->passmode();
 		CurrentScope->set_spass();
-		sorted.ss();
-		int n=sorted.size;
-		// collect far to near so overwrites in hash table preserve nearest
 		for(int i=0;i<n;i++){
+#ifdef SORT
 			MapNode *node=sorted[n-i-1];
+#else
+			MapNode *node=node_list++;
+#endif
 			node->evalsprites();
 		}
-		double d2=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
+		double d2=clock();
 		Sprite::collect();
 		Plant::collect();
-		double d3=1000.0*(clock()-d0)/CLOCKS_PER_SEC;
-
-		cout<<"Map::placements tid:"<<tid<<" nodes:"<<sorted.size<<" times sort:"<<d1<<" eval:"<< d2-d1<<" collect:"<<d3-d2<<" total:"<<d3-d1<<" ms"<<endl;
+		double d3=1000.0*clock()/CLOCKS_PER_SEC;
+		cout<<"Map::placements tid:"<<tid<<" nodes:"<<node_list.size<<" times"
+				<<" gather:"<<1000*(d1-d0)/CLOCKS_PER_SEC
+				<<" reset:"<< 1000*(dr-d1)/CLOCKS_PER_SEC
+				<<" eval:"<< 1000*(d2-dr)/CLOCKS_PER_SEC
+				<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
+				<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
+				<<" ms"<<endl;
 
 		CurrentScope->set_passmode(mode);
 	}

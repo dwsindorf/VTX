@@ -460,7 +460,23 @@ void TNcraters::applyExpr()
 // TNcraters::eval() evaluate the node
 //-------------------------------------------------------------
 void TNcraters::eval()
-{
+{	
+	if(!isEnabled()){
+		if(right)
+			right->eval();
+		return;
+	}
+	if(CurrentScope->rpass()){
+		double hashcode=(mgr->levels+
+			            1/mgr->maxsize+
+						1/mgr->mult
+						);
+		mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
+		if(right)
+			right->eval();
+		return;
+	}
+
 	TNarg &args=*((TNarg *)left);
 	double arg[16];
 	CraterMgr *cmgr=(CraterMgr*)mgr;
@@ -535,6 +551,8 @@ void TNcraters::eval()
 	    rbase=1;
 	    right->eval();
 	}
+	
+	//cout<<mgr->id<<endl;
 
 	cmgr->eval();
 	if(joined(this))

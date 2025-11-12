@@ -8,7 +8,7 @@
 #include "Util.h"
 
 //#define DEBUG_CRATERS
-#define TEST_SPRITES
+//#define TEST_SPRITES
 //#define TEST_PLANTS
 //#define TEST_CRATERS
 #define TEST_ROCKS
@@ -24,6 +24,7 @@ enum {
     CLOUDS   	= 0x00003000,
     SPRITES   	= 0x00004000,
     PLANTS   	= 0x00005000,
+    MCROCKS   	= 0x00006000,
     PLACETYPE   = 0x0000f000,
 	
     FLIP        = 0x00010000,
@@ -94,6 +95,8 @@ public:
 	int			lvl;    // type id
 	int			users;
 	double 		ht;
+	double 		aveht;
+	double 		wtsum;
 	double 		dist;
 	double      pts;
 	double      rval;
@@ -139,7 +142,6 @@ public:
 	double value() { return dist;}
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
-	int flip()				    { return type & FLIP;}
 };
 
 typedef struct place_mgr_flags {
@@ -150,6 +152,7 @@ typedef struct place_mgr_flags {
 	unsigned int  finalizer  : 1;	// indicates static object
 	unsigned int  debug	     : 1;	// debug
 	unsigned int  testpts	 : 1;	// test point size
+	unsigned int  useaveht	 : 1;	// use average ht
 	unsigned int  showstats	 : 1;	// show statistics
 	unsigned int  unused     : 25;	// unassigned bits
 } place_mgr_flags;
@@ -230,6 +233,8 @@ public:
 	int showstats()				{ return flags.s.showstats;}
 	void set_testpts(int i)   	{ flags.s.testpts=i;}
 	int testpts()				{ return flags.s.testpts;}
+	void set_useaveht(int i)   	{ flags.s.useaveht=i;}
+	int useaveht()				{ return flags.s.useaveht;}
 
 	void set_first(int i)   	{ flags.s.first=i;}
 	int first()				    { return flags.s.first;}
@@ -239,8 +244,8 @@ public:
 	int offset_valid()		    { return flags.s.offset;}
 	void set_finalizer(int i)   { flags.s.finalizer=i;}
 	int finalizer()		        { return flags.s.finalizer;}
-	void set_id(int i)          { type=i&PID;}
-	int get_id()				{ return type&PID;}
+	void set_pid(int i)         { type=i&PID;}
+	int get_pid()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
 
 
@@ -259,6 +264,7 @@ public:
 	virtual void collect(ValueList<PlaceData*> &data); // collect list of objects
 	virtual Placement *make(Point4DL&,int);
 	virtual PlaceData *make(Placement*s);
+	virtual void setHashcode();
 
 	friend class Placement;
 };
@@ -287,7 +293,6 @@ public:
 	virtual void set_id(int i);
 	virtual int get_id();
 	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
-	int flip()				    { return type & FLIP;}
 	bool is3D()   				{ return type & MC3D;}
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 

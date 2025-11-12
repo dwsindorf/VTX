@@ -2647,7 +2647,6 @@ void MapNode::evalsprites()
 	Hardness=d->hardness();
 
 	TheNoise.set(pt);
-
 	for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
 		Td.clr_flag(SFIRST);
 		Sprite *sprite=Td.sprites[Td.sid];
