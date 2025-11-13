@@ -2603,7 +2603,7 @@ double MapNode::value()
 	return point().length();
 }
 
-void MapNode::evalPlacements()
+void MapNode::setSurface()
 {
 	if(surface_water())
 		return;
@@ -2641,18 +2641,7 @@ void MapNode::evalPlacements()
 	Height=aveht;
 	MapPt=pnt;
 	Hardness=d->hardness();
-
 	TheNoise.set(pt);
-	for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
-		Td.clr_flag(SFIRST);
-		Sprite *sprite=Td.sprites[Td.sid];
-		sprite->eval();
-	}
-	for(Td.sid=0;Td.sid<Td.plants.size;Td.sid++){
-		Td.clr_flag(SFIRST);
-		Plant *plant=Td.plants[Td.sid];
-		plant->eval();
-	}	
 }
 
 

@@ -595,6 +595,10 @@ void PlantMgr::render(){
 			plant->emit();
 		}
 		glEnable(GL_CULL_FACE);
+		double d1=clock();
+		double te=(d1-t0)/CLOCKS_PER_SEC;
+		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;
+		
 	}
 	else {
 		PlantData *s=Plant::data[0];
@@ -623,6 +627,8 @@ void PlantMgr::render(){
 		glEnable(GL_CULL_FACE);
 	}
 	t3=clock(); // total
+	
+	
 	randval=l;
 	//if(Render.display(PLANTINFO))
 		collectStats();
@@ -681,7 +687,7 @@ bool PlantPoint::set_terrain(PlacementMgr &pmgr)
 //==================== PlantData ===============================
 
 //===================== Plant ==============================
-ValueList<PlaceData*> Plant::data;
+ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
@@ -697,7 +703,6 @@ void Plant::reset()
 {
 	data.free();
 	PlantMgr::textures=0;
-	//PlantMgr::free_htable();
 }
 
 //-------------------------------------------------------------
@@ -705,16 +710,21 @@ void Plant::reset()
 //-------------------------------------------------------------
 void Plant::collect()
 {
+	double d0=clock();
+
+	data.free();
+	//PlacementMgr::resetAll();
+
 	for(int i=0;i<Td.plants.size;i++){
-		PlacementMgr::resetAll();
 		Plant *plant=Td.plants[i];
 		plant->expr->created=0;
 		plant->mgr()->collect(data);
 	}
 	if(data.size){
 		data.sort();
-   		cout<<"plants collected:"<<data.size<<endl;
 	}
+	double d1=clock();
+	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 }
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
@@ -723,7 +733,7 @@ void Plant::eval()
 {
 	int mode=CurrentScope->passmode();
 	CurrentScope->set_spass();
-	expr->set_surface(); // TNplant.eval()
+	expr->eval();
 	CurrentScope->set_passmode(mode);
 }
 
@@ -844,13 +854,35 @@ void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
+
 //-------------------------------------------------------------
 // TNplant::eval() evaluate the node
 //-------------------------------------------------------------
-void TNplant::set_surface()
+void TNplant::eval()
 {	
-	if(Raster.surface==2)
+	if(!isEnabled() || TheScene->viewtype !=SURFACE || Raster.surface==2){
+		if(right)
+			right->eval();
 		return;
+	}
+	SINIT;
+	if(CurrentScope->rpass()){
+		int size=Td.plants.size;
+		plant_id=size;	
+		mgr->instance=plant_id;
+		if(plant)
+			plant->set_id(size);		
+		Td.add_plant(plant);
+		mgr->setHashcode();
+		if(right)
+			right->eval();
+		return;
+	}
+	if(!CurrentScope->spass()){
+		if(right)
+			right->eval();
+		return;
+	}
     extern double Hardness;
 	SINIT;
 	Color c =Color(1,1,1);
@@ -918,33 +950,11 @@ void TNplant::set_surface()
     density*=maxdensity;
 	density=clamp(density,0,1);
 	mgr->density=density;
-	
 	if(density<=0)
 		return;
 	smgr->eval();  // calls PlantPoint.set_terrain
 	g_pm.setTests();
 }
-//-------------------------------------------------------------
-// TNplant::eval() evaluate the node
-//-------------------------------------------------------------
-void TNplant::eval()
-{	
-	if(right)
-		right->eval();
-	if(!isEnabled() || TheScene->viewtype !=SURFACE){
-		return;
-	}
-	if(CurrentScope->rpass()){
-		int size=Td.plants.size;
-		plant_id=size;	
-		mgr->instance=plant_id;
-		if(plant)
-			plant->set_id(size);		
-		Td.add_plant(plant);
-		mgr->setHashcode();
-		return;
-	}
- }
 
 void TNplant::clearStats(){
 	//if(!update_needed)

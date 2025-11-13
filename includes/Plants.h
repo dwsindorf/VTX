@@ -143,7 +143,6 @@ public:
 	TNplant(TNode *l, TNode *r);
 	~TNplant();
 	void eval();
-	void set_surface();
 	void init();
 	int typeValue()			{ return ID_PLANT;}
 	const char *typeName ()	{ return "plant";}

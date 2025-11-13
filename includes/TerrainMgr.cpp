@@ -6,6 +6,7 @@
 #include "TextureClass.h"
 #include "ImageClass.h"
 #include "SceneClass.h"
+#include "Sprites.h"
 #include <iostream>
 #include <math.h>
 
@@ -1573,7 +1574,6 @@ void TerrainMgr::set_surface(TerrainData &data)
 	S0.c=data.c;
 	S0.p=Point(0,0,0);
 	set_eval_mode(1);
-
 	eval();
 	set_eval_mode(0);
 	set_first(0);

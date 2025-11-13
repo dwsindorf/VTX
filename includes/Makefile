@@ -197,8 +197,8 @@ depend:;
 ../Debug/Effects.o: TerrainNode.h TerrainData.h Renderer.h ViewClass.h Util.h
 ../Debug/Effects.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Debug/Effects.o: RenderOptions.h AdaptOptions.h MapNode.h NodeData.h
-../Debug/Effects.o: MapClass.h KeyIF.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/Effects.o: ./FrameBuffer.h
+../Debug/Effects.o: MapClass.h KeyIF.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/Effects.o: FrameBuffer.h
 ../Debug/Erode.o: NodeData.h GLheaders.h TerrainData.h NoiseClass.h
 ../Debug/Erode.o: PointClass.h defs.h ListClass.h ColorClass.h NodeIF.h
 ../Debug/Erode.o: TextureClass.h GLSupport.h GLglue.h ImageMgr.h MapClass.h
@@ -213,23 +213,23 @@ depend:;
 ../Debug/Fractal.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Debug/Fractal.o: matrix.h TrackBall.h ModelClass.h MapNode.h NodeData.h
 ../Debug/Fractal.o: MapClass.h Fractal.h AdaptOptions.h
-../Debug/FrameBuffer.o: GLheaders.h ./FrameBuffer.h
+../Debug/FrameBuffer.o: GLheaders.h FrameBuffer.h
 ../Debug/FrameClass.o: FrameClass.h ViewClass.h LightClass.h ColorClass.h
 ../Debug/FrameClass.o: GLheaders.h PointClass.h defs.h ListClass.h
 ../Debug/FrameClass.o: ObjectClass.h GLglue.h NodeIF.h Util.h MatrixClass.h
 ../Debug/FrameClass.o: matrix.h TrackBall.h
-../Debug/GLSLMgr.o: ./NoiseFuncs.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/GLSLMgr.o: GLheaders.h ./FrameBuffer.h ListClass.h defs.h
+../Debug/GLSLMgr.o: NoiseFuncs.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/GLSLMgr.o: GLheaders.h FrameBuffer.h ListClass.h defs.h
 ../Debug/GLSLMgr.o: PointClass.h Effects.h Raster.h SceneClass.h LightClass.h
 ../Debug/GLSLMgr.o: ColorClass.h ObjectClass.h GLglue.h NodeIF.h
 ../Debug/GLSLMgr.o: OrbitalClass.h TerrainMgr.h NoiseClass.h TextureClass.h
 ../Debug/GLSLMgr.o: GLSupport.h ImageMgr.h TerrainNode.h TerrainData.h
 ../Debug/GLSLMgr.o: Renderer.h ViewClass.h Util.h MatrixClass.h matrix.h
 ../Debug/GLSLMgr.o: TrackBall.h ModelClass.h FileUtil.h
-../Debug/GLSLProgram.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h GLheaders.h
-../Debug/GLSLProgram.o: ./FrameBuffer.h ListClass.h defs.h PointClass.h
-../Debug/GLSLVars.o: ./GLSLVars.h GLheaders.h ./FrameBuffer.h ListClass.h
-../Debug/GLSLVars.o: defs.h GLSLMgr.h ./GLSLProgram.h PointClass.h
+../Debug/GLSLProgram.o: GLSLMgr.h GLSLProgram.h GLSLVars.h GLheaders.h
+../Debug/GLSLProgram.o: FrameBuffer.h ListClass.h defs.h PointClass.h
+../Debug/GLSLVars.o: GLSLVars.h GLheaders.h FrameBuffer.h ListClass.h
+../Debug/GLSLVars.o: defs.h GLSLMgr.h GLSLProgram.h PointClass.h
 ../Debug/GLSupport.o: GLSupport.h GLglue.h GLheaders.h
 ../Debug/ImageClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/ImageClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
@@ -238,8 +238,8 @@ depend:;
 ../Debug/ImageClass.o: AdaptOptions.h SceneClass.h LightClass.h ObjectClass.h
 ../Debug/ImageClass.o: OrbitalClass.h Renderer.h ViewClass.h Util.h
 ../Debug/ImageClass.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
-../Debug/ImageClass.o: RenderOptions.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/ImageClass.o: ./FrameBuffer.h
+../Debug/ImageClass.o: RenderOptions.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/ImageClass.o: FrameBuffer.h
 ../Debug/ImageMgr.o: ImageMgr.h GLheaders.h defs.h ColorClass.h ListClass.h
 ../Debug/ImageMgr.o: FileUtil.h Util.h PointClass.h TerrainClass.h
 ../Debug/ImageMgr.o: TerrainMgr.h NoiseClass.h TextureClass.h GLSupport.h
@@ -280,7 +280,7 @@ depend:;
 ../Debug/MapClass.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Debug/MapClass.o: MapClass.h MapLink.h MapNode.h NodeData.h AdaptOptions.h
 ../Debug/MapClass.o: RenderOptions.h Effects.h Raster.h GLSLMgr.h
-../Debug/MapClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h FileUtil.h
+../Debug/MapClass.o: GLSLProgram.h GLSLVars.h FrameBuffer.h FileUtil.h
 ../Debug/MapLink.o: MapLink.h MapNode.h NodeData.h GLheaders.h TerrainData.h
 ../Debug/MapLink.o: NoiseClass.h PointClass.h defs.h ListClass.h ColorClass.h
 ../Debug/MapLink.o: NodeIF.h TextureClass.h GLSupport.h GLglue.h ImageMgr.h
@@ -295,7 +295,7 @@ depend:;
 ../Debug/MapNode.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Debug/MapNode.o: matrix.h TrackBall.h ModelClass.h MapNode.h NodeData.h
 ../Debug/MapNode.o: MapClass.h MapLink.h AdaptOptions.h RenderOptions.h
-../Debug/MapNode.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Debug/MapNode.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Debug/MapNode.o: Effects.h Raster.h
 ../Debug/MatrixClass.o: defs.h MatrixClass.h matrix.h PointClass.h
 ../Debug/ModelClass.o: ModelClass.h ListClass.h defs.h NodeIF.h ObjectClass.h
@@ -332,7 +332,7 @@ depend:;
 ../Debug/OrbitalClass.o: ModelClass.h RenderOptions.h Effects.h Raster.h
 ../Debug/OrbitalClass.o: MapClass.h MapNode.h NodeData.h Octree.h
 ../Debug/OrbitalClass.o: TerrainClass.h ImageClass.h GLSLMgr.h
-../Debug/OrbitalClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Debug/OrbitalClass.o: GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Debug/OrbitalClass.o: AdaptOptions.h FileUtil.h
 ../Debug/Placements.o: TerrainMgr.h NoiseClass.h PointClass.h defs.h
 ../Debug/Placements.o: ListClass.h ColorClass.h GLheaders.h TextureClass.h
@@ -363,7 +363,7 @@ depend:;
 ../Debug/Renderer.o: PointClass.h defs.h ColorClass.h ListClass.h NodeIF.h
 ../Debug/Renderer.o: ViewClass.h LightClass.h Util.h MatrixClass.h matrix.h
 ../Debug/Renderer.o: TrackBall.h GLSupport.h AdaptOptions.h RenderOptions.h
-../Debug/Renderer.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Debug/Renderer.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Debug/Rocks.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Debug/Rocks.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Debug/Rocks.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
@@ -379,8 +379,9 @@ depend:;
 ../Debug/SceneClass.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Debug/SceneClass.o: AdaptOptions.h RenderOptions.h Effects.h Raster.h
 ../Debug/SceneClass.o: Octree.h FileUtil.h FrameClass.h TerrainClass.h
-../Debug/SceneClass.o: KeyIF.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/SceneClass.o: ./FrameBuffer.h
+../Debug/SceneClass.o: KeyIF.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/SceneClass.o: FrameBuffer.h
+../Debug/Sprites.o: Sprites.h Placements.h
 ../Debug/TerrainClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Debug/TerrainClass.o: TerrainClass.h TerrainMgr.h TextureClass.h
@@ -389,8 +390,8 @@ depend:;
 ../Debug/TerrainClass.o: LightClass.h ObjectClass.h OrbitalClass.h Renderer.h
 ../Debug/TerrainClass.o: ViewClass.h Util.h MatrixClass.h matrix.h
 ../Debug/TerrainClass.o: TrackBall.h ModelClass.h AdaptOptions.h Effects.h
-../Debug/TerrainClass.o: Raster.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/TerrainClass.o: ./FrameBuffer.h RenderOptions.h
+../Debug/TerrainClass.o: Raster.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/TerrainClass.o: FrameBuffer.h RenderOptions.h
 ../Debug/TerrainData.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainData.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Debug/TerrainData.o: NodeData.h TextureClass.h GLSupport.h GLglue.h
@@ -398,8 +399,8 @@ depend:;
 ../Debug/TerrainData.o: ObjectClass.h OrbitalClass.h TerrainMgr.h
 ../Debug/TerrainData.o: TerrainNode.h Renderer.h ViewClass.h Util.h
 ../Debug/TerrainData.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
-../Debug/TerrainData.o: ImageClass.h TerrainClass.h GLSLMgr.h ./GLSLProgram.h
-../Debug/TerrainData.o: ./GLSLVars.h ./FrameBuffer.h RenderOptions.h
+../Debug/TerrainData.o: ImageClass.h TerrainClass.h GLSLMgr.h GLSLProgram.h
+../Debug/TerrainData.o: GLSLVars.h FrameBuffer.h RenderOptions.h
 ../Debug/TerrainMgr.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainMgr.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Debug/TerrainMgr.o: TerrainMgr.h TextureClass.h GLSupport.h GLglue.h
@@ -418,8 +419,8 @@ depend:;
 ../Debug/TextureClass.o: ImageMgr.h defs.h ColorClass.h ListClass.h
 ../Debug/TextureClass.o: PointClass.h NoiseClass.h TerrainNode.h
 ../Debug/TextureClass.o: TerrainData.h NodeIF.h TerrainClass.h TerrainMgr.h
-../Debug/TextureClass.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Debug/TextureClass.o: ./FrameBuffer.h Effects.h Raster.h SceneClass.h
+../Debug/TextureClass.o: GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Debug/TextureClass.o: FrameBuffer.h Effects.h Raster.h SceneClass.h
 ../Debug/TextureClass.o: LightClass.h ObjectClass.h OrbitalClass.h Renderer.h
 ../Debug/TextureClass.o: ViewClass.h Util.h MatrixClass.h matrix.h
 ../Debug/TextureClass.o: TrackBall.h ModelClass.h RenderOptions.h
@@ -454,7 +455,7 @@ depend:;
 ../Release/Effects.o: Renderer.h ViewClass.h Util.h MatrixClass.h matrix.h
 ../Release/Effects.o: TrackBall.h ModelClass.h RenderOptions.h AdaptOptions.h
 ../Release/Effects.o: MapNode.h NodeData.h MapClass.h KeyIF.h GLSLMgr.h
-../Release/Effects.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/Effects.o: GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/Erode.o: NodeData.h GLheaders.h TerrainData.h NoiseClass.h
 ../Release/Erode.o: PointClass.h defs.h ListClass.h ColorClass.h NodeIF.h
 ../Release/Erode.o: TextureClass.h GLSupport.h GLglue.h ImageMgr.h MapClass.h
@@ -470,13 +471,13 @@ depend:;
 ../Release/Fractal.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Release/Fractal.o: MapNode.h NodeData.h MapClass.h Fractal.h
 ../Release/Fractal.o: AdaptOptions.h
-../Release/FrameBuffer.o: GLheaders.h ./FrameBuffer.h
+../Release/FrameBuffer.o: GLheaders.h FrameBuffer.h
 ../Release/FrameClass.o: FrameClass.h ViewClass.h LightClass.h ColorClass.h
 ../Release/FrameClass.o: GLheaders.h PointClass.h defs.h ListClass.h
 ../Release/FrameClass.o: ObjectClass.h GLglue.h NodeIF.h Util.h MatrixClass.h
 ../Release/FrameClass.o: matrix.h TrackBall.h
-../Release/GLSLMgr.o: ./NoiseFuncs.h GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Release/GLSLMgr.o: GLheaders.h ./FrameBuffer.h ListClass.h defs.h
+../Release/GLSLMgr.o: ./NoiseFuncs.h GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Release/GLSLMgr.o: GLheaders.h FrameBuffer.h ListClass.h defs.h
 ../Release/GLSLMgr.o: PointClass.h Effects.h Raster.h SceneClass.h
 ../Release/GLSLMgr.o: LightClass.h ColorClass.h ObjectClass.h GLglue.h
 ../Release/GLSLMgr.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
@@ -484,10 +485,10 @@ depend:;
 ../Release/GLSLMgr.o: TerrainData.h Renderer.h ViewClass.h Util.h
 ../Release/GLSLMgr.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Release/GLSLMgr.o: FileUtil.h
-../Release/GLSLProgram.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h GLheaders.h
-../Release/GLSLProgram.o: ./FrameBuffer.h ListClass.h defs.h PointClass.h
-../Release/GLSLVars.o: ./GLSLVars.h GLheaders.h ./FrameBuffer.h ListClass.h
-../Release/GLSLVars.o: defs.h GLSLMgr.h ./GLSLProgram.h PointClass.h
+../Release/GLSLProgram.o: GLSLMgr.h GLSLProgram.h GLSLVars.h GLheaders.h
+../Release/GLSLProgram.o: FrameBuffer.h ListClass.h defs.h PointClass.h
+../Release/GLSLVars.o: GLSLVars.h GLheaders.h FrameBuffer.h ListClass.h
+../Release/GLSLVars.o: defs.h GLSLMgr.h GLSLProgram.h PointClass.h
 ../Release/GLSupport.o: GLSupport.h GLglue.h GLheaders.h
 ../Release/ImageClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/ImageClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
@@ -497,7 +498,7 @@ depend:;
 ../Release/ImageClass.o: LightClass.h ObjectClass.h OrbitalClass.h Renderer.h
 ../Release/ImageClass.o: ViewClass.h Util.h MatrixClass.h matrix.h
 ../Release/ImageClass.o: TrackBall.h ModelClass.h RenderOptions.h GLSLMgr.h
-../Release/ImageClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/ImageClass.o: GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/ImageMgr.o: ImageMgr.h GLheaders.h defs.h ColorClass.h ListClass.h
 ../Release/ImageMgr.o: FileUtil.h Util.h PointClass.h TerrainClass.h
 ../Release/ImageMgr.o: TerrainMgr.h NoiseClass.h TextureClass.h GLSupport.h
@@ -539,7 +540,7 @@ depend:;
 ../Release/MapClass.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Release/MapClass.o: MapClass.h MapLink.h MapNode.h NodeData.h
 ../Release/MapClass.o: AdaptOptions.h RenderOptions.h Effects.h Raster.h
-../Release/MapClass.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/MapClass.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/MapClass.o: FileUtil.h
 ../Release/MapLink.o: MapLink.h MapNode.h NodeData.h GLheaders.h
 ../Release/MapLink.o: TerrainData.h NoiseClass.h PointClass.h defs.h
@@ -556,7 +557,7 @@ depend:;
 ../Release/MapNode.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Release/MapNode.o: MapNode.h NodeData.h MapClass.h MapLink.h
 ../Release/MapNode.o: AdaptOptions.h RenderOptions.h GLSLMgr.h
-../Release/MapNode.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h Effects.h
+../Release/MapNode.o: GLSLProgram.h GLSLVars.h FrameBuffer.h Effects.h
 ../Release/MapNode.o: Raster.h
 ../Release/MarchingCubes.o: MarchingCubes.h
 ../Release/MatrixClass.o: defs.h MatrixClass.h matrix.h PointClass.h
@@ -595,7 +596,7 @@ depend:;
 ../Release/OrbitalClass.o: ModelClass.h RenderOptions.h Effects.h Raster.h
 ../Release/OrbitalClass.o: MapClass.h MapNode.h NodeData.h Octree.h
 ../Release/OrbitalClass.o: TerrainClass.h ImageClass.h GLSLMgr.h
-../Release/OrbitalClass.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/OrbitalClass.o: GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/OrbitalClass.o: AdaptOptions.h FileUtil.h
 ../Release/Placements.o: TerrainMgr.h NoiseClass.h PointClass.h defs.h
 ../Release/Placements.o: ListClass.h ColorClass.h GLheaders.h TextureClass.h
@@ -604,6 +605,7 @@ depend:;
 ../Release/Placements.o: Util.h SceneClass.h LightClass.h ObjectClass.h
 ../Release/Placements.o: OrbitalClass.h Renderer.h ViewClass.h MatrixClass.h
 ../Release/Placements.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h
+../Release/Plants.o: Plants.h Placements.h
 ../Release/PointClass.o: PointClass.h defs.h
 ../Release/PreviewRenderer.o: PreviewRenderer.h LightClass.h ColorClass.h
 ../Release/PreviewRenderer.o: GLheaders.h PointClass.h defs.h ListClass.h
@@ -627,7 +629,7 @@ depend:;
 ../Release/Renderer.o: PointClass.h defs.h ColorClass.h ListClass.h NodeIF.h
 ../Release/Renderer.o: ViewClass.h LightClass.h Util.h MatrixClass.h matrix.h
 ../Release/Renderer.o: TrackBall.h GLSupport.h AdaptOptions.h RenderOptions.h
-../Release/Renderer.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/Renderer.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/Rocks.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Release/Rocks.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Release/Rocks.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
@@ -644,8 +646,9 @@ depend:;
 ../Release/SceneClass.o: Util.h MatrixClass.h matrix.h TrackBall.h
 ../Release/SceneClass.o: ModelClass.h AdaptOptions.h RenderOptions.h
 ../Release/SceneClass.o: Effects.h Raster.h Octree.h FileUtil.h FrameClass.h
-../Release/SceneClass.o: TerrainClass.h KeyIF.h GLSLMgr.h ./GLSLProgram.h
-../Release/SceneClass.o: ./GLSLVars.h ./FrameBuffer.h
+../Release/SceneClass.o: TerrainClass.h KeyIF.h GLSLMgr.h GLSLProgram.h
+../Release/SceneClass.o: GLSLVars.h FrameBuffer.h
+../Release/Sprites.o: ./Sprites.h Placements.h
 ../Release/TerrainClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/TerrainClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Release/TerrainClass.o: TerrainClass.h TerrainMgr.h TextureClass.h
@@ -654,8 +657,8 @@ depend:;
 ../Release/TerrainClass.o: LightClass.h ObjectClass.h OrbitalClass.h
 ../Release/TerrainClass.o: Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Release/TerrainClass.o: matrix.h TrackBall.h ModelClass.h AdaptOptions.h
-../Release/TerrainClass.o: Effects.h Raster.h GLSLMgr.h ./GLSLProgram.h
-../Release/TerrainClass.o: ./GLSLVars.h ./FrameBuffer.h RenderOptions.h
+../Release/TerrainClass.o: Effects.h Raster.h GLSLMgr.h GLSLProgram.h
+../Release/TerrainClass.o: GLSLVars.h FrameBuffer.h RenderOptions.h
 ../Release/TerrainData.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/TerrainData.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Release/TerrainData.o: NodeData.h TextureClass.h GLSupport.h GLglue.h
@@ -664,7 +667,7 @@ depend:;
 ../Release/TerrainData.o: TerrainNode.h Renderer.h ViewClass.h Util.h
 ../Release/TerrainData.o: MatrixClass.h matrix.h TrackBall.h ModelClass.h
 ../Release/TerrainData.o: ImageClass.h TerrainClass.h GLSLMgr.h
-../Release/TerrainData.o: ./GLSLProgram.h ./GLSLVars.h ./FrameBuffer.h
+../Release/TerrainData.o: GLSLProgram.h GLSLVars.h FrameBuffer.h
 ../Release/TerrainData.o: RenderOptions.h
 ../Release/TerrainMgr.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/TerrainMgr.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
@@ -684,8 +687,8 @@ depend:;
 ../Release/TextureClass.o: ImageMgr.h defs.h ColorClass.h ListClass.h
 ../Release/TextureClass.o: PointClass.h NoiseClass.h TerrainNode.h
 ../Release/TextureClass.o: TerrainData.h NodeIF.h TerrainClass.h TerrainMgr.h
-../Release/TextureClass.o: GLSLMgr.h ./GLSLProgram.h ./GLSLVars.h
-../Release/TextureClass.o: ./FrameBuffer.h Effects.h Raster.h SceneClass.h
+../Release/TextureClass.o: GLSLMgr.h GLSLProgram.h GLSLVars.h
+../Release/TextureClass.o: FrameBuffer.h Effects.h Raster.h SceneClass.h
 ../Release/TextureClass.o: LightClass.h ObjectClass.h OrbitalClass.h
 ../Release/TextureClass.o: Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Release/TextureClass.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h

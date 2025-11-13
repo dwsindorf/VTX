@@ -997,7 +997,9 @@ void Scene::rebuild_all(){
 	Adapt.set_maxcycles(50);
 	GLSLMgr::clearTexs();
 	Plant::reset();
+	Sprite::reset();
 	Noise::resetStats();
+	PlacementMgr::free_htable();
 	Renderer::rebuild_all();
 	timing_start=clock();
 }
@@ -2709,8 +2711,8 @@ void Scene::render_shadows()
 
 	Raster.render();
 	project();
-
 	render_objects();
+
 	if(shadows_mode())
 		shadow_group(2);
 	project();

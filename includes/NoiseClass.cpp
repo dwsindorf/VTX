@@ -575,8 +575,8 @@ void  Noise::showStats(){
 	    default:
 	    	strcat(tstr,"Perlin");
 	}
-	sprintf(buff,"%s MultiNoise calls:%d time total:%2.1f s per call:%2.1f u per octave:%2.1f u factors %g",
-			tstr,n,build_time,1e6*gtm/n,1e6*gtmp/n,100.0*factor_hits/(factor_hits+factor_misses));
+	sprintf(buff,"%s MultiNoise calls:%d time total:%2.1f ms per call:%2.2f u per octave:%2.3f us factor hits:%g %%",
+			tstr,n,1000*gtm,1e6*gtm/n,1e6*gtmp/n,100.0*factor_hits/(factor_hits+factor_misses));
 	cout<<buff<<endl;
 #endif
 #ifdef DEBUG_NOISE_CACHE

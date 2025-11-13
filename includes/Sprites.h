@@ -25,12 +25,12 @@ public:
 class SpriteData  : public PlaceData
 {
 public:
+	int sprites_rows;
+	int sprites_cols;
+	
 	double variability;
 	double rand_flip_prob;
 	double select_bias;
-
-	int sprites_rows;
-	int sprites_cols;
 
 	SpriteData(SpritePoint*s);
 	int flip(){ return type & FLIP;}
@@ -71,6 +71,7 @@ public:
 
 	void init();
 	void eval();
+	void setTests();
 	static bool setProgram();
 };
 

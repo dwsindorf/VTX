@@ -8,6 +8,8 @@
 #include "SceneClass.h"
 #include "RenderOptions.h"
 #include <map>
+#include <unordered_set>
+#include <unordered_map>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,9 +27,8 @@ static char THIS_FILE[] = __FILE__;
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 #define DEBUG_HASH         //  turn on to get hash table stats
-#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
+//#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
 //#define NO_CHAIN
-//#define OLD_HASH
 
 static TerrainData Td;
 extern double ptable[];
@@ -85,9 +86,11 @@ int PlacementStats::cfreed=0;
 int PlacementStats::vtests=0;
 int PlacementStats::pts_fails=0;
 int PlacementStats::dns_fails=0;
-int PlacementStats::place_visits=0;
+int PlacementStats::lod_visits=0;
 int PlacementStats::lod_hits=0;
 int PlacementStats::lod_fails=0;
+
+std::unordered_set<int> types;
 
 void PlacementStats::exec(){
 	if(!Render.display(CRTRINFO))
@@ -100,8 +103,9 @@ void PlacementStats::exec(){
 		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
 #ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
+	if(lod_visits>0)
 	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K passed %2.1f %% failed %2.1f %%",
-		"lod",(double)place_visits/1000,100.0*lod_hits/place_visits,100.0*lod_fails/place_visits);
+		"lod",(double)lod_visits/1000,100.0*lod_hits/lod_visits,100.0*lod_fails/lod_visits);
 #endif
 #endif
 #ifdef DEBUG_HASH
@@ -116,16 +120,20 @@ void PlacementStats::exec(){
 }
 
 void PlacementStats::dump(){
+	if(!cmade)
+		return;
+		
 	printf("------- placements ---------------------\n");
-	printf("%10s %5.1f deleted:%5.1f active:%5.1f K\n",
-	    "created",cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0);
+	printf("%10s %5.1f deleted:%5.1f active:%5.1f K types:%d\n",
+	    "created",cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0,types.size());
 	if(vtests)
 	printf("%10s %5.1f K fails pts %2.1f %% dns %2.1f %%\n",
 		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
 #ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
+	if(lod_visits)
 	printf("%10s %5.1f K passed %2.1f %% failed %2.1f %%\n",
-		"lod",(double)place_visits/1000,100.0*lod_hits/place_visits,100.0*lod_fails/place_visits);
+		"lod",(double)lod_visits/1000,100.0*lod_hits/lod_visits,100.0*lod_fails/lod_visits);
 #endif
 #endif
 #ifdef DEBUG_HASH
@@ -136,7 +144,8 @@ void PlacementStats::dump(){
 	printf("%10s %5.1f K chained %5.1f K (%2.1f %%) hits %2.1f %% misses %2.1f %%\n",
 		"nhash",(double)nvisits/1000,(double)nchained/1000,100.0*nchained/nvisits,100.0*nhits/nvisits,100.0*nmisses/nvisits);
 #endif
-	printf("------------------------------------\n");
+	printf("------------------------------------");
+	cout<<endl;
 }
 
 //************************************************************
@@ -232,6 +241,7 @@ void PlacementMgr::free_htable()
     Stats.cfreed=0;
     if(!hash) 
     	return;
+    cout<<"PlacementMgr::free_htable"<<endl;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain
@@ -244,6 +254,7 @@ void PlacementMgr::free_htable()
         }
         hash[i] = 0;
     }
+    resetAll();
 }
 
 //-------------------------------------------------------------
@@ -264,6 +275,7 @@ void PlacementMgr::reset()
     list.reset();
     cval=0;
     scnt=0;
+    types.clear();
 }
 
 //-------------------------------------------------------------
@@ -315,14 +327,14 @@ void PlacementMgr::printChainStats()
     int emptyBuckets = 0;
     int maxChainLength = 0;
     long long totalChainLength = 0;
-    
+      
     // Histogram: count buckets by chain length
     std::map<int, int> histogram;
     
     for(int i = 0; i < hashsize; i++){
         int chainLen = 0;
         Placement* h = hash[i];
-        
+           
         while(h){
             chainLen++;
             totalPlacements++;
@@ -389,7 +401,8 @@ void PlacementMgr::printChainStats()
             }
         }
     }
-    printf("======================================\n");
+    printf("======================================");
+    cout<<endl;
 }
 //-------------------------------------------------------------
 // PlacementMgr::init()	initialize hash tables
@@ -535,16 +548,6 @@ bool PlacementMgr::valid()
     }
 	return true;
 }
-static uint64_t hashVertex(const Point& v) {
-    float snap = 0.001f;
-    int ix = (int)(round(v.x / snap) /snap);
-    int iy = (int)(round(v.y / snap) /snap); 
-    int iz = (int)(round(v.z / snap) /snap);
-    uint64_t key = ((uint64_t)(ix & 0x1FFFFF) << 42) |
-                   ((uint64_t)(iy & 0x1FFFFF) << 21) |
-                   ((uint64_t)(iz & 0x1FFFFF));
-    return key;
-}
 
 int PlacementMgr::hashPoint(Point4DL& pc, int lvl, int id) {
     // Use large primes to mix the bits
@@ -581,17 +584,17 @@ void PlacementMgr::eval()
     scnt=0;
 
     msize=maxsize;
-    for(lvl=0, size=msize; lvl<levels; size*=0.5*(level_mult+1), lvl++){
+     for(lvl=0, size=msize; lvl<levels; size*=0.5*(level_mult+1), lvl++){
         if(!valid())
             continue;
+         Stats.cvisits++;
 
 #ifdef PLACEMENTS_LOD
-        if(!CurrentScope->init_mode()&& Td.level>0&& Adapt.lod()/*&&lod()*/){
+        if(!Td.level>0 &&CurrentScope->init_mode() && Adapt.lod()/*&&lod()*/){
             double x=ptable[(int)Td.level];
             double lf=size/x;
-            //cout<<x<<" "<<size<<" "<<lf<<" "<<Td.level<<endl;
 #ifdef DEBUG_LOD
-            Stats.place_visits++;
+            Stats.lod_visits++;
             if(lf>0.5){ // size is ok 
                 Stats.lod_hits++;
             }
@@ -600,7 +603,7 @@ void PlacementMgr::eval()
             	return;
             }
 #else
-            if(x>LODSIZE)
+            if(lf<0.5)
                 return;
 #endif
         }
@@ -634,22 +637,16 @@ void PlacementMgr::eval()
         if(TheNoise.noise3D())
             p.w=0;
 
-#ifdef OLD_HASH
-        int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
-        if(TheNoise.noise4D())
-            n=PERM(pc.w+n);
-#else
-        int n=hashPoint(pc,lvl,id);
-#endif       
+        int n=hashPoint(pc,lvl,id);     
  
         // ⭐ MODIFIED: Search chain for matching placement
         Placement* h = hash[n];
         Placement* found = nullptr;
-        
-        Stats.cvisits++;
-        
+                
         // Search chain for existing placement with same point
         while(h){
+           	if(h->type)
+            	types.insert(h->type).second;
         	if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
                 found = h;
                 Stats.chits++;
@@ -677,14 +674,15 @@ void PlacementMgr::eval()
             hash[n] = c;
             found = c;
         }
-        
+ 
         if(found->radius > 0.0){
-            if(!found->set_terrain(*this))
+            if(!found->set_terrain(*this)){
                 Stats.crejects++;
+             }
         }
         else
             Stats.crejects++;
-        if(ntest()){
+         if(ntest()){
             find_neighbors(found);
             list.ss();
             while((h=list++)){
@@ -737,12 +735,8 @@ void PlacementMgr::find_neighbors(Placement *placement)
                                 placement->point.z+k,
                                 placement->point.w+l);
 
-#ifdef OLD_HASH
-        			int n=PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(lvl+id))));
-#else
         			int n=hashPoint(pc,lvl,id);
-#endif       
-                            
+                                 
 #ifdef DEBUG_PLACEMENTS
                     Stats.nvisits++;
 #endif
@@ -762,7 +756,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
                             break;
                         }
 #ifdef NO_CHAIN
-            break;
+            			break;
 #endif 
                         h = h->next;
                         if(h)
@@ -911,7 +905,6 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
     flags.s.active=true;
     PlacementMgr::sval=lerp(d,0,1.0,0,1);
     
- 
  	if(d<dist){
 		ht=Height; // closest to center
 		dist=d;

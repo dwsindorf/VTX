@@ -97,7 +97,10 @@ public:
     int tids;
     
     static LinkedList<Triangle*> triangle_list;
+    LinkedList<MapNode*> node_list;
 	ValueList<Triangle*> triangles;
+
+	int      get_mapnodes();
 
 	TerrainProperties *tp;
 
@@ -206,7 +209,6 @@ public:
 
 	int     geometry()          { return (flags & GEOMETRY)?1:0;}
 	void	set_geometry(int i)	{ BIT_SET(flags,GEOMETRY,i);}
-
 
 	int		size;
 	int		links;

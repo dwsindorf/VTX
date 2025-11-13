@@ -8,9 +8,9 @@
 #include "Util.h"
 
 //#define DEBUG_CRATERS
-//#define TEST_SPRITES
-//#define TEST_PLANTS
-//#define TEST_CRATERS
+#define TEST_SPRITES
+#define TEST_PLANTS
+#define TEST_CRATERS
 #define TEST_ROCKS
 
 //#define DEBUG_PMEM         // turn on for memory usage
@@ -70,14 +70,14 @@ public:
 	static int nhits,nmisses,nvisits,nrejects,nchained;
 	static int cmade,cfreed;
 	static int vtests,pts_fails,dns_fails;
-	static int place_visits,lod_hits,lod_fails;
+	static int lod_visits,lod_hits,lod_fails;
 
 	static void reset(){
 		chits=cvisits=crejects=cchained=0;
 		nhits=nmisses=nvisits=nrejects=nchained=0;
 		cmade=cfreed=0;
 		vtests=pts_fails=dns_fails=0;
-		place_visits=lod_hits=lod_fails=0;
+		lod_visits=lod_hits=lod_fails=0;
 	}
 	static void exec();
 	static void dump();

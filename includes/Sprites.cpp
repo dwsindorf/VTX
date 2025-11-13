@@ -159,6 +159,26 @@ SpriteMgr::~SpriteMgr()
 #endif
 	}
 }
+
+void SpriteMgr::setTests() {
+	if(!test() || hits==0)
+		return;
+	double x=1-cval;
+	if(testColor()) {
+		S0.set_cvalid();
+		if(fabs(x)>0)
+			S0.c=Color(0,1-x,1);
+		else
+			S0.c=Color(0,1,1);
+		Td.diffuse=Td.diffuse.mix(S0.c,0.5);
+	}
+	if(testDensity()) {
+		x=1/(cval+1e-6);
+		x=x*x; //*x*x;
+		Td.density+=lerp(cval,0,0.2,0,0.05*x);
+	}
+}
+
 //-------------------------------------------------------------
 // SpriteMgr::init()	initialize global objects
 //-------------------------------------------------------------
@@ -360,9 +380,9 @@ Sprite::Sprite(Image *i, int l, TNode *e)
 }
 
 void Sprite::reset()
-{
+{ 
+	cout<<"Sprite::reset()"<<endl;
 	data.free();
-	//PlacementMgr::free_htable();
 }
 
 void Sprite::set_image(Image *i, int r, int c){
@@ -378,11 +398,10 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 void Sprite::collect()
 {
-#define TEST
-#ifdef DEBUG_TEST_PTS
-	if(tests>0)
-		cout<<"tests:"<<tests<<" fails  pts:"<<100.0*pts_fails/tests<<" %"<<" dns:"<<100.0*dns_fails/tests<<endl;
-#endif
+	double d0=clock();
+
+	data.free();
+
 	for(int i=0;i<Td.sprites.size;i++){
 		Sprite *sprite=Td.sprites[i];
 		SpriteMgr *mgr=sprite->mgr();
@@ -390,9 +409,10 @@ void Sprite::collect()
 	} // next sprite
 	if(data.size){
   		data.sort();
-   		cout<<"Sprites collected:"<<data.size<<endl;
-
 	}
+	double d1=clock();
+	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+
 }
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string
@@ -536,11 +556,9 @@ void TNsprite::eval()
 	if(CurrentScope->rpass()){
 		int size=Td.sprites.size;
 		instance=size;
-		//cout<<instance<<" ";
 		mgr->instance=instance;
 		if(sprite)
 			sprite->set_id(size);
-		//set_id(size);
 		Td.add_sprite(sprite);
 		mgr->setHashcode();
 		if(right)
@@ -606,7 +624,7 @@ void TNsprite::eval()
 	density=sqrt(density);
 
 	mgr->density=density;	
-
+    
 	smgr->eval();  // calls SpritePoint.set_terrain	
 	g_sm.setTests();
  }

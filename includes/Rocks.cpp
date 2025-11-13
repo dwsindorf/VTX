@@ -55,6 +55,10 @@ RockMgr::RockMgr(int i) : PlacementMgr(i)
 	rdist=0;
 	pdist=1;
 	rx=ry=0;
+#ifdef TEST_ROCKS
+    set_testColor(true);
+#endif
+
 }
 RockMgr::~RockMgr()
 {
@@ -501,6 +505,7 @@ void TNrocks::eval() {
 	Td.insert_strata(rock);
 	if (!in_map && last)
 		Td.end();
+	rmgr->setTests();
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists
