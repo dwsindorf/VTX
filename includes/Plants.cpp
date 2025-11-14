@@ -459,23 +459,19 @@ bool PlantMgr::setProgram(){
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
 		
-	int n=Plant::data.size;
 	int l=randval;
-
-	//render();
-
 	randval=l;
 	return true;
 }
 
 void PlantMgr::clearStats(){
 	for(int i=0;i<Td.plants.size;i++){
-		Td.plants[i]->clearStats();
+		((Plant*)Td.plants[i])->clearStats();
 	}
 }
 void PlantMgr::showStats(){
 	for(int i=0;i<Td.plants.size;i++){
-		Td.plants[i]->showStats();
+		((Plant*)Td.plants[i])->showStats();
 	}
 }
 void PlantMgr::collectStats(){
@@ -548,9 +544,7 @@ void PlantMgr::render(){
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
 	if(update_needed && shadow_mode)
 		update_needed=false;
-	//TNBranch::setCollectLeafs(!test5);
 	TNBranch::setCollectLeafs(true);
-	//TNBranch::setCollectBranches(true);
 	TNBranch::setCollectBranches(!nocache);
 	
 	glLineWidth(1);
@@ -691,12 +685,12 @@ ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
-Plant::Plant(int l, TNode *e)
+Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 {
-	type=l;
-	plant_id=get_id();
-	expr=e;
-	valid=false;
+	//type=l;
+	//plant_id=get_id();
+	//expr=e;
+	//valid=false;
 }
 
 void Plant::reset()
@@ -708,24 +702,13 @@ void Plant::reset()
 //-------------------------------------------------------------
 // Plant::collect() collect valid plant points
 //-------------------------------------------------------------
-void Plant::collect()
-{
+void Plant::collect(Array<PlaceObj*> &plants){
 	double d0=clock();
-
-	data.free();
-	//PlacementMgr::resetAll();
-
-	for(int i=0;i<Td.plants.size;i++){
-		Plant *plant=Td.plants[i];
-		plant->expr->created=0;
-		plant->mgr()->collect(data);
-	}
-	if(data.size){
-		data.sort();
-	}
+	PlaceObj::collect(plants,data);
 	double d1=clock();
 	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 }
+
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
 //-------------------------------------------------------------
@@ -738,16 +721,16 @@ void Plant::eval()
 }
 
 bool Plant::setProgram(){
-	return expr->setProgram();
+	return ((TNplant*)expr)->setProgram();
 }
 bool Plant::initProgram(){
 	return false;
 }
 void Plant::clearStats(){
-	expr->clearStats();
+	((TNplant*)expr)->clearStats();
 }
 void Plant::showStats(){
-	expr->showStats();
+	((TNplant*)expr)->showStats();
 }
 
 //===================== TNplant ==============================

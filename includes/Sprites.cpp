@@ -399,21 +399,24 @@ void Sprite::set_image(Image *i, int r, int c){
 void Sprite::collect()
 {
 	double d0=clock();
-
 	data.free();
-
-	for(int i=0;i<Td.sprites.size;i++){
-		Sprite *sprite=Td.sprites[i];
-		SpriteMgr *mgr=sprite->mgr();
-		mgr->collect(data);
-	} // next sprite
+	collect(data);
 	if(data.size){
   		data.sort();
 	}
 	double d1=clock();
 	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-
 }
+
+void Sprite::collect(ValueList<PlaceData*> &data)
+{
+	for(int i=0;i<Td.sprites.size;i++){
+		Sprite *sprite=Td.sprites[i];
+		SpriteMgr *mgr=sprite->mgr();
+		mgr->collect(data);
+	} // next sprite
+}
+
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string
 //-------------------------------------------------------------

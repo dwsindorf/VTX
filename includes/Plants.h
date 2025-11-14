@@ -355,30 +355,22 @@ public:
 
 };
 
-class Plant
+class Plant : public PlaceObj
 {
 public:
-	int    type;
-	TNplant  *expr;
-	unsigned int plant_id;
-
-	bool   valid;
 	static ValueList<PlaceData*> data;
 
 	Plant(int l, TNode *e);
 	
-	PlantMgr *mgr() { return expr->mgr;}
+	PlacementMgr *mgr() { return ((TNplant*)expr)->mgr;}
 	char *name() { return expr->nodeName();}
 	void eval();
-	void print();
 	bool setProgram();
 	bool initProgram();
 	void clearStats();
 	void showStats();
-	int get_id()				{ return plant_id;}
-	void set_id(int i)			{ plant_id=i;}
 	static void reset();
-	static void collect();
+	static void collect(Array<PlaceObj*> &plants);
 };
 #endif
 

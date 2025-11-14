@@ -2609,7 +2609,6 @@ void MapNode::setSurface()
 		return;
 
     Td.clr_flag(SFIRST);
-    int nct = find_neighbors();
 
 	MapData *d=&data;
 	d=d->surface1();
@@ -2617,15 +2616,14 @@ void MapNode::setSurface()
 		return;
     
 	double t=d->theta();
-	double p=d->phi();
-	
-	Point pt=Td.rectangular(t, p);
-    double  aveht=d->Ht();
-    
+	double p=d->phi();	
+    double  aveht=d->Ht();  
     Point pnt=d->point();
+	Point pt=Td.rectangular(t, p);
 //#define AVE_PTS
 #ifdef AVE_PTS
- 	for(int i=0;i<nct;i++){
+   int nct = find_neighbors();
+	for(int i=0;i<nct;i++){
 		MapData *md=mapdata[i];
 		aveht+=md->Ht();
 		double t=md->theta();

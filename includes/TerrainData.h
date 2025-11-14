@@ -28,6 +28,7 @@ class TNpoint;
 class TNfractal;
 class TNclouds;
 class TNrocks;
+class PlaceObj;
 
 extern int    tindex, mindex;
 
@@ -141,7 +142,7 @@ public:
 	static double       fracval[MAX_FDATA];    // fractal ht
 
 	static Array<TerrainProperties*>properties;
-	static Array<Plant*> plants;
+	static Array<PlaceObj*> plants;
 	static Array<Sprite*> sprites;
 	static int sid;
 	static int fid;
@@ -348,6 +349,9 @@ public:
 	Array<Texture*> textures;
 	Array<TNnoise*> noise;
 	Array<TNrocks*> rocks;
+	Array<Sprite*> sprites;
+	Array<PlaceObj*> plants;
+	
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
 	TNdensity *tndensity;

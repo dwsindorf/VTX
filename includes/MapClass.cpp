@@ -1440,58 +1440,42 @@ int Map::get_mapnodes(){
 	node_list.ss();	
 	return node_list.size;
 }
-// nosort: Map::placements tid:1 nodes:32179 times gather:4 reset:35 eval:387 collect:126 total:552 ms
-// sort:   Map::placements tid:1 nodes:32179 times gather:3 reset:45 eval:430 collect:122 total:600 ms
-
-//#define TEST
 void Map::render_sprites(){
 	reset_texs();
 	double d0=clock();
-	if(first()){
-#ifdef TEST
-		if(Td.sprites.size){
-			Sprite::collect();
+	int n=get_mapnodes();
+	double d1=clock();
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+	Sprite::reset();
+	Plant::reset();
+	PlacementMgr::free_htable();
+	double d2=clock();
+	for(int i=0;i<n;i++){
+		MapNode *node=node_list++;
+		node->setSurface();
+		for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
+			Sprite *sprite=Td.sprites[Td.sid];
+			sprite->eval();
 		}
-		if(Td.plants.size){
-			Plant::collect();
-		}
-#else
-		int n=get_mapnodes();
-		double d1=clock();
-		int mode=CurrentScope->passmode();
-		CurrentScope->set_spass();
-		Sprite::reset();
-		Plant::reset();
-		PlacementMgr::free_htable();
-		double d2=clock();
-		for(int i=0;i<n;i++){
-			MapNode *node=node_list++;
-			node->setSurface();
-			for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
-				Td.clr_flag(SFIRST);
-				Sprite *sprite=Td.sprites[Td.sid];
-				sprite->eval();
-			}
-			for(Td.sid=0;Td.sid<Td.plants.size;Td.sid++){
-				Td.clr_flag(SFIRST);
-				Plant *plant=Td.plants[Td.sid];
-				plant->eval();
-			}	
-		}
-		double d3=clock();
-		Sprite::collect();
-		Plant::collect();
-		double d4=clock();
-		cout<<"Map::placements tid:"<<tid<<" nodes:"<<node_list.size<<" times"
-				<<" gather:"<<1000*(d1-d0)/CLOCKS_PER_SEC
-				<<" reset:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
-				<<" eval:"<< 1000*(d3-d2)/CLOCKS_PER_SEC
-				<<" collect:"<<1000*(d4-d4)/CLOCKS_PER_SEC
-				<<" total:"<<1000*(d4-d0)/CLOCKS_PER_SEC
-				<<" ms"<<endl;
-		CurrentScope->set_passmode(mode);
-#endif		
+		for(Td.sid=0;Td.sid<Td.plants.size;Td.sid++){
+			Plant *plant=Td.plants[Td.sid];
+			plant->eval();
+		}	
 	}
+	double d3=clock();
+	Sprite::collect();
+	Plant::collect(Td.plants);
+
+	double d4=clock();
+	cout<<"Map::placements tid:"<<tid<<" nodes:"<<node_list.size<<" times"
+			<<" gather:"<<1000*(d1-d0)/CLOCKS_PER_SEC
+			<<" reset:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
+			<<" eval:"<< 1000*(d3-d2)/CLOCKS_PER_SEC
+			<<" collect:"<<1000*(d4-d4)/CLOCKS_PER_SEC
+			<<" total:"<<1000*(d4-d0)/CLOCKS_PER_SEC
+			<<" ms"<<endl;
+	CurrentScope->set_passmode(mode);		
 
 	if(Td.plants.size){
 		if(PlantMgr::setProgram())

@@ -134,6 +134,7 @@ public:
 	void set_image(Image *, int r, int c);
 	static void reset();
 	static void collect();
+	static void collect(ValueList<PlaceData*> &data);
 };
 #endif
 

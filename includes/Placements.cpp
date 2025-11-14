@@ -958,7 +958,9 @@ void Placement::setVertex() {
 	dist=d;
 }
 
-//==================== PlantData ===============================
+//************************************************************
+// PlaceData class
+//************************************************************
 // copy constructor
 PlaceData::PlaceData(Placement *pnt){
 	type=pnt->type;
@@ -971,6 +973,36 @@ PlaceData::PlaceData(Placement *pnt){
 	instance=pnt->instance;
 	mgr=pnt->mgr;
 	rval=pnt->rval;
+}
+
+//************************************************************
+// PlaceObj class
+//************************************************************
+
+PlaceObj::PlaceObj(int t, TNode *e){
+	type=t;
+	get_id();
+	expr=e;
+	valid=false;
+
+}
+void PlaceObj::eval()
+{
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+	expr->eval();
+	CurrentScope->set_passmode(mode);
+}
+
+void PlaceObj::collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data)
+{
+	data.free();
+	for(int i=0;i<objs.size;i++){
+		PlaceObj *obj=objs[i];
+		obj->mgr()->collect(data);
+	}
+	if(data.size)
+		data.sort();
 }
 
 //************************************************************

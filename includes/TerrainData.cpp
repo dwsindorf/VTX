@@ -114,7 +114,7 @@ double TerrainData::depth=0;
 double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
-Array<Plant*> TerrainData::plants;
+Array<PlaceObj*> TerrainData::plants;
 Array<Sprite*> TerrainData::sprites;
 
 Array<TerrainProperties*>TerrainData::properties;
@@ -382,6 +382,8 @@ void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
 	rocks.reset();
+	sprites.reset();
+	plants.reset();
 }
 
 

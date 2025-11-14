@@ -16,6 +16,7 @@
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
 class PlacementMgr;
+class PlaceData;
 
 enum {
     PID 		= 0x00000fff,
@@ -83,6 +84,32 @@ public:
 	static void dump();
 };
 
+
+class PlaceObj
+{
+protected:
+	int    id;
+public:
+    static void collect(Array<PlaceObj*> &objs);
+    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
+    static void reset(ValueList<PlaceData*> &data){ data.free();}
+	int    type;
+	bool   valid;
+	TNode  *expr;
+	PlaceObj(int t, TNode *e);
+    virtual ~PlaceObj(){}
+    virtual void eval();  
+    virtual void print() {};
+    virtual bool setProgram() {};
+    virtual bool initProgram() {}; 
+    virtual PlacementMgr *mgr() { return nullptr;}
+    
+	int get_id()				{ return id;}
+	void set_id(int i)			{ id=i;}
+	bool isValid()				{ return valid;}
+	void setIsValid(bool i)		{ valid=i;}
+	char *name() { return expr->nodeName();}
+};
 
 class Placement
 {
