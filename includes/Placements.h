@@ -93,6 +93,8 @@ public:
     static void collect(Array<PlaceObj*> &objs);
     static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
     static void reset(ValueList<PlaceData*> &data){ data.free();}
+	static void eval(Array<PlaceObj*> &objs);
+
 	int    type;
 	bool   valid;
 	TNode  *expr;
@@ -293,7 +295,8 @@ public:
 	virtual Placement *make(Point4DL&,int);
 	virtual PlaceData *make(Placement*s);
 	virtual void setHashcode();
-
+	static bool setProgram(Array<PlaceObj*> &objs);
+	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;
 };
 

@@ -72,7 +72,8 @@ public:
 	void init();
 	void eval();
 	void setTests();
-	static bool setProgram();
+	static bool setProgram(Array<PlaceObj*> &objs);
+
 };
 
 //************************************************************
@@ -107,34 +108,26 @@ public:
 	void applyExpr();
 };
 
-class Sprite
+class Sprite : public PlaceObj
 {
 public:
 	Image *image;
-	int    type;
-	TNsprite  *expr;
 	unsigned int texture_id;
-	unsigned int sprite_id;
 	uint rows;
 	uint cols;
 
-	bool   valid;
 	static ValueList<PlaceData*> data;
 
 	Sprite(Image *i, int l, TNode *e);
 	
-	SpriteMgr *mgr() { return expr->mgr;}
-	char *name() { return expr->nodeName();}
+	SpriteMgr *mgr() { return ((TNsprite*)expr)->mgr;}
 	void eval();
-	void print();
 	bool setProgram();
 	bool initProgram();
-	int get_id()				{ return sprite_id;}
-	void set_id(int i)			{ sprite_id=i;}
 	void set_image(Image *, int r, int c);
 	static void reset();
-	static void collect();
-	static void collect(ValueList<PlaceData*> &data);
+	static void collect(Array<PlaceObj*> &data);
+	static void eval(Array<PlaceObj*> &data);
 };
 #endif
 

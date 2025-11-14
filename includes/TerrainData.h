@@ -143,7 +143,7 @@ public:
 
 	static Array<TerrainProperties*>properties;
 	static Array<PlaceObj*> plants;
-	static Array<Sprite*> sprites;
+	static Array<PlaceObj*> sprites;
 	static int sid;
 	static int fid;
 	static int rid;
@@ -361,7 +361,7 @@ public:
 
 	static int nid;
 	static int tid;
-	//static int sid;
+
 	static int pass;
 
 	TerrainProperties(int);

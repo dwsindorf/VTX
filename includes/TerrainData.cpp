@@ -115,7 +115,7 @@ double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
 Array<PlaceObj*> TerrainData::plants;
-Array<Sprite*> TerrainData::sprites;
+Array<PlaceObj*> TerrainData::sprites;
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;

@@ -1454,17 +1454,11 @@ void Map::render_sprites(){
 	for(int i=0;i<n;i++){
 		MapNode *node=node_list++;
 		node->setSurface();
-		for(Td.sid=0;Td.sid<Td.sprites.size;Td.sid++){
-			Sprite *sprite=Td.sprites[Td.sid];
-			sprite->eval();
-		}
-		for(Td.sid=0;Td.sid<Td.plants.size;Td.sid++){
-			Plant *plant=Td.plants[Td.sid];
-			plant->eval();
-		}	
+		Sprite::eval(Td.sprites);
+		Plant::eval(Td.plants);
 	}
 	double d3=clock();
-	Sprite::collect();
+	Sprite::collect(Td.sprites);
 	Plant::collect(Td.plants);
 
 	double d4=clock();
@@ -1478,11 +1472,11 @@ void Map::render_sprites(){
 	CurrentScope->set_passmode(mode);		
 
 	if(Td.plants.size){
-		if(PlantMgr::setProgram())
-			PlantMgr::render();
+		if(PlantMgr::setProgram(Td.plants))
+			PlantMgr::render(Td.plants);
 	}
 	if(Td.sprites.size){
-		SpriteMgr::setProgram();
+		SpriteMgr::setProgram(Td.sprites);
 	}
 }
 

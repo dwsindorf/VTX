@@ -52,15 +52,10 @@ public:
 	}
 	void setImageBaseDir(char *c){
 		ImageMgr::setImageBaseDir(c);
-		//getImageDirs();
 	}
 	void setImageBaseDir(){
 		File.getBranchesDir(base_dir);
 		getImageDirs();
-		//char base[512];
-		//File.getBaseDirectory(base);
-	 	//sprintf(base_dir,"%s/Textures/Plants/Branch",base);
-	  	//cout<<"branch base dir="<<base_dir<<endl;
 	}
 };
 extern BranchImageMgr branch_mgr;
@@ -98,8 +93,8 @@ public:
 	void init();
 	void eval();
 	
-	static bool setProgram();
-	static void render();
+	static bool setProgram(Array<PlaceObj*> &objs);
+	static void render(Array<PlaceObj*> &objs);
 	static void render_zvals();
 	static void render_shadows();
 	static void clearStats();
@@ -363,14 +358,16 @@ public:
 	Plant(int l, TNode *e);
 	
 	PlacementMgr *mgr() { return ((TNplant*)expr)->mgr;}
-	char *name() { return expr->nodeName();}
+	//char *name() { return expr->nodeName();}
 	void eval();
 	bool setProgram();
 	bool initProgram();
 	void clearStats();
 	void showStats();
 	static void reset();
-	static void collect(Array<PlaceObj*> &plants);
+	static void collect(Array<PlaceObj*> &data);
+	static void eval(Array<PlaceObj*> &data);
+
 };
 #endif
 

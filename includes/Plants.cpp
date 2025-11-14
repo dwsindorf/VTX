@@ -354,7 +354,7 @@ void PlantMgr::eval(){
 	PlacementMgr::eval(); 
 }
 
-bool PlantMgr::setProgram(){
+bool PlantMgr::setProgram(Array<PlaceObj*> &objs){
 	//cout<<"PlantMgr::setProgram "<<Raster.shadows()<<endl;
 	extern int test7;
 	shadow_count=0;
@@ -367,8 +367,8 @@ bool PlantMgr::setProgram(){
 
 	PlantMgr::textures=0;
 	
-	for(int i=0;i<Td.plants.size;i++){
-		Td.plants[i]->setProgram();
+	for(int i=0;i<objs.size;i++){
+		objs[i]->setProgram();
 	}
 
 	branch_nodes=0;
@@ -511,7 +511,7 @@ void PlantMgr::render_shadows(){
 	//glPolygonOffset (0.0f, 0.0f);
 	
 	shadow_count++;
-	render();
+	render(Td.plants);
 	//glLineWidth(1);
 	shadow_mode=false;
 
@@ -528,12 +528,12 @@ void PlantMgr::render_zvals(){
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	shadow_count++;
-	render();
+	render(Td.plants);
 
 	shadow_mode=false;
 }
 
-void PlantMgr::render(){
+void PlantMgr::render(Array<PlaceObj*> &objs){
 	oldmode=0;
 	int l=randval;
 	int n=Plant::data.size;
@@ -605,7 +605,7 @@ void PlantMgr::render(){
 	
 	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
 		if(!shadow_mode)
-			setProgram();
+			setProgram(objs);
 		glDisable(GL_CULL_FACE);
 
 		if(TNBranch::isCollectBranchesSet()){
@@ -687,10 +687,6 @@ ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
 Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 {
-	//type=l;
-	//plant_id=get_id();
-	//expr=e;
-	//valid=false;
 }
 
 void Plant::reset()
@@ -709,6 +705,9 @@ void Plant::collect(Array<PlaceObj*> &plants){
 	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 }
 
+void Plant::eval(Array<PlaceObj*> &objs){
+	PlaceObj::eval(objs);
+}
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
 //-------------------------------------------------------------

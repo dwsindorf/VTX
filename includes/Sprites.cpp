@@ -198,8 +198,7 @@ void SpriteMgr::eval(){
 	PlacementMgr::eval(); 
 }
 
-bool SpriteMgr::setProgram(){
-	TerrainProperties *tp=Td.tp;
+bool SpriteMgr::setProgram(Array<PlaceObj*> &objs){
 	if(!Sprite::data.size)
 		return false;
 	char defs[1024]="";
@@ -254,9 +253,8 @@ bool SpriteMgr::setProgram(){
 	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
 	GLSLMgr::setProgram();
 	GLSLMgr::loadVars();
-	for(int i=0;i<Td.sprites.size;i++){
-		TerrainData::sid=i;
-		Td.sprites[i]->setProgram();
+	for(int i=0;i<objs.size;i++){
+		objs[i]->setProgram();
 	}
 	//glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);
@@ -367,16 +365,16 @@ ValueList<PlaceData*> Sprite::data;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
-Sprite::Sprite(Image *i, int l, TNode *e)
+Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 {
-	type=l;
-	sprite_id=get_id();
+	//type=l;
+	//sprite_id=get_id();
 	texture_id=0;
     image=i;
-	expr=e;
+	//expr=e;
 	rows=((TNsprite *)e)->getImageRows();
 	cols=((TNsprite *)e)->getImageCols();
-	valid=false;
+	//valid=false;
 }
 
 void Sprite::reset()
@@ -396,27 +394,16 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 // Sprite::collect() collect valid sprite points
 //-------------------------------------------------------------
-void Sprite::collect()
+void Sprite::collect(Array<PlaceObj*> &sprites)
 {
 	double d0=clock();
-	data.free();
-	collect(data);
-	if(data.size){
-  		data.sort();
-	}
+	PlaceObj::collect(sprites,data);
 	double d1=clock();
 	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 }
-
-void Sprite::collect(ValueList<PlaceData*> &data)
-{
-	for(int i=0;i<Td.sprites.size;i++){
-		Sprite *sprite=Td.sprites[i];
-		SpriteMgr *mgr=sprite->mgr();
-		mgr->collect(data);
-	} // next sprite
+void Sprite::eval(Array<PlaceObj*> &objs){
+	PlaceObj::eval(objs);
 }
-
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string
 //-------------------------------------------------------------
@@ -430,7 +417,7 @@ void Sprite::eval()
 
 bool Sprite::setProgram(){
 	char str[MAXSTR];
-	int texid=sprite_id;
+	int texid=id;
 	glActiveTexture(GL_TEXTURE0+texid);
 	if(!valid){
 		glGenTextures(1, &texture_id); // Generate a unique texture ID
