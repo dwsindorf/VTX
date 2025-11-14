@@ -14,18 +14,7 @@ class Plant;
 
 #define MAX_BRANCHES 6
 #define MAX_PLANT_DATA 7
-#define PLANT_STATS 7
-
-class PlantPoint : public Placement
-{
-public:
-	PlantPoint(PlantMgr&, Point4DL&,int);
-	bool set_terrain(PlacementMgr  &mgr);
-};
-
-class PlantData : public PlaceData
-{
-};
+#define MAX_PLANTS 7
 
 class LeafImageMgr : public ImageMgr
 {
@@ -66,7 +55,8 @@ public:
 	Placement *make(Point4DL&,int);
 	
 	TNplant *plant;
-	static int stats[PLANT_STATS];
+	static int stats[MAX_PLANTS];
+
 	static double render_time;
 	static bool threed;
 	static bool spline;
@@ -98,8 +88,6 @@ public:
 	static void render_zvals();
 	static void render_shadows();
 	static void clearStats();
-	static void collectStats();
-	static void showStats();
 };
 
 
@@ -112,7 +100,6 @@ protected:
 public:
 	Point norm;
 	int branches;
-	int stats[MAX_BRANCHES][MAX_PLANT_DATA];
 
 	int plant_id;
 	int instance;
@@ -131,9 +118,6 @@ public:
 	static double norm_min;
 
 	Point base_point;
-	int created;
-	int rendered;
-	bool render_test;
 	
 	TNplant(TNode *l, TNode *r);
 	~TNplant();
@@ -155,13 +139,12 @@ public:
 	void getLastBranch();
 	void clearStats();
 	void setScale();
-	void showStats();
-	void addBranch(int id);
-	void addLine(int id);
+	void addBranch();
+	void addLine();
 	void addRendered();
-	void addLeaf(int id);
-	void addSpline(int id);
-	void addSkipped(int id);
+	void addLeaf();
+	void addSpline();
+	void addSkipped();
 	int getChildren(LinkedList<NodeIF*>&l);
 	bool randomize();
 	NodeIF *removeNode();
@@ -173,6 +156,25 @@ public:
 	NodeIF *getInstance(NodeIF *prev, int m);
 
 };
+class Plant : public PlaceObj
+{
+public:
+	static ValueList<PlaceData*> data;
+
+	Plant(int l, TNode *e);
+	
+	PlacementMgr *mgr() { return ((TNplant*)expr)->mgr;}
+	void eval();
+	bool setProgram();
+	bool initProgram();
+	void clearStats();
+	void showStats();
+	static void reset();
+	static void collect(Array<PlaceObj*> &data);
+	static void eval(Array<PlaceObj*> &data);
+
+};
+
 
 //************************************************************
 // Class TNLeaf
@@ -350,25 +352,6 @@ public:
 
 };
 
-class Plant : public PlaceObj
-{
-public:
-	static ValueList<PlaceData*> data;
-
-	Plant(int l, TNode *e);
-	
-	PlacementMgr *mgr() { return ((TNplant*)expr)->mgr;}
-	//char *name() { return expr->nodeName();}
-	void eval();
-	bool setProgram();
-	bool initProgram();
-	void clearStats();
-	void showStats();
-	static void reset();
-	static void collect(Array<PlaceObj*> &data);
-	static void eval(Array<PlaceObj*> &data);
-
-};
 #endif
 
 

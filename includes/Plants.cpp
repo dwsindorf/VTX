@@ -261,15 +261,24 @@ static bool nocache=false;
 LeafImageMgr leaf_mgr; // global image manager
 BranchImageMgr branch_mgr; // global image manager
 
+enum {
+	PLANT_TYPES =0,
+	PLANTS_DRAWN=1,
+	PLANTS_SKIPPED=2,
+	PLANT_BRANCHES=3,
+	PLANT_LEAVES=4,
+	PLANT_LINES=5,
+	PLANT_SPLINES=6,
+};
 void show_plant_info()
 {
 	if(!Render.display(PLANTINFO))
 		return;
 	TheScene->draw_string(HDR1_COLOR,"------- plants ---------------------");
-	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d render:%3.1f ms",
-			PlantMgr::stats[0],PlantMgr::stats[1],PlantMgr::stats[2],PlantMgr::render_time);
-	TheScene->draw_string(DATA_COLOR,"drawn:%d lines:%d polygons:%d splines:%d",
-			PlantMgr::show_one?1:PlantMgr::stats[6],PlantMgr::stats[3],PlantMgr::stats[4],PlantMgr::stats[5]);
+	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d render:%3.2f s",
+			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
+	TheScene->draw_string(DATA_COLOR,"drawn:%d skipped:%d lines:%d splines:%d",
+			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],PlantMgr::stats[PLANTS_SKIPPED],PlantMgr::stats[PLANT_LINES],PlantMgr::stats[PLANT_SPLINES]);
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
 //************************************************************
@@ -283,7 +292,7 @@ void show_plant_info()
 //-------------------------------------------------------------
 bool PlantMgr::shadow_mode=false;
 int PlantMgr::shadow_count=0;
-int PlantMgr::stats[PLANT_STATS];
+int PlantMgr::stats[MAX_PLANTS];
 double PlantMgr::render_time;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
@@ -465,33 +474,8 @@ bool PlantMgr::setProgram(Array<PlaceObj*> &objs){
 }
 
 void PlantMgr::clearStats(){
-	for(int i=0;i<Td.plants.size;i++){
-		((Plant*)Td.plants[i])->clearStats();
-	}
-}
-void PlantMgr::showStats(){
-	for(int i=0;i<Td.plants.size;i++){
-		((Plant*)Td.plants[i])->showStats();
-	}
-}
-void PlantMgr::collectStats(){
-	int n=Plant::data.size;
-	for(int i=0;i<PLANT_STATS;i++){
+	for(int i=0;i<MAX_PLANTS;i++){
 		stats[i]=0;
-	}
-	stats[0]=Td.plants.size;
-	stats[6]=n;
-	for(int i=0;i<Td.plants.size;i++){
-		TNplant *plant=Td.plants[i]->expr;
-		for(int j=0;j<plant->branches;j++){
-			stats[1]+=plant->stats[j][2]; // lines
-			stats[3]+=plant->stats[j][2]; // lines
-			stats[1]+=plant->stats[j][3]; // polygons
-			stats[4]+=plant->stats[j][3]; // lines
-			stats[1]+=plant->stats[j][4]; // splines
-			stats[5]+=plant->stats[j][4]; // lines
-			stats[2]+=plant->stats[j][5]; // leaves
-		}
 	}
 }
 
@@ -563,16 +547,18 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 		clearStats();
 		TNLeaf::sorted=false;
 	}
-	t1=clock();
 	
 	//if(!shadow_mode)
 		glEnable(GL_BLEND);
 	int start=show_one?0:n-1;
 	if(update_needed){
+		t1=clock();
+
 		glDisable(GL_CULL_FACE);
+		PlantMgr::stats[PLANT_TYPES]=objs.size;
 
 		for(int i=start;i>=0;i--){ // Farthest to closest
-			PlantData *s=Plant::data[i];
+			PlaceData *s=Plant::data[i];
 			int id=s->get_id();
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
@@ -591,11 +577,12 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 		glEnable(GL_CULL_FACE);
 		double d1=clock();
 		double te=(d1-t0)/CLOCKS_PER_SEC;
+		render_time=te;
 		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;
 		
 	}
 	else {
-		PlantData *s=Plant::data[0];
+		PlaceData *s=Plant::data[0];
 		PlantMgr *pmgr=(PlantMgr*)s->mgr;
 		TNplant *plant=pmgr->plant;
 		plant->setNormal();
@@ -625,7 +612,7 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	
 	randval=l;
 	//if(Render.display(PLANTINFO))
-		collectStats();
+	//	collectStats();
 		
 #ifdef SHOW_BRANCH_STATS
     if(update_needed)
@@ -662,22 +649,22 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 //-------------------------------------------------------------
 Placement *PlantMgr::make(Point4DL &p, int n)
 {
-    return new PlantPoint(*this,p,n);
+    return new Placement(*this,p,n);
 }
 
 //************************************************************
 // class PlantPoint
 //************************************************************
-PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
-{
-}
+//PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
+//{
+//}
 //-------------------------------------------------------------
 // PlantPoint::set_terrain()	impact terrain
 //-------------------------------------------------------------
-bool PlantPoint::set_terrain(PlacementMgr &pmgr)
-{
-	return Placement::set_terrain(pmgr); // use default method
-}
+//bool PlantPoint::set_terrain(PlacementMgr &pmgr)
+//{
+//	return Placement::set_terrain(pmgr); // use default method
+//}
 //==================== PlantData ===============================
 
 //===================== Plant ==============================
@@ -725,12 +712,6 @@ bool Plant::setProgram(){
 bool Plant::initProgram(){
 	return false;
 }
-void Plant::clearStats(){
-	((TNplant*)expr)->clearStats();
-}
-void Plant::showStats(){
-	((TNplant*)expr)->showStats();
-}
 
 //===================== TNplant ==============================
 
@@ -764,12 +745,9 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	width_scale=1;
 	size_scale=1;
 	draw_scale=1;
-	rendered=0;
-	created=0;
 	distance=0;
 	instance=0;
 	seed=0;
-	render_test=false;
 	
     mgr=new PlantMgr(PLANTS,this);
 }
@@ -938,57 +916,30 @@ void TNplant::eval()
 	g_pm.setTests();
 }
 
-void TNplant::clearStats(){
-	//if(!update_needed)
-	//	return;
-	rendered=0;
-	render_test=false;
-	for(int i=0;i<MAX_BRANCHES;i++){
-		for(int j=0;j<MAX_PLANT_DATA;j++)
-			stats[i][j]=0;
-	}
-}
-void TNplant::showStats(){
-	cout<<"plant["<<name_str<<"] created["<<created<<"] rendered["<<rendered<<"]"<<endl;
-#ifdef SHOW_BRANCH_DATA
-	for(int i=0;i<branches;i++){
-		cout<<"branch["<<i<<"]"
-		<<" skipped:"<<stats[i][0]
-		//<<" rendered:"<<stats[i][1]
-	    <<" lines:"<<stats[i][2]
-		<<" polygons:"<<stats[i][3]
-		<<" splines:"<<stats[i][4]
-		<<" leafs:"<<stats[i][5]
-		<<endl;
-	}
-#endif
-}
-void TNplant::addSkipped(int id){
+void TNplant::addSkipped(){
 	if(update_needed)
-	stats[id][0]++;	
+		PlantMgr::stats[PLANTS_SKIPPED]++;
 }
 void TNplant::addRendered(){
 	if(update_needed){
-		//if(!render_test)
-		rendered++;
-		//render_test=true;
+		PlantMgr::stats[PLANTS_DRAWN]++;
 	}
 }
-void TNplant::addLine(int id){
+void TNplant::addLine(){
 	if(update_needed)
-	stats[id][2]++;	
+		PlantMgr::stats[PLANT_LINES]++;	
 }
-void TNplant::addBranch(int id){
+void TNplant::addBranch(){
 	if(update_needed)
-	stats[id][3]++;	
+		PlantMgr::stats[PLANT_BRANCHES]++;	
 }
-void TNplant::addSpline(int id){
+void TNplant::addSpline(){
 	if(update_needed)
-	stats[id][4]++;	
+		PlantMgr::stats[PLANT_SPLINES]++;	
 }
-void TNplant::addLeaf(int id){
+void TNplant::addLeaf(){
 	if(update_needed)
-	stats[id][5]++;	
+		PlantMgr::stats[PLANT_LEAVES]++;	
 }
 
 //-------------------------------------------------------------
@@ -1207,8 +1158,6 @@ void TNplant::emit(){
 	else
 		return;
 	
-	render_test=false;
-
 	double branch_size=length*first_branch->length;
 
 	Point top=bot*(1+branch_size); // starting trunk size
@@ -1229,11 +1178,9 @@ void TNplant::emit(){
 	
 	TNLeaf::left_side=0;
 	
-	//glVertexAttrib4d(GLSLMgr::TexCoordsID, 0, 0, 0,0); // Constants1
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 
-	if(render_test)
-		rendered++;	
+	addRendered();	
 }
 
 bool TNplant::setProgram(){
@@ -1251,10 +1198,6 @@ bool TNplant::setProgram(){
 }
 
 bool TNplant::randomize(){
-//	int nsave=lastn;
-//	lastn=getRandValue()*123;
-//	setRands();
-//	lastn=nsave;
 	if(right && (right->typeValue() == ID_BRANCH)){
 		((TNBranch*)right)->randomize();
 		return true;
@@ -1754,11 +1697,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			child_width *= parent->width_taper;
 	    }
 		if (child_width < MIN_LINE_WIDTH) {
-			root->addSkipped(branch_id);
+			root->addSkipped();
 			return;
 		}
 		if (level>pw) {
-			root->addSkipped(branch_id);
+			root->addSkipped();
 			return;
 		}
 	}
@@ -1807,9 +1750,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	int tid = isTexEnabled() ? texid : -1;
 
 	if (child_width >MIN_LINE_WIDTH) {
-		//if(!render_test)
-		//root->addRendered();
-		root->render_test=true;
 		if (isPlantBranch() && lev >maxlvl)
 			opt = LAST_EMIT;
 		double bf=evalArg(12,Randval*randomness+bias);
@@ -1850,7 +1790,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					double size = root->width_scale * PSCALE * TheScene->wscale
 							* child_size;
 
-					//root->rendered++;
+					//PlantMgr::rendered++;
 
 					int segs = max_level;
 					double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
@@ -1885,7 +1825,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					// leaf clusters
 					Point p1s=p1;
 					for (int i = 0; i < segs; i++) {
-						root->addLeaf(branch_id);
+						root->addLeaf();
 						double a = i * f + phase;
 						double ca = COS(2.0 * PI * a);
 						double sa = SIN(2.0 * PI * a);
@@ -1918,7 +1858,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					}
 				}
 				else
-					root->addSkipped(branch_id);
+					root->addSkipped();
 			}
 		} else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
 			double nscale = lerp(child_width, MIN_LINE_WIDTH,
@@ -1931,9 +1871,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			shader_mode = RECT_MODE;
 			if (PlantMgr::spline && child_width > MIN_SPLINE_WIDTH) {
 				shader_mode = SPLINE_MODE;
-				root->addSpline(branch_id);
+				root->addSpline();
 			} else
-				root->addBranch(branch_id);
+				root->addBranch();
 			if (PlantMgr::shader_lines)
 				shader_mode = LINE_MODE;
 
@@ -2040,7 +1980,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 #endif
 			double nscale = TNplant::norm_min;
 			//root->rendered++;
-			root->addLine(branch_id);
+			root->addLine();
 			setColor(nocache);
 			c = S0.c;
 

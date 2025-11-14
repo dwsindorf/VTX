@@ -190,7 +190,7 @@ void Rock3DMgr::eval(){
 //-------------------------------------------------------------
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
-    return new Rock3D(*this,p,n);
+    return new Placement(*this,p,n);
 }
 
 bool Rock3DMgr::testColor() { 
@@ -202,17 +202,17 @@ bool Rock3DMgr::testDensity(){
 //************************************************************
 // Rock3D class
 //************************************************************
-Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
-{
-	mcObject=0;
-}
+//Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
+//{
+//	mcObject=0;
+//}
 //-------------------------------------------------------------
 // Rock::set_terrain()	impact terrain
 //-------------------------------------------------------------
-bool Rock3D::set_terrain(PlacementMgr &pmgr)
-{
-	return Placement::set_terrain(pmgr);
-}
+//bool Rock3D::set_terrain(PlacementMgr &pmgr)
+//{
+//	return Placement::set_terrain(pmgr);
+//}
 
 //************************************************************
 // TNrocks class

@@ -349,7 +349,7 @@ public:
 	Array<Texture*> textures;
 	Array<TNnoise*> noise;
 	Array<TNrocks*> rocks;
-	Array<Sprite*> sprites;
+	Array<PlaceObj*> sprites;
 	Array<PlaceObj*> plants;
 	
 	TNcolor *tncolor;

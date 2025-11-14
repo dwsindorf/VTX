@@ -15,12 +15,11 @@ class Rock : public Placement
 	virtual bool set_terrain(PlacementMgr  &mgr);
 };
 
-class Rock3D : public Rock
+class Rock3D : public PlaceObj
 {
  public:
     MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
-	Rock3D(PlacementMgr&, Point4DL&,int);
-	bool set_terrain(PlacementMgr  &mgr);
+    static ValueList<PlaceData*> data;
 };
 
 class RockMgr : public PlacementMgr
@@ -43,6 +42,7 @@ class Rock3DMgr : public RockMgr
 {
 protected:
 public:
+	Rock3D *rock;
     //static TNode *default_noise;
 	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
