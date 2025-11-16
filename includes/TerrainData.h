@@ -390,6 +390,7 @@ public:
 	void setProgram();
 	void reset();
 	int passes();
+	void add_sprite(Sprite *s);
 
 };
 #endif

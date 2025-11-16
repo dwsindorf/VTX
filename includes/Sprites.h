@@ -128,6 +128,8 @@ public:
 	static void reset();
 	static void collect(Array<PlaceObj*> &data);
 	static void eval(Array<PlaceObj*> &data);
+	
+	void collect();
 };
 #endif
 

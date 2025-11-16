@@ -513,7 +513,7 @@ void TNmap::eval()
 		// - Only keep terrain data for highest layer (reduces memory and processing costs)
 		// check for layer intersection
 		// - special case tilted terrain ?
-#define WHYTHIS
+#define WHYTHIS // ??
 #ifdef WHYTHIS
 		for(i=1;i<MAX_TDATA;i++){
 			if(Td.zlevel[i].p.z<=TZBAD){

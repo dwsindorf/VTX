@@ -174,10 +174,11 @@ void SpriteMgr::eval(){
 }
 
 bool SpriteMgr::setProgram(Array<PlaceObj*> &objs){
-	if(!Sprite::data.size)
+	if(!Sprite::data.size || !objs.size)
 		return false;
+	//cout<<Td.sprites.size<<" "<<objs.size<<endl;
 	char defs[1024]="";
-	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",Td.sprites.size);
+	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",objs.size);
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
 	if(Render.haze())
 		sprintf(defs+strlen(defs),"#define HAZE\n");
@@ -365,16 +366,23 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 // Sprite::collect() collect valid sprite points
 //-------------------------------------------------------------
-void Sprite::collect(Array<PlaceObj*> &sprites)
+void Sprite::collect(Array<PlaceObj*> &objs)
 {
-	double d0=clock();
-	PlaceObj::collect(sprites,data);
-	double d1=clock();
-	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+	//double d0=clock();
+	if(objs.size)
+		PlaceObj::collect(objs,data);
+	//double d1=clock();
+	//cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+}
+
+void Sprite::collect(){
+	mgr()->collect(data);
 }
 void Sprite::eval(Array<PlaceObj*> &objs){
-	PlaceObj::eval(objs);
+	if(objs.size)
+		PlaceObj::eval(objs);
 }
+
 //-------------------------------------------------------------
 // Sprite::eval() evaluate TNtexture string
 //-------------------------------------------------------------
@@ -519,12 +527,20 @@ void TNsprite::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		int size=Td.sprites.size;
+		int size;
+		bool inlayer=inLayer();
+		if(inlayer)
+			Td.tp->sprites.size;
+		else
+			size=Td.sprites.size;
 		instance=size;
 		mgr->instance=instance;
 		if(sprite)
 			sprite->set_id(size);
-		Td.add_sprite(sprite);
+		if(inlayer)
+			Td.tp->add_sprite(sprite);
+		else
+			Td.add_sprite(sprite);
 		mgr->setHashcode();
 		if(right)
 			right->eval();

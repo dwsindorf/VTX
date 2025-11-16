@@ -386,4 +386,7 @@ void TerrainProperties::reset(){
 	plants.reset();
 }
 
+void TerrainProperties::add_sprite(Sprite *s){
+	sprites.add(s);
+}
 

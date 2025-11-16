@@ -1198,6 +1198,7 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
+		get_mapnodes();
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
@@ -1237,14 +1238,13 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
+			render_sprites(tp->sprites);
 		}
-		if(!TheScene->select_mode()){
-			//cout<<Td.plants.size<<" "<<Plant::data.size<<endl;
-			//set_sprites(Raster.sprites()&&Td.sprites.size>0&& TheScene->viewobj==object);
-			bool sprites=Td.sprites.size>0&& TheScene->viewobj==object;
-			bool plants=Td.plants.size>0&& TheScene->viewobj==object;
-			if(sprites||plants)
-				render_sprites();
+		if(!TheScene->select_mode()&& TheScene->viewobj==object){
+			if(Td.sprites.size)
+				render_sprites(Td.sprites);			
+			if(Td.plants.size)
+				render_plants(Td.plants);
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
@@ -1288,14 +1288,75 @@ void Map::render_shaded()
 	Render.show_shaded();
 	GLSLMgr::endRender();
 	glPopAttrib();
-//	if(TheScene->viewobj==object){
-//    	double minz,maxz;
-//    	cout<< "Render ";
-//    	Raster.getLimits(minz,maxz);
-//	}
-	//cout << "Map::render time:"<< (clock()-d0)/CLOCKS_PER_SEC << " ms" <<endl;
-
 }
+
+#define PRINT_PLACEMENT_TIMING
+void  Map::render_sprites(Array<PlaceObj*>&sprites){
+	if(!sprites.size || TheScene->select_mode() || TheScene->viewobj!=object)
+		return;
+	int mode=CurrentScope->passmode();
+	reset_texs();
+	double d0=clock();
+	CurrentScope->set_spass();
+	Sprite::reset();
+	PlacementMgr::free_htable();
+	double d1=clock();
+	int n=node_list.size;
+	node_list.ss();
+	for(int i=0;i<n;i++){
+		MapNode *node=node_list++;
+		node->setSurface();
+		Sprite::eval(sprites);
+	}
+	double d2=clock();
+	Sprite::collect(sprites);
+	double d3=clock();
+#ifdef PRINT_PLACEMENT_TIMING
+	cout<<"Map::Sprites n:"<<sprites.size<<" times"
+			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
+			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
+			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
+			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
+			<<" ms"<<endl;
+#endif
+
+	SpriteMgr::setProgram(sprites);
+	CurrentScope->set_passmode(mode);
+}
+
+void  Map::render_plants(Array<PlaceObj*>&plants){
+	if(!plants.size)
+		return;
+	reset_texs();
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+	double d0=clock();
+	Plant::reset();
+	PlacementMgr::free_htable();
+	double d1=clock();
+	int n=node_list.size;
+	node_list.ss();
+	for(int i=0;i<n;i++){
+		MapNode *node=node_list++;
+		node->setSurface();
+		Plant::eval(plants);
+	}
+	double d2=clock();
+	Plant::collect(plants);
+	double d3=clock();
+#ifdef PRINT_PLACEMENT_TIMING
+	cout<<"Map::Plants n:"<<plants.size<<" times"
+			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
+			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
+			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
+			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
+			<<" ms"<<endl;
+#endif
+	if(PlantMgr::setProgram(plants))
+		PlantMgr::render(plants);
+	CurrentScope->set_passmode(mode);
+}
+
 //-------------------------------------------------------------
 // Map::render_water()	render water (surface mode)
 //-------------------------------------------------------------
@@ -1440,48 +1501,8 @@ int Map::get_mapnodes(){
 	node_list.ss();	
 	return node_list.size;
 }
-void Map::render_sprites(){
-	reset_texs();
-	double d0=clock();
-	int n=get_mapnodes();
-	double d1=clock();
-	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();
-	Sprite::reset();
-	Plant::reset();
-	PlacementMgr::free_htable();
-	double d2=clock();
-	for(int i=0;i<n;i++){
-		MapNode *node=node_list++;
-		node->setSurface();
-		Sprite::eval(Td.sprites);
-		Plant::eval(Td.plants);
-	}
-	double d3=clock();
-	Sprite::collect(Td.sprites);
-	Plant::collect(Td.plants);
-
-	double d4=clock();
-	cout<<"Map::placements tid:"<<tid<<" nodes:"<<node_list.size<<" times"
-			<<" gather:"<<1000*(d1-d0)/CLOCKS_PER_SEC
-			<<" reset:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
-			<<" eval:"<< 1000*(d3-d2)/CLOCKS_PER_SEC
-			<<" collect:"<<1000*(d4-d4)/CLOCKS_PER_SEC
-			<<" total:"<<1000*(d4-d0)/CLOCKS_PER_SEC
-			<<" ms"<<endl;
-	CurrentScope->set_passmode(mode);		
-
-	if(Td.plants.size){
-		if(PlantMgr::setProgram(Td.plants))
-			PlantMgr::render(Td.plants);
-	}
-	if(Td.sprites.size){
-		SpriteMgr::setProgram(Td.sprites);
-	}
-}
-
 //-------------------------------------------------------------
-// Map::render_bumps()	render bumpmaps (surface mode)
+// Map::render_bumps()	render bumpmaps (non-shader mode)
 //-------------------------------------------------------------
 void Map::render_bumps(){
 

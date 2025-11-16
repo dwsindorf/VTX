@@ -1166,11 +1166,14 @@ void TNplacements::eval()
 	//}
 	
 	MaxSize=mgr->maxsize;
-
-//	double hashcode=(mgr->levels+
-//		            1/mgr->maxsize+
-//					1/mgr->mult
-//					);
-//	mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
 }
 
+bool TNplacements::inLayer() {
+	NodeIF *p = getParent();
+	while (p && p->typeValue() != ID_LAYER) {
+		p=p->getParent();
+	}
+	if(p && p->typeValue() == ID_LAYER)
+		return true;
+	return false;
+}

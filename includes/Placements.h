@@ -324,6 +324,7 @@ public:
 	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
 	bool is3D()   				{ return type & MC3D;}
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
+	bool inLayer();
 
 };
 
