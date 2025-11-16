@@ -53,7 +53,7 @@
 // classes SpritePoint, SpriteMgr
 //************************************************************
 
-extern double Hscale, Drop, MaxSize,Height,Phi;
+extern double Hscale, Drop, MaxSize,Height,Theta,Phi;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -81,17 +81,8 @@ static int dns_fails=0;
 
 static TerrainData Td;
 
-#ifdef TEST_SPRITES
-SpriteMgr g_sm(FINAL|DENSITY_TEST|COLOR_TEST);
-#else
-SpriteMgr g_sm(FINAL|DENSITY_TEST);
-#endif
-
 //static int hits=0;
 //#define DEBUG_PMEM
-
-//#define COLOR_TEST
-//#define DENSITY_TEST
 
 #define USE_AVEHT
 #define SHOW
@@ -148,6 +139,10 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 	sprites_rows=0;
 	sprites_cols=0;
 	set_ntest(TEST_NEIGHBORS);
+	set_testDensity(true);
+#ifdef TEST_SPRITES
+	set_testColor(true);
+#endif
 	set_testpts(true);
 	set_useaveht(false);
 }
@@ -159,26 +154,6 @@ SpriteMgr::~SpriteMgr()
 #endif
 	}
 }
-
-void SpriteMgr::setTests() {
-	if(!test() || hits==0)
-		return;
-	double x=1-cval;
-	if(testColor()) {
-		S0.set_cvalid();
-		if(fabs(x)>0)
-			S0.c=Color(0,1-x,1);
-		else
-			S0.c=Color(0,1,1);
-		Td.diffuse=Td.diffuse.mix(S0.c,0.5);
-	}
-	if(testDensity()) {
-		x=1/(cval+1e-6);
-		x=x*x; //*x*x;
-		Td.density+=lerp(cval,0,0.2,0,0.05*x);
-	}
-}
-
 //-------------------------------------------------------------
 // SpriteMgr::init()	initialize global objects
 //-------------------------------------------------------------
@@ -323,10 +298,6 @@ Placement *SpriteMgr::make(Point4DL &p, int n)
 {
     return new SpritePoint(*this,p,n);
 }
-//PlaceData *SpriteMgr::make(Placement*s,Point bp,double d,double pts){
-//	Point xp=bp-TheScene->xpoint; // TODO: Why only needed for sprites ?
-//	return new SpriteData((SpritePoint*)s,xp,d,pts);
-//}
 
 PlaceData *SpriteMgr::make(Placement*s){
 	s->setVertex();
@@ -536,7 +507,11 @@ void TNsprite::set_id(int i){
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
 void TNsprite::eval()
-{	
+{
+	TerrainData ground;
+
+	SpriteMgr *smgr=(SpriteMgr*)mgr;
+
 	SINIT;
 	if(!isEnabled()){
 		if(right)
@@ -554,22 +529,25 @@ void TNsprite::eval()
 		if(right)
 			right->eval();
 		return;
-	}	
+	}
 	if(!CurrentScope->spass()){
 		if(right)
 			right->eval();
-		return;
+		if(!smgr->test())
+		    return;
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+		smgr->htval=Height;		
+		ground.copy(S0);
 	}
-	
+	INIT;
 	Color c =Color(1,1,1);
 
-	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
-	PlacementMgr::htval=Height;
 	ncalls++;
 	
 	double arg[10];
-	INIT;
+
 	TNarg &args=*((TNarg *)left);
 	TNode *dexpr;
 	
@@ -616,7 +594,11 @@ void TNsprite::eval()
 	mgr->density=density;	
     
 	smgr->eval();  // calls SpritePoint.set_terrain	
-	g_sm.setTests();
+	
+	if(!CurrentScope->spass()){
+		S0.copy(ground);
+		smgr->setTests();
+	}
  }
 
 //-------------------------------------------------------------

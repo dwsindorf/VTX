@@ -42,12 +42,6 @@ extern double lcos(double g);
 #define LAST_FORK   8
 #define BASE_FORK   16
 
-#ifdef TEST_PLANTS
-PlantMgr g_pm(FINAL|DENSITY_TEST|COLOR_TEST);
-#else
-PlantMgr g_pm(FINAL|DENSITY_TEST);
-#endif
-
 #define ENABLE_3D
 // Basic algorithm
 // 1) TNplant class implemented similar to sprites, craters etc (i.e placements)
@@ -204,7 +198,7 @@ PlantMgr g_pm(FINAL|DENSITY_TEST);
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
 
-extern double Drop, MaxSize,Height,Phi,Level,Randval,Srand,Range,Temp;
+extern double Drop, MaxSize,Height,Phi,Theta,Level,Randval,Srand,Range,Temp;
 extern double ptable[];
 extern Point MapPt;
 extern double  zslope();
@@ -305,10 +299,6 @@ bool PlantMgr::first_instance=false;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 {
-#ifdef TEST_PLANTS
-    set_testColor(true);
-#endif
-
 #ifdef DUMP
 	if(!first_instance)
 		add_finisher();
@@ -326,6 +316,11 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
 	set_testpts(1);
+	set_testDensity(true);
+#ifdef TEST_PLANTS
+	set_testColor(true);
+#endif
+
 }
 PlantMgr::PlantMgr(int i) : PlantMgr(i,0)
 {
@@ -652,21 +647,6 @@ Placement *PlantMgr::make(Point4DL &p, int n)
     return new Placement(*this,p,n);
 }
 
-//************************************************************
-// class PlantPoint
-//************************************************************
-//PlantPoint::PlantPoint(PlantMgr&m, Point4DL&p,int n) : Placement(m,p,n)
-//{
-//}
-//-------------------------------------------------------------
-// PlantPoint::set_terrain()	impact terrain
-//-------------------------------------------------------------
-//bool PlantPoint::set_terrain(PlacementMgr &pmgr)
-//{
-//	return Placement::set_terrain(pmgr); // use default method
-//}
-//==================== PlantData ===============================
-
 //===================== Plant ==============================
 ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
@@ -820,6 +800,13 @@ void TNplant::set_id(int i){
 //-------------------------------------------------------------
 void TNplant::eval()
 {	
+	
+	PlantMgr *smgr=(PlantMgr*)mgr;
+
+	TerrainData ground;
+	int hits;
+	double cval;
+
 	if(!isEnabled() || TheScene->viewtype !=SURFACE || Raster.surface==2){
 		if(right)
 			right->eval();
@@ -838,17 +825,21 @@ void TNplant::eval()
 			right->eval();
 		return;
 	}
-	if(!CurrentScope->spass()){
+	if(!CurrentScope->spass()){ // surface generation
 		if(right)
-			right->eval();
-		return;
+			right->eval(); // get ht 
+		if(!smgr->test())  // no modulation needed
+		    return;
+		// modify density and/or color of surface nodes
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+		smgr->htval=Height;		
+		ground.copy(S0); // save surface data
 	}
     extern double Hardness;
 	SINIT;
 	Color c =Color(1,1,1);
-	PlantMgr *smgr=(PlantMgr*)mgr;
 	
-	PlacementMgr::htval=Height;
 	ncalls++;
 	
 	INIT;
@@ -912,8 +903,12 @@ void TNplant::eval()
 	mgr->density=density;
 	if(density<=0)
 		return;
-	smgr->eval();  // calls PlantPoint.set_terrain
-	g_pm.setTests();
+	smgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
+	
+	if(!CurrentScope->spass()){ // adapt pass (else render-plant creation pass)
+		S0.copy(ground); //restore surface data
+		smgr->setTests();
+	}
 }
 
 void TNplant::addSkipped(){
@@ -2239,13 +2234,6 @@ bool TNBranch::randomize(){
 		delete left;
 		left=newbranch->left;
 		left->setParent(this);
-//		if(base)
-//			delete base;
-//		base=newbranch->base;
-//		if(base)
-//			base->setParent(this);	
-//		newbranch->base=base;
-		
 		if(right)
 			newbranch->right=right;	
 		getArgs();

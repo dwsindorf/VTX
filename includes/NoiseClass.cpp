@@ -414,7 +414,7 @@ char *Noise::ntypes[]={"GRADIENT","SIMPLEX","VORONOI"};
 char *Noise::nopts[]={"","|NABS","|SQR","|SQR|NABS","|NEG","|NABS|NEG","|SQR|NABS|NEG","|SQR|NEG"};
 
 std::string Noise::getNtype(double f){
-	return gets(ntypes,3,f*f);
+	return gets(ntypes,3,pow(f,4));
 }
 std::string Noise::getNopts(double f){
 	return gets(nopts,8,f);

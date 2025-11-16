@@ -245,6 +245,10 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 	if(d>thresh)
 		return false;
 	CraterMgr &mgr=(CraterMgr&)pmgr;
+	
+	if(pmgr.testColor())
+		Placement::set_terrain(pmgr);
+
 	scale=100*mgr.ampl*radius;
 	//scale=0.05*mgr.ampl*radius/Hscale;
 	rise=scale*mgr.rise;
@@ -602,12 +606,9 @@ void TNcraters::eval()
  	    ht=h1+ht*impact;
     ht+=h2+hb;
     if(type & CNORM || images.building()){
-        //double ampl=0.025*cmax/Hscale;
        double ampl=0.025*cmax;
        ht=(ht+ampl*cmgr->drop)/(ampl*cmgr->rise+ampl*cmgr->drop);
     }
-	//else
-	//	ht*=cmgr->ampl;
 	if(S0.pvalid()){
 		S0.p.z=ht;
 		S0.set_pvalid();
@@ -618,13 +619,6 @@ void TNcraters::eval()
 	}
 	S0.clr_constant();
 	Radius=lerp(dval,0,1,0,1);
-    if(cmgr->testColor()){
-		S0.set_cvalid();
-		if(fabs(dval)>0)
-			S0.c=Color(1-dval,0,1);
-		else
-			S0.c=Color(1,1,0);
-		Td.c=S0.c;
-		Td.set_cvalid();
-    }
+	if(cmgr->testColor())
+		cmgr->setTests();
 }

@@ -48,6 +48,7 @@ class SData {
 public:
     double v;
     double f;
+    int l;
     double value()   { return v;}
 };
 
@@ -205,19 +206,17 @@ protected:
 public:
 	
 	static Placement  **hash;
-	//ValueList<PlaceData*> data;
-	
 	static SData   sdata[SDATA_SIZE];
 	static ValueList<SData*> slist;
-	static int  scnt,hits,lvl;
-	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
+	static double size;
+	static int  scnt,hits,lvl,slvl;
+	static Point4D	offset;
+	static Point4D	mpt;
 	static double sval,cval,htval;
 	static LinkedList<Placement*> list;
 	static PlacementStats Stats;
-	static Point4D	mpt;
-	static Point4D	offset;
+	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
 	static double roff,roff2;
-	static double size;
 	static int hashsize;
 	static double collect_minpts,adapt_ptsize,render_ptsize;
 
@@ -299,7 +298,6 @@ public:
 	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;
 };
-
 
 //************************************************************
 // Class TNplacements

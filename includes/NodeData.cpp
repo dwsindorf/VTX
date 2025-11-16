@@ -19,9 +19,6 @@ extern double  zslope();
 extern int test_flag;
 extern Point MapPt,Mpt;
 
-extern PlantMgr g_pm;
-extern SpriteMgr g_sm;
-
 static TerrainData Td;
 //**************** static and private *********************
 
@@ -334,20 +331,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 	}
 
 	int pm=CurrentScope->passmode();
-	
-	bool test_plants=TheScene->viewobj==TheMap->object && g_pm.test();
-	bool test_plant_color=test_plants && g_pm.testColor();
-	bool test_plant_density=test_plants && g_pm.testDensity();
-
-	bool test_sprites=TheScene->viewobj==TheMap->object && g_sm.test();
-	bool test_sprite_color = test_sprites&& g_sm.testColor();
-	bool test_sprite_density = test_sprites&& g_sm.testDensity();
-		
-	if(test_sprite_color || test_plant_color )
-		nc=1;
-	if(test_sprite_density || test_plant_density)
-		dns=1;
-
 	a=b=0;
 
 	setTextures(tp->textures.size?1:0);
@@ -445,53 +428,8 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		setLink(s2);
 #ifndef HASH_POINTS
 	point_=TheMap->point(theta(),phi(),h);
-	Mpt=point();
 #endif
-	int mode=CurrentScope->passmode();
 
-    if(test_sprites){
-		CurrentScope->set_spass();
-		MapPt=point();
-		if(test_sprite_density){
-			Td.density=0;
-		}
-		if(test_sprite_color){
-			if(color_valid)
-				Td.diffuse=c;
-			else
-				Td.diffuse=Color(1,1,1);
-		}
-		for(i=0;i<Td.sprites.size;i++){
-			Sprite *sprite=Td.sprites[i];
-			sprite->eval();
-			if(test_sprite_density)
-				setDensity(Td.density);
-			if(test_sprite_color)
-				setColor(Td.diffuse);
-		}
-	}
-
-	if(test_plants){
-		MapPt=point();
-		if(test_plant_density&&!test_sprite_density)
-			Td.density=0;
-		if(test_plant_color&&!test_sprite_color){
-			if(color_valid)
-				Td.diffuse=c;
-			else
-				Td.diffuse=Color(1,1,1);
-		}
-		for(i=0;i<Td.plants.size;i++){
-			Plant *plant=Td.plants[i];
-			plant->eval();
-			if(test_plant_density)
-				setDensity(Td.density+density);
-			if(test_plant_color){				
-				setColor(Td.diffuse);
-			}
-		}
-	}
-	CurrentScope->set_passmode(mode);
 }
 //-------------------------------------------------------------
 // MapData::memsize() return storage size (bytes)

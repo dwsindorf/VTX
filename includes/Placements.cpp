@@ -156,16 +156,21 @@ void PlacementStats::dump(){
 //	arg[2]  mult			size multiplier per level
 //	arg[3]  density [dexpr]	scatter density or expr
 //-------------------------------------------------------------
-
 SData  PlacementMgr::sdata[SDATA_SIZE];
 ValueList<SData*> PlacementMgr::slist(sdata,SDATA_SIZE);
-LinkedList<Placement*> PlacementMgr::list;
-PlacementStats PlacementMgr::Stats;
 int PlacementMgr::scnt=0;
 int PlacementMgr::hits=0;
+int PlacementMgr::slvl=0;
+
 double PlacementMgr::sval=0;
 double PlacementMgr::cval=0;
 double PlacementMgr::htval=0;
+Point4D	PlacementMgr::mpt;
+Point4D	PlacementMgr::offset;
+double PlacementMgr::size=0.0;
+int PlacementMgr::lvl=0;
+LinkedList<Placement*> PlacementMgr::list;
+PlacementStats PlacementMgr::Stats;
 int PlacementMgr::trys=0;
 int PlacementMgr::visits=0;
 int PlacementMgr::bad_visits=0;
@@ -173,16 +178,13 @@ int PlacementMgr::bad_valid=0;
 int PlacementMgr::bad_active=0;
 int PlacementMgr::new_placements=0;
 int PlacementMgr::bad_pts=0;
-Point4D	PlacementMgr::mpt;
-Point4D	PlacementMgr::offset;
 double PlacementMgr::roff=1e-6;
 double PlacementMgr::roff2=1.0;
-double PlacementMgr::size=0.0;
 int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=2;
 double PlacementMgr::collect_minpts=2;
-int PlacementMgr::lvl=0;
+
 Placement* PlacementMgr::currentChain=nullptr;  // ⭐ Add this member variable
 int PlacementMgr::index=0;
 Placement  **PlacementMgr::hash=0;
@@ -275,6 +277,7 @@ void PlacementMgr::reset()
     list.reset();
     cval=0;
     scnt=0;
+    slvl=0;
     types.clear();
 }
 
@@ -430,14 +433,19 @@ void PlacementMgr::init()
 void PlacementMgr::setTests() {
 	if(!test() || hits==0)
 		return;
+	extern Color getColor(int i);
 	double x=1-cval;
 	if(testColor()) {
 		S0.set_cvalid();
-		if(fabs(x)>0)
-			S0.c=Color(1-x,0,1);
-		else
-			S0.c=Color(1,1,0);
-		Td.diffuse=Td.diffuse.mix(S0.c,0.5);
+		if(fabs(x)>0){
+			int hash=(3*instance+type)&0xf;
+			double lmod=(1.0*slvl)/levels;
+			Color c1=getColor(hash);
+			c1=c1.darken(lmod);
+			Color c3=getColor(hash+1);
+			c3=c3.lighten(lmod);
+			S0.c=c1.mix(c3,x);
+		}
 	}
 	if(testDensity()) {
 		x=1/(cval+1e-6);
@@ -582,6 +590,7 @@ void PlacementMgr::eval()
     hits=0;
     cval=0;
     scnt=0;
+    slvl=0;
 
     msize=maxsize;
      for(lvl=0, size=msize; lvl<levels; size*=0.5*(level_mult+1), lvl++){
@@ -662,13 +671,12 @@ void PlacementMgr::eval()
         
         // If not found, create new placement
         if(!found){
-            Placement* c = make(pc, n);
+             Placement* c = make(pc, n);
             if(!c->flags.s.valid){
                 delete c;
                 Stats.crejects++;
                 continue;
             }
-            
             // ⭐ Add to front of chain (no deletion!)
             c->next = hash[n];
             hash[n] = c;
@@ -705,6 +713,7 @@ void PlacementMgr::eval()
     slist.size=scnt;
     slist.sort();
     cval=slist.base[scnt-1]->f;
+    slvl=slist.base[scnt-1]->l;
 }
 //-------------------------------------------------------------
 // Placement::find_neighbors()	build neighbor list
@@ -894,7 +903,7 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 	double d=pmgr.mpt.distance(center);
 	d=d/radius;
 
-	PlacementMgr::sval=0;
+	pmgr.sval=0;
 	visits++;
 	
 	if(d>1.0)
@@ -903,25 +912,27 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 		return false;
 
     flags.s.active=true;
-    PlacementMgr::sval=lerp(d,0,1.0,0,1);
+    pmgr.sval=lerp(d,0,1.0,0,1);
     
  	if(d<dist){
 		ht=Height; // closest to center
 		dist=d;
 	}
     if(pmgr.useaveht()){
-    	double wt=1/(0.01+PlacementMgr::sval);
+    	double wt=1/(0.01+pmgr.sval);
      	aveht+=Height*wt;	
     	wtsum+=wt;
 		ht=aveht/wtsum;
     }
 
-	PlacementMgr::hits++;
+	pmgr.hits++;
+	//cout<<pmgr.lvl<<" ";
 
-	PlacementMgr::sdata[PlacementMgr::scnt].v=hid;
-	PlacementMgr::sdata[PlacementMgr::scnt].f=PlacementMgr::sval;
-  	if(PlacementMgr::scnt<SDATA_SIZE)
-  		PlacementMgr::scnt++;
+	pmgr.sdata[pmgr.scnt].v=hid;
+	pmgr.sdata[pmgr.scnt].f=pmgr.sval;
+	pmgr.sdata[pmgr.scnt].l=pmgr.lvl;
+  	if(pmgr.scnt<SDATA_SIZE)
+  		pmgr.scnt++;
 	return true;
 }
 

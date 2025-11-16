@@ -120,6 +120,8 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 
 	if(d>t)
 		return false;
+	if(pmgr.testColor())
+		Placement::set_terrain(pmgr);
 	
 	mgr.pdist=d/radius;
 	mgr.pdist=clamp(mgr.pdist,0,1);
@@ -500,11 +502,12 @@ void TNrocks::eval() {
 		Td.tp->set_rock(false);
 		S0.copy(ground);
 		if(!other_rock)
-		S0.clr_flag(ROCKBODY);
+			S0.clr_flag(ROCKBODY);
 	}
 	Td.insert_strata(rock);
 	if (!in_map && last)
 		Td.end();
+	//cout<<mgr->cval<<endl;
 	rmgr->setTests();
 }
 //-------------------------------------------------------------

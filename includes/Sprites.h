@@ -71,7 +71,7 @@ public:
 
 	void init();
 	void eval();
-	void setTests();
+	//void setTests();
 	static bool setProgram(Array<PlaceObj*> &objs);
 
 };

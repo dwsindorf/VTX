@@ -28,10 +28,6 @@ Scene() {
 		height=18.1202 ft;
 		heading=317;
 		tilt=1;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00399309;
 	}
 	View{
 		phi=-45.011;
@@ -40,21 +36,23 @@ Scene() {
 		gndlvl=-41289.9 ft;
 		tilt=-15;
 		angle=0;
-		hstride=2;
-		minr=0.00399308;
-		radius=0.00399223;
 	}
 	View{
 		phi=-45.0123;
 		theta=25.715;
 		height=21.9291 ft;
 		gndlvl=-41308.8 ft;
-		minr=0.00399218;
-		radius=0.00399218;
 	}
 	View{
 		height=35.8582 ft;
 		tilt=-10;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.00399218;
+	}
+	View{
+		minr=0.00399218;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -89,12 +87,10 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.58);
 					hscale=0.002;
-					ocean.auto=1;
-					ocean.state=0;
 					rot_phase=220.644;
 					specular=Color(1,1,1,0.03);
 					year=100;
-					bands("alpine2",ACHNL|CLAMP|DECAL|NEAREST|NORM|REPLACE,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
+					bands("alpine2",ACHNL|BLEND|CLAMP|DECAL|NEAREST|NORM|REPLACE,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
 						Color(0.522,0.322,0.02),
@@ -106,9 +102,9 @@ Scene() {
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
 						terrain=
-								Sprite("rocks9x",FLIP|NOLOD,1,1.39343e-06,1,1,0.44,0,0,0,0)+
-								Sprite("tropical",ID10|FLIP|NOLOD,7,3.46414e-07,1.68,1,1,0,0,0,0.72)+
-								Sprite("tropical",ID2|FLIP|NOLOD,1,2.58988e-06,2,1,0.52,-0.5,0,0,0.88)+
+								Sprite("rocks9x",FLIP|NOLOD,1,1.39343e-06,1,1,0.44,0,0,0,0)
+								Sprite("tropical",ID10|FLIP|NOLOD,7,3.46414e-07,1.68,1,1,0,0,0,0.72)
+								Sprite("tropical",ID2|FLIP|NOLOD,1,2.58988e-06,2,1,0.52,-0.5,0,0,0.88)
 								Texture("alpine2",BORDER|TEX,17.858,0.88888,1,0,1,2,0.5,0,0,0.03176,0,0.73016)+
 								Texture("brown-shells",A|NORM|RANDOMIZE|S|TEX,noise(GRADIENT|NABS|SCALE|SQR,16.8,3.6,0.48,0.5,2,1,4,0,0.9,1e-06),noise(GRADIENT|SQR,14.4,9.6,0.89,0.29,2.41,1,4,0,0.5,1e-06),2.09715e+06,1,-0.1,0,3.28576,1.3944,1,0,0,-0.6032,0,-1.36504)+
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(SIMPLEX|SQR,4.8,14,0.5,0.5,2,1,1,0,0,1e-06));

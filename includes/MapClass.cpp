@@ -2091,12 +2091,10 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	last=parent;
 	a=new MapNode(parent, t, p);
 	Td.clr_flag(FNOREC);
-
-	object->set_surface(Td);
-
-	a->data.init_terrain_data(Td,0);
-	//if(Td.get_flag(INMARGIN))
-	//    a->set_margin(1);
+	
+	object->set_surface(Td); // calls Terrain eval() -> S0.p;
+	a->data.init_terrain_data(Td,0); // set Ht(),phi(),theta() _point
+	
 	if(Td.get_flag(HIDDEN))
 	    a->set_hidden(1);
 	if(Adapt.recalc()&&!Td.get_flag(FNOREC))
