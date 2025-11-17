@@ -97,6 +97,7 @@ public:
 	static void eval(Array<PlaceObj*> &objs);
 
 	int    type;
+	int    layer;
 	bool   valid;
 	TNode  *expr;
 	PlaceObj(int t, TNode *e);
@@ -122,7 +123,8 @@ public:
 	double		radius;  // radius
 	int			hid;     // hash id
 	int			type;    // type id
-	int			lvl;    // type id
+	int			lvl;     // level
+	int         layer;   // terrain layer
 	int			users;
 	double 		ht;
 	double 		aveht;
@@ -151,6 +153,7 @@ public:
 	bool is3D()                 { return type&MC3D;}
 	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
 	void setVertex();
+	bool isEqual(Point4DL &p, int type, int lvl, int inst, int layer);
 };
 
 class PlaceData
@@ -224,6 +227,7 @@ public:
 	int     options;
 	int		id;
 	int		instance;
+	int		layer;
 	double  maxsize;
 	int     levels;
 	double	mult;

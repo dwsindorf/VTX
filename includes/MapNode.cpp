@@ -2606,43 +2606,4 @@ double MapNode::value()
 	return point().length();
 }
 
-void MapNode::setSurface()
-{
-	if(surface_water())
-		return;
-
-    Td.clr_flag(SFIRST);
-
-	MapData *d=&data;
-	d=d->surface1();
-	if(!d)
-		return;
-    
-	double t=d->theta();
-	double p=d->phi();	
-    double  aveht=d->Ht();  
-    Point pnt=d->point();
-	Point pt=Td.rectangular(t, p);
-//#define AVE_PTS
-#ifdef AVE_PTS
-   int nct = find_neighbors();
-	for(int i=0;i<nct;i++){
-		MapData *md=mapdata[i];
-		aveht+=md->Ht();
-		double t=md->theta();
-		double p=md->phi();
-		Point pt1=Td.rectangular(t, p);
-		pt=pt+Td.rectangular(t, p);
-		pnt=pnt+mapdata[i]->point();
-	}
-    double a=1.0/(1+nct);
-	aveht*=a;
-	pt=pt*a;
-#endif
-	Height=aveht;
-	MapPt=pnt;
-	Hardness=d->hardness();
-	TheNoise.set(pt);
-}
-
 

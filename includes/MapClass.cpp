@@ -14,6 +14,8 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
+static LinkedList<MapData*> node_data_list;
+
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
@@ -1198,7 +1200,7 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-		get_mapnodes();
+		//get_mapnodes();
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
@@ -1241,10 +1243,10 @@ void Map::render_shaded()
 			render_sprites(tp->sprites);
 		}
 		if(!TheScene->select_mode()&& TheScene->viewobj==object){
-			if(Td.sprites.size)
-				render_sprites(Td.sprites);			
 			if(Td.plants.size)
 				render_plants(Td.plants);
+			if(Td.sprites.size)
+				render_sprites(Td.sprites);			
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
@@ -1295,16 +1297,32 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 	if(!sprites.size || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();
-	reset_texs();
+	int n=get_mapnodes();
+	MapData *node;
+	int sid=sprites[0]->layer;
+	if(n){
+		node=node_data_list[0];
+		int nid=node->type();
+		cout<<"nid:"<<nid<<" sid:"<<sid<<" tid:"<<Td.tp->id<<endl;
+		//if(sid>0 && nid !=sid)
+		//	return;
+		
+	}
+	//reset_texs();
 	double d0=clock();
 	CurrentScope->set_spass();
 	Sprite::reset();
 	PlacementMgr::free_htable();
 	double d1=clock();
-	int n=node_list.size;
-	node_list.ss();
+	node_data_list.ss();
+	cout<<sprites.size<<" ";
+	int j=0;
 	for(int i=0;i<n;i++){
-		MapNode *node=node_list++;
+		node=node_data_list++;
+		if(sid>0 && node->type() != sid){
+			j++;
+			continue;
+		}
 		node->setSurface();
 		Sprite::eval(sprites);
 	}
@@ -1312,7 +1330,8 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 	Sprite::collect(sprites);
 	double d3=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<"Map::Sprites n:"<<sprites.size<<" times"
+	cout<<" TID:"<<Td.tp->id<<" Sprites n:"<<sprites.size<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
+			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
 			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
@@ -1329,15 +1348,16 @@ void  Map::render_plants(Array<PlaceObj*>&plants){
 		return;
 	reset_texs();
 	int mode=CurrentScope->passmode();
+	get_mapnodes();
 	CurrentScope->set_spass();
 	double d0=clock();
 	Plant::reset();
 	PlacementMgr::free_htable();
 	double d1=clock();
-	int n=node_list.size;
-	node_list.ss();
+	int n=node_data_list.size;
+	node_data_list.ss();
 	for(int i=0;i<n;i++){
-		MapNode *node=node_list++;
+		MapData *node=node_data_list++;
 		node->setSurface();
 		Plant::eval(plants);
 	}
@@ -1490,16 +1510,19 @@ static void collect_nodes(MapNode *n)
 	d=d->surface1();
 	
 	if(n->visible() && d && !d->rock() && !d->water()){
-		TheMap->node_list.add(n);
+		node_data_list.add(d);
     }
 }
 
 int Map::get_mapnodes(){
 	TheMap = this;
-	node_list.reset();
+	double d0=clock();
+	node_data_list.reset();
 	npole->visit(&collect_nodes);
-	node_list.ss();	
-	return node_list.size;
+	node_data_list.ss();
+	double d1=clock();
+	cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+	return node_data_list.size;
 }
 //-------------------------------------------------------------
 // Map::render_bumps()	render bumpmaps (non-shader mode)

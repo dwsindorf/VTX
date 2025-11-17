@@ -254,6 +254,26 @@ Point MapData::tvector()
 	    return pt;
 }
 
+void MapData::setSurface()
+{
+
+    //Td.clr_flag(SFIRST);
+
+    MapData *d=surface1();
+	if(!d)
+		return;   
+	double t=d->theta();
+	double p=d->phi();	
+    double  aveht=d->Ht();  
+    Point pnt=d->point();
+	Point pt=Td.rectangular(t, p);
+	Height=aveht;
+	MapPt=pnt;
+	//cout<<t<<" "<<p<<" "<<Height<<endl;
+	//pt.print("\n");
+	Hardness=d->hardness();
+	TheNoise.set(pt);
+}
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call
 //-------------------------------------------------------------
@@ -297,10 +317,11 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		density=td.s;
 		dns=1;
 	}
-	else if(td.density!=0.0){
-		dns=1;
-		density=td.density;
-	}
+
+//	else if(td.density!=0.0){
+//		dns=1;
+//		density=td.density;
+//	}
 	setRock(td.get_flag(ROCKBODY));
 	if(td.water())
 		nw=1;

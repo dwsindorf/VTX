@@ -284,10 +284,10 @@ void TNmap::eval()
 			layer->base->eval();
 			Td.tp->ntexs=Td.tp->textures.size;
 
-			if(Td.tp->textures.size && !Td.tp->has_color())
-				Td.tp->color=Td.tp->textures[0]->aveColor;
+			//if(Td.tp->textures.size && !Td.tp->has_color())
+			//	Td.tp->color=Td.tp->textures[0]->aveColor;
 
-			Td.tp->set_color(true);
+			//Td.tp->set_color(true);
 
 			layer=(TNlayer*)layer->right;
 			if(!layer || layer->typeValue()!=ID_LAYER)
@@ -349,6 +349,7 @@ void TNmap::eval()
 			continue;
 		}
 		layer->map=this;
+		Td.density=0;
 	    S0.height=0;
 		layer->edge=edge;
 		layer->drop=mdrop;
@@ -407,9 +408,8 @@ void TNmap::eval()
 	    S0.clr_flag(TEXFLAG);
 		S0.clr_flag(ROCKLAYER);
 		S0.set_flag(CLRTEXS);
-
+		//
 		layer->base->eval(); // calls rocks
-		
  		if(!Td.get_flag(ROCKLAYER)){
  	      	S0.p.z-=d;
 			Td.set_flag(MULTILAYER);  // used to turn off textures in margin

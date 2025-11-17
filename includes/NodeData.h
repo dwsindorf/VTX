@@ -469,6 +469,7 @@ public:
 	void invalidate_normal();
 	void invalidate_point();
 	void validate_normal();
+	void setSurface();
 
 	friend class MapNode;
 };

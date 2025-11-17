@@ -368,11 +368,11 @@ void Sprite::set_image(Image *i, int r, int c){
 //-------------------------------------------------------------
 void Sprite::collect(Array<PlaceObj*> &objs)
 {
-	//double d0=clock();
+	double d0=clock();
 	if(objs.size)
 		PlaceObj::collect(objs,data);
-	//double d1=clock();
-	//cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+	double d1=clock();
+	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 }
 
 void Sprite::collect(){
@@ -527,16 +527,21 @@ void TNsprite::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		int size;
+		int instance=0;
+		int layer=0;
 		bool inlayer=inLayer();
-		if(inlayer)
-			Td.tp->sprites.size;
+		if(inlayer){
+			instance=Td.tp->sprites.size;
+			layer=Td.tp->type();
+		}
 		else
-			size=Td.sprites.size;
-		instance=size;
+			instance=Td.sprites.size;
 		mgr->instance=instance;
-		if(sprite)
-			sprite->set_id(size);
+		mgr->layer=layer;
+		if(sprite){
+			sprite->set_id(instance);
+			sprite->layer=layer;
+		}
 		if(inlayer)
 			Td.tp->add_sprite(sprite);
 		else
@@ -553,12 +558,11 @@ void TNsprite::eval()
 		    return;
 		Height=S0.p.z;
 		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
-		smgr->htval=Height;		
+		smgr->htval=Height;	
 		ground.copy(S0);
 	}
 	INIT;
 	Color c =Color(1,1,1);
-
 
 	ncalls++;
 	
@@ -608,7 +612,7 @@ void TNsprite::eval()
 	density=sqrt(density);
 
 	mgr->density=density;	
-    
+ 
 	smgr->eval();  // calls SpritePoint.set_terrain	
 	
 	if(!CurrentScope->spass()){

@@ -195,6 +195,7 @@ PlacementMgr::PlacementMgr(int i)
     options=i&(~PID);
 	flags.l=0;
 	instance=0;
+	layer=0;
 
 	levels=5;
 	maxsize=0.01;
@@ -433,24 +434,29 @@ void PlacementMgr::init()
 void PlacementMgr::setTests() {
 	if(!test() || hits==0)
 		return;
+	static int cnt=0;
+	
 	extern Color getColor(int i);
 	double x=1-cval;
+	S0.clr_flag(DVALUE);
+	if(fabs(x)<1e-6)
+		return;
 	if(testColor()) {
 		S0.set_cvalid();
-		if(fabs(x)>0){
-			int hash=(3*instance+type)&0xf;
-			double lmod=(1.0*slvl)/levels;
-			Color c1=getColor(hash);
-			c1=c1.darken(lmod);
-			Color c3=getColor(hash+1);
-			c3=c3.lighten(lmod);
-			S0.c=c1.mix(c3,x);
-		}
+		int hash=(3*instance+type+layer)&0xf;
+		double lmod=(1.0*slvl)/levels;
+		Color c1=getColor(hash);
+		c1=c1.darken(lmod);
+		Color c3=getColor(hash+1);
+		c3=c3.lighten(lmod);
+		S0.c=c1.mix(c3,x);
 	}
 	if(testDensity()) {
-		x=1/(cval+1e-6);
+		S0.set_flag(DVALUE);
+		x=1/(cval+1e-4);
+		x=clamp(x,0,1);
 		x=x*x; //*x*x;
-		Td.density+=lerp(cval,0,0.2,0,0.05*x);
+		S0.s=lerp(cval,0,0.2,0,0.5*x);
 	}
 }
 
@@ -656,7 +662,8 @@ void PlacementMgr::eval()
         while(h){
            	if(h->type)
             	types.insert(h->type).second;
-        	if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
+        	//if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
+           	if(h->isEqual(pc,type,lvl,instance,layer)){
                 found = h;
                 Stats.chits++;
                 break;
@@ -754,7 +761,8 @@ void PlacementMgr::find_neighbors(Placement *placement)
                     Placement* found = nullptr;
                     
                     while(h){
-                        if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
+                        //if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
+                    	if(h->isEqual(pc,type,lvl,instance,layer)){
                             found = h;
                             if(found->users){
 #ifdef DEBUG_PLACEMENTS
@@ -810,7 +818,7 @@ void PlacementMgr::find_neighbors(Placement *placement)
 Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 {
 	mgr=&pmgr;
-    type=mgr->type;
+    type=pmgr.type;
 	hid=n;
 	double d,r,pf=1;
 	radius=0;
@@ -821,7 +829,8 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	visits=0;
 	//place_hits=0;
 	instance=pmgr.instance;
-	lvl=mgr->lvl;
+	layer=pmgr.layer;
+	lvl=pmgr.lvl;
 	pts=0;
 	rval=0;	
 	next=0;
@@ -953,6 +962,9 @@ void Placement::dump(){
 	}
 }
 
+inline bool Placement::isEqual(Point4DL &p, int t, int l, int i, int s){
+	return (p == point && t == type && l ==lvl && i == instance && s==layer);
+}
 //-------------------------------------------------------------
 // Placement::setVertex() set Placement surface vertex
 //-------------------------------------------------------------

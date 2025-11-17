@@ -82,8 +82,6 @@ public:
 class TNsprite : public TNplacements, public ImageInfo
 {
 public:
-	int instance;
-
 	Sprite *sprite;
 	double radius;
 	double maxdensity;

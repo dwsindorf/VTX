@@ -97,8 +97,7 @@ public:
     int tids;
     
     static LinkedList<Triangle*> triangle_list;
-    LinkedList<MapNode*> node_list;
-	ValueList<Triangle*> triangles;
+ 	ValueList<Triangle*> triangles;
 
 	int      get_mapnodes();
 
