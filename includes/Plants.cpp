@@ -474,29 +474,25 @@ void PlantMgr::clearStats(){
 	}
 }
 
-void PlantMgr::render_shadows(){
-	if(Td.plants.size==0)
+void PlantMgr::render_shadows(Array<PlaceObj*> &objs){
+	if(objs.size==0)
 		return;
 	if(!threed)
 		return;
 	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	//min_draw_width=2;
 	
 	Raster.setProgram(Raster.PLANT_SHADOWS);
-	
-	//glLineWidth(2);
-	//glPolygonOffset (0.0f, 0.0f);
-	
 	shadow_count++;
-	render(Td.plants);
-	//glLineWidth(1);
+	cout<<"PlantMgr::render_shadows"<<endl;
+
+	render(objs);
 	shadow_mode=false;
 
 }
-void PlantMgr::render_zvals(){
-	if(Td.plants.size==0)
+void PlantMgr::render_zvals(Array<PlaceObj*> &objs){
+	if(objs.size==0)
 		return;
 	if(!threed)
 		return;
@@ -507,7 +503,8 @@ void PlantMgr::render_zvals(){
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	shadow_count++;
-	render(Td.plants);
+	cout<<"PlantMgr::render_zvals"<<endl;
+	render(objs);
 
 	shadow_mode=false;
 }
@@ -519,13 +516,24 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	if(n==0)
 		return;
 	//nocache=TheScene->automv()||PlantMgr::no_cache;
+//#define TEST
+#ifdef TEST
+	nocache=true;
+	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
+	//if(update_needed && shadow_mode)
+	//	update_needed=false;
+	TNBranch::setCollectLeafs(true);
+	TNBranch::setCollectBranches(true);
+
+#else
 	nocache=PlantMgr::no_cache;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
 	if(update_needed && shadow_mode)
 		update_needed=false;
 	TNBranch::setCollectLeafs(true);
 	TNBranch::setCollectBranches(!nocache);
-	
+#endif	
+	cout<<"PlantMgr::render update:"<<update_needed<<endl;
 	glLineWidth(1);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -583,8 +591,10 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	}
 		
 	t2=clock(); // total
-	
+
+#ifndef TEST
 	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
+#endif
 		if(!shadow_mode)
 			setProgram(objs);
 		glDisable(GL_CULL_FACE);
@@ -600,7 +610,9 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 			TNLeaf::renderLeafs();
 		}
 		glEnable(GL_CULL_FACE);
+#ifndef TEST
 	}
+#endif
 	t3=clock(); // total
 	
 	
@@ -822,11 +834,15 @@ void TNplant::eval()
 			instance=Td.plants.size;
 		mgr->instance=instance;
 		mgr->layer=layer;
-		mgr->setHashcode();
+		if(plant){
+			plant->set_id(instance);
+			plant->layer=layer;
+		}
 		if(inlayer)
 			Td.tp->add_plant(plant);
 		else
 			Td.add_plant(plant);
+		mgr->setHashcode();
 		if(right)
 			right->eval();
 		return;

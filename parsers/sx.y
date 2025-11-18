@@ -114,9 +114,9 @@ void set_orbital(Orbital *orb){
 %token YY_VIEWOBJ YY_DEBUG YY_INCLUDE YY_EXCLUDE
 %token YY_COLOR YY_DENSITY YY_POINT YY_NOISE YY_VIEW  YY_VEXPR YY_SURFACE
 %token YY_TERRAIN YY_IMAGE YY_BANDS
-%token YY_MIX YY_WATER YY_CRATERS YY_MAP YY_TEXTURE YY_FRACTAL YY_FOG YY_SPRITE
+%token YY_LAYER YY_WATER YY_CRATERS YY_MAP YY_TEXTURE YY_FRACTAL YY_FOG YY_SPRITE
 %token YY_ERODE YY_HARDNESS YY_GLOSS YY_SNOW YY_ROCKS YY_COLORS YY_BASE YY_CLOUDS
-%token YY_ROOT YY_BRANCH YY_LEAF YY_STEM
+%token YY_PLANT YY_BRANCH YY_LEAF YY_STEM
 %token YY_OCEAN YY_LIQUID YY_SOLID
 %token OR AND EQ NE GE LE
 
@@ -130,7 +130,7 @@ void set_orbital(Orbital *orb){
 %type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
 %type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr ltype_expr
-%type <n> root_expr branch_expr leaf_expr
+%type <n> plant_expr branch_expr leaf_expr
 %type <n> inode_expr image image_expr bands_expr layer_inode
 %type <n> expr_item var_expr set_surface colors_expr
 %type <l> ntype itype ptype ltype
@@ -529,11 +529,11 @@ branch_expr
     						{ $$=new TNBranch($3, $8, $6);APOP;}	
     | YY_BRANCH '(' arg_list ')' expr
     						{ $$=new TNBranch($3, $5, 0);APOP;}	
-root_expr
-    : YY_ROOT '(' arg_list ')'
+plant_expr
+    : YY_PLANT '(' arg_list ')'
     						{ $$=new TNplant($3, 0);APOP;}
  
-    | YY_ROOT '(' arg_list ')' expr
+    | YY_PLANT '(' arg_list ')' expr
     						{ $$=new TNplant($3, $5);APOP;}
 
 item_name
@@ -557,7 +557,7 @@ expr
     | fog_expr         		{ $$=$1;}
     | texture_expr          { $$=$1;}
     | sprite_expr           { $$=$1;}
-    | root_expr             { $$=$1;}
+    | plant_expr            { $$=$1;}
     | branch_expr           { $$=$1;}
     | leaf_expr             { $$=$1;}
     | map_expr              { $$=$1;}
@@ -703,11 +703,11 @@ clouds_expr
     | YY_MAP '(' arg_list ')'
     						{ $$=new TNmap($3,0);APOP;}
  layer_expr
-    : YY_MIX '(' arg_list ')' '[' expr ']'
+    : YY_LAYER '(' arg_list ')' '[' expr ']'
     						{ $$=new TNlayer($3,0,$6);APOP;}
-    | YY_MIX '(' arg_list ')' '[' expr ']' expr
+    | YY_LAYER '(' arg_list ')' '[' expr ']' expr
     						{ $$=new TNlayer($3,$8,$6);APOP;}
-    | YY_MIX '(' arg_list ')'
+    | YY_LAYER '(' arg_list ')'
     						{ $$=new TNlayer($3,0,0);APOP;}
 
  ltype

@@ -697,8 +697,9 @@ void Map::shadow_normals()
 	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
+	    PlantMgr::render_shadows(tp->plants);
 	}
-	PlantMgr::render_shadows();
+	PlantMgr::render_shadows(Td.plants);
 
 	Render.popmode();
 }
@@ -756,12 +757,13 @@ void Map::render_zvals()
 	    if(!visid(tid))
 	        continue;
 	    if(Render.draw_szvals())
-	    	Raster.setProgram(Raster.SHADOW_ZVALS);
-	    
+	    	Raster.setProgram(Raster.SHADOW_ZVALS);	    
 	    npole->render_vertex();
+		if(Render.draw_szvals())
+			PlantMgr::render_zvals(tp->plants);
 	}
 	if(Render.draw_szvals())
-		PlantMgr::render_zvals();
+		PlantMgr::render_zvals(Td.plants);
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
 		Raster.surface=2;  // water pass
@@ -769,16 +771,7 @@ void Map::render_zvals()
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);
 		npole->render_vertex();
     }
-
-	//glFlush();
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
-	
-	//Render.popmode();
-//	glDrawBuffer(GL_BACK);
-//#ifdef WINDOWS
-//    if(!mask())
-//	glClear(GL_COLOR_BUFFER_BIT);  // for windows
-//#endif
 }
 
 //-------------------------------------------------------------
@@ -1243,12 +1236,8 @@ void Map::render_shaded()
 			render_sprites(tp->sprites);
 			render_plants(tp->plants);
 		}
-		if(!TheScene->select_mode()&& TheScene->viewobj==object){
-			if(Td.plants.size)
-				render_plants(Td.plants);
-			if(Td.sprites.size)
-				render_sprites(Td.sprites);			
-		}
+		render_plants(Td.plants);
+		render_sprites(Td.sprites);			
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
     bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
@@ -1327,7 +1316,6 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
 			<<" ms"<<endl;
 #endif
-
 	SpriteMgr::setProgram(sprites);
 	CurrentScope->set_passmode(mode);
 }

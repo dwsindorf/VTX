@@ -103,7 +103,7 @@ static LongSym keytbl[]={
 	{"Z",           YY_POINT},
 	{"Texture",		YY_TEXTURE},
 	{"Sprite",		YY_SPRITE},
-	{"Plant",		YY_ROOT},
+	{"Plant",		YY_PLANT},
 	{"Branch",		YY_BRANCH},
 	{"Leaf",		YY_LEAF},
 
@@ -132,7 +132,7 @@ static LongSym keytbl[]={
 	{"clouds",      YY_CLOUDS},
 	{"map",         YY_MAP},
 	{"fog",         YY_FOG},
-    {"layer",       YY_MIX},
+    {"layer",       YY_LAYER},
     {"image",       YY_IMAGE},
     {"bands",       YY_BANDS},
 	

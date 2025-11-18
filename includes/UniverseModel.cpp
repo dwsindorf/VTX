@@ -15,6 +15,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+//#define DEBUG_ADD_TO_TREE
 
 //************************************************************
 // UniverseModel class
@@ -641,9 +642,6 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 				list.add(getObjectSymbol(TN_FCHNL));
 			list.add(getObjectSymbol(TN_POINT));
 			list.add(getObjectSymbol(TN_TEXTURE));
-			//list.add(getObjectSymbol(TN_SPRITE));
-			//list.add(getObjectSymbol(TN_PLANT));
-			//list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
 		}
 		break;
@@ -832,6 +830,9 @@ void UniverseModel::setType(NodeIF *node)
 		case ID_PLANT:
 			node->setFlag(TN_PLANT);
 			break;
+		case ID_SPRITE:
+			node->setFlag(TN_SPRITE);
+			break;
 		case ID_BRANCH:
 			node->setFlag(TN_PLANT_BRANCH);
 			break;
@@ -883,9 +884,6 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_COLOR:
 			node->setFlag(TN_COLOR);
-			break;
-		case ID_SPRITE:
-			node->setFlag(TN_SPRITE);
 			break;
 		case ID_TEXTURE:
 			{
@@ -974,7 +972,6 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, NodeIF *node)
 TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *node)
 {
 	TreeNode *init_parent=parent;
-//#define DEBUG_ADD_TO_TREE
 #ifdef DEBUG_ADD_TO_TREE
 	if(child)
 		cout<<" parent="<<parent->node->typeName()<<" newobj="<<node->typeName()<<" child="<<child->node->typeName();
@@ -1093,7 +1090,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_PLANT_BRANCH:
 		break;
 	case TN_PLANT:
-    	while(parent && parent->getParent() && ptype!=TN_SURFACE){
+    	while(parent && parent->getParent() && (ptype!=TN_SURFACE && ptype!=TN_LAYER)){
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);
      	}

@@ -85,8 +85,8 @@ public:
 	
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
-	static void render_zvals();
-	static void render_shadows();
+	static void render_zvals(Array<PlaceObj*> &objs);
+	static void render_shadows(Array<PlaceObj*> &objs);
 	static void clearStats();
 };
 
