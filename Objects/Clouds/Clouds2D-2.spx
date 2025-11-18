@@ -1,0 +1,11 @@
+Clouds(0.0103463) {
+	crot=1;
+	day=4.91478;
+	emission=Color(1,1,1,0.05);
+	name="Clouds2D-2";
+	resolution=16;
+	Surface{
+		terrain=Color(1,1,1,twist(0.1,noise(GRADIENT|FS|SQR|TA,1,10.75,0.781,0.5,2.172,1,1,0,0.1,1e-05))*sin(5*THETA)+0.2*cos(2*PHI)+noise(GRADIENT|FS|NABS|SCALE|TA,7,9.25,-0.068,0.726,2,1,-0.1,0,0.88,1e-06));
+	}
+}
+

@@ -1,0 +1,7 @@
+layer("test",MORPH,0)
+	[	bands("dessert",ACHNL|BLEND|DECAL|REPLACE,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+	Color(0.302,0.082,0.082))+
+	image("eroded",BLEND|BUMP|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1))+
+hardness(0.4)
+]
+

@@ -1,0 +1,35 @@
+Galaxy(20000) {
+	center.bias=0.36508;
+	color.bias=0.76192;
+	color.mix=0.36508;
+	diffusion=3.601;
+	far.density=1.6984;
+	far.random=2.79368;
+	far.size=1.1905;
+	gradient=0.9;
+	name="Barred";
+	near.size=3.3333;
+	noise.cutoff=0;
+	nova.density=0.01588;
+	nova.size=1.1905;
+	radius=1;
+	radius.outer=1;
+	scatter=6;
+	twist.radius=1.5238;
+	twist.rotation=0.598411;
+	variability=1.50002;
+	noise.expr=noise(NLOD,2,7,1,0.2)+0.5*noise(GRADIENT|NLOD,8.56,5,1,0.589,2,1,4,0,0,1e-06);
+	color.expr=DENSITY+noise(GRADIENT|NABS|NLOD,0,5.5,-0.014,0.5,2,0.247,4,0,0,1e-06);
+	color.list=Colors(
+		Color(0.50,0.00,0.25),
+		Color(0.00,0.00,1.00),
+		Color(0.00,0.72,1.00),
+		Color(0.50,1.00,1.00),
+		Color(1.00,0.29,0.00),
+		Color(1.00,0.70,0.20),
+		Color(1.00,1.00,0.40),
+		Color(1.00,1.00,0.92)
+		);
+	
+}
+
