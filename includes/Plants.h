@@ -11,6 +11,7 @@ class TNplant;
 class TNBranch;
 class TNLeaf;
 class Plant;
+class BranchData;
 
 #define MAX_BRANCHES 6
 #define MAX_PLANT_DATA 7
@@ -75,14 +76,13 @@ public:
 	double lat_bias;
 	double hardness_bias;
 
-
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
 	PlantMgr(int);
 
 	void init();
 	void eval();
-	
+
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
 	static void render_zvals(Array<PlaceObj*> &objs);
@@ -152,12 +152,24 @@ public:
 	NodeIF *getInstance();
 	NodeIF *getInstance(NodeIF *prev);
 	NodeIF *getInstance(NodeIF *prev, int m);
-
+	
 };
 class Plant : public PlaceObj
 {
 public:
 	static ValueList<PlaceData*> data;
+	ValueList<BranchData*> branches;
+	ValueList<BranchData*> leafs;
+
+	void freeBranches() {branches.free();}
+	void renderBranches();
+	void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
+
+	bool sorted;
+	void renderLeafs();	
+	void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
+	void freeLeafs() {leafs.free();sorted=false;}
+	void sortLeafs() {if(!sorted)leafs.sort();sorted=true;}
 
 	Plant(int l, TNode *e);
 	
@@ -167,10 +179,15 @@ public:
 	bool initProgram();
 	void clearStats();
 	void showStats();
+	
 	static void reset();
 	static void collect(Array<PlaceObj*> &data);
 	static void eval(Array<PlaceObj*> &data);
-
+	
+	static void freeLeafs(Array<PlaceObj*> &data);
+	static void freeBranches(Array<PlaceObj*> &data);
+	static void renderBranches(Array<PlaceObj*> &data);
+	static void renderLeafs(Array<PlaceObj*> &data);	
 };
 
 //************************************************************
@@ -220,7 +237,6 @@ protected:
 	};
 public:
 	Array<TNode *>arglist;
-	static ValueList<BranchData*> branches;
 	static int collect_mode;
 
 	int maxlvl;
@@ -249,7 +265,6 @@ public:
 
 	TNplant *root;
 	TNcolor *color;
-	
 	int instance;
 
 	char colorexpr[256];
@@ -261,15 +276,11 @@ public:
 	virtual int typeValue()	  { return ID_BRANCH;}
 	virtual char *typeName () { return "branch";}
 	virtual char *symbol()	  { return "Branch";}
-
-	static void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
     
 	static void setCollectLeafs(bool b){BIT_SET(collect_mode,flags::LEAFS,b);}
 	static void setCollectBranches(bool b){BIT_SET(collect_mode,flags::BRANCHES,b);}
 	static bool isCollectLeafsSet(){return BIT_TST(collect_mode,flags::LEAFS);}
 	static bool isCollectBranchesSet(){return BIT_TST(collect_mode,flags::BRANCHES);}
-	static void freeBranches() {branches.free();}
-	static void renderBranches();
 	
 	static int polyMode(int m) { return m&POLY_LINE?GL_LINE:GL_FILL;}
 	static int shaderMode(int m) { return m&SHADER_MODE;}
@@ -317,7 +328,7 @@ public:
 	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
 	virtual Point setVector(Point vec, Point start, int lvl);
-	TNplant *getRoot();
+	void getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
 	int getChildren(LinkedList<NodeIF*>&l);
 	virtual bool randomize();
@@ -337,13 +348,6 @@ public:
 	int typeValue()		{ return ID_LEAF;}
 	char *typeName ()	{ return "leaf";}
 	char *symbol()		{ return "Leaf";}
-	static bool sorted;
-	static void renderLeafs();	
-	static void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
-
-	static void freeLeafs() {leafs.free();}
-	static void sortLeafs() {leafs.sort();}
-	static ValueList<BranchData*> leafs;
 	
 	Point setVector(Point vec, Point start, int lvl);
 

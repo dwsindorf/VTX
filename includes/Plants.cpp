@@ -354,6 +354,31 @@ void PlantMgr::init()
 
 }
 
+void Plant::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
+
+void Plant::renderLeafs(){
+	sortLeafs();
+	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
+		BranchData *s=leafs[i];
+		if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(s->data[3].w)){
+			continue;
+		}
+		s->render();
+	}
+}
+
+void Plant::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
+void Plant::renderBranches(){
+	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
+		BranchData *s=branches[i];
+		s->render();
+	}
+}
+
 void PlantMgr::eval(){	
 	PlacementMgr::eval(); 
 }
@@ -485,7 +510,6 @@ void PlantMgr::render_shadows(Array<PlaceObj*> &objs){
 	
 	Raster.setProgram(Raster.PLANT_SHADOWS);
 	shadow_count++;
-	cout<<"PlantMgr::render_shadows"<<endl;
 
 	render(objs);
 	shadow_mode=false;
@@ -503,7 +527,6 @@ void PlantMgr::render_zvals(Array<PlaceObj*> &objs){
 	Raster.setProgram(Raster.PLANT_ZVALS);
 
 	shadow_count++;
-	cout<<"PlantMgr::render_zvals"<<endl;
 	render(objs);
 
 	shadow_mode=false;
@@ -533,7 +556,6 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	TNBranch::setCollectLeafs(true);
 	TNBranch::setCollectBranches(!nocache);
 #endif	
-	cout<<"PlantMgr::render update:"<<update_needed<<endl;
 	glLineWidth(1);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -545,10 +567,10 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	//if(!nocache && Raster.shadows()&&shadow_count>1)
 
 	if(update_needed){
-		TNLeaf::freeLeafs();
-		TNBranch::freeBranches();
+		Plant::freeLeafs(objs);
+		Plant::freeBranches(objs);
 		clearStats();
-		TNLeaf::sorted=false;
+		//sorted=false;
 	}
 	
 	//if(!shadow_mode)
@@ -574,7 +596,7 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 			randval=s->rval;
 			plant->seed=URAND;
 
-			plant->emit();
+			plant->emit(); // render or collect
 		}
 		glEnable(GL_CULL_FACE);
 		double d1=clock();
@@ -600,14 +622,10 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 		glDisable(GL_CULL_FACE);
 
 		if(TNBranch::isCollectBranchesSet()){
-			TNBranch::renderBranches();
+			Plant::renderBranches(objs);
 		}
 		if(TNBranch::isCollectLeafsSet()){
-			if(!TNLeaf::sorted){
-				TNLeaf::sortLeafs();
-				TNLeaf::sorted=true;
-			}
-			TNLeaf::renderLeafs();
+			Plant::renderLeafs(objs);
 		}
 		glEnable(GL_CULL_FACE);
 #ifndef TEST
@@ -665,6 +683,7 @@ ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
 Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 {
+	sorted=false;
 }
 
 void Plant::reset()
@@ -686,6 +705,27 @@ void Plant::collect(Array<PlaceObj*> &plants){
 void Plant::eval(Array<PlaceObj*> &objs){
 	PlaceObj::eval(objs);
 }
+void Plant::freeLeafs(Array<PlaceObj*> &data){
+	for (int i=0;i<data.size;i++){
+		((Plant*)data[i])->freeLeafs();
+	}
+}
+void Plant::freeBranches(Array<PlaceObj*> &data){
+	for (int i=0;i<data.size;i++){
+		((Plant*)data[i])->freeBranches();
+	}
+}
+void Plant::renderBranches(Array<PlaceObj*> &data){
+	for (int i=0;i<data.size;i++){
+		((Plant*)data[i])->renderBranches();
+	}
+}
+void Plant::renderLeafs(Array<PlaceObj*> &data){
+	for (int i=0;i<data.size;i++){
+		((Plant*)data[i])->renderLeafs();
+	}
+}
+
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
 //-------------------------------------------------------------
@@ -1262,12 +1302,13 @@ NodeIF *TNplant::getInstance(NodeIF *parent, int type){
 	return plant;
 }
 
+
 //===================== TNBranch ==============================
 //************************************************************
 // TNBranch class
 //************************************************************
 int TNBranch::collect_mode=0;
-ValueList<BranchData*> TNBranch::branches(1000,2000);
+//ValueList<BranchData*> TNBranch::branches(1000,2000);
 
 TNBranch::TNBranch(TNode *l, TNode *r, TNode *b) : TNbase(0,l,r,b)
 {
@@ -1327,7 +1368,7 @@ void TNBranch::init(){
 	getTextureImage();
 	initArgs();
 	
-	root=getRoot();
+	getRoot();
 	level=0;
 	branch_id=root->branches;
 	root->branches+=1;
@@ -1853,7 +1894,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						double aspect=((double)image_cols)/image_rows;
 						int psmode=poly_mode|shader_mode;
 						if(isCollectLeafsSet())
-							TNLeaf::collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
+							root->plant->collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
 									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
 									Point4D(nscale,color_flags, tid, psmode), sd,c);
 						else {
@@ -1937,7 +1978,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					T0=Point4D(t0.x, t0.y, t0.z,phase);
 			
 					if(isCollectBranchesSet()){
-					    TNBranch::collectBranches(T0, Point4D(t1), Point4D(t2),
+					    root->plant->collectBranches(T0, Point4D(t1), Point4D(t2),
 						Point4D(dx, dy, f1, f2),
 						Point4D(nscale,color_flags, tid, psmode), sd,c);
 					}
@@ -1971,7 +2012,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				P2.w=top_offset;
 
 				if(isCollectBranchesSet()){
-					TNBranch::collectBranches(P0, P1, P2,
+					root->plant->collectBranches(P0, P1, P2,
 					Point4D(w1, w2, 0, 1),
 					Point4D(nscale,color_flags, tid, psmode), sd,c);
 				}
@@ -2004,7 +2045,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			int psmode=poly_mode|shader_mode;
 
 			if(isCollectBranchesSet()){
-				TNBranch::collectBranches(Point4D(p0), Point4D(p1), Point4D(p2),
+				root->plant->collectBranches(Point4D(p0), Point4D(p1), Point4D(p2),
 				Point4D(0, 0, 0, 0),
 				Point4D(nscale,color_flags, tid, psmode),
 				sd,
@@ -2039,14 +2080,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	}
 }
 
-TNplant* TNBranch::getRoot() {
+void TNBranch::getRoot() {
+	root=nullptr;
 	NodeIF *p = getParent();
 	while (p && p->typeValue() != ID_PLANT) {
 		p=p->getParent();
 	}
-	if(p && p->typeValue() == ID_PLANT)
-		return p;
-	return 0;
+	if(p && p->typeValue() == ID_PLANT){
+		root=p;
+	}
 }
 void TNBranch::propertyString(char *s){
 	TNarg *arg=(TNarg*)left;
@@ -2301,20 +2343,11 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
 
-void TNBranch::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-void TNBranch::renderBranches(){
-	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=branches[i];
-		s->render();
-	}
-}
 //===================== TNleaf ==============================
 //************************************************************
 // TNLeaf class
 //************************************************************
-ValueList<BranchData*> TNLeaf::leafs(100,1000);
+//ValueList<BranchData*> TNLeaf::leafs(100,1000);
 
 double BranchData::distance() { 
 	return data[2].length();
@@ -2344,7 +2377,7 @@ void  BranchData::render(){
 	oldmode=polymode;
 }
 
-bool TNLeaf::sorted=false;
+
 int TNLeaf::left_side=0;
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	setImageMgr(&leaf_mgr);
@@ -2356,19 +2389,6 @@ TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){
 	phase=0;
 }
 
-void TNLeaf::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-
-void TNLeaf::renderLeafs(){
-	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=leafs[i];
-		if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(s->data[3].w)){
-			continue;
-		}
-		s->render();
-	}
-}
 
 Point TNLeaf::setVector(Point vec, Point start, int lvl){
 	return TNBranch::setVector(vec,start,lvl);
