@@ -565,7 +565,6 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 			
 			randval=s->rval;
 			plant->seed=URAND;
-			plant->instance=i;
 
 			plant->emit();
 		}
@@ -720,13 +719,11 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	maxdensity=0.1;
 	radius=0;
 	size=1e-6;
-	plant_id=0;
 	base_drop=0;
 	width_scale=1;
 	size_scale=1;
 	draw_scale=1;
 	distance=0;
-	instance=0;
 	seed=0;
 	
     mgr=new PlantMgr(PLANTS,this);
@@ -814,13 +811,22 @@ void TNplant::eval()
 	}
 	SINIT;
 	if(CurrentScope->rpass()){
-		int size=Td.plants.size;
-		plant_id=size;	
-		mgr->instance=plant_id;
-		if(plant)
-			plant->set_id(size);		
-		Td.add_plant(plant);
+		int instance=0;
+		int layer=0;
+		bool inlayer=inLayer();
+		if(inlayer){
+			instance=Td.tp->plants.size;
+			layer=Td.tp->type();
+		}
+		else
+			instance=Td.plants.size;
+		mgr->instance=instance;
+		mgr->layer=layer;
 		mgr->setHashcode();
+		if(inlayer)
+			Td.tp->add_plant(plant);
+		else
+			Td.add_plant(plant);
 		if(right)
 			right->eval();
 		return;
@@ -972,8 +978,6 @@ void TNplant::save(FILE *f)
 	char buff[4096];
 	buff[0]=0;
 	valueString(buff);
-	//if(addtabs)
-	//fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
 	
 	TNBranch *branch=right;

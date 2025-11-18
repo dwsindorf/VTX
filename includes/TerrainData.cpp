@@ -389,4 +389,7 @@ void TerrainProperties::reset(){
 void TerrainProperties::add_sprite(Sprite *s){
 	sprites.add(s);
 }
+void TerrainProperties::add_plant(Plant *s){
+	plants.add(s);
+}
 

@@ -93,8 +93,6 @@ public:
 	const char *typeName ()	{ return "sprite";}
 	const char *symbol()	{ return "Sprite";}
 
-	//bool isLeaf()			{ return true;}
-	//int linkable()          { return 0;}
 	void setName(char*);
 	void valueString(char *);
 	void save(FILE*);

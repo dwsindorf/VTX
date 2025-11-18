@@ -521,7 +521,7 @@ void TNsprite::eval()
 	SpriteMgr *smgr=(SpriteMgr*)mgr;
 
 	SINIT;
-	if(!isEnabled()){
+	if(!isEnabled() || TheScene->viewtype !=SURFACE || Raster.surface==2){
 		if(right)
 			right->eval();
 		return;

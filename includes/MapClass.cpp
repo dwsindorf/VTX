@@ -1241,6 +1241,7 @@ void Map::render_shaded()
 			Render.show_shaded();
 			reset_texs();
 			render_sprites(tp->sprites);
+			render_plants(tp->plants);
 		}
 		if(!TheScene->select_mode()&& TheScene->viewobj==object){
 			if(Td.plants.size)
@@ -1298,27 +1299,15 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 		return;
 	int mode=CurrentScope->passmode();
 	int n=get_mapnodes();
-	MapData *node;
 	int sid=sprites[0]->layer;
-	if(n){
-		node=node_data_list[0];
-		int nid=node->type();
-		cout<<"nid:"<<nid<<" sid:"<<sid<<" tid:"<<Td.tp->id<<endl;
-		//if(sid>0 && nid !=sid)
-		//	return;
-		
-	}
-	//reset_texs();
 	double d0=clock();
 	CurrentScope->set_spass();
 	Sprite::reset();
 	PlacementMgr::free_htable();
 	double d1=clock();
-	node_data_list.ss();
-	cout<<sprites.size<<" ";
 	int j=0;
 	for(int i=0;i<n;i++){
-		node=node_data_list++;
+		MapData *node=node_data_list++;
 		if(sid>0 && node->type() != sid){
 			j++;
 			continue;
@@ -1344,20 +1333,23 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 }
 
 void  Map::render_plants(Array<PlaceObj*>&plants){
-	if(!plants.size)
+	if(!plants.size || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
-	reset_texs();
 	int mode=CurrentScope->passmode();
-	get_mapnodes();
+	int n=get_mapnodes();
+	int sid=plants[0]->layer;
 	CurrentScope->set_spass();
 	double d0=clock();
 	Plant::reset();
 	PlacementMgr::free_htable();
 	double d1=clock();
-	int n=node_data_list.size;
-	node_data_list.ss();
+	int j=0;
 	for(int i=0;i<n;i++){
 		MapData *node=node_data_list++;
+		if(sid>0 && node->type() != sid){
+			j++;
+			continue;
+		}
 		node->setSurface();
 		Plant::eval(plants);
 	}
@@ -1365,7 +1357,8 @@ void  Map::render_plants(Array<PlaceObj*>&plants){
 	Plant::collect(plants);
 	double d3=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<"Map::Plants n:"<<plants.size<<" times"
+	cout<<" TID:"<<Td.tp->id<<" Plants n:"<<plants.size<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
+			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
 			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
@@ -1399,7 +1392,6 @@ void Map::render_water(){
 	total_rpasses++;
 	npole->render();
 }
-
 
 //-------------------------------------------------------------
 // Map::render_surface()	render map  (surface mode)
@@ -1502,7 +1494,7 @@ void Map::render_texs(){
 
 
 //-------------------------------------------------------------
-// Map::render_sprites()	render sprites
+// Map::collect_nodes()	collect all visible surface nodes
 //-------------------------------------------------------------
 static void collect_nodes(MapNode *n)
 {

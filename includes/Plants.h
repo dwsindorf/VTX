@@ -101,8 +101,6 @@ public:
 	Point norm;
 	int branches;
 
-	int plant_id;
-	int instance;
 	Plant *plant;
 	double radius;
 	double size;
@@ -174,7 +172,6 @@ public:
 	static void eval(Array<PlaceObj*> &data);
 
 };
-
 
 //************************************************************
 // Class TNLeaf

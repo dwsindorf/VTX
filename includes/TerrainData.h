@@ -391,6 +391,7 @@ public:
 	void reset();
 	int passes();
 	void add_sprite(Sprite *s);
+	void add_plant(Plant *s);
 
 };
 #endif
