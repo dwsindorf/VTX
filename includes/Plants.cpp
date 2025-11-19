@@ -728,6 +728,8 @@ bool Plant::initProgram(){
 	return false;
 }
 
+PlacementMgr *Plant::mgr() { return ((TNplant*)expr)->mgr;}
+
 //===================== TNplant ==============================
 
 double TNplant::norm_max=2;

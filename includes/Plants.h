@@ -12,6 +12,7 @@ class TNBranch;
 class TNLeaf;
 class Plant;
 class BranchData;
+class PlacementMgr;
 
 #define MAX_BRANCHES 6
 #define MAX_PLANT_DATA 7
@@ -91,69 +92,6 @@ public:
 };
 
 
-//************************************************************
-// Class TNplant
-//************************************************************
-class TNplant : public TNplacements
-{
-protected:
-public:
-	Point norm;
-	int branches;
-
-	Plant *plant;
-	double radius;
-	double size;
-	double pntsize;
-	double distance;
-	double maxdensity;
-	double base_drop;
-	double width_scale;
-	double size_scale;
-	double draw_scale;
-	double seed;
-	static double norm_max;
-	static double norm_min;
-
-	Point base_point;
-	
-	TNplant(TNode *l, TNode *r);
-	~TNplant();
-	void eval();
-	void init();
-	int typeValue()			{ return ID_PLANT;}
-	const char *typeName ()	{ return "plant";}
-	const char *symbol()	{ return "Plant";}
-
-	void valueString(char *);
-	void save(FILE*);
-	void set_id(int i);
-	void saveNode(FILE *f);
-	void applyExpr();
-	bool setProgram();
-	void setNormal();
-	void emit();
-	void getLeaf();
-	void getLastBranch();
-	void clearStats();
-	void setScale();
-	void addBranch();
-	void addLine();
-	void addRendered();
-	void addLeaf();
-	void addSpline();
-	void addSkipped();
-	int getChildren(LinkedList<NodeIF*>&l);
-	bool randomize();
-	NodeIF *removeNode();
-	NodeIF *replaceNode(NodeIF *c);
-	NodeIF *addChild(NodeIF *n);
-	NodeIF *lastChild();
-	NodeIF *getInstance();
-	NodeIF *getInstance(NodeIF *prev);
-	NodeIF *getInstance(NodeIF *prev, int m);
-	
-};
 class Plant : public PlaceObj
 {
 public:
@@ -173,7 +111,7 @@ public:
 
 	Plant(int l, TNode *e);
 	
-	PlacementMgr *mgr() { return ((TNplant*)expr)->mgr;}
+	PlacementMgr *mgr();
 	void eval();
 	bool setProgram();
 	bool initProgram();
@@ -190,6 +128,36 @@ public:
 	static void renderLeafs(Array<PlaceObj*> &data);	
 };
 
+class PlantObjMgr : public PlaceObjMgr
+{
+protected:
+	void freeLeafs(Array<PlaceObj*> &data){
+		for (int i=0;i<data.size;i++){
+			((Plant*)data[i])->freeLeafs();
+		}
+	}
+	void freeBranches(Array<PlaceObj*> &data){
+		for (int i=0;i<data.size;i++){
+			((Plant*)data[i])->freeBranches();
+		}
+	}
+	void renderBranches(Array<PlaceObj*> &data){
+		for (int i=0;i<data.size;i++){
+			((Plant*)data[i])->renderBranches();
+		}
+	}
+	void renderLeafs(Array<PlaceObj*> &data){
+		for (int i=0;i<data.size;i++){
+			((Plant*)data[i])->renderLeafs();
+		}
+	}
+public:
+	ValueList<BranchData*> branches;
+	ValueList<BranchData*> leafs;
+
+	//void setProgram();
+	//void render();
+};
 //************************************************************
 // Class TNLeaf
 //************************************************************

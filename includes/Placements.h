@@ -1,9 +1,11 @@
 // Placements.h
 
-#ifndef _PLACEMENTS
-#define _PLACEMENTS
+#ifndef _PLACEMENTS_
+#define _PLACEMENTS_
 
-#include "TerrainMgr.h"
+//#pragma once
+
+//#include "TerrainMgr.h"
 #include "ImageMgr.h"
 #include "Util.h"
 
@@ -12,6 +14,8 @@
 #define TEST_PLANTS
 #define TEST_CRATERS
 #define TEST_ROCKS
+
+#define TEST_PLACEMGR
 
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
@@ -39,7 +43,7 @@ enum {
     NNBRS   	= 0x02000000,
     MAXA    	= 0x04000000,
     MAXB    	= 0x08000000,
-    MAXHT    	= 0x10000000,
+    MXHT    	= 0x10000000,
     CNORM    	= 0x20000000,
     FINAL   	= 0x80000000
 };
@@ -112,7 +116,28 @@ public:
 	void set_id(int i)			{ id=i;}
 	bool isValid()				{ return valid;}
 	void setIsValid(bool i)		{ valid=i;}
-	char *name() { return expr->nodeName();}
+	//char *name() { return expr->nodeName();}
+};
+
+class PlaceObjMgr
+{
+protected:
+public:
+	ValueList<PlaceData*> data;
+	Array<PlaceObj*> objs;
+	
+	PlaceObjMgr();
+	~PlaceObjMgr(){ data.free();}
+	virtual void collect();
+	virtual void eval();
+	virtual void reset();
+	virtual bool setProgram(){return false;}
+	virtual void render() {}
+	
+	int size() { return objs.size;}
+	
+	void addObject(PlaceObj *obj) { objs.add(obj);}
+	
 };
 
 class Placement
@@ -301,35 +326,6 @@ public:
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;
-};
-
-//************************************************************
-// Class TNplacements
-//************************************************************
-class TNplacements : public TNbase
-{
-protected:
-public:
-    PlacementMgr *mgr;
-	TNplacements(int t, TNode *l, TNode *r, TNode *b);
-	virtual ~TNplacements();
-	
-	virtual void reset();
-	virtual void eval();
-	virtual void init();
-	virtual void save(FILE *);
-	virtual int typeValue()			{ return ID_PLACED;}
-	virtual void setProperties(NodeIF *n);
-	virtual void valueString(char *);
-	virtual int optionString(char *);
-	virtual void addToken(LinkedList<TNode*>&l);
-	virtual void set_id(int i);
-	virtual int get_id();
-	void set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
-	bool is3D()   				{ return type & MC3D;}
-	void set3D(bool b)          { BIT_SET(type,MC3D,b);}
-	bool inLayer();
-
 };
 
 #endif

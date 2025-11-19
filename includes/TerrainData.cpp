@@ -117,8 +117,11 @@ double TerrainData::texht=0;
 Array<PlaceObj*> TerrainData::plants;
 Array<PlaceObj*> TerrainData::sprites;
 
+SpriteObjMgr TerrainData::Sprites;
+
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
+//SpriteObjMgr TerrainProperties::Sprites;
 
 //-------------------------------------------------------------
 //TerrainData::rectangular() map point on 1,1,1, cube
@@ -312,10 +315,13 @@ TerrainProperties::TerrainProperties(int t)
 	tnpoint=0;
 	tndensity=0;
 	ntexs=0;
+	//Sprites=new SpriteObjMgr();
 }
 TerrainProperties::~TerrainProperties(){
 	textures.reset();
 	noise.reset();
+	//delete Sprites;
+	//Sprites=0;
 }
 void TerrainProperties::initProgram(){
 	//Texture::reset();

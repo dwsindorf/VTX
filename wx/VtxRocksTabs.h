@@ -5,6 +5,7 @@
 #include "VtxTabsMgr.h"
 #include "SceneClass.h"
 #include "Rocks.h"
+#include "TerrainClass.h"
 
 class VtxRocksTabs : public VtxTabsMgr
 {

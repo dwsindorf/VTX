@@ -14,6 +14,7 @@ class Image;
 class Texture;
 class Object3D;
 class OceanState;
+class PlacementMgr;
 
 // TNpoint codes
 
@@ -282,4 +283,174 @@ public:
 	bool setProgram();
 	bool threeD();
 };
+
+
+//************************************************************
+// Class TNplacements
+//************************************************************
+class TNplacements : public TNbase
+{
+protected:
+public:
+    PlacementMgr *mgr;
+	TNplacements(int t, TNode *l, TNode *r, TNode *b);
+	virtual ~TNplacements();
+	
+	virtual void reset();
+	virtual void eval();
+	virtual void init();
+	virtual void save(FILE *);
+	virtual int typeValue()			{ return ID_PLACED;}
+	virtual void setProperties(NodeIF *n);
+	virtual void valueString(char *);
+	virtual int optionString(char *);
+	virtual void addToken(LinkedList<TNode*>&l);
+	virtual void set_id(int i);
+	virtual int get_id();
+	void set_flip(int i);
+	bool is3D();
+	void set3D(bool b);
+	bool inLayer();
+
+};
+
+//************************************************************
+// Class TNsprite
+//************************************************************
+class TNsprite : public TNplacements, public ImageInfo
+{
+public:
+	Sprite *sprite;
+	double radius;
+	double maxdensity;
+	TNsprite(char *, int opts,  TNode *l, TNode *r);
+	~TNsprite();
+	void eval();
+	void init();
+	int typeValue()			{ return ID_SPRITE;}
+	const char *typeName ()	{ return "sprite";}
+	const char *symbol()	{ return "Sprite";}
+
+	void setName(char*);
+	void valueString(char *);
+	void save(FILE*);
+	void setSpritesImage(char *name);
+	void set_id(int i);
+	char *nodeName();
+	int optionString(char *);
+	void saveNode(FILE *f);
+	void applyExpr();
+};
+
+
+//************************************************************
+// Class TNplant
+//************************************************************
+class TNplant : public TNplacements
+{
+protected:
+public:
+	Point norm;
+	int branches;
+
+	Plant *plant;
+	double radius;
+	double size;
+	double pntsize;
+	double distance;
+	double maxdensity;
+	double base_drop;
+	double width_scale;
+	double size_scale;
+	double draw_scale;
+	double seed;
+	static double norm_max;
+	static double norm_min;
+
+	Point base_point;
+	
+	TNplant(TNode *l, TNode *r);
+	~TNplant();
+	void eval();
+	void init();
+	int typeValue()			{ return ID_PLANT;}
+	const char *typeName ()	{ return "plant";}
+	const char *symbol()	{ return "Plant";}
+
+	void valueString(char *);
+	void save(FILE*);
+	void set_id(int i);
+	void saveNode(FILE *f);
+	void applyExpr();
+	bool setProgram();
+	void setNormal();
+	void emit();
+	void getLeaf();
+	void getLastBranch();
+	void clearStats();
+	void setScale();
+	void addBranch();
+	void addLine();
+	void addRendered();
+	void addLeaf();
+	void addSpline();
+	void addSkipped();
+	int getChildren(LinkedList<NodeIF*>&l);
+	bool randomize();
+	NodeIF *removeNode();
+	NodeIF *replaceNode(NodeIF *c);
+	NodeIF *addChild(NodeIF *n);
+	NodeIF *lastChild();
+	NodeIF *getInstance();
+	NodeIF *getInstance(NodeIF *prev);
+	NodeIF *getInstance(NodeIF *prev, int m);
+	
+};
+//************************************************************
+// Class TNcraters
+//************************************************************
+class TNcraters : public TNplacements
+{
+protected:
+	int join(TNode *);
+	int joined(TNode *);
+	TNode *next();
+public:
+	TNcraters(int t, TNode *l, TNode *r, TNode *b);
+	~TNcraters();
+	void eval();
+	void init();
+	void applyExpr();	   
+	int typeValue()			{ return ID_CRATERS;}
+	const char *typeName()	{ return "craters";}
+	void addToken(LinkedList<TNode*>&l);
+	void valueString(char *);
+};
+
+//************************************************************
+// Class TNrocks
+//************************************************************
+class TNrocks : public TNplacements
+{
+public:
+	int rock_id;
+	TNrocks(int t, TNode *l, TNode *r, TNode *b);
+	void eval();
+	void eval3d();
+	void init();
+	bool hasChild(int );
+	void applyExpr();
+	int typeValue()			{ return ID_ROCKS;}
+	const char *typeName ()	{ return "rocks";}
+	NodeIF *addChild(NodeIF *x);
+	NodeIF *addAfter(NodeIF *c,NodeIF *n);
+	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	NodeIF *replaceNode(NodeIF *c);
+	bool isLeaf()			{ return false;}
+	int linkable()      		    { return 1;}
+	NodeIF *getInstance(NodeIF *prev, int m);
+	TNrocks *newInstance(int m);
+	bool randomize();
+};
+
 #endif

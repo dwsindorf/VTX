@@ -1233,11 +1233,20 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
+			
+#ifdef TEST_PLACEMGR
+			render_objects(tp->Sprites);
+#else
 			render_sprites(tp->sprites);
+#endif
 			render_plants(tp->plants);
 		}
 		render_plants(Td.plants);
-		render_sprites(Td.sprites);			
+#ifdef TEST_PLACEMGR
+		render_objects(Td.Sprites);
+#else
+		render_sprites(Td.sprites);	
+#endif
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
     bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
@@ -1283,7 +1292,52 @@ void Map::render_shaded()
 }
 
 #define PRINT_PLACEMENT_TIMING
+
+void  Map::render_objects(PlaceObjMgr &mgr){
+	cout<<"OBJS:"<<mgr.objs.size<<endl;
+	if(!mgr.objs.size || TheScene->select_mode() || TheScene->viewobj!=object)
+		return;
+	int mode=CurrentScope->passmode();
+	int n=get_mapnodes();
+	int sid=mgr.objs[0]->layer;
+	
+	cout<<"SID:"<<sid<<endl;
+	double d0=clock();
+	CurrentScope->set_spass();
+	
+	mgr.reset();
+	PlacementMgr::free_htable();
+	node_data_list.ss();
+	double d1=clock();
+	int j=0;
+	for(int i=0;i<n;i++){
+		MapData *node=node_data_list++;
+		if(sid>0 && node->type() != sid){
+			j++;
+			continue;
+		}
+		node->setSurface();
+		mgr.eval();
+	}
+	double d2=clock();
+	mgr.collect();
+	cout<<"DATA:"<<mgr.data.size<<endl;
+	double d3=clock();
+#ifdef PRINT_PLACEMENT_TIMING
+	cout<<" TID:"<<Td.tp->id<<" Objects n:"<<mgr.objs.size<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
+			<<" times"
+			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
+			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
+			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
+			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
+			<<" ms"<<endl;
+#endif
+	mgr.setProgram();
+	CurrentScope->set_passmode(mode);
+}
+
 void  Map::render_sprites(Array<PlaceObj*>&sprites){
+	cout<<sprites.size<<endl;
 	if(!sprites.size || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();
@@ -1295,6 +1349,7 @@ void  Map::render_sprites(Array<PlaceObj*>&sprites){
 	PlacementMgr::free_htable();
 	double d1=clock();
 	int j=0;
+	node_data_list.ss();
 	for(int i=0;i<n;i++){
 		MapData *node=node_data_list++;
 		if(sid>0 && node->type() != sid){

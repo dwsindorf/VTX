@@ -75,33 +75,10 @@ public:
 	static bool setProgram(Array<PlaceObj*> &objs);
 
 };
-
-//************************************************************
-// Class TNsprite
-//************************************************************
-class TNsprite : public TNplacements, public ImageInfo
+class SpriteObjMgr : public PlaceObjMgr
 {
 public:
-	Sprite *sprite;
-	double radius;
-	double maxdensity;
-	TNsprite(char *, int opts,  TNode *l, TNode *r);
-	~TNsprite();
-	void eval();
-	void init();
-	int typeValue()			{ return ID_SPRITE;}
-	const char *typeName ()	{ return "sprite";}
-	const char *symbol()	{ return "Sprite";}
-
-	void setName(char*);
-	void valueString(char *);
-	void save(FILE*);
-	void setSpritesImage(char *name);
-	void set_id(int i);
-	char *nodeName();
-	int optionString(char *);
-	void saveNode(FILE *f);
-	void applyExpr();
+	bool setProgram();
 };
 
 class Sprite : public PlaceObj
@@ -116,7 +93,7 @@ public:
 
 	Sprite(Image *i, int l, TNode *e);
 	
-	SpriteMgr *mgr() { return ((TNsprite*)expr)->mgr;}
+	SpriteMgr *mgr();// { return ((TNsprite*)expr)->mgr;}
 	void eval();
 	bool setProgram();
 	bool initProgram();

@@ -1619,6 +1619,7 @@ void TerrainMgr::init_render()
 	
 	Td.plants.reset();
 	Td.sprites.reset();
+	Td.Sprites.reset();
 
 	Td.init();
 	Td.properties.free();

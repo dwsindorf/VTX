@@ -3,6 +3,7 @@
 
 #include "VtxTabsMgr.h"
 #include <Plants.h>
+#include "TerrainClass.h"
 class VtxPlantTabs : public VtxTabsMgr
 
 {

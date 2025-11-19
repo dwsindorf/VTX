@@ -3,6 +3,7 @@
 #include "Craters.h"
 #include "SceneClass.h"
 #include "RenderOptions.h"
+#include "TerrainClass.h"
 #include "Util.h"
 
 #ifdef _DEBUG
@@ -406,7 +407,7 @@ void TNcraters::init()
 //-------------------------------------------------------------
 int TNcraters::join(TNode *n)
 {
-    if(!n || n->typeValue() !=ID_CRATERS || type & MAXHT)
+    if(!n || n->typeValue() !=ID_CRATERS || type & MXHT)
          return 0;
 	TNcraters* child=(TNcraters*)n;
 	CraterMgr *cmgr=(CraterMgr*)(child->mgr);
@@ -600,7 +601,7 @@ void TNcraters::eval()
 			ht=S0.s;
 	}
     ht-=hb;
-	if(type & MAXHT)
+	if(type & MXHT)
     	ht=h1>ht?h1:ht;
     else
  	    ht=h1+ht*impact;

@@ -7,6 +7,7 @@
 #include "Util.h"
 #include "SceneClass.h"
 #include "RenderOptions.h"
+#include "TerrainClass.h"
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
@@ -61,7 +62,7 @@ void show_display_placements()
 #endif
 
 static LongSym popts[]={ 
-	{"MAXHT",		MAXHT},
+	{"MAXHT",		MXHT},
 	{"MAXA",		MAXA},
 	{"MAXB",		MAXB},
 	{"NOLOD",		NOLOD},
@@ -997,6 +998,36 @@ PlaceData::PlaceData(Placement *pnt){
 }
 
 //************************************************************
+// PlaceObjMgr class
+//************************************************************
+
+PlaceObjMgr::PlaceObjMgr(){
+	objs.reset();
+	data.reset();
+}
+void PlaceObjMgr::eval(){
+	int mode=CurrentScope->passmode();
+	for(int i=0;i<objs.size;i++){
+		objs[i]->expr->eval();
+	}
+	CurrentScope->set_passmode(mode);
+}
+
+void PlaceObjMgr::collect(){
+	data.free();
+	for(int i=0;i<objs.size;i++){
+		PlaceObj *obj=objs[i];
+		obj->mgr()->collect(data);
+	}
+	if(data.size)
+		data.sort();
+
+}
+
+void PlaceObjMgr::reset() { 
+	data.free();
+}
+//************************************************************
 // PlaceObj class
 //************************************************************
 
@@ -1067,6 +1098,10 @@ int TNplacements::get_id()
 {
 	return type&PID;
 }
+
+void TNplacements::set_flip(int i)   	    { if(i)BIT_ON(type,FLIP); else BIT_OFF(type,FLIP); }
+bool TNplacements::is3D()   				{ return type & MC3D;}
+void TNplacements::set3D(bool b)          { BIT_SET(type,MC3D,b);}
 
 //-------------------------------------------------------------
 // TNplacements::reset()	reset hash table

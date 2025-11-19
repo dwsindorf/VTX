@@ -1,11 +1,15 @@
 // TerrainData.h
 
-#ifndef _TERRAIN_DATA
-#define _TERRAIN_DATA
+//#ifndef _TERRAIN_DATA
+//#define _TERRAIN_DATA
+
+#pragma once
+
 #include "NoiseClass.h"
 #include "PointClass.h"
 #include "ColorClass.h"
 #include "NodeIF.h"
+#include "Sprites.h"
 
 class ExprMgr;
 class TerrainMgr;
@@ -29,6 +33,7 @@ class TNfractal;
 class TNclouds;
 class TNrocks;
 class PlaceObj;
+class SpriteObjMgr;
 
 extern int    tindex, mindex;
 
@@ -144,6 +149,8 @@ public:
 	static Array<TerrainProperties*>properties;
 	static Array<PlaceObj*> plants;
 	static Array<PlaceObj*> sprites;
+	
+	static SpriteObjMgr Sprites;
 	static int sid;
 	static int fid;
 	static int rid;
@@ -352,6 +359,8 @@ public:
 	Array<PlaceObj*> sprites;
 	Array<PlaceObj*> plants;
 	
+	SpriteObjMgr Sprites;
+	
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
 	TNdensity *tndensity;
@@ -394,5 +403,5 @@ public:
 	void add_plant(Plant *s);
 
 };
-#endif
+//#endif
 

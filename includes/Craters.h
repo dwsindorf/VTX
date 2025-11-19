@@ -47,27 +47,6 @@ public:
 	void reset();
 };
 
-//************************************************************
-// Class TNcraters
-//************************************************************
-class TNcraters : public TNplacements
-{
-protected:
-	int join(TNode *);
-	int joined(TNode *);
-	TNode *next();
-public:
-	TNcraters(int t, TNode *l, TNode *r, TNode *b);
-	~TNcraters();
-	void eval();
-	void init();
-	void applyExpr();	   
-	int typeValue()			{ return ID_CRATERS;}
-	const char *typeName()	{ return "craters";}
-	void addToken(LinkedList<TNode*>&l);
-	void valueString(char *);
-};
-
 
 #endif
 

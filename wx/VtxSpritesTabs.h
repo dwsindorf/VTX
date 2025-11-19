@@ -10,6 +10,7 @@
 
 #include "VtxTabsMgr.h"
 #include <Sprites.h>
+#include "TerrainClass.h"
 #include "VtxBitmapPanel.h"
 
 class VtxSpritesTabs : public VtxTabsMgr

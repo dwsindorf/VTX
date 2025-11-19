@@ -2,6 +2,7 @@
 #include "VtxCratersFunct.h"
 #include "VtxFunctDialog.h"
 #include "Craters.h"
+#include "TerrainClass.h"
 
 //########################### VtxCratersFunct Class ########################
 //#define LINE_WIDTH TABS_WIDTH-TABS_BORDER

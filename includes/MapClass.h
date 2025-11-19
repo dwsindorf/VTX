@@ -16,6 +16,7 @@ class MapData;
 class MapNode;
 class TerrainProperties;
 class Triangle;
+class PlaceObjMgr;
 	enum{
 		SHADER_LISTS = 0,
 		RASTER_LISTS = 1,
@@ -82,6 +83,8 @@ protected:
 	void render_water();
 	void make_triangle_lists();
 	void clearLists();
+	
+	void render_objects(PlaceObjMgr &);
 
 public:
 	MapNode *current;
