@@ -538,24 +538,13 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	int n=Plant::data.size;
 	if(n==0)
 		return;
-	//nocache=TheScene->automv()||PlantMgr::no_cache;
-//#define TEST
-#ifdef TEST
-	nocache=true;
-	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
-	//if(update_needed && shadow_mode)
-	//	update_needed=false;
-	TNBranch::setCollectLeafs(true);
-	TNBranch::setCollectBranches(true);
-
-#else
 	nocache=PlantMgr::no_cache;
 	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
 	if(update_needed && shadow_mode)
 		update_needed=false;
 	TNBranch::setCollectLeafs(true);
 	TNBranch::setCollectBranches(!nocache);
-#endif	
+	
 	glLineWidth(1);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -564,19 +553,14 @@ void PlantMgr::render(Array<PlaceObj*> &objs){
 	double t1;
 	double t2;
 	double t3;
-	//if(!nocache && Raster.shadows()&&shadow_count>1)
-
+	
+	glEnable(GL_BLEND);
+	int start=show_one?0:n-1;
 	if(update_needed){
 		Plant::freeLeafs(objs);
 		Plant::freeBranches(objs);
 		clearStats();
-		//sorted=false;
-	}
-	
-	//if(!shadow_mode)
-		glEnable(GL_BLEND);
-	int start=show_one?0:n-1;
-	if(update_needed){
+
 		t1=clock();
 
 		glDisable(GL_CULL_FACE);

@@ -441,6 +441,7 @@ void PlacementMgr::setTests() {
 	S0.clr_flag(DVALUE);
 	if(fabs(x)<1e-6)
 		return;
+	double y=pow(x,6);
 	if(testColor()) {
 		S0.set_cvalid();
 		int hash=(3*instance+type+layer)&0xf;
@@ -449,14 +450,11 @@ void PlacementMgr::setTests() {
 		c1=c1.darken(lmod);
 		Color c3=getColor(hash+1);
 		c3=c3.lighten(lmod);
-		S0.c=c1.mix(c3,x);
+		S0.c=c1.mix(c3,y);
 	}
 	if(testDensity()) {
 		S0.set_flag(DVALUE);
-		x=1/(cval+1e-4);
-		x=clamp(x,0,1);
-		x=x*x; //*x*x;
-		S0.s=lerp(cval,0,0.2,0,0.5*x);
+		S0.s=y;
 	}
 }
 
