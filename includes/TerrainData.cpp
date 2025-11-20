@@ -118,6 +118,7 @@ Array<PlaceObj*> TerrainData::plants;
 Array<PlaceObj*> TerrainData::sprites;
 
 SpriteObjMgr TerrainData::Sprites;
+PlantObjMgr TerrainData::Plants;
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;

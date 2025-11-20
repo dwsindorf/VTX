@@ -1045,25 +1045,25 @@ void PlaceObj::eval()
 	expr->eval();
 	CurrentScope->set_passmode(mode);
 }
-
-void PlaceObj::eval(Array<PlaceObj*> &objs){
-	int mode=CurrentScope->passmode();
-	for(int i=0;i<objs.size;i++){
-		objs[i]->expr->eval();
-	}
-	CurrentScope->set_passmode(mode);
-}
-
-void PlaceObj::collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data)
-{
-	data.free();
-	for(int i=0;i<objs.size;i++){
-		PlaceObj *obj=objs[i];
-		obj->mgr()->collect(data);
-	}
-	if(data.size)
-		data.sort();
-}
+//
+//void PlaceObj::eval(Array<PlaceObj*> &objs){
+//	int mode=CurrentScope->passmode();
+//	for(int i=0;i<objs.size;i++){
+//		objs[i]->expr->eval();
+//	}
+//	CurrentScope->set_passmode(mode);
+//}
+//
+//void PlaceObj::collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data)
+//{
+//	data.free();
+//	for(int i=0;i<objs.size;i++){
+//		PlaceObj *obj=objs[i];
+//		obj->mgr()->collect(data);
+//	}
+//	if(data.size)
+//		data.sort();
+//}
 
 //************************************************************
 // TNplacements class

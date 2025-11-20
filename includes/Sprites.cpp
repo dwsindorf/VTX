@@ -293,125 +293,7 @@ bool SpriteObjMgr::setProgram(){
 	glEnd();
 	return true;
 }
-bool SpriteMgr::setProgram(Array<PlaceObj*> &objs){
-	if(!Sprite::data.size || !objs.size)
-		return false;
-	//cout<<Td.sprites.size<<" "<<objs.size<<endl;
-	char defs[1024]="";
-	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",objs.size);
-	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
-	if(Render.haze())
-		sprintf(defs+strlen(defs),"#define HAZE\n");
 
-    bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
-	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
-		sprintf(defs+strlen(defs),"#define SHADOWS\n");
-
-	GLSLMgr::setDefString(defs);
-	
-	GLSLMgr::loadProgram("sprites.ps.vert","sprites.ps.frag");
-	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program)
-		return false;
-	glEnable(GL_TEXTURE_2D);
-   
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	glEnable(GL_BLEND);
-	glEnable(GL_POINT_SPRITE);
-	glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-	glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,GL_LOWER_LEFT);
-	glDisable(GL_POINT_SMOOTH);
-
-	GLSLVarMgr vars;
-	
-	Planetoid *orb=(Planetoid*)TheScene->viewobj;
-	Color diffuse=orb->diffuse;
-	Color shadow=orb->shadow_color;
-	Color haze=Raster.haze_color;
-	
-	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
-	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow.alpha());
-	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
-	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
-	vars.newFloatVar("haze_grad",Raster.haze_grad);
-	vars.newFloatVar("haze_ampl",Raster.haze_hf);
-	
-	double zn=TheScene->znear;
-	double zf=TheScene->zfar;
-	double ws1=1/zn;
-	double ws2=(zn-zf)/zf/zn;
-
-	vars.newFloatVar("ws1",ws1);
-	vars.newFloatVar("ws2",ws2);
-
-	vars.setProgram(program);
-	vars.loadVars();
-	GLSLMgr::CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
-	GLSLMgr::setProgram();
-	GLSLMgr::loadVars();
-	for(int i=0;i<objs.size;i++){
-		objs[i]->setProgram();
-	}
-	//glDisable(GL_DEPTH_TEST);
-	glBegin(GL_POINTS);
-	
-	int n=Sprite::data.size;
-	bool flip=false;
-	SpriteData *s=(SpriteData*)Sprite::data[0];
-
-	glNormal3dv(s->normal.values());
-
-	for(int i=n-1;i>=0;i--){
-		s=(SpriteData*)Sprite::data[i];
-		int id=s->instance;//s->get_id();
-		Point t=s->vertex;
-		double pts=s->pts;
-				
-		// random reflection - based on sprite hash table center position
-
-		int rval=s->rval;
-		
-		if(s->flip())
-			flip=RANDVAL(rval)+0.5>s->rand_flip_prob?false:true;
-		
-		double x=RANDVAL(rval);
-		double rv=s->variability*x;
-		pts*=1+rv;
-		
-		double sel=0.1;	
-		double r=0;
-		double sid=0;
-	    int rows=s->sprites_rows;
-	    int cols=s->sprites_cols;
-		double nn=(rows*cols);
-		double sb=0;
-
-		if(nn>1){ // random selection in multi-row sprites image
-			r=2*RANDVAL(rval);
-			r=clamp(r,-1,1);
-			sid=s->get_id();
-			sb=(1-s->select_bias)*r*(nn);
-			sel=sid+sb+0.5;
-			sel=sel>nn?sel-nn:sel;		
-			sel=sel<0?nn+sel:sel;
-			sel=clamp(sel,0,nn-1);
-		}
-		
-		int sy=sel/cols;
-		int sx=sel-sy*rows;
-		
-		sy=rows-sy-1; // invert y
-	    	    
-	   // cout<<"rows:"<<rows<<" cols:"<<cols<<" sel:"<<(int)sel<<" sy:"<<sy<<" sx:"<<sx<<" sb:"<<sb<<endl;
-    
-	    //cout<<(int)sid<<" "<<(int)sel<<" "<<r<<" "<<sb<<endl;
-		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
-		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
-	    glVertex3dv(t.values());
-	}
-	glEnd();
-	return true;
-}
 //-------------------------------------------------------------
 // SpriteMgr::make() factory method to make Placement
 //-------------------------------------------------------------
@@ -453,7 +335,7 @@ SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 }
 
 //===================== Sprite ==============================
-ValueList<PlaceData*> Sprite::data;
+//ValueList<PlaceData*> Sprite::data;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
@@ -469,11 +351,6 @@ Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 	//valid=false;
 }
 
-void Sprite::reset()
-{ 
-	cout<<"Sprite::reset()"<<endl;
-	data.free();
-}
 
 void Sprite::set_image(Image *i, int r, int c){
 	image=i;
@@ -482,25 +359,6 @@ void Sprite::set_image(Image *i, int r, int c){
 	valid=false;
 	if(texture_id>0)
 		glDeleteTextures(1,&texture_id);
-}
-//-------------------------------------------------------------
-// Sprite::collect() collect valid sprite points
-//-------------------------------------------------------------
-void Sprite::collect(Array<PlaceObj*> &objs)
-{
-	double d0=clock();
-	if(objs.size)
-		PlaceObj::collect(objs,data);
-	double d1=clock();
-	cout<<"Sprites collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-}
-
-void Sprite::collect(){
-	mgr()->collect(data);
-}
-void Sprite::eval(Array<PlaceObj*> &objs){
-	if(objs.size)
-		PlaceObj::eval(objs);
 }
 
 //-------------------------------------------------------------
@@ -545,9 +403,6 @@ bool Sprite::setProgram(){
 	vars.loadVars();
 
 	return true;
-}
-bool Sprite::initProgram(){
-	return false;
 }
 
 //===================== TNsprite ==============================
@@ -651,32 +506,21 @@ void TNsprite::eval()
 		int layer=0;
 		bool inlayer=inLayer();
 		if(inlayer){
-#ifdef TEST_PLACEMGR
 			instance=Td.tp->Sprites.size();
-#else
-			instance=Td.tp->sprites.size;
-#endif
 			layer=Td.tp->type();
 		}
 		else
-			instance=Td.sprites.size;
+			instance=Td.Sprites.size();
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(sprite){
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
-#ifdef TEST_PLACEMGR
 		if(inlayer)
 			Td.tp->Sprites.addObject(sprite);
 		else
 			Td.Sprites.addObject(sprite);
-#else
-		if(inlayer)
-			Td.tp->add_sprite(sprite);
-		else
-			Td.add_sprite(sprite);
-#endif 
 		cout<<"Sprites.size="<<Td.Sprites.size()<<endl;
 		mgr->setHashcode();
 		if(right)

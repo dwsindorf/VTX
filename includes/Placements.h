@@ -95,10 +95,10 @@ class PlaceObj
 protected:
 	int    id;
 public:
-    static void collect(Array<PlaceObj*> &objs);
-    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
-    static void reset(ValueList<PlaceData*> &data){ data.free();}
-	static void eval(Array<PlaceObj*> &objs);
+//    static void collect(Array<PlaceObj*> &objs);
+//    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
+//    static void reset(ValueList<PlaceData*> &data){ data.free();}
+//	static void eval(Array<PlaceObj*> &objs);
 
 	int    type;
 	int    layer;

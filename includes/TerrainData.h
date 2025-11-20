@@ -10,6 +10,7 @@
 #include "ColorClass.h"
 #include "NodeIF.h"
 #include "Sprites.h"
+#include "Plants.h"
 
 class ExprMgr;
 class TerrainMgr;
@@ -151,6 +152,8 @@ public:
 	static Array<PlaceObj*> sprites;
 	
 	static SpriteObjMgr Sprites;
+	static PlantObjMgr Plants;
+	
 	static int sid;
 	static int fid;
 	static int rid;
@@ -360,6 +363,7 @@ public:
 	Array<PlaceObj*> plants;
 	
 	SpriteObjMgr Sprites;
+	PlantObjMgr  Plants;
 	
 	TNcolor *tncolor;
 	TNpoint *tnpoint;

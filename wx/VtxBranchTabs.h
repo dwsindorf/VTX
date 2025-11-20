@@ -6,6 +6,7 @@
 #include <wx/clrpicker.h>
 
 #include <Plants.h>
+#include "TerrainClass.h"
 
 class VtxBranchTabs : public VtxTabsMgr
 

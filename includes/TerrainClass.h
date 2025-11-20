@@ -407,6 +407,150 @@ public:
 	
 };
 //************************************************************
+// Class TNBranch
+//************************************************************
+class TNBranch : public TNbase, public ImageInfo
+{
+protected:
+	enum flags{
+		TEX=0x01,
+		COL=0x02,
+		SHAPE=0x04,
+		SHADOW=0x08,
+		RANDOMIZE=0x10,
+		ENABLES=TEX|COL|SHAPE|SHADOW|RANDOMIZE,
+		LEAFS=0x01,
+		BRANCHES=0x02,
+		LINE_MODE=0x00,
+		RECT_MODE=0x01,
+		LEAF_MODE=0x02,
+		SPLINE_MODE=0x03,
+		THREED_MODE=0x04,
+		SHADER_MODE=LINE_MODE|RECT_MODE|LEAF_MODE|SPLINE_MODE|THREED_MODE,
+		POLY_FILL=0x08,
+		POLY_LINE=0x10,
+		POLY_MODE=POLY_FILL|POLY_LINE
+
+	};
+public:
+	Array<TNode *>arglist;
+	static int collect_mode;
+
+	int maxlvl;
+	int level;
+	int min_level;
+	int max_level;
+	int enables;
+	int branch_id;
+	int max_splits;
+	int first_bias;
+	double length; // trunk and main level
+	double width; // trunk and main level	
+	double randomness;
+	double divergence;
+	double flatness;
+	double length_taper;
+	double width_taper;
+	double offset;
+	double bias;
+	double curvature;
+	double density;
+	unsigned int texture_id;
+	int texid;
+	int color_flags;
+	bool alpha_texture;
+
+	TNplant *root;
+	TNcolor *color;
+	int instance;
+
+	char colorexpr[256];
+		
+	TNBranch(TNode *l, TNode *r, TNode *b);
+
+    void getArgs();
+
+	virtual int typeValue()	  { return ID_BRANCH;}
+	virtual char *typeName () { return "branch";}
+	virtual char *symbol()	  { return "Branch";}
+    
+	static void setCollectLeafs(bool b){BIT_SET(collect_mode,flags::LEAFS,b);}
+	static void setCollectBranches(bool b){BIT_SET(collect_mode,flags::BRANCHES,b);}
+	static bool isCollectLeafsSet(){return BIT_TST(collect_mode,flags::LEAFS);}
+	static bool isCollectBranchesSet(){return BIT_TST(collect_mode,flags::BRANCHES);}
+	
+	static int polyMode(int m) { return m&POLY_LINE?GL_LINE:GL_FILL;}
+	static int shaderMode(int m) { return m&SHADER_MODE;}
+	void setTexEnabled(bool b){BIT_SET(enables,flags::TEX,b);setColorFlags();}
+	void setColEnabled(bool b){BIT_SET(enables,flags::COL,b);setColorFlags();}
+	void setShapeEnabled(bool b){BIT_SET(enables,flags::SHAPE,b);setColorFlags();}
+	void setShadowEnabled(bool b){BIT_SET(enables,flags::SHADOW,b);}
+	void setRandEnabled(bool b){BIT_SET(enables,flags::RANDOMIZE,b);}
+	bool isColEnabled() { return BIT_TST(enables,flags::COL);}
+	bool isTexEnabled() { return BIT_TST(enables,flags::TEX);}
+	bool isShapeEnabled() { return BIT_TST(enables,flags::SHAPE);}
+	bool isShadowEnabled() { return BIT_TST(enables,flags::SHADOW);}
+	bool isRandEnabled() { return BIT_TST(enables,flags::RANDOMIZE);}
+	static bool isShadowEnabled(int t) { return BIT_TST(t,flags::SHADOW);}
+	static bool isColEnabled(int t) { return BIT_TST(t,flags::COL);}
+	static bool isTexEnabled(int t) { return BIT_TST(t,flags::TEX);}	
+	bool colValid();
+	bool texValid();
+	void init();
+	virtual void initArgs();
+	void eval();
+	void valueString(char *);
+	void save(FILE*);
+	void saveNode(FILE *f);
+	virtual NodeIF *removeNode();
+	virtual NodeIF *replaceNode(NodeIF *c);
+	virtual bool setProgram();
+	
+	bool isPlantLeaf()   { return typeValue()==ID_LEAF;}
+	bool isPlantBranch() { return typeValue()==ID_BRANCH;}
+	void getTextureName();
+	void getTextureImage();
+	void getColorString();
+	void setColorExpr(char *s);
+	char *getColorExpr(){return colorexpr;}
+	void setColorFromExpr();
+	void setColor(bool b);
+	void setColor(TNcolor*);
+	TNcolor* getColor();
+	void setColorFlags();
+	void invalidateTexture();
+	void setPlantImage(char *);
+	double evalArg(int id, double d);
+	
+	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
+	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
+	virtual Point setVector(Point vec, Point start, int lvl);
+	void getRoot();
+	Point spline(double t, Point p0, Point p1, Point p2);
+	int getChildren(LinkedList<NodeIF*>&l);
+	virtual bool randomize();
+	virtual void propertyString(char *s);
+	virtual bool canGenerate()  { return false;}
+};
+
+class TNLeaf : public TNBranch
+{
+public:
+	
+	TNLeaf(TNode *l, TNode *r, TNode *b);
+	
+	static int left_side;
+	double phase;
+
+	int typeValue()		{ return ID_LEAF;}
+	char *typeName ()	{ return "leaf";}
+	char *symbol()		{ return "Leaf";}
+	
+	Point setVector(Point vec, Point start, int lvl);
+
+};
+
+//************************************************************
 // Class TNcraters
 //************************************************************
 class TNcraters : public TNplacements
