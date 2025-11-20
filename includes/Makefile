@@ -281,6 +281,7 @@ depend:;
 ../Debug/MapClass.o: MapClass.h MapLink.h MapNode.h NodeData.h AdaptOptions.h
 ../Debug/MapClass.o: RenderOptions.h Effects.h Raster.h GLSLMgr.h
 ../Debug/MapClass.o: GLSLProgram.h GLSLVars.h FrameBuffer.h FileUtil.h
+../Debug/MapClass.o: Placements.h Sprites.h Plants.h 
 ../Debug/MapLink.o: MapLink.h MapNode.h NodeData.h GLheaders.h TerrainData.h
 ../Debug/MapLink.o: NoiseClass.h PointClass.h defs.h ListClass.h ColorClass.h
 ../Debug/MapLink.o: NodeIF.h TextureClass.h GLSupport.h GLglue.h ImageMgr.h
@@ -381,7 +382,8 @@ depend:;
 ../Debug/SceneClass.o: Octree.h FileUtil.h FrameClass.h TerrainClass.h
 ../Debug/SceneClass.o: KeyIF.h GLSLMgr.h GLSLProgram.h GLSLVars.h
 ../Debug/SceneClass.o: FrameBuffer.h
-../Debug/Sprites.o: Sprites.h Placements.h
+../Debug/Sprites.o: Sprites.h Placements.h TerrainClass.h
+../Debug/Plants.o: Plants.h Placements.h TerrainClass.h
 ../Debug/TerrainClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Debug/TerrainClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Debug/TerrainClass.o: TerrainClass.h TerrainMgr.h TextureClass.h
@@ -541,7 +543,7 @@ depend:;
 ../Release/MapClass.o: MapClass.h MapLink.h MapNode.h NodeData.h
 ../Release/MapClass.o: AdaptOptions.h RenderOptions.h Effects.h Raster.h
 ../Release/MapClass.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
-../Release/MapClass.o: FileUtil.h
+../Release/MapClass.o: FileUtil.h Placements.h Sprites.h Plants.h 
 ../Release/MapLink.o: MapLink.h MapNode.h NodeData.h GLheaders.h
 ../Release/MapLink.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/MapLink.o: ListClass.h ColorClass.h NodeIF.h TextureClass.h
@@ -605,7 +607,7 @@ depend:;
 ../Release/Placements.o: Util.h SceneClass.h LightClass.h ObjectClass.h
 ../Release/Placements.o: OrbitalClass.h Renderer.h ViewClass.h MatrixClass.h
 ../Release/Placements.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h
-../Release/Plants.o: Plants.h Placements.h
+../Release/Plants.o: Plants.h Placements.h TerrainClass.h
 ../Release/PointClass.o: PointClass.h defs.h
 ../Release/PreviewRenderer.o: PreviewRenderer.h LightClass.h ColorClass.h
 ../Release/PreviewRenderer.o: GLheaders.h PointClass.h defs.h ListClass.h
@@ -648,7 +650,7 @@ depend:;
 ../Release/SceneClass.o: Effects.h Raster.h Octree.h FileUtil.h FrameClass.h
 ../Release/SceneClass.o: TerrainClass.h KeyIF.h GLSLMgr.h GLSLProgram.h
 ../Release/SceneClass.o: GLSLVars.h FrameBuffer.h
-../Release/Sprites.o: ./Sprites.h Placements.h
+../Release/Sprites.o: ./Sprites.h Placements.h TerrainClass.h
 ../Release/TerrainClass.o: TerrainData.h NoiseClass.h PointClass.h defs.h
 ../Release/TerrainClass.o: ListClass.h ColorClass.h GLheaders.h NodeIF.h
 ../Release/TerrainClass.o: TerrainClass.h TerrainMgr.h TextureClass.h

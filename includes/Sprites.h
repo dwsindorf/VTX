@@ -78,7 +78,11 @@ public:
 class SpriteObjMgr : public PlaceObjMgr
 {
 public:
+	static ValueList<PlaceData*> data;
 	bool setProgram();
+	void free() { data.free();}
+	int placements(){ return data.size;}
+	void collect();
 };
 
 class Sprite : public PlaceObj
@@ -89,12 +93,20 @@ public:
 	uint rows;
 	uint cols;
 
+	static ValueList<PlaceData*> data;
+
 	Sprite(Image *i, int l, TNode *e);
 	
 	SpriteMgr *mgr();// { return ((TNsprite*)expr)->mgr;}
 	void eval();
 	bool setProgram();
+	bool initProgram();
 	void set_image(Image *, int r, int c);
+	static void reset();
+	static void collect(Array<PlaceObj*> &data);
+	static void eval(Array<PlaceObj*> &data);
+	
+	void collect();
 };
 #endif
 

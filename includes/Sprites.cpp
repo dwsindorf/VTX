@@ -178,6 +178,20 @@ SpriteMgr *Sprite::mgr() {
 	return ((TNsprite*)expr)->mgr;
 }
 
+ValueList<PlaceData*> SpriteObjMgr::data(50000,10000);
+
+
+void SpriteObjMgr::collect(){
+	data.free();
+	for(int i=0;i<objs.size;i++){
+		PlaceObj *obj=objs[i];
+		obj->mgr()->collect(data);
+	}
+	if(data.size)
+		data.sort();
+
+}
+
 bool SpriteObjMgr::setProgram(){
 	if(!data.size || !objs.size)
 		return false;
@@ -335,7 +349,7 @@ SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 }
 
 //===================== Sprite ==============================
-//ValueList<PlaceData*> Sprite::data;
+ValueList<PlaceData*> Sprite::data;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
@@ -351,6 +365,11 @@ Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 	//valid=false;
 }
 
+void Sprite::reset()
+{ 
+	cout<<"Sprite::reset()"<<endl;
+	data.free();
+}
 
 void Sprite::set_image(Image *i, int r, int c){
 	image=i;
@@ -403,6 +422,9 @@ bool Sprite::setProgram(){
 	vars.loadVars();
 
 	return true;
+}
+bool Sprite::initProgram(){
+	return false;
 }
 
 //===================== TNsprite ==============================
@@ -506,22 +528,33 @@ void TNsprite::eval()
 		int layer=0;
 		bool inlayer=inLayer();
 		if(inlayer){
-			instance=Td.tp->Sprites.size();
+#ifdef TEST_SPRITES_OBJMGR
+			instance=Td.tp->Sprites.objects();
+#else
+			instance=Td.tp->sprites.objects;
+#endif
 			layer=Td.tp->type();
 		}
 		else
-			instance=Td.Sprites.size();
+			instance=Td.sprites.size;
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(sprite){
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
+#ifdef TEST_SPRITES_OBJMGR
 		if(inlayer)
 			Td.tp->Sprites.addObject(sprite);
 		else
 			Td.Sprites.addObject(sprite);
-		cout<<"Sprites.size="<<Td.Sprites.size()<<endl;
+#else
+		if(inlayer)
+			Td.tp->add_sprite(sprite);
+		else
+			Td.add_sprite(sprite);
+#endif 
+		cout<<"Sprites.size="<<Td.Sprites.objects()<<endl;
 		mgr->setHashcode();
 		if(right)
 			right->eval();

@@ -82,12 +82,11 @@ public:
 	PlantMgr(int);
 
 	void init();
-	//void eval();
 
-	//static bool setProgram(Array<PlaceObj*> &objs);
-	//static void render(Array<PlaceObj*> &objs);
-	//static void render_zvals(Array<PlaceObj*> &objs);
-	//static void render_shadows(Array<PlaceObj*> &objs);
+	static bool setProgram(Array<PlaceObj*> &objs);
+	static void render(Array<PlaceObj*> &objs);
+	static void render_zvals(Array<PlaceObj*> &objs);
+	static void render_shadows(Array<PlaceObj*> &objs);
 	static void clearStats();
 };
 
@@ -95,7 +94,7 @@ public:
 class Plant : public PlaceObj
 {
 public:
-	//static ValueList<PlaceData*> data;
+	static ValueList<PlaceData*> data;
 	ValueList<BranchData*> branches;
 	ValueList<BranchData*> leafs;
 
@@ -118,19 +117,20 @@ public:
 	void clearStats();
 	void showStats();
 	
-//	static void reset();
-//	static void collect(Array<PlaceObj*> &data);
-//	static void eval(Array<PlaceObj*> &data);
-//	
-//	static void freeLeafs(Array<PlaceObj*> &data);
-//	static void freeBranches(Array<PlaceObj*> &data);
-//	static void renderBranches(Array<PlaceObj*> &data);
-//	static void renderLeafs(Array<PlaceObj*> &data);	
+	static void reset();
+	static void collect(Array<PlaceObj*> &data);
+	static void eval(Array<PlaceObj*> &data);
+	
+	static void freeLeafs(Array<PlaceObj*> &data);
+	static void freeBranches(Array<PlaceObj*> &data);
+	static void renderBranches(Array<PlaceObj*> &data);
+	static void renderLeafs(Array<PlaceObj*> &data);	
 };
 
 class PlantObjMgr : public PlaceObjMgr
 {
 protected:
+	static ValueList<PlaceData*> data;
 	void freeLeafs();
 	void freeBranches();
 	void renderBranches();
@@ -141,6 +141,9 @@ public:
 	void render();
 	void render_zvals();
 	void render_shadows();
+	void collect();
+	void free() { data.free();}
+	int placements(){ return data.size;}
 
 };
 //************************************************************

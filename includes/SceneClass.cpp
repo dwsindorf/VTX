@@ -996,8 +996,10 @@ void Scene::rebuild_all(){
 	Render.invalidate_textures();
 	Adapt.set_maxcycles(50);
 	GLSLMgr::clearTexs();
-	//Plant::reset();
-	//Sprite::reset();
+	//TerrainData::reset();
+	Plant::reset();
+	Sprite::reset();
+	//Td.Sprites.objs.reset();
 	Noise::resetStats();
 	PlacementMgr::free_htable();
 	Renderer::rebuild_all();

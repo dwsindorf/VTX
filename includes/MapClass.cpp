@@ -697,11 +697,17 @@ void Map::shadow_normals()
 	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
-	    tp->Plants.render_shadows();
-	    //PlantMgr::render_shadows(tp->plants);
+#ifdef TEST_PLANTS_OBJMGR
+		tp->Plants.render_shadows();
+#else
+	    PlantMgr::render_shadows(tp->plants);
+#endif
 	}
+#ifdef TEST_PLANTS_OBJMGR
 	Td.Plants.render_shadows();
-	//PlantMgr::render_shadows(Td.plants);
+#else
+	PlantMgr::render_shadows(Td.plants);
+#endif
 
 	Render.popmode();
 }
@@ -762,15 +768,17 @@ void Map::render_zvals()
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);	    
 	    npole->render_vertex();
 		if(Render.draw_szvals())
-#ifdef TEST_PLACEMGR
+#ifdef TEST_PLANTS_OBJMGR
+			//cout<<"render_zvals OBJS:"<<tp->Plants.objects()<<" DATA:"<<tp->Plants.placements()<<" TID:"<<tid<<endl;
 			tp->Plants.render_zvals();
 #else
+			//cout<<" render_zvals OBJS:"<<tp->plants.size<<" DATA:"<<Plant::data.size<<" TID:"<<tid<<endl;
 			PlantMgr::render_zvals(tp->plants);
 #endif
 	}
 	if(Render.draw_szvals())
-#ifdef TEST_PLACEMGR
-		Td.Plants.render_zvals();
+#ifdef TEST_PLANTS_OBJMGR
+        Td.Plants.render_zvals();
 #else
 		PlantMgr::render_zvals(Td.plants);
 #endif
@@ -1243,13 +1251,27 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
-			render_objects(tp->Sprites);
+#ifdef TEST_PLANTS_OBJMGR
 			render_objects(tp->Plants);
-			//render_plants(tp->plants);
+#else
+			render_plants(tp->plants);
+#endif			
+#ifdef TEST_SPRITES_OBJMGR
+			render_objects(tp->Sprites);
+#else
+			render_sprites(tp->sprites);
+#endif
 		}
-		//render_plants(Td.plants);
-		render_objects(Td.Sprites);
+#ifdef TEST_PLANTS_OBJMGR
 		render_objects(Td.Plants);
+#else
+		render_plants(Td.plants);
+#endif
+#ifdef TEST_SPRITES_OBJMGR
+		render_objects(Td.Sprites);
+#else
+		render_sprites(Td.sprites);	
+#endif
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
     bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
@@ -1298,17 +1320,17 @@ void Map::render_shaded()
 
 void  Map::render_objects(PlaceObjMgr &mgr){
 	//cout<<"OBJS:"<<mgr.objs.size<<endl;
-	if(!mgr.objs.size || TheScene->select_mode() || TheScene->viewobj!=object)
+	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();
 	int n=get_mapnodes();
-	int sid=mgr.objs[0]->layer;
+	int sid=mgr.layer();
 	
-	cout<<"SID:"<<sid<<endl;
+	cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
 	double d0=clock();
 	CurrentScope->set_spass();
 	
-	mgr.reset();
+	mgr.free();
 	PlacementMgr::free_htable();
 	node_data_list.ss();
 	double d1=clock();
@@ -1324,10 +1346,10 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	}
 	double d2=clock();
 	mgr.collect();
-	cout<<"DATA:"<<mgr.data.size<<endl;
+	cout<<"DATA:"<<mgr.placements()<<endl;
 	double d3=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<" TID:"<<Td.tp->id<<" Objects n:"<<mgr.objs.size<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
+	cout<<" TID:"<<Td.tp->id<<" Objects n:"<<mgr.objects()<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
 			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
@@ -1335,14 +1357,10 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
 			<<" ms"<<endl;
 #endif
-
-mgr.setProgram();
-//	if(mgr.setProgram())
-//		mgr.render();
-			
+	if(mgr.setProgram())
+		mgr.render();			
 	CurrentScope->set_passmode(mode);
 }
-/*
 void  Map::render_plants(Array<PlaceObj*>&plants){
 	if(!plants.size || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
@@ -1380,7 +1398,7 @@ void  Map::render_plants(Array<PlaceObj*>&plants){
 		PlantMgr::render(plants);
 	CurrentScope->set_passmode(mode);
 }
-*/
+
 //-------------------------------------------------------------
 // Map::render_water()	render water (surface mode)
 //-------------------------------------------------------------

@@ -15,7 +15,8 @@
 #define TEST_CRATERS
 #define TEST_ROCKS
 
-#define TEST_PLACEMGR
+#define TEST_SPRITES_OBJMGR
+#define TEST_PLANTS_OBJMGR
 
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
@@ -95,10 +96,10 @@ class PlaceObj
 protected:
 	int    id;
 public:
-//    static void collect(Array<PlaceObj*> &objs);
-//    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
-//    static void reset(ValueList<PlaceData*> &data){ data.free();}
-//	static void eval(Array<PlaceObj*> &objs);
+    static void collect(Array<PlaceObj*> &objs);
+    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
+    static void reset(ValueList<PlaceData*> &data){ data.free();}
+	static void eval(Array<PlaceObj*> &objs);
 
 	int    type;
 	int    layer;
@@ -122,19 +123,20 @@ public:
 class PlaceObjMgr
 {
 protected:
-public:
-	ValueList<PlaceData*> data;
 	Array<PlaceObj*> objs;
+public:
 	
 	PlaceObjMgr();
-	~PlaceObjMgr(){ data.free();}
-	virtual void collect();
+	virtual void collect(){}
 	virtual void eval();
-	virtual void reset();
+	virtual void reset()  { objs.reset();}
+	virtual void free() {}
 	virtual bool setProgram(){return false;}
 	virtual void render() {}
+	virtual int layer() { return objs.size>0?objs[0]->layer:0;}
+	virtual int placements() { return 0;}
 	
-	int size() { return objs.size;}
+	int objects() { return objs.size;}
 	
 	void addObject(PlaceObj *obj) { objs.add(obj);}
 	

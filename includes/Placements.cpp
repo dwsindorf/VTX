@@ -1000,10 +1000,10 @@ PlaceData::PlaceData(Placement *pnt){
 //************************************************************
 // PlaceObjMgr class
 //************************************************************
-
+//ValueList<PlaceData*> PlaceObjMgr::data(50000,10000);
 PlaceObjMgr::PlaceObjMgr(){
 	objs.reset();
-	data.reset();
+	//data.reset();
 }
 void PlaceObjMgr::eval(){
 	int mode=CurrentScope->passmode();
@@ -1013,20 +1013,18 @@ void PlaceObjMgr::eval(){
 	CurrentScope->set_passmode(mode);
 }
 
-void PlaceObjMgr::collect(){
-	data.free();
-	for(int i=0;i<objs.size;i++){
-		PlaceObj *obj=objs[i];
-		obj->mgr()->collect(data);
-	}
-	if(data.size)
-		data.sort();
+//void PlaceObjMgr::collect(){
+//	data.free();
+//	for(int i=0;i<objs.size;i++){
+//		PlaceObj *obj=objs[i];
+//		obj->mgr()->collect(data);
+//	}
+//	if(data.size)
+//		data.sort();
+//
+//}
 
-}
 
-void PlaceObjMgr::reset() { 
-	data.free();
-}
 //************************************************************
 // PlaceObj class
 //************************************************************
@@ -1045,25 +1043,25 @@ void PlaceObj::eval()
 	expr->eval();
 	CurrentScope->set_passmode(mode);
 }
-//
-//void PlaceObj::eval(Array<PlaceObj*> &objs){
-//	int mode=CurrentScope->passmode();
-//	for(int i=0;i<objs.size;i++){
-//		objs[i]->expr->eval();
-//	}
-//	CurrentScope->set_passmode(mode);
-//}
-//
-//void PlaceObj::collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data)
-//{
-//	data.free();
-//	for(int i=0;i<objs.size;i++){
-//		PlaceObj *obj=objs[i];
-//		obj->mgr()->collect(data);
-//	}
-//	if(data.size)
-//		data.sort();
-//}
+
+void PlaceObj::eval(Array<PlaceObj*> &objs){
+	int mode=CurrentScope->passmode();
+	for(int i=0;i<objs.size;i++){
+		objs[i]->expr->eval();
+	}
+	CurrentScope->set_passmode(mode);
+}
+
+void PlaceObj::collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data)
+{
+	data.free();
+	for(int i=0;i<objs.size;i++){
+		PlaceObj *obj=objs[i];
+		obj->mgr()->collect(data);
+	}
+	if(data.size)
+		data.sort();
+}
 
 //************************************************************
 // TNplacements class

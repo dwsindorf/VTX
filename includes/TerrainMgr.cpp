@@ -1611,15 +1611,26 @@ void TerrainMgr::init()
 	set_eval_mode(1);
 }
 //-------------------------------------------------------------
+// TerrainMgr::reset() 	clear
+//-------------------------------------------------------------
+void TerrainMgr::reset(){
+	//Sprite::reset();
+	Td.Sprites.reset();
+	Td.Plants.reset();
+
+}
+//-------------------------------------------------------------
 // TerrainMgr::init_render() 		evaluate nodes
 //-------------------------------------------------------------
 void TerrainMgr::init_render()
 {
 	CurrentScope=this;
 	
-	Td.plants.reset();
 	Td.sprites.reset();
 	Td.Sprites.reset();
+	
+	Td.plants.reset();
+	Td.Plants.reset();
 
 	Td.init();
 	Td.properties.free();
