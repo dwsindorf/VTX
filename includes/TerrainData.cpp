@@ -114,15 +114,13 @@ double TerrainData::depth=0;
 double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
-Array<PlaceObj*> TerrainData::plants;
-Array<PlaceObj*> TerrainData::sprites;
+//Array<PlaceObj*> TerrainData::plants;
 
 SpriteObjMgr TerrainData::Sprites;
 PlantObjMgr TerrainData::Plants;
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
-//SpriteObjMgr TerrainProperties::Sprites;
 
 //-------------------------------------------------------------
 //TerrainData::rectangular() map point on 1,1,1, cube
@@ -137,14 +135,10 @@ Point	TerrainData::rectangular(double t, double p)
 	pt=pt.rectangular();
 	return (pt+0.5);
 }
-void TerrainData::add_sprite(Sprite *t)
-{
-	sprites.add(t);
-}
-void TerrainData::add_plant(Plant *t)
-{
-	plants.add(t);
-}
+//void TerrainData::add_plant(Plant *t)
+//{
+//	plants.add(t);
+//}
 void TerrainData::add_texture(Texture *t)
 {
 	// add new texture to last property only
@@ -390,13 +384,13 @@ void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
 	rocks.reset();
-	sprites.reset();
+	//sprites.reset();
 	plants.reset();
 }
 
-void TerrainProperties::add_sprite(Sprite *s){
-	sprites.add(s);
-}
+//void TerrainProperties::add_sprite(Sprite *s){
+//	sprites.add(s);
+//}
 void TerrainProperties::add_plant(Plant *s){
 	plants.add(s);
 }

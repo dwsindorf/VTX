@@ -149,7 +149,7 @@ public:
 
 	static Array<TerrainProperties*>properties;
 	static Array<PlaceObj*> plants;
-	static Array<PlaceObj*> sprites;
+	//static Array<PlaceObj*> sprites;
 	
 	static SpriteObjMgr Sprites;
 	static PlantObjMgr Plants;
@@ -222,8 +222,8 @@ public:
 	void next_id()          { set_id(tids++);}
 	TerrainProperties		*add_id();
 	static void add_texture(Texture *);
-	static void add_sprite(Sprite *);
-	static void add_plant(Plant *);
+	//static void add_sprite(Sprite *);
+	//static void add_plant(Plant *);
 	static void add_fractal(TNfractal *);
 
 	static void add_TNnoise(TNnoise *);

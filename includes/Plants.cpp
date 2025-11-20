@@ -624,22 +624,6 @@ void PlantMgr::clearStats(){
 	}
 }
 
-void PlantMgr::render_zvals(Array<PlaceObj*> &objs){
-	if(objs.size==0)
-		return;
-	if(!PlantMgr::threed)
-		return;
-	PlantMgr::shadow_mode=true;
-	GLSLMgr::input_type=GL_LINES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-
-	Raster.setProgram(Raster.PLANT_ZVALS);
-
-	shadow_count++;
-	render(objs);
-
-	PlantMgr::shadow_mode=false;
-}
 void PlantObjMgr::render_zvals(){
 	if(objs.size==0)
 		return;
@@ -656,23 +640,6 @@ void PlantObjMgr::render_zvals(){
 
 	PlantMgr::shadow_mode=false;
 }
-
-void PlantMgr::render_shadows(Array<PlaceObj*> &objs){
-	if(objs.size==0)
-		return;
-	if(!PlantMgr::threed)
-		return;
-	PlantMgr::shadow_mode=true;
-	GLSLMgr::input_type=GL_LINES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-	
-	Raster.setProgram(Raster.PLANT_SHADOWS);
-	PlantMgr::shadow_count++;
-
-	render(objs);
-	shadow_mode=false;
-
-}
 void PlantObjMgr::render_shadows(){
 	if(objs.size==0)
 		return;
@@ -688,203 +655,6 @@ void PlantObjMgr::render_shadows(){
 	render();
 	PlantMgr::shadow_mode=false;
 
-}
-
-bool PlantMgr::setProgram(Array<PlaceObj*> &objs){
-	//cout<<"PlantMgr::setProgram "<<Raster.shadows()<<endl;
-	extern int test7;
-	shadow_count=0;
-	if(shadow_mode)
-		return false;
-	GLSLMgr::input_type=GL_LINES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-
-	char defs[1024]="";
-
-	PlantMgr::textures=0;
-	
-	for(int i=0;i<objs.size;i++){
-		objs[i]->setProgram();
-	}
-
-	branch_nodes=0;
-	trunk_nodes=0;
-	line_nodes=0;
-	
-	double twilite_min=-0.2; // full night
-	double twilite_max=0.2;  // full day
-	
-	if(test7)
-		sprintf(defs,"#define TEST3D\n");
-	if(Render.textures()){
-		sprintf(defs+strlen(defs),"#define NTEXS %d\n",PlantMgr::textures);
-		if(PlantMgr::textures>0 && Render.bumps())
-			sprintf(defs+strlen(defs),"#define BUMPS\n",PlantMgr::textures);
-	}
-	else
-		sprintf(defs+strlen(defs),"#define NTEXS 0\n");
-		
-	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
-	if(Render.haze())
-		sprintf(defs+strlen(defs),"#define HAZE\n");
-
-    bool do_shadows=Raster.shadows();
-	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
-		sprintf(defs+strlen(defs),"#define SHADOWS\n");
-	if(TheScene->light_view() || TheScene->test_view())
-		sprintf(defs+strlen(defs),"#define TEST_VIEW\n");
-	GLSLMgr::setDefString(defs);
-
-	
-	if(threed)
-		GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants3D.geom");
-	else
-		GLSLMgr::loadProgram("plants.gs.vert","plants.frag","plants2D.geom");
-		
-	GLhandleARB program=GLSLMgr::programHandle();
-	if(!program){
-		cout<<"PlantMgr::setProgram - failed to load program"<<endl;
-		return false;
-	}
-	
-	char str[MAXSTR];
-
-	for(int i=0;i<PlantMgr::textures;i++){
-		sprintf(str,"samplers2d[%d]",i);
-		glUniform1iARB(glGetUniformLocationARB(program,str),i);
-	}
-
-	GLSLVarMgr vars;
-	
-	Planetoid *orb=(Planetoid*)TheScene->viewobj;
-	
-	Color diffuse=orb->diffuse;
-	Color ambient=orb->ambient;
-	Color shadow=orb->shadow_color;
-	Color haze=Raster.haze_color;
-		
-	double shadow_intensity=orb->shadow_intensity;
-
-	
-	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
-	vars.newFloatVec("Ambient",ambient.red(),ambient.green(),ambient.blue(),ambient.alpha());
-	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow_intensity);
-	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
-	vars.newFloatVar("haze_zfar",Raster.haze_zfar);
-	vars.newFloatVar("haze_grad",Raster.haze_grad);
-	vars.newFloatVar("haze_ampl",Raster.haze_hf);
-	vars.newFloatVar("bump_delta",1e-3);
-	vars.newFloatVar("bump_ampl",0.025);
-	vars.newFloatVar("twilite_min",twilite_min);
-	vars.newFloatVar("twilite_max",twilite_max);
-
-	vars.newBoolVar("lighting",Render.lighting());
-	
-	double zn=TheScene->znear;
-	double zf=TheScene->zfar;
-	double ws1=1/zn;
-	double ws2=(zn-zf)/zf/zn;
-
-	vars.newFloatVar("ws1",ws1);
-	vars.newFloatVar("ws2",ws2);
-
-	vars.setProgram(program);
-	
-	vars.loadVars();
-
-	GLSLMgr::setProgram();
-	GLSLMgr::loadVars();
-		
-	int l=randval;
-	randval=l;
-	return true;
-}
-void PlantMgr::render(Array<PlaceObj*> &objs){
-	oldmode=0;
-	int l=randval;
-	int n=Plant::data.size;
-
-	if(n==0)
-		return;
-	nocache=PlantMgr::no_cache;
-	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
-	if(update_needed && shadow_mode)
-		update_needed=false;
-	TNBranch::setCollectLeafs(true);
-	TNBranch::setCollectBranches(!nocache);
-	
-	glLineWidth(1);
-	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	double t0=clock();
-	double t1;
-	double t2;
-	double t3;
-	
-	glEnable(GL_BLEND);
-	int start=show_one?0:n-1;
-	if(update_needed){
-		Plant::freeLeafs(objs);
-		Plant::freeBranches(objs);
-		clearStats();
-
-		t1=clock();
-
-		glDisable(GL_CULL_FACE);
-		PlantMgr::stats[PLANT_TYPES]=objs.size;
-
-		for(int i=start;i>=0;i--){ // Farthest to closest
-			PlaceData *s=Plant::data[i];
-			int id=s->get_id();
-			PlantMgr *pmgr=(PlantMgr*)s->mgr;
-			TNplant *plant=pmgr->plant;
-	
-			plant->size=s->radius; // placement size
-			plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
-			plant->pntsize=s->pts;
-			plant->distance=s->dist;
-			
-			randval=s->rval;
-			plant->seed=URAND;
-
-			plant->emit(); // render or collect
-		}
-		glEnable(GL_CULL_FACE);
-		double d1=clock();
-		double te=(d1-t0)/CLOCKS_PER_SEC;
-		render_time=te;
-		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;
-		
-	}
-	else {
-		PlaceData *s=Plant::data[0];
-		PlantMgr *pmgr=(PlantMgr*)s->mgr;
-		TNplant *plant=pmgr->plant;
-		plant->setNormal();
-	}
-		
-	t2=clock(); // total
-
-	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
-		if(!shadow_mode)
-			setProgram(objs);
-		glDisable(GL_CULL_FACE);
-
-		if(TNBranch::isCollectBranchesSet()){
-			Plant::renderBranches(objs);
-		}
-		if(TNBranch::isCollectLeafsSet()){
-			Plant::renderLeafs(objs);
-		}
-		glEnable(GL_CULL_FACE);
-	}
-
-	t3=clock(); // total
-	
-	randval=l;
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	update_needed=false;
 }
 
 //-------------------------------------------------------------
@@ -1087,36 +857,21 @@ void TNplant::eval()
 		int layer=0;
 		bool inlayer=inLayer();
 		if(inlayer){
-#ifdef TEST_PLANTS_OBJMGR
 			instance=Td.tp->Plants.objects();
-#else
-			instance=Td.tp->plants.size;
-#endif
 			layer=Td.tp->type();
 		}
 		else
-#ifdef TEST_PLANTS_OBJMGR
 			instance=Td.Plants.objects();
-#else
-			instance=Td.plants.size;
-#endif
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(plant){
 			plant->set_id(instance);
 			plant->layer=layer;
 		}
-#ifdef TEST_PLANTS_OBJMGR
 		if(inlayer)
 			Td.tp->Plants.addObject(plant);
 		else
 			Td.Plants.addObject(plant);
-#else
-		if(inlayer)
-			Td.tp->add_plant(plant);
-		else
-			Td.add_plant(plant);
-#endif
 		mgr->setHashcode();
 		if(right)
 			right->eval();
@@ -1346,7 +1101,7 @@ NodeIF *TNplant::removeNode(){
 		else
 			p->replaceChild(this,next);
 	}
-	Td.plants.remove(plant);
+	//Td.plants.remove(plant);
 	plant=0;
 	return this;
 }

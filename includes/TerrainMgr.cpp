@@ -1626,10 +1626,10 @@ void TerrainMgr::init_render()
 {
 	CurrentScope=this;
 	
-	Td.sprites.reset();
+	//Td.sprites.reset();
 	Td.Sprites.reset();
 	
-	Td.plants.reset();
+	//Td.plants.reset();
 	Td.Plants.reset();
 
 	Td.init();

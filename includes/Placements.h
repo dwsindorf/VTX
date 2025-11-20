@@ -15,7 +15,6 @@
 #define TEST_CRATERS
 #define TEST_ROCKS
 
-#define TEST_SPRITES_OBJMGR
 #define TEST_PLANTS_OBJMGR
 
 //#define DEBUG_PMEM         // turn on for memory usage

@@ -77,8 +77,6 @@ protected:
 	void reset();
 	void reset_texs();
 	void render_texs();
-	void render_sprites(Array<PlaceObj*>&);
-	void render_plants(Array<PlaceObj*>&);
 	void render_bumps();
 	void render_water();
 	void make_triangle_lists();

@@ -528,33 +528,21 @@ void TNsprite::eval()
 		int layer=0;
 		bool inlayer=inLayer();
 		if(inlayer){
-#ifdef TEST_SPRITES_OBJMGR
 			instance=Td.tp->Sprites.objects();
-#else
-			instance=Td.tp->sprites.objects;
-#endif
 			layer=Td.tp->type();
 		}
 		else
-			instance=Td.sprites.size;
+			instance=Td.Sprites.objects();
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(sprite){
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
-#ifdef TEST_SPRITES_OBJMGR
 		if(inlayer)
 			Td.tp->Sprites.addObject(sprite);
 		else
 			Td.Sprites.addObject(sprite);
-#else
-		if(inlayer)
-			Td.tp->add_sprite(sprite);
-		else
-			Td.add_sprite(sprite);
-#endif 
-		cout<<"Sprites.size="<<Td.Sprites.objects()<<endl;
 		mgr->setHashcode();
 		if(right)
 			right->eval();

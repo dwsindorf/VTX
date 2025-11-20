@@ -29,7 +29,6 @@ public:
 		char base[512];
 		File.getBaseDirectory(base);
 	 	sprintf(base_dir,"%s/Textures/Plants/Leaf",base);
-	  	//cout<<"leaf base dir="<<base_dir<<endl;
 	}
 };
 extern LeafImageMgr leaf_mgr;
@@ -83,10 +82,6 @@ public:
 
 	void init();
 
-	static bool setProgram(Array<PlaceObj*> &objs);
-	static void render(Array<PlaceObj*> &objs);
-	static void render_zvals(Array<PlaceObj*> &objs);
-	static void render_shadows(Array<PlaceObj*> &objs);
 	static void clearStats();
 };
 
@@ -113,7 +108,6 @@ public:
 	PlacementMgr *mgr();
 	void eval();
 	bool setProgram();
-	//bool initProgram();
 	void clearStats();
 	void showStats();
 	
