@@ -89,7 +89,6 @@ public:
 class Plant : public PlaceObj
 {
 public:
-	static ValueList<PlaceData*> data;
 	ValueList<BranchData*> branches;
 	ValueList<BranchData*> leafs;
 
@@ -112,13 +111,6 @@ public:
 	void showStats();
 	
 	static void reset();
-	static void collect(Array<PlaceObj*> &data);
-	static void eval(Array<PlaceObj*> &data);
-	
-	static void freeLeafs(Array<PlaceObj*> &data);
-	static void freeBranches(Array<PlaceObj*> &data);
-	static void renderBranches(Array<PlaceObj*> &data);
-	static void renderLeafs(Array<PlaceObj*> &data);	
 };
 
 class PlantObjMgr : public PlaceObjMgr
@@ -130,7 +122,6 @@ protected:
 	void renderBranches();
 	void renderLeafs();
 public:
-
 	bool setProgram();
 	void render();
 	void render_zvals();

@@ -667,7 +667,7 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 }
 
 //===================== Plant ==============================
-ValueList<PlaceData*> Plant::data(50000,10000);
+//ValueList<PlaceData*> Plant::data(50000,10000);
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
@@ -676,46 +676,46 @@ Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 	sorted=false;
 }
 
-void Plant::reset()
-{
-	cout<<"Plant::reset()"<<endl;
-	data.free();
-	PlantMgr::textures=0;
-}
-
+//void Plant::reset()
+//{
+//	cout<<"Plant::reset()"<<endl;
+//	data.free();
+//	PlantMgr::textures=0;
+//}
+//
 //-------------------------------------------------------------
 // Plant::collect() collect valid plant points
 //-------------------------------------------------------------
-void Plant::collect(Array<PlaceObj*> &plants){
-	double d0=clock();
-	PlaceObj::collect(plants,data);
-	double d1=clock();
-	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-}
-
-void Plant::eval(Array<PlaceObj*> &objs){
-	PlaceObj::eval(objs);
-}
-void Plant::freeLeafs(Array<PlaceObj*> &data){
-	for (int i=0;i<data.size;i++){
-		((Plant*)data[i])->freeLeafs();
-	}
-}
-void Plant::freeBranches(Array<PlaceObj*> &data){
-	for (int i=0;i<data.size;i++){
-		((Plant*)data[i])->freeBranches();
-	}
-}
-void Plant::renderBranches(Array<PlaceObj*> &data){
-	for (int i=0;i<data.size;i++){
-		((Plant*)data[i])->renderBranches();
-	}
-}
-void Plant::renderLeafs(Array<PlaceObj*> &data){
-	for (int i=0;i<data.size;i++){
-		((Plant*)data[i])->renderLeafs();
-	}
-}
+//void Plant::collect(Array<PlaceObj*> &plants){
+//	double d0=clock();
+//	PlaceObj::collect(plants,data);
+//	double d1=clock();
+//	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+//}
+//
+//void Plant::eval(Array<PlaceObj*> &objs){
+//	PlaceObj::eval(objs);
+//}
+//void Plant::freeLeafs(Array<PlaceObj*> &data){
+//	for (int i=0;i<data.size;i++){
+//		((Plant*)data[i])->freeLeafs();
+//	}
+//}
+//void Plant::freeBranches(Array<PlaceObj*> &data){
+//	for (int i=0;i<data.size;i++){
+//		((Plant*)data[i])->freeBranches();
+//	}
+//}
+//void Plant::renderBranches(Array<PlaceObj*> &data){
+//	for (int i=0;i<data.size;i++){
+//		((Plant*)data[i])->renderBranches();
+//	}
+//}
+//void Plant::renderLeafs(Array<PlaceObj*> &data){
+//	for (int i=0;i<data.size;i++){
+//		((Plant*)data[i])->renderLeafs();
+//	}
+//}
 
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string

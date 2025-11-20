@@ -349,7 +349,7 @@ SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 }
 
 //===================== Sprite ==============================
-ValueList<PlaceData*> Sprite::data;
+//ValueList<PlaceData*> Sprite::data;
 //-------------------------------------------------------------
 // Sprite::Sprite() Constructor
 //-------------------------------------------------------------
@@ -365,11 +365,11 @@ Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 	//valid=false;
 }
 
-void Sprite::reset()
-{ 
-	cout<<"Sprite::reset()"<<endl;
-	data.free();
-}
+//void Sprite::reset()
+//{ 
+//	cout<<"Sprite::reset()"<<endl;
+//	data.free();
+//}
 
 void Sprite::set_image(Image *i, int r, int c){
 	image=i;

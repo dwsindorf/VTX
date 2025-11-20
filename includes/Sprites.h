@@ -93,7 +93,7 @@ public:
 	uint rows;
 	uint cols;
 
-	static ValueList<PlaceData*> data;
+	//static ValueList<PlaceData*> data;
 
 	Sprite(Image *i, int l, TNode *e);
 	

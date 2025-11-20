@@ -95,28 +95,24 @@ class PlaceObj
 protected:
 	int    id;
 public:
-    static void collect(Array<PlaceObj*> &objs);
-    static void collect(Array<PlaceObj*> &objs,ValueList<PlaceData*> &data);
-    static void reset(ValueList<PlaceData*> &data){ data.free();}
-	static void eval(Array<PlaceObj*> &objs);
 
 	int    type;
 	int    layer;
 	bool   valid;
 	TNode  *expr;
 	PlaceObj(int t, TNode *e);
-    virtual ~PlaceObj(){}
-    virtual void eval();  
+
+    virtual void eval()  {};  
     virtual void print() {};
-    virtual bool setProgram() {};
-    virtual bool initProgram() {}; 
+    virtual bool setProgram() { return false;}
+    virtual bool initProgram() {return false;} 
     virtual PlacementMgr *mgr() { return nullptr;}
     
 	int get_id()				{ return id;}
 	void set_id(int i)			{ id=i;}
 	bool isValid()				{ return valid;}
 	void setIsValid(bool i)		{ valid=i;}
-	//char *name() { return expr->nodeName();}
+
 };
 
 class PlaceObjMgr
