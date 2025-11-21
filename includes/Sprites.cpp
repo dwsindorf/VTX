@@ -526,7 +526,7 @@ void TNsprite::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		int layer=Td.tp->type(); // layer id
+		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Sprites.objects();		
 		mgr->instance=instance;
 		mgr->layer=layer;

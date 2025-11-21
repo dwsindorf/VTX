@@ -752,13 +752,13 @@ void Map::render_zvals()
 	for(tid=ID0;tid<tids;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
+		if(Render.draw_szvals())
+			tp->Plants.render_zvals();
 	    if(!visid(tid))
-	        continue;
+	       continue;
 	    if(Render.draw_szvals())
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);	    
 	    npole->render_vertex();
-		if(Render.draw_szvals())
-			tp->Plants.render_zvals();
 	}
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
@@ -1189,7 +1189,7 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-		//get_mapnodes();
+		get_mapnodes();
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
@@ -1198,9 +1198,13 @@ void Map::render_shaded()
 		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
 #endif
 
-			if(!visid(tid) || !tp)
+			if(!tp)
 				continue;
 			total_tpasses++;
+			render_objects(tp->Plants); // if plants are global all layers get them
+			if(!visid(tid))
+				continue;
+
 			texpass=0;
 			double shine=Td.shine;
 			Color specular=Td.specular;
@@ -1229,7 +1233,7 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
-			render_objects(tp->Plants);
+//			render_objects(tp->Plants);
 			render_objects(tp->Sprites);
 		}
 	}
@@ -1282,7 +1286,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();
-	int n=get_mapnodes();
+	int n=node_data_list.size;
 	int sid=mgr.layer();
 	
 	cout<<"SID:"<<sid<<" TID:"<<tid<<endl;

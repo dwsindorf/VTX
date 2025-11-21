@@ -812,8 +812,10 @@ void TNplant::eval()
 	}
 	SINIT;
 	if(CurrentScope->rpass()){
+		int layer=inLayer()?Td.tp->type():0; // layer id
+		//cout<<"LAYER="<<layer<<endl;
 		int instance=Td.tp->Plants.objects();
-		int layer=Td.tp->type();
+
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(plant){
