@@ -1161,7 +1161,7 @@ void ImageReader::removeAll(char *name)
 {
  	ImageSym *is=images.inlist(name);
 	if(is)
-		images.remove(is); // deletes is
+		images.free(is); // deletes is
 	char path[256];
  	getImagePath(name,path);
    	remove(path);

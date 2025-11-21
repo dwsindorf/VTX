@@ -32,6 +32,8 @@
 // 9) with multiple sprites in file changing the size of one affects the coverage of others
 //   - FIXED need to have separate hash table to each sprite type
 // 10) density test doesn't seem to reject any instances (FIXED)
+// 11) with new PlaceObjMgr code "layer" sprites (rendered first)trash depth buffer for "global" sprites
+//     - need to collect and sort all sprites before rendering (fixed - removed global SpriteObjMgr)
 // TODO
 // 1) change sprite point size with distance (DONE)
 // 2) set ht offset based on sprite actual size and distance (DONE)
@@ -195,7 +197,6 @@ void SpriteObjMgr::collect(){
 bool SpriteObjMgr::setProgram(){
 	if(!data.size || !objs.size)
 		return false;
-	cout<<"OBJS:"<<Td.Sprites.objs.size<<" DATA:"<<Td.Sprites.data.size<<endl;
 	char defs[1024]="";
 	sprintf(defs+strlen(defs),"#define NSPRITES %d\n",objs.size);
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
@@ -508,6 +509,7 @@ void TNsprite::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
+#define TEST
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
@@ -524,25 +526,15 @@ void TNsprite::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		int instance=0;
-		int layer=0;
-		bool inlayer=inLayer();
-		if(inlayer){
-			instance=Td.tp->Sprites.objects();
-			layer=Td.tp->type();
-		}
-		else
-			instance=Td.Sprites.objects();
+		int layer=Td.tp->type(); // layer id
+		int instance=Td.tp->Sprites.objects();		
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(sprite){
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
-		if(inlayer)
-			Td.tp->Sprites.addObject(sprite);
-		else
-			Td.Sprites.addObject(sprite);
+		Td.tp->Sprites.addObject(sprite);
 		mgr->setHashcode();
 		if(right)
 			right->eval();

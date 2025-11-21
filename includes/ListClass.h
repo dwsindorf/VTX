@@ -385,7 +385,7 @@ public:
 										base[size++]=val;
 										return size>=1 ? base[size-1] : 0 ;
 									}
-	void remove(T val)				{	// remove element
+	void free(T val)				{	// remove element
 										int i,j;
 										T *oldbase=base;
 										MALLOC(size, T, base);
@@ -393,6 +393,18 @@ public:
 										    if(oldbase[i]==val)
 											    delete oldbase[i];
 											else
+											   	base[j++]=oldbase[i];
+										}
+										size=j;
+										index=0;
+										::free(oldbase);
+									}
+	void remove(T val)				{	// remove element
+										int i,j;
+										T *oldbase=base;
+										MALLOC(size, T, base);
+										for(i=0,j=0;i<size;i++){
+										    if(oldbase[i]!=val)
 											   	base[j++]=oldbase[i];
 										}
 										size=j;

@@ -427,7 +427,7 @@ void Scope::free_var(char *s)
 {
 	TerrainSym *ts=vars.inlist(s);
 	if(ts)
-		vars.remove(ts);
+		vars.free(ts);
 }
 
 //-------------------------------------------------------------
@@ -1091,7 +1091,7 @@ TNvar *ExprMgr::removeVar(char *s){
 	    return 0;
 	cout<<"free:"<<s<<endl;
 	exprs.remove(var);
-	vars.remove(ts);
+	vars.free(ts);
 	return var;
 }
 
@@ -1611,27 +1611,12 @@ void TerrainMgr::init()
 	set_eval_mode(1);
 }
 //-------------------------------------------------------------
-// TerrainMgr::reset() 	clear
-//-------------------------------------------------------------
-void TerrainMgr::reset(){
-	//Sprite::reset();
-	Td.Sprites.reset();
-	Td.Plants.reset();
-
-}
-//-------------------------------------------------------------
 // TerrainMgr::init_render() 		evaluate nodes
 //-------------------------------------------------------------
 void TerrainMgr::init_render()
 {
 	CurrentScope=this;
 	
-	//Td.sprites.reset();
-	Td.Sprites.reset();
-	
-	//Td.plants.reset();
-	Td.Plants.reset();
-
 	Td.init();
 	Td.properties.free();
 	Td.add_id();

@@ -699,7 +699,6 @@ void Map::shadow_normals()
 	    npole->render_vertex();
 		tp->Plants.render_shadows();
 	}
-	Td.Plants.render_shadows();
 	Render.popmode();
 }
 
@@ -761,8 +760,6 @@ void Map::render_zvals()
 		if(Render.draw_szvals())
 			tp->Plants.render_zvals();
 	}
-	if(Render.draw_szvals())
-        Td.Plants.render_zvals();
 	if(waterpass() && Render.show_water() ){
 		tid=WATER;
 		Raster.surface=2;  // water pass
@@ -1235,8 +1232,6 @@ void Map::render_shaded()
 			render_objects(tp->Plants);
 			render_objects(tp->Sprites);
 		}
-		render_objects(Td.Plants);
-		render_objects(Td.Sprites);
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
     bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
@@ -1284,7 +1279,6 @@ void Map::render_shaded()
 #define PRINT_PLACEMENT_TIMING
 
 void  Map::render_objects(PlaceObjMgr &mgr){
-	//cout<<"OBJS:"<<mgr.objs.size<<endl;
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();

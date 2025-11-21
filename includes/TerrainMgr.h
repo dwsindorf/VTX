@@ -357,7 +357,6 @@ public:
 	void setAdaptMode();
 	void applyExpr();
 	void clearExpr();
-	void reset();
 	void validateTextures();
 	void validateVariables();
 	void init_render();

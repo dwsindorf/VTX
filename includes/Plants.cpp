@@ -676,47 +676,6 @@ Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 	sorted=false;
 }
 
-//void Plant::reset()
-//{
-//	cout<<"Plant::reset()"<<endl;
-//	data.free();
-//	PlantMgr::textures=0;
-//}
-//
-//-------------------------------------------------------------
-// Plant::collect() collect valid plant points
-//-------------------------------------------------------------
-//void Plant::collect(Array<PlaceObj*> &plants){
-//	double d0=clock();
-//	PlaceObj::collect(plants,data);
-//	double d1=clock();
-//	cout<<"Plants collected:"<<data.size<<" "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-//}
-//
-//void Plant::eval(Array<PlaceObj*> &objs){
-//	PlaceObj::eval(objs);
-//}
-//void Plant::freeLeafs(Array<PlaceObj*> &data){
-//	for (int i=0;i<data.size;i++){
-//		((Plant*)data[i])->freeLeafs();
-//	}
-//}
-//void Plant::freeBranches(Array<PlaceObj*> &data){
-//	for (int i=0;i<data.size;i++){
-//		((Plant*)data[i])->freeBranches();
-//	}
-//}
-//void Plant::renderBranches(Array<PlaceObj*> &data){
-//	for (int i=0;i<data.size;i++){
-//		((Plant*)data[i])->renderBranches();
-//	}
-//}
-//void Plant::renderLeafs(Array<PlaceObj*> &data){
-//	for (int i=0;i<data.size;i++){
-//		((Plant*)data[i])->renderLeafs();
-//	}
-//}
-
 //-------------------------------------------------------------
 // Plant::eval() evaluate TNtexture string
 //-------------------------------------------------------------
@@ -853,25 +812,16 @@ void TNplant::eval()
 	}
 	SINIT;
 	if(CurrentScope->rpass()){
-		int instance=0;
-		int layer=0;
-		bool inlayer=inLayer();
-		if(inlayer){
-			instance=Td.tp->Plants.objects();
-			layer=Td.tp->type();
-		}
-		else
-			instance=Td.Plants.objects();
+		int instance=Td.tp->Plants.objects();
+		int layer=Td.tp->type();
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(plant){
 			plant->set_id(instance);
 			plant->layer=layer;
 		}
-		if(inlayer)
-			Td.tp->Plants.addObject(plant);
-		else
-			Td.Plants.addObject(plant);
+		Td.tp->Plants.addObject(plant);
+
 		mgr->setHashcode();
 		if(right)
 			right->eval();
@@ -1078,6 +1028,9 @@ NodeIF *TNplant::lastChild(){
 // TNplant::removeNode() delete or replace
 //-------------------------------------------------------------
 NodeIF *TNplant::removeNode(){
+	
+	bool inlayer=inLayer();
+	
 	NodeIF *p=getParent();
 	NodeIF *child=0;
 	if(p->typeValue()!=ID_ROOT){

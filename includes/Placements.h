@@ -15,8 +15,6 @@
 #define TEST_CRATERS
 #define TEST_ROCKS
 
-#define TEST_PLANTS_OBJMGR
-
 //#define DEBUG_PMEM         // turn on for memory usage
 // FIXME: need to base hash code on placement type
 class PlacementMgr;
@@ -134,6 +132,7 @@ public:
 	int objects() { return objs.size;}
 	
 	void addObject(PlaceObj *obj) { objs.add(obj);}
+	void rmoveObject(PlaceObj *obj) { objs.remove(obj);}
 	
 };
 

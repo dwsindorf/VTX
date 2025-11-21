@@ -643,6 +643,8 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_POINT));
 			list.add(getObjectSymbol(TN_TEXTURE));
 			list.add(getObjectSymbol(TN_ROCKS));
+			list.add(getObjectSymbol(TN_PLANT));
+			list.add(getObjectSymbol(TN_SPRITE));
 		}
 		break;
 
@@ -1090,7 +1092,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 	case TN_PLANT_BRANCH:
 		break;
 	case TN_PLANT:
-    	while(parent && parent->getParent() && (ptype!=TN_SURFACE && ptype!=TN_LAYER)){
+    	while(parent && parent->getParent() && ptype!=TN_SURFACE && ptype!=TN_LAYER){
   			parent=parent->getParent();
   			ptype=parent->getFlag(TN_TYPES);
      	}

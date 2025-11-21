@@ -757,7 +757,7 @@ void VtxBandsTabs::Save(){
 	ImageSym *isr=revert_list->inlist(name);
 	ImageSym *isn=new ImageSym(isc);
 	if(isr){
-		revert_list->remove(isr);
+		revert_list->free(isr);
 	}
 	revert_list->add(isn);
 	revert_list->sort();
