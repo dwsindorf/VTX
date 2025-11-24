@@ -55,6 +55,7 @@ public:
 	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
 	void eval();
+	void init();
 
 	bool testColor();
 	bool testDensity();

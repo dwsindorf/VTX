@@ -182,10 +182,17 @@ Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
+    set_testDensity(true);
 }
 
 void Rock3DMgr::eval(){	
 	PlacementMgr::eval(); 
+}
+
+void Rock3DMgr::init()
+{
+	PlacementMgr::init();
+  	reset();
 }
 
 //-------------------------------------------------------------
@@ -243,6 +250,7 @@ void TNrocks3D::eval()
 			right->eval();
 		return;
 	}
+	SINIT;
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Rocks.objects();
@@ -269,14 +277,21 @@ void TNrocks3D::eval()
 		ground.copy(S0);
 	}
 	INIT;
-	if(right) // ground
-		right->eval();
-	ground.copy(S0);
-	INIT;
+	
+	double arg[10];
 
-	TNplacements::eval(); // evaluate common arguments (0-3)
-	INIT;
-		
+	TNarg &args=*((TNarg *)left);
+	
+	int n=getargs(&args,arg,9);
+	
+	double density=1;
+
+	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
+	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
+	if(n>2) mgr->mult=arg[2];			// random scale multiplier
+	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	mgr->type=type;
+
 	mgr->eval();
 	if(!CurrentScope->spass()){ // adapt pass (else render-plant creation pass)
 		S0.copy(ground); //restore surface data
@@ -293,8 +308,12 @@ void TNrocks3D::init()
 
 	if(rock==0)
 		rock=new Rock3D(type,this);
-	TNplacements::init();
+	
+	mgr->set_first(1);
 	mgr->init();
+
+	TNplacements::init();
+ 
 }
 //************************************************************
 // TNrocks class
@@ -442,8 +461,9 @@ void TNrocks::init()
 		rmgr->rnoise=args[7];			
 	}
 	mgr->set_first(1);
+	mgr->init();
+	TNplacements::init();
 }
-
 
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node

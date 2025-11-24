@@ -436,9 +436,7 @@ void PlacementMgr::init()
 
 void PlacementMgr::setTests() {
 	if(!test() || hits==0)
-		return;
-	static int cnt=0;
-	
+		return;	
 	extern Color getColor(int i);
 	double x=1-cval;
 	S0.clr_flag(DVALUE);
@@ -936,7 +934,6 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
     }
 
 	pmgr.hits++;
-	//cout<<pmgr.lvl<<" ";
 
 	pmgr.sdata[pmgr.scnt].v=hid;
 	pmgr.sdata[pmgr.scnt].f=pmgr.sval;

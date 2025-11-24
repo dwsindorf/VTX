@@ -166,7 +166,6 @@ void SpriteMgr::init()
   	printf("SpriteMgr::init()\n");
 #endif
 	PlacementMgr::init();
-	ncalls=0;
 	nhits=0;
 	cnt=0;
   	reset();
@@ -545,9 +544,6 @@ void TNsprite::eval()
 		ground.copy(S0);
 	}
 	INIT;
-	Color c =Color(1,1,1);
-
-	ncalls++;
 	
 	double arg[10];
 
@@ -596,11 +592,11 @@ void TNsprite::eval()
 
 	mgr->density=density;	
  
-	smgr->eval();  // calls SpritePoint.set_terrain	
+	mgr->eval();  // calls SpritePoint.set_terrain	
 	
 	if(!CurrentScope->spass()){
 		S0.copy(ground);
-		smgr->setTests();
+		mgr->setTests();
 	}
  }
 

@@ -224,13 +224,6 @@ static double dfactor=0.5;
 #define MIN_TRIANGLE_WIDTH tfactor*min_draw_width
 #define MIN_SPLINE_WIDTH sfactor*min_draw_width
 
-#ifdef DUMP
-static void show_stats()
-{
-	g_pm.dump();
-	cout<<"calls="<<ncalls<< " hits="<<nhits<<endl;
-}
-#endif
 
 static int randval=0;
 
@@ -780,8 +773,6 @@ void TNplant::eval()
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
 	TerrainData ground;
-	int hits;
-	double cval;
 
 	if(!isEnabled() || TheScene->viewtype !=SURFACE || Raster.surface==2){
 		if(right)
@@ -791,9 +782,7 @@ void TNplant::eval()
 	SINIT;
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
-		//cout<<"LAYER="<<layer<<endl;
 		int instance=Td.tp->Plants.objects();
-
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(plant){
@@ -801,7 +790,6 @@ void TNplant::eval()
 			plant->layer=layer;
 		}
 		Td.tp->Plants.addObject(plant);
-
 		mgr->setHashcode();
 		if(right)
 			right->eval();
@@ -976,13 +964,6 @@ void TNplant::saveNode(FILE *f)
 	//if(addtabs)
 	    fprintf(f,"\n%s",tabs);
 	fprintf(f,"%s",buff);
-	cout<<"TNplant::saveNode "<<buff<<endl;
-	//TNbase::saveNode(f);
-//	TNBranch *branch=right;
-//	while(branch && (branch->typeValue()==ID_BRANCH||branch->typeValue()==ID_LEAF)){
-//		branch->saveNode(f);
-//		branch=branch->right;
-//	}
 }
 
 //-------------------------------------------------------------
