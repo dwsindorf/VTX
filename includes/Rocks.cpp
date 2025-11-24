@@ -190,6 +190,8 @@ void Rock3DMgr::eval(){
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
+ValueList<PlaceData*> RockObjMgr::data;
+
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
@@ -204,17 +206,16 @@ bool Rock3DMgr::testDensity(){
 //************************************************************
 // Rock3D class
 //************************************************************
-//Rock3D::Rock3D(PlacementMgr&m, Point4DL&p,int n) : Rock(m,p,n)
-//{
-//	mcObject=0;
-//}
-//-------------------------------------------------------------
-// Rock::set_terrain()	impact terrain
-//-------------------------------------------------------------
-//bool Rock3D::set_terrain(PlacementMgr &pmgr)
-//{
-//	return Placement::set_terrain(pmgr);
-//}
+Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
+{
+}
+void RockObjMgr::collect(){
+	data.free();
+	for(int i=0;i<objs.size;i++){
+		PlaceObj *obj=objs[i];
+		obj->mgr()->collect(data);
+	}
+}
 
 //************************************************************
 // TNrocks class
@@ -379,10 +380,10 @@ void TNrocks::eval3d()
 		if(right) // ground
 			right->eval();
 		INIT;
-		int nrocks=Td.tp->rocks.size;
-		rock_id=nrocks;	
+		//int nrocks=Td.tp->rocks.size;
+		//rock_id=nrocks;	
 		mgr->instance=rock_id;
-		Td.tp->rocks.add(this);
+		//Td.tp->rocks.add(this);
 		mgr->setHashcode();
 		return;
 	}

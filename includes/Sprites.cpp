@@ -366,12 +366,6 @@ Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 	//valid=false;
 }
 
-//void Sprite::reset()
-//{ 
-//	cout<<"Sprite::reset()"<<endl;
-//	data.free();
-//}
-
 void Sprite::set_image(Image *i, int r, int c){
 	image=i;
 	rows=r;

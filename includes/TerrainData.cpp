@@ -375,15 +375,7 @@ void TerrainProperties::setProgram(){
 void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
-	rocks.reset();
-	//sprites.reset();
-	plants.reset();
+	//plants.reset();
 }
 
-//void TerrainProperties::add_sprite(Sprite *s){
-//	sprites.add(s);
-//}
-void TerrainProperties::add_plant(Plant *s){
-	plants.add(s);
-}
 

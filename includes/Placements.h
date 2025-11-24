@@ -15,7 +15,7 @@
 #define TEST_CRATERS
 #define TEST_ROCKS
 
-//#define PRINT_PLACEMENT_TIMING
+#define PRINT_PLACEMENT_TIMING
 //#define PRINT_PLACEMENT_STATS
 
 //#define DEBUG_PMEM         // turn on for memory usage
@@ -131,6 +131,7 @@ public:
 	virtual void render() {}
 	virtual int layer() { return objs.size>0?objs[0]->layer:0;}
 	virtual int placements() { return 0;}
+	virtual const char *name() { return 0;}
 	
 	int objects() { return objs.size;}
 	

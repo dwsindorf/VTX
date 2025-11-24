@@ -1202,6 +1202,7 @@ void Map::render_shaded()
 				continue;
 			total_tpasses++;
 			render_objects(tp->Plants); // if plants are global all layers get them
+			render_objects(tp->Rocks);
 			if(!visid(tid))
 				continue;
 
@@ -1310,7 +1311,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	//cout<<"DATA:"<<mgr.placements()<<endl;
 	double d3=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j
+	cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j
 			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC

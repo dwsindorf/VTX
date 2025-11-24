@@ -15,11 +15,20 @@ class Rock : public Placement
 	virtual bool set_terrain(PlacementMgr  &mgr);
 };
 
+class RockObjMgr : public PlaceObjMgr
+{
+	static ValueList<PlaceData*> data;
+	void free() { data.free();}
+	int placements(){ return data.size;}
+	void collect();
+	const char *name() { return "Rocks3D";}
+};
+
 class Rock3D : public PlaceObj
 {
  public:
+	Rock3D(int l, TNode *e);
     MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
-    static ValueList<PlaceData*> data;
 };
 
 class RockMgr : public PlacementMgr

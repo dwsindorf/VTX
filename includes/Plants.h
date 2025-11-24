@@ -128,6 +128,7 @@ public:
 	void collect();
 	void free() { data.free();}
 	int placements(){ return data.size;}
+	const char *name() { return "Plants";}
 
 };
 //************************************************************

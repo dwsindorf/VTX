@@ -83,6 +83,7 @@ public:
 	void free() { data.free();}
 	int placements(){ return data.size;}
 	void collect();
+	const char *name() { return "Sprites";}
 };
 
 class Sprite : public PlaceObj

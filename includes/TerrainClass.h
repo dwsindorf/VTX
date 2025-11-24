@@ -342,6 +342,48 @@ public:
 	void applyExpr();
 };
 
+//************************************************************
+// Class TNrocks
+//************************************************************
+class TNrocks : public TNplacements
+{
+public:
+	int rock_id;
+	TNrocks(int t, TNode *l, TNode *r, TNode *b);
+	void eval();
+	void eval3d();
+	void init();
+	bool hasChild(int );
+	void applyExpr();
+	int typeValue()			{ return ID_ROCKS;}
+	const char *typeName ()	{ return "rocks";}
+	NodeIF *addChild(NodeIF *x);
+	NodeIF *addAfter(NodeIF *c,NodeIF *n);
+	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
+	NodeIF *replaceNode(NodeIF *c);
+	bool isLeaf()			{ return false;}
+	int linkable()      		    { return 1;}
+	NodeIF *getInstance(NodeIF *prev, int m);
+	TNrocks *newInstance(int m);
+	bool randomize();
+};
+
+class TNrocks3D : public TNplacements
+{
+public:
+	Rock3D *rock;
+	TNrocks3D(int t, TNode *l, TNode *r, TNode *b);
+	void eval();
+	void init();
+	int typeValue()			{ return ID_ROCK3D;}
+	const char *typeName ()	{ return "rock3D";}
+	const char *symbol()	{ return "Rock3D";}
+	bool isLeaf()			{ return false;}
+	int linkable()      	{ return 1;}
+	NodeIF *getInstance(NodeIF *prev, int m);
+	TNrocks3D *newInstance(int m);
+	bool randomize();
+};
 
 //************************************************************
 // Class TNplant
@@ -569,32 +611,6 @@ public:
 	const char *typeName()	{ return "craters";}
 	void addToken(LinkedList<TNode*>&l);
 	void valueString(char *);
-};
-
-//************************************************************
-// Class TNrocks
-//************************************************************
-class TNrocks : public TNplacements
-{
-public:
-	int rock_id;
-	TNrocks(int t, TNode *l, TNode *r, TNode *b);
-	void eval();
-	void eval3d();
-	void init();
-	bool hasChild(int );
-	void applyExpr();
-	int typeValue()			{ return ID_ROCKS;}
-	const char *typeName ()	{ return "rocks";}
-	NodeIF *addChild(NodeIF *x);
-	NodeIF *addAfter(NodeIF *c,NodeIF *n);
-	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
-	NodeIF *replaceNode(NodeIF *c);
-	bool isLeaf()			{ return false;}
-	int linkable()      		    { return 1;}
-	NodeIF *getInstance(NodeIF *prev, int m);
-	TNrocks *newInstance(int m);
-	bool randomize();
 };
 
 #endif

@@ -11,6 +11,7 @@
 #include "NodeIF.h"
 #include "Sprites.h"
 #include "Plants.h"
+#include "Rocks.h"
 
 class ExprMgr;
 class TerrainMgr;
@@ -350,12 +351,10 @@ public:
 	int callList;
 	Array<Texture*> textures;
 	Array<TNnoise*> noise;
-	Array<TNrocks*> rocks;
-	Array<PlaceObj*> sprites;
-	Array<PlaceObj*> plants;
 	
 	SpriteObjMgr Sprites;
 	PlantObjMgr  Plants;
+	RockObjMgr  Rocks;
 	
 	TNcolor *tncolor;
 	TNpoint *tnpoint;
@@ -395,9 +394,6 @@ public:
 	void setProgram();
 	void reset();
 	int passes();
-	void add_sprite(Sprite *s);
-	void add_plant(Plant *s);
-
 };
 //#endif
 
