@@ -28,8 +28,8 @@ static char THIS_FILE[] = __FILE__;
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 #define DEBUG_HASH         //  turn on to get hash table stats
+//#define NO_CHAIN          // TEST mode turn off chaining
 //#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
-//#define NO_CHAIN
 
 static TerrainData Td;
 extern double ptable[];
@@ -48,7 +48,9 @@ static int 	cnt;
 
 void show_display_placements()
 {
+#ifdef PRINT_PLACEMENT_STATS
 	PlacementStats::dump();
+#endif
 #ifdef DEBUG_HASH_CHAINS
 		PlacementMgr::printChainStats();
 #endif
@@ -245,7 +247,7 @@ void PlacementMgr::free_htable()
     Stats.cfreed=0;
     if(!hash) 
     	return;
-    cout<<"PlacementMgr::free_htable"<<endl;
+    //cout<<"PlacementMgr::free_htable"<<endl;
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain

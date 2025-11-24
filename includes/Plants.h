@@ -78,7 +78,6 @@ public:
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
-	PlantMgr(int);
 
 	void init();
 

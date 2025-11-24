@@ -1280,8 +1280,6 @@ void Map::render_shaded()
 	glPopAttrib();
 }
 
-#define PRINT_PLACEMENT_TIMING
-
 void  Map::render_objects(PlaceObjMgr &mgr){
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
@@ -1289,7 +1287,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	int n=node_data_list.size;
 	int sid=mgr.layer();
 	
-	cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
+	//cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
 	double d0=clock();
 	CurrentScope->set_spass();
 	
@@ -1309,10 +1307,10 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	}
 	double d2=clock();
 	mgr.collect();
-	cout<<"DATA:"<<mgr.placements()<<endl;
+	//cout<<"DATA:"<<mgr.placements()<<endl;
 	double d3=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<" TID:"<<Td.tp->id<<" Objects n:"<<mgr.objects()<<" nodes:"<<n<<" rejected:"<<j<<" processed:"<<n-j
+	cout<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j
 			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
@@ -1463,12 +1461,12 @@ static void collect_nodes(MapNode *n)
 
 int Map::get_mapnodes(){
 	TheMap = this;
-	double d0=clock();
+	//double d0=clock();
 	node_data_list.reset();
 	npole->visit(&collect_nodes);
 	node_data_list.ss();
-	double d1=clock();
-	cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+	//double d1=clock();
+	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 	return node_data_list.size;
 }
 //-------------------------------------------------------------

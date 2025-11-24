@@ -16,8 +16,6 @@ extern double lcos(double g);
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
-//#define TEST_PTS 
-//#define DEBUG_TEST_PTS 
 //#define DUMP
 //#define DEBUG_PMEM
 
@@ -184,7 +182,8 @@ extern double lcos(double g);
 //   - leaf shadows aren't rendered (fixed)
 // 16) plants don't show on some layers in multi-layer maps (fixed - use surface1)
 // 17) shadows aren't drawn correctly after move (but are fixed when scene is re-rendered)
-//
+// 18) In terrain with 2 plants adding Map deletes surface "pt" (ok with only 1 plant)
+//     - creates empty Map below plants (doesn't make a layer) (FIXED - map id level > plant)
 // NOTES to self
 // 1) Branch texture images
 //   - If tiled image is created from a photo it will only show the front half of full 3d map
@@ -198,28 +197,15 @@ extern double lcos(double g);
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
 //************************************************************
 
-extern double Drop, MaxSize,Height,Phi,Theta,Level,Randval,Srand,Range,Temp;
-extern double ptable[];
+extern double MaxSize,Height,Phi,Theta,Level,Randval,Srand,Range,Temp;
 extern Point MapPt;
 extern double  zslope();
-extern NameList<LongSym*> POpts;
-
-extern void inc_tabs();
-extern void dec_tabs();
 extern char tabs[];
-extern int addtabs;
 
 extern int test1,test2,test3,test4,test5;
 
 static int ncalls=0;
 static int oldmode=0;
-
-static double ht_offset=0.0;
-static double threshold=1;
-
-static int tests=0;
-static int pts_fails=0;
-static int dns_fails=0;
 
 static TerrainData Td;
 
@@ -228,8 +214,6 @@ static int trunk_nodes;
 static int line_nodes;
 
 static double min_draw_width=0.5;
-static double min_render_pts=2; // for render
-static double min_adapt_pts=4; //  for adapt - increase resolution only around nearby plants
 
 static double tfactor=2;
 static double sfactor=4;
@@ -322,9 +306,6 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 
 }
-PlantMgr::PlantMgr(int i) : PlantMgr(i,0)
-{
-}
 PlantMgr::~PlantMgr()
 {
   	if(finalizer()){
@@ -412,10 +393,6 @@ void PlantObjMgr::collect(){
 		data.sort();
 
 }
-//void PlantObjMgr::free(){
-//	cout<<"PlantObjMgr::free()"<<endl;
-//	PlaceObjMgr::free();
-//}
 void PlantObjMgr::render(){
 	oldmode=0;
 	int l=randval;
@@ -473,7 +450,9 @@ void PlantObjMgr::render(){
 		double d1=clock();
 		double te=(d1-t0)/CLOCKS_PER_SEC;
 		PlantMgr::render_time=te;
-		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;		
+#ifdef PRINT_PLANT_TIMING
+		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;	
+#endif
 	}
 	else {
 		PlaceData *s=data[0];
@@ -509,7 +488,6 @@ void PlantObjMgr::render(){
 	update_needed=false;
 }
 bool PlantObjMgr::setProgram(){
-	//cout<<"PlantMgr::setProgram "<<Raster.shadows()<<endl;
 	extern int test7;
 	PlantMgr::shadow_count=0;
 	if(PlantMgr::shadow_mode)
