@@ -12,7 +12,8 @@
 #include "TerrainClass.h"
 #include "UniverseModel.h"
 
-extern double Hscale, Drop, MaxSize;
+extern double Hscale, Drop, MaxSize,Height,Theta,Phi;
+extern Point MapPt;
 extern double ptable[];
 
 static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
@@ -173,9 +174,9 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 }
 
 //************************************************************
-// Rock3DMgr class
+// Rock3D classes
 //************************************************************
-Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
+Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
 #ifdef TEST_ROCKS
@@ -190,7 +191,7 @@ void Rock3DMgr::eval(){
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
-ValueList<PlaceData*> RockObjMgr::data;
+ValueList<PlaceData*> Rock3DObjMgr::data;
 
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
@@ -209,7 +210,7 @@ bool Rock3DMgr::testDensity(){
 Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
 {
 }
-void RockObjMgr::collect(){
+void Rock3DObjMgr::collect(){
 	data.free();
 	for(int i=0;i<objs.size;i++){
 		PlaceObj *obj=objs[i];
@@ -217,21 +218,95 @@ void RockObjMgr::collect(){
 	}
 }
 
+PlacementMgr *Rock3D::mgr() { 
+	return ((TNrocks3D*)expr)->mgr;
+}
+
+//************************************************************
+// TNrocks class
+//************************************************************
+TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNrocks(MCROCKS,l,r,b)
+{
+	mgr=new Rock3DMgr(type);
+	rock=0;
+}
+
+//-------------------------------------------------------------
+// TNrocks::eval3d() evaluate the node
+//-------------------------------------------------------------
+void TNrocks3D::eval()
+{
+	TerrainData ground;
+	
+	if(!isEnabled() || TheScene->viewtype !=SURFACE){
+		if(right)
+			right->eval();
+		return;
+	}
+	if(CurrentScope->rpass()){
+		int layer=inLayer()?Td.tp->type():0; // layer id
+		int instance=Td.tp->Rocks.objects();
+		mgr->instance=instance;
+		mgr->layer=layer;
+		if(rock){
+			rock->set_id(instance);
+			rock->layer=layer;
+		}
+		Td.tp->Rocks.addObject(rock);
+		mgr->setHashcode();
+		if(right)
+			right->eval();
+		return;
+	}
+	if(!CurrentScope->spass()){
+		if(right)
+			right->eval();
+		if(!mgr->test())
+			return;
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+		mgr->htval=Height;	
+		ground.copy(S0);
+	}
+	INIT;
+	if(right) // ground
+		right->eval();
+	ground.copy(S0);
+	INIT;
+
+	TNplacements::eval(); // evaluate common arguments (0-3)
+	INIT;
+		
+	mgr->eval();
+	if(!CurrentScope->spass()){ // adapt pass (else render-plant creation pass)
+		S0.copy(ground); //restore surface data
+		mgr->setTests();
+	}
+}
+//-------------------------------------------------------------
+// TNrocks3D::init() initialize the node
+//-------------------------------------------------------------
+void TNrocks3D::init()
+{
+	if(right)
+	   right->init();
+
+	if(rock==0)
+		rock=new Rock3D(type,this);
+	TNplacements::init();
+	mgr->init();
+}
 //************************************************************
 // TNrocks class
 //************************************************************
 TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r,b)
 {
-	if(is3D())
-		mgr=new Rock3DMgr(type);
-	else	
-    	mgr=new RockMgr(type);
+    mgr=new RockMgr(type);
 	TNarg &args=*((TNarg *)left);
 	TNode *arg=args[3];
 	if(arg && (arg->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
 	set_collapsed();
-	rock_id=0;
 }
 
 //-------------------------------------------------------------
@@ -371,38 +446,6 @@ void TNrocks::init()
 
 
 //-------------------------------------------------------------
-// TNrocks::eval3d() evaluate the node
-//-------------------------------------------------------------
-void TNrocks::eval3d()
-{
-	if(CurrentScope->rpass()){
-		INIT;		
-		if(right) // ground
-			right->eval();
-		INIT;
-		//int nrocks=Td.tp->rocks.size;
-		//rock_id=nrocks;	
-		mgr->instance=rock_id;
-		//Td.tp->rocks.add(this);
-		mgr->setHashcode();
-		return;
-	}
-	Rock3DMgr *rmgr=(RockMgr*)mgr;
-	INIT;
-	if(right) // ground
-		right->eval();
-	TerrainData ground;
-	ground.copy(S0);
-	INIT;
-
-	TNplacements::eval(); // evaluate common arguments (0-3)
- 	INIT;
-		
- 	rmgr->eval();
-	S0.copy(ground);
-	rmgr->setTests();
-}
-//-------------------------------------------------------------
 // TNrocks::eval() evaluate the node
 //-------------------------------------------------------------
 void TNrocks::eval() {
@@ -411,12 +454,7 @@ void TNrocks::eval() {
 			right->eval();
 		return;
 	}
-	if (is3D()) {
-		eval3d();
-		return;
-	}
 
-	bool test = is3D();
 	TerrainData rock;
 	TerrainData ground;
 	int i;
@@ -494,10 +532,8 @@ void TNrocks::eval() {
 		rock.p.x = rmgr->rx * (1 - rmgr->rdist);
 		rock.p.y = rmgr->ry * (1 - rmgr->rdist);
 		S0.copy(rock);
-		if (!test) {
-			Td.tp->set_rock(true);
-			S0.set_flag(ROCKBODY);
-		}
+		Td.tp->set_rock(true);
+		S0.set_flag(ROCKBODY);
 	}
 	else {
 		Td.tp->set_rock(false);
@@ -508,8 +544,6 @@ void TNrocks::eval() {
 	Td.insert_strata(rock);
 	if (!in_map && last)
 		Td.end();
-	//cout<<mgr->cval<<endl;
-	rmgr->setTests();
 }
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists
@@ -571,50 +605,14 @@ bool TNrocks::randomize(){
 }
 
 // this=prototype, this->parent=layer
-#define PLANET_ROCKS
 TNrocks *TNrocks::newInstance(int m){
 	NodeIF::setRands();
 	int gtype=m&GN_TYPES;
-#ifdef PLANET_ROCKS	
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	Planetoid::makeLists();
 	std::string str=Planetoid::newRocks(orb,gtype);
 	TNrocks *rocks=TheScene->parse_node(str.c_str());
 	rocks->setParent(parent);
-#else	
-	// randomize random selection from objects/rocks
-	LinkedList<ModelSym*>flist;
-	TheScene->model->getFileList(TN_ROCKS,flist);
-	int ival=std::rand() % flist.size;
-	ModelSym *sym=flist[ival];
-
-	char sbuff[1024];
-	TheScene->model->getFullPath(sym,sbuff);
-	TNrocks *rocks=TheScene->open_node(this,sbuff);
-	sbuff[0]=0;
-	
-	TNarg *arg=(TNarg*)rocks->left;
-	
-	double args[20];
-	
-	TNode* node=arg->index(1)->left;
-	if(node->typeValue()==ID_CONST){
-		TNconst *size=(TNconst*)node;
-		switch(gtype){
-		default:
-			break;
-		case GN_LARGE:
-			size->value=1e-5;
-			break;
-		case GN_MED:
-			size->value=1e-6;
-			break;
-		case GN_SMALL:
-			size->value=1e-7;
-			break;
-		}
-	}
-#endif
 	rocks->randomize();
 	return rocks;
 }

@@ -14,23 +14,6 @@ class Rock : public Placement
 	Rock(PlacementMgr&, Point4DL&,int);
 	virtual bool set_terrain(PlacementMgr  &mgr);
 };
-
-class RockObjMgr : public PlaceObjMgr
-{
-	static ValueList<PlaceData*> data;
-	void free() { data.free();}
-	int placements(){ return data.size;}
-	void collect();
-	const char *name() { return "Rocks3D";}
-};
-
-class Rock3D : public PlaceObj
-{
- public:
-	Rock3D(int l, TNode *e);
-    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
-};
-
 class RockMgr : public PlacementMgr
 {
 protected:
@@ -46,8 +29,24 @@ public:
 
 	virtual void init();
 };
+class Rock3DObjMgr : public PlaceObjMgr
+{
+	static ValueList<PlaceData*> data;
+	void free() { data.free();}
+	int placements(){ return data.size;}
+	void collect();
+	const char *name() { return "Rocks3D";}
+};
 
-class Rock3DMgr : public RockMgr
+class Rock3D : public PlaceObj
+{
+ public:
+	Rock3D(int l, TNode *e);
+    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
+    PlacementMgr *mgr();
+};
+
+class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
@@ -59,7 +58,6 @@ public:
 
 	bool testColor();
 	bool testDensity();
-
 };
 
 

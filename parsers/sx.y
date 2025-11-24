@@ -115,7 +115,7 @@ void set_orbital(Orbital *orb){
 %token YY_COLOR YY_DENSITY YY_POINT YY_NOISE YY_VIEW  YY_VEXPR YY_SURFACE
 %token YY_TERRAIN YY_IMAGE YY_BANDS
 %token YY_LAYER YY_WATER YY_CRATERS YY_MAP YY_TEXTURE YY_FRACTAL YY_FOG YY_SPRITE
-%token YY_ERODE YY_HARDNESS YY_GLOSS YY_SNOW YY_ROCKS YY_COLORS YY_BASE YY_CLOUDS
+%token YY_ERODE YY_HARDNESS YY_GLOSS YY_SNOW YY_ROCKS YY_ROCKS3D YY_COLORS YY_BASE YY_CLOUDS
 %token YY_PLANT YY_BRANCH YY_LEAF YY_STEM
 %token YY_OCEAN YY_LIQUID YY_SOLID
 %token OR AND EQ NE GE LE
@@ -127,7 +127,7 @@ void set_orbital(Orbital *orb){
 %type <d> value positive negative
 %type <n> expr water_expr craters_expr color_expr density_expr layer_expr fog_expr
 %type <n> ocean_expr liquid_expr solid_expr
-%type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr clouds_expr base_expr
+%type <n> erosion_expr hardness_expr gloss_expr snow_expr rocks_expr rocks3d_expr clouds_expr base_expr
 %type <n> group_expr map_expr const_expr string_expr var var_def fractal_expr
 %type <n> noise_expr global_expr point_expr arg_list subr_expr texture_expr sprite_expr ltype_expr
 %type <n> plant_expr branch_expr leaf_expr
@@ -536,6 +536,16 @@ plant_expr
     | YY_PLANT '(' arg_list ')' expr
     						{ $$=new TNplant($3, $5);APOP;}
 
+rocks3d_expr
+    : YY_ROCKS3D '(' arg_list ')'
+    						{ $$=new TNrocks3D($3, 0, 0);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' expr
+    						{ $$=new TNrocks3D($3, $5, 0);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']'
+    						{ $$=new TNrocks3D($3, 0, $6);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']' expr
+    						{ $$=new TNrocks3D($3, $8, $6);APOP;}	
+
 item_name
     : NAME                  { $$=$1;}
     | STRING                { $$=$1;}
@@ -553,6 +563,7 @@ expr
     | snow_expr             { $$=$1;}
     | craters_expr          { $$=$1;}
     | rocks_expr            { $$=$1;}
+    | rocks3d_expr           { $$=$1;}
     | clouds_expr           { $$=$1;}
     | fog_expr         		{ $$=$1;}
     | texture_expr          { $$=$1;}

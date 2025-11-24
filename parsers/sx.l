@@ -129,6 +129,7 @@ static LongSym keytbl[]={
 	{"snow",        YY_SNOW},
 	{"craters",     YY_CRATERS},
 	{"rocks",       YY_ROCKS},
+	{"rocks3d",     YY_ROCKS3D},
 	{"clouds",      YY_CLOUDS},
 	{"map",         YY_MAP},
 	{"fog",         YY_FOG},

@@ -348,41 +348,34 @@ public:
 class TNrocks : public TNplacements
 {
 public:
-	int rock_id;
 	TNrocks(int t, TNode *l, TNode *r, TNode *b);
-	void eval();
-	void eval3d();
-	void init();
+	virtual void eval();
+	virtual void init();
+	virtual int typeValue()			{ return ID_ROCKS;}
+	virtual const char *typeName ()	{ return "rocks";}
+	virtual NodeIF *getInstance(NodeIF *prev, int m);
+	virtual TNrocks *newInstance(int m);
+	virtual bool randomize();
 	bool hasChild(int );
 	void applyExpr();
-	int typeValue()			{ return ID_ROCKS;}
-	const char *typeName ()	{ return "rocks";}
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 	NodeIF *replaceNode(NodeIF *c);
 	bool isLeaf()			{ return false;}
-	int linkable()      		    { return 1;}
-	NodeIF *getInstance(NodeIF *prev, int m);
-	TNrocks *newInstance(int m);
-	bool randomize();
+	int linkable()          { return 1;}
 };
 
-class TNrocks3D : public TNplacements
+class TNrocks3D : public TNrocks
 {
 public:
 	Rock3D *rock;
-	TNrocks3D(int t, TNode *l, TNode *r, TNode *b);
+	TNrocks3D(TNode *l, TNode *r, TNode *b);
 	void eval();
 	void init();
 	int typeValue()			{ return ID_ROCK3D;}
-	const char *typeName ()	{ return "rock3D";}
-	const char *symbol()	{ return "Rock3D";}
-	bool isLeaf()			{ return false;}
-	int linkable()      	{ return 1;}
-	NodeIF *getInstance(NodeIF *prev, int m);
-	TNrocks3D *newInstance(int m);
-	bool randomize();
+	const char *typeName ()	{ return "rocks3d";}
+	//const char *symbol()	{ return "Rock3D";}
 };
 
 //************************************************************

@@ -1202,7 +1202,6 @@ void Map::render_shaded()
 				continue;
 			total_tpasses++;
 			render_objects(tp->Plants); // if plants are global all layers get them
-			render_objects(tp->Rocks);
 			if(!visid(tid))
 				continue;
 
@@ -1234,7 +1233,7 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
-//			render_objects(tp->Plants);
+			render_objects(tp->Rocks);
 			render_objects(tp->Sprites);
 		}
 	}
@@ -1288,7 +1287,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	int n=node_data_list.size;
 	int sid=mgr.layer();
 	
-	//cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
+	cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
 	double d0=clock();
 	CurrentScope->set_spass();
 	
