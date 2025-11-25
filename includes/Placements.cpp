@@ -1003,11 +1003,9 @@ PlaceObjMgr::PlaceObjMgr(){
 	objs.reset();
 }
 void PlaceObjMgr::eval(){
-	int mode=CurrentScope->passmode();
 	for(int i=0;i<objs.size;i++){
-		objs[i]->expr->eval();
+		objs[i]->expr->eval(); // TNode -> eval()
 	}
-	CurrentScope->set_passmode(mode);
 }
 
 //************************************************************

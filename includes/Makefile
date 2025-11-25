@@ -51,7 +51,7 @@ HDR_FILES = AdaptOptions.h \
 			MapClass.h \
 			MapLink.h \
 			MapNode.h \
-			MarchingCubes.h \
+			MCObjects.h \
 			MatrixClass.h \
 			ModelClass.h \
 			NodeData.h \
@@ -107,7 +107,7 @@ SRC_FILES=  AdaptOptions.cpp \
 			MapClass.cpp \
 			MapLink.cpp \
 			MapNode.cpp \
-			MarchingCubes.cpp \
+			MCObjects.cpp \
 			MatrixClass.cpp \
 			ModelClass.cpp \
 			NodeData.cpp \
@@ -561,7 +561,7 @@ depend:;
 ../Release/MapNode.o: AdaptOptions.h RenderOptions.h GLSLMgr.h
 ../Release/MapNode.o: GLSLProgram.h GLSLVars.h FrameBuffer.h Effects.h
 ../Release/MapNode.o: Raster.h
-../Release/MarchingCubes.o: MarchingCubes.h
+../Release/MCObjects.o: MCObjects.h
 ../Release/MatrixClass.o: defs.h MatrixClass.h matrix.h PointClass.h
 ../Release/ModelClass.o: ModelClass.h ListClass.h defs.h NodeIF.h
 ../Release/ModelClass.o: ObjectClass.h GLglue.h GLheaders.h PointClass.h
@@ -710,7 +710,7 @@ depend:;
 ../Debug/AdaptOptions.o:	AdaptOptions.cpp
 ../Debug/ColorClass.o:	ColorClass.cpp
 ../Debug/Craters.o:	Craters.cpp
-../Debug/Craters.o:	CubeTables.cpp
+../Debug/CubeTables.o:	CubeTables.cpp
 ../Debug/Effects.o:	Effects.cpp
 ../Debug/Erode.o:	Erode.cpp
 ../Debug/FileUtil.o:	FileUtil.cpp
@@ -731,7 +731,7 @@ depend:;
 ../Debug/MapClass.o:	MapClass.cpp
 ../Debug/MapLink.o:	MapLink.cpp
 ../Debug/MapNode.o:	MapNode.cpp
-../Debug/MarchingCubes.o:	MarchingCubes.cpp
+../Debug/MCObjects.o:	MCObjects.cpp
 ../Debug/ModelClass.o:	ModelClass.cpp
 ../Debug/NodeData.o:	NodeData.cpp
 ../Debug/NoiseClass.o:	NoiseClass.cpp
@@ -760,7 +760,7 @@ depend:;
 ../Release/AdaptOptions.o:	AdaptOptions.cpp
 ../Release/ColorClass.o:	ColorClass.cpp
 ../Release/Craters.o:	Craters.cpp
-../Release/Craters.o:	CubeTables.cpp
+../Release/CubeTables.o:	CubeTables.cpp
 ../Release/Effects.o:	Effects.cpp
 ../Release/Erode.o:	Erode.cpp
 ../Release/FileUtil.o:	FileUtil.cpp
@@ -781,7 +781,7 @@ depend:;
 ../Release/MapClass.o:	MapClass.cpp
 ../Release/MapLink.o:	MapLink.cpp
 ../Release/MapNode.o:	MapNode.cpp
-../Release/MarchingCubes.o:	MarchingCubes.cpp
+../Release/MCObjects.o:	MCObjects.cpp
 ../Release/MatrixClass.o:	MatrixClass.cpp
 ../Release/ModelClass.o:	ModelClass.cpp
 ../Release/NodeData.o:	NodeData.cpp

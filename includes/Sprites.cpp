@@ -336,7 +336,7 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 }
 
 //-------------------------------------------------------------
-// SpritePoint::set_terrain()	impact terrain
+// SpritePoint::SpriteData()
 //-------------------------------------------------------------
 //===================== SpriteData ==============================
 SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
@@ -373,18 +373,6 @@ void Sprite::set_image(Image *i, int r, int c){
 	if(texture_id>0)
 		glDeleteTextures(1,&texture_id);
 }
-
-//-------------------------------------------------------------
-// Sprite::eval() evaluate TNtexture string
-//-------------------------------------------------------------
-void Sprite::eval()
-{
-	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();
-	expr->eval(); // TNsprite.eval()
-	CurrentScope->set_passmode(mode);
-}
-
 bool Sprite::setProgram(){
 	char str[MAXSTR];
 	int texid=id;
@@ -416,9 +404,6 @@ bool Sprite::setProgram(){
 	vars.loadVars();
 
 	return true;
-}
-bool Sprite::initProgram(){
-	return false;
 }
 
 //===================== TNsprite ==============================

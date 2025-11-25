@@ -174,7 +174,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 }
 
 //************************************************************
-// Rock3D classes
+// Rock3DMgr classe
 //************************************************************
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
@@ -217,6 +217,39 @@ bool Rock3DMgr::testDensity(){
 Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
 {
 }
+
+//-------------------------------------------------------------
+// Rock3D::setProgram() initialize shader
+// 1) start with simple phong shader 
+//-------------------------------------------------------------
+bool Rock3DObjMgr::setProgram(){
+	return true;
+}
+
+//-------------------------------------------------------------
+// Rock3D::render() create and render the 3d rocks
+// - data contains array of placements (Rock3D)
+// if update needed
+//   - generate MarchingCubesObjects
+//   - save in array
+// render array
+//-------------------------------------------------------------
+void Rock3DObjMgr::render(){
+	if(data.size==0)
+		return;
+	data.ss();
+	PlaceData *s;
+	while(s=data.at()){
+		// get size, pts dist ?
+		// generate MarchingCubesObject
+		// render object
+		data++;
+	}
+}
+
+//-------------------------------------------------------------
+// Rock3D::collect() generate array of placements (data)
+//-------------------------------------------------------------
 void Rock3DObjMgr::collect(){
 	data.free();
 	for(int i=0;i<objs.size;i++){
@@ -285,11 +318,12 @@ void TNrocks3D::eval()
 	int n=getargs(&args,arg,9);
 	
 	double density=1;
-
+	Rock3DMgr *smgr=(Rock3DMgr*)mgr;
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
 	if(n>2) mgr->mult=arg[2];			// random scale multiplier
 	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
+	if(n>4) mgr->density=arg[4];        // density
 	mgr->type=type;
 
 	mgr->eval();
@@ -494,7 +528,7 @@ void TNrocks::eval() {
 		Td.tp->ntexs=0;
 		Td.tp->set_rock(true);
 		if(!in_map)
-		S0.set_flag(CLRTEXS);
+			S0.set_flag(CLRTEXS);
 		if(base)// rock texs
 			base->eval();
 		if(!in_map)// in case we were in another map on entry

@@ -93,21 +93,11 @@ public:
 	unsigned int texture_id;
 	uint rows;
 	uint cols;
-
-	//static ValueList<PlaceData*> data;
-
 	Sprite(Image *i, int l, TNode *e);
 	
 	SpriteMgr *mgr();// { return ((TNsprite*)expr)->mgr;}
-	void eval();
 	bool setProgram();
-	bool initProgram();
 	void set_image(Image *, int r, int c);
-	static void reset();
-	static void collect(Array<PlaceObj*> &data);
-	static void eval(Array<PlaceObj*> &data);
-	
-	void collect();
 };
 #endif
 

@@ -227,8 +227,6 @@ static double dfactor=0.5;
 
 static int randval=0;
 
-static bool update_needed=true;
-static bool nocache=false;
 LeafImageMgr leaf_mgr; // global image manager
 BranchImageMgr branch_mgr; // global image manager
 
@@ -273,6 +271,7 @@ bool PlantMgr::no_cache=false;
 bool PlantMgr::show_one=false;
 int PlantMgr::textures=0;
 bool PlantMgr::first_instance=false;
+bool PlantMgr::update_needed=false;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 {
@@ -308,6 +307,11 @@ PlantMgr::~PlantMgr()
 	}
 }
 
+void PlantMgr::clearStats(){
+	for(int i=0;i<MAX_PLANTS;i++){
+		stats[i]=0;
+	}
+}
 //-------------------------------------------------------------
 // PlantMgr::init()	initialize global objects
 //-------------------------------------------------------------
@@ -327,34 +331,19 @@ void PlantMgr::init()
 	finisher_added=true;
 
 }
-
-void Plant::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+//-------------------------------------------------------------
+// PlantMgr::make() factory methods to make Placement
+// - derived classes my override
+//-------------------------------------------------------------
+Placement *PlantMgr::make(Point4DL &p, int n)
+{
+    return new Placement(*this,p,n);
 }
 
-void Plant::renderLeafs(){
-	sortLeafs();
-	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=leafs[i];
-		if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(s->data[3].w)){
-			continue;
-		}
-		s->render();
-	}
-}
-
-void Plant::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
-		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-void Plant::renderBranches(){
-	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=branches[i];
-		s->render();
-	}
-}
-
+//************************************************************
+// PlantObjMgr class
+//************************************************************
 ValueList<PlaceData*> PlantObjMgr::data(50000,10000);
-
 void PlantObjMgr::freeLeafs(){
 	for (int i=0;i<objs.size;i++){
 		((Plant*)objs[i])->freeLeafs();
@@ -375,7 +364,6 @@ void PlantObjMgr::renderLeafs(){
 		((Plant*)objs[i])->renderLeafs();
 	}
 }
-
 void PlantObjMgr::collect(){
 	data.free();
 	for(int i=0;i<objs.size;i++){
@@ -384,8 +372,8 @@ void PlantObjMgr::collect(){
 	}
 	if(data.size)
 		data.sort();
-
 }
+
 void PlantObjMgr::render(){
 	oldmode=0;
 	int l=randval;
@@ -394,12 +382,12 @@ void PlantObjMgr::render(){
 
 	if(n==0)
 		return;
-	nocache=PlantMgr::no_cache;
-	update_needed=(TheScene->changed_detail()||TheScene->moved()|| nocache);
-	if(update_needed &&  PlantMgr::shadow_mode)
-		update_needed=false;
+	//nocache=PlantMgr::no_cache;
+	PlantMgr::update_needed=(TheScene->changed_detail()||TheScene->moved()|| PlantMgr::no_cache);
+	if(PlantMgr::update_needed &&  PlantMgr::shadow_mode)
+		PlantMgr::update_needed=false;
 	TNBranch::setCollectLeafs(true);
-	TNBranch::setCollectBranches(!nocache);
+	TNBranch::setCollectBranches(!PlantMgr::no_cache);
 	
 	glLineWidth(1);
 	
@@ -412,7 +400,7 @@ void PlantObjMgr::render(){
 	
 	glEnable(GL_BLEND);
 	int start= PlantMgr::show_one?0:n-1;
-	if(update_needed){
+	if(PlantMgr::update_needed){
 		freeLeafs();	
 		freeBranches();
 		PlantMgr::clearStats();
@@ -478,7 +466,7 @@ void PlantObjMgr::render(){
 #endif
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	update_needed=false;
+	PlantMgr::update_needed=false;
 }
 bool PlantObjMgr::setProgram(){
 	extern int test7;
@@ -588,13 +576,6 @@ bool PlantObjMgr::setProgram(){
 	randval=l;
 	return true;
 }
-
-void PlantMgr::clearStats(){
-	for(int i=0;i<MAX_PLANTS;i++){
-		stats[i]=0;
-	}
-}
-
 void PlantObjMgr::render_zvals(){
 	if(objs.size==0)
 		return;
@@ -625,20 +606,10 @@ void PlantObjMgr::render_shadows(){
 
 	render();
 	PlantMgr::shadow_mode=false;
-
 }
-
-//-------------------------------------------------------------
-// PlantMgr::make() factory methods to make Placement
-// - derived classes my override
-//-------------------------------------------------------------
-Placement *PlantMgr::make(Point4DL &p, int n)
-{
-    return new Placement(*this,p,n);
-}
-
-//===================== Plant ==============================
-//ValueList<PlaceData*> Plant::data(50000,10000);
+//************************************************************
+// Plant class
+//************************************************************
 //-------------------------------------------------------------
 // Plant::Plant() Constructor
 //-------------------------------------------------------------
@@ -646,32 +617,42 @@ Plant::Plant(int t, TNode *e):PlaceObj(t,e)
 {
 	sorted=false;
 }
-
-//-------------------------------------------------------------
-// Plant::eval() evaluate TNtexture string
-//-------------------------------------------------------------
-void Plant::eval()
-{
-	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();
-	expr->eval();
-	CurrentScope->set_passmode(mode);
-}
+PlacementMgr *Plant::mgr() { return ((TNplant*)expr)->mgr;}
 
 bool Plant::setProgram(){
 	return ((TNplant*)expr)->setProgram();
 }
 
-PlacementMgr *Plant::mgr() { return ((TNplant*)expr)->mgr;}
+void Plant::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
 
-//===================== TNplant ==============================
+void Plant::renderLeafs(){
+	sortLeafs();
+	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
+		BranchData *s=leafs[i];
+		if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(s->data[3].w)){
+			continue;
+		}
+		s->render();
+	}
+}
 
-double TNplant::norm_max=2;
-double TNplant::norm_min=1e-5;
+void Plant::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
+}
+void Plant::renderBranches(){
+	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
+		BranchData *s=branches[i];
+		s->render();
+	}
+}
 
 //************************************************************
 // TNplant class
 //************************************************************
+double TNplant::norm_max=2;
+double TNplant::norm_min=1e-5;
 TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
 	set_collapsed();
@@ -882,28 +863,28 @@ void TNplant::eval()
 }
 
 void TNplant::addSkipped(){
-	if(update_needed)
+	if(PlantMgr::update_needed)
 		PlantMgr::stats[PLANTS_SKIPPED]++;
 }
 void TNplant::addRendered(){
-	if(update_needed){
+	if(PlantMgr::update_needed){
 		PlantMgr::stats[PLANTS_DRAWN]++;
 	}
 }
 void TNplant::addLine(){
-	if(update_needed)
+	if(PlantMgr::update_needed)
 		PlantMgr::stats[PLANT_LINES]++;	
 }
 void TNplant::addBranch(){
-	if(update_needed)
+	if(PlantMgr::update_needed)
 		PlantMgr::stats[PLANT_BRANCHES]++;	
 }
 void TNplant::addSpline(){
-	if(update_needed)
+	if(PlantMgr::update_needed)
 		PlantMgr::stats[PLANT_SPLINES]++;	
 }
 void TNplant::addLeaf(){
-	if(update_needed)
+	if(PlantMgr::update_needed)
 		PlantMgr::stats[PLANT_LEAVES]++;	
 }
 
@@ -1206,8 +1187,6 @@ NodeIF *TNplant::getInstance(NodeIF *parent, int type){
 	return plant;
 }
 
-
-//===================== TNBranch ==============================
 //************************************************************
 // TNBranch class
 //************************************************************
@@ -1313,8 +1292,6 @@ void TNBranch::initArgs(){
 	if(n>15)density=arg[15];
 	
 	getTextureName();
-	//cout<<"TNBranch::initArgs() "<<isRandEnabled()<<" "<<image_file<<endl;
-
 }
 
 void TNBranch::invalidateTexture(){
@@ -1352,9 +1329,6 @@ bool TNBranch::setProgram(){
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-		
-		//cout<<"generating texture id:"<<texture_id<<" texid:"<<texid<<" w:"<<w<<" h:"<<h<<endl;
-
 	}
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 		
@@ -1728,7 +1702,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && !isShadowEnabled())
 				randval += 2;
-			else if(update_needed){
+			else if(PlantMgr::update_needed){
 				double rv = URAND; // density
 				double sv = SRAND; // size
 				double df = evalArg(15,density);
@@ -1737,7 +1711,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					if (PlantMgr::shader_lines)
 						shader_mode = LINE_MODE;
 	
-					setColor(nocache);
+					setColor(PlantMgr::no_cache);
 					c = S0.c;
 
 					double depth = bot.length();
@@ -1837,7 +1811,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			if (PlantMgr::shader_lines)
 				shader_mode = LINE_MODE;
 
-			setColor(nocache);
+			setColor(PlantMgr::no_cache);
 			c = S0.c;
 
 			tip.x = topx;
@@ -1941,7 +1915,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			double nscale = TNplant::norm_min;
 			//root->rendered++;
 			root->addLine();
-			setColor(nocache);
+			setColor(PlantMgr::no_cache);
 			c = S0.c;
 
 			poly_mode = POLY_LINE;
@@ -2247,12 +2221,9 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 	return TNfunc::getChildren(l);
 }
 
-//===================== TNleaf ==============================
 //************************************************************
 // TNLeaf class
 //************************************************************
-//ValueList<BranchData*> TNLeaf::leafs(100,1000);
-
 double BranchData::distance() { 
 	return data[2].length();
 }

@@ -1280,19 +1280,21 @@ void Map::render_shaded()
 	glPopAttrib();
 }
 
+//-------------------------------------------------------------
+// Map::render_objects() render placements that are not just terrain modifiers
+// - terrain modifiers: Craters, Rocks(2d) - not processed here
+// - objects: Plants, Sprites, Rocks(3d)
+//-------------------------------------------------------------
 void  Map::render_objects(PlaceObjMgr &mgr){
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
 	int mode=CurrentScope->passmode();
 	int n=node_data_list.size;
 	int sid=mgr.layer();
-	
-	cout<<"SID:"<<sid<<" TID:"<<tid<<endl;
 	double d0=clock();
-	CurrentScope->set_spass();
-	
+	CurrentScope->set_spass();	
 	mgr.free();
-	PlacementMgr::free_htable();
+	PlacementMgr::free_htable(); 
 	node_data_list.ss();
 	double d1=clock();
 	int j=0;
@@ -1300,27 +1302,30 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 		MapData *node=node_data_list++;
 		if(sid>0 && node->type() != sid){
 			j++;
-			continue;
+			continue; // if not a member of the current layer
 		}
-		node->setSurface();
-		mgr.eval();
+		node->setSurface(); // set the MapNode point for placement test
+		mgr.eval(); // populate hash table with Placements (make)
 	}
 	double d2=clock();
-	mgr.collect();
-	//cout<<"DATA:"<<mgr.placements()<<endl;
+	mgr.collect(); // collect placements into PlaceData data (make)
+
 	double d3=clock();
+	if(mgr.setProgram()) // render setup (set up shaders)
+		mgr.render();	 // create and/or render PlaceObj vertex array		
+	CurrentScope->set_passmode(mode);
+	double d4=clock();
 #ifdef PRINT_PLACEMENT_TIMING
 	cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j
 			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
 			<<" collect:"<<1000*(d3-d2)/CLOCKS_PER_SEC
-			<<" total:"<<1000*(d3-d0)/CLOCKS_PER_SEC
+			<<" render:"<<1000*(d4-d3)/CLOCKS_PER_SEC
+			<<" total:"<<1000*(d4-d0)/CLOCKS_PER_SEC
 			<<" ms"<<endl;
 #endif
-	if(mgr.setProgram())
-		mgr.render();			
-	CurrentScope->set_passmode(mode);
+
 }
 
 //-------------------------------------------------------------

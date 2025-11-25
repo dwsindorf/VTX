@@ -69,6 +69,7 @@ public:
 	static int shadow_count;
 	static bool show_one;
 	static bool first_instance;
+	static bool update_needed;
 	
 	Color c;
 	double slope_bias;
@@ -83,7 +84,6 @@ public:
 
 	static void clearStats();
 };
-
 
 class Plant : public PlaceObj
 {
@@ -104,12 +104,9 @@ public:
 	Plant(int l, TNode *e);
 	
 	PlacementMgr *mgr();
-	void eval();
 	bool setProgram();
 	void clearStats();
 	void showStats();
-	
-	static void reset();
 };
 
 class PlantObjMgr : public PlaceObjMgr

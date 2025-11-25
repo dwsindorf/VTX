@@ -4,7 +4,7 @@
 #define _ROCKS
 
 #include "Placements.h"
-#include "MarchingCubes.h"
+#include "MCObjects.h"
 
 class RockMgr;
 
@@ -32,17 +32,20 @@ public:
 class Rock3DObjMgr : public PlaceObjMgr
 {
 	static ValueList<PlaceData*> data;
+	MCObjectManager rocks;
 	void free() { data.free();}
 	int placements(){ return data.size;}
 	void collect();
 	const char *name() { return "Rocks3D";}
+    bool setProgram();
+    void render();
+
 };
 
 class Rock3D : public PlaceObj
 {
  public:
 	Rock3D(int l, TNode *e);
-    MarchingCubesObject* mcObject;  // Only allocated for 3D rocks
     PlacementMgr *mgr();
 };
 

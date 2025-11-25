@@ -132,7 +132,6 @@ public:
 	virtual int layer() { return objs.size>0?objs[0]->layer:0;}
 	virtual int placements() { return 0;}
 	virtual const char *name() { return 0;}
-	
 	int objects() { return objs.size;}
 	
 	void addObject(PlaceObj *obj) { objs.add(obj);}

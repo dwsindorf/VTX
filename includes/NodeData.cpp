@@ -256,21 +256,12 @@ Point MapData::tvector()
 
 void MapData::setSurface()
 {
-
-    //Td.clr_flag(SFIRST);
-
     MapData *d=surface1();
 	if(!d)
 		return;   
-	double t=d->theta();
-	double p=d->phi();	
-    double  aveht=d->Ht();  
-    Point pnt=d->point();
-	Point pt=Td.rectangular(t, p);
-	Height=aveht;
-	MapPt=pnt;
-	//cout<<t<<" "<<p<<" "<<Height<<endl;
-	//pt.print("\n");
+	Height=d->Ht();  
+    MapPt=d->point();
+	Point pt=Td.rectangular(d->theta(),d->phi());
 	Hardness=d->hardness();
 	TheNoise.set(pt);
 }
