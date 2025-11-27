@@ -16,12 +16,13 @@
 #define TEST_ROCKS
 
 #define PRINT_PLACEMENT_TIMING
-//#define PRINT_PLACEMENT_STATS
+#define PRINT_PLACEMENT_STATS
 
 //#define DEBUG_PMEM         // turn on for memory usage
 
 class PlacementMgr;
 class PlaceData;
+class TNarg;
 
 enum {
     PID 		= 0x00000fff,
@@ -76,14 +77,14 @@ public:
 	static int chits,cvisits,crejects,cchained;
 	static int nhits,nmisses,nvisits,nrejects,nchained;
 	static int cmade,cfreed;
-	static int vtests,pts_fails,dns_fails;
+	static int vtests,pts_fails,dns_fails,dns_pass;
 	static int lod_visits,lod_hits,lod_fails;
 
 	static void reset(){
 		chits=cvisits=crejects=cchained=0;
 		nhits=nmisses=nvisits=nrejects=nchained=0;
 		cmade=cfreed=0;
-		vtests=pts_fails=dns_fails=0;
+		vtests=pts_fails=dns_fails=dns_pass=0;
 		lod_visits=lod_hits=lod_fails=0;
 	}
 	static void exec();
@@ -252,14 +253,16 @@ public:
 	int		id;
 	int		instance;
 	int		layer;
-	double  maxsize;
+	
 	int     levels;
+	double  maxsize;
 	double	mult;
-	double	level_mult;
+	double	level_mult;	
 	double  density;
-	double  base;
 	double  ht;
 	double  msize;
+	double  base;
+
 	TNode   *dexpr;
 
 	static void free_htable();
@@ -271,6 +274,7 @@ public:
 	    currentChain = nullptr;
 	}
 	static void printChainStats();
+	static double calcDensity(double s, double m, double b, double p);
 	int hashPoint(Point4DL& pc, int lvl, int id);
 
 	int set_ntest(int i)		{ return i?BIT_OFF(options,NNBRS):BIT_ON(options,NNBRS);}
@@ -322,6 +326,7 @@ public:
 	virtual Placement *make(Point4DL&,int);
 	virtual PlaceData *make(Placement*s);
 	virtual void setHashcode();
+	virtual void getArgs(TNarg *);
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;

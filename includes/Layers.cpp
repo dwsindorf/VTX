@@ -13,13 +13,11 @@ int mindex=0;
 
 extern void inc_tabs();
 extern void dec_tabs();
-extern double zslope();
 
 extern Map     *TheMap;
 
 extern char   tabs[];
-extern double Hscale,Rscale;
-extern double ptable[];
+extern double Rscale;
 double  Mheight,Drop,Margin;
 
 //extern int hits,visits,misses;

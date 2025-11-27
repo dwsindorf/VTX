@@ -27,13 +27,13 @@ static char THIS_FILE[] = __FILE__;
 #define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
-#define DEBUG_HASH         //  turn on to get hash table stats
+//#define DEBUG_HASH         //  turn on to get hash table stats
 //#define NO_CHAIN          // TEST mode turn off chaining
 //#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
 
 static TerrainData Td;
 extern double ptable[];
-extern double Hscale,Height;
+extern double Hscale,Height,Slope;
 
 double MaxSize;
 
@@ -89,6 +89,7 @@ int PlacementStats::cfreed=0;
 int PlacementStats::vtests=0;
 int PlacementStats::pts_fails=0;
 int PlacementStats::dns_fails=0;
+int PlacementStats::dns_pass=0;
 int PlacementStats::lod_visits=0;
 int PlacementStats::lod_hits=0;
 int PlacementStats::lod_fails=0;
@@ -103,7 +104,7 @@ void PlacementStats::exec(){
 	    "created",cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0);
 	if(vtests)
 	TheScene->draw_string(DATA_COLOR,"%10s %5.1f K fails pts %2.1f %% dns %2.1f %%",
-		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
+		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/cmade);
 #ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
 	if(lod_visits>0)
@@ -131,7 +132,7 @@ void PlacementStats::dump(){
 	    "created",cmade/1000.0,cfreed/1000.0,(cmade-cfreed)/1000.0,types.size());
 	if(vtests)
 	printf("%10s %5.1f K fails pts %2.1f %% dns %2.1f %%\n",
-		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/vtests);
+		"tests",(double)vtests/1000,100.0*pts_fails/vtests,100.0*dns_fails/cmade);
 #ifdef PLACEMENTS_LOD
 #ifdef DEBUG_LOD
 	if(lod_visits)
@@ -443,7 +444,7 @@ void PlacementMgr::setTests() {
 	if(fabs(x)<1e-6)
 		return;
 	double y=pow(x,6);
-	if(testColor()) {
+	if(density>0 && testColor()) {
 		S0.set_cvalid();
 		int hash=(3*instance+type+layer)&0xf;
 		double lmod=(1.0*slvl)/levels;
@@ -638,7 +639,6 @@ void PlacementMgr::eval()
             p=pv*(1.0/size)+offset;
         }
         else{
-           // set_offset_valid(0);
             mpt=pv;     
             p=pv*(1.0/size);
             offset.clear();
@@ -661,7 +661,6 @@ void PlacementMgr::eval()
         while(h){
            	if(h->type)
             	types.insert(h->type).second;
-        	//if(h->point == pc && h->type == type && h->lvl ==lvl && h->instance == instance){
            	if(h->isEqual(pc,type,lvl,instance,layer)){
                 found = h;
                 Stats.chits++;
@@ -816,6 +815,8 @@ void PlacementMgr::find_neighbors(Placement *placement)
 //************************************************************
 Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 {
+	static int cnt=0;
+
 	mgr=&pmgr;
     type=pmgr.type;
 	hid=n;
@@ -864,8 +865,22 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 		CurrentScope->revaluate();
 		dns=clamp(dns,0,1);
 	}
-	if(rands[hid]+0.5>dns)
+	
+	double rtest=rands[hid]+0.5;
+
+	if(rtest>dns){
+		//if(cnt%100==0)
+		PlacementMgr::Stats.dns_fails++;
+		//cout<<"fail dns:"<<dns<<" rtest:"<<rtest<<endl;
 		return;
+	}
+	PlacementMgr::Stats.dns_pass++;
+
+	//if(cnt%100==0){
+//	if(rtest<=dns && cnt%100==0)
+//	  cout<<"pass dns:"<<dns<<" rtest:"<<rtest<<endl;
+	//}
+	cnt++;
 
 	d=fabs(p.length()-1);
 	double rf=1-mgr->mult;
@@ -1132,7 +1147,60 @@ void TNplacements::init()
 	if(base)
 	    base->init();
 }
+//#define DEBUG_DENSITY_CALC
+double PlacementMgr::calcDensity(double s, double mid, double b, double p){
+	double delta = s - mid;
+	double sign=delta<0?-1:1;
+	double range = (delta < 0) ? mid : (1.0 - mid);
+	double delta_norm = delta / range;  // -1 to 1
+	double y = b * sign * pow(fabs(delta_norm), p);  // -1 to 1 when b=±1
+	double t=0.5*(y-1);
+#ifdef DEBUG_DENSITY_CALC
+	if(cnt%100==0 && CurrentScope->spass())
+		cout<<"b:"<<b<<" s:"<<s<<" y:"<<t<<endl;
+    cnt++;
+#endif
+    
+    return t;
+}
+//#define DEBUG_DENSITY
 
+void PlacementMgr::getArgs(TNarg *left){
+	extern double Theta,Phi,Slope;
+	TNarg &args=*((TNarg *)left);
+	double arg[10];
+	
+	double maxdensity=1;
+	double slope_bias=0;
+	double ht_bias=0;
+	double lat_bias=0;
+	double f=0;
+
+	int n=getargs(&args,arg,9);
+	if(n>0) levels=(int)arg[0]; 	// scale levels
+	if(n>1) maxsize=arg[1];     	// size of largest placement
+	if(n>2) mult=arg[2];			// scale multiplier
+	if(n>3) level_mult=arg[3];      // scale multiplier per level
+	if(n>4) maxdensity=arg[4];      // density
+	if(n>5) slope_bias=arg[5];
+	if(n>6) ht_bias=arg[6];
+	if(n>7) lat_bias=arg[7];
+	
+	if(slope_bias)
+		f=calcDensity(Slope,0.25,slope_bias,0.2);
+	if(ht_bias)
+		f+=calcDensity(Height,0.5,ht_bias,0.2);	
+	if(lat_bias)
+		f+=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+    density=maxdensity*(1+f);
+	density=clamp(density,0,1);
+#ifdef DEBUG_DENSITY
+	if(cnt%1000==0)
+	cout<<"slope:"<<Slope<<" density="<<density<<endl;
+	cnt++;	
+#endif
+	
+}
 //-------------------------------------------------------------
 // TNplacements::eval() evaluate common arguments
 //-------------------------------------------------------------
@@ -1152,7 +1220,8 @@ void TNplacements::eval()
 		mgr->mult=randscale;            // in same level
 		mgr->level_mult=randscale;      // reduce size per level
 	}
-	//if(mgr->dexpr==0){
+	/*
+	if(mgr->dexpr==0){
 	// probability
 		dexpr=args[3];
 		if(dexpr){
@@ -1161,7 +1230,8 @@ void TNplacements::eval()
 		    mgr->density=S0.s;
 		    //cout<<mgr->density<<endl;
 		}
-	//}
+	}
+	*/
 	
 	MaxSize=mgr->maxsize;
 }

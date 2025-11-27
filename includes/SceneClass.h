@@ -262,6 +262,8 @@ public:
 	int  render_mode()			{ return rmode==RENDER ? 1 :0;}
 	int  shadows_mode()			{ return rmode==SHADOWS ? 1 :0;}
 	int  buffers_mode()			{ return rmode==BUFFERS ? 1 :0;}
+	
+	int mode() { return rmode;}
 
 	void init();
 	void reset();

@@ -14,7 +14,8 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-static LinkedList<MapData*> node_data_list;
+static LinkedList<MapNode*> node_data_list;
+extern double INV2PI;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
@@ -64,7 +65,7 @@ extern void     init_tables();
 Map            *TheMap = 0;
 double          Rscale, Gscale, Pscale, Hscale;
 double          ptable[PLVLS];
-extern double 	Theta, Phi, Height,MinHt,MaxHt;
+extern double 	Theta, Phi, Height,MinHt,MaxHt,Slope;
 extern Point	MapPt;
 extern int 		test2;
 
@@ -442,7 +443,7 @@ void Map::set_scene()
 	d=radius;
 	d=r*r-d*d;
 	TheScene->elevation=TheScene->radius-radius;
-	//cout << TheScene->elevation/radius << endl;
+	//cout << ->elevation/radius << endl;
 	if(d>0.0)
 		horizon=sqrt(d);
 
@@ -1299,12 +1300,14 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	double d1=clock();
 	int j=0;
 	for(int i=0;i<n;i++){
-		MapData *node=node_data_list++;
-		if(sid>0 && node->type() != sid){
+		MapNode *m=node_data_list++;
+		MapData *d=&m->data;
+		d=d->surface1();
+		if(sid>0 && d->type() != sid){
 			j++;
 			continue; // if not a member of the current layer
 		}
-		node->setSurface(); // set the MapNode point for placement test
+		m->setSurface();
 		mgr.eval(); // populate hash table with Placements (make)
 	}
 	double d2=clock();
@@ -1460,7 +1463,7 @@ static void collect_nodes(MapNode *n)
 	d=d->surface1();
 	
 	if(n->visible() && d && !d->rock() && !d->water()){
-		node_data_list.add(d);
+		node_data_list.add(n);
     }
 }
 
@@ -2081,9 +2084,11 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	    for(int i=0;i<MAX_NDATA;i++)
 	    	mapdata[i]=0;
 	}
+	else if(object==TheScene->viewobj)
+		parent->setSurface(); // needed to set Slope for placements
 
 	last=parent;
-	a=new MapNode(parent, t, p);
+	a=new MapNode(parent, t, p); // no neighbors yet so can't determine slope
 	Td.clr_flag(FNOREC);
 	
 	object->set_surface(Td); // calls Terrain eval() -> S0.p;

@@ -355,14 +355,10 @@ SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
 //-------------------------------------------------------------
 Sprite::Sprite(Image *i, int t, TNode *e) :PlaceObj(t,e)
 {
-	//type=l;
-	//sprite_id=get_id();
 	texture_id=0;
     image=i;
-	//expr=e;
 	rows=((TNsprite *)e)->getImageRows();
 	cols=((TNsprite *)e)->getImageCols();
-	//valid=false;
 }
 
 void Sprite::set_image(Image *i, int r, int c){
@@ -487,7 +483,7 @@ void TNsprite::set_id(int i){
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
-#define TEST
+
 //-------------------------------------------------------------
 // TNsprite::eval() evaluate the node
 //-------------------------------------------------------------
@@ -547,6 +543,7 @@ void TNsprite::eval()
 	if(n>5) smgr->slope_bias=arg[5];
 	if(n>6) smgr->ht_bias=arg[6];
 	if(n>7) smgr->lat_bias=arg[7];
+	
 	if(n>8) smgr->select_bias=arg[8];
 	
 	density=maxdensity;
@@ -554,21 +551,21 @@ void TNsprite::eval()
 	radius=TheMap->radius;
 		
 	mgr->type=type;
+	double slope=0;
+	double f=0;
 	if(smgr->slope_bias){
-		double slope=8*zslope();
-		double f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
-#ifdef DEBUG_SLOPE_BIAS
-		if(ncalls%100==0)
-			cout<<"slope:"<<slope<<" f:"<<f<<endl;
-#endif
+		slope=zslope();
+		f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
+//#ifdef DEBUG_SLOPE_BIAS
+//#endif
 		density+=f;
 	}
 	if(smgr->ht_bias){
-		double f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
+		f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
 		density+=f;
 	}
 	if(smgr->lat_bias){
-		double f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
+		f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
 		density+=f;
 	}
     density*=maxdensity;
@@ -576,8 +573,18 @@ void TNsprite::eval()
 	density=sqrt(density);
 
 	mgr->density=density;	
- 
+	
+	//if(cnt%1000==0)
+	//	cout<<"f:"<<f<<" slope:"<<slope<<" density:"<<density<<endl;
+	cnt++;
+
+	if(density>0){
+		
+  	//cout<<"f:"<<f<<" slope:"<<slope<<" density:"<<density<<endl;
+
 	mgr->eval();  // calls SpritePoint.set_terrain	
+}
+
 	
 	if(!CurrentScope->spass()){
 		S0.copy(ground);

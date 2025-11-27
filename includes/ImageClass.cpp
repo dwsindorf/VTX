@@ -17,7 +17,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 extern double Rand();
-extern double zslope();
 extern double Phi;
 extern void inc_tabs();
 extern void dec_tabs();

@@ -143,6 +143,7 @@ public:
     void remove();
     //void setVertexAttributes(MapData*d);
     void setVertexAttributes(Point p);
+    void setSurface();
 
     MapLink *split();
     void    sizechk();

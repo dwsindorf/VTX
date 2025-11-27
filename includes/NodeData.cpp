@@ -256,6 +256,7 @@ Point MapData::tvector()
 
 void MapData::setSurface()
 {
+	extern double Slope,INV2PI;
     MapData *d=surface1();
 	if(!d)
 		return;   
@@ -264,6 +265,9 @@ void MapData::setSurface()
 	Point pt=Td.rectangular(d->theta(),d->phi());
 	Hardness=d->hardness();
 	TheNoise.set(pt);
+	CELLSLOPE(Z(),Slope);
+	Slope *=TheMap->hscale*INV2PI;
+
 }
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call

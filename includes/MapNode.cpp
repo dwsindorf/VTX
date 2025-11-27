@@ -12,7 +12,7 @@
 #include "Sprites.h"
 #include "Plants.h"
 
-extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness;
+extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness,Slope;
 extern Point MapPt;
 
 #define VCLIP     // enable viewobj clip  test
@@ -1731,6 +1731,22 @@ MapData *MapNode::surface_data(){
 
     return surface_data(d);
 }
+void MapNode::setSurface()
+{
+	static int cnt=0;
+	MapData *d=&data;
+    d=d->surface1();
+	if(!d)
+		return; 
+	find_neighbors();
+	d->setSurface();
+#ifdef DEBUG_SET_SURFACE
+	if(cnt%1000==0)
+	cout<<s<<" MapNode::setSurface Slope:"<<Slope<<endl;
+	cnt++;
+#endif
+}
+
 //-------------------------------------------------------------
 // MapNode::render()	render the cell using open-gl triangles
 //-------------------------------------------------------------
@@ -1739,6 +1755,7 @@ void MapNode::render()
 	MapData *d;
 
 	TheMap->current=this;
+	
 
 	if(link && !TheMap->leaf_cycle())
 		link->render();
@@ -1768,6 +1785,7 @@ void MapNode::render()
     Phi = d->phi()/180;
     Theta = d->theta()/180.0-1;
     MapPt = d->mpoint();
+	//setSurface();
 
 	for(int i=0;i<TheMap->tp->textures.size;i++){
 		Texture *t;
@@ -1973,19 +1991,19 @@ Color MapNode::Tcolor(MapData *d) {
                 c = c.blend(Color(0, 0, 1), 1);
         }
 #else
-        if(d && d->rock())
-        	c = Color(1, 0.0, 0.0);
-        else
-        	c = Color(1, 1, 1);
+//        if(d && d->rock())
+//        	c = Color(1, 0.0, 0.0);
+//        else
+//        	c = Color(1, 1, 1);
         //c.print();
-//        double s;
+        double s;
 //         Td.clr_flag(SFIRST);
-//         find_neighbors();
-//         s=zslope();
-         //CELLSLOPE(Z(),s);
-         //s*=TheMap->hscale*INV2PI;
-         //cout<<s<<endl;
-         //c=Color(2*s,0,0);
+         find_neighbors();
+        //double s=zslope();
+         CELLSLOPE(Z(),s);
+         s*=TheMap->hscale*INV2PI;
+        // cout<<s<<endl;
+         c=Color(s,0,0);
       	 //c = Color(data.mdata(), 0, 0);
       	 //if (data.margin())
       	 //    c = c.blend(Color(0, 0, 1), 1);
@@ -2301,6 +2319,7 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d->mpoint());
+	//setSurface();
 //#define COLOR_SPRITES	
 #ifdef COLOR_SPRITES
 	double t=d->theta();
@@ -2315,6 +2334,13 @@ void MapNode::Svertex(MapData*dn) {
 			ts->eval();		
 	}
 #endif
+	//find_neighbors();
+	//setSurface("Svertex");
+//	Td.clr_flag(SFIRST);
+//	double zs=zslope();
+//	Point T=tangent(d);
+//	glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, zs, max_orders);
+
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
 			find_neighbors();
