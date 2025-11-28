@@ -208,10 +208,9 @@ PlacementMgr::PlacementMgr(int i)
 	density=1.0;
   	dexpr=0;
   	base=0;
-
-  	//hash=0;
-   	index=0;
-  	
+	slope_bias=ht_bias=lat_bias=hardness_bias=0;
+	maxdensity=1.0;
+   	index=0; 	
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
 
@@ -1166,17 +1165,18 @@ double PlacementMgr::calcDensity(double s, double mid, double b, double p){
 //#define DEBUG_DENSITY
 
 void PlacementMgr::getArgs(TNarg *left){
-	extern double Theta,Phi,Slope;
+	extern double Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
 	TNarg &args=*((TNarg *)left);
-	double arg[10];
+	double arg[11];
 	
-	double maxdensity=1;
-	double slope_bias=0;
-	double ht_bias=0;
-	double lat_bias=0;
+//	double maxdensity=1;
+//	double slope_bias=0;
+//	double ht_bias=0;
+//	double lat_bias=0;
+//	double hardness_bias=0;
 	double f=0;
 
-	int n=getargs(&args,arg,9);
+	int n=getargs(&args,arg,10);
 	if(n>0) levels=(int)arg[0]; 	// scale levels
 	if(n>1) maxsize=arg[1];     	// size of largest placement
 	if(n>2) mult=arg[2];			// scale multiplier
@@ -1185,20 +1185,25 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>5) slope_bias=arg[5];
 	if(n>6) ht_bias=arg[6];
 	if(n>7) lat_bias=arg[7];
+	if(n>8) hardness_bias=arg[8];
 	
+	//if(cnt%1000==0)	
+    //cout<<"pass:"<<CurrentScope->passmode()<<" TID:"<<TheMap->tid<<" Hardness:"<<Hardness<<endl;
 	if(slope_bias)
 		f=calcDensity(Slope,0.25,slope_bias,0.2);
 	if(ht_bias)
-		f+=calcDensity(Height,0.5,ht_bias,0.2);	
+		f+=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
 	if(lat_bias)
 		f+=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+	if(hardness_bias)
+		f+=calcDensity(Hardness,0.5,hardness_bias,0.5);
     density=maxdensity*(1+f);
 	density=clamp(density,0,1);
 #ifdef DEBUG_DENSITY
 	if(cnt%1000==0)
-	cout<<"slope:"<<Slope<<" density="<<density<<endl;
-	cnt++;	
+	cout<<"slope:"<<Slope<<" density="<<density<<endl;	
 #endif
+	cnt++;
 	
 }
 //-------------------------------------------------------------

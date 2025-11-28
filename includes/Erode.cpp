@@ -111,17 +111,17 @@ TNhardness::TNhardness(TNode *l, TNode *r) : TNfunc(l,r) {}
 void TNhardness::eval()
 {
   	TNarg *arg=(TNarg*)left;
-	hardness=0;
+	double softness=0;
 	if(arg){
 	    arg->eval();
-		hardness=S0.s;
+	    softness=clamp(S0.s,0,1);
 		//cout<<"["<<S0.hardness<<"]";
 	}
 	INIT;
 	if(right){
 		right->eval();
 	}
-	S0.s=hardness;
+	Td.softness=softness;
 	S0.set_hardness();
 }
 

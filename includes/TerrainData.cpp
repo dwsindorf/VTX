@@ -107,6 +107,7 @@ Color TerrainData::emission=Color(1,1,1,0);
 Color TerrainData::specular=Color(1,1,1,1);
 Color TerrainData::diffuse=Color(1,1,1,1);
 double TerrainData::sediment=0;
+double TerrainData::softness=0;
 double TerrainData::height=0;
 double TerrainData::clarity=100*FEET;
 double TerrainData::rock=0;

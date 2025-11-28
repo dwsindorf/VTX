@@ -70,12 +70,6 @@ public:
 	static bool show_one;
 	static bool first_instance;
 	static bool update_needed;
-	
-	Color c;
-	double slope_bias;
-	double ht_bias;
-	double lat_bias;
-	double hardness_bias;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);

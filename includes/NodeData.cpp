@@ -256,15 +256,25 @@ Point MapData::tvector()
 
 void MapData::setSurface()
 {
-	extern double Slope,INV2PI;
+	extern double Slope,INV2PI,Theta,Phi;
     MapData *d=surface1();
 	if(!d)
 		return;   
 	Height=d->Ht();  
     MapPt=d->point();
-	Point pt=Td.rectangular(d->theta(),d->phi());
+    Theta=d->theta();
+    Phi=d->phi();
+	Point pt=Td.rectangular(Theta,Phi);
 	Hardness=d->hardness();
 	TheNoise.set(pt);
+	if(!CurrentScope->passmode()){
+		MaxHt=Height>MaxHt?Height:MaxHt;
+		MinHt=Height<MinHt?Height:MinHt;
+	}
+	else{
+		MaxHt=TheMap->hmax/Rscale;
+		MinHt=TheMap->hmin/Rscale;	
+	}
 	CELLSLOPE(Z(),Slope);
 	Slope *=TheMap->hscale*INV2PI;
 
@@ -312,11 +322,6 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		density=td.s;
 		dns=1;
 	}
-
-//	else if(td.density!=0.0){
-//		dns=1;
-//		density=td.density;
-//	}
 	setRock(td.get_flag(ROCKBODY));
 	if(td.water())
 		nw=1;
@@ -401,7 +406,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
     if(td.water()||td.depth)
 		setDepth(td.depth);
     else if(td.hardness())
-		setHardness(td.s);
+		setHardness(td.softness);
 	else {
 		setSolid(td.rock);
 		setSediment(td.sediment);

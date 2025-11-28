@@ -136,6 +136,7 @@ public:
 	static double       ocean; 	    // water-ice
 	static double       erosion; 	// erosion
 	static double       sediment;	// sediment
+	static double       softness;	// sediment
 	static double       clarity; 	// max water clarity
 	static double       rock;    	// rock
 	static double       depth;    	// depth

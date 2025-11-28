@@ -719,27 +719,22 @@ void TNplant::init()
 		plant=new Plant(type,this);
 	smgr->init();
 	
-    double arg[12];
+    double arg[3];
 	INIT;
 	TNarg &args=*((TNarg *)left);
-	int n=getargs(&args,arg,11);
+		
+	smgr->getArgs((TNarg *)left);
 	
-	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest 
-	if(n>2) mgr->mult=arg[2];			// random scale multiplier
-	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) maxdensity=arg[4];
-	if(n>5) smgr->slope_bias=arg[5];
-	if(n>6) smgr->ht_bias=arg[6];
-	if(n>7) smgr->lat_bias=arg[7];
-	if(n>8) smgr->hardness_bias=arg[8];
-	
-	if(n>9) base_drop=arg[9];
-	if(n>10) draw_scale=arg[10];
-
+	TNarg *a = args.index(9);
+	if (a) {                // geometry exprs
+		int n = getargs(a, arg, 3);
+		if(n>0)
+			base_drop=arg[0];
+		if(n>1)
+			draw_scale=arg[1];
+	}
 	smgr->set_first(1);
 }
-
 
 void TNplant::set_id(int i){
 	BIT_OFF(type,PID);
@@ -751,7 +746,6 @@ void TNplant::set_id(int i){
 //-------------------------------------------------------------
 void TNplant::eval()
 {	
-	static int cnt=0;
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
 	TerrainData ground;
@@ -762,8 +756,7 @@ void TNplant::eval()
 			right->eval();
 		return;
 	}
-	SINIT;
-	
+	SINIT;	
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Plants.objects();
@@ -779,99 +772,27 @@ void TNplant::eval()
 			right->eval();
 		return;
 	}
-	if(!spass){ // surface generation
-		if(right)
-			right->eval(); // get ht 
-		if(!smgr->test())  // no modulation needed
-		    return;
-		// modify density and/or color of surface nodes
-		Height=S0.p.z;
-		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
-		smgr->htval=Height;		
-		ground.copy(S0); // save surface data
-	}
-    extern double Hardness;
-	SINIT;
-	Color c =Color(1,1,1);
-	
 	ncalls++;
 	
 	INIT;
 	
 	double b,f,h;
-	double density=0;
-	MaxSize=mgr->maxsize;
 	radius=PSCALE;
-#define DEBUG_SLOPE_BIAS	
 	mgr->type=type;
-#define TEST
-#ifdef TEST
-	//if(spass){
-	smgr->getArgs((TNarg *)left);
-	density=smgr->density;
-	//}
-#else
-	if(smgr->slope_bias){
-		double b=smgr->slope_bias;
-		double y=smgr->calcDensity(Slope,0.25,b,0.2);
-		density = maxdensity * y;
-		density=clamp(density,0,1);
-#ifdef DEBUG_SLOPE_BIAS
-		if(ncalls%100==0 && CurrentScope->spass())
-			cout<<"b:"<<b<<" s:"<<Slope<<" y:"<<y<<" d:"<<density<<endl;
-#endif
-	}
-	if(smgr->ht_bias){
-		h=Height;
-		b=smgr->ht_bias;
-		f=b * (h - 0.5) - 0.5;
-		f=clamp(f,-1,1);
-		//f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
-		density+=fabs(b)*f;
-#ifdef DEBUG_HT_BIAS
-		if(cnt%100==0)
-			cout<<"bias:"<<b<<" ht:"<<h<<" f:"<<f<<" d:"<<density<<endl;
-#endif
-	}
-	if(smgr->lat_bias){
-		h=fabs(2*Phi/180);
-		b=smgr->lat_bias;
-		f=2*b * (h - 0.5);
-		f=clamp(f,-1,1);
-		density+=fabs(b)*f;
-#ifdef DEBUG_LAT_BIAS
-		if(cnt%100==0)
-			cout<<"bias:"<<b<<" h:"<<h<<" f:"<<f<<" d:"<<density<<endl;
-#endif
-	}
-	if(smgr->hardness_bias){
-		b=smgr->hardness_bias;
-		h=Hardness;
-		f=b * (h - 0.5) - 0.5;
-		f=clamp(f,-1,1);
-		density+=fabs(b)*f;
-#ifdef DEBUG_HARD_BIAS
-		static double lasth=0;
-		if(cnt%100==0 && lasth !=hardness){
-			cout<<"bias:"<<b<<" hardness:"<<h<<" f:"<<f<<" d:"<<density<<endl;
-			lasth=hardness;
-		}
-#endif
-	}
-	   density*=maxdensity;
-		density=clamp(density,0,1);
-		mgr->density=density;
+	smgr->htval=Height;	
 
-#endif
-	cnt++;
+	smgr->getArgs((TNarg *)left);
+	MaxSize=mgr->maxsize;
+
+	double density=smgr->density;
+
  	if(density>0)
 		smgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	
-	if(!CurrentScope->spass()){ // adapt pass (else render-plant creation pass)
-		S0.copy(ground); //restore surface data
-		if(density>0)
+	if(!CurrentScope->spass() && density>0) // adapt pass (else render-plant creation pass)
 		smgr->setTests();
-	}
+	if(right)
+		right->eval();
 }
 
 void TNplant::addSkipped(){

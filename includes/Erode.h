@@ -12,7 +12,6 @@
 class TNhardness : public TNfunc
 {
 public:
-	double hardness;
 	TNhardness(TNode *l, TNode *r);
 	void eval();
 	void applyExpr();

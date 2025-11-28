@@ -556,8 +556,6 @@ void TNsprite::eval()
 	if(smgr->slope_bias){
 		slope=zslope();
 		f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
-//#ifdef DEBUG_SLOPE_BIAS
-//#endif
 		density+=f;
 	}
 	if(smgr->ht_bias){
@@ -573,19 +571,11 @@ void TNsprite::eval()
 	density=sqrt(density);
 
 	mgr->density=density;	
-	
-	//if(cnt%1000==0)
-	//	cout<<"f:"<<f<<" slope:"<<slope<<" density:"<<density<<endl;
 	cnt++;
 
 	if(density>0){
-		
-  	//cout<<"f:"<<f<<" slope:"<<slope<<" density:"<<density<<endl;
-
-	mgr->eval();  // calls SpritePoint.set_terrain	
-}
-
-	
+		mgr->eval();  // calls SpritePoint.set_terrain	
+	}	
 	if(!CurrentScope->spass()){
 		S0.copy(ground);
 		mgr->setTests();

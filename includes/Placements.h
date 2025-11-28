@@ -262,6 +262,11 @@ public:
 	double  ht;
 	double  msize;
 	double  base;
+	double  slope_bias;
+	double  ht_bias;
+	double  lat_bias;
+	double  hardness_bias;
+	double  maxdensity;
 
 	TNode   *dexpr;
 
