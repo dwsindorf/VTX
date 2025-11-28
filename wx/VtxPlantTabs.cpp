@@ -175,48 +175,48 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
-    wxBoxSizer *distrib = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Distribution"));
+    wxBoxSizer *distro = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Multilevel"));
 
-    distrib->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL, 4);
+    distro->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL, 4);
 
 	wxString orders[]={"1","2","3","4","5","6","7","8","9","10"};
 	m_orders=new wxChoice(panel, ID_LEVELS, wxDefaultPosition,wxSize(50,-1),10, orders);
 	m_orders->SetSelection(0);
 	
-	distrib->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
+	distro->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
 
     // size
 	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Size",40, VALUE2,60);
 	SizeSlider->setRange(1,200);
 	SizeSlider->setValue(10.0);
 
-	distrib->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	distro->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",40,VALUE2,60);
 	DensitySlider->setRange(0.0,1.0);
 	DensitySlider->setValue(1.0);
-	distrib->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	distrib->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	distro->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	distro->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	
-	boxSizer->Add(distrib,0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
 	
-    wxStaticBoxSizer* dispersion = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Dispersion"));
+    wxStaticBoxSizer* size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Dispersion"));
 
 	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Size",LABEL2,VALUE2,SLIDER2);
 	DeltaSizeSlider->setRange(0.0,2);
 	DeltaSizeSlider->setValue(0.0);
-	dispersion->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Level",LABEL2,VALUE2,SLIDER2);
 	LevelDeltaSlider->setRange(0.0,2);
 	LevelDeltaSlider->setValue(0.5);
-	dispersion->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	dispersion->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
-	boxSizer->Add(dispersion,0,wxALIGN_LEFT|wxALL,0);
+	size->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 	
 	// biases
 	
-	wxStaticBoxSizer* bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Biases"));
+	wxStaticBoxSizer* bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density Bias"));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	

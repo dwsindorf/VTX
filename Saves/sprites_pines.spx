@@ -117,9 +117,9 @@ Scene() {
 						Color(0.275,0.275,0.275,0.463));
 					Surface{
 						terrain=
-								Sprite("rocks9x",FLIP|NOLOD,1,1.39343e-06,1,1,0.44,0,0,0,0)
+								Sprite("rocks9x",FLIP|NOLOD,1,1.39343e-06,1,1,1,0,0,0,0)
 								Sprite("bushes9x",FLIP|NOLOD,2,3.46414e-07,1.68,1,1,0,0,0,0)
-								Sprite("firs2x2",FLIP|NOLOD,1,2.58988e-06,2,1,0.52,-0.5,0,0,0.88)
+								Sprite("firs2x2",FLIP|NOLOD,1,2.58988e-06,2,1,1,0,0,0,0)
 								Texture("alpine2",BORDER|TEX,17.858,0.88888,1,0,1,2,0.5,0,0,0.03176,0,0.73016)+
 								Texture("tallgrass-3",A|NORM|RANDOMIZE|S|TEX,noise(GRADIENT|NABS|SCALE|SQR,16.8,3.6,0.48,0.5,2,1,4,0,0.9,1e-06),noise(GRADIENT|SQR,14.4,9.6,0.89,0.29,2.41,1,4,0,0.5,1e-06),2.09715e+06,1,-0.1,0,3.28576,1.3944,1,0,0,-0.6032,0,-1.36504)+
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(SIMPLEX|SQR,4.8,14,0.5,0.5,2,2,1,0,0,1e-06));

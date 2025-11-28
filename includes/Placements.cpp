@@ -1169,11 +1169,6 @@ void PlacementMgr::getArgs(TNarg *left){
 	TNarg &args=*((TNarg *)left);
 	double arg[11];
 	
-//	double maxdensity=1;
-//	double slope_bias=0;
-//	double ht_bias=0;
-//	double lat_bias=0;
-//	double hardness_bias=0;
 	double f=0;
 
 	int n=getargs(&args,arg,10);
@@ -1186,9 +1181,6 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>6) ht_bias=arg[6];
 	if(n>7) lat_bias=arg[7];
 	if(n>8) hardness_bias=arg[8];
-	
-	//if(cnt%1000==0)	
-    //cout<<"pass:"<<CurrentScope->passmode()<<" TID:"<<TheMap->tid<<" Hardness:"<<Hardness<<endl;
 	if(slope_bias)
 		f=calcDensity(Slope,0.25,slope_bias,0.2);
 	if(ht_bias)

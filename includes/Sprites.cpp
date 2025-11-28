@@ -479,7 +479,6 @@ void TNsprite::init()
 }
 
 void TNsprite::set_id(int i){
-	//instance=i;
 	BIT_OFF(type,PID);
 	type|=i&PID;
 }
@@ -514,71 +513,34 @@ void TNsprite::eval()
 			right->eval();
 		return;
 	}
-	if(!CurrentScope->spass()){
-		if(right)
-			right->eval();
-		if(!smgr->test())
-		    return;
-		Height=S0.p.z;
-		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
-		smgr->htval=Height;	
-		ground.copy(S0);
-	}
+	if(right)
+		right->eval();
+	if(!CurrentScope->spass() && mgr->test())
+		ground.copy(S0); // save S0.p.z etc.
+	MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
 	INIT;
 	
-	double arg[10];
-
-	TNarg &args=*((TNarg *)left);
-	TNode *dexpr;
-	
-	int n=getargs(&args,arg,9);
-	
-	double density=1;
-
-	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2) mgr->mult=arg[2];			// random scale multiplier
-	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) maxdensity=arg[4];
-	if(n>5) smgr->slope_bias=arg[5];
-	if(n>6) smgr->ht_bias=arg[6];
-	if(n>7) smgr->lat_bias=arg[7];
-	
-	if(n>8) smgr->select_bias=arg[8];
-	
-	density=maxdensity;
+	smgr->getArgs((TNarg *)left);
 	MaxSize=mgr->maxsize;
+	double density=smgr->density;	
 	radius=TheMap->radius;
-		
 	mgr->type=type;
-	double slope=0;
-	double f=0;
-	if(smgr->slope_bias){
-		slope=zslope();
-		f=2*lerp(fabs(smgr->slope_bias)*slope,0,1,-smgr->slope_bias,smgr->slope_bias);
-		density+=f;
-	}
-	if(smgr->ht_bias){
-		f=2*lerp(8*fabs(smgr->ht_bias)*Height,-1,1,-smgr->ht_bias,smgr->ht_bias);
-		density+=f;
-	}
-	if(smgr->lat_bias){
-		f=lerp(fabs(smgr->lat_bias)*fabs(2*Phi/180),0,1,-smgr->lat_bias,+smgr->lat_bias);
-		density+=f;
-	}
-    density*=maxdensity;
-	density=clamp(density,0,1);
-	density=sqrt(density);
+	TNarg &args=*((TNarg *)left);
 
-	mgr->density=density;	
-	cnt++;
+	TNarg *a = args.index(9);
+	double arg[3];
+	if (a) {  
+		int n = getargs(a, arg, 3);
+		if(n>0)
+			smgr->select_bias=arg[0];
+	}
 
-	if(density>0){
+	if(density>0)
 		mgr->eval();  // calls SpritePoint.set_terrain	
-	}	
-	if(!CurrentScope->spass()){
-		S0.copy(ground);
-		mgr->setTests();
+	
+	if(!CurrentScope->spass() && mgr->test()){
+		S0.copy(ground); // restore ground parameters (S0.p.z)
+		mgr->setTests(); // set S0.s, S0.c ,S0.set_flag(DVALUE)
 	}
  }
 

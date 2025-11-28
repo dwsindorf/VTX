@@ -45,6 +45,8 @@ enum{
 
     ID_SLOPE_BIAS_SLDR,
     ID_SLOPE_BIAS_TEXT,
+	ID_HARD_BIAS_SLDR,
+	ID_HARD_BIAS_TEXT,
     ID_PHI_BIAS_SLDR,
     ID_PHI_BIAS_TEXT,
     ID_HT_BIAS_SLDR,
@@ -74,6 +76,7 @@ SET_SLIDER_EVENTS(DENSITY,VtxSpritesTabs,Density)
 SET_SLIDER_EVENTS(SLOPE_BIAS,VtxSpritesTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxSpritesTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxSpritesTabs,HtBias)
+SET_SLIDER_EVENTS(HARD_BIAS,VtxSpritesTabs,HardBias)
 SET_SLIDER_EVENTS(SEL_BIAS,VtxSpritesTabs,SelBias)
 
 END_EVENT_TABLE()
@@ -128,23 +131,6 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
     
-    wxBoxSizer *size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Size"));
-
-    // size
-	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Ave(ft)",LABEL2, VALUE2,SLIDER2);
-	SizeSlider->setRange(1,200);
-	SizeSlider->setValue(10.0);
-
-	size->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta",LABEL2,VALUE2,SLIDER2);
-	DeltaSizeSlider->setRange(0.0,2);
-	DeltaSizeSlider->setValue(0.0);
-	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
-	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
-
     wxStaticBoxSizer* distro = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Multilevel"));
 
     distro->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxALL, 4);
@@ -154,53 +140,70 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 	m_orders->SetSelection(0);
 
 	distro->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
-	
-	distro->AddSpacer(95);
-	
-	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Delta",LABEL2,VALUE2,SLIDER2);
-	LevelDeltaSlider->setRange(0.0,2);
-	LevelDeltaSlider->setValue(0.5);
-	distro->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	distro->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
-	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
-	
-	// density
-	
-	wxStaticBoxSizer* density = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density"));
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	  // size
+	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Size",40, VALUE2,60);
+	SizeSlider->setRange(1,200);
+	SizeSlider->setValue(10.0);
 
-	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Coverage",LABEL2,VALUE2,SLIDER2);
+	distro->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",40,VALUE2,60);
 	DensitySlider->setRange(0.0,1.0);
 	DensitySlider->setValue(1.0);
-	hline->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	distro->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
+	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Dispersion"));
+
+	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Size",LABEL2,VALUE2,SLIDER2);
+	DeltaSizeSlider->setRange(0.0,2);
+	DeltaSizeSlider->setValue(0.0);
+	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Level",LABEL2,VALUE2,SLIDER2);
+	LevelDeltaSlider->setRange(0.0,2);
+	LevelDeltaSlider->setValue(0.5);
+	size->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
+	
+	wxStaticBoxSizer* bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density Bias"));
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);	
 	SlopeBiasSlider=new ExprSliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
-	SlopeBiasSlider->setRange(-2,2);
+	SlopeBiasSlider->setRange(-1,1);
 	SlopeBiasSlider->setValue(0.0);
 
 	hline->Add(SlopeBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
-	density->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+
+	HardBiasSlider=new ExprSliderCtrl(panel,ID_HARD_BIAS_SLDR,"Hardness",LABEL2,VALUE2,SLIDER2);
+	HardBiasSlider->setRange(-1,1);
+	HardBiasSlider->setValue(0.0);
+
+	hline->Add(HardBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	
 	PhiBiasSlider=new ExprSliderCtrl(panel,ID_PHI_BIAS_SLDR,"Latitude",LABEL2,VALUE2,SLIDER2);
-	PhiBiasSlider->setRange(-2,2);
+	PhiBiasSlider->setRange(-1,1);
 	PhiBiasSlider->setValue(0.0);
 
 	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	HtBiasSlider=new ExprSliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
-	HtBiasSlider->setRange(-2,2);
+	HtBiasSlider->setRange(-1,1);
 	HtBiasSlider->setValue(0.0);
 
 	hline->Add(HtBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	density->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 
-	density->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
+	bias->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
 
-	boxSizer->Add(density,0,wxALIGN_LEFT|wxALL,0);
+	boxSizer->Add(bias,0,wxALIGN_LEFT|wxALL,0);
 }
 void VtxSpritesTabs::AddImageTab(wxWindow *panel){
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
@@ -398,6 +401,7 @@ wxString VtxSpritesTabs::exprString(){
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
+	s+=HardBiasSlider->getText()+",";
 	s+=SelBiasSlider->getText();
 	s+=")";
  	return wxString(s);
@@ -472,6 +476,12 @@ void VtxSpritesTabs::getObjAttributes(){
 		PhiBiasSlider->setValue(mgr->lat_bias);
 
 	a=args[8];
+	if(a)
+		HardBiasSlider->setValue(a);
+	else
+		HardBiasSlider->setValue(mgr->hardness_bias);
+
+	a=args[9];
 	if(a)
 		SelBiasSlider->setValue(a);
 	else

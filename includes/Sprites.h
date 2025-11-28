@@ -60,9 +60,6 @@ public:
 	int sprites_rows;
 	int sprites_cols;
 	double variability;
-	double slope_bias;
-	double ht_bias;
-	double lat_bias;
 	double rand_flip_prob;
 	double select_bias;
 	
@@ -71,7 +68,6 @@ public:
 
 	void init();
 	void eval();
-	//void setTests();
 	static bool setProgram(Array<PlaceObj*> &objs);
 
 };

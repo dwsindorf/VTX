@@ -52,6 +52,8 @@ protected:
 	ExprSliderCtrl *SlopeBiasSlider;
 	ExprSliderCtrl *PhiBiasSlider;
 	ExprSliderCtrl *HtBiasSlider;
+	ExprSliderCtrl *HardBiasSlider;
+
 	ExprSliderCtrl *SelBiasSlider;
 
 	bool changed_cell_expr;
@@ -84,6 +86,7 @@ public:
 	DEFINE_SLIDER_EVENTS(Density)
 	DEFINE_SLIDER_EVENTS(SlopeBias)
 	DEFINE_SLIDER_EVENTS(PhiBias)
+	DEFINE_SLIDER_EVENTS(HardBias)
 	DEFINE_SLIDER_EVENTS(HtBias)
 	DEFINE_SLIDER_EVENTS(SelBias)
 	DECLARE_EVENT_TABLE()
