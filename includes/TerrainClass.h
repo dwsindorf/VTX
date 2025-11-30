@@ -387,20 +387,18 @@ protected:
 public:
 	Point norm;
 	int branches;
+	double radius;
 
 	Plant *plant;
-	double radius;
 	double size;
 	double pntsize;
 	double distance;
-	double maxdensity;
-	double base_drop;
 	double width_scale;
 	double size_scale;
-	double draw_scale;
 	double seed;
 	static double norm_max;
 	static double norm_min;
+	static double draw_scale;
 
 	Point base_point;
 	

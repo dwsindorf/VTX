@@ -269,7 +269,10 @@ public:
 	double  ht_bias;
 	double  lat_bias;
 	double  hardness_bias;
+	double  selection_bias;
 	double  maxdensity;
+	double  comp;
+	double  drop;
 
 	TNode   *dexpr;
 

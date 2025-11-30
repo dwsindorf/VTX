@@ -53,9 +53,7 @@ class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
-	Rock3D *rock;
-    //static TNode *default_noise;
-	Rock3DMgr(int);
+ 	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
 	void eval();
 	void init();

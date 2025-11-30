@@ -31,8 +31,6 @@ enum{
     ID_LEVELS,
     ID_LEVELS_SIZE_SLDR,
     ID_LEVELS_SIZE_TEXT,
-    ID_LEVELS_DELTA_SLDR,
-    ID_LEVELS_DELTA_TEXT,
     ID_DENSITY_SLDR,
     ID_DENSITY_TEXT,
 
@@ -46,8 +44,6 @@ enum{
     ID_HARD_BIAS_TEXT,
 	ID_DROP_SLDR,
 	ID_DROP_TEXT,
-	ID_PIXELS_SLDR,
-	ID_PIXELS_TEXT,
 	ID_3D,
 	ID_SPLINES,
 	ID_LINES,
@@ -77,14 +73,12 @@ EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxPlantTabs::OnAddItem)
 EVT_CHOICE(ID_LEVELS,VtxPlantTabs::OnChangedLevels)
 SET_SLIDER_EVENTS(SIZE,VtxPlantTabs,Size)
 SET_SLIDER_EVENTS(DELTA_SIZE,VtxPlantTabs,DeltaSize)
-SET_SLIDER_EVENTS(LEVELS_DELTA,VtxPlantTabs,LevelDelta)
 SET_SLIDER_EVENTS(DENSITY,VtxPlantTabs,Density)
 SET_SLIDER_EVENTS(SLOPE_BIAS,VtxPlantTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxPlantTabs,PhiBias)
 SET_SLIDER_EVENTS(HT_BIAS,VtxPlantTabs,HtBias)
 SET_SLIDER_EVENTS(HARD_BIAS,VtxPlantTabs,HardBias)
 SET_SLIDER_EVENTS(DROP,VtxPlantTabs,Drop)
-SET_SLIDER_EVENTS(PIXELS,VtxPlantTabs,Pixels)
 
 EVT_CHECKBOX(ID_3D,VtxPlantTabs::OnChangedDisplay)
 EVT_CHECKBOX(ID_LINES,VtxPlantTabs::OnChangedDisplay)
@@ -207,10 +201,12 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	DeltaSizeSlider->setValue(0.0);
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
-	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Level",LABEL2,VALUE2,SLIDER2);
-	LevelDeltaSlider->setRange(0.0,2);
-	LevelDeltaSlider->setValue(0.5);
-	size->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
+	DropSlider->setRange(0,2);
+	DropSlider->setValue(0.0);
+	
+	size->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 	
@@ -252,25 +248,6 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	bias->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
 
 	boxSizer->Add(bias,0,wxALIGN_LEFT|wxALL,0);
-	
-	// other
-	
-	wxStaticBoxSizer* other = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Other"));
-	
-	DropSlider=new SliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
-	DropSlider->setRange(0,2);
-	DropSlider->setValue(0.0);
-	
-	other->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	PixelsSlider=new SliderCtrl(panel,ID_PIXELS_SLDR,"MinSize",LABEL2, VALUE2,SLIDER2);
-	PixelsSlider->setRange(0.1,1);
-	PixelsSlider->setValue(0.0);
-
-	other->Add(PixelsSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	other->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
-	boxSizer->Add(other,0,wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -310,14 +287,13 @@ wxString VtxPlantTabs::exprString(){
 	wxString s(p);
 
 	s+=DeltaSizeSlider->getText()+",";
-	s+=LevelDeltaSlider->getText()+",";
 	s+=DensitySlider->getText()+",";
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
 	s+=HardBiasSlider->getText()+",";
-	s+=DropSlider->getText()+",";
-	s+=PixelsSlider->getText();
+	s+="0,"; // selection bias not used
+	s+=DropSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -367,38 +343,32 @@ void VtxPlantTabs::getObjAttributes(){
 		DeltaSizeSlider->setValue(a);
 	else
 		DeltaSizeSlider->setValue(mgr->mult);
-
-	a=args[3];
-	if(a)
-		LevelDeltaSlider->setValue(a);
-	else
-		LevelDeltaSlider->setValue(mgr->level_mult);
 	
-	a=args[4];
+	a=args[3];
 	if(a)
 		DensitySlider->setValue(a);
 	else
-		DensitySlider->setValue(obj->maxdensity);
+		DensitySlider->setValue(mgr->maxdensity);
 
-	a=args[5];
+	a=args[4];
 	if(a)
 		SlopeBiasSlider->setValue(a);
 	else
 		SlopeBiasSlider->setValue(mgr->slope_bias);
 
-	a=args[6];
+	a=args[5];
 	if(a)
 		HtBiasSlider->setValue(a);
 	else
 		HtBiasSlider->setValue(mgr->ht_bias);
 
-	a=args[7];
+	a=args[6];
 	if(a)
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
 	
-	a=args[8];
+	a=args[7];
 	if(a)
 		HardBiasSlider->setValue(a);
 	else
@@ -408,14 +378,7 @@ void VtxPlantTabs::getObjAttributes(){
 	if(a)
 		DropSlider->setValue(a);
 	else
-		DropSlider->setValue(obj->base_drop);
-
-	a=args[10];
-	if(a)
-		PixelsSlider->setValue(a);
-	else
-		PixelsSlider->setValue(obj->draw_scale);
-
+		DropSlider->setValue(mgr->drop);
     getDisplayState();
 
 

@@ -130,8 +130,8 @@ SpriteMgr::SpriteMgr(int i) : PlacementMgr(i)
 		add_finisher(show_stats);
 #endif
 	MSK_SET(type,PLACETYPE,SPRITES);
-	level_mult=0.2;
-	slope_bias=0;
+	//level_mult=0.2;
+	mult=0.5;
 	ht_bias=0;
 	lat_bias=0;
 	rand_flip_prob=0.5;
@@ -520,8 +520,9 @@ void TNsprite::eval()
 		Height=S0.p.z;
 		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
 	}
+
 	INIT;
-	
+
 	smgr->getArgs((TNarg *)left);
 	MaxSize=mgr->maxsize;
 	double density=smgr->density;	
@@ -529,7 +530,7 @@ void TNsprite::eval()
 	mgr->type=type;
 	TNarg &args=*((TNarg *)left);
 
-	TNarg *a = args.index(9);
+	TNarg *a = args.index(8);
 	double arg[3];
 	if (a) {  
 		int n = getargs(a, arg, 3);

@@ -281,7 +281,8 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-	level_mult=0.2;
+	//level_mult=0.2;
+	mult=0.5;
 	slope_bias=0;
 	hardness_bias=0;
 	ht_bias=0;
@@ -416,7 +417,8 @@ void PlantObjMgr::render(){
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
  			plant->size=s->radius; // placement size
-			plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
+			//plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
+			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
 			plant->pntsize=s->pts;
 			plant->distance=s->dist;
 			
@@ -653,6 +655,7 @@ void Plant::renderBranches(){
 //************************************************************
 double TNplant::norm_max=2;
 double TNplant::norm_min=1e-5;
+double TNplant::draw_scale=1;
 TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
 	set_collapsed();
@@ -669,13 +672,9 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	plant=0;
 	branches=0;
 	pntsize=0;
-	maxdensity=0.1;
-	radius=0;
 	size=1e-6;
-	base_drop=0;
 	width_scale=1;
 	size_scale=1;
-	draw_scale=1;
 	distance=0;
 	seed=0;
 	
@@ -718,21 +717,9 @@ void TNplant::init()
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->init();
-	
-    double arg[3];
-	INIT;
-	TNarg &args=*((TNarg *)left);
-		
+			
 	smgr->getArgs((TNarg *)left);
 	
-	TNarg *a = args.index(9);
-	if (a) {                // geometry exprs
-		int n = getargs(a, arg, 3);
-		if(n>0)
-			base_drop=arg[0];
-		if(n>1)
-			draw_scale=arg[1];
-	}
 	smgr->set_first(1);
 }
 

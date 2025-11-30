@@ -42,6 +42,8 @@ enum{
     ID_LEVELS_DELTA_TEXT,
     ID_DENSITY_SLDR,
     ID_DENSITY_TEXT,
+	ID_DROP_SLDR,
+	ID_DROP_TEXT,
 
     ID_SLOPE_BIAS_SLDR,
     ID_SLOPE_BIAS_TEXT,
@@ -71,7 +73,7 @@ EVT_CHOICE(ID_FILELIST,VtxSpritesTabs::OnChangedFile)
 EVT_CHOICE(ID_LEVELS,VtxSpritesTabs::OnChangedLevels)
 SET_SLIDER_EVENTS(SIZE,VtxSpritesTabs,Size)
 SET_SLIDER_EVENTS(DELTA_SIZE,VtxSpritesTabs,DeltaSize)
-SET_SLIDER_EVENTS(LEVELS_DELTA,VtxSpritesTabs,LevelDelta)
+SET_SLIDER_EVENTS(DROP,VtxSpritesTabs,Drop)
 SET_SLIDER_EVENTS(DENSITY,VtxSpritesTabs,Density)
 SET_SLIDER_EVENTS(SLOPE_BIAS,VtxSpritesTabs,SlopeBias)
 SET_SLIDER_EVENTS(PHI_BIAS,VtxSpritesTabs,PhiBias)
@@ -161,11 +163,13 @@ void VtxSpritesTabs::AddDistribTab(wxWindow *panel){
 	DeltaSizeSlider->setRange(0.0,2);
 	DeltaSizeSlider->setValue(0.0);
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
+	DropSlider->setRange(0,2);
+	DropSlider->setValue(0.0);
 	
-	LevelDeltaSlider=new ExprSliderCtrl(panel,ID_LEVELS_DELTA_SLDR,"Level",LABEL2,VALUE2,SLIDER2);
-	LevelDeltaSlider->setRange(0.0,2);
-	LevelDeltaSlider->setValue(0.5);
-	size->Add(LevelDeltaSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	size->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
 	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 	
@@ -396,13 +400,13 @@ wxString VtxSpritesTabs::exprString(){
 	wxString s(p);
 
 	s+=DeltaSizeSlider->getText()+",";
-	s+=LevelDeltaSlider->getText()+",";
 	s+=DensitySlider->getText()+",";
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
 	s+=HardBiasSlider->getText()+",";
-	s+=SelBiasSlider->getText();
+	s+=SelBiasSlider->getText()+",";
+	s+=DropSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -445,43 +449,43 @@ void VtxSpritesTabs::getObjAttributes(){
 	else
 		DeltaSizeSlider->setValue(mgr->mult);
 
-	a=args[3];
-	if(a)
-		LevelDeltaSlider->setValue(a);
-	else
-		LevelDeltaSlider->setValue(mgr->level_mult);
+//	a=args[3];
+//	if(a)
+//		LevelDeltaSlider->setValue(a);
+//	else
+//		LevelDeltaSlider->setValue(mgr->level_mult);
 	
-	a=args[4];
+	a=args[3];
 	if(a)
 		DensitySlider->setValue(a);
 	else
 		DensitySlider->setValue(obj->maxdensity);
 
-	a=args[5];
+	a=args[4];
 	if(a)
 		SlopeBiasSlider->setValue(a);
 	else
 		SlopeBiasSlider->setValue(mgr->slope_bias);
 
-	a=args[6];
+	a=args[5];
 	if(a)
 		HtBiasSlider->setValue(a);
 	else
 		HtBiasSlider->setValue(mgr->ht_bias);
 
-	a=args[7];
+	a=args[6];
 	if(a)
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
 
-	a=args[8];
+	a=args[7];
 	if(a)
 		HardBiasSlider->setValue(a);
 	else
 		HardBiasSlider->setValue(mgr->hardness_bias);
 
-	a=args[9];
+	a=args[8];
 	if(a)
 		SelBiasSlider->setValue(a);
 	else
