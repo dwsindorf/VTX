@@ -515,9 +515,11 @@ void TNsprite::eval()
 	}
 	if(right)
 		right->eval();
-	if(!CurrentScope->spass() && mgr->test())
+	if(!CurrentScope->spass()){
 		ground.copy(S0); // save S0.p.z etc.
-	MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+	}
 	INIT;
 	
 	smgr->getArgs((TNarg *)left);
@@ -534,11 +536,10 @@ void TNsprite::eval()
 		if(n>0)
 			smgr->select_bias=arg[0];
 	}
-
 	if(density>0)
 		mgr->eval();  // calls SpritePoint.set_terrain	
-	
-	if(!CurrentScope->spass() && mgr->test()){
+		
+	if(!CurrentScope->spass()){
 		S0.copy(ground); // restore ground parameters (S0.p.z)
 		mgr->setTests(); // set S0.s, S0.c ,S0.set_flag(DVALUE)
 	}

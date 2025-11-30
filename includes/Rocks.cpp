@@ -265,7 +265,7 @@ PlacementMgr *Rock3D::mgr() {
 //************************************************************
 // TNrocks class
 //************************************************************
-TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNrocks(MCROCKS,l,r,b)
+TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNplacements(MCROCKS,l,r,b)
 {
 	mgr=new Rock3DMgr(type);
 	rock=0;
@@ -299,37 +299,26 @@ void TNrocks3D::eval()
 			right->eval();
 		return;
 	}
-	if(!CurrentScope->spass()){
-		if(right)
-			right->eval();
-		if(!mgr->test())
-			return;
-		Height=S0.p.z;
-		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
-		mgr->htval=Height;	
+	if(right)
+		right->eval();
+	if(!CurrentScope->spass() && mgr->test())
 		ground.copy(S0);
-	}
 	INIT;
-	
-	double arg[10];
 
-	TNarg &args=*((TNarg *)left);
-	
-	int n=getargs(&args,arg,9);
-	
-	double density=1;
-	Rock3DMgr *smgr=(Rock3DMgr*)mgr;
-	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2) mgr->mult=arg[2];			// random scale multiplier
-	if(n>3) mgr->level_mult=arg[3];     // scale multiplier per level
-	if(n>4) mgr->density=arg[4];        // density
 	mgr->type=type;
 
-	mgr->eval();
-	if(!CurrentScope->spass()){ // adapt pass (else render-plant creation pass)
-		S0.copy(ground); //restore surface data
-		mgr->setTests();
+	mgr->getArgs((TNarg *)left);
+	
+	MaxSize=mgr->maxsize;
+	
+	double density=mgr->density;
+	
+	if(density>0)
+		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
+	
+	if(!CurrentScope->spass()&& mgr->test()){ // adapt pass only
+		S0.copy(ground); // restore S0.p.z etc
+		mgr->setTests(); // set S0.c S0.s (density)
 	}
 }
 //-------------------------------------------------------------

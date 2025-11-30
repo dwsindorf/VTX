@@ -366,7 +366,7 @@ public:
 	int linkable()          { return 1;}
 };
 
-class TNrocks3D : public TNrocks
+class TNrocks3D : public TNplacements
 {
 public:
 	Rock3D *rock;

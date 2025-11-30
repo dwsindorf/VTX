@@ -55,6 +55,7 @@ public:
     double v;
     double f;
     int l;
+    int h;
     double value()   { return v;}
 };
 
@@ -158,6 +159,7 @@ public:
 	double      pts;
 	double      rval;
 	int 		visits;
+	int 		hits;
 	int 		instance;
     Point       vertex;
     Point       normal;
@@ -247,6 +249,7 @@ public:
 	static double roff,roff2;
 	static int hashsize;
 	static double collect_minpts,adapt_ptsize,render_ptsize;
+	static int min_hits;
 
 	int		type;    // type id
 	int     options;

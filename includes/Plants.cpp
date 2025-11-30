@@ -774,35 +774,30 @@ void TNplant::eval()
 	}
 	if(right)
 		right->eval();
-	if(!CurrentScope->spass() && mgr->test()){
+	if(!CurrentScope->spass() && mgr->test())
 		ground.copy(S0);
-	}
+	
 	ncalls++;
 	
 	INIT;
 	
-	radius=PSCALE;
 	mgr->type=type;
-	smgr->htval=Height;	
+
 	radius=TheMap->radius;
 
-	smgr->getArgs((TNarg *)left);
+	mgr->getArgs((TNarg *)left);
+	
 	MaxSize=mgr->maxsize;
 
-	double density=smgr->density;
+	double density=mgr->density;
 
  	if(density>0)
 		smgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	
-	if(!CurrentScope->spass()&& mgr->test()){
-		S0.copy(ground);
-		mgr->setTests();
+	if(!CurrentScope->spass()&& mgr->test()){ // adapt pass only
+		S0.copy(ground); // restore S0.p.z etc
+		mgr->setTests(); // set S0.c S0.s (density)
 	}
-
-//	if(!CurrentScope->spass() && density>0) // adapt pass (else render-plant creation pass)
-//		mgr->setTests();
-//	if(right)
-//		right->eval();
 }
 
 void TNplant::addSkipped(){

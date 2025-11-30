@@ -1117,12 +1117,8 @@ void Map::render_ids()
 	texture=0;
 	npole->init_render();
 
-	//Raster.set_all();
-
 	Raster.surface=1; // terrain only
 	for(tid=ID0;tid<Td.properties.size;tid++){
-		//cout<<"Map::render_ids "<<tid<<endl;
-
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		setProgram();
@@ -2084,8 +2080,9 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	    for(int i=0;i<MAX_NDATA;i++)
 	    	mapdata[i]=0;
 	}
-	else if(object==TheScene->viewobj)
+	else if(object==TheScene->viewobj){
 		parent->setSurface(); // needed to set Slope for placements
+	}
 
 	last=parent;
 	a=new MapNode(parent, t, p); // no neighbors yet so can't determine slope

@@ -58,7 +58,6 @@ void show_display_placements()
 	if(!Render.display(CRTRINFO))
 		return;
 	PlacementStats::exec();
-
 }
 
 #endif
@@ -188,6 +187,7 @@ int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=2;
 double PlacementMgr::collect_minpts=2;
+int PlacementMgr::min_hits=2;
 
 Placement* PlacementMgr::currentChain=nullptr;  // ⭐ Add this member variable
 int PlacementMgr::index=0;
@@ -435,15 +435,16 @@ void PlacementMgr::init()
 }
 
 void PlacementMgr::setTests() {
-	if(!test() || hits==0)
+	if(!test() || hits<min_hits)
 		return;	
 	extern Color getColor(int i);
-	double x=1-cval;
+	double x=fabs(1-cval);
 	S0.clr_flag(DVALUE);
-	if(fabs(x)<1e-6)
+	if(x<0.25)
 		return;
-	double y=pow(x,6);
-	if(density>0 && testColor()) {
+	x=lerp(x,0.25,1,0,1);
+	double y=pow(x,2);
+	if(testColor()) {
 		S0.set_cvalid();
 		int hash=(3*instance+type+layer)&0xf;
 		double lmod=(1.0*slvl)/levels;
@@ -456,6 +457,7 @@ void PlacementMgr::setTests() {
 	if(testDensity()) {
 		S0.set_flag(DVALUE);
 		S0.s=y;
+		//cout<<y<<endl;
 	}
 }
 
@@ -675,7 +677,7 @@ void PlacementMgr::eval()
         
         // If not found, create new placement
         if(!found){
-             Placement* c = make(pc, n);
+            Placement* c = make(pc, n);
             if(!c->flags.s.valid){
                 delete c;
                 Stats.crejects++;
@@ -694,7 +696,7 @@ void PlacementMgr::eval()
         }
         else
             Stats.crejects++;
-         if(ntest()){
+        if(ntest()){
             find_neighbors(found);
             list.ss();
             while((h=list++)){
@@ -718,6 +720,8 @@ void PlacementMgr::eval()
     slist.sort();
     cval=slist.base[scnt-1]->f;
     slvl=slist.base[scnt-1]->l;
+    hits=slist.base[scnt-1]->h;
+    //cout<<hits<<" "<<chits<<endl;
 }
 //-------------------------------------------------------------
 // Placement::find_neighbors()	build neighbor list
@@ -835,6 +839,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	next=0;
 	wtsum=0;
 	aveht=0;
+	hits=0;
 	
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
@@ -947,8 +952,8 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 		ht=aveht/wtsum;
     }
 
-	pmgr.hits++;
-
+	hits++;
+	pmgr.sdata[pmgr.scnt].h=hits;
 	pmgr.sdata[pmgr.scnt].v=hid;
 	pmgr.sdata[pmgr.scnt].f=pmgr.sval;
 	pmgr.sdata[pmgr.scnt].l=pmgr.lvl;

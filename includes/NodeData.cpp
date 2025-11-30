@@ -267,11 +267,12 @@ void MapData::setSurface()
 	Point pt=Td.rectangular(Theta,Phi);
 	Hardness=d->hardness();
 	TheNoise.set(pt);
-	if(!CurrentScope->passmode()){
+	// for ht bias calculation
+	if(!CurrentScope->passmode()){ 
 		MaxHt=Height>MaxHt?Height:MaxHt;
 		MinHt=Height<MinHt?Height:MinHt;
 	}
-	else{
+	else{ // render cycle 
 		MaxHt=TheMap->hmax/Rscale;
 		MinHt=TheMap->hmin/Rscale;	
 	}

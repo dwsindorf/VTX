@@ -1187,7 +1187,7 @@ void	MapNode::balance()
 	if(x && \
 	    (data.type()!=x->data.type() \
 	    || color().difference(x->color())>TheMap->gmax\
-	    || fabs(density()-x->density())>TheMap->gmax\
+	    || sqrt(fabs(density()-x->density()))>TheMap->gmax\
 	    || fabs(ocean()-x->ocean())>TheMap->gmax\
 		|| x->edge() \
 	    )) { \
@@ -1195,7 +1195,7 @@ void	MapNode::balance()
 #define TEST_CCOLOR()  \
 	if(data.type()!=cdata->type() \
 	    || color().difference(cdata->color())>TheMap->gmax \
-	    || fabs(density()-cdata->density())>TheMap->gmax \
+	    || sqrt(fabs(density()-cdata->density()))>TheMap->gmax \
 	    || fabs(ocean()-cdata->ocean())>TheMap->gmax \
 		|| cdata->edge() \
 	    )\
@@ -1731,9 +1731,11 @@ MapData *MapNode::surface_data(){
 
     return surface_data(d);
 }
+//-------------------------------------------------------------
+// MapNode::setSurface() set globals needed for render pass placements
+//-------------------------------------------------------------
 void MapNode::setSurface()
 {
-	static int cnt=0;
 	MapData *d=&data;
     d=d->surface1();
 	if(!d)
@@ -1741,8 +1743,9 @@ void MapNode::setSurface()
 	find_neighbors();
 	d->setSurface();
 #ifdef DEBUG_SET_SURFACE
+	static int cnt=0;
 	if(cnt%1000==0)
-	cout<<s<<" MapNode::setSurface Slope:"<<Slope<<endl;
+		cout<<s<<" MapNode::setSurface Slope:"<<Slope<<endl;
 	cnt++;
 #endif
 }
