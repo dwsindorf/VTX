@@ -18,6 +18,7 @@ class PlacementMgr;
 #define MAX_PLANT_DATA 7
 #define MAX_PLANTS 7
 
+
 class LeafImageMgr : public ImageMgr
 {
 public:
@@ -86,11 +87,11 @@ public:
 
 	void freeBranches() {branches.free();}
 	void renderBranches();
-	void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
+	void collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
 
 	bool sorted;
 	void renderLeafs();	
-	void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
+	void collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
 	void freeLeafs() {leafs.free();sorted=false;}
 	void sortLeafs() {if(!sorted)leafs.sort();sorted=true;}
 
@@ -127,9 +128,9 @@ public:
 class BranchData
 {
 public:
-	Point4D data[6];
+	Vec4 data[6];
 	Color c;
-	BranchData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
+	BranchData(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color col){
 		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
 		c=col;
 	}

@@ -18,6 +18,7 @@ extern double lcos(double g);
 #define TEST_NEIGHBORS 1
 //#define DUMP
 //#define DEBUG_PMEM
+#define DRAW_LINES
 
 #define PRINT_PLANT_TIMING
 #define DEBUG_RANDOMIZE
@@ -616,7 +617,7 @@ bool Plant::setProgram(){
 	return ((TNplant*)expr)->setProgram();
 }
 
-void Plant::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
 	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 }
 
@@ -631,7 +632,7 @@ void Plant::renderLeafs(){
 	}
 }
 
-void Plant::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+void Plant::collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
 		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
 }
 void Plant::renderBranches(){
@@ -1609,7 +1610,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		int sx=sel-sy*image_rows;
 		
 		sy=image_rows-sy-1; // invert y
-		Point4D sd(image_cols,image_rows,sx,sy);	
+		Vec4 sd(image_cols,image_rows,sx,sy);	
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && !isShadowEnabled())
@@ -1683,15 +1684,18 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						
 						double aspect=((double)image_cols)/image_rows;
 						int psmode=poly_mode|shader_mode;
-						root->plant->collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
-								Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-								Point4D(nscale,color_flags, tid, psmode), sd,c);
+						root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
+								Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
+								Vec4(nscale,color_flags, tid, psmode), sd,c);
 					}
 				}
 				else
 					root->addSkipped();
 			}
-		} else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
+		} else
+
+		if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled())
+		{ // branch mode
 			double nscale = lerp(child_width, MIN_LINE_WIDTH,
 					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
 					TNplant::norm_max);
@@ -1707,7 +1711,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				root->addBranch();
 			if (PlantMgr::shader_lines)
 				shader_mode = LINE_MODE;
-
 			setColor();
 			c = S0.c;
 
@@ -1737,7 +1740,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				t0 = p0;
 				double delta = 1.0 / (nv);
 				double f1, f2, dx, dy;
-				Point4D T0;
+				Vec4 T0;
  				for (int i = 0; i < nv; i++) {
 					f1 = i * delta;
 					f2 = (i + 1) * delta;
@@ -1745,10 +1748,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dy = (1 - f2) * r1 + f2 * r2;
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
-					T0=Point4D(t0.x, t0.y, t0.z,phase);
-				    root->plant->collectBranches(T0, Point4D(t1), Point4D(t2),
-					Point4D(dx, dy, f1, f2),
-					Point4D(nscale,color_flags, tid, psmode), sd,c);
+					T0=Vec4(t0.x, t0.y, t0.z,phase);
+				    root->plant->collectBranches(T0, Vec4(t1), Vec4(t2),
+				    		Vec4(dx, dy, f1, f2),
+							Vec4(nscale,color_flags, tid, psmode), sd,c);
 					t0 = t1;
 					s += ds;
 				}
@@ -1760,24 +1763,19 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w1 = dx;
 				w2 = dy;
 
-			} else if (isEnabled()) { // no spline
-				Point4D P0(p0);
-				Point4D P1(p1);
-				Point4D P2(p2);
+			} else { // no spline
+				Vec4 P0(p0);
+				Vec4 P1(p1);
+				Vec4 P2(p2);
 				P0.w=phase;
 				P1.w=bot_offset;
 				P2.w=top_offset;
 				root->plant->collectBranches(P0, P1, P2,
-				Point4D(w1, w2, 0, 1),
-				Point4D(nscale,color_flags, tid, psmode), sd,c);
+						Vec4(w1, w2, 0, 1),
+						Vec4(nscale,color_flags, tid, psmode), sd,c);
 			}
 		}
-//#define NO_LINE_SHADOW
-#ifdef NO_LINE_SHADOW		   
-        else if(!PlantMgr::shadow_mode && isEnabled()){ // branches line mode
-#else
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
-#endif
 			double nscale = TNplant::norm_min;
 			//root->rendered++;
 			root->addLine();
@@ -1787,13 +1785,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			poly_mode = POLY_LINE;
 			shader_mode = LINE_MODE;
 			int psmode=poly_mode|shader_mode;
-			root->plant->collectBranches(Point4D(p0), Point4D(p1), Point4D(p2),
-			Point4D(0, 0, 0, 0),
-			Point4D(nscale,color_flags, tid, psmode),
-			sd,
-			c);
+			root->plant->collectBranches(Vec4(p0), Vec4(p1), Vec4(p2),
+					Vec4(0, 0, 0, 0),
+					Vec4(nscale,color_flags, tid, psmode),sd,c);
 		}
 	}
+
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (opt & LAST_EMIT)
@@ -2083,6 +2080,34 @@ double BranchData::distance() {
 	return data[2].length();
 }
 
+#define USE_FLOATS
+
+#ifdef USE_FLOATS
+void  BranchData::render(){
+	Vec4 sd=data[5];
+	Vec4 p0=data[0];
+	int polymode=TNBranch::polyMode(data[4].w);
+		
+	glVertexAttrib4f(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+	glVertexAttrib4f(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
+	glVertexAttrib4f(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size	
+	glVertexAttrib4f(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, TNBranch::shaderMode(data[4].w)); //nscale,color_flags,tid,shader_mode
+	
+	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
+		glColor4f(c.red(), c.green(), c.blue(), c.alpha());
+
+	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+	else if(polymode!=oldmode)
+		glPolygonMode(GL_FRONT_AND_BACK, polymode);	
+	glBegin(GL_LINES);
+	glVertex4f(data[1].x, data[1].y, data[1].z, 0);
+	glVertex4f(data[2].x, data[2].y, data[2].z, 0);
+	glEnd();
+	oldmode=polymode;
+}
+
+#else
 void  BranchData::render(){
 	Point4D sd=data[5];
 	Point4D p0=data[0];
@@ -2106,7 +2131,7 @@ void  BranchData::render(){
 	glEnd();
 	oldmode=polymode;
 }
-
+#endif
 
 int TNLeaf::left_side=0;
 TNLeaf::TNLeaf(TNode *l, TNode *r, TNode *b) : TNBranch(l,r,b){

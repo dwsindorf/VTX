@@ -381,5 +381,25 @@ public:
 
 };
 
+class Vec4{
+public:
+	double x,y,z,w;
+	Vec4() {x=y=z=w=0;}
+	Vec4(Point p) { x=p.x;y=p.y;z=p.z;w=0;}
+	Vec4(double a,double b,double c){x=a;y=b;z=c;w=0;}
+	Vec4(double a,double b,double c,double d){x=a;y=b;z=c;w=d;}
+	double length()	{ return sqrt(x*x+y*y+z*z+w*w);}
+};
+
+class Vec4f{
+public:
+	float x,y,z,w;
+	Vec4f() {x=y=z=w=0;}
+	Vec4f(Point p) { x=p.x;y=p.y;z=p.z;w=0;}
+	Vec4f(float a,float b,float c){x=a;y=b;z=c;w=0;}
+	Vec4f(float a,float b,float c,float d){x=a;y=b;z=c;w=d;}
+	float length()	{ return sqrt(x*x+y*y+z*z+w*w);}
+};
+
 #endif
 
