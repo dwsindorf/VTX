@@ -1786,7 +1786,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			shader_mode = LINE_MODE;
 			int psmode=poly_mode|shader_mode;
 			root->plant->collectBranches(Vec4(p0), Vec4(p1), Vec4(p2),
-					Vec4(0, 0, 0, 0),
+					Vec4(),
 					Vec4(nscale,color_flags, tid, psmode),sd,c);
 		}
 	}
