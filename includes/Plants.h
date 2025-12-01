@@ -63,7 +63,6 @@ public:
 	static bool spline;
 	static bool poly_lines;
 	static bool shader_lines;
-	static bool no_cache;
 	static int textures;
 	static bool shadow_mode;
 	static int shadow_count;

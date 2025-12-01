@@ -547,7 +547,7 @@ public:
 	void setColorExpr(char *s);
 	char *getColorExpr(){return colorexpr;}
 	void setColorFromExpr();
-	void setColor(bool b);
+	void setColor();
 	void setColor(TNcolor*);
 	TNcolor* getColor();
 	void setColorFlags();

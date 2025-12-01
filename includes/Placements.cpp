@@ -1188,7 +1188,7 @@ double PlacementMgr::calcDensity(double s, double mid, double b, double p){
     
     return t;
 }
-#define DEBUG_DENSITY
+//#define DEBUG_DENSITY
 
 void PlacementMgr::getArgs(TNarg *left){
 	extern double Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
@@ -1198,11 +1198,13 @@ void PlacementMgr::getArgs(TNarg *left){
 	double f=0;
 
 	int n=getargs(&args,arg,10);
+	// common 
 	if(n>0) levels=(int)arg[0]; 	// scale levels
 	if(n>1) maxsize=arg[1];     	// size of largest placement
 	if(n>2) mult=arg[2];			// scale multiplier
 	if(n>3) maxdensity=arg[3];      // density
 	
+	// standard (TN classes may overide)
 	if(n>4) slope_bias=arg[4];
 	if(n>5) ht_bias=arg[5];
 	if(n>6) lat_bias=arg[6];
@@ -1232,32 +1234,17 @@ void PlacementMgr::getArgs(TNarg *left){
 //-------------------------------------------------------------
 void TNplacements::eval()
 {
-	double arg[4];
+	double arg[5];
 	INIT;
 	TNarg &args=*((TNarg *)left);
 	TNode *dexpr;
 	
-	int n=getargs(&args,arg,3);
+	int n=getargs(&args,arg,4);
 
 	if(n>0) mgr->levels=(int)arg[0]; 	// scale levels
-	if(n>1) mgr->maxsize=arg[1];     	// size of largest craters
-	if(n>2){
-		double randscale=arg[2];		// random scale multiplier
-		mgr->mult=randscale;            // in same level
-		//mgr->level_mult=randscale;      // reduce size per level
-	}
-	/*
-	if(mgr->dexpr==0){
-	// probability
-		dexpr=args[3];
-		if(dexpr){
-		    dexpr->eval();
-		    S0.s=clamp(S0.s,0,1);
-		    mgr->maxdensity=S0.s;
-		    //cout<<mgr->density<<endl;
-		}
-	}
-	*/
+	if(n>1) mgr->maxsize=arg[1];     	// size of largest placements
+	if(n>2) mgr->mult=arg[2];           // variability in size or level scale
+	if(n>3) mgr->maxdensity=arg[3];      
 	
 	MaxSize=mgr->maxsize;
 }
