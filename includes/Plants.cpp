@@ -18,9 +18,7 @@ extern double lcos(double g);
 #define TEST_NEIGHBORS 1
 //#define DUMP
 //#define DEBUG_PMEM
-#define DRAW_LINES
 
-#define PRINT_PLANT_TIMING
 #define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
 //#define SHOW_BRANCH_STATS
@@ -229,7 +227,6 @@ static double dfactor=0.5;
 
 static int randval=0;
 
-
 LeafImageMgr leaf_mgr; // global image manager
 BranchImageMgr branch_mgr; // global image manager
 
@@ -253,101 +250,6 @@ void show_plant_info()
 			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],PlantMgr::stats[PLANTS_SKIPPED],PlantMgr::stats[PLANT_LINES],PlantMgr::stats[PLANT_SPLINES]);
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
-
-//************************************************************
-// BranchData class
-//************************************************************
-
-double BranchData::distance() { 
-	return data[2].length();
-}
-
-void  BranchData::renderData(){
-	Vec4 sd=data[5];
-	Vec4 p0=data[0];
-	glVertexAttrib4f(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
-	glVertexAttrib4f(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
-	glVertexAttrib4f(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size	
-	glVertexAttrib4f(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, TNBranch::shaderMode(data[4].w)); //nscale,color_flags,tid,shader_mode	
-	glBegin(GL_LINES);
-	glVertex4f(data[1].x, data[1].y, data[1].z, 0);
-	glVertex4f(data[2].x, data[2].y, data[2].z, 0);
-	glEnd();
-}
-
-void  BranchData::render(){
-	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
-		glColor4f(c.red(), c.green(), c.blue(), c.alpha());
-	renderData();
-}
-
-void BranchVBO::build() {
-    if (!dirty || vertices.empty()) return;
-
-    if (!vao) {
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(BranchVertex),
-                 vertices.data(), GL_DYNAMIC_DRAW);
-
-    size_t stride = sizeof(BranchVertex);
-
-    // Position - use compatibility mode for gl_Vertex
-    glVertexPointer(4, GL_FLOAT, stride, (void*)offsetof(BranchVertex, pos));
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    // Color - use compatibility mode for gl_Color (includes alpha)
-    glColorPointer(4, GL_FLOAT, stride, (void*)offsetof(BranchVertex, color));
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    // Custom attributes stay as generic attributes
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common1));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common2));
-    glEnableVertexAttribArray(4);
-
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common3));
-    glEnableVertexAttribArray(5);
-
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, texcoord));
-    glEnableVertexAttribArray(6);
-
-    glBindVertexArray(0);
-
-    vertCount = vertices.size();
-    dirty = false;
-}
-
-void BranchVBO::render() {
-    if (vertices.empty()) return;
-
-    build();
-    glBindVertexArray(vao);
-    
-    if (PlantMgr::shadow_mode) {
-        glDisableClientState(GL_COLOR_ARRAY);
-    } else {
-        glEnableClientState(GL_COLOR_ARRAY);
-    }
-
-    glDrawArrays(GL_LINES, 0, vertCount);
-    
-    glEnableClientState(GL_COLOR_ARRAY);  // Restore
-    glBindVertexArray(0);
-}
-void BranchVBO::free() {
-    if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
-    if (vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
-    vertices.clear();
-    vertCount = 0;
-    dirty = true;
-}
-
 //************************************************************
 // PlantMgr class
 //************************************************************
@@ -365,12 +267,11 @@ bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
 bool PlantMgr::shader_lines=false;
-
+bool PlantMgr::no_cache=false;
 bool PlantMgr::show_one=false;
 int PlantMgr::textures=0;
 bool PlantMgr::first_instance=false;
 bool PlantMgr::update_needed=false;
-bool PlantMgr::vbo_valid=false;
 
 PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 {
@@ -380,8 +281,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-	//level_mult=0.2;
-	mult=0.5;
+	level_mult=0.2;
 	slope_bias=0;
 	hardness_bias=0;
 	ht_bias=0;
@@ -412,12 +312,6 @@ void PlantMgr::clearStats(){
 		stats[i]=0;
 	}
 }
-void PlantMgr::beginFrame() {
-    if (TheScene->changed_detail() || TheScene->moved()) {
-        vbo_valid = false;
-    }
-}
-
 //-------------------------------------------------------------
 // PlantMgr::init()	initialize global objects
 //-------------------------------------------------------------
@@ -481,17 +375,21 @@ void PlantObjMgr::collect(){
 }
 
 void PlantObjMgr::render(){
+	oldmode=0;
 	int l=randval;
 	int n=placements();
+	//cout<<n<<endl;
 
 	if(n==0)
 		return;
-    // Original logic for non-VBO mode
-    PlantMgr::update_needed = TheScene->moved() || TheScene->changed_detail();
-    if (PlantMgr::update_needed && PlantMgr::shadow_mode)
-        PlantMgr::update_needed = false;
-    
-    glLineWidth(1);
+	//nocache=PlantMgr::no_cache;
+	PlantMgr::update_needed=(TheScene->changed_detail()||TheScene->moved()|| PlantMgr::no_cache);
+	if(PlantMgr::update_needed &&  PlantMgr::shadow_mode)
+		PlantMgr::update_needed=false;
+	TNBranch::setCollectLeafs(true);
+	TNBranch::setCollectBranches(!PlantMgr::no_cache);
+	
+	glLineWidth(1);
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -503,7 +401,6 @@ void PlantObjMgr::render(){
 	glEnable(GL_BLEND);
 	int start= PlantMgr::show_one?0:n-1;
 	if(PlantMgr::update_needed){
-		cout << "REBUILDING in shadow_mode=" << PlantMgr::shadow_mode << endl;
 		freeLeafs();	
 		freeBranches();
 		PlantMgr::clearStats();
@@ -519,8 +416,7 @@ void PlantObjMgr::render(){
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
  			plant->size=s->radius; // placement size
-			//plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
-			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
+			plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
 			plant->pntsize=s->pts;
 			plant->distance=s->dist;
 			
@@ -528,18 +424,9 @@ void PlantObjMgr::render(){
 			plant->seed=URAND;
 
 			plant->emit(); // render or collect
-			//if(PlantMgr::shadow_mode)
-			//render_shadows();
 		}
-		   for (int i=0; i<objs.size; i++) {
-		        ((Plant*)objs[i])->sortLeafs();  // This builds the VBO
-		    }
+		//cout<<branches.size<<endl;
 
-#ifdef TEST		
-	     // IMPORTANT: Set these AFTER the loop, BEFORE leaving the if block
-	        needs_rebuild = false;
-	        rebuilt_since_move = true;
-#endif
 		glEnable(GL_CULL_FACE);
 		double d1=clock();
 		double te=(d1-t0)/CLOCKS_PER_SEC;
@@ -557,12 +444,19 @@ void PlantObjMgr::render(){
 		
 	t2=clock(); // total
 
-	if(!PlantMgr::shadow_mode)
-		setProgram();
-	glDisable(GL_CULL_FACE);
-	renderBranches();
-	renderLeafs();
-	glEnable(GL_CULL_FACE);
+	if(TNBranch::isCollectLeafsSet()||TNBranch::isCollectBranchesSet()){
+		if(!PlantMgr::shadow_mode)
+			setProgram();
+		glDisable(GL_CULL_FACE);
+
+		if(TNBranch::isCollectBranchesSet()){
+			renderBranches();
+		}
+		if(TNBranch::isCollectLeafsSet()){
+			renderLeafs();
+		}
+		glEnable(GL_CULL_FACE);
+	}
 	t3=clock(); // total
 		
 	randval=l;
@@ -572,8 +466,7 @@ void PlantObjMgr::render(){
 #endif
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//was_shadow_mode = PlantMgr::shadow_mode;
-	//PlantMgr::update_needed=false;
+	PlantMgr::update_needed=false;
 }
 bool PlantObjMgr::setProgram(){
 	extern int test7;
@@ -729,115 +622,37 @@ PlacementMgr *Plant::mgr() { return ((TNplant*)expr)->mgr;}
 bool Plant::setProgram(){
 	return ((TNplant*)expr)->setProgram();
 }
-#ifdef USE_VBO
-void Plant::collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+
+void Plant::collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 }
 
-void Plant::collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    lineVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+void Plant::renderLeafs(){
+	sortLeafs();
+	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
+		BranchData *s=leafs[i];
+		if(PlantMgr::shadow_mode && !TNBranch::isShadowEnabled(s->data[3].w)){
+			continue;
+		}
+		s->render();
+	}
 }
 
-void Plant::freeBranches() {
-    branchVBO.clear();
-    lineVBO.clear();
-}
-
-void Plant::renderBranches() {
-    if (PlantMgr::poly_lines || PlantMgr::shader_lines) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        branchVBO.render();
-        lineVBO.render();
-    } else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        branchVBO.render();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        lineVBO.render();
-    }
-}
-#else
-
-void Plant::collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
+void Plant::collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c){
 		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
 }
-void Plant::collectLines(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-		lines.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-
 void Plant::renderBranches(){
-	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
 		BranchData *s=branches[i];
 		s->render();
 	}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	for(int i=lines.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=lines[i];
-		s->render();
-	}
-}
-#endif
-void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 }
 
-#define USE_LEAF_VBO
-void Plant::renderLeafs(){
-	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#ifdef USE_VBO 
-    if (PlantMgr::shadow_mode) {
-        // Old method for shadows (avoids crash)
-        for (int i = leafs.size - 1; i >= 0; i--) {
-            leafs[i]->render();
-        }
-    } else {
-        leafVBO.render();
-    }
-#else	
-	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=leafs[i];
-		s->render();
-	}
-#endif
-}
-
-void Plant::sortLeafs() {
-	if (!sorted) {
-		leafs.ss();
-		leafs.sort();
-#ifdef USE_VBO   
-		leafVBO.clear();
-		for (int i = leafs.size - 1; i >= 0; i--) {
-			BranchData *l = leafs[i];
-			leafVBO.addBranch(l->data[0], l->data[1], l->data[2], l->data[3],
-					l->data[4], l->data[5], l->c,
-					TNBranch::shaderMode(l->data[4].w));
-		}
-#endif 
-	}
-
-	sorted = true;
-}
-
-void Plant::freeLeafs() {
-	leafs.free();
-#ifdef USE_VBO
-    leafVBO.clear();
-#endif
-	sorted=false;
-}
 //************************************************************
 // TNplant class
 //************************************************************
 double TNplant::norm_max=2;
 double TNplant::norm_min=1e-5;
-double TNplant::draw_scale=1;
 TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 {
 	set_collapsed();
@@ -854,12 +669,15 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	plant=0;
 	branches=0;
 	pntsize=0;
+	maxdensity=0.1;
+	radius=0;
 	size=1e-6;
+	base_drop=0;
 	width_scale=1;
 	size_scale=1;
+	draw_scale=1;
 	distance=0;
 	seed=0;
-	radius=0.1;
 	
     mgr=new PlantMgr(PLANTS,this);
 }
@@ -900,9 +718,21 @@ void TNplant::init()
 	if(plant==0)
 		plant=new Plant(type,this);
 	smgr->init();
-			
+	
+    double arg[3];
+	INIT;
+	TNarg &args=*((TNarg *)left);
+		
 	smgr->getArgs((TNarg *)left);
 	
+	TNarg *a = args.index(9);
+	if (a) {                // geometry exprs
+		int n = getargs(a, arg, 3);
+		if(n>0)
+			base_drop=arg[0];
+		if(n>1)
+			draw_scale=arg[1];
+	}
 	smgr->set_first(1);
 }
 
@@ -942,51 +772,53 @@ void TNplant::eval()
 			right->eval();
 		return;
 	}
-	if(right)
-		right->eval();
-	if(!CurrentScope->spass() && mgr->test())
-		ground.copy(S0);
-	
 	ncalls++;
 	
 	INIT;
 	
+	double b,f,h;
+	radius=PSCALE;
 	mgr->type=type;
+	smgr->htval=Height;	
 
-	radius=TheMap->radius;
-
-	mgr->getArgs((TNarg *)left);
-	
+	smgr->getArgs((TNarg *)left);
 	MaxSize=mgr->maxsize;
 
-	double density=mgr->density;
+	double density=smgr->density;
 
  	if(density>0)
 		smgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	
-	if(!CurrentScope->spass()&& mgr->test()){ // adapt pass only
-		S0.copy(ground); // restore S0.p.z etc
-		mgr->setTests(); // set S0.c S0.s (density)
-	}
+	if(!CurrentScope->spass() && density>0) // adapt pass (else render-plant creation pass)
+		smgr->setTests();
+	if(right)
+		right->eval();
 }
 
 void TNplant::addSkipped(){
-	PlantMgr::stats[PLANTS_SKIPPED]++;
+	if(PlantMgr::update_needed)
+		PlantMgr::stats[PLANTS_SKIPPED]++;
 }
 void TNplant::addRendered(){
-	PlantMgr::stats[PLANTS_DRAWN]++;
+	if(PlantMgr::update_needed){
+		PlantMgr::stats[PLANTS_DRAWN]++;
+	}
 }
 void TNplant::addLine(){
-	PlantMgr::stats[PLANT_LINES]++;	
+	if(PlantMgr::update_needed)
+		PlantMgr::stats[PLANT_LINES]++;	
 }
 void TNplant::addBranch(){
-	PlantMgr::stats[PLANT_BRANCHES]++;	
+	if(PlantMgr::update_needed)
+		PlantMgr::stats[PLANT_BRANCHES]++;	
 }
 void TNplant::addSpline(){
-	PlantMgr::stats[PLANT_SPLINES]++;	
+	if(PlantMgr::update_needed)
+		PlantMgr::stats[PLANT_SPLINES]++;	
 }
 void TNplant::addLeaf(){
-	PlantMgr::stats[PLANT_LEAVES]++;	
+	if(PlantMgr::update_needed)
+		PlantMgr::stats[PLANT_LEAVES]++;	
 }
 
 //-------------------------------------------------------------
@@ -1161,10 +993,15 @@ void TNplant::setScale(){
 void TNplant::setNormal(){
 	if(!isEnabled())
 		return;
+
 	Point bot=base_point;
 	Point norm=bot.normalize();
+//	cout<<endl;
+//	norm.print("plant ");
+
 	if(!PlantMgr::shadow_mode)
 		glNormal3dv(norm.values());
+
 }
 
 //-------------------------------------------------------------
@@ -1213,7 +1050,7 @@ void TNplant::emit(){
 	tip.z=0;
 	
 	TNLeaf::left_side=0;
-		
+	
 	first_branch->fork(BASE_FORK,p1,p2-p1,tip,length,start_width,0);
 
 	addRendered();	
@@ -1550,14 +1387,19 @@ void TNBranch::setColorFlags(){
 	if(texid>=0 && isTexEnabled() && alpha_texture && !isShapeEnabled())
 		color_flags|=4; // rect mode
 }
-void TNBranch::setColor(){
+void TNBranch::setColor(bool set){
 	if(PlantMgr::shadow_mode)
 		return;
 	if(color && isColEnabled()){
 		S0.clr_cvalid();
 		color->eval();
 		double alpha=isTexEnabled()?S0.c.alpha():1.0;
+		if(set)
+			glColor4d(S0.c.red(), S0.c.green(), S0.c.blue(), alpha);
 		S0.c.set_alpha(alpha);
+	}
+	else if(set){
+		glColor4d(1, 1, 0, 1);
 	}
 }
 
@@ -1693,8 +1535,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double a, b, x, y, off;
 	int shader_mode = 0;
 	int poly_mode = POLY_FILL;//GL_FILL;
-	//if (PlantMgr::poly_lines || PlantMgr::shader_lines)
-	//	poly_mode = POLY_LINE;
+	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
+		poly_mode = POLY_LINE;
 
 	TNBranch *parent=getParent();
 	TNBranch *child = 0;
@@ -1788,12 +1630,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		int sx=sel-sy*image_rows;
 		
 		sy=image_rows-sy-1; // invert y
-		Vec4 sd(image_cols,image_rows,sx,sy);	
+		Point4D sd(image_cols,image_rows,sx,sy);	
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
 			if (PlantMgr::shadow_mode && !isShadowEnabled())
 				randval += 2;
-			else {
+			else if(PlantMgr::update_needed){
 				double rv = URAND; // density
 				double sv = SRAND; // size
 				double df = evalArg(15,density);
@@ -1802,7 +1644,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					if (PlantMgr::shader_lines)
 						shader_mode = LINE_MODE;
 	
-					setColor();
+					setColor(PlantMgr::no_cache);
 					c = S0.c;
 
 					double depth = bot.length();
@@ -1861,19 +1703,31 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 						p2 = p1 + pr * asize;
 						
 						double aspect=((double)image_cols)/image_rows;
-						//int psmode=poly_mode|shader_mode;
-						root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
-								Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-								Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+						int psmode=poly_mode|shader_mode;
+						if(isCollectLeafsSet())
+							root->plant->collectLeafs(Point4D(p0), Point4D(p1), Point4D(p2),
+									Point4D(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
+									Point4D(nscale,color_flags, tid, psmode), sd,c);
+						else {
+							glColor4d(c.red(), c.green(), c.blue(), c.alpha());
+
+							glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+							glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y,p0.z, 0); // Constants2
+							glVertexAttrib4d(GLSLMgr::CommonID1,1 - width_taper, width_ratio * asize/aspect, orientation, enables); // Constants1		
+							glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale,color_flags, tid, shaderMode(psmode)); 
+							
+							glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
+							glBegin(GL_LINES);
+							glVertex4d(p1.x, p1.y, p1.z, 0);
+							glVertex4d(p2.x, p2.y, p2.z, 0);
+							glEnd();
+						}
 					}
 				}
 				else
 					root->addSkipped();
 			}
-		} else
-
-		if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled())
-		{ // branch mode
+		} else if (child_width > MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
 			double nscale = lerp(child_width, MIN_LINE_WIDTH,
 					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
 					TNplant::norm_max);
@@ -1889,7 +1743,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				root->addBranch();
 			if (PlantMgr::shader_lines)
 				shader_mode = LINE_MODE;
-			setColor();
+
+			setColor(PlantMgr::no_cache);
 			c = S0.c;
 
 			tip.x = topx;
@@ -1903,6 +1758,11 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
             double phase=0.5*Randval;
 
 			int psmode=poly_mode|shader_mode;
+			if(!isCollectBranchesSet()){
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid, shaderMode(psmode));
+				glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
+			}
+
 			if (PlantMgr::threed && shader_mode == SPLINE_MODE) {
 				// note: first implemented this code in the shader and was a bit faster but:
 				// 1) in 3d run out of shader resources (max components) unless the product
@@ -1918,7 +1778,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				t0 = p0;
 				double delta = 1.0 / (nv);
 				double f1, f2, dx, dy;
-				Vec4 T0;
+				Point4D T0;
  				for (int i = 0; i < nv; i++) {
 					f1 = i * delta;
 					f2 = (i + 1) * delta;
@@ -1926,10 +1786,23 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dy = (1 - f2) * r1 + f2 * r2;
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
-					T0=Vec4(t0.x, t0.y, t0.z,phase);
-				    root->plant->collectBranches(T0, Vec4(t1), Vec4(t2),
-				    		Vec4(dx, dy, f1, f2),
-							Vec4(nscale,color_flags, tid, psmode), sd,c);
+					T0=Point4D(t0.x, t0.y, t0.z,phase);
+			
+					if(isCollectBranchesSet()){
+					    root->plant->collectBranches(T0, Point4D(t1), Point4D(t2),
+						Point4D(dx, dy, f1, f2),
+						Point4D(nscale,color_flags, tid, psmode), sd,c);
+					}
+					else {			
+						glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+						glVertexAttrib4d(GLSLMgr::CommonID2, T0.x, T0.y, T0.z,phase); // Constants2
+						glVertexAttrib4d(GLSLMgr::CommonID1, dx, dy, f1, f2); // Constants1	
+	
+						glBegin(GL_LINES);
+						glVertex4d(t1.x, t1.y, t1.z, 0);
+						glVertex4d(t2.x, t2.y, t2.z, 0);
+						glEnd();
+					}
 					t0 = t1;
 					s += ds;
 				}
@@ -1941,32 +1814,64 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w1 = dx;
 				w2 = dy;
 
-			} else { // no spline
-				Vec4 P0(p0);
-				Vec4 P1(p1);
-				Vec4 P2(p2);
+			} else if (isEnabled()) { // no spline
+				Point4D P0(p0);
+				Point4D P1(p1);
+				Point4D P2(p2);
 				P0.w=phase;
 				P1.w=bot_offset;
 				P2.w=top_offset;
-				root->plant->collectBranches(P0, P1, P2,Vec4(w1, w2, 0, 1),
-						Vec4(nscale,color_flags, tid, psmode), sd,c);
+
+				if(isCollectBranchesSet()){
+					root->plant->collectBranches(P0, P1, P2,
+					Point4D(w1, w2, 0, 1),
+					Point4D(nscale,color_flags, tid, psmode), sd,c);
+				}
+				else {	
+					glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+					glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, phase); // Constants2
+					glVertexAttrib4d(GLSLMgr::CommonID1, w1, w2, 0, 1); // Constants1
+	
+					glBegin(GL_LINES);
+					glVertex4d(p1.x, p1.y, p1.z, bot_offset);
+					glVertex4d(p2.x, p2.y, p2.z, top_offset);
+					glEnd();
+				}
 			}
 		}
+//#define NO_LINE_SHADOW
+#ifdef NO_LINE_SHADOW		   
+        else if(!PlantMgr::shadow_mode && isEnabled()){ // branches line mode
+#else
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
+#endif
 			double nscale = TNplant::norm_min;
 			//root->rendered++;
 			root->addLine();
-			setColor();
+			setColor(PlantMgr::no_cache);
 			c = S0.c;
 
 			poly_mode = POLY_LINE;
 			shader_mode = LINE_MODE;
 			int psmode=poly_mode|shader_mode;
-			root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
-					Vec4(nscale,color_flags, tid, psmode),sd,c);
+
+			if(isCollectBranchesSet()){
+				root->plant->collectBranches(Point4D(p0), Point4D(p1), Point4D(p2),
+				Point4D(0, 0, 0, 0),
+				Point4D(nscale,color_flags, tid, psmode),
+				sd,
+				c);
+			}
+			else{	
+				glVertexAttrib4d(GLSLMgr::TexCoordsID, nscale, color_flags, tid,shaderMode(psmode));
+				glPolygonMode(GL_FRONT_AND_BACK, polyMode(psmode));
+				glBegin(GL_LINES);
+				glVertex4d(p1.x, p1.y, p1.z, 0);
+				glVertex4d(p2.x, p2.y, p2.z, 0);
+				glEnd();
+			}
 		}
 	}
-
 	if (child)
 		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
 	if (opt & LAST_EMIT)
@@ -2252,6 +2157,33 @@ int TNBranch::getChildren(LinkedList<NodeIF*>&l){
 //************************************************************
 // TNLeaf class
 //************************************************************
+double BranchData::distance() { 
+	return data[2].length();
+}
+
+void  BranchData::render(){
+	Point4D sd=data[5];
+	Point4D p0=data[0];
+	int polymode=TNBranch::polyMode(data[4].w);
+		
+	glVertexAttrib4d(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
+	glVertexAttrib4d(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
+	glVertexAttrib4d(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size	
+	glVertexAttrib4d(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, TNBranch::shaderMode(data[4].w)); //nscale,color_flags,tid,shader_mode
+	
+	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
+		glColor4d(c.red(), c.green(), c.blue(), c.alpha());
+
+	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	
+	else if(polymode!=oldmode)
+		glPolygonMode(GL_FRONT_AND_BACK, polymode);	
+	glBegin(GL_LINES);
+	glVertex4d(data[1].x, data[1].y, data[1].z, 0);
+	glVertex4d(data[2].x, data[2].y, data[2].z, 0);
+	glEnd();
+	oldmode=polymode;
+}
 
 
 int TNLeaf::left_side=0;

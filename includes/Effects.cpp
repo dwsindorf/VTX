@@ -109,7 +109,6 @@ void EffectsMgr::init_render()
 
 	if(old_mode !=do_shaders){
 	   TheScene->set_changed_render();
-	   cout<<"EffectsMgr::init_render set_changed_render"<<endl;
 	   Raster.shadow_count=0;
 	}
 }
