@@ -4,7 +4,7 @@
 #define _ROCKS
 
 #include "Placements.h"
-//#include "MCObjects.h"
+#include "MCObjects.h"
 
 class RockMgr;
 
@@ -32,7 +32,7 @@ public:
 class Rock3DObjMgr : public PlaceObjMgr
 {
 	static ValueList<PlaceData*> data;
-	//MCObjectManager rocks;
+	MCObjectManager rocks;
 	void free() { data.free();}
 	int placements(){ return data.size;}
 	void collect();
