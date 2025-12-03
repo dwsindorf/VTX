@@ -2701,6 +2701,7 @@ void Scene::render_shadows()
 			Raster.apply();
 			return;
 		}
+
 		project();
 		if(Raster.shadows() && !test_view())
 			Raster.renderFgShadows();

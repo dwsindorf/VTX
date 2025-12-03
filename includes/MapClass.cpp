@@ -654,6 +654,7 @@ void Map::render_raster()
 void Map::shadow_normals()
 {
 	make_current();
+	//cout<<"void Map::shadow_normals()"<<endl;
 
 	glPolygonMode(GL_FRONT,GL_FILL);
 	glCullFace(GL_BACK);
@@ -709,6 +710,7 @@ void Map::shadow_normals()
 void Map::render_zvals()
 {
 	make_current();
+	//cout<<"void Map::render_zvals()"<<endl;
 
 	GLSLMgr::beginRender();
 	//glFlush();
@@ -1285,6 +1287,7 @@ void Map::render_shaded()
 void  Map::render_objects(PlaceObjMgr &mgr){
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
+	//cout<<"Map::render_objects"<<endl;
 	int mode=CurrentScope->passmode();
 	int n=node_data_list.size;
 	int sid=mgr.layer();
@@ -1311,8 +1314,10 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 
 	double d3=clock();
 	if(mgr.setProgram()) // render setup (set up shaders)
-		mgr.render();	 // create and/or render PlaceObj vertex array		
+		mgr.render();	 // create and/or render PlaceObj vertex array	
+	
 	CurrentScope->set_passmode(mode);
+
 	double d4=clock();
 #ifdef PRINT_PLACEMENT_TIMING
 	cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j

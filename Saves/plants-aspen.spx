@@ -19,6 +19,7 @@ Scene() {
 		viewobj=Galaxy.1.System.1.Planet.1;
 	}
 	View{
+		heading=-31;
 		minr=0.00400003;
 	}
 	Galaxy(20000) {
@@ -69,7 +70,7 @@ Scene() {
 				twilight=Color(0.5,0.3,0.1);
 				Surface{
 					terrain=
-							Sprite("grass2x2",FLIP|NOLOD,5,1.89394e-07,1,1,1,0,0,0,0,1)Plant("Grass1",1,4.73485e-08,0.8,0.5,0.29,0,0,0,0,0.476,1)
+							Sprite("grass2x2",FLIP|NOLOD,5,1.89394e-07,1,1,0,0,0,0,0,0)Plant("Grass1",1,4.73485e-08,0.8,0.5,0.29,0,0,0,0,0.476,1)
 							Branch("Stem",7,1.6,0.88,1,1,0.4,0.1,0.7,1,20,0,1,15)["Cracks1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]
 							Plant("Aspen",1,7.95106e-07,1,0.5,0.2,0,0,0,0,0,1)
 							Branch("stem",9,1,2,0.3,1,0.13,0,0.8,0.9,1,-1,0.7,IRAND,13)["aspens-4x1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),0.3)]
