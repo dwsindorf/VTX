@@ -40,6 +40,7 @@ GLint 			GLSLMgr::TexCoordsID=-1;
 GLint 			GLSLMgr::CommonID1=-1;
 GLint 			GLSLMgr::CommonID2=-1;
 GLint 			GLSLMgr::CommonID3=-1;
+GLint 			GLSLMgr::ColorID=-1;
 GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
 GLint 			GLSLMgr::position1ID=-1;
@@ -915,12 +916,13 @@ void GLSLMgr::setProgram(){
  	CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
  	CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants2
  	CommonID3=glGetAttribLocation(program,"CommonAttributes3"); // Constants3
-
+ 	ColorID=glGetAttribLocation(program,"Color"); // Constants3
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
 	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
+ 	//cout<<CommonID1<<" "<<CommonID2<<" "<<CommonID3<<" "<<TexCoordsID<<endl;
 }
 
 //-------------------------------------------------------------

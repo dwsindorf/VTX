@@ -13,10 +13,13 @@ class TNLeaf;
 class Plant;
 class BranchData;
 class PlacementMgr;
+#include <vector>
 
 #define MAX_BRANCHES 6
 #define MAX_PLANT_DATA 7
 #define MAX_PLANTS 7
+
+#define USE_VBO
 
 class LeafImageMgr : public ImageMgr
 {
@@ -63,37 +66,111 @@ public:
 	static bool spline;
 	static bool poly_lines;
 	static bool shader_lines;
-	static bool no_cache;
 	static int textures;
 	static bool shadow_mode;
 	static int shadow_count;
 	static bool show_one;
 	static bool first_instance;
 	static bool update_needed;
+	static bool vbo_valid;
 
 	~PlantMgr();
 	PlantMgr(int,TNplant*);
+	
+	static void beginFrame();
 
 	void init();
 
 	static void clearStats();
 };
 
+struct BranchVertex {
+    Vec4 pos;       // -> gl_Vertex (location 0)
+    Vec4 common1;   // -> CommonAttributes1 (location 1)
+    Vec4 color;     // -> gl_Color (location 3)
+    Vec4 common2;   // -> CommonAttributes2 (location 4)
+    Vec4 common3;   // -> CommonAttributes3 (location 5)
+    Vec4 texcoord;  // -> TextureAttributes (location 6)
+};
+
+class BranchVBO {
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    int vertCount = 0;
+    bool dirty = true;
+    std::vector<BranchVertex> vertices;
+
+public:
+    void clear() {
+        vertices.clear();
+        dirty = true;
+        
+        // Force GPU buffer to be recreated
+        if (vbo) {
+            glDeleteBuffers(1, &vbo);
+            vbo = 0;
+        }
+        if (vao) {
+            glDeleteVertexArrays(1, &vao);
+            vao = 0;
+        }
+    }
+
+    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode) {
+        BranchVertex v;
+        v.common1 = f;
+        v.common2 = p0;
+        v.common3 = s;
+        v.texcoord = Vec4(d.x, d.y, d.z, shaderMode);
+        v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
+
+        v.pos = p1;
+        vertices.push_back(v);
+        v.pos = p2;
+        vertices.push_back(v);
+
+        dirty = true;
+    }
+
+    int size() { return vertices.size() / 2; }
+    bool empty() { return vertices.empty(); }
+
+    void build();
+    void render();
+    void free();
+};
 class Plant : public PlaceObj
 {
 public:
-	ValueList<BranchData*> branches;
-	ValueList<BranchData*> leafs;
+#ifdef USE_VBO
+	BranchVBO branchVBO;
+	BranchVBO lineVBO;
+	BranchVBO leafVBO;  // for later
+    void freeBranches();
+    void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
 
-	void freeBranches() {branches.free();}
+    void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
+    ~Plant() {
+        branchVBO.free();
+        lineVBO.free();
+        leafVBO.free();
+    }
+
+#else
+	ValueList<BranchData*> branches;
+	ValueList<BranchData*> lines;
+	void freeBranches() {branches.free();lines.free();}
+	void collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
+	void collectLines(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
+#endif
+	ValueList<BranchData*> leafs;
 	void renderBranches();
-	void collectBranches(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
 
 	bool sorted;
 	void renderLeafs();	
-	void collectLeafs(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d,Point4D s,Color c);
-	void freeLeafs() {leafs.free();sorted=false;}
-	void sortLeafs() {if(!sorted)leafs.sort();sorted=true;}
+	void collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
+	void freeLeafs();
+	void sortLeafs();
 
 	Plant(int l, TNode *e);
 	
@@ -128,17 +205,19 @@ public:
 class BranchData
 {
 public:
-	Point4D data[6];
+	Vec4 data[6];
 	Color c;
-	BranchData(Point4D p0,Point4D p1,Point4D p2, Point4D f, Point4D d, Point4D s, Color col){
+	BranchData(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color col){
 		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
 		c=col;
 	}
 	double distance();
 	double value() { return distance();}
 	void render();
+	void renderData();
 
 };
+
 
 #endif
 

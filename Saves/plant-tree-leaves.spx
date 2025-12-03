@@ -6,11 +6,11 @@ Scene() {
 		height=19.7195 ft;
 		gndlvl=10453.1 ft;
 		time=23531.6;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=35;
 		angle=-19;
 		fov=35;
@@ -21,6 +21,12 @@ Scene() {
 		height=21.9429 ft;
 		tilt=-1;
 		angle=-17;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.00400198;
+	}
+	View{
 		minr=0.00400198;
 	}
 	Universe {
@@ -56,12 +62,10 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.69);
 					hscale=0.001;
-					ocean.auto=1;
-					ocean.state=0;
 					rot_phase=214.841;
 					year=100;
 					Surface{
-						terrain=Plant("ash",1,1e-06,0.8,0.9,0.05,0,0,0,0,0,1)
+						terrain=Plant("ash",1,1e-06,0.8,0.1,0.05,0,0,0,0,0)
 								Branch("trunk",10,1,1,0.73,0.1,0.1,0,0.85,0.95,0,0,1,0,13)["pinebark2",Color(0.5,0.25,0,1)]
 								Branch("branch",8,2,1,0.34,1,0.89,0.51,0.69,0.69,10,0,0.87,15,15,0,0.45)["pinebark2",Color(0.1,0.1,0.01,2*DENSITY)]
 								Branch("stem",6,2,0.5,0.39,0.94,1,0,0.76,0.8,2,0,1,15,15,0,0.33)["Cracks1",Color(0.25+0.25*DENSITY,0.5*RED,0,1)]
