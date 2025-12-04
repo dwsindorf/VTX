@@ -496,17 +496,18 @@ void PlantObjMgr::render(){
 	
 	bool moved=TheScene->moved();
 	bool changed=TheScene->changed_detail();
-	if(changed && PlantMgr::shadow_mode)
-		return; // stale data wait for changed to clear
-    // Original logic for non-VBO mode
-    PlantMgr::update_needed = moved || changed;
+	if(changed && PlantMgr::shadow_mode){
+		cout<<"PlantObjMgr::render() changed_detail"<<endl;
+		return; // could be stale data : wait for changed to clear
+	}
+    bool update_needed = moved || changed;
     if (moved && PlantMgr::shadow_mode)
-        PlantMgr::update_needed = false;
+        update_needed = false;
     
     //cout<<"PlantObjMgr::render() moved:"<<moved<<" changed:"<<changed<<" update:"<<PlantMgr::update_needed<<endl;
     glLineWidth(1);
 	
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	double t0=clock();
 	double t1;
@@ -515,8 +516,8 @@ void PlantObjMgr::render(){
 	
 	glEnable(GL_BLEND);
 	int start= PlantMgr::show_one?0:n-1;
-	if(PlantMgr::update_needed){
-		cout << "REBUILDING in shadow_mode=" << PlantMgr::shadow_mode << endl;
+	if(update_needed){
+		cout << "PlantObjMgr::render REBUILDING shadow_mode=" << PlantMgr::shadow_mode << endl;
 		freeLeafs();	
 		freeBranches();
 		PlantMgr::clearStats();
@@ -573,8 +574,7 @@ void PlantObjMgr::render(){
 		showStats();
 #endif
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//was_shadow_mode = PlantMgr::shadow_mode;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//PlantMgr::update_needed=false;
 }
 bool PlantObjMgr::setProgram(){

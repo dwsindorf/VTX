@@ -209,7 +209,7 @@ public:
 
 	int     geometry()          { return (flags & GEOMETRY)?1:0;}
 	void	set_geometry(int i)	{ BIT_SET(flags,GEOMETRY,i);}
-
+	
 	int		size;
 	int		links;
 	int 	cycles;

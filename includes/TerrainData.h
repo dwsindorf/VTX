@@ -395,6 +395,10 @@ public:
 	void setProgram();
 	void reset();
 	int passes();
+	void render_zvals();
+	void render_shadows();
+
+
 };
 //#endif
 

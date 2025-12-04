@@ -193,6 +193,7 @@ public:
 	void render();
 	void render_zvals();
 	void render_shadows();
+	bool supports_shadows() { return true;}
 	void collect();
 	void free();
 	int placements(){ return data.size;}

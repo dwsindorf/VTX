@@ -699,7 +699,7 @@ void Map::shadow_normals()
 	        continue;
 		Raster.setProgram(Raster.SHADOWS);
 	    npole->render_vertex();
-		tp->Plants.render_shadows();
+		tp->render_shadows();
 	}
 	Render.popmode();
 }
@@ -756,7 +756,7 @@ void Map::render_zvals()
 		tp=Td.properties[tid];
 		Td.tp=tp;
 		if(Render.draw_szvals())
-			tp->Plants.render_zvals();
+			tp->render_zvals();
 	    if(!visid(tid))
 	       continue;
 	    if(Render.draw_szvals())
@@ -1288,11 +1288,24 @@ void Map::render_shaded()
 void  Map::render_objects(PlaceObjMgr &mgr){
 	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
 		return;
-	//cout<<"Map::render_objects"<<endl;
+	
+	bool moved=TheScene->moved() || TheScene->changed_detail();
+	cout<<"Map::render_objects moved="<<moved<<endl;
+	double d0=clock();
+	if(!moved){
+		mgr.render();	 // create and/or render PlaceObj vertex array	
+#ifdef PRINT_PLACEMENT_TIMING
+		double d1=clock();
+		cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()
+				<<" times "
+				<<" render:"<<1000*(d1-d0)/CLOCKS_PER_SEC
+				<<" ms"<<endl;
+#endif
+		return;
+	}
 	int mode=CurrentScope->passmode();
 	int n=node_data_list.size;
 	int sid=mgr.layer();
-	double d0=clock();
 	CurrentScope->set_spass();	
 	mgr.free();
 	PlacementMgr::free_htable(); 
@@ -1314,8 +1327,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	mgr.collect(); // collect placements into PlaceData data (make)
 
 	double d3=clock();
-	if(mgr.setProgram()) // render setup (set up shaders)
-		mgr.render();	 // create and/or render PlaceObj vertex array	
+	mgr.render();	 // create and/or render PlaceObj vertex array	
 	
 	CurrentScope->set_passmode(mode);
 

@@ -179,8 +179,57 @@ SpriteMgr *Sprite::mgr() {
 	return ((TNsprite*)expr)->mgr;
 }
 
-ValueList<PlaceData*> SpriteObjMgr::data(50000,10000);
+void SpriteVBO::build() {
+    if (!dirty || vertices.empty()) return;
 
+    if (!vao) {
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+    }
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SpriteVertex),
+                 vertices.data(), GL_DYNAMIC_DRAW);
+
+    size_t stride = sizeof(SpriteVertex);
+
+    // Position -> gl_Vertex
+    glVertexPointer(3, GL_FLOAT, stride, (void*)offsetof(SpriteVertex, pos));
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    // TexCoordsID (id, rows, pts, sel)
+    glVertexAttribPointer(GLSLMgr::TexCoordsID, 4, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(SpriteVertex, texcoord));
+    glEnableVertexAttribArray(GLSLMgr::TexCoordsID);
+
+    // CommonID1 (flip, cols, sx, sy)
+    glVertexAttribPointer(GLSLMgr::CommonID1, 4, GL_FLOAT, GL_FALSE, stride,
+                          (void*)offsetof(SpriteVertex, attrib1));
+    glEnableVertexAttribArray(GLSLMgr::CommonID1);
+
+    glBindVertexArray(0);
+
+    vertCount = vertices.size();
+    dirty = false;
+}
+void SpriteVBO::render() {
+    if (vertices.empty()) return;
+    build();
+    glBindVertexArray(vao);
+    glDrawArrays(GL_POINTS, 0, vertCount);
+    glBindVertexArray(0);
+}
+
+void SpriteVBO::free() {
+    if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
+    if (vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
+    vertices.clear();
+    vertCount = 0;
+    dirty = true;
+}
+ValueList<PlaceData*> SpriteObjMgr::data(50000,10000);
+bool SpriteObjMgr::vbo_valid=false;  // Add this
 
 void SpriteObjMgr::collect(){
 	data.free();
@@ -190,7 +239,7 @@ void SpriteObjMgr::collect(){
 	}
 	if(data.size)
 		data.sort();
-
+	vbo_valid = false;  // Mark VBO as needing rebuild
 }
 
 bool SpriteObjMgr::setProgram(){
@@ -251,63 +300,97 @@ bool SpriteObjMgr::setProgram(){
 	for(int i=0;i<objs.size;i++){
 		objs[i]->setProgram();
 	}
-	//glDisable(GL_DEPTH_TEST);
-	glBegin(GL_POINTS);
-	
-	int n=data.size;
-	bool flip=false;
-	SpriteData *s=(SpriteData*)data[0];
 
-	glNormal3dv(s->normal.values());
-
-	for(int i=n-1;i>=0;i--){
-		s=(SpriteData*)data[i];
-		int id=s->instance;//s->get_id();
-		Point t=s->vertex;
-		double pts=s->pts;
-				
-		// random reflection - based on sprite hash table center position
-
-		int rval=s->rval;
-		
-		if(s->flip())
-			flip=RANDVAL(rval)+0.5>s->rand_flip_prob?false:true;
-		
-		double x=RANDVAL(rval);
-		double rv=s->variability*x;
-		pts*=1+rv;
-		
-		double sel=0.1;	
-		double r=0;
-		double sid=0;
-	    int rows=s->sprites_rows;
-	    int cols=s->sprites_cols;
-		double nn=(rows*cols);
-		double sb=0;
-
-		if(nn>1){ // random selection in multi-row sprites image
-			r=2*RANDVAL(rval);
-			r=clamp(r,-1,1);
-			sid=s->get_id();
-			sb=(1-s->select_bias)*r*(nn);
-			sel=sid+sb+0.5;
-			sel=sel>nn?sel-nn:sel;		
-			sel=sel<0?nn+sel:sel;
-			sel=clamp(sel,0,nn-1);
-		}
-		
-		int sy=sel/cols;
-		int sx=sel-sy*rows;
-		
-		sy=rows-sy-1; // invert y
-		glVertexAttrib4d(GLSLMgr::TexCoordsID,id+0.1, rows, pts, sel);
-		glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
-	    glVertex3dv(t.values());
-	}
-	glEnd();
 	return true;
 }
+// VBO Sprites TID:1 Objects:3 Placements:86061 MapData processed:33109 rejected:0 times reset:48 eval:578 collect:104 render:7 total:737 ms
+// t   Sprites TID:1 Objects:3 Placements:58776 MapData processed:28471 rejected:0 times reset:77 eval:1085 collect:94 render:13 total:1269 ms
+// NO  Sprites TID:1 Objects:3 Placements:86220 MapData processed:32979 rejected:0 times reset:53 eval:572 collect:109 render:53 total:787 ms
+// t   Sprites TID:1 Objects:3 Placements:58776 MapData processed:28472 rejected:0 times reset:78 eval:1076 collect:93 render:14 total:1261 ms
+void SpriteObjMgr::render() {
 
+	int n=placements();
+
+	if(n==0)
+		return;
+	bool flip = false;
+
+	bool moved = TheScene->moved() || TheScene->changed_detail();
+	
+#ifndef USE_SPRITES_VBO
+	bool update_needed =true;
+#else
+	bool update_needed = moved || !vbo_valid;;
+#endif
+	setProgram(); // set sprites shader
+
+	SpriteData *s = (SpriteData*) data[0];
+	glNormal3dv(s->normal.values());
+
+	if (update_needed) {
+
+#ifdef USE_SPRITES_VBO
+		spriteVBO.clear();
+#else
+		glBegin(GL_POINTS);
+#endif
+
+		for (int i = n - 1; i >= 0; i--) {
+			SpriteData *s = (SpriteData*) data[i];
+			int id = s->instance; //s->get_id();
+			Point t = s->vertex;
+			double pts = s->pts;
+
+			// random reflection - based on sprite hash table center position
+
+			int rval = s->rval;
+
+			if (s->flip())
+				flip = RANDVAL(rval) + 0.5 > s->rand_flip_prob ? false : true;
+
+			double x = RANDVAL(rval);
+			double rv = s->variability * x;
+			pts *= 1 + rv;
+
+			double sel = 0.1;
+			double r = 0;
+			double sid = 0;
+			int rows = s->sprites_rows;
+			int cols = s->sprites_cols;
+			double nn = (rows * cols);
+			double sb = 0;
+
+			if (nn > 1) { // random selection in multi-row sprites image
+				r = 2 * RANDVAL(rval);
+				r = clamp(r, -1, 1);
+				sid = s->get_id();
+				sb = (1 - s->select_bias) * r * (nn);
+				sel = sid + sb + 0.5;
+				sel = sel > nn ? sel - nn : sel;
+				sel = sel < 0 ? nn + sel : sel;
+				sel = clamp(sel, 0, nn - 1);
+			}
+			int sy = sel / cols;
+			int sx = sel - sy * rows;
+			sy = rows - sy - 1; // invert y
+#ifdef USE_SPRITES_VBO
+			spriteVBO.addSprite(t, id, rows, cols, pts, sel, sx, sy, flip ? -1.0f : 1.0f);
+#else			
+			glVertexAttrib4d(GLSLMgr::TexCoordsID, id + 0.1, rows, pts, sel);
+			glVertexAttrib4d(GLSLMgr::CommonID1, flip, cols, sx, sy);
+			glVertex3dv(t.values());
+#endif			
+		}
+#ifndef USE_SPRITES_VBO
+		glEnd();
+#else
+		vbo_valid = true;  // Mark VBO as valid
+#endif
+	} 
+#ifdef USE_SPRITES_VBO
+	spriteVBO.render();
+#endif
+}
 //-------------------------------------------------------------
 // SpriteMgr::make() factory method to make Placement
 //-------------------------------------------------------------

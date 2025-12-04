@@ -5,10 +5,55 @@
 
 #include "Placements.h"
 #include "FileUtil.h"
+#include <vector>
 
 class SpriteMgr;
 class TNsprite;
 
+//#define USE_SPRITES_VBO
+
+struct SpriteVertex {
+    float pos[3];       // vertex position -> gl_Vertex
+    float texcoord[4];  // id, rows, pts, sel -> TexCoordsID
+    float attrib1[4];   // flip, cols, sx, sy -> CommonID1
+};
+class SpriteVBO {
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    int vertCount = 0;
+    bool dirty = true;
+    std::vector<SpriteVertex> vertices;
+
+public:
+    void clear() {
+        vertices.clear();
+        dirty = true;
+    }
+
+    void addSprite(Point &p, int id, int rows, int cols, double pts, double sel, int sx, int sy, float flip) {
+        SpriteVertex v;
+        v.pos[0] = p.x;
+        v.pos[1] = p.y;
+        v.pos[2] = p.z;
+        v.texcoord[0] = id + 0.1f;
+        v.texcoord[1] = rows;
+        v.texcoord[2] = pts;
+        v.texcoord[3] = sel;
+        v.attrib1[0] = flip;
+        v.attrib1[1] = cols;
+        v.attrib1[2] = sx;
+        v.attrib1[3] = sy;
+        vertices.push_back(v);
+        dirty = true;
+    }
+
+    int size() { return vertices.size(); }
+    bool empty() { return vertices.empty(); }
+
+    void build();
+    void render();
+    void free();
+};
 class SpritePoint : public Placement
 {
 public:
@@ -75,7 +120,11 @@ class SpriteObjMgr : public PlaceObjMgr
 {
 public:
 	static ValueList<PlaceData*> data;
+    SpriteVBO spriteVBO;  // Add this
+	static bool vbo_valid;  // Add this
+
 	bool setProgram();
+	void render();
 	void free() { data.free();}
 	int placements(){ return data.size;}
 	void collect();
