@@ -309,8 +309,9 @@ TerrainProperties::TerrainProperties(int t)
 TerrainProperties::~TerrainProperties(){
 	textures.reset();
 	noise.reset();
-	//delete Sprites;
-	//Sprites=0;
+	Sprites.reset();
+	Plants.reset();
+	Rocks.reset();
 }
 void TerrainProperties::initProgram(){
 	//Texture::reset();
@@ -376,7 +377,9 @@ void TerrainProperties::setProgram(){
 void TerrainProperties::reset(){
 	noise.reset();
 	textures.reset();
-	//plants.reset();
+	Plants.reset();
+	Sprites.reset();
+	Rocks.reset();
 }
 
 

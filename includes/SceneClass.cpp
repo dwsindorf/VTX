@@ -769,6 +769,7 @@ void Scene::init()
 void Scene::reset()
 {
     reset_tabs();
+
 	status=0;
 	set_render_mode();
 	reset_time();

@@ -197,6 +197,8 @@ extern double lcos(double g);
 //     o wrapping image this way also results in a 2x horizontal distortion
 //   - a workaround is to duplicate and combine each sub-image before generating the sprite panel image
 //     o each sub-image is twice as wide but we can see all available photo detail even with a 1x multiply
+// 2) using VBO for branches(and leafs) resulted in a HUGE speedup, (particularly for shadows)
+//   e.g shrubs with leafs (with shadows) : non-VNBO <1.0 fps with VBO ~15 fps
 //************************************************************
 
 extern double MaxSize,Height,Phi,Theta,Level,Randval,Srand,Range,Temp,Slope;
@@ -480,20 +482,31 @@ void PlantObjMgr::collect(){
 		data.sort();
 }
 
+void PlantObjMgr::free() { 
+	cout<<"PlantObjMgr::free() "<<data.size<<endl;
+	data.free();
+}
+
 void PlantObjMgr::render(){
 	int l=randval;
 	int n=placements();
 
 	if(n==0)
 		return;
+	
+	bool moved=TheScene->moved();
+	bool changed=TheScene->changed_detail();
+	if(changed && PlantMgr::shadow_mode)
+		return; // stale data wait for changed to clear
     // Original logic for non-VBO mode
-    PlantMgr::update_needed = TheScene->moved() || TheScene->changed_detail();
-    if (PlantMgr::update_needed && PlantMgr::shadow_mode)
+    PlantMgr::update_needed = moved || changed;
+    if (moved && PlantMgr::shadow_mode)
         PlantMgr::update_needed = false;
     
+    //cout<<"PlantObjMgr::render() moved:"<<moved<<" changed:"<<changed<<" update:"<<PlantMgr::update_needed<<endl;
     glLineWidth(1);
 	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	double t0=clock();
 	double t1;
@@ -522,20 +535,13 @@ void PlantObjMgr::render(){
 			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
 			plant->pntsize=s->pts;
 			plant->distance=s->dist;
-			
 			randval=s->rval;
 			plant->seed=URAND;
-
 			plant->emit(); // render or collect
 		}
-		   for (int i=0; i<objs.size; i++) {
-		        ((Plant*)objs[i])->sortLeafs();  // This builds the VBO
-		   }
-#ifdef TEST		
-	     // IMPORTANT: Set these AFTER the loop, BEFORE leaving the if block
-	        needs_rebuild = false;
-	        rebuilt_since_move = true;
-#endif
+	    for (int i=0; i<objs.size; i++) {
+			((Plant*)objs[i])->sortLeafs();  // This builds the VBO
+	    }
 		glEnable(GL_CULL_FACE);
 		double d1=clock();
 		double te=(d1-t0)/CLOCKS_PER_SEC;
@@ -544,7 +550,7 @@ void PlantObjMgr::render(){
 		cout<<"Plant emit n:"<<n<<" time:"<<te<<" per plant:"<<1000.0*te/n<<" ms"<<endl;	
 #endif
 	}
-	else {
+	else if(data.size){
 		PlaceData *s=data[0];
 		PlantMgr *pmgr=(PlantMgr*)s->mgr;
 		TNplant *plant=pmgr->plant;
@@ -567,7 +573,7 @@ void PlantObjMgr::render(){
 		showStats();
 #endif
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//was_shadow_mode = PlantMgr::shadow_mode;
 	//PlantMgr::update_needed=false;
 }
@@ -644,8 +650,6 @@ bool PlantObjMgr::setProgram(){
 	Color haze=Raster.haze_color;
 		
 	double shadow_intensity=orb->shadow_intensity;
-
-	
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
 	vars.newFloatVec("Ambient",ambient.red(),ambient.green(),ambient.blue(),ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow_intensity);
@@ -777,7 +781,6 @@ void Plant::renderBranches(){
 }
 #endif
 
-#define USE_VBO
 void Plant::renderLeafs(){
 	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -795,8 +798,8 @@ void Plant::renderLeafs(){
 void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
 #ifdef USE_VBO
 	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-	leafVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
 #else
+	leafVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
 	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 #endif
 }

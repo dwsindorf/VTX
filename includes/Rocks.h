@@ -31,6 +31,7 @@ public:
 };
 class Rock3DObjMgr : public PlaceObjMgr
 {
+public:
 	static ValueList<PlaceData*> data;
 	MCObjectManager rocks;
 	void free() { data.free();}

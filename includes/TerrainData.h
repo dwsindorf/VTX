@@ -355,7 +355,7 @@ public:
 	
 	SpriteObjMgr Sprites;
 	PlantObjMgr  Plants;
-	Rock3DObjMgr  Rocks;
+	Rock3DObjMgr Rocks;
 	
 	TNcolor *tncolor;
 	TNpoint *tnpoint;

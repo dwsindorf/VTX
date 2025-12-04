@@ -20,7 +20,7 @@ class PlacementMgr;
 #define MAX_PLANTS 7
 
 #define USE_VBO
-#define SORT_LEAFS
+
 class LeafImageMgr : public ImageMgr
 {
 public:
@@ -145,24 +145,24 @@ public:
 #ifdef USE_VBO
 	BranchVBO branchVBO;
 	BranchVBO lineVBO;
-	BranchVBO leafVBO;  // for later
-    void freeBranches();
-    void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
-
-    void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
+	BranchVBO leafVBO;
     ~Plant() {
         branchVBO.free();
         lineVBO.free();
         leafVBO.free();
+        leafs.free();
     }
-
 #else
+    ~Plant() {
+    	leafs.free();
+    }
 	ValueList<BranchData*> branches;
 	ValueList<BranchData*> lines;
-	void freeBranches() {branches.free();lines.free();}
-	void collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
-	void collectLines(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
 #endif
+	void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
+	void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
+    void freeBranches();
+
 	ValueList<BranchData*> leafs;
 	void renderBranches();
 
@@ -194,7 +194,7 @@ public:
 	void render_zvals();
 	void render_shadows();
 	void collect();
-	void free() { data.free();}
+	void free();
 	int placements(){ return data.size;}
 	const char *name() { return "Plants";}
 
