@@ -111,10 +111,8 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         float b1=0.1;
         float b2=0.9;
 
-       float s=w1*1.5;
-		//w1=w1*1.5;
-		//w2=w2*1.5;
-         
+        float s=w1*1.5;
+	        
         int nodes=6;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);

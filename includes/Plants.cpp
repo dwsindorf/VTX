@@ -519,7 +519,6 @@ void PlantObjMgr::render(){
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
  			plant->size=s->radius; // placement size
-			//plant->base_point=s->vertex*(1-plant->size*plant->base_drop);
 			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
 			plant->pntsize=s->pts;
 			plant->distance=s->dist;
@@ -528,13 +527,10 @@ void PlantObjMgr::render(){
 			plant->seed=URAND;
 
 			plant->emit(); // render or collect
-			//if(PlantMgr::shadow_mode)
-			//render_shadows();
 		}
 		   for (int i=0; i<objs.size; i++) {
 		        ((Plant*)objs[i])->sortLeafs();  // This builds the VBO
-		    }
-
+		   }
 #ifdef TEST		
 	     // IMPORTANT: Set these AFTER the loop, BEFORE leaving the if block
 	        needs_rebuild = false;
@@ -780,30 +776,28 @@ void Plant::renderBranches(){
 	}
 }
 #endif
-void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
 
-#define USE_LEAF_VBO
+#define USE_VBO
 void Plant::renderLeafs(){
 	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #ifdef USE_VBO 
-    if (PlantMgr::shadow_mode) {
-        // Old method for shadows (avoids crash)
-        for (int i = leafs.size - 1; i >= 0; i--) {
-            leafs[i]->render();
-        }
-    } else {
         leafVBO.render();
-    }
 #else	
 	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
 		BranchData *s=leafs[i];
 		s->render();
 	}
+#endif
+}
+void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
+#ifdef USE_VBO
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+	leafVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+#else
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
 #endif
 }
 
@@ -821,7 +815,6 @@ void Plant::sortLeafs() {
 		}
 #endif 
 	}
-
 	sorted = true;
 }
 
@@ -1743,9 +1736,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	if (!main_branch) {
 		if (isPlantLeaf()) {
 			b=offset*(1.0-(double)level/(max_splits + 1));
-			//b = lerp(first_bias,0,1,0,Level);//(lvl-1.0) / (first_bias + 1);
-			//b=1-Level;
-			//cout<<first_bias<<" "<<lvl<<" "<<maxlvl<<" "<<level<<" "<<b<<endl;
 		} else {
 			b = offset*URAND;
 		}
@@ -1791,89 +1781,77 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		Vec4 sd(image_cols,image_rows,sx,sy);	
 
 		if (isPlantLeaf() && isEnabled()) {  // leaf mode
-			if (PlantMgr::shadow_mode && !isShadowEnabled())
-				randval += 2;
-			else {
-				double rv = URAND; // density
-				double sv = SRAND; // size
-				double df = evalArg(15,density);
-				if (rv > 1 - df) { // skip render if density test fails
-					shader_mode = LEAF_MODE;
-					if (PlantMgr::shader_lines)
-						shader_mode = LINE_MODE;
-	
-					setColor();
-					c = S0.c;
+			double rv = URAND; // density
+			double sv = SRAND; // size
+			double df = evalArg(15,density);
+			if (rv > 1 - df) { // skip render if density test fails
+				shader_mode = LEAF_MODE;
 
-					double depth = bot.length();
-					child_size = length * FEET / 12; // inches
-					child_size *= 1 + 0.5 * randomness * sv;
+				setColor();
+				c = S0.c;
 
-					double width_ratio = 0.5 * width;
-					if(image)
-						width_ratio/=image->aspect();
-					double size = root->width_scale * PSCALE * TheScene->wscale
-							* child_size;
+				double depth = bot.length();
+				child_size = length * FEET / 12; // inches
+				child_size *= 1 + 0.5 * randomness * sv;
 
-					//PlantMgr::rendered++;
+				double width_ratio = 0.5 * width;
+				if(image)
+					width_ratio/=image->aspect();
+				double size = root->width_scale * PSCALE * TheScene->wscale
+						* child_size;
 
-					int segs = max_level;
-					double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
-					double f = 1.0 / segs;
- 					Point eye = p1.normalize(); // base of branch
-					eye = eye.normalize();
-					Point v = p2 - p1;  // branch direction
-					v = v.normalize();
-					Point t = v.cross(eye); // vector in a plane perpendicular to branch and eye (but edge on)
-					t = t.cross(v);        // offset 90 degrees from view plane 
-					t = t.normalize();
-					Point r = t * tilt + v * (1 - tilt);
-					r = r.normalize();
-					Point pv = p2;
+				int segs = max_level;
+				double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
+				double f = 1.0 / segs;
+				Point eye = p1.normalize(); // base of branch
+				eye = eye.normalize();
+				Point v = p2 - p1;  // branch direction
+				v = v.normalize();
+				Point t = v.cross(eye); // vector in a plane perpendicular to branch and eye (but edge on)
+				t = t.cross(v);        // offset 90 degrees from view plane 
+				t = t.normalize();
+				Point r = t * tilt + v * (1 - tilt);
+				r = r.normalize();
+				Point pv = p2;
 
-					 // alternate leaf side on branch
-					TNLeaf *leaf = this;
-					double phase = leaf->phase;
-					double nscale=-1;
-					if ((leaf->left_side & 1) == 0){
-						phase += 0.5;
-					}
-					leaf->left_side++;
-					
-					double orientation=flatness+1e-3;
-					pd=pow(Level,4);
-					double bt=lerp(pd,0,1,1,1-length_taper);
-					bt=bt<0?0:bt;
-					
-					double asize=size * bt;
-					double w1 = 0.75*parent_width / TheScene->wscale/ root->size_scale;
-					// leaf clusters
-					Point p1s=p1;
-					for (int i = 0; i < segs; i++) {
-						root->addLeaf();
-						double a = i * f + phase;
-						double ca = COS(2.0 * PI * a);
-						double sa = SIN(2.0 * PI * a);
-						Point pr = r * ca + v.cross(r) * sa
-								+ v * v.dot(r) * (1.0 - ca);
-						pr = pr.normalize();
-						p1 = p1s+ pr * w1; // need 1/2 branch width !
-						p2 = p1 + pr * asize;
-						
-						double aspect=((double)image_cols)/image_rows;
-						//int psmode=poly_mode|shader_mode;
-						root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
-								Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-								Vec4(nscale,color_flags, tid, shader_mode), sd,c);
-					}
+				 // alternate leaf side on branch
+				TNLeaf *leaf = this;
+				double phase = leaf->phase;
+				double nscale=-1;
+				if ((leaf->left_side & 1) == 0){
+					phase += 0.5;
 				}
-				else
-					root->addSkipped();
+				leaf->left_side++;
+				
+				double orientation=flatness+1e-3;
+				pd=pow(Level,4);
+				double bt=lerp(pd,0,1,1,1-length_taper);
+				bt=bt<0?0:bt;
+				
+				double asize=size * bt;
+				double w1 = 0.75*parent_width / TheScene->wscale/ root->size_scale;
+				// leaf clusters
+				Point p1s=p1;
+				for (int i = 0; i < segs; i++) {
+					root->addLeaf();
+					double a = i * f + phase;
+					double ca = COS(2.0 * PI * a);
+					double sa = SIN(2.0 * PI * a);
+					Point pr = r * ca + v.cross(r) * sa
+							+ v * v.dot(r) * (1.0 - ca);
+					pr = pr.normalize();
+					p1 = p1s+ pr * w1; // need 1/2 branch width !
+					p2 = p1 + pr * asize;
+					
+					double aspect=((double)image_cols)/image_rows;
+					root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
+							Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
+							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+				}
 			}
-		} else
-
-		if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled())
-		{ // branch mode
+			else
+				root->addSkipped();
+		} else if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
 			double nscale = lerp(child_width, MIN_LINE_WIDTH,
 					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
 					TNplant::norm_max);
@@ -1887,8 +1865,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				root->addSpline();
 			} else
 				root->addBranch();
-			if (PlantMgr::shader_lines)
-				shader_mode = LINE_MODE;
 			setColor();
 			c = S0.c;
 
@@ -1929,7 +1905,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					T0=Vec4(t0.x, t0.y, t0.z,phase);
 				    root->plant->collectBranches(T0, Vec4(t1), Vec4(t2),
 				    		Vec4(dx, dy, f1, f2),
-							Vec4(nscale,color_flags, tid, psmode), sd,c);
+							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 					t0 = t1;
 					s += ds;
 				}
@@ -1954,7 +1930,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		}
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
 			double nscale = TNplant::norm_min;
-			//root->rendered++;
 			root->addLine();
 			setColor();
 			c = S0.c;
@@ -1963,7 +1938,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			shader_mode = LINE_MODE;
 			int psmode=poly_mode|shader_mode;
 			root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
-					Vec4(nscale,color_flags, tid, psmode),sd,c);
+					Vec4(nscale,color_flags, tid, shader_mode),sd,c);
 		}
 	}
 

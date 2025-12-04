@@ -1,24 +1,24 @@
 
 attribute vec4 CommonAttributes1;
 attribute vec4 CommonAttributes2;
+attribute vec4 CommonAttributes3;
 attribute vec4 TextureAttributes;
 
-
+varying vec4 Normal_G;
+varying vec4 Color_G;
 varying vec4 Constants1;
+varying vec4 ImageVars_G;
 varying vec4 P0;
 varying vec4 TexVars_G;
 
-
-vec4 project(vec4 pnt){
-	vec4 vertex=vec4(pnt.xyz,1.0);
-	vec4 proj=gl_ModelViewProjectionMatrix * vertex;
-	return vec4(proj.xyz/proj.w,pnt.w);
-}
 void main(void) {
+	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
+	Color_G=gl_Color;
 	Constants1=CommonAttributes1;
+	TexVars_G=TextureAttributes;
     gl_Position=gl_Vertex;
     P0=CommonAttributes2;
-    TexVars_G=TextureAttributes;
-    
+    ImageVars_G=CommonAttributes3;
+ 	
 }
 

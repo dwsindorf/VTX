@@ -20,7 +20,7 @@ class PlacementMgr;
 #define MAX_PLANTS 7
 
 #define USE_VBO
-
+#define SORT_LEAFS
 class LeafImageMgr : public ImageMgr
 {
 public:

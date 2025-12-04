@@ -10,7 +10,6 @@ uniform mat4 smat;
 //#endif
 varying in vec4 Constants1[];
 varying in vec4 TexVars_G[];
-
 varying in vec4 P0[];
 
 vec4 Pos0,Pos1,Pos2;
@@ -77,11 +76,9 @@ void emitCone()
    vec3 v2 = normalize(Pos2.xyz - Pos1.xyz);
 
  	vec3 tx1=OrthoNormalVector(v1);
-  // vec3 tx1 = createPerp(Pos1.xyz, Pos0.xyz);
    vec3 ty1 = cross(normalize(v1), tx1 );
 
    vec3 tx2 = OrthoNormalVector(v2);
-  // vec3 tx2 = createPerp(Pos2.xyz, Pos1.xyz);
    vec3 ty2 = cross(normalize(v2), tx2 );
    
    int segs = 8;
@@ -129,6 +126,7 @@ vec4 bezier(float t, vec4 P0, vec4 P1, vec4 P2, vec4 P3){
 }
 
 void emitLeaf(){
+
     vec3 p0=P0[0].xyz;
 	vec3 p1=gl_PositionIn[0].xyz;
 	vec3 p2=gl_PositionIn[1].xyz;
@@ -155,10 +153,7 @@ void emitLeaf(){
     float b1=0.1;
     float b2=0.9;
 
-	//w1=w1*1.5;
-	//w2=w2*1.5;
-
-    int nodes=8;
+    int nodes=6;
     vec4 t1=vec4(tx1,1.0);
     vec4 t2=vec4(tx2,1.0);
     vec4 x1=mix(Pos1,Pos2,b1);
@@ -184,7 +179,7 @@ void main(void) {
     Pos0=P0[0];
     Pos1=gl_PositionIn[0];
     Pos2=gl_PositionIn[1];
-     if(length(Pos2)>2)
+    if(length(Pos2)>2)
        return;
     if(length(Pos1)>2)
        return;   
