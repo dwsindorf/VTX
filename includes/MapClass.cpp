@@ -1290,7 +1290,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 		return;
 	
 	bool moved=TheScene->moved() || TheScene->changed_detail();
-	cout<<"Map::render_objects moved="<<moved<<endl;
+	//cout<<"Map::render_objects moved="<<moved<<endl;
 	double d0=clock();
 	if(!moved){
 		mgr.render();	 // create and/or render PlaceObj vertex array	

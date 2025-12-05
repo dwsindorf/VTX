@@ -20,7 +20,7 @@ extern double lcos(double g);
 //#define DEBUG_PMEM
 #define DRAW_LINES
 
-#define PRINT_PLANT_TIMING
+//#define PRINT_PLANT_TIMING
 #define DEBUG_RANDOMIZE
 //#define SHOW_PLANT_STATS
 //#define SHOW_BRANCH_STATS
@@ -307,19 +307,22 @@ void BranchVBO::build() {
     glEnableClientState(GL_COLOR_ARRAY);
 
     // Custom attributes stay as generic attributes
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common1));
+    glVertexAttribPointer(GLSLMgr::CommonID1, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common1));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common2));
+    glVertexAttribPointer(GLSLMgr::CommonID2, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common2));
     glEnableVertexAttribArray(4);
 
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common3));
+    glVertexAttribPointer(GLSLMgr::CommonID3, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, common3));
     glEnableVertexAttribArray(5);
 
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, texcoord));
+    glVertexAttribPointer(GLSLMgr::TexCoordsID, 4, GL_FLOAT, GL_FALSE, stride, (void*)offsetof(BranchVertex, texcoord));
     glEnableVertexAttribArray(6);
 
     glBindVertexArray(0);
+    
+ 	//cout<<GLSLMgr::CommonID1<<" "<<GLSLMgr::CommonID2<<" "<<GLSLMgr::CommonID3<<" "<<GLSLMgr::TexCoordsID<<endl;
+
 
     vertCount = vertices.size();
     dirty = false;
@@ -483,7 +486,7 @@ void PlantObjMgr::collect(){
 }
 
 void PlantObjMgr::free() { 
-	cout<<"PlantObjMgr::free() "<<data.size<<endl;
+	//cout<<"PlantObjMgr::free() "<<data.size<<endl;
 	data.free();
 }
 
@@ -497,7 +500,7 @@ void PlantObjMgr::render(){
 	bool moved=TheScene->moved();
 	bool changed=TheScene->changed_detail();
 	if(changed && PlantMgr::shadow_mode){
-		cout<<"PlantObjMgr::render() changed_detail"<<endl;
+		//cout<<"PlantObjMgr::render() changed_detail"<<endl;
 		return; // could be stale data : wait for changed to clear
 	}
     bool update_needed = moved || changed;
@@ -517,7 +520,7 @@ void PlantObjMgr::render(){
 	glEnable(GL_BLEND);
 	int start= PlantMgr::show_one?0:n-1;
 	if(update_needed){
-		cout << "PlantObjMgr::render REBUILDING shadow_mode=" << PlantMgr::shadow_mode << endl;
+		//cout << "PlantObjMgr::render REBUILDING shadow_mode=" << PlantMgr::shadow_mode << endl;
 		freeLeafs();	
 		freeBranches();
 		PlantMgr::clearStats();

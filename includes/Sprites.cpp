@@ -230,6 +230,7 @@ void SpriteVBO::free() {
 }
 ValueList<PlaceData*> SpriteObjMgr::data(50000,10000);
 bool SpriteObjMgr::vbo_valid=false;  // Add this
+SpriteVBO SpriteObjMgr::spriteVBO;
 
 void SpriteObjMgr::collect(){
 	data.free();
@@ -305,6 +306,8 @@ bool SpriteObjMgr::setProgram(){
 }
 // VBO Sprites TID:1 Objects:3 Placements:86061 MapData processed:33109 rejected:0 times reset:48 eval:578 collect:104 render:7 total:737 ms
 // t   Sprites TID:1 Objects:3 Placements:58776 MapData processed:28471 rejected:0 times reset:77 eval:1085 collect:94 render:13 total:1269 ms
+// t   Sprites TID:4 Objects:3 Placements:62943 MapData processed:29237 rejected:0 times reset:95 eval:1103 collect:95 render:68 total:1361 ms
+
 // NO  Sprites TID:1 Objects:3 Placements:86220 MapData processed:32979 rejected:0 times reset:53 eval:572 collect:109 render:53 total:787 ms
 // t   Sprites TID:1 Objects:3 Placements:58776 MapData processed:28472 rejected:0 times reset:78 eval:1076 collect:93 render:14 total:1261 ms
 void SpriteObjMgr::render() {
@@ -317,10 +320,14 @@ void SpriteObjMgr::render() {
 
 	bool moved = TheScene->moved() || TheScene->changed_detail();
 	
-#ifndef USE_SPRITES_VBO
-	bool update_needed =true;
+#ifdef USE_SPRITES_VBO
+    bool update_needed = moved || !vbo_valid;
+//    cout << "SpriteObjMgr::render moved=" << moved 
+//         << " vbo_valid=" << vbo_valid 
+//         << " vbo_size=" << spriteVBO.size() 
+//         << " update_needed=" << update_needed << endl;
 #else
-	bool update_needed = moved || !vbo_valid;;
+    bool update_needed = true;
 #endif
 	setProgram(); // set sprites shader
 

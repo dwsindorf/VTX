@@ -10,7 +10,7 @@
 class SpriteMgr;
 class TNsprite;
 
-//#define USE_SPRITES_VBO
+#define USE_SPRITES_VBO
 
 struct SpriteVertex {
     float pos[3];       // vertex position -> gl_Vertex
@@ -120,7 +120,7 @@ class SpriteObjMgr : public PlaceObjMgr
 {
 public:
 	static ValueList<PlaceData*> data;
-    SpriteVBO spriteVBO;  // Add this
+    static SpriteVBO spriteVBO;  // Add this
 	static bool vbo_valid;  // Add this
 
 	bool setProgram();

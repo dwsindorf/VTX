@@ -16,7 +16,7 @@
 #define TEST_ROCKS
 
 #define PRINT_PLACEMENT_TIMING
-#define PRINT_PLACEMENT_STATS
+//#define PRINT_PLACEMENT_STATS
 
 //#define DEBUG_PMEM         // turn on for memory usage
 
