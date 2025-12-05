@@ -2097,9 +2097,6 @@ MapNode *Map::makenode(MapNode *parent, uint t, uint p)
 	    for(int i=0;i<MAX_NDATA;i++)
 	    	mapdata[i]=0;
 	}
-	else if(object==TheScene->viewobj){
-		parent->setSurface(); // needed to set Slope for placements
-	}
 
 	last=parent;
 	a=new MapNode(parent, t, p); // no neighbors yet so can't determine slope
