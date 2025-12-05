@@ -547,9 +547,9 @@ public:
 	void setColorExpr(char *s);
 	char *getColorExpr(){return colorexpr;}
 	void setColorFromExpr();
-	void setColor();
+	Color getColor();
 	void setColor(TNcolor*);
-	TNcolor* getColor();
+	TNcolor* getTNcolor();
 	void setColorFlags();
 	void invalidateTexture();
 	void setPlantImage(char *);

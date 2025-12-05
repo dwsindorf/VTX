@@ -1228,10 +1228,10 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-			render_objects(tp->Plants); // if plants are global all layers get them
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
+			render_objects(tp->Plants); // if plants are global all layers get them
 			render_objects(tp->Rocks);
 			render_objects(tp->Sprites);
 		}

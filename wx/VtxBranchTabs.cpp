@@ -692,7 +692,7 @@ void VtxBranchTabs::getObjAttributes(){
 	makeFileList(image_dir,image_name);
 	setImagePanel();
 	
-	TNcolor *tnode=obj->getColor();
+	TNcolor *tnode=obj->getTNcolor();
 
 	char red[128]={0};
 	char green[128]={0};

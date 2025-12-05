@@ -270,7 +270,7 @@ void  BranchData::renderData(){
 	glVertexAttrib4f(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
 	glVertexAttrib4f(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
 	glVertexAttrib4f(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size	
-	glVertexAttrib4f(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, TNBranch::shaderMode(data[4].w)); //nscale,color_flags,tid,shader_mode	
+	glVertexAttrib4f(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, data[4].w); //nscale,color_flags,tid,shader_mode	
 	glBegin(GL_LINES);
 	glVertex4f(data[1].x, data[1].y, data[1].z, 0);
 	glVertex4f(data[2].x, data[2].y, data[2].z, 0);
@@ -1464,7 +1464,7 @@ void TNBranch::setColor(TNcolor* c){
 		delete color;
 	color=c;
 }
-TNcolor* TNBranch::getColor(){
+TNcolor* TNBranch::getTNcolor(){
 	return color;
 }
 
@@ -1554,15 +1554,17 @@ void TNBranch::setColorFlags(){
 	if(texid>=0 && isTexEnabled() && alpha_texture && !isShapeEnabled())
 		color_flags|=4; // rect mode
 }
-void TNBranch::setColor(){
-	if(PlantMgr::shadow_mode)
-		return;
+
+Color TNBranch::getColor(){
+	Color c(1,1,1);
 	if(color && isColEnabled()){
 		S0.clr_cvalid();
 		color->eval();
 		double alpha=isTexEnabled()?S0.c.alpha():1.0;
 		S0.c.set_alpha(alpha);
+		c=S0.c;
 	}
+    return c;
 }
 
 Point TNBranch::setVector(Point vec, Point start, int lvl){
@@ -1798,8 +1800,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			if (rv > 1 - df) { // skip render if density test fails
 				shader_mode = LEAF_MODE;
 
-				setColor();
-				c = S0.c;
+				c=getColor();
 
 				double depth = bot.length();
 				child_size = length * FEET / 12; // inches
@@ -1876,8 +1877,8 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				root->addSpline();
 			} else
 				root->addBranch();
-			setColor();
-			c = S0.c;
+			c=getColor();
+			//c = S0.c;
 
 			tip.x = topx;
 			tip.y = topy;
@@ -1889,7 +1890,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			}
             double phase=0.5*Randval;
 
-			int psmode=poly_mode|shader_mode;
 			if (PlantMgr::threed && shader_mode == SPLINE_MODE) {
 				// note: first implemented this code in the shader and was a bit faster but:
 				// 1) in 3d run out of shader resources (max components) unless the product
@@ -1936,20 +1936,15 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				P1.w=bot_offset;
 				P2.w=top_offset;
 				root->plant->collectBranches(P0, P1, P2,Vec4(w1, w2, 0, 1),
-						Vec4(nscale,color_flags, tid, psmode), sd,c);
+						Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 			}
 		}
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
 			double nscale = TNplant::norm_min;
 			root->addLine();
-			setColor();
-			c = S0.c;
-
-			poly_mode = POLY_LINE;
-			shader_mode = LINE_MODE;
-			int psmode=poly_mode|shader_mode;
+			c=getColor();
 			root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
-					Vec4(nscale,color_flags, tid, shader_mode),sd,c);
+					Vec4(nscale,color_flags, tid, LINE_MODE),sd,c);
 		}
 	}
 
@@ -2160,7 +2155,7 @@ bool TNBranch::randomize(){
 	else{
 		info=LEAF;
 	}
-	TNcolor* color=getColor();
+	TNcolor* color=getTNcolor();
 	if(color){
 		TNcolor::rand_val=f;
 		color->randomize();
