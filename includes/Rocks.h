@@ -33,8 +33,9 @@ class Rock3DObjMgr : public PlaceObjMgr
 {
 public:
 	static ValueList<PlaceData*> data;
-	MCObjectManager rocks;
-	void free() { data.free();}
+    static MCObjectManager rocks;
+    static bool vbo_valid;
+	void free();
 	int placements(){ return data.size;}
 	void collect();
 	const char *name() { return "Rocks3D";}

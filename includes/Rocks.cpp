@@ -11,6 +11,7 @@
 #include "AdaptOptions.h"
 #include "TerrainClass.h"
 #include "UniverseModel.h"
+#include "GLSLMgr.h"
 
 extern double Hscale, Drop, MaxSize,Height,Theta,Phi;
 extern Point MapPt;
@@ -174,8 +175,20 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 }
 
 //************************************************************
+// Rock3D class
+//************************************************************
+Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
+{
+}
+
+//************************************************************
 // Rock3DMgr classe
 //************************************************************
+MCObjectManager Rock3DObjMgr::rocks;
+bool Rock3DObjMgr::vbo_valid = false;
+ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
+
+
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
@@ -198,8 +211,6 @@ void Rock3DMgr::init()
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
-ValueList<PlaceData*> Rock3DObjMgr::data;
-
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
@@ -211,52 +222,133 @@ bool Rock3DMgr::testColor() {
 bool Rock3DMgr::testDensity(){ 
 	return true;
 }
-//************************************************************
-// Rock3D class
-//************************************************************
-Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
-{
-}
 
 //-------------------------------------------------------------
 // Rock3D::setProgram() initialize shader
-// 1) start with simple phong shader 
 //-------------------------------------------------------------
-bool Rock3DObjMgr::setProgram(){
-	return true;
+bool Rock3DObjMgr::setProgram() {
+    if (!data.size || !objs.size)
+        return false;
+    
+    char defs[1024]="";
+    GLSLMgr::setDefString(defs);
+    
+    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
+    //GLSLMgr::loadProgram("phong.vert", "phong.frag");
+    GLhandleARB program = GLSLMgr::programHandle();
+    if (!program)
+        return false;
+    
+    // Set uniforms
+    Point lightPos = Lights.size > 0 ? Lights[0]->point : Point(1, 1, 1);
+    Point eyeLight = TheScene->eye * lightPos;  // Transform to eye space
+    
+    glUniform3f(glGetUniformLocation(program, "lightPosition"), 
+                eyeLight.x, eyeLight.y, eyeLight.z);
+    glUniform3f(glGetUniformLocation(program, "rockColor"), 0.5, 0.5, 0.5);  // Gray
+    
+    return true;
 }
 
-//-------------------------------------------------------------
-// Rock3D::render() create and render the 3d rocks
-// - data contains array of placements (Rock3D)
-// if update needed
-//   - generate MarchingCubesObjects
-//   - save in array
-// render array
-//-------------------------------------------------------------
-void Rock3DObjMgr::render(){
-	if(data.size==0)
-		return;
-	data.ss();
-	PlaceData *s;
-	while(s=data.at()){
-		// get size, pts dist ?
-		// generate MarchingCubesObject
-		// render object
-		data++;
-	}
+void Rock3DObjMgr::free() { 
+	data.free();
+    rocks.clear(); 
+    vbo_valid = false; 
 }
 
 //-------------------------------------------------------------
 // Rock3D::collect() generate array of placements (data)
 //-------------------------------------------------------------
-void Rock3DObjMgr::collect(){
-	data.free();
-	for(int i=0;i<objs.size;i++){
-		PlaceObj *obj=objs[i];
-		obj->mgr()->collect(data);
-	}
+
+void Rock3DObjMgr::collect() {
+    data.free();
+    for (int i = 0; i < objs.size; i++) {
+        PlaceObj *obj = objs[i];
+        obj->mgr()->collect(data);
+    }
+    if (data.size)
+        data.sort();
+    vbo_valid = false;
 }
+
+static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
+    return [center, radius](double x, double y, double z) -> double {
+        double dx = x - center.x;
+        double dy = y - center.y;
+        double dz = z - center.z;
+        double distance = sqrt(dx*dx + dy*dy + dz*dz);
+        return radius - distance;  // Positive inside sphere of given radius
+    };
+}
+//-------------------------------------------------------------
+// Rock3D::render() create and render the 3d rocks
+//-------------------------------------------------------------
+void Rock3DObjMgr::render() {
+    int n = data.size;
+    if (n == 0)
+        return;
+    
+    bool moved = TheScene->moved() || TheScene->changed_detail();
+    bool update_needed = moved || !vbo_valid;
+    
+    if (!setProgram()){
+        cout << "Rock3DObjMgr::render setProgram FAILED" << endl;
+        return;
+    }
+    
+    if (update_needed) {
+        rocks.clear();
+        rocks.setField(MCFields::sphere);
+        rocks.setIsoLevel(0.0);
+       // cout << "Rock3DObjMgr generating " << n << " rocks" << endl;
+        for (int i = n - 1; i >= 0; i--) {
+            PlaceData *s = data[i];
+            
+            Point pos = s->vertex-TheScene->xpoint;  // Subtract xpoint like sprites
+            double size = s->radius;
+            double dist = s->dist;
+            
+            char name[64];
+            sprintf(name, "rock_%d", i);
+            
+            MCObject *rock = rocks.addObject(name, pos, size);
+            if (rock) {
+                rock->setDistanceInfo(dist);
+                SurfaceFunction field = makeCenteredSphere(pos, size * 0.5);
+                rock->generateMesh(field, 0.0);
+               // rock->generateSmoothNormals();
+                rock->uploadToVBO();
+            }
+        }
+        
+        vbo_valid = true;
+    }
+    
+    // Render
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);  // Disable for now to debug
+    
+    const std::vector<MCObject*>& rockList = rocks.getObjects();
+    for (MCObject *rock : rockList) {
+        if (rock->vboValid && rock->mesh.size() > 0) {
+            glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
+            glVertexPointer(3, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
+            glNormalPointer(GL_FLOAT, 0, 0);
+            glEnableClientState(GL_NORMAL_ARRAY);
+            
+            glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
+            
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+        }
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 
 PlacementMgr *Rock3D::mgr() { 
 	return ((TNrocks3D*)expr)->mgr;
@@ -301,6 +393,7 @@ void TNrocks3D::eval()
 	}
 	if(right)
 		right->eval();
+	
 	if(!CurrentScope->spass() && mgr->test())
 		ground.copy(S0);
 	INIT;
@@ -464,7 +557,6 @@ NodeIF *TNrocks::addChild(NodeIF *x){
 		}
 	}
 	return x;
-	//TNplacements::addChild(x);
 }
 
 //-------------------------------------------------------------

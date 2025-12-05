@@ -1200,7 +1200,6 @@ void Map::render_shaded()
 			if(!tp)
 				continue;
 			total_tpasses++;
-			//render_objects(tp->Plants); // if plants are global all layers get them
 			if(!visid(tid))
 				continue;
 

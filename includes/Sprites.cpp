@@ -322,10 +322,6 @@ void SpriteObjMgr::render() {
 	
 #ifdef USE_SPRITES_VBO
     bool update_needed = moved || !vbo_valid;
-//    cout << "SpriteObjMgr::render moved=" << moved 
-//         << " vbo_valid=" << vbo_valid 
-//         << " vbo_size=" << spriteVBO.size() 
-//         << " update_needed=" << update_needed << endl;
 #else
     bool update_needed = true;
 #endif
@@ -347,6 +343,11 @@ void SpriteObjMgr::render() {
 			int id = s->instance; //s->get_id();
 			Point t = s->vertex;
 			double pts = s->pts;
+			
+//			if(i<5)
+//            cout << "  sprite " << i << " pos=(" << t.x << "," << t.y << "," << t.z 
+//                   << ") pts=" << pts<<" dist:"<<s->dist/FEET << endl;
+//
 
 			// random reflection - based on sprite hash table center position
 

@@ -539,6 +539,11 @@ void PlantObjMgr::render(){
 			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
 			plant->pntsize=s->pts;
 			plant->distance=s->dist;
+			
+//			if(i<5)
+//	            cout << "  Plant " << i << " pos=(" << s->vertex.x << "," << s->vertex.y << "," << s->vertex.z 
+//	                   << ") pts=" << s->pts<<" dist:"<<s->dist/FEET << endl;
+
 			randval=s->rval;
 			plant->seed=URAND;
 			plant->emit(); // render or collect
