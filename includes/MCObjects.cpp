@@ -191,40 +191,6 @@ void MCObject::setDistanceInfo(double distance, double projectedSize) {
     screenProjectedSize = projectedSize;
 }
 
-int MCObject::calculateResolution() const {
-    // Simple distance-based LOD
-    // You can tune these thresholds based on your needs
-    if (distanceToViewer < 5.0) return 32;
-    if (distanceToViewer < 15.0) return 16;
-    if (distanceToViewer < 40.0) return 8;
-    if (distanceToViewer < 100.0) return 4;
-    return 2;
-}
-
-const std::vector<MCTriangle>& MCObject::generateMesh(SurfaceFunction field, double isolevel) {
-    int newResolution = calculateResolution();
-    
-    // Check if we can use cached mesh
-    if (meshValid && newResolution == lastResolution) {
-        return mesh;
-    }
-    
-    // Generate new mesh
-    MCGenerator generator;
-    
-    double halfSize = baseSize * 0.5;
-    Point boundsMin = worldPosition - Point(halfSize, halfSize, halfSize);
-    Point boundsMax = worldPosition + Point(halfSize, halfSize, halfSize);
-    
-    mesh = generator.generateMesh(field, boundsMin, boundsMax, newResolution, isolevel);
-    
-    meshValid = true;
-    lastResolution = newResolution;
-    vboValid = false;  // VBO needs update
-    
-    return mesh;
-}
-
 void MCObject::invalidate() {
     meshValid = false;
     vboValid = false;
@@ -400,13 +366,6 @@ void MCObject::generateSmoothNormals() {
 
 MCObjectManager::MCObjectManager() 
     : currentIsoLevel(0.0) {
-    // Default LOD config
-    lodConfig.nearDistance = 5.0;
-    lodConfig.farDistance = 100.0;
-    lodConfig.maxResolution = 32;
-    lodConfig.minResolution = 4;
-    lodConfig.hysteresis = 1.1;
-    
     // Default field: simple sphere
     currentField = MCFields::sphere;
 }
@@ -431,13 +390,6 @@ void MCObjectManager::setIsoLevel(double iso) {
             obj->invalidate();
         }
     }
-}
-
-void MCObjectManager::setLODConfig(double nearDist, double farDist, int maxRes, int minRes) {
-    lodConfig.nearDistance = nearDist;
-    lodConfig.farDistance = farDist;
-    lodConfig.maxResolution = maxRes;
-    lodConfig.minResolution = minRes;
 }
 
 MCObject* MCObjectManager::addObject(const std::string& name, const Point& position, double size) {
@@ -474,27 +426,6 @@ void MCObjectManager::clear() {
     }
     objects.clear();
     objectMap.clear();
-}
-
-void MCObjectManager::updateFromViewpoint(const Point& viewpoint) {
-    for (auto* obj : objects) {
-        double dist = (obj->worldPosition - viewpoint).length();
-        obj->setDistanceInfo(dist);
-    }
-}
-
-void MCObjectManager::generateAllMeshes() {
-    for (auto* obj : objects) {
-        obj->generateMesh(currentField, currentIsoLevel);
-    }
-}
-
-void MCObjectManager::uploadAllToVBO() {
-    for (auto* obj : objects) {
-        if (!obj->vboValid && !obj->mesh.empty()) {
-            obj->uploadToVBO();
-        }
-    }
 }
 
 //=============================================================================

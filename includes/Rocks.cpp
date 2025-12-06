@@ -58,11 +58,7 @@ static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
     };
 }
 
-
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
-
-
-
 
 //************************************************************
 // Rock3DMgr class
@@ -114,6 +110,9 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 }
 
 int Rock3DObjMgr::getLODResolution(double pts) {
+	extern int test2;
+	if(test2)
+		return 24;
     double res = pts;//sqrt(pts);
     
     // Map screen size to voxel resolution
@@ -137,7 +136,6 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution) {
     // Generate new template at this resolution
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
-    templateSphere->setDistanceInfo(1.0);
     
     // Generate mesh at specified resolution
     MCGenerator generator;
@@ -228,17 +226,10 @@ void Rock3DObjMgr::render() {
 
     Point xpoint = TheScene->xpoint;
     
-      if (update_needed) {
+    if (update_needed) {
+    	
         rocks.clear();
-
-        // Generate unit sphere template at origin
-        Point origin(0, 0, 0);
-        MCObject templateSphere(origin, 1.0);
-        templateSphere.setDistanceInfo(1.0);
-        SurfaceFunction field = makeCenteredSphere(origin, 0.5);
-        templateSphere.generateMesh(field, 0.0);
-        templateSphere.generateSphereNormals();
-
+        
         // For each rock placement, create a transformed copy
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
@@ -246,10 +237,11 @@ void Rock3DObjMgr::render() {
             Point pos = s->vertex - xpoint;
             double size = 0.01 * s->radius;
             double pts = s->pts;
+            double dist = s->dist;
             
             int resolution = getLODResolution(pts);
             
-            cout<<"pts:"<<pts<<" resolution:"<<resolution<<endl;
+            //cout<<"pts:"<<pts<<" resolution:"<<resolution<<endl;
 
             MCObject* templateSphere = getTemplateForLOD(resolution);
                         
@@ -261,7 +253,7 @@ void Rock3DObjMgr::render() {
 
 			MCObject *rock = rocks.addObject(name, pos, size);
 			if (rock) {
-				rock->setDistanceInfo(s->dist);
+				rock->setDistanceInfo(dist,pts);
 				
 				// Copy and transform the template mesh
 				rock->mesh.clear();

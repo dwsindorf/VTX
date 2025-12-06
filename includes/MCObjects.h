@@ -128,16 +128,7 @@ private:
     // Current field function and iso level
     SurfaceFunction currentField;
     double currentIsoLevel;
-    
-    // LOD configuration
-    struct LODConfig {
-        double nearDistance;      // Distance for max detail
-        double farDistance;       // Distance for min detail
-        int maxResolution;        // Resolution at near distance
-        int minResolution;        // Resolution at far distance
-        double hysteresis;        // Prevents LOD thrashing (e.g., 1.1 = 10%)
-    } lodConfig;
-
+   
 public:
     MCObjectManager();
     ~MCObjectManager();
@@ -145,9 +136,7 @@ public:
     // Configuration
     void setField(SurfaceFunction field);
     void setIsoLevel(double iso);
-    void setLODConfig(double nearDist, double farDist, 
-                      int maxRes = 32, int minRes = 4);
-    
+     
     // Object management
     MCObject* addObject(const std::string& name, const Point& position, double size);
     MCObject* getObject(const std::string& name);
@@ -157,19 +146,7 @@ public:
     // Bulk operations
     size_t getObjectCount() const { return objects.size(); }
     const std::vector<MCObject*>& getObjects() const { return objects; }
-    
-    // Update all objects based on viewer position
-    void updateFromViewpoint(const Point& viewpoint);
-    
-    // Generate/update meshes for all objects
-    void generateAllMeshes();
-    
-    // Upload all meshes to VBOs
-    void uploadAllToVBO();
-    
-    // Get LOD config for external use
-    const LODConfig& getLODConfig() const { return lodConfig; }
-};
+  };
 
 //=============================================================================
 // Built-in scalar field functions for common shapes

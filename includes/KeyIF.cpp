@@ -74,9 +74,11 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST2:		
-//		PlantMgr::no_cache=PlantMgr::no_cache?false:true;
-//		cout<<"PlantMgr::no_cache="<<PlantMgr::no_cache<<endl;
-//        TheScene->set_changed_detail();
+		test2=test2?0:1;
+		cout<<"test2="<<test2<<endl;
+		TheScene->set_moved();
+		TheScene->set_changed_render();
+		break;
 		break;
 	case KEY_TEST3:
 		PlantMgr::shader_lines=PlantMgr::shader_lines?false:true;
@@ -99,7 +101,6 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		break;
 	case KEY_TEST7:
 		test7=test7?0:1;
-		//PlantMgr::no_cache=test7;
 		cout<<"test7="<<test7<<endl;
 		TheScene->set_moved();
 		TheScene->set_changed_render();
