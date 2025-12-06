@@ -276,9 +276,6 @@ void MapData::setSurface()
 		MaxHt=TheMap->hmax/Rscale;
 		MinHt=TheMap->hmin/Rscale;	
 	}
-	CELLSLOPE(Z(),Slope);
-	Slope *=TheMap->hscale*INV2PI;
-
 }
 //-------------------------------------------------------------
 // MapData::init_terrain_data()	set node data after surface call

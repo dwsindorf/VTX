@@ -112,6 +112,7 @@ public:
     MapNode *dnode;
     double  gval;
 
+    double slope();
     void vertexN()              { vertexN(&data);}
     void vertexC()              { Vcolor(&data);vertex(&data);}
     void vertexCN()             { vertexCN(&data);}

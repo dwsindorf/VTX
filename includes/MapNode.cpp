@@ -1740,7 +1740,8 @@ void MapNode::setSurface()
     d=d->surface1();
 	if(!d)
 		return; 
-	find_neighbors();
+	Slope=slope();
+	//find_neighbors();
 	d->setSurface();
 #ifdef DEBUG_SET_SURFACE
 	static int cnt=0;
@@ -1999,14 +2000,17 @@ Color MapNode::Tcolor(MapData *d) {
 //        else
 //        	c = Color(1, 1, 1);
         //c.print();
-        double s;
+        if(TheMap->object==TheScene->viewobj){
+        double s=slope();
+        //cout<<s<<endl;
 //         Td.clr_flag(SFIRST);
-         find_neighbors();
+        // find_neighbors();
         //double s=zslope();
-         CELLSLOPE(Z(),s);
-         s*=TheMap->hscale*INV2PI;
+        // CELLSLOPE(Z(),s);
+       //  s*=TheMap->hscale*INV2PI;
         // cout<<s<<endl;
          c=Color(s,0,0);
+        }
       	 //c = Color(data.mdata(), 0, 0);
       	 //if (data.margin())
       	 //    c = c.blend(Color(0, 0, 1), 1);
@@ -2322,27 +2326,6 @@ void MapNode::Svertex(MapData*dn) {
 	}
 
 	setVertexAttributes(d->mpoint());
-	//setSurface();
-//#define COLOR_SPRITES	
-#ifdef COLOR_SPRITES
-	double t=d->theta();
-	double p=d->phi();
-	Point pnt=Td.rectangular(t,p);
-	TheNoise.set(pnt);
-	MapPt=pt;
-	Height=d->Ht();
-	for (int j = 0; j < Td.sprites.size; j++) {
-		Sprite *ts=Td.sprites[j];
-		if(visible())				
-			ts->eval();		
-	}
-#endif
-	//find_neighbors();
-	//setSurface("Svertex");
-//	Td.clr_flag(SFIRST);
-//	double zs=zslope();
-//	Point T=tangent(d);
-//	glVertexAttrib4d(GLSLMgr::TexCoordsID, T.x, T.y, zs, max_orders);
 
 	if(d->textures() || d->bumpmaps()){
 		if (GLSLMgr::TexCoordsID >= 0){
@@ -2464,6 +2447,21 @@ Point MapNode::tangent(MapData *d)
 	Point V1 = p2 - p1;
 	return V1.normalize();
 }
+
+double MapNode::slope(){
+	double s=0;
+	MapData *n=&data;
+	TheMap->tid=1;
+	pnt_normal(n);
+	if(!n->normal_valid()){
+	   return s;
+	}
+	Point pn=n->normal_.normalize();
+	Point p=data.point().normalize();
+	s=pn.dot(p);
+	return fabs(s);
+}
+
 //-------------------------------------------------------------
 // MapNode::normal() calculates cell normal on-the-fly using
 //					 hash table to avoid calculation replication
@@ -2478,8 +2476,9 @@ Point *MapNode::pnt_normal(MapData *nd)
 	}
 	if(nd)
 	    n=surface_data(nd);
-	if(!n)
+	if(!n){
 		return 0;
+	}
 
 #ifdef HASH_NORMALS
 	Hdata *hd=normals.hash(n->id(),n);

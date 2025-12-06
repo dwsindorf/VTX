@@ -14,7 +14,7 @@
 #include "GLSLMgr.h"
 #include <map>
 
-extern double Hscale, Drop, MaxSize,Height,Theta,Phi;
+extern double Hscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
 extern Point MapPt;
 extern double ptable[];
 
@@ -25,16 +25,23 @@ static TerrainData Td;
 #define PRINT_STATS
 
 // 3d rocks using marching cubes
-// TODO:
-// 1. generate color test if 3d flag is set (MC3D) - done
-// 2. set density gradient on surface if 3d (as in plants)
-// 3. if 3d don't generate a new layer (test color and density on surface layer)
-//    - deform surface like craters
-//    - need to collect textures and color separately
-// 4. capture size and position information for placement
-// 5. create array of 3d rocks with placement and size info
-// 6. capture textures and color that would be set in MapData in 2d (like plants)
-// 7. for each layer and rock in layer emit rock as a marchingCubesObj
+// Tasks:
+// 1. generate color test if 3d flag is set - done
+// 2. set density gradient on surface if 3d - done)
+// 3. capture size and position information for placement - done
+// 4. create array of 3d rocks with placement and size info - done
+// 7. for each layer and rock in layer emit rock as a marchingCubes Object
+//    - start with simple sphere (done)
+// 8. refactor rock3d and rock classes to use the same wxWidgets GUI
+//    - change both to use Point in base [] for modulation rather than argument 
+//      note: 2d rocks now always map from surface
+//    - in both modify arguments to "standard" as in plants and sprites
+//      so all rocks can have biases
+//    - add "3d" checkbox to UI
+//      in UI change only class name (rock or rock3d) to regenerate
+// 9. add noise modulation to 3d rocks using existing methods 
+// 10. add texture and color
+//    - may need to capture into a private TerrainProperties object ?
 
 //************************************************************
 // Rock3D class
@@ -397,6 +404,7 @@ void TNrocks3D::init()
 void TNrocks3D::eval()
 {
 	TerrainData ground;
+	static int cnt=0;
 	
 	if(!isEnabled() || TheScene->viewtype !=SURFACE){
 		if(right)
@@ -424,8 +432,6 @@ void TNrocks3D::eval()
 	
 	if(!CurrentScope->spass()){
 		ground.copy(S0);
-		Height=S0.p.z;
-		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
 	}
 	INIT;
 

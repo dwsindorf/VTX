@@ -1196,6 +1196,7 @@ void PlacementMgr::getArgs(TNarg *left){
 	double arg[12];
 	
 	double f=0;
+	double fs=0,fl=0,fh=0,fd=0;
 
 	int n=getargs(&args,arg,10);
 	// common 
@@ -1213,18 +1214,22 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>9) drop=arg[9];
 	if(n>10) comp=arg[10];
 	if(slope_bias)
-		f=calcDensity(Slope,0.25,slope_bias,0.2);
+		fs=calcDensity(Slope,0.25,slope_bias,0.2);
 	if(ht_bias)
-		f+=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
+		fh=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
 	if(lat_bias)
-		f+=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
 	if(hardness_bias)
-		f+=calcDensity(Hardness,0.5,hardness_bias,0.5);
+		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
+	f=fs+fl+fh+fd;
     density=maxdensity*(1+f);
 	density=clamp(density,0,1);
 #ifdef DEBUG_DENSITY
-	if(cnt%1000==0)
-	cout<<"maxdensity:"<<maxdensity<<" density="<<density<<endl;	
+	if(cnt%1000==0){
+		char buff[256];
+		sprintf(buff,"density max:%-1.2f slope:%-1.2f ht:%-1.2f lat:%-1.2f final:%-1.2f ",maxdensity,fs,fh,fl,density);
+		cout<<buff<<endl;
+	}
 #endif
 	cnt++;
 	
