@@ -22,6 +22,8 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
+#define PRINT_STATS
+
 // 3d rocks using marching cubes
 // TODO:
 // 1. generate color test if 3d flag is set (MC3D) - done
@@ -61,7 +63,7 @@ static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
 //************************************************************
 // Rock3DMgr class
 //************************************************************
-
+int Rock3DMgr::stats[MAX_ROCK_STATS][2];
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
@@ -84,35 +86,15 @@ void Rock3DMgr::init()
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
-enum {
-	ROCKS_DRAWN=1,
-	ROCK_VOXELS=2,
-};
-
-int Rock3DMgr::stats[MAX_ROCK_STATS][2];
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
 }
-
 bool Rock3DMgr::testColor() { 
 	return PlacementMgr::testColor()?true:false;
 }
 bool Rock3DMgr::testDensity(){ 
 	return true;
-}
-
-
-//************************************************************
-// Rock3DObjMgr class
-//************************************************************
-MCObjectManager Rock3DObjMgr::rocks;
-bool Rock3DObjMgr::vbo_valid = false;
-ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
-std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
-
-Rock3DObjMgr::~Rock3DObjMgr(){
-	freeLODTemplates();
 }
 
 struct RockLodEntry {
@@ -175,10 +157,22 @@ int Rock3DMgr::getLODResolution(double pts) {
 			return kRockLodTable[i].res;
 		}
 	}
-
 	// Fallback (shouldn't hit if table is well-formed):
 	return kRockLodTable[MAX_ROCK_STATS - 1].res;
 }
+//************************************************************
+// Rock3DObjMgr class
+//************************************************************
+MCObjectManager Rock3DObjMgr::rocks;
+bool Rock3DObjMgr::vbo_valid = false;
+ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
+std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
+
+Rock3DObjMgr::~Rock3DObjMgr(){
+	freeLODTemplates();
+}
+
+
 
 MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution) {
     // Check if we already have this template
@@ -283,8 +277,9 @@ void Rock3DObjMgr::render() {
     if (update_needed) {
     	
         rocks.clear();
+#ifdef PRINT_STATS
         Rock3DMgr::clearStats();
-        
+#endif        
         // For each rock placement, create a transformed copy
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
@@ -295,9 +290,7 @@ void Rock3DObjMgr::render() {
             double dist = s->dist;
             
             int resolution = Rock3DMgr::getLODResolution(pts);
-            
-            //cout<<"pts:"<<pts<<" resolution:"<<resolution<<endl;
-
+    
             MCObject* templateSphere = getTemplateForLOD(resolution);
                         
 			if (!templateSphere || templateSphere->mesh.empty())
@@ -308,8 +301,7 @@ void Rock3DObjMgr::render() {
 
 			MCObject *rock = rocks.addObject(name, pos, size);
 			if (rock) {
-				rock->setDistanceInfo(dist,pts);
-				
+				rock->setDistanceInfo(dist,pts);				
 				// Copy and transform the template mesh
 				rock->mesh.clear();
 				for (const auto& tri : templateSphere->mesh) {
@@ -325,9 +317,9 @@ void Rock3DObjMgr::render() {
 					rock->mesh.push_back(newTri);
 				}
 				rock->meshValid = true;
+#ifdef PRINT_STATS				
 				Rock3DMgr::setStats(resolution,rock->mesh.size());
-				//cout << "resolution=" << resolution  << " triangles=" << rock->mesh.size() << endl;
-
+#endif
 				rock->worldPosition = pos;
                 if(!test8)
                 	rock->uploadToVBOSmooth();   // Use smooth normals
@@ -335,8 +327,9 @@ void Rock3DObjMgr::render() {
               		rock->uploadToVBO(); // flat shading
             }
         }
+#ifdef PRINT_STATS
 		Rock3DMgr::printStats();
-
+#endif
         vbo_valid = true;
     }
 
