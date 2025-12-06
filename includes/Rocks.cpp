@@ -284,72 +284,113 @@ static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
 // Rock3D::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render() {
+    extern int test7, test8;
     int n = data.size;
     if (n == 0)
         return;
-    
+
     bool moved = TheScene->moved() || TheScene->changed_detail();
     bool update_needed = moved || !vbo_valid;
-    
-    if (!setProgram()){
-        cout << "Rock3DObjMgr::render setProgram FAILED" << endl;
-        return;
-    }
-    
+
+    Point xpoint = TheScene->xpoint;
+
     if (update_needed) {
         rocks.clear();
-        rocks.setField(MCFields::sphere);
-        rocks.setIsoLevel(0.0);
-       // cout << "Rock3DObjMgr generating " << n << " rocks" << endl;
+
+        // Generate unit sphere template at origin
+        Point origin(0, 0, 0);
+        MCObject templateSphere(origin, 1.0);
+        templateSphere.setDistanceInfo(1.0);
+        SurfaceFunction field = makeCenteredSphere(origin, 0.5);
+        templateSphere.generateMesh(field, 0.0);
+        templateSphere.generateSphereNormals();
+
+        // For each rock placement, create a transformed copy of the template
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
-            
-            Point pos = s->vertex-TheScene->xpoint;  // Subtract xpoint like sprites
-            double size = s->radius;
-            double dist = s->dist;
-            
+
+            Point pos = s->vertex - xpoint;
+            double size = 0.01 * s->radius;
+
             char name[64];
             sprintf(name, "rock_%d", i);
-            
+
             MCObject *rock = rocks.addObject(name, pos, size);
             if (rock) {
-                rock->setDistanceInfo(dist);
-                SurfaceFunction field = makeCenteredSphere(pos, size * 0.5);
-                rock->generateMesh(field, 0.0);
-               // rock->generateSmoothNormals();
+                rock->setDistanceInfo(s->dist);
+                
+                // Copy and transform the template mesh
+                rock->mesh.clear();
+                for (const auto& tri : templateSphere.mesh) {
+                    MCTriangle newTri;
+                    for (int v = 0; v < 3; v++) {
+                        // Scale and translate each vertex
+                        newTri.vertices[v] = Point(
+                            tri.vertices[v].x * size + pos.x,
+                            tri.vertices[v].y * size + pos.y,
+                            tri.vertices[v].z * size + pos.z
+                        );
+                    }
+                    // Normal doesn't need translation, just copy
+                    newTri.normal = tri.normal;
+                    rock->mesh.push_back(newTri);
+                }
+                rock->meshValid = true;
                 rock->uploadToVBO();
             }
         }
-        
+
         vbo_valid = true;
     }
-    
-    // Render
+
+    glUseProgram(0);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_NORMALIZE);
+    glColor3f(0.6f, 0.5f, 0.4f);
+
+    float lightPos[] = {0.0f, 0.5f, 1.0f, 0.0f};
+    float ambient[] = {0.3f, 0.3f, 0.3f, 1.0f};
+    float diffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);  // Disable for now to debug
-    
+    if (test8)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
+    if (test7)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     const std::vector<MCObject*>& rockList = rocks.getObjects();
     for (MCObject *rock : rockList) {
         if (rock->vboValid && rock->mesh.size() > 0) {
             glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
             glVertexPointer(3, GL_FLOAT, 0, 0);
             glEnableClientState(GL_VERTEX_ARRAY);
-            
+
             glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
             glNormalPointer(GL_FLOAT, 0, 0);
             glEnableClientState(GL_NORMAL_ARRAY);
-            
+
             glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
-            
+
             glDisableClientState(GL_VERTEX_ARRAY);
             glDisableClientState(GL_NORMAL_ARRAY);
         }
     }
-    
+
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_COLOR_MATERIAL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
-
-
 PlacementMgr *Rock3D::mgr() { 
 	return ((TNrocks3D*)expr)->mgr;
 }
@@ -394,8 +435,11 @@ void TNrocks3D::eval()
 	if(right)
 		right->eval();
 	
-	if(!CurrentScope->spass() && mgr->test())
+	if(!CurrentScope->spass()){
 		ground.copy(S0);
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+	}
 	INIT;
 
 	mgr->type=type;
@@ -409,7 +453,7 @@ void TNrocks3D::eval()
 	if(density>0)
 		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	
-	if(!CurrentScope->spass()&& mgr->test()){ // adapt pass only
+	if(!CurrentScope->spass()){ // adapt pass only
 		S0.copy(ground); // restore S0.p.z etc
 		mgr->setTests(); // set S0.c S0.s (density)
 	}

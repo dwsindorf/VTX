@@ -458,7 +458,7 @@ void PlacementMgr::setTests() {
 	}
 	if(testDensity()) {
 		S0.set_flag(DVALUE);
-		S0.s=y;
+		S0.s=x;
 		//cout<<y<<endl;
 	}
 }

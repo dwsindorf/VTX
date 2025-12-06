@@ -112,6 +112,7 @@ public:
     
     // Optional: smooth normals across shared vertices
     void generateSmoothNormals();
+    void MCObject::generateSphereNormals();
 };
 
 //=============================================================================

@@ -341,14 +341,9 @@ void SpriteObjMgr::render() {
 		for (int i = n - 1; i >= 0; i--) {
 			SpriteData *s = (SpriteData*) data[i];
 			int id = s->instance; //s->get_id();
-			Point t = s->vertex;
+			Point t = s->vertex-TheScene->xpoint;
 			double pts = s->pts;
 			
-//			if(i<5)
-//            cout << "  sprite " << i << " pos=(" << t.x << "," << t.y << "," << t.z 
-//                   << ") pts=" << pts<<" dist:"<<s->dist/FEET << endl;
-//
-
 			// random reflection - based on sprite hash table center position
 
 			int rval = s->rval;
@@ -431,7 +426,7 @@ SpritePoint::SpritePoint(SpriteMgr&mgr, Point4DL&p,int n) : Placement(mgr,p,n)
 //-------------------------------------------------------------
 //===================== SpriteData ==============================
 SpriteData::SpriteData(SpritePoint *s): PlaceData(s){
-	vertex=s->vertex-TheScene->xpoint; // TODO: Why only needed for sprites ?
+	vertex=s->vertex;//-TheScene->xpoint; // TODO: Why only needed for sprites ?
   	sprites_cols=s->sprites_cols;
  	sprites_rows=s->sprites_rows;
 	variability=s->variability;

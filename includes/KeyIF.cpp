@@ -107,6 +107,9 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_TEST8:
 		test8=test8?0:1;
 		cout<<"test8="<<test8<<endl;
+		TheScene->set_moved();
+		TheScene->set_changed_render();
+
 		break;
 	case KEY_RAND_SEED:
 		TheScene->setRandomSeed();

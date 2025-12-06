@@ -30,17 +30,17 @@ void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
                               std::vector<MCTriangle>& triangles) {
     MCTriangle tri;
     tri.vertices[0] = v1;
-    tri.vertices[1] = v2;
-    tri.vertices[2] = v3;
+    tri.vertices[1] = v3;
+    tri.vertices[2] = v2;
     
     // Calculate face normal
-    Point edge1 = v2 - v1;
-    Point edge2 = v3 - v1;
-    tri.normal = Point(
-        edge1.y * edge2.z - edge1.z * edge2.y,
-        edge1.z * edge2.x - edge1.x * edge2.z,
-        edge1.x * edge2.y - edge1.y * edge2.x
-    ).normalize();
+    Point edge1 = tri.vertices[1] - tri.vertices[0];
+     Point edge2 = tri.vertices[2] - tri.vertices[0];
+     tri.normal = Point(
+         edge1.y * edge2.z - edge1.z * edge2.y,
+         edge1.z * edge2.x - edge1.x * edge2.z,
+         edge1.x * edge2.y - edge1.y * edge2.x
+     ).normalize();
     
     triangles.push_back(tri);
 }
@@ -239,7 +239,7 @@ void MCObject::clearMesh() {
 void MCObject::uploadToVBO() {
     if (mesh.empty()) return;
     
-    // Delete old VBOs if they exist
+     // Delete old VBOs if they exist
     if (vboVertices != 0) {
         glDeleteBuffers(1, &vboVertices);
     }
@@ -290,6 +290,17 @@ void MCObject::deleteVBO() {
     vboValid = false;
 }
 
+// Add to MCObject
+void MCObject::generateSphereNormals() {
+    if (mesh.empty()) return;
+    
+    for (auto& tri : mesh) {
+        Point centroid = (tri.vertices[0] + tri.vertices[1] + tri.vertices[2]) * (1.0/3.0);
+        tri.normal = (centroid - worldPosition).normalize();
+    }
+    
+    vboValid = false;
+}
 void MCObject::generateSmoothNormals() {
     if (mesh.empty()) return;
     
