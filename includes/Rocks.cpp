@@ -58,8 +58,6 @@ static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
     };
 }
 
-std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
-
 //************************************************************
 // Rock3DMgr class
 //************************************************************
@@ -86,6 +84,12 @@ void Rock3DMgr::init()
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
+enum {
+	ROCKS_DRAWN=1,
+	ROCK_VOXELS=2,
+};
+
+int Rock3DMgr::stats[MAX_ROCK_STATS][2];
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
@@ -98,32 +102,82 @@ bool Rock3DMgr::testDensity(){
 	return true;
 }
 
+
 //************************************************************
 // Rock3DObjMgr class
 //************************************************************
 MCObjectManager Rock3DObjMgr::rocks;
 bool Rock3DObjMgr::vbo_valid = false;
 ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
+std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 
 Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
 
-int Rock3DObjMgr::getLODResolution(double pts) {
-	extern int test2;
-	if(test2)
+struct RockLodEntry {
+    int    res;     // voxel resolution
+    double maxPts;  // upper bound for pts (pts < maxPts)
+};
+
+// Table encodes both LOD mapping and the stats index order:
+static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
+    {  2,  3.0 },  // pts < 3   → res 2
+    {  3,  5.0 },  // pts < 5   → res 3
+    {  4, 12.0 },  // pts < 12  → res 4
+    {  5, 15.0 },  // pts < 15  → res 5
+    {  6, 20.0 },  // pts < 20  → res 6
+    { 12, 35.0 },  // pts < 35  → res 12
+    { 16, 60.0 },  // pts < 60  → res 16
+    { 24,  1e9 }   // default / max detail
+};
+
+void Rock3DMgr::clearStats(){
+	for(int i=0;i<MAX_ROCK_STATS;i++){
+		stats[i][0]=stats[i][1]=0;
+	}
+}
+
+void Rock3DMgr::printStats(){
+    int rcnt = 0;
+    int tcnt = 0;
+    std::cout << "------- 3D Rocks stats --------" << std::endl;
+    for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+        std::cout << "res:"       << kRockLodTable[i].res
+                  << " cnt:"      << stats[i][0]
+                  << " triangles:"<< stats[i][1]
+                  << std::endl;
+        rcnt  += stats[i][0];
+        tcnt  += stats[i][1];
+    }
+    std::cout << "Totals rocks:"    << rcnt
+              << " triangles:"      << tcnt
+              << std::endl;
+}
+
+void Rock3DMgr::setStats(int res, int tris){
+    for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+        if (kRockLodTable[i].res == res) {
+            stats[i][0]++;           // count of rocks at this res
+            stats[i][1] += tris;     // total triangles
+            return;
+        }
+    }
+}
+
+int Rock3DMgr::getLODResolution(double pts) {
+   extern int test2;
+	if (test2)
 		return 24;
-    double res = pts;//sqrt(pts);
-    
-    // Map screen size to voxel resolution
-    if (res < 3) return 2;
-    if (res < 5) return 3;
-    if (res < 8) return 4;
-    if (res < 12) return 6;
-    if (res < 20) return 8;
-    if (res < 35) return 12;
-    if (res < 60) return 16;
-    return 24;  // Max detail
+
+	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+		if (pts < kRockLodTable[i].maxPts) {
+			return kRockLodTable[i].res;
+		}
+	}
+
+	// Fallback (shouldn't hit if table is well-formed):
+	return kRockLodTable[MAX_ROCK_STATS - 1].res;
 }
 
 MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution) {
@@ -229,6 +283,7 @@ void Rock3DObjMgr::render() {
     if (update_needed) {
     	
         rocks.clear();
+        Rock3DMgr::clearStats();
         
         // For each rock placement, create a transformed copy
         for (int i = n - 1; i >= 0; i--) {
@@ -239,7 +294,7 @@ void Rock3DObjMgr::render() {
             double pts = s->pts;
             double dist = s->dist;
             
-            int resolution = getLODResolution(pts);
+            int resolution = Rock3DMgr::getLODResolution(pts);
             
             //cout<<"pts:"<<pts<<" resolution:"<<resolution<<endl;
 
@@ -270,6 +325,9 @@ void Rock3DObjMgr::render() {
 					rock->mesh.push_back(newTri);
 				}
 				rock->meshValid = true;
+				Rock3DMgr::setStats(resolution,rock->mesh.size());
+				//cout << "resolution=" << resolution  << " triangles=" << rock->mesh.size() << endl;
+
 				rock->worldPosition = pos;
                 if(!test8)
                 	rock->uploadToVBOSmooth();   // Use smooth normals
@@ -277,6 +335,7 @@ void Rock3DObjMgr::render() {
               		rock->uploadToVBO(); // flat shading
             }
         }
+		Rock3DMgr::printStats();
 
         vbo_valid = true;
     }

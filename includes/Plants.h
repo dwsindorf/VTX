@@ -15,9 +15,7 @@ class BranchData;
 class PlacementMgr;
 #include <vector>
 
-#define MAX_BRANCHES 6
-#define MAX_PLANT_DATA 7
-#define MAX_PLANTS 7
+#define MAX_PLANT_STATS 7
 
 #define USE_VBO
 
@@ -59,7 +57,7 @@ public:
 	Placement *make(Point4DL&,int);
 	
 	TNplant *plant;
-	static int stats[MAX_PLANTS];
+	static int stats[MAX_PLANT_STATS];
 
 	static double render_time;
 	static bool threed;

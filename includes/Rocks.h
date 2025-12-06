@@ -9,6 +9,8 @@
 
 class RockMgr;
 
+#define MAX_ROCK_STATS 8
+
 class Rock : public Placement
 {
  public:
@@ -38,8 +40,7 @@ public:
     static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-    static int getLODResolution(double pts);
-    static MCObject* getTemplateForLOD(int resolution);
+     static MCObject* getTemplateForLOD(int resolution);
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -64,6 +65,12 @@ class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
+	static int stats[MAX_ROCK_STATS][2];
+	static void clearStats();
+	static void printStats();
+	static void setStats(int,int);
+	static int getLODResolution(double pts);
+
  	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
 	void eval();

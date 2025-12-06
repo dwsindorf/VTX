@@ -364,7 +364,7 @@ void BranchVBO::free() {
 //-------------------------------------------------------------
 bool PlantMgr::shadow_mode=false;
 int PlantMgr::shadow_count=0;
-int PlantMgr::stats[MAX_PLANTS];
+int PlantMgr::stats[MAX_PLANT_STATS];
 double PlantMgr::render_time;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
@@ -413,7 +413,7 @@ PlantMgr::~PlantMgr()
 }
 
 void PlantMgr::clearStats(){
-	for(int i=0;i<MAX_PLANTS;i++){
+	for(int i=0;i<MAX_PLANT_STATS;i++){
 		stats[i]=0;
 	}
 }
