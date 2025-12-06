@@ -230,26 +230,33 @@ bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
         return false;
     
-    char defs[1024]="";
-    GLSLMgr::setDefString(defs);
+    char defs[1024] = "";
+    sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
     
+    GLSLMgr::setDefString(defs);
     GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
-    //GLSLMgr::loadProgram("phong.vert", "phong.frag");
+    
     GLhandleARB program = GLSLMgr::programHandle();
     if (!program)
         return false;
     
-    // Set uniforms
-    Point lightPos = Lights.size > 0 ? Lights[0]->point : Point(1, 1, 1);
-    Point eyeLight = TheScene->eye * lightPos;  // Transform to eye space
+    GLSLVarMgr vars;
     
-    glUniform3f(glGetUniformLocation(program, "lightPosition"), 
-                eyeLight.x, eyeLight.y, eyeLight.z);
-    glUniform3f(glGetUniformLocation(program, "rockColor"), 0.5, 0.5, 0.5);  // Gray
+    Planetoid *orb = (Planetoid*)TheScene->viewobj;
+    Color diffuse = orb->diffuse;
+    Color ambient = orb->ambient;
+    
+    vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
+    vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
+    
+    vars.setProgram(program);
+    vars.loadVars();
+    
+    GLSLMgr::setProgram();
+    GLSLMgr::loadVars();
     
     return true;
 }
-
 void Rock3DObjMgr::free() { 
 	data.free();
     rocks.clear(); 
@@ -293,8 +300,8 @@ void Rock3DObjMgr::render() {
     bool update_needed = moved || !vbo_valid;
 
     Point xpoint = TheScene->xpoint;
-
-    if (update_needed) {
+    
+      if (update_needed) {
         rocks.clear();
 
         // Generate unit sphere template at origin
@@ -305,7 +312,7 @@ void Rock3DObjMgr::render() {
         templateSphere.generateMesh(field, 0.0);
         templateSphere.generateSphereNormals();
 
-        // For each rock placement, create a transformed copy of the template
+        // For each rock placement, create a transformed copy
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
 
@@ -324,44 +331,34 @@ void Rock3DObjMgr::render() {
                 for (const auto& tri : templateSphere.mesh) {
                     MCTriangle newTri;
                     for (int v = 0; v < 3; v++) {
-                        // Scale and translate each vertex
                         newTri.vertices[v] = Point(
                             tri.vertices[v].x * size + pos.x,
                             tri.vertices[v].y * size + pos.y,
                             tri.vertices[v].z * size + pos.z
                         );
                     }
-                    // Normal doesn't need translation, just copy
                     newTri.normal = tri.normal;
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
-                rock->uploadToVBO();
+                if(test8)
+                	rock->uploadToVBOSmooth();   // Use smooth normals
+                else
+              		rock->uploadToVBO();
             }
         }
 
         vbo_valid = true;
     }
 
-    glUseProgram(0);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_NORMALIZE);
-    glColor3f(0.6f, 0.5f, 0.4f);
-
-    float lightPos[] = {0.0f, 0.5f, 1.0f, 0.0f};
-    float ambient[] = {0.3f, 0.3f, 0.3f, 1.0f};
-    float diffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+    if (!setProgram()) {
+        cout << "Rock3DObjMgr::setProgram FAILED" << endl;
+        return;
+    }
 
     glEnable(GL_DEPTH_TEST);
-    if (test8)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
+
     if (test7)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
@@ -385,9 +382,6 @@ void Rock3DObjMgr::render() {
         }
     }
 
-    glDisable(GL_NORMALIZE);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

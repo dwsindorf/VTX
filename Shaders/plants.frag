@@ -104,11 +104,8 @@ vec3 setLighting(vec3 BaseColor) {
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
  		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*night_lighting;
-		lpn=clamp(lpn,0,5.0);
-		
+		lpn=clamp(lpn,0,5.0);	
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
-		//diffuse=clamp(diffuse,vec3(0),vec3(5));
-		//test=vec3(lpn,0,0);		
 	}
 	
 	vec3 TotalDiffuse = BaseColor*diffuse*Diffuse.a+Ambient*Ambient.a;

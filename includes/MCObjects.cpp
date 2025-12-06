@@ -236,6 +236,53 @@ void MCObject::clearMesh() {
     vboValid = false;
 }
 
+void MCObject::uploadToVBOSmooth() {
+    if (mesh.empty()) return;
+    
+    // Delete old VBOs if they exist
+    if (vboVertices != 0) {
+        glDeleteBuffers(1, &vboVertices);
+    }
+    if (vboNormals != 0) {
+        glDeleteBuffers(1, &vboNormals);
+    }
+    
+    // Prepare vertex and normal arrays
+    size_t vertexCount = mesh.size() * 3;
+    std::vector<float> vertices(vertexCount * 3);
+    std::vector<float> normals(vertexCount * 3);
+    
+    for (size_t i = 0; i < mesh.size(); i++) {
+        for (int v = 0; v < 3; v++) {
+            size_t idx = (i * 3 + v) * 3;
+            
+            // Vertex position
+            vertices[idx + 0] = (float)mesh[i].vertices[v].x;
+            vertices[idx + 1] = (float)mesh[i].vertices[v].y;
+            vertices[idx + 2] = (float)mesh[i].vertices[v].z;
+            
+            // Per-vertex normal: direction from center to vertex
+            Point vertexNormal = (mesh[i].vertices[v] - worldPosition).normalize();
+            normals[idx + 0] = (float)vertexNormal.x;
+            normals[idx + 1] = (float)vertexNormal.y;
+            normals[idx + 2] = (float)vertexNormal.z;
+        }
+    }
+    
+    // Create and upload VBOs
+    glGenBuffers(1, &vboVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
+    glGenBuffers(1, &vboNormals);
+    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    
+    vboValid = true;
+}
+
 void MCObject::uploadToVBO() {
     if (mesh.empty()) return;
     

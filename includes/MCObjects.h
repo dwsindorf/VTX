@@ -108,11 +108,12 @@ public:
     
     // Upload mesh to VBOs for rendering
     void uploadToVBO();
+    void uploadToVBOSmooth();
     void deleteVBO();
     
     // Optional: smooth normals across shared vertices
     void generateSmoothNormals();
-    void MCObject::generateSphereNormals();
+    void generateSphereNormals();
 };
 
 //=============================================================================
