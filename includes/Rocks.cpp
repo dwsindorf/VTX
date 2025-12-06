@@ -12,6 +12,7 @@
 #include "TerrainClass.h"
 #include "UniverseModel.h"
 #include "GLSLMgr.h"
+#include <map>
 
 extern double Hscale, Drop, MaxSize,Height,Theta,Phi;
 extern Point MapPt;
@@ -34,72 +35,381 @@ static TerrainData Td;
 // 7. for each layer and rock in layer emit rock as a marchingCubesObj
 
 //************************************************************
-// RockMgr class
+// Rock3D class
 //************************************************************
-//	arg[0]  levels   		scale levels
-//	arg[1]  maxsize			size of largest craters
-//	arg[2]  mult			size multiplier per level
-//	arg[3]  density			density or dexpr
-//
-//	arg[4]  zcomp			z compression factor
-//	arg[5]  drop			z drop factor or function
-//	arg[6]  noise		    noise amplitude
-//	arg[7]  noise_expr		noise function
-//-------------------------------------------------------------
-TNode *RockMgr::default_noise=0;
-RockMgr::RockMgr(int i) : PlacementMgr(i)
+Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
 {
-	MSK_SET(type,PLACETYPE,ROCKS);
-	noise_ampl=1;
-	zcomp=0.1;
-	drop=0.1;
-	rnoise=0;
-	rdist=0;
-	pdist=1;
-	rx=ry=0;
+}
+PlacementMgr *Rock3D::mgr() { 
+	return ((TNrocks3D*)expr)->mgr;
+}
+
+//************************************************************
+// helper functions
+//************************************************************
+
+static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
+    return [center, radius](double x, double y, double z) -> double {
+        double dx = x - center.x;
+        double dy = y - center.y;
+        double dz = z - center.z;
+        double distance = sqrt(dx*dx + dy*dy + dz*dz);
+        return radius - distance;  // Positive inside sphere of given radius
+    };
+}
+
+
+std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
+
+
+
+
+//************************************************************
+// Rock3DMgr class
+//************************************************************
+
+Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
+{
+	MSK_SET(type,PLACETYPE,MCROCKS);
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
-
+    set_testDensity(true);
 }
-RockMgr::~RockMgr()
+
+void Rock3DMgr::eval(){	
+	PlacementMgr::eval(); 
+}
+
+void Rock3DMgr::init()
 {
-  	if(finalizer()){
-#ifdef DEBUG_PMEM
-  		printf("RockMgr::free()\n");
-#endif
-        DFREE(default_noise);
-	}
+	PlacementMgr::init();
+  	reset();
 }
 
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
-Placement *RockMgr::make(Point4DL &p, int n)
+Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
-    return new Rock(*this,p,n);
+    return new Placement(*this,p,n);
+}
+
+bool Rock3DMgr::testColor() { 
+	return PlacementMgr::testColor()?true:false;
+}
+bool Rock3DMgr::testDensity(){ 
+	return true;
+}
+
+//************************************************************
+// Rock3DObjMgr class
+//************************************************************
+MCObjectManager Rock3DObjMgr::rocks;
+bool Rock3DObjMgr::vbo_valid = false;
+ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
+
+Rock3DObjMgr::~Rock3DObjMgr(){
+	freeLODTemplates();
+}
+
+int Rock3DObjMgr::getLODResolution(double pts) {
+    double res = pts;//sqrt(pts);
+    
+    // Map screen size to voxel resolution
+    if (res < 3) return 2;
+    if (res < 5) return 3;
+    if (res < 8) return 4;
+    if (res < 12) return 6;
+    if (res < 20) return 8;
+    if (res < 35) return 12;
+    if (res < 60) return 16;
+    return 24;  // Max detail
+}
+
+MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution) {
+    // Check if we already have this template
+    auto it = lodTemplates.find(resolution);
+    if (it != lodTemplates.end()) {
+        return it->second;
+    }
+    
+    // Generate new template at this resolution
+    Point origin(0, 0, 0);
+    MCObject* templateSphere = new MCObject(origin, 1.0);
+    templateSphere->setDistanceInfo(1.0);
+    
+    // Generate mesh at specified resolution
+    MCGenerator generator;
+    Point boundsMin(-0.5, -0.5, -0.5);
+    Point boundsMax(0.5, 0.5, 0.5);
+    SurfaceFunction field = makeCenteredSphere(origin, 0.5);
+    templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
+    templateSphere->meshValid = true;
+    
+    lodTemplates[resolution] = templateSphere;
+    
+    cout << "Created LOD template: resolution=" << resolution 
+         << " tris=" << templateSphere->mesh.size() << endl;
+    
+    return templateSphere;
+}
+void Rock3DObjMgr::freeLODTemplates() {
+    for (auto& pair : lodTemplates) {
+        delete pair.second;
+    }
+    lodTemplates.clear();
+}
+//-------------------------------------------------------------
+// Rock3DObjMgr::setProgram() initialize shader
+//-------------------------------------------------------------
+bool Rock3DObjMgr::setProgram() {
+    if (!data.size || !objs.size)
+        return false;
+    
+    char defs[1024] = "";
+    sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
+    
+    GLSLMgr::setDefString(defs);
+    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
+    
+    GLhandleARB program = GLSLMgr::programHandle();
+    if (!program)
+        return false;
+    
+    GLSLVarMgr vars;
+    
+    Planetoid *orb = (Planetoid*)TheScene->viewobj;
+    Color diffuse = orb->diffuse;
+    Color ambient = orb->ambient;
+    
+    vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
+    vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
+    
+    vars.setProgram(program);
+    vars.loadVars();
+    
+    GLSLMgr::setProgram();
+    GLSLMgr::loadVars();
+    
+    return true;
+}
+void Rock3DObjMgr::free() { 
+	data.free();
+    rocks.clear(); 
+    vbo_valid = false; 
 }
 
 //-------------------------------------------------------------
-// RockMgr::init()	initialize global objects
+// Rock3DObjMgr::collect() generate array of placements (data)
 //-------------------------------------------------------------
-void RockMgr::init()
-{
-	if(default_noise==0){
-#ifdef DEBUG_PMEM
-  		printf("RockMgr::init()\n");
-#endif
-	   default_noise=(TNode*)TheScene->parse_node((char*)def_rnoise_expr);
-	}
-	PlacementMgr::init();
+void Rock3DObjMgr::collect() {
+    data.free();
+    for (int i = 0; i < objs.size; i++) {
+        PlaceObj *obj = objs[i];
+        obj->mgr()->collect(data);
+    }
+    if (data.size)
+        data.sort();
+    vbo_valid = false;
 }
+
+//-------------------------------------------------------------
+// Rock3DObjMgr::render() create and render the 3d rocks
+//-------------------------------------------------------------
+void Rock3DObjMgr::render() {
+    extern int test7, test8;
+    int n = data.size;
+    if (n == 0)
+        return;
+
+    bool moved = TheScene->moved() || TheScene->changed_detail();
+    bool update_needed = moved || !vbo_valid;
+
+    Point xpoint = TheScene->xpoint;
+    
+      if (update_needed) {
+        rocks.clear();
+
+        // Generate unit sphere template at origin
+        Point origin(0, 0, 0);
+        MCObject templateSphere(origin, 1.0);
+        templateSphere.setDistanceInfo(1.0);
+        SurfaceFunction field = makeCenteredSphere(origin, 0.5);
+        templateSphere.generateMesh(field, 0.0);
+        templateSphere.generateSphereNormals();
+
+        // For each rock placement, create a transformed copy
+        for (int i = n - 1; i >= 0; i--) {
+            PlaceData *s = data[i];
+
+            Point pos = s->vertex - xpoint;
+            double size = 0.01 * s->radius;
+            double pts = s->pts;
+            
+            int resolution = getLODResolution(pts);
+            
+            cout<<"pts:"<<pts<<" resolution:"<<resolution<<endl;
+
+            MCObject* templateSphere = getTemplateForLOD(resolution);
+                        
+			if (!templateSphere || templateSphere->mesh.empty())
+				continue;
+
+			char name[64];
+			sprintf(name, "rock_%d", i);
+
+			MCObject *rock = rocks.addObject(name, pos, size);
+			if (rock) {
+				rock->setDistanceInfo(s->dist);
+				
+				// Copy and transform the template mesh
+				rock->mesh.clear();
+				for (const auto& tri : templateSphere->mesh) {
+					MCTriangle newTri;
+					for (int v = 0; v < 3; v++) {
+						newTri.vertices[v] = Point(
+							tri.vertices[v].x * size + pos.x,
+							tri.vertices[v].y * size + pos.y,
+							tri.vertices[v].z * size + pos.z
+						);
+					}
+					newTri.normal = tri.normal;
+					rock->mesh.push_back(newTri);
+				}
+				rock->meshValid = true;
+				rock->worldPosition = pos;
+                if(!test8)
+                	rock->uploadToVBOSmooth();   // Use smooth normals
+                else
+              		rock->uploadToVBO(); // flat shading
+            }
+        }
+
+        vbo_valid = true;
+    }
+
+    if (!setProgram()) {
+        cout << "Rock3DObjMgr::setProgram FAILED" << endl;
+        return;
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    if (test7)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    const std::vector<MCObject*>& rockList = rocks.getObjects();
+    for (MCObject *rock : rockList) {
+        if (rock->vboValid && rock->mesh.size() > 0) {
+            glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
+            glVertexPointer(3, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_VERTEX_ARRAY);
+
+            glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
+            glNormalPointer(GL_FLOAT, 0, 0);
+            glEnableClientState(GL_NORMAL_ARRAY);
+
+            glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
+
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_NORMAL_ARRAY);
+        }
+    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+//************************************************************
+// TNrocks3D class
+//************************************************************
+TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNplacements(MCROCKS,l,r,b)
+{
+	mgr=new Rock3DMgr(type);
+	rock=0;
+}
+
+//-------------------------------------------------------------
+// TNrocks3D::init() initialize the node
+//-------------------------------------------------------------
+void TNrocks3D::init()
+{
+	if(right)
+	   right->init();
+	if(rock==0)
+		rock=new Rock3D(type,this);	
+	mgr->set_first(1);
+	mgr->init();
+
+	TNplacements::init(); 
+}
+
+//-------------------------------------------------------------
+// TNrocks3D::eval() evaluate the node
+//-------------------------------------------------------------
+void TNrocks3D::eval()
+{
+	TerrainData ground;
+	
+	if(!isEnabled() || TheScene->viewtype !=SURFACE){
+		if(right)
+			right->eval();
+		return;
+	}
+	SINIT;
+	if(CurrentScope->rpass()){
+		int layer=inLayer()?Td.tp->type():0; // layer id
+		int instance=Td.tp->Rocks.objects();
+		mgr->instance=instance;
+		mgr->layer=layer;
+		if(rock){
+			rock->set_id(instance);
+			rock->layer=layer;
+		}
+		Td.tp->Rocks.addObject(rock);
+		mgr->setHashcode();
+		if(right)
+			right->eval();
+		return;
+	}
+	if(right)
+		right->eval();
+	
+	if(!CurrentScope->spass()){
+		ground.copy(S0);
+		Height=S0.p.z;
+		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
+	}
+	INIT;
+
+	mgr->type=type;
+
+	mgr->getArgs((TNarg *)left);
+	
+	MaxSize=mgr->maxsize;
+	
+	double density=mgr->density;
+	
+	if(density>0)
+		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
+	
+	if(!CurrentScope->spass()){ // adapt pass only
+		S0.copy(ground); // restore S0.p.z etc
+		mgr->setTests(); // set S0.c S0.s (density)
+	}
+}
+
+//------------------- 2D Rocks ------------------------------
+
 //************************************************************
 // Rock class
 //************************************************************
 Rock::Rock(PlacementMgr&m, Point4DL&p,int n) : Placement(m,p,n)
 {
 }
-
 //-------------------------------------------------------------
 // Rock::set_terrain()	impact terrain 
 //-------------------------------------------------------------
@@ -175,300 +485,66 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 }
 
 //************************************************************
-// Rock3D class
+// RockMgr class
 //************************************************************
-Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
+//	arg[0]  levels   		scale levels
+//	arg[1]  maxsize			size of largest craters
+//	arg[2]  mult			size multiplier per level
+//	arg[3]  density			density or dexpr
+//
+//	arg[4]  zcomp			z compression factor
+//	arg[5]  drop			z drop factor or function
+//	arg[6]  noise		    noise amplitude
+//	arg[7]  noise_expr		noise function
+//-------------------------------------------------------------
+TNode *RockMgr::default_noise=0;
+RockMgr::RockMgr(int i) : PlacementMgr(i)
 {
-}
-
-//************************************************************
-// Rock3DMgr classe
-//************************************************************
-MCObjectManager Rock3DObjMgr::rocks;
-bool Rock3DObjMgr::vbo_valid = false;
-ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
-
-
-Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
-{
-	MSK_SET(type,PLACETYPE,MCROCKS);
+	MSK_SET(type,PLACETYPE,ROCKS);
+	noise_ampl=1;
+	zcomp=0.1;
+	drop=0.1;
+	rnoise=0;
+	rdist=0;
+	pdist=1;
+	rx=ry=0;
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
-    set_testDensity(true);
-}
 
-void Rock3DMgr::eval(){	
-	PlacementMgr::eval(); 
 }
-
-void Rock3DMgr::init()
+RockMgr::~RockMgr()
 {
-	PlacementMgr::init();
-  	reset();
+  	if(finalizer()){
+#ifdef DEBUG_PMEM
+  		printf("RockMgr::free()\n");
+#endif
+        DFREE(default_noise);
+	}
 }
 
 //-------------------------------------------------------------
 // RockMgr::make() factory method to make Placement
 //-------------------------------------------------------------
-Placement *Rock3DMgr::make(Point4DL &p, int n)
+Placement *RockMgr::make(Point4DL &p, int n)
 {
-    return new Placement(*this,p,n);
-}
-
-bool Rock3DMgr::testColor() { 
-	return PlacementMgr::testColor()?true:false;
-}
-bool Rock3DMgr::testDensity(){ 
-	return true;
+    return new Rock(*this,p,n);
 }
 
 //-------------------------------------------------------------
-// Rock3D::setProgram() initialize shader
+// RockMgr::init()	initialize global objects
 //-------------------------------------------------------------
-bool Rock3DObjMgr::setProgram() {
-    if (!data.size || !objs.size)
-        return false;
-    
-    char defs[1024] = "";
-    sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
-    
-    GLSLMgr::setDefString(defs);
-    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
-    
-    GLhandleARB program = GLSLMgr::programHandle();
-    if (!program)
-        return false;
-    
-    GLSLVarMgr vars;
-    
-    Planetoid *orb = (Planetoid*)TheScene->viewobj;
-    Color diffuse = orb->diffuse;
-    Color ambient = orb->ambient;
-    
-    vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
-    vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
-    
-    vars.setProgram(program);
-    vars.loadVars();
-    
-    GLSLMgr::setProgram();
-    GLSLMgr::loadVars();
-    
-    return true;
-}
-void Rock3DObjMgr::free() { 
-	data.free();
-    rocks.clear(); 
-    vbo_valid = false; 
-}
-
-//-------------------------------------------------------------
-// Rock3D::collect() generate array of placements (data)
-//-------------------------------------------------------------
-
-void Rock3DObjMgr::collect() {
-    data.free();
-    for (int i = 0; i < objs.size; i++) {
-        PlaceObj *obj = objs[i];
-        obj->mgr()->collect(data);
-    }
-    if (data.size)
-        data.sort();
-    vbo_valid = false;
-}
-
-static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
-    return [center, radius](double x, double y, double z) -> double {
-        double dx = x - center.x;
-        double dy = y - center.y;
-        double dz = z - center.z;
-        double distance = sqrt(dx*dx + dy*dy + dz*dz);
-        return radius - distance;  // Positive inside sphere of given radius
-    };
-}
-//-------------------------------------------------------------
-// Rock3D::render() create and render the 3d rocks
-//-------------------------------------------------------------
-void Rock3DObjMgr::render() {
-    extern int test7, test8;
-    int n = data.size;
-    if (n == 0)
-        return;
-
-    bool moved = TheScene->moved() || TheScene->changed_detail();
-    bool update_needed = moved || !vbo_valid;
-
-    Point xpoint = TheScene->xpoint;
-    
-      if (update_needed) {
-        rocks.clear();
-
-        // Generate unit sphere template at origin
-        Point origin(0, 0, 0);
-        MCObject templateSphere(origin, 1.0);
-        templateSphere.setDistanceInfo(1.0);
-        SurfaceFunction field = makeCenteredSphere(origin, 0.5);
-        templateSphere.generateMesh(field, 0.0);
-        templateSphere.generateSphereNormals();
-
-        // For each rock placement, create a transformed copy
-        for (int i = n - 1; i >= 0; i--) {
-            PlaceData *s = data[i];
-
-            Point pos = s->vertex - xpoint;
-            double size = 0.01 * s->radius;
-
-            char name[64];
-            sprintf(name, "rock_%d", i);
-
-            MCObject *rock = rocks.addObject(name, pos, size);
-            if (rock) {
-                rock->setDistanceInfo(s->dist);
-                
-                // Copy and transform the template mesh
-                rock->mesh.clear();
-                for (const auto& tri : templateSphere.mesh) {
-                    MCTriangle newTri;
-                    for (int v = 0; v < 3; v++) {
-                        newTri.vertices[v] = Point(
-                            tri.vertices[v].x * size + pos.x,
-                            tri.vertices[v].y * size + pos.y,
-                            tri.vertices[v].z * size + pos.z
-                        );
-                    }
-                    newTri.normal = tri.normal;
-                    rock->mesh.push_back(newTri);
-                }
-                rock->meshValid = true;
-                if(test8)
-                	rock->uploadToVBOSmooth();   // Use smooth normals
-                else
-              		rock->uploadToVBO();
-            }
-        }
-
-        vbo_valid = true;
-    }
-
-    if (!setProgram()) {
-        cout << "Rock3DObjMgr::setProgram FAILED" << endl;
-        return;
-    }
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    if (test7)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    const std::vector<MCObject*>& rockList = rocks.getObjects();
-    for (MCObject *rock : rockList) {
-        if (rock->vboValid && rock->mesh.size() > 0) {
-            glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
-            glVertexPointer(3, GL_FLOAT, 0, 0);
-            glEnableClientState(GL_VERTEX_ARRAY);
-
-            glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
-            glNormalPointer(GL_FLOAT, 0, 0);
-            glEnableClientState(GL_NORMAL_ARRAY);
-
-            glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
-
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY);
-        }
-    }
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-PlacementMgr *Rock3D::mgr() { 
-	return ((TNrocks3D*)expr)->mgr;
-}
-
-//************************************************************
-// TNrocks class
-//************************************************************
-TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNplacements(MCROCKS,l,r,b)
+void RockMgr::init()
 {
-	mgr=new Rock3DMgr(type);
-	rock=0;
+	if(default_noise==0){
+#ifdef DEBUG_PMEM
+  		printf("RockMgr::init()\n");
+#endif
+	   default_noise=(TNode*)TheScene->parse_node((char*)def_rnoise_expr);
+	}
+	PlacementMgr::init();
 }
 
-//-------------------------------------------------------------
-// TNrocks::eval3d() evaluate the node
-//-------------------------------------------------------------
-void TNrocks3D::eval()
-{
-	TerrainData ground;
-	
-	if(!isEnabled() || TheScene->viewtype !=SURFACE){
-		if(right)
-			right->eval();
-		return;
-	}
-	SINIT;
-	if(CurrentScope->rpass()){
-		int layer=inLayer()?Td.tp->type():0; // layer id
-		int instance=Td.tp->Rocks.objects();
-		mgr->instance=instance;
-		mgr->layer=layer;
-		if(rock){
-			rock->set_id(instance);
-			rock->layer=layer;
-		}
-		Td.tp->Rocks.addObject(rock);
-		mgr->setHashcode();
-		if(right)
-			right->eval();
-		return;
-	}
-	if(right)
-		right->eval();
-	
-	if(!CurrentScope->spass()){
-		ground.copy(S0);
-		Height=S0.p.z;
-		MapPt=TheMap->point(Theta,Phi,Height)-TheScene->xpoint;
-	}
-	INIT;
-
-	mgr->type=type;
-
-	mgr->getArgs((TNarg *)left);
-	
-	MaxSize=mgr->maxsize;
-	
-	double density=mgr->density;
-	
-	if(density>0)
-		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
-	
-	if(!CurrentScope->spass()){ // adapt pass only
-		S0.copy(ground); // restore S0.p.z etc
-		mgr->setTests(); // set S0.c S0.s (density)
-	}
-}
-//-------------------------------------------------------------
-// TNrocks3D::init() initialize the node
-//-------------------------------------------------------------
-void TNrocks3D::init()
-{
-	if(right)
-	   right->init();
-
-	if(rock==0)
-		rock=new Rock3D(type,this);
-	
-	mgr->set_first(1);
-	mgr->init();
-
-	TNplacements::init();
- 
-}
 //************************************************************
 // TNrocks class
 //************************************************************
@@ -528,6 +604,7 @@ NodeIF *TNrocks::replaceNode(NodeIF *c)
 	TheScene->rebuild_all();
 	return c;
 }
+
 //-------------------------------------------------------------
 // TNrocks::addAfter append x after base if c==this
 // - used when adding a TNnode object to a TerrainMgr stack
@@ -718,6 +795,7 @@ void TNrocks::eval() {
 	if (!in_map && last)
 		Td.end();
 }
+
 //-------------------------------------------------------------
 // TNrocks::hasChild return true if child exists
 //-------------------------------------------------------------

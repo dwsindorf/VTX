@@ -1,22 +1,78 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-36.5995;
-		theta=350.874;
-		height=3 ft;
-		gndlvl=1282.89 ft;
-		time=67797;
-		vstride=0.02;
+		phi=-5.91682;
+		theta=341.169;
+		height=48.3975 ft;
+		time=67990.8;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
-		minr=0.00400024;
-		heading=43;
-		tilt=-15;
+		zoom=1;
+		minh=9.4697e-10;
+		heading=-36;
+		tilt=-22;
+		angle=30;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		height=22.7508 ft;
+		time=68055;
+		tilt=-21;
+		angle=26;
+	}
+	View{
+		height=12.1812 ft;
+		heading=-26;
+		tilt=-26;
+		angle=32;
+	}
+	View{
+		time=68132.6;
+		tilt=-22;
+		angle=28;
+	}
+	View{
+		height=10.5894 ft;
+		time=72947.8;
+		heading=-1;
+		tilt=-16;
+		angle=31;
+	}
+	View{
+		time=69306.4;
+	}
+	View{
+		heading=4;
+		tilt=-21;
+		angle=22;
+	}
+	View{
+		time=69339.6;
+		tilt=-14;
+		angle=35;
+	}
+	View{
+		time=-4297;
+		delt=1000;
+		tilt=-16;
+		angle=33;
+	}
+	View{
+		tilt=-20;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.004;
+	}
+	View{
+		height=12.1338 ft;
+		time=66103;
+		heading=9;
+		tilt=-16;
+		minr=0.004;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -54,7 +110,7 @@ Scene() {
 					Surface{
 						terrain=rocks3d(1,2e-07,0.8,0.5,0.3)
 								
-								Texture("Sand2",BORDER|LINEAR|RANDOMIZE|TEX,84168.9,2,1,0,1,2,0.5,0,0,-0.22224,0,-0.05552)+Z(noise(GRADIENT|NABS|SCALE|UNS,9,4,-0.041,0.4,2,1,4,0.17,0,1e-06));
+								Texture("Sand2",BORDER|LINEAR|RANDOMIZE|TEX,84168.9,2,1,0,1,2,0.5,0,0,-0.22224,0,-0.05552)+Z(noise(GRADIENT|NABS|SCALE|UNS,9,4,-0.041,0.4,2,0,4,0.17,0,1e-06));
 					}
 				}
 			}

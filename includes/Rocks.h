@@ -5,6 +5,7 @@
 
 #include "Placements.h"
 #include "MCObjects.h"
+#include <map>
 
 class RockMgr;
 
@@ -34,14 +35,22 @@ class Rock3DObjMgr : public PlaceObjMgr
 public:
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;
+    static std::map<int, MCObject*> lodTemplates;
+    
     static bool vbo_valid;
+    static int getLODResolution(double pts);
+    static MCObject* getTemplateForLOD(int resolution);
+    static void freeLODTemplates();
+
+    ~Rock3DObjMgr();
+    
 	void free();
 	int placements(){ return data.size;}
 	void collect();
 	const char *name() { return "Rocks3D";}
     bool setProgram();
     void render();
-
+ 
 };
 
 class Rock3D : public PlaceObj
