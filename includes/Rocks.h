@@ -40,7 +40,7 @@ public:
     static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-     static MCObject* getTemplateForLOD(int resolution);
+    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl);
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();

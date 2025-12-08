@@ -1,6 +1,7 @@
 #include "MCObjects.h"
 #include <algorithm>
 #include <cstring>
+#include <map>
 
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
@@ -201,7 +202,120 @@ void MCObject::clearMesh() {
     meshValid = false;
     vboValid = false;
 }
-
+void MCObject::uploadToVBODisplaced() {
+    if (mesh.empty()) return;
+    
+    // Delete old VBOs if they exist
+    if (vboVertices != 0) {
+        glDeleteBuffers(1, &vboVertices);
+    }
+    if (vboNormals != 0) {
+        glDeleteBuffers(1, &vboNormals);
+    }
+    
+    // Use scientific notation for full precision
+    auto makeVertexKey = [](const Point& v) -> std::string {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "%.15e,%.15e,%.15e", v.x, v.y, v.z);  // 15 digits precision
+        return std::string(buf);
+    };
+    
+    // DEBUG: Print first few vertex keys
+#ifdef DEBUG_HASH
+    std::cout << "First 9 vertex keys:" << std::endl;
+    int count = 0;
+    for (const auto& tri : mesh) {
+        for (int v = 0; v < 3; v++) {
+            if (count < 9) {
+                std::string key = makeVertexKey(tri.vertices[v]);
+                std::cout << "  Vertex " << count << ": (" 
+                          << tri.vertices[v].x << "," << tri.vertices[v].y << "," << tri.vertices[v].z 
+                          << ") -> key: [" << key << "]" << std::endl;
+                count++;
+            }
+        }
+    }
+#endif   
+    // Accumulate normals per vertex position
+    std::map<std::string, Point> normalAccum;
+    
+    for (const auto& tri : mesh) {
+        for (int v = 0; v < 3; v++) {
+            std::string key = makeVertexKey(tri.vertices[v]);
+            normalAccum[key] = normalAccum[key] + tri.normal;
+        }
+    }
+#ifdef DEBUG_HASH   
+    std::cout << "uploadToVBODisplaced: " << mesh.size() << " triangles, " 
+              << normalAccum.size() << " unique vertices" << std::endl;
+    
+    // Sample before normalize
+    if (!normalAccum.empty()) {
+        Point sampleNormal = normalAccum.begin()->second;
+        std::cout << "Sample accumulated normal before normalize: " 
+                  << sampleNormal.x << ", " << sampleNormal.y << ", " << sampleNormal.z 
+                  << " length=" << sampleNormal.length() << std::endl;
+    }
+#endif
+    // Normalize accumulated normals
+    for (auto& pair : normalAccum) {
+        double len = pair.second.length();
+        if (len > 0.00001) {
+            pair.second = pair.second.normalize();
+        } else {
+#ifdef DEBUG_HASH
+            std::cout << "WARNING: Zero-length normal for vertex, using fallback" << std::endl;
+#endif
+            pair.second = Point(0, 1, 0);
+        }
+    }
+    
+    // Sample after normalize
+    if (!normalAccum.empty()) {
+        Point sampleNormal = normalAccum.begin()->second;
+#ifdef DEBUG_HASH
+        std::cout << "Sample normalized normal: " 
+                  << sampleNormal.x << ", " << sampleNormal.y << ", " << sampleNormal.z 
+                  << " length=" << sampleNormal.length() << std::endl;
+#endif
+    }
+    
+    // Prepare vertex and per-vertex normal arrays
+    size_t vertexCount = mesh.size() * 3;
+    std::vector<float> vertices(vertexCount * 3);
+    std::vector<float> normals(vertexCount * 3);
+    
+    for (size_t i = 0; i < mesh.size(); i++) {
+        for (int v = 0; v < 3; v++) {
+            size_t idx = (i * 3 + v) * 3;
+            
+            // Vertex position
+            vertices[idx + 0] = (float)mesh[i].vertices[v].x;
+            vertices[idx + 1] = (float)mesh[i].vertices[v].y;
+            vertices[idx + 2] = (float)mesh[i].vertices[v].z;
+            
+            // Per-vertex smoothed normal
+            std::string key = makeVertexKey(mesh[i].vertices[v]);
+            Point smoothNormal = normalAccum[key];
+            normals[idx + 0] = (float)smoothNormal.x;
+            normals[idx + 1] = (float)smoothNormal.y;
+            normals[idx + 2] = (float)smoothNormal.z;
+        }
+    }
+    
+    // Create and upload VBOs
+    glGenBuffers(1, &vboVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
+    glGenBuffers(1, &vboNormals);
+    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    
+    vboValid = true;
+}
 void MCObject::uploadToVBOSmooth() {
     if (mesh.empty()) return;
     

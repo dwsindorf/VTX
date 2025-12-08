@@ -67,6 +67,122 @@ static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
     };
 }
 
+// In Rocks.cpp - add near top with other static functions
+
+// Noisy sphere field for marching cubes iso-surface extraction
+static SurfaceFunction makeNoisyRockField(const Point& center, double radius, int seed, double noiseAmpl) {
+    return [center, radius, seed, noiseAmpl](double x, double y, double z) -> double {
+        static std::map<int, PerlinNoise> noiseGens;
+        if (noiseGens.find(seed) == noiseGens.end()) {
+            noiseGens[seed] = PerlinNoise(seed);
+        }
+        PerlinNoise& noise = noiseGens[seed];
+        
+        double dx = x - center.x;
+        double dy = y - center.y;
+        double dz = z - center.z;
+        double distance = sqrt(dx*dx + dy*dy + dz*dz);
+        
+        // Base sphere
+        double baseSphere = radius - distance;
+        
+        // Add noise to the iso-surface
+        // Scale sample position to get consistent look regardless of rock size
+        double scale = 2.0 / radius;
+        double n = noise.octaveNoise(dx * scale, dy * scale, dz * scale, 4, 0.5, 2.0, 0.5, 0.5);
+        
+        return baseSphere + n * noiseAmpl * radius;
+    };
+}
+
+// Post-mesh vertex displacement
+static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) {
+    static std::map<int, PerlinNoise> noiseGens;
+    if (noiseGens.find(seed) == noiseGens.end()) {
+        noiseGens[seed] = PerlinNoise(seed);
+    }
+    PerlinNoise& noise = noiseGens[seed];
+    
+    Point center = rock->worldPosition;
+    double rockSize = rock->baseSize;
+    
+    for (auto& tri : rock->mesh) {
+        for (int v = 0; v < 3; v++) {
+            Point& vertex = tri.vertices[v];
+            
+            // Direction from center to vertex (outward normal)
+            Point dir = (vertex - center).normalize();
+            
+            // Normalize position relative to rock center and size
+            // This gives us unit-scale coordinates for noise sampling
+            double nx = (vertex.x - center.x) / rockSize;
+            double ny = (vertex.y - center.y) / rockSize;
+            double nz = (vertex.z - center.z) / rockSize;
+            
+            // Sample noise at normalized coordinates with some frequency
+            double scale = 4.0;
+            double n = noise.octaveNoise(
+                nx * scale + seed * 0.1,  // Offset by seed for variation
+                ny * scale, 
+                nz * scale, 
+                3, 0.5, 2.0, 0.5, 0.5
+            );
+            
+            // Displace vertex along normal direction
+            vertex.x += dir.x * n * amplitude;
+            vertex.y += dir.y * n * amplitude;
+            vertex.z += dir.z * n * amplitude;
+        }
+    }
+}
+// LOD template cache - now keyed by resolution AND noise parameters
+struct LODKey {
+    int resolution;
+    bool noisy;
+    
+    bool operator<(const LODKey& other) const {
+        if (resolution != other.resolution) return resolution < other.resolution;
+        return noisy < other.noisy;
+    }
+};
+
+static std::map<LODKey, MCObject*> lodTemplates;
+
+static MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl = 0.2) {
+    LODKey key = {resolution, noisy};
+    
+    auto it = lodTemplates.find(key);
+    if (it != lodTemplates.end()) {
+        return it->second;
+    }
+    
+    Point origin(0, 0, 0);
+    MCObject* templateSphere = new MCObject(origin, 1.0);
+    templateSphere->setDistanceInfo(1.0);
+    
+    MCGenerator generator;
+    Point boundsMin(-0.6, -0.6, -0.6);  // Slightly larger bounds for noisy shapes
+    Point boundsMax(0.6, 0.6, 0.6);
+    
+    SurfaceFunction field;
+    if (noisy) {
+        // Use seed=0 for template - actual rocks will get displacement
+        field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
+    } else {
+        field = makeCenteredSphere(origin, 0.5);
+    }
+    
+    templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
+    templateSphere->meshValid = true;
+    
+    lodTemplates[key] = templateSphere;
+    
+    cout << "Created LOD template: resolution=" << resolution 
+         << " noisy=" << noisy
+         << " tris=" << templateSphere->mesh.size() << endl;
+    
+    return templateSphere;
+}
 //************************************************************
 // Rock3DMgr class
 //************************************************************
@@ -109,18 +225,16 @@ struct RockLodEntry {
     double maxPts;  // upper bound for pts (pts < maxPts)
 };
 
-// Table encodes both LOD mapping and the stats index order:
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  2,  3.0 },  // pts < 3   → res 2
-    {  3,  5.0 },  // pts < 5   → res 3
-    {  4, 12.0 },  // pts < 12  → res 4
-    {  5, 15.0 },  // pts < 15  → res 5
-    {  6, 20.0 },  // pts < 20  → res 6
-    { 12, 35.0 },  // pts < 35  → res 12
-    { 16, 60.0 },  // pts < 60  → res 16
-    { 24,  1e9 }   // default / max detail
+    {  2,  2.0 },  // pts < 2   → res 2
+    {  3,  3.0 },  // pts < 3   → res 3
+    {  4,  5.0 },  // pts < 5   → res 4
+    {  8, 10.0 },  // pts < 10  → res 6
+    { 16, 20.0 },  // pts < 20  → res 12
+    { 24, 35.0 },  // pts < 35  → res 16
+    { 32, 60.0 },  // pts < 60  → res 24
+    { 64,  1e9 }   // default / max detail (increased from 24)
 };
-
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
 		stats[i][0]=stats[i][1]=0;
@@ -181,28 +295,36 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 
 
 
-MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution) {
-    // Check if we already have this template
-    auto it = lodTemplates.find(resolution);
+MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl) {
+    // Key includes noise parameters
+    int key = noisy ? (resolution * 1000 + (int)(noiseAmpl * 100)) : resolution;
+    
+    auto it = lodTemplates.find(key);
     if (it != lodTemplates.end()) {
         return it->second;
     }
     
-    // Generate new template at this resolution
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
-    // Generate mesh at specified resolution
     MCGenerator generator;
-    Point boundsMin(-0.5, -0.5, -0.5);
-    Point boundsMax(0.5, 0.5, 0.5);
-    SurfaceFunction field = makeCenteredSphere(origin, 0.5);
+    Point boundsMin(-0.6, -0.6, -0.6);  // Slightly larger for noisy shapes
+    Point boundsMax(0.6, 0.6, 0.6);
+    
+    SurfaceFunction field;
+    if (noisy) {
+        field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
+    } else {
+        field = makeCenteredSphere(origin, 0.5);
+    }
+    
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
     templateSphere->meshValid = true;
     
-    lodTemplates[resolution] = templateSphere;
+    lodTemplates[key] = templateSphere;
     
     cout << "Created LOD template: resolution=" << resolution 
+         << " noisy=" << noisy
          << " tris=" << templateSphere->mesh.size() << endl;
     
     return templateSphere;
@@ -275,19 +397,25 @@ void Rock3DObjMgr::render() {
     int n = data.size;
     if (n == 0)
         return;
+    
+    bool wireframe=test7;
+    bool smooth=!test8;
 
     bool moved = TheScene->moved() || TheScene->changed_detail();
     bool update_needed = moved || !vbo_valid;
 
     Point xpoint = TheScene->xpoint;
-    
+
+    bool useNoisyIsoSurface = false;
+    bool useVertexDisplacement = false;
+    double isoNoiseAmpl = 0.5;
+    double vertexNoiseAmpl = 0.5;
+
     if (update_needed) {
-    	
         rocks.clear();
 #ifdef PRINT_STATS
         Rock3DMgr::clearStats();
 #endif        
-        // For each rock placement, create a transformed copy
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
 
@@ -295,47 +423,75 @@ void Rock3DObjMgr::render() {
             double size = 0.01 * s->radius;
             double pts = s->pts;
             double dist = s->dist;
+            int rval = s->rval;
             
             int resolution = Rock3DMgr::getLODResolution(pts);
     
-            MCObject* templateSphere = getTemplateForLOD(resolution);
+            MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl);
                         
-			if (!templateSphere || templateSphere->mesh.empty())
-				continue;
+            if (!templateSphere || templateSphere->mesh.empty())
+                continue;
 
-			char name[64];
-			sprintf(name, "rock_%d", i);
+            char name[64];
+            sprintf(name, "rock_%d", i);
 
-			MCObject *rock = rocks.addObject(name, pos, size);
-			if (rock) {
-				rock->setDistanceInfo(dist,pts);				
-				// Copy and transform the template mesh
-				rock->mesh.clear();
-				for (const auto& tri : templateSphere->mesh) {
-					MCTriangle newTri;
-					for (int v = 0; v < 3; v++) {
-						newTri.vertices[v] = Point(
-							tri.vertices[v].x * size + pos.x,
-							tri.vertices[v].y * size + pos.y,
-							tri.vertices[v].z * size + pos.z
-						);
-					}
-					newTri.normal = tri.normal;
-					rock->mesh.push_back(newTri);
-				}
-				rock->meshValid = true;
-#ifdef PRINT_STATS				
-				Rock3DMgr::setStats(resolution,rock->mesh.size());
+            MCObject *rock = rocks.addObject(name, pos, size);
+            if (rock) {
+                rock->setDistanceInfo(dist, pts);
+                
+                // Copy and transform the template mesh
+                rock->mesh.clear();
+                for (const auto& tri : templateSphere->mesh) {
+                    MCTriangle newTri;
+                    for (int v = 0; v < 3; v++) {
+                        newTri.vertices[v] = Point(
+                            tri.vertices[v].x * size + pos.x,
+                            tri.vertices[v].y * size + pos.y,
+                            tri.vertices[v].z * size + pos.z
+                        );
+                    }
+                    // Flip the template normals (they're backwards)
+                    newTri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
+                    rock->mesh.push_back(newTri);
+                }
+                rock->meshValid = true;
+                rock->worldPosition = pos;
+                
+                // Apply vertex displacement
+                if (useVertexDisplacement) {
+                    applyVertexDisplacement(rock, rval, vertexNoiseAmpl * size);
+                    
+                    // Recalculate face normals after displacement
+                    for (auto& tri : rock->mesh) {
+                        Point edge1 = tri.vertices[1] - tri.vertices[0];
+                        Point edge2 = tri.vertices[2] - tri.vertices[0];
+                        tri.normal = Point(
+                            edge1.y * edge2.z - edge1.z * edge2.y,
+                            edge1.z * edge2.x - edge1.x * edge2.z,
+                            edge1.x * edge2.y - edge1.y * edge2.x
+                        ).normalize();
+                        
+                        // Flip to match the template normal convention
+                        tri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
+                    }
+                }                
+                // For smooth shading after displacement, average the face normals at vertices
+                if (smooth && useVertexDisplacement) {
+                    rock->uploadToVBODisplaced();
+                }
+                else if (smooth) {
+                    rock->uploadToVBOSmooth();  // Sphere normals for undisplaced
+                }
+                else {
+                    rock->uploadToVBO();  // Flat shading
+                }
+#ifdef PRINT_STATS                
+                Rock3DMgr::setStats(resolution, rock->mesh.size());
 #endif
-				rock->worldPosition = pos;
-                if(!test8)
-                	rock->uploadToVBOSmooth();   // Use smooth normals
-                else
-              		rock->uploadToVBO(); // flat shading
             }
         }
 #ifdef PRINT_STATS
-		Rock3DMgr::printStats();
+        Rock3DMgr::printStats();
 #endif
         vbo_valid = true;
     }
@@ -348,7 +504,7 @@ void Rock3DObjMgr::render() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    if (test7)
+    if (wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -373,7 +529,6 @@ void Rock3DObjMgr::render() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
-
 //************************************************************
 // TNrocks3D class
 //************************************************************
