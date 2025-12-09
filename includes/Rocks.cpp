@@ -22,7 +22,7 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define PRINT_STATS
+//#define PRINT_STATS
 
 // 3d rocks using marching cubes
 // Tasks:
@@ -148,41 +148,7 @@ struct LODKey {
 
 static std::map<LODKey, MCObject*> lodTemplates;
 
-static MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl = 0.2) {
-    LODKey key = {resolution, noisy};
-    
-    auto it = lodTemplates.find(key);
-    if (it != lodTemplates.end()) {
-        return it->second;
-    }
-    
-    Point origin(0, 0, 0);
-    MCObject* templateSphere = new MCObject(origin, 1.0);
-    templateSphere->setDistanceInfo(1.0);
-    
-    MCGenerator generator;
-    Point boundsMin(-0.6, -0.6, -0.6);  // Slightly larger bounds for noisy shapes
-    Point boundsMax(0.6, 0.6, 0.6);
-    
-    SurfaceFunction field;
-    if (noisy) {
-        // Use seed=0 for template - actual rocks will get displacement
-        field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
-    } else {
-        field = makeCenteredSphere(origin, 0.5);
-    }
-    
-    templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
-    templateSphere->meshValid = true;
-    
-    lodTemplates[key] = templateSphere;
-    
-    cout << "Created LOD template: resolution=" << resolution 
-         << " noisy=" << noisy
-         << " tris=" << templateSphere->mesh.size() << endl;
-    
-    return templateSphere;
-}
+
 //************************************************************
 // Rock3DMgr class
 //************************************************************
@@ -246,10 +212,12 @@ void Rock3DMgr::printStats(){
     int tcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+#ifdef PRINT_STATS
         std::cout << "res:"       << kRockLodTable[i].res
                   << " cnt:"      << stats[i][0]
                   << " triangles:"<< stats[i][1]
                   << std::endl;
+#endif
         rcnt  += stats[i][0];
         tcnt  += stats[i][1];
     }
@@ -320,11 +288,11 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     templateSphere->meshValid = true;
     
     lodTemplates[key] = templateSphere;
-    
+#ifdef PRINT_STATS    
     cout << "Created LOD template: resolution=" << resolution 
          << " noisy=" << noisy
          << " tris=" << templateSphere->mesh.size() << endl;
-    
+#endif    
     return templateSphere;
 }
 void Rock3DObjMgr::freeLODTemplates() {
@@ -339,32 +307,43 @@ void Rock3DObjMgr::freeLODTemplates() {
 bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
         return false;
-    
+
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
-    
+
     GLSLMgr::setDefString(defs);
     GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
-    
+
     GLhandleARB program = GLSLMgr::programHandle();
     if (!program)
         return false;
-    
+
     GLSLVarMgr vars;
-    
+
     Planetoid *orb = (Planetoid*)TheScene->viewobj;
     Color diffuse = orb->diffuse;
     Color ambient = orb->ambient;
-    
+
+    // DEBUG: Print the color values
+    static bool printed = false;
+    if (!printed) {
+        std::cout << "Rock lighting - Diffuse: (" 
+                  << diffuse.red() << ", " << diffuse.green() << ", " << diffuse.blue() << ", " << diffuse.alpha() << ")" << std::endl;
+        std::cout << "Rock lighting - Ambient: (" 
+                  << ambient.red() << ", " << ambient.green() << ", " << ambient.blue() << ", " << ambient.alpha() << ")" << std::endl;
+        std::cout << "Number of lights: " << Lights.size << std::endl;
+        printed = true;
+    }
+
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
-    
+
     vars.setProgram(program);
     vars.loadVars();
-    
+
     GLSLMgr::setProgram();
     GLSLMgr::loadVars();
-    
+
     return true;
 }
 void Rock3DObjMgr::free() { 
@@ -411,15 +390,16 @@ void Rock3DObjMgr::render() {
 
     if (update_needed) {
         rocks.clear();
-#ifdef PRINT_STATS
         Rock3DMgr::clearStats();
-#endif        
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
             
             PlacementMgr *pmgr=(PlacementMgr*)s->mgr;
             vertexNoiseAmpl=0.5*pmgr->noise_amp;
-            isoNoiseAmpl=2*vertexNoiseAmpl;         
+            isoNoiseAmpl=2*vertexNoiseAmpl;
+            
+            useNoisyIsoSurface=isoNoiseAmpl>0;
+            useVertexDisplacement=vertexNoiseAmpl>0;
  
             Point pos = s->vertex - xpoint;
             double size = 0.01 * s->radius;
@@ -481,20 +461,16 @@ void Rock3DObjMgr::render() {
                 if (smooth && useVertexDisplacement) {
                     rock->uploadToVBODisplaced();
                 }
-                else if (smooth) {
+                else if (smooth) { // 
                     rock->uploadToVBOSmooth();  // Sphere normals for undisplaced
                 }
-                else {
+                else { // useVertexDisplacement no smooth
                     rock->uploadToVBO();  // Flat shading
                 }
-#ifdef PRINT_STATS                
                 Rock3DMgr::setStats(resolution, rock->mesh.size());
-#endif
             }
         }
-#ifdef PRINT_STATS
         Rock3DMgr::printStats();
-#endif
         vbo_valid = true;
     }
 
@@ -758,11 +734,10 @@ void RockMgr::init()
 TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r,b)
 {
     mgr=new RockMgr(type);
-	//TNarg &args=*((TNarg *)left);
-	//TNode *arg=args[3];
-	//if(arg && (arg->typeValue() != ID_CONST))
-	//	mgr->dexpr=arg;
-    noise=0;
+	TNarg &args=*((TNarg *)left);
+	TNode *arg=args[8];
+	if(arg && (arg->typeValue() != ID_CONST))
+		mgr->dexpr=arg;
 	set_collapsed();
 }
 
@@ -889,18 +864,15 @@ void TNrocks::init()
 {
 	RockMgr *rmgr=(RockMgr*)mgr;
 	rmgr->init();
-	//TNplacements::init();
-	//TNarg &args=*((TNarg *)left);
-	
-	 noise=findChild(ID_POINT);
+	TNplacements::init();
+	TNarg &args=*((TNarg *)left);
 
-
-//	if(args[7]){
-//		TNarg *tamp=args[6];
-//		tamp->eval();
-//		rmgr->noise_ampl=S0.s;
-//		rmgr->rnoise=args[7];			
-//	}
+	if(args[7]){
+		TNarg *tamp=args[6];
+		tamp->eval();
+		rmgr->noise_ampl=S0.s;
+		rmgr->rnoise=args[7];			
+	}
 	mgr->set_first(1);
 	mgr->init();
 	TNplacements::init();
