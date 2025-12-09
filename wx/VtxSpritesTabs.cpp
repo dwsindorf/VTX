@@ -401,12 +401,14 @@ wxString VtxSpritesTabs::exprString(){
 
 	s+=DeltaSizeSlider->getText()+",";
 	s+=DensitySlider->getText()+",";
+	s+="0,"; // compr not used
+	s+=DropSlider->getText();
+	s+="0,0,"; // noise_amp noise_expt not used
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
 	s+=HardBiasSlider->getText()+",";
-	s+=SelBiasSlider->getText()+",";
-	s+=DropSlider->getText();
+	s+=SelBiasSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -424,7 +426,7 @@ void VtxSpritesTabs::getObjAttributes(){
 	sprites_dir=obj->getImageDir();
 	
 	int ns=m_dim_choice->FindString(sprites_dir, false);
-	cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<image_cols<<"x"<<image_rows<<endl;
+	//cout<<ns<<" "<<sprites_dir<<"/"<<sprites_file<<" "<<image_cols<<"x"<<image_rows<<endl;
 	m_dim_choice->SetSelection(ns);
 	
 	makeFileList(sprites_dir,sprites_file);
@@ -442,18 +444,14 @@ void VtxSpritesTabs::getObjAttributes(){
 	SizeSlider->setValue(mgr->maxsize*obj->radius/FEET);
 
 	TNarg &args=*((TNarg *)obj->left);
-	TNode *a=args[2];
+	TNode *a=args[0];
+	
+	a=args[2];
 
 	if(a)
 		DeltaSizeSlider->setValue(a);
 	else
 		DeltaSizeSlider->setValue(mgr->mult);
-
-//	a=args[3];
-//	if(a)
-//		LevelDeltaSlider->setValue(a);
-//	else
-//		LevelDeltaSlider->setValue(mgr->level_mult);
 	
 	a=args[3];
 	if(a)
@@ -461,31 +459,36 @@ void VtxSpritesTabs::getObjAttributes(){
 	else
 		DensitySlider->setValue(obj->maxdensity);
 
-	a=args[4];
+	// args[4]=comp
+	// args[5]=drop
+	// args[6]=noise_ampl
+	// args[7]=noise_expr
+
+	a=args[8];
 	if(a)
 		SlopeBiasSlider->setValue(a);
 	else
 		SlopeBiasSlider->setValue(mgr->slope_bias);
 
-	a=args[5];
+	a=args[9];
 	if(a)
 		HtBiasSlider->setValue(a);
 	else
 		HtBiasSlider->setValue(mgr->ht_bias);
 
-	a=args[6];
+	a=args[10];
 	if(a)
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
 
-	a=args[7];
+	a=args[11];
 	if(a)
 		HardBiasSlider->setValue(a);
 	else
 		HardBiasSlider->setValue(mgr->hardness_bias);
 
-	a=args[8];
+	a=args[12];
 	if(a)
 		SelBiasSlider->setValue(a);
 	else

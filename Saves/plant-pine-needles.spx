@@ -11,13 +11,16 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400198;
 		heading=54;
 		tilt=-11;
 		angle=-39;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		heading=72;
+		minr=0.00400198;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -52,16 +55,14 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.69);
 					hscale=0.001;
-					ocean.auto=1;
-					ocean.state=0;
 					rot_phase=185.803;
 					year=100;
 					Surface{
-						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("test",1,1.5e-06,0.8,0.9,0.07,0,0,0,0,0,1)
+						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+Plant("test",1,1.5e-06,0.8,0.1,0,0,0,0,0,0)
 								Branch("trunk",8,1,1,0.61,0,0.1,0,0.76,0.95,0,0,1,0,15)["Cracks1",Color(0.5,0.25,0,LVL)]
 								Branch("branch",8,2.7,0.64,0.34,0,0.9,0.48,0.67,0.79,12,1,1,0,15)["Cracks1",Color(0.1,0.1,0.01,2*LVL)]
-								Branch("needle",3,1,0.5,0.99,1,1,0.24,0.7,0.8,10,-1,0.7,15,15,0,1)["Cracks1",Color(0.1*(1-0.5*URAND),0.1+0.2*LVL*URAND,0.1*IRAND,1)]								;
+								Branch("needle",3,1,0.5,0.99,1,1,0.24,0.7,0.8,10,-1,0.7,15,15,0,1)["Cracks1",Color(0.1*(1-0.5*URAND),0.1+0.2*LVL*URAND,0.1*IRAND,1)]
+								;
 					}
 					Sky(0.0041029) {
 						color=Color(0,0.58,0.89);

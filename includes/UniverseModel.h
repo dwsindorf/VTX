@@ -56,6 +56,8 @@ enum tree_codes{
 	TN_PLANT_BRANCH = 0x0000002b,
 	TN_PLANT_LEAF  	= 0x0000002c,
 	TN_HARDNESS  	= 0x0000002d,
+	TN_ROCKS3D  	= 0x0000002e,
+
 };
 
 enum gen_codes{

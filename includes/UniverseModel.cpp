@@ -237,6 +237,9 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	case TN_CRATERS:
 		sprintf(tmp,"craters(1,0.05,0.2)\n");
 		break;
+	case TN_ROCKS3D:
+		sprintf(tmp,"rocks3d(ID1,1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
+		break;
 	case TN_ROCKS:
 		sprintf(tmp,"rocks(ID1,1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
 		break;
@@ -334,6 +337,7 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("Map",type);
 	case TN_CRATERS:
 		return new ModelSym("Craters",type);
+	case TN_ROCKS3D:
 	case TN_ROCKS:
 		return new ModelSym("Rocks",type);
 	case TN_FOG:
@@ -474,6 +478,7 @@ bool UniverseModel::hasTypeList(int type){
 	case TN_WATER:
 	case TN_SKY:
 	case TN_ROCKS:
+	case TN_ROCKS3D:
 	case TN_TEXTURE:
 		return true;
 	}
@@ -528,6 +533,7 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_MED));
 		list.add(getTypeSymbol(GN_DENSE));
 		break;
+	case TN_ROCKS3D:
 	case TN_ROCKS:
 		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_LARGE));
@@ -547,7 +553,8 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 {
 	int type=obj->getFlag(TN_TYPES);
-	switch(type&TN_TYPES){
+	int ntype=type&TN_TYPES;
+	switch(ntype){
 	case TN_SCENE:
 	case TN_UNIVERSE:
 		list.add(getObjectSymbol(TN_GALAXY));
@@ -643,16 +650,22 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 			list.add(getObjectSymbol(TN_POINT));
 			list.add(getObjectSymbol(TN_TEXTURE));
 			list.add(getObjectSymbol(TN_ROCKS));
+			list.add(getObjectSymbol(TN_ROCKS3D));
 			list.add(getObjectSymbol(TN_PLANT));
 			list.add(getObjectSymbol(TN_SPRITE));
 		}
 		break;
 
+	case TN_ROCKS3D:
 	case TN_ROCKS:
 		if(obj->collapsed()&& obj->hasChildren() && obj->getParent())
 			return getAddList(obj->getParent(),list);
-		else if(actionmode==DROPPING)
-			list.add(getObjectSymbol(TN_ROCKS));
+		else if(actionmode==DROPPING){
+			if(ntype==TN_ROCKS)
+				list.add(getObjectSymbol(TN_ROCKS));
+			else
+				list.add(getObjectSymbol(TN_ROCKS3D));
+		}
 		else{
 			if(!obj->hasChild(ID_POINT))
 				list.add(getObjectSymbol(TN_POINT));
@@ -697,6 +710,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		if(!obj->hasChild(ID_MAP)){
 			list.add(getObjectSymbol(TN_MAP));
 			list.add(getObjectSymbol(TN_ROCKS));
+			list.add(getObjectSymbol(TN_ROCKS3D));
 		}
 		break;
 	case TN_SNOW:
@@ -850,6 +864,7 @@ void UniverseModel::setType(NodeIF *node)
 		case ID_CRATERS:
 			node->setFlag(TN_CRATERS);
 			break;
+		case ID_ROCK3D:
 		case ID_ROCKS:
 			node->setFlag(TN_ROCKS);
 			node->setFlag(TN_HIDEFLAG);
@@ -955,6 +970,7 @@ TreeNode *UniverseModel::insertInTree(TreeNode *parent, NodeIF *node)
 		break;
 	case TN_PLANT:
 	case TN_ROCKS:
+	case TN_ROCKS3D:
 		node->setFlag(NODE_BRANCH);
 		break;
 	}
@@ -1027,6 +1043,7 @@ TreeNode *UniverseModel::addToTree(TreeNode *parent, TreeNode *child, NodeIF *no
 		if(ntype!=TN_PLANT_BRANCH)
 			parent=parent->getParent();
 		break;
+	case TN_ROCKS3D:
 	case TN_ROCKS:
 	    if(!branch)
 			parent=parent->getParent();

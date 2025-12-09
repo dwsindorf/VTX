@@ -160,6 +160,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 	SET_TABS_OBJECT(TN_WATER,VtxWaterTabs)
 	SET_TABS_OBJECT(TN_SURFACE,VtxSurfaceTabs)
 	SET_TABS_OBJECT(TN_ROCKS,VtxRocksTabs)
+	SET_TABS_OBJECT(TN_ROCKS3D,VtxRocksTabs)
 	SET_TABS_OBJECT(TN_RING,VtxRingTabs)
 	SET_TABS_OBJECT(TN_SNOW,VtxSnowTabs)
 	SET_TABS_OBJECT(TN_SYSTEM,VtxSystemTabs)

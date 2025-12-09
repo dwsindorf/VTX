@@ -288,12 +288,14 @@ wxString VtxPlantTabs::exprString(){
 
 	s+=DeltaSizeSlider->getText()+",";
 	s+=DensitySlider->getText()+",";
+	s+="0,"; // compr (not used)
+	s+=DropSlider->getText();
+	s+="0,0,"; // noise_amp noise_expr (not used)
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
 	s+=HardBiasSlider->getText()+",";
-	s+="0,"; // selection bias not used
-	s+=DropSlider->getText();
+	s+="0"; // selection bias
 	s+=")";
  	return wxString(s);
 }
@@ -337,8 +339,9 @@ void VtxPlantTabs::getObjAttributes(){
 	SizeSlider->setValue(mgr->maxsize*obj->radius/FEET);
 
 	TNarg &args=*((TNarg *)obj->left);
-	TNode *a=args[2];
+	TNode *a=args[0];
 
+	a=args[2];
 	if(a)
 		DeltaSizeSlider->setValue(a);
 	else
@@ -349,36 +352,38 @@ void VtxPlantTabs::getObjAttributes(){
 		DensitySlider->setValue(a);
 	else
 		DensitySlider->setValue(mgr->maxdensity);
-
-	a=args[4];
+	// args[4]=zcomp
+	a=args[5];
+	if(a)
+		DropSlider->setValue(a);
+	else
+		DropSlider->setValue(mgr->drop);
+	// args[6]=noise_ampl
+	// args[7]=noise_expr
+	a=args[8];
 	if(a)
 		SlopeBiasSlider->setValue(a);
 	else
 		SlopeBiasSlider->setValue(mgr->slope_bias);
 
-	a=args[5];
+	a=args[9];
 	if(a)
 		HtBiasSlider->setValue(a);
 	else
 		HtBiasSlider->setValue(mgr->ht_bias);
 
-	a=args[6];
+	a=args[10];
 	if(a)
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
 	
-	a=args[7];
+	a=args[11];
 	if(a)
 		HardBiasSlider->setValue(a);
 	else
 		HardBiasSlider->setValue(mgr->hardness_bias);
 
-	a=args[9];
-	if(a)
-		DropSlider->setValue(a);
-	else
-		DropSlider->setValue(mgr->drop);
     getDisplayState();
 
 

@@ -282,11 +282,24 @@ void VtxRocksTabs::getObjAttributes(){
 		AmplSlider->setValue(a);
 	else
 		AmplSlider->setValue(mgr->noise_ampl);
+	
 	a=args[7];
 	if(a)
 		NoiseExpr->setValue(a);
 	else
 		NoiseExpr->SetValue(wxString("noise(GRADIENT|NLOD,0,2)"));
+		
+	//TNode *expr=tc->getNoiseExpr();
+	//if(expr)
+	//	NoiseExpr->setValue(expr);
+		
+	
+	//NoiseExpr->setValue(tc->getNoiseExpr());
+	//a=args[7];
+	//if(a)
+	//	NoiseExpr->setValue(a);
+	//else
+	//	NoiseExpr->SetValue(wxString("noise(GRADIENT|NLOD,0,2)"));
 
 	update_needed=false;
 
@@ -299,9 +312,11 @@ void VtxRocksTabs::setObjAttributes(){
 	update_needed=true;
 
 	TNrocks *tc=object();
+	wxString s;
 	char id[32];
-
-	wxString s="rocks(";
+	s=tc->typeName();
+	s+="(";
+     	
 	int pid=m_seed->GetSelection();
 	if(pid>0){
 		sprintf(id,"ID%d",pid);
@@ -336,6 +351,12 @@ void VtxRocksTabs::setObjAttributes(){
 
 	//cout << s << endl;
 	s+="\n";
+	
+//	if(!NoiseExpr->getText().IsEmpty()){
+//		wxString t=NoiseExpr->getText();
+//		tc->setNoiseExpr((char*)t.ToAscii());
+//	}
+
 
 	char p[1024];
 	strcpy(p,s.ToAscii());

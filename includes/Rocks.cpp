@@ -89,7 +89,7 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
         // Add noise to the iso-surface
         // Scale sample position to get consistent look regardless of rock size
         double scale = 2.0 / radius;
-        double n = noise.octaveNoise(dx * scale, dy * scale, dz * scale, 4, 0.5, 2.0, 0.5, 0.5);
+        double n = noise.octaveNoise(dx * scale, dy * scale, dz * scale, 6, 0.5, 2.0, 0.5, 0.5);
         
         return baseSphere + n * noiseAmpl * radius;
     };
@@ -230,8 +230,8 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  3,  3.0 },  // pts < 3   → res 3
     {  4,  5.0 },  // pts < 5   → res 4
     {  8, 10.0 },  // pts < 10  → res 6
-    { 16, 20.0 },  // pts < 20  → res 12
-    { 24, 35.0 },  // pts < 35  → res 16
+    { 12, 20.0 },  // pts < 20  → res 12
+    { 16, 35.0 },  // pts < 35  → res 16
     { 32, 60.0 },  // pts < 60  → res 24
     { 64,  1e9 }   // default / max detail (increased from 24)
 };
@@ -292,8 +292,6 @@ std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
-
-
 
 MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl) {
     // Key includes noise parameters
@@ -399,15 +397,15 @@ void Rock3DObjMgr::render() {
         return;
     
     bool wireframe=test7;
-    bool smooth=!test8;
+    bool smooth=test8;
 
     bool moved = TheScene->moved() || TheScene->changed_detail();
     bool update_needed = moved || !vbo_valid;
 
     Point xpoint = TheScene->xpoint;
 
-    bool useNoisyIsoSurface = false;
-    bool useVertexDisplacement = false;
+    bool useNoisyIsoSurface = true;
+    bool useVertexDisplacement = true;
     double isoNoiseAmpl = 0.5;
     double vertexNoiseAmpl = 0.5;
 
@@ -418,7 +416,11 @@ void Rock3DObjMgr::render() {
 #endif        
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
-
+            
+            PlacementMgr *pmgr=(PlacementMgr*)s->mgr;
+            vertexNoiseAmpl=0.5*pmgr->noise_amp;
+            isoNoiseAmpl=2*vertexNoiseAmpl;         
+ 
             Point pos = s->vertex - xpoint;
             double size = 0.01 * s->radius;
             double pts = s->pts;
@@ -532,7 +534,7 @@ void Rock3DObjMgr::render() {
 //************************************************************
 // TNrocks3D class
 //************************************************************
-TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNplacements(MCROCKS,l,r,b)
+TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNrocks(t|MCROCKS,l,r,b)
 {
 	mgr=new Rock3DMgr(type);
 	rock=0;
@@ -756,10 +758,11 @@ void RockMgr::init()
 TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r,b)
 {
     mgr=new RockMgr(type);
-	TNarg &args=*((TNarg *)left);
-	TNode *arg=args[3];
-	if(arg && (arg->typeValue() != ID_CONST))
-		mgr->dexpr=arg;
+	//TNarg &args=*((TNarg *)left);
+	//TNode *arg=args[3];
+	//if(arg && (arg->typeValue() != ID_CONST))
+	//	mgr->dexpr=arg;
+    noise=0;
 	set_collapsed();
 }
 
@@ -886,20 +889,33 @@ void TNrocks::init()
 {
 	RockMgr *rmgr=(RockMgr*)mgr;
 	rmgr->init();
-	TNplacements::init();
-	TNarg &args=*((TNarg *)left);
+	//TNplacements::init();
+	//TNarg &args=*((TNarg *)left);
+	
+	 noise=findChild(ID_POINT);
 
-	if(args[7]){
-		TNarg *tamp=args[6];
-		tamp->eval();
-		rmgr->noise_ampl=S0.s;
-		rmgr->rnoise=args[7];			
-	}
+
+//	if(args[7]){
+//		TNarg *tamp=args[6];
+//		tamp->eval();
+//		rmgr->noise_ampl=S0.s;
+//		rmgr->rnoise=args[7];			
+//	}
 	mgr->set_first(1);
 	mgr->init();
 	TNplacements::init();
 }
 
+void TNrocks::setNoiseExpr(char *s){
+	if(noise){
+		noise->setExpr(s);
+		noise->applyExpr();
+	}
+}
+TNode *TNrocks::getNoiseExpr(){
+//	if(noise)
+//		noise->valueString(s);
+}
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node
 //-------------------------------------------------------------
@@ -1005,20 +1021,20 @@ void TNrocks::eval() {
 // TNrocks::hasChild return true if child exists
 //-------------------------------------------------------------
 static int find_type=0;
-static bool find_test=false;
+static NodeIF *child;
 static void findType(NodeIF *obj)
 {
 	if(obj->typeValue()==find_type){
-		find_test=true;
+		child=obj;
 		obj->setFlag(NODE_STOP);
 	}
 }
-bool TNrocks::hasChild(int type){
+NodeIF *TNrocks::findChild(int type){
 	find_type=type;
-	find_test=false;
+	child=0;
 	if(base)
 		base->visitNode(findType);
-	return find_test;
+	return child;
 }
 
 // called by VtxSceneDialog ->scene->makeObject

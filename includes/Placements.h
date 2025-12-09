@@ -277,6 +277,8 @@ public:
 	double  maxdensity;
 	double  comp;
 	double  drop;
+	double  noise_amp;
+	double  noise_expr;
 
 	TNode   *dexpr;
 

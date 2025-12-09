@@ -536,16 +536,6 @@ plant_expr
     | YY_PLANT '(' arg_list ')' expr
     						{ $$=new TNplant($3, $5);APOP;}
 
-rocks3d_expr
-    : YY_ROCKS3D '(' arg_list ')'
-    						{ $$=new TNrocks3D($3, 0, 0);APOP;}
-    | YY_ROCKS3D '(' arg_list ')' expr
-    						{ $$=new TNrocks3D($3, $5, 0);APOP;}
-    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']'
-    						{ $$=new TNrocks3D($3, 0, $6);APOP;}
-    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']' expr
-    						{ $$=new TNrocks3D($3, $8, $6);APOP;}	
-
 item_name
     : NAME                  { $$=$1;}
     | STRING                { $$=$1;}
@@ -648,6 +638,25 @@ clouds_expr
     						{ $$=new TNclouds($3,$5);APOP;}
     | YY_CLOUDS '(' arg_list ')'
 							{ $$=new TNclouds($3,0);APOP;}
+
+rocks3d_expr
+    : YY_ROCKS3D '(' arg_list ')'
+    						{ $$=new TNrocks3D(0,$3, 0, 0);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' expr
+    						{ $$=new TNrocks3D(0,$3, $5, 0);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']'
+    						{ $$=new TNrocks3D(0,$3, 0, $6);APOP;}
+    | YY_ROCKS3D '(' arg_list ')' '[' arg_list ']' expr
+    						{ $$=new TNrocks3D(0,$3, $8, $6);APOP;}	
+    | YY_ROCKS3D '(' ptype ',' arg_list ')'
+							{ $$=new TNrocks3D($3,$5,0,0);APOP;}
+    | YY_ROCKS3D '(' ptype ',' arg_list ')' expr
+    						{ $$=new TNrocks3D($3,$5,$7,0);APOP;}
+    | YY_ROCKS3D '(' ptype ',' arg_list ')' '[' expr ']'
+    						{ $$=new TNrocks3D($3,$5,0,$8);APOP;}
+    | YY_ROCKS3D '(' ptype ',' arg_list ')' '[' expr ']' expr
+    						{ $$=new TNrocks3D($3,$5,$10,$8);APOP;}
+
 
  rocks_expr
     : YY_ROCKS '(' arg_list ')' expr

@@ -220,22 +220,6 @@ void MCObject::uploadToVBODisplaced() {
         return std::string(buf);
     };
     
-    // DEBUG: Print first few vertex keys
-#ifdef DEBUG_HASH
-    std::cout << "First 9 vertex keys:" << std::endl;
-    int count = 0;
-    for (const auto& tri : mesh) {
-        for (int v = 0; v < 3; v++) {
-            if (count < 9) {
-                std::string key = makeVertexKey(tri.vertices[v]);
-                std::cout << "  Vertex " << count << ": (" 
-                          << tri.vertices[v].x << "," << tri.vertices[v].y << "," << tri.vertices[v].z 
-                          << ") -> key: [" << key << "]" << std::endl;
-                count++;
-            }
-        }
-    }
-#endif   
     // Accumulate normals per vertex position
     std::map<std::string, Point> normalAccum;
     
@@ -245,27 +229,12 @@ void MCObject::uploadToVBODisplaced() {
             normalAccum[key] = normalAccum[key] + tri.normal;
         }
     }
-#ifdef DEBUG_HASH   
-    std::cout << "uploadToVBODisplaced: " << mesh.size() << " triangles, " 
-              << normalAccum.size() << " unique vertices" << std::endl;
-    
-    // Sample before normalize
-    if (!normalAccum.empty()) {
-        Point sampleNormal = normalAccum.begin()->second;
-        std::cout << "Sample accumulated normal before normalize: " 
-                  << sampleNormal.x << ", " << sampleNormal.y << ", " << sampleNormal.z 
-                  << " length=" << sampleNormal.length() << std::endl;
-    }
-#endif
     // Normalize accumulated normals
     for (auto& pair : normalAccum) {
         double len = pair.second.length();
         if (len > 0.00001) {
             pair.second = pair.second.normalize();
         } else {
-#ifdef DEBUG_HASH
-            std::cout << "WARNING: Zero-length normal for vertex, using fallback" << std::endl;
-#endif
             pair.second = Point(0, 1, 0);
         }
     }
@@ -273,11 +242,6 @@ void MCObject::uploadToVBODisplaced() {
     // Sample after normalize
     if (!normalAccum.empty()) {
         Point sampleNormal = normalAccum.begin()->second;
-#ifdef DEBUG_HASH
-        std::cout << "Sample normalized normal: " 
-                  << sampleNormal.x << ", " << sampleNormal.y << ", " << sampleNormal.z 
-                  << " length=" << sampleNormal.length() << std::endl;
-#endif
     }
     
     // Prepare vertex and per-vertex normal arrays

@@ -792,11 +792,6 @@ void PlacementMgr::find_neighbors(Placement *placement)
                     else{
                         // Not found in chain, create new
                         Placement* c = make(pc, n);
-//                        if(!c->flags.s.valid){
-//                             delete c;
-//                             Stats.crejects++;
-//                             continue;
-//                         }
                         
                         // ⭐ Add to front of chain
                    
@@ -820,7 +815,52 @@ void PlacementMgr::find_neighbors(Placement *placement)
     placement->users--;
 }
 
+void PlacementMgr::getArgs(TNarg *left){
+	extern double Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
+	TNarg &args=*((TNarg *)left);
+	double arg[13];
+	
+	double f=0;
+	double fs=0,fl=0,fh=0,fd=0;
 
+	int n=getargs(&args,arg,13);
+	// common 
+	if(n>0) levels=(int)arg[0]; 	// scale levels
+	if(n>1) maxsize=arg[1];     	// size of largest placement
+	if(n>2) mult=arg[2];			// scale multiplier
+	if(n>3) maxdensity=arg[3];      // density
+	if(n>4) comp=arg[4];
+	if(n>5) drop=arg[5];
+	if(n>6) noise_amp=arg[6];
+	if(n>7) noise_expr=arg[7];
+	
+	// standard (TN classes may overide)
+	if(n>8) slope_bias=arg[8];
+	if(n>9) ht_bias=arg[9];
+	if(n>10) lat_bias=arg[10];
+	if(n>11) hardness_bias=arg[11];
+	if(n>12) selection_bias=arg[12];
+	if(slope_bias)
+		fs=calcDensity(Slope,0.25,slope_bias,0.2);
+	if(ht_bias)
+		fh=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
+	if(lat_bias)
+		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+	if(hardness_bias)
+		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
+	f=fs+fl+fh+fd;
+    density=maxdensity*(1+f);
+	density=clamp(density,0,1);
+#ifdef DEBUG_DENSITY
+	if(cnt%1000==0){
+		char buff[256];
+		sprintf(buff,"density max:%-1.2f slope:%-1.2f ht:%-1.2f lat:%-1.2f final:%-1.2f ",maxdensity,fs,fh,fl,density);
+		cout<<buff<<endl;
+	}
+#endif
+	cnt++;
+	
+}
 //************************************************************
 // class Placement
 //************************************************************
@@ -1190,50 +1230,7 @@ double PlacementMgr::calcDensity(double s, double mid, double b, double p){
 }
 //#define DEBUG_DENSITY
 
-void PlacementMgr::getArgs(TNarg *left){
-	extern double Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
-	TNarg &args=*((TNarg *)left);
-	double arg[12];
-	
-	double f=0;
-	double fs=0,fl=0,fh=0,fd=0;
 
-	int n=getargs(&args,arg,10);
-	// common 
-	if(n>0) levels=(int)arg[0]; 	// scale levels
-	if(n>1) maxsize=arg[1];     	// size of largest placement
-	if(n>2) mult=arg[2];			// scale multiplier
-	if(n>3) maxdensity=arg[3];      // density
-	
-	// standard (TN classes may overide)
-	if(n>4) slope_bias=arg[4];
-	if(n>5) ht_bias=arg[5];
-	if(n>6) lat_bias=arg[6];
-	if(n>7) hardness_bias=arg[7];
-	if(n>8) selection_bias=arg[8];
-	if(n>9) drop=arg[9];
-	if(n>10) comp=arg[10];
-	if(slope_bias)
-		fs=calcDensity(Slope,0.25,slope_bias,0.2);
-	if(ht_bias)
-		fh=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
-	if(lat_bias)
-		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
-	if(hardness_bias)
-		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
-	f=fs+fl+fh+fd;
-    density=maxdensity*(1+f);
-	density=clamp(density,0,1);
-#ifdef DEBUG_DENSITY
-	if(cnt%1000==0){
-		char buff[256];
-		sprintf(buff,"density max:%-1.2f slope:%-1.2f ht:%-1.2f lat:%-1.2f final:%-1.2f ",maxdensity,fs,fh,fl,density);
-		cout<<buff<<endl;
-	}
-#endif
-	cnt++;
-	
-}
 //-------------------------------------------------------------
 // TNplacements::eval() evaluate common arguments
 //-------------------------------------------------------------

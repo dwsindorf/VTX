@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400199;
 		heading=95;
 		tilt=-30;
 		angle=-33;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00400199;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -52,14 +54,12 @@ Scene() {
 					day=24;
 					diffuse=Color(1,1,1,0.71);
 					hscale=0.001;
-					ocean.auto=1;
-					ocean.state=2;
 					rot_phase=220.644;
 					year=100;
 					Surface{
-						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+
-								Plant("name",1,5e-07,1,1,0.4,0,0,0,0)
-								Branch("trunk",12,2.5,0.3,1,0,0.95,0.1,0.7,0.95,2,0,1,0,15)["Cracks1",Color(0.25+IRAND*LVL,0.8*LVL,0.25+0.1*IRAND*LVL,1)]								;
+						terrain=Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06))+Plant("name",1,5e-07,1,0.545,0,0,0,0,0,0)
+								Branch("trunk",12,2.5,0.3,1,0,0.95,0.1,0.7,0.95,2,0,1,0,15)["Cracks1",Color(0.25+IRAND*LVL,0.8*LVL,0.25+0.1*IRAND*LVL,1)]
+								;
 					}
 					Sky(0.00410952) {
 						color=Color(0,0.58,0.89);

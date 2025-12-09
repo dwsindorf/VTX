@@ -6,11 +6,11 @@ Scene() {
 		height=19.5526 ft;
 		gndlvl=136.435 ft;
 		time=11406.4;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=-38;
 		tilt=-4;
 		angle=1;
@@ -20,6 +20,12 @@ Scene() {
 	}
 	View{
 		heading=-31;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.00400003;
+	}
+	View{
 		minr=0.00400003;
 	}
 	Galaxy(20000) {
@@ -70,9 +76,9 @@ Scene() {
 				twilight=Color(0.5,0.3,0.1);
 				Surface{
 					terrain=
-							Sprite("grass2x2",FLIP|NOLOD,5,1.89394e-07,1,1,0,0,0,0,0,0)Plant("Grass1",1,4.73485e-08,0.8,0.5,0.29,0,0,0,0,0.476,1)
+							Sprite("grass2x2",FLIP|NOLOD,5,1.89394e-07,1,1,0,0,0,0,0,0)Plant("Grass1",1,4.73485e-08,0.8,0.3,0,0,0,0,0,0.889)
 							Branch("Stem",7,1.6,0.88,1,1,0.4,0.1,0.7,1,20,0,1,15)["Cracks1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]
-							Plant("Aspen",1,7.95106e-07,1,0.5,0.2,0,0,0,0,0,1)
+							Plant("Aspen",1,7.95106e-07,1,0.2,0,0,0,0,0,0)
 							Branch("stem",9,1,2,0.3,1,0.13,0,0.8,0.9,1,-1,0.7,IRAND,13)["aspens-4x1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),0.3)]
 							Branch(4,2.4,0.68,0.29,0.37,1,0.35,0.73,0.89,16,3,1,IRAND,13)["aspens-4x1",Color(0,0,0,1)]
 							Leaf("Leaf2",1,1,4.1,1,0.25,1,0,0.8,0.38,3,0,0,0.95,11)["leafs-2x2",Color(0.5*URAND+0.25,0.5*RED,0,0.2*URAND)]
