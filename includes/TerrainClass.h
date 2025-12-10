@@ -348,7 +348,6 @@ public:
 class TNrocks : public TNplacements
 {
 public:
-	TNpoint *noise;
 	TNrocks(int t, TNode *l, TNode *r, TNode *b);
 	virtual void eval();
 	virtual void init();
@@ -359,7 +358,9 @@ public:
 	virtual bool randomize();
 	virtual void applyExpr();
 	virtual void setNoiseExpr(char *s);
-	virtual TNode *getNoiseExpr();
+	virtual void setNoiseAmpl(double d);
+	virtual TNnoise *getNoiseExpr();
+	virtual double getNoiseAmpl();
 	NodeIF *findChild(int );
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);

@@ -24,6 +24,7 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 static TerrainData Td;
 
 //#define PRINT_STATS
+#define PRINT_CACHE_STATS
 
 // 3d rocks using marching cubes
 // Tasks:
@@ -96,20 +97,54 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
     };
 }
 
+// Noisy sphere field for marching cubes iso-surface extraction
+static SurfaceFunction makeRockField(const Point& center, double radius, int seed, double noiseAmpl, TNode *tc) {
+    return [center, radius, seed, noiseAmpl, tc](double x, double y, double z) -> double {
+     	TheNoise.rseed=seed;
+        
+        double dx = x - center.x;
+        double dy = y - center.y;
+        double dz = z - center.z;
+        double distance = sqrt(dx*dx + dy*dy + dz*dz);
+        
+        // Base sphere
+        double baseSphere = radius - distance;
+        double scale = 2.0 / radius;
+        Point np=Point(dx, dy, dz);
+ 		TheNoise.push(np);
+ 		CurrentScope->revaluate();
+ 		Point pn;
+ 		double rz=0;
+ 		tc->eval();
+		if(tc->typeValue()==ID_POINT)
+ 			rz=S0.p.z;
+ 		else
+ 			rz=S0.s;
+
+ 		TheNoise.pop();
+        
+        // Add noise to the iso-surface
+        // Scale sample position to get consistent look regardless of rock size
+       // double n = noise.octaveNoise(dx * scale, dy * scale, dz * scale, 6, 0.5, 2.0, 0.5, 0.5);
+        
+        return baseSphere + rz * noiseAmpl * radius;
+    };
+}
+
 // Post-mesh vertex displacement
-static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) {
-    static std::map<int, PerlinNoise> noiseGens;
-    if (noiseGens.find(seed) == noiseGens.end()) {
-        noiseGens[seed] = PerlinNoise(seed);
-    }
-    PerlinNoise& noise = noiseGens[seed];
+static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, double comp, double drop, TNode *tc) {
     
     Point center = rock->worldPosition;
     double rockSize = rock->baseSize;
     
+    static int cnt=0;
+  
+   	TheNoise.rseed=seed;
+        		CurrentScope->revaluate();
+
     for (auto& tri : rock->mesh) {
         for (int v = 0; v < 3; v++) {
-            Point& vertex = tri.vertices[v];
+            Point &vertex = tri.vertices[v];
             
             // Direction from center to vertex (outward normal)
             Point dir = (vertex - center).normalize();
@@ -119,20 +154,21 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) 
             double nx = (vertex.x - center.x) / rockSize;
             double ny = (vertex.y - center.y) / rockSize;
             double nz = (vertex.z - center.z) / rockSize;
-            
-            // Sample noise at normalized coordinates with some frequency
-            double scale = 4.0;
-            double n = noise.octaveNoise(
-                nx * scale + seed * 0.1,  // Offset by seed for variation
-                ny * scale, 
-                nz * scale, 
-                3, 0.5, 2.0, 0.5, 0.5
-            );
-            
-            // Displace vertex along normal direction
-            vertex.x += dir.x * n * amplitude;
-            vertex.y += dir.y * n * amplitude;
-            vertex.z += dir.z * n * amplitude;
+			Point np(nx,ny,nz);
+			TheNoise.push(np);
+			Point pn;
+			double rz=0;
+			Point pv=vertex;
+			tc->eval();
+			
+			Point pd=S0.p;
+			if(pd.x==0 && pd.y==0)
+				pd.x=pd.y=pd.z;
+			Point delta=dir*pd*amplitude;
+			vertex=vertex+delta;
+			cnt++;
+
+			TheNoise.pop();
         }
     }
 }
@@ -155,7 +191,7 @@ static std::map<LODKey, MCObject*> lodTemplates;
 //************************************************************
 int Rock3DMgr::stats[MAX_ROCK_STATS][2];
 
-Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
+Rock3DMgr::Rock3DMgr(int i) : RockMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
 #ifdef TEST_ROCKS
@@ -175,7 +211,7 @@ void Rock3DMgr::init()
 }
 
 //-------------------------------------------------------------
-// RockMgr::make() factory method to make Placement
+// Rock3DMgr::make() factory method to make Placement
 //-------------------------------------------------------------
 Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
@@ -198,10 +234,10 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  3,  3.0 },  // pts < 3   → res 3
     {  4,  5.0 },  // pts < 5   → res 4
     {  8, 10.0 },  // pts < 10  → res 6
-    { 12, 20.0 },  // pts < 20  → res 12
-    { 16, 35.0 },  // pts < 35  → res 16
-    { 32, 60.0 },  // pts < 60  → res 24
-    { 64,  1e9 }   // default / max detail (increased from 24)
+    { 16, 20.0 },  // pts < 20  → res 12
+    { 32, 35.0 },  // pts < 35  → res 16
+    { 64, 60.0 },  // pts < 60  → res 24
+    { 128,  1e9 }   // default / max detail (increased from 24)
 };
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
@@ -267,7 +303,9 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
 
-MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl) {
+#define TEST
+
+MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int rval, TNode *tc) {
     // Key includes noise parameters
     int key = noisy ? (resolution * 1000 + (int)(noiseAmpl * 100)) : resolution;
     
@@ -280,12 +318,16 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
     MCGenerator generator;
-    Point boundsMin(-0.6, -0.6, -0.6);  // Slightly larger for noisy shapes
-    Point boundsMax(0.6, 0.6, 0.6);
+    Point boundsMin(-0.9, -0.9, -0.9);  // Slightly larger for noisy shapes
+    Point boundsMax(0.9, 0.9, 0.9);
     
     SurfaceFunction field;
     if (noisy) {
+#ifdef TEST
+        field = makeRockField(origin, 0.5, rval, noiseAmpl,tc);
+#else
         field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
+#endif
     } else {
         field = makeCenteredSphere(origin, 0.5);
     }
@@ -415,18 +457,33 @@ void Rock3DObjMgr::render() {
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
             
-            PlacementMgr *pmgr = (PlacementMgr*)s->mgr;
-            double vertexNoiseAmpl = 0.5 * pmgr->noise_amp;
-            double isoNoiseAmpl = 2 * vertexNoiseAmpl;
+            Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
+            TNode *tc=pmgr->rnoise;
+            
+            char tmp[1024];
+            tmp[0]=0;
+            if(tc)
+            	tc->valueString(tmp);
+            TNode *tv=pmgr->vnoise;
+  
+            if(tv)
+            	tv->valueString(tmp);
+            std::string estr=tmp;
+            
+             double isoNoiseAmpl = pmgr->noise_amp;
             
             bool useNoisyIsoSurface = isoNoiseAmpl > 0;
-            bool useVertexDisplacement = vertexNoiseAmpl > 0;
- 
+            bool useVertexDisplacement = (tv!=nullptr  && tv->isEnabled());
+            
+            double vertexNoiseAmpl = useVertexDisplacement?0.5 * pmgr->noise_amp:0;
+
             Point eyePos = s->vertex - xpoint;
             double size = 0.01 * s->radius;
             double pts = s->pts;
             double dist = s->dist;
             int rval = s->rval;
+            double comp=pmgr->comp;
+            double drop=pmgr->drop;
             
             int resolution = Rock3DMgr::getLODResolution(pts);
             
@@ -452,17 +509,21 @@ void Rock3DObjMgr::render() {
                 bool seedMatch = (entry.seed == rval);
                 bool vertexNoiseMatch = fabs(entry.vertexNoiseAmpl - vertexNoiseAmpl) < 0.001;
                 bool isoNoiseMatch = fabs(entry.isoNoiseAmpl - isoNoiseAmpl) < 0.001;
+                bool isoNoiseExprMatch = (estr==entry.estr);
                 
-                if (!resMatch || !seedMatch || !vertexNoiseMatch || !isoNoiseMatch) {
+               if (!resMatch || !seedMatch || !vertexNoiseMatch || !isoNoiseMatch || !isoNoiseExprMatch ) {
                     // Print what changed for first few regens
+#ifdef PRINT_CACHE_STATS
                     if (regens < 5) {
                         std::cout << "Regen rock " << i << ": ";
                         if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
                         if (!seedMatch) std::cout << "seed " << entry.seed << "->" << rval << " ";
                         if (!vertexNoiseMatch) std::cout << "vNoise " << entry.vertexNoiseAmpl << "->" << vertexNoiseAmpl << " ";
-                        if (!isoNoiseMatch) std::cout << "iNoise " << entry.isoNoiseAmpl << "->" << isoNoiseAmpl << " ";
+                        if (!isoNoiseMatch) std::cout << "iNoiseAmpl " << entry.isoNoiseAmpl << "->" << isoNoiseAmpl << " ";
+                        if (!isoNoiseExprMatch) std::cout << "NoiseExpr " << entry.estr << "->" << estr << " ";
                         std::cout << std::endl;
                     }
+#endif
                     regens++;
                     rockCache.erase(it);
                     needsGeneration = true;
@@ -477,7 +538,7 @@ void Rock3DObjMgr::render() {
             }            
             // Generate if needed
             if (needsGeneration) {
-                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl);
+                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl,rval, tc);
                 
                 if (!templateSphere || templateSphere->mesh.empty())
                     continue;
@@ -496,7 +557,7 @@ void Rock3DObjMgr::render() {
                 if (useVertexDisplacement) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl,comp,drop,tv);
                     templateMesh = tempRock.mesh;
                     
                     // Recalculate normals
@@ -517,6 +578,7 @@ void Rock3DObjMgr::render() {
                 entry.mesh = templateMesh;
                 entry.worldVertex = s->vertex;
                 entry.resolution = resolution;
+                entry.estr = estr;
                 entry.seed = rval;
                 entry.vertexNoiseAmpl = vertexNoiseAmpl;
                 entry.isoNoiseAmpl = isoNoiseAmpl;
@@ -569,7 +631,7 @@ void Rock3DObjMgr::render() {
                 ++it;
             }
         }
-        const size_t MAX_CACHE_SIZE = 1000;
+        const size_t MAX_CACHE_SIZE = 5000;
 
         if (rockCache.size() > MAX_CACHE_SIZE) {
             std::vector<std::pair<RockCacheKey, int>> ages;
@@ -640,14 +702,16 @@ TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNrocks(t|MCROCKS,l,r
 //-------------------------------------------------------------
 void TNrocks3D::init()
 {
-	if(right)
-	   right->init();
+	TNrocks::init();
 	if(rock==0)
 		rock=new Rock3D(type,this);	
-	mgr->set_first(1);
-	mgr->init();
-
-	TNplacements::init(); 
+	
+	Rock3DMgr *rmgr=(Rock3DMgr*)mgr;
+	TNode *tc=findChild(ID_POINT);
+	if(tc)
+		rmgr->vnoise=tc;
+	else
+		rmgr->vnoise=0;
 }
 
 //-------------------------------------------------------------
@@ -993,19 +1057,35 @@ void TNrocks::init()
 		rmgr->rnoise=args[7];			
 	}
 	mgr->set_first(1);
-	mgr->init();
 	TNplacements::init();
 }
 
 void TNrocks::setNoiseExpr(char *s){
-	if(noise){
-		noise->setExpr(s);
-		noise->applyExpr();
-	}
+//	if(noise){
+//		noise->setExpr(s);
+//		noise->applyExpr();
+//	}
 }
-TNode *TNrocks::getNoiseExpr(){
-//	if(noise)
-//		noise->valueString(s);
+void TNrocks::setNoiseAmpl(double d){
+}
+
+TNnoise *TNrocks::getNoiseExpr(){
+	TNarg &args=*((TNarg *)left);
+	TNarg *a=args[7];
+	if(a)
+		return (TNnoise*)a;
+	else 
+		return nullptr;
+}
+double TNrocks::getNoiseAmpl(){
+	TNarg &args=*((TNarg *)left);
+	TNarg *a=args[7];
+	
+	if(a){
+		a->eval();
+		return S0.s;
+	}
+	return 0;
 }
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node

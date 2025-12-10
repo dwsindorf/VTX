@@ -8,6 +8,7 @@
 #include <map>
 
 class RockMgr;
+class TNnode;
 
 #define MAX_ROCK_STATS 8
 
@@ -53,6 +54,7 @@ public:
 	
 	struct RockCacheEntry {
 	    std::vector<MCTriangle> mesh;  // Just store the mesh, not the whole object
+	    std::string estr;
 	    Point worldVertex;
 	    int resolution;
 	    int seed;
@@ -71,7 +73,8 @@ public:
     static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl);
+    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int seed, TNode *tc);
+     //SurfaceFunction makeRockField(const Point& center, double radius, int seed, double noiseAmpl);
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -92,10 +95,11 @@ class Rock3D : public PlaceObj
     PlacementMgr *mgr();
 };
 
-class Rock3DMgr : public PlacementMgr
+class Rock3DMgr : public RockMgr
 {
 protected:
 public:
+	TNode   *vnoise;
 	static int stats[MAX_ROCK_STATS][2];
 	static void clearStats();
 	static void printStats();
