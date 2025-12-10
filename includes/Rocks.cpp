@@ -13,6 +13,7 @@
 #include "UniverseModel.h"
 #include "GLSLMgr.h"
 #include <map>
+#include <set>
 
 extern double Hscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
 extern Point MapPt;
@@ -153,6 +154,7 @@ static std::map<LODKey, MCObject*> lodTemplates;
 // Rock3DMgr class
 //************************************************************
 int Rock3DMgr::stats[MAX_ROCK_STATS][2];
+
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
@@ -256,6 +258,10 @@ MCObjectManager Rock3DObjMgr::rocks;
 bool Rock3DObjMgr::vbo_valid = false;
 ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
+std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr::rockCache;
+int Rock3DObjMgr::cacheHits = 0;
+int Rock3DObjMgr::cacheMisses = 0;
+int Rock3DObjMgr::cacheRegens = 0;
 
 Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
@@ -375,76 +381,126 @@ void Rock3DObjMgr::render() {
     if (n == 0)
         return;
     
-    bool wireframe=test7;
-    bool smooth=test8;
+    bool wireframe = test7;
+    bool smooth = test8;
 
     bool moved = TheScene->moved() || TheScene->changed_detail();
-    bool update_needed = moved || !vbo_valid;
-
     Point xpoint = TheScene->xpoint;
 
-    bool useNoisyIsoSurface = true;
-    bool useVertexDisplacement = true;
-    double isoNoiseAmpl = 0.5;
-    double vertexNoiseAmpl = 0.5;
+    // Settings that would require full rebuild
+    static bool lastWireframe = wireframe;
+    static bool lastSmooth = smooth;
+    bool settingsChanged = (wireframe != lastWireframe) || (smooth != lastSmooth);
+    lastWireframe = wireframe;
+    lastSmooth = smooth;
 
-    if (update_needed) {
+    if (settingsChanged) {
+        std::cout << "Settings changed - clearing cache" << std::endl;
+        rockCache.clear();
+        rocks.clear();
+        vbo_valid = false;
+    }
+
+    if (moved || !vbo_valid) {
         rocks.clear();
         Rock3DMgr::clearStats();
+        
+        // Mark all cached as not used
+        for (auto& pair : rockCache) {
+            pair.second.framesSinceUsed++;
+        }
+        
+        int hits = 0, misses = 0, regens = 0;
+
         for (int i = n - 1; i >= 0; i--) {
             PlaceData *s = data[i];
             
-            PlacementMgr *pmgr=(PlacementMgr*)s->mgr;
-            vertexNoiseAmpl=0.5*pmgr->noise_amp;
-            isoNoiseAmpl=2*vertexNoiseAmpl;
+            PlacementMgr *pmgr = (PlacementMgr*)s->mgr;
+            double vertexNoiseAmpl = 0.5 * pmgr->noise_amp;
+            double isoNoiseAmpl = 2 * vertexNoiseAmpl;
             
-            useNoisyIsoSurface=isoNoiseAmpl>0;
-            useVertexDisplacement=vertexNoiseAmpl>0;
+            bool useNoisyIsoSurface = isoNoiseAmpl > 0;
+            bool useVertexDisplacement = vertexNoiseAmpl > 0;
  
-            Point pos = s->vertex - xpoint;
+            Point eyePos = s->vertex - xpoint;
             double size = 0.01 * s->radius;
             double pts = s->pts;
             double dist = s->dist;
             int rval = s->rval;
             
             int resolution = Rock3DMgr::getLODResolution(pts);
-    
-            MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl);
-                        
-            if (!templateSphere || templateSphere->mesh.empty())
-                continue;
-
+            
+            // Create cache key from world position
+            RockCacheKey key(s->vertex);
+            
+            // Use frame-unique name (not cache key based)
             char name[64];
             sprintf(name, "rock_%d", i);
-
-            MCObject *rock = rocks.addObject(name, pos, size);
-            if (rock) {
-                rock->setDistanceInfo(dist, pts);
+            
+            // Check cache
+            auto it = rockCache.find(key);
+            
+            bool needsGeneration = true;
+            std::vector<MCTriangle> templateMesh;
+            
+            if (it != rockCache.end()) {
+                RockCacheEntry& entry = it->second;
+                entry.framesSinceUsed = 0;
                 
-                // Copy and transform the template mesh
-                rock->mesh.clear();
+                // Debug: Check what's different
+                bool resMatch = (entry.resolution == resolution);
+                bool seedMatch = (entry.seed == rval);
+                bool vertexNoiseMatch = fabs(entry.vertexNoiseAmpl - vertexNoiseAmpl) < 0.001;
+                bool isoNoiseMatch = fabs(entry.isoNoiseAmpl - isoNoiseAmpl) < 0.001;
+                
+                if (!resMatch || !seedMatch || !vertexNoiseMatch || !isoNoiseMatch) {
+                    // Print what changed for first few regens
+                    if (regens < 5) {
+                        std::cout << "Regen rock " << i << ": ";
+                        if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
+                        if (!seedMatch) std::cout << "seed " << entry.seed << "->" << rval << " ";
+                        if (!vertexNoiseMatch) std::cout << "vNoise " << entry.vertexNoiseAmpl << "->" << vertexNoiseAmpl << " ";
+                        if (!isoNoiseMatch) std::cout << "iNoise " << entry.isoNoiseAmpl << "->" << isoNoiseAmpl << " ";
+                        std::cout << std::endl;
+                    }
+                    regens++;
+                    rockCache.erase(it);
+                    needsGeneration = true;
+                } else {
+                    // CACHE HIT
+                    templateMesh = entry.mesh;
+                    needsGeneration = false;
+                    hits++;
+                }
+            } else {
+                misses++;
+            }            
+            // Generate if needed
+            if (needsGeneration) {
+                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl);
+                
+                if (!templateSphere || templateSphere->mesh.empty())
+                    continue;
+
+                // Create mesh in template space
                 for (const auto& tri : templateSphere->mesh) {
                     MCTriangle newTri;
                     for (int v = 0; v < 3; v++) {
-                        newTri.vertices[v] = Point(
-                            tri.vertices[v].x * size + pos.x,
-                            tri.vertices[v].y * size + pos.y,
-                            tri.vertices[v].z * size + pos.z
-                        );
+                        newTri.vertices[v] = tri.vertices[v];
                     }
-                    // Flip the template normals (they're backwards)
                     newTri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
-                    rock->mesh.push_back(newTri);
+                    templateMesh.push_back(newTri);
                 }
-                rock->meshValid = true;
-                rock->worldPosition = pos;
                 
-                // Apply vertex displacement
+                // Apply vertex displacement in template space
                 if (useVertexDisplacement) {
-                    applyVertexDisplacement(rock, rval, vertexNoiseAmpl * size);
+                    MCObject tempRock(Point(0,0,0), 1.0);
+                    tempRock.mesh = templateMesh;
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
+                    templateMesh = tempRock.mesh;
                     
-                    // Recalculate face normals after displacement
-                    for (auto& tri : rock->mesh) {
+                    // Recalculate normals
+                    for (auto& tri : templateMesh) {
                         Point edge1 = tri.vertices[1] - tri.vertices[0];
                         Point edge2 = tri.vertices[2] - tri.vertices[0];
                         tri.normal = Point(
@@ -452,24 +508,87 @@ void Rock3DObjMgr::render() {
                             edge1.z * edge2.x - edge1.x * edge2.z,
                             edge1.x * edge2.y - edge1.y * edge2.x
                         ).normalize();
-                        
-                        // Flip to match the template normal convention
                         tri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
                     }
-                }                
-                // For smooth shading after displacement, average the face normals at vertices
+                }
+                
+                // Store in cache
+                RockCacheEntry entry;
+                entry.mesh = templateMesh;
+                entry.worldVertex = s->vertex;
+                entry.resolution = resolution;
+                entry.seed = rval;
+                entry.vertexNoiseAmpl = vertexNoiseAmpl;
+                entry.isoNoiseAmpl = isoNoiseAmpl;
+                entry.framesSinceUsed = 0;
+                rockCache[key] = entry;
+            }
+            
+            // Create rock and transform to eye space
+            MCObject *rock = rocks.addObject(name, eyePos, size);
+            if (rock) {
+                rock->setDistanceInfo(dist, pts);
+                rock->mesh.clear();
+                
+                // Transform cached mesh to eye space
+                for (const auto& tri : templateMesh) {
+                    MCTriangle newTri;
+                    for (int v = 0; v < 3; v++) {
+                        newTri.vertices[v] = Point(
+                            tri.vertices[v].x * size + eyePos.x,
+                            tri.vertices[v].y * size + eyePos.y,
+                            tri.vertices[v].z * size + eyePos.z
+                        );
+                    }
+                    newTri.normal = tri.normal;
+                    rock->mesh.push_back(newTri);
+                }
+                rock->meshValid = true;
+                rock->worldPosition = eyePos;
+                
+                // Upload VBO
                 if (smooth && useVertexDisplacement) {
                     rock->uploadToVBODisplaced();
                 }
-                else if (smooth) { // 
-                    rock->uploadToVBOSmooth();  // Sphere normals for undisplaced
+                else if (smooth) {
+                    rock->uploadToVBOSmooth();
                 }
-                else { // useVertexDisplacement no smooth
-                    rock->uploadToVBO();  // Flat shading
+                else {
+                    rock->uploadToVBO();
                 }
+                
                 Rock3DMgr::setStats(resolution, rock->mesh.size());
             }
         }
+        
+        // Cull old cache entries
+        for (auto it = rockCache.begin(); it != rockCache.end(); ) {
+            if (it->second.framesSinceUsed > 5) {
+                it = rockCache.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        const size_t MAX_CACHE_SIZE = 1000;
+
+        if (rockCache.size() > MAX_CACHE_SIZE) {
+            std::vector<std::pair<RockCacheKey, int>> ages;
+            for (auto& pair : rockCache) {
+                ages.push_back({pair.first, pair.second.framesSinceUsed});
+            }
+            std::sort(ages.begin(), ages.end(), 
+                      [](auto& a, auto& b) { return a.second > b.second; });
+            
+            size_t toRemove = rockCache.size() - MAX_CACHE_SIZE;
+            for (size_t i = 0; i < toRemove; i++) {
+                rockCache.erase(ages[i].first);
+            }
+            std::cout << "Cache limit reached - removed " << toRemove << " oldest entries" << std::endl;
+        }
+
+        std::cout << "Rock cache: " << hits << " hits, " << misses << " misses, " 
+                  << regens << " regens, " << rockCache.size() << " cached" << std::endl;
+        
         Rock3DMgr::printStats();
         vbo_valid = true;
     }

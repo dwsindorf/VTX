@@ -35,6 +35,37 @@ public:
 class Rock3DObjMgr : public PlaceObjMgr
 {
 public:
+	// Cache key based on world position
+	struct RockCacheKey {
+		long long x, y, z;  // Quantized world position
+		
+		RockCacheKey(const Point& worldPos, double snap = 1e-10) {  // Changed from 0.01 to 0.001
+		    x = (long long)round(worldPos.x / snap);
+		    y = (long long)round(worldPos.y / snap);
+		    z = (long long)round(worldPos.z / snap);
+		}		
+		bool operator<(const RockCacheKey& other) const {
+			if (x != other.x) return x < other.x;
+			if (y != other.y) return y < other.y;
+			return z < other.z;
+		}
+	};
+	
+	struct RockCacheEntry {
+	    std::vector<MCTriangle> mesh;  // Just store the mesh, not the whole object
+	    Point worldVertex;
+	    int resolution;
+	    int seed;
+	    double vertexNoiseAmpl;
+	    double isoNoiseAmpl;
+	    int framesSinceUsed;
+	};    
+    static std::map<RockCacheKey, RockCacheEntry> rockCache;
+    static int cacheHits;
+    static int cacheMisses;
+    static int cacheRegens;
+ 
+	static bool noiseSettingsChanged();
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;
     static std::map<int, MCObject*> lodTemplates;

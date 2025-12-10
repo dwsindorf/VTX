@@ -124,13 +124,13 @@ public:
 class MCObjectManager {
 private:
     std::vector<MCObject*> objects;
-    std::unordered_map<std::string, MCObject*> objectMap;
     
     // Current field function and iso level
     SurfaceFunction currentField;
     double currentIsoLevel;
    
 public:
+    std::unordered_map<std::string, MCObject*> objectMap;
     MCObjectManager();
     ~MCObjectManager();
     
