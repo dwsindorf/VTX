@@ -36,7 +36,7 @@ protected:
     void invalidateObject(){
     	object()->invalidate();
      	TheView->set_changed_detail();
-    	TheScene->rebuild();
+    	TheScene->rebuild_all();
     }
 	void getObjAttributes();
 	void setObjAttributes();
@@ -78,6 +78,8 @@ public:
 	void OnEnable(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event){
 		setObjAttributes();
+		invalidateObject();
+		
     }
 	DECLARE_EVENT_TABLE()
 };

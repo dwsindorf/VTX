@@ -1274,17 +1274,8 @@ void TNrocks::eval() {
 	INIT;
 
 	RockMgr *rmgr = (RockMgr*) mgr;
-	TNplacements::eval(); // evaluate common arguments (0-3)
-	TNarg &args = *((TNarg*) left);
-	TNarg *a = args.index(4);
-	if (a) {                // geometry exprs
-		double arg[3];
-		int n = getargs(a, arg, 3);
-		if (n > 0)
-			rmgr->zcomp = arg[0];      // compression factor
-		if (n > 1)
-			rmgr->drop = arg[1];       // drop factor
-	}
+	
+	mgr->getArgs((TNarg *)left);
 	INIT;
 	if (base)
 		base->eval();

@@ -18,6 +18,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+//#define DEBUG_DENSITY
 
 //************************************************************
 // classes Placable, PlacementMgr
@@ -685,16 +686,18 @@ void PlacementMgr::eval()
                 Stats.crejects++;
                 continue;
             }
-            // ⭐ Add to front of chain (no deletion!)
-            c->next = hash[n];
-            hash[n] = c;
-            found = c;
+            else{
+				// ⭐ Add to front of chain (no deletion!)
+				c->next = hash[n];
+				hash[n] = c;
+				found = c;
+            }
         }
  
         if(found->radius > 0.0){
             if(!found->set_terrain(*this)){
                 Stats.crejects++;
-             }
+            }
         }
         else
             Stats.crejects++;
@@ -794,10 +797,13 @@ void PlacementMgr::find_neighbors(Placement *placement)
                         Placement* c = make(pc, n);
                         
                         // ⭐ Add to front of chain
-                   
+                        //if(c->flags.s.valid){
                         c->next = hash[n];
                         hash[n] = c;
                         found = c;
+                        //}
+                        //else
+                        //	delete c;
                     }
 
                     if(found && found->radius > 0.0){
@@ -892,7 +898,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
 #endif
-	double dns=mgr->density;
+	double dns=mgr->maxdensity;
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
@@ -919,34 +925,22 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 		SPOP;
 		CurrentScope->revaluate();
 		dns=clamp(dns,0,1);
-		//  cout<<"dns:"<<dns<<" rtest:"<<rtest<<endl;
-
 	}
-
-
-//	if(cnt%100==0){
-//	  cout<<"dns:"<<dns<<" rtest:"<<rtest<<endl;
-//	}
 
 	if(rtest>dns){
-//		if(cnt%100==0){
-			PlacementMgr::Stats.dns_fails++;
-//			cout<<"fail dns:"<<dns<<" rtest:"<<rtest<<endl;
-//		}
+		PlacementMgr::Stats.dns_fails++;
+#ifdef DEBUG_DENSITY
+		if(cnt%100==0)
+			cout<<"fail dns:"<<dns<<" rtest:"<<rtest<<endl;
+#endif
 		return;
 	}
-//	else{
-//		if(cnt%100==0)
-//			cout<<"pass dns:"<<dns<<" rtest:"<<rtest<<endl;
-//	}
 	PlacementMgr::Stats.dns_pass++;
-
-	//if(cnt%100==0){
-//	if(rtest<=dns && cnt%100==0)
-//	  cout<<"pass dns:"<<dns<<" rtest:"<<rtest<<endl;
-	//}
+#ifdef DEBUG_DENSITY
+	if(rtest<=dns && cnt%100==0)
+	  cout<<"pass dns:"<<dns<<" rtest:"<<rtest<<endl;
 	cnt++;
-
+#endif
 	d=fabs(p.length()-1);
 	double rf=1-mgr->mult;
 	
@@ -1228,8 +1222,6 @@ double PlacementMgr::calcDensity(double s, double mid, double b, double p){
     
     return t;
 }
-//#define DEBUG_DENSITY
-
 
 //-------------------------------------------------------------
 // TNplacements::eval() evaluate common arguments
