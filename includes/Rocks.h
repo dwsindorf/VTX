@@ -60,6 +60,8 @@ public:
 	    int seed;
 	    double vertexNoiseAmpl;
 	    double isoNoiseAmpl;
+	    double comp;
+	    double drop;
 	    int framesSinceUsed;
 	};    
     static std::map<RockCacheKey, RockCacheEntry> rockCache;
@@ -73,8 +75,7 @@ public:
     static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int seed, TNode *tc);
-     //SurfaceFunction makeRockField(const Point& center, double radius, int seed, double noiseAmpl);
+    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int seed, TNode *tc, double comp);
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -95,11 +96,12 @@ class Rock3D : public PlaceObj
     PlacementMgr *mgr();
 };
 
-class Rock3DMgr : public RockMgr
+class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
 	TNode   *vnoise;
+	TNode   *rnoise;
 	static int stats[MAX_ROCK_STATS][2];
 	static void clearStats();
 	static void printStats();
