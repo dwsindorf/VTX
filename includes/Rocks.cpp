@@ -676,21 +676,8 @@ void Rock3DObjMgr::render() {
                 
                 // Get world position and surface normal
                 Point worldPos = s->vertex;
-                Point up = s->normal;  // Surface normal in world space
+                Point up = s->normal;
                 
-                // Calculate Z offset to place bottom on terrain
-                // Calculate Z offset to place bottom on terrain
-                double minTemplateZ = 1e9;
-                for (const auto& tri : templateMesh) {
-                    for (int v = 0; v < 3; v++) {
-                        minTemplateZ = std::min(minTemplateZ, tri.vertices[v].z);
-                    }
-                }
-                double zOffset = -minTemplateZ * size;
-
-                // Apply drop - lower the rock into the terrain
-                zOffset -= drop * size;
-
                 // Create perpendicular basis vectors for tangent plane
                 Point right, forward;
                 if (fabs(up.z) < 0.9) {
@@ -704,24 +691,31 @@ void Rock3DObjMgr::render() {
                     up.x * right.y - up.y * right.x
                 );
                 
+                // Apply drop: lower the rock center along surface normal
+                Point rockCenter = Point(
+                    worldPos.x - up.x * drop * s->radius * 0.01,
+                    worldPos.y - up.y * drop * s->radius * 0.01,
+                    worldPos.z - up.z * drop * s->radius * 0.01
+                );
+                
                 // Transform each vertex from template space to world space
                 for (const auto& tri : templateMesh) {
                     MCTriangle newTri;
                     for (int v = 0; v < 3; v++) {
-                        Point tv = tri.vertices[v];  // Template vertex
+                        Point tv = tri.vertices[v];
                         
-                        // Rotate template to align with surface: X→right, Y→forward, Z→up
+                        // Rotate template to align with surface
                         Point rotated = Point(
                             tv.x * right.x + tv.y * forward.x + tv.z * up.x,
                             tv.x * right.y + tv.y * forward.y + tv.z * up.y,
                             tv.x * right.z + tv.y * forward.z + tv.z * up.z
                         );
                         
-                        // Scale, translate to world position, and apply vertical offset
+                        // Scale and translate to rock center
                         Point worldVertex = Point(
-                            worldPos.x + rotated.x * size + up.x * zOffset,
-                            worldPos.y + rotated.y * size + up.y * zOffset,
-                            worldPos.z + rotated.z * size + up.z * zOffset
+                            rockCenter.x + rotated.x * size,
+                            rockCenter.y + rotated.y * size,
+                            rockCenter.z + rotated.z * size
                         );
                         
                         // Convert to eye space
@@ -733,7 +727,7 @@ void Rock3DObjMgr::render() {
                 rock->meshValid = true;
                 rock->worldPosition = eyePos;
                 
-                // Upload VBO - use flat shading for heavily compressed rocks
+                // Upload VBO
                 if (comp > 0.3) {
                     rock->uploadToVBO();
                 }
