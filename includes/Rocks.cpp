@@ -108,6 +108,7 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
 // Noisy ellipsoid field for marching cubes iso-surface extraction using standard noise function
 static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, int seed, double noiseAmpl, TNode *tc) {
     return [center, rx, ry, rz, seed, noiseAmpl, tc](double x, double y, double z) -> double {
+    	int rseed=TheNoise.rseed;
      	TheNoise.rseed = seed;
         
         double dx = x - center.x;
@@ -135,6 +136,7 @@ static SurfaceFunction makeRockField(const Point& center, double rx, double ry, 
  			rz = S0.s;
 
  		TheNoise.pop();
+ 		TheNoise.rseed = rseed;
         
         return baseEllipsoid + rz * noiseAmpl;
     };
@@ -187,7 +189,7 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
     double rockSize = rock->baseSize;
     
     static int cnt=0;
-  
+    int rseed=TheNoise.rseed;
    	TheNoise.rseed=seed;
     CurrentScope->revaluate();
 
@@ -226,6 +228,7 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
 			tri.vertices[v].z -= drop;
 		}
 	}
+    TheNoise.rseed=rseed;
 }
 // LOD template cache - now keyed by resolution AND noise parameters
 struct LODKey {
