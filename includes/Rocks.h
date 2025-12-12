@@ -82,6 +82,11 @@ public:
 	const char *name() { return "Rocks3D";}
     bool setProgram();
     void render();
+	void render_shadows();
+    void render_objects();
+	
+
+    bool supports_shadows() { return true;}
  
 };
 

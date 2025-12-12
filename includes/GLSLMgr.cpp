@@ -829,7 +829,7 @@ void GLSLMgr::setTessLevel(int n){
 bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	static char tmp[4096];
 	bool first=false;
-	bool geom=strlen(gshader)>0?true:false;
+	bool geom=gshader && strlen(gshader)>0?true:false;
 	sprintf(tmp,"%s %s %s",defString,vshader,fshader);
 	if(geom)
 		sprintf(tmp+strlen(tmp)," %s",gshader);

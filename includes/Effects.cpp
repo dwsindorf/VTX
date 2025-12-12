@@ -74,6 +74,10 @@ static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHA
 //     - uses RTT texture generated in I above as input
 // III. shadows
 
+char *EffectsMgr::shadow_vert=0;
+char *EffectsMgr::shadow_geom=0;
+char *EffectsMgr::shadow_defs=0;
+
 EffectsMgr::EffectsMgr(){
 	shadowMapFBO=0;
 	depthTextureId=0;
@@ -153,12 +157,15 @@ void EffectsMgr::setProgram(int type){
 #endif
 	char defs[512]="";
 	switch(type){
-	case PLANT_ZVALS:
-		if(test7)
-			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TEST3D\n");
+	case PLACE_ZVALS:
 	case SHADOW_ZVALS:
-		if(type==PLANT_ZVALS)
-			GLSLMgr::loadProgram("plants.gs.vert","shadows_zvals.frag","plants.shadows.geom");
+		if(type==PLACE_ZVALS){
+			if(shadow_defs)
+				sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),(const char*)shadow_defs);
+			//	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),shadow_defs);
+			//GLSLMgr::loadProgram("plants.gs.vert","shadows_zvals.frag","plants.shadows.geom");
+			GLSLMgr::loadProgram(shadow_vert,(char*)"shadows_zvals.frag",shadow_geom);
+		}
 		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();
@@ -170,10 +177,7 @@ void EffectsMgr::setProgram(int type){
 		vars.newBoolVar("lighting",false);
 
 		break;
-	case PLANT_SHADOWS:
-		if(test7)
-			sprintf(defs+strlen(defs),"#define TEST3D\n");
-		//sprintf(defs+strlen(defs),"#define SHADOWS\n");
+	case PLACE_SHADOWS:
 	case SHADOWS:
 		if(shadow_proj)
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
@@ -181,8 +185,10 @@ void EffectsMgr::setProgram(int type){
 			sprintf(defs+strlen(defs),"#define SHADOW_TEST\n");
 
 		GLSLMgr::setDefString(defs);
-		if(type==PLANT_SHADOWS)
-			GLSLMgr::loadProgram("plants.gs.vert","shadows.frag","plants.shadows.geom");
+		if(type==PLACE_SHADOWS){
+			//GLSLMgr::loadProgram("plants.gs.vert","shadows.frag","plants.shadows.geom");
+			GLSLMgr::loadProgram(shadow_vert,"shadows.frag",shadow_geom);
+		}
 		else if(TheMap && TheMap->hasGeometry()){
 			sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),"#define TESSLVL %d\n",Map::tessLevel());
 			TheMap->setGeometryDefs();

@@ -150,54 +150,7 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         
         float dt=1.0/nodes;
         float t=dt;
-//#define TEST3D
-#ifdef TEST3D
-        int segs = 3;
-        nodes=5;
-	    float f=1.0 /(segs-1);
-        
-		tx = createPerp(p2, p1);
-		ty = cross(v2, tx);
-         float ws=0.5;
-        f=1.0 /(segs);
-  		for(int i=0; i<segs; i++) {
-	      float a = i*f;
-	      float f1=w1;
-	      float f2=w2;
-	      //Color=vec4(a,0,0,1);
-	      float ca = cos(2*PI*a);
-	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
-	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
-	      float sa = sin(2*PI*a);
-	      vec3 na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
-	      vec4 nx=vec4(na1,1);
-	      s1p=x1+f1*nx;
-          s2p=x2+f2*nx;
-          t=0;
-          // rotate curve one step
-          a = (i+1)*f;
-          ca = cos(2*PI*a); 
-	      sa = sin(2*PI*a);
-	      na1 = vec3(ca*tx.x + sa*ty.x,ca*tx.y + sa*ty.y,ca*tx.z + sa*ty.z);
-	      nx=vec4(na1,1);
-	      f1=lerp(abs(ca),0.0,1.0,w1,ws*w1);
-	      f2=lerp(abs(ca),0.0,1.0,w2,ws*w2);
-	      
-          s1m=x1+f1*nx;
-	      s2m=x2+f2*nx;
- 	                 	                     
-	      produceTVertex(vec2(0.5,0.0),Pos1); // bot
-	      for(int i=0;i<nodes-1;i++){
-	          vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
-	          produceTVertex(vec2(p.w/s+0.5,t),p);
-	          p=bezier(t,Pos1,s1m,s2m,Pos2);
-	          produceTVertex(vec2(p.w/s+0.5,t),p);
-	          t+=dt;
-	      }
-	      produceTVertex(vec2(0.5,1.0),Pos2); // top
-	      EndPrimitive();
-      }
- #else    
+
       produceTVertex(vec2(0.5,0.0),Pos1); // bot
       for(int i=0;i<nodes-1;i++){
           vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
@@ -207,7 +160,6 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
           t+=dt;
       }
       produceTVertex(vec2(0.5,1.0),Pos2); // top
-#endif 
 	}
 	EndPrimitive();
 }

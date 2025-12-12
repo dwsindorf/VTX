@@ -65,8 +65,6 @@ public:
 	static bool poly_lines;
 	static bool shader_lines;
 	static int textures;
-	static bool shadow_mode;
-	static int shadow_count;
 	static bool show_one;
 	static bool first_instance;
 	static bool update_needed;

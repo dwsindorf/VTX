@@ -13,9 +13,15 @@ class EffectsMgr : public RasterMgr
 	GLuint shadow_map_height;
 	GLuint shadow_map_width;
 public:
-
+    static char *shadow_vert;
+    static char *shadow_geom;
+    static char *shadow_defs;
 	void enableShadowMap(bool b);
-
+    static void setShadowProgram(const char*vert,const char*geom, char *defs){
+    	shadow_vert=vert;
+     	shadow_geom=geom;
+     	shadow_defs=defs;
+   }
 	GLuint shadow_map_ratio;
 	void create_jitter_lookup(int size, int samples_u, int samples_v);
 	void initShadowTexture();

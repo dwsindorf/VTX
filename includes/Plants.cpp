@@ -278,7 +278,7 @@ void  BranchData::renderData(){
 }
 
 void  BranchData::render(){
-	if(!PlantMgr::shadow_mode) // if this is set shadows aren't drawn (???)
+	if(!PlaceObjMgr::shadow_mode) // if this is set shadows aren't drawn (???)
 		glColor4f(c.red(), c.green(), c.blue(), c.alpha());
 	renderData();
 }
@@ -334,7 +334,7 @@ void BranchVBO::render() {
     build();
     glBindVertexArray(vao);
     
-    if (PlantMgr::shadow_mode) {
+    if (PlaceObjMgr::shadow_mode) {
         glDisableClientState(GL_COLOR_ARRAY);
     } else {
         glEnableClientState(GL_COLOR_ARRAY);
@@ -362,8 +362,6 @@ void BranchVBO::free() {
 //	arg[3]  density			density or dexpr
 //
 //-------------------------------------------------------------
-bool PlantMgr::shadow_mode=false;
-int PlantMgr::shadow_count=0;
 int PlantMgr::stats[MAX_PLANT_STATS];
 double PlantMgr::render_time;
 bool PlantMgr::threed=true;
@@ -436,7 +434,6 @@ void PlantMgr::init()
 
 	ncalls=0;
   	reset();
-  	shadow_count=0;
 	if(!finisher_added)
 		add_finisher(show_plant_info);
 	finisher_added=true;
@@ -499,12 +496,12 @@ void PlantObjMgr::render(){
 	
 	bool moved=TheScene->moved();
 	bool changed=TheScene->changed_detail();
-	if(changed && PlantMgr::shadow_mode){
+	if(changed && PlaceObjMgr::shadow_mode){
 		//cout<<"PlantObjMgr::render() changed_detail"<<endl;
 		return; // could be stale data : wait for changed to clear
 	}
     bool update_needed = moved || changed;
-    if (moved && PlantMgr::shadow_mode)
+    if (moved && PlaceObjMgr::shadow_mode)
         update_needed = false;
     
     //cout<<"PlantObjMgr::render() moved:"<<moved<<" changed:"<<changed<<" update:"<<PlantMgr::update_needed<<endl;
@@ -520,7 +517,7 @@ void PlantObjMgr::render(){
 	glEnable(GL_BLEND);
 	int start= PlantMgr::show_one?0:n-1;
 	if(update_needed){
-		//cout << "PlantObjMgr::render REBUILDING shadow_mode=" << PlantMgr::shadow_mode << endl;
+		//cout << "PlantObjMgr::render REBUILDING shadow_mode=" << PlaceObjMgr::shadow_mode << endl;
 		freeLeafs();	
 		freeBranches();
 		PlantMgr::clearStats();
@@ -564,7 +561,7 @@ void PlantObjMgr::render(){
 		
 	t2=clock(); // total
 
-	if(!PlantMgr::shadow_mode)
+	if(!PlaceObjMgr::shadow_mode)
 		setProgram();
 	glDisable(GL_CULL_FACE);
 	renderBranches();
@@ -582,9 +579,7 @@ void PlantObjMgr::render(){
 	//PlantMgr::update_needed=false;
 }
 bool PlantObjMgr::setProgram(){
-	extern int test7;
-	PlantMgr::shadow_count=0;
-	if(PlantMgr::shadow_mode)
+	if(PlaceObjMgr::shadow_mode)
 		return false;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
@@ -604,8 +599,6 @@ bool PlantObjMgr::setProgram(){
 	double twilite_min=-0.2; // full night
 	double twilite_max=0.2;  // full day
 	
-	if(test7)
-		sprintf(defs,"#define TEST3D\n");
 	if(Render.textures()){
 		sprintf(defs+strlen(defs),"#define NTEXS %d\n",PlantMgr::textures);
 		if(PlantMgr::textures>0 && Render.bumps())
@@ -688,35 +681,34 @@ bool PlantObjMgr::setProgram(){
 	return true;
 }
 void PlantObjMgr::render_zvals(){
-	if(objs.size==0)
-		return;
-	if(!PlantMgr::threed)
-		return;
-	PlantMgr::shadow_mode=true;
-	GLSLMgr::input_type=GL_LINES;
-	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-
-	Raster.setProgram(Raster.PLANT_ZVALS);
-
-	PlantMgr::shadow_count++;
-	render();
-
-	PlantMgr::shadow_mode=false;
+	render_shadows();
+//	if(objs.size==0)
+//		return;
+//	if(!PlantMgr::threed)
+//		return;
+//	shadow_mode=true;
+//	GLSLMgr::input_type=GL_LINES;
+//	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+//
+//	Raster.setProgram(Raster.PLACE_ZVALS);
+//	render();
+//
+//	shadow_mode=false;
 }
 void PlantObjMgr::render_shadows(){
 	if(objs.size==0)
 		return;
 	if(!PlantMgr::threed)
 		return;
-	PlantMgr::shadow_mode=true;
+	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	
-	Raster.setProgram(Raster.PLANT_SHADOWS);
-	PlantMgr::shadow_count++;
+	Raster.setShadowProgram("plants.gs.vert","plants.shadows.geom",0);
+	Raster.setProgram(Raster.PLACE_SHADOWS);
 
 	render();
-	PlantMgr::shadow_mode=false;
+	shadow_mode=false;
 }
 //************************************************************
 // Plant class
@@ -1163,7 +1155,7 @@ void TNplant::setNormal(){
 		return;
 	Point bot=base_point;
 	Point norm=bot.normalize();
-	if(!PlantMgr::shadow_mode)
+	if(!PlaceObjMgr::shadow_mode)
 		glNormal3dv(norm.values());
 }
 
@@ -1185,7 +1177,7 @@ void TNplant::emit(){
 	Point bot=base_point;
 	norm=bot.normalize();
 
-	if(!PlantMgr::shadow_mode)
+	if(!PlaceObjMgr::shadow_mode)
 		glNormal3dv(norm.values());
 			
 	TNBranch *first_branch=(TNBranch*)right;

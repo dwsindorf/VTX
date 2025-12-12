@@ -440,6 +440,7 @@ void PlacementMgr::init()
 void PlacementMgr::setTests() {
 	if(!test() || hits<min_hits)
 		return;	
+
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
 	S0.clr_flag(DVALUE);
@@ -447,6 +448,7 @@ void PlacementMgr::setTests() {
 		return;
 	x=lerp(x,0.25,1,0,1);
 	double y=pow(x,2);
+
 	if(testColor()) {
 		S0.set_cvalid();
 		int hash=(3*instance+type+layer)&0xf;
@@ -460,7 +462,6 @@ void PlacementMgr::setTests() {
 	if(testDensity()) {
 		S0.set_flag(DVALUE);
 		S0.s=x;
-		//cout<<y<<endl;
 	}
 }
 
@@ -693,8 +694,7 @@ void PlacementMgr::eval()
 				found = c;
             }
         }
- 
-        if(found->radius > 0.0){
+        if(found->radius > 0.0){        
             if(!found->set_terrain(*this)){
                 Stats.crejects++;
             }
@@ -715,12 +715,12 @@ void PlacementMgr::eval()
         }
         
     }
-
     if(!first() || !scnt)
         return;
     for(int i=0; i<scnt; i++){
         slist.base[i]=sdata+i;
     }
+
     slist.size=scnt;
     slist.sort();
     cval=slist.base[scnt-1]->f;
@@ -993,6 +993,7 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 	if(!flags.s.valid)
 		return false;
 
+
     flags.s.active=true;
     pmgr.sval=lerp(d,0,1.0,0,1);
     
@@ -1014,6 +1015,7 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 	pmgr.sdata[pmgr.scnt].l=pmgr.lvl;
   	if(pmgr.scnt<SDATA_SIZE)
   		pmgr.scnt++;
+
 	return true;
 }
 
@@ -1073,6 +1075,8 @@ PlaceData::PlaceData(Placement *pnt){
 //************************************************************
 // PlaceObjMgr class
 //************************************************************
+bool PlaceObjMgr::shadow_mode=false;
+
 PlaceObjMgr::PlaceObjMgr(){
 	objs.reset();
 }

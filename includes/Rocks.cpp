@@ -12,10 +12,14 @@
 #include "TerrainClass.h"
 #include "UniverseModel.h"
 #include "GLSLMgr.h"
+#include "Effects.h"
+
 #include <map>
 #include <set>
 
 extern double Hscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
+extern int test7, test8;
+
 extern Point MapPt;
 extern double ptable[];
 
@@ -183,7 +187,7 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) 
     }
 }
 // Post-mesh vertex displacement NEW uses standard noise function
-static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, double comp, double drop, TNode *tc) {
+static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, TNode *tc) {
     
     Point center = rock->worldPosition;
     double rockSize = rock->baseSize;
@@ -192,7 +196,7 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
     int rseed=TheNoise.rseed;
    	TheNoise.rseed=seed;
     CurrentScope->revaluate();
-    
+      
     for (auto& tri : rock->mesh) {
         for (int v = 0; v < 3; v++) {
             Point &vertex = tri.vertices[v];
@@ -223,11 +227,6 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
 			TheNoise.pop();
         }
     }
-    for (auto& tri : rock->mesh) {
-		for (int v = 0; v < 3; v++) {
-			tri.vertices[v].z -= drop;
-		}
-	}
     TheNoise.rseed=rseed;
 }
 // LOD template cache - now keyed by resolution AND noise parameters
@@ -254,6 +253,8 @@ Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 	MSK_SET(type,PLACETYPE,MCROCKS);
 	comp=0.0;
 	drop=0.0;
+	vnoise=0;
+	rnoise=0;
 
 #ifdef TEST_ROCKS
     set_testColor(true);
@@ -433,6 +434,9 @@ bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
         return false;
 
+	if(PlaceObjMgr::shadow_mode)
+		return false;
+
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
 
@@ -480,11 +484,21 @@ void Rock3DObjMgr::collect() {
     vbo_valid = false;
 }
 
+void Rock3DObjMgr::render_shadows(){
+	if(objs.size==0)
+		return;
+	shadow_mode=true;
+    //cout<<"Rock3DObjMgr::render_shadows()"<<endl;
+
+	Raster.setShadowProgram("shadows.vert",0,0);
+	Raster.setProgram(Raster.PLACE_SHADOWS);
+	render();
+	shadow_mode=false;
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render() {
-    extern int test7, test8;
     int n = data.size;
     if (n == 0)
         return;
@@ -493,25 +507,19 @@ void Rock3DObjMgr::render() {
     bool smooth = test8;
 
     bool moved = TheScene->moved();
-    Point xpoint = TheScene->xpoint;
-    
-    double* vm = TheScene->viewMatrix;
-    
-    // Settings that would require full rebuild
-    static bool lastWireframe = wireframe;
-    static bool lastSmooth = smooth;
-    bool settingsChanged = (wireframe != lastWireframe) || (smooth != lastSmooth || TheScene->changed_detail());
-    lastWireframe = wireframe;
-    lastSmooth = smooth;
+	bool changed=TheScene->changed_detail();
 
-    if (settingsChanged) {
-        std::cout << "Settings changed - clearing cache" << std::endl;
-        rockCache.clear();
-        rocks.clear();
-        vbo_valid = false;
-    }
+    bool update_needed = moved || changed || !vbo_valid;
+  
+    if (update_needed) {
+        if (changed) {
+            std::cout << "Settings changed - clearing cache" << std::endl;
+            rockCache.clear();
+            rocks.clear();
+            vbo_valid = false;
+        }
 
-    if (moved || !vbo_valid) {
+   		Point xpoint = TheScene->xpoint;
         rocks.clear();
         Rock3DMgr::clearStats();
         
@@ -616,7 +624,9 @@ void Rock3DObjMgr::render() {
                 if (useVertexDisplacement) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, comp, drop, tv);
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, tv);
+                    //applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
+                    templateMesh = tempRock.mesh;  // COPY THE DISPLACED MESH BACK!
                  }
                 // Store in cache
                 RockCacheEntry entry;
@@ -706,38 +716,45 @@ void Rock3DObjMgr::render() {
         vbo_valid = true;
     }
 
-    if (!setProgram()) {
-        cout << "Rock3DObjMgr::setProgram FAILED" << endl;
-        return;
+    render_objects();
+ 
+}
+//-------------------------------------------------------------
+// Rock3DObjMgr::render() create and render the 3d rocks
+//-------------------------------------------------------------
+void Rock3DObjMgr::render_objects() {
+    bool wireframe = test7;
+
+    if(!PlaceObjMgr::shadow_mode){
+    	if (!setProgram()) {
+    	  cout << "Rock3DObjMgr::setProgram FAILED" << endl;
+    	  return;
+    	}
     }
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
     if (wireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    const std::vector<MCObject*>& rockList = rocks.getObjects();
-    for (MCObject *rock : rockList) {
-        if (rock->vboValid && rock->mesh.size() > 0) {
-            glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
-            glVertexPointer(3, GL_FLOAT, 0, 0);
-            glEnableClientState(GL_VERTEX_ARRAY);
+	const std::vector<MCObject*>& rockList = rocks.getObjects();
+	for (MCObject *rock : rockList) {
+		if (rock->vboValid && rock->mesh.size() > 0) {
+			glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
+			glVertexPointer(3, GL_FLOAT, 0, 0);
+			glEnableClientState(GL_VERTEX_ARRAY);
 
-            glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
-            glNormalPointer(GL_FLOAT, 0, 0);
-            glEnableClientState(GL_NORMAL_ARRAY);
+			glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
+			glNormalPointer(GL_FLOAT, 0, 0);
+			glEnableClientState(GL_NORMAL_ARRAY);
 
-            glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
+			glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
 
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisableClientState(GL_NORMAL_ARRAY);
-        }
-    }
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glDisableClientState(GL_VERTEX_ARRAY);
+			glDisableClientState(GL_NORMAL_ARRAY);
+		}
+	}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 //************************************************************
 // TNrocks3D class
@@ -771,6 +788,8 @@ void TNrocks3D::init()
 		rmgr->vnoise=tc;
 	else
 		rmgr->vnoise=0;
+	mgr->set_first(1);
+
 }
 
 //-------------------------------------------------------------
@@ -817,7 +836,7 @@ void TNrocks3D::eval()
 	MaxSize=mgr->maxsize;
 	
 	double density=mgr->density;
-	
+
 	if(density>0)
 		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	
@@ -857,6 +876,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 
 	if(d>t)
 		return false;
+
 	if(pmgr.testColor())
 		Placement::set_terrain(pmgr);
 	
