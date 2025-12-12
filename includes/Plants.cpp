@@ -1695,8 +1695,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	double a, b, x, y, off;
 	int shader_mode = 0;
 	int poly_mode = POLY_FILL;//GL_FILL;
-	//if (PlantMgr::poly_lines || PlantMgr::shader_lines)
-	//	poly_mode = POLY_LINE;
 
 	TNBranch *parent=getParent();
 	TNBranch *child = 0;

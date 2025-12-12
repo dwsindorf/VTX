@@ -58,17 +58,13 @@ public:
 	    Point worldVertex;
 	    int resolution;
 	    int seed;
-	    double vertexNoiseAmpl;
-	    double isoNoiseAmpl;
-	    double comp;
-	    double drop;
 	    int framesSinceUsed;
 	};    
     static std::map<RockCacheKey, RockCacheEntry> rockCache;
     static int cacheHits;
     static int cacheMisses;
     static int cacheRegens;
- 
+  
 	static bool noiseSettingsChanged();
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;

@@ -192,7 +192,7 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
     int rseed=TheNoise.rseed;
    	TheNoise.rseed=seed;
     CurrentScope->revaluate();
-
+    
     for (auto& tri : rock->mesh) {
         for (int v = 0; v < 3; v++) {
             Point &vertex = tri.vertices[v];
@@ -448,18 +448,7 @@ bool Rock3DObjMgr::setProgram() {
     Planetoid *orb = (Planetoid*)TheScene->viewobj;
     Color diffuse = orb->diffuse;
     Color ambient = orb->ambient;
-
-    // DEBUG: Print the color values
-    static bool printed = false;
-    if (!printed) {
-        std::cout << "Rock lighting - Diffuse: (" 
-                  << diffuse.red() << ", " << diffuse.green() << ", " << diffuse.blue() << ", " << diffuse.alpha() << ")" << std::endl;
-        std::cout << "Rock lighting - Ambient: (" 
-                  << ambient.red() << ", " << ambient.green() << ", " << ambient.blue() << ", " << ambient.alpha() << ")" << std::endl;
-        std::cout << "Number of lights: " << Lights.size << std::endl;
-        printed = true;
-    }
-
+     
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 
@@ -503,13 +492,15 @@ void Rock3DObjMgr::render() {
     bool wireframe = test7;
     bool smooth = test8;
 
-    bool moved = TheScene->moved() || TheScene->changed_detail();
+    bool moved = TheScene->moved();
     Point xpoint = TheScene->xpoint;
-
+    
+    double* vm = TheScene->viewMatrix;
+    
     // Settings that would require full rebuild
     static bool lastWireframe = wireframe;
     static bool lastSmooth = smooth;
-    bool settingsChanged = (wireframe != lastWireframe) || (smooth != lastSmooth);
+    bool settingsChanged = (wireframe != lastWireframe) || (smooth != lastSmooth || TheScene->changed_detail());
     lastWireframe = wireframe;
     lastSmooth = smooth;
 
@@ -561,7 +552,7 @@ void Rock3DObjMgr::render() {
             int rval = s->rval;
             double comp = pmgr->comp;
             double drop = pmgr->drop;
-            
+             
             int resolution = Rock3DMgr::getLODResolution(pts);
             
             // Create cache key from world position
@@ -584,21 +575,14 @@ void Rock3DObjMgr::render() {
                 // Check what's different
                 bool resMatch = (entry.resolution == resolution);
                 bool seedMatch = (entry.seed == rval);
-                bool vertexNoiseMatch = fabs(entry.vertexNoiseAmpl - vertexNoiseAmpl) < 0.001;
-                bool isoNoiseMatch = fabs(entry.isoNoiseAmpl - isoNoiseAmpl) < 0.001;
                 bool isoNoiseExprMatch = (estr == entry.estr);
-                bool compMatch = fabs(entry.comp - comp) < 0.001;
-                bool dropMatch = fabs(entry.drop - drop) < 0.001;
-                
-                if (!resMatch || !seedMatch || !vertexNoiseMatch || !isoNoiseMatch || 
-                    !isoNoiseExprMatch || !compMatch || !dropMatch) {
-#ifdef PRINT_CACHE_STATS
+                 
+                if (!resMatch || !seedMatch || !isoNoiseExprMatch) {
+ #ifdef PRINT_CACHE_STATS
                     if (regens < 5) {
                         std::cout << "Regen rock " << i << ": ";
                         if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
                         if (!seedMatch) std::cout << "seed " << entry.seed << "->" << rval << " ";
-                        if (!dropMatch) std::cout << "drop " << entry.drop << "->" << drop << " ";
-                        if (!compMatch) std::cout << "comp " << entry.comp << "->" << comp << " ";
                         std::cout << std::endl;
                     }
 #endif
@@ -613,15 +597,12 @@ void Rock3DObjMgr::render() {
                 }
             } else {
                 misses++;
-            }
-            
+            }           
             // Generate if needed
             if (needsGeneration) {
-                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl, rval, tc, comp);
-                
+                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl, rval, tc, comp);                
                 if (!templateSphere || templateSphere->mesh.empty())
-                    continue;
-                
+                    continue;               
                 // Copy mesh without modification
                 for (const auto& tri : templateSphere->mesh) {
                     MCTriangle newTri;
@@ -630,29 +611,13 @@ void Rock3DObjMgr::render() {
                     }
                     newTri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
                     templateMesh.push_back(newTri);
-                }
-                
+                }               
                 // Apply vertex displacement in template space
                 if (useVertexDisplacement) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
                     applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, comp, drop, tv);
-                    templateMesh = tempRock.mesh;
-                }
-                
-                // Recalculate normals after displacement
-                for (auto& tri : templateMesh) {
-                    Point edge1 = tri.vertices[1] - tri.vertices[0];
-                    Point edge2 = tri.vertices[2] - tri.vertices[0];
-                    tri.normal = Point(
-                        edge1.y * edge2.z - edge1.z * edge2.y,
-                        edge1.z * edge2.x - edge1.x * edge2.z,
-                        edge1.x * edge2.y - edge1.y * edge2.x
-                    ).normalize();
-                    // Flip to match template convention
-                    tri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
-                }
-                
+                 }
                 // Store in cache
                 RockCacheEntry entry;
                 entry.mesh = templateMesh;
@@ -660,10 +625,6 @@ void Rock3DObjMgr::render() {
                 entry.resolution = resolution;
                 entry.estr = estr;
                 entry.seed = rval;
-                entry.vertexNoiseAmpl = vertexNoiseAmpl;
-                entry.isoNoiseAmpl = isoNoiseAmpl;
-                entry.drop = drop;
-                entry.comp = comp;
                 entry.framesSinceUsed = 0;
                 rockCache[key] = entry;
             }
@@ -678,69 +639,36 @@ void Rock3DObjMgr::render() {
                 Point worldPos = s->vertex;
                 Point up = s->normal;
                 
-                // Create perpendicular basis vectors for tangent plane
-                Point right, forward;
-                if (fabs(up.z) < 0.9) {
-                    right = Point(up.y, -up.x, 0).normalize();
-                } else {
-                    right = Point(0, up.z, -up.y).normalize();
-                }
-                forward = Point(
-                    up.y * right.z - up.z * right.y,
-                    up.z * right.x - up.x * right.z,
-                    up.x * right.y - up.y * right.x
-                );
-                
                 // Apply drop: lower the rock center along surface normal
-                Point rockCenter = Point(
-                    worldPos.x - up.x * drop * s->radius * 0.01,
-                    worldPos.y - up.y * drop * s->radius * 0.01,
-                    worldPos.z - up.z * drop * s->radius * 0.01
-                );
+                Point rockCenter = worldPos - up*(s->radius * 0.01*drop);
                 
-                // Transform each vertex from template space to world space
+                // Transform each vertex from world space to eye space
+      
                 for (const auto& tri : templateMesh) {
-                    MCTriangle newTri;
+                    MCTriangle newTri;                  
                     for (int v = 0; v < 3; v++) {
                         Point tv = tri.vertices[v];
-                        
-                        // Rotate template to align with surface
-                        Point rotated = Point(
-                            tv.x * right.x + tv.y * forward.x + tv.z * up.x,
-                            tv.x * right.y + tv.y * forward.y + tv.z * up.y,
-                            tv.x * right.z + tv.y * forward.z + tv.z * up.z
-                        );
-                        
-                        // Scale and translate to rock center
-                        Point worldVertex = Point(
-                            rockCenter.x + rotated.x * size,
-                            rockCenter.y + rotated.y * size,
-                            rockCenter.z + rotated.z * size
-                        );
-                        
-                        // Convert to eye space
-                        newTri.vertices[v] = worldVertex - xpoint;
-                    }
-                    newTri.normal = tri.normal;
+                        Point worldVertex=rockCenter+tv*size;                       
+                        Point eyeVertex = worldVertex - xpoint; // Convert to eye space
+                        newTri.vertices[v] = eyeVertex;
+                    }                   
+                    // Calculate normal in eye space from the 3 eye-space vertices
+                    Point edge1 = newTri.vertices[1] - newTri.vertices[0];
+                    Point edge2 = newTri.vertices[2] - newTri.vertices[0];
+                    Point eyeNormal = edge2.cross(edge1);
+                    newTri.normal = eyeNormal.normalize();
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
                 rock->worldPosition = eyePos;
                 
                 // Upload VBO
-                if (comp > 0.3) {
-                    rock->uploadToVBO();
-                }
-                else if (smooth && useVertexDisplacement) {
-                    rock->uploadToVBODisplaced();
-                }
-                else if (smooth) {
+                if (smooth && useVertexDisplacement) 
+                     rock->uploadToVBODisplaced();
+                else if (smooth) 
                     rock->uploadToVBOSmooth();
-                }
-                else {
-                    rock->uploadToVBO();
-                }
-                
+                else 
+                    rock->uploadToVBO();                
                 Rock3DMgr::setStats(resolution, rock->mesh.size());
             }
         }
