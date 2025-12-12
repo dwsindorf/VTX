@@ -27,6 +27,8 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
+#define PSCALE 0.006 // placement scale factor
+
 //#define PRINT_STATS
 #define PRINT_CACHE_STATS
 
@@ -142,7 +144,7 @@ static SurfaceFunction makeRockField(const Point& center, double rx, double ry, 
  		TheNoise.pop();
  		TheNoise.rseed = rseed;
         
-        return baseEllipsoid + rz * noiseAmpl;
+        return baseEllipsoid - rz * noiseAmpl;
     };
 }
 
@@ -365,7 +367,7 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
 
-#define TEST
+//#define TEST // use built in noise functions
 
 MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int rval, TNode *tc, double comp) {
     // Key includes noise parameters AND compression
@@ -402,9 +404,9 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     SurfaceFunction field;
     if (noisy) {
 #ifdef TEST
-        field = makeRockField(origin, rx, ry, rz, rval, noiseAmpl, tc);
-#else
         field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
+#else
+        field = makeRockField(origin, rx, ry, rz, rval, noiseAmpl, tc);
 #endif
     } else {
         field = makeCenteredEllipsoid(origin, rx, ry, rz);
@@ -488,8 +490,8 @@ void Rock3DObjMgr::render_shadows(){
 	if(objs.size==0)
 		return;
 	shadow_mode=true;
-    //cout<<"Rock3DObjMgr::render_shadows()"<<endl;
-
+    
+	// not really needed - these are the defaults for shadow mode
 	Raster.setShadowProgram("shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 	render();
@@ -554,7 +556,7 @@ void Rock3DObjMgr::render() {
             double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * pmgr->noise_amp : 0;
 
             Point eyePos = s->vertex - xpoint;
-            double size = 0.01 * s->radius;
+            double size = PSCALE * s->radius;
             double pts = s->pts;
             double dist = s->dist;
             int rval = s->rval;
@@ -624,8 +626,11 @@ void Rock3DObjMgr::render() {
                 if (useVertexDisplacement) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, tv);
-                    //applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
+#ifdef TEST
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);     // use built-in perlin noise
+#else
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, tv); // use standard TNoise function
+#endif
                     templateMesh = tempRock.mesh;  // COPY THE DISPLACED MESH BACK!
                  }
                 // Store in cache
@@ -673,7 +678,7 @@ void Rock3DObjMgr::render() {
                 rock->worldPosition = eyePos;
                 
                 // Upload VBO
-                if (smooth && useVertexDisplacement) 
+                if (smooth && useVertexDisplacement)
                      rock->uploadToVBODisplaced();
                 else if (smooth) 
                     rock->uploadToVBOSmooth();
@@ -1227,7 +1232,7 @@ void TNrocks::eval() {
 	INIT;
 	if (base)
 		base->eval();
-	if (!S0.pvalid())
+	//if (!S0.pvalid())
 	S0.p.z=ground.p.z;
 	rmgr->base = S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
 	S0.next_id();
