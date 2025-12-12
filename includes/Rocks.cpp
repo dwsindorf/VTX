@@ -633,6 +633,7 @@ void Rock3DObjMgr::render() {
 #endif
                     templateMesh = tempRock.mesh;  // COPY THE DISPLACED MESH BACK!
                  }
+                                
                 // Store in cache
                 RockCacheEntry entry;
                 entry.mesh = templateMesh;
@@ -654,18 +655,33 @@ void Rock3DObjMgr::render() {
                 Point worldPos = s->vertex;
                 Point up = s->normal;
                 
-                // Apply drop: lower the rock center along surface normal
-                Point rockCenter = worldPos - up*(s->radius * 0.01*drop);
+                double dscale=PSCALE*drop*(1-0.5*comp)*0.5;
                 
-                // Transform each vertex from world space to eye space
+                // Apply drop: lower the rock center along surface normal
+                Point rockCenter = worldPos - up*(s->radius * dscale);
+                
+                Point right, forward;
+				if (fabs(up.z) < 0.9)
+					right = Point(up.y, -up.x, 0).normalize();
+				else
+					right = Point(0, up.z, -up.y).normalize();
+				
+				forward = Point(up.y * right.z - up.z * right.y,
+						up.z * right.x - up.x * right.z,
+						up.x * right.y - up.y * right.x);
+ 
+               // Transform each vertex from world space to eye space
       
                 for (const auto& tri : templateMesh) {
                     MCTriangle newTri;                  
                     for (int v = 0; v < 3; v++) {
-                        Point tv = tri.vertices[v];
-                        Point worldVertex=rockCenter+tv*size;                       
-                        Point eyeVertex = worldVertex - xpoint; // Convert to eye space
-                        newTri.vertices[v] = eyeVertex;
+                        Point tv = tri.vertices[v];                       
+                        Point rotated = Point(
+								tv.x * right.x + tv.y * forward.x + tv.z * up.x,
+								tv.x * right.y + tv.y * forward.y + tv.z * up.y,
+								tv.x * right.z + tv.y * forward.z + tv.z * up.z);						
+                        Point worldVertex = rockCenter+rotated*size;
+						newTri.vertices[v] = worldVertex - xpoint; // Convert to eye space
                     }                   
                     // Calculate normal in eye space from the 3 eye-space vertices
                     Point edge1 = newTri.vertices[1] - newTri.vertices[0];

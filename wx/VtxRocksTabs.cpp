@@ -206,7 +206,7 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	shape->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2S, VALUE1,SLIDER2);
-	DropSlider->setRange(0,2);
+	DropSlider->setRange(0,1);
 	DropSlider->setValue(0.0);
 
 	shape->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
