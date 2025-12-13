@@ -539,6 +539,8 @@ public:
 	virtual void clearExpr();
 	virtual void init();
 	virtual void setValue(NodeIF *n)		{ replaceChild(base,n);}
+	NodeIF *findChild(int );
+
 };
 
 extern int getargs(TNode *args, double *array, int max);

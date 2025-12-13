@@ -357,11 +357,6 @@ public:
 	virtual TNrocks *newInstance(int m);
 	virtual bool randomize();
 	virtual void applyExpr();
-	virtual void setNoiseExpr(char *s);
-	virtual void setNoiseAmpl(double d);
-	virtual TNnoise *getNoiseExpr();
-	virtual double getNoiseAmpl();
-	NodeIF *findChild(int );
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
@@ -370,7 +365,7 @@ public:
 	int linkable()          { return 1;}
 };
 
-class TNrocks3D : public TNrocks
+class TNrocks3D : public TNplacements
 {
 public:
 	Rock3D *rock;

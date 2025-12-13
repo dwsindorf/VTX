@@ -1233,6 +1233,25 @@ TNbase::~TNbase()
 }
 
 //-------------------------------------------------------------
+// TNrocks::hasChild return true if child exists
+//-------------------------------------------------------------
+static int find_type=0;
+static NodeIF *child;
+static void findType(NodeIF *obj)
+{
+	if(obj->typeValue()==find_type){
+		child=obj;
+		obj->setFlag(NODE_STOP);
+	}
+}
+NodeIF *TNbase::findChild(int type){
+	find_type=type;
+	child=0;
+	if(base)
+		base->visitNode(findType);
+	return child;
+}
+//-------------------------------------------------------------
 // TNbase::visit() apply visit function
 //-------------------------------------------------------------
 void TNbase::visit(void (*func) (TNode *)){

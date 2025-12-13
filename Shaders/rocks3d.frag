@@ -1,10 +1,20 @@
 #version 120
 
+uniform sampler2DRect FBOTex1;
+uniform sampler2DRect FBOTex2;
+uniform sampler2DRect FBOTex3;
+uniform sampler2DRect FBOTex4;
+
+#define SHADOWTEX FBOTex3
+
 varying vec3 Normal;
 varying vec3 EyeDir;
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
+uniform vec4 Shadow;
+
+#define DEPTH   gl_FragCoord.z
 
 vec3 setLighting(vec3 BaseColor) {
     vec3 normal = normalize(Normal);
@@ -44,5 +54,14 @@ vec3 setLighting(vec3 BaseColor) {
 void main() {
     vec3 rockColor = vec3(0.6, 0.5, 0.4);
     vec3 color = setLighting(rockColor);
-    gl_FragColor = vec4(color, 1.0);
+    
+#ifdef SHADOWS
+     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+     color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
+#endif  
+    
+    gl_FragData[0]=vec4(color, 1.0);
+    //gl_FragData[1]=vec4(0.1,DEPTH,1,1.0); // set type to 0 to bypass second haze correction in effects.frag
+    
+   // gl_FragColor = vec4(color, 1.0);
 }

@@ -35,11 +35,10 @@ static TerrainData Td;
 // 3d rocks using marching cubes
 // Tasks:
 // 1. generate color test if 3d flag is set - done
-// 2. set density gradient on surface if 3d - done)
+// 2. set density gradient on surface if 3d - done
 // 3. capture size and position information for placement - done
 // 4. create array of 3d rocks with placement and size info - done
-// 7. for each layer and rock in layer emit rock as a marchingCubes Object
-//    - start with simple sphere (done)
+// 7. for each layer and rock in layer emit rock as a marchingCubes Object - done
 // 8. refactor rock3d and rock classes to use the same wxWidgets GUI
 //    - change both to use Point in base [] for modulation rather than argument 
 //      note: 2d rocks now always map from surface
@@ -47,9 +46,11 @@ static TerrainData Td;
 //      so all rocks can have biases
 //    - add "3d" checkbox to UI
 //      in UI change only class name (rock or rock3d) to regenerate
-// 9. add noise modulation to 3d rocks using existing methods 
-// 10. add texture and color
-//    - may need to capture into a private TerrainProperties object ?
+// 9. add noise modulation to 3d rocks using existing methods - done
+// 10. support for shadows - done
+// 11. improve lighting model
+// 12. add color
+// 13. add texture
 
 //************************************************************
 // Rock3D class
@@ -112,10 +113,9 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
 
 // Noisy sphere field for marching cubes iso-surface extraction using standard noise function
 // Noisy ellipsoid field for marching cubes iso-surface extraction using standard noise function
-static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, int seed, double noiseAmpl, TNode *tc) {
-    return [center, rx, ry, rz, seed, noiseAmpl, tc](double x, double y, double z) -> double {
-    	int rseed=TheNoise.rseed;
-     	TheNoise.rseed = seed;
+static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, double noiseAmpl, TNode *tc) {
+    return [center, rx, ry, rz, noiseAmpl, tc](double x, double y, double z) -> double {
+     	//TheNoise.rseed = seed;
         
         double dx = x - center.x;
         double dy = y - center.y;
@@ -132,18 +132,13 @@ static SurfaceFunction makeRockField(const Point& center, double rx, double ry, 
         
         double scale = 2.0 / ((rx + ry + rz) / 3.0);  // Average radius for scale
         Point np = Point(dx, dy, dz);
- 		TheNoise.push(np);
- 		CurrentScope->revaluate();
+ 		TheNoise.set(np);
  		double rz = 0;
  		tc->eval();
 		if (tc->typeValue() == ID_POINT)
  			rz = S0.p.z;
  		else
  			rz = S0.s;
-
- 		TheNoise.pop();
- 		TheNoise.rseed = rseed;
-        
         return baseEllipsoid - rz * noiseAmpl;
     };
 }
@@ -189,14 +184,13 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) 
     }
 }
 // Post-mesh vertex displacement NEW uses standard noise function
-static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, TNode *tc) {
+static void applyVertexDisplacement(MCObject* rock, double amplitude, TNode *tc) {
     
     Point center = rock->worldPosition;
     double rockSize = rock->baseSize;
     
     static int cnt=0;
-    int rseed=TheNoise.rseed;
-   	TheNoise.rseed=seed;
+   	//TheNoise.rseed=seed;
     CurrentScope->revaluate();
       
     for (auto& tri : rock->mesh) {
@@ -212,12 +206,11 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
             double ny = (vertex.y - center.y) / rockSize;
             double nz = (vertex.z - center.z) / rockSize;
 			Point np(nx,ny,nz);
-			TheNoise.push(np);
+			TheNoise.set(np);
 			Point pn;
 			double rz=0;
 			Point pv=vertex;
-			tc->eval();
-			
+			tc->eval();			
 			Point pd=S0.p;
 			if(pd.x==0 && pd.y==0)
 				pd.x=pd.y=pd.z;
@@ -225,11 +218,9 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude, 
 			Point delta=dir*pd*amplitude;
 			vertex=vertex+delta;
 			cnt++;
-
-			TheNoise.pop();
         }
     }
-    TheNoise.rseed=rseed;
+   // TheNoise.rseed=rseed;
 }
 // LOD template cache - now keyed by resolution AND noise parameters
 struct LODKey {
@@ -369,7 +360,7 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 
 //#define TEST // use built in noise functions
 
-MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, int rval, TNode *tc, double comp) {
+MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl,TNode *tc, double comp) {
     // Key includes noise parameters AND compression
     int key = noisy ? (resolution * 1000 + (int)(noiseAmpl * 100) + (int)(comp * 10)) : (resolution + (int)(comp * 10));
     
@@ -388,13 +379,6 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     double rz = 0.5 * (1.0 - comp);
     if (rz < 0.05) rz = 0.05;
 
-    // For flatter rocks, expand X/Y slightly
-    if (comp > 0.3) {
-        double expand = 1.0 + comp * 0.5;
-        rx *= expand;
-        ry *= expand;
-    }
-
     // Adjust bounds to match ellipsoid size
     // Add extra margin for noise (especially when noiseAmpl is high)
     double margin = 1.1 + noiseAmpl * 2.0;  // Increase margin with noise amplitude
@@ -404,9 +388,9 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     SurfaceFunction field;
     if (noisy) {
 #ifdef TEST
-        field = makeNoisyRockField(origin, 0.5, 0, noiseAmpl);
+        field = makeNoisyRockField(origin, 0.5, 0, rval, noiseAmpl);
 #else
-        field = makeRockField(origin, rx, ry, rz, rval, noiseAmpl, tc);
+        field = makeRockField(origin, rx, ry, rz, noiseAmpl, tc);
 #endif
     } else {
         field = makeCenteredEllipsoid(origin, rx, ry, rz);
@@ -442,6 +426,10 @@ bool Rock3DObjMgr::setProgram() {
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
 
+    bool do_shadows=Raster.shadows();
+ 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
+ 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
+
     GLSLMgr::setDefString(defs);
     GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
 
@@ -454,9 +442,15 @@ bool Rock3DObjMgr::setProgram() {
     Planetoid *orb = (Planetoid*)TheScene->viewobj;
     Color diffuse = orb->diffuse;
     Color ambient = orb->ambient;
+	Color shadow=orb->shadow_color;
+	Color haze=Raster.haze_color;
+
      
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
+	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
+	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+
 
     vars.setProgram(program);
     vars.loadVars();
@@ -610,9 +604,16 @@ void Rock3DObjMgr::render() {
             }           
             // Generate if needed
             if (needsGeneration) {
-                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl, rval, tc, comp);                
-                if (!templateSphere || templateSphere->mesh.empty())
-                    continue;               
+            	int rseed=TheNoise.rseed;
+            	TheNoise.rseed=rval;
+            	CurrentScope->revaluate();
+        		
+            	    
+                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl, tc, comp);                
+                if (!templateSphere || templateSphere->mesh.empty()){
+             		TheNoise.rseed = rseed;
+                    continue;   
+                }
                 // Copy mesh without modification
                 for (const auto& tri : templateSphere->mesh) {
                     MCTriangle newTri;
@@ -629,7 +630,7 @@ void Rock3DObjMgr::render() {
 #ifdef TEST
                     applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);     // use built-in perlin noise
 #else
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl, tv); // use standard TNoise function
+                    applyVertexDisplacement(&tempRock,vertexNoiseAmpl, tv); // use standard TNoise function
 #endif
                     templateMesh = tempRock.mesh;  // COPY THE DISPLACED MESH BACK!
                  }
@@ -643,6 +644,8 @@ void Rock3DObjMgr::render() {
                 entry.seed = rval;
                 entry.framesSinceUsed = 0;
                 rockCache[key] = entry;
+        	
+         		TheNoise.rseed = rseed;
             }
             
             // Create rock and transform to eye space
@@ -780,7 +783,7 @@ void Rock3DObjMgr::render_objects() {
 //************************************************************
 // TNrocks3D class
 //************************************************************
-TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNrocks(t|MCROCKS,l,r,b)
+TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNplacements(t|MCROCKS,l,r,b)
 {
 	mgr=new Rock3DMgr(type);
 	rock=0;
@@ -1160,33 +1163,7 @@ void TNrocks::init()
 	TNplacements::init();
 }
 
-void TNrocks::setNoiseExpr(char *s){
-//	if(noise){
-//		noise->setExpr(s);
-//		noise->applyExpr();
-//	}
-}
-void TNrocks::setNoiseAmpl(double d){
-}
-
-TNnoise *TNrocks::getNoiseExpr(){
-	TNarg &args=*((TNarg *)left);
-	TNarg *a=args[7];
-	if(a)
-		return (TNnoise*)a;
-	else 
-		return nullptr;
-}
-double TNrocks::getNoiseAmpl(){
-	TNarg &args=*((TNarg *)left);
-	TNarg *a=args[7];
-	
-	if(a){
-		a->eval();
-		return S0.s;
-	}
-	return 0;
-}
+#define ROCK_LAYER
 //-------------------------------------------------------------
 // TNrocks::eval() evaluate the node
 //-------------------------------------------------------------
@@ -1203,7 +1180,9 @@ void TNrocks::eval() {
 	bool first = (right && right->typeValue() != ID_ROCKS);
 	bool last = getParent()->typeValue() != ID_ROCKS;
 	INIT;
+#ifdef ROCK_LAYER
 	S0.set_flag(ROCKLAYER);
+#endif
 	int in_map = S0.get_flag(CLRTEXS);
 
 	if (CurrentScope->rpass()) {
@@ -1211,6 +1190,7 @@ void TNrocks::eval() {
 		if(right) // ground
 			right->eval();
 		INIT;
+#ifdef ROCK_LAYER
 		Td.add_id();
 		Td.tp->set_rock(true);
 		Td.tp->ntexs=0;
@@ -1221,12 +1201,17 @@ void TNrocks::eval() {
 			base->eval();
 		if(!in_map)// in case we were in another map on entry
 			S0.clr_flag(CLRTEXS);
+#else
+		if(base)// rock texs
+			base->eval();
+#endif
 		mgr->setHashcode();
 		return;
 	}
-
+#ifdef ROCK_LAYER
 	if (!in_map && first)
 		Td.begin();
+#endif
 	ground.p.z = 0;
 
 	INIT;
@@ -1248,10 +1233,11 @@ void TNrocks::eval() {
 	INIT;
 	if (base)
 		base->eval();
-	//if (!S0.pvalid())
 	S0.p.z=ground.p.z;
 	rmgr->base = S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
+#ifdef ROCK_LAYER
 	S0.next_id();
+#endif
 	rock.copy(S0);
 	INIT;
 	rmgr->ht = mgr->base;
@@ -1265,38 +1251,24 @@ void TNrocks::eval() {
 		rock.p.x = rmgr->rx * (1 - rmgr->rdist);
 		rock.p.y = rmgr->ry * (1 - rmgr->rdist);
 		S0.copy(rock);
+#ifdef ROCK_LAYER
 		Td.tp->set_rock(true);
 		S0.set_flag(ROCKBODY);
+#endif
 	}
 	else {
 		Td.tp->set_rock(false);
 		S0.copy(ground);
+#ifdef ROCK_LAYER
 		if(!other_rock)
 			S0.clr_flag(ROCKBODY);
+#endif
 	}
+#ifdef ROCK_LAYER
 	Td.insert_strata(rock);
 	if (!in_map && last)
 		Td.end();
-}
-
-//-------------------------------------------------------------
-// TNrocks::hasChild return true if child exists
-//-------------------------------------------------------------
-static int find_type=0;
-static NodeIF *child;
-static void findType(NodeIF *obj)
-{
-	if(obj->typeValue()==find_type){
-		child=obj;
-		obj->setFlag(NODE_STOP);
-	}
-}
-NodeIF *TNrocks::findChild(int type){
-	find_type=type;
-	child=0;
-	if(base)
-		base->visitNode(findType);
-	return child;
+#endif
 }
 
 // called by VtxSceneDialog ->scene->makeObject
@@ -1327,7 +1299,7 @@ bool TNrocks::randomize(){
 			val->valueString(buff);
 			//cout<<"before:"<<buff<<endl;
 			std::string str=TNnoise::randomize(buff,f,1);
-			TNnoise *newval=TheScene->parse_node(str.c_str());
+			TNnoise *newval=TheScene->parse_node((char*)str.c_str());
 			arg->left=newval;
 			//cout<<"after:"<<str<<endl;
 			delete val;
@@ -1345,7 +1317,7 @@ TNrocks *TNrocks::newInstance(int m){
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	Planetoid::makeLists();
 	std::string str=Planetoid::newRocks(orb,gtype);
-	TNrocks *rocks=TheScene->parse_node(str.c_str());
+	TNrocks *rocks=TheScene->parse_node((char*)str.c_str());
 	rocks->setParent(parent);
 	rocks->randomize();
 	return rocks;
