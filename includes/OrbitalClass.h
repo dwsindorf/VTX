@@ -682,6 +682,7 @@ public:
 	double 	   last_dt;
 	double 	   last_temp;
 	double     light_theta;
+	double     tod;
 
 	static int planet_id;
 	static int moon_cnt;

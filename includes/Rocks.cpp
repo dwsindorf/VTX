@@ -364,10 +364,10 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
     // Key includes noise parameters AND compression
     int key = noisy ? (resolution * 1000 + (int)(noiseAmpl * 100) + (int)(comp * 10)) : (resolution + (int)(comp * 10));
     
-    auto it = lodTemplates.find(key);
-    if (it != lodTemplates.end()) {
-        return it->second;
-    }
+//    auto it = lodTemplates.find(key);
+//    if (it != lodTemplates.end()) {
+//        return it->second;
+//    }
     
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
@@ -413,6 +413,22 @@ void Rock3DObjMgr::freeLODTemplates() {
     }
     lodTemplates.clear();
 }
+
+double calculateNightLighting(double tod) {
+    const double dawnStart = 0.20, dawnEnd = 0.3;
+    const double duskStart = 0.7, duskEnd = 0.8;   
+    // Night (before dawn or after dusk)
+    if (tod < dawnStart || tod > duskEnd) 
+        return 0.0;  
+    // Full day (between dawn and dusk)
+    if (tod >= dawnEnd && tod <= duskStart) 
+        return 1.0;    
+    // Dawn transition (smoothstep from 0 to 1)
+    if (tod < dawnEnd) 
+        return smoothstep(dawnStart, dawnEnd, tod);   
+    // Dusk transition (smoothstep from 1 to 0)
+    return 1.0 - smoothstep(duskStart, duskEnd, tod);
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::setProgram() initialize shader
 //-------------------------------------------------------------
@@ -445,12 +461,27 @@ bool Rock3DObjMgr::setProgram() {
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
 
+	double twilite_min=-0.5;
+	double twilite_max=0.5;
+	double twilite_dph=0.1;
+	
+	double tod=orb->tod;
+	
+	double night_lighting=0;
+	double dmin=0.2;
+	double dmax=0.3;
+	double smin=0.6;
+	double smax=0.7;
+	
+	night_lighting=calculateNightLighting(tod);
+	//cout<<tod<<" "<<night_lighting<<endl;
      
+	//cout<<tod<<" "<<fabs(dd)<<" "<<apm<<endl;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
-
+	vars.newFloatVar("night_lighting",night_lighting);
 
     vars.setProgram(program);
     vars.loadVars();

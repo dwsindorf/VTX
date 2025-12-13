@@ -1,5 +1,6 @@
 #version 120
 
+uniform float night_ligting;
 varying vec3 Normal;
 varying vec3 EyeDir;
 

@@ -4280,6 +4280,7 @@ void Planetoid::setDateString(){
 	double month=fmod(angle*12,12);
 	double day=(angle*360-((int)month)*30)+1;
 	double dt=calc_delt();
+	tod=dt;
 	double dd=-dt*24;
 	//double dd=fabs(dt*24);
 	char *locked=tidalLocked()?"L":" ";
@@ -4287,7 +4288,6 @@ void Planetoid::setDateString(){
     char *apm=fabs(dd)<12?"AM":"PM";
     int dap=fabs(dd);
     int min=60*(fabs(dd)-dap);
-     
     dap=dap>12?dap-12:dap;
 
 	sprintf(date,"%-3s %-2d %2d:%02d %s %s",months[(int)month],(int)day,dap,min,apm,locked);
