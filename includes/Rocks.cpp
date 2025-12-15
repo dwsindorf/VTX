@@ -29,8 +29,16 @@ static TerrainData Td;
 
 #define PSCALE 0.006 // placement scale factor
 
+static bool first=true;
+
 //#define PRINT_STATS
-#define PRINT_CACHE_STATS
+//#define PRINT_ROCK_STATS
+//#define PRINT_CACHE_STATS
+//#define PRINT_ROCK_CACHE_STATS
+//
+#define USE_TEMPLATES
+
+static bool shadow_start=false;
 
 // 3d rocks using marching cubes
 // Tasks:
@@ -305,7 +313,7 @@ void Rock3DMgr::printStats(){
     int tcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
-#ifdef PRINT_STATS
+#ifdef PRINT_ROCK_STATS
         std::cout << "res:"       << kRockLodTable[i].res
                   << " cnt:"      << stats[i][0]
                   << " triangles:"<< stats[i][1]
@@ -316,6 +324,7 @@ void Rock3DMgr::printStats(){
     }
     std::cout << "Totals rocks:"    << rcnt
               << " triangles:"      << tcnt
+	          << " keys:"           << Rock3DObjMgr::lodTemplates.size()
               << std::endl;
 }
 
@@ -358,17 +367,21 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
 
-//#define TEST // use built in noise functions
+//#define PERLIN_NOISE // use built in noise functions
 
-MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noiseAmpl,TNode *tc, double comp) {
-    // Key includes noise parameters AND compression
-    int key = noisy ? (resolution * 1000 + (int)(noiseAmpl * 100) + (int)(comp * 10)) : (resolution + (int)(comp * 10));
-    
-//    auto it = lodTemplates.find(key);
-//    if (it != lodTemplates.end()) {
-//        return it->second;
-//    }
-    
+MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, double noiseAmpl, double comp, double rval,TNode *tc) {
+	int key=0;
+	bool noisy=(noiseAmpl>1e-6);
+#ifdef USE_TEMPLATES
+    int k1=resolution * 100;
+    int k2=(int)(rval * 10)/50;
+    key = k1 + k2;
+   //cout<<rval<<" "<< k1<<" "<<k2<<" "<<key<<endl;  
+    auto it = lodTemplates.find(key);
+    if (it != lodTemplates.end()) {
+        return it->second;
+    }
+#endif   
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
@@ -387,7 +400,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(int resolution, bool noisy, double noi
    
     SurfaceFunction field;
     if (noisy) {
-#ifdef TEST
+#ifdef PERLIN_NOISE
         field = makeNoisyRockField(origin, 0.5, 0, rval, noiseAmpl);
 #else
         field = makeRockField(origin, rx, ry, rz, noiseAmpl, tc);
@@ -435,7 +448,8 @@ double calculateNightLighting(double tod) {
 bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
         return false;
-
+   
+ 
 	if(PlaceObjMgr::shadow_mode)
 		return false;
 
@@ -460,21 +474,13 @@ bool Rock3DObjMgr::setProgram() {
     Color ambient = orb->ambient;
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
-
-	double twilite_min=-0.5;
-	double twilite_max=0.5;
-	double twilite_dph=0.1;
 	
 	double tod=orb->tod;
 	
-	double night_lighting=0;
-	double dmin=0.2;
-	double dmax=0.3;
-	double smin=0.6;
-	double smax=0.7;
-	
-	night_lighting=calculateNightLighting(tod);
-	//cout<<tod<<" "<<night_lighting<<endl;
+	double night_lighting=1;
+	if(!TheScene->changed_file())
+		night_lighting=calculateNightLighting(tod);
+	//cout<<"tod:"<<tod<<" "<<night_lighting<<endl;
      
 	//cout<<tod<<" "<<fabs(dd)<<" "<<apm<<endl;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
@@ -488,7 +494,7 @@ bool Rock3DObjMgr::setProgram() {
 
     GLSLMgr::setProgram();
     GLSLMgr::loadVars();
-
+    
     return true;
 }
 void Rock3DObjMgr::free() { 
@@ -511,6 +517,20 @@ void Rock3DObjMgr::collect() {
     vbo_valid = false;
 }
 
+void Rock3DObjMgr::render_zvals(){
+
+	if(objs.size==0)
+		return;
+	//cout<<"Rock3DObjMgr::render_zvals() view:"<<Raster.shadow_vcnt<<":"<<Raster.shadow_vsteps<<endl;
+	if(Raster.shadow_vcnt==0)
+		shadow_start=true;
+	shadow_mode=true;
+	render();
+    shadow_start=false;
+
+	shadow_mode=false;
+}
+
 void Rock3DObjMgr::render_shadows(){
 	if(objs.size==0)
 		return;
@@ -520,6 +540,7 @@ void Rock3DObjMgr::render_shadows(){
 	Raster.setShadowProgram("shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 	render();
+//	if(Raster.shadow_vcnt==Raster.shadow_vsteps-1)
 	shadow_mode=false;
 }
 //-------------------------------------------------------------
@@ -532,13 +553,20 @@ void Rock3DObjMgr::render() {
     
     bool wireframe = test7;
     bool smooth = test8;
-
+    
+    //static bool shadow_start=PlaceObjMgr::shadow_mode&&(Raster.shadow_vcnt==0);
+     
     bool moved = TheScene->moved();
 	bool changed=TheScene->changed_detail();
-
+	//cout<<"moved:"<<moved<<" shadows:"<<PlaceObjMgr::shadow_mode<<" start:"<<shadow_start<<endl;
+	if(PlaceObjMgr::shadow_mode && !shadow_start){
+		moved=false;
+	}
     bool update_needed = moved || changed || !vbo_valid;
-  
+    
+      
     if (update_needed) {
+    	cout<<"Rebuilding shadow_mode:"<<PlaceObjMgr::shadow_mode<<" moved:"<<moved<<" shadow_start:"<<shadow_start<<endl;
         if (changed) {
             std::cout << "Settings changed - clearing cache" << std::endl;
             rockCache.clear();
@@ -613,7 +641,7 @@ void Rock3DObjMgr::render() {
                 bool isoNoiseExprMatch = (estr == entry.estr);
                  
                 if (!resMatch || !seedMatch || !isoNoiseExprMatch) {
- #ifdef PRINT_CACHE_STATS
+ #ifdef PRINT_ROCK_CACHE_STATS
                     if (regens < 5) {
                         std::cout << "Regen rock " << i << ": ";
                         if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
@@ -640,7 +668,7 @@ void Rock3DObjMgr::render() {
             	CurrentScope->revaluate();
         		
             	    
-                MCObject* templateSphere = getTemplateForLOD(resolution, useNoisyIsoSurface, isoNoiseAmpl, tc, comp);                
+                MCObject* templateSphere = getTemplateForLOD(resolution, isoNoiseAmpl, comp, rval, tc);                
                 if (!templateSphere || templateSphere->mesh.empty()){
              		TheNoise.rseed = rseed;
                     continue;   
@@ -658,7 +686,7 @@ void Rock3DObjMgr::render() {
                 if (useVertexDisplacement) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
-#ifdef TEST
+#ifdef PERLIN_NOISE
                     applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);     // use built-in perlin noise
 #else
                     applyVertexDisplacement(&tempRock,vertexNoiseAmpl, tv); // use standard TNoise function
@@ -748,7 +776,7 @@ void Rock3DObjMgr::render() {
         }
         
         // Cache size limit
-        const size_t MAX_CACHE_SIZE = 5000;
+        const size_t MAX_CACHE_SIZE = 10000;
         if (rockCache.size() > MAX_CACHE_SIZE) {
             std::vector<std::pair<RockCacheKey, int>> ages;
             for (auto& pair : rockCache) {
@@ -763,11 +791,13 @@ void Rock3DObjMgr::render() {
             }
             std::cout << "Cache limit reached - removed " << toRemove << " oldest entries" << std::endl;
         }
-
+#ifdef PRINT_CACHE_STATS
         std::cout << "Rock cache: " << hits << " hits, " << misses << " misses, " 
                   << regens << " regens, " << rockCache.size() << " cached" << std::endl;
-        
+#endif
+#ifdef PRINT_STATS       
         Rock3DMgr::printStats();
+#endif
         vbo_valid = true;
     }
 

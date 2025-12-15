@@ -2708,6 +2708,7 @@ void Scene::render_shadows()
 			Raster.renderFgShadows();
 	}
 	project();
+	TheScene->clr_moved();
 
 	Raster.render();
 	project();

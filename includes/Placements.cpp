@@ -847,7 +847,7 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>11) hardness_bias=arg[11];
 	if(n>12) selection_bias=arg[12];
 	if(slope_bias)
-		fs=calcDensity(Slope,0.25,slope_bias,0.2);
+		fs=calcDensity(Slope,0.4,2*slope_bias,0.2);
 	if(ht_bias)
 		fh=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
 	if(lat_bias)

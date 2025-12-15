@@ -71,7 +71,7 @@ public:
     static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-    MCObject* getTemplateForLOD(int resolution, bool noisy, double noiseAmpl, TNode *tc, double comp);
+    MCObject* getTemplateForLOD(int resolution, double ampl, double comp, double rval, TNode *tc);
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -82,6 +82,7 @@ public:
 	const char *name() { return "Rocks3D";}
     bool setProgram();
     void render();
+	void render_zvals();
 	void render_shadows();
     void render_objects();
 	

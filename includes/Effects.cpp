@@ -20,7 +20,7 @@ EffectsMgr Raster;	// one and only global object
 #define JMAPTEXID   2
 //#define DEBUG_EFFECTS
 
-static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH","PLANT_ZVALS","PLANT_SHADOWS"};
+static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH","PLACE_ZVALS","PLACE_SHADOWS"};
 // Effects supported (using shaders)
 //  1. haze (horizontal)
 //  2. vfog (vertical)

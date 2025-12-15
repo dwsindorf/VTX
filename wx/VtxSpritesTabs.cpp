@@ -30,6 +30,9 @@ enum{
 	ID_ENABLE,
 	ID_DELETE,
 	ID_SAVE,
+	
+	ID_NAME_TEXT,
+
     ID_FILELIST,
     ID_SIZE_SLDR,
     ID_SIZE_TEXT,

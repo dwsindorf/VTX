@@ -19,9 +19,14 @@ protected:
 	ExprSliderCtrl *DropSlider;
 	ExprSliderCtrl *AmplSlider;
 	ExprTextCtrl   *NoiseExpr;
+	ExprSliderCtrl *SlopeBiasSlider;
+	ExprSliderCtrl *PhiBiasSlider;
+	ExprSliderCtrl *HtBiasSlider;
+	ExprSliderCtrl *HardBiasSlider;
+
 	wxChoice *m_scale_exp;
 	wxChoice *m_orders;
-	wxChoice *m_seed;
+	//wxChoice *m_seed;
 
 	TNrocks *object() 	{ return (TNrocks *)object_node->node;}
 	Planetoid *getOrbital()
@@ -56,6 +61,7 @@ public:
 		delete DropSlider;
 		delete AmplSlider;
 		delete NoiseExpr;
+		
 	}
 	bool Create(wxWindow* parent,
 				wxWindowID id,
@@ -73,6 +79,10 @@ public:
 	DEFINE_SLIDER_EVENTS(Flatness)
 	DEFINE_SLIDER_EVENTS(Drop)
 	DEFINE_SLIDER_EVENTS(Ampl)
+	DEFINE_SLIDER_EVENTS(SlopeBias)
+	DEFINE_SLIDER_EVENTS(PhiBias)
+	DEFINE_SLIDER_EVENTS(HardBias)
+	DEFINE_SLIDER_EVENTS(HtBias)
 
     void OnDelete(wxCommandEvent& event);
 	void OnEnable(wxCommandEvent& event);

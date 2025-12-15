@@ -143,78 +143,55 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
     panel->SetSizer(topSizer);
 
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
-    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 0);
 
-	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",50,120);
+    wxStaticBoxSizer* props = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Properties"));
+    
+	//wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",50,100);
+	props->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	
-	m_skeleton=new wxCheckBox(panel, ID_3D, "Skeleton");
-	m_skeleton->SetValue(true);
-	hline->Add(m_skeleton, 0, wxALIGN_LEFT|wxALL,5);
-	
-	m_lines=new wxCheckBox(panel, ID_LINES, "Lines");
-	m_lines->SetValue(false);
-	hline->Add(m_lines, 0, wxALIGN_LEFT|wxALL,5);
-
-	m_splines=new wxCheckBox(panel, ID_SPLINES, "Splines");
-	m_splines->SetValue(true);
-	hline->Add(m_splines, 0, wxALIGN_LEFT|wxALL,5);
-
-	m_show_one=new wxCheckBox(panel, ID_SPLINES, "ShowOne");
-	m_show_one->SetValue(false);
-	hline->Add(m_show_one, 0, wxALIGN_LEFT|wxALL,5);
-	
-	hline->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-	boxSizer->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
-
-    wxBoxSizer *distro = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Multilevel"));
-
-    distro->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL, 4);
+	props->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL,5);
 
 	wxString orders[]={"1","2","3","4","5","6","7","8","9","10"};
 	m_orders=new wxChoice(panel, ID_LEVELS, wxDefaultPosition,wxSize(50,-1),10, orders);
 	m_orders->SetSelection(0);
 	
-	distro->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
-
-    // size
-	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Size",40, VALUE2,60);
+	props->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 0);
+	
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL1,VALUE2,SLIDER2);
+	DensitySlider->setRange(0.0,1.0);
+	DensitySlider->setValue(1.0);
+	props->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	props->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	
+	boxSizer->Add(props,0,wxALIGN_LEFT|wxALL,0);
+		
+    wxStaticBoxSizer* size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Size"));
+    
+	SizeSlider=new SliderCtrl(panel,ID_SIZE_SLDR,"Max",LABEL2,VALUE2,SLIDER2);
 	SizeSlider->setRange(1,200);
 	SizeSlider->setValue(10.0);
 
-	distro->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	size->Add(SizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",40,VALUE2,60);
-	DensitySlider->setRange(0.0,1.0);
-	DensitySlider->setValue(1.0);
-	distro->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	distro->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
-	
-	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
-	
-    wxStaticBoxSizer* size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Dispersion"));
-
-	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Size",LABEL2,VALUE2,SLIDER2);
+	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta",LABEL2,VALUE2,SLIDER2);
 	DeltaSizeSlider->setRange(0.0,2);
 	DeltaSizeSlider->setValue(0.0);
+	
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
-	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
-	DropSlider->setRange(0,2);
-	DropSlider->setValue(0.0);
-	
-	size->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
 	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 	
 	// biases
 	
 	wxStaticBoxSizer* bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density Bias"));
 
-	hline = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	//hline = new wxBoxSizer(wxHORIZONTAL);
 	
 	SlopeBiasSlider=new ExprSliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
 	SlopeBiasSlider->setRange(-1,1);
@@ -248,7 +225,35 @@ void VtxPlantTabs::AddDistribTab(wxWindow *panel){
 	bias->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
 
 	boxSizer->Add(bias,0,wxALIGN_LEFT|wxALL,0);
+	
+    wxStaticBoxSizer* misc = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Other"));
+	
+	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2, VALUE2,SLIDER2);
+	DropSlider->setRange(0,2);
+	DropSlider->setValue(0.0);
+	
+	misc->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	m_skeleton=new wxCheckBox(panel, ID_3D, "Skeleton");
+	m_skeleton->SetValue(true);
+	misc->Add(m_skeleton, 0, wxALIGN_LEFT|wxTOP,5);
+	
+	m_lines=new wxCheckBox(panel, ID_LINES, "Lines");
+	m_lines->SetValue(false);
+	misc->Add(m_lines, 0, wxALIGN_LEFT|wxTOP,5);
 
+	m_splines=new wxCheckBox(panel, ID_SPLINES, "Splines");
+	m_splines->SetValue(true);
+	misc->Add(m_splines, 0, wxALIGN_LEFT|wxTOP,5);
+
+	m_show_one=new wxCheckBox(panel, ID_SPLINES, "One");
+	m_show_one->SetValue(false);
+	misc->Add(m_show_one, 0, wxALIGN_LEFT|wxTOP,5);
+	
+	misc->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+
+	//misc->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(misc, 0, wxALIGN_LEFT|wxALL,0);
 }
 
 void VtxPlantTabs::updateControls(){
@@ -290,12 +295,11 @@ wxString VtxPlantTabs::exprString(){
 	s+=DensitySlider->getText()+",";
 	s+="0,"; // compr (not used)
 	s+=DropSlider->getText();
-	s+="0,0,"; // noise_amp noise_expr (not used)
+	s+=",0,0,"; // noise_amp noise_expr (not used)
 	s+=SlopeBiasSlider->getText()+",";
 	s+=HtBiasSlider->getText()+",";
 	s+=PhiBiasSlider->getText()+",";
-	s+=HardBiasSlider->getText()+",";
-	s+="0"; // selection bias
+	s+=HardBiasSlider->getText();
 	s+=")";
  	return wxString(s);
 }
@@ -312,7 +316,7 @@ void VtxPlantTabs::setObjAttributes(){
 	if(strlen(obj->name_str))
 		sceneDialog->setNodeName(obj->name_str);
 
-	cout<<"set:"<<s.ToAscii()<<endl;
+	//cout<<"set:"<<s.ToAscii()<<endl;
 
 	obj->setExpr((char*)s.ToAscii());
 	obj->applyExpr();
@@ -331,6 +335,7 @@ void VtxPlantTabs::getObjAttributes(){
 
 	TNplant *obj=object();
 	PlantMgr *mgr=(PlantMgr*)obj->mgr;
+	//cout<<"get:";
 
 	object_name->SetValue(obj->nodeName());
 
@@ -338,21 +343,22 @@ void VtxPlantTabs::getObjAttributes(){
 	double maxsize=mgr->maxsize;
 	SizeSlider->setValue(mgr->maxsize*obj->radius/FEET);
 
+	char tmp[1024];
+	tmp[0]=0;
+	
 	TNarg &args=*((TNarg *)obj->left);
-	TNode *a=args[0];
 
-	a=args[2];
+	TNode *a=args[2];
+	a->valueString(tmp);
 	if(a)
 		DeltaSizeSlider->setValue(a);
 	else
 		DeltaSizeSlider->setValue(mgr->mult);
-	
 	a=args[3];
+
 	if(a)
 		DensitySlider->setValue(a);
 	else
-		DensitySlider->setValue(mgr->maxdensity);
-	// args[4]=zcomp
 	a=args[5];
 	if(a)
 		DropSlider->setValue(a);
@@ -365,25 +371,23 @@ void VtxPlantTabs::getObjAttributes(){
 		SlopeBiasSlider->setValue(a);
 	else
 		SlopeBiasSlider->setValue(mgr->slope_bias);
-
 	a=args[9];
 	if(a)
 		HtBiasSlider->setValue(a);
 	else
 		HtBiasSlider->setValue(mgr->ht_bias);
-
 	a=args[10];
 	if(a)
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
-	
+	cout<<PhiBiasSlider->getText()+",";
+
 	a=args[11];
 	if(a)
 		HardBiasSlider->setValue(a);
 	else
 		HardBiasSlider->setValue(mgr->hardness_bias);
-
     getDisplayState();
 
 

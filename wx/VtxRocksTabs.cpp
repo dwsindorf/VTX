@@ -3,11 +3,15 @@
 
 //########################### VtxRocksTabs Class ########################
 
-#define LABEL1 60
-#define VALUE1 60
-#define SLIDER1 150
-#undef SLIDER2
-#define SLIDER2  70
+#define BOX_WIDTH TABS_WIDTH-TABS_BORDER
+#define LINE_WIDTH BOX_WIDTH-TABS_BORDER
+#define LINE_HEIGHT 30
+
+#define VALUE1 50
+#define LABEL1 45
+#undef LABEL2
+#define LABEL2 60
+#define SLIDER1  80
 // define all resource ids here
 enum {
 	OBJ_SHOW,
@@ -23,7 +27,6 @@ enum {
     ID_DELTA_SIZE_TEXT,
     ID_DENSITY_SLDR,
     ID_DENSITY_TEXT,
-    ID_SEED,
     ID_FLATNESS_SLDR,
     ID_FLATNESS_TEXT,
     ID_DROP_SLDR,
@@ -31,6 +34,15 @@ enum {
     ID_AMPL_SLDR,
     ID_AMPL_TEXT,
     ID_NOISE_EXPR,
+    ID_SLOPE_BIAS_SLDR,
+    ID_SLOPE_BIAS_TEXT,
+    ID_PHI_BIAS_SLDR,
+    ID_PHI_BIAS_TEXT,
+    ID_HT_BIAS_SLDR,
+    ID_HT_BIAS_TEXT,
+    ID_HARD_BIAS_SLDR,
+    ID_HARD_BIAS_TEXT,
+
 };
 
 
@@ -44,12 +56,15 @@ SET_SLIDER_EVENTS(DENSITY,VtxRocksTabs,Density)
 SET_SLIDER_EVENTS(FLATNESS,VtxRocksTabs,Flatness)
 SET_SLIDER_EVENTS(DROP,VtxRocksTabs,Drop)
 SET_SLIDER_EVENTS(AMPL,VtxRocksTabs,Ampl)
+SET_SLIDER_EVENTS(SLOPE_BIAS,VtxRocksTabs,SlopeBias)
+SET_SLIDER_EVENTS(PHI_BIAS,VtxRocksTabs,PhiBias)
+SET_SLIDER_EVENTS(HT_BIAS,VtxRocksTabs,HtBias)
+SET_SLIDER_EVENTS(HARD_BIAS,VtxRocksTabs,HardBias)
 
 EVT_TEXT_ENTER(ID_NOISE_EXPR,VtxRocksTabs::OnChanged)
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxRocksTabs::OnNameText)
 
 EVT_CHOICE(ID_SCALE_MULT, VtxRocksTabs::OnChanged)
-EVT_CHOICE(ID_SEED, VtxRocksTabs::OnChanged)
 EVT_CHOICE(ID_ORDERS, VtxRocksTabs::OnChanged)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxRocksTabs::OnAddItem)
@@ -121,99 +136,124 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 
     wxStaticBoxSizer* props = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Properties"));
 
- 	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Label",LABEL2+10,VALUE2+SLIDER2);
+	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",50,100);
  	props->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
- 	boxSizer->Add(props,0,wxALIGN_LEFT|wxALL,0);
+ 
+	props->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(40,-1)), 0, wxALIGN_LEFT|wxALL,5);
 
-    wxStaticBoxSizer* distro = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Distribution"));
-
-	// levels
-
-    distro->Add(new wxStaticText(panel,-1,"Levels",wxDefaultPosition,wxSize(LABEL2,-1)), 0, wxALIGN_LEFT|wxALL, 4);
-
-	wxString orders[]={"1","2","3","4","5","6","7","8","9","10"};
+ 	wxString orders[]={"1","2","3","4","5","6","7","8","9","10"};
 	m_orders=new wxChoice(panel, ID_ORDERS, wxDefaultPosition,wxSize(50,-1),10, orders);
 	m_orders->SetSelection(0);
 
-	distro->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 3);
-
-	distro->AddSpacer(10);
-
+	props->Add(m_orders, 0, wxALIGN_LEFT|wxALL, 0);
 	// density
 
-	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL2S,VALUE1,SLIDER2);
+	DensitySlider=new ExprSliderCtrl(panel,ID_DENSITY_SLDR,"Density",LABEL1,VALUE2,SLIDER2);
 	DensitySlider->setRange(0.0,1.0);
 	DensitySlider->setValue(1.0);
-	distro->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	props->Add(DensitySlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	props->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
+	
+	boxSizer->Add(props,0,wxALIGN_LEFT|wxALL,0);
+	//props->AddSpacer(10);
 
-	distro->AddSpacer(10);
-
-	//distro->Add(new wxStaticText(panel,-1,"L"), 0, wxALIGN_LEFT|wxALL, 4);
-	wxString seed[]={"ID0","ID1","ID2","ID3","ID4","ID5","ID6","ID7","ID8","ID9"};
-	m_seed=new wxChoice(panel, ID_SEED, wxDefaultPosition,wxSize(60,-1),10, seed);
-	m_seed->SetSelection(0);
-
-	distro->Add(m_seed, 0, wxALIGN_LEFT|wxALL, 3);
-	distro->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-
-	boxSizer->Add(distro,0,wxALIGN_LEFT|wxALL,0);
-
-    wxBoxSizer *size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Max-Delta Size"));
+    wxStaticBoxSizer* size = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Size"));
 
     // size
-	ScaleSlider=new SliderCtrl(panel,ID_SCALE_SLDR,"",0, VALUE1,SLIDER2);
+	ScaleSlider=new SliderCtrl(panel,ID_SCALE_SLDR,"Max",LABEL1,VALUE2,SLIDER1);
 	ScaleSlider->setRange(0.1,0.9999);
 	ScaleSlider->setValue(1.0);
 
 	size->Add(ScaleSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	wxString exps[]={"10","1","0.1","0.01","0.001","1e-4","1e-5","1e-6","1e-7"};
-	m_scale_exp=new wxChoice(panel, ID_SCALE_MULT, wxDefaultPosition,wxSize(70,-1),9, exps);
+	m_scale_exp=new wxChoice(panel, ID_SCALE_MULT, wxDefaultPosition,wxSize(50,-1),9, exps);
 	m_scale_exp->SetSelection(5);
 	size->Add(new wxStaticText(panel,-1,"X"), 0, wxALIGN_LEFT|wxALL, 4);
 	size->Add(m_scale_exp, 0, wxALIGN_LEFT|wxALL, 3);
 
-	size->AddSpacer(20);
+	//size->AddSpacer(20);
 
-	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"",0,VALUE1,SLIDER2);
+	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta",LABEL1,VALUE2,SLIDER1);
 	DeltaSizeSlider->setRange(0.0,1.0);
 	DeltaSizeSlider->setValue(0.5);
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	size->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	size->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(size,0,wxALIGN_LEFT|wxALL,0);
 
 
-    wxStaticBoxSizer* ampl = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Surface"));
+    wxStaticBoxSizer* shape = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Shape"));
 
+    wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+    
 	AmplSlider=new ExprSliderCtrl(panel,ID_AMPL_SLDR,"Ampl",LABEL2, VALUE1,SLIDER2);
 	AmplSlider->setRange(0.0,1.0);
-	ampl->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	hline->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,160);
-	ampl->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-
-	ampl->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
-
-	boxSizer->Add(ampl,0,wxALIGN_LEFT|wxALL,0);
-
-    wxStaticBoxSizer* shape = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Shape"));
+	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,140);
+	hline->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	
+	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
 
 	FlatnessSlider=new ExprSliderCtrl(panel,ID_FLATNESS_SLDR,"Compress",LABEL2, VALUE1,SLIDER2);
 	FlatnessSlider->setRange(0,1.0);
 	FlatnessSlider->setValue(0.5);
 
-	shape->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(FlatnessSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 	
 	DropSlider=new ExprSliderCtrl(panel,ID_DROP_SLDR,"Drop",LABEL2S, VALUE1,SLIDER2);
 	DropSlider->setRange(0,1);
 	DropSlider->setValue(0.0);
 
-	shape->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	hline->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
-
-	shape->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	shape->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);
+	
+	// biases
+	
+	wxStaticBoxSizer* bias = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Density Bias"));
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	SlopeBiasSlider=new ExprSliderCtrl(panel,ID_SLOPE_BIAS_SLDR,"Slope",LABEL2,VALUE2,SLIDER2);
+	SlopeBiasSlider->setRange(-1,1);
+	SlopeBiasSlider->setValue(0.0);
+
+	hline->Add(SlopeBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	HardBiasSlider=new ExprSliderCtrl(panel,ID_HARD_BIAS_SLDR,"Hardness",LABEL2,VALUE2,SLIDER2);
+	HardBiasSlider->setRange(-1,1);
+	HardBiasSlider->setValue(0.0);
+
+	hline->Add(HardBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	
+	PhiBiasSlider=new ExprSliderCtrl(panel,ID_PHI_BIAS_SLDR,"Latitude",LABEL2,VALUE2,SLIDER2);
+	PhiBiasSlider->setRange(-1,1);
+	PhiBiasSlider->setValue(0.0);
+
+	hline->Add(PhiBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	HtBiasSlider=new ExprSliderCtrl(panel,ID_HT_BIAS_SLDR,"Height",LABEL2, VALUE2,SLIDER2);
+	HtBiasSlider->setRange(-1,1);
+	HtBiasSlider->setValue(0.0);
+
+	hline->Add(HtBiasSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	bias->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	bias->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
+
+	boxSizer->Add(bias,0,wxALIGN_LEFT|wxALL,0);
 
 }
 
@@ -232,8 +272,8 @@ void VtxRocksTabs::getObjAttributes(){
 	TNrocks *tc=object();
 	RockMgr *mgr=(RockMgr*)tc->mgr;
 
-	int id=tc->get_id();
-	m_seed->SetSelection(id);
+	//int id=tc->get_id();
+	//m_seed->SetSelection(id);
 	TNarg &args=*((TNarg *)tc->left);
 	TNode *a=args[0];
 
@@ -289,18 +329,28 @@ void VtxRocksTabs::getObjAttributes(){
 	else
 		NoiseExpr->SetValue(wxString("noise(GRADIENT|NLOD,0,2)"));
 		
-	//TNode *expr=tc->getNoiseExpr();
-	//if(expr)
-	//	NoiseExpr->setValue(expr);
-		
-	
-	//NoiseExpr->setValue(tc->getNoiseExpr());
-	//a=args[7];
-	//if(a)
-	//	NoiseExpr->setValue(a);
-	//else
-	//	NoiseExpr->SetValue(wxString("noise(GRADIENT|NLOD,0,2)"));
+	a=args[8];
+	if(a)
+		SlopeBiasSlider->setValue(a);
+	else
+		SlopeBiasSlider->setValue(mgr->slope_bias);
+	a=args[9];
+	if(a)
+		HtBiasSlider->setValue(a);
+	else
+		HtBiasSlider->setValue(mgr->ht_bias);
+	a=args[10];
+	if(a)
+		PhiBiasSlider->setValue(a);
+	else
+		PhiBiasSlider->setValue(mgr->lat_bias);
+	cout<<PhiBiasSlider->getText()+",";
 
+	a=args[11];
+	if(a)
+		HardBiasSlider->setValue(a);
+	else
+		HardBiasSlider->setValue(mgr->hardness_bias);
 	update_needed=false;
 
 }
@@ -317,12 +367,6 @@ void VtxRocksTabs::setObjAttributes(){
 	s=tc->typeName();
 	s+="(";
      	
-	int pid=m_seed->GetSelection();
-	if(pid>0){
-		sprintf(id,"ID%d",pid);
-		s+=wxString(id);
-		s+=",";
-	}
 	int orders = m_orders->GetSelection();
 	sprintf(id,"%d",orders+1);
 	s+=wxString(id)+",";
@@ -347,15 +391,15 @@ void VtxRocksTabs::setObjAttributes(){
 		s+=",";
 		s+=NoiseExpr->getText();
 	}
+	s+=",";
+	s+=SlopeBiasSlider->getText()+",";
+	s+=HtBiasSlider->getText()+",";
+	s+=PhiBiasSlider->getText()+",";
+	s+=HardBiasSlider->getText();
+
 	s+=")";
 
-	//cout << s << endl;
 	s+="\n";
-	
-//	if(!NoiseExpr->getText().IsEmpty()){
-//		wxString t=NoiseExpr->getText();
-//		tc->setNoiseExpr((char*)t.ToAscii());
-//	}
 
 
 	char p[1024];

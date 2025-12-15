@@ -3211,6 +3211,8 @@ void Star::set_lights()
 	setMatrix();
 	set_point();
 
+	//cout<<"Star::set_lights:"<<TheView->xoffset.x<<endl;
+
 	l->point=point;  // 	position of light in "eye" frame
 
 	// OGL will set position of light from current state of ModelMatrix
@@ -4225,7 +4227,6 @@ void Planetoid::set_tod(){
 	Point light_point=Lights[0]->point.mm(TheScene->InvModelMatrix.values());
 	Point ls=light_point.spherical();
 	light_theta=ls.y;
-	//cout<<"light_theta:"<<light_theta<<endl;
 }
 //-------------------------------------------------------------
 // Planetoid::set_lighting()  set light attributes
@@ -4534,6 +4535,7 @@ double Planetoid::dlt(){
 //-------------------------------------------------------------
 double Planetoid::calc_delt()
 {
+	//cout<<"last_dt:"<<last_dt<<endl;
 	double dv=dlt();
 	double wt=unwrap(last_dt,dv);
 	double del=P360(wt)/360;

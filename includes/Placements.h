@@ -135,7 +135,7 @@ public:
 	virtual int placements() { return 0;}
 	virtual const char *name() { return 0;}
 	virtual bool supports_shadows() { return false;}
-	virtual void render_zvals() {render_shadows();}
+	virtual void render_zvals() {}
 	virtual void render_shadows(){}
 
 	int objects() { return objs.size;}

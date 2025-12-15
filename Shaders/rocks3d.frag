@@ -67,7 +67,7 @@ void main() {
 #endif  
 
     gl_FragData[0]=vec4(color, 1.0);
-    gl_FragData[1]=vec4(2,DEPTH,1,1.0); // set type to 0 to bypass second haze correction in effects.frag
+    gl_FragData[1]=vec4(2,DEPTH,1,1.0); // 
     
     //gl_FragColor[0] = vec4(night_lighting,0,0,1.0);
 }

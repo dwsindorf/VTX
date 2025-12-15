@@ -314,33 +314,6 @@ public:
 
 };
 
-//************************************************************
-// Class TNsprite
-//************************************************************
-class TNsprite : public TNplacements, public ImageInfo
-{
-public:
-	Sprite *sprite;
-	double radius;
-	double maxdensity;
-	TNsprite(char *, int opts,  TNode *l, TNode *r);
-	~TNsprite();
-	void eval();
-	void init();
-	int typeValue()			{ return ID_SPRITE;}
-	const char *typeName ()	{ return "sprite";}
-	const char *symbol()	{ return "Sprite";}
-
-	void setName(char*);
-	void valueString(char *);
-	void save(FILE*);
-	void setSpritesImage(char *name);
-	void set_id(int i);
-	char *nodeName();
-	int optionString(char *);
-	void saveNode(FILE *f);
-	void applyExpr();
-};
 
 //************************************************************
 // Class TNrocks
@@ -375,6 +348,34 @@ public:
 	int typeValue()			{ return ID_ROCK3D;}
 	const char *typeName ()	{ return "rocks3d";}
 	//const char *symbol()	{ return "Rock3D";}
+};
+
+//************************************************************
+// Class TNsprite
+//************************************************************
+class TNsprite : public TNplacements, public ImageInfo
+{
+public:
+	Sprite *sprite;
+	double radius;
+	double maxdensity;
+	TNsprite(char *, int opts,  TNode *l, TNode *r);
+	~TNsprite();
+	void eval();
+	void init();
+	int typeValue()			{ return ID_SPRITE;}
+	const char *typeName ()	{ return "sprite";}
+	const char *symbol()	{ return "Sprite";}
+
+	void setName(char*);
+	void valueString(char *);
+	void save(FILE*);
+	void setSpritesImage(char *name);
+	void set_id(int i);
+	char *nodeName();
+	int optionString(char *);
+	void saveNode(FILE *f);
+	void applyExpr();
 };
 
 //************************************************************
