@@ -15,6 +15,7 @@
 
 #include "PointClass.h"
 #include "PerlinNoise.h"
+#include "ColorClass.h"
 
 #include <vector>
 #include <functional>
@@ -33,6 +34,7 @@
 struct MCTriangle {
     Point vertices[3];
     Point normal;
+    Color colors[3];
 };
 
 // Scalar field function type - returns density at (x,y,z)
@@ -82,6 +84,7 @@ public:
     // Optional: OpenGL VBO handles for rendering
     GLuint vboVertices;
     GLuint vboNormals;
+    GLuint vboColors;
     bool vboValid;
     
     MCObject();
@@ -139,6 +142,7 @@ public:
     void setIsoLevel(double iso);
      
     // Object management
+    MCObject* addObject(const Point& position, double size);
     MCObject* addObject(const std::string& name, const Point& position, double size);
     MCObject* getObject(const std::string& name);
     void removeObject(const std::string& name);

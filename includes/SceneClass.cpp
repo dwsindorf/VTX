@@ -2605,6 +2605,7 @@ void Scene::render_shadows()
 		Raster.apply();
 		return;
 	}
+	bool shadow_pass=false;
 	Raster.init_render();
 
     int single_pass=0;
@@ -2702,18 +2703,20 @@ void Scene::render_shadows()
 			Raster.apply();
 			return;
 		}
-
 		project();
 		if(Raster.shadows() && !test_view())
 			Raster.renderFgShadows();
+		shadow_pass=true;
 	}
 	project();
-	TheScene->clr_moved();
+	//bool was_moved=moved();
+	//if(shadow_pass)
+	//	TheScene->clr_moved();
 
 	Raster.render();
 	project();
 	render_objects();
-
+	shadow_pass=false;
 	if(shadows_mode())
 		shadow_group(2);
 	project();

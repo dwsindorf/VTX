@@ -3,6 +3,7 @@
 uniform float night_ligting;
 varying vec3 Normal;
 varying vec3 EyeDir;
+varying vec3 VertexColor;
 
 void main() {
     gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
@@ -12,4 +13,6 @@ void main() {
     
     // Eye direction (position in eye space)
     EyeDir = (gl_ModelViewMatrix * gl_Vertex).xyz;
+    
+    VertexColor = gl_Color.rgb;
 }

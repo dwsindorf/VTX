@@ -15,6 +15,7 @@ varying vec3 EyeDir;
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
+varying vec3 VertexColor;
 
 uniform float night_lighting;
 
@@ -58,7 +59,7 @@ vec3 setLighting(vec3 BaseColor) {
 }
 
 void main() {
-    vec3 rockColor = vec3(0.6, 0.5, 0.4);
+    vec3 rockColor = VertexColor; 
     vec3 color = setLighting(rockColor);
     
 #ifdef SHADOWS

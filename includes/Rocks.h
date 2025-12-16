@@ -68,10 +68,11 @@ public:
 	static bool noiseSettingsChanged();
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;
-    static std::map<int, MCObject*> lodTemplates;
+    //static std::map<int, MCObject*> lodTemplates;
     
     static bool vbo_valid;
-    MCObject* getTemplateForLOD(int resolution, double ampl, double comp, double rval, TNode *tc);
+    //MCObject* getTemplateForLOD(int resolution, double ampl, double comp, double rval, TNode *tc);
+ 
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -104,6 +105,7 @@ protected:
 public:
 	TNode   *vnoise;
 	TNode   *rnoise;
+	TNode   *color;
 	static int stats[MAX_ROCK_STATS][2];
 	static void clearStats();
 	static void printStats();
