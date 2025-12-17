@@ -658,7 +658,7 @@ TNtexture::TNtexture(char *s, int l, TNode *d)
 // TNtexture::~TNtexture() destructor
 //-------------------------------------------------------------
 TNtexture::~TNtexture()
-{
+{ 
 	DFREE(texture);
 }
 
@@ -764,7 +764,8 @@ void TNtexture::init()
 	    return;
 	}
 	if(Render.invalid_textures()){
-		delete texture;
+		if(texture)
+			delete texture;
 		texture=0;
 	}
     if(texture==0){

@@ -820,7 +820,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 //-------------------------------------------------------------
 void VtxSceneDialog::rebuildObjectTree(){
 	TheScene->suspend();
-	cout<<"rebuildObjectTree start"<<endl;
+	//cout<<"rebuildObjectTree start"<<endl;
 	rebuilding=true;
 	treepanel->DeleteAllItems();
 	if(root)
@@ -843,9 +843,9 @@ void VtxSceneDialog::rebuildObjectTree(){
 	rebuilding=false;
 	selected=root;
 	currentTabs=-1;
-	cout<<"rebuildObjectTree 1"<<endl;
+	//cout<<"rebuildObjectTree 1"<<endl;
 	treepanel->SelectItem(selectedId);
-	cout<<"rebuildObjectTree 2"<<endl;
+	//cout<<"rebuildObjectTree 2"<<endl;
 
 	treepanel->EnsureVisible(selectedId);
 

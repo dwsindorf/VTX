@@ -10,6 +10,7 @@
 #include "ModelClass.h"
 #include "AdaptOptions.h"
 #include "TerrainClass.h"
+#include "ImageClass.h"
 #include "UniverseModel.h"
 #include "GLSLMgr.h"
 #include "Effects.h"
@@ -31,12 +32,15 @@ static TerrainData Td;
 
 static bool first=true;
 
-#define PRINT_STATS
+//#define PERLIN_NOISE // use built in noise functions
+
+//#define PRINT_STATS
 //#define PRINT_LOD_STATS
-#define PRINT_ROCK_STATS
-#define PRINT_CACHE_STATS
+//#define PRINT_ROCK_STATS
+//#define PRINT_CACHE_STATS
 //#define PRINT_ROCK_CACHE_STATS
-//
+
+//#define TEST_TEXTURES
 #define USE_TEMPLATES
 
 static bool shadow_start=false;
@@ -68,9 +72,53 @@ static bool shadow_start=false;
 //************************************************************
 Rock3D::Rock3D(int t, TNode *e):PlaceObj(t,e)
 {
+	textureID=texid=0;
 }
 PlacementMgr *Rock3D::mgr() { 
 	return ((TNrocks3D*)expr)->mgr;
+}
+static int tid=0;
+bool Rock3D::setProgram(){
+	Rock3DMgr* rmgr=(Rock3DMgr*)mgr();
+	for(int i=0;i<rmgr->texs.size;i++){
+		TNtexture *tntex=rmgr->texs[i];
+		Texture *texture=tntex->texture;
+		Image *image=texture->timage;
+		if(!tntex->isEnabled() || texture->t1d() || !image->valid())
+			continue;
+#ifdef TEST_TEXTURES
+		if(textureID==0){
+			texid=tid++;
+			glGenTextures(1, &textureID);
+			glBindTexture(GL_TEXTURE_2D, textureID);
+			
+			// Texture parameters
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+			
+			int w = image->width;
+			int h = image->height;
+			unsigned char* pixels = (unsigned char*)image->data;
+			
+			if(image->alpha_image() || image->gltype() == GL_RGBA)
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+			else
+	            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);			
+		}
+		glBindTexture(GL_TEXTURE_2D, textureID);
+#endif
+	}
+	return true;
+}
+
+void Rock3D::invalidateTexture(){
+	if(textureID){
+		glDeleteTextures(1,&textureID);
+		textureID=0;
+	}
 }
 
 //************************************************************
@@ -98,6 +146,11 @@ static SurfaceFunction makeCenteredEllipsoid(const Point& center, double rx, dou
         return 1.0 - distance;  // Positive inside ellipsoid
     };
 }
+
+// Noisy sphere field for marching cubes iso-surface extraction using standard noise function
+// Noisy ellipsoid field for marching cubes iso-surface extraction using standard noise function
+
+#ifdef PERLIN_NOISE
 // Noisy sphere field for marching cubes iso-surface extraction using built-in noise function
 static SurfaceFunction makeNoisyRockField(const Point& center, double radius, int seed, double noiseAmpl) {
     return [center, radius, seed, noiseAmpl](double x, double y, double z) -> double {
@@ -124,39 +177,6 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
     };
 }
 
-// Noisy sphere field for marching cubes iso-surface extraction using standard noise function
-// Noisy ellipsoid field for marching cubes iso-surface extraction using standard noise function
-static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, double noiseAmpl, TNode *tc) {
-    return [center, rx, ry, rz, noiseAmpl, tc](double x, double y, double z) -> double {
-     	//TheNoise.rseed = seed;
-        
-        double dx = x - center.x;
-        double dy = y - center.y;
-        double dz = z - center.z;
-        
-        // Ellipsoid distance (not sphere)
-        double ex = dx / rx;
-        double ey = dy / ry;
-        double ez = dz / rz;
-        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
-        
-        // Base ellipsoid (positive inside)
-        double baseEllipsoid = 1.0 - ellipsoidDist;
-        
-        double scale = 2.0 / ((rx + ry + rz) / 3.0);  // Average radius for scale
-        Point np = Point(dx, dy, dz);
- 		TheNoise.set(np);
- 		double rz = 0;
- 		tc->eval();
-		if (tc->typeValue() == ID_POINT)
- 			rz = S0.p.z;
- 		else
- 			rz = S0.s;
-        return baseEllipsoid - rz * noiseAmpl;
-    };
-}
-
-#ifdef PERLIN_NOISE
 // Post-mesh vertex displacement OLD uses Perlin noise function
 static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) {
     static std::map<int, PerlinNoise> noiseGens;
@@ -198,6 +218,36 @@ static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) 
     }
 }
 #endif
+static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, double noiseAmpl, TNode *tc) {
+    return [center, rx, ry, rz, noiseAmpl, tc](double x, double y, double z) -> double {
+     	//TheNoise.rseed = seed;
+        
+        double dx = x - center.x;
+        double dy = y - center.y;
+        double dz = z - center.z;
+        
+        // Ellipsoid distance (not sphere)
+        double ex = dx / rx;
+        double ey = dy / ry;
+        double ez = dz / rz;
+        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
+        
+        // Base ellipsoid (positive inside)
+        double baseEllipsoid = 1.0 - ellipsoidDist;
+        
+        double scale = 2.0 / ((rx + ry + rz) / 3.0);  // Average radius for scale
+        Point np = Point(dx, dy, dz);
+ 		TheNoise.set(np);
+ 		double rz = 0;
+ 		tc->eval();
+		if (tc->typeValue() == ID_POINT)
+ 			rz = S0.p.z;
+ 		else
+ 			rz = S0.s;
+        return baseEllipsoid - rz * noiseAmpl;
+    };
+}
+
 // Post-mesh vertex displacement and color: uses standard noise function
 static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc) {
     
@@ -222,8 +272,8 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
 			Point pn;
 			double rz=0;
 			Point pv=vertex;
-			SINIT;
 			if(tv && tv->isEnabled()){
+				SINIT;
 				tv->eval();	
 				if(S0.pvalid()){
 					Point pd=S0.p;
@@ -231,20 +281,13 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
 					vertex=vertex+delta;
 				}
 			}
+			color=rock_color;
 			if(tc && tc->isEnabled()){
 				SINIT;
 				tc->eval();	
 				if(S0.cvalid())
 					color=S0.c;
-				else if (S0.svalid()){
-					double gray=clamp(fabs(S0.s),0,1);
-					color=Color(gray,gray,gray);	
-				}
-				else
-					color=rock_color;					
 			}
-			else
-				color=rock_color;
         }
     }
 }
@@ -335,6 +378,7 @@ Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 	drop=0.0;
 	vnoise=0;
 	rnoise=0;
+	color=0;
 
 #ifdef TEST_ROCKS
     set_testColor(true);
@@ -378,14 +422,13 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  8, 12.0 },
     { 16, 20.0 },
     { 32, 50.0 },
-    { 64, 90.0 },
-    { 128,  1e9 }  // default / max detail (increased from 24)
+    { 48, 90.0 },
+    { 96,  1e9 }  // default / max detail (increased from 24)
 };
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
 		stats[i][0]=stats[i][1]==0;
 	}
-	
 }
 
 void Rock3DMgr::printStats(){
@@ -448,9 +491,6 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
 }
 
-//#define PERLIN_NOISE // use built in noise functions
-
-
 void Rock3DObjMgr::freeLODTemplates() {
     for (auto& pair : lodTemplates) {
         delete pair.second;
@@ -478,18 +518,29 @@ double calculateNightLighting(double tod) {
 //-------------------------------------------------------------
 bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
-        return false;
-   
+        return false;   
  
 	if(PlaceObjMgr::shadow_mode)
 		return false;
-
+	cout<<"Rock3DObjMgr::setProgram() objs="<<objs.size<<endl;
+	tid=0;
+	for(int i=0;i<objs.size;i++){
+		objs[i]->setProgram();
+	}
+    
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
 
     bool do_shadows=Raster.shadows();
  	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
  		sprintf(defs+strlen(defs),"#define SHADOWS\n");
+ 	
+	if(Render.textures()){
+		sprintf(defs+strlen(defs),"#define NTEXS %d\n",tid);
+	}
+	else
+		sprintf(defs+strlen(defs),"#define NTEXS 0\n");
+
 
     GLSLMgr::setDefString(defs);
     GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
@@ -595,7 +646,7 @@ void Rock3DObjMgr::render() {
     	lodCacheHits=lodCacheMisses=0;
       
     if (update_needed) {
-    	cout<<"Rebuilding shadow_mode:"<<PlaceObjMgr::shadow_mode<<" moved:"<<moved<<" shadow_start:"<<shadow_start<<endl;
+    	//cout<<"Rebuilding shadow_mode:"<<PlaceObjMgr::shadow_mode<<" moved:"<<moved<<" shadow_start:"<<shadow_start<<endl;
         if (changed) {
             std::cout << "Settings changed - clearing cache" << std::endl;
             rockCache.clear();
@@ -883,6 +934,18 @@ TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNplacements(t|MCROCK
 	rock=0;
 }
 
+
+static Rock3DMgr *rm;
+static void collectTexs(NodeIF *obj){
+	int type=obj->typeValue();
+	if(type==ID_TEXTURE){
+		TNtexture *tex=(TNtexture *)obj;
+		if(tex->texture)
+			tex->texture->tid=tid;
+		rm->texs.add(tex);
+	}
+}
+
 //-------------------------------------------------------------
 // TNrocks3D::init() initialize the node
 //-------------------------------------------------------------
@@ -898,8 +961,6 @@ void TNrocks3D::init()
 		tamp->eval();
 		rmgr->rnoise=args[7];			
 	}
-	if(rock==0)
-		rock=new Rock3D(type,this);	
 	
 	TNode *tv=findChild(ID_POINT);
 	if(tv)
@@ -911,8 +972,16 @@ void TNrocks3D::init()
 		rmgr->color=tc;
 	else
 		rmgr->color=0;
-	mgr->set_first(1);
+	rmgr->texs.reset();
+	rm=rmgr;
+	tid=0;
+	if(base){
+		base->visitNode(collectTexs);
+	}
 
+	mgr->set_first(1);
+	if(rock==0)
+		rock=new Rock3D(type,this);	
 }
 
 //-------------------------------------------------------------

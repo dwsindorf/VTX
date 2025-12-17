@@ -682,18 +682,6 @@ bool PlantObjMgr::setProgram(){
 }
 void PlantObjMgr::render_zvals(){
 	render_shadows();
-//	if(objs.size==0)
-//		return;
-//	if(!PlantMgr::threed)
-//		return;
-//	shadow_mode=true;
-//	GLSLMgr::input_type=GL_LINES;
-//	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-//
-//	Raster.setProgram(Raster.PLACE_ZVALS);
-//	render();
-//
-//	shadow_mode=false;
 }
 void PlantObjMgr::render_shadows(){
 	if(objs.size==0)

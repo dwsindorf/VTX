@@ -9,6 +9,7 @@
 
 class RockMgr;
 class TNnode;
+class TNtexture;
 
 #define MAX_ROCK_STATS 8
 
@@ -67,12 +68,8 @@ public:
   
 	static bool noiseSettingsChanged();
 	static ValueList<PlaceData*> data;
-    static MCObjectManager rocks;
-    //static std::map<int, MCObject*> lodTemplates;
-    
-    static bool vbo_valid;
-    //MCObject* getTemplateForLOD(int resolution, double ampl, double comp, double rval, TNode *tc);
- 
+    static MCObjectManager rocks;  
+    static bool vbo_valid; 
     static void freeLODTemplates();
 
     ~Rock3DObjMgr();
@@ -95,14 +92,19 @@ public:
 class Rock3D : public PlaceObj
 {
  public:
+	GLuint   textureID;
+	GLuint   texid;
 	Rock3D(int l, TNode *e);
     PlacementMgr *mgr();
+    bool setProgram();
+    void invalidateTexture();
 };
 
 class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
+	LinkedList<TNtexture *> texs;
 	TNode   *vnoise;
 	TNode   *rnoise;
 	TNode   *color;
