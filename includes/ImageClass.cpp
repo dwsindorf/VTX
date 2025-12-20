@@ -658,7 +658,7 @@ TNtexture::TNtexture(char *s, int l, TNode *d)
 // TNtexture::~TNtexture() destructor
 //-------------------------------------------------------------
 TNtexture::~TNtexture()
-{ 
+{
 	DFREE(texture);
 }
 
@@ -758,9 +758,10 @@ void TNtexture::applyExpr()
 //-------------------------------------------------------------
 void TNtexture::init()
 {
+	cout<<"TNtexture::init() "<<name<<endl;
     Image *timage=images.load(name,BMP);
 	if(!timage){
-	    //printf("TNtexture ERROR image %s not found\n",name);
+	    printf("TNtexture ERROR image %s not found\n",name);
 	    return;
 	}
 	if(Render.invalid_textures()){

@@ -10,6 +10,7 @@
 class RockMgr;
 class TNnode;
 class TNtexture;
+class Texture;
 
 #define MAX_ROCK_STATS 8
 
@@ -34,6 +35,19 @@ public:
 
 	virtual void init();
 };
+class TexInfo {
+public:
+	bool     texactive;
+	bool     bumpactive;
+	double   texamp;
+	double   bumpamp;
+	double   scale;
+	int      texid;
+	bool     t2d;
+	TexInfo(Texture *);
+	void print();
+};
+
 class Rock3DObjMgr : public PlaceObjMgr
 {
 public:
@@ -62,6 +76,7 @@ public:
 	    int framesSinceUsed;
 	};    
     static std::map<RockCacheKey, RockCacheEntry> rockCache;
+    static std::list<TexInfo> texs;
     static int cacheHits;
     static int cacheMisses;
     static int cacheRegens;
@@ -92,7 +107,6 @@ public:
 class Rock3D : public PlaceObj
 {
  public:
-	GLuint   textureID;
 	GLuint   texid;
 	Rock3D(int l, TNode *e);
     PlacementMgr *mgr();

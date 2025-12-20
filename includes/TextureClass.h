@@ -20,12 +20,12 @@ class Image;
 class Texture
 {
 	int    options;
-	bool   valid;
-	GLuint id[2];
 	void del();
 	void set_state();
 
 public:
+	GLuint id[2];
+	bool   valid;
 	static int num_attrs;
 	static int num_coords;
 

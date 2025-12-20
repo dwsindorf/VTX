@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-//#define DEBUG_TEXTURES
+#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -67,7 +67,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	s=0;
 	t=0;
 #ifdef DEBUG_TEXTURES
-	cout<<"new Texture "<<timage->height<<"x"<<timage->width<<endl;
+	cout<<"Texture::Texture new Texture "<<timage->height<<"x"<<timage->width<<endl;
 #endif
 }
 
@@ -76,6 +76,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 //-------------------------------------------------------------
 Texture::~Texture()
 {
+	cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
 	del();
 }
 
@@ -434,7 +435,8 @@ bool Texture::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+3.5-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 	double tex_bias=t2d()?bias:0;
- 	sprintf(str,"samplers2d[%d]",tid);    		glUniform1iARB(glGetUniformLocationARB(program,str),tid);
+ 	sprintf(str,"samplers2d[%d]",tid);    		
+ 	glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
  	float near_bias=mipmap()?0:1;
  	float far_bias=mipmap()?0:1;

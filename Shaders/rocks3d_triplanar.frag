@@ -2,10 +2,18 @@
 
 #include "utils.h"
 
+uniform sampler2DRect FBOTex1;
+uniform sampler2DRect FBOTex2;
+uniform sampler2DRect FBOTex3;
+uniform sampler2DRect FBOTex4;
+
+#define SHADOWTEX FBOTex3
+
 varying vec3 Normal;
 varying vec3 EyeDir;
 varying vec3 WorldPos;
 varying vec3 VertexColor;
+varying vec3 TemplatePos;
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
@@ -18,26 +26,22 @@ uniform float bumpScale;
 uniform int useTexture;  // 0=color only, 1=texture only, 2=color*texture
 
 // Triplanar mapping function
-vec3 triplanarMapping(vec3 worldPos, vec3 normal) {
-    // Blend weights based on surface normal
-    vec3 blending = abs(normal);
+vec3 triplanarMapping(vec3 pos) {
+    vec3 blending = abs(pos);
     blending = normalize(max(blending, 0.00001));
     float b = (blending.x + blending.y + blending.z);
     blending /= vec3(b, b, b);
     
-    // Sample texture from 3 planes
-    vec2 xaxis = worldPos.yz * textureScale;
-    vec2 yaxis = worldPos.xz * textureScale;
-    vec2 zaxis = worldPos.xy * textureScale;
+    vec2 xaxis = pos.yz * textureScale;
+    vec2 yaxis = pos.xz * textureScale;
+    vec2 zaxis = pos.xy * textureScale;
     
     vec3 xColor = texture2D(rockTexture, xaxis).rgb;
     vec3 yColor = texture2D(rockTexture, yaxis).rgb;
     vec3 zColor = texture2D(rockTexture, zaxis).rgb;
     
-    // Blend the three projections
     return xColor * blending.x + yColor * blending.y + zColor * blending.z;
 }
-
 // Simple bump mapping (uses texture luminance for height)
 vec3 computeBumpedNormal(vec3 worldPos, vec3 normal) {
     vec3 blending = abs(normal);
@@ -104,10 +108,10 @@ void main() {
     
     if (useTexture == 1) {
         // Texture only
-        rockColor = triplanarMapping(WorldPos, normalize(Normal));
+        rockColor = triplanarMapping(TemplatePos);
     } else if (useTexture == 2) {
         // Color * Texture
-        vec3 texColor = triplanarMapping(WorldPos, normalize(Normal));
+        vec3 texColor = triplanarMapping(TemplatePos);
         rockColor = VertexColor * texColor;
     } else {
         // Color only (default)
@@ -120,7 +124,7 @@ void main() {
     float shadow = 1.0 - texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
     color.rgb = mix(color.rgb, Shadow.rgb, shadow * Shadow.a);
 #endif
-    
+ // DEBUG 3: Show the actual UV coordinates being used
     gl_FragData[0] = vec4(color, 1.0);
     gl_FragData[1] = vec4(2, gl_FragCoord.z, 1, 1.0);
 }

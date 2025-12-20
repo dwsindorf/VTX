@@ -288,11 +288,13 @@ void ImageSym::print()
 //************************************************************
 Image::~Image()
 {
+	cout<<"Image::~Image Deleting:"<<this<<endl;
 	FREE(data);
 }
 Image::Image()
 
 {
+	cout<<"Image::Image Adding:"<<this<<endl;
 	data=0;
 }
 Image::Image(RGBColor *b, int w, int h)

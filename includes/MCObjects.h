@@ -35,6 +35,7 @@ struct MCTriangle {
     Point vertices[3];
     Point normal;
     Color colors[3];
+    Point templatePos[3]; 
 };
 
 // Scalar field function type - returns density at (x,y,z)
@@ -85,6 +86,7 @@ public:
     GLuint vboVertices;
     GLuint vboNormals;
     GLuint vboColors;
+    GLuint vboTemplatePos;
     bool vboValid;
     
     MCObject();
