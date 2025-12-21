@@ -32,6 +32,7 @@ static TerrainData Td;
 
 static bool first=true;
 static int tid=0;
+static int nbumps=0;
 
 //#define PERLIN_NOISE // use built in noise functions
 
@@ -42,7 +43,6 @@ static int tid=0;
 //#define PRINT_ROCK_CACHE_STATS
 
 #define TEST_TEXTURES
-#define USE_TEMPLATES
 
 static bool shadow_start=false;
 
@@ -64,7 +64,7 @@ static bool shadow_start=false;
 // 10. support for shadows - done
 // 11. improve lighting model (done)
 // 12. add color -done 
-// 13. add texture (triplanar)
+// 13. add single texture (triplanar) using simple shader - done
 // 14. add bump-map
 // 15  multi-textures
 //
@@ -127,19 +127,26 @@ bool Rock3D::setProgram(){
 	for(int i=0;i<rmgr->texs.size;i++){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
+		if(!tntex->isEnabled() || texture->t1d())
+			continue;
 #ifdef TEST_TEXTURES
+		TerrainProperties::tid=tid;
+		if(texture->bump_active && Render.bumps())
+			nbumps++;
+		texture->setProgram();
+		texture->initProgram();
+		tid++;
+#else
 		if((!texture->valid || Render.invalid_textures()) && texture->id[0]>0) {
 			glDeleteTextures(1, (GLuint*)&texture->id[0]);
 			texture->id[0]=0;
 		}
 #endif
-		if(!tntex->isEnabled() || texture->t1d())
-			continue;
+#ifndef TEST_TEXTURES
 		
 		tntex->eval();
 		TexInfo tex=TexInfo(texture);
 		Rock3DObjMgr::texs.push_back(tex);
-#ifdef TEST_TEXTURES
 		
 		if(texture->id[0]==0){
 			Image *image=texture->timage;
@@ -365,7 +372,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     int resolution = Rock3DMgr::getLODResolution(pts);
     double noiseAmpl = pmgr->noise_amp;
 	bool noisy=(noiseAmpl>1e-6);
-#ifdef USE_TEMPLATES
+
     int k1=resolution * 100;
     //int k2=(int)(rval)&7;
     int k2=(int)(rval * 10)/50;
@@ -375,7 +382,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     	lodCacheHits++;
         return it->second;
     }
-#endif   
+
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
@@ -404,14 +411,12 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     }   
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
     templateSphere->meshValid = true;    
-#ifdef USE_TEMPLATES
    lodTemplates[key] = templateSphere;
 #ifdef PRINT_LOD_STATS    
     cout << "Created LOD template: resolution:" << resolution<< " key:"<<key 
          << " k1:"<< k1 << " k2:" << k2 
          << " Triangles:" << templateSphere->mesh.size() << endl;
 #endif 
-#endif
     lodCacheMisses++;
     return templateSphere;
 }
@@ -574,12 +579,13 @@ bool Rock3DObjMgr::setProgram() {
 	if(PlaceObjMgr::shadow_mode)
 		return false;
 	cout<<"Rock3DObjMgr::setProgram() objs="<<objs.size<<endl;
+
+#ifndef TEST_TEXTURES
 	texs.clear();
 	//tid=0;
 	for(int i=0;i<objs.size;i++){
 		objs[i]->setProgram();
 	}
-    
 	int useTexture = 1;
 	double textureScale=0;
 	double bumpScale=0;
@@ -593,25 +599,33 @@ bool Rock3DObjMgr::setProgram() {
 			useTexture=0;
 		//tex.print();
 	}
+#endif
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
+    sprintf(defs+strlen(defs), "#define COLOR\n");
 
     bool do_shadows=Raster.shadows();
  	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
  		sprintf(defs+strlen(defs),"#define SHADOWS\n");
- 	
-	if(Render.textures()){
-		sprintf(defs+strlen(defs),"#define NTEXS %d\n",tid);
-	}
-	else
-		sprintf(defs+strlen(defs),"#define NTEXS 0\n");
-
 
     GLSLMgr::setDefString(defs);
+
 #ifdef TEST_TEXTURES
-    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d_triplanar.frag");
+    if(Render.textures()){
+    	tid=0;
+    	nbumps=0;
+    	Texture::reset();
+		for(int i=0;i<objs.size;i++){
+			objs[i]->setProgram();
+		}  
+    }
+	sprintf(defs,"#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
+
+    //sprintf(defs,"#define NTEXS %d\n",tid);
+	strcat(GLSLMgr::defString,defs);
+    GLSLMgr::loadProgram("rocks3d_tex.vert", "rocks3d_tex.frag");
 #else
-    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d.frag");
+    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d_triplanar.frag");
 #endif
 
     GLhandleARB program = GLSLMgr::programHandle();
@@ -637,6 +651,7 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVar("night_lighting",night_lighting);
+#ifndef TEST_TEXTURES
 	vars.newFloatVar("textureScale",textureScale);
 	vars.newFloatVar("bumpScale",bumpScale);
 	vars.newIntVar("useTexture",useTexture);
@@ -645,7 +660,6 @@ bool Rock3DObjMgr::setProgram() {
 	cout<<"tex scale:"<<textureScale<<" bump:"<<bumpScale<<endl;
 	GLuint texLoc = glGetUniformLocation(program, "rockTexture");
 	glUniform1i(texLoc, 0);
-   
 	// TODO - add support for multiple textures
 	// (4) each rock type can have 0,1 or 2 textures 
 	//     - expect just single 2d texture for image/bumps but maybe later a 1D color overlay
@@ -668,6 +682,7 @@ bool Rock3DObjMgr::setProgram() {
 	// };
 	// uniform tex2d_info tex2d[NTEXS];
 	// uniform sampler2D samplers2d[NTEXS];
+#endif  
 
 
 

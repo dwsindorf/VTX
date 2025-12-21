@@ -76,7 +76,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 //-------------------------------------------------------------
 Texture::~Texture()
 {
-	cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
+	//cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
 	del();
 }
 

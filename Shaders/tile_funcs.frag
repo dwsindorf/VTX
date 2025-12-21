@@ -66,7 +66,7 @@ vec4 textureNoTile( int id, in vec2 uv, float mm)
 
 vec4 triplanarNoTile(int id, vec4 pos, float mm) {
     sampler2D samp=samplers2d[id];
-    vec3 N = normalize(WorldNormal);
+    vec3 N = normalize(WorldNormal.xyz);
     vec3 blendWeights = abs(N);
 #ifdef SHARPEN
     blendWeights = pow(blendWeights, vec3(6.0)); // Increase power for sharper transition

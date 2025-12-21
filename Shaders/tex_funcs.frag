@@ -97,7 +97,7 @@ vec4 triplanarMap(int id, vec4 pos, float mm)
  	sampler2D samp=samplers2d[id];
  	vec3 wp= normalize(object);
  	 			
-    vec3 N = normalize(WorldNormal);
+    vec3 N = normalize(WorldNormal.xyz);
     vec3 V=pos.xyz; 
     vec3 absN = abs(N);
     vec3 blendWeights = abs(N);

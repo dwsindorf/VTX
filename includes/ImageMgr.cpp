@@ -288,7 +288,7 @@ void ImageSym::print()
 //************************************************************
 Image::~Image()
 {
-	cout<<"Image::~Image Deleting:"<<this<<endl;
+	//cout<<"Image::~Image Deleting:"<<this<<endl;
 	FREE(data);
 }
 Image::Image()
