@@ -29,6 +29,7 @@ struct tex2d_info {
 	bool  randomize;     // randomized texture	
 	bool  seasonal;      // seasonal	
 	bool  triplanar;     // triplanar mapping	
+	bool  t3d;           // 3d mapping	
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];
@@ -92,10 +93,31 @@ float phiFunc(int id){
 
 #if NTEXS >0
 
+// Triplanar mapping function
+vec4 triplanarMap3D(int id, vec4 pos, float mm) {
+ 	sampler2D samp=samplers2d[id];
+ 	float ts=2e-7; // Hack !
+ 	float texScale=scale*ts;
+    vec3 blending = abs(pos.xyz);
+    blending = normalize(max(blending, 0.00001));
+    float b = (blending.x + blending.y + blending.z);
+    blending /= vec3(b, b, b);
+    
+    vec2 xaxis = pos.yz * texScale;
+    vec2 yaxis = pos.xz * texScale;
+    vec2 zaxis = pos.xy * texScale;
+    
+    vec3 xColor = texture2D(samp, xaxis,mm).rgb;
+    vec3 yColor = texture2D(samp, yaxis,mm).rgb;
+    vec3 zColor = texture2D(samp, zaxis,mm).rgb;
+    
+    vec3 blended=xColor * blending.x + yColor * blending.y + zColor * blending.z;
+    return vec4(blended,1.0);
+}
+
 vec4 triplanarMap(int id, vec4 pos, float mm)
 {
  	sampler2D samp=samplers2d[id];
- 	vec3 wp= normalize(object);
  	 			
     vec3 N = normalize(WorldNormal.xyz);
     vec3 V=pos.xyz; 
@@ -121,7 +143,10 @@ vec4 textureTile(int id, in vec4 coords , float mm)
    	if(tex2d[tid].randomize)
        	return triplanarNoTile(tid, coords,mm);
 #endif
-	return triplanarMap(tid,coords,mm);
+   	if(tex2d[tid].t3d)
+   		return triplanarMap3D(tid,coords,mm);
+   	else
+		return triplanarMap(tid,coords,mm);
 }
 
 vec4 textureTile(int id, in vec2 uv , float mm)
@@ -132,7 +157,6 @@ vec4 textureTile(int id, in vec2 uv , float mm)
 #endif
 	return texture2D(samplers2d[id], uv,mm);
 }
-
 
 vec4 getTex(int tid, vec4 coords, float mm){
 	if(tex2d[tid].triplanar)

@@ -63,7 +63,8 @@ enum  {
 	SEXPR       = 0x00040000, 	// S expression in argument list
 	AEXPR       = 0x00080000, 	// T expression in argument list
 	TRIPLANAR   = 0x00100000,   // use triplanar mapping
-	TXOPTS	    = 0x001fffA0, 	// texture opts mask
+	TX3D        = 0x00200000,   // 3d case mapping
+	TXOPTS	    = 0x003fffA0, 	// texture opts mask
 
     // ImageMgr file options
 

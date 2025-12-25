@@ -69,8 +69,6 @@ public:
 	bool bump_active;
 	bool hmap_active;
 
-	bool coords_active;
-
 	bool s_data;
 	bool a_data;
 	bool d_data;
@@ -106,6 +104,8 @@ public:
 	int wrap()				{ return options & BORDER ? GL_CLAMP_TO_EDGE:GL_REPEAT;}
 	int t1d()				{ return (width()==1 || height()==1)?1:0;}
 	int t2d()				{ return (width()>1 && height()>1)?1:0;}
+	void set3D()            { BIT_ON(options,TX3D);}
+	int t3d()				{ return (options & TX3D)?true:false;}
 	int comps()				{ return image()->comps();}
 	int gltype()			{ return image()->gltype();}
 	int txtype()			{ return type;}
@@ -122,6 +122,7 @@ public:
 	void bumpCoords(int,double s,double t);
 	void texCoords(int,double s,double t);
 	void getTexCoords(double& s, double & t);
+	int getTexCoords(double *A,Point p);
 	Point getTexCoords(Point p);
 	double getTexAmpl(int mode);
 	void eval();
@@ -132,6 +133,7 @@ public:
 	void invalidate()       { valid=false;}
 	bool setProgram();
 	bool initProgram();
+	
 
     static void reset();
 

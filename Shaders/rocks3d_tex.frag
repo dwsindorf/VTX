@@ -13,12 +13,15 @@ uniform sampler2DRect FBOTex4;
 varying vec3 Normal;
 varying vec4 WorldNormal;
 varying vec3 EyeDirection;
+varying vec3 WorldPos;
+
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
 
 uniform float night_lighting;
+uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
 
@@ -72,25 +75,30 @@ void main() {
 	vec4 color=vec4(1.0);
 #endif
 
-#if NLIGHTS >0
-	color.a=0.5;
-	vec3 c=setLighting(color.rgb);
-    color.rgb=c.rgb;
-#endif
 
-  // vec3 color = setLighting(Color.rgb);
+
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
     
+#if NLIGHTS >0
+	if(lighting){
+		vec3 c=setLighting(color.rgb);
+    	color.rgb=c.rgb;
+    }
+#endif
      
 #ifdef SHADOWS
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
 
-    gl_FragData[0]=vec4(color);
-    gl_FragData[1]=vec4(2,DEPTH,1,1.0); // 
+   //vec3 debugColor = fract(WorldPos * 0.1);  // Wrap to 0-1 range
+     //gl_FragData[0] = vec4(abs(gl_TexCoord[0].xy),1,1.0);
+    //gl_FragData[0] = vec4(abs(coords.xy),1,1.0);
+     //gl_FragData[0] = vec4(debugColor,1.0);
+     gl_FragData[0]=vec4(color);
+     gl_FragData[1]=vec4(2,DEPTH,1,1.0);  
     
     //gl_FragColor[0] = vec4(night_lighting,0,0,1.0);
 }

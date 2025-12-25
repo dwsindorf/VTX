@@ -111,6 +111,7 @@ class Rock3D : public PlaceObj
 	Rock3D(int l, TNode *e);
     PlacementMgr *mgr();
     bool setProgram();
+    bool initProgram();
     void invalidateTexture();
 };
 

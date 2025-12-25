@@ -18,7 +18,7 @@
 #include <map>
 #include <set>
 
-extern double Hscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
+extern double Hscale,Gscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
 extern int test7, test8;
 
 extern Point MapPt;
@@ -28,21 +28,22 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define PSCALE 0.006 // placement scale factor
+#define PSCALE 0.008 // placement scale factor
 
 static bool first=true;
 static int tid=0;
 static int nbumps=0;
+static bool cvalid;
 
 //#define PERLIN_NOISE // use built in noise functions
 
-//#define PRINT_STATS
+#define PRINT_STATS
 //#define PRINT_LOD_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_CACHE_STATS
 //#define PRINT_ROCK_CACHE_STATS
 
-#define TEST_TEXTURES
+#define USE_TEXTURE_CLASS
 
 static bool shadow_start=false;
 
@@ -109,6 +110,23 @@ TexInfo::TexInfo(Texture *texture){
 void TexInfo::print(){
 	cout<<"tex id:"<<tid<<" texamp:"<<texamp<<" bumpamp:"<<bumpamp<<" scale:"<<scale<<endl;	
 }
+
+struct RockLodEntry {
+    int    res;     // voxel resolution
+    double maxPts;  // upper bound for pts (pts < maxPts)
+};
+
+static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
+    {  2,  2.0 },
+    {  4,  5.0 },
+    {  8,  8.0 },
+    {  16, 12.0 },
+    { 32, 20.0 },
+    { 64, 40.0 },
+    { 96, 90.0 },
+    { 128,  1e9 }  // default / max detail (increased from 24)
+};
+
 //************************************************************
 // Rock3D class
 //************************************************************
@@ -120,20 +138,25 @@ PlacementMgr *Rock3D::mgr() {
 	return ((TNrocks3D*)expr)->mgr;
 }
 
-bool Rock3D::setProgram(){
+bool Rock3D::initProgram(){
 	Rock3DMgr* rmgr=(Rock3DMgr*)mgr();
 	int mode=CurrentScope->passmode();
-	CurrentScope->set_spass();	
+	CurrentScope->set_spass();
+	TNcolor *color=(TNcolor*)rmgr->color;
+	if(color && color->isEnabled())
+		cvalid=true;
+		
 	for(int i=0;i<rmgr->texs.size;i++){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
 		if(!tntex->isEnabled() || texture->t1d())
 			continue;
-#ifdef TEST_TEXTURES
+		texture->set3D();
+#ifdef USE_TEXTURE_CLASS
 		TerrainProperties::tid=tid;
 		if(texture->bump_active && Render.bumps())
 			nbumps++;
-		texture->setProgram();
+		texture->eval();
 		texture->initProgram();
 		tid++;
 #else
@@ -142,7 +165,7 @@ bool Rock3D::setProgram(){
 			texture->id[0]=0;
 		}
 #endif
-#ifndef TEST_TEXTURES
+#ifndef USE_TEXTURE_CLASS
 		
 		tntex->eval();
 		TexInfo tex=TexInfo(texture);
@@ -177,7 +200,24 @@ bool Rock3D::setProgram(){
 	return true;
 }
 
-
+bool Rock3D::setProgram(){
+	Rock3DMgr* rmgr=(Rock3DMgr*)mgr();
+	int mode=CurrentScope->passmode();
+	CurrentScope->set_spass();
+		
+	for(int i=0;i<rmgr->texs.size;i++){
+		TNtexture *tntex=rmgr->texs[i];
+		Texture *texture=tntex->texture;
+		if(!tntex->isEnabled() || texture->t1d())
+			continue;
+		TerrainProperties::tid=tid;
+		texture->eval();
+		texture->setProgram();
+		tid++;
+	}
+	CurrentScope->set_passmode(mode);
+	return true;
+}
 //************************************************************
 // helper functions
 //************************************************************
@@ -227,8 +267,8 @@ static SurfaceFunction makeNoisyRockField(const Point& center, double radius, in
         
         // Add noise to the iso-surface
         // Scale sample position to get consistent look regardless of rock size
-        double scale = 2.0 / radius;
-        double n = noise.octaveNoise(dx * scale, dy * scale, dz * scale, 6, 0.5, 2.0, 0.5, 0.5);
+        double max_scale = 2.0 / radius;
+        double n = noise.octaveNoise(dx * max_scale, dy * max_scale, dz * max_scale, 6, 0.5, 2.0, 0.5, 0.5);
         
         return baseSphere + n * noiseAmpl * radius;
     };
@@ -465,21 +505,6 @@ bool Rock3DMgr::testDensity(){
 	return true;
 }
 
-struct RockLodEntry {
-    int    res;     // voxel resolution
-    double maxPts;  // upper bound for pts (pts < maxPts)
-};
-
-static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  1,  2.0 },
-    {  2,  5.0 },
-    {  4,  8.0 },
-    {  8, 12.0 },
-    { 16, 20.0 },
-    { 32, 50.0 },
-    { 48, 90.0 },
-    { 96,  1e9 }  // default / max detail (increased from 24)
-};
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
 		stats[i][0]=stats[i][1]==0;
@@ -579,12 +604,15 @@ bool Rock3DObjMgr::setProgram() {
 	if(PlaceObjMgr::shadow_mode)
 		return false;
 	cout<<"Rock3DObjMgr::setProgram() objs="<<objs.size<<endl;
+	
+	double wscale=Gscale*Hscale*0.3;
+	cout<<"Gscale="<<Gscale<<" Hscale:"<<Hscale<<" scale:"<<Hscale/Gscale/0.3<<endl;
 
-#ifndef TEST_TEXTURES
+#ifndef USE_TEXTURE_CLASS
 	texs.clear();
 	//tid=0;
 	for(int i=0;i<objs.size;i++){
-		objs[i]->setProgram();
+		objs[i]->initProgram();
 	}
 	int useTexture = 1;
 	double textureScale=0;
@@ -602,7 +630,6 @@ bool Rock3DObjMgr::setProgram() {
 #endif
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
-    sprintf(defs+strlen(defs), "#define COLOR\n");
 
     bool do_shadows=Raster.shadows();
  	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
@@ -610,20 +637,27 @@ bool Rock3DObjMgr::setProgram() {
 
     GLSLMgr::setDefString(defs);
 
-#ifdef TEST_TEXTURES
+#ifdef USE_TEXTURE_CLASS
     if(Render.textures()){
     	tid=0;
     	nbumps=0;
+    	cvalid=false;
     	Texture::reset();
 		for(int i=0;i<objs.size;i++){
-			objs[i]->setProgram();
+			objs[i]->initProgram();
 		}  
     }
-	sprintf(defs,"#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
+    if(cvalid)
+    	sprintf(defs,"#define COLOR \n#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
+    else
+		sprintf(defs,"#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
 
-    //sprintf(defs,"#define NTEXS %d\n",tid);
 	strcat(GLSLMgr::defString,defs);
     GLSLMgr::loadProgram("rocks3d_tex.vert", "rocks3d_tex.frag");
+	tid=0;
+	for(int i=0;i<objs.size;i++){
+		objs[i]->setProgram();
+	} 
 #else
     GLSLMgr::loadProgram("rocks3d.vert", "rocks3d_triplanar.frag");
 #endif
@@ -651,7 +685,10 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVar("night_lighting",night_lighting);
-#ifndef TEST_TEXTURES
+	vars.newBoolVar("lighting",Render.lighting());
+	//vars.newFloatVar("textureScale",textureScale);
+
+#ifndef USE_TEXTURE_CLASS
 	vars.newFloatVar("textureScale",textureScale);
 	vars.newFloatVar("bumpScale",bumpScale);
 	vars.newIntVar("useTexture",useTexture);

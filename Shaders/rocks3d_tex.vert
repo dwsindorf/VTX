@@ -6,6 +6,7 @@
 #include "common.h"
 
 uniform float night_ligting;
+uniform float textureScale;
 varying vec3 Normal;
 varying vec3 EyeDirection;
 varying vec3 WorldPos;
@@ -23,9 +24,19 @@ void main() {
     EyeDirection = -(gl_ModelViewMatrix * gl_Vertex).xyz;
     TemplatePos = templatePosition;  // Pass through
     
-    WorldPos = gl_Vertex.xyz;
+     WorldPos = templatePosition;
+#ifdef COLOR
     Color = gl_Color;
-#include "set_tex.vert"
+#endif
+//#include "set_tex.vert"
+//#include "set_common.vert"
+#ifdef TX0
+    gl_TexCoord[0] = vec4(0.4*templatePosition, 1.0);
+#endif
+#ifdef TX1
+    gl_TexCoord[1] = vec4(templatePosition, 1.0);
+#endif
+
     WorldNormal.xyz = gl_Normal;
     
 }

@@ -58,6 +58,8 @@ Texture::Texture(Image *i, int l, TNode *e)
 	a_data=false;
 	d_data=false;
 	bump_damp=0.0;
+	bump_mip=1;
+	cid=0;
 	bump_bias=0;
 	phi_bias=0;
 	height_bias=0;
@@ -153,7 +155,10 @@ void Texture::texCoords(int tchnl,Point p)
 //-------------------------------------------------------------
 Point Texture::getTexCoords(Point pt){
 	double wscale=Gscale*Hscale*0.3;
+
 	Point pm=pt*wscale*scale;
+	//cout<<"scale:"<<scale<<" length:"<<scale/pm.length()<<endl;
+	//pm.print("\n");
 	Point pf=p*wscale*scale; // p=MapPt of root node
 	Point pr=pm-pf.floor();
 	return pr;
@@ -294,7 +299,7 @@ void Texture::begin() {
 		bool norm=normalize();
 		bool set_alpha=shader_pass || alpha_image;
 		
-		//cout<<"2d:"<< image()->tx2d()<< " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
+		//cout<<tid <<" 2d:"<< image()->tx2d()<< " rgba_image:"<< rgba_image << " alpha_image:"<< alpha_image << endl;
 
 		for (int i = 0; i < h; i++){
 			for (int j = 0; j< w ; j++) {
@@ -420,7 +425,7 @@ bool Texture::setProgram(){
 	//float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
 	float hlog=0.25*log2(delta); // hack to reduce number of tex orders for larger images
 	float logf = log2(ts)+dlogf+hlog; // reduces tex max_orders set in MapNode::Svertex
-
+    logf-=t3d()?6:0;
 	TerrainProperties *tp=TerrainData::tp;
 	double bumpmin=1e-5;
 	double minscale=32;
@@ -441,7 +446,6 @@ bool Texture::setProgram(){
  	float near_bias=mipmap()?0:1;
  	float far_bias=mipmap()?0:1;
  	float tbias=0;
- 	
 //	Planetoid *orb=(Planetoid *)TNode::getOrbital(get_root());
 //	if(orb && (orb->type()==ID_PLANET || orb->type()==ID_MOON)){
 //		
@@ -469,10 +473,10 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].tilt_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),tilt_bias);
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].seasonal",tid);      glUniform1iARB(glGetUniformLocationARB(program,str),seasonal());
-    sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
     sprintf(str,"tex2d[%d].triplanar",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),triplanar());
+    sprintf(str,"tex2d[%d].t3d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t3d());
 #ifdef DEBUG_TEXTURES
-    cout<<"Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" scale:"<<scale<<" triplanar:"<<triplanar()<<endl;
+    cout<<tid<<" Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" scale:"<<scale<<" triplanar:"<<triplanar()<<endl;
 #endif
     //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);
