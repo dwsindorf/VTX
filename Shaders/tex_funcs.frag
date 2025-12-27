@@ -25,9 +25,9 @@ struct tex2d_info {
 	float near_bias; 	 // low frequency bias bias
 	float far_bias; 	 // high frequency bias bias
 	float tilt_bias;     // tilt bias	
-	bool  t1d;           // 1d texture
 	bool  randomize;     // randomized texture	
 	bool  seasonal;      // seasonal	
+	bool  t1d;           // 1d texture
 	bool  triplanar;     // triplanar mapping	
 	bool  t3d;           // 3d mapping	
 };
@@ -94,34 +94,14 @@ float phiFunc(int id){
 #if NTEXS >0
 
 // Triplanar mapping function
-vec4 triplanarMap3D(int id, vec4 pos, float mm) {
- 	sampler2D samp=samplers2d[id];
- 	float ts=2e-7; // Hack !
- 	float texScale=scale*ts;
-    vec3 blending = abs(pos.xyz);
-    blending = normalize(max(blending, 0.00001));
-    float b = (blending.x + blending.y + blending.z);
-    blending /= vec3(b, b, b);
-    
-    vec2 xaxis = pos.yz * texScale;
-    vec2 yaxis = pos.xz * texScale;
-    vec2 zaxis = pos.xy * texScale;
-    
-    vec3 xColor = texture2D(samp, xaxis,mm).rgb;
-    vec3 yColor = texture2D(samp, yaxis,mm).rgb;
-    vec3 zColor = texture2D(samp, zaxis,mm).rgb;
-    
-    vec3 blended=xColor * blending.x + yColor * blending.y + zColor * blending.z;
-    return vec4(blended,1.0);
-}
 
 vec4 triplanarMap(int id, vec4 pos, float mm)
 {
  	sampler2D samp=samplers2d[id];
  	 			
     vec3 N = normalize(WorldNormal.xyz);
-    vec3 V=pos.xyz; 
-    vec3 absN = abs(N);
+    vec3 V = pos.xyz; 
+
     vec3 blendWeights = abs(N);
 #ifdef SHARPEN
     blendWeights = pow(blendWeights, vec3(6.0)); // Increase power for sharper transition
@@ -143,10 +123,7 @@ vec4 textureTile(int id, in vec4 coords , float mm)
    	if(tex2d[tid].randomize)
        	return triplanarNoTile(tid, coords,mm);
 #endif
-   	if(tex2d[tid].t3d)
-   		return triplanarMap3D(tid,coords,mm);
-   	else
-		return triplanarMap(tid,coords,mm);
+	return triplanarMap(tid,coords,mm);
 }
 
 vec4 textureTile(int id, in vec2 uv , float mm)
@@ -314,7 +291,11 @@ vec3 getBump(int tid, vec4 coords,float mm){
 	    bump_fade = lerp(Tangent.w-logf-freqmip,-4.0,1.0,0.0,1.0); \
 	    bump_fade *= lerp(Tangent.w-logf-freqmip,3.0,10.0,1.0,0.0); \
 	    bump_max=max(bump_max,bump_fade); \
-		bump += bump_max*bump_ampl*trans_mat*tc; \
+	    if(tex2d[tid].t3d)  \
+	        bump += bump_max*bump_ampl*tc; \
+	    else  \
+	        bump += bump_max*bump_ampl*trans_mat*tc; \
+	    \
 		bmpht += b+(tva-0.5)*bump_ampl*orders_delta;
 	
 #define NEXT_ORDER \

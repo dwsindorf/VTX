@@ -80,7 +80,12 @@ void main() {
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
-    
+ 
+ #if NBUMPS > 0
+        // Apply accumulated bump to normal
+        Normal = normalize(Normal + bump);
+    #endif
+       
 #if NLIGHTS >0
 	if(lighting){
 		vec3 c=setLighting(color.rgb);
@@ -93,10 +98,8 @@ void main() {
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
 
-   //vec3 debugColor = fract(WorldPos * 0.1);  // Wrap to 0-1 range
-     //gl_FragData[0] = vec4(abs(gl_TexCoord[0].xy),1,1.0);
-    //gl_FragData[0] = vec4(abs(coords.xy),1,1.0);
-     //gl_FragData[0] = vec4(debugColor,1.0);
+     //gl_FragData[0] = vec4(bump,1);
+     //gl_FragData[0] = vec4(tangent,1);
      gl_FragData[0]=vec4(color);
      gl_FragData[1]=vec4(2,DEPTH,1,1.0);  
     

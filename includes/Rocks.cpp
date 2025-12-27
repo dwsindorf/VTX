@@ -581,7 +581,7 @@ void Rock3DObjMgr::freeLODTemplates() {
 
 double calculateNightLighting(double tod) {
     const double dawnStart = 0.20, dawnEnd = 0.3;
-    const double duskStart = 0.7, duskEnd = 0.8;   
+    const double duskStart = 0.7, duskEnd = 0.85;   
     // Night (before dawn or after dusk)
     if (tod < dawnStart || tod > duskEnd) 
         return 0.0;  
@@ -605,9 +605,6 @@ bool Rock3DObjMgr::setProgram() {
 		return false;
 	cout<<"Rock3DObjMgr::setProgram() objs="<<objs.size<<endl;
 	
-	double wscale=Gscale*Hscale*0.3;
-	cout<<"Gscale="<<Gscale<<" Hscale:"<<Hscale<<" scale:"<<Hscale/Gscale/0.3<<endl;
-
 #ifndef USE_TEXTURE_CLASS
 	texs.clear();
 	//tid=0;
@@ -686,7 +683,7 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
-	//vars.newFloatVar("textureScale",textureScale);
+
 
 #ifndef USE_TEXTURE_CLASS
 	vars.newFloatVar("textureScale",textureScale);
@@ -970,10 +967,11 @@ void Rock3DObjMgr::render() {
                // Transform each vertex from world space to eye space
       
                 for (const auto& tri : templateMesh) {
-                    MCTriangle newTri;                  
+                    MCTriangle newTri;   
+                    
                     for (int v = 0; v < 3; v++) {
                         Point tv = tri.vertices[v];                       
-						newTri.templatePos[v] = tv;  // STORE template position
+						newTri.templatePos[v] = tv*1e-7;  // STORE template position
                         Point rotated = Point(
 								tv.x * right.x + tv.y * forward.x + tv.z * up.x,
 								tv.x * right.y + tv.y * forward.y + tv.z * up.y,

@@ -425,7 +425,9 @@ bool Texture::setProgram(){
 	//float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
 	float hlog=0.25*log2(delta); // hack to reduce number of tex orders for larger images
 	float logf = log2(ts)+dlogf+hlog; // reduces tex max_orders set in MapNode::Svertex
-    logf-=t3d()?6:0;
+	//if(t3d())
+	//	logf-=log2(1e7);
+    logf-=t3d()?log2(5e7):0;
 	TerrainProperties *tp=TerrainData::tp;
 	double bumpmin=1e-5;
 	double minscale=32;
@@ -473,6 +475,7 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].tilt_bias",tid);     glUniform1fARB(glGetUniformLocationARB(program,str),tilt_bias);
     sprintf(str,"tex2d[%d].randomize",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),randomized());
     sprintf(str,"tex2d[%d].seasonal",tid);      glUniform1iARB(glGetUniformLocationARB(program,str),seasonal());
+    sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
     sprintf(str,"tex2d[%d].triplanar",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),triplanar());
     sprintf(str,"tex2d[%d].t3d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t3d());
 #ifdef DEBUG_TEXTURES
