@@ -284,6 +284,7 @@ public:
 	bool threeD();
 };
 
+//~~~~~~~~~~~~~~~~~ placement nodes ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 //************************************************************
 // Class TNplacements
@@ -338,7 +339,7 @@ public:
 	int linkable()          { return 1;}
 };
 
-class TNrocks3D : public TNplacements
+class TNrocks3D : public TNrocks
 {
 public:
 	Rock3D *rock;

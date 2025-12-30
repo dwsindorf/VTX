@@ -54,7 +54,7 @@
 
 #define FTEST
 
-#define DEBUG_TREE_ACTIONS
+//#define DEBUG_TREE_ACTIONS
 
 #define TREE_WIDTH 250
 #define PAGE_WIDTH TABS_WIDTH+5
@@ -820,7 +820,7 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 //-------------------------------------------------------------
 void VtxSceneDialog::rebuildObjectTree(){
 	TheScene->suspend();
-	//cout<<"rebuildObjectTree start"<<endl;
+	cout<<"rebuildObjectTree start"<<endl;
 	rebuilding=true;
 	treepanel->DeleteAllItems();
 	if(root)
@@ -905,7 +905,9 @@ void VtxSceneDialog::setSelected(wxTreeItemId id){
 	TreeDataNode *tdnode=(TreeDataNode*)treepanel->GetItemData(id);
 	TreeNode  *tnode=tdnode->tnode;
 	NodeIF *node=tnode->node;
+#ifdef DEBUG_TREE_ACTIONS
 	cout<<"setSelected:"<< node->typeName()<<endl;
+#endif
 	selectedId=id;
 }
 void VtxSceneDialog::VtxSceneDialog::selectObject(wxTreeItemId parent,NodeIF *n){

@@ -758,7 +758,6 @@ void TNtexture::applyExpr()
 //-------------------------------------------------------------
 void TNtexture::init()
 {
-	cout<<"TNtexture::init() "<<name<<endl;
     Image *timage=images.load(name,BMP);
 	if(!timage){
 	    printf("TNtexture ERROR image %s not found\n",name);

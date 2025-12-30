@@ -64,9 +64,16 @@ void main() {
     WorldNormal.xyz = gl_TexCoord[0].xyz;
 #endif
 #ifdef TX1
-    gl_TexCoord[1] = vec4(templatePosition, 1.0);
+    gl_TexCoord[1] = vec4(templatePosition*tex2d[1].scale, 1.0);
+    WorldNormal.xyz = gl_TexCoord[1].xyz;
 #endif
-    // Normal = gl_Normal.xyz;
-    //WorldNormal.xyz = gl_Normal;
+#ifdef TX2
+    gl_TexCoord[2] = vec4(templatePosition*tex2d[2].scale, 1.0);
+    WorldNormal.xyz = gl_TexCoord[2].xyz;
+#endif
+#ifdef TX3
+    gl_TexCoord[3] = vec4(templatePosition*tex2d[3].scale, 1.0);
+    WorldNormal.xyz = gl_TexCoord[3].xyz;
+#endif
     
 }

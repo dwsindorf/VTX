@@ -364,7 +364,7 @@ void VtxPlantTabs::getObjAttributes(){
 		DropSlider->setValue(a);
 	else
 		DropSlider->setValue(mgr->drop);
-	// args[6]=noise_ampl
+	// args[6]=noise_amp
 	// args[7]=noise_expr
 	a=args[8];
 	if(a)

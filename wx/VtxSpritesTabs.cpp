@@ -464,7 +464,7 @@ void VtxSpritesTabs::getObjAttributes(){
 
 	// args[4]=comp
 	// args[5]=drop
-	// args[6]=noise_ampl
+	// args[6]=noise_amp
 	// args[7]=noise_expr
 
 	a=args[8];

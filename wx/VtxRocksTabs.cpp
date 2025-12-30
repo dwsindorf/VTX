@@ -2,6 +2,7 @@
 #include "VtxSceneDialog.h"
 
 //########################### VtxRocksTabs Class ########################
+extern	void rebuild_scene_tree();
 
 #define BOX_WIDTH TABS_WIDTH-TABS_BORDER
 #define LINE_WIDTH BOX_WIDTH-TABS_BORDER
@@ -42,6 +43,7 @@ enum {
     ID_HT_BIAS_TEXT,
     ID_HARD_BIAS_SLDR,
     ID_HARD_BIAS_TEXT,
+	ID_3D
 
 };
 
@@ -66,6 +68,7 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxRocksTabs::OnNameText)
 
 EVT_CHOICE(ID_SCALE_MULT, VtxRocksTabs::OnChanged)
 EVT_CHOICE(ID_ORDERS, VtxRocksTabs::OnChanged)
+EVT_CHECKBOX(ID_3D,VtxRocksTabs::OnChangedDim)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxRocksTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxRocksTabs::OnDelete)
@@ -100,7 +103,7 @@ bool VtxRocksTabs::Create(wxWindow* parent,
 
     AddPropertiesTab(page);
     AddPage(page,wxT("Rocks"),true);
-
+    changed_model=false;
     return true;
 }
 
@@ -211,6 +214,10 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	DropSlider->setValue(0.0);
 
 	hline->Add(DropSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	m_3d=new wxCheckBox(panel, ID_3D, "3D");
+	m_3d->SetValue(false);
+	hline->Add(m_3d, 0, wxALIGN_LEFT|wxTOP,5);
 	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
 	shape->SetMinSize(wxSize(BOX_WIDTH,2*LINE_HEIGHT+TABS_BORDER));
@@ -270,7 +277,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	TNrocks *tc=object();
-	RockMgr *mgr=(RockMgr*)tc->mgr;
+	PlacementMgr *mgr=(PlacementMgr*)tc->mgr;
 
 	//int id=tc->get_id();
 	//m_seed->SetSelection(id);
@@ -311,7 +318,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(a)
 		FlatnessSlider->setValue(a);
 	else
-		FlatnessSlider->setValue(mgr->zcomp);
+		FlatnessSlider->setValue(mgr->comp);
 	a=args[5];
 	if(a)
 		DropSlider->setValue(a);
@@ -321,7 +328,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(a)
 		AmplSlider->setValue(a);
 	else
-		AmplSlider->setValue(mgr->noise_ampl);
+		AmplSlider->setValue(mgr->noise_amp);
 	
 	a=args[7];
 	if(a)
@@ -351,6 +358,8 @@ void VtxRocksTabs::getObjAttributes(){
 		HardBiasSlider->setValue(a);
 	else
 		HardBiasSlider->setValue(mgr->hardness_bias);
+	
+	m_3d->SetValue(tc->typeValue()==ID_ROCK3D?true:false);
 	update_needed=false;
 
 }
@@ -360,11 +369,13 @@ void VtxRocksTabs::getObjAttributes(){
 //-------------------------------------------------------------
 void VtxRocksTabs::setObjAttributes(){
 	update_needed=true;
+	cout<<"VtxRocksTabs::setObjAttributes"<<endl;
 
 	TNrocks *tc=object();
 	wxString s;
 	char id[32];
-	s=tc->typeName();
+	s=m_3d->GetValue()?"rocks3d":"rocks";
+	//s=tc->typeName();
 	s+="(";
      	
 	int orders = m_orders->GetSelection();
@@ -404,7 +415,9 @@ void VtxRocksTabs::setObjAttributes(){
 
 	char p[1024];
 	strcpy(p,s.ToAscii());
+	//cout<<"Rock str:"<<p<<endl;
 	tc->setExpr(p);
+	TNrocks *rocks = tc->getExprNode();
 	if(tc->getExprNode()==0)
 		update_needed=true;
 	else{
@@ -412,9 +425,19 @@ void VtxRocksTabs::setObjAttributes(){
 		tc->applyExpr();
 	}
 	invalidateObject();
+	if(changed_model)
+		rebuild_scene_tree();
+		sceneDialog->selectObject(rocks);
+		//object_node->node=rocks;
+	changed_model=false;
+	
 }
 
-
+void VtxRocksTabs::OnChangedDim(wxCommandEvent& event){
+	changed_model=true;
+	setObjAttributes();
+	
+}
 void VtxRocksTabs::OnEnable(wxCommandEvent& event){
 	VtxTabsMgr::OnEnable(event);
 	TheScene->rebuild_all();

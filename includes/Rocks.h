@@ -26,8 +26,7 @@ protected:
 public:
     static TNode *default_noise;
 	virtual Placement *make(Point4DL&,int);
-	double  zcomp,drop,rdist,pdist;
-	double  noise_ampl;
+	double  rdist,pdist;
 	double  rx,ry;
 	TNode   *rnoise;
 	~RockMgr();
@@ -81,11 +80,8 @@ public:
     static int cacheMisses;
     static int cacheRegens;
   
-	static bool noiseSettingsChanged();
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;  
-    static bool vbo_valid; 
-    static void freeLODTemplates();
 
     ~Rock3DObjMgr();
     
@@ -119,14 +115,14 @@ class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
-	LinkedList<TNtexture *> texs;
+	ValueList<TNtexture *> texs;
 	TNode   *vnoise;
 	TNode   *rnoise;
 	TNode   *color;
 	static int stats[MAX_ROCK_STATS][2];
 	static void clearStats();
 	static void printStats();
-	static void setStats(int,int);
+	static void setStats(int,int,bool);
 	static int getLODResolution(double pts);
 
  	Rock3DMgr(int);

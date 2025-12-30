@@ -26,7 +26,11 @@ protected:
 
 	wxChoice *m_scale_exp;
 	wxChoice *m_orders;
+	
+	wxCheckBox *m_3d;
 	//wxChoice *m_seed;
+	
+	bool changed_model;
 
 	TNrocks *object() 	{ return (TNrocks *)object_node->node;}
 	Planetoid *getOrbital()
@@ -72,6 +76,8 @@ public:
 
 	int showMenu(bool);
 	void updateControls();
+	
+	void OnChangedDim(wxCommandEvent& event);
 	
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(DeltaSize)

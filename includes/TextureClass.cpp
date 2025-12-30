@@ -20,7 +20,7 @@ static TerrainData Td;
 #define TEXFLOOR // makes tex coords modulo scale (fixes float precision problems)
 #define FIX_T0	 // corrects tex coords discontinuity at theta=0.0
 
-#define DEBUG_TEXTURES
+//#define DEBUG_TEXTURES
 //************************************************************
 // Class Texture
 //************************************************************
@@ -405,7 +405,7 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
-	//cout << "Texture::setProgram tid:"<< tid << " texid:"<< texid<<endl;
+	cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
 	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
 

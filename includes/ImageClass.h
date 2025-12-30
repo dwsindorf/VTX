@@ -78,6 +78,8 @@ public:
 	void setTexActive(bool);
 	void setBumpActive(bool);
 	bool initProgram();
+	double value()          { return !texture?0:texture->t2d()?2:1;}
+
 	int exprString(TNarg *,char *nstr);
 
 };
