@@ -25,7 +25,7 @@ uniform bool lighting;
 uniform int activeTexture;
 
 #define DEPTH   gl_FragCoord.z
-
+#define TEST
 vec3 setLighting(vec3 BaseColor) {
     vec3 normal = normalize(Normal);
     vec3 eye = normalize(-EyeDirection);
@@ -76,6 +76,7 @@ void main() {
 	vec4 color=vec4(1.0);
 #endif
 #ifdef TEST
+attrib=1.0;
 #if NTEXS >0
 #ifdef TX0
 
@@ -118,7 +119,7 @@ if (activeTexture == 1) {
 #endif 
 }
 #endif // TX1
-#elsse
+#else
 #include "set_tex.frag"
 #endif
 #endif // NTEXS>0
@@ -140,9 +141,8 @@ if (activeTexture == 1) {
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
 
-     //gl_FragData[0] = vec4(bump,1);
-     //gl_FragData[0] = vec4(tangent,1);
-     gl_FragData[0]=vec4(color);
+     gl_FragData[0]=vec4(activeTexture+0.01,0,1,1);
+     //gl_FragData[0]=vec4(color);
      gl_FragData[1]=vec4(2,DEPTH,1,1.0);  
     
     //gl_FragColor[0] = vec4(night_lighting,0,0,1.0);

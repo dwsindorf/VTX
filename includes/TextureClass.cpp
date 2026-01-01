@@ -78,7 +78,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 //-------------------------------------------------------------
 Texture::~Texture()
 {
-	cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
+	//cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
 	del();
 }
 
@@ -110,7 +110,7 @@ const void *Texture::pixels()
 //-------------------------------------------------------------
 void Texture::del() {
 	if(id>0)
-		glDeleteTextures(2, &id);
+		glDeleteTextures(1, &id);
 	id=0;
 	valid = false;
 }
@@ -274,7 +274,6 @@ void Texture::set_state() {
 //-------------------------------------------------------------
 void Texture::begin() {
 	glEnable(GL_TEXTURE_2D);
-	int j=0;
 	if(!valid || Render.invalid_textures()) {
 		if (id>0)
 			glDeleteTextures(1, (GLuint*)&id);
@@ -384,9 +383,9 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
+	cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
+	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
-	//cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
-	//glActiveTexture(GL_TEXTURE0+texid);
 
 	GLSLVarMgr vars;
 

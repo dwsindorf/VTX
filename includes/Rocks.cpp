@@ -986,9 +986,9 @@ void Rock3DObjMgr::render_objects() {
 			glNormalPointer(GL_FLOAT, 0, 0);
 			glEnableClientState(GL_NORMAL_ARRAY);
 
-			glBindBuffer(GL_ARRAY_BUFFER, rock->vboColors);
-			glColorPointer(3, GL_FLOAT, 0, 0);
-			glEnableClientState(GL_COLOR_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, rock->vboColors);
+            glColorPointer(3, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_COLOR_ARRAY);
 
 			// ADD THIS - bind template position as vertex attribute
 			GLint attribLoc = glGetAttribLocation(program, "templatePosition");
