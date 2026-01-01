@@ -37,7 +37,7 @@ Texture::Texture(Image *i, int l, TNode *e)
     timage=i;
     type=GL_TEXTURE_2D;
 	expr=e;
-	id[0]=id[1]=0;
+	id=0;
 	scale=1;
 	tvalue=svalue=0;
 	texamp=1;
@@ -78,7 +78,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 //-------------------------------------------------------------
 Texture::~Texture()
 {
-	//cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
+	cout<<"Texture::~Texture Deleting Texture:"<<this<<" image:"<<timage<<endl;
 	del();
 }
 
@@ -109,9 +109,9 @@ const void *Texture::pixels()
 // Texture::del() free resources
 //-------------------------------------------------------------
 void Texture::del() {
-	if(id[0]>0)
-		glDeleteTextures(2, &id[0]);
-	id[0]=id[1]=0;
+	if(id>0)
+		glDeleteTextures(2, &id);
+	id=0;
 	valid = false;
 }
 
@@ -274,12 +274,14 @@ void Texture::set_state() {
 //-------------------------------------------------------------
 void Texture::begin() {
 	glEnable(GL_TEXTURE_2D);
-	int tid=0;
+	int j=0;
 	if(!valid || Render.invalid_textures()) {
-		if (id[tid]>0)
-			glDeleteTextures(2, (GLuint*)&id);
-		glGenTextures(1, &id[tid]); // Generate a unique texture ID
-		glBindTexture(GL_TEXTURE_2D, id[0]);
+		if (id>0)
+			glDeleteTextures(1, (GLuint*)&id);
+
+		glGenTextures(1, &id); // Generate a unique texture ID
+		cout<<"glGenTextures "<<tid<<" id:"<<id<<endl;
+		glBindTexture(GL_TEXTURE_2D, id);
 		set_state();
 
 		int w=width();
@@ -318,36 +320,13 @@ void Texture::begin() {
 		}
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-		// build bump texture image for OGL legacy bumpmap usage (non-shader)
-
-		if(bump_active && !Render.draw_shaded()){
-			glGenTextures(1, &id[++tid]); // Generate a unique texture ID
-			glBindTexture(GL_TEXTURE_2D, id[1]);
-			set_state();
-			for (int i = 0; i < h; i++){
-				for (int j = 0; j< w ; j++) {
-				    unsigned char ac=255;
-					int index=i*w+j;
-				    int rgb_index=index*rgb_step;
-					if(rgba_image)
-						ac=rgb[rgb_index+3];
-					else{
-						ac=(rgb[rgb_index]+rgb[rgb_index+1]+rgb[rgb_index+2])/3;
-					}
-					data[index*4+0]=data[index*4+1]=data[index*4+2]=ac;
-					data[index*4+3]=255;
-				}
-			}
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		}
 		FREE(data);
 		valid=true;
 	}
-	if(Raster.bumps())
-		glBindTexture(GL_TEXTURE_2D, id[1]);
-	else{
-		glBindTexture(GL_TEXTURE_2D, id[0]);
-	}
+	std::cout << "Binding texture id=" << id << " to unit " << tid << std::endl;
+
+	glBindTexture(GL_TEXTURE_2D, id);
+
 }
 
 //-------------------------------------------------------------
@@ -405,9 +384,9 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
-	cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
-	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
+	//cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
+	//glActiveTexture(GL_TEXTURE0+texid);
 
 	GLSLVarMgr vars;
 

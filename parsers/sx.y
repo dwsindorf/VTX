@@ -659,10 +659,10 @@ rocks3d_expr
 
 
  rocks_expr
-    : YY_ROCKS '(' arg_list ')' expr
-    						{ $$=new TNrocks(0,$3,$5,0);APOP;}
-    | YY_ROCKS '(' arg_list ')'
+    : YY_ROCKS '(' arg_list ')'
 							{ $$=new TNrocks(0,$3,0,0);APOP;}
+    | YY_ROCKS '(' arg_list ')' expr
+    						{ $$=new TNrocks(0,$3,$5,0);APOP;}
     | YY_ROCKS '(' arg_list ')' '[' expr ']'
     						{ $$=new TNrocks(0,$3,0,$6);APOP;}
     | YY_ROCKS '(' arg_list ')' '[' expr ']' expr

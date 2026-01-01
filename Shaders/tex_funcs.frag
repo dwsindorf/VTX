@@ -64,7 +64,8 @@ uniform sampler2D samplers2d[NTEXS];
 	int tex_n=0; \
 	vec4 last_color=vec4(0.0); \
 	float last_bmpht; \
-    vec3 last_bump=vec3(0.0);
+    vec3 last_bump=vec3(0.0); \
+    vec3 tc;
 
 #define BUMP_VARS \
 	float tva; \
@@ -285,7 +286,7 @@ vec3 getBump(int tid, vec4 coords,float mm){
 #define SET_BUMP \
 	    tva=(tval.x+tval.y+tval.z)/3.0;\
 		bump*=1.0-tva*tex2d[tid].bump_damp*bump_max; \
-		vec3 tc=getBump(tid,coords,texmip); \
+		tc=getBump(tid,coords,texmip); \
 	    last_bump=bump; \
 	    last_bmpht=bmpht; \
 	    bump_fade = lerp(Tangent.w-logf-freqmip,-4.0,1.0,0.0,1.0); \

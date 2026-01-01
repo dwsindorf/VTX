@@ -24,7 +24,7 @@ class Texture
 	void set_state();
 
 public:
-	GLuint id[2];
+	GLuint id;
 	bool   valid;
 	static int num_attrs;
 	static int num_coords;

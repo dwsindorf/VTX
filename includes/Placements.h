@@ -203,7 +203,7 @@ public:
 	PlacementMgr *mgr;
 	PlaceData(Placement*);
 	
-	double value() { return dist;}
+	virtual double value() { return dist;}
 	int get_id()				{ return type&PID;}
 	int get_class()				{ return type&PLACETYPE;}
 };

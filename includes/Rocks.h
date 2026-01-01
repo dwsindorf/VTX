@@ -11,6 +11,8 @@ class RockMgr;
 class TNnode;
 class TNtexture;
 class Texture;
+class Rock3DData;
+class Rock3DMgr;
 
 #define MAX_ROCK_STATS 8
 
@@ -72,6 +74,7 @@ public:
 	    Point worldVertex;
 	    int resolution;
 	    int seed;
+	    int instance;
 	    int framesSinceUsed;
 	};    
     static std::map<RockCacheKey, RockCacheEntry> rockCache;
@@ -98,6 +101,13 @@ public:
 
     bool supports_shadows() { return true;}
  
+};
+
+class Rock3DData : public PlaceData
+{
+public:
+	Rock3DData(Placement *s) : PlaceData(s){}
+    double value() { return instance;}
 };
 
 class Rock3D : public PlaceObj
@@ -127,6 +137,7 @@ public:
 
  	Rock3DMgr(int);
 	Placement *make(Point4DL&,int);
+	PlaceData *make(Placement*s);
 	void eval();
 	void init();
 

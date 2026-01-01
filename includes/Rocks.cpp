@@ -37,14 +37,12 @@ static bool cvalid;
 
 //#define PERLIN_NOISE // use built in noise functions
 
-#define PRINT_STATS
+//#define PRINT_STATS
 //#define PRINT_LOD_STATS
 //#define PRINT_ROCK_STATS
 //#define USE_LOD_CACHE
 //#define PRINT_CACHE_STATS
 //#define PRINT_ROCK_CACHE_STATS
-
-#define USE_TEXTURE_CLASS
 
 static bool shadow_start=false;
 
@@ -153,7 +151,8 @@ bool Rock3D::initProgram(){
 		if(!tntex->isEnabled())
 			continue;
 		texture->set3D();
-#ifdef USE_TEXTURE_CLASS
+		std::cout << "Rock type " << rmgr->instance << " initProgram: tid=" << tid << std::endl;
+
 		TerrainProperties::tid=tid;
 		if(texture->bump_active && Render.bumps())
 			nbumps++;
@@ -161,42 +160,6 @@ bool Rock3D::initProgram(){
 		texture->eval();
 		texture->initProgram();
 		tid++;
-#else
-		if((!texture->valid || Render.invalid_textures()) && texture->id[0]>0) {
-			glDeleteTextures(1, (GLuint*)&texture->id[0]);
-			texture->id[0]=0;
-		}
-#endif
-#ifndef USE_TEXTURE_CLASS
-		
-		tntex->eval();
-		TexInfo tex=TexInfo(texture);
-		Rock3DObjMgr::texs.push_back(tex);
-		
-		if(texture->id[0]==0){
-			Image *image=texture->timage;
-			texid=tid++;
-			glGenTextures(1, &texture->id[0]);
-			glBindTexture(GL_TEXTURE_2D, texture->id[0]);
-			
-			// Texture parameters
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-			
-			int w = image->width;
-			int h = image->height;
-			unsigned char* pixels = (unsigned char*)image->data;
-			
-			if(image->alpha_image() || image->gltype() == GL_RGBA)
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-			else
-	            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);			
-		}
-		glBindTexture(GL_TEXTURE_2D, texture->id[0]);
-#endif
 	}
 	CurrentScope->set_passmode(mode);
 	return true;
@@ -214,6 +177,7 @@ bool Rock3D::setProgram(){
 			continue;
 		TerrainProperties::tid=tid;
 		texture->eval();
+		std::cout << "Rock type " << rmgr->instance << " setProgram: tid=" << tid << std::endl;
 		texture->setProgram();
 		tid++;
 	}
@@ -401,8 +365,6 @@ struct LODKey {
     }
 };
 
-int lodCacheHits=0;
-int lodCacheMisses=0;
 static std::map<int, MCObject*> lodTemplates;
 
 static MCObject* getTemplateForLOD(PlaceData *s) {
@@ -484,6 +446,11 @@ Placement *Rock3DMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
 }
+PlaceData *Rock3DMgr::make(Placement*s)
+{
+    return new Rock3DData(s);
+}
+
 bool Rock3DMgr::testColor() { 
 	return PlacementMgr::testColor()?true:false;
 }
@@ -588,26 +555,8 @@ bool Rock3DObjMgr::setProgram() {
 	if(PlaceObjMgr::shadow_mode)
 		return false;
 	
-#ifndef USE_TEXTURE_CLASS
-	texs.clear();
-	//tid=0;
-	for(int i=0;i<objs.size;i++){
-		objs[i]->initProgram();
-	}
-	int useTexture = 1;
-	double textureScale=0;
-	double bumpScale=0;
+	cout<<"Rock3DObjMgr::setProgram()"<<endl;
 	
-	for (const auto& tex : texs) {
-		if(tex.bumpactive)
-			bumpScale=tex.bumpamp;
-		if(tex.texactive)
-			textureScale=0.01*tex.scale;
-		else
-			useTexture=0;
-		//tex.print();
-	}
-#endif
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
 
@@ -617,7 +566,6 @@ bool Rock3DObjMgr::setProgram() {
 
     GLSLMgr::setDefString(defs);
 
-#ifdef USE_TEXTURE_CLASS
     if(Render.textures()){
     	tid=0;
     	nbumps=0;
@@ -638,11 +586,7 @@ bool Rock3DObjMgr::setProgram() {
 	for(int i=0;i<objs.size;i++){
 		objs[i]->setProgram();
 	} 
-#else
-    GLSLMgr::loadProgram("rocks3d.vert", "rocks3d_triplanar.frag");
-#endif
-
-    GLhandleARB program = GLSLMgr::programHandle();
+   GLhandleARB program = GLSLMgr::programHandle();
     if (!program)
         return false;
      GLSLVarMgr vars;
@@ -667,18 +611,6 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
 
-
-#ifndef USE_TEXTURE_CLASS
-	vars.newFloatVar("textureScale",textureScale);
-	vars.newFloatVar("bumpScale",bumpScale);
-	vars.newIntVar("useTexture",useTexture);
-	
-	glEnable(GL_TEXTURE_2D);
-	cout<<"tex scale:"<<textureScale<<" bump:"<<bumpScale<<endl;
-	GLuint texLoc = glGetUniformLocation(program, "rockTexture");
-	glUniform1i(texLoc, 0);
-#endif  
-
     vars.setProgram(program);
     vars.loadVars();
 
@@ -691,6 +623,7 @@ void Rock3DObjMgr::free() {
 	data.free();
 }
 
+
 //-------------------------------------------------------------
 // Rock3DObjMgr::collect() generate array of placements (data)
 //-------------------------------------------------------------
@@ -702,7 +635,8 @@ void Rock3DObjMgr::collect() {
     }
     if (data.size)
         data.sort();
-    //vbo_valid = false;
+//    for(int i=0;i<data.size;i++)
+//    	cout<<data[i]->instance;
 }
 
 void Rock3DObjMgr::render_zvals(){
@@ -749,16 +683,16 @@ void Rock3DObjMgr::render() {
 		moved = false;
 		changed = false;  // ADD THIS - don't rebuild in shadow passes
 	}
+    std::cout << "Rock3DObjMgr::render() passmode:" <<CurrentScope->passmode()<<endl;
 	
     bool placement_needs_update = moved;  // Rocks change, but meshes stay same
     bool mesh_needs_rebuild = changed;  // Actual geometry changes
     
     if (changed) {
-        std::cout << "Settings changed - invalidating meshes" << std::endl;
+        std::cout << "Settings changed - invalidating" <<endl;
         rockCache.clear();
         rocks.clear();
         Rock3DMgr::clearStats();
-        lodCacheHits=lodCacheMisses=0;
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
@@ -897,6 +831,7 @@ void Rock3DObjMgr::render() {
                 entry.estr = estr;
                 entry.seed = rval;
                 entry.framesSinceUsed = 0;
+                entry.instance=s->instance;
                 rockCache[key] = entry;
         	
          		TheNoise.rseed = rseed;
@@ -956,7 +891,7 @@ void Rock3DObjMgr::render() {
                      
                 // Upload VBO
                 if (smooth && useVertexDisplacement)
-                     rock->uploadToVBODisplaced();
+                    rock->uploadToVBODisplaced();
                 else 
                     rock->uploadToVBO(); 
                 Rock3DMgr::setStats(resolution, rock->mesh.size(),true);
@@ -1005,6 +940,10 @@ void Rock3DObjMgr::render() {
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
+    
+    int currentRockType = -1;
+    int rockIndex = 0;
+
 
     if(!PlaceObjMgr::shadow_mode){
     	if (!setProgram()) {
@@ -1012,6 +951,7 @@ void Rock3DObjMgr::render_objects() {
     	  return;
     	}
     }
+    cout<<"Rock3DObjMgr::render_objects()"<<endl;
     if (wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
@@ -1020,6 +960,23 @@ void Rock3DObjMgr::render_objects() {
 	const std::vector<MCObject*>& rockList = rocks.getObjects();
 	for (MCObject *rock : rockList) {
 		if (rock->vboValid && rock->mesh.size() > 0) {
+			GLhandleARB program = GLSLMgr::programHandle();
+
+			PlaceData* placeData = data[rockIndex];
+			int rockType = placeData->mgr->instance;  // 0, 1, 2, etc.
+			
+			// When rock type changes, update shader uniforms
+			if (rockType != currentRockType) {
+				
+				// Set which texture set to use
+				GLint activeTexLoc = glGetUniformLocation(program, "activeTexture");
+				if (activeTexLoc >= 0) {
+					std::cout << "Switching to rock type " << rockType << std::endl;
+					glUniform1i(activeTexLoc, rockType);
+				}
+				
+				currentRockType = rockType;
+			}
              
 			glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
 			glVertexPointer(3, GL_FLOAT, 0, 0);
@@ -1034,7 +991,6 @@ void Rock3DObjMgr::render_objects() {
 			glEnableClientState(GL_COLOR_ARRAY);
 
 			// ADD THIS - bind template position as vertex attribute
-			GLhandleARB program = GLSLMgr::programHandle();
 			GLint attribLoc = glGetAttribLocation(program, "templatePosition");
 			if (attribLoc >= 0) {
 				glBindBuffer(GL_ARRAY_BUFFER, rock->vboTemplatePos);
@@ -1050,6 +1006,8 @@ void Rock3DObjMgr::render_objects() {
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
 			glDisableClientState(GL_COLOR_ARRAY);
+			
+			rockIndex++;
 		}
 	}
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

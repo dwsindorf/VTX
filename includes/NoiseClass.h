@@ -10,7 +10,7 @@
 #define LARGE_TBL
 
 #ifdef LARGE_TBL
-const int PERMSIZE=128*1024*32;
+const int PERMSIZE=64*1024*32;
 #else
 const int PERMSIZE=1024*32;
 #endif

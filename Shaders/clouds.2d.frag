@@ -9,6 +9,8 @@
 
 // ########## Texture section #########################
 
+varying vec4 WorldNormal;
+
 #if NTEXS >0
 #include "tex_funcs.frag"
 #endif

@@ -22,6 +22,7 @@ uniform vec4 Shadow;
 
 uniform float night_lighting;
 uniform bool lighting;
+uniform int activeTexture;
 
 #define DEPTH   gl_FragCoord.z
 
@@ -74,17 +75,58 @@ void main() {
 #else
 	vec4 color=vec4(1.0);
 #endif
-
-
-
+#ifdef TEST
 #if NTEXS >0
+#ifdef TX0
+
+if (activeTexture == 0) {
+    INIT_TEX(0, C0)
+#ifdef M0
+    BGN_ORDERS
+#endif
+    APPLY_TEX
+#ifdef T0
+    SET_COLOR
+#endif
+#ifdef B0
+    SET_BUMP
+#endif
+#ifdef M0
+    NEXT_ORDER
+    END_ORDERS
+#endif   
+}
+#endif //TX0
+    
+#ifdef TX1
+if (activeTexture == 1) {
+    INIT_TEX(1, C1)
+    APPLY_TEX
+#ifdef M1
+    NEXT_ORDER
+    END_ORDERS
+#endif
+#ifdef T1
+    SET_COLOR
+#endif
+#ifdef B1
+    SET_BUMP
+#endif
+#ifdef M1
+    NEXT_ORDER
+    END_ORDERS
+#endif 
+}
+#endif // TX1
+#elsse
 #include "set_tex.frag"
 #endif
+#endif // NTEXS>0
  
- #if NBUMPS > 0
+#if NBUMPS > 0
         // Apply accumulated bump to normal
         Normal = normalize(Normal + bump);
-    #endif
+#endif
        
 #if NLIGHTS >0
 	if(lighting){
