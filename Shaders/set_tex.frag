@@ -3,6 +3,7 @@
 #endif
 
 #ifdef TX0
+if(tex2d[0].instance == tex2d[0].active) {
 #ifdef A0
     SET_ATTRIB(A0)
 #else
@@ -26,9 +27,11 @@ INIT_TEX(0,C0)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX1
+if(tex2d[1].instance == tex2d[1].active) {
 #ifdef A1
     SET_ATTRIB(A1)
 #else
@@ -52,9 +55,11 @@ INIT_TEX(1,C1)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX2
+if(tex2d[2].instance == tex2d[2].active) {
 #ifdef A2
     SET_ATTRIB(A2)
 #else
@@ -78,9 +83,11 @@ INIT_TEX(2,C2)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX3
+if(tex2d[3].instance == tex2d[3].active) {
 #ifdef A3
     SET_ATTRIB(A3)
 #else
@@ -104,9 +111,11 @@ INIT_TEX(3,C3)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX4
+if(tex2d[4].instance == tex2d[4].active) {
 #ifdef A4
     SET_ATTRIB(A4)
 #else
@@ -130,9 +139,11 @@ INIT_TEX(4,C4)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX5
+if(tex2d[5].instance == tex2d[5].active) {
 #ifdef A5
     SET_ATTRIB(A5)
 #else
@@ -156,9 +167,11 @@ INIT_TEX(5,C5)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX6
+if(tex2d[6].instance == tex2d[6].active) {
 #ifdef A6
     SET_ATTRIB(A6)
 #else
@@ -182,9 +195,11 @@ INIT_TEX(6,C6)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX7
+if(tex2d[7].instance == tex2d[7].active) {
 #ifdef A7
     SET_ATTRIB(A7)
 #else
@@ -208,9 +223,11 @@ INIT_TEX(7,C7)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX8
+if(tex2d[8].instance == tex2d[8].active) {
 INIT_TEX(8,C8)
 #ifdef N8
     SET_NOISE(N8)
@@ -229,9 +246,11 @@ INIT_TEX(8,C8)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX9
+if(tex2d[9].instance == tex2d[9].active) {
 INIT_TEX(9,C9)
 #ifdef N9
     SET_NOISE(N9)
@@ -250,9 +269,11 @@ INIT_TEX(9,C9)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX10
+if(tex2d[10].instance == tex2d[10].active) {
 INIT_TEX(10,C10)
 #ifdef N10
     SET_NOISE(N10)
@@ -271,9 +292,11 @@ INIT_TEX(10,C10)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX11
+if(tex2d[11].instance == tex2d[11].active) {
 INIT_TEX(11,C11)
 #ifdef N11
     SET_NOISE(N11)
@@ -292,9 +315,11 @@ INIT_TEX(11,C11)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX12
+if(tex2d[12].instance == tex2d[12].active) {
 INIT_TEX(12,C12)
 #ifdef N12
     SET_NOISE(N12)
@@ -313,9 +338,11 @@ INIT_TEX(12,C12)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX13
+if(tex2d[13].instance == tex2d[13].active) {
 INIT_TEX(13,C13)
 #ifdef N13
     SET_NOISE(N13)
@@ -334,9 +361,11 @@ INIT_TEX(13,C13)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX14
+if(tex2d[14].instance == tex2d[14].active) {
 INIT_TEX(14,C14)
 #ifdef N14
     SET_NOISE(N14)
@@ -355,9 +384,11 @@ INIT_TEX(14,C14)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 
 #ifdef TX15
+if(tex2d[15].instance == tex2d[15].active) {
 INIT_TEX(15,C15)
 #ifdef N15
     SET_NOISE(N15)
@@ -376,5 +407,6 @@ INIT_TEX(15,C15)
     NEXT_ORDER
     END_ORDERS
 #endif
+}
 #endif
 

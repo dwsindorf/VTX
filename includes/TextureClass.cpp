@@ -66,6 +66,7 @@ Texture::Texture(Image *i, int l, TNode *e)
 	slope_bias=0;
 	tilt_bias=0;
 	tid=0;
+	pid=0;
 	s=0;
 	t=0;
 #ifdef DEBUG_TEXTURES
@@ -383,7 +384,7 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
-	cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
+	//cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
 	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
 
@@ -456,8 +457,10 @@ bool Texture::setProgram(){
     sprintf(str,"tex2d[%d].t1d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t1d());
     sprintf(str,"tex2d[%d].triplanar",tid);     glUniform1iARB(glGetUniformLocationARB(program,str),triplanar());
     sprintf(str,"tex2d[%d].t3d",tid);           glUniform1iARB(glGetUniformLocationARB(program,str),t3d());
+    sprintf(str,"tex2d[%d].active",tid);        glUniform1iARB(glGetUniformLocationARB(program,str),pid);
+    sprintf(str,"tex2d[%d].instance",tid);      glUniform1iARB(glGetUniformLocationARB(program,str),pid);
 #ifdef DEBUG_TEXTURES
-    cout<<tid<<" Terrain ID:"<<tp->id<<" texture id:"<<tid<<" 1d:"<<t1d()<<" scale:"<<scale<<" triplanar:"<<triplanar()<<endl;
+    cout<<" Texture ID:"<<tp->id<<" tid:"<<tid<<" pid:"<<pid<<" 2d:"<<t2d()<<" triplanar:"<<triplanar()<<endl;
 #endif
     //	double dfactor=0.5*GLSLMgr::wscale;
 //    double zn=log2(0.2*dfactor/TheScene->znear);

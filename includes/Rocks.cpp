@@ -32,6 +32,7 @@ static TerrainData Td;
 
 static bool first=true;
 static int tid=0;
+static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
@@ -43,6 +44,7 @@ static bool cvalid;
 //#define USE_LOD_CACHE
 //#define PRINT_CACHE_STATS
 #define PRINT_ROCK_CACHE_STATS
+//#define PRINT_ACTIVE_TEX
 
 static bool shadow_start=false;
 
@@ -96,19 +98,19 @@ static bool shadow_start=false;
 //     - Rock3DObjMgr (render_object)
 //       * uploads/ renders data using vertex buffers
 
-TexInfo::TexInfo(Texture *texture){
-	texactive=texture->tex_active;
-	bumpactive=texture->bump_active;
-	texamp=texture->texamp;
-	bumpamp=texture->bumpamp;
-	scale=texture->scale;
-	t2d=texture->t2d();
-	texid=Rock3DObjMgr::texs.size();
-	//cout<<"new tex 1d:"<<t1d<<endl;	
-}
-void TexInfo::print(){
-	cout<<"tex id:"<<tid<<" texamp:"<<texamp<<" bumpamp:"<<bumpamp<<" scale:"<<scale<<endl;	
-}
+//TexInfo::TexInfo(Texture *texture){
+//	texactive=texture->tex_active;
+//	bumpactive=texture->bump_active;
+//	texamp=texture->texamp;
+//	bumpamp=texture->bumpamp;
+//	scale=texture->scale;
+//	t2d=texture->t2d();
+//	texid=Rock3DObjMgr::texs.size();
+//	//cout<<"new tex 1d:"<<t1d<<endl;	
+//}
+//void TexInfo::print(){
+//	cout<<"tex id:"<<tid<<" texamp:"<<texamp<<" bumpamp:"<<bumpamp<<" scale:"<<scale<<endl;	
+//}
 
 struct RockLodEntry {
     int    res;     // voxel resolution
@@ -144,7 +146,7 @@ bool Rock3D::initProgram(){
 	TNcolor *color=(TNcolor*)rmgr->color;
 	if(color && color->isEnabled())
 		cvalid=true;
-		
+	//for(int i=0;i<rmgr->texs.size;i++){	
 	for(int i=rmgr->texs.size-1;i>=0;i--){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
@@ -170,7 +172,8 @@ bool Rock3D::setProgram(){
 	int mode=CurrentScope->passmode();
 	CurrentScope->set_spass();
 		
-	for(int i=rmgr->texs.size-1;i>=0;i--){
+	for(int i=rmgr->texs.size-1;i>=0;i--){  // needed so 1d tex is drawn last as in 2d rocks
+	//for(int i=0;i<rmgr->texs.size;i++){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
 		if(!tntex->isEnabled())
@@ -178,6 +181,7 @@ bool Rock3D::setProgram(){
 		TerrainProperties::tid=tid;
 		texture->eval();
 		std::cout << "Rock type " << rmgr->instance << " setProgram: tid=" << tid << std::endl;
+		texture->pid=pid;
 		texture->setProgram();
 		tid++;
 	}
@@ -525,7 +529,7 @@ std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr:
 int Rock3DObjMgr::cacheHits = 0;
 int Rock3DObjMgr::cacheMisses = 0;
 int Rock3DObjMgr::cacheRegens = 0;
-std::list<TexInfo> Rock3DObjMgr::texs;
+int Rock3DObjMgr::maxTexs = 0;
 
 Rock3DObjMgr::~Rock3DObjMgr(){
 }
@@ -565,7 +569,7 @@ bool Rock3DObjMgr::setProgram() {
  		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
     GLSLMgr::setDefString(defs);
-
+    maxTexs=0;
     if(Render.textures()){
     	tid=0;
     	nbumps=0;
@@ -573,19 +577,22 @@ bool Rock3DObjMgr::setProgram() {
     	Texture::reset();
 		for(int i=0;i<objs.size;i++){
 			objs[i]->initProgram();
-		}  
+		}
+		maxTexs=tid;
     }
     if(cvalid)
-    	sprintf(defs,"#define COLOR \n#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
+    	sprintf(defs,"#define COLOR \n#define NTEXS %d\n#define NBUMPS %d\n",maxTexs,nbumps);
     else
 		sprintf(defs,"#define NTEXS %d\n#define NBUMPS %d\n",tid,nbumps);
 
 	strcat(GLSLMgr::defString,defs);
     GLSLMgr::loadProgram("rocks3d_tex.vert", "rocks3d_tex.frag");
 	tid=0;
+	pid=0;
 	for(int i=0;i<objs.size;i++){
 		objs[i]->setProgram();
-	} 
+		pid++;
+	}
    GLhandleARB program = GLSLMgr::programHandle();
     if (!program)
         return false;
@@ -962,9 +969,6 @@ void Rock3DObjMgr::render_objects() {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
 	GLhandleARB program = GLSLMgr::programHandle();
-	GLint activeTexLoc = glGetUniformLocation(program, "activeTexture");
-	//if(activeTexLoc<0)
-	//	cout <<"ERROR activeTexture not used in program"<<endl;
 
    // glUniform1i(activeTexLoc, 0);
 	const std::vector<MCObject*>& rockList = rocks.getObjects();
@@ -976,23 +980,21 @@ void Rock3DObjMgr::render_objects() {
 			
 			int mgrInstance = placeData->mgr->instance;
 
-			if (rockType != mgrInstance) {
-			    std::cout << "MISMATCH! PlaceData instance=" << rockType 
-			              << " but mgr instance=" << mgrInstance << std::endl;
-			}
-
-			if (activeTexLoc >= 0) {
-			    glUniform1i(activeTexLoc, rockType);
-			}				
-			// When rock type changes, update shader uniforms
-			if (rockType != currentRockType) {				
-				// Set which texture set to use
-				if (activeTexLoc >= 0) {
-					std::cout << "Switching to rock type " << rockType <<" id:"<<placeData->mgr->mult<<std::endl;
+			for (int i = 0; i < maxTexs; i++) { // set active status for all textures
+				char str[64];
+				sprintf(str, "tex2d[%d].active", i);
+				GLint loc = glGetUniformLocation(program, str);
+				if (loc >= 0) {
+					glUniform1i(loc, rockType);
 				}
+			}
+			// show when active texture changes
+#ifdef PRINT_ACTIVE_TEX
+			if (rockType != currentRockType) {				
+				std::cout << "Switching active rock instance " << currentRockType <<"->"<<rockType<<std::endl;				
 				currentRockType = rockType;
 			}
-             
+#endif             
 			glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
 			glVertexPointer(3, GL_FLOAT, 0, 0);
 			glEnableClientState(GL_VERTEX_ARRAY);
@@ -1081,7 +1083,7 @@ void TNrocks3D::init()
 	tid=0;
 	if(base){
 		base->visitNode(collectTexs);
-		rmgr->texs.sort();
+		//rmgr->texs.sort();
 	}
 	mgr->set_first(1);
 	if(rock==0)
@@ -1105,7 +1107,7 @@ void TNrocks3D::eval()
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Rocks.objects();
-		cout<<"new Rock type instance="<<instance<<endl;
+		//cout<<"new Rock type instance="<<instance<<endl;
 				
 		mgr->instance=instance;
 		mgr->layer=layer;

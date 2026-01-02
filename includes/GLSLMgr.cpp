@@ -152,18 +152,13 @@ void GLSLMgr::makeTexDefsFile(){
 		 cout<< "GLSLMgr::makeTexDefsFile file write error"<< endl;
 	    return;
 	}
-//	fprintf(fp,"#if NTEXS >0\n");
-//	fprintf(fp,"    TEX_VARS\n");
-//	fprintf(fp,"#endif\n");
-//	fprintf(fp,"#if NBUMPS >0\n");
-//	fprintf(fp,"    BUMP_VARS\n");
-//	fprintf(fp,"#endif\n");
 	fprintf(fp,"#if NVALS >0\n");
 	fprintf(fp,"    NOISE_VARS\n");
 	fprintf(fp,"#endif\n\n");
 	int n=unused_tex_units>16?16:unused_tex_units;
 	for(int i=0;i<n;i++){
 		fprintf(fp,"#ifdef TX%d\n",i);
+		fprintf(fp,"if(tex2d[%d].instance == tex2d[%d].active) {\n",i,i);
 		if(i<8){
 			fprintf(fp,"#ifdef A%d\n",i);
 			fprintf(fp,"    SET_ATTRIB(A%d)\n",i);
@@ -175,9 +170,6 @@ void GLSLMgr::makeTexDefsFile(){
 		fprintf(fp,"#ifdef N%d\n",i);
 		fprintf(fp,"    SET_NOISE(N%d)\n",i);
 		fprintf(fp,"#endif\n");
-//		fprintf(fp,"#ifdef X%d\n",i);
-//		fprintf(fp,"    SET_TEX1D(X%d)\n",i);
-//		fprintf(fp,"#endif\n");
 		fprintf(fp,"#ifdef M%d\n",i);
 		fprintf(fp,"    BGN_ORDERS\n");
 		fprintf(fp,"#endif\n");
@@ -192,6 +184,7 @@ void GLSLMgr::makeTexDefsFile(){
 		fprintf(fp,"    NEXT_ORDER\n");
 		fprintf(fp,"    END_ORDERS\n");
 		fprintf(fp,"#endif\n");
+		fprintf(fp,"}\n");
 		fprintf(fp,"#endif\n\n");
 	}
 	fclose(fp);

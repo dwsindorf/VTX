@@ -30,6 +30,8 @@ struct tex2d_info {
 	bool  t1d;           // 1d texture
 	bool  triplanar;     // triplanar mapping	
 	bool  t3d;           // 3d mapping	
+	int   instance;      // placement instance
+	int   active;        // placement instance	
 };
 uniform tex2d_info tex2d[NTEXS];
 uniform sampler2D samplers2d[NTEXS];

@@ -22,10 +22,10 @@ uniform vec4 Shadow;
 
 uniform float night_lighting;
 uniform bool lighting;
-uniform int activeTexture;
 
 #define DEPTH   gl_FragCoord.z
 //#define TEST_ACTIVE
+//#define TEST_MULTI
 vec3 setLighting(vec3 BaseColor) {
     vec3 normal = normalize(Normal);
     vec3 eye = normalize(-EyeDirection);
@@ -74,44 +74,8 @@ void main() {
 #endif
 
 #if NTEXS >0
-#ifdef TEST_RESET
-
-attrib=1.0;
-
-#ifdef TX0
-if (activeTexture == 0) {
-INIT_TEX(0,C0)
-    BGN_ORDERS
-    APPLY_TEX
-#ifdef T0
-    SET_COLOR
-#endif
-#ifdef B0
-    SET_BUMP
-#endif
-    NEXT_ORDER
-    END_ORDERS
-}   
-#endif 
-#ifdef TX1
-if (activeTexture == 1) {
-INIT_TEX(1,C1)
-    BGN_ORDERS
-    APPLY_TEX
-#ifdef T1
-    SET_COLOR
-#endif
-#ifdef B1
-    SET_BUMP
-#endif
-    NEXT_ORDER
-    END_ORDERS
-}
-#endif
-#else
 #include "set_tex.frag"
 #endif
-#endif // NTEXS>0
  
 #if NBUMPS > 0
         // Apply accumulated bump to normal

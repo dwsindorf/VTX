@@ -74,8 +74,9 @@ public:
 	bool d_data;
 
 	int type;
-	int tid;
-	int cid;
+	int tid; // terrain texture id (0.. number in layer)
+	int cid; // coordinate id
+	int pid; // placement id
 	TNode  *expr;
 	
 	int style()				{ switch(options & STYLE){
