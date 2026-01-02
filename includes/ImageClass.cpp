@@ -927,7 +927,7 @@ void TNtexture::eval()
 	    texture->bumpamp=0;
 	}
     texture->bias=bias;
-	//cout<<"scale="<<texture->scale<<" ampl="<<texture->texamp<<endl;
+	//cout<<"scale="<<texture->scale<<" ampl="<<texture->texamp<<" bias:"<<bias<<endl;
 
     texture->orders=orders;
     texture->orders_atten=orders_atten;

@@ -22,8 +22,8 @@ struct tex2d_info {
 	float height_bias;   // height bias
 	float bump_bias;     // bump bias
 	float slope_bias; 	 // slope bias
-	float near_bias; 	 // low frequency bias bias
-	float far_bias; 	 // high frequency bias bias
+	float near_bias; 	 // low frequency bias
+	float far_bias; 	 // high frequency bias
 	float tilt_bias;     // tilt bias	
 	bool  randomize;     // randomized texture	
 	bool  seasonal;      // seasonal	
@@ -234,7 +234,11 @@ vec3 getBump(int tid, vec4 coords,float mm){
   	tid = i; \
 	scale=tex2d[i].scale; \
 	coords = COORDS; \
-	coords*= tex2d[i].t3d?scale*1e-7:1.0; \
+	if(tex2d[i].t3d) {\
+		coords*= scale*1e-7; \
+		if(tex2d[i].t1d) \
+		   coords.x+=tex2d[i].bias; \
+	} \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
 	last_color=color; \

@@ -153,7 +153,7 @@ bool Rock3D::initProgram(){
 		if(!tntex->isEnabled())
 			continue;
 		texture->set3D();
-		std::cout << "Rock type " << rmgr->instance << " initProgram: tid=" << tid << std::endl;
+		//std::cout << "Rock type " << rmgr->instance << " initProgram: tid=" << tid << std::endl;
 
 		TerrainProperties::tid=tid;
 		if(texture->bump_active && Render.bumps())
@@ -172,7 +172,7 @@ bool Rock3D::setProgram(){
 	int mode=CurrentScope->passmode();
 	CurrentScope->set_spass();
 		
-	for(int i=rmgr->texs.size-1;i>=0;i--){  // needed so 1d tex is drawn last as in 2d rocks
+	for(int i=rmgr->texs.size-1;i>=0;i--){  // reverse needed so 1d tex is drawn last as in 2d rocks
 	//for(int i=0;i<rmgr->texs.size;i++){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
@@ -180,7 +180,7 @@ bool Rock3D::setProgram(){
 			continue;
 		TerrainProperties::tid=tid;
 		texture->eval();
-		std::cout << "Rock type " << rmgr->instance << " setProgram: tid=" << tid << std::endl;
+		//std::cout << "Rock type " << rmgr->instance << " setProgram: tid=" << tid << std::endl;
 		texture->pid=pid;
 		texture->setProgram();
 		tid++;
@@ -393,7 +393,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
 
     // Adjust bounds to match ellipsoid size
     // Add extra margin for noise (especially when noiseAmpl is high)
-    double margin = 1.1 + noiseAmpl;  // Increase margin with noise amplitude
+    double margin = 1.1 + 2*noiseAmpl;  // Increase margin with noise amplitude
     Point boundsMin(-rx * margin, -ry * margin, -rz * margin);
     Point boundsMax(rx * margin, ry * margin, rz * margin);    
    
@@ -691,7 +691,7 @@ void Rock3DObjMgr::render() {
 		moved = false;
 		changed = false;  // ADD THIS - don't rebuild in shadow passes
 	}
-    std::cout << "Rock3DObjMgr::render() passmode:" <<CurrentScope->passmode()<<endl;
+    //std::cout << "Rock3DObjMgr::render() passmode:" <<CurrentScope->passmode()<<endl;
 	
     bool placement_needs_update = moved;  // Rocks change, but meshes stay same
     bool mesh_needs_rebuild = changed;  // Actual geometry changes
@@ -962,7 +962,7 @@ void Rock3DObjMgr::render_objects() {
     	  return;
     	}
     }
-    cout<<"Rock3DObjMgr::render_objects()"<<endl;
+    //cout<<"Rock3DObjMgr::render_objects()"<<endl;
     if (wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else

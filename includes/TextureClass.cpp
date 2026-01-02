@@ -323,7 +323,7 @@ void Texture::begin() {
 		FREE(data);
 		valid=true;
 	}
-	std::cout << "Binding texture id=" << id << " to unit " << tid << std::endl;
+	//std::cout << "Binding texture id=" << id << " to unit " << tid << std::endl;
 
 	glBindTexture(GL_TEXTURE_2D, id);
 
@@ -421,6 +421,8 @@ bool Texture::setProgram(){
 	double bumpdelta=pow(10,-(0.25*minscale+3.5-2*TheScene->bump_mip));
 	bumpdelta=bumpdelta<1e-9?1e-9:bumpdelta;
 	double tex_bias=t2d()?bias:0;
+	if(t3d() && t1d())
+		tex_bias=bias;
  	sprintf(str,"samplers2d[%d]",tid);    		
  	glUniform1iARB(glGetUniformLocationARB(program,str),tid);
 
