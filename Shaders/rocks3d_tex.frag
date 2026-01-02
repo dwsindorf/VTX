@@ -25,7 +25,7 @@ uniform bool lighting;
 uniform int activeTexture;
 
 #define DEPTH   gl_FragCoord.z
-#define TEST
+//#define TEST_ACTIVE
 vec3 setLighting(vec3 BaseColor) {
     vec3 normal = normalize(Normal);
     vec3 eye = normalize(-EyeDirection);
@@ -67,24 +67,21 @@ vec3 setLighting(vec3 BaseColor) {
 #endif
 
 void main() {
-#ifdef NOTILE
-    warmup();
-#endif
 #ifdef COLOR
 	vec4 color=Color;
 #else
 	vec4 color=vec4(1.0);
 #endif
-#ifdef TEST
-attrib=1.0;
-#if NTEXS >0
-#ifdef TX0
 
+#if NTEXS >0
+#ifdef TEST_RESET
+
+attrib=1.0;
+
+#ifdef TX0
 if (activeTexture == 0) {
-    INIT_TEX(0, C0)
-#ifdef M0
+INIT_TEX(0,C0)
     BGN_ORDERS
-#endif
     APPLY_TEX
 #ifdef T0
     SET_COLOR
@@ -92,33 +89,25 @@ if (activeTexture == 0) {
 #ifdef B0
     SET_BUMP
 #endif
-#ifdef M0
     NEXT_ORDER
     END_ORDERS
-#endif   
-}
-#endif //TX0
-    
+}   
+#endif 
 #ifdef TX1
 if (activeTexture == 1) {
-    INIT_TEX(1, C1)
+INIT_TEX(1,C1)
+    BGN_ORDERS
     APPLY_TEX
-#ifdef M1
-    NEXT_ORDER
-    END_ORDERS
-#endif
 #ifdef T1
     SET_COLOR
 #endif
 #ifdef B1
     SET_BUMP
 #endif
-#ifdef M1
     NEXT_ORDER
     END_ORDERS
-#endif 
 }
-#endif // TX1
+#endif
 #else
 #include "set_tex.frag"
 #endif
@@ -140,9 +129,11 @@ if (activeTexture == 1) {
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
-
-     gl_FragData[0]=vec4(activeTexture+0.01,0,1,1);
-     //gl_FragData[0]=vec4(color);
+#ifdef TEST_ACTIVE
+    gl_FragData[0]=vec4(activeTexture,0,1,1);
+#else
+    gl_FragData[0]=vec4(color);
+#endif
      gl_FragData[1]=vec4(2,DEPTH,1,1.0);  
     
     //gl_FragColor[0] = vec4(night_lighting,0,0,1.0);

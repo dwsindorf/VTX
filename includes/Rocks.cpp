@@ -42,7 +42,7 @@ static bool cvalid;
 //#define PRINT_ROCK_STATS
 //#define USE_LOD_CACHE
 //#define PRINT_CACHE_STATS
-//#define PRINT_ROCK_CACHE_STATS
+#define PRINT_ROCK_CACHE_STATS
 
 static bool shadow_start=false;
 
@@ -610,6 +610,7 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
+	vars.newIntVar("activeTexture",0);
 
     vars.setProgram(program);
     vars.loadVars();
@@ -711,8 +712,8 @@ void Rock3DObjMgr::render() {
         
         int hits = 0, misses = 0, regens = 0;
 
-        for (int i = n - 1; i >= 0; i--) {
-            PlaceData *s = data[i];
+        for (int i = 0; i < n; i++)  {
+        	Rock3DData *s = data[i];
             
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
             TNode *tr = pmgr->rnoise;
@@ -744,6 +745,7 @@ void Rock3DObjMgr::render() {
             int rval = s->rval;
             double comp = pmgr->comp;
             double drop = pmgr->drop;
+            int instance=s->instance;
              
             int resolution = Rock3DMgr::getLODResolution(pts);
             
@@ -770,15 +772,16 @@ void Rock3DObjMgr::render() {
                 bool resMatch = (entry.resolution == resolution);
                 bool seedMatch = (entry.seed == rval);
                 bool isoNoiseExprMatch = (estr == entry.estr);
-                 
-                if (!resMatch || !seedMatch || !isoNoiseExprMatch) {
+                bool instanceMatch = (instance == entry.instance); 
+                if (!resMatch || !seedMatch || !isoNoiseExprMatch|| !instanceMatch) {
  #ifdef PRINT_ROCK_CACHE_STATS
-                    if (regens < 5) {
-                        std::cout << "Regen rock " << i << ": ";
+                   if (regens < 5) {
+                        std::cout << "REGEN ROCK " << i << ": ";
                         if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
                         if (!seedMatch) std::cout << "seed " << entry.seed << "->" << rval << " ";
+                        if (!instanceMatch) std::cout << "instance " << entry.instance << "->" << instance << " ";
                         std::cout << std::endl;
-                    }
+                   }
 #endif
                     regens++;
                     rockCache.erase(it);
@@ -831,7 +834,8 @@ void Rock3DObjMgr::render() {
                 entry.estr = estr;
                 entry.seed = rval;
                 entry.framesSinceUsed = 0;
-                entry.instance=s->instance;
+                entry.instance=instance;
+                
                 rockCache[key] = entry;
         	
          		TheNoise.rseed = rseed;
@@ -870,7 +874,7 @@ void Rock3DObjMgr::render() {
                     
                     for (int v = 0; v < 3; v++) {
                         Point tv = tri.vertices[v];                       
-						newTri.templatePos[v] = tv*1e-7;  // STORE template position
+						newTri.templatePos[v] = tv;  // STORE template position
                         Point rotated = Point(
 								tv.x * right.x + tv.y * forward.x + tv.z * up.x,
 								tv.x * right.y + tv.y * forward.y + tv.z * up.y,
@@ -931,7 +935,7 @@ void Rock3DObjMgr::render() {
         Rock3DMgr::printStats();
 #endif
     }
-
+   
     render_objects();
  
 }
@@ -957,24 +961,35 @@ void Rock3DObjMgr::render_objects() {
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
+	GLhandleARB program = GLSLMgr::programHandle();
+	GLint activeTexLoc = glGetUniformLocation(program, "activeTexture");
+	//if(activeTexLoc<0)
+	//	cout <<"ERROR activeTexture not used in program"<<endl;
+
+   // glUniform1i(activeTexLoc, 0);
 	const std::vector<MCObject*>& rockList = rocks.getObjects();
 	for (MCObject *rock : rockList) {
 		if (rock->vboValid && rock->mesh.size() > 0) {
-			GLhandleARB program = GLSLMgr::programHandle();
 
 			PlaceData* placeData = data[rockIndex];
-			int rockType = placeData->mgr->instance;  // 0, 1, 2, etc.
+			int rockType = placeData->instance;  // 0, 1, 2, etc.
 			
+			int mgrInstance = placeData->mgr->instance;
+
+			if (rockType != mgrInstance) {
+			    std::cout << "MISMATCH! PlaceData instance=" << rockType 
+			              << " but mgr instance=" << mgrInstance << std::endl;
+			}
+
+			if (activeTexLoc >= 0) {
+			    glUniform1i(activeTexLoc, rockType);
+			}				
 			// When rock type changes, update shader uniforms
-			if (rockType != currentRockType) {
-				
+			if (rockType != currentRockType) {				
 				// Set which texture set to use
-				GLint activeTexLoc = glGetUniformLocation(program, "activeTexture");
 				if (activeTexLoc >= 0) {
-					std::cout << "Switching to rock type " << rockType << std::endl;
-					glUniform1i(activeTexLoc, rockType);
+					std::cout << "Switching to rock type " << rockType <<" id:"<<placeData->mgr->mult<<std::endl;
 				}
-				
 				currentRockType = rockType;
 			}
              
@@ -1090,6 +1105,8 @@ void TNrocks3D::eval()
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Rocks.objects();
+		cout<<"new Rock type instance="<<instance<<endl;
+				
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(rock){

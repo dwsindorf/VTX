@@ -230,8 +230,9 @@ vec3 getBump(int tid, vec4 coords,float mm){
 
 #define INIT_TEX(i,COORDS) \
   	tid = i; \
-	coords = COORDS; \
 	scale=tex2d[i].scale; \
+	coords = COORDS; \
+	coords*= tex2d[i].t3d?scale*1e-7:1.0; \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
 	last_color=color; \
