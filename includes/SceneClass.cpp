@@ -927,6 +927,7 @@ void Scene::open(char *fn)
 	set_changed_detail();
 	set_changed_position();
 	set_changed_file();
+	set_changed_render();
 
 	clr_changed_view();
 	clr_moved();
@@ -976,6 +977,7 @@ void Scene::open(char *fn)
 	clr_changed_view();
 	clr_moved();
 	set_changed_detail();
+
 	Render.invalidate_textures();
 	images.invalidate();
 	images.makeImagelist();
@@ -1678,6 +1680,7 @@ void Scene::change_view(int v)
 	//vobj=viewobj;
 
 	set_changed_detail();
+	
 	if(focusobj != viewobj)
 		objects->visitAll(&Object3D::clr_groups);
 

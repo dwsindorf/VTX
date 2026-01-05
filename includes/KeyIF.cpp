@@ -25,6 +25,7 @@ using std::endl;
 extern int yydebug;
 KeyIF KIF;
 int KeyIF::test=0;
+//#define DEBUG_KEYS
 
 extern int show_visits;
 int ktest1=0;
@@ -48,6 +49,7 @@ int test5=0;
 int test6=0;
 int test7=0;
 int test8=0;
+
 //-------------------------------------------------------------
 // KeyIF::standard_key() process ascii key code function
 //-------------------------------------------------------------
@@ -755,6 +757,9 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 //-------------------------------------------------------------
 int KeyIF::special_key(unsigned &state, unsigned key)
 {
+#ifdef DEBUG_KEYS
+	printf("special key state:0x%x key:%d\n",key,state);
+#endif
 	switch(key){
 	case KEY_FORWARD:
 		TheScene->view->forward();
@@ -822,7 +827,6 @@ int KeyIF::special_key(unsigned &state, unsigned key)
 		return 0;
 	}
   	//TheScene->set_changed_render();
-	//printf("special key %x %x\n",key,state);
 	return 1;
 }
 

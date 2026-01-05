@@ -91,42 +91,14 @@ static bool shadow_start=false;
 //     - Rock3DObjMgr(collect)
 //       * traverses hash table and fills static array PlaceData(data)
 //     - Rock3DObjMgr (render)
-//       * parses data array and fills vertex buffer with OpenGL data (if need rebuild determied)
+//       * parses data array and fills vertex buffer with OpenGL data (if need rebuild determined)
 //     - Rock3DObjMgr (setProgram)
 //       * sets up OpenGl environment for all objects to be rendered
 //       * sets shader program
 //     - Rock3DObjMgr (render_object)
 //       * uploads/ renders data using vertex buffers
 
-//TexInfo::TexInfo(Texture *texture){
-//	texactive=texture->tex_active;
-//	bumpactive=texture->bump_active;
-//	texamp=texture->texamp;
-//	bumpamp=texture->bumpamp;
-//	scale=texture->scale;
-//	t2d=texture->t2d();
-//	texid=Rock3DObjMgr::texs.size();
-//	//cout<<"new tex 1d:"<<t1d<<endl;	
-//}
-//void TexInfo::print(){
-//	cout<<"tex id:"<<tid<<" texamp:"<<texamp<<" bumpamp:"<<bumpamp<<" scale:"<<scale<<endl;	
-//}
 
-struct RockLodEntry {
-    int    res;     // voxel resolution
-    double maxPts;  // upper bound for pts (pts < maxPts)
-};
-
-static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  2,  2.0 },
-    {  4,  5.0 },
-    {  8,  10.0 },
-    {  16, 20.0 },
-    { 32, 30.0 },
-    { 48, 50.0 },
-    { 64, 90.0 },
-    { 96,  1e9 }  // default 
-};
 
 //************************************************************
 // Rock3D class
@@ -416,6 +388,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
 // Rock3DMgr class
 //************************************************************
 int Rock3DMgr::stats[MAX_ROCK_STATS][2];
+double Rock3DMgr::resScale=1;
 
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
@@ -468,6 +441,22 @@ void Rock3DMgr::clearStats(){
 	}
 }
 
+struct RockLodEntry {
+    int    res;     // voxel resolution
+    double maxPts;  // upper bound for pts (pts < maxPts)
+};
+
+static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
+    {  2,  2.0 },
+    {  4,  5.0 },
+    {  8,  10.0 },
+    {  16, 20.0 },
+    { 32, 30.0 },
+    { 48, 50.0 },
+    { 64, 90.0 },
+    { 96,  1e9 }  // default 
+};
+
 void Rock3DMgr::printStats(){
     int rcnt = 0;
     int tcnt = 0;
@@ -475,7 +464,7 @@ void Rock3DMgr::printStats(){
     std::cout << "------- 3D Rocks stats --------" << std::endl;
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 #ifdef PRINT_ROCK_STATS
-        std::cout << "res:"       << kRockLodTable[i].res
+        std::cout << "res:"       << kRockLodTable[i].resScale
                   << " cnt:"      << stats[i][0]
                   << " triangles:"<< stats[i][1]/1000<<" k"
                   << std::endl;
@@ -490,17 +479,15 @@ void Rock3DMgr::printStats(){
 
 void Rock3DMgr::setStats(int res, int tris,bool add){
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
-        if (kRockLodTable[i].res == res) {
+        if ((int)(kRockLodTable[i].res*resScale) == res) {
         	if(add){
 				stats[i][0]++;           // count of rocks at this res
 				stats[i][1] += tris;     // total triangles
-				//cout<<"adding:"<<tris<<endl<<" total:"<<stats[i][1]<<endl;
 
         	}
         	else{
 				stats[i][0]--;           // count of rocks at this res
 				stats[i][1] -= tris;     // total triangles
-				//cout<<"removing:"<<tris<<endl<<" total:"<<stats[i][1]<<endl;
         	}
             return;
         }
@@ -508,17 +495,25 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
 }
 
 int Rock3DMgr::getLODResolution(double pts) {
-   extern int test2;
-	if (test2)
-		return 24;
-
-	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+	int res=kRockLodTable[MAX_ROCK_STATS - 1].res; // fallback
+ 	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 		if (pts < kRockLodTable[i].maxPts) {
-			return kRockLodTable[i].res;
+			res=kRockLodTable[i].res;
+			break;
 		}
 	}
-	// Fallback (shouldn't hit if table is well-formed):
-	return kRockLodTable[MAX_ROCK_STATS - 1].res;
+ 	double cellsize=TheScene->cellsize;
+
+ 	if (cellsize <= 3.5) {// Between best and normal: lerp from 2.0 to 1.0	        
+ 	   resScale = lerp(cellsize, 1, 3.5, 2.0, 1.0);
+ 	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
+ 	   resScale = lerp(cellsize, 3.5, 7, 1.0, 0.5);
+    }
+ 	int newres=(int)(res*resScale);
+ 	newres=newres<2?2:newres;
+ 	//resScale=lerp(TheScene->cellsize-3.5,-2.5,2.5,2,0.5);	
+ 	//cout<<"scale:"<<resScale<<" res "<<res<<"->"<<newres<<endl;
+	return newres;
 }
 //************************************************************
 // Rock3DObjMgr class
@@ -558,9 +553,7 @@ bool Rock3DObjMgr::setProgram() {
  
 	if(PlaceObjMgr::shadow_mode)
 		return false;
-	
-	cout<<"Rock3DObjMgr::setProgram()"<<endl;
-	
+		
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
 
@@ -641,7 +634,7 @@ void Rock3DObjMgr::collect() {
         PlaceObj *obj = objs[i];
         obj->mgr()->collect(data);
     }
-    if (data.size)
+    if (data.size) // now sorted by instance instead of distance
         data.sort();
 //    for(int i=0;i<data.size;i++)
 //    	cout<<data[i]->instance;
@@ -682,19 +675,18 @@ void Rock3DObjMgr::render() {
         return;
     
     bool wireframe = test7;
-    bool smooth = test8;
-         
+    bool smooth =test8;
+    
     bool moved = TheScene->moved();
-	bool changed=TheScene->changed_detail();
-	// In shadow mode (except first pass), don't rebuild
-	if (PlaceObjMgr::shadow_mode && !shadow_start) {
-		moved = false;
-		changed = false;  // ADD THIS - don't rebuild in shadow passes
-	}
-    //std::cout << "Rock3DObjMgr::render() passmode:" <<CurrentScope->passmode()<<endl;
-	
-    bool placement_needs_update = moved;  // Rocks change, but meshes stay same
-    bool mesh_needs_rebuild = changed;  // Actual geometry changes
+    bool changed=TheScene->changed_detail();
+    
+    if (PlaceObjMgr::shadow_mode && !shadow_start) {
+        moved = false;
+        changed = false;
+    }
+    
+    bool placement_needs_update = moved;
+    bool mesh_needs_rebuild = changed;
     
     if (changed) {
         std::cout << "Settings changed - invalidating" <<endl;
@@ -704,14 +696,11 @@ void Rock3DObjMgr::render() {
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
- 		
-		//std::cout << "Cleared rocks, rebuilding..." << std::endl;
-		// Clear rocks list for rebuild
-		
-		rocks.clear();
-		Rock3DMgr::clearStats();
+        rocks.clear();
+        Rock3DMgr::clearStats();
         
-   		Point xpoint = TheScene->xpoint;
+        Point xpoint = TheScene->xpoint;
+        
         // Mark all cached as not used
         for (auto& pair : rockCache) {
             pair.second.framesSinceUsed++;
@@ -720,7 +709,7 @@ void Rock3DObjMgr::render() {
         int hits = 0, misses = 0, regens = 0;
 
         for (int i = 0; i < n; i++)  {
-        	Rock3DData *s = data[i];
+            Rock3DData *s = data[i];
             
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
             TNode *tr = pmgr->rnoise;
@@ -757,10 +746,8 @@ void Rock3DObjMgr::render() {
             int resolution = Rock3DMgr::getLODResolution(pts);
             
             // Create cache key from world position
-            //RockCacheKey key(s->vertex);
-            RockCacheKey key(s->vertex);
+            RockCacheKey key(s->vertex,instance);
            
-            // Use frame-unique name (not cache key based)
             char name[64];
             sprintf(name, "rock_%d", i);
             
@@ -781,15 +768,18 @@ void Rock3DObjMgr::render() {
                 bool isoNoiseExprMatch = (estr == entry.estr);
                 bool instanceMatch = (instance == entry.instance); 
                 if (!resMatch || !seedMatch || !isoNoiseExprMatch|| !instanceMatch) {
- #ifdef PRINT_ROCK_CACHE_STATS
-                   if (regens < 5) {
-                        std::cout << "REGEN ROCK " << i << ": ";
+#ifdef DEBUG_REGEN               
+                    // DEBUG: Show why regenerating
+                    static int regenDebugCount = 0;
+                    if (regenDebugCount < 10) {
+                        std::cout << "REGEN rock " << i << " pos(" << s->vertex.x << "," << s->vertex.y << "): ";
                         if (!resMatch) std::cout << "res " << entry.resolution << "->" << resolution << " ";
                         if (!seedMatch) std::cout << "seed " << entry.seed << "->" << rval << " ";
-                        if (!instanceMatch) std::cout << "instance " << entry.instance << "->" << instance << " ";
+                        if (!instanceMatch) std::cout << "inst " << entry.instance << "->" << instance << " ";
                         std::cout << std::endl;
-                   }
-#endif
+                        regenDebugCount++;
+                    }
+#endif                   
                     regens++;
                     rockCache.erase(it);
                     needsGeneration = true;
@@ -802,16 +792,19 @@ void Rock3DObjMgr::render() {
                 }
             } else {
                 misses++;
-            }           
+            }
+
             // Generate if needed
+            
             if (needsGeneration) {
-            	int rseed=TheNoise.rseed;
-            	TheNoise.rseed=rval;
+                int rseed=TheNoise.rseed;
+                TheNoise.rseed=rval;
                 MCObject* templateSphere = getTemplateForLOD(s);                
                 if (!templateSphere || templateSphere->mesh.empty()){
-             		TheNoise.rseed = rseed;
+                    TheNoise.rseed = rseed;
                     continue;   
                 }
+                
                 // Copy mesh without modification
                 for (const auto& tri : templateSphere->mesh) {
                     MCTriangle newTri;
@@ -821,16 +814,17 @@ void Rock3DObjMgr::render() {
                     newTri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
                     templateMesh.push_back(newTri);
                 }               
+                
                 // Apply vertex displacement in template space
                 if (useVertexDisplacement || setVertexColor) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
 #ifdef PERLIN_NOISE
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);     // use built-in perlin noise
+                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
 #else
-                    applyVertexAttributes(&tempRock,vertexNoiseAmpl, tv, tc); // use standard TNoise function
+                    applyVertexAttributes(&tempRock,vertexNoiseAmpl, tv, tc);
 #endif
-                    templateMesh = tempRock.mesh;  // COPY THE DISPLACED MESH BACK!
+                    templateMesh = tempRock.mesh;
                  }
                                 
                 // Store in cache
@@ -845,12 +839,12 @@ void Rock3DObjMgr::render() {
                 
                 rockCache[key] = entry;
         	
-         		TheNoise.rseed = rseed;
+                TheNoise.rseed = rseed;
             }
             
             // Create rock and transform to eye space
             MCObject* rock = rocks.addObject(eyePos, size);
-            //cout<<name<<endl;
+            
             if (rock) {
                 rock->setDistanceInfo(dist, pts);
                 rock->mesh.clear();
@@ -865,44 +859,52 @@ void Rock3DObjMgr::render() {
                 Point rockCenter = worldPos - up*(s->radius * dscale);
                 
                 Point right, forward;
-				if (fabs(up.z) < 0.9)
-					right = Point(up.y, -up.x, 0).normalize();
-				else
-					right = Point(0, up.z, -up.y).normalize();
-				
-				forward = Point(up.y * right.z - up.z * right.y,
-						up.z * right.x - up.x * right.z,
-						up.x * right.y - up.y * right.x);
+                if (fabs(up.z) < 0.9)
+                    right = Point(up.y, -up.x, 0).normalize();
+                else
+                    right = Point(0, up.z, -up.y).normalize();
+                
+                forward = Point(up.y * right.z - up.z * right.y,
+                        up.z * right.x - up.x * right.z,
+                        up.x * right.y - up.y * right.x);
  
-               // Transform each vertex from world space to eye space
-      
                 for (const auto& tri : templateMesh) {
                     MCTriangle newTri;   
                     
                     for (int v = 0; v < 3; v++) {
-                        Point tv = tri.vertices[v];                       
-						newTri.templatePos[v] = tv;  // STORE template position
+                        Point tv = tri.vertices[v];         
+                        newTri.templatePos[v] = tv;  // STORE template position
                         Point rotated = Point(
-								tv.x * right.x + tv.y * forward.x + tv.z * up.x,
-								tv.x * right.y + tv.y * forward.y + tv.z * up.y,
-								tv.x * right.z + tv.y * forward.z + tv.z * up.z);						
+                                    tv.x * right.x + tv.y * forward.x + tv.z * up.x,
+                                    tv.x * right.y + tv.y * forward.y + tv.z * up.y,
+                                    tv.x * right.z + tv.y * forward.z + tv.z * up.z);						
                         Point worldVertex = rockCenter+rotated*size;
-						newTri.vertices[v] = worldVertex - xpoint; // Convert to eye space
-						newTri.colors[v]=tri.colors[v];
-                    }                   
+                        newTri.vertices[v] = worldVertex - xpoint; // Convert to eye space
+                        newTri.colors[v]=tri.colors[v];
+                    } 
+ 
                     // Calculate normal in eye space from the 3 eye-space vertices
-                    Point edge1 = newTri.vertices[1] - newTri.vertices[0];
-                    Point edge2 = newTri.vertices[2] - newTri.vertices[0];
+                    Point edge1 = newTri.templatePos[1] - newTri.templatePos[0];
+                    Point edge2 = newTri.templatePos[2] - newTri.templatePos[0];
+
                     Point eyeNormal = edge2.cross(edge1);
-                    newTri.normal = eyeNormal.normalize();
+                    double len = eyeNormal.length();
+                    static Point lastGood=Point(0, 1, 0);
+                    if (len > 1e-25) {
+                    	lastGood = eyeNormal;               	
+                    } else {
+                    	//cout<<"Rock3DObjMgr::render 0 len using:"<<lastGood.length()<<endl;                 
+                    }
+                    newTri.normal = lastGood.normalize();  
+                   // newTri.normal = eyeNormal.normalize();
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
                 rock->worldPosition = eyePos;
-                     
+                
                 // Upload VBO
-                if (smooth && useVertexDisplacement)
-                    rock->uploadToVBODisplaced();
+                if (smooth || useVertexDisplacement)
+                    rock->uploadToVBODisplaced(smooth);
                 else 
                     rock->uploadToVBO(); 
                 Rock3DMgr::setStats(resolution, rock->mesh.size(),true);
@@ -910,9 +912,11 @@ void Rock3DObjMgr::render() {
         }
         
         // Cull old cache entries
+        int culledCount = 0;
         for (auto it = rockCache.begin(); it != rockCache.end(); ) {
-            if (it->second.framesSinceUsed > 5) {
+            if (it->second.framesSinceUsed > 20) {
                 it = rockCache.erase(it);
+                culledCount++;
             } else {
                 ++it;
             }
@@ -934,27 +938,26 @@ void Rock3DObjMgr::render() {
             }
             std::cout << "Cache limit reached - removed " << toRemove << " oldest entries" << std::endl;
         }
-#ifdef PRINT_CACHE_STATS
-        std::cout << "Rock cache: " << hits << " hits, " << misses << " misses, " 
-                  << regens << " regens, " << rockCache.size() << " cached" << std::endl;
-#endif
-#ifdef PRINT_STATS       
+        
+        // DEBUG: Summary
+        std::cout << "Cache: " << hits << " hits, " << misses << " misses, " << regens << " regens, " 
+                  << culledCount << " culled, " << rockCache.size() << " total cached" << std::endl;
         Rock3DMgr::printStats();
-#endif
     }
-   
-    render_objects();
- 
+     render_objects();
 }
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
-    
+
+    static std::set<int> lastFrameRocks;
+    std::set<int> thisFrameRocks;
+
     int currentRockType = -1;
     int rockIndex = 0;
-
+    int drawnCount = 0;
 
     if(!PlaceObjMgr::shadow_mode){
     	if (!setProgram()) {
@@ -962,19 +965,27 @@ void Rock3DObjMgr::render_objects() {
     	  return;
     	}
     }
-    //cout<<"Rock3DObjMgr::render_objects()"<<endl;
     if (wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    
+
+    const std::vector<MCObject*>& rockList = rocks.getObjects();
+    int validCount = 0, invalidVboCount = 0, emptyMeshCount = 0;
+
 	GLhandleARB program = GLSLMgr::programHandle();
-
-   // glUniform1i(activeTexLoc, 0);
-	const std::vector<MCObject*>& rockList = rocks.getObjects();
 	for (MCObject *rock : rockList) {
+		if (!rock->vboValid) {
+		        invalidVboCount++;
+		        continue;
+		    }
+		    if (rock->mesh.size() == 0) {
+		        emptyMeshCount++;
+		        continue;
+		    }
+		    validCount++;
 		if (rock->vboValid && rock->mesh.size() > 0) {
-
+			thisFrameRocks.insert(rockIndex);
 			PlaceData* placeData = data[rockIndex];
 			int rockType = placeData->instance;  // 0, 1, 2, etc.
 			
@@ -983,9 +994,9 @@ void Rock3DObjMgr::render_objects() {
 			for (int i = 0; i < maxTexs; i++) { // set active status for all textures
 				char str[64];
 				sprintf(str, "tex2d[%d].active", i);
-				GLint loc = glGetUniformLocation(program, str);
+				GLint loc = glGetUniformLocationARB(program, str);
 				if (loc >= 0) {
-					glUniform1i(loc, rockType);
+					glUniform1iARB(loc, rockType);
 				}
 			}
 			// show when active texture changes
@@ -1014,7 +1025,6 @@ void Rock3DObjMgr::render_objects() {
 				glVertexAttribPointer(attribLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
 				glEnableVertexAttribArray(attribLoc);
 			}
-
 			glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
 			
 			// Disable template position attribute
@@ -1023,8 +1033,8 @@ void Rock3DObjMgr::render_objects() {
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
 			glDisableClientState(GL_COLOR_ARRAY);
-			
 			rockIndex++;
+
 		}
 	}
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

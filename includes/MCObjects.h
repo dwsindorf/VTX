@@ -113,12 +113,10 @@ public:
     
     // Upload mesh to VBOs for rendering
     void uploadToVBO();
-    void uploadToVBOSmooth();
-    void uploadToVBODisplaced();  // Smooth normals for displaced geometry
+    void uploadToVBODisplaced(bool computeSmoothNormals = false);
     void deleteVBO();
     
     // Optional: smooth normals across shared vertices
-    void generateSmoothNormals();
     void generateSphereNormals();
 };
 
