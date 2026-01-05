@@ -240,7 +240,9 @@ void PlacementMgr::setHashcode(){
 		            1/maxsize+
 					1/mult
 					);
-	id=(int)hashcode+type+instance+hashcode*TheNoise.rseed;
+	//id=(int)hashcode+type+instance+hashcode*TheNoise.rseed;
+	id=(int)hashcode+type+hashcode*TheNoise.rseed;
+
 }
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
@@ -908,7 +910,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	mgr->Stats.vtests++;
 
 	r=Random(pp);
-	rval=256*fabs(r)+instance;
+	rval=256*fabs(r);//+instance;
 	
 	p=p-mgr->offset;
  	p=(p+0.5)*mgr->size;

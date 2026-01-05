@@ -204,7 +204,7 @@ void MCObject::clearMesh() {
 }
 void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
     if (mesh.empty()) return;
-        
+            
     // Delete old VBOs
     if (vboVertices != 0) glDeleteBuffers(1, &vboVertices);
     if (vboNormals != 0) glDeleteBuffers(1, &vboNormals);
@@ -232,9 +232,21 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
                 uint64_t key = hashVertex(mesh[i].templatePos[v]);
                 vertexToTriangles[key].push_back(i);
             }
-        }       
+        }  
+#ifdef DEBUG_AVERAGING
+        int minTris = 1000, maxTris = 0;
+        double totalTris = 0;
+        for (auto& pair : vertexToTriangles) {
+            int count = pair.second.size();
+            minTris = std::min(minTris, count);
+            maxTris = std::max(maxTris, count);
+            totalTris += count;
+        }
+        std::cout << "Vertex sharing: avg=" << (totalTris / vertexToTriangles.size())
+                  << " min=" << minTris << " max=" << maxTris << std::endl;
+#endif
         // Compute smoothed normals with angle threshold
-        const double SMOOTH_ANGLE_COS = cos(45.0 * M_PI / 180.0);
+        const double SMOOTH_ANGLE_COS = cos(80.0 * M_PI / 180.0);
         for (auto& pair : vertexToTriangles) {
             uint64_t key = pair.first;
             std::vector<int>& tris = pair.second;           
@@ -243,12 +255,12 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
             int count = 1;          
             for (size_t i = 1; i < tris.size(); i++) {
                 Point normal = mesh[tris[i]].normal;
-                 if (referenceNormal.dot(normal) > SMOOTH_ANGLE_COS) {
+                if (referenceNormal.dot(normal) > SMOOTH_ANGLE_COS) {
                     avgNormal = avgNormal + normal;
                     count++;
                 }
             }
-            normalAccum[key] = avgNormal; // Fallback for degenerate normals
+            normalAccum[key] = avgNormal/count;
         } 
         static Point lastGood=Point(0, 1, 0);
         // Normalize accumulated normals

@@ -28,7 +28,7 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define PSCALE 0.008 // placement scale factor
+#define PSCALE 0.006 // placement scale factor
 
 static bool first=true;
 static int tid=0;
@@ -36,11 +36,9 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PERLIN_NOISE // use built in noise functions
-
 //#define PRINT_STATS
 //#define PRINT_LOD_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_ROCK_STATS
 //#define USE_LOD_CACHE
 //#define PRINT_CACHE_STATS
 #define PRINT_ROCK_CACHE_STATS
@@ -98,8 +96,6 @@ static bool shadow_start=false;
 //     - Rock3DObjMgr (render_object)
 //       * uploads/ renders data using vertex buffers
 
-
-
 //************************************************************
 // Rock3D class
 //************************************************************
@@ -125,7 +121,6 @@ bool Rock3D::initProgram(){
 		if(!tntex->isEnabled())
 			continue;
 		texture->set3D();
-		//std::cout << "Rock type " << rmgr->instance << " initProgram: tid=" << tid << std::endl;
 
 		TerrainProperties::tid=tid;
 		if(texture->bump_active && Render.bumps())
@@ -144,7 +139,7 @@ bool Rock3D::setProgram(){
 	int mode=CurrentScope->passmode();
 	CurrentScope->set_spass();
 		
-	for(int i=rmgr->texs.size-1;i>=0;i--){  // reverse needed so 1d tex is drawn last as in 2d rocks
+	for(int i=rmgr->texs.size-1;i>=0;i--){  // reverse needed so 1-d tex is drawn last as in 2d rocks
 	//for(int i=0;i<rmgr->texs.size;i++){
 		TNtexture *tntex=rmgr->texs[i];
 		Texture *texture=tntex->texture;
@@ -152,7 +147,6 @@ bool Rock3D::setProgram(){
 			continue;
 		TerrainProperties::tid=tid;
 		texture->eval();
-		//std::cout << "Rock type " << rmgr->instance << " setProgram: tid=" << tid << std::endl;
 		texture->pid=pid;
 		texture->setProgram();
 		tid++;
@@ -186,77 +180,6 @@ static SurfaceFunction makeCenteredEllipsoid(const Point& center, double rx, dou
     };
 }
 
-// Noisy sphere field for marching cubes iso-surface extraction using standard noise function
-// Noisy ellipsoid field for marching cubes iso-surface extraction using standard noise function
-
-#ifdef PERLIN_NOISE
-// Noisy sphere field for marching cubes iso-surface extraction using built-in noise function
-static SurfaceFunction makeNoisyRockField(const Point& center, double radius, int seed, double noiseAmpl) {
-    return [center, radius, seed, noiseAmpl](double x, double y, double z) -> double {
-        static std::map<int, PerlinNoise> noiseGens;
-        if (noiseGens.find(seed) == noiseGens.end()) {
-            noiseGens[seed] = PerlinNoise(seed);
-        }
-        PerlinNoise& noise = noiseGens[seed];
-        
-        double dx = x - center.x;
-        double dy = y - center.y;
-        double dz = z - center.z;
-        double distance = sqrt(dx*dx + dy*dy + dz*dz);
-        
-        // Base sphere
-        double baseSphere = radius - distance;
-        
-        // Add noise to the iso-surface
-        // Scale sample position to get consistent look regardless of rock size
-        double max_scale = 2.0 / radius;
-        double n = noise.octaveNoise(dx * max_scale, dy * max_scale, dz * max_scale, 6, 0.5, 2.0, 0.5, 0.5);
-        
-        return baseSphere + n * noiseAmpl * radius;
-    };
-}
-
-// Post-mesh vertex displacement OLD uses Perlin noise function
-static void applyVertexDisplacement(MCObject* rock, int seed, double amplitude) {
-    static std::map<int, PerlinNoise> noiseGens;
-    if (noiseGens.find(seed) == noiseGens.end()) {
-        noiseGens[seed] = PerlinNoise(seed);
-    }
-    PerlinNoise& noise = noiseGens[seed];
-    
-    Point center = rock->worldPosition;
-    double rockSize = rock->baseSize;
-    
-    for (auto& tri : rock->mesh) {
-        for (int v = 0; v < 3; v++) {
-            Point& vertex = tri.vertices[v];
-            
-            // Direction from center to vertex (outward normal)
-            Point dir = (vertex - center).normalize();
-            
-            // Normalize position relative to rock center and size
-            // This gives us unit-scale coordinates for noise sampling
-            double nx = (vertex.x - center.x) / rockSize;
-            double ny = (vertex.y - center.y) / rockSize;
-            double nz = (vertex.z - center.z) / rockSize;
-            
-            // Sample noise at normalized coordinates with some frequency
-            double scale = 4.0;
-            double n = noise.octaveNoise(
-                nx * scale + seed * 0.1,  // Offset by seed for variation
-                ny * scale, 
-                nz * scale, 
-                3, 0.5, 2.0, 0.5, 0.5
-            );
-            
-            // Displace vertex along normal direction
-            vertex.x += dir.x * n * amplitude;
-            vertex.y += dir.y * n * amplitude;
-            vertex.z += dir.z * n * amplitude;
-        }
-    }
-}
-#endif
 static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, double noiseAmpl, TNode *tc) {
     return [center, rx, ry, rz, noiseAmpl, tc](double x, double y, double z) -> double {
      	//TheNoise.rseed = seed;
@@ -360,8 +283,8 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     
     double rx = 0.5;
     double ry = 0.5;
-    double rz = 0.5 * (1.0 - comp);
-    if (rz < 0.05) rz = 0.05;
+    double rz = 0.5 * (1.0 - 2*comp);
+    if (rz < 0.02) rz = 0.02;
 
     // Adjust bounds to match ellipsoid size
     // Add extra margin for noise (especially when noiseAmpl is high)
@@ -371,11 +294,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
    
     SurfaceFunction field;
     if (noisy) {
-#ifdef PERLIN_NOISE
-        field = makeNoisyRockField(origin, 0.5, 0, rval, noiseAmpl);
-#else
         field = makeRockField(origin, rx, ry, rz, noiseAmpl, tc);
-#endif
     } else {
         field = makeCenteredEllipsoid(origin, rx, ry, rz);
     }   
@@ -464,7 +383,7 @@ void Rock3DMgr::printStats(){
     std::cout << "------- 3D Rocks stats --------" << std::endl;
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 #ifdef PRINT_ROCK_STATS
-        std::cout << "res:"       << kRockLodTable[i].resScale
+        std::cout << "res:"       << (int)(kRockLodTable[i].res*resScale)
                   << " cnt:"      << stats[i][0]
                   << " triangles:"<< stats[i][1]/1000<<" k"
                   << std::endl;
@@ -675,7 +594,7 @@ void Rock3DObjMgr::render() {
         return;
     
     bool wireframe = test7;
-    bool smooth =test8;
+    bool smooth =Render.avenorms();//test8;
     
     bool moved = TheScene->moved();
     bool changed=TheScene->changed_detail();
@@ -819,11 +738,7 @@ void Rock3DObjMgr::render() {
                 if (useVertexDisplacement || setVertexColor) {
                     MCObject tempRock(Point(0,0,0), 1.0);
                     tempRock.mesh = templateMesh;
-#ifdef PERLIN_NOISE
-                    applyVertexDisplacement(&tempRock, rval, vertexNoiseAmpl);
-#else
                     applyVertexAttributes(&tempRock,vertexNoiseAmpl, tv, tc);
-#endif
                     templateMesh = tempRock.mesh;
                  }
                                 
@@ -884,8 +799,8 @@ void Rock3DObjMgr::render() {
                     } 
  
                     // Calculate normal in eye space from the 3 eye-space vertices
-                    Point edge1 = newTri.templatePos[1] - newTri.templatePos[0];
-                    Point edge2 = newTri.templatePos[2] - newTri.templatePos[0];
+                    Point edge1 = newTri.vertices[1] - newTri.vertices[0];
+                    Point edge2 = newTri.vertices[2] - newTri.vertices[0];
 
                     Point eyeNormal = edge2.cross(edge1);
                     double len = eyeNormal.length();
@@ -896,7 +811,6 @@ void Rock3DObjMgr::render() {
                     	//cout<<"Rock3DObjMgr::render 0 len using:"<<lastGood.length()<<endl;                 
                     }
                     newTri.normal = lastGood.normalize();  
-                   // newTri.normal = eyeNormal.normalize();
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
