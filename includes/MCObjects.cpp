@@ -166,14 +166,16 @@ MCObject::MCObject()
     : worldPosition(0, 0, 0), baseSize(1.0), 
       distanceToViewer(0), screenProjectedSize(0),
       meshValid(false), lastResolution(-1),
-      vboVertices(0), vboNormals(0),vboTemplatePos(0), vboColors(0), vboValid(false) {
+      vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0), 
+	  vboColors(0), vboValid(false) {
 }
 
 MCObject::MCObject(const Point& pos, double size) 
     : worldPosition(pos), baseSize(size), 
       distanceToViewer(0), screenProjectedSize(0),
       meshValid(false), lastResolution(-1),
-      vboVertices(0), vboNormals(0),vboTemplatePos(0), vboColors(0),vboValid(false) {
+      vboVertices(0), vboNormals(0),vboTemplatePos(0), vboFaceNormals(0),
+	  vboColors(0),vboValid(false) {
 }
 
 MCObject::~MCObject() {
@@ -208,6 +210,7 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
     // Delete old VBOs
     if (vboVertices != 0) glDeleteBuffers(1, &vboVertices);
     if (vboNormals != 0) glDeleteBuffers(1, &vboNormals);
+    if (vboFaceNormals != 0) glDeleteBuffers(1, &vboFaceNormals);
     if (vboColors != 0) glDeleteBuffers(1, &vboColors);
     if (vboTemplatePos != 0) glDeleteBuffers(1, &vboTemplatePos);
     
@@ -277,6 +280,7 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
     size_t vertexCount = mesh.size() * 3;
     std::vector<float> vertices(vertexCount * 3);
     std::vector<float> normals(vertexCount * 3);
+    std::vector<float> facenormals(vertexCount * 3);
     std::vector<float> colors(vertexCount * 3);
     std::vector<float> templatePositions(vertexCount * 3);
     
@@ -314,6 +318,11 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
             templatePositions[idx + 0] = (float)mesh[i].templatePos[v].x;
             templatePositions[idx + 1] = (float)mesh[i].templatePos[v].y;
             templatePositions[idx + 2] = (float)mesh[i].templatePos[v].z;
+            
+            facenormals[idx + 0] = (float)mesh[i].faceNormal.x;
+            facenormals[idx + 1] = (float)mesh[i].faceNormal.y;
+            facenormals[idx + 2] = (float)mesh[i].faceNormal.z;
+
         }
     }
     // Upload VBOs
@@ -324,7 +333,11 @@ void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
     glGenBuffers(1, &vboNormals);
     glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-    
+ 
+    glGenBuffers(1, &vboFaceNormals);
+    glBindBuffer(GL_ARRAY_BUFFER, vboFaceNormals);
+    glBufferData(GL_ARRAY_BUFFER, facenormals.size() * sizeof(float), facenormals.data(), GL_STATIC_DRAW);
+
     glGenBuffers(1, &vboColors);
     glBindBuffer(GL_ARRAY_BUFFER, vboColors);
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), colors.data(), GL_STATIC_DRAW);
@@ -345,6 +358,7 @@ void MCObject::uploadToVBO() {
     // Delete old VBOs
      if (vboVertices != 0) glDeleteBuffers(1, &vboVertices);
      if (vboNormals != 0) glDeleteBuffers(1, &vboNormals);
+     if (vboFaceNormals != 0) glDeleteBuffers(1, &vboFaceNormals);
      if (vboColors != 0) glDeleteBuffers(1, &vboColors);
      if (vboTemplatePos != 0) glDeleteBuffers(1, &vboTemplatePos);
     
@@ -352,6 +366,7 @@ void MCObject::uploadToVBO() {
     size_t vertexCount = mesh.size() * 3;
     std::vector<float> vertices(vertexCount * 3);
     std::vector<float> normals(vertexCount * 3);
+    std::vector<float> facenormals(vertexCount * 3);
     std::vector<float> colors(vertexCount * 3);
     std::vector<float> templatePositions(vertexCount * 3);  // ADD THIS
     
@@ -365,7 +380,11 @@ void MCObject::uploadToVBO() {
             normals[idx + 0] = (float)mesh[i].normal.x;
             normals[idx + 1] = (float)mesh[i].normal.y;
             normals[idx + 2] = (float)mesh[i].normal.z;
-            
+ 
+            facenormals[idx + 0] = (float)mesh[i].faceNormal.x;
+            facenormals[idx + 1] = (float)mesh[i].faceNormal.y;
+            facenormals[idx + 2] = (float)mesh[i].faceNormal.z;
+
             colors[idx + 0] = (float)mesh[i].colors[v].red();
             colors[idx + 1] = (float)mesh[i].colors[v].green();
             colors[idx + 2] = (float)mesh[i].colors[v].blue();
@@ -385,7 +404,11 @@ void MCObject::uploadToVBO() {
     glGenBuffers(1, &vboNormals);
     glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-    
+
+    glGenBuffers(1, &vboFaceNormals);
+    glBindBuffer(GL_ARRAY_BUFFER, vboFaceNormals);
+    glBufferData(GL_ARRAY_BUFFER, facenormals.size() * sizeof(float), facenormals.data(), GL_STATIC_DRAW);
+
     glGenBuffers(1, &vboColors);  // ADD THIS
     glBindBuffer(GL_ARRAY_BUFFER, vboColors);
     glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), colors.data(), GL_STATIC_DRAW);
@@ -409,7 +432,19 @@ void MCObject::deleteVBO() {
         glDeleteBuffers(1, &vboNormals);
         vboNormals = 0;
     }
-    vboValid = false;
+    if (vboFaceNormals != 0) {
+        glDeleteBuffers(1, &vboFaceNormals);
+        vboFaceNormals = 0;
+    }
+    if (vboColors != 0) {
+        glDeleteBuffers(1, &vboColors);
+        vboColors = 0;
+    }
+    if (vboTemplatePos != 0) {
+         glDeleteBuffers(1, &vboTemplatePos);
+         vboTemplatePos = 0;
+    } 
+   vboValid = false;
 }
 
 // Add to MCObject

@@ -12,6 +12,7 @@ uniform sampler2DRect FBOTex4;
 
 varying vec3 Normal;
 varying vec4 WorldNormal;
+
 varying vec3 EyeDirection;
 varying vec3 WorldPos;
 

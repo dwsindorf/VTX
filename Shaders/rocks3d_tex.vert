@@ -13,6 +13,7 @@ varying vec3 WorldPos;
 varying vec3 TemplatePos;
 varying vec4 WorldNormal;
 attribute vec3 templatePosition;  // Attribute location 3
+attribute vec3 faceNormal;        // Attribute location 4
 
 void main() {
     gl_Position = ftransform();
@@ -32,8 +33,7 @@ void main() {
 #if NTEXS >0
 	for(int i=0;i<NTEXS;i++){
 		gl_TexCoord[i] = vec4(templatePosition, 1.0);
-	    WorldNormal.xyz = gl_TexCoord[i].xyz;
 	}
-	WorldNormal.xyz = gl_TexCoord[0].xyz;
+	WorldNormal.xyz = faceNormal;//gl_TexCoord[0].xyz;
 #endif    
 }

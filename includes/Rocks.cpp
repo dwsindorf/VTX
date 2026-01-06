@@ -792,7 +792,8 @@ void Rock3DObjMgr::render() {
                         Point rotated = Point(
                                     tv.x * right.x + tv.y * forward.x + tv.z * up.x,
                                     tv.x * right.y + tv.y * forward.y + tv.z * up.y,
-                                    tv.x * right.z + tv.y * forward.z + tv.z * up.z);						
+                                    tv.x * right.z + tv.y * forward.z + tv.z * up.z);
+                        //newTri.templatePos[v] = rotated;  // STORE template position
                         Point worldVertex = rockCenter+rotated*size;
                         newTri.vertices[v] = worldVertex - xpoint; // Convert to eye space
                         newTri.colors[v]=tri.colors[v];
@@ -801,16 +802,23 @@ void Rock3DObjMgr::render() {
                     // Calculate normal in eye space from the 3 eye-space vertices
                     Point edge1 = newTri.vertices[1] - newTri.vertices[0];
                     Point edge2 = newTri.vertices[2] - newTri.vertices[0];
-
                     Point eyeNormal = edge2.cross(edge1);
-                    double len = eyeNormal.length();
-                    static Point lastGood=Point(0, 1, 0);
-                    if (len > 1e-25) {
-                    	lastGood = eyeNormal;               	
-                    } else {
-                    	//cout<<"Rock3DObjMgr::render 0 len using:"<<lastGood.length()<<endl;                 
+                    
+                    // face normal for texture mapping                    
+                    Point edge3 = newTri.templatePos[1] - newTri.templatePos[0];
+                    Point edge4 = newTri.templatePos[2] - newTri.templatePos[0];
+                    Point faceNormal = edge4.cross(edge3);
+                     	
+                    static Point lastGoodEye=Point(0, 1, 0);
+                    static Point lastGoodFace=Point(0, 1, 0);
+                    if (eyeNormal.length() > 1e-30) {
+                    	lastGoodEye = eyeNormal;               	
+                    } 
+                    if (faceNormal.length() > 1e-30) {
+                    	lastGoodFace = faceNormal;               	
                     }
-                    newTri.normal = lastGood.normalize();  
+                    newTri.normal = lastGoodEye.normalize();
+                    newTri.faceNormal = lastGoodFace.normalize();  
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
@@ -927,23 +935,30 @@ void Rock3DObjMgr::render_objects() {
 			glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
 			glNormalPointer(GL_FLOAT, 0, 0);
 			glEnableClientState(GL_NORMAL_ARRAY);
-
+			
             glBindBuffer(GL_ARRAY_BUFFER, rock->vboColors);
             glColorPointer(3, GL_FLOAT, 0, 0);
             glEnableClientState(GL_COLOR_ARRAY);
 
-			// ADD THIS - bind template position as vertex attribute
-			GLint attribLoc = glGetAttribLocation(program, "templatePosition");
-			if (attribLoc >= 0) {
+			GLint attribLoc1 = glGetAttribLocation(program, "templatePosition");
+			if (attribLoc1 >= 0) {
 				glBindBuffer(GL_ARRAY_BUFFER, rock->vboTemplatePos);
-				glVertexAttribPointer(attribLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-				glEnableVertexAttribArray(attribLoc);
+				glVertexAttribPointer(attribLoc1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(attribLoc1);
+			}
+			GLint attribLoc2 = glGetAttribLocation(program, "faceNormal");
+			if (attribLoc2 >= 0) {
+				glBindBuffer(GL_ARRAY_BUFFER, rock->vboFaceNormals);
+				glVertexAttribPointer(attribLoc2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(attribLoc2);
 			}
 			glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
 			
 			// Disable template position attribute
-			if (attribLoc >= 0) 
-			    glDisableVertexAttribArray(attribLoc);
+			if (attribLoc1 >= 0) 
+			    glDisableVertexAttribArray(attribLoc1);
+			if (attribLoc2 >= 0) 
+			    glDisableVertexAttribArray(attribLoc2);
 			glDisableClientState(GL_VERTEX_ARRAY);
 			glDisableClientState(GL_NORMAL_ARRAY);
 			glDisableClientState(GL_COLOR_ARRAY);

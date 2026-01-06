@@ -34,6 +34,7 @@
 struct MCTriangle {
     Point vertices[3];
     Point normal;
+    Point faceNormal;
     Color colors[3];
     Point templatePos[3]; 
 };
@@ -85,6 +86,7 @@ public:
     // Optional: OpenGL VBO handles for rendering
     GLuint vboVertices;
     GLuint vboNormals;
+    GLuint vboFaceNormals;
     GLuint vboColors;
     GLuint vboTemplatePos;
     bool vboValid;
