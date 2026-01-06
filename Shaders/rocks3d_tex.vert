@@ -26,12 +26,13 @@ void main() {
     
      WorldPos = templatePosition;
 #ifdef COLOR
-    Color = gl_Color;
+     Color = gl_Color;
 #endif
 
 #if NTEXS >0
 	for(int i=0;i<NTEXS;i++){
 		gl_TexCoord[i] = vec4(templatePosition, 1.0);
+	    WorldNormal.xyz = gl_TexCoord[i].xyz;
 	}
 	WorldNormal.xyz = gl_TexCoord[0].xyz;
 #endif    

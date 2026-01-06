@@ -106,7 +106,7 @@ vec4 triplanarMap(int id, vec4 pos, float mm)
 
     vec3 blendWeights = abs(N);
 #ifdef SHARPEN
-    blendWeights = pow(blendWeights, vec3(6.0)); // Increase power for sharper transition
+    blendWeights = pow(blendWeights, vec3(6)); // Increase power for sharper transition
 #endif
     // Calculate blend weights based on normal direction
     blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);

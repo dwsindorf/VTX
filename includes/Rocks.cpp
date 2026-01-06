@@ -283,12 +283,12 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     
     double rx = 0.5;
     double ry = 0.5;
-    double rz = 0.5 * (1.0 - 2*comp);
+    double rz = 0.5 * (1.0 - comp);
     if (rz < 0.02) rz = 0.02;
 
     // Adjust bounds to match ellipsoid size
     // Add extra margin for noise (especially when noiseAmpl is high)
-    double margin = 1.1 + 2*noiseAmpl;  // Increase margin with noise amplitude
+    double margin = 1.1 + 2.5*noiseAmpl;  // Increase margin with noise amplitude
     Point boundsMin(-rx * margin, -ry * margin, -rz * margin);
     Point boundsMax(rx * margin, ry * margin, rz * margin);    
    

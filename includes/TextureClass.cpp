@@ -280,7 +280,7 @@ void Texture::begin() {
 			glDeleteTextures(1, (GLuint*)&id);
 
 		glGenTextures(1, &id); // Generate a unique texture ID
-		cout<<"glGenTextures "<<tid<<" id:"<<id<<endl;
+		//cout<<"glGenTextures "<<tid<<" id:"<<id<<endl;
 		glBindTexture(GL_TEXTURE_2D, id);
 		set_state();
 
