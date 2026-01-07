@@ -377,7 +377,14 @@ void VtxRocksTabs::setObjAttributes(){
 	s=m_3d->GetValue()?"rocks3d":"rocks";
 	//s=tc->typeName();
 	s+="(";
-     	
+ 
+	int pid=tc->get_id();
+	if(pid>0){
+		sprintf(id,"ID%d",pid);
+		s+=wxString(id);
+		s+=",";
+	}
+
 	int orders = m_orders->GetSelection();
 	sprintf(id,"%d",orders+1);
 	s+=wxString(id)+",";

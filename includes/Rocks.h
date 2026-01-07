@@ -31,6 +31,8 @@ public:
 	double  rdist,pdist;
 	double  rx,ry;
 	TNode   *rnoise;
+	TNode   *vnoise;
+
 	~RockMgr();
 	RockMgr(int);
 

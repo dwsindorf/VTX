@@ -28,7 +28,7 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define PSCALE 0.006 // placement scale factor
+#define PSCALE 0.008 // placement scale factor
 
 static bool first=true;
 static int tid=0;
@@ -160,53 +160,41 @@ bool Rock3D::setProgram(){
 
 Color rock_color(0.6, 0.5, 0.4);
 
-static SurfaceFunction makeCenteredSphere(const Point& center, double radius) {
-    return [center, radius](double x, double y, double z) -> double {
+static SurfaceFunction makeRockField(const Point& center, PlaceData *s) {
+    return [center, s](double x, double y, double z) -> double {
+        Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
+        TNode *tc = pmgr->rnoise;
+        double noiseAmpl = pmgr->noise_amp;
+        double comp = pmgr->comp;
+        bool noisy = (noiseAmpl > 1e-6);
+             
+        double comp_factor=std::max((1.0 - 1.25*comp),0.2);
+       
         double dx = x - center.x;
         double dy = y - center.y;
-        double dz = z - center.z;
-        double distance = sqrt(dx*dx + dy*dy + dz*dz);
-        return radius - distance;  // Positive inside sphere of given radius
-    };
-}
-
-static SurfaceFunction makeCenteredEllipsoid(const Point& center, double rx, double ry, double rz) {
-    return [center, rx, ry, rz](double x, double y, double z) -> double {
-        double dx = (x - center.x) / rx;
-        double dy = (y - center.y) / ry;
-        double dz = (z - center.z) / rz;
-        double distance = sqrt(dx*dx + dy*dy + dz*dz);
-        return 1.0 - distance;  // Positive inside ellipsoid
-    };
-}
-
-static SurfaceFunction makeRockField(const Point& center, double rx, double ry, double rz, double noiseAmpl, TNode *tc) {
-    return [center, rx, ry, rz, noiseAmpl, tc](double x, double y, double z) -> double {
-     	//TheNoise.rseed = seed;
-        
-        double dx = x - center.x;
-        double dy = y - center.y;
-        double dz = z - center.z;
+        double dz = z/comp_factor - center.z;
         
         // Ellipsoid distance (not sphere)
-        double ex = dx / rx;
-        double ey = dy / ry;
-        double ez = dz / rz;
+        double ex = 2*dx;
+        double ey = 2*dy;
+        double ez = 2*dz;
         double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
         
         // Base ellipsoid (positive inside)
         double baseEllipsoid = 1.0 - ellipsoidDist;
         
-        double scale = 2.0 / ((rx + ry + rz) / 3.0);  // Average radius for scale
-        Point np = Point(dx, dy, dz);
- 		TheNoise.set(np);
- 		double rz = 0;
- 		tc->eval();
-		if (tc->typeValue() == ID_POINT)
- 			rz = S0.p.z;
- 		else
- 			rz = S0.s;
-        return baseEllipsoid - rz * noiseAmpl;
+        if(noisy){
+			Point np = Point(dx, dy, dz);
+			TheNoise.set(np);
+			double rz = 0;
+			tc->eval();
+			if (tc->typeValue() == ID_POINT)
+				rz = S0.p.z;
+			else
+				rz = S0.s;
+			baseEllipsoid-=rz * noiseAmpl;
+        }
+        return baseEllipsoid;
     };
 }
 
@@ -240,7 +228,7 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
 				if(S0.pvalid()){
 					Point pd=S0.p;
 					Point delta=dir*pd*amplitude;
-					vertex=vertex+delta;
+					vertex=vertex-delta;
 				}
 			}
 			color=rock_color;
@@ -268,36 +256,21 @@ static std::map<int, MCObject*> lodTemplates;
 
 static MCObject* getTemplateForLOD(PlaceData *s) {
     Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
-    TNode *tc = pmgr->rnoise;
     double pts = s->pts;
-        int rval = s->rval;
-        double comp = pmgr->comp;
-        int resolution = Rock3DMgr::getLODResolution(pts);
-        double noiseAmpl = pmgr->noise_amp;
-        int rockType = pmgr->type;  // ADD THIS - get the rock type
-        bool noisy = (noiseAmpl > 1e-6);
+	int resolution = Rock3DMgr::getLODResolution(pts);
+	double noiseAmpl = pmgr->noise_amp;
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
     MCGenerator generator;
-    
-    double rx = 0.5;
-    double ry = 0.5;
-    double rz = 0.5 * (1.0 - comp);
-    if (rz < 0.02) rz = 0.02;
-
+ 
     // Adjust bounds to match ellipsoid size
     // Add extra margin for noise (especially when noiseAmpl is high)
-    double margin = 1.1 + 2.5*noiseAmpl;  // Increase margin with noise amplitude
-    Point boundsMin(-rx * margin, -ry * margin, -rz * margin);
-    Point boundsMax(rx * margin, ry * margin, rz * margin);    
+    double margin = 1.1 + 2*noiseAmpl;  // Increase margin with noise amplitude
+    Point boundsMin(-0.5 * margin, -0.5 * margin, -0.5 * margin);
+    Point boundsMax(0.5 * margin, 0.5 * margin, 0.5 * margin);    
    
-    SurfaceFunction field;
-    if (noisy) {
-        field = makeRockField(origin, rx, ry, rz, noiseAmpl, tc);
-    } else {
-        field = makeCenteredEllipsoid(origin, rx, ry, rz);
-    }   
+    SurfaceFunction field = makeRockField(origin, s);
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
     templateSphere->meshValid = true;  
     return templateSphere;
@@ -651,7 +624,7 @@ void Rock3DObjMgr::render() {
             bool useVertexDisplacement = (tv != nullptr && tv->isEnabled());
             bool setVertexColor = (tc != nullptr && tc->isEnabled());
             
-            double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * pmgr->noise_amp : 0;
+            double vertexNoiseAmpl = useVertexDisplacement ?pmgr->noise_amp : 0;
 
             Point eyePos = s->vertex - xpoint;
             double size = PSCALE * s->radius;
@@ -788,7 +761,7 @@ void Rock3DObjMgr::render() {
                     
                     for (int v = 0; v < 3; v++) {
                         Point tv = tri.vertices[v];         
-                        newTri.templatePos[v] = tv;  // STORE template position
+                        newTri.templatePos[v] = tv+0.01*(s->rval);  // STORE template position
                         Point rotated = Point(
                                     tv.x * right.x + tv.y * forward.x + tv.z * up.x,
                                     tv.x * right.y + tv.y * forward.y + tv.z * up.y,
@@ -1136,14 +1109,17 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
  		TheNoise.push(np);
  		CurrentScope->revaluate();
  		double z=0;
- 		mgr.rnoise->eval();
- 		if(mgr.rnoise->typeValue()==ID_POINT){
+ 		if(mgr.vnoise){
+ 			mgr.vnoise->eval();
+ 		//if(mgr.rnoise->typeValue()==ID_POINT){
  			z=S0.p.z;
  			mgr.rx=nf*S0.p.x;
  			mgr.ry=nf*S0.p.y; 	
   		}
- 		else
- 			z=S0.s;
+ 		if(mgr.rnoise){
+ 			mgr.rnoise->eval();
+ 			z+=S0.s;
+ 		}
  		TheNoise.pop();
  		rm=0.25*z*mgr.noise_amp*radius;
  		SPOP;
@@ -1189,6 +1165,7 @@ RockMgr::RockMgr(int i) : PlacementMgr(i)
 	comp=0.1;
 	drop=0.1;
 	rnoise=0;
+	vnoise=0;
 	rdist=0;
 	pdist=1;
 	rx=ry=0;
@@ -1383,13 +1360,21 @@ void TNrocks::init()
 	rmgr->init();
 	TNplacements::init();
 	TNarg &args=*((TNarg *)left);
-
+	
+	TNode *tv=findChild(ID_POINT);
+	if(tv)
+		rmgr->vnoise=tv;
+	
 	if(args[7]){
+		rmgr->rnoise=args[7];			
+	}
+	rmgr->noise_amp=1;
+	if(args[6]){
 		TNarg *tamp=args[6];
 		tamp->eval();
 		rmgr->noise_amp=S0.s;
-		rmgr->rnoise=args[7];			
 	}
+
 	mgr->set_first(1);
 	TNplacements::init();
 }
@@ -1466,6 +1451,7 @@ void TNrocks::eval() {
 		base->eval();
 	S0.p.z=ground.p.z;
 	rmgr->base = S0.p.z-rmgr->drop*rmgr->maxsize/Hscale;
+	INIT;
 #ifdef ROCK_LAYER
 	S0.next_id();
 #endif

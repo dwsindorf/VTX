@@ -237,7 +237,7 @@ vec3 getBump(int tid, vec4 coords,float mm){
 	if(tex2d[i].t3d) {\
 		coords*= scale*1e-7; \
 		if(tex2d[i].t1d) \
-		   coords.x+=tex2d[i].bias; \
+		   coords+=tex2d[i].bias; \
 	} \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
