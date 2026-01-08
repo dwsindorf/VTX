@@ -168,7 +168,7 @@ static SurfaceFunction makeRockField(const Point& center, PlaceData *s) {
         double comp = pmgr->comp;
         bool noisy = (noiseAmpl > 1e-6);
              
-        double comp_factor=std::max((1.0 - 1.25*comp),0.2);
+        double comp_factor=std::max((1.0 - 2*comp),0.2);
        
         double dx = x - center.x;
         double dy = y - center.y;
@@ -183,16 +183,11 @@ static SurfaceFunction makeRockField(const Point& center, PlaceData *s) {
         // Base ellipsoid (positive inside)
         double baseEllipsoid = 1.0 - ellipsoidDist;
         
-        if(noisy){
+        if(tc && noisy){
 			Point np = Point(dx, dy, dz);
 			TheNoise.set(np);
-			double rz = 0;
 			tc->eval();
-			if (tc->typeValue() == ID_POINT)
-				rz = S0.p.z;
-			else
-				rz = S0.s;
-			baseEllipsoid-=rz * noiseAmpl;
+			baseEllipsoid-=S0.s * noiseAmpl;
         }
         return baseEllipsoid;
     };
@@ -346,7 +341,7 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     { 32, 30.0 },
     { 48, 50.0 },
     { 64, 90.0 },
-    { 96,  1e9 }  // default 
+    { 128,  1e9 }  // default 
 };
 
 void Rock3DMgr::printStats(){
@@ -624,7 +619,7 @@ void Rock3DObjMgr::render() {
             bool useVertexDisplacement = (tv != nullptr && tv->isEnabled());
             bool setVertexColor = (tc != nullptr && tc->isEnabled());
             
-            double vertexNoiseAmpl = useVertexDisplacement ?pmgr->noise_amp : 0;
+            double vertexNoiseAmpl = useVertexDisplacement ?0.5*pmgr->noise_amp : 0;
 
             Point eyePos = s->vertex - xpoint;
             double size = PSCALE * s->radius;
@@ -973,18 +968,25 @@ void TNrocks3D::init()
 	rmgr->init();
 	TNplacements::init();
 	TNarg &args=*((TNarg *)left);
-
-	if(args[7]){
-		TNarg *tamp=args[6];
-		tamp->eval();
-		rmgr->rnoise=args[7];			
-	}
-	
+	rmgr->rnoise=0;
 	TNode *tv=findChild(ID_POINT);
 	if(tv)
 		rmgr->vnoise=tv;
 	else
 		rmgr->vnoise=0;
+	if(args[7]){
+		if(args[7]->typeValue()==ID_POINT){
+			rmgr->vnoise=args[7];
+			//TNarg *arg=(TNarg*)args[7];
+			//rmgr->rnoise=arg->index(3)->left;
+			//rmgr->rnoise->valueString(temp);
+			//cout<<temp<<endl;
+		}
+		else
+			rmgr->rnoise=args[7];
+	}
+	
+	
 	TNode *tc=findChild(ID_COLOR);
 	if(tc)
 		rmgr->color=tc;
@@ -1366,7 +1368,10 @@ void TNrocks::init()
 		rmgr->vnoise=tv;
 	
 	if(args[7]){
-		rmgr->rnoise=args[7];			
+		if(!tv && args[7]->typeValue()==ID_POINT)
+			rmgr->vnoise=args[7];
+		else	
+			rmgr->rnoise=args[7];			
 	}
 	rmgr->noise_amp=1;
 	if(args[6]){

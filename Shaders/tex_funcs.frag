@@ -235,7 +235,7 @@ vec3 getBump(int tid, vec4 coords,float mm){
 	scale=tex2d[i].scale; \
 	coords = COORDS; \
 	if(tex2d[i].t3d) {\
-		coords*= scale*1e-7; \
+		coords*= scale*1e-6; \
 		if(tex2d[i].t1d) \
 		   coords+=tex2d[i].bias; \
 	} \

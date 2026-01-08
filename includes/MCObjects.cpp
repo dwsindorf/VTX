@@ -36,12 +36,12 @@ void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
     
     // Calculate face normal
     Point edge1 = tri.vertices[1] - tri.vertices[0];
-     Point edge2 = tri.vertices[2] - tri.vertices[0];
-     tri.normal = Point(
-         edge1.y * edge2.z - edge1.z * edge2.y,
-         edge1.z * edge2.x - edge1.x * edge2.z,
-         edge1.x * edge2.y - edge1.y * edge2.x
-     ).normalize();
+    Point edge2 = tri.vertices[2] - tri.vertices[0];
+    tri.normal = Point(
+        edge1.y * edge2.z - edge1.z * edge2.y,
+        edge1.z * edge2.x - edge1.x * edge2.z,
+        edge1.x * edge2.y - edge1.y * edge2.x
+    ).normalize();
     
     triangles.push_back(tri);
 }
@@ -153,15 +153,13 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 generateTrianglesForCube(cubeIndex, vertList, triangles);
             }
         }
-    }
-    
+    }   
     return triangles;
 }
 
 //=============================================================================
 // MCObject implementation
 //=============================================================================
-
 MCObject::MCObject() 
     : worldPosition(0, 0, 0), baseSize(1.0), 
       distanceToViewer(0), screenProjectedSize(0),
