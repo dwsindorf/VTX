@@ -38,8 +38,6 @@ static bool cvalid;
 
 #define PRINT_STATS
 #define PRINT_ROCK_STATS
-//#define USE_LOD_CACHE
-//#define PRINT_CACHE_STATS
 #define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 #define USE_TEMPLATES
@@ -237,21 +235,6 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
         }
     }
 }
-// LOD template cache - now keyed by resolution AND noise parameters
-struct LODKey {
-    int resolution;
-    bool noisy;
-    
-    bool operator<(const LODKey& other) const {
-        if (resolution != other.resolution) return resolution < other.resolution;
-        return noisy < other.noisy;
-    }
-};
-
-int lodCacheHits=0;
-int lodCacheMisses=0;
-int templates_per_lod=2;
-static std::map<int, MCObject*> lodTemplates;
 
 static MCObject* getTemplateForLOD(PlaceData *s) {
     Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
@@ -263,13 +246,12 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
 	bool noisy=(noiseAmpl>1e-6);
 #ifdef USE_TEMPLATES
     int k1=resolution * 100;
-    int k2=(int)(rval)%templates_per_lod;
+    int k2=(int)(rval)%Rock3DObjMgr::templates_per_lod;
     int k3=s->instance*1000;
-    //int k2=(int)(rval * 10)/50;
     int key = k1 + k2 +k3;
-    auto it = lodTemplates.find(key);
-    if (it != lodTemplates.end()) {
-    	lodCacheHits++;
+    auto it = Rock3DObjMgr::lodTemplates.find(key);
+    if (it != Rock3DObjMgr::lodTemplates.end()) {
+    	Rock3DObjMgr::lodCacheHits++;
         return it->second;
     }
 #endif   
@@ -288,14 +270,14 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
     templateSphere->meshValid = true;    
 #ifdef USE_TEMPLATES
-   lodTemplates[key] = templateSphere;
+    Rock3DObjMgr::lodTemplates[key] = templateSphere;
 #ifdef PRINT_LOD_STATS    
     cout << "Created LOD template: resolution:" << resolution<< " key:"<<key 
          << " k1:"<< k1 << " k2:" << k2 
          << " Triangles:" << templateSphere->mesh.size() << endl;
 #endif 
 #endif
-    lodCacheMisses++;
+    Rock3DObjMgr::lodCacheMisses++;
     return templateSphere;
 }
 
@@ -378,8 +360,8 @@ void Rock3DMgr::printStats(){
     int kcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
 #ifdef USE_TEMPLATES
-    int lod_calls=(lodCacheHits+lodCacheMisses);
-    std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*lodCacheHits/lod_calls<<" %"<<endl;
+    int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
+    std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*Rock3DObjMgr::lodCacheHits/lod_calls<<" %"<<endl;
 #endif
 
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
@@ -445,6 +427,9 @@ int Rock3DObjMgr::cacheHits = 0;
 int Rock3DObjMgr::cacheMisses = 0;
 int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
+int Rock3DObjMgr::lodCacheHits=0;
+int Rock3DObjMgr::lodCacheMisses=0;
+int Rock3DObjMgr::templates_per_lod=2;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	freeLODTemplates();
@@ -551,7 +536,6 @@ bool Rock3DObjMgr::setProgram() {
 void Rock3DObjMgr::free() { 
 	data.free();
 }
-
 
 //-------------------------------------------------------------
 // Rock3DObjMgr::collect() generate array of placements (data)
@@ -739,8 +723,11 @@ void Rock3DObjMgr::render() {
                     MCTriangle newTri;
                     for (int v = 0; v < 3; v++) {
                         newTri.vertices[v] = tri.vertices[v];
+                        newTri.templatePos[v] = tri.templatePos[v];  // COPY TEMPLATE POSITIONS!
+                        newTri.colors[v] = tri.colors[v];            // And colors while we're at it
                     }
                     newTri.normal = Point(-tri.normal.x, -tri.normal.y, -tri.normal.z);
+                    newTri.faceNormal = tri.faceNormal;  // Copy face normal too
                     templateMesh.push_back(newTri);
                 }               
                 
@@ -800,7 +787,7 @@ void Rock3DObjMgr::render() {
                     
                     for (int v = 0; v < 3; v++) {
                         Point tv = tri.vertices[v];         
-                        newTri.templatePos[v] = tv+0.01*(s->rval);  // STORE template position
+                        newTri.templatePos[v] = tv+0.002*(s->rval);  // STORE template position
                         Point rotated = Point(
                                     tv.x * right.x + tv.y * forward.x + tv.z * up.x,
                                     tv.x * right.y + tv.y * forward.y + tv.z * up.y,
@@ -992,7 +979,6 @@ TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNrocks(t|MCROCKS,l,r
 	rock=0;
 }
 
-
 static Rock3DMgr *rm;
 static void collectTexs(NodeIF *obj){
 	int type=obj->typeValue();
@@ -1022,10 +1008,6 @@ void TNrocks3D::init()
 	if(args[7]){
 		if(args[7]->typeValue()==ID_POINT){
 			rmgr->vnoise=args[7];
-			//TNarg *arg=(TNarg*)args[7];
-			//rmgr->rnoise=arg->index(3)->left;
-			//rmgr->rnoise->valueString(temp);
-			//cout<<temp<<endl;
 		}
 		else
 			rmgr->rnoise=args[7];

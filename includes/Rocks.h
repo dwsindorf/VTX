@@ -75,8 +75,11 @@ public:
     static int cacheMisses;
     static int cacheRegens;
     static int maxTexs;
+    static int lodCacheHits;
+    static int lodCacheMisses;
+    static int templates_per_lod;
     static std::map<int, MCObject*> lodTemplates;
-  
+ 
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;  
     static void freeLODTemplates();
