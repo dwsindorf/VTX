@@ -36,13 +36,14 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_LOD_STATS
+#define PRINT_STATS
 #define PRINT_ROCK_STATS
 //#define USE_LOD_CACHE
 //#define PRINT_CACHE_STATS
 #define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
+#define USE_TEMPLATES
+//#define PRINT_LOD_STATS
 
 static bool shadow_start=false;
 
@@ -247,13 +248,31 @@ struct LODKey {
     }
 };
 
+int lodCacheHits=0;
+int lodCacheMisses=0;
+int templates_per_lod=2;
 static std::map<int, MCObject*> lodTemplates;
 
 static MCObject* getTemplateForLOD(PlaceData *s) {
     Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
     double pts = s->pts;
-	int resolution = Rock3DMgr::getLODResolution(pts);
-	double noiseAmpl = pmgr->noise_amp;
+    int rval = s->rval;
+    double comp = pmgr->comp;
+    int resolution = Rock3DMgr::getLODResolution(pts);
+    double noiseAmpl = pmgr->noise_amp;
+	bool noisy=(noiseAmpl>1e-6);
+#ifdef USE_TEMPLATES
+    int k1=resolution * 100;
+    int k2=(int)(rval)%templates_per_lod;
+    int k3=s->instance*1000;
+    //int k2=(int)(rval * 10)/50;
+    int key = k1 + k2 +k3;
+    auto it = lodTemplates.find(key);
+    if (it != lodTemplates.end()) {
+    	lodCacheHits++;
+        return it->second;
+    }
+#endif   
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
@@ -267,7 +286,16 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
    
     SurfaceFunction field = makeRockField(origin, s);
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
-    templateSphere->meshValid = true;  
+    templateSphere->meshValid = true;    
+#ifdef USE_TEMPLATES
+   lodTemplates[key] = templateSphere;
+#ifdef PRINT_LOD_STATS    
+    cout << "Created LOD template: resolution:" << resolution<< " key:"<<key 
+         << " k1:"<< k1 << " k2:" << k2 
+         << " Triangles:" << templateSphere->mesh.size() << endl;
+#endif 
+#endif
+    lodCacheMisses++;
     return templateSphere;
 }
 
@@ -349,6 +377,11 @@ void Rock3DMgr::printStats(){
     int tcnt = 0;
     int kcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
+#ifdef USE_TEMPLATES
+    int lod_calls=(lodCacheHits+lodCacheMisses);
+    std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*lodCacheHits/lod_calls<<" %"<<endl;
+#endif
+
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 #ifdef PRINT_ROCK_STATS
         std::cout << "res:"       << (int)(kRockLodTable[i].res*resScale)
@@ -412,8 +445,16 @@ int Rock3DObjMgr::cacheHits = 0;
 int Rock3DObjMgr::cacheMisses = 0;
 int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
-
+std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 Rock3DObjMgr::~Rock3DObjMgr(){
+	freeLODTemplates();
+}
+
+void Rock3DObjMgr::freeLODTemplates() {
+    for (auto& pair : lodTemplates) {
+        delete pair.second;
+    }
+    lodTemplates.clear();
 }
 
 double calculateNightLighting(double tod) {
@@ -579,6 +620,7 @@ void Rock3DObjMgr::render() {
         std::cout << "Settings changed - invalidating" <<endl;
         rockCache.clear();
         rocks.clear();
+        freeLODTemplates();
         Rock3DMgr::clearStats();
     }    	
       
@@ -731,6 +773,8 @@ void Rock3DObjMgr::render() {
             if (rock) {
                 rock->setDistanceInfo(dist, pts);
                 rock->mesh.clear();
+                rock->instanceId = instance;
+                rock->dataIndex = i;  // Store the data array index!
                 
                 // Get world position and surface normal
                 Point worldPos = s->vertex;
@@ -877,7 +921,8 @@ void Rock3DObjMgr::render_objects() {
 		if (rock->vboValid && rock->mesh.size() > 0) {
 			thisFrameRocks.insert(rockIndex);
 			PlaceData* placeData = data[rockIndex];
-			int rockType = placeData->instance;  // 0, 1, 2, etc.
+			//int rockType = placeData->instance;  // 0, 1, 2, etc.
+			int rockType = rock->instanceId;
 			
 			int mgrInstance = placeData->mgr->instance;
 

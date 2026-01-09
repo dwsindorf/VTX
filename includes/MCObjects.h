@@ -90,6 +90,8 @@ public:
     GLuint vboColors;
     GLuint vboTemplatePos;
     bool vboValid;
+    int instanceId;  // Which instance/type this belongs to
+    int dataIndex;   // Index into the data array (for texture mapping)
     
     MCObject();
     MCObject(const Point& pos, double size);

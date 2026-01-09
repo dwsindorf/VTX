@@ -75,9 +75,11 @@ public:
     static int cacheMisses;
     static int cacheRegens;
     static int maxTexs;
+    static std::map<int, MCObject*> lodTemplates;
   
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;  
+    static void freeLODTemplates();
 
     ~Rock3DObjMgr();
     

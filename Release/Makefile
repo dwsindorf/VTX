@@ -21,7 +21,7 @@ PARSER_TMPS = .sb y.output lex.yy.c sx_y.h sx_y.cpp sx_l.cpp yytopp
 #################
 #GLIBS     = -lGL -lGLU
 GLUTLIB    = -lglut
-LIBS      = $(GLIBS) $(X11)
+LIBS      =  -lgomp $(GLIBS) $(X11)
 LIBPATH       = .;$(JOGL_LIB)
 CLASSPATH    = ".;$(JOGL_LIB)/jogl.jar;$(JOGL_LIB)/gluegen-rt.jar"
 INCS  		= -I../jpeglib
@@ -31,10 +31,10 @@ OPTLVL     = -O3
 DEFINES	      = -D$(PLATFORM) $(MAXRGB) -Wall -Wno-non-virtual-dtor -fno-strict-aliasing -fpermissive
 #DEFINES	      = -D$(PLATFORM) $(MAXRGB) -Wall -Wno-non-virtual-dtor -fno-strict-aliasing
 
-GLDEFS	      = -DGLEW_STATIC -DGLEW
+GLDEFS	      = -fopenmp -DGLEW_STATIC -DGLEW
 GFILE         = glew.cpp
 LFLAGS        = $(GLDFLAGS)
-CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS)
+CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS) -fopenmp 
 #CFLAGS        = -w $(OPTLVL) $(DEFINES) $(GLDEFS)
 MFLAGS        = -j6 
 CC            = g++
