@@ -27,6 +27,22 @@ class PlaceObjMgr;
 		MAXLISTS=32,
 	};
 
+	class SurfacePoint {
+	public:
+	    Point worldPos;     // For MapPt
+	    Point normal;       // For future use
+	    double theta, phi;  // Spherical coordinates
+	    double slope;       // For slope_bias
+	    double height;      // For ht_bias
+	    double maxht;
+	    double minht;
+	    double hardness;    // For hardness_bias (from FBOTex later)
+	    int layerId;        // For layer filtering (from FBOTex later)
+	    
+	    SurfacePoint() : theta(0), phi(0), slope(0), height(0), hardness(0.5), layerId(0), maxht(0), minht(0){}
+	    void setGlobals() const;
+	};
+
 class Map
 {
 protected:

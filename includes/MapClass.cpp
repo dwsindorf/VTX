@@ -14,7 +14,10 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-static LinkedList<MapNode*> node_data_list;
+#define TEST
+
+static std::vector<SurfacePoint> node_data_list;
+
 extern double INV2PI;
 
 static void water_test(MapNode *n);
@@ -237,6 +240,26 @@ double cell_size(int i)
 	return PI*TheMap->radius*ptable[i];
 }
 
+
+void SurfacePoint::setGlobals() const {
+	extern double Slope, Theta, Phi, Height, Hardness;
+	extern Point MapPt;
+	extern double MaxHt, MinHt;
+	
+	MapPt = worldPos;
+	Theta = theta;
+	Phi = phi;
+	Slope = slope;
+	Height = height;
+	Hardness = hardness;
+	
+	// Set noise position
+	Point pt = Td.rectangular(Theta, Phi);
+	TheNoise.set(pt);
+	
+	MaxHt=maxht;
+	MinHt=minht;
+}
 //************************************************************
 // Map class
 //************************************************************
@@ -1303,23 +1326,23 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 		return;
 	}
 	int mode=CurrentScope->passmode();
-	int n=node_data_list.size;
+	int n=node_data_list.size();
 	int sid=mgr.layer();
 	CurrentScope->set_spass();	
 	mgr.free();
 	PlacementMgr::free_htable(); 
-	node_data_list.ss();
+	//node_data_list.ss();
 	double d1=clock();
 	int j=0;
 	for(int i=0;i<n;i++){
-		MapNode *m=node_data_list++;
-		MapData *d=&m->data;
-		d=d->surface1();
-		if(sid>0 && d->type() != sid){
+	   const SurfacePoint& sp = node_data_list[i];		    
+		// Layer filtering
+		if(sid > 0 && sp.layerId != sid) {
 			j++;
-			continue; // if not a member of the current layer
-		}
-		m->setSurface();
+			continue;
+		}		    
+		// Set all globals in one call
+		sp.setGlobals();
 		mgr.eval(); // populate hash table with Placements (make)
 	}
 	double d2=clock();
@@ -1472,24 +1495,40 @@ void Map::render_texs(){
 //-------------------------------------------------------------
 static void collect_nodes(MapNode *n)
 {
-	MapData *d=&n->data;
-	d=d->surface1();
-	
-	if(n->visible() && d && !d->rock() && !d->water()){
-		node_data_list.add(n);
+    MapData *d = &n->data;
+    d = d->surface1();
+    
+    if(n->visible() && d && !d->rock() && !d->water()) {
+        // Create SurfacePoint from MapNode
+        SurfacePoint sp;
+        
+        sp.worldPos = d->point();
+        sp.theta = d->theta();
+        sp.phi = d->phi();
+        sp.height = d->Ht();
+        sp.hardness = d->hardness();
+        sp.slope = n->slope();
+    	sp.maxht=TheMap->hmax/Rscale;
+    	sp.minht=TheMap->hmin/Rscale;	
+        
+        // Calculate normal (radial for sphere)
+        Point pt = Td.rectangular(sp.theta, sp.phi);
+        sp.normal = pt.normalize();
+        
+        sp.layerId = d->type();  // Terrain layer id
+        
+        node_data_list.push_back(sp);  // Changed from .add()
     }
 }
-
 int Map::get_mapnodes(){
 	TheMap = this;
-	//double d0=clock();
-	node_data_list.reset();
+	node_data_list.clear();
 	npole->visit(&collect_nodes);
-	node_data_list.ss();
-	//double d1=clock();
 	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-	return node_data_list.size;
+	return node_data_list.size();
 }
+
+
 //-------------------------------------------------------------
 // Map::render_bumps()	render bumpmaps (non-shader mode)
 //-------------------------------------------------------------
