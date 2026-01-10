@@ -240,7 +240,6 @@ double cell_size(int i)
 	return PI*TheMap->radius*ptable[i];
 }
 
-
 void SurfacePoint::setGlobals() const {
 	extern double Slope, Theta, Phi, Height, Hardness;
 	extern Point MapPt;
@@ -252,13 +251,11 @@ void SurfacePoint::setGlobals() const {
 	Slope = slope;
 	Height = height;
 	Hardness = hardness;
-	
+	MaxHt=TheMap->hmax/Rscale;
+	MinHt=TheMap->hmin/Rscale;	
 	// Set noise position
 	Point pt = Td.rectangular(Theta, Phi);
 	TheNoise.set(pt);
-	
-	MaxHt=maxht;
-	MinHt=minht;
 }
 //************************************************************
 // Map class
@@ -1211,7 +1208,7 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-		get_mapnodes();
+		//get_mapnodes();
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
@@ -1251,6 +1248,7 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
+			get_mapnodes();
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
@@ -1335,13 +1333,15 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	double d1=clock();
 	int j=0;
 	for(int i=0;i<n;i++){
-	   const SurfacePoint& sp = node_data_list[i];		    
+	   const SurfacePoint& sp = node_data_list[i];	
+	   
 		// Layer filtering
 		if(sid > 0 && sp.layerId != sid) {
 			j++;
 			continue;
 		}		    
 		// Set all globals in one call
+		//cout<<sid<<" "<<sp.layerId<<endl;
 		sp.setGlobals();
 		mgr.eval(); // populate hash table with Placements (make)
 	}
@@ -1508,8 +1508,6 @@ static void collect_nodes(MapNode *n)
         sp.height = d->Ht();
         sp.hardness = d->hardness();
         sp.slope = n->slope();
-    	sp.maxht=TheMap->hmax/Rscale;
-    	sp.minht=TheMap->hmin/Rscale;	
         
         // Calculate normal (radial for sphere)
         Point pt = Td.rectangular(sp.theta, sp.phi);
@@ -1517,17 +1515,179 @@ static void collect_nodes(MapNode *n)
         
         sp.layerId = d->type();  // Terrain layer id
         
+        static int debugCount = 0;
+		    if (debugCount++ < 3) {
+			   cout << "TreeTraversal SP: length=" << sp.worldPos.length() 
+					<< " theta=" << sp.theta << " phi=" << sp.phi 
+					<< " height=" << sp.height << endl;
+		    }
+                
         node_data_list.push_back(sp);  // Changed from .add()
     }
 }
+#define USE_DEPTH_BUFFER
 int Map::get_mapnodes(){
 	TheMap = this;
 	node_data_list.clear();
+#ifdef USE_DEPTH_BUFFER
+    collectSurfacePointsFromDepth(8);  // Use depth buffer
+#else
 	npole->visit(&collect_nodes);
+#endif
 	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
 	return node_data_list.size();
 }
 
+void Map::collectSurfacePointsFromDepth(int stride) {
+    static GLint vport[4];
+    TheScene->getViewport(vport);
+    
+    int width = vport[2];
+    int height = vport[3];
+    
+    // Read depth buffer
+    std::vector<float> depthBuffer(width * height);
+    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
+    
+    // Get matrices for gluUnProject
+    GLdouble modelMatrix[16], projMatrix[16];
+    GLint viewport[4];
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+    glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    
+    // Get camera position for conversion to world space
+    Point xpoint = TheScene->xpoint;
+    
+    for (int y = 0; y < height; y += stride) {
+        for (int x = 0; x < width; x += stride) {
+            int idx = y * width + x;
+            double wz = depthBuffer[idx];
+            
+            if (wz >= 0.9999) continue;
+            
+            // Use gluUnProject (it handles all the matrix math correctly)
+            GLdouble objX, objY, objZ;
+            gluUnProject(x, y, wz,
+                        modelMatrix, projMatrix, viewport,
+                        &objX, &objY, &objZ);
+            
+            // gluUnProject returns eye-space coordinates, convert to world space
+            Point eyePos(objX, objY, objZ);
+            Point worldPos = eyePos + xpoint;
+            
+            SurfacePoint sp;
+            sp.worldPos = worldPos;
+            
+            // Calculate spherical coordinates
+            Point pt = sp.worldPos;
+            double r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+            
+            // Skip invalid positions
+            if (r < 1e-10) continue;
+            
+            sp.theta = acos(pt.z / r) * 180.0 / M_PI;
+            sp.phi = atan2(pt.y, pt.x) * 180.0 / M_PI;
+            sp.height = r - TheMap->radius;
+            
+            // Simple radial normal for now
+            sp.normal = pt.normalize();
+            
+            // Calculate slope
+            sp.slope = 0.0;  // Simple for now with radial normals
+            
+            sp.hardness = 0.5;
+            sp.layerId = 0;
+            
+            static int debugCount = 0;
+            if (debugCount++ < 3) {
+                cout << "DepthBuffer SP: length=" << sp.worldPos.length()
+                     << " theta=" << sp.theta << " phi=" << sp.phi
+                     << " height=" << sp.height 
+                     << " eyePos=" << eyePos.length()
+                     << " xpoint=" << xpoint.length() << endl;
+            }
+            
+            node_data_list.push_back(sp);
+        }
+    }
+    
+    std::cout << "Collected " << node_data_list.size() 
+              << " surface points from depth buffer (stride=" << stride << ")" << std::endl;
+}
+
+Point Map::estimateNormalFromDepth(int x, int y, const std::vector<float>& depth,
+                                   int width, int height,
+                                   GLdouble* invProj, GLdouble* invModel,
+                                   double ws1, double ws2, GLint* vport) {
+    // Sample neighbors
+    int x1 = std::max(0, x - 1);
+    int x2 = std::min(width - 1, x + 1);
+    int y1 = std::max(0, y - 1);
+    int y2 = std::min(height - 1, y + 1);
+    
+    float d1 = depth[y * width + x1];
+    float d2 = depth[y * width + x2];
+    float d3 = depth[y1 * width + x];
+    float d4 = depth[y2 * width + x];
+    
+    // Skip if any neighbor is sky
+    if (d1 >= 0.9999f || d2 >= 0.9999f || d3 >= 0.9999f || d4 >= 0.9999f) {
+        return Point(0, 0, 1);
+    }
+    
+    // Unproject helper function
+    auto unproject = [&](int px, int py, float pz) -> Point {
+        // Convert depth to eye distance
+        double wf = ws2 * pz + ws1;
+        double zv = 1.0 / wf;
+        
+        // Screen to NDC
+        double ndcX = (2.0 * px / width) - 1.0;
+        double ndcY = (2.0 * py / height) - 1.0;
+        double ndcZ = 2.0 * pz - 1.0;
+        
+        // NDC to clip space
+        double clip[4] = {ndcX * zv, ndcY * zv, ndcZ * zv, zv};
+        
+        // Clip to eye space
+        double eye[4];
+        mvmul4(clip, invProj, eye);
+        
+        // Eye to world space
+        double world[4];
+        mvmul4(eye, invModel, world);
+        
+        // Homogeneous divide
+        if (fabs(world[3]) > 1e-10) {
+            world[0] /= world[3];
+            world[1] /= world[3];
+            world[2] /= world[3];
+        }
+        
+        return Point(world[0], world[1], world[2]);
+    };
+    
+    // Unproject 4 neighbors
+    Point p1 = unproject(x1, y, d1);
+    Point p2 = unproject(x2, y, d2);
+    Point p3 = unproject(x, y1, d3);
+    Point p4 = unproject(x, y2, d4);
+    
+    // Calculate tangent vectors
+    Point dx = p2 - p1;
+    Point dy = p4 - p3;
+    
+    // Cross product gives normal
+    Point normal = dx.cross(dy);
+    double len = normal.length();
+    
+    if (len > 1e-6) {
+        return normal.normalize();
+    } else {
+        return Point(0, 0, 1);  // Fallback
+    }
+}
 
 //-------------------------------------------------------------
 // Map::render_bumps()	render bumpmaps (non-shader mode)
