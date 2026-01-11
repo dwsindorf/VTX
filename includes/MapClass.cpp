@@ -16,6 +16,12 @@ static bool debug_call_lists=false;
 
 #define USE_DEPTH_BUFFER
 
+#ifdef USE_DEPTH_BUFFER
+bool UseDepthBuffer = true;
+#else
+bool UseDepthBuffer = false;
+#endif
+
 static std::vector<SurfacePoint> node_data_list;
 
 extern double INV2PI;
@@ -1584,7 +1590,7 @@ int Map::get_mapnodes(){
 	TheMap = this;
 	node_data_list.clear();
 #ifdef USE_DEPTH_BUFFER
-    collectSurfacePointsFromDepth(4);  // Use depth buffer
+    collectSurfacePointsFromDepth(2);  // Use depth buffer
 #else
 	npole->visit(&collect_nodes);
 #endif
@@ -1597,7 +1603,7 @@ void SurfacePoint::setGlobals() const {
 	extern Point MapPt;
 	extern double MaxHt, MinHt;
 	
-	MapPt = worldPos;
+	MapPt = worldPos; // eye space
 	Theta = theta;
 	Phi = phi;
 	Slope = slope;
@@ -1608,22 +1614,20 @@ void SurfacePoint::setGlobals() const {
 
 	Point worldPos = MapPt + TheScene->xpoint;
 	double r = worldPos.length();
-	Point normalizedPos = worldPos * (0.5 / r);
-	    
+	Point normalizedPos = worldPos * (0.5 / r);	    
 	Point noisePos = normalizedPos + Point(0.5, 0.5, 0.5);
 	    
 	TheNoise.set(noisePos);
 	static int debugCount = 0;
 	static int mind=100;
 	double dist = MapPt.length() / FEET;
-	//if (debugCount <5 && dist < 20) {
-	if (dist<mind && dist < 20 && debugCount<5) {
-		cout << "setGlobals:  dist=" << dist <<" ht="<<Height
-			 //<< " worldPos=" << worldPos << " MapPt=" << MapPt 
-			 << endl;
-		mind=dist;
-		debugCount++;
-	}
+//	if (dist<mind && dist < 20 && debugCount<5) {
+//		cout << "setGlobals:  dist=" << dist <<" ht="<<Height
+//			 //<< " worldPos=" << worldPos << " MapPt=" << MapPt 
+//			 << endl;
+//		mind=dist;
+//		debugCount++;
+//	}
 }
 
 

@@ -924,7 +924,7 @@ void TNplant::eval()
 	}
 	if(right)
 		right->eval();
-	if(!CurrentScope->spass() && mgr->test())
+	if(!CurrentScope->spass())
 		ground.copy(S0);
 	
 	ncalls++;
@@ -943,9 +943,10 @@ void TNplant::eval()
 
  	if(density>0)
 		smgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
-	
-	if(!CurrentScope->spass()&& mgr->test()){ // adapt pass only
-		S0.copy(ground); // restore S0.p.z etc
+
+	S0.copy(ground); // restore S0.p.z etc
+
+	if(!CurrentScope->spass()){ // adapt pass only
 		mgr->setTests(); // set S0.c S0.s (density)
 	}
 }

@@ -299,8 +299,8 @@ Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 #ifdef TEST_ROCKS
     set_testColor(true);
 #endif
-    set_testDensity(true);
-    set_useaveht(true);
+   set_testDensity(true);
+   set_useaveht(true);
 }
 
 void Rock3DMgr::eval(){	
@@ -325,12 +325,12 @@ PlaceData *Rock3DMgr::make(Placement*s)
     return new Rock3DData(s);
 }
 
-bool Rock3DMgr::testColor() { 
-	return PlacementMgr::testColor()?true:false;
-}
-bool Rock3DMgr::testDensity(){ 
-	return true;
-}
+//bool Rock3DMgr::testColor() { 
+//	return PlacementMgr::testColor()?true:false;
+//}
+//bool Rock3DMgr::testDensity(){ 
+//	return true;
+//}
 
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
@@ -1048,8 +1048,6 @@ void TNrocks3D::eval()
 	if(CurrentScope->rpass()){
 		int layer=inLayer()?Td.tp->type():0; // layer id
 		int instance=Td.tp->Rocks.objects();
-		//cout<<"new Rock type instance="<<instance<<endl;
-				
 		mgr->instance=instance;
 		mgr->layer=layer;
 		if(rock){
@@ -1080,9 +1078,9 @@ void TNrocks3D::eval()
 
 	if(density>0)
 		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
+	S0.copy(ground); // restore S0.p.z etc
 	
 	if(!CurrentScope->spass()){ // adapt pass only
-		S0.copy(ground); // restore S0.p.z etc
 		mgr->setTests(); // set S0.c S0.s (density)
 	}
 }

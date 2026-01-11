@@ -139,8 +139,8 @@ public:
 	void eval();
 	void init();
 
-	bool testColor();
-	bool testDensity();
+	//bool testColor();
+	//bool testDensity();
 };
 
 

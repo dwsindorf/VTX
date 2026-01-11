@@ -35,6 +35,9 @@ static char THIS_FILE[] = __FILE__;
 static TerrainData Td;
 extern double ptable[];
 extern double Hscale,Height,Slope;
+extern Point MapPt;
+
+extern bool UseDepthBuffer;
 
 double MaxSize;
 
@@ -233,7 +236,12 @@ PlacementMgr::~PlacementMgr()
 }
 
 bool PlacementMgr::testColor()  		{ return options & COLOR_TEST?Render.color_test():false;}
-bool PlacementMgr::testDensity()  		{ return options & DENSITY_TEST?true:false;}
+bool PlacementMgr::testDensity()  		{ 
+	extern bool UseDepthBuffer;
+	if(UseDepthBuffer)
+		return false;
+	return options & DENSITY_TEST?true:false;
+}
 
 void PlacementMgr::setHashcode(){
 	double hashcode=(levels+
@@ -450,7 +458,7 @@ void PlacementMgr::setTests() {
 		return;
 	x=lerp(x,0.25,1,0,1);
 	double y=pow(x,2);
-
+	
 	if(testColor()) {
 		S0.set_cvalid();
 		int hash=(3*instance+type+layer)&0xf;
@@ -500,7 +508,6 @@ void PlacementMgr::collect(ValueList<PlaceData*> &data){
 			s->setVertex();
 			double dist=s->dist;
 			double pts=s->pts;
-			Point vertex=s->vertex;			
 			if (testpts()) {  // reject small placements
 				if (pts < collect_minpts) {
 					bad_pts++;
@@ -549,7 +556,6 @@ void PlacementMgr::dump(){
 bool PlacementMgr::valid()
 { 
 	if(testpts()){	// cull small placements	
-		extern Point MapPt;
 		double mps=render_ptsize;
 		if(TheScene->adapt_mode())
 			mps=adapt_ptsize;
@@ -590,7 +596,7 @@ int PlacementMgr::hashPoint(Point4DL& pc, int lvl, int id) {
 #define LODSIZE       10*size
 void PlacementMgr::eval()
 {
-    Point4D pc,p;
+    Point4D p;
     Point4D pv=TheNoise.get_point();
     pv=pv-TheNoise.offset;
 
@@ -896,6 +902,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	wtsum=0;
 	aveht=0;
 	hits=0;
+	vertex=MapPt+TheScene->vpoint;
 	
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
@@ -975,6 +982,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	    p.w=0;
 	center=p;
 	radius=r;
+	
 
 	flags.s.valid=true;
 }
