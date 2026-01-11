@@ -125,7 +125,7 @@ void Point::print(char *m)
     double px=x;
     double py=y;
     double pz=z;
-    int r=5;
+    int r=10;
     const char *s="";
     if(length()>LY){
         px/=LY;
@@ -140,8 +140,8 @@ void Point::print(char *m)
 // Overload the << operator
 std::ostream& operator<<(std::ostream& os, const Point& p) {
 	char temp[512];
-	int r=5;
-	sprintf(temp,"Point(%5g,%5g,%5g)",round(p.x,r),round(p.y,r),round(p.z,r));
+	int r=9;
+	sprintf(temp,"Point(%-1.4g,%-1.4g,%-1.4g)",p.x,p.y,p.z);
 	os<<temp;
     return os; // Return stream to allow chaining (e.g., cout << a << b;)
 }

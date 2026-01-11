@@ -110,8 +110,8 @@ inline double unwrap(double a, double b){
 }
 
 inline double round(double f,int n){
-	static double digits[]={1,10,1e2,1e3,1e4,1e5,1e6,1e7,1e8};
-	if(n<0||n>8)
+	static double digits[]={1,10,1e2,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10};
+	if(n<0||n>10)
 		return f;
 	int i=(int)(f*digits[n]+0.5);
 	return i/digits[n];

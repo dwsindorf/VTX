@@ -916,18 +916,18 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
  	p=(p+0.5)*mgr->size;
 	double rtest=rands[hid]+0.5;
 
-	if(mgr->dexpr){  // density expr
-		Point4D p1=p*TheNoise.scale+TheNoise.offset;
-	    SPUSH;
-		TheNoise.push(p1);
-		CurrentScope->revaluate();
-		mgr->dexpr->eval();
-		TheNoise.pop();
-		dns+=S0.s;
-		SPOP;
-		CurrentScope->revaluate();
-		dns=clamp(dns,0,1);
-	}
+//	if(mgr->dexpr){  // density expr
+//		Point4D p1=p*TheNoise.scale+TheNoise.offset;
+//	    SPUSH;
+//		TheNoise.push(p1);
+//		CurrentScope->revaluate();
+//		mgr->dexpr->eval();
+//		TheNoise.pop();
+//		dns+=S0.s;
+//		SPOP;
+//		CurrentScope->revaluate();
+//		dns=clamp(dns,0,1);
+//	}
 
 	if(rtest>dns){
 		PlacementMgr::Stats.dns_fails++;

@@ -240,23 +240,6 @@ double cell_size(int i)
 	return PI*TheMap->radius*ptable[i];
 }
 
-void SurfacePoint::setGlobals() const {
-	extern double Slope, Theta, Phi, Height, Hardness;
-	extern Point MapPt;
-	extern double MaxHt, MinHt;
-	
-	MapPt = worldPos;
-	Theta = theta;
-	Phi = phi;
-	Slope = slope;
-	Height = height;
-	Hardness = hardness;
-	MaxHt=TheMap->hmax/Rscale;
-	MinHt=TheMap->hmin/Rscale;	
-	// Set noise position
-	Point pt =Td.rectangular(Theta, Phi);
-	TheNoise.set(pt);
-}
 //************************************************************
 // Map class
 //************************************************************
@@ -436,7 +419,7 @@ void Map::make_current()
 	Gscale=1/Rscale;
 	Pscale=DPR*atan(hscale);
 }
-//#define DEBUG_SET_SCENE
+#define DEBUG_SET_SCENE
 //-------------------------------------------------------------
 // Map::set_scene()	 set near/far clipping planes, horizon etc.
 //-------------------------------------------------------------
@@ -1252,9 +1235,20 @@ void Map::render_shaded()
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
+//			render_objects(tp->Plants); // if plants are global all layers get them
+//			render_objects(tp->Rocks);
+//			render_objects(tp->Sprites);
+		}
+		for(int i=0;i<tids-1;i++){
+			tid=i+ID0;
+			tp=Td.properties[tid];
+			Td.tp=tp;
+			if(!tp || !visid(tid))
+				continue;
 			render_objects(tp->Plants); // if plants are global all layers get them
 			render_objects(tp->Rocks);
 			render_objects(tp->Sprites);
+
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
@@ -1501,49 +1495,28 @@ static void collect_nodes(MapNode *n)
         // Create SurfacePoint from MapNode
         SurfacePoint sp;
         
-        sp.worldPos = d->point();
+        sp.worldPos = d->point();  // in eye space
         sp.theta = d->theta();
         sp.phi = d->phi();
         sp.height = d->Ht();
         sp.hardness = d->hardness();
         sp.slope = n->slope();
         
-        // Calculate normal (radial for sphere)
-        Point pt = Td.rectangular(sp.theta, sp.phi);
-        sp.normal = pt.normalize();
-        
-        sp.layerId = d->type();  // Terrain layer id
-
-        static int debugCount = 0;
-        if (debugCount++ < 3) {
-            cout << "MapNodes SP:"<< sp.worldPos
-                 << " theta=" << sp.theta << " phi=" << sp.phi
-                 << " height=" << sp.height/FEET<< endl;
-        }
+        double dist=sp.worldPos.length()/FEET; // distance from eye
                 
+        sp.layerId = d->type();  // Terrain layer id
+     
         node_data_list.push_back(sp);  // Changed from .add()
     }
 }
-
-int Map::get_mapnodes(){
-	TheMap = this;
-	node_data_list.clear();
-#ifdef USE_DEPTH_BUFFER
-    collectSurfacePointsFromDepth(8);  // Use depth buffer
-#else
-	npole->visit(&collect_nodes);
-#endif
-	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
-	return node_data_list.size();
-}
-
 void Map::collectSurfacePointsFromDepth(int stride) {
     static GLint vport[4];
     TheScene->getViewport(vport);
     
     int width = vport[2];
     int height = vport[3];
-    
+    double zn,zf;
+     
     // Read depth buffer
     std::vector<float> depthBuffer(width * height);
     glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
@@ -1558,12 +1531,12 @@ void Map::collectSurfacePointsFromDepth(int stride) {
     // Get camera position for conversion to world space
     Point xpoint = TheScene->xpoint;
     
-    for (int y = 0; y < height; y += stride) {
+    for (int y = height-1; y >=0; y -= stride) {
         for (int x = 0; x < width; x += stride) {
             int idx = y * width + x;
             double wz = depthBuffer[idx];
             
-            if (wz >= 0.9999) continue;
+            if (wz == 1.0) continue;
             
             // Use gluUnProject (it handles all the matrix math correctly)
             GLdouble objX, objY, objZ;
@@ -1573,13 +1546,14 @@ void Map::collectSurfacePointsFromDepth(int stride) {
             
             // gluUnProject returns eye-space coordinates, convert to world space
             Point eyePos(objX, objY, objZ);
-            Point worldPos = eyePos + xpoint;
+            Point worldPos = eyePos;// + xpoint;
             
             SurfacePoint sp;
-            sp.worldPos = Point()-worldPos;
+            sp.worldPos =worldPos;
+            double dist=worldPos.length()/FEET;
             
             // Calculate spherical coordinates
-            Point pt = sp.worldPos;
+            Point pt = sp.worldPos+xpoint;
             double r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
             
             // Skip invalid positions
@@ -1588,6 +1562,7 @@ void Map::collectSurfacePointsFromDepth(int stride) {
             sp.theta = acos(pt.z / r) * 180.0 / M_PI;
             sp.phi = atan2(pt.y, pt.x) * 180.0 / M_PI;
             sp.height = r - TheMap->radius;
+            sp.height /= Rscale;
             
             // Simple radial normal for now
             sp.normal = pt.normalize();
@@ -1598,13 +1573,6 @@ void Map::collectSurfacePointsFromDepth(int stride) {
             sp.hardness = 0.0;
             sp.layerId = 0;
             
-            static int debugCount = 0;
-            if (debugCount++ < 3) {
-                cout << "DepthBuffer SP:"<< sp.worldPos
-                     << " theta=" << sp.theta << " phi=" << sp.phi
-                     << " height=" << sp.height/FEET<< endl;
-            }
-            
             node_data_list.push_back(sp);
         }
     }
@@ -1612,6 +1580,52 @@ void Map::collectSurfacePointsFromDepth(int stride) {
     std::cout << "Collected " << node_data_list.size() 
               << " surface points from depth buffer (stride=" << stride << ")" << std::endl;
 }
+int Map::get_mapnodes(){
+	TheMap = this;
+	node_data_list.clear();
+#ifdef USE_DEPTH_BUFFER
+    collectSurfacePointsFromDepth(4);  // Use depth buffer
+#else
+	npole->visit(&collect_nodes);
+#endif
+	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+	return node_data_list.size();
+}
+
+void SurfacePoint::setGlobals() const {
+	extern double Slope, Theta, Phi, Height, Hardness;
+	extern Point MapPt;
+	extern double MaxHt, MinHt;
+	
+	MapPt = worldPos;
+	Theta = theta;
+	Phi = phi;
+	Slope = slope;
+	Height = height;
+	Hardness = hardness;
+	MaxHt=TheMap->hmax/Rscale;
+	MinHt=TheMap->hmin/Rscale;	
+
+	Point worldPos = MapPt + TheScene->xpoint;
+	double r = worldPos.length();
+	Point normalizedPos = worldPos * (0.5 / r);
+	    
+	Point noisePos = normalizedPos + Point(0.5, 0.5, 0.5);
+	    
+	TheNoise.set(noisePos);
+	static int debugCount = 0;
+	static int mind=100;
+	double dist = MapPt.length() / FEET;
+	//if (debugCount <5 && dist < 20) {
+	if (dist<mind && dist < 20 && debugCount<5) {
+		cout << "setGlobals:  dist=" << dist <<" ht="<<Height
+			 //<< " worldPos=" << worldPos << " MapPt=" << MapPt 
+			 << endl;
+		mind=dist;
+		debugCount++;
+	}
+}
+
 
 Point Map::estimateNormalFromDepth(int x, int y, const std::vector<float>& depth,
                                    int width, int height,
@@ -2249,7 +2263,7 @@ void Map::find_limits(){
 	MinHt=hmin;
 	MaxHt=hmax;
 
-    //cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
+    cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility
