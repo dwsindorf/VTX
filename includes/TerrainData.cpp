@@ -130,6 +130,7 @@ Point	TerrainData::rectangular(double t, double p)
 	TheNoise.theta=t;
 	Point pt(t,p,0.5);
 	pt=pt.rectangular();
+	cout<<pt<<endl;
 	return (pt+0.5);
 }
 void TerrainData::add_texture(Texture *t)

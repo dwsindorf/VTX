@@ -37,8 +37,8 @@ static int nbumps=0;
 static bool cvalid;
 
 #define PRINT_STATS
-#define PRINT_ROCK_STATS
-#define PRINT_ROCK_CACHE_STATS
+//#define PRINT_ROCK_STATS
+//#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 #define USE_TEMPLATES
 //#define PRINT_LOD_STATS

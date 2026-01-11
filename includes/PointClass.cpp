@@ -137,6 +137,16 @@ void Point::print(char *m)
 	printf("%s%-15g %-15g %-4.1f %s ",m,round(px,r),round(py,r),pz,s);
 }
 
+// Overload the << operator
+std::ostream& operator<<(std::ostream& os, const Point& p) {
+	char temp[512];
+	int r=5;
+	sprintf(temp,"Point(%5g,%5g,%5g)",round(p.x,r),round(p.y,r),round(p.z,r));
+	os<<temp;
+    return os; // Return stream to allow chaining (e.g., cout << a << b;)
+}
+
+
 //-------------------------------------------------------------
 // Point::intersect_sphere()	 sphere intersection
 //-------------------------------------------------------------

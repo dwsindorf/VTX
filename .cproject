@@ -56,66 +56,138 @@
 			<resource resourceType="PROJECT" workspacePath="/VTX"/>
 		</configuration>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cygwin.base.222105798;cdt.managedbuild.toolchain.gnu.cygwin.base.222105798.1117502080;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.91211385;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.966063975">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cygwin.base.222105798;cdt.managedbuild.toolchain.gnu.cygwin.base.222105798.1117502080;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.277325626;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.183814983">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
-			<target name="build" path="Debug" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildTarget>build_wx</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
 			<target name="clean" path="Debug" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildTarget>clean</buildTarget>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 			<target name="showenv" path="Debug" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildTarget>showenv</buildTarget>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="showenv" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
-				<buildTarget>showenv</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="build" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="build" path="Debug" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
 				<buildTarget>build_wx</buildTarget>
 				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
+				<useDefaultCommand>false</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
-			<target name="clean" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+			<target name="test" path="Debug" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
-				<buildTarget>clean</buildTarget>
-				<stopOnError>true</stopOnError>
-				<useDefaultCommand>true</useDefaultCommand>
-				<runAllBuilders>true</runAllBuilders>
-			</target>
-			<target name="test" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-				<buildCommand>make</buildCommand>
+				<buildArguments/>
 				<buildTarget>test</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>
 			</target>
+			<target name="showenv" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>showenv</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="clean" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>clean</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="build" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>build_wx</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
+			<target name="test" path="Release" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+				<buildCommand>make</buildCommand>
+				<buildArguments/>
+				<buildTarget>test</buildTarget>
+				<stopOnError>true</stopOnError>
+				<useDefaultCommand>false</useDefaultCommand>
+				<runAllBuilders>true</runAllBuilders>
+			</target>
 		</buildTargets>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558;cdt.managedbuild.toolchain.gnu.base.230618558.1592436735;cdt.managedbuild.tool.gnu.c.compiler.base.1783528371;cdt.managedbuild.tool.gnu.c.compiler.input.846803212">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.1553742444;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.406177734">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1233866698;cdt.managedbuild.tool.gnu.cpp.compiler.input.1412566278">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558.1183088552;cdt.managedbuild.toolchain.gnu.base.230618558.1183088552.;cdt.managedbuild.tool.gnu.c.compiler.base.1484066171;cdt.managedbuild.tool.gnu.c.compiler.input.423415953">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.955779908;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1862163722">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1281806753;cdt.managedbuild.config.gnu.exe.release.356777836.1281806753.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.2089706954;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1615535147">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.469255913;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.432702388">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.195170946;cdt.managedbuild.tool.gnu.c.compiler.input.1005557174">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1925519647;cdt.managedbuild.config.gnu.exe.release.356777836.1925519647.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.958338413;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.1206583293">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558.1183088552;cdt.managedbuild.toolchain.gnu.base.230618558.1183088552.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.616406727;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1504422111">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558.1183088552;cdt.managedbuild.toolchain.gnu.base.230618558.1183088552.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.1086480671;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.632090525">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911;cdt.managedbuild.config.gnu.exe.debug.155739911.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.2084543658;cdt.managedbuild.tool.gnu.c.compiler.input.1934777280">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.base.1776966171;cdt.managedbuild.tool.gnu.c.compiler.input.1896553918">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558.1183088552;cdt.managedbuild.toolchain.gnu.base.230618558.1183088552.;cdt.managedbuild.tool.gnu.cpp.compiler.base.1896817119;cdt.managedbuild.tool.gnu.cpp.compiler.input.1476200372">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.108509939;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.738409441">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1281806753;cdt.managedbuild.config.gnu.exe.release.356777836.1281806753.;cdt.managedbuild.tool.gnu.c.compiler.cygwin.base.237811115;cdt.managedbuild.tool.gnu.c.compiler.input.cygwin.423122462">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836;cdt.managedbuild.config.gnu.exe.release.356777836.;cdt.managedbuild.tool.gnu.cpp.compiler.base.2120037469;cdt.managedbuild.tool.gnu.cpp.compiler.input.1221473999">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911;cdt.managedbuild.config.gnu.exe.debug.155739911.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.251851111;cdt.managedbuild.tool.gnu.cpp.compiler.input.717461241">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237;cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.314474216;cdt.managedbuild.tool.gnu.c.compiler.input.479603998">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237;cdt.managedbuild.config.gnu.exe.debug.155739911.1511371237.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.220794577;cdt.managedbuild.tool.gnu.cpp.compiler.input.116759728">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.230618558;cdt.managedbuild.toolchain.gnu.base.230618558.1592436735;cdt.managedbuild.tool.gnu.cpp.compiler.base.1471728158;cdt.managedbuild.tool.gnu.cpp.compiler.input.1261558317">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.356777836.1925519647;cdt.managedbuild.config.gnu.exe.release.356777836.1925519647.;cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.667047281;cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.680583599">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

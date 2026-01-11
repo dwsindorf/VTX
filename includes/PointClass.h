@@ -77,6 +77,7 @@ public:
 	double maxval()             {  double f=x>y?x:y;return f>z?f:z;}
 	double minval()             {  double f=x<y?x:y;return f<z?f:z;}
 	int intersect_sphere(Point, Point, double r, double &, double &);
+	friend std::ostream& operator<<(std::ostream& os, const Point& b);
 };
 
 class Point2D

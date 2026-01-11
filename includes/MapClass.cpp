@@ -14,7 +14,7 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-#define TEST
+#define USE_DEPTH_BUFFER
 
 static std::vector<SurfacePoint> node_data_list;
 
@@ -254,7 +254,7 @@ void SurfacePoint::setGlobals() const {
 	MaxHt=TheMap->hmax/Rscale;
 	MinHt=TheMap->hmin/Rscale;	
 	// Set noise position
-	Point pt = Td.rectangular(Theta, Phi);
+	Point pt =Td.rectangular(Theta, Phi);
 	TheNoise.set(pt);
 }
 //************************************************************
@@ -1333,13 +1333,12 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	double d1=clock();
 	int j=0;
 	for(int i=0;i<n;i++){
-	   const SurfacePoint& sp = node_data_list[i];	
-	   
+	   const SurfacePoint& sp = node_data_list[i];
 		// Layer filtering
 		if(sid > 0 && sp.layerId != sid) {
 			j++;
 			continue;
-		}		    
+		}
 		// Set all globals in one call
 		//cout<<sid<<" "<<sp.layerId<<endl;
 		sp.setGlobals();
@@ -1514,18 +1513,18 @@ static void collect_nodes(MapNode *n)
         sp.normal = pt.normalize();
         
         sp.layerId = d->type();  // Terrain layer id
-        
+
         static int debugCount = 0;
-		    if (debugCount++ < 3) {
-			   cout << "TreeTraversal SP: length=" << sp.worldPos.length() 
-					<< " theta=" << sp.theta << " phi=" << sp.phi 
-					<< " height=" << sp.height << endl;
-		    }
+        if (debugCount++ < 3) {
+            cout << "MapNodes SP:"<< sp.worldPos
+                 << " theta=" << sp.theta << " phi=" << sp.phi
+                 << " height=" << sp.height/FEET<< endl;
+        }
                 
         node_data_list.push_back(sp);  // Changed from .add()
     }
 }
-#define USE_DEPTH_BUFFER
+
 int Map::get_mapnodes(){
 	TheMap = this;
 	node_data_list.clear();
@@ -1577,7 +1576,7 @@ void Map::collectSurfacePointsFromDepth(int stride) {
             Point worldPos = eyePos + xpoint;
             
             SurfacePoint sp;
-            sp.worldPos = worldPos;
+            sp.worldPos = Point()-worldPos;
             
             // Calculate spherical coordinates
             Point pt = sp.worldPos;
@@ -1596,16 +1595,14 @@ void Map::collectSurfacePointsFromDepth(int stride) {
             // Calculate slope
             sp.slope = 0.0;  // Simple for now with radial normals
             
-            sp.hardness = 0.5;
+            sp.hardness = 0.0;
             sp.layerId = 0;
             
             static int debugCount = 0;
             if (debugCount++ < 3) {
-                cout << "DepthBuffer SP: length=" << sp.worldPos.length()
+                cout << "DepthBuffer SP:"<< sp.worldPos
                      << " theta=" << sp.theta << " phi=" << sp.phi
-                     << " height=" << sp.height 
-                     << " eyePos=" << eyePos.length()
-                     << " xpoint=" << xpoint.length() << endl;
+                     << " height=" << sp.height/FEET<< endl;
             }
             
             node_data_list.push_back(sp);
