@@ -304,6 +304,7 @@ TerrainProperties::TerrainProperties(int t)
 	tnpoint=0;
 	tndensity=0;
 	ntexs=0;
+	callList=0;
 	//cout<<"New properties "<<id<<endl;
 	//Sprites=new SpriteObjMgr();
 }

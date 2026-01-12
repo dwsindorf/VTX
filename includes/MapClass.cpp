@@ -23,12 +23,11 @@ bool UseDepthBuffer = false;
 #endif
 
 static std::vector<SurfacePoint> node_data_list;
-
 extern double INV2PI;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
-//#define DEBUG_RENDER
+#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -425,7 +424,7 @@ void Map::make_current()
 	Gscale=1/Rscale;
 	Pscale=DPR*atan(hscale);
 }
-#define DEBUG_SET_SCENE
+//#define DEBUG_SET_SCENE
 //-------------------------------------------------------------
 // Map::set_scene()	 set near/far clipping planes, horizon etc.
 //-------------------------------------------------------------
@@ -1196,15 +1195,12 @@ void Map::render_shaded()
 	npole->init_render();
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
+
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-		//get_mapnodes();
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
 			Td.tp=tp;
-#ifdef DEBUG_RENDER
-		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
-#endif
 
 			if(!tp)
 				continue;
@@ -1237,33 +1233,32 @@ void Map::render_shaded()
 			else {
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
-			get_mapnodes();
+#ifdef DEBUG_RENDER
+		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
+#endif
+
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
-//			render_objects(tp->Plants); // if plants are global all layers get them
-//			render_objects(tp->Rocks);
-//			render_objects(tp->Sprites);
 		}
-		for(int i=0;i<tids-1;i++){
-			tid=i+ID0;
-			tp=Td.properties[tid];
-			Td.tp=tp;
-			if(!tp || !visid(tid))
-				continue;
-			render_objects(tp->Plants); // if plants are global all layers get them
-			render_objects(tp->Rocks);
-			render_objects(tp->Sprites);
-
+		if((object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
+			get_mapnodes();
+			for(int i=0;i<tids-1;i++){
+				tid=i+ID0;
+				tp=Td.properties[tid];
+				Td.tp=tp;
+				if(!tp || !visid(tid))
+					continue;
+				render_objects(tp->Plants); // if plants are global all layers get them
+				render_objects(tp->Rocks);
+				render_objects(tp->Sprites);
+			}
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
-    bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
+	bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
 	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
 	if(show_water){
-#ifdef DEBUG_RENDER
-		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
-#endif
 		tid=WATER;
 		tp=Td.properties[tid];
 		Td.tp=tp;
@@ -1291,6 +1286,10 @@ void Map::render_shaded()
 		else {
 		    RENDERLIST(SHADER_LISTS,tid,render());
 		}
+#ifdef DEBUG_RENDER
+		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
+#endif
+
 		Render.show_shaded();
 		Raster.surface=1;
 	}
@@ -1323,6 +1322,9 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 #endif
 		return;
 	}
+	MaxHt=TheMap->hmax/Rscale;
+	MinHt=TheMap->hmin/Rscale;	
+
 	int mode=CurrentScope->passmode();
 	int n=node_data_list.size();
 	int sid=mgr.layer();
@@ -1339,8 +1341,6 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 			j++;
 			continue;
 		}
-		// Set all globals in one call
-		//cout<<sid<<" "<<sp.layerId<<endl;
 		sp.setGlobals();
 		mgr.eval(); // populate hash table with Placements (make)
 	}
@@ -1516,75 +1516,14 @@ static void collect_nodes(MapNode *n)
     }
 }
 void Map::collectSurfacePointsFromDepth(int stride) {
-    static GLint vport[4];
-    TheScene->getViewport(vport);
-    
-    int width = vport[2];
-    int height = vport[3];
-    double zn,zf;
-     
-    // Read depth buffer
-    std::vector<float> depthBuffer(width * height);
-    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
-    
-    // Get matrices for gluUnProject
-    GLdouble modelMatrix[16], projMatrix[16];
-    GLint viewport[4];
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
-    glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    
-    // Get camera position for conversion to world space
-    Point xpoint = TheScene->xpoint;
-    
-    for (int y = height-1; y >=0; y -= stride) {
-        for (int x = 0; x < width; x += stride) {
-            int idx = y * width + x;
-            double wz = depthBuffer[idx];
-            
-            if (wz == 1.0) continue;
-            
-            // Use gluUnProject (it handles all the matrix math correctly)
-            GLdouble objX, objY, objZ;
-            gluUnProject(x, y, wz,
-                        modelMatrix, projMatrix, viewport,
-                        &objX, &objY, &objZ);
-            
-            // gluUnProject returns eye-space coordinates, convert to world space
-            Point eyePos(objX, objY, objZ);
-            Point worldPos = eyePos;// + xpoint;
-            
-            SurfacePoint sp;
-            sp.worldPos =worldPos;
-            double dist=worldPos.length()/FEET;
-            
-            // Calculate spherical coordinates
-            Point pt = sp.worldPos+xpoint;
-            double r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
-            
-            // Skip invalid positions
-            if (r < 1e-10) continue;
-            
-            sp.theta = acos(pt.z / r) * 180.0 / M_PI;
-            sp.phi = atan2(pt.y, pt.x) * 180.0 / M_PI;
-            sp.height = r - TheMap->radius;
-            sp.height /= Rscale;
-            
-            // Simple radial normal for now
-            sp.normal = pt.normalize();
-            
-            // Calculate slope
-            sp.slope = 0.0;  // Simple for now with radial normals
-            
-            sp.hardness = 0.0;
-            sp.layerId = 0;
-            
-            node_data_list.push_back(sp);
-        }
-    }
-    
-    std::cout << "Collected " << node_data_list.size() 
-              << " surface points from depth buffer (stride=" << stride << ")" << std::endl;
+	double d0=clock();
+	Raster.collectSurfaceData(node_data_list, stride);
+	double d1=clock();
+	
+	std::cout  << "collectSurfacePointsFromDepth(" << stride << ")"
+			<< " Collected " << node_data_list.size()  
+		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
+
 }
 int Map::get_mapnodes(){
 	TheMap = this;
@@ -1609,8 +1548,6 @@ void SurfacePoint::setGlobals() const {
 	Slope = slope;
 	Height = height;
 	Hardness = hardness;
-	MaxHt=TheMap->hmax/Rscale;
-	MinHt=TheMap->hmin/Rscale;	
 
 	Point worldPos = MapPt + TheScene->xpoint;
 	double r = worldPos.length();
@@ -1618,16 +1555,6 @@ void SurfacePoint::setGlobals() const {
 	Point noisePos = normalizedPos + Point(0.5, 0.5, 0.5);
 	    
 	TheNoise.set(noisePos);
-	static int debugCount = 0;
-	static int mind=100;
-	double dist = MapPt.length() / FEET;
-//	if (dist<mind && dist < 20 && debugCount<5) {
-//		cout << "setGlobals:  dist=" << dist <<" ht="<<Height
-//			 //<< " worldPos=" << worldPos << " MapPt=" << MapPt 
-//			 << endl;
-//		mind=dist;
-//		debugCount++;
-//	}
 }
 
 
@@ -2267,7 +2194,7 @@ void Map::find_limits(){
 	MinHt=hmin;
 	MaxHt=hmax;
 
-    cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
+    //cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility
@@ -2410,9 +2337,13 @@ void  Map::get_info()
 	set_fog(0);
 	set_visbumps(0);
 	set_vistexs(0);
+	
+	Raster.set_placed(0);
 
 	for(i=0;i<Td.properties.size;i++){
 		idcnts[i]=0;
+		if(Td.properties[i]->has_placed())
+			Raster.set_placed(1);			
 	}
 	vnodes=0;
 	tids=0;

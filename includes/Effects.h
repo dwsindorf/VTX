@@ -4,6 +4,7 @@
 #define _EFFECTS_H
 
 #include "Raster.h"
+class SurfacePoint;
 
 class EffectsMgr : public RasterMgr
 {
@@ -36,6 +37,8 @@ public:
 	void renderBgShadows();
 	void applyBgShadows();
 	void renderFgShadows();
+	
+	void collectSurfaceData(std::vector<SurfacePoint>& points, int stride = 8);
 
 	void applyShadows();
 	void init_shadows();

@@ -379,6 +379,10 @@ public:
 	bool is_rock()  	    { return info.s.rock;}
 	void set_geometry(bool b) { info.s.geometry=b;}
 	bool has_geometry()  	{ return info.s.geometry;}
+	bool has_rocks()  	    { return Rocks.objects();}
+	bool has_plants()  	    { return Plants.objects();}
+	bool has_sprites()  	{ return Sprites.objects();}
+	bool has_placed()       { return  has_rocks() || has_plants() || has_sprites();}      
 	void set_color(bool b)  { info.s.color=b;}
 	bool has_color()  		{ return info.s.color;}
 	void set_density(bool b) { info.s.density=b;}

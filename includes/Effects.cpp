@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-//#define DEBUG_EFFECTS
+#define DEBUG_EFFECTS
 
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH","PLACE_ZVALS","PLACE_SHADOWS"};
 // Effects supported (using shaders)
@@ -138,6 +138,7 @@ void EffectsMgr::render() {
 // EffectsMgr::setApplyProgram()	apply raster effects to image
 //-------------------------------------------------------------
 void EffectsMgr::setProgram(int type){
+	
 	GLint    vport[4];
 	TheScene->getViewport(vport);
 	GLSLVarMgr vars;
@@ -474,6 +475,7 @@ void EffectsMgr::apply(){
 	else if(!Render.draw_shaded()){ // uses old non-shader code
 		RasterMgr::apply(); //
 	}
+	GLSLMgr::initFrameBuffer();
 }
 
 //-------------------------------------------------------------
@@ -787,3 +789,74 @@ void EffectsMgr::create_jitter_lookup(int size, int samples_u, int samples_v)
 	delete [] data;
 
 }
+
+void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int stride) {
+	extern double Gscale,Hscale,Rscale;
+    points.clear();
+    
+    GLint vport[4];
+    TheScene->getViewport(vport);
+        
+    int width = vport[2];
+    int height = vport[3];
+    
+    // Read depth buffer from current framebuffer
+    std::vector<float> depthBuffer(width * height);
+    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
+    
+    // Read FBOTex2 (gl_FragData[1]) which contains vec4(Constants1.g, depth, reflect1, vfog)
+    // We want the R channel which has Constants1.g (terrain layer ID)
+    std::vector<float> fboData(width * height * 4);  // RGBA
+    
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[2]);  // FBOTex2 is index 1
+    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData.data());
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);  // Unbind
+    
+    // Get matrices for unprojection
+    GLdouble modelMatrix[16], projMatrix[16];
+    GLint viewport[4];
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
+    glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    
+    Point xpoint = TheScene->xpoint;
+    
+    int cnt=0;
+    
+    // Sample at stride intervals
+    for (int y = height-1; y>=0; y -= stride) {
+        for (int x = 0; x < width; x += stride) {
+            int idx = y * width + x;
+            double wz = depthBuffer[idx];
+            
+            if (wz >= 0.9999) continue;  // Skip sky
+            
+            // Get layer ID from FBO R channel (Constants1.g)
+            float layerData = fboData[idx * 4];  // R channel
+            
+            int dindex=idx * 4;
+            GLdouble objX, objY, objZ;
+            gluUnProject(x, y, wz,
+                        modelMatrix, projMatrix, viewport,
+                        &objX, &objY, &objZ);
+            
+            SurfacePoint sp;           
+            sp.worldPos = Point(objX, objY, objZ);  // Eye-space position
+              
+            // Convert to world space for theta/phi/height
+            Point worldPos = sp.worldPos + xpoint;
+            double r = worldPos.length();
+            
+            if (r < 1e-10) continue;
+            sp.layerId=fboData[dindex+0];
+            sp.slope=fboData[dindex+1];
+            sp.theta=fboData[dindex+2];
+            sp.phi=fboData[dindex+3];        
+            sp.height = (r - TheMap->radius) / Rscale;
+            sp.normal = worldPos.normalize();
+            sp.hardness = 0.0;
+            points.push_back(sp);
+        }
+    }
+    //GLSLMgr::setFBOReset();
+ }

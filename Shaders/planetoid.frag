@@ -60,8 +60,6 @@ uniform vec4 IceColor2;
 uniform float water_clarity;
 uniform float ice_clarity;
 
-
-#ifdef GRID
 vec2 spherical(vec3 rec)
 {
 	float t,p,r;
@@ -70,6 +68,8 @@ vec2 spherical(vec3 rec)
 	p=atan(-rec.z,rec.x)*DPR;
 	return vec2(t,p);
 }
+
+#ifdef GRID
 uniform vec4 phi_color;
 uniform vec4 theta_color;
 uniform float grid_spacing;
@@ -170,6 +170,11 @@ void main(void) {
 #ifdef VIEWOBJ
     float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 	gl_FragData[1]=vec4(Constants1.g,depth,reflect1,vfog);
+#ifdef PLACED
+	vec3 pm=(Vertex1-0.5)*2;
+	vec2 sp=spherical(pm);
+	gl_FragData[2]=vec4((int)(Constants1.g-3+0.1),Tangent.z,180+sp.y,sp.x);
+#endif
 #else  // moons 
 	gl_FragData[1]=vec4(0,illumination,0.05,0.0); // set first component (type) to 0 so reflections work
 #endif
@@ -185,7 +190,7 @@ void main(void) {
 	gl_FragData[0] = color;
 	//gl_FragData[0] = abs(normalize(WorldNormal));
 	//float ht=Constants1.x/rscale+1.0;
-	//gl_FragData[0] = vec4(ht*0.5,0,0,1);
+	//gl_FragData[0] = vec4(Tangent.z,0,0,1);
 
 }
 // ########## end planetoid.frag #########################

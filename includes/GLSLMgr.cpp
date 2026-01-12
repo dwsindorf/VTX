@@ -596,7 +596,7 @@ void GLSLMgr::initFrameBuffer()
 	}
 
 	GLenum mrt[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
-	glDrawBuffers(2,mrt);
+	glDrawBuffers(4,mrt);
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 	if(status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		cout << "frameBuffer not valid" << endl;

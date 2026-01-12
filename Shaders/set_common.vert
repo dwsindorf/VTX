@@ -3,9 +3,9 @@
 	Color=gl_Color;
 #endif
 
-#if NTEXS >0
+//#if NTEXS >0
 	Tangent=TextureAttributes;
-#endif
+//#endif
 
 //#if NVALS >0
 	Vertex1=Position1;

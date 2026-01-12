@@ -3648,10 +3648,12 @@ bool Planetoid::setProgram(){
 	TerrainProperties *tp=map->tp;
 
 	char defs[512]="";
+	if(Raster.placed()&&TheScene->viewobj==this && TheScene->viewtype==SURFACE)
+		sprintf(defs+strlen(defs),"#define PLACED\n");
 	if(Render.lighting())
-		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
+		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	else
-		sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
+		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
     bool do_shadows=Raster.shadows() && Raster.twilight();
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()||TheScene->viewobj==this)){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
@@ -3841,7 +3843,7 @@ int Planetoid::render_pass()
 	else
 		clear_pass(BG3);
 	if(selected() && map->visbumps() && Render.bumps())
-	    	Raster.set_bumptexs(1);
+	    Raster.set_bumptexs(1);
 	
     return selected();
 }

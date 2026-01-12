@@ -81,9 +81,8 @@ protected:
 
 		DEBUG_SHADOWS	= 0x00100000,
 		SPRITES		    = 0x00200000,
-		ADAPT_SPRITES	= 0x00400000,
 
-		SDEFAULTS       = DPTEST|SOFT_EDGES|BGSHADOWS|MAX_VIEW|SPRITES|ADAPT_SPRITES,
+		SDEFAULTS       = DPTEST|SOFT_EDGES|BGSHADOWS|MAX_VIEW|SPRITES,
 		NEEDS_AUXBUF    = REFLECTIONS|FOG,
 		NEEDS_PIXBUF    = DOSHADOWS|WATERDEPTH|REFLECTIONS|HAZE|FOG|WATERMOD,
 		NEEDS_ZBUF1     = WATERDEPTH|SHADOWS|FOG|HAZE,
@@ -105,6 +104,7 @@ protected:
 		unsigned int  light	   : 3;	// current light
 		unsigned int  accum    : 1;
 		unsigned int  shadows  : 1;
+		unsigned int  placed   : 1;
 		unsigned int  unused   : 13;
 	} rmdata;
 
@@ -134,6 +134,15 @@ public:
 	static GLdouble vproj[16];
 	static GLdouble ivproj[16];
 	static GLdouble ivpmat[16];
+	static GLfloat	*gdata;		// geometry data
+	static GLfloat	*zbuf1;		// eye zbuffer
+	static GLfloat	*zbuf2;		// shadow zbuffer
+	static GLubyte	*pixels;	// eye pixel buffer
+	static GLubyte	*image;		// pointer to current image buffer
+	static GLubyte	*ibuffs[8];	// image buffer pointers
+	static double   *avals;		// column buffer for cos alpha values
+	void prep_zbuf();
+	void init_cols();
 
 	RasterMgr();
 	~RasterMgr();
@@ -328,9 +337,6 @@ public:
 	void set_sprites(int c)			{ BIT_SET(options,SPRITES,c);}
 	int  sprites()					{ return options & SPRITES?1:0;}
 
-	void set_adapt_sprites(int c)	{ BIT_SET(options,ADAPT_SPRITES,c);}
-	int  adapt_sprites()			{ return options & ADAPT_SPRITES?1:0;}
-
 	int  reflections()				{ return options & REFLECTIONS?1:0;}
 	void set_reflections(int c)		{ BIT_SET(options,REFLECTIONS,c);}
 
@@ -385,6 +391,9 @@ public:
 
 	void set_bumptexs(int i)        { flags.bumptexs=i;}
 	int bumptexs()				    { return flags.bumptexs;}
+
+	void set_placed(int i)          { flags.placed=i;}
+	int placed()				    { return flags.placed;}
 
 	// id table functions
 
@@ -477,6 +486,7 @@ public:
  	virtual void render_shadows();
     virtual void shadow_view();
     virtual void shadow_light();
+    
 
 };
 //extern RasterMgr Raster;

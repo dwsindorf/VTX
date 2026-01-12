@@ -468,7 +468,7 @@ bool Rock3DObjMgr::setProgram() {
 		return false;
 		
     char defs[1024] = "";
-    sprintf(defs, "#define NLIGHTS %d\n", Lights.size);
+    sprintf(defs+strlen(defs), "#define NLIGHTS %d\n", Lights.size);
 
     bool do_shadows=Raster.shadows();
  	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
@@ -1006,14 +1006,11 @@ void TNrocks3D::init()
 	else
 		rmgr->vnoise=0;
 	if(args[7]){
-		if(args[7]->typeValue()==ID_POINT){
+		if(args[7]->typeValue()==ID_POINT)
 			rmgr->vnoise=args[7];
-		}
 		else
 			rmgr->rnoise=args[7];
 	}
-	
-	
 	TNode *tc=findChild(ID_COLOR);
 	if(tc)
 		rmgr->color=tc;

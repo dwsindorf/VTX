@@ -2724,6 +2724,8 @@ void Scene::render_shadows()
 		shadow_group(2);
 	project();
 	Raster.apply();
+
+	
 }
 
 //-------------------------------------------------------------

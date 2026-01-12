@@ -46,14 +46,7 @@ static int			npixels=0;
 static int			colsize=0;
 class ShadowFlags;
 
-static int zvalid=0;
-static GLfloat		*gdata=0;		// geometry data
-static GLfloat		*zbuf1=0;		// eye zbuffer
-static GLfloat		*zbuf2=0;		// shadow zbuffer
-static GLubyte		*pixels=0;		// eye pixel buffer
-static GLubyte		*image=0;		// pointer to current image buffer
-static GLubyte		*ibuffs[8];		// image buffer pointers
-static double       *avals=0;		// column buffer for cos alpha values
+int zvalid=0;
 static double       *tlut=0;		// tangent lut
 static double       *alut=0;		// arc-tangent lut
 static double        bmax=0;
@@ -161,7 +154,7 @@ void show_raster_specs()
 //-------------------------------------------------------------
 // prep_zbuf()   convert zbuf values to distance values
 //-------------------------------------------------------------
-static void prep_zbuf()
+void RasterMgr::prep_zbuf()
 {
 	int i,j,k;
 	zn=TheScene->znear;
@@ -179,7 +172,7 @@ static void prep_zbuf()
 //-------------------------------------------------------------
 // prep_zbuf()   initialize reflection vectors
 //-------------------------------------------------------------
-static void init_cols()
+void RasterMgr::init_cols()
 {
 #ifdef OPTIMIZE
 	int i;
@@ -229,6 +222,13 @@ GLdouble RasterMgr::ismat[16];
 GLdouble RasterMgr::vproj[16];
 GLdouble RasterMgr::ivproj[16]={1,0,0,0, 0,1,0,0,  0,0,1,0, 0,0,0,1};
 GLdouble RasterMgr::ivpmat[16]={1,0,0,0, 0,1,0,0, 0,0,2,0, -1,-1,-1,1};
+GLfloat	 *RasterMgr::gdata=0;		// geometry data
+GLfloat	 *RasterMgr::zbuf1=0;		// eye zbuffer
+GLfloat	 *RasterMgr::zbuf2=0;		// shadow zbuffer
+GLubyte	 *RasterMgr::pixels=0;		// eye pixel buffer
+GLubyte	 *RasterMgr::image=0;		// pointer to current image buffer
+GLubyte	 *RasterMgr::ibuffs[8];		// image buffer pointers
+double   *RasterMgr::avals=0;		// column buffer for cos alpha values
 
 RasterMgr::RasterMgr()
 {
@@ -1363,8 +1363,14 @@ void RasterMgr::make_filter_mask()
 {
 	if(filter_valid)
 	    return;
-	if(!zvalid)
+	if(!zvalid){
+		cout<<"getting zbuff"<<endl;
 		getZbuf(0);
+	}
+	else{
+		cout<<"reusing zbuff"<<endl;
+
+	}
 
 	filter_valid=1;
 	int i,j,k,n,w,wc;
