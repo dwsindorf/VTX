@@ -301,10 +301,7 @@ public:
 	bool            setGeometryPrgm();
 	bool            hasGeometry();
 	void            collectSurfacePointsFromDepth(int stride);
-	Point estimateNormalFromDepth(int x, int y, const std::vector<float>& depth,
-	                             int width, int height,
-	                             GLdouble* invProj, GLdouble* invModel,
-	                             double ws1, double ws2, GLint* vport);
+	
 };
 
 class RingMap : public Map

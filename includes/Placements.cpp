@@ -18,7 +18,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-//#define DEBUG_DENSITY
 
 //************************************************************
 // classes Placable, PlacementMgr
@@ -31,6 +30,8 @@ static char THIS_FILE[] = __FILE__;
 //#define DEBUG_HASH         //  turn on to get hash table stats
 //#define NO_CHAIN          // TEST mode turn off chaining
 //#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
+#define PRINT_PLACEMENT_STATS
+//#define DEBUG_DENSITY
 
 static TerrainData Td;
 extern double ptable[];
@@ -44,7 +45,7 @@ double MaxSize;
 int place_gid=0;
 static int 	cnt;
 
-#ifdef DEBUG_PLACEMENTS
+//#ifdef DEBUG_PLACEMENTS
 
 // hash lookup overhead
 //     PERM(pc.x+PERM(pc.y+PERM(pc.z+PERM(n2+id)))
@@ -64,7 +65,7 @@ void show_display_placements()
 	PlacementStats::exec();
 }
 
-#endif
+//#endif
 
 static LongSym popts[]={ 
 	{"MAXHT",		MXHT},
@@ -450,7 +451,6 @@ void PlacementMgr::init()
 void PlacementMgr::setTests() {
 	if(!test() || hits<min_hits)
 		return;	
-
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
 	S0.clr_flag(DVALUE);
@@ -835,7 +835,7 @@ void PlacementMgr::getArgs(TNarg *left){
 	double arg[13];
 	
 	double f=0;
-	double fs=0,fl=0,fh=0,fd=0;
+	double fs=1,fl=1,fh=1,fd=1;
 
 	int n=getargs(&args,arg,13);
 	// common 
@@ -854,21 +854,28 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>10) lat_bias=arg[10];
 	if(n>11) hardness_bias=arg[11];
 	if(n>12) selection_bias=arg[12];
-	if(slope_bias)
-		fs=calcDensity(Slope,0.4,2*slope_bias,0.2);
-	if(ht_bias)
-		fh=calcDensity((Height-MinHt)/(MaxHt-MinHt),0.5,ht_bias,0.5);	
-	if(lat_bias)
-		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
-	if(hardness_bias)
-		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
-	f=fs+fl+fh+fd;
-    density=maxdensity*(1+f);
+	
+	double dht=(Height-MinHt)/(MaxHt-MinHt);
+	
+	density=maxdensity;
+//	if(slope_bias)
+//		fs=calcDensity(Slope,0.3,slope_bias,0.1);
+//	if(ht_bias){
+//		fh=calcDensity(dht,0.5,ht_bias,0.5);	
+//	}
+//	if(lat_bias)
+//		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+//	if(hardness_bias)
+//		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
+//	density*=fs*fh*fl*fd;
+	//f=fs+fl+fh+fd;
+   // density=maxdensity*(1+f);
 	density=clamp(density,0,1);
 #ifdef DEBUG_DENSITY
-	if(cnt%1000==0){
+	if(cnt%10000==0){
 		char buff[256];
-		sprintf(buff,"density max:%-1.2f slope:%-1.2f ht:%-1.2f lat:%-1.2f final:%-1.2f ",maxdensity,fs,fh,fl,density);
+		sprintf(buff,"density max:%-1.2f slope:%-1.2f(%-1.2f) ht:%-1.2f(%-1.2f) lat:%-1.2f final:%-1.2f ",
+				maxdensity,Slope,fs,dht,fh,fl,density);
 		cout<<buff<<endl;
 	}
 #endif
@@ -907,7 +914,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 #ifdef DEBUG_PLACEMENTS
 	mgr->Stats.cmade++;
 #endif
-	double dns=mgr->maxdensity;
+	double dns=mgr->density;
 	Point4D	p(pt);
 
 	int seed=PERM(hid);
@@ -923,30 +930,30 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
  	p=(p+0.5)*mgr->size;
 	double rtest=rands[hid]+0.5;
 
-	if(mgr->dexpr){  // density expr
-		Point4D p1=p*TheNoise.scale+TheNoise.offset;
-	    SPUSH;
-		TheNoise.push(p1);
-		CurrentScope->revaluate();
-		mgr->dexpr->eval();
-		TheNoise.pop();
-		dns+=S0.s;
-		SPOP;
-		CurrentScope->revaluate();
-		dns=clamp(dns,0,1);
-	}
+//	if(mgr->dexpr){  // density expr
+//		Point4D p1=p*TheNoise.scale+TheNoise.offset;
+//	    SPUSH;
+//		TheNoise.push(p1);
+//		CurrentScope->revaluate();
+//		mgr->dexpr->eval();
+//		TheNoise.pop();
+//		dns+=S0.s;
+//		SPOP;
+//		CurrentScope->revaluate();
+//		dns=clamp(dns,0,1);
+//	}
 
 	if(rtest>dns){
 		PlacementMgr::Stats.dns_fails++;
-#ifdef DEBUG_DENSITY
-		if(cnt%100==0)
+#ifdef DEBUG_DENSITY2
+		if(cnt%1000==0)
 			cout<<"fail dns:"<<dns<<" rtest:"<<rtest<<endl;
 #endif
 		return;
 	}
 	PlacementMgr::Stats.dns_pass++;
-#ifdef DEBUG_DENSITY
-	if(rtest<=dns && cnt%100==0)
+#ifdef DEBUG_DENSITY2
+	if(rtest<=dns && cnt%1000==0)
 	  cout<<"pass dns:"<<dns<<" rtest:"<<rtest<<endl;
 	cnt++;
 #endif
@@ -1221,20 +1228,35 @@ void TNplacements::init()
 	    base->init();
 }
 //#define DEBUG_DENSITY_CALC
-double PlacementMgr::calcDensity(double s, double mid, double b, double p){
-	double delta = s - mid;
-	double sign=delta<0?-1:1;
-	double range = (delta < 0) ? mid : (1.0 - mid);
-	double delta_norm = delta / range;  // -1 to 1
-	double y = b * sign * pow(fabs(delta_norm), p);  // -1 to 1 when b=±1
-	double t=0.5*(y-1);
-#ifdef DEBUG_DENSITY_CALC
-	if(cnt%100==0 && CurrentScope->spass())
-		cout<<"b:"<<b<<" s:"<<s<<" y:"<<t<<endl;
-    cnt++;
-#endif
-    
-    return t;
+double PlacementMgr::calcDensity(double s, double m, double b, double p){
+	double x = (s - m) / p;
+	    
+	// Sigmoid curve: 0 to 1, centered at m
+	double sigmoid = 1.0 / (1.0 + exp(-x * 6.0));
+	
+	// Apply bias:
+	// b = -1: return (1 - sigmoid) - fully inverted
+	// b = 0: return 0.5 - neutral/no preference
+	// b = +1: return sigmoid - normal preference
+	
+	double y;
+	if (b >= 0) {
+		// Positive bias: blend from 0.5 to sigmoid
+		y = 0.5 + b * (sigmoid - 0.5);
+	} else {
+		// Negative bias: blend from 0.5 to (1 - sigmoid)
+		y = 0.5 + b * (sigmoid - 0.5);  // This inverts when b is negative
+	}
+	
+	#ifdef DEBUG_DENSITY_CALC
+	if(cnt%10000==0 && CurrentScope->spass())
+		cout << "m:" << m << " b:" << b << " s:" << s << " p:" << p 
+			 << " sigmoid:" << sigmoid << " y:" << y << endl;
+	cnt++;
+	#endif
+	
+	return clamp(y, 0.0, 1.0);//	double delta = s - m;
+
 }
 
 //-------------------------------------------------------------

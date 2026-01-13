@@ -14,13 +14,7 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-#define USE_DEPTH_BUFFER
-
-#ifdef USE_DEPTH_BUFFER
 bool UseDepthBuffer = true;
-#else
-bool UseDepthBuffer = false;
-#endif
 
 static std::vector<SurfacePoint> node_data_list;
 extern double INV2PI;
@@ -1236,7 +1230,6 @@ void Map::render_shaded()
 #ifdef DEBUG_RENDER
 		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
 #endif
-
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
@@ -1286,10 +1279,23 @@ void Map::render_shaded()
 		else {
 		    RENDERLIST(SHADER_LISTS,tid,render());
 		}
+		if((object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
+			get_mapnodes();
+			for(int i=0;i<tids-1;i++){
+				tid=i+ID0;
+				tp=Td.properties[tid];
+				Td.tp=tp;
+				if(!tp || !visid(tid))
+					continue;
+				render_objects(tp->Plants); // if plants are global all layers get them
+				render_objects(tp->Rocks);
+				render_objects(tp->Sprites);
+			}
+		}
+
 #ifdef DEBUG_RENDER
 		cout <<" Map::render_shaded - WATER "<<object->name()<<endl;
 #endif
-
 		Render.show_shaded();
 		Raster.surface=1;
 	}
@@ -1354,7 +1360,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 
 	double d4=clock();
 #ifdef PRINT_PLACEMENT_TIMING
-	cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" MapData processed:"<<n-j<<" rejected:"<<j
+	cout<<mgr.name()<<" TID:"<<Td.tp->id<<" Objects:"<<mgr.objects()<<" Placements:"<<mgr.placements()<<" SurfacePoint processed:"<<n-j<<" rejected:"<<j
 			<<" times"
 			<<" reset:"<< 1000*(d1-d0)/CLOCKS_PER_SEC
 			<<" eval:"<< 1000*(d2-d1)/CLOCKS_PER_SEC
@@ -1516,24 +1522,22 @@ static void collect_nodes(MapNode *n)
     }
 }
 void Map::collectSurfacePointsFromDepth(int stride) {
-	double d0=clock();
 	Raster.collectSurfaceData(node_data_list, stride);
-	double d1=clock();
-	
-	std::cout  << "collectSurfacePointsFromDepth(" << stride << ")"
-			<< " Collected " << node_data_list.size()  
-		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
-
 }
 int Map::get_mapnodes(){
 	TheMap = this;
+	double d0=clock();
+
 	node_data_list.clear();
-#ifdef USE_DEPTH_BUFFER
-    collectSurfacePointsFromDepth(2);  // Use depth buffer
-#else
-	npole->visit(&collect_nodes);
-#endif
-	//cout<<"nodes:"<<node_data_list.size<<" collected in "<<1000*(d1-d0)/CLOCKS_PER_SEC<<" ms"<<endl;
+    if(UseDepthBuffer)
+    	collectSurfacePointsFromDepth(4);  // Use depth buffer
+    else
+		npole->visit(&collect_nodes);
+	double d1=clock();
+	
+	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer
+			<< " Collected " << node_data_list.size()  
+		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
 	return node_data_list.size();
 }
 
@@ -1555,80 +1559,6 @@ void SurfacePoint::setGlobals() const {
 	Point noisePos = normalizedPos + Point(0.5, 0.5, 0.5);
 	    
 	TheNoise.set(noisePos);
-}
-
-
-Point Map::estimateNormalFromDepth(int x, int y, const std::vector<float>& depth,
-                                   int width, int height,
-                                   GLdouble* invProj, GLdouble* invModel,
-                                   double ws1, double ws2, GLint* vport) {
-    // Sample neighbors
-    int x1 = std::max(0, x - 1);
-    int x2 = std::min(width - 1, x + 1);
-    int y1 = std::max(0, y - 1);
-    int y2 = std::min(height - 1, y + 1);
-    
-    float d1 = depth[y * width + x1];
-    float d2 = depth[y * width + x2];
-    float d3 = depth[y1 * width + x];
-    float d4 = depth[y2 * width + x];
-    
-    // Skip if any neighbor is sky
-    if (d1 >= 0.9999f || d2 >= 0.9999f || d3 >= 0.9999f || d4 >= 0.9999f) {
-        return Point(0, 0, 1);
-    }
-    
-    // Unproject helper function
-    auto unproject = [&](int px, int py, float pz) -> Point {
-        // Convert depth to eye distance
-        double wf = ws2 * pz + ws1;
-        double zv = 1.0 / wf;
-        
-        // Screen to NDC
-        double ndcX = (2.0 * px / width) - 1.0;
-        double ndcY = (2.0 * py / height) - 1.0;
-        double ndcZ = 2.0 * pz - 1.0;
-        
-        // NDC to clip space
-        double clip[4] = {ndcX * zv, ndcY * zv, ndcZ * zv, zv};
-        
-        // Clip to eye space
-        double eye[4];
-        mvmul4(clip, invProj, eye);
-        
-        // Eye to world space
-        double world[4];
-        mvmul4(eye, invModel, world);
-        
-        // Homogeneous divide
-        if (fabs(world[3]) > 1e-10) {
-            world[0] /= world[3];
-            world[1] /= world[3];
-            world[2] /= world[3];
-        }
-        
-        return Point(world[0], world[1], world[2]);
-    };
-    
-    // Unproject 4 neighbors
-    Point p1 = unproject(x1, y, d1);
-    Point p2 = unproject(x2, y, d2);
-    Point p3 = unproject(x, y1, d3);
-    Point p4 = unproject(x, y2, d4);
-    
-    // Calculate tangent vectors
-    Point dx = p2 - p1;
-    Point dy = p4 - p3;
-    
-    // Cross product gives normal
-    Point normal = dx.cross(dy);
-    double len = normal.length();
-    
-    if (len > 1e-6) {
-        return normal.normalize();
-    } else {
-        return Point(0, 0, 1);  // Fallback
-    }
 }
 
 //-------------------------------------------------------------
@@ -2194,7 +2124,7 @@ void Map::find_limits(){
 	MinHt=hmin;
 	MaxHt=hmax;
 
-    //cout <<"minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ratio:"<<zf/zn<<endl;
+    cout <<"Map::find_limits() minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ft ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility

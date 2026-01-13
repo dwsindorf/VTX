@@ -931,7 +931,7 @@ void RasterMgr::read_ids()
 	glUseProgramObjectARB(0);
 }
 
-//#define DEBUG_LIMITS
+#define DEBUG_LIMITS
 //-------------------------------------------------------------
 // RasterMgr::getLimits()	get zn,zf from depth buffer
 //-------------------------------------------------------------

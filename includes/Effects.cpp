@@ -794,6 +794,8 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
 	extern double Gscale,Hscale,Rscale;
     points.clear();
     
+    double d0=clock();
+    
     GLint vport[4];
     TheScene->getViewport(vport);
         
@@ -804,6 +806,7 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     std::vector<float> depthBuffer(width * height);
     glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
     
+    double dd=clock();
     // Read FBOTex2 (gl_FragData[1]) which contains vec4(Constants1.g, depth, reflect1, vfog)
     // We want the R channel which has Constants1.g (terrain layer ID)
     std::vector<float> fboData(width * height * 4);  // RGBA
@@ -812,6 +815,7 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData.data());
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);  // Unbind
     
+    double di=clock();
     // Get matrices for unprojection
     GLdouble modelMatrix[16], projMatrix[16];
     GLint viewport[4];
@@ -821,6 +825,13 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     
     Point xpoint = TheScene->xpoint;
     
+    double ts=(1000.0/CLOCKS_PER_SEC);
+    
+    double d1=clock();
+    Point pt(dd-d0,di-dd,d1-di);
+    
+    pt=pt*ts;
+         
     int cnt=0;
     
     // Sample at stride intervals
@@ -829,7 +840,7 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
             int idx = y * width + x;
             double wz = depthBuffer[idx];
             
-            if (wz >= 0.9999) continue;  // Skip sky
+            //if (wz >= 0.9999) continue;  // Skip sky
             
             // Get layer ID from FBO R channel (Constants1.g)
             float layerData = fboData[idx * 4];  // R channel
@@ -847,16 +858,25 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
             Point worldPos = sp.worldPos + xpoint;
             double r = worldPos.length();
             
-            if (r < 1e-10) continue;
+           // if (r < 1e-10) continue;
             sp.layerId=fboData[dindex+0];
+            if(sp.layerId<1){
+            	//cout<<sp.layerId;
+            	continue;
+            }
+
             sp.slope=fboData[dindex+1];
             sp.theta=fboData[dindex+2];
             sp.phi=fboData[dindex+3];        
             sp.height = (r - TheMap->radius) / Rscale;
             sp.normal = worldPos.normalize();
             sp.hardness = 0.0;
+              	
             points.push_back(sp);
         }
     }
-    //GLSLMgr::setFBOReset();
+    double d2=clock();
+    std::cout  << "EffectsMgr::collectSurfaceData Buffers:"<<pt<<" " << (d1-d0)*ts 
+    			<< " Process:" <<(d2-d1)*ts<<" ms"<<endl;
+
  }
