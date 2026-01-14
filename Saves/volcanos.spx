@@ -1,75 +1,22 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=30.057;
-		theta=30.1981;
-		height=220.569 ft;
-		gndlvl=1625.33 ft;
-		time=5005.72;
-		vstride=1;
-		hstride=1;
+		phi=30.2704;
+		theta=30.1479;
+		height=517.267 ft;
+		gndlvl=2991.62 ft;
+		time=3185.02;
+		vstride=0.02;
+		hstride=2;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=35;
-		tilt=-10;
+		zoom=0.005;
+		minh=5.68182e-10;
+		minr=0.00500057;
+		heading=178;
+		tilt=-15;
 		fov=35;
 		gstride=586570;
 		viewobj=Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=273.786 ft;
-	}
-	View{
-		time=5648.32;
-	}
-	View{
-		height=189.016 ft;
-		time=5697.82;
-		heading=45;
-		tilt=-8;
-	}
-	View{
-		height=228.831 ft;
-	}
-	View{
-		phi=30.0572;
-		theta=30.1983;
-		height=311.007 ft;
-		heading=32;
-	}
-	View{
-		phi=30.0575;
-		theta=30.1992;
-		height=412.749 ft;
-		heading=12;
-	}
-	View{
-		phi=30.0579;
-		theta=30.2008;
-		height=286.601 ft;
-		time=5500;
-		heading=22;
-	}
-	View{
-		phi=30.0576;
-		theta=30.1998;
-		height=365.469 ft;
-		heading=19;
-		vstride=0.02;
-		zoom=0.005;
-		minh=5.68182e-10;
-		radius=0.00500038;
-	}
-	View{
-		phi=30.0582;
-		theta=30.2013;
-		height=58.328 ft;
-		time=3185.02;
-		heading=23;
-		tilt=-6;
-		minr=0.00500031;
-		radius=0.00500032;
 	}
 	Galaxy(10000) {
 		origin=Point(2000,0,0);
@@ -111,8 +58,6 @@ Scene() {
 				fog.value=1;
 				fog.vmax=1250 ft;
 				fog.vmin=1111.2 ft;
-				ocean.auto=1;
-				ocean.state=2;
 				phase=180;
 				shadow=Color(0,0,0,0.25);
 				shine=14.1033;
@@ -124,16 +69,11 @@ Scene() {
 				haze.max=5e-05;
 				haze.min=5e-06;
 				haze.value=1;
-				bands("lava",DECAL|NORM|REPLACE,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
+				bands("lava",BLEND|DECAL|NORM|REPLACE,128,0.42222,0.77778,Color(0.18,0.18,0.204),Color(0.094,0.094,0.094),
 					Color(0.58,0.024,0.024));
 				Surface{
-					m1=0.1*noise(6,3);
-					m2=noise(GRADIENT|NABS|SCALE|SQR,11,8,0.5,0.5,2)+m1;
-					m3=0.1*noise(10,3,0.6);
-					c1=craters(ID1,2,0.002,0.25,1,1,1,0.755,0.717,5,0.1,0.2,0,0,0,0.434,0.9)
-					m2;
 					terrain=fog(1.5*noise(GRADIENT|NABS|SQR|UNS,8.8,3.9,0.61,0.2,2.1,0.7,1,0,0,1e-06))
-							Z(0.5*c1)+
+							Z(0.5*craters(ID1,2,0.002,0.25,1,1,1,0.755,0.717,5,0.1,0.2,0,0,0,0.434,0.9))+
 							Texture("lava",BORDER|TEX,25267.6,0.38096,1,-2.94336,2,2,1,0,0,0,0.66668,-0.25)+
 							Texture("deep_fire",BUMP|TEX,3411.05,-1.84904,1.05556,0,7.33984,2.28304,1,0,0,0,0,0)+
 							Texture("coldlava",BUMP|TEX,665.133,-1.84904,1.07936,0,7.33984,2.28304,1,0,0,0,0,0)+
