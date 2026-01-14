@@ -561,6 +561,7 @@ void GLSLMgr::initGL(int w, int h){
 //-------------------------------------------------------------
 void GLSLMgr::initFrameBuffer()
 {
+	extern bool UseDepthBuffer;
 	GLint    v[4];
 	glGetIntegerv(GL_VIEWPORT,v);
 	width=v[2];
@@ -596,7 +597,11 @@ void GLSLMgr::initFrameBuffer()
 	}
 
 	GLenum mrt[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
-	glDrawBuffers(4,mrt);
+	if(UseDepthBuffer)
+		glDrawBuffers(4,mrt);
+	else
+		glDrawBuffers(2,mrt);
+		
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 	if(status != GL_FRAMEBUFFER_COMPLETE_EXT)
 		cout << "frameBuffer not valid" << endl;

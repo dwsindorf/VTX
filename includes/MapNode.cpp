@@ -2184,9 +2184,6 @@ void MapNode::setVertexAttributes(Point pm){
 	pm=pm*wscale;
 #endif
 	pm=pm*0.5+0.5;
-	// set pm to Vertex1 in shaders
-	// - pm contains just the (rectangularized) phi&theta values of the point
-
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 

@@ -559,7 +559,6 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         //TheScene->set_changed_detail();
 		break;
 	case KEY_RENDER_SPRITES:
-		extern bool UseDepthBuffer;
 		UseDepthBuffer=!UseDepthBuffer;
 		cout<<"UseDepthBuffer="<<UseDepthBuffer<<endl;
 		TheScene->set_changed_render();

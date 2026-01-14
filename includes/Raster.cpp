@@ -929,6 +929,7 @@ void RasterMgr::read_ids()
 			GL_RGBA, GL_FLOAT,gdata);
 	glActiveTextureARB(GL_TEXTURE0);
 	glUseProgramObjectARB(0);
+	
 }
 
 #define DEBUG_LIMITS
@@ -985,13 +986,22 @@ void  RasterMgr::getIDLimits(double &zn, double &zf,double &hmin, double &hmax){
 //-------------------------------------------------------------
 void RasterMgr::getZbuf(int i)
 {
+    double d0=clock();
+    double ts=(1000.0/CLOCKS_PER_SEC);
+    TheScene->getViewport(vport);
     if(i==0){
-		//if(!zvalid)
-		glReadPixels(0, 0, vport[2],vport[3],GL_DEPTH_COMPONENT, GL_FLOAT,zbuf1);
+		if(zbuf1){
+			glReadPixels(0, 0, vport[2],vport[3],GL_DEPTH_COMPONENT, GL_FLOAT,zbuf1);	
+
 		zvalid=1;
+		}
 	}
-	else
+	else if(zbuf2)
 		glReadPixels(0, 0, vport[2],vport[3],GL_DEPTH_COMPONENT, GL_FLOAT,zbuf2);
+    
+			double d1=clock();
+				std::cout  << " RasterMgr::getZbuf("<<i<<")" << (d1-d0)*ts <<" ms"<<endl;
+	
 }
 
 //-------------------------------------------------------------

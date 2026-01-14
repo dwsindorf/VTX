@@ -18,7 +18,7 @@ EffectsMgr Raster;	// one and only global object
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
 #define JMAPTEXID   2
-#define DEBUG_EFFECTS
+//#define DEBUG_EFFECTS
 
 static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHADOWS","SHADOWS_FINISH","PLACE_ZVALS","PLACE_SHADOWS"};
 // Effects supported (using shaders)
@@ -406,7 +406,7 @@ void EffectsMgr::setProgram(int type){
 // EffectsMgr::apply()	apply effects image
 //-------------------------------------------------------------
 void EffectsMgr::apply(){
-
+	
 	if (Render.draw_shaded()&& do_shaders){
 		set_render_type(SHADERS);
 		GLSLMgr::beginRender();
@@ -475,7 +475,8 @@ void EffectsMgr::apply(){
 	else if(!Render.draw_shaded()){ // uses old non-shader code
 		RasterMgr::apply(); //
 	}
-	GLSLMgr::initFrameBuffer();
+	if(UseDepthBuffer)
+		GLSLMgr::initFrameBuffer();
 }
 
 //-------------------------------------------------------------
@@ -789,31 +790,35 @@ void EffectsMgr::create_jitter_lookup(int size, int samples_u, int samples_v)
 	delete [] data;
 
 }
-
+#define USE_DEPTH  
 void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int stride) {
 	extern double Gscale,Hscale,Rscale;
+	double wscale=Gscale*Hscale;
     points.clear();
-    
-    double d0=clock();
-    
+     
     GLint vport[4];
     TheScene->getViewport(vport);
         
     int width = vport[2];
     int height = vport[3];
     
+    double zmin=100,zmax=0;
+   
     // Read depth buffer from current framebuffer
     std::vector<float> depthBuffer(width * height);
+    std::vector<float> fboData1(width * height * 4);  // RGBA
+    std::vector<float> fboData2(width * height * 4);  // RGBA
+    std::vector<float> fboData3(width * height * 4);  // RGBA
+    double d0=clock();
+#ifdef USE_DEPTH   
     glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
-    
-    double dd=clock();
-    // Read FBOTex2 (gl_FragData[1]) which contains vec4(Constants1.g, depth, reflect1, vfog)
-    // We want the R channel which has Constants1.g (terrain layer ID)
-    std::vector<float> fboData(width * height * 4);  // RGBA
-    
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[2]);  // FBOTex2 is index 1
-    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData.data());
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, 0);  // Unbind
+#else
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[3]);  // FBOTex2 is index 1
+    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData1.data());
+#endif    
+    double dd=clock();  
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[2]);  // FBOTex2 is index 2
+    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData2.data());
     
     double di=clock();
     // Get matrices for unprojection
@@ -835,17 +840,22 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     int cnt=0;
     
     // Sample at stride intervals
-    for (int y = height-1; y>=0; y -= stride) {
+    for (int y = 0; y <height; y += stride) {
         for (int x = 0; x < width; x += stride) {
             int idx = y * width + x;
-            double wz = depthBuffer[idx];
-            
-            //if (wz >= 0.9999) continue;  // Skip sky
-            
-            // Get layer ID from FBO R channel (Constants1.g)
-            float layerData = fboData[idx * 4];  // R channel
-            
             int dindex=idx * 4;
+#ifdef USE_DEPTH
+            double wz = depthBuffer[idx];
+#else
+            double wz = fboData1[dindex+1];
+#endif            
+            if (wz >= 0.9999) continue;  // Skip sky
+ 
+            zmax=std::max(zmax,wz);
+            zmin=std::min(zmin,wz);
+            // Get layer ID from FBO R channel (Constants1.g)
+            float layerData = fboData2[idx * 4];  // R channel
+            
             GLdouble objX, objY, objZ;
             gluUnProject(x, y, wz,
                         modelMatrix, projMatrix, viewport,
@@ -853,21 +863,21 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
             
             SurfacePoint sp;           
             sp.worldPos = Point(objX, objY, objZ);  // Eye-space position
-              
-            // Convert to world space for theta/phi/height
+             // Convert to world space for theta/phi/height
             Point worldPos = sp.worldPos + xpoint;
             double r = worldPos.length();
             
-           // if (r < 1e-10) continue;
-            sp.layerId=fboData[dindex+0];
+            if (r < 1e-10) continue;
+            sp.layerId=fboData2[dindex+0];
+
             if(sp.layerId<1){
             	//cout<<sp.layerId;
             	continue;
             }
 
-            sp.slope=fboData[dindex+1];
-            sp.theta=fboData[dindex+2];
-            sp.phi=fboData[dindex+3];        
+            sp.slope=fboData2[dindex+1];
+            sp.theta=fboData2[dindex+2];
+            sp.phi=fboData2[dindex+3];        
             sp.height = (r - TheMap->radius) / Rscale;
             sp.normal = worldPos.normalize();
             sp.hardness = 0.0;
@@ -877,6 +887,6 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     }
     double d2=clock();
     std::cout  << "EffectsMgr::collectSurfaceData Buffers:"<<pt<<" " << (d1-d0)*ts 
-    			<< " Process:" <<(d2-d1)*ts<<" ms"<<endl;
+    			<< " Process:" <<(d2-d1)*ts<<" ms"<<" zmin:"<<zmin<<" zmax:"<<zmax<<endl;
 
  }

@@ -14,7 +14,7 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-bool UseDepthBuffer = true;
+bool UseDepthBuffer = false;
 
 static std::vector<SurfacePoint> node_data_list;
 extern double INV2PI;
@@ -1189,6 +1189,9 @@ void Map::render_shaded()
 	npole->init_render();
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
+	
+	if(!UseDepthBuffer)
+		get_mapnodes();
 
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
 		for(int i=0;i<tids-1;i++){
@@ -1228,13 +1231,20 @@ void Map::render_shaded()
 				RENDERLIST(SHADER_LISTS,tid,render());
 			}
 #ifdef DEBUG_RENDER
-		cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
+		    cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
 #endif
+		    if(!UseDepthBuffer){
+				render_objects(tp->Rocks);
+				render_objects(tp->Plants); // if plants are global all layers get them
+				render_objects(tp->Sprites);
+		    }
+
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
 		}
-		if((object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
+		
+		if(UseDepthBuffer && (object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
 			get_mapnodes();
 			for(int i=0;i<tids-1;i++){
 				tid=i+ID0;
@@ -1278,19 +1288,6 @@ void Map::render_shaded()
 		}
 		else {
 		    RENDERLIST(SHADER_LISTS,tid,render());
-		}
-		if((object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
-			get_mapnodes();
-			for(int i=0;i<tids-1;i++){
-				tid=i+ID0;
-				tp=Td.properties[tid];
-				Td.tp=tp;
-				if(!tp || !visid(tid))
-					continue;
-				render_objects(tp->Plants); // if plants are global all layers get them
-				render_objects(tp->Rocks);
-				render_objects(tp->Sprites);
-			}
 		}
 
 #ifdef DEBUG_RENDER
@@ -1530,7 +1527,7 @@ int Map::get_mapnodes(){
 
 	node_data_list.clear();
     if(UseDepthBuffer)
-    	collectSurfacePointsFromDepth(4);  // Use depth buffer
+    	collectSurfacePointsFromDepth(3);  // Use depth buffer
     else
 		npole->visit(&collect_nodes);
 	double d1=clock();
@@ -2096,7 +2093,6 @@ void Map::adapt()
 	if(first_make){
 		first_make=false;
 	}
-	
 	//find_limits();
 }
 

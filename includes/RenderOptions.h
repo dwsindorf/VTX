@@ -341,6 +341,6 @@ public:
 };
 
 extern	RenderOptions    Render;
-
+extern bool UseDepthBuffer;
 #endif
 

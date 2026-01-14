@@ -38,8 +38,6 @@ extern double ptable[];
 extern double Hscale,Height,Slope;
 extern Point MapPt;
 
-extern bool UseDepthBuffer;
-
 double MaxSize;
 
 int place_gid=0;
@@ -858,16 +856,16 @@ void PlacementMgr::getArgs(TNarg *left){
 	double dht=(Height-MinHt)/(MaxHt-MinHt);
 	
 	density=maxdensity;
-//	if(slope_bias)
-//		fs=calcDensity(Slope,0.3,slope_bias,0.1);
-//	if(ht_bias){
-//		fh=calcDensity(dht,0.5,ht_bias,0.5);	
-//	}
-//	if(lat_bias)
-//		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
-//	if(hardness_bias)
-//		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
-//	density*=fs*fh*fl*fd;
+	if(slope_bias)
+		fs=calcDensity(Slope,0.3,slope_bias,0.1);
+	if(ht_bias){
+		fh=calcDensity(dht,0.5,ht_bias,0.5);	
+	}
+	if(lat_bias)
+		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+	if(hardness_bias)
+		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
+	density*=fs*fh*fl*fd;
 	//f=fs+fl+fh+fd;
    // density=maxdensity*(1+f);
 	density=clamp(density,0,1);
@@ -930,18 +928,18 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
  	p=(p+0.5)*mgr->size;
 	double rtest=rands[hid]+0.5;
 
-//	if(mgr->dexpr){  // density expr
-//		Point4D p1=p*TheNoise.scale+TheNoise.offset;
-//	    SPUSH;
-//		TheNoise.push(p1);
-//		CurrentScope->revaluate();
-//		mgr->dexpr->eval();
-//		TheNoise.pop();
-//		dns+=S0.s;
-//		SPOP;
-//		CurrentScope->revaluate();
-//		dns=clamp(dns,0,1);
-//	}
+	if(mgr->dexpr){  // density expr
+		Point4D p1=p*TheNoise.scale+TheNoise.offset;
+	    SPUSH;
+		TheNoise.push(p1);
+		CurrentScope->revaluate();
+		mgr->dexpr->eval();
+		TheNoise.pop();
+		dns+=S0.s;
+		SPOP;
+		CurrentScope->revaluate();
+		dns=clamp(dns,0,1);
+	}
 
 	if(rtest>dns){
 		PlacementMgr::Stats.dns_fails++;
@@ -989,7 +987,6 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	    p.w=0;
 	center=p;
 	radius=r;
-	
 
 	flags.s.valid=true;
 }
@@ -1009,7 +1006,6 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 		return false;
 	if(!flags.s.valid)
 		return false;
-
 
     flags.s.active=true;
     pmgr.sval=lerp(d,0,1.0,0,1);

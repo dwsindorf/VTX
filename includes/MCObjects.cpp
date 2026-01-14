@@ -166,6 +166,8 @@ MCObject::MCObject()
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0), 
 	  vboColors(0), vboValid(false) {
+	instanceId=0;
+	dataIndex=0;
 }
 
 MCObject::MCObject(const Point& pos, double size) 
@@ -174,6 +176,9 @@ MCObject::MCObject(const Point& pos, double size)
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0),vboTemplatePos(0), vboFaceNormals(0),
 	  vboColors(0),vboValid(false) {
+	instanceId=0;
+	dataIndex=0;
+
 }
 
 MCObject::~MCObject() {
