@@ -175,7 +175,6 @@ void main(void) {
 	vec2 sp=spherical(pm);
 	gl_FragData[2]=vec4((int)(Constants1.g-3+0.1),Tangent.z,180+sp.y,sp.x); // layer id, slope, theta, phi
 	//gl_FragData[3]=vec4(Vertex1); // layer id, slope, theta, phi
-
 #endif
 #else  // moons 
 	gl_FragData[1]=vec4(0,illumination,0.05,0.0); // set first component (type) to 0 so reflections work
@@ -190,9 +189,5 @@ void main(void) {
 #endif
 
 	gl_FragData[0] = color;
-	//gl_FragData[0] = abs(normalize(WorldNormal));
-	//float ht=Constants1.x/rscale+1.0;
-	//gl_FragData[0] = vec4(Tangent.z,0,0,1);
-
 }
 // ########## end planetoid.frag #########################

@@ -320,7 +320,7 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		density=td.s;
 		dns=1;
 	}
-	else if(td.density!=0.0){
+	if(td.density!=0.0){
 		dns=1;
 		density=td.density;
 	}

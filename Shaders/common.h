@@ -10,9 +10,9 @@ varying vec4 Color;
 varying vec4 Vertex1;
 varying vec4 Vertex2;
 //#endif
-#if NTEXS >0
+//#if NTEXS >0
 varying vec4 Tangent;
-#endif
+//#endif
 
 varying vec4 Constants1;
 

@@ -188,9 +188,9 @@ double PlacementMgr::roff=1e-6;
 double PlacementMgr::roff2=1.0;
 int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
-double PlacementMgr::adapt_ptsize=2;
-double PlacementMgr::collect_minpts=2;
-int PlacementMgr::min_hits=2;
+double PlacementMgr::adapt_ptsize=1;
+double PlacementMgr::collect_minpts=1;
+int PlacementMgr::min_hits=1;
 
 Placement* PlacementMgr::currentChain=nullptr;  // ⭐ Add this member variable
 int PlacementMgr::index=0;
@@ -215,10 +215,10 @@ PlacementMgr::PlacementMgr(int i)
   	drop=0;
 	slope_bias=ht_bias=lat_bias=hardness_bias=0;
 	maxdensity=1.0;
-   	index=0; 	
+   	index=0; 
+   	width_scale=1;
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
-
 }
 
 PlacementMgr::~PlacementMgr()
@@ -446,14 +446,14 @@ void PlacementMgr::init()
 	reset();
 }
 
-void PlacementMgr::setTests() {
+bool PlacementMgr::setTests() {
 	if(!test() || hits<min_hits)
-		return;	
+		return false;	
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
 	S0.clr_flag(DVALUE);
 	if(x<0.25)
-		return;
+		return false;
 	x=lerp(x,0.25,1,0,1);
 	double y=pow(x,2);
 	
@@ -471,6 +471,7 @@ void PlacementMgr::setTests() {
 		S0.set_flag(DVALUE);
 		S0.s=x;
 	}
+	return true;
 }
 
 //-------------------------------------------------------------
@@ -560,7 +561,7 @@ bool PlacementMgr::valid()
 		Point pv=MapPt;
 		double d=pv.length();		
 		double r=TheMap->radius*size;
-		double pts=TheScene->wscale*r/d;
+		double pts=width_scale*TheScene->wscale*r/d;
 		Stats.vtests++;
 		if(pts<mps){
 			Stats.pts_fails++;
@@ -1064,7 +1065,7 @@ void Placement::setVertex() {
 	vertex = Point(-base.x, base.y, -base.z);   // Point.rectangular has 180 rotation around y (??)
 	double d = vertex.distance(TheScene->vpoint);  // distance	
 	double r = TheMap->radius * radius;
-	pts = TheScene->wscale * r / d;
+	pts = mgr->width_scale*TheScene->wscale * (r / d);
 	dist=d;
 }
 

@@ -279,6 +279,7 @@ public:
 	double  drop;
 	double  noise_amp;
 	double  noise_expr;
+	double  width_scale;
 
 	TNode   *dexpr;
 
@@ -336,7 +337,7 @@ public:
 	virtual void eval();
 	virtual void dump();
 	virtual bool valid();
-	virtual void setTests();
+	virtual bool setTests();
 	virtual bool testColor();   // color node for debugging
 	virtual bool testDensity(); // add for detail to center to more accurately define seed position
 	virtual void collect(ValueList<PlaceData*> &data); // collect list of objects

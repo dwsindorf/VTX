@@ -1193,6 +1193,9 @@ void Map::render_shaded()
 	if(!UseDepthBuffer)
 		get_mapnodes();
 
+	bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
+	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
+
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
@@ -1238,7 +1241,6 @@ void Map::render_shaded()
 				render_objects(tp->Plants); // if plants are global all layers get them
 				render_objects(tp->Sprites);
 		    }
-
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
@@ -1259,8 +1261,6 @@ void Map::render_shaded()
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
-	bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
-	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
 	if(show_water){
 		tid=WATER;
 		tp=Td.properties[tid];
@@ -1491,32 +1491,30 @@ void Map::render_texs(){
 	}
 }
 
-
 //-------------------------------------------------------------
 // Map::collect_nodes()	collect all visible surface nodes
 //-------------------------------------------------------------
 static void collect_nodes(MapNode *n)
 {
     MapData *d = &n->data;
+    if(!n->visible() && !n->partvis())
+    	return;
+     if((d->water() && !d->rock()))
+    	return;
     d = d->surface1();
+	SurfacePoint sp;	
+	sp.worldPos = d->point();  // in eye space
+	sp.theta = d->theta();
+	sp.phi = d->phi();
+	sp.height = d->Ht();
+	sp.hardness = d->hardness();
+	sp.slope = n->slope();
+	
+	double dist=sp.worldPos.length()/FEET; // distance from eye
+			
+	sp.layerId = d->type();  // Terrain layer id
+	node_data_list.push_back(sp);  // Changed from .add()
     
-    if(n->visible() && d && !d->rock() && !d->water()) {
-        // Create SurfacePoint from MapNode
-        SurfacePoint sp;
-        
-        sp.worldPos = d->point();  // in eye space
-        sp.theta = d->theta();
-        sp.phi = d->phi();
-        sp.height = d->Ht();
-        sp.hardness = d->hardness();
-        sp.slope = n->slope();
-        
-        double dist=sp.worldPos.length()/FEET; // distance from eye
-                
-        sp.layerId = d->type();  // Terrain layer id
-     
-        node_data_list.push_back(sp);  // Changed from .add()
-    }
 }
 void Map::collectSurfacePointsFromDepth(int stride) {
 	Raster.collectSurfaceData(node_data_list, stride);

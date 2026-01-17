@@ -584,7 +584,7 @@ bool PlantObjMgr::setProgram(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 
-	char defs[1024]="";
+	char defs[1024]="#define PLACED\n";
 
 	PlantMgr::textures=0;
 	

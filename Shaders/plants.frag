@@ -162,9 +162,9 @@ void main(void) {
 	color.a=pow(color.a,p);
 	test=vec3(h,0,0);
 #endif 
-
-//color=vec4(test.x,0,0,1);
+	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
  	gl_FragData[0]=color;
+ 	//gl_FragData[1]=vec4(fcolor2); // pass thru
 	gl_FragData[1]=vec4(0.1,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
 
 }

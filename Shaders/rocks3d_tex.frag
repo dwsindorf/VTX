@@ -94,12 +94,11 @@ void main() {
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
-#ifdef TEST_ACTIVE
-    gl_FragData[0]=vec4(activeTexture,0,1,1);
-#else
-    gl_FragData[0]=vec4(color);
-#endif
-     gl_FragData[1]=vec4(2,DEPTH,1,1.0);  
+	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
+    //color.rgb=vec3(fcolor2.a,0,0);
+    gl_FragData[0]=vec4(color.xyz,1);
+
+    gl_FragData[1]=vec4(fcolor2); // pass thru
     
-    //gl_FragColor[0] = vec4(night_lighting,0,0,1.0);
+ 
 }

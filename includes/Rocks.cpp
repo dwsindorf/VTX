@@ -40,7 +40,7 @@ static bool cvalid;
 //#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
-#define USE_TEMPLATES
+//#define USE_TEMPLATES
 //#define PRINT_LOD_STATS
 
 static bool shadow_start=false;
@@ -521,6 +521,7 @@ bool Rock3DObjMgr::setProgram() {
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+	
 	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
 	vars.newIntVar("activeTexture",0);
@@ -586,6 +587,8 @@ void Rock3DObjMgr::render() {
     if (n == 0)
         return;
     
+	//cout<<"Hscale:"<<Hscale<<" Gscale:"<<1000/Gscale<<endl;
+
     bool wireframe = test7;
     bool smooth =Render.avenorms();//test8;
     
@@ -648,7 +651,7 @@ void Rock3DObjMgr::render() {
             double vertexNoiseAmpl = useVertexDisplacement ?0.5*pmgr->noise_amp : 0;
 
             Point eyePos = s->vertex - xpoint;
-            double size = PSCALE * s->radius;
+            double size = 4*Hscale * s->radius;
             double pts = s->pts;
             double dist = s->dist;
             int rval = s->rval;
@@ -767,7 +770,7 @@ void Rock3DObjMgr::render() {
                 Point worldPos = s->vertex;
                 Point up = s->normal;
                 
-                double dscale=PSCALE*drop*(1-0.5*comp)*0.5;
+                double dscale=Hscale*drop*(1-0.5*comp)*0.5;
                 
                 // Apply drop: lower the rock center along surface normal
                 Point rockCenter = worldPos - up*(s->radius * dscale);
@@ -1076,9 +1079,10 @@ void TNrocks3D::eval()
 	if(density>0)
 		mgr->eval();  // calls PlantPoint.set_terrain (need MapPt)
 	S0.copy(ground); // restore S0.p.z etc
-	
+	S0.clr_flag(ROCKBODY);
 	if(!CurrentScope->spass()){ // adapt pass only
-		mgr->setTests(); // set S0.c S0.s (density)
+		if(mgr->setTests())
+			S0.set_flag(ROCKBODY);
 	}
 }
 
