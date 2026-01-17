@@ -216,7 +216,7 @@ PlacementMgr::PlacementMgr(int i)
 	slope_bias=ht_bias=lat_bias=hardness_bias=0;
 	maxdensity=1.0;
    	index=0; 
-   	width_scale=1;
+   	pts_scale=1;
     set_first(0);
 	set_finalizer(i&FINAL?1:0);
 }
@@ -561,7 +561,7 @@ bool PlacementMgr::valid()
 		Point pv=MapPt;
 		double d=pv.length();		
 		double r=TheMap->radius*size;
-		double pts=width_scale*TheScene->wscale*r/d;
+		double pts=pts_scale*TheScene->wscale*r/d;
 		Stats.vtests++;
 		if(pts<mps){
 			Stats.pts_fails++;
@@ -1065,7 +1065,7 @@ void Placement::setVertex() {
 	vertex = Point(-base.x, base.y, -base.z);   // Point.rectangular has 180 rotation around y (??)
 	double d = vertex.distance(TheScene->vpoint);  // distance	
 	double r = TheMap->radius * radius;
-	pts = mgr->width_scale*TheScene->wscale * (r / d);
+	pts = mgr->pts_scale*TheScene->wscale * (r / d);
 	dist=d;
 }
 

@@ -217,7 +217,8 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double min_draw_width=0.5;
+static double base_draw_width=0.5;
+static double min_draw_width=base_draw_width;
 
 static double tfactor=2;
 static double sfactor=4;
@@ -882,8 +883,22 @@ void TNplant::init()
 	smgr->init();
 			
 	smgr->getArgs((TNarg *)left);
-	
 	smgr->set_first(1);
+	
+	
+	TNBranch *first_branch=(TNBranch*)right;
+	if(right && right->typeValue() == ID_BRANCH) 
+		first_branch=(TNBranch*)right;
+	else
+		return;
+	
+	double t=first_branch->length_taper;
+	double n=first_branch->max_level;
+	double f=n;
+	if(n>1 && t<1)
+		f=(pow(t, float(n)) - 1.0) / (t - 1.0);
+	cout<<"n:"<<n<<" t:"<<t<<" f:"<<f<<endl;
+	smgr->pts_scale=f;
 }
 
 void TNplant::set_id(int i){
@@ -1114,24 +1129,24 @@ void TNplant::setScale(){
 	dfactor=draw_scale;
 	switch(TheScene->render_quality){
 	case DRAFT:
-		min_draw_width=1.5;
-		tfactor=3;
-		sfactor=6;
+		min_draw_width=base_draw_width*1.5;
+		tfactor=3*mgr->pts_scale;
+		sfactor=6*mgr->pts_scale;
 		break;
 	case NORMAL:
-		tfactor=2;
-		sfactor=3;
-		min_draw_width=1;
+		tfactor=2*mgr->pts_scale;
+		sfactor=3*mgr->pts_scale;
+		min_draw_width=base_draw_width;
 		break;
 	case HIGH:
-		tfactor=2;
-		sfactor=2;
-		min_draw_width=0.95;
+		tfactor=2*mgr->pts_scale;
+		sfactor=2*mgr->pts_scale;
+		min_draw_width=base_draw_width*0.95;
 		break;
 	case BEST:
-		tfactor=2;
-		sfactor=2;
-		min_draw_width=0.9;
+		tfactor=2*mgr->pts_scale;
+		sfactor=2*mgr->pts_scale;
+		min_draw_width=base_draw_width*0.9;
 		break;	
 	}
 }

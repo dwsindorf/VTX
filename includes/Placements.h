@@ -279,7 +279,7 @@ public:
 	double  drop;
 	double  noise_amp;
 	double  noise_expr;
-	double  width_scale;
+	double  pts_scale;
 
 	TNode   *dexpr;
 
