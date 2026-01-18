@@ -217,17 +217,17 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double base_draw_width=0.5;
+static double base_draw_width=1.5;
 static double min_draw_width=base_draw_width;
 
-static double tfactor=2;
-static double sfactor=4;
-static double dfactor=0.5;
+static double tfactor=10;
+static double sfactor=2;
+static double dfactor=1;
 
 #define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH dfactor*MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH tfactor*min_draw_width
-#define MIN_SPLINE_WIDTH sfactor*min_draw_width
+#define MIN_TRIANGLE_WIDTH tfactor*MIN_LINE_WIDTH
+#define MIN_SPLINE_WIDTH sfactor*MIN_TRIANGLE_WIDTH
 
 
 static int randval=0;
@@ -891,13 +891,13 @@ void TNplant::init()
 		first_branch=(TNBranch*)right;
 	else
 		return;
-	
+	double w=first_branch->width;
 	double t=first_branch->length_taper;
 	double n=first_branch->max_level;
-	double f=n;
+	double f=n/w;
 	if(n>1 && t<1)
-		f=(pow(t, float(n)) - 1.0) / (t - 1.0);
-	cout<<"n:"<<n<<" t:"<<t<<" f:"<<f<<endl;
+		f=(pow(t, float(n)) - 1.0) / (t - 1.0)/w;
+	cout<<"n:"<<n<<" w:"<<w<<" t:"<<t<<" f:"<<f<<endl;
 	smgr->pts_scale=f;
 }
 
@@ -1130,22 +1130,14 @@ void TNplant::setScale(){
 	switch(TheScene->render_quality){
 	case DRAFT:
 		min_draw_width=base_draw_width*1.5;
-		tfactor=3*mgr->pts_scale;
-		sfactor=6*mgr->pts_scale;
 		break;
 	case NORMAL:
-		tfactor=2*mgr->pts_scale;
-		sfactor=3*mgr->pts_scale;
 		min_draw_width=base_draw_width;
 		break;
 	case HIGH:
-		tfactor=2*mgr->pts_scale;
-		sfactor=2*mgr->pts_scale;
 		min_draw_width=base_draw_width*0.95;
 		break;
 	case BEST:
-		tfactor=2*mgr->pts_scale;
-		sfactor=2*mgr->pts_scale;
 		min_draw_width=base_draw_width*0.9;
 		break;	
 	}
@@ -1201,7 +1193,7 @@ void TNplant::emit(){
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 	
-	dfactor=draw_scale*lerp(pntsize,1,100,0.5,1);
+	//dfactor=draw_scale*lerp(pntsize,1,100,0.5,1);
 
 	Point tip;
 	tip.x=start_width/width_scale;
@@ -1717,7 +1709,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		if (first_fork && lvl > 0  && parent->typeValue()==ID_BRANCH){
 			child_width *= parent->width_taper;
 	    }
-		if (child_width < MIN_LINE_WIDTH) {
+		if (child_width <MIN_LINE_WIDTH) {
 			root->addSkipped();
 			return;
 		}

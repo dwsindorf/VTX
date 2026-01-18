@@ -185,7 +185,7 @@ int PlacementMgr::bad_active=0;
 int PlacementMgr::new_placements=0;
 int PlacementMgr::bad_pts=0;
 double PlacementMgr::roff=1e-6;
-double PlacementMgr::roff2=1.0;
+double PlacementMgr::roff2=1;
 int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=1;
@@ -957,11 +957,10 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	cnt++;
 #endif
 	d=fabs(p.length()-1);
-	double rf=1-mgr->mult;
-	
+	double rf=1;//-mgr->mult;
 	// randomly mis-align placement center 
 	if(mgr->ntest()){
-		if(d>0.8*mgr->size)
+		if(d>mgr->size)
 			return;
 		r=0.5*mgr->size*(1-URAND(1)*rf);
 		pf=2*mgr->size-r;
@@ -988,8 +987,9 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	    p.w=0;
 	center=p;
 	radius=r;
-
 	flags.s.valid=true;
+
+
 }
 
 //-------------------------------------------------------------

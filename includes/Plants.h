@@ -76,7 +76,6 @@ public:
 	static void beginFrame();
 
 	void init();
-	void getScale();
 
 	static void clearStats();
 };
