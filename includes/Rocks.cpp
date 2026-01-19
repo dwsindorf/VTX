@@ -29,8 +29,6 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define PSCALE 0.008 // placement scale factor
-
 static bool first=true;
 static int tid=0;
 static int pid=0;
@@ -41,7 +39,9 @@ static bool cvalid;
 //#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
-#define PRINT_LOD_STATS
+//#define PRINT_LOD_STATS
+#define DEBUG_REGEN
+
 
 bool use_templates=true;
 static bool shadow_start=false;
@@ -637,6 +637,7 @@ void Rock3DObjMgr::render() {
     
     bool placement_needs_update = moved;
     bool mesh_needs_rebuild = changed;
+    double t1=0,t2=0,t3=0,t4=0,d0=0,d1=0;
     
     if (mesh_needs_rebuild) {
         std::cout << "Settings changed - invalidating" <<endl;
@@ -647,6 +648,7 @@ void Rock3DObjMgr::render() {
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
+
         rocks.clear();
         Rock3DMgr::clearStats();
         
@@ -659,7 +661,9 @@ void Rock3DObjMgr::render() {
         
         int hits = 0, misses = 0, regens = 0;
 
+
         for (int i = 0; i < n; i++)  {
+        	d0=clock();
             Rock3DData *s = data[i];
             
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
@@ -744,10 +748,12 @@ void Rock3DObjMgr::render() {
             } else {
                 misses++;
             }
-
+            d1=clock();
+            t1+=d1-d0;
             // Generate if needed
             
             if (needsGeneration) {
+            	d0=clock();
                 int rseed=TheNoise.rseed;
                 TheNoise.rseed=rval;
                 MCObject* templateSphere = getTemplateForLOD(s);                
@@ -790,12 +796,14 @@ void Rock3DObjMgr::render() {
                 rockCache[key] = entry;
         	
                 TheNoise.rseed = rseed;
+
             }
             
             // Create rock and transform to eye space
             MCObject* rock = rocks.addObject(eyePos, size);
             
             if (rock) {
+            	d0=clock();
                 rock->setDistanceInfo(dist, pts);
                 rock->mesh.clear();
                 rock->instanceId = instance;
@@ -860,16 +868,18 @@ void Rock3DObjMgr::render() {
                 }
                 rock->meshValid = true;
                 rock->worldPosition = eyePos;
-                
-                // Upload VBO
+                 t2+=clock()-d0;
+                 d0=clock();
+              // Upload VBO
                 if (smooth || useVertexDisplacement)
                     rock->uploadToVBODisplaced(smooth);
                 else 
                     rock->uploadToVBO(); 
                 Rock3DMgr::setStats(resolution, rock->mesh.size(),true);
+                t3+=clock()-d0;
             }
         }
-        
+        d0=clock();
         // Cull old cache entries
         int culledCount = 0;
         for (auto it = rockCache.begin(); it != rockCache.end(); ) {
@@ -897,11 +907,15 @@ void Rock3DObjMgr::render() {
             }
             std::cout << "Cache limit reached - removed " << toRemove << " oldest entries" << std::endl;
         }
-        
+        t4+=clock()-d1;
         // DEBUG: Summary
         std::cout << "Cache: " << hits << " hits, " << misses << " misses, " << regens << " regens, " 
                   << culledCount << " culled, " << rockCache.size() << " total cached" << std::endl;
         Rock3DMgr::printStats();
+        double ts=1000.0/CLOCKS_PER_SEC;
+        Point p4(t1,t2,t3);
+        p4=p4*ts;
+        cout<<p4<<endl;
     }
      render_objects();
 }
