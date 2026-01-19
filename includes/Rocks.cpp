@@ -17,6 +17,7 @@
 
 #include <map>
 #include <set>
+#include <algorithm>
 
 extern double Hscale,Gscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
 extern int test7, test8;
@@ -36,13 +37,13 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
+//#define PRINT_STATS
 //#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
-//#define USE_TEMPLATES
-//#define PRINT_LOD_STATS
+#define PRINT_LOD_STATS
 
+bool use_templates=true;
 static bool shadow_start=false;
 
 // 3d rocks using marching cubes
@@ -159,6 +160,40 @@ bool Rock3D::setProgram(){
 
 Color rock_color(0.6, 0.5, 0.4);
 
+struct RockLodEntry {
+    int    res;     // voxel resolution
+    double maxPts;  // upper bound for pts (pts < maxPts)
+};
+
+static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
+    {  2,  2.0},
+    {  4,  5.0},
+    {  8,  10.0},
+    {  16, 20.0},
+    { 32, 30.0},
+    { 48, 50.0},
+    { 64, 90.0},
+    { 128,  1e9}  // default 
+};
+
+static int getLodIndex(int scaledRes, double resScale) {
+    // Reverse the scaling with rounding
+    int unscaledRes = (int)(scaledRes / resScale + 0.5);  // Round instead of truncate
+    
+    // Find closest match in table
+    int bestIndex = 0;
+    int minDiff = abs(kRockLodTable[0].res - unscaledRes);
+    
+    for (int i = 1; i < MAX_ROCK_STATS; i++) {
+        int diff = abs(kRockLodTable[i].res - unscaledRes);
+        if (diff < minDiff) {
+            minDiff = diff;
+            bestIndex = i;
+        }
+    }   
+    return bestIndex;
+}
+
 static SurfaceFunction makeRockField(const Point& center, PlaceData *s) {
     return [center, s](double x, double y, double z) -> double {
         Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
@@ -243,18 +278,18 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     double comp = pmgr->comp;
     int resolution = Rock3DMgr::getLODResolution(pts);
     double noiseAmpl = pmgr->noise_amp;
-	bool noisy=(noiseAmpl>1e-6);
-#ifdef USE_TEMPLATES
-    int k1=resolution * 100;
-    int k2=(int)(rval)%Rock3DObjMgr::templates_per_lod;
-    int k3=s->instance*1000;
-    int key = k1 + k2 +k3;
-    auto it = Rock3DObjMgr::lodTemplates.find(key);
-    if (it != Rock3DObjMgr::lodTemplates.end()) {
-    	Rock3DObjMgr::lodCacheHits++;
-        return it->second;
-    }
-#endif   
+	int key=0,k1=0,k2=0,k3=0;
+	if(use_templates){
+		k1=resolution * 100;
+		k2=(int)(rval)%Rock3DObjMgr::templates_per_lod;
+		k3=s->instance*10000;
+		key = k1 + k2 +k3;   
+		auto it = Rock3DObjMgr::lodTemplates.find(key);
+		if (it != Rock3DObjMgr::lodTemplates.end()) {
+			Rock3DObjMgr::lodCacheHits++;
+			return it->second;
+		}
+    }  
     Point origin(0, 0, 0);
     MCObject* templateSphere = new MCObject(origin, 1.0);
     
@@ -269,22 +304,28 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     SurfaceFunction field = makeRockField(origin, s);
     templateSphere->mesh = generator.generateMesh(field, boundsMin, boundsMax, resolution, 0.0);
     templateSphere->meshValid = true;    
-#ifdef USE_TEMPLATES
-    Rock3DObjMgr::lodTemplates[key] = templateSphere;
+	if(use_templates){
+    	Rock3DObjMgr::lodTemplates[key] = templateSphere;
 #ifdef PRINT_LOD_STATS    
-    cout << "Created LOD template: resolution:" << resolution<< " key:"<<key 
-         << " k1:"<< k1 << " k2:" << k2 
-         << " Triangles:" << templateSphere->mesh.size() << endl;
+		cout << "Created LOD template: resolution:" << resolution<<" type:"<<k3/1000<<" rval:"<<k2<<" key:"<<key 
+			// << " k1:"<< k1 << " k2:" << k2 
+			 << " Triangles:" << templateSphere->mesh.size() << endl;
 #endif 
-#endif
+	}
     Rock3DObjMgr::lodCacheMisses++;
+    int index = getLodIndex(resolution, Rock3DMgr::resScale);
+    if (index >= 0)
+    	 Rock3DMgr::stats[index][2]++;
+   else
+     cout<<"Bad index:" <<index<<" res:"<<resolution<<endl;
+    
     return templateSphere;
 }
 
 //************************************************************
 // Rock3DMgr class
 //************************************************************
-int Rock3DMgr::stats[MAX_ROCK_STATS][2];
+int Rock3DMgr::stats[MAX_ROCK_STATS][3];
 double Rock3DMgr::resScale=1;
 
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
@@ -325,48 +366,27 @@ PlaceData *Rock3DMgr::make(Placement*s)
     return new Rock3DData(s);
 }
 
-//bool Rock3DMgr::testColor() { 
-//	return PlacementMgr::testColor()?true:false;
-//}
-//bool Rock3DMgr::testDensity(){ 
-//	return true;
-//}
-
 void Rock3DMgr::clearStats(){
+	cout<<"Rock3DMgr::clearStats"<<endl;
 	for(int i=0;i<MAX_ROCK_STATS;i++){
-		stats[i][0]=stats[i][1]=0;
+		stats[i][0]=stats[i][1]=stats[i][2]=0;
 	}
 }
-
-struct RockLodEntry {
-    int    res;     // voxel resolution
-    double maxPts;  // upper bound for pts (pts < maxPts)
-};
-
-static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  2,  2.0 },
-    {  4,  5.0 },
-    {  8,  10.0 },
-    {  16, 20.0 },
-    { 32, 30.0 },
-    { 48, 50.0 },
-    { 64, 90.0 },
-    { 128,  1e9 }  // default 
-};
 
 void Rock3DMgr::printStats(){
     int rcnt = 0;
     int tcnt = 0;
     int kcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
-#ifdef USE_TEMPLATES
-    int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
-    std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*Rock3DObjMgr::lodCacheHits/lod_calls<<" %"<<endl;
-#endif
+    if(use_templates){
+    	int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
+    	std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*Rock3DObjMgr::lodCacheHits/lod_calls<<" %"<<endl;
+	}
 
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 #ifdef PRINT_ROCK_STATS
-        std::cout << "res:"       << (int)(kRockLodTable[i].res*resScale)
+        std::cout << "res:"       << (int)(kRockLodTable[i].res*resScale+0.1)
+                  << " calls:"    << stats[i][2]
                   << " cnt:"      << stats[i][0]
                   << " triangles:"<< stats[i][1]/1000<<" k"
                   << std::endl;
@@ -396,6 +416,19 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
     }
 }
 
+inline double remap(double x,
+                    double xmin, double xmax,
+                    double ymin, double ymax)
+{
+	if (std::abs(xmax - xmin) < 1e-12)
+	        return 0.5 * (ymin + ymax);
+
+	    double t = (x - xmin) / (xmax - xmin);
+	    t = std::clamp(t, 0.0, 1.0);
+
+	    return ymin + t * (ymax - ymin);
+}
+
 int Rock3DMgr::getLODResolution(double pts) {
 	int res=kRockLodTable[MAX_ROCK_STATS - 1].res; // fallback
  	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
@@ -407,9 +440,9 @@ int Rock3DMgr::getLODResolution(double pts) {
  	double cellsize=TheScene->cellsize;
 
  	if (cellsize <= 3.5) {// Between best and normal: lerp from 2.0 to 1.0	        
- 	   resScale = lerp(cellsize, 1, 3.5, 2.0, 1.0);
+ 	   resScale = remap(cellsize, 1, 3.5, 2.0, 1.0);
  	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
- 	   resScale = lerp(cellsize, 3.5, 7, 1.0, 0.5);
+ 	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
  	int newres=(int)(res*resScale);
  	newres=newres<2?2:newres;
@@ -432,10 +465,12 @@ int Rock3DObjMgr::lodCacheMisses=0;
 int Rock3DObjMgr::templates_per_lod=2;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 Rock3DObjMgr::~Rock3DObjMgr(){
-	freeLODTemplates();
+	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
+	//freeLODTemplates();
 }
 
 void Rock3DObjMgr::freeLODTemplates() {
+	cout<<"Rock3DObjMgr::freeLODTemplates()"<<endl;
     for (auto& pair : lodTemplates) {
         delete pair.second;
     }
@@ -603,7 +638,7 @@ void Rock3DObjMgr::render() {
     bool placement_needs_update = moved;
     bool mesh_needs_rebuild = changed;
     
-    if (changed) {
+    if (mesh_needs_rebuild) {
         std::cout << "Settings changed - invalidating" <<endl;
         rockCache.clear();
         rocks.clear();
@@ -1008,6 +1043,12 @@ void TNrocks3D::init()
 		rmgr->vnoise=tv;
 	else
 		rmgr->vnoise=0;
+	if(args[6]){
+		args[6]->eval();
+		rmgr->noise_amp=S0.s;
+		rmgr->pts_scale=1+2*rmgr->noise_amp;
+		//cout <<rmgr->pts_scale<<endl;
+	}
 	if(args[7]){
 		if(args[7]->typeValue()==ID_POINT)
 			rmgr->vnoise=args[7];

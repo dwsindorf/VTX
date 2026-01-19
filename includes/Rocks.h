@@ -126,7 +126,7 @@ public:
 	TNode   *vnoise;
 	TNode   *rnoise;
 	TNode   *color;
-	static int stats[MAX_ROCK_STATS][2];
+	static int stats[MAX_ROCK_STATS][3];
 	static void clearStats();
 	static void printStats();
 	static void setStats(int,int,bool);
@@ -138,9 +138,6 @@ public:
 	PlaceData *make(Placement*s);
 	void eval();
 	void init();
-
-	//bool testColor();
-	//bool testDensity();
 };
 
 

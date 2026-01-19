@@ -1190,13 +1190,14 @@ void Map::render_shaded()
 	Lights.setAmbient(Td.ambient);
 	Lights.setDiffuse(Td.diffuse);
 	
-	if(!UseDepthBuffer)
-		get_mapnodes();
-
-	bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
-	bool show_water=waterpass() &&  Render.show_water() && (viewobj_surface || Raster.show_water());
+    bool viewobj_surface=(object==TheScene->viewobj && TheScene->viewtype==SURFACE);
+	bool viewobj_orbital=(object==TheScene->viewobj && TheScene->viewtype!=SURFACE);
+	bool show_water=waterpass() &&  Render.show_water() && (viewobj_orbital || Raster.show_water());
 
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
+		if(!UseDepthBuffer && viewobj_surface)
+			get_mapnodes();
+
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
 			tp=Td.properties[tid];
@@ -1236,7 +1237,7 @@ void Map::render_shaded()
 #ifdef DEBUG_RENDER
 		    cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
 #endif
-		    if(!UseDepthBuffer){
+		    if(!UseDepthBuffer && viewobj_surface){
 				render_objects(tp->Rocks);
 				render_objects(tp->Plants); // if plants are global all layers get them
 				render_objects(tp->Sprites);
@@ -1246,7 +1247,7 @@ void Map::render_shaded()
 			reset_texs();
 		}
 		
-		if(UseDepthBuffer && (object==TheScene->viewobj && TheScene->viewtype==SURFACE)){
+		if(UseDepthBuffer && viewobj_surface){
 			get_mapnodes();
 			for(int i=0;i<tids-1;i++){
 				tid=i+ID0;
@@ -2118,7 +2119,7 @@ void Map::find_limits(){
 	MinHt=hmin;
 	MaxHt=hmax;
 
-    cout <<"Map::find_limits() minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ft ratio:"<<zf/zn<<endl;
+   //cout <<"Map::find_limits() minht:"<<hmin/FEET<<" maxht:"<<hmax/FEET<<" zn:"<<zn/FEET<<" zf:"<<zf/FEET<<" ft ratio:"<<zf/zn<<endl;
 }
 //-------------------------------------------------------------
 // Map::vischk()	test all nodes for visibility

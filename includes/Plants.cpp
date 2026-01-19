@@ -220,14 +220,10 @@ static int line_nodes;
 static double base_draw_width=1.5;
 static double min_draw_width=base_draw_width;
 
-static double tfactor=10;
-static double sfactor=2;
-static double dfactor=1;
-
-#define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
-#define MIN_LINE_WIDTH dfactor*MIN_DRAW_WIDTH
-#define MIN_TRIANGLE_WIDTH tfactor*MIN_LINE_WIDTH
-#define MIN_SPLINE_WIDTH sfactor*MIN_TRIANGLE_WIDTH
+//#define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
+#define MIN_LINE_WIDTH min_draw_width
+#define MIN_TRIANGLE_WIDTH 10*MIN_LINE_WIDTH
+#define MIN_SPLINE_WIDTH 2*MIN_TRIANGLE_WIDTH
 
 
 static int randval=0;
@@ -1126,7 +1122,7 @@ int TNplant::getChildren(LinkedList<NodeIF*>&l){
 }
 
 void TNplant::setScale(){
-	dfactor=draw_scale;
+	//dfactor=draw_scale;
 	switch(TheScene->render_quality){
 	case DRAFT:
 		min_draw_width=base_draw_width*1.5;
