@@ -35,12 +35,12 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
-#define DEBUG_REGEN
+//#define DEBUG_REGEN
 
 
 bool use_templates=true;
@@ -167,13 +167,14 @@ struct RockLodEntry {
 
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  2,  2.0},
-    {  4,  5.0},
-    {  8,  10.0},
-    {  16, 20.0},
-    { 32, 30.0},
-    { 48, 50.0},
-    { 64, 90.0},
-    { 128,  1e9}  // default 
+    {  4,  10.0},
+    {  8,  20.0},
+    {  16, 50.0},
+    { 32, 100.0},
+    { 48, 150.0},
+    { 64, 200.0},
+    { 128, 400.0},
+    { 200,  1e9}  // default 
 };
 
 static int getLodIndex(int scaledRes, double resScale) {
@@ -251,7 +252,7 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
 			Point pn;
 			double rz=0;
 			Point pv=vertex;
-			if(tv && tv->isEnabled()){
+			if(tv && tv->isEnabled()){  // vertex displacement
 				SINIT;
 				tv->eval();	
 				if(S0.pvalid()){
@@ -261,7 +262,7 @@ static void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, T
 				}
 			}
 			color=rock_color;
-			if(tc && tc->isEnabled()){
+			if(tc && tc->isEnabled()){ // color calculation
 				SINIT;
 				tc->eval();	
 				if(S0.cvalid())
@@ -281,7 +282,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
 	int key=0,k1=0,k2=0,k3=0;
 	if(use_templates){
 		k1=resolution * 100;
-		k2=(int)(rval)%Rock3DObjMgr::templates_per_lod;
+		k2=(int)(rval)% Map::tessLevel();
 		k3=s->instance*10000;
 		key = k1 + k2 +k3;   
 		auto it = Rock3DObjMgr::lodTemplates.find(key);
@@ -316,7 +317,7 @@ static MCObject* getTemplateForLOD(PlaceData *s) {
     int index = getLodIndex(resolution, Rock3DMgr::resScale);
     if (index >= 0)
     	 Rock3DMgr::stats[index][2]++;
-   else
+    else
      cout<<"Bad index:" <<index<<" res:"<<resolution<<endl;
     
     return templateSphere;
@@ -369,7 +370,7 @@ PlaceData *Rock3DMgr::make(Placement*s)
 void Rock3DMgr::clearStats(){
 	cout<<"Rock3DMgr::clearStats"<<endl;
 	for(int i=0;i<MAX_ROCK_STATS;i++){
-		stats[i][0]=stats[i][1]=stats[i][2]=0;
+		stats[i][0]=stats[i][1]=0;
 	}
 }
 
@@ -382,20 +383,18 @@ void Rock3DMgr::printStats(){
     	int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
     	std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*Rock3DObjMgr::lodCacheHits/lod_calls<<" %"<<endl;
 	}
-
+    char buff[256];
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 #ifdef PRINT_ROCK_STATS
-        std::cout << "res:"       << (int)(kRockLodTable[i].res*resScale+0.1)
-                  << " calls:"    << stats[i][2]
-                  << " cnt:"      << stats[i][0]
-                  << " triangles:"<< stats[i][1]/1000<<" k"
-                  << std::endl;
+    	sprintf(buff,"resolution:%3d templates:%d instances:%3d triangles:%3d K",
+        (int)(kRockLodTable[i].res*resScale+0.1),stats[i][2],stats[i][0],stats[i][1]/1000);
+        cout<<buff<< std::endl;
 #endif
         rcnt  += stats[i][0];
         tcnt  += stats[i][1];
     }
     std::cout << "Totals rocks:"    << rcnt
-              << " triangles:"      << tcnt/1000<<" k"
+              << " triangles:"      << tcnt/1000<<" K"
               << std::endl;
 }
 
@@ -462,7 +461,7 @@ int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
-int Rock3DObjMgr::templates_per_lod=2;
+int Rock3DObjMgr::templates_per_lod=3;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
@@ -475,6 +474,9 @@ void Rock3DObjMgr::freeLODTemplates() {
         delete pair.second;
     }
     lodTemplates.clear();
+    for(int i=0;i<MAX_ROCK_STATS;i++){
+    	Rock3DMgr::stats[i][2]=0;
+    }
 }
 
 double calculateNightLighting(double tod) {
@@ -625,7 +627,8 @@ void Rock3DObjMgr::render() {
 	//cout<<"Hscale:"<<Hscale<<" Gscale:"<<1000/Gscale<<endl;
 
     bool wireframe = test7;
-    bool smooth =Render.avenorms();//test8;
+    bool smooth =Render.avenorms()&&!test8;
+    //bool smooth = test8;
     
     bool moved = TheScene->moved();
     bool changed=TheScene->changed_detail();
@@ -637,7 +640,7 @@ void Rock3DObjMgr::render() {
     
     bool placement_needs_update = moved;
     bool mesh_needs_rebuild = changed;
-    double t1=0,t2=0,t3=0,t4=0,d0=0,d1=0;
+    double t1=0,t2=0,t3=0,t4=0,t5=0,d0=0,d1=0,d2=0;
     
     if (mesh_needs_rebuild) {
         std::cout << "Settings changed - invalidating" <<endl;
@@ -648,9 +651,11 @@ void Rock3DObjMgr::render() {
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
+    	d0=clock();
 
         rocks.clear();
-        Rock3DMgr::clearStats();
+        if(!mesh_needs_rebuild)
+        	Rock3DMgr::clearStats();
         
         Point xpoint = TheScene->xpoint;
         
@@ -663,9 +668,10 @@ void Rock3DObjMgr::render() {
 
 
         for (int i = 0; i < n; i++)  {
-        	d0=clock();
             Rock3DData *s = data[i];
             
+        	d1=clock();
+           
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
             TNode *tr = pmgr->rnoise;
             
@@ -713,7 +719,7 @@ void Rock3DObjMgr::render() {
             std::vector<MCTriangle> templateMesh;
             bool cacheHit=false;
             
-            if (it != rockCache.end()) {
+            if (it != rockCache.end()) { // retrieve template mesh if in cache
                 RockCacheEntry& entry = it->second;
                 entry.framesSinceUsed = 0;
                 
@@ -748,12 +754,11 @@ void Rock3DObjMgr::render() {
             } else {
                 misses++;
             }
-            d1=clock();
-            t1+=d1-d0;
-            // Generate if needed
+            d2=clock();
+            t1+=d2-d1; // t1=cache overhead
             
-            if (needsGeneration) {
-            	d0=clock();
+            if (needsGeneration) { // if not found generate mesh
+            	d1=clock();
                 int rseed=TheNoise.rseed;
                 TheNoise.rseed=rval;
                 MCObject* templateSphere = getTemplateForLOD(s);                
@@ -761,8 +766,9 @@ void Rock3DObjMgr::render() {
                     TheNoise.rseed = rseed;
                     continue;   
                 }
-                
-                // Copy mesh without modification
+                d2=clock();
+                t2+=d2-d1; // t2=template creation time
+                // Copy mesh without modification                
                 for (const auto& tri : templateSphere->mesh) {
                     MCTriangle newTri;
                     for (int v = 0; v < 3; v++) {
@@ -781,7 +787,7 @@ void Rock3DObjMgr::render() {
                     tempRock.mesh = templateMesh;
                     applyVertexAttributes(&tempRock,vertexNoiseAmpl, tv, tc);
                     templateMesh = tempRock.mesh;
-                 }
+                }
                                 
                 // Store in cache
                 RockCacheEntry entry;
@@ -796,6 +802,7 @@ void Rock3DObjMgr::render() {
                 rockCache[key] = entry;
         	
                 TheNoise.rseed = rseed;
+                t3+=clock()-d2; // t3=vertex/color modulation
 
             }
             
@@ -803,7 +810,7 @@ void Rock3DObjMgr::render() {
             MCObject* rock = rocks.addObject(eyePos, size);
             
             if (rock) {
-            	d0=clock();
+            	d1=clock();
                 rock->setDistanceInfo(dist, pts);
                 rock->mesh.clear();
                 rock->instanceId = instance;
@@ -867,19 +874,23 @@ void Rock3DObjMgr::render() {
                     rock->mesh.push_back(newTri);
                 }
                 rock->meshValid = true;
-                rock->worldPosition = eyePos;
-                 t2+=clock()-d0;
-                 d0=clock();
+                bool hires=false;
+                if(smooth){
+					rock->worldPosition = eyePos;
+					int resolution = Rock3DMgr::getLODResolution(rock->screenProjectedSize);
+					int index = getLodIndex(resolution, Rock3DMgr::resScale);
+					hires=(index==MAX_ROCK_STATS-1);
+                }
+                
               // Upload VBO
-                if (smooth || useVertexDisplacement)
-                    rock->uploadToVBODisplaced(smooth);
+                if (hires || useVertexDisplacement)
+                    rock->uploadToVBODisplaced(hires);
                 else 
                     rock->uploadToVBO(); 
                 Rock3DMgr::setStats(resolution, rock->mesh.size(),true);
-                t3+=clock()-d0;
+                t4+=clock()-d1;//  t4=upload to vbo (smoothing)
             }
         }
-        d0=clock();
         // Cull old cache entries
         int culledCount = 0;
         for (auto it = rockCache.begin(); it != rockCache.end(); ) {
@@ -907,13 +918,17 @@ void Rock3DObjMgr::render() {
             }
             std::cout << "Cache limit reached - removed " << toRemove << " oldest entries" << std::endl;
         }
-        t4+=clock()-d1;
+       // t4+=clock()-d1;
         // DEBUG: Summary
         std::cout << "Cache: " << hits << " hits, " << misses << " misses, " << regens << " regens, " 
                   << culledCount << " culled, " << rockCache.size() << " total cached" << std::endl;
         Rock3DMgr::printStats();
         double ts=1000.0/CLOCKS_PER_SEC;
-        Point p4(t1,t2,t3);
+        // t1=cache overhead
+        // t2=template creation time (MC noise calculation)
+        // t3=vertex/color modulation 
+        // t4=upload to vbo (w/wo smoothing)
+        Point4D p4(t1,t2,t3,t4);
         p4=p4*ts;
         cout<<p4<<endl;
     }

@@ -74,10 +74,13 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST2:		
-		test2=test2?0:1;
-		cout<<"test2="<<test2<<endl;
-		TheScene->set_moved();
-		TheScene->set_changed_render();
+		//test2=test2?0:1;
+		//cout<<"test2="<<test2<<endl;
+		Render.set_color_test(!Render.color_test());
+		TheScene->rebuild_all();
+
+		//TheScene->set_moved();
+		//TheScene->set_changed_render();
 		break;
 		break;
 	case KEY_TEST3:
@@ -96,7 +99,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST6:
-		Render.set_color_test(!Render.color_test());
+		extern bool use_templates;
+		use_templates=use_templates?0:1;
+		cout<<"use_templates="<<use_templates<<endl;
+		TheScene->set_changed_detail();
 		TheScene->rebuild_all();
 		break;
 	case KEY_TEST7:
@@ -106,10 +112,9 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		TheScene->set_changed_render();
 		break;
 	case KEY_TEST8:
-		extern bool use_templates;
-		use_templates=use_templates?0:1;
-		cout<<"use_templates="<<use_templates<<endl;
-		 TheScene->set_changed_detail();
+		test8=test8?0:1;
+		cout<<"test8="<<test8<<endl;
+		TheScene->set_changed_detail();
 		TheScene->rebuild_all();
 		break;
 	case KEY_RAND_SEED:

@@ -146,6 +146,14 @@ std::ostream& operator<<(std::ostream& os, const Point& p) {
     return os; // Return stream to allow chaining (e.g., cout << a << b;)
 }
 
+// Overload the << operator
+std::ostream& operator<<(std::ostream& os, const Point4D& p) {
+	char temp[512];
+	int r=9;
+	sprintf(temp,"Point(%-1.4g,%-1.4g,%-1.4g,%-1.4g)",p.x,p.y,p.z,p.w);
+	os<<temp;
+    return os; // Return stream to allow chaining (e.g., cout << a << b;)
+}
 
 //-------------------------------------------------------------
 // Point::intersect_sphere()	 sphere intersection

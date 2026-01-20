@@ -2090,13 +2090,13 @@ void Spheroid::move_focus(Point &selm)
 			if(TheScene->viewtype==ORBITAL)
 			 	ht=1.5*radius();
 			else
-			 	ht=rampstep(500*FEET,1000*MILES,dz,20*FEET,10*MILES);
+			 	ht=rampstep(500*FEET,1000*MILES,dz,5*FEET,10*MILES);
 		}
 
  		// called from move_selected
 
  		else {
- 			minht=rampstep(500*FEET,10*MILES,dz,20*FEET,200*FEET);
+ 			minht=rampstep(500*FEET,10*MILES,dz,5*FEET,200*FEET);
 			if(dh<minht)
 				ht=minht;
 			else

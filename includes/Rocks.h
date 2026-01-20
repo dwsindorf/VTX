@@ -14,7 +14,7 @@ class Texture;
 class Rock3DData;
 class Rock3DMgr;
 
-#define MAX_ROCK_STATS 8
+#define MAX_ROCK_STATS 9
 
 class Rock : public Placement
 {
@@ -47,7 +47,7 @@ public:
 		long long x, y, z;  // Quantized world position
 		int instance;
 		
-		RockCacheKey(const Point& worldPos, int inst, double snap = 1e-10) {
+		RockCacheKey(const Point& worldPos, int inst, double snap = 1e-9) {
 		        x = (int64_t)round(worldPos.x / snap);
 		        y = (int64_t)round(worldPos.y / snap);
 		        z = (int64_t)round(worldPos.z / snap);

@@ -204,12 +204,10 @@ public:
 	Point4D fract()                 { Point4D p=floor(); return *this-p;}
 
 	double dot(Point4D&p)			{ return (x*p.x+y*p.y+z*p.z+w*p.w);}
-	Point toPoint()                 { return Point(x,x,z);}
-	
+	Point toPoint()                 { return Point(x,x,z);}	
 	void clear()					{x=y=z=w=0;}
-
-
 	void print();
+	friend std::ostream& operator<<(std::ostream& os, const Point4D& b);
 };
 
 class LTheta
