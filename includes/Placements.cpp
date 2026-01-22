@@ -610,8 +610,7 @@ void PlacementMgr::eval()
     scnt=0;
     slvl=0;
 
-    msize=maxsize;
-     for(lvl=0, size=msize; lvl<levels; size*=0.5*(mult+1), lvl++){
+    for(lvl=0, size=maxsize; lvl<levels; size*=mult, lvl++){
         if(!valid())
             continue;
          Stats.cvisits++;
@@ -957,18 +956,21 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	cnt++;
 #endif
 	d=fabs(p.length()-1);
-	double rf=1;//-mgr->mult;
+	double rf=mgr->mult;
 	// randomly mis-align placement center 
+	double u = URAND(1);              // u in [0,1]
+	double m = mgr->mult;             // can be >1 or <1
+	double scale = 1.0 + u * (m - 1.0);
 	if(mgr->ntest()){
 		if(d>mgr->size)
 			return;
-		r=0.5*mgr->size*(1-URAND(1)*rf);
+		r = mgr->size*0.5*scale;
 		pf=2*mgr->size-r;
 	}
 	else{
 		if(d>0.4*mgr->size)
 			return;
-		r=0.25*mgr->size*(1-URAND(1)*rf);
+		r = mgr->size*0.5*scale;
 		pf=0.8*mgr->size-r;
 	}
 	pf*=mgr->roff2;

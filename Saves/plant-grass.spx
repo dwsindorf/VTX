@@ -20,15 +20,21 @@ Scene() {
 	}
 	View{
 		tilt=-3;
+	}
+	View{
+		height=12.034 ft;
+		tilt=-6;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400199;
 	}
 	View{
-		height=12.034 ft;
-		tilt=-6;
+		tilt=-4;
 		minr=0.00400199;
+	}
+	View{
+		tilt=0;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -66,7 +72,7 @@ Scene() {
 					rot_phase=249.674;
 					year=100;
 					Surface{
-						terrain=Plant("Yellow",1,9.4697e-08,0.984,0.5,0,0.635,0,0.54,0,0,0,0)
+						terrain=Plant("Yellow",1,9.4697e-08,0.444,0.483,0,0.635,0,0,-0.27,0,0,0)
 								Branch("Stem",10,1,1,0.1,1,1,0.212,0.8,0.8,100,0,1,0,30,-0.091,1)["aspen1",Color(0.2+IRAND*LVL,RED,0.1*IRAND*(1-LVL),1)]
 								
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));

@@ -425,6 +425,7 @@ public:
 	void setScale();
 	void addBranch();
 	void addLine();
+	void addTriangle();
 	void addRendered();
 	void addLeaf();
 	void addSpline();

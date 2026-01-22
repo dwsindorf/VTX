@@ -22,16 +22,16 @@ extern double lcos(double g);
 
 //#define PRINT_PLANT_TIMING
 #define DEBUG_RANDOMIZE
-//#define SHOW_PLANT_STATS
-//#define SHOW_BRANCH_STATS
+#define SHOW_PLANT_STATS
+#define SHOW_BRANCH_STATS
 //#define SHOW_BRANCH_TIMING
 //#define DEBUG_SLOPE_BIAS
 //#define DEBUG_HT_BIAS
 //#define DEBUG_LAT_BIAS
 
 //#define DEBUG_HARD_BIAS
-//#define PSCALE TheMap->radius
-#define PSCALE 0.004
+#define PSCALE TheMap->radius
+//#define PSCALE 0.004
 
 #define SRAND 	(rands[PERM((randval++))])
 #define URAND 	(rands[PERM((randval++))]+0.5)
@@ -217,13 +217,13 @@ static int branch_nodes;
 static int trunk_nodes;
 static int line_nodes;
 
-static double base_draw_width=1.5;
+static double base_draw_width=1;
 static double min_draw_width=base_draw_width;
 
 //#define MIN_DRAW_WIDTH min_draw_width // varies with scene quality
 #define MIN_LINE_WIDTH min_draw_width
 #define MIN_TRIANGLE_WIDTH 10*MIN_LINE_WIDTH
-#define MIN_SPLINE_WIDTH 2*MIN_TRIANGLE_WIDTH
+#define MIN_SPLINE_WIDTH 4*MIN_TRIANGLE_WIDTH
 
 
 static int randval=0;
@@ -239,7 +239,8 @@ enum {
 	PLANT_BRANCHES=3,
 	PLANT_LEAVES=4,
 	PLANT_LINES=5,
-	PLANT_SPLINES=6,
+	PLANT_TRIANGLES=6,
+	PLANT_SPLINES=7,
 };
 void show_plant_info()
 {
@@ -252,7 +253,21 @@ void show_plant_info()
 			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],PlantMgr::stats[PLANTS_SKIPPED],PlantMgr::stats[PLANT_LINES],PlantMgr::stats[PLANT_SPLINES]);
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
-
+void show_plant_stats()
+{
+	char buff[256];
+	cout<<"------- plants ---------------------"<<endl;
+	sprintf(buff,"types:%d branches:%d leaves:%d render:%3.2f s",
+			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
+	cout<<buff<<endl;
+	sprintf(buff,"drawn:%d skipped:%d lines:%d triangles:%d splines:%d",
+			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],
+					PlantMgr::stats[PLANTS_SKIPPED],
+					PlantMgr::stats[PLANT_LINES],
+					PlantMgr::stats[PLANT_TRIANGLES],
+					PlantMgr::stats[PLANT_SPLINES]);
+	cout<<buff<<endl;
+}
 //************************************************************
 // BranchData class
 //************************************************************
@@ -331,6 +346,7 @@ void BranchVBO::render() {
     build();
     glBindVertexArray(vao);
     
+    
     if (PlaceObjMgr::shadow_mode) {
         glDisableClientState(GL_COLOR_ARRAY);
     } else {
@@ -380,7 +396,6 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 #endif
 	MSK_SET(type,PLACETYPE,PLANTS);
 	plant=p;
-	//level_mult=0.2;
 	mult=0.5;
 	slope_bias=0;
 	hardness_bias=0;
@@ -569,7 +584,7 @@ void PlantObjMgr::render(){
 	randval=l;
 #ifdef SHOW_BRANCH_STATS
     if(update_needed)
-		showStats();
+    	show_plant_stats();
 #endif
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -726,13 +741,16 @@ void Plant::freeBranches() {
 
 void Plant::renderBranches() {
     if (PlantMgr::poly_lines || PlantMgr::shader_lines) {
+    	glLineWidth(1);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         branchVBO.render();
         lineVBO.render();
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glLineWidth(1);
         branchVBO.render();
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glLineWidth(0.5);
         lineVBO.render();
     }
 }
@@ -893,6 +911,7 @@ void TNplant::init()
 	double f=n/w;
 	if(n>1 && t<1)
 		f=(pow(t, float(n)) - 1.0) / (t - 1.0)/w;
+	//f=pow(f,0.75);
 	cout<<"n:"<<n<<" w:"<<w<<" t:"<<t<<" f:"<<f<<endl;
 	smgr->pts_scale=f;
 }
@@ -974,6 +993,10 @@ void TNplant::addLine(){
 void TNplant::addBranch(){
 	PlantMgr::stats[PLANT_BRANCHES]++;	
 }
+void TNplant::addTriangle(){
+	PlantMgr::stats[PLANT_TRIANGLES]++;	
+}
+
 void TNplant::addSpline(){
 	PlantMgr::stats[PLANT_SPLINES]++;	
 }
@@ -1607,17 +1630,22 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 static bool main_fork=false;
 void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
 	int minlvl=0;
+
 	//TNLeaf::left_side=0;
 	TNBranch *parent=getParent();
 	if(min_level<-0.1){
 		if(parent->typeValue()==ID_BRANCH)
 			minlvl=parent->max_level+min_level;
 	}
-	else if(min_level>0)
+	else if(min_level>0){
 		minlvl=min_level;
+		//cout<<"lvl:"<<lvl<<" minlvl:"<<minlvl<<endl;
+	}
 	//if(!isPlantLeaf() &&lvl<minlvl)
-	if(lvl<minlvl)
+	if(lvl>0 && minlvl>0 && lvl<=minlvl)
 		return;
+	
+	
 	if(isPlantLeaf())
 		maxlvl=parent->max_level;
 	else
@@ -1641,7 +1669,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		we=we>1?1:we; // clamp branch width to parent width
 		for(int i=0;i<n;i++){
 			level=0;
-			emit(opt,start,vec,tip,s,we*w,1);
+			emit(opt,start,vec,tip,s,we*w,0);
 		}
 	}
 	else{
@@ -1907,6 +1935,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 				w2 = dy;
 
 			} else { // no spline
+				root->addTriangle();
 				Vec4 P0(p0);
 				Vec4 P1(p1);
 				Vec4 P2(p2);

@@ -90,15 +90,18 @@ Scene() {
 		height=19.4534 ft;
 		time=443350;
 		heading=-10;
+	}
+	View{
+		height=16.141 ft;
+		tilt=-1;
+		angle=-1;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00399988;
 	}
 	View{
-		height=16.141 ft;
-		tilt=-1;
-		angle=-1;
+		heading=-12;
 		minr=0.00399988;
 	}
 	Galaxy(20000) {
@@ -149,9 +152,9 @@ Scene() {
 				twilight=Color(0.5,0.3,0.1);
 				Surface{
 					terrain=
-							Sprite("grass2x2",FLIP|NOLOD,4,5.68182e-07,0.857,1,0,0,0,0,0,0)Plant("Yellow",2,2.36742e-07,0.5,1,0,0,0,0,0,0)
+							Sprite("grass2x2",FLIP|NOLOD,4,5.68182e-07,0.857,1,0,0,0,0,0,0)Plant("Yellow",2,2.36742e-07,0.5,0.633,0,0.367,0,0,0,0,0,0)
 							Branch("stem",6,1,0.3,0.1,1,0.744,0.256,0.75,0.95,100,0,1.43,0,31,-0.214,1)["pinebark1",Color(0.5*LVL+0.2*IRAND,0.1+0.7*IRAND*LVL,0.1,1)]
-							Plant("Pine1",1,1.2e-06,0.8,0.2,0,0,0,0,0,1)
+							Plant("Pine1",1,1.2e-06,0.6,0.2,0,0.2,0,0,0,0,0,0)
 							Branch("trunk",12,1,0.79,0.59,0.43,0.05,0,0.84,0.96,0,0,1,0,15,0,1)["Cracks1",Color(0.5,0.25,0,LVL)]
 							Branch("branch",7,2,0.55,0.26,0.13,2,0.67,0.77,0.9,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(0.2*IRAND*IRAND+0.2*URAND*LVL,0.2*LVL,0,2*LVL)]
 							Color(0.752941,0.752941,0.752941,1)+Z(noise(GRADIENT|SCALE,5,2,1,0.5,2,0.48,4,0,0,1e-06))+

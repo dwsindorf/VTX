@@ -267,7 +267,6 @@ public:
 	double	level_mult;	
 	double  density;
 	double  ht;
-	double  msize;
 	double  base;
 	double  slope_bias;
 	double  ht_bias;

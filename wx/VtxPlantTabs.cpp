@@ -355,10 +355,11 @@ void VtxPlantTabs::getObjAttributes(){
 	else
 		DeltaSizeSlider->setValue(mgr->mult);
 	a=args[3];
-
+    // args[4]=comp
 	if(a)
 		DensitySlider->setValue(a);
 	else
+		DensitySlider->setValue(mgr->maxdensity);
 	a=args[5];
 	if(a)
 		DropSlider->setValue(a);
@@ -381,7 +382,6 @@ void VtxPlantTabs::getObjAttributes(){
 		PhiBiasSlider->setValue(a);
 	else
 		PhiBiasSlider->setValue(mgr->lat_bias);
-	cout<<PhiBiasSlider->getText()+",";
 
 	a=args[11];
 	if(a)
