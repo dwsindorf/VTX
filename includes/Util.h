@@ -219,6 +219,15 @@ public:
 	}
 };
 
+inline double clamp(double x, double l, double m)
+{
+	if(x<l)
+		return l;
+	if(x>m)
+		return m;
+	return x;
+}
+
 inline double lerp(double x, double xmin, double xmax, double ymin, double ymax){
 	x=x<xmin?xmin:x;
 	x=x>xmax?xmax:x;
@@ -226,6 +235,19 @@ inline double lerp(double x, double xmin, double xmax, double ymin, double ymax)
 	double b=ymin-a*xmin;
 	double y=a*x+b;
 	return y;
+}
+
+inline double remap(double x,
+                    double xmin, double xmax,
+                    double ymin, double ymax)
+{
+	if (std::abs(xmax - xmin) < 1e-12)
+	        return 0.5 * (ymin + ymax);
+
+	    double t = (x - xmin) / (xmax - xmin);
+	    t = clamp(t, 0.0, 1.0);
+
+	    return ymin + t * (ymax - ymin);
 }
 
 inline void d2f(double doubleValue, float  &floatHigh, float &floatLow, double scale) {
@@ -248,6 +270,7 @@ inline std::string gets(char *s[], int n, double r) {
 	return std::string(s[nt]);
 }
 
+const double TS=1000.0/CLOCKS_PER_SEC;
 
 #endif
 

@@ -201,7 +201,7 @@ extern double lcos(double g);
 //   e.g shrubs with leafs (with shadows) : non-VNBO <1.0 fps with VBO ~15 fps
 //************************************************************
 
-extern double MaxSize,Height,Phi,Theta,Level,Randval,Srand,Range,Temp,Slope;
+extern double MaxSize,Height,Phi,Theta,Level,PLevel,Randval,Srand,Range,Temp,Slope;
 extern Point MapPt;
 extern double  zslope();
 extern char tabs[];
@@ -1692,6 +1692,13 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	if (!root)
 		init();
 	level++;
+	TNBranch *parent=getParent();
+	if(parent->typeValue()==ID_PLANT){
+		PLevel = ((double) lvl-1) / maxlvl;
+		//cout<<"trunk level "<<level<<endl;
+	}
+	//else
+	//	cout<<"branch level"<<level<<endl;
 
 	int mode = opt;
 
@@ -1708,7 +1715,6 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	int shader_mode = 0;
 	int poly_mode = POLY_FILL;//GL_FILL;
 
-	TNBranch *parent=getParent();
 	TNBranch *child = 0;
 	if(right && (right->typeValue()==ID_BRANCH || right->typeValue()==ID_LEAF))
 		child=(TNBranch *)right;

@@ -832,13 +832,13 @@ bool  VtxScene::SwapBuffers(){
 void VtxScene::OnKey( wxKeyEvent& event )
 {
 	int key=event.GetKeyCode();
-	if(key==' '){
-		SetCurrent();
-		SwapBuffers();
-		Refresh();
-		Update();
-	}
-	else
+//	if(key==' '){
+//		SetCurrent();
+//		SwapBuffers();
+//		Refresh();
+//		Update();
+//	}
+//	else
 		set_key(key);
 }
 

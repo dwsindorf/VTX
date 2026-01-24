@@ -14,14 +14,6 @@
 double Color::min_brightness=0.5;
 double Color::min_contrast=0.4;
 
-static double clamp(double x, double l, double m) {
-	if(x<l)
-		return l;
-	if(x>m)
-		return m;
-	return x;
-}
-
 // RGBColor class
 
 RGBColor RGBColor::blend(RGBColor c, double f)

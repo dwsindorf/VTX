@@ -32,7 +32,7 @@ extern double eslope();
 extern void inc_tabs();
 extern void dec_tabs();
 
-extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,Range,Temp,Tave,Tsol,Tgas;
+extern double Theta, Phi, Height, Drop, Margin,Impact,Radius,Density,MaxHt,MinHt,FHt,Randval,Srand,Level,PLevel,Range,Temp,Tave,Tsol,Tgas;
 extern char   tabs[];
 extern double Hscale,Rscale;
 
@@ -132,6 +132,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	URAND,
 	SRAND,
 	LVL,
+	PLVL,
 	TID,
 	GTOL,
 	LTOG,
@@ -191,6 +192,7 @@ static LongSym gtypes[]={
 	{"URAND",		URAND},
 	{"SRAND",		SRAND},
 	{"LVL",			LVL},
+	{"PLVL",		PLVL},
 	{"TID",			TID},
 	{"GTOL",		GTOL},
 	{"LTOG",		LTOG},
@@ -404,6 +406,9 @@ void TNglobal::eval()
 		break;
 	case LVL:
 		S0.s=Level;
+		break;
+	case PLVL:
+		S0.s=PLevel;
 		break;
 	case TID:
 		S0.s=Td.tp->id;

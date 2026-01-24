@@ -170,14 +170,6 @@ inline double scal(double x, double mn, double mx)
 	return mn+(mx-mn)*x;
 }
 
-inline double clamp(double x, double l, double m)
-{
-	if(x<l)
-		return l;
-	if(x>m)
-		return m;
-	return x;
-}
 
 inline double tmod(double x)
 {
