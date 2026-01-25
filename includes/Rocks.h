@@ -41,7 +41,10 @@ public:
 
 class Rock3DObjMgr : public PlaceObjMgr
 {
+
 public:
+	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
+	MCObject* getTemplateForLOD(Rock3DData *s);
 	// Cache key based on world position
 	struct RockCacheKey {
 		long long x, y, z;  // Quantized world position

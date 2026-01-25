@@ -1,5 +1,4 @@
 #include "MCObjects.h"
-#include "Util.h"
 #include <algorithm>
 #include <cstring>
 #include <map>
@@ -32,8 +31,18 @@ void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
                               std::vector<MCTriangle>& triangles) {
     MCTriangle tri;
     tri.vertices[0] = v1;
-    tri.vertices[1] = v3;
-    tri.vertices[2] = v2;
+    tri.vertices[1] = v2;
+    tri.vertices[2] = v3;
+    
+    // SET templatePos for texture coordinates (needed for triplanar mapping)
+    tri.templatePos[0] = v1;
+    tri.templatePos[1] = v2;
+    tri.templatePos[2] = v3;
+    
+    // Initialize colors to white (will be modulated later if color node exists)
+    tri.colors[0] = Color(1, 1, 1);
+    tri.colors[1] = Color(1, 1, 1);
+    tri.colors[2] = Color(1, 1, 1);
     
     // Calculate face normal
     Point edge1 = tri.vertices[1] - tri.vertices[0];
@@ -43,6 +52,9 @@ void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
         edge1.z * edge2.x - edge1.x * edge2.z,
         edge1.x * edge2.y - edge1.y * edge2.x
     ).normalize();
+    
+    // Initialize faceNormal same as normal for now
+    tri.faceNormal = tri.normal;
     
     triangles.push_back(tri);
 }
@@ -154,21 +166,21 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 generateTrianglesForCube(cubeIndex, vertList, triangles);
             }
         }
-    }   
+    }
+    
     return triangles;
 }
 
 //=============================================================================
 // MCObject implementation
 //=============================================================================
+
 MCObject::MCObject() 
     : worldPosition(0, 0, 0), baseSize(1.0), 
       distanceToViewer(0), screenProjectedSize(0),
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0), 
 	  vboColors(0), vboValid(false) {
-	instanceId=0;
-	dataIndex=0;
 }
 
 MCObject::MCObject(const Point& pos, double size) 
@@ -177,9 +189,6 @@ MCObject::MCObject(const Point& pos, double size)
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0),vboTemplatePos(0), vboFaceNormals(0),
 	  vboColors(0),vboValid(false) {
-	instanceId=0;
-	dataIndex=0;
-
 }
 
 MCObject::~MCObject() {
@@ -461,6 +470,51 @@ void MCObject::generateSphereNormals() {
     }
     
     vboValid = false;
+}
+void MCObject::generateSmoothNormals() {
+    if (mesh.empty()) return;
+    
+    // Hash function for vertex position
+    auto hashVertex = [](const Point& v) -> uint64_t {
+        double snap = 0.001;
+        int ix = (int)(round(v.x / snap) / snap);
+        int iy = (int)(round(v.y / snap) / snap);
+        int iz = (int)(round(v.z / snap) / snap);
+        return ((uint64_t)(ix & 0x1FFFFF) << 42) |
+               ((uint64_t)(iy & 0x1FFFFF) << 21) |
+               ((uint64_t)(iz & 0x1FFFFF));
+    };
+    
+    // Accumulate normals per vertex position
+    std::unordered_map<uint64_t, Point> normalAccum;
+    
+    for (const auto& tri : mesh) {
+        for (int v = 0; v < 3; v++) {
+            uint64_t key = hashVertex(tri.vertices[v]);
+            normalAccum[key] = normalAccum[key] + tri.normal;
+        }
+    }
+    
+    // Normalize accumulated normals
+    for (auto& pair : normalAccum) {
+        if (pair.second.length() > 0.001) {
+            pair.second = pair.second.normalize();
+        } else {
+            pair.second = Point(0, 1, 0);
+        }
+    }
+    
+    // Apply smoothed normals to triangles
+    for (auto& tri : mesh) {
+        Point smoothNormal(0, 0, 0);
+        for (int v = 0; v < 3; v++) {
+            uint64_t key = hashVertex(tri.vertices[v]);
+            smoothNormal = smoothNormal + normalAccum[key];
+        }
+        tri.normal = smoothNormal.normalize();
+    }
+    
+    vboValid = false;  // VBO needs update
 }
 
 //=============================================================================

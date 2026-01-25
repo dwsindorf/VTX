@@ -121,6 +121,7 @@ public:
     void deleteVBO();
     
     // Optional: smooth normals across shared vertices
+    void generateSmoothNormals();
     void generateSphereNormals();
 };
 
