@@ -73,6 +73,15 @@ Scene() {
 		tilt=-10;
 		minr=0.004;
 	}
+	View{
+		phi=-5.9161;
+		height=5 ft;
+		tilt=-15;
+		hstride=2;
+	}
+	View{
+		phi=-5.91612;
+	}
 	Universe {
 		Galaxy(20000) {
 			name="Uncharted";

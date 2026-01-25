@@ -117,7 +117,6 @@ public:
     
     // Upload mesh to VBOs for rendering
     void uploadToVBO();
-    void uploadToVBODisplaced(bool computeSmoothNormals = false);
     void deleteVBO();
     
     // Optional: smooth normals across shared vertices

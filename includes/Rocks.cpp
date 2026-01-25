@@ -668,7 +668,6 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 #ifdef PRINT_LOD_STATS     
     std::cout << "Created LOD template: resolution:" << resolution 
               << " instance:" << instance 
-              //<< " smooth:" << smooth
               << " Triangles:" << templateSphere->mesh.size() << std::endl;
 #endif 
     int index = getLodIndex(resolution, Rock3DMgr::resScale);
@@ -687,12 +686,10 @@ void Rock3DObjMgr::render() {
         return;
     
     bool wireframe = test7;
-    bool smooth = Render.avenorms() && !test8;
     
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-    cout << "Rock3DObjMgr::render() moved:" << moved << " changed:" << changed << endl;
-  
+      
     if (PlaceObjMgr::shadow_mode && !shadow_start) {
         moved = false;
         changed = false;

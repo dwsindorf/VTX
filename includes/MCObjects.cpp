@@ -181,6 +181,8 @@ MCObject::MCObject()
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0), 
 	  vboColors(0), vboValid(false) {
+	instanceId=0;
+	dataIndex=0;
 }
 
 MCObject::MCObject(const Point& pos, double size) 
@@ -189,6 +191,9 @@ MCObject::MCObject(const Point& pos, double size)
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0),vboTemplatePos(0), vboFaceNormals(0),
 	  vboColors(0),vboValid(false) {
+	instanceId=0;
+	dataIndex=0;
+
 }
 
 MCObject::~MCObject() {
@@ -217,153 +222,6 @@ void MCObject::clearMesh() {
     meshValid = false;
     vboValid = false;
 }
-void MCObject::uploadToVBODisplaced(bool computeSmoothNormals) {
-    if (mesh.empty()) return;
-            
-    // Delete old VBOs
-    if (vboVertices != 0) glDeleteBuffers(1, &vboVertices);
-    if (vboNormals != 0) glDeleteBuffers(1, &vboNormals);
-    if (vboFaceNormals != 0) glDeleteBuffers(1, &vboFaceNormals);
-    if (vboColors != 0) glDeleteBuffers(1, &vboColors);
-    if (vboTemplatePos != 0) glDeleteBuffers(1, &vboTemplatePos);
-    
-    std::unordered_map<uint64_t, Point> normalAccum;
-    double snapSize = 0.001;
-	auto hashVertex = [snapSize](const Point& v) -> uint64_t {
-		long long ix = (long long)round(v.x / snapSize);
-		long long iy = (long long)round(v.y / snapSize);
-		long long iz = (long long)round(v.z / snapSize);
-		
-		uint64_t hx = ((uint64_t)(ix & 0x1FFFFF));
-		uint64_t hy = ((uint64_t)(iy & 0x1FFFFF));
-		uint64_t hz = ((uint64_t)(iz & 0x1FFFFF));
-		
-		return (hx << 42) | (hy << 21) | hz;
-	};  
-    if (computeSmoothNormals) {
-        // Build vertex-to-triangles mapping
-        std::unordered_map<uint64_t, std::vector<int>> vertexToTriangles;      
-        for (size_t i = 0; i < mesh.size(); i++) {
-            for (int v = 0; v < 3; v++) {
-                uint64_t key = hashVertex(mesh[i].templatePos[v]);
-                vertexToTriangles[key].push_back(i);
-            }
-        }  
-#ifdef DEBUG_AVERAGING
-        int minTris = 1000, maxTris = 0;
-        double totalTris = 0;
-        for (auto& pair : vertexToTriangles) {
-            int count = pair.second.size();
-            minTris = std::min(minTris, count);
-            maxTris = std::max(maxTris, count);
-            totalTris += count;
-        }
-        std::cout << "Vertex sharing: avg=" << (totalTris / vertexToTriangles.size())
-                  << " min=" << minTris << " max=" << maxTris << std::endl;
-#endif
-        // Compute smoothed normals with angle threshold
-        const double SMOOTH_ANGLE_COS = cos(80.0 * M_PI / 180.0);
-        for (auto& pair : vertexToTriangles) {
-            uint64_t key = pair.first;
-            std::vector<int>& tris = pair.second;           
-            Point referenceNormal = mesh[tris[0]].normal;           
-            Point avgNormal = referenceNormal;
-            int count = 1;          
-            for (size_t i = 1; i < tris.size(); i++) {
-                Point normal = mesh[tris[i]].normal;
-                if (referenceNormal.dot(normal) > SMOOTH_ANGLE_COS) {
-                    avgNormal = avgNormal + normal;
-                    count++;
-                }
-            }
-            normalAccum[key] = avgNormal/count;
-        } 
-        static Point lastGood=Point(0, 1, 0);
-        // Normalize accumulated normals
-        for (auto& pair : normalAccum) {
-            double len = pair.second.length();
-            if (len > 1e-8)
-            	lastGood=pair.second.normalize();
-            else 
-            	cout<<"degenerate normal detected len="<<len<<" x:"<<pair.second.x<<endl;
-            pair.second = lastGood;  
-        }
-    }
-    // Build VBO arrays
-    size_t vertexCount = mesh.size() * 3;
-    std::vector<float> vertices(vertexCount * 3);
-    std::vector<float> normals(vertexCount * 3);
-    std::vector<float> facenormals(vertexCount * 3);
-    std::vector<float> colors(vertexCount * 3);
-    std::vector<float> templatePositions(vertexCount * 3);
-    
-    for (size_t i = 0; i < mesh.size(); i++) {
-        for (int v = 0; v < 3; v++) {
-            size_t idx = (i * 3 + v) * 3;
-            
-            vertices[idx + 0] = (float)mesh[i].vertices[v].x;
-            vertices[idx + 1] = (float)mesh[i].vertices[v].y;
-            vertices[idx + 2] = (float)mesh[i].vertices[v].z;
-            
-            // Use smooth normals if computed, otherwise use face normals
-            Point normal;
-            if (computeSmoothNormals) {
-                uint64_t key = hashVertex(mesh[i].templatePos[v]);
-                auto it = normalAccum.find(key);
-                if (it != normalAccum.end()) {
-                    normal = it->second;
-                } else {
-                    // Fallback to face normal if hash lookup fails
-                    normal = mesh[i].normal;
-                }
-            } else {
-                normal = mesh[i].normal;
-            }
-            
-            normals[idx + 0] = (float)normal.x;
-            normals[idx + 1] = (float)normal.y;
-            normals[idx + 2] = (float)normal.z;
-            
-            colors[idx + 0] = (float)mesh[i].colors[v].red();
-            colors[idx + 1] = (float)mesh[i].colors[v].green();
-            colors[idx + 2] = (float)mesh[i].colors[v].blue();
-            
-            templatePositions[idx + 0] = (float)mesh[i].templatePos[v].x;
-            templatePositions[idx + 1] = (float)mesh[i].templatePos[v].y;
-            templatePositions[idx + 2] = (float)mesh[i].templatePos[v].z;
-            
-            facenormals[idx + 0] = (float)mesh[i].faceNormal.x;
-            facenormals[idx + 1] = (float)mesh[i].faceNormal.y;
-            facenormals[idx + 2] = (float)mesh[i].faceNormal.z;
-
-        }
-    }
-    // Upload VBOs
-    glGenBuffers(1, &vboVertices);
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    
-    glGenBuffers(1, &vboNormals);
-    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
- 
-    glGenBuffers(1, &vboFaceNormals);
-    glBindBuffer(GL_ARRAY_BUFFER, vboFaceNormals);
-    glBufferData(GL_ARRAY_BUFFER, facenormals.size() * sizeof(float), facenormals.data(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &vboColors);
-    glBindBuffer(GL_ARRAY_BUFFER, vboColors);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), colors.data(), GL_STATIC_DRAW);
-    
-    glGenBuffers(1, &vboTemplatePos);
-    glBindBuffer(GL_ARRAY_BUFFER, vboTemplatePos);
-    glBufferData(GL_ARRAY_BUFFER, templatePositions.size() * sizeof(float), 
-                 templatePositions.data(), GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    vboValid = true;
-}
-
 
 void MCObject::uploadToVBO() {
     if (mesh.empty()) return;
@@ -405,7 +263,6 @@ void MCObject::uploadToVBO() {
             templatePositions[idx + 0] = (float)mesh[i].templatePos[v].x;
             templatePositions[idx + 1] = (float)mesh[i].templatePos[v].y;
             templatePositions[idx + 2] = (float)mesh[i].templatePos[v].z;
-
         }
     }
     
@@ -457,64 +314,102 @@ void MCObject::deleteVBO() {
          glDeleteBuffers(1, &vboTemplatePos);
          vboTemplatePos = 0;
     } 
-   vboValid = false;
-}
-
-// Add to MCObject
-void MCObject::generateSphereNormals() {
-    if (mesh.empty()) return;
-    
-    for (auto& tri : mesh) {
-        Point centroid = (tri.vertices[0] + tri.vertices[1] + tri.vertices[2]) * (1.0/3.0);
-        tri.normal = (centroid - worldPosition).normalize();
-    }
-    
     vboValid = false;
 }
+
 void MCObject::generateSmoothNormals() {
     if (mesh.empty()) return;
     
-    // Hash function for vertex position
-    auto hashVertex = [](const Point& v) -> uint64_t {
-        double snap = 0.001;
-        int ix = (int)(round(v.x / snap) / snap);
-        int iy = (int)(round(v.y / snap) / snap);
-        int iz = (int)(round(v.z / snap) / snap);
-        return ((uint64_t)(ix & 0x1FFFFF) << 42) |
-               ((uint64_t)(iy & 0x1FFFFF) << 21) |
-               ((uint64_t)(iz & 0x1FFFFF));
+    // Hash vertices in TEMPLATE SPACE (not world space)
+    double snapSize = 0.001;
+    auto hashVertex = [snapSize](const Point& v) -> uint64_t {
+        long long ix = (long long)round(v.x / snapSize);
+        long long iy = (long long)round(v.y / snapSize);
+        long long iz = (long long)round(v.z / snapSize);
+        
+        uint64_t hx = ((uint64_t)(ix & 0x1FFFFF));
+        uint64_t hy = ((uint64_t)(iy & 0x1FFFFF));
+        uint64_t hz = ((uint64_t)(iz & 0x1FFFFF));
+        
+        return (hx << 42) | (hy << 21) | hz;
     };
     
-    // Accumulate normals per vertex position
+    // Build vertex-to-triangles mapping using templatePos
+    std::unordered_map<uint64_t, std::vector<size_t>> vertexToTriangles;
+    for (size_t i = 0; i < mesh.size(); i++) {
+        for (int v = 0; v < 3; v++) {
+            uint64_t key = hashVertex(mesh[i].templatePos[v]);  // Use templatePos!
+            vertexToTriangles[key].push_back(i);
+        }
+    }
+    
+    // Compute smoothed normals with angle threshold
+    const double SMOOTH_ANGLE_COS = cos(80.0 * M_PI / 180.0);
     std::unordered_map<uint64_t, Point> normalAccum;
     
-    for (const auto& tri : mesh) {
-        for (int v = 0; v < 3; v++) {
-            uint64_t key = hashVertex(tri.vertices[v]);
-            normalAccum[key] = normalAccum[key] + tri.normal;
+    for (auto& pair : vertexToTriangles) {
+        uint64_t key = pair.first;
+        std::vector<size_t>& tris = pair.second;
+        
+        Point referenceNormal = mesh[tris[0]].normal;
+        Point avgNormal = referenceNormal;
+        int count = 1;
+        
+        for (size_t i = 1; i < tris.size(); i++) {
+            Point normal = mesh[tris[i]].normal;
+            // Only average if angle is within threshold
+            if (referenceNormal.dot(normal) > SMOOTH_ANGLE_COS) {
+                avgNormal = avgNormal + normal;
+                count++;
+            }
         }
+        
+        normalAccum[key] = avgNormal / count;
     }
     
     // Normalize accumulated normals
     for (auto& pair : normalAccum) {
-        if (pair.second.length() > 0.001) {
+        double len = pair.second.length();
+        if (len > 1e-8) {
             pair.second = pair.second.normalize();
         } else {
             pair.second = Point(0, 1, 0);
         }
     }
     
-    // Apply smoothed normals to triangles
+    // Store per-vertex smooth normals in a temporary structure
+    // We can't modify triangle normals directly since each vertex needs its own
+    // Instead, store in a map that uploadToVBO will use
+    std::unordered_map<uint64_t, Point> vertexNormals;
     for (auto& tri : mesh) {
-        Point smoothNormal(0, 0, 0);
         for (int v = 0; v < 3; v++) {
-            uint64_t key = hashVertex(tri.vertices[v]);
-            smoothNormal = smoothNormal + normalAccum[key];
+            uint64_t key = hashVertex(tri.templatePos[v]);
+            auto it = normalAccum.find(key);
+            if (it != normalAccum.end()) {
+                vertexNormals[key] = it->second;
+            }
         }
-        tri.normal = smoothNormal.normalize();
     }
     
-    vboValid = false;  // VBO needs update
+    // Note: We need to modify uploadToVBO to use per-vertex normals
+    // For now, just update the triangle normals with averaged value
+    for (auto& tri : mesh) {
+        Point smoothNormal(0, 0, 0);
+        int count = 0;
+        for (int v = 0; v < 3; v++) {
+            uint64_t key = hashVertex(tri.templatePos[v]);
+            auto it = normalAccum.find(key);
+            if (it != normalAccum.end()) {
+                smoothNormal = smoothNormal + it->second;
+                count++;
+            }
+        }
+        if (count > 0) {
+            tri.normal = (smoothNormal / count).normalize();
+        }
+    }
+    
+    vboValid = false;
 }
 
 //=============================================================================
