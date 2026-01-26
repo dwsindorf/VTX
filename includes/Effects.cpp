@@ -790,7 +790,6 @@ void EffectsMgr::create_jitter_lookup(int size, int samples_u, int samples_v)
 	delete [] data;
 
 }
-#define USE_DEPTH  
 void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int stride) {
 	extern double Gscale,Hscale,Rscale;
 	double wscale=Gscale*Hscale;
@@ -810,12 +809,7 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
     std::vector<float> fboData2(width * height * 4);  // RGBA
     std::vector<float> fboData3(width * height * 4);  // RGBA
     double d0=clock();
-#ifdef USE_DEPTH   
     glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
-#else
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[3]);  // FBOTex2 is index 1
-    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData1.data());
-#endif    
     double dd=clock();  
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[2]);  // FBOTex2 is index 2
     glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData2.data());
@@ -844,11 +838,8 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
         for (int x = 0; x < width; x += stride) {
             int idx = y * width + x;
             int dindex=idx * 4;
-#ifdef USE_DEPTH
+
             double wz = depthBuffer[idx];
-#else
-            double wz = fboData1[dindex+1];
-#endif            
             if (wz >= 0.9999) continue;  // Skip sky
  
             zmax=std::max(zmax,wz);
@@ -867,7 +858,7 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
             Point worldPos = sp.worldPos + xpoint;
             double r = worldPos.length();
             
-            if (r < 1e-10) continue;
+            if (r < 1e-12) continue;
             sp.layerId=fboData2[dindex+0];
 
             if(sp.layerId<1){
@@ -878,7 +869,8 @@ void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int strid
             sp.slope=fboData2[dindex+1];
             sp.theta=fboData2[dindex+2];
             sp.phi=fboData2[dindex+3];        
-            sp.height = (r - TheMap->radius) / Rscale;
+            sp.height = (r - 0.99999998*TheMap->radius) / Rscale;
+            
             sp.normal = worldPos.normalize();
             sp.hardness = 0.0;
               	

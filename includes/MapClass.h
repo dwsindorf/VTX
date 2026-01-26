@@ -97,6 +97,7 @@ protected:
 	void clearLists();
 	
 	void render_objects(PlaceObjMgr &);
+	void render_placements();
 
 public:
 	MapNode *current;

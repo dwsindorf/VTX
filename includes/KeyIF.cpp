@@ -99,11 +99,10 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST6:
-		extern bool use_templates;
-		use_templates=use_templates?0:1;
-		cout<<"use_templates="<<use_templates<<endl;
-		TheScene->set_changed_detail();
-		TheScene->rebuild_all();
+		test6=test6?0:1;
+		cout<<"test6="<<test6<<endl;
+		TheScene->set_moved();
+		TheScene->set_changed_render();
 		break;
 	case KEY_TEST7:
 		test7=test7?0:1;

@@ -1236,11 +1236,9 @@ void Map::render_shaded()
 			}
 #ifdef DEBUG_RENDER
 		    cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
-#endif
+#endif   
 		    if(!UseDepthBuffer && viewobj_surface){
-				render_objects(tp->Rocks);
-				render_objects(tp->Plants); // if plants are global all layers get them
-				render_objects(tp->Sprites);
+				render_placements();
 		    }
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
@@ -1255,9 +1253,7 @@ void Map::render_shaded()
 				Td.tp=tp;
 				if(!tp || !visid(tid))
 					continue;
-				render_objects(tp->Plants); // if plants are global all layers get them
-				render_objects(tp->Rocks);
-				render_objects(tp->Sprites);
+				render_placements();
 			}
 		}
 	}
@@ -1303,6 +1299,11 @@ void Map::render_shaded()
 	glPopAttrib();
 }
 
+void Map::render_placements(){
+	render_objects(tp->Rocks);
+	render_objects(tp->Plants); // if plants are global all layers get them
+	render_objects(tp->Sprites);
+}
 //-------------------------------------------------------------
 // Map::render_objects() render placements that are not just terrain modifiers
 // - terrain modifiers: Craters, Rocks(2d) - not processed here
@@ -1526,7 +1527,7 @@ int Map::get_mapnodes(){
 
 	node_data_list.clear();
     if(UseDepthBuffer)
-    	collectSurfacePointsFromDepth(3);  // Use depth buffer
+    	collectSurfacePointsFromDepth(4);  // Use depth buffer
     else
 		npole->visit(&collect_nodes);
 	double d1=clock();

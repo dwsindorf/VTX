@@ -35,8 +35,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
-#define PRINT_ROCK_STATS
+//#define PRINT_STATS
+//#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -337,6 +337,8 @@ int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
 int Rock3DObjMgr::templates_per_lod=3;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
+std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
+//std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
 	//freeLODTemplates();
@@ -686,10 +688,12 @@ void Rock3DObjMgr::render() {
         return;
     
     bool wireframe = test7;
+    bool smooth = Render.avenorms() && !test8;
     
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-      
+    //cout << "Rock3DObjMgr::render() moved:" << moved << " changed:" << changed << endl;
+  
     if (PlaceObjMgr::shadow_mode && !shadow_start) {
         moved = false;
         changed = false;
@@ -697,7 +701,7 @@ void Rock3DObjMgr::render() {
     
     bool placement_needs_update = moved;
     bool mesh_needs_rebuild = changed;
-    double t1 = 0, t2 = 0, t3 = 0, t4 = 0, t5 = 0, d0 = 0, d1 = 0, d2 = 0;
+    double t1 = 0, t2 = 0, t3 = 0, d0 = 0, d1 = 0;
     
     if (mesh_needs_rebuild) {
         std::cout << "Settings changed - invalidating" << endl;
@@ -705,19 +709,30 @@ void Rock3DObjMgr::render() {
         rocks.clear();
         freeLODTemplates();
         Rock3DMgr::clearStats();
+        
+        // Clear batches
+        for (auto& pair : rockBatches) {
+            pair.second.deleteVBOs();
+        }
+        rockBatches.clear();
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
         d0 = clock();
         
-        rocks.clear();  // Clear old rocks
+        rocks.clear();  // Still clear for compatibility
+        
+        // Clear and prepare batches
+        for (auto& pair : rockBatches) {
+            pair.second.deleteVBOs();
+            pair.second.clear();
+        }
+        rockBatches.clear();
         
         if (!mesh_needs_rebuild)
             Rock3DMgr::clearStats();
         
         Point xpoint = TheScene->xpoint;
-        
-        int hits = 0, misses = 0;
 
         for (int i = 0; i < n; i++) {
             Rock3DData *s = data[i];
@@ -735,7 +750,7 @@ void Rock3DObjMgr::render() {
             
             int resolution = Rock3DMgr::getLODResolution(pts);
             
-            // Get fully-processed template (includes displacement, color, normals, smoothing)
+            // Get fully-processed template
             d1 = clock();
             int rseed = TheNoise.rseed;
             TheNoise.rseed = rval;
@@ -748,86 +763,160 @@ void Rock3DObjMgr::render() {
                 continue;
             }
             
-            d2 = clock();
-            t2 += d2 - d1;  // Template retrieval time (should be ~0 after first frame)
+            t1 += clock() - d1;
             
-            // Create rock and transform template to world/eye space
-            MCObject* rock = rocks.addObject(eyePos, size);
+            // Get or create batch for this resolution
+            //VBOBatch& batch = rockBatches[resolution];
             
-            if (rock) {
-                d1 = clock();
-                rock->setDistanceInfo(dist, pts);
-                rock->mesh.clear();
-                rock->instanceId = instance;
-                rock->dataIndex = i;
-                
-                // Get world position and surface normal
-                Point worldPos = s->vertex;
-                Point up = s->normal;
-                
-                double dscale = Hscale * drop * (1 - 0.5 * comp) * 0.5;
-                Point rockCenter = worldPos - up * (s->radius * dscale);
-                
-                // Create rotation basis vectors
-                Point right, forward;
-                if (fabs(up.z) < 0.9)
-                    right = Point(up.y, -up.x, 0).normalize();
-                else
-                    right = Point(0, up.z, -up.y).normalize();
-                
-                forward = Point(up.y * right.z - up.z * right.y,
-                                up.z * right.x - up.x * right.z,
-                                up.x * right.y - up.y * right.x);
-                
-                // Transform fully-processed template mesh to world/eye space
-                for (const auto& tri : templateSphere->mesh) {
-                    MCTriangle newTri;
-                    
-                    for (int v = 0; v < 3; v++) {
-                        Point tv = tri.vertices[v];
-                        
-                        // Apply rotation matrix (scale is included in 'size' below)
-                        Point rotated = Point(
-                            tv.x * right.x + tv.y * forward.x + tv.z * up.x,
-                            tv.x * right.y + tv.y * forward.y + tv.z * up.y,
-                            tv.x * right.z + tv.y * forward.z + tv.z * up.z);
-                        
-                        // Scale, translate to world position, convert to eye space
-                        Point worldVertex = rockCenter + rotated * size;
-                        newTri.vertices[v] = worldVertex - xpoint;
-                        
-                        // Copy pre-processed attributes from template
-                        newTri.colors[v] = tri.colors[v];
-                        newTri.templatePos[v] = tri.templatePos[v];
-                    }
-                    
-                    // Rotate the pre-calculated normals
-                    newTri.normal = rotateNormal(tri.normal, right, forward, up);
-                    newTri.faceNormal = tri.faceNormal;
-                    
-                    rock->mesh.push_back(newTri);
-                }
-                
-                rock->meshValid = true;
-                
-                t5 += clock() - d1;  // Mesh transformation time
-                d1 = clock();
-                
-                // Simple VBO upload (no smoothing - already in template)
-                rock->uploadToVBO();
-                
-                t4 += clock() - d1;  // VBO upload time
-                
-                Rock3DMgr::setStats(resolution, rock->mesh.size(), true);
+            int mgrInstance = pmgr->instance;  // This is the texture type!
+            BatchKey batchKey(resolution, mgrInstance);
+            
+            VBOBatch& batch = rockBatches[batchKey];
+            if (batch.vertices.empty()) {
+                batch.instanceId = instance;
+                batch.lodLevel = resolution;
             }
+            
+            d1 = clock();
+            
+            // Record rock info
+            int vertexOffset = batch.vertices.size() / 3;
+            batch.rockOffsets.push_back(vertexOffset);
+            batch.rockTriCounts.push_back(templateSphere->mesh.size());
+            batch.rockDataIndices.push_back(i);
+            batch.rockInstanceIds.push_back(instance);
+            
+            // Get world position and surface normal
+            Point worldPos = s->vertex;
+            Point up = s->normal;
+            
+            double dscale = Hscale * drop * (1 - 0.5 * comp) * 0.5;
+            Point rockCenter = worldPos - up * (s->radius * dscale);
+            
+            // Create rotation basis vectors
+            Point right, forward;
+            if (fabs(up.z) < 0.9)
+                right = Point(up.y, -up.x, 0).normalize();
+            else
+                right = Point(0, up.z, -up.y).normalize();
+            
+            forward = Point(up.y * right.z - up.z * right.y,
+                            up.z * right.x - up.x * right.z,
+                            up.x * right.y - up.y * right.x);
+            
+            // Transform and add to batch
+            for (const auto& tri : templateSphere->mesh) {
+                for (int v = 0; v < 3; v++) {
+                    Point tv = tri.vertices[v];
+                    
+                    // Rotate and scale
+                    Point rotated = Point(
+                        tv.x * right.x + tv.y * forward.x + tv.z * up.x,
+                        tv.x * right.y + tv.y * forward.y + tv.z * up.y,
+                        tv.x * right.z + tv.y * forward.z + tv.z * up.z);
+                    
+                    Point worldVertex = rockCenter + rotated * size;
+                    Point eyeVertex = worldVertex - xpoint;
+                    
+                    // Add to batch arrays
+                    batch.vertices.push_back(eyeVertex.x);
+                    batch.vertices.push_back(eyeVertex.y);
+                    batch.vertices.push_back(eyeVertex.z);
+                    
+                    // Rotate normal
+                    Point rotatedNormal = rotateNormal(tri.normal, right, forward, up);
+                    batch.normals.push_back(rotatedNormal.x);
+                    batch.normals.push_back(rotatedNormal.y);
+                    batch.normals.push_back(rotatedNormal.z);
+                    
+                    // Face normal (for texturing)
+                    
+                    //Point rotatedFaceNormal = tri.faceNormal;//rotateNormal(tri.faceNormal, right, forward, up);
+                    batch.faceNormals.push_back(tri.faceNormal.x);
+                    batch.faceNormals.push_back(tri.faceNormal.y);
+                    batch.faceNormals.push_back(tri.faceNormal.z);
+                    
+                    // Colors
+                    batch.colors.push_back((float)(tri.colors[v].red()));
+                    batch.colors.push_back((float)(tri.colors[v].green()));
+                    batch.colors.push_back((float)(tri.colors[v].blue()));
+                    
+                    // Template position
+                    Point tp = tri.templatePos[v];
+                    tp.x += 0.002 * rval; 
+                    tp.y += 0.002 * rval; 
+                    tp.z += 0.002 * rval; 
+                    
+                    batch.templatePos.push_back(tp.x);
+                    batch.templatePos.push_back(tp.y);
+                    batch.templatePos.push_back(tp.z);
+                }
+            }
+            
+            t3 += clock() - d1;
+            
+            Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), true);
         }
         
-        std::cout << "Processed " << n << " rocks" << std::endl;
+        // Upload batched VBOs (one set per resolution level)
+        d1 = clock();
+        int totalBatches = 0;
+        int totalVerts = 0;
+        
+        GLhandleARB program = GLSLMgr::programHandle();
+        
+        for (auto& pair : rockBatches) {
+        	const BatchKey& key = pair.first;
+			VBOBatch& batch = pair.second;
+			if (batch.rockOffsets.empty()) continue;
+			
+			// Set texture uniforms ONCE per batch (all same instance)
+			int instanceId = batch.instanceId;
+            totalBatches++;
+            totalVerts += batch.vertices.size() / 3;
+            
+            // Upload vertices
+            glGenBuffers(1, &batch.vboVertices);
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
+            glBufferData(GL_ARRAY_BUFFER, batch.vertices.size() * sizeof(float),
+                        batch.vertices.data(), GL_STATIC_DRAW);
+            
+            // Upload normals
+            glGenBuffers(1, &batch.vboNormals);
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboNormals);
+            glBufferData(GL_ARRAY_BUFFER, batch.normals.size() * sizeof(float),
+                        batch.normals.data(), GL_STATIC_DRAW);
+            
+            // Upload face normals
+            glGenBuffers(1, &batch.vboFaceNormals);
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboFaceNormals);
+            glBufferData(GL_ARRAY_BUFFER, batch.faceNormals.size() * sizeof(float),
+                        batch.faceNormals.data(), GL_STATIC_DRAW);
+            
+            // Upload colors
+            glGenBuffers(1, &batch.vboColors);
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboColors);
+            glBufferData(GL_ARRAY_BUFFER, batch.colors.size() * sizeof(float),
+                        batch.colors.data(), GL_STATIC_DRAW);
+            
+            // Upload template positions
+            glGenBuffers(1, &batch.vboTemplatePos);
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboTemplatePos);
+            glBufferData(GL_ARRAY_BUFFER, batch.templatePos.size() * sizeof(float),
+                        batch.templatePos.data(), GL_STATIC_DRAW);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+        
+        t2 = (clock() - d1);
+        
+        std::cout << "Batched " << n << " rocks into " << totalBatches 
+                  << " VBOs (" << totalVerts << " vertices)" << std::endl;
         Rock3DMgr::printStats();
         
         double total = (clock() - d0) * TS;
-        cout << "t1:" << t1*TS << " t2:" << t2*TS << " t3:" << t3*TS 
-             << " t4:" << t4*TS << " t5:" << t5*TS << " total:" << total << endl;
+        cout << "Compute time Templates:" << t1*TS 
+             << " VBOs:" << t2*TS << " Batches:" << t3*TS << " Total:" << total << " ms"<<endl;
     }
     
     render_objects();
@@ -837,103 +926,112 @@ void Rock3DObjMgr::render() {
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
-
-    static std::set<int> lastFrameRocks;
-    std::set<int> thisFrameRocks;
-
-    int currentRockType = -1;
-    int rockIndex = 0;
-    int drawnCount = 0;
-
-    if(!PlaceObjMgr::shadow_mode){
-    	if (!setProgram()) {
-    	  cout << "Rock3DObjMgr::setProgram FAILED" << endl;
-    	  return;
-    	}
+    
+    if (!PlaceObjMgr::shadow_mode) {
+        if (!setProgram()) {
+            cout << "Rock3DObjMgr::setProgram FAILED" << endl;
+            return;
+        }
     }
+    
+    //cout << "render_objects: maxTexs=" << maxTexs << " objs.size=" << objs.size << endl;
     if (wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    const std::vector<MCObject*>& rockList = rocks.getObjects();
-    int validCount = 0, invalidVboCount = 0, emptyMeshCount = 0;
-
-	GLhandleARB program = GLSLMgr::programHandle();
-	
-	for (MCObject *rock : rockList) {
-		if (!rock->vboValid) {
-		        invalidVboCount++;
-		        continue;
-		    }
-		    if (rock->mesh.size() == 0) {
-		        emptyMeshCount++;
-		        continue;
-		    }
-		    validCount++;
-		if (rock->vboValid && rock->mesh.size() > 0) {
-			thisFrameRocks.insert(rockIndex);
-			PlaceData* placeData = data[rockIndex];
-			//int rockType = placeData->instance;  // 0, 1, 2, etc.
-			int rockType = rock->instanceId;
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    //glDisable(GL_POLYGON_OFFSET_FILL);
+    GLhandleARB program = GLSLMgr::programHandle();
+    tid = 0;
+	for (int i = 0; i < objs.size; i++) {
+		Rock3D* rockObj = (Rock3D*)objs[i];
+		Rock3DMgr* rmgr = (Rock3DMgr*)rockObj->mgr();
+		
+		// Set textures for this instance
+		for (int j = rmgr->texs.size - 1; j >= 0; j--) {
+			TNtexture *tntex = rmgr->texs[j];
+			if (!tntex->isEnabled()) continue;
 			
-			int mgrInstance = placeData->mgr->instance;
-
-			for (int i = 0; i < maxTexs; i++) { // set active status for all textures
-				char str[64];
-				sprintf(str, "tex2d[%d].active", i);
-				GLint loc = glGetUniformLocationARB(program, str);
-				if (loc >= 0) {
-					glUniform1iARB(loc, rockType);
-				}
-			}
-			// show when active texture changes
-#ifdef PRINT_ACTIVE_TEX
-			if (rockType != currentRockType) {				
-				std::cout << "Switching active rock instance " << currentRockType <<"->"<<rockType<<std::endl;				
-				currentRockType = rockType;
-			}
-#endif             
-			glBindBuffer(GL_ARRAY_BUFFER, rock->vboVertices);
-			glVertexPointer(3, GL_FLOAT, 0, 0);
-			glEnableClientState(GL_VERTEX_ARRAY);
-
-			glBindBuffer(GL_ARRAY_BUFFER, rock->vboNormals);
-			glNormalPointer(GL_FLOAT, 0, 0);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			
-            glBindBuffer(GL_ARRAY_BUFFER, rock->vboColors);
-            glColorPointer(3, GL_FLOAT, 0, 0);
-            glEnableClientState(GL_COLOR_ARRAY);
-
-			GLint attribLoc1 = glGetAttribLocation(program, "templatePosition");
-			if (attribLoc1 >= 0) {
-				glBindBuffer(GL_ARRAY_BUFFER, rock->vboTemplatePos);
-				glVertexAttribPointer(attribLoc1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-				glEnableVertexAttribArray(attribLoc1);
-			}
-			GLint attribLoc2 = glGetAttribLocation(program, "faceNormal");
-			if (attribLoc2 >= 0) {
-				glBindBuffer(GL_ARRAY_BUFFER, rock->vboFaceNormals);
-				glVertexAttribPointer(attribLoc2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-				glEnableVertexAttribArray(attribLoc2);
-			}
-			glDrawArrays(GL_TRIANGLES, 0, rock->mesh.size() * 3);
-			
-			// Disable template position attribute
-			if (attribLoc1 >= 0) 
-			    glDisableVertexAttribArray(attribLoc1);
-			if (attribLoc2 >= 0) 
-			    glDisableVertexAttribArray(attribLoc2);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-			glDisableClientState(GL_COLOR_ARRAY);
-			rockIndex++;
-
+			Texture *texture = tntex->texture;
+			texture->pid = i;  // instance ID
+			TerrainProperties::tid = tid;
+			texture->setProgram();  // This binds the texture
+			tid++;
 		}
 	}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    int totalRocks = 0;
+    
+    // Render each batch
+    for (auto& pair : rockBatches) {
+        const BatchKey& key = pair.first;
+        VBOBatch& batch = pair.second;
+        if (batch.vertices.empty()) continue;
+        int rockType = batch.instanceId;  // This is mgr->instance
+            
+            // Set ALL texture active flags to this rockType
+		for (int i = 0; i < maxTexs; i++) {
+			char str[64];
+			sprintf(str, "tex2d[%d].active", i);
+			GLint loc = glGetUniformLocationARB(program, str);
+			if (loc >= 0) {
+				glUniform1iARB(loc, rockType);
+			}
+		}         
+        #ifdef PRINT_ACTIVE_TEX
+            static int currentRockType = -1;
+            if (rockType != currentRockType) {
+                std::cout << "Switching active rock instance " << currentRockType 
+                          << " -> " << rockType << std::endl;
+                currentRockType = rockType;
+            }
+        #endif
+         // Bind VBOs for this batch
+        glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, batch.vboNormals);
+        glNormalPointer(GL_FLOAT, 0, 0);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, batch.vboColors);
+        glColorPointer(3, GL_FLOAT, 0, 0);
+        glEnableClientState(GL_COLOR_ARRAY);
+        
+        // Template position attribute
+        GLint attribLoc1 = glGetAttribLocation(program, "templatePosition");
+        if (attribLoc1 >= 0) {
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboTemplatePos);
+            glVertexAttribPointer(attribLoc1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(attribLoc1);
+        } 
+        // Face normal attribute
+        GLint attribLoc2 = glGetAttribLocation(program, "faceNormal");
+        if (attribLoc2 >= 0) {
+            glBindBuffer(GL_ARRAY_BUFFER, batch.vboFaceNormals);
+            glVertexAttribPointer(attribLoc2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(attribLoc2);
+        }
+        
+        // Draw ENTIRE batch in ONE call (this is the key optimization!)
+        int totalVertices = batch.vertices.size() / 3;
+        glDrawArrays(GL_TRIANGLES, 0, totalVertices);
+        
+        totalRocks += batch.rockOffsets.size();
+        
+        // Cleanup attributes
+        if (attribLoc1 >= 0) glDisableVertexAttribArray(attribLoc1);
+        if (attribLoc2 >= 0) glDisableVertexAttribArray(attribLoc2);
+        
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    cout << "Rendered " << totalRocks << " rocks from " << rockBatches.size() << " batches" << endl;
 }
 //************************************************************
 // TNrocks3D class
