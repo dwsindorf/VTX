@@ -238,10 +238,10 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"craters(1,0.05,0.2)\n");
 		break;
 	case TN_ROCKS3D:
-		sprintf(tmp,"rocks3d(ID1,1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
+		sprintf(tmp,"rocks3d(1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
 		break;
 	case TN_ROCKS:
-		sprintf(tmp,"rocks(ID1,1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
+		sprintf(tmp,"rocks(1,1e-05,0.8,0.163,0.1,0.1,0,noise(GRADIENT|NLOD,0,2))[Color(0.5,0.5,0.5)]\n");
 		break;
 	case TN_FOG:
 		sprintf(tmp,"fog(0.0)\n");
@@ -338,6 +338,7 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 	case TN_CRATERS:
 		return new ModelSym("Craters",type);
 	case TN_ROCKS3D:
+		return new ModelSym("Rocks3D",type);
 	case TN_ROCKS:
 		return new ModelSym("Rocks",type);
 	case TN_FOG:
@@ -865,6 +866,10 @@ void UniverseModel::setType(NodeIF *node)
 			node->setFlag(TN_CRATERS);
 			break;
 		case ID_ROCK3D:
+			node->setFlag(TN_ROCKS3D);
+			node->setFlag(TN_HIDEFLAG);
+			node->setFlag(TN_BRANCH);
+			break;
 		case ID_ROCKS:
 			node->setFlag(TN_ROCKS);
 			node->setFlag(TN_HIDEFLAG);

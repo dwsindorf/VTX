@@ -344,7 +344,7 @@ void MCObject::generateSmoothNormals() {
     }
     
     // Compute smoothed normals with angle threshold
-    const double SMOOTH_ANGLE_COS = cos(80.0 * M_PI / 180.0);
+    const double SMOOTH_ANGLE_COS = cos(90.0 * M_PI / 180.0);
     std::unordered_map<uint64_t, Point> normalAccum;
     
     for (auto& pair : vertexToTriangles) {
@@ -358,7 +358,7 @@ void MCObject::generateSmoothNormals() {
         for (size_t i = 1; i < tris.size(); i++) {
             Point normal = mesh[tris[i]].normal;
             // Only average if angle is within threshold
-            if (referenceNormal.dot(normal) > SMOOTH_ANGLE_COS) {
+            if (referenceNormal.dot(normal)< SMOOTH_ANGLE_COS) {
                 avgNormal = avgNormal + normal;
                 count++;
             }

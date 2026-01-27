@@ -24,6 +24,7 @@ extern int test7, test8;
 
 extern Point MapPt;
 extern double ptable[];
+extern char tabs[];
 
 static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
@@ -62,11 +63,11 @@ static bool shadow_start=false;
 //      in UI change only class name (rock or rock3d) to regenerate
 // 9. add noise modulation to 3d rocks using existing methods - done
 // 10. support for shadows - done
-// 11. improve lighting model (done)
+// 11. improve lighting model -done
 // 12. add color -done 
 // 13. add single texture (triplanar) using simple shader - done
-// 14. add bump-map
-// 15  multi-textures
+// 14. add bump-map -done
+// 15  multi-textures - done
 //
 // Notes:
 // (1) the terrain stack may have one or more "layers"
@@ -78,22 +79,26 @@ static bool shadow_start=false;
 //     - Rock3DMgr: responsible for creating rock instance candidates
 //     - Rock3D: used by Rock3DObjMgr to produce final array of 3d rocks (utility class)
 // (4) generation sequence
-//     - In MapClass(render_objects) 
+//     - In MapClass::render_objects 
 //       * called for each terrain layer and 3DObjMgr type instance in each layer (Plants, Sprites 3DRocks)
 //       * traverses map data and generates array of visible objects (MapNodes) as seed candidates for placements 
 //       * for each MapNode: calls MapNode->setSurface() to put 3d vertex(point) etc. into global objects
-//       * calls Rock3DObjMgr: eval(): 
-//     - Rock3DObjMgr(eval)
+//     - Rock3DObjMgr::eval
+//       * called by Map::render_objects
 //       * for each type(TNrock), calls TNrock->eval() which calls Rock3Dmgr->eval()
 //       * Rock3Dmgr populates global hash table with placement candidates
-//     - Rock3DObjMgr(collect)
+//     - Rock3DObjMgr::collect
+//       * called by Map::render_objects
 //       * traverses hash table and fills static array PlaceData(data)
-//     - Rock3DObjMgr (render)
+//     - Rock3DObjMgr::render
+//       * called by Map::render_objects
 //       * parses data array and fills vertex buffer with OpenGL data (if need rebuild determined)
-//     - Rock3DObjMgr (setProgram)
+//     - Rock3DObjMgr::setProgram
+//       * called by Rock3DObjMgr::render
 //       * sets up OpenGl environment for all objects to be rendered
 //       * sets shader program
-//     - Rock3DObjMgr (render_object)
+//     - Rock3DObjMgr::render_object
+//       * called by Rock3DObjMgr::render
 //       * uploads/ renders data using vertex buffers
 
 //************************************************************
@@ -940,7 +945,6 @@ void Rock3DObjMgr::render_objects() {
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    //glDisable(GL_POLYGON_OFFSET_FILL);
     GLhandleARB program = GLSLMgr::programHandle();
     tid = 0;
 	for (int i = 0; i < objs.size; i++) {
@@ -1031,14 +1035,15 @@ void Rock3DObjMgr::render_objects() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    cout << "Rendered " << totalRocks << " rocks from " << rockBatches.size() << " batches" << endl;
+    //cout << "Rendered " << totalRocks << " rocks from " << rockBatches.size() << " batches" << endl;
 }
 //************************************************************
 // TNrocks3D class
 //************************************************************
-TNrocks3D::TNrocks3D(int t,TNode *l, TNode *r, TNode *b) : TNrocks(t|MCROCKS,l,r,b)
+TNrocks3D::TNrocks3D(TNode *l, TNode *r, TNode *b) : TNrocks(l,r,b)
 {
 	delete mgr;
+	type=MCROCKS;
 	mgr=new Rock3DMgr(type);
 	rock=0;
 }
@@ -1304,12 +1309,20 @@ void RockMgr::init()
 //************************************************************
 // TNrocks class
 //************************************************************
-TNrocks::TNrocks(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|ROCKS,l,r,b)
+TNrocks::TNrocks(TNode *l, TNode *r, TNode *b) : TNplacements(ROCKS,l,r,b)
 {
     mgr=new RockMgr(type);
+    TNarg *arg=left;
+	TNarg *node=arg->left;
+	if(node->typeValue() == ID_STRING){		
+		setName(((TNstring*)node)->value);
+		left=arg->next();
+		left->setParent(this);
+		arg->right=0;
+		delete arg;	
+	}
 	TNarg &args=*((TNarg *)left);
-	TNode *arg=args[8];
-	if(arg && (arg->typeValue() != ID_CONST))
+	if(args[8] && (args[8]->typeValue() != ID_CONST))
 		mgr->dexpr=arg;
 	set_collapsed();
 }
@@ -1375,6 +1388,51 @@ NodeIF *TNrocks::replaceNode(NodeIF *c)
 	base=0;
 	TheScene->rebuild_all();
 	return c;
+}
+
+void TNrocks::propertyString(char *s)
+{
+	sprintf(s+strlen(s),"%s(",symbol());
+	if(strlen(name_str))
+		sprintf(s+strlen(s),"\"%s\",",name_str);
+
+	TNarg *arg=(TNarg*)left;
+	while(arg){
+		arg->valueString(s);
+		arg=arg->next();
+		if(arg)
+			strcat(s,",");
+	}
+	strcat(s,")");
+}
+
+//-------------------------------------------------------------
+// TNtexture::valueString() node value substring
+//-------------------------------------------------------------
+void TNrocks::valueString(char *s)
+{	
+    TNbase *value=this;
+ 	setStart(s);
+	value->propertyString(s);
+	if(base){
+		sprintf(s+strlen(s),"\n%s[",tabs);
+		base->valueString(s);
+		sprintf(s+strlen(s),"\n%s]",tabs);
+	}	
+	setEnd(s);
+}
+
+void TNrocks::save(FILE *f)
+{
+	char buff[4096];
+	buff[0]=0;
+	valueString(buff);
+	fprintf(f,"%s",buff);
+	if(right){
+		fprintf(f,"%s",tabs);
+		right->save(f);
+	}
+
 }
 
 //-------------------------------------------------------------
@@ -1492,7 +1550,9 @@ void TNrocks::eval() {
 	TerrainData ground;
 	int i;
 	bool first = (right && right->typeValue() != ID_ROCKS);
-	bool last = getParent()->typeValue() != ID_ROCKS;
+	bool last = false;
+	if(parent && parent->typeValue() != ID_ROCKS);
+		last=true;
 	INIT;
 #ifdef ROCK_LAYER
 	S0.set_flag(ROCKLAYER);
@@ -1628,10 +1688,10 @@ bool TNrocks::randomize(){
 // this=prototype, this->parent=layer
 TNrocks *TNrocks::newInstance(int m){
 	NodeIF::setRands();
-	int gtype=m&GN_TYPES;
+	
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	Planetoid::makeLists();
-	std::string str=Planetoid::newRocks(orb,gtype);
+	std::string str=Planetoid::newRocks(orb,m);
 	TNrocks *rocks=TheScene->parse_node((char*)str.c_str());
 	rocks->setParent(parent);
 	rocks->randomize();

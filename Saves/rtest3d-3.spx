@@ -28,12 +28,16 @@ Scene() {
 		heading=137;
 		tilt=1;
 		angle=-36;
+	}
+	View{
+		tilt=-9;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400199;
 	}
 	View{
+		phi=-5.55616;
 		minr=0.00400199;
 	}
 	Universe {
@@ -72,8 +76,8 @@ Scene() {
 					rot_phase=249.674;
 					year=100;
 					Surface{
-						terrain=rocks3d(ID1,1,9.999e-07,0.8,1,0.127,0.19,0.762,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.534,0.329,2.1,1,-0.3,0,0.38,1e-06),0,0,0,0)[Point(noise(GRADIENT|NABS|NEG|SCALE|SQR,1,8,0.2,0.5,2,0.178,-0.4,0,0,1e-06),noise(VORONOI|NABS|NEG|SCALE|SQR,0,8,0.2,0.5,2,0.301,-0.4,0,0,1e-06),noise(GRADIENT|NABS|NEG|SCALE|SQR,1,8,0.2,0.5,2,0.178,-0.4,0,0,1e-06))+
-								Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,1.04858e+06,-0.3808,1,0,1,2,0.68254,0,0,0,0,0)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)]
+						terrain=rocks3d(1,9.999e-07,0.8,1,0.127,0.19,0.762,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.534,0.329,2.1,1,-0.3,0,0.38,1e-06),0,0,0,0)[Point(noise(GRADIENT|NABS|NEG|SCALE|SQR,1,8,0.2,0.5,2,0.178,-0.4,0,0,1e-06),noise(VORONOI|NABS|NEG|SCALE|SQR,0,8,0.2,0.5,2,0.301,-0.4,0,0,1e-06),noise(GRADIENT|NABS|NEG|SCALE|SQR,1,8,0.2,0.5,2,0.178,-0.4,0,0,1e-06))+
+								Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,618323,-0.88896,0.73016,0,1,2,0.68254,0,0,0,0,0)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)]
 								
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,1.65088,2,0,2,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}

@@ -322,7 +322,7 @@ public:
 class TNrocks : public TNplacements
 {
 public:
-	TNrocks(int t, TNode *l, TNode *r, TNode *b);
+	TNrocks(TNode *l, TNode *r, TNode *b);
 	virtual void eval();
 	virtual void init();
 	virtual int typeValue()			{ return ID_ROCKS;}
@@ -331,6 +331,9 @@ public:
 	virtual TNrocks *newInstance(int m);
 	virtual bool randomize();
 	virtual void applyExpr();
+	void propertyString(char *);
+	void valueString(char *s);
+	void save(FILE*);
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
@@ -343,7 +346,7 @@ class TNrocks3D : public TNrocks
 {
 public:
 	Rock3D *rock;
-	TNrocks3D(int t,TNode *l, TNode *r, TNode *b);
+	TNrocks3D(TNode *l, TNode *r, TNode *b);
 	void eval();
 	void init();
 	int typeValue()			{ return ID_ROCK3D;}

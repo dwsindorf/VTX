@@ -52,6 +52,8 @@ IMPLEMENT_CLASS(VtxRocksTabs, wxNotebook )
 
 BEGIN_EVENT_TABLE(VtxRocksTabs, wxNotebook)
 
+EVT_TEXT_ENTER(ID_NAME_TEXT,VtxRocksTabs::OnNameText)
+
 SET_SLIDER_EVENTS(SCALE,VtxRocksTabs,Scale)
 SET_SLIDER_EVENTS(DELTA_SIZE,VtxRocksTabs,DeltaSize)
 SET_SLIDER_EVENTS(DENSITY,VtxRocksTabs,Density)
@@ -115,7 +117,7 @@ int VtxRocksTabs::showMenu(bool expanded){
 	menu.AppendCheckItem(OBJ_SHOW,wxT("Enable"));
 	menu.AppendSeparator();
 	menu.Append(OBJ_DELETE,wxT("Delete"));
-	menu.Append(OBJ_SAVE,wxT("Save.."));
+	//menu.Append(OBJ_SAVE,wxT("Save.."));
 
 	wxMenu *addmenu=getAddMenu(object());
 
@@ -270,6 +272,15 @@ void VtxRocksTabs::updateControls(){
 	}
 }
 
+void VtxRocksTabs::OnNameText(wxCommandEvent& event){
+	char *s=object_name->GetValue().ToAscii();
+	sceneDialog->setNodeName(s);
+	TNrocks *tc=object();
+	object_name->SetValue(tc->nodeName());
+	changed_model=false;
+	setObjAttributes();
+
+}
 //-------------------------------------------------------------
 // VtxRocksTabs::getObjAttributes() when switched in
 //-------------------------------------------------------------
@@ -277,6 +288,7 @@ void VtxRocksTabs::getObjAttributes(){
 	if(!update_needed)
 		return;
 	TNrocks *tc=object();
+	object_name->SetValue(tc->nodeName());
 	PlacementMgr *mgr=(PlacementMgr*)tc->mgr;
 
 	//int id=tc->get_id();
@@ -369,22 +381,18 @@ void VtxRocksTabs::getObjAttributes(){
 //-------------------------------------------------------------
 void VtxRocksTabs::setObjAttributes(){
 	update_needed=true;
-	cout<<"VtxRocksTabs::setObjAttributes"<<endl;
-
+	char p[1024]="";
 	TNrocks *tc=object();
 	wxString s;
 	char id[32];
 	s=m_3d->GetValue()?"rocks3d":"rocks";
-	//s=tc->typeName();
 	s+="(";
- 
-	int pid=tc->get_id();
-	if(pid>0){
-		sprintf(id,"ID%d",pid);
-		s+=wxString(id);
-		s+=",";
+	
+	if(!object_name->GetValue().empty()){
+		char name[128];
+		sprintf(name,"\"%s\",",(const char*)object_name->GetValue().ToAscii());
+		s+=name;
 	}
-
 	int orders = m_orders->GetSelection();
 	sprintf(id,"%d",orders+1);
 	s+=wxString(id)+",";
@@ -419,10 +427,8 @@ void VtxRocksTabs::setObjAttributes(){
 
 	s+="\n";
 
-
-	char p[1024];
 	strcpy(p,s.ToAscii());
-	//cout<<"Rock str:"<<p<<endl;
+	cout<<"Rock str:"<<p<<endl;
 	tc->setExpr(p);
 	TNrocks *rocks = tc->getExprNode();
 	if(tc->getExprNode()==0)

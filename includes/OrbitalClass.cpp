@@ -5722,8 +5722,9 @@ static std::string rndTilted(){
 	str+=")";
 	return str;
 }
-std::string Planetoid::newRocks(Planetoid *planet,int gtype){
+std::string Planetoid::newRocks(Planetoid *planet,int m){
 	pushInstance(planet);
+	int gtype=m&GN_TYPES;
 	Nrocks=true;
 	planet->setColors();
 	char buff[4096];
@@ -5750,8 +5751,10 @@ std::string Planetoid::newRocks(Planetoid *planet,int gtype){
 	}
 	double comp=0.1+0.1*s[7];
 	double drop=0.2-comp;
-	//sprintf(buff,"rocks(ID1,3,%g,0.2,%g,0.3,0.05,0.512,",size,Prob);
-	sprintf(buff,"rocks(ID1,3,%g,0.2,%g,%g,%g,0.512,",size,Prob,comp,drop);
+	int type=m&TN_TYPES;
+	const char *s=(type==TN_ROCKS?"rocks":"rocks3d");
+	//sprintf(buff,"rocks(3,%g,0.2,%g,0.3,0.05,0.512,",size,Prob);
+	sprintf(buff,"%s(ID1,3,%g,0.2,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
 	std::string str=buff;
 	Nscale=1;
 	if(r[9]>0.75)

@@ -63,7 +63,6 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_CMND_QUIT:
 		BIT_ON(state,CMD_QUIT);
 		break;
-
 	case KEY_HELP:
 		TheScene->set_help(!TheScene->help());
 		TheScene->set_changed_render();
@@ -74,13 +73,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST2:		
-		//test2=test2?0:1;
-		//cout<<"test2="<<test2<<endl;
 		Render.set_color_test(!Render.color_test());
 		TheScene->rebuild_all();
-
-		//TheScene->set_moved();
-		//TheScene->set_changed_render();
 		break;
 		break;
 	case KEY_TEST3:
