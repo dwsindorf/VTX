@@ -36,8 +36,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -171,12 +171,12 @@ struct RockLodEntry {
 };
 
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  2,  2.0},
+    {  2,  5.0},
     {  4,  10.0},
     {  8,  20.0},
     {  16, 50.0},
     { 32, 100.0},
-    { 48, 150.0},
+    //{ 48, 150.0},
     { 64, 200.0},
     { 128, 400.0},
     { 200,  1e9}  // default 
@@ -307,8 +307,9 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
     }
 }
 
-int Rock3DMgr::getLODResolution(double pntsize) {
-	double pts=floor(pntsize);
+int Rock3DMgr::getLODResolution(double pts) {
+	if(pts<kRockLodTable[0].res)
+		return 0;
 	int res=kRockLodTable[MAX_ROCK_STATS - 1].res; // fallback
  	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 		if (pts <= kRockLodTable[i].maxPts) {
@@ -325,7 +326,7 @@ int Rock3DMgr::getLODResolution(double pntsize) {
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
  	int newres=(int)(res*resScale);
- 	newres=newres<2?2:newres;
+  	//newres=newres<2?2:newres;
 	return newres;
 }
 //************************************************************
@@ -563,6 +564,8 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     int rval = s->rval;
     int instance = s->instance;
     int resolution = Rock3DMgr::getLODResolution(pts);
+    if(resolution==0)
+	   return 0;
     
     // Create cache key including smoothing state
     bool smooth = Render.avenorms() && !test8;
@@ -754,6 +757,9 @@ void Rock3DObjMgr::render() {
             int instance = s->instance;
             
             int resolution = Rock3DMgr::getLODResolution(pts);
+            if(resolution==0){
+            	continue;
+            }
             
             // Get fully-processed template
             d1 = clock();

@@ -1291,9 +1291,6 @@ int TNbase::optionString(char *s)
 void TNbase::propertyString(char *s)
 {
 	sprintf(s+strlen(s),"%s(",symbol());
-	if(strlen(name_str))
-		sprintf(s+strlen(s),"\"%s\",",name_str);
-
 	char opts[64];
 	opts[0]=0;
 	if(optionString(opts)){

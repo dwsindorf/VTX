@@ -44,9 +44,9 @@ protected:
 
     void invalidateObject(){
     	object()->invalidate();
-    	TheView->set_changed_render();
-     	//TheView->set_changed_detail();
-    	//TheScene->rebuild_all();
+    	//TheView->set_changed_render();
+     	TheView->set_changed_detail();
+    	TheScene->rebuild_all();
     }
 	void getObjAttributes();
 	void setObjAttributes();

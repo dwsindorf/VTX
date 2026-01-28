@@ -14,7 +14,7 @@ class Texture;
 class Rock3DData;
 class Rock3DMgr;
 
-#define MAX_ROCK_STATS 9
+#define MAX_ROCK_STATS 8
 
 class Rock : public Placement
 {
