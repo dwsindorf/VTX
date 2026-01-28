@@ -911,7 +911,7 @@ void TNplant::init()
 	double f=n/w;
 	if(n>1 && t<1)
 		f=(pow(t, float(n)) - 1.0) / (t - 1.0)/w;
-	//f=pow(f,0.75);
+	f=pow(f,0.75);
 	cout<<"n:"<<n<<" w:"<<w<<" t:"<<t<<" f:"<<f<<endl;
 	smgr->pts_scale=f;
 }

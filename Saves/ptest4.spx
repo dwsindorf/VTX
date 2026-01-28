@@ -21,7 +21,7 @@ Scene() {
 		view=SURFACE;
 		phi=4.21875;
 		theta=151.875;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-460.479 ft;
 		heading=0;
 		pitch=0;
@@ -72,7 +72,7 @@ Scene() {
 		view=SURFACE;
 		phi=2.8125;
 		theta=165.938;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-1204.59 ft;
 		heading=0;
 		pitch=0;
@@ -106,7 +106,7 @@ Scene() {
 		view=SURFACE;
 		phi=-8.4375;
 		theta=164.531;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-1287.38 ft;
 		heading=0;
 		pitch=0;
@@ -172,7 +172,7 @@ Scene() {
 		view=SURFACE;
 		phi=-23.2031;
 		theta=162.422;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=2561.18 ft;
 		heading=0;
 		pitch=0;
@@ -435,10 +435,10 @@ Scene() {
 								+
 								Texture("Sand2",TEX,22788.2,2,2,0,2,2,0.5,0,0,0,0,0)]
 							layer(MORPH,0,0.1,0.2)
-								[Plant("pine",1,1.2e-06,0.8,0.05,0,0,0,0,0,0)
+								[Plant("pine",1,1.2e-06,1.143,0.05,0,0,0,0,0,0,0,0)
 								Branch("trunk",12,1,0.79,0.59,0.43,0.05,0,0.84,0.96,0,0,1,0,15,0,1)["Cracks1",Color(0.5,0.25,0,LVL)]
-								Branch("branch",9,2,0.55,0.26,0.13,2,0.67,0.77,0.84,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]
-								Plant("bush",2,6.1553e-07,0.8,0.5,0,0,0,0,0,0)
+								Branch("branch",9,2,0.55,0.26,0.13,2,0.67,0.77,0.9-0.2*PLVL,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]
+								Plant("bush",1,6.1553e-07,0.8,0.2,0,0,0,0,0,0,0,0)
 								Branch("stem",10,2.4,0.25,1,1,0.9,0.1,0.7,1,6,0,1,15,15)["Cracks1",Color(0.6-0.3*IRAND,0.4*LVL+0.3,0.2*IRAND+0.25*LVL+0.2,1)]
 								Z(noise(GRADIENT|NABS|SQR|UNS,9,11.87,0.4,0.5,2,1,4,0,0,1e-06))
 								+

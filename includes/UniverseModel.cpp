@@ -828,6 +828,7 @@ void UniverseModel::setType(NodeIF *node)
 		case ID_DIVIDE:
 		case ID_EXPR:
 		case ID_CONST:
+		case ID_ARG:
 		case ID_GLOBAL:
 			node->setFlag(TN_COMP|TN_HIDEFLAG);
 			break;
