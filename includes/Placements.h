@@ -132,6 +132,7 @@ public:
 	virtual bool setProgram(){return false;}
 	virtual void render() {}
 	virtual int layer() { return objs.size>0?objs[0]->layer:0;}
+	virtual int type()  { return objs.size>0?objs[0]->type:0;}
 	virtual int placements() { return 0;}
 	virtual const char *name() { return 0;}
 	virtual bool supports_shadows() { return false;}

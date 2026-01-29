@@ -954,9 +954,10 @@ void TNplant::eval()
 	}
 	if(right)
 		right->eval();
-	if(!CurrentScope->spass())
-		ground.copy(S0);
-	
+	//if(!CurrentScope->spass())
+	ground.copy(S0);
+	if(S0.get_flag(ROCKBODY))
+		return;	
 	ncalls++;
 	
 	INIT;

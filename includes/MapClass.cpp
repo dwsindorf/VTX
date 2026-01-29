@@ -1333,15 +1333,20 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	int mode=CurrentScope->passmode();
 	int n=node_data_list.size();
 	int sid=mgr.layer();
+	int type=mgr.type();
+	
 	CurrentScope->set_spass();	
 	mgr.free();
 	PlacementMgr::free_htable(); 
-	//node_data_list.ss();
 	double d1=clock();
 	int j=0;
 	for(int i=0;i<n;i++){
 	   const SurfacePoint& sp = node_data_list[i];
-		// Layer filtering
+		// filtering
+	    if(type!=MCROCKS && sp.rock){
+			j++;
+			continue;
+	    }
 		if(sid > 0 && sp.layerId != sid) {
 			j++;
 			continue;
@@ -1504,13 +1509,14 @@ static void collect_nodes(MapNode *n)
      if((d->water() && !d->rock()))
     	return;
     d = d->surface1();
-	SurfacePoint sp;	
+	SurfacePoint sp;
 	sp.worldPos = d->point();  // in eye space
 	sp.theta = d->theta();
 	sp.phi = d->phi();
 	sp.height = d->Ht();
 	sp.hardness = d->hardness();
 	sp.slope = n->slope();
+	sp.rock=d->rock();
 	
 	double dist=sp.worldPos.length()/FEET; // distance from eye
 			

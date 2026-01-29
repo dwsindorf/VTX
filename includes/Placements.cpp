@@ -990,8 +990,6 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	center=p;
 	radius=r;
 	flags.s.valid=true;
-
-
 }
 
 //-------------------------------------------------------------
@@ -1004,6 +1002,7 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 
 	pmgr.sval=0;
 	visits++;
+	
 	
 	if(d>1.0)
 		return false;
@@ -1031,8 +1030,8 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
 	pmgr.sdata[pmgr.scnt].l=pmgr.lvl;
   	if(pmgr.scnt<SDATA_SIZE)
   		pmgr.scnt++;
-
-	return true;
+  	
+ 	return true;
 }
 
 void Placement::reset(){

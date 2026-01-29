@@ -36,8 +36,9 @@ class PlaceObjMgr;
 	    double height;      // For ht_bias
 	    double hardness;    // For hardness_bias (from FBOTex later)
 	    int layerId;        // For layer filtering (from FBOTex later)
+	    bool rock;
 	    
-	    SurfacePoint() : theta(0), phi(0), slope(0), height(0), hardness(0.5), layerId(0){}
+	    SurfacePoint() : theta(0), phi(0), slope(0), height(0), hardness(0.5), layerId(0), rock(false){}
 	    void setGlobals() const;
 	};
 

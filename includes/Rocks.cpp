@@ -176,7 +176,6 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  8,  20.0},
     {  16, 50.0},
     { 32, 100.0},
-    //{ 48, 150.0},
     { 64, 200.0},
     { 128, 400.0},
     { 200,  1e9}  // default 
@@ -326,6 +325,7 @@ int Rock3DMgr::getLODResolution(double pts) {
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
  	int newres=(int)(res*resScale);
+
   	//newres=newres<2?2:newres;
 	return newres;
 }
@@ -572,13 +572,13 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     
     // Build key: resolution + seed + expression + instance + smooth
     int k1 = resolution * 100;
-    int k2 = (int)(rval)% Map::tessLevel();
+    int k2 = (int)(rval)% templates_per_lod;
     int k3 = instance * 1000;
     //int k4 = smooth ? 10000 : 0;  // Include smoothing in key
     int key = k1 + k2 +k3;   
-	auto it = Rock3DObjMgr::lodTemplates.find(key);
-	if (it != Rock3DObjMgr::lodTemplates.end()) {
-		Rock3DObjMgr::lodCacheHits++;
+	auto it = lodTemplates.find(key);
+	if (it != lodTemplates.end()) {
+		lodCacheHits++;
 		return it->second;
 	}
     // Template not in cache - generate it fully processed
@@ -674,7 +674,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     
     // Store in cache
     lodTemplates[key] = templateSphere;
-    Rock3DObjMgr::lodCacheMisses++;
+    lodCacheMisses++;
 #ifdef PRINT_LOD_STATS     
     std::cout << "Created LOD template: resolution:" << resolution 
               << " instance:" << instance 
@@ -848,9 +848,10 @@ void Rock3DObjMgr::render() {
                     batch.faceNormals.push_back(tri.faceNormal.z);
                     
                     // Colors
-                    batch.colors.push_back((float)(tri.colors[v].red()));
-                    batch.colors.push_back((float)(tri.colors[v].green()));
-                    batch.colors.push_back((float)(tri.colors[v].blue()));
+                    Color c=tri.colors[v];
+                    batch.colors.push_back(c.red());
+                    batch.colors.push_back(c.green());
+                    batch.colors.push_back(c.blue());
                     
                     // Template position
                     Point tp = tri.templatePos[v];
@@ -1188,10 +1189,10 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	
 	double thresh=mgr.noise_amp;
 	double td=mgr.drop*mgr.maxsize;
-	double t=1.75*radius;
+	double t=1.25*radius;
 
 	r=radius;
-
+	S0.clr_flag(ROCKBODY);
 	if(d>t)
 		return false;
 

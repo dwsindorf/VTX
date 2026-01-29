@@ -182,7 +182,7 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	//size->AddSpacer(20);
 
 	DeltaSizeSlider=new ExprSliderCtrl(panel,ID_DELTA_SIZE_SLDR,"Delta",LABEL1,VALUE2,SLIDER1);
-	DeltaSizeSlider->setRange(0.0,1.0);
+	DeltaSizeSlider->setRange(0.0,2.0);
 	DeltaSizeSlider->setValue(0.5);
 	size->Add(DeltaSizeSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
