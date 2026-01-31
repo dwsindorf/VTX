@@ -244,7 +244,7 @@ double cell_size(int i)
 // Map class
 //************************************************************
 LinkedList<Triangle*> Map::triangle_list;
-std::vector<Point> Map::points_list;
+std::vector<Point> Map::node_list;
 bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
 int Map::tesslevel=4;
@@ -1503,13 +1503,13 @@ void Map::render_texs(){
 static void collect_nodes(MapNode *n){
 	if(!n->visible() && !n->partvis())
 	   return;
-	Map::points_list.push_back(n->point());
+	Map::node_list.push_back(n);
 
 }
-int Map::get_points(){
-	points_list.clear();
+int Map::get_nodes(){
+	node_list.clear();
     visit(collect_nodes);
-    return points_list.size();
+    return node_list.size();
 }
 
 //-------------------------------------------------------------
@@ -2097,7 +2097,7 @@ void Map::adapt()
 		TheScene->cycles=mcount;
 		Raster.set_waterpass(waterpass() && Render.show_water());
 		Raster.set_fogpass(fog());
-		get_points();
+		get_nodes();
 		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
 	}
 	if(Render.display(MAPINFO) || Render.display(NODEINFO)){

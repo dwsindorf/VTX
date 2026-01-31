@@ -115,10 +115,10 @@ public:
     
     static LinkedList<Triangle*> triangle_list;
  	ValueList<Triangle*> triangles;
- 	static std::vector<Point> points_list;
+ 	static std::vector<MapNode *> node_list;
 
 	int      get_surface_data();
-	int      get_points();
+	int      get_nodes();
 
 	TerrainProperties *tp;
 

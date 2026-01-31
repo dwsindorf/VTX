@@ -1490,7 +1490,18 @@ void MapNode::visit_cycle(void  (*func)(MapData*))
 	}
 }
 
+static MapNode *pivot;
+void add_bounds(MapNode *n){
+	pivot->bounds.eval(n->mpoint());
+}
+
 void MapNode::getBounds(){
+	if(bounds.valid())
+		return;
+	bounds.reset();
+	pivot=this;
+	CWcycle(add_bounds);
+	bounds.make();
 }
 
 //-------------------------------------------------------------

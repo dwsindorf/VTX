@@ -518,15 +518,15 @@ void RasterMgr::init_light_view_distance_based(){
 	double minDist = 1e30;
 	
 	
-	for (int i = 0; i < Map::points_list.size(); i++) {
-		Point p=Map::points_list[i];
+	for (int i = 0; i < Map::node_list.size(); i++) {
+		Point p=Map::node_list[i];
 		double dist =p.length();
 		
 		if (dist > maxDist) maxDist = dist;
 		if (dist < minDist) minDist = dist;
 	}
 
-	cout<<"nodes:"<< Map::points_list.size() << " MinDist:" << minDist/FEET << " MaxDist:"<< maxDist/FEET<<endl;
+	cout<<"nodes:"<< Map::node_list.size() << " MinDist:" << minDist/FEET << " MaxDist:"<< maxDist/FEET<<endl;
 
 }
 void RasterMgr::set_light_view_distance_based(){

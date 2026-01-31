@@ -397,6 +397,7 @@ public:
     MapNode *left()                 { return lnode;}
     MapNode *right()                { return rnode;}
     Point point()                   { return data.point();}
+    Point mpoint()                  { return data.mpoint();}
     Point tangent(MapData *a);
     Color color()                   { return data.color();}
     void setColor(Color c)          { data.setColor(c);
