@@ -122,6 +122,16 @@ protected:
 	int dcnt;
 	MapNode	**idtbl;
 	int ftype;
+	
+	
+	static const int MAX_CASCADES = 10;
+	Bounds cascadeBounds[MAX_CASCADES];
+	double cascadeSplits[MAX_CASCADES + 1];
+	int numCascades;
+	bool useCascades;  // true if using cascade mode
+	
+	void buildCascades();
+	    
 
 public:
 	enum {RENDERPGM,EFFECTSPGM,POSTPROCPGM,SHADOW_ZVALS,SHADOWS,SHADOWS_FINISH,PLACE_ZVALS,PLACE_SHADOWS};
@@ -486,6 +496,9 @@ public:
  	virtual void render_shadows();
     virtual void shadow_view();
     virtual void shadow_light();
+    
+    virtual void init_light_view_distance_based();
+    virtual void set_light_view_distance_based();
     
 
 };

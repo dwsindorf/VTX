@@ -1490,6 +1490,9 @@ void MapNode::visit_cycle(void  (*func)(MapData*))
 	}
 }
 
+void MapNode::getBounds(){
+}
+
 //-------------------------------------------------------------
 // MapNode::ave_point()	return ave point in cell;
 //-------------------------------------------------------------

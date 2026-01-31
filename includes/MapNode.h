@@ -111,8 +111,10 @@ public:
     MapNode *unode;
     MapNode *dnode;
     double  gval;
+    Bounds bounds;
 
     double slope();
+    void getBounds();
     void vertexN()              { vertexN(&data);}
     void vertexC()              { Vcolor(&data);vertex(&data);}
     void vertexCN()             { vertexCN(&data);}

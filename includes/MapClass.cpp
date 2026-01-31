@@ -21,7 +21,7 @@ extern double INV2PI;
 
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
-#define DEBUG_RENDER
+//#define DEBUG_RENDER
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -65,6 +65,7 @@ extern void     set_info(char *c,...);
 extern void     init_tables();
 
 Map            *TheMap = 0;
+Map            *VisMap = 0;
 double          Rscale, Gscale, Pscale, Hscale;
 double          ptable[PLVLS];
 extern double 	Theta, Phi, Height,MinHt,MaxHt,Slope;
@@ -243,6 +244,7 @@ double cell_size(int i)
 // Map class
 //************************************************************
 LinkedList<Triangle*> Map::triangle_list;
+std::vector<Point> Map::points_list;
 bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
 int Map::tesslevel=4;
@@ -1196,7 +1198,7 @@ void Map::render_shaded()
 
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
 		if(!UseDepthBuffer && viewobj_surface)
-			get_mapnodes();
+			get_surface_data();
 
 		for(int i=0;i<tids-1;i++){
 			tid=i+ID0;
@@ -1246,7 +1248,7 @@ void Map::render_shaded()
 		}
 		
 		if(UseDepthBuffer && viewobj_surface){
-			get_mapnodes();
+			get_surface_data();
 			for(int i=0;i<tids-1;i++){
 				tid=i+ID0;
 				tp=Td.properties[tid];
@@ -1498,10 +1500,22 @@ void Map::render_texs(){
 	}
 }
 
+static void collect_nodes(MapNode *n){
+	if(!n->visible() && !n->partvis())
+	   return;
+	Map::points_list.push_back(n->point());
+
+}
+int Map::get_points(){
+	points_list.clear();
+    visit(collect_nodes);
+    return points_list.size();
+}
+
 //-------------------------------------------------------------
-// Map::collect_nodes()	collect all visible surface nodes
+// Map::()	collect all visible surface nodes
 //-------------------------------------------------------------
-static void collect_nodes(MapNode *n)
+static void collect_surface_data(MapNode *n)
 {
     MapData *d = &n->data;
     if(!n->visible() && !n->partvis())
@@ -1527,7 +1541,7 @@ static void collect_nodes(MapNode *n)
 void Map::collectSurfacePointsFromDepth(int stride) {
 	Raster.collectSurfaceData(node_data_list, stride);
 }
-int Map::get_mapnodes(){
+int Map::get_surface_data(){
 	TheMap = this;
 	double d0=clock();
 
@@ -1535,7 +1549,7 @@ int Map::get_mapnodes(){
     if(UseDepthBuffer)
     	collectSurfacePointsFromDepth(4);  // Use depth buffer
     else
-		npole->visit(&collect_nodes);
+		npole->visit(&collect_surface_data);
 	double d1=clock();
 	
 	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer
@@ -1844,8 +1858,9 @@ static void evalbox(MapNode *n)
 	if(n->visible()){
 		Point pt=n->point();
     	Point p1=pt.mm(vmat);
-    	if(p1.z<0)
-    	TheMap->rbounds.eval(p1);
+    	if(p1.z<0){
+			TheMap->rbounds.eval(p1);
+    	}
     }
 }
 //-------------------------------------------------------------
@@ -1865,18 +1880,12 @@ void Map::make_visbox()
 
 	    rbounds.reset();
 		npole->visit(evalbox);
-
+		
 	    r=rbounds.make();
 
 	    if(idtest && TheScene->viewobj==object){
-	    	if(geometry()){
-				rbounds.zn=0.1*zn;
-				rbounds.zf=1.2*zf;
-	    	}
-	    	else{
-				rbounds.zn=0.1*zn;
-				rbounds.zf=1.2*zf;
-	    	}
+			rbounds.zn=0.1*zn;
+			rbounds.zf=1.2*zf;
 	    }
 	    else{
 			rbounds.zn=-rbounds.bmax().z;
@@ -1891,8 +1900,8 @@ void Map::make_visbox()
 
 		//vbounds.zn=0.5*rbounds.zn;
 	    //cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
-		//if(TheScene->viewobj==object)
-		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
+		if(TheScene->viewobj==object)
+		    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=rbounds.zn;
 		vbounds.zf=rbounds.zf;
 		
@@ -1913,6 +1922,8 @@ void Map::make_visbox()
 	v=vbounds.box();
     for(i=0;i<rbounds.size();i++)
         v[i]=r[i].mm(TheScene->viewMatrix);
+    
+   
 }
 
 //-------------------------------------------------------------
@@ -2065,8 +2076,11 @@ void Map::adapt()
         if(idtest && object==TheScene->viewobj){
         	find_limits();
         }
-		if(object->allows_selection()||idtest)
+		if(object->allows_selection()||idtest){
 			make_visbox();
+		}
+		if(TheScene->viewobj==object)
+			VisMap=this;
 		Raster.set_draw_nvis(0);
 		get_info();
 
@@ -2083,6 +2097,7 @@ void Map::adapt()
 		TheScene->cycles=mcount;
 		Raster.set_waterpass(waterpass() && Render.show_water());
 		Raster.set_fogpass(fog());
+		get_points();
 		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
 	}
 	if(Render.display(MAPINFO) || Render.display(NODEINFO)){

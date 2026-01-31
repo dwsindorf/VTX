@@ -22,6 +22,7 @@ extern void Srand(int);
 extern int test5;
 extern double Theta, Phi,Rscale;
 extern Point MapPt;
+extern Map* VisMap;
 
 const double maxdp=0.5;
 
@@ -499,14 +500,37 @@ void RasterMgr::init_view()
 	shadow_vsteps=(int)shadow_vsteps;
 	
 	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias/shadow_fov,shadow_vsteps-1);
-	//cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
+	cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
 	shadow_vleft=2*shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
 	//	shadow_vright=smax;
 	shadow_vcnt=0;
+	if(VisMap){
+	}
+	//if(TheMap->object==TheScene->viewobj)
+		init_light_view_distance_based();
 }
+void RasterMgr::init_light_view_distance_based(){
+	Point eyePos = TheScene->epoint;
+		
+	double maxDist = 0;
+	double minDist = 1e30;
+	
+	
+	for (int i = 0; i < Map::points_list.size(); i++) {
+		Point p=Map::points_list[i];
+		double dist =p.length();
+		
+		if (dist > maxDist) maxDist = dist;
+		if (dist < minDist) minDist = dist;
+	}
 
+	cout<<"nodes:"<< Map::points_list.size() << " MinDist:" << minDist/FEET << " MaxDist:"<< maxDist/FEET<<endl;
+
+}
+void RasterMgr::set_light_view_distance_based(){
+}
 //-------------------------------------------------------------
 // void RasterMgr::next_view()
 //              called at start of each view
@@ -532,7 +556,7 @@ void RasterMgr::set_light_view()
 {
 	double f,z,r,y,d,w;
     Point c,e,n,cv,l,cl;
-    double light_offset=1000; // moves light away from surface
+    double light_offset=10; // moves light away from surface
     double fov_scale=1;
 
     l=light()->point;
@@ -542,7 +566,7 @@ void RasterMgr::set_light_view()
 	if(farview())
 		c=cv*TheScene->height; // center light view at shadow obj surface
 	else
-		c=cv*0.5*(shadow_vleft+shadow_vright); // keep light centered at eye location
+		c=cv*(0.9*shadow_vleft+0.1*shadow_vright); // keep light centered at eye location
 
 	cl=(l-c).normalize();
 	
