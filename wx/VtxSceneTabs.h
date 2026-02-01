@@ -47,6 +47,7 @@ protected:
 	wxChoice *set_layers;
 	wxChoice *keep_tmps;
 	wxChoice *use_tmps;
+	wxChoice *shadow_views;
 
 	wxCheckBox *m_forward_time;
 
@@ -142,6 +143,9 @@ public:
  
     void OnGenerateQualitySelect(wxCommandEvent& event);
     void OnUpdateGenerateQuality(wxUpdateUIEvent& event);
+
+    void OnShadowViewsSelect(wxCommandEvent& event);
+    void OnUpdateShadowViews(wxUpdateUIEvent& event);
 
     void OnSetLayersSelect(wxCommandEvent& event);
     void OnUpdateSetLayers(wxUpdateUIEvent& event);
@@ -361,7 +365,7 @@ public:
     void OnUpdateMergeMode(wxUpdateUIEvent& event);
     void setObjAttributes();
 
-    DEFINE_SLIDER_VAR_EVENTS(ShadowRes,Raster.shadow_vsteps)
+   // DEFINE_SLIDER_VAR_EVENTS(ShadowRes,Raster.(double)shadow_views)
     DEFINE_SLIDER_VAR_EVENTS(ShadowBlur,Raster.shadow_blur)
     DEFINE_SLIDER_VAR_EVENTS(HDRMax,Raster.hdr_max_base)
     DEFINE_SLIDER_VAR_EVENTS(HDRMin,Raster.hdr_min_base)

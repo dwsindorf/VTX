@@ -66,6 +66,7 @@ extern void     init_tables();
 
 Map            *TheMap = 0;
 Map            *VisMap = 0;
+Point 			VisPoint;
 double          Rscale, Gscale, Pscale, Hscale;
 double          ptable[PLVLS];
 extern double 	Theta, Phi, Height,MinHt,MaxHt,Slope;
@@ -244,7 +245,7 @@ double cell_size(int i)
 // Map class
 //************************************************************
 LinkedList<Triangle*> Map::triangle_list;
-std::vector<Point> Map::node_list;
+std::vector<MapNode *> Map::node_list;
 bool Map::use_call_lists=true;
 bool Map::use_triangle_lists=true;
 int Map::tesslevel=4;
@@ -2079,8 +2080,6 @@ void Map::adapt()
 		if(object->allows_selection()||idtest){
 			make_visbox();
 		}
-		if(TheScene->viewobj==object)
-			VisMap=this;
 		Raster.set_draw_nvis(0);
 		get_info();
 
@@ -2097,8 +2096,8 @@ void Map::adapt()
 		TheScene->cycles=mcount;
 		Raster.set_waterpass(waterpass() && Render.show_water());
 		Raster.set_fogpass(fog());
-		get_nodes();
-		//cout<<cycles<<" MinHt:"<<MinHt<<" MaxHt:"<<MaxHt<<endl;
+		VisMap=this;
+		VisPoint=TheScene->xpoint;
 	}
 	if(Render.display(MAPINFO) || Render.display(NODEINFO)){
 		mcycles=mcount;

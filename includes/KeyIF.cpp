@@ -219,7 +219,7 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		case FN_TEST:
 			TheScene->set_eye_view();
 			Render.set_draw_nvis(0);
-			TheScene->set_changed_detail();
+			TheScene->set_changed_render();
 			break;
 		case FN_INFO:
 			Render.clr_display(ALLINFO);

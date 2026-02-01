@@ -57,8 +57,7 @@ enum {
     ID_SHADOWS,
     ID_SHADOW_BLUR_SLDR,
     ID_SHADOW_BLUR_TEXT,
-    ID_SHADOW_RES_SLDR,
-    ID_SHADOW_RES_TEXT,
+	ID_SHADOW_VIEWS,
     ID_SHADOW_FOV_SLDR,
     ID_SHADOW_FOV_TEXT,
     ID_SHADOW_DOV_SLDR,
@@ -99,7 +98,6 @@ EVT_UPDATE_UI(ID_ANIMATE, VtxSceneTabs::OnUpdateAnimate)
 EVT_CHECKBOX(ID_TIME_FORWARD,VtxSceneTabs::OnForwardTime)
 EVT_UPDATE_UI(ID_TIME_FORWARD, VtxSceneTabs::OnUpdateTimeDirection)
 
-
 EVT_RADIOBOX(ID_DRAWTYPE, VtxSceneTabs::OnDrawMode)
 EVT_UPDATE_UI(ID_DRAWTYPE, VtxSceneTabs::OnUpdateDrawMode)
 
@@ -108,6 +106,10 @@ EVT_CHOICE(ID_RENDER_QUALITY,VtxSceneTabs::OnRenderQualitySelect)
 
 EVT_UPDATE_UI(ID_GENERATE_QUALITY, VtxSceneTabs::OnUpdateGenerateQuality)
 EVT_CHOICE(ID_GENERATE_QUALITY,VtxSceneTabs::OnGenerateQualitySelect)
+
+EVT_UPDATE_UI(ID_SHADOW_VIEWS, VtxSceneTabs::OnUpdateShadowViews)
+EVT_CHOICE(ID_SHADOW_VIEWS,VtxSceneTabs::OnShadowViewsSelect)
+
 
 EVT_UPDATE_UI(ID_SET_LAYERS, VtxSceneTabs::OnUpdateSetLayers)
 EVT_CHOICE(ID_SET_LAYERS,VtxSceneTabs::OnSetLayersSelect)
@@ -120,7 +122,6 @@ EVT_UPDATE_UI(ID_LMODE, VtxSceneTabs::OnUpdateLightMode)
 EVT_COMMAND_SCROLL_THUMBRELEASE(ID_TIME_SLDR,VtxSceneTabs::OnEndTimeSlider)
 EVT_COMMAND_SCROLL(ID_TIME_SLDR,VtxSceneTabs::OnTimeSlider)
 EVT_TEXT_ENTER(ID_TIME_TEXT,VtxSceneTabs::OnTimeText)
-//EVT_UPDATE_UI(ID_TIME_SLDR, VtxSceneTabs::OnUpdateTime)
 
 EVT_COMMAND_SCROLL_THUMBRELEASE(ID_RATE_SLDR,VtxSceneTabs::OnEndRateSlider)
 EVT_COMMAND_SCROLL(ID_RATE_SLDR,VtxSceneTabs::OnRateSlider)
@@ -178,7 +179,6 @@ EVT_TEXT_ENTER(ID_NORMAL_TEXT,VtxSceneTabs::OnNormalAmpText)
 SET_SLIDER_EVENTS(HDRMIN,VtxSceneTabs,HDRMin)
 SET_SLIDER_EVENTS(HDRMAX,VtxSceneTabs,HDRMax)
 SET_SLIDER_EVENTS(SHADOW_BLUR,VtxSceneTabs,ShadowBlur)
-SET_SLIDER_EVENTS(SHADOW_RES,VtxSceneTabs,ShadowRes)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxSceneTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxSceneTabs::OnDelete)
@@ -405,13 +405,24 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	ShadowBlurSlider->slider->SetToolTip("Soften Shadow Edges");
 
 	hline->Add(ShadowBlurSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	
+	wxStaticText *lbl=new wxStaticText(panel,-1,"Views",wxDefaultPosition,wxSize(-1,-1));
+	hline->Add(lbl, LABEL2, wxALIGN_LEFT|wxTop|wxLEFT,0);
+	hline->AddSpacer(10);
+	wxString views[]={"1","2","3","4","5","6","7","8"};
 
-	ShadowResSlider=new SliderCtrl(panel,ID_SHADOW_RES_SLDR,"Views",LABEL2,VALUE2,SLIDER2);
-	ShadowResSlider->setRange(1,10);
-	ShadowResSlider->slider->SetToolTip("Number of Light source views");
-	ShadowResSlider->format=wxString("%1.0f");
+	shadow_views=new wxChoice(panel, ID_SHADOW_VIEWS, wxDefaultPosition,wxSize(40,-1),8, views);
+	shadow_views->SetSelection(3);
+	
+	hline->Add(shadow_views,0,wxALIGN_LEFT|wxALL,0);
 
-	hline->Add(ShadowResSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+//	ShadowResSlider=new SliderCtrl(panel,ID_SHADOW_RES_SLDR,"Views",LABEL2,VALUE2,SLIDER2);
+//	ShadowResSlider->setRange(1,10);
+//	ShadowResSlider->slider->SetToolTip("Number of Light source views");
+//	ShadowResSlider->format=wxString("%1.0f");
+//
+//	hline->Add(ShadowResSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -554,7 +565,7 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
 	wxString offsets[]={"1","2","3","4","5","6"};
 
-	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(-1,-1),Map::maxtesslevel, offsets);
+	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(20,-1),Map::maxtesslevel, offsets);
 	m_tesslevel->SetSelection(0);
 
 	detail_ctrls->Add(m_tesslevel,0,wxALIGN_LEFT|wxALL,0);
@@ -792,6 +803,15 @@ void VtxSceneTabs::OnUpdateGenerateQuality(wxUpdateUIEvent& event){
 		generate_quality->SetSelection(mode);
 }
 
+void VtxSceneTabs::OnShadowViewsSelect(wxCommandEvent& event){
+	Raster.shadow_views=event.GetSelection()+1;	
+	TheScene->set_changed_render();
+
+}
+void VtxSceneTabs::OnUpdateShadowViews(wxUpdateUIEvent& event){
+	shadow_views->SetSelection(Raster.shadow_views-1);
+}
+
 void VtxSceneTabs::OnSetLayersSelect(wxCommandEvent& event){
 	int mode=event.GetSelection();
 	Planetoid::set_layers=mode;
@@ -870,7 +890,7 @@ void VtxSceneTabs::updateControls(){
 	m_curvature->SetValue(Adapt.curve_test());
 
 	updateSlider(ShadowBlurSlider,Raster.shadow_blur);
-	updateSlider(ShadowResSlider,Raster.shadow_vsteps);
+	//updateSlider(ShadowResSlider,Raster.shadow_views);
 	updateSlider(ShadowFovSlider,Raster.shadow_fov);
 	updateSlider(ShadowDovSlider,Raster.shadow_dov);
 	

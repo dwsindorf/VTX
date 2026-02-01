@@ -10,7 +10,8 @@
 #include "GLSLMgr.h"
 
 #define OPTIMIZE
-//#define DEBUG_SHADOWS
+#define DEBUG_SHADOWS
+#define DEBUG_SHADOW_CASCADES
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
 extern double lsin(double t);
@@ -23,6 +24,7 @@ extern int test5;
 extern double Theta, Phi,Rscale;
 extern Point MapPt;
 extern Map* VisMap;
+extern int test6;
 
 const double maxdp=0.5;
 
@@ -303,7 +305,8 @@ RasterMgr::RasterMgr()
 	shadow_fov=0.5;
 	shadow_dov=1.0;
 	shadow_vbias=2;
-	shadow_vsteps=4.0;
+	shadow_vsteps=4;
+	shadow_views=4;
 	shadow_edge_min=1;
 	shadow_edge_width=1;
 	shadow_color=Color(0,0,0);
@@ -460,6 +463,13 @@ void RasterMgr::init_shadows()
 	s_dpmax=shadow_dpmax;
 	s_dpmin=shadow_dpmin;
 	s_rval=0.01*shadow_randval;
+	shadow_vsteps=shadow_views;
+	
+	if(shouldUseCascades())
+		buildCascades();
+	else
+		useCascades = false;
+	//cout<<"shouldUseCascades() = "<<shouldUseCascades()<<endl;
 
 	setView();
 
@@ -497,39 +507,205 @@ void RasterMgr::init_view()
 {	
 	shadow_zrange=shadow_vzf-shadow_vzn;
 	//shadow_vstep=smax/z;
-	shadow_vsteps=(int)shadow_vsteps;
+	//shadow_vsteps=(int)shadow_vsteps;
 	
 	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias/shadow_fov,shadow_vsteps-1);
-	cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmax<<":"<<shadow_vmin<<" range:"<<shadow_zrange<<" step:"<<shadow_vstep<<endl;
+	cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmin/FEET<<":"<<shadow_vmax/FEET<<" range:"<<shadow_zrange/FEET<<" step:"<<shadow_vstep/FEET<<endl;
 	shadow_vleft=2*shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
 	//	shadow_vright=smax;
 	shadow_vcnt=0;
-	if(VisMap){
-	}
-	//if(TheMap->object==TheScene->viewobj)
-		init_light_view_distance_based();
 }
-void RasterMgr::init_light_view_distance_based(){
-	Point eyePos = TheScene->epoint;
+
+bool RasterMgr::shouldUseCascades()
+{
+    if(test6)
+		return false;
+
+	extern Map *VisMap;
+    // Only use cascades in surface view mode
+    if (TheScene->viewtype != SURFACE)
+        return false;
+    
+    // Only if viewing a single map object
+    if (!TheScene->viewobj || !VisMap)
+        return false;
+
+    if (VisMap->object !=TheScene->viewobj)
+         return false;
+
+    // Only if shadows are enabled
+    if (!shadows())
+        return false;
+    
+    return true;
+}
+
+void RasterMgr::buildCascades(){
+	const double CASCADE_OVERLAP = 0.2;  // 15% overlap
+	extern Point VisPoint;
+	extern Map *VisMap;
+	Point eyePos = VisPoint;
+	
+	double d0 = clock();
+	
+	VisMap->get_nodes();
 		
-	double maxDist = 0;
+	// Get the visible nodes collected by Map
+	std::vector<MapNode*>& nodes = VisMap->node_list;
+	
+	if (nodes.empty()) {
+		// No nodes - use single cascade with default bounds
+		numCascades = 1;
+		cascadeBounds[0] = VisMap->vbounds;
+		useCascades = false;
+		return;
+	}
+		
+	// Calculate distance to all visible nodes and find min/max
 	double minDist = 1e30;
+	double maxDist = 0;
 	
-	
-	for (int i = 0; i < Map::node_list.size(); i++) {
-		Point p=Map::node_list[i];
-		double dist =p.length();
+	for (MapNode* node : nodes) {
+		if (!node) continue;
 		
-		if (dist > maxDist) maxDist = dist;
+		node->getBounds();
+		
+		// Get node center from its bounds
+		Point nodeCenter = node->bounds.center();
+		double dist = (nodeCenter - eyePos).length();
+		
 		if (dist < minDist) minDist = dist;
+		if (dist > maxDist) maxDist = dist;
 	}
-
-	cout<<"nodes:"<< Map::node_list.size() << " MinDist:" << minDist/FEET << " MaxDist:"<< maxDist/FEET<<endl;
-
-}
-void RasterMgr::set_light_view_distance_based(){
+	
+	if (minDist >= maxDist || nodes.size() == 0) {
+		// Fallback to single cascade
+		numCascades = 1;
+		cascadeBounds[0] = VisMap->vbounds;
+		useCascades = false;
+		return;
+	}
+	
+	// Use configured number of shadow views
+	int requestedCascades = shadow_views;
+	if (requestedCascades < 1) requestedCascades = 1;
+	if (requestedCascades > MAX_CASCADES) requestedCascades = MAX_CASCADES;
+	
+	// Choose split algorithm based on distance range
+	double distRatio = maxDist / minDist;
+	double tempSplits[MAX_CASCADES + 1];
+	
+	if (distRatio > 100) {  // Large range, use log
+		double logMin = log(minDist);
+		double logMax = log(maxDist);
+		double logRange = logMax - logMin;
+		
+		tempSplits[0] = minDist;
+		for (int i = 1; i < requestedCascades; i++) {
+			double t = (double)i / requestedCascades;
+			tempSplits[i] = exp(logMin + t * logRange);
+		}
+		tempSplits[requestedCascades] = maxDist * 1.01;
+	} else {  // Small range, use power
+		tempSplits[0] = minDist;
+		double range = maxDist - minDist;
+		
+		for (int i = 1; i < requestedCascades; i++) {
+			double t = (double)i / requestedCascades;
+			double exponent = 2.0;
+			double factor = pow(t, exponent);
+			tempSplits[i] = minDist + factor * range;
+		}
+		tempSplits[requestedCascades] = maxDist * 1.01;
+	}
+	
+	// Build bounds for each initial cascade and count nodes
+	Bounds tempBounds[MAX_CASCADES];
+	int nodeCounts[MAX_CASCADES];
+	
+	for (int c = 0; c < requestedCascades; c++) {
+		double nearDist = tempSplits[c];
+		double farDist = tempSplits[c + 1];
+		
+		// ADD OVERLAP: extend far distance into next cascade
+		if (c < requestedCascades - 1) {  // Not the last cascade
+			double cascadeRange = farDist - nearDist;
+			farDist += cascadeRange * CASCADE_OVERLAP;  // Extend by overlap %
+		}
+		
+		tempBounds[c].reset();
+		nodeCounts[c] = 0;
+		
+		// Merge bounds of all nodes in this distance range
+		for (MapNode* node : nodes) {
+			if (!node) continue;
+			
+			Point nodeCenter = node->bounds.center();
+			double dist = (nodeCenter - eyePos).length();
+			
+			// Only include nodes within this cascade's distance range
+			if (dist >= nearDist && dist <= farDist) {
+				Point nodeMin = node->bounds.bmin();
+				Point nodeMax = node->bounds.bmax();
+				
+				tempBounds[c].eval(nodeMin);
+				tempBounds[c].eval(nodeMax);
+				nodeCounts[c]++;
+			}
+		}
+		
+		if (nodeCounts[c] > 0) {
+			tempBounds[c].make();
+		}
+	}
+	
+	// Compact: remove empty cascades
+	numCascades = 0;
+	for (int c = 0; c < requestedCascades; c++) {
+		if (nodeCounts[c] > 0) {
+			cascadeBounds[numCascades] = tempBounds[c];
+			cascadeSplits[numCascades] = tempSplits[c];
+			cascadeBounds[numCascades].zn = tempSplits[c];
+			cascadeBounds[numCascades].zf = tempSplits[c + 1];
+			
+#ifdef DEBUG_SHADOW_CASCADES
+			cout << "Cascade Create " << numCascades << ": " << nodeCounts[c] << " nodes, "
+				 << "dist=" << (tempSplits[c]/FEET) << ":" << (tempSplits[c+1]/FEET) << "ft, "
+				 << "extent=" << (cascadeBounds[numCascades].extent()/FEET) << "ft" << endl;
+#endif
+			
+			numCascades++;
+		}
+	}
+	
+	// Set final split for last cascade
+	if (numCascades > 0) {
+		cascadeSplits[numCascades] = cascadeBounds[numCascades-1].zf;
+	}
+	
+	// Handle edge case: no valid cascades
+	if (numCascades == 0) {
+		numCascades = 1;
+		cascadeBounds[0] = VisMap->vbounds;
+		cascadeSplits[0] = minDist;
+		cascadeSplits[1] = maxDist;
+		useCascades = false;
+		return;
+	}
+	
+	useCascades = true;
+	
+	shadow_vsteps=numCascades;
+	
+	double d1 = clock();
+	
+#ifdef DEBUG_SHADOW_CASCADES
+	cout << "Final: " << numCascades << " non-empty cascades from " 
+		 << nodes.size() << " nodes, dist range: " << (minDist/FEET) << ":" << (maxDist/FEET) 
+		 << "ft, calc:" << (d1-d0)*TS << " ms" << endl;
+#endif
 }
 //-------------------------------------------------------------
 // void RasterMgr::next_view()
@@ -544,7 +720,6 @@ int RasterMgr::next_view()
   // cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
 	shadow_vcnt++;
 	shadow_count++;
- 
 	return shadow_vcnt;
 }
 
@@ -555,59 +730,128 @@ int RasterMgr::next_view()
 void RasterMgr::set_light_view()
 {
 	double f,z,r,y,d,w;
-    Point c,e,n,cv,l,cl;
-    double light_offset=10; // moves light away from surface
-    double fov_scale=1;
+	Point c,e,n,cv,l,cl;
+	double light_offset=10; // moves light away from surface
+	double fov_scale=1;
+	double fov=1;
 
-    l=light()->point;
+	l=light()->point;
 
 	cv=TheScene->cpoint-TheScene->epoint; // center to eye
 	cv=cv.normalize();
-	if(farview())
-		c=cv*TheScene->height; // center light view at shadow obj surface
-	else
-		c=cv*(0.9*shadow_vleft+0.1*shadow_vright); // keep light centered at eye location
-
-	cl=(l-c).normalize();
 	
-	w=shadow_vmax-shadow_vmin; // from bounds
-	r=shadow_vzf-shadow_vzn;
-    y=w>r?w:r;
-    
-   	d=light_offset*y;
-    e=c+cl*d;
+	if (useCascades) {		
+		double expansionFactor = 1.0;
+		
+		// ADD EXPANSION FACTOR for distant cascades to prevent clipping
+		if (shadow_vcnt == shadow_vsteps - 1) {
+			expansionFactor = 2;  // 40% larger to account for rotation
+		} //else if (shadow_vcnt == shadow_vsteps - 2 && shadow_vsteps > 2) {
+			//expansionFactor = 1.4;  // 20% larger for second-to-last
+		//}		
+		// USE CASCADE-SPECIFIC BOUNDS
+		Bounds& cascade = cascadeBounds[shadow_vcnt];
+		Point boundsCenter = cascade.center();
+		double boundsExtent = cascade.extent();
+		
+		// Center light view on this cascade's bounds
+		c = boundsCenter;
+			
+		if (farview())
+		    c = cv * TheScene->height;
+		else
+		    c = cv * ((cascade.zn + cascade.zf) / 2.0);  // Center at cascade mid-distance
+		    
+		cl = (l - c).normalize();
 	
-    n=TheScene->npoint.normalize(); // NB
-    
-    double fov=fov_scale*DPR*atan2(y,d);
-    
-    fov/=pow(shadow_vbias/shadow_fov,shadow_vsteps-shadow_vcnt-1);
+		// Size based on cascade extent
+		w = boundsExtent * expansionFactor;
+		r = boundsExtent * expansionFactor;
+		y = w > r ? w : r;
+		
+		d = light_offset * y;
+		e = c + cl * d;
+		
+		n = TheScene->npoint.normalize();
+		
+		// FOV for this cascade (no additional scaling needed)
+		fov = fov_scale * DPR * atan2(y, d);
+		
+		// Near/far planes
+		double s1, s2;
+		Point sp = TheScene->shadowobj->point;
+		double rr = boundsExtent * expansionFactor + TheScene->height;
+		
+		if (e.intersect_sphere(c, sp, rr, s1, s2) >= 0) {
+			double z1 = s1 * d;
+			if (z1 < zn)
+				zn = z1;
+		}
+		
+		double dov = 10 * shadow_dov;
+		zn = d - 4 * dov * r;
+		if (zn < r)
+			zn = r;
+		zf = d + dov * r;
+		
+#ifdef DEBUG_SHADOWS
+		char tmp[256];
+		sprintf(tmp, "Cascade View %d: dist=%.1f:%.1f ft extent=%.1f ft expand=%.1f%% fov=%.2f zn=%.1f zf=%.1f ratio=%.1f",
+				shadow_vcnt, cascade.zn/FEET, cascade.zf/FEET,
+				boundsExtent/FEET, (expansionFactor-1.0)*100, fov, zn/FEET, zf/FEET, zf/zn);
+		cout << tmp << endl;
+#endif
+		} 
+	else {
+		// ORIGINAL ALGORITHM for orbital views
+		if (farview())
+			c = cv * TheScene->height; // center light view at shadow obj surface
+		else
+			c = cv * 0.5*(shadow_vleft + shadow_vright); // keep light centered at eye location
 
-	double s1,s2;
- 	Point sp=TheScene->shadowobj->point;
- 	double rr=shadow_vsize+TheScene->height;
- 	if(e.intersect_sphere(c,sp,rr,s1,s2)>=0){
-	    double z1=s1*d;
- 	    if(z1<zn)
- 	         zn=z1;
-	}
- 	double dov=10*shadow_dov;
-	zn=d-4*dov*r;
-	if(zn<r)
-		zn=r;
-	zf=d+dov*r;
+		cl = (l - c).normalize();
+		
+		w = (shadow_vmax - shadow_vmin); // from bounds
+		r = (shadow_vzf - shadow_vzn);
+		
+		y = w > r ? w : r;
+		
+		d = light_offset * y;
+		e = c + cl * d;
+		
+		n = TheScene->npoint.normalize();
+		
+		fov = fov_scale * DPR * atan2(y, d);
+		
+		// Apply progressive FOV reduction for original algorithm
+		fov /= pow(shadow_vbias / shadow_fov, shadow_vsteps - shadow_vcnt - 1);
 
-	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c,n);
-	TheScene->getMatrix(GL_PROJECTION,sproj);
-	CMmmul(vpmat,sproj,smat,4);
+		double s1, s2;
+		Point sp = TheScene->shadowobj->point;
+		double rr = shadow_vsize + TheScene->height;
+		if (e.intersect_sphere(c, sp, rr, s1, s2) >= 0) {
+			double z1 = s1 * d;
+			if (z1 < zn)
+				zn = z1;
+		}
+		double dov = 10 * shadow_dov;
+		zn = d - 4 * dov * r;
+		if (zn < r)
+			zn = r;
+		zf = d + dov * r;
 
 #ifdef DEBUG_SHADOWS
-	char tmp[256];
-	sprintf(tmp,"#%d zn %g zf %g ratio %g fov %g",shadow_vcnt,zn,zf,zf/zn,fov);
-	cout << tmp <<endl;
-#endif 
+		char tmp[256];
+		sprintf(tmp, "Shadow view %d zn %g zf %g ratio %g fov %g", shadow_vcnt, zn/FEET, zf/FEET, zf/zn, fov);
+		cout << tmp << endl;
+#endif
+	}
+	
+	// Common projection setup
+	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c, n);
+	TheScene->getMatrix(GL_PROJECTION, sproj);
+	CMmmul(vpmat, sproj, smat, 4);
 }
-
 //-------------------------------------------------------------
 // void RasterMgr::render_shadows()	 top level call
 //-------------------------------------------------------------

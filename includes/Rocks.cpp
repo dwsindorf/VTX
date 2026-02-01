@@ -475,7 +475,6 @@ void Rock3DObjMgr::render_zvals(){
 
 	if(objs.size==0)
 		return;
-	//cout<<"Rock3DObjMgr::render_zvals() view:"<<Raster.shadow_vcnt<<":"<<Raster.shadow_vsteps<<endl;
 	if(Raster.shadow_vcnt==0)
 		shadow_start=true;
 	shadow_mode=true;
@@ -494,7 +493,6 @@ void Rock3DObjMgr::render_shadows(){
 	Raster.setShadowProgram("shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 	render();
-//	if(Raster.shadow_vcnt==Raster.shadow_vsteps-1)
 	shadow_mode=false;
 }
 // Post-mesh vertex displacement and color: uses standard noise function

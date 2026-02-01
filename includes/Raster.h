@@ -252,7 +252,6 @@ public:
 	double shadow_dpmin;
 	double shadow_dpmax;
 
-	double shadow_vsteps;
 	double shadow_vbias;
 	double shadow_fov;
 	double shadow_dov;
@@ -261,6 +260,8 @@ public:
 	int	   shadow_edge_width;
 	int	   shadow_vcnt;
 	int	   shadow_count;
+	int    shadow_views;   // requested
+	int    shadow_vsteps;  // actual
 
 	int    shadow_test;
 	bool   shadow_proj;
@@ -497,8 +498,7 @@ public:
     virtual void shadow_view();
     virtual void shadow_light();
     
-    virtual void init_light_view_distance_based();
-    virtual void set_light_view_distance_based();
+    virtual bool shouldUseCascades();
     
 
 };

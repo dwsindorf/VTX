@@ -608,7 +608,6 @@ void EffectsMgr::render_shadows(){
 	glUseProgramObjectARB(0);
 	//glEnable(GL_BLEND);
 
-	//shadow_vsteps=views;
 	GLSLMgr::clrBuffers();
 	Map::use_call_lists=tmp;
 	GLSLMgr::setTessLevel(Map::tessLevel());
