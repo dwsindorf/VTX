@@ -205,6 +205,7 @@ void MapLink::adapt()
 		if(ctr && !ctr->ctest())
 			return;
 		combine();
+		last->bounds.reset();
 		last->dec_alevel();
 		last->clr_nflags();
 		last->clr_cchecks();

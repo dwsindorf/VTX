@@ -10,7 +10,7 @@
 #include "GLSLMgr.h"
 
 #define OPTIMIZE
-#define DEBUG_SHADOWS
+//#define DEBUG_SHADOWS
 #define DEBUG_SHADOW_CASCADES
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
@@ -543,7 +543,7 @@ bool RasterMgr::shouldUseCascades()
 }
 
 void RasterMgr::buildCascades(){
-	const double CASCADE_OVERLAP = 0.2;  // 15% overlap
+	const double CASCADE_OVERLAP = 0.3;  // 15% overlap
 	extern Point VisPoint;
 	extern Map *VisMap;
 	Point eyePos = VisPoint;
@@ -566,7 +566,9 @@ void RasterMgr::buildCascades(){
 	// Calculate distance to all visible nodes and find min/max
 	double minDist = 1e30;
 	double maxDist = 0;
-	
+	extern int bounds_valid;
+	extern int bounds_invalid;
+	bounds_valid=bounds_invalid=0;
 	for (MapNode* node : nodes) {
 		if (!node) continue;
 		
@@ -579,7 +581,7 @@ void RasterMgr::buildCascades(){
 		if (dist < minDist) minDist = dist;
 		if (dist > maxDist) maxDist = dist;
 	}
-	
+	cout<<"bounds valid="<<100.0*bounds_valid/(bounds_valid+bounds_invalid)<<" %"<<endl;
 	if (minDist >= maxDist || nodes.size() == 0) {
 		// Fallback to single cascade
 		numCascades = 1;
@@ -593,33 +595,19 @@ void RasterMgr::buildCascades(){
 	if (requestedCascades < 1) requestedCascades = 1;
 	if (requestedCascades > MAX_CASCADES) requestedCascades = MAX_CASCADES;
 	
-	// Choose split algorithm based on distance range
 	double distRatio = maxDist / minDist;
 	double tempSplits[MAX_CASCADES + 1];
 	
-	if (distRatio > 100) {  // Large range, use log
-		double logMin = log(minDist);
-		double logMax = log(maxDist);
-		double logRange = logMax - logMin;
-		
-		tempSplits[0] = minDist;
-		for (int i = 1; i < requestedCascades; i++) {
-			double t = (double)i / requestedCascades;
-			tempSplits[i] = exp(logMin + t * logRange);
-		}
-		tempSplits[requestedCascades] = maxDist * 1.01;
-	} else {  // Small range, use power
-		tempSplits[0] = minDist;
-		double range = maxDist - minDist;
-		
-		for (int i = 1; i < requestedCascades; i++) {
-			double t = (double)i / requestedCascades;
-			double exponent = 2.0;
-			double factor = pow(t, exponent);
-			tempSplits[i] = minDist + factor * range;
-		}
-		tempSplits[requestedCascades] = maxDist * 1.01;
+	double logMin = log(minDist);
+	double logMax = log(maxDist);
+	double logRange = logMax - logMin;
+	
+	tempSplits[0] = minDist;
+	for (int i = 1; i < requestedCascades; i++) {
+		double t = (double)i / requestedCascades;
+		tempSplits[i] = exp(logMin + 0.75*t * logRange);
 	}
+	tempSplits[requestedCascades] = maxDist * 1.01;
 	
 	// Build bounds for each initial cascade and count nodes
 	Bounds tempBounds[MAX_CASCADES];
@@ -674,8 +662,7 @@ void RasterMgr::buildCascades(){
 			cout << "Cascade Create " << numCascades << ": " << nodeCounts[c] << " nodes, "
 				 << "dist=" << (tempSplits[c]/FEET) << ":" << (tempSplits[c+1]/FEET) << "ft, "
 				 << "extent=" << (cascadeBounds[numCascades].extent()/FEET) << "ft" << endl;
-#endif
-			
+#endif			
 			numCascades++;
 		}
 	}
@@ -695,8 +682,7 @@ void RasterMgr::buildCascades(){
 		return;
 	}
 	
-	useCascades = true;
-	
+	useCascades = true;	
 	shadow_vsteps=numCascades;
 	
 	double d1 = clock();
@@ -706,21 +692,6 @@ void RasterMgr::buildCascades(){
 		 << nodes.size() << " nodes, dist range: " << (minDist/FEET) << ":" << (maxDist/FEET) 
 		 << "ft, calc:" << (d1-d0)*TS << " ms" << endl;
 #endif
-}
-//-------------------------------------------------------------
-// void RasterMgr::next_view()
-//              called at start of each view
-//	            shadow_vleft=shadow_vright
-//-------------------------------------------------------------
-int RasterMgr::next_view()
-{
-	//shadow_vleft=shadow_vright;
-	shadow_vstep*=shadow_vbias/shadow_fov;
-	shadow_vright=shadow_vleft+shadow_vstep;
-  // cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
-	shadow_vcnt++;
-	shadow_count++;
-	return shadow_vcnt;
 }
 
 //------------------------------------------------------------
@@ -745,9 +716,9 @@ void RasterMgr::set_light_view()
 	if (useCascades) {		
 		// ADD EXPANSION FACTOR for distant cascades to prevent clipping
 		if (shadow_vcnt == shadow_vsteps - 1) {
-			expansionFactor = 1.6;  // 40% larger to account for rotation
+			expansionFactor = 1.2;  // 40% larger to account for rotation
 		} else if (shadow_vcnt == shadow_vsteps - 2 && shadow_vsteps > 2) {
-			expansionFactor = 1.2;  // 20% larger for second-to-last
+			expansionFactor = 1.1;  // 20% larger for second-to-last
 		}		
 		// USE CASCADE-SPECIFIC BOUNDS
 		Bounds& cascade = cascadeBounds[shadow_vcnt];
@@ -828,6 +799,22 @@ void RasterMgr::set_light_view()
 	TheScene->getMatrix(GL_PROJECTION, sproj);
 	CMmmul(vpmat, sproj, smat, 4);
 }
+//-------------------------------------------------------------
+// void RasterMgr::next_view()
+//              called at start of each view
+//	            shadow_vleft=shadow_vright
+//-------------------------------------------------------------
+int RasterMgr::next_view()
+{
+	//shadow_vleft=shadow_vright;
+	shadow_vstep*=shadow_vbias/shadow_fov;
+	shadow_vright=shadow_vleft+shadow_vstep;
+  // cout<<shadow_vcnt<<" "<<shadow_vleft<<" "<<shadow_vright<<" "<<0.5*(shadow_vright+shadow_vleft)<<endl;
+	shadow_vcnt++;
+	shadow_count++;
+	return shadow_vcnt;
+}
+
 //-------------------------------------------------------------
 // void RasterMgr::render_shadows()	 top level call
 //-------------------------------------------------------------

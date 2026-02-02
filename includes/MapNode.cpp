@@ -15,6 +15,9 @@
 extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness,Slope;
 extern Point MapPt;
 
+int bounds_valid=0;
+int bounds_invalid=0;
+
 #define VCLIP     // enable viewobj clip  test
 #define PCLIP     // enable parent sphere clip  test
 #define ZCLIP     // enable dmax clip  test
@@ -618,6 +621,7 @@ MapLink *MapNode::split()
 		if(TheMap)
 			TheMap->size++;
 		clr_bchecked();
+		getBounds();
 		return 0;
 	}
 
@@ -680,6 +684,7 @@ MapLink *MapNode::split()
 	clr_bchecked();
 	if(need_recalc())
 	   recalc2();
+	getBounds();
 	return new MapLink(l,c,u);
 }
 
@@ -1491,16 +1496,19 @@ void MapNode::visit_cycle(void  (*func)(MapData*))
 }
 
 static MapNode *pivot;
-void add_bounds(MapNode *n){
+void eval_bounds(MapNode *n){
 	pivot->bounds.eval(n->mpoint());
 }
 
 void MapNode::getBounds(){
-	if(bounds.valid())
+	if(bounds.valid()){
+		bounds_valid++;
 		return;
+	}
+	bounds_invalid++;
 	bounds.reset();
 	pivot=this;
-	CWcycle(add_bounds);
+	CWcycle(eval_bounds);
 	bounds.make();
 }
 
