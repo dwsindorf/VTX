@@ -7,7 +7,7 @@
 uniform vec3 object;
 varying vec4 Normal;
 varying vec4 EyeDirection;
-//uniform vec4 Emission;
+varying vec4 WorldNormal;
 
 void main(void) {
 
@@ -18,6 +18,7 @@ void main(void) {
 	Normal.w = TextureAttributes.x;     // tangent packed into unused 4th component of Normal
 	EyeDirection.w=TextureAttributes.y; // and EyeDirection vectors
 
+	WorldNormal.xyz = gl_Normal;//Vertex2;
 	//Color=Emission;
 
 #include "set_common.vert"

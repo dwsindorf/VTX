@@ -1901,8 +1901,8 @@ void Map::make_visbox()
 
 		//vbounds.zn=0.5*rbounds.zn;
 	    //cout << "rbounds zn:"<<rbounds.zn/FEET<<" zf:"<<rbounds.zf/FEET<<endl;
-		if(TheScene->viewobj==object)
-		    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
+		//if(TheScene->viewobj==object)
+		//    cout << "rbounds.zn:" << rbounds.zn/FEET << " rbounds.zf:"<< rbounds.zf/FEET << " zn:"<<zn/FEET<<" zf:"<<zf/FEET<<endl;
 		vbounds.zn=rbounds.zn;
 		vbounds.zf=rbounds.zf;
 		

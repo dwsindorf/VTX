@@ -510,7 +510,7 @@ void RasterMgr::init_view()
 	//shadow_vsteps=(int)shadow_vsteps;
 	
 	shadow_vstep=(shadow_vmax-shadow_vmin)/pow(shadow_vbias/shadow_fov,shadow_vsteps-1);
-	cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmin/FEET<<":"<<shadow_vmax/FEET<<" range:"<<shadow_zrange/FEET<<" step:"<<shadow_vstep/FEET<<endl;
+	//cout<<"views:"<<shadow_vsteps<<" init view "<<shadow_vmin/FEET<<":"<<shadow_vmax/FEET<<" range:"<<shadow_zrange/FEET<<" step:"<<shadow_vstep/FEET<<endl;
 	shadow_vleft=2*shadow_vmin;
     shadow_vright=shadow_vleft+shadow_vstep;
 	//if(shadow_vright>smax)
@@ -729,11 +729,13 @@ int RasterMgr::next_view()
 //-------------------------------------------------------------
 void RasterMgr::set_light_view()
 {
-	double f,z,r,y,d,w;
-	Point c,e,n,cv,l,cl;
+	double f,z,r,y,d,w,left,right,s1,s2,dov,rr;
+	Point c,e,n,cv,l,cl,sp;
 	double light_offset=10; // moves light away from surface
 	double fov_scale=1;
 	double fov=1;
+	double expansionFactor = 1.0;
+	double extent=1;
 
 	l=light()->point;
 
@@ -741,112 +743,86 @@ void RasterMgr::set_light_view()
 	cv=cv.normalize();
 	
 	if (useCascades) {		
-		double expansionFactor = 1.0;
-		
 		// ADD EXPANSION FACTOR for distant cascades to prevent clipping
 		if (shadow_vcnt == shadow_vsteps - 1) {
-			expansionFactor = 2;  // 40% larger to account for rotation
-		} //else if (shadow_vcnt == shadow_vsteps - 2 && shadow_vsteps > 2) {
-			//expansionFactor = 1.4;  // 20% larger for second-to-last
-		//}		
+			expansionFactor = 1.6;  // 40% larger to account for rotation
+		} else if (shadow_vcnt == shadow_vsteps - 2 && shadow_vsteps > 2) {
+			expansionFactor = 1.2;  // 20% larger for second-to-last
+		}		
 		// USE CASCADE-SPECIFIC BOUNDS
 		Bounds& cascade = cascadeBounds[shadow_vcnt];
 		Point boundsCenter = cascade.center();
-		double boundsExtent = cascade.extent();
+		extent=cascade.extent();
+		left=cascade.zn;
+		right=cascade.zf;
 		
-		// Center light view on this cascade's bounds
-		c = boundsCenter;
-			
-		if (farview())
-		    c = cv * TheScene->height;
-		else
-		    c = cv * ((cascade.zn + cascade.zf) / 2.0);  // Center at cascade mid-distance
-		    
-		cl = (l - c).normalize();
-	
 		// Size based on cascade extent
-		w = boundsExtent * expansionFactor;
-		r = boundsExtent * expansionFactor;
-		y = w > r ? w : r;
-		
-		d = light_offset * y;
-		e = c + cl * d;
-		
-		n = TheScene->npoint.normalize();
-		
-		// FOV for this cascade (no additional scaling needed)
-		fov = fov_scale * DPR * atan2(y, d);
-		
-		// Near/far planes
-		double s1, s2;
-		Point sp = TheScene->shadowobj->point;
-		double rr = boundsExtent * expansionFactor + TheScene->height;
-		
-		if (e.intersect_sphere(c, sp, rr, s1, s2) >= 0) {
-			double z1 = s1 * d;
-			if (z1 < zn)
-				zn = z1;
-		}
-		
-		double dov = 10 * shadow_dov;
-		zn = d - 4 * dov * r;
-		if (zn < r)
-			zn = r;
-		zf = d + dov * r;
-		
-#ifdef DEBUG_SHADOWS
-		char tmp[256];
-		sprintf(tmp, "Cascade View %d: dist=%.1f:%.1f ft extent=%.1f ft expand=%.1f%% fov=%.2f zn=%.1f zf=%.1f ratio=%.1f",
-				shadow_vcnt, cascade.zn/FEET, cascade.zf/FEET,
-				boundsExtent/FEET, (expansionFactor-1.0)*100, fov, zn/FEET, zf/FEET, zf/zn);
-		cout << tmp << endl;
-#endif
+		w = extent * expansionFactor;
+		r = extent * expansionFactor;
+
 		} 
 	else {
 		// ORIGINAL ALGORITHM for orbital views
-		if (farview())
-			c = cv * TheScene->height; // center light view at shadow obj surface
-		else
-			c = cv * 0.5*(shadow_vleft + shadow_vright); // keep light centered at eye location
-
-		cl = (l - c).normalize();
-		
+		left=shadow_vleft;
+		right=shadow_vright;
 		w = (shadow_vmax - shadow_vmin); // from bounds
 		r = (shadow_vzf - shadow_vzn);
-		
-		y = w > r ? w : r;
-		
-		d = light_offset * y;
-		e = c + cl * d;
-		
-		n = TheScene->npoint.normalize();
-		
-		fov = fov_scale * DPR * atan2(y, d);
-		
-		// Apply progressive FOV reduction for original algorithm
-		fov /= pow(shadow_vbias / shadow_fov, shadow_vsteps - shadow_vcnt - 1);
+		fov_scale /= pow(shadow_vbias / shadow_fov, shadow_vsteps - shadow_vcnt - 1);
+		extent=shadow_vsize;		
+	}
+	y = w > r ? w : r;
+	if (farview())
+		c = cv * TheScene->height; // center light view at shadow obj surface
+	else
+	    c = cv * 0.5* (left + right);  // Center at mid-distance
 
-		double s1, s2;
-		Point sp = TheScene->shadowobj->point;
-		double rr = shadow_vsize + TheScene->height;
-		if (e.intersect_sphere(c, sp, rr, s1, s2) >= 0) {
-			double z1 = s1 * d;
-			if (z1 < zn)
-				zn = z1;
-		}
-		double dov = 10 * shadow_dov;
-		zn = d - 4 * dov * r;
-		if (zn < r)
-			zn = r;
-		zf = d + dov * r;
+	cl = (l - c).normalize();
+	
+	d = light_offset * y;
+	e = c + cl * d;
+	
+	n = TheScene->npoint.normalize();
+	
+	fov = fov_scale * DPR * atan2(y, d);
+
+	sp = TheScene->shadowobj->point;
+	rr = extent * expansionFactor + TheScene->height;
+	if (e.intersect_sphere(c, sp, rr, s1, s2) >= 0) {
+		double z1 = s1 * d;
+		if (z1 < zn)
+			zn = z1;
+	}
+	dov = 10 * shadow_dov;
+	zn = d - 4 * dov * r;
+	if (zn < r)
+		zn = r;
+	zf = d + dov * r;
 
 #ifdef DEBUG_SHADOWS
-		char tmp[256];
-		sprintf(tmp, "Shadow view %d zn %g zf %g ratio %g fov %g", shadow_vcnt, zn/FEET, zf/FEET, zf/zn, fov);
-		cout << tmp << endl;
-#endif
+	char tmp[1024];
+	char ustr[64]="FT";
+	double units=FEET;
+	if(zn>1000*MILES){
+		units=1000*MILES;
+		sprintf(ustr,"1000 Miles");
 	}
-	
+	else if(zn>MILES){
+		units=MILES;
+		sprintf(ustr,"Miles");
+	}
+	sprintf(tmp, "Shadow View %d extent=%-6g left=%-6g right=%-6g near=%-6g far=%-6g ratio=%-3g fov=%-3g units=%s ",
+			shadow_vcnt, 
+			round(extent/units,1), 
+			round(left/units,1), 
+			round(right/units,1),
+			round(zn/units,1), 
+			round(zf/units,1), 
+			round(zf/zn,2), 
+			round(fov,2),
+			ustr);
+	cout << tmp << endl;
+#endif
+
 	// Common projection setup
 	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c, n);
 	TheScene->getMatrix(GL_PROJECTION, sproj);

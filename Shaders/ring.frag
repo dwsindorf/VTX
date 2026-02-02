@@ -33,6 +33,8 @@ uniform float twilite_min;
 uniform float twilite_max;
 uniform float twilite_dph; // dot product between point-center light-point at horizon
 
+varying vec4 WorldNormal;
+
 //
 //Lighting model
 //
