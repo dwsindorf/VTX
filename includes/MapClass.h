@@ -70,7 +70,7 @@ protected:
 		VISIDS      =	0x00400000, // generate vis box from id pass
 		ENDADAPT    =	0x00800000, // set before running last ids pass
 		GEOMETRY    =	0x01000000, // geometery flag;
-		MULTILAYER  =	0x02000000, // multilayer flag
+		PLACEDATA  =	0x02000000, // placement flag
 		TRANSPARANT =	0x04000800,	// set transparancy flag
 		FIRST       =	0x08000000	// first render pass
 
@@ -160,8 +160,8 @@ public:
 	void	set_render_btof()   { BIT_SET(flags,RENDER_BTOF,1);}
 	int	    render_btof()	    { return (flags & RENDER_BTOF)?1:0;}
 
-	void	set_multilayer()   { BIT_SET(flags,MULTILAYER,1);}
-	int	    multilayer()	    { return (flags & MULTILAYER)?1:0;}
+	void	set_multilayer()   { BIT_SET(flags,PLACEDATA,1);}
+	int	    multilayer()	    { return (flags & PLACEDATA)?1:0;}
 
 	int     render_triangles();
 

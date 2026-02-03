@@ -1192,7 +1192,7 @@ void	MapNode::balance()
 	if(x && \
 	    (data.type()!=x->data.type() \
 	    || color().difference(x->color())>TheMap->gmax\
-	    || sqrt(fabs(density()-x->density()))>TheMap->gmax\
+	    || sqrt(fabs(mdata()-x->mdata()))>TheMap->gmax\
 	    || fabs(ocean()-x->ocean())>TheMap->gmax\
 		|| x->edge() \
 	    )) { \
@@ -1200,7 +1200,7 @@ void	MapNode::balance()
 #define TEST_CCOLOR()  \
 	if(data.type()!=cdata->type() \
 	    || color().difference(cdata->color())>TheMap->gmax \
-	    || sqrt(fabs(density()-cdata->density()))>TheMap->gmax \
+	    || sqrt(fabs(mdata()-cdata->mdata()))>TheMap->gmax \
 	    || fabs(ocean()-cdata->ocean())>TheMap->gmax \
 		|| cdata->edge() \
 	    )\
@@ -2362,7 +2362,6 @@ void MapNode::Svertex(MapData*dn) {
 		int texid = 0;
 		double s = 0;
 		double t = 0;
-		double margin=Render.texblend()?d->mdata():1;
 		for (int j = 0; j < tp->textures.size; j++) {
 			s=t=0;
 			tx = tp->textures[j];
@@ -2378,14 +2377,11 @@ void MapNode::Svertex(MapData*dn) {
 				}
 				if(tx->a_data){
 					t = d->texture(index);
-					if(tx->d_data)
-						t*=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=margin;
-					A[texid]=clamp(t,0.0,1.0);
+					A[texid]=1;
 					num_attribs++;
 				}
 			} else if(tx->cid>=0){
@@ -2397,14 +2393,11 @@ void MapNode::Svertex(MapData*dn) {
 
 				if(tx->a_data){
 					t = d->texture(index);
-					if(tx->d_data)
-						t*=margin;
 					A[texid]=clamp(t,0.0,1.0);
 					num_attribs++;
 				}
 				else if(tx->d_data){
-					t=margin;
-					A[texid]=clamp(t,0.0,1.0);
+					A[texid]=1;
 					num_attribs++;
 				}
 			}

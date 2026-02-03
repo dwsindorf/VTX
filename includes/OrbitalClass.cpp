@@ -5778,12 +5778,12 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 	Prob=r[12]; // probability
 	Noise=0.1;
 	std::string str;
-	if(r[6]>0.8)
-		str+=newRocks(planet,GN_LARGE);
-	if(r[7]>0.2)
-		str+=newRocks(planet,GN_MED);
-	if(r[8]>0.5)
-		str+=newRocks(planet,GN_SMALL);
+//	if(r[6]>0.8)
+//		str+=newRocks(planet,GN_LARGE);
+//	if(r[7]>0.2)
+//		str+=newRocks(planet,GN_MED);
+//	if(r[8]>0.5)
+//		str+=newRocks(planet,GN_SMALL);
 	
 	Nscale=pow(2,16);
 	pushInstance(planet);

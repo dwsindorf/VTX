@@ -451,7 +451,7 @@ bool PlacementMgr::setTests() {
 		return false;	
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
-	S0.clr_flag(DVALUE);
+	S0.clr_flag(PLACEMENT);
 	if(x<0.25)
 		return false;
 	x=lerp(x,0.25,1,0,1);
@@ -468,8 +468,8 @@ bool PlacementMgr::setTests() {
 		S0.c=c1.mix(c3,y);
 	}
 	if(testDensity()) {
-		S0.set_flag(DVALUE);
-		S0.s=x;
+		S0.set_flag(PLACEMENT);
+		Td.margin=x;
 	}
 	return true;
 }

@@ -605,7 +605,7 @@ void RasterMgr::buildCascades(){
 	tempSplits[0] = minDist;
 	for (int i = 1; i < requestedCascades; i++) {
 		double t = (double)i / requestedCascades;
-		tempSplits[i] = exp(logMin + 0.75*t * logRange);
+		tempSplits[i] = exp(logMin + 0.5*t * logRange);
 	}
 	tempSplits[requestedCascades] = maxDist * 1.01;
 	
@@ -716,7 +716,7 @@ void RasterMgr::set_light_view()
 	if (useCascades) {		
 		// ADD EXPANSION FACTOR for distant cascades to prevent clipping
 		if (shadow_vcnt == shadow_vsteps - 1) {
-			expansionFactor = 1.2;  // 40% larger to account for rotation
+			expansionFactor = 1.3;  // 40% larger to account for rotation
 		} else if (shadow_vcnt == shadow_vsteps - 2 && shadow_vsteps > 2) {
 			expansionFactor = 1.1;  // 20% larger for second-to-last
 		}		

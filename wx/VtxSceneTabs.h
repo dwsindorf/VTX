@@ -145,7 +145,6 @@ public:
     void OnUpdateGenerateQuality(wxUpdateUIEvent& event);
 
     void OnShadowViewsSelect(wxCommandEvent& event);
-    void OnUpdateShadowViews(wxUpdateUIEvent& event);
 
     void OnSetLayersSelect(wxCommandEvent& event);
     void OnUpdateSetLayers(wxUpdateUIEvent& event);

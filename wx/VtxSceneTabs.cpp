@@ -107,9 +107,7 @@ EVT_CHOICE(ID_RENDER_QUALITY,VtxSceneTabs::OnRenderQualitySelect)
 EVT_UPDATE_UI(ID_GENERATE_QUALITY, VtxSceneTabs::OnUpdateGenerateQuality)
 EVT_CHOICE(ID_GENERATE_QUALITY,VtxSceneTabs::OnGenerateQualitySelect)
 
-EVT_UPDATE_UI(ID_SHADOW_VIEWS, VtxSceneTabs::OnUpdateShadowViews)
 EVT_CHOICE(ID_SHADOW_VIEWS,VtxSceneTabs::OnShadowViewsSelect)
-
 
 EVT_UPDATE_UI(ID_SET_LAYERS, VtxSceneTabs::OnUpdateSetLayers)
 EVT_CHOICE(ID_SET_LAYERS,VtxSceneTabs::OnSetLayersSelect)
@@ -408,21 +406,13 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	
 	wxStaticText *lbl=new wxStaticText(panel,-1,"Views",wxDefaultPosition,wxSize(-1,-1));
 	hline->Add(lbl, LABEL2, wxALIGN_LEFT|wxTop|wxLEFT,0);
-	hline->AddSpacer(10);
+	hline->AddSpacer(50);
 	wxString views[]={"1","2","3","4","5","6","7","8"};
 
-	shadow_views=new wxChoice(panel, ID_SHADOW_VIEWS, wxDefaultPosition,wxSize(40,-1),8, views);
+	shadow_views=new wxChoice(panel, ID_SHADOW_VIEWS, wxDefaultPosition,wxSize(50,-1),8, views);
 	shadow_views->SetSelection(3);
 	
 	hline->Add(shadow_views,0,wxALIGN_LEFT|wxALL,0);
-
-
-//	ShadowResSlider=new SliderCtrl(panel,ID_SHADOW_RES_SLDR,"Views",LABEL2,VALUE2,SLIDER2);
-//	ShadowResSlider->setRange(1,10);
-//	ShadowResSlider->slider->SetToolTip("Number of Light source views");
-//	ShadowResSlider->format=wxString("%1.0f");
-//
-//	hline->Add(ShadowResSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -808,9 +798,6 @@ void VtxSceneTabs::OnShadowViewsSelect(wxCommandEvent& event){
 	TheScene->set_changed_render();
 
 }
-void VtxSceneTabs::OnUpdateShadowViews(wxUpdateUIEvent& event){
-	shadow_views->SetSelection(Raster.shadow_views-1);
-}
 
 void VtxSceneTabs::OnSetLayersSelect(wxCommandEvent& event){
 	int mode=event.GetSelection();
@@ -871,6 +858,8 @@ void VtxSceneTabs::updateControls(){
 	m_autogrid->SetValue(TheScene->autogrid());
 	keep_tmps->SetSelection(TheScene->keep_tmps);
 	use_tmps->SetSelection(TheScene->use_tmps);
+	
+	shadow_views->SetSelection(Raster.shadow_views-1);
 
 	updateSlider(GridSpacingSlider,TheScene->grid_spacing);
 	updateSlider(ContourSpacingSlider,TheScene->contour_spacing);
@@ -890,7 +879,6 @@ void VtxSceneTabs::updateControls(){
 	m_curvature->SetValue(Adapt.curve_test());
 
 	updateSlider(ShadowBlurSlider,Raster.shadow_blur);
-	//updateSlider(ShadowResSlider,Raster.shadow_views);
 	updateSlider(ShadowFovSlider,Raster.shadow_fov);
 	updateSlider(ShadowDovSlider,Raster.shadow_dov);
 	

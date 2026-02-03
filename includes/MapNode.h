@@ -358,6 +358,7 @@ public:
     double delt()                   { return data.X();}
     double delp()                   { return data.Y();}
 
+    double mdata()                  { return data.mdata();}
     double density()                { return data.density();}
     double ocean()                  { return data.ocean();}
     double sediment()               { return data.sediment();}

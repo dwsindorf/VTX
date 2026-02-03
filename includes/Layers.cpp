@@ -252,8 +252,6 @@ void TNmap::setmorph(double d)
 //-------------------------------------------------------------
 void TNmap::init()
 {
-	TheMap->set_multilayer();
-
 	TNlayer *layer=(TNlayer*)right;
 	layers=0;
 	while(layer && layer->typeValue()==ID_LAYER){
@@ -274,18 +272,11 @@ void TNmap::eval()
 	if(layer && CurrentScope->rpass()){
 		int in_map=S0.get_flag(CLRTEXS);
 		S0.set_flag(CLRTEXS);
-		//if(Td.get_flag(FVALUE))
-		//	Td.set_flag(MULTILAYER);
 		int i=0;
 		while(layer && layer->typeValue()==ID_LAYER){
 			layer->id=Td.tids-1;
 			layer->base->eval();
 			Td.tp->ntexs=Td.tp->textures.size;
-
-			//if(Td.tp->textures.size && !Td.tp->has_color())
-			//	Td.tp->color=Td.tp->textures[0]->aveColor;
-
-			//Td.tp->set_color(true);
 
 			layer=(TNlayer*)layer->right;
 			if(!layer || layer->typeValue()!=ID_LAYER)
@@ -338,8 +329,6 @@ void TNmap::eval()
 	int in_map=S0.get_flag(CLRTEXS);
 	S0.set_flag(CLRTEXS);
 	S0.datacnt=0;
-	if(Td.get_flag(!ROCKLAYER))
-		Td.set_flag(MULTILAYER);
 
 	while(layer && layer->typeValue()==ID_LAYER){
 		if(!layer->isEnabled()){
@@ -410,7 +399,6 @@ void TNmap::eval()
 		layer->base->eval(); // calls rocks
  		if(!Td.get_flag(ROCKLAYER)){
  	      	S0.p.z-=d;
-			Td.set_flag(MULTILAYER);  // used to turn off textures in margin
       		S0.next_id();
  		}
 		Td.insert_strata(S0);
@@ -435,58 +423,6 @@ void TNmap::eval()
 	s1=msmooth*rampstep(TheScene->height,1e-7,1e-4,1e-3,0.01);
 	s2=0.1*s1;
 
-	if(Td.get_flag(!ROCKLAYER)){ // don't merge layers if layer = Rocks
-		// 1) Remove visual artifact when different textures meet at layer intersection
-		//    get tiled effect (due to texture colors not being blended)
-		//    work-around
-		//    - reduce texture opacity to zero in small dz region at layer intersections
-		//    - replace texture with texture average color
-		//    - blend colors from adjacent layers
-		// morph layer heights
-		double dm=rampstep(top_layer->morph,0,1,s1,s2);
-		Td.margin=smoothstep(fabs(dz),0,dm,0,1); // sets texture opacity 
-		if(top_layer->morph){
-			f=top_layer->morph*rampstep(0,margin,dz,0.5,0);
-			if(f){
-				Point p=Td.zlevel[0].p;
-				Td.zlevel[0].p.z=(1-f)*Td.zlevel[0].p.z+f*Td.zlevel[1].p.z;
-				Td.zlevel[0].p.x=(1-f)*Td.zlevel[0].p.x+f*Td.zlevel[1].p.x;
-				Td.zlevel[0].p.y=(1-f)*Td.zlevel[0].p.y+f*Td.zlevel[1].p.y;
-				Td.zlevel[1].p.z=(1-f)*Td.zlevel[1].p.z+f*p.z;
-				Td.zlevel[1].p.x=(1-f)*Td.zlevel[1].p.x+f*p.x;
-				Td.zlevel[1].p.y=(1-f)*Td.zlevel[1].p.y+f*p.y;
-			}
-		}
-		// morph layer colors and textures
-		if(Td.margin<1){
-			int id=1+Td.zlevel[0].id(); // get properties for top layer
-			if(id<Td.zlevel[0].properties.size && Td.zlevel[0].properties[id]->ntexs){
-				int tid=Td.zlevel[0].properties[id]->ntexs-1; // top texture in layer
-				FColor  avec=Td.zlevel[0].properties[id]->textures[tid]->aveColor;
-				Color c=Color(avec.red(),avec.green(),avec.blue());
-				Td.zlevel[0].c=Color(avec.red(),avec.green(),avec.blue());
-			}
-			Td.zlevel[0].set_cvalid();
-			for(int i=1;i<MAX_TDATA;i++){
-				if(Td.zlevel[i].p.z==TZBAD)
-					break;
-				Td.zlevel[i].set_cvalid();
-				Td.zlevel[i].c=Td.zlevel[0].c; // not sure why this works
-			}
-			if(Td.margin<0.75)
-				S0.set_flag(INEDGE);
-		}
-		if(f){
-			Color c1=Td.zlevel[0].c;
-			Color c2=Td.zlevel[1].c;
-			if(lowdz>-10)
-				c2=c2.blend(lowc,rampstep(0,margin,5*lowdz,0.5,0));
-			Td.zlevel[1].c=c2.blend(c1,f);
-			Td.zlevel[0].c=c1.blend(c2,f);
-			Td.zlevel[0].set_cvalid();
-			Td.zlevel[1].set_cvalid();
-		}
-	} // don't merge layers if layer = Rocks
 	Td.zlevel[0].set_cvalid();
 
 	S0.copy(Td.zlevel[0]); // return top level

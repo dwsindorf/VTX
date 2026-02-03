@@ -78,7 +78,7 @@ enum {
 	NOISE1D     = 0x00010000,     // shader 1D noise
 	HIDDEN      = 0x00020000,    // invisible node
 	COMPLEX     = 0x00040000,    // complex expression
-	MULTILAYER  = 0x00080000,    // multilayer terrain
+	PLACEMENT   = 0x00080000,     // placement data
 	ROCKLAYER   = 0x00100000,    // rocks terrain
 	ROCKBODY    = 0x00200000,    // rocks terrain
 	INEDGE      = 0x00400000,    // edge flag
