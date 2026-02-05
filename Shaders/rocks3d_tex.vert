@@ -1,21 +1,26 @@
 #version 120
 
-//#include "attributes.h"
 #include "textures.h"
 #include "attributes.vert"
 #include "common.h"
 
 uniform float night_ligting;
 uniform float textureScale;
+uniform float wscale;
 varying vec3 Normal;
 varying vec3 EyeDirection;
 varying vec3 WorldPos;
 varying vec3 TemplatePos;
 varying vec4 WorldNormal;
-attribute vec3 templatePosition;  // Attribute location 3
-attribute vec3 faceNormal;        // Attribute location 4
+attribute vec4 templatePosition;  // Attribute location 3
+attribute vec4 faceNormal;        // Attribute location 4
 
 void main() {
+
+    float depth=templatePosition.w;
+    float dfactor = 0.5 * wscale / depth;
+    float max_orders = log2(dfactor);
+    
     gl_Position = ftransform();
      
     // Normal in eye space
@@ -23,17 +28,20 @@ void main() {
     
     // Eye direction (position in eye space)
     EyeDirection = -(gl_ModelViewMatrix * gl_Vertex).xyz;
-    TemplatePos = templatePosition;  // Pass through
+    TemplatePos = templatePosition.xyz;  // Pass through
     
-     WorldPos = templatePosition;
+    Tangent.w = max_orders;
+    
+     WorldPos = templatePosition.xyz;
 #ifdef COLOR
      Color = gl_Color;
 #endif
 
 #if NTEXS >0
 	for(int i=0;i<NTEXS;i++){
-		gl_TexCoord[i] = vec4(templatePosition, 1.0);
+		gl_TexCoord[i] = vec4(templatePosition.xyz, 1.0);
 	}
-	WorldNormal.xyz = faceNormal;//gl_TexCoord[0].xyz;
+	WorldNormal.xyz = faceNormal.xyz;//gl_TexCoord[0].xyz;
+	Tangent.z=abs(faceNormal.w);
 #endif    
 }

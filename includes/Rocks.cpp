@@ -439,6 +439,8 @@ bool Rock3DObjMgr::setProgram() {
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+		
+	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
 	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
@@ -746,7 +748,8 @@ void Rock3DObjMgr::render() {
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
             
             Point eyePos = s->vertex - xpoint;
-            double size = 4 * Hscale * s->radius;
+             // double size = 4 * Hscale * s->radius;
+           double size = 0.006*s->radius;
             double pts = floor(s->pts);
             double dist = s->dist;
             int rval = s->rval;
@@ -844,6 +847,9 @@ void Rock3DObjMgr::render() {
                     batch.faceNormals.push_back(tri.faceNormal.x);
                     batch.faceNormals.push_back(tri.faceNormal.y);
                     batch.faceNormals.push_back(tri.faceNormal.z);
+                    double slope=rotatedNormal.dot(up);
+                    batch.faceNormals.push_back(slope);
+                    //cout<<slope<<endl;                    
                     
                     // Colors
                     Color c=tri.colors[v];
@@ -860,6 +866,7 @@ void Rock3DObjMgr::render() {
                     batch.templatePos.push_back(tp.x);
                     batch.templatePos.push_back(tp.y);
                     batch.templatePos.push_back(tp.z);
+                    batch.templatePos.push_back(eyeVertex.length());
                 }
             }
             
@@ -1011,14 +1018,14 @@ void Rock3DObjMgr::render_objects() {
         GLint attribLoc1 = glGetAttribLocation(program, "templatePosition");
         if (attribLoc1 >= 0) {
             glBindBuffer(GL_ARRAY_BUFFER, batch.vboTemplatePos);
-            glVertexAttribPointer(attribLoc1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(attribLoc1, 4, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(attribLoc1);
         } 
         // Face normal attribute
         GLint attribLoc2 = glGetAttribLocation(program, "faceNormal");
         if (attribLoc2 >= 0) {
             glBindBuffer(GL_ARRAY_BUFFER, batch.vboFaceNormals);
-            glVertexAttribPointer(attribLoc2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(attribLoc2, 4, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(attribLoc2);
         }
         

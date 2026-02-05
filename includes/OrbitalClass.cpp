@@ -5753,8 +5753,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	double drop=0.2-comp;
 	int type=m&TN_TYPES;
 	const char *s=(type==TN_ROCKS?"rocks":"rocks3d");
-	//sprintf(buff,"rocks(3,%g,0.2,%g,0.3,0.05,0.512,",size,Prob);
-	sprintf(buff,"%s(ID1,3,%g,0.2,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
+	sprintf(buff,"%s(3,%g,0.2,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
 	std::string str=buff;
 	Nscale=1;
 	if(r[9]>0.75)
@@ -5778,12 +5777,12 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 	Prob=r[12]; // probability
 	Noise=0.1;
 	std::string str;
-//	if(r[6]>0.8)
-//		str+=newRocks(planet,GN_LARGE);
-//	if(r[7]>0.2)
-//		str+=newRocks(planet,GN_MED);
-//	if(r[8]>0.5)
-//		str+=newRocks(planet,GN_SMALL);
+	if(r[6]>0.8)
+		str+=newRocks(planet,GN_LARGE);
+	if(r[7]>0.2)
+		str+=newRocks(planet,GN_MED);
+	if(r[8]>0.5)
+		str+=newRocks(planet,GN_SMALL);
 	
 	Nscale=pow(2,16);
 	pushInstance(planet);

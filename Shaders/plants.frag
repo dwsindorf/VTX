@@ -168,8 +168,7 @@ void main(void) {
  	//gl_FragData[0].xyz=vec3(1.0,0,0);
  	
  	//gl_FragData[0].x=MODE/2.0;
- 	//gl_FragData[1]=vec4(fcolor2); // pass thru
-	gl_FragData[1]=vec4(0.1,DEPTH,0,color.a); // set type to 0 to bypass second haze correction in effects.frag
+ 	gl_FragData[1]=vec4(fcolor2); // pass thru
 
 }
 // ########## end plants.frag #########################

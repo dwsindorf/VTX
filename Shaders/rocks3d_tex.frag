@@ -95,7 +95,8 @@ void main() {
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
-   // color.rgb=vec3(fcolor2.x,0,0);
+   // color.rgb=vec3(Tangent.z,0,0);
+   //color.rgb=abs(Normal.rgb);
     gl_FragData[0]=vec4(color.xyz,1);
 
     gl_FragData[1]=vec4(fcolor2); // pass thru

@@ -235,7 +235,7 @@ void VtxNoiseFunct::AddControlsTab(wxWindow *panel){
 	mod_cntrls->Add(RoundSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	ClampSlider=new SliderCtrl(panel,ID_CLAMP_SLDR,"Clamp",LABEL2, VALUE2,SLIDER2);
-	ClampSlider->setRange(0,4);
+	ClampSlider->setRange(-0.5,2);
 
 	mod_cntrls->Add(ClampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 

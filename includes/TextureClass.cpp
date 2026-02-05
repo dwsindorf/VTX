@@ -404,9 +404,7 @@ bool Texture::setProgram(){
 	//float hlog=0.25*log2(height()); // hack to reduce number of tex orders for larger images
 	float hlog=0.25*log2(delta); // hack to reduce number of tex orders for larger images
 	float logf = log2(ts)+dlogf+hlog; // reduces tex max_orders set in MapNode::Svertex
-	//if(t3d())
-	//	logf-=log2(1e7);
-    logf-=t3d()?log2(5e7):0;
+
 	TerrainProperties *tp=TerrainData::tp;
 	double bumpmin=1e-5;
 	double minscale=32;
