@@ -36,8 +36,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -341,7 +341,7 @@ int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
-int Rock3DObjMgr::templates_per_lod=3;
+int Rock3DObjMgr::templates_per_lod=4;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 //std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
@@ -748,14 +748,16 @@ void Rock3DObjMgr::render() {
             Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
             
             Point eyePos = s->vertex - xpoint;
-             // double size = 4 * Hscale * s->radius;
-           double size = 0.006*s->radius;
+            double size = 2*TheMap->radius*s->radius;
             double pts = floor(s->pts);
             double dist = s->dist;
             int rval = s->rval;
             double comp = pmgr->comp;
             double drop = pmgr->drop;
             int instance = s->instance;
+            
+            //cout<< s->radius<<" "<<size<<" "<<pts<<endl;
+
             
             int resolution = Rock3DMgr::getLODResolution(pts);
             if(resolution==0){
@@ -1089,7 +1091,7 @@ void TNrocks3D::init()
 	if(args[6]){
 		args[6]->eval();
 		rmgr->noise_amp=S0.s;
-		rmgr->pts_scale=1+2*rmgr->noise_amp;
+		rmgr->pts_scale=2+2*rmgr->noise_amp;
 		//cout <<rmgr->pts_scale<<endl;
 	}
 	if(args[7]){

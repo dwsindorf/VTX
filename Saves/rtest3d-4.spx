@@ -84,7 +84,12 @@ Scene() {
 		radius=0.004;
 	}
 	View{
+		height=10.3079 ft;
+		heading=122;
 		minr=0.004;
+	}
+	View{
+		height=7.17744 ft;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -120,9 +125,9 @@ Scene() {
 					shine=6.48785;
 					year=100;
 					Surface{
-						terrain=rocks3d(1,9.999e-07,1.5,1,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,7.37,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+
-								Texture("bricks",BORDER|LINEAR|RANDOMIZE|TEX|TRIPLANAR,618323,0.8254,1,0,1,2,0.5,0,0,-0.22224,0,-0.05552)]
-								
+						terrain=rocks3d(1,5e-07,1.5,0.2,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,7.37,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
+								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|BUMP|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.67772e+07,2.15872,0.8254,0,1.76176,2,0.5,0,0,0,0,-0.1)
+								]								
 								Texture("gray-gravel",BORDER|LINEAR|RANDOMIZE|TEX,2.44601e+06,2,1,0,1,2,0.5,0,0,-0.22224,0,-0.05552)+Z(0);
 					}
 				}
