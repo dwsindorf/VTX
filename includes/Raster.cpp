@@ -11,7 +11,7 @@
 
 #define OPTIMIZE
 //#define DEBUG_SHADOWS
-#define DEBUG_SHADOW_CASCADES
+//#define DEBUG_SHADOW_CASCADES
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
 extern double lsin(double t);

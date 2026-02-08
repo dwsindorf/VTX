@@ -5,11 +5,11 @@ Scene() {
 		theta=341.168;
 		height=3 ft;
 		time=1.01208e+06;
-		vstride=0.02;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.004;
-		minh=5.68182e-10;
+		zoom=1;
+		minh=9.4697e-10;
 		heading=120;
 		tilt=-9;
 		fov=35;
@@ -19,6 +19,12 @@ Scene() {
 	View{
 		heading=150;
 		angle=1;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.004;
+	}
+	View{
 		minr=0.004;
 	}
 	Universe {
@@ -55,7 +61,7 @@ Scene() {
 					shine=6.48785;
 					year=100;
 					image("craters",BLEND|DECAL|NORM|REPLACE,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("yellow-green",ACHNL|DECAL|NORM|REFLECT|REPLACE,64,0.41936,0.34902,Color(0.039,0.039,0.039,0.349),Color(0.922,0.902,0.106),
+					bands("yellow-green",ACHNL|BLEND|DECAL|NORM|REFLECT|REPLACE,64,0.41936,0.34902,Color(0.039,0.039,0.039,0.349),Color(0.922,0.902,0.106),
 						Color(0.902,0.722,0.11),
 						Color(0.071,0.173,0.024),
 						Color(0.004,0.075,0),
@@ -65,7 +71,7 @@ Scene() {
 					Surface{
 						terrain=rocks3d(1,2e-08,0.66,0.1,0,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
 								[Texture("yellow-green",TEX,469739,1.71428,1,-0.05,1,2,0.5,0,0,0,0.26984,0.01588)+Texture("craters",BUMP|TRIPLANAR,7.35095e+06,3.17472,2,1,1,2,0.84932,0,0,0,0,0)
-								]								rocks3d(2,2e-07,1.5,0.1,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
+								]								rocks3d(2,2e-07,1.5,0.05,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
 								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.67772e+07,0.8254,1,0,1,2,0.5,0,0,0,0,-0.1746)
 								]								
 								Texture("mud1",BORDER|LINEAR|RANDOMIZE|TEX,1.41121e+06,2,1,0,2.14288,2,0.5,0,0,-0.22224,0,-0.05552)+Z(0);

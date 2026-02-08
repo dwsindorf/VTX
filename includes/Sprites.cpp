@@ -594,6 +594,7 @@ void TNsprite::eval()
 			sprite->layer=layer;
 		}
 		Td.tp->Sprites.addObject(sprite);
+		Td.pids++;
 		mgr->setHashcode();
 		if(right)
 			right->eval();

@@ -947,6 +947,7 @@ void TNplant::eval()
 			plant->layer=layer;
 		}
 		Td.tp->Plants.addObject(plant);
+		Td.pids++;
 		mgr->setHashcode();
 		if(right)
 			right->eval();

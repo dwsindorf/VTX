@@ -154,6 +154,7 @@ public:
 	void render_zvals();
 	void render_shadows();
     void render_objects();
+    void clear();
 	
     bool supports_shadows() { return true;}
  

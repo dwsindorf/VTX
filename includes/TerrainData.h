@@ -161,8 +161,7 @@ public:
 	static int datacnt;
 	static int flags;
 	static int tids;
-	static int sids;
-	static int rids;
+	static int pids;
 	static int fids;
 	static int pass;
 
@@ -248,6 +247,7 @@ public:
 		InitAll();
 		datacnt=0;
 		tids=0;
+		pids=0;
 		mindex=0;
 		tindex=0;
 		image=0;

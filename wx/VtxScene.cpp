@@ -1063,7 +1063,7 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 			show_scene_dialog();
 		else
 			kif.set_key(state, (unsigned) vkey);
-		if(!motionKeypressed((wxKeyCode)vkey))
+		//if(!motionKeypressed((wxKeyCode)vkey))
 			vkey = 0;
 	}
     wxString cwd=::wxGetCwd();

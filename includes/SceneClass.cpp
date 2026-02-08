@@ -2430,7 +2430,6 @@ void Scene::render()
 	int update_needed=
 		      changed_time()
 			||changed_detail()
- 			//||Adapt.more_cycles()
 			||moved()
 			||changed_render();
 

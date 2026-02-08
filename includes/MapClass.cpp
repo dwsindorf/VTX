@@ -1543,17 +1543,19 @@ void Map::collectSurfacePointsFromDepth(int stride) {
 	Raster.collectSurfaceData(node_data_list, stride);
 }
 int Map::get_surface_data(){
+	node_data_list.clear();
+	if(!Td.pids)
+		return 0;
 	TheMap = this;
 	double d0=clock();
 
-	node_data_list.clear();
     if(UseDepthBuffer)
     	collectSurfacePointsFromDepth(4);  // Use depth buffer
     else
 		npole->visit(&collect_surface_data);
 	double d1=clock();
 	
-	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer
+	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer <<" placements:"<<Td.pids
 			<< " Collected " << node_data_list.size()  
 		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
 	return node_data_list.size();

@@ -36,8 +36,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
-#define PRINT_ROCK_STATS
+//#define PRINT_STATS
+//#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -341,10 +341,9 @@ int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
-int Rock3DObjMgr::templates_per_lod=4;
+int Rock3DObjMgr::templates_per_lod=3;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
-//std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
 	//freeLODTemplates();
@@ -687,6 +686,20 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
  
     return templateSphere;
 }
+
+void Rock3DObjMgr::clear(){
+    //rockCache.clear();
+    rocks.clear();
+    //freeLODTemplates();
+    Rock3DMgr::clearStats();
+    
+    // Clear batches
+    for (auto& pair : rockBatches) {
+        pair.second.deleteVBOs();
+        pair.second.clear();
+    }
+    rockBatches.clear();
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
@@ -713,32 +726,19 @@ void Rock3DObjMgr::render() {
     
     if (mesh_needs_rebuild) {
         std::cout << "Settings changed - invalidating" << endl;
+        clear();
         rockCache.clear();
-        rocks.clear();
         freeLODTemplates();
         Rock3DMgr::clearStats();
-        
-        // Clear batches
-        for (auto& pair : rockBatches) {
-            pair.second.deleteVBOs();
-        }
-        rockBatches.clear();
     }    	
       
     if (placement_needs_update || mesh_needs_rebuild) {
         d0 = clock();
         
-        rocks.clear();  // Still clear for compatibility
-        
-        // Clear and prepare batches
-        for (auto& pair : rockBatches) {
-            pair.second.deleteVBOs();
-            pair.second.clear();
+        if (!mesh_needs_rebuild){
+        	clear();
+            //Rock3DMgr::clearStats();
         }
-        rockBatches.clear();
-        
-        if (!mesh_needs_rebuild)
-            Rock3DMgr::clearStats();
         
         Point xpoint = TheScene->xpoint;
 
@@ -755,9 +755,6 @@ void Rock3DObjMgr::render() {
             double comp = pmgr->comp;
             double drop = pmgr->drop;
             int instance = s->instance;
-            
-            //cout<< s->radius<<" "<<size<<" "<<pts<<endl;
-
             
             int resolution = Rock3DMgr::getLODResolution(pts);
             if(resolution==0){
@@ -780,7 +777,6 @@ void Rock3DObjMgr::render() {
             t1 += clock() - d1;
             
             // Get or create batch for this resolution
-            //VBOBatch& batch = rockBatches[resolution];
             
             int mgrInstance = pmgr->instance;  // This is the texture type!
             BatchKey batchKey(resolution, mgrInstance);
@@ -1141,6 +1137,7 @@ void TNrocks3D::eval()
 			rock->layer=layer;
 		}
 		Td.tp->Rocks.addObject(rock);
+		Td.pids++;
 		mgr->setHashcode();
 		if(right)
 			right->eval();
