@@ -19,6 +19,18 @@ class PlacementMgr;
 
 #define USE_VBO
 
+class Vec4{
+public:
+	float x,y,z,w;
+	Vec4() {x=y=z=w=0.0f;}
+	Vec4(Point p) { x=p.x;y=p.y;z=p.z;w=0.0f;}
+	Vec4(Point p,double a) { x=p.x;y=p.y;z=p.z;w=a;}
+	Vec4(float a,float b,float c){x=a;y=b;z=c;w=0.0f;}
+	Vec4(double a,double b,double c,double d){x=a;y=b;z=c;w=d;}
+	float length()	{ return sqrt(x*x+y*y+z*z+w*w);}
+	Point point() { return Point(x,y,z);}
+};
+
 class LeafImageMgr : public ImageMgr
 {
 public:
@@ -95,11 +107,12 @@ class BranchVBO {
     GLuint vbo = 0;
     int vertCount = 0;
     bool dirty = true;
-    std::vector<BranchVertex> vertices;
+    std::vector<BranchVertex> verticesObjectSpace;
+    std::vector<BranchVertex> verticesEyeSpace;
 
 public:
     void clear() {
-        vertices.clear();
+        verticesObjectSpace.clear();
         dirty = true;
         
         // Force GPU buffer to be recreated
@@ -114,10 +127,11 @@ public:
     }
 
     void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode);
-    int size() { return vertices.size() / 2; }
-    bool empty() { return vertices.empty(); }
+    int size() { return verticesObjectSpace.size() / 2; }
+    bool empty() { return verticesObjectSpace.empty(); }
 
     void build();
+    void transform(Point plantCenter, Point eyePoint);
     void render();
     void free();
 };

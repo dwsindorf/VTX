@@ -17,7 +17,8 @@ extern double lcos(double g);
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
 
-#define USE_XP
+#define TEST
+//#define USE_XP
 //#define DUMP
 //#define DEBUG_PMEM
 #define DRAW_LINES
@@ -297,8 +298,32 @@ void  BranchData::render(){
 	renderData();
 }
 
+void BranchVBO::transform(Point plantCenter, Point eyePoint) {
+	verticesEyeSpace.clear();
+	verticesEyeSpace.reserve(verticesObjectSpace.size());
+
+	// Transform from object space to eye space
+	for (const auto &vObj : verticesObjectSpace) {  // Read from object space
+		BranchVertex vEye = vObj;
+
+		Point objPos(vObj.pos.x, vObj.pos.y, vObj.pos.z);
+		Point worldPos = objPos + plantCenter;
+		Point eyePos = worldPos - eyePoint;
+		vEye.pos = Vec4(eyePos,eyePos.length());
+
+		Point objP0(vObj.common2.x, vObj.common2.y, vObj.common2.z);
+		Point worldP0 = objP0 + plantCenter;
+		Point eyeP0 = worldP0 - eyePoint;
+		vEye.common2 = Vec4(eyeP0,eyeP0.length());
+
+		verticesEyeSpace.push_back(vEye);  // Write to eye space
+	}
+
+	dirty = true;
+}
+
 void BranchVBO::build() {
-    if (!dirty || vertices.empty()) return;
+    if (!dirty || verticesEyeSpace.empty()) return;
 
     if (!vao) {
         glGenVertexArrays(1, &vao);
@@ -307,8 +332,8 @@ void BranchVBO::build() {
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(BranchVertex),
-                 vertices.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, verticesEyeSpace.size() * sizeof(BranchVertex),
+                 verticesEyeSpace.data(), GL_DYNAMIC_DRAW);
 
     size_t stride = sizeof(BranchVertex);
 
@@ -338,7 +363,7 @@ void BranchVBO::build() {
  	//cout<<GLSLMgr::CommonID1<<" "<<GLSLMgr::CommonID2<<" "<<GLSLMgr::CommonID3<<" "<<GLSLMgr::TexCoordsID<<endl;
 
 
-    vertCount = vertices.size();
+    vertCount = verticesEyeSpace.size();
     dirty = false;
 }
 
@@ -351,15 +376,15 @@ void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Col
 	v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
 
 	v.pos = p1;
-	vertices.push_back(v);
+	verticesObjectSpace.push_back(v);
 	v.pos = p2;
-	vertices.push_back(v);
+	verticesObjectSpace.push_back(v);
 
 	dirty = true;
 }
 
 void BranchVBO::render() {
-    if (vertices.empty()) return;
+    if (verticesObjectSpace.empty()) return;
 
     build();
     glBindVertexArray(vao);
@@ -379,7 +404,7 @@ void BranchVBO::render() {
 void BranchVBO::free() {
     if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
     if (vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
-    vertices.clear();
+    verticesObjectSpace.clear();
     vertCount = 0;
     dirty = true;
 }
@@ -560,22 +585,27 @@ void PlantObjMgr::render(){
 		t1=clock();
 
 		glDisable(GL_CULL_FACE);
+		Point eyePoint=TheScene->xpoint;
 		PlantMgr::stats[PLANT_TYPES]=objs.size;
 		for(int i=0;i<=start;i++){ // Farthest to closest sorted by pts + instance*2000
 		//for(int i=start;i>=0;i--){ // Farthest to closest sorted by distance;
 			PlaceData *s=data[i]; 
-			int id=s->get_id();
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
-			TNplant *plant=pmgr->plant;
- 			plant->size=s->radius; // placement size
- 			plant->drop=(1-plant->size*pmgr->drop);
-			plant->base_point=s->vertex;
-			plant->pntsize=s->pts;
-			plant->distance=s->dist;			
+			TNplant *tnplant=pmgr->plant;
+			int id=s->get_id();
+ 			tnplant->size=s->radius; // placement size
+ 			tnplant->drop=(1-tnplant->size*pmgr->drop);
+			tnplant->base_point=s->vertex;
+			tnplant->pntsize=s->pts;
+			tnplant->distance=s->dist;			
 			//cout<<(int)plant->pntsize<<" id:"<<s->instance<<endl;
 			randval=s->rval;
-			plant->seed=URAND;
-			plant->emit(); // render or collect
+			tnplant->seed=URAND;
+			tnplant->emit(); // render or collect
+			Point plantCenter = s->vertex* tnplant->drop;
+			tnplant->plant->branchVBO.transform(plantCenter, eyePoint);
+			tnplant->plant->lineVBO.transform(plantCenter, eyePoint);
+			tnplant->plant->leafVBO.transform(plantCenter, eyePoint);
 		}
 	    for (int i=0; i<objs.size; i++) {
 			((Plant*)objs[i])->sortLeafs();  // This builds the VBO
@@ -1192,6 +1222,10 @@ void TNplant::emit(){
 	Point p1=bot;
 	Point p2=top;
 
+#ifdef TEST
+	p1=p1-base_point;
+	p2=p2-base_point;
+#else
 #ifdef USE_XP;
 	p1=p1-base_point;
 	p2=p2-base_point;
@@ -1199,6 +1233,7 @@ void TNplant::emit(){
 	p1=p1-TheScene->xpoint;
 	p2=p2-TheScene->xpoint;
 	
+#endif
 #endif
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
@@ -1922,9 +1957,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dy = (1 - f2) * r1 + f2 * r2;
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
-					T0=Vec4(t0+xp,phase);
-					//T0.w=phase;
-				    root->plant->collectBranches(T0, Vec4(t1+xp), Vec4(t2+xp),
+				    root->plant->collectBranches(Vec4(t0+xp,phase), Vec4(t1+xp), Vec4(t2+xp),
 				    		Vec4(dx, dy, f1, f2),
 							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 					t0 = t1;
@@ -1940,13 +1973,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			} else { // no spline
 				root->addTriangle();
-				Vec4 P0(p0+xp);
-				Vec4 P1(p1+xp);
-				Vec4 P2(p2+xp);
-				P0.w=phase;
-				P1.w=bot_offset;
-				P2.w=top_offset;
-				root->plant->collectBranches(P0, P1, P2,Vec4(w1, w2, 0, 1),
+				root->plant->collectBranches(Vec4(p0+xp,phase), Vec4(p1+xp,bot_offset), Vec4(p2+xp,top_offset),Vec4(w1, w2, 0, 1),
 						Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 			}
 		}
