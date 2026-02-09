@@ -688,9 +688,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 }
 
 void Rock3DObjMgr::clear(){
-    //rockCache.clear();
     rocks.clear();
-    //freeLODTemplates();
     Rock3DMgr::clearStats();
     
     // Clear batches

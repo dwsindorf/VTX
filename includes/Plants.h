@@ -55,6 +55,7 @@ class PlantMgr : public PlacementMgr
 protected:
 public:
 	Placement *make(Point4DL&,int);
+	PlaceData *make(Placement*s);
 	
 	TNplant *plant;
 	static int stats[MAX_PLANT_STATS];
@@ -112,22 +113,7 @@ public:
         }
     }
 
-    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode) {
-        BranchVertex v;
-        v.common1 = f;
-        v.common2 = p0;
-        v.common3 = s;
-        v.texcoord = Vec4(d.x, d.y, d.z, shaderMode);
-        v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
-
-        v.pos = p1;
-        vertices.push_back(v);
-        v.pos = p2;
-        vertices.push_back(v);
-
-        dirty = true;
-    }
-
+    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode);
     int size() { return vertices.size() / 2; }
     bool empty() { return vertices.empty(); }
 
@@ -138,7 +124,7 @@ public:
 class Plant : public PlaceObj
 {
 public:
-#ifdef USE_VBO
+
 	BranchVBO branchVBO;
 	BranchVBO lineVBO;
 	BranchVBO leafVBO;
@@ -148,13 +134,6 @@ public:
         leafVBO.free();
         leafs.free();
     }
-#else
-    ~Plant() {
-    	leafs.free();
-    }
-	ValueList<BranchData*> branches;
-	ValueList<BranchData*> lines;
-#endif
 	void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
 	void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
     void freeBranches();
@@ -176,6 +155,12 @@ public:
 	void showStats();
 };
 
+class PlantData : public PlaceData
+{
+public:
+	PlantData(Placement *s) : PlaceData(s){}
+    double value();
+};
 class PlantObjMgr : public PlaceObjMgr
 {
 protected:

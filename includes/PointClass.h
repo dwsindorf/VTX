@@ -387,7 +387,10 @@ public:
 	Vec4d(Point p) { x=p.x;y=p.y;z=p.z;w=0;}
 	Vec4d(double a,double b,double c){x=a;y=b;z=c;w=0;}
 	Vec4d(double a,double b,double c,double d){x=a;y=b;z=c;w=d;}
+	Vec4d(Point p,double a) { x=p.x;y=p.y;z=p.z;w=a;}
 	double length()	{ return sqrt(x*x+y*y+z*z+w*w);}
+	Point point() { return Point(x,y,z);}
+
 };
 
 class Vec4{
@@ -395,9 +398,11 @@ public:
 	float x,y,z,w;
 	Vec4() {x=y=z=w=0.0f;}
 	Vec4(Point p) { x=p.x;y=p.y;z=p.z;w=0.0f;}
+	Vec4(Point p,double a) { x=p.x;y=p.y;z=p.z;w=a;}
 	Vec4(float a,float b,float c){x=a;y=b;z=c;w=0.0f;}
 	Vec4(double a,double b,double c,double d){x=a;y=b;z=c;w=d;}
 	float length()	{ return sqrt(x*x+y*y+z*z+w*w);}
+	Point point() { return Point(x,y,z);}
 };
 
 #endif

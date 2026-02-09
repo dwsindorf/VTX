@@ -395,6 +395,7 @@ public:
 
 	Plant *plant;
 	double size;
+	double drop;
 	double pntsize;
 	double distance;
 	double width_scale;

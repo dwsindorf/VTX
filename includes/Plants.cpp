@@ -16,6 +16,8 @@ extern double lcos(double g);
 #define USE_AVEHT
 #define MIN_VISITS 1
 #define TEST_NEIGHBORS 1
+
+#define USE_XP
 //#define DUMP
 //#define DEBUG_PMEM
 #define DRAW_LINES
@@ -340,6 +342,22 @@ void BranchVBO::build() {
     dirty = false;
 }
 
+void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode) {
+	BranchVertex v;
+	v.common1 = f;
+	v.common2 = p0;
+	v.common3 = s;
+	v.texcoord = Vec4(d.x, d.y, d.z, shaderMode);
+	v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
+
+	v.pos = p1;
+	vertices.push_back(v);
+	v.pos = p2;
+	vertices.push_back(v);
+
+	dirty = true;
+}
+
 void BranchVBO::render() {
     if (vertices.empty()) return;
 
@@ -451,6 +469,8 @@ void PlantMgr::init()
 	finisher_added=true;
 
 }
+
+double PlantData::value() { return 2000*instance+pts;}
 //-------------------------------------------------------------
 // PlantMgr::make() factory methods to make Placement
 // - derived classes my override
@@ -459,7 +479,10 @@ Placement *PlantMgr::make(Point4DL &p, int n)
 {
     return new Placement(*this,p,n);
 }
-
+PlaceData *PlantMgr::make(Placement*s)
+{
+    return new PlantData(s);
+}
 //************************************************************
 // PlantObjMgr class
 //************************************************************
@@ -538,17 +561,18 @@ void PlantObjMgr::render(){
 
 		glDisable(GL_CULL_FACE);
 		PlantMgr::stats[PLANT_TYPES]=objs.size;
-
-		for(int i=start;i>=0;i--){ // Farthest to closest
-			PlaceData *s=data[i];
+		for(int i=0;i<=start;i++){ // Farthest to closest sorted by pts + instance*2000
+		//for(int i=start;i>=0;i--){ // Farthest to closest sorted by distance;
+			PlaceData *s=data[i]; 
 			int id=s->get_id();
 			PlantMgr *pmgr=(PlantMgr*)s->mgr;
 			TNplant *plant=pmgr->plant;
  			plant->size=s->radius; // placement size
-			plant->base_point=s->vertex*(1-plant->size*pmgr->drop);
+ 			plant->drop=(1-plant->size*pmgr->drop);
+			plant->base_point=s->vertex;
 			plant->pntsize=s->pts;
-			plant->distance=s->dist;
-
+			plant->distance=s->dist;			
+			//cout<<(int)plant->pntsize<<" id:"<<s->instance<<endl;
 			randval=s->rval;
 			plant->seed=URAND;
 			plant->emit(); // render or collect
@@ -725,13 +749,13 @@ PlacementMgr *Plant::mgr() { return ((TNplant*)expr)->mgr;}
 bool Plant::setProgram(){
 	return ((TNplant*)expr)->setProgram();
 }
-#ifdef USE_VBO
+
 void Plant::collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
     branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
 }
 
 void Plant::collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    lineVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+    lineVBO.addBranch(p0, p1,p2, f, d, s, c, TNBranch::shaderMode(d.w));
 }
 
 void Plant::freeBranches() {
@@ -754,60 +778,24 @@ void Plant::renderBranches() {
         lineVBO.render();
     }
 }
-#else
 
-void Plant::collectBranches(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-		branches.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-void Plant::collectLines(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-		lines.add(new BranchData(p0,p1,p2,f,d,s,c));
-}
-
-void Plant::renderBranches(){
-	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	for(int i=branches.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=branches[i];
-		s->render();
-	}
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	for(int i=lines.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=lines[i];
-		s->render();
-	}
-}
-#endif
 
 void Plant::renderLeafs(){
 	if (PlantMgr::poly_lines || PlantMgr::shader_lines)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#ifdef USE_VBO 
-        leafVBO.render();
-#else	
-	for(int i=leafs.size-1;i>=0;i--){ // Farthest to closest
-		BranchData *s=leafs[i];
-		s->render();
-	}
-#endif
+
+    leafVBO.render();
 }
 void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-#ifdef USE_VBO
 	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-#else
-	leafVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
-#endif
 }
 
 void Plant::sortLeafs() {
 	if (!sorted) {
 		leafs.ss();
-		leafs.sort();
-#ifdef USE_VBO   
+		leafs.sort(); 
 		leafVBO.clear();
 		for (int i = leafs.size - 1; i >= 0; i--) {
 			BranchData *l = leafs[i];
@@ -815,16 +803,13 @@ void Plant::sortLeafs() {
 					l->data[4], l->data[5], l->c,
 					TNBranch::shaderMode(l->data[4].w));
 		}
-#endif 
 	}
 	sorted = true;
 }
 
 void Plant::freeLeafs() {
 	leafs.free();
-#ifdef USE_VBO
     leafVBO.clear();
-#endif
 	sorted=false;
 }
 //************************************************************
@@ -1190,27 +1175,31 @@ void TNplant::emit(){
      
 	Randval=URAND;
 	double length=size*PSCALE;	
-
-	Point bot=base_point;
-	norm=bot.normalize();
-
-	if(!PlaceObjMgr::shadow_mode)
-		glNormal3dv(norm.values());
-			
+		
 	TNBranch *first_branch=(TNBranch*)right;
 	if(right && right->typeValue() == ID_BRANCH) 
 		first_branch=(TNBranch*)right;
 	else
-		return;
+		return; // plant with no branches !
 	
-	double branch_size=length*first_branch->length;
+	norm=base_point.normalize(); // defines surface normal
+	if(!PlaceObjMgr::shadow_mode)
+		glNormal3dv(norm.values());
 
+	Point bot=base_point*drop;	
+	double branch_size=length*first_branch->length;
 	Point top=bot*(1+branch_size); // starting trunk size
 	Point p1=bot;
 	Point p2=top;
-	p1=p1-TheScene->vpoint;
-	p2=p2-TheScene->vpoint;
 
+#ifdef USE_XP;
+	p1=p1-base_point;
+	p2=p2-base_point;
+#else
+	p1=p1-TheScene->xpoint;
+	p2=p2-TheScene->xpoint;
+	
+#endif
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 	
@@ -1703,6 +1692,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	//	cout<<"branch level"<<level<<endl;
 
 	int mode = opt;
+#ifdef USE_XP
+	Point xp=root->base_point-TheScene->xpoint;
+#else
+	Point xp;
+#endif
+
 
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
@@ -1927,8 +1922,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					dy = (1 - f2) * r1 + f2 * r2;
 					t1 = spline(s, p0, p1, p2);
 					t2 = spline(s + ds, p0, p1, p2);
-					T0=Vec4(t0.x, t0.y, t0.z,phase);
-				    root->plant->collectBranches(T0, Vec4(t1), Vec4(t2),
+					T0=Vec4(t0+xp,phase);
+					//T0.w=phase;
+				    root->plant->collectBranches(T0, Vec4(t1+xp), Vec4(t2+xp),
 				    		Vec4(dx, dy, f1, f2),
 							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 					t0 = t1;
@@ -1944,9 +1940,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 			} else { // no spline
 				root->addTriangle();
-				Vec4 P0(p0);
-				Vec4 P1(p1);
-				Vec4 P2(p2);
+				Vec4 P0(p0+xp);
+				Vec4 P1(p1+xp);
+				Vec4 P2(p2+xp);
 				P0.w=phase;
 				P1.w=bot_offset;
 				P2.w=top_offset;
@@ -1958,7 +1954,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			double nscale = TNplant::norm_min;
 			root->addLine();
 			c=getColor();
-			root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
+			root->plant->collectLines(Vec4(p0+xp), Vec4(p1+xp), Vec4(p2+xp),Vec4(),
 					Vec4(nscale,color_flags, tid, LINE_MODE),sd,c);
 		}
 	}
