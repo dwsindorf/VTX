@@ -18,7 +18,6 @@ extern double lcos(double g);
 #define TEST_NEIGHBORS 1
 
 #define TEST
-//#define USE_XP
 //#define DUMP
 //#define DEBUG_PMEM
 #define DRAW_LINES
@@ -44,6 +43,8 @@ extern double lcos(double g);
 #define LAST_EMIT   4
 #define LAST_FORK   8
 #define BASE_FORK   16
+
+static int cnt=0;
 
 #define ENABLE_3D
 // Basic algorithm
@@ -276,55 +277,30 @@ void show_plant_stats()
 //************************************************************
 
 double BranchData::distance() { 
-	return data[2].length();
+	return position.distance(TheScene->xpoint);
 }
-
-void  BranchData::renderData(){
-	Vec4 sd=data[5];
-	Vec4 p0=data[0];
-	glVertexAttrib4f(GLSLMgr::CommonID3, sd.x, sd.y,sd.z, sd.w); // Constants3
-	glVertexAttrib4f(GLSLMgr::CommonID2, p0.x, p0.y, p0.z, p0.w);   // Constants2
-	glVertexAttrib4f(GLSLMgr::CommonID1, data[3].x,data[3].y,data[3].z,data[3].w); // taper, compression, width_ratio,size	
-	glVertexAttrib4f(GLSLMgr::TexCoordsID, data[4].x, data[4].y, data[4].z, data[4].w); //nscale,color_flags,tid,shader_mode	
-	glBegin(GL_LINES);
-	glVertex4f(data[1].x, data[1].y, data[1].z, 0);
-	glVertex4f(data[2].x, data[2].y, data[2].z, 0);
-	glEnd();
-}
-
-void  BranchData::render(){
-	if(!PlaceObjMgr::shadow_mode) // if this is set shadows aren't drawn (???)
-		glColor4f(c.red(), c.green(), c.blue(), c.alpha());
-	renderData();
-}
-
-void BranchVBO::transform(Point plantCenter, Point eyePoint) {
-	verticesEyeSpace.clear();
-	verticesEyeSpace.reserve(verticesObjectSpace.size());
-
+void BranchVBO::transform() {
+	Point xp=TheScene->xpoint;
 	// Transform from object space to eye space
-	for (const auto &vObj : verticesObjectSpace) {  // Read from object space
-		BranchVertex vEye = vObj;
-
+	for (const auto &vObj : vertexes) {  // Read from object space
 		Point objPos(vObj.pos.x, vObj.pos.y, vObj.pos.z);
-		Point worldPos = objPos + plantCenter;
-		Point eyePos = worldPos - eyePoint;
-		vEye.pos = Vec4(eyePos,eyePos.length());
+		Point eyePos = objPos + vObj.position-xp;
+		vObj.pos = Vec4(eyePos,vObj.pos.w);
 
 		Point objP0(vObj.common2.x, vObj.common2.y, vObj.common2.z);
-		Point worldP0 = objP0 + plantCenter;
-		Point eyeP0 = worldP0 - eyePoint;
-		vEye.common2 = Vec4(eyeP0,eyeP0.length());
-
-		verticesEyeSpace.push_back(vEye);  // Write to eye space
+		Point eyeP0 = objP0 +  vObj.position-xp;
+		vObj.common2 = Vec4(eyeP0,vObj.common2.w);
+		cnt++;
 	}
-
 	dirty = true;
 }
 
 void BranchVBO::build() {
-    if (!dirty || verticesEyeSpace.empty()) return;
-
+    if (!dirty || vertexes.empty()) return;
+#ifdef TEST
+    if(dirty)
+    	transform();
+#endif    	
     if (!vao) {
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
@@ -332,8 +308,8 @@ void BranchVBO::build() {
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, verticesEyeSpace.size() * sizeof(BranchVertex),
-                 verticesEyeSpace.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertexes.size() * sizeof(BranchVertex),
+                 vertexes.data(), GL_DYNAMIC_DRAW);
 
     size_t stride = sizeof(BranchVertex);
 
@@ -362,29 +338,29 @@ void BranchVBO::build() {
     
  	//cout<<GLSLMgr::CommonID1<<" "<<GLSLMgr::CommonID2<<" "<<GLSLMgr::CommonID3<<" "<<GLSLMgr::TexCoordsID<<endl;
 
-
-    vertCount = verticesEyeSpace.size();
+    vertCount = vertexes.size();
     dirty = false;
 }
 
-void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode) {
+void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode,Point p) {
 	BranchVertex v;
 	v.common1 = f;
 	v.common2 = p0;
 	v.common3 = s;
 	v.texcoord = Vec4(d.x, d.y, d.z, shaderMode);
 	v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
+	v.position=p;
 
 	v.pos = p1;
-	verticesObjectSpace.push_back(v);
+	vertexes.push_back(v);
 	v.pos = p2;
-	verticesObjectSpace.push_back(v);
+	vertexes.push_back(v);
 
 	dirty = true;
 }
 
 void BranchVBO::render() {
-    if (verticesObjectSpace.empty()) return;
+    if (vertexes.empty()) return;
 
     build();
     glBindVertexArray(vao);
@@ -404,7 +380,7 @@ void BranchVBO::render() {
 void BranchVBO::free() {
     if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
     if (vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
-    verticesObjectSpace.clear();
+    vertexes.clear();
     vertCount = 0;
     dirty = true;
 }
@@ -587,6 +563,7 @@ void PlantObjMgr::render(){
 		glDisable(GL_CULL_FACE);
 		Point eyePoint=TheScene->xpoint;
 		PlantMgr::stats[PLANT_TYPES]=objs.size;
+		cnt=0;
 		for(int i=0;i<=start;i++){ // Farthest to closest sorted by pts + instance*2000
 		//for(int i=start;i>=0;i--){ // Farthest to closest sorted by distance;
 			PlaceData *s=data[i]; 
@@ -601,11 +578,13 @@ void PlantObjMgr::render(){
 			//cout<<(int)plant->pntsize<<" id:"<<s->instance<<endl;
 			randval=s->rval;
 			tnplant->seed=URAND;
-			tnplant->emit(); // render or collect
+			
 			Point plantCenter = s->vertex* tnplant->drop;
-			tnplant->plant->branchVBO.transform(plantCenter, eyePoint);
-			tnplant->plant->lineVBO.transform(plantCenter, eyePoint);
-			tnplant->plant->leafVBO.transform(plantCenter, eyePoint);
+			Point eyeVertex=plantCenter-eyePoint;
+	
+			tnplant->emit(); // collect calls for each branch
+			cnt++;
+
 		}
 	    for (int i=0; i<objs.size; i++) {
 			((Plant*)objs[i])->sortLeafs();  // This builds the VBO
@@ -780,20 +759,20 @@ bool Plant::setProgram(){
 	return ((TNplant*)expr)->setProgram();
 }
 
-void Plant::collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+void Plant::collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c,Point p) {
+    branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w),p);
 }
 
-void Plant::collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    lineVBO.addBranch(p0, p1,p2, f, d, s, c, TNBranch::shaderMode(d.w));
+void Plant::collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c,Point p) {
+    lineVBO.addBranch(p0, p1,p2, f, d, s, c, TNBranch::shaderMode(d.w),p);
 }
 
 void Plant::freeBranches() {
     branchVBO.clear();
     lineVBO.clear();
 }
-
 void Plant::renderBranches() {
+	cnt=0;
     if (PlantMgr::poly_lines || PlantMgr::shader_lines) {
     	glLineWidth(1);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -818,8 +797,8 @@ void Plant::renderLeafs(){
 
     leafVBO.render();
 }
-void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c){
-	leafs.add(new BranchData(p0,p1,p2,f,d,s,c));
+void Plant::collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c,Point p){
+	leafs.add(new BranchData(p0,p1,p2,f,d,s,c,p));
 }
 
 void Plant::sortLeafs() {
@@ -831,7 +810,7 @@ void Plant::sortLeafs() {
 			BranchData *l = leafs[i];
 			leafVBO.addBranch(l->data[0], l->data[1], l->data[2], l->data[3],
 					l->data[4], l->data[5], l->c,
-					TNBranch::shaderMode(l->data[4].w));
+					TNBranch::shaderMode(l->data[4].w),l->position);
 		}
 	}
 	sorted = true;
@@ -870,6 +849,7 @@ TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
 	distance=0;
 	seed=0;
 	radius=0.1;
+	drop=0;
 	
     mgr=new PlantMgr(PLANTS,this);
 }
@@ -1222,19 +1202,9 @@ void TNplant::emit(){
 	Point p1=bot;
 	Point p2=top;
 
-#ifdef TEST
 	p1=p1-base_point;
 	p2=p2-base_point;
-#else
-#ifdef USE_XP;
-	p1=p1-base_point;
-	p2=p2-base_point;
-#else
-	p1=p1-TheScene->xpoint;
-	p2=p2-TheScene->xpoint;
 	
-#endif
-#endif
 	double start_width=width_scale*pntsize*first_branch->length;//*first_branch->width;
 	size_scale=	pntsize*width_scale/size;
 	
@@ -1727,13 +1697,12 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	//	cout<<"branch level"<<level<<endl;
 
 	int mode = opt;
-#ifdef USE_XP
+#ifdef TEST
+	Point xp; // subtract eye position in VBO transform
+#else         // subtract eye position before collect
 	Point xp=root->base_point-TheScene->xpoint;
-#else
-	Point xp;
 #endif
-
-
+ 
 	bool first_fork = (opt & FIRST_FORK);
 	bool main_branch = (opt & FIRST_EMIT);
 	//bool main_branch = (opt & BASE_FORK);
@@ -1902,7 +1871,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					double aspect=((double)image_cols)/image_rows;
 					root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
 							Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+							Vec4(nscale,color_flags, tid, shader_mode), sd,c,root->base_point);
 				}
 			}
 			else
@@ -1959,7 +1928,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 					t2 = spline(s + ds, p0, p1, p2);
 				    root->plant->collectBranches(Vec4(t0+xp,phase), Vec4(t1+xp), Vec4(t2+xp),
 				    		Vec4(dx, dy, f1, f2),
-							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+							Vec4(nscale,color_flags, tid, shader_mode), sd,c,root->base_point);
 					t0 = t1;
 					s += ds;
 				}
@@ -1974,7 +1943,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			} else { // no spline
 				root->addTriangle();
 				root->plant->collectBranches(Vec4(p0+xp,phase), Vec4(p1+xp,bot_offset), Vec4(p2+xp,top_offset),Vec4(w1, w2, 0, 1),
-						Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+						Vec4(nscale,color_flags, tid, shader_mode), sd,c,root->base_point);
 			}
 		}
 		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
@@ -1982,7 +1951,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 			root->addLine();
 			c=getColor();
 			root->plant->collectLines(Vec4(p0+xp), Vec4(p1+xp), Vec4(p2+xp),Vec4(),
-					Vec4(nscale,color_flags, tid, LINE_MODE),sd,c);
+					Vec4(nscale,color_flags, tid, LINE_MODE),sd,c,root->base_point);
 		}
 	}
 

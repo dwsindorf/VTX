@@ -24,17 +24,21 @@ Scene() {
 	View{
 		height=12.034 ft;
 		tilt=-6;
+	}
+	View{
+		tilt=-4;
+	}
+	View{
+		tilt=0;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400199;
 	}
 	View{
-		tilt=-4;
+		height=3 ft;
+		tilt=-2;
 		minr=0.00400199;
-	}
-	View{
-		tilt=0;
 	}
 	Universe {
 		Galaxy(20000) {

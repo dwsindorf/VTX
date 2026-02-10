@@ -100,19 +100,20 @@ struct BranchVertex {
     Vec4 common2;   // -> CommonAttributes2 (location 4)
     Vec4 common3;   // -> CommonAttributes3 (location 5)
     Vec4 texcoord;  // -> TextureAttributes (location 6)
+    Point position;
 };
 
 class BranchVBO {
+public:
     GLuint vao = 0;
     GLuint vbo = 0;
     int vertCount = 0;
     bool dirty = true;
-    std::vector<BranchVertex> verticesObjectSpace;
-    std::vector<BranchVertex> verticesEyeSpace;
+    std::vector<BranchVertex> vertexes;
 
 public:
     void clear() {
-        verticesObjectSpace.clear();
+        vertexes.clear();
         dirty = true;
         
         // Force GPU buffer to be recreated
@@ -126,12 +127,12 @@ public:
         }
     }
 
-    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode);
-    int size() { return verticesObjectSpace.size() / 2; }
-    bool empty() { return verticesObjectSpace.empty(); }
+    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode,Point p);
+    int size() { return vertexes.size() / 2; }
+    bool empty() { return vertexes.empty(); }
 
     void build();
-    void transform(Point plantCenter, Point eyePoint);
+    void transform();
     void render();
     void free();
 };
@@ -148,8 +149,8 @@ public:
         leafVBO.free();
         leafs.free();
     }
-	void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
-	void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
+	void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, Point p);
+	void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, Point p);
     void freeBranches();
 
 	ValueList<BranchData*> leafs;
@@ -157,7 +158,7 @@ public:
 
 	bool sorted;
 	void renderLeafs();	
-	void collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c);
+	void collectLeafs(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d,Vec4 s,Color c,Point p);
 	void freeLeafs();
 	void sortLeafs();
 
@@ -198,14 +199,16 @@ public:
 //************************************************************
 // Class TNLeaf
 //************************************************************
+
 class BranchData
 {
 public:
 	Vec4 data[6];
 	Color c;
-	BranchData(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color col){
+	Point position;
+	BranchData(Vec4 p0,Vec4 p1,Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color col,Point p){
 		data[0]=p0;data[1]=p1;data[2]=p2;data[3]=f;data[4]=d;data[5]=s;
-		c=col;
+		c=col,position=p;
 	}
 	double distance();
 	double value() { return distance();}
