@@ -23,17 +23,18 @@ Scene() {
 	}
 	View{
 		tilt=-2;
+	}
+	View{
+		height=17.8379 ft;
+		heading=-38;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.00400003;
 	}
 	View{
+		heading=-35;
 		minr=0.00400003;
-	}
-	View{
-		height=17.8379 ft;
-		heading=-38;
 	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
@@ -84,7 +85,7 @@ Scene() {
 				Surface{
 					terrain=
 							Sprite("grass2x2",FLIP|NOLOD,1,1.89394e-07,2,1,0,0,0,0,0,0,0,0)Plant("Grass1",1,2.36742e-08,1.27,0.3,0,0.2,0,0,0,0,0,0)
-							Branch("Stem",7,1.6,0.88,1,1,0.4,0.1,0.7,1,20,0,1,15)["Cracks1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]
+							Branch("Stem",7,1,0.88,1,1,0.4,0.1,0.7,1,10,0,1,15,31,0,1)["Cracks1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),1)]
 							Plant("Aspen",1,7.95106e-07,0.762,0.15,0,0.1,0,0,0,0,0,0)
 							Branch("stem",9,1,2,0.3,1,0.13,0,0.8,0.9,1,-1,0.7,IRAND,13)["aspens-4x1",Color(0.4*LVL+0.2*IRAND,0.1+0.6*IRAND*LVL,0.3*IRAND*(1-LVL),0.3)]
 							Branch(4,2,0.8,0.29,0.37,1,0.35,0.73,0.89,10,1,1,IRAND,13,0,1)["aspens-4x1",Color(0,0,0,1)]

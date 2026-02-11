@@ -30,10 +30,9 @@ static bool use_cache=true;
 //#define DEBUG_SLOPE_BIAS
 //#define DEBUG_HT_BIAS
 //#define DEBUG_LAT_BIAS
-
 //#define DEBUG_HARD_BIAS
+
 #define PSCALE TheMap->radius
-//#define PSCALE 0.004
 
 #define SRAND 	(rands[PERM((randval++))])
 #define URAND 	(rands[PERM((randval++))]+0.5)
@@ -592,6 +591,8 @@ void PlantObjMgr::render()
         update_needed = false;
 
     Point eyePoint = TheScene->epoint;
+    
+   // cout<<"PlantObjMgr::render() changed="<<changed<<" moved="<<moved<<endl;
 
     glEnable(GL_BLEND);
 
@@ -771,7 +772,7 @@ bool PlantObjMgr::setProgram(){
 	}
 	
 	char str[MAXSTR];
-
+	
 	for(int i=0;i<PlantMgr::textures;i++){
 		sprintf(str,"samplers2d[%d]",i);
 		glUniform1iARB(glGetUniformLocationARB(program,str),i);
@@ -1439,11 +1440,13 @@ void TNBranch::init(){
 	if(!left)
 		return;
 	INIT;
+	texture_id=0;
 	if(arglist.size==0)
 		getArgs();
 	getTextureImage();
 	initArgs();
 	
+	//getTextureImage();
 	getRoot();
 	level=0;
 	branch_id=root->branches;

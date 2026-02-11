@@ -581,7 +581,7 @@ void RasterMgr::buildCascades(){
 		if (dist < minDist) minDist = dist;
 		if (dist > maxDist) maxDist = dist;
 	}
-	cout<<"bounds valid="<<100.0*bounds_valid/(bounds_valid+bounds_invalid)<<" %"<<endl;
+	//cout<<"bounds valid="<<100.0*bounds_valid/(bounds_valid+bounds_invalid)<<" %"<<endl;
 	if (minDist >= maxDist || nodes.size() == 0) {
 		// Fallback to single cascade
 		numCascades = 1;
@@ -605,7 +605,7 @@ void RasterMgr::buildCascades(){
 	tempSplits[0] = minDist;
 	for (int i = 1; i < requestedCascades; i++) {
 		double t = (double)i / requestedCascades;
-		tempSplits[i] = exp(logMin + 0.5*t * logRange);
+		tempSplits[i] = exp(logMin + t * logRange);
 	}
 	tempSplits[requestedCascades] = maxDist * 1.01;
 	

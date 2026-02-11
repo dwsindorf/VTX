@@ -889,6 +889,7 @@ void Scene::save(FILE *fp)
 void Scene::open(char *fn)
 {
 	cout<<"Open"<<endl;
+	PlantMgr::textures=0;
 	reset();
 
 	PlacementMgr::free_htable();
@@ -975,7 +976,6 @@ void Scene::open(char *fn)
     save(path);
 #endif
 	clr_changed_view();
-	clr_moved();
 	set_changed_detail();
 
 	Render.invalidate_textures();
@@ -983,6 +983,8 @@ void Scene::open(char *fn)
 	images.makeImagelist();
 
 	GLSLMgr::clearTexs();
+	PlacementMgr::free_htable();
+	Renderer::rebuild_all();
 	views_mark();
 }
 
