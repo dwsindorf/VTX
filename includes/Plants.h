@@ -242,8 +242,6 @@ class PlantObjMgr : public PlaceObjMgr
 		}
 	};
 	
-	static std::map<PlantCacheKey, PlantCacheEntry> plantCache;
-	static int maxCacheSize;
 protected:
 	static ValueList<PlaceData*> data;
 	void freeLeafs();
@@ -253,6 +251,9 @@ protected:
 public:
 	static int cacheHits;
 	static int cacheMisses;
+	static int cacheDeletes;
+	static int maxCacheSize;
+	static std::map<PlantCacheKey, PlantCacheEntry> plantCache;
 
 	bool setProgram();
 	void render();

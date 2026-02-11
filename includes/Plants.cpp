@@ -251,7 +251,7 @@ void show_plant_info()
 	if(!Render.display(PLANTINFO))
 		return;
 	TheScene->draw_string(HDR1_COLOR,"------- plants ---------------------");
-	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d render:%3.2f s",
+	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d generate:%3.2f s",
 			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
 	TheScene->draw_string(DATA_COLOR,"drawn:%d skipped:%d lines:%d splines:%d",
 			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],PlantMgr::stats[PLANTS_SKIPPED],PlantMgr::stats[PLANT_LINES],PlantMgr::stats[PLANT_SPLINES]);
@@ -261,7 +261,7 @@ void show_plant_stats()
 {
 	char buff[256];
 	cout<<"------- plants ---------------------"<<endl;
-	sprintf(buff,"types:%d branches:%d leaves:%d render:%3.2f s",
+	sprintf(buff,"types:%d branches:%d leaves:%d generate:%3.2f s",
 			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
 	cout<<buff<<endl;
 	sprintf(buff,"drawn:%d skipped:%d lines:%d triangles:%d splines:%d",
@@ -270,11 +270,13 @@ void show_plant_stats()
 					PlantMgr::stats[PLANT_LINES],
 					PlantMgr::stats[PLANT_TRIANGLES],
 					PlantMgr::stats[PLANT_SPLINES]);
+	cout<<buff<<endl;
 	if(use_cache){
 		int cache_tests=PlantObjMgr::cacheHits+PlantObjMgr::cacheMisses;
-		sprintf(buff+strlen(buff)," cache tests:%d hits:%2.1f %%",cache_tests,100.0*PlantObjMgr::cacheHits/cache_tests);
+		sprintf(buff,"cache tests:%d hits:%2.1f%% active:%d added:%d removed:%d",
+				cache_tests,100.0*PlantObjMgr::cacheHits/cache_tests,PlantObjMgr::plantCache.size(),PlantObjMgr::cacheMisses,PlantObjMgr::cacheDeletes);
+		cout<<buff<<endl;
 	}
-	cout<<buff<<endl;
 }
 //************************************************************
 // BranchData class
@@ -497,6 +499,7 @@ ValueList<PlaceData*> PlantObjMgr::data(50000,10000);
 std::map<PlantObjMgr::PlantCacheKey, PlantObjMgr::PlantCacheEntry> PlantObjMgr::plantCache;
 int PlantObjMgr::cacheHits=0;
 int PlantObjMgr::cacheMisses=0;
+int PlantObjMgr::cacheDeletes=0;
 int PlantObjMgr::maxCacheSize=50000;
 
 void PlantObjMgr::freeLeafs(){
@@ -527,14 +530,6 @@ void PlantObjMgr::collect(){
 	}
 	if(data.size)
 		data.sort();
-	 // If viewpoint changed significantly, clear cache
-	static Point lastViewPoint;
-	Point currentViewPoint = TheScene->epoint;
-#define CACHE_INVALIDATE_DISTANCE 100.0/FEET
-	if (currentViewPoint.distance(lastViewPoint) > CACHE_INVALIDATE_DISTANCE) {
-		clearCache();
-		lastViewPoint = currentViewPoint;
-	}
 }
 void PlantObjMgr::clearCache()
 {
@@ -544,6 +539,7 @@ void PlantObjMgr::clearCache()
     // Reset stats
     cacheHits = 0;
     cacheMisses = 0;
+    cacheDeletes = 0;
     
     // Force regeneration next frame
     // (cache is empty so all plants will be cache misses)
@@ -551,14 +547,14 @@ void PlantObjMgr::clearCache()
 void PlantObjMgr::updateCache()
 {
     static int frameCount = 0;
-    if (++frameCount % 60 != 0) return;  // Check every 60 frames
     
     auto it = plantCache.begin();
     while (it != plantCache.end()) {
         it->second.framesSinceUsed++;
         
-        if (it->second.framesSinceUsed > 300) {  // ~5 seconds at 60fps
+        if (it->second.framesSinceUsed > 5) {  // remove if not used after 5 update cycles
             it = plantCache.erase(it);
+            cacheDeletes++;
         } else {
             ++it;
         }
@@ -585,7 +581,7 @@ void PlantObjMgr::render()
     int l = randval;
     if (n == 0)
         return;
-
+    
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
     if (changed && PlaceObjMgr::shadow_mode) {
@@ -602,6 +598,8 @@ void PlantObjMgr::render()
     if (update_needed) {
     	PlantMgr::clearStats();
   		cacheHits = cacheMisses =0;
+  		PlantMgr::stats[PLANT_TYPES]=objs.size;
+  		double t0=clock();
    		if(changed)
     		clearCache(); 
     	for (int i = 0; i < objs.size; i++) {
@@ -696,6 +694,7 @@ void PlantObjMgr::render()
 		}
        
         updateCache();  // OUTSIDE the loop!
+        PlantMgr::render_time=(clock()-t0)/CLOCKS_PER_SEC;
         
     } else if (data.size) {
         // No update needed - just set normal
@@ -1001,7 +1000,7 @@ void TNplant::init()
 	if(n>1 && t<1)
 		f=(pow(t, float(n)) - 1.0) / (t - 1.0)/w;
 	f=pow(f,0.75);
-	cout<<"n:"<<n<<" w:"<<w<<" t:"<<t<<" f:"<<f<<endl;
+	//cout<<"n:"<<n<<" w:"<<w<<" t:"<<t<<" f:"<<f<<endl;
 	smgr->pts_scale=f;
 }
 

@@ -720,7 +720,7 @@ void Rock3DObjMgr::render() {
     double t1 = 0, t2 = 0, t3 = 0, d0 = 0, d1 = 0;
     
     if (mesh_needs_rebuild) {
-        std::cout << "Settings changed - invalidating" << endl;
+        std::cout << "Rock3DObjMgr::render Settings changed - invalidating" << endl;
         clear();
         rockCache.clear();
         freeLODTemplates();
