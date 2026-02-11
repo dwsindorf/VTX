@@ -129,9 +129,6 @@ public:
 	    int framesSinceUsed;
 	};    
     static std::map<RockCacheKey, RockCacheEntry> rockCache;
-    static int cacheHits;
-    static int cacheMisses;
-    static int cacheRegens;
     static int maxTexs;
     static int lodCacheHits;
     static int lodCacheMisses;

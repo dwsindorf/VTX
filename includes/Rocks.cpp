@@ -335,9 +335,6 @@ int Rock3DMgr::getLODResolution(double pts) {
 MCObjectManager Rock3DObjMgr::rocks;
 ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
 std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr::rockCache;
-int Rock3DObjMgr::cacheHits = 0;
-int Rock3DObjMgr::cacheMisses = 0;
-int Rock3DObjMgr::cacheRegens = 0;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;

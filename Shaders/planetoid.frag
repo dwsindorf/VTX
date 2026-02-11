@@ -187,7 +187,6 @@ void main(void) {
     color.rgb=addGrid(color.rgb);
 #endif   
 #endif
-
 	gl_FragData[0] = color;
 }
 // ########## end planetoid.frag #########################
