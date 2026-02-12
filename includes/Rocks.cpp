@@ -36,8 +36,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -177,8 +177,8 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  16, 50.0},
     { 32, 100.0},
     { 64, 200.0},
-    { 128, 400.0},
-    { 200,  1e9}  // default 
+    { 128, 600.0},
+    { 256,  1e9}  // default 
 };
 
 static int getLodIndex(int scaledRes, double resScale) {
@@ -1417,9 +1417,8 @@ void TNrocks::propertyString(char *s)
 //-------------------------------------------------------------
 void TNrocks::valueString(char *s)
 {	
-    TNbase *value=this;
  	setStart(s);
-	value->propertyString(s);
+	propertyString(s);
 	if(base){
 		sprintf(s+strlen(s),"\n%s[",tabs);
 		base->valueString(s);
@@ -1438,9 +1437,15 @@ void TNrocks::save(FILE *f)
 		fprintf(f,"%s",tabs);
 		right->save(f);
 	}
-
 }
 
+void TNrocks::saveNode(FILE*f){
+	char buff[4096];
+	buff[0]=0;
+	valueString(buff);
+	fprintf(f,"%s",buff);
+
+}
 //-------------------------------------------------------------
 // TNrocks::addAfter append x after base if c==this
 // - used when adding a TNnode object to a TerrainMgr stack

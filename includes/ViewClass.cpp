@@ -199,7 +199,7 @@ void View::draw_string(int id, const char *msg,...)
 	int n=MAX_STRING_SIZE;
 
 	va_start(xp, msg);
-	char buff[512];
+	char buff[1024];
 	vsprintf(buff,msg, xp);
 	va_end(xp);
 	strncpy(strings+nstrings*n,buff,n);

@@ -17,7 +17,7 @@
 #define EYE_MOVE    3
 
 #define MAX_STRINGS 	128
-#define MAX_STRING_SIZE 64
+#define MAX_STRING_SIZE 256
 
 #define COS45	0.70711f
 

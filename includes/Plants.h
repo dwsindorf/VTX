@@ -16,7 +16,7 @@ class PlacementMgr;
 #include <vector>
 #include <map>
 
-#define MAX_PLANT_STATS 7
+#define MAX_PLANT_STATS 10
 
 #define USE_VBO
 
@@ -73,7 +73,9 @@ public:
 	TNplant *plant;
 	static int stats[MAX_PLANT_STATS];
 
+	static double generate_time;
 	static double render_time;
+	static double process_time;
 	static bool threed;
 	static bool spline;
 	static bool poly_lines;
@@ -203,7 +205,7 @@ class PlantObjMgr : public PlaceObjMgr
 		long long x, y, z;
 		int instance;
 		
-		PlantCacheKey(const Point& worldPos, int inst, double snap=1e-9) {
+		PlantCacheKey(const Point& worldPos, int inst, double snap=1e-10) {
 			//cout<<worldPos/snap<<endl;
 			x = (int64_t)round(worldPos.x / snap);
 			y = (int64_t)round(worldPos.y / snap);

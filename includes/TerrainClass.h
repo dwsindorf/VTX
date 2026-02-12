@@ -334,6 +334,7 @@ public:
 	void propertyString(char *);
 	void valueString(char *s);
 	void save(FILE*);
+	void saveNode(FILE*);
 	NodeIF *addChild(NodeIF *x);
 	NodeIF *addAfter(NodeIF *c,NodeIF *n);
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);

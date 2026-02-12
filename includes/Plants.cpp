@@ -244,38 +244,56 @@ enum {
 	PLANT_LINES=5,
 	PLANT_TRIANGLES=6,
 	PLANT_SPLINES=7,
+	PLANT_VERTEXES=8,
+	PLANT_INSTANCES=9,
 };
+static char str1[1024];
+static char str2[1024];
+static char str3[1024];
+void set_plant_stat_strings(){
+	sprintf(str1,"types:%d number:%d verts:%d times make:%3.2f process:%3.2f render:%3.2f s\n",
+	PlantMgr::stats[PLANT_TYPES],
+	PlantMgr::stats[PLANT_INSTANCES],
+	PlantMgr::stats[PLANT_VERTEXES],
+	PlantMgr::generate_time,
+	PlantMgr::process_time,
+	PlantMgr::render_time);
+	
+	sprintf(str2,"new plants:%d branches:%d leaves:%d lines:%d triangles:%d splines:%d skipped:%d\n",
+	PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],
+	PlantMgr::stats[PLANT_BRANCHES],
+	PlantMgr::stats[PLANT_LEAVES],
+	PlantMgr::stats[PLANT_LINES],
+	PlantMgr::stats[PLANT_TRIANGLES],
+	PlantMgr::stats[PLANT_SPLINES],
+	PlantMgr::stats[PLANTS_SKIPPED]
+	);
+	str3[0]=0;
+	if(use_cache){
+		int cache_tests=PlantObjMgr::cacheHits+PlantObjMgr::cacheMisses;
+		sprintf(str3,"cache tests:%d hits:%2.1f active:%d added:%d removed:%d\n",
+				cache_tests,100.0*PlantObjMgr::cacheHits/cache_tests,PlantObjMgr::plantCache.size(),PlantObjMgr::cacheMisses,PlantObjMgr::cacheDeletes);
+	}
+}
 void show_plant_info()
 {
 	if(!Render.display(PLANTINFO))
 		return;
 	TheScene->draw_string(HDR1_COLOR,"------- plants ---------------------");
-	TheScene->draw_string(DATA_COLOR,"types:%d branches:%d leaves:%d generate:%3.2f s",
-			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
-	TheScene->draw_string(DATA_COLOR,"drawn:%d skipped:%d lines:%d splines:%d",
-			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],PlantMgr::stats[PLANTS_SKIPPED],PlantMgr::stats[PLANT_LINES],PlantMgr::stats[PLANT_SPLINES]);
+	set_plant_stat_strings();
+	TheScene->draw_string(DATA_COLOR,str1);
+	TheScene->draw_string(DATA_COLOR,str2);
+	if(strlen(str3))
+		TheScene->draw_string(DATA_COLOR,str3);
 	TheScene->draw_string(HDR1_COLOR,"------------------------------------");
 }
 void show_plant_stats()
 {
-	char buff[256];
 	cout<<"------- plants ---------------------"<<endl;
-	sprintf(buff,"types:%d branches:%d leaves:%d generate:%3.2f s",
-			PlantMgr::stats[PLANT_TYPES],PlantMgr::stats[PLANT_BRANCHES],PlantMgr::stats[PLANT_LEAVES],PlantMgr::render_time);
-	cout<<buff<<endl;
-	sprintf(buff,"drawn:%d skipped:%d lines:%d triangles:%d splines:%d",
-			PlantMgr::show_one?1:PlantMgr::stats[PLANTS_DRAWN],
-					PlantMgr::stats[PLANTS_SKIPPED],
-					PlantMgr::stats[PLANT_LINES],
-					PlantMgr::stats[PLANT_TRIANGLES],
-					PlantMgr::stats[PLANT_SPLINES]);
-	cout<<buff<<endl;
-	if(use_cache){
-		int cache_tests=PlantObjMgr::cacheHits+PlantObjMgr::cacheMisses;
-		sprintf(buff,"cache tests:%d hits:%2.1f%% active:%d added:%d removed:%d",
-				cache_tests,100.0*PlantObjMgr::cacheHits/cache_tests,PlantObjMgr::plantCache.size(),PlantObjMgr::cacheMisses,PlantObjMgr::cacheDeletes);
-		cout<<buff<<endl;
-	}
+	set_plant_stat_strings();
+	cout<<str1;
+	cout<<str2;
+	cout<<str3;
 }
 //************************************************************
 // BranchData class
@@ -287,18 +305,11 @@ double BranchData::distance() {
 
 void BranchVBO::appendEyeSpace(const std::vector<BranchVertex>& objVerts, Point plantCenter)
 {
-    Point xpoint = TheScene->xpoint;
-    Point offset = plantCenter - xpoint;
-    
+    Point offset = plantCenter - TheScene->xpoint;   
     for (const auto& vObj : objVerts) {
         BranchVertex vEye = vObj;
-        
-        Point eyePos = vObj.pos.point() + offset;
-        vEye.pos = Vec4(eyePos, eyePos.length());
-        
-        Point eyeP0 = vObj.common2.point() + offset;
-        vEye.common2 = Vec4(eyeP0, eyeP0.length());
-        
+        vEye.pos=Vec4(vObj.pos.x+offset.x,vObj.pos.y+offset.y,vObj.pos.z+offset.z);
+        vEye.common2=Vec4(vObj.common2.x+offset.x,vObj.common2.y+offset.y,vObj.common2.z+offset.z);
         vertexesEyeSpace.push_back(vEye);
     }
     dirty = true;
@@ -407,7 +418,9 @@ void BranchVBO::free()
 //
 //-------------------------------------------------------------
 int PlantMgr::stats[MAX_PLANT_STATS];
-double PlantMgr::render_time;
+double PlantMgr::generate_time=0;
+double PlantMgr::render_time=0;
+double PlantMgr::process_time=0;
 bool PlantMgr::threed=true;
 bool PlantMgr::spline=true;
 bool PlantMgr::poly_lines=false;
@@ -591,7 +604,9 @@ void PlantObjMgr::render()
         update_needed = false;
 
     Point eyePoint = TheScene->epoint;
-    
+    double t0;
+    double gentm=0;
+    double tm=0;
    // cout<<"PlantObjMgr::render() changed="<<changed<<" moved="<<moved<<endl;
 
     glEnable(GL_BLEND);
@@ -600,7 +615,7 @@ void PlantObjMgr::render()
     	PlantMgr::clearStats();
   		cacheHits = cacheMisses =0;
   		PlantMgr::stats[PLANT_TYPES]=objs.size;
-  		double t0=clock();
+  		t0=clock();
    		if(changed)
     		clearCache(); 
     	for (int i = 0; i < objs.size; i++) {
@@ -614,7 +629,7 @@ void PlantObjMgr::render()
 		}
 
         int start = PlantMgr::show_one ? 1 : n;  // number of plants to process
-        
+        PlantMgr::stats[PLANT_INSTANCES]=start;
         for (int i = 0; i < start; i++) {
             PlaceData *s = data[i];
             PlantMgr *pmgr = (PlantMgr*)s->mgr;
@@ -632,20 +647,21 @@ void PlantObjMgr::render()
             tnplant->seed     = URAND;
 
             Point plantCenter = s->vertex * tnplant->drop;
-
             // Look up cache
             PlantCacheKey cacheKey(plantCenter, s->instance);
             auto cacheIt = plantCache.find(cacheKey);
-
+  
             if (use_cache && cacheIt != plantCache.end() &&
                 !cacheIt->second.needsRegen(s->pts)) {
                 // CACHE HIT
                 cacheHits++;
                 PlantCacheEntry& entry = cacheIt->second;
                 entry.framesSinceUsed = 0;
+               
                 plant->accumBranchVBO.appendEyeSpace(cacheIt->second.branches, plantCenter);
                 plant->accumLineVBO.appendEyeSpace(cacheIt->second.lines, plantCenter);
                 plant->accumLeafVBO.appendEyeSpace(entry.leafs, plantCenter);  // ADD THIS LINE
+                //tm+=clock()-t2;
             } 
             else {
                 // CACHE MISS - generate geometry
@@ -655,9 +671,10 @@ void PlantObjMgr::render()
                 plant->branchVBO.clear();
                 plant->lineVBO.clear();
                 plant->freeLeafs();  // Clears both leafs list AND leafVBO
-
+                double t1=clock();
                 // Generate in object space
                 tnplant->emit();
+                gentm+=clock()-t1;
 
                 // Sort leafs and build leafVBO in object space
                 plant->sortLeafs();
@@ -677,25 +694,37 @@ void PlantObjMgr::render()
                 entry.framesSinceUsed = 0;
 
                 plantCache[cacheKey] = entry;
-                
+                //double t2=clock();
                 // Append to accum (object space → eye space)
                 plant->accumBranchVBO.appendEyeSpace(entry.branches, plantCenter);
                 plant->accumLineVBO.appendEyeSpace(entry.lines, plantCenter);
                 plant->accumLeafVBO.appendEyeSpace(entry.leafs, plantCenter);
-
+                //tm+=clock()-t2;
             }
-
          }
+        //double t2=clock();
         // Upload accumulated eye space VBOs once per plant type
+        PlantMgr::stats[PLANT_VERTEXES]=0;
+        for (int i = 0; i < objs.size; i++) {
+        	Plant *plant = (Plant*)objs[i];
+			PlantMgr::stats[PLANT_VERTEXES]+=plant->accumBranchVBO.vertexesEyeSpace.size()
+			+plant->accumLineVBO.vertexesEyeSpace.size()
+			+plant->accumLeafVBO.vertexesEyeSpace.size();
+        }
+        //int nverts=0;
 		for (int i = 0; i < objs.size; i++) {
 			Plant *plant = (Plant*)objs[i];
 			plant->accumBranchVBO.build();
 			plant->accumLineVBO.build();
 			plant->accumLeafVBO.build();
 		}
-       
+        //tm+=clock()-t2;
+
         updateCache();  // OUTSIDE the loop!
-        PlantMgr::render_time=(clock()-t0)/CLOCKS_PER_SEC;
+        PlantMgr::generate_time=gentm/CLOCKS_PER_SEC;
+        PlantMgr::process_time=(clock()-t0)/CLOCKS_PER_SEC-PlantMgr::generate_time; // all other processing
+        
+        //cout<<"nverts="<<nverts<<endl;
         
     } else if (data.size) {
         // No update needed - just set normal
@@ -704,7 +733,7 @@ void PlantObjMgr::render()
         TNplant *tnplant = pmgr->plant;
         tnplant->setNormal();
     }
-
+    t0=clock();
     if (!PlaceObjMgr::shadow_mode)
         setProgram();
     glDisable(GL_CULL_FACE);
@@ -713,12 +742,13 @@ void PlantObjMgr::render()
     glEnable(GL_CULL_FACE);
 
     randval = l;
+    PlantMgr::render_time=(clock()-t0)/CLOCKS_PER_SEC;
 #ifdef SHOW_BRANCH_STATS
     if (update_needed)
         show_plant_stats();
 #endif
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}
+ }
 bool PlantObjMgr::setProgram(){
 	if(PlaceObjMgr::shadow_mode)
 		return false;
