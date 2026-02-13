@@ -1789,8 +1789,8 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		
 		// increase width of branches wrt parent for more distant plants
 		// - otherwise only trunk is rendered and it appears "denuded"
-		if((opt & BASE_FORK)==0)
-			we*=lerp(w,1,10,3,1); // units are screen pixels
+		//if((opt & BASE_FORK)==0)
+		//	we*=lerp(w,1,10,3,1); // units are screen pixels
 			
 		we=we>1?1:we; // clamp branch width to parent width
 		for(int i=0;i<n;i++){
@@ -1917,169 +1917,167 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 
 	int tid = isTexEnabled() ? texid : -1;
 
-	if (child_width >MIN_LINE_WIDTH) {
-		if (isPlantBranch() && lev >maxlvl)
-			opt = LAST_EMIT;
-		double bf=evalArg(12,Randval*randomness+bias);
-		int rc=image_cols*image_rows-1;
-		int sel=0;
-		if(rc>0){
-			sel=bf*rc;
-			sel=clamp(sel,0,rc);
-		}
-		int sy=sel/image_cols;
-		int sx=sel-sy*image_rows;
-		
-		sy=image_rows-sy-1; // invert y
-		Vec4 sd(image_cols,image_rows,sx,sy);	
+	if (isPlantBranch() && lev >maxlvl)
+		opt = LAST_EMIT;
+	double bf=evalArg(12,Randval*randomness+bias);
+	int rc=image_cols*image_rows-1;
+	int sel=0;
+	if(rc>0){
+		sel=bf*rc;
+		sel=clamp(sel,0,rc);
+	}
+	int sy=sel/image_cols;
+	int sx=sel-sy*image_rows;
+	
+	sy=image_rows-sy-1; // invert y
+	Vec4 sd(image_cols,image_rows,sx,sy);	
 
-		if (isPlantLeaf() && isEnabled()) {  // leaf mode
-			double rv = URAND; // density
-			double sv = SRAND; // size
-			double df = evalArg(15,density);
-			if (rv > 1 - df) { // skip render if density test fails
-				shader_mode = LEAF_MODE;
+	if (isPlantLeaf() && isEnabled()) {  // leaf mode
+		double rv = URAND; // density
+		double sv = SRAND; // size
+		double df = evalArg(15,density);
+		if (rv > 1 - df) { // skip render if density test fails
+			shader_mode = LEAF_MODE;
 
-				c=getColor();
-
-				double depth = bot.length();
-				child_size = length * FEET / 12; // inches
-				child_size *= 1 + 0.5 * randomness * sv;
-
-				double width_ratio = 0.5 * width;
-				if(image)
-					width_ratio/=image->aspect();
-				double size = root->width_scale * PSCALE * TheScene->wscale
-						* child_size;
-
-				int segs = max_level;
-				double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
-				double f = 1.0 / segs;
-				Point eye = p1.normalize(); // base of branch
-				eye = eye.normalize();
-				Point v = p2 - p1;  // branch direction
-				v = v.normalize();
-				Point t = v.cross(eye); // vector in a plane perpendicular to branch and eye (but edge on)
-				t = t.cross(v);        // offset 90 degrees from view plane 
-				t = t.normalize();
-				Point r = t * tilt + v * (1 - tilt);
-				r = r.normalize();
-				Point pv = p2;
-
-				 // alternate leaf side on branch
-				TNLeaf *leaf = this;
-				double phase = leaf->phase;
-				double nscale=-1;
-				if ((leaf->left_side & 1) == 0){
-					phase += 0.5;
-				}
-				leaf->left_side++;
-				
-				double orientation=flatness+1e-3;
-				pd=pow(Level,4);
-				double bt=lerp(pd,0,1,1,1-length_taper);
-				bt=bt<0?0:bt;
-				
-				double asize=size * bt;
-				double w1 = 0.75*parent_width / TheScene->wscale/ root->size_scale;
-				// leaf clusters
-				Point p1s=p1;
-				for (int i = 0; i < segs; i++) {
-					root->addLeaf();
-					double a = i * f + phase;
-					double ca = COS(2.0 * PI * a);
-					double sa = SIN(2.0 * PI * a);
-					Point pr = r * ca + v.cross(r) * sa
-							+ v * v.dot(r) * (1.0 - ca);
-					pr = pr.normalize();
-					p1 = p1s+ pr * w1; // need 1/2 branch width !
-					p2 = p1 + pr * asize;
-					
-					double aspect=((double)image_cols)/image_rows;
-					root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
-							Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
-							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
-				}
-			}
-			else
-				root->addSkipped();
-		} else if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
-			double nscale = lerp(child_width, MIN_LINE_WIDTH,
-					10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
-					TNplant::norm_max);
-			
-			double w1 = child_width / TheScene->wscale;
-			double w2 = w1 * (evalArg(7,width_taper));
-
-			shader_mode = RECT_MODE;
-			if (PlantMgr::spline && child_width > MIN_SPLINE_WIDTH) {
-				shader_mode = SPLINE_MODE;
-				root->addSpline();
-			} else
-				root->addBranch();
 			c=getColor();
-			//c = S0.c;
 
-			tip.x = topx;
-			tip.y = topy;
-			tip.z = top_offset;
+			double depth = bot.length();
+			child_size = length * FEET / 12; // inches
+			child_size *= 1 + 0.5 * randomness * sv;
 
-			if (PlantMgr::threed) {
-				w1 = w1 / root->size_scale;
-				w2 = w2 / root->size_scale;
+			double width_ratio = 0.5 * width;
+			if(image)
+				width_ratio/=image->aspect();
+			double size = root->width_scale * PSCALE * TheScene->wscale
+					* child_size;
+
+			int segs = max_level;
+			double tilt = divergence+ 1e-4; // meta-stable if tilt=0;
+			double f = 1.0 / segs;
+			Point eye = p1.normalize(); // base of branch
+			eye = eye.normalize();
+			Point v = p2 - p1;  // branch direction
+			v = v.normalize();
+			Point t = v.cross(eye); // vector in a plane perpendicular to branch and eye (but edge on)
+			t = t.cross(v);        // offset 90 degrees from view plane 
+			t = t.normalize();
+			Point r = t * tilt + v * (1 - tilt);
+			r = r.normalize();
+			Point pv = p2;
+
+			 // alternate leaf side on branch
+			TNLeaf *leaf = this;
+			double phase = leaf->phase;
+			double nscale=-1;
+			if ((leaf->left_side & 1) == 0){
+				phase += 0.5;
 			}
-            double phase=0.5*Randval;
-
-			if (PlantMgr::threed && shader_mode == SPLINE_MODE) {
-				// note: first implemented this code in the shader and was a bit faster but:
-				// 1) in 3d run out of shader resources (max components) unless the product
-				//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
-				// 2) get miss-aligment between branch segments because can't set terminal vector (v)
-				//    to direction of spline end (no access to ogl parameters from shader)
-				int nv = 4;
-				double ds = 0.5 / nv;
-				double s = 0.5;
-				double r1 = w1;
-				double r2 = w2;
-				Point t0, t1, t2;
-				t0 = p0;
-				double delta = 1.0 / (nv);
-				double f1, f2, dx, dy;
-				Vec4 T0;
- 				for (int i = 0; i < nv; i++) {
-					f1 = i * delta;
-					f2 = (i + 1) * delta;
-					dx = (1 - f1) * r1 + f1 * r2;
-					dy = (1 - f2) * r1 + f2 * r2;
-					t1 = spline(s, p0, p1, p2);
-					t2 = spline(s + ds, p0, p1, p2);
-				    root->plant->collectBranches(Vec4(t0,phase), Vec4(t1), Vec4(t2),
-				    		Vec4(dx, dy, f1, f2),
-							Vec4(nscale,color_flags, tid, shader_mode), sd,c);
-					t0 = t1;
-					s += ds;
-				}
-				v = t2 - t1;
-				v = v.normalize();
-				v = v * cl;
-
-				bot = t2;
-				w1 = dx;
-				w2 = dy;
-
-			} else { // no spline
-				root->addTriangle();
-				root->plant->collectBranches(Vec4(p0,phase), Vec4(p1,bot_offset), Vec4(p2,top_offset),Vec4(w1, w2, 0, 1),
+			leaf->left_side++;
+			
+			double orientation=flatness+1e-3;
+			pd=pow(Level,4);
+			double bt=lerp(pd,0,1,1,1-length_taper);
+			bt=bt<0?0:bt;
+			
+			double asize=size * bt;
+			double w1 = 0.75*parent_width / TheScene->wscale/ root->size_scale;
+			// leaf clusters
+			Point p1s=p1;
+			for (int i = 0; i < segs; i++) {
+				root->addLeaf();
+				double a = i * f + phase;
+				double ca = COS(2.0 * PI * a);
+				double sa = SIN(2.0 * PI * a);
+				Point pr = r * ca + v.cross(r) * sa
+						+ v * v.dot(r) * (1.0 - ca);
+				pr = pr.normalize();
+				p1 = p1s+ pr * w1; // need 1/2 branch width !
+				p2 = p1 + pr * asize;
+				
+				double aspect=((double)image_cols)/image_rows;
+				root->plant->collectLeafs(Vec4(p0), Vec4(p1), Vec4(p2),
+						Vec4(1 - width_taper,width_ratio * asize/aspect, orientation,enables),
 						Vec4(nscale,color_flags, tid, shader_mode), sd,c);
 			}
 		}
-		else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
-			double nscale = TNplant::norm_min;
-			root->addLine();
-			c=getColor();
-			root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
-					Vec4(nscale,color_flags, tid, LINE_MODE),sd,c);
+		else
+			root->addSkipped();
+	} else if (child_width >= MIN_TRIANGLE_WIDTH && isEnabled()) { // branch mode
+		double nscale = lerp(child_width, MIN_LINE_WIDTH,
+				10 * MIN_TRIANGLE_WIDTH, TNplant::norm_min,
+				TNplant::norm_max);
+		
+		double w1 = child_width / TheScene->wscale;
+		double w2 = w1 * (evalArg(7,width_taper));
+
+		shader_mode = RECT_MODE;
+		if (PlantMgr::spline && child_width > MIN_SPLINE_WIDTH) {
+			shader_mode = SPLINE_MODE;
+			root->addSpline();
+		} else
+			root->addBranch();
+		c=getColor();
+		//c = S0.c;
+
+		tip.x = topx;
+		tip.y = topy;
+		tip.z = top_offset;
+
+		if (PlantMgr::threed) {
+			w1 = w1 / root->size_scale;
+			w2 = w2 / root->size_scale;
 		}
+		double phase=0.5*Randval;
+
+		if (PlantMgr::threed && shader_mode == SPLINE_MODE) {
+			// note: first implemented this code in the shader and was a bit faster but:
+			// 1) in 3d run out of shader resources (max components) unless the product
+			//    of spline nodes and cone nodes is <= 32 (default cone nodes = 16 so nv <=2)
+			// 2) get miss-aligment between branch segments because can't set terminal vector (v)
+			//    to direction of spline end (no access to ogl parameters from shader)
+			int nv = 4;
+			double ds = 0.5 / nv;
+			double s = 0.5;
+			double r1 = w1;
+			double r2 = w2;
+			Point t0, t1, t2;
+			t0 = p0;
+			double delta = 1.0 / (nv);
+			double f1, f2, dx, dy;
+			Vec4 T0;
+			for (int i = 0; i < nv; i++) {
+				f1 = i * delta;
+				f2 = (i + 1) * delta;
+				dx = (1 - f1) * r1 + f1 * r2;
+				dy = (1 - f2) * r1 + f2 * r2;
+				t1 = spline(s, p0, p1, p2);
+				t2 = spline(s + ds, p0, p1, p2);
+				root->plant->collectBranches(Vec4(t0,phase), Vec4(t1), Vec4(t2),
+						Vec4(dx, dy, f1, f2),
+						Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+				t0 = t1;
+				s += ds;
+			}
+			v = t2 - t1;
+			v = v.normalize();
+			v = v * cl;
+
+			bot = t2;
+			w1 = dx;
+			w2 = dy;
+
+		} else { // no spline
+			root->addTriangle();
+			root->plant->collectBranches(Vec4(p0,phase), Vec4(p1,bot_offset), Vec4(p2,top_offset),Vec4(w1, w2, 0, 1),
+					Vec4(nscale,color_flags, tid, shader_mode), sd,c);
+		}
+	}
+	else if (isEnabled()) { // line mode > MIN_DRAW_WIDTH
+		double nscale = TNplant::norm_min;
+		root->addLine();
+		c=getColor();
+		root->plant->collectLines(Vec4(p0), Vec4(p1), Vec4(p2),Vec4(),
+				Vec4(nscale,color_flags, tid, LINE_MODE),sd,c);
 	}
 
 	if (child)
