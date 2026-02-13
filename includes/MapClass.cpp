@@ -706,6 +706,7 @@ void Map::shadow_normals()
 	    npole->render_vertex();
 		tp->render_shadows();
 	}
+	Td.render_shadows();
 	Render.popmode();
 }
 
@@ -760,10 +761,13 @@ void Map::render_zvals()
 	for(tid=ID0;tid<tids;tid++){
 		tp=Td.properties[tid];
 		Td.tp=tp;
-		if(Render.draw_szvals())
-			tp->render_zvals();
 	    if(!visid(tid))
 	       continue;
+		if(Render.draw_szvals()){
+			if(tid==ID0)
+				Td.render_zvals();
+			tp->render_zvals();
+		}
 	    if(Render.draw_szvals())
 	    	Raster.setProgram(Raster.SHADOW_ZVALS);	    
 	    npole->render_vertex();
@@ -1296,6 +1300,9 @@ void Map::render_shaded()
 		Render.show_shaded();
 		Raster.surface=1;
 	}
+	render_objects(Td.Rocks);
+	render_objects(Td.Plants);
+	render_objects(Td.Sprites);
 	set_textures(0);
 	Render.show_shaded();
 	GLSLMgr::endRender();

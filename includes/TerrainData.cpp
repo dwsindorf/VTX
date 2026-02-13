@@ -115,6 +115,9 @@ double TerrainData::depth=0;
 double TerrainData::margin=0;
 double TerrainData::extent=0;
 double TerrainData::texht=0;
+PlantObjMgr  TerrainData::Plants;
+Rock3DObjMgr TerrainData::Rocks;
+SpriteObjMgr TerrainData::Sprites;
 
 Array<TerrainProperties*>TerrainData::properties;
 TerrainProperties *TerrainData::tp=0;
@@ -286,6 +289,24 @@ void TerrainData::end()
 		datacnt++;
 		data[i-1]=&zlevel[datacnt];
 	}
+}
+
+void TerrainData::render_zvals(){
+	if(Plants.supports_shadows())
+		Plants.render_zvals();
+	if(Sprites.supports_shadows())
+		Sprites.render_zvals();
+	if(Rocks.supports_shadows())
+		Rocks.render_zvals();
+		
+}
+void TerrainData::render_shadows(){
+	if(Plants.supports_shadows())
+		Plants.render_shadows();
+	if(Sprites.supports_shadows())
+		Sprites.render_shadows();
+	if(Rocks.supports_shadows())
+		Rocks.render_shadows();
 }
 
 //************************************************************

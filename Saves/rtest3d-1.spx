@@ -19,14 +19,23 @@ Scene() {
 	View{
 		heading=150;
 		angle=1;
+	}
+	View{
+		heading=121;
 		vstride=0.02;
 		zoom=0.004;
 		minh=5.68182e-10;
 		radius=0.004;
 	}
 	View{
-		heading=121;
+		heading=94;
 		minr=0.004;
+	}
+	View{
+		height=4.42486 ft;
+		heading=79;
+		tilt=-14;
+		angle=0;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -70,12 +79,12 @@ Scene() {
 						Color(0,0.306,0.004),
 						Color(0.02,0.114,0.02));
 					Surface{
-						terrain=rocks3d(1,2e-08,0.66,0.1,0,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
+						terrain=rocks3d(2,2e-08,0.66,0.1,0.2,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
 								[Texture("yellow-green",TEX,469739,1.71428,1,-0.05,1,2,0.5,0,0,0,0.26984,0.01588)+Texture("craters",BUMP|TRIPLANAR,7.35095e+06,3.17472,2,1,1,2,0.84932,0,0,0,0,0)
-								]								rocks3d(2,2e-07,1.5,0.05,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
-								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|BUMP|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.67772e+07,1.3968,0.8254,0,1,2,0.5,0,0,0,0,-0.1746)
+								]								rocks3d(1,3e-07,1.5,0.05,0.2,0.1,1,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
+								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|BUMP|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.67772e+07,2.92064,0.8254,0,1,2,0.5,0,0,0,0,-0.1746)
 								]								
-								Texture("mud1",BORDER|LINEAR|RANDOMIZE|TEX,1.41121e+06,2,1,0,2.14288,2,0.5,0,0,-0.22224,0,-0.05552)+Z(0);
+								Texture("mud1",BORDER|BUMP|RANDOMIZE|TEX,1.41121e+06,0.3,2,0,2.14288,2,0.5,0,0,-0.22224,0,-0.05552)+Z(0);
 					}
 				}
 			}

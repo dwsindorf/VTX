@@ -1131,7 +1131,10 @@ void TNrocks3D::eval()
 			rock->set_id(instance);
 			rock->layer=layer;
 		}
-		Td.tp->Rocks.addObject(rock);
+		if(layer)
+			Td.tp->Rocks.addObject(rock);
+		else
+			Td.Rocks.addObject(rock);
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)

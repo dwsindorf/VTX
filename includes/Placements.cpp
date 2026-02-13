@@ -184,8 +184,6 @@ int PlacementMgr::bad_valid=0;
 int PlacementMgr::bad_active=0;
 int PlacementMgr::new_placements=0;
 int PlacementMgr::bad_pts=0;
-double PlacementMgr::roff=1e-6;
-double PlacementMgr::roff2=1;
 int PlacementMgr::hashsize=HASHSIZE;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=1;
@@ -636,24 +634,9 @@ void PlacementMgr::eval()
 #endif
 
         int seed=lvl*13+id;
-            
-        if(lvl>0 && roff>0){   
-           // set_offset_valid(1);
-            offset.x=roff*SRAND(1);
-            offset.y=roff*SRAND(2);
-            offset.z=roff*SRAND(3);
-            if(TheNoise.noise4D())
-                offset.w=roff*SRAND(4);
-            else
-                offset.w=0;
-            mpt=pv+offset;
-            p=pv*(1.0/size)+offset;
-        }
-        else{
-            mpt=pv;     
-            p=pv*(1.0/size);
-            offset.clear();
-        }
+        mpt=pv;     
+        p=pv*(1.0/size);
+        offset.clear();
         
         Point4DL pc(FLOOR(p.x),
                     FLOOR(p.y),
@@ -732,7 +715,6 @@ void PlacementMgr::eval()
     cval=slist.base[scnt-1]->f;
     slvl=slist.base[scnt-1]->l;
     hits=slist.base[scnt-1]->h;
-    //cout<<hits<<" "<<chits<<endl;
 }
 //-------------------------------------------------------------
 // Placement::find_neighbors()	build neighbor list
@@ -973,7 +955,6 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 		r = mgr->size*0.5*scale;
 		pf=0.8*mgr->size-r;
 	}
-	pf*=mgr->roff2;
 	if(pf>0){
 		p.x+=pf*SRAND(2);
 		p.y+=pf*SRAND(3);

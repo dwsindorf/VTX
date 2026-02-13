@@ -148,6 +148,10 @@ public:
 	static TerrainData  lower;   	// lower surface level
 	static double       texht;	    // height map texture
 	static double       fracval[MAX_FDATA];    // fractal ht
+	
+	static PlantObjMgr  Plants;
+	static Rock3DObjMgr Rocks;
+	static SpriteObjMgr Sprites;
 
 	static Array<TerrainProperties*>properties;
 		
@@ -171,6 +175,10 @@ public:
 	static void set_flag(int i)    { BIT_ON(flags,i);}
 	static void clr_flag(int i)    { BIT_OFF(flags,i);}
 	static int get_flag(int i)		{ return flags&i;}
+	
+	static void render_zvals();
+	static void render_shadows();
+
 
 	static Point	rectangular(double t, double p);
 
@@ -257,6 +265,9 @@ public:
 		depth=0;
 		density=0;
 		ocean=0;
+		Plants.reset();
+		Rocks.reset();
+		Sprites.reset();
 	}
 	void init(){
 		reset();

@@ -1065,7 +1065,10 @@ void TNplant::eval()
 			plant->set_id(instance);
 			plant->layer=layer;
 		}
-		Td.tp->Plants.addObject(plant);
+		if(layer)
+			Td.tp->Plants.addObject(plant);
+		else
+			Td.Plants.addObject(plant);
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)

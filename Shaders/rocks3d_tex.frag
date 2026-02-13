@@ -98,8 +98,9 @@ void main() {
    // color.rgb=vec3(Tangent.z,0,0);
    //color.rgb=abs(Normal.rgb);
     gl_FragData[0]=vec4(color.xyz,1);
+    gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
 
-    gl_FragData[1]=vec4(fcolor2); // pass thru
+    //gl_FragData[1]=vec4(fcolor2); // pass thru
     
  
 }

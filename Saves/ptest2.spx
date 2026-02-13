@@ -380,6 +380,9 @@ Scene() {
 	View{
 		minr=0.00399986;
 	}
+	View{
+		tilt=-15;
+	}
 	Galaxy(20000) {
 		origin=Point(4000,0,0);
 		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
@@ -432,13 +435,13 @@ Scene() {
 							Branch("branch",9,2,0.55,0.26,0.13,2,0.67,0.77,0.84,10,3,0.89,15,15,-0.6+LVL,0.58)["Cracks1",Color(IRAND*IRAND+0.4*URAND*LVL,0.4*LVL,0,0.5*LVL)]
 							map(noise(GRADIENT,1,5,1,0.5,2,1,4),0,0,0)
 							layer(MORPH,0,0.2)
-								[Plant("Yellow",1,2.84091e-07,0.8,0.5,0,0,0,0,0,0.444)
+								[Plant("Yellow",1,2.84091e-07,0.8,0.2,0,0,0,0,0,0.444,0,0)
 								Branch("Stem",10,1,1,0.1,1,1,0.212,0.8,0.8,100,0,1,0,30,-0.091,1)["aspen1",Color(0.2+IRAND*LVL,RED,0.1*IRAND*(1-LVL),1)]
 								Z(noise(GRADIENT|SCALE,5,11.5,1,0.5,2,1,4,0,0,1e-06))
 								+
 								Texture("Sand2",TEX,22788.2,2,2,0,2,2,0.5,0,0,0,0,0)]
 							layer(MORPH,0,0.1,0.2)
-								[Plant("bush",2,6.1553e-07,0.8,0.5,0,0,0,0,0,0)
+								[Plant("bush",1,6.1553e-07,0.8,0.1,0,0,0,0,0,0,0,0)
 								Branch("stem",10,2.4,0.25,1,1,0.9,0.1,0.7,1,6,0,1,15,15)["Cracks1",Color(0.6-0.3*IRAND,0.4*LVL+0.3,0.2*IRAND+0.25*LVL+0.2,1)]
 								Z(noise(GRADIENT|NABS|SQR|UNS,9,11.87,0.4,0.5,2,1,4,0,0,1e-06))
 								+

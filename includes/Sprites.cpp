@@ -593,7 +593,10 @@ void TNsprite::eval()
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
-		Td.tp->Sprites.addObject(sprite);
+		if(layer)
+			Td.tp->Sprites.addObject(sprite);
+		else
+			Td.Sprites.addObject(sprite);
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)

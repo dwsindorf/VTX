@@ -121,8 +121,8 @@ public:
 class PlaceObjMgr
 {
 protected:
-	Array<PlaceObj*> objs;
 public:
+	Array<PlaceObj*> objs;
 	static bool shadow_mode;
 	PlaceObjMgr();
 	virtual void collect(){}
@@ -251,7 +251,6 @@ public:
 	static LinkedList<Placement*> list;
 	static PlacementStats Stats;
 	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
-	static double roff,roff2;
 	static int hashsize;
 	static double collect_minpts,adapt_ptsize,render_ptsize;
 	static int min_hits;
