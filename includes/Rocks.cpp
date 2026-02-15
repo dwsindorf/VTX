@@ -425,16 +425,25 @@ bool Rock3DObjMgr::setProgram() {
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
 	
+	double twilite_min=-0.2; // full night
+	double twilite_max=0.2;  // full day
+
+	
+	//double tod=P360(orb->dlt())/360;
+	//	tod=dt;
 	double tod=orb->tod;
 	
 	double night_lighting=1;
 	if(!TheScene->changed_file())
 		night_lighting=calculateNightLighting(tod);
+		cout<<"tod:"<<tod<<" night_lighting:"<<night_lighting<<endl;
      
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+	vars.newFloatVar("twilite_min",twilite_min);
+	vars.newFloatVar("twilite_max",twilite_max);
 		
 	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
@@ -1123,18 +1132,23 @@ void TNrocks3D::eval()
 	}
 	SINIT;
 	if(CurrentScope->rpass()){
-		int layer=inLayer()?Td.tp->type():0; // layer id
-		int instance=Td.tp->Rocks.objects();
-		mgr->instance=instance;
-		mgr->layer=layer;
+		int layer=0;
+		int instance;
+		if(inLayer()){
+			layer=Td.tp->type(); // layer id
+			instance=Td.tp->Rocks.objects();
+			Td.tp->Rocks.addObject(rock);
+		}
+		else{
+			instance=Td.Rocks.objects();
+			Td.Rocks.addObject(rock);
+		}
 		if(rock){
-			rock->set_id(instance);
+			rock->set_id(instance);		
 			rock->layer=layer;
 		}
-		if(layer)
-			Td.tp->Rocks.addObject(rock);
-		else
-			Td.Rocks.addObject(rock);
+		mgr->instance=instance;
+		mgr->layer=layer;
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)

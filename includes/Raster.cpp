@@ -599,7 +599,7 @@ void RasterMgr::buildCascades(){
 	double tempSplits[MAX_CASCADES + 1];
 	
 	double logMin = log(minDist);
-	double logMax = log(maxDist);
+	double logMax = 1.1*log(maxDist);
 	double logRange = logMax - logMin;
 	
 	tempSplits[0] = minDist;

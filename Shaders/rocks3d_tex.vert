@@ -11,7 +11,7 @@ varying vec3 Normal;
 varying vec3 EyeDirection;
 varying vec3 WorldPos;
 varying vec3 TemplatePos;
-varying vec4 WorldNormal;
+varying vec3 WorldNormal;
 attribute vec4 templatePosition;  // Attribute location 3
 attribute vec4 faceNormal;        // Attribute location 4
 
@@ -33,6 +33,7 @@ void main() {
     Tangent.w = max_orders;
     
      WorldPos = templatePosition.xyz;
+     WorldNormal=normalize(WorldPos);
 #ifdef COLOR
      Color = gl_Color;
 #endif

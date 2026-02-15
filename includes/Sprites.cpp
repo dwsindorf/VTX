@@ -584,19 +584,25 @@ void TNsprite::eval()
 			right->eval();
 		return;
 	}
-	if(CurrentScope->rpass()){
-		int layer=inLayer()?Td.tp->type():0; // layer id
-		int instance=Td.tp->Sprites.objects();		
-		mgr->instance=instance;
-		mgr->layer=layer;
+	if(CurrentScope->rpass()){		
+		int layer=0;
+		int instance;
+		if(inLayer()){
+			layer=Td.tp->type(); // layer id
+			instance=Td.tp->Sprites.objects();
+			Td.tp->Sprites.addObject(sprite);
+		}
+		else{
+			instance=Td.Sprites.objects();
+			Td.Sprites.addObject(sprite);
+		}
 		if(sprite){
 			sprite->set_id(instance);
 			sprite->layer=layer;
 		}
-		if(layer)
-			Td.tp->Sprites.addObject(sprite);
-		else
-			Td.Sprites.addObject(sprite);
+		mgr->instance=instance;
+		mgr->layer=layer;
+
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)

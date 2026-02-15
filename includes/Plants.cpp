@@ -1057,18 +1057,23 @@ void TNplant::eval()
 	}
 	SINIT;	
 	if(CurrentScope->rpass()){
-		int layer=inLayer()?Td.tp->type():0; // layer id
-		int instance=Td.tp->Plants.objects();
-		mgr->instance=instance;
-		mgr->layer=layer;
+		int layer=0;
+		int instance;
+		if(inLayer()){
+			layer=Td.tp->type(); // layer id
+			instance=Td.tp->Plants.objects();
+			Td.tp->Plants.addObject(plant);
+		}
+		else{
+			instance=Td.Plants.objects();
+			Td.Plants.addObject(plant);
+		}
 		if(plant){
 			plant->set_id(instance);
 			plant->layer=layer;
 		}
-		if(layer)
-			Td.tp->Plants.addObject(plant);
-		else
-			Td.Plants.addObject(plant);
+		mgr->instance=instance;
+		mgr->layer=layer;
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)
