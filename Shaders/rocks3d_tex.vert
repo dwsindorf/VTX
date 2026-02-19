@@ -7,6 +7,7 @@
 uniform float night_ligting;
 uniform float textureScale;
 uniform float wscale;
+uniform vec4 xpoint;
 varying vec3 Normal;
 varying vec3 EyeDirection;
 varying vec3 WorldPos;
@@ -32,15 +33,15 @@ void main() {
     
     Tangent.w = max_orders;
     
-     WorldPos = templatePosition.xyz;
-     WorldNormal=normalize(WorldPos);
+     WorldPos = (xpoint.xyz);
+     WorldNormal=normalize(templatePosition.xyz);
 #ifdef COLOR
      Color = gl_Color;
 #endif
 
 #if NTEXS >0
 	for(int i=0;i<NTEXS;i++){
-		gl_TexCoord[i] = vec4(templatePosition.xyz, 1.0);
+		gl_TexCoord[i] = vec4(templatePosition.xyz, depth*40);
 	}
 	WorldNormal.xyz = faceNormal.xyz;//gl_TexCoord[0].xyz;
 	Tangent.z=abs(faceNormal.w);

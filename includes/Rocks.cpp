@@ -437,11 +437,13 @@ bool Rock3DObjMgr::setProgram() {
 	if(!TheScene->changed_file())
 		night_lighting=calculateNightLighting(tod);
 		cout<<"tod:"<<tod<<" night_lighting:"<<night_lighting<<endl;
-     
+    Point xp=TheScene->xpoint.normalize();
+    cout<<xp<<endl;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
+	vars.newFloatVec("xpoint",xp.x,xp.y,xp.z,night_lighting);
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 		

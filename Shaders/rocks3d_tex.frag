@@ -21,6 +21,9 @@ uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
 
+uniform float twilite_min;
+uniform float twilite_max;
+
 uniform float night_lighting;
 uniform bool lighting;
 
@@ -61,7 +64,7 @@ vec3 setLighting(vec3 BaseColor) {
     vec3 TotalDiffuse = BaseColor * diffuse * Diffuse.a * 0.85;
     
     return ambient + TotalDiffuse;
-    //return vec3(night_lighting,0,0);
+ 
 }
 #if NTEXS >0
 #include "tex_funcs.frag"
@@ -94,9 +97,15 @@ void main() {
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
+   vec3 lpos=normalize(gl_LightSource[0].position.xyz);
+   float dl=dot(lpos,WorldPos.rgb);
+   float tl=0;
+   //if(dl>0)
+       tl  = lerp(dl,-0.5,0.0,0.0,1.0); // twilite band
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
    // color.rgb=vec3(Tangent.z,0,0);
-   //color.rgb=abs(Normal.rgb);
+   
+    //color.rgb=vec3(tl,0,0);
     gl_FragData[0]=vec4(color.xyz,1);
     gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
 

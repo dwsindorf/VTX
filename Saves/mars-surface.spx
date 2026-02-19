@@ -29,7 +29,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=67.5;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-25443.9 ft;
 		heading=0;
 		pitch=0;
@@ -72,7 +72,7 @@ Scene() {
 		view=SURFACE;
 		phi=18.9844;
 		theta=46.4062;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=15178.4 ft;
 		heading=0;
 		pitch=0;
@@ -112,7 +112,7 @@ Scene() {
 		view=SURFACE;
 		phi=-6.32813;
 		theta=93.5156;
-		height=52800 ft;
+		height=10 miles;
 		gndlvl=-106602 ft;
 		heading=0;
 		pitch=0;
@@ -188,17 +188,10 @@ Scene() {
 	}
 	View{
 		height=5336.64 ft;
-		vstride=0.02;
-		zoom=0.002;
-		minh=5.68182e-10;
-		radius=0.00198783;
 	}
 	View{
 		height=4470.47 ft;
 		time=370000;
-		hstride=2;
-		minr=0.00198682;
-		radius=0.00198766;
 	}
 	View{
 		phi=-6.25671;
@@ -207,7 +200,6 @@ Scene() {
 		gndlvl=-73031.9 ft;
 		tilt=-15;
 		angle=0;
-		radius=0.00198626;
 	}
 	View{
 		phi=-6.18648;
@@ -216,11 +208,14 @@ Scene() {
 		heading=0;
 		tilt=-3;
 		angle=1;
-		minr=0.00198617;
-		radius=0.00198617;
 	}
 	View{
 		time=366000;
+		vstride=0.02;
+		zoom=0.002;
+		minh=5.68182e-10;
+		minr=0.00198617;
+		radius=0.00198617;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -245,7 +240,7 @@ Scene() {
 					name="Sol";
 					specular=Color(1,1,1);
 					temperature=5773.8;
-					bands("star1",ACHNL|CLAMP|DECAL|REPLACE,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					bands("star1",ACHNL|BLEND|CLAMP|DECAL|REPLACE,16,Color(1,1,0.898),Color(1,0.937,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.463,0.039,0.122),
 						Color(0.024,0.02,0.125));
 					Surface{
@@ -272,30 +267,27 @@ Scene() {
 					day=24;
 					hscale=0.01;
 					name="Mars";
-					ocean.auto=1;
-					ocean.state=2;
 					shadow=Color(0,0,0,0.87);
 					shine=5.56269;
 					specular=Color(1,1,1,0.14);
 					tilt=25;
 					year=687;
-					bands("dessert",ACHNL|DECAL|REPLACE,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+					bands("dessert",ACHNL|BLEND|DECAL|REPLACE,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
 						Color(0.302,0.082,0.082));
-					bands("P17364",DECAL|NORM|REFLECT|REPLACE|TMP,64,0.112494,0.645639,Color(0,0,0),Color(0.2,0.14,0.11),
+					bands("P17364",BLEND|DECAL|NORM|REFLECT|REPLACE|TMP,64,0.112494,0.645639,Color(0,0,0),Color(0.2,0.14,0.11),
 						Color(0.44,0.37,0.35),
 						Color(0.26,0.17,0.14),
 						Color(0.2,0.14,0.12),
 						Color(0.44,0.38,0.36));
 					image("E1907",BLEND|DECAL|GRAY|NORM|REPLACE|TMP,256,256,noise(SIMPLEX|SQR|UNS,0.89,7.36,0,0.54,2.2,0.95,0));
 					Surface{
-						terrain=rocks(3,2e-05,0.194084,0.4,0.2,0.1,0.3,noise(GRADIENT|NABS|SQR,1.07,7.76,0.19,0.55,1.98,0.41,-0.4,0,0,0))[
-								Texture("P17364",LINEAR|NORM|TEX,2.09715e+06,2,1,0.194849,1,2,1,0,0.00380776,0.00145584,0.0493973,0.0541927)+
-								Texture("E1907",BUMP,1.04858e+06,1,0,0,12,2,0.5,0,0,0,0,0.1)]
-								snow(-0.7,0.14,0.57,0.17,1,0.82)
+						terrain=rocks(3,2e-05,0.194084,0.4,0.2,0.1,0.3,noise(GRADIENT|NABS|SQR,1.07,7.76,0.19,0.55,1.98,0.41,-0.4,0,0,0))
+								[Texture("P17364",LINEAR|NORM|TEX,2.09715e+06,2,1,0.194849,1,2,1,0,0.00380776,0.00145584,0.0493973,0.0541927)+Texture("E1907",BUMP,1.04858e+06,1,0,0,12,2,0.5,0,0,0,0,0.1)
+								]								snow(-0.7,0.14,0.57,0.17,1,0.82)
 								
 								Texture("dessert",BORDER|NORM|TEX,537.269,2,1,1.22224,1,2,0.5,0,0.05552,0.4,-0.4,0.3)+
 								Texture("mars",TEX,1,2,1.75,0,1,2,0.5,0,0,0,0,0)+
-								Texture("Shist1",BUMP,1407.09,-0.44448,1,0,3,2,0.5,0,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,2.1,0.8,0.61,0.42,0)
+								Texture("Shist1",BUMP,1407.09,-0.44448,1,0,3,2,0.5,0,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,0.5,0.8,0.61,0.42,0,0.5,0)
 								fractal(SQR|SS,13.7,8,0.05,0.24,3,0.4,0.08,0.42,0.35,0)noise(GRADIENT|NABS|SCALE|SQR,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
 								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,1,-0.36112,0,0,0,0);
 					}
