@@ -36,8 +36,8 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
-#define PRINT_ROCK_STATS
+//#define PRINT_STATS
+//#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_STATS
@@ -357,7 +357,7 @@ void Rock3DObjMgr::freeLODTemplates() {
     }
 }
 
-double calculateNightLighting(double tod) {
+static double calculateNightLighting(double tod) {
     const double dawnStart = 0.20, dawnEnd = 0.3;
     const double duskStart = 0.7, duskEnd = 0.85;   
     // Night (before dawn or after dusk)
@@ -425,31 +425,21 @@ bool Rock3DObjMgr::setProgram() {
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
 	
-	double twilite_min=-0.2; // full night
-	double twilite_max=0.2;  // full day
-
+	//double tod=orb->tod;
 	
-	//double tod=P360(orb->dlt())/360;
-	//	tod=dt;
-	double tod=orb->tod;
-	
-	double night_lighting=1;
-	if(!TheScene->changed_file())
-		night_lighting=calculateNightLighting(tod);
-		cout<<"tod:"<<tod<<" night_lighting:"<<night_lighting<<endl;
-    Point xp=TheScene->xpoint.normalize();
-    cout<<xp<<endl;
+	//double night_lighting=1;
+	//if(!TheScene->changed_file())
+	//	night_lighting=calculateNightLighting(tod);
+	//	cout<<"tod:"<<tod<<" night_lighting:"<<night_lighting<<endl;
+    Point xp=orb->point;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
-	vars.newFloatVec("xpoint",xp.x,xp.y,xp.z,night_lighting);
-	vars.newFloatVar("twilite_min",twilite_min);
-	vars.newFloatVar("twilite_max",twilite_max);
+	vars.newFloatVec("xpoint",xp.x,xp.y,xp.z,0);
 		
 	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
-	vars.newFloatVar("night_lighting",night_lighting);
 	vars.newBoolVar("lighting",Render.lighting());
 	vars.newIntVar("activeTexture",0);
 

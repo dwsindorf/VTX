@@ -3714,7 +3714,6 @@ bool Planetoid::setProgram(){
 	shadow_intensity=shadow_color.alpha();
 	if(TheScene->inside_sky())
 		shadow_intensity*=lerp(Raster.ldp,-1,0,shadow_intensity,1);
-	//cout<<Raster.ldp<<" "<<shadow_intensity<<endl;
 	Point p=point.mm(TheScene->invViewMatrix);
 	vars.newFloatVec("object",p.x,p.y,p.z); // global
 	p=p.mm(TheScene->viewMatrix);

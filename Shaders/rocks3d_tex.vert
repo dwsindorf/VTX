@@ -33,7 +33,7 @@ void main() {
     
     Tangent.w = max_orders;
     
-     WorldPos = (xpoint.xyz);
+     WorldPos = normalize(xpoint.xyz);
      WorldNormal=normalize(templatePosition.xyz);
 #ifdef COLOR
      Color = gl_Color;

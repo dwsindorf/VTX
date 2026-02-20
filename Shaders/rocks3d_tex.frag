@@ -47,6 +47,9 @@ vec3 setLighting(vec3 BaseColor) {
     for (int i = 0; i < NLIGHTS; i++) {
         if (gl_LightSource[i].position.w == 0.0)
             continue;
+        vec3 lpos=normalize(gl_LightSource[i].position.xyz);
+        float dl=-dot(lpos,WorldPos.rgb);
+        dl=pow(max(dl,0),0.5);
             
         vec3 light = normalize(gl_LightSource[i].position.xyz + EyeDirection);
         float LdotN = dot(light, normal);
@@ -54,7 +57,7 @@ vec3 setLighting(vec3 BaseColor) {
         // Keep some compression but less aggressive (use power 0.8 instead of sqrt=0.5)
         LdotN = pow(max(LdotN, 0.0), 0.8);
         
-        float intensity = night_lighting / gl_LightSource[i].constantAttenuation / float(NLIGHTS);
+        float intensity = dl / gl_LightSource[i].constantAttenuation / float(NLIGHTS);
         float lpn = LdotN * intensity;
         
         diffuse += Diffuse.rgb * gl_LightSource[i].diffuse.rgb * lpn;
@@ -97,15 +100,17 @@ void main() {
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
-   vec3 lpos=normalize(gl_LightSource[0].position.xyz);
-   float dl=dot(lpos,WorldPos.rgb);
-   float tl=0;
+   //vec3 lpos=normalize(gl_LightSource[0].position.xyz);
+   //float dl=-dot(lpos,WorldPos.rgb);
+  // dl=max(dl,0);
+  // float tl=0;
    //if(dl>0)
-       tl  = lerp(dl,-0.5,0.0,0.0,1.0); // twilite band
+    //   tl  = lerp(dl,0.0,0.3,0.0,1.0); // twilite band
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
    // color.rgb=vec3(Tangent.z,0,0);
    
-    //color.rgb=vec3(tl,0,0);
+    //color.rgb=vec3(dl,0,0);
+   //color.rgb=lpos;
     gl_FragData[0]=vec4(color.xyz,1);
     gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
 
