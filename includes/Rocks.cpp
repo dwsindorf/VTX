@@ -752,6 +752,8 @@ void Rock3DObjMgr::render() {
             double drop = pmgr->drop;
             int instance = s->instance;
             
+            //cout<<rval<<endl;
+            
             int resolution = Rock3DMgr::getLODResolution(pts);
             if(resolution==0){
             	continue;
@@ -853,9 +855,9 @@ void Rock3DObjMgr::render() {
                     
                     // Template position
                     Point tp = tri.templatePos[v];
-                    tp.x += 0.002 * rval; 
-                    tp.y += 0.002 * rval; 
-                    tp.z += 0.002 * rval; 
+                    tp.x += 0.001 * s->rval; 
+                    tp.y += 0.001 * s->rval; 
+                    tp.z += 0.001 * s->rval; 
                     
                     batch.templatePos.push_back(tp.x);
                     batch.templatePos.push_back(tp.y);
@@ -1197,7 +1199,7 @@ bool Rock::set_terrain(PlacementMgr &pmgr)
 	
 	double thresh=mgr.noise_amp;
 	double td=mgr.drop*mgr.maxsize;
-	double t=1.25*radius;
+	double t=1.5*radius;
 
 	r=radius;
 	S0.clr_flag(ROCKBODY);
@@ -1675,6 +1677,7 @@ NodeIF *TNrocks::getInstance(NodeIF *obj, int m){
 	return newInstance(m);
 }
 bool TNrocks::randomize(){
+	NodeIF::setRands();
 	double f=0.2;
 	TNarg *arg=(TNarg*)left;
 	char buff[1024];
@@ -1693,7 +1696,7 @@ bool TNrocks::randomize(){
 			buff[0]=0;
 			val->valueString(buff);
 			//cout<<"before:"<<buff<<endl;
-			std::string str=TNnoise::randomize(buff,f,1);
+			std::string str=TNnoise::randomize(buff,f,0.4);
 			TNnoise *newval=TheScene->parse_node((char*)str.c_str());
 			arg->left=newval;
 			//cout<<"after:"<<str<<endl;
@@ -1707,7 +1710,7 @@ bool TNrocks::randomize(){
 
 // this=prototype, this->parent=layer
 TNrocks *TNrocks::newInstance(int m){
-	NodeIF::setRands();
+	//NodeIF::setRands();
 	
 	Planetoid *orb=(Planetoid *)getOrbital(this);
 	Planetoid::makeLists();

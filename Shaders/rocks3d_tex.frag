@@ -28,8 +28,6 @@ uniform float night_lighting;
 uniform bool lighting;
 
 #define DEPTH   gl_FragCoord.z
-//#define TEST_ACTIVE
-//#define TEST_MULTI
 vec3 setLighting(vec3 BaseColor) {
     vec3 normal = normalize(Normal);
     vec3 eye = normalize(-EyeDirection);
@@ -100,21 +98,12 @@ void main() {
      float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
-   //vec3 lpos=normalize(gl_LightSource[0].position.xyz);
-   //float dl=-dot(lpos,WorldPos.rgb);
-  // dl=max(dl,0);
-  // float tl=0;
-   //if(dl>0)
-    //   tl  = lerp(dl,0.0,0.3,0.0,1.0); // twilite band
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
    // color.rgb=vec3(Tangent.z,0,0);
    
-    //color.rgb=vec3(dl,0,0);
-   //color.rgb=lpos;
     gl_FragData[0]=vec4(color.xyz,1);
     gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
 
     //gl_FragData[1]=vec4(fcolor2); // pass thru
     
- 
 }

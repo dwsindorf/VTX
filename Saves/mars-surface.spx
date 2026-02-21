@@ -29,7 +29,7 @@ Scene() {
 		view=SURFACE;
 		phi=-2.51457e-07;
 		theta=67.5;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-25443.9 ft;
 		heading=0;
 		pitch=0;
@@ -72,7 +72,7 @@ Scene() {
 		view=SURFACE;
 		phi=18.9844;
 		theta=46.4062;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=15178.4 ft;
 		heading=0;
 		pitch=0;
@@ -112,7 +112,7 @@ Scene() {
 		view=SURFACE;
 		phi=-6.32813;
 		theta=93.5156;
-		height=10 miles;
+		height=52800 ft;
 		gndlvl=-106602 ft;
 		heading=0;
 		pitch=0;
@@ -267,7 +267,7 @@ Scene() {
 					day=24;
 					hscale=0.01;
 					name="Mars";
-					shadow=Color(0,0,0,0.87);
+					shadow=Color(0,0,0,0.49);
 					shine=5.56269;
 					specular=Color(1,1,1,0.14);
 					tilt=25;
@@ -285,10 +285,10 @@ Scene() {
 								[Texture("P17364",LINEAR|NORM|TEX,2.09715e+06,2,1,0.194849,1,2,1,0,0.00380776,0.00145584,0.0493973,0.0541927)+Texture("E1907",BUMP,1.04858e+06,1,0,0,12,2,0.5,0,0,0,0,0.1)
 								]								snow(-0.7,0.14,0.57,0.17,1,0.82)
 								
-								Texture("dessert",BORDER|NORM|TEX,537.269,2,1,1.22224,1,2,0.5,0,0.05552,0.4,-0.4,0.3)+
 								Texture("mars",TEX,1,2,1.75,0,1,2,0.5,0,0,0,0,0)+
-								Texture("Shist1",BUMP,1407.09,-0.44448,1,0,3,2,0.5,0,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,0.5,0.8,0.61,0.42,0,0.5,0)
-								fractal(SQR|SS,13.7,8,0.05,0.24,3,0.4,0.08,0.42,0.35,0)noise(GRADIENT|NABS|SCALE|SQR,19,6,1,0.5,1.58,0.71,1,0,0)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
+								Texture("dessert",NORM|TEX,537.269,2,1,1.22224,1,2,0.5,0,0.05552,0.4,0.23808,0.61904)+
+								Texture("Shist1",BUMP|LINEAR,65536,3.68256,1,0,3,2,0.5,0,0,0,0,0)+Z(craters(ID4,4,0.000622518,0.2,0,0.1,0.02,1,1,0.1,0.5,0.8,0.61,0.42,0,0.5,0)
+								fractal(SQR|SS,13.7,8,0.05,0.24,3,0.4,0.08,0.42,0.35,0)noise(GRADIENT|NABS|NLOD|SCALE|SQR,20,10.37,1,0.5,2,0.71,1,0,0,1e-06)+craters(ID3,4,0.000622518,0.5,0.37,0.26,0.1,1,0,0.5,1,0.8,0.6,0.2,0))+
 								Texture("mars_hmap",HMAP,1,1,1.61112,0,1,2,0.5,0,1,-0.36112,0,0,0,0);
 					}
 					Sky(0.0022) {

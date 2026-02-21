@@ -26,7 +26,7 @@ extern double Theta,Phi,Radius,Sfact;
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
 #define DEBUG_TEMP 1
-#define DEBUG_AVE_TEMP
+//#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 
@@ -5067,7 +5067,7 @@ void Planetoid::setIceColors(){
 
 
 #ifdef DEBUG_GENERATE
-#define PRNT_FEATURE(s) cout<<"RND_"<<s<<":"<<buff<<endl;
+#define PRNT_FEATURE(s) cout<<"RND_"<<s<<":"<<str<<endl;
 #else
 #define PRNT_FEATURE(s)
 #endif
@@ -5247,17 +5247,20 @@ std::string Planetoid::randFeature(int type) {
 		break;
 		//Point(0,noise(SIMPLEX|NABS|NEG|NLOD|RO2,0,7,1,0.5,2,0.3,0,0,0,1e-06),noise(SIMPLEX|NABS|NEG|SQR,0,4,0.32,0.33,2.08,1,-0.32,0,0,0))
 	case RND_SURFACE_GULLIES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE,"+std::to_string(Nscale)+",8,0.041,0.5,2,"+std::to_string(Ampl)+",0,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|NLOD,"+std::to_string(Nscale)+",8,0.041,0.5,2,"+std::to_string(Ampl)+",0,0,0,1e-06)";
+		PRNT_FEATURE("SURFACE_GULLIES")
 		break;
 	case RND_SURFACE_RIDGES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE,"+std::to_string(Nscale)+",8,0.041,0.5,2,"+std::to_string(Ampl)+",0,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|NLOD,"+std::to_string(Nscale)+",8,0.041,0.5,2,"+std::to_string(Ampl)+",0,0,0,1e-06)";
+		PRNT_FEATURE("SURFACE_RIDGES")
 		break;
 	case RND_SURFACE_PIMPLES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|SQR,"+std::to_string(Nscale)+",8,0.2,0.5,2,"+std::to_string(Ampl)+",-0.4,0,0,1e-06)";
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|NEG|SCALE|SQR|NLOD,"+std::to_string(Nscale)+",8,0.2,0.5,2,"+std::to_string(Ampl)+",-0.1,0,0,1e-06)";
+		PRNT_FEATURE("SURFACE_PIMPLES")
 		break;
 	case RND_SURFACE_DIMPLES:
-		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|SQR,"+std::to_string(Nscale)+",8,0.2,0.5,2,"+std::to_string(Ampl)+",-0.4,0,0,1e-06)";
-		//str=TNnoise::randomize(str.c_str(),0.1,0.0);
+		str="noise("+randFeature(RND_NOISEFUNC)+"|NABS|SCALE|SQR|NLOD,"+std::to_string(Nscale)+",8,0.2,0.5,2,"+std::to_string(Ampl)+",-0.2,0,0,1e-06)";
+		PRNT_FEATURE("SURFACE_DIMPLES")
 		break;
 	case RND_HRIDGES:
 		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4)";
@@ -5345,8 +5348,8 @@ std::string Planetoid::randFeature(int type) {
 		0.01*(1+0.3*s[9]),  // bmp bias
 		-0.05*(1+0.5*s[10]) // slope bias
 		);
-		PRNT_FEATURE("GLOBAL_DUAL_TEX")
 		str=std::string(buff);
+		PRNT_FEATURE("GLOBAL_DUAL_TEX")
 		keep_rands=false;
 		break;
 	case RND_GLOBAL_TEX:
@@ -5430,7 +5433,7 @@ std::string Planetoid::randFeature(int type) {
 		sprintf(buff,"Texture(%s,NORM|TEX%s,%g,2,1,%g,1,2,1,0,%g,%g,%g,%g)",
 		randFeature(RND_TEXNAME).c_str(), // image name
 		linear,
-		pow(2,21),         // start
+		Nscale,         // start
 		0.5*s[6],          // offset
 		0.01*s[7],         // phi bias
 		0.01*s[8],         // ht bias
@@ -5724,45 +5727,53 @@ static std::string rndTilted(){
 std::string Planetoid::newRocks(Planetoid *planet,int m){
 	pushInstance(planet);
 	int gtype=m&GN_TYPES;
+	if(gtype==0){  // [Random]
+		int t=3*r[1]+0.25;
+		if(t==0)
+			gtype=GN_SMALL;
+		else if(t==1)
+			gtype=GN_MED;
+		else
+			gtype=GN_LARGE;
+	}
 	Nrocks=true;
 	planet->setColors();
 	char buff[4096];
-	double size;
-	int tex_scale;
+	double size=1e-6;
+	int tex_1d_scale=16;
+	int tex_2d_scale=20;
 	Ampl=0.4;
 	Prob=0.1;
 	switch(gtype){
 	case GN_LARGE:
-		tex_scale=20;
-		size=1e-5;
+		size=0.5e-5;
 		Prob=0.05;
 		break;
 	case GN_MED:
-		tex_scale=21;
-		size=1e-6;
+		size=0.5e-6;
 		Prob=0.1;
 		break;
 	case GN_SMALL:
-		tex_scale=22;
 		size=1e-7;
-		Prob=0.2;
+		Prob=0.1;
 		break;	
 	}
 	double comp=0.1+0.1*s[7];
-	double drop=0.2-comp;
+	double drop=0.1-0.5*comp;
 	int type=m&TN_TYPES;
 	const char *s=(type==TN_ROCKS?"rocks":"rocks3d");
-	sprintf(buff,"%s(3,%g,0.2,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
+	sprintf(buff,"%s(1,%g,1.5,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
 	std::string str=buff;
 	Nscale=1;
-	if(r[9]>0.75)
+	if(type==TN_ROCKS && r[9]>0.75)
 		str+=rndTilted();
 	else		
 		str+=rndSurfaceNoise(r[10]);
 	str+=")[";
-	Nscale=pow(2,tex_scale);
+	Nscale=pow(2,tex_1d_scale);
 	str+=newSurfaceBands(planet);
 	str+="+";
+	Nscale=pow(2,tex_2d_scale);
 	str+=newSurfaceTex(planet);
 	str+="]";
 	Nrocks=false;

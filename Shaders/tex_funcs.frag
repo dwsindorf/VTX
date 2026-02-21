@@ -234,11 +234,6 @@ vec3 getBump(int tid, vec4 coords,float mm){
   	tid = i; \
 	scale=tex2d[i].scale; \
 	coords = COORDS; \
-	if(tex2d[i].t3d) {\
-		coords*= scale*coords.w; \
-		if(tex2d[i].t1d) \
-		   coords+=tex2d[i].bias; \
-	} \
 	amplitude = clamp(attrib,0.0,1.0); \
 	logf=tex2d[i].logf; \
 	last_color=color; \

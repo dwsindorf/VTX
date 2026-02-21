@@ -1,0 +1,151 @@
+Scene() {
+	View{
+		view=SURFACE;
+		phi=-5.55628;
+		theta=24.4364;
+		height=7.45338 ft;
+		gndlvl=10522.2 ft;
+		time=375724;
+		vstride=1;
+		hstride=1;
+		astride=1;
+		zoom=1;
+		minh=9.4697e-10;
+		heading=208;
+		tilt=5;
+		angle=-14;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		tilt=-2;
+	}
+	View{
+		tilt=-1;
+		angle=-17;
+	}
+	View{
+		tilt=3;
+	}
+	View{
+		heading=209;
+	}
+	View{
+		phi=-5.5563;
+		height=42.6682 ft;
+		angle=-15;
+	}
+	View{
+		phi=-5.55632;
+		height=22.8188 ft;
+		heading=205;
+	}
+	View{
+		height=7.94822 ft;
+		heading=179;
+	}
+	View{
+		height=7.85593 ft;
+		heading=188;
+		tilt=7;
+		angle=-14;
+	}
+	View{
+		height=6.30739 ft;
+		heading=180;
+	}
+	View{
+		height=7.62545 ft;
+		heading=164;
+		tilt=-3;
+		angle=-24;
+	}
+	View{
+		height=30.2978 ft;
+		vstride=0.02;
+		zoom=0.004;
+		minh=5.68182e-10;
+		radius=0.004002;
+	}
+	View{
+		minr=0.00400199;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Uncharted";
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*LVL;
+			color.list=Colors(
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
+				);
+			System(1000) {
+				Star(0.5,0) {
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					shadow=Color(0,0,0);
+					specular=Color(1,1,1);
+					symmetry=0.95;
+					temperature=6000;
+					light=Color(1,1,1);
+					Corona(4) {
+						color1=Color(1,1,1,0.95);
+						color2=Color(0,0,0);
+					}
+				}
+				Planet(0.004,60) {
+					day=24;
+					diffuse=Color(1,1,1,0.58);
+					hscale=0.001;
+					rot_phase=249.674;
+					year=100;
+					bands("alpine2",ACHNL|BLEND|CLAMP|DECAL|NEAREST|NORM|REPLACE,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
+						Color(0.2,0.4,0.075),
+						Color(0.275,0.475,0),
+						Color(0.522,0.322,0.02),
+						Color(0.275,0.251,0.2),
+						Color(0.275,0.224,0.024),
+						Color(1,1,1),
+						Color(1,1,1,0),
+						Color(0.996,0.769,0.345),
+						Color(0.275,0.275,0.275,0.463));
+					image("craters",BLEND|DECAL|NORM|REPLACE,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					Surface{
+						terrain=rocks3d(2,9.999e-07,1.25,0.025,0.2,0.1,0.778,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
+								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|BUMP|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.85823e+06,1.90464,0.8254,0,1.76176,2,0.5,0,0,-0.22224,0,-0.05552)
+								]								rocks3d(1,3e-08,1.25,0.3,0.1,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
+								[Texture("alpine2",BORDER|LINEAR|TEX,3323.53,2,1,0,1,2,0.5,0,0,0,-0.14284,0)+Texture("craters",BUMP|LINEAR|TRIPLANAR,5.58258e+06,1.90464,2,1,9,2,0.84932,0,0,0,0,0.0476)
+								]								rocks3d(1,2e-07,0.8,0.291,0.159,0,0.302,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.973,0.329,2.1,0.384,-0.3,0,0.38,1e-06),0,0,0,0)
+								[Z(noise(GRADIENT|NEG|NLOD,0,5,0.041,0.5,2.22,1,4,0,0,1e-06))+Texture("mud1",BUMP|TEX|TRIPLANAR,5.58258e+06,0.63488,2,0,1,2,0.5873,0,0,0,0.58732,-0.55556)+Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,1.27412e+07,1.65088,2,0,1,2,0.5873,0,0,0,0,0.49208)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)
+								]								
+								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
+					}
+					Sky(0.0041029) {
+						color=Color(0,0.58,0.89);
+						day=24;
+						density=0.51388;
+						haze.color=Color(1,1,0.88);
+						haze.grad=0.0685;
+						haze.height=0.52;
+						haze.max=15.085 miles;
+						haze.value=1;
+						name="BlueSky";
+						night.color=Color(0,0,0,0.9);
+						resolution=4;
+						specular=Color(1,1,1);
+						twilight.max=1;
+						twilight.min=-1;
+						year=100;
+					}
+				}
+			}
+		}
+	}
+}
