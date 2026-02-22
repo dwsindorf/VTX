@@ -19,28 +19,25 @@
 #include <set>
 #include <algorithm>
 
-extern double Hscale,Gscale, Drop, MaxSize,Height,Theta,Phi,Slope,MaxHt;
+extern double Hscale,Drop, MaxSize;
 extern int test7, test8;
 
-extern Point MapPt;
-extern double ptable[];
 extern char tabs[];
 
 static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-static bool first=true;
 static int tid=0;
 static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+#define PRINT_ROCK_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
-//#define PRINT_LOD_STATS
+#define PRINT_LOD_STATS
 //#define DEBUG_REGEN
 
 
@@ -318,12 +315,25 @@ int Rock3DMgr::getLODResolution(double pts) {
 	}
 
  	double cellsize=TheScene->cellsize;
-
+ 
  	if (cellsize <= 3.5) {// Between best and normal: lerp from 2.0 to 1.0	        
  	   resScale = remap(cellsize, 1, 3.5, 2.0, 1.0);
  	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
+	switch(TheScene->generate_quality){
+ 	default:
+ 		break;
+	case DRAFT:
+		resScale*=0.75;
+ 		break;
+	case HIGH:
+		resScale*=1.5;
+ 		break;
+	case BEST:
+		resScale*=2;
+ 		break; 		
+ 	}
  	int newres=(int)(res*resScale);
 
   	//newres=newres<2?2:newres;
@@ -357,21 +367,6 @@ void Rock3DObjMgr::freeLODTemplates() {
     }
 }
 
-static double calculateNightLighting(double tod) {
-    const double dawnStart = 0.20, dawnEnd = 0.3;
-    const double duskStart = 0.7, duskEnd = 0.85;   
-    // Night (before dawn or after dusk)
-    if (tod < dawnStart || tod > duskEnd) 
-        return 0.0;  
-    // Full day (between dawn and dusk)
-    if (tod >= dawnEnd && tod <= duskStart) 
-        return 1.0;    
-    // Dawn transition (smoothstep from 0 to 1)
-    if (tod < dawnEnd) 
-        return smoothstep(dawnStart, dawnEnd, tod);   
-    // Dusk transition (smoothstep from 1 to 0)
-    return 1.0 - smoothstep(duskStart, duskEnd, tod);
-}
 //-------------------------------------------------------------
 // Rock3DObjMgr::setProgram() initialize shader
 //-------------------------------------------------------------

@@ -786,6 +786,7 @@ void VtxSceneTabs::OnUpdateRenderQuality(wxUpdateUIEvent& event){
 void VtxSceneTabs::OnGenerateQualitySelect(wxCommandEvent& event){
 	int mode=event.GetSelection();
 	TheScene->generate_quality=mode;
+	TheScene->rebuild_all();
 }
 void VtxSceneTabs::OnUpdateGenerateQuality(wxUpdateUIEvent& event){
 	int mode=TheScene->generate_quality;
