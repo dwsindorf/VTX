@@ -37,15 +37,15 @@ public:
 	int operator>(Point&p)		{ return (z>p.z);}
 	int operator==(Point&p)		{ return DEQ(x,p.x)&&DEQ(y,p.y)&&DEQ(z,p.z);}
 	int operator!=(Point&p)		{ return !(*this==p);}
-	double operator[](int i)	{ return ((i==0)?x:((i==1)?y:z));}
-	double dot(Point&p)			{ return (x*p.x+y*p.y+z*p.z);}
-	Point cross(Point&p)		{ return Point(y*p.z-z*p.y,z*p.x-x*p.z,x*p.y-y*p.x);}
-	double length()				{ return sqrt(x*x+y*y+z*z);}
-	double magnitude()			{ return x*x+y*y+z*z;}
-	double distance(Point p)	{ Point tmp=p-*this;
+	double operator[](int i) const	{ return ((i==0)?x:((i==1)?y:z));}
+	double dot(const Point&p)	{ return (x*p.x+y*p.y+z*p.z);}
+	Point cross(const Point&p)	{ return Point(y*p.z-z*p.y,z*p.x-x*p.z,x*p.y-y*p.x);}
+	double length() const		{ return sqrt(x*x+y*y+z*z);}
+	double magnitude() const	{ return x*x+y*y+z*z;}
+	double distance(const Point p) const	{ Point tmp=p-*this;
 								  return tmp.length();
 								}
-	Point normalize()           { return (*this)/length();}
+	Point normalize() const     { return (*this)/length();}
 	Point floor()               { return Point(::floor(x),::floor(y),::floor(z));}
 	Point fract()               { Point p=floor(); return *this-p;}
 
@@ -74,8 +74,8 @@ public:
 	double mz(double *m)		{  return x*m[2]+y*m[6]+z*m[10]+m[14];}
 	double mf(double *m)		{  return x*m[3]+y*m[7]+z*m[11]+m[15];}
 	double *values()            {  return &x;}
-	double maxval()             {  double f=x>y?x:y;return f>z?f:z;}
-	double minval()             {  double f=x<y?x:y;return f<z?f:z;}
+	double maxval()  const      {  double f=x>y?x:y;return f>z?f:z;}
+	double minval()  const      {  double f=x<y?x:y;return f<z?f:z;}
 	int intersect_sphere(Point, Point, double r, double &, double &);
 	friend std::ostream& operator<<(std::ostream& os, const Point& b);
 };

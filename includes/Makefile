@@ -80,6 +80,7 @@ HDR_FILES = AdaptOptions.h \
 			UniverseModel.h \
 			Util.h \
 			ViewClass.h \
+			ViewFustrum.h \
 			defs.h \
 			matrix.h
 
@@ -135,6 +136,7 @@ SRC_FILES=  AdaptOptions.cpp \
 			TrackBall.cpp \
 			UniverseModel.cpp \
 			ViewClass.cpp \
+			ViewFustrum.cpp \
 			matrix.cpp \
 			cloud_data.cpp \
 			PerlinNoise.cpp
