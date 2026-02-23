@@ -41,6 +41,7 @@ public:
 
 class Rock3DObjMgr : public PlaceObjMgr
 {
+
 	struct BatchKey {
 		    int resolution;
 		    int instanceId;
@@ -95,7 +96,7 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    }
 	};
 
-
+	static std::map<int, VBOBatch> adaptiveBatches;  // Keyed by instance ID
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
 	MCObject* getTemplateForLOD(Rock3DData *s);
@@ -141,6 +142,10 @@ public:
 
     ~Rock3DObjMgr();
     
+    void renderBatch(VBOBatch& batch, GLhandleARB program);
+    void uploadBatchVBOs(VBOBatch& batch);
+    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s);
+    
 	void free();
 	int placements(){ return data.size;}
 	void collect();
@@ -150,8 +155,7 @@ public:
 	void render_zvals();
 	void render_shadows();
     void render_objects();
-    void clear();
-	
+    void clear();	
     bool supports_shadows() { return true;}
  
 };

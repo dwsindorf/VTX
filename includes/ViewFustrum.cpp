@@ -6,7 +6,7 @@
  */
 
 #include "ViewFustrum.h"
-//#include <GL/gl.h>
+
 
 void ViewFustrum::extractFromGL() {
     double modelview[16];

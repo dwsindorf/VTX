@@ -1,19 +1,7 @@
 #ifndef MCOBJECTS_H
 #define MCOBJECTS_H
 
-#ifdef _WIN32
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <windows.h>
-#endif
-
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#else
-#include <GL/gl.h>
-#endif
-
-#include "PointClass.h"
+#include "ViewFustrum.h"
 #include "PerlinNoise.h"
 #include "ColorClass.h"
 
@@ -47,7 +35,43 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 //=============================================================================
 
 class MCGenerator {
-private:
+public:
+	struct OctreeCell {
+		Point center;
+		double size;
+		int depth;
+
+		Point getMin() const {
+			double h = size / 2;
+			return Point(center.x - h, center.y - h, center.z - h);
+		}
+
+		Point getMax() const {
+			double h = size / 2;
+			return Point(center.x + h, center.y + h, center.z + h);
+		}
+	};
+	void subdivideOctree(
+	        SurfaceFunction field,
+	        const OctreeCell& cell,
+	        std::vector<OctreeCell>& leafCells,
+	        const Point& rockCenter,
+	        double rockRadius,
+	        const Point& cameraPos,
+	        double wscale,
+	        int maxDepth,
+	        double isolevel,
+	        double minPixels);
+	
+    
+    bool checkSurfaceIntersection(SurfaceFunction field, 
+                                  const OctreeCell& cell, 
+                                  double isolevel);
+    bool shouldRefine(const OctreeCell& cell, 
+                     const Point& viewPoint, 
+					 double refinementThreshold
+					 );
+ 
     Point interpolateVertex(const Point& p1, const Point& p2, 
                            double val1, double val2, double isolevel);
     void addTriangle(const Point& v1, const Point& v2, const Point& v3, 
@@ -55,6 +79,7 @@ private:
     void generateTrianglesForCube(int cubeIndex, const Point vertList[12], 
                                   std::vector<MCTriangle>& triangles);
 
+    
 public:
     // Generate mesh for a bounding volume
     // resolution = number of voxels per axis
@@ -62,6 +87,23 @@ public:
         SurfaceFunction field,
         const Point& boundsMin, const Point& boundsMax,
         int resolution, double isolevel = 0.0);
+    
+    std::vector<MCTriangle> generateAdaptiveMesh(
+            SurfaceFunction field,
+            const Point& rockCenter,
+            double rockRadius,
+            const Point& cameraPos,
+            double wscale,
+            int maxDepth = 8,
+            double isolevel = 0.0,
+            double minPixels = 2.0);
+    
+    int calculateCellResolution(const OctreeCell& cell,
+                                   double rockDistance,
+                                   double rockRadius,    // ADD: world-space radius
+                                   double wscale);
+    
+    
 };
 
 //=============================================================================
@@ -122,6 +164,13 @@ public:
     // Optional: smooth normals across shared vertices
     void generateSmoothNormals();
     void generateSphereNormals();
+    const std::vector<MCTriangle>& generateMeshAdaptive(
+            SurfaceFunction field,
+            const Point& rockCenter,
+            double rockRadius,
+            const Point& cameraPos,
+            double wscale,
+            double isolevel = 0.0);
 };
 
 //=============================================================================
