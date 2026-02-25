@@ -61,8 +61,7 @@ public:
 	        double rockRadius,
 	        const Point& cameraPos,
 	        double wscale,
-	        int maxDepth,
-	        double isolevel,
+	        double maxDepth,
 	        double minPixels);
 	
     
@@ -91,9 +90,10 @@ public:
             double rockRadius,
             const Point& cameraPos,
             double wscale,
-            int maxDepth = 8,
-            double isolevel = 0.0,
-            double minPixels = 2.0);
+            double minPixels = 50,            
+			double maxDepth = 8,
+			double margin=1
+	);
  };
 
 //=============================================================================

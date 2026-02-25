@@ -146,6 +146,8 @@ public:
     void uploadBatchVBOs(VBOBatch& batch);
     void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s);
     
+    SurfaceFunction makeRockField(Rock3DMgr* pmgr);
+    
 	void free();
 	int placements(){ return data.size;}
 	void collect();

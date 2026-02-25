@@ -189,16 +189,16 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     double rockRadius,
     const Point& cameraPos,
     double wscale,
-    int maxDepth,
-    double isolevel,
-    double minPixels)
+    double minPixels,
+	double maxDepth,  
+	double margin)
 {
     std::vector<OctreeCell> leafCells;
     
     // Start with root cell in world space
     OctreeCell root;
     root.center = rockCenter;
-    root.size = rockRadius * 2.0;  // Cube spans diameter
+    root.size = rockRadius * 2.0*margin;  // Cube spans diameter
     root.depth = 0;
     
     std::cout << "generateAdaptiveMesh: rockCenter=" << rockCenter 
@@ -209,25 +209,31 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
    maxdist=0;
    mindist=1e6;
     // Recursively subdivide
-    subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
-                   cameraPos, wscale, maxDepth, isolevel, minPixels);
+   subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
+                   cameraPos, wscale, maxDepth, minPixels);
     
     std::cout << "  leafs=" << leafCells.size() << " non-leafs="<<cells<<std::endl;
     std::cout << "  minpts:" << minpts << " maxpts:"<<maxpts<<" ratio:"<<maxpts/minpts<<" mindist:"<<mindist<<" maxdist:"<<maxdist<<" ratio:"<<maxdist/mindist<<std::endl;
     
     // Generate mesh for each leaf cell with constant resolution
     std::vector<MCTriangle> mesh;
-    const int LEAF_RESOLUTION = 1;  // Fixed resolution for all leaf cells
-    
+    const int LEAF_RESOLUTION = 8;  // Fixed resolution for all leaf cells
+    //100 16: leafs=477 non-leafs=128
     for (const auto& cell : leafCells) {
-        // Convert world-space cell bounds to local space for field evaluation
-        // Field is defined in rock-local coordinates where rock spans ~[-0.5, 0.5]
-        Point localMin = (cell.getMin() - rockCenter) / rockRadius;
-        Point localMax = (cell.getMax() - rockCenter) / rockRadius;
-         // Generate marching cubes mesh in local space
-        auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION, isolevel);
-         mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
-    }  
+        // Expand cell slightly to overlap with neighbors
+        double overlapFactor = 1.3;  // 10% overlap
+        double expandedSize = cell.size * overlapFactor;
+        double h = expandedSize / 2.0;
+        
+        Point expandedMin(cell.center.x - h, cell.center.y - h, cell.center.z - h);
+        Point expandedMax(cell.center.x + h, cell.center.y + h, cell.center.z + h);
+        
+        Point localMin = (expandedMin - rockCenter) / rockRadius;
+        Point localMax = (expandedMax - rockCenter) / rockRadius;
+        
+        auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION);
+        mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
+    }
     std::cout << "  Total triangles: " << mesh.size() << std::endl;  
     
     return mesh;
@@ -241,9 +247,9 @@ void MCGenerator::subdivideOctree(
     double rockRadius,
     const Point& cameraPos,
     double wscale,
-    int maxDepth,
-    double isolevel,
-    double minPixels)
+    double maxDepth,
+	double minPixels
+    )
 {
     // Convert cell to local space for surface intersection test
     Point localCenter = (cell.center - rockCenter) / rockRadius;
@@ -256,7 +262,7 @@ void MCGenerator::subdivideOctree(
     localCell.depth = cell.depth;
     
     // Check if surface passes through this cell
-    if (!checkSurfaceIntersection(field, localCell, isolevel)) {
+    if (!checkSurfaceIntersection(field, localCell, 0.0)) {
         return;  // Skip empty cells
     }
     double rockCenterDist = rockCenter.distance(cameraPos);
@@ -299,7 +305,7 @@ void MCGenerator::subdivideOctree(
         child.center.z = cell.center.z + ((i & 4) ? offset : -offset);
         
         subdivideOctree(field, child, leafCells, rockCenter, rockRadius,
-                       cameraPos, wscale, maxDepth, isolevel, minPixels);
+                       cameraPos, wscale, maxDepth, minPixels);
     }
 }
 
@@ -609,7 +615,7 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
     double wscale,
 	double min_pts,
 	double max_depth,
-	double isolevel)
+	double margin)
 {
     MCGenerator generator;
     
@@ -619,9 +625,9 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
         rockRadius,
         cameraPos,
         wscale,
+        min_pts,            // Stop when cells < 2 pixels
         max_depth,              // Max depth
-        isolevel,
-        min_pts             // Stop when cells < 2 pixels
+        margin
     );
     
     meshValid = true;

@@ -42,6 +42,7 @@ static bool cvalid;
 
 
 bool use_adaptive_grid=true;
+bool use_templates=true;
 static bool shadow_start=false;
 
 // 3d rocks using marching cubes
@@ -532,6 +533,34 @@ void Rock3DObjMgr::applyVertexAttributes(MCObject* rock, double amplitude, TNode
     }
 }
 
+SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
+    double comp = pmgr->comp;
+    double comp_factor = std::max((1.0 - 2*comp), 0.2);
+    double isoNoiseAmpl = pmgr->noise_amp;
+    bool useNoisyIsoSurface = isoNoiseAmpl > 0;
+    TNode* tr = pmgr->rnoise;
+    double margin = 1 + 3*isoNoiseAmpl;
+    
+    return [=](double x, double y, double z) -> double {
+        double ex = 2*x;
+        double ey = 2*y;
+        double ez = 2*(z/comp_factor);
+        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
+        double baseEllipsoid = ellipsoidDist - 1.0;
+        
+        if (useNoisyIsoSurface && tr && tr->isEnabled()) {
+            Point np(x, y, z);
+            TheNoise.set(np);
+            SINIT;
+            tr->eval();
+            if (S0.s) {
+                baseEllipsoid += S0.s * isoNoiseAmpl;
+            }
+        }
+        return baseEllipsoid;
+    };
+}
+
 MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
     TNode *tr = pmgr->rnoise;
@@ -566,12 +595,14 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     int k2 = (int)(rval)% templates_per_lod;
     int k3 = instance * 1000;
     //int k4 = smooth ? 10000 : 0;  // Include smoothing in key
-    int key = k1 + k2 +k3;   
-	auto it = lodTemplates.find(key);
-	if (it != lodTemplates.end()) {
-		lodCacheHits++;
-		return it->second;
-	}
+    int key = k1 + k2 +k3;
+    if(use_templates){
+		auto it = lodTemplates.find(key);
+		if (it != lodTemplates.end()) {
+			lodCacheHits++;
+			return it->second;
+		}
+    }
     // Template not in cache - generate it fully processed
     MCObject* templateSphere = new MCObject(Point(0, 0, 0), 1.0);
     
@@ -580,35 +611,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     double comp_factor = std::max((1.0 - 2*comp), 0.2);
     Point center(0, 0, 0);  // Template centered at origin
     
-    SurfaceFunction field = [&](double x, double y, double z) -> double {
-		if (!useNoisyIsoSurface) {
-			// Simple ellipsoid
-			double ex = 2*x;
-			double ey = 2*y;
-			double ez = 2*(z/comp_factor);
-			double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
-			return ellipsoidDist - 1.0;  // Inside-positive
-		}
-		
-		// Noisy ellipsoid
-		double ex = 2*x;
-		double ey = 2*y;
-		double ez = 2*(z/comp_factor);
-		double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
-		double baseEllipsoid = ellipsoidDist - 1.0;
-		
-		if (tr && tr->isEnabled()) {
-			Point np(x, y, z);
-			TheNoise.set(np);
-			SINIT;
-			tr->eval();
-			if (S0.s) {
-				baseEllipsoid += S0.s * isoNoiseAmpl;  // SUBTRACT noise
-			}
-		}
-		
-		return baseEllipsoid;
-    };
+    SurfaceFunction field = makeRockField(pmgr);
     
     MCGenerator generator;
     double margin = 1 + 3*isoNoiseAmpl;  // Increase margin with noise amplitude
@@ -620,7 +623,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
         resolution, 0.0  // CORRECT - single resolution
     );
     
-    if (templateSphere->mesh.empty()) {
+    if (use_templates && templateSphere->mesh.empty()) {
         delete templateSphere;
         return nullptr;
     }
@@ -664,13 +667,15 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     }
     
     // Store in cache
-    lodTemplates[key] = templateSphere;
-    lodCacheMisses++;
+    if(use_templates){
+		lodTemplates[key] = templateSphere;
+		lodCacheMisses++;
 #ifdef PRINT_LOD_STATS     
-    std::cout << "Created LOD template: resolution:" << resolution 
-              << " instance:" << instance 
-              << " Triangles:" << templateSphere->mesh.size() << std::endl;
+		std::cout << "Created LOD template: resolution:" << resolution 
+				  << " instance:" << instance 
+				  << " Triangles:" << templateSphere->mesh.size() << std::endl;
 #endif 
+	}
     int index = getLodIndex(resolution, Rock3DMgr::resScale);
    
     if (index >= 0)
@@ -794,12 +799,8 @@ void Rock3DObjMgr::render() {
             Rock3DMgr *pmgr = (Rock3DMgr*) s->mgr;
 
             Point eyePos = s->vertex - xpoint;
-            double size = 2 * TheMap->radius * s->radius;
             double pts = floor(s->pts);
-            double dist = s->dist;
             int rval = s->rval;
-            double comp = pmgr->comp;
-            double drop = pmgr->drop;
             int instance = s->instance;
 
             int resolution = Rock3DMgr::getLODResolution(pts);
@@ -823,36 +824,9 @@ void Rock3DObjMgr::render() {
                                 
 				rock->setPosition(Point(0,0,0));  // CHANGE: Local space
 				
-				// Create field function (same logic as getTemplateForLOD)
-				double comp = pmgr->comp;
 				double isoNoiseAmpl = pmgr->noise_amp;
-				bool useNoisyIsoSurface = isoNoiseAmpl > 0;
-				double comp_factor = std::max((1.0 - 2*comp), 0.2);
-				TNode *tr = pmgr->rnoise;
 				
-//				SurfaceFunction field = [](double x, double y, double z) -> double {
-//				    // Rounded cube - smoother transitions
-//				    double k = 0.1;  // Smoothing factor
-//				    double dx = fabs(x) - 0.5;
-//				    double dy = fabs(y) - 0.5;
-//				    double dz = fabs(z) - 0.5;
-//				    
-//				    // Smooth maximum (creates rounded edges)
-//				    double maxXY = std::max(dx, dy);
-//				    double result = std::max(maxXY, dz);
-//				    
-//				    // Add slight smoothing
-//				    return (result - k);
-//				};
-				SurfaceFunction field = [&, comp_factor](double x, double y, double z) -> double {
-				    // Simple ellipsoid (no noise for octree - noise applied later via applyVertexAttributes)
-				    double ex = 2*x;
-				    double ey = 2*y;
-				    double ez = 2*(z/comp_factor);
-				    double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
-				    return ellipsoidDist - 1.0;
-				};
-									
+				SurfaceFunction field = makeRockField(pmgr);
 				// Set random seed for this rock
 				int rseed = TheNoise.rseed;
 				TheNoise.rseed = s->rval;
@@ -862,23 +836,15 @@ void Rock3DObjMgr::render() {
 
 				std::cout << "Calling generateMeshAdaptive: s->dist=" << s->dist 
 				          << " TheScene->wscale=" << TheScene->wscale <<std::endl;
-				
-				cout<<"radius:"<<s->radius<<" map size:"<<TheMap->radius<<endl;
-				
-				cout<<"xoffset="<<TheScene->xoffset<<endl;
+				d1 = clock();				
 				double radius = s->radius * TheMap->radius;
 				Point rockCenter = s->vertex;
 				
-				Point dpt=rockCenter-TheScene->xpoint;
-				cout << "xpoint=" << TheScene->xpoint << endl;
-				cout << "dist=" << s->vertex.distance(TheScene->xpoint) << endl;
-				cout << "s->dist=" << s->dist << endl;
-				cout << "s->vertex-xpoint=" << dpt << endl;
-				
-				Point camOffset = TheScene->xpoint - s->vertex;
-				
-			    Point right, forward;
-			    Point up = s->normal;
+				// rotate the camera to align cells to terrain
+								
+				Point camOffset = TheScene->xpoint - s->vertex;				
+			    Point right, forward, up;
+			    up = s->normal;
 			    if (fabs(up.z) < 0.9)
 			        right = Point(up.y, -up.x, 0).normalize();
 			    else
@@ -893,13 +859,37 @@ void Rock3DObjMgr::render() {
 				    camOffset.dot(forward),  
 				    camOffset.dot(s->normal)
 				);
-
 				
+				double margin = 1 + 3*isoNoiseAmpl;				
 				rock->generateMeshAdaptive(field, rockCenter, radius, rotatedCamera, 
-				                          TheScene->wscale, 5,32);
+				                          TheScene->wscale, 8,16,margin);
+				
+				// Recalculate normals to match template path winding
+				for (auto& tri : rock->mesh) {
+				    Point edge1 = tri.vertices[1] - tri.vertices[0];
+				    Point edge2 = tri.vertices[2] - tri.vertices[0];
+				    Point normal = edge2.cross(edge1);
+				    if (normal.length() > 1e-30)
+				        tri.normal = normal.normalize();
+				    else
+				        tri.normal = Point(0, 1, 0);
+				    
+				    // Face normal for texture mapping
+				    Point edge3 = tri.templatePos[1] - tri.templatePos[0];
+				    Point edge4 = tri.templatePos[2] - tri.templatePos[0];
+				    Point faceNormal = edge4.cross(edge3);
+				    if (faceNormal.length() > 1e-30)
+				        tri.faceNormal = faceNormal.normalize();
+				    else
+				        tri.faceNormal = Point(0, 1, 0);
+				}
 				    
 				TheNoise.rseed = rseed;
-				
+
+				std::cout << "Adaptive: pts=" << s->pts
+				          << " tris=" << rock->mesh.size()
+						  << " time="<<(clock()-d1)/CLOCKS_PER_SEC
+				          << std::endl;
 				std::cout << "Adaptive rock " << i << ": triangles=" << rock->mesh.size() << std::endl;
 				
 				if (rock->mesh.empty()) {
@@ -909,10 +899,7 @@ void Rock3DObjMgr::render() {
                 // Add to adaptive batch (grouped by instance ID)
 				VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
-                
-                Point xpoint = TheScene->xpoint;
-                //Point up = s->normal;
-                
+                                
                 // Transform and add to batch using helper function
                 for (const auto& tri : rock->mesh) {
                    addTriangleToBatch(batch, tri, s);
@@ -925,6 +912,12 @@ void Rock3DObjMgr::render() {
                 TheNoise.rseed = rval;
 
                 MCObject *templateSphere = getTemplateForLOD(s);
+                
+                std::cout << "Template: pts=" << s->pts
+                          << " res=" << resolution
+                          << " tris=" << templateSphere->mesh.size()
+						  << " time="<<(clock()-d1)/CLOCKS_PER_SEC
+                          << std::endl;
 
                 TheNoise.rseed = rseed;
 
@@ -1144,11 +1137,10 @@ void Rock3DObjMgr::render_objects() {
             return;
         }
     }
-    
+     
     if (wireframe){
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-         glDisable(GL_CULL_FACE);
-         //glEnable(GL_CULL_FACE);
+          //glEnable(GL_CULL_FACE);
          //glCullFace(GL_FRONT);
          
     }
@@ -1202,6 +1194,8 @@ void Rock3DObjMgr::render_objects() {
     
     // ===== Render Adaptive Batches =====
     if(use_adaptive_grid)
+     //   glDisable(GL_CULL_FACE);
+
     for (auto& pair : adaptiveBatches) {
         int rockType = pair.first;  // instance ID
         VBOBatch& batch = pair.second;

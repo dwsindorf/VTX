@@ -68,9 +68,11 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		TheScene->set_changed_render();
 		break;
 	case KEY_TEST1:
-		PlantMgr::threed=PlantMgr::threed?false:true;
-		cout<<"PlantMgr::threed="<<PlantMgr::threed<<endl;
+		extern bool use_adaptive_grid;
+		use_adaptive_grid=!use_adaptive_grid;
+		cout<<"use_adaptive_grid="<<use_adaptive_grid<<endl;
         TheScene->set_changed_detail();
+        TheScene->rebuild_all();
 		break;
 	case KEY_TEST2:		
 		Render.set_color_test(!Render.color_test());
