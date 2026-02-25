@@ -881,7 +881,20 @@ void Rock3DObjMgr::render() {
                         else
                             tri.faceNormal = Point(0, 1, 0);
                     }
+                    TNode *tv = pmgr->vnoise;
+					TNode *tc = pmgr->color;
+					bool useVertexDisplacement = (tv != nullptr && tv->isEnabled() && isoNoiseAmpl > 0);
+					bool setVertexColor = (tc != nullptr && tc->isEnabled());
+					double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
 
+					if (useVertexDisplacement || setVertexColor) {
+						applyVertexAttributes(&rock, vertexNoiseAmpl, tv, tc);
+					}
+                    // Apply smooth normals if enabled (same option as template path)
+                    bool smooth = Render.avenorms() && !test8;
+                    if (smooth) 
+                         rock.generateSmoothNormals();
+                    
                     TheNoise.rseed = rseed;
 
                     mesh = rock.mesh;
@@ -918,12 +931,6 @@ void Rock3DObjMgr::render() {
 
                 MCObject *templateSphere = getTemplateForLOD(s);
                 
-                std::cout << "Template: pts=" << s->pts
-                          << " res=" << resolution
-                          << " tris=" << templateSphere->mesh.size()
-						  << " time="<<(clock()-d1)/CLOCKS_PER_SEC
-                          << std::endl;
-
                 TheNoise.rseed = rseed;
 
                 if (!templateSphere || templateSphere->mesh.empty()) {
