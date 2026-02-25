@@ -809,103 +809,108 @@ void Rock3DObjMgr::render() {
             }
             if (resolution > ADAPTIVE_SIZE_THRESHOLD && use_adaptive_grid) {
                 // ===== ADAPTIVE PATH =====
-                // Build adaptive mesh
-                std::string rockKey = std::to_string(s->rval);
-                MCObject* rock = rocks.getObject(rockKey);
-                
-                if (!rock) {
-                	rock = rocks.addObject(rockKey, Point(0,0,0), 0.7);  // Local space, unit size   
-                	rock->instanceId = s->instance;
-                    rock->dataIndex = s->rval;
+
+                // Compute rotation basis from terrain normal
+                Point up = s->normal;
+                Point right, forward;
+                if (fabs(up.z) < 0.9)
+                    right = Point(up.y, -up.x, 0).normalize();
+                else
+                    right = Point(0, up.z, -up.y).normalize();
+
+                forward = Point(up.y * right.z - up.z * right.y,
+                                up.z * right.x - up.x * right.z,
+                                up.x * right.y - up.y * right.x);
+
+                // Rotate camera into rock-local frame to match octree orientation
+                Point camOffset = TheScene->xpoint - s->vertex;
+                Point rotatedCamera = s->vertex + Point(
+                    camOffset.dot(right),
+                    camOffset.dot(forward),
+                    camOffset.dot(up)
+                );
+
+                double radius = s->radius * TheMap->radius;
+                Point rockCenter = s->vertex;
+                double isoNoiseAmpl = pmgr->noise_amp;
+                double margin = 1 + 3 * isoNoiseAmpl;
+
+                // Build cache key with quantized view direction
+                Point viewDir = (rotatedCamera - rockCenter).normalize();
+                RockCacheKey cacheKey(s->vertex, s->instance, viewDir, 30.0);
+
+                std::vector<MCTriangle> mesh;
+
+                auto it = rockCache.find(cacheKey);
+                if (it != rockCache.end()) {
+                    // Cache hit - reuse mesh
+                    mesh = it->second.mesh;
+            #ifdef PRINT_ROCK_CACHE_STATS
+                    std::cout << "Adaptive cache hit: pts=" << s->pts
+                              << " tris=" << mesh.size() << std::endl;
+            #endif
+                } else {
+                    // Cache miss - generate mesh
+                    SurfaceFunction field = makeRockField(pmgr);
+                    int rseed = TheNoise.rseed;
+                    TheNoise.rseed = s->rval;
+
+                    d1 = clock();
+
+                    MCObject rock;
+                    rock.instanceId = s->instance;
+                    rock.dataIndex = s->rval;
+                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,
+                                               TheScene->wscale, 8, 16, margin);
+
+                    // Recalculate normals to match template path winding
+                    for (auto& tri : rock.mesh) {
+                        Point edge1 = tri.vertices[1] - tri.vertices[0];
+                        Point edge2 = tri.vertices[2] - tri.vertices[0];
+                        Point normal = edge2.cross(edge1);
+                        if (normal.length() > 1e-30)
+                            tri.normal = normal.normalize();
+                        else
+                            tri.normal = Point(0, 1, 0);
+
+                        Point edge3 = tri.templatePos[1] - tri.templatePos[0];
+                        Point edge4 = tri.templatePos[2] - tri.templatePos[0];
+                        Point faceNormal = edge4.cross(edge3);
+                        if (faceNormal.length() > 1e-30)
+                            tri.faceNormal = faceNormal.normalize();
+                        else
+                            tri.faceNormal = Point(0, 1, 0);
+                    }
+
+                    TheNoise.rseed = rseed;
+
+                    mesh = rock.mesh;
+
+                    // Store in cache
+                    RockCacheEntry entry;
+                    entry.mesh = mesh;
+                    entry.instance = s->instance;
+                    entry.seed = s->rval;
+                    rockCache[cacheKey] = entry;
+
+            #ifdef PRINT_ROCK_CACHE_STATS
+                    std::cout << "Adaptive cache miss: pts=" << s->pts
+                              << " tris=" << mesh.size()
+                              << " time=" << (clock() - d1) * TS << "ms" << std::endl;
+            #endif
                 }
-                
-                //rock->setPosition(s->vertex);
-                rock->setDistanceInfo(s->dist, s->pts);
-                                
-				rock->setPosition(Point(0,0,0));  // CHANGE: Local space
-				
-				double isoNoiseAmpl = pmgr->noise_amp;
-				
-				SurfaceFunction field = makeRockField(pmgr);
-				// Set random seed for this rock
-				int rseed = TheNoise.rseed;
-				TheNoise.rseed = s->rval;
-				
-				double rockDist = s->dist;  // Distance from camera to rock in world space
-				Point localViewPoint(0, 0, rockDist);  // Put "camera" at same relative distance in local space
 
-				std::cout << "Calling generateMeshAdaptive: s->dist=" << s->dist 
-				          << " TheScene->wscale=" << TheScene->wscale <<std::endl;
-				d1 = clock();				
-				double radius = s->radius * TheMap->radius;
-				Point rockCenter = s->vertex;
-				
-				// rotate the camera to align cells to terrain
-								
-				Point camOffset = TheScene->xpoint - s->vertex;				
-			    Point right, forward, up;
-			    up = s->normal;
-			    if (fabs(up.z) < 0.9)
-			        right = Point(up.y, -up.x, 0).normalize();
-			    else
-			        right = Point(0, up.z, -up.y).normalize();
-			    
-			    forward = Point(up.y * right.z - up.z * right.y,
-			                    up.z * right.x - up.x * right.z,
-			                    up.x * right.y - up.y * right.x);
+                if (mesh.empty()) continue;
 
-				Point rotatedCamera = s->vertex + Point(
-				    camOffset.dot(right),
-				    camOffset.dot(forward),  
-				    camOffset.dot(s->normal)
-				);
-				
-				double margin = 1 + 3*isoNoiseAmpl;				
-				rock->generateMeshAdaptive(field, rockCenter, radius, rotatedCamera, 
-				                          TheScene->wscale, 8,16,margin);
-				
-				// Recalculate normals to match template path winding
-				for (auto& tri : rock->mesh) {
-				    Point edge1 = tri.vertices[1] - tri.vertices[0];
-				    Point edge2 = tri.vertices[2] - tri.vertices[0];
-				    Point normal = edge2.cross(edge1);
-				    if (normal.length() > 1e-30)
-				        tri.normal = normal.normalize();
-				    else
-				        tri.normal = Point(0, 1, 0);
-				    
-				    // Face normal for texture mapping
-				    Point edge3 = tri.templatePos[1] - tri.templatePos[0];
-				    Point edge4 = tri.templatePos[2] - tri.templatePos[0];
-				    Point faceNormal = edge4.cross(edge3);
-				    if (faceNormal.length() > 1e-30)
-				        tri.faceNormal = faceNormal.normalize();
-				    else
-				        tri.faceNormal = Point(0, 1, 0);
-				}
-				    
-				TheNoise.rseed = rseed;
-
-				std::cout << "Adaptive: pts=" << s->pts
-				          << " tris=" << rock->mesh.size()
-						  << " time="<<(clock()-d1)/CLOCKS_PER_SEC
-				          << std::endl;
-				std::cout << "Adaptive rock " << i << ": triangles=" << rock->mesh.size() << std::endl;
-				
-				if (rock->mesh.empty()) {
-					continue;
-				}                
-                
                 // Add to adaptive batch (grouped by instance ID)
-				VBOBatch& batch = adaptiveBatches[instance];
+                VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
-                                
-                // Transform and add to batch using helper function
-                for (const auto& tri : rock->mesh) {
-                   addTriangleToBatch(batch, tri, s);
+
+                for (const auto& tri : mesh) {
+                    addTriangleToBatch(batch, tri, s);
                 }
-                
-            } else {
+            }
+            else {
                 // ===== TEMPLATE PATH (using helper function) =====               
                 d1 = clock();
                 int rseed = TheNoise.rseed;

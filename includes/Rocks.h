@@ -5,6 +5,7 @@
 
 #include "Placements.h"
 #include "MCObjects.h"
+#include <math.h>
 #include <map>
 
 class RockMgr;
@@ -105,19 +106,39 @@ public:
 	struct RockCacheKey {
 		long long x, y, z;  // Quantized world position
 		int instance;
-		
-		RockCacheKey(const Point& worldPos, int inst, double snap = 1e-10) {
+	    int viewBucketX, viewBucketY, viewBucketZ;  // quantized view direction
+	    // Original - for template path (no view direction)
+	    RockCacheKey(const Point& worldPos, int inst, double snap = 1e-10) {
+	        x = (int64_t)round(worldPos.x / snap);
+	        y = (int64_t)round(worldPos.y / snap);
+	        z = (int64_t)round(worldPos.z / snap);
+	        instance = inst;
+	        viewBucketX = viewBucketY = viewBucketZ = 0;
+	    }
+	    RockCacheKey(const Point& worldPos, int inst, 
+	                 const Point& viewDir,
+	                 double angleBucketDeg = 30.0,
+	                 double snap = 1e-10)  
+	     {
 		        x = (int64_t)round(worldPos.x / snap);
 		        y = (int64_t)round(worldPos.y / snap);
 		        z = (int64_t)round(worldPos.z / snap);
 		        instance = inst;  // STORE INSTANCE
-		    }
-		bool operator<(const RockCacheKey& other) const {
-		        if (instance != other.instance) return instance < other.instance;  // CHECK INSTANCE FIRST
-		        if (x != other.x) return x < other.x;
-		        if (y != other.y) return y < other.y;
-		        return z < other.z;
-		    }
+		        // Quantize view direction to buckets of angleBucketDeg
+				double bucketSize = angleBucketDeg / 180.0;  
+				viewBucketX = (int)round(viewDir.x / bucketSize);
+				viewBucketY = (int)round(viewDir.y / bucketSize);
+				viewBucketZ = (int)round(viewDir.z / bucketSize);
+		}
+	    bool operator<(const RockCacheKey& other) const {
+	        if (instance != other.instance) return instance < other.instance;
+	        if (x != other.x) return x < other.x;
+	        if (y != other.y) return y < other.y;
+	        if (z != other.z) return z < other.z;
+	        if (viewBucketX != other.viewBucketX) return viewBucketX < other.viewBucketX;
+	        if (viewBucketY != other.viewBucketY) return viewBucketY < other.viewBucketY;
+	        return viewBucketZ < other.viewBucketZ;
+	    }
 	};
 	
 	struct RockCacheEntry {
