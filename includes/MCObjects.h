@@ -36,6 +36,8 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 
 class MCGenerator {
 public:
+	static int cells;
+	
 	struct OctreeCell {
 		Point center;
 		double size;
@@ -67,11 +69,6 @@ public:
     bool checkSurfaceIntersection(SurfaceFunction field, 
                                   const OctreeCell& cell, 
                                   double isolevel);
-    bool shouldRefine(const OctreeCell& cell, 
-                     const Point& viewPoint, 
-					 double refinementThreshold
-					 );
- 
     Point interpolateVertex(const Point& p1, const Point& p2, 
                            double val1, double val2, double isolevel);
     void addTriangle(const Point& v1, const Point& v2, const Point& v3, 
@@ -97,14 +94,7 @@ public:
             int maxDepth = 8,
             double isolevel = 0.0,
             double minPixels = 2.0);
-    
-    int calculateCellResolution(const OctreeCell& cell,
-                                   double rockDistance,
-                                   double rockRadius,    // ADD: world-space radius
-                                   double wscale);
-    
-    
-};
+ };
 
 //=============================================================================
 // MCObject - A single marching cubes object placed on terrain
@@ -170,6 +160,8 @@ public:
             double rockRadius,
             const Point& cameraPos,
             double wscale,
+			double min_pts=2,
+			double max_depth=10,
             double isolevel = 0.0);
 };
 

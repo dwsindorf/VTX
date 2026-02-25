@@ -41,7 +41,7 @@ static bool cvalid;
 //#define DEBUG_REGEN
 
 
-bool use_adaptive_grid=false;
+bool use_adaptive_grid=true;
 static bool shadow_start=false;
 
 // 3d rocks using marching cubes
@@ -720,7 +720,7 @@ static void transformRockToSurface(
     // Calculate rock center
     double dscale = Hscale * drop * (1 - 0.5 * comp) * 0.5;
     Point rockCenter = worldPos - up * (radius * dscale);
-    
+        
     // Create rotation basis vectors
     Point right, forward;
     if (fabs(up.z) < 0.9)
@@ -830,6 +830,20 @@ void Rock3DObjMgr::render() {
 				double comp_factor = std::max((1.0 - 2*comp), 0.2);
 				TNode *tr = pmgr->rnoise;
 				
+//				SurfaceFunction field = [](double x, double y, double z) -> double {
+//				    // Rounded cube - smoother transitions
+//				    double k = 0.1;  // Smoothing factor
+//				    double dx = fabs(x) - 0.5;
+//				    double dy = fabs(y) - 0.5;
+//				    double dz = fabs(z) - 0.5;
+//				    
+//				    // Smooth maximum (creates rounded edges)
+//				    double maxXY = std::max(dx, dy);
+//				    double result = std::max(maxXY, dz);
+//				    
+//				    // Add slight smoothing
+//				    return (result - k);
+//				};
 				SurfaceFunction field = [&, comp_factor](double x, double y, double z) -> double {
 				    // Simple ellipsoid (no noise for octree - noise applied later via applyVertexAttributes)
 				    double ex = 2*x;
@@ -838,16 +852,7 @@ void Rock3DObjMgr::render() {
 				    double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
 				    return ellipsoidDist - 1.0;
 				};
-				
-				// TEST the field immediately
-				std::cout << "  Direct field test:" << std::endl;
-				std::cout << "    field(0,0,0) = " << field(0,0,0) << std::endl;
-				std::cout << "    field(0.5,0.5,0.5) = " << field(0.5,0.5,0.5) << std::endl;
-				std::cout << "    field(-0.5,-0.5,-0.5) = " << field(-0.5,-0.5,-0.5) << std::endl;
-				if (tr) {
-				    std::cout << "  tr enabled=" << tr->isEnabled() << std::endl;
-				}
-				
+									
 				// Set random seed for this rock
 				int rseed = TheNoise.rseed;
 				TheNoise.rseed = s->rval;
@@ -856,10 +861,42 @@ void Rock3DObjMgr::render() {
 				Point localViewPoint(0, 0, rockDist);  // Put "camera" at same relative distance in local space
 
 				std::cout << "Calling generateMeshAdaptive: s->dist=" << s->dist 
-				          << " TheScene->wscale=" << TheScene->wscale << std::endl;
+				          << " TheScene->wscale=" << TheScene->wscale <<std::endl;
 				
-				rock->generateMeshAdaptive(field, s->vertex, s->radius, TheScene->xpoint, 
-				                          TheScene->wscale, 0.0);
+				cout<<"radius:"<<s->radius<<" map size:"<<TheMap->radius<<endl;
+				
+				cout<<"xoffset="<<TheScene->xoffset<<endl;
+				double radius = s->radius * TheMap->radius;
+				Point rockCenter = s->vertex;
+				
+				Point dpt=rockCenter-TheScene->xpoint;
+				cout << "xpoint=" << TheScene->xpoint << endl;
+				cout << "dist=" << s->vertex.distance(TheScene->xpoint) << endl;
+				cout << "s->dist=" << s->dist << endl;
+				cout << "s->vertex-xpoint=" << dpt << endl;
+				
+				Point camOffset = TheScene->xpoint - s->vertex;
+				
+			    Point right, forward;
+			    Point up = s->normal;
+			    if (fabs(up.z) < 0.9)
+			        right = Point(up.y, -up.x, 0).normalize();
+			    else
+			        right = Point(0, up.z, -up.y).normalize();
+			    
+			    forward = Point(up.y * right.z - up.z * right.y,
+			                    up.z * right.x - up.x * right.z,
+			                    up.x * right.y - up.y * right.x);
+
+				Point rotatedCamera = s->vertex + Point(
+				    camOffset.dot(right),
+				    camOffset.dot(forward),  
+				    camOffset.dot(s->normal)
+				);
+
+				
+				rock->generateMeshAdaptive(field, rockCenter, radius, rotatedCamera, 
+				                          TheScene->wscale, 5,32);
 				    
 				TheNoise.rseed = rseed;
 				
@@ -874,13 +911,11 @@ void Rock3DObjMgr::render() {
                 batch.instanceId = instance;
                 
                 Point xpoint = TheScene->xpoint;
-                Point up = s->normal;
+                //Point up = s->normal;
                 
                 // Transform and add to batch using helper function
                 for (const auto& tri : rock->mesh) {
-                    for (int v = 0; v < 3; v++) {
-                    	 addTriangleToBatch(batch, tri, s);
-                    }
+                   addTriangleToBatch(batch, tri, s);
                 }
                 
             } else {
@@ -922,9 +957,7 @@ void Rock3DObjMgr::render() {
 
                 // Transform and add to batch using helper function (same as adaptive!)
                 for (const auto &tri : templateSphere->mesh) {
-                    for (int v = 0; v < 3; v++) {
-                    	addTriangleToBatch(batch, tri, s);
-                    }
+                    addTriangleToBatch(batch, tri, s);
                 }
 
                 t3 += clock() - d1;
@@ -1114,6 +1147,10 @@ void Rock3DObjMgr::render_objects() {
     
     if (wireframe){
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+         glDisable(GL_CULL_FACE);
+         //glEnable(GL_CULL_FACE);
+         //glCullFace(GL_FRONT);
+         
     }
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

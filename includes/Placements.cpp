@@ -450,9 +450,9 @@ bool PlacementMgr::setTests() {
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
 	S0.clr_flag(PLACEMENT);
-	if(x<0.25)
-		return false;
-	x=lerp(x,0.25,1,0,1);
+	//if(x<0.25)
+	//	return false;
+	//x=lerp(x,0.25,1,0,1);
 	double y=pow(x,2);
 	
 	if(testColor()) {

@@ -5,6 +5,11 @@
 #include "ViewFustrum.h"  // Add at top with other includes
 
 
+static double maxpts=0;
+static double minpts=1e6;
+static double maxdist=0;
+static double mindist=100;
+
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -15,6 +20,9 @@ extern const int MC_triTable[256][16];
 //=============================================================================
 // MCGenerator implementation
 //=============================================================================
+
+int MCGenerator::cells=0;
+
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
     if (std::abs(isolevel - val1) < 0.00001) return p1;
@@ -173,7 +181,6 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
     return triangles;
 }
 
-
 // Add these method implementations:
 
 std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
@@ -196,32 +203,32 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     
     std::cout << "generateAdaptiveMesh: rockCenter=" << rockCenter 
               << " rockRadius=" << rockRadius << std::endl;
-    
+   cells=0;
+   maxpts=0;
+   minpts=1e10;
+   maxdist=0;
+   mindist=1e6;
     // Recursively subdivide
     subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
                    cameraPos, wscale, maxDepth, isolevel, minPixels);
     
-    std::cout << "  leafCells=" << leafCells.size() << std::endl;
+    std::cout << "  leafs=" << leafCells.size() << " non-leafs="<<cells<<std::endl;
+    std::cout << "  minpts:" << minpts << " maxpts:"<<maxpts<<" ratio:"<<maxpts/minpts<<" mindist:"<<mindist<<" maxdist:"<<maxdist<<" ratio:"<<maxdist/mindist<<std::endl;
     
     // Generate mesh for each leaf cell with constant resolution
     std::vector<MCTriangle> mesh;
-    const int LEAF_RESOLUTION = 4;  // Fixed resolution for all 2-pixel cells
+    const int LEAF_RESOLUTION = 1;  // Fixed resolution for all leaf cells
     
     for (const auto& cell : leafCells) {
         // Convert world-space cell bounds to local space for field evaluation
         // Field is defined in rock-local coordinates where rock spans ~[-0.5, 0.5]
         Point localMin = (cell.getMin() - rockCenter) / rockRadius;
         Point localMax = (cell.getMax() - rockCenter) / rockRadius;
-        
-        // Generate marching cubes mesh in local space
+         // Generate marching cubes mesh in local space
         auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION, isolevel);
-        
-        // Transform vertices back to world space
-        
-        mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
-    }
-    
-    std::cout << "  Total triangles: " << mesh.size() << std::endl;
+         mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
+    }  
+    std::cout << "  Total triangles: " << mesh.size() << std::endl;  
     
     return mesh;
 }
@@ -240,7 +247,7 @@ void MCGenerator::subdivideOctree(
 {
     // Convert cell to local space for surface intersection test
     Point localCenter = (cell.center - rockCenter) / rockRadius;
-    double localSize = cell.size / rockRadius;
+    double localSize = cell.size/ rockRadius;
     
     // Create local-space cell for surface check
     OctreeCell localCell;
@@ -252,29 +259,31 @@ void MCGenerator::subdivideOctree(
     if (!checkSurfaceIntersection(field, localCell, isolevel)) {
         return;  // Skip empty cells
     }
+    double rockCenterDist = rockCenter.distance(cameraPos);
     
-    // Calculate projected size in pixels
     double distance = cell.center.distance(cameraPos);
-    if (distance < 0.001) distance = 0.001;
+    //double projectedPixels = wscale * wscale * (cell.size * cell.size) / (distance * distance);
     
-    double projectedPixels = wscale * (cell.size / distance);
+    //if(cell.depth>6 && distance>rockCenterDist + 0.3*rockRadius)
+    //	return;
     
+    double projectedPixels = wscale * cell.size / (distance);
+    static int cnt=0;
+    maxpts=std::max(maxpts,projectedPixels);
+    minpts=std::min(minpts,projectedPixels);
+    maxdist=std::max(maxdist,distance);
+    mindist=std::min(mindist,distance);
+   
     // Should we subdivide?
-    bool should_subdivide = (projectedPixels > minPixels) && (cell.depth < maxDepth);
-    
-    if (cell.depth == 0) {
-        std::cout << "  ROOT: distance=" << distance
-                  << " projectedPixels=" << projectedPixels 
-                  << " minPixels=" << minPixels
-                  << " subdivide=" << should_subdivide << std::endl;
-    }
+    bool should_subdivide = (projectedPixels > minPixels*2) && (cell.depth < maxDepth);
+ 
     
     if (!should_subdivide) {
-        // This is a leaf cell
+         // This is a leaf cell
         leafCells.push_back(cell);
         return;
     }
-    
+    cells++;
     // Subdivide into 8 children
     double childSize = cell.size / 2.0;
     double offset = childSize / 2.0;
@@ -314,10 +323,6 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     double values[8];
     for (int i = 0; i < 8; i++) {
         values[i] = field(corners[i].x, corners[i].y, corners[i].z);
-        if (cell.depth == 0) {
-            std::cout << "      Cell center=" << cell.center << " size=" << cell.size << std::endl;
-            std::cout << "      Cell halfSize=" << (cell.size/2) << std::endl;
-        }
     }
     
     // Check if surface (isolevel) crosses through cell
@@ -333,80 +338,10 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
         if (values[i] < minVal) minVal = values[i];
         if (values[i] > maxVal) maxVal = values[i];
     }
-    if (cell.depth == 0) {  // Only print for root
-        std::cout << "      Corner values: min=" << minVal << " max=" << maxVal 
-                  << " isolevel=" << isolevel << " intersects=" 
-                  << (minVal <= isolevel && maxVal >= isolevel) << std::endl;
-    }
-   
-    // Surface intersects if isolevel is between min and max
+     // Surface intersects if isolevel is between min and max
     return (minVal <= isolevel && maxVal >= isolevel);
 }
 
-bool MCGenerator::shouldRefine(const OctreeCell& cell, 
-                              const Point& viewPoint, 
-                              double threshold)
-{
-    double distance = cell.center.distance(viewPoint);
-    
-    // Avoid division by zero
-    //if (distance < 0.01) distance = 0.01;
-    
-    // Project cell size onto screen (rough approximation)
-    double projectedSize = cell.size / distance;
-    
-    bool refine = projectedSize > threshold;
-    
-    if (cell.depth == 0) {
-        std::cout << "    shouldRefine: distance=" << distance 
-                  << " size=" << cell.size
-                  << " projectedSize=" << projectedSize 
-                  << " threshold=" << threshold
-                  << " result=" << refine << std::endl;
-    }
-    
-    return refine;
-}
-
-int MCGenerator::calculateCellResolution(const OctreeCell& cell,
-                                        double rockDistance,
-                                        double rockRadius,    // ADD
-                                        double wscale)
-    {
-	   // Convert cell size from local space to world space
-	
-	double cellOffsetZ = cell.center.z * rockRadius;  // Z offset in world space
-	
-	double cellDistance = rockDistance - cellOffsetZ;  // Minus because camera looks in -Z
-
-//	double minDist = rockRadius * 0.1;  // At least 10% of rock radius
-//	if (cellDistance < minDist) {
-//		cellDistance = minDist;
-//	}
-	    
-	double cellWorldSize = cell.size * rockRadius;
-	    
-	    // Calculate projected size in pixels
-    double pts = wscale * (cellWorldSize / cellDistance);   // return 1;
-	
-	double res=1;
-    
-    // Map pixel size to marching cubes resolution
-    // Higher pixel size = more screen space = needs higher resolution mesh
-    //if (pts > 40) res=2;  // Very large on screen
-    //else if (pts >20)res=1;
-    //else if (pts > 20) res=8;
-   // else if (pts > 10) res=6;
-    //else if (pts > 5) res=4;
-    
-    static int cnt=0;
-    if(cnt%5000==0)
-    cout<<"pts:"<<pts<<" dist:"<<cellDistance<<" cellWorldSize:"<<cellWorldSize<<" res:"<<res<<endl;
-    
-    cnt++;
-
-    return res;  // Minimum resolution
-}
 
 //=============================================================================
 // MCObject implementation
@@ -672,7 +607,9 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
     double rockRadius,
     const Point& cameraPos,
     double wscale,
-    double isolevel)
+	double min_pts,
+	double max_depth,
+	double isolevel)
 {
     MCGenerator generator;
     
@@ -682,9 +619,9 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
         rockRadius,
         cameraPos,
         wscale,
-        8,              // Max depth
+        max_depth,              // Max depth
         isolevel,
-        2.0             // Stop when cells < 2 pixels
+        min_pts             // Stop when cells < 2 pixels
     );
     
     meshValid = true;

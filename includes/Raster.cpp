@@ -1229,10 +1229,6 @@ void RasterMgr::getZbuf(int i)
 	}
 	else if(zbuf2)
 		glReadPixels(0, 0, vport[2],vport[3],GL_DEPTH_COMPONENT, GL_FLOAT,zbuf2);
-    
-			double d1=clock();
-				std::cout  << " RasterMgr::getZbuf("<<i<<")" << (d1-d0)*ts <<" ms"<<endl;
-	
 }
 
 //-------------------------------------------------------------
