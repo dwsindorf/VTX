@@ -37,7 +37,13 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 class MCGenerator {
 public:
 	static int cells;
-	
+    // Stats for checkSurfaceIntersection
+    static int csi_calls;        // total calls
+    static int csi_early_exit;   // exited after corner check
+    static int csi_edge_exits;   // exited during edge bisection
+    static int csi_false;        // returned false (cell pruned)
+    static long long csi_field_calls;  // total field function calls
+    static int csi_by_depth[32];
 	struct OctreeCell {
 		Point center;
 		double size;

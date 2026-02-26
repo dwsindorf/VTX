@@ -857,7 +857,7 @@ void Rock3DObjMgr::render() {
                     MCObject rock;
                     rock.instanceId = s->instance;
                     rock.dataIndex = s->rval;
-                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, 4, 16, margin);
+                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, 2, 8, margin);
 
                     // Recalculate normals to match template path winding
                     for (auto& tri : rock.mesh) {

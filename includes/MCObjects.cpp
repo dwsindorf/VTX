@@ -22,6 +22,12 @@ extern const int MC_triTable[256][16];
 //=============================================================================
 
 int MCGenerator::cells=0;
+int MCGenerator::csi_calls = 0;
+int MCGenerator::csi_early_exit = 0;
+int MCGenerator::csi_edge_exits = 0;
+int MCGenerator::csi_false = 0;
+long long MCGenerator::csi_field_calls = 0;
+int MCGenerator::csi_by_depth[32] = {};  // ← add here
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
@@ -206,9 +212,28 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     maxdist=0;
     mindist=1e6;
 
+    // Reset stats before subdivideOctree
+    csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
+    csi_field_calls = 0;
+
+
     subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
                    cameraPos, wscale, maxDepth, minPixels);
 
+    std::cout << "  CSI: calls=" << csi_calls
+              << " early_exit=" << csi_early_exit
+              << " edge_exits=" << csi_edge_exits  
+              << " pruned=" << csi_false
+              << " field_calls=" << csi_field_calls
+              << " avg_per_call=" << (double)csi_field_calls/csi_calls
+              << std::endl;
+    // Add depth distribution printout:
+    std::cout << "  CSI by depth: ";
+    for (int d = 0; d <= 10; d++)
+        if (csi_by_depth[d] > 0)
+            std::cout << "d" << d << "=" << csi_by_depth[d] << " ";
+    std::cout << std::endl;
+    memset(csi_by_depth, 0, sizeof(csi_by_depth));
     double minCellSize = root.size;
     for (const auto& cell : leafCells)
         minCellSize = std::min(minCellSize, cell.size);
@@ -313,7 +338,11 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
                                           const OctreeCell& cell, 
                                           double isolevel)
 {
-    // Sample 8 corners
+    csi_calls++;
+    
+    csi_calls++;
+    csi_by_depth[std::min(cell.depth, 31)]++;  // ← add here
+        
     double h = cell.size / 2;
     double cx = cell.center.x, cy = cell.center.y, cz = cell.center.z;
     
@@ -328,43 +357,65 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     double minVal = 1e10, maxVal = -1e10;
     for (int i = 0; i < 8; i++) {
         values[i] = field(corners[i].x, corners[i].y, corners[i].z);
+        csi_field_calls++;
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
     }
-    if (minVal <= isolevel && maxVal >= isolevel) return true;
+
+    // Surface straddles isolevel - definite intersection
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        csi_early_exit++;
+        return true;
+    }
     
-    // All corners on same side - check edges with bisection
-    // to catch thin surface features between corners
+    // All corners on same side - only do expensive edge bisection
+    // if field values are close enough to isolevel to be worth checking
+//    const double SKIP_THRESHOLD = 0.0;
+//    double distToIso = (minVal > isolevel) ? (minVal - isolevel) : (isolevel - maxVal);
+//    if (distToIso > SKIP_THRESHOLD && cell.depth >= 3) {
+//        csi_false++;
+//        return false;
+//    }
+    // Close to isolevel but all corners on same side —
+    // do edge bisection to catch thin surface features
     int edgePairs[12][2] = {
-        {0,1},{1,2},{2,3},{3,0},  // bottom face
-        {4,5},{5,6},{6,7},{7,4},  // top face
-        {0,4},{1,5},{2,6},{3,7}   // vertical edges
+        {0,1},{1,2},{2,3},{3,0},
+        {4,5},{5,6},{6,7},{7,4},
+        {0,4},{1,5},{2,6},{3,7}
     };
     
-    const int BISECT_STEPS = 8;  // 2^4 = 16 samples per edge
+    const int BISECT_STEPS = 8;
     for (int e = 0; e < 12; e++) {
         Point p1 = corners[edgePairs[e][0]];
         Point p2 = corners[edgePairs[e][1]];
-        double v1 = values[edgePairs[e][0]];
-        double v2 = values[edgePairs[e][1]];
         
-        // Sample along edge at multiple points
         for (int s = 1; s < BISECT_STEPS; s++) {
             double t = s / (double)BISECT_STEPS;
             Point p = p1 + (p2 - p1) * t;
             double v = field(p.x, p.y, p.z);
+            csi_field_calls++;
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
-            if (minVal <= isolevel && maxVal >= isolevel) return true;
+            if (minVal <= isolevel && maxVal >= isolevel) {
+                csi_edge_exits++;
+                return true;
+            }
         }
     }
     
-    // Also sample center
+    // Check center
     double centerVal = field(cx, cy, cz);
-    minVal = std::min(minVal, centerVal);
-    maxVal = std::max(maxVal, centerVal);
+    csi_field_calls++;
+    if (centerVal < minVal) minVal = centerVal;
+    if (centerVal > maxVal) maxVal = centerVal;
+
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        csi_edge_exits++;
+        return true;
+    }
     
-    return (minVal <= isolevel && maxVal >= isolevel);
+    csi_false++;
+    return false;
 }
 //=============================================================================
 // MCObject implementation
