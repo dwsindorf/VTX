@@ -101,6 +101,7 @@ class Rock3DObjMgr : public PlaceObjMgr
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
 	MCObject* getTemplateForLOD(Rock3DData *s);
+	bool smooth();
 public:
 	// Cache key based on world position
 	struct RockCacheKey {

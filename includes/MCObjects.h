@@ -162,7 +162,7 @@ public:
             double wscale,
 			double min_pts=2,
 			double max_depth=10,
-            double isolevel = 0.0);
+            double margin = 1.0);
 };
 
 //=============================================================================

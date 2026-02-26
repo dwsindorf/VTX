@@ -33,11 +33,11 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
-//#define PRINT_ROCK_STATS
+#define PRINT_STATS
+//#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
-//#define PRINT_LOD_STATS
+//#define PRINT_LOD_GEN
 //#define DEBUG_REGEN
 
 
@@ -168,6 +168,8 @@ struct RockLodEntry {
     double maxPts;  // upper bound for pts (pts < maxPts)
 };
 
+const double ADAPTIVE_SIZE_THRESHOLD = 200.0;
+
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  2,  5.0},
     {  4,  10.0},
@@ -268,11 +270,13 @@ void Rock3DMgr::printStats(){
     int tcnt = 0;
     int kcnt = 0;
     std::cout << "------- 3D Rocks stats --------" << std::endl;
+#ifdef PRINT_LOD_STATS
     int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
     std::cout << "LOD Cache calls:"<<lod_calls<<" hits:"<<100.0*Rock3DObjMgr::lodCacheHits/lod_calls<<" %"<<endl;	
+#endif
     char buff[256];
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
-#ifdef PRINT_ROCK_STATS
+#ifdef PRINT_LOD_STATS
     	sprintf(buff,"resolution:%3d templates:%d instances:%3d triangles:%3d K",
         (int)(kRockLodTable[i].res*resScale+0.1),stats[i][2],stats[i][0],stats[i][1]/1000);
         cout<<buff<< std::endl;
@@ -288,15 +292,8 @@ void Rock3DMgr::printStats(){
 void Rock3DMgr::setStats(int res, int tris,bool add){
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
         if ((int)(kRockLodTable[i].res*resScale) == res) {
-        	if(add){
-				stats[i][0]++;           // count of rocks at this res
-				stats[i][1] += tris;     // total triangles
-
-        	}
-        	else{
-				stats[i][0]--;           // count of rocks at this res
-				stats[i][1] -= tris;     // total triangles
-        	}
+			stats[i][0]++;           // count of rocks at this res
+			stats[i][1] += tris;     // total triangles
             return;
         }
     }
@@ -450,6 +447,9 @@ void Rock3DObjMgr::free() {
 	data.free();
 }
 
+bool Rock3DObjMgr::smooth(){
+	return Render.avenorms() && test8;
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::collect() generate array of placements (data)
 //-------------------------------------------------------------
@@ -491,7 +491,7 @@ void Rock3DObjMgr::render_shadows(){
 }
 // Post-mesh vertex displacement and color: uses standard noise function
 void Rock3DObjMgr::applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc) {
-    
+    cout<<"Rock3DObjMgr::applyVertexAttributes"<<endl;
     Point center = rock->worldPosition;
     double rockSize = rock->baseSize;
         
@@ -539,7 +539,7 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
     double isoNoiseAmpl = pmgr->noise_amp;
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
-    double margin = 1 + 3*isoNoiseAmpl;
+    double margin = 1 + 4*isoNoiseAmpl;
     
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
@@ -588,13 +588,12 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 	   return 0;
     
     // Create cache key including smoothing state
-    bool smooth = Render.avenorms() && !test8;
+    //bool smooth = Render.avenorms() && test8;
     
     // Build key: resolution + seed + expression + instance + smooth
     int k1 = resolution * 100;
     int k2 = (int)(rval)% templates_per_lod;
     int k3 = instance * 1000;
-    //int k4 = smooth ? 10000 : 0;  // Include smoothing in key
     int key = k1 + k2 +k3;
     if(use_templates){
 		auto it = lodTemplates.find(key);
@@ -614,7 +613,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     SurfaceFunction field = makeRockField(pmgr);
     
     MCGenerator generator;
-    double margin = 1 + 3*isoNoiseAmpl;  // Increase margin with noise amplitude
+    double margin = 1 + 4*isoNoiseAmpl;  // Increase margin with noise amplitude
     Point boundsMin(-0.5 * margin, -0.5 * margin, -0.5 * margin);
     Point boundsMax(0.5 * margin, 0.5 * margin, 0.5 * margin);    
     
@@ -662,25 +661,22 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     }
     
     // Apply smoothing if enabled
-    if (smooth) {
+    if (smooth()) {
         templateSphere->generateSmoothNormals();
-    }
-    
+    }   
     // Store in cache
     if(use_templates){
 		lodTemplates[key] = templateSphere;
 		lodCacheMisses++;
-#ifdef PRINT_LOD_STATS     
+#ifdef PRINT_LOD_GEN     
 		std::cout << "Created LOD template: resolution:" << resolution 
 				  << " instance:" << instance 
 				  << " Triangles:" << templateSphere->mesh.size() << std::endl;
 #endif 
-	}
-    int index = getLodIndex(resolution, Rock3DMgr::resScale);
-   
-    if (index >= 0)
-    	 Rock3DMgr::stats[index][2]++;
- 
+		int index = getLodIndex(resolution, Rock3DMgr::resScale);	   
+		if (index >= 0)
+			 Rock3DMgr::stats[index][2]++;
+	} 
     return templateSphere;
 }
 
@@ -758,7 +754,6 @@ void Rock3DObjMgr::render() {
         return;
 
     bool wireframe = test7;
-    bool smooth = Render.avenorms() && !test8;
 
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
@@ -783,12 +778,9 @@ void Rock3DObjMgr::render() {
     if (placement_needs_update || mesh_needs_rebuild) {
         d0 = clock();
 
-        if (!mesh_needs_rebuild) {
+        if (!mesh_needs_rebuild) { // already cleared above
             clear();
         }
-
-        // Define threshold resolution for adaptive vs template rendering
-        const double ADAPTIVE_SIZE_THRESHOLD = 200.0;
 
         Point xpoint = TheScene->xpoint;
         ViewFustrum frustum;
@@ -802,6 +794,10 @@ void Rock3DObjMgr::render() {
             double pts = floor(s->pts);
             int rval = s->rval;
             int instance = s->instance;
+            
+            int rseed = TheNoise.rseed;
+            TheNoise.rseed = s->rval;
+
 
             int resolution = Rock3DMgr::getLODResolution(pts);
             if (resolution == 0) {
@@ -809,6 +805,7 @@ void Rock3DObjMgr::render() {
             }
             if (resolution > ADAPTIVE_SIZE_THRESHOLD && use_adaptive_grid) {
                 // ===== ADAPTIVE PATH =====
+            
 
                 // Compute rotation basis from terrain normal
                 Point up = s->normal;
@@ -833,7 +830,7 @@ void Rock3DObjMgr::render() {
                 double radius = s->radius * TheMap->radius;
                 Point rockCenter = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
-                double margin = 1 + 3 * isoNoiseAmpl;
+                double margin = 1 + 4 * isoNoiseAmpl;
 
                 // Build cache key with quantized view direction
                 Point viewDir = (rotatedCamera - rockCenter).normalize();
@@ -852,16 +849,13 @@ void Rock3DObjMgr::render() {
                 } else {
                     // Cache miss - generate mesh
                     SurfaceFunction field = makeRockField(pmgr);
-                    int rseed = TheNoise.rseed;
-                    TheNoise.rseed = s->rval;
-
+ 
                     d1 = clock();
 
                     MCObject rock;
                     rock.instanceId = s->instance;
                     rock.dataIndex = s->rval;
-                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,
-                                               TheScene->wscale, 8, 16, margin);
+                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, 8, 16, margin);
 
                     // Recalculate normals to match template path winding
                     for (auto& tri : rock.mesh) {
@@ -891,11 +885,10 @@ void Rock3DObjMgr::render() {
 						applyVertexAttributes(&rock, vertexNoiseAmpl, tv, tc);
 					}
                     // Apply smooth normals if enabled (same option as template path)
-                    bool smooth = Render.avenorms() && !test8;
-                    if (smooth) 
+                    if (smooth()) 
                          rock.generateSmoothNormals();
                     
-                    TheNoise.rseed = rseed;
+                    //TheNoise.rseed = rseed;
 
                     mesh = rock.mesh;
 
@@ -922,17 +915,14 @@ void Rock3DObjMgr::render() {
                 for (const auto& tri : mesh) {
                     addTriangleToBatch(batch, tri, s);
                 }
+                Rock3DMgr::setStats(resolution, mesh.size(), true);
             }
             else {
                 // ===== TEMPLATE PATH (using helper function) =====               
                 d1 = clock();
-                int rseed = TheNoise.rseed;
-                TheNoise.rseed = rval;
-
+                 
                 MCObject *templateSphere = getTemplateForLOD(s);
                 
-                TheNoise.rseed = rseed;
-
                 if (!templateSphere || templateSphere->mesh.empty()) {
                     continue;
                 }
@@ -958,16 +948,14 @@ void Rock3DObjMgr::render() {
                 batch.rockDataIndices.push_back(i);
                 batch.rockInstanceIds.push_back(instance);
 
-                Point up = s->normal;
-
                 // Transform and add to batch using helper function (same as adaptive!)
                 for (const auto &tri : templateSphere->mesh) {
                     addTriangleToBatch(batch, tri, s);
                 }
-
                 t3 += clock() - d1;
                 Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), true);
             }
+            TheNoise.rseed = rseed;
         }
 
         d1 = clock();
@@ -1141,7 +1129,6 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program) {
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
-    bool smooth = Render.avenorms() && !test8;
      
     if (!PlaceObjMgr::shadow_mode) {
         if (!setProgram()) {
@@ -1152,7 +1139,6 @@ void Rock3DObjMgr::render_objects() {
      
     if (wireframe){
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-          //glEnable(GL_CULL_FACE);
          //glCullFace(GL_FRONT);
          
     }

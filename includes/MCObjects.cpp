@@ -217,19 +217,19 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     
     // Generate mesh for each leaf cell with constant resolution
     std::vector<MCTriangle> mesh;
-    const int LEAF_RESOLUTION = 8;  // Fixed resolution for all leaf cells
+    const int LEAF_RESOLUTION = 1;  // Fixed resolution for all leaf cells
     //100 16: leafs=477 non-leafs=128
     for (const auto& cell : leafCells) {
         // Expand cell slightly to overlap with neighbors
-        double overlapFactor = 1.3;  // 10% overlap
+        double overlapFactor = 1.2;  // 10% overlap
         double expandedSize = cell.size * overlapFactor;
         double h = expandedSize / 2.0;
         
         Point expandedMin(cell.center.x - h, cell.center.y - h, cell.center.z - h);
         Point expandedMax(cell.center.x + h, cell.center.y + h, cell.center.z + h);
         
-        Point localMin = (expandedMin - rockCenter) / rockRadius;
-        Point localMax = (expandedMax - rockCenter) / rockRadius;
+        Point localMin = (expandedMin - rockCenter) / (rockRadius*2);
+        Point localMax = (expandedMax - rockCenter) / (rockRadius*2);
         
         auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION);
         mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
@@ -252,8 +252,8 @@ void MCGenerator::subdivideOctree(
     )
 {
     // Convert cell to local space for surface intersection test
-    Point localCenter = (cell.center - rockCenter) / rockRadius;
-    double localSize = cell.size/ rockRadius;
+    Point localCenter = (cell.center - rockCenter) / (rockRadius*2);
+    double localSize = cell.size/(rockRadius*2);
     
     // Create local-space cell for surface check
     OctreeCell localCell;
@@ -268,13 +268,8 @@ void MCGenerator::subdivideOctree(
     double rockCenterDist = rockCenter.distance(cameraPos);
     
     double distance = cell.center.distance(cameraPos);
-    //double projectedPixels = wscale * wscale * (cell.size * cell.size) / (distance * distance);
-    
-    //if(cell.depth>6 && distance>rockCenterDist + 0.3*rockRadius)
-    //	return;
     
     double projectedPixels = wscale * cell.size / (distance);
-    static int cnt=0;
     maxpts=std::max(maxpts,projectedPixels);
     minpts=std::min(minpts,projectedPixels);
     maxdist=std::max(maxdist,distance);
@@ -282,8 +277,7 @@ void MCGenerator::subdivideOctree(
    
     // Should we subdivide?
     bool should_subdivide = (projectedPixels > minPixels*2) && (cell.depth < maxDepth);
- 
-    
+  
     if (!should_subdivide) {
          // This is a leaf cell
         leafCells.push_back(cell);
