@@ -190,46 +190,52 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     const Point& cameraPos,
     double wscale,
     double minPixels,
-	double maxDepth,  
-	double margin)
+    double maxDepth,  
+    double margin)
 {
     std::vector<OctreeCell> leafCells;
     
-    // Start with root cell in world space
     OctreeCell root;
     root.center = rockCenter;
-    root.size = rockRadius * 2.0*margin;  // Cube spans diameter
+    root.size = rockRadius * 2.0 * margin;
     root.depth = 0;
-    
-    std::cout << "generateAdaptiveMesh: rockCenter=" << rockCenter 
-              << " rockRadius=" << rockRadius << std::endl;
-   cells=0;
-   maxpts=0;
-   minpts=1e10;
-   maxdist=0;
-   mindist=1e6;
-    // Recursively subdivide
-   subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
+
+    cells=0;
+    maxpts=0;
+    minpts=1e10;
+    maxdist=0;
+    mindist=1e6;
+
+    subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
                    cameraPos, wscale, maxDepth, minPixels);
+
+    double minCellSize = root.size;
+    for (const auto& cell : leafCells)
+        minCellSize = std::min(minCellSize, cell.size);
+    double snapSize = (minCellSize / (rockRadius * 2.0)) * 0.01;  // 1% of finest cell in local space
+
     
-    std::cout << "  leafs=" << leafCells.size() << " non-leafs="<<cells<<std::endl;
-    std::cout << "  minpts:" << minpts << " maxpts:"<<maxpts<<" ratio:"<<maxpts/minpts<<" mindist:"<<mindist<<" maxdist:"<<maxdist<<" ratio:"<<maxdist/mindist<<std::endl;
-    
-    // Generate mesh for each leaf cell with constant resolution
+    std::cout << "  leafs=" << leafCells.size() << " non-leafs=" << cells << std::endl;
+    std::cout << "  minpts:" << minpts << " maxpts:" << maxpts 
+              << " ratio:" << maxpts/minpts 
+              << " mindist:" << mindist << " maxdist:" << maxdist 
+              << " ratio:" << maxdist/mindist << std::endl;
+
+ 
+    // ===== Generate mesh for each leaf cell =====
     std::vector<MCTriangle> mesh;
-    const int LEAF_RESOLUTION = 1;  // Fixed resolution for all leaf cells
-    //100 16: leafs=477 non-leafs=128
+    const int LEAF_RESOLUTION = 1;
+    const double overlapFactor = 1.0;
+
     for (const auto& cell : leafCells) {
-        // Expand cell slightly to overlap with neighbors
-        double overlapFactor = 1.2;  // 10% overlap
         double expandedSize = cell.size * overlapFactor;
         double h = expandedSize / 2.0;
         
         Point expandedMin(cell.center.x - h, cell.center.y - h, cell.center.z - h);
         Point expandedMax(cell.center.x + h, cell.center.y + h, cell.center.z + h);
         
-        Point localMin = (expandedMin - rockCenter) / (rockRadius*2);
-        Point localMax = (expandedMax - rockCenter) / (rockRadius*2);
+        Point localMin = (expandedMin - rockCenter) / (rockRadius * 2);
+        Point localMax = (expandedMax - rockCenter) / (rockRadius * 2);
         
         auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION);
         mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
@@ -307,42 +313,59 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
                                           const OctreeCell& cell, 
                                           double isolevel)
 {
-    // Sample field at 8 corners of cell
+    // Sample 8 corners
     double h = cell.size / 2;
+    double cx = cell.center.x, cy = cell.center.y, cz = cell.center.z;
+    
     Point corners[8] = {
-        Point(cell.center.x - h, cell.center.y - h, cell.center.z - h),
-        Point(cell.center.x + h, cell.center.y - h, cell.center.z - h),
-        Point(cell.center.x + h, cell.center.y + h, cell.center.z - h),
-        Point(cell.center.x - h, cell.center.y + h, cell.center.z - h),
-        Point(cell.center.x - h, cell.center.y - h, cell.center.z + h),
-        Point(cell.center.x + h, cell.center.y - h, cell.center.z + h),
-        Point(cell.center.x + h, cell.center.y + h, cell.center.z + h),
-        Point(cell.center.x - h, cell.center.y + h, cell.center.z + h)
+        Point(cx-h, cy-h, cz-h), Point(cx+h, cy-h, cz-h),
+        Point(cx+h, cy+h, cz-h), Point(cx-h, cy+h, cz-h),
+        Point(cx-h, cy-h, cz+h), Point(cx+h, cy-h, cz+h),
+        Point(cx+h, cy+h, cz+h), Point(cx-h, cy+h, cz+h)
     };
     
     double values[8];
+    double minVal = 1e10, maxVal = -1e10;
     for (int i = 0; i < 8; i++) {
         values[i] = field(corners[i].x, corners[i].y, corners[i].z);
+        minVal = std::min(minVal, values[i]);
+        maxVal = std::max(maxVal, values[i]);
+    }
+    if (minVal <= isolevel && maxVal >= isolevel) return true;
+    
+    // All corners on same side - check edges with bisection
+    // to catch thin surface features between corners
+    int edgePairs[12][2] = {
+        {0,1},{1,2},{2,3},{3,0},  // bottom face
+        {4,5},{5,6},{6,7},{7,4},  // top face
+        {0,4},{1,5},{2,6},{3,7}   // vertical edges
+    };
+    
+    const int BISECT_STEPS = 8;  // 2^4 = 16 samples per edge
+    for (int e = 0; e < 12; e++) {
+        Point p1 = corners[edgePairs[e][0]];
+        Point p2 = corners[edgePairs[e][1]];
+        double v1 = values[edgePairs[e][0]];
+        double v2 = values[edgePairs[e][1]];
+        
+        // Sample along edge at multiple points
+        for (int s = 1; s < BISECT_STEPS; s++) {
+            double t = s / (double)BISECT_STEPS;
+            Point p = p1 + (p2 - p1) * t;
+            double v = field(p.x, p.y, p.z);
+            minVal = std::min(minVal, v);
+            maxVal = std::max(maxVal, v);
+            if (minVal <= isolevel && maxVal >= isolevel) return true;
+        }
     }
     
-    // Check if surface (isolevel) crosses through cell
-    // by seeing if values span the isolevel
-    double minVal = values[0];
-    double maxVal = values[0];
+    // Also sample center
+    double centerVal = field(cx, cy, cz);
+    minVal = std::min(minVal, centerVal);
+    maxVal = std::max(maxVal, centerVal);
     
-    Point center = cell.center;
-    double centerValue = field(center.x, center.y, center.z);
-    minVal = std::min(minVal, centerValue);
-    maxVal = std::max(maxVal, centerValue);
-    for (int i = 1; i < 8; i++) {
-        if (values[i] < minVal) minVal = values[i];
-        if (values[i] > maxVal) maxVal = values[i];
-    }
-     // Surface intersects if isolevel is between min and max
     return (minVal <= isolevel && maxVal >= isolevel);
 }
-
-
 //=============================================================================
 // MCObject implementation
 //=============================================================================

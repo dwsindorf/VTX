@@ -100,6 +100,7 @@ class Rock3DObjMgr : public PlaceObjMgr
 	static std::map<int, VBOBatch> adaptiveBatches;  // Keyed by instance ID
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
+	static double noiseFactor;
 	MCObject* getTemplateForLOD(Rock3DData *s);
 	bool smooth();
 public:

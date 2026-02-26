@@ -348,6 +348,9 @@ int Rock3DObjMgr::templates_per_lod=3;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::adaptiveBatches;  // Keyed by instance ID
+
+static double Rock3DObjMgr::noiseFactor=4;
+;
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
 	//freeLODTemplates();
@@ -491,7 +494,6 @@ void Rock3DObjMgr::render_shadows(){
 }
 // Post-mesh vertex displacement and color: uses standard noise function
 void Rock3DObjMgr::applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc) {
-    cout<<"Rock3DObjMgr::applyVertexAttributes"<<endl;
     Point center = rock->worldPosition;
     double rockSize = rock->baseSize;
         
@@ -539,7 +541,7 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
     double isoNoiseAmpl = pmgr->noise_amp;
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
-    double margin = 1 + 4*isoNoiseAmpl;
+    double margin = 1 + noiseFactor*isoNoiseAmpl;
     
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
@@ -613,7 +615,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     SurfaceFunction field = makeRockField(pmgr);
     
     MCGenerator generator;
-    double margin = 1 + 4*isoNoiseAmpl;  // Increase margin with noise amplitude
+    double margin = 1 + noiseFactor*isoNoiseAmpl;  // Increase margin with noise amplitude
     Point boundsMin(-0.5 * margin, -0.5 * margin, -0.5 * margin);
     Point boundsMax(0.5 * margin, 0.5 * margin, 0.5 * margin);    
     
@@ -830,7 +832,7 @@ void Rock3DObjMgr::render() {
                 double radius = s->radius * TheMap->radius;
                 Point rockCenter = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
-                double margin = 1 + 4 * isoNoiseAmpl;
+                double margin = 1 + noiseFactor*isoNoiseAmpl;
 
                 // Build cache key with quantized view direction
                 Point viewDir = (rotatedCamera - rockCenter).normalize();
@@ -855,7 +857,7 @@ void Rock3DObjMgr::render() {
                     MCObject rock;
                     rock.instanceId = s->instance;
                     rock.dataIndex = s->rval;
-                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, 8, 16, margin);
+                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, 4, 16, margin);
 
                     // Recalculate normals to match template path winding
                     for (auto& tri : rock.mesh) {
