@@ -5,7 +5,7 @@
 #include "ViewFustrum.h"  // Add at top with other includes
 
 //#define DEBUG_ADAPTIVE
-
+#define OPTIMIZE
 static double maxpts=0;
 static double minpts=1e6;
 static double maxdist=0;
@@ -290,7 +290,12 @@ void MCGenerator::subdivideOctree(
     // Convert cell to local space for surface intersection test
     Point localCenter = (cell.center - rockCenter) / (rockRadius);
     double localSize = cell.size/(rockRadius);
+    Point localCamDir = (cameraPos - rockCenter);  // already in rotated frame
+    double localCamDist = localCamDir.length();
+    Point localCamNorm = localCamDir / localCamDist;
     
+    double viewDot = localCenter.dot(localCamNorm);
+   
     // Create local-space cell for surface check
     OctreeCell localCell;
     localCell.center = localCenter;
@@ -298,9 +303,6 @@ void MCGenerator::subdivideOctree(
     localCell.depth = cell.depth;
     
     // Check if surface passes through this cell
-    if (!checkSurfaceIntersection(field, localCell, 0.0)) {
-        return;  // Skip empty cells
-    }
     double rockCenterDist = rockCenter.distance(cameraPos);
     
     double distance = cell.center.distance(cameraPos);
@@ -317,11 +319,19 @@ void MCGenerator::subdivideOctree(
     // Cells below the surface midpoint get coarser subdivision
     // since they're partially or fully buried in terrain
     double effectiveMinPixels = minPixels;
+
+#ifdef OPTIMIZE
     if (localZ < 0) {
         // Scale minPixels up as we go deeper — deeper = coarser
         double burialFactor = 1.0 + (-localZ) * 10.0;  // tuneable
         effectiveMinPixels = minPixels * burialFactor;
-     }
+     }   
+    // Back-face coarsening - far side of rock from camera
+    if (viewDot < -0.2) {  // tuneable threshold
+        double backFactor = 1.0 + (-viewDot - 0.2) * 10.0;
+        effectiveMinPixels = std::max(effectiveMinPixels, minPixels * backFactor);
+    }
+#endif 
     // Should we subdivide?
     bool should_subdivide = (projectedPixels > effectiveMinPixels *2) && (cell.depth < maxDepth);
   
@@ -330,6 +340,12 @@ void MCGenerator::subdivideOctree(
         leafCells.push_back(cell);
         return;
     }
+  
+    // this can be expensive
+    if (!checkSurfaceIntersection(field, localCell, 0.0)) {
+        return;  // Skip empty cells
+    }
+
     cells++;
     // Subdivide into 8 children
     double childSize = cell.size / 2.0;
@@ -350,12 +366,11 @@ void MCGenerator::subdivideOctree(
     }
 }
 
+
 bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field, 
                                           const OctreeCell& cell, 
                                           double isolevel)
-{
-    csi_calls++;
-    
+{    
     csi_calls++;
     csi_by_depth[std::min(cell.depth, 31)]++;  // ← add here
         
@@ -428,6 +443,7 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     csi_false++;
     return false;
 }
+
 //=============================================================================
 // MCObject implementation
 //=============================================================================

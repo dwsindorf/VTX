@@ -1233,7 +1233,7 @@ void Rock3DObjMgr::render_objects() {
     
     // ===== Render Adaptive Batches =====
     if(use_adaptive_grid)
-     glDisable(GL_CULL_FACE);
+     glDisable(GL_CULL_FACE); // makes holes less visible
 
     for (auto& pair : adaptiveBatches) {
         int rockType = pair.first;  // instance ID
