@@ -44,6 +44,8 @@ public:
     static int csi_false;        // returned false (cell pruned)
     static long long csi_field_calls;  // total field function calls
     static int csi_by_depth[32];
+    static int gm_field_calls;
+    double maxdepth;
 	struct OctreeCell {
 		Point center;
 		double size;

@@ -4,6 +4,7 @@
 #include <map>
 #include "ViewFustrum.h"  // Add at top with other includes
 
+//#define DEBUG_ADAPTIVE
 
 static double maxpts=0;
 static double minpts=1e6;
@@ -28,6 +29,7 @@ int MCGenerator::csi_edge_exits = 0;
 int MCGenerator::csi_false = 0;
 long long MCGenerator::csi_field_calls = 0;
 int MCGenerator::csi_by_depth[32] = {};  // ← add here
+int MCGenerator::gm_field_calls=0;
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
@@ -117,6 +119,8 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 double pz = boundsMin.z + z * stepZ;
                 int idx = x * gridSize * gridSize + y * gridSize + z;
                 cornerGrid[idx] = field(px, py, pz);
+				gm_field_calls++;  // ← add this
+
             }
         }
     }
@@ -201,11 +205,14 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
 {
     std::vector<OctreeCell> leafCells;
     
+    maxdepth=maxDepth;
+    
     OctreeCell root;
     root.center = rockCenter;
-    root.size = rockRadius * 2.0 * margin;
+    root.size = rockRadius * margin;
     root.depth = 0;
 
+#ifdef DEBUG_ADAPTIVE
     cells=0;
     maxpts=0;
     minpts=1e10;
@@ -215,11 +222,12 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     // Reset stats before subdivideOctree
     csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
     csi_field_calls = 0;
-
+#endif
 
     subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
                    cameraPos, wscale, maxDepth, minPixels);
 
+#ifdef DEBUG_ADAPTIVE
     std::cout << "  CSI: calls=" << csi_calls
               << " early_exit=" << csi_early_exit
               << " edge_exits=" << csi_edge_exits  
@@ -236,17 +244,14 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     memset(csi_by_depth, 0, sizeof(csi_by_depth));
     double minCellSize = root.size;
     for (const auto& cell : leafCells)
-        minCellSize = std::min(minCellSize, cell.size);
-    double snapSize = (minCellSize / (rockRadius * 2.0)) * 0.01;  // 1% of finest cell in local space
-
-    
-    std::cout << "  leafs=" << leafCells.size() << " non-leafs=" << cells << std::endl;
-    std::cout << "  minpts:" << minpts << " maxpts:" << maxpts 
+        minCellSize = std::min(minCellSize, cell.size);   
+    std::cout << " leafs=" << leafCells.size() << " non-leafs=" << cells << std::endl;
+    std::cout << " minpts:" << minpts << " maxpts:" << maxpts 
               << " ratio:" << maxpts/minpts 
               << " mindist:" << mindist << " maxdist:" << maxdist 
               << " ratio:" << maxdist/mindist << std::endl;
 
- 
+#endif
     // ===== Generate mesh for each leaf cell =====
     std::vector<MCTriangle> mesh;
     const int LEAF_RESOLUTION = 1;
@@ -259,13 +264,13 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
         Point expandedMin(cell.center.x - h, cell.center.y - h, cell.center.z - h);
         Point expandedMax(cell.center.x + h, cell.center.y + h, cell.center.z + h);
         
-        Point localMin = (expandedMin - rockCenter) / (rockRadius * 2);
-        Point localMax = (expandedMax - rockCenter) / (rockRadius * 2);
+        Point localMin = (expandedMin - rockCenter) / (rockRadius);
+        Point localMax = (expandedMax - rockCenter) / (rockRadius);
         
         auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION);
         mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
     }
-    std::cout << "  Total triangles: " << mesh.size() << std::endl;  
+    //std::cout << "  Total triangles: " << mesh.size() << std::endl;  
     
     return mesh;
 }
@@ -283,8 +288,8 @@ void MCGenerator::subdivideOctree(
     )
 {
     // Convert cell to local space for surface intersection test
-    Point localCenter = (cell.center - rockCenter) / (rockRadius*2);
-    double localSize = cell.size/(rockRadius*2);
+    Point localCenter = (cell.center - rockCenter) / (rockRadius);
+    double localSize = cell.size/(rockRadius);
     
     // Create local-space cell for surface check
     OctreeCell localCell;
@@ -305,9 +310,20 @@ void MCGenerator::subdivideOctree(
     minpts=std::min(minpts,projectedPixels);
     maxdist=std::max(maxdist,distance);
     mindist=std::min(mindist,distance);
-   
+
+    // Convert cell center to local space to check z position
+    double localZ = (cell.center.z - rockCenter.z) / (rockRadius);
+
+    // Cells below the surface midpoint get coarser subdivision
+    // since they're partially or fully buried in terrain
+    double effectiveMinPixels = minPixels;
+    if (localZ < 0) {
+        // Scale minPixels up as we go deeper — deeper = coarser
+        double burialFactor = 1.0 + (-localZ) * 10.0;  // tuneable
+        effectiveMinPixels = minPixels * burialFactor;
+     }
     // Should we subdivide?
-    bool should_subdivide = (projectedPixels > minPixels*2) && (cell.depth < maxDepth);
+    bool should_subdivide = (projectedPixels > effectiveMinPixels *2) && (cell.depth < maxDepth);
   
     if (!should_subdivide) {
          // This is a leaf cell
@@ -361,21 +377,11 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
     }
-
     // Surface straddles isolevel - definite intersection
     if (minVal <= isolevel && maxVal >= isolevel) {
         csi_early_exit++;
         return true;
     }
-    
-    // All corners on same side - only do expensive edge bisection
-    // if field values are close enough to isolevel to be worth checking
-//    const double SKIP_THRESHOLD = 0.0;
-//    double distToIso = (minVal > isolevel) ? (minVal - isolevel) : (isolevel - maxVal);
-//    if (distToIso > SKIP_THRESHOLD && cell.depth >= 3) {
-//        csi_false++;
-//        return false;
-//    }
     // Close to isolevel but all corners on same side —
     // do edge bisection to catch thin surface features
     int edgePairs[12][2] = {
@@ -384,7 +390,12 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
         {0,4},{1,5},{2,6},{3,7}
     };
     
-    const int BISECT_STEPS = 8;
+    double depthFraction = cell.depth / maxdepth;
+    // More bisection steps near root (large cells), fewer near leaves (small cells)
+    int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
+    
+    //int BISECT_STEPS = std::max(8.0-0.75*cell.depth,1.0);
+    //int BISECT_STEPS =8;
     for (int e = 0; e < 12; e++) {
         Point p1 = corners[edgePairs[e][0]];
         Point p2 = corners[edgePairs[e][1]];

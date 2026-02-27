@@ -22,6 +22,8 @@ extern double INV2PI;
 static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
+//#define DEBUG_GETNODES
+
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -1561,10 +1563,11 @@ int Map::get_surface_data(){
     else
 		npole->visit(&collect_surface_data);
 	double d1=clock();
-	
+#ifdef DEBUG_GETNODES	
 	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer <<" placements:"<<Td.pids
 			<< " Collected " << node_data_list.size()  
 		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
+#endif
 	return node_data_list.size();
 }
 
