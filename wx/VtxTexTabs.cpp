@@ -286,7 +286,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 
 	StartSlider=new SliderCtrl(panel,ID_START_SLDR,"Start",LABEL1,VALUE2,SLIDER2);
-	StartSlider->setRange(-1,24,0,25);
+	StartSlider->setRange(-1,29,0,30);
 
 	hline->Add(StartSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 

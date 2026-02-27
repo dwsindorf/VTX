@@ -224,7 +224,6 @@ double Rock3DMgr::maxDepth=10;
 double Rock3DMgr::minPointsize=1;
 double Rock3DMgr::adaptThreshold=200;
 
-
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
 	MSK_SET(type,PLACETYPE,MCROCKS);
@@ -354,9 +353,9 @@ int Rock3DMgr::getLODResolution(double pts) {
  		break;
 	case HIGH:
 		resScale*=1.5;
-		minPointsize=1.5;
+		minPointsize=1.25;
 		maxDepth=10;
-		adaptThreshold=350;
+		adaptThreshold=300;
  		break;
 	case BEST:
 		resScale*=2;
@@ -932,9 +931,7 @@ void Rock3DObjMgr::render() {
                     // Apply smooth normals if enabled (same option as template path)
                     if (smooth()) 
                          rock.generateSmoothNormals();
-                    
-                    //TheNoise.rseed = rseed;
-
+ 
                     mesh = rock.mesh;
 
                     // Store in cache
@@ -1184,8 +1181,7 @@ void Rock3DObjMgr::render_objects() {
      
     if (wireframe){
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-         //glCullFace(GL_FRONT);
-         
+         //glCullFace(GL_FRONT);        
     }
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
