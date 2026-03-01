@@ -9,7 +9,9 @@
 #include <functional>
 #include <cmath>
 #include <unordered_map>
+#include <map>
 #include <string>
+#include <cstdint>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -36,73 +38,68 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 
 class MCGenerator {
 public:
-	static int cells;
+    static int cells;
     // Stats for checkSurfaceIntersection
-    static int csi_calls;        // total calls
-    static int csi_early_exit;   // exited after corner check
-    static int csi_edge_exits;   // exited during edge bisection
-    static int csi_false;        // returned false (cell pruned)
-    static long long csi_field_calls;  // total field function calls
+    static int csi_calls;
+    static int csi_early_exit;
+    static int csi_edge_exits;
+    static int csi_false;
+    static long long csi_field_calls;
     static int csi_by_depth[32];
     static int gm_field_calls;
     double maxdepth;
-	struct OctreeCell {
-		Point center;
-		double size;
-		int depth;
 
-		Point getMin() const {
-			double h = size / 2;
-			return Point(center.x - h, center.y - h, center.z - h);
-		}
+    struct OctreeCell {
+        Point center;
+        double size;
+        int depth;
 
-		Point getMax() const {
-			double h = size / 2;
-			return Point(center.x + h, center.y + h, center.z + h);
-		}
-	};
-	void subdivideOctree(
-	        SurfaceFunction field,
-	        const OctreeCell& cell,
-	        std::vector<OctreeCell>& leafCells,
-	        const Point& rockCenter,
-	        double rockRadius,
-	        const Point& cameraPos,
-	        double wscale,
-	        double maxDepth,
-	        double minPixels);
-	
-    
-    bool checkSurfaceIntersection(SurfaceFunction field, 
-                                  const OctreeCell& cell, 
+        Point getMin() const {
+            double h = size / 2;
+            return Point(center.x - h, center.y - h, center.z - h);
+        }
+        Point getMax() const {
+            double h = size / 2;
+            return Point(center.x + h, center.y + h, center.z + h);
+        }
+    };
+
+    void subdivideOctree(
+        SurfaceFunction field,
+        const OctreeCell& cell,
+        std::vector<OctreeCell>& leafCells,
+        const Point& rockCenter,
+        double rockRadius,
+        const Point& cameraPos,
+        double wscale,
+        double maxDepth,
+        double minPixels);
+
+    bool checkSurfaceIntersection(SurfaceFunction field,
+                                  const OctreeCell& cell,
                                   double isolevel);
-    Point interpolateVertex(const Point& p1, const Point& p2, 
-                           double val1, double val2, double isolevel);
-    void addTriangle(const Point& v1, const Point& v2, const Point& v3, 
-                    std::vector<MCTriangle>& triangles);
-    void generateTrianglesForCube(int cubeIndex, const Point vertList[12], 
+    Point interpolateVertex(const Point& p1, const Point& p2,
+                            double val1, double val2, double isolevel);
+    void addTriangle(const Point& v1, const Point& v2, const Point& v3,
+                     std::vector<MCTriangle>& triangles);
+    void generateTrianglesForCube(int cubeIndex, const Point vertList[12],
                                   std::vector<MCTriangle>& triangles);
 
-    
-public:
-    // Generate mesh for a bounding volume
-    // resolution = number of voxels per axis
     std::vector<MCTriangle> generateMesh(
         SurfaceFunction field,
         const Point& boundsMin, const Point& boundsMax,
         int resolution, double isolevel = 0.0);
-    
+
     std::vector<MCTriangle> generateAdaptiveMesh(
-            SurfaceFunction field,
-            const Point& rockCenter,
-            double rockRadius,
-            const Point& cameraPos,
-            double wscale,
-            double minPixels = 50,            
-			double maxDepth = 8,
-			double margin=1
-	);
- };
+        SurfaceFunction field,
+        const Point& rockCenter,
+        double rockRadius,
+        const Point& cameraPos,
+        double wscale,
+        double minPixels = 50,
+        double maxDepth = 8,
+        double margin = 1);
+};
 
 //=============================================================================
 // MCObject - A single marching cubes object placed on terrain
@@ -110,67 +107,46 @@ public:
 
 class MCObject {
 public:
-    // Object placement info (provided by your terrain system)
-    Point worldPosition;      // Center position on terrain
-    double baseSize;          // Object's base size in world units
-    
-    // Distance-based LOD info (computed or provided)
+    Point worldPosition;
+    double baseSize;
     double distanceToViewer;
-    double screenProjectedSize;  // Optional: if your system provides this
-    
-    // Generated mesh data
+    double screenProjectedSize;
     std::vector<MCTriangle> mesh;
     bool meshValid;
     int lastResolution;
-    
-    // Optional: OpenGL VBO handles for rendering
     GLuint vboVertices;
     GLuint vboNormals;
     GLuint vboFaceNormals;
     GLuint vboColors;
     GLuint vboTemplatePos;
     bool vboValid;
-    int instanceId;  // Which instance/type this belongs to
-    int dataIndex;   // Index into the data array (for texture mapping)
-    
+    int instanceId;
+    int dataIndex;
+
     MCObject();
     MCObject(const Point& pos, double size);
     ~MCObject();
-    
-    // Core interface
+
     void setPosition(const Point& pos);
     void setDistanceInfo(double distance, double projectedSize = 0.0);
-    
-    // Generate mesh with LOD based on distance
     const std::vector<MCTriangle>& generateMesh(
-        SurfaceFunction field, 
-        double isolevel = 0.0);
-    
-    // Calculate appropriate resolution based on distance
+        SurfaceFunction field, double isolevel = 0.0);
     int calculateResolution() const;
-    
-    // Invalidate cached mesh (call when object moves significantly)
     void invalidate();
-    
-    // Clear mesh data
     void clearMesh();
-    
-    // Upload mesh to VBOs for rendering
     void uploadToVBO();
     void deleteVBO();
-    
-    // Optional: smooth normals across shared vertices
     void generateSmoothNormals();
     void generateSphereNormals();
     const std::vector<MCTriangle>& generateMeshAdaptive(
-            SurfaceFunction field,
-            const Point& rockCenter,
-            double rockRadius,
-            const Point& cameraPos,
-            double wscale,
-			double min_pts=2,
-			double max_depth=10,
-            double margin = 1.0);
+        SurfaceFunction field,
+        const Point& rockCenter,
+        double rockRadius,
+        const Point& cameraPos,
+        double wscale,
+        double min_pts = 2,
+        double max_depth = 10,
+        double margin = 1.0);
 };
 
 //=============================================================================
@@ -180,45 +156,201 @@ public:
 class MCObjectManager {
 private:
     std::vector<MCObject*> objects;
-    
-    // Current field function and iso level
     SurfaceFunction currentField;
     double currentIsoLevel;
-   
+
 public:
     std::unordered_map<std::string, MCObject*> objectMap;
     MCObjectManager();
     ~MCObjectManager();
-    
-    // Configuration
     void setField(SurfaceFunction field);
     void setIsoLevel(double iso);
-     
-    // Object management
     MCObject* addObject(const Point& position, double size);
     MCObject* addObject(const std::string& name, const Point& position, double size);
     MCObject* getObject(const std::string& name);
     void removeObject(const std::string& name);
     void clear();
-    
-    // Bulk operations
     size_t getObjectCount() const { return objects.size(); }
     const std::vector<MCObject*>& getObjects() const { return objects; }
-  };
+};
 
 //=============================================================================
 // Built-in scalar field functions for common shapes
 //=============================================================================
 
 namespace MCFields {
-    // Sphere centered at origin with radius 1
     double sphere(double x, double y, double z);
-    
-    // Noisy sphere (asteroid/rock shape) - creates unique shape per center/seed
     SurfaceFunction makeNoisySphere(const Point& center, int seed = 42);
-    
-    // Cube (sharp edges)
     double cube(double x, double y, double z);
 }
+
+//=============================================================================
+// MCObjNode - One cell in a persistent adaptive octree
+// Equivalent to MapNode in the 2D terrain system.
+// Used for rocks, asteroids, standalone MC objects.
+//=============================================================================
+
+class MCObjNode {
+public:
+    // Tree structure - mirrors MapNode neighbor pointers
+    MCObjNode *children[8];  // null if leaf
+    MCObjNode *parent;
+
+    // Neighbor connectivity for T-junction stitching (future use)
+    // mirrors MapNode lnode/rnode/unode/dnode
+    MCObjNode *neighbors[6]; // +x,-x,+y,-y,+z,-z faces
+
+    // Cell geometry (world space)
+    Point center;
+    double size;
+    int depth;
+
+    // Cached field value at cell center — evaluated once, never again.
+    // Key advantage over OctreeCell which re-evaluates every frame.
+    double fieldValue;
+    bool fieldEvaluated;
+
+    // Corner field values — shared with adjacent siblings on split.
+    // Avoids re-evaluation when neighbors split or merge.
+    double cornerValues[8];
+    bool cornersEvaluated[8];
+
+    // Cached result of surface intersection test
+    // avoids re-running checkSurfaceIntersection when tree hasn't changed
+    bool surfaceChecked;
+    bool surfacePresent;
+
+    // Generated mesh — only valid for leaf nodes
+    std::vector<MCTriangle> mesh;
+    bool meshValid;
+
+    // Per-frame LOD state — updated each adapt pass
+    bool inFrustum;
+    double projectedSize;
+
+    MCObjNode();
+    ~MCObjNode();
+
+    bool isLeaf() const { return children[0] == nullptr; }
+
+    // Tree operations — mirror MapNode/MapLink interface
+    void split();                // create 8 children
+    void collapse();             // destroy children, become leaf
+
+    // Traversal — mirrors MapNode::visit()
+    void visit(void (MCObjNode::*func)());
+    void visit_all(void (MCObjNode::*func)());
+
+    // Collect leaf nodes for mesh generation and rendering
+    void collectLeaves(std::vector<MCObjNode*>& leaves);
+
+    // Core per-frame adapt — mirrors MapNode::adapt()
+    // Splits or collapses based on viewpoint, culling, LOD
+    void adapt(SurfaceFunction field,
+               const Point& objCenter, double objRadius,
+               const Point& cameraPos, double wscale,
+               double minPixels, int maxDepth);
+
+    // Evaluate and cache field value at center (lazy)
+    double evalField(SurfaceFunction field);
+
+    // Surface intersection using cached corner values where available
+    bool checkSurface(SurfaceFunction field, double isolevel = 0.0);
+
+    // Generate marching cubes mesh for this leaf cell
+    void generateMesh(SurfaceFunction field,
+                      const Point& objCenter, double objRadius);
+
+    // Invalidate mesh and surface cache (call when field changes)
+    void invalidate();
+};
+
+//=============================================================================
+// MCObjTree - Persistent adaptive octree for one 3D object
+// Equivalent to Map in the 2D terrain system.
+// Owns the root MCObjNode and manages the tree lifetime.
+// Used for: rocks, asteroids, standalone MC objects, future terrain.
+//=============================================================================
+
+class MCObjTree {
+public:
+    MCObjNode *root;
+
+    // Object identity — determines field function and caching
+    int instance;   // which manager/type owns this object
+    int rval;       // noise seed
+
+    // Cached field function — rebuilt only on invalidate()
+    SurfaceFunction field;
+
+    // Object geometry (world space)
+    Point center;
+    double radius;
+    double margin;
+
+    // Tree state
+    bool valid;             // false if full rebuild needed
+    int framesSinceUsed;    // for LRU eviction in MCObjMgr
+
+    MCObjTree();
+    ~MCObjTree();
+
+    // Initialize or reinitialize root node
+    void init(const Point& center, double radius, double margin,
+              SurfaceFunction field, int instance, int rval);
+
+    // Force full rebuild on next adapt() — call when field params change
+    void invalidate();
+
+    // Free entire tree
+    void free();
+
+    // Top-level adapt — mirrors Map::adapt()
+    // Traverses tree top-down, splits/collapses nodes per viewpoint
+    void adapt(const Point& cameraPos, double wscale,
+               double minPixels, int maxDepth);
+
+    // Collect all leaf nodes for rendering
+    void collectLeaves(std::vector<MCObjNode*>& leaves);
+
+    // Traversal — mirrors Map::visit() / Map::visit_all()
+    void visit(void (MCObjNode::*func)());
+    void visit_all(void (MCObjNode::*func)());
+};
+
+//=============================================================================
+// MCObjTreeMgr - Manages a collection of MCObjTree instances
+// Equivalent to MCObjectManager but for persistent trees.
+// Future: asteroid fields, cave systems, standalone objects.
+//=============================================================================
+
+class MCObjTreeMgr {
+public:
+    // Key: quantized world position + instance + rval
+    // mirrors Rock3DObjMgr::rockCache but holds trees not meshes
+    std::map<uint64_t, MCObjTree*> trees;
+
+    int maxTrees;   // LRU eviction limit
+
+    MCObjTreeMgr(int maxTrees = 50);
+    ~MCObjTreeMgr();
+
+    // Get existing tree or create new one for this object
+    MCObjTree* getOrCreate(const Point& center, double radius,
+                           double margin, SurfaceFunction field,
+                           int instance, int rval);
+
+    // Invalidate all trees — call when settings change
+    void invalidateAll();
+
+    // Remove least recently used trees down to maxTrees
+    void evict();
+
+    void clear();
+
+private:
+    // Generate a stable 64-bit key from position + instance
+    uint64_t makeKey(const Point& center, int instance, int rval) const;
+};
 
 #endif // MCOBJECTS_H

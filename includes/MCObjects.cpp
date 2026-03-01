@@ -840,3 +840,453 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
 
 } // namespace MCFields
 
+//=============================================================================
+// MCObjNode implementation
+//=============================================================================
+
+MCObjNode::MCObjNode()
+    : parent(nullptr),
+      center(0,0,0), size(0), depth(0),
+      fieldValue(0), fieldEvaluated(false),
+      surfaceChecked(false), surfacePresent(false),
+      meshValid(false),
+      inFrustum(false), projectedSize(0)
+{
+    memset(children,          0, sizeof(children));
+    memset(neighbors,         0, sizeof(neighbors));
+    memset(cornerValues,      0, sizeof(cornerValues));
+    memset(cornersEvaluated, false, sizeof(cornersEvaluated));
+}
+
+MCObjNode::~MCObjNode()
+{
+    collapse();
+}
+
+void MCObjNode::collapse()
+{
+    for (int i = 0; i < 8; i++) {
+        if (children[i]) {
+            delete children[i];
+            children[i] = nullptr;
+        }
+    }
+    meshValid = false;
+}
+
+void MCObjNode::invalidate()
+{
+    fieldEvaluated  = false;
+    surfaceChecked  = false;
+    meshValid       = false;
+    memset(cornersEvaluated, false, sizeof(cornersEvaluated));
+    mesh.clear();
+    mesh.shrink_to_fit();
+    for (int i = 0; i < 8; i++)
+        if (children[i])
+            children[i]->invalidate();
+}
+
+void MCObjNode::visit(void (MCObjNode::*func)())
+{
+    (this->*func)();
+    if (!isLeaf())
+        for (int i = 0; i < 8; i++)
+            if (children[i])
+                children[i]->visit(func);
+}
+
+void MCObjNode::visit_all(void (MCObjNode::*func)())
+{
+    // visit_all visits every node whether leaf or not
+    // mirrors MapNode::visit_all
+    (this->*func)();
+    for (int i = 0; i < 8; i++)
+        if (children[i])
+            children[i]->visit_all(func);
+}
+
+void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
+{
+    if (isLeaf()) {
+        leaves.push_back(this);
+    } else {
+        for (int i = 0; i < 8; i++)
+            if (children[i])
+                children[i]->collectLeaves(leaves);
+    }
+}
+
+double MCObjNode::evalField(SurfaceFunction field)
+{
+    if (!fieldEvaluated) {
+        fieldValue     = field(center.x, center.y, center.z);
+        fieldEvaluated = true;
+    }
+    return fieldValue;
+}
+
+void MCObjNode::split()
+{
+    // Already split — shouldn't happen but guard anyway
+    if (!isLeaf()) return;
+
+    double childSize = size / 2.0;
+    double offset    = childSize / 2.0;
+
+    for (int i = 0; i < 8; i++) {
+        MCObjNode* child = new MCObjNode();
+        child->parent = this;
+        child->depth  = depth + 1;
+        child->size   = childSize;
+        child->center = Point(
+            center.x + ((i & 1) ? offset : -offset),
+            center.y + ((i & 2) ? offset : -offset),
+            center.z + ((i & 4) ? offset : -offset)
+        );
+
+        // Each child's center is this node's body-center —
+        // only for the child whose octant contains this node's center
+        // that's not straightforwardly mappable, so leave lazy for now.
+        // Corner sharing: this node's corners map to child corners.
+        // Corner layout (same as MC standard):
+        //   0=(-,-,-) 1=(+,-,-) 2=(+,+,-) 3=(-,+,-)
+        //   4=(-,-,+) 5=(+,-,+) 6=(+,+,+) 7=(-,+,+)
+        //
+        // Each child's 8 corners: 4 are shared with siblings,
+        // 1 is shared with this node's corner, rest are new.
+        // The one corner of this node shared with child i
+        // is exactly corner i (same octant index).
+        if (cornersEvaluated[i]) {
+            // The "outer" corner of child i (furthest from center)
+            // is the same as parent corner i
+            child->cornerValues[i]     = cornerValues[i];
+            child->cornersEvaluated[i] = true;
+        }
+
+        children[i] = child;
+    }
+
+    // This node is no longer a leaf — clear its mesh
+    meshValid = false;
+    mesh.clear();
+    mesh.shrink_to_fit();
+}
+
+bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
+{
+    // Return cached result if available
+    if (surfaceChecked)
+        return surfacePresent;
+
+    surfaceChecked = true;
+
+    double h  = size / 2.0;
+    double cx = center.x, cy = center.y, cz = center.z;
+
+    // Corner positions — standard MC ordering
+    Point corners[8] = {
+        Point(cx-h, cy-h, cz-h), Point(cx+h, cy-h, cz-h),
+        Point(cx+h, cy+h, cz-h), Point(cx-h, cy+h, cz-h),
+        Point(cx-h, cy-h, cz+h), Point(cx+h, cy-h, cz+h),
+        Point(cx+h, cy+h, cz+h), Point(cx-h, cy+h, cz+h)
+    };
+
+    // Evaluate corners — use cached values where available
+    double values[8];
+    double minVal =  1e10;
+    double maxVal = -1e10;
+
+    for (int i = 0; i < 8; i++) {
+        if (!cornersEvaluated[i]) {
+            cornerValues[i]     = field(corners[i].x, corners[i].y, corners[i].z);
+            cornersEvaluated[i] = true;
+        }
+        values[i] = cornerValues[i];
+        minVal = std::min(minVal, values[i]);
+        maxVal = std::max(maxVal, values[i]);
+    }
+
+    // Surface straddles isolevel — definite intersection
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        return true;
+    }
+
+    // Edge bisection — same depth-dependent step count as MCGenerator
+    static const int edgePairs[12][2] = {
+        {0,1},{1,2},{2,3},{3,0},
+        {4,5},{5,6},{6,7},{7,4},
+        {0,4},{1,5},{2,6},{3,7}
+    };
+
+    // Fewer bisection steps at deeper levels (smaller cells)
+    int BISECT_STEPS = std::max(8 - depth, 1);
+
+    for (int e = 0; e < 12; e++) {
+        Point p1 = corners[edgePairs[e][0]];
+        Point p2 = corners[edgePairs[e][1]];
+        for (int s = 1; s < BISECT_STEPS; s++) {
+            double t = s / (double)BISECT_STEPS;
+            Point  p = p1 + (p2 - p1) * t;
+            double v = field(p.x, p.y, p.z);
+            minVal = std::min(minVal, v);
+            maxVal = std::max(maxVal, v);
+            if (minVal <= isolevel && maxVal >= isolevel) {
+                surfacePresent = true;
+                return true;
+            }
+        }
+    }
+
+    // Check center (also caches it)
+    double cv = evalField(field);
+    minVal = std::min(minVal, cv);
+    maxVal = std::max(maxVal, cv);
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        return true;
+    }
+
+    surfacePresent = false;
+    return false;
+}
+
+void MCObjNode::generateMesh(SurfaceFunction field,
+                              const Point& objCenter, double objRadius)
+{
+    if (meshValid) return;
+
+    // Convert world-space cell bounds to local space for MCGenerator
+    double h = size / 2.0;
+    Point worldMin(center.x - h, center.y - h, center.z - h);
+    Point worldMax(center.x + h, center.y + h, center.z + h);
+
+    Point localMin = (worldMin - objCenter) / objRadius;
+    Point localMax = (worldMax - objCenter) / objRadius;
+
+    MCGenerator gen;
+    mesh = gen.generateMesh(field, localMin, localMax, 1);
+    meshValid = true;
+}
+
+void MCObjNode::adapt(SurfaceFunction field,
+                      const Point& objCenter, double objRadius,
+                      const Point& cameraPos, double wscale,
+                      double minPixels, int maxDepth)
+{
+    // ── Projected screen size of this cell ──────────────────────────────
+    double distance    = center.distance(cameraPos);
+    projectedSize      = wscale * size / distance;
+
+    // ── Underground burial coarsening (same as subdivideOctree) ─────────
+    double localZ = (center.z - objCenter.z) / objRadius;
+    double effectiveMinPixels = minPixels;
+    if (localZ < 0)
+        effectiveMinPixels *= 1.0 + (-localZ) * 10.0;
+
+    // ── Back-face coarsening ─────────────────────────────────────────────
+    Point localCenter  = (center - objCenter) / objRadius;
+    Point localCamNorm = (cameraPos - objCenter).normalize();
+    double viewDot     = localCenter.dot(localCamNorm);
+    if (viewDot < -0.2)
+        effectiveMinPixels = std::max(effectiveMinPixels,
+                             minPixels * (1.0 + (-viewDot - 0.2) * 10.0));
+
+    // ── Should this node be a leaf? ──────────────────────────────────────
+    bool shouldBeLeaf = (projectedSize <= effectiveMinPixels * 2)
+                     || (depth >= maxDepth);
+
+    if (shouldBeLeaf) {
+        // Collapse children if we had them (camera moved away)
+        if (!isLeaf())
+            collapse();
+
+        // Generate mesh if not already valid
+        if (!meshValid)
+            generateMesh(field, objCenter, objRadius);
+
+        return;
+    }
+
+    // ── Need to subdivide — check surface first (uses cache) ────────────
+    if (!checkSurface(field)) {
+        // No surface here — prune entire subtree
+        collapse();
+        return;
+    }
+
+    // ── Split if currently a leaf ────────────────────────────────────────
+    if (isLeaf())
+        split();
+
+    // ── Recurse into children ────────────────────────────────────────────
+    for (int i = 0; i < 8; i++)
+        if (children[i])
+            children[i]->adapt(field, objCenter, objRadius,
+                               cameraPos, wscale, minPixels, maxDepth);
+}
+
+//=============================================================================
+// MCObjTree implementation
+//=============================================================================
+
+MCObjTree::MCObjTree()
+    : root(nullptr), instance(0), rval(0),
+      radius(0), margin(1.0),
+      valid(false), framesSinceUsed(0)
+{}
+
+MCObjTree::~MCObjTree()
+{
+    free();
+}
+
+void MCObjTree::free()
+{
+    if (root) {
+        delete root;
+        root = nullptr;
+    }
+    valid = false;
+}
+
+void MCObjTree::invalidate()
+{
+    // Field params changed — force full rebuild next adapt()
+    free();
+}
+
+void MCObjTree::init(const Point& c, double r, double m,
+                     SurfaceFunction f, int inst, int rv)
+{
+    free();
+    center   = c;
+    radius   = r;
+    margin   = m;
+    field    = f;
+    instance = inst;
+    rval     = rv;
+
+    root         = new MCObjNode();
+    root->center = center;
+    root->size   = radius * 2.0 * margin;  // full diameter
+    root->depth  = 0;
+
+    valid = true;
+}
+
+void MCObjTree::adapt(const Point& cameraPos, double wscale,
+                      double minPixels, int maxDepth)
+{
+    if (!root || !valid) return;
+    root->adapt(field, center, radius, cameraPos, wscale, minPixels, maxDepth);
+    framesSinceUsed = 0;
+}
+
+void MCObjTree::collectLeaves(std::vector<MCObjNode*>& leaves)
+{
+    if (root)
+        root->collectLeaves(leaves);
+}
+
+void MCObjTree::visit(void (MCObjNode::*func)())
+{
+    if (root)
+        root->visit(func);
+}
+
+void MCObjTree::visit_all(void (MCObjNode::*func)())
+{
+    if (root)
+        root->visit_all(func);
+}
+
+//=============================================================================
+// MCObjTreeMgr implementation
+//=============================================================================
+
+MCObjTreeMgr::MCObjTreeMgr(int max)
+    : maxTrees(max)
+{}
+
+MCObjTreeMgr::~MCObjTreeMgr()
+{
+    clear();
+}
+
+void MCObjTreeMgr::clear()
+{
+    for (auto& pair : trees) {
+        delete pair.second;
+    }
+    trees.clear();
+}
+
+void MCObjTreeMgr::invalidateAll()
+{
+    for (auto& pair : trees)
+        pair.second->invalidate();
+}
+
+uint64_t MCObjTreeMgr::makeKey(const Point& center, int instance, int rval) const
+{
+    // Quantize position to ~1 unit grid to form stable key.
+    // Combine with instance and rval using cheap bit mixing.
+    int64_t ix = (int64_t)round(center.x);
+    int64_t iy = (int64_t)round(center.y);
+    int64_t iz = (int64_t)round(center.z);
+
+    uint64_t h = 0;
+    h ^= (uint64_t)(ix * 2654435761ULL);
+    h ^= (uint64_t)(iy * 2246822519ULL);
+    h ^= (uint64_t)(iz * 3266489917ULL);
+    h ^= (uint64_t)(instance * 668265263ULL);
+    h ^= (uint64_t)(rval     * 374761393ULL);
+    return h;
+}
+
+MCObjTree* MCObjTreeMgr::getOrCreate(const Point& center, double radius,
+                                      double margin, SurfaceFunction field,
+                                      int instance, int rval)
+{
+    uint64_t key = makeKey(center, instance, rval);
+
+    auto it = trees.find(key);
+    if (it != trees.end()) {
+        it->second->framesSinceUsed = 0;
+        return it->second;
+    }
+
+    // Evict before adding if at capacity
+    if ((int)trees.size() >= maxTrees)
+        evict();
+
+    MCObjTree* tree = new MCObjTree();
+    tree->init(center, radius, margin, field, instance, rval);
+    trees[key] = tree;
+    return tree;
+}
+
+void MCObjTreeMgr::evict()
+{
+    // Age all trees and remove the oldest half
+    // Simple strategy: remove any tree not used this frame
+    // More sophisticated LRU can be added later
+
+    // First increment age of all trees
+    for (auto& pair : trees)
+        pair.second->framesSinceUsed++;
+
+    // Remove trees unused for more than N frames
+    const int MAX_IDLE_FRAMES = 5;
+    auto it = trees.begin();
+    while (it != trees.end()) {
+        if (it->second->framesSinceUsed > MAX_IDLE_FRAMES) {
+            delete it->second;
+            it = trees.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
