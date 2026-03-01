@@ -1,75 +1,23 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55628;
+		phi=-5.55632;
 		theta=24.4364;
-		height=7.45338 ft;
+		height=8.58357 ft;
 		gndlvl=10522.2 ft;
 		time=375724;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=208;
-		tilt=5;
-		angle=-14;
-		fov=35;
-		gstride=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		tilt=-2;
-	}
-	View{
-		tilt=-1;
-		angle=-17;
-	}
-	View{
-		tilt=3;
-	}
-	View{
-		heading=209;
-	}
-	View{
-		phi=-5.5563;
-		height=42.6682 ft;
-		angle=-15;
-	}
-	View{
-		phi=-5.55632;
-		height=22.8188 ft;
-		heading=205;
-	}
-	View{
-		height=7.94822 ft;
-		heading=179;
-	}
-	View{
-		height=7.85593 ft;
-		heading=188;
-		tilt=7;
-		angle=-14;
-	}
-	View{
-		height=6.30739 ft;
-		heading=180;
-	}
-	View{
-		height=7.62545 ft;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00400199;
 		heading=164;
 		tilt=-3;
 		angle=-24;
-	}
-	View{
-		height=30.2978 ft;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.004002;
-	}
-	View{
-		minr=0.00400199;
+		fov=35;
+		gstride=586570;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -120,7 +68,7 @@ Scene() {
 					Surface{
 						terrain=rocks3d(2,9.999e-07,1.25,0.025,0.2,0.1,0.778,noise(GRADIENT|NEG|NLOD,0,11.5,0.315,0.5,2,1,-0.2,0,0,1e-06),0,0,0,0)
 								[Color(noise(GRADIENT|NLOD|UNS,0,7,0.699,0.5,2,1,4,0,-0.87,1e-06),0.5*RED,0.3,1)+Texture("bricks",BORDER|BUMP|LINEAR|RANDOMIZE|TEX|TRIPLANAR,1.85823e+06,1.90464,0.8254,0,1.76176,2,0.5,0,0,-0.22224,0,-0.05552)
-								]								rocks3d(1,3e-08,1.25,0.3,0.1,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
+								]								rocks3d(1,3e-08,1.25,0.1,0.1,0.1,0.365,noise(GRADIENT|NABS|NEG|NLOD|NNORM|SQR,0,5,0.342,0.329,2.1,1,-0.3,0,0,1e-06),0,0,0,0)
 								[Texture("alpine2",BORDER|LINEAR|TEX,3323.53,2,1,0,1,2,0.5,0,0,0,-0.14284,0)+Texture("craters",BUMP|LINEAR|TRIPLANAR,5.58258e+06,1.90464,2,1,9,2,0.84932,0,0,0,0,0.0476)
 								]								rocks3d(1,2e-07,0.8,0.291,0.159,0,0.302,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.973,0.329,2.1,0.384,-0.3,0,0.38,1e-06),0,0,0,0)
 								[Z(noise(GRADIENT|NEG|NLOD,0,5,0.041,0.5,2.22,1,4,0,0,1e-06))+Texture("mud1",BUMP|TEX|TRIPLANAR,5.58258e+06,0.63488,2,0,1,2,0.5873,0,0,0,0.58732,-0.55556)+Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,1.27412e+07,1.65088,2,0,1,2,0.5873,0,0,0,0,0.49208)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)
