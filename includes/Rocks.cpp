@@ -339,7 +339,7 @@ int Rock3DMgr::getLODResolution(double pts) {
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
  	
-	switch(TheScene->render_quality){
+	switch(TheScene->generate_quality){
 	case DRAFT:
 		resScale*=0.75;
 		minPointsize=4;
@@ -356,14 +356,14 @@ int Rock3DMgr::getLODResolution(double pts) {
 	case HIGH:
 		resScale*=1.25;
 		minPointsize=1.25;
-		maxDepth=10;
+		maxDepth=11;
 		adaptThreshold=250;
  		break;
 	case BEST:
 		resScale*=1.5;
 		minPointsize=1;
-		maxDepth=11;
-		adaptThreshold=400;
+		maxDepth=12;
+		adaptThreshold=300;
  		break; 		
  	}
  	int newres=(int)(res*resScale);
@@ -1033,7 +1033,7 @@ void Rock3DObjMgr::addTriangleToBatch(
     }
 }
 void Rock3DObjMgr::uploadBatchVBOs(VBOBatch& batch) {
-    if (batch.vertices.empty()) return;
+    //if (batch.vertices.empty()) return;
     
     // Delete old VBOs if they exist
     batch.deleteVBOs();
@@ -1081,10 +1081,23 @@ void Rock3DObjMgr::uploadBatchVBOs(VBOBatch& batch) {
                  GL_STATIC_DRAW);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);  // Unbind
+    
+    batch.uploadedVertexCount = batch.vertices.size();
+    
+    // ← FREE CPU-SIDE ARRAYS - data is now on GPU, no longer needed
+	batch.vertices.clear();
+	batch.vertices.shrink_to_fit();
+	batch.normals.clear();
+	batch.normals.shrink_to_fit();
+	batch.faceNormals.clear();
+	batch.faceNormals.shrink_to_fit();
+	batch.colors.clear();
+	batch.colors.shrink_to_fit();
+	batch.templatePos.clear();
+	batch.templatePos.shrink_to_fit();
 }
 void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program) {
-    if (batch.vertices.empty()) return;
-    
+	if (batch.uploadedVertexCount == 0) return;  // ← was batch.vertices.empty()    
     // Bind VBOs
     glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
     glVertexPointer(3, GL_FLOAT, 0, 0);
@@ -1113,9 +1126,9 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program) {
         glVertexAttribPointer(attribLoc2, 4, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(attribLoc2);
     }
+        
+    int totalVertices = batch.uploadedVertexCount / 3;
     
-    // Draw
-    int totalVertices = batch.vertices.size() / 3;
     glDrawArrays(GL_TRIANGLES, 0, totalVertices);
     
     // Cleanup attributes
@@ -1173,8 +1186,8 @@ void Rock3DObjMgr::render_objects() {
     for (auto& pair : rockBatches) {
         const BatchKey& key = pair.first;
         VBOBatch& batch = pair.second;
-        if (batch.vertices.empty()) continue;
-        
+       // if (batch.vertices.empty()) continue;
+        if (batch.uploadedVertexCount == 0) continue;
         int rockType = batch.instanceId;  // This is mgr->instance
         
         // Set ALL texture active flags to this rockType
@@ -1199,8 +1212,8 @@ void Rock3DObjMgr::render_objects() {
         int rockType = pair.first;  // instance ID
         VBOBatch& batch = pair.second;
          
-        if (batch.vertices.empty()) continue;
-          
+        //if (batch.vertices.empty()) continue;
+        if (batch.uploadedVertexCount == 0) continue;  
          // Set texture active flags (same as template batches)
         for (int i = 0; i < maxTexs; i++) {
             char str[64];

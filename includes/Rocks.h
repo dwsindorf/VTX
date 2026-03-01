@@ -75,6 +75,8 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    GLuint vboColors = 0;
 	    GLuint vboTemplatePos = 0;
 	    
+	    int uploadedVertexCount = 0;  // ← add this
+	    
 	    void clear() {
 	        vertices.clear();
 	        normals.clear();
