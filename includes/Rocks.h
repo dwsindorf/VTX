@@ -166,8 +166,9 @@ public:
     
     void renderBatch(VBOBatch& batch, GLhandleARB program);
     void uploadBatchVBOs(VBOBatch& batch);
-    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s);
-    
+    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s,   // new overload
+                            const Point& right, const Point& forward,
+                            const Point& rockEyeCenter, double rockSize);    
     SurfaceFunction makeRockField(Rock3DMgr* pmgr);
     
 	void free();

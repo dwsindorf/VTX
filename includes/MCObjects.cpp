@@ -631,7 +631,7 @@ void MCObject::generateSmoothNormals() {
         for (size_t i = 1; i < tris.size(); i++) {
             Point normal = mesh[tris[i]].normal;
             // Only average if angle is within threshold
-            if (referenceNormal.dot(normal)< SMOOTH_ANGLE_COS) {
+            if (referenceNormal.dot(normal)> SMOOTH_ANGLE_COS) {
                 avgNormal = avgNormal + normal;
                 count++;
             }
@@ -649,21 +649,7 @@ void MCObject::generateSmoothNormals() {
             pair.second = Point(0, 1, 0);
         }
     }
-    
-    // Store per-vertex smooth normals in a temporary structure
-    // We can't modify triangle normals directly since each vertex needs its own
-    // Instead, store in a map that uploadToVBO will use
-    std::unordered_map<uint64_t, Point> vertexNormals;
-    for (auto& tri : mesh) {
-        for (int v = 0; v < 3; v++) {
-            uint64_t key = hashVertex(tri.templatePos[v]);
-            auto it = normalAccum.find(key);
-            if (it != normalAccum.end()) {
-                vertexNormals[key] = it->second;
-            }
-        }
-    }
-    
+   
     // Note: We need to modify uploadToVBO to use per-vertex normals
     // For now, just update the triangle normals with averaged value
     for (auto& tri : mesh) {
@@ -728,7 +714,7 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
     meshValid = true;
     lastResolution = -1;
     
-    generateSphereNormals();
+   // generateSphereNormals();
     
     return mesh;
 }

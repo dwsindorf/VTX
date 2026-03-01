@@ -168,8 +168,6 @@ struct RockLodEntry {
     double maxPts;  // upper bound for pts (pts < maxPts)
 };
 
-const double ADAPTIVE_SIZE_THRESHOLD = 150.0;
-
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  2,  5.0},
     {  4,  10.0},
@@ -279,22 +277,26 @@ void Rock3DMgr::printStats(){
 #endif
     char buff[256];
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
-#ifdef PRINT_LOD_STATS
+
     	int tres=(int)(kRockLodTable[i].res*resScale+0.1);
     	if(stats[i][3]>0){
+#ifdef PRINT_LOD_STATS
         	sprintf(buff,"resolution:%-3d  adaptive:%3d instances:%3d triangles:%4d K",tres,stats[i][3],stats[i][0],stats[i][1]/1000);
             cout<<buff<< std::endl;
+#endif
             rcnt  += stats[i][0];
             tcnt  += stats[i][1];
         	break;
     	}
     	else{
+#ifdef PRINT_LOD_STATS
     		sprintf(buff,"resolution:%-3d templates:%3d instances:%3d triangles:%3d K", tres,stats[i][2],stats[i][0],stats[i][1]/1000);
         	cout<<buff<< std::endl;
+#endif
             rcnt  += stats[i][0];
             tcnt  += stats[i][1];
     	}
-#endif
+
     }
     std::cout << "Totals rocks:"    << rcnt
               << " triangles:"      << tcnt/1000<<" K"
@@ -349,19 +351,19 @@ int Rock3DMgr::getLODResolution(double pts) {
 		resScale*=1;
 		minPointsize=2;
 		maxDepth=9;
-		adaptThreshold=100;
+		adaptThreshold=200;
  		break;
 	case HIGH:
-		resScale*=1.5;
+		resScale*=1.25;
 		minPointsize=1.25;
 		maxDepth=10;
-		adaptThreshold=300;
+		adaptThreshold=250;
  		break;
 	case BEST:
-		resScale*=2;
+		resScale*=1.5;
 		minPointsize=1;
 		maxDepth=11;
-		adaptThreshold=500;
+		adaptThreshold=400;
  		break; 		
  	}
  	int newres=(int)(res*resScale);
@@ -372,7 +374,7 @@ int Rock3DMgr::getLODResolution(double pts) {
 // Rock3DObjMgr class
 //************************************************************
 MCObjectManager Rock3DObjMgr::rocks;
-ValueList<PlaceData*> Rock3DObjMgr::data(10000, 5000);
+ValueList<PlaceData*> Rock3DObjMgr::data(20000, 5000);
 std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr::rockCache;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
@@ -661,7 +663,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     );
     
     double gm_time = (clock() - gm_t_start) * 1000.0 / CLOCKS_PER_SEC;
-    if(resolution>=0.7*ADAPTIVE_SIZE_THRESHOLD)
+    if(resolution>=Rock3DMgr::adaptThreshold)
     std::cout << "Template generateMesh:"
               << " res=" << resolution
               << " field_calls=" << MCGenerator::gm_field_calls
@@ -742,53 +744,6 @@ void Rock3DObjMgr::clear(){
     adaptiveBatches.clear();
 }
 
-
-// Helper to transform rock from local space to world/eye space
-static void transformRockToSurface(
-    const Rock3DData* rockData,
-    const Point& rockLocalPos,
-    const Point& rockNormal,
-    Point& outEyeVertex,
-    Point& outRotatedNormal)
-{
-	
-	Point xpoint=TheScene->xpoint;
-    Rock3DMgr* pmgr = (Rock3DMgr*)rockData->mgr;
-    
-    Point worldPos = rockData->vertex;
-    Point up = rockData->normal;
-    double radius = rockData->radius;
-    double size = 2 * TheMap->radius * rockData->radius;
-    double drop = pmgr->drop;
-    double comp = pmgr->comp;
-    
-    // Calculate rock center
-    double dscale = Hscale * drop * (1 - 0.5 * comp) * 0.5;
-    Point rockCenter = worldPos - up * (radius * dscale);
-        
-    // Create rotation basis vectors
-    Point right, forward;
-    if (fabs(up.z) < 0.9)
-        right = Point(up.y, -up.x, 0).normalize();
-    else
-        right = Point(0, up.z, -up.y).normalize();
-    
-    forward = Point(up.y * right.z - up.z * right.y,
-                    up.z * right.x - up.x * right.z,
-                    up.x * right.y - up.y * right.x);
-    
-    // Rotate and scale vertex
-    Point rotated = Point(
-        rockLocalPos.x * right.x + rockLocalPos.y * forward.x + rockLocalPos.z * up.x,
-        rockLocalPos.x * right.y + rockLocalPos.y * forward.y + rockLocalPos.z * up.y,
-        rockLocalPos.x * right.z + rockLocalPos.y * forward.z + rockLocalPos.z * up.z);
-    
-    Point worldVertex = rockCenter + rotated * size;
-    outEyeVertex = worldVertex - xpoint;
-    
-    // Rotate normal
-    outRotatedNormal = rotateNormal(rockNormal, right, forward, up);
-}
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
@@ -812,7 +767,6 @@ void Rock3DObjMgr::render() {
     double t1 = 0, t2 = 0, t3 = 0, d0 = 0, d1 = 0;
 
     if (mesh_needs_rebuild) {
-        //std::cout << "Rock3DObjMgr::render Settings changed - invalidating" << endl;
         clear();
         rockCache.clear();
         freeLODTemplates();
@@ -834,7 +788,6 @@ void Rock3DObjMgr::render() {
             Rock3DData *s = data[i];
             Rock3DMgr *pmgr = (Rock3DMgr*) s->mgr;
 
-            Point eyePos = s->vertex - xpoint;
             double pts = floor(s->pts);
             int rval = s->rval;
             int instance = s->instance;
@@ -848,22 +801,26 @@ void Rock3DObjMgr::render() {
                 continue;
             }
 
+            // Precompute basis vectors once per rock - used by both paths
+            Point up, right, forward, rockEyeCenter;
+            double rockSize;
+
+            up = s->normal;
+            if (fabs(up.z) < 0.9)
+                right = Point(up.y, -up.x, 0).normalize();
+            else
+                right = Point(0, up.z, -up.y).normalize();
+            forward = Point(up.y * right.z - up.z * right.y,
+                            up.z * right.x - up.x * right.z,
+                            up.x * right.y - up.y * right.x);
+            rockSize = 2 * TheMap->radius * s->radius;
+            double dscale = Hscale * pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
+            rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
+
             if (resolution > Rock3DMgr::adaptThreshold && use_adaptive_grid) {
                 // ===== ADAPTIVE PATH =====
-       
-                // Compute rotation basis from terrain normal
-                Point up = s->normal;
-                Point right, forward;
-                if (fabs(up.z) < 0.9)
-                    right = Point(up.y, -up.x, 0).normalize();
-                else
-                    right = Point(0, up.z, -up.y).normalize();
 
-                forward = Point(up.y * right.z - up.z * right.y,
-                                up.z * right.x - up.x * right.z,
-                                up.x * right.y - up.y * right.x);
-
-                // Rotate camera into rock-local frame to match octree orientation
+                // rotatedCamera uses already-computed basis vectors
                 Point camOffset = TheScene->xpoint - s->vertex;
                 Point rotatedCamera = s->vertex + Point(
                     camOffset.dot(right),
@@ -874,32 +831,33 @@ void Rock3DObjMgr::render() {
                 double radius = s->radius * TheMap->radius;
                 Point rockCenter = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
-                double margin = 1 + Rock3DMgr::noiseFactor*isoNoiseAmpl;
+                double margin = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
 
                 // Build cache key with quantized view direction
                 Point viewDir = (rotatedCamera - rockCenter).normalize();
                 RockCacheKey cacheKey(s->vertex, s->instance, viewDir, 30.0);
 
-                std::vector<MCTriangle> mesh;
+                const std::vector<MCTriangle>* meshPtr = nullptr;
 
                 auto it = rockCache.find(cacheKey);
                 if (it != rockCache.end()) {
-                    // Cache hit - reuse mesh
-                    mesh = it->second.mesh;
-            #ifdef PRINT_ROCK_CACHE_STATS
+                    // Cache hit - use pointer, no copy
+                    meshPtr = &it->second.mesh;
+                #ifdef PRINT_ROCK_CACHE_STATS
                     std::cout << "Adaptive cache hit: pts=" << s->pts
-                              << " tris=" << mesh.size() << std::endl;
-            #endif
+                              << " tris=" << meshPtr->size() << std::endl;
+                #endif
                 } else {
                     // Cache miss - generate mesh
                     SurfaceFunction field = makeRockField(pmgr);
- 
                     d1 = clock();
-                    
+
                     MCObject rock;
                     rock.instanceId = s->instance;
                     rock.dataIndex = s->rval;
-                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,TheScene->wscale, Rock3DMgr::minPointsize, Rock3DMgr::maxDepth, margin);
+                    rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,
+                                             TheScene->wscale, Rock3DMgr::minPointsize,
+                                             Rock3DMgr::maxDepth, margin);
 
                     // Recalculate normals to match template path winding
                     for (auto& tri : rock.mesh) {
@@ -919,52 +877,51 @@ void Rock3DObjMgr::render() {
                         else
                             tri.faceNormal = Point(0, 1, 0);
                     }
+
                     TNode *tv = pmgr->vnoise;
-					TNode *tc = pmgr->color;
-					bool useVertexDisplacement = (tv != nullptr && tv->isEnabled() && isoNoiseAmpl > 0);
-					bool setVertexColor = (tc != nullptr && tc->isEnabled());
-					double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
+                    TNode *tc = pmgr->color;
+                    bool useVertexDisplacement = (tv != nullptr && tv->isEnabled() && isoNoiseAmpl > 0);
+                    bool setVertexColor = (tc != nullptr && tc->isEnabled());
+                    double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
 
-					if (useVertexDisplacement || setVertexColor) {
-						applyVertexAttributes(&rock, vertexNoiseAmpl, tv, tc);
-					}
-                    // Apply smooth normals if enabled (same option as template path)
-                    if (smooth()) 
-                         rock.generateSmoothNormals();
- 
-                    mesh = rock.mesh;
+                    if (useVertexDisplacement || setVertexColor) {
+                        applyVertexAttributes(&rock, vertexNoiseAmpl, tv, tc);
+                    }
 
-                    // Store in cache
+                    if (smooth())
+                        rock.generateSmoothNormals();
+
+                    // Move mesh into cache entry - no copy
                     RockCacheEntry entry;
-                    entry.mesh = mesh;
+                    entry.mesh = std::move(rock.mesh);
                     entry.instance = s->instance;
                     entry.seed = s->rval;
-                    rockCache[cacheKey] = entry;
+                    auto& cached = (rockCache[cacheKey] = std::move(entry));
+                    meshPtr = &cached.mesh;
 
-            #ifdef PRINT_ROCK_CACHE_STATS
+                #ifdef PRINT_ROCK_CACHE_STATS
                     std::cout << "Adaptive cache miss: pts=" << s->pts
-                              << " tris=" << mesh.size()
+                              << " tris=" << meshPtr->size()
                               << " time=" << (clock() - d1) * TS << "ms" << std::endl;
-            #endif
+                #endif
                 }
 
-                if (mesh.empty()) continue;
+                if (!meshPtr || meshPtr->empty()) continue;
 
-                // Add to adaptive batch (grouped by instance ID)
+                // Add to adaptive batch - iterates directly from cache, no copy
                 VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
-
-                for (const auto& tri : mesh) {
-                    addTriangleToBatch(batch, tri, s);
+                for (const auto& tri : *meshPtr) {
+                    addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
                 }
-                Rock3DMgr::setStats(resolution, mesh.size(), true);
+                Rock3DMgr::setStats(resolution, meshPtr->size(), true);
             }
             else {
-                // ===== TEMPLATE PATH (using helper function) =====               
+                // ===== TEMPLATE PATH =====
                 d1 = clock();
-                 
+
                 MCObject *templateSphere = getTemplateForLOD(s);
-                
+
                 if (!templateSphere || templateSphere->mesh.empty()) {
                     continue;
                 }
@@ -982,7 +939,7 @@ void Rock3DObjMgr::render() {
                 }
 
                 d1 = clock();
-                
+
                 // Record rock info
                 int vertexOffset = batch.vertices.size() / 3;
                 batch.rockOffsets.push_back(vertexOffset);
@@ -990,9 +947,8 @@ void Rock3DObjMgr::render() {
                 batch.rockDataIndices.push_back(i);
                 batch.rockInstanceIds.push_back(instance);
 
-                // Transform and add to batch using helper function (same as adaptive!)
                 for (const auto &tri : templateSphere->mesh) {
-                    addTriangleToBatch(batch, tri, s);
+                    addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
                 }
                 t3 += clock() - d1;
                 Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), false);
@@ -1001,17 +957,14 @@ void Rock3DObjMgr::render() {
         }
 
         d1 = clock();
-         
+
         // ===== Upload Template VBOs =====
         for (auto &pair : rockBatches) {
-            const BatchKey &key = pair.first;
-            VBOBatch &batch = pair.second;          
-            uploadBatchVBOs(batch);
+            uploadBatchVBOs(pair.second);
         }
         // ===== Upload Adaptive VBOs =====
         for (auto& pair : adaptiveBatches) {
-        	VBOBatch& batch = pair.second;
-        	uploadBatchVBOs(batch);
+            uploadBatchVBOs(pair.second);
         }
 
         t2 = (clock() - d1);
@@ -1026,28 +979,35 @@ void Rock3DObjMgr::render() {
     render_objects();
 }
 
-void Rock3DObjMgr::addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s) {
+void Rock3DObjMgr::addTriangleToBatch(
+    VBOBatch& batch, 
+    const MCTriangle& tri, 
+    Rock3DData* s,
+    // Precomputed per-rock values:
+    const Point& right, 
+    const Point& forward,
+    const Point& rockEyeCenter,
+    double rockSize)
+{
     for (int v = 0; v < 3; v++) {
-        Point eyeVertex, rotatedNormal;
-        
-        transformRockToSurface(
-            s,                  // Rock3DData*
-            tri.vertices[v],    // rock local position
-            tri.normal,         // rock normal
-            eyeVertex,          // output: transformed vertex
-            rotatedNormal       // output: rotated normal
+        // Transform using precomputed basis - no recomputation
+        Point rotated = Point(
+            tri.vertices[v].x * right.x  + tri.vertices[v].y * forward.x + tri.vertices[v].z * s->normal.x,
+            tri.vertices[v].x * right.y  + tri.vertices[v].y * forward.y + tri.vertices[v].z * s->normal.y,
+            tri.vertices[v].x * right.z  + tri.vertices[v].y * forward.z + tri.vertices[v].z * s->normal.z
         );
-        
-        // Add to batch arrays
+        Point eyeVertex = rockEyeCenter + rotated * rockSize;
+
+        Point rotatedNormal = rotateNormal(tri.normal, right, forward, s->normal);
+
         batch.vertices.push_back(eyeVertex.x);
         batch.vertices.push_back(eyeVertex.y);
         batch.vertices.push_back(eyeVertex.z);
-        
+
         batch.normals.push_back(rotatedNormal.x);
         batch.normals.push_back(rotatedNormal.y);
         batch.normals.push_back(rotatedNormal.z);
-        
-        // Face normal (with slope for texturing)
+
         batch.faceNormals.push_back(tri.faceNormal.x);
         batch.faceNormals.push_back(tri.faceNormal.y);
         batch.faceNormals.push_back(tri.faceNormal.z);
