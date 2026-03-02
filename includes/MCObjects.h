@@ -17,6 +17,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+#define USE_PERSISTENT_TREE
+
 //=============================================================================
 // Core data structures
 //=============================================================================
@@ -38,15 +40,20 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 
 class MCGenerator {
 public:
+    static int tm_field_calls;
+#ifndef USE_PERSISTENT_TREE
+    static int ad_field_calls;
+    static int frame_field_calls;  // reset each frame
+
     static int cells;
-    // Stats for checkSurfaceIntersection
+     // Stats for checkSurfaceIntersection
     static int csi_calls;
     static int csi_early_exit;
     static int csi_edge_exits;
     static int csi_false;
     static long long csi_field_calls;
     static int csi_by_depth[32];
-    static int gm_field_calls;
+#endif
     double maxdepth;
 
     struct OctreeCell {
@@ -64,20 +71,7 @@ public:
         }
     };
 
-    void subdivideOctree(
-        SurfaceFunction field,
-        const OctreeCell& cell,
-        std::vector<OctreeCell>& leafCells,
-        const Point& rockCenter,
-        double rockRadius,
-        const Point& cameraPos,
-        double wscale,
-        double maxDepth,
-        double minPixels);
-
-    bool checkSurfaceIntersection(SurfaceFunction field,
-                                  const OctreeCell& cell,
-                                  double isolevel);
+ 
     Point interpolateVertex(const Point& p1, const Point& p2,
                             double val1, double val2, double isolevel);
     void addTriangle(const Point& v1, const Point& v2, const Point& v3,
@@ -85,11 +79,26 @@ public:
     void generateTrianglesForCube(int cubeIndex, const Point vertList[12],
                                   std::vector<MCTriangle>& triangles);
 
+    
     std::vector<MCTriangle> generateMesh(
         SurfaceFunction field,
         const Point& boundsMin, const Point& boundsMax,
         int resolution, double isolevel = 0.0);
+#ifndef USE_PERSISTENT_TREE
+    void subdivideOctree(
+         SurfaceFunction field,
+         const OctreeCell& cell,
+         std::vector<OctreeCell>& leafCells,
+         const Point& rockCenter,
+         double rockRadius,
+         const Point& cameraPos,
+         double wscale,
+         double maxDepth,
+         double minPixels);
 
+    bool checkSurfaceIntersection(SurfaceFunction field,
+                                  const OctreeCell& cell,
+                                  double isolevel);
     std::vector<MCTriangle> generateAdaptiveMesh(
         SurfaceFunction field,
         const Point& rockCenter,
@@ -99,6 +108,8 @@ public:
         double minPixels = 50,
         double maxDepth = 8,
         double margin = 1);
+#endif
+    
 };
 
 //=============================================================================
@@ -205,11 +216,6 @@ public:
     double size;
     int depth;
 
-    // Cached field value at cell center — evaluated once, never again.
-    // Key advantage over OctreeCell which re-evaluates every frame.
-    double fieldValue;
-    bool fieldEvaluated;
-
     // Corner field values — shared with adjacent siblings on split.
     // Avoids re-evaluation when neighbors split or merge.
     double cornerValues[8];
@@ -223,6 +229,7 @@ public:
     // Generated mesh — only valid for leaf nodes
     std::vector<MCTriangle> mesh;
     bool meshValid;
+    bool attributesApplied;  // ← add this
 
     // Per-frame LOD state — updated each adapt pass
     bool inFrustum;
@@ -251,12 +258,11 @@ public:
                const Point& cameraPos, double wscale,
                double minPixels, int maxDepth);
 
-    // Evaluate and cache field value at center (lazy)
-    double evalField(SurfaceFunction field);
-
-    // Surface intersection using cached corner values where available
-    bool checkSurface(SurfaceFunction field, double isolevel = 0.0);
-
+     // Surface intersection using cached corner values where available
+    bool checkSurface(SurfaceFunction field,
+                      const Point& objCenter, double objRadius,
+                      int maxDepth,
+                      double isolevel = 0.0);
     // Generate marching cubes mesh for this leaf cell
     void generateMesh(SurfaceFunction field,
                       const Point& objCenter, double objRadius);
@@ -331,8 +337,10 @@ public:
     std::map<uint64_t, MCObjTree*> trees;
 
     int maxTrees;   // LRU eviction limit
+    static int field_calls;
+    static int frame_field_calls;  // reset each frame
 
-    MCObjTreeMgr(int maxTrees = 50);
+    MCObjTreeMgr(int maxTrees = 200);
     ~MCObjTreeMgr();
 
     // Get existing tree or create new one for this object
@@ -348,7 +356,7 @@ public:
 
     void clear();
 
-private:
+//private:
     // Generate a stable 64-bit key from position + instance
     uint64_t makeKey(const Point& center, int instance, int rval) const;
 };

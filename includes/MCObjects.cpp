@@ -21,7 +21,9 @@ extern const int MC_triTable[256][16];
 //=============================================================================
 // MCGenerator implementation
 //=============================================================================
-
+#ifndef USE_PERSISTENT_TREE
+int MCGenerator::ad_field_calls=0;
+int MCGenerator::frame_field_calls=0;  // reset each frame
 int MCGenerator::cells=0;
 int MCGenerator::csi_calls = 0;
 int MCGenerator::csi_early_exit = 0;
@@ -29,7 +31,8 @@ int MCGenerator::csi_edge_exits = 0;
 int MCGenerator::csi_false = 0;
 long long MCGenerator::csi_field_calls = 0;
 int MCGenerator::csi_by_depth[32] = {};  // ← add here
-int MCGenerator::gm_field_calls=0;
+#endif
+int MCGenerator::tm_field_calls=0;
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
@@ -119,7 +122,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 double pz = boundsMin.z + z * stepZ;
                 int idx = x * gridSize * gridSize + y * gridSize + z;
                 cornerGrid[idx] = field(px, py, pz);
-				gm_field_calls++;  // ← add this
+				tm_field_calls++;
 
             }
         }
@@ -192,7 +195,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 }
 
 // Add these method implementations:
-
+#ifndef USE_PERSISTENT_TREE
 std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     SurfaceFunction field,
     const Point& rockCenter,
@@ -221,7 +224,6 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
 
     // Reset stats before subdivideOctree
     csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
-    csi_field_calls = 0;
 #endif
 
     subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
@@ -388,6 +390,7 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     double minVal = 1e10, maxVal = -1e10;
     for (int i = 0; i < 8; i++) {
         values[i] = field(corners[i].x, corners[i].y, corners[i].z);
+        MCGenerator::frame_field_calls++;
         csi_field_calls++;
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
@@ -420,6 +423,7 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
             Point p = p1 + (p2 - p1) * t;
             double v = field(p.x, p.y, p.z);
             csi_field_calls++;
+            MCGenerator::frame_field_calls++;
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
             if (minVal <= isolevel && maxVal >= isolevel) {
@@ -432,6 +436,7 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     // Check center
     double centerVal = field(cx, cy, cz);
     csi_field_calls++;
+    MCGenerator::frame_field_calls++;
     if (centerVal < minVal) minVal = centerVal;
     if (centerVal > maxVal) maxVal = centerVal;
 
@@ -443,6 +448,7 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     csi_false++;
     return false;
 }
+#endif
 
 //=============================================================================
 // MCObject implementation
@@ -687,7 +693,7 @@ void MCObject::generateSphereNormals()
         tri.normal = (triCenter - worldPosition).normalize();
     }
 }
-
+#ifndef USE_PERSISTENT_TREE
 const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
     SurfaceFunction field,
     const Point& rockCenter,
@@ -718,6 +724,7 @@ const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
     
     return mesh;
 }
+#endif
 //=============================================================================
 // MCObjectManager implementation
 //=============================================================================
@@ -847,9 +854,8 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
 MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),
-      fieldValue(0), fieldEvaluated(false),
       surfaceChecked(false), surfacePresent(false),
-      meshValid(false),
+      meshValid(false),attributesApplied(false),
       inFrustum(false), projectedSize(0)
 {
     memset(children,          0, sizeof(children));
@@ -871,14 +877,17 @@ void MCObjNode::collapse()
             children[i] = nullptr;
         }
     }
-    meshValid = false;
+    meshValid         = false;
+    attributesApplied = false;  // ← add
+    mesh.clear();
+    mesh.shrink_to_fit();
 }
 
 void MCObjNode::invalidate()
 {
-    fieldEvaluated  = false;
     surfaceChecked  = false;
     meshValid       = false;
+    attributesApplied = false;  // ← add
     memset(cornersEvaluated, false, sizeof(cornersEvaluated));
     mesh.clear();
     mesh.shrink_to_fit();
@@ -917,14 +926,6 @@ void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
     }
 }
 
-double MCObjNode::evalField(SurfaceFunction field)
-{
-    if (!fieldEvaluated) {
-        fieldValue     = field(center.x, center.y, center.z);
-        fieldEvaluated = true;
-    }
-    return fieldValue;
-}
 
 void MCObjNode::split()
 {
@@ -973,18 +974,20 @@ void MCObjNode::split()
     mesh.shrink_to_fit();
 }
 
-bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
+bool MCObjNode::checkSurface(SurfaceFunction field,
+                              const Point& objCenter, double objRadius,int maxDepth,
+                              double isolevel)
 {
-    // Return cached result if available
     if (surfaceChecked)
         return surfacePresent;
 
     surfaceChecked = true;
 
-    double h  = size / 2.0;
-    double cx = center.x, cy = center.y, cz = center.z;
-
-    // Corner positions — standard MC ordering
+    // Convert world-space cell to local space — field expects local coords
+    Point localCenter = (center - objCenter) / objRadius;
+    double localSize  = size / objRadius;
+    double h = localSize / 2.0;
+    double cx = localCenter.x, cy = localCenter.y, cz = localCenter.z;
     Point corners[8] = {
         Point(cx-h, cy-h, cz-h), Point(cx+h, cy-h, cz-h),
         Point(cx+h, cy+h, cz-h), Point(cx-h, cy+h, cz-h),
@@ -992,7 +995,6 @@ bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
         Point(cx+h, cy+h, cz+h), Point(cx-h, cy+h, cz+h)
     };
 
-    // Evaluate corners — use cached values where available
     double values[8];
     double minVal =  1e10;
     double maxVal = -1e10;
@@ -1000,6 +1002,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
     for (int i = 0; i < 8; i++) {
         if (!cornersEvaluated[i]) {
             cornerValues[i]     = field(corners[i].x, corners[i].y, corners[i].z);
+            MCObjTreeMgr::frame_field_calls++;
             cornersEvaluated[i] = true;
         }
         values[i] = cornerValues[i];
@@ -1007,21 +1010,20 @@ bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
         maxVal = std::max(maxVal, values[i]);
     }
 
-    // Surface straddles isolevel — definite intersection
     if (minVal <= isolevel && maxVal >= isolevel) {
         surfacePresent = true;
         return true;
     }
 
-    // Edge bisection — same depth-dependent step count as MCGenerator
     static const int edgePairs[12][2] = {
         {0,1},{1,2},{2,3},{3,0},
         {4,5},{5,6},{6,7},{7,4},
         {0,4},{1,5},{2,6},{3,7}
     };
 
-    // Fewer bisection steps at deeper levels (smaller cells)
-    int BISECT_STEPS = std::max(8 - depth, 1);
+    double depthFraction = depth / maxDepth;
+     // More bisection steps near root (large cells), fewer near leaves (small cells)
+     int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
 
     for (int e = 0; e < 12; e++) {
         Point p1 = corners[edgePairs[e][0]];
@@ -1030,6 +1032,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
             double t = s / (double)BISECT_STEPS;
             Point  p = p1 + (p2 - p1) * t;
             double v = field(p.x, p.y, p.z);
+            MCObjTreeMgr::frame_field_calls++;
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
             if (minVal <= isolevel && maxVal >= isolevel) {
@@ -1039,8 +1042,10 @@ bool MCObjNode::checkSurface(SurfaceFunction field, double isolevel)
         }
     }
 
-    // Check center (also caches it)
-    double cv = evalField(field);
+    // Check local center
+    Point localCenterPt = (center - objCenter) / objRadius;
+    double cv = field(localCenterPt.x, localCenterPt.y, localCenterPt.z);
+    MCObjTreeMgr::frame_field_calls++;
     minVal = std::min(minVal, cv);
     maxVal = std::max(maxVal, cv);
     if (minVal <= isolevel && maxVal >= isolevel) {
@@ -1057,11 +1062,9 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 {
     if (meshValid) return;
 
-    // Convert world-space cell bounds to local space for MCGenerator
     double h = size / 2.0;
     Point worldMin(center.x - h, center.y - h, center.z - h);
     Point worldMax(center.x + h, center.y + h, center.z + h);
-
     Point localMin = (worldMin - objCenter) / objRadius;
     Point localMax = (worldMax - objCenter) / objRadius;
 
@@ -1069,7 +1072,6 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     mesh = gen.generateMesh(field, localMin, localMax, 1);
     meshValid = true;
 }
-
 void MCObjNode::adapt(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
                       const Point& cameraPos, double wscale,
@@ -1103,14 +1105,15 @@ void MCObjNode::adapt(SurfaceFunction field,
             collapse();
 
         // Generate mesh if not already valid
-        if (!meshValid)
+        if (!meshValid){
             generateMesh(field, objCenter, objRadius);
+        }
 
         return;
     }
 
     // ── Need to subdivide — check surface first (uses cache) ────────────
-    if (!checkSurface(field)) {
+    if (!checkSurface(field, objCenter, objRadius, maxDepth)) {
         // No surface here — prune entire subtree
         collapse();
         return;
@@ -1170,7 +1173,7 @@ void MCObjTree::init(const Point& c, double r, double m,
 
     root         = new MCObjNode();
     root->center = center;
-    root->size   = radius * 2.0 * margin;  // full diameter
+    root->size   = radius * margin;  // full diameter
     root->depth  = 0;
 
     valid = true;
@@ -1205,7 +1208,8 @@ void MCObjTree::visit_all(void (MCObjNode::*func)())
 //=============================================================================
 // MCObjTreeMgr implementation
 //=============================================================================
-
+int MCObjTreeMgr::field_calls=0;
+int MCObjTreeMgr::frame_field_calls;  // reset each frame
 MCObjTreeMgr::MCObjTreeMgr(int max)
     : maxTrees(max)
 {}
@@ -1221,30 +1225,34 @@ void MCObjTreeMgr::clear()
         delete pair.second;
     }
     trees.clear();
+ 
 }
 
 void MCObjTreeMgr::invalidateAll()
 {
     for (auto& pair : trees)
         pair.second->invalidate();
+    
+    field_calls=0;
 }
 
 uint64_t MCObjTreeMgr::makeKey(const Point& center, int instance, int rval) const
 {
-    // Quantize position to ~1 unit grid to form stable key.
-    // Combine with instance and rval using cheap bit mixing.
-    int64_t ix = (int64_t)round(center.x);
-    int64_t iy = (int64_t)round(center.y);
-    int64_t iz = (int64_t)round(center.z);
+	// Snap to 1/1000th of internal unit — preserves distinctness for small coords
+	    const double snap = 1e-10;
+	    int64_t ix = (int64_t)round(center.x / snap);
+	    int64_t iy = (int64_t)round(center.y / snap);
+	    int64_t iz = (int64_t)round(center.z / snap);
 
-    uint64_t h = 0;
-    h ^= (uint64_t)(ix * 2654435761ULL);
-    h ^= (uint64_t)(iy * 2246822519ULL);
-    h ^= (uint64_t)(iz * 3266489917ULL);
-    h ^= (uint64_t)(instance * 668265263ULL);
-    h ^= (uint64_t)(rval     * 374761393ULL);
-    return h;
-}
+	    uint64_t h = 14695981039346656037ULL;
+	    auto mix = [&](uint64_t v) { h ^= v; h *= 1099511628211ULL; };
+
+	    mix((uint64_t)ix);
+	    mix((uint64_t)iy);
+	    mix((uint64_t)iz);
+	    mix((uint64_t)(uint32_t)instance);
+	    mix((uint64_t)(uint32_t)rval);
+	    return h;}
 
 MCObjTree* MCObjTreeMgr::getOrCreate(const Point& center, double radius,
                                       double margin, SurfaceFunction field,
@@ -1254,8 +1262,13 @@ MCObjTree* MCObjTreeMgr::getOrCreate(const Point& center, double radius,
 
     auto it = trees.find(key);
     if (it != trees.end()) {
-        it->second->framesSinceUsed = 0;
-        return it->second;
+        MCObjTree* tree = it->second;
+        // Reinitialize if invalidated (e.g. after mesh_needs_rebuild)
+        if (!tree->valid || !tree->root)
+            tree->init(center, radius, margin, field, instance, rval);
+        else
+            tree->framesSinceUsed = 0;
+        return tree;
     }
 
     // Evict before adding if at capacity

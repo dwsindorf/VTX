@@ -98,7 +98,12 @@ class Rock3DObjMgr : public PlaceObjMgr
 	        vboVertices = vboNormals = vboFaceNormals = vboColors = vboTemplatePos = 0;
 	    }
 	};
-
+#ifdef USE_PERSISTENT_TREE
+    static MCObjTreeMgr rockTreeMgr;
+    void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
+    void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
+                                 Rock3DMgr* pmgr, double isoNoiseAmpl);
+#endif
 	static std::map<int, VBOBatch> adaptiveBatches;  // Keyed by instance ID
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
@@ -191,7 +196,7 @@ class Rock3DData : public PlaceData
 {
 public:
 	Rock3DData(Placement *s) : PlaceData(s){}
-    double value() { return instance;}
+    double value();
 };
 
 class Rock3D : public PlaceObj
@@ -213,7 +218,7 @@ public:
 	TNode   *vnoise;
 	TNode   *rnoise;
 	TNode   *color;
-	static int stats[MAX_ROCK_STATS][4];
+	static int stats[MAX_ROCK_STATS][5];
 	static void clearStats();
 	static void printStats();
 	static void setStats(int,int,bool);

@@ -34,7 +34,8 @@ static int nbumps=0;
 static bool cvalid;
 
 #define PRINT_STATS
-#define PRINT_LOD_STATS
+//#define PRINT_ROCK_CACHE_STATS
+//#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_GEN
@@ -215,12 +216,12 @@ static Point rotateNormal(const Point& normal, const Point& right, const Point& 
 //************************************************************
 // Rock3DMgr class
 //************************************************************
-int Rock3DMgr::stats[MAX_ROCK_STATS][4];
+int Rock3DMgr::stats[MAX_ROCK_STATS][5];
 double Rock3DMgr::resScale=1;
-double Rock3DMgr::noiseFactor=4;
+double Rock3DMgr::noiseFactor=5;
 double Rock3DMgr::maxDepth=10;
 double Rock3DMgr::minPointsize=1;
-double Rock3DMgr::adaptThreshold=200;
+double Rock3DMgr::adaptThreshold=100;
 
 Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
 {
@@ -262,14 +263,16 @@ PlaceData *Rock3DMgr::make(Placement*s)
 
 void Rock3DMgr::clearStats(){
 	for(int i=0;i<MAX_ROCK_STATS;i++){
-		stats[i][0]=stats[i][1]=stats[i][3]=0;
+		stats[i][0]=stats[i][1]=stats[i][3]=stats[i][4]=0;
 	}
 }
 
 void Rock3DMgr::printStats(){
     int rcnt = 0;
     int tcnt = 0;
-    int kcnt = 0;
+    int kcnt = 0; // template keys
+    int acnt = 0; // adapt rocks
+    int lcnt = 0; // template rocks
     std::cout << "------- 3D Rocks stats --------" << std::endl;
 #ifdef PRINT_LOD_STATS
     int lod_calls=(Rock3DObjMgr::lodCacheHits+Rock3DObjMgr::lodCacheMisses);
@@ -279,29 +282,45 @@ void Rock3DMgr::printStats(){
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
 
     	int tres=(int)(kRockLodTable[i].res*resScale+0.1);
-    	if(stats[i][3]>0){
+    	if(stats[i][3]>0){ // adaptive
 #ifdef PRINT_LOD_STATS
         	sprintf(buff,"resolution:%-3d  adaptive:%3d instances:%3d triangles:%4d K",tres,stats[i][3],stats[i][0],stats[i][1]/1000);
             cout<<buff<< std::endl;
 #endif
             rcnt  += stats[i][0];
             tcnt  += stats[i][1];
+            acnt  += stats[i][3];
         	break;
     	}
-    	else{
+    	else{ // template
 #ifdef PRINT_LOD_STATS
     		sprintf(buff,"resolution:%-3d templates:%3d instances:%3d triangles:%3d K", tres,stats[i][2],stats[i][0],stats[i][1]/1000);
         	cout<<buff<< std::endl;
 #endif
             rcnt  += stats[i][0];
             tcnt  += stats[i][1];
+            kcnt  += stats[i][2];
+            lcnt  += stats[i][4];
     	}
 
     }
     std::cout << "Totals rocks:"    << rcnt
-              << " triangles:"      << tcnt/1000<<" K"
+ 			  <<" adaptive:"<<acnt
+#ifdef USE_PERSISTENT_TREE		  
+			  <<" field calls:"<<MCObjTreeMgr::field_calls
+			  <<"["<<MCObjTreeMgr::frame_field_calls<<"]"
+
+#else
+			  <<" field calls:"<<MCGenerator::ad_field_calls
+			  <<"["<<MCGenerator::frame_field_calls<<"]"
+#endif
+			  <<" template:"<<lcnt
+   		      <<" keys:"<<kcnt
+              <<" triangles:"<< tcnt/1000<<" K"
+			  <<" field calls:"<<MCGenerator::tm_field_calls
               << std::endl;
 }
+
 
 void Rock3DMgr::setStats(int res, int tris,bool add){
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
@@ -338,7 +357,7 @@ int Rock3DMgr::getLODResolution(double pts) {
  	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
- 	
+
 	switch(TheScene->generate_quality){
 	case DRAFT:
 		resScale*=0.75;
@@ -350,22 +369,24 @@ int Rock3DMgr::getLODResolution(double pts) {
 	case NORMAL:
 		resScale*=1;
 		minPointsize=2;
-		maxDepth=9;
-		adaptThreshold=200;
+		maxDepth=10;
+		adaptThreshold=100;
  		break;
 	case HIGH:
 		resScale*=1.25;
 		minPointsize=1.25;
 		maxDepth=11;
-		adaptThreshold=250;
+		adaptThreshold=120;
  		break;
 	case BEST:
 		resScale*=1.5;
 		minPointsize=1;
 		maxDepth=12;
-		adaptThreshold=300;
+		adaptThreshold=150;
  		break; 		
  	}
+	
+ 	//cout<<res<<" "<<resScale<<" "<<adaptThreshold<<endl;
  	int newres=(int)(res*resScale);
 
 	return newres;
@@ -384,6 +405,9 @@ std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::adaptiveBatches;  // Keyed by instance ID
 
+#ifdef USE_PERSISTENT_TREE
+MCObjTreeMgr Rock3DObjMgr::rockTreeMgr(100);  // max 100 persistent trees
+#endif
 
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
@@ -453,12 +477,6 @@ bool Rock3DObjMgr::setProgram() {
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
 	
-	//double tod=orb->tod;
-	
-	//double night_lighting=1;
-	//if(!TheScene->changed_file())
-	//	night_lighting=calculateNightLighting(tod);
-	//	cout<<"tod:"<<tod<<" night_lighting:"<<night_lighting<<endl;
     Point xp=orb->point;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient", ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
@@ -486,6 +504,11 @@ void Rock3DObjMgr::free() {
 bool Rock3DObjMgr::smooth(){
 	return Render.avenorms() && test8;
 }
+
+double Rock3DData::value() { 
+	//return dist;
+	return instance;
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::collect() generate array of placements (data)
 //-------------------------------------------------------------
@@ -496,9 +519,7 @@ void Rock3DObjMgr::collect() {
         obj->mgr()->collect(data);
     }
     if (data.size) // now sorted by instance instead of distance
-        data.sort();
-//    for(int i=0;i<data.size;i++)
-//    	cout<<data[i]->instance;
+       data.sort();
 }
 
 void Rock3DObjMgr::render_zvals(){
@@ -577,7 +598,6 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
     double margin = 1 + Rock3DMgr::noiseFactor*isoNoiseAmpl;
-    
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*y;
@@ -586,7 +606,7 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
         double baseEllipsoid = ellipsoidDist - 1.0;
         
         if (useNoisyIsoSurface && tr && tr->isEnabled()) {
-            Point np(x, y, z);
+             Point np(x, y, z);
             TheNoise.set(np);
             SINIT;
             tr->eval();
@@ -597,6 +617,47 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
         return baseEllipsoid;
     };
 }
+#ifdef USE_PERSISTENT_TREE
+
+// Recalculate normals to match template path winding
+// Same logic as the old adaptive path — extracted to avoid duplication
+void Rock3DObjMgr::fixupAdaptiveNormals(std::vector<MCTriangle>& mesh)
+{
+    for (auto& tri : mesh) {
+        Point edge1 = tri.vertices[1] - tri.vertices[0];
+        Point edge2 = tri.vertices[2] - tri.vertices[0];
+        Point normal = edge2.cross(edge1);
+        tri.normal = (normal.length() > 1e-30) ? normal.normalize()
+                                               : Point(0, 1, 0);
+
+        Point edge3 = tri.templatePos[1] - tri.templatePos[0];
+        Point edge4 = tri.templatePos[2] - tri.templatePos[0];
+        Point faceNormal = edge4.cross(edge3);
+        tri.faceNormal = (faceNormal.length() > 1e-30) ? faceNormal.normalize()
+                                                        : Point(0, 1, 0);
+    }
+}
+
+// Apply vertex displacement and color — works on a flat mesh vector
+// extracted so it can be called per-leaf or on the full collected mesh
+void Rock3DObjMgr::applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
+                                            Rock3DMgr* pmgr, double isoNoiseAmpl)
+{
+    TNode *tv = pmgr->vnoise;
+    TNode *tc = pmgr->color;
+    bool useVertexDisplacement = (tv && tv->isEnabled() && isoNoiseAmpl > 0);
+    bool setVertexColor        = (tc && tc->isEnabled());
+    if (!useVertexDisplacement && !setVertexColor) return;
+
+    double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
+
+    // applyVertexAttributes works on MCObject — wrap mesh temporarily
+    MCObject tmp;
+    tmp.mesh = mesh;  // copy in
+    applyVertexAttributes(&tmp, vertexNoiseAmpl, tv, tc);
+    mesh = std::move(tmp.mesh);  // move back
+}
+#endif // USE_PERSISTENT_TREE
 
 MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     Rock3DMgr *pmgr = (Rock3DMgr*)s->mgr;
@@ -623,7 +684,10 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     int resolution = Rock3DMgr::getLODResolution(pts);
     if(resolution==0)
 	   return 0;
-    
+ 
+	int index = getLodIndex(resolution, Rock3DMgr::resScale);	   
+
+    Rock3DMgr::stats[index][4]++; // keys
     // Create cache key including smoothing state
     //bool smooth = Render.avenorms() && test8;
     
@@ -654,22 +718,12 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     Point boundsMin(-0.5 * margin, -0.5 * margin, -0.5 * margin);
     Point boundsMax(0.5 * margin, 0.5 * margin, 0.5 * margin);    
     
-    MCGenerator::gm_field_calls = 0;
     double gm_t_start = clock();
 
     templateSphere->mesh = generator.generateMesh(
         field, boundsMin, boundsMax,
         resolution, 0.0  // CORRECT - single resolution
     );
-    
-    double gm_time = (clock() - gm_t_start) * 1000.0 / CLOCKS_PER_SEC;
-    if(resolution>=Rock3DMgr::adaptThreshold)
-    std::cout << "Template generateMesh:"
-              << " res=" << resolution
-              << " field_calls=" << MCGenerator::gm_field_calls
-              << " tris=" << templateSphere->mesh.size()
-              << " time=" << gm_time << "ms"
-              << std::endl;
     
     if (use_templates && templateSphere->mesh.empty()) {
         delete templateSphere;
@@ -719,9 +773,8 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 				  << " instance:" << instance 
 				  << " Triangles:" << templateSphere->mesh.size() << std::endl;
 #endif 
-		int index = getLodIndex(resolution, Rock3DMgr::resScale);	   
 		if (index >= 0)
-			 Rock3DMgr::stats[index][2]++;
+			 Rock3DMgr::stats[index][2]++; // keys
 	} 
     return templateSphere;
 }
@@ -742,6 +795,11 @@ void Rock3DObjMgr::clear(){
         pair.second.clear();
     }
     adaptiveBatches.clear();
+#ifdef USE_PERSISTENT_TREE
+    MCObjTreeMgr::frame_field_calls = 0;
+#else
+    MCGenerator::frame_field_calls = 0;
+#endif
 }
 
 //-------------------------------------------------------------
@@ -771,6 +829,12 @@ void Rock3DObjMgr::render() {
         rockCache.clear();
         freeLODTemplates();
         Rock3DMgr::clearStats();
+#ifdef USE_PERSISTENT_TREE
+        rockTreeMgr.invalidateAll();  // field params changed — rebuild all trees
+        MCObjTreeMgr::field_calls = 0;
+#else
+        MCGenerator::ad_field_calls=0;
+#endif
     }
 
     if (placement_needs_update || mesh_needs_rebuild) {
@@ -817,9 +881,8 @@ void Rock3DObjMgr::render() {
             double dscale = Hscale * pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
-            if (resolution > Rock3DMgr::adaptThreshold && use_adaptive_grid) {
-                // ===== ADAPTIVE PATH =====
-
+            if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
+            	//printf("ADAPTIVE: pts=%.1f res=%d\n", pts, resolution);
                 // rotatedCamera uses already-computed basis vectors
                 Point camOffset = TheScene->xpoint - s->vertex;
                 Point rotatedCamera = s->vertex + Point(
@@ -828,12 +891,66 @@ void Rock3DObjMgr::render() {
                     camOffset.dot(up)
                 );
 
-                double radius = s->radius * TheMap->radius;
-                Point rockCenter = s->vertex;
+                double radius       = s->radius * TheMap->radius;
+                Point  rockCenter   = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
-                double margin = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
+                double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
 
-                // Build cache key with quantized view direction
+			#ifdef USE_PERSISTENT_TREE
+                // ===== PERSISTENT TREE ADAPTIVE PATH =====
+                d1 = clock();
+
+                SurfaceFunction field = makeRockField(pmgr);
+
+                MCObjTree* tree = rockTreeMgr.getOrCreate(
+                    rockCenter, radius, margin, field, s->instance, s->rval);
+
+                // Adapt tree to current viewpoint — incremental, reuses cached values
+                tree->adapt(rotatedCamera, TheScene->wscale,
+                            Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth);
+
+                // Collect leaf nodes that have surface
+                std::vector<MCObjNode*> leaves;
+                tree->collectLeaves(leaves);
+
+                // Assemble mesh from leaves — each leaf generates/caches its own triangles
+                // Only leaves whose meshValid==false needed regeneration this frame
+                int newTris = 0;
+                VBOBatch& batch = adaptiveBatches[instance];
+                batch.instanceId = instance;
+
+                for (MCObjNode* leaf : leaves) {
+					if (leaf->mesh.empty()) continue;
+
+					if (!leaf->attributesApplied) {
+						fixupAdaptiveNormals(leaf->mesh);
+						applyAdaptiveAttributes(leaf->mesh, pmgr, isoNoiseAmpl);
+						if (smooth()) {
+							MCObject tmp;
+							tmp.mesh = leaf->mesh;
+							tmp.generateSmoothNormals();
+							leaf->mesh = std::move(tmp.mesh);
+						}
+						leaf->attributesApplied = true;
+						newTris += leaf->mesh.size();
+					}
+
+					for (const auto& tri : leaf->mesh) {
+						addTriangleToBatch(batch, tri, s, right, forward,
+										   rockEyeCenter, rockSize);
+					}
+				}
+                Rock3DMgr::setStats(resolution, batch.vertices.size() / (3*3), true);
+
+            #ifdef PRINT_ROCK_CACHE_STATS
+                std::cout << "Persistent tree: leaves=" << leaves.size()
+                          << " newTris=" << newTris
+                          << " time=" << (clock() - d1) * TS << "ms" << std::endl;
+            #endif
+
+            #else
+                // ===== ORIGINAL ADAPTIVE PATH (rockCache based) =====
+
                 Point viewDir = (rotatedCamera - rockCenter).normalize();
                 RockCacheKey cacheKey(s->vertex, s->instance, viewDir, 30.0);
 
@@ -841,63 +958,51 @@ void Rock3DObjMgr::render() {
 
                 auto it = rockCache.find(cacheKey);
                 if (it != rockCache.end()) {
-                    // Cache hit - use pointer, no copy
                     meshPtr = &it->second.mesh;
                 #ifdef PRINT_ROCK_CACHE_STATS
                     std::cout << "Adaptive cache hit: pts=" << s->pts
                               << " tris=" << meshPtr->size() << std::endl;
                 #endif
                 } else {
-                    // Cache miss - generate mesh
                     SurfaceFunction field = makeRockField(pmgr);
                     d1 = clock();
 
                     MCObject rock;
                     rock.instanceId = s->instance;
-                    rock.dataIndex = s->rval;
+                    rock.dataIndex  = s->rval;
                     rock.generateMeshAdaptive(field, rockCenter, radius, rotatedCamera,
-                                             TheScene->wscale, Rock3DMgr::minPointsize,
-                                             Rock3DMgr::maxDepth, margin);
+                                              TheScene->wscale, Rock3DMgr::minPointsize,
+                                              Rock3DMgr::maxDepth, margin);
 
-                    // Recalculate normals to match template path winding
                     for (auto& tri : rock.mesh) {
                         Point edge1 = tri.vertices[1] - tri.vertices[0];
                         Point edge2 = tri.vertices[2] - tri.vertices[0];
                         Point normal = edge2.cross(edge1);
-                        if (normal.length() > 1e-30)
-                            tri.normal = normal.normalize();
-                        else
-                            tri.normal = Point(0, 1, 0);
-
+                        tri.normal = (normal.length() > 1e-30) ? normal.normalize()
+                                                               : Point(0, 1, 0);
                         Point edge3 = tri.templatePos[1] - tri.templatePos[0];
                         Point edge4 = tri.templatePos[2] - tri.templatePos[0];
                         Point faceNormal = edge4.cross(edge3);
-                        if (faceNormal.length() > 1e-30)
-                            tri.faceNormal = faceNormal.normalize();
-                        else
-                            tri.faceNormal = Point(0, 1, 0);
+                        tri.faceNormal = (faceNormal.length() > 1e-30) ? faceNormal.normalize()
+                                                                        : Point(0, 1, 0);
                     }
 
                     TNode *tv = pmgr->vnoise;
                     TNode *tc = pmgr->color;
-                    bool useVertexDisplacement = (tv != nullptr && tv->isEnabled() && isoNoiseAmpl > 0);
-                    bool setVertexColor = (tc != nullptr && tc->isEnabled());
+                    bool useVertexDisplacement = (tv && tv->isEnabled() && isoNoiseAmpl > 0);
+                    bool setVertexColor        = (tc && tc->isEnabled());
                     double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
-
-                    if (useVertexDisplacement || setVertexColor) {
+                    if (useVertexDisplacement || setVertexColor)
                         applyVertexAttributes(&rock, vertexNoiseAmpl, tv, tc);
-                    }
-
                     if (smooth())
                         rock.generateSmoothNormals();
 
-                    // Move mesh into cache entry - no copy
                     RockCacheEntry entry;
-                    entry.mesh = std::move(rock.mesh);
+                    entry.mesh     = std::move(rock.mesh);
                     entry.instance = s->instance;
-                    entry.seed = s->rval;
-                    auto& cached = (rockCache[cacheKey] = std::move(entry));
-                    meshPtr = &cached.mesh;
+                    entry.seed     = s->rval;
+                    auto& cached   = (rockCache[cacheKey] = std::move(entry));
+                    meshPtr        = &cached.mesh;
 
                 #ifdef PRINT_ROCK_CACHE_STATS
                     std::cout << "Adaptive cache miss: pts=" << s->pts
@@ -908,16 +1013,19 @@ void Rock3DObjMgr::render() {
 
                 if (!meshPtr || meshPtr->empty()) continue;
 
-                // Add to adaptive batch - iterates directly from cache, no copy
                 VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
                 for (const auto& tri : *meshPtr) {
-                    addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
+                    addTriangleToBatch(batch, tri, s, right, forward,
+                                       rockEyeCenter, rockSize);
                 }
                 Rock3DMgr::setStats(resolution, meshPtr->size(), true);
+
+            #endif // USE_PERSISTENT_TREE
             }
             else {
                 // ===== TEMPLATE PATH =====
+            	//printf("TEMPLATE: pts=%.1f res=%d\n", pts, resolution);
                 d1 = clock();
 
                 MCObject *templateSphere = getTemplateForLOD(s);
@@ -969,8 +1077,14 @@ void Rock3DObjMgr::render() {
 
         t2 = (clock() - d1);
 
-        Rock3DMgr::printStats();
 
+#ifdef USE_PERSISTENT_TREE
+        MCObjTreeMgr::field_calls+=MCObjTreeMgr::frame_field_calls;
+#else
+        MCObjTreeMgr::field_calls+=MCGenerator::frame_field_calls;
+#endif
+        Rock3DMgr::printStats();
+        MCObjTreeMgr::field_calls+=MCObjTreeMgr::frame_field_calls;
         double total = (clock() - d0) * TS;
         cout << "Compute time Templates:" << t1 * TS << " VBOs:" << t2 * TS
                 << " Batches:" << t3 * TS << " Total:" << total << " ms"

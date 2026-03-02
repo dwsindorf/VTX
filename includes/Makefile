@@ -367,7 +367,7 @@ depend:;
 ../Debug/Renderer.o: ViewClass.h LightClass.h Util.h MatrixClass.h matrix.h
 ../Debug/Renderer.o: TrackBall.h GLSupport.h AdaptOptions.h RenderOptions.h
 ../Debug/Renderer.o: GLSLMgr.h GLSLProgram.h GLSLVars.h FrameBuffer.h
-../Debug/Rocks.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
+../Debug/Rocks.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h MCObjects.h
 ../Debug/Rocks.o: PointClass.h defs.h ListClass.h ObjectClass.h GLglue.h
 ../Debug/Rocks.o: NodeIF.h OrbitalClass.h TerrainMgr.h NoiseClass.h
 ../Debug/Rocks.o: TextureClass.h GLSupport.h ImageMgr.h TerrainNode.h
@@ -641,7 +641,7 @@ depend:;
 ../Release/Rocks.o: TerrainData.h Renderer.h ViewClass.h Util.h MatrixClass.h
 ../Release/Rocks.o: matrix.h TrackBall.h ModelClass.h RenderOptions.h Rocks.h
 ../Release/Rocks.o: Placements.h MapNode.h NodeData.h MapClass.h
-../Release/Rocks.o: AdaptOptions.h
+../Release/Rocks.o: AdaptOptions.h MCObjects.h
 ../Release/SceneClass.o: SceneClass.h LightClass.h ColorClass.h GLheaders.h
 ../Release/SceneClass.o: PointClass.h defs.h ListClass.h ObjectClass.h
 ../Release/SceneClass.o: GLglue.h NodeIF.h OrbitalClass.h TerrainMgr.h
