@@ -917,13 +917,14 @@ void MCObjNode::visit_all(void (MCObjNode::*func)())
 
 void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
 {
-    if (isLeaf()) {
-        leaves.push_back(this);
-    } else {
-        for (int i = 0; i < 8; i++)
-            if (children[i])
-                children[i]->collectLeaves(leaves);
-    }
+	if (isLeaf()) {
+		if (!mesh.empty())  // only collect leaves with actual geometry
+			leaves.push_back(this);
+		return;
+	}
+	for (int i = 0; i < 8; i++)
+		if (children[i])
+			children[i]->collectLeaves(leaves);
 }
 
 
@@ -1071,6 +1072,12 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
     meshValid = true;
+    // If mesh is empty, mark surface as not present to prevent
+    // re-subdivision of this cell in future frames
+	if (mesh.empty()) {
+		surfacePresent = false;
+		surfaceChecked = true;
+	}
 }
 void MCObjNode::adapt(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
@@ -1113,7 +1120,9 @@ void MCObjNode::adapt(SurfaceFunction field,
     }
 
     // ── Need to subdivide — check surface first (uses cache) ────────────
-    if (!checkSurface(field, objCenter, objRadius, maxDepth)) {
+    double localSize = size / objRadius;
+    bool skipSurfaceCheck = (localSize > 2.0);  // cell larger than rock
+    if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth)) {
         // No surface here — prune entire subtree
         collapse();
         return;

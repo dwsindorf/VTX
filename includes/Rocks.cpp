@@ -939,7 +939,14 @@ void Rock3DObjMgr::render() {
 						addTriangleToBatch(batch, tri, s, right, forward,
 										   rockEyeCenter, rockSize);
 					}
-				}
+				}                 
+//                int maxLeafDepth = 0;
+//                for (auto* leaf : leaves)
+//                    maxLeafDepth = std::max(maxLeafDepth, leaf->depth);
+//
+//                printf("ADAPTIVE,%d,%.0f,leaves=%zu,maxdepth=%d,tris=%d,rootsize=%.2f,instance=%d,radius=%.2f\n",
+//                       resolution, pts, leaves.size(), maxLeafDepth, newTris,
+//                       tree->root->size/FEET,s->instance, radius/FEET);
                 Rock3DMgr::setStats(resolution, batch.vertices.size() / (3*3), true);
 
             #ifdef PRINT_ROCK_CACHE_STATS
