@@ -176,7 +176,7 @@ public:
     void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s,   // new overload
                             const Point& right, const Point& forward,
                             const Point& rockEyeCenter, double rockSize);    
-    SurfaceFunction makeRockField(Rock3DMgr* pmgr);
+    SurfaceFunction makeRockField(Rock3DMgr* pmgr,bool mode);
     
 	void free();
 	int placements(){ return data.size;}

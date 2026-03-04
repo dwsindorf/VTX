@@ -41,19 +41,18 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 class MCGenerator {
 public:
     static int tm_field_calls;
-#ifndef USE_PERSISTENT_TREE
     static int ad_field_calls;
     static int frame_field_calls;  // reset each frame
-
     static int cells;
-     // Stats for checkSurfaceIntersection
+    static int cells_deleted;
+    static int cells_created;
+    static int leaf_cells;
     static int csi_calls;
     static int csi_early_exit;
     static int csi_edge_exits;
     static int csi_false;
-    static long long csi_field_calls;
     static int csi_by_depth[32];
-#endif
+    static double csi_minCellSize;
     double maxdepth;
 
     struct OctreeCell {
@@ -109,7 +108,8 @@ public:
         double maxDepth = 8,
         double margin = 1);
 #endif
-    
+    static void resetStats();
+    static void printStats();
 };
 
 //=============================================================================
@@ -195,6 +195,7 @@ namespace MCFields {
     double cube(double x, double y, double z);
 }
 
+#ifdef USE_PERSISTENT_TREE
 //=============================================================================
 // MCObjNode - One cell in a persistent adaptive octree
 // Equivalent to MapNode in the 2D terrain system.
@@ -337,7 +338,7 @@ public:
     std::map<uint64_t, MCObjTree*> trees;
 
     int maxTrees;   // LRU eviction limit
-    static int field_calls;
+    static int ad_field_calls;
     static int frame_field_calls;  // reset each frame
 
     MCObjTreeMgr(int maxTrees = 200);
@@ -360,5 +361,5 @@ public:
     // Generate a stable 64-bit key from position + instance
     uint64_t makeKey(const Point& center, int instance, int rval) const;
 };
-
+#endif
 #endif // MCOBJECTS_H

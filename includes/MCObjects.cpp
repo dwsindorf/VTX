@@ -5,11 +5,6 @@
 #include "ViewFustrum.h"  // Add at top with other includes
 
 //#define DEBUG_ADAPTIVE
-#define OPTIMIZE
-static double maxpts=0;
-static double minpts=1e6;
-static double maxdist=0;
-static double mindist=100;
 
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
@@ -21,19 +16,18 @@ extern const int MC_triTable[256][16];
 //=============================================================================
 // MCGenerator implementation
 //=============================================================================
-#ifndef USE_PERSISTENT_TREE
-int MCGenerator::ad_field_calls=0;
-int MCGenerator::frame_field_calls=0;  // reset each frame
 int MCGenerator::cells=0;
+int MCGenerator::leaf_cells=0;
 int MCGenerator::csi_calls = 0;
+int MCGenerator::cells_deleted=0;
+int MCGenerator::cells_created=0;
 int MCGenerator::csi_early_exit = 0;
 int MCGenerator::csi_edge_exits = 0;
 int MCGenerator::csi_false = 0;
-long long MCGenerator::csi_field_calls = 0;
 int MCGenerator::csi_by_depth[32] = {};  // ← add here
-#endif
-int MCGenerator::tm_field_calls=0;
-
+int MCGenerator::tm_field_calls=0; // templates
+int MCGenerator::ad_field_calls=0; // adaptive
+int MCGenerator::frame_field_calls=0;  // reset each frame
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
     if (std::abs(isolevel - val1) < 0.00001) return p1;
@@ -194,6 +188,31 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
     return triangles;
 }
 
+void MCGenerator::resetStats() {
+	cells = leaf_cells = cells_created=cells_deleted=0;
+	// Reset stats before subdivideOctree
+	csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
+	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
+}
+void MCGenerator::printStats(){
+#ifdef DEBUG_ADAPTIVE
+   std::cout  << " CSI: calls=" << csi_calls
+			  << " EXITS early:" << csi_early_exit
+			  << " edge:" << csi_edge_exits  
+			  << " empty:" << csi_false
+			  << std::endl;
+	// Add depth distribution printout:
+	cout << " CSI: by depth ";
+	for (int d = 0; d <= 10; d++)
+		if (csi_by_depth[d] > 0)
+			std::cout << "d" << d << ":" << csi_by_depth[d] << " ";
+	cout << endl;
+#ifdef USE_PERSISTENT_TREE
+	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted;
+#endif	
+	cout << " leafs:" << leaf_cells << " non-leafs:" << cells << " "<<100*leaf_cells/(cells+leaf_cells)<<"%"<<endl;
+#endif
+}
 // Add these method implementations:
 #ifndef USE_PERSISTENT_TREE
 std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
@@ -215,45 +234,10 @@ std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
     root.size = rockRadius * margin;
     root.depth = 0;
 
-#ifdef DEBUG_ADAPTIVE
-    cells=0;
-    maxpts=0;
-    minpts=1e10;
-    maxdist=0;
-    mindist=1e6;
-
-    // Reset stats before subdivideOctree
-    csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
-#endif
-
     subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
                    cameraPos, wscale, maxDepth, minPixels);
 
-#ifdef DEBUG_ADAPTIVE
-    std::cout << "  CSI: calls=" << csi_calls
-              << " early_exit=" << csi_early_exit
-              << " edge_exits=" << csi_edge_exits  
-              << " pruned=" << csi_false
-              << " field_calls=" << csi_field_calls
-              << " avg_per_call=" << (double)csi_field_calls/csi_calls
-              << std::endl;
-    // Add depth distribution printout:
-    std::cout << "  CSI by depth: ";
-    for (int d = 0; d <= 10; d++)
-        if (csi_by_depth[d] > 0)
-            std::cout << "d" << d << "=" << csi_by_depth[d] << " ";
-    std::cout << std::endl;
-    memset(csi_by_depth, 0, sizeof(csi_by_depth));
-    double minCellSize = root.size;
-    for (const auto& cell : leafCells)
-        minCellSize = std::min(minCellSize, cell.size);   
-    std::cout << " leafs=" << leafCells.size() << " non-leafs=" << cells << std::endl;
-    std::cout << " minpts:" << minpts << " maxpts:" << maxpts 
-              << " ratio:" << maxpts/minpts 
-              << " mindist:" << mindist << " maxdist:" << maxdist 
-              << " ratio:" << maxdist/mindist << std::endl;
 
-#endif
     // ===== Generate mesh for each leaf cell =====
     std::vector<MCTriangle> mesh;
     const int LEAF_RESOLUTION = 1;
@@ -310,19 +294,13 @@ void MCGenerator::subdivideOctree(
     double distance = cell.center.distance(cameraPos);
     
     double projectedPixels = wscale * cell.size / (distance);
-    maxpts=std::max(maxpts,projectedPixels);
-    minpts=std::min(minpts,projectedPixels);
-    maxdist=std::max(maxdist,distance);
-    mindist=std::min(mindist,distance);
-
-    // Convert cell center to local space to check z position
+     // Convert cell center to local space to check z position
     double localZ = (cell.center.z - rockCenter.z) / (rockRadius);
 
     // Cells below the surface midpoint get coarser subdivision
     // since they're partially or fully buried in terrain
     double effectiveMinPixels = minPixels;
 
-#ifdef OPTIMIZE
     if (localZ < 0) {
         // Scale minPixels up as we go deeper — deeper = coarser
         double burialFactor = 1.0 + (-localZ) * 10.0;  // tuneable
@@ -333,11 +311,12 @@ void MCGenerator::subdivideOctree(
         double backFactor = 1.0 + (-viewDot - 0.2) * 10.0;
         effectiveMinPixels = std::max(effectiveMinPixels, minPixels * backFactor);
     }
-#endif 
+
     // Should we subdivide?
     bool should_subdivide = (projectedPixels > effectiveMinPixels *2) && (cell.depth < maxDepth);
   
     if (!should_subdivide) {
+    	leaf_cells++;
          // This is a leaf cell
         leafCells.push_back(cell);
         return;
@@ -352,8 +331,7 @@ void MCGenerator::subdivideOctree(
     // Subdivide into 8 children
     double childSize = cell.size / 2.0;
     double offset = childSize / 2.0;
-    
-    for (int i = 0; i < 8; i++) {
+     for (int i = 0; i < 8; i++) {
         OctreeCell child;
         child.size = childSize;
         child.depth = cell.depth + 1;
@@ -390,8 +368,6 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     double minVal = 1e10, maxVal = -1e10;
     for (int i = 0; i < 8; i++) {
         values[i] = field(corners[i].x, corners[i].y, corners[i].z);
-        MCGenerator::frame_field_calls++;
-        csi_field_calls++;
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
     }
@@ -412,8 +388,6 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     // More bisection steps near root (large cells), fewer near leaves (small cells)
     int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
     
-    //int BISECT_STEPS = std::max(8.0-0.75*cell.depth,1.0);
-    //int BISECT_STEPS =8;
     for (int e = 0; e < 12; e++) {
         Point p1 = corners[edgePairs[e][0]];
         Point p2 = corners[edgePairs[e][1]];
@@ -422,8 +396,6 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
             double t = s / (double)BISECT_STEPS;
             Point p = p1 + (p2 - p1) * t;
             double v = field(p.x, p.y, p.z);
-            csi_field_calls++;
-            MCGenerator::frame_field_calls++;
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
             if (minVal <= isolevel && maxVal >= isolevel) {
@@ -435,8 +407,6 @@ bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field,
     
     // Check center
     double centerVal = field(cx, cy, cz);
-    csi_field_calls++;
-    MCGenerator::frame_field_calls++;
     if (centerVal < minVal) minVal = centerVal;
     if (centerVal > maxVal) maxVal = centerVal;
 
@@ -472,7 +442,6 @@ MCObject::MCObject(const Point& pos, double size)
 	  vboColors(0),vboValid(false) {
 	instanceId=0;
 	dataIndex=0;
-
 }
 
 MCObject::~MCObject() {
@@ -850,7 +819,7 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
 //=============================================================================
 // MCObjNode implementation
 //=============================================================================
-
+#ifdef USE_PERSISTENT_TREE
 MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),
@@ -862,10 +831,12 @@ MCObjNode::MCObjNode()
     memset(neighbors,         0, sizeof(neighbors));
     memset(cornerValues,      0, sizeof(cornerValues));
     memset(cornersEvaluated, false, sizeof(cornersEvaluated));
+	MCGenerator::cells_created++;
 }
 
 MCObjNode::~MCObjNode()
 {
+    MCGenerator::cells_deleted++;
     collapse();
 }
 
@@ -918,8 +889,11 @@ void MCObjNode::visit_all(void (MCObjNode::*func)())
 void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
 {
 	if (isLeaf()) {
-		if (!mesh.empty())  // only collect leaves with actual geometry
+		if (!mesh.empty()){  // only collect leaves with actual geometry
+			if (!attributesApplied)      // only count newly generated leaves
+			 	MCGenerator::leaf_cells++;
 			leaves.push_back(this);
+		}
 		return;
 	}
 	for (int i = 0; i < 8; i++)
@@ -983,7 +957,9 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         return surfacePresent;
 
     surfaceChecked = true;
-
+    MCGenerator::csi_calls++;   
+    MCGenerator::csi_by_depth[std::min(depth, 31)]++;
+    
     // Convert world-space cell to local space — field expects local coords
     Point localCenter = (center - objCenter) / objRadius;
     double localSize  = size / objRadius;
@@ -997,13 +973,10 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     };
 
     double values[8];
-    double minVal =  1e10;
-    double maxVal = -1e10;
-
+    double minVal =  1e10, maxVal = -1e10;
     for (int i = 0; i < 8; i++) {
         if (!cornersEvaluated[i]) {
             cornerValues[i]     = field(corners[i].x, corners[i].y, corners[i].z);
-            MCObjTreeMgr::frame_field_calls++;
             cornersEvaluated[i] = true;
         }
         values[i] = cornerValues[i];
@@ -1013,6 +986,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
 
     if (minVal <= isolevel && maxVal >= isolevel) {
         surfacePresent = true;
+        MCGenerator::csi_early_exit++;
         return true;
     }
 
@@ -1022,7 +996,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         {0,4},{1,5},{2,6},{3,7}
     };
 
-    double depthFraction = depth / maxDepth;
+    double depthFraction = (double)depth / (double)maxDepth;
      // More bisection steps near root (large cells), fewer near leaves (small cells)
      int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
 
@@ -1033,11 +1007,11 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
             double t = s / (double)BISECT_STEPS;
             Point  p = p1 + (p2 - p1) * t;
             double v = field(p.x, p.y, p.z);
-            MCObjTreeMgr::frame_field_calls++;
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
             if (minVal <= isolevel && maxVal >= isolevel) {
                 surfacePresent = true;
+                MCGenerator::csi_edge_exits++;
                 return true;
             }
         }
@@ -1046,14 +1020,14 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     // Check local center
     Point localCenterPt = (center - objCenter) / objRadius;
     double cv = field(localCenterPt.x, localCenterPt.y, localCenterPt.z);
-    MCObjTreeMgr::frame_field_calls++;
     minVal = std::min(minVal, cv);
     maxVal = std::max(maxVal, cv);
     if (minVal <= isolevel && maxVal >= isolevel) {
         surfacePresent = true;
+        MCGenerator::csi_edge_exits++;
         return true;
     }
-
+    MCGenerator::csi_false++;
     surfacePresent = false;
     return false;
 }
@@ -1103,19 +1077,18 @@ void MCObjNode::adapt(SurfaceFunction field,
                              minPixels * (1.0 + (-viewDot - 0.2) * 10.0));
 
     // ── Should this node be a leaf? ──────────────────────────────────────
-    bool shouldBeLeaf = (projectedSize <= effectiveMinPixels * 2)
-                     || (depth >= maxDepth);
+    bool size_check=(projectedSize <= effectiveMinPixels * 2);
+    bool depth_check=(depth >= maxDepth);
+    bool shouldBeLeaf = size_check || depth_check;
 
     if (shouldBeLeaf) {
         // Collapse children if we had them (camera moved away)
         if (!isLeaf())
             collapse();
-
         // Generate mesh if not already valid
         if (!meshValid){
             generateMesh(field, objCenter, objRadius);
         }
-
         return;
     }
 
@@ -1129,9 +1102,11 @@ void MCObjNode::adapt(SurfaceFunction field,
     }
 
     // ── Split if currently a leaf ────────────────────────────────────────
-    if (isLeaf())
+    if (isLeaf()){
         split();
-
+    	MCGenerator::cells++; 
+    }
+    
     // ── Recurse into children ────────────────────────────────────────────
     for (int i = 0; i < 8; i++)
         if (children[i])
@@ -1217,8 +1192,6 @@ void MCObjTree::visit_all(void (MCObjNode::*func)())
 //=============================================================================
 // MCObjTreeMgr implementation
 //=============================================================================
-int MCObjTreeMgr::field_calls=0;
-int MCObjTreeMgr::frame_field_calls;  // reset each frame
 MCObjTreeMgr::MCObjTreeMgr(int max)
     : maxTrees(max)
 {}
@@ -1241,8 +1214,6 @@ void MCObjTreeMgr::invalidateAll()
 {
     for (auto& pair : trees)
         pair.second->invalidate();
-    
-    field_calls=0;
 }
 
 uint64_t MCObjTreeMgr::makeKey(const Point& center, int instance, int rval) const
@@ -1312,3 +1283,4 @@ void MCObjTreeMgr::evict()
         }
     }
 }
+#endif

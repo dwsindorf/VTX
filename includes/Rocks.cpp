@@ -304,20 +304,15 @@ void Rock3DMgr::printStats(){
     	}
 
     }
-    std::cout << "Totals rocks:"    << rcnt
+    int total_field=MCGenerator::ad_field_calls+MCGenerator::tm_field_calls;
+    std::cout << "Totals rocks:"<< rcnt
  			  <<" adaptive:"<<acnt
-#ifdef USE_PERSISTENT_TREE		  
-			  <<" field calls:"<<MCObjTreeMgr::field_calls
-			  <<"["<<MCObjTreeMgr::frame_field_calls<<"]"
-
-#else
-			  <<" field calls:"<<MCGenerator::ad_field_calls
-			  <<"["<<MCGenerator::frame_field_calls<<"]"
-#endif
-			  <<" template:"<<lcnt
-   		      <<" keys:"<<kcnt
-              <<" triangles:"<< tcnt/1000<<" K"
-			  <<" field calls:"<<MCGenerator::tm_field_calls
+			  <<" field:"<<MCGenerator::ad_field_calls/1000
+			  <<"K template:"<<lcnt
+			  <<" field:"<<MCGenerator::tm_field_calls/1000
+   		      <<"K keys:"<<kcnt
+              <<" triangles:"<< tcnt/1000<<"K"
+			  <<" total field:"<<total_field/1000<<"K this frame:"<<MCGenerator::frame_field_calls
               << std::endl;
 }
 
@@ -591,13 +586,14 @@ void Rock3DObjMgr::applyVertexAttributes(MCObject* rock, double amplitude, TNode
     }
 }
 
-SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
+SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
     double comp = pmgr->comp;
     double comp_factor = std::max((1.0 - 2*comp), 0.2);
     double isoNoiseAmpl = pmgr->noise_amp;
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
     double margin = 1 + Rock3DMgr::noiseFactor*isoNoiseAmpl;
+    bool istemplate=mode;
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*y;
@@ -614,6 +610,14 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr) {
                 baseEllipsoid += S0.s * isoNoiseAmpl;
             }
         }
+        
+        if(istemplate){
+        	MCGenerator::tm_field_calls++;
+        }
+        else{
+        	MCGenerator::ad_field_calls++;
+        }
+        MCGenerator::frame_field_calls++;
         return baseEllipsoid;
     };
 }
@@ -711,7 +715,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     double comp_factor = std::max((1.0 - 2*comp), 0.2);
     Point center(0, 0, 0);  // Template centered at origin
     
-    SurfaceFunction field = makeRockField(pmgr);
+    SurfaceFunction field = makeRockField(pmgr,true);
     
     MCGenerator generator;
     double margin = 1 + Rock3DMgr::noiseFactor*isoNoiseAmpl;  // Increase margin with noise amplitude
@@ -795,11 +799,8 @@ void Rock3DObjMgr::clear(){
         pair.second.clear();
     }
     adaptiveBatches.clear();
-#ifdef USE_PERSISTENT_TREE
-    MCObjTreeMgr::frame_field_calls = 0;
-#else
     MCGenerator::frame_field_calls = 0;
-#endif
+    MCGenerator::cells_created=MCGenerator::cells_deleted=0;
 }
 
 //-------------------------------------------------------------
@@ -829,11 +830,13 @@ void Rock3DObjMgr::render() {
         rockCache.clear();
         freeLODTemplates();
         Rock3DMgr::clearStats();
+        MCGenerator::tm_field_calls=0;
+        MCGenerator::ad_field_calls = 0;
+        MCGenerator::resetStats();
+
+       
 #ifdef USE_PERSISTENT_TREE
         rockTreeMgr.invalidateAll();  // field params changed — rebuild all trees
-        MCObjTreeMgr::field_calls = 0;
-#else
-        MCGenerator::ad_field_calls=0;
 #endif
     }
 
@@ -899,9 +902,9 @@ void Rock3DObjMgr::render() {
 			#ifdef USE_PERSISTENT_TREE
                 // ===== PERSISTENT TREE ADAPTIVE PATH =====
                 d1 = clock();
-
-                SurfaceFunction field = makeRockField(pmgr);
-
+                
+                SurfaceFunction field = makeRockField(pmgr,false);
+                
                 MCObjTree* tree = rockTreeMgr.getOrCreate(
                     rockCenter, radius, margin, field, s->instance, s->rval);
 
@@ -916,9 +919,11 @@ void Rock3DObjMgr::render() {
                 // Assemble mesh from leaves — each leaf generates/caches its own triangles
                 // Only leaves whose meshValid==false needed regeneration this frame
                 int newTris = 0;
+                int totalTris = 0;  // all triangles for this rock, cached or not
+                
                 VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
-
+                
                 for (MCObjNode* leaf : leaves) {
 					if (leaf->mesh.empty()) continue;
 
@@ -934,20 +939,13 @@ void Rock3DObjMgr::render() {
 						leaf->attributesApplied = true;
 						newTris += leaf->mesh.size();
 					}
-
+					totalTris += leaf->mesh.size();  // always count
 					for (const auto& tri : leaf->mesh) {
 						addTriangleToBatch(batch, tri, s, right, forward,
 										   rockEyeCenter, rockSize);
 					}
-				}                 
-//                int maxLeafDepth = 0;
-//                for (auto* leaf : leaves)
-//                    maxLeafDepth = std::max(maxLeafDepth, leaf->depth);
-//
-//                printf("ADAPTIVE,%d,%.0f,leaves=%zu,maxdepth=%d,tris=%d,rootsize=%.2f,instance=%d,radius=%.2f\n",
-//                       resolution, pts, leaves.size(), maxLeafDepth, newTris,
-//                       tree->root->size/FEET,s->instance, radius/FEET);
-                Rock3DMgr::setStats(resolution, batch.vertices.size() / (3*3), true);
+				}                  
+                Rock3DMgr::setStats(resolution, totalTris, true);
 
             #ifdef PRINT_ROCK_CACHE_STATS
                 std::cout << "Persistent tree: leaves=" << leaves.size()
@@ -971,7 +969,7 @@ void Rock3DObjMgr::render() {
                               << " tris=" << meshPtr->size() << std::endl;
                 #endif
                 } else {
-                    SurfaceFunction field = makeRockField(pmgr);
+                    SurfaceFunction field = makeRockField(pmgr,false);
                     d1 = clock();
 
                     MCObject rock;
@@ -1034,7 +1032,7 @@ void Rock3DObjMgr::render() {
                 // ===== TEMPLATE PATH =====
             	//printf("TEMPLATE: pts=%.1f res=%d\n", pts, resolution);
                 d1 = clock();
-
+                 
                 MCObject *templateSphere = getTemplateForLOD(s);
 
                 if (!templateSphere || templateSphere->mesh.empty()) {
@@ -1084,18 +1082,14 @@ void Rock3DObjMgr::render() {
 
         t2 = (clock() - d1);
 
-
-#ifdef USE_PERSISTENT_TREE
-        MCObjTreeMgr::field_calls+=MCObjTreeMgr::frame_field_calls;
-#else
-        MCObjTreeMgr::field_calls+=MCGenerator::frame_field_calls;
-#endif
+        //MCGenerator::ad_field_calls+=MCGenerator::frame_field_calls;
         Rock3DMgr::printStats();
-        MCObjTreeMgr::field_calls+=MCObjTreeMgr::frame_field_calls;
         double total = (clock() - d0) * TS;
-        cout << "Compute time Templates:" << t1 * TS << " VBOs:" << t2 * TS
+        cout << "Compute time Generate:" << t1 * TS << " VBOs:" << t2 * TS
                 << " Batches:" << t3 * TS << " Total:" << total << " ms"
                 << endl;
+        
+        MCGenerator::printStats();
     }
     render_objects();
 }
@@ -1327,7 +1321,7 @@ void Rock3DObjMgr::render_objects() {
     
     // ===== Render Adaptive Batches =====
     if(use_adaptive_grid)
-     glDisable(GL_CULL_FACE); // makes holes less visible
+    	glDisable(GL_CULL_FACE); // makes holes less visible
 
     for (auto& pair : adaptiveBatches) {
         int rockType = pair.first;  // instance ID
