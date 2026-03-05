@@ -52,10 +52,7 @@ public:
     
     // Extract frustum from OpenGL matrices
     void extractFromGL();
-    
-    // Extract from explicit matrices
-    void extractFromMatrices(const double modelview[16], const double projection[16]);
-    
+        
     // Test if AABB intersects frustum
     bool intersectsAABB(const Point& center, double halfSize) const;
     

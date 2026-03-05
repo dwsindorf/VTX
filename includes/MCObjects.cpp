@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <cstring>
 #include <map>
-#include "ViewFustrum.h"  // Add at top with other includes
+#include "ViewClass.h"  // Add at top with other includes
 
-//#define DEBUG_ADAPTIVE
+#define DEBUG_ADAPTIVE
 
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
@@ -12,6 +12,68 @@
 
 extern const int MC_edgeTable[256];
 extern const int MC_triTable[256][16];
+
+
+Point MCObjAdaptFlags::rockOrigin;
+Point MCObjAdaptFlags::rockRight;
+Point MCObjAdaptFlags::rockForward;
+Point MCObjAdaptFlags::rockUp;
+Point MCObjAdaptFlags::camForward; 
+
+void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u){
+    	rockOrigin=p;rockRight=r;rockForward=f;rockUp=u;
+    	// In Rocks.cpp before tree->adapt():
+    	MCObjAdaptFlags::camForward = Point(
+    	    -TheView->viewMatrix[2],
+    	    -TheView->viewMatrix[6],
+    	    -TheView->viewMatrix[10]
+    	)-TheView->xpoint;
+    	camForward=camForward.normalize();
+//    	Point lookOffset = lookAt - p;
+//    	Point rotatedLookAt = p + Point(
+//    	    lookOffset.dot(r),
+//    	    lookOffset.dot(f),
+//    	    lookOffset.dot(u)
+//    	);
+    	
+    	
+//    	camForward=Point(
+//    	    -TheView->viewMatrix[2],   // -z column mapped to world x
+//    	    -TheView->viewMatrix[6],   // -z column mapped to world y  
+//    	    -TheView->viewMatrix[10]   // -z column mapped to world z
+//    	);
+    	camForward.print();
+//    	MCObjAdaptFlags::camForward = Point(
+//    			camf.dot(r),
+//				camf.dot(f),
+//				camf.dot(u)
+//    	);
+}
+
+// Test if a world-space point is inside the view frustum
+    // mirrors MapNode::clipchk logic
+bool MCObjAdaptFlags::inView(const Point &pos, double esize = 0.0) {	
+	Point eyePos = pos - TheView->xpoint;
+	Point p = eyePos.mm(TheView->viewMatrix);
+	
+    double z = -p.mz(TheView->lookMatrix);
+
+	if (z < TheView->znear - esize)
+		return false;
+
+	double m = (z > 0) ? esize / z : 0.0;
+	double t = 1.0 + m;
+
+	double y = p.my(TheView->projMatrix) / z;
+	if (y < -t || y > t)
+		return false;
+
+	double x = p.mx(TheView->projMatrix) / z;
+	if (x < -t * TheView->aspect || x > t * TheView->aspect)
+		return false;
+
+	return true;
+}
 
 //=============================================================================
 // MCGenerator implementation
@@ -196,6 +258,10 @@ void MCGenerator::resetStats() {
 }
 void MCGenerator::printStats(){
 #ifdef DEBUG_ADAPTIVE
+	int total_cells=cells+leaf_cells;
+	if(total_cells==0)
+		return;
+
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
 			  << " edge:" << csi_edge_exits  
@@ -209,7 +275,7 @@ void MCGenerator::printStats(){
 	cout << endl;
 #ifdef USE_PERSISTENT_TREE
 	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted;
-#endif	
+#endif
 	cout << " leafs:" << leaf_cells << " non-leafs:" << cells << " "<<100*leaf_cells/(cells+leaf_cells)<<"%"<<endl;
 #endif
 }
@@ -1056,26 +1122,43 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 void MCObjNode::adapt(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
                       const Point& cameraPos, double wscale,
-                      double minPixels, int maxDepth)
+                      double minPixels, int maxDepth,const MCObjAdaptFlags& flags)
 {
     // ── Projected screen size of this cell ──────────────────────────────
     double distance    = center.distance(cameraPos);
     projectedSize      = wscale * size / distance;
-
-    // ── Underground burial coarsening (same as subdivideOctree) ─────────
-    double localZ = (center.z - objCenter.z) / objRadius;
     double effectiveMinPixels = minPixels;
-    if (localZ < 0)
-        effectiveMinPixels *= 1.0 + (-localZ) * 10.0;
+    if (flags.burialCoarsening){
+		double localZ = (center.z - objCenter.z) / objRadius;
+		if (localZ < 0)
+			effectiveMinPixels *= 1.0 + (-localZ) * 10.0;
+    }
 
     // ── Back-face coarsening ─────────────────────────────────────────────
-    Point localCenter  = (center - objCenter) / objRadius;
-    Point localCamNorm = (cameraPos - objCenter).normalize();
-    double viewDot     = localCenter.dot(localCamNorm);
-    if (viewDot < -0.2)
-        effectiveMinPixels = std::max(effectiveMinPixels,
-                             minPixels * (1.0 + (-viewDot - 0.2) * 10.0));
-
+    if (flags.backfaceCoarsening){
+		Point localCenter  = (center - objCenter) / objRadius;
+		Point localCamNorm = (cameraPos - objCenter).normalize();
+		double viewDot     = localCenter.dot(localCamNorm);
+		double thresh= 0.0; // tunable -0.2 , -0.1, 0.0
+		if (viewDot < thresh)
+			effectiveMinPixels = std::max(effectiveMinPixels,
+								 minPixels * (1.0 + (-viewDot + thresh) * 10.0));
+    }
+    
+    static int cnt=0;
+    if (flags.frustumCulling) {
+    	
+    	Point vc=(center-TheView->xpoint).normalize();
+    	Point vd=(TheView->vcpoint-TheView->xpoint).normalize();
+    	double dot=vd.dot(vc);
+    	bool outside = fabs(dot)<0.6;
+    	if (outside && depth > 6) {
+    	   	if(cnt%100==0)
+    	    	cout<<dot<<endl;
+    	    cnt++;
+    	    projectedSize /= 4.0;
+    	}
+    }
     // ── Should this node be a leaf? ──────────────────────────────────────
     bool size_check=(projectedSize <= effectiveMinPixels * 2);
     bool depth_check=(depth >= maxDepth);
@@ -1111,7 +1194,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     for (int i = 0; i < 8; i++)
         if (children[i])
             children[i]->adapt(field, objCenter, objRadius,
-                               cameraPos, wscale, minPixels, maxDepth);
+                               cameraPos, wscale, minPixels, maxDepth,flags);
 }
 
 //=============================================================================
@@ -1122,7 +1205,8 @@ MCObjTree::MCObjTree()
     : root(nullptr), instance(0), rval(0),
       radius(0), margin(1.0),
       valid(false), framesSinceUsed(0)
-{}
+{
+}
 
 MCObjTree::~MCObjTree()
 {
@@ -1164,10 +1248,10 @@ void MCObjTree::init(const Point& c, double r, double m,
 }
 
 void MCObjTree::adapt(const Point& cameraPos, double wscale,
-                      double minPixels, int maxDepth)
+                      double minPixels, int maxDepth,const MCObjAdaptFlags& flags)
 {
     if (!root || !valid) return;
-    root->adapt(field, center, radius, cameraPos, wscale, minPixels, maxDepth);
+    root->adapt(field, center, radius, cameraPos, wscale, minPixels, maxDepth,flags);
     framesSinceUsed = 0;
 }
 

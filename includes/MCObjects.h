@@ -195,6 +195,36 @@ namespace MCFields {
     double cube(double x, double y, double z);
 }
 
+// In MCObjects.h
+struct MCObjAdaptFlags {
+    bool burialCoarsening  = true;   // increase minPixels below terrain surface
+    bool backfaceCoarsening = true;  // increase minPixels on far side of rock
+    bool frustumCulling    = false;  // skip cells outside view frustum (future)
+    bool curvatureAdapt    = false;  // finer subdivision at high curvature (future)
+
+    static Point rockOrigin;
+    static Point rockRight;
+    static Point rockForward;
+    static Point rockUp;
+    static Point camForward; 
+    
+    static void setDirections(Point p, Point r, Point f, Point u);
+    static bool inView(const Point& worldPos, double esize = 0.0);
+    // Presets for common object types
+    static MCObjAdaptFlags rock() {
+        return MCObjAdaptFlags{true, true, true, false};
+    }
+    static MCObjAdaptFlags asteroid() {
+        return MCObjAdaptFlags{false, true, false, false};  // no burial
+    }
+    static MCObjAdaptFlags cave() {
+        return MCObjAdaptFlags{false, false, false, false}; // interior object
+    }
+    static MCObjAdaptFlags holes() {
+        return MCObjAdaptFlags{true, false, false, false}; // pourous object
+    }
+};
+
 #ifdef USE_PERSISTENT_TREE
 //=============================================================================
 // MCObjNode - One cell in a persistent adaptive octree
@@ -254,11 +284,13 @@ public:
 
     // Core per-frame adapt — mirrors MapNode::adapt()
     // Splits or collapses based on viewpoint, culling, LOD
+
     void adapt(SurfaceFunction field,
                const Point& objCenter, double objRadius,
                const Point& cameraPos, double wscale,
-               double minPixels, int maxDepth);
-
+               double minPixels, int maxDepth,
+               const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
+    
      // Surface intersection using cached corner values where available
     bool checkSurface(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
@@ -314,8 +346,10 @@ public:
 
     // Top-level adapt — mirrors Map::adapt()
     // Traverses tree top-down, splits/collapses nodes per viewpoint
+    
     void adapt(const Point& cameraPos, double wscale,
-               double minPixels, int maxDepth);
+               double minPixels, int maxDepth,
+               const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
 
     // Collect all leaf nodes for rendering
     void collectLeaves(std::vector<MCObjNode*>& leaves);

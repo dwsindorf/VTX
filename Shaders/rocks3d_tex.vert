@@ -73,7 +73,8 @@ void main() {
 
 #if NTEXS >0
 	for(int i=0;i<NTEXS;i++){
-	    float scale=tex2d[i].scale*1e-7;//* depth*40;
+	    //float scale=tex2d[i].scale*1e-7;
+	    float scale=tex2d[i].scale*textureScale;
 	    vec3 coords=templatePosition.xyz*scale;
 	    if(tex2d[i].t1d)
 		   coords+=tex2d[i].bias; 	    
