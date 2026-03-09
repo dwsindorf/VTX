@@ -50,6 +50,8 @@ public:
     static int csi_calls;
     static int csi_early_exit;
     static int csi_edge_exits;
+    static int csi_cull_calls;
+    static int csi_adapt_calls;
     static int csi_false;
     static int csi_by_depth[32];
     static double csi_minCellSize;
@@ -212,7 +214,7 @@ struct MCObjAdaptFlags {
     static bool inView(const Point& worldPos, double esize = 0.0);
     // Presets for common object types
     static MCObjAdaptFlags rock() {
-        return MCObjAdaptFlags{true, true, true, false};
+        return MCObjAdaptFlags{false, false, true, false};
     }
     static MCObjAdaptFlags asteroid() {
         return MCObjAdaptFlags{false, true, false, false};  // no burial

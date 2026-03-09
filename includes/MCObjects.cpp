@@ -42,7 +42,7 @@ void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u){
 //    	    -TheView->viewMatrix[6],   // -z column mapped to world y  
 //    	    -TheView->viewMatrix[10]   // -z column mapped to world z
 //    	);
-    	camForward.print();
+//    	camForward.print();
 //    	MCObjAdaptFlags::camForward = Point(
 //    			camf.dot(r),
 //				camf.dot(f),
@@ -53,13 +53,13 @@ void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u){
 // Test if a world-space point is inside the view frustum
     // mirrors MapNode::clipchk logic
 bool MCObjAdaptFlags::inView(const Point &pos, double esize = 0.0) {	
-	Point eyePos = pos - TheView->xpoint;
+	Point eyePos = pos;// - TheView->xpoint;
 	Point p = eyePos.mm(TheView->viewMatrix);
 	
     double z = -p.mz(TheView->lookMatrix);
 
-	if (z < TheView->znear - esize)
-		return false;
+	//if (z < TheView->znear - esize)
+	//	return false;
 
 	double m = (z > 0) ? esize / z : 0.0;
 	double t = 1.0 + m;
@@ -85,6 +85,8 @@ int MCGenerator::cells_deleted=0;
 int MCGenerator::cells_created=0;
 int MCGenerator::csi_early_exit = 0;
 int MCGenerator::csi_edge_exits = 0;
+int MCGenerator::csi_cull_calls=0;
+int MCGenerator::csi_adapt_calls=0;
 int MCGenerator::csi_false = 0;
 int MCGenerator::csi_by_depth[32] = {};  // ← add here
 int MCGenerator::tm_field_calls=0; // templates
@@ -253,7 +255,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	// Reset stats before subdivideOctree
-	csi_calls = csi_early_exit = csi_edge_exits = csi_false = 0;
+	csi_calls = csi_early_exit = csi_edge_exits = csi_false = csi_cull_calls=csi_adapt_calls=0;
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 }
 void MCGenerator::printStats(){
@@ -274,7 +276,8 @@ void MCGenerator::printStats(){
 			std::cout << "d" << d << ":" << csi_by_depth[d] << " ";
 	cout << endl;
 #ifdef USE_PERSISTENT_TREE
-	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted;
+	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted<<endl;
+	cout<< " Adapt calls:"<<csi_adapt_calls<<" culls:"<<csi_cull_calls<<" "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
 #endif
 	cout << " leafs:" << leaf_cells << " non-leafs:" << cells << " "<<100*leaf_cells/(cells+leaf_cells)<<"%"<<endl;
 #endif
@@ -1125,13 +1128,17 @@ void MCObjNode::adapt(SurfaceFunction field,
                       double minPixels, int maxDepth,const MCObjAdaptFlags& flags)
 {
     // ── Projected screen size of this cell ──────────────────────────────
+
+	MCGenerator::csi_adapt_calls++;
     double distance    = center.distance(cameraPos);
     projectedSize      = wscale * size / distance;
     double effectiveMinPixels = minPixels;
     if (flags.burialCoarsening){
 		double localZ = (center.z - objCenter.z) / objRadius;
-		if (localZ < 0)
+		if (localZ < 0){
 			effectiveMinPixels *= 1.0 + (-localZ) * 10.0;
+			MCGenerator::csi_cull_calls++;
+		}
     }
 
     // ── Back-face coarsening ─────────────────────────────────────────────
@@ -1140,24 +1147,23 @@ void MCObjNode::adapt(SurfaceFunction field,
 		Point localCamNorm = (cameraPos - objCenter).normalize();
 		double viewDot     = localCenter.dot(localCamNorm);
 		double thresh= 0.0; // tunable -0.2 , -0.1, 0.0
-		if (viewDot < thresh)
+		if (viewDot < thresh){
 			effectiveMinPixels = std::max(effectiveMinPixels,
 								 minPixels * (1.0 + (-viewDot + thresh) * 10.0));
+			MCGenerator::csi_cull_calls++;
+		}
     }
     
     static int cnt=0;
-    if (flags.frustumCulling) {
-    	
-    	Point vc=(center-TheView->xpoint).normalize();
-    	Point vd=(TheView->vcpoint-TheView->xpoint).normalize();
-    	double dot=vd.dot(vc);
-    	bool outside = fabs(dot)<0.6;
-    	if (outside && depth > 6) {
-    	   	if(cnt%100==0)
-    	    	cout<<dot<<endl;
-    	    cnt++;
-    	    projectedSize /= 4.0;
-    	}
+    if (flags.frustumCulling && depth>5) {
+    	bool test=flags.inView(center-TheView->xpoint,size);
+		if(test){
+			effectiveMinPixels*=10;
+			MCGenerator::csi_cull_calls++;
+			//cout<<"+";
+		}
+		//else
+		//	cout<<"-";
     }
     // ── Should this node be a leaf? ──────────────────────────────────────
     bool size_check=(projectedSize <= effectiveMinPixels * 2);
