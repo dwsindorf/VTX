@@ -54,6 +54,7 @@ public:
     static int csi_adapt_calls;
     static int csi_false;
     static int csi_by_depth[32];
+    static int csi_cull_by_depth[32];
     static double csi_minCellSize;
     double maxdepth;
 
@@ -209,12 +210,16 @@ struct MCObjAdaptFlags {
     static Point rockForward;
     static Point rockUp;
     static Point camForward; 
+    static Point rotatedCam; 
+ 
+    static double frustumPlanes[6][4];
+    static void extractFrustumPlanes();
     
     static void setDirections(Point p, Point r, Point f, Point u);
-    static bool inView(const Point& worldPos, double esize = 0.0);
+    static bool inView(const Point& worldPos, const Point& camera, double esize = 0.0);
     // Presets for common object types
     static MCObjAdaptFlags rock() {
-        return MCObjAdaptFlags{false, false, true, false};
+        return MCObjAdaptFlags{true, true, true, false};
     }
     static MCObjAdaptFlags asteroid() {
         return MCObjAdaptFlags{false, true, false, false};  // no burial
@@ -304,6 +309,9 @@ public:
 
     // Invalidate mesh and surface cache (call when field changes)
     void invalidate();
+    
+    void getCorners(Point worldCorners[8], Point localCorners[8],
+                    const Point& objCenter, double objRadius) const;
 };
 
 //=============================================================================
@@ -355,6 +363,7 @@ public:
 
     // Collect all leaf nodes for rendering
     void collectLeaves(std::vector<MCObjNode*>& leaves);
+    static Point rotateToLocal(const Point p);
 
     // Traversal — mirrors Map::visit() / Map::visit_all()
     void visit(void (MCObjNode::*func)());

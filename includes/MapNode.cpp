@@ -866,6 +866,11 @@ int MapNode::clipchk(Point pnt)
 	x=p.mx(TheScene->projMatrix)/z;
     if(x < -t|| x >t)
         return 1;
+//	cout<<pnt<<endl;
+//	printf("xpoint planet units:(%.8f,%.8f,%.8f)\n",
+//	    TheView->xpoint.x, TheView->xpoint.y, TheView->xpoint.z);
+//	printf("terrain point planet units:(%.8f,%.8f,%.8f)\n",
+//	    pnt.x, pnt.y, pnt.z);  // add this inside clipchk
 
 #ifdef ZCLIP
 	dist=TheScene->epoint.distance(p);

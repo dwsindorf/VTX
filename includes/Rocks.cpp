@@ -836,7 +836,7 @@ void Rock3DObjMgr::render() {
         MCGenerator::tm_field_calls=0;
         MCGenerator::ad_field_calls = 0;
         MCGenerator::resetStats();
-
+        cout<<"rebuilding Rocks"<<endl;
        
 #ifdef USE_PERSISTENT_TREE
         rockTreeMgr.invalidateAll();  // field params changed — rebuild all trees
@@ -888,44 +888,49 @@ void Rock3DObjMgr::render() {
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
             if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
-            	//printf("ADAPTIVE: pts=%.1f res=%d\n", pts, resolution);
-                // rotatedCamera uses already-computed basis vectors
                 Point camOffset = TheScene->xpoint - s->vertex;
- 
-                //Point camOffset = TheScene->xpoint - s->vertex;
-                Point rotatedCamera = s->vertex + Point(
-                    camOffset.dot(right),
-                    camOffset.dot(forward),
-                    camOffset.dot(up)
-                );
-                Point camInEyeSpace = TheScene->epoint - TheScene->xpoint;
                 double radius       = s->radius * TheMap->radius;
                 Point  rockCenter   = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
                 double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
 
 			#ifdef USE_PERSISTENT_TREE
+                Point eyePos = s->vertex - TheView->xpoint;
+                Point p = eyePos.mm(TheView->viewMatrix);
+                double z = -p.mz(TheView->lookMatrix);
+                double y = p.my(TheView->projMatrix) / z;
+                printf("ROCK CENTER ndc y=%.4f z=%.2f\n", y, z/FEET);
                 
-//                bool inView=MCObjAdaptFlags::inView(s->vertex,radius * 1.2);
-//                if (inView)
-//                    cout << "ROCK is in view" << endl;
-//                else
-//                    cout << "ROCK NOT in view" << endl;                
+                bool inView=MCObjAdaptFlags::inView(s->vertex-xpoint,xpoint,radius * 1.5);
+                if (inView)
+                    cout << "ROCK is in view" << endl;
+                else
+                    cout << "ROCK NOT in view" << endl;                
                 // ===== PERSISTENT TREE ADAPTIVE PATH =====
                 d1 = clock();
-                
+//#define RECTANGLE_FIELD
+#ifdef RECTANGLE_FIELD               
+                SurfaceFunction field = [](double x, double y, double z) -> double {
+                    double dx = fabs(x) - 1.0;
+                    double dy = fabs(y) - 1.0;
+                    double dz = fabs(z) - 1.0;
+                    MCGenerator::frame_field_calls++;
+                    MCGenerator::ad_field_calls++;
+                    return std::max({dx, dy, dz});
+                };
+                margin=2.1;
+#else                
                 SurfaceFunction field = makeRockField(pmgr,false);
-                
+#endif
                 MCObjAdaptFlags::setDirections(s->vertex,right,forward,up);
                 
                 MCObjTree* tree = rockTreeMgr.getOrCreate(
                     rockCenter, radius, margin, field, s->instance, s->rval);
                 
                 // Adapt tree to current viewpoint — incremental, reuses cached values
-                tree->adapt(rotatedCamera, TheScene->wscale,
-                            Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth,flags);
-
-                   // Collect leaf nodes that have surface
+                tree->adapt(TheScene->xpoint, TheScene->wscale,
+                           Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth,flags);
+                
                 std::vector<MCObjNode*> leaves;
                 tree->collectLeaves(leaves);
 

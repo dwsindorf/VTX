@@ -46,6 +46,7 @@ public:
 								  return tmp.length();
 								}
 	Point normalize() const     { return (*this)/length();}
+	Point negate()              { return Point(-x,-y,-z);}
 	Point floor()               { return Point(::floor(x),::floor(y),::floor(z));}
 	Point fract()               { Point p=floor(); return *this-p;}
 
