@@ -41,6 +41,8 @@ static bool cvalid;
 //#define PRINT_LOD_GEN
 //#define DEBUG_REGEN
 
+//#define RECTANGLE_FIELD
+#define SHOW_TEMPLATES true
 
 bool use_adaptive_grid=true;
 bool use_templates=true;
@@ -895,20 +897,8 @@ void Rock3DObjMgr::render() {
                 double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
 
 			#ifdef USE_PERSISTENT_TREE
-                Point eyePos = s->vertex - TheView->xpoint;
-                Point p = eyePos.mm(TheView->viewMatrix);
-                double z = -p.mz(TheView->lookMatrix);
-                double y = p.my(TheView->projMatrix) / z;
-                printf("ROCK CENTER ndc y=%.4f z=%.2f\n", y, z/FEET);
-                
-                bool inView=MCObjAdaptFlags::inView(s->vertex-xpoint,xpoint,radius * 1.5);
-                if (inView)
-                    cout << "ROCK is in view" << endl;
-                else
-                    cout << "ROCK NOT in view" << endl;                
                 // ===== PERSISTENT TREE ADAPTIVE PATH =====
                 d1 = clock();
-//#define RECTANGLE_FIELD
 #ifdef RECTANGLE_FIELD               
                 SurfaceFunction field = [](double x, double y, double z) -> double {
                     double dx = fabs(x) - 1.0;
@@ -973,7 +963,15 @@ void Rock3DObjMgr::render() {
 
             #else
                 // ===== ORIGINAL ADAPTIVE PATH (rockCache based) =====
-
+                
+                auto rotateToLocal = [&](const Point& p) -> Point {
+                    return Point(
+                        p.dot(right),
+                        p.dot(forward),
+                        p.dot(up)
+                    );
+                };
+                Point rotatedCamera = rotateToLocal(TheScene->xpoint);
                 Point viewDir = (rotatedCamera - rockCenter).normalize();
                 RockCacheKey cacheKey(s->vertex, s->instance, viewDir, 30.0);
 
@@ -1046,7 +1044,7 @@ void Rock3DObjMgr::render() {
 
             #endif // USE_PERSISTENT_TREE
             }
-            else {
+            else if(SHOW_TEMPLATES){
                 // ===== TEMPLATE PATH =====
             	//printf("TEMPLATE: pts=%.1f res=%d\n", pts, resolution);
                 d1 = clock();

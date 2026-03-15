@@ -1141,7 +1141,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 
     Point worldCorners[8], localCorners[8];
     getCorners(worldCorners, localCorners, objCenter, objRadius);
-
+    
     // Find local-space min/max from corners
     Point localMin = localCorners[0];
     Point localMax = localCorners[0];
@@ -1170,11 +1170,17 @@ void MCObjNode::adapt(SurfaceFunction field,
                       double minPixels, int maxDepth, const MCObjAdaptFlags& flags)
 {
     MCGenerator::csi_adapt_calls++;
-
+ 
+    
+    if(depth==0){
+     }
     // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
+    
+    bool culled=false;
+    
     bool skipSurfaceCheck = (depth < 2);  // cell larger than rock
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
@@ -1199,36 +1205,46 @@ void MCObjNode::adapt(SurfaceFunction field,
             MCGenerator::csi_cull_by_depth[depth]++;
         }
     }
-    bool culled=false;
-    Point worldCenter;
-    Point rotatedCorner;
-   double h = size / 2.0;
-// ── Frustum culling ──────────────────────────────────────────────────
-   if (flags.frustumCulling && depth > 5) {
-	   Point worldCorners[8], localCorners[8];
-	   getCorners(worldCorners, localCorners, objCenter, objRadius);
 
-	   bool anyInside = false;
-	   for (int i = 0; i < 8; i++) {
-		   Point p = (worldCorners[i] - TheView->xpoint).mm(TheView->viewMatrix);
-		   double z = -p.mz(TheView->lookMatrix);
-		   if (z < TheView->znear) { anyInside = true; break; }
-		   double x = p.mx(TheView->projMatrix) / z;
-		   double y = p.my(TheView->projMatrix) / z;
-		   if (x >= -TheView->aspect && x <= TheView->aspect &&
-			   y >= -1.0 && y <= 1.0) {
-			   anyInside = true;
-			   break;
-		   }
-	   }
+   // ── Frustum culling ──────────────────────────────────────────────────
+    if (flags.frustumCulling && depth > 5) {
+    	
+      	Point toCam = (TheView->xpoint - MCObjAdaptFlags::rockOrigin).normalize();
+		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
+		double viewDot = camFwd.dot(toCam);  // 1=looking directly at rock, 0=90deg away
+		viewDot*=fabs(viewDot);
+		
+		double angleFactor = 1.0 - std::max(0.0, viewDot);  // 0 when facing, 1 when 90deg away
+		double margin = angleFactor * 1.5;  // tunable
+        //if(cnt%10000==0)
+        //cout<<"viewdot="<<viewDot<<" new margin:"<<margin<<" prev margin:"<<4*size / objRadius<<endl;
 
-	   bool culled = !anyInside;
-	   if (culled) {
-		   effectiveMinPixels *= 10.0;
-		   skipSurfaceCheck = true;
-		   MCGenerator::csi_cull_calls++;
-		   MCGenerator::csi_cull_by_depth[depth]++;
-	   }
+      //  	margin=4*size / objRadius;
+ 
+        Point worldCorners[8], localCorners[8];
+        getCorners(worldCorners, localCorners, objCenter, objRadius);
+
+        bool anyInside = false;
+        for (int i = 0; i < 8; i++) {
+            Point p = (worldCorners[i] - TheView->xpoint).mm(TheView->viewMatrix);
+            double z = -p.mz(TheView->lookMatrix);
+            if (z < TheView->znear) { anyInside = true; break; }
+            double x = p.mx(TheView->projMatrix) / z;
+            double y = p.my(TheView->projMatrix) / z;
+            if (x >= -(TheView->aspect + margin) && x <= (TheView->aspect + margin) &&
+                y >= -(1.0 + margin) && y <= (1.0 + margin)) {
+                anyInside = true;
+                break;
+            }
+        }
+
+        culled = !anyInside;
+        if (culled) {
+        	skipSurfaceCheck=true;
+            MCGenerator::csi_cull_calls++;
+            MCGenerator::csi_cull_by_depth[depth]++;
+            effectiveMinPixels *= 4;
+         }
     }
     cnt++;
     // ── Should this node be a leaf? ──────────────────────────────────────
@@ -1237,13 +1253,11 @@ void MCObjNode::adapt(SurfaceFunction field,
     bool shouldBeLeaf = size_check || depth_check;
 
     if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth)) {
-    	if(culled){
-    	}
         collapse();
         return;
     }
     if (shouldBeLeaf) {
-        if (!isLeaf())
+         if (!isLeaf())
             collapse();
         if (!meshValid)
             generateMesh(field, objCenter, objRadius);

@@ -537,7 +537,7 @@ void GLSLMgr::initGL(int w, int h){
 	cout << "unused tex units:"<< max_tex_id+1 << endl;
 	cout << "max color buffer attachments:"<< maxAttach << endl;
 	printf("max varying vec4s = %d\n",maxVaryingFloats/4);
-	printf("max geometry output vetices = %d\n",maxGeomVertices);
+	printf("max geometry output vertices = %d\n",maxGeomVertices);
 	printf("max geometry output components = %d\n",maxGeomComponents);
 #endif
 	//gl_MaxGeometryOutputVertices
