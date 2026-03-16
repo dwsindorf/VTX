@@ -186,12 +186,8 @@ struct MCObjAdaptFlags {
     static Point rockUp;
     static Point camForward; 
     static Point rotatedCam; 
- 
-    static double frustumPlanes[6][4];
-    static void extractFrustumPlanes();
-    
+     
     static void setDirections(Point p, Point r, Point f, Point u);
-    static bool inView(const Point& worldPos, const Point& camera, double esize = 0.0);
     // Presets for common object types
     static MCObjAdaptFlags rock() {
         return MCObjAdaptFlags{true, true, true, false};
@@ -284,7 +280,7 @@ public:
     // Invalidate mesh and surface cache (call when field changes)
     void invalidate();
     
-    void getCorners(Point worldCorners[8], Point localCorners[8],
+    void getCorners(Point localCorners[8],
                     const Point& objCenter, double objRadius) const;
 };
 

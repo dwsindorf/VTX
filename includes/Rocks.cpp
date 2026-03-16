@@ -862,7 +862,6 @@ void Rock3DObjMgr::render() {
             	TheNoise.rseed=rseed;
                 continue;
             }
-
             // Precompute basis vectors once per rock - used by both paths
             Point up, right, forward, rockEyeCenter;
             double rockSize;
@@ -968,8 +967,6 @@ void Rock3DObjMgr::render() {
                           << " newTris=" << newTris
                           << " time=" << (clock() - d1) * TS << "ms" << std::endl;
             #endif
-
-
             }
             else if(SHOW_TEMPLATES){
                 // ===== TEMPLATE PATH =====

@@ -21,106 +21,11 @@ Point MCObjAdaptFlags::rockForward;
 Point MCObjAdaptFlags::rockUp;
 Point MCObjAdaptFlags::camForward;
 Point MCObjAdaptFlags::rotatedCam; 
-double MCObjAdaptFlags::frustumPlanes[6][4];
-void MCObjAdaptFlags::extractFrustumPlanes() {
-    Point xp = TheView->xpoint;
 
-    Point camFwd(TheView->viewMatrix[2], TheView->viewMatrix[6], TheView->viewMatrix[10]);
-    auto ndcX = [&](Point worldPos) -> double {
-        Point er = worldPos - TheView->xpoint;
-        Point p = er.mm(TheView->viewMatrix);
-        double z = -(p.x*TheView->lookMatrix[2]+p.y*TheView->lookMatrix[6]+p.z*TheView->lookMatrix[10]);
-        if (z <= 0) return 0;
-        return (p.x*TheView->projMatrix[0]+p.y*TheView->projMatrix[4]+p.z*TheView->projMatrix[8])/z;
-    };
-    auto ndcY = [&](Point worldPos) -> double {
-        Point er = worldPos - TheView->xpoint;
-        Point p = er.mm(TheView->viewMatrix);
-        double z = -(p.x*TheView->lookMatrix[2]+p.y*TheView->lookMatrix[6]+p.z*TheView->lookMatrix[10]);
-        if (z <= 0) return 0;
-        return (p.x*TheView->projMatrix[1]+p.y*TheView->projMatrix[5]+p.z*TheView->projMatrix[9])/z;
-    };
-
-    double eps = 1000.0 * FEET;
-    Point gx(
-        ndcX(rockOrigin+Point(eps,0,0))-ndcX(rockOrigin-Point(eps,0,0)),
-        ndcX(rockOrigin+Point(0,eps,0))-ndcX(rockOrigin-Point(0,eps,0)),
-        ndcX(rockOrigin+Point(0,0,eps))-ndcX(rockOrigin-Point(0,0,eps))
-    );
-    Point gy(
-        ndcY(rockOrigin+Point(eps,0,0))-ndcY(rockOrigin-Point(eps,0,0)),
-        ndcY(rockOrigin+Point(0,eps,0))-ndcY(rockOrigin-Point(0,eps,0)),
-        ndcY(rockOrigin+Point(0,0,eps))-ndcY(rockOrigin-Point(0,0,eps))
-    );
-    gx = gx.normalize();  // screen-right in world space
-    gy = gy.normalize();  // screen-up in world space
-
-    Point camRight = gx;
-    Point camUp = gy;     
-    // Get half-angles from projection matrix
-    // For column-major proj: m[0] = 1/(aspect*tan(fovY/2)), m[5] = 1/tan(fovY/2)
-    double projX = TheView->projMatrix[0];  // col0,row0
-    double projY = TheView->projMatrix[5];  // col1,row1
-    // projX = 1/(aspect*tanHalfFov), projY = 1/tanHalfFov
-    double tanHalfFovX = fabs(1.0 / projX);
-    double tanHalfFovY = fabs(1.0 / projY);
-
-    Point nLeft  = (camFwd - camRight * tanHalfFovX).normalize();
-    Point nRight = (camFwd + camRight * tanHalfFovX).normalize();
-    Point nBot   = (camFwd + camUp * tanHalfFovY).normalize();
-    Point nTop   = (camFwd - camUp * tanHalfFovY).normalize();
-    
-    // Plane equation: n.dot(p) - n.dot(xp) >= 0  for points inside
-    // d = -n.dot(xp)
-    frustumPlanes[0][0]=nLeft.x;  frustumPlanes[0][1]=nLeft.y;  frustumPlanes[0][2]=nLeft.z;
-    frustumPlanes[0][3]=-nLeft.dot(xp);
-
-    frustumPlanes[1][0]=nRight.x; frustumPlanes[1][1]=nRight.y; frustumPlanes[1][2]=nRight.z;
-    frustumPlanes[1][3]=-nRight.dot(xp);
-
-    frustumPlanes[2][0]=nBot.x;   frustumPlanes[2][1]=nBot.y;   frustumPlanes[2][2]=nBot.z;
-    frustumPlanes[2][3]=-nBot.dot(xp);
-
-    frustumPlanes[3][0]=nTop.x;   frustumPlanes[3][1]=nTop.y;   frustumPlanes[3][2]=nTop.z;
-    frustumPlanes[3][3]=-nTop.dot(xp);
-    
-//    double d = frustumPlanes[0][0]*rockOrigin.x + frustumPlanes[0][1]*rockOrigin.y
-//             + frustumPlanes[0][2]*rockOrigin.z + frustumPlanes[0][3];
-//    printf("rockOrigin plane[0] dist=%.2f ft (positive=inside)\n", d/FEET);
-
-}
-bool MCObjAdaptFlags::inView(const Point &pos, const Point& camera, double esize = 0.0) {	
-	Point eyePos = pos;//-camera;
-	Point p = eyePos.mm(TheView->viewMatrix);
-	
-    double z = -p.mz(TheView->lookMatrix);
-
-	//if (z < TheView->znear - esize)
-	//	return false;
-
-	double m = (z > 0) ? esize / z : 0.0;
-	double t = 1.0 + m;
-
-	double y = p.my(TheView->projMatrix) / z;
-	if (y < -t || y > t)
-		return false;
-
-	double x = p.mx(TheView->projMatrix) / z;
-	if (x < -t * TheView->aspect || x > t * TheView->aspect)
-            return false;
-
-    return true;
-}
 void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u) {
 	rockOrigin = p; rockRight = r; rockForward = f; rockUp = u;
-
-	camForward = Point(
-		-TheView->viewMatrix[2],
-		-TheView->viewMatrix[6],
-		-TheView->viewMatrix[10]
+	camForward = Point(-TheView->viewMatrix[2],-TheView->viewMatrix[6],-TheView->viewMatrix[10]
 	).normalize();
-	extractFrustumPlanes();
-
 }
 
 //=============================================================================
@@ -795,10 +700,6 @@ void MCObjNode::split()
     double childSize = size / 2.0;
     double offset    = childSize / 2.0;
 
-    Point right   = MCObjAdaptFlags::rockRight;
-    Point forward = MCObjAdaptFlags::rockForward;
-    Point up      = MCObjAdaptFlags::rockUp;
-
     for (int i = 0; i < 8; i++) {
         MCObjNode* child = new MCObjNode();
         child->parent = this;
@@ -833,8 +734,8 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     MCGenerator::csi_calls++;
     MCGenerator::csi_by_depth[std::min(depth, 31)]++;
 
-    Point worldCorners[8], corners[8];
-    getCorners(worldCorners, corners, objCenter, objRadius);
+    Point corners[8];
+    getCorners(corners, objCenter, objRadius);
 
     double values[8];
     double minVal =  1e10, maxVal = -1e10;
@@ -901,8 +802,8 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 {
     if (meshValid) return;
 
-    Point worldCorners[8], localCorners[8];
-    getCorners(worldCorners, localCorners, objCenter, objRadius);
+    Point localCorners[8];
+    getCorners(localCorners, objCenter, objRadius);
 
     Point localMin = localCorners[0];
     Point localMax = localCorners[0];
@@ -946,11 +847,10 @@ void MCObjNode::adapt(SurfaceFunction field,
         double localUp = (center.z - objCenter.z) / objRadius;
         if (localUp < 0) {
             effectiveMinPixels *= 1.0 + (-localUp) * 10.0;
-            //culled=true;
+            culled=true;
         }
     }
-
-    // ── Back-face coarsening — all in rock-local space ───────────────────
+    // ── Back-face coarsening — cells in rock-local space ───────────────────
     if (flags.backfaceCoarsening) {
         Point localCenter = (center - objCenter) / objRadius;
         Point localCamNorm = (cameraPos - objCenter).normalize();
@@ -959,14 +859,12 @@ void MCObjNode::adapt(SurfaceFunction field,
         if (viewDot < thresh) {
             effectiveMinPixels = std::max(effectiveMinPixels,
                 minPixels * (1.0 + (-viewDot + thresh) * 10.0));
-            //culled=true;
+            culled=true;
         }
     }
-#define USE_DP
-#ifdef USE_DP
+    // ── Fustrum coarsening — cells in world space ───────────────────
     if (flags.frustumCulling && depth > 5) {
-  		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
-			
+  		Point camFwd = MCObjAdaptFlags::camForward;			
 		Point offset = center - objCenter;
 		Point worldCenter = MCObjAdaptFlags::rockOrigin
 						  + MCObjAdaptFlags::rockRight   * offset.x
@@ -975,55 +873,20 @@ void MCObjNode::adapt(SurfaceFunction field,
 		Point toCell = (TheView->xpoint-worldCenter).normalize();
                       
         double dotVal=camFwd.dot(toCell);
-        dotVal*=fabs(dotVal);  
-        double thresh = lerp(projectedSize, minPixels, 8, 0.99, 0.2);
+        double dpFactor=5;       // larger fails faster - fewer triangles but more large cells 
+        //dotVal*=fabs(dotVal);  // fails even faster - more large cells 
+        double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
         culled = (dotVal < thresh);  
         
-        //if(culled && cnt%10000==0)
-       //   cout<<"depth:"<<depth<<" dotVal:"<<dotVal<<" projected:"<<projectedSize<<" thresh:"<<thresh<<endl;
+        //if(culled && thresh<0.2)
+       //  cout<<"depth:"<<depth<<" dotVal:"<<dotVal<<" projected:"<<projectedSize<<" thresh:"<<thresh<<endl;
 
         if (culled) {
             effectiveMinPixels *= 8.0;
             skipSurfaceCheck = true;
         }
     }
-#else
-    if (flags.frustumCulling && depth > 5) {
-     		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
-       	
-          	Point toRock = (TheView->xpoint - MCObjAdaptFlags::rockOrigin).normalize();
-    		double dotVal = camFwd.dot(toRock);  // 1=looking directly at rock, 0=90deg away
-    		dotVal*=fabs(dotVal);
-    		
-    		double angleFactor = 1.0 - std::max(0.0, dotVal);  // 0 when facing, 1 when 90deg away
-    		double margin = angleFactor * 1.5;  // tunable
-      
-            Point worldCorners[8], localCorners[8];
-            getCorners(worldCorners, localCorners, objCenter, objRadius);
-
-            bool anyInside = false;
-            for (int i = 0; i < 8; i++) {
-                Point p = (worldCorners[i] - TheView->xpoint).mm(TheView->viewMatrix);
-                double z = -p.mz(TheView->lookMatrix);
-                if (z < TheView->znear) { anyInside = true; break; }
-                double x = p.mx(TheView->projMatrix) / z;
-                double y = p.my(TheView->projMatrix) / z;
-                if (x >= -(TheView->aspect + margin) && x <= (TheView->aspect + margin) &&
-                    y >= -(1.0 + margin) && y <= (1.0 + margin)) {
-                    anyInside = true;
-                    break;
-                }
-            }
-
-            culled = !anyInside;
-            if (culled) {
-            	skipSurfaceCheck=true;
-                effectiveMinPixels *= 8;
-             }
-        }
-#endif
-    cnt++;
-    
+    cnt++;    
     if(culled){
         MCGenerator::csi_cull_calls++;
         MCGenerator::csi_cull_by_depth[depth]++;
@@ -1057,7 +920,7 @@ void MCObjNode::adapt(SurfaceFunction field,
             children[i]->adapt(field, objCenter, objRadius,
                                cameraPos, wscale, minPixels, maxDepth, flags);
 }
-void MCObjNode::getCorners(Point worldCorners[8], Point localCorners[8],
+void MCObjNode::getCorners(Point localCorners[8],
                             const Point& objCenter, double objRadius) const
 {
     double h = size / 2.0;
@@ -1068,13 +931,7 @@ void MCObjNode::getCorners(Point worldCorners[8], Point localCorners[8],
             center.y + ((i & 2) ? h : -h),
             center.z + ((i & 4) ? h : -h)
         );
-        // World-space corner
         Point co = rc - objCenter;
-        worldCorners[i] = MCObjAdaptFlags::rockOrigin
-                        + MCObjAdaptFlags::rockRight   * co.x
-                        + MCObjAdaptFlags::rockForward * co.y
-                        + MCObjAdaptFlags::rockUp      * co.z;
-        // Local-space corner for field evaluation
         localCorners[i] = co / objRadius;
     }
 }
