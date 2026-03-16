@@ -309,7 +309,6 @@ void MCGenerator::resetStats() {
 
 }
 void MCGenerator::printStats(){
-#ifdef DEBUG_ADAPTIVE
 	int total_cells=cells+leaf_cells;
 	if(total_cells==0)
 		return;
@@ -330,219 +329,10 @@ void MCGenerator::printStats(){
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
-#ifdef USE_PERSISTENT_TREE
 	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted<<endl;
 	cout<< " Adapt calls:"<<csi_adapt_calls<<" culls:"<<csi_cull_calls<<" "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
-#endif
-	cout << " leafs:" << leaf_cells << " non-leafs:" << cells << " "<<100*leaf_cells/(cells+leaf_cells)<<"%"<<endl;
-#endif
 }
 // Add these method implementations:
-#ifndef USE_PERSISTENT_TREE
-std::vector<MCTriangle> MCGenerator::generateAdaptiveMesh(
-    SurfaceFunction field,
-    const Point& rockCenter,
-    double rockRadius,
-    const Point& cameraPos,
-    double wscale,
-    double minPixels,
-    double maxDepth,  
-    double margin)
-{
-    std::vector<OctreeCell> leafCells;
-    
-    maxdepth=maxDepth;
-    
-    OctreeCell root;
-    root.center = rockCenter;
-    root.size = rockRadius * margin;
-    root.depth = 0;
-
-    subdivideOctree(field, root, leafCells, rockCenter, rockRadius,
-                   cameraPos, wscale, maxDepth, minPixels);
-
-
-    // ===== Generate mesh for each leaf cell =====
-    std::vector<MCTriangle> mesh;
-    const int LEAF_RESOLUTION = 1;
-    const double overlapFactor = 1.0;
-
-    for (const auto& cell : leafCells) {
-        double expandedSize = cell.size * overlapFactor;
-        double h = expandedSize / 2.0;
-        
-        Point expandedMin(cell.center.x - h, cell.center.y - h, cell.center.z - h);
-        Point expandedMax(cell.center.x + h, cell.center.y + h, cell.center.z + h);
-        
-        Point localMin = (expandedMin - rockCenter) / (rockRadius);
-        Point localMax = (expandedMax - rockCenter) / (rockRadius);
-        
-        auto cellMesh = generateMesh(field, localMin, localMax, LEAF_RESOLUTION);
-        mesh.insert(mesh.end(), cellMesh.begin(), cellMesh.end());
-    }
-    //std::cout << "  Total triangles: " << mesh.size() << std::endl;  
-    
-    return mesh;
-}
-
-void MCGenerator::subdivideOctree(
-    SurfaceFunction field,
-    const OctreeCell& cell,
-    std::vector<OctreeCell>& leafCells,
-    const Point& rockCenter,
-    double rockRadius,
-    const Point& cameraPos,
-    double wscale,
-    double maxDepth,
-	double minPixels
-    )
-{
-    // Convert cell to local space for surface intersection test
-    Point localCenter = (cell.center - rockCenter) / (rockRadius);
-    double localSize = cell.size/(rockRadius);
-    Point localCamDir = (cameraPos - rockCenter);  // already in rotated frame
-    double localCamDist = localCamDir.length();
-    Point localCamNorm = localCamDir / localCamDist;
-    
-    double viewDot = localCenter.dot(localCamNorm);
-   
-    // Create local-space cell for surface check
-    OctreeCell localCell;
-    localCell.center = localCenter;
-    localCell.size = localSize;
-    localCell.depth = cell.depth;
-    
-    // Check if surface passes through this cell
-    double rockCenterDist = rockCenter.distance(cameraPos);
-    
-    double distance = cell.center.distance(cameraPos);
-    
-    double projectedPixels = wscale * cell.size / (distance);
-     // Convert cell center to local space to check z position
-    double localZ = (cell.center.z - rockCenter.z) / (rockRadius);
-
-    // Cells below the surface midpoint get coarser subdivision
-    // since they're partially or fully buried in terrain
-    double effectiveMinPixels = minPixels;
-
-    if (localZ < 0) {
-        // Scale minPixels up as we go deeper — deeper = coarser
-        double burialFactor = 1.0 + (-localZ) * 10.0;  // tuneable
-        effectiveMinPixels = minPixels * burialFactor;
-     }   
-    // Back-face coarsening - far side of rock from camera
-    if (viewDot < -0.2) {  // tuneable threshold
-        double backFactor = 1.0 + (-viewDot - 0.2) * 10.0;
-        effectiveMinPixels = std::max(effectiveMinPixels, minPixels * backFactor);
-    }
-
-    // Should we subdivide?
-    bool should_subdivide = (projectedPixels > effectiveMinPixels *2) && (cell.depth < maxDepth);
-  
-    if (!should_subdivide) {
-    	leaf_cells++;
-         // This is a leaf cell
-        leafCells.push_back(cell);
-        return;
-    }
-  
-    // this can be expensive
-    if (!checkSurfaceIntersection(field, localCell, 0.0)) {
-        return;  // Skip empty cells
-    }
-
-    cells++;
-    // Subdivide into 8 children
-    double childSize = cell.size / 2.0;
-    double offset = childSize / 2.0;
-     for (int i = 0; i < 8; i++) {
-        OctreeCell child;
-        child.size = childSize;
-        child.depth = cell.depth + 1;
-        
-        // Calculate child center in world space (8 octants)
-        child.center.x = cell.center.x + ((i & 1) ? offset : -offset);
-        child.center.y = cell.center.y + ((i & 2) ? offset : -offset);
-        child.center.z = cell.center.z + ((i & 4) ? offset : -offset);
-        
-        subdivideOctree(field, child, leafCells, rockCenter, rockRadius,
-                       cameraPos, wscale, maxDepth, minPixels);
-    }
-}
-
-
-bool MCGenerator::checkSurfaceIntersection(SurfaceFunction field, 
-                                          const OctreeCell& cell, 
-                                          double isolevel)
-{    
-    csi_calls++;
-    csi_by_depth[std::min(cell.depth, 31)]++;  // ← add here
-        
-    double h = cell.size / 2;
-    double cx = cell.center.x, cy = cell.center.y, cz = cell.center.z;
-    
-    Point corners[8] = {
-        Point(cx-h, cy-h, cz-h), Point(cx+h, cy-h, cz-h),
-        Point(cx+h, cy+h, cz-h), Point(cx-h, cy+h, cz-h),
-        Point(cx-h, cy-h, cz+h), Point(cx+h, cy-h, cz+h),
-        Point(cx+h, cy+h, cz+h), Point(cx-h, cy+h, cz+h)
-    };
-    
-    double values[8];
-    double minVal = 1e10, maxVal = -1e10;
-    for (int i = 0; i < 8; i++) {
-        values[i] = field(corners[i].x, corners[i].y, corners[i].z);
-        minVal = std::min(minVal, values[i]);
-        maxVal = std::max(maxVal, values[i]);
-    }
-    // Surface straddles isolevel - definite intersection
-    if (minVal <= isolevel && maxVal >= isolevel) {
-        csi_early_exit++;
-        return true;
-    }
-    // Close to isolevel but all corners on same side —
-    // do edge bisection to catch thin surface features
-    int edgePairs[12][2] = {
-        {0,1},{1,2},{2,3},{3,0},
-        {4,5},{5,6},{6,7},{7,4},
-        {0,4},{1,5},{2,6},{3,7}
-    };
-    
-    double depthFraction = cell.depth / maxdepth;
-    // More bisection steps near root (large cells), fewer near leaves (small cells)
-    int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
-    
-    for (int e = 0; e < 12; e++) {
-        Point p1 = corners[edgePairs[e][0]];
-        Point p2 = corners[edgePairs[e][1]];
-        
-        for (int s = 1; s < BISECT_STEPS; s++) {
-            double t = s / (double)BISECT_STEPS;
-            Point p = p1 + (p2 - p1) * t;
-            double v = field(p.x, p.y, p.z);
-            minVal = std::min(minVal, v);
-            maxVal = std::max(maxVal, v);
-            if (minVal <= isolevel && maxVal >= isolevel) {
-                csi_edge_exits++;
-                return true;
-            }
-        }
-    }
-    
-    // Check center
-    double centerVal = field(cx, cy, cz);
-    if (centerVal < minVal) minVal = centerVal;
-    if (centerVal > maxVal) maxVal = centerVal;
-
-    if (minVal <= isolevel && maxVal >= isolevel) {
-        csi_edge_exits++;
-        return true;
-    }
-    
-    csi_false++;
-    return false;
-}
-#endif
 
 //=============================================================================
 // MCObject implementation
@@ -693,7 +483,7 @@ void MCObject::generateSmoothNormals() {
     if (mesh.empty()) return;
     
     // Hash vertices in TEMPLATE SPACE (not world space)
-    double snapSize = 0.001;
+    double snapSize = 0.0001;
     auto hashVertex = [snapSize](const Point& v) -> uint64_t {
         long long ix = (long long)round(v.x / snapSize);
         long long iy = (long long)round(v.y / snapSize);
@@ -716,7 +506,7 @@ void MCObject::generateSmoothNormals() {
     }
     
     // Compute smoothed normals with angle threshold
-    const double SMOOTH_ANGLE_COS = cos(90.0 * M_PI / 180.0);
+    const double SMOOTH_ANGLE_COS = cos(30.0 * M_PI / 180.0);
     std::unordered_map<uint64_t, Point> normalAccum;
     
     for (auto& pair : vertexToTriangles) {
@@ -786,38 +576,7 @@ void MCObject::generateSphereNormals()
         tri.normal = (triCenter - worldPosition).normalize();
     }
 }
-#ifndef USE_PERSISTENT_TREE
-const std::vector<MCTriangle>& MCObject::generateMeshAdaptive(
-    SurfaceFunction field,
-    const Point& rockCenter,
-    double rockRadius,
-    const Point& cameraPos,
-    double wscale,
-	double min_pts,
-	double max_depth,
-	double margin)
-{
-    MCGenerator generator;
-    
-    mesh = generator.generateAdaptiveMesh(
-        field,
-        rockCenter,
-        rockRadius,
-        cameraPos,
-        wscale,
-        min_pts,            // Stop when cells < 2 pixels
-        max_depth,              // Max depth
-        margin
-    );
-    
-    meshValid = true;
-    lastResolution = -1;
-    
-   // generateSphereNormals();
-    
-    return mesh;
-}
-#endif
+
 //=============================================================================
 // MCObjectManager implementation
 //=============================================================================
@@ -943,7 +702,6 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
 //=============================================================================
 // MCObjNode implementation
 //=============================================================================
-#ifdef USE_PERSISTENT_TREE
 MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),
@@ -1172,9 +930,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     MCGenerator::csi_adapt_calls++;
  
     
-    if(depth==0){
-     }
-    // ── Projected screen size — use world-space xpoint for correct distance ──
+     // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
@@ -1187,8 +943,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         double localUp = (center.z - objCenter.z) / objRadius;
         if (localUp < 0) {
             effectiveMinPixels *= 1.0 + (-localUp) * 10.0;
-            MCGenerator::csi_cull_calls++;
-            MCGenerator::csi_cull_by_depth[depth]++;
+            //culled=true;
         }
     }
 
@@ -1201,52 +956,75 @@ void MCObjNode::adapt(SurfaceFunction field,
         if (viewDot < thresh) {
             effectiveMinPixels = std::max(effectiveMinPixels,
                 minPixels * (1.0 + (-viewDot + thresh) * 10.0));
-            MCGenerator::csi_cull_calls++;
-            MCGenerator::csi_cull_by_depth[depth]++;
+            //culled=true;
         }
     }
-
-   // ── Frustum culling ──────────────────────────────────────────────────
+#define TEST
+#ifdef TEST
     if (flags.frustumCulling && depth > 5) {
-    	
-      	Point toCam = (TheView->xpoint - MCObjAdaptFlags::rockOrigin).normalize();
-		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
-		double viewDot = camFwd.dot(toCam);  // 1=looking directly at rock, 0=90deg away
-		viewDot*=fabs(viewDot);
-		
-		double angleFactor = 1.0 - std::max(0.0, viewDot);  // 0 when facing, 1 when 90deg away
-		double margin = angleFactor * 1.5;  // tunable
-        //if(cnt%10000==0)
-        //cout<<"viewdot="<<viewDot<<" new margin:"<<margin<<" prev margin:"<<4*size / objRadius<<endl;
+  		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
+			
+		Point offset = center - objCenter;
+		Point worldCenter = MCObjAdaptFlags::rockOrigin
+						  + MCObjAdaptFlags::rockRight   * offset.x
+						  + MCObjAdaptFlags::rockForward * offset.y
+						  + MCObjAdaptFlags::rockUp      * offset.z;
+		Point toCell = (TheView->xpoint-worldCenter).normalize();
+                      
+        double dotVal=camFwd.dot(toCell);
+        dotVal*=fabs(dotVal);  
+        double thresh = lerp(projectedSize, minPixels, 8, 0.99, 0.2);
+        culled = (dotVal < thresh);  
+        
+        //if(culled && cnt%10000==0)
+       //   cout<<"depth:"<<depth<<" dotVal:"<<dotVal<<" projected:"<<projectedSize<<" thresh:"<<thresh<<endl;
 
-      //  	margin=4*size / objRadius;
- 
-        Point worldCorners[8], localCorners[8];
-        getCorners(worldCorners, localCorners, objCenter, objRadius);
-
-        bool anyInside = false;
-        for (int i = 0; i < 8; i++) {
-            Point p = (worldCorners[i] - TheView->xpoint).mm(TheView->viewMatrix);
-            double z = -p.mz(TheView->lookMatrix);
-            if (z < TheView->znear) { anyInside = true; break; }
-            double x = p.mx(TheView->projMatrix) / z;
-            double y = p.my(TheView->projMatrix) / z;
-            if (x >= -(TheView->aspect + margin) && x <= (TheView->aspect + margin) &&
-                y >= -(1.0 + margin) && y <= (1.0 + margin)) {
-                anyInside = true;
-                break;
-            }
-        }
-
-        culled = !anyInside;
         if (culled) {
-        	skipSurfaceCheck=true;
-            MCGenerator::csi_cull_calls++;
-            MCGenerator::csi_cull_by_depth[depth]++;
-            effectiveMinPixels *= 4;
-         }
+            effectiveMinPixels *= 8.0;
+            skipSurfaceCheck = true;
+        }
     }
+#else
+    if (flags.frustumCulling && depth > 5) {
+     		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
+       	
+          	Point toRock = (TheView->xpoint - MCObjAdaptFlags::rockOrigin).normalize();
+    		double dotVal = camFwd.dot(toRock);  // 1=looking directly at rock, 0=90deg away
+    		dotVal*=fabs(dotVal);
+    		
+    		double angleFactor = 1.0 - std::max(0.0, dotVal);  // 0 when facing, 1 when 90deg away
+    		double margin = angleFactor * 1.5;  // tunable
+      
+            Point worldCorners[8], localCorners[8];
+            getCorners(worldCorners, localCorners, objCenter, objRadius);
+
+            bool anyInside = false;
+            for (int i = 0; i < 8; i++) {
+                Point p = (worldCorners[i] - TheView->xpoint).mm(TheView->viewMatrix);
+                double z = -p.mz(TheView->lookMatrix);
+                if (z < TheView->znear) { anyInside = true; break; }
+                double x = p.mx(TheView->projMatrix) / z;
+                double y = p.my(TheView->projMatrix) / z;
+                if (x >= -(TheView->aspect + margin) && x <= (TheView->aspect + margin) &&
+                    y >= -(1.0 + margin) && y <= (1.0 + margin)) {
+                    anyInside = true;
+                    break;
+                }
+            }
+
+            culled = !anyInside;
+            if (culled) {
+            	skipSurfaceCheck=true;
+                effectiveMinPixels *= 4;
+             }
+        }
+#endif
     cnt++;
+    
+    if(culled){
+        MCGenerator::csi_cull_calls++;
+        MCGenerator::csi_cull_by_depth[depth]++;
+    }
     // ── Should this node be a leaf? ──────────────────────────────────────
     bool size_check  = (projectedSize <= effectiveMinPixels * 2);
     bool depth_check = (depth >= maxDepth);
@@ -1477,4 +1255,3 @@ void MCObjTreeMgr::evict()
         }
     }
 }
-#endif

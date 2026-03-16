@@ -17,8 +17,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define USE_PERSISTENT_TREE
-
 //=============================================================================
 // Core data structures
 //=============================================================================
@@ -86,31 +84,7 @@ public:
         SurfaceFunction field,
         const Point& boundsMin, const Point& boundsMax,
         int resolution, double isolevel = 0.0);
-#ifndef USE_PERSISTENT_TREE
-    void subdivideOctree(
-         SurfaceFunction field,
-         const OctreeCell& cell,
-         std::vector<OctreeCell>& leafCells,
-         const Point& rockCenter,
-         double rockRadius,
-         const Point& cameraPos,
-         double wscale,
-         double maxDepth,
-         double minPixels);
 
-    bool checkSurfaceIntersection(SurfaceFunction field,
-                                  const OctreeCell& cell,
-                                  double isolevel);
-    std::vector<MCTriangle> generateAdaptiveMesh(
-        SurfaceFunction field,
-        const Point& rockCenter,
-        double rockRadius,
-        const Point& cameraPos,
-        double wscale,
-        double minPixels = 50,
-        double maxDepth = 8,
-        double margin = 1);
-#endif
     static void resetStats();
     static void printStats();
 };
@@ -232,7 +206,6 @@ struct MCObjAdaptFlags {
     }
 };
 
-#ifdef USE_PERSISTENT_TREE
 //=============================================================================
 // MCObjNode - One cell in a persistent adaptive octree
 // Equivalent to MapNode in the 2D terrain system.
@@ -406,5 +379,4 @@ public:
     // Generate a stable 64-bit key from position + instance
     uint64_t makeKey(const Point& center, int instance, int rval) const;
 };
-#endif
 #endif // MCOBJECTS_H
