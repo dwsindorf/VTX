@@ -503,10 +503,6 @@ void Rock3DObjMgr::free() {
 	data.free();
 }
 
-bool Rock3DObjMgr::smooth(){
-	return Render.avenorms() && test8;
-}
-
 double Rock3DData::value() { 
 	//return dist;
 	return instance;
@@ -629,8 +625,6 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
     };
 }
 
-// Recalculate normals to match template path winding
-// Same logic as the old adaptive path — extracted to avoid duplication
 void Rock3DObjMgr::fixupAdaptiveNormals(std::vector<MCTriangle>& mesh)
 {
     for (auto& tri : mesh) {
@@ -639,7 +633,6 @@ void Rock3DObjMgr::fixupAdaptiveNormals(std::vector<MCTriangle>& mesh)
         Point normal = edge2.cross(edge1);
         tri.normal = (normal.length() > 1e-30) ? normal.normalize()
                                                : Point(0, 1, 0);
-
         Point edge3 = tri.templatePos[1] - tri.templatePos[0];
         Point edge4 = tri.templatePos[2] - tri.templatePos[0];
         Point faceNormal = edge4.cross(edge3);
@@ -647,7 +640,6 @@ void Rock3DObjMgr::fixupAdaptiveNormals(std::vector<MCTriangle>& mesh)
                                                         : Point(0, 1, 0);
     }
 }
-
 // Apply vertex displacement and color — works on a flat mesh vector
 // extracted so it can be called per-leaf or on the full collected mesh
 void Rock3DObjMgr::applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
@@ -770,7 +762,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     }
     
     // Apply smoothing if enabled
-    if (smooth()) {
+    if (MCGenerator::smooth()) {
         templateSphere->generateSmoothNormals();
     }   
     // Store in cache
@@ -929,27 +921,46 @@ void Rock3DObjMgr::render() {
                 VBOBatch& batch = adaptiveBatches[instance];
                 batch.instanceId = instance;
                 
+                /// Reset normals for ALL leaves to face normals
                 for (MCObjNode* leaf : leaves) {
-					if (leaf->mesh.empty()) continue;
+                    if (leaf->mesh.empty()) continue;
+                    fixupAdaptiveNormals(leaf->mesh);
+                    if (!leaf->attributesApplied)
+                        newTris += leaf->mesh.size();
+                    totalTris += leaf->mesh.size();
+                }
 
-					if (!leaf->attributesApplied) {
-						fixupAdaptiveNormals(leaf->mesh);
-						applyAdaptiveAttributes(leaf->mesh, pmgr, isoNoiseAmpl);
-						if (smooth()) {
-							MCObject tmp;
-							tmp.mesh = leaf->mesh;
-							tmp.generateSmoothNormals();
-							leaf->mesh = std::move(tmp.mesh);
-						}
-						leaf->attributesApplied = true;
-						newTris += leaf->mesh.size();
-					}
-					totalTris += leaf->mesh.size();  // always count
-					for (const auto& tri : leaf->mesh) {
-						addTriangleToBatch(batch, tri, s, right, forward,
-										   rockEyeCenter, rockSize);
-					}
-				}                  
+                // Smooth across combined mesh
+                if (MCGenerator::smooth()) {
+                    MCObject tmp;
+                    for (MCObjNode* leaf : leaves)
+                        if (!leaf->mesh.empty())
+                            tmp.mesh.insert(tmp.mesh.end(), leaf->mesh.begin(), leaf->mesh.end());
+                    tmp.generateSmoothNormals();
+                    int idx = 0;
+                    for (MCObjNode* leaf : leaves) {
+                        if (leaf->mesh.empty()) continue;
+                        for (auto& tri : leaf->mesh)
+                            tri.normal = tmp.mesh[idx++].normal;
+                    }
+                }
+
+                // Apply attributes — new leaves only
+                for (MCObjNode* leaf : leaves) {
+                    if (leaf->mesh.empty()) continue;
+                    if (!leaf->attributesApplied) {
+                        applyAdaptiveAttributes(leaf->mesh, pmgr, isoNoiseAmpl);
+                        leaf->attributesApplied = true;
+                    }
+                }
+
+                // Add to batch
+                for (MCObjNode* leaf : leaves) {
+                    if (leaf->mesh.empty()) continue;
+                    for (const auto& tri : leaf->mesh)
+                        addTriangleToBatch(batch, tri, s, right, forward,
+                                           rockEyeCenter, rockSize);
+                }
                 Rock3DMgr::setStats(resolution, totalTris, true);
 
             #ifdef PRINT_ROCK_CACHE_STATS

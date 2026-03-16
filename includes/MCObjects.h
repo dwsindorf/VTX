@@ -87,6 +87,7 @@ public:
 
     static void resetStats();
     static void printStats();
+    static bool smooth();
 };
 
 //=============================================================================
@@ -240,7 +241,7 @@ public:
     // Generated mesh — only valid for leaf nodes
     std::vector<MCTriangle> mesh;
     bool meshValid;
-    bool attributesApplied;  // ← add this
+    bool attributesApplied;
 
     // Per-frame LOD state — updated each adapt pass
     bool inFrustum;
@@ -293,7 +294,6 @@ public:
 // Owns the root MCObjNode and manages the tree lifetime.
 // Used for: rocks, asteroids, standalone MC objects, future terrain.
 //=============================================================================
-
 class MCObjTree {
 public:
     MCObjNode *root;

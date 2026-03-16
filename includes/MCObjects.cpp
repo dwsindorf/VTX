@@ -3,6 +3,7 @@
 #include <cstring>
 #include <map>
 #include "ViewClass.h"  // Add at top with other includes
+#include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
 
@@ -152,6 +153,11 @@ Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
         p1.y + mu * (p2.y - p1.y),
         p1.z + mu * (p2.z - p1.z)
     );
+}
+
+bool MCGenerator::smooth(){
+	extern int test8;
+	return Render.avenorms() && test8;
 }
 
 void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3, 
@@ -483,7 +489,7 @@ void MCObject::generateSmoothNormals() {
     if (mesh.empty()) return;
     
     // Hash vertices in TEMPLATE SPACE (not world space)
-    double snapSize = 0.0001;
+    double snapSize = 0.001;
     auto hashVertex = [snapSize](const Point& v) -> uint64_t {
         long long ix = (long long)round(v.x / snapSize);
         long long iy = (long long)round(v.y / snapSize);
@@ -506,7 +512,7 @@ void MCObject::generateSmoothNormals() {
     }
     
     // Compute smoothed normals with angle threshold
-    const double SMOOTH_ANGLE_COS = cos(30.0 * M_PI / 180.0);
+    const double SMOOTH_ANGLE_COS = cos(60.0 * M_PI / 180.0);
     std::unordered_map<uint64_t, Point> normalAccum;
     
     for (auto& pair : vertexToTriangles) {
@@ -524,24 +530,22 @@ void MCObject::generateSmoothNormals() {
                 avgNormal = avgNormal + normal;
                 count++;
             }
-        }
-        
+        }        
         normalAccum[key] = avgNormal / count;
     }
     
     // Normalize accumulated normals
     for (auto& pair : normalAccum) {
+    	static Point last_good;
         double len = pair.second.length();
-        if (len > 1e-8) {
+        if (len > 1e-10) {
             pair.second = pair.second.normalize();
+            last_good=pair.second;
         } else {
-            pair.second = Point(0, 1, 0);
+            pair.second = last_good;//Point(0, 1, 0);
         }
     }
-   
-    // Note: We need to modify uploadToVBO to use per-vertex normals
-    // For now, just update the triangle normals with averaged value
-    for (auto& tri : mesh) {
+     for (auto& tri : mesh) {
         Point smoothNormal(0, 0, 0);
         int count = 0;
         for (int v = 0; v < 3; v++) {
@@ -899,8 +903,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 
     Point worldCorners[8], localCorners[8];
     getCorners(worldCorners, localCorners, objCenter, objRadius);
-    
-    // Find local-space min/max from corners
+
     Point localMin = localCorners[0];
     Point localMax = localCorners[0];
     for (int i = 1; i < 8; i++) {
@@ -914,13 +917,13 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
+
     meshValid = true;
     if (mesh.empty()) {
         surfacePresent = false;
         surfaceChecked = true;
     }
 }
-
 static int cnt=0;
 void MCObjNode::adapt(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
@@ -959,8 +962,8 @@ void MCObjNode::adapt(SurfaceFunction field,
             //culled=true;
         }
     }
-#define TEST
-#ifdef TEST
+#define USE_DP
+#ifdef USE_DP
     if (flags.frustumCulling && depth > 5) {
   		Point camFwd = Point(-TheView->viewMatrix[2], -TheView->viewMatrix[6], -TheView->viewMatrix[10]);
 			
@@ -1015,7 +1018,7 @@ void MCObjNode::adapt(SurfaceFunction field,
             culled = !anyInside;
             if (culled) {
             	skipSurfaceCheck=true;
-                effectiveMinPixels *= 4;
+                effectiveMinPixels *= 8;
              }
         }
 #endif
