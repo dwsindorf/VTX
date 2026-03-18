@@ -28,6 +28,8 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
+#define RSCALE 0.004
+
 static int tid=0;
 static int pid=0;
 static int nbumps=0;
@@ -165,6 +167,8 @@ bool Rock3D::setProgram(){
 //************************************************************
 
 Color rock_color(0.6, 0.5, 0.4);
+double base_threshold=50;
+double base_minsize=1.5;
 
 struct RockLodEntry {
     int    res;     // voxel resolution
@@ -172,14 +176,14 @@ struct RockLodEntry {
 };
 
 static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
-    {  2,  5.0},
-    {  4,  10.0},
-    {  8,  20.0},
-    {  16, 50.0},
-    { 32, 100.0},
-    { 64, 200.0},
-    { 128, 600.0},
-    { 256,  1e9}  // default 
+    {  4,  5.0},
+    {  16,  10.0},
+    { 32,  20.0},
+    { 40, 30.0},
+    { 64, 100.0},
+    { 128, 200.0},
+    { 256, 400.0},
+    { 512,  1e9}  // default 
 };
 
 static int getLodIndex(int scaledRes, double resScale) {
@@ -219,8 +223,6 @@ static Point rotateNormal(const Point& normal, const Point& right, const Point& 
 // Rock3DMgr class
 //************************************************************
 
-double base_threshold=100;
-double base_minsize=1.5;
 
 int Rock3DMgr::stats[MAX_ROCK_STATS][5];
 double Rock3DMgr::resScale=1;
@@ -387,9 +389,8 @@ int Rock3DMgr::getLODResolution(double pts) {
  		break; 		
  	}
 	
- 	//cout<<res<<" "<<resScale<<" "<<adaptThreshold<<endl;
  	int newres=(int)(res*resScale);
-
+ 
 	return newres;
 }
 //************************************************************
@@ -401,7 +402,7 @@ std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr:
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
-int Rock3DObjMgr::templates_per_lod=3;
+int Rock3DObjMgr::templates_per_lod=4;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::adaptiveBatches;  // Keyed by instance ID
@@ -485,7 +486,7 @@ bool Rock3DObjMgr::setProgram() {
 		
 	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
-	double texscale=0.25e-4*TheMap->radius;
+	double texscale=0.25e-4*RSCALE;
 	vars.newFloatVar("textureScale",texscale);
 		
 	vars.newBoolVar("lighting",Render.lighting());
@@ -686,7 +687,8 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     if(resolution==0)
 	   return 0;
  
-	int index = getLodIndex(resolution, Rock3DMgr::resScale);	   
+	int index = getLodIndex(resolution, Rock3DMgr::resScale);	
+	resolution = kRockLodTable[index].res;  // use table resolution for cache key
 
     Rock3DMgr::stats[index][4]++; // keys
     // Create cache key including smoothing state
@@ -874,13 +876,13 @@ void Rock3DObjMgr::render() {
             forward = Point(up.y * right.z - up.z * right.y,
                             up.z * right.x - up.x * right.z,
                             up.x * right.y - up.y * right.x);
-            rockSize = 2 * TheMap->radius * s->radius;
-            double dscale = Hscale * pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
+            rockSize = 2 * RSCALE * s->radius;
+            double dscale = RSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
             if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
                 Point camOffset = TheScene->xpoint - s->vertex;
-                double radius       = s->radius * TheMap->radius;
+                double radius       = s->radius * RSCALE;
                 Point  rockCenter   = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
                 double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
@@ -1324,7 +1326,7 @@ void TNrocks3D::init()
 	if(args[6]){
 		args[6]->eval();
 		rmgr->noise_amp=S0.s;
-		rmgr->pts_scale=2+2*rmgr->noise_amp;
+		rmgr->pts_scale=1+rmgr->noise_amp;
 		//cout <<rmgr->pts_scale<<endl;
 	}
 	if(args[7]){

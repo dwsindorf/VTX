@@ -390,6 +390,7 @@ void BranchVBO::render()
     glDrawArrays(GL_LINES, 0, vertCount);
 
     // Cleanup
+
     glDisableVertexAttribArray(GLSLMgr::CommonID1);
     glDisableVertexAttribArray(GLSLMgr::CommonID2);
     glDisableVertexAttribArray(GLSLMgr::CommonID3);
@@ -863,6 +864,7 @@ void PlantObjMgr::render_shadows(){
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	
+	//Raster.setShadowProgram("shadows.vert",0,0);
 	Raster.setShadowProgram("plants.gs.vert","plants.shadows.geom",0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 

@@ -187,7 +187,6 @@ void EffectsMgr::setProgram(int type){
 
 		GLSLMgr::setDefString(defs);
 		if(type==PLACE_SHADOWS){
-			//GLSLMgr::loadProgram("plants.gs.vert","shadows.frag","plants.shadows.geom");
 			GLSLMgr::loadProgram(shadow_vert,"shadows.frag",shadow_geom);
 		}
 		else if(TheMap && TheMap->hasGeometry()){

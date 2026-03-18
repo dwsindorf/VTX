@@ -10,6 +10,7 @@ varying vec4 Constants1;
 varying vec4 ImageVars_G;
 varying vec4 P0;
 varying vec4 TexVars_G;
+varying vec4 EyeDirection;
 
 void main(void) {
 	Normal_G.xyz = gl_NormalMatrix * gl_Normal;
@@ -19,6 +20,8 @@ void main(void) {
     gl_Position=gl_Vertex;
     P0=CommonAttributes2;
     ImageVars_G=CommonAttributes3;
+    
+    EyeDirection=-(gl_ModelViewMatrix * gl_Vertex);
  	
 }
 

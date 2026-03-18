@@ -292,21 +292,21 @@ void TerrainData::end()
 }
 
 void TerrainData::render_zvals(){
+	if(Rocks.supports_shadows())
+		Rocks.render_zvals();
 	if(Plants.supports_shadows())
 		Plants.render_zvals();
 	if(Sprites.supports_shadows())
 		Sprites.render_zvals();
-	if(Rocks.supports_shadows())
-		Rocks.render_zvals();
 		
 }
 void TerrainData::render_shadows(){
+	if(Rocks.supports_shadows())
+		Rocks.render_shadows();
 	if(Plants.supports_shadows())
 		Plants.render_shadows();
 	if(Sprites.supports_shadows())
 		Sprites.render_shadows();
-	if(Rocks.supports_shadows())
-		Rocks.render_shadows();
 }
 
 //************************************************************
