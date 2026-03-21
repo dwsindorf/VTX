@@ -106,6 +106,8 @@ class Rock3DObjMgr : public PlaceObjMgr
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
 	MCObject* getTemplateForLOD(Rock3DData *s);
+    void rebuild();
+    void calibrate();
 	
 public:
 	// Cache key based on world position
@@ -212,6 +214,12 @@ class Rock3DMgr : public PlacementMgr
 {
 protected:
 public:
+	struct NoiseCalib {
+		double scale = 1.0;
+		double offset = 0.0;
+		bool calibrated = false;
+	};
+	NoiseCalib noiseCalib;
 	ValueList<TNtexture *> texs;
 	TNode   *vnoise;
 	TNode   *rnoise;

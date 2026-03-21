@@ -6,7 +6,7 @@
 #include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
-
+#define NEW
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -16,9 +16,9 @@ extern const int MC_triTable[256][16];
 
 
 Point MCObjAdaptFlags::rockOrigin;
-Point MCObjAdaptFlags::rockRight;
-Point MCObjAdaptFlags::rockForward;
-Point MCObjAdaptFlags::rockUp;
+const Point MCObjAdaptFlags::rockRight;
+const Point MCObjAdaptFlags::rockForward;
+const Point MCObjAdaptFlags::rockUp;
 Point MCObjAdaptFlags::camForward;
 Point MCObjAdaptFlags::rotatedCam; 
 
@@ -38,6 +38,7 @@ int MCGenerator::cells_deleted=0;
 int MCGenerator::cells_created=0;
 int MCGenerator::csi_early_exit = 0;
 int MCGenerator::csi_edge_exits = 0;
+int MCGenerator::csi_edge_tests = 0;
 int MCGenerator::csi_cull_calls=0;
 int MCGenerator::csi_adapt_calls=0;
 int MCGenerator::csi_false = 0;
@@ -46,6 +47,8 @@ int MCGenerator::csi_cull_by_depth[32] = {};
 int MCGenerator::tm_field_calls=0; // templates
 int MCGenerator::ad_field_calls=0; // adaptive
 int MCGenerator::frame_field_calls=0;  // reset each frame
+
+
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
                                      double val1, double val2, double isolevel) {
     if (std::abs(isolevel - val1) < 0.00001) return p1;
@@ -201,8 +204,6 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                         );
                     }
                 }
-                
-                // Generate triangles for this cube
                 generateTrianglesForCube(cubeIndex, vertList, triangles);
             }
         }
@@ -214,7 +215,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	// Reset stats before subdivideOctree
-	csi_calls = csi_early_exit = csi_edge_exits = csi_false = csi_cull_calls=csi_adapt_calls=0;
+	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 	memset(csi_cull_by_depth, 0, sizeof(csi_cull_by_depth));  // ← ensure this is present
 
@@ -226,8 +227,8 @@ void MCGenerator::printStats(){
 
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
-			  << " edge:" << csi_edge_exits  
-			  << " empty:" << csi_false
+			  << " edge:" << csi_edge_exits<<"["<<csi_edge_tests
+			  << "] empty:" << csi_false
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
@@ -724,11 +725,13 @@ void MCObjNode::split()
     mesh.shrink_to_fit();
 }
 bool MCObjNode::checkSurface(SurfaceFunction field,
-                              const Point& objCenter, double objRadius, int maxDepth,
+                              const Point& objCenter, double objRadius, int maxDepth,double isoNoiseAmpl,
                               double isolevel)
 {
     if (surfaceChecked)
         return surfacePresent;
+    
+    
 
     surfaceChecked = true;
     MCGenerator::csi_calls++;
@@ -738,9 +741,12 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     getCorners(corners, objCenter, objRadius);
 
     double values[8];
-    double minVal =  1e10, maxVal = -1e10;
+    double minVal =  1e15, maxVal = -1e15;
+    
+    
     for (int i = 0; i < 8; i++) {
-        if (!cornersEvaluated[i]) {
+         if (!cornersEvaluated[i]) {
+            MCGenerator::csi_edge_tests++;
             cornerValues[i]     = field(corners[i].x, corners[i].y, corners[i].z);
             cornersEvaluated[i] = true;
         }
@@ -761,7 +767,46 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         {0,4},{1,5},{2,6},{3,7}
     };
 
-    double depthFraction = (double)depth / (double)maxDepth;
+    // Check center
+    Point co = center - objCenter;
+    Point localCenter = co / objRadius;
+    double cv = field(localCenter.x, localCenter.y, localCenter.z);
+    minVal = std::min(minVal, cv);
+    maxVal = std::max(maxVal, cv);
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        MCGenerator::csi_edge_exits++;
+        return true;
+    }
+
+#ifdef NEW
+    int gridN=0;
+    if      (depth <= 3) gridN = 4;
+    else if (depth <= 5) gridN = 3;
+    else if (depth <= 7) gridN = 2;
+
+    Point c0 = corners[0];  // min corner
+    Point c7 = corners[7];  // max corner
+
+    for (int ix = 0; ix <= gridN && !(minVal<=isolevel && maxVal>=isolevel); ix++)
+    for (int iy = 0; iy <= gridN && !(minVal<=isolevel && maxVal>=isolevel); iy++)
+    for (int iz = 0; iz <= gridN && !(minVal<=isolevel && maxVal>=isolevel); iz++) {
+        double x = c0.x + (c7.x - c0.x) * ix / gridN;
+        double y = c0.y + (c7.y - c0.y) * iy / gridN;
+        double z = c0.z + (c7.z - c0.z) * iz / gridN;
+        double v = field(x, y, z);
+        minVal = std::min(minVal, v);
+        maxVal = std::max(maxVal, v);
+    }
+
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        MCGenerator::csi_edge_exits++;
+        return true;
+    }
+#else
+    // Run bisection only to try to find definite confirmation
+    double depthFraction = (double)depth / (double)6;
     int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
 
     for (int e = 0; e < 12; e++) {
@@ -780,28 +825,18 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
             }
         }
     }
+#endif  
 
-    // Check center
-    Point co = center - objCenter;
-    Point localCenter = co / objRadius;
-    double cv = field(localCenter.x, localCenter.y, localCenter.z);
-    minVal = std::min(minVal, cv);
-    maxVal = std::max(maxVal, cv);
-    if (minVal <= isolevel && maxVal >= isolevel) {
-        surfacePresent = true;
-        MCGenerator::csi_edge_exits++;
-        return true;
-    }
     MCGenerator::csi_false++;
     surfacePresent = false;
     return false;
 }
 
 void MCObjNode::generateMesh(SurfaceFunction field,
-                              const Point& objCenter, double objRadius)
+                              const Point& objCenter, double objRadius,
+                              double isoNoiseAmpl)
 {
     if (meshValid) return;
-
     Point localCorners[8];
     getCorners(localCorners, objCenter, objRadius);
 
@@ -815,7 +850,6 @@ void MCObjNode::generateMesh(SurfaceFunction field,
         localMax.y = std::max(localMax.y, localCorners[i].y);
         localMax.z = std::max(localMax.z, localCorners[i].z);
     }
-
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
 
@@ -828,7 +862,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
 static int cnt=0;
 void MCObjNode::adapt(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
-                      const Point& cameraPos, double wscale,
+                      const Point& cameraPos, double wscale,double isoNoiseAmpl,
                       double minPixels, int maxDepth, const MCObjAdaptFlags& flags)
 {
     MCGenerator::csi_adapt_calls++;
@@ -838,10 +872,13 @@ void MCObjNode::adapt(SurfaceFunction field,
     double distance   = center.distance(cameraPos);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
-    
+   
     bool culled=false;
-    
-    bool skipSurfaceCheck = (depth < 2);  // cell larger than rock
+#ifdef NEW    
+    bool skipSurfaceCheck = (depth < 2);  // 
+#else
+    bool skipSurfaceCheck = (depth < 6);  //  
+#endif
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
@@ -863,7 +900,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         }
     }
     // ── Fustrum coarsening — cells in world space ───────────────────
-    if (flags.frustumCulling && depth > 5) {
+    if (flags.frustumCulling && depth > 4) {
   		Point camFwd = MCObjAdaptFlags::camForward;			
 		Point offset = center - objCenter;
 		Point worldCenter = MCObjAdaptFlags::rockOrigin
@@ -873,7 +910,7 @@ void MCObjNode::adapt(SurfaceFunction field,
 		Point toCell = (TheView->xpoint-worldCenter).normalize();
                       
         double dotVal=camFwd.dot(toCell);
-        double dpFactor=5;       // larger fails faster - fewer triangles but more large cells 
+        double dpFactor=6;       // larger fails faster - fewer triangles but more large cells 
         //dotVal*=fabs(dotVal);  // fails even faster - more large cells 
         double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
         culled = (dotVal < thresh);  
@@ -896,7 +933,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     bool depth_check = (depth >= maxDepth);
     bool shouldBeLeaf = size_check || depth_check;
 
-    if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth)) {
+    if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth,isoNoiseAmpl)) {
         collapse();
         return;
     }
@@ -904,7 +941,7 @@ void MCObjNode::adapt(SurfaceFunction field,
          if (!isLeaf())
             collapse();
         if (!meshValid)
-            generateMesh(field, objCenter, objRadius);
+            generateMesh(field, objCenter, objRadius,isoNoiseAmpl);
         return;
     }
 
@@ -918,7 +955,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     for (int i = 0; i < 8; i++)
         if (children[i])
             children[i]->adapt(field, objCenter, objRadius,
-                               cameraPos, wscale, minPixels, maxDepth, flags);
+                               cameraPos, wscale, isoNoiseAmpl,minPixels, maxDepth, flags);
 }
 void MCObjNode::getCorners(Point localCorners[8],
                             const Point& objCenter, double objRadius) const
@@ -993,11 +1030,14 @@ void MCObjTree::init(const Point& c, double r, double m,
     valid = true;
 }
 
-void MCObjTree::adapt(const Point& cameraPos, double wscale,
+void MCObjTree::adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl, 
                       double minPixels, int maxDepth,const MCObjAdaptFlags& flags)
 {
     if (!root || !valid) return;
-    root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, minPixels, maxDepth,flags);
+
+   root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
+  //  root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, 1e-5, 8,flags);
+    
     framesSinceUsed = 0;
 }
 

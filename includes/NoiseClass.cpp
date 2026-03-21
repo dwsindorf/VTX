@@ -15,7 +15,7 @@
 //#define LONGLONG // slower but allows freqs>2e9
 
 //#define DEBUG_NOISE_CACHE
-#define DEBUG_NOISE_EVAL
+//#define DEBUG_NOISE_EVAL
 
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
@@ -658,7 +658,7 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
 			norm_value+=dv;
 		}
     }
-    double ma,mb;
+     double ma,mb;
     if(type & UNS){ // scale min to max 0 to 2
 		ma=1.0/(v2-v1);
 		mb=v1*ma;
@@ -683,9 +683,7 @@ void Noise::get_minmax(double &v1, double &v2,int type,int n, double *args)
 #endif
     v1=ma;
     v2=mb;
-   // cout<<"domain="<<domain<<endl;
-
-	set_mode(oldmode);
+    set_mode(oldmode);
 }
 
 void checkDuplicates(double* table, int size) {

@@ -42,8 +42,11 @@ static bool cvalid;
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_GEN
 //#define DEBUG_REGEN
-
+//#define SHOW_BACKFACING
+//#define COLOR_CELLS_TEST
 //#define RECTANGLE_FIELD
+//#define SHOW_DEPTHS
+
 #define SHOW_TEMPLATES true
 
 bool use_adaptive_grid=true;
@@ -179,7 +182,7 @@ static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
     {  4,  5.0},
     {  16,  10.0},
     { 32,  20.0},
-    { 40, 30.0},
+    { 40, 40.0},
     { 64, 100.0},
     { 128, 200.0},
     { 256, 400.0},
@@ -226,7 +229,7 @@ static Point rotateNormal(const Point& normal, const Point& right, const Point& 
 
 int Rock3DMgr::stats[MAX_ROCK_STATS][5];
 double Rock3DMgr::resScale=1;
-double Rock3DMgr::noiseFactor=4;
+double Rock3DMgr::noiseFactor=1.1;
 double Rock3DMgr::maxDepth=10;
 double Rock3DMgr::minPointsize=1;
 double Rock3DMgr::adaptThreshold=100;
@@ -310,7 +313,6 @@ void Rock3DMgr::printStats(){
             kcnt  += stats[i][2];
             lcnt  += stats[i][4];
     	}
-
     }
     int total_field=MCGenerator::ad_field_calls+MCGenerator::tm_field_calls;
     std::cout << "Totals rocks:"<< rcnt
@@ -596,7 +598,6 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
     double isoNoiseAmpl = pmgr->noise_amp;
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
-    double margin = 1 + Rock3DMgr::noiseFactor*isoNoiseAmpl;
     bool istemplate=mode;
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
@@ -606,15 +607,20 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
         double baseEllipsoid = ellipsoidDist - 1.0;
         
         if (useNoisyIsoSurface && tr && tr->isEnabled()) {
-             Point np(x, y, z);
+        	double noiseScale  = pmgr->noiseCalib.scale;
+        	double noiseOffset = pmgr->noiseCalib.offset;
+
+            Point np(x, y, z);
             TheNoise.set(np);
             SINIT;
             tr->eval();
             if (S0.s) {
-                baseEllipsoid += S0.s * isoNoiseAmpl;
-            }
+            	baseEllipsoid += S0.s * noiseScale + noiseOffset;
+            	//double normalizedNoise = std::max(-1.0, std::min(1.0, S0.s));
+            	//    baseEllipsoid += S0.s * isoNoiseAmpl;            
+            }        
         }
-        
+         
         if(istemplate){
         	MCGenerator::tm_field_calls++;
         }
@@ -801,7 +807,69 @@ void Rock3DObjMgr::clear(){
     MCGenerator::frame_field_calls = 0;
     MCGenerator::cells_created=MCGenerator::cells_deleted=0;
 }
+void Rock3DObjMgr::calibrate(){
+	for(int i=0;i<objs.size;i++){
+		Rock3D* rockObj = (Rock3D*)objs[i];
+		Rock3DMgr* pmgr=(Rock3DMgr*)rockObj->mgr();
+		// Create a temporary field with scale=1, offset=0 to sample raw noise
+	    double isoNoiseAmpl = pmgr->noise_amp;
+	    pmgr->noiseCalib.scale=1;
+	    pmgr->noiseCalib.offset=0;
+	    
+	    if(isoNoiseAmpl==0)
+	    	continue;
+	    double comp = pmgr->comp;
+	    double comp_factor = std::max((1.0 - 2*comp), 0.2);
 
+		double minDev = 1e10, maxDev = -1e10;
+		int samples = 20;
+		double step = 2.0 / samples;
+		
+		// Temporary raw field (no normalization yet)
+		SurfaceFunction rawField = makeRockField(pmgr, false);  // uses scale=1, offset=0
+		
+		for (int ix = 0; ix <= samples; ix++)
+		for (int iy = 0; iy <= samples; iy++)
+		for (int iz = 0; iz <= samples; iz++) {
+			double x = -1.0 + ix * step;
+			double y = -1.0 + iy * step;
+			double z = -1.0 + iz * step;
+			
+			// Base ellipsoid at this point
+			double ex = 2*x, ey = 2*y, ez = 2*(z/comp_factor);
+			double baseVal = sqrt(ex*ex + ey*ey + ez*ez) - 1.0;
+			
+			double fieldVal = rawField(x, y, z);
+			double deviation = fieldVal - baseVal;
+			minDev = std::min(minDev, deviation);
+			maxDev = std::max(maxDev, deviation);
+		}
+		
+		// Map [minDev, maxDev] -> [-isoNoiseAmpl, +isoNoiseAmpl]
+		double range = maxDev - minDev;
+		if (range > 1e-10) {
+			pmgr->noiseCalib.scale  = 2.0 * isoNoiseAmpl / range;
+			pmgr->noiseCalib.offset = -isoNoiseAmpl - minDev * pmgr->noiseCalib.scale;
+		}
+		cout<<"scale:"<<pmgr->noiseCalib.scale<<" offset:"<<pmgr->noiseCalib.offset<<endl; 
+		pmgr->noiseCalib.calibrated = true;
+	}
+
+}
+void Rock3DObjMgr::rebuild(){
+    clear();
+     rockCache.clear();
+     freeLODTemplates();
+     Rock3DMgr::clearStats();
+     MCGenerator::tm_field_calls=0;
+     MCGenerator::ad_field_calls = 0;
+     MCGenerator::resetStats();
+     calibrate();
+     cout<<"rebuilding Rocks"<<endl;
+    
+     rockTreeMgr.invalidateAll();  // field params changed — rebuild all trees
+
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
@@ -810,6 +878,9 @@ void Rock3DObjMgr::render() {
     if (n == 0)
         return;
 
+#ifdef SHOW_ONE
+    n=1;
+#endif
     bool wireframe = test7;
 
     bool moved = TheScene->moved();
@@ -825,16 +896,7 @@ void Rock3DObjMgr::render() {
     double t1 = 0, t2 = 0, t3 = 0, d0 = 0, d1 = 0;
 
     if (mesh_needs_rebuild) {
-        clear();
-        rockCache.clear();
-        freeLODTemplates();
-        Rock3DMgr::clearStats();
-        MCGenerator::tm_field_calls=0;
-        MCGenerator::ad_field_calls = 0;
-        MCGenerator::resetStats();
-        cout<<"rebuilding Rocks"<<endl;
-       
-        rockTreeMgr.invalidateAll();  // field params changed — rebuild all trees
+    	rebuild();
     }
 
     if (placement_needs_update || mesh_needs_rebuild) {
@@ -891,14 +953,14 @@ void Rock3DObjMgr::render() {
                 d1 = clock();
 #ifdef RECTANGLE_FIELD               
                 SurfaceFunction field = [](double x, double y, double z) -> double {
-                    double dx = fabs(x) - 1.0;
-                    double dy = fabs(y) - 1.0;
-                    double dz = fabs(z) - 1.0;
+                    double dx = fabs(x*2) - 1.0;  // surface at |x|=0.5, matching ellipsoid
+                    double dy = fabs(y*2) - 1.0;
+                    double dz = fabs(z*2) - 1.0;
                     MCGenerator::frame_field_calls++;
                     MCGenerator::ad_field_calls++;
                     return std::max({dx, dy, dz});
                 };
-                margin=2.1;
+                margin = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;  // same as makeRockField
 #else                
                 SurfaceFunction field = makeRockField(pmgr,false);
 #endif
@@ -908,7 +970,7 @@ void Rock3DObjMgr::render() {
                     rockCenter, radius, margin, field, s->instance, s->rval);
                 
                 // Adapt tree to current viewpoint — incremental, reuses cached values
-                tree->adapt(TheScene->xpoint, TheScene->wscale,
+                tree->adapt(TheScene->xpoint, TheScene->wscale,isoNoiseAmpl,
                            Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth,flags);
                 
                 std::vector<MCObjNode*> leaves;
@@ -954,21 +1016,39 @@ void Rock3DObjMgr::render() {
                         leaf->attributesApplied = true;
                     }
                 }
-
                 // Add to batch
+                static float colors[7][3] = {
+                    {1,0,0},{0,1,0},{0,0,1},{1,1,0},{0,1,1},{1,0,1},{1,1,1}
+                };
                 for (MCObjNode* leaf : leaves) {
                     if (leaf->mesh.empty()) continue;
-                    for (const auto& tri : leaf->mesh)
+                    for (auto& tri : leaf->mesh) {
+#ifdef COLOR_CELLS_TEST // color cells by depth (also need Color in base)
+                        for (int v = 0; v < 3; v++) {
+                        	int c = leaf->depth % 7;
+                        	tri.colors[v] = Color(colors[c][0], colors[c][1], colors[c][2]);
+                        }
+#endif
                         addTriangleToBatch(batch, tri, s, right, forward,
                                            rockEyeCenter, rockSize);
-                }
+                    }
+                } 
+#ifdef SHOW_DEPTHS
+                std::set<int> depths;
+                for(MCObjNode* leaf : leaves)
+                    if(!leaf->mesh.empty())
+                        depths.insert(leaf->depth);
+                printf("depths present:");
+                for(int d : depths) printf(" %d", d);
+                printf("\n");
+#endif
                 Rock3DMgr::setStats(resolution, totalTris, true);
 
-            #ifdef PRINT_ROCK_CACHE_STATS
+#ifdef PRINT_ROCK_CACHE_STATS
                 std::cout << "Persistent tree: leaves=" << leaves.size()
                           << " newTris=" << newTris
                           << " time=" << (clock() - d1) * TS << "ms" << std::endl;
-            #endif
+#endif
             }
             else if(SHOW_TEMPLATES){
                 // ===== TEMPLATE PATH =====
@@ -1262,9 +1342,10 @@ void Rock3DObjMgr::render_objects() {
     }
     
     // ===== Render Adaptive Batches =====
+#ifdef SHOW_BACKFACING
     if(use_adaptive_grid)
     	glDisable(GL_CULL_FACE); // makes holes less visible
-
+#endif
     for (auto& pair : adaptiveBatches) {
         int rockType = pair.first;  // instance ID
         VBOBatch& batch = pair.second;
@@ -1326,7 +1407,7 @@ void TNrocks3D::init()
 	if(args[6]){
 		args[6]->eval();
 		rmgr->noise_amp=S0.s;
-		rmgr->pts_scale=1+rmgr->noise_amp;
+		rmgr->pts_scale=1+Rock3DMgr::noiseFactor*rmgr->noise_amp;
 		//cout <<rmgr->pts_scale<<endl;
 	}
 	if(args[7]){

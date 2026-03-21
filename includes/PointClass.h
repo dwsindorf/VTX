@@ -38,7 +38,7 @@ public:
 	int operator==(Point&p)		{ return DEQ(x,p.x)&&DEQ(y,p.y)&&DEQ(z,p.z);}
 	int operator!=(Point&p)		{ return !(*this==p);}
 	double operator[](int i) const	{ return ((i==0)?x:((i==1)?y:z));}
-	double dot(const Point&p)	{ return (x*p.x+y*p.y+z*p.z);}
+	double dot(const Point&p)	const { return (x*p.x+y*p.y+z*p.z);}
 	Point cross(const Point&p)	{ return Point(y*p.z-z*p.y,z*p.x-x*p.z,x*p.y-y*p.x);}
 	double length() const		{ return sqrt(x*x+y*y+z*z);}
 	double magnitude() const	{ return x*x+y*y+z*z;}

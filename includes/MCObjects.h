@@ -48,6 +48,7 @@ public:
     static int csi_calls;
     static int csi_early_exit;
     static int csi_edge_exits;
+    static int csi_edge_tests;
     static int csi_cull_calls;
     static int csi_adapt_calls;
     static int csi_false;
@@ -181,9 +182,9 @@ struct MCObjAdaptFlags {
     bool curvatureAdapt    = false;  // finer subdivision at high curvature (future)
 
     static Point rockOrigin;
-    static Point rockRight;
-    static Point rockForward;
-    static Point rockUp;
+    static const Point rockRight;
+    static const Point rockForward;
+    static const Point rockUp;
     static Point camForward; 
     static Point rotatedCam; 
      
@@ -264,7 +265,7 @@ public:
 
     void adapt(SurfaceFunction field,
                const Point& objCenter, double objRadius,
-               const Point& cameraPos, double wscale,
+               const Point& cameraPos, double wscale,double isoNoiseAmpl,
                double minPixels, int maxDepth,
                const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
     
@@ -272,10 +273,11 @@ public:
     bool checkSurface(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
                       int maxDepth,
+					  double isoNoiseAmpl,
                       double isolevel = 0.0);
     // Generate marching cubes mesh for this leaf cell
     void generateMesh(SurfaceFunction field,
-                      const Point& objCenter, double objRadius);
+                      const Point& objCenter, double objRadius, double isoNoiseAmpl);
 
     // Invalidate mesh and surface cache (call when field changes)
     void invalidate();
@@ -326,7 +328,7 @@ public:
     // Top-level adapt — mirrors Map::adapt()
     // Traverses tree top-down, splits/collapses nodes per viewpoint
     
-    void adapt(const Point& cameraPos, double wscale,
+    void adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl,
                double minPixels, int maxDepth,
                const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
 
