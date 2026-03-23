@@ -10,7 +10,7 @@ uniform float wscale;
 uniform vec4 xpoint;
 varying vec3 Normal;
 varying vec3 EyeDirection;
-varying vec3 WorldPos;
+varying vec3 EyePos;
 varying vec3 TemplatePos;
 varying vec3 WorldNormal;
 attribute vec4 templatePosition;  // Attribute location 3
@@ -65,7 +65,7 @@ void main() {
     
     Tangent.w = max_orders;
     
-     WorldPos = normalize(xpoint.xyz);
+     EyePos = normalize(xpoint.xyz);
      WorldNormal=normalize(templatePosition.xyz);
 #ifdef COLOR
      Color = gl_Color;

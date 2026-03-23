@@ -14,8 +14,7 @@ varying vec3 Normal;
 varying vec4 WorldNormal;
 
 varying vec3 EyeDirection;
-varying vec3 WorldPos;
-
+varying vec3 EyePos;
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
@@ -46,7 +45,7 @@ vec3 setLighting(vec3 BaseColor) {
         if (gl_LightSource[i].position.w == 0.0)
             continue;
         vec3 lpos=normalize(gl_LightSource[i].position.xyz);
-        float dl=-dot(lpos,WorldPos.rgb);
+        float dl=-dot(lpos,EyePos.rgb);
         dl=pow(max(dl,0),0.5);
             
         vec3 light = normalize(gl_LightSource[i].position.xyz + EyeDirection);

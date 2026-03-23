@@ -890,6 +890,16 @@ void Rock3DObjMgr::render() {
         Point xpoint = TheScene->xpoint;
          
         MCObjAdaptFlags flags = MCObjAdaptFlags::rock();
+        Point up,right, forward;
+        up=xpoint.normalize();
+        if (fabs(up.z) < 0.9)
+            right = Point(up.y, -up.x, 0).normalize();
+        else
+            right = Point(0, up.z, -up.y).normalize();
+        forward = Point(up.y * right.z - up.z * right.y,
+                        up.z * right.x - up.x * right.z,
+                        up.x * right.y - up.y * right.x);
+
         try {
         for (int i = 0; i < n; i++) {
             Rock3DData *s = data[i];
@@ -908,17 +918,8 @@ void Rock3DObjMgr::render() {
                 continue;
             }
             // Precompute basis vectors once per rock - used by both paths
-            Point up, right, forward, rockEyeCenter;
+            Point rockEyeCenter;
             double rockSize;
-
-            up = s->normal;
-            if (fabs(up.z) < 0.9)
-                right = Point(up.y, -up.x, 0).normalize();
-            else
-                right = Point(0, up.z, -up.y).normalize();
-            forward = Point(up.y * right.z - up.z * right.y,
-                            up.z * right.x - up.x * right.z,
-                            up.x * right.y - up.y * right.x);
             rockSize = 2 * RSCALE * s->radius;
             double dscale = RSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
@@ -1074,11 +1075,11 @@ void Rock3DObjMgr::render() {
             TheNoise.rseed = rseed;
         } 
         } catch (std::exception& e) {
-        	    printf("CRASH bad_alloc\n");
+        	printf("Rock3DObjMgr::render - EXCEPTION: %s\n",e.what());
         } 
 
         d1 = clock();
-//#define TEST
+#define TEST
 #ifdef TEST        
         size_t totalTemplateVerts = 0;
 		for (auto& pair : rockBatches)
@@ -1129,16 +1130,19 @@ void Rock3DObjMgr::addTriangleToBatch(
     const Point& rockEyeCenter,
     double rockSize)
 {
+	
+	Point up=TheView->xpoint.normalize();
+
     for (int v = 0; v < 3; v++) {
         // Transform using precomputed basis - no recomputation
         Point rotated = Point(
-            tri.vertices[v].x * right.x  + tri.vertices[v].y * forward.x + tri.vertices[v].z * s->normal.x,
-            tri.vertices[v].x * right.y  + tri.vertices[v].y * forward.y + tri.vertices[v].z * s->normal.y,
-            tri.vertices[v].x * right.z  + tri.vertices[v].y * forward.z + tri.vertices[v].z * s->normal.z
+            tri.vertices[v].x * right.x  + tri.vertices[v].y * forward.x + tri.vertices[v].z * up.x,
+            tri.vertices[v].x * right.y  + tri.vertices[v].y * forward.y + tri.vertices[v].z * up.y,
+            tri.vertices[v].x * right.z  + tri.vertices[v].y * forward.z + tri.vertices[v].z * up.z
         );
         Point eyeVertex = rockEyeCenter + rotated * rockSize;
 
-        Point rotatedNormal = rotateNormal(tri.normal, right, forward, s->normal);
+        Point rotatedNormal = rotateNormal(tri.normal, right, forward, up);
 
         batch.vertices.push_back(eyeVertex.x);
         batch.vertices.push_back(eyeVertex.y);
@@ -1151,7 +1155,7 @@ void Rock3DObjMgr::addTriangleToBatch(
         batch.faceNormals.push_back(tri.faceNormal.x);
         batch.faceNormals.push_back(tri.faceNormal.y);
         batch.faceNormals.push_back(tri.faceNormal.z);
-        double slope = rotatedNormal.dot(s->normal);
+        double slope = rotatedNormal.dot(up);
         batch.faceNormals.push_back(slope);
         
         // Colors
