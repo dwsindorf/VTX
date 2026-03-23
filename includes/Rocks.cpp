@@ -37,12 +37,12 @@ static bool cvalid;
 
 #define PRINT_STATS
 //#define PRINT_ROCK_CACHE_STATS
-//#define PRINT_LOD_STATS
+#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_GEN
 //#define DEBUG_REGEN
-//#define SHOW_BACKFACING
+#define SHOW_BACKFACING
 //#define COLOR_CELLS_TEST
 //#define RECTANGLE_FIELD
 //#define SHOW_DEPTHS
@@ -168,28 +168,107 @@ bool Rock3D::setProgram(){
 //************************************************************
 // helper functions
 //************************************************************
+static Point rotateNormal(const Point& normal, const Point& right, const Point& forward, const Point& up) {
+    Point rotated(
+        normal.x * right.x + normal.y * forward.x + normal.z * up.x,
+        normal.x * right.y + normal.y * forward.y + normal.z * up.y,
+        normal.x * right.z + normal.y * forward.z + normal.z * up.z
+    );
+    double len = rotated.length();
+    if (len > 1e-30) {
+        return rotated / len;
+    }
+    return Point(0, 1, 0);
+}
 
+//************************************************************
+// Rock3DMgr class
+//************************************************************
 Color rock_color(0.6, 0.5, 0.4);
-double base_threshold=50;
+double base_threshold=100;
 double base_minsize=1.5;
 
-struct RockLodEntry {
-    int    res;     // voxel resolution
-    double maxPts;  // upper bound for pts (pts < maxPts)
-};
-
-static const RockLodEntry kRockLodTable[MAX_ROCK_STATS] = {
+const Rock3DMgr::RockLodEntry Rock3DMgr::kRockLodTable[MAX_ROCK_STATS] = {
     {  4,  5.0},
-    {  16,  10.0},
-    { 32,  20.0},
-    { 40, 40.0},
-    { 64, 100.0},
+    {  8,  10.0},
+    { 16,  20.0},
+    { 32, 60.0},
+    { 64, 110.0},
     { 128, 200.0},
     { 256, 400.0},
     { 512,  1e9}  // default 
 };
 
-static int getLodIndex(int scaledRes, double resScale) {
+int Rock3DMgr::stats[MAX_ROCK_STATS][5];
+double Rock3DMgr::resScale=1;
+double Rock3DMgr::noiseFactor=1.1;
+double Rock3DMgr::maxDepth=10;
+double Rock3DMgr::minPointsize=1;
+double Rock3DMgr::adaptThreshold=base_threshold;
+
+Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
+{
+	MSK_SET(type,PLACETYPE,MCROCKS);
+	comp=0.0;
+	drop=0.0;
+	vnoise=0;
+	rnoise=0;
+	color=0;
+#ifdef TEST_ROCKS
+    set_testColor(true);
+#endif
+   set_testDensity(true);
+   set_useaveht(true);
+}
+int Rock3DMgr::getLODResolution(double pts) {
+	if(pts<kRockLodTable[0].res)
+		return 0;
+	int res=kRockLodTable[MAX_ROCK_STATS - 1].res; // fallback
+ 	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
+		if (pts <= kRockLodTable[i].maxPts) {
+			res=kRockLodTable[i].res;
+			break;
+		}
+	}
+ 	double cellsize=TheScene->cellsize;
+ 	if (cellsize <= 3.5) {// Between best and normal: lerp from 2.0 to 1.0	        
+ 	   resScale = remap(cellsize, 1, 3.5, 2.0, 1.0);
+ 	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
+ 	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
+    }
+
+	switch(TheScene->generate_quality){
+	case DRAFT:
+		resScale*=0.75;
+		minPointsize=base_minsize*2;
+		maxDepth=8;
+		adaptThreshold=0.5*base_threshold;
+ 		break;
+	default:
+	case NORMAL:
+		resScale*=1;
+		minPointsize=base_minsize*1.0;
+		maxDepth=10;
+		adaptThreshold=base_threshold*1.0;
+ 		break;
+	case HIGH:
+		resScale*=1.25;
+		minPointsize=base_minsize*0.75;
+		maxDepth=11;
+		adaptThreshold=1.2*base_threshold;
+ 		break;
+	case BEST:
+		resScale*=1.5;
+		minPointsize=base_minsize*0.5;
+		maxDepth=12;
+		adaptThreshold=1.5*base_threshold;
+ 		break; 		
+ 	}	
+ 	int newres=(int)(res*resScale); 
+	return newres;
+}
+
+int Rock3DMgr::getLodIndex(int scaledRes, double resScale) {
     // Reverse the scaling with rounding
     int unscaledRes = (int)(scaledRes / resScale + 0.5);  // Round instead of truncate
     
@@ -205,49 +284,6 @@ static int getLodIndex(int scaledRes, double resScale) {
         }
     }   
     return bestIndex;
-}
-
-
-static Point rotateNormal(const Point& normal, const Point& right, const Point& forward, const Point& up) {
-    Point rotated(
-        normal.x * right.x + normal.y * forward.x + normal.z * up.x,
-        normal.x * right.y + normal.y * forward.y + normal.z * up.y,
-        normal.x * right.z + normal.y * forward.z + normal.z * up.z
-    );
-    double len = rotated.length();
-    if (len > 1e-30) {
-        return rotated / len;
-    }
-    return Point(0, 1, 0);  // ADD THIS LINE
-}
-
-
-//************************************************************
-// Rock3DMgr class
-//************************************************************
-
-
-int Rock3DMgr::stats[MAX_ROCK_STATS][5];
-double Rock3DMgr::resScale=1;
-double Rock3DMgr::noiseFactor=1.1;
-double Rock3DMgr::maxDepth=10;
-double Rock3DMgr::minPointsize=1;
-double Rock3DMgr::adaptThreshold=100;
-
-Rock3DMgr::Rock3DMgr(int i) : PlacementMgr(i)
-{
-	MSK_SET(type,PLACETYPE,MCROCKS);
-	comp=0.0;
-	drop=0.0;
-	vnoise=0;
-	rnoise=0;
-	color=0;
-
-#ifdef TEST_ROCKS
-    set_testColor(true);
-#endif
-   set_testDensity(true);
-   set_useaveht(true);
 }
 
 void Rock3DMgr::eval(){	
@@ -325,8 +361,6 @@ void Rock3DMgr::printStats(){
 			  <<" total field:"<<total_field/1000<<"K this frame:"<<MCGenerator::frame_field_calls
               << std::endl;
 }
-
-
 void Rock3DMgr::setStats(int res, int tris,bool add){
     for (int i = 0; i < MAX_ROCK_STATS; ++i) {
     	int tres=(int)(kRockLodTable[i].res*resScale);
@@ -344,57 +378,6 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
     }
 }
 
-int Rock3DMgr::getLODResolution(double pts) {
-	if(pts<kRockLodTable[0].res)
-		return 0;
-	int res=kRockLodTable[MAX_ROCK_STATS - 1].res; // fallback
- 	for (int i = 0; i < MAX_ROCK_STATS; ++i) {
-		if (pts <= kRockLodTable[i].maxPts) {
-			res=kRockLodTable[i].res;
-			break;
-		}
-	}
-
- 	double cellsize=TheScene->cellsize;
- 
- 	if (cellsize <= 3.5) {// Between best and normal: lerp from 2.0 to 1.0	        
- 	   resScale = remap(cellsize, 1, 3.5, 2.0, 1.0);
- 	} else {// Between normal and draft: lerp from 1.0 to 0.5 	        
- 	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
-    }
-
-	switch(TheScene->generate_quality){
-	case DRAFT:
-		resScale*=0.75;
-		minPointsize=base_minsize*2;
-		maxDepth=8;
-		adaptThreshold=0.5*base_threshold;
- 		break;
-	default:
-	case NORMAL:
-		resScale*=1;
-		minPointsize=base_minsize*1.0;
-		maxDepth=10;
-		adaptThreshold=base_threshold*1.0;
- 		break;
-	case HIGH:
-		resScale*=1.25;
-		minPointsize=base_minsize*0.75;
-		maxDepth=11;
-		adaptThreshold=1.2*base_threshold;
- 		break;
-	case BEST:
-		resScale*=1.5;
-		minPointsize=base_minsize*0.5;
-		maxDepth=12;
-		adaptThreshold=1.5*base_threshold;
- 		break; 		
- 	}
-	
- 	int newres=(int)(res*resScale);
- 
-	return newres;
-}
 //************************************************************
 // Rock3DObjMgr class
 //************************************************************
@@ -409,7 +392,7 @@ std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::adaptiveBatches;  // Keyed by instance ID
 
-MCObjTreeMgr Rock3DObjMgr::rockTreeMgr(100);  // max 100 persistent trees
+MCObjTreeMgr Rock3DObjMgr::rockTreeMgr(1000);  // max 100 persistent trees
 
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
@@ -693,8 +676,8 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     if(resolution==0)
 	   return 0;
  
-	int index = getLodIndex(resolution, Rock3DMgr::resScale);	
-	resolution = kRockLodTable[index].res;  // use table resolution for cache key
+	int index = Rock3DMgr::getLodIndex(resolution, Rock3DMgr::resScale);	
+	resolution = Rock3DMgr::kRockLodTable[index].res;  // use table resolution for cache key
 
     Rock3DMgr::stats[index][4]++; // keys
     // Create cache key including smoothing state
@@ -851,18 +834,16 @@ void Rock3DObjMgr::calibrate(){
 			pmgr->noiseCalib.scale  = 2.0 * isoNoiseAmpl / range;
 			pmgr->noiseCalib.offset = -isoNoiseAmpl - minDev * pmgr->noiseCalib.scale;
 		}
-		cout<<"scale:"<<pmgr->noiseCalib.scale<<" offset:"<<pmgr->noiseCalib.offset<<endl; 
+		//cout<<"scale:"<<pmgr->noiseCalib.scale<<" offset:"<<pmgr->noiseCalib.offset<<endl; 
 		pmgr->noiseCalib.calibrated = true;
 	}
 
 }
 void Rock3DObjMgr::rebuild(){
-    clear();
+     clear();
      rockCache.clear();
      freeLODTemplates();
      Rock3DMgr::clearStats();
-     MCGenerator::tm_field_calls=0;
-     MCGenerator::ad_field_calls = 0;
      MCGenerator::resetStats();
      calibrate();
      cout<<"rebuilding Rocks"<<endl;
@@ -877,7 +858,6 @@ void Rock3DObjMgr::render() {
     int n = data.size;
     if (n == 0)
         return;
-
 #ifdef SHOW_ONE
     n=1;
 #endif
@@ -885,6 +865,7 @@ void Rock3DObjMgr::render() {
 
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
+    cout<<"Rock3DObjMgr::render() start moved:"<<moved<<" changed:"<<changed<<endl;
 
     if (PlaceObjMgr::shadow_mode && !shadow_start) {
         moved = false;
@@ -893,7 +874,7 @@ void Rock3DObjMgr::render() {
 
     bool placement_needs_update = moved;
     bool mesh_needs_rebuild = changed;
-    double t1 = 0, t2 = 0, t3 = 0, d0 = 0, d1 = 0;
+    double t1 = 0, t2 = 0, t3 = 0,t4=0, d0 = 0, d1 = 0, d2=0;
 
     if (mesh_needs_rebuild) {
     	rebuild();
@@ -904,12 +885,12 @@ void Rock3DObjMgr::render() {
 
         if (!mesh_needs_rebuild) { // already cleared above
             clear();
-        }
-
+         	MCGenerator::resetStats();
+      	}
         Point xpoint = TheScene->xpoint;
          
         MCObjAdaptFlags flags = MCObjAdaptFlags::rock();
-         
+        try {
         for (int i = 0; i < n; i++) {
             Rock3DData *s = data[i];
             Rock3DMgr *pmgr = (Rock3DMgr*) s->mgr;
@@ -1033,6 +1014,8 @@ void Rock3DObjMgr::render() {
                                            rockEyeCenter, rockSize);
                     }
                 } 
+                t4+=clock()-d1;
+                
 #ifdef SHOW_DEPTHS
                 std::set<int> depths;
                 for(MCObjNode* leaf : leaves)
@@ -1054,10 +1037,10 @@ void Rock3DObjMgr::render() {
                 // ===== TEMPLATE PATH =====
             	//printf("TEMPLATE: pts=%.1f res=%d\n", pts, resolution);
                 d1 = clock();
-                 
-                MCObject *templateSphere = getTemplateForLOD(s);
-
-                if (!templateSphere || templateSphere->mesh.empty()) {
+  
+               
+                 MCObject *templateSphere = getTemplateForLOD(s);
+                 if (!templateSphere || templateSphere->mesh.empty()) {
                     continue;
                 }
 
@@ -1085,14 +1068,35 @@ void Rock3DObjMgr::render() {
                 for (const auto &tri : templateSphere->mesh) {
                     addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
                 }
-                t3 += clock() - d1;
+                 t3 += clock() - d1;
                 Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), false);
             }
             TheNoise.rseed = rseed;
-        }
+        } 
+        } catch (std::exception& e) {
+        	    printf("CRASH bad_alloc\n");
+        } 
 
         d1 = clock();
-
+//#define TEST
+#ifdef TEST        
+        size_t totalTemplateVerts = 0;
+		for (auto& pair : rockBatches)
+			totalTemplateVerts += pair.second.vertices.size();
+		
+		size_t totalAdaptiveVerts = 0;
+		for (auto& pair : adaptiveBatches)
+			totalAdaptiveVerts += pair.second.vertices.size();
+		
+		printf("  rockBatches: %d batches, %zu verts (~%zu MB)\n",
+			   (int)rockBatches.size(), totalTemplateVerts,
+			   totalTemplateVerts * sizeof(float) * 5 / 1024 / 1024);
+		printf("  adaptiveBatches: %d batches, %zu verts (~%zu MB)\n",
+			   (int)adaptiveBatches.size(), totalAdaptiveVerts,
+			   totalAdaptiveVerts * sizeof(float) * 5 / 1024 / 1024);
+		printf("  lodTemplates: %d cached\n", (int)lodTemplates.size());
+		printf("  data.size=%d n=%d\n", data.size, n);
+#endif
         // ===== Upload Template VBOs =====
         for (auto &pair : rockBatches) {
             uploadBatchVBOs(pair.second);
@@ -1101,19 +1105,18 @@ void Rock3DObjMgr::render() {
         for (auto& pair : adaptiveBatches) {
             uploadBatchVBOs(pair.second);
         }
-
         t2 = (clock() - d1);
 
-        //MCGenerator::ad_field_calls+=MCGenerator::frame_field_calls;
+#ifdef PRINT_STATS        
         Rock3DMgr::printStats();
         double total = (clock() - d0) * TS;
-        cout << "Compute time Generate:" << t1 * TS << " VBOs:" << t2 * TS
-                << " Batches:" << t3 * TS << " Total:" << total << " ms"
+        cout << "Compute Batches T["<<rockBatches.size()<<"]:"<< (t1+t3) * TS << " A["<<adaptiveBatches.size()<<"]:"<<t4 * TS<< " Upload:"<<t2 * TS <<  " Total:" << total << " ms"
                 << endl;
-        
         MCGenerator::printStats();
+#endif
     }
     render_objects();
+  
 }
 
 void Rock3DObjMgr::addTriangleToBatch(

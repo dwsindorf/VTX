@@ -1035,6 +1035,7 @@ void VtxScene::dragAction(){
 //-------------------------------------------------------------
 void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 {
+	    
     if(!GetContext()){
     	SetContext();
         SetCurrent();
@@ -1070,9 +1071,9 @@ void VtxScene::OnPaint( wxPaintEvent& WXUNUSED(event) )
 
     ::wxSetWorkingDirectory("../Shaders");
 
-   // if(!TheScene->suspended())
     int moved=TheScene->moved();
     TheScene->render();
+
     if(TheScene->automv()||TheScene->autotm()||moved||TheScene->changed_detail())
     	sceneDialog->updateTabs();
     if(scene_rendered)

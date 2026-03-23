@@ -219,6 +219,14 @@ public:
 		double offset = 0.0;
 		bool calibrated = false;
 	};
+	struct RockLodEntry {
+	    int    res;     // voxel resolution
+	    double maxPts;  // upper bound for pts (pts < maxPts)
+	};
+
+	static const RockLodEntry kRockLodTable[MAX_ROCK_STATS];
+    static int getLodIndex(int scaledRes, double resScale);
+
 	NoiseCalib noiseCalib;
 	ValueList<TNtexture *> texs;
 	TNode   *vnoise;

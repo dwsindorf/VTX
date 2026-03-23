@@ -51,6 +51,7 @@ public:
 	int         current_width,current_ht;
 	int			hborder;
 	int			wborder;
+	bool        rendering;
 
 	void set_keep_variables(int i)		{ ropts.keep_vars=i;}
 	int keep_variables()				{ return ropts.keep_vars;}

@@ -891,7 +891,7 @@ void Scene::open(char *fn)
 	cout<<"Open"<<endl;
 	PlantMgr::textures=0;
 	reset();
-
+	rendering=false;
 	PlacementMgr::free_htable();
 	
 	set_action("Building..");
@@ -2426,7 +2426,7 @@ void Scene::adapt()
 void Scene::render()
 {
     scene_rendered=0;
-
+        
 	if(!suspended())
 	    animate();
 	int update_needed=
@@ -2435,7 +2435,10 @@ void Scene::render()
 			||moved()
 			||changed_render();
 
-	if(!suspended() && (update_needed || self)){
+   // printf("update_needed=%d suspended=%d\n", update_needed, (int)suspended());
+	if(!rendering && !suspended() && (update_needed || self)){
+	    cout<<"rendering="<<rendering<<endl;
+	    rendering=true;
 
 		setContext();
 		init_for_cycle();
@@ -2449,7 +2452,7 @@ void Scene::render()
 
 	    set_adapt_mode();
 
-	    //cout<<"render:"<<endl;
+	    cout<<"Scene::render() start"<<endl;
 		set_lights();
 		Raster.manageBuffers();
 		rendered_objects=0;
@@ -2502,7 +2505,6 @@ void Scene::render()
 			draw_string(HDR1_COLOR,"------- render -------------------");
 	 	GLSLMgr::setFBOReset();
 	 
-
 		render_shadows();
 
 		glFlush();
@@ -2545,16 +2547,19 @@ void Scene::render()
         clr_changed_position();
         Render.validate_textures();
     	auto_stride();
-        if(swap_on_update)
+        if(swap_on_update){
 	       swap_buffers();
+        }
+        rendering=false;
+        cout<<"Scene::render() end"<<endl;
 	}
-	if(!swap_on_update) // swap on refresh
+	if(!swap_on_update){ // swap on refresh
 		swap_buffers();
+	}
 
 	clr_eyeref();
 	if(autotm())
 		set_changed_time();
-
 }
 
 //-------------------------------------------------------------
@@ -2623,7 +2628,6 @@ void Scene::render_shadows()
     int bgs=Raster.shadows() && Raster.bgshadows() && !light_view() && !test_view();
 
     locate_objs();
-    //cout<<"render_shadows:"<<endl;
 	set_lights();
 
 	bounds=viewobj->bounds();

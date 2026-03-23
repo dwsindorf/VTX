@@ -6,7 +6,6 @@
 #include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
-#define NEW
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -216,6 +215,8 @@ void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	// Reset stats before subdivideOctree
 	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
+    tm_field_calls=ad_field_calls = 0;
+
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 	memset(csi_cull_by_depth, 0, sizeof(csi_cull_by_depth));  // ← ensure this is present
 
@@ -730,20 +731,29 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
 {
     if (surfaceChecked)
         return surfacePresent;
-    
-    
-
+ 
     surfaceChecked = true;
     MCGenerator::csi_calls++;
     MCGenerator::csi_by_depth[std::min(depth, 31)]++;
 
+    double values[8];
+    double minVal =  1e15, maxVal = -1e15;
+    // Check center
+    Point co = center - objCenter;
+    Point localCenter = co / objRadius;
+    double cv = field(localCenter.x, localCenter.y, localCenter.z);
+    minVal = std::min(minVal, cv);
+    maxVal = std::max(maxVal, cv);
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        MCGenerator::csi_edge_tests++;
+        MCGenerator::csi_edge_exits++;
+        return true;
+    }  
+    // Check corners
     Point corners[8];
     getCorners(corners, objCenter, objRadius);
 
-    double values[8];
-    double minVal =  1e15, maxVal = -1e15;
-    
-    
     for (int i = 0; i < 8; i++) {
          if (!cornersEvaluated[i]) {
             MCGenerator::csi_edge_tests++;
@@ -753,33 +763,14 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         values[i] = cornerValues[i];
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
+        if (minVal <= isolevel && maxVal >= isolevel){
+            surfacePresent = true;
+             MCGenerator::csi_early_exit++;
+             return true;
+
+        }
     }
-
-    if (minVal <= isolevel && maxVal >= isolevel) {
-        surfacePresent = true;
-        MCGenerator::csi_early_exit++;
-        return true;
-    }
-
-    static const int edgePairs[12][2] = {
-        {0,1},{1,2},{2,3},{3,0},
-        {4,5},{5,6},{6,7},{7,4},
-        {0,4},{1,5},{2,6},{3,7}
-    };
-
-    // Check center
-    Point co = center - objCenter;
-    Point localCenter = co / objRadius;
-    double cv = field(localCenter.x, localCenter.y, localCenter.z);
-    minVal = std::min(minVal, cv);
-    maxVal = std::max(maxVal, cv);
-    if (minVal <= isolevel && maxVal >= isolevel) {
-        surfacePresent = true;
-        MCGenerator::csi_edge_exits++;
-        return true;
-    }
-
-#ifdef NEW
+    // Check interior (super-sample)
     int gridN=0;
     if      (depth <= 3) gridN = 4;
     else if (depth <= 5) gridN = 3;
@@ -797,35 +788,13 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         double v = field(x, y, z);
         minVal = std::min(minVal, v);
         maxVal = std::max(maxVal, v);
+        MCGenerator::csi_edge_tests++;
     }
-
     if (minVal <= isolevel && maxVal >= isolevel) {
         surfacePresent = true;
         MCGenerator::csi_edge_exits++;
         return true;
     }
-#else
-    // Run bisection only to try to find definite confirmation
-    double depthFraction = (double)depth / (double)6;
-    int BISECT_STEPS = std::max((int)round(8.0 * (1.0 - depthFraction)), 1);
-
-    for (int e = 0; e < 12; e++) {
-        Point p1 = corners[edgePairs[e][0]];
-        Point p2 = corners[edgePairs[e][1]];
-        for (int s = 1; s < BISECT_STEPS; s++) {
-            double t = s / (double)BISECT_STEPS;
-            Point  p = p1 + (p2 - p1) * t;
-            double v = field(p.x, p.y, p.z);
-            minVal = std::min(minVal, v);
-            maxVal = std::max(maxVal, v);
-            if (minVal <= isolevel && maxVal >= isolevel) {
-                surfacePresent = true;
-                MCGenerator::csi_edge_exits++;
-                return true;
-            }
-        }
-    }
-#endif  
 
     MCGenerator::csi_false++;
     surfacePresent = false;
@@ -866,24 +835,23 @@ void MCObjNode::adapt(SurfaceFunction field,
                       double minPixels, int maxDepth, const MCObjAdaptFlags& flags)
 {
     MCGenerator::csi_adapt_calls++;
- 
+
     
      // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
-   
+
+    
     bool culled=false;
-#ifdef NEW    
+    double cullFactor=20;
+
     bool skipSurfaceCheck = (depth < 2);  // 
-#else
-    bool skipSurfaceCheck = (depth < 6);  //  
-#endif
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
         if (localUp < 0) {
-            effectiveMinPixels *= 1.0 + (-localUp) * 10.0;
+            effectiveMinPixels *= 1.0 + (-localUp) * cullFactor;
             culled=true;
         }
     }
@@ -895,7 +863,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         double thresh = 0.0;
         if (viewDot < thresh) {
             effectiveMinPixels = std::max(effectiveMinPixels,
-                minPixels * (1.0 + (-viewDot + thresh) * 10.0));
+                minPixels * (1.0 + (-viewDot + thresh) * cullFactor));
             culled=true;
         }
     }
@@ -919,7 +887,7 @@ void MCObjNode::adapt(SurfaceFunction field,
        //  cout<<"depth:"<<depth<<" dotVal:"<<dotVal<<" projected:"<<projectedSize<<" thresh:"<<thresh<<endl;
 
         if (culled) {
-            effectiveMinPixels *= 8.0;
+            effectiveMinPixels *= cullFactor;
             skipSurfaceCheck = true;
         }
     }
@@ -1088,8 +1056,7 @@ void MCObjTreeMgr::invalidateAll()
 
 uint64_t MCObjTreeMgr::makeKey(const Point& center, int instance, int rval) const
 {
-	// Snap to 1/1000th of internal unit — preserves distinctness for small coords
-	    const double snap = 1e-10;
+	    const double snap = 1e-8;
 	    int64_t ix = (int64_t)round(center.x / snap);
 	    int64_t iy = (int64_t)round(center.y / snap);
 	    int64_t iz = (int64_t)round(center.z / snap);
@@ -1138,7 +1105,7 @@ void MCObjTreeMgr::evict()
     // Age all trees and remove the oldest half
     // Simple strategy: remove any tree not used this frame
     // More sophisticated LRU can be added later
-
+    // printf("EVICTING trees, current size: %d\n", (int)trees.size());
     // First increment age of all trees
     for (auto& pair : trees)
         pair.second->framesSinceUsed++;

@@ -54,6 +54,8 @@ Renderer::Renderer()
 	custom_width=med_width;
 	set_keep_children(1);
 	set_keep_variables(1);
+	
+	rendering=false;
 }
 
 Renderer::~Renderer()
