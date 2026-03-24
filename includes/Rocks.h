@@ -42,26 +42,78 @@ public:
 
 class Rock3DObjMgr : public PlaceObjMgr
 {
-
-	struct BatchKey {
-		    int resolution;
-		    int instanceId;
-		    
-		    BatchKey(int r, int i) : resolution(r), instanceId(i) {}
-		    
-		    bool operator<(const BatchKey& other) const {
-		        if (resolution != other.resolution) return resolution < other.resolution;
-		        return instanceId < other.instanceId;
-		    }
-		};
-	// Interleaved vertex for template mesh — local rock space, uploaded once
+	// 1. GLVertex first — used by everything else
 	struct GLVertex {
-	    float pos[3];          // offset 0  (12 bytes)
-	    float normal[3];       // offset 12 (12 bytes)
-	    float templatePos[4];  // offset 24 (16 bytes) xyz + unused
-	    float faceNormal[4];   // offset 40 (16 bytes) xyz + unused
-	    float color[3];        // offset 56 (12 bytes)
+		float pos[3];          // offset 0  (12 bytes)
+		float normal[3];       // offset 12 (12 bytes)
+		float templatePos[4];  // offset 24 (16 bytes)
+		float faceNormal[4];   // offset 40 (16 bytes)
+		float color[3];        // offset 56 (12 bytes)
 	};                         // total: 68 bytes
+
+	// 2. RockInstance — used by InstanceVBO and LODBatch
+	struct RockInstance {
+		float eyeCenter[3];
+		float rockSize;
+		float rval;
+		float pad[3];
+	};
+
+	// 3. TemplateMeshVBO — uses GLVertex
+	struct TemplateMeshVBO {
+		GLuint vbo = 0;
+		int vertexCount = 0;
+		void upload(const std::vector<GLVertex>& vertices) {
+			cleanup();
+			if (vertices.empty()) return;
+			glGenBuffers(1, &vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+			glBufferData(GL_ARRAY_BUFFER,
+						 vertices.size() * sizeof(GLVertex),
+						 vertices.data(), GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			vertexCount = (int)vertices.size();
+		}
+		void cleanup() {
+			if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
+			vertexCount = 0;
+		}
+		bool valid() const { return vbo != 0 && vertexCount > 0; }
+	};
+
+	// 4. InstanceVBO — uses RockInstance
+	struct InstanceVBO {
+		GLuint vbo = 0;
+		int instanceCount = 0;
+		void upload(const std::vector<RockInstance>& instances) {
+			if (instances.empty()) { instanceCount = 0; return; }
+			if (!vbo) glGenBuffers(1, &vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+			glBufferData(GL_ARRAY_BUFFER,
+						 instances.size() * sizeof(RockInstance),
+						 instances.data(), GL_DYNAMIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			instanceCount = (int)instances.size();
+		}
+		void cleanup() {
+			if (vbo) { glDeleteBuffers(1, &vbo); vbo = 0; }
+			instanceCount = 0;
+		}
+	};
+
+	// 5. LODBatch — uses TemplateMeshVBO and InstanceVBO
+	struct LODBatch {
+		TemplateMeshVBO templateVBO;
+		InstanceVBO instanceVBO;
+		std::vector<RockInstance> instances;
+		int lodLevel   = 0;
+		int instanceId = 0;
+		void cleanup() {
+			templateVBO.cleanup();
+			instanceVBO.cleanup();
+			instances.clear();
+		}
+	};                     // total: 68 bytes
 	struct VBOBatch {
 	    int lodLevel;
 	    int instanceId; 
@@ -89,24 +141,30 @@ class Rock3DObjMgr : public PlaceObjMgr
 	        vboVertices = 0;
 	    }
 	};
-
-	// Per-rock instance data — rebuilt per frame, one entry per visible rock
-	struct RockInstance {
-	    float eyeCenter[3];    // offset 0  rock center in eye space
-	    float rockSize;        // offset 12 scale factor
-	    float rval;            // offset 16 texture seed
-	    float pad[3];          // offset 20 align to 32 bytes
-	};                   
+	struct BatchKey {
+		int resolution;
+		int instanceId;
+		
+		BatchKey(int r, int i) : resolution(r), instanceId(i) {}
+		
+		bool operator<(const BatchKey& other) const {
+			if (resolution != other.resolution) return resolution < other.resolution;
+			return instanceId < other.instanceId;
+		}
+	};
     static MCObjTreeMgr rockTreeMgr;
     void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
                                  Rock3DMgr* pmgr, double isoNoiseAmpl);
 	static std::map<int, VBOBatch> adaptiveBatches;  // Keyed by instance ID
 	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
+    static std::map<BatchKey, LODBatch> lodBatches;
+
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
 	MCObject* getTemplateForLOD(Rock3DData *s);
     void rebuild();
     void calibrate();
+    std::vector<Rock3DObjMgr::GLVertex> buildTemplateVertices(MCObject* tmpl);
 	
 public:
 	// Cache key based on world position
