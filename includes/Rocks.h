@@ -16,7 +16,7 @@ class Rock3DData;
 class Rock3DMgr;
 
 #define MAX_ROCK_STATS 8
-
+#define NEW_BATCH_MODE
 class Rock : public Placement
 {
  public:
@@ -54,35 +54,30 @@ class Rock3DObjMgr : public PlaceObjMgr
 		        return instanceId < other.instanceId;
 		    }
 		};
+	// Interleaved vertex for template mesh — local rock space, uploaded once
+	struct GLVertex {
+	    float pos[3];          // offset 0  (12 bytes)
+	    float normal[3];       // offset 12 (12 bytes)
+	    float templatePos[4];  // offset 24 (16 bytes) xyz + unused
+	    float faceNormal[4];   // offset 40 (16 bytes) xyz + unused
+	    float color[3];        // offset 56 (12 bytes)
+	};                         // total: 68 bytes
 	struct VBOBatch {
 	    int lodLevel;
 	    int instanceId; 
-	    std::vector<float> vertices;
-	    std::vector<float> normals;
-	    std::vector<float> faceNormals;
-	    std::vector<float> colors;
-	    std::vector<float> templatePos;
+	    std::vector<GLVertex> glVertices;  // replaces 5 separate vectors
 	    
-	    // Per-rock info for rendering
-	    std::vector<int> rockDataIndices;    // Index into data array
-	    std::vector<int> rockInstanceIds;    // Rock instance/type
-	    std::vector<int> rockOffsets;        // Vertex offset for each rock
-	    std::vector<int> rockTriCounts;      // Triangle count for each rock
+	    // Per-rock info for rendering (keep these)
+	    std::vector<int> rockDataIndices;
+	    std::vector<int> rockInstanceIds;
+	    std::vector<int> rockOffsets;
+	    std::vector<int> rockTriCounts;
 	    
-	    GLuint vboVertices = 0;
-	    GLuint vboNormals = 0;
-	    GLuint vboFaceNormals = 0;
-	    GLuint vboColors = 0;
-	    GLuint vboTemplatePos = 0;
-	    
-	    int uploadedVertexCount = 0;  // ← add this
+	    GLuint vboVertices = 0;  // single interleaved VBO
+	    int uploadedVertexCount = 0;
 	    
 	    void clear() {
-	        vertices.clear();
-	        normals.clear();
-	        faceNormals.clear();
-	        colors.clear();
-	        templatePos.clear();
+	        glVertices.clear();
 	        rockDataIndices.clear();
 	        rockInstanceIds.clear();
 	        rockOffsets.clear();
@@ -91,13 +86,17 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    
 	    void deleteVBOs() {
 	        if (vboVertices) glDeleteBuffers(1, &vboVertices);
-	        if (vboNormals) glDeleteBuffers(1, &vboNormals);
-	        if (vboFaceNormals) glDeleteBuffers(1, &vboFaceNormals);
-	        if (vboColors) glDeleteBuffers(1, &vboColors);
-	        if (vboTemplatePos) glDeleteBuffers(1, &vboTemplatePos);
-	        vboVertices = vboNormals = vboFaceNormals = vboColors = vboTemplatePos = 0;
+	        vboVertices = 0;
 	    }
 	};
+
+	// Per-rock instance data — rebuilt per frame, one entry per visible rock
+	struct RockInstance {
+	    float eyeCenter[3];    // offset 0  rock center in eye space
+	    float rockSize;        // offset 12 scale factor
+	    float rval;            // offset 16 texture seed
+	    float pad[3];          // offset 20 align to 32 bytes
+	};                   
     static MCObjTreeMgr rockTreeMgr;
     void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,

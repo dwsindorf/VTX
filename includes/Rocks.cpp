@@ -37,15 +37,17 @@ static bool cvalid;
 
 #define PRINT_STATS
 //#define PRINT_ROCK_CACHE_STATS
-#define PRINT_LOD_STATS
+//#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_ACTIVE_TEX
 //#define PRINT_LOD_GEN
 //#define DEBUG_REGEN
-#define SHOW_BACKFACING
+//#define SHOW_BACKFACING
 //#define COLOR_CELLS_TEST
 //#define RECTANGLE_FIELD
 //#define SHOW_DEPTHS
+#define SHOW_BATCH_STATS
+
 
 #define SHOW_TEMPLATES true
 
@@ -1052,7 +1054,7 @@ void Rock3DObjMgr::render() {
                 BatchKey batchKey(resolution, mgrInstance);
 
                 VBOBatch &batch = rockBatches[batchKey];
-                if (batch.vertices.empty()) {
+                if (batch.glVertices.empty()) {
                     batch.instanceId = instance;
                     batch.lodLevel = resolution;
                 }
@@ -1060,7 +1062,7 @@ void Rock3DObjMgr::render() {
                 d1 = clock();
 
                 // Record rock info
-                int vertexOffset = batch.vertices.size() / 3;
+                int vertexOffset = batch.glVertices.size();
                 batch.rockOffsets.push_back(vertexOffset);
                 batch.rockTriCounts.push_back(templateSphere->mesh.size());
                 batch.rockDataIndices.push_back(i);
@@ -1079,15 +1081,14 @@ void Rock3DObjMgr::render() {
         } 
 
         d1 = clock();
-#define TEST
-#ifdef TEST        
+#ifdef SHOW_BATCH_STATS        
         size_t totalTemplateVerts = 0;
 		for (auto& pair : rockBatches)
-			totalTemplateVerts += pair.second.vertices.size();
+			totalTemplateVerts += pair.second.glVertices.size();
 		
 		size_t totalAdaptiveVerts = 0;
 		for (auto& pair : adaptiveBatches)
-			totalAdaptiveVerts += pair.second.vertices.size();
+			totalAdaptiveVerts += pair.second.glVertices.size();
 		
 		printf("  rockBatches: %d batches, %zu verts (~%zu MB)\n",
 			   (int)rockBatches.size(), totalTemplateVerts,
@@ -1116,179 +1117,134 @@ void Rock3DObjMgr::render() {
         MCGenerator::printStats();
 #endif
     }
-    render_objects();
-  
+    render_objects();  
 }
 
 void Rock3DObjMgr::addTriangleToBatch(
     VBOBatch& batch, 
     const MCTriangle& tri, 
     Rock3DData* s,
-    // Precomputed per-rock values:
     const Point& right, 
     const Point& forward,
     const Point& rockEyeCenter,
     double rockSize)
 {
-	
-	Point up=TheView->xpoint.normalize();
+    Point up = TheView->xpoint.normalize();
 
     for (int v = 0; v < 3; v++) {
-        // Transform using precomputed basis - no recomputation
+        GLVertex gv;        
+        // Transform position to world-relative-to-eye space
         Point rotated = Point(
-            tri.vertices[v].x * right.x  + tri.vertices[v].y * forward.x + tri.vertices[v].z * up.x,
-            tri.vertices[v].x * right.y  + tri.vertices[v].y * forward.y + tri.vertices[v].z * up.y,
-            tri.vertices[v].x * right.z  + tri.vertices[v].y * forward.z + tri.vertices[v].z * up.z
+            tri.vertices[v].x * right.x + tri.vertices[v].y * forward.x + tri.vertices[v].z * up.x,
+            tri.vertices[v].x * right.y + tri.vertices[v].y * forward.y + tri.vertices[v].z * up.y,
+            tri.vertices[v].x * right.z + tri.vertices[v].y * forward.z + tri.vertices[v].z * up.z
         );
         Point eyeVertex = rockEyeCenter + rotated * rockSize;
-
+        gv.pos[0] = (float)eyeVertex.x;
+        gv.pos[1] = (float)eyeVertex.y;
+        gv.pos[2] = (float)eyeVertex.z;
+        
+        // Transform normal
         Point rotatedNormal = rotateNormal(tri.normal, right, forward, up);
-
-        batch.vertices.push_back(eyeVertex.x);
-        batch.vertices.push_back(eyeVertex.y);
-        batch.vertices.push_back(eyeVertex.z);
-
-        batch.normals.push_back(rotatedNormal.x);
-        batch.normals.push_back(rotatedNormal.y);
-        batch.normals.push_back(rotatedNormal.z);
-
-        batch.faceNormals.push_back(tri.faceNormal.x);
-        batch.faceNormals.push_back(tri.faceNormal.y);
-        batch.faceNormals.push_back(tri.faceNormal.z);
-        double slope = rotatedNormal.dot(up);
-        batch.faceNormals.push_back(slope);
+        gv.normal[0] = (float)rotatedNormal.x;
+        gv.normal[1] = (float)rotatedNormal.y;
+        gv.normal[2] = (float)rotatedNormal.z;
         
-        // Colors
-        Color c = tri.colors[v];
-        batch.colors.push_back(c.red());
-        batch.colors.push_back(c.green());
-        batch.colors.push_back(c.blue());
-        
-        // Template position
+        // Template position with rval offset
         Point tp = tri.templatePos[v];
         tp.x += 0.001 * s->rval;
         tp.y += 0.001 * s->rval;
         tp.z += 0.001 * s->rval;
+        gv.templatePos[0] = (float)tp.x;
+        gv.templatePos[1] = (float)tp.y;
+        gv.templatePos[2] = (float)tp.z;
+        gv.templatePos[3] = (float)eyeVertex.length();  // depth
         
-        batch.templatePos.push_back(tp.x);
-        batch.templatePos.push_back(tp.y);
-        batch.templatePos.push_back(tp.z);
-        batch.templatePos.push_back(eyeVertex.length());
+        // Face normal + slope
+        double slope = rotatedNormal.dot(up);
+        gv.faceNormal[0] = (float)tri.faceNormal.x;
+        gv.faceNormal[1] = (float)tri.faceNormal.y;
+        gv.faceNormal[2] = (float)tri.faceNormal.z;
+        gv.faceNormal[3] = (float)slope;
+        
+        // Color
+        Color c = tri.colors[v];
+        gv.color[0] = (float)c.red();
+        gv.color[1] = (float)c.green();
+        gv.color[2] = (float)c.blue();
+        
+        batch.glVertices.push_back(gv);
     }
 }
+
 void Rock3DObjMgr::uploadBatchVBOs(VBOBatch& batch) {
-    //if (batch.vertices.empty()) return;
-    
-    // Delete old VBOs if they exist
     batch.deleteVBOs();
+    if (batch.glVertices.empty()) return;
     
-    // Generate new VBOs
     glGenBuffers(1, &batch.vboVertices);
-    glGenBuffers(1, &batch.vboNormals);
-    glGenBuffers(1, &batch.vboFaceNormals);
-    glGenBuffers(1, &batch.vboColors);
-    glGenBuffers(1, &batch.vboTemplatePos);
-    
-    // Upload vertices
     glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 batch.vertices.size() * sizeof(float), 
-                 batch.vertices.data(), 
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 batch.glVertices.size() * sizeof(GLVertex),
+                 batch.glVertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    // Upload normals
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboNormals);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 batch.normals.size() * sizeof(float), 
-                 batch.normals.data(), 
-                 GL_STATIC_DRAW);
+    batch.uploadedVertexCount = batch.glVertices.size() * 3;
     
-    // Upload face normals
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboFaceNormals);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 batch.faceNormals.size() * sizeof(float), 
-                 batch.faceNormals.data(), 
-                 GL_STATIC_DRAW);
-    
-    // Upload colors
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboColors);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 batch.colors.size() * sizeof(float), 
-                 batch.colors.data(), 
-                 GL_STATIC_DRAW);
-    
-    // Upload template positions
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboTemplatePos);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 batch.templatePos.size() * sizeof(float), 
-                 batch.templatePos.data(), 
-                 GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);  // Unbind
-    
-    batch.uploadedVertexCount = batch.vertices.size();
-    
-    // ← FREE CPU-SIDE ARRAYS - data is now on GPU, no longer needed
-	batch.vertices.clear();
-	batch.vertices.shrink_to_fit();
-	batch.normals.clear();
-	batch.normals.shrink_to_fit();
-	batch.faceNormals.clear();
-	batch.faceNormals.shrink_to_fit();
-	batch.colors.clear();
-	batch.colors.shrink_to_fit();
-	batch.templatePos.clear();
-	batch.templatePos.shrink_to_fit();
+    batch.glVertices.clear();
+    batch.glVertices.shrink_to_fit();
 }
+
 void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program) {
-	if (batch.uploadedVertexCount == 0) return;  // ← was batch.vertices.empty()    
-    // Bind VBOs
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
-    glVertexPointer(3, GL_FLOAT, 0, 0);
+    if (batch.uploadedVertexCount == 0) return;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);  // single interleaved VBO
+    
+    // pos at offset 0
     glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, pos));
     
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboNormals);
-    glNormalPointer(GL_FLOAT, 0, 0);
+    // normal at offset 12
     glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, normal));
     
-    glBindBuffer(GL_ARRAY_BUFFER, batch.vboColors);
-    glColorPointer(3, GL_FLOAT, 0, 0);
+    // color at offset 56
     glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, color));
     
-    // Template position attribute
-    GLint attribLoc1 = glGetAttribLocation(program, "templatePosition");
-    if (attribLoc1 >= 0) {
-        glBindBuffer(GL_ARRAY_BUFFER, batch.vboTemplatePos);
-        glVertexAttribPointer(attribLoc1, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(attribLoc1);
+    // templatePosition at offset 24
+    GLint locTP = glGetAttribLocation(program, "templatePosition");
+    if (locTP >= 0) {
+        glVertexAttribPointer(locTP, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, templatePos));
+        glEnableVertexAttribArray(locTP);
     }
     
-    // Face normal attribute
-    GLint attribLoc2 = glGetAttribLocation(program, "faceNormal");
-    if (attribLoc2 >= 0) {
-        glBindBuffer(GL_ARRAY_BUFFER, batch.vboFaceNormals);
-        glVertexAttribPointer(attribLoc2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(attribLoc2);
+    // faceNormal at offset 40
+    GLint locFN = glGetAttribLocation(program, "faceNormal");
+    if (locFN >= 0) {
+        glVertexAttribPointer(locFN, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, faceNormal));
+        glEnableVertexAttribArray(locFN);
     }
-        
+    
     int totalVertices = batch.uploadedVertexCount / 3;
-    
     glDrawArrays(GL_TRIANGLES, 0, totalVertices);
     
-    // Cleanup attributes
-    if (attribLoc1 >= 0) glDisableVertexAttribArray(attribLoc1);
-    if (attribLoc2 >= 0) glDisableVertexAttribArray(attribLoc2);
-        
+    // Cleanup
+    if (locTP >= 0) glDisableVertexAttribArray(locTP);
+    if (locFN >= 0) glDisableVertexAttribArray(locFN);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
-     
+         
     if (!PlaceObjMgr::shadow_mode) {
         if (!setProgram()) {
             cout << "Rock3DObjMgr::setProgram FAILED" << endl;
