@@ -48,8 +48,6 @@ static bool cvalid;
 //#define SHOW_DEPTHS
 #define SHOW_BATCH_STATS
 
-//#define TEST
-
 #define SHOW_TEMPLATES true
 
 bool use_adaptive_grid=true;
@@ -395,7 +393,7 @@ std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::rockBatches;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::LODBatch> Rock3DObjMgr::lodBatches;
 
-std::map<int, Rock3DObjMgr::VBOBatch> Rock3DObjMgr::adaptiveBatches;  // Keyed by instance ID
+std::map<int, Rock3DObjMgr::AdaptiveBatch> Rock3DObjMgr::adaptiveBatches;
 
 MCObjTreeMgr Rock3DObjMgr::rockTreeMgr(1000);  // max 100 persistent trees
 
@@ -766,17 +764,6 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 		lodTemplates[key] = templateSphere;
 		lodCacheMisses++;
 
-#ifdef TEST
-    // Build and store permanent template VBO
-    BatchKey batchKey(resolution, pmgr->instance);
-    auto& lbatch = lodBatches[batchKey];
-    lbatch.lodLevel = resolution;
-    lbatch.instanceId = pmgr->instance;
-    auto verts = buildTemplateVertices(templateSphere);
-    lbatch.templateVBO.upload(verts);
-    printf("TemplateMeshVBO: key=%d res=%d instance=%d verts=%d\n",
-           key, resolution, pmgr->instance, (int)verts.size());
-#endif
 #ifdef PRINT_LOD_GEN     
 		std::cout << "Created LOD template: resolution:" << resolution 
 				  << " instance:" << instance 
@@ -980,8 +967,14 @@ void Rock3DObjMgr::render() {
                 int newTris = 0;
                 int totalTris = 0;  // all triangles for this rock, cached or not
                 
-                VBOBatch& batch = adaptiveBatches[instance];
-                batch.instanceId = instance;
+                //VBOBatch& batch = adaptiveBatches[instance];
+                //batch.instanceId = instance;
+                AdaptiveBatch& ab = adaptiveBatches[i];
+                ab.instanceId = instance;
+                ab.eyeCenter = rockEyeCenter;
+                ab.rockSize = (float)rockSize;
+                ab.rval = (float)s->rval * 0.001f;
+                VBOBatch& batch = ab.vbo;
                 
                 /// Reset normals for ALL leaves to face normals
                 for (MCObjNode* leaf : leaves) {
@@ -1063,6 +1056,23 @@ void Rock3DObjMgr::render() {
                 }
 
                 t1 += clock() - d1;
+                
+                // Fill lodBatch instance data
+                {
+                    int mgrInstance = pmgr->instance;
+                    BatchKey batchKey(resolution, mgrInstance);
+                    LODBatch& lbatch = lodBatches[batchKey];
+                    lbatch.lodLevel = resolution;
+                    lbatch.instanceId = mgrInstance;
+                    RockInstance inst;
+                    inst.eyeCenter[0] = (float)rockEyeCenter.x;
+                    inst.eyeCenter[1] = (float)rockEyeCenter.y;
+                    inst.eyeCenter[2] = (float)rockEyeCenter.z;
+                    inst.rockSize     = (float)rockSize;
+                    inst.rval         = (float)s->rval * 0.001f;
+                    inst.pad[0] = inst.pad[1] = inst.pad[2] = 0;
+                    lbatch.instances.push_back(inst);
+                }
 
                 // Get or create batch for this resolution
                 int mgrInstance = pmgr->instance;
@@ -1087,20 +1097,7 @@ void Rock3DObjMgr::render() {
                     addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
                 }
                  t3 += clock() - d1;
-                 
-#ifdef TEST
-				// New instanced path — fill instance data
-				auto& lbatch = lodBatches[batchKey];
-				RockInstance inst;
-				inst.eyeCenter[0] = (float)rockEyeCenter.x;
-				inst.eyeCenter[1] = (float)rockEyeCenter.y;
-				inst.eyeCenter[2] = (float)rockEyeCenter.z;
-				inst.rockSize     = (float)rockSize;
-				inst.rval         = (float)s->rval * 0.001f;
-				inst.pad[0] = inst.pad[1] = inst.pad[2] = 0;
-				lbatch.instances.push_back(inst);
-#endif
-                Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), false);
+                 Rock3DMgr::setStats(resolution, templateSphere->mesh.size(), false);
             }
             TheNoise.rseed = rseed;
         } 
@@ -1111,16 +1108,16 @@ void Rock3DObjMgr::render() {
         d1 = clock();
 #ifdef SHOW_BATCH_STATS        
         size_t totalTemplateVerts = 0;
-		for (auto& pair : rockBatches)
-			totalTemplateVerts += pair.second.glVertices.size();
+        size_t totalInstances = 0;       
+        for (auto& pair : lodBatches)
+            totalInstances += pair.second.instanceVBO.instanceCount;
+        printf("  lodBatches: %d batches, %zu instances\n",
+               (int)lodBatches.size(), totalInstances);
 		
 		size_t totalAdaptiveVerts = 0;
 		for (auto& pair : adaptiveBatches)
-			totalAdaptiveVerts += pair.second.glVertices.size();
+			totalAdaptiveVerts += pair.second.vbo.glVertices.size();
 		
-		printf("  rockBatches: %d batches, %zu verts (~%zu MB)\n",
-		       (int)rockBatches.size(), totalTemplateVerts,
-		       totalTemplateVerts * sizeof(GLVertex) / 1024 / 1024);
 		printf("  adaptiveBatches: %d batches, %zu verts (~%zu MB)\n",
 		       (int)adaptiveBatches.size(), totalAdaptiveVerts,
 		       totalAdaptiveVerts * sizeof(GLVertex) / 1024 / 1024);
@@ -1128,25 +1125,22 @@ void Rock3DObjMgr::render() {
 		printf("  lodTemplates: %d cached\n", (int)lodTemplates.size());
 		printf("  data.size=%d n=%d\n", data.size, n);
 #endif
-#ifdef TEST
-    for (auto& pair : lodBatches) {
-        LODBatch& lb = pair.second;
-        if (!lb.instances.empty()) {
-            lb.instanceVBO.upload(lb.instances);
-            printf("InstanceVBO: key=%d instances=%d\n", 
-                   pair.first.resolution, lb.instanceVBO.instanceCount);
-            lb.instances.clear();
-            lb.instances.shrink_to_fit();
-        }
-    }
-#endif
+
+		for (auto& pair : lodBatches) {
+			LODBatch& lb = pair.second;
+			if (!lb.instances.empty()) {
+				lb.instanceVBO.upload(lb.instances);
+				lb.instances.clear();
+				lb.instances.shrink_to_fit();
+			}
+		}
         // ===== Upload Template VBOs =====
         for (auto &pair : rockBatches) {
             uploadBatchVBOs(pair.second);
         }
         // ===== Upload Adaptive VBOs =====
         for (auto& pair : adaptiveBatches) {
-            uploadBatchVBOs(pair.second);
+            uploadBatchVBOs(pair.second.vbo);
         }
         t2 = (clock() - d1);
 
@@ -1315,7 +1309,78 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program) {
     glDisableClientState(GL_COLOR_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
+    if (!lbatch.templateVBO.valid()) return;
+    if (lbatch.instanceVBO.instanceCount == 0) return;
 
+    // Bind interleaved template VBO
+    glBindBuffer(GL_ARRAY_BUFFER, lbatch.templateVBO.vbo);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, pos));
+
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, normal));
+
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, color));
+
+    GLint locTP = glGetAttribLocation(program, "templatePosition");
+    if (locTP >= 0) {
+        glVertexAttribPointer(locTP, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, templatePos));
+        glEnableVertexAttribArray(locTP);
+    }
+
+    GLint locFN = glGetAttribLocation(program, "faceNormal");
+    if (locFN >= 0) {
+        glVertexAttribPointer(locFN, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, faceNormal));
+        glEnableVertexAttribArray(locFN);
+    }
+
+    // Bind instance VBO
+    glBindBuffer(GL_ARRAY_BUFFER, lbatch.instanceVBO.vbo);
+
+    GLint locEC = glGetAttribLocation(program, "rockEyeCenter");
+    if (locEC >= 0) {
+        glVertexAttribPointer(locEC, 3, GL_FLOAT, GL_FALSE,
+                              sizeof(RockInstance), (void*)offsetof(RockInstance, eyeCenter));
+        glVertexAttribDivisor(locEC, 1);
+        glEnableVertexAttribArray(locEC);
+    }
+
+    GLint locRS = glGetAttribLocation(program, "rockSize");
+    if (locRS >= 0) {
+        glVertexAttribPointer(locRS, 1, GL_FLOAT, GL_FALSE,
+                              sizeof(RockInstance), (void*)offsetof(RockInstance, rockSize));
+        glVertexAttribDivisor(locRS, 1);
+        glEnableVertexAttribArray(locRS);
+    }
+
+    GLint locRV = glGetAttribLocation(program, "rockRval");
+    if (locRV >= 0) {
+        glVertexAttribPointer(locRV, 1, GL_FLOAT, GL_FALSE,
+                              sizeof(RockInstance), (void*)offsetof(RockInstance, rval));
+        glVertexAttribDivisor(locRV, 1);
+        glEnableVertexAttribArray(locRV);
+    }
+
+    glDrawArraysInstanced(GL_TRIANGLES, 0,
+                          lbatch.templateVBO.vertexCount,
+                          lbatch.instanceVBO.instanceCount);
+
+    // Reset divisors and cleanup
+    if (locEC >= 0) { glVertexAttribDivisor(locEC, 0); glDisableVertexAttribArray(locEC); }
+    if (locRS >= 0) { glVertexAttribDivisor(locRS, 0); glDisableVertexAttribArray(locRS); }
+    if (locRV >= 0) { glVertexAttribDivisor(locRV, 0); glDisableVertexAttribArray(locRV); }
+    if (locTP >= 0) glDisableVertexAttribArray(locTP);
+    if (locFN >= 0) glDisableVertexAttribArray(locFN);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
 //-------------------------------------------------------------
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
@@ -1386,24 +1451,19 @@ void Rock3DObjMgr::render_objects() {
     if(use_adaptive_grid)
     	glDisable(GL_CULL_FACE); // makes holes less visible
 #endif
-    for (auto& pair : adaptiveBatches) {
-        int rockType = pair.first;  // instance ID
-        VBOBatch& batch = pair.second;
-         
-        //if (batch.vertices.empty()) continue;
-        if (batch.uploadedVertexCount == 0) continue;  
-         // Set texture active flags (same as template batches)
+     for (auto& pair : adaptiveBatches) {
+        AdaptiveBatch& ab = pair.second;
+        if (ab.vbo.uploadedVertexCount == 0) continue;
         for (int i = 0; i < maxTexs; i++) {
             char str[64];
             sprintf(str, "tex2d[%d].active", i);
             GLint loc = glGetUniformLocationARB(program, str);
-            if (loc >= 0) {
-                glUniform1iARB(loc, rockType);
-            }
-        }         
-        renderBatch(batch, program);
+            if (loc >= 0) glUniform1iARB(loc, ab.instanceId);
+        }
         totalRocks++;  
+        renderBatch(ab.vbo, program);
     }
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);  
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

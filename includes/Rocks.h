@@ -16,7 +16,6 @@ class Rock3DData;
 class Rock3DMgr;
 
 #define MAX_ROCK_STATS 8
-#define NEW_BATCH_MODE
 class Rock : public Placement
 {
  public:
@@ -152,12 +151,22 @@ class Rock3DObjMgr : public PlaceObjMgr
 			return instanceId < other.instanceId;
 		}
 	};
+	struct AdaptiveBatch {
+	    VBOBatch vbo;
+	    Point eyeCenter;
+	    float rockSize = 1.0f;
+	    float rval = 0.0f;
+	    int instanceId = 0;
+	    
+	    void clear() { vbo.clear(); }
+	    void deleteVBOs() { vbo.deleteVBOs(); }
+	};
     static MCObjTreeMgr rockTreeMgr;
     void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
                                  Rock3DMgr* pmgr, double isoNoiseAmpl);
-	static std::map<int, VBOBatch> adaptiveBatches;  // Keyed by instance ID
-	static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
+    static std::map<int, AdaptiveBatch> adaptiveBatches;
+    static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
     static std::map<BatchKey, LODBatch> lodBatches;
 
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
@@ -165,6 +174,7 @@ class Rock3DObjMgr : public PlaceObjMgr
     void rebuild();
     void calibrate();
     std::vector<Rock3DObjMgr::GLVertex> buildTemplateVertices(MCObject* tmpl);
+    void renderLODBatch(LODBatch& lbatch, GLhandleARB program);
 	
 public:
 	// Cache key based on world position
