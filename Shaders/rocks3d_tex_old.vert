@@ -7,7 +7,7 @@
 uniform float night_ligting;
 uniform float textureScale;
 uniform float wscale;
-uniform vec4 xpoint;
+uniform vec4 mpoint;
 varying vec3 Normal;
 varying vec3 EyeDirection;
 varying vec3 EyePos;
@@ -65,7 +65,7 @@ void main() {
     
     Tangent.w = max_orders;
     
-     EyePos = normalize(xpoint.xyz);
+     EyePos = normalize(mpoint.xyz);
      WorldNormal=normalize(templatePosition.xyz);
 #ifdef COLOR
      Color = gl_Color;

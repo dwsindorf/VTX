@@ -2437,7 +2437,6 @@ void Scene::render()
 
    // printf("update_needed=%d suspended=%d\n", update_needed, (int)suspended());
 	if(!rendering && !suspended() && (update_needed || self)){
-	    cout<<"rendering="<<rendering<<endl;
 	    rendering=true;
 
 		setContext();
@@ -2452,7 +2451,6 @@ void Scene::render()
 
 	    set_adapt_mode();
 
-	    cout<<"Scene::render() start"<<endl;
 		set_lights();
 		Raster.manageBuffers();
 		rendered_objects=0;
@@ -2551,7 +2549,6 @@ void Scene::render()
 	       swap_buffers();
         }
         rendering=false;
-        cout<<"Scene::render() end"<<endl;
 	}
 	if(!swap_on_update){ // swap on refresh
 		swap_buffers();

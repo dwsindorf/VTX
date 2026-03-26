@@ -15,6 +15,9 @@ class Texture;
 class Rock3DData;
 class Rock3DMgr;
 
+
+//#define OLD
+
 #define MAX_ROCK_STATS 8
 class Rock : public Placement
 {
@@ -117,22 +120,12 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    int lodLevel;
 	    int instanceId; 
 	    std::vector<GLVertex> glVertices;  // replaces 5 separate vectors
-	    
-	    // Per-rock info for rendering (keep these)
-	    std::vector<int> rockDataIndices;
-	    std::vector<int> rockInstanceIds;
-	    std::vector<int> rockOffsets;
-	    std::vector<int> rockTriCounts;
-	    
+	    	    
 	    GLuint vboVertices = 0;  // single interleaved VBO
 	    int uploadedVertexCount = 0;
 	    
 	    void clear() {
 	        glVertices.clear();
-	        rockDataIndices.clear();
-	        rockInstanceIds.clear();
-	        rockOffsets.clear();
-	        rockTriCounts.clear();
 	    }
 	    
 	    void deleteVBOs() {
@@ -166,7 +159,6 @@ class Rock3DObjMgr : public PlaceObjMgr
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
                                  Rock3DMgr* pmgr, double isoNoiseAmpl);
     static std::map<int, AdaptiveBatch> adaptiveBatches;
-    static std::map<BatchKey, VBOBatch> rockBatches;  // Changed key type
     static std::map<BatchKey, LODBatch> lodBatches;
 
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
@@ -238,11 +230,9 @@ public:
 
     ~Rock3DObjMgr();
     
-    void renderBatch(VBOBatch& batch, GLhandleARB program);
+    void renderBatch(VBOBatch& batch, GLhandleARB program, const AdaptiveBatch& ab);
     void uploadBatchVBOs(VBOBatch& batch);
-    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s,   // new overload
-                            const Point& right, const Point& forward,
-                            const Point& rockEyeCenter, double rockSize);    
+    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s);
     SurfaceFunction makeRockField(Rock3DMgr* pmgr,bool mode);
     
 	void free();
