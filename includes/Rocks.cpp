@@ -387,8 +387,6 @@ Rock3DObjMgr::~Rock3DObjMgr(){
 }
 
 void Rock3DObjMgr::freeLODTemplates() {
-    printf("freeLODTemplates: clearing %zu lodTemplates, %zu lodBatches\n",
-           lodTemplates.size(), lodBatches.size());
     for (auto& pair : lodTemplates) {
         delete pair.second;
     }
@@ -517,15 +515,15 @@ void Rock3DObjMgr::collect() {
 }
 
 void Rock3DObjMgr::render_zvals(){
-
 	if(objs.size==0)
 		return;
 	if(Raster.shadow_vcnt==0)
 		shadow_start=true;
 	shadow_mode=true;
+	Raster.setShadowProgram("rocks3d_shadows.vert",0,0);
+	Raster.setProgram(Raster.PLACE_SHADOWS);
 	render();
-	//if(Raster.shadow_vcnt>=Raster.shadow_vsteps-1)
-		shadow_start=false;
+	shadow_start=false;
 	shadow_mode=false;
 }
 
@@ -534,8 +532,7 @@ void Rock3DObjMgr::render_shadows(){
 		return;
 	shadow_mode=true;
     
-	// not really needed - these are the defaults for shadow mode
-	Raster.setShadowProgram("shadows.vert",0,0);
+	Raster.setShadowProgram("rocks3d_shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 	render();
 	shadow_mode=false;
@@ -774,7 +771,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 		lodCacheMisses++;
 		
 		// Build and store permanent template VBO
-		BatchKey batchKey(resolution, pmgr->instance);
+		BatchKey batchKey(scaledRes, pmgr->instance);
 		auto& lbatch = lodBatches[batchKey];
 		lbatch.lodLevel = scaledRes;
 		lbatch.instanceId = pmgr->instance;
@@ -880,7 +877,6 @@ void Rock3DObjMgr::render() {
 
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-   // cout<<"Rock3DObjMgr::render() start moved:"<<moved<<" changed:"<<changed<<endl;
 
     if (PlaceObjMgr::shadow_mode && !shadow_start) {
         moved = false;
@@ -893,11 +889,9 @@ void Rock3DObjMgr::render() {
 
 //    printf("render: moved=%d changed=%d placement_needs_update=%d mesh_needs_rebuild=%d\n",
 //             moved, changed, placement_needs_update, mesh_needs_rebuild);
-
     if (mesh_needs_rebuild) {
     	rebuild();
     }
-
     if (placement_needs_update || mesh_needs_rebuild) {
         d0 = clock();
 
@@ -905,6 +899,9 @@ void Rock3DObjMgr::render() {
             clear();
          	MCGenerator::resetStats();
       	}
+        for (auto& pair : lodBatches) {
+            pair.second.instanceVBO.instanceCount = 0;
+        }
         Point xpoint = TheScene->xpoint;
          
         MCObjAdaptFlags flags = MCObjAdaptFlags::rock();
@@ -917,6 +914,9 @@ void Rock3DObjMgr::render() {
         forward = Point(up.y * right.z - up.z * right.y,
                         up.z * right.x - up.x * right.z,
                         up.x * right.y - up.y * right.x);
+        
+        static std::map<int,int> pushCount;
+           pushCount.clear();
 
         try {
         	
@@ -1071,11 +1071,7 @@ void Rock3DObjMgr::render() {
                 // Fill lodBatch instance data
                 {
                     int mgrInstance = pmgr->instance;
-                    //BatchKey batchKey(resolution, mgrInstance);
-                    int index = Rock3DMgr::getLodIndex(resolution, Rock3DMgr::resScale);
-                    int tableRes = Rock3DMgr::kRockLodTable[index].res;  // unscaled
-                    //cout<<"resolution:"<<resolution<<" tableRes:"<<tableRes<<endl;
-                    BatchKey batchKey(tableRes, mgrInstance);
+                    BatchKey batchKey(resolution, mgrInstance);
                     LODBatch& lbatch = lodBatches[batchKey];
                     lbatch.lodLevel = resolution;
                     lbatch.instanceId = mgrInstance;
@@ -1123,12 +1119,6 @@ void Rock3DObjMgr::render() {
         // ===== Upload Template VBOs =====
 		for (auto& pair : lodBatches) {
 			LODBatch& lb = pair.second;
-			
-//		    printf("upload: key=(%d,%d) templateValid=%d instances=%zu\n",
-//		           pair.first.resolution, pair.first.instanceId,
-//		           (int)lb.templateVBO.valid(),
-//		           lb.instances.size());
-
 			if (!lb.instances.empty()) {
 				lb.instanceVBO.upload(lb.instances);
 				lb.instances.clear();
@@ -1312,7 +1302,7 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
 
     // Bind instance VBO
     glBindBuffer(GL_ARRAY_BUFFER, lbatch.instanceVBO.vbo);
-
+    
     GLint locEC = glGetAttribLocation(program, "rockEyeCenter");
     if (locEC >= 0) {
         glVertexAttribPointer(locEC, 3, GL_FLOAT, GL_FALSE,
@@ -1339,7 +1329,7 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
     
     float instData[8];
     glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(instData), instData);
- 
+
     // Check rotation uniforms
     GLint locR = glGetUniformLocation(program, "rockRight");
     GLint locF = glGetUniformLocation(program, "rockForward");
@@ -1370,10 +1360,28 @@ void Rock3DObjMgr::render_objects() {
     bool wireframe = test7;
          
     if (!PlaceObjMgr::shadow_mode) {
-        if (!setProgram()) {
+         if (!setProgram()) {
             cout << "Rock3DObjMgr::setProgram FAILED" << endl;
             return;
         }
+    }
+    else {
+    	 Point up = TheScene->xpoint.normalize();
+        // Shadow mode — set rotation uniforms on shadow program
+        GLhandleARB prog = GLSLMgr::programHandle();
+       
+        Point right = (fabs(up.z) < 0.9) ?
+                      Point(up.y, -up.x, 0).normalize() :
+                      Point(0, up.z, -up.y).normalize();
+        Point forward = Point(up.y*right.z - up.z*right.y,
+                              up.z*right.x - up.x*right.z,
+                              up.x*right.y - up.y*right.x);
+        GLint locR = glGetUniformLocation(prog, "rockRight");
+        GLint locF = glGetUniformLocation(prog, "rockForward");
+        GLint locU = glGetUniformLocation(prog, "rockUp");
+        if (locR >= 0) glUniform3f(locR, right.x, right.y, right.z);
+        if (locF >= 0) glUniform3f(locF, forward.x, forward.y, forward.z);
+        if (locU >= 0) glUniform3f(locU, up.x, up.y, up.z);
     }
      
     if (wireframe){
@@ -1384,8 +1392,8 @@ void Rock3DObjMgr::render_objects() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     GLhandleARB program = GLSLMgr::programHandle();
-    tid = 0;
-    
+    if (!PlaceObjMgr::shadow_mode) {
+    tid = 0;   
     // Set up textures for each rock instance
     for (int i = 0; i < objs.size; i++) {
         Rock3D* rockObj = (Rock3D*)objs[i];
@@ -1403,7 +1411,7 @@ void Rock3DObjMgr::render_objects() {
             tid++;
         }
     }
-    
+    }
     int totalRocks = 0; 
 
     // ===== Render LOD Batches (instanced templates) =====

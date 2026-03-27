@@ -163,8 +163,6 @@ void EffectsMgr::setProgram(int type){
 		if(type==PLACE_ZVALS){
 			if(shadow_defs)
 				sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),(const char*)shadow_defs);
-			//	sprintf(GLSLMgr::defString+strlen(GLSLMgr::defString),shadow_defs);
-			//GLSLMgr::loadProgram("plants.gs.vert","shadows_zvals.frag","plants.shadows.geom");
 			GLSLMgr::loadProgram(shadow_vert,(char*)"shadows_zvals.frag",shadow_geom);
 		}
 		else if(TheMap && TheMap->hasGeometry()){
@@ -176,7 +174,6 @@ void EffectsMgr::setProgram(int type){
 		else
 		    GLSLMgr::loadProgram("shadows_zvals.vert","shadows_zvals.frag");
 		vars.newBoolVar("lighting",false);
-
 		break;
 	case PLACE_SHADOWS:
 	case SHADOWS:
