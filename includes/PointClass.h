@@ -42,9 +42,7 @@ public:
 	Point cross(const Point&p)	{ return Point(y*p.z-z*p.y,z*p.x-x*p.z,x*p.y-y*p.x);}
 	double length() const		{ return sqrt(x*x+y*y+z*z);}
 	double magnitude() const	{ return x*x+y*y+z*z;}
-	double distance(const Point p) const	{ Point tmp=p-*this;
-								  return tmp.length();
-								}
+	double distance(const Point p) const	{ Point tmp=p-*this;return tmp.length();}
 	Point normalize() const     { return (*this)/length();}
 	Point negate()              { return Point(-x,-y,-z);}
 	Point floor()               { return Point(::floor(x),::floor(y),::floor(z));}
@@ -365,6 +363,7 @@ public:
 
 	FPoint() {  x=y=z=0.0f;}
 	FPoint(double a, double b, double c) : x((float)a), y((float)b), z((float)c) {}
+	FPoint(Point p){ x=p.x;y=p.y;z=p.z;}
 
 	void set_theta(double a)	{	x=(float)a;}
 	void set_phi(double a)		{	y=(float)a;}
@@ -378,6 +377,9 @@ public:
 	FPoint operator-(double s)	{ return FPoint(x-s,y-s,z-s);}
 	FPoint operator*(double s)	{ return FPoint(x*s,y*s,z*s);}
 	FPoint operator/(double s)	{ return FPoint(x/s,y/s,z/s);}
+	FPoint operator-(FPoint p)	{ return FPoint(x-p.x,y-p.y,z-p.z);}
+	double length()		{ return sqrt(x*x+y*y+z*z);}
+	double distance(FPoint p){ FPoint tmp=p-*this;return tmp.length();}
 
 };
 
