@@ -450,9 +450,9 @@ bool PlacementMgr::setTests() {
 	extern Color getColor(int i);
 	double x=fabs(1-cval);
 	S0.clr_flag(PLACEMENT);
-	//if(x<0.25)
-	//	return false;
-	//x=lerp(x,0.25,1,0,1);
+	if(x<0.25)
+		return false;
+	x=lerp(x,0.25,1,0,1);
 	double y=pow(x,2);
 	
 	if(testColor()) {
@@ -593,6 +593,9 @@ int PlacementMgr::hashPoint(Point4DL& pc, int lvl, int id) {
 #define LODSIZE       10*size
 void PlacementMgr::eval()
 {
+	if(density <= 0)
+	   return;  // skip early — was checked in Placement::eval() before calling this
+
     Point4D p;
     Point4D pv=TheNoise.get_point();
     pv=pv-TheNoise.offset;
@@ -1078,7 +1081,8 @@ PlaceObjMgr::PlaceObjMgr(){
 }
 void PlaceObjMgr::eval(){
 	for(int i=0;i<objs.size;i++){
-		objs[i]->expr->eval(); // TNode -> eval()
+		TNplacements *placement=(TNplacements *)objs[i]->expr;
+		placement->mgr->eval(); // just call the mgr eval
 	}
 }
 

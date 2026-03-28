@@ -182,7 +182,7 @@ bool Rock3D::setProgram(){
 // Rock3DMgr class
 //************************************************************
 Color rock_color(0.6, 0.5, 0.4);
-double base_threshold=100;
+double base_threshold=50;
 double base_minsize=1.5;
 
 const Rock3DMgr::RockLodEntry Rock3DMgr::kRockLodTable[MAX_ROCK_STATS] = {
