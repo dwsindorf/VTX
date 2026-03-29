@@ -98,7 +98,6 @@ protected:
 	void clearLists();
 	
 	void render_objects(PlaceObjMgr &);
-	void render_placements();
 
 public:
 	MapNode *current;
@@ -304,7 +303,6 @@ public:
 	bool            setGeometryDefs();
 	bool            setGeometryPrgm();
 	bool            hasGeometry();
-	void            collectSurfacePointsFromDepth(int stride);
 	
 };
 
@@ -317,7 +315,7 @@ public:
 	Point point(double t, double p, double r);
 	void set_scene();
 };
-extern Map	*TheMap;
+extern Map	*TheMap,*VisMap;
 extern double   ptable[];
 
 #define CELLSIZE(i) PI*TheMap->radius*ptable[i]

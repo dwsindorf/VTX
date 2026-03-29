@@ -3648,8 +3648,6 @@ bool Planetoid::setProgram(){
 	TerrainProperties *tp=map->tp;
 
 	char defs[512]="";
-	if(UseDepthBuffer && Raster.placed()&&TheScene->viewobj==this && TheScene->viewtype==SURFACE)
-		sprintf(defs+strlen(defs),"#define PLACED\n");
 	if(Render.lighting())
 		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	else

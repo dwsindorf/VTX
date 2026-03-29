@@ -471,8 +471,6 @@ void EffectsMgr::apply(){
 	else if(!Render.draw_shaded()){ // uses old non-shader code
 		RasterMgr::apply(); //
 	}
-	if(UseDepthBuffer)
-		GLSLMgr::initFrameBuffer();
 }
 
 //-------------------------------------------------------------
@@ -785,95 +783,3 @@ void EffectsMgr::create_jitter_lookup(int size, int samples_u, int samples_v)
 	delete [] data;
 
 }
-void EffectsMgr::collectSurfaceData(std::vector<SurfacePoint>& points, int stride) {
-	extern double Gscale,Hscale,Rscale;
-	double wscale=Gscale*Hscale;
-    points.clear();
-     
-    GLint vport[4];
-    TheScene->getViewport(vport);
-        
-    int width = vport[2];
-    int height = vport[3];
-    
-    double zmin=100,zmax=0;
-   
-    // Read depth buffer from current framebuffer
-    std::vector<float> depthBuffer(width * height);
-    std::vector<float> fboData1(width * height * 4);  // RGBA
-    std::vector<float> fboData2(width * height * 4);  // RGBA
-    std::vector<float> fboData3(width * height * 4);  // RGBA
-    double d0=clock();
-    glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depthBuffer.data());
-    double dd=clock();  
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, GLSLMgr::fbotexs[2]);  // FBOTex2 is index 2
-    glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_FLOAT, fboData2.data());
-    
-    double di=clock();
-    // Get matrices for unprojection
-    GLdouble modelMatrix[16], projMatrix[16];
-    GLint viewport[4];
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelMatrix);
-    glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    
-    Point xpoint = TheScene->xpoint;
-    
-    double ts=(1000.0/CLOCKS_PER_SEC);
-    
-    double d1=clock();
-    Point pt(dd-d0,di-dd,d1-di);
-    
-    pt=pt*ts;
-         
-    int cnt=0;
-    
-    // Sample at stride intervals
-    for (int y = 0; y <height; y += stride) {
-        for (int x = 0; x < width; x += stride) {
-            int idx = y * width + x;
-            int dindex=idx * 4;
-
-            double wz = depthBuffer[idx];
-            if (wz >= 0.9999) continue;  // Skip sky
- 
-            zmax=std::max(zmax,wz);
-            zmin=std::min(zmin,wz);
-            // Get layer ID from FBO R channel (Constants1.g)
-            float layerData = fboData2[idx * 4];  // R channel
-            
-            GLdouble objX, objY, objZ;
-            gluUnProject(x, y, wz,
-                        modelMatrix, projMatrix, viewport,
-                        &objX, &objY, &objZ);
-            
-            SurfacePoint sp;           
-            sp.worldPos = Point(objX, objY, objZ);  // Eye-space position
-             // Convert to world space for theta/phi/height
-            Point worldPos = sp.worldPos + xpoint;
-            double r = worldPos.length();
-            
-            if (r < 1e-12) continue;
-            sp.layerId=fboData2[dindex+0];
-
-            if(sp.layerId<1){
-            	//cout<<sp.layerId;
-            	continue;
-            }
-
-            sp.slope=fboData2[dindex+1];
-            sp.theta=fboData2[dindex+2];
-            sp.phi=fboData2[dindex+3];        
-            sp.height = (r - 0.99999998*TheMap->radius) / Rscale;
-            
-            sp.normal = worldPos.normalize();
-            sp.hardness = 0.0;
-              	
-            points.push_back(sp);
-        }
-    }
-    double d2=clock();
-    std::cout  << "EffectsMgr::collectSurfaceData Buffers:"<<pt<<" " << (d1-d0)*ts 
-    			<< " Process:" <<(d2-d1)*ts<<" ms"<<" zmin:"<<zmin<<" zmax:"<<zmax<<endl;
-
- }

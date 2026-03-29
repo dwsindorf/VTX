@@ -38,8 +38,6 @@ public:
 	void applyBgShadows();
 	void renderFgShadows();
 	
-	void collectSurfaceData(std::vector<SurfacePoint>& points, int stride = 8);
-
 	void applyShadows();
 	void init_shadows();
  	void render_shadows();

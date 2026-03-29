@@ -28,8 +28,6 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define RSCALE 0.004
-
 static int tid=0;
 static int pid=0;
 static int nbumps=0;
@@ -486,7 +484,7 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("rockUp",      up.x,     up.y,     up.z,     0);		
 	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
-	double texscale=0.25e-4*RSCALE;
+	double texscale=0.25e-4*PSCALE;
 	vars.newFloatVar("textureScale",texscale);
 		
 	vars.newBoolVar("lighting",Render.lighting());
@@ -941,7 +939,6 @@ void Rock3DObjMgr::render() {
             
             int rseed = TheNoise.rseed;
             TheNoise.rseed = s->rval;
-
             int resolution = Rock3DMgr::getLODResolution(pts);
             if (resolution == 0) {
             	TheNoise.rseed=rseed;
@@ -950,13 +947,13 @@ void Rock3DObjMgr::render() {
             // Precompute basis vectors once per rock - used by both paths
             Point rockEyeCenter;
             double rockSize;
-            rockSize = 2 * RSCALE * s->radius;
-            double dscale = RSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
+            rockSize = 2*PSCALE * s->radius;
+            double dscale = PSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
             if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
                 Point camOffset = TheScene->xpoint - s->vertex;
-                double radius       = s->radius * RSCALE;
+                double radius       = s->radius * PSCALE;
                 Point  rockCenter   = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
                 double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
@@ -1590,6 +1587,7 @@ void TNrocks3D::eval()
 		}
 		mgr->instance=instance;
 		mgr->layer=layer;
+		mgr->type=type;
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)
@@ -1604,7 +1602,7 @@ void TNrocks3D::eval()
 	}
 	INIT;
 
-	mgr->type=type;
+	//mgr->type=type;
 
 	mgr->getArgs((TNarg *)left);
 	

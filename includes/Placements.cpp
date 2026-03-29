@@ -24,7 +24,7 @@ static char THIS_FILE[] = __FILE__;
 //************************************************************
 #define HASHSIZE PERMSIZE
 
-//#define DEBUG_PLACEMENTS   // turn on to get hash table hits
+#define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
 #define DEBUG_LOD        // turn on to get lod info
 //#define DEBUG_HASH         //  turn on to get hash table stats
@@ -35,8 +35,8 @@ static char THIS_FILE[] = __FILE__;
 
 static TerrainData Td;
 extern double ptable[];
-extern double Hscale,Height,Slope;
 extern Point MapPt;
+extern double Hscale,Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
 
 double MaxSize;
 
@@ -234,20 +234,15 @@ PlacementMgr::~PlacementMgr()
 
 bool PlacementMgr::testColor()  		{ return options & COLOR_TEST?Render.color_test():false;}
 bool PlacementMgr::testDensity()  		{ 
-	extern bool UseDepthBuffer;
-	if(UseDepthBuffer)
-		return false;
 	return options & DENSITY_TEST?true:false;
 }
 
 void PlacementMgr::setHashcode(){
-	double hashcode=(levels+
-		            1/maxsize+
-					1/mult
-					);
-	//id=(int)hashcode+type+instance+hashcode*TheNoise.rseed;
-	id=(int)hashcode+type+hashcode*TheNoise.rseed;
+	int hashcode=(levels+1/maxsize+1/mult);
+    id=(int)hashcode+type;
+    //id=type+100*layer+instance;
 
+	//cout<<"layer:"<<layer<<" instance:"<<instance<<" type:"<<type<<" id:"<<id<<endl;
 }
 //-------------------------------------------------------------
 // PlacementMgr::free_htable() reset for eval pass
@@ -558,7 +553,7 @@ bool PlacementMgr::valid()
 			mps=adapt_ptsize;
 		Point pv=MapPt;
 		double d=pv.length();		
-		double r=TheMap->radius*size;
+		double r=PSCALE*size;
 		double pts=pts_scale*TheScene->wscale*r/d;
 		Stats.vtests++;
 		if(pts<mps){
@@ -636,7 +631,6 @@ void PlacementMgr::eval()
         }
 #endif
 
-        int seed=lvl*13+id;
         mpt=pv;     
         p=pv*(1.0/size);
         offset.clear();
@@ -812,14 +806,39 @@ void PlacementMgr::find_neighbors(Placement *placement)
     placement->users--;
 }
 
+void PlacementMgr::setDensity(){
+	double fs=1,fl=1,fh=1,fd=1;
+	double dht=(Height-MinHt)/(MaxHt-MinHt);
+
+	density=maxdensity;
+	if(slope_bias)
+		fs=calcDensity(Slope,0.3,slope_bias,0.1);
+	if(ht_bias){
+		fh=calcDensity(dht,0.5,ht_bias,0.5);	
+	}
+	if(lat_bias)
+		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
+	if(hardness_bias)
+		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
+	density*=fs*fh*fl*fd;
+	density=clamp(density,0,1);
+	#ifdef DEBUG_DENSITY
+	static int cnt=0;
+	if(cnt%10000==0){
+		char buff[256];
+		sprintf(buff,"density max:%-1.2f slope:%-1.2f(%-1.2f) ht:%-1.2f(%-1.2f) lat:%-1.2f final:%-1.2f ",
+				maxdensity,Slope,fs,dht,fh,fl,density);
+		cout<<buff<<endl;
+	}
+	cnt++;
+	#endif
+}
+
 void PlacementMgr::getArgs(TNarg *left){
 	extern double Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
 	TNarg &args=*((TNarg *)left);
 	double arg[13];
 	
-	double f=0;
-	double fs=1,fl=1,fh=1,fd=1;
-
 	int n=getargs(&args,arg,13);
 	// common 
 	if(n>0) levels=(int)arg[0]; 	// scale levels
@@ -838,32 +857,7 @@ void PlacementMgr::getArgs(TNarg *left){
 	if(n>11) hardness_bias=arg[11];
 	if(n>12) selection_bias=arg[12];
 	
-	double dht=(Height-MinHt)/(MaxHt-MinHt);
-	
-	density=maxdensity;
-	if(slope_bias)
-		fs=calcDensity(Slope,0.3,slope_bias,0.1);
-	if(ht_bias){
-		fh=calcDensity(dht,0.5,ht_bias,0.5);	
-	}
-	if(lat_bias)
-		fl=calcDensity(fabs(2*Phi/180),0.5,lat_bias,0.5);
-	if(hardness_bias)
-		fd=calcDensity(Hardness,0.5,hardness_bias,0.5);
-	density*=fs*fh*fl*fd;
-	//f=fs+fl+fh+fd;
-   // density=maxdensity*(1+f);
-	density=clamp(density,0,1);
-#ifdef DEBUG_DENSITY
-	if(cnt%10000==0){
-		char buff[256];
-		sprintf(buff,"density max:%-1.2f slope:%-1.2f(%-1.2f) ht:%-1.2f(%-1.2f) lat:%-1.2f final:%-1.2f ",
-				maxdensity,Slope,fs,dht,fh,fl,density);
-		cout<<buff<<endl;
-	}
-#endif
-	cnt++;
-	
+	setDensity();
 }
 //************************************************************
 // class Placement
@@ -1049,7 +1043,7 @@ void Placement::setVertex() {
 	Point base = TheMap->point(ps.y, ps.x, ht); // spherical-to-rectangular
 	vertex = Point(-base.x, base.y, -base.z);   // Point.rectangular has 180 rotation around y (??)
 	double d = vertex.distance(TheScene->vpoint);  // distance	
-	double r = TheMap->radius * radius;
+	double r = PSCALE * radius;
 	pts = mgr->pts_scale*TheScene->wscale * (r / d);
 	dist=d;
 }
@@ -1082,6 +1076,7 @@ PlaceObjMgr::PlaceObjMgr(){
 void PlaceObjMgr::eval(){
 	for(int i=0;i<objs.size;i++){
 		TNplacements *placement=(TNplacements *)objs[i]->expr;
+		placement->mgr->setDensity();
 		placement->mgr->eval(); // just call the mgr eval
 	}
 }

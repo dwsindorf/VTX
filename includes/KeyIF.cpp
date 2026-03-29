@@ -559,11 +559,11 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         //TheScene->set_changed_detail();
 		break;
 	case KEY_RENDER_SPRITES:
-		UseDepthBuffer=!UseDepthBuffer;
-		cout<<"UseDepthBuffer="<<UseDepthBuffer<<endl;
-		TheScene->set_changed_render();
-        TheScene->set_changed_detail();
-        TheScene->rebuild_all();
+//		UseDepthBuffer=!UseDepthBuffer;
+//		cout<<"UseDepthBuffer="<<UseDepthBuffer<<endl;
+//		TheScene->set_changed_render();
+//        TheScene->set_changed_detail();
+//        TheScene->rebuild_all();
 		break;
 	case KEY_RENDER_SPECULAR:
 		TheScene->set_spectex(TheScene->spectex()?0:1);

@@ -18,6 +18,8 @@
 #define PRINT_PLACEMENT_TIMING
 //#define PRINT_PLACEMENT_STATS
 
+#define PSCALE 0.004
+
 //#define DEBUG_PMEM         // turn on for memory usage
 
 class PlacementMgr;
@@ -344,6 +346,7 @@ public:
 	virtual PlaceData *make(Placement*s);
 	virtual void setHashcode();
 	virtual void getArgs(TNarg *);
+	virtual void setDensity();
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;
