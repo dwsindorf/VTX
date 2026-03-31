@@ -103,6 +103,7 @@ class Rock3DObjMgr : public PlaceObjMgr
 		}
 	};
 
+	
 	// 5. LODBatch — uses TemplateMeshVBO and InstanceVBO
 	struct LODBatch {
 		TemplateMeshVBO templateVBO;

@@ -1983,7 +1983,85 @@ System *System::newInstance(){
 
     return system;
 }
+//************************************************************
+// Asteroid class
+//************************************************************
+Asteroid::Asteroid(Orbital *m, double s, double r):
+	Orbital(m,s,r)
+{
+	terrain.parent=&exprs;   // Scope parent
+	terrain.setParent(this); // NodeIF parent
+	exprs.setParent(this);
+	rnoise=0;
+	vnoise=0;
+	color=0;
 
+}
+//-------------------------------------------------------------
+// Spheroid::save()   archive the object
+//-------------------------------------------------------------
+void Asteroid::save(FILE *fp)
+{
+	fprintf(fp,"%s%s",tabs,name());
+	terrain.validateTextures();
+	Orbital::save(fp);
+	terrain.save(fp);
+	ObjectNode::save(fp);
+    dec_tabs();
+	fprintf(fp,"%s}\n",tabs);
+}
+
+void Asteroid::get_vars(){
+	Orbital::get_vars();
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		rnoise=var->right;
+}
+int Asteroid::getChildren(LinkedList<NodeIF*>&l)
+{
+    int n = exprs.getChildren(l);
+    l.add(&terrain);
+    n += ObjectNode::getChildren(l);
+    return n + 1;
+}
+
+static int tid=0;
+static Asteroid *asteroid;
+void collectTexs(NodeIF *obj){
+	int type=obj->typeValue();
+	if(type==ID_TEXTURE){
+		TNtexture *tex=(TNtexture *)obj;
+		if(tex->texture)
+			tex->texture->tid=tid++;
+		asteroid->texs.add(tex);
+	}
+}
+void Asteroid::init(){
+	asteroid=this;
+	tid=0;
+	terrain.getChildren((int)ID_TEXTURE,texs);
+	vnoise=terrain.getChild(ID_POINT);
+	color=terrain.getChild(ID_COLOR);
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		rnoise=var->right;
+	cout<<"textures:"<<texs.size<<endl;
+	cout<<"color:"<<(color?true:false)<<endl;
+	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
+	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
+
+}
+void Asteroid::adapt(){
+}
+void Asteroid::render(){
+}
+bool Asteroid::setProgram(){
+	return false;
+}
+void Asteroid::render_zvals(){
+}
+void Asteroid::render_shadows(){
+}
 //************************************************************
 // Spheroid class
 //************************************************************
@@ -1997,6 +2075,8 @@ Spheroid::Spheroid(Orbital *m, double s) :
 #ifdef DEBUG_BASE_OBJS
 	//printf("    Spheroid\n");
 #endif
+	symmetry=1;
+	map=0;
 }
 Spheroid::Spheroid(Orbital *m, double s, double r) :
 	Orbital(m,s,r)
@@ -4443,7 +4523,7 @@ double Planetoid::calcLocalTemperature(bool w){
 }
 
 void Planetoid::checkForOcean(){	
-	have_water=terrain.hasChild(ID_WATER,true);
+	have_water=terrain.hasChild(ID_WATER);
 }
 bool Planetoid::water(){	
 	return have_water;

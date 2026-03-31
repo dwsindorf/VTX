@@ -182,6 +182,9 @@ int UniverseModel::getPrototype(int type,char *tmp)
 	case TN_HALO:
 		sprintf(tmp,"Halo(1) {}\n");
 		break;
+	case TN_ASTEROID:
+		sprintf(tmp,"Asteroid(0.005,40){Surface{}}\n");
+		break;
 	case TN_PLANET:
 		sprintf(tmp,"Planet(0.005,40){day=24;year=100;Surface{}}\n");
 		break;
@@ -297,6 +300,8 @@ ModelSym* UniverseModel::getObjectSymbol(int type){
 		return new ModelSym("System",type);
 	case TN_STAR:
 		return new ModelSym("Star",type);
+	case TN_ASTEROID:
+		return new ModelSym("Asteroid",type);
 	case TN_CORONA:
 		return new ModelSym("Corona",type);
 	case TN_HALO:
@@ -578,6 +583,7 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		}
 		list.add(getObjectSymbol(TN_STAR));
 		list.add(getObjectSymbol(TN_PLANET));
+		list.add(getObjectSymbol(TN_ASTEROID));
 		break;
 	case TN_CORONA:
 		list.add(getObjectSymbol(TN_CORONA));
@@ -795,6 +801,9 @@ void UniverseModel::setType(NodeIF *node)
 			break;
 		case ID_STAR:
 			node->setFlag(TN_STAR);
+			break;
+		case ID_ASTEROID:
+			node->setFlag(TN_ASTEROID);
 			break;
 		case ID_CORONA:
 			node->setFlag(TN_CORONA);

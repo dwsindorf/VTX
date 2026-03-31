@@ -89,6 +89,7 @@ static LongSym keytbl[]={
 	{"Sky",			YY_SKY},
 	{"Nebula",		YY_NEBULA},
 	{"Universe",	YY_UNIVERSE},
+	{"Asteroid",	YY_ASTEROID},
 	{"Galaxy",		YY_GALAXY},
 	{"Surface",		YY_SURFACE},
 	{"Volume",		YY_SURFACE},

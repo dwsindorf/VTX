@@ -12,13 +12,13 @@
 //#define DEBUG_CRATERS
 #define TEST_SPRITES
 #define TEST_PLANTS
-#define TEST_CRATERS
+//#define TEST_CRATERS
 #define TEST_ROCKS
 
 #define PRINT_PLACEMENT_TIMING
 //#define PRINT_PLACEMENT_STATS
 
-#define PSCALE 0.004
+#define PSCALE TheMap->radius
 
 //#define DEBUG_PMEM         // turn on for memory usage
 

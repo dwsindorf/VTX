@@ -109,7 +109,7 @@ void set_orbital(Orbital *orb){
 
 /******************************  YACC SECTION ****************************/
 %token YY_SCENE
-%token YY_UNIVERSE YY_GALAXY YY_NEBULA YY_SYSTEM YY_STAR YY_PLANET YY_MOON
+%token YY_UNIVERSE YY_GALAXY YY_NEBULA YY_SYSTEM YY_STAR YY_PLANET YY_MOON YY_ASTEROID
 %token YY_CLOUD_LAYER YY_SHELL YY_RING YY_SKY YY_CORONA YY_HALO
 %token YY_VIEWOBJ YY_DEBUG YY_INCLUDE YY_EXCLUDE
 %token YY_COLOR YY_DENSITY YY_POINT YY_NOISE YY_VIEW  YY_VEXPR YY_SURFACE
@@ -172,6 +172,7 @@ orbital_item
     | ring
     | clouds
     | sky
+    | asteroid
 
 /*------------- expr_node rules ---------------------------------------*/
 expr_node
@@ -300,6 +301,7 @@ system_exprs
 system_expr
     : star
     | planet
+    | asteroid
     | var_expr
     | view_object
 
@@ -370,6 +372,22 @@ star_expr
    	| corona
    	| halo
  
+/*------------- asteroid rules ----------------------------------------------*/
+
+asteroid
+    : asteroid_def '{' asteroid_body '}'	{ OPOP;}
+asteroid_def
+    : YY_ASTEROID '(' expr ',' expr ')'
+    		{ OPUSH(new Asteroid(ORB1,TNvalue($3),TNvalue($5)));}
+asteroid_body
+   	:
+   	| asteroid_exprs
+asteroid_exprs
+   	: asteroid_expr
+   	| asteroid_exprs asteroid_expr
+asteroid_expr
+   	: orb_expr
+   	| surface
 
 /*------------- Corona rules ----------------------------------------------*/
 

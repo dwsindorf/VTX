@@ -35,6 +35,7 @@ enum orbital_codes{
 	ID_GALAXY  		= ID_ORBITAL|0x0004,
 	ID_NEBULA  		= ID_ORBITAL|0x0005,
 	ID_SYSTEM  		= ID_ORBITAL|0x0006,
+	ID_ASTEROID  	= ID_ORBITAL|0x0007,
 	ID_STAR     	= ID_LEVEL1|ID_ORBITAL|0x0107,
 	ID_CORONA  		= ID_LEVEL1|ID_ORBITAL|0x0508,
 	ID_FLARES  		= ID_LEVEL1|ID_ORBITAL|0x0509,
@@ -166,6 +167,7 @@ public:
 	virtual NodeIF *getInstance();
 };
 
+
 //************************************************************
 // Universe class
 //************************************************************
@@ -181,6 +183,35 @@ public:
 	NodeIF *replaceChild(NodeIF *c,NodeIF *n);
 
 	void save(FILE *);
+};
+
+//************************************************************
+// Asteroid class
+//************************************************************
+class Asteroid : public Orbital {
+public:
+	LinkedList<NodeIF *> texs;
+	TNode   *vnoise;
+	TNode   *rnoise;
+	TNode   *color;
+
+	Asteroid(Orbital *m, double s, double r);
+	TerrainMgr terrain;
+	const char *name()			{ return "Asteroid";}
+	int  type()					{ return ID_ASTEROID;}
+	void save(FILE *fp);
+	void get_vars();
+	void set_surface(TerrainData &d) { terrain.set_surface(d);}
+	TNode *set_terrain(TNode *n) { return terrain.set_root(n);}
+	int getChildren(LinkedList<NodeIF*>&l);
+	bool hasChildren() { return true;}
+	void init();
+	void adapt();
+	void render();
+	bool setProgram();
+	void render_zvals();
+	void render_shadows();
+
 };
 
 //************************************************************
@@ -281,6 +312,7 @@ public:
 	void get_vars();
 	void addNewSystem();
 };
+
 
 //************************************************************
 // System class
