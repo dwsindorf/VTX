@@ -1992,13 +1992,26 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	terrain.parent=&exprs;   // Scope parent
 	terrain.setParent(this); // NodeIF parent
 	exprs.setParent(this);
-	rnoise=0;
-	vnoise=0;
-	color=0;
+	rnoise=nullptr;
+	vnoise=nullptr;
+	color=nullptr;
+	object=nullptr;
+	hscale=1;
+	symmetry=1;
 
 }
 //-------------------------------------------------------------
-// Spheroid::save()   archive the object
+// Asteroid::~Asteroid - destructor
+//-------------------------------------------------------------
+Asteroid::~Asteroid()
+{
+    if(object) {
+        delete object;
+        object = nullptr;
+    }
+}
+//-------------------------------------------------------------
+// Asteroid::save()   archive the object
 //-------------------------------------------------------------
 void Asteroid::save(FILE *fp)
 {
@@ -2011,12 +2024,6 @@ void Asteroid::save(FILE *fp)
 	fprintf(fp,"%s}\n",tabs);
 }
 
-void Asteroid::get_vars(){
-	Orbital::get_vars();
-	TNvar *var=exprs.getVar((char*)"noise.expr");
-	if(var)
-		rnoise=var->right;
-}
 int Asteroid::getChildren(LinkedList<NodeIF*>&l)
 {
     int n = exprs.getChildren(l);
@@ -2025,20 +2032,7 @@ int Asteroid::getChildren(LinkedList<NodeIF*>&l)
     return n + 1;
 }
 
-static int tid=0;
-static Asteroid *asteroid;
-void collectTexs(NodeIF *obj){
-	int type=obj->typeValue();
-	if(type==ID_TEXTURE){
-		TNtexture *tex=(TNtexture *)obj;
-		if(tex->texture)
-			tex->texture->tid=tid++;
-		asteroid->texs.add(tex);
-	}
-}
 void Asteroid::init(){
-	asteroid=this;
-	tid=0;
 	terrain.getChildren((int)ID_TEXTURE,texs);
 	vnoise=terrain.getChild(ID_POINT);
 	color=terrain.getChild(ID_COLOR);
@@ -2049,11 +2043,27 @@ void Asteroid::init(){
 	cout<<"color:"<<(color?true:false)<<endl;
 	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
+	if(!object)
+	    object = new MCObject(Point(0, 0, 0), size);
+}
+void Asteroid::init_view(){
+	cout<<"Asteroid::init_view()"<<endl;
+	TheScene->zoom=size;
+
+	TheScene->minh=3*FEET;
+	TheScene->maxr=2*size;
+	TheScene->hstride=1;
+	TheScene->vstride=0.02;
+	TheScene->phi=5;
+	TheScene->theta=0;
+
 
 }
 void Asteroid::adapt(){
+	cout<<"Asteroid::adapt()"<<endl;
 }
 void Asteroid::render(){
+	cout<<"Asteroid::render()"<<endl;
 }
 bool Asteroid::setProgram(){
 	return false;
@@ -2061,6 +2071,59 @@ bool Asteroid::setProgram(){
 void Asteroid::render_zvals(){
 }
 void Asteroid::render_shadows(){
+}
+//-------------------------------------------------------------
+// Asteroid::adapt_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::adapt_pass()
+{
+	clr_selected();
+    if(TheScene->viewobj==this)
+        clear_pass(FG0);
+    return selected();
+}
+//-------------------------------------------------------------
+// Asteroid::shadow_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::shadow_pass()
+{
+	return adapt_pass();
+}
+
+//-------------------------------------------------------------
+// Asteroid::render_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::render_pass()
+{
+	return adapt_pass();
+}
+//-------------------------------------------------------------
+// Asteroid::makeField - Create scalar field from rnoise
+//-------------------------------------------------------------
+SurfaceFunction Asteroid::makeField()
+{
+	double size = this->size;
+    if(!rnoise) {
+        // Fallback: simple sphere
+        return [size](double x, double y, double z) -> double {
+            double r = sqrt(x*x + y*y + z*z);
+            return size - r;  // positive inside, negative outside
+        };
+    }   
+    // Capture rnoise and rockSize for the lambda
+    TNode *noise = rnoise;
+    
+    return [noise, size](double x, double y, double z) -> double {
+        // Evaluate noise at this point
+        Point np(x, y, z);
+        TheNoise.set(np);
+        SINIT;
+        noise->eval();
+        
+        // Base sphere with noise displacement
+        double r = sqrt(x*x + y*y + z*z);
+        return (size - r) + S0.s * size * 0.1;
+    };
 }
 //************************************************************
 // Spheroid class

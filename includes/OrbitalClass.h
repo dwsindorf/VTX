@@ -189,18 +189,25 @@ public:
 // Asteroid class
 //************************************************************
 class Asteroid : public Orbital {
+private:
+	SurfaceFunction makeField();  // Create field from rnoise expression
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;
 	TNode   *rnoise;
 	TNode   *color;
+	MCObject *object; 
+	SurfaceFunction field;
+	double     symmetry;
+	double     hscale;
+	Color 	   shadow_color;
 
 	Asteroid(Orbital *m, double s, double r);
+	~Asteroid();
 	TerrainMgr terrain;
 	const char *name()			{ return "Asteroid";}
 	int  type()					{ return ID_ASTEROID;}
 	void save(FILE *fp);
-	void get_vars();
 	void set_surface(TerrainData &d) { terrain.set_surface(d);}
 	TNode *set_terrain(TNode *n) { return terrain.set_root(n);}
 	int getChildren(LinkedList<NodeIF*>&l);
@@ -211,7 +218,10 @@ public:
 	bool setProgram();
 	void render_zvals();
 	void render_shadows();
-
+	int render_pass();
+	int shadow_pass();
+	int adapt_pass();
+	void init_view();
 };
 
 //************************************************************

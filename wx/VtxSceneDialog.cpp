@@ -21,6 +21,7 @@
 
 #include "VtxSceneTabs.h"
 #include "VtxPlanetTabs.h"
+#include "VtxAsteroidTabs.h"
 #include "VtxMoonTabs.h"
 #include "VtxStarTabs.h"
 #include "VtxCoronaTabs.h"
@@ -139,6 +140,7 @@ bool VtxSceneDialog::Create( wxWindow* parent,
 
     SET_TABS_OBJECT(TN_SCENE,VtxSceneTabs)
     SET_TABS_OBJECT(TN_PLANET,VtxPlanetTabs)
+	SET_TABS_OBJECT(TN_ASTEROID,VtxAsteroidTabs)
 	SET_TABS_OBJECT(TN_STAR,VtxStarTabs)
 	SET_TABS_OBJECT(TN_MOON,VtxMoonTabs)
 	SET_TABS_OBJECT(TN_CORONA,VtxCoronaTabs)
