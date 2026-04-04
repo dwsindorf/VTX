@@ -1987,16 +1987,16 @@ System *System::newInstance(){
 // Asteroid class
 //************************************************************
 Asteroid::Asteroid(Orbital *m, double s, double r):
-	Orbital(m,s,r)
+	Spheroid(m,s,r)
 {
-	terrain.parent=&exprs;   // Scope parent
-	terrain.setParent(this); // NodeIF parent
-	exprs.setParent(this);
+		
+	delete map;
+	map=nullptr;
 	rnoise=nullptr;
 	vnoise=nullptr;
 	color=nullptr;
-	object=nullptr;
-	hscale=1;
+	tree=nullptr;
+	hscale=0.5; 
 	symmetry=1;
 
 }
@@ -2005,124 +2005,222 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 //-------------------------------------------------------------
 Asteroid::~Asteroid()
 {
-    if(object) {
-        delete object;
-        object = nullptr;
+    if(tree) {
+        delete tree;
+        tree = nullptr;
     }
 }
-//-------------------------------------------------------------
-// Asteroid::save()   archive the object
-//-------------------------------------------------------------
-void Asteroid::save(FILE *fp)
-{
-	fprintf(fp,"%s%s",tabs,name());
-	terrain.validateTextures();
-	Orbital::save(fp);
-	terrain.save(fp);
-	ObjectNode::save(fp);
-    dec_tabs();
-	fprintf(fp,"%s}\n",tabs);
+
+double Asteroid::far_height() {
+    return size;
 }
 
-int Asteroid::getChildren(LinkedList<NodeIF*>&l)
-{
-    int n = exprs.getChildren(l);
-    l.add(&terrain);
-    n += ObjectNode::getChildren(l);
-    return n + 1;
+double Asteroid::max_height() {
+    return size;
+}
+double Asteroid::height(double t, double p) {
+    // Return surface height at theta/phi position
+    // For a simple sphere, just return the radius
+    return size;
 }
 
 void Asteroid::init(){
+	Orbital::init();
 	terrain.getChildren((int)ID_TEXTURE,texs);
 	vnoise=terrain.getChild(ID_POINT);
 	color=terrain.getChild(ID_COLOR);
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	if(var)
 		rnoise=var->right;
+	cout<<"=== ASTEROID INIT ===" << endl;
+	cout<<"size: " << size << endl;
 	cout<<"textures:"<<texs.size<<endl;
 	cout<<"color:"<<(color?true:false)<<endl;
 	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
-	if(!object)
-	    object = new MCObject(Point(0, 0, 0), size);
+	if(!tree) {
+		tree = new MCObjTree();
+		field = makeField();
+		tree->init(
+			Point(0, 0, 0),  // center in local space
+			size,            // radius
+			1.0,             // margin
+			field,
+			0,               // instance id
+			0                // rval (seed)
+		);
+	}
+    cout << "Tree created and initialized radius:" << TheScene->radius<<endl;
 }
 void Asteroid::init_view(){
-	cout<<"Asteroid::init_view()"<<endl;
-	TheScene->zoom=size;
+   
+    // Set up view parameters for orbital view
+    TheScene->maxr = size * 10;
+    TheScene->minr = size;
+    
+    TheScene->maxht = 0;
+    TheScene->zoom = size;
+    TheScene->minh = size * 0.001;
+    TheScene->hstride = 1;
+    TheScene->vstride = 0.02;
 
-	TheScene->minh=3*FEET;
-	TheScene->maxr=2*size;
-	TheScene->hstride=1;
-	TheScene->vstride=0.02;
-	TheScene->phi=5;
-	TheScene->theta=0;
+    cout<<"Asteroid::init_view new file:"<<TheScene->changed_file()<<" view radius:"<<TheScene->radius<<endl;
+	if(TheScene->changed_file())  // exit for open
+	   return;
 
+    
+    TheScene->gndlvl = 0;
+    
+    TheScene->phi=0;
+    TheScene->theta=0;
+    
+    TheScene->radius=size;
+    TheScene->elevation=0;
+    TheScene->height=TheScene->radius;
 
 }
-void Asteroid::adapt(){
-	cout<<"Asteroid::adapt()"<<endl;
+int Asteroid::scale(double& znear, double& zfar) {
+    // Set clipping planes based on asteroid size
+    double zn = size * 1.001;   // near plane = 0.1% of radius
+    double zf = size * 100;      // far plane = 100x radius
+    
+    double z1,z2;
+    int rv=Object3D::scale(z1, z2);
+    //cout << "Asteroid::scale() zn=" << zn << ", zf=" << zf << " return:"<<OUTSIDE<<endl;
+    //cout << "Object3D::scale() zn=" << z1 << ", zf=" << z2 << " return:"<<rv<<endl;
+    //znear=z1;
+    //zfar=z2;
+    double ht=TheScene->radius-size;
+    if(ht<TheScene->minh)   // prevent underground views
+       ht=TheScene->minh;
+    
+    TheScene->radius=size+ht;
+
+    TheScene->height=ht;
+    TheScene->elevation=TheScene->radius-size;
+    
+    znear=z1;
+    zfar=z2;
+
+    return rv;  // Render as outside object
 }
-void Asteroid::render(){
-	cout<<"Asteroid::render()"<<endl;
+void Asteroid::adapt_object(){
+    if(!tree) {
+        cout << "adapt_object: tree is null!" << endl;
+        return;
+    }
+    
+    cout << "=== ASTEROID ADAPT ===" << endl;
+    
+    // Rebuild field if needed
+    if(!tree->valid) {
+        cout << "Tree invalid, rebuilding field" << endl;
+        field = makeField();
+        tree->field = field;
+    }
+    
+    Point camWorld = TheScene->xpoint;
+    Point asteroidWorld = this->point;
+    Point camLocal = camWorld - asteroidWorld;
+    
+    double wscale = TheScene->wscale;
+    double dist = camLocal.length();
+    cout << "Distance: " << dist <<" obj "<<point << " xpoint "<<camWorld<<endl;
+    
+    // Adapt the octree
+    double minPixels = 2.0;
+    int maxDepth = 10;
+    MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid();
+    
+    tree->adapt(camLocal, wscale, hscale, minPixels, maxDepth, flags);
+    
+    // Check leaf count
+    std::vector<MCObjNode*> leaves;
+    tree->collectLeaves(leaves);
+    cout << "Leaf nodes: " << leaves.size() << endl;
+    
+    int meshCount = 0;
+    for(MCObjNode* leaf : leaves) {
+        if(leaf->meshValid && !leaf->mesh.empty())
+            meshCount++;
+    }
+    cout << "Leaves with mesh: " << meshCount << endl;
 }
+void Asteroid::render_object(){
+	extern int test7;
+    if(!tree || !tree->root)
+        return;
+    
+    std::vector<MCObjNode*> leaves;
+    tree->collectLeaves(leaves);
+    if(leaves.empty())
+        return;
+  
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    
+    if(test7)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // Disable blend and set proper GL state
+    glDisable(GL_BLEND);
+    //glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    
+    glColor3f(1.0f, 0.5f, 0.0f);  // Orange
+  
+    Point eyeOffset = TheScene->eyeref() ? TheScene->xpoint : Point(0,0,0);
+    
+    glBegin(GL_TRIANGLES);
+    for(MCObjNode* leaf : leaves) {
+        if(!leaf->meshValid || leaf->mesh.empty())
+            continue;
+        for(const MCTriangle& tri : leaf->mesh) {
+            glNormal3dv(&tri.normal.x);
+            for(int i = 0; i < 3; i++) {
+             	// Subtract eye offset from each vertex (the "proper" way)
+            	Point p = tri.vertices[i] - eyeOffset;
+            	glVertex3dv(&p.x);
+            }
+        }
+    }
+    glEnd();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPopAttrib();
+}
+
 bool Asteroid::setProgram(){
 	return false;
 }
-void Asteroid::render_zvals(){
-}
-void Asteroid::render_shadows(){
-}
-//-------------------------------------------------------------
-// Asteroid::adapt_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::adapt_pass()
-{
-	clr_selected();
-    if(TheScene->viewobj==this)
-        clear_pass(FG0);
-    return selected();
-}
-//-------------------------------------------------------------
-// Asteroid::shadow_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::shadow_pass()
-{
-	return adapt_pass();
-}
 
-//-------------------------------------------------------------
-// Asteroid::render_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::render_pass()
-{
-	return adapt_pass();
-}
 //-------------------------------------------------------------
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------
 SurfaceFunction Asteroid::makeField()
 {
-	double size = this->size;
+    double sz = this->size;
+    double hs = this->hscale;
+    
     if(!rnoise) {
         // Fallback: simple sphere
-        return [size](double x, double y, double z) -> double {
+        return [sz](double x, double y, double z) -> double {
             double r = sqrt(x*x + y*y + z*z);
-            return size - r;  // positive inside, negative outside
+            return sz - r;
         };
-    }   
-    // Capture rnoise and rockSize for the lambda
+    }
+    
     TNode *noise = rnoise;
     
-    return [noise, size](double x, double y, double z) -> double {
-        // Evaluate noise at this point
+    return [noise, sz, hs](double x, double y, double z) -> double {
         Point np(x, y, z);
         TheNoise.set(np);
         SINIT;
         noise->eval();
         
-        // Base sphere with noise displacement
         double r = sqrt(x*x + y*y + z*z);
-        return (size - r) + S0.s * size * 0.1;
+        return (sz - r) + S0.s * hs;  // Use hscale here
     };
 }
 //************************************************************
@@ -2336,7 +2434,7 @@ int  Spheroid::scale(double &zn, double &zf)
     int v=getvis();
     int t;
 
-    if(TheScene->viewobj==this){
+    if(map && TheScene->viewobj==this){
         if(TheScene->adapt_mode() || !map->vbounds.valid()){
 		    set_scene();
 		    zn=TheScene->znear;
@@ -2421,15 +2519,10 @@ int Spheroid::render_pass()
 
     if(!local_group() || offscreen() || !isEnabled())
 		return 0;
-	//if(view_group()){
     if(view_group())
 		clear_pass(BG2);
     else
     	clear_pass(BG3);
-	//}
-	//else
-	//	clear_pass(BG2);
-		//clear_pass(BG5);
     return selected();
 }
 
@@ -2439,7 +2532,6 @@ int Spheroid::render_pass()
 void Spheroid::get_vars()
 {
     Orbital::get_vars();
-
 
 	if(exprs.get_local("shadow",Td))
 		shadow_color=Td.c;
@@ -2451,10 +2543,10 @@ void Spheroid::get_vars()
 	}
 	else
 		hscale=def_hscale;
-	//map->hscale=hscale;
 
 	VGET("symmetry",symmetry,def_symmetry);
-	map->symmetry=symmetry;
+	if(map)
+		map->symmetry=symmetry;
 }
 
 //-------------------------------------------------------------
@@ -2497,7 +2589,7 @@ void Spheroid::set_rotation()
 //-------------------------------------------------------------
 void Spheroid::rebuild()
 {
-	if(invalid()){
+	if(map && invalid()){
 		delete map;
 		map=new Map(size);
 		map->object=this;
@@ -2516,7 +2608,7 @@ void Spheroid::rebuild()
 //-------------------------------------------------------------
 bool Spheroid::hasChildren()
 {
-	return true;
+	return true; // at least terrain
 }
 //-------------------------------------------------------------
 // Spheroid::getChildren
@@ -2563,6 +2655,7 @@ void Spheroid::locate()
  	TheScene->pushMatrix();
  	setMatrix();
  	set_point();
+   // cout<<name()<<" Point:"<<point<<" Origin:"<<origin<<endl;
  	TheScene->popMatrix();
  	visit(&Object3D::locate);
  }
@@ -2573,7 +2666,7 @@ void Spheroid::locate()
 void Spheroid::select()
 {
 	set_ref();
-	if(included()){
+	if(map && included()){
 		TheScene->pushMatrix();
 
 		set_tilt();
@@ -2667,17 +2760,16 @@ void Spheroid::save(FILE *fp)
 void Spheroid::adapt_object()
 {
 	//cout<<name()<<" adapt_object seed:"<<rseed<<endl;
-
-	exprs.eval();
-	set_geometry();
-	terrain.init();
-	terrain.setAdaptMode();
-	set_wscale();
-	//if(rseed)
-	pushSeed();
-	map->adapt();
-	//if(rseed)
-	popSeed();
+	if(map){
+		exprs.eval();
+		set_geometry();
+		terrain.init();
+		terrain.setAdaptMode();
+		set_wscale();
+		pushSeed();
+		map->adapt();
+		popSeed();
+    }
 }
 
 //-------------------------------------------------------------
@@ -2685,18 +2777,18 @@ void Spheroid::adapt_object()
 //-------------------------------------------------------------
 void Spheroid::render_object()
 {
-	first=1;
-	terrain.init_render();
-	Td.albedo=albedo;
-	Td.shine=shine;
-	Td.ambient=ambient;
-	Td.emission=emission;
-	Td.diffuse=diffuse;
-	Td.specular=specular;
-	//pushSeed();
-	map->render();
-	//popSeed();
-	first=0;
+	if(map){
+		first=1;
+		terrain.init_render();
+		Td.albedo=albedo;
+		Td.shine=shine;
+		Td.ambient=ambient;
+		Td.emission=emission;
+		Td.diffuse=diffuse;
+		Td.specular=specular;
+		map->render();
+		first=0;
+	}
 }
 
 //-------------------------------------------------------------
@@ -2713,7 +2805,8 @@ void Spheroid::map_color(MapData* d,Color &c)
 //-------------------------------------------------------------
 void Spheroid::set_scene()
 {
-	map->set_scene();
+	if(map)
+		map->set_scene();
 }
 
 //-------------------------------------------------------------
@@ -2721,7 +2814,7 @@ void Spheroid::set_scene()
 //-------------------------------------------------------------
 double Spheroid::height(double t, double p)
 {
-	return map->elevation(t,p);
+	return map?map->elevation(t,p):0;
 }
 
 //-------------------------------------------------------------
@@ -2729,9 +2822,11 @@ double Spheroid::height(double t, double p)
 //-------------------------------------------------------------
 void Spheroid::set_geometry()
 {
-	map->radius=size;
-	map->symmetry=symmetry;
-	map->hscale=hscale;
+	if(map){
+		map->radius=size;
+		map->symmetry=symmetry;
+		map->hscale=hscale;
+	}
 	Hscale=hscale;
 	Gscale=1/hscale/size;
 	Rscale=size*hscale;
@@ -2742,7 +2837,7 @@ void Spheroid::set_geometry()
 //-------------------------------------------------------------
 Bounds *Spheroid::bounds()
 {
-	if(!allows_selection())
+	if(!map || !allows_selection())
 		return 0;
 	if(!map->vbounds.valid()){
 		map->make_visbox();
@@ -2765,8 +2860,8 @@ void Spheroid::init()
 	terrain.init();
 	terrain.init_render();
 	terrain.set_eval_mode(0);
-	map->make();
-
+	if(map)
+		map->make();
 }
 
 //-------------------------------------------------------------
@@ -2774,11 +2869,7 @@ void Spheroid::init()
 //-------------------------------------------------------------
 double  Spheroid::max_height()
 {
-	//if(TheScene->viewobj==this  && map->hrange==0){
-	//	map->find_limits();
-	//    cout<<name() << " hrange:"<<map->hrange<<" hscale:"<<hscale<<endl;
-	//}
-    if(map->hrange)
+    if(map && map->hrange)
     	return map->hrange*hscale;
     return 0.1*hscale;
 }
@@ -2788,8 +2879,6 @@ double  Spheroid::max_height()
 //-------------------------------------------------------------
 double Spheroid::far_height()
 {
-	//TheScene->gstride=0.1*LY;
-
 	Orbital *obj;
 	children.ss();
 
@@ -2835,7 +2924,7 @@ void Spheroid::init_view()
 	if(TheScene->changed_file())  // exit for open
 	   return;
 
-	TheScene->gndlvl=map->elevation(TheScene->theta,TheScene->phi);
+	TheScene->gndlvl=map?map->elevation(TheScene->theta,TheScene->phi):0;
 
 	switch(TheScene->viewtype){
 	case ORBITAL:
@@ -2866,7 +2955,9 @@ void Spheroid::init_view()
 		break;
 	}
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
-	TheScene->radius=TheScene->elevation+map->radius;
+	TheScene->radius=TheScene->elevation;
+	if(map)
+		TheScene->radius+=map->radius;
 
 }
 
@@ -4022,6 +4113,7 @@ int Planetoid::shadow_pass()
 void Planetoid::render() {
 	if (!isEnabled())
 		return;
+	
 	LinkedList<Object3D*> inlist;
 	LinkedList<Object3D*> outlist;
 	LinkedList<Object3D*> shells;
@@ -5204,9 +5296,6 @@ void Planetoid::setIceColors(){
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
 //-------------------------------------------------------------
-
-
-
 #ifdef DEBUG_GENERATE
 #define PRNT_FEATURE(s) cout<<"RND_"<<s<<":"<<str<<endl;
 #else

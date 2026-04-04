@@ -35,7 +35,7 @@ enum orbital_codes{
 	ID_GALAXY  		= ID_ORBITAL|0x0004,
 	ID_NEBULA  		= ID_ORBITAL|0x0005,
 	ID_SYSTEM  		= ID_ORBITAL|0x0006,
-	ID_ASTEROID  	= ID_ORBITAL|0x0007,
+	ID_ASTEROID  	= ID_ORBITAL|0x0307,
 	ID_STAR     	= ID_LEVEL1|ID_ORBITAL|0x0107,
 	ID_CORONA  		= ID_LEVEL1|ID_ORBITAL|0x0508,
 	ID_FLARES  		= ID_LEVEL1|ID_ORBITAL|0x0509,
@@ -185,44 +185,7 @@ public:
 	void save(FILE *);
 };
 
-//************************************************************
-// Asteroid class
-//************************************************************
-class Asteroid : public Orbital {
-private:
-	SurfaceFunction makeField();  // Create field from rnoise expression
-public:
-	LinkedList<NodeIF *> texs;
-	TNode   *vnoise;
-	TNode   *rnoise;
-	TNode   *color;
-	MCObject *object; 
-	SurfaceFunction field;
-	double     symmetry;
-	double     hscale;
-	Color 	   shadow_color;
 
-	Asteroid(Orbital *m, double s, double r);
-	~Asteroid();
-	TerrainMgr terrain;
-	const char *name()			{ return "Asteroid";}
-	int  type()					{ return ID_ASTEROID;}
-	void save(FILE *fp);
-	void set_surface(TerrainData &d) { terrain.set_surface(d);}
-	TNode *set_terrain(TNode *n) { return terrain.set_root(n);}
-	int getChildren(LinkedList<NodeIF*>&l);
-	bool hasChildren() { return true;}
-	void init();
-	void adapt();
-	void render();
-	bool setProgram();
-	void render_zvals();
-	void render_shadows();
-	int render_pass();
-	int shadow_pass();
-	int adapt_pass();
-	void init_view();
-};
 
 //************************************************************
 // DensityCloud class
@@ -436,7 +399,34 @@ public:
 	void addTerrainVar(const char *,const char *);
 
 };
+//************************************************************
+// Asteroid class
+//************************************************************
+class Asteroid : public Spheroid {
+private:
+	SurfaceFunction makeField();  // Create field from rnoise expression
+public:
+	LinkedList<NodeIF *> texs;
+	TNode   *vnoise;
+	TNode   *rnoise;
+	TNode   *color;
+	MCObjTree *tree; 
+	SurfaceFunction field;
 
+	Asteroid(Orbital *m, double s, double r);
+	~Asteroid();
+	const char *name()			{ return "Asteroid";}
+	int  type()					{ return ID_ASTEROID;}
+	void init();
+	void init_view();
+	void adapt_object();
+	void render_object();
+	bool setProgram();
+	int scale(double& znear, double& zfar);
+	double far_height();
+	double max_height();
+	double height(double t, double p);
+};
 //************************************************************
 // Star class
 //************************************************************

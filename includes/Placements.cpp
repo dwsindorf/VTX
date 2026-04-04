@@ -24,13 +24,13 @@ static char THIS_FILE[] = __FILE__;
 //************************************************************
 #define HASHSIZE PERMSIZE
 
-#define DEBUG_PLACEMENTS   // turn on to get hash table hits
+//#define DEBUG_PLACEMENTS   // turn on to get hash table hits
 #define PLACEMENTS_LOD     // turn on to enable lod rejection
-#define DEBUG_LOD        // turn on to get lod info
+//#define DEBUG_LOD        // turn on to get lod info
 //#define DEBUG_HASH         //  turn on to get hash table stats
 //#define NO_CHAIN          // TEST mode turn off chaining
 //#define DEBUG_HASH_CHAINS  //  turn on to get hash table chain stats
-#define PRINT_PLACEMENT_STATS
+//#define PRINT_PLACEMENT_STATS
 //#define DEBUG_DENSITY
 
 static TerrainData Td;

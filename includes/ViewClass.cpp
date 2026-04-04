@@ -1390,7 +1390,7 @@ void View::auto_delh()
 {
 	if(minr && autoh())
 		delh=zoom*hstride*(1.0-exp(-(radius-minr)/minr)+1000*minh)/minr;
-	//cout<<" hstride:"<<hstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<endl;
+	//cout<<" hstride:"<<hstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<" delh:"<<delh<<endl;
 }
 
 void View::reset_stride()

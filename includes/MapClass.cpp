@@ -457,7 +457,6 @@ void Map::set_scene()
 	TheScene->radius=radius+gndlvl+ht;
 
 	TheScene->znear=0.25*ht;
-	//TheScene->zfar=horizon;
 	TheScene->zfar=horizon;
 
 	dmin=TheScene->znear;
@@ -576,6 +575,7 @@ void Map::render()
 		else
 			glCullFace(GL_FRONT);
 	}
+
 	glFrontFace(GL_CW);
 	set_textures(Render.textures());
 	set_lighting(lighting && Render.lighting());
@@ -2101,17 +2101,6 @@ void Map::adapt()
 		first_make=false;
 	}
 	//find_limits();
-}
-
-static void water_test(MapNode *n)
-{
-	MapData *d=&n->data;
-	while(d){
-		if(d->water()){
-			TheMap->set_waterpass(1);
-		}
-		d=d->data2();
-	}
 }
 
 //-------------------------------------------------------------
