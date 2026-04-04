@@ -1850,7 +1850,7 @@ void Scene::set_viewobj(ObjectNode *obj)
     ObjectNode *p=0;
     if(viewobj->type()==ID_MOON)
     	p=viewobj->getParent()->getParent();
-    else if(viewobj->type()==ID_PLANET || viewobj->type()==ID_STAR)
+    else if(viewobj->type()==ID_PLANET || viewobj->type()==ID_STAR|| viewobj->type()==ID_ASTEROID)
     	p=viewobj->getParent();
     if(p && p->type()==ID_SYSTEM)
     	System::TheSystem=(System *)p;

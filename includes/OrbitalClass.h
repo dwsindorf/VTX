@@ -35,6 +35,7 @@ enum orbital_codes{
 	ID_GALAXY  		= ID_ORBITAL|0x0004,
 	ID_NEBULA  		= ID_ORBITAL|0x0005,
 	ID_SYSTEM  		= ID_ORBITAL|0x0006,
+	ID_ASTEROID  	= ID_ORBITAL|0x0307,
 	ID_STAR     	= ID_LEVEL1|ID_ORBITAL|0x0107,
 	ID_CORONA  		= ID_LEVEL1|ID_ORBITAL|0x0508,
 	ID_FLARES  		= ID_LEVEL1|ID_ORBITAL|0x0509,
@@ -166,6 +167,7 @@ public:
 	virtual NodeIF *getInstance();
 };
 
+
 //************************************************************
 // Universe class
 //************************************************************
@@ -182,6 +184,8 @@ public:
 
 	void save(FILE *);
 };
+
+
 
 //************************************************************
 // DensityCloud class
@@ -281,6 +285,7 @@ public:
 	void get_vars();
 	void addNewSystem();
 };
+
 
 //************************************************************
 // System class
@@ -394,7 +399,37 @@ public:
 	void addTerrainVar(const char *,const char *);
 
 };
+//************************************************************
+// Asteroid class
+//************************************************************
+class Asteroid : public Spheroid {
+private:
+	SurfaceFunction makeField();  // Create field from rnoise expression
+public:
+	LinkedList<NodeIF *> texs;
+	TNode   *vnoise;
+	TNode   *rnoise;
+	TNode   *color;
+	MCObjTree *tree; 
+	SurfaceFunction field;
 
+	Asteroid(Orbital *m, double s, double r);
+	~Asteroid();
+	const char *name()			{ return "Asteroid";}
+	int  type()					{ return ID_ASTEROID;}
+	void init();
+	void init_view();
+	void adapt_object();
+	void render_object();
+	bool setProgram();
+	int scale(double& znear, double& zfar);
+	double far_height();
+	double max_height();
+	double height(double t, double p);
+	int render_pass();
+	int adapt_pass();
+
+};
 //************************************************************
 // Star class
 //************************************************************

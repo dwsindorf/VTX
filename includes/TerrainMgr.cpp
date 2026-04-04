@@ -1203,44 +1203,52 @@ bool TerrainMgr::hasChildren(){
 //-------------------------------------------------------------
 // TerrainMgr::NodeIF methods
 //-------------------------------------------------------------
-static int find_type=0;
-static bool find_test=false;
-static bool find_enabled=false;
-static TNode *find_child=0;
 
-static void findType(NodeIF *obj)
+//-------------------------------------------------------------
+// TerrainMgr::getChildrenOfType - recursive helper
+//-------------------------------------------------------------
+void TerrainMgr::getChildrenOfType(NodeIF* node, int target_type, LinkedList<NodeIF*>&l)
 {
-	int type=obj->typeValue();
-	if(type==ID_ROCKS||type==ID_MAP)
-		obj->setFlag(NODE_STOP);
-	else if(obj->typeValue()==find_type){
-		if(obj->isEnabled() || !find_enabled)
-			find_test=true;
-		else
-			find_test=false;
-		obj->setFlag(NODE_STOP);
-		find_child=obj;
-	}
+    if(!node)
+        return;
+
+    // Stop descending into certain types
+    int type = node->typeValue();
+    if(type == ID_ROCKS || type == ID_MAP)
+        return;
+
+    // Check if this node matches
+    if(type == target_type && node->isEnabled()) {
+        l.add(node);
+    }
+       
+    // Recurse into children
+    LinkedList<NodeIF*> children;
+    if(node->getChildren(children) > 0) {
+        children.ss();
+        NodeIF* child;
+        while((child = children++) != nullptr) {
+        	getChildrenOfType(child, target_type, l);
+        }
+    }
 }
+
 bool TerrainMgr::hasChild(int type){
-	find_type=type;
-	find_test=false;
-	find_enabled=false;
-	find_child=0;
-	visitNode(findType);
-	return find_test;
+    LinkedList<NodeIF*> children;
+    getChildren(type, children);
+    return children.size > 0;
 }
-bool TerrainMgr::hasChild(int type,bool enabled){
-	find_type=type;
-	find_test=false;
-	find_enabled=true;
-	visitNode(findType);
-	return find_test;
-}
+
 TNode *TerrainMgr::getChild(int type){
-	if(hasChild(type))
-		return find_child;
+    LinkedList<NodeIF*> children;
+	getChildren(type, children);	
+	if(children.size > 0)
+		return children[0];
 	return 0;
+}
+void TerrainMgr::getChildren(int t, LinkedList<NodeIF*>&l){
+	if(root)
+	   getChildrenOfType(root, t, l);
 }
 
 //-------------------------------------------------------------

@@ -889,18 +889,10 @@ int MapNode::clipchk(Point pnt)
     Object3D *pobj=TheMap->object->getObjParent();
 
 #ifdef VCLIP
-
     // test for intersection with viewobj
-
-    if(vobj && vobj->allows_selection()){
-
-        h=2*vobj->getMap()->hscale;
-//        Object3D *obj=TheMap->object;
-//        double zf=vobj->getMap()->dmax; // add contribution from radius of parent
-//        double s=obj->size;
-//		double d=TheScene->epoint.distance(obj->point);
-		//h+=10*s*zf/d;
-
+    Map *map=vobj->getMap();
+    if(map && vobj && vobj->allows_selection()){
+        h=2*map->hscale;
         r=vobj->size*(1-h);
 		if(p.intersect_sphere(TheScene->epoint,vobj->point,r,d1,d2)>0){
 	    	if(d1>0 && d1<1)

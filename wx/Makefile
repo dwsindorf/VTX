@@ -73,6 +73,7 @@ SRC_FILES        = \
              VtxPlantTabs.cpp \
              VtxBranchTabs.cpp \
              VtxLeafTabs.cpp \
+             VtxAsteroidTabs.cpp \
 
 OBJS= $(SRC_FILES:%.cpp=$(OBJDIR)/%.o)
 
@@ -458,6 +459,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Debug/VtxNoiseFunct.o: ../includes/TrackBall.h ../includes/ModelClass.h
 ../Debug/VtxNoiseFunct.o: VtxFunctDialog.h ../includes/TerrainClass.h
 ../Debug/VtxPlanetTabs.o: VtxPlanetTabs.h VtxTabsMgr.h VtxControls.h
+../Debug/VtxAsteroidTabs.o: VtxAsteroidTabs.h VtxTabsMgr.h VtxControls.h ../includes/OrbitalClass.h
 ../Debug/VtxPlanetTabs.o: VtxExprEdit.h ../includes/ColorClass.h
 ../Debug/VtxPlanetTabs.o: ../includes/GLheaders.h ../includes/SceneClass.h
 ../Debug/VtxPlanetTabs.o: ../includes/LightClass.h ../includes/PointClass.h
@@ -1080,6 +1082,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Release/VtxNoiseFunct.o: ../includes/TrackBall.h ../includes/ModelClass.h
 ../Release/VtxNoiseFunct.o: VtxFunctDialog.h ../includes/TerrainClass.h
 ../Release/VtxPlanetTabs.o: VtxPlanetTabs.h VtxTabsMgr.h VtxControls.h
+../Release/VtxAsteroidTabs.o: VtxAsteroidTabs.h VtxTabsMgr.h VtxControls.h ../includes/OrbitalClass.h
 ../Release/VtxPlanetTabs.o: VtxExprEdit.h ../includes/ColorClass.h
 ../Release/VtxPlanetTabs.o: ../includes/GLheaders.h ../includes/SceneClass.h
 ../Release/VtxPlanetTabs.o: ../includes/LightClass.h ../includes/PointClass.h

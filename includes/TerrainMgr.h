@@ -305,6 +305,8 @@ class TerrainMgr : public ExprMgr
 	friend class MapNode;
 	int var_index;
     char name_str[64];
+	void getChildrenOfType(NodeIF* node, int target_type, LinkedList<NodeIF*>&l);
+
 public:
 	TNroot  *root;
 	TerrainMgr();
@@ -318,8 +320,8 @@ public:
 	virtual void save(FILE*);
 	virtual bool hasChildren();
 	virtual TNode *getChild(int );
+	virtual void getChildren(int t, LinkedList<NodeIF*>&l);
 	virtual bool hasChild(int );
-	virtual bool hasChild(int t, bool enabled);
 	virtual int getChildren(LinkedList<NodeIF*>&l);
 	virtual int typeValue()				{ return ID_TNMGR;}
 	virtual const char *typeName()		{ return "Surface";}

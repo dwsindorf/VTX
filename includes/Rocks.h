@@ -16,7 +16,7 @@ class Rock3DData;
 class Rock3DMgr;
 
 
-//#define OLD
+#define TEST_ADAPTIVE
 
 #define MAX_ROCK_STATS 8
 class Rock : public Placement
@@ -103,6 +103,7 @@ class Rock3DObjMgr : public PlaceObjMgr
 		}
 	};
 
+	
 	// 5. LODBatch — uses TemplateMeshVBO and InstanceVBO
 	struct LODBatch {
 		TemplateMeshVBO templateVBO;
@@ -168,56 +169,7 @@ class Rock3DObjMgr : public PlaceObjMgr
     std::vector<Rock3DObjMgr::GLVertex> buildTemplateVertices(MCObject* tmpl);
     void renderLODBatch(LODBatch& lbatch, GLhandleARB program);
 	
-public:
-	// Cache key based on world position
-	struct RockCacheKey {
-		long long x, y, z;  // Quantized world position
-		int instance;
-	    int viewBucketX, viewBucketY, viewBucketZ;  // quantized view direction
-	    // Original - for template path (no view direction)
-	    RockCacheKey(const Point& worldPos, int inst, double snap = 1e-10) {
-	        x = (int64_t)round(worldPos.x / snap);
-	        y = (int64_t)round(worldPos.y / snap);
-	        z = (int64_t)round(worldPos.z / snap);
-	        instance = inst;
-	        viewBucketX = viewBucketY = viewBucketZ = 0;
-	    }
-	    RockCacheKey(const Point& worldPos, int inst, 
-	                 const Point& viewDir,
-	                 double angleBucketDeg = 30.0,
-	                 double snap = 1e-10)  
-	     {
-		        x = (int64_t)round(worldPos.x / snap);
-		        y = (int64_t)round(worldPos.y / snap);
-		        z = (int64_t)round(worldPos.z / snap);
-		        instance = inst;  // STORE INSTANCE
-		        // Quantize view direction to buckets of angleBucketDeg
-				double bucketSize = angleBucketDeg / 180.0;  
-				viewBucketX = (int)round(viewDir.x / bucketSize);
-				viewBucketY = (int)round(viewDir.y / bucketSize);
-				viewBucketZ = (int)round(viewDir.z / bucketSize);
-		}
-	    bool operator<(const RockCacheKey& other) const {
-	        if (instance != other.instance) return instance < other.instance;
-	        if (x != other.x) return x < other.x;
-	        if (y != other.y) return y < other.y;
-	        if (z != other.z) return z < other.z;
-	        if (viewBucketX != other.viewBucketX) return viewBucketX < other.viewBucketX;
-	        if (viewBucketY != other.viewBucketY) return viewBucketY < other.viewBucketY;
-	        return viewBucketZ < other.viewBucketZ;
-	    }
-	};
-	
-	struct RockCacheEntry {
-	    std::vector<MCTriangle> mesh;  // Just store the mesh, not the whole object
-	    std::string estr;
-	    Point worldVertex;
-	    int resolution;
-	    int seed;
-	    int instance;
-	    int framesSinceUsed;
-	};    
-    static std::map<RockCacheKey, RockCacheEntry> rockCache;
+public:	
     static int maxTexs;
     static int lodCacheHits;
     static int lodCacheMisses;
@@ -232,7 +184,9 @@ public:
     
     void renderBatch(VBOBatch& batch, GLhandleARB program, const AdaptiveBatch& ab);
     void uploadBatchVBOs(VBOBatch& batch);
-    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s);
+    void addTriangleToBatch(VBOBatch& batch, const MCTriangle& tri, Rock3DData* s,
+                            const Point& right, const Point& forward,
+                            const Point& rockEyeCenter, double rockSize);
     SurfaceFunction makeRockField(Rock3DMgr* pmgr,bool mode);
     
 	void free();

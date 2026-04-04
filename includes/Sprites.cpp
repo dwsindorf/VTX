@@ -602,6 +602,7 @@ void TNsprite::eval()
 		}
 		mgr->instance=instance;
 		mgr->layer=layer;
+		mgr->type=type;
 
 		Td.pids++;
 		mgr->setHashcode();
@@ -623,7 +624,6 @@ void TNsprite::eval()
 	MaxSize=mgr->maxsize;
 	double density=smgr->density;	
 	radius=TheMap->radius;
-	mgr->type=type;
 	TNarg &args=*((TNarg *)left);
 
 	TNarg *a = args.index(8);

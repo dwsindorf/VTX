@@ -12,11 +12,13 @@
 //#define DEBUG_CRATERS
 #define TEST_SPRITES
 #define TEST_PLANTS
-#define TEST_CRATERS
+//#define TEST_CRATERS
 #define TEST_ROCKS
 
 #define PRINT_PLACEMENT_TIMING
 //#define PRINT_PLACEMENT_STATS
+
+#define PSCALE TheMap->radius
 
 //#define DEBUG_PMEM         // turn on for memory usage
 
@@ -344,6 +346,7 @@ public:
 	virtual PlaceData *make(Placement*s);
 	virtual void setHashcode();
 	virtual void getArgs(TNarg *);
+	virtual void setDensity();
 	static bool setProgram(Array<PlaceObj*> &objs);
 	static void render(Array<PlaceObj*> &objs);
 	friend class Placement;

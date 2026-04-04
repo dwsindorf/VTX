@@ -32,8 +32,6 @@ static bool use_cache=true;
 //#define DEBUG_LAT_BIAS
 //#define DEBUG_HARD_BIAS
 
-#define PSCALE TheMap->radius
-
 #define SRAND 	(rands[PERM((randval++))])
 #define URAND 	(rands[PERM((randval++))]+0.5)
 
@@ -953,7 +951,7 @@ void Plant::freeLeafs() {
 double TNplant::norm_max=2;
 double TNplant::norm_min=1e-5;
 double TNplant::draw_scale=1;
-TNplant::TNplant(TNode *l, TNode *r) : TNplacements(0,l,r,0)
+TNplant::TNplant(TNode *l, TNode *r) : TNplacements(PLANTS,l,r,0)
 {
 	set_collapsed();
 
@@ -1076,6 +1074,7 @@ void TNplant::eval()
 		}
 		mgr->instance=instance;
 		mgr->layer=layer;
+		mgr->type=type;
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)
@@ -1092,7 +1091,7 @@ void TNplant::eval()
 	
 	INIT;
 	
-	mgr->type=type;
+	//mgr->type=type;
 
 	radius=TheMap->radius;
 

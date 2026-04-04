@@ -14,8 +14,6 @@
 #include "Plants.h"
 static bool debug_call_lists=false;
 
-bool UseDepthBuffer = false;
-
 static std::vector<SurfacePoint> node_data_list;
 extern double INV2PI;
 
@@ -320,7 +318,7 @@ void Map::clearLists() {
 		}
 	}
 	set_first(true);
-	//PlacementMgr::free_htable();
+	//PlacementMgr::();
 }
 //-------------------------------------------------------------
 // Map::clearLists() clear call lists
@@ -459,7 +457,6 @@ void Map::set_scene()
 	TheScene->radius=radius+gndlvl+ht;
 
 	TheScene->znear=0.25*ht;
-	//TheScene->zfar=horizon;
 	TheScene->zfar=horizon;
 
 	dmin=TheScene->znear;
@@ -578,6 +575,7 @@ void Map::render()
 		else
 			glCullFace(GL_FRONT);
 	}
+
 	glFrontFace(GL_CW);
 	set_textures(Render.textures());
 	set_lighting(lighting && Render.lighting());
@@ -1204,7 +1202,7 @@ void Map::render_shaded()
 	bool show_water=waterpass() &&  Render.show_water() && (viewobj_orbital || Raster.show_water());
 
 	if(!waterpass() || !Raster.show_water() || !Render.show_water()){
-		if(!UseDepthBuffer && viewobj_surface)
+		if(viewobj_surface)
 			get_surface_data();
 
 		for(int i=0;i<tids-1;i++){
@@ -1246,24 +1244,14 @@ void Map::render_shaded()
 #ifdef DEBUG_RENDER
 		    cout <<"Map::render_shaded - LAND "<<object->name()<<" tid:"<<tid<<":"<<tids-1<<endl;
 #endif   
-		    if(!UseDepthBuffer && viewobj_surface){
-				render_placements();
+		    if(viewobj_surface){
+		    	render_objects(tp->Rocks);
+		    	render_objects(tp->Plants); // if plants are global all layers get them
+		    	render_objects(tp->Sprites);
 		    }
 			GLSLMgr::setTessLevel(tesslevel);
 			Render.show_shaded();
 			reset_texs();
-		}
-		
-		if(UseDepthBuffer && viewobj_surface){
-			get_surface_data();
-			for(int i=0;i<tids-1;i++){
-				tid=i+ID0;
-				tp=Td.properties[tid];
-				Td.tp=tp;
-				if(!tp || !visid(tid))
-					continue;
-				render_placements();
-			}
 		}
 	}
 	// for surface views the viewobj (only) uses an effects shader to render water
@@ -1311,11 +1299,6 @@ void Map::render_shaded()
 	glPopAttrib();
 }
 
-void Map::render_placements(){
-	render_objects(tp->Rocks);
-	render_objects(tp->Plants); // if plants are global all layers get them
-	render_objects(tp->Sprites);
-}
 //-------------------------------------------------------------
 // Map::render_objects() render placements that are not just terrain modifiers
 // - terrain modifiers: Craters, Rocks(2d) - not processed here
@@ -1347,7 +1330,7 @@ void  Map::render_objects(PlaceObjMgr &mgr){
 	int sid=mgr.layer();
 	int type=mgr.type();
 	
-	CurrentScope->set_spass();	
+	CurrentScope->set_spass();
 	mgr.free();
 	PlacementMgr::free_htable(); 
 	double d1=clock();
@@ -1548,23 +1531,16 @@ static void collect_surface_data(MapNode *n)
 	node_data_list.push_back(sp);  // Changed from .add()
     
 }
-void Map::collectSurfacePointsFromDepth(int stride) {
-	Raster.collectSurfaceData(node_data_list, stride);
-}
 int Map::get_surface_data(){
 	node_data_list.clear();
 	if(!Td.pids)
 		return 0;
 	TheMap = this;
 	double d0=clock();
-
-    if(UseDepthBuffer)
-    	collectSurfacePointsFromDepth(4);  // Use depth buffer
-    else
-		npole->visit(&collect_surface_data);
+	npole->visit(&collect_surface_data);
 	double d1=clock();
 #ifdef DEBUG_GETNODES	
-	std::cout  << "get_mapnodes UseDepthBuffer=" << UseDepthBuffer <<" placements:"<<Td.pids
+	std::cout  << "get_mapnodes placements:"<<Td.pids
 			<< " Collected " << node_data_list.size()  
 		    <<" points time:"<< 1000*(d1-d0)/CLOCKS_PER_SEC <<" ms"<<endl;
 #endif
@@ -2032,7 +2008,6 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
-   
 	if(ADAPT_NEEDED  || TheScene->changed_render() || (TheScene->changed_time() && TheScene->viewtype!=SURFACE))
 		clearLists();
 	//if(!test2)
@@ -2126,17 +2101,6 @@ void Map::adapt()
 		first_make=false;
 	}
 	//find_limits();
-}
-
-static void water_test(MapNode *n)
-{
-	MapData *d=&n->data;
-	while(d){
-		if(d->water()){
-			TheMap->set_waterpass(1);
-		}
-		d=d->data2();
-	}
 }
 
 //-------------------------------------------------------------

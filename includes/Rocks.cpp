@@ -28,8 +28,6 @@ static const char *def_rnoise_expr="noise(GRADIENT,0,2)\n";
 
 static TerrainData Td;
 
-#define RSCALE 0.004
-
 static int tid=0;
 static int pid=0;
 static int nbumps=0;
@@ -108,6 +106,17 @@ static bool shadow_start=false;
 //       * called by Rock3DObjMgr::render
 //       * uploads/ renders data using vertex buffers
 
+static Point rotateNormal(const Point& normal, const Point& right, const Point& forward, const Point& up) {
+    Point rotated(
+        normal.x * right.x + normal.y * forward.x + normal.z * up.x,
+        normal.x * right.y + normal.y * forward.y + normal.z * up.y,
+        normal.x * right.z + normal.y * forward.z + normal.z * up.z
+    );
+    double len = rotated.length();
+    if (len > 1e-30)
+        return rotated / len;
+    return Point(0, 1, 0);
+}
 //************************************************************
 // Rock3D class
 //************************************************************
@@ -171,7 +180,7 @@ bool Rock3D::setProgram(){
 // Rock3DMgr class
 //************************************************************
 Color rock_color(0.6, 0.5, 0.4);
-double base_threshold=100;
+double base_threshold=50;
 double base_minsize=1.5;
 
 const Rock3DMgr::RockLodEntry Rock3DMgr::kRockLodTable[MAX_ROCK_STATS] = {
@@ -369,7 +378,6 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
 //************************************************************
 MCObjectManager Rock3DObjMgr::rocks;
 ValueList<PlaceData*> Rock3DObjMgr::data(20000, 5000);
-std::map<Rock3DObjMgr::RockCacheKey, Rock3DObjMgr::RockCacheEntry> Rock3DObjMgr::rockCache;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
@@ -462,6 +470,8 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVec("mpoint",xp.x,xp.y,xp.z,0);
 	
+	//cout<<"orb->point:"<<xp<<" xpoint:"<<TheScene->xpoint<<endl;
+	
 	Point up = TheScene->xpoint.normalize();
 	Point right = (fabs(up.z) < 0.9) ?
 	              Point(up.y, -up.x, 0).normalize() :
@@ -474,7 +484,7 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("rockUp",      up.x,     up.y,     up.z,     0);		
 	vars.newFloatVar("wscale",GLSLMgr::wscale);
 	
-	double texscale=0.25e-4*RSCALE;
+	double texscale=0.25e-4*PSCALE;
 	vars.newFloatVar("textureScale",texscale);
 		
 	vars.newBoolVar("lighting",Render.lighting());
@@ -498,8 +508,8 @@ void Rock3DObjMgr::free() {
 }
 
 double Rock3DData::value() { 
-	//return dist;
-	return instance;
+	return dist;
+	//return instance;
 }
 //-------------------------------------------------------------
 // Rock3DObjMgr::collect() generate array of placements (data)
@@ -522,6 +532,7 @@ void Rock3DObjMgr::render_zvals(){
 	shadow_mode=true;
 	Raster.setShadowProgram("rocks3d_shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
+	
 	render();
 	shadow_start=false;
 	shadow_mode=false;
@@ -534,10 +545,9 @@ void Rock3DObjMgr::render_shadows(){
     
 	Raster.setShadowProgram("rocks3d_shadows.vert",0,0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
+	
 	render();
 	shadow_mode=false;
-	
-
 }
 // Post-mesh vertex displacement and color: uses standard noise function
 void Rock3DObjMgr::applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc) {
@@ -852,7 +862,6 @@ void Rock3DObjMgr::calibrate(){
 }
 void Rock3DObjMgr::rebuild(){
      clear();
-     rockCache.clear();
      freeLODTemplates();
      Rock3DMgr::clearStats();
      MCGenerator::resetStats();
@@ -930,7 +939,6 @@ void Rock3DObjMgr::render() {
             
             int rseed = TheNoise.rseed;
             TheNoise.rseed = s->rval;
-
             int resolution = Rock3DMgr::getLODResolution(pts);
             if (resolution == 0) {
             	TheNoise.rseed=rseed;
@@ -939,13 +947,13 @@ void Rock3DObjMgr::render() {
             // Precompute basis vectors once per rock - used by both paths
             Point rockEyeCenter;
             double rockSize;
-            rockSize = 2 * RSCALE * s->radius;
-            double dscale = RSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
+            rockSize = PSCALE * s->radius;
+            double dscale = PSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
             if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
                 Point camOffset = TheScene->xpoint - s->vertex;
-                double radius       = s->radius * RSCALE;
+                double radius       = s->radius * PSCALE;
                 Point  rockCenter   = s->vertex;
                 double isoNoiseAmpl = pmgr->noise_amp;
                 double margin       = 1 + Rock3DMgr::noiseFactor * isoNoiseAmpl;
@@ -1036,7 +1044,7 @@ void Rock3DObjMgr::render() {
                         	tri.colors[v] = Color(colors[c][0], colors[c][1], colors[c][2]);
                         }
 #endif
-                        addTriangleToBatch(batch, tri, s);
+                        addTriangleToBatch(batch, tri, s, right, forward, rockEyeCenter, rockSize);
                     }
                 } 
                 t4+=clock()-d1;
@@ -1076,6 +1084,8 @@ void Rock3DObjMgr::render() {
                     lbatch.lodLevel = resolution;
                     lbatch.instanceId = mgrInstance;
                     RockInstance inst;
+                	//cout<<"template:"<<rockEyeCenter.length()/FEET<<endl;
+
                     inst.eyeCenter[0] = (float)rockEyeCenter.x;
                     inst.eyeCenter[1] = (float)rockEyeCenter.y;
                     inst.eyeCenter[2] = (float)rockEyeCenter.z;
@@ -1178,38 +1188,67 @@ std::vector<Rock3DObjMgr::GLVertex> Rock3DObjMgr::buildTemplateVertices(MCObject
     }
     return verts;
 }
+
 void Rock3DObjMgr::addTriangleToBatch(
-    VBOBatch& batch,
-    const MCTriangle& tri,
-    Rock3DData* s)
+    VBOBatch& batch, 
+    const MCTriangle& tri, 
+    Rock3DData* s,
+    const Point& right, 
+    const Point& forward,
+    const Point& rockEyeCenter,
+    double rockSize)
 {
+    Point up = TheView->xpoint.normalize();
+
     for (int v = 0; v < 3; v++) {
-        GLVertex gv;
-        gv.pos[0] = (float)tri.vertices[v].x;
-        gv.pos[1] = (float)tri.vertices[v].y;
-        gv.pos[2] = (float)tri.vertices[v].z;
-        gv.normal[0] = (float)tri.normal.x;
-        gv.normal[1] = (float)tri.normal.y;
-        gv.normal[2] = (float)tri.normal.z;
-        gv.templatePos[0] = (float)tri.templatePos[v].x;
-        gv.templatePos[1] = (float)tri.templatePos[v].y;
-        gv.templatePos[2] = (float)tri.templatePos[v].z;
-        gv.templatePos[3] = 0.0f;
+        GLVertex gv;        
+        // Transform position to world-relative-to-eye space
+        Point rotated = Point(
+            tri.vertices[v].x * right.x + tri.vertices[v].y * forward.x + tri.vertices[v].z * up.x,
+            tri.vertices[v].x * right.y + tri.vertices[v].y * forward.y + tri.vertices[v].z * up.y,
+            tri.vertices[v].x * right.z + tri.vertices[v].y * forward.z + tri.vertices[v].z * up.z
+        );
+        Point eyeVertex = rockEyeCenter + rotated * rockSize;
+        gv.pos[0] = (float)eyeVertex.x;
+        gv.pos[1] = (float)eyeVertex.y;
+        gv.pos[2] = (float)eyeVertex.z;
+        
+        // Transform normal
+        Point rotatedNormal = rotateNormal(tri.normal, right, forward, up);
+        gv.normal[0] = (float)rotatedNormal.x;
+        gv.normal[1] = (float)rotatedNormal.y;
+        gv.normal[2] = (float)rotatedNormal.z;
+        
+        // Template position with rval offset
+        Point tp = tri.templatePos[v];
+        tp.x += 0.001 * s->rval;
+        tp.y += 0.001 * s->rval;
+        tp.z += 0.001 * s->rval;
+        gv.templatePos[0] = (float)tp.x;
+        gv.templatePos[1] = (float)tp.y;
+        gv.templatePos[2] = (float)tp.z;
+        gv.templatePos[3] = (float)eyeVertex.length();  // depth
+        
+        // Face normal + slope
+        double slope = rotatedNormal.dot(up);
         gv.faceNormal[0] = (float)tri.faceNormal.x;
         gv.faceNormal[1] = (float)tri.faceNormal.y;
         gv.faceNormal[2] = (float)tri.faceNormal.z;
-        gv.faceNormal[3] = 0.0f;
+        gv.faceNormal[3] = (float)slope;
+        
+        // Color
         Color c = tri.colors[v];
         gv.color[0] = (float)c.red();
         gv.color[1] = (float)c.green();
         gv.color[2] = (float)c.blue();
+        
         batch.glVertices.push_back(gv);
     }
 }
+
 void Rock3DObjMgr::uploadBatchVBOs(VBOBatch& batch) {
     batch.deleteVBOs();
     if (batch.glVertices.empty()) return;
-    
     glGenBuffers(1, &batch.vboVertices);
     glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
     glBufferData(GL_ARRAY_BUFFER,
@@ -1217,17 +1256,18 @@ void Rock3DObjMgr::uploadBatchVBOs(VBOBatch& batch) {
                  batch.glVertices.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    batch.uploadedVertexCount = batch.glVertices.size() * 3;
+    batch.uploadedVertexCount = batch.glVertices.size();
     
     batch.glVertices.clear();
     batch.glVertices.shrink_to_fit();
+    
 }
 
 void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program,
                                 const AdaptiveBatch& ab)
 {
     if (batch.uploadedVertexCount == 0) return;
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, batch.vboVertices);
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1254,13 +1294,13 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program,
     GLint locEC = glGetAttribLocation(program, "rockEyeCenter");
     GLint locRS = glGetAttribLocation(program, "rockSize");
     GLint locRV = glGetAttribLocation(program, "rockRval");
-    if (locEC >= 0) glVertexAttrib3f(locEC,
+            
+     if (locEC >= 0) glVertexAttrib3f(locEC,
                                      (float)ab.eyeCenter.x,
                                      (float)ab.eyeCenter.y,
                                      (float)ab.eyeCenter.z);
     if (locRS >= 0) glVertexAttrib1f(locRS, ab.rockSize);
     if (locRV >= 0) glVertexAttrib1f(locRV, ab.rval);
-
     glDrawArrays(GL_TRIANGLES, 0, batch.uploadedVertexCount);
 
     if (locTP >= 0) glDisableVertexAttribArray(locTP);
@@ -1273,8 +1313,7 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program,
 void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
 	if (!lbatch.templateVBO.valid()) return;
     if (lbatch.instanceVBO.instanceCount == 0) return;
-
-    // Bind interleaved template VBO
+     // Bind interleaved template VBO
     glBindBuffer(GL_ARRAY_BUFFER, lbatch.templateVBO.vbo);
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1364,8 +1403,26 @@ void Rock3DObjMgr::render_objects() {
             cout << "Rock3DObjMgr::setProgram FAILED" << endl;
             return;
         }
+        tid = 0;   
+		// Set up textures for each rock instance
+		for (int i = 0; i < objs.size; i++) {
+			Rock3D* rockObj = (Rock3D*)objs[i];
+			Rock3DMgr* rmgr = (Rock3DMgr*)rockObj->mgr();
+			
+			// Set textures for this instance
+			for (int j = rmgr->texs.size - 1; j >= 0; j--) {
+				TNtexture *tntex = rmgr->texs[j];
+				if (!tntex->isEnabled()) continue;
+				
+				Texture *texture = tntex->texture;
+				texture->pid = i;  // instance ID
+				TerrainProperties::tid = tid;
+				texture->setProgram();  // This binds the texture
+				tid++;
+			}
+		}
     }
-    else {
+    else { // only needed for instance rocks
     	 Point up = TheScene->xpoint.normalize();
         // Shadow mode — set rotation uniforms on shadow program
         GLhandleARB prog = GLSLMgr::programHandle();
@@ -1384,37 +1441,37 @@ void Rock3DObjMgr::render_objects() {
         if (locU >= 0) glUniform3f(locU, up.x, up.y, up.z);
     }
      
-    if (wireframe){
+    GLhandleARB program = GLSLMgr::programHandle();
+    int totalRocks = 0; 
+    if (wireframe)
          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-         //glCullFace(GL_FRONT);        
-    }
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
-    GLhandleARB program = GLSLMgr::programHandle();
-    if (!PlaceObjMgr::shadow_mode) {
-    tid = 0;   
-    // Set up textures for each rock instance
-    for (int i = 0; i < objs.size; i++) {
-        Rock3D* rockObj = (Rock3D*)objs[i];
-        Rock3DMgr* rmgr = (Rock3DMgr*)rockObj->mgr();
-        
-        // Set textures for this instance
-        for (int j = rmgr->texs.size - 1; j >= 0; j--) {
-            TNtexture *tntex = rmgr->texs[j];
-            if (!tntex->isEnabled()) continue;
-            
-            Texture *texture = tntex->texture;
-            texture->pid = i;  // instance ID
-            TerrainProperties::tid = tid;
-            texture->setProgram();  // This binds the texture
-            tid++;
+    GLint locUI = glGetUniformLocation(program, "useInstancing");
+
+    // ===== Render Adaptive Batches =====
+#ifdef SHOW_BACKFACING
+    if(use_adaptive_grid)
+    	glDisable(GL_CULL_FACE); // makes holes less visible
+#endif
+    if (locUI >= 0) glUniform1i(locUI, 0);
+    
+    for (auto& pair : adaptiveBatches) {
+        AdaptiveBatch& ab = pair.second;
+        if (ab.vbo.uploadedVertexCount == 0) continue;
+        for (int i = 0; i < maxTexs; i++) {
+            char str[64];
+            sprintf(str, "tex2d[%d].active", i);
+            GLint loc = glGetUniformLocationARB(program, str);
+            if (loc >= 0) glUniform1iARB(loc, ab.instanceId);
         }
+        totalRocks++;  
+        renderBatch(ab.vbo, program, ab);
     }
-    }
-    int totalRocks = 0; 
 
     // ===== Render LOD Batches (instanced templates) =====
+    if (locUI >= 0) glUniform1i(locUI, 1);
     for (auto& pair : lodBatches) {
         LODBatch& lbatch = pair.second;
         if (!lbatch.templateVBO.valid()) continue;
@@ -1427,23 +1484,6 @@ void Rock3DObjMgr::render_objects() {
         }
         renderLODBatch(lbatch, program);
         totalRocks += lbatch.instanceVBO.instanceCount;
-    }
-    // ===== Render Adaptive Batches =====
-#ifdef SHOW_BACKFACING
-    if(use_adaptive_grid)
-    	glDisable(GL_CULL_FACE); // makes holes less visible
-#endif
-     for (auto& pair : adaptiveBatches) {
-        AdaptiveBatch& ab = pair.second;
-        if (ab.vbo.uploadedVertexCount == 0) continue;
-        for (int i = 0; i < maxTexs; i++) {
-            char str[64];
-            sprintf(str, "tex2d[%d].active", i);
-            GLint loc = glGetUniformLocationARB(program, str);
-            if (loc >= 0) glUniform1iARB(loc, ab.instanceId);
-        }
-        totalRocks++;  
-        renderBatch(ab.vbo, program, ab);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);  
@@ -1547,6 +1587,7 @@ void TNrocks3D::eval()
 		}
 		mgr->instance=instance;
 		mgr->layer=layer;
+		mgr->type=type;
 		Td.pids++;
 		mgr->setHashcode();
 		if(right)
@@ -1561,7 +1602,7 @@ void TNrocks3D::eval()
 	}
 	INIT;
 
-	mgr->type=type;
+	//mgr->type=type;
 
 	mgr->getArgs((TNarg *)left);
 	
