@@ -426,6 +426,9 @@ public:
 	double far_height();
 	double max_height();
 	double height(double t, double p);
+	int render_pass();
+	int adapt_pass();
+
 };
 //************************************************************
 // Star class

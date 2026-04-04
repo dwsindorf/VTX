@@ -1998,7 +1998,6 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	tree=nullptr;
 	hscale=0.5; 
 	symmetry=1;
-
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2067,18 +2066,40 @@ void Asteroid::init_view(){
     cout<<"Asteroid::init_view new file:"<<TheScene->changed_file()<<" view radius:"<<TheScene->radius<<endl;
 	if(TheScene->changed_file())  // exit for open
 	   return;
-
-    
+  
     TheScene->gndlvl = 0;
     
     TheScene->phi=0;
     TheScene->theta=0;
     
-    TheScene->radius=size;
-    TheScene->elevation=0;
+    TheScene->radius=4*size;
+    TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
 
 }
+//-------------------------------------------------------------
+// Spheroid::adapt_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::adapt_pass()
+{
+	clr_selected();
+	if(TheScene->viewobj==this)
+		clear_pass(FG0);		
+
+    return selected();
+}
+
+//-------------------------------------------------------------
+// Spheroid::render_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::render_pass()
+{
+	clr_selected();
+	if(TheScene->viewobj==this)
+		clear_pass(FG0);		
+    return selected();
+}
+
 int Asteroid::scale(double& znear, double& zfar) {
     // Set clipping planes based on asteroid size
     double zn = size * 1.001;   // near plane = 0.1% of radius
@@ -2101,6 +2122,8 @@ int Asteroid::scale(double& znear, double& zfar) {
     
     znear=z1;
     zfar=z2;
+    
+    cout<<"Asteroid zn:"<<znear/size<<" zf:"<<zfar/size<<" view:"<<rv<<endl;
 
     return rv;  // Render as outside object
 }
@@ -2759,7 +2782,7 @@ void Spheroid::save(FILE *fp)
 //-------------------------------------------------------------
 void Spheroid::adapt_object()
 {
-	//cout<<name()<<" adapt_object seed:"<<rseed<<endl;
+	cout<<name()<<" adapt_object seed:"<<rseed<<endl;
 	if(map){
 		exprs.eval();
 		set_geometry();
