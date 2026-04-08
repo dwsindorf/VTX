@@ -1987,7 +1987,7 @@ System *System::newInstance(){
 // Asteroid class
 //************************************************************
 Asteroid::Asteroid(Orbital *m, double s, double r):
-	Spheroid(m,s,r)
+		vboVertices(0),Spheroid(m,s,r)
 {
 		
 	delete map;
@@ -1998,6 +1998,8 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	tree=nullptr;
 	hscale=0.5; 
 	symmetry=1;
+	vboDirty=true;
+	uploadedVertexCount=lastLeafCount=0;
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2146,6 +2148,10 @@ int Asteroid::scale(double& znear, double& zfar) {
     setvis(OUTSIDE); 
     return OUTSIDE;  // Render as outside object
 }
+bool Asteroid::setProgram(){
+	return false; // TODO
+}
+
 void Asteroid::adapt_object(){
     if(!tree) {
         cout << "adapt_object: tree is null!" << endl;
@@ -2178,18 +2184,10 @@ void Asteroid::adapt_object(){
     TheNoise.rseed=rseed;
     tree->adapt(xpoint, TheScene->wscale, hscale, minPixels, maxDepth, flags);
     TheNoise.rseed=seed;
-    // Check leaf count
+  
+ #ifdef PRINT_DEPTH_COUNTS
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
-  
-     if(!leaves.empty()){
-        double minPS=1e10, maxPS=-1e10;
-        for(auto* l : leaves){
-            minPS = std::min(minPS, l->projectedSize);
-            maxPS = std::max(maxPS, l->projectedSize);
-        }
-     }
-#ifdef PRINT_DEPTH_COUNTS
     int depthCounts[16]={0};
     for(auto* l : leaves){
         if(l->depth < 16) depthCounts[l->depth]++;
@@ -2198,11 +2196,6 @@ void Asteroid::adapt_object(){
         if(depthCounts[d]>0)
             cout << "depth " << d << ": " << depthCounts[d] << " leaves" << endl;
 #endif    
-    int meshCount = 0;
-    for(MCObjNode* leaf : leaves) {
-        if(leaf->meshValid && !leaf->mesh.empty())
-            meshCount++;
-    }
 }
 void Asteroid::render_object(){
 	extern int test7;
@@ -2267,16 +2260,62 @@ void Asteroid::render_object(){
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
 }
-
-bool Asteroid::setProgram(){
-	return false;
+void Asteroid::drawVBO(){
+    if(!vboVertices || uploadedVertexCount==0) return;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    
+    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)0);
+    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)(3*sizeof(float)));
+    
+    glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+    
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+void Asteroid::drawVBO(){
+    if(!vboVertices || uploadedVertexCount==0) return;
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
 
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, pos));
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, normal));
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, color));
+
+    // Shader attribs — skipped when no shader active (loc=-1)
+    GLhandleARB program = GLSLMgr::programHandle();
+    GLint locTP = glGetAttribLocation(program, "templatePosition");
+    if(locTP >= 0){
+        glVertexAttribPointer(locTP, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, templatePos));
+        glEnableVertexAttribArray(locTP);
+    }
+    GLint locFN = glGetAttribLocation(program, "faceNormal");
+    if(locFN >= 0){
+        glVertexAttribPointer(locFN, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, faceNormal));
+        glEnableVertexAttribArray(locFN);
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+
+    if(locTP >= 0) glDisableVertexAttribArray(locTP);
+    if(locFN >= 0) glDisableVertexAttribArray(locFN);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
 //-------------------------------------------------------------
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------
-#define TEST
-#ifdef TEST
 SurfaceFunction Asteroid::makeField() {
     double comp = symmetry;
     double comp_factor = 1;//std::max((1.0 - 2*comp), 0.2);
@@ -2327,55 +2366,7 @@ SurfaceFunction Asteroid::makeField() {
          return baseEllipsoid;
     };
 }
-#else
-SurfaceFunction Asteroid::makeField()
-{
-    double sz = this->size;
-    double hs = this->hscale;
-    TNode *noise = rnoise;
 
-    if(!noise) {
-        return [sz](double x, double y, double z) -> double {
-            return sqrt(x*x + y*y + z*z) - sz;
-        };
-    }
-
-    // Sample raw noise range over unit sphere surface, map to [-hs, +hs]
-    double minVal = 1e10, maxVal = -1e10;
-    int samples = 20;
-    double step = 2.0 / samples;
-    for(int ix = 0; ix <= samples; ix++)
-    for(int iy = 0; iy <= samples; iy++)
-    for(int iz = 0; iz <= samples; iz++) {
-        double x = -1.0 + ix * step;
-        double y = -1.0 + iy * step;
-        double z = -1.0 + iz * step;
-        Point pt(x, y, z);
-        TheNoise.set(pt);
-        SINIT;
-        noise->eval();
-        minVal = std::min(minVal, S0.s);
-        maxVal = std::max(maxVal, S0.s);
-    }
-    double range = maxVal - minVal;
-    double noiseScale  = (range > 1e-10) ? 2.0 * hs / range : 0.0;
-    double noiseOffset = (range > 1e-10) ? -hs - minVal * noiseScale : 0.0;
-    
-//    cout << "noise calibration: min=" << minVal << " max=" << maxVal 
-//         << " scale=" << noiseScale << " offset=" << noiseOffset << endl;
-
-    return [noise, sz, noiseScale, noiseOffset](double x, double y, double z) -> double {
-    	double scale = 0.5 / sz;
-    	Point np(x * scale, y * scale, z * scale);
-        TheNoise.set(np);
-        SINIT;
-        noise->eval();
-        double r = sqrt(x*x + y*y + z*z);
-        return (r/sz - 1.0) + S0.s * noiseScale + noiseOffset;
-        //return (sz - r)/sz + S0.s * noiseScale + noiseOffset;    
-        };
-}
-#endif
 //************************************************************
 // Spheroid class
 //************************************************************

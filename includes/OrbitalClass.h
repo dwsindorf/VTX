@@ -404,8 +404,23 @@ public:
 //************************************************************
 class Asteroid : public Spheroid {
 private:
+	struct GLVertex {
+	    float pos[3];
+	    float normal[3]; 
+	    float templatePos[4];
+	    float faceNormal[4];
+	    float color[3];
+	};
 	SurfaceFunction makeField();  // Create field from rnoise expression
 	void rebuildTree();
+	std::vector<GLVertex> glVertices;  // staging buffer
+	GLuint vboVertices;
+	int    uploadedVertexCount;
+	bool   vboDirty;
+	int    lastLeafCount;
+	void buildVBO();
+	void drawVBO();
+	void deleteVBO();
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;
