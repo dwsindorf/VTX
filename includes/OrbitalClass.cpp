@@ -29,6 +29,8 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
+#define ASTEROID_VBO
+//#define PRINT_DEPTH_COUNTS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2154,25 +2156,22 @@ bool Asteroid::setProgram(){
 
 void Asteroid::adapt_object(){
     if(!tree) {
-        cout << "adapt_object: tree is null!" << endl;
         return;
     }
          
-    bool paramsChanged = TheScene->changed_detail();
-        
-	if(paramsChanged) {
-		cout << "Parameters changed, rebuilding tree" << endl;
-		rebuildTree();
-	}     
+    if(TheScene->changed_detail()){
+        rebuildTree();
+        vboDirty = true;
+    }
+    if(!TheScene->moved() && !vboDirty)
+        return;
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
     
-    double dist = asteroidWorld.distance(xpoint);
+    //double dist = asteroidWorld.distance(xpoint);
     double minPixels = 4;int maxDepth = 10;
     
-    cout<<"xn:"<<TheScene->znear<<" zf:"<<TheScene->zfar<<" r:"<<TheScene->zfar/TheScene->znear<<endl;
-   //MCObjAdaptFlags flags = MCObjAdaptFlags::cave();
-     MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid();
+    MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid(); // or cave
 
     MCObjAdaptFlags::setDirections(
         asteroidWorld,          // origin
@@ -2182,9 +2181,11 @@ void Asteroid::adapt_object(){
     );
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
+    MCGenerator::cells_created = 0;
+    MCGenerator::cells_deleted = 0;
+        
     tree->adapt(xpoint, TheScene->wscale, hscale, minPixels, maxDepth, flags);
     TheNoise.rseed=seed;
-  
  #ifdef PRINT_DEPTH_COUNTS
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
@@ -2195,7 +2196,8 @@ void Asteroid::adapt_object(){
     for(int d=0; d<16; d++)
         if(depthCounts[d]>0)
             cout << "depth " << d << ": " << depthCounts[d] << " leaves" << endl;
-#endif    
+#endif
+    vboDirty = true;
 }
 void Asteroid::render_object(){
 	extern int test7;
@@ -2217,69 +2219,126 @@ void Asteroid::render_object(){
 	}
 	if(mesh.empty()) 
 		return;
-	Point viewDir = TheScene->xpoint.normalize();
 
 	glUseProgram(0); 
-    //glClear(GL_DEPTH_BUFFER_BIT);
 
-//	glPolygonOffset(2.0f, 2.0f);	
-//	MCObject obj;
-//	obj.mesh = mesh;
-//	obj.generateSmoothNormals();
-//	mesh = obj.mesh;
-
-    Point eyeOffset = TheScene->xpoint;
-    
+    Point eyeOffset = TheScene->xpoint;    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     
     if(test7)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // Disable blend and set proper GL state
     glDisable(GL_BLEND);
     glEnable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    //glEnable(GL_CULL_FACE);
-     
-    glColor3f(1.0f, 0.5f, 0.0f);  // Orange
-
-    glBegin(GL_TRIANGLES);
-    for(const MCTriangle& tri : mesh) {
-		glNormal3d(-tri.normal.x, -tri.normal.y, -tri.normal.z);
-		for(int i = 0; i < 3; i++) {
-			Point p = tri.vertices[i]* (size*2) - eyeOffset;
-			//Point p = tri.vertices[i] - localEye;
-			glVertex3dv(&p.x);
-		}
-	}
-    glEnd();
-    glDisable(GL_POLYGON_OFFSET_FILL);
+    if(vboDirty) 
+    	buildVBO();  // fallback if adapt didn't run
+    drawVBO();    
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
 }
-void Asteroid::drawVBO(){
-    if(!vboVertices || uploadedVertexCount==0) return;
+void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
+    bool setVertexColor = (color && color->isEnabled());
+    if(!setVertexColor) return;
     
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+        
+    for(auto& tri : mesh){
+        for(int v=0; v<3; v++){
+            // Vertices are in normalized [-0.5,0.5] space
+            // Scale by 0.5/sz to match rock noise frequency (same as makeField)
+            Point np(tri.vertices[v].x * (0.5/size),
+                     tri.vertices[v].y * (0.5/size),
+                     tri.vertices[v].z * (0.5/size));
+            TheNoise.set(np);
+            SINIT;
+            color->eval();
+            if(S0.cvalid()){
+                tri.colors[v] = S0.c;
+            }
+            else
+                tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
+        }
+    }
+    TheNoise.rseed = seed;
+}
+void Asteroid::buildVBO(){
+    std::vector<MCObjNode*> leaves;
+    tree->collectLeaves(leaves);
+    lastLeafCount = leaves.size();
     
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
+    glVertices.clear();
+    Point eyeCenter = this->point - TheScene->xpoint;
+    double scale = size * 2.0;
+    Point eyeOffset = TheScene->xpoint;   
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
     
-    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)0);
-    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)(3*sizeof(float)));
+    for(MCObjNode* leaf : leaves){
+        if(!leaf->meshValid || leaf->mesh.empty()) continue;
+        if(!leaf->attributesApplied){
+             applyAttributes(leaf->mesh);
+             leaf->attributesApplied = true;
+        }
+        for(auto& tri : leaf->mesh){
+            // Gradient-based normal consistency
+            Point c = (tri.vertices[0]+tri.vertices[1]+tri.vertices[2])*(1.0/3.0);
+            double ex=2*c.x, ey=2*c.y, ez=2*c.z;
+            double ed=sqrt(ex*ex+ey*ey+ez*ez);
+            Point n = tri.normal;
+            if(ed > 1e-10){
+                Point grad(ex/ed, ey/ed, ez/ed);
+                if(n.dot(grad) > 0) n = -n;  // ensure inward for negation below
+            }
+            for(int v=0; v<3; v++){
+                GLVertex gv;
+                Point p = tri.vertices[v] * scale - eyeOffset;  // match working path                
+                gv.pos[0]=(float)p.x;
+                gv.pos[1]=(float)p.y;
+                gv.pos[2]=(float)p.z;
+                gv.normal[0]=(float)-n.x;  // negate: MC normals point inward
+                gv.normal[1]=(float)-n.y;
+                gv.normal[2]=(float)-n.z;
+                gv.templatePos[0]=(float)tri.vertices[v].x;
+                gv.templatePos[1]=(float)tri.vertices[v].y;
+                gv.templatePos[2]=(float)tri.vertices[v].z;
+                gv.templatePos[3]=(float)eyeCenter.length();
+                gv.faceNormal[0]=(float)-tri.faceNormal.x;
+                gv.faceNormal[1]=(float)-tri.faceNormal.y;
+                gv.faceNormal[2]=(float)-tri.faceNormal.z;
+                gv.faceNormal[3]=0.0f;
+                Color c = tri.colors[v];
+                gv.color[0]=(float)c.red();
+                gv.color[1]=(float)c.green();
+                gv.color[2]=(float)c.blue();
+                glVertices.push_back(gv);
+            }
+        }
+    }
+    TheNoise.rseed = seed;
     
-    glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+    // Upload to GPU
+    if(vboVertices) glDeleteBuffers(1,&vboVertices);
+    if(glVertices.empty()){ vboVertices=0; uploadedVertexCount=0; return; }
     
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glGenBuffers(1,&vboVertices);
+    glBindBuffer(GL_ARRAY_BUFFER,vboVertices);
+    glBufferData(GL_ARRAY_BUFFER,
+                 glVertices.size()*sizeof(GLVertex),
+                 glVertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    uploadedVertexCount = glVertices.size();
+    glVertices.clear();
+    glVertices.shrink_to_fit();
+    vboDirty = false;
 }
 void Asteroid::drawVBO(){
     if(!vboVertices || uploadedVertexCount==0) return;
-    
+ 
     glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -2344,8 +2403,8 @@ SurfaceFunction Asteroid::makeField() {
    double noiseScale  = (range > 1e-10) ? 2.0 * hs / range : 0.0;
    double noiseOffset = (range > 1e-10) ? -hs - minVal * noiseScale : 0.0;
    
-   cout << "noise calibration: min=" << minVal << " max=" << maxVal 
-		<< " scale=" << noiseScale << " offset=" << noiseOffset << endl;
+  // cout << "noise calibration: min=" << minVal << " max=" << maxVal 
+//		<< " scale=" << noiseScale << " offset=" << noiseOffset << endl;
 
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;

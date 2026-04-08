@@ -413,6 +413,7 @@ private:
 	};
 	SurfaceFunction makeField();  // Create field from rnoise expression
 	void rebuildTree();
+	void applyAttributes(std::vector<MCTriangle>& mesh);
 	std::vector<GLVertex> glVertices;  // staging buffer
 	GLuint vboVertices;
 	int    uploadedVertexCount;
