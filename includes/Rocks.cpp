@@ -599,6 +599,7 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
     bool istemplate=mode;
+    
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*y;
@@ -616,8 +617,6 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
             tr->eval();
             if (S0.s) {
             	baseEllipsoid += S0.s * noiseScale + noiseOffset;
-            	//double normalizedNoise = std::max(-1.0, std::min(1.0, S0.s));
-            	//    baseEllipsoid += S0.s * isoNoiseAmpl;            
             }        
         }
          
@@ -770,7 +769,6 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
             tri.faceNormal = Point(0, 1, 0);
         }
     }
-    
     // Apply smoothing if enabled
     if (MCGenerator::smooth()) {
         templateSphere->generateSmoothNormals();
@@ -947,7 +945,7 @@ void Rock3DObjMgr::render() {
             // Precompute basis vectors once per rock - used by both paths
             Point rockEyeCenter;
             double rockSize;
-            rockSize = PSCALE * s->radius;
+            rockSize = 2*PSCALE * s->radius;
             double dscale = PSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
 
@@ -981,7 +979,7 @@ void Rock3DObjMgr::render() {
                 // Adapt tree to current viewpoint — incremental, reuses cached values
                 tree->adapt(TheScene->xpoint, TheScene->wscale,isoNoiseAmpl,
                            Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth,flags);
-                
+ 
                 std::vector<MCObjNode*> leaves;
                 tree->collectLeaves(leaves);
 

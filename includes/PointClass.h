@@ -29,6 +29,7 @@ public:
 	Point operator+(double s)	{ return Point(x+s,y+s,z+s);}
 	Point operator-(Point p)	{ return Point(x-p.x,y-p.y,z-p.z);}
 	Point operator-(double s)	{ return Point(x-s,y-s,z-s);}
+	Point operator-() const     { return Point(-x,-y,-z);}  // unary minus
 	Point operator*(Point p)	{ return Point(x*p.x,y*p.y,z*p.z);}
 	Point operator*(double s)	{ return Point(x*s,y*s,z*s);}
 	Point operator/(Point p)	{ return Point(x/p.x,y/p.y,z/p.z);}

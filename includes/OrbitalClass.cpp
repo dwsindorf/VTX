@@ -186,7 +186,7 @@ void Orbital::set_lighting(){
 }
 
 void Orbital::set_wscale(){
-	float wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
+	double wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
 	GLSLMgr::wscale=wscale;
 }
 
@@ -2014,15 +2014,46 @@ double Asteroid::far_height() {
     return size;
 }
 
-double Asteroid::max_height() {
-    return size;
-}
 double Asteroid::height(double t, double p) {
     // Return surface height at theta/phi position
     // For a simple sphere, just return the radius
     return size;
 }
+int Asteroid::getNoiseFunction(char *buff){
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	TNode *expr=var->getExprNode();
+	if(!expr)
+		expr=var->right;
+	buff[0]=0;
+	expr->valueString(buff);
+	return 1;
+}
+void Asteroid::setNoiseFunction(char *expr){
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		var->setExpr(expr);
+	else
+		var=addExprVar("noise.expr",expr);
+	rnoise=var->right;
+}
+void Asteroid::applyNoiseFunction(){
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	var->applyExpr();
+	rnoise=var->right;
+}
 
+void Asteroid::invalidate(){
+	NodeIF::invalidate();
+	rebuild();
+	
+}
+void Asteroid::rebuildTree(){
+	if(tree)
+		delete tree;
+	tree = new MCObjTree();
+	field = makeField();
+	tree->init(Point(0, 0, 0),size*2,2.0,field,0,rseed);
+}
 void Asteroid::init(){
 	Orbital::init();
 	terrain.getChildren((int)ID_TEXTURE,texs);
@@ -2031,28 +2062,20 @@ void Asteroid::init(){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	if(var)
 		rnoise=var->right;
+	else
+		setNoiseFunction("noise(GRADIENT|NLOD,0,2)");
+
 	cout<<"=== ASTEROID INIT ===" << endl;
 	cout<<"size: " << size << endl;
 	cout<<"textures:"<<texs.size<<endl;
 	cout<<"color:"<<(color?true:false)<<endl;
 	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
-	if(!tree) {
-		tree = new MCObjTree();
-		field = makeField();
-		tree->init(
-			Point(0, 0, 0),  // center in local space
-			size,            // radius
-			1.0,             // margin
-			field,
-			0,               // instance id
-			0                // rval (seed)
-		);
-	}
-    cout << "Tree created and initialized radius:" << TheScene->radius<<endl;
+	tree=0;
+	rebuildTree();
+	
 }
-void Asteroid::init_view(){
-   
+void Asteroid::init_view(){   
     // Set up view parameters for orbital view
     TheScene->maxr = size * 10;
     TheScene->minr = size;
@@ -2072,7 +2095,7 @@ void Asteroid::init_view(){
     TheScene->phi=0;
     TheScene->theta=0;
     
-    TheScene->radius=4*size;
+    TheScene->radius=7*size;
     TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
 
@@ -2082,10 +2105,9 @@ void Asteroid::init_view(){
 //-------------------------------------------------------------
 int Asteroid::adapt_pass()
 {
-	clr_selected();
-	if(TheScene->viewobj==this)
-		clear_pass(FG0);		
-
+    clr_selected();
+    if(TheScene->viewobj==this)
+        clear_pass(FG0);
     return selected();
 }
 
@@ -2095,90 +2117,126 @@ int Asteroid::adapt_pass()
 int Asteroid::render_pass()
 {
 	clr_selected();
-	if(TheScene->viewobj==this)
-		clear_pass(FG0);		
+    if(TheScene->viewobj==this)
+        clear_pass(FG0);
     return selected();
+}
+double Asteroid::max_height() {
+    return 2*hscale;  // factor in noise 
 }
 
 int Asteroid::scale(double& znear, double& zfar) {
     // Set clipping planes based on asteroid size
-    double zn = size * 1.001;   // near plane = 0.1% of radius
-    double zf = size * 100;      // far plane = 100x radius
+    double zn,zf;      // far plane = 100x radius
+    const double MINZN=1e-6;
+    double d=TheView->epoint.distance(point);
+    zn=d-size*(1+max_height());
+    if(zn<MINZN){
+    	zn=MINZN;
+    }
+    zf=d+size*(1+max_height());
     
-    double z1,z2;
-    int rv=Object3D::scale(z1, z2);
-    //cout << "Asteroid::scale() zn=" << zn << ", zf=" << zf << " return:"<<OUTSIDE<<endl;
-    //cout << "Object3D::scale() zn=" << z1 << ", zf=" << z2 << " return:"<<rv<<endl;
-    //znear=z1;
-    //zfar=z2;
     double ht=TheScene->radius-size;
-    if(ht<TheScene->minh)   // prevent underground views
-       ht=TheScene->minh;
     
-    TheScene->radius=size+ht;
-
     TheScene->height=ht;
     TheScene->elevation=TheScene->radius-size;
     
-    znear=z1;
-    zfar=z2;
-    
-    cout<<"Asteroid zn:"<<znear/size<<" zf:"<<zfar/size<<" view:"<<rv<<endl;
-
-    return rv;  // Render as outside object
+    znear=zn;
+    zfar=zf;
+    setvis(OUTSIDE); 
+    return OUTSIDE;  // Render as outside object
 }
 void Asteroid::adapt_object(){
     if(!tree) {
         cout << "adapt_object: tree is null!" << endl;
         return;
     }
-    
-    cout << "=== ASTEROID ADAPT ===" << endl;
-    
-    // Rebuild field if needed
-    if(!tree->valid) {
-        cout << "Tree invalid, rebuilding field" << endl;
-        field = makeField();
-        tree->field = field;
-    }
-    
-    Point camWorld = TheScene->xpoint;
+         
+    bool paramsChanged = TheScene->changed_detail();
+        
+	if(paramsChanged) {
+		cout << "Parameters changed, rebuilding tree" << endl;
+		rebuildTree();
+	}     
+    Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
-    Point camLocal = camWorld - asteroidWorld;
     
-    double wscale = TheScene->wscale;
-    double dist = camLocal.length();
-    cout << "Distance: " << dist <<" obj "<<point << " xpoint "<<camWorld<<endl;
+    double dist = asteroidWorld.distance(xpoint);
+    double minPixels = 4;int maxDepth = 10;
     
-    // Adapt the octree
-    double minPixels = 2.0;
-    int maxDepth = 10;
-    MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid();
-    
-    tree->adapt(camLocal, wscale, hscale, minPixels, maxDepth, flags);
-    
+    cout<<"xn:"<<TheScene->znear<<" zf:"<<TheScene->zfar<<" r:"<<TheScene->zfar/TheScene->znear<<endl;
+   //MCObjAdaptFlags flags = MCObjAdaptFlags::cave();
+     MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid();
+
+    MCObjAdaptFlags::setDirections(
+        asteroidWorld,          // origin
+        Point(1, 0, 0),        // right
+        Point(0, 1, 0),        // forward  
+        Point(0, 0, 1)         // up
+    );
+    int seed = TheNoise.rseed;
+    TheNoise.rseed=rseed;
+    tree->adapt(xpoint, TheScene->wscale, hscale, minPixels, maxDepth, flags);
+    TheNoise.rseed=seed;
     // Check leaf count
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
-    cout << "Leaf nodes: " << leaves.size() << endl;
-    
+  
+     if(!leaves.empty()){
+        double minPS=1e10, maxPS=-1e10;
+        for(auto* l : leaves){
+            minPS = std::min(minPS, l->projectedSize);
+            maxPS = std::max(maxPS, l->projectedSize);
+        }
+     }
+#ifdef PRINT_DEPTH_COUNTS
+    int depthCounts[16]={0};
+    for(auto* l : leaves){
+        if(l->depth < 16) depthCounts[l->depth]++;
+    }
+    for(int d=0; d<16; d++)
+        if(depthCounts[d]>0)
+            cout << "depth " << d << ": " << depthCounts[d] << " leaves" << endl;
+#endif    
     int meshCount = 0;
     for(MCObjNode* leaf : leaves) {
         if(leaf->meshValid && !leaf->mesh.empty())
             meshCount++;
     }
-    cout << "Leaves with mesh: " << meshCount << endl;
 }
 void Asteroid::render_object(){
 	extern int test7;
     if(!tree || !tree->root)
         return;
-    
+    if(TheScene->bgpass==FG1)
+    	return;
+        
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
     if(leaves.empty())
         return;
-  
+ 
+    // Collect all triangles into one mesh and smooth normals
+	std::vector<MCTriangle> mesh;
+	for(MCObjNode* leaf : leaves) {
+		if(!leaf->meshValid || leaf->mesh.empty()) continue;
+		mesh.insert(mesh.end(), leaf->mesh.begin(), leaf->mesh.end());
+	}
+	if(mesh.empty()) 
+		return;
+	Point viewDir = TheScene->xpoint.normalize();
+
+	glUseProgram(0); 
+    //glClear(GL_DEPTH_BUFFER_BIT);
+
+//	glPolygonOffset(2.0f, 2.0f);	
+//	MCObject obj;
+//	obj.mesh = mesh;
+//	obj.generateSmoothNormals();
+//	mesh = obj.mesh;
+
+    Point eyeOffset = TheScene->xpoint;
+    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     
     if(test7)
@@ -2187,29 +2245,25 @@ void Asteroid::render_object(){
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     // Disable blend and set proper GL state
     glDisable(GL_BLEND);
-    //glDisable(GL_LIGHTING);
+    glEnable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    
+    //glEnable(GL_CULL_FACE);
+     
     glColor3f(1.0f, 0.5f, 0.0f);  // Orange
-  
-    Point eyeOffset = TheScene->eyeref() ? TheScene->xpoint : Point(0,0,0);
-    
+
     glBegin(GL_TRIANGLES);
-    for(MCObjNode* leaf : leaves) {
-        if(!leaf->meshValid || leaf->mesh.empty())
-            continue;
-        for(const MCTriangle& tri : leaf->mesh) {
-            glNormal3dv(&tri.normal.x);
-            for(int i = 0; i < 3; i++) {
-             	// Subtract eye offset from each vertex (the "proper" way)
-            	Point p = tri.vertices[i] - eyeOffset;
-            	glVertex3dv(&p.x);
-            }
-        }
-    }
+    for(const MCTriangle& tri : mesh) {
+		glNormal3d(-tri.normal.x, -tri.normal.y, -tri.normal.z);
+		for(int i = 0; i < 3; i++) {
+			Point p = tri.vertices[i]* (size*2) - eyeOffset;
+			//Point p = tri.vertices[i] - localEye;
+			glVertex3dv(&p.x);
+		}
+	}
     glEnd();
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
 }
@@ -2221,31 +2275,107 @@ bool Asteroid::setProgram(){
 //-------------------------------------------------------------
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------
+#define TEST
+#ifdef TEST
+SurfaceFunction Asteroid::makeField() {
+    double comp = symmetry;
+    double comp_factor = 1;//std::max((1.0 - 2*comp), 0.2);
+    double hs = this->hscale;
+    bool useNoisyIsoSurface = hs > 0;
+    TNode *noise = rnoise;
+
+    // Sample raw noise range over unit sphere surface, map to [-hs, +hs]
+   double minVal = 1e10, maxVal = -1e10;
+   int samples = 20;
+   double step = 2.0 / samples;
+   for(int ix = 0; ix <= samples; ix++)
+   for(int iy = 0; iy <= samples; iy++)
+   for(int iz = 0; iz <= samples; iz++) {
+	   double x = -1.0 + ix * step;
+	   double y = -1.0 + iy * step;
+	   double z = -1.0 + iz * step;
+	   Point pt(x, y, z);
+	   TheNoise.set(pt);
+	   SINIT;
+	   noise->eval();
+	   minVal = std::min(minVal, S0.s);
+	   maxVal = std::max(maxVal, S0.s);
+   }
+   double range = maxVal - minVal;
+   double noiseScale  = (range > 1e-10) ? 2.0 * hs / range : 0.0;
+   double noiseOffset = (range > 1e-10) ? -hs - minVal * noiseScale : 0.0;
+   
+   cout << "noise calibration: min=" << minVal << " max=" << maxVal 
+		<< " scale=" << noiseScale << " offset=" << noiseOffset << endl;
+
+    return [=](double x, double y, double z) -> double {
+        double ex = 2*x;
+        double ey = 2*y;
+        double ez = 2*(z/comp_factor);
+        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
+        double baseEllipsoid = ellipsoidDist - 1.0;
+        
+        if (useNoisyIsoSurface && noise && noise->isEnabled()) {  
+            Point np(x, y, z);
+            TheNoise.set(np);
+            SINIT;
+            noise->eval();
+            if (S0.s) {
+            	baseEllipsoid += S0.s * noiseScale + noiseOffset;
+            }        
+        }
+         return baseEllipsoid;
+    };
+}
+#else
 SurfaceFunction Asteroid::makeField()
 {
     double sz = this->size;
     double hs = this->hscale;
-    
-    if(!rnoise) {
-        // Fallback: simple sphere
+    TNode *noise = rnoise;
+
+    if(!noise) {
         return [sz](double x, double y, double z) -> double {
-            double r = sqrt(x*x + y*y + z*z);
-            return sz - r;
+            return sqrt(x*x + y*y + z*z) - sz;
         };
     }
+
+    // Sample raw noise range over unit sphere surface, map to [-hs, +hs]
+    double minVal = 1e10, maxVal = -1e10;
+    int samples = 20;
+    double step = 2.0 / samples;
+    for(int ix = 0; ix <= samples; ix++)
+    for(int iy = 0; iy <= samples; iy++)
+    for(int iz = 0; iz <= samples; iz++) {
+        double x = -1.0 + ix * step;
+        double y = -1.0 + iy * step;
+        double z = -1.0 + iz * step;
+        Point pt(x, y, z);
+        TheNoise.set(pt);
+        SINIT;
+        noise->eval();
+        minVal = std::min(minVal, S0.s);
+        maxVal = std::max(maxVal, S0.s);
+    }
+    double range = maxVal - minVal;
+    double noiseScale  = (range > 1e-10) ? 2.0 * hs / range : 0.0;
+    double noiseOffset = (range > 1e-10) ? -hs - minVal * noiseScale : 0.0;
     
-    TNode *noise = rnoise;
-    
-    return [noise, sz, hs](double x, double y, double z) -> double {
-        Point np(x, y, z);
+//    cout << "noise calibration: min=" << minVal << " max=" << maxVal 
+//         << " scale=" << noiseScale << " offset=" << noiseOffset << endl;
+
+    return [noise, sz, noiseScale, noiseOffset](double x, double y, double z) -> double {
+    	double scale = 0.5 / sz;
+    	Point np(x * scale, y * scale, z * scale);
         TheNoise.set(np);
         SINIT;
         noise->eval();
-        
         double r = sqrt(x*x + y*y + z*z);
-        return (sz - r) + S0.s * hs;  // Use hscale here
-    };
+        return (r/sz - 1.0) + S0.s * noiseScale + noiseOffset;
+        //return (sz - r)/sz + S0.s * noiseScale + noiseOffset;    
+        };
 }
+#endif
 //************************************************************
 // Spheroid class
 //************************************************************
@@ -2782,7 +2912,6 @@ void Spheroid::save(FILE *fp)
 //-------------------------------------------------------------
 void Spheroid::adapt_object()
 {
-	cout<<name()<<" adapt_object seed:"<<rseed<<endl;
 	if(map){
 		exprs.eval();
 		set_geometry();

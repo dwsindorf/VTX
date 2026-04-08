@@ -26,11 +26,8 @@ uniform vec3 rockRight;
 uniform vec3 rockForward;
 uniform vec3 rockUp;
 
-<<<<<<< HEAD
-=======
 uniform bool useInstancing;
 
->>>>>>> test2
 #if NTEXS > 0
 struct tex2d_info {
     float bumpval;
@@ -66,27 +63,6 @@ uniform tex2d_info tex2d[NTEXS];
 
 void main() {
     // Transform local rock space → world-relative-to-eye
-<<<<<<< HEAD
-    vec3 localPos = gl_Vertex.xyz;
-    vec3 pos = rockEyeCenter
-             + (localPos.x * rockRight
-             +  localPos.y * rockForward
-             +  localPos.z * rockUp) * rockSize;
-
-    // Apply ModelView rotation + Projection
-    gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * vec4(pos, 1.0);
-
-    // Transform normal through same rotation
-    vec3 worldNormal = normalize(
-        gl_Normal.x * rockRight +
-        gl_Normal.y * rockForward +
-        gl_Normal.z * rockUp);
-    Normal = normalize(gl_NormalMatrix * worldNormal);
-
-    // Eye direction in eye space
-    vec4 eyePos4 = gl_ModelViewMatrix * vec4(pos, 1.0);
-    EyeDirection = -eyePos4.xyz;
-=======
     vec3 pos;
     vec3 norm;
   
@@ -110,7 +86,6 @@ void main() {
     EyeDirection = -eyePos4.xyz;
     
     Normal = normalize(gl_NormalMatrix * norm);
->>>>>>> test2
 
     // Depth for LOD calculations
     float depth = length(eyePos4.xyz);
@@ -137,11 +112,7 @@ void main() {
         gl_TexCoord[i] = vec4(coords, depth);
     }
     WorldNormal = faceNormal.xyz;
-<<<<<<< HEAD
-    float slope = dot(worldNormal, rockUp);
-=======
     float slope = dot(norm, rockUp);    
->>>>>>> test2
     Tangent.z = abs(slope);
     
 #endif

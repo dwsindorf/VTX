@@ -156,7 +156,6 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    void deleteVBOs() { vbo.deleteVBOs(); }
 	};
     static MCObjTreeMgr rockTreeMgr;
-    void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
                                  Rock3DMgr* pmgr, double isoNoiseAmpl);
     static std::map<int, AdaptiveBatch> adaptiveBatches;
@@ -179,6 +178,7 @@ public:
 	static ValueList<PlaceData*> data;
     static MCObjectManager rocks;  
     static void freeLODTemplates();
+    static void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
 
     ~Rock3DObjMgr();
     

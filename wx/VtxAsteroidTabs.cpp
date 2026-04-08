@@ -60,10 +60,11 @@ IMPLEMENT_CLASS(VtxAsteroidTabs, wxNotebook)
 BEGIN_EVENT_TABLE(VtxAsteroidTabs, wxNotebook)
 
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxAsteroidTabs::OnNameText)
+EVT_TEXT_ENTER(ID_NOISE_EXPR,OnChangedNoiseExpr)
+SET_SLIDER_EVENTS(HSCALE,VtxAsteroidTabs,Hscale)
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxAsteroidTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxAsteroidTabs,Size)
-SET_SLIDER_EVENTS(HSCALE,VtxAsteroidTabs,Hscale)
 
 SET_SLIDER_EVENTS(DAY,VtxAsteroidTabs,Day)
 SET_SLIDER_EVENTS(YEAR,VtxAsteroidTabs,Year)
@@ -328,10 +329,9 @@ void VtxAsteroidTabs::updateControls() {
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider, obj->diffuse);
 	updateColor(ShadowSlider, obj->shadow_color);
-	
-	char buff[256]="noise(GRADIENT|NLOD,0,2)";
-	if(obj->rnoise)
-		obj->rnoise->valueString(buff);
+		
+	char buff[256];
+	obj->getNoiseFunction(buff);
 	NoiseExpr->SetValue(buff);
 
 	object_name->SetValue(object_node->node->nodeName());

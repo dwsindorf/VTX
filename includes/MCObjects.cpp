@@ -298,76 +298,6 @@ void MCObject::clearMesh() {
     vboValid = false;
 }
 
-void MCObject::uploadToVBO() {
-    if (mesh.empty()) return;
-    
-    // Delete old VBOs
-     if (vboVertices != 0) glDeleteBuffers(1, &vboVertices);
-     if (vboNormals != 0) glDeleteBuffers(1, &vboNormals);
-     if (vboFaceNormals != 0) glDeleteBuffers(1, &vboFaceNormals);
-     if (vboColors != 0) glDeleteBuffers(1, &vboColors);
-     if (vboTemplatePos != 0) glDeleteBuffers(1, &vboTemplatePos);
-    
-    // Prepare vertex and normal arrays
-    size_t vertexCount = mesh.size() * 3;
-    std::vector<float> vertices(vertexCount * 3);
-    std::vector<float> normals(vertexCount * 3);
-    std::vector<float> facenormals(vertexCount * 3);
-    std::vector<float> colors(vertexCount * 3);
-    std::vector<float> templatePositions(vertexCount * 3);  // ADD THIS
-    
-    for (size_t i = 0; i < mesh.size(); i++) {
-        for (int v = 0; v < 3; v++) {
-            size_t idx = (i * 3 + v) * 3;
-            vertices[idx + 0] = (float)mesh[i].vertices[v].x;
-            vertices[idx + 1] = (float)mesh[i].vertices[v].y;
-            vertices[idx + 2] = (float)mesh[i].vertices[v].z;
-            
-            normals[idx + 0] = (float)mesh[i].normal.x;
-            normals[idx + 1] = (float)mesh[i].normal.y;
-            normals[idx + 2] = (float)mesh[i].normal.z;
- 
-            facenormals[idx + 0] = (float)mesh[i].faceNormal.x;
-            facenormals[idx + 1] = (float)mesh[i].faceNormal.y;
-            facenormals[idx + 2] = (float)mesh[i].faceNormal.z;
-
-            colors[idx + 0] = (float)mesh[i].colors[v].red();
-            colors[idx + 1] = (float)mesh[i].colors[v].green();
-            colors[idx + 2] = (float)mesh[i].colors[v].blue();
-            
-            templatePositions[idx + 0] = (float)mesh[i].templatePos[v].x;
-            templatePositions[idx + 1] = (float)mesh[i].templatePos[v].y;
-            templatePositions[idx + 2] = (float)mesh[i].templatePos[v].z;
-        }
-    }
-    
-    // Create and upload VBOs
-    glGenBuffers(1, &vboVertices);
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    
-    glGenBuffers(1, &vboNormals);
-    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &vboFaceNormals);
-    glBindBuffer(GL_ARRAY_BUFFER, vboFaceNormals);
-    glBufferData(GL_ARRAY_BUFFER, facenormals.size() * sizeof(float), facenormals.data(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &vboColors);  // ADD THIS
-    glBindBuffer(GL_ARRAY_BUFFER, vboColors);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), colors.data(), GL_STATIC_DRAW);
-
-    glGenBuffers(1, &vboTemplatePos);
-    glBindBuffer(GL_ARRAY_BUFFER, vboTemplatePos);
-    glBufferData(GL_ARRAY_BUFFER, templatePositions.size() * sizeof(float), 
-                 templatePositions.data(), GL_STATIC_DRAW);
-   
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
-    vboValid = true;
-}
-
 void MCObject::deleteVBO() {
     if (vboVertices != 0) {
         glDeleteBuffers(1, &vboVertices);
@@ -775,6 +705,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     if      (depth <= 3) gridN = 4;
     else if (depth <= 5) gridN = 3;
     else if (depth <= 7) gridN = 2;
+    else if (depth <= 9) gridN = 2; 
 
     Point c0 = corners[0];  // min corner
     Point c7 = corners[7];  // max corner
@@ -841,7 +772,6 @@ void MCObjNode::adapt(SurfaceFunction field,
     double distance   = center.distance(cameraPos);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
-
     
     bool culled=false;
     double cullFactor=20;

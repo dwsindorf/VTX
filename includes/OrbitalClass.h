@@ -405,6 +405,7 @@ public:
 class Asteroid : public Spheroid {
 private:
 	SurfaceFunction makeField();  // Create field from rnoise expression
+	void rebuildTree();
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;
@@ -428,6 +429,11 @@ public:
 	double height(double t, double p);
 	int render_pass();
 	int adapt_pass();
+	int getNoiseFunction(char *c);
+	void setNoiseFunction(char *c);
+	void applyNoiseFunction();
+	void invalidate();
+
 
 };
 //************************************************************

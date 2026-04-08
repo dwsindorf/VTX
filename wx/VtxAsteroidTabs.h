@@ -28,7 +28,11 @@ protected:
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
 	void OnTidalLock(wxCommandEvent& event);
-
+	void rebuild(){
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild();
+	}
 public:
 	VtxAsteroidTabs(wxWindow *parent, wxWindowID id, const wxPoint &pos =
 			wxDefaultPosition, const wxSize &size = wxDefaultSize, long style =
@@ -67,8 +71,7 @@ public:
 		Asteroid *obj = object();
 		double val = SizeSlider->getValue() * MILES*1000;
 		obj->size = val;
-		TheView->set_changed_detail();
-		TheScene->rebuild_all();
+		rebuild();
 	}
 	void OnSizeSlider(wxScrollEvent &event) {
 		SizeSlider->setValueFromSlider();
@@ -77,47 +80,34 @@ public:
 		SizeSlider->setValueFromText();
 		double val = SizeSlider->getValue() * MILES*1000;
 		object()->size = val;
-		TheView->set_changed_detail();
-		TheScene->rebuild_all();
+		rebuild();
 	}
 	void OnEndHscaleSlider(wxScrollEvent &event) {
 		HscaleSlider->setValueFromSlider();
-		Asteroid *obj = object();
 		double val = HscaleSlider->getValue();
-		obj->hscale = val;// obj->size;
-		obj->invalidate();
-		TheView->set_changed_detail();
-		TheScene->rebuild();
+		object()->hscale = val;// obj->size;
+		rebuild();
 	}
 	void OnHscaleSlider(wxScrollEvent &event) {
 		HscaleSlider->setValueFromSlider();
 	}
 	void OnHscaleText(wxCommandEvent &event) {
 		HscaleSlider->setValueFromText();
-		Asteroid *obj = object();
 		double val = HscaleSlider->getValue();
 		object()->hscale = val;
-		object()->invalidate();
-		TheView->set_changed_detail();
-		TheScene->rebuild();
+		rebuild();
 	}
 
 	void OnEndCellSizeSlider(wxScrollEvent &event) {
-		Asteroid *obj = object();
-		OnSliderValue(CellSizeSlider, obj->detail);
-		obj->invalidate();
-		TheView->set_changed_detail();
-		TheScene->rebuild();
+		OnSliderValue(CellSizeSlider, object()->detail);
+		rebuild();
 	}
 	void OnCellSizeSlider(wxScrollEvent &event) {
 		CellSizeSlider->setValueFromSlider();
 	}
 	void OnCellSizeText(wxCommandEvent &event) {
-		Asteroid *obj = object();
-		OnSliderText(CellSizeSlider, obj->detail);
-		obj->invalidate();
-		TheView->set_changed_detail();
-		TheScene->rebuild();
+		OnSliderText(CellSizeSlider, object()->detail);
+		rebuild();
 	}
 	void OnEndOrbitRadiusSlider(wxScrollEvent &event) {}
 
@@ -157,6 +147,13 @@ public:
         invalidate();
     }
 
+    void OnChangedNoiseExpr(wxCommandEvent& event){
+    	cout<<"changed noise"<<endl;
+    	object()->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
+    	object()->applyNoiseFunction();
+    	rebuild();
+    }
+    
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
 	DEFINE_SLIDER_VAR_EVENTS(Day,object()->day)

@@ -2765,11 +2765,8 @@ void Scene::render_objects()
 	for(bgpass=BGMAX;bgpass>=FGMAX;bgpass--){
 	 	pass_group();
 		if(passobjs()){
-			//set_view();
 			project();
-			//cout << bgpass << endl;
 			render_bgpass();
-			//if(bgpass>FGMAX && !Raster.farview())
 			if(bgpass>FGMAX)
 				GLSLMgr::clrDepthBuffer();
 			pass_reset();

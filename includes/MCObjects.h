@@ -124,7 +124,6 @@ public:
     int calculateResolution() const;
     void invalidate();
     void clearMesh();
-    void uploadToVBO();
     void deleteVBO();
     void generateSmoothNormals();
     void generateSphereNormals();
