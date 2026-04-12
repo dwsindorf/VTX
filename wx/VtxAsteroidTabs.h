@@ -2,6 +2,8 @@
 #define ASTEROID_TABS_H
 
 #include "VtxTabsMgr.h"
+#include "MCObjects.h"
+
 
 class VtxAsteroidTabs: public VtxTabsMgr {
 DECLARE_CLASS(VtxAsteroidTabs)
@@ -25,9 +27,12 @@ protected:
 	ColorSlider *DiffuseSlider;
 	ColorSlider *ShadowSlider;
 	
+	wxChoice   *m_maxDepth;
+	wxCheckBox *m_clip;
+	wxCheckBox *m_backface;
+
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
-	void OnTidalLock(wxCommandEvent& event);
 	void rebuild(){
 		object()->invalidate();
 		TheView->set_changed_detail();
@@ -98,6 +103,17 @@ public:
 		rebuild();
 	}
 
+	void OnMaxDepth(wxCommandEvent&  event){
+		cout<<"maxDepth="<<m_maxDepth->GetSelection()+1<<endl;
+		object()->maxDepth=m_maxDepth->GetSelection()+1;
+		rebuild();
+	}
+	
+	void OnChangedFlags(wxCommandEvent& event){
+		object()->cliptest=m_clip->IsChecked();
+		object()->backtest=m_backface->IsChecked();
+		rebuild();
+	}
 	void OnEndCellSizeSlider(wxScrollEvent &event) {
 		OnSliderValue(CellSizeSlider, object()->detail);
 		rebuild();

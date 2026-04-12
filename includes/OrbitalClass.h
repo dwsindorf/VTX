@@ -418,7 +418,6 @@ private:
 	GLuint vboVertices;
 	int    uploadedVertexCount;
 	bool   vboDirty;
-	int    lastLeafCount;
 	double noiseScale;
 	double noiseOffset;
 	void buildVBO();
@@ -432,7 +431,9 @@ public:
 	TNode   *color;
 	MCObjTree *tree; 
 	SurfaceFunction field;
-
+	int    maxDepth;
+	bool cliptest;
+	bool backtest;
 	Asteroid(Orbital *m, double s, double r);
 	~Asteroid();
 	const char *name()			{ return "Asteroid";}

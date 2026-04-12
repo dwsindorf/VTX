@@ -555,7 +555,7 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
 
 	wxString offsets[]={"1","2","3","4","5","6"};
 
-	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(20,-1),Map::maxtesslevel, offsets);
+	m_tesslevel=new wxChoice(panel, ID_TESSLEVEL, wxDefaultPosition,wxSize(40,-1),Map::maxtesslevel, offsets);
 	m_tesslevel->SetSelection(0);
 
 	detail_ctrls->Add(m_tesslevel,0,wxALIGN_LEFT|wxALL,0);

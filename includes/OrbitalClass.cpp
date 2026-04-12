@@ -1990,8 +1990,7 @@ System *System::newInstance(){
 //************************************************************
 Asteroid::Asteroid(Orbital *m, double s, double r):
 		vboVertices(0),Spheroid(m,s,r)
-{
-		
+{		
 	delete map;
 	map=nullptr;
 	rnoise=nullptr;
@@ -2001,9 +2000,12 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	hscale=0.5; 
 	symmetry=1;
 	vboDirty=true;
-	uploadedVertexCount=lastLeafCount=0;
+	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
+	maxDepth=9;
+	cliptest=true;
+	backtest=true;
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2094,7 +2096,6 @@ void Asteroid::init_view(){
     TheScene->hstride = 1;
     TheScene->vstride = 0.02;
 
-    //cout<<"Asteroid::init_view new file:"<<TheScene->changed_file()<<" view radius:"<<TheScene->radius<<endl;
 	if(TheScene->changed_file())  // exit for open
 	   return;
   
@@ -2171,17 +2172,24 @@ void Asteroid::adapt_object(){
         return;
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
-    
-    double minPixels = 1;int maxDepth = 9;
-    
-    MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid(); // or cave
-    //MCObjAdaptFlags flags = MCObjAdaptFlags::cave(); // or cave
+    Point up,right, forward;
+	up=xpoint.normalize();
+	if (fabs(up.z) < 0.9)
+		right = Point(up.y, -up.x, 0).normalize();
+	else
+		right = Point(0, up.z, -up.y).normalize();
+	forward = Point(up.y * right.z - up.z * right.y,
+					up.z * right.x - up.x * right.z,
+					up.x * right.y - up.y * right.x);
+    MCObjAdaptFlags::setDirections(asteroidWorld-xpoint,right,forward,up);
+
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
     MCGenerator::cells_created = 0;
     MCGenerator::cells_deleted = 0;
-        
-    tree->adapt(xpoint, TheScene->wscale, hscale, minPixels, maxDepth, flags);
+     
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
+    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     TheNoise.rseed=seed;
  #ifdef PRINT_DEPTH_COUNTS
     std::vector<MCObjNode*> leaves;
@@ -2222,6 +2230,18 @@ void Asteroid::render_object(){
 		return;
 
 	glUseProgram(0); 
+	if (MCGenerator::smooth()) {
+		cout<<"Smooth enabled"<<endl;
+		MCObject obj;
+		obj.mesh = mesh;
+		obj.generateSmoothNormals();
+		int idx=0;
+		for(MCObjNode* leaf : leaves){
+			if(!leaf->meshValid || leaf->mesh.empty()) continue;
+			for(auto& tri : leaf->mesh)
+				tri.normal = obj.mesh[idx++].normal;
+		}
+	}
 
     Point eyeOffset = TheScene->xpoint;    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -2237,7 +2257,7 @@ void Asteroid::render_object(){
         glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
     if(vboDirty) 
     	buildVBO();  // fallback if adapt didn't run
     drawVBO();    
@@ -2268,7 +2288,6 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
 void Asteroid::buildVBO(){
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
-    lastLeafCount = leaves.size();
     
     glVertices.clear();
     Point eyeCenter = this->point - TheScene->xpoint;
@@ -2363,7 +2382,6 @@ void Asteroid::drawVBO(){
     glDisableClientState(GL_COLOR_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
-bool calibrating=true;
 void Asteroid::calibrateNoise(){
     if(!rnoise) return;
     
@@ -2371,7 +2389,6 @@ void Asteroid::calibrateNoise(){
     TheNoise.rseed = rseed;
     noiseScale = 1.0;
     noiseOffset = 0.0;
-    calibrating=true;
     
     SurfaceFunction rawField = makeField();
     
@@ -2405,8 +2422,8 @@ void Asteroid::calibrateNoise(){
     
     cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
          << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
-    calibrating=false;
 }
+
 //-------------------------------------------------------------
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------

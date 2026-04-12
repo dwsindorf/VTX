@@ -187,7 +187,16 @@ struct MCObjAdaptFlags {
     static const Point rockUp;
     static Point camForward; 
     static Point rotatedCam; 
-     
+    
+    MCObjAdaptFlags() {}
+        
+        // Explicit constructor for external configuration
+	MCObjAdaptFlags(bool burial, bool backface, bool frustum, bool curvature)
+		: burialCoarsening(burial)
+		, backfaceCoarsening(backface)
+		, frustumCulling(frustum)
+		, curvatureAdapt(curvature)
+	{}     
     static void setDirections(Point p, Point r, Point f, Point u);
     // Presets for common object types
     static MCObjAdaptFlags rock() {

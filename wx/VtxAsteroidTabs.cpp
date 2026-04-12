@@ -50,6 +50,9 @@ enum {
 	ID_SHADOW_TEXT,
 	ID_SHADOW_COLOR,
 	ID_NOISE_EXPR,
+	ID_MAXDEPTH,
+	ID_CLIPTEST,
+	ID_BACKTEST
 
 };
 
@@ -80,6 +83,10 @@ SET_COLOR_EVENTS(EMISSION,VtxAsteroidTabs,Emission)
 SET_COLOR_EVENTS(SPECULAR,VtxAsteroidTabs,Specular)
 SET_COLOR_EVENTS(DIFFUSE,VtxAsteroidTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxAsteroidTabs,Shadow)
+
+EVT_CHOICE(ID_MAXDEPTH, VtxAsteroidTabs::OnMaxDepth)
+EVT_CHECKBOX(ID_CLIPTEST,VtxAsteroidTabs::OnChangedFlags)
+EVT_CHECKBOX(ID_BACKTEST,VtxAsteroidTabs::OnChangedFlags)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxAsteroidTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxAsteroidTabs::OnDelete)
@@ -152,10 +159,31 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	wxBoxSizer *object_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
 			wxT("Object"));
 
+	
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", 40,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
+	
+	wxStaticText *lbl=new wxStaticText(panel,-1,"MaxDepth",wxDefaultPosition,wxSize(-1,-1));
+	hline->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
+	
+	wxString depths[]={"1","2","3","4","5","6","7","8","9","10","11","12"};	
 
+    m_maxDepth=new wxChoice(panel, ID_MAXDEPTH, wxDefaultPosition,wxSize(40,-1),12, depths);
+	m_maxDepth->SetSelection(8);
+
+	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
+	
+	wxStaticText *tests=new wxStaticText(panel,-1,"Tests",wxDefaultPosition,wxSize(-1,-1));
+	hline->Add(tests, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
+	
+	m_clip=new wxCheckBox(panel, ID_CLIPTEST, "Fustrum");
+	m_clip->SetToolTip("Decrease cells in off-screen areas");
+	hline->Add(m_clip,5,wxALIGN_LEFT|wxALL,5);
+
+	m_backface=new wxCheckBox(panel, ID_BACKTEST, "Interior");
+	m_backface->SetToolTip("Decrease cells in interior");
+	hline->Add(m_backface,5,wxALIGN_LEFT|wxALL,5);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -307,6 +335,7 @@ void VtxAsteroidTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 	event.Check(is_viewobj());
 }
 
+
 void VtxAsteroidTabs::updateControls() {
 	if (changing)
 		return;
@@ -329,6 +358,13 @@ void VtxAsteroidTabs::updateControls() {
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider, obj->diffuse);
 	updateColor(ShadowSlider, obj->shadow_color);
+	
+	
+	m_maxDepth->SetSelection(obj->maxDepth-1);
+	
+	m_clip->SetValue(obj->cliptest);
+	m_backface->SetValue(obj->backtest);
+
 		
 	char buff[256];
 	obj->getNoiseFunction(buff);
