@@ -148,7 +148,6 @@ public:
     }
 
     void OnChangedNoiseExpr(wxCommandEvent& event){
-    	cout<<"changed noise"<<endl;
     	object()->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
     	object()->applyNoiseFunction();
     	rebuild();

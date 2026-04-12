@@ -599,7 +599,7 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     TNode* tr = pmgr->rnoise;
     bool istemplate=mode;
-    
+
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*y;
@@ -615,11 +615,8 @@ SurfaceFunction Rock3DObjMgr::makeRockField(Rock3DMgr* pmgr,bool mode) {
             TheNoise.set(np);
             SINIT;
             tr->eval();
-            if (S0.s) {
-            	baseEllipsoid += S0.s * noiseScale + noiseOffset;
-            }        
-        }
-         
+            baseEllipsoid += S0.s * noiseScale + noiseOffset;
+        }      
         if(istemplate){
         	MCGenerator::tm_field_calls++;
         }
@@ -853,7 +850,7 @@ void Rock3DObjMgr::calibrate(){
 			pmgr->noiseCalib.scale  = 2.0 * isoNoiseAmpl / range;
 			pmgr->noiseCalib.offset = -isoNoiseAmpl - minDev * pmgr->noiseCalib.scale;
 		}
-		//cout<<"scale:"<<pmgr->noiseCalib.scale<<" offset:"<<pmgr->noiseCalib.offset<<endl; 
+		cout<<"Rocks scale:"<<pmgr->noiseCalib.scale<<" offset:"<<pmgr->noiseCalib.offset<<endl; 
 		pmgr->noiseCalib.calibrated = true;
 	}
 
@@ -977,7 +974,7 @@ void Rock3DObjMgr::render() {
                     rockCenter, radius, margin, field, s->instance, s->rval);
                 
                 // Adapt tree to current viewpoint — incremental, reuses cached values
-                tree->adapt(TheScene->xpoint, TheScene->wscale,isoNoiseAmpl,
+                tree->adapt(MCObjTree::rotateToLocal(TheScene->xpoint), TheScene->wscale,isoNoiseAmpl,
                            Rock3DMgr::minPointsize, (int)Rock3DMgr::maxDepth,flags);
  
                 std::vector<MCObjNode*> leaves;

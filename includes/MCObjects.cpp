@@ -45,6 +45,7 @@ int MCGenerator::csi_by_depth[32] = {};
 int MCGenerator::csi_cull_by_depth[32] = {};
 int MCGenerator::tm_field_calls=0; // templates
 int MCGenerator::ad_field_calls=0; // adaptive
+int MCGenerator::gm_field_calls=0; // mesh both
 int MCGenerator::frame_field_calls=0;  // reset each frame
 
 
@@ -141,7 +142,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 double pz = boundsMin.z + z * stepZ;
                 int idx = x * gridSize * gridSize + y * gridSize + z;
                 cornerGrid[idx] = field(px, py, pz);
-				tm_field_calls++;
+				gm_field_calls++;
 
             }
         }
@@ -215,7 +216,7 @@ void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	// Reset stats before subdivideOctree
 	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
-    tm_field_calls=ad_field_calls = 0;
+    tm_field_calls=ad_field_calls = gm_field_calls =0;
 
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 	memset(csi_cull_by_depth, 0, sizeof(csi_cull_by_depth));  // ← ensure this is present
@@ -228,8 +229,8 @@ void MCGenerator::printStats(){
 
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
-			  << " edge:" << csi_edge_exits<<"["<<csi_edge_tests
-			  << "] empty:" << csi_false
+			  << " edge:" << csi_edge_exits<<" tests:"<<csi_edge_tests
+			  << " empty:" << csi_false
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
@@ -243,7 +244,12 @@ void MCGenerator::printStats(){
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
 	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted<<endl;
-	cout<< " Adapt calls:"<<csi_adapt_calls<<" culls:"<<csi_cull_calls<<" "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
+	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
+	if(tm_field_calls)
+		cout<< " Field calls adaptive:"<<ad_field_calls/1000<<" template:"<<tm_field_calls/1000;
+	else	
+	    cout<< " Field calls:"<<ad_field_calls/1000;
+	cout<<" mesh:"<<gm_field_calls/1000<<" K"<<endl;
 }
 // Add these method implementations:
 
@@ -933,8 +939,8 @@ void MCObjTree::adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl,
 {
     if (!root || !valid) return;
 
-   root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
-  //  root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, 1e-5, 8,flags);
+   //root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
+   root->adapt(field, center, radius, cameraPos, wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
     
     framesSinceUsed = 0;
 }

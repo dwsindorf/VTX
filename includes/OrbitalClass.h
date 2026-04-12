@@ -419,9 +419,12 @@ private:
 	int    uploadedVertexCount;
 	bool   vboDirty;
 	int    lastLeafCount;
+	double noiseScale;
+	double noiseOffset;
 	void buildVBO();
 	void drawVBO();
 	void deleteVBO();
+	void calibrateNoise();
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;

@@ -25,12 +25,12 @@ extern double Theta,Phi,Radius,Sfact;
 //#define GEOMETRY_TEST
 #define WRITE_STAR_DATA
 //#define DEBUG_RENDER
-#define DEBUG_TEMP 1
+#define DEBUG_TEMP 0
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-#define ASTEROID_VBO
 //#define PRINT_DEPTH_COUNTS
+#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2002,6 +2002,8 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	symmetry=1;
 	vboDirty=true;
 	uploadedVertexCount=lastLeafCount=0;
+	noiseScale=1.0;
+	noiseOffset=0.0;
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2054,9 +2056,11 @@ void Asteroid::invalidate(){
 void Asteroid::rebuildTree(){
 	if(tree)
 		delete tree;
+	calibrateNoise();
 	tree = new MCObjTree();
 	field = makeField();
-	tree->init(Point(0, 0, 0),size*2,2.0,field,0,rseed);
+	tree->init(Point(0, 0, 0),2*size,2.0,field,0,rseed);
+	MCGenerator::resetStats();
 }
 void Asteroid::init(){
 	Orbital::init();
@@ -2090,7 +2094,7 @@ void Asteroid::init_view(){
     TheScene->hstride = 1;
     TheScene->vstride = 0.02;
 
-    cout<<"Asteroid::init_view new file:"<<TheScene->changed_file()<<" view radius:"<<TheScene->radius<<endl;
+    //cout<<"Asteroid::init_view new file:"<<TheScene->changed_file()<<" view radius:"<<TheScene->radius<<endl;
 	if(TheScene->changed_file())  // exit for open
 	   return;
   
@@ -2099,7 +2103,7 @@ void Asteroid::init_view(){
     TheScene->phi=0;
     TheScene->theta=0;
     
-    TheScene->radius=7*size;
+    TheScene->radius=5*size;
     TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
 
@@ -2168,17 +2172,10 @@ void Asteroid::adapt_object(){
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
     
-    //double dist = asteroidWorld.distance(xpoint);
-    double minPixels = 4;int maxDepth = 10;
+    double minPixels = 1;int maxDepth = 9;
     
     MCObjAdaptFlags flags = MCObjAdaptFlags::asteroid(); // or cave
-
-    MCObjAdaptFlags::setDirections(
-        asteroidWorld,          // origin
-        Point(1, 0, 0),        // right
-        Point(0, 1, 0),        // forward  
-        Point(0, 0, 1)         // up
-    );
+    //MCObjAdaptFlags flags = MCObjAdaptFlags::cave(); // or cave
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
     MCGenerator::cells_created = 0;
@@ -2197,6 +2194,10 @@ void Asteroid::adapt_object(){
         if(depthCounts[d]>0)
             cout << "depth " << d << ": " << depthCounts[d] << " leaves" << endl;
 #endif
+#ifdef PRINT_STATS        
+        MCGenerator::printStats();
+#endif
+
     vboDirty = true;
 }
 void Asteroid::render_object(){
@@ -2230,10 +2231,13 @@ void Asteroid::render_object(){
     else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_BLEND);
-    glEnable(GL_LIGHTING);
+    if(Render.lighting())
+    	glEnable(GL_LIGHTING);
+    else
+        glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     if(vboDirty) 
     	buildVBO();  // fallback if adapt didn't run
     drawVBO();    
@@ -2249,17 +2253,12 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
         
     for(auto& tri : mesh){
         for(int v=0; v<3; v++){
-            // Vertices are in normalized [-0.5,0.5] space
-            // Scale by 0.5/sz to match rock noise frequency (same as makeField)
-            Point np(tri.vertices[v].x * (0.5/size),
-                     tri.vertices[v].y * (0.5/size),
-                     tri.vertices[v].z * (0.5/size));
+        	Point np(tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
             TheNoise.set(np);
             SINIT;
             color->eval();
-            if(S0.cvalid()){
+            if(S0.cvalid())
                 tri.colors[v] = S0.c;
-            }
             else
                 tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
         }
@@ -2273,7 +2272,7 @@ void Asteroid::buildVBO(){
     
     glVertices.clear();
     Point eyeCenter = this->point - TheScene->xpoint;
-    double scale = size * 2.0;
+    double scale = 2*size;
     Point eyeOffset = TheScene->xpoint;   
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
@@ -2285,24 +2284,16 @@ void Asteroid::buildVBO(){
              leaf->attributesApplied = true;
         }
         for(auto& tri : leaf->mesh){
-            // Gradient-based normal consistency
-            Point c = (tri.vertices[0]+tri.vertices[1]+tri.vertices[2])*(1.0/3.0);
-            double ex=2*c.x, ey=2*c.y, ez=2*c.z;
-            double ed=sqrt(ex*ex+ey*ey+ez*ez);
-            Point n = tri.normal;
-            if(ed > 1e-10){
-                Point grad(ex/ed, ey/ed, ez/ed);
-                if(n.dot(grad) > 0) n = -n;  // ensure inward for negation below
-            }
-            for(int v=0; v<3; v++){
+           Point n = tri.normal;
+           for(int v=0; v<3; v++){
                 GLVertex gv;
                 Point p = tri.vertices[v] * scale - eyeOffset;  // match working path                
                 gv.pos[0]=(float)p.x;
                 gv.pos[1]=(float)p.y;
                 gv.pos[2]=(float)p.z;
-                gv.normal[0]=(float)-n.x;  // negate: MC normals point inward
-                gv.normal[1]=(float)-n.y;
-                gv.normal[2]=(float)-n.z;
+                gv.normal[0]=(float)-tri.normal.x;  // negate: MC normals point inward
+                gv.normal[1]=(float)-tri.normal.y;
+                gv.normal[2]=(float)-tri.normal.z;
                 gv.templatePos[0]=(float)tri.vertices[v].x;
                 gv.templatePos[1]=(float)tri.vertices[v].y;
                 gv.templatePos[2]=(float)tri.vertices[v].z;
@@ -2372,40 +2363,58 @@ void Asteroid::drawVBO(){
     glDisableClientState(GL_COLOR_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+bool calibrating=true;
+void Asteroid::calibrateNoise(){
+    if(!rnoise) return;
+    
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    noiseScale = 1.0;
+    noiseOffset = 0.0;
+    calibrating=true;
+    
+    SurfaceFunction rawField = makeField();
+    
+    double minDev=1e10, maxDev=-1e10;
+    int samples=20;
+    double step = 2.0/samples;  // sample over [-1,1] like rocks
+    
+    for(int ix=0; ix<=samples; ix++)
+    for(int iy=0; iy<=samples; iy++)
+    for(int iz=0; iz<=samples; iz++){
+        double x = -1.0 + ix*step;
+        double y = -1.0 + iy*step;
+        double z = -1.0 + iz*step;
+        
+        // Base ellipsoid — same formula as makeField
+        double ex=2*x, ey=2*y, ez=2*z;
+        double baseVal = sqrt(ex*ex+ey*ey+ez*ez) - 1.0;
+        
+        double fieldVal = rawField(x, y, z);
+        double deviation = fieldVal - baseVal;
+        minDev = std::min(minDev, deviation);
+        maxDev = std::max(maxDev, deviation);
+    }
+    
+    double range = maxDev - minDev;
+    if(range > 1e-10){
+        noiseScale  = 2.0 * hscale / range;
+        noiseOffset = -hscale - minDev * noiseScale;
+    }
+    TheNoise.rseed = seed;
+    
+    cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
+         << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
+    calibrating=false;
+}
 //-------------------------------------------------------------
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------
 SurfaceFunction Asteroid::makeField() {
     double comp = symmetry;
     double comp_factor = 1;//std::max((1.0 - 2*comp), 0.2);
-    double hs = this->hscale;
-    bool useNoisyIsoSurface = hs > 0;
-    TNode *noise = rnoise;
-
-    // Sample raw noise range over unit sphere surface, map to [-hs, +hs]
-   double minVal = 1e10, maxVal = -1e10;
-   int samples = 20;
-   double step = 2.0 / samples;
-   for(int ix = 0; ix <= samples; ix++)
-   for(int iy = 0; iy <= samples; iy++)
-   for(int iz = 0; iz <= samples; iz++) {
-	   double x = -1.0 + ix * step;
-	   double y = -1.0 + iy * step;
-	   double z = -1.0 + iz * step;
-	   Point pt(x, y, z);
-	   TheNoise.set(pt);
-	   SINIT;
-	   noise->eval();
-	   minVal = std::min(minVal, S0.s);
-	   maxVal = std::max(maxVal, S0.s);
-   }
-   double range = maxVal - minVal;
-   double noiseScale  = (range > 1e-10) ? 2.0 * hs / range : 0.0;
-   double noiseOffset = (range > 1e-10) ? -hs - minVal * noiseScale : 0.0;
-   
-  // cout << "noise calibration: min=" << minVal << " max=" << maxVal 
-//		<< " scale=" << noiseScale << " offset=" << noiseOffset << endl;
-
+    bool useNoisyIsoSurface = this->hscale > 0;
+ 
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*y;
@@ -2413,14 +2422,15 @@ SurfaceFunction Asteroid::makeField() {
         double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
         double baseEllipsoid = ellipsoidDist - 1.0;
         
-        if (useNoisyIsoSurface && noise && noise->isEnabled()) {  
-            Point np(x, y, z);
-            TheNoise.set(np);
+        if (useNoisyIsoSurface && rnoise && rnoise->isEnabled()) {  
+        	static int cnt=0;
+        	Point np(2*x, 2*y, 2*z);  // match rock coordinate range [-1,1]
+         	TheNoise.set(np);
             SINIT;
-            noise->eval();
-            if (S0.s) {
-            	baseEllipsoid += S0.s * noiseScale + noiseOffset;
-            }        
+            rnoise->eval();
+            double value=S0.s * noiseScale + noiseOffset;
+            baseEllipsoid += value;
+            MCGenerator::ad_field_calls++;
         }
          return baseEllipsoid;
     };

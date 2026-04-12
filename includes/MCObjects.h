@@ -38,6 +38,7 @@ typedef std::function<double(double, double, double)> SurfaceFunction;
 
 class MCGenerator {
 public:
+	static int gm_field_calls;
     static int tm_field_calls;
     static int ad_field_calls;
     static int frame_field_calls;  // reset each frame
@@ -193,7 +194,7 @@ struct MCObjAdaptFlags {
         return MCObjAdaptFlags{true, true, true, false};
     }
     static MCObjAdaptFlags asteroid() {
-        return MCObjAdaptFlags{false, true, false, false};  // no burial
+        return MCObjAdaptFlags{false, true, true, false};  // no burial
     }
     static MCObjAdaptFlags cave() {
         return MCObjAdaptFlags{false, false, false, false}; // interior object
