@@ -32,8 +32,6 @@ enum {
 	ID_YEAR_TEXT,
 	ID_SHINE_SLDR,
 	ID_SHINE_TEXT,
-	ID_ALBEDO_SLDR,
-	ID_ALBEDO_TEXT,
 	ID_AMBIENT_SLDR,
 	ID_AMBIENT_TEXT,
 	ID_AMBIENT_COLOR,
@@ -43,9 +41,6 @@ enum {
 	ID_DIFFUSE_SLDR,
 	ID_DIFFUSE_TEXT,
 	ID_DIFFUSE_COLOR,
-	ID_EMISSION_SLDR,
-	ID_EMISSION_TEXT,
-	ID_EMISSION_COLOR,
 	ID_SHADOW_SLDR,
 	ID_SHADOW_TEXT,
 	ID_SHADOW_COLOR,
@@ -76,10 +71,8 @@ SET_SLIDER_EVENTS(ORBIT_RADIUS,VtxAsteroidTabs,OrbitRadius)
 SET_SLIDER_EVENTS(ORBIT_TILT,VtxAsteroidTabs,OrbitTilt)
 SET_SLIDER_EVENTS(ORBIT_PHASE,VtxAsteroidTabs,OrbitPhase)
 SET_SLIDER_EVENTS(SHINE,VtxAsteroidTabs,Shine)
-SET_SLIDER_EVENTS(ALBEDO,VtxAsteroidTabs,Albedo)
 
 SET_COLOR_EVENTS(AMBIENT,VtxAsteroidTabs,Ambient)
-SET_COLOR_EVENTS(EMISSION,VtxAsteroidTabs,Emission)
 SET_COLOR_EVENTS(SPECULAR,VtxAsteroidTabs,Specular)
 SET_COLOR_EVENTS(DIFFUSE,VtxAsteroidTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxAsteroidTabs,Shadow)
@@ -159,7 +152,6 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	wxBoxSizer *object_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
 			wxT("Object"));
 
-	
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
 	object_name = new TextCtrl(panel, ID_NAME_TEXT, "Name", 40,100);
 	hline->Add(object_name->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
@@ -294,12 +286,9 @@ void VtxAsteroidTabs::AddLightingTab(wxWindow *panel) {
 			wxT("Color"));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	ShineSlider = new SliderCtrl(panel, ID_SHINE_SLDR, "Shine", LABEL, VALUE, SLIDER2);
+	ShineSlider = new SliderCtrl(panel, ID_SHINE_SLDR, "Shine", LABEL, VALUE, CSLIDER);
 	ShineSlider->setRange(0.25, 100);
 	hline->Add(ShineSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
-	AlbedoSlider = new SliderCtrl(panel, ID_ALBEDO_SLDR, "Albedo", LABEL2, VALUE, SLIDER2);
-	AlbedoSlider->setRange(0.01, 1);
-	hline->Add(AlbedoSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	color_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	AmbientSlider = new ColorSlider(panel, ID_AMBIENT_SLDR, "Ambient", LABEL,
@@ -311,9 +300,6 @@ void VtxAsteroidTabs::AddLightingTab(wxWindow *panel) {
 	DiffuseSlider = new ColorSlider(panel, ID_DIFFUSE_SLDR, "Diffuse", LABEL,
 			VALUE, CSLIDER, CBOX1);
 	color_cntrls->Add(DiffuseSlider->getSizer(), 1, wxALIGN_LEFT | wxALL);
-	EmissionSlider = new ColorSlider(panel, ID_EMISSION_SLDR, "Radiance", LABEL,
-			VALUE, CSLIDER, CBOX1);
-	color_cntrls->Add(EmissionSlider->getSizer(), 1, wxALIGN_LEFT | wxALL);
 	ShadowSlider = new ColorSlider(panel, ID_SHADOW_SLDR, "Shadow", LABEL,
 			VALUE, CSLIDER, CBOX1);
 	color_cntrls->Add(ShadowSlider->getSizer(), 1, wxALIGN_LEFT | wxALL);
@@ -335,7 +321,6 @@ void VtxAsteroidTabs::OnUpdateViewObj(wxUpdateUIEvent &event) {
 	event.Check(is_viewobj());
 }
 
-
 void VtxAsteroidTabs::updateControls() {
 	if (changing)
 		return;
@@ -350,11 +335,9 @@ void VtxAsteroidTabs::updateControls() {
 	updateSlider(DaySlider, obj->day);
 	updateSlider(YearSlider, obj->year);
 	updateSlider(ShineSlider, obj->shine);
-	updateSlider(AlbedoSlider, obj->albedo);
 	updateSlider(HscaleSlider, obj->hscale);
 
 	updateColor(AmbientSlider, obj->ambient);
-	updateColor(EmissionSlider, obj->emission);
 	updateColor(SpecularSlider, obj->specular);
 	updateColor(DiffuseSlider, obj->diffuse);
 	updateColor(ShadowSlider, obj->shadow_color);
@@ -364,8 +347,7 @@ void VtxAsteroidTabs::updateControls() {
 	
 	m_clip->SetValue(obj->cliptest);
 	m_backface->SetValue(obj->backtest);
-
-		
+	
 	char buff[256];
 	obj->getNoiseFunction(buff);
 	NoiseExpr->SetValue(buff);

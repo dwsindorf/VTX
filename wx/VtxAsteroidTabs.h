@@ -52,10 +52,8 @@ public:
 		delete RotPhaseSlider;
 		delete YearSlider;
 		delete ShineSlider;
-		delete AlbedoSlider;
 		delete AmbientSlider;
 		delete SpecularSlider;
-		delete EmissionSlider;
 		delete DiffuseSlider;
 		delete ShadowSlider;
 		delete NoiseExpr;
@@ -136,31 +134,9 @@ public:
     	OnSliderText( OrbitRadiusSlider, object()->orbit_radius);
 		invalidateRender();
 	}
-
-	void OnEndAlbedoSlider(wxScrollEvent &event) {}
-
-    void OnAlbedoSlider(wxScrollEvent& event){
-    	AlbedoSlider->setValueFromSlider();
-    	OnSliderValue(AlbedoSlider, object()->albedo);
-		invalidateRender();
-	}
-    void OnAlbedoText (wxCommandEvent& event){
-    	OnSliderText( AlbedoSlider, object()->albedo);
-		invalidateRender();
-	}
     void invalidate(){
         object()->invalidate();
         TheView->set_changed_detail();
-    }
-    void OnSliderText(SliderCtrl *s, double &var){
-       s->setValueFromText();
-       var=s->getValue();
-       invalidate();
-    }
-    void OnSliderValue(SliderCtrl *s, double &var){
-        s->setValueFromSlider();
-        var=s->getValue();
-        invalidate();
     }
 
     void OnChangedNoiseExpr(wxCommandEvent& event){
@@ -179,7 +155,6 @@ public:
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)
-	DEFINE_COLOR_VAR_EVENTS(Emission,object()->emission)
 	DEFINE_COLOR_VAR_EVENTS(Shadow,object()->shadow_color)
 
 	void OnViewObj(wxCommandEvent &event);

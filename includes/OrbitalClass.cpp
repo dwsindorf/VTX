@@ -2107,10 +2107,23 @@ void Asteroid::init_view(){
     TheScene->radius=5*size;
     TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
-
 }
 //-------------------------------------------------------------
-// Spheroid::adapt_pass() select for scene pass
+// Asteroid::set_lighting() set lighting
+//-------------------------------------------------------------
+void Asteroid::set_lighting(){
+    Orbital::set_lighting();
+    Lights.setAttenuation(point);
+    
+    Lights.setShininess(shine);
+	Lights.mixSpecular(specular);
+
+	Lights.mixDiffuse(diffuse);
+	Lights.setAmbient(ambient);
+}
+
+//-------------------------------------------------------------
+// Asteroid::adapt_pass() select for scene pass
 //-------------------------------------------------------------
 int Asteroid::adapt_pass()
 {
@@ -2121,7 +2134,7 @@ int Asteroid::adapt_pass()
 }
 
 //-------------------------------------------------------------
-// Spheroid::render_pass() select for scene pass
+// Asteroid::render_pass() select for scene pass
 //-------------------------------------------------------------
 int Asteroid::render_pass()
 {
@@ -2134,6 +2147,9 @@ double Asteroid::max_height() {
     return 2*hscale;  // factor in noise 
 }
 
+//-------------------------------------------------------------
+// Asteroid::scale() set znear, zfar
+//-------------------------------------------------------------
 int Asteroid::scale(double& znear, double& zfar) {
     // Set clipping planes based on asteroid size
     double zn,zf;      // far plane = 100x radius
@@ -2155,8 +2171,118 @@ int Asteroid::scale(double& znear, double& zfar) {
     setvis(OUTSIDE); 
     return OUTSIDE;  // Render as outside object
 }
+
+//-------------------------------------------------------------
+// Asteroid::setProgram() set up shaders
+//-------------------------------------------------------------
 bool Asteroid::setProgram(){
-	return false; // TODO
+    if(!Raster.do_shaders)
+        return false;
+    
+    // Shadow pass bypass — not yet supported
+    static bool asteroid_shadows = false;
+    if(!asteroid_shadows && PlaceObjMgr::shadow_mode)
+        return false;
+    
+    char defs[1024] = "";
+    sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
+            Lights.size, Render.light_mode());
+    
+    if(asteroid_shadows && Raster.shadows() && !TheScene->light_view())
+        sprintf(defs+strlen(defs), "#define SHADOWS\n");
+
+    GLSLMgr::setDefString(defs);
+
+    // === initProgram pass — count textures and bumps ===
+    int tid = 0;
+    int pid = 0;
+    int nbumps = 0;
+    bool cvalid = false;
+
+    if(color && color->isEnabled())
+        cvalid = true;
+
+    int mode = CurrentScope->passmode();
+    CurrentScope->set_spass();
+    nbumps = 0;
+    Texture::reset();  // reset texture system state
+    if(Render.textures()){
+        for(int i = texs.size-1; i >= 0; i--){  // reverse like rocks
+            TNtexture *tntex = (TNtexture*)texs[i];
+            Texture *texture = tntex->texture;
+            if(!tntex->isEnabled()) continue;
+            texture->set3D();
+            TerrainProperties::tid = tid;
+            if(texture->bump_active && Render.bumps())
+                nbumps++;
+            texture->tid = tid;
+            texture->eval();
+            texture->initProgram();
+            tid++;
+        }
+    }
+
+    // Build defs with final counts
+    char texdefs[256];
+    if(cvalid)
+        sprintf(texdefs, "#define COLOR\n#define NTEXS %d\n#define NBUMPS %d\n",
+                tid, nbumps);
+    else
+        sprintf(texdefs, "#define NTEXS %d\n#define NBUMPS %d\n", tid, nbumps);
+    strcat(GLSLMgr::defString, texdefs);
+
+    GLSLMgr::loadProgram("asteroid.vert", "asteroid.frag");
+
+    GLhandleARB program = GLSLMgr::programHandle();
+    if(!program){
+        CurrentScope->set_passmode(mode);
+        return false;
+    }
+
+    // === setProgram pass — set texture uniforms ===
+    if(Render.textures()){
+        for(int i = texs.size-1; i >= 0; i--){
+            TNtexture *tntex = (TNtexture*)texs[i];
+            Texture *texture = tntex->texture;
+            if(!tntex->isEnabled()) continue;
+            TerrainProperties::tid = tid;
+            texture->eval();
+            texture->pid = pid;
+            texture->setProgram();
+            pid++;
+        }
+    }
+    CurrentScope->set_passmode(mode);
+
+    // === Set uniforms ===
+    GLSLVarMgr vars;
+    
+    vars.newFloatVec("Diffuse",
+        diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
+    vars.newFloatVec("Ambient",
+        ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
+    vars.newFloatVec("Specular",
+         specular.red(), specular.green(), specular.blue(), specular.alpha());
+    vars.newFloatVec("Shadow",
+        shadow_color.red(), shadow_color.green(), shadow_color.blue(),
+        shadow_intensity);
+
+    //vars.newFloatVec("mpoint", point.x, point.y, point.z, 0.0f);
+ 
+    vars.newFloatVar("shadow_darkness",  (float)shadow_intensity);
+    vars.newFloatVar("wscale",           GLSLMgr::wscale);
+    vars.newFloatVar("textureScale",     (float)(1.0/size));
+    vars.newBoolVar("lighting",          Render.lighting());
+
+    vars.setProgram(program);
+    vars.loadVars();
+
+    if(TheScene->inside_sky() || Raster.do_shaders)
+        GLSLMgr::setFBOWritePass();
+    else
+        GLSLMgr::setFBORenderPass();
+
+    return true;
 }
 
 void Asteroid::adapt_object(){
@@ -2214,52 +2340,33 @@ void Asteroid::render_object(){
         return;
     if(TheScene->bgpass==FG1)
     	return;
-        
-    std::vector<MCObjNode*> leaves;
-    tree->collectLeaves(leaves);
-    if(leaves.empty())
-        return;
- 
-    // Collect all triangles into one mesh and smooth normals
-	std::vector<MCTriangle> mesh;
-	for(MCObjNode* leaf : leaves) {
-		if(!leaf->meshValid || leaf->mesh.empty()) continue;
-		mesh.insert(mesh.end(), leaf->mesh.begin(), leaf->mesh.end());
-	}
-	if(mesh.empty()) 
-		return;
 
-	glUseProgram(0); 
-	if (MCGenerator::smooth()) {
-		cout<<"Smooth enabled"<<endl;
-		MCObject obj;
-		obj.mesh = mesh;
-		obj.generateSmoothNormals();
-		int idx=0;
-		for(MCObjNode* leaf : leaves){
-			if(!leaf->meshValid || leaf->mesh.empty()) continue;
-			for(auto& tri : leaf->mesh)
-				tri.normal = obj.mesh[idx++].normal;
-		}
-	}
+    if(vboDirty) 
+    	buildVBO();
 
-    Point eyeOffset = TheScene->xpoint;    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     
     if(test7)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_BLEND);
-    if(Render.lighting())
-    	glEnable(GL_LIGHTING);
-    else
-        glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
+    
+	if(Render.lighting())
+		glEnable(GL_LIGHTING);
+	else
+		glDisable(GL_LIGHTING);
+    
+	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    if(vboDirty) 
-    	buildVBO();  // fallback if adapt didn't run
+    
+    if (Raster.do_shaders) {
+        glEnable(GL_BLEND);
+        set_lighting();
+		setProgram();
+	} else {
+		glDisable(GL_BLEND);
+		glUseProgram(0); 
+	}
+     
     drawVBO();    
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
@@ -2295,6 +2402,20 @@ void Asteroid::buildVBO(){
     Point eyeOffset = TheScene->xpoint;   
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
+    // Smooth normals across all leaves — computed once per VBO build
+	if(MCGenerator::smooth()){
+		MCObject tmp;
+		for(MCObjNode* leaf : leaves)
+			if(!leaf->mesh.empty())
+				tmp.mesh.insert(tmp.mesh.end(), leaf->mesh.begin(), leaf->mesh.end());
+		tmp.generateSmoothNormals();
+		int idx = 0;
+		for(MCObjNode* leaf : leaves){
+			if(!leaf->mesh.empty())
+				for(auto& tri : leaf->mesh)
+					tri.normal = tmp.mesh[idx++].normal;
+		}
+	}
     
     for(MCObjNode* leaf : leaves){
         if(!leaf->meshValid || leaf->mesh.empty()) continue;
@@ -7872,8 +7993,8 @@ bool CloudLayer::setProgram(){
 
 	vars.newFloatVar("sky_ht",sky_ht);
 	vars.newFloatVar("eye_ht",TheScene->height);
-	vars.newFloatVar("twilite_min",twilite_min);
-	vars.newFloatVar("twilite_max",twilite_max);
+	vars.newFloatVar("twilite_min", -2.0f);
+	vars.newFloatVar("twilite_max",  2.0f);
 	vars.newFloatVar("twilite_dph",twilite_dph);
 
 	Point p=point.mm(TheScene->invViewMatrix);

@@ -453,7 +453,7 @@ public:
 	void setNoiseFunction(char *c);
 	void applyNoiseFunction();
 	void invalidate();
-
+	void set_lighting();
 
 };
 //************************************************************
