@@ -152,6 +152,7 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(RotPhase,object()->rot_phase)
 	DEFINE_SLIDER_VAR_EVENTS(Shine,object()->shine)
 	
+	
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)

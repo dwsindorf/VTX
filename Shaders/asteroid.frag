@@ -7,7 +7,7 @@ uniform sampler2DRect FBOTex3;
 uniform sampler2DRect FBOTex4;
 
 #define SHADOWTEX FBOTex3
-
+#define DEPTH   gl_FragCoord.z
 uniform vec3  center;
 uniform vec4  Diffuse;
 uniform vec4  Specular;
@@ -96,7 +96,6 @@ void main() {
 #else
     vec4 color = vec4(1.0);
 #endif
-
     vec3 normal = normalize(Normal);
     bump = vec3(0.0);
 
@@ -122,8 +121,9 @@ void main() {
     float shadow = texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
     color.rgb = mix(color.rgb, Shadow.rgb, shadow * Shadow.a);
 #endif
-
     gl_FragData[0] = vec4(color.xyz, 1.0);
-    // Moon-style FBO output
-    gl_FragData[1] = vec4(0.0, illumination, 0.05, 0.0);
+   // gl_FragData[0] = vec4(fract(gl_TexCoord[0].xyz), 1.0);  // visualize tex coords
+    //gl_FragData[1] = vec4(0.0, illumination, 0.05, 0.0);
+    gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
+    
 }

@@ -2003,7 +2003,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=9;
+	maxDepth=10;
 	cliptest=true;
 	backtest=true;
 }
@@ -2018,15 +2018,9 @@ Asteroid::~Asteroid()
     }
 }
 
-double Asteroid::far_height() {
-    return size;
-}
-
-double Asteroid::height(double t, double p) {
-    // Return surface height at theta/phi position
-    // For a simple sphere, just return the radius
-    return size;
-}
+//-------------------------------------------------------------
+// Asteroid::[get,set,apply]NoiseFunction - called from wx window
+//-------------------------------------------------------------
 int Asteroid::getNoiseFunction(char *buff){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	TNode *expr=var->getExprNode();
@@ -2055,15 +2049,10 @@ void Asteroid::invalidate(){
 	rebuild();
 	
 }
-void Asteroid::rebuildTree(){
-	if(tree)
-		delete tree;
-	calibrateNoise();
-	tree = new MCObjTree();
-	field = makeField();
-	tree->init(Point(0, 0, 0),2*size,2.0,field,0,rseed);
-	MCGenerator::resetStats();
-}
+
+//-------------------------------------------------------------
+// Asteroid::init() set variables on open or rebuild
+//-------------------------------------------------------------
 void Asteroid::init(){
 	Orbital::init();
 	terrain.getChildren((int)ID_TEXTURE,texs);
@@ -2082,9 +2071,12 @@ void Asteroid::init(){
 	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
 	tree=0;
-	rebuildTree();
-	
+	rebuildTree();	
 }
+
+//-------------------------------------------------------------
+// Asteroid::init_view() reset to orbital view
+//-------------------------------------------------------------
 void Asteroid::init_view(){   
     // Set up view parameters for orbital view
     TheScene->maxr = size * 10;
@@ -2104,10 +2096,11 @@ void Asteroid::init_view(){
     TheScene->phi=0;
     TheScene->theta=0;
     
-    TheScene->radius=5*size;
+    TheScene->radius=4*size;
     TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
 }
+
 //-------------------------------------------------------------
 // Asteroid::set_lighting() set lighting
 //-------------------------------------------------------------
@@ -2143,10 +2136,16 @@ int Asteroid::render_pass()
         clear_pass(FG0);
     return selected();
 }
+double Asteroid::far_height() {
+    return size;
+}
+
 double Asteroid::max_height() {
     return 2*hscale;  // factor in noise 
 }
-
+double Asteroid::height(double t, double p) {
+     return size;
+}
 //-------------------------------------------------------------
 // Asteroid::scale() set znear, zfar
 //-------------------------------------------------------------
@@ -2183,7 +2182,7 @@ bool Asteroid::setProgram(){
     static bool asteroid_shadows = false;
     if(!asteroid_shadows && PlaceObjMgr::shadow_mode)
         return false;
-    
+        
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
@@ -2240,6 +2239,7 @@ bool Asteroid::setProgram(){
     }
 
     // === setProgram pass — set texture uniforms ===
+    tid=0;
     if(Render.textures()){
         for(int i = texs.size-1; i >= 0; i--){
             TNtexture *tntex = (TNtexture*)texs[i];
@@ -2249,7 +2249,17 @@ bool Asteroid::setProgram(){
             texture->eval();
             texture->pid = pid;
             texture->setProgram();
+            // set instance & active to the same value
+            char str[64];
+			sprintf(str, "tex2d[%d].instance", i);
+			GLint loc = glGetUniformLocationARB(program, str);
+			if(loc >= 0) glUniform1iARB(loc, 0);			
+			sprintf(str, "tex2d[%d].active", i);
+			loc = glGetUniformLocationARB(program, str);
+			if(loc >= 0) glUniform1iARB(loc, 0);
             pid++;
+            tid++;
+
         }
     }
     CurrentScope->set_passmode(mode);
@@ -2270,21 +2280,40 @@ bool Asteroid::setProgram(){
     //vars.newFloatVec("mpoint", point.x, point.y, point.z, 0.0f);
  
     vars.newFloatVar("shadow_darkness",  (float)shadow_intensity);
-    vars.newFloatVar("wscale",           GLSLMgr::wscale);
-    vars.newFloatVar("textureScale",     (float)(1.0/size));
+    float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
+    
+    vars.newFloatVar("wscale",           wscale);
+    
+    vars.newFloatVar("textureScale",     (float)(size));
     vars.newBoolVar("lighting",          Render.lighting());
 
     vars.setProgram(program);
     vars.loadVars();
-
-    if(TheScene->inside_sky() || Raster.do_shaders)
-        GLSLMgr::setFBOWritePass();
-    else
-        GLSLMgr::setFBORenderPass();
-
+    
+    GLSLMgr::setProgram();
+    GLSLMgr::loadVars();
+        
+    GLSLMgr::setFBOWritePass();
+ 
     return true;
 }
 
+//-------------------------------------------------------------
+// Asteroid::rebuildTree() rebuild
+//-------------------------------------------------------------
+void Asteroid::rebuildTree(){
+	if(tree)
+		delete tree;
+	calibrateNoise();
+	tree = new MCObjTree();
+	field = makeField();
+	tree->init(Point(0, 0, 0),2*size,2.0,field,0,rseed);
+	MCGenerator::resetStats();
+}
+
+//-------------------------------------------------------------
+// Asteroid::adapt_object() adapt mesh
+//-------------------------------------------------------------
 void Asteroid::adapt_object(){
     if(!tree) {
         return;
@@ -2311,29 +2340,20 @@ void Asteroid::adapt_object(){
 
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
-    MCGenerator::cells_created = 0;
-    MCGenerator::cells_deleted = 0;
-     
+      
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
     tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     TheNoise.rseed=seed;
- #ifdef PRINT_DEPTH_COUNTS
-    std::vector<MCObjNode*> leaves;
-    tree->collectLeaves(leaves);
-    int depthCounts[16]={0};
-    for(auto* l : leaves){
-        if(l->depth < 16) depthCounts[l->depth]++;
-    }
-    for(int d=0; d<16; d++)
-        if(depthCounts[d]>0)
-            cout << "depth " << d << ": " << depthCounts[d] << " leaves" << endl;
-#endif
+    
 #ifdef PRINT_STATS        
         MCGenerator::printStats();
 #endif
-
     vboDirty = true;
 }
+
+//-------------------------------------------------------------
+// Asteroid::render_object() render mesh
+//-------------------------------------------------------------
 void Asteroid::render_object(){
 	extern int test7;
     if(!tree || !tree->root)
@@ -2357,6 +2377,7 @@ void Asteroid::render_object(){
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     
     if (Raster.do_shaders) {
         glEnable(GL_BLEND);
@@ -2371,6 +2392,10 @@ void Asteroid::render_object(){
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
 }
+
+//-------------------------------------------------------------
+// Asteroid::applyAttributes() set color
+//-------------------------------------------------------------
 void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
     bool setVertexColor = (color && color->isEnabled());
     if(!setVertexColor) return;
@@ -2392,6 +2417,10 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
     }
     TheNoise.rseed = seed;
 }
+
+//-------------------------------------------------------------
+// Asteroid::buildVBO() build VBO
+//-------------------------------------------------------------
 void Asteroid::buildVBO(){
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
@@ -2467,6 +2496,10 @@ void Asteroid::buildVBO(){
     glVertices.shrink_to_fit();
     vboDirty = false;
 }
+
+//-------------------------------------------------------------
+// Asteroid::drawVBO() render VBO
+//-------------------------------------------------------------
 void Asteroid::drawVBO(){
     if(!vboVertices || uploadedVertexCount==0) return;
  
@@ -2503,6 +2536,10 @@ void Asteroid::drawVBO(){
     glDisableClientState(GL_COLOR_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+//-------------------------------------------------------------
+// Asteroid::calibrateNoise() calibrate iso noise
+//-------------------------------------------------------------
 void Asteroid::calibrateNoise(){
     if(!rnoise) return;
     
@@ -2540,9 +2577,11 @@ void Asteroid::calibrateNoise(){
         noiseOffset = -hscale - minDev * noiseScale;
     }
     TheNoise.rseed = seed;
-    
+//#define SHOW_CALIBRATE   
+#ifdef SHOW_CALIBRATE   
     cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
          << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
+#endif
 }
 
 //-------------------------------------------------------------

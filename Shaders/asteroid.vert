@@ -72,6 +72,18 @@ void main() {
     EyePos        = normalize(mpoint.xyz);   // direction to asteroid center from eye
     WorldNormal   = normalize(tp);           // outward direction in object space
 
+	vec3 wn = normalize(tp);  // templatePosition normalized = outward surface direction
+	vec3 up = vec3(0.0, 1.0, 0.0);
+	if (abs(dot(wn, up)) > 0.9)
+	    up = vec3(1.0, 0.0, 0.0);  // avoid degeneracy at poles
+	vec3 tangent  = normalize(cross(wn, up));
+	vec3 binormal = normalize(cross(wn, tangent));
+	
+	// Transform tangent to eye space and store in Tangent.xy
+	vec3 eyeTangent = normalize(mat3(gl_ModelViewMatrix) * tangent);
+	Tangent.x = eyeTangent.x;
+	Tangent.y = eyeTangent.y;
+	
 #ifdef COLOR
     Color = gl_Color;
 #endif
@@ -85,6 +97,6 @@ void main() {
         gl_TexCoord[i] = vec4(coords, depth);
     }
     WorldNormal = faceNormal.xyz;   // face normal for slope-based texture blending
-    Tangent.z   = 0.0;              // no burial/slope coarsening for asteroid
+    Tangent.z  = 0.0;              // no burial/slope coarsening for asteroid
 #endif
 }

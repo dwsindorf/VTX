@@ -384,7 +384,6 @@ bool Texture::setProgram(){
 	//int tid=num_tids;
 	int texid=TerrainProperties::tid;
 	tid=texid;
-	//cout << "Texture::setProgram tid:"<< tid << " 2d:"<< t2d()<<endl;
 	glActiveTexture(GL_TEXTURE0+texid);
 	begin();
 
