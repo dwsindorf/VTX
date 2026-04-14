@@ -97,6 +97,7 @@ void main() {
         gl_TexCoord[i] = vec4(coords, depth);
     }
     WorldNormal = faceNormal.xyz;   // face normal for slope-based texture blending
-    Tangent.z  = 0.0;              // no burial/slope coarsening for asteroid
+    float slope = dot(norm, up);    
+    Tangent.z = abs(slope);
 #endif
 }

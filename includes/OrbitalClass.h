@@ -434,6 +434,8 @@ public:
 	int    maxDepth;
 	bool cliptest;
 	bool backtest;
+	bool shadow_mode;
+	bool shadow_start;
 	Asteroid(Orbital *m, double s, double r);
 	~Asteroid();
 	const char *name()			{ return "Asteroid";}
@@ -454,6 +456,11 @@ public:
 	void applyNoiseFunction();
 	void invalidate();
 	void set_lighting();
+	bool supports_shadows() { return true; }
+	int  shadow_pass();
+	void render_zvals();
+	void render_shadows();
+	Bounds *bounds();
 
 };
 //************************************************************

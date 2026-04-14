@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-#define PRINT_STATS
+//#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2006,6 +2006,9 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	maxDepth=10;
 	cliptest=true;
 	backtest=true;
+	shadow_mode=false;
+	shadow_start=false;
+	
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2122,7 +2125,7 @@ int Asteroid::adapt_pass()
 {
     clr_selected();
     if(TheScene->viewobj==this)
-        clear_pass(FG0);
+        select_pass(FG0);
     return selected();
 }
 
@@ -2133,9 +2136,20 @@ int Asteroid::render_pass()
 {
 	clr_selected();
     if(TheScene->viewobj==this)
-        clear_pass(FG0);
+        select_pass(FG0);
     return selected();
 }
+
+//-------------------------------------------------------------
+// Asteroid::render_pass() select for shadow pass
+//-------------------------------------------------------------
+int Asteroid::shadow_pass(){
+    clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FGS);
+    return selected();
+}
+
 double Asteroid::far_height() {
     return size;
 }
@@ -2178,17 +2192,15 @@ bool Asteroid::setProgram(){
     if(!Raster.do_shaders)
         return false;
     
-    // Shadow pass bypass — not yet supported
-    static bool asteroid_shadows = false;
-    if(!asteroid_shadows && PlaceObjMgr::shadow_mode)
+    if(shadow_mode)
         return false;
         
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
     
-    if(asteroid_shadows && Raster.shadows() && !TheScene->light_view())
-        sprintf(defs+strlen(defs), "#define SHADOWS\n");
+    if(Raster.shadows() && !TheScene->light_view() && !TheScene->test_view())        
+    	sprintf(defs+strlen(defs), "#define SHADOWS\n");
 
     GLSLMgr::setDefString(defs);
 
@@ -2276,7 +2288,7 @@ bool Asteroid::setProgram(){
     vars.newFloatVec("Shadow",
         shadow_color.red(), shadow_color.green(), shadow_color.blue(),
         shadow_intensity);
-
+    //shadow_color.print();
     //vars.newFloatVec("mpoint", point.x, point.y, point.z, 0.0f);
  
     vars.newFloatVar("shadow_darkness",  (float)shadow_intensity);
@@ -2293,8 +2305,8 @@ bool Asteroid::setProgram(){
     GLSLMgr::setProgram();
     GLSLMgr::loadVars();
         
-    GLSLMgr::setFBOWritePass();
- 
+    GLSLMgr::setFBOReadWritePass();
+
     return true;
 }
 
@@ -2318,13 +2330,22 @@ void Asteroid::adapt_object(){
     if(!tree) {
         return;
     }
+    bool moved = TheScene->moved();
+    bool changed = TheScene->changed_detail();
          
-    if(TheScene->changed_detail()){
+    if(changed){
         rebuildTree();
         vboDirty = true;
     }
-    if(!TheScene->moved() && !vboDirty)
+ 
+    if (shadow_mode && !shadow_start) {
+       moved = false;
+       changed = false;
+    }
+    if(!moved && !vboDirty)
         return;
+    cout<<"adapt_object "<<TheScene->bgpass<<endl;
+
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
     Point up,right, forward;
@@ -2358,11 +2379,18 @@ void Asteroid::render_object(){
 	extern int test7;
     if(!tree || !tree->root)
         return;
-    if(TheScene->bgpass==FG1)
-    	return;
-
+ 
     if(vboDirty) 
     	buildVBO();
+    
+    if(TheScene->buffers_mode()){
+		if(Render.draw_szvals())
+			render_zvals();         // Step 1: light POV depth
+		else if(Render.draw_normals())
+			render_shadows();       // Step 2: eye POV shadow comparison
+		return;
+	}
+    cout<<"render_object "<<Raster.shadow_vcnt<<" "<<(TheScene->buffers_mode() && Render.draw_szvals())<<endl;
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     
@@ -2380,6 +2408,10 @@ void Asteroid::render_object(){
     //glEnable(GL_CULL_FACE);
     
     if (Raster.do_shaders) {
+    	Raster.shadow_value = shadow_color.alpha();
+    	Raster.shadow_color = shadow_color;
+    	Raster.shadow_color.set_alpha(1);
+    	Raster.shadow_darkness = 1.0;
         glEnable(GL_BLEND);
         set_lighting();
 		setProgram();
@@ -2393,6 +2425,66 @@ void Asteroid::render_object(){
     glPopAttrib();
 }
 
+Bounds *Asteroid::bounds(){
+	static Bounds asteroid_bounds;
+    double d = TheView->epoint.distance(point);
+    double mh = size * (1.0 + max_height());
+    asteroid_bounds.zn = std::max(d - mh, size * 0.001);
+    asteroid_bounds.zf = d + mh;
+    return &asteroid_bounds;
+}
+
+
+void Asteroid::render_zvals(){
+	if(Raster.shadow_vcnt==0)
+		shadow_start=true;
+	shadow_mode=true;
+    cout<<"render_zvals"<<endl;
+   
+    Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
+    Raster.setProgram(Raster.PLACE_SHADOWS);
+
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	int cmask[4];
+	glGetIntegerv(GL_COLOR_WRITEMASK,cmask); // get original color mask (usually all true)
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable writing to color buffer
+	glDisable(GL_DITHER);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_BLEND);
+	glDisable(GL_FOG);
+
+    drawVBO();
+    
+	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
+
+	glPopAttrib();
+	
+	shadow_start=false;
+	shadow_mode=false;
+}
+
+void Asteroid::render_shadows(){
+//	render_object();
+	   cout<<"render_shadows"<<endl;
+
+	shadow_mode=true;
+	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
+    Raster.setProgram(Raster.PLACE_SHADOWS);
+ 
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glDisable(GL_DITHER);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_BLEND);
+	glDisable(GL_FOG);
+
+	//render_object();	
+	drawVBO();
+    glPopAttrib();
+	shadow_mode=false;
+}
 //-------------------------------------------------------------
 // Asteroid::applyAttributes() set color
 //-------------------------------------------------------------

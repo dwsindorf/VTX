@@ -44,7 +44,7 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
 
 #ifdef SHADOWS
     float shadow         = texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    float shadow_diffuse = lerp(Shadow.a, 0.0, 1.0, 1.0, shadow);
+    float shadow_diffuse = mix(1.0 - Shadow.a, 1.0, shadow);
 #else
     float shadow_diffuse = 1.0;
 #endif
@@ -77,12 +77,10 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
             specular += Specular.rgb * intensity * pow(sdp, shine) * Specular.a;
         }
     }
-
-    diffuse = mix(diffuse, Shadow.rgb, 1.0 - shadow_diffuse);
-
+    //diffuse = mix(diffuse, Shadow.rgb, 1.0 - shadow_diffuse);
     return vec4(ambient
-              + diffuse  * BaseColor * Diffuse.a * shadow_diffuse
-              + specular, 0.0);
+              + diffuse * BaseColor * Diffuse.a * shadow_diffuse
+              + specular * shadow_diffuse, 0.0);
 }
 #endif
 
@@ -106,7 +104,6 @@ void main() {
 #if NBUMPS > 0
     normal = normalize(normal + bump);
 #endif
-
     float illumination = 0.0;
 
 #if NLIGHTS > 0
@@ -116,14 +113,7 @@ void main() {
         illumination = c.a;
     }
 #endif
-
-#ifdef SHADOWS
-    float shadow = texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    color.rgb = mix(color.rgb, Shadow.rgb, shadow * Shadow.a);
-#endif
     gl_FragData[0] = vec4(color.xyz, 1.0);
-   // gl_FragData[0] = vec4(fract(gl_TexCoord[0].xyz), 1.0);  // visualize tex coords
-    //gl_FragData[1] = vec4(0.0, illumination, 0.05, 0.0);
     gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
     
 }
