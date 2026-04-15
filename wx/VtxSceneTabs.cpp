@@ -797,6 +797,7 @@ void VtxSceneTabs::OnUpdateGenerateQuality(wxUpdateUIEvent& event){
 
 void VtxSceneTabs::OnShadowViewsSelect(wxCommandEvent& event){
 	Raster.shadow_views=event.GetSelection()+1;	
+	Raster.init_shadows();
 	TheScene->set_changed_render();
 
 }

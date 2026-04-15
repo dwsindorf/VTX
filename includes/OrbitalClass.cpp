@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-//#define PRINT_STATS
+#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -1990,7 +1990,8 @@ System *System::newInstance(){
 //************************************************************
 Asteroid::Asteroid(Orbital *m, double s, double r):
 		vboVertices(0),Spheroid(m,s)
-{		
+{
+	orbit_radius=r;
 	rnoise=nullptr;
 	vnoise=nullptr;
 	color=nullptr;
@@ -2196,10 +2197,6 @@ bool Asteroid::setProgram(){
     if(shadow_mode)
         return false;
     
-    Hscale = hscale;
-    Rscale = size * hscale;
-    Gscale = 1.0 / Rscale;
-    
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
@@ -2340,7 +2337,6 @@ void Asteroid::adapt_object(){
     }
     if(!moved && !vboDirty)
         return;
-    cout<<"adapt_object "<<TheScene->bgpass<<endl;
 
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
@@ -2365,6 +2361,8 @@ void Asteroid::adapt_object(){
 #ifdef PRINT_STATS        
         MCGenerator::printStats();
 #endif
+    if(!changed)
+    MCGenerator::resetStats();
     vboDirty = true;
 }
 
@@ -2378,7 +2376,11 @@ void Asteroid::render_object(){
  
     if(vboDirty) 
     	buildVBO();
-    
+ 
+    Hscale = hscale;
+    Rscale = size * hscale;
+    Gscale = 1.0 / Rscale;
+
     if(TheScene->buffers_mode()){
 		if(Render.draw_szvals())
 			render_zvals();         // Step 1: light POV depth
@@ -2434,7 +2436,6 @@ void Asteroid::render_zvals(){
 	if(Raster.shadow_vcnt==0)
 		shadow_start=true;
 	shadow_mode=true;
-    cout<<"render_zvals"<<endl;
    
     Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
     Raster.setProgram(Raster.PLACE_SHADOWS);
@@ -2461,9 +2462,6 @@ void Asteroid::render_zvals(){
 }
 
 void Asteroid::render_shadows(){
-//	render_object();
-	   cout<<"render_shadows"<<endl;
-
 	shadow_mode=true;
 	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
     Raster.setProgram(Raster.PLACE_SHADOWS);

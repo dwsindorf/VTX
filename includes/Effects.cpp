@@ -597,7 +597,7 @@ void EffectsMgr::render_shadows(){
 		if(!all_lights())
 			break;
 	}
-	shadow_vcnt=0;
+	//shadow_vcnt=0;
 	glDrawBuffers(2,mrt1);
 	set_render_type(0);
 	glUseProgramObjectARB(0);
