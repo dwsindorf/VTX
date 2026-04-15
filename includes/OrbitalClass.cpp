@@ -1989,10 +1989,8 @@ System *System::newInstance(){
 // Asteroid class
 //************************************************************
 Asteroid::Asteroid(Orbital *m, double s, double r):
-		vboVertices(0),Spheroid(m,s,r)
+		vboVertices(0),Spheroid(m,s)
 {		
-	delete map;
-	map=nullptr;
 	rnoise=nullptr;
 	vnoise=nullptr;
 	color=nullptr;
@@ -2059,6 +2057,9 @@ void Asteroid::invalidate(){
 void Asteroid::init(){
 	Orbital::init();
 	terrain.getChildren((int)ID_TEXTURE,texs);
+	terrain.init();
+	terrain.init_render();
+	terrain.set_eval_mode(0);
 	vnoise=terrain.getChild(ID_POINT);
 	color=terrain.getChild(ID_COLOR);
 	TNvar *var=exprs.getVar((char*)"noise.expr");
@@ -2194,7 +2195,11 @@ bool Asteroid::setProgram(){
     
     if(shadow_mode)
         return false;
-        
+    
+    Hscale = hscale;
+    Rscale = size * hscale;
+    Gscale = 1.0 / Rscale;
+    
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
@@ -2209,12 +2214,8 @@ bool Asteroid::setProgram(){
     int pid = 0;
     int nbumps = 0;
     bool cvalid = false;
-
     if(color && color->isEnabled())
         cvalid = true;
-
-    int mode = CurrentScope->passmode();
-    CurrentScope->set_spass();
     nbumps = 0;
     Texture::reset();  // reset texture system state
     if(Render.textures()){
@@ -2246,9 +2247,9 @@ bool Asteroid::setProgram(){
 
     GLhandleARB program = GLSLMgr::programHandle();
     if(!program){
-        CurrentScope->set_passmode(mode);
         return false;
     }
+    GLSLMgr::loadVars();
 
     // === setProgram pass — set texture uniforms ===
     tid=0;
@@ -2261,7 +2262,7 @@ bool Asteroid::setProgram(){
             texture->eval();
             texture->pid = pid;
             texture->setProgram();
-            // set instance & active to the same value
+           // set instance & active to the same value
             char str[64];
 			sprintf(str, "tex2d[%d].instance", i);
 			GLint loc = glGetUniformLocationARB(program, str);
@@ -2274,11 +2275,10 @@ bool Asteroid::setProgram(){
 
         }
     }
-    CurrentScope->set_passmode(mode);
-
+    
     // === Set uniforms ===
     GLSLVarMgr vars;
-    
+        
     vars.newFloatVec("Diffuse",
         diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient",
@@ -2287,11 +2287,7 @@ bool Asteroid::setProgram(){
          specular.red(), specular.green(), specular.blue(), specular.alpha());
     vars.newFloatVec("Shadow",
         shadow_color.red(), shadow_color.green(), shadow_color.blue(),
-        shadow_intensity);
-    //shadow_color.print();
-    //vars.newFloatVec("mpoint", point.x, point.y, point.z, 0.0f);
- 
-    vars.newFloatVar("shadow_darkness",  (float)shadow_intensity);
+		shadow_color.alpha());
     float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
     
     vars.newFloatVar("wscale",           wscale);
@@ -2302,8 +2298,8 @@ bool Asteroid::setProgram(){
     vars.setProgram(program);
     vars.loadVars();
     
-    GLSLMgr::setProgram();
-    GLSLMgr::loadVars();
+    //GLSLMgr::setProgram();
+    //GLSLMgr::loadVars();
         
     GLSLMgr::setFBOReadWritePass();
 
@@ -2390,7 +2386,6 @@ void Asteroid::render_object(){
 			render_shadows();       // Step 2: eye POV shadow comparison
 		return;
 	}
-    cout<<"render_object "<<Raster.shadow_vcnt<<" "<<(TheScene->buffers_mode() && Render.draw_szvals())<<endl;
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     
@@ -2472,7 +2467,7 @@ void Asteroid::render_shadows(){
 	shadow_mode=true;
 	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
     Raster.setProgram(Raster.PLACE_SHADOWS);
- 
+    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_DITHER);
 	glDisable(GL_TEXTURE_2D);
@@ -2480,7 +2475,6 @@ void Asteroid::render_shadows(){
 	glDisable(GL_BLEND);
 	glDisable(GL_FOG);
 
-	//render_object();	
 	drawVBO();
     glPopAttrib();
 	shadow_mode=false;
@@ -2720,6 +2714,7 @@ Spheroid::Spheroid(Orbital *m, double s) :
 #endif
 	symmetry=1;
 	map=0;
+	first=0;
 }
 Spheroid::Spheroid(Orbital *m, double s, double r) :
 	Orbital(m,s,r)
@@ -2913,6 +2908,8 @@ void Spheroid::set_focus(Point &selm)
 //#define DEBUG_SCALE
 int  Spheroid::scale(double &zn, double &zf)
 {
+	if(!isEnabled())
+		return OFFSCREEN;
     int v=getvis();
     int t;
 
@@ -2984,8 +2981,10 @@ int Spheroid::selection_pass()
 int Spheroid::adapt_pass()
 {
 	clr_selected();
+    if(!local_group() || offscreen() || !isEnabled())
+		return 0;
 
-    if(!local_group() || !view_group() || offscreen())
+    if(view_group())
         clear_pass(BG2);
     else
         clear_pass(BG1);
@@ -3148,7 +3147,7 @@ void Spheroid::locate()
 void Spheroid::select()
 {
 	set_ref();
-	if(map && included()){
+	if(isEnabled() && map && included()){
 		TheScene->pushMatrix();
 
 		set_tilt();
@@ -3241,7 +3240,7 @@ void Spheroid::save(FILE *fp)
 //-------------------------------------------------------------
 void Spheroid::adapt_object()
 {
-	if(map){
+	if(isEnabled() && map){
 		exprs.eval();
 		set_geometry();
 		terrain.init();
@@ -3258,7 +3257,7 @@ void Spheroid::adapt_object()
 //-------------------------------------------------------------
 void Spheroid::render_object()
 {
-	if(map){
+	if(isEnabled() && map){
 		first=1;
 		terrain.init_render();
 		Td.albedo=albedo;
@@ -3303,6 +3302,9 @@ double Spheroid::height(double t, double p)
 //-------------------------------------------------------------
 void Spheroid::set_geometry()
 {
+	if(!isEnabled())
+		return;
+
 	if(map){
 		map->radius=size;
 		map->symmetry=symmetry;
@@ -3318,6 +3320,9 @@ void Spheroid::set_geometry()
 //-------------------------------------------------------------
 Bounds *Spheroid::bounds()
 {
+	if(!isEnabled())
+		return 0;
+
 	if(!map || !allows_selection())
 		return 0;
 	if(!map->vbounds.valid()){
@@ -3331,6 +3336,9 @@ Bounds *Spheroid::bounds()
 //-------------------------------------------------------------
 void Spheroid::init()
 {
+	if(!isEnabled())
+ 		return;
+
 	//Scene::timer.showTime(typeName());
 	Gscale=1/hscale/size;
 	exprs.init();
@@ -3388,6 +3396,9 @@ double Spheroid::far_height()
 //-------------------------------------------------------------
 void Spheroid::init_view()
 {
+	if(!isEnabled())
+		return;
+
 	TheScene->gstride=0.1*LY;
 
 	children.ss();
@@ -4527,7 +4538,8 @@ int Planetoid::adapt_pass()
 	clr_selected();
 
     if(!local_group() || !view_group() || offscreen()|| !isEnabled())
-        clear_pass(BG4);
+        //clear_pass(BG4);
+    	return 0;
     else{
         if(TheScene->viewobj==this)
             clear_pass(FG0);
@@ -4671,10 +4683,12 @@ void Planetoid::render() {
 //-------------------------------------------------------------
 void Planetoid::init_render()
 {
-	checkForOcean();
- 	visit(&Object3D::init_render);
+	visit(&Object3D::init_render);
 
-	double dp=0;
+ 	if(!isEnabled())
+ 		return;
+	checkForOcean();
+ 	double dp=0;
 	double dpmin=1,dpmax=-1;
 	Raster.blend_factor=Raster.darken_factor=0;
 
@@ -4808,6 +4822,9 @@ void Planetoid::adapt_object()
 //-------------------------------------------------------------
 void Planetoid::render_object()
 {
+	if(!isEnabled())
+		return;
+
  	first=1;
 	set_lighting();
 	Raster.init_lights(1);

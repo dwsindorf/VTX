@@ -77,7 +77,7 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
             specular += Specular.rgb * intensity * pow(sdp, shine) * Specular.a;
         }
     }
-    //diffuse = mix(diffuse, Shadow.rgb, 1.0 - shadow_diffuse);
+    diffuse = mix(diffuse, Shadow.rgb, 1.0 - shadow_diffuse);
     return vec4(ambient
               + diffuse * BaseColor * Diffuse.a * shadow_diffuse
               + specular * shadow_diffuse, 0.0);
