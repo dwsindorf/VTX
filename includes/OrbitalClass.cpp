@@ -2026,12 +2026,16 @@ Asteroid::~Asteroid()
 //RNoise
 int Asteroid::getRNoiseFunction(char *buff){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
-	TNode *expr=var->getExprNode();
-	if(!expr)
-		expr=var->right;
 	buff[0]=0;
-	expr->valueString(buff);
-	return 1;
+	if(var){
+		TNode *expr=var->getExprNode();
+		if(!expr)
+			expr=var->right;
+		expr->valueString(buff);
+		return 1;
+	}
+	else
+		return 0;
 }
 void Asteroid::setRNoiseFunction(char *expr){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
@@ -2039,25 +2043,31 @@ void Asteroid::setRNoiseFunction(char *expr){
 		var->setExpr(expr);
 	else
 		var=addExprVar("noise.expr",expr);
-	//rnoise=var->right;
 	var->applyExpr();
     rnoise=var->right;
 }
 // VNoise
+void Asteroid::setVNoiseFunction(char *expr){
+	TNvar *var=exprs.getVar((char*)"vertex.expr");
+	if(var)
+		var->setExpr(expr);
+	else
+		var=addExprVar("vertex.expr",expr);
+	var->applyExpr();
+    vnoise=var->right;
+}
 int Asteroid::getVNoiseFunction(char *buff){
 	buff[0]=0;
-	if(vnoise){
-		vnoise->valueString(buff);
+	TNvar *var=exprs.getVar((char*)"vertex.expr");
+	if(var){
+		TNode *expr=var->getExprNode();
+		if(!expr)
+			expr=var->right;		
+		expr->valueString(buff);		
 		return 1;
 	}
-	return 0;
-}
-void Asteroid::setVNoiseFunction(char *expr){
-	NodeIF *pnt=TheScene->parse_node(expr);
-	if(pnt->typeValue()==ID_POINT){
-		DFREE(((TNpoint*)vnoise)->right)
-		((TNpoint *)vnoise)->right=((TNpoint *)pnt)->right;
-	}
+	else
+		return 0;
 }
 //-------------------------------------------------------------
 // Asteroid::invalidate() invalidate
@@ -2076,13 +2086,18 @@ void Asteroid::init(){
 	terrain.init();
 	terrain.init_render();
 	terrain.set_eval_mode(0);
-	vnoise=terrain.getChild(ID_POINT);
 	color=terrain.getChild(ID_COLOR);
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	if(var)
 		rnoise=var->right;
 	else
 		setRNoiseFunction("noise(GRADIENT|NLOD,0,2)");
+	
+	var=exprs.getVar((char*)"vertex.expr");
+	if(var)
+		vnoise=var->right;
+	else
+		vnoise=0;
 
 	cout<<"=== ASTEROID INIT ===" << endl;
 	cout<<"size: " << size << endl;
@@ -2374,10 +2389,10 @@ void Asteroid::adapt_object(){
     TheNoise.rseed=seed;
     
 #ifdef PRINT_STATS        
-        MCGenerator::printStats();
+    MCGenerator::printStats();
 #endif
     if(!changed)
-    MCGenerator::resetStats();
+    	MCGenerator::resetStats();
     vboDirty = true;
 }
 
@@ -2446,7 +2461,6 @@ Bounds *Asteroid::bounds(){
     return &asteroid_bounds;
 }
 
-
 void Asteroid::render_zvals(){
 	if(Raster.shadow_vcnt==0)
 		shadow_start=true;
@@ -2492,29 +2506,42 @@ void Asteroid::render_shadows(){
     glPopAttrib();
 	shadow_mode=false;
 }
+
 //-------------------------------------------------------------
-// Asteroid::applyAttributes() set color
+// Asteroid::applyAttributes() set color, vertex disolacement
 //-------------------------------------------------------------
 void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
     bool setVertexColor = (color && color->isEnabled());
-    if(!setVertexColor) return;
+    bool doDisplace = vnoise;
+    if(!setVertexColor  && !doDisplace) return;
     
-    int seed = TheNoise.rseed;
-    TheNoise.rseed = rseed;
-        
     for(auto& tri : mesh){
         for(int v=0; v<3; v++){
         	Point np(tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
             TheNoise.set(np);
-            SINIT;
-            color->eval();
-            if(S0.cvalid())
-                tri.colors[v] = S0.c;
-            else
-                tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
+            if(doDisplace){
+				SINIT;				
+				vnoise->eval();
+				Point dir = tri.vertices[v].normalize();
+				if(S0.pvalid()){
+					Point delta = dir * S0.p * size*hscale;  // scale to asteroid size
+					tri.vertices[v] = tri.vertices[v] - delta;
+				}
+				else if(S0.svalid()){
+					Point delta = dir * S0.s * size*hscale;  // scale to asteroid size
+					tri.vertices[v] = tri.vertices[v] - delta;
+				}
+			}
+            if(setVertexColor){
+                SINIT;
+				color->eval();
+				if(S0.cvalid())
+					tri.colors[v] = S0.c;
+				else
+					tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
+            }
         }
     }
-    TheNoise.rseed = seed;
 }
 
 //-------------------------------------------------------------

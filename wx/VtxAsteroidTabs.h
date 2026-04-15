@@ -60,7 +60,7 @@ public:
 		delete ShadowSlider;
 		delete SymmetrySlider;
 		delete RNoiseExpr;
-		//delete VNoiseExpr;
+		delete VNoiseExpr;
 
 	}
 	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
@@ -162,13 +162,15 @@ public:
 
     void OnChangedRNoiseExpr(wxCommandEvent& event){
     	object()->setRNoiseFunction((char*)RNoiseExpr->GetValue().ToAscii());
-    	//object()->applyRNoiseFunction();
     	rebuild();
     }
 
     void OnChangedVNoiseExpr(wxCommandEvent& event){
-    	object()->setVNoiseFunction((char*)VNoiseExpr->GetValue().ToAscii());
-    	rebuild();
+    	char *vnoise=(char*)VNoiseExpr->GetValue().ToAscii();
+    	if(vnoise && strlen(vnoise)>0){
+			object()->setVNoiseFunction(vnoise);
+			rebuild();
+    	}
     }
 
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
