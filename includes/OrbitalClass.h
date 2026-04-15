@@ -451,9 +451,10 @@ public:
 	double height(double t, double p);
 	int render_pass();
 	int adapt_pass();
-	int getNoiseFunction(char *c);
-	void setNoiseFunction(char *c);
-	void applyNoiseFunction();
+	int getRNoiseFunction(char *c);
+	void setRNoiseFunction(char *c);
+	int getVNoiseFunction(char *c);
+	void setVNoiseFunction(char *c);
 	void invalidate();
 	void set_lighting();
 	bool supports_shadows() { return true; }

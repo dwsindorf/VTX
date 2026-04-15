@@ -19,7 +19,9 @@ protected:
 	SliderCtrl *HscaleSlider;
 	SliderCtrl *ShineSlider;
 	SliderCtrl *AlbedoSlider;
-	ExprTextCtrl   *NoiseExpr;
+	SliderCtrl *SymmetrySlider;
+	ExprTextCtrl   *RNoiseExpr;
+	ExprTextCtrl   *VNoiseExpr;
 
 	ColorSlider *AmbientSlider;
 	ColorSlider *SpecularSlider;
@@ -56,7 +58,9 @@ public:
 		delete SpecularSlider;
 		delete DiffuseSlider;
 		delete ShadowSlider;
-		delete NoiseExpr;
+		delete SymmetrySlider;
+		delete RNoiseExpr;
+		//delete VNoiseExpr;
 
 	}
 	bool Create(wxWindow *parent, wxWindowID id, const wxPoint &pos =
@@ -85,6 +89,7 @@ public:
 		object()->size = val;
 		rebuild();
 	}
+	
 	void OnEndHscaleSlider(wxScrollEvent &event) {
 		HscaleSlider->setValueFromSlider();
 		double val = HscaleSlider->getValue();
@@ -98,6 +103,22 @@ public:
 		HscaleSlider->setValueFromText();
 		double val = HscaleSlider->getValue();
 		object()->hscale = val;
+		rebuild();
+	}
+
+	void OnEndSymmetrySlider(wxScrollEvent &event) {
+		SymmetrySlider->setValueFromSlider();
+		double val = SymmetrySlider->getValue();
+		object()->symmetry = val;
+		rebuild();
+	}
+	void OnSymmetrySlider(wxScrollEvent &event) {
+		SymmetrySlider->setValueFromSlider();
+	}
+	void OnSymmetryText(wxCommandEvent &event) {
+		SymmetrySlider->setValueFromText();
+		double val = SymmetrySlider->getValue();
+		object()->symmetry = val;
 		rebuild();
 	}
 
@@ -139,12 +160,17 @@ public:
         TheView->set_changed_detail();
     }
 
-    void OnChangedNoiseExpr(wxCommandEvent& event){
-    	object()->setNoiseFunction((char*)NoiseExpr->GetValue().ToAscii());
-    	object()->applyNoiseFunction();
+    void OnChangedRNoiseExpr(wxCommandEvent& event){
+    	object()->setRNoiseFunction((char*)RNoiseExpr->GetValue().ToAscii());
+    	//object()->applyRNoiseFunction();
     	rebuild();
     }
-    
+
+    void OnChangedVNoiseExpr(wxCommandEvent& event){
+    	object()->setVNoiseFunction((char*)VNoiseExpr->GetValue().ToAscii());
+    	rebuild();
+    }
+
 	DEFINE_SLIDER_VAR_EVENTS(OrbitPhase,object()->orbit_phase)
 	DEFINE_SLIDER_VAR_EVENTS(OrbitTilt,object()->orbit_skew)
 	DEFINE_SLIDER_VAR_EVENTS(Day,object()->day)

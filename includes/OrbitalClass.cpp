@@ -2021,9 +2021,10 @@ Asteroid::~Asteroid()
 }
 
 //-------------------------------------------------------------
-// Asteroid::[get,set,apply]NoiseFunction - called from wx window
+// Asteroid::[get,set]{R,V]NoiseFunction - called from wx window
 //-------------------------------------------------------------
-int Asteroid::getNoiseFunction(char *buff){
+//RNoise
+int Asteroid::getRNoiseFunction(char *buff){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	TNode *expr=var->getExprNode();
 	if(!expr)
@@ -2032,24 +2033,38 @@ int Asteroid::getNoiseFunction(char *buff){
 	expr->valueString(buff);
 	return 1;
 }
-void Asteroid::setNoiseFunction(char *expr){
+void Asteroid::setRNoiseFunction(char *expr){
 	TNvar *var=exprs.getVar((char*)"noise.expr");
 	if(var)
 		var->setExpr(expr);
 	else
 		var=addExprVar("noise.expr",expr);
-	rnoise=var->right;
-}
-void Asteroid::applyNoiseFunction(){
-	TNvar *var=exprs.getVar((char*)"noise.expr");
+	//rnoise=var->right;
 	var->applyExpr();
-	rnoise=var->right;
+    rnoise=var->right;
 }
-
+// VNoise
+int Asteroid::getVNoiseFunction(char *buff){
+	buff[0]=0;
+	if(vnoise){
+		vnoise->valueString(buff);
+		return 1;
+	}
+	return 0;
+}
+void Asteroid::setVNoiseFunction(char *expr){
+	NodeIF *pnt=TheScene->parse_node(expr);
+	if(pnt->typeValue()==ID_POINT){
+		DFREE(((TNpoint*)vnoise)->right)
+		((TNpoint *)vnoise)->right=((TNpoint *)pnt)->right;
+	}
+}
+//-------------------------------------------------------------
+// Asteroid::invalidate() invalidate
+//-------------------------------------------------------------
 void Asteroid::invalidate(){
 	NodeIF::invalidate();
 	rebuild();
-	
 }
 
 //-------------------------------------------------------------
@@ -2067,7 +2082,7 @@ void Asteroid::init(){
 	if(var)
 		rnoise=var->right;
 	else
-		setNoiseFunction("noise(GRADIENT|NLOD,0,2)");
+		setRNoiseFunction("noise(GRADIENT|NLOD,0,2)");
 
 	cout<<"=== ASTEROID INIT ===" << endl;
 	cout<<"size: " << size << endl;
@@ -2672,13 +2687,13 @@ void Asteroid::calibrateNoise(){
 // Asteroid::makeField - Create scalar field from rnoise
 //-------------------------------------------------------------
 SurfaceFunction Asteroid::makeField() {
-    double comp = symmetry;
-    double comp_factor = 1;//std::max((1.0 - 2*comp), 0.2);
+    double comp = 1-symmetry;
+    double comp_factor = std::max((1.0 - comp), 0.2);
     bool useNoisyIsoSurface = this->hscale > 0;
  
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
-        double ey = 2*y;
+        double ey = 2*(y/comp_factor);
         double ez = 2*(z/comp_factor);
         double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
         double baseEllipsoid = ellipsoidDist - 1.0;

@@ -44,10 +44,14 @@ enum {
 	ID_SHADOW_SLDR,
 	ID_SHADOW_TEXT,
 	ID_SHADOW_COLOR,
-	ID_NOISE_EXPR,
+	ID_RNOISE_EXPR,
+	ID_VNOISE_EXPR,
 	ID_MAXDEPTH,
 	ID_CLIPTEST,
-	ID_BACKTEST
+	ID_BACKTEST,
+	ID_SYMMETRY_SLDR,
+	ID_SYMMETRY_TEXT,
+
 
 };
 
@@ -58,8 +62,12 @@ IMPLEMENT_CLASS(VtxAsteroidTabs, wxNotebook)
 BEGIN_EVENT_TABLE(VtxAsteroidTabs, wxNotebook)
 
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxAsteroidTabs::OnNameText)
-EVT_TEXT_ENTER(ID_NOISE_EXPR,OnChangedNoiseExpr)
+EVT_TEXT_ENTER(ID_RNOISE_EXPR,OnChangedRNoiseExpr)
+EVT_TEXT_ENTER(ID_VNOISE_EXPR,OnChangedVNoiseExpr)
+
 SET_SLIDER_EVENTS(HSCALE,VtxAsteroidTabs,Hscale)
+SET_SLIDER_EVENTS(SYMMETRY,VtxAsteroidTabs,Symmetry)
+
 
 SET_SLIDER_EVENTS(CELLSIZE,VtxAsteroidTabs,CellSize)
 SET_SLIDER_EVENTS(RADIUS,VtxAsteroidTabs,Size)
@@ -167,7 +175,7 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
 	
 	wxStaticText *tests=new wxStaticText(panel,-1,"Tests",wxDefaultPosition,wxSize(-1,-1));
-	hline->Add(tests, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
+	hline->Add(tests, 5, wxALIGN_LEFT|wxTop|wxLEFT,5);
 	
 	m_clip=new wxCheckBox(panel, ID_CLIPTEST, "Fustrum");
 	m_clip->SetToolTip("Decrease cells in off-screen areas");
@@ -227,10 +235,22 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 
 	hline->Add(HscaleSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 	
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,140);
-	hline->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+	RNoiseExpr=new ExprTextCtrl(panel,ID_RNOISE_EXPR,"RNoise",LABEL2S,140);
+	hline->Add(RNoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
 	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	SymmetrySlider = new SliderCtrl(panel, ID_SYMMETRY_SLDR, "Symmetry", LABEL2B,VALUE2, SLIDER2);
+	SymmetrySlider->setRange(0.2, 1);
+	SymmetrySlider->setValue(1.0);
+	hline->Add(SymmetrySlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	VNoiseExpr=new ExprTextCtrl(panel,ID_VNOISE_EXPR,"VNoise",LABEL2S,140);
+	hline->Add(VNoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
+
+	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
+	
 	boxSizer->Add(shape, 0, wxALIGN_LEFT | wxALL, 0);
 
 	wxBoxSizer *orbit_cntrls = new wxStaticBoxSizer(wxVERTICAL, panel,
@@ -336,6 +356,7 @@ void VtxAsteroidTabs::updateControls() {
 	updateSlider(YearSlider, obj->year);
 	updateSlider(ShineSlider, obj->shine);
 	updateSlider(HscaleSlider, obj->hscale);
+	updateSlider(SymmetrySlider, obj->symmetry);
 
 	updateColor(AmbientSlider, obj->ambient);
 	updateColor(SpecularSlider, obj->specular);
@@ -349,8 +370,12 @@ void VtxAsteroidTabs::updateControls() {
 	m_backface->SetValue(obj->backtest);
 	
 	char buff[256];
-	obj->getNoiseFunction(buff);
-	NoiseExpr->SetValue(buff);
+	obj->getRNoiseFunction(buff);
+	RNoiseExpr->SetValue(buff);
+	
+	obj->getVNoiseFunction(buff);
+	VNoiseExpr->SetValue(buff);
+
 
 	object_name->SetValue(object_node->node->nodeName());
 }
