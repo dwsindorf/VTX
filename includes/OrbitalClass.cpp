@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-#define PRINT_STATS
+//#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2223,10 +2223,9 @@ int Asteroid::scale(double& znear, double& zfar) {
 bool Asteroid::setProgram(){
     if(!Raster.do_shaders)
         return false;
-    
+
     if(shadow_mode)
         return false;
-    
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
@@ -2324,10 +2323,7 @@ bool Asteroid::setProgram(){
 
     vars.setProgram(program);
     vars.loadVars();
-    
-    //GLSLMgr::setProgram();
-    //GLSLMgr::loadVars();
-        
+
     GLSLMgr::setFBOReadWritePass();
 
     return true;
@@ -2400,6 +2396,7 @@ void Asteroid::adapt_object(){
 // Asteroid::render_object() render mesh
 //-------------------------------------------------------------
 void Asteroid::render_object(){
+	static int num_shadows=0;
 	extern int test7;
     if(!tree || !tree->root)
         return;
@@ -2462,8 +2459,10 @@ Bounds *Asteroid::bounds(){
 }
 
 void Asteroid::render_zvals(){
-	if(Raster.shadow_vcnt==0)
+	if(Raster.shadow_vcnt==0){
 		shadow_start=true;
+	}
+
 	shadow_mode=true;
    
     Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
@@ -2494,7 +2493,6 @@ void Asteroid::render_shadows(){
 	shadow_mode=true;
 	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
     Raster.setProgram(Raster.PLACE_SHADOWS);
-    
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glDisable(GL_DITHER);
 	glDisable(GL_TEXTURE_2D);
@@ -2505,6 +2503,7 @@ void Asteroid::render_shadows(){
 	drawVBO();
     glPopAttrib();
 	shadow_mode=false;
+
 }
 
 //-------------------------------------------------------------

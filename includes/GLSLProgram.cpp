@@ -58,6 +58,7 @@ GLSLProgram::GLSLProgram(char *p,char *v, char *f,char *g){
 	strcat(shader_name," ");
 	strcat(shader_name,v);
 	strcat(shader_name," ");
+
 	strcat(shader_name,f);
 	strcat(shader_name," ");
 	strcat(shader_name,g);

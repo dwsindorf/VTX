@@ -463,7 +463,10 @@ void RasterMgr::init_shadows()
 	s_dpmax=shadow_dpmax;
 	s_dpmin=shadow_dpmin;
 	s_rval=0.01*shadow_randval;
-	shadow_vsteps=shadow_views;
+	if(TheScene->viewobj && TheScene->viewobj->typeValue()==ID_ASTEROID)
+		shadow_vsteps=1;
+	else
+		shadow_vsteps=shadow_views;
 		
 	if(shouldUseCascades())
 		buildCascades();

@@ -74,7 +74,6 @@ protected:
 	SliderCtrl *HDRMinSlider;
 	SliderCtrl *HDRMaxSlider;
 	SliderCtrl *ShadowBlurSlider;
-	SliderCtrl *ShadowResSlider;
 	SliderCtrl *ShadowFovSlider;
 	SliderCtrl *ShadowDovSlider;
 
@@ -110,7 +109,6 @@ public:
 		delete HDRMinSlider;
 		delete HDRMaxSlider;
 		delete ShadowBlurSlider;
-		delete ShadowResSlider;
 		delete ShadowFovSlider;
 		delete ShadowDovSlider;
 		delete GridSpacingSlider;
