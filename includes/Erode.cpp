@@ -1,4 +1,3 @@
-
 #include "NodeData.h"
 #include "Erode.h"
 
@@ -217,116 +216,86 @@ void TNerode::applyExpr()
 }
 
 //-------------------------------------------------------------
-// TNerode::eval() evaluate the node
+// TNerode::eval()
+//
+// Elevation-weighted erosion. Single-pass, locally computed, no artefacts.
+//
+// Carves terrain below a threshold elevation, leaving higher ground as mesas.
+//
+//   base < level              → full incision = depth  (valley floors)
+//   level..level+edge         → incision tapers depth→0  (cliff/hillside)
+//   base > level+edge         → no incision  (mesa tops, untouched)
+//
+// Visual controls:
+//   depth  — how much lower the valleys are vs the mesa tops (Z-units)
+//   level  — the Z threshold separating valley from mesa.
+//             Lower level = smaller mesa tops (more terrain below it = more eroded).
+//             Higher level = larger mesa tops.
+//   edge   — width of the cliff zone above 'level'.
+//             Small edge = sharp vertical cliff.
+//             Large edge = gentle hillside slope.
+//   shape  — profile of the cliff face.
+//             1 = linear, 2 = concave (overhangs near top), 0.5 = convex (rounded)
+//
+// args:
+//   0  depth  0.3   incision in Z-units (height difference mesa top to valley floor)
+//   1  level  0.0   Z threshold: below = full erosion, above = mesa top
+//   2  edge   0.4   cliff zone width in Z-units (delta above level)
+//   3  shape  1.0   cliff profile exponent
+//
+// Options: SQR = square the weight (sharper cliff-top edge)
 //-------------------------------------------------------------
-void TNerode::eval() {
+void TNerode::eval()
+{
     INIT;
+    Td.set_flag(EVALUE);
 
     TNarg *arg = (TNarg*) left;
-    double args[11];
-    int n = getargs(arg, args, 10);
-     Td.sediment = 0;
-     Td.erosion = 1;
-     Td.set_flag(EVALUE);
+    double args[4];
+    int n = getargs(arg, args, 4);
 
-    if(!isEnabled() || CurrentScope->rpass()){
-    	if(right)
-    		right->eval();
-    	return;
+    double depth = n > 0 ? args[0] : 0.3;
+    double level = n > 1 ? args[1] : 0.0;
+    double edge  = n > 2 ? args[2] : 0.4;
+    double shape = n > 3 ? args[3] : 1.0;
+
+    if (edge <= 0.0) edge = 0.001;
+    double level_top = level + edge;
+
+    if (!isEnabled()) {
+        if (right) right->eval();
+        return;
+    }
+    if (CurrentScope->rpass()) {
+        Td.set_flag(EVALUE);
+        if (right) right->eval();
+        return;
     }
 
-    int idx=0;
-    unsigned int begin=30;
-   // unsigned int begin = (unsigned int) (2.0 * args[idx++]);
-  //  unsigned int orders = (unsigned int) (2.0 * args[idx++]);
-   // unsigned int begin=1;
-    double fill_ampl = n > idx ? args[idx++] : 1.0;
-    double transport = n > idx ? args[idx++] : 0.0;
-    double upper = n > idx ? args[idx++] : 0.2; // upper height threshold
-    double dt = n > idx ? args[idx++] : 0.1; // lower threshold
-    double lower=upper-dt;
-
-    double slope_ampl = n > idx ? args[idx++] : 1.0;
-    double slope_drop = n > idx ? args[idx++] : 0.1; // slope drop
-    double slope_min = n > idx ? args[idx++] : 0.25; // min slope
-    double ds = n > idx ? args[idx++] : 3; // lower threshold
-    double slope_max = slope_min+ds; // max slope
-
-    double ave=0;
-    if(transport>0)
-        ave=transport*ave_sediment();
+    double base = 0.0;
     if (right) {
         right->eval();
-        //Td.p.z= S0.pvalid()?S0.p.z:S0.s;
-        Td.rock = S0.pvalid()?S0.p.z:S0.s;
+        base = S0.pvalid() ? S0.p.z : S0.s;
     }
-    //double z = Td.p.z;//+ave;
-   double z = Td.rock;//+ave;
+    Td.rock = base;
 
-    int l1 = begin;
-//    int l2=begin+orders;
-//    l1=l1>MAXLVLS?MAXLVLS:l1;
-//    l2=l2>MAXLVLS?MAXLVLS:l2;
-    int level = (int) Td.level;
+    // ── Erosion weight ─────────────────────────────────────────
+    double w;
+    if (base >= level_top)
+        w = 0.0;                                      // mesa top: untouched
+    else if (base >= level)
+        w = 1.0 - (base - level) / edge;             // cliff zone: taper 1→0
+    else
+        w = 1.0;                                      // valley: full erosion
 
-    double drop=0;
-    double sed = 0;//ave;
-    double s=0;
-    slope_min/=TheMap->hscale;
-    slope_max/=TheMap->hscale;
-   // if (level >= l1 /*&& level<l2*/) {
-    	//if(level<l2){
-       // CELLSLOPE(Ht(),s);
-        CELLSLOPE(solid(),s);
-       s*=TheMap->hscale;//*INV2PI;
+    if (options & SQR) w = w * w;
+    if (shape != 1.0) w = pow(w, shape);
 
-         if (options & SQR)
-             s = s * s;
-         if (options & SS)
-             drop=slope_ampl*smoothstep(slope_min, slope_max, s,0,slope_drop);
-         else
-             drop=slope_ampl*rampstep(slope_min, slope_max, s,0,slope_drop);
-        drop*=TheMap->hscale;
-       sed-=drop;
-        //double ave = ave_sediment();
-        //sed = ave;
+    double incision = depth * w;
+    double z = base - incision;
 
-        //double absz = fabs(z);
-        //z+=drop;
+    if (S0.pvalid()) S0.p.z = z;
+    else             S0.s   = z;
 
-       // if (thresh < lim) {
-       // if (z < upper){
-        	//sed=fill_ampl*(upper-z);
-            sed+=fill_ampl*rampstep(lower, upper, z,lower-z, 0);
-        //}
-        //else
-        //    sed = 0;
- 
-
-//            if (z - drop < thresh)
-//                sed = thresh - drop;
-//            else
-//                sed = -drop;
-//        } else {
-//            drop = rampstep(0, absz, drop, drop, absz);
-//            sed = -drop;
-//        }
-//		double delta=0.5*(sed-ave);
-//		for(int i=0;i<mdcnt;i++){
-//			mapdata[i]->setSediment(NBSED(i)+delta/mdcnt);
-//			mapdata[i]->invalidate();
-//		}
-//		sed=sed-delta;
-    	//}
-        z += sed;
-//        drop=s;
-
-   //}
-   if (S0.pvalid())
-       S0.p.z=z;
-   else
-       S0.s=z;
-    Td.sediment = sed;
-
+    Td.sediment = -incision;
 }
-

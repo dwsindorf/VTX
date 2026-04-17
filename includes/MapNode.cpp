@@ -1,4 +1,3 @@
-
 #include "SceneClass.h"
 #include "MapNode.h"
 #include "MapLink.h"
@@ -2642,5 +2641,3 @@ double MapNode::value()
 {
 	return point().length();
 }
-
-
