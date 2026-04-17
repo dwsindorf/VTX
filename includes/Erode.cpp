@@ -1,33 +1,58 @@
 #include "NodeData.h"
 #include "Erode.h"
 
-// Erosion algorithms - non uniform grid
-// I. Simple height function
-//  algorithm:
-//  - move material (sediment) from high to low areas
-//  implementation:
-//  - generate terrain normally until some sub-division threshold is reached level=l1
-//  - if height(z) < some max value(zmax) and > some min value(zmin) decrease z proportional to z - zmin
-//  effects: 
-//  - produces cliff like structures when z is between zmin and zmax
-//  - otherwise terrain is unchanged
-//  - doesn't require addition data other than unmodified height function (rock)
-// II. Thermal erosion
-// alorithm:
-// - "slump" terrain to constrain max slope to some critical angle (e.g. 45 degrees)
-// III. Hydrolic erosion
-// alorithm:
-// - carry "sediment" from high to low height areas using water model
-// - each vertex needs water value, sediment value, current height (+hardness), slope (2d)
-// - if slope > threshold && water value> threshold, remove material (sediment) from vertex (decrease ht)
-// - otherwise, if sediment > water carry limit, deposit sediment at vertex (increase ht)
-// - at each vertex move sediment and water between 4 neighboring vertexes (use delta ht, slope to determine outcome)
-// - "evaporate" some of the water (decrease carry capacity)
-// - continue until 
-// challenges:
-// - most published algorithms use iterative methods to move material around in a fixed grid
-// - with dynamically generated vertexes this may be more problematic
-
+//--------------------------------------------------------------------
+// TNerode — single-pass elevation-weighted terrain incision
+//--------------------------------------------------------------------
+//
+// ALGORITHM SUMMARY
+//
+// This is a single-pass, locally-computed elevation classifier rather
+// than a true erosion simulation.
+//
+// For each terrain node as it is created by the LOD system, the child
+// expression (noise, fractal, etc.) is evaluated to get the raw height
+// 'base'. An erosion weight 'w' is then computed based solely on where
+// 'base' falls within the elevation range defined by 'level' and 'edge':
+//
+//   base < level            →  w = 1.0  (full incision — valley floor)
+//   level..level+edge       →  w tapers 1→0  (cliff face transition)
+//   base > level+edge       →  w = 0.0  (untouched — mesa/plateau top)
+//
+// The final output height is:  z = base - depth * w
+//
+// The cliff profile is shaped by pow(w, shape) after the ramp.
+// The SS option replaces the linear ramp with a smoothstep curve,
+// eliminating derivative discontinuities at the ramp boundaries.
+//
+// WHAT IT PRODUCES
+//
+// The algorithm is more accurately described as differential subsidence
+// than hydraulic erosion. It selectively lowers terrain below a threshold
+// elevation, leaving higher ground as plateaus and creating cliff faces
+// at the transition zone. This naturally produces mesa and butte landforms
+// similar to arid environments such as the Colorado Plateau, where
+// differential erosion of hard and soft rock layers creates flat-topped
+// elevated terrain with steep sides.
+//
+// WHAT IT DOESN'T DO
+//
+// Real dendritic drainage forms because water from a large catchment area
+// concentrates into progressively fewer, deeper channels following the
+// steepest descent paths. That process requires either a global
+// pre-computation pass over the whole terrain grid, or an iterative
+// simulation with multiple passes. Neither is feasible in VTX's on-demand
+// single-pass LOD architecture where each node is evaluated independently
+// with only its immediate neighbours available.
+//
+// To approximate drainage patterns within the existing architecture, the
+// most promising direction would be to modulate 'w' by a noise function
+// with a dendritic spatial structure — such as Voronoi-based cell noise
+// where the ridges between cells mimic watershed divides. Adding a fractal
+// layer on top of erode (as an outer expression wrapper) already gets
+// partway there by contributing directional streaking on the cliff faces.
+//
+//--------------------------------------------------------------------
 
 //**************** extern API area ************************
 extern NameList<LongSym*> NOpts;
@@ -45,19 +70,6 @@ extern double   ptable[];
 extern const double INV2PI;
 const unsigned int  MAXLVLS=63;
 
-//-------------------------------------------------------------
-// cell_min()		return fractal min ht
-//-------------------------------------------------------------
-//static double sedmin()
-//{
-//	double s=smallest(NBSED(0),NBSED(1));
-//	if(mdcnt==4){
-//		double s2=smallest(NBSED(2),NBSED(3));
-//		if(s2<s)
-//			s=s2;
-//	}
-//	return s;
-//}
 
 //-------------------------------------------------------------
 // cell_ave()		return ave sediment
@@ -114,7 +126,6 @@ void TNhardness::eval()
 	if(arg){
 	    arg->eval();
 	    softness=clamp(S0.s,0,1);
-		//cout<<"["<<S0.hardness<<"]";
 	}
 	INIT;
 	if(right){
@@ -260,7 +271,6 @@ void TNerode::eval()
     double shape = n > 3 ? args[3] : 1.0;
 
     if (edge <= 0.0) edge = 0.001;
-    double level_top = level + edge;
 
     if (!isEnabled()) {
         if (right) right->eval();
@@ -279,17 +289,29 @@ void TNerode::eval()
     }
     Td.rock = base;
 
+    double base_n = base;
+
     // ── Erosion weight ─────────────────────────────────────────
+    // SS: smoothstep ramp — zero derivative at both ends, removes
+    //     the crease where the ramp meets the flat valley/mesa.
+    // shape: applied to w after the ramp — controls cliff profile.
+    //   >1 = more erosion concentrated near the bottom (concave cliff)
+    //   <1 = more erosion spread toward the top (convex cliff)
     double w;
-    if (base >= level_top)
-        w = 0.0;                                      // mesa top: untouched
-    else if (base >= level)
-        w = 1.0 - (base - level) / edge;             // cliff zone: taper 1→0
-    else
-        w = 1.0;                                      // valley: full erosion
+    if (base_n >= level + edge) {
+        w = 0.0;
+    } else if (base_n >= level) {
+        double t = (base_n - level) / edge;  // 0 at level, 1 at level+edge
+        if (options & SS)
+            w = 1.0 - (t * t * (3.0 - 2.0 * t));  // smoothstep
+        else
+            w = 1.0 - t;                            // linear
+    } else {
+        w = 1.0;
+    }
 
     if (options & SQR) w = w * w;
-    if (shape != 1.0) w = pow(w, shape);
+    if (shape != 1.0)  w = pow(w, shape);
 
     double incision = depth * w;
     double z = base - incision;

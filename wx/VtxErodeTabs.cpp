@@ -90,10 +90,10 @@ void VtxErodeTabs::AddControlsTab(wxWindow *panel)
 	wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
 	topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
-	// ── Deposition ────────────────────────────────────────────
+	// ── Amplitude ────────────────────────────────────────────
 	// Depth: how deep valleys are carved (Z-units)
 	// Power: cliff profile shape (1=linear, 2=concave, 0.5=convex)
-	wxBoxSizer* dep_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Deposition"));
+	wxBoxSizer* dep_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Amplitude"));
 	wxBoxSizer* dep_row = new wxBoxSizer(wxHORIZONTAL);
 
 	FillAmplSlider = new ExprSliderCtrl(panel, ID_FILL_AMPL_SLDR, "Depth", LABEL2, VALUE1, SLIDER2);
@@ -102,7 +102,7 @@ void VtxErodeTabs::AddControlsTab(wxWindow *panel)
 	dep_row->Add(FillAmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
 
 	FillTransportSlider = new ExprSliderCtrl(panel, ID_FILL_TRANS_SLDR, "Power", LABEL2, VALUE1, SLIDER2);
-	FillTransportSlider->setRange(0.1, 4.0);
+	FillTransportSlider->setRange(0.2, 4.0);
 	FillTransportSlider->setValue(1.0);
 	dep_row->Add(FillTransportSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
 
@@ -116,13 +116,13 @@ void VtxErodeTabs::AddControlsTab(wxWindow *panel)
 	wxBoxSizer* ht_row = new wxBoxSizer(wxHORIZONTAL);
 
 	FillLevelSlider = new ExprSliderCtrl(panel, ID_FILL_LEVEL_SLDR, "Start", LABEL2, VALUE1, SLIDER2);
-	FillLevelSlider->setRange(-2.0, 2.0);
-	FillLevelSlider->setValue(0.0);
+	FillLevelSlider->setRange(-1.0, 1.0);
+	FillLevelSlider->setValue(0.5);
 	ht_row->Add(FillLevelSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
 
 	FillMarginSlider = new ExprSliderCtrl(panel, ID_FILL_MARGIN_SLDR, "Range", LABEL2, VALUE1, SLIDER2);
-	FillMarginSlider->setRange(0.01, 4.0);
-	FillMarginSlider->setValue(0.4);
+	FillMarginSlider->setRange(0.01, 1.0);
+	FillMarginSlider->setValue(0.2);
 	ht_row->Add(FillMarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
 
 	ht_box->Add(ht_row, 0, wxALIGN_LEFT|wxALL, 0);
@@ -161,11 +161,11 @@ void VtxErodeTabs::getObjAttributes()
 
 	a = args[idx++];
 	if (a) FillLevelSlider->setValue(a);
-	else   FillLevelSlider->setValue(0.0);
+	else   FillLevelSlider->setValue(0.5);
 
 	a = args[idx++];
 	if (a) FillMarginSlider->setValue(a);
-	else   FillMarginSlider->setValue(0.4);
+	else   FillMarginSlider->setValue(0.2);
 
 	a = args[idx++];
 	if (a) FillTransportSlider->setValue(a);
