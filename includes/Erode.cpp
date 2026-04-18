@@ -316,14 +316,11 @@ void TNerode::eval()
     }
     Td.rock = base;
 
-    // ── Image mode (no 3D point) ───────────────────────────────
-    // When not in terrain context, erode() acts as a 2D procedural
-    // pattern generator. Args:
-    //   depth=Scale, nchannels=Start, orders=Orders,
-    //   drain_mix=Drainage (pattern foreground weight),
-    //   ampl=Bias (pattern background level)
-    // Output is Scale * (Bias*(1-dc) + Drainage*dc)
-    if (!S0.pvalid() && !right) {
+    // ── Image mode ────────────────────────────────────────────
+    // When ImageMgr is building an image, skip terrain cliff logic and
+    // output the drainage pattern directly as a scalar — same pattern
+    // as Craters, Fractal etc. which all branch on images.building().
+    if (images.building()) {
         double tn = Theta / 360.0;
         double pn = (Phi + 90.0) / 360.0;
         double f  = pow(2.0, (double)nchannels);
