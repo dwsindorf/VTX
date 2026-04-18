@@ -9,21 +9,18 @@ class VtxErodeFunct : public VtxFunctMgr
 	DECLARE_CLASS(VtxErodeFunct)
 protected:
 	void AddControlsTab(wxWindow *panel);
-	// Erosion box
-	ExprSliderCtrl *FillAmplSlider;
-	ExprSliderCtrl *FillTransportSlider;
-	ExprSliderCtrl *FillLevelSlider;
-	ExprSliderCtrl *FillMarginSlider;
-	// Drainage box
-	ExprSliderCtrl *FillChannelsSlider;
-	ExprSliderCtrl *FillOrdersSlider;
+	// Overlays
+	ExprSliderCtrl *FillChannelsSlider;  // Start
+	ExprSliderCtrl *FillOrdersSlider;    // Orders
 	ExprSliderCtrl *FillFalloffSlider;   // Atten
 	ExprSliderCtrl *FillFreqSlider;      // Delf
-	// Amplitude box
-	ExprSliderCtrl *FillDrAmplSlider;    // Drainage ampl
-	ExprSliderCtrl *FillDrainMixSlider;  // Erosion ampl
+	// Amplitude
+	ExprSliderCtrl *FillDrAmplSlider;    // Drainage
+	ExprSliderCtrl *FillDrainMixSlider;  // Erosion
+	ExprSliderCtrl *FillAmplSlider;      // Scale
+	// Options
+	wxCheckBox *m_neg;
 	wxCheckBox *m_sqr;
-	wxCheckBox *m_ss;
 
 public:
 	VtxErodeFunct(wxWindow* parent, wxWindowID id,
@@ -39,23 +36,19 @@ public:
 		const wxString& name = wxNotebookNameStr);
 
 	~VtxErodeFunct() {
-		delete FillAmplSlider;     delete FillTransportSlider;
-		delete FillLevelSlider;    delete FillMarginSlider;
 		delete FillChannelsSlider; delete FillOrdersSlider;
 		delete FillFalloffSlider;  delete FillFreqSlider;
 		delete FillDrAmplSlider;   delete FillDrainMixSlider;
+		delete FillAmplSlider;
 	}
 
-	DEFINE_SLIDER_EVENTS(FillAmpl)
-	DEFINE_SLIDER_EVENTS(FillTransport)
-	DEFINE_SLIDER_EVENTS(FillLevel)
-	DEFINE_SLIDER_EVENTS(FillMargin)
 	DEFINE_SLIDER_EVENTS(FillChannels)
 	DEFINE_SLIDER_EVENTS(FillOrders)
 	DEFINE_SLIDER_EVENTS(FillFalloff)
 	DEFINE_SLIDER_EVENTS(FillFreq)
 	DEFINE_SLIDER_EVENTS(FillDrAmpl)
 	DEFINE_SLIDER_EVENTS(FillDrainMix)
+	DEFINE_SLIDER_EVENTS(FillAmpl)
 
 	void OnChangeEvent(wxCommandEvent& event) { getFunction(); }
 	void setFunction(wxString);

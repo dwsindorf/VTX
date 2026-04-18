@@ -3,41 +3,37 @@
 #include "Erode.h"
 
 //########################### VtxErodeFunct Class ########################
+// Image mode erode: generates a 2D procedural pattern (Voronoi or ridged
+// noise) for use in image() expressions. No terrain height logic — just
+// the drainage pattern parameters and amplitude controls.
 
 #define BOX_WIDTH TABS_WIDTH-TABS_BORDER
 #define LINE_HEIGHT 30
 #define VALUE1 60
 
 enum {
-	OBJ_DELETE, OBJ_SAVE,
-	ID_SQR, ID_SS,
-	ID_FILL_AMPL_SLDR,    ID_FILL_AMPL_TEXT,
-	ID_FILL_TRANS_SLDR,   ID_FILL_TRANS_TEXT,
-	ID_FILL_LEVEL_SLDR,   ID_FILL_LEVEL_TEXT,
-	ID_FILL_MARGIN_SLDR,  ID_FILL_MARGIN_TEXT,
-	ID_FILL_CHANNELS_SLDR,ID_FILL_CHANNELS_TEXT,
-	ID_FILL_DRAMPL_SLDR,  ID_FILL_DRAMPL_TEXT,
-	ID_FILL_DRAINMIX_SLDR,ID_FILL_DRAINMIX_TEXT,
-	ID_FILL_ORDERS_SLDR,  ID_FILL_ORDERS_TEXT,
-	ID_FILL_FREQ_SLDR,    ID_FILL_FREQ_TEXT,
-	ID_FILL_FALLOFF_SLDR, ID_FILL_FALLOFF_TEXT,
+	ID_SQR, ID_NEG,
+	ID_FILL_CHANNELS_SLDR, ID_FILL_CHANNELS_TEXT,
+	ID_FILL_ORDERS_SLDR,   ID_FILL_ORDERS_TEXT,
+	ID_FILL_FALLOFF_SLDR,  ID_FILL_FALLOFF_TEXT,
+	ID_FILL_FREQ_SLDR,     ID_FILL_FREQ_TEXT,
+	ID_FILL_DRAMPL_SLDR,   ID_FILL_DRAMPL_TEXT,
+	ID_FILL_DRAINMIX_SLDR, ID_FILL_DRAINMIX_TEXT,
+	ID_FILL_AMPL_SLDR,     ID_FILL_AMPL_TEXT,
 };
 
 IMPLEMENT_CLASS(VtxErodeFunct, wxNotebook)
 
 BEGIN_EVENT_TABLE(VtxErodeFunct, wxNotebook)
 EVT_CHECKBOX(ID_SQR, VtxErodeFunct::OnChangeEvent)
-EVT_CHECKBOX(ID_SS,  VtxErodeFunct::OnChangeEvent)
-SET_SLIDER_EVENTS(FILL_AMPL,    VtxErodeFunct, FillAmpl)
-SET_SLIDER_EVENTS(FILL_TRANS,   VtxErodeFunct, FillTransport)
-SET_SLIDER_EVENTS(FILL_LEVEL,   VtxErodeFunct, FillLevel)
-SET_SLIDER_EVENTS(FILL_MARGIN,  VtxErodeFunct, FillMargin)
-SET_SLIDER_EVENTS(FILL_CHANNELS,VtxErodeFunct, FillChannels)
-SET_SLIDER_EVENTS(FILL_DRAMPL,  VtxErodeFunct, FillDrAmpl)
-SET_SLIDER_EVENTS(FILL_DRAINMIX,VtxErodeFunct, FillDrainMix)
-SET_SLIDER_EVENTS(FILL_ORDERS,  VtxErodeFunct, FillOrders)
-SET_SLIDER_EVENTS(FILL_FREQ,    VtxErodeFunct, FillFreq)
-SET_SLIDER_EVENTS(FILL_FALLOFF, VtxErodeFunct, FillFalloff)
+EVT_CHECKBOX(ID_NEG, VtxErodeFunct::OnChangeEvent)
+SET_SLIDER_EVENTS(FILL_CHANNELS, VtxErodeFunct, FillChannels)
+SET_SLIDER_EVENTS(FILL_ORDERS,   VtxErodeFunct, FillOrders)
+SET_SLIDER_EVENTS(FILL_FALLOFF,  VtxErodeFunct, FillFalloff)
+SET_SLIDER_EVENTS(FILL_FREQ,     VtxErodeFunct, FillFreq)
+SET_SLIDER_EVENTS(FILL_DRAMPL,   VtxErodeFunct, FillDrAmpl)
+SET_SLIDER_EVENTS(FILL_DRAINMIX, VtxErodeFunct, FillDrainMix)
+SET_SLIDER_EVENTS(FILL_AMPL,     VtxErodeFunct, FillAmpl)
 END_EVENT_TABLE()
 
 VtxErodeFunct::VtxErodeFunct(wxWindow* parent, wxWindowID id,
@@ -63,39 +59,17 @@ void VtxErodeFunct::AddControlsTab(wxWindow *panel)
 	wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
 	topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
-	// ── Erosion ───────────────────────────────────────────────
-	wxBoxSizer* erosion_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Erosion"));
-
-	wxBoxSizer* dep_row = new wxBoxSizer(wxHORIZONTAL);
-	FillAmplSlider = new ExprSliderCtrl(panel, ID_FILL_AMPL_SLDR, "Depth", LABEL2, VALUE1, SLIDER2);
-	FillAmplSlider->setRange(0.0, 2.0); FillAmplSlider->setValue(0.3);
-	dep_row->Add(FillAmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	FillTransportSlider = new ExprSliderCtrl(panel, ID_FILL_TRANS_SLDR, "Power", LABEL2, VALUE1, SLIDER2);
-	FillTransportSlider->setRange(0.1, 4.0); FillTransportSlider->setValue(1.0);
-	dep_row->Add(FillTransportSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	erosion_box->Add(dep_row, 0, wxALIGN_LEFT|wxALL, 0);
-
-	wxBoxSizer* ht_row = new wxBoxSizer(wxHORIZONTAL);
-	FillLevelSlider = new ExprSliderCtrl(panel, ID_FILL_LEVEL_SLDR, "Start", LABEL2, VALUE1, SLIDER2);
-	FillLevelSlider->setRange(-2.0, 2.0); FillLevelSlider->setValue(0.0);
-	ht_row->Add(FillLevelSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	FillMarginSlider = new ExprSliderCtrl(panel, ID_FILL_MARGIN_SLDR, "Range", LABEL2, VALUE1, SLIDER2);
-	FillMarginSlider->setRange(0.01, 4.0); FillMarginSlider->setValue(0.4);
-	ht_row->Add(FillMarginSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	erosion_box->Add(ht_row, 0, wxALIGN_LEFT|wxALL, 0);
-	boxSizer->Add(erosion_box, 0, wxALIGN_LEFT|wxALL, 0);
-
-	// ── Drainage ──────────────────────────────────────────────
-	wxBoxSizer* drain_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Drainage"));
+	// ── Overlays ───────────────────────────────────────────────
+	wxBoxSizer* overlay_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Overlays"));
 
 	wxBoxSizer* ov1 = new wxBoxSizer(wxHORIZONTAL);
 	FillChannelsSlider = new ExprSliderCtrl(panel, ID_FILL_CHANNELS_SLDR, "Start", LABEL2, VALUE1, SLIDER2);
-	FillChannelsSlider->setRange(0.0, 20.0); FillChannelsSlider->setValue(12.0);
+	FillChannelsSlider->setRange(0.0, 20.0); FillChannelsSlider->setValue(6.0);
 	ov1->Add(FillChannelsSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
 	FillOrdersSlider = new ExprSliderCtrl(panel, ID_FILL_ORDERS_SLDR, "Orders", LABEL2, VALUE1, SLIDER2);
-	FillOrdersSlider->setRange(1.0, 8.0); FillOrdersSlider->setValue(3.0);
+	FillOrdersSlider->setRange(1.0, 8.0); FillOrdersSlider->setValue(5.0);
 	ov1->Add(FillOrdersSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	drain_box->Add(ov1, 0, wxALIGN_LEFT|wxALL, 0);
+	overlay_box->Add(ov1, 0, wxALIGN_LEFT|wxALL, 0);
 
 	wxBoxSizer* ov2 = new wxBoxSizer(wxHORIZONTAL);
 	FillFalloffSlider = new ExprSliderCtrl(panel, ID_FILL_FALLOFF_SLDR, "Atten", LABEL2, VALUE1, SLIDER2);
@@ -104,53 +78,63 @@ void VtxErodeFunct::AddControlsTab(wxWindow *panel)
 	FillFreqSlider = new ExprSliderCtrl(panel, ID_FILL_FREQ_SLDR, "Delf", LABEL2, VALUE1, SLIDER2);
 	FillFreqSlider->setRange(1.1, 4.0); FillFreqSlider->setValue(2.0);
 	ov2->Add(FillFreqSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	drain_box->Add(ov2, 0, wxALIGN_LEFT|wxALL, 0);
-	boxSizer->Add(drain_box, 0, wxALIGN_LEFT|wxALL, 0);
+	overlay_box->Add(ov2, 0, wxALIGN_LEFT|wxALL, 0);
+	boxSizer->Add(overlay_box, 0, wxALIGN_LEFT|wxALL, 0);
 
 	// ── Amplitude ─────────────────────────────────────────────
+	// Drainage: weight of Voronoi/ridged pattern
+	// Erosion:  weight of inverse (background level)
+	// Scale:    overall output amplitude
 	wxBoxSizer* ampl_box = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Amplitude"));
-	wxBoxSizer* ampl_row = new wxBoxSizer(wxHORIZONTAL);
+
+	wxBoxSizer* ampl_row1 = new wxBoxSizer(wxHORIZONTAL);
 	FillDrAmplSlider = new ExprSliderCtrl(panel, ID_FILL_DRAMPL_SLDR, "Drainage", LABEL2, VALUE1, SLIDER2);
-	FillDrAmplSlider->setRange(0.0, 2.0); FillDrAmplSlider->setValue(0.5);
-	ampl_row->Add(FillDrAmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	FillDrainMixSlider = new ExprSliderCtrl(panel, ID_FILL_DRAINMIX_SLDR, "Erosion", LABEL2, VALUE1, SLIDER2);
-	FillDrainMixSlider->setRange(0.0, 2.0); FillDrainMixSlider->setValue(1.0);
-	ampl_row->Add(FillDrainMixSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-	ampl_box->Add(ampl_row, 0, wxALIGN_LEFT|wxALL, 0);
+	FillDrAmplSlider->setRange(0.0, 2.0); FillDrAmplSlider->setValue(1.0);
+	ampl_row1->Add(FillDrAmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+	FillDrainMixSlider = new ExprSliderCtrl(panel, ID_FILL_DRAINMIX_SLDR, "Bias", LABEL2, VALUE1, SLIDER2);
+	FillDrainMixSlider->setRange(0.0, 2.0); FillDrainMixSlider->setValue(0.0);
+	ampl_row1->Add(FillDrainMixSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+	ampl_box->Add(ampl_row1, 0, wxALIGN_LEFT|wxALL, 0);
+
+	wxBoxSizer* ampl_row2 = new wxBoxSizer(wxHORIZONTAL);
+	FillAmplSlider = new ExprSliderCtrl(panel, ID_FILL_AMPL_SLDR, "Scale", LABEL2, VALUE1, SLIDER2);
+	FillAmplSlider->setRange(0.0, 2.0); FillAmplSlider->setValue(1.0);
+	ampl_row2->Add(FillAmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+	ampl_box->Add(ampl_row2, 0, wxALIGN_LEFT|wxALL, 0);
 	boxSizer->Add(ampl_box, 0, wxALIGN_LEFT|wxALL, 0);
 
 	// ── Options ───────────────────────────────────────────────
 	wxBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Options"));
+	m_neg = new wxCheckBox(panel, ID_NEG, "Rounded");
+	options->Add(m_neg, 0, wxALIGN_LEFT|wxALL, 2);
 	m_sqr = new wxCheckBox(panel, ID_SQR, "Square");
 	options->Add(m_sqr, 0, wxALIGN_LEFT|wxALL, 2);
-	m_ss = new wxCheckBox(panel, ID_SS, "SmoothStep");
-	options->Add(m_ss, 0, wxALIGN_LEFT|wxALL, 2);
 	options->SetMinSize(wxSize(BOX_WIDTH, LINE_HEIGHT + TABS_BORDER));
 	boxSizer->Add(options, 0, wxALIGN_LEFT|wxALL, 0);
 }
 
 void VtxErodeFunct::setFunction(wxString f)
 {
+	// Image erode args: [0]scale [1]level(unused) [2]edge(unused) [3]shape(unused)
+	//                   [4]channels [5]drain_ampl [6]erode_ampl [7]orders [8]delf [9]atten
 	TNerode *tc = (TNerode*)TheScene->parse_node(f.ToAscii());
 	if (!tc) return;
 	int type = tc->options;
+	m_neg->SetValue((type & NEG) ? true : false);
 	m_sqr->SetValue((type & SQR) ? true : false);
-	m_ss->SetValue((type & SS)   ? true : false);
 	TNarg &args = *((TNarg*)tc->left);
 	int idx = 0; TNode *a;
 	auto get = [&](ExprSliderCtrl *s, double def) {
 		a = args[idx++]; if (a) s->setValue(a); else s->setValue(def);
 	};
-	get(FillAmplSlider,      0.3);
-	get(FillLevelSlider,     0.0);
-	get(FillMarginSlider,    0.4);
-	get(FillTransportSlider, 1.0);
-	get(FillChannelsSlider,  12.0);
-	get(FillDrAmplSlider,    0.5);
-	get(FillDrainMixSlider,  1.0);
-	get(FillOrdersSlider,    3.0);
-	get(FillFreqSlider,      2.0);
-	get(FillFalloffSlider,   0.5);
+	get(FillAmplSlider,      1.0);  // [0] scale
+	idx += 3;                        // skip [1]level [2]edge [3]shape
+	get(FillChannelsSlider,  6.0);  // [4] start
+	get(FillDrAmplSlider,    1.0);  // [5] drainage ampl
+	get(FillDrainMixSlider,  0.0);  // [6] erosion ampl
+	get(FillOrdersSlider,    5.0);  // [7] orders
+	get(FillFreqSlider,      2.0);  // [8] delf
+	get(FillFalloffSlider,   0.5);  // [9] atten
 	delete tc;
 }
 
@@ -158,20 +142,24 @@ void VtxErodeFunct::getFunction()
 {
 	wxString s = "erode(";
 	wxString n = "";
-	if (m_sqr->GetValue()) n += "SQR";
-	if (m_ss->GetValue())  n += n.IsEmpty() ? "SS" : "|SS";
+	if (m_neg->GetValue()) n += "NEG";
+	if (m_sqr->GetValue()) n += n.IsEmpty() ? "SQR" : "|SQR";
 	if (!n.IsEmpty()) s += n + ",";
-	s += FillAmplSlider->getText()      + ","; // depth
-	s += FillLevelSlider->getText()     + ","; // start
-	s += FillMarginSlider->getText()    + ","; // range
-	s += FillTransportSlider->getText() + ","; // power
-	s += FillChannelsSlider->getText()  + ","; // channels
-	s += FillDrAmplSlider->getText()    + ","; // drain ampl
-	s += FillDrainMixSlider->getText()  + ","; // erode ampl
-	s += FillOrdersSlider->getText()    + ","; // orders
-	s += FillFreqSlider->getText()      + ","; // delf
-	s += FillFalloffSlider->getText();         // atten
+
+	// Emit all 10 args so terrain erode and image erode share same arg layout.
+	// Image-irrelevant args [1-3] are fixed at neutral values.
+	s += FillAmplSlider->getText()     + ","; // [0] scale (depth)
+	s += "0,";                                 // [1] level  (unused in image mode)
+	s += "1,";                                 // [2] edge   (unused in image mode)
+	s += "0,";                                 // [3] shape  (unused in image mode)
+	s += FillChannelsSlider->getText() + ","; // [4] start
+	s += FillDrAmplSlider->getText()   + ","; // [5] drainage ampl
+	s += FillDrainMixSlider->getText() + ","; // [6] erosion ampl
+	s += FillOrdersSlider->getText()   + ","; // [7] orders
+	s += FillFreqSlider->getText()     + ","; // [8] delf
+	s += FillFalloffSlider->getText();        // [9] atten
 	s += ")";
+
 	TNerode *tn = (TNerode*)TheScene->parse_node(s.ToAscii());
 	if (!tn) return;
 	char buff[256]; buff[0] = 0;

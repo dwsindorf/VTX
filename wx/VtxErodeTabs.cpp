@@ -145,7 +145,7 @@ void VtxErodeTabs::AddControlsTab(wxWindow *panel)
 
 	// ── Options ───────────────────────────────────────────────
 	wxBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, panel, wxT("Options"));
-	m_inv = new wxCheckBox(panel, ID_INV, "Invert");
+	m_inv = new wxCheckBox(panel, ID_INV, "Rounded");
 	options->Add(m_inv, 0, wxALIGN_LEFT|wxALL, 2);
 	m_sqr = new wxCheckBox(panel, ID_SQR, "Square");
 	options->Add(m_sqr, 0, wxALIGN_LEFT|wxALL, 2);

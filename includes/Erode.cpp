@@ -316,6 +316,49 @@ void TNerode::eval()
     }
     Td.rock = base;
 
+    // ── Image mode (no 3D point) ───────────────────────────────
+    // When not in terrain context, erode() acts as a 2D procedural
+    // pattern generator. Args:
+    //   depth=Scale, nchannels=Start, orders=Orders,
+    //   drain_mix=Drainage (pattern foreground weight),
+    //   ampl=Bias (pattern background level)
+    // Output is Scale * (Bias*(1-dc) + Drainage*dc)
+    if (!S0.pvalid() && !right) {
+        double tn = Theta / 360.0;
+        double pn = (Phi + 90.0) / 360.0;
+        double f  = pow(2.0, (double)nchannels);
+        double vsum = 0.0, vtotal = 0.0, oct_amp = 1.0;
+        const double VMAX = 0.87;
+        for (int oct = 0; oct < orders; oct++) {
+            double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
+            double d, v;
+            if (options & NEG) {
+                double n = Noise::Noise3D(pnt);
+                double a = fabs(n);
+                const double smooth_r = 0.15;
+                if (a < smooth_r) { double t=a/smooth_r; a=smooth_r*0.5*t*t*(3.0-t); }
+                v = 1.0 - a; v = v * v;
+            } else {
+                d = Noise::Voronoi3D(pnt) + 0.5;
+                d = d < 0.0 ? 0.0 : d;
+                v = 1.0 - (d / VMAX);
+            }
+            v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
+            vsum   += oct_amp * v;
+            vtotal += oct_amp;
+            f      *= drain_delf;
+            oct_amp *= falloff;
+        }
+        double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
+        dc = dc * dc * (3.0 - 2.0 * dc);
+        // Output: Scale * (Bias*(1-dc) + Drainage*dc)
+        // dc=0 (ridge/cell centre) → Scale*Bias
+        // dc=1 (channel/boundary) → Scale*Drainage
+        // Bias=0: pure pattern from 0 to Scale*Drainage
+        S0.s = depth * (ampl * (1.0 - dc) + drain_mix * dc);
+        return;
+    }
+
     // ── Elevation weight ───────────────────────────────────────
     double w_elev;
     if (base >= level + edge) {
@@ -382,26 +425,30 @@ void TNerode::eval()
         // falloff=1: all octaves equal; falloff=0.5: each half previous; falloff=0: first only
         double vsum = 0.0, vtotal = 0.0;
         double f = pow(2.0, (double)nchannels);
-        double oct_amp = 1.0;  // drain_mix applied in combine step
+        double oct_amp = 1.0;
         for (int oct = 0; oct < orders; oct++) {
             double peak = (orders > 1) ? double(oct) / double(orders - 1) : 0.5;
             double dist = fabs(tc_w - peak);
             double hw = 1.0 - dist * 1.5;
             hw = hw < 0.0 ? 0.0 : hw;
             hw = hw * hw * (3.0 - 2.0 * hw);
+
             double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
             double v;
             if (options & NEG) {
-                // Gully mode: use gradient (Perlin) noise.
-                // Gradient noise has smooth branching zero-crossings that form
-                // a natural connected network — much closer to real drainage than
-                // Voronoi cells. Values in [-1,1]; we fold with abs() to get
-                // narrow ridges at zero-crossings and broad basins between them.
-                // Then invert: 1=basin (uneroded), 0=ridge (gully).
-                // Squaring sharpens the gully into a narrow V-cut.
-                double n = Noise::Noise3D(pnt);       // [-1, 1]
-                double a = 1.0 - fabs(n);              // 1=zero-crossing, 0=peak
-                v = a * a;                             // sharpen: narrow gullies, broad ridges
+                // Gully mode: smoothed absolute value of gradient noise.
+                // |Perlin| gives narrow ridge crests at zero-crossings with
+                // broad smooth basins between — watershed divides over gully floors.
+                // smooth_r rounds the sharp V at each crest (like noise Smooth param).
+                double n = Noise::Noise3D(pnt);
+                double a = fabs(n);
+                const double smooth_r = 0.15;
+                if (a < smooth_r) {
+                    double t = a / smooth_r;
+                    a = smooth_r * 0.5 * t * t * (3.0 - t);
+                }
+                v = 1.0 - a;
+                v = v * v;  // sharpen: concentrate carving near ridge crests
             } else {
                 // Cell mode: standard Voronoi dome
                 const double VMAX = 0.87;
@@ -433,5 +480,5 @@ void TNerode::eval()
     if (S0.pvalid()) S0.p.z = z;
     else             S0.s   = z;
 
-    Td.sediment = -(base - z);
+    Td.sediment = -(base - z);  // total erosion depth (negative = removed material)
 }
