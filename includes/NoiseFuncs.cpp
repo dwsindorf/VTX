@@ -789,7 +789,34 @@ double  Voronoi::noise(double x, double y, double z) {
 }
 
 //-------------------------------------------------------------
-// Noise::Voronoi4D() 4d Voronoi noise (for seamless image generation)
+// Voronoi::edge() 3D Voronoi boundary distance
+// Returns (second_nearest - nearest): 0 at cell boundaries, peaks at centres.
+// Gives V-shaped gullies with sharp ridges — use instead of noise() for
+// drainage channels that carve downward rather than dome upward.
+//-------------------------------------------------------------
+double Voronoi::edge(double x, double y, double z) {
+	Point pnt=Point(x,y,z);
+	Point p = pnt.floor();
+	Point f = pnt.fract();
+	Point2D res(rval);
+	for (int k = -1; k <= 1; k++) {
+		for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1; i++) {
+				Point b = Point(double(i), double(j), double(k));
+				Point r = Point(b) - f + hashv3(p + b);
+				double d = r.magnitude();
+				double cond = MAX(SIGN(res.x - d), 0.0);
+				double nCond = 1.0 - cond;
+				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
+				double nCond2 = 1.0 - cond2;
+				res = Point2D(d, res.x) * cond + res * nCond;
+				res.y = cond2 * d + nCond2 * res.y;
+			}
+		}
+	}
+	// res.y - res.x: 0 at boundary, positive at cell centre
+	return (res.y - res.x) - 0.5;
+}
 //-------------------------------------------------------------
 #define pvmul4(v, m, p) \
 	p.x=m.x*v.x+m.w*v.y+m.z*v.z+m.y*v.w; \

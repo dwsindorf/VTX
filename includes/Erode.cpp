@@ -1,5 +1,6 @@
 #include "NodeData.h"
 #include "Erode.h"
+#include "NoiseFuncs.h"  // for Voronoi::edge()
 
 //--------------------------------------------------------------------
 // TNerode — single-pass elevation-weighted terrain incision
@@ -389,9 +390,25 @@ void TNerode::eval()
             hw = hw < 0.0 ? 0.0 : hw;
             hw = hw * hw * (3.0 - 2.0 * hw);
             double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
-            double d = Noise::Voronoi3D(pnt) + 0.5;
-            d = d < 0.0 ? 0.0 : d;
-            double v = 1.0 - (d / VMAX);
+            double v;
+            if (options & NEG) {
+                // Gully mode: use gradient (Perlin) noise.
+                // Gradient noise has smooth branching zero-crossings that form
+                // a natural connected network — much closer to real drainage than
+                // Voronoi cells. Values in [-1,1]; we fold with abs() to get
+                // narrow ridges at zero-crossings and broad basins between them.
+                // Then invert: 1=basin (uneroded), 0=ridge (gully).
+                // Squaring sharpens the gully into a narrow V-cut.
+                double n = Noise::Noise3D(pnt);       // [-1, 1]
+                double a = 1.0 - fabs(n);              // 1=zero-crossing, 0=peak
+                v = a * a;                             // sharpen: narrow gullies, broad ridges
+            } else {
+                // Cell mode: standard Voronoi dome
+                const double VMAX = 0.87;
+                double d = Noise::Voronoi3D(pnt) + 0.5;
+                d = d < 0.0 ? 0.0 : d;
+                v = 1.0 - (d / VMAX);
+            }
             v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
             vsum   += oct_amp * hw * v;
             vtotal += oct_amp * hw;
@@ -401,8 +418,6 @@ void TNerode::eval()
 
         double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
         dc = dc * dc * (3.0 - 2.0 * dc);
-        // INV (NEG flag): invert drainage — ridges become gullies and vice versa
-        if (options & NEG) dc = 1.0 - dc;
         w_drain = dc * env;
     }
 

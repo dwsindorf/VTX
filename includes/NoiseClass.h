@@ -231,8 +231,6 @@ protected:
 	static int _ntype;
 	static NoiseFactor *factors[MAXNFACTORS];
 
-public:
-
    enum {
        PT4D     = 0x01
     };
@@ -240,6 +238,9 @@ public:
     static double multinoise(int options, int n, double *s);
     //static double random(int options,int n, double *s);
     static double NoiseMinMax(double v);
+
+public:
+
     static double Noise1D(double v);
     static double Noise2D(double *v);
     static double Noise3D(double *v);
@@ -248,6 +249,7 @@ public:
     static double Voronoi1D(double x);
     static double Voronoi2D(double *pnt);
     static double Voronoi3D(double *pnt);
+    static double VoronoiEdge3D(double *pnt);  // V-shaped gullies
     static double Voronoi4D(double *pnt);
     static double SimplexMinMax(double v);
     static double Simplex1D(double x);
@@ -315,4 +317,3 @@ public:
 };
 
 #endif
-

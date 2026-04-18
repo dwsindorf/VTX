@@ -92,6 +92,7 @@ public:
 	static double noise(double x, double y); // 2D
 	static double noise(double x, double y, double z); // 3D
 	static double noise(double x, double y, double z, double w); // 4D
+	static double edge(double x, double y, double z);  // res.y-res.x for V-gullies
 
 };
 

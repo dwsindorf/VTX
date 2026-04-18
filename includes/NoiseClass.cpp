@@ -1117,6 +1117,14 @@ double Noise::Voronoi3D(double *d){
 	return Voronoi::noise(d[0],d[1],d[2]);
 }
 
+// VoronoiEdge3D: returns (second_nearest - nearest) distance.
+// Zero at cell boundaries (ridge crests), peaks at cell centres (gully floors).
+// Gives V-shaped gullies with sharp ridges between them — opposite of
+// Voronoi3D which gives dome-shaped cell centres.
+double Noise::VoronoiEdge3D(double *d){
+	return Voronoi::edge(d[0],d[1],d[2]);
+}
+
 //-------------------------------------------------------------
 // Noise::Voronoi4D() 4d Voronoi noise
 //-------------------------------------------------------------
