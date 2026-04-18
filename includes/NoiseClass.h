@@ -231,6 +231,8 @@ protected:
 	static int _ntype;
 	static NoiseFactor *factors[MAXNFACTORS];
 
+public:
+
    enum {
        PT4D     = 0x01
     };
@@ -252,8 +254,6 @@ protected:
     static double Simplex2D(double *pnt);
     static double Simplex3D(double *pnt);
     static double Simplex4D(double *pnt);
-
-public:
 
     static char *ntypes[];
     static char *nopts[];

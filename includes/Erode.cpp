@@ -68,8 +68,22 @@ static 			TerrainData Td;
 
 extern double   ptable[];
 extern const double INV2PI;
+extern double   Theta, Phi;  // per-cell geographic coords (degrees), set before eval()
 const unsigned int  MAXLVLS=63;
 
+//-------------------------------------------------------------
+// cell_min()		return fractal min ht
+//-------------------------------------------------------------
+//static double sedmin()
+//{
+//	double s=smallest(NBSED(0),NBSED(1));
+//	if(mdcnt==4){
+//		double s2=smallest(NBSED(2),NBSED(3));
+//		if(s2<s)
+//			s=s2;
+//	}
+//	return s;
+//}
 
 //-------------------------------------------------------------
 // cell_ave()		return ave sediment
@@ -126,6 +140,7 @@ void TNhardness::eval()
 	if(arg){
 	    arg->eval();
 	    softness=clamp(S0.s,0,1);
+		//cout<<"["<<S0.hardness<<"]";
 	}
 	INIT;
 	if(right){
@@ -229,32 +244,37 @@ void TNerode::applyExpr()
 //-------------------------------------------------------------
 // TNerode::eval()
 //
-// Elevation-weighted erosion. Single-pass, locally computed, no artefacts.
+// Elevation-weighted erosion with optional gradient-based drainage channels.
 //
-// Carves terrain below a threshold elevation, leaving higher ground as mesas.
+// ELEVATION WEIGHT (always active):
+//   base < level              → w_elev = 1  (valley floors, full erosion)
+//   level..level+edge         → w_elev tapers 1→0  (cliff face)
+//   base > level+edge         → w_elev = 0  (mesa tops, untouched)
 //
-//   base < level              → full incision = depth  (valley floors)
-//   level..level+edge         → incision tapers depth→0  (cliff/hillside)
-//   base > level+edge         → no incision  (mesa tops, untouched)
+// DRAINAGE WEIGHT (active when nchannels > 0):
+//   Uses the height gradient across neighbours to determine local flow
+//   direction. The flow angle is quantized into nchannels sectors. Cells
+//   near the centre of a sector lie on a channel floor (w_drain = 1).
+//   Cells near a sector boundary lie on a watershed ridge (w_drain = 0).
+//   This produces a radial drainage pattern whose channel density and
+//   width are controlled by nchannels and drain_mix.
 //
-// Visual controls:
-//   depth  — how much lower the valleys are vs the mesa tops (Z-units)
-//   level  — the Z threshold separating valley from mesa.
-//             Lower level = smaller mesa tops (more terrain below it = more eroded).
-//             Higher level = larger mesa tops.
-//   edge   — width of the cliff zone above 'level'.
-//             Small edge = sharp vertical cliff.
-//             Large edge = gentle hillside slope.
-//   shape  — profile of the cliff face.
-//             1 = linear, 2 = concave (overhangs near top), 0.5 = convex (rounded)
+//   The gradient is computed from mapdata[] solid() values — the same
+//   neighbour heights used by CELLSLOPE. With mdcnt < 4 the drainage
+//   weight falls back to the elevation weight alone.
+//
+// Combined: incision = depth * w_elev * lerp(1, w_drain, drain_mix)
 //
 // args:
-//   0  depth  0.3   incision in Z-units (height difference mesa top to valley floor)
-//   1  level  0.0   Z threshold: below = full erosion, above = mesa top
-//   2  edge   0.4   cliff zone width in Z-units (delta above level)
-//   3  shape  1.0   cliff profile exponent
+//   0  depth       0.3   incision depth in Z-units
+//   1  level       0.0   Z threshold separating valley from mesa
+//   2  edge        0.4   cliff zone width above level
+//   3  shape       1.0   cliff profile exponent
+//   4  nchannels   0     number of drainage sectors (0 = elevation only)
+//   5  drain_mix   1.0   blend: 0=elevation only, 1=drainage modulates fully
 //
-// Options: SQR = square the weight (sharper cliff-top edge)
+// Options: SQR = square elev weight (sharper cliff top)
+//          SS  = smoothstep ramp (smoother cliff transitions)
 //-------------------------------------------------------------
 void TNerode::eval()
 {
@@ -262,13 +282,19 @@ void TNerode::eval()
     Td.set_flag(EVALUE);
 
     TNarg *arg = (TNarg*) left;
-    double args[4];
-    int n = getargs(arg, args, 4);
+    double args[10];
+    int n = getargs(arg, args, 10);
 
-    double depth = n > 0 ? args[0] : 0.3;
-    double level = n > 1 ? args[1] : 0.0;
-    double edge  = n > 2 ? args[2] : 0.4;
-    double shape = n > 3 ? args[3] : 1.0;
+    double depth      = n > 0 ? args[0] : 0.3;
+    double level      = n > 1 ? args[1] : 0.0;
+    double edge       = n > 2 ? args[2] : 0.4;
+    double shape      = n > 3 ? args[3] : 1.0;
+    int    nchannels  = n > 4 ? (int)(args[4] + 0.5) : 0;
+    double drain_mix  = n > 5 ? args[5] : 0.5;   // drainage amplitude (UI: "Drainage")
+    double ampl       = n > 6 ? args[6] : 1.0;   // erosion amplitude  (UI: "Erosion")
+    int    orders     = n > 7 ? (int)(args[7] + 0.5) : 3;
+    double drain_delf = n > 8 ? args[8] : 2.0;
+    double falloff    = n > 9 ? args[9] : 0.5;
 
     if (edge <= 0.0) edge = 0.001;
 
@@ -289,35 +315,108 @@ void TNerode::eval()
     }
     Td.rock = base;
 
-    double base_n = base;
-
-    // ── Erosion weight ─────────────────────────────────────────
-    // SS: smoothstep ramp — zero derivative at both ends, removes
-    //     the crease where the ramp meets the flat valley/mesa.
-    // shape: applied to w after the ramp — controls cliff profile.
-    //   >1 = more erosion concentrated near the bottom (concave cliff)
-    //   <1 = more erosion spread toward the top (convex cliff)
-    double w;
-    if (base_n >= level + edge) {
-        w = 0.0;
-    } else if (base_n >= level) {
-        double t = (base_n - level) / edge;  // 0 at level, 1 at level+edge
+    // ── Elevation weight ───────────────────────────────────────
+    double w_elev;
+    if (base >= level + edge) {
+        w_elev = 0.0;
+    } else if (base >= level) {
+        double t = (base - level) / edge;
         if (options & SS)
-            w = 1.0 - (t * t * (3.0 - 2.0 * t));  // smoothstep
+            w_elev = 1.0 - (t * t * (3.0 - 2.0 * t));
         else
-            w = 1.0 - t;                            // linear
+            w_elev = 1.0 - t;
     } else {
-        w = 1.0;
+        w_elev = 1.0;
+    }
+    if (options & SQR) w_elev = w_elev * w_elev;
+    if (shape != 1.0)  w_elev = pow(w_elev, shape);
+
+    // ── Drainage weight ────────────────────────────────────────
+    // Voronoi cells on the unit sphere.
+    // tn in [0,1], pn in [0,0.5] — phi halved to preserve circular aspect
+    // ratio (theta spans 360 degrees, phi spans 180 degrees).
+    // base_freq = 2^start → cell size = 2^-start of the unit sphere,
+    // matching fractal's subdivision level convention exactly.
+    // start=12 → cells at LOD-12 scale.
+    double w_drain = 0.0;
+    if (nchannels > 0 && drain_mix > 0.0) {
+        const double VMAX = 0.87;
+
+        // t_cliff: position in cliff zone [0=base, 1=top]
+        // Extended slightly beyond [0,1] for smooth envelope falloff
+        double t_cliff;
+        if (base >= level + edge)
+            t_cliff = 1.0 + (base - (level + edge)) / edge;
+        else if (base >= level)
+            t_cliff = (base - level) / edge;
+        else
+            t_cliff = -(level - base) / edge;
+
+        // Envelope: bell curve peaking near the cliff base (natural drainage
+        // carves deepest near the bottom where water has most energy).
+        // Fades smoothly 50% of edge-width above and below the cliff zone.
+        double env = 0.0;
+        if (t_cliff > -0.5 && t_cliff < 1.5) {
+            double tc = (t_cliff + 0.5) / 2.0;  // remap to [0,1]
+            const double lo = 0.175;             // peak at ~25% up cliff (near base)
+            double u = (tc <= lo)
+                ? tc / lo
+                : 1.0 - (tc - lo) / (1.0 - lo);
+            u = u < 0.0 ? 0.0 : u > 1.0 ? 1.0 : u;
+            env = u * u * (3.0 - 2.0 * u);
+        }
+
+        // Unit sphere coords — phi halved for circular cells
+        double tn = Theta / 360.0;
+        double pn = (Phi + 90.0) / 360.0;
+
+        // Clamp t_cliff to [0,1] for octave height weighting
+        double tc_w = t_cliff < 0.0 ? 0.0 : t_cliff > 1.0 ? 1.0 : t_cliff;
+
+        // Multi-octave Voronoi:
+        // Multi-octave Voronoi — amplitude model matches texture overlays:
+        // oct=0: amplitude = ampl,            freq = 2^start
+        // oct=1: amplitude = ampl * falloff,  freq = 2^start * drain_delf
+        // oct=2: amplitude = ampl * falloff^2, freq = 2^start * drain_delf^2
+        // falloff=1: all octaves equal; falloff=0.5: each half previous; falloff=0: first only
+        double vsum = 0.0, vtotal = 0.0;
+        double f = pow(2.0, (double)nchannels);
+        double oct_amp = 1.0;  // drain_mix applied in combine step
+        for (int oct = 0; oct < orders; oct++) {
+            double peak = (orders > 1) ? double(oct) / double(orders - 1) : 0.5;
+            double dist = fabs(tc_w - peak);
+            double hw = 1.0 - dist * 1.5;
+            hw = hw < 0.0 ? 0.0 : hw;
+            hw = hw * hw * (3.0 - 2.0 * hw);
+            double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
+            double d = Noise::Voronoi3D(pnt) + 0.5;
+            d = d < 0.0 ? 0.0 : d;
+            double v = 1.0 - (d / VMAX);
+            v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
+            vsum   += oct_amp * hw * v;
+            vtotal += oct_amp * hw;
+            f       *= drain_delf;
+            oct_amp *= falloff;
+        }
+
+        double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
+        dc = dc * dc * (3.0 - 2.0 * dc);
+        // INV (NEG flag): invert drainage — ridges become gullies and vice versa
+        if (options & NEG) dc = 1.0 - dc;
+        w_drain = dc * env;
     }
 
-    if (options & SQR) w = w * w;
-    if (shape != 1.0)  w = pow(w, shape);
-
-    double incision = depth * w;
-    double z = base - incision;
+    // ── Combine ────────────────────────────────────────────────
+    // Erosion carves the cliff face by depth * ampl * w_elev.
+    // Drainage modulates within that zone: channels carve deeper,
+    // ridges carve less — but never below the full erosion depth.
+    // Combined weight blends between w_elev alone and w_elev*w_drain
+    // based on drain_mix amplitude.  Result stays in [0, depth*ampl].
+    double w_combined = w_elev * (ampl + drain_mix * 0.25 * w_drain);
+    double z = base - depth * w_combined;
 
     if (S0.pvalid()) S0.p.z = z;
     else             S0.s   = z;
 
-    Td.sediment = -incision;
+    Td.sediment = -(base - z);
 }

@@ -408,11 +408,10 @@ void MapData::init_terrain_data(TerrainData &td,int pass)
 		setDepth(td.depth);
     else if(td.hardness())
 		setHardness(td.softness);
-	else {
+	else if(ne==2) {
 		setSolid(td.rock);
 		setSediment(td.sediment);
-		if(ne>0)
-			TheMap->set_erosion(1);
+		TheMap->set_erosion(1);
 	}
     Hardness=hardness();
 	double h=Ht();
