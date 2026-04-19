@@ -109,6 +109,7 @@ public:
 
     void OnNextColors(wxCommandEvent& event);
     void OnPrevColors(wxCommandEvent& event);
+    void OnInvert(wxCommandEvent& event);
     void OnChanged(wxCommandEvent& event);
     void OnShowTmps(wxCommandEvent& event);
     void OnFileSelect(wxCommandEvent& event);

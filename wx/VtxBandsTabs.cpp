@@ -56,7 +56,7 @@ IMPLEMENT_CLASS(VtxBandsTabs, wxPanel )
 BEGIN_EVENT_TABLE(VtxBandsTabs, wxPanel)
 
 EVT_CHECKBOX(ID_NORM,VtxBandsTabs::OnChanged)
-EVT_CHECKBOX(ID_INVERT,VtxBandsTabs::OnChanged)
+EVT_CHECKBOX(ID_INVERT,VtxBandsTabs::OnInvert)
 EVT_CHECKBOX(ID_CLAMP,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_ALPHA,VtxBandsTabs::OnChanged)
 EVT_CHECKBOX(ID_NEAREST,VtxBandsTabs::OnChanged)
@@ -293,15 +293,7 @@ bool VtxBandsTabs::canSave()  {
 // - image has been edited after last save or load
 //-------------------------------------------------------------
 bool VtxBandsTabs::canRevert(){
-	if(!revert_list)
-		return false;
-	if(!isModified())
-		return false;
-	char *name=(char*)m_name.ToAscii();
-	ImageSym *is=revert_list->inlist(name);
-	if(is)
-		return true;
-	return false;
+	return isModified();
 }
 
 //-------------------------------------------------------------
@@ -361,6 +353,8 @@ void VtxBandsTabs::freeRevertList() {
 void VtxBandsTabs::makeImageList(){
 	cout<<"VtxBandsTabs::makeImageList()"<<endl;
 
+	// Sort before scan so addImages' inlist() check prevents duplicates
+	images.images.sort();
     images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
@@ -407,26 +401,29 @@ void VtxBandsTabs::makeRevertList(){
 // VtxBandsTabs::setObjAttributes() when switched out
 //-------------------------------------------------------------
 void VtxBandsTabs::setObjAttributes(){
-	//if(!update_needed)
-	//	return;
+	if(!update_needed)
+		return;
 	wxString istr=getImageString(m_name);
 	char buff[512];
 	strcpy(buff,istr.ToAscii());
-	//cout << buff << endl;
+	// Write spx to disk so getImageInfo finds it during init()
+	images.saveSpxFile((char*)m_name.ToAscii(), buff);
+	// Remove cached entry so TNbands::init() is forced to rebuild
+	// (TNbands uses istring match not CHANGED flag to decide rebuild)
+	ImageSym *cached = images.images.inlist((char*)m_name.ToAscii());
+	if(cached) { DFREE(cached->image); }
+	images.images.sort();
 	TNinode *n=(TNinode*)TheScene->parse_node(buff);
 	if(!n)
 		return;
 	n->init();
+	images.images.sort();
 	delete n;
 
 	m_image_window->setImage(m_name.ToAscii(),m_image_window->TILE);
-	if(update_needed){
-		TheScene->set_changed_detail();
-		TheScene->rebuild_all();
-		setModified(true);
-	}
-	else
-		setModified(true);
+	setModified(true);
+	TheScene->set_changed_detail();
+	TheScene->rebuild_all();
 	Render.invalidate_textures();
     TNbands::show_tmps=m_show_tmps->GetValue();
 	update_needed=false;
@@ -493,8 +490,8 @@ wxString VtxBandsTabs::getImageString(wxString name){
 	int opts=0;
 	if(m_norm_check->GetValue())
 		opts |= NORM;
-	if(m_invert_check->GetValue())
-		opts |= INVT;
+	// Invert is handled by reversing color order in setColorsFromControls,
+	// not by a flag in the spx
 	if(m_clamp_check->GetValue())
 		opts |= CLAMP;
 	if(m_nearest_check->GetValue())
@@ -709,7 +706,26 @@ void VtxBandsTabs::makeNewImage(char *name, char *iexpr){
 //-------------------------------------------------------------
 // VtxBandsTabs::OnChanged() generic handler attribute change event
 //-------------------------------------------------------------
+void VtxBandsTabs::OnInvert(wxCommandEvent& event){
+	// Capture current slider state into colors (forward order)
+	setColorsFromControls();
+	// Copy Color values before freeing the list
+	Color arr[256];
+	int count=0;
+	colors.ss();
+	Color *cp;
+	while((cp=colors++) && count<256) arr[count++]=*cp;
+	colors.free();
+	// Re-add in reverse order
+	for(int i=count-1;i>=0;i--) colors.add(new Color(arr[i]));
+	// Update sliders to show reversed order
+	setControlsFromColors();
+	update_needed=true;
+	setObjAttributes();
+}
+
 void VtxBandsTabs::OnChanged(wxCommandEvent& event){
+	update_needed=true;
 	setObjAttributes();
 }
 
@@ -751,16 +767,26 @@ void VtxBandsTabs::OnImageSize(wxCommandEvent& event){
 //-------------------------------------------------------------
 void VtxBandsTabs::Save(){
 	char *name=(char*)m_name.ToAscii();
-	ImageSym *isc=image_list->inlist(name);
-	if(!isc)
-		return;
-	ImageSym *isr=revert_list->inlist(name);
-	ImageSym *isn=new ImageSym(isc);
-	if(isr){
-		revert_list->free(isr);
+	if(m_name.IsEmpty()) return;
+
+	// Write current expression to spx
+	wxString istr=getImageString(m_name);
+	char buff[512];
+	strcpy(buff, istr.ToAscii());
+	images.saveSpxFile(name, buff);
+
+	// Rebuild and save bmp
+	images.images.sort();
+	ImageSym *cached = images.images.inlist(name);
+	if(cached) { DFREE(cached->image); }
+	TNinode *n=(TNinode*)TheScene->parse_node(buff);
+	if(n){
+		n->init();
+		Image *img=images.find(name);
+		if(img) images.save(name, img);
+		images.images.sort();
+		delete n;
 	}
-	revert_list->add(isn);
-	revert_list->sort();
 
 	setModified(false);
 	imageDialog->UpdateControls();
@@ -770,12 +796,15 @@ void VtxBandsTabs::Save(){
 // VtxBandsTabs::Revert() handler for Revert button press event
 //-------------------------------------------------------------
 void VtxBandsTabs::Revert(){
-	if(!revert_list)
-		return;
+	if(m_name.IsEmpty()) return;
 	char *name=(char*)m_name.ToAscii();
-	ImageSym *is=revert_list->inlist(name);
-	if(is && is->istring){
-		makeNewImage(name, is->istring);
+	// Read spx from disk and rebuild
+	char *spx=images.readSpxFile(name);
+	if(spx){
+		ImageSym *cached=images.images.inlist(name);
+		if(cached) { DFREE(cached->image); }
+		makeNewImage(name, spx);
+		FREE(spx);
 	}
 	Render.invalidate_textures();
 	TheScene->set_changed_detail();
@@ -786,27 +815,38 @@ void VtxBandsTabs::Revert(){
 
 bool VtxBandsTabs::Clone(wxString new_name, bool rename){
 	char *name=(char*)new_name.ToAscii();
-	ImageSym *is=image_list->inlist((char*)new_name.ToAscii());
-	if(is)
-		return false; // name exists
-	is=image_list->inlist((char*)m_name.ToAscii());
-	if(is && is->istring){
-		wxString iexpr=getImageString(new_name);
-		TNinode *n=(TNinode*)TheScene->parse_node((char*)iexpr.ToAscii());
-		if(!n)
-			return false;
-		if(rename)
-			images.removeAll((char*)m_name.ToAscii());
+	ImageSym *is=image_list->inlist((char*)m_name.ToAscii());
+	if(!is || !is->istring)
+		return false;
 
-		n->init();
-		m_name=new_name;
-		makeImageList();
-		makeRevertList();
-		displayImage((char*)m_name.ToAscii());
-	    setSelection(name);
-		return true;	
-	}
-	return false;	
+	wxString iexpr=getImageString(new_name);
+	char buff[512];
+	strcpy(buff, iexpr.ToAscii());
+
+	// Write spx to disk first so getImageInfo finds it during init()
+	images.saveSpxFile(name, buff);
+
+	// Sort before init() so addImage's inlist() doesn't create duplicates
+	images.images.sort();
+
+	TNinode *n=(TNinode*)TheScene->parse_node(buff);
+	if(!n)
+		return false;
+
+	if(rename)
+		images.removeAll((char*)m_name.ToAscii());
+
+	n->init();
+	delete n;
+
+	// Sort after all modifications before makeImageList scans
+	images.images.sort();
+
+	m_name=new_name;
+	makeImageList();
+	makeRevertList();
+	setSelection(name);
+	return true;
 }
 bool VtxBandsTabs::New(wxString name){
 	return Clone(name,false);	
@@ -869,13 +909,16 @@ void VtxBandsTabs::OnMixSlider(wxScrollEvent& event){
 }
 void VtxBandsTabs::OnEndMixSlider(wxScrollEvent& event){
 	m_mix_color->setValueFromSlider();
+	update_needed=true;
 	setObjAttributes();
 }
 void VtxBandsTabs::OnMixText(wxCommandEvent& event){
 	m_mix_color->setValueFromText();
+	update_needed=true;
 	setObjAttributes();
 }
 void VtxBandsTabs::OnMixColor(wxColourPickerEvent& event){
+	update_needed=true;
 	setObjAttributes();
 }
 
@@ -884,10 +927,12 @@ void VtxBandsTabs::OnModSlider(wxScrollEvent& event){
 }
 void VtxBandsTabs::OnEndModSlider(wxScrollEvent& event){
 	m_mod_slider->setValueFromSlider();
+	update_needed=true;
 	setObjAttributes();
 }
 void VtxBandsTabs::OnModText(wxCommandEvent& event){
 	m_mod_slider->setValueFromText();
+	update_needed=true;
 	setObjAttributes();
 }
 
@@ -902,6 +947,7 @@ void VtxBandsTabs::OnEndSplineColorSlider(wxScrollEvent& event){
 	int i=(event.GetId()-ID_COLORS)/4;
 	ColorSlider *s=csliders[i];
 	s->setValueFromSlider();
+	update_needed=true;
 	setObjAttributes();
 }
 
@@ -909,13 +955,15 @@ void VtxBandsTabs::OnSplineColorText(wxCommandEvent& event){
 	int i=(event.GetId()-ID_COLORS)/4;
 	ColorSlider *s=csliders[i];
 	s->setValueFromText();
+	update_needed=true;
 	setObjAttributes();
- }
+}
 
 void VtxBandsTabs::OnSplineColorValue(wxColourPickerEvent&event){
+	update_needed=true;
 	setObjAttributes();
 }
 void VtxBandsTabs::OnSplineColorEnable(wxCommandEvent& event){
+	update_needed=true;
 	setObjAttributes();
 }
-

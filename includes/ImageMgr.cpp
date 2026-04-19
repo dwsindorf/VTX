@@ -1435,7 +1435,7 @@ void ImageReader::addImage(char *name, int m, char *vstr, Image *im, char *p)
 	else{
 		is=new ImageSym(m,name,im,vstr,p);
 		images.add(is);
-		//images.sort();
+		images.sort();
 	}
 }
 

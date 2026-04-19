@@ -36,6 +36,12 @@ protected:
 	void makeNewImage(char *, char *);
 	bool Clone(wxString name,bool rename);
 
+	// Working copy helpers
+	wxString tmpName(wxString name);
+	bool     isTmp(wxString name);
+	wxString baseName(wxString name);
+	void     loadIntoWorkingCopy(wxString name);
+
 	wxChoice *m_file_menu;
 	wxString m_name;
 	VtxImageWindow *m_image_window;

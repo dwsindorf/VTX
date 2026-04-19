@@ -14,6 +14,8 @@
 #include <malloc.h>
 
 #include "VtxImageDialog.h"
+#include "FileUtil.h"
+#include <wx/filefn.h>
 #include "OrbitalClass.h"
 #include "UniverseModel.h"
 
@@ -113,47 +115,64 @@ wxString  VtxImageDialog::getSelection(){
 void VtxImageDialog::OnNew(wxCommandEvent &event){
 	wxString name=getSelection();
 	FileIODialog *dlg = new FileIODialog("New",name);
-    if ( dlg->ShowModal() == wxID_OK ){
-    	bool ok=false;
-    	wxString new_name=dlg->getName();
-    	switch(m_type){
-    	case TYPE_1D:
-    		ok=m_1D_tabs->New(new_name);
-    		m_2D_tabs->Invalidate();
-    		break;
-    	case TYPE_2D:
-    		ok=m_2D_tabs->New(new_name);
-    		break;
-    	}
-    	if(ok)
-    		cout<<new_name+" created"<<endl;
-    	else
-    		cout<<new_name+" exists"<<endl;
-    }
-    dlg->Destroy();
+	if(dlg->ShowModal() == wxID_OK){
+		wxString new_name=dlg->getName();
+		if(!new_name.IsEmpty()){
+			// Check if name exists on disk
+			char bdir[256]; char spxpath[300];
+			FileUtil::getBitmapsDir(bdir);
+			sprintf(spxpath,"%s%s.spx",bdir,(const char*)new_name.ToAscii());
+			bool exists = wxFileExists(wxString(spxpath));
+			if(exists){
+				wxString msg = wxString("\"")+new_name+"\" already exists. Replace?";
+				int res=wxMessageBox(msg,"File Exists",wxYES_NO|wxNO_DEFAULT|wxICON_WARNING,this);
+				if(res==wxYES){
+					switch(m_type){
+					case TYPE_2D: m_2D_tabs->Rename(new_name); break;
+					case TYPE_1D: m_1D_tabs->Rename(new_name); break;
+					}
+				}
+			} else {
+				bool ok=false;
+				switch(m_type){
+				case TYPE_1D: ok=m_1D_tabs->New(new_name); m_2D_tabs->Invalidate(); break;
+				case TYPE_2D: ok=m_2D_tabs->New(new_name); break;
+				}
+				if(ok) cout<<new_name+" created"<<endl;
+			}
+		}
+	}
+	dlg->Destroy();
 }
 
 void VtxImageDialog::OnRename(wxCommandEvent &event){
 	wxString name=getSelection();
-
 	FileIODialog *dlg = new FileIODialog("Rename",name);
-    if ( dlg->ShowModal() == wxID_OK ){
-    	bool ok=false;
-    	wxString new_name=dlg->getName();
-    	switch(m_type){
-    	case TYPE_1D:
-    		ok=m_1D_tabs->Rename(new_name);
-    		break;
-    	case TYPE_2D:
-    		ok=m_2D_tabs->Rename(new_name);
-    		break;
-    	}
-    	if(ok)
-    		cout<<new_name+" created"<<endl;
-    	else
-    		cout<<new_name+" exists"<<endl;
-    }
-    dlg->Destroy();
+	if(dlg->ShowModal() == wxID_OK){
+		wxString new_name=dlg->getName();
+		if(!new_name.IsEmpty() && new_name != name){
+			char bdir[256]; char spxpath[300];
+			FileUtil::getBitmapsDir(bdir);
+			sprintf(spxpath,"%s%s.spx",bdir,(const char*)new_name.ToAscii());
+			bool exists = wxFileExists(wxString(spxpath));
+			if(exists){
+				wxString msg = wxString("\"")+new_name+"\" already exists. Replace?";
+				int res=wxMessageBox(msg,"File Exists",wxYES_NO|wxNO_DEFAULT|wxICON_WARNING,this);
+				if(res==wxYES){
+					switch(m_type){
+					case TYPE_2D: m_2D_tabs->Rename(new_name); break;
+					case TYPE_1D: m_1D_tabs->Rename(new_name); break;
+					}
+				}
+			} else {
+				switch(m_type){
+				case TYPE_2D: m_2D_tabs->Rename(new_name); break;
+				case TYPE_1D: m_1D_tabs->Rename(new_name); break;
+				}
+			}
+		}
+	}
+	dlg->Destroy();
 }
 
 void VtxImageDialog::OnClose(wxCloseEvent& event){
@@ -316,13 +335,12 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 
 }
 void VtxImageDialog::OnSave(wxCommandEvent &event){
-	//Invalidate();
 	switch(m_type){
 	case TYPE_2D:
-		//m_2D_tabs->Save();
-		m_2D_tabs->Invalidate();
+		m_2D_tabs->Save();
 		break;
 	case TYPE_1D:
+		m_1D_tabs->Save();
 		m_1D_tabs->Invalidate();
 		break;
 	}
