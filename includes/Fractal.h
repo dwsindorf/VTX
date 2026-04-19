@@ -24,6 +24,7 @@ public:
 	const char *typeName ()	{ return "fractal";}
 	void propertyString(char *s);
 	void applyExpr();
+	void buildImage();
 };
 
 

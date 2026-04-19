@@ -485,8 +485,6 @@ void TNcraters::eval()
 	TNarg &args=*((TNarg *)left);
 	double arg[16];
 	CraterMgr *cmgr=(CraterMgr*)mgr;
-	
-	//Point4D pv=TheNoise.get_point();
 
 	cmgr->init();
 
@@ -557,8 +555,6 @@ void TNcraters::eval()
 	    right->eval();
 	}
 	
-	//cout<<mgr->id<<endl;
-
 	cmgr->eval();
 	if(joined(this))
 	    return;
@@ -584,7 +580,6 @@ void TNcraters::eval()
 			hb=S0.s;
 	}
     hb+=cmgr->offset;
-    
 
     INIT;
     double ht=0;

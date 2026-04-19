@@ -46,6 +46,7 @@ void TNfractal::init()
 	TNfunc::init();
 
 }
+
 //-------------------------------------------------------------
 // TNfractal::eval() evaluate the node
 //-------------------------------------------------------------
@@ -71,18 +72,22 @@ void TNfractal::init()
 //	7	 tbias	1.0   low slope multiplier (damping factor)
 //	8	 hmax	1.0   ht(fractional) for mode switch
 //	9	 hval	1.0   multiplier to apply if ht > hmax
-//
 //-------------------------------------------------------------
 void TNfractal::eval()
 {
-	//if(!isEnabled() /*|| Td.get_flag(FVALUE)*/){
 	if(!isEnabled() || chnl>3){
 		if(right)
 			right->eval();
 		return;
 	}
-    
- 	Td.clr_flag(FVALUE);
+
+	if (images.building()) {
+		buildImage();
+		return;
+	}
+	INIT;
+
+	Td.clr_flag(FVALUE);
 	static int init=0;
 	static double facts[64];
 	double margin_scale=1;
@@ -101,22 +106,14 @@ void TNfractal::eval()
 
 	if(arg)
 		n=getargs(arg,args,20);
-
-	INIT;
 	if(right){
 	   	Td.set_flag(FVALUE);
-
 		right->eval();
 		if(S0.pvalid())
 			base=S0.p.z;
 		else
 			base=S0.s;
 	}
-	//if(S0.get_flag(INMARGIN))
-	//	margin_scale=0.1;
-	//if(Td.texht)
-	//	base+=Td.texht;
-
 	double slope,delta,t,f,drop=0;
 	double t1,t2;
 	unsigned int l1,l2;
@@ -131,88 +128,6 @@ void TNfractal::eval()
 	double ampl=n>2?args[2]:0.1;
 	double sbias=n>3?args[3]:0.2;
 
-	// ── Image mode ────────────────────────────────────────────
-	// Mirrors terrain fractal behaviour using TheNoise 4D point.
-	// At each octave:
-	//   slope = gradient magnitude of accumulated signal so far
-	//   rand  = noise at a different seed (like per-cell random in terrain)
-	//   delta = ampl * rand * slope * sbias   (slope-scaled displacement)
-	//   drop  = rand2 * sdrop * slope * sbias (downward bias on steep slopes)
-	//   result += lerp_weight * (delta - drop)
-	// Flat areas (slope < thresh*smax) are damped by tbias.
-	// Height-dependent scaling mirrors hmax/hval ramp.
-	if (images.building()) {
-		double smax   = n>4 ? args[4] : 2.0;
-		double sdrop  = n>5 ? args[5] : 0.1;
-		double thresh = n>6 ? args[6] : 0.0;
-		double tbias  = n>7 ? args[7] : 0.0;
-		double hmax_a = n>8 ? args[8] : 1.0;
-		double hval   = n>9 ? args[9] : 0.0;
-
-		Point4D pt = TheNoise.get_point();
-		double base_freq = pow(2.0, (double)begin);
-		const double EPS = 0.01;
-		const double IM_RPD = 2.0 * PI / 360.0;  // degrees to radians
-
-		double result = base;
-		for (unsigned int oct = 0; oct < orders; oct++) {
-			double f = base_freq * pow(2.0, (double)oct);
-			// Blend weight decreases each octave (like CELLSIZE ratio in terrain)
-			double t = 1.0 / (double)(1 << oct);
-
-			// Gradient in 4D torus space — offsets must stay on the torus
-			// surface to avoid seam discontinuities in TILE mode.
-			// Move along each circle by angle EPS rather than offsetting
-			// individual components linearly.
-			double th = TheNoise.theta * IM_RPD;  // theta in radians
-			double ph = TheNoise.phi   * IM_RPD;  // phi in radians
-			const double R = 0.5;              // torus radius (rw=rh=0.5)
-			// Centre point
-			double pnt_c[4]  = { pt.x*f, pt.y*f, pt.z*f, pt.w*f };
-			// Offset in theta: move along (vx,vz) circle
-			double th2 = th + EPS;
-			double pnt_dth[4] = { -R*cos(th2)*f, pt.y*f, R*sin(th2)*f, pt.w*f };
-			// Offset in phi: move along (vy,vw) circle
-			double ph2 = ph + EPS;
-			double pnt_dph[4] = { pt.x*f, R*sin(ph2)*f, pt.z*f, -R*cos(ph2)*f };
-			double nc  = Noise::Noise4D(pnt_c);
-			double ndth = Noise::Noise4D(pnt_dth);
-			double ndph = Noise::Noise4D(pnt_dph);
-			double gx  = (ndth - nc) / EPS;
-			double gy  = (ndph - nc) / EPS;
-			double slope = sqrt(gx*gx + gy*gy);
-
-			if (options & SQR) slope = slope * slope;
-			if (slope > smax)  slope = smax;
-
-			// Damp flat areas
-			if (thresh > 0.0 && slope <= thresh * smax)
-				slope *= tbias;
-
-			// Height-dependent scaling (mirrors hmax/hval ramp)
-			if (hmax_a > 0.0) {
-				double fht = (result - (-1.0)) / 2.0;  // normalise result to [0,1]
-				fht = fht < 0.0 ? 0.0 : fht > 1.0 ? 1.0 : fht;
-				if (fht > hmax_a) slope *= hval;
-			}
-
-			// rand1/rand2: noise at permuted seeds — seamless since
-			// we permute all 4 torus components together
-			double pnt_r1[4] = { pt.y*f+7.3, pt.z*f+3.1, pt.w*f+5.7, pt.x*f+1.4 };
-			double pnt_r2[4] = { pt.z*f+1.9, pt.w*f+8.3, pt.x*f+2.4, pt.y*f+6.1 };
-			double rand1 = Noise::Noise4D(pnt_r1);  // [-1,1]
-			double rand2 = Noise::Noise4D(pnt_r2);  // [-1,1]
-
-			double delta = ampl * rand1 * slope * sbias;
-			double drop  = sdrop ? rand2 * sdrop * slope * sbias : 0.0;
-			result += t * (delta - drop);
-		}
-
-		if (options & NEG) result = -result;
-		if (S0.pvalid()) S0.p.z = result;
-		else             S0.s   = result;
-		return;
-	}
 	double smax=n>4?args[4]:2.0;
 	double sdrop=n>5?args[5]:0.1;
 	double thresh=n>6?args[6]:0.0;
@@ -225,8 +140,6 @@ void TNfractal::eval()
 	ampl/=hscale;
 	smax/=hscale;
 	bool inmargin=false;
-
-	//cout<<Hscale<<endl;
 
 	unsigned int level=(int)Td.level;
 
@@ -360,6 +273,103 @@ void TNfractal::eval()
 		S0.s=f;
 }
 
+//-------------------------------------------------------------
+// TNfractal::buildImage() evaluate the node for image building
+//-------------------------------------------------------------
+// Mirrors terrain fractal behaviour using TheNoise 4D point.
+// At each octave:
+//   slope = gradient magnitude of accumulated signal so far
+//   rand  = noise at a different seed (like per-cell random in terrain)
+//   delta = ampl * rand * slope * sbias   (slope-scaled displacement)
+//   drop  = rand2 * sdrop * slope * sbias (downward bias on steep slopes)
+//   result += lerp_weight * (delta - drop)
+// Flat areas (slope < thresh*smax) are damped by tbias.
+// Height-dependent scaling mirrors hmax/hval ramp.
+//-------------------------------------------------------------
+void TNfractal::buildImage(){
+	double args[20];
+	INIT;
+	double base=0;
+	if(right){
+		right->eval();
+		base=S0.s;
+	}
+  	TNarg *arg=(TNarg*)left;
+    int n=getargs(arg,args,20);
+	unsigned int begin=(unsigned int)(2.0*args[0]);
+	unsigned int orders=(unsigned int)(2.0*args[1]);
+	double ampl=n>2?args[2]:0.1;
+	double sbias=n>3?args[3]:0.2;
+
+	double smax   = n>4 ? args[4] : 2.0;
+	double sdrop  = n>5 ? args[5] : 0.1;
+	double thresh = n>6 ? args[6] : 0.0;
+	double tbias  = n>7 ? args[7] : 0.0;
+	double hmax_a = n>8 ? args[8] : 1.0;
+	double hval   = n>9 ? args[9] : 0.0;
+
+	Point4D pt = TheNoise.get_point();
+	double base_freq = pow(2.0, (double)begin);
+	const double EPS = 0.01;
+	const double IM_RPD = 2.0 * PI / 360.0;  // degrees to radians
+
+	double result = base;
+	for (unsigned int oct = 0; oct < orders; oct++) {
+		double f = base_freq * pow(2.0, (double)oct);
+		// Blend weight decreases each octave (like CELLSIZE ratio in terrain)
+		double t = 1.0 / (double)(1 << oct);
+		// Gradient in 4D torus space — offsets must stay on the torus
+		// surface to avoid seam discontinuities in TILE mode.
+		// Move along each circle by angle EPS rather than offsetting
+		// individual components linearly.
+		double th = TheNoise.theta * IM_RPD;  // theta in radians
+		double ph = TheNoise.phi   * IM_RPD;  // phi in radians
+		const double R = 0.5;              // torus radius (rw=rh=0.5)
+		// Centre point
+		double pnt_c[4]  = { pt.x*f, pt.y*f, pt.z*f, pt.w*f };
+		// Offset in theta: move along (vx,vz) circle
+		double th2 = th + EPS;
+		double pnt_dth[4] = { -R*cos(th2)*f, pt.y*f, R*sin(th2)*f, pt.w*f };
+		// Offset in phi: move along (vy,vw) circle
+		double ph2 = ph + EPS;
+		double pnt_dph[4] = { pt.x*f, R*sin(ph2)*f, pt.z*f, -R*cos(ph2)*f };
+		double nc  = Noise::Noise4D(pnt_c);
+		double ndth = Noise::Noise4D(pnt_dth);
+		double ndph = Noise::Noise4D(pnt_dph);
+		double gx  = (ndth - nc) / EPS;
+		double gy  = (ndph - nc) / EPS;
+		double slope = sqrt(gx*gx + gy*gy);
+
+		if (options & SQR) slope = slope * slope;
+		if (slope > smax)  slope = smax;
+
+		// Damp flat areas
+		if (thresh > 0.0 && slope <= thresh * smax)
+			slope *= tbias;
+
+		// Height-dependent scaling (mirrors hmax/hval ramp)
+		if (hmax_a > 0.0) {
+			double fht = (result - (-1.0)) / 2.0;  // normalise result to [0,1]
+			fht = fht < 0.0 ? 0.0 : fht > 1.0 ? 1.0 : fht;
+			if (fht > hmax_a) slope *= hval;
+		}
+
+		// rand1/rand2: noise at permuted seeds — seamless since
+		// we permute all 4 torus components together
+		double pnt_r1[4] = { pt.y*f+7.3, pt.z*f+3.1, pt.w*f+5.7, pt.x*f+1.4 };
+		double pnt_r2[4] = { pt.z*f+1.9, pt.w*f+8.3, pt.x*f+2.4, pt.y*f+6.1 };
+		double rand1 = Noise::Noise4D(pnt_r1);  // [-1,1]
+		double rand2 = Noise::Noise4D(pnt_r2);  // [-1,1]
+
+		double delta = ampl * rand1 * slope * sbias;
+		double drop  = sdrop ? rand2 * sdrop * slope * sbias : 0.0;
+		result += t * (delta - drop);
+	}
+
+	if (options & NEG) result = -result;
+	S0.s   = result;
+
+}
 //-------------------------------------------------------------
 // TNfractal::save() evaluate the node
 //-------------------------------------------------------------

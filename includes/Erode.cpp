@@ -244,7 +244,7 @@ void TNerode::applyExpr()
 
 //-------------------------------------------------------------
 // TNerode::eval()
-//
+//-------------------------------------------------------------
 // Elevation-weighted erosion with optional gradient-based drainage channels.
 //
 // ELEVATION WEIGHT (always active):
@@ -317,42 +317,8 @@ void TNerode::eval()
     Td.rock = base;
 
     // ── Image mode ────────────────────────────────────────────
-    // When ImageMgr is building an image, skip terrain cliff logic and
-    // output the drainage pattern directly as a scalar — same pattern
-    // as Craters, Fractal etc. which all branch on images.building().
-    if (images.building()) {
-        double tn = Theta / 360.0;
-        double pn = (Phi + 90.0) / 360.0;
-        double f  = pow(2.0, (double)nchannels);
-        double vsum = 0.0, vtotal = 0.0, oct_amp = 1.0;
-        const double VMAX = 0.87;
-        for (int oct = 0; oct < orders; oct++) {
-            double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
-            double d, v;
-            if (options & NEG) {
-                double n = Noise::Noise3D(pnt);
-                double a = fabs(n);
-                const double smooth_r = 0.15;
-                if (a < smooth_r) { double t=a/smooth_r; a=smooth_r*0.5*t*t*(3.0-t); }
-                v = 1.0 - a; v = v * v;
-            } else {
-                d = Noise::Voronoi3D(pnt) + 0.5;
-                d = d < 0.0 ? 0.0 : d;
-                v = 1.0 - (d / VMAX);
-            }
-            v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
-            vsum   += oct_amp * v;
-            vtotal += oct_amp;
-            f      *= drain_delf;
-            oct_amp *= falloff;
-        }
-        double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
-        dc = dc * dc * (3.0 - 2.0 * dc);
-        // Output: Scale * (Bias*(1-dc) + Drainage*dc)
-        // dc=0 (ridge/cell centre) → Scale*Bias
-        // dc=1 (channel/boundary) → Scale*Drainage
-        // Bias=0: pure pattern from 0 to Scale*Drainage
-        S0.s = depth * (ampl * (1.0 - dc) + drain_mix * dc);
+     if (images.building()) {
+    	buildImage();
         return;
     }
 
@@ -479,3 +445,61 @@ void TNerode::eval()
 
     Td.sediment = -(base - z);  // total erosion depth (negative = removed material)
 }
+
+//-------------------------------------------------------------
+// TNerode::buildImage() used for image generation
+//-------------------------------------------------------------
+// When ImageMgr is building an image, skip terrain cliff logic and
+// output the drainage pattern directly as a scalar — same pattern
+// as Craters, Fractal etc. which all branch on images.building().
+//-------------------------------------------------------------
+void TNerode::buildImage(){
+	INIT;
+	double args[10];
+    TNarg *arg = (TNarg*) left;
+
+	int n = getargs(arg, args, 10);
+
+	double depth      = n > 0 ? args[0] : 0.3;
+	int    nchannels  = n > 4 ? (int)(args[4] + 0.5) : 0;
+	double drain_mix  = n > 5 ? args[5] : 0.5;   // drainage amplitude (UI: "Drainage")
+	double ampl       = n > 6 ? args[6] : 1.0;   // erosion amplitude  (UI: "Erosion")
+	int    orders     = n > 7 ? (int)(args[7] + 0.5) : 3;
+	double drain_delf = n > 8 ? args[8] : 2.0;
+	double falloff    = n > 9 ? args[9] : 0.5;
+
+	double tn = Theta / 360.0;
+		double pn = (Phi + 90.0) / 360.0;
+		double f  = pow(2.0, (double)nchannels);
+		double vsum = 0.0, vtotal = 0.0, oct_amp = 1.0;
+		const double VMAX = 0.87;
+		for (int oct = 0; oct < orders; oct++) {
+			double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
+			double d, v;
+			if (options & NEG) {
+				double n = Noise::Noise3D(pnt);
+				double a = fabs(n);
+				const double smooth_r = 0.15;
+				if (a < smooth_r) { double t=a/smooth_r; a=smooth_r*0.5*t*t*(3.0-t); }
+				v = 1.0 - a; v = v * v;
+			} else {
+				d = Noise::Voronoi3D(pnt) + 0.5;
+				d = d < 0.0 ? 0.0 : d;
+				v = 1.0 - (d / VMAX);
+			}
+			v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
+			vsum   += oct_amp * v;
+			vtotal += oct_amp;
+			f      *= drain_delf;
+			oct_amp *= falloff;
+		}
+		double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
+		dc = dc * dc * (3.0 - 2.0 * dc);
+		// Output: Scale * (Bias*(1-dc) + Drainage*dc)
+		// dc=0 (ridge/cell centre) → Scale*Bias
+		// dc=1 (channel/boundary) → Scale*Drainage
+		// Bias=0: pure pattern from 0 to Scale*Drainage
+		S0.s = depth * (ampl * (1.0 - dc) + drain_mix * dc);
+		return;
+}
+

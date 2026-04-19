@@ -35,6 +35,7 @@ public:
 	const char *typeName ()	{ return "erode";}
 	void propertyString(char *s);
 	void applyExpr();
+	void buildImage();
 };
 
 
