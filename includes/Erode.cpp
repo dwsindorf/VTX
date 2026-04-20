@@ -1,7 +1,6 @@
 #include "NodeData.h"
 #include "Erode.h"
 #include "NoiseFuncs.h"  // for Voronoi::edge()
-#include "NoiseClass.h"   // for TheNoise.get_point(), Noise4D, Voronoi4D
 
 //--------------------------------------------------------------------
 // TNerode — single-pass elevation-weighted terrain incision
@@ -317,11 +316,6 @@ void TNerode::eval()
     }
     Td.rock = base;
 
-    // ── Image mode ────────────────────────────────────────────
-     if (images.building()) {
-    	buildImage();
-        return;
-    }
 
     // ── Elevation weight ───────────────────────────────────────
     double w_elev;
@@ -340,18 +334,9 @@ void TNerode::eval()
     if (shape != 1.0)  w_elev = pow(w_elev, shape);
 
     // ── Drainage weight ────────────────────────────────────────
-    // Voronoi cells on the unit sphere.
-    // tn in [0,1], pn in [0,0.5] — phi halved to preserve circular aspect
-    // ratio (theta spans 360 degrees, phi spans 180 degrees).
-    // base_freq = 2^start → cell size = 2^-start of the unit sphere,
-    // matching fractal's subdivision level convention exactly.
-    // start=12 → cells at LOD-12 scale.
     double w_drain = 0.0;
     if (nchannels > 0 && drain_mix > 0.0) {
         const double VMAX = 0.87;
-
-        // t_cliff: position in cliff zone [0=base, 1=top]
-        // Extended slightly beyond [0,1] for smooth envelope falloff
         double t_cliff;
         if (base >= level + edge)
             t_cliff = 1.0 + (base - (level + edge)) / edge;
@@ -360,13 +345,10 @@ void TNerode::eval()
         else
             t_cliff = -(level - base) / edge;
 
-        // Envelope: bell curve peaking near the cliff base (natural drainage
-        // carves deepest near the bottom where water has most energy).
-        // Fades smoothly 50% of edge-width above and below the cliff zone.
         double env = 0.0;
         if (t_cliff > -0.5 && t_cliff < 1.5) {
-            double tc = (t_cliff + 0.5) / 2.0;  // remap to [0,1]
-            const double lo = 0.175;             // peak at ~25% up cliff (near base)
+            double tc = (t_cliff + 0.5) / 2.0;
+            const double lo = 0.175;
             double u = (tc <= lo)
                 ? tc / lo
                 : 1.0 - (tc - lo) / (1.0 - lo);
@@ -374,19 +356,14 @@ void TNerode::eval()
             env = u * u * (3.0 - 2.0 * u);
         }
 
-        // Unit sphere coords — phi halved for circular cells
         double tn = Theta / 360.0;
-        double pn = (Phi + 90.0) / 360.0;
-
-        // Clamp t_cliff to [0,1] for octave height weighting
+        // In terrain mode Phi spans -90..90 so pn covers [0,0.5] — intentional
+        // to match the spherical aspect ratio of the planet surface.
+        // In image mode both axes span the full [0,1] tile so use equal scaling.
+        double pn = images.building()
+            ? (Phi + 90.0) / 180.0   // image: Phi -90..90 → 0..1
+            : (Phi + 90.0) / 360.0;  // terrain: preserve spherical aspect
         double tc_w = t_cliff < 0.0 ? 0.0 : t_cliff > 1.0 ? 1.0 : t_cliff;
-
-        // Multi-octave Voronoi:
-        // Multi-octave Voronoi — amplitude model matches texture overlays:
-        // oct=0: amplitude = ampl,            freq = 2^start
-        // oct=1: amplitude = ampl * falloff,  freq = 2^start * drain_delf
-        // oct=2: amplitude = ampl * falloff^2, freq = 2^start * drain_delf^2
-        // falloff=1: all octaves equal; falloff=0.5: each half previous; falloff=0: first only
         double vsum = 0.0, vtotal = 0.0;
         double f = pow(2.0, (double)nchannels);
         double oct_amp = 1.0;
@@ -396,14 +373,9 @@ void TNerode::eval()
             double hw = 1.0 - dist * 1.5;
             hw = hw < 0.0 ? 0.0 : hw;
             hw = hw * hw * (3.0 - 2.0 * hw);
-
             double pnt[3] = { tn * f, pn * f, double(oct) * 3.7 };
             double v;
             if (options & NEG) {
-                // Gully mode: smoothed absolute value of gradient noise.
-                // |Perlin| gives narrow ridge crests at zero-crossings with
-                // broad smooth basins between — watershed divides over gully floors.
-                // smooth_r rounds the sharp V at each crest (like noise Smooth param).
                 double n = Noise::Noise3D(pnt);
                 double a = fabs(n);
                 const double smooth_r = 0.15;
@@ -411,10 +383,8 @@ void TNerode::eval()
                     double t = a / smooth_r;
                     a = smooth_r * 0.5 * t * t * (3.0 - t);
                 }
-                v = 1.0 - a;
-                v = v * v;  // sharpen: concentrate carving near ridge crests
+                v = 1.0 - a; v = v * v;
             } else {
-                // Cell mode: standard Voronoi dome
                 const double VMAX = 0.87;
                 double d = Noise::Voronoi3D(pnt) + 0.5;
                 d = d < 0.0 ? 0.0 : d;
@@ -426,87 +396,31 @@ void TNerode::eval()
             f       *= drain_delf;
             oct_amp *= falloff;
         }
-
         double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
         dc = dc * dc * (3.0 - 2.0 * dc);
         w_drain = dc * env;
     }
 
     // ── Combine ────────────────────────────────────────────────
-    // Erosion carves the cliff face by depth * ampl * w_elev.
-    // Drainage modulates within that zone: channels carve deeper,
-    // ridges carve less — but never below the full erosion depth.
-    // Combined weight blends between w_elev alone and w_elev*w_drain
-    // based on drain_mix amplitude.  Result stays in [0, depth*ampl].
     double w_combined = w_elev * (ampl + drain_mix * 0.25 * w_drain);
     double z = base - depth * w_combined;
 
-    if (S0.pvalid()) S0.p.z = z;
-    else             S0.s   = z;
-
-    Td.sediment = -(base - z);  // total erosion depth (negative = removed material)
+    if (images.building()) {
+        // Image mode: z is the eroded intensity. Clamp to [0,1].
+        // level/edge gate by downstream intensity; drainage carves the pattern.
+        double out = z < 0.0 ? 0.0 : z > 1.0 ? 1.0 : z;
+        S0.s = out;
+    } else if (S0.pvalid()) {
+        S0.p.z = z;
+        Td.sediment = -(base - z);
+    } else {
+        S0.s = z;
+        Td.sediment = -(base - z);
+    }
 }
 
 //-------------------------------------------------------------
-// TNerode::buildImage() used for image generation
-//-------------------------------------------------------------
-// Uses TheNoise.get_point() 4D torus coords for seamless TILE tiling,
-// matching the same mechanism used by noise() and craters() in image mode.
-// Voronoi4D / Noise4D are used so all four torus components contribute,
-// eliminating the banding that flat 3D coords produce.
-// Modulates the downstream (right) node value eval'd before this call.
+// TNerode::buildImage() TODO: add realistic erosion
 //-------------------------------------------------------------
 void TNerode::buildImage(){
-	// Capture downstream value BEFORE INIT clears S0.s
-	double base = S0.s;
-	INIT;
-	double args[10];
-	TNarg *arg = (TNarg*) left;
-	int n = getargs(arg, args, 10);
-
-	double depth      = n > 0 ? args[0] : 0.3;
-	int    nchannels  = n > 4 ? (int)(args[4] + 0.5) : 0;
-	double drain_mix  = n > 5 ? args[5] : 0.5;
-	double ampl       = n > 6 ? args[6] : 1.0;
-	int    orders     = n > 7 ? (int)(args[7] + 0.5) : 3;
-	double drain_delf = n > 8 ? args[8] : 2.0;
-	double falloff    = n > 9 ? args[9] : 0.5;
-
-	// 4D torus point set by image builder for seamless tiling
-	Point4D pt = TheNoise.get_point();
-	double f = pow(2.0, (double)nchannels);
-	double vsum = 0.0, vtotal = 0.0, oct_amp = 1.0;
-	const double VMAX = 0.87;
-
-	for (int oct = 0; oct < orders; oct++) {
-		// Scale all 4 torus components — octave seed via w offset
-		double pnt[4] = { pt.x*f, pt.y*f, pt.z*f, pt.w*f + oct*0.37 };
-		double v;
-		if (options & NEG) {
-			// Gully mode: smoothed |Noise4D|
-			double nn = Noise::Noise4D(pnt);
-			double a = fabs(nn);
-			const double smooth_r = 0.15;
-			if (a < smooth_r) { double t = a/smooth_r; a = smooth_r*0.5*t*t*(3.0-t); }
-			v = 1.0 - a;
-			v = v * v;
-		} else {
-			// Cell mode: Voronoi4D dome
-			double d = Noise::Voronoi4D(pnt) + 0.5;
-			d = d < 0.0 ? 0.0 : d;
-			v = 1.0 - (d / VMAX);
-		}
-		v = v < 0.0 ? 0.0 : v > 1.0 ? 1.0 : v;
-		vsum   += oct_amp * v;
-		vtotal += oct_amp;
-		f      *= drain_delf;
-		oct_amp *= falloff;
-	}
-
-	double dc = (vtotal > 0.0) ? vsum / vtotal : 0.0;
-	dc = dc * dc * (3.0 - 2.0 * dc);
-	double erode_val = depth * (ampl * (1.0 - dc) + drain_mix * dc);
-
-	// Modulate downstream node value (captured before INIT)
-	S0.s = (base != 0.0) ? erode_val * base : erode_val;
 }

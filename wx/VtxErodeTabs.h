@@ -1,73 +1,84 @@
-#ifndef ERODE_TABS_H_
-#define ERODE_TABS_H_
+#ifndef VTX_ERODE_TABS_H_
+#define VTX_ERODE_TABS_H_
 
 #include "VtxTabsMgr.h"
-#include "VtxExprEdit.h"
+#include "VtxControls.h"
 #include "Erode.h"
+
+enum {
+    ID_ETABS_DELETE, ID_ETABS_ENABLE,
+    ID_ETABS_AMPL_SLDR,   ID_ETABS_AMPL_TEXT,
+    ID_ETABS_TRANS_SLDR,  ID_ETABS_TRANS_TEXT,
+    ID_ETABS_LEVEL_SLDR,  ID_ETABS_LEVEL_TEXT,
+    ID_ETABS_MARGIN_SLDR, ID_ETABS_MARGIN_TEXT,
+    ID_ETABS_CHAN_SLDR,   ID_ETABS_CHAN_TEXT,
+    ID_ETABS_ORD_SLDR,    ID_ETABS_ORD_TEXT,
+    ID_ETABS_ATT_SLDR,    ID_ETABS_ATT_TEXT,
+    ID_ETABS_DELF_SLDR,   ID_ETABS_DELF_TEXT,
+    ID_ETABS_DRAMPL_SLDR, ID_ETABS_DRAMPL_TEXT,
+    ID_ETABS_DRMIX_SLDR,  ID_ETABS_DRMIX_TEXT,
+    ID_ETABS_INV,
+    ID_ETABS_SQR,
+    ID_ETABS_SS,
+};
 
 class VtxErodeTabs : public VtxTabsMgr
 {
-	DECLARE_CLASS(VtxErodeTabs)
-protected:
-	TNerode *object()  { return (TNerode *)object_node->node; }
-	void AddControlsTab(wxWindow *panel);
+    DECLARE_CLASS(VtxErodeTabs)
 
-	// Erosion box
-	ExprSliderCtrl *FillAmplSlider;       // Depth
-	ExprSliderCtrl *FillTransportSlider;  // Power
-	ExprSliderCtrl *FillLevelSlider;      // Start
-	ExprSliderCtrl *FillMarginSlider;     // Range
-	// Drainage box (was Overlays)
-	ExprSliderCtrl *FillChannelsSlider;   // Start
-	ExprSliderCtrl *FillOrdersSlider;     // Orders
-	ExprSliderCtrl *FillFalloffSlider;    // Atten
-	ExprSliderCtrl *FillFreqSlider;       // Delf
-	// Amplitude box (was Drainage)
-	ExprSliderCtrl *FillDrAmplSlider;     // Drainage ampl
-	ExprSliderCtrl *FillDrainMixSlider;   // Erosion ampl
+    void AddControlsTab(wxWindow *panel);
 
-	wxCheckBox *m_inv;
-	wxCheckBox *m_sqr;
-	wxCheckBox *m_ss;
+    // Options checkboxes
+    wxCheckBox *m_inv;
+    wxCheckBox *m_sqr;
+    wxCheckBox *m_ss;
 
 public:
-	VtxErodeTabs(wxWindow* parent, wxWindowID id,
-		const wxPoint& pos  = wxDefaultPosition,
-		const wxSize&  size = wxDefaultSize,
-		long style = 0,
-		const wxString& name = wxNotebookNameStr);
+    // Sliders — named to match DEFINE_SLIDER_EVENTS macros
+    ExprSliderCtrl *FillAmplSlider;
+    ExprSliderCtrl *FillTransportSlider;
+    ExprSliderCtrl *FillLevelSlider;
+    ExprSliderCtrl *FillMarginSlider;
+    ExprSliderCtrl *FillChannelsSlider;
+    ExprSliderCtrl *FillOrdersSlider;
+    ExprSliderCtrl *FillFalloffSlider;
+    ExprSliderCtrl *FillFreqSlider;
+    ExprSliderCtrl *FillDrAmplSlider;
+    ExprSliderCtrl *FillDrainMixSlider;
 
-	bool Create(wxWindow* parent, wxWindowID id,
-		const wxPoint& pos  = wxDefaultPosition,
-		const wxSize&  size = wxDefaultSize,
-		long style = 0,
-		const wxString& name = wxNotebookNameStr);
+    VtxErodeTabs(wxWindow* parent, wxWindowID id,
+        const wxPoint& pos  = wxDefaultPosition,
+        const wxSize&  size = wxDefaultSize,
+        long style = 0,
+        const wxString& name = wxNotebookNameStr);
 
-	~VtxErodeTabs() {
-		delete FillAmplSlider;     delete FillTransportSlider;
-		delete FillLevelSlider;    delete FillMarginSlider;
-		delete FillChannelsSlider; delete FillOrdersSlider;
-		delete FillFalloffSlider;  delete FillFreqSlider;
-		delete FillDrAmplSlider;   delete FillDrainMixSlider;
-	}
+    bool Create(wxWindow* parent, wxWindowID id,
+        const wxPoint& pos  = wxDefaultPosition,
+        const wxSize&  size = wxDefaultSize,
+        long style = 0,
+        const wxString& name = wxNotebookNameStr);
 
-	DEFINE_SLIDER_EVENTS(FillAmpl)
-	DEFINE_SLIDER_EVENTS(FillTransport)
-	DEFINE_SLIDER_EVENTS(FillLevel)
-	DEFINE_SLIDER_EVENTS(FillMargin)
-	DEFINE_SLIDER_EVENTS(FillChannels)
-	DEFINE_SLIDER_EVENTS(FillOrders)
-	DEFINE_SLIDER_EVENTS(FillFalloff)
-	DEFINE_SLIDER_EVENTS(FillFreq)
-	DEFINE_SLIDER_EVENTS(FillDrAmpl)
-	DEFINE_SLIDER_EVENTS(FillDrainMix)
+    TNerode *object() { return (TNerode*)object_node->node; }
 
-	void OnChangeEvent(wxCommandEvent& event) { setObjAttributes(); }
-	void getObjAttributes();
-	void setObjAttributes();
-	void updateControls();
-	int  showMenu(bool);
-	DECLARE_EVENT_TABLE()
+    int  showMenu(bool expanded) override;
+    void updateControls() override;
+    void getObjAttributes() override;
+    void setObjAttributes() override;
+
+    void OnChangeEvent(wxCommandEvent&) { setObjAttributes(); }
+
+    DEFINE_SLIDER_EVENTS(FillAmpl)
+    DEFINE_SLIDER_EVENTS(FillTransport)
+    DEFINE_SLIDER_EVENTS(FillLevel)
+    DEFINE_SLIDER_EVENTS(FillMargin)
+    DEFINE_SLIDER_EVENTS(FillChannels)
+    DEFINE_SLIDER_EVENTS(FillOrders)
+    DEFINE_SLIDER_EVENTS(FillFalloff)
+    DEFINE_SLIDER_EVENTS(FillFreq)
+    DEFINE_SLIDER_EVENTS(FillDrAmpl)
+    DEFINE_SLIDER_EVENTS(FillDrainMix)
+
+    DECLARE_EVENT_TABLE()
 };
 
-#endif /* ERODE_TABS_H_ */
+#endif
