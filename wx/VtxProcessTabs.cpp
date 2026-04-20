@@ -1,0 +1,491 @@
+#include "wx/wxprec.h"
+#ifndef WX_PRECOMP
+#include "wx/wx.h"
+#endif
+#include <wx/image.h>
+#include <wx/filename.h>
+#include <wx/dir.h>
+#include <cmath>
+#include <algorithm>
+
+#include "VtxProcessTabs.h"
+#include "VtxImageDialog.h"
+#include "ImageMgr.h"
+
+#define BOX_W  (TABS_WIDTH - TABS_BORDER)
+#define LABEL1  60
+#define VALUE1  50
+#define SLIDER1 120
+
+enum {
+    ID_PROC_FILE,
+    ID_PROC_OP,
+    ID_PROC_RADIUS_SLDR,
+    ID_PROC_RADIUS_TEXT,     // must be SLDR+1 (Slider base uses id+1 for text)
+    ID_PROC_STRENGTH_SLDR,
+    ID_PROC_STRENGTH_TEXT,
+    ID_PROC_ITERS_SLDR,
+    ID_PROC_ITERS_TEXT,
+    ID_PROC_GRAY,
+};
+
+static const char *op_names[] = {
+    "-- Select --",
+    "Dilate", "Erode", "Blur", "Sharpen",
+    "Normalize", "Contrast", "Brightness",
+    "Hydraulic Erosion",
+    nullptr
+};
+
+IMPLEMENT_CLASS(VtxProcessTabs, wxPanel)
+
+BEGIN_EVENT_TABLE(VtxProcessTabs, wxPanel)
+EVT_CHOICE(ID_PROC_FILE, VtxProcessTabs::OnFileSelect)
+EVT_CHOICE(ID_PROC_OP,   VtxProcessTabs::OnOpSelect)
+EVT_COMMAND_SCROLL(ID_PROC_RADIUS_SLDR,   VtxProcessTabs::OnRadiusSlider)
+EVT_COMMAND_SCROLL(ID_PROC_STRENGTH_SLDR, VtxProcessTabs::OnStrengthSlider)
+EVT_COMMAND_SCROLL(ID_PROC_ITERS_SLDR,   VtxProcessTabs::OnItersSlider)
+EVT_TEXT_ENTER(ID_PROC_RADIUS_TEXT,   VtxProcessTabs::OnRadiusText)
+EVT_TEXT_ENTER(ID_PROC_STRENGTH_TEXT, VtxProcessTabs::OnStrengthText)
+EVT_TEXT_ENTER(ID_PROC_ITERS_TEXT,   VtxProcessTabs::OnItersText)
+END_EVENT_TABLE()
+
+VtxProcessTabs::VtxProcessTabs(wxWindow *parent, wxWindowID id,
+    const wxPoint &pos, const wxSize &size, long style, const wxString &name)
+    : wxPanel(parent, id, pos, size, style, name),
+      m_w(0), m_h(0), m_has_image(false), m_modified(false), m_last_op(PROC_DILATE)
+{
+    buildUI(this);
+    wxInitAllImageHandlers();
+}
+
+void VtxProcessTabs::buildUI(wxPanel *panel)
+{
+    wxBoxSizer *top = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(top);
+    wxBoxSizer *box = new wxBoxSizer(wxVERTICAL);
+    top->Add(box, 0, wxALIGN_LEFT|wxALL, 5);
+
+    // ── File list (Textures/Processed/ only) ─────────────────────────
+    wxStaticBoxSizer *file_box = new wxStaticBoxSizer(wxHORIZONTAL, panel, "File");
+    m_file_menu = new wxChoice(panel, ID_PROC_FILE, wxDefaultPosition, wxSize(200,-1));
+    file_box->Add(m_file_menu, 0, wxALIGN_LEFT|wxALL, 2);
+    file_box->SetMinSize(wxSize(BOX_W,-1));
+    box->Add(file_box, 0, wxALIGN_LEFT|wxALL, 0);
+
+    // ── Operation ─────────────────────────────────────────────────────
+    wxStaticBoxSizer *op_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Operation");
+
+    wxBoxSizer *op_row = new wxBoxSizer(wxHORIZONTAL);
+    m_op_menu = new wxChoice(panel, ID_PROC_OP, wxDefaultPosition, wxSize(160,-1));
+    for (int i = 0; op_names[i]; i++) m_op_menu->Append(op_names[i]);
+    m_op_menu->SetSelection(PROC_DILATE);
+    op_row->Add(m_op_menu, 0, wxALIGN_LEFT|wxALL, 2);
+    m_gray_check = new wxCheckBox(panel, ID_PROC_GRAY, "Grayscale");
+    op_row->Add(m_gray_check, 0, wxALIGN_CENTER_VERTICAL|wxALL, 4);
+    op_box->Add(op_row, 0, wxALIGN_LEFT|wxALL, 0);
+
+    wxBoxSizer *param_row = new wxBoxSizer(wxHORIZONTAL);
+    m_radius_slider = new SliderCtrl(panel, ID_PROC_RADIUS_SLDR, "Radius",
+        LABEL1, VALUE1, SLIDER1);
+    m_radius_slider->setRange(1, 20); m_radius_slider->setValue(3);
+    param_row->Add(m_radius_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+    m_strength_slider = new SliderCtrl(panel, ID_PROC_STRENGTH_SLDR, "Strength",
+        LABEL1, VALUE1, SLIDER1);
+    m_strength_slider->setRange(0.0, 2.0); m_strength_slider->setValue(1.0);
+    param_row->Add(m_strength_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+    op_box->Add(param_row, 0, wxALIGN_LEFT|wxALL, 0);
+
+    wxBoxSizer *iter_row = new wxBoxSizer(wxHORIZONTAL);
+    m_iters_slider = new SliderCtrl(panel, ID_PROC_ITERS_SLDR, "Iterations",
+        LABEL1, VALUE1, SLIDER1);
+    m_iters_slider->setRange(1, 500); m_iters_slider->setValue(50);
+    iter_row->Add(m_iters_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+    op_box->Add(iter_row, 0, wxALIGN_LEFT|wxALL, 0);
+
+    op_box->SetMinSize(wxSize(BOX_W,-1));
+    box->Add(op_box, 0, wxALIGN_LEFT|wxALL, 0);
+
+    // ── Image display ─────────────────────────────────────────────────
+    wxStaticBoxSizer *img_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Image");
+    m_image_window = new VtxImageWindow(panel, wxID_ANY,
+        wxDefaultPosition, wxSize(BOX_W, 200));
+    img_box->Add(m_image_window, 0, wxALIGN_LEFT|wxALL, 0);
+    box->Add(img_box, 0, wxALIGN_LEFT|wxALL, 0);
+
+    makeFileList();
+}
+
+// ── Directory / file helpers ──────────────────────────────────────────
+
+void VtxProcessTabs::ensureProcessedDir()
+{
+    char path[512];
+    FileUtil::getProcessedDir(path);
+    int len = strlen(path);
+    if (len>0 && (path[len-1]=='/'||path[len-1]=='\\')) path[len-1]=0;
+    if (!wxDirExists(wxString(path))) wxMkdir(wxString(path));
+}
+
+void VtxProcessTabs::makeFileList()
+{
+    wxString sel = m_file_menu->GetStringSelection();
+    m_file_menu->Clear();
+    char dir[512]; dir[0] = 0;
+    FileUtil::getProcessedDir(dir);
+    if (dir[0] == 0) return;   // dir not yet configured
+    wxString wxdir(dir);
+    if (!wxDirExists(wxdir)) return;
+    wxDir d(wxdir);
+    wxString f;
+    wxArrayString files;
+    for (bool ok=d.GetFirst(&f,"*.bmp",wxDIR_FILES); ok; ok=d.GetNext(&f)) files.Add(wxFileName(f).GetName());
+    for (bool ok=d.GetFirst(&f,"*.jpg",wxDIR_FILES); ok; ok=d.GetNext(&f)) files.Add(wxFileName(f).GetName());
+    for (bool ok=d.GetFirst(&f,"*.png",wxDIR_FILES); ok; ok=d.GetNext(&f)) files.Add(wxFileName(f).GetName());
+    files.Sort();
+    for (size_t i=0; i<files.Count(); i++) m_file_menu->Append(files[i]);
+    // Restore previous selection if still present
+    int idx = sel.IsEmpty() ? wxNOT_FOUND : m_file_menu->FindString(sel);
+    if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
+}
+
+// ── Image load / save / display ───────────────────────────────────────
+
+bool VtxProcessTabs::loadImage(const wxString &path)
+{
+    wxImage img;
+    if (!img.LoadFile(path)) return false;
+    m_w = img.GetWidth();
+    m_h = img.GetHeight();
+    bool has_alpha = img.HasAlpha();
+    m_buf.resize(m_w * m_h * 4);
+    unsigned char *rgb   = img.GetData();
+    unsigned char *alpha = has_alpha ? img.GetAlpha() : nullptr;
+    for (int i=0; i<m_h*m_w; i++) {
+        m_buf[i*4+0] = rgb[i*3+0]/255.0f;
+        m_buf[i*4+1] = rgb[i*3+1]/255.0f;
+        m_buf[i*4+2] = rgb[i*3+2]/255.0f;
+        m_buf[i*4+3] = alpha ? alpha[i]/255.0f : 1.0f;
+    }
+    m_orig = m_buf;
+    m_has_image = true;
+    m_modified  = false;
+    return true;
+}
+
+bool VtxProcessTabs::saveImage(const wxString &path)
+{
+    if (!m_has_image) return false;
+    wxImage img(m_w, m_h);
+    bool has_alpha = false;
+    for (int i=0;i<m_w*m_h;i++) if (m_buf[i*4+3]<0.999f){has_alpha=true;break;}
+    if (has_alpha) img.InitAlpha();
+    unsigned char *rgb = img.GetData(), *alpha = has_alpha ? img.GetAlpha() : nullptr;
+    auto cl=[](float v)->unsigned char{
+        return (unsigned char)(std::max(0.0f,std::min(1.0f,v))*255.0f+0.5f);};
+    for (int i=0;i<m_h*m_w;i++){
+        rgb[i*3+0]=cl(m_buf[i*4+0]); rgb[i*3+1]=cl(m_buf[i*4+1]); rgb[i*3+2]=cl(m_buf[i*4+2]);
+        if(alpha) alpha[i]=cl(m_buf[i*4+3]);
+    }
+    return img.SaveFile(path, wxBITMAP_TYPE_BMP);
+}
+
+void VtxProcessTabs::displayBuffer()
+{
+    if (!m_has_image) return;
+    m_image_window->setImageData(m_buf.data(), m_w, m_h);
+}
+
+// ── Public interface ──────────────────────────────────────────────────
+
+void VtxProcessTabs::loadFromPath(const wxString &path, const wxString &name)
+{
+    wxString imgname = path.IsEmpty() ? name : path;
+    if (imgname.IsEmpty()) return;
+
+    Image *img = images.load((char*)imgname.ToAscii(), BMP|JPG|PNG);
+    if (!img) {
+        wxMessageBox("Cannot load image: " + imgname, "Process");
+        return;
+    }
+
+    m_w = img->width;
+    m_h = img->height;
+    m_buf.resize(m_w * m_h * 4);
+
+    unsigned char *pixels = (unsigned char*)img->data;
+    bool rgba = (img->gltype() == GL_RGBA);
+
+    for (int i = 0; i < m_h * m_w; i++) {
+        if (rgba) {
+            m_buf[i*4+0] = pixels[i*4+0] / 255.0f;
+            m_buf[i*4+1] = pixels[i*4+1] / 255.0f;
+            m_buf[i*4+2] = pixels[i*4+2] / 255.0f;
+            m_buf[i*4+3] = pixels[i*4+3] / 255.0f;
+        } else {
+            m_buf[i*4+0] = pixels[i*3+0] / 255.0f;
+            m_buf[i*4+1] = pixels[i*3+1] / 255.0f;
+            m_buf[i*4+2] = pixels[i*3+2] / 255.0f;
+            m_buf[i*4+3] = 1.0f;
+        }
+    }
+    m_orig = m_buf;
+    m_prev_buf.clear();
+    m_has_image = true;
+    m_modified  = false;
+    m_name = name.IsEmpty() ? imgname : name;
+
+    int idx = m_file_menu->FindString(m_name);
+    if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
+
+    // Restore the last op the user had selected (defaults to PROC_DILATE on first use)
+    m_op_menu->SetSelection(m_last_op);
+
+    displayBuffer();
+}
+
+void VtxProcessTabs::runOperation()
+{
+    if (!m_has_image) return;
+    int   op    = m_op_menu->GetSelection();
+    if (op == PROC_NONE) return;
+    int   r     = (int)m_radius_slider->getValue();
+    float str   = (float)m_strength_slider->getValue();
+    int   iters = (int)m_iters_slider->getValue();
+    bool  gray  = m_gray_check->GetValue();
+    m_prev_buf = m_buf;   // snapshot for single-step Revert
+    m_last_op  = op;
+    if (gray) toGrayscale();  // convert to luma first, then op works on grey data
+    switch (op) {
+    case PROC_DILATE:    opDilate(r, gray);       break;
+    case PROC_ERODE_IMG: opErodeImg(r, gray);     break;
+    case PROC_BLUR:      opBlur(r, gray);         break;
+    case PROC_SHARPEN:   opSharpen(str, gray);    break;
+    case PROC_NORMALIZE: opNormalize(gray);       break;
+    case PROC_CONTRAST:  opContrast(str, gray);   break;
+    case PROC_BRIGHTNESS:opBrightness(str, gray); break;
+    case PROC_HYDRAULIC: opHydraulic(iters, str); break;
+    default: return;
+    }
+    m_modified = true;
+    displayBuffer();
+    imageDialog->UpdateControls();
+}
+
+void VtxProcessTabs::Save()
+{
+    if (!m_has_image) return;
+    ensureProcessedDir();
+    wxString name = m_name.IsEmpty() ? wxString("processed") : m_name;
+    wxTextEntryDialog dlg(this, "Save as:", "Save Processed", name);
+    if (dlg.ShowModal() != wxID_OK) return;
+    name = dlg.GetValue();
+    if (name.IsEmpty()) return;
+    char dir[512]; FileUtil::getProcessedDir(dir);
+    wxString path = wxString(dir) + name + ".bmp";
+    if (saveImage(path)) {
+        m_name = name;
+        m_modified = false;
+        makeFileList();
+        int idx = m_file_menu->FindString(name);
+        if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
+    } else {
+        wxMessageBox("Save failed: "+path, "Process");
+    }
+}
+
+void VtxProcessTabs::Revert()
+{
+    if (!m_has_image || m_prev_buf.empty()) return;
+    m_buf = m_prev_buf;
+    m_prev_buf.clear();
+    m_modified = !m_buf.empty() && (m_buf != m_orig);
+    displayBuffer();
+    imageDialog->UpdateControls();
+}
+
+void VtxProcessTabs::updateControls()
+{
+    makeFileList();
+}
+
+// ── Slider / text-entry event handlers ───────────────────────────────
+
+void VtxProcessTabs::OnRadiusSlider(wxScrollEvent &event)
+{
+    m_radius_slider->setValueFromSlider();
+}
+void VtxProcessTabs::OnStrengthSlider(wxScrollEvent &event)
+{
+    m_strength_slider->setValueFromSlider();
+}
+void VtxProcessTabs::OnItersSlider(wxScrollEvent &event)
+{
+    m_iters_slider->setValueFromSlider();
+}
+void VtxProcessTabs::OnRadiusText(wxCommandEvent &event)
+{
+    m_radius_slider->setValueFromText();
+}
+void VtxProcessTabs::OnStrengthText(wxCommandEvent &event)
+{
+    m_strength_slider->setValueFromText();
+}
+void VtxProcessTabs::OnItersText(wxCommandEvent &event)
+{
+    m_iters_slider->setValueFromText();
+}
+
+void VtxProcessTabs::OnFileSelect(wxCommandEvent &event)
+{
+    wxString name = m_file_menu->GetStringSelection();
+    if (name.IsEmpty()) return;
+    char dir[512]; FileUtil::getProcessedDir(dir);
+    wxString base = wxString(dir) + name;
+    wxString path;
+    if      (wxFileExists(base+".bmp")) path=base+".bmp";
+    else if (wxFileExists(base+".jpg")) path=base+".jpg";
+    else if (wxFileExists(base+".png")) path=base+".png";
+    else return;
+    loadImage(path);
+    m_name = name;
+    displayBuffer();
+}
+
+void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
+{
+    int op = m_op_menu->GetSelection();
+    switch (op) {
+    case PROC_HYDRAULIC:
+        m_iters_slider->setRange(1,500); m_iters_slider->setValue(100);
+        m_radius_slider->setRange(1,10);  m_radius_slider->setValue(2);
+        break;
+    case PROC_CONTRAST: case PROC_BRIGHTNESS:
+        m_strength_slider->setRange(-2.0,2.0); m_strength_slider->setValue(0.0);
+        break;
+    default:
+        m_radius_slider->setRange(1,20);      m_radius_slider->setValue(3);
+        m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
+        break;
+    }
+}
+
+// ── Operations ────────────────────────────────────────────────────────
+
+void VtxProcessTabs::toGrayscale()
+{
+    for (int i = 0; i < m_w * m_h; i++) {
+        float luma = 0.299f * m_buf[i*4+0]
+                   + 0.587f * m_buf[i*4+1]
+                   + 0.114f * m_buf[i*4+2];
+        m_buf[i*4+0] = m_buf[i*4+1] = m_buf[i*4+2] = luma;
+    }
+}
+
+void VtxProcessTabs::opDilate(int r, bool gray)
+{
+    std::vector<float> out=m_buf;
+    for (int y=0;y<m_h;y++) for (int x=0;x<m_w;x++) {
+        float mx[4]={0,0,0,0};
+        for (int dy=-r;dy<=r;dy++){int ny=std::max(0,std::min(m_h-1,y+dy));
+        for (int dx=-r;dx<=r;dx++){int nx=std::max(0,std::min(m_w-1,x+dx));
+            if(gray){float v=0.299f*m_buf[(ny*m_w+nx)*4+0]+0.587f*m_buf[(ny*m_w+nx)*4+1]+0.114f*m_buf[(ny*m_w+nx)*4+2];
+                mx[0]=mx[1]=mx[2]=std::max(mx[0],v);}
+            else for(int c=0;c<4;c++) mx[c]=std::max(mx[c],m_buf[(ny*m_w+nx)*4+c]);
+        }}
+        for(int c=0;c<4;c++) out[(y*m_w+x)*4+c]=mx[c];
+    }
+    m_buf=out;
+}
+
+void VtxProcessTabs::opErodeImg(int r, bool gray)
+{
+    std::vector<float> out=m_buf;
+    for (int y=0;y<m_h;y++) for (int x=0;x<m_w;x++) {
+        float mn[4]={1,1,1,1};
+        for (int dy=-r;dy<=r;dy++){int ny=std::max(0,std::min(m_h-1,y+dy));
+        for (int dx=-r;dx<=r;dx++){int nx=std::max(0,std::min(m_w-1,x+dx));
+            if(gray){float v=0.299f*m_buf[(ny*m_w+nx)*4+0]+0.587f*m_buf[(ny*m_w+nx)*4+1]+0.114f*m_buf[(ny*m_w+nx)*4+2];
+                mn[0]=mn[1]=mn[2]=std::min(mn[0],v);}
+            else for(int c=0;c<4;c++) mn[c]=std::min(mn[c],m_buf[(ny*m_w+nx)*4+c]);
+        }}
+        for(int c=0;c<4;c++) out[(y*m_w+x)*4+c]=mn[c];
+    }
+    m_buf=out;
+}
+
+void VtxProcessTabs::opBlur(int r, bool gray)
+{
+    int ksize=2*r+1; std::vector<float> k(ksize); float sigma=r/2.0f+0.5f,sum=0;
+    for(int i=0;i<ksize;i++){float x=i-r;k[i]=expf(-x*x/(2*sigma*sigma));sum+=k[i];}
+    for(auto &v:k) v/=sum;
+    int nch=gray?3:4;
+    std::vector<float> tmp=m_buf,out=m_buf;
+    for(int y=0;y<m_h;y++) for(int x=0;x<m_w;x++) for(int c=0;c<nch;c++){
+        float acc=0;
+        for(int dx=-r;dx<=r;dx++){int nx=std::max(0,std::min(m_w-1,x+dx));acc+=k[dx+r]*m_buf[(y*m_w+nx)*4+c];}
+        tmp[(y*m_w+x)*4+c]=acc;}
+    for(int y=0;y<m_h;y++) for(int x=0;x<m_w;x++) for(int c=0;c<nch;c++){
+        float acc=0;
+        for(int dy=-r;dy<=r;dy++){int ny=std::max(0,std::min(m_h-1,y+dy));acc+=k[dy+r]*tmp[(ny*m_w+x)*4+c];}
+        out[(y*m_w+x)*4+c]=acc;}
+    m_buf=out;
+}
+
+void VtxProcessTabs::opSharpen(float strength, bool gray)
+{
+    std::vector<float> orig=m_buf; opBlur(2,gray);
+    std::vector<float> blur=m_buf; m_buf=orig;
+    int nch=gray?3:4;
+    for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){
+        float v=orig[i*4+c]+strength*(orig[i*4+c]-blur[i*4+c]);
+        m_buf[i*4+c]=std::max(0.0f,std::min(1.0f,v));}
+}
+
+void VtxProcessTabs::opNormalize(bool gray)
+{
+    int nch=gray?3:4; float mn=1e9f,mx=-1e9f;
+    for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){mn=std::min(mn,m_buf[i*4+c]);mx=std::max(mx,m_buf[i*4+c]);}
+    float range=mx-mn; if(range<1e-6f) return;
+    for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++) m_buf[i*4+c]=(m_buf[i*4+c]-mn)/range;
+}
+
+void VtxProcessTabs::opContrast(float strength, bool gray)
+{
+    float factor=(strength>=0)?1.0f+strength:1.0f/(1.0f-strength);
+    int nch=gray?3:4;
+    for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){
+        float v=(m_buf[i*4+c]-0.5f)*factor+0.5f;
+        m_buf[i*4+c]=std::max(0.0f,std::min(1.0f,v));}
+}
+
+void VtxProcessTabs::opBrightness(float amount, bool gray)
+{
+    int nch=gray?3:4;
+    for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++)
+        m_buf[i*4+c]=std::max(0.0f,std::min(1.0f,m_buf[i*4+c]+amount));
+}
+
+void VtxProcessTabs::opHydraulic(int iters, float strength)
+{
+    int N=m_w*m_h; std::vector<float> h(N),sed(N,0.0f);
+    for(int i=0;i<N;i++) h[i]=0.299f*m_buf[i*4+0]+0.587f*m_buf[i*4+1]+0.114f*m_buf[i*4+2];
+    const float Kr=0.01f*strength,Kd=0.005f*strength,Ke=0.5f;
+    std::vector<float> dh(N);
+    for(int iter=0;iter<iters;iter++){
+        std::fill(dh.begin(),dh.end(),0.0f);
+        for(int y=1;y<m_h-1;y++) for(int x=1;x<m_w-1;x++){
+            int idx=y*m_w+x; float hc=h[idx];
+            int nbrs[4]={idx-m_w,idx+m_w,idx-1,idx+1};
+            float max_diff=0; int lowest=-1;
+            for(int n:nbrs){float d=hc-h[n];if(d>max_diff){max_diff=d;lowest=n;}}
+            if(lowest<0) continue;
+            float cap=Ke*max_diff,carry=sed[idx];
+            if(carry<cap){float amt=Kr*(cap-carry);dh[idx]-=amt;sed[idx]+=amt;}
+            else{float amt=Kd*(carry-cap);dh[lowest]+=amt;sed[idx]-=amt;}
+            dh[idx]-=0.5f*max_diff; dh[lowest]+=0.5f*max_diff*0.99f;
+        }
+        for(int i=0;i<N;i++) h[i]=std::max(0.0f,std::min(1.0f,h[i]+dh[i]));
+    }
+    for(int i=0;i<N;i++){m_buf[i*4+0]=m_buf[i*4+1]=m_buf[i*4+2]=h[i];}
+}

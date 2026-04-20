@@ -12,6 +12,7 @@ class VtxImageWindow : public wxPanel
 protected:
 	wxString m_name;
 	int option;
+	wxBitmap m_direct_bitmap; // set by setImageData(), bypasses images cache
 public:
 	enum {
 		TILE,SCALE
@@ -24,6 +25,10 @@ public:
 			const wxString& name = "");
 
 	void setImage(wxString,int option );
+	// Paint directly from a float RGBA buffer (no images cache / temp file needed)
+	void setImageData(const float *rgba, int w, int h);
+	void clearImageData();
+	wxString getImagePath() const { return m_name; }
 	void OnPaint(wxPaintEvent& event);
 	bool TileBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);
 	bool ScaleBitmap(const wxRect& rect, wxDC& dc, const wxBitmap& bitmap);

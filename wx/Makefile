@@ -31,6 +31,7 @@ SRC_FILES        = \
 			 VtxDefaultTabs.cpp \
              VtxErodeFunct.cpp \
              VtxErodeTabs.cpp \
+             VtxProcessTabs.cpp \
 			 VtxExprEdit.cpp \
 			 VtxFogTabs.cpp \
              VtxFrame.cpp \
@@ -2311,6 +2312,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Debug/VtxDefaultTabs.o:	VtxDefaultTabs.cpp
 ../Debug/VtxErodeFunct.o:	VtxErodeFunct.cpp
 ../Debug/VtxErodeTabs.o:	VtxErodeTabs.cpp
+../Debug/VtxProcessTabs.o:	VtxProcessTabs.cpp
 ../Debug/VtxExprEdit.o:	VtxExprEdit.cpp
 ../Debug/VtxFogTabs.o:	VtxFogTabs.cpp
 ../Debug/VtxFrame.o:	VtxFrame.cpp
@@ -2358,6 +2360,7 @@ depend:;      @makedepend -Y./ -I../includes $(SRC_FILES) -p"../Debug/" 2>/dev/n
 ../Release/VtxDefaultTabs.o: VtxDefaultTabs.cpp
 ../Release/VtxErodeFunct.o: VtxErodeFunct.cpp
 ../Release/VtxErodeTabs.o: VtxErodeTabs.cpp
+../Release/VtxProcessTabs.o: VtxProcessTabs.cpp
 ../Release/VtxExprEdit.o: VtxExprEdit.cpp
 ../Release/VtxFogTabs.o: VtxFogTabs.cpp
 ../Release/VtxFrame.o: VtxFrame.cpp

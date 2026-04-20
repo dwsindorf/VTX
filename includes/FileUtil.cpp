@@ -48,6 +48,7 @@ char *FileUtil::textures=(char*)"Textures";
 char *FileUtil::images=(char*)"Images";
 char *FileUtil::maps=(char*)"Maps";
 char *FileUtil::sprites=(char*)"Sprites";
+char *FileUtil::processed=(char*)"Processed";
 char *FileUtil::plants=(char*)"Plants";
 char *FileUtil::branches=(char*)"Branch";
 char *FileUtil::leaves=(char*)"Leaf";
@@ -139,6 +140,18 @@ void FileUtil::getSpritesDir(char *dir)
 	strcpy(dir,path);
 }
 
+//-------------------------------------------------------------
+// FileUtil::getProcessedDir get processed images directory
+//-------------------------------------------------------------
+void FileUtil::getProcessedDir(char *dir)
+{
+	char path[MAXSTR];
+  	getBaseDirectory(path);
+	addToPath(path,textures);
+	addToPath(path,processed);
+	strcat(path,separator);
+	strcpy(dir,path);
+}
 //-------------------------------------------------------------
 // FileUtil::getSpritesDir get branches images directory
 //-------------------------------------------------------------
@@ -810,4 +823,3 @@ int FileUtil::fileExists(char *path)
 #endif // unix
 
 //************************************************************
-

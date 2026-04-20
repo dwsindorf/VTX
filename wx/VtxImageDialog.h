@@ -18,11 +18,12 @@
 #include "VtxImageTabs.h"
 #include "VtxImportTabs.h"
 #include "VtxBandsTabs.h"
+#include "VtxProcessTabs.h"
 #include "SceneClass.h"
 
 
-#define DLG_HEIGHT (380)
-#define DLG_WIDTH  (500)
+#define DLG_HEIGHT (450)
+#define DLG_WIDTH  (520)
 #define TABS_BORDER 10
 #ifndef TABS_WIDTH
 #define TABS_WIDTH  (DLG_WIDTH-20)
@@ -35,7 +36,8 @@ enum {
 	TYPE_MAP=3,
 	TYPE_HTMAP=4,
 	TYPE_BRANCH=5,
-	TYPE_LEAF=6
+	TYPE_LEAF=6,
+	TYPE_PROCESS=5   // notebook page index (Branch/Leaf are in other dialogs)
 };
 
 class VtxImageDialog : public wxFrame
@@ -50,12 +52,14 @@ class VtxImageDialog : public wxFrame
 	VtxImportTabs *m_img_tabs;
 	VtxImportTabs *m_map_tabs;
 	VtxImportTabs *m_hmap_tabs;
+	VtxProcessTabs *m_process_tabs;
 	
 	wxButton *m_save;
 	wxButton *m_revert;
 	wxButton *m_delete;
 	wxButton *m_new;
 	wxButton *m_rename;
+	wxButton *m_process;
 	
 	wxString image_name;
 
@@ -95,6 +99,7 @@ public:
     bool Show(wxString name, int d2);
     void OnOk(wxCommandEvent &event);
     void OnTabSwitch(wxNotebookEvent &event);
+    void OnProcess(wxCommandEvent &event);
     void OnSave(wxCommandEvent &event);
     void OnRevert(wxCommandEvent &event);
     void OnDelete(wxCommandEvent &event);

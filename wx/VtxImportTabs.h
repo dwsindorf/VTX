@@ -59,6 +59,7 @@ public:
 
     void setSelection(wxString name);
     wxString getSelection(){return m_file_menu->GetStringSelection();}
+    VtxImageWindow *getImageWindow(){ return m_image_window; }
 
     void OnFileSelect(wxCommandEvent& event);
     void OnShowMode(wxCommandEvent& event);

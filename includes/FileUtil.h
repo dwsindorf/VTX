@@ -1,4 +1,3 @@
-
 //  FileUtil.h
 
 #ifndef _FILEUTIL
@@ -63,6 +62,7 @@ public:
 	static char *hmaps;
 	static char *maps;
 	static char *sprites;
+	static char *processed;
 	static char *plants;
 	static char *branches;
 	static char *leaves;
@@ -77,6 +77,7 @@ public:
 	static void getHmapsDir(char *dir);
 	static void getMapsDir(char *dir);
 	static void getSpritesDir(char *dir);
+	static void getProcessedDir(char *dir);
 	static void getBranchesDir(char *dir);
 	static void getLeavesDir(char *dir);
 

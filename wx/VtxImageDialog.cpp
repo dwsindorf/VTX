@@ -14,6 +14,7 @@
 #include <malloc.h>
 
 #include "VtxImageDialog.h"
+#include "VtxProcessTabs.h"
 #include "FileUtil.h"
 #include <wx/filefn.h>
 #include "OrbitalClass.h"
@@ -27,6 +28,7 @@ enum {
     ID_DELETE,
     ID_NEW,
     ID_RENAME,
+    ID_PROCESS,
     ID_SWITCH,
     ID_SIZE,
  };
@@ -76,6 +78,7 @@ EVT_BUTTON(ID_REVERT, VtxImageDialog::OnRevert)
 EVT_BUTTON(ID_DELETE, VtxImageDialog::OnDelete)
 EVT_BUTTON(ID_NEW, VtxImageDialog::OnNew)
 EVT_BUTTON(ID_RENAME, VtxImageDialog::OnRename)
+EVT_BUTTON(ID_PROCESS, VtxImageDialog::OnProcess)
 
 EVT_NOTEBOOK_PAGE_CHANGED(ID_SWITCH,VtxImageDialog::OnTabSwitch)
 
@@ -109,6 +112,8 @@ wxString  VtxImageDialog::getSelection(){
 	case TYPE_HTMAP:
 		name=m_hmap_tabs->getSelection();
 		break;
+	case TYPE_PROCESS:
+		break; // no selection concept in process tab
 	}
 	return name;
 }
@@ -196,6 +201,7 @@ bool VtxImageDialog::Create( wxWindow* parent,
     m_delete = new wxButton(this,ID_DELETE,"Delete",wxDefaultPosition,BTNSIZE);
     m_new = new wxButton(this,ID_NEW,"New",wxDefaultPosition,BTNSIZE);
     m_rename = new wxButton(this,ID_RENAME,"Rename",wxDefaultPosition,BTNSIZE);
+    m_process = new wxButton(this,ID_PROCESS,"Process",wxDefaultPosition,BTNSIZE);
     
     m_rename->Enable(true);
 
@@ -205,6 +211,7 @@ bool VtxImageDialog::Create( wxWindow* parent,
     buttons->Add(m_delete, 0, wxALIGN_LEFT|wxALL,0);
     buttons->Add(m_new, 0, wxALIGN_LEFT|wxALL,0);
     buttons->Add(m_rename, 0, wxALIGN_LEFT|wxALL,0);
+    buttons->Add(m_process, 0, wxALIGN_LEFT|wxALL,0);
 
 
     m_tabs=new wxNotebook(this,ID_SWITCH,wxPoint(0,0),wxSize(DLG_WIDTH,DLG_HEIGHT));
@@ -213,12 +220,14 @@ bool VtxImageDialog::Create( wxWindow* parent,
     m_img_tabs=new VtxImportTabs(m_tabs,IMPORT,wxID_ANY);
     m_map_tabs=new VtxImportTabs(m_tabs,MAP,wxID_ANY);
     m_hmap_tabs=new VtxImportTabs(m_tabs,HTMAP,wxID_ANY);
+    m_process_tabs=new VtxProcessTabs(m_tabs,wxID_ANY);
 
  	m_tabs->AddPage(m_1D_tabs,wxT("1D"),true);
  	m_tabs->AddPage(m_2D_tabs,wxT("2D"),false);
  	m_tabs->AddPage(m_img_tabs,wxT("Img"),false);
  	m_tabs->AddPage(m_map_tabs,wxT("Map"),false);
  	m_tabs->AddPage(m_hmap_tabs,wxT("HMap"),false);
+ 	m_tabs->AddPage(m_process_tabs,wxT("Process"),false);
 
 	topSizer->Add(m_tabs,0,wxALIGN_LEFT|wxALL);
 
@@ -279,6 +288,9 @@ bool VtxImageDialog::Show(wxString name, int type){
 	case TYPE_HTMAP:
 		m_hmap_tabs->setSelection(name);
 		break;
+	case TYPE_PROCESS:
+		m_process_tabs->updateControls();
+		break;
 	}
 	return Show(true);
 }
@@ -331,9 +343,57 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_save->Enable(m_hmap_tabs->canSave());
 		m_new->Enable(m_hmap_tabs->canSave());
 		break;
+	case TYPE_PROCESS:
+		m_process_tabs->updateControls();
+		m_revert->Enable(m_process_tabs->canRevert());
+		m_save->Enable(m_process_tabs->canSave());
+		m_delete->Enable(false);
+		m_new->Enable(false);
+		break;
 	}
 
 }
+void VtxImageDialog::OnProcess(wxCommandEvent &event){
+	if(m_type == TYPE_PROCESS){
+		// Already in Process tab — run the selected operation
+		m_process_tabs->runOperation();
+		return;
+	}
+	// Get the image name currently selected in the active tab
+	wxString path, name;
+	switch(m_type){
+	case TYPE_1D:
+		path = m_1D_tabs->getImageWindow()->getImagePath();
+		name = m_1D_tabs->getSelection();
+		break;
+	case TYPE_2D:
+		path = m_2D_tabs->getImageWindow()->getImagePath();
+		name = m_2D_tabs->getSelection();
+		break;
+	case TYPE_IMPORT:
+		path = m_img_tabs->getImageWindow()->getImagePath();
+		name = m_img_tabs->getSelection();
+		break;
+	case TYPE_MAP:
+		path = m_map_tabs->getImageWindow()->getImagePath();
+		name = m_map_tabs->getSelection();
+		break;
+	case TYPE_HTMAP:
+		path = m_hmap_tabs->getImageWindow()->getImagePath();
+		name = m_hmap_tabs->getSelection();
+		break;
+	}
+	// Switch tab first so that the OnTabSwitch handler sees TYPE_PROCESS
+	// and does not try to re-trigger a load.
+	m_type = TYPE_PROCESS;
+	m_tabs->SetSelection(TYPE_PROCESS);
+	m_process_tabs->loadFromPath(path, name);
+	m_revert->Enable(m_process_tabs->canRevert());
+	m_save->Enable(m_process_tabs->canSave());
+	m_delete->Enable(false);
+	m_new->Enable(false);
+}
+
 void VtxImageDialog::OnSave(wxCommandEvent &event){
 	switch(m_type){
 	case TYPE_2D:
@@ -342,6 +402,9 @@ void VtxImageDialog::OnSave(wxCommandEvent &event){
 	case TYPE_1D:
 		m_1D_tabs->Save();
 		m_1D_tabs->Invalidate();
+		break;
+	case TYPE_PROCESS:
+		m_process_tabs->Save();
 		break;
 	}
 }
@@ -364,6 +427,9 @@ void VtxImageDialog::OnRevert(wxCommandEvent &event){
 	case TYPE_HTMAP:
 		m_hmap_tabs->Revert();
 		break;
+	case TYPE_PROCESS:
+		m_process_tabs->Revert();
+		break;
 	}
 }
 void VtxImageDialog::OnDelete(wxCommandEvent &event){
@@ -382,6 +448,8 @@ void VtxImageDialog::OnDelete(wxCommandEvent &event){
 		break;
 	case TYPE_HTMAP:
 		m_hmap_tabs->Delete();
+		break;
+	case TYPE_PROCESS:
 		break;
 	}
 }
@@ -416,6 +484,12 @@ void VtxImageDialog::UpdateControls(){
 		m_delete->Enable(m_hmap_tabs->canDelete());
 		m_save->Enable(m_hmap_tabs->canSave());
 		m_new->Enable(m_hmap_tabs->canSave());
+		break;
+	case TYPE_PROCESS:
+		m_revert->Enable(m_process_tabs->canRevert());
+		m_save->Enable(m_process_tabs->canSave());
+		m_delete->Enable(false);
+		m_new->Enable(false);
 		break;
 	}
 	Refresh();

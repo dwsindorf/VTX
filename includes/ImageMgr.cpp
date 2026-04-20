@@ -1024,6 +1024,12 @@ uint ImageReader::getFileInfo(char *name, char *dir)
    		info |=BRANCH;
    		return info;
    	}
+	File.getProcessedDir(dir);
+	info=getImageInfo(name,dir);
+	if(info){
+		info |=IMPORT;  // treated as plain texture
+		return info;
+	}
    	File.getLeavesDir(dir);
 	info=getTiledImageInfo(name,dir);
    	if(info){
