@@ -36,6 +36,7 @@ class VtxProcessTabs : public wxPanel
     SliderCtrl      *m_strength_slider;
     SliderCtrl      *m_iters_slider;
     wxCheckBox      *m_gray_check;
+    wxCheckBox      *m_tile_check;
     VtxImageWindow  *m_image_window;
 
     std::vector<float> m_buf;
@@ -91,6 +92,7 @@ public:
     void OnStrengthText(wxCommandEvent &event);
     void OnItersText(wxCommandEvent &event);
     void OnGrayCheck(wxCommandEvent &event);
+    void OnTileCheck(wxCommandEvent &event);
 
     DECLARE_EVENT_TABLE()
 };

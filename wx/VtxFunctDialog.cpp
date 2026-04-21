@@ -150,11 +150,9 @@ bool VtxFunctDialog::setEditor(VtxExprEdit *e){
 	return true;
 }
 void VtxFunctDialog::getFunct(wxString val){
-	//cout << "VtxFunctDialog::getFunct:"<<val<<endl;
 	if(editor){
 		editor->setToken(symbol,val);
 	}
-
 }
 bool VtxFunctDialog::setFunct(wxString token, wxString val){
 	TNode *tn=(TNode*)TheScene->parse_node((char*)val.ToAscii());

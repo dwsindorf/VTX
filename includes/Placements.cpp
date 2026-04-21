@@ -1,5 +1,3 @@
-
-
 #include "TerrainMgr.h"
 #include "Placements.h"
 #include "AdaptOptions.h"
@@ -1096,6 +1094,9 @@ PlaceObj::PlaceObj(int t, TNode *e){
 //************************************************************
 TNplacements::TNplacements(int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b) 
 {
+	// explicit_pid: true only when the parser supplied an explicit IDx token.
+	// Auto-assigned PIDs must not be serialized to the scene file.
+	explicit_pid = (t & PID) != 0;
 	int id=type&PID;
  	if(id==0){
 		id=place_gid++;
@@ -1176,7 +1177,7 @@ void TNplacements::save(FILE *f)
 int TNplacements::optionString(char *c)
 {
     c[0]=0;
-	if(type&PID)
+	if(explicit_pid && (type&PID))
 		sprintf(c,"ID%d",type&PID);
 	for(int i=0;i<POpts.size;i++){
     	if(type & POpts[i]->value){
@@ -1253,7 +1254,9 @@ void TNplacements::eval()
 	if(n>1) mgr->maxsize=arg[1];     	// size of largest placements
 	if(n>2) mgr->mult=arg[2];           // variability in size or level scale
 	if(n>3) mgr->maxdensity=arg[3];      
-	
+
+	mgr->setDensity();  // propagate maxdensity → density for the placement gate
+
 	MaxSize=mgr->maxsize;
 }
 

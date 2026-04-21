@@ -29,7 +29,7 @@ void VtxImageWindow::setImage(wxString name, int opt)
     Refresh();
 }
 
-void VtxImageWindow::setImageData(const float *rgba, int w, int h)
+void VtxImageWindow::setImageData(const float *rgba, int w, int h, int mode)
 {
     // Convert float RGBA [0..1] → packed RGB + alpha and store as wxBitmap
     unsigned char *rgb   = (unsigned char*)malloc(w * h * 3);
@@ -47,6 +47,7 @@ void VtxImageWindow::setImageData(const float *rgba, int w, int h)
     img.SetAlpha(alpha, false);     // takes ownership of alpha
     m_direct_bitmap = wxBitmap(img, -1);
     m_name = wxString();            // suppress cache lookup in OnPaint
+    option = mode;
     Refresh();
 }
 
@@ -63,7 +64,10 @@ void VtxImageWindow::OnPaint(wxPaintEvent& event)
 
     // Fast path: direct bitmap set by setImageData()
     if (m_direct_bitmap.IsOk()) {
-        ScaleBitmap(wxRect(0, 0, sz.x, sz.y), dc, m_direct_bitmap);
+        if (option == TILE)
+            TileBitmap(wxRect(0, 0, sz.x, sz.y), dc, m_direct_bitmap);
+        else
+            ScaleBitmap(wxRect(0, 0, sz.x, sz.y), dc, m_direct_bitmap);
         return;
     }
 

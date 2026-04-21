@@ -342,7 +342,14 @@ void VtxExprEdit::fireChangeEvent(){
 	wxCommandEvent evt(wxEVT_COMMAND_TEXT_ENTER);
 	evt.SetEventObject(this);
 	evt.SetId(GetId());
-	GetEventHandler()->ProcessEvent(evt) ;
+	// ProcessEvent on the widget itself only reaches handlers registered on it.
+	// The TEXT_ENTER handler is on the parent panel, so walk up until it's handled.
+	wxWindow *w = this;
+	while(w){
+		if(w->GetEventHandler()->ProcessEvent(evt))
+			break;
+		w = w->GetParent();
+	}
 }
 
 //-------------------------------------------------------------

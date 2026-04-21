@@ -1,4 +1,3 @@
-
 #include "VtxCratersFunct.h"
 #include "VtxFunctDialog.h"
 #include "Craters.h"
@@ -288,7 +287,18 @@ void VtxCratersFunct::setFunction(wxString f){
 
 	CraterMgr *mgr=(CraterMgr*)tc->mgr;
 
-	int id=tc->get_id();
+	// Extract seed from the expression string directly.
+	// Selection 0 = no explicit seed ("--"), selection N = IDN.
+	// tc->get_id() can't be trusted here because the TNplacements constructor
+	// may auto-assign a place_gid when no IDx is present.
+	int id = 0;
+	{
+		const char *p = strstr(f.ToAscii(), "(");
+		if(p){ p++; while(*p==' ') p++;
+			if(strncmp(p,"ID",2)==0 && isdigit((unsigned char)p[2]))
+				id = atoi(p+2);
+		}
+	}
 	m_seed->SetSelection(id);
 	TNarg &args=*((TNarg *)tc->left);
 	TNode *a=args[0];
@@ -399,7 +409,6 @@ void VtxCratersFunct::setFunction(wxString f){
 
 void VtxCratersFunct::getFunction(){
 	char buff[256];
-
 	wxString s="craters(";
 	int pid=m_seed->GetSelection();
 	if(pid>0){
@@ -450,13 +459,6 @@ void VtxCratersFunct::getFunction(){
 	s+=")";
 	//cout << s << endl;
 
-	TNcraters *tn=(TNcraters*)TheScene->parse_node((char*)s.ToAscii());
-	if(!tn){
-		return;
-	}
-	buff[0]=0;
-	tn->valueString(buff);
-	s = wxString(buff);
-	//cout << buff << endl;
 	functDialog->getFunct(s);
+	PlacementMgr::free_htable();
 }

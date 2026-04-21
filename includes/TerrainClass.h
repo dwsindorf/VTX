@@ -294,6 +294,7 @@ class TNplacements : public TNbase
 protected:
 public:
     PlacementMgr *mgr;
+    bool explicit_pid;  // true only when IDx was present in the source expression
 	TNplacements(int t, TNode *l, TNode *r, TNode *b);
 	virtual ~TNplacements();
 	
@@ -600,7 +601,7 @@ protected:
 	int joined(TNode *);
 	TNode *next();
 public:
-	TNcraters(int t, TNode *l, TNode *r, TNode *b);
+	TNcraters(int t, TNode *l, TNode *r);
 	~TNcraters();
 	void eval();
 	void init();

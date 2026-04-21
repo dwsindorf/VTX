@@ -677,22 +677,14 @@ rocks_expr
     						{ $$=new TNrocks($3,$8,$6);APOP;}
   craters_expr
     : YY_CRATERS '(' arg_list ')' expr
-    						{ $$=new TNcraters(0,$3,$5,0);APOP;}
+    						{ $$=new TNcraters(0,$3,$5);APOP;}
     | YY_CRATERS '(' arg_list ')'
-							{ $$=new TNcraters(0,$3,0,0);APOP;}
-    | YY_CRATERS '(' arg_list ')' '[' expr ']'
-    						{ $$=new TNcraters(0,$3,0,$6);APOP;}
-    | YY_CRATERS '(' arg_list ')' '[' expr ']' expr
-    						{ $$=new TNcraters(0,$3,$8,$6);APOP;}
+							{ $$=new TNcraters(0,$3,0);APOP;}
     | YY_CRATERS '(' ptype ',' arg_list ')' expr
-    						{ $$=new TNcraters($3,$5,$7,0);APOP;}
+    						{ $$=new TNcraters($3,$5,$7);APOP;}
     | YY_CRATERS '(' ptype ',' arg_list ')'
-							{ $$=new TNcraters($3,$5,0,0);APOP;}
-    | YY_CRATERS '(' ptype ',' arg_list ')' '[' expr ']'
-    						{ $$=new TNcraters($3,$5,0,$8);APOP;}
-    | YY_CRATERS '(' ptype ',' arg_list ')' '[' expr ']' expr
-    						{ $$=new TNcraters($3,$5,$10,$8);APOP;}
- ptype
+							{ $$=new TNcraters($3,$5,0);APOP;}
+  ptype
 	: PTYPE					{ $$=$1;}
 	| ID					{ $$=$1;}
 	| ptype '|' PTYPE		{ $$=$1|$3;}

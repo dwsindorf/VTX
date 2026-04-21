@@ -331,7 +331,7 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 //************************************************************
 // TNcraters class
 //************************************************************
-TNcraters::TNcraters(int t, TNode *l, TNode *r, TNode *b) : TNplacements(t|CRATERS,l,r,b)
+TNcraters::TNcraters(int t, TNode *l, TNode *r) : TNplacements(t|CRATERS,l,r,0)
 {
     mgr=new CraterMgr(type);
 	TNarg &args=*((TNarg *)left);
@@ -456,9 +456,8 @@ void TNcraters::applyExpr()
 		eval();
 		delete ctrs;
         expr=0;
+
     }
-    if(base)
-        base->applyExpr();
 }
 
 //-------------------------------------------------------------
@@ -571,15 +570,7 @@ void TNcraters::eval()
 	    cout<<buff<<endl;
 	}
 #endif
-	double hb=0;
-	if(base){
-		base->eval();
-		if(S0.pvalid())
-			hb=S0.p.z;
-		else if(S0.svalid())
-			hb=S0.s;
-	}
-    hb+=cmgr->offset;
+	double hb=cmgr->offset;
 
     INIT;
     double ht=0;

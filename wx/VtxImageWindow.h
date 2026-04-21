@@ -26,7 +26,7 @@ public:
 
 	void setImage(wxString,int option );
 	// Paint directly from a float RGBA buffer (no images cache / temp file needed)
-	void setImageData(const float *rgba, int w, int h);
+	void setImageData(const float *rgba, int w, int h, int mode = SCALE);
 	void clearImageData();
 	wxString getImagePath() const { return m_name; }
 	void OnPaint(wxPaintEvent& event);

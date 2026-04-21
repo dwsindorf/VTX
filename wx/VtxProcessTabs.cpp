@@ -28,6 +28,7 @@ enum {
     ID_PROC_ITERS_SLDR,
     ID_PROC_ITERS_TEXT,
     ID_PROC_GRAY,
+    ID_PROC_TILE,
 };
 
 static const char *op_names[] = {
@@ -44,6 +45,7 @@ BEGIN_EVENT_TABLE(VtxProcessTabs, wxPanel)
 EVT_CHOICE(ID_PROC_FILE, VtxProcessTabs::OnFileSelect)
 EVT_CHOICE(ID_PROC_OP,   VtxProcessTabs::OnOpSelect)
 EVT_CHECKBOX(ID_PROC_GRAY, VtxProcessTabs::OnGrayCheck)
+EVT_CHECKBOX(ID_PROC_TILE, VtxProcessTabs::OnTileCheck)
 EVT_COMMAND_SCROLL(ID_PROC_RADIUS_SLDR,   VtxProcessTabs::OnRadiusSlider)
 EVT_COMMAND_SCROLL(ID_PROC_STRENGTH_SLDR, VtxProcessTabs::OnStrengthSlider)
 EVT_COMMAND_SCROLL(ID_PROC_ITERS_SLDR,   VtxProcessTabs::OnItersSlider)
@@ -74,6 +76,9 @@ void VtxProcessTabs::buildUI(wxPanel *panel)
     file_box->Add(m_file_menu, 0, wxALIGN_LEFT|wxALL, 2);
     m_gray_check = new wxCheckBox(panel, ID_PROC_GRAY, "Grayscale");
     file_box->Add(m_gray_check, 0, wxALIGN_CENTER_VERTICAL|wxALL, 4);
+    m_tile_check = new wxCheckBox(panel, ID_PROC_TILE, "Tile");
+    m_tile_check->SetValue(true);
+    file_box->Add(m_tile_check, 0, wxALIGN_CENTER_VERTICAL|wxALL, 4);
 
     file_box->SetMinSize(wxSize(BOX_W+10,-1));
     box->Add(file_box, 0, wxALIGN_LEFT|wxALL, 0);
@@ -195,7 +200,8 @@ bool VtxProcessTabs::saveImage(const wxString &path)
 void VtxProcessTabs::displayBuffer()
 {
     if (!m_has_image) return;
-    m_image_window->setImageData(m_buf.data(), m_w, m_h);
+    int mode = m_tile_check->GetValue() ? VtxImageWindow::TILE : VtxImageWindow::SCALE;
+    m_image_window->setImageData(m_buf.data(), m_w, m_h, mode);
 }
 
 // ── Public interface ──────────────────────────────────────────────────
@@ -242,6 +248,18 @@ void VtxProcessTabs::loadFromPath(const wxString &path, const wxString &name)
 
     // Restore the last op the user had selected (defaults to PROC_DILATE on first use)
     m_op_menu->SetSelection(m_last_op);
+
+    // Detect whether the image is already grayscale (R==G==B for every pixel).
+    // If so, check and disable the checkbox — there are no color components to lose.
+    // If the image has color, uncheck and enable so the user can choose.
+    bool is_gray = true;
+    for (int i = 0; i < m_w * m_h && is_gray; i++) {
+        float r = m_buf[i*4+0], g = m_buf[i*4+1], b = m_buf[i*4+2];
+        if (fabsf(r - g) > 1.0f/255.0f || fabsf(r - b) > 1.0f/255.0f)
+            is_gray = false;
+    }
+    m_gray_check->SetValue(is_gray);
+    m_gray_check->Enable(!is_gray);
 
     displayBuffer();
 }
@@ -369,6 +387,11 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             }
         }
     }
+    displayBuffer();
+}
+
+void VtxProcessTabs::OnTileCheck(wxCommandEvent &event)
+{
     displayBuffer();
 }
 
