@@ -15,10 +15,10 @@
 
 enum ProcOp {
     PROC_NONE = 0,
-    PROC_DILATE,
-    PROC_ERODE_IMG,
     PROC_BLUR,
     PROC_SHARPEN,
+    PROC_DILATE,
+    PROC_ERODE_IMG,
     PROC_NORMALIZE,
     PROC_CONTRAST,
     PROC_BRIGHTNESS,
@@ -90,6 +90,7 @@ public:
     void OnRadiusText(wxCommandEvent &event);
     void OnStrengthText(wxCommandEvent &event);
     void OnItersText(wxCommandEvent &event);
+    void OnGrayCheck(wxCommandEvent &event);
 
     DECLARE_EVENT_TABLE()
 };

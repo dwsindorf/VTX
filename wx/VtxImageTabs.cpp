@@ -26,6 +26,7 @@ enum{
 #define LABEL1 50
 #define VALUE1 50
 #define SLIDER1 120
+#define IMAGE_H  250
 
 IMPLEMENT_CLASS(VtxImageTabs, wxPanel)
 
@@ -102,7 +103,7 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
     m_gradient_file_menu = new wxChoice(panel, ID_GRADIENT_LIST, wxPoint(-1,4), wxSize(120,-1));
     m_gradient_file_menu->SetColumns(5);
     options->Add(m_gradient_file_menu, 0, wxALIGN_LEFT|wxALL, 0);
-	m_gradient_image = new VtxImageWindow(panel, wxID_ANY, wxDefaultPosition, wxSize(100,26));
+	m_gradient_image = new VtxImageWindow(panel, wxID_ANY, wxDefaultPosition, wxSize(100,20));
 	options->Add(m_gradient_image, 0, wxALIGN_LEFT|wxALL, 2);
     options->SetMinSize(wxSize(TABS_WIDTH,-1));
     boxSizer->Add(options, 0, wxALIGN_LEFT|wxALL, 0);
@@ -114,7 +115,7 @@ void VtxImageTabs::AddImageTab(wxPanel *panel){
 	boxSizer->Add(image_expr_line, 0, wxALIGN_LEFT|wxALL, 0);
 
 	wxStaticBoxSizer* image_display = new wxStaticBoxSizer(wxVERTICAL, panel, wxT("Image"));
-	m_image_window = new VtxImageWindow(this, wxID_ANY, wxDefaultPosition, wxSize(TABS_WIDTH-TABS_BORDER,160));
+	m_image_window = new VtxImageWindow(this, wxID_ANY, wxDefaultPosition, wxSize(TABS_WIDTH-TABS_BORDER,IMAGE_H));
 	image_display->Add(m_image_window, 0, wxALIGN_LEFT|wxALL, 0);
 	image_display->SetMinSize(wxSize(TABS_WIDTH,-1));
 	boxSizer->Add(image_display, 0, wxALIGN_LEFT|wxALL, 0);

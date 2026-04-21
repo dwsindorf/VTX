@@ -316,12 +316,14 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_delete->Enable(m_2D_tabs->canDelete());
 		m_save->Enable(m_2D_tabs->canSave());
 		m_new->Enable(m_2D_tabs->canSave());
+		m_process->Enable(true);
 		break;
 	case TYPE_1D:
 		m_revert->Enable(m_1D_tabs->canRevert());
 		m_delete->Enable(m_1D_tabs->canDelete());
 		m_save->Enable(m_1D_tabs->canSave());
 		m_new->Enable(m_1D_tabs->canSave());
+		m_process->Enable(false);
 		if(!last_gradient.IsEmpty())
 			m_1D_tabs->setSelection(last_gradient);
 		break;
@@ -330,18 +332,21 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_delete->Enable(m_img_tabs->canDelete());
 		m_save->Enable(m_img_tabs->canSave());
 		m_new->Enable(m_img_tabs->canSave());
+		m_process->Enable(true);
 		break;
 	case TYPE_MAP:
 		m_revert->Enable(m_map_tabs->canRevert());
 		m_delete->Enable(m_map_tabs->canDelete());
 		m_save->Enable(m_map_tabs->canSave());
 		m_new->Enable(m_map_tabs->canSave());
+		m_process->Enable(true);
 		break;
 	case TYPE_HTMAP:
 		m_revert->Enable(m_hmap_tabs->canRevert());
 		m_delete->Enable(m_hmap_tabs->canDelete());
 		m_save->Enable(m_hmap_tabs->canSave());
 		m_new->Enable(m_hmap_tabs->canSave());
+		m_process->Enable(true);
 		break;
 	case TYPE_PROCESS:
 		m_process_tabs->updateControls();
@@ -349,6 +354,7 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_save->Enable(m_process_tabs->canSave());
 		m_delete->Enable(false);
 		m_new->Enable(false);
+		m_process->Enable(true);
 		break;
 	}
 

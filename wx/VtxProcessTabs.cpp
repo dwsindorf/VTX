@@ -13,6 +13,7 @@
 #include "ImageMgr.h"
 
 #define BOX_W  (TABS_WIDTH - TABS_BORDER)
+#define IMAGE_H  250
 #define LABEL1  60
 #define VALUE1  50
 #define SLIDER1 120
@@ -31,7 +32,7 @@ enum {
 
 static const char *op_names[] = {
     "-- Select --",
-    "Dilate", "Erode", "Blur", "Sharpen",
+    "Blur", "Sharpen","Dilate", "Erode",
     "Normalize", "Contrast", "Brightness",
     "Hydraulic Erosion",
     nullptr
@@ -42,6 +43,7 @@ IMPLEMENT_CLASS(VtxProcessTabs, wxPanel)
 BEGIN_EVENT_TABLE(VtxProcessTabs, wxPanel)
 EVT_CHOICE(ID_PROC_FILE, VtxProcessTabs::OnFileSelect)
 EVT_CHOICE(ID_PROC_OP,   VtxProcessTabs::OnOpSelect)
+EVT_CHECKBOX(ID_PROC_GRAY, VtxProcessTabs::OnGrayCheck)
 EVT_COMMAND_SCROLL(ID_PROC_RADIUS_SLDR,   VtxProcessTabs::OnRadiusSlider)
 EVT_COMMAND_SCROLL(ID_PROC_STRENGTH_SLDR, VtxProcessTabs::OnStrengthSlider)
 EVT_COMMAND_SCROLL(ID_PROC_ITERS_SLDR,   VtxProcessTabs::OnItersSlider)
@@ -53,7 +55,7 @@ END_EVENT_TABLE()
 VtxProcessTabs::VtxProcessTabs(wxWindow *parent, wxWindowID id,
     const wxPoint &pos, const wxSize &size, long style, const wxString &name)
     : wxPanel(parent, id, pos, size, style, name),
-      m_w(0), m_h(0), m_has_image(false), m_modified(false), m_last_op(PROC_DILATE)
+      m_w(0), m_h(0), m_has_image(false), m_modified(false), m_last_op(PROC_BLUR)
 {
     buildUI(this);
     wxInitAllImageHandlers();
@@ -70,7 +72,10 @@ void VtxProcessTabs::buildUI(wxPanel *panel)
     wxStaticBoxSizer *file_box = new wxStaticBoxSizer(wxHORIZONTAL, panel, "File");
     m_file_menu = new wxChoice(panel, ID_PROC_FILE, wxDefaultPosition, wxSize(200,-1));
     file_box->Add(m_file_menu, 0, wxALIGN_LEFT|wxALL, 2);
-    file_box->SetMinSize(wxSize(BOX_W,-1));
+    m_gray_check = new wxCheckBox(panel, ID_PROC_GRAY, "Grayscale");
+    file_box->Add(m_gray_check, 0, wxALIGN_CENTER_VERTICAL|wxALL, 4);
+
+    file_box->SetMinSize(wxSize(BOX_W+10,-1));
     box->Add(file_box, 0, wxALIGN_LEFT|wxALL, 0);
 
     // ── Operation ─────────────────────────────────────────────────────
@@ -79,10 +84,12 @@ void VtxProcessTabs::buildUI(wxPanel *panel)
     wxBoxSizer *op_row = new wxBoxSizer(wxHORIZONTAL);
     m_op_menu = new wxChoice(panel, ID_PROC_OP, wxDefaultPosition, wxSize(160,-1));
     for (int i = 0; op_names[i]; i++) m_op_menu->Append(op_names[i]);
-    m_op_menu->SetSelection(PROC_DILATE);
+    m_op_menu->SetSelection(PROC_BLUR);
     op_row->Add(m_op_menu, 0, wxALIGN_LEFT|wxALL, 2);
-    m_gray_check = new wxCheckBox(panel, ID_PROC_GRAY, "Grayscale");
-    op_row->Add(m_gray_check, 0, wxALIGN_CENTER_VERTICAL|wxALL, 4);
+    m_strength_slider = new SliderCtrl(panel, ID_PROC_STRENGTH_SLDR, "Strength",
+           LABEL1, VALUE1, SLIDER1);
+    m_strength_slider->setRange(0.0, 2.0); m_strength_slider->setValue(1.0);
+    op_row->Add(m_strength_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
     op_box->Add(op_row, 0, wxALIGN_LEFT|wxALL, 0);
 
     wxBoxSizer *param_row = new wxBoxSizer(wxHORIZONTAL);
@@ -90,18 +97,13 @@ void VtxProcessTabs::buildUI(wxPanel *panel)
         LABEL1, VALUE1, SLIDER1);
     m_radius_slider->setRange(1, 20); m_radius_slider->setValue(3);
     param_row->Add(m_radius_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-    m_strength_slider = new SliderCtrl(panel, ID_PROC_STRENGTH_SLDR, "Strength",
-        LABEL1, VALUE1, SLIDER1);
-    m_strength_slider->setRange(0.0, 2.0); m_strength_slider->setValue(1.0);
-    param_row->Add(m_strength_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-    op_box->Add(param_row, 0, wxALIGN_LEFT|wxALL, 0);
 
-    wxBoxSizer *iter_row = new wxBoxSizer(wxHORIZONTAL);
     m_iters_slider = new SliderCtrl(panel, ID_PROC_ITERS_SLDR, "Iterations",
         LABEL1, VALUE1, SLIDER1);
     m_iters_slider->setRange(1, 500); m_iters_slider->setValue(50);
-    iter_row->Add(m_iters_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
-    op_box->Add(iter_row, 0, wxALIGN_LEFT|wxALL, 0);
+    param_row->Add(m_iters_slider->getSizer(), 0, wxALIGN_LEFT|wxALL, 0);
+
+    op_box->Add(param_row, 0, wxALIGN_LEFT|wxALL, 0);
 
     op_box->SetMinSize(wxSize(BOX_W,-1));
     box->Add(op_box, 0, wxALIGN_LEFT|wxALL, 0);
@@ -109,7 +111,7 @@ void VtxProcessTabs::buildUI(wxPanel *panel)
     // ── Image display ─────────────────────────────────────────────────
     wxStaticBoxSizer *img_box = new wxStaticBoxSizer(wxVERTICAL, panel, "Image");
     m_image_window = new VtxImageWindow(panel, wxID_ANY,
-        wxDefaultPosition, wxSize(BOX_W, 200));
+        wxDefaultPosition, wxSize(BOX_W, IMAGE_H));
     img_box->Add(m_image_window, 0, wxALIGN_LEFT|wxALL, 0);
     box->Add(img_box, 0, wxALIGN_LEFT|wxALL, 0);
 
@@ -255,7 +257,10 @@ void VtxProcessTabs::runOperation()
     bool  gray  = m_gray_check->GetValue();
     m_prev_buf = m_buf;   // snapshot for single-step Revert
     m_last_op  = op;
-    if (gray) toGrayscale();  // convert to luma first, then op works on grey data
+    if (gray) {
+        m_buf = m_orig;   // start from color original so toGrayscale has full data
+        toGrayscale();
+    }
     switch (op) {
     case PROC_DILATE:    opDilate(r, gray);       break;
     case PROC_ERODE_IMG: opErodeImg(r, gray);     break;
@@ -334,6 +339,37 @@ void VtxProcessTabs::OnStrengthText(wxCommandEvent &event)
 void VtxProcessTabs::OnItersText(wxCommandEvent &event)
 {
     m_iters_slider->setValueFromText();
+}
+
+void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
+{
+    if (!m_has_image) return;
+    if (m_gray_check->GetValue()) {
+        // Checked: convert current m_buf to grayscale and show
+        toGrayscale();
+    } else {
+        // Unchecked: restore color from m_orig, then re-apply the last op if any
+        m_buf = m_orig;
+        if (!m_prev_buf.empty()) {
+            // An op was previously applied — re-run it without gray so color is preserved
+            int op = m_last_op;
+            int   r     = (int)m_radius_slider->getValue();
+            float str   = (float)m_strength_slider->getValue();
+            int   iters = (int)m_iters_slider->getValue();
+            switch (op) {
+            case PROC_BLUR:      opBlur(r, false);         break;
+            case PROC_SHARPEN:   opSharpen(str, false);    break;
+            case PROC_DILATE:    opDilate(r, false);       break;
+            case PROC_ERODE_IMG: opErodeImg(r, false);     break;
+            case PROC_NORMALIZE: opNormalize(false);       break;
+            case PROC_CONTRAST:  opContrast(str, false);   break;
+            case PROC_BRIGHTNESS:opBrightness(str, false); break;
+            case PROC_HYDRAULIC: opHydraulic(iters, str);  break;
+            default: break;
+            }
+        }
+    }
+    displayBuffer();
 }
 
 void VtxProcessTabs::OnFileSelect(wxCommandEvent &event)
