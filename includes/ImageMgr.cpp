@@ -399,9 +399,10 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 	switch(mtype){
 	default:
 	case PMAP:        // planar mapping (decal)
-		dy=2*PI*rh/h;
-		dx=2*PI*rw/w;
-	 	vz=1.0;
+		dx=2.0/w;
+		dy=2.0/h;
+		x1=-1.0;
+		y1=-1.0;
 		break;
 	case SMAP:       // spherical mapping
 	    dx=360.0/w;
@@ -455,6 +456,7 @@ Image::Image(int opts, int h, int w, TNode *value, Image *grad)
 			case PMAP:
 			default:
 			    vx=x;
+			    vy=y;
 				break;
 			}
 			TheNoise.theta=x;

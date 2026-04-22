@@ -1,5 +1,3 @@
-
-
 #include "Craters.h"
 #include "SceneClass.h"
 #include "RenderOptions.h"
@@ -456,8 +454,9 @@ void TNcraters::applyExpr()
 		eval();
 		delete ctrs;
         expr=0;
-
     }
+    if(base)
+        base->applyExpr();
 }
 
 //-------------------------------------------------------------
@@ -522,6 +521,11 @@ void TNcraters::eval()
 		}
 	}
 	TNplacements::eval();  // evaluate common arguments
+	if(images.building()){
+		// Set stable id for deterministic placement in image mode
+		double hashcode=(mgr->levels+1/mgr->maxsize+1/mgr->mult);
+		mgr->id=(int)hashcode+mgr->type+mgr->instance+(int)(hashcode*TheNoise.rseed);
+	}
 	TNarg *a=args.index(8);
 
 	if(a){                // geometry exprs
@@ -570,7 +574,15 @@ void TNcraters::eval()
 	    cout<<buff<<endl;
 	}
 #endif
-	double hb=cmgr->offset;
+	double hb=0;
+	if(base){
+		base->eval();
+		if(S0.pvalid())
+			hb=S0.p.z;
+		else if(S0.svalid())
+			hb=S0.s;
+	}
+    hb+=cmgr->offset;
 
     INIT;
     double ht=0;

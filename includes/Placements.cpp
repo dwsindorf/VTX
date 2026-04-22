@@ -596,7 +596,12 @@ void PlacementMgr::eval()
     if(TheNoise.noise3D())
          pv.w=0;
     double l=pv.length();
-    pv=pv.normalize();
+    if(images.building() && TheNoise.noise3D()){
+        if(l < 1e-10) return;  // center pixel degenerate
+        // Don't normalize — keep flat 2D coords for PMAP image mode
+    } else {
+        pv=pv.normalize();
+    }
      
     sval=0;
     hits=0;
@@ -629,7 +634,8 @@ void PlacementMgr::eval()
         }
 #endif
 
-        mpt=pv;     
+        mpt=pv;
+        if(images.building() && TheNoise.noise3D()){ mpt.z=0; mpt.w=0; }
         p=pv*(1.0/size);
         offset.clear();
         
@@ -934,11 +940,19 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 #endif
 	d=fabs(p.length()-1);
 	double rf=mgr->mult;
-	// randomly mis-align placement center 
-	double u = URAND(1);              // u in [0,1]
-	double m = mgr->mult;             // can be >1 or <1
+	double u = URAND(1);
+	double m = mgr->mult;
 	double scale = 1.0 + u * (m - 1.0);
-	if(mgr->ntest()){
+	if(images.building() && TheNoise.noise3D()){
+		// PMAP image mode: p.z != 0 makes p.length() != 1, failing the sphere test.
+		// Bypass and use uniform radius with 2D jitter only.
+		r = mgr->size * 0.5 * scale;
+		pf = 0.4 * mgr->size;
+		p.x += pf * SRAND(2);
+		p.y += pf * SRAND(3);
+		p.z = 0; p.w = 0;
+		pf = 0;
+	} else if(mgr->ntest()){
 		if(d>mgr->size)
 			return;
 		r = mgr->size*0.5*scale;
@@ -959,7 +973,8 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 		else
 			p.w=0;
 	}
-	p=p.normalize();
+	if(!(images.building() && TheNoise.noise3D()))
+		p=p.normalize();
 	p=p+mgr->offset;
 	if(TheNoise.noise3D())
 	    p.w=0;
@@ -1094,8 +1109,6 @@ PlaceObj::PlaceObj(int t, TNode *e){
 //************************************************************
 TNplacements::TNplacements(int t, TNode *l, TNode *r, TNode *b) : TNbase(t,l,r,b) 
 {
-	// explicit_pid: true only when the parser supplied an explicit IDx token.
-	// Auto-assigned PIDs must not be serialized to the scene file.
 	explicit_pid = (t & PID) != 0;
 	int id=type&PID;
  	if(id==0){
@@ -1255,7 +1268,7 @@ void TNplacements::eval()
 	if(n>2) mgr->mult=arg[2];           // variability in size or level scale
 	if(n>3) mgr->maxdensity=arg[3];      
 
-	mgr->setDensity();  // propagate maxdensity → density for the placement gate
+	mgr->setDensity();
 
 	MaxSize=mgr->maxsize;
 }
