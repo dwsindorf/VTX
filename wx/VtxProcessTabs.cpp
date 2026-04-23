@@ -577,24 +577,23 @@ void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
     const int dx[8] = { 0, 0, 1,-1, 1,-1, 1,-1};
     const int dy[8] = {-1, 1, 0, 0,-1,-1, 1, 1};
 
-    // For each pixel, find the lowest neighbor (flow always goes somewhere)
+    // For each pixel, find the lowest neighbor using wraparound so tiled
+    // images produce seamless flow across the tile boundary.
     std::vector<int> drain(N, -1);
     for(int y = 0; y < m_h; y++){
         for(int x = 0; x < m_w; x++){
             int idx = y*m_w+x;
             float hc = h[idx];
             int   best = -1;
-            float best_drop = -1e9f;  // always pick lowest neighbor
+            float best_drop = -1e9f;
             for(int d = 0; d < 8; d++){
-                int nx = x+dx[d], ny = y+dy[d];
-                if(nx<0||nx>=m_w||ny<0||ny>=m_h) continue;
+                int nx = (x+dx[d]+m_w) % m_w;
+                int ny = (y+dy[d]+m_h) % m_h;
                 float dist = (d<4)?1.0f:1.414f;
                 float drop = (hc - h[ny*m_w+nx]) / dist;
                 if(drop > best_drop){ best_drop = drop; best = ny*m_w+nx; }
             }
-            // Only drain to a neighbor — avoid self-loops on flat areas
-            // by not draining if all neighbors are higher (true local minimum)
-            if(best_drop < -0.001f) drain[idx] = -1;  // local min, stop here
+            if(best_drop < -0.001f) drain[idx] = -1;
             else drain[idx] = best;
         }
     }

@@ -269,7 +269,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	wxStaticBoxSizer*hmap_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("HtMap"));
 
 	HmapAmpSlider=new SliderCtrl(panel,ID_HMAP_AMP_SLDR,"Ampl",LABEL1,VALUE2,SLIDER2);
-	HmapAmpSlider->setRange(-8,8);
+	HmapAmpSlider->setRange(-50,50);
 	HmapAmpSlider->setValue(1.0);
 	hmap_controls->Add(HmapAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
@@ -414,7 +414,6 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 void VtxTexTabs::makeFileList(){
 	int info=0;
-	{ static int mfl_cnt=0; cout<<"makeFileList["<<mfl_cnt++<<"]: m_image_type="<<m_image_type<<" TYPE_PROCESS="<<TYPE_PROCESS<<endl; }
 	switch(m_image_type){
 	case TYPE_1D:
 		info=BANDS|SPX;
@@ -439,7 +438,6 @@ void VtxTexTabs::makeFileList(){
 
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(info, list);
-	cout<<"makeFileList: info=0x"<<hex<<info<<dec<<" list.size="<<list.size<<" images.size="<<images.images.size<<endl;
     files.Clear();
 	for(int i=0;i<list.size;i++){
 		files.Add(list[i]->name());
@@ -937,7 +935,6 @@ void VtxTexTabs::setObjAttributes(){
 // VtxTexTabs::getObjAttributes() when switched in
 //-------------------------------------------------------------
 void VtxTexTabs::getObjAttributes(){
-	{ static int cnt=0; cout<<"getObjAttributes["<<cnt++<<"] update_needed="<<update_needed<<endl; }
 	if(!update_needed)
 		return;
 	TNtexture *tnode=(TNtexture*)object();
@@ -962,7 +959,6 @@ void VtxTexTabs::getObjAttributes(){
 
 	ImageSym *is=images.getImageInfo(tname);
 	m_type=is->info;
-	{ char dbg[256]; sprintf(dbg,"getObjAttributes: name=%s m_type=0x%08x IMTYPE=0x%08x PROCESSED=0x%08x",tname,m_type,m_type&IMTYPE,PROCESSED); cout<<dbg<<endl; }
 	delete is;
 
 	int interp=opts & INTRP_MASK;
@@ -999,12 +995,7 @@ void VtxTexTabs::getObjAttributes(){
 		args[i++]->valueString(p);
 		m_alpha_expr->SetValue(wxString(p));
 	}
-	if((m_type & IMTYPE) == PROCESSED){
-		mode->SetSelection(TYPE_PROCESS);
-		m_image_type=TYPE_PROCESS;
-		cout<<"SET TYPE_PROCESS m_image_type="<<m_image_type<<endl;
-	}
-	else if((m_type & SPX) && !((m_type & IMTYPE) == PROCESSED)){
+	if(m_type & SPX){
 		if(m_type&BANDS){
 			m_image_type=TYPE_1D;
 			mode->SetSelection(TYPE_1D);
@@ -1021,6 +1012,10 @@ void VtxTexTabs::getObjAttributes(){
 	else if((m_type & IMTYPE) == HTMAP){
 		mode->SetSelection(TYPE_HTMAP);
 		m_image_type=TYPE_HTMAP;
+	}
+	else if((m_type & IMTYPE) == PROCESSED){
+		mode->SetSelection(TYPE_PROCESS);
+		m_image_type=TYPE_PROCESS;
 	}
 	else{
 		mode->SetSelection(TYPE_IMPORT);
@@ -1054,7 +1049,6 @@ void VtxTexTabs::getObjAttributes(){
 	m_bump_check->SetValue(tnode->bumpActive());
 	m_hmap_check->SetValue(tnode->hmapActive());
 
-	cout<<"BEFORE makeFileList m_image_type="<<m_image_type<<endl;
 	makeFileList();
 	m_image_window->setImage(m_name,VtxImageWindow::TILE);
 	saveState(m_image_type);

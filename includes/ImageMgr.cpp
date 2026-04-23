@@ -991,6 +991,14 @@ uint ImageReader::getFileInfo(char *name, char *dir)
     uint info=0;
 //	cout <<name<<endl;
 
+	// Check Processed first so processed images take priority over same-named bitmaps
+	File.getProcessedDir(dir);
+	info=getImageInfo(name,dir);
+	if(info){
+		info |=PROCESSED;
+		return info;
+	}
+
   	File.getBitmapsDir(dir);
    	info=getImageInfo(name,dir);
    	if(info)
@@ -1012,12 +1020,6 @@ uint ImageReader::getFileInfo(char *name, char *dir)
 	info=getImageInfo(name,dir);
 	if(info){
 		info|=HTMAP;
-		return info;
-	}
-	File.getProcessedDir(dir);
-	info=getImageInfo(name,dir);
-	if(info){
-		info |=PROCESSED;
 		return info;
 	}
 	File.getSpritesDir(dir);
@@ -1533,6 +1535,8 @@ Image *ImageReader::open(char *name)
 	timer.start();
 #endif
 	ImageSym *is=imageInfo(name);
+	if(!is)
+		is=getImageInfo(name);  // fallback: scan dirs if not in registry
 	if(is){
 		strcat(dir,is->namePath().c_str());
 		im=open(name, dir);	
