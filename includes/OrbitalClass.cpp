@@ -3020,10 +3020,8 @@ int Spheroid::selection_pass()
 int Spheroid::adapt_pass()
 {
 	clr_selected();
-    if(!local_group() || offscreen() || !isEnabled())
-		return 0;
 
-    if(view_group())
+    if(!local_group() || !view_group() || offscreen())
         clear_pass(BG2);
     else
         clear_pass(BG1);
@@ -4577,8 +4575,7 @@ int Planetoid::adapt_pass()
 	clr_selected();
 
     if(!local_group() || !view_group() || offscreen()|| !isEnabled())
-        //clear_pass(BG4);
-    	return 0;
+        clear_pass(BG4);
     else{
         if(TheScene->viewobj==this)
             clear_pass(FG0);
@@ -4645,7 +4642,6 @@ int Planetoid::shadow_pass()
 void Planetoid::render() {
 	if (!isEnabled())
 		return;
-	
 	LinkedList<Object3D*> inlist;
 	LinkedList<Object3D*> outlist;
 	LinkedList<Object3D*> shells;

@@ -1,101 +1,121 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=32.7724;
-		theta=88.7151;
-		height=3904.19 ft;
-		gndlvl=-5222.73 ft;
-		time=2483.56;
-		vstride=0.02;
+		phi=26.7422;
+		theta=241.772;
+		height=15117.8 ft;
+		gndlvl=-11981.9 ft;
+		time=4.14464e+06;
+		vstride=1;
 		hstride=1;
 		astride=1;
-		zoom=0.001;
-		minh=5.68182e-10;
-		minr=0.000999011;
-		heading=128;
-		tilt=1;
-		angle=-18;
+		zoom=1;
+		minh=9.4697e-10;
+		heading=47;
+		tilt=-5;
+		angle=-45;
 		fov=35;
 		gstride=586570;
-		viewobj=Galaxy.1.System.1.Planet.1;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
-	Galaxy(20000) {
-		origin=Point(4000,0,0);
-		noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
-		color.expr=1*DENSITY;
-		color.list=Colors(
-			Color(0.50,0.00,0.25),
-			Color(0.00,0.00,1.00),
-			Color(0.00,0.72,1.00),
-			Color(0.50,1.00,1.00),
-			Color(1.00,0.27,0.00),
-			Color(1.00,0.70,0.20),
-			Color(1.00,1.00,0.40),
-			Color(1.00,1.00,0.70)
-			);
-		System(1) {
-			Star(1,0) {
-				color=Color(1,1,0.6);
-				diffuse=Color(1,1,1);
-				emission=Color(1,1,1);
-				specular=Color(1,1,1);
-				temperature=6000;
-				Corona(5.1) {
-					color1=Color(1,1,0.8,0.5);
-					color2=Color(1,1,0.6,0.7);
-				}
-			}
-			Planet(0.001,50) {
-				albedo=0.3;
-				ambient=Color(1,1,1,0.13);
-				day=1;
-				diffuse=Color(1,1,1,0.4);
-				fog.max=1200 ft;
-				fog.min=200 ft;
-				fog.value=0.898039;
-				fog.vmax=2083.4 ft;
-				fog.vmin=555.6 ft;
-				hscale=0.001;
-				resolution=0.5;
-				rot_phase=127.742;
-				shadow=Color(0,0,0.1,0.7);
-				shine=1.24841;
-				specular=Color(1,1,1,0.27);
-				year=300;
-				water.color=Color(0,0.5,0.8);
-				bands("jupiter",BLEND|DECAL|REPLACE,64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
-				Surface{
-					m1=noise(GRADIENT|NABS|NEG|SQR,8,14,0.2,0.5,2.1,0.24,1,0,0);
-					m2=noise(GRADIENT|SQR|RO1,8.8,14,0.3,0.5,2.1,0.88,1,0,0);
-					terrain=fractal(14,3,0.1,1.06,2,0.15,0,0,1,0)Point(noise(GRADIENT|NLOD|SQR,7.6,5.7,0.1,0.44,2,0.57,1,0,0),noise(GRADIENT|SQR,9.1,8,0.98,0.5,2,0.46,1,0,0),noise(SIMPLEX|NLOD|SQR,9.1,2,-0.39,0.44,2,0.74,1,0,0))+
-							Texture("jupiter",LINEAR|TEX,1,2,1,1.55552,1,2,0.5,0,0,0,0.20636,0.23808)+
-							Texture("BrownStone",BUMP,422.264,1,1,0,2.66656,2,0.5,0,0,0,0,0)+gloss(0.51588,3.28577);
-				}
-				Clouds(0.00101) {
-					albedo=0.6;
-					crot=1;
-					day=1.5;
-					specular=Color(1,1,1,0.6);
-					tilt=5;
+	View{
+		height=18783.9 ft;
+		time=4.14844e+06;
+		heading=28;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=5.68182e-10;
+		radius=0.00150129;
+	}
+	View{
+		minr=0.00149773;
+	}
+	Universe {
+		Galaxy(20000) {
+			name="Milky Way";
+			origin=Point(20000,0,0);
+			noise.expr=noise(GRADIENT|NLOD,2,7,1,0.2)+0.1*noise(GRADIENT|NLOD,14,5,0.5);
+			color.expr=1*DENSITY;
+			color.list=Colors(
+				Color(0.50,0.00,0.25),
+				Color(0.00,0.00,1.00),
+				Color(0.00,0.72,1.00),
+				Color(0.50,1.00,1.00),
+				Color(1.00,0.27,0.00),
+				Color(1.00,0.70,0.20),
+				Color(1.00,1.00,0.40),
+				Color(1.00,1.00,0.70)
+				);
+			System(1000) {
+				name="Solor";
+				origin=Point(-2000,0,0);
+				Star(1.5,0.01) {
+					color=Color(1,1,0.8);
+					day=100;
+					diffuse=Color(1,1,1);
+					emission=Color(1,1,1);
+					name="Sol";
+					specular=Color(1,1,1);
+					temperature=6000;
 					Surface{
-						a=noise(1,15,0.5,0.1);
-						d=ramp(0.5,1,a,1,0.7);
-						terrain=Color(d,d,d,a+0.1);
+						m1=noise(GRADIENT|UNS,3,10,0.4,0.5);
+						m2=noise(GRADIENT|NABS|UNS,8,10,0.5,0.5);
+						m3=clamp(m1*m2,0,1);
+						terrain=Color(1,1-0.3*m3,0.9-m3);
+					}
+					Corona(8.11) {
+						color1=Color(1,1,0.8,0.8);
+						color2=Color(1,1,0.7);
 					}
 				}
-				Sky(0.00109686) {
-					color=Color(0.56,0.91,0.99);
-					day=1;
-					density=0.48572;
-					haze.color=Color(1,1,1,0);
-					haze.grad=0.25714;
-					haze.max=30 miles;
-					haze.min=10 miles;
-					night.color=Color(0,0,0);
-					shine=1;
-					specular=Color(1,1,1);
-					twilight=Color(0.5,0,0.2);
-					year=300;
+				Planet(0.0015,50) {
+					albedo=0.73;
+					ambient=Color(1,1,1,0.01);
+					day=58.65;
+					diffuse=Color(1,1,1,0.59);
+					name="Mercury";
+					phase=29.0304;
+					resolution=3.31426;
+					shadow=Color(0,0,0,0.95);
+					shine=17.6664;
+					specular=Color(1,1,1,0.97);
+					sunset=0.01;
+					year=20;
+					bands("saturn3",ACHNL|BLEND|DECAL|NORM|REPLACE,64,Color(0,0,0),Color(0.675,0.4,0),Color(1,0.875,0.275),Color(0.502,0.251,0,0.714),
+						Color(0,0.251,0,0.451),
+						Color(0.992,0.773,0.004));
+					image("cracks2",BLEND|DECAL|INVT|REPLACE,256,256,noise(GRADIENT|NABS|UNS,1,5,0.3)+0.5*craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+					Surface{
+						md=noise(GRADIENT|UNS|RO1,1,5,0.5,0.2,1.98732);
+						mz=md+0.2*noise(GRADIENT|NABS|UNS,11,4,0.5,0.5,1.98732);
+						mc=1-0.7*md;
+						terrain=Z(craters(ID1,4,0.2,0.05,1,1,1,0.42,1,0.5,1,0.8,0.6,0.2,0))+
+								Texture("saturn3",BORDER|NORM|TEX,8,1,-0.0308,-1.88896,1,1.61112,1,0,0,0,-0.83332,0)+
+								Texture("cracks2",BUMP|RANDOMIZE,48.4022,1.16984,0.91668,4,10,2.20752,1,0);
+					}
+					Moon(0.0012,0.005) {
+						ambient=Color(1,0.98,0,0);
+						day=3;
+						diffuse=Color(1,1,1,0.66);
+						emission=Color(0.95,0.97,0.96,0);
+						name="Luna";
+						phase=314.287;
+						rot_phase=102.859;
+						shine=20.4374;
+						specular=Color(1,1,1,0.89);
+						sunset=0.621998;
+						year=2;
+						twilight.value=0;
+						image("craters",BLEND|DECAL|NORM|REPLACE,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
+						bands("dessert",ACHNL|BLEND|DECAL|REPLACE,128,0.07142,0.6,Color(1,0.635,0.086,0.6),Color(1,0.886,0.486),
+							Color(0.165,0,0),
+							Color(0,0,0));
+						Surface{
+							terrain=
+									Texture("dessert",BORDER|LINEAR|NORM|S|TEX,noise(GRADIENT|NABS|SCALE|UNS,0,5,-0.95,0.5,2,0.13,1,0,0,1e-06),4,1,0.47272,0,1,2,1,0,0,1,-0.07936,-0.1)+
+									Texture("craters",BUMP,5.2918,-0.54544,1,0,6,3,1,0,0,0,0,0);
+						}
+					}
 				}
 			}
 		}

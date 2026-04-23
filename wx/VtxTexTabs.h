@@ -85,7 +85,7 @@ protected:
 	wxChoice *choices;
 	wxChoice *mode;
 
-	tex_state state[5];
+	tex_state state[6];
 
 	int m_image_type;
 	bool m_invert;

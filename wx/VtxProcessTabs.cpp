@@ -36,6 +36,7 @@ static const char *op_names[] = {
     "Blur", "Sharpen","Dilate", "Erode",
     "Normalize", "Contrast", "Brightness",
     "Hydraulic Erosion",
+    "Dendritic Erosion",
     nullptr
 };
 
@@ -287,7 +288,8 @@ void VtxProcessTabs::runOperation()
     case PROC_NORMALIZE: opNormalize(gray);       break;
     case PROC_CONTRAST:  opContrast(str, gray);   break;
     case PROC_BRIGHTNESS:opBrightness(str, gray); break;
-    case PROC_HYDRAULIC: opHydraulic(iters, str); break;
+    case PROC_HYDRAULIC:  opHydraulic(iters, str);              break;
+    case PROC_DENDRITIC:  opDendritic(iters, (float)m_radius_slider->getValue()*0.05f, str); break;
     default: return;
     }
     m_modified = true;
@@ -382,7 +384,8 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             case PROC_NORMALIZE: opNormalize(false);       break;
             case PROC_CONTRAST:  opContrast(str, false);   break;
             case PROC_BRIGHTNESS:opBrightness(str, false); break;
-            case PROC_HYDRAULIC: opHydraulic(iters, str);  break;
+            case PROC_HYDRAULIC:  opHydraulic(iters, str);  break;
+            case PROC_DENDRITIC:  opDendritic(iters, (float)m_radius_slider->getValue()*0.05f, str); break;
             default: break;
             }
         }
@@ -418,6 +421,11 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
     case PROC_HYDRAULIC:
         m_iters_slider->setRange(1,500); m_iters_slider->setValue(100);
         m_radius_slider->setRange(1,10);  m_radius_slider->setValue(2);
+        break;
+    case PROC_DENDRITIC:
+        m_iters_slider->setRange(1,200);  m_iters_slider->setValue(30);
+        m_radius_slider->setRange(1,20);  m_radius_slider->setValue(5);   // branch prob * 0.05
+        m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
         break;
     case PROC_CONTRAST: case PROC_BRIGHTNESS:
         m_strength_slider->setRange(-2.0,2.0); m_strength_slider->setValue(0.0);
@@ -547,4 +555,77 @@ void VtxProcessTabs::opHydraulic(int iters, float strength)
         for(int i=0;i<N;i++) h[i]=std::max(0.0f,std::min(1.0f,h[i]+dh[i]));
     }
     for(int i=0;i<N;i++){m_buf[i*4+0]=m_buf[i*4+1]=m_buf[i*4+2]=h[i];}
+}
+
+void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
+{
+    // Flow accumulation approach: every pixel contributes flow downhill.
+    // Pixels where many upstream pixels drain through become dark channels.
+    // seeds    = threshold — minimum flow to show as channel (lower = more channels)
+    // branchProb * 20 = flow exponent (higher = sharper channel contrast)
+    // strength = carving depth
+
+    int N = m_w * m_h;
+
+    std::vector<float> h(N);
+    for(int i = 0; i < N; i++)
+        h[i] = 0.299f*m_buf[i*4+0] + 0.587f*m_buf[i*4+1] + 0.114f*m_buf[i*4+2];
+
+    // flow[i] = number of pixels that drain through pixel i (including itself)
+    std::vector<float> flow(N, 1.0f);
+
+    const int dx[8] = { 0, 0, 1,-1, 1,-1, 1,-1};
+    const int dy[8] = {-1, 1, 0, 0,-1,-1, 1, 1};
+
+    // For each pixel, find the lowest neighbor (flow always goes somewhere)
+    std::vector<int> drain(N, -1);
+    for(int y = 0; y < m_h; y++){
+        for(int x = 0; x < m_w; x++){
+            int idx = y*m_w+x;
+            float hc = h[idx];
+            int   best = -1;
+            float best_drop = -1e9f;  // always pick lowest neighbor
+            for(int d = 0; d < 8; d++){
+                int nx = x+dx[d], ny = y+dy[d];
+                if(nx<0||nx>=m_w||ny<0||ny>=m_h) continue;
+                float dist = (d<4)?1.0f:1.414f;
+                float drop = (hc - h[ny*m_w+nx]) / dist;
+                if(drop > best_drop){ best_drop = drop; best = ny*m_w+nx; }
+            }
+            // Only drain to a neighbor — avoid self-loops on flat areas
+            // by not draining if all neighbors are higher (true local minimum)
+            if(best_drop < -0.001f) drain[idx] = -1;  // local min, stop here
+            else drain[idx] = best;
+        }
+    }
+
+    // Propagate flow: sort pixels by height descending, then push flow downhill
+    std::vector<int> order(N);
+    for(int i = 0; i < N; i++) order[i] = i;
+    std::sort(order.begin(), order.end(), [&](int a, int b){ return h[a] > h[b]; });
+
+    for(int idx : order){
+        if(drain[idx] >= 0)
+            flow[drain[idx]] += flow[idx];
+    }
+
+    // Find max flow for normalisation
+    float max_flow = *std::max_element(flow.begin(), flow.end());
+    if(max_flow < 2.0f) return;
+
+    // Threshold: fraction of max_flow needed to show as channel
+    // seeds=1 -> almost everything, seeds=200 -> only major channels
+    float threshold = (seeds / 1000.0f) * max_flow;
+    // Exponent controls sharpness: higher = only major rivers show
+    float exponent = 1.0f + branchProb * 20.0f;
+
+    for(int i = 0; i < N; i++){
+        if(flow[i] <= threshold) continue;
+        float t = (flow[i] - threshold) / (max_flow - threshold);
+        t = powf(t, 1.0f / exponent);  // gamma — makes thin branches visible
+        h[i] = std::max(0.0f, h[i] - t * strength);
+    }
+
+    for(int i = 0; i < N; i++)
+        m_buf[i*4+0] = m_buf[i*4+1] = m_buf[i*4+2] = h[i];
 }

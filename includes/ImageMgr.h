@@ -86,6 +86,7 @@ enum  {
 	IMPORT   	= 0x02000000,
 	MAP   	    = 0x03000000,
 	HTMAP  	    = 0x04000000,
+	PROCESSED  	= 0x05000000,
 	SPRITE   	= 0x08000000,
 	BRANCH      = 0x09000000,
 	LEAF        = 0x0A000000,

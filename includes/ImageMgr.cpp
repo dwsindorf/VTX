@@ -1014,6 +1014,12 @@ uint ImageReader::getFileInfo(char *name, char *dir)
 		info|=HTMAP;
 		return info;
 	}
+	File.getProcessedDir(dir);
+	info=getImageInfo(name,dir);
+	if(info){
+		info |=PROCESSED;
+		return info;
+	}
 	File.getSpritesDir(dir);
 	info=getTiledImageInfo(name,dir);
    	if(info){
@@ -1026,12 +1032,6 @@ uint ImageReader::getFileInfo(char *name, char *dir)
    		info |=BRANCH;
    		return info;
    	}
-	File.getProcessedDir(dir);
-	info=getImageInfo(name,dir);
-	if(info){
-		info |=IMPORT;  // treated as plain texture
-		return info;
-	}
    	File.getLeavesDir(dir);
 	info=getTiledImageInfo(name,dir);
    	if(info){
@@ -1146,6 +1146,8 @@ void ImageReader::getImageInfo(int mode, LinkedList<ImageSym*> &list)
 			if((mode & IMDIMS) && ((mode & IMDIMS) != (info & IMDIMS)))
 			 	continue;
 			break;
+		case PROCESSED:
+			break;  // no extra filtering for processed images
 		}
 		ImageSym *nis=new ImageSym(is);
 		list.add(nis);
@@ -1318,6 +1320,9 @@ void ImageReader::makeImagelist()
 	  	addImages(sdir);
 
 	  	File.getHmapsDir(sdir);
+	  	addImages(sdir);
+
+	  	File.getProcessedDir(sdir);
 	  	addImages(sdir);
 
 		//images.sort();

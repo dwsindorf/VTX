@@ -1,4 +1,3 @@
-
 #include "VtxTexTabs.h"
 #include "VtxSceneDialog.h"
 #include "VtxImageDialog.h"
@@ -6,6 +5,7 @@
 
 #include <wx/filefn.h>
 #include <wx/dir.h>
+#include <wx/filename.h>
 #include <wx/bmpbuttn.h>
 #include <image_dialog.xpm>
 
@@ -167,6 +167,7 @@ bool VtxTexTabs::Create(wxWindow* parent,
 	saveState(TYPE_IMPORT);
 	saveState(TYPE_MAP);
 	saveState(TYPE_HTMAP);
+	saveState(TYPE_PROCESS);
 
     return true;
 }
@@ -214,7 +215,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	m_edit_button=new wxBitmapButton(panel,ID_SHOW_IMAGE_EDIT,bmp,wxDefaultPosition,wxSize(28,28));
 	image_controls->Add(m_edit_button,0,wxALIGN_LEFT|wxALL,0);
 
-	mode=new wxChoice(panel,ID_MODE,wxDefaultPosition,wxSize(60,-1),5,VtxImageDialog::type_names);
+	mode=new wxChoice(panel,ID_MODE,wxDefaultPosition,wxSize(60,-1),6,VtxImageDialog::type_names);
 	mode->SetSelection(0);
 	image_controls->Add(mode,0,wxALIGN_LEFT|wxALL,2);
 
@@ -413,6 +414,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 void VtxTexTabs::makeFileList(){
 	int info=0;
+	{ static int mfl_cnt=0; cout<<"makeFileList["<<mfl_cnt++<<"]: m_image_type="<<m_image_type<<" TYPE_PROCESS="<<TYPE_PROCESS<<endl; }
 	switch(m_image_type){
 	case TYPE_1D:
 		info=BANDS|SPX;
@@ -429,11 +431,15 @@ void VtxTexTabs::makeFileList(){
 	case TYPE_HTMAP:
 		info=HTMAP;
 		break;
+	case TYPE_PROCESS:
+		info=PROCESSED;
+		break;
 	}
     //images.makeImagelist();
 
 	LinkedList<ImageSym *> list;
 	images.getImageInfo(info, list);
+	cout<<"makeFileList: info=0x"<<hex<<info<<dec<<" list.size="<<list.size<<" images.size="<<images.images.size<<endl;
     files.Clear();
 	for(int i=0;i<list.size;i++){
 		files.Add(list[i]->name());
@@ -535,9 +541,9 @@ void VtxTexTabs::OnModeSelect(wxCommandEvent& event){
 }
 
 void VtxTexTabs::get_files(int type){
-	saveState(m_image_type);
+	if(m_image_type < 5) saveState(m_image_type);
 	bool oldhmap=m_hmap_check->GetValue();
-	restoreState(type);
+	if(type < 5) restoreState(type);
 	bool newhmap=m_hmap_check->GetValue();
 	m_image_type=type;
 	makeFileList();
@@ -599,11 +605,11 @@ void VtxTexTabs::setSelected(TreeNode *s){
 //-------------------------------------------------------------
 void VtxTexTabs::updateControls(){
 	if(update_needed){
-		wxString selected=wxString(object()->name);
-		int index=files.Index(selected);
-		if(index>=0)
-		choices->SetSelection(index);
 		getObjAttributes();
+		// Sync choices selection after getObjAttributes has built the correct file list
+		int index=files.Index(m_name);
+		if(index>=0)
+			choices->SetSelection(index);
 	}
 }
 
@@ -931,6 +937,7 @@ void VtxTexTabs::setObjAttributes(){
 // VtxTexTabs::getObjAttributes() when switched in
 //-------------------------------------------------------------
 void VtxTexTabs::getObjAttributes(){
+	{ static int cnt=0; cout<<"getObjAttributes["<<cnt++<<"] update_needed="<<update_needed<<endl; }
 	if(!update_needed)
 		return;
 	TNtexture *tnode=(TNtexture*)object();
@@ -955,6 +962,7 @@ void VtxTexTabs::getObjAttributes(){
 
 	ImageSym *is=images.getImageInfo(tname);
 	m_type=is->info;
+	{ char dbg[256]; sprintf(dbg,"getObjAttributes: name=%s m_type=0x%08x IMTYPE=0x%08x PROCESSED=0x%08x",tname,m_type,m_type&IMTYPE,PROCESSED); cout<<dbg<<endl; }
 	delete is;
 
 	int interp=opts & INTRP_MASK;
@@ -991,7 +999,12 @@ void VtxTexTabs::getObjAttributes(){
 		args[i++]->valueString(p);
 		m_alpha_expr->SetValue(wxString(p));
 	}
-	if(m_type & SPX){
+	if((m_type & IMTYPE) == PROCESSED){
+		mode->SetSelection(TYPE_PROCESS);
+		m_image_type=TYPE_PROCESS;
+		cout<<"SET TYPE_PROCESS m_image_type="<<m_image_type<<endl;
+	}
+	else if((m_type & SPX) && !((m_type & IMTYPE) == PROCESSED)){
 		if(m_type&BANDS){
 			m_image_type=TYPE_1D;
 			mode->SetSelection(TYPE_1D);
@@ -1041,6 +1054,7 @@ void VtxTexTabs::getObjAttributes(){
 	m_bump_check->SetValue(tnode->bumpActive());
 	m_hmap_check->SetValue(tnode->hmapActive());
 
+	cout<<"BEFORE makeFileList m_image_type="<<m_image_type<<endl;
 	makeFileList();
 	m_image_window->setImage(m_name,VtxImageWindow::TILE);
 	saveState(m_image_type);
@@ -1056,5 +1070,3 @@ void VtxTexTabs::setHtmap(){
 	if(hm)
 		invalidateObject();
 }
-
-

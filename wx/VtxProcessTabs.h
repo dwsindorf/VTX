@@ -23,6 +23,7 @@ enum ProcOp {
     PROC_CONTRAST,
     PROC_BRIGHTNESS,
     PROC_HYDRAULIC,
+    PROC_DENDRITIC,
     PROC_OP_COUNT
 };
 
@@ -63,6 +64,7 @@ class VtxProcessTabs : public wxPanel
     void opContrast(float strength, bool gray);
     void opBrightness(float amount, bool gray);
     void opHydraulic(int iters, float strength);
+    void opDendritic(int seeds, float branchProb, float strength);
     void toGrayscale(); // collapse m_buf to R=G=B=luminance
 
 public:

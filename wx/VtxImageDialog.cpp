@@ -92,7 +92,7 @@ VtxImageDialog::VtxImageDialog( wxWindow* parent,
     Create(parent, id, caption, pos,wxSize(DLG_WIDTH,DLG_HEIGHT), style);
 }
 
-wxString VtxImageDialog::type_names[]={"1D","2D","Tex","Map","HMap"};
+wxString VtxImageDialog::type_names[]={"1D","2D","Tex","Map","HMap","Process"};
 
 wxString  VtxImageDialog::getSelection(){
 	wxString name;
@@ -113,7 +113,8 @@ wxString  VtxImageDialog::getSelection(){
 		name=m_hmap_tabs->getSelection();
 		break;
 	case TYPE_PROCESS:
-		break; // no selection concept in process tab
+		name=m_process_tabs->getSelection();
+		break;
 	}
 	return name;
 }
