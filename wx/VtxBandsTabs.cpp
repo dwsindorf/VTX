@@ -848,12 +848,6 @@ bool VtxBandsTabs::Clone(wxString new_name, bool rename){
 	setSelection(name);
 	return true;
 }
-bool VtxBandsTabs::New(wxString name){
-	return Clone(name,false);	
-}
-bool VtxBandsTabs::Rename(wxString name){
-	return Clone(name,true);
-}
 
 //-------------------------------------------------------------
 // VtxBandsTabs::Delete() handler for Delete button press event

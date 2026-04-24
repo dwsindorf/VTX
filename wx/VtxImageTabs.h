@@ -34,7 +34,6 @@ protected:
 	void getObjAttributes();
 	void setObjAttributes();
 	void makeNewImage(char *, char *);
-	bool Clone(wxString name,bool rename);
 
 	// Working copy helpers
 	wxString tmpName(wxString name);
@@ -66,6 +65,7 @@ protected:
 	wxString m_gradient_name;
 
 public:
+	bool Clone(wxString name,bool rename);
 	VtxImageTabs(wxWindow* parent,
 			wxWindowID id,
 			const wxPoint& pos = wxDefaultPosition,
@@ -81,8 +81,6 @@ public:
     void Revert();
     void Delete();
     void setGradientName();
-	bool New(wxString name);
-	bool Rename(wxString name);
 
     void Invalidate();
     int rebuild();

@@ -462,8 +462,8 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
         m_radius_slider->setRange(1,10);  m_radius_slider->setValue(2);
         break;
     case PROC_DENDRITIC:
-        m_iters_slider->setRange(1,200);  m_iters_slider->setValue(30);
-        m_radius_slider->setRange(1,20);  m_radius_slider->setValue(5);   // branch prob * 0.05
+        m_iters_slider->setRange(1,200);  m_iters_slider->setValue(1);
+        m_radius_slider->setRange(1,20);  m_radius_slider->setValue(1);
         m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
         break;
     case PROC_CONTRAST: case PROC_BRIGHTNESS:
@@ -647,20 +647,16 @@ void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
             flow[drain[idx]] += flow[idx];
     }
 
-    // Find max flow for normalisation
     float max_flow = *std::max_element(flow.begin(), flow.end());
     if(max_flow < 2.0f) return;
 
-    // Threshold: fraction of max_flow needed to show as channel
-    // seeds=1 -> almost everything, seeds=200 -> only major channels
     float threshold = (seeds / 1000.0f) * max_flow;
-    // Exponent controls sharpness: higher = only major rivers show
-    float exponent = 1.0f + branchProb * 20.0f;
+    float exponent  = 1.0f + branchProb * 20.0f;
 
     for(int i = 0; i < N; i++){
         if(flow[i] <= threshold) continue;
         float t = (flow[i] - threshold) / (max_flow - threshold);
-        t = powf(t, 1.0f / exponent);  // gamma — makes thin branches visible
+        t = powf(t, 1.0f / exponent);
         h[i] = std::max(0.0f, h[i] - t * strength);
     }
 

@@ -546,15 +546,9 @@ bool VtxImageTabs::Clone(wxString new_name, bool rename){
 }
 // ── New: clone current into new name ────────────────────────
 
-bool VtxImageTabs::New(wxString name){
-	return Clone(name, false);
-}
 
 // ── Rename: clone to new name + delete old ──────────────────
 
-bool VtxImageTabs::Rename(wxString name){
-	return Clone(name, true);
-}
 
 // ── Delete: remove files + select first remaining ────────────
 

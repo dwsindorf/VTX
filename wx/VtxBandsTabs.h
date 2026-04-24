@@ -37,7 +37,6 @@ protected:
 	void setControlsFromColors();
 	void setColorsFromControls();
 	bool alpha();
-	bool Clone(wxString name,bool rename);
 
 	ColorSlider *m_mix_color;
 	SliderCtrl *m_mod_slider;
@@ -74,6 +73,7 @@ protected:
 	int num_colors;
 	int num_sliders;
 public:
+	bool Clone(wxString name,bool rename);
 	VtxBandsTabs(wxWindow* parent,
 			wxWindowID id,
 			const wxPoint& pos = wxDefaultPosition,
@@ -93,7 +93,6 @@ public:
 
 	void updateControls();
     void Save();
-	bool New(wxString name);
     void Revert();
 	void Build();
     void Delete();
@@ -101,7 +100,6 @@ public:
 	bool canRevert();
 	bool canSave();
     void Invalidate();
-    bool Rename(wxString name);
 
 
     void setSelection(wxString name);

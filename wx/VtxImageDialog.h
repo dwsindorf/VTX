@@ -101,8 +101,6 @@ public:
     void OnSave(wxCommandEvent &event);
     void OnRevert(wxCommandEvent &event);
     void OnDelete(wxCommandEvent &event);
-    void OnNew(wxCommandEvent &event);
-    void OnRename(wxCommandEvent &event);
 
     void Invalidate();
 
