@@ -200,18 +200,13 @@ bool VtxImageDialog::Create( wxWindow* parent,
     m_save = new wxButton(this,ID_SAVE,"Save",wxDefaultPosition,BTNSIZE);
     m_revert = new wxButton(this,ID_REVERT,"Revert",wxDefaultPosition,BTNSIZE);
     m_delete = new wxButton(this,ID_DELETE,"Delete",wxDefaultPosition,BTNSIZE);
-    m_new = new wxButton(this,ID_NEW,"New",wxDefaultPosition,BTNSIZE);
-    m_rename = new wxButton(this,ID_RENAME,"Rename",wxDefaultPosition,BTNSIZE);
     m_process = new wxButton(this,ID_PROCESS,"Process",wxDefaultPosition,BTNSIZE);
     
-    m_rename->Enable(true);
 
     
     buttons->Add(m_save, 0, wxALIGN_LEFT|wxALL,0);
     buttons->Add(m_revert, 0, wxALIGN_LEFT|wxALL,0);
     buttons->Add(m_delete, 0, wxALIGN_LEFT|wxALL,0);
-    buttons->Add(m_new, 0, wxALIGN_LEFT|wxALL,0);
-    buttons->Add(m_rename, 0, wxALIGN_LEFT|wxALL,0);
     buttons->Add(m_process, 0, wxALIGN_LEFT|wxALL,0);
 
 
@@ -316,14 +311,12 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_revert->Enable(m_2D_tabs->canRevert());
 		m_delete->Enable(m_2D_tabs->canDelete());
 		m_save->Enable(m_2D_tabs->canSave());
-		m_new->Enable(m_2D_tabs->canSave());
 		m_process->Enable(true);
 		break;
 	case TYPE_1D:
 		m_revert->Enable(m_1D_tabs->canRevert());
 		m_delete->Enable(m_1D_tabs->canDelete());
 		m_save->Enable(m_1D_tabs->canSave());
-		m_new->Enable(m_1D_tabs->canSave());
 		m_process->Enable(false);
 		if(!last_gradient.IsEmpty())
 			m_1D_tabs->setSelection(last_gradient);
@@ -332,29 +325,25 @@ void VtxImageDialog::OnTabSwitch(wxNotebookEvent &event){
 		m_revert->Enable(m_img_tabs->canRevert());
 		m_delete->Enable(m_img_tabs->canDelete());
 		m_save->Enable(m_img_tabs->canSave());
-		m_new->Enable(m_img_tabs->canSave());
 		m_process->Enable(true);
 		break;
 	case TYPE_MAP:
 		m_revert->Enable(m_map_tabs->canRevert());
 		m_delete->Enable(m_map_tabs->canDelete());
 		m_save->Enable(m_map_tabs->canSave());
-		m_new->Enable(m_map_tabs->canSave());
 		m_process->Enable(true);
 		break;
 	case TYPE_HTMAP:
 		m_revert->Enable(m_hmap_tabs->canRevert());
 		m_delete->Enable(m_hmap_tabs->canDelete());
 		m_save->Enable(m_hmap_tabs->canSave());
-		m_new->Enable(m_hmap_tabs->canSave());
 		m_process->Enable(true);
 		break;
 	case TYPE_PROCESS:
 		m_process_tabs->updateControls();
 		m_revert->Enable(m_process_tabs->canRevert());
 		m_save->Enable(m_process_tabs->canSave());
-		m_delete->Enable(false);
-		m_new->Enable(false);
+		m_delete->Enable(m_process_tabs->canSave());
 		m_process->Enable(true);
 		break;
 	}
@@ -398,21 +387,52 @@ void VtxImageDialog::OnProcess(wxCommandEvent &event){
 	m_revert->Enable(m_process_tabs->canRevert());
 	m_save->Enable(m_process_tabs->canSave());
 	m_delete->Enable(false);
-	m_new->Enable(false);
 }
 
 void VtxImageDialog::OnSave(wxCommandEvent &event){
+	// Always show name dialog so user can save-as or just confirm current name
+	wxString current = getSelection();
+	FileIODialog *dlg = new FileIODialog("Save As", current);
+	if(dlg->ShowModal() != wxID_OK){ dlg->Destroy(); return; }
+	wxString new_name = dlg->getName();
+	dlg->Destroy();
+	if(new_name.IsEmpty()) return;
+
+	bool name_changed = (new_name != current);
+	if(name_changed){
+		// Check if target file already exists
+		bool exists = false;
+		switch(m_type){
+		case TYPE_1D:{
+			char bdir[256]; FileUtil::getBitmapsDir(bdir);
+			char path[512]; sprintf(path,"%s%s.spx",bdir,(const char*)new_name.ToAscii());
+			exists = wxFileExists(wxString(path)); break;}
+		case TYPE_2D:{
+			char bdir[256]; FileUtil::getBitmapsDir(bdir);
+			char path[512]; sprintf(path,"%s%s.spx",bdir,(const char*)new_name.ToAscii());
+			exists = wxFileExists(wxString(path)); break;}
+		case TYPE_PROCESS:{
+			char pdir[256]; FileUtil::getProcessedDir(pdir);
+			char path[512]; sprintf(path,"%s%s.bmp",pdir,(const char*)new_name.ToAscii());
+			exists = wxFileExists(wxString(path)); break;}
+		}
+		if(exists){
+			wxString msg = wxString("\"") + new_name + "\" already exists. Replace?";
+			int res = wxMessageBox(msg,"File Exists",wxYES_NO|wxNO_DEFAULT|wxICON_WARNING,this);
+			if(res != wxYES) return;
+		}
+		// Rename first, then save
+		switch(m_type){
+		case TYPE_2D: m_2D_tabs->Rename(new_name); break;
+		case TYPE_1D: m_1D_tabs->Rename(new_name); break;
+		case TYPE_PROCESS: m_process_tabs->Rename(new_name); break;
+		}
+	}
+	// Save
 	switch(m_type){
-	case TYPE_2D:
-		m_2D_tabs->Save();
-		break;
-	case TYPE_1D:
-		m_1D_tabs->Save();
-		m_1D_tabs->Invalidate();
-		break;
-	case TYPE_PROCESS:
-		m_process_tabs->Save();
-		break;
+	case TYPE_2D:  m_2D_tabs->Save(); break;
+	case TYPE_1D:  m_1D_tabs->Save(); m_1D_tabs->Invalidate(); break;
+	case TYPE_PROCESS: m_process_tabs->Save(); break;
 	}
 }
 
@@ -440,6 +460,11 @@ void VtxImageDialog::OnRevert(wxCommandEvent &event){
 	}
 }
 void VtxImageDialog::OnDelete(wxCommandEvent &event){
+	// Confirm before deleting any image
+	wxString name = getSelection();
+	if(name.IsEmpty()) return;
+	wxString msg = wxString("Delete \"") + name + "\" from the file system?";
+	if(wxMessageBox(msg,"Delete",wxOK|wxCANCEL|wxICON_WARNING,this) != wxOK) return;
 	switch(m_type){
 	case TYPE_2D:
 		m_2D_tabs->Delete();
@@ -457,6 +482,7 @@ void VtxImageDialog::OnDelete(wxCommandEvent &event){
 		m_hmap_tabs->Delete();
 		break;
 	case TYPE_PROCESS:
+		m_process_tabs->Delete();
 		break;
 	}
 }
@@ -466,37 +492,31 @@ void VtxImageDialog::UpdateControls(){
 		m_revert->Enable(m_2D_tabs->canRevert());
 		m_delete->Enable(m_2D_tabs->canDelete());
 		m_save->Enable(m_2D_tabs->canSave());
-		m_new->Enable(m_2D_tabs->canSave());
 		break;
 	case TYPE_1D:
 		m_revert->Enable(m_1D_tabs->canRevert());
 		m_delete->Enable(m_1D_tabs->canDelete());
 		m_save->Enable(m_1D_tabs->canSave());
-		m_new->Enable(m_1D_tabs->canSave());
 		break;
 	case TYPE_IMPORT:
 		m_revert->Enable(m_img_tabs->canRevert());
 		m_delete->Enable(m_img_tabs->canDelete());
 		m_save->Enable(m_img_tabs->canSave());
-		m_new->Enable(m_img_tabs->canSave());
 		break;
 	case TYPE_MAP:
 		m_revert->Enable(m_map_tabs->canRevert());
 		m_delete->Enable(m_map_tabs->canDelete());
 		m_save->Enable(m_map_tabs->canSave());
-		m_new->Enable(m_map_tabs->canSave());
 		break;
 	case TYPE_HTMAP:
 		m_revert->Enable(m_hmap_tabs->canRevert());
 		m_delete->Enable(m_hmap_tabs->canDelete());
 		m_save->Enable(m_hmap_tabs->canSave());
-		m_new->Enable(m_hmap_tabs->canSave());
 		break;
 	case TYPE_PROCESS:
 		m_revert->Enable(m_process_tabs->canRevert());
 		m_save->Enable(m_process_tabs->canSave());
 		m_delete->Enable(false);
-		m_new->Enable(false);
 		break;
 	}
 	Refresh();

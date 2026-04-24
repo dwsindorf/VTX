@@ -257,6 +257,7 @@ void VtxTexTabs::AddImageTab(wxWindow *panel){
 	bump_controls->Add(BumpAmpSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	BumpDampSlider=new SliderCtrl(panel,ID_DAMP_SLDR,"Offset",LABEL2,VALUE2,SLIDER2);
+
 	BumpDampSlider->setRange(0,1,0,1);
 	BumpDampSlider->setValue(0.0);
 	bump_controls->Add(BumpDampSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

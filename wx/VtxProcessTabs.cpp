@@ -151,10 +151,16 @@ void VtxProcessTabs::makeFileList()
     for (bool ok=d.GetFirst(&f,"*.jpg",wxDIR_FILES); ok; ok=d.GetNext(&f)) files.Add(wxFileName(f).GetName());
     for (bool ok=d.GetFirst(&f,"*.png",wxDIR_FILES); ok; ok=d.GetNext(&f)) files.Add(wxFileName(f).GetName());
     files.Sort();
-    for (size_t i=0; i<files.Count(); i++) m_file_menu->Append(files[i]);
-    // Restore previous selection if still present
+    for (size_t i=0; i<files.Count(); i++){
+        if (!files[i].StartsWith("_"))   // skip temp/preview files
+            m_file_menu->Append(files[i]);
+    }
+    // Restore previous selection if still present, else select first
     int idx = sel.IsEmpty() ? wxNOT_FOUND : m_file_menu->FindString(sel);
-    if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
+    if (idx != wxNOT_FOUND)
+        m_file_menu->SetSelection(idx);
+    else if (m_file_menu->GetCount() > 0)
+        m_file_menu->SetSelection(0);
 }
 
 // ── Image load / save / display ───────────────────────────────────────
@@ -319,6 +325,22 @@ void VtxProcessTabs::Save()
     }
 }
 
+void VtxProcessTabs::Delete()
+{
+    if(m_name.IsEmpty()) return;
+    char dir[512]; FileUtil::getProcessedDir(dir);
+    wxString base = wxString(dir) + m_name;
+    if(wxFileExists(base+".bmp")) wxRemoveFile(base+".bmp");
+    if(wxFileExists(base+".jpg")) wxRemoveFile(base+".jpg");
+    if(wxFileExists(base+".png")) wxRemoveFile(base+".png");
+    m_has_image = false;
+    m_name = "";
+    m_buf.clear();
+    m_orig.clear();
+    m_prev_buf.clear();
+    updateControls();
+}
+
 void VtxProcessTabs::Revert()
 {
     if (!m_has_image || m_prev_buf.empty()) return;
@@ -332,6 +354,23 @@ void VtxProcessTabs::Revert()
 void VtxProcessTabs::updateControls()
 {
     makeFileList();
+    // If no image is loaded yet, auto-load the first file in the list
+    if(!m_has_image && m_file_menu->GetCount() > 0){
+        m_file_menu->SetSelection(0);
+        wxString name = m_file_menu->GetString(0);
+        char dir[512]; dir[0]=0;
+        FileUtil::getProcessedDir(dir);
+        wxString base = wxString(dir) + name;
+        wxString path;
+        if      (wxFileExists(base+".bmp")) path = base+".bmp";
+        else if (wxFileExists(base+".jpg")) path = base+".jpg";
+        else if (wxFileExists(base+".png")) path = base+".png";
+        if(!path.IsEmpty()){
+            loadImage(path);
+            m_name = name;
+            displayBuffer();
+        }
+    }
 }
 
 // ── Slider / text-entry event handlers ───────────────────────────────

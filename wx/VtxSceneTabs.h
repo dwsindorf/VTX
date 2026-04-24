@@ -192,6 +192,11 @@ public:
     void OnLODText(wxCommandEvent& event){
      	OnSliderText(LODSlider, TheScene->cellsize);
      	TheScene->rebuild_all();
+     	changing = false;
+     	LODSlider->slider->SetFocus();  // move focus away from text box
+    }
+    void OnLODTextEdit(wxCommandEvent& event){
+        changing = true;  // prevent OnUpdateLOD overwriting while typing
     }
     void OnUpdateLOD(wxUpdateUIEvent& event);
 

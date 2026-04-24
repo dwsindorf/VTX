@@ -57,8 +57,6 @@ class VtxImageDialog : public wxFrame
 	wxButton *m_save;
 	wxButton *m_revert;
 	wxButton *m_delete;
-	wxButton *m_new;
-	wxButton *m_rename;
 	wxButton *m_process;
 	
 	wxString image_name;

@@ -78,7 +78,9 @@ public:
     void runOperation();
 
     void Save();
+    void Rename(const wxString &new_name) { m_name = new_name; }
     void Revert();
+    void Delete();
     bool canSave()   const { return m_has_image; }
     bool canRevert() const { return m_has_image && !m_prev_buf.empty(); }
 

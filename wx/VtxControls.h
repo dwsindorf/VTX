@@ -250,8 +250,10 @@ public:
 		Slider::setValue(arg);
 	}
 	void setTextFromValue(){
+		// Don't overwrite text while the user is editing it
+		if(text->HasFocus()) return;
 		wxString s=valueString();
-		text->SetValue(s);
+		text->ChangeValue(s);  // ChangeValue doesn't fire EVT_TEXT
 	}
 	void setValue(char  *p){
 		text->ChangeValue(wxString(p));
@@ -262,6 +264,17 @@ public:
 	void setValueFromText(){
 		setValueFromString(text->GetValue());
 	}
+	// Call this on EVT_KILL_FOCUS to apply typed value
+	bool applyFromText(){
+		if(text->IsModified()){
+			setValueFromText();
+			setSliderFromValue();
+			text->SetModified(false);
+			return true;
+		}
+		return false;
+	}
+	bool textHasFocus() const { return text->HasFocus(); }
 
 	wxString getText() { return text->GetValue();}
 

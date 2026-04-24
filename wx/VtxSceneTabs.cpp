@@ -1,4 +1,3 @@
-
 #include "VtxSceneTabs.h"
 #include "MapClass.h"
 #include <GLSLMgr.h>
@@ -132,6 +131,7 @@ EVT_TEXT_ENTER(ID_FOV_TEXT,VtxSceneTabs::OnFOVText)
 EVT_COMMAND_SCROLL_THUMBRELEASE(ID_LOD_SLDR,VtxSceneTabs::OnEndLODSlider)
 EVT_COMMAND_SCROLL(ID_LOD_SLDR,VtxSceneTabs::OnLODSlider)
 EVT_TEXT_ENTER(ID_LOD_TEXT,VtxSceneTabs::OnLODText)
+EVT_TEXT(ID_LOD_TEXT,VtxSceneTabs::OnLODTextEdit)
 EVT_UPDATE_UI(ID_LOD_SLDR, VtxSceneTabs::OnUpdateLOD)
 
 EVT_CHECKBOX(ID_AA_ENABLE,VtxSceneTabs::OnAAEnable)
@@ -902,7 +902,7 @@ void VtxSceneTabs::OnUpdateTime(wxUpdateUIEvent& event){
 		getTime();
 }
 void VtxSceneTabs::OnUpdateLOD(wxUpdateUIEvent& event){
-	if(!changing)
+	if(!changing && !LODSlider->textHasFocus())
 		LODSlider->setValue(TheScene->cellsize);
 }
 
@@ -986,4 +986,3 @@ void VtxSceneTabs::setRate(){
 	TheScene->delt=rate;
 	TheScene->set_changed_render();
 }
-
