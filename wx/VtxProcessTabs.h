@@ -64,7 +64,7 @@ class VtxProcessTabs : public wxPanel
     void opContrast(float strength, bool gray);
     void opBrightness(float amount, bool gray);
     void opHydraulic(int iters, float strength);
-    void opDendritic(int seeds, float branchProb, float strength);
+    void opDendritic(float branchProb, float strength);
     void toGrayscale(); // collapse m_buf to R=G=B=luminance
 
 public:

@@ -295,7 +295,10 @@ void VtxProcessTabs::runOperation()
     case PROC_CONTRAST:  opContrast(str, gray);   break;
     case PROC_BRIGHTNESS:opBrightness(str, gray); break;
     case PROC_HYDRAULIC:  opHydraulic(iters, str);              break;
-    case PROC_DENDRITIC:  opDendritic(iters, (float)m_radius_slider->getValue()*0.05f, str); break;
+    case PROC_DENDRITIC:
+        for(int pass=0; pass<iters; pass++)
+            opDendritic((float)m_radius_slider->getValue()*0.05f, str);
+        break;
     default: return;
     }
     m_modified = true;
@@ -307,18 +310,13 @@ void VtxProcessTabs::Save()
 {
     if (!m_has_image) return;
     ensureProcessedDir();
-    wxString name = m_name.IsEmpty() ? wxString("processed") : m_name;
-    wxTextEntryDialog dlg(this, "Save as:", "Save Processed", name);
-    if (dlg.ShowModal() != wxID_OK) return;
-    name = dlg.GetValue();
-    if (name.IsEmpty()) return;
+    if (m_name.IsEmpty()) m_name = "processed";
     char dir[512]; FileUtil::getProcessedDir(dir);
-    wxString path = wxString(dir) + name + ".bmp";
+    wxString path = wxString(dir) + m_name + ".bmp";
     if (saveImage(path)) {
-        m_name = name;
         m_modified = false;
         makeFileList();
-        int idx = m_file_menu->FindString(name);
+        int idx = m_file_menu->FindString(m_name);
         if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
     } else {
         wxMessageBox("Save failed: "+path, "Process");
@@ -424,7 +422,10 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             case PROC_CONTRAST:  opContrast(str, false);   break;
             case PROC_BRIGHTNESS:opBrightness(str, false); break;
             case PROC_HYDRAULIC:  opHydraulic(iters, str);  break;
-            case PROC_DENDRITIC:  opDendritic(iters, (float)m_radius_slider->getValue()*0.05f, str); break;
+            case PROC_DENDRITIC:
+                for(int pass=0; pass<iters; pass++)
+                    opDendritic((float)m_radius_slider->getValue()*0.05f, str);
+                break;
             default: break;
             }
         }
@@ -462,7 +463,8 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
         m_radius_slider->setRange(1,10);  m_radius_slider->setValue(2);
         break;
     case PROC_DENDRITIC:
-        m_iters_slider->setRange(1,200);  m_iters_slider->setValue(1);
+        // Iterations = repeat count, Radius = channel width, Strength = carve depth
+        m_iters_slider->setRange(1,10);   m_iters_slider->setValue(2);
         m_radius_slider->setRange(1,20);  m_radius_slider->setValue(1);
         m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
         break;
@@ -596,7 +598,7 @@ void VtxProcessTabs::opHydraulic(int iters, float strength)
     for(int i=0;i<N;i++){m_buf[i*4+0]=m_buf[i*4+1]=m_buf[i*4+2]=h[i];}
 }
 
-void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
+void VtxProcessTabs::opDendritic(float branchProb, float strength)
 {
     // Flow accumulation approach: every pixel contributes flow downhill.
     // Pixels where many upstream pixels drain through become dark channels.
@@ -650,7 +652,7 @@ void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
     float max_flow = *std::max_element(flow.begin(), flow.end());
     if(max_flow < 2.0f) return;
 
-    float threshold  = (seeds / 1000.0f) * max_flow;
+    float threshold  = 0.001f * max_flow;  // fixed low threshold — show all channels
     float exponent   = 1.0f + branchProb * 20.0f;
     float max_radius = branchProb * 3.0f;  // max neighbour spread in pixels
 
