@@ -650,15 +650,71 @@ void VtxProcessTabs::opDendritic(int seeds, float branchProb, float strength)
     float max_flow = *std::max_element(flow.begin(), flow.end());
     if(max_flow < 2.0f) return;
 
-    float threshold = (seeds / 1000.0f) * max_flow;
-    float exponent  = 1.0f + branchProb * 20.0f;
+    float threshold  = (seeds / 1000.0f) * max_flow;
+    float exponent   = 1.0f + branchProb * 20.0f;
+    float max_radius = branchProb * 3.0f;  // max neighbour spread in pixels
 
+    // (1) Per-pixel carve depth. Threshold varied by gentle positional noise
+    //     (+-15%) to break the circular termination pattern.
+    // (2) Carve is capped so a channel can never go darker than its downstream
+    //     neighbour — tips naturally taper to the base terrain level.
+    std::vector<float> carve(N, 0.0f);
     for(int i = 0; i < N; i++){
-        if(flow[i] <= threshold) continue;
+        if(flow[i] <= 1.0f) continue;
+        int x = i % m_w, y = i / m_w;
+        float noise = 1.0f + 0.15f * sinf(x * 0.37f + y * 0.59f)
+                                   * cosf(x * 0.71f - y * 0.43f);
+        if(flow[i] <= threshold * noise) continue;
         float t = (flow[i] - threshold) / (max_flow - threshold);
         t = powf(t, 1.0f / exponent);
-        h[i] = std::max(0.0f, h[i] - t * strength);
+        // Channel floor: follow drain path to its sink (local minimum).
+        // Use the full elevation drop from this pixel to the sink,
+        // scaled by t so trunks carve deeper than tips.
+        // Limit iterations to avoid infinite loops on flat terrain.
+        int cur = i;
+        float floor_h = h[i];
+        for(int s = 0; s < N; s++){
+            if(drain[cur] < 0) break;
+            int nxt = drain[cur];
+            if(h[nxt] >= h[cur]) break;  // stop if not actually descending
+            cur = nxt;
+            floor_h = h[cur];
+        }
+        float drop = std::max(0.0f, h[i] - floor_h);
+        carve[i] = t * drop * strength;
     }
+
+    // (3)(4) Spread carve to neighbours — width proportional to sqrt(flow).
+    // Use max() accumulation so channels don't stack and over-darken.
+    std::vector<float> spread(N, 0.0f);
+    if(max_radius > 0.1f){
+        for(int y2 = 0; y2 < m_h; y2++){
+            for(int x2 = 0; x2 < m_w; x2++){
+                int idx = y2*m_w+x2;
+                if(carve[idx] < 1e-5f) continue;
+                float fn = (flow[idx] - threshold) / (max_flow - threshold);
+                float radius = max_radius * sqrtf(std::max(0.0f, fn));
+                int r = (int)ceilf(radius);
+                for(int dy2 = -r; dy2 <= r; dy2++){
+                    int ny2 = (y2+dy2+m_h)%m_h;
+                    for(int dx2 = -r; dx2 <= r; dx2++){
+                        int nx2 = (x2+dx2+m_w)%m_w;
+                        float d = sqrtf((float)(dx2*dx2+dy2*dy2));
+                        if(d > radius + 0.5f) continue;
+                        float falloff = (radius > 0.5f) ? (1.0f - d/(radius+1e-6f)) : 1.0f;
+                        float c = carve[idx] * std::max(0.0f, falloff);
+                        if(c > spread[ny2*m_w+nx2])
+                            spread[ny2*m_w+nx2] = c;
+                    }
+                }
+            }
+        }
+    } else {
+        spread = carve;
+    }
+
+    for(int i = 0; i < N; i++)
+        h[i] = std::max(0.0f, h[i] - spread[i]);
 
     for(int i = 0; i < N; i++)
         m_buf[i*4+0] = m_buf[i*4+1] = m_buf[i*4+2] = h[i];
