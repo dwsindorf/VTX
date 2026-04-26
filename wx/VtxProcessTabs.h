@@ -46,6 +46,10 @@ class VtxProcessTabs : public wxPanel
     int m_last_op;                  // op selection to restore when re-entering the tab
     int m_w, m_h;
     bool m_has_image;
+    double m_str;    // current strength slider value
+    double m_rad;    // current radius slider value
+    double m_iters;  // current iterations slider value
+    bool   m_gray;   // current grayscale checkbox value
     bool m_modified;
     wxString m_name;
 
@@ -56,15 +60,15 @@ class VtxProcessTabs : public wxPanel
     void displayBuffer();
     void ensureProcessedDir();
 
-    void opDilate(int r, bool gray);
-    void opErodeImg(int r, bool gray);
-    void opBlur(int r, bool gray);
-    void opSharpen(float strength, bool gray);
-    void opNormalize(bool gray);
-    void opContrast(float strength, bool gray);
-    void opBrightness(float amount, bool gray);
-    void opHydraulic(int iters, float strength);
-    void opDendritic(float branchProb, float strength);
+    void opDilate();
+    void opErodeImg();
+    void opBlur();
+    void opSharpen();
+    void opNormalize();
+    void opContrast();
+    void opBrightness();
+    void opHydraulic();
+    void opDendritic();
     void toGrayscale(); // collapse m_buf to R=G=B=luminance
 
 public:
