@@ -46,10 +46,10 @@ class VtxProcessTabs : public wxPanel
     int m_last_op;                  // op selection to restore when re-entering the tab
     int m_w, m_h;
     bool m_has_image;
-    double m_str;    // current strength slider value
-    double m_rad;    // current radius slider value
-    double m_iters;  // current iterations slider value
-    bool   m_gray;   // current grayscale checkbox value
+    double m_str;
+    double m_rad;
+    double m_iters;
+    bool   m_gray;
     bool m_modified;
     wxString m_name;
 

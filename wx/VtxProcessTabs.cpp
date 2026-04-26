@@ -277,17 +277,16 @@ void VtxProcessTabs::runOperation()
     if (!m_has_image) return;
     int   op    = m_op_menu->GetSelection();
     if (op == PROC_NONE) return;
-    // Store slider values in member vars so op functions read directly
     m_str   = m_strength_slider->getValue();
     m_rad   = m_radius_slider->getValue();
     m_iters = m_iters_slider->getValue();
     m_gray  = m_gray_check->GetValue();
-    m_prev_buf = m_buf;   // snapshot for single-step Revert
     m_last_op  = op;
     if (m_gray) {
         m_buf = m_orig;   // start from color original so toGrayscale has full data
         toGrayscale();
     }
+    m_prev_buf = m_buf;   // snapshot for Revert
     switch (op) {
     case PROC_DILATE:    opDilate();    break;
     case PROC_ERODE_IMG: opErodeImg();  break;
@@ -412,8 +411,7 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             m_str   = m_strength_slider->getValue();
             m_rad   = m_radius_slider->getValue();
             m_iters = m_iters_slider->getValue();
-            m_gray  = m_gray_check->GetValue();
-            m_gray = false;  // preview shows color
+            m_gray  = false;
             switch (op) {
             case PROC_BLUR:       opBlur();       break;
             case PROC_SHARPEN:    opSharpen();    break;
@@ -422,8 +420,8 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             case PROC_NORMALIZE:  opNormalize();  break;
             case PROC_CONTRAST:   opContrast();   break;
             case PROC_BRIGHTNESS: opBrightness(); break;
-            case PROC_HYDRAULIC:  opHydraulic();  break;
-            case PROC_DENDRITIC:  opDendritic();  break;
+    case PROC_HYDRAULIC: opHydraulic(); break;
+    case PROC_DENDRITIC: opDendritic(); break;
             default: break;
             }
         }
@@ -457,15 +455,15 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
     int op = m_op_menu->GetSelection();
     switch (op) {
     case PROC_HYDRAULIC:
-        // Iterations: higher=more channels (1=sparse, 100=dense)
-        m_iters_slider->setRange(1,100); m_iters_slider->setValue(10);
-        m_radius_slider->setRange(1,10);  m_radius_slider->setValue(2);
+        m_iters_slider->setRange(1,20);   m_iters_slider->setValue(10);
+        m_radius_slider->setRange(0,20);  m_radius_slider->setValue(3);
         break;
     case PROC_DENDRITIC:
-        // Iterations = repeat count, Radius = channel width, Strength = carve depth
         m_iters_slider->setRange(1,20);   m_iters_slider->setValue(10);
-        m_radius_slider->setRange(1,5);  m_radius_slider->setValue(1);
+        m_radius_slider->setRange(0,20);  m_radius_slider->setValue(3);
         m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
+        break;
+        // Iterations = repeat count, Radius = channel width, Strength = carve depth
         break;
     case PROC_CONTRAST: case PROC_BRIGHTNESS:
         m_strength_slider->setRange(-2.0,2.0); m_strength_slider->setValue(0.0);
@@ -491,7 +489,7 @@ void VtxProcessTabs::toGrayscale()
 
 void VtxProcessTabs::opDilate()
 {
-    int r = (int)m_rad; bool gray = m_gray;
+    int r=(int)m_rad; bool gray=m_gray;
     std::vector<float> out=m_buf;
     for (int y=0;y<m_h;y++) for (int x=0;x<m_w;x++) {
         float mx[4]={0,0,0,0};
@@ -508,7 +506,7 @@ void VtxProcessTabs::opDilate()
 
 void VtxProcessTabs::opErodeImg()
 {
-    int r = (int)m_rad; bool gray = m_gray;
+    int r=(int)m_rad; bool gray=m_gray;
     std::vector<float> out=m_buf;
     for (int y=0;y<m_h;y++) for (int x=0;x<m_w;x++) {
         float mn[4]={1,1,1,1};
@@ -525,7 +523,7 @@ void VtxProcessTabs::opErodeImg()
 
 void VtxProcessTabs::opBlur()
 {
-    int r = (int)m_rad; bool gray = m_gray;
+    int r=(int)m_rad; bool gray=m_gray;
     int ksize=2*r+1; std::vector<float> k(ksize); float sigma=r/2.0f+0.5f,sum=0;
     for(int i=0;i<ksize;i++){float x=i-r;k[i]=expf(-x*x/(2*sigma*sigma));sum+=k[i];}
     for(auto &v:k) v/=sum;
@@ -544,11 +542,9 @@ void VtxProcessTabs::opBlur()
 
 void VtxProcessTabs::opSharpen()
 {
-    float strength = (float)m_str; bool gray = m_gray;
+    float strength=(float)m_str; bool gray=m_gray;
     std::vector<float> orig=m_buf;
-    double saved_rad = m_rad; m_rad = 2;  // sharpen uses fixed blur radius
-    opBlur();
-    m_rad = saved_rad;
+    { double sv=m_rad; m_rad=2; opBlur(); m_rad=sv; }
     std::vector<float> blur=m_buf; m_buf=orig;
     int nch=gray?3:4;
     for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){
@@ -558,7 +554,7 @@ void VtxProcessTabs::opSharpen()
 
 void VtxProcessTabs::opNormalize()
 {
-    bool gray = m_gray;
+    bool gray=m_gray;
     int nch=gray?3:4; float mn=1e9f,mx=-1e9f;
     for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){mn=std::min(mn,m_buf[i*4+c]);mx=std::max(mx,m_buf[i*4+c]);}
     float range=mx-mn; if(range<1e-6f) return;
@@ -567,7 +563,7 @@ void VtxProcessTabs::opNormalize()
 
 void VtxProcessTabs::opContrast()
 {
-    float strength = (float)m_str; bool gray = m_gray;
+    float strength=(float)m_str; bool gray=m_gray;
     float factor=(strength>=0)?1.0f+strength:1.0f/(1.0f-strength);
     int nch=gray?3:4;
     for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++){
@@ -577,7 +573,7 @@ void VtxProcessTabs::opContrast()
 
 void VtxProcessTabs::opBrightness()
 {
-    float amount = (float)m_str; bool gray = m_gray;
+    float amount=(float)m_str; bool gray=m_gray;
     int nch=gray?3:4;
     for(int i=0;i<m_w*m_h;i++) for(int c=0;c<nch;c++)
         m_buf[i*4+c]=std::max(0.0f,std::min(1.0f,m_buf[i*4+c]+amount));
@@ -585,7 +581,7 @@ void VtxProcessTabs::opBrightness()
 
 void VtxProcessTabs::opHydraulic()
 {
-    int iters = (int)m_iters; float strength = (float)m_str;
+    int iters=(int)m_iters; float strength=(float)m_str;
     int N=m_w*m_h; std::vector<float> h(N),sed(N,0.0f);
     for(int i=0;i<N;i++) h[i]=0.299f*m_buf[i*4+0]+0.587f*m_buf[i*4+1]+0.114f*m_buf[i*4+2];
     const float Kr=0.01f*strength,Kd=0.005f*strength,Ke=0.5f;
@@ -610,10 +606,8 @@ void VtxProcessTabs::opHydraulic()
 
 void VtxProcessTabs::opDendritic()
 {
-    float strength   = (float)m_str;
     float branchProb = (float)m_rad * 0.05f;
-    // m_iters controls channel density: higher=more channels
-    // thr_mult: iters=1->0.1, iters=10->0.01, iters=100->0.001
+    float strength   = (float)m_str;
     float thr_mult   = 0.02f / (float)m_iters;
     // Flow accumulation approach: every pixel contributes flow downhill.
     // Pixels where many upstream pixels drain through become dark channels.
@@ -667,9 +661,9 @@ void VtxProcessTabs::opDendritic()
     float max_flow = *std::max_element(flow.begin(), flow.end());
     if(max_flow < 2.0f) return;
 
-    float threshold  = thr_mult * max_flow;
-    float exponent   = 1.0f + branchProb * 20.0f;
-    float max_radius = branchProb * 3.0f;  // max neighbour spread in pixels
+    float threshold  = thr_mult * max_flow;  // — show all channels
+    float exponent   = 2.0f;  // t^(1/2)=sqrt suppresses tips slightly
+    float max_radius = (float)m_rad;  // slider directly = max px width
 
     // (1) Per-pixel carve depth. Threshold varied by gentle positional noise
     //     (+-15%) to break the circular termination pattern.
