@@ -452,7 +452,7 @@ void VtxImageDialog::UpdateControls(){
 	case TYPE_PROCESS:
 		m_revert->Enable(m_process_tabs->canRevert());
 		m_save->Enable(m_process_tabs->canSave());
-		m_delete->Enable(false);
+		m_delete->Enable(m_process_tabs->canDelete());
 		break;
 	}
 	Refresh();

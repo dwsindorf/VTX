@@ -306,25 +306,41 @@ void VtxProcessTabs::runOperation()
 
 void VtxProcessTabs::Save()
 {
-    if (!m_has_image) return;
+    if (!m_has_image)
+    	return;
     ensureProcessedDir();
-    if (m_name.IsEmpty()) m_name = "processed";
-    char dir[512]; FileUtil::getProcessedDir(dir);
+    if (m_name.IsEmpty())
+    	m_name = "processed";
+    char dir[512];
+    FileUtil::getProcessedDir(dir);
     wxString path = wxString(dir) + m_name + ".bmp";
     if (saveImage(path)) {
         m_modified = false;
         makeFileList();
         int idx = m_file_menu->FindString(m_name);
         if (idx != wxNOT_FOUND) m_file_menu->SetSelection(idx);
+    	images.invalidate();
+    	images.makeImagelist();
+
     } else {
         wxMessageBox("Save failed: "+path, "Process");
     }
 }
 
+bool VtxProcessTabs::canDelete()  {
+    char dir[512];
+    FileUtil::getProcessedDir(dir);
+    wxString base = wxString(dir) + m_name;
+    if(wxFileExists(base+".bmp"))
+    	return true;
+    return false;
+}
+
 void VtxProcessTabs::Delete()
 {
     if(m_name.IsEmpty()) return;
-    char dir[512]; FileUtil::getProcessedDir(dir);
+    char dir[512];
+    FileUtil::getProcessedDir(dir);
     wxString base = wxString(dir) + m_name;
     if(wxFileExists(base+".bmp")) wxRemoveFile(base+".bmp");
     if(wxFileExists(base+".jpg")) wxRemoveFile(base+".jpg");
@@ -335,6 +351,9 @@ void VtxProcessTabs::Delete()
     m_orig.clear();
     m_prev_buf.clear();
     updateControls();
+	images.invalidate();
+	images.makeImagelist();
+
 }
 
 void VtxProcessTabs::Revert()
@@ -420,8 +439,8 @@ void VtxProcessTabs::OnGrayCheck(wxCommandEvent &event)
             case PROC_NORMALIZE:  opNormalize();  break;
             case PROC_CONTRAST:   opContrast();   break;
             case PROC_BRIGHTNESS: opBrightness(); break;
-    case PROC_HYDRAULIC: opHydraulic(); break;
-    case PROC_DENDRITIC: opDendritic(); break;
+			case PROC_HYDRAULIC:  opHydraulic(); break;
+			case PROC_DENDRITIC:  opDendritic(); break;
             default: break;
             }
         }
@@ -463,11 +482,14 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
         m_radius_slider->setRange(0,20);  m_radius_slider->setValue(3);
         m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
         break;
-        // Iterations = repeat count, Radius = channel width, Strength = carve depth
+    case PROC_CONTRAST:
+    case PROC_BRIGHTNESS:
+        m_strength_slider->setRange(-1.0,1.0); m_strength_slider->setValue(0.0);
         break;
-    case PROC_CONTRAST: case PROC_BRIGHTNESS:
-        m_strength_slider->setRange(-2.0,2.0); m_strength_slider->setValue(0.0);
-        break;
+    case PROC_BLUR:
+    	m_strength_slider->setRange(0.0,1.0); m_strength_slider->setValue(0.5);
+    	m_radius_slider->setRange(1,3);      m_radius_slider->setValue(1);
+    	break;
     default:
         m_radius_slider->setRange(1,20);      m_radius_slider->setValue(3);
         m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
@@ -581,27 +603,135 @@ void VtxProcessTabs::opBrightness()
 
 void VtxProcessTabs::opHydraulic()
 {
-    int iters=(int)m_iters; float strength=(float)m_str;
-    int N=m_w*m_h; std::vector<float> h(N),sed(N,0.0f);
-    for(int i=0;i<N;i++) h[i]=0.299f*m_buf[i*4+0]+0.587f*m_buf[i*4+1]+0.114f*m_buf[i*4+2];
-    const float Kr=0.01f*strength,Kd=0.005f*strength,Ke=0.5f;
-    std::vector<float> dh(N);
-    for(int iter=0;iter<iters;iter++){
-        std::fill(dh.begin(),dh.end(),0.0f);
-        for(int y=1;y<m_h-1;y++) for(int x=1;x<m_w-1;x++){
-            int idx=y*m_w+x; float hc=h[idx];
-            int nbrs[4]={idx-m_w,idx+m_w,idx-1,idx+1};
-            float max_diff=0; int lowest=-1;
-            for(int n:nbrs){float d=hc-h[n];if(d>max_diff){max_diff=d;lowest=n;}}
-            if(lowest<0) continue;
-            float cap=Ke*max_diff,carry=sed[idx];
-            if(carry<cap){float amt=Kr*(cap-carry);dh[idx]-=amt;sed[idx]+=amt;}
-            else{float amt=Kd*(carry-cap);dh[lowest]+=amt;sed[idx]-=amt;}
-            dh[idx]-=0.5f*max_diff; dh[lowest]+=0.5f*max_diff*0.99f;
+    // Water-layer hydraulic erosion.
+    //
+    // Three arrays over the heightfield:
+    //   h[i]   terrain height  (what gets carved, written back to m_buf)
+    //   w[i]   water depth     (drives flow; does not modify terrain directly)
+    //   s[i]   suspended sediment in the water
+    //
+    // Each iteration:
+    //   1. Rain      — add a uniform water film to every cell
+    //   2. Flow      — water moves toward the lowest (h+w) neighbour;
+    //                  flow volume is proportional to the surface-height
+    //                  difference so steep slopes move more water
+    //   3. Erosion   — fast-moving water (large flow) picks up terrain
+    //   4. Deposition— when sediment load exceeds carrying capacity,
+    //                  the excess drops out back onto the terrain
+    //   5. Evaporation — shrink water slightly each iteration so it
+    //                  doesn't flood and drown the signal
+    //
+    // Parameters mapped from UI sliders:
+    //   m_str   (Strength 0..1) — erosion / deposition rate scale
+    //   m_rad   (Radius   0..1) — rain rate (more water → more flow → deeper carve)
+    //   m_iters (Iters  1..200) — number of simulation steps
+
+    const int   W      = m_w, H = m_h, N = W * H;
+    const int   iters  = (int)m_iters;
+    const float Kr     = 0.015f * (float)m_str;   // erosion rate
+    const float Kd     = 0.010f * (float)m_str;   // deposition rate
+    const float Kc     = 80.0f;                   // carrying-capacity scale (slope^2 * Kc = cap)
+    const float rain   = 0.004f * (float)m_rad;   // water added per cell per iter
+    const float Ke     = 0.02f;                   // evaporation fraction per iter
+    const float Kf     = 0.5f;                    // flow fraction (0.5 = half the gradient)
+
+    // Initialise terrain from luminance
+    std::vector<float> h(N), w(N, 0.0f), s(N, 0.0f);
+    for(int i = 0; i < N; i++)
+        h[i] = 0.299f*m_buf[i*4+0] + 0.587f*m_buf[i*4+1] + 0.114f*m_buf[i*4+2];
+
+    // 4-neighbour offsets
+    const int dx[4] = { 0, 0,-1, 1};
+    const int dy[4] = {-1, 1, 0, 0};
+
+    std::vector<float> dw(N), ds(N), dh(N);
+
+    for(int iter = 0; iter < iters; iter++){
+
+        // 1. Rain
+        for(int i = 0; i < N; i++) w[i] += rain;
+
+        // 2–4. Flow, erosion, deposition — accumulate deltas then apply
+        std::fill(dw.begin(), dw.end(), 0.0f);
+        std::fill(ds.begin(), ds.end(), 0.0f);
+        std::fill(dh.begin(), dh.end(), 0.0f);
+
+        for(int y = 0; y < H; y++){
+            for(int x = 0; x < W; x++){
+                int idx = y*W + x;
+                float surf = h[idx] + w[idx];   // water surface height
+
+                // Find lowest neighbour by total surface height
+                float best_drop = 0.0f;
+                int   best_n    = -1;
+                for(int d = 0; d < 4; d++){
+                    int nx = x + dx[d], ny = y + dy[d];
+                    if(nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                    float drop = surf - (h[ny*W+nx] + w[ny*W+nx]);
+                    if(drop > best_drop){ best_drop = drop; best_n = ny*W+nx; }
+                }
+                if(best_n < 0) continue;
+
+                // 2. Flow: move water proportional to surface-height drop (h+w).
+                // Water finds its own path over lips and through pools.
+                float flow = std::min(w[idx], Kf * best_drop);
+                if(flow <= 0.0f) continue;
+
+                // Sediment carried with the water (proportional share)
+                float sed_carry = (w[idx] > 0.0f) ? s[idx] * (flow / w[idx]) : 0.0f;
+
+                dw[idx]    -= flow;
+                dw[best_n] += flow;
+                ds[idx]    -= sed_carry;
+                ds[best_n] += sed_carry;
+
+                // 3. Erosion: carrying capacity driven by terrain slope alone,
+                // not water surface drop. Deep water on flat ground should
+                // deposit, not erode; steep terrain should erode regardless
+                // of water depth.
+                // Squared slope gives a nonlinear response: gentle slopes
+                // deposit aggressively, steep slopes erode aggressively.
+                // This sharpens channel edges and produces clearer
+                // flat-floor / steep-wall differentiation.
+                float terrain_drop = std::max(0.0f, h[idx] - h[best_n]);
+                float capacity = Kc * terrain_drop * terrain_drop;
+                float current  = s[idx] - sed_carry;  // sediment staying here
+                if(current < capacity){
+                    float erode = Kr * (capacity - current);
+                    erode = std::min(erode, h[idx]);   // can't erode below 0
+                    dh[idx] -= erode;
+                    ds[idx] += erode;
+                } else {
+                    // 4. Deposition: dump excess sediment back onto terrain
+                    float deposit = Kd * (current - capacity);
+                    dh[idx] += deposit;
+                    ds[idx] -= deposit;
+                }
+            }
         }
-        for(int i=0;i<N;i++) h[i]=std::max(0.0f,std::min(1.0f,h[i]+dh[i]));
+
+        // Apply deltas
+        for(int i = 0; i < N; i++){
+            h[i] = std::max(0.0f, std::min(1.0f, h[i] + dh[i]));
+            w[i] = std::max(0.0f, w[i] + dw[i]);
+            s[i] = std::max(0.0f, s[i] + ds[i]);
+        }
+
+        // 5. Evaporation — deposit remaining sediment as water dries up
+        for(int i = 0; i < N; i++){
+            float evap = Ke * w[i];
+            // Sediment that was dissolved in evaporated water drops out
+            float deposit = (w[i] > 0.0f) ? s[i] * (evap / w[i]) : 0.0f;
+            w[i] -= evap;
+            s[i] -= deposit;
+            h[i]  = std::max(0.0f, std::min(1.0f, h[i] + deposit));
+            s[i]  = std::max(0.0f, s[i]);
+        }
     }
-    for(int i=0;i<N;i++){m_buf[i*4+0]=m_buf[i*4+1]=m_buf[i*4+2]=h[i];}
+
+    // Write result back as greyscale
+    for(int i = 0; i < N; i++)
+        m_buf[i*4+0] = m_buf[i*4+1] = m_buf[i*4+2] = h[i];
 }
 
 void VtxProcessTabs::opDendritic()

@@ -345,15 +345,23 @@ void TNerode::eval()
         else
             t_cliff = -(level - base) / edge;
 
-        double env = 0.0;
-        if (t_cliff > -0.5 && t_cliff < 1.5) {
-            double tc = (t_cliff + 0.5) / 2.0;
-            const double lo = 0.175;
-            double u = (tc <= lo)
-                ? tc / lo
-                : 1.0 - (tc - lo) / (1.0 - lo);
-            u = u < 0.0 ? 0.0 : u > 1.0 ? 1.0 : u;
-            env = u * u * (3.0 - 2.0 * u);
+        // env gates drainage to the cliff transition zone in terrain mode.
+        // In image mode there is no cliff spatial context, so allow drainage
+        // everywhere (env = 1.0).
+        double env;
+        if (images.building()) {
+            env = 1.0;
+        } else {
+            env = 0.0;
+            if (t_cliff > -0.5 && t_cliff < 1.5) {
+                double tc = (t_cliff + 0.5) / 2.0;
+                const double lo = 0.175;
+                double u = (tc <= lo)
+                    ? tc / lo
+                    : 1.0 - (tc - lo) / (1.0 - lo);
+                u = u < 0.0 ? 0.0 : u > 1.0 ? 1.0 : u;
+                env = u * u * (3.0 - 2.0 * u);
+            }
         }
 
         double tn = Theta / 360.0;
@@ -420,7 +428,13 @@ void TNerode::eval()
 }
 
 //-------------------------------------------------------------
-// TNerode::buildImage() TODO: add realistic erosion
+// TNerode::buildImage()
+//
+// eval() already handles images.building() inline:
+//   - pn uses full [0,1] Phi mapping instead of spherical aspect ratio
+//   - output is clamped to [0,1] and written to S0.s
+// So we just delegate to eval() here.
 //-------------------------------------------------------------
 void TNerode::buildImage(){
+    eval();
 }
