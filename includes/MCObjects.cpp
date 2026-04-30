@@ -820,13 +820,9 @@ void MCObjNode::adapt(SurfaceFunction field,
         Point toObj  = (MCObjAdaptFlags::rockOrigin - cameraPos).normalize();
         double camSign = (camFwd.dot(toObj) >= 0.0) ? -1.0 : 1.0;
         double dotVal=fabs(camFwd.dot(toCell));
-        //double dotVal=camSign*camFwd.dot(toCell);
         double dpFactor=6;       // larger fails faster - fewer triangles but more large cells 
-        //dotVal*=fabs(dotVal);  // fails even faster - more large cells 
         double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
         culled = (dotVal < thresh);  
-        if(cnt%10000==0)
-         	cout<<"camSign:"<<camSign<<" dotVal:"<<camFwd.dot(toCell)<<endl;
 
         if (culled) {
             effectiveMinPixels *= cullFactor;
