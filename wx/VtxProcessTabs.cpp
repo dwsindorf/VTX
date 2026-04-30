@@ -266,6 +266,7 @@ void VtxProcessTabs::loadFromPath(const wxString &path, const wxString &name)
         if (fabsf(r - g) > 1.0f/255.0f || fabsf(r - b) > 1.0f/255.0f)
             is_gray = false;
     }
+    m_color=!is_gray;
     m_gray_check->SetValue(is_gray);
     m_gray_check->Enable(!is_gray);
 
@@ -282,7 +283,7 @@ void VtxProcessTabs::runOperation()
     m_iters = m_iters_slider->getValue();
     m_gray  = m_gray_check->GetValue();
     m_last_op  = op;
-    if (m_gray) {
+    if (m_color && m_gray) {
         m_buf = m_orig;   // start from color original so toGrayscale has full data
         toGrayscale();
     }
@@ -478,9 +479,9 @@ void VtxProcessTabs::OnOpSelect(wxCommandEvent &event)
         m_radius_slider->setRange(0,20);  m_radius_slider->setValue(3);
         break;
     case PROC_DENDRITIC:
-        m_iters_slider->setRange(1,20);   m_iters_slider->setValue(10);
-        m_radius_slider->setRange(0,20);  m_radius_slider->setValue(3);
-        m_strength_slider->setRange(0.0,2.0); m_strength_slider->setValue(1.0);
+        m_iters_slider->setRange(1,100);   m_iters_slider->setValue(50);
+        m_radius_slider->setRange(1,20);  m_radius_slider->setValue(10);
+        m_strength_slider->setRange(0.0,4.0); m_strength_slider->setValue(2.0);
         break;
     case PROC_CONTRAST:
     case PROC_BRIGHTNESS:

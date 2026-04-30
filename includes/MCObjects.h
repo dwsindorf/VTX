@@ -56,6 +56,7 @@ public:
     static int csi_by_depth[32];
     static int csi_cull_by_depth[32];
     static double csi_minCellSize;
+    static double minDistance;
     double maxdepth;
 
     struct OctreeCell {

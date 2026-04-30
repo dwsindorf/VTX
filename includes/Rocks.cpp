@@ -33,7 +33,7 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
+//#define PRINT_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
@@ -803,8 +803,6 @@ void Rock3DObjMgr::clear(){
         pair.second.clear();
     }
     adaptiveBatches.clear();
-    MCGenerator::frame_field_calls = 0;
-    MCGenerator::cells_created=MCGenerator::cells_deleted=0;
 }
 void Rock3DObjMgr::calibrate(){
 	for(int i=0;i<objs.size;i++){
@@ -907,8 +905,9 @@ void Rock3DObjMgr::render() {
             pair.second.instanceVBO.instanceCount = 0;
         }
         Point xpoint = TheScene->xpoint;
-         
-        MCObjAdaptFlags flags = MCObjAdaptFlags::rock();
+
+        MCObjAdaptFlags flags=MCObjAdaptFlags(true,true,true,false);
+
         Point up,right, forward;
         up=xpoint.normalize();
         if (fabs(up.z) < 0.9)
@@ -1141,8 +1140,8 @@ void Rock3DObjMgr::render() {
         double total = (clock() - d0) * TS;
         cout << " Compute Batches T["<<lodBatches.size()<<"]:"<< (t1+t3) * TS << " A["<<adaptiveBatches.size()<<"]:"<<t4 * TS<< " Upload:"<<t2 * TS <<  " Total:" << total << " ms"
                 << endl;
-        MCGenerator::printStats();
 #endif
+        MCGenerator::printStats();
     }
     render_objects();  
 }

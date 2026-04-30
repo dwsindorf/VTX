@@ -6,6 +6,7 @@
 #include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
+#define PRINT_STATS
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -47,6 +48,7 @@ int MCGenerator::tm_field_calls=0; // templates
 int MCGenerator::ad_field_calls=0; // adaptive
 int MCGenerator::gm_field_calls=0; // mesh both
 int MCGenerator::frame_field_calls=0;  // reset each frame
+double MCGenerator::minDistance=1000;
 
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
@@ -214,18 +216,18 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 
 void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
-	// Reset stats before subdivideOctree
 	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
     tm_field_calls=ad_field_calls = gm_field_calls =0;
-
+    minDistance=1e6;
+    frame_field_calls = 0;
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 	memset(csi_cull_by_depth, 0, sizeof(csi_cull_by_depth));  // ← ensure this is present
 
 }
 void MCGenerator::printStats(){
-	int total_cells=cells+leaf_cells;
-	if(total_cells==0)
-		return;
+#ifndef PRINT_STATS
+	return;
+#endif
 
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
@@ -234,12 +236,12 @@ void MCGenerator::printStats(){
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
-	for (int d = 0; d <= 10; d++)
+	for (int d = 0; d <= 12; d++)
 		if (csi_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_by_depth[d] << " ";
 	cout << endl;
 	cout << " CULL: by depth ";
-	for (int d = 0; d <= 10; d++)
+	for (int d = 0; d <= 12; d++)
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
@@ -250,8 +252,11 @@ void MCGenerator::printStats(){
 	else	
 	    cout<< " Field calls:"<<ad_field_calls/1000;
 	cout<<" mesh:"<<gm_field_calls/1000<<" K"<<endl;
+	if(minDistance>MILES)
+		cout<<" minDistance:"<<minDistance/MILES<<" miles"<<endl;
+	else
+		cout<<" minDistance:"<<minDistance/FEET<<" feet"<<endl;
 }
-// Add these method implementations:
 
 //=============================================================================
 // MCObject implementation
@@ -772,10 +777,10 @@ void MCObjNode::adapt(SurfaceFunction field,
                       double minPixels, int maxDepth, const MCObjAdaptFlags& flags)
 {
     MCGenerator::csi_adapt_calls++;
-
-    
      // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
+    if(isLeaf())
+    MCGenerator::minDistance=std::min(distance,MCGenerator::minDistance);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
     
@@ -812,15 +817,16 @@ void MCObjNode::adapt(SurfaceFunction field,
 						  + MCObjAdaptFlags::rockForward * offset.y
 						  + MCObjAdaptFlags::rockUp      * offset.z;
 		Point toCell = (TheView->xpoint-worldCenter).normalize();
-                      
-        double dotVal=camFwd.dot(toCell);
+        Point toObj  = (MCObjAdaptFlags::rockOrigin - cameraPos).normalize();
+        double camSign = (camFwd.dot(toObj) >= 0.0) ? -1.0 : 1.0;
+        double dotVal=fabs(camFwd.dot(toCell));
+        //double dotVal=camSign*camFwd.dot(toCell);
         double dpFactor=6;       // larger fails faster - fewer triangles but more large cells 
         //dotVal*=fabs(dotVal);  // fails even faster - more large cells 
         double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
         culled = (dotVal < thresh);  
-        
-        //if(culled && thresh<0.2)
-       //  cout<<"depth:"<<depth<<" dotVal:"<<dotVal<<" projected:"<<projectedSize<<" thresh:"<<thresh<<endl;
+        if(cnt%10000==0)
+         	cout<<"camSign:"<<camSign<<" dotVal:"<<camFwd.dot(toCell)<<endl;
 
         if (culled) {
             effectiveMinPixels *= cullFactor;

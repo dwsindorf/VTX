@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-//#define PRINT_STATS
+#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2002,11 +2002,12 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=10;
+	maxDepth=12;
 	cliptest=true;
 	backtest=true;
 	shadow_mode=false;
 	shadow_start=false;
+	minHeight=size;
 	
 }
 //-------------------------------------------------------------
@@ -2173,6 +2174,17 @@ int Asteroid::render_pass()
 }
 
 //-------------------------------------------------------------
+// Asteroid::selection_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::selection_pass()
+{
+	clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FG0);
+    return selected();
+}
+
+//-------------------------------------------------------------
 // Asteroid::render_pass() select for shadow pass
 //-------------------------------------------------------------
 int Asteroid::shadow_pass(){
@@ -2187,7 +2199,7 @@ double Asteroid::far_height() {
 }
 
 double Asteroid::max_height() {
-    return 2*hscale;  // factor in noise 
+    return 2*hscale;  // factor in noise
 }
 double Asteroid::height(double t, double p) {
      return size;
@@ -2207,7 +2219,8 @@ int Asteroid::scale(double& znear, double& zfar) {
     zf=d+size*(1+max_height());
     
     double ht=TheScene->radius-size;
-    
+    double mht=std::min(ht,minHeight);
+    //TheScene->height=mht;
     TheScene->height=ht;
     TheScene->elevation=TheScene->radius-size;
     
@@ -2383,10 +2396,8 @@ void Asteroid::adapt_object(){
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
     tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     TheNoise.rseed=seed;
-    
-#ifdef PRINT_STATS        
+    minHeight=MCGenerator::minDistance;
     MCGenerator::printStats();
-#endif
     if(!changed)
     	MCGenerator::resetStats();
     vboDirty = true;
@@ -2730,7 +2741,7 @@ SurfaceFunction Asteroid::makeField() {
          	TheNoise.set(np);
             SINIT;
             rnoise->eval();
-            double value=S0.s * noiseScale + noiseOffset;
+            double value=S0.s * noiseScale/comp_factor + noiseOffset;
             baseEllipsoid += value;
             MCGenerator::ad_field_calls++;
         }

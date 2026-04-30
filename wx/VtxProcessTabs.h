@@ -50,6 +50,7 @@ class VtxProcessTabs : public wxPanel
     double m_rad;
     double m_iters;
     bool   m_gray;
+    bool   m_color;
     bool m_modified;
     wxString m_name;
 

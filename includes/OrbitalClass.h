@@ -436,6 +436,7 @@ public:
 	bool backtest;
 	bool shadow_mode;
 	bool shadow_start;
+	double minHeight;
 	Asteroid(Orbital *m, double s, double r);
 	~Asteroid();
 	const char *name()			{ return "Asteroid";}
@@ -451,6 +452,7 @@ public:
 	double height(double t, double p);
 	int render_pass();
 	int adapt_pass();
+	int selection_pass();
 	int getRNoiseFunction(char *c);
 	void setRNoiseFunction(char *c);
 	int getVNoiseFunction(char *c);
