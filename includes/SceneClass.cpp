@@ -2148,7 +2148,7 @@ void Scene::select()
 	// for orbitals will be id of ObjectNode* in Raster.idtbl
 	int id=(int)select_pass();
 	focusobj=(ObjectNode*)Raster.get_data(id);
-
+    cout<<"Scene::select() "<<id<<" obj:"<<focusobj<<endl;
 	if(focusobj){
 	    if(focusobj==viewobj){
 			bgpass=FG0;
@@ -2181,9 +2181,8 @@ void Scene::select()
 		set_select_mode();
 		id=(int)select_pass();
 		obj=(ObjectNode*)Raster.get_data(id);
-		if(obj){
+		if(obj)
 			selm=focusobj->get_focus(obj);
-		}
 		else
 			focusobj=0;
 	}
@@ -2223,7 +2222,7 @@ void *Scene::select_pass()
 
 	int rsave=Render.mode();
 	Render.show_zvals();
-
+    //cout<<"Scene::select_pass()"<<endl;
 	objects->visit(&Object3D::select);
 	Render.set_mode(rsave);
 
@@ -2238,7 +2237,7 @@ void *Scene::select_pass()
 			obj=(void*)hit[3];
 		}
 	}
-	//cout << "hits="<<n<<" obj:"<<obj<<endl;
+	cout << "hits="<<n<<" obj:"<<obj<<endl;
     return obj;
 }
 

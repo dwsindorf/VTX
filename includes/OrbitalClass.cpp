@@ -1,4 +1,4 @@
- // OrbitalClass.cpp
+// OrbitalClass.cpp
 #include "SceneClass.h"
 #include "RenderOptions.h"
 #include "Effects.h"
@@ -1314,7 +1314,7 @@ void Galaxy::setStarTexture(int id,char *name){
  	sprintf(dir,"%s/Resources/Sprites/Stars/%s",base,name);
 
 	Image *image = images.open(name,dir);
-	
+
 	if (!image)
 		return;
 	height = image->height;
@@ -1496,7 +1496,7 @@ void Galaxy::addNewSystem()
 	int ssave=lastn;
 	fixed_rands=true;
 	System::galaxy_origin=TheScene->selm;
-	
+
 	cout<<"New System"<<endl;
 
 	System  *system=System::newInstance();
@@ -1508,7 +1508,7 @@ void Galaxy::addNewSystem()
     TheScene->rebuild_all();
     rebuild_scene_tree();
     select_tree_node(system);
-    
+
     TheScene->focusobj=system;
     system->init_view();
     lastn=ssave;
@@ -1857,7 +1857,7 @@ double System::adjustOrbits(){
 		return 0;
 	double year=0;
 	double phase=0;
-	
+
 	Star *star;
 	Object3D *child;
 
@@ -1943,7 +1943,7 @@ System *System::newInstance(){
 	setCenterText(" New System");
 
 	System  *system=TheScene->getPrototype(0,TN_SYSTEM);
-    
+
 	system->origin=galaxy_origin;
 
 	system->set_system(system->origin);
@@ -1955,7 +1955,7 @@ System *System::newInstance(){
 	int planets=system->m_planets;
 	building_system=true;
 	for(int i=0;i<stars;i++){
-		Star *star=Star::newInstance();	
+		Star *star=Star::newInstance();
 		if(stars==1)
 			star->orbit_radius=0;
 		lastn++;
@@ -1968,7 +1968,7 @@ System *System::newInstance(){
 		Planet::planet_cnt=i+1;
 		Planet *planet=TheScene->getPrototype(0,ID_PLANET);
 		planet->setRands();
-		
+
 		planet->orbit_radius=1.3*(Planetoid::planet_orbit+20+50*r[4]);
 		planet->orbit_distance=planet->orbit_radius;
 
@@ -1996,7 +1996,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	vnoise=nullptr;
 	color=nullptr;
 	tree=nullptr;
-	hscale=0.5; 
+	hscale=0.5;
 	symmetry=1;
 	vboDirty=true;
 	uploadedVertexCount=0;
@@ -2008,7 +2008,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
-	
+
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2063,8 +2063,8 @@ int Asteroid::getVNoiseFunction(char *buff){
 	if(var){
 		TNode *expr=var->getExprNode();
 		if(!expr)
-			expr=var->right;		
-		expr->valueString(buff);		
+			expr=var->right;
+		expr->valueString(buff);
 		return 1;
 	}
 	else
@@ -2093,7 +2093,7 @@ void Asteroid::init(){
 		rnoise=var->right;
 	else
 		setRNoiseFunction("noise(GRADIENT|NLOD,0,2)");
-	
+
 	var=exprs.getVar((char*)"vertex.expr");
 	if(var)
 		vnoise=var->right;
@@ -2107,17 +2107,17 @@ void Asteroid::init(){
 	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
 	tree=0;
-	rebuildTree();	
+	rebuildTree();
 }
 
 //-------------------------------------------------------------
 // Asteroid::init_view() reset to orbital view
 //-------------------------------------------------------------
-void Asteroid::init_view(){   
+void Asteroid::init_view(){
     // Set up view parameters for orbital view
     TheScene->maxr = size * 10;
     TheScene->minr = size;
-    
+
     TheScene->maxht = 0;
     TheScene->zoom = size;
     TheScene->minh = size * 0.001;
@@ -2126,12 +2126,12 @@ void Asteroid::init_view(){
 
 	if(TheScene->changed_file())  // exit for open
 	   return;
-  
+
     TheScene->gndlvl = 0;
-    
+
     TheScene->phi=0;
     TheScene->theta=0;
-    
+
     TheScene->radius=4*size;
     TheScene->elevation=TheScene->radius-size;
     TheScene->height=TheScene->radius;
@@ -2143,7 +2143,7 @@ void Asteroid::init_view(){
 void Asteroid::set_lighting(){
     Orbital::set_lighting();
     Lights.setAttenuation(point);
-    
+
     Lights.setShininess(shine);
 	Lights.mixSpecular(specular);
 
@@ -2178,9 +2178,15 @@ int Asteroid::render_pass()
 //-------------------------------------------------------------
 int Asteroid::selection_pass()
 {
-	clr_selected();
-    if(TheScene->viewobj==this)
-        select_pass(FG0);
+    clr_selected();
+//    if(TheScene->viewobj==this)
+//        select_pass(FG0);
+    if(TheScene->viewobj==this){
+        if(TheScene->select_node())
+        	clear_pass(FG0);
+        else
+            clear_pass(BG1);
+    }
     return selected();
 }
 
@@ -2217,16 +2223,16 @@ int Asteroid::scale(double& znear, double& zfar) {
     	zn=MINZN;
     }
     zf=d+size*(1+max_height());
-    
+
     double ht=TheScene->radius-size;
     double mht=std::min(ht,minHeight);
     //TheScene->height=mht;
     TheScene->height=ht;
     TheScene->elevation=TheScene->radius-size;
-    
+
     znear=zn;
     zfar=zf;
-    setvis(OUTSIDE); 
+    setvis(OUTSIDE);
     return OUTSIDE;  // Render as outside object
 }
 
@@ -2242,8 +2248,8 @@ bool Asteroid::setProgram(){
     char defs[1024] = "";
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
-    
-    if(Raster.shadows() && !TheScene->light_view() && !TheScene->test_view())        
+
+    if(Raster.shadows() && !TheScene->light_view() && !TheScene->test_view())
     	sprintf(defs+strlen(defs), "#define SHADOWS\n");
 
     GLSLMgr::setDefString(defs);
@@ -2305,7 +2311,7 @@ bool Asteroid::setProgram(){
             char str[64];
 			sprintf(str, "tex2d[%d].instance", i);
 			GLint loc = glGetUniformLocationARB(program, str);
-			if(loc >= 0) glUniform1iARB(loc, 0);			
+			if(loc >= 0) glUniform1iARB(loc, 0);
 			sprintf(str, "tex2d[%d].active", i);
 			loc = glGetUniformLocationARB(program, str);
 			if(loc >= 0) glUniform1iARB(loc, 0);
@@ -2314,10 +2320,10 @@ bool Asteroid::setProgram(){
 
         }
     }
-    
+
     // === Set uniforms ===
     GLSLVarMgr vars;
-        
+
     vars.newFloatVec("Diffuse",
         diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
     vars.newFloatVec("Ambient",
@@ -2328,9 +2334,9 @@ bool Asteroid::setProgram(){
         shadow_color.red(), shadow_color.green(), shadow_color.blue(),
 		shadow_color.alpha());
     float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
-    
+
     vars.newFloatVar("wscale",           wscale);
-    
+
     vars.newFloatVar("textureScale",     (float)(size));
     vars.newBoolVar("lighting",          Render.lighting());
 
@@ -2364,12 +2370,12 @@ void Asteroid::adapt_object(){
     }
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-         
+
     if(changed){
         rebuildTree();
         vboDirty = true;
     }
- 
+
     if (shadow_mode && !shadow_start) {
        moved = false;
        changed = false;
@@ -2392,7 +2398,7 @@ void Asteroid::adapt_object(){
 
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
-      
+
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
     tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     TheNoise.rseed=seed;
@@ -2411,10 +2417,10 @@ void Asteroid::render_object(){
 	extern int test7;
     if(!tree || !tree->root)
         return;
- 
-    if(vboDirty) 
+
+    if(vboDirty)
     	buildVBO();
- 
+
     Hscale = hscale;
     Rscale = size * hscale;
     Gscale = 1.0 / Rscale;
@@ -2428,20 +2434,20 @@ void Asteroid::render_object(){
 	}
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-    
+
     if(test7)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
+
 	if(Render.lighting())
 		glEnable(GL_LIGHTING);
 	else
 		glDisable(GL_LIGHTING);
-    
+
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     //glEnable(GL_CULL_FACE);
-    
+
     if (Raster.do_shaders) {
     	Raster.shadow_value = shadow_color.alpha();
     	Raster.shadow_color = shadow_color;
@@ -2452,10 +2458,10 @@ void Asteroid::render_object(){
 		setProgram();
 	} else {
 		glDisable(GL_BLEND);
-		glUseProgram(0); 
+		glUseProgram(0);
 	}
-     
-    drawVBO();    
+
+    drawVBO();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glPopAttrib();
 }
@@ -2469,13 +2475,166 @@ Bounds *Asteroid::bounds(){
     return &asteroid_bounds;
 }
 
+//-------------------------------------------------------------
+// Asteroid::select()
+// Register this asteroid in the GL selection buffer so it can
+// be picked by mouse click, then also handle the FG (surface)
+// selection pass.  For object-level picking we just draw the
+// VBO; per-surface picking is done via raycast in set_focus().
+//-------------------------------------------------------------
+void Asteroid::select()
+{
+    if (!isEnabled()) return;
+    set_ref();
+
+    if (/*TheScene->select_object() &&*/ vboVertices && uploadedVertexCount > 0) {
+    	TheScene->pushMatrix();
+
+		set_tilt();
+		set_rotation();
+		setMatrix();
+    	int id = Raster.set_id();
+        Raster.set_data((MapNode*)this);
+        glLoadName(id);
+
+        MapNode *test=Raster.get_data(id);
+
+        cout<<"Asteroid::select() id:"<<test<<" pass:"<<TheScene->bgpass<<endl;
+
+        // GL_SELECT is incompatible with GLSL shaders -- the selection
+        // mechanism only works with the fixed-function pipeline.
+        // Disable any active shader program before drawing.
+        glUseProgram(0);
+
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_1D);
+        glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(GLVertex),
+                        (void*)offsetof(GLVertex, pos));
+        glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glPopAttrib();
+        TheScene->popMatrix();
+    }
+
+    //Orbital::select(); // select children
+}
+
+
+//-------------------------------------------------------------
+// Asteroid::get_focus()
+// Returns the asteroid's world position as the focus point.
+// selm is stored in TheScene and passed to set_focus() each frame.
+//-------------------------------------------------------------
+Point Asteroid::get_focus(void *v)
+{
+    // Called once when user clicks. Do the raycast here and return
+    // the world-space hit point as selm. set_focus() reprojects it each frame.
+    if (!tree || !tree->root)
+        return point;
+
+    double scale = 2.0 * size;
+    Point  cam_w = TheScene->xpoint;
+
+    double sx = TheScene->selp.x;
+    double sy = TheView->viewport[3] - TheScene->selp.y;
+    Point near_w = TheScene->unProject(Point(sx, sy, 0.0));
+    Point far_w  = TheScene->unProject(Point(sx, sy, 1.0));
+    Point near_mc = (near_w + cam_w) / scale;
+    Point far_mc  = (far_w  + cam_w) / scale;
+    Point local_org = near_mc;
+    Point local_dir = (far_mc - near_mc).normalize();
+
+    Point hit_local;
+    if (tree->raycast(local_org, local_dir, hit_local))
+        return hit_local * scale;  // world-space hit point
+    return point;  // fallback: asteroid center
+}
+
+//-------------------------------------------------------------
+// Asteroid::set_focus()
+// Called each frame while this object is selected.  Ray-casts
+// the screen-click against the MC mesh, draws a crosshair at
+// the hit point, and displays straight-line distance.
+//-------------------------------------------------------------
+void Asteroid::set_focus(Point &selm)
+{
+    // selm is the world-space hit point set by get_focus().
+    // Reproject it each frame so crosshair tracks the surface as camera moves.
+    if (selm.length() < 1e-10) {
+        Object3D::set_focus(selm);
+        return;
+    }
+
+    GLboolean lflag;
+    glGetBooleanv(GL_LIGHTING, &lflag);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+
+    // selm is the world-space hit from get_focus(), reprojected each frame.
+    Point  cam_w   = TheScene->xpoint;
+    Point  hit_world = selm;
+
+    // Distance string
+    double d = hit_world.distance(cam_w);
+    const char *units = "miles";
+    double dval = d / MILES;
+    if (d < 4.0 * MILES) { dval = d / FEET; units = "ft"; }
+    TheScene->set_istring("dist %5.1f %s", dval, units);
+
+    // Project hit to screen using ModelViewProjMatrix (same matrix that
+    // InvModelViewProjMatrix inverts -- so if unProject works, this should too).
+    Point hit_gl = hit_world - cam_w;
+    GLdouble hv[4] = {hit_gl.x, hit_gl.y, hit_gl.z, 1.0};
+    GLdouble cv[4];
+    mvmul4(hv, TheScene->ModelViewProjMatrix.values(), cv);
+    double wz = 1.0 / cv[3];
+    double vx = 0.5 * TheView->viewport[2] * (cv[0]*wz + 1.0);
+    double vy = 0.5 * TheView->viewport[3] * (cv[1]*wz + 1.0);
+
+    double arm = 8.0;
+
+    // Draw crosshair as 2D overlay at computed screen position
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, TheView->viewport[2], 0, TheView->viewport[3], -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glLineWidth(2.0f);
+    glColor3d(1, 1, 1);
+    glBegin(GL_LINES);
+    glVertex2d(vx,       vy - arm);
+    glVertex2d(vx,       vy + arm);
+    glVertex2d(vx - arm, vy);
+    glVertex2d(vx + arm, vy);
+    glEnd();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glLineWidth(1.0f);
+    glFlush();
+    if (lflag == GL_TRUE)
+        glEnable(GL_LIGHTING);
+}
+
 void Asteroid::render_zvals(){
 	if(Raster.shadow_vcnt==0){
 		shadow_start=true;
 	}
 
 	shadow_mode=true;
-   
+
     Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
     Raster.setProgram(Raster.PLACE_SHADOWS);
 
@@ -2491,7 +2650,7 @@ void Asteroid::render_zvals(){
 	glDisable(GL_FOG);
 
     drawVBO();
-    
+
 	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
 
 	glPopAttrib();
@@ -2524,13 +2683,13 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
     bool setVertexColor = (color && color->isEnabled());
     bool doDisplace = vnoise;
     if(!setVertexColor  && !doDisplace) return;
-    
+
     for(auto& tri : mesh){
         for(int v=0; v<3; v++){
         	Point np(tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
             TheNoise.set(np);
             if(doDisplace){
-				SINIT;				
+				SINIT;
 				vnoise->eval();
 				Point dir = tri.vertices[v].normalize();
 				if(S0.pvalid()){
@@ -2560,11 +2719,11 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
 void Asteroid::buildVBO(){
     std::vector<MCObjNode*> leaves;
     tree->collectLeaves(leaves);
-    
+
     glVertices.clear();
     Point eyeCenter = this->point - TheScene->xpoint;
     double scale = 2*size;
-    Point eyeOffset = TheScene->xpoint;   
+    Point eyeOffset = TheScene->xpoint;
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
     // Smooth normals across all leaves — computed once per VBO build
@@ -2581,7 +2740,7 @@ void Asteroid::buildVBO(){
 					tri.normal = tmp.mesh[idx++].normal;
 		}
 	}
-    
+
     for(MCObjNode* leaf : leaves){
         if(!leaf->meshValid || leaf->mesh.empty()) continue;
         if(!leaf->attributesApplied){
@@ -2592,7 +2751,7 @@ void Asteroid::buildVBO(){
            Point n = tri.normal;
            for(int v=0; v<3; v++){
                 GLVertex gv;
-                Point p = tri.vertices[v] * scale - eyeOffset;  // match working path                
+                Point p = tri.vertices[v] * scale - eyeOffset;  // match working path
                 gv.pos[0]=(float)p.x;
                 gv.pos[1]=(float)p.y;
                 gv.pos[2]=(float)p.z;
@@ -2616,11 +2775,11 @@ void Asteroid::buildVBO(){
         }
     }
     TheNoise.rseed = seed;
-    
+
     // Upload to GPU
     if(vboVertices) glDeleteBuffers(1,&vboVertices);
     if(glVertices.empty()){ vboVertices=0; uploadedVertexCount=0; return; }
-    
+
     glGenBuffers(1,&vboVertices);
     glBindBuffer(GL_ARRAY_BUFFER,vboVertices);
     glBufferData(GL_ARRAY_BUFFER,
@@ -2638,7 +2797,7 @@ void Asteroid::buildVBO(){
 //-------------------------------------------------------------
 void Asteroid::drawVBO(){
     if(!vboVertices || uploadedVertexCount==0) return;
- 
+
     glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
 
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -2678,43 +2837,43 @@ void Asteroid::drawVBO(){
 //-------------------------------------------------------------
 void Asteroid::calibrateNoise(){
     if(!rnoise) return;
-    
+
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
     noiseScale = 1.0;
     noiseOffset = 0.0;
-    
+
     SurfaceFunction rawField = makeField();
-    
+
     double minDev=1e10, maxDev=-1e10;
     int samples=20;
     double step = 2.0/samples;  // sample over [-1,1] like rocks
-    
+
     for(int ix=0; ix<=samples; ix++)
     for(int iy=0; iy<=samples; iy++)
     for(int iz=0; iz<=samples; iz++){
         double x = -1.0 + ix*step;
         double y = -1.0 + iy*step;
         double z = -1.0 + iz*step;
-        
+
         // Base ellipsoid — same formula as makeField
         double ex=2*x, ey=2*y, ez=2*z;
         double baseVal = sqrt(ex*ex+ey*ey+ez*ez) - 1.0;
-        
+
         double fieldVal = rawField(x, y, z);
         double deviation = fieldVal - baseVal;
         minDev = std::min(minDev, deviation);
         maxDev = std::max(maxDev, deviation);
     }
-    
+
     double range = maxDev - minDev;
     if(range > 1e-10){
         noiseScale  = 2.0 * hscale / range;
         noiseOffset = -hscale - minDev * noiseScale;
     }
     TheNoise.rseed = seed;
-//#define SHOW_CALIBRATE   
-#ifdef SHOW_CALIBRATE   
+//#define SHOW_CALIBRATE
+#ifdef SHOW_CALIBRATE
     cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
          << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
 #endif
@@ -2727,15 +2886,15 @@ SurfaceFunction Asteroid::makeField() {
     double comp = 1-symmetry;
     double comp_factor = std::max((1.0 - comp), 0.2);
     bool useNoisyIsoSurface = this->hscale > 0;
- 
+
     return [=](double x, double y, double z) -> double {
         double ex = 2*x;
         double ey = 2*(y/comp_factor);
         double ez = 2*(z/comp_factor);
         double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
         double baseEllipsoid = ellipsoidDist - 1.0;
-        
-        if (useNoisyIsoSurface && rnoise && rnoise->isEnabled()) {  
+
+        if (useNoisyIsoSurface && rnoise && rnoise->isEnabled()) {
         	static int cnt=0;
         	Point np(2*x, 2*y, 2*z);  // match rock coordinate range [-1,1]
          	TheNoise.set(np);
@@ -2888,7 +3047,7 @@ void Spheroid::move_focus(Point &selm)
 //-------------------------------------------------------------
 void Spheroid::set_focus(Point &selm)
 {
-    if(TheScene->viewobj !=this){
+     if(TheScene->viewobj !=this){
        Object3D::set_focus(selm);
        return;
     }
@@ -3563,7 +3722,7 @@ Color Star::star_color[Star::ntypes]={
 		Color(0.8,0.8,1.000),  // A
 		Color(0.6,0.8,1.000),  // B
 		Color(0.5,0.7,1.000)}; // O
-#endif	
+#endif
 enum type{
 	ST_RED=0,ST_YELLOW=2,ST_WHITE=3, ST_BLUE=5
 };
@@ -3583,7 +3742,7 @@ double *Star::temps=0;
 // Star::make_temps_table()  generate a random instance
 //-------------------------------------------------------------
 // generate a table of star temperatures based on stellar frequency and luminocity data
-// The idea is that when picking a star from the background (brightest in select region) 
+// The idea is that when picking a star from the background (brightest in select region)
 // the star type will be a product of it's stellar frequency and relative brightness
 // (e.g. close in red stars, further out blue stars)
 //-------------------------------------------------------------
@@ -3591,7 +3750,7 @@ double *Star::temps=0;
 void Star::make_temps_table(){
 	num_temps=expand_factor;
 	MALLOC(num_temps,double,temps);
-	
+
 	MALLOC(ntypes,double,probability);
 	int index=0;
 	double sum=0;
@@ -3615,8 +3774,8 @@ void Star::make_temps_table(){
 		for(int j=0;j<m;j++){
 			double t=(1-f)*start_temp+f*end_temp;
 			temps[index++]=t;
-			f+=delta;			
-		}	
+			f+=delta;
+		}
 	}
 	// note: for some reason not all table entries at the end are getting filled
 	if(index<num_temps){
@@ -3634,7 +3793,7 @@ void Star::make_temps_table(){
 }
 
 //-------------------------------------------------------------
-// void Star::star_info(..) 
+// void Star::star_info(..)
 //-------------------------------------------------------------
 // return predicted temperature and type string based on radiance color
 //-------------------------------------------------------------
@@ -3669,7 +3828,7 @@ void Star::star_info(Color col, double *t, char *m){
 // double Star::star_size(double temp)
 //-------------------------------------------------------------
 // - star size from temperature
-// - approximate linear fit to data 
+// - approximate linear fit to data
 //-------------------------------------------------------------
 double Star::star_size(double temp){
 	static double sun_radius=0.4327; // in 10^6 miles
@@ -3707,7 +3866,7 @@ void Star::random(double &temp, double &radius, Color &color){
 		   c2=star_color[m];
 		   f=(temp-t1)/(t2-t1);
 		   break;
-	   }   
+	   }
    }
    Color c=c1.mix(c2,f);
    color=c;
@@ -3775,7 +3934,7 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 	temperature=0;
 	startype[0]=0;
 	if(temps==0){
-		make_temps_table();	
+		make_temps_table();
 	}
 }
 Star::~Star()
@@ -3862,7 +4021,7 @@ Star *Star::newInstance(int gtype){
 	star->temperature=t;
 	star->emission=c;
 	star->size=r;
-	
+
     star->children.ss();
 
     TNinode *img=image(c);
@@ -3884,7 +4043,7 @@ Star *Star::newInstance(int gtype){
 	halo->color2=c;
 	halo->gradient=0.8;
 	halo->density=0.9;
-	
+
 	Corona *outer=star->children++;
 	outer->size = pow(1 + r, 2);
 	outer->ht = outer->size - r;
@@ -4022,7 +4181,7 @@ void Star::map_color(MapData* d,Color &c)
 // Star::setProgram() set shader program;
 //-------------------------------------------------------------
 bool Star::setProgram(){
-	
+
 	pushSeed();
 	char frag_shader[128]="star.frag";
 	char vert_shader[128]="star.vert";
@@ -4047,7 +4206,7 @@ bool Star::setProgram(){
 	p=p.mm(TheScene->viewMatrix);
 	vars.newFloatVec("center",p.x,p.y,p.z);
 	vars.newFloatVar("rseed",TheNoise.rseed);
-	
+
 	if(TheScene->inside_sky()||Raster.do_shaders)
 		GLSLMgr::setFBOReadWritePass();
 	else
@@ -4116,7 +4275,7 @@ void Star::render() {
 //-------------------------------------------------------------
 void Star::render_object()
 {
-	
+
  	first=1;
  	pushSeed();
 	show_render_state(this);
@@ -4148,7 +4307,7 @@ int Star::render_pass()
     if(!local_group() || offscreen() || !isEnabled())
 		return 0;
     if(TheScene->viewobj==this)
-		clear_pass(FG0);		
+		clear_pass(FG0);
 	else if(local_group())
 		clear_pass(BG3);
 	//else
@@ -4165,7 +4324,7 @@ Planetoid::Planetoid(Orbital *m, double s, double r) :
 	ocean=0;
 
 	ocean_level=0;
-	
+
 	ocean_state=def_ocean_state;
 	ocean_auto=false;
 	terrain_type=GN_ROCKY;
@@ -4222,7 +4381,7 @@ void Planetoid::setOceanExpr(char *expr){
 }
 
 void Planetoid::setOceanExpr(){
-  if(water()) { 
+  if(water()) {
 	  TNvar *var=exprs.getVar((char*)"ocean.expr");
 	  if(!var)
 		  getOceanExpr();
@@ -4230,11 +4389,11 @@ void Planetoid::setOceanExpr(){
 	  	var->setExpr(ocean->getOceanExpr());
 	 	var->applyExpr();
 	  }
-  } else 
+  } else
 	  exprs.hide_var("ocean.expr");
 }
 
-void Planetoid::getOceanExpr(){		
+void Planetoid::getOceanExpr(){
 	TNvar *var=exprs.getVar((char*)"ocean.expr");
 	if(!var){
 		var=addExprVar("ocean.expr",ocean->getOceanExpr());
@@ -4271,14 +4430,14 @@ void Planetoid::get_ocean_vars()
 
 //	if(exprs.get_local("water.level",Td))
 //		ocean_level=Td.s;
-//	else 
+//	else
 	if(exprs.get_local("ocean.level",Td))
 		ocean_level=Td.s;
 	else
 		ocean_level=0;
 	VGET("ocean.state",ocean_state,def_ocean_state);
 	VGET("ocean.auto",ocean_auto,def_ocean_auto);
-	
+
 	MNGET("ocean.name",name_str);
 	MVGET("ocean.rseed",rseed);
 
@@ -4286,7 +4445,7 @@ void Planetoid::get_ocean_vars()
 	MVGET("ocean.liquid",liquid->temp);
 	MVGET("ocean.solid.trans",solid->trans_temp);
 	MVGET("ocean.liquid.trans",liquid->trans_temp);
-	
+
 	MCGET("water.color1",liquid->color1);
 	MCGET("water.color2",liquid->color2);
 	MDGET("water.clarity",liquid->clarity,FEET);
@@ -4310,7 +4469,7 @@ void Planetoid::get_ocean_vars()
 	MVGET("ocean.solid.albedo",solid->specular);
 	MVGET("ocean.solid.shine",solid->shine);
 	MVGET("ocean.solid.volatility",solid->volatility);
-		
+
 }
 #define MCSET(name,value) exprs.set_var(name,ocean->value,water()&& (ODEF->value != ocean->value))
 #define MVSET(name,value) exprs.set_var(name,ocean->value,water() && (ODEF->value != ocean->value))
@@ -4322,9 +4481,9 @@ void Planetoid::get_ocean_vars()
 #define WUSET(name,value,u) { ts=exprs.set_var(name,ocean->value,0); ts->units=u;}
 
 void Planetoid::set_ocean_vars(){
-	
-	setOceanExpr();	
-	
+
+	setOceanExpr();
+
 	WCSET("water.color1",liquid->color1);
 	WCSET("water.color2",liquid->color2);
 	WVSET("water.clarity",liquid->clarity);
@@ -4338,9 +4497,9 @@ void Planetoid::set_ocean_vars(){
 	VSET("ocean.state",ocean_state,def_ocean_state);
 	VSET("ocean.auto",ocean_auto,def_ocean_auto);
 	USET("ocean.level",ocean_level,0,"ft");
-	
+
 	MVSET("ocean.rseed",rseed);
-		
+
 	MVSET("ocean.solid",solid->temp);
 	MVSET("ocean.liquid",liquid->temp);
 	MVSET("ocean.solid.trans",solid->trans_temp);
@@ -4353,7 +4512,7 @@ void Planetoid::set_ocean_vars(){
 	MVSET("ocean.liquid.shine",liquid->shine);
 	MVSET("ocean.liquid.volatility",liquid->volatility);
 	MUSET("ocean.liquid.clarity",liquid->clarity*FEET,"ft");
-	
+
     MCSET("ocean.solid.color1",solid->color1);
     MCSET("ocean.solid.color2",solid->color2);
 	MUSET("ocean.solid.clarity",solid->clarity*FEET,"ft");
@@ -4376,7 +4535,7 @@ void Planetoid::get_vars()
 	VGET("season.factor",season_factor,def_season_factor);
 	VGET("temp.factor",temp_factor,def_temp_factor);
 	VGET("season.enable",seasonal,true);
-	
+
 	VGET("fog.value",fog_value,def_fog_value);
 	VGET("fog.glow",fog_glow,def_fog_glow);
 	if(exprs.get_local("fog.color",Td)){
@@ -4400,7 +4559,7 @@ void Planetoid::set_vars()
 	checkForOcean();
 
 	set_ocean_vars();
-	
+
 	VSET("season.factor",season_factor,def_season_factor);
 	VSET("temp.factor",temp_factor,def_temp_factor);
 	VSET("season.enable",seasonal,true);
@@ -4413,7 +4572,7 @@ void Planetoid::set_vars()
 	USET("fog.max",fog_max,def_fog_max,"ft");
 	USET("fog.vmin",fog_vmin,def_fog_vmin,"ft");
 	USET("fog.vmax",fog_vmax,def_fog_vmax,"ft");
-	
+
 }
 //-------------------------------------------------------------
 // Planetoid::setProgram() set shader program;
@@ -4501,7 +4660,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("fog_znear",fog_min);
 	vars.newFloatVar("fog_zfar",fog_max);
 	vars.newFloatVar("rseed",rseed);
-	
+
 	double glow=TheScene->viewobj==this?1:2;
 	vars.newFloatVar("glow",glow);
 
@@ -4538,10 +4697,10 @@ bool Planetoid::setProgram(){
 		vars.newFloatVec("IceColor1",c.red(),c.green(),c.blue(),c.alpha());
 		c=ocean->solid->color2;
 		vars.newFloatVec("IceColor2",c.red(),c.green(),c.blue(),c.alpha());
-	
+
 		vars.newFloatVar("ice_clarity",ocean->solid->clarity*FEET);
 		vars.newFloatVar("water_clarity",clarity*FEET);
-	
+
 		vars.newFloatVar("water_shine",ocean->liquid->shine);
 		vars.newFloatVar("ice_shine",ocean->solid->shine);
 		vars.newFloatVar("water_specular",ocean->liquid->specular);
@@ -4615,7 +4774,7 @@ int Planetoid::render_pass()
 		clear_pass(BG3);
 	if(selected() && map->visbumps() && Render.bumps())
 	    Raster.set_bumptexs(1);
-	
+
     return selected();
 }
 
@@ -4750,7 +4909,7 @@ void Planetoid::init_render()
 		    cl=cl.normalize();
 			double dpl=-cv.dot(cl);
 			dpmax=dpl>dpmax?dpl:dpmax;
-			dpmin=dpl<dpmin?dpl:dpmin;	
+			dpmin=dpl<dpmin?dpl:dpmin;
 		}
 		if(dpmin<=0 && dpmax<=0)
 			dp=dpmax;
@@ -4764,7 +4923,7 @@ void Planetoid::init_render()
 			Raster.blend_factor=f;
 			Raster.darken_factor=def_twilite_value*f;
 		}
-	}	
+	}
 
  	glDisable(GL_FOG);
 
@@ -4821,17 +4980,17 @@ void Planetoid::adapt_object()
 	calcAveTemperature();
 	Tave=temperature;
 	Tsol=ocean->solid->temp;
-	Tgas=ocean->liquid->temp;	
-	
+	Tgas=ocean->liquid->temp;
+
 	double p=TheScene->phi;
 	Phi=TheScene->phi;
 	Theta=TheScene->theta;
 
 	debug_temp=DEBUG_TEMP;
 	double t=calcLocalTemperature(false);
-	
+
 	surface_temp=t;  // K
-	
+
     double dt=fabs(last_temp-surface_temp);
     setDateString();
 	if(seasonal && water() && dt>1){
@@ -4854,7 +5013,7 @@ void Planetoid::adapt_object()
 		Raster.water_color1=ocean->liquid->color1;
 		Raster.water_color2=ocean->liquid->color2;
 		Raster.water_clarity=Td.clarity;
-	
+
 		Raster.ice_color1=ocean->solid->color1;
 		Raster.ice_color2=ocean->solid->color2;
 		Raster.ice_clarity=ocean->solid->clarity*FEET;
@@ -4876,7 +5035,7 @@ void Planetoid::render_object()
 	Raster.init_lights(1);
 	show_render_state(this);
 	Temp=surface_temp;
-	
+
     if(TheScene->bgpass==BG4){
 		map->set_mask(1);
 		Color c=Raster.blend_color;
@@ -4921,7 +5080,7 @@ void Planetoid::set_surface(TerrainData &data)
 		}
 		else{
 			data.ocean=ocean_state==SOLID?2:1;
-		}			
+		}
 	}
 	else{
 		data.ocean=0;
@@ -5114,7 +5273,7 @@ void Planetoid::calcAveTemperature() {
 		return;
 	}
 	Orbital *obj;
-	
+
 	heat_factor = 0;
 	children.ss();
 	Sky *sky = (Sky*) getChild(ID_SKY);
@@ -5125,7 +5284,7 @@ void Planetoid::calcAveTemperature() {
 	//g = 0.4 * pow(g, 0.25);
 	char str[1024];
 	str[0]=0;
-	
+
 	double radius=orbit_radius;
 	if(typeValue()==ID_MOON)
 		radius=((Orbital*)getParent())->orbit_radius;
@@ -5134,7 +5293,7 @@ void Planetoid::calcAveTemperature() {
 	temperature = 0;
 	double Tp=0;
 	double Tg=0;
-	
+
 	while ((obj = (Orbital*) System::TheSystem->children++)) {
 		if (obj->type() == ID_STAR) {
 			double d = radius-((Star*)obj)->size;//point.distance(obj->point);// - obj->size - size;
@@ -5199,7 +5358,7 @@ double Planetoid::calcLocalTemperature(bool w){
 	Temp=t;
 	if(w && ocean->ocean_expr){
 		f=ocean->evalOceanFunction();
-		double gf=t > ocean->liquid->temp?liquidToGas(t):1;		
+		double gf=t > ocean->liquid->temp?liquidToGas(t):1;
 		t+=gf*f;
 	}
 	if(debug_temp>1){
@@ -5221,10 +5380,10 @@ double Planetoid::calcLocalTemperature(bool w){
 	return t;
 }
 
-void Planetoid::checkForOcean(){	
+void Planetoid::checkForOcean(){
 	have_water=terrain.hasChild(ID_WATER);
 }
-bool Planetoid::water(){	
+bool Planetoid::water(){
 	return have_water;
 }
 //-------------------------------------------------------------
@@ -5263,7 +5422,7 @@ double Planetoid::oceanState(){
 	double trans;
 	if(Temp<ocean->liquid->temp){
 		trans=ocean->solid->temp+ocean->solid->trans_temp;
-		ds=smoothstep(ocean->solid->temp,trans,Temp,1.0,0)+1;		
+		ds=smoothstep(ocean->solid->temp,trans,Temp,1.0,0)+1;
 	}
 	else{
 		trans=ocean->liquid->temp+ocean->liquid->trans_temp;
@@ -5404,9 +5563,9 @@ void Planetoid::makeLists(){
 			icy_list.add(is);
 		else if(name[0]=='G')
 			gassy_list.add(is);
-		else if(name[0]=='P')	
+		else if(name[0]=='P')
 			rocky_list.add(is);
-		else if(name[0]=='E')	
+		else if(name[0]=='E')
 			erode_list.add(is);
 	}
 	list.reset();
@@ -5566,7 +5725,7 @@ void Planet::newInstance(int gtype){
 			newInstance(GN_VOLCANIC);
 		else
 			newInstance(GN_CRATERED);
-		return;		
+		return;
 	case GN_GASSY:
 		makeLists();
 		planet_id=planet_cnt+lastn;
@@ -5584,7 +5743,7 @@ void Planet::newInstance(int gtype){
 		newRocky(this,gtype);
 		break;
 	}
-	
+
 	symmetry=1;
 	set_geometry();
 	//setProtoValid(true);
@@ -5647,10 +5806,10 @@ enum orbital_features{
 #define DESSERT_THEME     Color(0.9,0.8,0.7),Color(0.9,0.82,0.68),Color(0.62,0.52,0.44),Color(1,0.9,0.64)
 #define DRK_BROWN_THEME   Color(0,0,0),Color(0.675,0.4,0.1),Color(1,0.875,0.275),Color(0.4,0.251,0.1)
 #define LGT_BROWN_THEME   Color(0,0,0),Color(1,0.529,0),Color(1,0.863,0.635),Color(0.655,0.471,0.024)
-#define GRAY_THEME        Color(0,0,0),Color(0.1,0.1,0.1),Color(0.5,0.5,0.5),Color(1,1,1)    
-#define BLUE_THEME        Color(0.0,0.0,0.0),Color(0.012,0.384,0.422),Color(0.769,0.937,0.976),Color(1,1,1)    
-#define RED_THEME         Color(0.5,0.3,0.09),Color(1,0.89,0.49),Color(0.302,0.078,0.078),Color(0.202,0.02,0.02)    
-#define GREEN_THEME       Color(0,0,0),Color(0.2,0.3,0.2),Color(0.5,0.7,0.6),Color(0.7,0.8,0.5)    
+#define GRAY_THEME        Color(0,0,0),Color(0.1,0.1,0.1),Color(0.5,0.5,0.5),Color(1,1,1)
+#define BLUE_THEME        Color(0.0,0.0,0.0),Color(0.012,0.384,0.422),Color(0.769,0.937,0.976),Color(1,1,1)
+#define RED_THEME         Color(0.5,0.3,0.09),Color(1,0.89,0.49),Color(0.302,0.078,0.078),Color(0.202,0.02,0.02)
+#define GREEN_THEME       Color(0,0,0),Color(0.2,0.3,0.2),Color(0.5,0.7,0.6),Color(0.7,0.8,0.5)
 Color Planetoid::themes[THEMES*4]={
 		DESSERT_THEME,
 		DRK_BROWN_THEME,
@@ -5705,7 +5864,7 @@ void Planetoid::setColors(){
 			tc.set_blue(tc.blue()+0.01*s[i+2]);
 			tc=tc.darken(0.2*r[i+3]);
 			tc=tc.lighten(0.2*r[i+4]);
-			colors[i]=tc;		
+			colors[i]=tc;
 		}
 		cout<<"THEME "<<index<<endl;
 	}
@@ -5723,7 +5882,7 @@ void Planetoid::setColors(){
 		case GN_OCEANIC:
 			if(r[8]>=0.50){
 				hue=0.2+0.1*s[3];
-				mix=Color(0.0,0.0,0);			
+				mix=Color(0.0,0.0,0);
 			}
 			else{
 				hue=0.1+0.1*r[3];
@@ -5766,12 +5925,12 @@ void Planetoid::setColors(){
 		case GN_CRATERED:
 			hue=0.05+0.1*r[3];
 			sat=0.4+0.3*s[4];
-			val=0.4+0.3*s[5];			
+			val=0.4+0.3*s[5];
 			break;
 		case GN_ROCKY:
 			hue=0.05+0.1*r[3];
 			sat=0.4+0.3*s[4];
-			val=0.4+0.3*s[5];			
+			val=0.4+0.3*s[5];
 			break;
 		}
 #ifdef DEBUG_GENERATE
@@ -5832,10 +5991,10 @@ void Planetoid::setIceColors(){
 		tc.set_red(tc.red()+0.2*s[i]);
 		tc.set_green(tc.green()+0.2*s[i+1]);
 		tc.set_blue(tc.blue()+0.2*s[i+2]);
-		colors[i]=tc;		
+		colors[i]=tc;
 	}
 	//cout<<"setIceColors "<<endl;
-	
+
 }
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
@@ -5854,9 +6013,9 @@ std::string Planetoid::randFeature(int type) {
 	char buff[4096];
 	const char *linear=Nrocks?"|LINEAR":"";
 	const char *randtex=Nrocks?"|TRIPLANAR":"|RANDOMIZE";
-	
+
 	switch(type){
-	case RND_TEXNAME:			
+	case RND_TEXNAME:
 		str="\"";
 		if(TheScene->use_tmps==ALL_TMPS){
 			if(planetoid->terrain_type==GN_ICY)
@@ -5864,7 +6023,7 @@ std::string Planetoid::randFeature(int type) {
 			else if(planetoid->terrain_type==GN_GASSY)
 				str+=getGassyTexName();
 			else
-				str+=getRockyTexName();								
+				str+=getRockyTexName();
 		}
 		else{
 			if(planetoid->terrain_type==GN_ICY)
@@ -5872,7 +6031,7 @@ std::string Planetoid::randFeature(int type) {
 			else if(planetoid->terrain_type==GN_GASSY)
 				str+="G";
 			else
-				str+="P";					
+				str+="P";
 			str+=std::to_string(planet_id);
 		}
 		str+="\"";
@@ -6038,7 +6197,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_HRIDGES:
 		str="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4)";
-		break;	
+		break;
 	case RND_HROCKS:
 		str+="pow(";
 		str+="noise("+randFeature(RND_NOISEFUNC3)+"|NABS|NLOD|SCALE|SQR|UNS,0,4.2,0.41,0.41,2.8,1,0.4,0,0.5)*";
@@ -6114,7 +6273,7 @@ std::string Planetoid::randFeature(int type) {
 		randFeature(RND_TEXNAME).c_str(), // image name
 		randFeature(RND_TEX_NOISE).c_str(), // noise
 		tcount>0?"-":"",
-		randFeature(RND_LAYER_VAR).c_str(),	// +- n	
+		randFeature(RND_LAYER_VAR).c_str(),	// +- n
 		//pow(2,8+2*s[0]),  // start
 		mr*r[7],       // offset
 		mr*(Lbias+0.01*s[8]),     // phi bias
@@ -6160,7 +6319,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=randFeature(RND_LTEXNAME);
 		str+=",BORDER|BUMP|NORM|RANDOMIZE";
 		if(Nrocks)
-			str+="|LINEAR";			
+			str+="|LINEAR";
 		str+=",4096,0.1,2,0,7,";
 		str+=std::to_string(2+0.5*r[1]);    // freq
 		str+=",0.4,0,0,";
@@ -6169,7 +6328,7 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(0.1*r[6]*tcount); // slope bias
 		str+=")\n";
 		//keep_rands=false;
-		break;	
+		break;
 	case RND_EMAP_IMAGE:
 		//keep_rands=true;
 		str="image(";
@@ -6180,7 +6339,7 @@ std::string Planetoid::randFeature(int type) {
 		else if(r[7]>0.1)
 			str+=randFeature(RND_HERODED);
 		else
-			str+=randFeature(RND_HVORONI);	
+			str+=randFeature(RND_HVORONI);
 		str+=");\n";
 		//keep_rands=false;
 		break;
@@ -6198,7 +6357,7 @@ std::string Planetoid::randFeature(int type) {
 		else if(r[7]>0.1)
 			str+=randFeature(RND_HERODED);
 		else
-			str+=randFeature(RND_HVORONI);	
+			str+=randFeature(RND_HVORONI);
 		str+=");\n";
 		keep_rands=false;
 		break;
@@ -6240,7 +6399,7 @@ std::string Planetoid::randFeature(int type) {
 		);
 		str=buff;
 		PRNT_FEATURE("SURFACE_TEX")
-		break;	
+		break;
 	case RND_HMAP_TEX:
 		keep_rands=true;
 		sprintf(buff,"Texture(%s,HMAP|LINEAR|S|RANDOMIZE,%s,%1.2f,%1.2f,0,0,%1.2f,%1.2f,%1.2f,0,%1.2f,%1.2f,0,0,0)",
@@ -6343,7 +6502,7 @@ static std::string newHmapTex(Planetoid *planet){
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_HMAP_IMAGE);
-		strcpy(buff,str.c_str());	
+		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
 		planet->add_image(himg);
@@ -6359,7 +6518,7 @@ static std::string newErodeTex(Planetoid *planet){
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
-		strcpy(buff,str.c_str());	
+		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
 		planet->add_image(himg);
@@ -6371,7 +6530,7 @@ static std::string newSurfaceTex(Planetoid *planet){
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
-		strcpy(buff,str.c_str());	
+		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
 		planet->add_image(himg);
@@ -6382,7 +6541,7 @@ static std::string newSurfaceTex(Planetoid *planet){
 static std::string newSurfaceBands(Planetoid *planet){
 	if(TheScene->use_tmps!=ALL_TMPS){
 		//planet->setColors();
-		char buff[2048];	
+		char buff[2048];
 		std::string str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
@@ -6401,7 +6560,7 @@ static std::string newDualGlobalTex(Planetoid *planet){
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
 		img->init();
-		planet->add_image(img);	
+		planet->add_image(img);
 	}
 	str=Planetoid::randFeature(RND_GLOBAL_DUAL_TEX);
 	Planetoid::popInstance(planet);
@@ -6409,7 +6568,7 @@ static std::string newDualGlobalTex(Planetoid *planet){
 }
 std::string newGlobalTex(Planetoid *planet){
 	if(TheScene->use_tmps!=ALL_TMPS){
-		char buff[2048];	
+		char buff[2048];
 		std::string str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
@@ -6420,7 +6579,7 @@ std::string newGlobalTex(Planetoid *planet){
 }
 
 static std::string newLocalTex(Planetoid *planet){
-	char buff[2048];	
+	char buff[2048];
 	Planetoid::pushInstance(planet);
 	std::string str;
 	if(TheScene->use_tmps!=ALL_TMPS){
@@ -6428,11 +6587,11 @@ static std::string newLocalTex(Planetoid *planet){
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
 		img->init();
-		planet->add_image(img);	
+		planet->add_image(img);
 	}
-	if(TheScene->use_tmps==NO_TMPS){	
+	if(TheScene->use_tmps==NO_TMPS){
 		str=Planetoid::randFeature(RND_LOCAL_IMAGE);
-		strcpy(buff,str.c_str());	
+		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
 		planet->add_image(himg);
@@ -6443,7 +6602,7 @@ static std::string newLocalTex(Planetoid *planet){
 }
 
 
-std::string Planetoid::newOcean(Planetoid *planet){	
+std::string Planetoid::newOcean(Planetoid *planet){
 	cout<<"new Ocean"<<endl;
 	double level=s[0]*FEET;
 	pushInstance(planet);
@@ -6454,7 +6613,7 @@ std::string Planetoid::newOcean(Planetoid *planet){
 
 	char buff[2045];
 	buff[0]=0;
-	
+
 	water->setNoiseExprs(state);
 	water->propertyString(buff);
 
@@ -6464,7 +6623,7 @@ std::string Planetoid::newOcean(Planetoid *planet){
 	//state->setOceanFunction((char*)randFeature(RND_OCEAN_EXPR).c_str());
 
 	popInstance(planet);
-	
+
 	return std::string(buff);
 }
 
@@ -6476,7 +6635,7 @@ static std::string rndSurfaceNoise(double f){
 		return Planetoid::randFeature(RND_SURFACE_GULLIES);
 	else if(f>0.25)
 		return Planetoid::randFeature(RND_SURFACE_DIMPLES);
-	else 
+	else
 		return Planetoid::randFeature(RND_SURFACE_PIMPLES);
 }
 
@@ -6530,7 +6689,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	case GN_SMALL:
 		size=1e-7;
 		Prob=0.1;
-		break;	
+		break;
 	}
 	double comp=0.1+0.1*s[7];
 	double drop=0.1-0.5*comp;
@@ -6541,7 +6700,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	Nscale=1;
 	if(type==TN_ROCKS && r[9]>0.75)
 		str+=rndTilted();
-	else		
+	else
 		str+=rndSurfaceNoise(r[10]);
 	str+=")[";
 	Nscale=pow(2,tex_1d_scale);
@@ -6551,7 +6710,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	str+=newSurfaceTex(planet);
 	str+="]";
 	Nrocks=false;
-	popInstance(planet);	
+	popInstance(planet);
 	cout<<str<<endl;
 
 	return str;
@@ -6567,11 +6726,11 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 		str+=newRocks(planet,GN_MED);
 	if(r[8]>0.5)
 		str+=newRocks(planet,GN_SMALL);
-	
+
 	Nscale=pow(2,16);
 	pushInstance(planet);
 	planet->setColors();
-    
+
 	str+=newSurfaceBands(planet);
 	str+="+";
 	str+=newSurfaceTex(planet);
@@ -6579,7 +6738,7 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 
 	Nscale=20;
 
-	str+="Z(";	
+	str+="Z(";
 	switch(planet->terrain_type){
 	case GN_VOLCANIC:
 		Ampl=1+r[13]; // ampl/rise/drop
@@ -6610,7 +6769,7 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 }
 
 std::string Planetoid::newGlobalDetail(Planetoid *planet){
-	std::string str="+Z(";	
+	std::string str="+Z(";
 	Prob=r[12]; // probability
 	Ampl=r[13]*size_scale; // ampl/rise/drop
 	Maxs=r[14]*size_scale; // max size
@@ -6657,7 +6816,7 @@ std::string Planetoid::newGlobalDetail(Planetoid *planet){
 	str+=randFeature(RND_CANYONS);
 	return str;
 }
-std::string Planetoid::newLayer(Planetoid *planet){	
+std::string Planetoid::newLayer(Planetoid *planet){
 	//cout<<"new Layer "<<layer_cnt<<endl;
 	std::string str;
 	pushInstance(planet);
@@ -6712,7 +6871,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	str+=newErodeTex(planet);
 	str+="+";
 	str+=newHmapTex(planet);
-	
+
 	str+=newGlobalDetail(planet);
 
  	str+=")";
@@ -6721,7 +6880,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	//cout<<"new Layer generated:"<<str.c_str()<<endl;
 
 	return str;
-	
+
 }
 std::string newPlant(int gtype){
 	char buff[4096];
@@ -6732,7 +6891,7 @@ std::string newPlant(int gtype){
 	str=buff;
 	cout<<buff<<endl;
 	return str;
-		
+
 }
 void Planetoid::newRocky(Planetoid *planet, int gtype){
 	char surface[5000];
@@ -6744,12 +6903,12 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	str="";
 	planet->terrain_type=gtype;
 	planetoid=planet;
-	
+
 	//cout<<"new rocky "<<planet_cnt<<endl;
 	// decrease ht and max size of craters for larger planets
-	size_scale=lerp(planet->size,0.001,0.01,1,0.5);  
+	size_scale=lerp(planet->size,0.001,0.01,1,0.5);
 	//cout<<" "<<planet->size<<" "<<size_scale<<endl;
-	
+
     switch(gtype){
     default:
     case GN_VOLCANIC:
@@ -6774,7 +6933,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		planet->addChild(sky);
 		CloudLayer *clouds;
 		clouds = planet->newClouds(false);
-		planet->addChild(clouds);	
+		planet->addChild(clouds);
 		if(r[7]>0.1)
  			str+=newPlant(GN_GRASS);
  		if(r[7]>0.5)
@@ -6784,7 +6943,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		str+=newOcean(planet);
 		if(sky->pressure >=1){
 			clouds = planet->newClouds(true);
-			planet->addChild(clouds);				
+			planet->addChild(clouds);
 		}
 		planet->calcAveTemperature();
 		if(planet->temperature<400)
@@ -6793,9 +6952,9 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     	break;
     }
 	//str+=randFeature(RND_FRACTAL);
-	
+
     if(set_layers==0){
-    	num_layers=0.5+r[10]*TheScene->generate_quality;	
+    	num_layers=0.5+r[10]*TheScene->generate_quality;
 		//num_layers=num_layers>max_layers?max_layers:num_layers;
 		num_layers+=1;
     }
@@ -6804,7 +6963,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
     int layers=num_layers;
     //cout<<"layers="<<num_layers<<" "<<set_layers<<endl;
 	str+=randFeature(RND_MAP);
-	
+
 	layer_cnt=0;
 	for(int i=0;i<num_layers;i++)
 		str+=newLayer(planet);
@@ -6812,7 +6971,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 
 	strcpy(buff,str.c_str());
 	cout<<"text generated length:"<<strlen(buff)<<endl;
-	
+
 	TNode *root=TheScene->parse_node(buff);
 	if(root){
 	    planet->terrain.set_root(root);
@@ -6820,14 +6979,14 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	}
 	else
 	    cout<<"error building planet surface"<<endl;
-	
+
 	if(planet->typeValue()==ID_PLANET){
 		int moons=r[7]*2.1;
 		int max_moons=TheScene->generate_quality;
 		moons=moons>max_moons?max_moons:moons;
 		moon_cnt=0;
 		for(int i=0;i<moons;i++){
-			((Planet *)planet)->addMoon(GN_RANDOM);			
+			((Planet *)planet)->addMoon(GN_RANDOM);
 		}
 	}
 	char pname[64];
@@ -6873,7 +7032,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	planet->day=100+90*r[2];
 	planet->year=planet->day*(1+3*r[3]);
 	planet->detail=4;
-	
+
 	planet->terrain_type=GN_GASSY;
 	planetoid=planet;
 	planet->setColors();
@@ -6883,14 +7042,14 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	if(TheScene->use_tmps!=ALL_TMPS){
 		std::string str=randFeature(RND_BANDS);
 		strcpy(buff,str.c_str());
-	
+
 		TNinode *img=(TNinode*)TheScene->parse_node(buff);
 		img->init();
 		Render.invalidate_textures();
 		planet->add_image(img);
 	}
 	std::string  noise_func=randFeature(RND_NOISEFUNC);
-	
+
 	char noise_expr1[2048];
 	char noise_expr2[2048];
 	char noise_expr3[2048];
@@ -6914,7 +7073,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
     else
     	phi_bias=0.6+0.2*s[3];
     char  *tname=randFeature(RND_TEXNAME).c_str();
-   
+
     sprintf(buff,"Texture(%s,S|TEX,%s+%s+%s,%g,%g,0,%g,%g,%g,%g,0,%g,0,0,0)",
     		tname,noise_expr1,noise_expr2,noise_expr3,
 			scale,ampl,offset,levels,delf,dela,phi_bias);
@@ -6941,7 +7100,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	moon_cnt=0;
 	for(int i=0;i<moons;i++){
-		planet->addMoon(GN_RANDOM);		
+		planet->addMoon(GN_RANDOM);
 	}
 	Render.invalidate_textures();
 	images.invalidate();
@@ -7061,7 +7220,7 @@ void Shell::render_object()
 {
 	if(Raster.auximage()) // skip surface fog/water effects
 		return;
-    
+
 	if(TheScene->render_mode()){
 	    set_lighting();
 		Spheroid::render_object();
@@ -7205,7 +7364,7 @@ double Sky::getHeatCalacity() {
 //-------------------------------------------------------------
 // Sky::getInstance()  generate a random instance
 //-------------------------------------------------------------
-bool Sky::randomize(){	
+bool Sky::randomize(){
 	setRseed(getRandValue());
 	setRands();
 	Color hsv=Color(0.5+0.3*s[2]+0.2*s[3],0.5,0.9);
@@ -7223,7 +7382,7 @@ bool Sky::randomize(){
 
 NodeIF *Sky::getInstance(NodeIF *prev,int type){
 	cout<<"Sky::getInstance"<<endl;
-	Sky *sky=newInstance(type&GN_TYPES);	
+	Sky *sky=newInstance(type&GN_TYPES);
 	sky->setParent(prev->getParent());
 	return sky;
 }
@@ -7286,7 +7445,7 @@ int  Sky::scale(double &zn, double &zf)
     	Raster.twilite_dph=twilite_dph;
     	Raster.twilite_max=twilite_max;
     	Raster.twilite_min=twilite_min;
-    	
+
     	Raster.setParams();
 
     	Point p=point.mm(TheScene->invViewMatrix);
@@ -8208,7 +8367,7 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVar("dpmin",dpmin);
 	vars.newFloatVar("dpmax",dpmax);
 	vars.newFloatVar("ldp",Raster.ldp);
-	
+
 	//cout<<"CloudLayer::setProgram "<<Raster.ldp<<endl;
 
 	//cout <<"clouds dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
@@ -8643,13 +8802,13 @@ CloudLayer *CloudLayer::newInstance(bool is3d){
 		clouds->day=(4+3*s[5]);
 	char buff[2048];
 	std::string str;
-    
+
 	if(is3d)
 		str=Planetoid::randFeature(RND_CLOUDS_3D);
 	else
 		str=Planetoid::randFeature(RND_CLOUDS_2D);
 	strcpy(buff,str.c_str());
-		
+
 	TNode *root=TheScene->parse_node(buff);
 	if(root){
 	    clouds->terrain.set_root(root);
@@ -8742,7 +8901,7 @@ bool Corona::setProgram(){
 	char frag_shader[128]="corona.frag";
 	char vert_shader[128]="corona.vert";
 	GLSLMgr::setDefString("");
-	
+
 
 	double dpmin,dpmax;
 
@@ -8768,11 +8927,11 @@ bool Corona::setProgram(){
 	  	dpmax=dp;
 	  	dpmin=l1/d;
 	}
-	    
+
 	TerrainProperties *tp=map->tp;
 
 	tp->initProgram();
-	
+
 	GLSLMgr::loadProgram(vert_shader,frag_shader);
 	GLhandleARB program=GLSLMgr::programHandle();
 	if(!program)
@@ -8782,7 +8941,7 @@ bool Corona::setProgram(){
 
 	FColor outer=FColor(color2);
 	FColor inner=FColor(color1);
-	
+
 	double t=animation?rate*TheScene->time:0.0;
 
 	vars.newFloatVar("rseed",rseed+t);
@@ -8937,10 +9096,10 @@ int Corona::render_pass()
 	    return 0;
 
 	if(getParent()==TheScene->viewobj)
-		clear_pass(FG0);	
+		clear_pass(FG0);
 	else if(local_group())
-		clear_pass(BG3);	
-		
+		clear_pass(BG3);
+
     return selected();
 }
 //-------------------------------------------------------------
@@ -9099,7 +9258,7 @@ void Halo::orient()
 }
 
 bool Halo::setProgram(){
-	
+
 	glEnable(GL_BLEND);
 	char frag_shader[128]="halo.frag";
 	char vert_shader[128]="halo.vert";
@@ -9510,19 +9669,19 @@ Ring *Ring::newInstance(){
 	ring=TheScene->getPrototype(0,TN_RING);
 	ring_id=lastn;
 	ring->setRseed(URAND(lastn++));
-	
+
 	Color tc,mix;
 	const int ncolors=8;
 	Color colors[ncolors];
 	const int nrands=10;
-			
+
 	double r[nrands];
 	double s[nrands];
 	for(int i=0;i<nrands;i++){
 		r[i]=URAND(lastn++);
 		s[i]=RAND(lastn++);
 	}
-		
+
 	tc=Color(0.5+3*r[4],0.2+2*r[5],0.8*r[5],r[2]);
     mix=Color(0.4+2*r[7],0.9*r[8],0.2+0.3*r[9],r[3]);
 	colors[0]=mix;
@@ -9537,7 +9696,7 @@ Ring *Ring::newInstance(){
 	colors[6]=tc.lighten(0.9+0.6*s[6]);
 	colors[7]=tc.darken(0.9);
 	colors[7].set_alpha(0);
-	
+
 	char buff[2048];
 
 	sprintf(buff,"bands(\"R%d\",TMP|NORM|REFLECT,64,%g,%g",ring_id,0.2+0.1*s[0],0.4+0.2*s[1]);
@@ -9552,7 +9711,7 @@ Ring *Ring::newInstance(){
 	img->init();
 	Render.invalidate_textures();
 	ring->add_image(img);
-	
+
 	sprintf(buff,"Texture(\"R%d\",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,%g,1,0,1,2,1,0,0,0,0,0)",ring_id,0.1+r[0]);
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);

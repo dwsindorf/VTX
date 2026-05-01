@@ -346,6 +346,11 @@ public:
     void collectLeaves(std::vector<MCObjNode*>& leaves);
     static Point rotateToLocal(const Point p);
 
+    // Möller–Trumbore ray-triangle intersection across all leaf meshes.
+    // origin and dir must be in the same space as tri.vertices (local [-0.5,0.5]).
+    // Returns true on hit, setting hit_local to the closest intersection.
+    bool raycast(const Point& origin, const Point& dir, Point& hit_local) const;
+
     // Traversal — mirrors Map::visit() / Map::visit_all()
     void visit(void (MCObjNode::*func)());
     void visit_all(void (MCObjNode::*func)());

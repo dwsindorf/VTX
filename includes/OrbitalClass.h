@@ -1,4 +1,3 @@
-
 //  OrbitalClass.h
 
 #ifndef _ID_ORBITALCLASS
@@ -424,6 +423,8 @@ private:
 	void drawVBO();
 	void deleteVBO();
 	void calibrateNoise();
+	GLdouble savedMVP[16];    // MVP matrix captured at render time for set_focus()
+	GLdouble savedInvMVP[16]; // inverse MVP for unproject in set_focus()
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;
@@ -464,7 +465,10 @@ public:
 	void render_zvals();
 	void render_shadows();
 	Bounds *bounds();
-
+	Point get_focus(void *v);
+	void  set_focus(Point &p);
+	void  move_focus(Point &p) {}  // no-op: asteroid click doesn't reposition camera
+	void  select();
 };
 //************************************************************
 // Star class

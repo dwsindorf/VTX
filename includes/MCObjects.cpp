@@ -6,7 +6,7 @@
 #include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
-#define PRINT_STATS
+//#define PRINT_STATS
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -20,7 +20,7 @@ const Point MCObjAdaptFlags::rockRight;
 const Point MCObjAdaptFlags::rockForward;
 const Point MCObjAdaptFlags::rockUp;
 Point MCObjAdaptFlags::camForward;
-Point MCObjAdaptFlags::rotatedCam; 
+Point MCObjAdaptFlags::rotatedCam;
 
 void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u) {
 	rockOrigin = p; rockRight = r; rockForward = f; rockUp = u;
@@ -51,12 +51,12 @@ int MCGenerator::frame_field_calls=0;  // reset each frame
 double MCGenerator::minDistance=1000;
 
 
-Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2, 
+Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
                                      double val1, double val2, double isolevel) {
     if (std::abs(isolevel - val1) < 0.00001) return p1;
     if (std::abs(isolevel - val2) < 0.00001) return p2;
     if (std::abs(val1 - val2) < 0.00001) return p1;
-    
+
     double mu = (isolevel - val1) / (val2 - val1);
     return Point(
         p1.x + mu * (p2.x - p1.x),
@@ -70,23 +70,23 @@ bool MCGenerator::smooth(){
 	return Render.avenorms() && test8;
 }
 
-void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3, 
+void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
                               std::vector<MCTriangle>& triangles) {
     MCTriangle tri;
     tri.vertices[0] = v1;
     tri.vertices[1] = v2;
     tri.vertices[2] = v3;
-    
+
     // SET templatePos for texture coordinates (needed for triplanar mapping)
     tri.templatePos[0] = v1;
     tri.templatePos[1] = v2;
     tri.templatePos[2] = v3;
-    
+
     // Initialize colors to white (will be modulated later if color node exists)
     tri.colors[0] = Color(1, 1, 1);
     tri.colors[1] = Color(1, 1, 1);
     tri.colors[2] = Color(1, 1, 1);
-    
+
     // Calculate face normal
     Point edge1 = tri.vertices[1] - tri.vertices[0];
     Point edge2 = tri.vertices[2] - tri.vertices[0];
@@ -95,20 +95,20 @@ void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
         edge1.z * edge2.x - edge1.x * edge2.z,
         edge1.x * edge2.y - edge1.y * edge2.x
     ).normalize();
-    
+
     // Initialize faceNormal same as normal for now
     tri.faceNormal = tri.normal;
-    
+
     triangles.push_back(tri);
 }
 
-void MCGenerator::generateTrianglesForCube(int cubeIndex, const Point vertList[12], 
+void MCGenerator::generateTrianglesForCube(int cubeIndex, const Point vertList[12],
                                            std::vector<MCTriangle>& triangles) {
     for (int i = 0; MC_triTable[cubeIndex][i] != -1; i += 3) {
         if (i + 2 < 16 && MC_triTable[cubeIndex][i+1] != -1 && MC_triTable[cubeIndex][i+2] != -1) {
-            addTriangle(vertList[MC_triTable[cubeIndex][i]], 
-                       vertList[MC_triTable[cubeIndex][i+1]], 
-                       vertList[MC_triTable[cubeIndex][i+2]], 
+            addTriangle(vertList[MC_triTable[cubeIndex][i]],
+                       vertList[MC_triTable[cubeIndex][i+1]],
+                       vertList[MC_triTable[cubeIndex][i+2]],
                        triangles);
         }
     }
@@ -118,24 +118,24 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
     SurfaceFunction field,
     const Point& boundsMin, const Point& boundsMax,
     int resolution, double isolevel) {
-    
+
     std::vector<MCTriangle> triangles;
-    
+
     double stepX = (boundsMax.x - boundsMin.x) / resolution;
     double stepY = (boundsMax.y - boundsMin.y) / resolution;
     double stepZ = (boundsMax.z - boundsMin.z) / resolution;
-    
+
     // Edge vertex indices for interpolation
     int edgeVertices[12][2] = {
         {0,1}, {1,2}, {2,3}, {3,0},
         {4,5}, {5,6}, {6,7}, {7,4},
         {0,4}, {1,5}, {2,6}, {3,7}
     };
-    
+
     // Pre-compute corner values for efficiency
     int gridSize = resolution + 1;
     std::vector<double> cornerGrid(gridSize * gridSize * gridSize);
-    
+
     for (int x = 0; x <= resolution; x++) {
         for (int y = 0; y <= resolution; y++) {
             for (int z = 0; z <= resolution; z++) {
@@ -149,7 +149,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
             }
         }
     }
-    
+
     // Process each cube
     for (int x = 0; x < resolution; x++) {
         for (int y = 0; y < resolution; y++) {
@@ -157,7 +157,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 double px = boundsMin.x + x * stepX;
                 double py = boundsMin.y + y * stepY;
                 double pz = boundsMin.z + z * stepZ;
-                
+
                 // 8 corners of this cube
                 Point cubeVertices[8] = {
                     Point(px, py, pz),
@@ -169,7 +169,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                     Point(px + stepX, py + stepY, pz + stepZ),
                     Point(px, py + stepY, pz + stepZ)
                 };
-                
+
                 // Get corner values from pre-computed grid
                 double cubeValues[8];
                 cubeValues[0] = cornerGrid[x * gridSize * gridSize + y * gridSize + z];
@@ -180,7 +180,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                 cubeValues[5] = cornerGrid[(x+1) * gridSize * gridSize + y * gridSize + (z+1)];
                 cubeValues[6] = cornerGrid[(x+1) * gridSize * gridSize + (y+1) * gridSize + (z+1)];
                 cubeValues[7] = cornerGrid[x * gridSize * gridSize + (y+1) * gridSize + (z+1)];
-                
+
                 // Determine cube index
                 int cubeIndex = 0;
                 for (int i = 0; i < 8; i++) {
@@ -188,12 +188,12 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                         cubeIndex |= (1 << i);
                     }
                 }
-                
+
                 // Skip if cube is entirely inside or outside
                 if (MC_edgeTable[cubeIndex] == 0) {
                     continue;
                 }
-                
+
                 // Interpolate vertices on active edges
                 Point vertList[12];
                 for (int i = 0; i < 12; i++) {
@@ -201,7 +201,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
                         int v1 = edgeVertices[i][0];
                         int v2 = edgeVertices[i][1];
                         vertList[i] = interpolateVertex(
-                            cubeVertices[v1], cubeVertices[v2], 
+                            cubeVertices[v1], cubeVertices[v2],
                             cubeValues[v1], cubeValues[v2], isolevel
                         );
                     }
@@ -210,7 +210,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
             }
         }
     }
-    
+
     return triangles;
 }
 
@@ -249,7 +249,7 @@ void MCGenerator::printStats(){
 	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
 	if(tm_field_calls)
 		cout<< " Field calls adaptive:"<<ad_field_calls/1000<<" template:"<<tm_field_calls/1000;
-	else	
+	else
 	    cout<< " Field calls:"<<ad_field_calls/1000;
 	cout<<" mesh:"<<gm_field_calls/1000<<" K"<<endl;
 	if(minDistance>MILES)
@@ -262,18 +262,18 @@ void MCGenerator::printStats(){
 // MCObject implementation
 //=============================================================================
 
-MCObject::MCObject() 
-    : worldPosition(0, 0, 0), baseSize(1.0), 
+MCObject::MCObject()
+    : worldPosition(0, 0, 0), baseSize(1.0),
       distanceToViewer(0), screenProjectedSize(0),
       meshValid(false), lastResolution(-1),
-      vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0), 
+      vboVertices(0), vboNormals(0), vboFaceNormals(0),vboTemplatePos(0),
 	  vboColors(0), vboValid(false) {
 	instanceId=0;
 	dataIndex=0;
 }
 
-MCObject::MCObject(const Point& pos, double size) 
-    : worldPosition(pos), baseSize(size), 
+MCObject::MCObject(const Point& pos, double size)
+    : worldPosition(pos), baseSize(size),
       distanceToViewer(0), screenProjectedSize(0),
       meshValid(false), lastResolution(-1),
       vboVertices(0), vboNormals(0),vboTemplatePos(0), vboFaceNormals(0),
@@ -329,27 +329,27 @@ void MCObject::deleteVBO() {
     if (vboTemplatePos != 0) {
          glDeleteBuffers(1, &vboTemplatePos);
          vboTemplatePos = 0;
-    } 
+    }
     vboValid = false;
 }
 
 void MCObject::generateSmoothNormals() {
     if (mesh.empty()) return;
-    
+
     // Hash vertices in TEMPLATE SPACE (not world space)
     double snapSize = 0.001;
     auto hashVertex = [snapSize](const Point& v) -> uint64_t {
         long long ix = (long long)round(v.x / snapSize);
         long long iy = (long long)round(v.y / snapSize);
         long long iz = (long long)round(v.z / snapSize);
-        
+
         uint64_t hx = ((uint64_t)(ix & 0x1FFFFF));
         uint64_t hy = ((uint64_t)(iy & 0x1FFFFF));
         uint64_t hz = ((uint64_t)(iz & 0x1FFFFF));
-        
+
         return (hx << 42) | (hy << 21) | hz;
     };
-    
+
     // Build vertex-to-triangles mapping using templatePos
     std::unordered_map<uint64_t, std::vector<size_t>> vertexToTriangles;
     for (size_t i = 0; i < mesh.size(); i++) {
@@ -358,19 +358,19 @@ void MCObject::generateSmoothNormals() {
             vertexToTriangles[key].push_back(i);
         }
     }
-    
+
     // Compute smoothed normals with angle threshold
     const double SMOOTH_ANGLE_COS = cos(60.0 * M_PI / 180.0);
     std::unordered_map<uint64_t, Point> normalAccum;
-    
+
     for (auto& pair : vertexToTriangles) {
         uint64_t key = pair.first;
         std::vector<size_t>& tris = pair.second;
-        
+
         Point referenceNormal = mesh[tris[0]].normal;
         Point avgNormal = referenceNormal;
         int count = 1;
-        
+
         for (size_t i = 1; i < tris.size(); i++) {
             Point normal = mesh[tris[i]].normal;
             // Only average if angle is within threshold
@@ -378,10 +378,10 @@ void MCObject::generateSmoothNormals() {
                 avgNormal = avgNormal + normal;
                 count++;
             }
-        }        
+        }
         normalAccum[key] = avgNormal / count;
     }
-    
+
     // Normalize accumulated normals
     for (auto& pair : normalAccum) {
     	static Point last_good;
@@ -408,7 +408,7 @@ void MCObject::generateSmoothNormals() {
             tri.normal = (smoothNormal / count).normalize();
         }
     }
-    
+
     vboValid = false;
 }
 
@@ -420,10 +420,10 @@ void MCObject::generateSphereNormals()
         Point edge1 = tri.vertices[1] - tri.vertices[0];
         Point edge2 = tri.vertices[2] - tri.vertices[0];
         tri.faceNormal = edge1.cross(edge2).normalize();
-        
+
         // For sphere normals: average position of triangle vertices
         Point triCenter = (tri.vertices[0] + tri.vertices[1] + tri.vertices[2]) / 3.0;
-        
+
         // Normal points radially outward from object center
         tri.normal = (triCenter - worldPosition).normalize();
     }
@@ -433,7 +433,7 @@ void MCObject::generateSphereNormals()
 // MCObjectManager implementation
 //=============================================================================
 
-MCObjectManager::MCObjectManager() 
+MCObjectManager::MCObjectManager()
     : currentIsoLevel(0.0) {
     // Default field: simple sphere
     currentField = MCFields::sphere;
@@ -473,7 +473,7 @@ MCObject* MCObjectManager::addObject(const std::string& name, const Point& posit
     if (it != objectMap.end()) {
         return it->second;
     }
-  
+
     MCObject* obj = new MCObject(position, size);
     objects.push_back(obj);
     objectMap[name] = obj;
@@ -531,20 +531,20 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
             noiseGenerators[seed] = PerlinNoise(seed);
         }
         PerlinNoise& noise = noiseGenerators[seed];
-        
+
         // Transform to object-local coordinates
         double objX = x - center.x;
         double objY = y - center.y;
         double objZ = z - center.z;
-        
+
         // Base sphere
         double radius = 1.0;
         double distance = sqrt(objX*objX + objY*objY + objZ*objZ);
         double baseSphere = radius - distance;
-        
+
         // Add noise displacement
         double noiseValue = noise.octaveNoise(x, y, z, 4, 1.0, 2.0, 0.5, 0.5);
-        
+
         return baseSphere + noiseValue;
     };
 }
@@ -672,7 +672,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
 {
     if (surfaceChecked)
         return surfacePresent;
- 
+
     surfaceChecked = true;
     MCGenerator::csi_calls++;
     MCGenerator::csi_by_depth[std::min(depth, 31)]++;
@@ -690,7 +690,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         MCGenerator::csi_edge_tests++;
         MCGenerator::csi_edge_exits++;
         return true;
-    }  
+    }
     // Check corners
     Point corners[8];
     getCorners(corners, objCenter, objRadius);
@@ -716,7 +716,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     if      (depth <= 3) gridN = 4;
     else if (depth <= 5) gridN = 3;
     else if (depth <= 7) gridN = 2;
-    else if (depth <= 9) gridN = 2; 
+    else if (depth <= 9) gridN = 2;
 
     Point c0 = corners[0];  // min corner
     Point c7 = corners[7];  // max corner
@@ -783,11 +783,11 @@ void MCObjNode::adapt(SurfaceFunction field,
     MCGenerator::minDistance=std::min(distance,MCGenerator::minDistance);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
-    
+
     bool culled=false;
     double cullFactor=20;
 
-    bool skipSurfaceCheck = (depth < 2);  // 
+    bool skipSurfaceCheck = (depth < 2);  //
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
@@ -810,7 +810,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     }
     // ── Fustrum coarsening — cells in world space ───────────────────
     if (flags.frustumCulling && depth > 4) {
-  		Point camFwd = MCObjAdaptFlags::camForward;			
+  		Point camFwd = MCObjAdaptFlags::camForward;
 		Point offset = center - objCenter;
 		Point worldCenter = MCObjAdaptFlags::rockOrigin
 						  + MCObjAdaptFlags::rockRight   * offset.x
@@ -820,16 +820,16 @@ void MCObjNode::adapt(SurfaceFunction field,
         Point toObj  = (MCObjAdaptFlags::rockOrigin - cameraPos).normalize();
         double camSign = (camFwd.dot(toObj) >= 0.0) ? -1.0 : 1.0;
         double dotVal=fabs(camFwd.dot(toCell));
-        double dpFactor=6;       // larger fails faster - fewer triangles but more large cells 
+        double dpFactor=6;       // larger fails faster - fewer triangles but more large cells
         double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
-        culled = (dotVal < thresh);  
+        culled = (dotVal < thresh);
 
         if (culled) {
             effectiveMinPixels *= cullFactor;
             skipSurfaceCheck = true;
         }
     }
-    cnt++;    
+    cnt++;
     if(culled){
         MCGenerator::csi_cull_calls++;
         MCGenerator::csi_cull_by_depth[depth]++;
@@ -936,14 +936,14 @@ void MCObjTree::init(const Point& c, double r, double m,
     valid = true;
 }
 
-void MCObjTree::adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl, 
+void MCObjTree::adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl,
                       double minPixels, int maxDepth,const MCObjAdaptFlags& flags)
 {
     if (!root || !valid) return;
 
    //root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
    root->adapt(field, center, radius, cameraPos, wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
-    
+
     framesSinceUsed = 0;
 }
 
@@ -951,6 +951,57 @@ void MCObjTree::collectLeaves(std::vector<MCObjNode*>& leaves)
 {
     if (root)
         root->collectLeaves(leaves);
+}
+
+//-------------------------------------------------------------
+// MCObjTree::raycast()
+//
+// Möller–Trumbore intersection against all leaf mesh triangles.
+// origin and dir must be in the same space as tri.vertices,
+// i.e. local normalised space [-0.5, 0.5].
+// Returns true on the closest hit, setting hit_local.
+//-------------------------------------------------------------
+bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local) const
+{
+    const double EPSILON = 1e-8;
+    double best_t = 1e30;
+    bool   hit    = false;
+
+    std::vector<MCObjNode*> leaves;
+    if (root)
+        root->collectLeaves(leaves);
+
+    for (MCObjNode* leaf : leaves) {
+        if (!leaf->meshValid || leaf->mesh.empty()) continue;
+        for (const MCTriangle& tri : leaf->mesh) {
+            Point v0 = tri.vertices[0];
+            Point v1 = tri.vertices[1];
+            Point v2 = tri.vertices[2];
+
+            Point edge1 = v1 - v0;
+            Point edge2 = v2 - v0;
+            Point h     = dir.cross(edge2);
+            double a    = edge1.dot(h);
+            if (fabs(a) < EPSILON) continue;
+
+            double f = 1.0 / a;
+            Point  s = origin - v0;
+            double u = f * s.dot(h);
+            if (u < 0.0 || u > 1.0) continue;
+
+            Point  q = s.cross(edge1);
+            double v = f * dir.dot(q);
+            if (v < 0.0 || u + v > 1.0) continue;
+
+            double t = f * edge2.dot(q);
+            if (t < EPSILON || t >= best_t) continue;
+
+            best_t    = t;
+            hit_local = origin + dir * t;
+            hit       = true;
+        }
+    }
+    return hit;
 }
 
 void MCObjTree::visit(void (MCObjNode::*func)())
@@ -983,7 +1034,7 @@ void MCObjTreeMgr::clear()
         delete pair.second;
     }
     trees.clear();
- 
+
 }
 
 void MCObjTreeMgr::invalidateAll()
@@ -1014,7 +1065,7 @@ MCObjTree* MCObjTreeMgr::getOrCreate(const Point& center, double radius,
                                       int instance, int rval)
 {
     uint64_t key = makeKey(center, instance, rval);
-    
+
     Point rotatedCenter = MCObjTree::rotateToLocal(center);
 
     auto it = trees.find(key);
