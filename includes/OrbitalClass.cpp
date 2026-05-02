@@ -1998,12 +1998,11 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	tree=nullptr;
 	hscale=0.5;
 	symmetry=1;
-	detail=2;
 	vboDirty=true;
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=11;
+	maxDepth=12;
 	cliptest=true;
 	backtest=true;
 	shadow_mode=false;
@@ -2402,11 +2401,49 @@ void Asteroid::adapt_object(){
     TheNoise.rseed=rseed;
 
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
-    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+
+    // Progressive refinement loop:
+    // Start at a shallow depth and increase maxDepth each cycle.
+    // Visibility from each cycle guides which cells get finer detail.
+    // Mirrors Map::adapt's iterative convergence approach.
+    int startDepth = 5;  // start coarse
+    int max_cycles = maxDepth - startDepth + 1;
+
+    for (int cycle = 0; cycle < max_cycles; cycle++) {
+        int cycleDepth = startDepth + cycle;
+
+        // Render current tree as ID colors, read back visibility
+        if (tree->root && cycle > 0) {
+            // Save current FBO, render IDs, read back, restore FBO state.
+            GLint savedFBO = 0;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
+            // Bind FBO for rendering (need depth buffer for correct ID render)
+            if (savedFBO == 0) GLSLMgr::setFBOWritePass();
+            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+            glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            tree->render_ids(2.0*size, xpoint);
+            glFinish();
+            tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
+            // Restore FBO state and clear for next render
+            if (savedFBO == 0)
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            else {
+                GLSLMgr::setFBOWritePass();  // restores multi-attachment draw
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            }
+            flags.useVisibility = true;
+        }
+
+        int c0 = MCGenerator::cells_created;
+        int d0 = MCGenerator::cells_deleted;
+        tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
+        int created = MCGenerator::cells_created - c0;
+        int deleted = MCGenerator::cells_deleted - d0;
+    }
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
 #ifdef PRINT_STATS
-    tree->countCells();
     MCGenerator::printStats();
     if(!changed)
     	MCGenerator::resetStats();

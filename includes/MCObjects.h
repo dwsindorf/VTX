@@ -5,8 +5,7 @@
 #include "PerlinNoise.h"
 #include "ColorClass.h"
 
-// Local color-ID union for pixel readback (mirrors NodeData.h idu/idc
-// but without pulling in the full terrain header chain).
+// Color-ID union for pixel readback (mirrors NodeData.h idu/idc)
 union MCIdColor {
     int l;
     struct {
@@ -17,6 +16,7 @@ union MCIdColor {
 #endif
     } c;
 };
+
 
 #include <vector>
 #include <functional>
@@ -194,6 +194,7 @@ struct MCObjAdaptFlags {
     bool backfaceCoarsening = true;  // increase minPixels on far side of rock
     bool frustumCulling    = false;  // skip cells outside view frustum (future)
     bool curvatureAdapt    = false;  // finer subdivision at high curvature (future)
+    bool useVisibility     = false;  // use nodeVisible/nodeMasked from ID readback
 
     static Point rockOrigin;
     static const Point rockRight;
@@ -266,10 +267,8 @@ public:
     // Per-frame LOD state — updated each adapt pass
     bool inFrustum;
     double projectedSize;
-
-    // Visibility flags set by pixel-readback ID pass
-    bool nodeVisible;   // seen in last ID readback — needs full resolution
-    bool nodeMasked;    // not seen — candidate for coarsening
+    bool nodeVisible;   // seen in last ID readback
+    bool nodeMasked;    // not seen -- candidate for coarsening
 
     MCObjNode();
     ~MCObjNode();
@@ -363,27 +362,19 @@ public:
     void collectLeaves(std::vector<MCObjNode*>& leaves);
     static Point rotateToLocal(const Point p);
 
-    // Walk the live tree and count total and leaf nodes.
-    // Sets MCGenerator::cells and MCGenerator::leaf_cells.
     void countCells();
+
+    // Pixel-readback visibility system
+    std::vector<MCObjNode*> mcIdtbl;
+    std::vector<GLfloat>    mcPixels;
+    void resetMcIdtbl();
+    void render_ids(double scale, const Point& xpoint);
+    void mark_visibility(int viewport_w, int viewport_h);
 
     // Möller–Trumbore ray-triangle intersection across all leaf meshes.
     // origin and dir must be in the same space as tri.vertices (local [-0.5,0.5]).
     // Returns true on hit, setting hit_local to the closest intersection.
     bool raycast(const Point& origin, const Point& dir, Point& hit_local) const;
-
-    // Pixel-readback visibility system.
-    // Each leaf is rendered as a flat RGB color encoding its index into mcIdtbl.
-    // glReadPixels decodes which leaves were visible; the rest get masked.
-    // mcIdtbl[0] is unused (black = background). Valid IDs start at 1.
-    std::vector<MCObjNode*> mcIdtbl;  // index → node pointer
-    std::vector<GLfloat>    mcPixels; // readback buffer (4 floats/pixel)
-
-    void resetMcIdtbl();
-    // Render each leaf as a flat color = its mcIdtbl index (no shader, no lighting).
-    void render_ids();
-    // glReadPixels into mcPixels, decode colors, set nodeVisible/nodeMasked on leaves.
-    void mark_visibility(int viewport_w, int viewport_h);
 
     // Traversal — mirrors Map::visit() / Map::visit_all()
     void visit(void (MCObjNode::*func)());
