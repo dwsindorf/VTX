@@ -1998,11 +1998,12 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	tree=nullptr;
 	hscale=0.5;
 	symmetry=1;
+	detail=2;
 	vboDirty=true;
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=10;
+	maxDepth=11;
 	cliptest=true;
 	backtest=true;
 	shadow_mode=false;

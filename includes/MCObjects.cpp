@@ -241,7 +241,7 @@ void MCGenerator::printStats(){
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
-	cout<< " CELLS total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted<<endl;
+	cout<< " CELLS leaf:"<<leaf_cells<<" non-leaf:"<<cells-leaf_cells<<" created:" << cells_created << " deleted:" << cells_deleted<<endl;
 	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
 	if(tm_field_calls)
 		cout<< " Field calls adaptive:"<<ad_field_calls/1000<<" template:"<<tm_field_calls/1000;
@@ -555,7 +555,8 @@ MCObjNode::MCObjNode()
       center(0,0,0), size(0), depth(0),
       surfaceChecked(false), surfacePresent(false),
       meshValid(false),attributesApplied(false),
-      inFrustum(false), projectedSize(0)
+      inFrustum(false), projectedSize(0),
+      nodeVisible(false), nodeMasked(false)
 {
     memset(children,          0, sizeof(children));
     memset(neighbors,         0, sizeof(neighbors));
@@ -949,25 +950,18 @@ void MCObjTree::collectLeaves(std::vector<MCObjNode*>& leaves)
 
 //-------------------------------------------------------------
 // MCObjTree::countCells()
-//
-// Walks the live tree and sets MCGenerator::cells and
-// MCGenerator::leaf_cells to reflect current tree state.
-// Call before printStats() when you want accurate totals
-// rather than the incremental counts from the last adapt pass.
+// Walk the live tree and set MCGenerator::cells / leaf_cells.
 //-------------------------------------------------------------
 void MCObjTree::countCells()
 {
     MCGenerator::cells      = 0;
     MCGenerator::leaf_cells = 0;
-
     if (!root) return;
 
-    // Iterative traversal using a stack to avoid deep recursion
     std::vector<MCObjNode*> stack;
     stack.push_back(root);
     while (!stack.empty()) {
-        MCObjNode* node = stack.back();
-        stack.pop_back();
+        MCObjNode* node = stack.back(); stack.pop_back();
         MCGenerator::cells++;
         if (node->isLeaf()) {
             MCGenerator::leaf_cells++;
@@ -979,8 +973,103 @@ void MCObjTree::countCells()
     }
 }
 
+
+// Clear the ID table. ID 0 is reserved (background color = black).
 //-------------------------------------------------------------
-// MCObjTree::raycast()
+void MCObjTree::resetMcIdtbl()
+{
+    mcIdtbl.clear();
+    mcIdtbl.push_back(nullptr);  // index 0 = background (never used)
+}
+
+//-------------------------------------------------------------
+// MCObjTree::render_ids()
+//
+// Render each leaf node's triangles as a flat RGB color that
+// encodes its index into mcIdtbl.  The caller must:
+//   - clear the color buffer beforehand
+//   - disable lighting, textures, and shaders
+//   - set up the same projection/modelview as the normal render
+//
+// Uses MCIdColor union (mirrors NodeData.h idu) for the same encoding that
+// the terrain system uses, so mark_visibility can decode identically.
+//-------------------------------------------------------------
+void MCObjTree::render_ids()
+{
+    if (!root) return;
+
+    std::vector<MCObjNode*> leaves;
+    root->collectLeaves(leaves);
+
+    // Reset all visibility flags before the new pass
+    for (MCObjNode* leaf : leaves) {
+        leaf->nodeVisible = false;
+        leaf->nodeMasked  = false;
+    }
+
+    glUseProgram(0);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_BLEND);
+    glShadeModel(GL_FLAT);
+
+    resetMcIdtbl();
+
+    MCIdColor idb;
+    for (MCObjNode* leaf : leaves) {
+        if (!leaf->meshValid || leaf->mesh.empty()) continue;
+
+        // Assign this leaf an ID and encode as RGB
+        idb.l = (int)mcIdtbl.size();
+        mcIdtbl.push_back(leaf);
+
+        glColor4ub(idb.c.red, idb.c.green, idb.c.blue, 0);
+
+        glBegin(GL_TRIANGLES);
+        for (const MCTriangle& tri : leaf->mesh) {
+            for (int v = 0; v < 3; v++)
+                glVertex3dv(&tri.vertices[v].x);
+        }
+        glEnd();
+    }
+    glFlush();
+}
+
+//-------------------------------------------------------------
+// MCObjTree::mark_visibility()
+//
+// Read back the color buffer, decode IDs, and mark each leaf
+// node as visible (seen) or masked (not seen).
+// Call after render_ids() and glFinish().
+//-------------------------------------------------------------
+void MCObjTree::mark_visibility(int viewport_w, int viewport_h)
+{
+    int n = viewport_w * viewport_h;
+    mcPixels.resize(4 * n);
+
+    glReadPixels(0, 0, viewport_w, viewport_h,
+                 GL_RGBA, GL_FLOAT, mcPixels.data());
+
+    MCIdColor idb;
+    for (int i = 0; i < 4 * n; i += 4) {
+        idb.c.red   = (GLubyte)roundf(mcPixels[i]   * 255.0f);
+        idb.c.green = (GLubyte)roundf(mcPixels[i+1] * 255.0f);
+        idb.c.blue  = (GLubyte)roundf(mcPixels[i+2] * 255.0f);
+        idb.c.alpha = 0;
+
+        int id = idb.l;
+        if (id > 0 && id < (int)mcIdtbl.size() && mcIdtbl[id])
+            mcIdtbl[id]->nodeVisible = true;
+    }
+
+    // Any leaf not seen is masked
+    for (size_t id = 1; id < mcIdtbl.size(); id++)
+        if (mcIdtbl[id] && !mcIdtbl[id]->nodeVisible)
+            mcIdtbl[id]->nodeMasked = true;
+}
+
+
 //
 // Möller–Trumbore intersection against all leaf mesh triangles.
 // origin and dir must be in the same space as tri.vertices,

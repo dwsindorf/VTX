@@ -2526,6 +2526,7 @@ void Scene::render()
 			printf("build tm: %-2.1f\n",build_time);
 			Noise::showStats();
 			timing_start=0;
+			fflush(stdout);
    		}
         show_info(INFO_TIME);
 #endif

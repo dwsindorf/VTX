@@ -5,6 +5,19 @@
 #include "PerlinNoise.h"
 #include "ColorClass.h"
 
+// Local color-ID union for pixel readback (mirrors NodeData.h idu/idc
+// but without pulling in the full terrain header chain).
+union MCIdColor {
+    int l;
+    struct {
+#ifndef BIG_ENDEAN
+        GLubyte blue, green, red, alpha;
+#else
+        GLubyte alpha, red, green, blue;
+#endif
+    } c;
+};
+
 #include <vector>
 #include <functional>
 #include <cmath>
@@ -254,6 +267,10 @@ public:
     bool inFrustum;
     double projectedSize;
 
+    // Visibility flags set by pixel-readback ID pass
+    bool nodeVisible;   // seen in last ID readback — needs full resolution
+    bool nodeMasked;    // not seen — candidate for coarsening
+
     MCObjNode();
     ~MCObjNode();
 
@@ -347,14 +364,26 @@ public:
     static Point rotateToLocal(const Point p);
 
     // Walk the live tree and count total and leaf nodes.
-    // Sets MCGenerator::cells and MCGenerator::leaf_cells so printStats()
-    // reflects the current tree state rather than the last adapt pass.
+    // Sets MCGenerator::cells and MCGenerator::leaf_cells.
     void countCells();
 
     // Möller–Trumbore ray-triangle intersection across all leaf meshes.
     // origin and dir must be in the same space as tri.vertices (local [-0.5,0.5]).
     // Returns true on hit, setting hit_local to the closest intersection.
     bool raycast(const Point& origin, const Point& dir, Point& hit_local) const;
+
+    // Pixel-readback visibility system.
+    // Each leaf is rendered as a flat RGB color encoding its index into mcIdtbl.
+    // glReadPixels decodes which leaves were visible; the rest get masked.
+    // mcIdtbl[0] is unused (black = background). Valid IDs start at 1.
+    std::vector<MCObjNode*> mcIdtbl;  // index → node pointer
+    std::vector<GLfloat>    mcPixels; // readback buffer (4 floats/pixel)
+
+    void resetMcIdtbl();
+    // Render each leaf as a flat color = its mcIdtbl index (no shader, no lighting).
+    void render_ids();
+    // glReadPixels into mcPixels, decode colors, set nodeVisible/nodeMasked on leaves.
+    void mark_visibility(int viewport_w, int viewport_h);
 
     // Traversal — mirrors Map::visit() / Map::visit_all()
     void visit(void (MCObjNode::*func)());
