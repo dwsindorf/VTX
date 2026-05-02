@@ -346,6 +346,11 @@ public:
     void collectLeaves(std::vector<MCObjNode*>& leaves);
     static Point rotateToLocal(const Point p);
 
+    // Walk the live tree and count total and leaf nodes.
+    // Sets MCGenerator::cells and MCGenerator::leaf_cells so printStats()
+    // reflects the current tree state rather than the last adapt pass.
+    void countCells();
+
     // Möller–Trumbore ray-triangle intersection across all leaf meshes.
     // origin and dir must be in the same space as tri.vertices (local [-0.5,0.5]).
     // Returns true on hit, setting hit_local to the closest intersection.

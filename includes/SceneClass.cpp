@@ -2148,7 +2148,6 @@ void Scene::select()
 	// for orbitals will be id of ObjectNode* in Raster.idtbl
 	int id=(int)select_pass();
 	focusobj=(ObjectNode*)Raster.get_data(id);
-    cout<<"Scene::select() "<<id<<" obj:"<<focusobj<<endl;
 	if(focusobj){
 	    if(focusobj==viewobj){
 			bgpass=FG0;
@@ -2237,7 +2236,7 @@ void *Scene::select_pass()
 			obj=(void*)hit[3];
 		}
 	}
-	cout << "hits="<<n<<" obj:"<<obj<<endl;
+	//cout << "hits="<<n<<" obj:"<<obj<<endl;
     return obj;
 }
 
@@ -2536,7 +2535,7 @@ void Scene::render()
 		output_text(); // on-screen info
 
 		set_action("Ready");
-    	if(changed_detail() || automv())
+    	if(/*changed_detail() ||*/ automv())
     		set_moved();
     	else
     		clr_moved();

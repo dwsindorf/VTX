@@ -15,7 +15,7 @@
 //#define TEST_CRATERS
 #define TEST_ROCKS
 
-#define PRINT_PLACEMENT_TIMING
+//#define PRINT_PLACEMENT_TIMING
 //#define PRINT_PLACEMENT_STATS
 
 #define PSCALE TheMap->radius

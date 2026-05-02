@@ -6,7 +6,7 @@
 #include "RenderOptions.h"
 
 #define DEBUG_ADAPTIVE
-//#define PRINT_STATS
+#define PRINT_STATS
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -225,10 +225,6 @@ void MCGenerator::resetStats() {
 
 }
 void MCGenerator::printStats(){
-#ifndef PRINT_STATS
-	return;
-#endif
-
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
 			  << " edge:" << csi_edge_exits<<" tests:"<<csi_edge_tests
@@ -245,7 +241,7 @@ void MCGenerator::printStats(){
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
-	cout<< " CELLS created:" << cells_created << " deleted:" << cells_deleted<<endl;
+	cout<< " CELLS total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted<<endl;
 	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
 	if(tm_field_calls)
 		cout<< " Field calls adaptive:"<<ad_field_calls/1000<<" template:"<<tm_field_calls/1000;
@@ -624,7 +620,7 @@ void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
 {
 	if (isLeaf()) {
 		if (!mesh.empty()){  // only collect leaves with actual geometry
-			if (!attributesApplied)      // only count newly generated leaves
+			//if (!attributesApplied)      // only count newly generated leaves
 			 	MCGenerator::leaf_cells++;
 			leaves.push_back(this);
 		}
@@ -780,7 +776,7 @@ void MCObjNode::adapt(SurfaceFunction field,
      // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
     if(isLeaf())
-    MCGenerator::minDistance=std::min(distance,MCGenerator::minDistance);
+    	MCGenerator::minDistance=std::min(distance,MCGenerator::minDistance);
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
 
@@ -809,7 +805,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         }
     }
     // ── Fustrum coarsening — cells in world space ───────────────────
-    if (flags.frustumCulling && depth > 4) {
+    if (flags.frustumCulling && depth > 3) {
   		Point camFwd = MCObjAdaptFlags::camForward;
 		Point offset = center - objCenter;
 		Point worldCenter = MCObjAdaptFlags::rockOrigin
@@ -818,9 +814,8 @@ void MCObjNode::adapt(SurfaceFunction field,
 						  + MCObjAdaptFlags::rockUp      * offset.z;
 		Point toCell = (TheView->xpoint-worldCenter).normalize();
         Point toObj  = (MCObjAdaptFlags::rockOrigin - cameraPos).normalize();
-        double camSign = (camFwd.dot(toObj) >= 0.0) ? -1.0 : 1.0;
         double dotVal=fabs(camFwd.dot(toCell));
-        double dpFactor=6;       // larger fails faster - fewer triangles but more large cells
+        double dpFactor=8;       // larger fails faster - fewer triangles but more large cells
         double thresh = lerp(projectedSize, minPixels, dpFactor*minPixels, 0.99, 0.0);
         culled = (dotVal < thresh);
 
@@ -941,8 +936,7 @@ void MCObjTree::adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl,
 {
     if (!root || !valid) return;
 
-   //root->adapt(field, center, radius, rotateToLocal(cameraPos), wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
-   root->adapt(field, center, radius, cameraPos, wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
+    root->adapt(field, center, radius, cameraPos, wscale, isoNoiseAmpl, minPixels, maxDepth,flags);
 
     framesSinceUsed = 0;
 }
@@ -951,6 +945,38 @@ void MCObjTree::collectLeaves(std::vector<MCObjNode*>& leaves)
 {
     if (root)
         root->collectLeaves(leaves);
+}
+
+//-------------------------------------------------------------
+// MCObjTree::countCells()
+//
+// Walks the live tree and sets MCGenerator::cells and
+// MCGenerator::leaf_cells to reflect current tree state.
+// Call before printStats() when you want accurate totals
+// rather than the incremental counts from the last adapt pass.
+//-------------------------------------------------------------
+void MCObjTree::countCells()
+{
+    MCGenerator::cells      = 0;
+    MCGenerator::leaf_cells = 0;
+
+    if (!root) return;
+
+    // Iterative traversal using a stack to avoid deep recursion
+    std::vector<MCObjNode*> stack;
+    stack.push_back(root);
+    while (!stack.empty()) {
+        MCObjNode* node = stack.back();
+        stack.pop_back();
+        MCGenerator::cells++;
+        if (node->isLeaf()) {
+            MCGenerator::leaf_cells++;
+        } else {
+            for (int i = 0; i < 8; i++)
+                if (node->children[i])
+                    stack.push_back(node->children[i]);
+        }
+    }
 }
 
 //-------------------------------------------------------------

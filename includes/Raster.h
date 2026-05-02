@@ -423,7 +423,7 @@ public:
 	int   set_id()					{ return idcnt=dcnt;}
 	int   first_id()				{ return 1;}
 	int   last_id()					{ return idcnt;}
-	int   idvalues()				{ return dcnt;}
+	int   idvalues()				{ return dcnt>1;}
 	int   invalid_id(int i)			{ return (i<0 || i>=dcnt)?1:0;}
 	int   valid_id(int i)			{ return (idtbl && i>=0 && i<dcnt)?1:0;}
 	void  reset_idtbl();

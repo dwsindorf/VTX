@@ -125,7 +125,8 @@ public:
 	void OnMaxDepth(wxCommandEvent&  event){
 		cout<<"maxDepth="<<m_maxDepth->GetSelection()+1<<endl;
 		object()->maxDepth=m_maxDepth->GetSelection()+1;
-		rebuild();
+		TheView->set_changed_detail();
+		//rebuild();
 	}
 	
 	void OnChangedFlags(wxCommandEvent& event){

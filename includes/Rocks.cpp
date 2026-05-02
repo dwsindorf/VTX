@@ -1140,8 +1140,8 @@ void Rock3DObjMgr::render() {
         double total = (clock() - d0) * TS;
         cout << " Compute Batches T["<<lodBatches.size()<<"]:"<< (t1+t3) * TS << " A["<<adaptiveBatches.size()<<"]:"<<t4 * TS<< " Upload:"<<t2 * TS <<  " Total:" << total << " ms"
                 << endl;
-#endif
         MCGenerator::printStats();
+#endif
     }
     render_objects();  
 }

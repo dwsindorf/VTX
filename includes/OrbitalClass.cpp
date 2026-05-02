@@ -2002,7 +2002,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=12;
+	maxDepth=10;
 	cliptest=true;
 	backtest=true;
 	shadow_mode=false;
@@ -2368,6 +2368,7 @@ void Asteroid::adapt_object(){
     if(!tree) {
         return;
     }
+
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
 
@@ -2403,9 +2404,12 @@ void Asteroid::adapt_object(){
     tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
+#ifdef PRINT_STATS
+    tree->countCells();
     MCGenerator::printStats();
     if(!changed)
     	MCGenerator::resetStats();
+#endif
     vboDirty = true;
 }
 
@@ -2487,7 +2491,7 @@ void Asteroid::select()
     if (!isEnabled()) return;
     set_ref();
 
-    if (/*TheScene->select_object() &&*/ vboVertices && uploadedVertexCount > 0) {
+    if (vboVertices && uploadedVertexCount > 0) {
     	TheScene->pushMatrix();
 
 		set_tilt();
@@ -2496,10 +2500,6 @@ void Asteroid::select()
     	int id = Raster.set_id();
         Raster.set_data((MapNode*)this);
         glLoadName(id);
-
-        MapNode *test=Raster.get_data(id);
-
-        cout<<"Asteroid::select() id:"<<test<<" pass:"<<TheScene->bgpass<<endl;
 
         // GL_SELECT is incompatible with GLSL shaders -- the selection
         // mechanism only works with the fixed-function pipeline.
@@ -2520,8 +2520,6 @@ void Asteroid::select()
         glPopAttrib();
         TheScene->popMatrix();
     }
-
-    //Orbital::select(); // select children
 }
 
 
