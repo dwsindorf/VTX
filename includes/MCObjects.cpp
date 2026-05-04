@@ -329,21 +329,32 @@ void MCObject::deleteVBO() {
     vboValid = false;
 }
 
-void MCObject::generateSmoothNormals() {
+void MCObject::generateSmoothNormals(double snapSize) {
     if (mesh.empty()) return;
 
-    // Hash vertices in TEMPLATE SPACE (not world space)
-    double snapSize = 0.001;
+    if (snapSize <= 0.0) {
+        // Auto-compute from mesh: find max edge length and use a fraction.
+        // Max edge (not min) gives a snap size that covers the coarsest cells —
+        // T-junction gaps are always much smaller than any edge length.
+        double maxEdge = 0.0;
+        for(int i=0; i<(int)mesh.size() && i<64; i++){
+            for(int v=0; v<3; v++){
+                Point d = mesh[i].templatePos[v] - mesh[i].templatePos[(v+1)%3];
+                double len = d.length();
+                maxEdge = std::max(maxEdge, len);
+            }
+        }
+        snapSize = (maxEdge > 1e-30) ? maxEdge * 0.01 : 0.001;
+    }
     auto hashVertex = [snapSize](const Point& v) -> uint64_t {
         long long ix = (long long)round(v.x / snapSize);
         long long iy = (long long)round(v.y / snapSize);
         long long iz = (long long)round(v.z / snapSize);
-
-        uint64_t hx = ((uint64_t)(ix & 0x1FFFFF));
-        uint64_t hy = ((uint64_t)(iy & 0x1FFFFF));
-        uint64_t hz = ((uint64_t)(iz & 0x1FFFFF));
-
-        return (hx << 42) | (hy << 21) | hz;
+        // Use full 64-bit mixing — bit-packing with fixed masks overflows at small snapSize.
+        uint64_t hx = (uint64_t)(ix * 2654435761ULL);
+        uint64_t hy = (uint64_t)(iy * 805459861ULL);
+        uint64_t hz = (uint64_t)(iz * 3674653429ULL);
+        return hx ^ (hy * 2246822519ULL) ^ (hz * 3266489917ULL);
     };
 
     // Build vertex-to-triangles mapping using templatePos
@@ -622,7 +633,7 @@ void MCObjNode::collectLeaves(std::vector<MCObjNode*>& leaves)
 	if (isLeaf()) {
 		if (!mesh.empty()){  // only collect leaves with actual geometry
 			//if (!attributesApplied)      // only count newly generated leaves
-			 	MCGenerator::leaf_cells++;
+			// 	MCGenerator::leaf_cells++;
 			leaves.push_back(this);
 		}
 		return;
@@ -784,12 +795,10 @@ void MCObjNode::adapt(SurfaceFunction field,
         // ID readback visibility: replaces all heuristic culling tests.
     // Ground truth from pixel readback -- covers frustum, occlusion,
     // backface and burial in one test.
-    if (flags.useVisibility) {
-    	if(nodeMasked && !nodeVisible){
-			effectiveMinPixels *= cullFactor;
-			skipSurfaceCheck = true;
-			culled = true;
-    	}
+    if (flags.useVisibility && nodeMasked && !nodeVisible) {
+        effectiveMinPixels *= cullFactor;
+        skipSurfaceCheck = true;
+        culled = true;
         // Skip all heuristic tests below -- ID test supersedes them
         goto cull_done;
     }
@@ -845,9 +854,11 @@ void MCObjNode::adapt(SurfaceFunction field,
     bool depth_check = (depth >= maxDepth);
     bool shouldBeLeaf = size_check || depth_check;
 
-    // If already a stable leaf (mesh valid, not going to split), skip checkSurface.
-    // This avoids re-running expensive field evaluations on nodes that won't change.
-    if (shouldBeLeaf && isLeaf() && meshValid) {
+    // If already a stable leaf at maximum depth, skip checkSurface — nothing can change.
+    // Do NOT apply this at intermediate cycle depths: a cell that was a leaf last cycle
+    // due to depth_check must be re-examined as cycleDepth increases, or it stays
+    // permanently coarse and creates LOD banding rings.
+    if (depth_check && isLeaf() && meshValid) {
         return;
     }
 

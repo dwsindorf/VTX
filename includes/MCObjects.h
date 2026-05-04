@@ -140,7 +140,7 @@ public:
     void invalidate();
     void clearMesh();
     void deleteVBO();
-    void generateSmoothNormals();
+    void generateSmoothNormals(double snapSize = 0.0); // 0 = auto-compute
     void generateSphereNormals();
     const std::vector<MCTriangle>& generateMeshAdaptive(
         SurfaceFunction field,
