@@ -554,7 +554,7 @@ MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),
       surfaceChecked(false), surfacePresent(false),
-      meshValid(false),attributesApplied(false),
+      meshValid(false), attributesApplied(false),
       inFrustum(false), projectedSize(0),
       nodeVisible(false), nodeMasked(false)
 {
@@ -581,9 +581,6 @@ void MCObjNode::collapse()
     }
     meshValid         = false;
     attributesApplied = false;
-    // Reset surface cache so a later adapt cycle with a higher maxDepth
-    // re-evaluates the field rather than reusing a stale false-negative.
-    surfaceChecked    = false;
     mesh.clear();
     mesh.shrink_to_fit();
 }
@@ -592,7 +589,7 @@ void MCObjNode::invalidate()
 {
     surfaceChecked  = false;
     meshValid       = false;
-    attributesApplied = false;  // ← add
+    attributesApplied = false;
     memset(cornersEvaluated, false, sizeof(cornersEvaluated));
     mesh.clear();
     mesh.shrink_to_fit();
@@ -765,11 +762,6 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     mesh = gen.generateMesh(field, localMin, localMax, 1);
 
     meshValid = true;
-    // Note: do NOT override surfaceChecked/surfacePresent here if mesh is empty.
-    // checkSurface already confirmed surface presence before generateMesh was called.
-    // An empty mesh from MC at resolution 1 is a generator failure, not proof the
-    // surface is absent. Caching false here causes the next adapt cycle (when maxDepth
-    // increases in the progressive loop) to collapse this node, creating visible gaps.
 }
 static int cnt=0;
 void MCObjNode::adapt(SurfaceFunction field,
@@ -778,7 +770,6 @@ void MCObjNode::adapt(SurfaceFunction field,
                       double minPixels, int maxDepth, const MCObjAdaptFlags& flags)
 {
     MCGenerator::csi_adapt_calls++;
-     // ── Projected screen size — use world-space xpoint for correct distance ──
     double distance   = center.distance(cameraPos);
     if(isLeaf())
     	MCGenerator::minDistance=std::min(distance,MCGenerator::minDistance);
@@ -788,15 +779,17 @@ void MCObjNode::adapt(SurfaceFunction field,
     bool culled=false;
     double cullFactor=20;
 
-    bool skipSurfaceCheck = (depth < 2);  //
+    bool skipSurfaceCheck = (depth < 2);
 
         // ID readback visibility: replaces all heuristic culling tests.
     // Ground truth from pixel readback -- covers frustum, occlusion,
     // backface and burial in one test.
-    if (flags.useVisibility && nodeMasked && !nodeVisible) {
-        effectiveMinPixels *= cullFactor;
-        skipSurfaceCheck = true;
-        culled = true;
+    if (flags.useVisibility) {
+    	if(nodeMasked && !nodeVisible){
+			effectiveMinPixels *= cullFactor;
+			skipSurfaceCheck = true;
+			culled = true;
+    	}
         // Skip all heuristic tests below -- ID test supersedes them
         goto cull_done;
     }
@@ -851,6 +844,12 @@ void MCObjNode::adapt(SurfaceFunction field,
     bool size_check  = (projectedSize <= effectiveMinPixels * 2);
     bool depth_check = (depth >= maxDepth);
     bool shouldBeLeaf = size_check || depth_check;
+
+    // If already a stable leaf (mesh valid, not going to split), skip checkSurface.
+    // This avoids re-running expensive field evaluations on nodes that won't change.
+    if (shouldBeLeaf && isLeaf() && meshValid) {
+        return;
+    }
 
     if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth,isoNoiseAmpl)) {
         collapse();

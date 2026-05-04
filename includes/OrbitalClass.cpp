@@ -2002,7 +2002,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=12;
+	maxDepth=14;
 	cliptest=true;
 	backtest=true;
 	shadow_mode=false;
@@ -2407,13 +2407,8 @@ void Asteroid::adapt_object(){
     // Visibility from each cycle guides which cells get finer detail.
     // Mirrors Map::adapt's iterative convergence approach.
     int startDepth = 2;  // start coarse
-    maxDepth=12;
     int max_cycles = maxDepth - startDepth + 1;
     int cycleDepth=maxDepth;
-
-    bool testLoop=true;
-
-    if(testLoop)
 
     for (int cycle = 0; cycle < max_cycles; cycle++) {
         int cycleDepth = startDepth + cycle;
@@ -2448,8 +2443,6 @@ void Asteroid::adapt_object(){
         int created = MCGenerator::cells_created - c0;
         int deleted = MCGenerator::cells_deleted - d0;
     }
-    else
-    	tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
 #ifdef PRINT_STATS

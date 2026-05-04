@@ -167,9 +167,9 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	wxStaticText *lbl=new wxStaticText(panel,-1,"MaxDepth",wxDefaultPosition,wxSize(-1,-1));
 	hline->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
 	
-	wxString depths[]={"1","2","3","4","5","6","7","8","9","10","11","12"};	
+	wxString depths[]={"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"};
 
-    m_maxDepth=new wxChoice(panel, ID_MAXDEPTH, wxDefaultPosition,wxSize(40,-1),12, depths);
+    m_maxDepth=new wxChoice(panel, ID_MAXDEPTH, wxDefaultPosition,wxSize(40,-1),16, depths);
 	m_maxDepth->SetSelection(8);
 
 	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
