@@ -55,7 +55,7 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
 
         // Light direction in eye space
         vec3  ldir      = normalize(gl_LightSource[i].position.xyz);
-        float LdotN     = max(dot(ldir, normal), 0.0);
+        float LdotN     = abs(dot(ldir, normal));
         float intensity = 1.0 / gl_LightSource[i].constantAttenuation / float(NLIGHTS);
 
         diffuse += Diffuse.rgb * gl_LightSource[i].diffuse.rgb * LdotN * intensity;

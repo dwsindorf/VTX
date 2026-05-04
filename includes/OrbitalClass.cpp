@@ -2406,19 +2406,26 @@ void Asteroid::adapt_object(){
     // Start at a shallow depth and increase maxDepth each cycle.
     // Visibility from each cycle guides which cells get finer detail.
     // Mirrors Map::adapt's iterative convergence approach.
-    int startDepth = 5;  // start coarse
+    int startDepth = 2;  // start coarse
+    maxDepth=12;
     int max_cycles = maxDepth - startDepth + 1;
+    int cycleDepth=maxDepth;
+
+    bool testLoop=true;
+
+    if(testLoop)
 
     for (int cycle = 0; cycle < max_cycles; cycle++) {
         int cycleDepth = startDepth + cycle;
 
         // Render current tree as ID colors, read back visibility
-        if (tree->root && cycle > 0) {
+        if (cycle > 0) {
             // Save current FBO, render IDs, read back, restore FBO state.
             GLint savedFBO = 0;
             glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
             // Bind FBO for rendering (need depth buffer for correct ID render)
-            if (savedFBO == 0) GLSLMgr::setFBOWritePass();
+            if (savedFBO == 0)
+            	GLSLMgr::setFBOWritePass();
             glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
             glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2441,6 +2448,8 @@ void Asteroid::adapt_object(){
         int created = MCGenerator::cells_created - c0;
         int deleted = MCGenerator::cells_deleted - d0;
     }
+    else
+    	tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
 #ifdef PRINT_STATS

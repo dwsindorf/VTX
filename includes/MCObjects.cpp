@@ -580,7 +580,10 @@ void MCObjNode::collapse()
         }
     }
     meshValid         = false;
-    attributesApplied = false;  // ← add
+    attributesApplied = false;
+    // Reset surface cache so a later adapt cycle with a higher maxDepth
+    // re-evaluates the field rather than reusing a stale false-negative.
+    surfaceChecked    = false;
     mesh.clear();
     mesh.shrink_to_fit();
 }
@@ -713,7 +716,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
     if      (depth <= 3) gridN = 4;
     else if (depth <= 5) gridN = 3;
     else if (depth <= 7) gridN = 2;
-    else if (depth <= 9) gridN = 2;
+    else                 gridN = 2;  // depth > 7 including >9: always use 2 to avoid div-by-zero
 
     Point c0 = corners[0];  // min corner
     Point c7 = corners[7];  // max corner
@@ -762,10 +765,11 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     mesh = gen.generateMesh(field, localMin, localMax, 1);
 
     meshValid = true;
-    if (mesh.empty()) {
-        surfacePresent = false;
-        surfaceChecked = true;
-    }
+    // Note: do NOT override surfaceChecked/surfacePresent here if mesh is empty.
+    // checkSurface already confirmed surface presence before generateMesh was called.
+    // An empty mesh from MC at resolution 1 is a generator failure, not proof the
+    // surface is absent. Caching false here causes the next adapt cycle (when maxDepth
+    // increases in the progressive loop) to collapse this node, creating visible gaps.
 }
 static int cnt=0;
 void MCObjNode::adapt(SurfaceFunction field,
@@ -781,14 +785,22 @@ void MCObjNode::adapt(SurfaceFunction field,
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
 
-    // Visibility coarsening: masked cells get lower resolution
-    if (flags.useVisibility && nodeMasked && !nodeVisible)
-        effectiveMinPixels *= 20.0;  // cullFactor
-
     bool culled=false;
     double cullFactor=20;
 
     bool skipSurfaceCheck = (depth < 2);  //
+
+        // ID readback visibility: replaces all heuristic culling tests.
+    // Ground truth from pixel readback -- covers frustum, occlusion,
+    // backface and burial in one test.
+    if (flags.useVisibility && nodeMasked && !nodeVisible) {
+        effectiveMinPixels *= cullFactor;
+        skipSurfaceCheck = true;
+        culled = true;
+        // Skip all heuristic tests below -- ID test supersedes them
+        goto cull_done;
+    }
+
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
@@ -829,6 +841,7 @@ void MCObjNode::adapt(SurfaceFunction field,
             skipSurfaceCheck = true;
         }
     }
+    cull_done:
     cnt++;
     if(culled){
         MCGenerator::csi_cull_calls++;
