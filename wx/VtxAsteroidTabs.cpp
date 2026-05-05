@@ -2,6 +2,8 @@
 #include "UniverseModel.h"
 #include "VtxSceneDialog.h"
 
+extern int test8;
+
 //########################### ObjectAddMenu Class ########################
 enum {
 	OBJ_SHOW,
@@ -47,8 +49,7 @@ enum {
 	ID_RNOISE_EXPR,
 	ID_VNOISE_EXPR,
 	ID_MAXDEPTH,
-	ID_CLIPTEST,
-	ID_BACKTEST,
+	ID_SMOOTH,
 	ID_SYMMETRY_SLDR,
 	ID_SYMMETRY_TEXT,
 
@@ -86,8 +87,7 @@ SET_COLOR_EVENTS(DIFFUSE,VtxAsteroidTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxAsteroidTabs,Shadow)
 
 EVT_CHOICE(ID_MAXDEPTH, VtxAsteroidTabs::OnMaxDepth)
-EVT_CHECKBOX(ID_CLIPTEST,VtxAsteroidTabs::OnChangedFlags)
-EVT_CHECKBOX(ID_BACKTEST,VtxAsteroidTabs::OnChangedFlags)
+EVT_CHECKBOX(ID_SMOOTH,VtxAsteroidTabs::OnChangedFlags)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxAsteroidTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxAsteroidTabs::OnDelete)
@@ -174,16 +174,9 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 
 	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
 	
-	wxStaticText *tests=new wxStaticText(panel,-1,"Tests",wxDefaultPosition,wxSize(-1,-1));
-	hline->Add(tests, 5, wxALIGN_LEFT|wxTop|wxLEFT,5);
-	
-	m_clip=new wxCheckBox(panel, ID_CLIPTEST, "Fustrum");
-	m_clip->SetToolTip("Decrease cells in off-screen areas");
-	hline->Add(m_clip,5,wxALIGN_LEFT|wxALL,5);
-
-	m_backface=new wxCheckBox(panel, ID_BACKTEST, "Interior");
-	m_backface->SetToolTip("Decrease cells in interior");
-	hline->Add(m_backface,5,wxALIGN_LEFT|wxALL,5);
+	m_smooth=new wxCheckBox(panel, ID_SMOOTH, "Smooth");
+	m_smooth->SetToolTip("Use smooth normals");
+	hline->Add(m_smooth,5,wxALIGN_LEFT|wxALL,5);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -366,8 +359,7 @@ void VtxAsteroidTabs::updateControls() {
 	
 	m_maxDepth->SetSelection(obj->maxDepth-1);
 	
-	m_clip->SetValue(obj->cliptest);
-	m_backface->SetValue(obj->backtest);
+	m_smooth->SetValue(test8);
 	
 	char buff[256];
 	obj->getRNoiseFunction(buff);

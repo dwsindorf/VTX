@@ -30,8 +30,7 @@ protected:
 	ColorSlider *ShadowSlider;
 	
 	wxChoice   *m_maxDepth;
-	wxCheckBox *m_clip;
-	wxCheckBox *m_backface;
+	wxCheckBox *m_smooth;
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
@@ -130,9 +129,10 @@ public:
 	}
 	
 	void OnChangedFlags(wxCommandEvent& event){
-		object()->cliptest=m_clip->IsChecked();
-		object()->backtest=m_backface->IsChecked();
-		rebuild();
+		extern int test8;
+		test8=event.IsChecked();
+		TheView->set_changed_detail();
+		//rebuild();
 	}
 	void OnEndCellSizeSlider(wxScrollEvent &event) {
 		OnSliderValue(CellSizeSlider, object()->detail);

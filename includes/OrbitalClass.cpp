@@ -2402,7 +2402,7 @@ void Asteroid::adapt_object(){
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
 
-    MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
 
     // Progressive refinement loop:
     // Start at a shallow depth and increase maxDepth each cycle.
