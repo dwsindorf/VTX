@@ -2461,7 +2461,6 @@ void Asteroid::adapt_object(){
 //-------------------------------------------------------------
 void Asteroid::render_object(){
 	static int num_shadows=0;
-	extern int test7;
     if(!tree || !tree->root)
         return;
 
@@ -2482,7 +2481,7 @@ void Asteroid::render_object(){
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-    if(test7)
+    if(MCGenerator::wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	if(Render.lighting())
@@ -2771,11 +2770,10 @@ void Asteroid::buildVBO(){
     // Gradient normals are continuous across cell boundaries, eliminating banding
     // from floating point corner position differences in the geometric cross-product.
     {
-        extern int test8;
         SurfaceFunction& field = tree->field;
         const double h = 1.0 / (1 << maxDepth);  // step = one cell width at maxDepth
 
-        if (test8) {
+        if (MCGenerator::smooth) {
             // Gouraud: per-vertex gradient normal, averaged across shared vertices
             struct V3Key {
                 float x, y, z;

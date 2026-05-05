@@ -68,9 +68,11 @@ public:
     static int csi_false;
     static int csi_by_depth[32];
     static int csi_cull_by_depth[32];
+    static bool wireframe;
+    static bool smooth;
     static double csi_minCellSize;
     static double minDistance;
-    double maxdepth;
+    static double cullFactor;
 
     struct OctreeCell {
         Point center;
@@ -103,7 +105,6 @@ public:
 
     static void resetStats();
     static void printStats();
-    static bool smooth();
 };
 
 //=============================================================================

@@ -2,8 +2,6 @@
 #include "UniverseModel.h"
 #include "VtxSceneDialog.h"
 
-extern int test8;
-
 //########################### ObjectAddMenu Class ########################
 enum {
 	OBJ_SHOW,
@@ -50,6 +48,7 @@ enum {
 	ID_VNOISE_EXPR,
 	ID_MAXDEPTH,
 	ID_SMOOTH,
+	ID_LINES,
 	ID_SYMMETRY_SLDR,
 	ID_SYMMETRY_TEXT,
 
@@ -88,6 +87,7 @@ SET_COLOR_EVENTS(SHADOW,VtxAsteroidTabs,Shadow)
 
 EVT_CHOICE(ID_MAXDEPTH, VtxAsteroidTabs::OnMaxDepth)
 EVT_CHECKBOX(ID_SMOOTH,VtxAsteroidTabs::OnChangedFlags)
+EVT_CHECKBOX(ID_LINES,VtxAsteroidTabs::OnChangedFlags)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxAsteroidTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxAsteroidTabs::OnDelete)
@@ -175,8 +175,12 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
 	
 	m_smooth=new wxCheckBox(panel, ID_SMOOTH, "Smooth");
-	m_smooth->SetToolTip("Use smooth normals");
+	m_smooth->SetToolTip("Smooth normals");
 	hline->Add(m_smooth,5,wxALIGN_LEFT|wxALL,5);
+
+	m_wireframe=new wxCheckBox(panel, ID_LINES, "Lines");
+	m_wireframe->SetToolTip("wireframe");
+	hline->Add(m_wireframe,5,wxALIGN_LEFT|wxALL,5);
 
 	object_cntrls->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
@@ -359,7 +363,8 @@ void VtxAsteroidTabs::updateControls() {
 	
 	m_maxDepth->SetSelection(obj->maxDepth-1);
 	
-	m_smooth->SetValue(test8);
+	m_smooth->SetValue(MCGenerator::smooth);
+	m_wireframe->SetValue(MCGenerator::wireframe);
 	
 	char buff[256];
 	obj->getRNoiseFunction(buff);

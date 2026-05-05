@@ -746,46 +746,39 @@ double Voronoi::noise(double x, double y) {
 	p1.z=m.z*p.x+m.x*p.y+m.y*p.z;
 
 inline Point Voronoi::hashv3(Point p) {
-	Point p1;
-	
-	pvmul3(p, hpnt, p1);
-	double d1=SIN(p1.x);
-	double d2=SIN(p1.y);
-	double d3=SIN(p1.z);
-	
-	Point p4= Point(d1,d2,d3);
-	return p4.fract();
+    // Integer hash — replaces 3x lsin() calls (81 per Voronoi eval, ~8us/eval).
+    // Produces uniform [0,1) output with good distribution across all axes.
+    int ix = (int)floor(p.x);
+    int iy = (int)floor(p.y);
+    int iz = (int)floor(p.z);
+    unsigned int h = (unsigned int)(ix*1619 + iy*31337 + iz*6971);
+    unsigned int hx = (h ^ 0xB5297A4Du) * 0x68E31DA4u;  hx ^= hx >> 16;
+    unsigned int hy = (h ^ 0x1B56C4E9u) * 0x02519623u;  hy ^= hy >> 16;
+    unsigned int hz = (h ^ 0x4B02469Fu) * 0x5A7B3E4Du;  hz ^= hz >> 16;
+    const double scale = 1.0/4294967296.0;
+    return Point(hx*scale, hy*scale, hz*scale);
 }
 
 //-------------------------------------------------------------
 // Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
 //-------------------------------------------------------------
 double  Voronoi::noise(double x, double y, double z) {
-//#ifdef USE_LUT
-//	make_lut();
-//#endif
 	Point pnt=Point(x,y,z);
 	Point p = pnt.floor();
 	Point f = pnt.fract();
-	Point2D res(rval);
+	double d1=1e10, d2=1e10;
 	for (int k = -1; k <= 1; k++) {
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
 				Point b = Point(double(i), double(j), double(k));
 				Point r = Point(b) - f + hashv3(p + b);
-				double d =r.magnitude();
-
-				double cond = MAX(SIGN(res.x - d), 0.0);
-				double nCond = 1.0 - cond;
-
-				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
-				double nCond2 = 1.0 - cond2;
-				res = Point2D(d, res.x) * cond + res * nCond;
-				res.y = cond2 * d + nCond2 * res.y;
+				double d = r.x*r.x + r.y*r.y + r.z*r.z;
+				if      (d < d1) { d2=d1; d1=d; }
+				else if (d < d2) { d2=d; }
 			}
 		}
 	}
-	return res.x-0.5;
+	return sqrt(d1) - 0.5;
 }
 
 //-------------------------------------------------------------
@@ -798,24 +791,19 @@ double Voronoi::edge(double x, double y, double z) {
 	Point pnt=Point(x,y,z);
 	Point p = pnt.floor();
 	Point f = pnt.fract();
-	Point2D res(rval);
+	double d1=1e10, d2=1e10;
 	for (int k = -1; k <= 1; k++) {
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
 				Point b = Point(double(i), double(j), double(k));
 				Point r = Point(b) - f + hashv3(p + b);
-				double d = r.magnitude();
-				double cond = MAX(SIGN(res.x - d), 0.0);
-				double nCond = 1.0 - cond;
-				double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
-				double nCond2 = 1.0 - cond2;
-				res = Point2D(d, res.x) * cond + res * nCond;
-				res.y = cond2 * d + nCond2 * res.y;
+				double d = r.x*r.x + r.y*r.y + r.z*r.z;
+				if      (d < d1) { d2=d1; d1=d; }
+				else if (d < d2) { d2=d; }
 			}
 		}
 	}
-	// res.y - res.x: 0 at boundary, positive at cell centre
-	return (res.y - res.x) - 0.5;
+	return (sqrt(d2) - sqrt(d1)) - 0.5;
 }
 //-------------------------------------------------------------
 #define pvmul4(v, m, p) \

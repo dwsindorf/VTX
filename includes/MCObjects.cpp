@@ -49,7 +49,9 @@ int MCGenerator::ad_field_calls=0; // adaptive
 int MCGenerator::gm_field_calls=0; // mesh both
 int MCGenerator::frame_field_calls=0;  // reset each frame
 double MCGenerator::minDistance=1000;
-
+double MCGenerator::cullFactor=20;
+bool MCGenerator::wireframe=false;
+bool MCGenerator::smooth=false;
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
                                      double val1, double val2, double isolevel) {
@@ -63,11 +65,6 @@ Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
         p1.y + mu * (p2.y - p1.y),
         p1.z + mu * (p2.z - p1.z)
     );
-}
-
-bool MCGenerator::smooth(){
-	extern int test8;
-	return Render.avenorms() && test8;
 }
 
 void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
@@ -788,7 +785,6 @@ void MCObjNode::adapt(SurfaceFunction field,
     double effectiveMinPixels = minPixels;
 
     bool culled=false;
-    double cullFactor=20;
 
     bool skipSurfaceCheck = (depth < 2);
 
@@ -796,7 +792,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     // Ground truth from pixel readback -- covers frustum, occlusion,
     // backface and burial in one test.
     if (flags.useVisibility && nodeMasked && !nodeVisible) {
-        effectiveMinPixels *= cullFactor;
+        effectiveMinPixels *= MCGenerator::cullFactor;
         skipSurfaceCheck = true;
         culled = true;
         // Skip all heuristic tests below -- ID test supersedes them
@@ -807,7 +803,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
         if (localUp < 0) {
-            effectiveMinPixels *= 1.0 + (-localUp) * cullFactor;
+            effectiveMinPixels *= 1.0 + (-localUp) * MCGenerator::cullFactor;
             culled=true;
         }
     }
@@ -819,7 +815,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         double thresh = 0.0;
         if (viewDot < thresh) {
             effectiveMinPixels = std::max(effectiveMinPixels,
-                minPixels * (1.0 + (-viewDot + thresh) * cullFactor));
+                minPixels * (1.0 + (-viewDot + thresh) * MCGenerator::cullFactor));
             culled=true;
         }
     }
@@ -839,7 +835,7 @@ void MCObjNode::adapt(SurfaceFunction field,
         culled = (dotVal < thresh);
 
         if (culled) {
-            effectiveMinPixels *= cullFactor;
+            effectiveMinPixels *= MCGenerator::cullFactor;
             skipSurfaceCheck = true;
         }
     }

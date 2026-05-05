@@ -767,7 +767,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
         }
     }
     // Apply smoothing if enabled
-    if (MCGenerator::smooth()) {
+    if (MCGenerator::smooth) {
         templateSphere->generateSmoothNormals();
     }   
     // Store in cache
@@ -875,7 +875,7 @@ void Rock3DObjMgr::render() {
     n=1;
 #endif
     
-      bool wireframe = test7;
+    bool wireframe = MCGenerator::wireframe;
 
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
@@ -1003,7 +1003,7 @@ void Rock3DObjMgr::render() {
                 }
 
                 // Smooth across combined mesh
-                if (MCGenerator::smooth()) {
+                if (MCGenerator::smooth) {
                     MCObject tmp;
                     for (MCObjNode* leaf : leaves)
                         if (!leaf->mesh.empty())
@@ -1390,7 +1390,7 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
-    bool wireframe = test7;
+    bool wireframe = MCGenerator::wireframe;
          
     if (!PlaceObjMgr::shadow_mode) {
          if (!setProgram()) {

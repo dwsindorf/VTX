@@ -101,14 +101,14 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		TheScene->set_changed_render();
 		break;
 	case KEY_TEST7:
-		test7=test7?0:1;
-		cout<<"test7="<<test7<<endl;
+		MCGenerator::wireframe=MCGenerator::wireframe?false:true;
+		cout<<"wireframe="<<MCGenerator::wireframe<<endl;
 		TheScene->set_moved();
 		TheScene->set_changed_render();
 		break;
 	case KEY_TEST8:
-		test8=test8?0:1;
-		cout<<"test8="<<test8<<endl;
+		MCGenerator::smooth=MCGenerator::smooth?false:true;
+		cout<<"smooth="<<MCGenerator::smooth<<endl;
 		TheScene->set_changed_detail();
 		TheScene->rebuild_all();
 		break;

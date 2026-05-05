@@ -4,7 +4,6 @@
 #include "VtxTabsMgr.h"
 #include "MCObjects.h"
 
-
 class VtxAsteroidTabs: public VtxTabsMgr {
 DECLARE_CLASS(VtxAsteroidTabs)
 protected:
@@ -31,6 +30,7 @@ protected:
 	
 	wxChoice   *m_maxDepth;
 	wxCheckBox *m_smooth;
+	wxCheckBox *m_wireframe;
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
@@ -125,14 +125,12 @@ public:
 		cout<<"maxDepth="<<m_maxDepth->GetSelection()+1<<endl;
 		object()->maxDepth=m_maxDepth->GetSelection()+1;
 		TheView->set_changed_detail();
-		//rebuild();
 	}
 	
 	void OnChangedFlags(wxCommandEvent& event){
-		extern int test8;
-		test8=event.IsChecked();
+		MCGenerator::smooth=m_smooth->IsChecked();
+		MCGenerator::wireframe=m_wireframe->IsChecked();
 		TheView->set_changed_detail();
-		//rebuild();
 	}
 	void OnEndCellSizeSlider(wxScrollEvent &event) {
 		OnSliderValue(CellSizeSlider, object()->detail);
