@@ -2984,8 +2984,8 @@ void Asteroid::calibrateNoise(){
     SurfaceFunction rawField = makeField();
 
     double minDev=1e10, maxDev=-1e10;
-    int samples=20;
-    double step = 2.0/samples;  // sample over [-1,1] like rocks
+    int samples=50;
+    double step = 2.0/samples;
 
     for(int ix=0; ix<=samples; ix++)
     for(int iy=0; iy<=samples; iy++)
@@ -2994,10 +2994,13 @@ void Asteroid::calibrateNoise(){
         double y = -1.0 + iy*step;
         double z = -1.0 + iz*step;
 
-        // Base ellipsoid — same formula as makeField
         double ex=2*x, ey=2*y, ez=2*z;
-        double baseVal = sqrt(ex*ex+ey*ey+ez*ez) - 1.0;
+        double ellipsoidDist = sqrt(ex*ex+ey*ey+ez*ez);
+        // Only sample near the surface — interior/exterior points have noise
+        // that doesn't affect the isosurface and skews the calibrated range.
+        if(ellipsoidDist < 0.5 || ellipsoidDist > 1.5) continue;
 
+        double baseVal = ellipsoidDist - 1.0;
         double fieldVal = rawField(x, y, z);
         double deviation = fieldVal - baseVal;
         minDev = std::min(minDev, deviation);

@@ -87,9 +87,9 @@ static inline double clamp(double x, double l, double m)
 
 #define setup(i,b0,b1,r0,r1)\
 	t = vec[i]; \
-	b0 = ((NLONG)t) & BM;\
+	b0 = ((NLONG)floor(t)) & BM;\
 	b1 = (b0+1) & BM;\
-	r0 = t - (NLONG)t;\
+	r0 = t - floor(t);\
 	r1 = r0 - 1.0;
 
 double Perlin::noise1(double arg)
@@ -361,4 +361,3 @@ void Perlin::initialize()
 	}
 	initialized=true;
 }
-
