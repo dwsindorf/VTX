@@ -2436,6 +2436,7 @@ void Scene::render()
    // printf("update_needed=%d suspended=%d\n", update_needed, (int)suspended());
 	if(!rendering && !suspended() && (update_needed || self)){
 	    rendering=true;
+	    double timing_start=clock();
 
 		setContext();
 		init_for_cycle();
@@ -2525,7 +2526,7 @@ void Scene::render()
 			build_time=(double)(clock() - timing_start)/CLOCKS_PER_SEC;
 			printf("build tm: %-2.1f\n",build_time);
 			Noise::showStats();
-			timing_start=0;
+
 			fflush(stdout);
    		}
         show_info(INFO_TIME);

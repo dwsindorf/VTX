@@ -2402,48 +2402,59 @@ void Asteroid::adapt_object(){
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
 
-    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
 
-    // Progressive refinement loop:
-    // Start at a shallow depth and increase maxDepth each cycle.
-    // Visibility from each cycle guides which cells get finer detail.
-    // Mirrors Map::adapt's iterative convergence approach.
-    int startDepth = 2;  // start coarse
-    int max_cycles = maxDepth - startDepth + 1;
-    int cycleDepth=maxDepth;
+    int total_created = 0, total_deleted = 0;
 
-    for (int cycle = 0; cycle < max_cycles; cycle++) {
-        int cycleDepth = startDepth + cycle;
+    bool isInitialBuild = (tree->root && !tree->root->meshValid &&
+                           tree->root->isLeaf());
 
-        // Render current tree as ID colors, read back visibility
-        if (cycle > 0) {
-            // Save current FBO, render IDs, read back, restore FBO state.
-            GLint savedFBO = 0;
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
-            // Bind FBO for rendering (need depth buffer for correct ID render)
-            if (savedFBO == 0)
-            	GLSLMgr::setFBOWritePass();
-            glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-            glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            tree->render_ids(2.0*size, xpoint);
-            glFinish();
-            tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
-            // Restore FBO state and clear for next render
-            if (savedFBO == 0)
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            else {
-                GLSLMgr::setFBOWritePass();  // restores multi-attachment draw
+    if (isInitialBuild) {
+        // Progressive loop for initial build: coarse-to-fine with ID readback gating.
+        int startDepth = 2;
+        int max_cycles = maxDepth - startDepth + 1;
+        for (int cycle = 0; cycle < max_cycles; cycle++) {
+            int cycleDepth = startDepth + cycle;
+            if (cycle > 0) {
+                GLint savedFBO = 0;
+                glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
+                if (savedFBO == 0) GLSLMgr::setFBOWritePass();
+                glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+                glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                tree->render_ids(2.0*size, xpoint);
+                glFinish();
+                tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
+                if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+                flags.useVisibility = true;
             }
-            flags.useVisibility = true;
+            int c0 = MCGenerator::cells_created;
+            int d0 = MCGenerator::cells_deleted;
+            tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
+            total_created += MCGenerator::cells_created - c0;
+            total_deleted += MCGenerator::cells_deleted - d0;
         }
+    } else {
+        // Incremental: ID readback from current tree, then single adapt.
+        GLint savedFBO = 0;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
+        if (savedFBO == 0) GLSLMgr::setFBOWritePass();
+        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        tree->render_ids(2.0*size, xpoint);
+        glFinish();
+        tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
+        if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+        flags.useVisibility = true;
 
         int c0 = MCGenerator::cells_created;
         int d0 = MCGenerator::cells_deleted;
-        tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
-        int created = MCGenerator::cells_created - c0;
-        int deleted = MCGenerator::cells_deleted - d0;
+        tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+        total_created += MCGenerator::cells_created - c0;
+        total_deleted += MCGenerator::cells_deleted - d0;
     }
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
@@ -2453,7 +2464,12 @@ void Asteroid::adapt_object(){
     if(!changed)
     	MCGenerator::resetStats();
 #endif
-    vboDirty = true;
+    // Only rebuild VBO if tree topology changed — mesh generation is cached
+    // per leaf (meshValid flag) but normals and VBO upload must redo all leaves.
+    if(total_created > 0 || total_deleted > 0 || vboDirty)
+        vboDirty = true;
+    else
+        vboDirty = false;
 }
 
 //-------------------------------------------------------------
@@ -2461,6 +2477,7 @@ void Asteroid::adapt_object(){
 //-------------------------------------------------------------
 void Asteroid::render_object(){
 	static int num_shadows=0;
+	extern int test7;
     if(!tree || !tree->root)
         return;
 
@@ -2481,7 +2498,7 @@ void Asteroid::render_object(){
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-    if(MCGenerator::wireframe)
+    if(test7)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	if(Render.lighting())
@@ -2770,6 +2787,7 @@ void Asteroid::buildVBO(){
     // Gradient normals are continuous across cell boundaries, eliminating banding
     // from floating point corner position differences in the geometric cross-product.
     {
+        extern int test8;
         SurfaceFunction& field = tree->field;
         const double h = 1.0 / (1 << maxDepth);  // step = one cell width at maxDepth
 
@@ -2788,38 +2806,61 @@ void Asteroid::buildVBO(){
             };
             std::unordered_map<V3Key,Point,V3Hash> vertNormal;
 
-            // Accumulate gradient at each vertex position
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                for(auto& tri : leaf->mesh)
-                for(int v=0; v<3; v++){
-                    const Point& p = tri.templatePos[v];
-                    double dx = field(p.x+h,p.y,  p.z  ) - field(p.x-h,p.y,  p.z  );
-                    double dy = field(p.x,  p.y+h, p.z  ) - field(p.x,  p.y-h, p.z  );
-                    double dz = field(p.x,  p.y,   p.z+h) - field(p.x,  p.y,   p.z-h);
-                    V3Key k{(float)p.x, (float)p.y, (float)p.z};
-                    vertNormal[k] = vertNormal[k] + Point(dx,dy,dz);
+            // Check if any leaf needs normal recomputation
+            bool anyNewNormals = false;
+            for(MCObjNode* leaf : leaves)
+                if(leaf->meshValid && !leaf->mesh.empty() && !leaf->normalsValid)
+                    { anyNewNormals = true; break; }
+
+            if(anyNewNormals){
+                // Accumulate gradient at each vertex position — forward differences (4 calls/point)
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    for(auto& tri : leaf->mesh)
+                    for(int v=0; v<3; v++){
+                        const Point& p = tri.templatePos[v];
+                        double fc = field(p.x,   p.y,   p.z  );
+                        double dx = field(p.x+h,  p.y,   p.z  ) - fc;
+                        double dy = field(p.x,    p.y+h, p.z  ) - fc;
+                        double dz = field(p.x,    p.y,   p.z+h) - fc;
+                        V3Key k{(float)p.x, (float)p.y, (float)p.z};
+                        vertNormal[k] = vertNormal[k] + Point(dx,dy,dz);
+                    }
                 }
-            }
-            // Normalize
-            for(auto& kv : vertNormal){
-                double len = kv.second.length();
-                if(len > 1e-10) kv.second = kv.second * (-1.0/len);
-            }
-            // Write per-vertex normal into tri — upload loop uses tri.normal for all 3 verts,
-            // so store the per-vertex result in a side map looked up during upload
-            // (tri.normal stays as centroid gradient for faceNormal/fallback)
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                for(auto& tri : leaf->mesh){
-                    Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
-                    double dx = field(c.x+h,c.y,  c.z  ) - field(c.x-h,c.y,  c.z  );
-                    double dy = field(c.x,  c.y+h, c.z  ) - field(c.x,  c.y-h, c.z  );
-                    double dz = field(c.x,  c.y,   c.z+h) - field(c.x,  c.y,   c.z-h);
-                    Point grad(dx,dy,dz);
-                    double len = grad.length();
-                    tri.faceNormal = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
-                    tri.normal = tri.faceNormal;  // fallback
+                for(auto& kv : vertNormal){
+                    double len = kv.second.length();
+                    if(len > 1e-10) kv.second = kv.second * (-1.0/len);
+                }
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    leaf->normalsValid = true;
+                    for(auto& tri : leaf->mesh){
+                        Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
+                        double fc = field(c.x,   c.y,   c.z  );
+                        double dx = field(c.x+h,  c.y,   c.z  ) - fc;
+                        double dy = field(c.x,    c.y+h, c.z  ) - fc;
+                        double dz = field(c.x,    c.y,   c.z+h) - fc;
+                        Point grad(dx,dy,dz);
+                        double len = grad.length();
+                        tri.faceNormal = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
+                        tri.normal = tri.faceNormal;
+                    }
+                }
+            } else {
+                // All normals cached — rebuild vertNormal map from stored tri.normal
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    for(auto& tri : leaf->mesh)
+                    for(int v=0; v<3; v++){
+                        V3Key k{(float)tri.templatePos[v].x,
+                                (float)tri.templatePos[v].y,
+                                (float)tri.templatePos[v].z};
+                        vertNormal[k] = vertNormal[k] + tri.normal;
+                    }
+                }
+                for(auto& kv : vertNormal){
+                    double len = kv.second.length();
+                    if(len > 1e-10) kv.second = kv.second * (-1.0/len);
                 }
             }
 
@@ -2860,14 +2901,19 @@ void Asteroid::buildVBO(){
                 }
             }
         } else {
-            // Flat: gradient normal at triangle centroid — same for all 3 vertices
+            // Flat: gradient normal at triangle centroid — same for all 3 vertices.
+            // Forward differences: 4 field calls instead of 6 (central differences).
+            // Skip leaves where normalsValid — normals are cached from previous frame.
             for(MCObjNode* leaf : leaves){
                 if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                if(leaf->normalsValid) continue;
+                leaf->normalsValid = true;
                 for(auto& tri : leaf->mesh){
                     Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
-                    double dx = field(c.x+h,c.y,  c.z  ) - field(c.x-h,c.y,  c.z  );
-                    double dy = field(c.x,  c.y+h, c.z  ) - field(c.x,  c.y-h, c.z  );
-                    double dz = field(c.x,  c.y,   c.z+h) - field(c.x,  c.y,   c.z-h);
+                    double fc  = field(c.x,   c.y,   c.z  );
+                    double dx  = field(c.x+h,  c.y,   c.z  ) - fc;
+                    double dy  = field(c.x,    c.y+h, c.z  ) - fc;
+                    double dz  = field(c.x,    c.y,   c.z+h) - fc;
                     Point grad(dx,dy,dz);
                     double len = grad.length();
                     tri.normal    = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);

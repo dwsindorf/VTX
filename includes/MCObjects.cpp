@@ -562,7 +562,7 @@ MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),
       surfaceChecked(false), surfacePresent(false),
-      meshValid(false), attributesApplied(false),
+      meshValid(false), normalsValid(false), attributesApplied(false),
       inFrustum(false), projectedSize(0),
       nodeVisible(false), nodeMasked(false)
 {
@@ -589,6 +589,7 @@ void MCObjNode::collapse()
     }
     meshValid         = false;
     attributesApplied = false;
+    normalsValid      = false;
     mesh.clear();
     mesh.shrink_to_fit();
 }
@@ -598,6 +599,7 @@ void MCObjNode::invalidate()
     surfaceChecked  = false;
     meshValid       = false;
     attributesApplied = false;
+    normalsValid      = false;
     memset(cornersEvaluated, false, sizeof(cornersEvaluated));
     mesh.clear();
     mesh.shrink_to_fit();
@@ -665,6 +667,11 @@ void MCObjNode::split()
         }
 
         children[i] = child;
+        // Inherit parent visibility — new children are assumed to have the same
+        // visibility as their parent until the next ID readback corrects them.
+        // Without this, new children are never masked and grow unboundedly.
+        child->nodeVisible = nodeVisible;
+        child->nodeMasked  = nodeMasked;
     }
 
     meshValid = false;
@@ -769,7 +776,8 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
 
-    meshValid = true;
+    meshValid    = true;
+    normalsValid = false;
 }
 static int cnt=0;
 void MCObjNode::adapt(SurfaceFunction field,
@@ -791,11 +799,13 @@ void MCObjNode::adapt(SurfaceFunction field,
         // ID readback visibility: replaces all heuristic culling tests.
     // Ground truth from pixel readback -- covers frustum, occlusion,
     // backface and burial in one test.
-    if (flags.useVisibility && nodeMasked && !nodeVisible) {
-        effectiveMinPixels *= MCGenerator::cullFactor;
-        skipSurfaceCheck = true;
-        culled = true;
-        // Skip all heuristic tests below -- ID test supersedes them
+    if (flags.useVisibility) {
+        if (nodeMasked && !nodeVisible) {
+            effectiveMinPixels *= MCGenerator::cullFactor;
+            skipSurfaceCheck = true;
+            culled = true;
+        }
+        // Skip all heuristic tests below regardless — ID test supersedes them
         goto cull_done;
     }
 
@@ -812,10 +822,12 @@ void MCObjNode::adapt(SurfaceFunction field,
         Point localCenter = (center - objCenter) / objRadius;
         Point localCamNorm = (cameraPos - objCenter).normalize();
         double viewDot = localCenter.dot(localCamNorm);
-        double thresh = 0.0;
-        if (viewDot < thresh) {
+        // Hysteresis: coarsen at viewDot < -0.1, full detail at viewDot > +0.1.
+        // Dead zone prevents churn when camera rotates near the terminator.
+        const double hyst = 0.1;
+        if (viewDot < -hyst) {
             effectiveMinPixels = std::max(effectiveMinPixels,
-                minPixels * (1.0 + (-viewDot + thresh) * MCGenerator::cullFactor));
+                minPixels * (1.0 + (-viewDot - hyst) * MCGenerator::cullFactor));
             culled=true;
         }
     }
@@ -1022,6 +1034,13 @@ static bool propagateMasked(MCObjNode* node);  // forward decl
 
 void MCObjTree::mark_visibility(int viewport_w, int viewport_h)
 {
+    // Reset all leaf visibility flags before readback so stale flags don't persist
+    for (size_t id = 1; id < mcIdtbl.size(); id++) {
+        if (mcIdtbl[id]) {
+            mcIdtbl[id]->nodeVisible = false;
+            mcIdtbl[id]->nodeMasked  = false;
+        }
+    }
     int n = viewport_w * viewport_h;
     mcPixels.resize(4 * n);
     glReadPixels(0, 0, viewport_w, viewport_h, GL_RGBA, GL_FLOAT, mcPixels.data());

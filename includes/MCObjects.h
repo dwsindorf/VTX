@@ -263,6 +263,7 @@ public:
     // Generated mesh — only valid for leaf nodes
     std::vector<MCTriangle> mesh;
     bool meshValid;
+    bool normalsValid;     // gradient normals cached in tri.normal/faceNormal
     bool attributesApplied;
 
     // Per-frame LOD state — updated each adapt pass
