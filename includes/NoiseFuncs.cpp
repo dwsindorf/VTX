@@ -728,16 +728,17 @@ double Voronoi::noise(double x, double y) {
   Point2D point(x,y);
   Point2D p = point.floor();
   Point2D f = point.fract();
-  double res = 0.0;
+  double d1=1e10, d2=1e10;
   for (int j = -1; j <= 1; j++) {
     for (int i = -1; i <= 1; i++) {
       Point2D b = Point2D(i, j);
-      Point2D r = b- f + rhashv(p + b);
-      double d=pow(r.magnitude(),8.0);
-      res += 1.0 / d;
+      Point2D r = b - f + rhashv(p + b);
+      double d = r.x*r.x + r.y*r.y;
+      if      (d < d1) { d2=d1; d1=d; }
+      else if (d < d2) { d2=d; }
     }
   }
-  return pow(1.0 / res, 0.0625);
+  return sqrt(d1) - 0.5;
 }
 
 #define pvmul3(p, m, p1) \
@@ -813,48 +814,36 @@ double Voronoi::edge(double x, double y, double z) {
 	p.w=m.w*v.x+m.z*v.y+m.y*v.z+m.x*v.w;
 
 inline Point4D Voronoi::hashv4(Point4D p) {
-	Point4D p1;
-	pvmul4(p, hpnt, p1);
-
-	double d1=SIN(p1.x);
-	double d2=SIN(p1.y);
-	double d3=SIN(p1.z);
-	double d4=SIN(p1.w);
-	Point4D p4= Point4D(d4,d3,d2,d1);
-	return p4.fract();
+	int ix = (int)floor(p.x);
+	int iy = (int)floor(p.y);
+	int iz = (int)floor(p.z);
+	int iw = (int)floor(p.w);
+	unsigned int h = (unsigned int)(ix*1619 + iy*31337 + iz*6971 + iw*1301);
+	unsigned int hx = (h ^ 0xB5297A4Du) * 0x68E31DA4u;  hx ^= hx >> 16;
+	unsigned int hy = (h ^ 0x1B56C4E9u) * 0x02519623u;  hy ^= hy >> 16;
+	unsigned int hz = (h ^ 0x4B02469Fu) * 0x5A7B3E4Du;  hz ^= hz >> 16;
+	unsigned int hw = (h ^ 0xA341316Cu) * 0x9e3779b9u;  hw ^= hw >> 16;
+	const double scale = 1.0/4294967296.0;
+	return Point4D(hx*scale, hy*scale, hz*scale, hw*scale);
 }
 
 double Voronoi::noise(double x, double y, double z, double w) {
-//#ifdef USE_LUT
-//	make_lut();
-//#endif
-	double result = 0;
 	Point4D pnt = Point4D(x,y,z,w);
 	Point4D p = pnt.floor();
 	Point4D f = pnt.fract();
-	Point res(rval);
+	double d1=1e10, d2=1e10;
 	for (int k = -1; k <= 1; k++) {
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
 				for (int l = -1; l<= 1; l++) {
 					Point4D b = Point4D(double(i), double(j), double(k), double(l));
-					Point4D r = Point4D(b) - f  + hashv4(p + b);
-					double d = r.magnitude();
-
-					double cond = MAX(SIGN(res.x - d), 0.0);
-					double nCond = 1.0 - cond;
-
-					double cond2 = nCond * MAX(SIGN(res.y - d), 0.0);
-					double nCond2 = 1.0 - cond2;
-
-					double cond3 = nCond2 * MAX(SIGN(res.z - d), 0.0);
-					double nCond3 = 1.0 - cond3;
-					res = Point(d, res.x, res.y) * cond + res * nCond;
-					res.y = cond2 * d + nCond2 * res.y;
-					res.z = cond3 * d + nCond3 * res.z;
+					Point4D r = Point4D(b) - f + hashv4(p + b);
+					double d = r.x*r.x + r.y*r.y + r.z*r.z + r.w*r.w;
+					if      (d < d1) { d2=d1; d1=d; }
+					else if (d < d2) { d2=d; }
 				}
 			}
 		}
 	}
-	return res.x-0.5;
+	return sqrt(d1) - 0.5;
 }
