@@ -467,7 +467,7 @@ public:
 	Bounds *bounds();
 	Point get_focus(void *v);
 	void  set_focus(Point &p);
-	void  move_focus(Point &p) {}  // no-op: asteroid click doesn't reposition camera
+	void  move_focus(Point &p);
 	void  select();
 };
 //************************************************************

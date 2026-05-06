@@ -2113,34 +2113,78 @@ void Asteroid::init(){
 }
 
 //-------------------------------------------------------------
-// Asteroid::init_view() reset to orbital view
+// Asteroid::init_view() set parameters for change in viewtype
 //-------------------------------------------------------------
 void Asteroid::init_view(){
-    // Set up view parameters for orbital view
-    TheScene->maxr = size * 10;
-    TheScene->minr = size;
-
-    TheScene->maxht = 0;
-    TheScene->zoom = size;
-    TheScene->minh = size * 0.001;
+    TheScene->maxr   = size * 10;
+    TheScene->minr   = size;
+    TheScene->zoom   = size;
     TheScene->hstride = 1;
     TheScene->vstride = 0.02;
 
-	if(TheScene->changed_file())  // exit for open
-	   return;
+    // maxht non-zero enables SURFACE view switching.
+    // Use size as the threshold — below size means "on the surface".
+    TheScene->maxht  = size;       // switch to surface when closer than asteroid radius
+    TheScene->minh   = 1.0 * FEET; // minimum 1 foot above surface
+
+    if(TheScene->changed_file())
+        return;
 
     TheScene->gndlvl = 0;
 
-    TheScene->phi=0;
-    TheScene->theta=0;
+    switch(TheScene->viewtype){
+    case ORBITAL:
+        TheScene->phi    = 0;
+        TheScene->theta  = 0;
+        TheScene->radius = 4 * size;
+        TheScene->elevation = TheScene->radius - size;
+        TheScene->height    = TheScene->radius;
+        break;
 
-    TheScene->radius=4*size;
-    TheScene->elevation=TheScene->radius-size;
-    TheScene->height=TheScene->radius;
+    case SURFACE:
+        // Delegate to move_focus which correctly converts the cursor hit (selm)
+        // to theta/phi/radius. Works whether we arrive via focusobj or viewobj path.
+        move_focus(TheScene->selm);
+        break;
+    }
 }
 
 //-------------------------------------------------------------
-// Asteroid::set_lighting() set lighting
+// Asteroid::move_focus() position camera at cursor hit point
+//-------------------------------------------------------------
+void Asteroid::move_focus(Point &selm)
+{
+    if(!tree || !tree->root)
+        return;
+
+    Point sph = selm.spherical();
+    double theta = sph.y - 180.0;  // longitude, corrected by 180°
+    double phi   = sph.x;          // latitude
+
+    TheScene->theta  = theta;
+    TheScene->phi    = phi;
+    printf("move_focus: selm=(%.4f,%.4f,%.4f) sph=(%.1f,%.1f,%.4f) -> T=%.1f P=%.1f camT=%.1f camP=%.1f\n",
+        selm.x,selm.y,selm.z, sph.x,sph.y,sph.z, theta,phi,
+        TheScene->theta, TheScene->phi);
+    TheScene->gndlvl = 0;
+
+    // Set height based on current distance to the surface, like Spheroid::move_focus.
+    // Use 10% of the distance from camera to hit point as the landing height.
+    double dist = (selm - TheScene->xpoint).length();
+    double ht   = std::max(dist * 0.1, 1.0 * FEET);  // 10% of dist, minimum 1 foot
+    TheScene->height    = ht;
+    TheScene->elevation = ht;
+    TheScene->radius    = size + ht;
+
+    if(TheScene->changed_view() || TheScene->changed_object()){
+        TheScene->heading   = 0;
+        TheScene->view_tilt = -15;  // look slightly down to see surface
+        TheScene->pitch     = 0;
+    }
+
+    TheScene->clr_moved();
+    TheScene->set_changed_detail();
+}
 //-------------------------------------------------------------
 void Asteroid::set_lighting(){
     Orbital::set_lighting();
@@ -2425,6 +2469,7 @@ void Asteroid::adapt_object(){
                 tree->render_ids(2.0*size, xpoint);
                 glFinish();
                 tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
+                Raster.reset_idtbl();  // clear MC node IDs — prevents idvalues() misuse in Scene::select()
                 if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
                 flags.useVisibility = true;
@@ -2446,6 +2491,7 @@ void Asteroid::adapt_object(){
         tree->render_ids(2.0*size, xpoint);
         glFinish();
         tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
+        Raster.reset_idtbl();  // clear MC node IDs — prevents idvalues() misuse in Scene::select()
         if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
         else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
         flags.useVisibility = true;
@@ -2556,6 +2602,12 @@ void Asteroid::select()
 		set_tilt();
 		set_rotation();
 		setMatrix();
+
+        // Reset the Raster ID table so MC node IDs from render_ids() don't
+        // get misinterpreted as MapNode theta/phi in Scene::select()'s
+        // surface_view idvalues() path.
+        Raster.reset_idtbl();
+
     	int id = Raster.set_id();
         Raster.set_data((MapNode*)this);
         glLoadName(id);
@@ -2608,7 +2660,7 @@ Point Asteroid::get_focus(void *v)
 
     Point hit_local;
     if (tree->raycast(local_org, local_dir, hit_local))
-        return hit_local * scale;  // world-space hit point
+        return hit_local * scale;  // world-space hit (asteroid centered at origin in MC space)
     return point;  // fallback: asteroid center
 }
 
@@ -2621,7 +2673,6 @@ Point Asteroid::get_focus(void *v)
 void Asteroid::set_focus(Point &selm)
 {
     // selm is the world-space hit point set by get_focus().
-    // Reproject it each frame so crosshair tracks the surface as camera moves.
     if (selm.length() < 1e-10) {
         Object3D::set_focus(selm);
         return;
@@ -2633,8 +2684,7 @@ void Asteroid::set_focus(Point &selm)
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
 
-    // selm is the world-space hit from get_focus(), reprojected each frame.
-    Point  cam_w   = TheScene->xpoint;
+    Point  cam_w     = TheScene->xpoint;
     Point  hit_world = selm;
 
     // Distance string
@@ -2642,7 +2692,10 @@ void Asteroid::set_focus(Point &selm)
     const char *units = "miles";
     double dval = d / MILES;
     if (d < 4.0 * MILES) { dval = d / FEET; units = "ft"; }
-    TheScene->set_istring("dist %5.1f %s", dval, units);
+
+    // Show theta/phi of hit point for diagnostics
+    Point sph = hit_world.spherical();
+    TheScene->set_istring("dist %5.1f %s  T:%.1f P:%.1f", dval, units, sph.y - 180.0, sph.x);
 
     // Project hit to screen using ModelViewProjMatrix (same matrix that
     // InvModelViewProjMatrix inverts -- so if unProject works, this should too).
@@ -2787,7 +2840,6 @@ void Asteroid::buildVBO(){
     // Gradient normals are continuous across cell boundaries, eliminating banding
     // from floating point corner position differences in the geometric cross-product.
     {
-        extern int test8;
         SurfaceFunction& field = tree->field;
         const double h = 1.0 / (1 << maxDepth);  // step = one cell width at maxDepth
 
