@@ -414,12 +414,15 @@ private:
 	void rebuildTree();
 	void applyAttributes(std::vector<MCTriangle>& mesh);
 	double raycastHeight();       // ray from camera toward center, returns ht above surface
+	void   updateSurfaceR();      // sample field to find actual surface radius at camera pos
 	std::vector<GLVertex> glVertices;  // staging buffer
 	GLuint vboVertices;
 	int    uploadedVertexCount;
 	bool   vboDirty;
 	double meshZnear;   // tight znear from last VBO build (eye space)
 	double meshZfar;    // tight zfar  from last VBO build (eye space)
+	double surfaceR;    // actual surface radius at last focus click (from selm.length())
+	bool   surfaceView; // true when in surface view — controls radius() return value
 	double noiseScale;
 	double noiseOffset;
 	void buildVBO();
@@ -449,7 +452,7 @@ public:
 	void render_object();
 	bool setProgram();
 	int scale(double& znear, double& zfar);
-	double radius()             { return size; }
+	double radius()             { return surfaceView ? surfaceR : size; }
 	double far_height();
 	double max_height();
 	double height(double t, double p);

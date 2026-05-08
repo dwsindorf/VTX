@@ -31,7 +31,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-#define PRINT_STATS
+//#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2008,7 +2008,10 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
-
+	meshZnear=0;
+	meshZfar=0;
+	surfaceR=size;
+	surfaceView=false;
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2135,6 +2138,7 @@ void Asteroid::init_view(){
 
     switch(TheScene->viewtype){
     case ORBITAL:
+        surfaceView = false;
         TheScene->phi    = 0;
         TheScene->theta  = 0;
         TheScene->radius = 4 * size;
@@ -2146,9 +2150,24 @@ void Asteroid::init_view(){
         break;
 
     case SURFACE:
-        // Delegate to move_focus which correctly converts the cursor hit (selm)
-        // to theta/phi/radius. Works whether we arrive via focusobj or viewobj path.
-        move_focus(TheScene->selm);
+        surfaceView = true;
+        if(TheScene->selm.length() > size * 0.5){
+            // Valid cursor hit — land there.
+            move_focus(TheScene->selm);
+        } else {
+            // No cursor hit — land above the top of the asteroid.
+            // Use size*(1+max_height()) as conservative surface radius to stay outside.
+            surfaceR = size * (1.0 + max_height());
+            double ht = size * 0.1;
+            TheScene->theta     = 0;
+            TheScene->phi       = 90;
+            TheScene->height    = ht;
+            TheScene->elevation = ht;
+            TheScene->radius    = surfaceR + ht;
+            TheScene->heading   = 0;
+            TheScene->view_tilt = -15;
+            TheScene->pitch     = 0;
+        }
         break;
     }
 }
@@ -2161,33 +2180,66 @@ void Asteroid::move_focus(Point &selm)
     if(!tree || !tree->root)
         return;
 
-    Point sph = selm.spherical();
-    double theta = sph.y - 180.0;  // longitude, corrected by 180°
-    double phi   = sph.x;          // latitude
 
-    TheScene->theta  = theta;
-    TheScene->phi    = phi;
-    printf("move_focus: selm=(%.4f,%.4f,%.4f) sph=(%.1f,%.1f,%.4f) -> T=%.1f P=%.1f camT=%.1f camP=%.1f\n",
-        selm.x,selm.y,selm.z, sph.x,sph.y,sph.z, theta,phi,
-        TheScene->theta, TheScene->phi);
-    TheScene->gndlvl = 0;
-
-    // Set height based on current distance to the surface, like Spheroid::move_focus.
-    // Use 10% of the distance from camera to hit point as the landing height.
-    double dist = (selm - TheScene->xpoint).length();
-    double ht   = std::max(dist * 0.1, 1.0 * FEET);  // 10% of dist, minimum 1 foot
-    TheScene->height    = ht;
-    TheScene->elevation = ht;
-    TheScene->radius    = size + ht;
-
-    if(TheScene->changed_view() || TheScene->changed_object()){
-        TheScene->heading   = 0;
-        TheScene->view_tilt = -15;  // look slightly down to see surface
-        TheScene->pitch     = 0;
+    if(TheScene->viewobj != this){
+        // Switching to this asteroid as viewobj — init orbital view.
+        surfaceView = false;
+        TheScene->viewobj = this;
+        init_view();
+        return;
     }
 
-    TheScene->clr_moved();
+    // viewobj == this
+    TheScene->gndlvl = 0;
+
+    // Store actual surface radius from the hit point for znear computation.
+    double sr = selm.length();
+    if(sr > size * 0.5) surfaceR = sr;
+    else surfaceR = size * (1.0 + max_height());  // no valid hit — stay outside noise envelope
+
+    if(TheScene->viewtype == ORBITAL){
+        surfaceView = false;
+        // In orbital view: progressive zoom toward the asteroid.
+        // Don't change theta/phi — those control the orbital camera angle.
+        double curR  = TheScene->radius;
+        double newR  = (TheScene->changed_position()) ? 4.0 * size : curR * 0.5;
+        newR = std::max(newR, size * 1.05);
+        TheScene->radius    = newR;
+        TheScene->height    = newR;
+        TheScene->elevation = newR;
+    }
+    else{
+        surfaceView = true;
+        // Surface view: place camera above the hit point.
+        Point sph   = selm.spherical();
+        double theta = sph.y - 180.0;
+        double phi   = sph.x;
+
+        TheScene->theta = theta;
+        TheScene->phi   = phi;
+
+        double dist = (selm - TheScene->xpoint).length();
+        double ht   = std::max(dist * 0.1, 1.0 * FEET);
+
+        if(TheScene->changed_position()){
+            // Progressive zoom: 10% of current height each press.
+            double curHt = std::max(TheScene->radius - surfaceR, TheScene->minh);
+            ht = std::max(curHt * 0.1, TheScene->minh);
+        }
+
+        TheScene->height    = ht;
+        TheScene->elevation = ht;
+        TheScene->radius    = surfaceR + ht;
+
+        if(TheScene->changed_view() || TheScene->changed_object()){
+            TheScene->heading   = 0;
+            TheScene->view_tilt = -15;
+            TheScene->pitch     = 0;
+        }
+    }
+
     TheScene->set_changed_detail();
+    TheScene->minr = size * 0.001;
 }
 //-------------------------------------------------------------
 void Asteroid::set_lighting(){
@@ -2260,30 +2312,111 @@ double Asteroid::max_height() {
 double Asteroid::height(double t, double p) {
      return size;
 }
+
+//-------------------------------------------------------------
+// Asteroid::updateSurfaceR()
+// Sample the isosurface field along the camera-to-center direction
+// to find the actual surface radius at the camera's current position.
+// Updates surfaceR member. Called from scale() every frame.
+//-------------------------------------------------------------
+void Asteroid::updateSurfaceR()
+{
+    if(!tree) return;
+
+    // Camera direction toward asteroid center in normalised field space.
+    // Field coords are in [-0.5,0.5], corresponding to world [-size,size].
+    Point cam_w  = TheScene->xpoint;
+    double camLen = cam_w.length();
+    if(camLen < 1e-10) return;
+
+    Point inward = (cam_w * (-1.0 / camLen));  // unit vector toward center
+
+    // Binary search for field zero crossing along inward ray.
+    // Start just inside the bounding envelope, end at center.
+    double lo = 0.0;                            // t=0: asteroid center
+    double hi = camLen;                         // t=camLen: camera position
+    // field space: divide world coords by 2*size
+    double scale2 = 2.0 * size;
+    SurfaceFunction& f = tree->field;
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+
+    // Find bracket: walk outward from center until field goes positive (outside)
+    double t_surface = size;  // fallback
+    const int STEPS = 8;
+    double flo = -1.0, fhi = 1.0;
+    double tlo = 0.0, thi = hi;
+    for(int i = 0; i <= STEPS; i++){
+        double t  = hi * i / STEPS;
+        Point  wp = cam_w + inward * (-t);  // world point along inward ray
+        // Negate: inward goes from camera toward center, so at t=0 we're at camera,
+        // at t=hi we're at center. We want world points between center and camera.
+        wp = cam_w * (1.0 - (double)i/STEPS);  // lerp from cam to center
+        Point  fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+        double fv = f(fp.x, fp.y, fp.z);
+        if(i == 0){ fhi = fv; thi = t; }
+        else if(fv <= 0.0 && flo > 0.0){
+            // zero crossing found: surface is between t and previous t
+            t_surface = hi * (i-1.0) / STEPS;
+            tlo = hi * (i-1.0) / STEPS;
+            thi = hi * i / STEPS;
+            flo = fv;
+            break;
+        }
+        flo = fv;
+    }
+    // Refine with a few bisection steps
+    for(int i = 0; i < 6; i++){
+        double tm = 0.5*(tlo+thi);
+        Point  wp = cam_w * (1.0 - tm/hi);
+        Point  fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+        double fv = f(fp.x, fp.y, fp.z);
+        if(fv > 0.0) thi = tm;
+        else         tlo = tm;
+    }
+    t_surface = 0.5*(tlo+thi);  // distance from camera to surface
+    surfaceR  = camLen - t_surface;  // surface radius from center
+
+    TheNoise.rseed = seed;
+}
+
 //-------------------------------------------------------------
 // Asteroid::scale() set znear, zfar
 //-------------------------------------------------------------
 int Asteroid::scale(double& znear, double& zfar) {
-    // Set clipping planes based on asteroid size
-    double zn,zf;      // far plane = 100x radius
-    const double MINZN=1e-6;
-    double d=TheView->epoint.distance(point);
-    zn=d-size*(1+max_height());
-    if(zn<MINZN){
-    	zn=MINZN;
+    double d        = TheView->epoint.distance(point);
+    double envelope = size * (1.0 + max_height());
+
+    if(TheScene->viewobj == this){
+        // ht = camera height above actual surface.
+        // surfaceR is set by move_focus from the actual hit point.
+        double ht = std::max(TheScene->radius - surfaceR, TheScene->minh);
+
+        TheScene->height    = ht;
+        TheScene->elevation = ht;
+        // Do NOT set TheScene->radius here — that drives calc_offset/camera position.
+
+        // znear: 25% of height above surface, matching Map::set_scene.
+        znear = 0.25 * ht;
+        znear = std::max(znear, TheScene->minh * 0.1);
+
+        // zfar: horizon distance or 4x envelope.
+        double r         = TheScene->radius;
+        double horizonSq = r*r - surfaceR*surfaceR;
+        double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
+        zfar = std::max(horizon, 4.0*envelope);
+
+        if(TheScene->surface_view())
+            TheScene->minr = size * 0.001;
     }
-    zf=d+size*(1+max_height());
+    else{
+        double zn = d - envelope;
+        znear = (zn > 1e-6) ? zn : 1e-6;
+        zfar  = d + envelope;
+    }
 
-    double ht=TheScene->radius-size;
-    double mht=std::min(ht,minHeight);
-    //TheScene->height=mht;
-    TheScene->height=ht;
-    TheScene->elevation=TheScene->radius-size;
-
-    znear=zn;
-    zfar=zf;
     setvis(OUTSIDE);
-    return OUTSIDE;  // Render as outside object
+    return OUTSIDE;
 }
 
 //-------------------------------------------------------------
@@ -2434,6 +2567,8 @@ void Asteroid::adapt_object(){
     if(!moved && !vboDirty)
         return;
 
+    MCGenerator::minDistance = 0;  // reset so this adapt gets a fresh minimum
+
     Point xpoint = TheScene->xpoint;
     Point asteroidWorld = this->point;
     Point up,right, forward;
@@ -2471,6 +2606,18 @@ void Asteroid::adapt_object(){
     }
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
+
+    // Compute znear/zfar now while minDistance is fresh.
+    // scale() is called before adapt so it can't do this itself.
+    if(TheScene->viewobj == this && minHeight > 0){
+        double ht = std::max(minHeight, TheScene->minh);
+        meshZnear = 0.25 * ht;
+        meshZnear = std::max(meshZnear, TheScene->minh * 0.1);
+        double r         = TheScene->radius;
+        double envelope2 = size * (1.0 + max_height());
+        double horizonSq = r*r - size*size;
+        double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope2;
+        meshZfar = std::max(horizon, 4.0*envelope2);    }
 #ifdef PRINT_STATS
     tree->countCells();
     MCGenerator::printStats();
