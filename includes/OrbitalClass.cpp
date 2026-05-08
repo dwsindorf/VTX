@@ -2957,63 +2957,31 @@ void Asteroid::buildVBO(){
         SurfaceFunction& field = tree->field;
         const double h = 1.0 / (1 << maxDepth);  // step = one cell width at maxDepth
 
-        if (MCGenerator::smooth) {
-            // Gouraud: per-vertex gradient normal, averaged across shared vertices
-            struct V3Key {
-                float x, y, z;
-                bool operator==(const V3Key& o) const { return x==o.x && y==o.y && z==o.z; }
-            };
-            struct V3Hash {
-                size_t operator()(const V3Key& k) const {
-                    uint32_t ix, iy, iz;
-                    memcpy(&ix, &k.x, 4); memcpy(&iy, &k.y, 4); memcpy(&iz, &k.z, 4);
-                    return (size_t)(ix*2654435761ULL ^ iy*805459861ULL ^ iz*3674653429ULL);
-                }
-            };
-            std::unordered_map<V3Key,Point,V3Hash> vertNormal;
+        // Face normals are computed in generateMesh (normalsValid flag).
+        // For smooth mode: do a cross-leaf vertex averaging pass whenever any leaf
+        // has new geometry (!smoothNormalsValid). Store result in tri.smoothNormal[3].
+        // This runs at adapt time effectively — only when mesh changes, not every frame.
 
-            // Check if any leaf needs normal recomputation
-            bool anyNewNormals = false;
+        if(MCGenerator::smooth){
+            bool anyNew = false;
             for(MCObjNode* leaf : leaves)
-                if(leaf->meshValid && !leaf->mesh.empty() && !leaf->normalsValid)
-                    { anyNewNormals = true; break; }
+                if(leaf->meshValid && !leaf->mesh.empty() && !leaf->smoothNormalsValid)
+                    { anyNew = true; break; }
 
-            if(anyNewNormals){
-                // Accumulate gradient at each vertex position — forward differences (4 calls/point)
-                for(MCObjNode* leaf : leaves){
-                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                    for(auto& tri : leaf->mesh)
-                    for(int v=0; v<3; v++){
-                        const Point& p = tri.templatePos[v];
-                        double fc = field(p.x,   p.y,   p.z  );
-                        double dx = field(p.x+h,  p.y,   p.z  ) - fc;
-                        double dy = field(p.x,    p.y+h, p.z  ) - fc;
-                        double dz = field(p.x,    p.y,   p.z+h) - fc;
-                        V3Key k{(float)p.x, (float)p.y, (float)p.z};
-                        vertNormal[k] = vertNormal[k] + Point(dx,dy,dz);
+            if(anyNew){
+                struct V3Key {
+                    float x, y, z;
+                    bool operator==(const V3Key& o) const { return x==o.x&&y==o.y&&z==o.z; }
+                };
+                struct V3Hash {
+                    size_t operator()(const V3Key& k) const {
+                        uint32_t ix,iy,iz;
+                        memcpy(&ix,&k.x,4); memcpy(&iy,&k.y,4); memcpy(&iz,&k.z,4);
+                        return (size_t)(ix*2654435761ULL^iy*805459861ULL^iz*3674653429ULL);
                     }
-                }
-                for(auto& kv : vertNormal){
-                    double len = kv.second.length();
-                    if(len > 1e-10) kv.second = kv.second * (-1.0/len);
-                }
-                for(MCObjNode* leaf : leaves){
-                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                    leaf->normalsValid = true;
-                    for(auto& tri : leaf->mesh){
-                        Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
-                        double fc = field(c.x,   c.y,   c.z  );
-                        double dx = field(c.x+h,  c.y,   c.z  ) - fc;
-                        double dy = field(c.x,    c.y+h, c.z  ) - fc;
-                        double dz = field(c.x,    c.y,   c.z+h) - fc;
-                        Point grad(dx,dy,dz);
-                        double len = grad.length();
-                        tri.faceNormal = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
-                        tri.normal = tri.faceNormal;
-                    }
-                }
-            } else {
-                // All normals cached — rebuild vertNormal map from stored tri.normal
+                };
+                // Accumulate face normals at shared vertex positions across ALL leaves
+                std::unordered_map<V3Key,Point,V3Hash> vertNormal;
                 for(MCObjNode* leaf : leaves){
                     if(!leaf->meshValid || leaf->mesh.empty()) continue;
                     for(auto& tri : leaf->mesh)
@@ -3021,103 +2989,60 @@ void Asteroid::buildVBO(){
                         V3Key k{(float)tri.templatePos[v].x,
                                 (float)tri.templatePos[v].y,
                                 (float)tri.templatePos[v].z};
-                        vertNormal[k] = vertNormal[k] + tri.normal;
+                        vertNormal[k] = vertNormal[k] + tri.faceNormal;
                     }
                 }
+                // Normalize
                 for(auto& kv : vertNormal){
                     double len = kv.second.length();
-                    if(len > 1e-10) kv.second = kv.second * (-1.0/len);
+                    if(len > 1e-10) kv.second = kv.second*(1.0/len);
                 }
-            }
-
-            // Step 2: Apply vertex displacement
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                if(!leaf->attributesApplied){
-                    applyAttributes(leaf->mesh);
-                    leaf->attributesApplied = true;
-                }
-            }
-
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                for(auto& tri : leaf->mesh){
+                // Store into ALL leaves (including ones that were already valid)
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    leaf->smoothNormalsValid = true;
+                    for(auto& tri : leaf->mesh)
                     for(int v=0; v<3; v++){
-                        GLVertex gv;
-                        Point p = tri.vertices[v] * scale - eyeOffset;
-                        gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
                         V3Key k{(float)tri.templatePos[v].x,
                                 (float)tri.templatePos[v].y,
                                 (float)tri.templatePos[v].z};
                         auto it = vertNormal.find(k);
-                        Point vn = (it != vertNormal.end()) ? it->second : tri.normal;
-                        gv.normal[0]=(float)-vn.x; gv.normal[1]=(float)-vn.y; gv.normal[2]=(float)-vn.z;
-                        gv.templatePos[0]=(float)tri.vertices[v].x;
-                        gv.templatePos[1]=(float)tri.vertices[v].y;
-                        gv.templatePos[2]=(float)tri.vertices[v].z;
-                        gv.templatePos[3]=(float)eyeCenter.length();
-                        gv.faceNormal[0]=(float)-tri.faceNormal.x;
-                        gv.faceNormal[1]=(float)-tri.faceNormal.y;
-                        gv.faceNormal[2]=(float)-tri.faceNormal.z;
-                        gv.faceNormal[3]=0.0f;
-                        Color c = tri.colors[v];
-                        gv.color[0]=(float)c.red(); gv.color[1]=(float)c.green(); gv.color[2]=(float)c.blue();
-                        glVertices.push_back(gv);
+                        tri.smoothNormal[v] = (it!=vertNormal.end()) ? it->second : tri.faceNormal;
                     }
                 }
             }
-        } else {
-            // Flat: gradient normal at triangle centroid — same for all 3 vertices.
-            // Forward differences: 4 field calls instead of 6 (central differences).
-            // Skip leaves where normalsValid — normals are cached from previous frame.
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                if(leaf->normalsValid) continue;
-                leaf->normalsValid = true;
-                for(auto& tri : leaf->mesh){
-                    Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
-                    double fc  = field(c.x,   c.y,   c.z  );
-                    double dx  = field(c.x+h,  c.y,   c.z  ) - fc;
-                    double dy  = field(c.x,    c.y+h, c.z  ) - fc;
-                    double dz  = field(c.x,    c.y,   c.z+h) - fc;
-                    Point grad(dx,dy,dz);
-                    double len = grad.length();
-                    tri.normal    = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
-                    tri.faceNormal = tri.normal;
-                }
-            }
+        }
 
-            // Step 2: Apply vertex displacement
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                if(!leaf->attributesApplied){
-                    applyAttributes(leaf->mesh);
-                    leaf->attributesApplied = true;
-                }
+        // Apply vertex displacement (only new leaves)
+        for(MCObjNode* leaf : leaves){
+            if(!leaf->meshValid || leaf->mesh.empty()) continue;
+            if(!leaf->attributesApplied){
+                applyAttributes(leaf->mesh);
+                leaf->attributesApplied = true;
             }
+        }
 
-            for(MCObjNode* leaf : leaves){
-                if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                for(auto& tri : leaf->mesh){
-                    for(int v=0; v<3; v++){
-                        GLVertex gv;
-                        Point p = tri.vertices[v] * scale - eyeOffset;
-                        gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
-                        gv.normal[0]=(float)-tri.normal.x;
-                        gv.normal[1]=(float)-tri.normal.y;
-                        gv.normal[2]=(float)-tri.normal.z;
-                        gv.templatePos[0]=(float)tri.vertices[v].x;
-                        gv.templatePos[1]=(float)tri.vertices[v].y;
-                        gv.templatePos[2]=(float)tri.vertices[v].z;
-                        gv.templatePos[3]=(float)eyeCenter.length();
-                        gv.faceNormal[0]=(float)-tri.faceNormal.x;
-                        gv.faceNormal[1]=(float)-tri.faceNormal.y;
-                        gv.faceNormal[2]=(float)-tri.faceNormal.z;
-                        gv.faceNormal[3]=0.0f;
-                        Color c = tri.colors[v];
-                        gv.color[0]=(float)c.red(); gv.color[1]=(float)c.green(); gv.color[2]=(float)c.blue();
-                        glVertices.push_back(gv);
-                    }
+        // Assemble VBO
+        for(MCObjNode* leaf : leaves){
+            if(!leaf->meshValid || leaf->mesh.empty()) continue;
+            for(auto& tri : leaf->mesh){
+                for(int v=0; v<3; v++){
+                    GLVertex gv;
+                    Point p = tri.vertices[v] * scale - eyeOffset;
+                    gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
+                    Point vn = MCGenerator::smooth ? tri.smoothNormal[v] : tri.faceNormal;
+                    gv.normal[0]=(float)-vn.x; gv.normal[1]=(float)-vn.y; gv.normal[2]=(float)-vn.z;
+                    gv.templatePos[0]=(float)tri.vertices[v].x;
+                    gv.templatePos[1]=(float)tri.vertices[v].y;
+                    gv.templatePos[2]=(float)tri.vertices[v].z;
+                    gv.templatePos[3]=(float)eyeCenter.length();
+                    gv.faceNormal[0]=(float)-tri.faceNormal.x;
+                    gv.faceNormal[1]=(float)-tri.faceNormal.y;
+                    gv.faceNormal[2]=(float)-tri.faceNormal.z;
+                    gv.faceNormal[3]=0.0f;
+                    Color c = tri.colors[v];
+                    gv.color[0]=(float)c.red(); gv.color[1]=(float)c.green(); gv.color[2]=(float)c.blue();
+                    glVertices.push_back(gv);
                 }
             }
         }

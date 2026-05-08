@@ -38,8 +38,9 @@ struct MCTriangle {
     Point vertices[3];
     Point normal;
     Point faceNormal;
+    Point smoothNormal[3];  // cached per-vertex smooth normals (valid when normalsValid)
     Color colors[3];
-    Point templatePos[3]; 
+    Point templatePos[3];
 };
 
 // Scalar field function type - returns density at (x,y,z)
@@ -90,7 +91,7 @@ public:
         }
     };
 
- 
+
     Point interpolateVertex(const Point& p1, const Point& p2,
                             double val1, double val2, double isolevel);
     void addTriangle(const Point& v1, const Point& v2, const Point& v3,
@@ -98,7 +99,7 @@ public:
     void generateTrianglesForCube(int cubeIndex, const Point vertList[12],
                                   std::vector<MCTriangle>& triangles);
 
-    
+
     std::vector<MCTriangle> generateMesh(
         SurfaceFunction field,
         const Point& boundsMin, const Point& boundsMax,
@@ -201,18 +202,18 @@ struct MCObjAdaptFlags {
     static const Point rockRight;
     static const Point rockForward;
     static const Point rockUp;
-    static Point camForward; 
-    static Point rotatedCam; 
-    
+    static Point camForward;
+    static Point rotatedCam;
+
     MCObjAdaptFlags() {}
-        
+
         // Explicit constructor for external configuration
 	MCObjAdaptFlags(bool burial, bool backface, bool frustum, bool visids)
 		: burialCoarsening(burial)
 		, backfaceCoarsening(backface)
 		, frustumCulling(frustum)
 		, useVisibility(visids)
-	{}     
+	{}
     static void setDirections(Point p, Point r, Point f, Point u);
 };
 
@@ -250,7 +251,8 @@ public:
     // Generated mesh — only valid for leaf nodes
     std::vector<MCTriangle> mesh;
     bool meshValid;
-    bool normalsValid;     // gradient normals cached in tri.normal/faceNormal
+    bool normalsValid;          // flat/face normals cached in tri.normal/faceNormal
+    bool smoothNormalsValid;    // per-vertex smooth normals cached in tri.smoothNormal[3]
     bool attributesApplied;
 
     // Per-frame LOD state — updated each adapt pass
@@ -283,7 +285,7 @@ public:
                const Point& cameraPos, double wscale,double isoNoiseAmpl,
                double minPixels, int maxDepth,
                const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
-    
+
      // Surface intersection using cached corner values where available
     bool checkSurface(SurfaceFunction field,
                       const Point& objCenter, double objRadius,
@@ -296,7 +298,7 @@ public:
 
     // Invalidate mesh and surface cache (call when field changes)
     void invalidate();
-    
+
     void getCorners(Point localCorners[8],
                     const Point& objCenter, double objRadius) const;
 };
@@ -342,7 +344,7 @@ public:
 
     // Top-level adapt — mirrors Map::adapt()
     // Traverses tree top-down, splits/collapses nodes per viewpoint
-    
+
     void adapt(const Point& cameraPos, double wscale,double isoNoiseAmpl,
                double minPixels, int maxDepth,
                const MCObjAdaptFlags& flags = MCObjAdaptFlags{});
