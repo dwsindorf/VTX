@@ -781,14 +781,11 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
 
-    // Compute face normals from field gradient at each triangle centroid.
-    // Field is available here; this avoids redundant field calls in buildVBO.
-    // h matches the step used in buildVBO gradient computation.
-    // We use objRadius (= 2*asteroid_size) to get cell width at max depth.
-    // A single cell at depth D spans objRadius/2^D in normalised space.
-    // Use a small fixed h that's reasonable across depths.
-    {
-        const double h = 1.0 / 512.0;  // fine enough for gradient accuracy
+    // Compute face normals from field gradient — only when smooth mode is on.
+    // In flat mode buildVBO uses cross-product normals from tri.normal.
+    // Skipping these field calls in flat mode avoids unnecessary computation.
+    if(MCGenerator::smooth){
+        const double h = 1.0 / 512.0;
         for(auto& tri : mesh){
             Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
             double fc = field(c.x,    c.y,    c.z   );
@@ -799,14 +796,13 @@ void MCObjNode::generateMesh(SurfaceFunction field,
             double len = grad.length();
             tri.faceNormal = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
             tri.normal     = tri.faceNormal;
-            // smoothNormal will be filled by buildVBO cross-leaf averaging pass
             tri.smoothNormal[0] = tri.smoothNormal[1] = tri.smoothNormal[2] = tri.faceNormal;
         }
     }
 
-    meshValid    = true;
-    normalsValid = true;   // face normals are valid
-    smoothNormalsValid = false;  // cross-leaf smooth normals not yet computed
+    meshValid          = true;
+    normalsValid       = MCGenerator::smooth;  // face normals valid only if computed above
+    smoothNormalsValid = false;
 }
 static int cnt=0;
 
