@@ -2005,8 +2005,6 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	noiseScale=1.0;
 	noiseOffset=0.0;
 	maxDepth=12;
-	cliptest=true;
-	backtest=true;
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
@@ -2125,10 +2123,13 @@ void Asteroid::init_view(){
     // maxht non-zero enables SURFACE view switching.
     // Use size as the threshold — below size means "on the surface".
     TheScene->maxht  = size;       // switch to surface when closer than asteroid radius
-    TheScene->minh   = 1.0 * FEET; // minimum 1 foot above surface
+    TheScene->minh   = 10.0 * FEET; // minimum 1 foot above surface
 
     if(TheScene->changed_file())
         return;
+
+    if(TheScene->surface_view())
+        TheScene->minr = size * 0.001;  // allow down to 0.1% of radius above surface
 
     TheScene->gndlvl = 0;
 
@@ -2139,6 +2140,9 @@ void Asteroid::init_view(){
         TheScene->radius = 4 * size;
         TheScene->elevation = TheScene->radius - size;
         TheScene->height    = TheScene->radius;
+        TheScene->view_tilt = 0;   // ensure no leftover surface tilt
+        TheScene->pitch     = -90;
+        TheScene->heading   = 90;
         break;
 
     case SURFACE:
@@ -2446,9 +2450,8 @@ void Asteroid::adapt_object(){
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
 
-    MCObjAdaptFlags flags=MCObjAdaptFlags(false,backtest,cliptest,false);
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,true);
 
-    int total_created = 0, total_deleted = 0;
 
     bool isInitialBuild = (tree->root && !tree->root->meshValid &&
                            tree->root->isLeaf());
@@ -2459,48 +2462,12 @@ void Asteroid::adapt_object(){
         int max_cycles = maxDepth - startDepth + 1;
         for (int cycle = 0; cycle < max_cycles; cycle++) {
             int cycleDepth = startDepth + cycle;
-            if (cycle > 0) {
-                GLint savedFBO = 0;
-                glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
-                if (savedFBO == 0) GLSLMgr::setFBOWritePass();
-                glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-                glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                tree->render_ids(2.0*size, xpoint);
-                glFinish();
-                tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
-                Raster.reset_idtbl();  // clear MC node IDs — prevents idvalues() misuse in Scene::select()
-                if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
-                flags.useVisibility = true;
-            }
-            int c0 = MCGenerator::cells_created;
-            int d0 = MCGenerator::cells_deleted;
+            tree->render_ids(2.0*size, xpoint);
             tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
-            total_created += MCGenerator::cells_created - c0;
-            total_deleted += MCGenerator::cells_deleted - d0;
         }
     } else {
-        // Incremental: ID readback from current tree, then single adapt.
-        GLint savedFBO = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
-        if (savedFBO == 0) GLSLMgr::setFBOWritePass();
-        glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         tree->render_ids(2.0*size, xpoint);
-        glFinish();
-        tree->mark_visibility(TheView->viewport[2], TheView->viewport[3]);
-        Raster.reset_idtbl();  // clear MC node IDs — prevents idvalues() misuse in Scene::select()
-        if (savedFBO == 0) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        else { GLSLMgr::setFBOWritePass(); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
-        flags.useVisibility = true;
-
-        int c0 = MCGenerator::cells_created;
-        int d0 = MCGenerator::cells_deleted;
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
-        total_created += MCGenerator::cells_created - c0;
-        total_deleted += MCGenerator::cells_deleted - d0;
     }
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;
@@ -2510,13 +2477,8 @@ void Asteroid::adapt_object(){
     if(!changed)
     	MCGenerator::resetStats();
 #endif
-    // Only rebuild VBO if tree topology changed — mesh generation is cached
-    // per leaf (meshValid flag) but normals and VBO upload must redo all leaves.
-    if(total_created > 0 || total_deleted > 0 || vboDirty)
-        vboDirty = true;
-    else
-        vboDirty = false;
-}
+    vboDirty = true;
+ }
 
 //-------------------------------------------------------------
 // Asteroid::render_object() render mesh
@@ -2544,7 +2506,7 @@ void Asteroid::render_object(){
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
-    if(test7)
+    if(MCGenerator::wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	if(Render.lighting())

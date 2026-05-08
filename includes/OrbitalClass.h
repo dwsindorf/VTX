@@ -413,10 +413,13 @@ private:
 	SurfaceFunction makeField();  // Create field from rnoise expression
 	void rebuildTree();
 	void applyAttributes(std::vector<MCTriangle>& mesh);
+	double raycastHeight();       // ray from camera toward center, returns ht above surface
 	std::vector<GLVertex> glVertices;  // staging buffer
 	GLuint vboVertices;
 	int    uploadedVertexCount;
 	bool   vboDirty;
+	double meshZnear;   // tight znear from last VBO build (eye space)
+	double meshZfar;    // tight zfar  from last VBO build (eye space)
 	double noiseScale;
 	double noiseOffset;
 	void buildVBO();
@@ -433,8 +436,6 @@ public:
 	MCObjTree *tree; 
 	SurfaceFunction field;
 	int    maxDepth;
-	bool cliptest;
-	bool backtest;
 	bool shadow_mode;
 	bool shadow_start;
 	double minHeight;
@@ -448,6 +449,7 @@ public:
 	void render_object();
 	bool setProgram();
 	int scale(double& znear, double& zfar);
+	double radius()             { return size; }
 	double far_height();
 	double max_height();
 	double height(double t, double p);

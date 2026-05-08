@@ -68,6 +68,7 @@ public:
     static int csi_false;
     static int csi_by_depth[32];
     static int csi_cull_by_depth[32];
+    static int maxDepth;
     static bool wireframe;
     static bool smooth;
     static double csi_minCellSize;
@@ -194,7 +195,6 @@ struct MCObjAdaptFlags {
     bool burialCoarsening  = true;   // increase minPixels below terrain surface
     bool backfaceCoarsening = true;  // increase minPixels on far side of rock
     bool frustumCulling    = false;  // skip cells outside view frustum (future)
-    bool curvatureAdapt    = false;  // finer subdivision at high curvature (future)
     bool useVisibility     = false;  // use nodeVisible/nodeMasked from ID readback
 
     static Point rockOrigin;
@@ -207,26 +207,13 @@ struct MCObjAdaptFlags {
     MCObjAdaptFlags() {}
         
         // Explicit constructor for external configuration
-	MCObjAdaptFlags(bool burial, bool backface, bool frustum, bool curvature)
+	MCObjAdaptFlags(bool burial, bool backface, bool frustum, bool visids)
 		: burialCoarsening(burial)
 		, backfaceCoarsening(backface)
 		, frustumCulling(frustum)
-		, curvatureAdapt(curvature)
+		, useVisibility(visids)
 	{}     
     static void setDirections(Point p, Point r, Point f, Point u);
-    // Presets for common object types
-    static MCObjAdaptFlags rock() {
-        return MCObjAdaptFlags{true, true, true, false};
-    }
-    static MCObjAdaptFlags asteroid() {
-        return MCObjAdaptFlags{false, true, true, false};  // no burial
-    }
-    static MCObjAdaptFlags cave() {
-        return MCObjAdaptFlags{false, false, false, false}; // interior object
-    }
-    static MCObjAdaptFlags holes() {
-        return MCObjAdaptFlags{true, false, false, false}; // pourous object
-    }
 };
 
 //=============================================================================
