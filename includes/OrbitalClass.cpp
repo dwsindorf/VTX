@@ -31,7 +31,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-//#define PRINT_STATS
+#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2103,6 +2103,17 @@ void Asteroid::init(){
 	else
 		vnoise=0;
 
+	// Restore surfaceView flag from saved viewtype so radius() returns the
+	// right value when Scene::open calls radius = height + gndlvl + viewobj->radius().
+	if(TheScene->viewtype == SURFACE){
+	    surfaceView = true;
+	    surfaceR = std::max(TheScene->radius - TheScene->height,
+	                        size * (1.0 + max_height() * 0.5));
+	} else {
+	    surfaceView = false;
+	    surfaceR = size;
+	}
+
 	cout<<"=== ASTEROID INIT ===" << endl;
 	cout<<"size: " << size << endl;
 	cout<<"textures:"<<texs.size<<endl;
@@ -2122,17 +2133,11 @@ void Asteroid::init_view(){
     TheScene->zoom   = size;
     TheScene->hstride = 1;
     TheScene->vstride = 0.02;
-
-    // maxht non-zero enables SURFACE view switching.
-    // Use size as the threshold — below size means "on the surface".
-    TheScene->maxht  = size;       // switch to surface when closer than asteroid radius
-    TheScene->minh   = 10.0 * FEET; // minimum 1 foot above surface
+    TheScene->minh   = 10.0 * FEET;
+    TheScene->maxht  = size;
 
     if(TheScene->changed_file())
         return;
-
-    if(TheScene->surface_view())
-        TheScene->minr = size * 0.001;  // allow down to 0.1% of radius above surface
 
     TheScene->gndlvl = 0;
 
@@ -2144,20 +2149,20 @@ void Asteroid::init_view(){
         TheScene->radius = 4 * size;
         TheScene->elevation = TheScene->radius - size;
         TheScene->height    = TheScene->radius;
-        TheScene->view_tilt = 0;   // ensure no leftover surface tilt
+        TheScene->view_tilt = 0;
         TheScene->pitch     = -90;
         TheScene->heading   = 90;
+        TheScene->minr      = size;
         break;
 
     case SURFACE:
         surfaceView = true;
+        TheScene->minr = surfaceR;  // minr=surfaceR so auto_delv scales ht/surfaceR
         if(TheScene->selm.length() > size * 0.5){
-            // Valid cursor hit — land there.
             move_focus(TheScene->selm);
         } else {
-            // No cursor hit — land above the top of the asteroid.
-            // Use size*(1+max_height()) as conservative surface radius to stay outside.
             surfaceR = size * (1.0 + max_height());
+            TheScene->minr = surfaceR;
             double ht = size * 0.1;
             TheScene->theta     = 0;
             TheScene->phi       = 90;
@@ -2230,6 +2235,7 @@ void Asteroid::move_focus(Point &selm)
         TheScene->height    = ht;
         TheScene->elevation = ht;
         TheScene->radius    = surfaceR + ht;
+        TheScene->minr      = surfaceR;  // auto_delv: (radius-minr)/minr = ht/surfaceR
 
         if(TheScene->changed_view() || TheScene->changed_object()){
             TheScene->heading   = 0;
@@ -2239,7 +2245,6 @@ void Asteroid::move_focus(Point &selm)
     }
 
     TheScene->set_changed_detail();
-    TheScene->minr = size * 0.001;
 }
 //-------------------------------------------------------------
 void Asteroid::set_lighting(){
@@ -2407,7 +2412,7 @@ int Asteroid::scale(double& znear, double& zfar) {
         zfar = std::max(horizon, 4.0*envelope);
 
         if(TheScene->surface_view())
-            TheScene->minr = size * 0.001;
+            TheScene->minr = surfaceR;
     }
     else{
         double zn = d - envelope;
