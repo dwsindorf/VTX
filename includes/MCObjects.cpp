@@ -785,7 +785,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     // In flat mode buildVBO uses cross-product normals from tri.normal.
     // Skipping these field calls in flat mode avoids unnecessary computation.
     if(MCGenerator::smooth){
-        const double h = 1.0 / 512.0;
+        const double h = size / 256.0;
         for(auto& tri : mesh){
             Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
             double fc = field(c.x,    c.y,    c.z   );
@@ -794,7 +794,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
             double dz = field(c.x,    c.y,    c.z+h ) - fc;
             Point grad(dx, dy, dz);
             double len = grad.length();
-            tri.faceNormal = (len > 1e-10) ? grad*(-1.0/len) : Point(0,1,0);
+            tri.faceNormal = (len > 1e-12) ? grad*(-1.0/len) : Point(0,1,0);
             tri.normal     = tri.faceNormal;
             tri.smoothNormal[0] = tri.smoothNormal[1] = tri.smoothNormal[2] = tri.faceNormal;
         }

@@ -31,7 +31,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_DEPTH_COUNTS
-#define PRINT_STATS
+//#define PRINT_STATS
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2139,6 +2139,7 @@ void Asteroid::init_view(){
     if(TheScene->changed_file())
         return;
 
+    TheScene->minr = surfaceView ? surfaceR : size;
     TheScene->gndlvl = 0;
 
     switch(TheScene->viewtype){

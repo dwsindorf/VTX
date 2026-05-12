@@ -42,7 +42,7 @@ int show_visits=0;
 double mark_start=0;
 double mark_stop=0;
 
-#define DEBUG_TIMING
+//#define DEBUG_TIMING
 #define VERIFY_OPEN
 
 //extern int hits,visits;
