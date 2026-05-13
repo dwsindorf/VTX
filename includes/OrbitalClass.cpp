@@ -2011,7 +2011,9 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	meshZnear=0;
 	meshZfar=0;
 	surfaceR=size;
-	surfaceView=false;
+	// Identity matrix — replaced by render_object() on the first render frame.
+	memset(savedInvMVP, 0, sizeof(savedInvMVP));
+	savedInvMVP[0]=savedInvMVP[5]=savedInvMVP[10]=savedInvMVP[15]=1.0;
 }
 //-------------------------------------------------------------
 // Asteroid::~Asteroid - destructor
@@ -2103,17 +2105,6 @@ void Asteroid::init(){
 	else
 		vnoise=0;
 
-	// Restore surfaceView flag from saved viewtype so radius() returns the
-	// right value when Scene::open calls radius = height + gndlvl + viewobj->radius().
-	if(TheScene->viewtype == SURFACE){
-	    surfaceView = true;
-	    surfaceR = std::max(TheScene->radius - TheScene->height,
-	                        size * (1.0 + max_height() * 0.5));
-	} else {
-	    surfaceView = false;
-	    surfaceR = size;
-	}
-
 	cout<<"=== ASTEROID INIT ===" << endl;
 	cout<<"size: " << size << endl;
 	cout<<"textures:"<<texs.size<<endl;
@@ -2122,121 +2113,92 @@ void Asteroid::init(){
 	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
 	tree=0;
 	rebuildTree();
-}
 
+	// Restore surfaceR from saved gndlvl: surfaceR = size + gndlvl.
+	// gndlvl is restored from the scene file before init() is called,
+	// so this is exact regardless of noise field sampling error.
+	// Only sample the field for non-file contexts (e.g. first creation).
+	if(TheScene->viewtype == SURFACE){
+	    double sr = size + TheScene->gndlvl;
+	    if(sr > size * (1.0 + max_height()))
+	        sr = size * (1.0 + max_height());  // clamp to valid range
+	    surfaceR = (sr > size * 0.5) ? sr : size;
+	} else {
+	    surfaceR = size;
+	}
+}
 //-------------------------------------------------------------
 // Asteroid::init_view() set parameters for change in viewtype
 //-------------------------------------------------------------
 void Asteroid::init_view(){
-    TheScene->maxr   = size * 10;
-    TheScene->minr   = size;
-    TheScene->zoom   = size;
-    TheScene->hstride = 1;
-    TheScene->vstride = 0.02;
-    TheScene->minh   = 10.0 * FEET;
-    TheScene->maxht  = size;
-
-    if(TheScene->changed_file())
-        return;
-
-    TheScene->minr = surfaceView ? surfaceR : size;
-    TheScene->gndlvl = 0;
-
-    switch(TheScene->viewtype){
-    case ORBITAL:
-        surfaceView = false;
-        TheScene->phi    = 0;
-        TheScene->theta  = 0;
-        TheScene->radius = 4 * size;
-        TheScene->elevation = TheScene->radius - size;
-        TheScene->height    = TheScene->radius;
-        TheScene->view_tilt = 0;
-        TheScene->pitch     = -90;
-        TheScene->heading   = 90;
-        TheScene->minr      = size;
-        break;
-
-    case SURFACE:
-        surfaceView = true;
-        TheScene->minr = surfaceR;  // minr=surfaceR so auto_delv scales ht/surfaceR
-        if(TheScene->selm.length() > size * 0.5){
-            move_focus(TheScene->selm);
-        } else {
-            surfaceR = size * (1.0 + max_height());
-            TheScene->minr = surfaceR;
-            double ht = size * 0.1;
-            TheScene->theta     = 0;
-            TheScene->phi       = 90;
-            TheScene->height    = ht;
-            TheScene->elevation = ht;
-            TheScene->radius    = surfaceR + ht;
-            TheScene->heading   = 0;
-            TheScene->view_tilt = -15;
-            TheScene->pitch     = 0;
-        }
-        break;
-    }
+	Spheroid::init_view();
 }
 
 //-------------------------------------------------------------
 // Asteroid::move_focus() position camera at cursor hit point
+// selm = Point(theta, phi, gndlvl) from get_focus(), matching Spheroid convention.
+// gndlvl = surfaceR - size (surface deviation above nominal radius).
 //-------------------------------------------------------------
 void Asteroid::move_focus(Point &selm)
 {
     if(!tree || !tree->root)
         return;
 
-
     if(TheScene->viewobj != this){
         // Switching to this asteroid as viewobj — init orbital view.
-        surfaceView = false;
         TheScene->viewobj = this;
         init_view();
         return;
     }
 
-    // viewobj == this
-    TheScene->gndlvl = 0;
-
-    // Store actual surface radius from the hit point for znear computation.
-    double sr = selm.length();
-    if(sr > size * 0.5) surfaceR = sr;
-    else surfaceR = size * (1.0 + max_height());  // no valid hit — stay outside noise envelope
+    // viewobj == this.
+    // Extract surface radius from gndlvl.  selm.z = surfaceR - size.
+    double sr = size + selm.z;
+    if(sr > size * 0.5)
+        surfaceR = sr;
+    else
+        surfaceR = size * (1.0 + max_height());  // no valid hit
 
     if(TheScene->viewtype == ORBITAL){
-        surfaceView = false;
-        // In orbital view: progressive zoom toward the asteroid.
-        // Don't change theta/phi — those control the orbital camera angle.
-        double curR  = TheScene->radius;
-        double newR  = (TheScene->changed_position()) ? 4.0 * size : curR * 0.5;
+        // Progressive zoom toward the asteroid in orbital view.
+        double curR = TheScene->radius;
+        double newR = (TheScene->changed_position()) ? 4.0 * size : curR * 0.5;
         newR = std::max(newR, size * 1.05);
         TheScene->radius    = newR;
         TheScene->height    = newR;
         TheScene->elevation = newR;
+        TheScene->gndlvl    = 0;
     }
     else{
-        surfaceView = true;
         // Surface view: place camera above the hit point.
-        Point sph   = selm.spherical();
-        double theta = sph.y - 180.0;
-        double phi   = sph.x;
+        // Use same radius/gndlvl/height accounting as Spheroid::move_focus so
+        // set_obj_path() (radius = viewobj->radius() + elevation) works correctly:
+        //   radius = size + gndlvl + height = size + (surfaceR-size) + ht = surfaceR + ht
+        TheScene->theta  = selm.x;
+        TheScene->phi    = selm.y;
+        TheScene->gndlvl = selm.z;          // = surfaceR - size
 
-        TheScene->theta = theta;
-        TheScene->phi   = phi;
-
-        double dist = (selm - TheScene->xpoint).length();
-        double ht   = std::max(dist * 0.1, 1.0 * FEET);
-
+        double ht;
         if(TheScene->changed_position()){
-            // Progressive zoom: 10% of current height each press.
+            // Progressive zoom: halve current height above surface each press.
             double curHt = std::max(TheScene->radius - surfaceR, TheScene->minh);
-            ht = std::max(curHt * 0.1, TheScene->minh);
+            ht = std::max(curHt * 0.5, TheScene->minh);
         }
+        else{
+            // First entry from orbital or object change.
+            ht = (TheScene->changed_view() || TheScene->changed_object())
+                    ? 5000.0 * FEET
+                    : 100.0  * FEET;
+        }
+        ht = std::max(ht, TheScene->minh);
 
         TheScene->height    = ht;
-        TheScene->elevation = ht;
-        TheScene->radius    = surfaceR + ht;
-        TheScene->minr      = surfaceR;  // auto_delv: (radius-minr)/minr = ht/surfaceR
+        TheScene->elevation = TheScene->gndlvl + ht;
+        TheScene->radius    = size + TheScene->elevation;  // = surfaceR + ht
+        TheScene->minr      = surfaceR;
+
+        TheScene->clr_moved();           // gndlvl is set; Map::set_scene not needed
+        TheScene->set_changed_detail();
 
         if(TheScene->changed_view() || TheScene->changed_object()){
             TheScene->heading   = 0;
@@ -2287,8 +2249,6 @@ int Asteroid::render_pass()
 int Asteroid::selection_pass()
 {
     clr_selected();
-//    if(TheScene->viewobj==this)
-//        select_pass(FG0);
     if(TheScene->viewobj==this){
         if(TheScene->select_node())
         	clear_pass(FG0);
@@ -2315,77 +2275,72 @@ double Asteroid::far_height() {
 double Asteroid::max_height() {
     return 2*hscale;  // factor in noise
 }
-double Asteroid::height(double t, double p) {
-     return size;
+double Asteroid::height(double t, double p)
+{
+    if(!tree) return 0;
+    double tr = (t + 180.0) * RPD;
+    double pr = p * RPD;
+    double sr_est = size * (1.0 + max_height());
+    Point dir(
+        sr_est * cos(pr) * sin(tr),
+        sr_est * sin(pr),
+        sr_est * cos(pr) * cos(tr)
+    );
+    return sampleSurfaceR(dir) - size;  // deviation from nominal radius, same units as map->elevation
 }
 
 //-------------------------------------------------------------
-// Asteroid::updateSurfaceR()
-// Sample the isosurface field along the camera-to-center direction
-// to find the actual surface radius at the camera's current position.
-// Updates surfaceR member. Called from scale() every frame.
+// Asteroid::sampleSurfaceR()
+// Sample the isosurface field along an arbitrary world-space
+// direction to find the surface radius from center in that direction.
+// dir should point from asteroid center toward (or past) the surface.
 //-------------------------------------------------------------
-void Asteroid::updateSurfaceR()
+double Asteroid::sampleSurfaceR(Point dir)
 {
-    if(!tree) return;
+    double camLen = dir.length();
+    if(!tree || camLen < 1e-10)
+        return size * (1.0 + max_height() * 0.5);
 
-    // Camera direction toward asteroid center in normalised field space.
-    // Field coords are in [-0.5,0.5], corresponding to world [-size,size].
-    Point cam_w  = TheScene->xpoint;
-    double camLen = cam_w.length();
-    if(camLen < 1e-10) return;
-
-    Point inward = (cam_w * (-1.0 / camLen));  // unit vector toward center
-
-    // Binary search for field zero crossing along inward ray.
-    // Start just inside the bounding envelope, end at center.
-    double lo = 0.0;                            // t=0: asteroid center
-    double hi = camLen;                         // t=camLen: camera position
-    // field space: divide world coords by 2*size
     double scale2 = 2.0 * size;
     SurfaceFunction& f = tree->field;
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
 
-    // Find bracket: walk outward from center until field goes positive (outside)
-    double t_surface = size;  // fallback
     const int STEPS = 8;
-    double flo = -1.0, fhi = 1.0;
-    double tlo = 0.0, thi = hi;
+    double flo = -1.0;
+    double tlo = 0.0, thi = camLen;
     for(int i = 0; i <= STEPS; i++){
-        double t  = hi * i / STEPS;
-        Point  wp = cam_w + inward * (-t);  // world point along inward ray
-        // Negate: inward goes from camera toward center, so at t=0 we're at camera,
-        // at t=hi we're at center. We want world points between center and camera.
-        wp = cam_w * (1.0 - (double)i/STEPS);  // lerp from cam to center
-        Point  fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+        Point wp = dir * (1.0 - (double)i/STEPS);  // lerp from dir tip to center
+        Point fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
         double fv = f(fp.x, fp.y, fp.z);
-        if(i == 0){ fhi = fv; thi = t; }
+        if(i == 0){ flo = fv; }
         else if(fv <= 0.0 && flo > 0.0){
-            // zero crossing found: surface is between t and previous t
-            t_surface = hi * (i-1.0) / STEPS;
-            tlo = hi * (i-1.0) / STEPS;
-            thi = hi * i / STEPS;
-            flo = fv;
+            tlo = camLen*(i-1.0)/STEPS;
+            thi = camLen*i/STEPS;
             break;
         }
         flo = fv;
     }
-    // Refine with a few bisection steps
     for(int i = 0; i < 6; i++){
         double tm = 0.5*(tlo+thi);
-        Point  wp = cam_w * (1.0 - tm/hi);
-        Point  fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+        Point wp = dir * (1.0 - tm/camLen);
+        Point fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
         double fv = f(fp.x, fp.y, fp.z);
-        if(fv > 0.0) thi = tm;
-        else         tlo = tm;
+        if(fv > 0.0) thi = tm; else tlo = tm;
     }
-    t_surface = 0.5*(tlo+thi);  // distance from camera to surface
-    surfaceR  = camLen - t_surface;  // surface radius from center
-
     TheNoise.rseed = seed;
+    return camLen - 0.5*(tlo+thi);  // surface radius from center
 }
-
+//-------------------------------------------------------------
+// Asteroid::updateSurfaceR()
+// Update surfaceR for current camera position. Called from scale().
+//-------------------------------------------------------------
+void Asteroid::updateSurfaceR()
+{
+    Point cam_w = TheScene->xpoint;
+    if(cam_w.length() < 1e-10) return;
+    surfaceR = sampleSurfaceR(cam_w);
+}
 //-------------------------------------------------------------
 // Asteroid::scale() set znear, zfar
 //-------------------------------------------------------------
@@ -2394,26 +2349,24 @@ int Asteroid::scale(double& znear, double& zfar) {
     double envelope = size * (1.0 + max_height());
 
     if(TheScene->viewobj == this){
-        // ht = camera height above actual surface.
-        // surfaceR is set by move_focus from the actual hit point.
-        double ht = std::max(TheScene->radius - surfaceR, TheScene->minh);
+        // radius = size + gndlvl + height  (set by move_focus / set_obj_path).
+        // So height-above-surface = radius - size - gndlvl = radius - surfaceR.
+        double ht = TheScene->radius - surfaceR;
+        if(ht < TheScene->minh)
+            ht = TheScene->minh;
 
         TheScene->height    = ht;
-        TheScene->elevation = ht;
-        // Do NOT set TheScene->radius here — that drives calc_offset/camera position.
+        TheScene->elevation = TheScene->gndlvl + ht;
+        TheScene->radius    = size + TheScene->elevation;   // = surfaceR + ht
+        TheScene->minr      = surfaceR;
 
-        // znear: 25% of height above surface, matching Map::set_scene.
         znear = 0.25 * ht;
         znear = std::max(znear, TheScene->minh * 0.1);
 
-        // zfar: horizon distance or 4x envelope.
         double r         = TheScene->radius;
         double horizonSq = r*r - surfaceR*surfaceR;
         double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
         zfar = std::max(horizon, 4.0*envelope);
-
-        if(TheScene->surface_view())
-            TheScene->minr = surfaceR;
     }
     else{
         double zn = d - envelope;
@@ -2558,6 +2511,13 @@ void Asteroid::adapt_object(){
         return;
     }
 
+    // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
+    // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
+    // doesn't find stale MapNode* pointers from a previous planet/moon adapt
+    // and crash trying to call theta()/phi() on them.
+    if(TheScene->viewobj == this)
+        Raster.reset_idtbl();
+
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
 
@@ -2644,6 +2604,12 @@ void Asteroid::render_object(){
 
     if(vboDirty)
     	buildVBO();
+
+    // Capture the render-frame inverse MVP for use in get_focus().
+    // get_focus() runs during GL_SELECT where the matrix state is a pick
+    // matrix — we need the proper perspective matrix for correct unprojection.
+    if(!TheScene->buffers_mode())
+        memcpy(savedInvMVP, TheScene->InvModelViewProjMatrix.values(), 16*sizeof(GLdouble));
 
     Hscale = hscale;
     Rscale = size * hscale;
@@ -2756,27 +2722,60 @@ void Asteroid::select()
 //-------------------------------------------------------------
 Point Asteroid::get_focus(void *v)
 {
-    // Called once when user clicks. Do the raycast here and return
-    // the world-space hit point as selm. set_focus() reprojects it each frame.
+    // Raycast screen click against MC mesh.
+    // Returns Point(theta, phi, gndlvl) — same convention as Spheroid::get_focus —
+    // where gndlvl = surfaceR - size (surface deviation above nominal radius).
     if (!tree || !tree->root)
-        return point;
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
+
+    // If no render frame has completed yet, savedInvMVP is identity — skip raycast.
+    // (Off-diagonal [1] is 0 for identity but non-zero for a real perspective matrix.)
+    bool validMVP = (savedInvMVP[1] != 0.0 || savedInvMVP[4] != 0.0 ||
+                     savedInvMVP[2] != 0.0);
+    if(!validMVP)
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
 
     double scale = 2.0 * size;
     Point  cam_w = TheScene->xpoint;
 
     double sx = TheScene->selp.x;
     double sy = TheView->viewport[3] - TheScene->selp.y;
-    Point near_w = TheScene->unProject(Point(sx, sy, 0.0));
-    Point far_w  = TheScene->unProject(Point(sx, sy, 1.0));
+
+    // Use the saved render-frame InvModelViewProjMatrix, not the live GL state.
+    // During the GL_SELECT pass, the projection matrix is a pick matrix —
+    // unProject() via the saved matrix gives the correct render-frame ray.
+    auto unprojectSaved = [&](double ndcz) -> Point {
+        GLdouble v[4] = { 2.0*sx/TheView->viewport[2] - 1.0,
+                          2.0*sy/TheView->viewport[3] - 1.0,
+                          2.0*ndcz - 1.0, 1.0 };
+        GLdouble w[4];
+        mvmul4(v, savedInvMVP, w);
+        if(fabs(w[3]) < 1e-30) return Point(0,0,0);
+        double wz = 1.0 / w[3];
+        return Point(w[0]*wz, w[1]*wz, w[2]*wz);
+    };
+
+    Point near_w  = unprojectSaved(0.0);
+    Point far_w   = unprojectSaved(1.0);
     Point near_mc = (near_w + cam_w) / scale;
     Point far_mc  = (far_w  + cam_w) / scale;
     Point local_org = near_mc;
     Point local_dir = (far_mc - near_mc).normalize();
 
     Point hit_local;
-    if (tree->raycast(local_org, local_dir, hit_local))
-        return hit_local * scale;  // world-space hit (asteroid centered at origin in MC space)
-    return point;  // fallback: asteroid center
+    if (tree->raycast(local_org, local_dir, hit_local)) {
+        // hit_local is in MC space. Convert to world-space and extract spherical coords.
+        Point hit_world = hit_local * scale;  // world-space, asteroid-centred
+        double sr = hit_world.length();
+        Point sph = hit_world.spherical();    // sph.x=phi, sph.y=theta+180
+        double theta  = sph.y - 180.0;
+        double phi    = sph.x;
+        double gndlvl = sr - size;            // surface deviation above nominal radius
+        return Point(theta, phi, gndlvl);
+    }
+    // Raycast missed — return current view angles with existing gndlvl so
+    // move_focus() keeps surfaceR correct rather than resetting it to size.
+    return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
 }
 
 //-------------------------------------------------------------
@@ -2787,70 +2786,10 @@ Point Asteroid::get_focus(void *v)
 //-------------------------------------------------------------
 void Asteroid::set_focus(Point &selm)
 {
-    // selm is the world-space hit point set by get_focus().
-    if (selm.length() < 1e-10) {
-        Object3D::set_focus(selm);
-        return;
-    }
-
-    GLboolean lflag;
-    glGetBooleanv(GL_LIGHTING, &lflag);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-
-    Point  cam_w     = TheScene->xpoint;
-    Point  hit_world = selm;
-
-    // Distance string
-    double d = hit_world.distance(cam_w);
-    const char *units = "miles";
-    double dval = d / MILES;
-    if (d < 4.0 * MILES) { dval = d / FEET; units = "ft"; }
-
-    // Show theta/phi of hit point for diagnostics
-    Point sph = hit_world.spherical();
-    TheScene->set_istring("dist %5.1f %s  T:%.1f P:%.1f", dval, units, sph.y - 180.0, sph.x);
-
-    // Project hit to screen using ModelViewProjMatrix (same matrix that
-    // InvModelViewProjMatrix inverts -- so if unProject works, this should too).
-    Point hit_gl = hit_world - cam_w;
-    GLdouble hv[4] = {hit_gl.x, hit_gl.y, hit_gl.z, 1.0};
-    GLdouble cv[4];
-    mvmul4(hv, TheScene->ModelViewProjMatrix.values(), cv);
-    double wz = 1.0 / cv[3];
-    double vx = 0.5 * TheView->viewport[2] * (cv[0]*wz + 1.0);
-    double vy = 0.5 * TheView->viewport[3] * (cv[1]*wz + 1.0);
-
-    double arm = 8.0;
-
-    // Draw crosshair as 2D overlay at computed screen position
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, TheView->viewport[2], 0, TheView->viewport[3], -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    glLineWidth(2.0f);
-    glColor3d(1, 1, 1);
-    glBegin(GL_LINES);
-    glVertex2d(vx,       vy - arm);
-    glVertex2d(vx,       vy + arm);
-    glVertex2d(vx - arm, vy);
-    glVertex2d(vx + arm, vy);
-    glEnd();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    glLineWidth(1.0f);
-    glFlush();
-    if (lflag == GL_TRUE)
-        glEnable(GL_LIGHTING);
+	// selm = Point(theta, phi, gndlvl) from get_focus(), same as Spheroid.
+    // Just delegate — Spheroid::set_focus reconstructs world position from
+    // selm using radius() (which returns size) and ModelMatrix, draws crosshair.
+    Spheroid::set_focus(selm);
 }
 
 void Asteroid::render_zvals(){
@@ -3778,7 +3717,10 @@ void Spheroid::set_scene()
 //-------------------------------------------------------------
 double Spheroid::height(double t, double p)
 {
-	return map?map->elevation(t,p):0;
+	double ht=map?map->elevation(t,p):0;
+    cout<<"Spheroid::height "<<ht<<endl;
+
+	return ht;
 }
 
 //-------------------------------------------------------------
@@ -3891,7 +3833,6 @@ void Spheroid::init_view()
 
 	TheScene->maxht=mht;
 	TheScene->zoom=size;
-
 	TheScene->minh=3*FEET;
 	TheScene->maxr=2*size;
 	TheScene->hstride=1;
@@ -3900,7 +3841,7 @@ void Spheroid::init_view()
 	if(TheScene->changed_file())  // exit for open
 	   return;
 
-	TheScene->gndlvl=map?map->elevation(TheScene->theta,TheScene->phi):0;
+	TheScene->gndlvl=height(TheScene->theta,TheScene->phi);
 
 	switch(TheScene->viewtype){
 	case ORBITAL:
@@ -3932,9 +3873,7 @@ void Spheroid::init_view()
 	}
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
 	TheScene->radius=TheScene->elevation;
-	if(map)
-		TheScene->radius+=map->radius;
-
+	TheScene->radius+=radius();
 }
 
 //-------------------------------------------------------------
