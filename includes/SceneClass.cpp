@@ -2119,7 +2119,7 @@ void Scene::select()
 	if(surface_view()){
 #define USE_IDS // fetch selected node from last idtable image
 #ifdef USE_IDS
-		if(Raster.idvalues()){
+		if(Raster.idvalues() && viewobj->getMap()){
 		    viewobj->set_geometry();
 			MapNode *n=Raster.pixelID(selx,sely);
 			if(n){
@@ -3325,4 +3325,3 @@ void Scene::show_mode_info()
         break;
     }
 }
-

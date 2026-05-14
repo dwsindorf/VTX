@@ -17,6 +17,8 @@ uniform float twilite_min;
 uniform float twilite_max;
 uniform float twilite_dph;
 uniform bool  lighting;
+uniform float hdr_min;
+uniform float hdr_max;
 
 varying vec3 Normal;
 varying vec3 EyeDirection;
@@ -35,8 +37,20 @@ varying vec3 WorldNormal;
 vec4 setLighting(vec3 BaseColor, vec3 normal) {
     vec3 eye = normalize(EyeDirection);
 
-    // Simple ambient
-    vec3 ambient = Ambient.rgb * Ambient.a * BaseColor;
+#ifdef HDR
+    // Match lighting.frag: use bump amplitude to modulate exposure,
+    // then apply hemispherical ambient (top_shading) based on surface normal.
+    float bumpamp = dot(Normal, bump);
+    float exposure = 1.0 - hdr_min * smoothstep(0.0, 1.0, bumpamp / max(hdr_max, 0.001));
+    exposure = max(exposure, 0.0);
+    float RdotN = dot(normalize(WorldNormal), normal);
+    float top_shading = 0.5 * exposure * RdotN + 0.5 + 0.5 * exposure;
+#else
+    float RdotN = dot(normalize(WorldNormal), normal);
+    float top_shading = 0.5 * RdotN + 0.5;
+#endif
+
+    vec3 ambient = Ambient.rgb * Ambient.a * BaseColor * top_shading;
 
     vec3  diffuse  = vec3(0.0);
     vec3  specular = vec3(0.0);
@@ -113,7 +127,11 @@ void main() {
         illumination = c.a;
     }
 #endif
-    gl_FragData[0] = vec4(color.xyz, 1.0);
-    gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
+    gl_FragData[0] = vec4(clamp(color.xyz, 0.0, 1.0), 1.0);
+    // gl_FragData[1].r = ss flag: >2 means terrain pixel (enables haze/fog/HDR effects).
+    // Asteroid doesn't currently support atmospheric effects (haze, fog, sky),
+    // so write ss=0 to avoid postproc HDR exposure correction and effects-shader
+    // processing.  Set to 4 (like planetoid terrain) when asteroid atmosphere is added.
+    gl_FragData[1] = vec4(0.0, DEPTH, 0.0, color.a);
     
 }

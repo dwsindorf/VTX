@@ -2131,7 +2131,23 @@ void Asteroid::init(){
 // Asteroid::init_view() set parameters for change in viewtype
 //-------------------------------------------------------------
 void Asteroid::init_view(){
+	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
 	Spheroid::init_view();
+
+	if(TheScene->changed_file())
+		return;  // init() already set surfaceR from saved gndlvl
+
+	if(TheScene->viewtype == SURFACE){
+		// Spheroid::init_view() calls height(theta,phi) which may return a negative
+		// value if the orbital camera angle points to a concave part of the surface.
+		// Override: place camera at 5000ft above the nominal sphere surface.
+		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
+		surfaceR            = size;   // conservative — scale() corrects immediately
+		TheScene->gndlvl    = 0;
+		TheScene->height    = 5000.0 * FEET;
+		TheScene->elevation = TheScene->height;
+		TheScene->radius    = size + TheScene->elevation;
+	}
 }
 
 //-------------------------------------------------------------
@@ -2349,24 +2365,39 @@ int Asteroid::scale(double& znear, double& zfar) {
     double envelope = size * (1.0 + max_height());
 
     if(TheScene->viewobj == this){
-        // radius = size + gndlvl + height  (set by move_focus / set_obj_path).
-        // So height-above-surface = radius - size - gndlvl = radius - surfaceR.
+        // Sample actual surface below camera each frame — self-correcting.
+        // Skip on the first frame after file open (changed_file set) because
+        // init() already set surfaceR precisely from the saved gndlvl; sampling
+        // the field here could introduce small errors when ht is small.
+        if(!TheScene->changed_file())
+            updateSurfaceR();
+
+        // ht = camera height above surface.
         double ht = TheScene->radius - surfaceR;
         if(ht < TheScene->minh)
             ht = TheScene->minh;
 
         TheScene->height    = ht;
+        // Keep gndlvl consistent with surfaceR — don't trust whatever
+        // another object's Map::set_scene() may have written to gndlvl.
+        TheScene->gndlvl    = surfaceR - size;
         TheScene->elevation = TheScene->gndlvl + ht;
-        TheScene->radius    = size + TheScene->elevation;   // = surfaceR + ht
+        TheScene->radius    = size + TheScene->elevation;  // = surfaceR + ht
         TheScene->minr      = surfaceR;
 
-        znear = 0.25 * ht;
+        // znear: use the closest mesh vertex distance from the previous adapt pass.
+        // meshZnear is set by adapt_object() from MCGenerator::minDistance — the
+        // actual nearest surface point, not just the point directly below.
+        // Fall back to 0.25*ht on the first frame before any adapt has run.
+        znear = (meshZnear > 0) ? meshZnear : 0.25 * ht;
         znear = std::max(znear, TheScene->minh * 0.1);
 
+        // zfar: use meshZfar from last adapt when available (uses surfaceR for horizon).
         double r         = TheScene->radius;
         double horizonSq = r*r - surfaceR*surfaceR;
         double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
-        zfar = std::max(horizon, 4.0*envelope);
+        double zfarCalc  = std::max(horizon, 4.0*envelope);
+        zfar = (meshZfar > 0) ? meshZfar : zfarCalc;
     }
     else{
         double zn = d - envelope;
@@ -2391,8 +2422,11 @@ bool Asteroid::setProgram(){
     sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
             Lights.size, Render.light_mode());
 
-    if(Raster.shadows() && !TheScene->light_view() && !TheScene->test_view())
+    if(Raster.shadows() && Raster.twilight() && !TheScene->light_view() && !TheScene->test_view())
     	sprintf(defs+strlen(defs), "#define SHADOWS\n");
+
+    if(Raster.hdr())
+        sprintf(defs+strlen(defs), "#define HDR\n");
 
     GLSLMgr::setDefString(defs);
 
@@ -2475,6 +2509,8 @@ bool Asteroid::setProgram(){
     vars.newFloatVec("Shadow",
         shadow_color.red(), shadow_color.green(), shadow_color.blue(),
 		shadow_color.alpha());
+    vars.newFloatVar("hdr_min", (float)Raster.hdr_min);
+    vars.newFloatVar("hdr_max", (float)Raster.hdr_max);
     float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
 
     vars.newFloatVar("wscale",           wscale);
@@ -2581,9 +2617,10 @@ void Asteroid::adapt_object(){
         meshZnear = std::max(meshZnear, TheScene->minh * 0.1);
         double r         = TheScene->radius;
         double envelope2 = size * (1.0 + max_height());
-        double horizonSq = r*r - size*size;
+        double horizonSq = r*r - surfaceR*surfaceR;
         double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope2;
-        meshZfar = std::max(horizon, 4.0*envelope2);    }
+        meshZfar = std::max(horizon, 4.0*envelope2);
+    }
 #ifdef PRINT_STATS
     tree->countCells();
     MCGenerator::printStats();

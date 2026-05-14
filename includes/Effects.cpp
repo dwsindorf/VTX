@@ -1,4 +1,3 @@
-
 #include "Effects.h"
 #include "RenderOptions.h"
 #include "AdaptOptions.h"
@@ -123,14 +122,13 @@ void EffectsMgr::init_render()
 //-------------------------------------------------------------
 void EffectsMgr::render() {
 	//setView();
-	//cout << "EffectsMgr::render()"<<endl;
 	if (!Render.draw_shaded()){  //  if using shaders all done in apply call
 		RasterMgr::render();
 	}
 	else {
-		GLSLMgr::setFBOReset();
+			GLSLMgr::setFBOReset();
+		GLSLMgr::setFBOWritePass();     // bind FBO for render_objects() gl_FragData writes
 		GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
-		//glEnable(GL_BLEND);
 	}
 }
 

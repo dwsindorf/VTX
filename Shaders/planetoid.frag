@@ -123,10 +123,6 @@ vec3 addContours(vec3 color){
 #if NTEXS >0
 #include "tex_funcs.frag"
 #endif
-//
-//#if NTEXS >0
-//	TEX_VARS
-//#endif
 // ########## main section #########################
 void main(void) {
 	amplitude = 1.0;
@@ -155,15 +151,9 @@ void main(void) {
     if(lighting){
 		vec4 c=setLighting(color.rgb,normal,bump);
     	color.rgb=c.rgb;
-    	illumination=c.a;//sqrt(c.a);
+    	illumination=c.a;
     }
 #endif
-#ifdef SHADOWS
-    //float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    //color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a);
-    //color.rgb = gl_FragCoord.xyz;
-    //color.rgb=vec3(shadow,0,0);
-#endif    
     float depth=gl_FragCoord.z;
     vec3 eye = normalize(EyeDirection.xyz);
     float reflect1=dot(normal,eye); // reflection angle
@@ -174,7 +164,6 @@ void main(void) {
 	vec3 pm=(Vertex1-0.5)*2;
 	vec2 sp=spherical(pm);
 	gl_FragData[2]=vec4((int)(Constants1.g-3+0.1),Tangent.z,180+sp.y,sp.x); // layer id, slope, theta, phi
-	//gl_FragData[3]=vec4(Vertex1); // layer id, slope, theta, phi
 #endif
 #else  // moons 
 	gl_FragData[1]=vec4(0,illumination,0.05,0.0); // set first component (type) to 0 so reflections work
