@@ -2151,6 +2151,40 @@ void Asteroid::init_view(){
 }
 
 //-------------------------------------------------------------
+// Asteroid::init_render()   render setup
+//-------------------------------------------------------------
+void Asteroid::init_render()
+{
+	visit(&Object3D::init_render);
+
+ 	if(!isEnabled())
+ 		return;
+ 	double dp=0;
+	double dpmin=1,dpmax=-1;
+	Raster.blend_factor=Raster.darken_factor=0;
+
+	if(TheScene->viewobj==this){
+		Point lp;
+		Point vp=TheScene->vpoint;
+		for(int i=0;i<Lights.numLights();i++){
+			Point c=point.mm(TheScene->invViewMatrix);
+			Point cv=vp-c;
+			cv=cv.normalize();
+		    Point l=Lights[i]->point.mm(TheScene->invViewMatrix);
+		    Point cl=l-c;
+		    cl=cl.normalize();
+			double dpl=-cv.dot(cl);
+			dpmax=dpl>dpmax?dpl:dpmax;
+			dpmin=dpl<dpmin?dpl:dpmin;
+		}
+		if(dpmin<=0 && dpmax<=0)
+			dp=dpmax;
+		else
+			dp=dpmin;
+		Raster.set_ldp(dp);
+	}
+}
+//-------------------------------------------------------------
 // Asteroid::move_focus() position camera at cursor hit point
 // selm = Point(theta, phi, gndlvl) from get_focus(), matching Spheroid convention.
 // gndlvl = surfaceR - size (surface deviation above nominal radius).
@@ -2511,6 +2545,7 @@ bool Asteroid::setProgram(){
 		shadow_color.alpha());
     vars.newFloatVar("hdr_min", (float)Raster.hdr_min);
     vars.newFloatVar("hdr_max", (float)Raster.hdr_max);
+
     float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
 
     vars.newFloatVar("wscale",           wscale);

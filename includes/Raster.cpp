@@ -313,7 +313,7 @@ RasterMgr::RasterMgr()
 	shadow_value=1;
 	shadow_zfactor=0.05;
 	shadow_blur=0.2;
-	shadow_test=2;
+	shadow_test=0;
 	
 	set_bgshadows(0);
 

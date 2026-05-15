@@ -2500,7 +2500,7 @@ void Scene::render()
 		info_enabled=Render.display(OBJINFO)&&render_info;
 		if(info_enabled && adapt_info)
 			draw_string(HDR1_COLOR,"------- render -------------------");
-	 	GLSLMgr::setFBOReset();
+	 	GLSLMgr::setFBOFullReset();  // clear all 4 FBO attachments before each frame
 	 
 		render_shadows();
 
@@ -2720,6 +2720,9 @@ void Scene::render_shadows()
 
 	Raster.render();
 	project();
+	GLSLMgr::clrFBODepthBuffers();  // clear FBO depth: prevents shadows_normals() depth from
+	                                  // causing final render_objects() to fail depth test on
+	                                  // some pixels, leaving shadows.frag output in FBOTex1
 	render_objects();
 	shadow_pass=false;
 	if(shadows_mode())

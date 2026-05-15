@@ -1059,13 +1059,14 @@ void GLSLMgr::setFBOReset(){
 	cout << "GLSLMgr::setFBOReset()"<<endl;
 #endif
 	glClearColor(0,0,0,1);
-	//clrBuffers();
 	float v0[1]={1.0};
 	float v1[4]={0,0,0,1};
 	glClearBufferfv(GL_DEPTH,0,v0);
-	for(int i=0;i<NUMFBOTEXS;i++){
-		glClearBufferfv(GL_COLOR,i,v1);
-	}
+	// Clear only the main render targets (att0=color, att1=FLAGS).
+	// att2/att3 (shadow accumulation) are cleared by renderFgShadows() itself.
+	// Clearing them here would destroy shadow data before the final render reads it.
+	glClearBufferfv(GL_COLOR,0,v1);
+	glClearBufferfv(GL_COLOR,1,v1);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); // enable transparency
@@ -1073,6 +1074,34 @@ void GLSLMgr::setFBOReset(){
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT);
 	glUseProgramObjectARB(0);
+	using_fbo=false;
+	vars.setValue(FBOWRITE,false);
+	vars.setValue(FBOREAD,false);
+}
+
+void GLSLMgr::setFBOFullReset(){
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
+
+	// Clear all 4 attachments — use at scene open/load to flush stale data from
+	// previous scene's shadow/effects rendering.
+	// glClearBufferfv(GL_COLOR, i) clears draw buffer i, not attachment i directly.
+	// Must set all 4 draw buffers first or indices 2 and 3 are GL_NONE (no-op).
+	GLenum mrt_all[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT,
+	                    GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
+	glDrawBuffers(NUMFBOTEXS, mrt_all);
+
+	float v0[1]={1.0};
+	float v1[4]={0,0,0,1};
+	glClearBufferfv(GL_DEPTH,0,v0);
+	for(int i=0;i<NUMFBOTEXS;i++){
+		glClearBufferfv(GL_COLOR,i,v1);
+	}
+
+	// Restore standard 2-buffer draw state
+	GLenum mrt[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
+	glDrawBuffers(2, mrt);
+
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	using_fbo=false;
 	vars.setValue(FBOWRITE,false);
 	vars.setValue(FBOREAD,false);
@@ -1108,4 +1137,3 @@ void GLSLMgr::setFBOReadWritePass(){
 	cout << "GLSLMgr::setFBOReadWritePass("<<using_fbo<<")"<< endl;
 #endif
 }
-

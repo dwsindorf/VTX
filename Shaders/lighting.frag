@@ -26,7 +26,6 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	float bumpamp=dot(n,bmp);
     float exposure = 1.0-hdr_min*smoothstep(0.0,1.0,bumpamp/hdr_max);
 	exposure = max(exposure,0.0);
-	//exposure*=exposure;	
 	float RdotN   = dot(radius,normal); // for top lighting on nightside
 	float top_shading  = 0.5*exposure*RdotN+0.5+0.5*exposure;  
 #else
@@ -48,7 +47,6 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #endif
 
     float shine=gl_FrontMaterial.shininess;
-    //float albedo=0.5;
     if(Constants1.g>=0 && Constants1.g<2.1){
 	    if(Constants1.g>1.1){
 		   shine=ice_shine;
@@ -70,8 +68,6 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
-		//illumination   += LdotN*intensity*horizon;
-		//illumination   += horizon;
 		ambient+=topcolor*(3.0*horizon);
         if(LdotN>-0.5){
 			float damp = lerp(LdotN,-0.5,0.0,0.0,1.0); // prevents false specular highlites on backfaces
@@ -91,7 +87,6 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 			float pf        = damp*intensity*horizon*pow(sdp, shine);
 			
 			specular       += gl_LightSource[i].specular.rgb * pf*shadow_specular*albedo;
-			//illumination   += pf*gl_LightSource[i].specular.a;
         }
 	}
 	diffuse.rgb=mix(diffuse.rgb,Shadow.rgb,1.0-shadow_diffuse);
@@ -101,7 +96,6 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	vec3 TotalSpecular = specular.rgb;
 
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
-	//return vec4(Constants1*0.25);
 
 }
 

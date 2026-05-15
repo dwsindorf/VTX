@@ -126,7 +126,7 @@ void EffectsMgr::render() {
 		RasterMgr::render();
 	}
 	else {
-			GLSLMgr::setFBOReset();
+		GLSLMgr::setFBOReset();
 		GLSLMgr::setFBOWritePass();     // bind FBO for render_objects() gl_FragData writes
 		GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
 	}

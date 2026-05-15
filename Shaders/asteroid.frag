@@ -94,7 +94,7 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
     diffuse = mix(diffuse, Shadow.rgb, 1.0 - shadow_diffuse);
     return vec4(ambient
               + diffuse * BaseColor * Diffuse.a * shadow_diffuse
-              + specular * shadow_diffuse, 0.0);
+              + specular * shadow_diffuse, exposure);
 }
 #endif
 
@@ -128,10 +128,6 @@ void main() {
     }
 #endif
     gl_FragData[0] = vec4(clamp(color.xyz, 0.0, 1.0), 1.0);
-    // gl_FragData[1].r = ss flag: >2 means terrain pixel (enables haze/fog/HDR effects).
-    // Asteroid doesn't currently support atmospheric effects (haze, fog, sky),
-    // so write ss=0 to avoid postproc HDR exposure correction and effects-shader
-    // processing.  Set to 4 (like planetoid terrain) when asteroid atmosphere is added.
-    gl_FragData[1] = vec4(0.0, DEPTH, 0.0, color.a);
+    gl_FragData[1] = vec4(4.0, DEPTH, 0.0, illumination);
     
 }

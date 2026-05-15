@@ -118,6 +118,7 @@ public:
 	static void clrFBOColorBuffer(int i);
 	static void clrFBODepthBuffers();
 	static void setFBOReset();
+	static void setFBOFullReset();  // clears all 4 attachments — use at scene open
 	static void setFBORenderPass();
 	static void setFBOWritePass();
 	static void setFBOReadPass();

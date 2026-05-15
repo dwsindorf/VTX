@@ -473,6 +473,7 @@ public:
 	void  set_focus(Point &p);
 	void  move_focus(Point &p);
 	void  select();
+	void init_render();
 };
 //************************************************************
 // Star class
