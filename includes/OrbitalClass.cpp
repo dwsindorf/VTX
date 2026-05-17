@@ -2142,12 +2142,16 @@ void Asteroid::init_view(){
 		// value if the orbital camera angle points to a concave part of the surface.
 		// Override: place camera at 5000ft above the nominal sphere surface.
 		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
-		surfaceR            = size;   // conservative — scale() corrects immediately
+		surfaceR            = 2*size;   // conservative — scale() corrects immediately
 		TheScene->gndlvl    = 0;
 		TheScene->height    = 5000.0 * FEET;
-		TheScene->elevation = TheScene->height;
-		TheScene->radius    = size + TheScene->elevation;
 	}
+	else{
+		TheScene->height=size * (3.0 + max_height());
+	}
+	TheScene->elevation=TheScene->height+TheScene->gndlvl;
+	TheScene->radius=size+TheScene->elevation;
+
 }
 
 //-------------------------------------------------------------
@@ -2356,30 +2360,33 @@ double Asteroid::sampleSurfaceR(Point dir)
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
 
+    // Normalize to a unit direction, then scan from just outside the envelope
+    // inward to center. Independent of camera distance.
+    Point dirN = dir * (1.0 / camLen);
+    double envelope = size * (1.0 + max_height());
+
     const int STEPS = 8;
-    double flo = -1.0;
-    double tlo = 0.0, thi = camLen;
-    for(int i = 0; i <= STEPS; i++){
-        Point wp = dir * (1.0 - (double)i/STEPS);  // lerp from dir tip to center
-        Point fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+    double flo = f(dirN.x*envelope/scale2, dirN.y*envelope/scale2, dirN.z*envelope/scale2);
+    double tlo = 0.0, thi = envelope;
+    for(int i = 1; i <= STEPS; i++){
+        double t = envelope * (1.0 - (double)i/STEPS);  // scan inward from envelope to center
+        Point fp(dirN.x*t/scale2, dirN.y*t/scale2, dirN.z*t/scale2);
         double fv = f(fp.x, fp.y, fp.z);
-        if(i == 0){ flo = fv; }
-        else if(fv <= 0.0 && flo > 0.0){
-            tlo = camLen*(i-1.0)/STEPS;
-            thi = camLen*i/STEPS;
+        if(fv <= 0.0 && flo > 0.0){
+            tlo = envelope*(i-1.0)/STEPS;
+            thi = envelope*(double)i/STEPS;
             break;
         }
         flo = fv;
     }
     for(int i = 0; i < 6; i++){
         double tm = 0.5*(tlo+thi);
-        Point wp = dir * (1.0 - tm/camLen);
-        Point fp(wp.x/scale2, wp.y/scale2, wp.z/scale2);
+        Point fp(dirN.x*tm/scale2, dirN.y*tm/scale2, dirN.z*tm/scale2);
         double fv = f(fp.x, fp.y, fp.z);
-        if(fv > 0.0) thi = tm; else tlo = tm;
+        if(fv > 0.0) tlo = tm; else thi = tm;
     }
     TheNoise.rseed = seed;
-    return camLen - 0.5*(tlo+thi);  // surface radius from center
+    return 0.5*(tlo+thi);  // surface radius from center along dirN
 }
 //-------------------------------------------------------------
 // Asteroid::updateSurfaceR()
@@ -2400,9 +2407,7 @@ int Asteroid::scale(double& znear, double& zfar) {
 
     if(TheScene->viewobj == this){
         // Sample actual surface below camera each frame — self-correcting.
-        // Skip on the first frame after file open (changed_file set) because
-        // init() already set surfaceR precisely from the saved gndlvl; sampling
-        // the field here could introduce small errors when ht is small.
+        // sampleSurfaceR normalizes the direction so camera distance doesn't matter.
         if(!TheScene->changed_file())
             updateSurfaceR();
 
@@ -2412,12 +2417,10 @@ int Asteroid::scale(double& znear, double& zfar) {
             ht = TheScene->minh;
 
         TheScene->height    = ht;
-        // Keep gndlvl consistent with surfaceR — don't trust whatever
-        // another object's Map::set_scene() may have written to gndlvl.
         TheScene->gndlvl    = surfaceR - size;
         TheScene->elevation = TheScene->gndlvl + ht;
-        TheScene->radius    = size + TheScene->elevation;  // = surfaceR + ht
-        TheScene->minr      = surfaceR;
+        TheScene->radius    = size + TheScene->elevation;
+        TheScene->minr      = TheScene->surface_view() ? surfaceR : envelope;
 
         // znear: use the closest mesh vertex distance from the previous adapt pass.
         // meshZnear is set by adapt_object() from MCGenerator::minDistance — the
@@ -2434,6 +2437,9 @@ int Asteroid::scale(double& znear, double& zfar) {
         zfar = (meshZfar > 0) ? meshZfar : zfarCalc;
     }
     else{
+        // Orbital view — set minr to the asteroid's envelope so auto_delh()
+        // computes correct angular step size relative to the asteroid radius.
+        TheScene->minr = envelope;
         double zn = d - envelope;
         znear = (zn > 1e-6) ? zn : 1e-6;
         zfar  = d + envelope;
