@@ -3363,21 +3363,30 @@ void Spheroid::set_focus(Point &selm)
     d=p.length();
 	const char *s1="miles";
 	const char *s2="miles";
-    if(d>=4*MILES)
+	const char *s3="miles";
+    if(d>=2*MILES)
 		d=d/MILES;
 	else {
 		d=d/FEET;
 		s1="ft";
 	}
     double g=selm.z-TheScene->elevation;
-	if(fabs(g)>4*MILES)
+	if(fabs(g)>2*MILES)
 		g=g/MILES;
 	else{
 		g=g/FEET;
 		s2="ft";
 	}
-    TheScene->set_istring("dist %5.1f %s dht %5.1f %s elev %4.0f ft",
-		d,s1,g,s2,selm.z/FEET);
+	double e=selm.z;
+	if(fabs(e)>2*MILES)
+		e=e/MILES;
+	else{
+		e=e/FEET;
+		s3="ft";
+	}
+
+    TheScene->set_istring("dist %5.1f %s dht %5.1f %s elev %4.0f %s",
+		d,s1,g,s2,e,s3);
 
 	glLineWidth(2.0f);
 	glColor3d(1,1,1);

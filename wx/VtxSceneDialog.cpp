@@ -1066,8 +1066,10 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
  	LinkedList<ModelSym*>tlist;
 	
  	//cout<<"sym:"<<sym->name()<<" i:"<<i<<endl;
- 	if(!TheScene->model->hasTypeList(sym->value))
+ 	if(!TheScene->model->hasTypeList(sym->value)){
+ 		list.add(new ModelSym(*sym));
 		submenu->Append(i++,"Generate");
+ 	}
  	else{
 		wxMenu *tmenu=getTypeMenu(sym,++i,list);
 		submenu->AppendSubMenu(tmenu,"Generate");
@@ -1120,11 +1122,9 @@ wxMenu *VtxSceneDialog::getReplaceMenu(wxMenu &menu,NodeIF *obj){
 	int i=TABS_REPLACE;
  	replace_list.free();
 	ModelSym* sym=getSym(obj);
-	replace_list.add(sym);
+	//replace_list.add(sym);
 	
-	cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
-
-
+	//cout<<"getReplaceMenu:"<<obj->typeName()<<endl;
 	return getFileMenu(sym,i,replace_list);
 }
 
@@ -1145,7 +1145,7 @@ wxMenu *VtxSceneDialog::getAddMenu(NodeIF *obj){
 	wxMenu *addmenu=new wxMenu();
 	int i=TABS_ADD;
  	while(sym=dlist++){
-		add_list.add(sym);
+		//add_list.add(sym);
 		wxString label=sym->name();
 		wxMenu *submenu=getFileMenu(sym,i,add_list);
 		if(submenu)
