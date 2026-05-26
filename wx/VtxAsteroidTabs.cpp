@@ -167,9 +167,9 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 	wxStaticText *lbl=new wxStaticText(panel,-1,"MaxDepth",wxDefaultPosition,wxSize(-1,-1));
 	hline->Add(lbl, 5, wxALIGN_LEFT|wxTop|wxLEFT,0);
 	
-	wxString depths[]={"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"};
+	wxString depths[]={"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"};
 
-    m_maxDepth=new wxChoice(panel, ID_MAXDEPTH, wxDefaultPosition,wxSize(40,-1),16, depths);
+    m_maxDepth=new wxChoice(panel, ID_MAXDEPTH, wxDefaultPosition,wxSize(40,-1),20, depths);
 	m_maxDepth->SetSelection(8);
 
 	hline->Add(m_maxDepth, 5, wxALIGN_LEFT | wxALL, 5);
@@ -186,7 +186,7 @@ void VtxAsteroidTabs::AddObjectTab(wxWindow *panel) {
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	SizeSlider = new SliderCtrl(panel, ID_RADIUS_SLDR, "Size(1e3 ml)", LABEL2B,
+	SizeSlider = new SliderCtrl(panel, ID_RADIUS_SLDR, "Size(miles)", LABEL2B,
 			VALUE2, SLIDER2);
 	SizeSlider->setRange(1, 1000);
 	SizeSlider->setValue(1);
@@ -344,7 +344,7 @@ void VtxAsteroidTabs::updateControls() {
 	Asteroid *obj = (Asteroid*) object();
 	
 	updateSlider(CellSizeSlider, obj->detail);
-	updateSlider(SizeSlider, obj->size / MILES/1000);
+	updateSlider(SizeSlider, obj->size / MILES);
 	updateSlider(OrbitRadiusSlider, obj->orbit_radius);
 	updateSlider(OrbitPhaseSlider, obj->orbit_phase);
 	updateSlider(OrbitTiltSlider, obj->orbit_skew);

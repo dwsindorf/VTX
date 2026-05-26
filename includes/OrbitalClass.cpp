@@ -2004,7 +2004,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	uploadedVertexCount=0;
 	noiseScale=1.0;
 	noiseOffset=0.0;
-	maxDepth=12;
+	maxDepth=16;
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
@@ -2353,7 +2353,7 @@ int Asteroid::scale(double& znear, double& zfar) {
         if(ht < TheScene->minh)
             ht = TheScene->minh;
 
-        //TheScene->minr      = TheScene->surface_view() ? surfaceR : envelope;
+        TheScene->minr      = TheScene->surface_view() ? surfaceR : envelope;
 
         // znear: use the closest mesh vertex distance from the previous adapt pass.
         // meshZnear is set by adapt_object() from MCGenerator::minDistance — the
@@ -2566,7 +2566,7 @@ void Asteroid::adapt_object(){
     bool isInitialBuild = (tree->root && !tree->root->meshValid &&
                            tree->root->isLeaf());
 
-    if (isInitialBuild) {
+    if (isInitialBuildd) {
         // Progressive loop for initial build: coarse-to-fine with ID readback gating.
         int startDepth = 2;
         int max_cycles = maxDepth - startDepth + 1;
@@ -3258,8 +3258,7 @@ void Spheroid::move_focus(Point &selm)
 		TheScene->height=ht;
 		TheScene->elevation=TheScene->height+TheScene->gndlvl;
 		TheScene->radius=radius()+TheScene->elevation;
-    	cout<<"Spheroid::move_focus ht:"<<ht/MILES<<" r:"<<TheScene->radius/MILES<<endl;
-
+    	//cout<<"Spheroid::move_focus ht:"<<ht/MILES<<" r:"<<TheScene->radius/MILES<<endl;
 		//map->vbounds.set_valid(0);
 	}
 	else{
@@ -3351,7 +3350,7 @@ void Spheroid::set_focus(Point &selm)
 //-------------------------------------------------------------
 // Spheroid::scale() 	set znear, zfar
 //-------------------------------------------------------------
-#define DEBUG_SCALE
+//#define DEBUG_SCALE
 int  Spheroid::scale(double &zn, double &zf)
 {
 	if(!isEnabled())

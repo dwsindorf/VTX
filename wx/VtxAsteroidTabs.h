@@ -75,7 +75,7 @@ public:
 	void OnEndSizeSlider(wxScrollEvent &event) {
 		SizeSlider->setValueFromSlider();
 		Asteroid *obj = object();
-		double val = SizeSlider->getValue() * MILES*1000;
+		double val = SizeSlider->getValue() * MILES;
 		obj->size = val;
 		rebuild();
 	}
@@ -84,7 +84,7 @@ public:
 	}
 	void OnSizeText(wxCommandEvent &event) {
 		SizeSlider->setValueFromText();
-		double val = SizeSlider->getValue() * MILES*1000;
+		double val = SizeSlider->getValue() * MILES;
 		object()->size = val;
 		rebuild();
 	}
