@@ -2362,7 +2362,9 @@ void Scene::animate()
 static void init_objvis(Object3D *obj)
 {
     double zn,zf;
-	obj->scale(zn,zf);
+   // if(obj==TheScene->viewobj)
+   // cout<<"init_objvis "<< TheScene->bgpass<< endl;
+	obj->scale(TheScene->znear,TheScene->zfar);
 }
 void Scene::adapt()
 {
@@ -3058,7 +3060,8 @@ static void pass_group_obj(Object3D *obj)
         passlist.add(obj);
 		double zn=lim;
 		double zf=-lim;
-
+		if(obj==TheScene->viewobj)
+        cout<<"pass group "<< TheScene->bgpass<<endl;
 		obj->scale(zn,zf);
 		if(obj->local_group()){
 		    strcat(grps,"L");

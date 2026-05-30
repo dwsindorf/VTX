@@ -2008,8 +2008,10 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
-	meshZnear=0;
-	meshZfar=0;
+	jumpSeed=false;
+	meshBoundsZn=0;
+	meshBoundsZf=0;
+	meshBoundsValid=false;
 	surfaceR=size;
 	// Identity matrix — replaced by render_object() on the first render frame.
 	memset(savedInvMVP, 0, sizeof(savedInvMVP));
@@ -2133,6 +2135,7 @@ void Asteroid::init(){
 void Asteroid::init_view(){
 	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
 	Spheroid::init_view();
+	TheScene->minh=10*MILES;
 
 	if(TheScene->changed_file())
 		return;  // init() already set surfaceR from saved gndlvl
@@ -2198,6 +2201,16 @@ void Asteroid::move_focus(Point &selm)
     if(!tree || !tree->root)
         return;
     Spheroid::move_focus(selm);
+
+    // Arriving at a picked target. selm.z (gndlvl) is the picked mesh surface radius
+    // minus size — seed surfaceR from it so the first surface frame has the right ht
+    // before the mesh rebuilds, and drop the stale (orbital) nearest-cell distance so
+    // scale() falls to its conservative seed znear until the new mesh is adapted.
+    if(TheScene->viewobj == this){
+        surfaceR  = size + selm.z;
+        minHeight = 0.0;
+        jumpSeed  = true;   // hold the seeded surfaceR until the mesh rebuilds here
+    }
 }
 //-------------------------------------------------------------
 void Asteroid::set_lighting(){
@@ -2238,13 +2251,9 @@ int Asteroid::render_pass()
 //-------------------------------------------------------------
 int Asteroid::selection_pass()
 {
-    clr_selected();
-    if(TheScene->viewobj==this){
-        if(TheScene->select_node())
-        	clear_pass(FG0);
-        else
-            clear_pass(BG1);
-    }
+	clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FG0);
     return selected();
 }
 
@@ -2323,60 +2332,109 @@ double Asteroid::sampleSurfaceR(Point dir)
     }
     TheNoise.rseed = seed;
     double result=0.5*(tlo+thi);  // surface radius from center along dirN
+    cout<<"sampleSurfaceR:"<<result<<endl;
     return result;
 }
 //-------------------------------------------------------------
+// Asteroid::surfaceRByRaycast()
+// Cast a ray from just outside the envelope, inward toward the
+// center, along the given direction, and return the world-space
+// radius of the closest triangle hit. Unlike sampleSurfaceR()
+// (which scans the raw field) this hits the actual rendered mesh,
+// so it includes the vnoise displacement from applyAttributes()
+// and needs no field evaluation. Returns <0 on a miss.
+//-------------------------------------------------------------
+double Asteroid::surfaceRByRaycast(Point dir)
+{
+    if(!tree || !tree->root)
+        return -1.0;
+    double len = dir.length();
+    if(len < 1e-10)
+        return -1.0;
+
+    double scale2   = 2.0 * size;
+    double envelope = size * (1.0 + max_height());
+
+    // raycast space == tri.vertices space == world / (2*size), center at origin.
+    Point dirN   = dir * (1.0 / len);                 // center -> surface direction
+    Point origin = dirN * (envelope * 1.05 / scale2); // just outside the envelope
+    Point ray    = dirN * -1.0;                       // inward, toward center
+
+    Point hit_local;
+    double result=-1;
+    if(tree->raycast(origin, ray, hit_local))
+        result=hit_local.length() * scale2;           // world-space surface radius
+    //cout<<"surfaceRByRaycast:"<<result/MILES<<" "<<dir<<endl;
+    return result;                                       // miss
+
+}
+//-------------------------------------------------------------
 // Asteroid::updateSurfaceR()
-// Update surfaceR for current camera position. Called from scale().
+// Update surfaceR for the current camera position. Prefer a mesh
+// raycast (accurate, includes vnoise); fall back to the raw-field
+// scan only if the ray misses (e.g. mesh not built yet).
 //-------------------------------------------------------------
 void Asteroid::updateSurfaceR()
 {
-    Point cam_w = TheScene->xpoint;
-    //if(cam_w.length() < 1e-10) return;
-    surfaceR = sampleSurfaceR(cam_w);
+    Point cam_w = TheScene->spoint;
+    double r = surfaceRByRaycast(cam_w);
+    surfaceR = (r > 0.0) ? r : sampleSurfaceR(cam_w);
 }
 //-------------------------------------------------------------
 // Asteroid::scale() set znear, zfar
 //-------------------------------------------------------------
 int Asteroid::scale(double& znear, double& zfar) {
-    double d        = TheView->epoint.distance(point);
+	if(TheScene->viewobj != this || TheScene->bgpass==0) // we don't allow group participation
+		return OUTSIDE;
+    const double rmax = size * (1.0 + max_height());            // envelope (peaks)
+    const double rmin = std::max(size * (1.0 - max_height()),   // valleys
+                                 size * 0.1);
+    double d    = TheView->epoint.distance(point);        // eye -> center, current
+
+        // ---- surface radius below / at the relevant point ----
+    double ht;
+	if(TheScene->changed_file()){
+		ht=TheScene->height;
+		surfaceR=TheScene->gndlvl+size;
+		//TheScene->radius=surfaceR+TheScene->height;
+		// Freshly loaded: init() already set surfaceR from the saved gndlvl. Trust it
+		// (selm is stale right after a load, and the mesh may still be coarse).
+	}
+	else if(jumpSeed){
+		// Just jumped to a picked target; mesh not yet rebuilt here. selm.z is the
+		// picked mesh radius (includes vnoise, correct frame) — hold it until
+		// adapt_object() rebuilds and clears jumpSeed.
+		//surfaceR = size + TheScene->selm.z; // should already be set in move_focus
+		ht = TheScene->radius - surfaceR;
+	}
+	else{
+		updateSurfaceR();   // steady flight: mesh raycast below the current eye
+		ht = TheScene->radius - surfaceR;
+	}
+
+	// ---- height bookkeeping (asteroid analog of Map::set_scene) ----
+	// Movement updates TheScene->radius only; recompute height/elevation/gndlvl from
+	// it here so the HT readout tracks movement and saves capture the right values.
+	ht=std::max(ht, TheScene->minh);
+
+	TheScene->radius    = surfaceR + ht;       // clamp out of the ground
+	TheScene->gndlvl    = surfaceR - size;
+	TheScene->elevation = TheScene->radius - size;
+	TheScene->height    = TheScene->radius-(size+TheScene->gndlvl);
+
+	//cout<<"calculated radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES<<endl;
+
+	TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
+
+    znear=0.1*TheScene->height;
     double envelope = size * (1.0 + max_height());
 
-    if(TheScene->viewobj == this){
-        // Sample actual surface below camera each frame — self-correcting.
-        // sampleSurfaceR normalizes the direction so camera distance doesn't matter.
-        //if(!TheScene->changed_file())
-            updateSurfaceR();
+    double r         = TheScene->radius;
+	double horizonSq = r*r - surfaceR*surfaceR;
+	double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
+	zfar  = std::max(horizon, 4.0*envelope);
 
-        // ht = camera height above surface.
-        double ht = TheScene->radius - surfaceR;
-        if(ht < TheScene->minh)
-            ht = TheScene->minh;
-
-        TheScene->minr      = TheScene->surface_view() ? surfaceR : envelope;
-
-        // znear: use the closest mesh vertex distance from the previous adapt pass.
-        // meshZnear is set by adapt_object() from MCGenerator::minDistance — the
-        // actual nearest surface point, not just the point directly below.
-        // Fall back to 0.25*ht on the first frame before any adapt has run.
-        znear = (meshZnear > 0) ? meshZnear : 0.25 * ht;
-        znear = std::max(znear, TheScene->minh * 0.1);
-
-        // zfar: use meshZfar from last adapt when available (uses surfaceR for horizon).
-        double r         = TheScene->radius;
-        double horizonSq = r*r - surfaceR*surfaceR;
-        double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
-        double zfarCalc  = std::max(horizon, 4.0*envelope);
-        zfar = (meshZfar > 0) ? meshZfar : zfarCalc;
-    }
-    else{
-        // Orbital view — set minr to the asteroid's envelope so auto_delh()
-        // computes correct angular step size relative to the asteroid radius.
-        TheScene->minr = envelope;
-        double zn = d - envelope;
-        znear = (zn > 1e-6) ? zn : 1e-6;
-        zfar  = d + envelope;
-    }
+	//cout<<"asteroid zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" miles ratio:"<<zfar/znear<<endl;
     setvis(OUTSIDE);
     return OUTSIDE;
 }
@@ -2528,7 +2586,7 @@ void Asteroid::adapt_object(){
         Raster.reset_idtbl();
 
     bool moved = TheScene->moved();
-    bool changed = TheScene->changed_detail();
+    bool changed = TheScene->changed_detail()||TheScene->changed_view();
 
     if(changed){
         rebuildTree();
@@ -2565,8 +2623,7 @@ void Asteroid::adapt_object(){
 
     bool isInitialBuild = (tree->root && !tree->root->meshValid &&
                            tree->root->isLeaf());
-
-    if (isInitialBuildd) {
+    if (isInitialBuild) {
         // Progressive loop for initial build: coarse-to-fine with ID readback gating.
         int startDepth = 2;
         int max_cycles = maxDepth - startDepth + 1;
@@ -2580,20 +2637,8 @@ void Asteroid::adapt_object(){
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     }
     TheNoise.rseed=seed;
-    minHeight=MCGenerator::minDistance;
-
-    // Compute znear/zfar now while minDistance is fresh.
-    // scale() is called before adapt so it can't do this itself.
-    if(TheScene->viewobj == this && minHeight > 0){
-        double ht = std::max(minHeight, TheScene->minh);
-        meshZnear = 0.25 * ht;
-        meshZnear = std::max(meshZnear, TheScene->minh * 0.1);
-        double r         = TheScene->radius;
-        double envelope2 = size * (1.0 + max_height());
-        double horizonSq = r*r - surfaceR*surfaceR;
-        double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope2;
-        meshZfar = std::max(horizon, 4.0*envelope2);
-    }
+    minHeight=MCGenerator::minDistance;   // nearest leaf cell distance; scale() uses this directly
+    jumpSeed=false;                       // mesh now rebuilt at the current position
 #ifdef PRINT_STATS
     tree->countCells();
     MCGenerator::printStats();
@@ -2645,8 +2690,8 @@ void Asteroid::render_object(){
 
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    //glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     if (Raster.do_shaders) {
     	Raster.shadow_value = shadow_color.alpha();
@@ -2973,12 +3018,16 @@ void Asteroid::buildVBO(){
         }
 
         // Assemble VBO
+        double bzn = 1e30, bzf = 0.0;        // radial extent from the (build-time) camera
         for(MCObjNode* leaf : leaves){
             if(!leaf->meshValid || leaf->mesh.empty()) continue;
             for(auto& tri : leaf->mesh){
                 for(int v=0; v<3; v++){
                     GLVertex gv;
                     Point p = tri.vertices[v] * scale - eyeOffset;
+                    double pd = p.length();
+                    if(pd < bzn) bzn = pd;
+                    if(pd > bzf) bzf = pd;
                     gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
                     Point vn = MCGenerator::smooth ? tri.smoothNormal[v] : tri.faceNormal;
                     gv.normal[0]=(float)-vn.x; gv.normal[1]=(float)-vn.y; gv.normal[2]=(float)-vn.z;
@@ -2995,6 +3044,12 @@ void Asteroid::buildVBO(){
                     glVertices.push_back(gv);
                 }
             }
+        }
+        if(bzf > 0.0){
+            meshBoundsZn    = bzn;
+            meshBoundsZf    = bzf;
+            meshBoundsCam   = eyeOffset;      // == TheScene->xpoint at capture time
+            meshBoundsValid = true;
         }
     }
     TheNoise.rseed = seed;

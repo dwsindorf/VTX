@@ -414,15 +414,18 @@ private:
 	void rebuildTree();
 	void applyAttributes(std::vector<MCTriangle>& mesh);
 	double raycastHeight();       // ray from camera toward center, returns ht above surface
-	void   updateSurfaceR();      // sample field to find actual surface radius at camera pos
-	double sampleSurfaceR(Point dir);
+	void   updateSurfaceR();      // find actual surface radius below the camera
+	double sampleSurfaceR(Point dir);   // raw-field zero crossing (misses vnoise)
+	double surfaceRByRaycast(Point dir);// mesh raycast (closest triangle; includes vnoise)
 	std::vector<GLVertex> glVertices;  // staging buffer
 	GLuint vboVertices;
 	int    uploadedVertexCount;
 	bool   vboDirty;
-	double meshZnear;   // tight znear from last VBO build (eye space)
-	double meshZfar;    // tight zfar  from last VBO build (eye space)
-	double surfaceR;    // actual surface radius at last focus click (from selm.length())
+	double meshBoundsZn;     // nearest VBO vertex distance from camera (radial, world)
+	double meshBoundsZf;     // farthest VBO vertex distance from camera (radial, world)
+	Point  meshBoundsCam;    // camera position when meshBounds* were captured
+	bool   meshBoundsValid;  // true once buildVBO() has emitted geometry
+	double surfaceR;    // actual surface radius below camera (mesh raycast)
 	double noiseScale;
 	double noiseOffset;
 	void buildVBO();
@@ -442,6 +445,7 @@ public:
 	bool shadow_mode;
 	bool shadow_start;
 	double minHeight;
+	bool   jumpSeed;   // true from move_focus() until adapt_object() rebuilds at the new spot
 	Asteroid(Orbital *m, double s, double r);
 	~Asteroid();
 	const char *name()			{ return "Asteroid";}

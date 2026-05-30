@@ -103,7 +103,6 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 	case KEY_TEST7:
 		MCGenerator::wireframe=MCGenerator::wireframe?false:true;
 		cout<<"wireframe="<<MCGenerator::wireframe<<endl;
-		TheScene->set_moved();
 		TheScene->set_changed_render();
 		break;
 	case KEY_TEST8:
