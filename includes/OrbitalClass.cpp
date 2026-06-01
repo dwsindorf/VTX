@@ -2135,7 +2135,7 @@ void Asteroid::init(){
 void Asteroid::init_view(){
 	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
 	Spheroid::init_view();
-	TheScene->minh=10*MILES;
+	TheScene->minh=1*MILES;
 
 	if(TheScene->changed_file())
 		return;  // init() already set surfaceR from saved gndlvl
@@ -2147,7 +2147,7 @@ void Asteroid::init_view(){
 		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
 		surfaceR            = 2*size;   // conservative — scale() corrects immediately
 		TheScene->gndlvl    = 0;
-		TheScene->height    = 5000.0 * FEET;
+		TheScene->height    = 20*MILES;
 	}
 	else{
 		TheScene->height=size * (3.0 + max_height());
@@ -2198,19 +2198,40 @@ void Asteroid::init_render()
 //-------------------------------------------------------------
 void Asteroid::move_focus(Point &selm)
 {
-    if(!tree || !tree->root)
+    if(!tree || !tree->root || TheScene->viewobj != this)
         return;
-    Spheroid::move_focus(selm);
+    // difference current-target ht
+    double dh=TheScene->elevation-selm.z;
+    double minht=1*MILES;
+    double curht=TheScene->height;
+    double ht=curht;
 
-    // Arriving at a picked target. selm.z (gndlvl) is the picked mesh surface radius
-    // minus size — seed surfaceR from it so the first surface frame has the right ht
-    // before the mesh rebuilds, and drop the stale (orbital) nearest-cell distance so
-    // scale() falls to its conservative seed znear until the new mesh is adapted.
-    if(TheScene->viewobj == this){
-        surfaceR  = size + selm.z;
-        minHeight = 0.0;
-        jumpSeed  = true;   // hold the seeded surfaceR until the mesh rebuilds here
-    }
+	Point m=selm;
+	m.z+=radius();
+	m=m.rectangular();
+	Point p=m.mm(TheScene->ModelMatrix.values())+point;
+
+	double dz=p.length();
+
+	TheScene->theta=selm.x;
+	TheScene->phi=selm.y;
+	TheScene->gndlvl=selm.z;
+	TheScene->clr_moved();  	     // don't need new gndlvl from Map.set_scene
+	TheScene->set_changed_detail();  // but still need to turn on Map.adapt
+
+	if(dh>0)
+		ht=0.25*dh; // move closer
+
+	ht=ht<minht?minht:ht;
+	TheScene->height=ht;
+	TheScene->elevation=TheScene->height+TheScene->gndlvl;
+	TheScene->radius=size+TheScene->elevation;
+
+	surfaceR  = size + selm.z;
+	minHeight = minht;
+	jumpSeed  = true;   // hold the seeded surfaceR until the mesh rebuilds here
+	//cout<<"Asteroid::move_focus ht old:"<<curht/MILES<<" target:"<<selm.z/MILES<<" delta:"<<dh/MILES<<" new:"<<ht/MILES<<endl;
+
 }
 //-------------------------------------------------------------
 void Asteroid::set_lighting(){
@@ -2249,12 +2270,8 @@ int Asteroid::render_pass()
 //-------------------------------------------------------------
 // Asteroid::selection_pass() select for scene pass
 //-------------------------------------------------------------
-int Asteroid::selection_pass()
-{
-	clr_selected();
-    if(TheScene->viewobj==this)
-        select_pass(FG0);
-    return selected();
+int Asteroid::selection_pass() {
+	return Spheroid::selection_pass();
 }
 
 //-------------------------------------------------------------
@@ -2377,6 +2394,7 @@ double Asteroid::surfaceRByRaycast(Point dir)
 void Asteroid::updateSurfaceR()
 {
     Point cam_w = TheScene->spoint;
+
     double r = surfaceRByRaycast(cam_w);
     surfaceR = (r > 0.0) ? r : sampleSurfaceR(cam_w);
 }
@@ -2389,10 +2407,8 @@ int Asteroid::scale(double& znear, double& zfar) {
     const double rmax = size * (1.0 + max_height());            // envelope (peaks)
     const double rmin = std::max(size * (1.0 - max_height()),   // valleys
                                  size * 0.1);
-    double d    = TheView->epoint.distance(point);        // eye -> center, current
 
-        // ---- surface radius below / at the relevant point ----
-    double ht;
+    double ht=0;
 	if(TheScene->changed_file()){
 		ht=TheScene->height;
 		surfaceR=TheScene->gndlvl+size;
@@ -2404,7 +2420,7 @@ int Asteroid::scale(double& znear, double& zfar) {
 		// Just jumped to a picked target; mesh not yet rebuilt here. selm.z is the
 		// picked mesh radius (includes vnoise, correct frame) — hold it until
 		// adapt_object() rebuilds and clears jumpSeed.
-		//surfaceR = size + TheScene->selm.z; // should already be set in move_focus
+		surfaceR = size + TheScene->selm.z; // should already be set in move_focus
 		ht = TheScene->radius - surfaceR;
 	}
 	else{
@@ -2422,19 +2438,34 @@ int Asteroid::scale(double& znear, double& zfar) {
 	TheScene->elevation = TheScene->radius - size;
 	TheScene->height    = TheScene->radius-(size+TheScene->gndlvl);
 
-	//cout<<"calculated radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES<<endl;
+	//cout<<"radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES;
 
 	TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
 
-    znear=0.1*TheScene->height;
+    znear=0.01*TheScene->height;
     double envelope = size * (1.0 + max_height());
 
     double r         = TheScene->radius;
-	double horizonSq = r*r - surfaceR*surfaceR;
-	double horizon   = (horizonSq > 0) ? sqrt(horizonSq) : 2.0*envelope;
-	zfar  = std::max(horizon, 4.0*envelope);
+    // Prefer the actual visible mesh extent (the asteroid's analog of the planet's
+   // map->vbounds): tight, so render_ids' depth buffer keeps enough precision for
+   // pixelLeaf to resolve the frontmost cell instead of z-fighting. Expand by how
+   // far the eye moved since capture so the bounds stay valid between rebuilds;
+   // fall back to the analytic valley-horizon on the first/jump frame.
+   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
+   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
+	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
+	   zfar  = (meshBoundsZf + dcam) * 1.05;
+   }
+   else{
+	   double horizonSq = r*r - rmin*rmin;
+	   zfar  = (horizonSq > 0) ? 1.1*sqrt(horizonSq) : 2.0*envelope;
+	   zfar += envelope;
+	   znear = std::max(0.001*TheScene->height, 4.0*FEET);
+   }
+   if(znear < zfar/50000.0)
+	   znear = zfar/50000.0;   // safety: never collapse the range
+   	//cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<endl;
 
-	//cout<<"asteroid zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" miles ratio:"<<zfar/znear<<endl;
     setvis(OUTSIDE);
     return OUTSIDE;
 }
@@ -2603,6 +2634,7 @@ void Asteroid::adapt_object(){
     MCGenerator::minDistance = 0;  // reset so this adapt gets a fresh minimum
 
     Point xpoint = TheScene->xpoint;
+
     Point asteroidWorld = this->point;
     Point up,right, forward;
 	up=xpoint.normalize();
@@ -2636,6 +2668,11 @@ void Asteroid::adapt_object(){
         tree->render_ids(2.0*size, xpoint);
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     }
+    // Refresh the id table against the FINAL adapted mesh. The render_ids calls
+     // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
+     // subdivision behind and pixelLeaf() resolves stale/freed cells.
+     tree->render_ids(2.0*size, xpoint);
+
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;   // nearest leaf cell distance; scale() uses this directly
     jumpSeed=false;                       // mesh now rebuilt at the current position
@@ -2729,8 +2766,9 @@ Bounds *Asteroid::bounds(){
 //-------------------------------------------------------------
 void Asteroid::select()
 {
-    if (!isEnabled()) return;
     set_ref();
+    if (!isEnabled()||!included())
+    	return;
 
     if (vboVertices && uploadedVertexCount > 0) {
     	TheScene->pushMatrix();
@@ -2772,22 +2810,21 @@ void Asteroid::select()
 
 //-------------------------------------------------------------
 // Asteroid::get_focus()
-// Returns the asteroid's world position as the focus point.
-// selm is stored in TheScene and passed to set_focus() each frame.
+// Resolve a surface pick the way the Map/OctTree do: read back the cell
+// rendered at the cursor pixel (frontmost, from render_ids' id image) and
+// intersect only that cell. This avoids the whole-tree raycast grazing
+// through an LOD-boundary crack to the far side of the body.
+// Returns Point(theta, phi, gndlvl), gndlvl = surfaceR - size.
 //-------------------------------------------------------------
 Point Asteroid::get_focus(void *v)
 {
-    // Raycast screen click against MC mesh.
-    // Returns Point(theta, phi, gndlvl) — same convention as Spheroid::get_focus —
-    // where gndlvl = surfaceR - size (surface deviation above nominal radius).
     if (!tree || !tree->root)
         return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
 
-    // If no render frame has completed yet, savedInvMVP is identity — skip raycast.
-    // (Off-diagonal [1] is 0 for identity but non-zero for a real perspective matrix.)
+    // If no render frame has completed yet, savedInvMVP is identity — skip pick.
     bool validMVP = (savedInvMVP[1] != 0.0 || savedInvMVP[4] != 0.0 ||
                      savedInvMVP[2] != 0.0);
-    if(!validMVP)
+    if (!validMVP)
         return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
 
     double scale = 2.0 * size;
@@ -2796,41 +2833,23 @@ Point Asteroid::get_focus(void *v)
     double sx = TheScene->selp.x;
     double sy = TheView->viewport[3] - TheScene->selp.y;
 
-    // Use the saved render-frame InvModelViewProjMatrix, not the live GL state.
-    // During the GL_SELECT pass, the projection matrix is a pick matrix —
-    // unProject() via the saved matrix gives the correct render-frame ray.
-    auto unprojectSaved = [&](double ndcz) -> Point {
-        GLdouble v[4] = { 2.0*sx/TheView->viewport[2] - 1.0,
-                          2.0*sy/TheView->viewport[3] - 1.0,
-                          2.0*ndcz - 1.0, 1.0 };
-        GLdouble w[4];
-        mvmul4(v, savedInvMVP, w);
-        if(fabs(w[3]) < 1e-30) return Point(0,0,0);
-        double wz = 1.0 / w[3];
-        return Point(w[0]*wz, w[1]*wz, w[2]*wz);
-    };
+    MCObjNode *leaf = tree->pixelLeaf((int)TheScene->selp.x, (int)TheScene->selp.y);
+    if (!leaf || !leaf->meshValid || leaf->mesh.empty())   // off-surface or stale id table
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
 
-    Point near_w  = unprojectSaved(0.0);
-    Point far_w   = unprojectSaved(1.0);
-    Point near_mc = (near_w + cam_w) / scale;
-    Point far_mc  = (far_w  + cam_w) / scale;
-    Point local_org = near_mc;
-    Point local_dir = (far_mc - near_mc).normalize();
+	// Cells are ~1-2 px, so any vertex of the picked cell is the surface point.
+	// tri.vertices are MC/local ([-0.5,0.5], surface ~0.5); * scale -> world.
+	const MCTriangle& t0 = leaf->mesh[0];
+	Point hit_world = (t0.vertices[0] + t0.vertices[1] + t0.vertices[2]) * (scale / 3.0);
 
-    Point hit_local;
-    if (tree->raycast(local_org, local_dir, hit_local)) {
-        // hit_local is in MC space. Convert to world-space and extract spherical coords.
-        Point hit_world = hit_local * scale;  // world-space, asteroid-centred
-        double sr = hit_world.length();
-        Point sph = hit_world.spherical();    // sph.x=phi, sph.y=theta+180
-        double theta  = sph.y - 180.0;
-        double phi    = sph.x;
-        double gndlvl = sr - size;            // surface deviation above nominal radius
-        return Point(theta, phi, gndlvl);
-    }
-    // Raycast missed — return current view angles with existing gndlvl so
-    // move_focus() keeps surfaceR correct rather than resetting it to size.
-    return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
+	double sr     = hit_world.length();
+	Point  sph    = hit_world.spherical();
+	double theta  = sph.y - 180.0;
+	double phi    = sph.x;
+	double gndlvl = sr - size;
+	printf("HIT  theta=%.3f phi=%.3f gnd=%.4f  (screen %.0f,%.0f)\n",
+		   theta, phi, gndlvl/MILES, sx, sy);
+	return Point(theta, phi, gndlvl);
 }
 
 //-------------------------------------------------------------
@@ -2844,6 +2863,7 @@ void Asteroid::set_focus(Point &selm)
 	// selm = Point(theta, phi, gndlvl) from get_focus(), same as Spheroid.
     // Just delegate — Spheroid::set_focus reconstructs world position from
     // selm using radius() (which returns size) and ModelMatrix, draws crosshair.
+
     Spheroid::set_focus(selm);
 }
 
@@ -3947,7 +3967,7 @@ void Spheroid::init_view()
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
 	TheScene->radius=TheScene->elevation;
 	TheScene->radius+=radius();
-	cout<<"Spheroid::init_view() r:"<<TheScene->radius/MILES<<endl;
+	//cout<<"Spheroid::init_view() r:"<<TheScene->radius/MILES<<endl;
 }
 
 //-------------------------------------------------------------

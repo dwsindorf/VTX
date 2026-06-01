@@ -970,6 +970,8 @@ void MCObjTree::free()
         root = nullptr;
     }
     valid = false;
+    resetMcIdtbl();    // drop stale leaf pointers so pixelLeaf() can't deref freed nodes
+    mcPixels.clear();  // stale id image no longer maps to live leaves
 }
 
 void MCObjTree::invalidate()
@@ -1182,6 +1184,7 @@ bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local)
     const double EPSILON = 1e-8;
     double best_t = 1e30;
     bool   hit    = false;
+    //double t0=clock();
 
     std::vector<MCObjNode*> leaves;
     if (root)
@@ -1217,9 +1220,85 @@ bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local)
             hit       = true;
         }
     }
+    //double t1=clock();
+    // ~20 ms per call
+    // cout<<"raycast tm="<<1000.0*(t1-t0)/CLOCKS_PER_SEC<<" ms"<<endl;
     return hit;
 }
+//-------------------------------------------------------------
+// MCObjTree::pixelLeaf()
+// Return the leaf that was rendered at screen pixel (x,y) in the last
+// render_ids() pass, read from the mcPixels id image. x,y are top-origin
+// (selp convention); flipped here to glReadPixels' bottom-origin rows.
+// Mirrors RasterMgr::pixelID(). Returns nullptr off-surface / out of range.
+//-------------------------------------------------------------
+MCObjNode* MCObjTree::pixelLeaf(int x, int y) const
+{
+    int w = TheView->viewport[2];
+    int h = TheView->viewport[3];
+    if (mcPixels.empty() || x < 0 || x >= w) return nullptr;
 
+    int row = h - y;                       // top-origin -> bottom-origin
+    if (row < 0) row = 0; else if (row > h - 1) row = h - 1;
+    int i = 4 * (row * w + x);
+    if (i < 0 || i + 2 >= (int)mcPixels.size()) return nullptr;
+
+    MCIdColor idb; idb.l = 0;
+    idb.c.red   = (GLubyte)roundf(mcPixels[i]     * 255.0f);
+    idb.c.green = (GLubyte)roundf(mcPixels[i + 1] * 255.0f);
+    idb.c.blue  = (GLubyte)roundf(mcPixels[i + 2] * 255.0f);
+    idb.c.alpha = 0;
+
+    int id = idb.l;
+    if (id <= 0 || id >= (int)mcIdtbl.size()) return nullptr;
+    return mcIdtbl[id];
+}
+
+//-------------------------------------------------------------
+// MCObjTree::raycastLeaf()
+// Möller–Trumbore against a single node's triangles only. origin/dir are in
+// the same local normalised space as tri.vertices ([-0.5,0.5]). Returns the
+// nearest hit within that node, if any.
+//-------------------------------------------------------------
+bool MCObjTree::raycastLeaf(const MCObjNode* node, const Point& origin,
+                            const Point& dir, Point& hit_local) const
+{
+    if (!node || !node->meshValid || node->mesh.empty()) return false;
+
+    const double EPSILON = 1e-8;
+    double best_t = 1e30;
+    bool   hit    = false;
+
+    for (const MCTriangle& tri : node->mesh) {
+        Point v0 = tri.vertices[0];
+        Point v1 = tri.vertices[1];
+        Point v2 = tri.vertices[2];
+
+        Point edge1 = v1 - v0;
+        Point edge2 = v2 - v0;
+        Point h     = dir.cross(edge2);
+        double a    = edge1.dot(h);
+        if (fabs(a) < EPSILON) continue;
+
+        double f = 1.0 / a;
+        Point  s = origin - v0;
+        double u = f * s.dot(h);
+        if (u < 0.0 || u > 1.0) continue;
+
+        Point  q = s.cross(edge1);
+        double v = f * dir.dot(q);
+        if (v < 0.0 || u + v > 1.0) continue;
+
+        double t = f * edge2.dot(q);
+        if (t < EPSILON || t >= best_t) continue;
+
+        best_t    = t;
+        hit_local = origin + dir * t;
+
+        hit       = true;
+    }
+    return hit;
+}
 void MCObjTree::visit(void (MCObjNode::*func)())
 {
     if (root)

@@ -6,6 +6,7 @@
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
+varying vec4 WorldNormal;
 
 void main(void) {
 
@@ -20,6 +21,7 @@ void main(void) {
 #endif
 
 #include "set_common.vert"
+WorldNormal.xyz = gl_Normal;
 
 #include "set_tex.vert"
 #include "set_attributes.vert"

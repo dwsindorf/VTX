@@ -366,6 +366,11 @@ public:
     // origin and dir must be in the same space as tri.vertices (local [-0.5,0.5]).
     // Returns true on hit, setting hit_local to the closest intersection.
     bool raycast(const Point& origin, const Point& dir, Point& hit_local) const;
+    // Pick support: leaf drawn at a screen pixel in the last render_ids() pass
+	// (mcPixels/mcIdtbl), and a raycast restricted to one node's triangles.
+	MCObjNode* pixelLeaf(int x, int y) const;
+	bool raycastLeaf(const MCObjNode* node, const Point& origin,
+					 const Point& dir, Point& hit_local) const;
 
     // Traversal — mirrors Map::visit() / Map::visit_all()
     void visit(void (MCObjNode::*func)());
