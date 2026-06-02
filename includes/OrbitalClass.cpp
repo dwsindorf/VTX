@@ -2727,8 +2727,8 @@ void Asteroid::render_object(){
 
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 
     if (Raster.do_shaders) {
     	Raster.shadow_value = shadow_color.alpha();

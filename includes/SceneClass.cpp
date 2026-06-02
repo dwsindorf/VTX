@@ -3159,25 +3159,25 @@ void Scene::set_quality(int q)
 {
     switch(q){
     case BEST:
-		cellsize=0.1666*dflt_cellsize;
-		break;
-
-    case HIGH:
 		cellsize=0.25*dflt_cellsize;
 		break;
 
-	case NORMAL:
+    case HIGH:
 		cellsize=0.5*dflt_cellsize;
+		break;
+
+	case NORMAL:
+		cellsize=dflt_cellsize;
 		break;
 
 	case DRAFT:
 		cellsize=2*dflt_cellsize;
 		break;
 	}
-	set_changed_detail();
-	if(q!=render_quality)
+	if(q<render_quality)
 	    rebuild_all();
     render_quality=q;
+	set_changed_detail();
 }
 
 //-------------------------------------------------------------
