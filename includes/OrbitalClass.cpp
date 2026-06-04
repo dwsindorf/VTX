@@ -30,8 +30,8 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-//#define PRINT_DEPTH_COUNTS
-//#define PRINT_STATS
+//#define PRINT_ASTEROID_STATS
+#define USE_IDTABLE
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -2440,9 +2440,9 @@ int Asteroid::scale(double& znear, double& zfar) {
 
 	//cout<<"radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES;
 
-	TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
+	//TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
 
-    znear=0.01*TheScene->height;
+    znear=0.1*TheScene->height;
     double envelope = size * (1.0 + max_height());
 
     double r         = TheScene->radius;
@@ -2451,21 +2451,28 @@ int Asteroid::scale(double& znear, double& zfar) {
    // pixelLeaf to resolve the frontmost cell instead of z-fighting. Expand by how
    // far the eye moved since capture so the bounds stay valid between rebuilds;
    // fall back to the analytic valley-horizon on the first/jump frame.
-   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
-   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
-	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
-	   zfar  = (meshBoundsZf + dcam) * 1.05;
+//   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
+//   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
+//	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
+//	   zfar  = (meshBoundsZf + dcam) * 1.05;
+//   }
+   if(MCGenerator::maxDistance>0){
+ 	   znear = 0.25*MCGenerator::minDistance;
+ 	   zfar  = 2*MCGenerator::maxDistance;
    }
    else{
 	   double horizonSq = r*r - rmin*rmin;
 	   zfar  = (horizonSq > 0) ? 1.1*sqrt(horizonSq) : 2.0*envelope;
 	   zfar += envelope;
-	   znear = std::max(0.001*TheScene->height, 4.0*FEET);
+	   znear = std::max(0.01*TheScene->height, 4.0*FEET);
    }
    if(znear < zfar/50000.0)
 	   znear = zfar/50000.0;   // safety: never collapse the range
-   	//cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<endl;
 
+   TheScene->minr = surfaceR + TheScene->minh;
+	//cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<" minr:"<<TheScene->minr/MILES<<endl;;
+
+ 	//cout<<" surfaceR:"<<surfaceR/MILES<<" ht:"<<ht/MILES<<" minr:"<<TheScene->minr/MILES<<endl;
     setvis(OUTSIDE);
     return OUTSIDE;
 }
@@ -2632,6 +2639,7 @@ void Asteroid::adapt_object(){
         return;
 
     MCGenerator::minDistance = 0;  // reset so this adapt gets a fresh minimum
+    MCGenerator::maxDistance = 0;  // reset so this adapt gets a fresh minimum
 
     Point xpoint = TheScene->xpoint;
 
@@ -2650,34 +2658,47 @@ void Asteroid::adapt_object(){
     int seed = TheNoise.rseed;
     TheNoise.rseed=rseed;
 
+#ifdef USE_IDTABLE
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,true);
-
 
     bool isInitialBuild = (tree->root && !tree->root->meshValid &&
                            tree->root->isLeaf());
+    double rsum=0;
+    double asum=0;
     if (isInitialBuild) {
         // Progressive loop for initial build: coarse-to-fine with ID readback gating.
         int startDepth = 2;
         int max_cycles = maxDepth - startDepth + 1;
         for (int cycle = 0; cycle < max_cycles; cycle++) {
             int cycleDepth = startDepth + cycle;
+            double t0=clock();
             tree->render_ids(2.0*size, xpoint);
+            rsum+=clock()-t0;
+            double t1=clock();
             tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
+            asum+=clock()-t1;
         }
+        cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
+
     } else {
         tree->render_ids(2.0*size, xpoint);
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
     }
+
+#else
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
+    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+#endif
     // Refresh the id table against the FINAL adapted mesh. The render_ids calls
      // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
      // subdivision behind and pixelLeaf() resolves stale/freed cells.
-     tree->render_ids(2.0*size, xpoint);
-
+    tree->render_ids(2.0*size, xpoint);
+    tree->countCells();
     TheNoise.rseed=seed;
     minHeight=MCGenerator::minDistance;   // nearest leaf cell distance; scale() uses this directly
     jumpSeed=false;                       // mesh now rebuilt at the current position
-#ifdef PRINT_STATS
-    tree->countCells();
+
+#ifdef PRINT_ASTEROID_STATS
     MCGenerator::printStats();
     if(!changed)
     	MCGenerator::resetStats();
@@ -2847,8 +2868,8 @@ Point Asteroid::get_focus(void *v)
 	double theta  = sph.y - 180.0;
 	double phi    = sph.x;
 	double gndlvl = sr - size;
-	printf("HIT  theta=%.3f phi=%.3f gnd=%.4f  (screen %.0f,%.0f)\n",
-		   theta, phi, gndlvl/MILES, sx, sy);
+	//printf("HIT  theta=%.3f phi=%.3f gnd=%.4f  (screen %.0f,%.0f)\n",
+	//	   theta, phi, gndlvl/MILES, sx, sy);
 	return Point(theta, phi, gndlvl);
 }
 

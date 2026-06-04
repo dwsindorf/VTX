@@ -86,8 +86,8 @@ SET_COLOR_EVENTS(DIFFUSE,VtxAsteroidTabs,Diffuse)
 SET_COLOR_EVENTS(SHADOW,VtxAsteroidTabs,Shadow)
 
 EVT_CHOICE(ID_MAXDEPTH, VtxAsteroidTabs::OnMaxDepth)
-EVT_CHECKBOX(ID_SMOOTH,VtxAsteroidTabs::OnChangedFlags)
-EVT_CHECKBOX(ID_LINES,VtxAsteroidTabs::OnChangedFlags)
+EVT_CHECKBOX(ID_SMOOTH,VtxAsteroidTabs::OnChangedSmooth)
+EVT_CHECKBOX(ID_LINES,VtxAsteroidTabs::OnChangedLines)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxAsteroidTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxAsteroidTabs::OnDelete)

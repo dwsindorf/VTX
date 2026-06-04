@@ -1233,7 +1233,8 @@ void View::move_down()
 		theta-=d*cos(RPD*heading);
 		phi-=d*sin(RPD*heading);
 		radius-=0.5*delv*cos(RPD*pitch);
-
+		if(radius<minr)
+			radius=minr;
 		adjust_view();
 	}
 	set_moved();
@@ -1375,15 +1376,16 @@ void View::head_forward()
 
 void View::auto_delv() {
 	if (minr) {
-		//cout << "r/m:"<<radius/minr<< " exp:"<< (1-exp(-(radius-minr)/minr))/FEET << endl;
-		delv = zoom * vstride * ((1.0 - exp(-(radius - minr) / minr))) + minh;
-		//cout<<" vstride:"<<vstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" zoom:"<<zoom<<endl;
-		if (radius < minr) {
+		if (radius <= minr) {
 			radius = minr;
-			delv = 0;
+			delv = 0.5*minh;
+		}
+		else{
+			delv = zoom * vstride * ((1.0 - exp(-(radius - minr) / minr))) + minh;
 		}
 	} else
 		delv = zoom * vstride;
+	//cout<<" vstride:"<<vstride<<" radius:"<<radius<<" minr:"<<minr<<" minh:"<<minh<<" delv:"<<delv/MILES<<endl;
 }
 
 void View::auto_delh()

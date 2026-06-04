@@ -32,6 +32,7 @@ void MCObjAdaptFlags::setDirections(Point p, Point r, Point f, Point u) {
 // MCGenerator implementation
 //=============================================================================
 int MCGenerator::cells=0;
+int MCGenerator::triangles=0;
 int MCGenerator::leaf_cells=0;
 int MCGenerator::csi_calls = 0;
 int MCGenerator::cells_deleted=0;
@@ -43,6 +44,7 @@ int MCGenerator::csi_cull_calls=0;
 int MCGenerator::csi_adapt_calls=0;
 int MCGenerator::csi_false = 0;
 int MCGenerator::csi_by_depth[32] = {};
+int MCGenerator::leafs_by_depth[32] = {};
 int MCGenerator::csi_cull_by_depth[32] = {};
 int MCGenerator::tm_field_calls=0; // templates
 int MCGenerator::ad_field_calls=0; // adaptive
@@ -50,6 +52,7 @@ int MCGenerator::gm_field_calls=0; // mesh both
 int MCGenerator::frame_field_calls=0;  // reset each frame
 int MCGenerator::maxDepth=0;
 double MCGenerator::minDistance=1000;
+double MCGenerator::maxDistance=0;
 double MCGenerator::cullFactor=20;
 bool MCGenerator::wireframe=false;
 bool MCGenerator::smooth=false;
@@ -216,11 +219,13 @@ void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
     tm_field_calls=ad_field_calls = gm_field_calls =0;
-    minDistance=0;
+    minDistance=1000;
+    maxDistance=0;
     maxDepth=0;
     frame_field_calls = 0;
 	memset(csi_by_depth, 0, sizeof(csi_by_depth));  // ← ensure this is present
 	memset(csi_cull_by_depth, 0, sizeof(csi_cull_by_depth));  // ← ensure this is present
+	memset(leafs_by_depth, 0, sizeof(leafs_by_depth));  // ← ensure this is present
 
 }
 void MCGenerator::printStats(){
@@ -231,27 +236,30 @@ void MCGenerator::printStats(){
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
-	for (int d = 0; d <= 12; d++)
+	for (int d = 0; d <= 16; d++)
 		if (csi_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_by_depth[d] << " ";
 	cout << endl;
 	cout << " CULL: by depth ";
-	for (int d = 0; d <= 12; d++)
+	for (int d = 0; d <= 16; d++)
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
-	cout<< " CELLS total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted<<endl;
+	cout<< " CELLS total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted
+			<<" tris:"<<triangles<<" depth:"<<maxDepth<<endl;
+	cout << " LEAFS: by depth ";
+	for (int d = 0; d <= 16; d++)
+		if (csi_cull_by_depth[d] > 0)
+			std::cout << "d" << d << ":" << leafs_by_depth[d] << " ";
+	cout << endl;
 	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
 	if(tm_field_calls)
 		cout<< " Field calls adaptive:"<<ad_field_calls/1000<<" template:"<<tm_field_calls/1000;
 	else
 	    cout<< " Field calls:"<<ad_field_calls/1000;
 	cout<<" mesh:"<<gm_field_calls/1000<<" K"<<endl;
-	//if(minDistance>MILES)
 	if(minDistance>0)
-		cout<<" minDistance:"<<minDistance/MILES<<" miles"<<endl;
-	//else
-	//	cout<<" minDistance:"<<minDistance/FEET<<" feet"<<endl;
+		cout<<" minDistance:"<<minDistance/MILES<<" maxDistance:"<<maxDistance/MILES<<" miles"<<endl;
 }
 
 //=============================================================================
@@ -563,7 +571,7 @@ SurfaceFunction makeNoisySphere(const Point& center, int seed) {
 //=============================================================================
 MCObjNode::MCObjNode()
     : parent(nullptr),
-      center(0,0,0), size(0), depth(0),
+      center(0,0,0), size(0), depth(0),viewDistance(0),
       surfaceChecked(false), surfacePresent(false),
       meshValid(false), normalsValid(false), smoothNormalsValid(false), attributesApplied(false),
       inFrustum(false), projectedSize(0),
@@ -780,7 +788,9 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     }
     MCGenerator gen;
     mesh = gen.generateMesh(field, localMin, localMax, 1);
-
+//    if (mesh.empty() && surfaceChecked && surfacePresent) {
+//        mesh = gen.generateMesh(field, localMin, localMax, 2);
+//    }
     // Compute face normals from field gradient — only when smooth mode is on.
     // In flat mode buildVBO uses cross-product normals from tri.normal.
     // Skipping these field calls in flat mode avoids unnecessary computation.
@@ -813,6 +823,7 @@ void MCObjNode::adapt(SurfaceFunction field,
 {
     MCGenerator::csi_adapt_calls++;
     double distance   = center.distance(cameraPos);
+    viewDistance=distance;
     projectedSize     = wscale * size / distance;
     double effectiveMinPixels = minPixels;
 
@@ -875,13 +886,13 @@ void MCObjNode::adapt(SurfaceFunction field,
             skipSurfaceCheck = true;
         }
     }
+    cull_done:
     if(isLeaf()){
     	if(depth>MCGenerator::maxDepth){
     		MCGenerator::maxDepth=depth;
     	}
     }
 
-    cull_done:
     cnt++;
     if(culled){
         MCGenerator::csi_cull_calls++;
@@ -890,11 +901,11 @@ void MCObjNode::adapt(SurfaceFunction field,
 
     // Track nearest leaf cell center distance, including culled cells.
     // Must be after cull_done so useVisibility goto doesn't skip it.
-    if(isLeaf()){
-        if(MCGenerator::minDistance == 0 || distance < MCGenerator::minDistance){
-            MCGenerator::minDistance = distance;
-        }
-    }
+//    if(isLeaf()){
+//        if(MCGenerator::minDistance == 0 || distance < MCGenerator::minDistance){
+//            MCGenerator::minDistance = distance;
+//        }
+//    }
     // ── Should this node be a leaf? ──────────────────────────────────────
     bool size_check  = (projectedSize <= effectiveMinPixels * 2);
     bool depth_check = (depth >= maxDepth);
@@ -904,6 +915,7 @@ void MCObjNode::adapt(SurfaceFunction field,
     // Do NOT apply this at intermediate cycle depths: a cell that was a leaf last cycle
     // due to depth_check must be re-examined as cycleDepth increases, or it stays
     // permanently coarse and creates LOD banding rings.
+
     if (depth_check && isLeaf() && meshValid) {
         return;
     }
@@ -1032,7 +1044,6 @@ void MCObjTree::resetMcIdtbl()
 void MCObjTree::render_ids(double scale, const Point& xpoint)
 {
     if (!root) return;
-
     GLint savedFBO = 0;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFBO);
     if (savedFBO == 0)
@@ -1048,7 +1059,6 @@ void MCObjTree::render_ids(double scale, const Point& xpoint)
         leaf->nodeVisible = false;
         leaf->nodeMasked  = false;
     }
-
     glUseProgram(0);
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
@@ -1056,9 +1066,8 @@ void MCObjTree::render_ids(double scale, const Point& xpoint)
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glShadeModel(GL_FLAT);
-
 
     resetMcIdtbl();
 
@@ -1116,7 +1125,8 @@ void MCObjTree::mark_visibility(int viewport_w, int viewport_h)
     int vis=0, masked=0;
     for (size_t id = 1; id < mcIdtbl.size(); id++) {
         if (mcIdtbl[id] && !mcIdtbl[id]->nodeVisible) {
-            mcIdtbl[id]->nodeMasked = true; masked++;
+            mcIdtbl[id]->nodeMasked = true;
+            masked++;
         } else if (mcIdtbl[id]) vis++;
     }
 
@@ -1138,7 +1148,6 @@ static bool propagateMasked(MCObjNode* node)
     return allMasked;
 }
 
-
 //-------------------------------------------------------------
 // MCObjTree::countCells()
 //
@@ -1151,7 +1160,10 @@ void MCObjTree::countCells()
 {
     MCGenerator::cells      = 0;
     MCGenerator::leaf_cells = 0;
+    MCGenerator::triangles      = 0;
 
+    double mn=1000;
+    double mx=0;
     if (!root) return;
 
     // Iterative traversal using a stack to avoid deep recursion
@@ -1163,12 +1175,25 @@ void MCObjTree::countCells()
         MCGenerator::cells++;
         if (node->isLeaf()) {
             MCGenerator::leaf_cells++;
+            MCGenerator::triangles+=node->mesh.size();
+            MCGenerator::leafs_by_depth[node->depth]++;
+            if(node->nodeVisible){
+            	if(node->viewDistance<mn)
+            		mn=node->viewDistance;
+            	if(node->viewDistance>mx)
+            		mx=node->viewDistance;
+            }
+
         } else {
             for (int i = 0; i < 8; i++)
                 if (node->children[i])
                     stack.push_back(node->children[i]);
         }
     }
+    cout<<"distance min:"<<mn/MILES<<" max:"<<mx/MILES<<" ratio:"<<mx/mn<<endl;
+    MCGenerator::minDistance=mn;
+    MCGenerator::maxDistance=mx;
+
 }
 
 //-------------------------------------------------------------
@@ -1181,7 +1206,7 @@ void MCObjTree::countCells()
 //-------------------------------------------------------------
 bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local) const
 {
-    const double EPSILON = 1e-8;
+    const double EPSILON = 1e-10;
     double best_t = 1e30;
     bool   hit    = false;
     //double t0=clock();

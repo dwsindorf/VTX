@@ -127,9 +127,12 @@ public:
 		TheView->set_changed_detail();
 	}
 	
-	void OnChangedFlags(wxCommandEvent& event){
-		MCGenerator::smooth=m_smooth->IsChecked();
-		MCGenerator::wireframe=m_wireframe->IsChecked();
+	void OnChangedLines(wxCommandEvent& event){
+		MCGenerator::wireframe=event.IsChecked();
+		TheView->set_changed_render();
+	}
+	void OnChangedSmooth(wxCommandEvent& event){
+		MCGenerator::smooth=event.IsChecked();
 		TheView->set_changed_detail();
 	}
 	void OnEndCellSizeSlider(wxScrollEvent &event) {

@@ -57,6 +57,7 @@ public:
     static int ad_field_calls;
     static int frame_field_calls;  // reset each frame
     static int cells;
+    static int triangles;
     static int cells_deleted;
     static int cells_created;
     static int leaf_cells;
@@ -69,11 +70,13 @@ public:
     static int csi_false;
     static int csi_by_depth[32];
     static int csi_cull_by_depth[32];
+    static int leafs_by_depth[32];
     static int maxDepth;
     static bool wireframe;
     static bool smooth;
     static double csi_minCellSize;
     static double minDistance;
+    static double maxDistance;
     static double cullFactor;
 
     struct OctreeCell {
@@ -258,6 +261,7 @@ public:
     // Per-frame LOD state — updated each adapt pass
     bool inFrustum;
     double projectedSize;
+    double viewDistance;
     bool nodeVisible;   // seen in last ID readback
     bool nodeMasked;    // not seen -- candidate for coarsening
 
