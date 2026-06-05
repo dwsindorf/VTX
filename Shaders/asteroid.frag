@@ -127,6 +127,7 @@ void main() {
         illumination = c.a;
     }
 #endif
+   // gl_FragData[0] = vec4(normalize(WorldNormal) * 0.5 + 0.5, 1.0);
     gl_FragData[0] = vec4(clamp(color.xyz, 0.0, 1.0), 1.0);
     gl_FragData[1] = vec4(4.0, DEPTH, 0.0, illumination);
     

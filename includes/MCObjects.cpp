@@ -60,16 +60,13 @@ bool MCGenerator::smooth=false;
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
                                      double val1, double val2, double isolevel) {
-    if (std::abs(isolevel - val1) < 0.00001) return p1;
-    if (std::abs(isolevel - val2) < 0.00001) return p2;
-    if (std::abs(val1 - val2) < 0.00001) return p1;
-
-    double mu = (isolevel - val1) / (val2 - val1);
-    return Point(
-        p1.x + mu * (p2.x - p1.x),
-        p1.y + mu * (p2.y - p1.y),
-        p1.z + mu * (p2.z - p1.z)
-    );
+    double denom = val2 - val1;
+    if (std::abs(denom) < 1e-12) return p1;     // div-by-zero guard ONLY
+    double mu = (isolevel - val1) / denom;
+    if (mu < 0.0) mu = 0.0; else if (mu > 1.0) mu = 1.0;  // clamp tiny FP overshoot to the edge
+    return Point(p1.x + mu*(p2.x - p1.x),
+                 p1.y + mu*(p2.y - p1.y),
+                 p1.z + mu*(p2.z - p1.z));
 }
 
 void MCGenerator::addTriangle(const Point& v1, const Point& v2, const Point& v3,
@@ -796,13 +793,13 @@ void MCObjNode::generateMesh(SurfaceFunction field,
     // In flat mode buildVBO uses cross-product normals from tri.normal.
     // Skipping these field calls in flat mode avoids unnecessary computation.
     if(MCGenerator::smooth){
-        const double h = size / 256.0;
+        const double h = 1.0 / (1 << (MCGenerator::maxDepth + 2));   // local-space step, ~1/4 of deepest cell
         for(auto& tri : mesh){
             Point c = (tri.templatePos[0]+tri.templatePos[1]+tri.templatePos[2])*(1.0/3.0);
-            double fc = field(c.x,    c.y,    c.z   );
-            double dx = field(c.x+h,  c.y,    c.z   ) - fc;
-            double dy = field(c.x,    c.y+h,  c.z   ) - fc;
-            double dz = field(c.x,    c.y,    c.z+h ) - fc;
+            double fc = field(c.x,   c.y,   c.z);
+            double dx = field(c.x+h, c.y,   c.z) - fc;
+            double dy = field(c.x,   c.y+h, c.z) - fc;
+            double dz = field(c.x,   c.y,   c.z+h) - fc;
             Point grad(dx, dy, dz);
             double len = grad.length();
             tri.faceNormal = (len > 1e-12) ? grad*(-1.0/len) : Point(0,1,0);
@@ -810,7 +807,6 @@ void MCObjNode::generateMesh(SurfaceFunction field,
             tri.smoothNormal[0] = tri.smoothNormal[1] = tri.smoothNormal[2] = tri.faceNormal;
         }
     }
-
     meshValid          = true;
     normalsValid       = MCGenerator::smooth;  // face normals valid only if computed above
     smoothNormalsValid = false;

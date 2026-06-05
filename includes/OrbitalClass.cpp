@@ -2995,45 +2995,46 @@ void Asteroid::buildVBO(){
     Point eyeOffset = TheScene->xpoint;
     int seed = TheNoise.rseed;
     TheNoise.rseed = rseed;
-    // Step 1: Compute normals from field gradient.
-    // Gradient normals are continuous across cell boundaries, eliminating banding
-    // from floating point corner position differences in the geometric cross-product.
     {
         SurfaceFunction& field = tree->field;
-        const double h = 1.0 / (1 << maxDepth);  // step = one cell width at maxDepth
 
-        // Face normals are computed in generateMesh (normalsValid flag).
-        // For smooth mode: do a cross-leaf vertex averaging pass whenever any leaf
-        // has new geometry (!smoothNormalsValid). Store result in tri.smoothNormal[3].
-        // This runs at adapt time effectively — only when mesh changes, not every frame.
+        // Quantized weld key: snap templatePos to a grid ~16x finer than the
+        // deepest cell. Identical shared vertices round to the same integer key
+        // and weld; genuinely distinct vertices stay distinct. Unlike a raw
+        // (float) cast, this can't alias neighboring edge vertices into one
+        // bucket at high maxDepth (the source of the linear miscolor streaks).
+        const double wq = double(1ULL << (maxDepth + 4));
+        struct V3Key {
+            long long x, y, z;
+            bool operator==(const V3Key& o) const { return x==o.x && y==o.y && z==o.z; }
+        };
+        struct V3Hash {
+            size_t operator()(const V3Key& k) const {
+                return (size_t)((uint64_t)k.x*2654435761ULL
+                              ^ (uint64_t)k.y*805459861ULL
+                              ^ (uint64_t)k.z*3674653429ULL);
+            }
+        };
+        auto wkey = [wq](const Point& p) -> V3Key {
+            return V3Key{ (long long)llround(p.x*wq),
+                          (long long)llround(p.y*wq),
+                          (long long)llround(p.z*wq) };
+        };
 
         if(MCGenerator::smooth){
-            bool anyNew = false;
+            bool anyNew = true;
             for(MCObjNode* leaf : leaves)
                 if(leaf->meshValid && !leaf->mesh.empty() && !leaf->smoothNormalsValid)
                     { anyNew = true; break; }
 
             if(anyNew){
-                struct V3Key {
-                    float x, y, z;
-                    bool operator==(const V3Key& o) const { return x==o.x&&y==o.y&&z==o.z; }
-                };
-                struct V3Hash {
-                    size_t operator()(const V3Key& k) const {
-                        uint32_t ix,iy,iz;
-                        memcpy(&ix,&k.x,4); memcpy(&iy,&k.y,4); memcpy(&iz,&k.z,4);
-                        return (size_t)(ix*2654435761ULL^iy*805459861ULL^iz*3674653429ULL);
-                    }
-                };
                 // Accumulate face normals at shared vertex positions across ALL leaves
                 std::unordered_map<V3Key,Point,V3Hash> vertNormal;
                 for(MCObjNode* leaf : leaves){
                     if(!leaf->meshValid || leaf->mesh.empty()) continue;
                     for(auto& tri : leaf->mesh)
                     for(int v=0; v<3; v++){
-                        V3Key k{(float)tri.templatePos[v].x,
-                                (float)tri.templatePos[v].y,
-                                (float)tri.templatePos[v].z};
+                        V3Key k = wkey(tri.templatePos[v]);
                         vertNormal[k] = vertNormal[k] + tri.faceNormal;
                     }
                 }
@@ -3048,9 +3049,7 @@ void Asteroid::buildVBO(){
                     leaf->smoothNormalsValid = true;
                     for(auto& tri : leaf->mesh)
                     for(int v=0; v<3; v++){
-                        V3Key k{(float)tri.templatePos[v].x,
-                                (float)tri.templatePos[v].y,
-                                (float)tri.templatePos[v].z};
+                        V3Key k = wkey(tri.templatePos[v]);
                         auto it = vertNormal.find(k);
                         tri.smoothNormal[v] = (it!=vertNormal.end()) ? it->second : tri.faceNormal;
                     }
@@ -3098,7 +3097,7 @@ void Asteroid::buildVBO(){
         if(bzf > 0.0){
             meshBoundsZn    = bzn;
             meshBoundsZf    = bzf;
-            meshBoundsCam   = eyeOffset;      // == TheScene->xpoint at capture time
+            meshBoundsCam   = eyeOffset;
             meshBoundsValid = true;
         }
     }
