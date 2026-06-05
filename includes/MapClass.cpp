@@ -569,8 +569,7 @@ void Map::render()
 		glEnable(GL_CULL_FACE);
 		if(Render.backface() && frontface==GL_FRONT)
 			glCullFace(GL_FRONT);
-		else
-		if(Render.frontface() && frontface==GL_FRONT)
+		else if(Render.frontface() && frontface==GL_FRONT)
 			glCullFace(GL_BACK);
 		else
 			glCullFace(GL_FRONT);

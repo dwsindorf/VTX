@@ -2759,6 +2759,7 @@ void Asteroid::render_object(){
     glEnable(GL_DEPTH_TEST);
     //glDisable(GL_CULL_FACE);
     glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     if (Raster.do_shaders) {
     	Raster.shadow_value = shadow_color.alpha();
@@ -9459,9 +9460,15 @@ NodeIF *Corona::getInstance(){
 // Corona::render_object()   lower level render
 //-------------------------------------------------------------
 void Corona::render_object() {
+
 	if (Raster.auximage()) // skip surface fog/water effects
 		return;
 	show_render_state(this);
+	//if(inside())
+		map->frontface=GL_BACK;
+	//else
+	//	map->frontface=GL_FRONT;
+
 	glDisable(GL_DEPTH_TEST);
 	first = 1;
 	if(density_expr){
@@ -9475,6 +9482,8 @@ void Corona::render_object() {
 	first = 0;
 	glEnable(GL_DEPTH_TEST);
 	terrain.clr_root();
+	map->frontface=GL_FRONT;
+	glCullFace(GL_BACK);
 
 }
 

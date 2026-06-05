@@ -1067,6 +1067,8 @@ void MCObjTree::render_ids(double scale, const Point& xpoint)
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_FLAT);
 
+    glCullFace(GL_BACK);
+
     resetMcIdtbl();
 
     MCIdColor idb;
