@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-//#define PRINT_ASTEROID_STATS
+#define PRINT_ASTEROID_STATS
 #define USE_IDTABLE
 
 static int debug_temp=DEBUG_TEMP;
@@ -2665,25 +2665,31 @@ void Asteroid::adapt_object(){
                            tree->root->isLeaf());
     double rsum=0;
     double asum=0;
+    double t0=0;
+    double t1=0;
     if (isInitialBuild) {
         // Progressive loop for initial build: coarse-to-fine with ID readback gating.
         int startDepth = 2;
         int max_cycles = maxDepth - startDepth + 1;
         for (int cycle = 0; cycle < max_cycles; cycle++) {
             int cycleDepth = startDepth + cycle;
-            double t0=clock();
+            t0=clock();
             tree->render_ids(2.0*size, xpoint);
             rsum+=clock()-t0;
-            double t1=clock();
+            t1=clock();
             tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
             asum+=clock()-t1;
         }
-        cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
 
     } else {
+    	t0=clock();
         tree->render_ids(2.0*size, xpoint);
+        t1=clock();
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+        asum+=clock()-t1;
     }
+    cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
+
 
 #else
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
@@ -2692,6 +2698,9 @@ void Asteroid::adapt_object(){
     // Refresh the id table against the FINAL adapted mesh. The render_ids calls
      // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
      // subdivision behind and pixelLeaf() resolves stale/freed cells.
+    //MCGenerator::resetStats();
+
+    MCGenerator::maxDepth=maxDepth;
     tree->render_ids(2.0*size, xpoint);
     tree->countCells();
     TheNoise.rseed=seed;
@@ -2748,8 +2757,8 @@ void Asteroid::render_object(){
 
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    //glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     if (Raster.do_shaders) {
     	Raster.shadow_value = shadow_color.alpha();

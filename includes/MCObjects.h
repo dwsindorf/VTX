@@ -71,6 +71,7 @@ public:
     static int csi_by_depth[32];
     static int csi_cull_by_depth[32];
     static int leafs_by_depth[32];
+    static int viscells;
     static int maxDepth;
     static bool wireframe;
     static bool smooth;

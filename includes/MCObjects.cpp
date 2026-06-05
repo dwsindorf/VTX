@@ -51,6 +51,7 @@ int MCGenerator::ad_field_calls=0; // adaptive
 int MCGenerator::gm_field_calls=0; // mesh both
 int MCGenerator::frame_field_calls=0;  // reset each frame
 int MCGenerator::maxDepth=0;
+int MCGenerator::viscells=0;
 double MCGenerator::minDistance=1000;
 double MCGenerator::maxDistance=0;
 double MCGenerator::cullFactor=20;
@@ -236,20 +237,20 @@ void MCGenerator::printStats(){
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
-	for (int d = 0; d <= 16; d++)
+	for (int d = 0; d <= 20; d++)
 		if (csi_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_by_depth[d] << " ";
 	cout << endl;
 	cout << " CULL: by depth ";
-	for (int d = 0; d <= 16; d++)
+	for (int d = 0; d <= 20; d++)
 		if (csi_cull_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << csi_cull_by_depth[d] << " ";
 	cout << endl;
-	cout<< " CELLS total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted
-			<<" tris:"<<triangles<<" depth:"<<maxDepth<<endl;
-	cout << " LEAFS: by depth ";
-	for (int d = 0; d <= 16; d++)
-		if (csi_cull_by_depth[d] > 0)
+	cout<< " CELLS: total:"<<cells<<" leaf:"<<leaf_cells<<" "<<100.0*leaf_cells/cells<<"% created:" << cells_created << " deleted:" << cells_deleted
+			<<" tris:"<<triangles<<" max depth:"<<maxDepth<<endl;
+	cout << " VIS: "<<viscells<< " by depth ";
+	for (int d = 0; d <= 20; d++)
+		if (leafs_by_depth[d] > 0)
 			std::cout << "d" << d << ":" << leafs_by_depth[d] << " ";
 	cout << endl;
 	cout<< " Adapt calls:"<<csi_adapt_calls/1000<<" culls:"<<csi_cull_calls/1000<<" K "<<100.0*csi_cull_calls/csi_adapt_calls<<"%"<<endl;
@@ -683,8 +684,8 @@ void MCObjNode::split()
         // Inherit parent visibility — new children are assumed to have the same
         // visibility as their parent until the next ID readback corrects them.
         // Without this, new children are never masked and grow unboundedly.
-        child->nodeVisible = nodeVisible;
-        child->nodeMasked  = nodeMasked;
+       // child->nodeVisible = nodeVisible;
+        //child->nodeMasked  = nodeMasked;
     }
 
     meshValid = false;
@@ -1066,6 +1067,7 @@ void MCObjTree::render_ids(double scale, const Point& xpoint)
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    //glDisable(GL_CULL_FACE);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_FLAT);
 
@@ -1132,6 +1134,8 @@ void MCObjTree::mark_visibility(int viewport_w, int viewport_h)
 
     // Propagate nodeMasked upward: an internal node is masked if ALL its
     // children are masked. This lets the coarsening fire at the right depth.
+
+
     if (root) propagateMasked(root);
 }
 
@@ -1160,39 +1164,89 @@ void MCObjTree::countCells()
 {
     MCGenerator::cells      = 0;
     MCGenerator::leaf_cells = 0;
-    MCGenerator::triangles      = 0;
-
-    double mn=1000;
-    double mx=0;
+    MCGenerator::triangles  = 0;
     if (!root) return;
+    double t0=clock();
+	memset(MCGenerator::leafs_by_depth, 0, sizeof(MCGenerator::leafs_by_depth));  // ← ensure this is present
 
-    // Iterative traversal using a stack to avoid deep recursion
+    // ── tree walk: cell / leaf / visible-depth counts ───────────────────
     std::vector<MCObjNode*> stack;
     stack.push_back(root);
+    MCGenerator::viscells=0;
     while (!stack.empty()) {
-        MCObjNode* node = stack.back();
-        stack.pop_back();
+        MCObjNode* node = stack.back(); stack.pop_back();
         MCGenerator::cells++;
         if (node->isLeaf()) {
             MCGenerator::leaf_cells++;
-            MCGenerator::triangles+=node->mesh.size();
-            MCGenerator::leafs_by_depth[node->depth]++;
-            if(node->nodeVisible){
-            	if(node->viewDistance<mn)
-            		mn=node->viewDistance;
-            	if(node->viewDistance>mx)
-            		mx=node->viewDistance;
+            MCGenerator::triangles += node->mesh.size();
+            if (node->nodeVisible){
+            	MCGenerator::viscells++;
+                MCGenerator::leafs_by_depth[node->depth]++;
             }
-
         } else {
             for (int i = 0; i < 8; i++)
-                if (node->children[i])
-                    stack.push_back(node->children[i]);
+                if (node->children[i]) stack.push_back(node->children[i]);
         }
     }
-    cout<<"distance min:"<<mn/MILES<<" max:"<<mx/MILES<<" ratio:"<<mx/mn<<endl;
-    MCGenerator::minDistance=mn;
-    MCGenerator::maxDistance=mx;
+
+    // ── pixel-weighted depth range from the final ID readback ───────────
+    MCIdColor idb; idb.c.alpha = 0;
+    auto decode = [&](int i) -> double {              // dist, or -1 if no cell
+        idb.c.red   = (GLubyte)roundf(mcPixels[i]  *255.0f);
+        idb.c.green = (GLubyte)roundf(mcPixels[i+1]*255.0f);
+        idb.c.blue  = (GLubyte)roundf(mcPixels[i+2]*255.0f);
+        int id = idb.l;
+        if (id <= 0 || id >= (int)mcIdtbl.size() || !mcIdtbl[id]) return -1.0;
+        return mcIdtbl[id]->viewDistance;
+    };
+
+    int   np   = (int)mcPixels.size();                // == 4 * pixelcount
+    double dmin = 1e30, dmax = 0;
+    long   nvis = 0;
+
+    for (int i = 0; i < np; i += 4) {                 // pass 1: exact min/max + count
+        double d = decode(i);
+        if (d < 0) continue;
+        if (d < dmin) dmin = d;
+        if (d > dmax) dmax = d;
+        nvis++;
+    }
+
+    if (nvis == 0) {                                  // nothing visible — leave a safe range
+        MCGenerator::minDistance = 0;
+        MCGenerator::maxDistance = 0;
+        return;
+    }
+
+    const int B = 256;                                // pass 2: log-spaced histogram
+    long hist[B] = {0};
+    double lmin = log(dmin > 1e-6 ? dmin : 1e-6);
+    double lmax = log(dmax);
+    double span = (lmax > lmin) ? (lmax - lmin) : 1.0;
+    double inv  = (B - 1) / span;
+    for (int i = 0; i < np; i += 4) {
+        double d = decode(i);
+        if (d < 0) continue;
+        int b = (int)((log(d) - lmin) * inv);
+        if (b < 0) b = 0; else if (b >= B) b = B - 1;
+        hist[b]++;
+    }
+
+    // far = 99th percentile (rejects sparse leaks; a real distant surface
+    // covering real pixel area still lands in the percentile and survives)
+    long hiTarget = (long)(0.99 * nvis);
+    long cum = 0; int bFar = B - 1;
+    for (int b = 0; b < B; b++) { cum += hist[b]; if (cum >= hiTarget) { bFar = b; break; } }
+    double dFar = exp(lmin + (bFar + 1) * span / (B - 1));   // upper edge of the bucket
+
+    MCGenerator::minDistance = dmin;     // exact nearest — feeds znear (×0.25) and minHeight
+    MCGenerator::maxDistance = dFar;     // robust far    — feeds zfar  (×2)
+
+    cout << "depth range  near:" << dmin/MILES
+         << "  far(p99):" << dFar/MILES
+         << "  truemax:" << dmax/MILES
+         << "  ratio:" << dFar/dmin << endl;
+    //cout<<"calc time="<<(clock()-t0)/CLOCKS_PER_SEC<<endl; //  ~20 ms
 
 }
 
@@ -1206,11 +1260,15 @@ void MCObjTree::countCells()
 //-------------------------------------------------------------
 bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local) const
 {
-    const double EPSILON = 1e-10;
     double best_t = 1e30;
     bool   hit    = false;
-    //double t0=clock();
 
+    // Work with a unit ray direction so t is a real distance in local space.
+    double dlen = dir.length();
+    if (dlen < 1e-30)
+        return false;                       // no direction
+    Point dirN = dir * (1.0 / dlen);
+//double t0=clock();
     std::vector<MCObjNode*> leaves;
     if (root)
         root->collectLeaves(leaves);
@@ -1224,9 +1282,16 @@ bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local)
 
             Point edge1 = v1 - v0;
             Point edge2 = v2 - v0;
-            Point h     = dir.cross(edge2);
+            Point h     = dirN.cross(edge2);
             double a    = edge1.dot(h);
-            if (fabs(a) < EPSILON) continue;
+
+            // Scale-free parallelism test.
+            //   a = |dirN|·|edge1×edge2|·cosθ, and dirN is unit, so a/|edge1×edge2|
+            //   is just cosθ between the ray and the triangle plane normal.
+            //   Reject only near-parallel rays — independent of triangle size/depth.
+            double area2 = edge1.cross(edge2).length();   // = 2 * triangle area
+            if (area2 < 1e-30)            continue;        // degenerate (zero-area) triangle
+            if (fabs(a) < 1e-7 * area2)   continue;        // ray within ~1e-7 rad of the plane
 
             double f = 1.0 / a;
             Point  s = origin - v0;
@@ -1234,20 +1299,18 @@ bool MCObjTree::raycast(const Point& origin, const Point& dir, Point& hit_local)
             if (u < 0.0 || u > 1.0) continue;
 
             Point  q = s.cross(edge1);
-            double v = f * dir.dot(q);
+            double v = f * dirN.dot(q);
             if (v < 0.0 || u + v > 1.0) continue;
 
             double t = f * edge2.dot(q);
-            if (t < EPSILON || t >= best_t) continue;
+            if (t < 1e-9 || t >= best_t) continue;   // reject hits at/behind origin
 
             best_t    = t;
-            hit_local = origin + dir * t;
+            hit_local = origin + dirN * t;
             hit       = true;
         }
     }
-    //double t1=clock();
-    // ~20 ms per call
-    // cout<<"raycast tm="<<1000.0*(t1-t0)/CLOCKS_PER_SEC<<" ms"<<endl;
+   // cout<<"raycast tm="<<(clock()-t0)/CLOCKS_PER_SEC<<endl;
     return hit;
 }
 //-------------------------------------------------------------
