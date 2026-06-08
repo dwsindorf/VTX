@@ -1063,8 +1063,8 @@ void MCObjTree::render_ids(double scale, const Point& xpoint)
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    //glDisable(GL_CULL_FACE);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glShadeModel(GL_FLAT);
 
     glCullFace(GL_BACK);
@@ -1243,7 +1243,8 @@ void MCObjTree::countCells()
     cout << "depth range  near:" << dmin/MILES
          << "  far(p99):" << dFar/MILES
          << "  truemax:" << dmax/MILES
-         << "  ratio:" << dFar/dmin << endl;
+         << "  ratio:" << dFar/dmin
+		 << " calc:"<<(clock()-t0)/CLOCKS_PER_SEC<<" ms"<<endl;
     //cout<<"calc time="<<(clock()-t0)/CLOCKS_PER_SEC<<endl; //  ~20 ms
 
 }

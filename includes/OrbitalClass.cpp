@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-#define PRINT_ASTEROID_STATS
+//#define PRINT_ASTEROID_STATS
 #define USE_IDTABLE
 
 static int debug_temp=DEBUG_TEMP;
@@ -2147,13 +2147,16 @@ void Asteroid::init_view(){
 		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
 		surfaceR            = 2*size;   // conservative — scale() corrects immediately
 		TheScene->gndlvl    = 0;
-		TheScene->height    = 20*MILES;
+		TheScene->height    = 200*MILES;
 	}
 	else{
 		TheScene->height=size * (3.0 + max_height());
 	}
+	//if(TheScene->changed_view())
+	//	MCGenerator::maxDistance=0;
 	TheScene->elevation=TheScene->height+TheScene->gndlvl;
 	TheScene->radius=size+TheScene->elevation;
+	//cout<<"Asteroid::init_view() gl:"<<TheScene->gndlvl/MILES<<" ht"<<TheScene->height/MILES<<endl;
 
 }
 
@@ -2446,17 +2449,12 @@ int Asteroid::scale(double& znear, double& zfar) {
     double envelope = size * (1.0 + max_height());
 
     double r         = TheScene->radius;
-    // Prefer the actual visible mesh extent (the asteroid's analog of the planet's
-   // map->vbounds): tight, so render_ids' depth buffer keeps enough precision for
-   // pixelLeaf to resolve the frontmost cell instead of z-fighting. Expand by how
-   // far the eye moved since capture so the bounds stay valid between rebuilds;
-   // fall back to the analytic valley-horizon on the first/jump frame.
 //   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
 //   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
 //	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
 //	   zfar  = (meshBoundsZf + dcam) * 1.05;
 //   }
-   if(MCGenerator::maxDistance>0){
+   if(!TheScene->changed_view()&& MCGenerator::maxDistance>0){
  	   znear = 0.25*MCGenerator::minDistance;
  	   zfar  = 2*MCGenerator::maxDistance;
    }
@@ -2470,7 +2468,7 @@ int Asteroid::scale(double& znear, double& zfar) {
 	   znear = zfar/50000.0;   // safety: never collapse the range
 
    TheScene->minr = surfaceR + TheScene->minh;
-	//cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<" minr:"<<TheScene->minr/MILES<<endl;;
+   //cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<" minr:"<<TheScene->minr/MILES;
 
  	//cout<<" surfaceR:"<<surfaceR/MILES<<" ht:"<<ht/MILES<<" minr:"<<TheScene->minr/MILES<<endl;
     setvis(OUTSIDE);
@@ -2757,8 +2755,8 @@ void Asteroid::render_object(){
 
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
-    glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     if (Raster.do_shaders) {
@@ -3103,6 +3101,8 @@ void Asteroid::buildVBO(){
         }
     }
     TheNoise.rseed = seed;
+    //if(meshBoundsValid)
+    //cout<<"bzn:"<<meshBoundsZn/MILES<<" bzf:"<<meshBoundsZf/MILES<<endl;
 
     // Upload to GPU
     if(vboVertices) glDeleteBuffers(1,&vboVertices);

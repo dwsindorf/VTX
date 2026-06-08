@@ -253,7 +253,10 @@ vec3 getBump(int tid, vec4 coords,float mm){
     slope_bias=2*lerp(8*slope_factor*Tangent.z,0,1,-tex2d[i].slope_bias,tex2d[i].slope_bias); \
     env_bias=phi_bias+height_bias+bump_bias+slope_bias;\
 	if(tex2d[i].t1d) { \
-	    coords.x+=env_bias; \
+	    if(tex2d[i].t3d) \
+	       coords.x  = env_bias; \
+	    else \
+	       coords.x+=env_bias; \
 	} \
     else { \
         alpha+=env_bias; \

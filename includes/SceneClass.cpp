@@ -2671,6 +2671,7 @@ void Scene::render_shadows()
 	}
 
  	// ----- get shadow map for near objects ----
+
 	if(single_pass){
 		//shadow_group(2);
 		Raster.init_render();

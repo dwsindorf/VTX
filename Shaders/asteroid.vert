@@ -70,9 +70,17 @@ void main() {
     vec3 tp   = templatePosition.xyz;
     TemplatePos   = tp;
     EyePos        = normalize(mpoint.xyz);   // direction to asteroid center from eye
-    WorldNormal   = normalize(tp);           // outward direction in object space
+    
 
 	vec3 wn = normalize(tp);  // templatePosition normalized = outward surface direction
+	WorldNormal   = wn;       // outward direction in object space
+	
+	Vertex1 = vec4(wn.x, wn.y, wn.z, Tangent.w);
+	float baseR  = 0.5;                       // local datum = gndlvl in object space
+    float height = length(tp) - baseR;        // per-vertex elevation above ground level
+    Constants1 = vec4(height*0.01, 0.0, 0.0, 0.0); // HT = Constants1.x
+	
+	
 	vec3 up = vec3(0.0, 1.0, 0.0);
 	if (abs(dot(wn, up)) > 0.9)
 	    up = vec3(1.0, 0.0, 0.0);  // avoid degeneracy at poles
