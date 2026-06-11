@@ -1239,14 +1239,13 @@ void MCObjTree::countCells()
 
     MCGenerator::minDistance = dmin;     // exact nearest — feeds znear (×0.25) and minHeight
     MCGenerator::maxDistance = dFar;     // robust far    — feeds zfar  (×2)
-
+#ifdef DEBUG_ASTEROID_SCALE
     cout << "depth range  near:" << dmin/MILES
          << "  far(p99):" << dFar/MILES
          << "  truemax:" << dmax/MILES
          << "  ratio:" << dFar/dmin
 		 << " calc:"<<(clock()-t0)/CLOCKS_PER_SEC<<" ms"<<endl;
-    //cout<<"calc time="<<(clock()-t0)/CLOCKS_PER_SEC<<endl; //  ~20 ms
-
+#endif
 }
 
 //-------------------------------------------------------------

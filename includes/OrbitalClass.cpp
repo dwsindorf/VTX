@@ -2686,7 +2686,7 @@ void Asteroid::adapt_object(){
         tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
         asum+=clock()-t1;
     }
-    cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
+   // cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
 
 
 #else

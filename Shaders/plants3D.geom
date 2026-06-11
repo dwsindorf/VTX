@@ -42,11 +42,12 @@ void emitVertex(vec3 v){
    EmitVertex();  
 }
 void produceVertex(vec3 v){
-   vec4 p=vec4(v,1.0);
-   gl_Position = project(p);
-   EmitVertex();  
+   vec4 p = vec4(v, 1.0);
+   vec4 proj = gl_ModelViewProjectionMatrix * p;
+   float w = proj.w > 0.0 ? proj.w : 1e-10;
+   gl_Position = vec4(proj.xyz / w, 1.0);
+   EmitVertex();
 }
-
 void produceTxVertex(vec2 tx,vec3 v){
   gl_TexCoord[0].xy=tx;
   emitVertex(v);
@@ -182,14 +183,14 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
       pt1.xyz = p1+r1*n1;
       pt1.w=1;
  
-      gl_Position = project(pt1);
+      gl_Position = gl_ModelViewProjectionMatrix * vec4(pt1.xyz, 1.0);
       EmitVertex();
       
       gl_TexCoord[0].xy=vec2(scale*a,t2);
       //Pnorm.xyz=-n2;
       pt2.xyz = p2 + r2*n2;
       pt2.w=1;
-      gl_Position = project(pt2);
+      gl_Position = gl_ModelViewProjectionMatrix * vec4(pt2.xyz, 1.0);
       EmitVertex();     
    }
 }

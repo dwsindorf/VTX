@@ -48,16 +48,13 @@ vec3 OrthoNormalVector(vec3 v) {
 }
 
 void produceVertex(vec3 v){
-   vec4 p=vec4(v,1.0);
-   gl_Position = project(p);
-
-   vec4 VertexPosition=(gl_ModelViewMatrix * p);
-   ShadowCoord=smat * VertexPosition;
-   EyeDirection=-(gl_ModelViewMatrix * p);
- 
-   EmitVertex();  
+   vec4 p = vec4(v, 1.0);
+   gl_Position = gl_ModelViewProjectionMatrix * p;   // clip space — no divide
+   vec4 VertexPosition = (gl_ModelViewMatrix * p);
+   ShadowCoord = smat * VertexPosition;
+   EyeDirection = -VertexPosition;
+   EmitVertex();
 }
-
 
 // draw a line
 void emitLine(){

@@ -602,7 +602,7 @@ void RasterMgr::buildCascades(){
 	double tempSplits[MAX_CASCADES + 1];
 	
 	double logMin = log(minDist);
-	double logMax = 1.1*log(maxDist);
+	double logMax = log(1.25*maxDist);
 	double logRange = logMax - logMin;
 	
 	tempSplits[0] = minDist;
@@ -766,7 +766,7 @@ void RasterMgr::set_light_view()
 		if (z1 < zn)
 			zn = z1;
 	}
-	dov = 10 * shadow_dov;
+	dov = 2*shadow_dov;
 	zn = d - 4 * dov * r;
 	if (zn < r)
 		zn = r;

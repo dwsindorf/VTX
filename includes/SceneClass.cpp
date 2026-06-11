@@ -42,7 +42,7 @@ int show_visits=0;
 double mark_start=0;
 double mark_stop=0;
 
-#define DEBUG_TIMING
+//#define DEBUG_TIMING
 #define VERIFY_OPEN
 
 //extern int hits,visits;
@@ -2597,6 +2597,7 @@ void Scene::shadow_group(int smode)
 	    Raster.shadow_vmax=bounds->zf;
 	    Raster.shadow_vzn=znear;
 	    Raster.shadow_vzf=zfar;
+	   // cout<<"shadow zn:"<<Raster.shadow_vzn/MILES<<" zf:"<<Raster.shadow_vzf/MILES<<" ratio:"<<Raster.shadow_vzf/Raster.shadow_vzn<<endl;
 	    Raster.shadow_vsize=shadowobj->size;
 	}
 	set_render_mode();
