@@ -76,10 +76,11 @@ void main(void) {
     	discard;
     if(sc.y>ymax || sc.y<0.0)
     	discard;
-	float zv = 1.0/(ws2*gl_FragCoord.z + ws1);   // fragment's eye depth
+
+   float zv = length(EyeDirection.xyz);   // eye distance, projection-independent
 	if (zv < vleft || zv > vright)
-    	discard;   // outside my slice — another view answers
- 
+    discard;
+
 	vec3 light   = normalize(Light+EyeDirection.xyz);
 #ifdef LDRTEST
 	vec3 radius  = -normalize(EyeDirection.xyz+center);

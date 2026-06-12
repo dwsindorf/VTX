@@ -179,7 +179,8 @@ void EffectsMgr::setProgram(int type){
 			sprintf(defs+strlen(defs),"#define USING_PROJ\n");
 		if(debug_shadows() && shadow_test>0)
 			sprintf(defs+strlen(defs),"#define SHADOW_TEST\n");
-
+		if (TheScene->viewtype==ORBITAL)
+			sprintf(defs+strlen(defs),"#define ORBITAL\n");
 		GLSLMgr::setDefString(defs);
 		if(type==PLACE_SHADOWS){
 			GLSLMgr::loadProgram(shadow_vert,"shadows.frag",shadow_geom);
@@ -192,7 +193,7 @@ void EffectsMgr::setProgram(int type){
 	    }
 		else
 		    GLSLMgr::loadProgram("shadows.vert","shadows.frag");
-		if (shadow_vcnt >= shadow_vsteps-1) {       // widest view backstops everything
+		if (useCascades || shadow_vcnt >= shadow_vsteps-1) {
 		    vars.newFloatVar("vleft", 0.0f);
 		    vars.newFloatVar("vright", 1e30f);
 		} else {
