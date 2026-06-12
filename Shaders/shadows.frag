@@ -33,7 +33,8 @@ uniform int view;
 uniform int views;
 uniform int shadow_test;
 uniform float xmax,ymax;
-uniform float zmin,zmax;
+uniform float vleft,vright;
+uniform float ws1,ws2;
 uniform float shadow_intensity;
 uniform int light_index;
 
@@ -75,9 +76,10 @@ void main(void) {
     	discard;
     if(sc.y>ymax || sc.y<0.0)
     	discard;
-    	
-   // if(sc.z>zmax || sc.z<zmin)
-   // 	onscreen=0;
+	float zv = 1.0/(ws2*gl_FragCoord.z + ws1);   // fragment's eye depth
+	if (zv < vleft || zv > vright)
+    	discard;   // outside my slice — another view answers
+ 
 	vec3 light   = normalize(Light+EyeDirection.xyz);
 #ifdef LDRTEST
 	vec3 radius  = -normalize(EyeDirection.xyz+center);

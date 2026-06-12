@@ -192,15 +192,22 @@ void EffectsMgr::setProgram(int type){
 	    }
 		else
 		    GLSLMgr::loadProgram("shadows.vert","shadows.frag");
-
+		if (shadow_vcnt >= shadow_vsteps-1) {       // widest view backstops everything
+		    vars.newFloatVar("vleft", 0.0f);
+		    vars.newFloatVar("vright", 1e30f);
+		} else {
+		    vars.newFloatVar("vleft",(float)shadow_vleft);
+		    vars.newFloatVar("vright",(float)shadow_vright);
+		}
 		vars.newFloatArray("smat",smat,16);
 		vars.newIntVar("ShadowMap",SMAPTEXID);
 		vars.newIntVar("JitterMap",JMAPTEXID);
 		vars.newFloatVar("shadowmap_ratio",shadow_map_ratio);
 		vars.newFloatVar("xmax",GLSLMgr::width*shadow_map_ratio);
 		vars.newFloatVar("ymax",GLSLMgr::height*shadow_map_ratio);
-		vars.newFloatVar("zmax",s_zmax);
-		vars.newFloatVar("zmin",s_zmin);
+		vars.newFloatVar("ws1",ws1);
+		vars.newFloatVar("ws2",ws2);
+
 		vars.newFloatVar("shadow_intensity",shadow_intensity);
 		vars.newIntVar("light_index",light_index());
 		vars.newBoolVar("lighting",true);
