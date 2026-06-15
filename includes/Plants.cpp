@@ -1760,7 +1760,7 @@ Point TNBranch::spline(double x, Point p0, Point p1, Point p2){
 }
 
 static bool main_fork=false;
-void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl){
+void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w, int lvl, Point pp0, Point pp1){
 	int minlvl=0;
 
 	//TNLeaf::left_side=0;
@@ -1801,7 +1801,7 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		we=we>1?1:we; // clamp branch width to parent width
 		for(int i=0;i<n;i++){
 			level=0;
-			emit(opt,start,vec,tip,s,we*w,0);
+			emit(opt,start,vec,tip,s,we*w,0,pp0,pp1);
 		}
 	}
 	else{
@@ -1809,14 +1809,14 @@ void TNBranch::fork(int opt, Point start, Point vec,Point tip,double s, double w
 		leaf->phase=root->seed; // random phase
 		n+=max_splits;
 		for(int i=0;i<n;i++){
-			emit(opt,start,vec,tip,s,w,lvl);
+			emit(opt,start,vec,tip,s,w,lvl,pp0,pp1);
 		}
 	}
 	randval=l+1;
 }
 
 void TNBranch::emit(int opt, Point base, Point vec, Point tip,
-		double parent_size, double parent_width, int lvl) {
+		double parent_size, double parent_width, int lvl, Point pp0, Point pp1) {
 
 	int lev = lvl;
 	lev++;
@@ -1900,14 +1900,43 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		}
 		b = b <= 1 ? b : 1;
 
-		start = p1 - vec * b;
-		SRAND;
-		double dw = (parent_width - child_width) / parent_width;
-		bot_offset = dw * SRAND / size_scale;
-		top_offset = bot_offset;
+		// Parent segment's spline control points:
+		//   parent_p0 = pp0, parent_p1 = pp1, parent_p2 = base (exact)
+		// passed down from the parent's own (p0,p1,p2). The parent rendered
+		// spline(s) for s in [0.5,1.0]; a child back-walks fraction b from the
+		// tip (s=1.0) toward s=0.5. Spawn ON that curve so the connection point
+		// matches the drawn (curved) geometry rather than the straight chord.
+		bool use_spline = PlantMgr::spline
+				&& (pp0.x!=0 || pp0.y!=0 || pp0.z!=0
+				 || pp1.x!=0 || pp1.y!=0 || pp1.z!=0);
+		if (use_spline) {
+			Point pcp2 = base;
+			double sc = 1.0 - 0.5*b;          // b=0 -> tip(1.0), b=1 -> mid(0.5)
+			start = spline(sc, pp0, pp1, pcp2);
+			double sds = 1e-3;
+			Point tan = spline(sc+sds, pp0, pp1, pcp2) - start;
+			double tl = tan.length();
+			double vl = vec.length();
+			if (tl > 1e-20)
+				tan = tan * (vl / tl);  // curve direction, chord length
+			else
+				tan = vec;
+			SRAND;
+			double dw = (parent_width - child_width) / parent_width;
+			bot_offset = dw * SRAND / size_scale;
+			top_offset = bot_offset;
+			v = setVector(tan, start, lvl);
+			v = v * cl;
+		} else {
+			start = p1 - vec * b;
+			SRAND;
+			double dw = (parent_width - child_width) / parent_width;
+			bot_offset = dw * SRAND / size_scale;
+			top_offset = bot_offset;
 
-		v = setVector(vec, start, lvl);
-		v = v * cl; // v = direction along last branch
+			v = setVector(vec, start, lvl);
+			v = v * cl; // v = direction along last branch
+		}
 	} else { // main branch
 		bot_offset = tip.z;
 		v = setVector(vec, start, lvl);
@@ -1920,6 +1949,10 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	p2 = start + v; // new top
 	bot = p2;       // new base	
 	p1 = start;
+
+	// snapshot this segment's spline control points before the leaf-cluster
+	// loop below can overwrite p1/p2; children spawn onto this curve.
+	Point seg_cp0 = p0, seg_cp1 = p1;
 
 	int tid = isTexEnabled() ? texid : -1;
 
@@ -2087,7 +2120,7 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 	}
 
 	if (child)
-		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev);
+		child->fork(FIRST_FORK, bot, v, tip, child_size, child_width, lev, seg_cp0, seg_cp1);
 	if (opt & LAST_EMIT)
 		return;
 	if (isPlantBranch() ) {
@@ -2097,9 +2130,9 @@ void TNBranch::emit(int opt, Point base, Point vec, Point tip,
 		child_width *= evalArg(7,width_taper);
 		child_size *= evalArg(8,length_taper);
 		if (n>=1 && child_width >MIN_LINE_WIDTH){
-			emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev);
+			emit(FIRST_EMIT, bot, v, tip, child_size, child_width, lev, seg_cp0, seg_cp1);
 			for (int i = 1; i < n; i++) {
-				emit(0, bot, v, tip, child_size, child_width, lev);
+				emit(0, bot, v, tip, child_size, child_width, lev, seg_cp0, seg_cp1);
 			}
 		}
 	}

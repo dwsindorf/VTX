@@ -563,8 +563,8 @@ public:
 	void setPlantImage(char *);
 	double evalArg(int id, double d);
 	
-	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl);
-	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl);
+	virtual void emit(int, Point b, Point v,Point l, double w, double t, int lvl, Point pp0=Point(0,0,0), Point pp1=Point(0,0,0));
+	virtual void fork(int, Point b, Point v,Point l, double w, double t, int lvl, Point pp0=Point(0,0,0), Point pp1=Point(0,0,0));
 	virtual Point setVector(Point vec, Point start, int lvl);
 	void getRoot();
 	Point spline(double t, Point p0, Point p1, Point p2);
