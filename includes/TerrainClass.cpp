@@ -1304,7 +1304,7 @@ void TNnoise::eval()
     	return; // pixel shader noise
     }
 	int dolod=(type&NLOD)?0:Adapt.lod();
-	if(dolod){
+	if(dolod && Td.level>0){
 		int orders=(int)args[1];
         int lmax=(int)(Td.level*0.5-args[0]+4);
 #ifdef DEBUG_LOD

@@ -1,5 +1,6 @@
 #include "NoiseClass.h"
 #include "NoiseFuncs.h"
+#include <omp.h>
 
 #include "ColorClass.h"
 #include "Perlin.h"
@@ -11,11 +12,9 @@
 
 
 //#define OLDPERLIN
-//#define NOISE_CACHE
 //#define LONGLONG // slower but allows freqs>2e9
 
-//#define DEBUG_NOISE_CACHE
-//#define DEBUG_NOISE_EVAL
+#define DEBUG_NOISE_EVAL
 
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX
@@ -51,8 +50,6 @@ static double norm_value,norm_offset;
 
 typedef struct State {
 	double vec[4];
-	int   status;
-	double values[NOISESIZE];
 }
  State;
 
@@ -68,15 +65,11 @@ double Noise::offsets[OFFSETS]={ROFF0,ROFF1,ROFF2,ROFF3,ROFF4,ROFF5};
 static State states[MAXSTATES][OFFSETS];
 MinMax nvals,norms;
 
-#define VALUE(i)    states[state][domain].values[i]
-#define STATUS      states[state][domain].status
 #define POINT       states[state][domain].vec
 #define P0          states[state][0].vec
 
 
-#define INIT_STATE  domain=0; \
-					for(int i=0;i<OFFSETS;i++) \
-						states[state][i].status=0;
+#define INIT_STATE  domain=0;
 
 #define NPUSH		state++
 #define NPOP		state--
@@ -579,12 +572,6 @@ void  Noise::showStats(){
 			tstr,n,1000*gtm,1e6*gtm/n,1e6*gtmp/n,100.0*factor_hits/(factor_hits+factor_misses));
 	cout<<buff<<endl;
 #endif
-#ifdef DEBUG_NOISE_CACHE
-	sprintf(buff,"Noise calls:%d cache hits:%d percent:%2.1f",
-			noise_visits,noise_hits,(100.0*noise_hits)/noise_visits);
-	cout<<buff<<endl;
-
-#endif
 }
 //-------------------------------------------------------------
 // double factor(int i) return noise value
@@ -794,57 +781,31 @@ double Noise::value(int i)
 	        return NoiseMinMax(fv);
 	    }
 	}
-	int m=1<<i;
 	double v[4];
-#ifdef DEBUG_NOISE_CACHE
-	noise_visits++;
-#endif
-#ifdef NOISE_CACHE
-	if((m & STATUS)==0){
-#endif
-		STATUS|=m;
-#ifdef NOISE_CACHE
-		noise_misses++;
-#endif
-		freq=factors[nfact]->freqs[i];
-		v[0]=POINT[0]*freq;
-		v[1]=POINT[1]*freq;
-		v[2]=POINT[2]*freq;
-		if(noise4D()){
-			v[3]=POINT[3]*freq;
-			switch(type){
-			case VORONOI:
-				VALUE(i)=Voronoi4D(v);
-				break;
-			case SIMPLEX:
-				VALUE(i)=Simplex4D(v);
-				break;
-			case GRADIENT:
-			default:
-				VALUE(i)=Noise4D(v);
-			}
+
+	freq=factors[nfact]->freqs[i];
+	v[0]=POINT[0]*freq;
+	v[1]=POINT[1]*freq;
+	v[2]=POINT[2]*freq;
+	double result;
+	if(noise4D()){
+		v[3]=POINT[3]*freq;
+		switch(type){
+		case VORONOI:	result=Voronoi4D(v); break;
+		case SIMPLEX:	result=Simplex4D(v); break;
+		case GRADIENT:
+		default:		result=Noise4D(v);
 		}
-		else{
-			switch(type){
-			case VORONOI:
-				VALUE(i)=Voronoi3D(v);
-				break;
-			case SIMPLEX:
-				VALUE(i)=Simplex3D(v);
-				break;
-			case GRADIENT:
-			default:
-				VALUE(i)=Noise3D(v);
-			}
+	}
+	else{
+		switch(type){
+		case VORONOI:	result=Voronoi3D(v); break;
+		case SIMPLEX:	result=Simplex3D(v); break;
+		case GRADIENT:
+		default:		result=Noise3D(v);
 		}
-#ifdef NOISE_CACHE
-    }
-#ifdef DEBUG_NOISE_CACHE
-	else
-	    noise_hits++;
-#endif
-#endif
-	return VALUE(i);
+	}
+	return result;
 }
 
 //-------------------------------------------------------------
@@ -1018,12 +979,26 @@ double Noise::multinoise(int type, int nargs, double *args)
     	if(!nabs)
     		rmin *=2;
     }
+
+	// Phase 1: parallel — pre-compute raw noise values for all octaves.
+	// value(i) is read-only w.r.t. shared state (POINT, factors[], nfact,
+	// ntype, _mode are all set before this call and not written during eval).
+	double signals[NOISESIZE];
+	double facts[NOISESIZE];
+	int eval_end = frac1>0 ? end+1 : end;  // frac1 blend needs one extra octave
+	//#pragma omp parallel for schedule(static) if(orders > 3)
+	for(i=start; i<eval_end; i++){
+		signals[i] = value(i);
+		facts[i]   = factor(i);
+	}
+
+	// Phase 2: serial — accumulate with weight dependency
 	for(i=start;i<end;i++){
-		signal=value(i);
-		fact=factor(i);
+		signal=signals[i];
+		fact=facts[i];
 		if(frac1>0){
-			signal=signal*(1-frac1)+value(i+1)*frac1;
-			fact=fact*(1-frac1)+factor(i+1)*frac1;
+			signal=signal*(1-frac1)+signals[i+1]*frac1;
+			fact=fact*(1-frac1)+facts[i+1]*frac1;
 		}
 		signal=signal>clip?clip:signal;
 		if(nabs){

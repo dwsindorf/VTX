@@ -762,6 +762,9 @@ inline Point Voronoi::hashv3(Point p) {
 
 //-------------------------------------------------------------
 // Noise::Voronoi3D() 3d Voronoi noise (for terrain ht etc.)
+// Early-exit: skip cells whose minimum possible distance exceeds d1.
+// For neighbor at offset k along z, the nearest face is at distance
+// fz (k==-1), 1-fz (k==+1), or 0 (k==0). Same for j/y and i/x.
 //-------------------------------------------------------------
 double  Voronoi::noise(double x, double y, double z) {
 	Point pnt=Point(x,y,z);
@@ -769,7 +772,13 @@ double  Voronoi::noise(double x, double y, double z) {
 	Point f = pnt.fract();
 	double d1=1e10, d2=1e10;
 	for (int k = -1; k <= 1; k++) {
+		double dz = k==0 ? 0.0 : (k==-1 ? f.z : 1.0-f.z);
+		double dz2 = dz*dz;
+		if(dz2 >= d1) continue;
 		for (int j = -1; j <= 1; j++) {
+			double dy = j==0 ? 0.0 : (j==-1 ? f.y : 1.0-f.y);
+			double dyz2 = dz2 + dy*dy;
+			if(dyz2 >= d1) continue;
 			for (int i = -1; i <= 1; i++) {
 				Point b = Point(double(i), double(j), double(k));
 				Point r = Point(b) - f + hashv3(p + b);
@@ -787,6 +796,7 @@ double  Voronoi::noise(double x, double y, double z) {
 // Returns (second_nearest - nearest): 0 at cell boundaries, peaks at centres.
 // Gives V-shaped gullies with sharp ridges — use instead of noise() for
 // drainage channels that carve downward rather than dome upward.
+// Early-exit skips on d2 since we need second-nearest too.
 //-------------------------------------------------------------
 double Voronoi::edge(double x, double y, double z) {
 	Point pnt=Point(x,y,z);
@@ -794,7 +804,13 @@ double Voronoi::edge(double x, double y, double z) {
 	Point f = pnt.fract();
 	double d1=1e10, d2=1e10;
 	for (int k = -1; k <= 1; k++) {
+		double dz = k==0 ? 0.0 : (k==-1 ? f.z : 1.0-f.z);
+		double dz2 = dz*dz;
+		if(dz2 >= d2) continue;
 		for (int j = -1; j <= 1; j++) {
+			double dy = j==0 ? 0.0 : (j==-1 ? f.y : 1.0-f.y);
+			double dyz2 = dz2 + dy*dy;
+			if(dyz2 >= d2) continue;
 			for (int i = -1; i <= 1; i++) {
 				Point b = Point(double(i), double(j), double(k));
 				Point r = Point(b) - f + hashv3(p + b);

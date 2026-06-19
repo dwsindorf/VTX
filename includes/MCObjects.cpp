@@ -5,6 +5,7 @@
 #include "ViewClass.h"  // Add at top with other includes
 #include "RenderOptions.h"
 #include "GLSLMgr.h"
+#include "TerrainData.h"
 
 #define DEBUG_ADAPTIVE
 #define PRINT_STATS
@@ -14,6 +15,8 @@
 
 extern const int MC_edgeTable[256];
 extern const int MC_triTable[256][16];
+
+static TerrainData Td;
 
 Point MCObjAdaptFlags::rockOrigin;
 const Point MCObjAdaptFlags::rockRight;
@@ -916,6 +919,8 @@ void MCObjNode::adapt(SurfaceFunction field,
     if (depth_check && isLeaf() && meshValid) {
         return;
     }
+
+    Td.level=0;
 
     if (!skipSurfaceCheck && !checkSurface(field, objCenter, objRadius, maxDepth,isoNoiseAmpl)) {
         collapse();
