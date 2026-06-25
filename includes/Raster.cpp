@@ -1,4 +1,3 @@
-
 #include "Effects.h"
 #include "RenderOptions.h"
 #include "AdaptOptions.h"
@@ -10,8 +9,8 @@
 #include "GLSLMgr.h"
 
 #define OPTIMIZE
-//#define DEBUG_SHADOWS
-//#define DEBUG_SHADOW_CASCADES
+#define DEBUG_SHADOWS
+#define DEBUG_SHADOW_CASCADES
 extern void DisplayErrorMessage(const char *format,...);
 extern void init_test_params();
 extern double lsin(double t);
@@ -313,7 +312,7 @@ RasterMgr::RasterMgr()
 	shadow_value=1;
 	shadow_zfactor=0.05;
 	shadow_blur=0.2;
-	shadow_test=0;
+	shadow_test=1;
 	
 	set_bgshadows(0);
 
@@ -584,6 +583,7 @@ void RasterMgr::buildCascades(){
 		if (dist < minDist) minDist = dist;
 		if (dist > maxDist) maxDist = dist;
 	}
+
 	//cout<<"bounds valid="<<100.0*bounds_valid/(bounds_valid+bounds_invalid)<<" %"<<endl;
 	if (minDist >= maxDist || nodes.size() == 0) {
 		// Fallback to single cascade
@@ -592,7 +592,6 @@ void RasterMgr::buildCascades(){
 		useCascades = false;
 		return;
 	}
-	
 	// Use configured number of shadow views
 	int requestedCascades = shadow_views;
 	if (requestedCascades < 1) requestedCascades = 1;
@@ -745,7 +744,12 @@ void RasterMgr::set_light_view()
 		extent=shadow_vsize;		
 	}
 	y = w > r ? w : r;
-	if (farview())
+	// farview() can flip true mid-session when a second object (horizon, distant
+	// planetoid, sky body) crosses onscreen (vsobs>1), which re-aims the light at
+	// cv*height. For near-surface cascade shadows that yanks the whole light
+	// frustum off the foreground plants and kills every branch self-shadow at once.
+	// Keep cascades aimed at the cascade mid-distance regardless of farview.
+	if (farview() && !useCascades)
 		c = cv * TheScene->height; // center light view at shadow obj surface
 	else
 	    c = cv * 0.5* (left + right);  // Center at mid-distance
@@ -796,7 +800,6 @@ void RasterMgr::set_light_view()
 			ustr);
 	cout << tmp << endl;
 #endif
-
 	// Common projection setup
 	TheScene->perspective(fov, TheScene->aspect, zn, zf, e, c, n);
 	TheScene->getMatrix(GL_PROJECTION, sproj);

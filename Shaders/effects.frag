@@ -6,7 +6,6 @@ uniform sampler2DRect FBOTex1;
 uniform sampler2DRect FBOTex2;
 uniform sampler2DRect FBOTex3;
 uniform sampler2DRect FBOTex4;
-
 #define SHADOWTEX FBOTex3
 
 uniform vec4 Haze;

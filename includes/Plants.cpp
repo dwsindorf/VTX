@@ -586,6 +586,8 @@ void PlantObjMgr::free() {
 	//clearCache();
 }
 
+static bool shadow_start=false;   // true only on the first shadow cascade (see render_shadows)
+
 void PlantObjMgr::render()
 {
     int n = placements();
@@ -595,12 +597,18 @@ void PlantObjMgr::render()
     
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-    if (changed && PlaceObjMgr::shadow_mode) {
-        return;
+    // The shadow pass runs before the color pass in the frame. Rebuild the
+    // eye-relative plant VBO on the FIRST shadow cascade (shadow_start) so the
+    // shadow buffer is built from the current view's geometry; skip the rebuild
+    // on the remaining cascades. This matches Rock3DObjMgr and keeps the shadow
+    // map and the lit plants on identical geometry (previously the shadow pass
+    // skipped the rebuild entirely, so shadows lagged a frame on any view change
+    // or rebuild -> false/blocky plant self-shadows until the next render).
+    if (PlaceObjMgr::shadow_mode && !shadow_start) {
+        moved = false;
+        changed = false;
     }
     bool update_needed = moved || changed;
-    if (moved && PlaceObjMgr::shadow_mode)
-        update_needed = false;
 
     Point eyePoint = TheScene->epoint;
     double t0;
@@ -858,6 +866,8 @@ void PlantObjMgr::render_shadows(){
 		return;
 	if(!PlantMgr::threed)
 		return;
+	if(Raster.shadow_vcnt==0)      // first shadow cascade: allow the VBO rebuild here
+		shadow_start=true;
 	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
@@ -867,6 +877,7 @@ void PlantObjMgr::render_shadows(){
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 
 	render();
+	shadow_start=false;
 	shadow_mode=false;
 }
 //************************************************************

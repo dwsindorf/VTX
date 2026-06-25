@@ -165,6 +165,7 @@ void main(void) {
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
 	
  	gl_FragData[0]=color;
+ 	
  	//if(MODE==LINE)
  	//gl_FragData[0].xyz=vec3(pow(DEPTH,10),0,0);
  	

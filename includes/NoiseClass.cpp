@@ -14,7 +14,7 @@
 //#define OLDPERLIN
 //#define LONGLONG // slower but allows freqs>2e9
 
-#define DEBUG_NOISE_EVAL
+//#define DEBUG_NOISE_EVAL
 
 //#define DEBUG_FACTORS
 //#define DEBUG_MINMAX

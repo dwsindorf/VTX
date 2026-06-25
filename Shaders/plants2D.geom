@@ -15,6 +15,7 @@ varying out vec4 TexVars;
 varying out vec4 ImageVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
+varying out vec4 EyeDirection;
 
 vec4 Pos0,Pos1,Pos2;
 
@@ -62,6 +63,7 @@ void emitVertex(vec3 v){
 void produceVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = project(p);
+   EyeDirection = -(gl_ModelViewMatrix * p);
    EmitVertex();  
 }
 

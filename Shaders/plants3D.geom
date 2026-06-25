@@ -15,6 +15,7 @@ varying out vec4 TexVars;
 varying out vec4 ImageVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
+varying out vec4 EyeDirection;
 
 vec4 Pos0,Pos1,Pos2;
 
@@ -39,6 +40,7 @@ vec3 OrthoNormalVector(vec3 v) {
 void emitVertex(vec3 v){
    vec4 p=vec4(v,1.0);
    gl_Position = p;
+   EyeDirection = -(gl_ModelViewMatrix * p);
    EmitVertex();  
 }
 void produceVertex(vec3 v){
@@ -46,6 +48,7 @@ void produceVertex(vec3 v){
    vec4 proj = gl_ModelViewProjectionMatrix * p;
    float w = proj.w > 0.0 ? proj.w : 1e-10;
    gl_Position = vec4(proj.xyz / w, 1.0);
+   EyeDirection = -(gl_ModelViewMatrix * p);
    EmitVertex();
 }
 void produceTxVertex(vec2 tx,vec3 v){

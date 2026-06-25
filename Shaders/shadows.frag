@@ -48,7 +48,14 @@ uniform float rscale;
 
 void main(void) {
 #ifdef SHADOW_TEST
-   if(shadow_test==3){
+	if(shadow_test==4){
+	    vec4 scd = ShadowCoord/ShadowCoord.w;
+	    float stored = texture2DRect(ShadowMap, scd.st).z;
+	    float gap = (scd.z - stored) * 1e6;        // microscale
+	    gl_FragData[0] = vec4(gap>0.0?gap:0.0, gap<0.0?-gap:0.0, 0.0, 1.0);
+	    return; // R = positive gap (should shadow), G = negative (won't)
+	}
+	if(shadow_test==3){
         float d=gl_FragCoord.z;
         gl_FragData[0]=vec4(pow(d,2),0,0,1);
         return;
@@ -78,7 +85,7 @@ void main(void) {
     	discard;
 
    float zv = length(EyeDirection.xyz);   // eye distance, projection-independent
-	if (zv < vleft || zv > vright)
+   if (zv < vleft || zv > vright)
     discard;
 
 	vec3 light   = normalize(Light+EyeDirection.xyz);
