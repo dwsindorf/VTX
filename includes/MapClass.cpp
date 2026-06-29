@@ -1512,7 +1512,7 @@ static void collect_surface_data(MapNode *n)
     MapData *d = &n->data;
     if(!n->visible() && !n->partvis())
     	return;
-     if((d->water() && !d->rock()))
+    if(d->water() && !d->rock())
     	return;
     d = d->surface1();
 	SurfacePoint sp;

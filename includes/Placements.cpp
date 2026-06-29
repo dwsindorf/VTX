@@ -1081,7 +1081,7 @@ PlaceData::PlaceData(Placement *pnt){
 //************************************************************
 // PlaceObjMgr class
 //************************************************************
-bool PlaceObjMgr::shadow_mode=false;
+//bool PlaceObjMgr::shadow_mode=false;
 
 PlaceObjMgr::PlaceObjMgr(){
 	objs.reset();

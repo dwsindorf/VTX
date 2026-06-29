@@ -51,6 +51,7 @@ static bool cvalid;
 bool use_adaptive_grid=true;
 bool use_templates=true;
 static bool shadow_start=false;
+static bool shadow_mode=false;
 
 // 3d rocks using marching cubes
 // Tasks:
@@ -417,7 +418,7 @@ bool Rock3DObjMgr::setProgram() {
     if (!data.size || !objs.size)
         return false;   
  
-	if(PlaceObjMgr::shadow_mode)
+	if(shadow_mode)
 		return false;
 		
     char defs[1024] = "";
@@ -880,7 +881,7 @@ void Rock3DObjMgr::render() {
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
 
-    if (PlaceObjMgr::shadow_mode && !shadow_start) {
+    if (shadow_mode && !shadow_start) {
         moved = false;
         changed = false;
     }
@@ -894,7 +895,9 @@ void Rock3DObjMgr::render() {
     if (mesh_needs_rebuild) {
     	rebuild();
     }
-    if (placement_needs_update || mesh_needs_rebuild) {
+    bool update_needed=placement_needs_update || mesh_needs_rebuild;
+ 
+    if (update_needed) {
         d0 = clock();
 
         if (!mesh_needs_rebuild) { // already cleared above
@@ -1392,7 +1395,7 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
 void Rock3DObjMgr::render_objects() {
     bool wireframe = MCGenerator::wireframe;
          
-    if (!PlaceObjMgr::shadow_mode) {
+    if (!shadow_mode) {
          if (!setProgram()) {
             cout << "Rock3DObjMgr::setProgram FAILED" << endl;
             return;
@@ -2006,7 +2009,6 @@ void TNrocks::eval() {
 			right->eval();
 		return;
 	}
-
 	TerrainData rock;
 	TerrainData ground;
 	int i;

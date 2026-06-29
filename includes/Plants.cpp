@@ -228,6 +228,8 @@ static double min_draw_width=base_draw_width;
 
 
 static int randval=0;
+static bool shadow_start=false;   // true only on the first shadow cascade (see render_shadows)
+static bool shadow_mode=false;
 
 
 LeafImageMgr leaf_mgr; // global image manager
@@ -361,7 +363,7 @@ void BranchVBO::render()
     glVertexPointer(4, GL_FLOAT, stride, (void*)offsetof(BranchVertex, pos));
     glEnableClientState(GL_VERTEX_ARRAY);
 
-    if (PlaceObjMgr::shadow_mode) {
+    if (shadow_mode) {
         glDisableClientState(GL_COLOR_ARRAY);
     } else {
         glColorPointer(4, GL_FLOAT, stride, (void*)offsetof(BranchVertex, color));
@@ -586,7 +588,6 @@ void PlantObjMgr::free() {
 	//clearCache();
 }
 
-static bool shadow_start=false;   // true only on the first shadow cascade (see render_shadows)
 
 void PlantObjMgr::render()
 {
@@ -597,14 +598,7 @@ void PlantObjMgr::render()
     
     bool moved = TheScene->moved();
     bool changed = TheScene->changed_detail();
-    // The shadow pass runs before the color pass in the frame. Rebuild the
-    // eye-relative plant VBO on the FIRST shadow cascade (shadow_start) so the
-    // shadow buffer is built from the current view's geometry; skip the rebuild
-    // on the remaining cascades. This matches Rock3DObjMgr and keeps the shadow
-    // map and the lit plants on identical geometry (previously the shadow pass
-    // skipped the rebuild entirely, so shadows lagged a frame on any view change
-    // or rebuild -> false/blocky plant self-shadows until the next render).
-    if (PlaceObjMgr::shadow_mode && !shadow_start) {
+    if (shadow_mode && !shadow_start) {
         moved = false;
         changed = false;
     }
@@ -619,7 +613,7 @@ void PlantObjMgr::render()
     glEnable(GL_BLEND);
 
     if (update_needed) {
-    	PlantMgr::clearStats();
+     	PlantMgr::clearStats();
   		cacheHits = cacheMisses =0;
   		PlantMgr::stats[PLANT_TYPES]=objs.size;
   		t0=clock();
@@ -741,7 +735,7 @@ void PlantObjMgr::render()
         tnplant->setNormal();
     }
     t0=clock();
-    if (!PlaceObjMgr::shadow_mode)
+    if (!shadow_mode)
         setProgram();
     glDisable(GL_CULL_FACE);
     renderBranches();
@@ -757,7 +751,7 @@ void PlantObjMgr::render()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
  }
 bool PlantObjMgr::setProgram(){
-	if(PlaceObjMgr::shadow_mode)
+	if(shadow_mode)
 		return false;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
@@ -859,20 +853,30 @@ bool PlantObjMgr::setProgram(){
 	return true;
 }
 void PlantObjMgr::render_zvals(){
-	render_shadows();
-}
-void PlantObjMgr::render_shadows(){
 	if(objs.size==0)
-		return;
-	if(!PlantMgr::threed)
 		return;
 	if(Raster.shadow_vcnt==0)      // first shadow cascade: allow the VBO rebuild here
 		shadow_start=true;
 	shadow_mode=true;
 	GLSLMgr::input_type=GL_LINES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+
+	Raster.setShadowProgram("plants.gs.vert","plants.shadows.geom",0);
+	Raster.setProgram(Raster.PLACE_SHADOWS);
+
+	render();
+	shadow_start=false;
+	shadow_mode=false;
+
+}
+void PlantObjMgr::render_shadows(){
+
+	if(objs.size==0)
+		return;
+	shadow_mode=true;
+	GLSLMgr::input_type=GL_LINES;
+	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
 	
-	//Raster.setShadowProgram("shadows.vert",0,0);
 	Raster.setShadowProgram("plants.gs.vert","plants.shadows.geom",0);
 	Raster.setProgram(Raster.PLACE_SHADOWS);
 
@@ -1056,16 +1060,17 @@ void TNplant::set_id(int i){
 //-------------------------------------------------------------
 void TNplant::eval()
 {	
+
+	if(!isEnabled() || TheScene->viewtype !=SURFACE){
+		if(right)
+			right->eval();
+		return;
+	}
 	PlantMgr *smgr=(PlantMgr*)mgr;
 
 	TerrainData ground;
 	bool spass=CurrentScope->spass();
 
-	if(!isEnabled() || TheScene->viewtype !=SURFACE || Raster.surface==2){
-		if(right)
-			right->eval();
-		return;
-	}
 	SINIT;	
 	if(CurrentScope->rpass()){
 		int layer=0;
@@ -1311,7 +1316,7 @@ void TNplant::setNormal(){
 		return;
 	Point bot=base_point;
 	Point norm=bot.normalize();
-	if(!PlaceObjMgr::shadow_mode)
+	if(!shadow_mode)
 		glNormal3dv(norm.values());
 }
 
@@ -1337,7 +1342,7 @@ void TNplant::emit(){
 		return; // plant with no branches !
 	
 	norm=base_point.normalize(); // defines surface normal
-	if(!PlaceObjMgr::shadow_mode)
+	if(!shadow_mode)
 		glNormal3dv(norm.values());
 
 	Point bot=base_point*drop;	

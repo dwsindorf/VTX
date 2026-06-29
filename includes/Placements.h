@@ -125,7 +125,6 @@ class PlaceObjMgr
 protected:
 public:
 	Array<PlaceObj*> objs;
-	static bool shadow_mode;
 	PlaceObjMgr();
 	virtual void collect(){}
 	virtual void eval();
