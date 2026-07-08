@@ -2129,6 +2129,7 @@ void Asteroid::init(){
 	} else {
 	    surfaceR = size;
 	}
+	MCGenerator::csi_hole_patch_threshold=4;
 }
 //-------------------------------------------------------------
 // Asteroid::init_view() set parameters for change in viewtype

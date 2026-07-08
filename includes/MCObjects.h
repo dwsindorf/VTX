@@ -65,6 +65,7 @@ public:
     static int csi_early_exit;
     static int csi_edge_exits;
     static int csi_hole_patched;
+    static int csi_hole_patch_threshold;
     static int csi_edge_tests;
     static int csi_cull_calls;
     static int csi_adapt_calls;

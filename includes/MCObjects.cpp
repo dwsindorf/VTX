@@ -9,6 +9,7 @@
 
 #define DEBUG_ADAPTIVE
 #define PRINT_STATS
+#define PATCH_HOLES
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -43,6 +44,7 @@ int MCGenerator::cells_created=0;
 int MCGenerator::csi_early_exit = 0;
 int MCGenerator::csi_edge_exits = 0;
 int MCGenerator::csi_hole_patched=0;
+int MCGenerator::csi_hole_patch_threshold=4;
 int MCGenerator::csi_edge_tests = 0;
 int MCGenerator::csi_cull_calls=0;
 int MCGenerator::csi_adapt_calls=0;
@@ -764,14 +766,15 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         MCGenerator::csi_edge_exits++;
         return true;
     }
+#ifdef PATCH_HOLES
     // Coarse-level false verdicts destroy entire subtrees, and a large cell
     // can contain a thin sliver of surface that a sparse grid misses
     // (observed: depth-3 cell with min=-0.034, max=+1.85 declared empty).
     // Before accepting "no surface" at shallow depth, re-verify densely.
     // These calls are rare (csi_by_depth: only hundreds at depth<=4), so
     // even a 12^3 grid here is cheap relative to the cost of a wrong answer.
-    if (depth <= 5) {
-        int vN = (depth <= 3) ? 12 : 8;
+    if (depth <= MCGenerator::csi_hole_patch_threshold) {
+        int vN = (depth <= 2) ? 12 : 8;
         for (int ix = 0; ix <= vN && !(minVal<=isolevel && maxVal>=isolevel); ix++)
         for (int iy = 0; iy <= vN && !(minVal<=isolevel && maxVal>=isolevel); iy++)
         for (int iz = 0; iz <= vN && !(minVal<=isolevel && maxVal>=isolevel); iz++) {
@@ -789,6 +792,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
             return true;
         }
     }
+#endif
     MCGenerator::csi_false++;
     surfacePresent = false;
     return false;

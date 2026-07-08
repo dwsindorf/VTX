@@ -239,6 +239,7 @@ int Rock3DMgr::getLODResolution(double pts) {
 		minPointsize=base_minsize*2;
 		maxDepth=8;
 		adaptThreshold=0.5*base_threshold;
+		MCGenerator::csi_hole_patch_threshold=0;
  		break;
 	default:
 	case NORMAL:
@@ -246,18 +247,21 @@ int Rock3DMgr::getLODResolution(double pts) {
 		minPointsize=base_minsize*1.0;
 		maxDepth=10;
 		adaptThreshold=base_threshold*1.0;
+		MCGenerator::csi_hole_patch_threshold=3;
  		break;
 	case HIGH:
 		resScale*=1.25;
 		minPointsize=base_minsize*0.75;
 		maxDepth=11;
 		adaptThreshold=1.2*base_threshold;
+		MCGenerator::csi_hole_patch_threshold=5;
  		break;
 	case BEST:
 		resScale*=1.5;
 		minPointsize=base_minsize*0.5;
 		maxDepth=12;
 		adaptThreshold=1.5*base_threshold;
+		MCGenerator::csi_hole_patch_threshold=5;
  		break; 		
  	}	
  	int newres=(int)(res*resScale); 
