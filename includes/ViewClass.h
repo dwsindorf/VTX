@@ -107,8 +107,6 @@ protected:
 
 	int mm;
 
-	void push_attributes();
-	void pop_attributes();
 
 public:
 	TrackBall model_trackball;
@@ -376,6 +374,9 @@ public:
 	void set_vstring(const char *msg,...);
 	void set_show_vstring(int c) { BIT_SET(status,SHOW_VSTRING,c);}
 	int show_vstring()           { return status & SHOW_VSTRING;}
+
+	void push_attributes();
+	void pop_attributes();
 
 	// viewpoint motion functions
 

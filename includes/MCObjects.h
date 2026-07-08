@@ -64,6 +64,7 @@ public:
     static int csi_calls;
     static int csi_early_exit;
     static int csi_edge_exits;
+    static int csi_hole_patched;
     static int csi_edge_tests;
     static int csi_cull_calls;
     static int csi_adapt_calls;
@@ -303,6 +304,7 @@ public:
 
     // Invalidate mesh and surface cache (call when field changes)
     void invalidate();
+    void clearVisibility() { nodeVisible = false; nodeMasked = false; }
 
     void getCorners(Point localCorners[8],
                     const Point& objCenter, double objRadius) const;

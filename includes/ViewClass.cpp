@@ -244,7 +244,6 @@ void View::set_istring(const char *msg,...)
 	vsprintf(buff,msg, xp);
 	va_end(xp);
 	strncpy(istring,buff,n);
-	//cout<<"View::set_istring "<<istring<<endl;
 }
 
 //-------------------------------------------------------------
@@ -259,20 +258,32 @@ void View::output_text()
 	pop_attributes();
 }
 
+static GLint saved_program = 0;
 //-------------------------------------------------------------
 // View::push_attributes() push render attributes
 //-------------------------------------------------------------
 void View::push_attributes(){
+	glGetIntegerv(GL_CURRENT_PROGRAM, &saved_program);   // add member: GLint saved_program;
+	glUseProgram(0);                                     // BEFORE glRasterPos!
+
+	GLint maxUnits = 1;
+	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxUnits);
+	if (maxUnits > 8) maxUnits = 8;
+	for (int u = 0; u < maxUnits; u++) {
+		glActiveTexture(GL_TEXTURE0 + u);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_1D);
+	}
+	glActiveTexture(GL_TEXTURE0);
+
 	mm=getMatrixMode();
 	pushMatrix();
-    glLoadIdentity();
+	glLoadIdentity();
 	setMatrixMode(GL_PROJECTION);
-    loadIdentity();
+	loadIdentity();
 	glDisable(GL_BLEND);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DITHER);
 	glDisable(GL_FOG);
 	glRasterPos4d(-1,-1,0,1);
@@ -282,13 +293,13 @@ void View::push_attributes(){
 // View::push_attributes() pop render attributes
 //-------------------------------------------------------------
 void View::pop_attributes(){
-    glPopAttrib();
+	glPopAttrib();
 	glMatrixMode(mm);
 	popMatrix();
 	glRasterPos4d(-1,-1,0,1);
 	glEnable(GL_DEPTH_TEST);
+	glUseProgram(saved_program);                         // restore
 }
-
 //-------------------------------------------------------------
 // View::output_strings() draw cached strings
 //-------------------------------------------------------------

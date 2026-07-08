@@ -50,8 +50,6 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
     float top_shading = 0.5 * RdotN + 0.5;
 #endif
 
-    vec3 ambient = Ambient.rgb * Ambient.a * BaseColor * top_shading;
-
     vec3  diffuse  = vec3(0.0);
     vec3  specular = vec3(0.0);
     float shine    = gl_FrontMaterial.shininess;
@@ -59,9 +57,12 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
 #ifdef SHADOWS
     float shadow         = texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
     float shadow_diffuse = mix(1.0 - Shadow.a, 1.0, shadow);
+    float aval=Ambient.a;
 #else
     float shadow_diffuse = 1.0;
+    float aval=lerp(Shadow.a,0,1,1,Ambient.a);
 #endif
+    vec3 ambient = Ambient.rgb * aval * BaseColor * top_shading;
 
     for (int i = 0; i < NLIGHTS; i++) {
         if (gl_LightSource[i].position.w == 0.0)

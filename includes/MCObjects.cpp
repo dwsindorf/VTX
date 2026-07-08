@@ -42,6 +42,7 @@ int MCGenerator::cells_deleted=0;
 int MCGenerator::cells_created=0;
 int MCGenerator::csi_early_exit = 0;
 int MCGenerator::csi_edge_exits = 0;
+int MCGenerator::csi_hole_patched=0;
 int MCGenerator::csi_edge_tests = 0;
 int MCGenerator::csi_cull_calls=0;
 int MCGenerator::csi_adapt_calls=0;
@@ -218,7 +219,7 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 
 void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
-	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=0;
+	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=csi_hole_patched=0;
     tm_field_calls=ad_field_calls = gm_field_calls =0;
     minDistance=1000;
     maxDistance=0;
@@ -232,7 +233,7 @@ void MCGenerator::resetStats() {
 void MCGenerator::printStats(){
    std::cout  << " CSI: calls=" << csi_calls
 			  << " EXITS early:" << csi_early_exit
-			  << " edge:" << csi_edge_exits<<" tests:"<<csi_edge_tests
+			  << " edge:" << csi_edge_exits<<" patched:"<<csi_hole_patched<<" tests:"<<csi_edge_tests
 			  << " empty:" << csi_false
 			  << std::endl;
 	// Add depth distribution printout:
@@ -763,7 +764,31 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         MCGenerator::csi_edge_exits++;
         return true;
     }
-
+    // Coarse-level false verdicts destroy entire subtrees, and a large cell
+    // can contain a thin sliver of surface that a sparse grid misses
+    // (observed: depth-3 cell with min=-0.034, max=+1.85 declared empty).
+    // Before accepting "no surface" at shallow depth, re-verify densely.
+    // These calls are rare (csi_by_depth: only hundreds at depth<=4), so
+    // even a 12^3 grid here is cheap relative to the cost of a wrong answer.
+    if (depth <= 5) {
+        int vN = (depth <= 3) ? 12 : 8;
+        for (int ix = 0; ix <= vN && !(minVal<=isolevel && maxVal>=isolevel); ix++)
+        for (int iy = 0; iy <= vN && !(minVal<=isolevel && maxVal>=isolevel); iy++)
+        for (int iz = 0; iz <= vN && !(minVal<=isolevel && maxVal>=isolevel); iz++) {
+            double x = c0.x + (c7.x - c0.x) * ix / vN;
+            double y = c0.y + (c7.y - c0.y) * iy / vN;
+            double z = c0.z + (c7.z - c0.z) * iz / vN;
+            double v = field(x, y, z);
+            minVal = std::min(minVal, v);
+            maxVal = std::max(maxVal, v);
+            MCGenerator::csi_edge_tests++;
+        }
+        if (minVal <= isolevel && maxVal >= isolevel) {
+            surfacePresent = true;
+            MCGenerator::csi_hole_patched++;   // or add a csi_rescued counter
+            return true;
+        }
+    }
     MCGenerator::csi_false++;
     surfacePresent = false;
     return false;

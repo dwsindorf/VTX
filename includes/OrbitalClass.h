@@ -434,6 +434,8 @@ private:
 	void calibrateNoise();
 	GLdouble savedMVP[16];    // MVP matrix captured at render time for set_focus()
 	GLdouble savedInvMVP[16]; // inverse MVP for unproject in set_focus()
+
+	void holeProbe(double sx, double sy);
 public:
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;

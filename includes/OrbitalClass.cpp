@@ -30,7 +30,8 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-//#define PRINT_ASTEROID_STATS
+#define PRINT_ASTEROID_STATS
+//#define DEBUG_HOLE_PROBE
 #define USE_IDTABLE
 
 static int debug_temp=DEBUG_TEMP;
@@ -2742,7 +2743,17 @@ void Asteroid::render_object(){
 			render_shadows();       // Step 2: eye POV shadow comparison
 		return;
 	}
-
+    // top of Asteroid::render_object(), after the !tree early-outs:
+    #ifdef DEBUG_HOLE_PROBE
+        {
+            static Point2D lastProbe(-1,-1);
+            if (TheScene->selp.x != lastProbe.x || TheScene->selp.y != lastProbe.y) {
+                lastProbe = TheScene->selp;
+                if (TheScene->viewobj == this)
+                    holeProbe(TheScene->selp.x, TheScene->selp.y);
+            }
+        }
+    #endif
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
     if(MCGenerator::wireframe)
@@ -2756,7 +2767,7 @@ void Asteroid::render_object(){
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    //glEnable(GL_CULL_FACE);
+   //glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     if (Raster.do_shaders) {
@@ -3239,6 +3250,181 @@ SurfaceFunction Asteroid::makeField() {
     };
 }
 
+
+// Asteroid::holeProbe()
+// Diagnose why the pixel at (sx,sy) shows a hole.
+//-------------------------------------------------------------
+void Asteroid::holeProbe(double sx, double sy)
+{
+    if (!tree || !tree->root) { cout << "holeProbe: no tree" << endl; return; }
+
+    double scale = 2.0 * size;                 // world = template * scale
+    int vpw = TheView->viewport[2];
+    int vph = TheView->viewport[3];
+
+    // --- build pick ray via savedInvMVP (same convention as the mesh draw:
+    //     vertices are drawn at template*scale - xpoint, so unprojected points
+    //     are eye-relative; add xpoint to get asteroid-centered world) --------
+    double nx = 2.0 * sx / vpw - 1.0;
+    double ny = 2.0 * (vph - sy) / vph - 1.0;  // selp is top-origin
+
+    auto unproj = [&](double nz, Point& out) -> bool {
+        const GLdouble* m = savedInvMVP;       // column-major (OpenGL)
+        double x = m[0]*nx + m[4]*ny + m[8]*nz  + m[12];
+        double y = m[1]*nx + m[5]*ny + m[9]*nz  + m[13];
+        double z = m[2]*nx + m[6]*ny + m[10]*nz + m[14];
+        double w = m[3]*nx + m[7]*ny + m[11]*nz + m[15];
+        if (fabs(w) < 1e-20) return false;
+        out = Point(x/w, y/w, z/w);
+        return true;
+    };
+    Point pn, pf;
+    if (!unproj(-1.0, pn) || !unproj(1.0, pf)) { cout << "holeProbe: bad InvMVP" << endl; return; }
+
+    Point o_w  = pn + TheScene->xpoint;        // asteroid-centered world
+    Point f_w  = pf + TheScene->xpoint;
+    Point o_t  = o_w / scale;                  // template space ([-1,1], surface ~0.5)
+    Point d_t  = (f_w - o_w);
+    double dl  = d_t.length();
+    if (dl < 1e-20) { cout << "holeProbe: degenerate ray" << endl; return; }
+    d_t = d_t / dl;
+
+    cout << "\n=== HOLE PROBE @ pixel(" << sx << "," << sy << ") maxDepth=" << maxDepth << " ===" << endl;
+    cout << "ray(template)  o=(" << o_t.x << "," << o_t.y << "," << o_t.z
+         << ")  d=(" << d_t.x << "," << d_t.y << "," << d_t.z << ")" << endl;
+
+    // --- march the REAL field along the ray (same rseed context as adapt) ---
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    Td.level = 0;                              // match checkSurface conditions
+    SurfaceFunction& f = tree->field;
+
+    double cellT   = 2.0 / (double)(1 << maxDepth);   // leaf cell size, template units
+    double step    = cellT / 8.0;
+    double tmax    = 4.0;                              // whole tree diameter + margin
+    double prev    = f(o_t.x, o_t.y, o_t.z);
+    double tHit    = -1.0;
+    for (double t = step; t <= tmax; t += step) {
+        Point p = o_t + d_t * t;
+        double v = f(p.x, p.y, p.z);
+        if (prev > 0.0 && v <= 0.0) {                  // outside -> inside
+            double a = t - step, b = t;
+            for (int i = 0; i < 40; i++) {
+                double m2 = 0.5 * (a + b);
+                Point pm = o_t + d_t * m2;
+                if (f(pm.x, pm.y, pm.z) <= 0.0) b = m2; else a = m2;
+            }
+            tHit = 0.5 * (a + b);
+            break;
+        }
+        prev = v;
+    }
+    if (tHit < 0.0) {
+        cout << "field: NO surface along this ray -> not a mesh hole, the field"
+                " genuinely has a gap here (or the ray/unproject is off)." << endl;
+        TheNoise.rseed = seed;
+        return;
+    }
+    Point P_t = o_t + d_t * tHit;                      // true surface point, template
+    Point P_w = P_t * scale;                           // world (tree node space)
+    cout << "field: TRUE surface at t=" << tHit << "  P(template)=("
+         << P_t.x << "," << P_t.y << "," << P_t.z << ")" << endl;
+
+    // --- descend the octree by point location, print each node --------------
+    MCObjNode* n = tree->root;
+    MCObjNode* leaf = nullptr;
+    while (n) {
+        cout << "  depth=" << n->depth
+             << " size=" << n->size
+             << " leaf=" << n->isLeaf()
+             << " surfChecked=" << n->surfaceChecked
+             << " surfPresent=" << n->surfacePresent
+             << " meshValid=" << n->meshValid
+             << " tris=" << n->mesh.size()
+             << " vis=" << n->nodeVisible << "/" << n->nodeMasked
+             << endl;
+        if (n->isLeaf()) { leaf = n; break; }
+        int ci = (P_w.x > n->center.x ? 1 : 0)
+               | (P_w.y > n->center.y ? 2 : 0)
+               | (P_w.z > n->center.z ? 4 : 0);
+        if (!n->children[ci]) {
+            cout << "  !! child " << ci << " is NULL at depth " << n->depth
+                 << " — partial split, structural bug" << endl;
+            leaf = n; break;
+        }
+        n = n->children[ci];
+    }
+    if (!leaf) { TheNoise.rseed = seed; return; }
+
+    // --- verdict checks on the terminal node ---------------------------------
+    Point corners[8];
+    leaf->getCorners(corners, tree->center, tree->radius);
+
+    // (a) cached corner values vs FRESH evaluation — detects field inconsistency
+    double worstDrift = 0; int drifts = 0;
+    for (int i = 0; i < 8; i++) {
+        if (!leaf->cornersEvaluated[i]) continue;
+        double fresh = f(corners[i].x, corners[i].y, corners[i].z);
+        double d = fabs(fresh - leaf->cornerValues[i]);
+        if (d > 1e-9) { drifts++; if (d > worstDrift) worstDrift = d; }
+    }
+    if (drifts)
+        cout << "  !! CORNER CACHE DRIFT: " << drifts << " corners differ from fresh"
+                " field eval, worst delta=" << worstDrift
+             << "  -> field is NOT consistent across evaluations (global noise state)" << endl;
+    else
+        cout << "  corner cache consistent with fresh field evals" << endl;
+
+    // (b) dense 9^3 ground truth for this node
+    double mn = 1e30, mx = -1e30;
+    for (int ix = 0; ix <= 8; ix++)
+    for (int iy = 0; iy <= 8; iy++)
+    for (int iz = 0; iz <= 8; iz++) {
+        double x = corners[0].x + (corners[7].x - corners[0].x) * ix / 8.0;
+        double y = corners[0].y + (corners[7].y - corners[0].y) * iy / 8.0;
+        double z = corners[0].z + (corners[7].z - corners[0].z) * iz / 8.0;
+        double v = f(x, y, z);
+        mn = std::min(mn, v); mx = std::max(mx, v);
+    }
+    bool denseSurface = (mn <= 0.0 && mx >= 0.0);
+    cout << "  dense 9^3: min=" << mn << " max=" << mx
+         << (denseSurface ? "  -> SURFACE PRESENT" : "  -> no surface") << endl;
+
+    // (c) corner sign summary (what single-cube MC sees)
+    int inside = 0;
+    for (int i = 0; i < 8; i++) {
+        double v = leaf->cornersEvaluated[i] ? leaf->cornerValues[i]
+                                             : f(corners[i].x, corners[i].y, corners[i].z);
+        if (v < 0.0) inside++;
+    }
+    cout << "  corner signs: " << inside << "/8 inside"
+         << (inside == 0 || inside == 8 ? "  -> uniform: single-cube MC emits NOTHING" : "") << endl;
+
+    // (d) if the leaf has triangles, does the pick ray actually hit them?
+    if (!leaf->mesh.empty()) {
+        Point hitL;
+        // raycastLeaf expects origin/dir in the same space as tri.vertices
+        bool hit = tree->raycastLeaf(leaf, o_t, d_t, hitL);
+        cout << "  leaf mesh: " << leaf->mesh.size() << " tris, pick ray "
+             << (hit ? "HITS them -> hole is DOWNSTREAM (applyAttributes/VBO/shader)"
+                     : "MISSES them -> partial coverage within cell") << endl;
+    }
+
+    // --- final verdict --------------------------------------------------------
+    if (leaf->surfaceChecked && !leaf->surfacePresent && denseSurface)
+        cout << ">> VERDICT: checkSurface FALSE NEGATIVE at depth " << leaf->depth
+             << (drifts ? " (caused by field inconsistency)" : " (sampling miss)") << endl;
+    else if (leaf->isLeaf() && leaf->surfacePresent && leaf->mesh.empty())
+        cout << ">> VERDICT: MC corner miss — leaf knows surface is present but"
+                " emitted no triangles" << endl;
+    else if (!leaf->mesh.empty())
+        cout << ">> VERDICT: CPU mesh covers this point — investigate"
+                " applyAttributes/buildVBO/render" << endl;
+
+    TheNoise.rseed = seed;
+    cout << "=== END PROBE ===\n" << endl;
+}
+
 //************************************************************
 // Spheroid class
 //************************************************************
@@ -3386,11 +3572,7 @@ void Spheroid::set_focus(Point &selm)
     Point p1,p2,v;
 	double d;
 
-	GLboolean lflag;
-	glGetBooleanv(GL_LIGHTING,&lflag);
-	glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
+	TheView->push_attributes();
 
 	Point m=selm;
 	m.z+=radius();
@@ -3427,7 +3609,9 @@ void Spheroid::set_focus(Point &selm)
 		d,s1,g,s2,e,s3);
 
 	glLineWidth(2.0f);
-	glColor3d(1,1,1);
+
+	FColor fg=View::syscolor[INFO_COLOR];
+	glColor3d(fg.red(),fg.green(),fg.blue());
 
     p1=TheScene->unProject(v.x,v.y-8,v.z);
     p2=TheScene->unProject(v.x,v.y+8,v.z);
@@ -3448,8 +3632,7 @@ void Spheroid::set_focus(Point &selm)
 	glLineWidth(1.0f);
 
 	glFlush();
-	if(lflag==GL_TRUE)
-		glEnable(GL_LIGHTING);
+	TheView->pop_attributes();
 }
 
 //-------------------------------------------------------------
