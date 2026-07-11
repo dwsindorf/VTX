@@ -480,6 +480,7 @@ public:
 	void  move_focus(Point &p);
 	void  select();
 	void init_render();
+	NodeIF *getInstance(NodeIF *prev,int type);
 };
 //************************************************************
 // Star class

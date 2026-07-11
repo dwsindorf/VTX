@@ -2000,7 +2000,7 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	tree=nullptr;
 	hscale=0.5;
 	symmetry=1;
-	detail=4;
+	detail=3;
 	vboDirty=true;
 	uploadedVertexCount=0;
 	noiseScale=1.0;
@@ -2083,6 +2083,10 @@ int Asteroid::getVNoiseFunction(char *buff){
 //-------------------------------------------------------------
 void Asteroid::invalidate(){
 	NodeIF::invalidate();
+	texs.reset();
+	terrain.getChildren((int)ID_TEXTURE,texs);
+	color=terrain.getChild(ID_COLOR);
+	terrain.init();
 	rebuild();
 }
 
@@ -2091,6 +2095,7 @@ void Asteroid::invalidate(){
 //-------------------------------------------------------------
 void Asteroid::init(){
 	Orbital::init();
+	texs.reset();
 	terrain.getChildren((int)ID_TEXTURE,texs);
 	terrain.init();
 	terrain.init_render();
@@ -2100,7 +2105,7 @@ void Asteroid::init(){
 	if(var)
 		rnoise=var->right;
 	else
-		setRNoiseFunction("noise(GRADIENT|NLOD,0,2)");
+		setRNoiseFunction("noise(GRADIENT|NLOD,0,8,0.5,0.5,2,1,4)");
 
 	var=exprs.getVar((char*)"vertex.expr");
 	if(var)
@@ -2129,7 +2134,7 @@ void Asteroid::init(){
 	} else {
 	    surfaceR = size;
 	}
-	MCGenerator::csi_hole_patch_threshold=4;
+
 }
 //-------------------------------------------------------------
 // Asteroid::init_view() set parameters for change in viewtype
@@ -2615,6 +2620,21 @@ void Asteroid::adapt_object(){
     if(!tree) {
         return;
     }
+
+	switch(TheScene->generate_quality){
+	case DRAFT:
+		MCGenerator::csi_hole_patch_threshold=0;
+		break;
+	default:
+	case NORMAL:
+		MCGenerator::csi_hole_patch_threshold=4;
+		break;
+	case HIGH:
+		MCGenerator::csi_hole_patch_threshold=5;
+		break;
+	case BEST:
+		MCGenerator::csi_hole_patch_threshold=6;
+	}
 
     // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
     // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
@@ -3250,8 +3270,16 @@ SurfaceFunction Asteroid::makeField() {
          return baseEllipsoid;
     };
 }
-
-
+//-------------------------------------------------------------
+// Asteroid::getInstance() called from Scene::makeObject
+// - "this" is the parsed prototype (Asteroid(0.005,40){Surface{}})
+// - hook point for typed generation/randomize later
+//-------------------------------------------------------------
+NodeIF *Asteroid::getInstance(NodeIF *prev,int type){
+	setParent(prev);
+	return this;
+}
+//-------------------------------------------------------------
 // Asteroid::holeProbe()
 // Diagnose why the pixel at (sx,sy) shows a hole.
 //-------------------------------------------------------------
@@ -7886,7 +7914,7 @@ double Sky::getHeatCalacity() {
 }
 
 //-------------------------------------------------------------
-// Sky::getInstance()  generate a random instance
+// Sky::randomize()  generate a random instance
 //-------------------------------------------------------------
 bool Sky::randomize(){
 	setRseed(getRandValue());

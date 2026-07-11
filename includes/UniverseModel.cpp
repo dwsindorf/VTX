@@ -183,7 +183,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Halo(1) {}\n");
 		break;
 	case TN_ASTEROID:
-		sprintf(tmp,"Asteroid(0.005,40){Surface{}}\n");
+		sprintf(tmp,"Asteroid(0.001,40){hscale=0.4;resolution=3;day=20;year=50;rot_phase=100;Surface{}}\n");
 		break;
 	case TN_PLANET:
 		sprintf(tmp,"Planet(0.005,40){day=24;year=100;Surface{}}\n");
@@ -204,7 +204,10 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"()\n");
 		break;
 	case TN_TEXTURE:
-		sprintf(tmp,"Texture(\"jupiter\",TEX,1,2,1,0,1,2,0.5,0)\n");
+		if(gtype==GN_2D)
+			sprintf(tmp,"Texture(\"eroded\",TEX|TRIPLANAR,500,2,1,0,2,2,0.5,0)\n");
+		else
+			sprintf(tmp,"Texture(\"jupiter\",TEX|LINEAR,1,2,1,0,1,2,0.5,0)\n");
 		break;
 	case TN_SPRITE:
 		sprintf(tmp,"Sprite(\"firs2x2\",FLIP,1,1e-6,1,1,1,0,0,0)\n");
@@ -547,7 +550,6 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_SMALL));
 		break;
 	case TN_TEXTURE:
-		list.add(getTypeSymbol(GN_RANDOM));
 		list.add(getTypeSymbol(GN_1D));
 		list.add(getTypeSymbol(GN_2D));
 		break;
@@ -596,10 +598,13 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 		list.add(getObjectSymbol(TN_HALO));
 
 		break;
+	case TN_ASTEROID:
+		if(obj->collapsed() && obj->getParent())
+			list.add(getObjectSymbol(TN_ASTEROID));
+		break;
 	case TN_PLANET:
 		if(obj->collapsed() && obj->getParent()){
 			list.add(getObjectSymbol(TN_PLANET));
-			//return getAddList(obj->getParent(),list);
 		}
 		else{
 			if(!obj->hasChild(ID_SKY) || actionmode==DROPPING)
@@ -686,21 +691,26 @@ int UniverseModel::getAddList(NodeIF *obj,LinkedList<ModelSym*>&list)
 
 	case TN_SURFACE:
 		if(obj->collapsed() && obj->hasChildren() && obj->getParent())
-			return getAddList(obj->getParent(),list);
+			if(getAddList(obj->getParent(),list))
+				return getAddList(obj->getParent(),list);
 		list.add(getObjectSymbol(TN_TEXTURE));
-		list.add(getObjectSymbol(TN_SPRITE));
-		list.add(getObjectSymbol(TN_PLANT));
-		list.add(getObjectSymbol(TN_POINT));
-
 		if(!obj->hasChild(ID_COLOR))
 			list.add(getObjectSymbol(TN_COLOR));
+		if(obj->getParent()->getFlag(TN_TYPES)==TN_CLOUDS){
+			list.add(getObjectSymbol(TN_POINT));
+			break;
+		}
+		if(obj->getParent()->getFlag(TN_TYPES)==TN_ASTEROID){
+			if(!obj->hasChild(TN_POINT))
+				list.add(getObjectSymbol(TN_POINT));
+			break;
+		}
+		// additional options fot planets
+		list.add(getObjectSymbol(TN_POINT));
+		list.add(getObjectSymbol(TN_SPRITE));
+		list.add(getObjectSymbol(TN_PLANT));
 		if(!obj->hasChild(ID_GLOSS))
 			list.add(getObjectSymbol(TN_GLOSS));
-		if(obj->getParent()->getFlag(TN_TYPES)==TN_CLOUDS)
-			break;
-		//if(actionmode==DROPPING)
-		//	break;
-
 		if(!obj->hasChild(ID_ERODE))
 			list.add(getObjectSymbol(TN_ERODE));
 		if(!obj->hasChild(ID_FCHNL))

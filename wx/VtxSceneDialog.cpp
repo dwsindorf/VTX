@@ -295,11 +295,29 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		sym=list[menu_id];
 		wxString name(sym->name());
 		if(!sym->isFile() && name == "<Random>"){
-			int ival=std::rand() % replace_list.size;
-			sym=replace_list[ival];
-			rand_flag=true;
+			// the <Random> sym carries the parent type in sym->value:
+			// pick from the same file set the submenu displays,
+			// not from replace_list (wrong list when adding)
+			LinkedList<ModelSym*> flist;
+			LinkedList<ModelSym*> cands;
+			TheScene->model->getFileList(sym->value,flist);
+			flist.ss();
+			ModelSym *fs;
+			while(fs=flist++){
+				if(fs->isFile())
+					cands.add(fs);
+				else if(fs->isDir())
+					File.getFileNameList(fs->dir(),"*.spx",cands);
+			}
+			if(cands.size){
+				cands.ss();
+				int ival=std::rand() % cands.size;
+				sym=cands[ival];
+				rand_flag=true;
+			}
+			// else: sym stays as the <Random> entry (not a file),
+			// falls into the makeObject branch -> generates a prototype
 		}
-
 		if(sym){
 			cout<<"SYM name:"<<sym->name()<<" value:"<<sym->value<<" dir:"<<sym->dir()<<endl;
 			sbuff[0]=0;

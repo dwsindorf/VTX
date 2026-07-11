@@ -1,0 +1,25 @@
+Asteroid(0.001,80) {
+	albedo=0.544263;
+	ambient=Color(1,1,1,0);
+	day=0.1;
+	diffuse=Color(1,1,1,0.68);
+	emission=Color(1,1,1,0.6);
+	hscale=0.4;
+	name="Asteroid2";
+	resolution=2;
+	shadow=Color(0,0,0);
+	shine=19.3721;
+	specular=Color(1,1,1,0.13);
+	tilt=-2.9016;
+	year=100;
+	noise.expr=noise(SIMPLEX|NLOD|NNORM,0,7,0.562,1,2,1,2,0,0,1e-06);
+	bands("yellow-white",ACHNL|BLEND|DECAL|NORM|REPLACE,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
+		Color(0.502,0.251,0),
+		Color(0.141,0,0));
+	Surface{
+		terrain=
+				Texture("yellow-white",BORDER|LINEAR|TEX,0.5,0.63492,1,0.03176,1,2,0.5,0,0,0,0.77776,-1)+
+				Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,8,8,2,0,1,2,0.5,0,0,0,0,1);
+	}
+}
+
