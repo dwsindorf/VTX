@@ -386,7 +386,7 @@ ValueList<PlaceData*> Rock3DObjMgr::data(20000, 5000);
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
-int Rock3DObjMgr::templates_per_lod=4;
+int Rock3DObjMgr::templates_per_lod=6;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
 std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::LODBatch> Rock3DObjMgr::lodBatches;
 
@@ -659,7 +659,7 @@ void Rock3DObjMgr::applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
     bool setVertexColor        = (tc && tc->isEnabled());
     if (!useVertexDisplacement && !setVertexColor) return;
 
-    double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * isoNoiseAmpl : 0;
+    double vertexNoiseAmpl = useVertexDisplacement ? 1.0 : 0;
 
     // applyVertexAttributes works on MCObject — wrap mesh temporarily
     MCObject tmp;
@@ -685,7 +685,7 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     bool useNoisyIsoSurface = isoNoiseAmpl > 0;
     bool useVertexDisplacement = (tv != nullptr && tv->isEnabled() && useNoisyIsoSurface);
     bool setVertexColor = (tc != nullptr && tc->isEnabled());
-    double vertexNoiseAmpl = useVertexDisplacement ? 0.5 * pmgr->noise_amp : 0;
+    double vertexNoiseAmpl = useVertexDisplacement ? 1.0 : 0;
     
     double pts = floor(s->pts);
     int rval = s->rval;

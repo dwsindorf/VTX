@@ -62,7 +62,8 @@ float BLUE=1.0;
 float ALPHA=1.0;
 
 #define LAT abs(PHI)
-#define EQU (1-LAT)
+//#define EQU (1-LAT)
+#define EQU abs(PHI-0.5)
 #define X Vertex1.x
 
 // ########## end common.h #########################

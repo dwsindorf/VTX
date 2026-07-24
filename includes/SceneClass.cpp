@@ -2435,8 +2435,9 @@ void Scene::render()
 			||moved()
 			||changed_render();
 
-   // printf("update_needed=%d suspended=%d\n", update_needed, (int)suspended());
 	if(!rendering && !suspended() && (update_needed || self)){
+    //printf("update_needed moved:%d changed render:%d detail:%d time:%d\n", moved(),
+    //		changed_render(),changed_detail(),changed_time());
 	    rendering=true;
 	    double timing_start=clock();
 
@@ -2503,7 +2504,7 @@ void Scene::render()
 		if(info_enabled && adapt_info)
 			draw_string(HDR1_COLOR,"------- render -------------------");
 	 	GLSLMgr::setFBOFullReset();  // clear all 4 FBO attachments before each frame
-	 
+
 		render_shadows();
 
 		glFlush();

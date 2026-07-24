@@ -2787,8 +2787,8 @@ void Asteroid::render_object(){
 
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-   //glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
+   glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     if (Raster.do_shaders) {
@@ -7227,29 +7227,35 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	double size=1e-6;
 	int tex_1d_scale=16;
 	int tex_2d_scale=20;
-	Ampl=0.4;
+	Ampl=0.5;
 	Prob=0.1;
+	double sv=1.0;
 	switch(gtype){
 	case GN_LARGE:
-		size=0.5e-5;
-		Prob=0.05;
+		size=1e-5;
+		Prob=0.03;
+		sv=0.7;
 		break;
 	case GN_MED:
 		size=0.5e-6;
-		Prob=0.1;
+		Prob=0.05;
+		sv=0.8;
+		Ampl=0.4;
 		break;
 	case GN_SMALL:
 		size=1e-7;
-		Prob=0.1;
+		Prob=0.05;
+		sv=0.8;
+		Ampl=0.2;
 		break;
 	}
 	double comp=0.1+0.1*s[7];
 	double drop=0.1-0.5*comp;
 	int type=m&TN_TYPES;
 	const char *s=(type==TN_ROCKS?"rocks":"rocks3d");
-	sprintf(buff,"%s(1,%g,1.5,%g,%g,%g,0.512,",s,size,Prob,comp,drop);
+	sprintf(buff,"%s(3,%g,%g,%g,%g,%g,%g,",s,size,sv,Prob,comp,drop,Ampl);
 	std::string str=buff;
-	Nscale=1;
+	Nscale=0;
 	if(type==TN_ROCKS && r[9]>0.75)
 		str+=rndTilted();
 	else
@@ -7506,12 +7512,14 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	//str+=randFeature(RND_FRACTAL);
 
     if(set_layers==0){
-    	num_layers=0.5+r[10]*TheScene->generate_quality;
+    	double rf=r[10];
+    	num_layers=1+2*rf*TheScene->generate_quality;
 		//num_layers=num_layers>max_layers?max_layers:num_layers;
-		num_layers+=1;
+		//num_layers+=1;
     }
     else
     	num_layers=set_layers;
+    num_layers=std::max(1,num_layers);
     int layers=num_layers;
     //cout<<"layers="<<num_layers<<" "<<set_layers<<endl;
 	str+=randFeature(RND_MAP);
@@ -7610,11 +7618,11 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	double storms=0.4+0.1*s[3];
 
 	// storms
-	sprintf(noise_expr2,"%g*max(EQU*noise(SIMPLEX|FS|SCALE|SQR|RO1,%g,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms,1+0.25*r[4]);
+	sprintf(noise_expr2,"%g*max((EQU+0.5*PHI)*noise(SIMPLEX|FS|SCALE|SQR|RO1,%g,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms,1+0.25*r[4]);
 	double ripple=1+0.1*s[4];
      sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,noise_func.c_str());
     double scale=0.5+r[5];
-    double ampl=1.5+0.5*r[6];
+    double ampl=0.5+0.25*s[5];
     double offset=r[7];
     double levels=2+r[8];
     double delf=2.2+s[6];

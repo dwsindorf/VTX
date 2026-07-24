@@ -161,12 +161,17 @@ void VtxPointTabs::getObjAttributes(){
     if(tnode->right){
 		TNarg &args=*((TNarg *)tnode->right);
 		INIT;
-		if(args[0])
+		if(!args[1]){ // z only
 			args[0]->valueString(z);
-		if(args[1])
-			args[1]->valueString(y);
-		if(args[2])
-			args[2]->valueString(x);
+		}
+		else{
+			if(args[0])
+				args[0]->valueString(x);
+			if(args[1])
+				args[1]->valueString(y);
+			if(args[2])
+				args[2]->valueString(z);
+		}
     }
 	m_x_expr->SetValue(x);
 	m_y_expr->SetValue(y);

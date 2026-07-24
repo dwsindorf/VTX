@@ -847,7 +847,7 @@ void PlacementMgr::getArgs(TNarg *left){
 	// common 
 	if(n>0) levels=(int)arg[0]; 	// scale levels
 	if(n>1) maxsize=arg[1];     	// size of largest placement
-	if(n>2) mult=arg[2];			// scale multiplier
+	if(n>2) mult=pow(arg[2],levels>1?2:1);			// scale multiplier
 	if(n>3) maxdensity=arg[3];      // density
 	if(n>4) comp=arg[4];
 	if(n>5) drop=arg[5];

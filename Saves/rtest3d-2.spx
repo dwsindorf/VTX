@@ -1,72 +1,28 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-5.55628;
+		phi=-5.55632;
 		theta=24.4364;
-		height=7.45338 ft;
+		height=7.62545 ft;
 		gndlvl=10522.2 ft;
 		time=375724;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=208;
-		tilt=5;
-		angle=-14;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00400199;
+		heading=116;
+		tilt=-8;
+		angle=3;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
 	}
 	View{
-		tilt=-2;
-	}
-	View{
-		tilt=-1;
-		angle=-17;
-	}
-	View{
-		tilt=3;
-	}
-	View{
-		heading=209;
-	}
-	View{
-		phi=-5.5563;
-		height=42.6682 ft;
-		angle=-15;
-	}
-	View{
-		phi=-5.55632;
-		height=22.8188 ft;
-		heading=205;
-	}
-	View{
-		height=7.94822 ft;
-		heading=179;
-	}
-	View{
-		height=7.85593 ft;
-		heading=188;
-		tilt=7;
-		angle=-14;
-	}
-	View{
-		height=6.30739 ft;
-		heading=180;
-	}
-	View{
-		height=7.62545 ft;
-		heading=164;
-		tilt=-3;
-		angle=-24;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00400199;
-	}
-	View{
-		minr=0.00400199;
+		time=391330;
+		heading=106;
+		tilt=-12;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -104,8 +60,8 @@ Scene() {
 					rot_phase=249.674;
 					year=100;
 					Surface{
-						terrain=rocks3d(1,2e-07,0.8,0.291,0.159,0,0.302,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.973,0.329,2.1,0.384,-0.3,0,0.38,1e-06),0,0,0,0)
-								[Z(noise(GRADIENT|NEG|NLOD,0,5,0.041,0.5,2.22,1,4,0,0,1e-06))+Texture("mud1",BUMP|TEX|TRIPLANAR,5.58258e+06,0.63488,2,0,1,2,0.5873,0,0,0,0.58732,-0.55556)+Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,1.27412e+07,1.65088,2,0,1,2,0.5873,0,0,0,0,0.49208)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)
+						terrain=rocks3d(3,2e-07,0.7,0.1,0.175,0,0.667,noise(GRADIENT|NEG|NLOD|SQR,0,5.13,0.973,0.329,2.1,0.384,-0.3,0,0.38,1e-06),0,0,0,0)
+								[Z(noise(GRADIENT|NEG|NLOD,0,5,0.041,0.5,2.22,0.205,-0.031,0,0,1e-06))+Texture("mud1",BUMP|TEX|TRIPLANAR,5.58258e+06,0.63488,2,0,1,2,0.5873,0,0,0,0.58732,-0.55556)+Texture("bricks",BUMP|LINEAR|TEX|TRIPLANAR,1.27412e+07,1.65088,2,0,1,2,0.5873,0,0,0,0,0.49208)+Color(noise(GRADIENT|UNS,0,7.37,1,0.5,2,1,4,0,-1.19,1e-06),0.5*RED,0,1)
 								]								
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NLOD|SQR,5.1,16,0.4,0.5,2.22,1,4,0,0,1e-06));
 					}

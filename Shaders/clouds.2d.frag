@@ -1,4 +1,4 @@
-
+varying vec4 WorldNormal;
 
 #include "clouds.lighting.frag"
 #define _BUMPS_

@@ -1082,7 +1082,7 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 	ModelSym *fsym,*dsym;
 	wxMenu *submenu=new wxMenu();
  	LinkedList<ModelSym*>tlist;
-	
+
  	//cout<<"sym:"<<sym->name()<<" i:"<<i<<endl;
  	if(!TheScene->model->hasTypeList(sym->value))
 		submenu->Append(i++,"Generate");
@@ -1100,6 +1100,21 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 		while((fsym=flist++)){
 			if(fsym->isDir()){
 				wxMenu *menu=new wxMenu();
+
+				// Generate: sym is NAMED after the dir (e.g. "2D") so the
+				// handler's getGtype(value,name) maps it to the matching
+				// gtype from getTypeList; value carries the parent type
+				list.add(new ModelSym(fsym->name(),sym->value));
+				menu->Append(i++,"Generate");
+
+				// <Random>: carries the dir path so the handler can
+				// restrict candidates to this subdirectory only
+				ModelSym *rsym=new ModelSym("<Random>",sym->value);
+				strcpy(rsym->path,fsym->dir());
+				list.add(rsym);
+				menu->AppendSeparator();
+				menu->Append(i++,"<Random>");
+
 				dlist.reset();
 				File.getFileNameList(fsym->dir(),"*.spx",dlist);
 				dlist.ss();
@@ -1124,7 +1139,6 @@ wxMenu *VtxSceneDialog::getFileMenu(ModelSym *sym,int &i,LinkedList<ModelSym*>&l
 	}
 	return submenu;
 }
-
 //-------------------------------------------------------------
 // VtxSceneDialog::getOpenMenu()
 //-------------------------------------------------------------

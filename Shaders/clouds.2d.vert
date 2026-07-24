@@ -5,6 +5,7 @@
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
+varying vec4 WorldNormal;
 
 void main(void) {
 	gl_Position = ftransform();
@@ -12,6 +13,7 @@ void main(void) {
 	Normal.xyz = gl_NormalMatrix * gl_Normal;
 
 #include "set_common.vert"
+	WorldNormal.xyz = gl_Normal;
 #include "set_tex.vert"
 #include "set_attributes.vert"
 
