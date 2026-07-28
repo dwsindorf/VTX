@@ -7408,7 +7408,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	// 3) add layer header
 	str+=newSurfaceDetail(planet);
 	str+=randFeature(RND_FRACTAL);
-	if(planet->terrain_type==GN_OCEANIC){
+	if(planet->terrain_type==GN_OCEANIC){ // snow adds too many textures for dual
 		str+=newGlobalTex(planet);
 	}
 	else{

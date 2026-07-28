@@ -155,11 +155,29 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    void clear() { vbo.clear(); }
 	    void deleteVBOs() { vbo.deleteVBOs(); }
 	};
+    // ---- per-layer render state --------------------------------------------
+    // NOTE: the owning TerrainProperties is deleted and reallocated on every
+    // frame by TerrainMgr::init_render() (Td.properties.free()), so this state
+    // cannot live in instance members - it would be destroyed between the move
+    // pass that builds it and the render-only pass that draws it. It stays
+    // static, but is keyed by terrain layer id so that layers no longer
+    // overwrite each other's placements and batches.
+    struct LayerState {
+        ValueList<PlaceData*>        data;
+        std::map<int, AdaptiveBatch> adaptiveBatches;
+        std::map<BatchKey, LODBatch> lodBatches;
+        LayerState() : data(2000, 2000) {}
+        // ValueList/Array own a malloc'd buffer and define no copy ctor, so a
+        // shallow copy would double-free. std::map::operator[] constructs in
+        // place, so nothing here needs to be copyable.
+        LayerState(const LayerState&) = delete;
+        LayerState& operator=(const LayerState&) = delete;
+    };
+    static std::map<int, LayerState> layers;
+
     static MCObjTreeMgr rockTreeMgr;
     void applyAdaptiveAttributes(std::vector<MCTriangle>& mesh,
                                  Rock3DMgr* pmgr, double isoNoiseAmpl);
-    static std::map<int, AdaptiveBatch> adaptiveBatches;
-    static std::map<BatchKey, LODBatch> lodBatches;
 
 	void applyVertexAttributes(MCObject* rock, double amplitude, TNode *tv, TNode *tc);
 	MCObject* getTemplateForLOD(Rock3DData *s);
@@ -175,10 +193,14 @@ public:
     static int templates_per_lod;
     static std::map<int, MCObject*> lodTemplates;
  
-	static ValueList<PlaceData*> data;
+    // Accessor for this manager's layer state. Only valid once objs has been
+    // populated (layer() reads objs[0]->layer); callers guard on objs.size.
+    LayerState& LS() { return layers[layer()]; }
+
     static MCObjectManager rocks;  
-    static void freeLODTemplates();
+    void freeLODTemplates();
     static void fixupAdaptiveNormals(std::vector<MCTriangle>& mesh);
+    static void freeAll();   // drop all layer state + GPU buffers (scene teardown)
 
     ~Rock3DObjMgr();
     
@@ -190,7 +212,7 @@ public:
     SurfaceFunction makeRockField(Rock3DMgr* pmgr,bool mode);
     
 	void free();
-	int placements(){ return data.size;}
+	int placements(){ return objs.size ? LS().data.size : 0;}
 	void collect();
 	const char *name() { return "Rocks3D";}
     bool setProgram();
@@ -261,5 +283,3 @@ public:
 
 
 #endif
-
-

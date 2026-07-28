@@ -1022,6 +1022,13 @@ void TNplant::applyExpr()
 //-------------------------------------------------------------
 void TNplant::init()
 {
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	if(!isEnabled() || TheScene->viewtype !=SURFACE || orb!=TheScene->viewobj){
+		if(right)
+			right->init();
+		return;
+	}
+
     branches=0;
 	if(right)
 	   right->init();

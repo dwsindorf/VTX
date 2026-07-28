@@ -21,7 +21,7 @@ static void water_test(MapNode *n);
 #define DEBUG_TRIANGLES 0
 //#define DEBUG_RENDER
 //#define DEBUG_GETNODES
-
+//#define PRINT_PLACEMENT_TIMING
 #define DRAW_VIS (!Render.draw_nvis()&&!Raster.draw_nvis())
 
 #define RENDERLIST(i,j,func) \
@@ -1304,7 +1304,11 @@ void Map::render_shaded()
 // - objects: Plants, Sprites, Rocks(3d)
 //-------------------------------------------------------------
 void  Map::render_objects(PlaceObjMgr &mgr){
-	if(!mgr.objects() || TheScene->select_mode() || TheScene->viewobj!=object)
+	if(!mgr.objects() || TheScene->viewobj!=object || TheScene->viewtype==ORBITAL){
+		//mgr.free();
+		return;
+	}
+	if(TheScene->select_mode())
 		return;
 	
 	bool moved=TheScene->moved() || TheScene->changed_detail();
@@ -2007,8 +2011,12 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
-	if(ADAPT_NEEDED  || TheScene->changed_render() || (TheScene->changed_time() && TheScene->viewtype!=SURFACE))
+	if(ADAPT_NEEDED
+			|| TheScene->changed_render()
+			|| (TheScene->changed_time() && object->typeValue()==ID_CLOUD)
+			){
 		clearLists();
+	}
 	//if(!test2)
 	if(ADAPT_NEEDED) {
 		set_end_adapt(0);

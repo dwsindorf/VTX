@@ -1,4 +1,3 @@
-
 //************************************************************
 // classes Rock, RockMgr
 //************************************************************
@@ -45,6 +44,8 @@ static bool cvalid;
 //#define RECTANGLE_FIELD
 //#define SHOW_DEPTHS
 //#define SHOW_BATCH_STATS
+//#define SHOW_SKIPPED_BATCHES
+//#define SHOW_LAYER_STATE
 
 #define SHOW_TEMPLATES true
 
@@ -382,29 +383,60 @@ void Rock3DMgr::setStats(int res, int tris,bool add){
 // Rock3DObjMgr class
 //************************************************************
 MCObjectManager Rock3DObjMgr::rocks;
-ValueList<PlaceData*> Rock3DObjMgr::data(20000, 5000);
+std::map<int, Rock3DObjMgr::LayerState> Rock3DObjMgr::layers;
 int Rock3DObjMgr::maxTexs = 0;
 int Rock3DObjMgr::lodCacheHits=0;
 int Rock3DObjMgr::lodCacheMisses=0;
 int Rock3DObjMgr::templates_per_lod=6;
 std::map<int, MCObject*> Rock3DObjMgr::lodTemplates;
-std::map<Rock3DObjMgr::BatchKey, Rock3DObjMgr::LODBatch> Rock3DObjMgr::lodBatches;
-
-std::map<int, Rock3DObjMgr::AdaptiveBatch> Rock3DObjMgr::adaptiveBatches;
 
 MCObjTreeMgr Rock3DObjMgr::rockTreeMgr(1000);  // max 100 persistent trees
 
+// NOTE: this manager is destroyed and reallocated every frame along with its
+// owning TerrainProperties, so the destructor must NOT release the layer state
+// or its GPU buffers. Use freeAll() at scene teardown instead.
 Rock3DObjMgr::~Rock3DObjMgr(){
 	//cout<<"Rock3DObjMgr::~Rock3DObjMgr()"<<endl;
-	//freeLODTemplates();
+}
+
+//-------------------------------------------------------------
+// Rock3DObjMgr::freeAll() release every layer's state and GPU buffers
+// - call this on scene teardown / reload, not per frame
+//-------------------------------------------------------------
+void Rock3DObjMgr::freeAll() {
+    for (auto& lpair : layers) {
+        LayerState& ls = lpair.second;
+        for (auto& pair : ls.lodBatches)
+            pair.second.cleanup();
+        ls.lodBatches.clear();
+        for (auto& pair : ls.adaptiveBatches) {
+            pair.second.deleteVBOs();
+            pair.second.clear();
+        }
+        ls.adaptiveBatches.clear();
+        ls.data.free();
+    }
+    layers.clear();
+
+    for (auto& pair : lodTemplates)
+        delete pair.second;
+    lodTemplates.clear();
+
+    rockTreeMgr.clear();
+
+    for(int i=0;i<MAX_ROCK_STATS;i++){
+    	Rock3DMgr::stats[i][2]=0;
+    }
 }
 
 void Rock3DObjMgr::freeLODTemplates() {
+    auto& lodBatches = LS().lodBatches;
+
     for (auto& pair : lodTemplates) {
         delete pair.second;
     }
     lodTemplates.clear();
-    // Clean up LOD batches including GPU template VBOs
+    // Clean up this layer's LOD batches including GPU template VBOs
 	for (auto& pair : lodBatches) {
 		pair.second.cleanup();
 	}
@@ -419,7 +451,9 @@ void Rock3DObjMgr::freeLODTemplates() {
 // Rock3DObjMgr::setProgram() initialize shader
 //-------------------------------------------------------------
 bool Rock3DObjMgr::setProgram() {
-    if (!data.size || !objs.size)
+    if (!objs.size)
+        return false;
+    if (!LS().data.size)
         return false;   
  
 	if(shadow_mode)
@@ -509,7 +543,9 @@ bool Rock3DObjMgr::setProgram() {
     return true;
 }
 void Rock3DObjMgr::free() { 
-	data.free();
+	if (!objs.size)
+		return;
+	LS().data.free();
 }
 
 double Rock3DData::value() { 
@@ -520,6 +556,10 @@ double Rock3DData::value() {
 // Rock3DObjMgr::collect() generate array of placements (data)
 //-------------------------------------------------------------
 void Rock3DObjMgr::collect() {
+    if (!objs.size)
+        return;
+    auto& data = LS().data;
+
     data.free();
     for (int i = 0; i < objs.size; i++) {
         PlaceObj *obj = objs[i];
@@ -673,7 +713,9 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
     TNode *tr = pmgr->rnoise;
     TNode *tv = pmgr->vnoise;
     TNode *tc = pmgr->color;
-    
+
+    auto& lodBatches = LS().lodBatches;
+
     char tmp[1024];
     tmp[0] = 0;
     if (tr) tr->valueString(tmp);
@@ -700,18 +742,32 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 
     Rock3DMgr::stats[index][4]++; // keys
     
-    // Build key: resolution + seed + expression + instance
+    // Build key: resolution + seed + expression + instance + layer
+    // NOTE: instance is a per-layer index (TNrocks3D::eval uses
+    // Td.tp->Rocks.objects()), so layer must be part of the key or layer N's
+    // rock #0 is handed layer M's cached template.
     int k1 = scaledRes * 100;
     int k2 = (int)(rval)% templates_per_lod;
     int k3 = instance * 1000;
-    int key = k1 + k2 +k3;
+    int k4 = layer() * 100000;
+    int key = k1 + k2 + k3 + k4;
     if(use_templates){
 		auto it = lodTemplates.find(key);
 		if (it != lodTemplates.end()) {
 			lodCacheHits++;
-		    // Check if templateVBO needs rebuilding
+		    // The template mesh is cached, but this layer's batch may not have
+		    // a templateVBO yet (new BatchKey as LOD shifts with distance, or
+		    // the batch was cleared while lodTemplates was retained). Without
+		    // this, render_objects() silently skips the batch on
+		    // !templateVBO.valid() and the rocks never appear.
 		    BatchKey batchKey(scaledRes, pmgr->instance);
 		    auto& lbatch = lodBatches[batchKey];
+		    if (!lbatch.templateVBO.valid()) {
+		        lbatch.lodLevel   = scaledRes;
+		        lbatch.instanceId = pmgr->instance;
+		        auto verts = buildTemplateVertices(it->second);
+		        lbatch.templateVBO.upload(verts);
+		    }
 			return it->second;
 		}
     }
@@ -802,7 +858,11 @@ MCObject* Rock3DObjMgr::getTemplateForLOD(Rock3DData *s) {
 void Rock3DObjMgr::clear(){
     rocks.clear();
     Rock3DMgr::clearStats();
-    
+
+    if (!objs.size)
+        return;
+    auto& adaptiveBatches = LS().adaptiveBatches;
+
     for (auto& pair : adaptiveBatches) {
      	pair.second.deleteVBOs();
         pair.second.clear();
@@ -873,9 +933,28 @@ void Rock3DObjMgr::rebuild(){
 // Rock3DObjMgr::render() create and render the 3d rocks
 //-------------------------------------------------------------
 void Rock3DObjMgr::render() {
+    // layer() reads objs[0]->layer, so LS() is only meaningful once the scene
+    // eval pass has repopulated objs for this frame.
+    if (!objs.size)
+        return;
+
+    LayerState& ls        = LS();
+    auto& data            = ls.data;
+    auto& lodBatches      = ls.lodBatches;
+    auto& adaptiveBatches = ls.adaptiveBatches;
+
+#ifdef SHOW_LAYER_STATE
+    printf("Rocks3D layer=%d data=%d lodBatches=%d adaptive=%d moved=%d changed=%d\n",
+           layer(), data.size, (int)lodBatches.size(), (int)adaptiveBatches.size(),
+           (int)TheScene->moved(), (int)TheScene->changed_detail());
+#endif
+
     int n = data.size;
     if (n == 0)
         return;
+	//if(TheScene->viewtype==ORBITAL)
+	//	return;
+
 #ifdef SHOW_ONE
     n=1;
 #endif
@@ -1398,7 +1477,14 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
 //-------------------------------------------------------------
 void Rock3DObjMgr::render_objects() {
     bool wireframe = MCGenerator::wireframe;
-         
+
+    if (!objs.size)
+        return;
+
+    LayerState& ls        = LS();
+    auto& lodBatches      = ls.lodBatches;
+    auto& adaptiveBatches = ls.adaptiveBatches;
+
     if (!shadow_mode) {
          if (!setProgram()) {
             cout << "Rock3DObjMgr::setProgram FAILED" << endl;
@@ -1473,10 +1559,11 @@ void Rock3DObjMgr::render_objects() {
 
     // ===== Render LOD Batches (instanced templates) =====
     if (locUI >= 0) glUniform1i(locUI, 1);
+    int skipped_novbo = 0, skipped_noinst = 0;
     for (auto& pair : lodBatches) {
         LODBatch& lbatch = pair.second;
-        if (!lbatch.templateVBO.valid()) continue;
-        if (lbatch.instanceVBO.instanceCount == 0) continue;
+        if (!lbatch.templateVBO.valid()) { skipped_novbo++;  continue; }
+        if (lbatch.instanceVBO.instanceCount == 0) { skipped_noinst++; continue; }
         for (int i = 0; i < maxTexs; i++) {
             char str[64];
             sprintf(str, "tex2d[%d].active", i);
@@ -1486,6 +1573,13 @@ void Rock3DObjMgr::render_objects() {
         renderLODBatch(lbatch, program);
         totalRocks += lbatch.instanceVBO.instanceCount;
     }
+
+#ifdef SHOW_SKIPPED_BATCHES
+    if (skipped_novbo || skipped_noinst)
+        printf("Rocks3D layer=%d skipped %d/%d batches (no templateVBO:%d  no instances:%d)\n",
+               layer(), skipped_novbo + skipped_noinst, (int)lodBatches.size(),
+               skipped_novbo, skipped_noinst);
+#endif
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);  
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1517,6 +1611,12 @@ static void collectTexs(NodeIF *obj){
 //-------------------------------------------------------------
 void TNrocks3D::init()
 {
+	Planetoid *orb=(Planetoid *)getOrbital(this);
+	if(!isEnabled() || TheScene->viewtype !=SURFACE || orb!=TheScene->viewobj){
+		if(right)
+			right->init();
+		return;
+	}
 	Rock3DMgr *rmgr=(Rock3DMgr*)mgr;
 	rmgr->init();
 	TNplacements::init();
@@ -1564,7 +1664,7 @@ void TNrocks3D::eval()
 	TerrainData ground;
 	static int cnt=0;
 	
-	if(!isEnabled() || TheScene->viewtype !=SURFACE){
+	if(!isEnabled() || TheScene->viewtype !=SURFACE ){
 		if(right)
 			right->eval();
 		return;
@@ -2165,3 +2265,4 @@ TNrocks *TNrocks::newInstance(int m){
 	rocks->randomize();
 	return rocks;
 }
+

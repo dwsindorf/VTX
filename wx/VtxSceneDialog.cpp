@@ -18,7 +18,7 @@
 #include "OrbitalClass.h"
 #include "UniverseModel.h"
 #include "FileUtil.h"
-
+#include "FrameClass.h"
 #include "VtxSceneTabs.h"
 #include "VtxPlanetTabs.h"
 #include "VtxAsteroidTabs.h"
@@ -812,20 +812,40 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 #ifdef DEBUG_TREE_ACTIONS
 	cout<<" newobj:"<<newobj->typeName()<<" oldobj:"<<oldobj->typeName()<<endl;
 #endif
-	bool vo=(oldobj==TheScene->viewobj);
+	bool is_object=(oldobj->typeClass()&ID_OBJECT)?true:false;
+	// transfer the view if the old object is (or contains) the viewobj
+	// (e.g. replacing a planet while viewing one of its moons)
+	bool vo=is_object && TheScene->containsViewobj((ObjectNode*)oldobj);
 	if(vo)
-	   TheScene->viewobj=(ObjectNode *)newobj;  	
-    newobj=oldobj->replaceNode(newobj);
-    if(!newobj)
-    	return;
-    int type=newobj->getFlag(TN_TYPES);
+	   TheScene->viewobj=(ObjectNode *)newobj;
+	// clear stale pick state so change_view(ORBITAL) inside replaceNode
+	// can't redirect viewobj back to the detached old object
+	TheScene->selobj=0;
+	TheScene->focusobj=0;
+    // note: replaceNode return semantics vary by class:
+    // object nodes return the detached old node, terrain nodes (TNmap,
+    // TNlayer) keep 'this' in the tree and return it - so track both
+    NodeIF *keep=oldobj->replaceNode(newobj);
+    NodeIF *sel=is_object?newobj:keep;
+    if(!sel)
+    	sel=newobj;
+    int type=sel->getFlag(TN_TYPES);
 	TheScene->regroup();
-
-    //TheScene->rebuild_all();
-    //TheScene->rebuild();
+	if(is_object && oldobj!=newobj){
+		// view history frames may hold pointers into the old subtree:
+		// clear the stack and seed it with the current (post-replace) state.
+		// note: views_reset() must NOT be used here - FrameMgr::add() dedupes
+		// unchanged views, so set_frame() would restore a stale frame whose
+		// vobj still points at the old (about to be deleted) object
+		TheScene->views->free();
+		TheScene->views->add(TheScene);
+		if(TheScene->vobj==(ObjectNode*)oldobj)
+			TheScene->vobj=TheScene->viewobj;
+		delete oldobj;             // old subtree is fully detached - reclaim it
+	}
     rebuildObjectTree();
 
-    selectObject(newobj);
+    selectObject(sel);
     item=treepanel->GetSelection();
 
 	if(expanded)
