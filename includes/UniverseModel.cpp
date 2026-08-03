@@ -183,7 +183,7 @@ int UniverseModel::getPrototype(int type,char *tmp)
 		sprintf(tmp,"Halo(1) {}\n");
 		break;
 	case TN_ASTEROID:
-		sprintf(tmp,"Asteroid(0.001,40){hscale=0.4;resolution=3;day=20;year=50;rot_phase=100;Surface{}}\n");
+		sprintf(tmp,"Asteroid(0.001,50){hscale=0.4;resolution=3;day=20;year=50;rot_phase=100;Surface{}}\n");
 		break;
 	case TN_PLANET:
 		sprintf(tmp,"Planet(0.005,40){day=24;year=100;Surface{}}\n");
@@ -435,6 +435,8 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("GasGiant",type);
 	case GN_ROCKY:
 		return new ModelSym("Rocky",type);
+	case GN_METALLIC:
+		return new ModelSym("Metallic",type);
 	case GN_CRATERED:
 		return new ModelSym("Cratered",type);
 	case GN_VOLCANIC:
@@ -489,6 +491,7 @@ bool UniverseModel::hasTypeList(int type){
 	case TN_ROCKS:
 	case TN_ROCKS3D:
 	case TN_TEXTURE:
+	case TN_ASTEROID:
 		return true;
 	}
 }
@@ -515,6 +518,12 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 		list.add(getTypeSymbol(GN_OCEANIC));
 		list.add(getTypeSymbol(GN_CRATERED));
 		list.add(getTypeSymbol(GN_VOLCANIC));
+		list.add(getTypeSymbol(GN_ICY));
+		break;
+	case TN_ASTEROID:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_ROCKY));
+		list.add(getTypeSymbol(GN_METALLIC));
 		list.add(getTypeSymbol(GN_ICY));
 		break;
 	case TN_PLANT:

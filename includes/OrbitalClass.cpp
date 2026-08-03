@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 //#define DEBUG_GENERATE
 //#define DEBUG_COLORS
-#define PRINT_ASTEROID_STATS
+//#define PRINT_ASTEROID_STATS
 //#define DEBUG_HOLE_PROBE
 #define USE_IDTABLE
 
@@ -99,6 +99,16 @@ static double	def_twilite_min=-0.2;
 static Color	def_shadow_color=Color(0,0,0,0.7);
 static double	def_symmetry=1;
 static double	def_hscale=0.0005;
+
+static int gen_type=0;
+static double Ampl=0;
+static double Prob=0;
+static double Maxs=0;
+static double Noise=0;
+static double Lbias=0;
+static double Hbias=0;
+static double Nscale=0;
+static bool   Nrocks=false;
 
 //************************************************************
 // Orbital class
@@ -1987,1473 +1997,6 @@ System *System::newInstance(){
 
     return system;
 }
-//************************************************************
-// Asteroid class
-//************************************************************
-Asteroid::Asteroid(Orbital *m, double s, double r):
-		vboVertices(0),Spheroid(m,s)
-{
-	orbit_radius=r;
-	rnoise=nullptr;
-	vnoise=nullptr;
-	color=nullptr;
-	tree=nullptr;
-	hscale=0.5;
-	symmetry=1;
-	detail=3;
-	vboDirty=true;
-	uploadedVertexCount=0;
-	noiseScale=1.0;
-	noiseOffset=0.0;
-	maxDepth=16;
-	shadow_mode=false;
-	shadow_start=false;
-	minHeight=size;
-	jumpSeed=false;
-	meshBoundsZn=0;
-	meshBoundsZf=0;
-	meshBoundsValid=false;
-	surfaceR=size;
-	// Identity matrix — replaced by render_object() on the first render frame.
-	memset(savedInvMVP, 0, sizeof(savedInvMVP));
-	savedInvMVP[0]=savedInvMVP[5]=savedInvMVP[10]=savedInvMVP[15]=1.0;
-}
-//-------------------------------------------------------------
-// Asteroid::~Asteroid - destructor
-//-------------------------------------------------------------
-Asteroid::~Asteroid()
-{
-    if(tree) {
-        delete tree;
-        tree = nullptr;
-    }
-}
-
-//-------------------------------------------------------------
-// Asteroid::[get,set]{R,V]NoiseFunction - called from wx window
-//-------------------------------------------------------------
-//RNoise
-int Asteroid::getRNoiseFunction(char *buff){
-	TNvar *var=exprs.getVar((char*)"noise.expr");
-	buff[0]=0;
-	if(var){
-		TNode *expr=var->getExprNode();
-		if(!expr)
-			expr=var->right;
-		expr->valueString(buff);
-		return 1;
-	}
-	else
-		return 0;
-}
-void Asteroid::setRNoiseFunction(char *expr){
-	TNvar *var=exprs.getVar((char*)"noise.expr");
-	if(var)
-		var->setExpr(expr);
-	else
-		var=addExprVar("noise.expr",expr);
-	var->applyExpr();
-    rnoise=var->right;
-}
-// VNoise
-void Asteroid::setVNoiseFunction(char *expr){
-	TNvar *var=exprs.getVar((char*)"vertex.expr");
-	if(var)
-		var->setExpr(expr);
-	else
-		var=addExprVar("vertex.expr",expr);
-	var->applyExpr();
-    vnoise=var->right;
-}
-int Asteroid::getVNoiseFunction(char *buff){
-	buff[0]=0;
-	TNvar *var=exprs.getVar((char*)"vertex.expr");
-	if(var){
-		TNode *expr=var->getExprNode();
-		if(!expr)
-			expr=var->right;
-		expr->valueString(buff);
-		return 1;
-	}
-	else
-		return 0;
-}
-//-------------------------------------------------------------
-// Asteroid::invalidate() invalidate
-//-------------------------------------------------------------
-void Asteroid::invalidate(){
-	NodeIF::invalidate();
-	texs.reset();
-	terrain.getChildren((int)ID_TEXTURE,texs);
-	color=terrain.getChild(ID_COLOR);
-	terrain.init();
-	rebuild();
-}
-
-//-------------------------------------------------------------
-// Asteroid::init() set variables on open or rebuild
-//-------------------------------------------------------------
-void Asteroid::init(){
-	Orbital::init();
-	texs.reset();
-	terrain.getChildren((int)ID_TEXTURE,texs);
-	terrain.init();
-	terrain.init_render();
-	terrain.set_eval_mode(0);
-	color=terrain.getChild(ID_COLOR);
-	TNvar *var=exprs.getVar((char*)"noise.expr");
-	if(var)
-		rnoise=var->right;
-	else
-		setRNoiseFunction("noise(GRADIENT|NLOD,0,8,0.5,0.5,2,1,4)");
-
-	var=exprs.getVar((char*)"vertex.expr");
-	if(var)
-		vnoise=var->right;
-	else
-		vnoise=0;
-
-	cout<<"=== ASTEROID INIT ===" << endl;
-	cout<<"size: " << size << endl;
-	cout<<"textures:"<<texs.size<<endl;
-	cout<<"color:"<<(color?true:false)<<endl;
-	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
-	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
-	tree=0;
-	rebuildTree();
-
-	// Restore surfaceR from saved gndlvl: surfaceR = size + gndlvl.
-	// gndlvl is restored from the scene file before init() is called,
-	// so this is exact regardless of noise field sampling error.
-	// Only sample the field for non-file contexts (e.g. first creation).
-	if(TheScene->viewtype == SURFACE){
-	    double sr = size + TheScene->gndlvl;
-	    if(sr > size * (1.0 + max_height()))
-	        sr = size * (1.0 + max_height());  // clamp to valid range
-	    surfaceR = (sr > size * 0.5) ? sr : size;
-	} else {
-	    surfaceR = size;
-	}
-
-}
-//-------------------------------------------------------------
-// Asteroid::init_view() set parameters for change in viewtype
-//-------------------------------------------------------------
-void Asteroid::init_view(){
-	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
-	Spheroid::init_view();
-	TheScene->minh=1*MILES;
-
-	if(TheScene->changed_file())
-		return;  // init() already set surfaceR from saved gndlvl
-
-	if(TheScene->viewtype == SURFACE){
-		// Spheroid::init_view() calls height(theta,phi) which may return a negative
-		// value if the orbital camera angle points to a concave part of the surface.
-		// Override: place camera at 5000ft above the nominal sphere surface.
-		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
-		surfaceR            = 2*size;   // conservative — scale() corrects immediately
-		TheScene->gndlvl    = 0;
-		TheScene->height    = 200*MILES;
-	}
-	else{
-		TheScene->height=size * (3.0 + max_height());
-	}
-	//if(TheScene->changed_view())
-	//	MCGenerator::maxDistance=0;
-	TheScene->elevation=TheScene->height+TheScene->gndlvl;
-	TheScene->radius=size+TheScene->elevation;
-	//cout<<"Asteroid::init_view() gl:"<<TheScene->gndlvl/MILES<<" ht"<<TheScene->height/MILES<<endl;
-
-}
-
-//-------------------------------------------------------------
-// Asteroid::init_render()   render setup
-//-------------------------------------------------------------
-void Asteroid::init_render()
-{
-	visit(&Object3D::init_render);
-
- 	if(!isEnabled())
- 		return;
- 	double dp=0;
-	double dpmin=1,dpmax=-1;
-	Raster.blend_factor=Raster.darken_factor=0;
-
-	if(TheScene->viewobj==this){
-		Point lp;
-		Point vp=TheScene->vpoint;
-		for(int i=0;i<Lights.numLights();i++){
-			Point c=point.mm(TheScene->invViewMatrix);
-			Point cv=vp-c;
-			cv=cv.normalize();
-		    Point l=Lights[i]->point.mm(TheScene->invViewMatrix);
-		    Point cl=l-c;
-		    cl=cl.normalize();
-			double dpl=-cv.dot(cl);
-			dpmax=dpl>dpmax?dpl:dpmax;
-			dpmin=dpl<dpmin?dpl:dpmin;
-		}
-		if(dpmin<=0 && dpmax<=0)
-			dp=dpmax;
-		else
-			dp=dpmin;
-		Raster.set_ldp(dp);
-	}
-}
-//-------------------------------------------------------------
-// Asteroid::move_focus() position camera at cursor hit point
-// selm = Point(theta, phi, gndlvl) from get_focus(), matching Spheroid convention.
-// gndlvl = surfaceR - size (surface deviation above nominal radius).
-//-------------------------------------------------------------
-void Asteroid::move_focus(Point &selm)
-{
-    if(!tree || !tree->root || TheScene->viewobj != this)
-        return;
-    // difference current-target ht
-    double dh=TheScene->elevation-selm.z;
-    double minht=1*MILES;
-    double curht=TheScene->height;
-    double ht=curht;
-
-	Point m=selm;
-	m.z+=radius();
-	m=m.rectangular();
-	Point p=m.mm(TheScene->ModelMatrix.values())+point;
-
-	double dz=p.length();
-
-	TheScene->theta=selm.x;
-	TheScene->phi=selm.y;
-	TheScene->gndlvl=selm.z;
-	TheScene->clr_moved();  	     // don't need new gndlvl from Map.set_scene
-	TheScene->set_changed_detail();  // but still need to turn on Map.adapt
-
-	if(dh>0)
-		ht=0.25*dh; // move closer
-
-	ht=ht<minht?minht:ht;
-	TheScene->height=ht;
-	TheScene->elevation=TheScene->height+TheScene->gndlvl;
-	TheScene->radius=size+TheScene->elevation;
-
-	surfaceR  = size + selm.z;
-	minHeight = minht;
-	jumpSeed  = true;   // hold the seeded surfaceR until the mesh rebuilds here
-	//cout<<"Asteroid::move_focus ht old:"<<curht/MILES<<" target:"<<selm.z/MILES<<" delta:"<<dh/MILES<<" new:"<<ht/MILES<<endl;
-
-}
-//-------------------------------------------------------------
-void Asteroid::set_lighting(){
-    Orbital::set_lighting();
-    Lights.setAttenuation(point);
-
-    Lights.setShininess(shine);
-	Lights.mixSpecular(specular);
-
-	Lights.mixDiffuse(diffuse);
-	Lights.setAmbient(ambient);
-}
-
-//-------------------------------------------------------------
-// Asteroid::adapt_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::adapt_pass()
-{
-    clr_selected();
-    if(TheScene->viewobj==this)
-        select_pass(FG0);
-    return selected();
-}
-
-//-------------------------------------------------------------
-// Asteroid::render_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::render_pass()
-{
-	clr_selected();
-    if(TheScene->viewobj==this)
-        select_pass(FG0);
-    return selected();
-}
-
-//-------------------------------------------------------------
-// Asteroid::selection_pass() select for scene pass
-//-------------------------------------------------------------
-int Asteroid::selection_pass() {
-	return Spheroid::selection_pass();
-}
-
-//-------------------------------------------------------------
-// Asteroid::render_pass() select for shadow pass
-//-------------------------------------------------------------
-int Asteroid::shadow_pass(){
-    clr_selected();
-    if(TheScene->viewobj==this)
-        select_pass(FGS);
-    return selected();
-}
-
-double Asteroid::far_height() {
-    return size;
-}
-
-double Asteroid::max_height() {
-    return 2*hscale;  // factor in noise
-}
-double Asteroid::height(double t, double p)
-{
-    if(!tree) return 0;
-    double tr = (t + 180.0) * RPD;
-    double pr = p * RPD;
-    double sr_est = size * (1.0 + max_height());
-    Point dir(
-        sr_est * cos(pr) * sin(tr),
-        sr_est * sin(pr),
-        sr_est * cos(pr) * cos(tr)
-    );
-    return sampleSurfaceR(dir) - size;  // deviation from nominal radius, same units as map->elevation
-}
-
-//-------------------------------------------------------------
-// Asteroid::sampleSurfaceR()
-// Sample the isosurface field along an arbitrary world-space
-// direction to find the surface radius from center in that direction.
-// dir should point from asteroid center toward (or past) the surface.
-//-------------------------------------------------------------
-double Asteroid::sampleSurfaceR(Point dir)
-{
-    double camLen = dir.length();
-    if(!tree || camLen < 1e-10)
-        return size * (1.0 + max_height() * 0.5);
-
-    double scale2 = 2.0 * size;
-    SurfaceFunction& f = tree->field;
-    int seed = TheNoise.rseed;
-    TheNoise.rseed = rseed;
-
-    // Normalize to a unit direction, then scan from just outside the envelope
-    // inward to center. Independent of camera distance.
-    Point dirN = dir * (1.0 / camLen);
-    double envelope = size * (1.0 + max_height());
-
-    const int STEPS = 8;
-    double flo = f(dirN.x*envelope/scale2, dirN.y*envelope/scale2, dirN.z*envelope/scale2);
-    double tlo = 0.0, thi = envelope;
-    for(int i = 1; i <= STEPS; i++){
-        double t = envelope * (1.0 - (double)i/STEPS);  // scan inward from envelope to center
-        Point fp(dirN.x*t/scale2, dirN.y*t/scale2, dirN.z*t/scale2);
-        double fv = f(fp.x, fp.y, fp.z);
-        if(fv <= 0.0 && flo > 0.0){
-            tlo = envelope*(i-1.0)/STEPS;
-            thi = envelope*(double)i/STEPS;
-            break;
-        }
-        flo = fv;
-    }
-    for(int i = 0; i < 6; i++){
-        double tm = 0.5*(tlo+thi);
-        Point fp(dirN.x*tm/scale2, dirN.y*tm/scale2, dirN.z*tm/scale2);
-        double fv = f(fp.x, fp.y, fp.z);
-        if(fv > 0.0) tlo = tm; else thi = tm;
-    }
-    TheNoise.rseed = seed;
-    double result=0.5*(tlo+thi);  // surface radius from center along dirN
-    cout<<"sampleSurfaceR:"<<result<<endl;
-    return result;
-}
-//-------------------------------------------------------------
-// Asteroid::surfaceRByRaycast()
-// Cast a ray from just outside the envelope, inward toward the
-// center, along the given direction, and return the world-space
-// radius of the closest triangle hit. Unlike sampleSurfaceR()
-// (which scans the raw field) this hits the actual rendered mesh,
-// so it includes the vnoise displacement from applyAttributes()
-// and needs no field evaluation. Returns <0 on a miss.
-//-------------------------------------------------------------
-double Asteroid::surfaceRByRaycast(Point dir)
-{
-    if(!tree || !tree->root)
-        return -1.0;
-    double len = dir.length();
-    if(len < 1e-10)
-        return -1.0;
-
-    double scale2   = 2.0 * size;
-    double envelope = size * (1.0 + max_height());
-
-    // raycast space == tri.vertices space == world / (2*size), center at origin.
-    Point dirN   = dir * (1.0 / len);                 // center -> surface direction
-    Point origin = dirN * (envelope * 1.05 / scale2); // just outside the envelope
-    Point ray    = dirN * -1.0;                       // inward, toward center
-
-    Point hit_local;
-    double result=-1;
-    if(tree->raycast(origin, ray, hit_local))
-        result=hit_local.length() * scale2;           // world-space surface radius
-    //cout<<"surfaceRByRaycast:"<<result/MILES<<" "<<dir<<endl;
-    return result;                                       // miss
-
-}
-//-------------------------------------------------------------
-// Asteroid::updateSurfaceR()
-// Update surfaceR for the current camera position. Prefer a mesh
-// raycast (accurate, includes vnoise); fall back to the raw-field
-// scan only if the ray misses (e.g. mesh not built yet).
-//-------------------------------------------------------------
-void Asteroid::updateSurfaceR()
-{
-    Point cam_w = TheScene->spoint;
-
-    double r = surfaceRByRaycast(cam_w);
-    surfaceR = (r > 0.0) ? r : sampleSurfaceR(cam_w);
-}
-//-------------------------------------------------------------
-// Asteroid::scale() set znear, zfar
-//-------------------------------------------------------------
-int Asteroid::scale(double& znear, double& zfar) {
-	if(TheScene->viewobj != this || TheScene->bgpass==0) // we don't allow group participation
-		return OUTSIDE;
-    const double rmax = size * (1.0 + max_height());            // envelope (peaks)
-    const double rmin = std::max(size * (1.0 - max_height()),   // valleys
-                                 size * 0.1);
-
-    double ht=0;
-	if(TheScene->changed_file()){
-		ht=TheScene->height;
-		surfaceR=TheScene->gndlvl+size;
-		//TheScene->radius=surfaceR+TheScene->height;
-		// Freshly loaded: init() already set surfaceR from the saved gndlvl. Trust it
-		// (selm is stale right after a load, and the mesh may still be coarse).
-	}
-	else if(jumpSeed){
-		// Just jumped to a picked target; mesh not yet rebuilt here. selm.z is the
-		// picked mesh radius (includes vnoise, correct frame) — hold it until
-		// adapt_object() rebuilds and clears jumpSeed.
-		surfaceR = size + TheScene->selm.z; // should already be set in move_focus
-		ht = TheScene->radius - surfaceR;
-	}
-	else{
-		updateSurfaceR();   // steady flight: mesh raycast below the current eye
-		ht = TheScene->radius - surfaceR;
-	}
-
-	// ---- height bookkeeping (asteroid analog of Map::set_scene) ----
-	// Movement updates TheScene->radius only; recompute height/elevation/gndlvl from
-	// it here so the HT readout tracks movement and saves capture the right values.
-	ht=std::max(ht, TheScene->minh);
-
-	TheScene->radius    = surfaceR + ht;       // clamp out of the ground
-	TheScene->gndlvl    = surfaceR - size;
-	TheScene->elevation = TheScene->radius - size;
-	TheScene->height    = TheScene->radius-(size+TheScene->gndlvl);
-
-	//cout<<"radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES;
-
-	//TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
-
-    znear=0.1*TheScene->height;
-    double envelope = size * (1.0 + max_height());
-
-    double r         = TheScene->radius;
-//   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
-//   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
-//	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
-//	   zfar  = (meshBoundsZf + dcam) * 1.05;
-//   }
-   if(!TheScene->changed_view()&& MCGenerator::maxDistance>0){
- 	   znear = 0.25*MCGenerator::minDistance;
- 	   zfar  = 2*MCGenerator::maxDistance;
-   }
-   else{
-	   double horizonSq = r*r - rmin*rmin;
-	   zfar  = (horizonSq > 0) ? 1.1*sqrt(horizonSq) : 2.0*envelope;
-	   zfar += envelope;
-	   znear = std::max(0.01*TheScene->height, 4.0*FEET);
-   }
-   if(znear < zfar/50000.0)
-	   znear = zfar/50000.0;   // safety: never collapse the range
-
-   TheScene->minr = surfaceR + TheScene->minh;
-   //cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<" minr:"<<TheScene->minr/MILES;
-
- 	//cout<<" surfaceR:"<<surfaceR/MILES<<" ht:"<<ht/MILES<<" minr:"<<TheScene->minr/MILES<<endl;
-    setvis(OUTSIDE);
-    return OUTSIDE;
-}
-
-//-------------------------------------------------------------
-// Asteroid::setProgram() set up shaders
-//-------------------------------------------------------------
-bool Asteroid::setProgram(){
-    if(!Raster.do_shaders)
-        return false;
-
-    if(shadow_mode)
-        return false;
-    char defs[1024] = "";
-    sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
-            Lights.size, Render.light_mode());
-
-    if(Raster.shadows() && Raster.twilight() && !TheScene->light_view() && !TheScene->test_view())
-    	sprintf(defs+strlen(defs), "#define SHADOWS\n");
-
-    if(Raster.hdr())
-        sprintf(defs+strlen(defs), "#define HDR\n");
-
-    GLSLMgr::setDefString(defs);
-
-    // === initProgram pass — count textures and bumps ===
-    int tid = 0;
-    int pid = 0;
-    int nbumps = 0;
-    bool cvalid = false;
-    if(color && color->isEnabled())
-        cvalid = true;
-    nbumps = 0;
-    Texture::reset();  // reset texture system state
-    if(Render.textures()){
-        for(int i = texs.size-1; i >= 0; i--){  // reverse like rocks
-            TNtexture *tntex = (TNtexture*)texs[i];
-            Texture *texture = tntex->texture;
-            if(!tntex->isEnabled()) continue;
-            texture->set3D();
-            TerrainProperties::tid = tid;
-            if(texture->bump_active && Render.bumps())
-                nbumps++;
-            texture->tid = tid;
-            texture->eval();
-            texture->initProgram();
-            tid++;
-        }
-    }
-
-    // Build defs with final counts
-    char texdefs[256];
-    if(cvalid)
-        sprintf(texdefs, "#define COLOR\n#define NTEXS %d\n#define NBUMPS %d\n",
-                tid, nbumps);
-    else
-        sprintf(texdefs, "#define NTEXS %d\n#define NBUMPS %d\n", tid, nbumps);
-    strcat(GLSLMgr::defString, texdefs);
-
-    GLSLMgr::loadProgram("asteroid.vert", "asteroid.frag");
-
-    GLhandleARB program = GLSLMgr::programHandle();
-    if(!program){
-        return false;
-    }
-    GLSLMgr::loadVars();
-
-    // === setProgram pass — set texture uniforms ===
-    tid=0;
-    if(Render.textures()){
-        for(int i = texs.size-1; i >= 0; i--){
-            TNtexture *tntex = (TNtexture*)texs[i];
-            Texture *texture = tntex->texture;
-            if(!tntex->isEnabled()) continue;
-            TerrainProperties::tid = tid;
-            texture->eval();
-            texture->pid = pid;
-            texture->setProgram();
-           // set instance & active to the same value
-            char str[64];
-			sprintf(str, "tex2d[%d].instance", i);
-			GLint loc = glGetUniformLocationARB(program, str);
-			if(loc >= 0) glUniform1iARB(loc, 0);
-			sprintf(str, "tex2d[%d].active", i);
-			loc = glGetUniformLocationARB(program, str);
-			if(loc >= 0) glUniform1iARB(loc, 0);
-            pid++;
-            tid++;
-
-        }
-    }
-
-    // === Set uniforms ===
-    GLSLVarMgr vars;
-
-    vars.newFloatVec("Diffuse",
-        diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
-    vars.newFloatVec("Ambient",
-        ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
-    vars.newFloatVec("Specular",
-         specular.red(), specular.green(), specular.blue(), specular.alpha());
-    vars.newFloatVec("Shadow",
-        shadow_color.red(), shadow_color.green(), shadow_color.blue(),
-		shadow_color.alpha());
-    vars.newFloatVar("hdr_min", (float)Raster.hdr_min);
-    vars.newFloatVar("hdr_max", (float)Raster.hdr_max);
-
-    float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
-
-    vars.newFloatVar("wscale",           wscale);
-
-    vars.newFloatVar("textureScale",     (float)(size));
-    vars.newBoolVar("lighting",          Render.lighting());
-
-    vars.setProgram(program);
-    vars.loadVars();
-
-    GLSLMgr::setFBOReadWritePass();
-
-    return true;
-}
-
-//-------------------------------------------------------------
-// Asteroid::rebuildTree() rebuild
-//-------------------------------------------------------------
-void Asteroid::rebuildTree(){
-	if(tree)
-		delete tree;
-	calibrateNoise();
-	tree = new MCObjTree();
-	field = makeField();
-	tree->init(Point(0, 0, 0),2*size,2.0,field,0,rseed);
-	MCGenerator::resetStats();
-}
-
-//-------------------------------------------------------------
-// Asteroid::adapt_object() adapt mesh
-//-------------------------------------------------------------
-void Asteroid::adapt_object(){
-    if(!tree) {
-        return;
-    }
-
-	switch(TheScene->generate_quality){
-	case DRAFT:
-		MCGenerator::csi_hole_patch_threshold=0;
-		break;
-	default:
-	case NORMAL:
-		MCGenerator::csi_hole_patch_threshold=4;
-		break;
-	case HIGH:
-		MCGenerator::csi_hole_patch_threshold=5;
-		break;
-	case BEST:
-		MCGenerator::csi_hole_patch_threshold=6;
-	}
-
-    // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
-    // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
-    // doesn't find stale MapNode* pointers from a previous planet/moon adapt
-    // and crash trying to call theta()/phi() on them.
-    if(TheScene->viewobj == this)
-        Raster.reset_idtbl();
-
-    bool moved = TheScene->moved();
-    bool changed = TheScene->changed_detail()||TheScene->changed_view();
-
-    if(changed){
-        rebuildTree();
-        vboDirty = true;
-    }
-
-    if (shadow_mode && !shadow_start) {
-       moved = false;
-       changed = false;
-    }
-    if(!moved && !vboDirty)
-        return;
-
-    MCGenerator::minDistance = 0;  // reset so this adapt gets a fresh minimum
-    MCGenerator::maxDistance = 0;  // reset so this adapt gets a fresh minimum
-
-    Point xpoint = TheScene->xpoint;
-
-    Point asteroidWorld = this->point;
-    Point up,right, forward;
-	up=xpoint.normalize();
-	if (fabs(up.z) < 0.9)
-		right = Point(up.y, -up.x, 0).normalize();
-	else
-		right = Point(0, up.z, -up.y).normalize();
-	forward = Point(up.y * right.z - up.z * right.y,
-					up.z * right.x - up.x * right.z,
-					up.x * right.y - up.y * right.x);
-    MCObjAdaptFlags::setDirections(asteroidWorld-xpoint,right,forward,up);
-
-    int seed = TheNoise.rseed;
-    TheNoise.rseed=rseed;
-
-#ifdef USE_IDTABLE
-    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,true);
-
-    bool isInitialBuild = (tree->root && !tree->root->meshValid &&
-                           tree->root->isLeaf());
-    double rsum=0;
-    double asum=0;
-    double t0=0;
-    double t1=0;
-    if (isInitialBuild) {
-        // Progressive loop for initial build: coarse-to-fine with ID readback gating.
-        int startDepth = 2;
-        int max_cycles = maxDepth - startDepth + 1;
-        for (int cycle = 0; cycle < max_cycles; cycle++) {
-            int cycleDepth = startDepth + cycle;
-            t0=clock();
-            tree->render_ids(2.0*size, xpoint);
-            rsum+=clock()-t0;
-            t1=clock();
-            tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
-            asum+=clock()-t1;
-        }
-
-    } else {
-    	t0=clock();
-        tree->render_ids(2.0*size, xpoint);
-        t1=clock();
-        tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
-        asum+=clock()-t1;
-    }
-   // cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
-
-
-#else
-    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
-    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
-#endif
-    // Refresh the id table against the FINAL adapted mesh. The render_ids calls
-     // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
-     // subdivision behind and pixelLeaf() resolves stale/freed cells.
-    //MCGenerator::resetStats();
-
-    MCGenerator::maxDepth=maxDepth;
-    tree->render_ids(2.0*size, xpoint);
-    tree->countCells();
-    TheNoise.rseed=seed;
-    minHeight=MCGenerator::minDistance;   // nearest leaf cell distance; scale() uses this directly
-    jumpSeed=false;                       // mesh now rebuilt at the current position
-
-#ifdef PRINT_ASTEROID_STATS
-    MCGenerator::printStats();
-    if(!changed)
-    	MCGenerator::resetStats();
-#endif
-    vboDirty = true;
- }
-
-//-------------------------------------------------------------
-// Asteroid::render_object() render mesh
-//-------------------------------------------------------------
-void Asteroid::render_object(){
-	static int num_shadows=0;
-	extern int test7;
-    if(!tree || !tree->root)
-        return;
-
-    if(vboDirty)
-    	buildVBO();
-
-    // Capture the render-frame inverse MVP for use in get_focus().
-    // get_focus() runs during GL_SELECT where the matrix state is a pick
-    // matrix — we need the proper perspective matrix for correct unprojection.
-    if(!TheScene->buffers_mode())
-        memcpy(savedInvMVP, TheScene->InvModelViewProjMatrix.values(), 16*sizeof(GLdouble));
-
-    Hscale = hscale;
-    Rscale = size * hscale;
-    Gscale = 1.0 / Rscale;
-
-    if(TheScene->buffers_mode()){
-		if(Render.draw_szvals())
-			render_zvals();         // Step 1: light POV depth
-		else if(Render.draw_normals())
-			render_shadows();       // Step 2: eye POV shadow comparison
-		return;
-	}
-    // top of Asteroid::render_object(), after the !tree early-outs:
-    #ifdef DEBUG_HOLE_PROBE
-        {
-            static Point2D lastProbe(-1,-1);
-            if (TheScene->selp.x != lastProbe.x || TheScene->selp.y != lastProbe.y) {
-                lastProbe = TheScene->selp;
-                if (TheScene->viewobj == this)
-                    holeProbe(TheScene->selp.x, TheScene->selp.y);
-            }
-        }
-    #endif
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-    if(MCGenerator::wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	if(Render.lighting())
-		glEnable(GL_LIGHTING);
-	else
-		glDisable(GL_LIGHTING);
-
-	glEnable(GL_TEXTURE_2D);
-    glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
-   glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    if (Raster.do_shaders) {
-    	Raster.shadow_value = shadow_color.alpha();
-    	Raster.shadow_color = shadow_color;
-    	Raster.shadow_color.set_alpha(1);
-    	Raster.shadow_darkness = 1.0;
-        glEnable(GL_BLEND);
-        set_lighting();
-		setProgram();
-	} else {
-		glDisable(GL_BLEND);
-		glUseProgram(0);
-	}
-
-    drawVBO();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glPopAttrib();
-}
-
-Bounds *Asteroid::bounds(){
-	static Bounds asteroid_bounds;
-    double d = TheView->epoint.distance(point);
-    double mh = size * (1.0 + max_height());
-    asteroid_bounds.zn = std::max(d - mh, size * 0.001);
-    asteroid_bounds.zf = d + mh;
-    return &asteroid_bounds;
-}
-
-//-------------------------------------------------------------
-// Asteroid::select()
-// Register this asteroid in the GL selection buffer so it can
-// be picked by mouse click, then also handle the FG (surface)
-// selection pass.  For object-level picking we just draw the
-// VBO; per-surface picking is done via raycast in set_focus().
-//-------------------------------------------------------------
-void Asteroid::select()
-{
-    set_ref();
-    if (!isEnabled()||!included())
-    	return;
-
-    if (vboVertices && uploadedVertexCount > 0) {
-    	TheScene->pushMatrix();
-
-		set_tilt();
-		set_rotation();
-		setMatrix();
-
-        // Reset the Raster ID table so MC node IDs from render_ids() don't
-        // get misinterpreted as MapNode theta/phi in Scene::select()'s
-        // surface_view idvalues() path.
-        Raster.reset_idtbl();
-
-    	int id = Raster.set_id();
-        Raster.set_data((MapNode*)this);
-        glLoadName(id);
-
-        // GL_SELECT is incompatible with GLSL shaders -- the selection
-        // mechanism only works with the fixed-function pipeline.
-        // Disable any active shader program before drawing.
-        glUseProgram(0);
-
-        glPushAttrib(GL_ALL_ATTRIB_BITS);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_TEXTURE_1D);
-        glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(GLVertex),
-                        (void*)offsetof(GLVertex, pos));
-        glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glPopAttrib();
-        TheScene->popMatrix();
-    }
-}
-
-
-//-------------------------------------------------------------
-// Asteroid::get_focus()
-// Resolve a surface pick the way the Map/OctTree do: read back the cell
-// rendered at the cursor pixel (frontmost, from render_ids' id image) and
-// intersect only that cell. This avoids the whole-tree raycast grazing
-// through an LOD-boundary crack to the far side of the body.
-// Returns Point(theta, phi, gndlvl), gndlvl = surfaceR - size.
-//-------------------------------------------------------------
-Point Asteroid::get_focus(void *v)
-{
-    if (!tree || !tree->root)
-        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
-
-    // If no render frame has completed yet, savedInvMVP is identity — skip pick.
-    bool validMVP = (savedInvMVP[1] != 0.0 || savedInvMVP[4] != 0.0 ||
-                     savedInvMVP[2] != 0.0);
-    if (!validMVP)
-        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
-
-    double scale = 2.0 * size;
-    Point  cam_w = TheScene->xpoint;
-
-    double sx = TheScene->selp.x;
-    double sy = TheView->viewport[3] - TheScene->selp.y;
-
-    MCObjNode *leaf = tree->pixelLeaf((int)TheScene->selp.x, (int)TheScene->selp.y);
-    if (!leaf || !leaf->meshValid || leaf->mesh.empty())   // off-surface or stale id table
-        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
-
-	// Cells are ~1-2 px, so any vertex of the picked cell is the surface point.
-	// tri.vertices are MC/local ([-0.5,0.5], surface ~0.5); * scale -> world.
-	const MCTriangle& t0 = leaf->mesh[0];
-	Point hit_world = (t0.vertices[0] + t0.vertices[1] + t0.vertices[2]) * (scale / 3.0);
-
-	double sr     = hit_world.length();
-	Point  sph    = hit_world.spherical();
-	double theta  = sph.y - 180.0;
-	double phi    = sph.x;
-	double gndlvl = sr - size;
-	//printf("HIT  theta=%.3f phi=%.3f gnd=%.4f  (screen %.0f,%.0f)\n",
-	//	   theta, phi, gndlvl/MILES, sx, sy);
-	return Point(theta, phi, gndlvl);
-}
-
-//-------------------------------------------------------------
-// Asteroid::set_focus()
-// Called each frame while this object is selected.  Ray-casts
-// the screen-click against the MC mesh, draws a crosshair at
-// the hit point, and displays straight-line distance.
-//-------------------------------------------------------------
-void Asteroid::set_focus(Point &selm)
-{
-	// selm = Point(theta, phi, gndlvl) from get_focus(), same as Spheroid.
-    // Just delegate — Spheroid::set_focus reconstructs world position from
-    // selm using radius() (which returns size) and ModelMatrix, draws crosshair.
-
-    Spheroid::set_focus(selm);
-}
-
-void Asteroid::render_zvals(){
-	if(Raster.shadow_vcnt==0){
-		shadow_start=true;
-	}
-
-	shadow_mode=true;
-
-    Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
-    Raster.setProgram(Raster.PLACE_SHADOWS);
-
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-	int cmask[4];
-	glGetIntegerv(GL_COLOR_WRITEMASK,cmask); // get original color mask (usually all true)
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable writing to color buffer
-	glDisable(GL_DITHER);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_BLEND);
-	glDisable(GL_FOG);
-
-    drawVBO();
-
-	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
-
-	glPopAttrib();
-	
-	shadow_start=false;
-	shadow_mode=false;
-}
-
-void Asteroid::render_shadows(){
-	shadow_mode=true;
-	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
-    Raster.setProgram(Raster.PLACE_SHADOWS);
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glDisable(GL_DITHER);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_BLEND);
-	glDisable(GL_FOG);
-
-	drawVBO();
-    glPopAttrib();
-	shadow_mode=false;
-
-}
-
-//-------------------------------------------------------------
-// Asteroid::applyAttributes() set color, vertex disolacement
-//-------------------------------------------------------------
-void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
-    bool setVertexColor = (color && color->isEnabled());
-    bool doDisplace = vnoise;
-    if(!setVertexColor  && !doDisplace) return;
-
-    for(auto& tri : mesh){
-        for(int v=0; v<3; v++){
-        	Point np(tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
-            TheNoise.set(np);
-            if(doDisplace){
-				SINIT;
-				vnoise->eval();
-				Point dir = tri.vertices[v].normalize();
-				if(S0.pvalid()){
-					Point delta = dir * S0.p * size*hscale;  // scale to asteroid size
-					tri.vertices[v] = tri.vertices[v] - delta;
-				}
-				else if(S0.svalid()){
-					Point delta = dir * S0.s * size*hscale;  // scale to asteroid size
-					tri.vertices[v] = tri.vertices[v] - delta;
-				}
-			}
-            if(setVertexColor){
-                SINIT;
-				color->eval();
-				if(S0.cvalid())
-					tri.colors[v] = S0.c;
-				else
-					tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
-            }
-        }
-    }
-}
-
-//-------------------------------------------------------------
-// Asteroid::buildVBO() build VBO
-//-------------------------------------------------------------
-void Asteroid::buildVBO(){
-    std::vector<MCObjNode*> leaves;
-    tree->collectLeaves(leaves);
-
-    glVertices.clear();
-    Point eyeCenter = this->point - TheScene->xpoint;
-    double scale = 2*size;
-    Point eyeOffset = TheScene->xpoint;
-    int seed = TheNoise.rseed;
-    TheNoise.rseed = rseed;
-    {
-        SurfaceFunction& field = tree->field;
-
-        // Quantized weld key: snap templatePos to a grid ~16x finer than the
-        // deepest cell. Identical shared vertices round to the same integer key
-        // and weld; genuinely distinct vertices stay distinct. Unlike a raw
-        // (float) cast, this can't alias neighboring edge vertices into one
-        // bucket at high maxDepth (the source of the linear miscolor streaks).
-        const double wq = double(1ULL << (maxDepth + 4));
-        struct V3Key {
-            long long x, y, z;
-            bool operator==(const V3Key& o) const { return x==o.x && y==o.y && z==o.z; }
-        };
-        struct V3Hash {
-            size_t operator()(const V3Key& k) const {
-                return (size_t)((uint64_t)k.x*2654435761ULL
-                              ^ (uint64_t)k.y*805459861ULL
-                              ^ (uint64_t)k.z*3674653429ULL);
-            }
-        };
-        auto wkey = [wq](const Point& p) -> V3Key {
-            return V3Key{ (long long)llround(p.x*wq),
-                          (long long)llround(p.y*wq),
-                          (long long)llround(p.z*wq) };
-        };
-
-        if(MCGenerator::smooth){
-            bool anyNew = true;
-            for(MCObjNode* leaf : leaves)
-                if(leaf->meshValid && !leaf->mesh.empty() && !leaf->smoothNormalsValid)
-                    { anyNew = true; break; }
-
-            if(anyNew){
-                // Accumulate face normals at shared vertex positions across ALL leaves
-                std::unordered_map<V3Key,Point,V3Hash> vertNormal;
-                for(MCObjNode* leaf : leaves){
-                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                    for(auto& tri : leaf->mesh)
-                    for(int v=0; v<3; v++){
-                        V3Key k = wkey(tri.templatePos[v]);
-                        vertNormal[k] = vertNormal[k] + tri.faceNormal;
-                    }
-                }
-                // Normalize
-                for(auto& kv : vertNormal){
-                    double len = kv.second.length();
-                    if(len > 1e-10) kv.second = kv.second*(1.0/len);
-                }
-                // Store into ALL leaves (including ones that were already valid)
-                for(MCObjNode* leaf : leaves){
-                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
-                    leaf->smoothNormalsValid = true;
-                    for(auto& tri : leaf->mesh)
-                    for(int v=0; v<3; v++){
-                        V3Key k = wkey(tri.templatePos[v]);
-                        auto it = vertNormal.find(k);
-                        tri.smoothNormal[v] = (it!=vertNormal.end()) ? it->second : tri.faceNormal;
-                    }
-                }
-            }
-        }
-
-        // Apply vertex displacement (only new leaves)
-        for(MCObjNode* leaf : leaves){
-            if(!leaf->meshValid || leaf->mesh.empty()) continue;
-            if(!leaf->attributesApplied){
-                applyAttributes(leaf->mesh);
-                leaf->attributesApplied = true;
-            }
-        }
-
-        // Assemble VBO
-        double bzn = 1e30, bzf = 0.0;        // radial extent from the (build-time) camera
-        for(MCObjNode* leaf : leaves){
-            if(!leaf->meshValid || leaf->mesh.empty()) continue;
-            for(auto& tri : leaf->mesh){
-                for(int v=0; v<3; v++){
-                    GLVertex gv;
-                    Point p = tri.vertices[v] * scale - eyeOffset;
-                    double pd = p.length();
-                    if(pd < bzn) bzn = pd;
-                    if(pd > bzf) bzf = pd;
-                    gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
-                    Point vn = MCGenerator::smooth ? tri.smoothNormal[v] : tri.faceNormal;
-                    gv.normal[0]=(float)-vn.x; gv.normal[1]=(float)-vn.y; gv.normal[2]=(float)-vn.z;
-                    gv.templatePos[0]=(float)tri.vertices[v].x;
-                    gv.templatePos[1]=(float)tri.vertices[v].y;
-                    gv.templatePos[2]=(float)tri.vertices[v].z;
-                    gv.templatePos[3]=(float)eyeCenter.length();
-                    gv.faceNormal[0]=(float)-tri.faceNormal.x;
-                    gv.faceNormal[1]=(float)-tri.faceNormal.y;
-                    gv.faceNormal[2]=(float)-tri.faceNormal.z;
-                    gv.faceNormal[3]=0.0f;
-                    Color c = tri.colors[v];
-                    gv.color[0]=(float)c.red(); gv.color[1]=(float)c.green(); gv.color[2]=(float)c.blue();
-                    glVertices.push_back(gv);
-                }
-            }
-        }
-        if(bzf > 0.0){
-            meshBoundsZn    = bzn;
-            meshBoundsZf    = bzf;
-            meshBoundsCam   = eyeOffset;
-            meshBoundsValid = true;
-        }
-    }
-    TheNoise.rseed = seed;
-    //if(meshBoundsValid)
-    //cout<<"bzn:"<<meshBoundsZn/MILES<<" bzf:"<<meshBoundsZf/MILES<<endl;
-
-    // Upload to GPU
-    if(vboVertices) glDeleteBuffers(1,&vboVertices);
-    if(glVertices.empty()){ vboVertices=0; uploadedVertexCount=0; return; }
-
-    glGenBuffers(1,&vboVertices);
-    glBindBuffer(GL_ARRAY_BUFFER,vboVertices);
-    glBufferData(GL_ARRAY_BUFFER,
-                 glVertices.size()*sizeof(GLVertex),
-                 glVertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-    uploadedVertexCount = glVertices.size();
-    glVertices.clear();
-    glVertices.shrink_to_fit();
-    vboDirty = false;
-}
-
-//-------------------------------------------------------------
-// Asteroid::drawVBO() render VBO
-//-------------------------------------------------------------
-void Asteroid::drawVBO(){
-    if(!vboVertices || uploadedVertexCount==0) return;
-
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, pos));
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, normal));
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, color));
-
-    // Shader attribs — skipped when no shader active (loc=-1)
-    GLhandleARB program = GLSLMgr::programHandle();
-    GLint locTP = glGetAttribLocation(program, "templatePosition");
-    if(locTP >= 0){
-        glVertexAttribPointer(locTP, 4, GL_FLOAT, GL_FALSE,
-                              sizeof(GLVertex), (void*)offsetof(GLVertex, templatePos));
-        glEnableVertexAttribArray(locTP);
-    }
-    GLint locFN = glGetAttribLocation(program, "faceNormal");
-    if(locFN >= 0){
-        glVertexAttribPointer(locFN, 4, GL_FLOAT, GL_FALSE,
-                              sizeof(GLVertex), (void*)offsetof(GLVertex, faceNormal));
-        glEnableVertexAttribArray(locFN);
-    }
-
-    glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
-
-    if(locTP >= 0) glDisableVertexAttribArray(locTP);
-    if(locFN >= 0) glDisableVertexAttribArray(locFN);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-//-------------------------------------------------------------
-// Asteroid::calibrateNoise() calibrate iso noise
-//-------------------------------------------------------------
-void Asteroid::calibrateNoise(){
-    if(!rnoise) return;
-
-    int seed = TheNoise.rseed;
-    TheNoise.rseed = rseed;
-    noiseScale = 1.0;
-    noiseOffset = 0.0;
-
-    SurfaceFunction rawField = makeField();
-
-    double minDev=1e10, maxDev=-1e10;
-    int samples=50;
-    double step = 2.0/samples;
-
-    for(int ix=0; ix<=samples; ix++)
-    for(int iy=0; iy<=samples; iy++)
-    for(int iz=0; iz<=samples; iz++){
-        double x = -1.0 + ix*step;
-        double y = -1.0 + iy*step;
-        double z = -1.0 + iz*step;
-
-        double ex=2*x, ey=2*y, ez=2*z;
-        double ellipsoidDist = sqrt(ex*ex+ey*ey+ez*ez);
-        // Only sample near the surface — interior/exterior points have noise
-        // that doesn't affect the isosurface and skews the calibrated range.
-        if(ellipsoidDist < 0.5 || ellipsoidDist > 1.5) continue;
-
-        double baseVal = ellipsoidDist - 1.0;
-        double fieldVal = rawField(x, y, z);
-        double deviation = fieldVal - baseVal;
-        minDev = std::min(minDev, deviation);
-        maxDev = std::max(maxDev, deviation);
-    }
-
-    double range = maxDev - minDev;
-    if(range > 1e-10){
-        noiseScale  = 2.0 * hscale / range;
-        noiseOffset = -hscale - minDev * noiseScale;
-    }
-    TheNoise.rseed = seed;
-//#define SHOW_CALIBRATE
-#ifdef SHOW_CALIBRATE
-    cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
-         << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
-#endif
-}
-
-//-------------------------------------------------------------
-// Asteroid::makeField - Create scalar field from rnoise
-//-------------------------------------------------------------
-SurfaceFunction Asteroid::makeField() {
-    double comp = 1-symmetry;
-    double comp_factor = std::max((1.0 - comp), 0.2);
-    bool useNoisyIsoSurface = this->hscale > 0;
-
-    return [=](double x, double y, double z) -> double {
-        double ex = 2*x;
-        double ey = 2*(y/comp_factor);
-        double ez = 2*(z/comp_factor);
-        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
-        double baseEllipsoid = ellipsoidDist - 1.0;
-
-        if (useNoisyIsoSurface && rnoise && rnoise->isEnabled()) {
-        	static int cnt=0;
-        	Point np(2*x, 2*y, 2*z);  // match rock coordinate range [-1,1]
-         	TheNoise.set(np);
-            SINIT;
-            rnoise->eval();
-            double value=S0.s * noiseScale/comp_factor + noiseOffset;
-            baseEllipsoid += value;
-            MCGenerator::ad_field_calls++;
-        }
-         return baseEllipsoid;
-    };
-}
-//-------------------------------------------------------------
-// Asteroid::getInstance() called from Scene::makeObject
-// - "this" is the parsed prototype (Asteroid(0.005,40){Surface{}})
-// - hook point for typed generation/randomize later
-//-------------------------------------------------------------
-NodeIF *Asteroid::getInstance(NodeIF *prev,int type){
-	setParent(prev);
-	return this;
-}
-//-------------------------------------------------------------
-// Asteroid::holeProbe()
-// Diagnose why the pixel at (sx,sy) shows a hole.
-//-------------------------------------------------------------
-void Asteroid::holeProbe(double sx, double sy)
-{
-    if (!tree || !tree->root) { cout << "holeProbe: no tree" << endl; return; }
-
-    double scale = 2.0 * size;                 // world = template * scale
-    int vpw = TheView->viewport[2];
-    int vph = TheView->viewport[3];
-
-    // --- build pick ray via savedInvMVP (same convention as the mesh draw:
-    //     vertices are drawn at template*scale - xpoint, so unprojected points
-    //     are eye-relative; add xpoint to get asteroid-centered world) --------
-    double nx = 2.0 * sx / vpw - 1.0;
-    double ny = 2.0 * (vph - sy) / vph - 1.0;  // selp is top-origin
-
-    auto unproj = [&](double nz, Point& out) -> bool {
-        const GLdouble* m = savedInvMVP;       // column-major (OpenGL)
-        double x = m[0]*nx + m[4]*ny + m[8]*nz  + m[12];
-        double y = m[1]*nx + m[5]*ny + m[9]*nz  + m[13];
-        double z = m[2]*nx + m[6]*ny + m[10]*nz + m[14];
-        double w = m[3]*nx + m[7]*ny + m[11]*nz + m[15];
-        if (fabs(w) < 1e-20) return false;
-        out = Point(x/w, y/w, z/w);
-        return true;
-    };
-    Point pn, pf;
-    if (!unproj(-1.0, pn) || !unproj(1.0, pf)) { cout << "holeProbe: bad InvMVP" << endl; return; }
-
-    Point o_w  = pn + TheScene->xpoint;        // asteroid-centered world
-    Point f_w  = pf + TheScene->xpoint;
-    Point o_t  = o_w / scale;                  // template space ([-1,1], surface ~0.5)
-    Point d_t  = (f_w - o_w);
-    double dl  = d_t.length();
-    if (dl < 1e-20) { cout << "holeProbe: degenerate ray" << endl; return; }
-    d_t = d_t / dl;
-
-    cout << "\n=== HOLE PROBE @ pixel(" << sx << "," << sy << ") maxDepth=" << maxDepth << " ===" << endl;
-    cout << "ray(template)  o=(" << o_t.x << "," << o_t.y << "," << o_t.z
-         << ")  d=(" << d_t.x << "," << d_t.y << "," << d_t.z << ")" << endl;
-
-    // --- march the REAL field along the ray (same rseed context as adapt) ---
-    int seed = TheNoise.rseed;
-    TheNoise.rseed = rseed;
-    Td.level = 0;                              // match checkSurface conditions
-    SurfaceFunction& f = tree->field;
-
-    double cellT   = 2.0 / (double)(1 << maxDepth);   // leaf cell size, template units
-    double step    = cellT / 8.0;
-    double tmax    = 4.0;                              // whole tree diameter + margin
-    double prev    = f(o_t.x, o_t.y, o_t.z);
-    double tHit    = -1.0;
-    for (double t = step; t <= tmax; t += step) {
-        Point p = o_t + d_t * t;
-        double v = f(p.x, p.y, p.z);
-        if (prev > 0.0 && v <= 0.0) {                  // outside -> inside
-            double a = t - step, b = t;
-            for (int i = 0; i < 40; i++) {
-                double m2 = 0.5 * (a + b);
-                Point pm = o_t + d_t * m2;
-                if (f(pm.x, pm.y, pm.z) <= 0.0) b = m2; else a = m2;
-            }
-            tHit = 0.5 * (a + b);
-            break;
-        }
-        prev = v;
-    }
-    if (tHit < 0.0) {
-        cout << "field: NO surface along this ray -> not a mesh hole, the field"
-                " genuinely has a gap here (or the ray/unproject is off)." << endl;
-        TheNoise.rseed = seed;
-        return;
-    }
-    Point P_t = o_t + d_t * tHit;                      // true surface point, template
-    Point P_w = P_t * scale;                           // world (tree node space)
-    cout << "field: TRUE surface at t=" << tHit << "  P(template)=("
-         << P_t.x << "," << P_t.y << "," << P_t.z << ")" << endl;
-
-    // --- descend the octree by point location, print each node --------------
-    MCObjNode* n = tree->root;
-    MCObjNode* leaf = nullptr;
-    while (n) {
-        cout << "  depth=" << n->depth
-             << " size=" << n->size
-             << " leaf=" << n->isLeaf()
-             << " surfChecked=" << n->surfaceChecked
-             << " surfPresent=" << n->surfacePresent
-             << " meshValid=" << n->meshValid
-             << " tris=" << n->mesh.size()
-             << " vis=" << n->nodeVisible << "/" << n->nodeMasked
-             << endl;
-        if (n->isLeaf()) { leaf = n; break; }
-        int ci = (P_w.x > n->center.x ? 1 : 0)
-               | (P_w.y > n->center.y ? 2 : 0)
-               | (P_w.z > n->center.z ? 4 : 0);
-        if (!n->children[ci]) {
-            cout << "  !! child " << ci << " is NULL at depth " << n->depth
-                 << " — partial split, structural bug" << endl;
-            leaf = n; break;
-        }
-        n = n->children[ci];
-    }
-    if (!leaf) { TheNoise.rseed = seed; return; }
-
-    // --- verdict checks on the terminal node ---------------------------------
-    Point corners[8];
-    leaf->getCorners(corners, tree->center, tree->radius);
-
-    // (a) cached corner values vs FRESH evaluation — detects field inconsistency
-    double worstDrift = 0; int drifts = 0;
-    for (int i = 0; i < 8; i++) {
-        if (!leaf->cornersEvaluated[i]) continue;
-        double fresh = f(corners[i].x, corners[i].y, corners[i].z);
-        double d = fabs(fresh - leaf->cornerValues[i]);
-        if (d > 1e-9) { drifts++; if (d > worstDrift) worstDrift = d; }
-    }
-    if (drifts)
-        cout << "  !! CORNER CACHE DRIFT: " << drifts << " corners differ from fresh"
-                " field eval, worst delta=" << worstDrift
-             << "  -> field is NOT consistent across evaluations (global noise state)" << endl;
-    else
-        cout << "  corner cache consistent with fresh field evals" << endl;
-
-    // (b) dense 9^3 ground truth for this node
-    double mn = 1e30, mx = -1e30;
-    for (int ix = 0; ix <= 8; ix++)
-    for (int iy = 0; iy <= 8; iy++)
-    for (int iz = 0; iz <= 8; iz++) {
-        double x = corners[0].x + (corners[7].x - corners[0].x) * ix / 8.0;
-        double y = corners[0].y + (corners[7].y - corners[0].y) * iy / 8.0;
-        double z = corners[0].z + (corners[7].z - corners[0].z) * iz / 8.0;
-        double v = f(x, y, z);
-        mn = std::min(mn, v); mx = std::max(mx, v);
-    }
-    bool denseSurface = (mn <= 0.0 && mx >= 0.0);
-    cout << "  dense 9^3: min=" << mn << " max=" << mx
-         << (denseSurface ? "  -> SURFACE PRESENT" : "  -> no surface") << endl;
-
-    // (c) corner sign summary (what single-cube MC sees)
-    int inside = 0;
-    for (int i = 0; i < 8; i++) {
-        double v = leaf->cornersEvaluated[i] ? leaf->cornerValues[i]
-                                             : f(corners[i].x, corners[i].y, corners[i].z);
-        if (v < 0.0) inside++;
-    }
-    cout << "  corner signs: " << inside << "/8 inside"
-         << (inside == 0 || inside == 8 ? "  -> uniform: single-cube MC emits NOTHING" : "") << endl;
-
-    // (d) if the leaf has triangles, does the pick ray actually hit them?
-    if (!leaf->mesh.empty()) {
-        Point hitL;
-        // raycastLeaf expects origin/dir in the same space as tri.vertices
-        bool hit = tree->raycastLeaf(leaf, o_t, d_t, hitL);
-        cout << "  leaf mesh: " << leaf->mesh.size() << " tris, pick ray "
-             << (hit ? "HITS them -> hole is DOWNSTREAM (applyAttributes/VBO/shader)"
-                     : "MISSES them -> partial coverage within cell") << endl;
-    }
-
-    // --- final verdict --------------------------------------------------------
-    if (leaf->surfaceChecked && !leaf->surfacePresent && denseSurface)
-        cout << ">> VERDICT: checkSurface FALSE NEGATIVE at depth " << leaf->depth
-             << (drifts ? " (caused by field inconsistency)" : " (sampling miss)") << endl;
-    else if (leaf->isLeaf() && leaf->surfacePresent && leaf->mesh.empty())
-        cout << ">> VERDICT: MC corner miss — leaf knows surface is present but"
-                " emitted no triangles" << endl;
-    else if (!leaf->mesh.empty())
-        cout << ">> VERDICT: CPU mesh covers this point — investigate"
-                " applyAttributes/buildVBO/render" << endl;
-
-    TheNoise.rseed = seed;
-    cout << "=== END PROBE ===\n" << endl;
-}
-
 //************************************************************
 // Spheroid class
 //************************************************************
@@ -6019,6 +4562,7 @@ double Planetoid::dlt(){
 	double dv=tv-light_theta;
 	return dv;
 }
+
 //-------------------------------------------------------------
 // Planetoid::calc_delt() determine (normalized) position of the sun.
 //-------------------------------------------------------------
@@ -6085,6 +4629,7 @@ double Planetoid::planet_orbit=0;
 static NameList<ImageSym*> icy_list;
 static NameList<ImageSym*> rocky_list;
 static NameList<ImageSym*> gassy_list;
+static NameList<ImageSym*> metallic_list;      // 'M' prefix
 
 static NameList<ImageSym*> hmaps_list;
 static NameList<ImageSym*> image_list;
@@ -6094,6 +4639,7 @@ static NameList<ImageSym*> surface_list;
 void Planetoid::makeLists(){
 	icy_list.free();
 	rocky_list.free();
+	metallic_list.free();
 	gassy_list.free();
 	hmaps_list.free();
 	image_list.free();
@@ -6117,6 +4663,8 @@ void Planetoid::makeLists(){
 			gassy_list.add(is);
 		else if(name[0]=='P')
 			rocky_list.add(is);
+		else if(name[0]=='M')
+			metallic_list.add(is);
 		else if(name[0]=='E')
 			erode_list.add(is);
 	}
@@ -6137,6 +4685,7 @@ void Planetoid::makeLists(){
 	icy_list.sort();
 	gassy_list.sort();
 	rocky_list.sort();
+	metallic_list.sort();
 	hmaps_list.sort();
 	image_list.sort();
 	erode_list.sort();
@@ -6173,7 +4722,11 @@ static char *getRockyTexName(){
 	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<rocky_list.size<<endl;
 	return name;
 }
-
+static char *getMetallicTexName(){
+    if(metallic_list.size==0) return getRockyTexName();
+    int index=NodeIF::r[5]*metallic_list.size;
+    return metallic_list[index]->name();
+}
 static char *getRandLayerTexName(){
 	int index=NodeIF::r[6]*image_list.size;
 	char *name=image_list[index]->name();
@@ -6376,15 +4929,6 @@ Color Planetoid::tc;
 int Planetoid::ncolors=6;
 Color Planetoid::colors[COLORS];
 
-static Planetoid *planetoid=0;
-static double Ampl=0;
-static double Prob=0;
-static double Maxs=0;
-static double Noise=0;
-static double Lbias=0;
-static double Hbias=0;
-static double Nscale=0;
-static bool   Nrocks=false;
 
 static bool keep_rands=false;
 static double size_scale=1;
@@ -6570,18 +5114,22 @@ std::string Planetoid::randFeature(int type) {
 	case RND_TEXNAME:
 		str="\"";
 		if(TheScene->use_tmps==ALL_TMPS){
-			if(planetoid->terrain_type==GN_ICY)
+			if(gen_type==GN_ICY)
 				str+=getIcyTexName();
-			else if(planetoid->terrain_type==GN_GASSY)
+			else if(gen_type==GN_GASSY)
 				str+=getGassyTexName();
+			else if(gen_type==GN_METALLIC)
+				str+=getMetallicTexName();
 			else
 				str+=getRockyTexName();
 		}
 		else{
-			if(planetoid->terrain_type==GN_ICY)
+			if(gen_type==GN_ICY)
 				str+="I";
-			else if(planetoid->terrain_type==GN_GASSY)
+			else if(gen_type==GN_GASSY)
 				str+="G";
+			else if(gen_type==GN_METALLIC)
+				str+="M";
 			else
 				str+="P";
 			str+=std::to_string(planet_id);
@@ -7036,7 +5584,7 @@ void Planet::newRocky(Planet *planet,int gtype){
 	planet->hscale=def_hscale*(1+0.5*s[4]);
 }
 void Planetoid::pushInstance(Planetoid *planet){
-	planetoid=planet;
+	gen_type=planet->terrain_type;
 	nsave=lastn;
 	lastn+=ncount*131;
 	planet->initInstance();
@@ -7065,7 +5613,7 @@ static std::string newHmapTex(Planetoid *planet){
 	}
 	return Planetoid::randFeature(RND_HMAP_TEX);
 }
-static std::string newErodeTex(Planetoid *planet){
+static std::string newErodeTex(Orbital *orbital){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
@@ -7073,11 +5621,11 @@ static std::string newErodeTex(Planetoid *planet){
 		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
-		planet->add_image(himg);
+		orbital->add_image(himg);
 	}
 	return Planetoid::randFeature(RND_ERODE_TEX);
 }
-static std::string newSurfaceTex(Planetoid *planet){
+static std::string newSurfaceTex(Orbital *orbital){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
 		char buff[2048];
@@ -7085,12 +5633,12 @@ static std::string newSurfaceTex(Planetoid *planet){
 		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
 		himg->init();
-		planet->add_image(himg);
+		orbital->add_image(himg);
 	}
 	//return Planetoid::randFeature(RND_ERODE_TEX);
 	return Planetoid::randFeature(RND_SURFACE_TEX);
 }
-static std::string newSurfaceBands(Planetoid *planet){
+static std::string newSurfaceBands(Orbital *orbital){
 	if(TheScene->use_tmps!=ALL_TMPS){
 		//planet->setColors();
 		char buff[2048];
@@ -7098,7 +5646,7 @@ static std::string newSurfaceBands(Planetoid *planet){
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
 		img->init();
-		planet->add_image(img);
+		orbital->add_image(img);
 	}
 	return Planetoid::randFeature(RND_SURFACE_BANDS);
 }
@@ -7233,18 +5781,18 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	switch(gtype){
 	case GN_LARGE:
 		size=1e-5;
-		Prob=0.03;
+		Prob=0.05;
 		sv=0.7;
 		break;
 	case GN_MED:
 		size=0.5e-6;
-		Prob=0.05;
+		Prob=0.1;
 		sv=0.8;
 		Ampl=0.4;
 		break;
 	case GN_SMALL:
 		size=1e-7;
-		Prob=0.05;
+		Prob=0.1;
 		sv=0.8;
 		Ampl=0.2;
 		break;
@@ -7260,7 +5808,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 		str+=rndTilted();
 	else
 		str+=rndSurfaceNoise(r[10]);
-	str+=")[";
+	str+=",-0.8)[";
 	Nscale=pow(2,tex_1d_scale);
 	str+=newSurfaceBands(planet);
 	str+="+";
@@ -7460,7 +6008,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 	Sky *sky=0;
 	str="";
 	planet->terrain_type=gtype;
-	planetoid=planet;
+	gen_type=gtype;
 
 	//cout<<"new rocky "<<planet_cnt<<endl;
 	// decrease ht and max size of craters for larger planets
@@ -7594,7 +6142,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	planet->detail=4;
 
 	planet->terrain_type=GN_GASSY;
-	planetoid=planet;
+	gen_type=GN_GASSY;
 	planet->setColors();
 	keep_rands=true;
 
@@ -7719,6 +6267,1649 @@ void Moon::set_tilt()
 		TheScene->rotate(-tilt,cos(planet->orbit_angle*RPD),0,sin(planet->orbit_angle*RPD));
 	}
 }
+
+//************************************************************
+// Asteroid class
+//************************************************************
+static std::string newAsteroidColor(int gtype){
+	char buff[256];
+	Color c=Planetoid::colors[3];
+	sprintf(buff,"Color(%1.3f,%1.3f,%1.3f,0.0)",c.red(),c.green(),c.blue());
+	return std::string(buff);
+}
+
+static std::string newAsteroidBands(Asteroid *a,int gtype){
+	if(TheScene->use_tmps!=ALL_TMPS){          // generate the bands image from colors[]
+		char b[2048];
+		std::string s=Planetoid::randFeature(RND_BANDS);
+		strcpy(b,s.c_str());
+		TNinode *img=(TNinode*)TheScene->parse_node(b);
+		img->init();
+		a->add_image(img);
+	}
+	char buff[1024];
+	sprintf(buff,"Texture(%s,A|NORM|LINEAR|TEX,0,0.5,2,1,0,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)\n",
+		Planetoid::randFeature(RND_TEXNAME).c_str(),
+		//Planetoid::randFeature(RND_TEX_NOISE).c_str(),
+		0.0,                                    // phi bias - meaningless on a solid body
+		0.0,                 // ht bias
+		0.1*(1+0.5*NodeIF::s[9]),              // bmp bias
+		-0.05*(1+0.5*NodeIF::s[10]));           // slope bias
+	return std::string(buff);
+}
+
+static std::string newShapeNoise(int gtype){          // -> noise.expr, drives makeField()
+	char buff[512];
+	switch(gtype){
+	case GN_ICY:        // smoother, rounder - ice relaxes
+		sprintf(buff,"noise(GRADIENT|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
+			10+2*NodeIF::r[1],0.6+0.2*NodeIF::s[2],0.55+0.10*NodeIF::s[3],1.8+0.3*NodeIF::s[4]);
+		break;
+	case GN_METALLIC:   // angular core fragments - fewer orders, harder falloff
+		sprintf(buff,"noise(GRADIENT|SQR|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
+			8+2*NodeIF::r[1],0.3+0.2*NodeIF::s[2],0.40+0.10*NodeIF::s[3],2.4+0.4*NodeIF::s[4]);
+		break;
+	default:
+	case GN_ROCKY:
+		sprintf(buff,"noise(GRADIENT|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
+			12+3*NodeIF::r[1],0.4+0.2*NodeIF::s[2],0.50+0.10*NodeIF::s[3],2.0+0.4*NodeIF::s[4]);
+		break;
+	}
+	return TNnoise::randomize(buff,0.3,0.0);
+}
+
+static std::string newDetailNoise(int gtype){         // -> vertex.expr, scaled by size*hscale
+	char buff[512];
+	double amp = (gtype==GN_ICY)?0.35:(gtype==GN_METALLIC)?0.5:0.7;
+	sprintf(buff,"noise(SIMPLEX|SQR|UNS,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
+		9+3*NodeIF::r[6],0.5+0.2*NodeIF::s[7],amp,2.2+0.4*NodeIF::s[8]);
+	return TNnoise::randomize(buff,0.3,0.0);
+}
+
+Asteroid::Asteroid(Orbital *m, double s, double r):
+		vboVertices(0),Spheroid(m,s)
+{
+	orbit_radius=r;
+	rnoise=nullptr;
+	vnoise=nullptr;
+	color=nullptr;
+	tree=nullptr;
+	hscale=0.5;
+	symmetry=1;
+	detail=3;
+	vboDirty=true;
+	uploadedVertexCount=0;
+	noiseScale=1.0;
+	noiseOffset=0.0;
+	maxDepth=16;
+	shadow_mode=false;
+	shadow_start=false;
+	minHeight=size;
+	jumpSeed=false;
+	meshBoundsZn=0;
+	meshBoundsZf=0;
+	meshBoundsValid=false;
+	surfaceR=size;
+	// Identity matrix — replaced by render_object() on the first render frame.
+	memset(savedInvMVP, 0, sizeof(savedInvMVP));
+	savedInvMVP[0]=savedInvMVP[5]=savedInvMVP[10]=savedInvMVP[15]=1.0;
+	terrain_type=GN_ROCKY;
+}
+//-------------------------------------------------------------
+// Asteroid::~Asteroid - destructor
+//-------------------------------------------------------------
+Asteroid::~Asteroid()
+{
+    if(tree) {
+        delete tree;
+        tree = nullptr;
+    }
+}
+
+//-------------------------------------------------------------
+// Asteroid::[get,set]{R,V]NoiseFunction - called from wx window
+//-------------------------------------------------------------
+//RNoise
+int Asteroid::getRNoiseFunction(char *buff){
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	buff[0]=0;
+	if(var){
+		TNode *expr=var->getExprNode();
+		if(!expr)
+			expr=var->right;
+		expr->valueString(buff);
+		return 1;
+	}
+	else
+		return 0;
+}
+void Asteroid::setRNoiseFunction(char *expr){
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		var->setExpr(expr);
+	else
+		var=addExprVar("noise.expr",expr);
+	var->applyExpr();
+    rnoise=var->right;
+}
+// VNoise
+void Asteroid::setVNoiseFunction(char *expr){
+	TNvar *var=exprs.getVar((char*)"vertex.expr");
+	if(var)
+		var->setExpr(expr);
+	else
+		var=addExprVar("vertex.expr",expr);
+	var->applyExpr();
+    vnoise=var->right;
+}
+int Asteroid::getVNoiseFunction(char *buff){
+	buff[0]=0;
+	TNvar *var=exprs.getVar((char*)"vertex.expr");
+	if(var){
+		TNode *expr=var->getExprNode();
+		if(!expr)
+			expr=var->right;
+		expr->valueString(buff);
+		return 1;
+	}
+	else
+		return 0;
+}
+//-------------------------------------------------------------
+// Asteroid::invalidate() invalidate
+//-------------------------------------------------------------
+void Asteroid::invalidate(){
+	NodeIF::invalidate();
+	texs.reset();
+	terrain.getChildren((int)ID_TEXTURE,texs);
+	color=terrain.getChild(ID_COLOR);
+	terrain.init();
+	rebuild();
+}
+
+//-------------------------------------------------------------
+// Asteroid::init() set variables on open or rebuild
+//-------------------------------------------------------------
+void Asteroid::init(){
+	Orbital::init();
+	texs.reset();
+	terrain.getChildren((int)ID_TEXTURE,texs);
+	terrain.init();
+	terrain.init_render();
+	terrain.set_eval_mode(0);
+	color=terrain.getChild(ID_COLOR);
+	TNvar *var=exprs.getVar((char*)"noise.expr");
+	if(var)
+		rnoise=var->right;
+	else
+		setRNoiseFunction("noise(GRADIENT|NLOD,0,14,0.5,0.5,2,1,4)");
+
+	var=exprs.getVar((char*)"vertex.expr");
+	if(var)
+		vnoise=var->right;
+	else
+		vnoise=0;
+
+	cout<<"=== ASTEROID INIT ===" << endl;
+	cout<<"size: " << size << endl;
+	cout<<"textures:"<<texs.size<<endl;
+	cout<<"color:"<<(color?true:false)<<endl;
+	cout<<"vnoise:"<<(vnoise?true:false)<<endl;
+	cout<<"rnoise:"<<(rnoise?true:false)<<endl;
+
+	rebuildTree();
+
+	// Restore surfaceR from saved gndlvl: surfaceR = size + gndlvl.
+	// gndlvl is restored from the scene file before init() is called,
+	// so this is exact regardless of noise field sampling error.
+	// Only sample the field for non-file contexts (e.g. first creation).
+	if(TheScene->viewtype == SURFACE){
+	    double sr = size + TheScene->gndlvl;
+	    if(sr > size * (1.0 + max_height()))
+	        sr = size * (1.0 + max_height());  // clamp to valid range
+	    surfaceR = (sr > size * 0.5) ? sr : size;
+	} else {
+	    surfaceR = size;
+	}
+
+}
+//-------------------------------------------------------------
+// Asteroid::init_view() set parameters for change in viewtype
+//-------------------------------------------------------------
+void Asteroid::init_view(){
+	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
+	Spheroid::init_view();
+	TheScene->minh=1*MILES;
+
+	if(TheScene->changed_file())
+		return;  // init() already set surfaceR from saved gndlvl
+
+	if(TheScene->viewtype == SURFACE){
+		// Spheroid::init_view() calls height(theta,phi) which may return a negative
+		// value if the orbital camera angle points to a concave part of the surface.
+		// Override: place camera at 5000ft above the nominal sphere surface.
+		// scale() will call updateSurfaceR() each frame to correct surfaceR precisely.
+		surfaceR            = 2*size;   // conservative — scale() corrects immediately
+		TheScene->gndlvl    = 0;
+		TheScene->height    = 200*MILES;
+	}
+	else{
+		TheScene->height=size * (3.0 + 2*max_height());
+	}
+	//if(TheScene->changed_view())
+	//	MCGenerator::maxDistance=0;
+	TheScene->elevation=TheScene->height+TheScene->gndlvl;
+	TheScene->radius=size+TheScene->elevation;
+	//cout<<"Asteroid::init_view() gl:"<<TheScene->gndlvl/MILES<<" ht"<<TheScene->height/MILES<<endl;
+
+}
+
+//-------------------------------------------------------------
+// Asteroid::init_render()   render setup
+//-------------------------------------------------------------
+void Asteroid::init_render()
+{
+	visit(&Object3D::init_render);
+
+ 	if(!isEnabled())
+ 		return;
+ 	double dp=0;
+	double dpmin=1,dpmax=-1;
+	Raster.blend_factor=Raster.darken_factor=0;
+
+	if(TheScene->viewobj==this){
+		Point lp;
+		Point vp=TheScene->vpoint;
+		for(int i=0;i<Lights.numLights();i++){
+			Point c=point.mm(TheScene->invViewMatrix);
+			Point cv=vp-c;
+			cv=cv.normalize();
+		    Point l=Lights[i]->point.mm(TheScene->invViewMatrix);
+		    Point cl=l-c;
+		    cl=cl.normalize();
+			double dpl=-cv.dot(cl);
+			dpmax=dpl>dpmax?dpl:dpmax;
+			dpmin=dpl<dpmin?dpl:dpmin;
+		}
+		if(dpmin<=0 && dpmax<=0)
+			dp=dpmax;
+		else
+			dp=dpmin;
+		Raster.set_ldp(dp);
+	}
+}
+//-------------------------------------------------------------
+// Asteroid::move_focus() position camera at cursor hit point
+// selm = Point(theta, phi, gndlvl) from get_focus(), matching Spheroid convention.
+// gndlvl = surfaceR - size (surface deviation above nominal radius).
+//-------------------------------------------------------------
+void Asteroid::move_focus(Point &selm)
+{
+    if(!tree || !tree->root || TheScene->viewobj != this)
+        return;
+    // difference current-target ht
+    double dh=TheScene->elevation-selm.z;
+    double minht=1*MILES;
+    double curht=TheScene->height;
+    double ht=curht;
+
+	Point m=selm;
+	m.z+=radius();
+	m=m.rectangular();
+	Point p=m.mm(TheScene->ModelMatrix.values())+point;
+
+	double dz=p.length();
+
+	TheScene->theta=selm.x;
+	TheScene->phi=selm.y;
+	TheScene->gndlvl=selm.z;
+	TheScene->clr_moved();  	     // don't need new gndlvl from Map.set_scene
+	TheScene->set_changed_detail();  // but still need to turn on Map.adapt
+
+	if(dh>0)
+		ht=0.25*dh; // move closer
+
+	ht=ht<minht?minht:ht;
+	TheScene->height=ht;
+	TheScene->elevation=TheScene->height+TheScene->gndlvl;
+	TheScene->radius=size+TheScene->elevation;
+
+	surfaceR  = size + selm.z;
+	minHeight = minht;
+	jumpSeed  = true;   // hold the seeded surfaceR until the mesh rebuilds here
+	//cout<<"Asteroid::move_focus ht old:"<<curht/MILES<<" target:"<<selm.z/MILES<<" delta:"<<dh/MILES<<" new:"<<ht/MILES<<endl;
+
+}
+//-------------------------------------------------------------
+void Asteroid::set_lighting(){
+    Orbital::set_lighting();
+    Lights.setAttenuation(point);
+
+    Lights.setShininess(shine);
+	Lights.mixSpecular(specular);
+
+	Lights.mixDiffuse(diffuse);
+	Lights.setAmbient(ambient);
+}
+
+//-------------------------------------------------------------
+// Asteroid::adapt_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::adapt_pass()
+{
+    clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FG0);
+    return selected();
+}
+
+//-------------------------------------------------------------
+// Asteroid::render_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::render_pass()
+{
+	clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FG0);
+    return selected();
+}
+
+//-------------------------------------------------------------
+// Asteroid::selection_pass() select for scene pass
+//-------------------------------------------------------------
+int Asteroid::selection_pass() {
+	return Spheroid::selection_pass();
+}
+
+//-------------------------------------------------------------
+// Asteroid::render_pass() select for shadow pass
+//-------------------------------------------------------------
+int Asteroid::shadow_pass(){
+    clr_selected();
+    if(TheScene->viewobj==this)
+        select_pass(FGS);
+    return selected();
+}
+
+double Asteroid::far_height() {
+    return size;
+}
+
+double Asteroid::max_height() {
+    return 2*hscale;  // factor in noise
+}
+double Asteroid::height(double t, double p)
+{
+    if(!tree) return 0;
+    double tr = (t + 180.0) * RPD;
+    double pr = p * RPD;
+    double sr_est = size * (1.0 + max_height());
+    Point dir(
+        sr_est * cos(pr) * sin(tr),
+        sr_est * sin(pr),
+        sr_est * cos(pr) * cos(tr)
+    );
+    return sampleSurfaceR(dir) - size;  // deviation from nominal radius, same units as map->elevation
+}
+
+//-------------------------------------------------------------
+// Asteroid::sampleSurfaceR()
+// Sample the isosurface field along an arbitrary world-space
+// direction to find the surface radius from center in that direction.
+// dir should point from asteroid center toward (or past) the surface.
+//-------------------------------------------------------------
+double Asteroid::sampleSurfaceR(Point dir)
+{
+    double camLen = dir.length();
+    if(!tree || camLen < 1e-10)
+        return size * (1.0 + max_height() * 0.5);
+
+    double scale2 = 2.0 * size;
+    SurfaceFunction& f = tree->field;
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+
+    // Normalize to a unit direction, then scan from just outside the envelope
+    // inward to center. Independent of camera distance.
+    Point dirN = dir * (1.0 / camLen);
+    double envelope = size * (1.0 + max_height());
+
+    const int STEPS = 8;
+    double flo = f(dirN.x*envelope/scale2, dirN.y*envelope/scale2, dirN.z*envelope/scale2);
+    double tlo = 0.0, thi = envelope;
+    for(int i = 1; i <= STEPS; i++){
+        double t = envelope * (1.0 - (double)i/STEPS);  // scan inward from envelope to center
+        Point fp(dirN.x*t/scale2, dirN.y*t/scale2, dirN.z*t/scale2);
+        double fv = f(fp.x, fp.y, fp.z);
+        if(fv <= 0.0 && flo > 0.0){
+            tlo = envelope*(i-1.0)/STEPS;
+            thi = envelope*(double)i/STEPS;
+            break;
+        }
+        flo = fv;
+    }
+    for(int i = 0; i < 6; i++){
+        double tm = 0.5*(tlo+thi);
+        Point fp(dirN.x*tm/scale2, dirN.y*tm/scale2, dirN.z*tm/scale2);
+        double fv = f(fp.x, fp.y, fp.z);
+        if(fv > 0.0) tlo = tm; else thi = tm;
+    }
+    TheNoise.rseed = seed;
+    double result=0.5*(tlo+thi);  // surface radius from center along dirN
+    cout<<"sampleSurfaceR:"<<result<<endl;
+    return result;
+}
+//-------------------------------------------------------------
+// Asteroid::surfaceRByRaycast()
+// Cast a ray from just outside the envelope, inward toward the
+// center, along the given direction, and return the world-space
+// radius of the closest triangle hit. Unlike sampleSurfaceR()
+// (which scans the raw field) this hits the actual rendered mesh,
+// so it includes the vnoise displacement from applyAttributes()
+// and needs no field evaluation. Returns <0 on a miss.
+//-------------------------------------------------------------
+double Asteroid::surfaceRByRaycast(Point dir)
+{
+    if(!tree || !tree->root)
+        return -1.0;
+    double len = dir.length();
+    if(len < 1e-10)
+        return -1.0;
+
+    double scale2   = 2.0 * size;
+    double envelope = size * (1.0 + max_height());
+
+    // raycast space == tri.vertices space == world / (2*size), center at origin.
+    Point dirN   = dir * (1.0 / len);                 // center -> surface direction
+    Point origin = dirN * (envelope * 1.05 / scale2); // just outside the envelope
+    Point ray    = dirN * -1.0;                       // inward, toward center
+
+    Point hit_local;
+    double result=-1;
+    if(tree->raycast(origin, ray, hit_local))
+        result=hit_local.length() * scale2;           // world-space surface radius
+    //cout<<"surfaceRByRaycast:"<<result/MILES<<" "<<dir<<endl;
+    return result;                                       // miss
+
+}
+//-------------------------------------------------------------
+// Asteroid::updateSurfaceR()
+// Update surfaceR for the current camera position. Prefer a mesh
+// raycast (accurate, includes vnoise); fall back to the raw-field
+// scan only if the ray misses (e.g. mesh not built yet).
+//-------------------------------------------------------------
+void Asteroid::updateSurfaceR()
+{
+    Point cam_w = TheScene->spoint;
+
+    double r = surfaceRByRaycast(cam_w);
+    surfaceR = (r > 0.0) ? r : sampleSurfaceR(cam_w);
+}
+//-------------------------------------------------------------
+// Asteroid::scale() set znear, zfar
+//-------------------------------------------------------------
+int Asteroid::scale(double& znear, double& zfar) {
+	if(TheScene->viewobj != this || TheScene->bgpass==0) // we don't allow group participation
+		return OUTSIDE;
+    const double rmax = size * (1.0 + max_height());            // envelope (peaks)
+    const double rmin = std::max(size * (1.0 - max_height()),   // valleys
+                                 size * 0.1);
+
+    double ht=0;
+	if(TheScene->changed_file()){
+		ht=TheScene->height;
+		surfaceR=TheScene->gndlvl+size;
+		//TheScene->radius=surfaceR+TheScene->height;
+		// Freshly loaded: init() already set surfaceR from the saved gndlvl. Trust it
+		// (selm is stale right after a load, and the mesh may still be coarse).
+	}
+	else if(jumpSeed){
+		// Just jumped to a picked target; mesh not yet rebuilt here. selm.z is the
+		// picked mesh radius (includes vnoise, correct frame) — hold it until
+		// adapt_object() rebuilds and clears jumpSeed.
+		surfaceR = size + TheScene->selm.z; // should already be set in move_focus
+		ht = TheScene->radius - surfaceR;
+	}
+	else{
+		updateSurfaceR();   // steady flight: mesh raycast below the current eye
+		ht = TheScene->radius - surfaceR;
+	}
+
+	// ---- height bookkeeping (asteroid analog of Map::set_scene) ----
+	// Movement updates TheScene->radius only; recompute height/elevation/gndlvl from
+	// it here so the HT readout tracks movement and saves capture the right values.
+	ht=std::max(ht, TheScene->minh);
+
+	TheScene->radius    = surfaceR + ht;       // clamp out of the ground
+	TheScene->gndlvl    = surfaceR - size;
+	TheScene->elevation = TheScene->radius - size;
+	TheScene->height    = TheScene->radius-(size+TheScene->gndlvl);
+
+	//cout<<"radius:"<<TheScene->radius/MILES<<" gndlvl:"<<TheScene->gndlvl/MILES<<" ht:"<<TheScene->height/MILES;
+
+	//TheScene->minr = TheScene->surface_view() ? surfaceR : rmax;
+
+    znear=0.1*TheScene->height;
+    double envelope = size * (1.0 + max_height());
+
+    double r         = TheScene->radius;
+//   double dcam = meshBoundsValid ? (TheScene->xpoint - meshBoundsCam).length() : 1e30;
+//   if(meshBoundsValid && dcam < 0.25*meshBoundsZf){
+//	   znear = 0.25 * std::max(meshBoundsZn - dcam, 4.0*FEET);
+//	   zfar  = (meshBoundsZf + dcam) * 1.05;
+//   }
+   if(!TheScene->changed_view()&& MCGenerator::maxDistance>0){
+ 	   znear = 0.25*MCGenerator::minDistance;
+ 	   zfar  = 2*MCGenerator::maxDistance;
+   }
+   else{
+	   double horizonSq = r*r - rmin*rmin;
+	   zfar  = (horizonSq > 0) ? 1.1*sqrt(horizonSq) : 2.0*envelope;
+	   zfar += envelope;
+	   znear = std::max(0.01*TheScene->height, 4.0*FEET);
+   }
+   if(znear < zfar/50000.0)
+	   znear = zfar/50000.0;   // safety: never collapse the range
+
+   TheScene->minr = surfaceR + TheScene->minh;
+   //cout<<" zn:"<<znear/MILES<<" zf:"<<zfar/MILES<<" ratio:"<<zfar/znear<<" minr:"<<TheScene->minr/MILES;
+
+ 	//cout<<" surfaceR:"<<surfaceR/MILES<<" ht:"<<ht/MILES<<" minr:"<<TheScene->minr/MILES<<endl;
+    setvis(OUTSIDE);
+    return OUTSIDE;
+}
+
+//-------------------------------------------------------------
+// Asteroid::setProgram() set up shaders
+//-------------------------------------------------------------
+bool Asteroid::setProgram(){
+    if(!Raster.do_shaders)
+        return false;
+
+    if(shadow_mode)
+        return false;
+    char defs[1024] = "";
+    sprintf(defs, "#define NLIGHTS %d\n#define LMODE %d\n",
+            Lights.size, Render.light_mode());
+
+    if(Raster.shadows() && Raster.twilight() && !TheScene->light_view() && !TheScene->test_view())
+    	sprintf(defs+strlen(defs), "#define SHADOWS\n");
+
+    if(Raster.hdr())
+        sprintf(defs+strlen(defs), "#define HDR\n");
+
+    GLSLMgr::setDefString(defs);
+
+    // === initProgram pass — count textures and bumps ===
+    int tid = 0;
+    int pid = 0;
+    int nbumps = 0;
+    bool cvalid = false;
+    if(color && color->isEnabled())
+        cvalid = true;
+    nbumps = 0;
+    Texture::reset();  // reset texture system state
+    if(Render.textures()){
+        for(int i = texs.size-1; i >= 0; i--){  // reverse like rocks
+            TNtexture *tntex = (TNtexture*)texs[i];
+            Texture *texture = tntex->texture;
+            if(!tntex->isEnabled()) continue;
+            texture->set3D();
+            TerrainProperties::tid = tid;
+            if(texture->bump_active && Render.bumps())
+                nbumps++;
+            texture->tid = tid;
+            tntex->eval();
+            texture->initProgram();
+            tid++;
+        }
+    }
+
+    // Build defs with final counts
+    char texdefs[256];
+    if(cvalid)
+        sprintf(texdefs, "#define COLOR\n#define NTEXS %d\n#define NBUMPS %d\n",
+                tid, nbumps);
+    else
+        sprintf(texdefs, "#define NTEXS %d\n#define NBUMPS %d\n", tid, nbumps);
+    strcat(GLSLMgr::defString, texdefs);
+
+    GLSLMgr::loadProgram("asteroid.vert", "asteroid.frag");
+
+    GLhandleARB program = GLSLMgr::programHandle();
+    if(!program){
+        return false;
+    }
+    GLSLMgr::loadVars();
+    GLSLMgr::setProgram();
+
+    // === setProgram pass — set texture uniforms ===
+    tid=0;
+    if(Render.textures()){
+        for(int i = texs.size-1; i >= 0; i--){
+            TNtexture *tntex = (TNtexture*)texs[i];
+            Texture *texture = tntex->texture;
+            if(!tntex->isEnabled()) continue;
+            TerrainProperties::tid = tid;
+            texture->eval();
+            texture->pid = pid;
+            texture->setProgram();
+           // set instance & active to the same value
+            char str[64];
+			sprintf(str, "tex2d[%d].instance", i);
+			GLint loc = glGetUniformLocationARB(program, str);
+			if(loc >= 0) glUniform1iARB(loc, 0);
+			sprintf(str, "tex2d[%d].active", i);
+			loc = glGetUniformLocationARB(program, str);
+			if(loc >= 0) glUniform1iARB(loc, 0);
+            pid++;
+            tid++;
+
+        }
+    }
+
+    // === Set uniforms ===
+    GLSLVarMgr vars;
+
+    vars.newFloatVec("Diffuse",
+        diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());
+    vars.newFloatVec("Ambient",
+        ambient.red(), ambient.green(), ambient.blue(), ambient.alpha());
+    vars.newFloatVec("Specular",
+         specular.red(), specular.green(), specular.blue(), specular.alpha());
+    vars.newFloatVec("Shadow",
+        shadow_color.red(), shadow_color.green(), shadow_color.blue(),
+		shadow_color.alpha());
+    vars.newFloatVar("hdr_min", (float)Raster.hdr_min);
+    vars.newFloatVar("hdr_max", (float)Raster.hdr_max);
+
+    float wscale = 0.5f * TheScene->window_height / tan(RPD * TheScene->fov / 2.0);
+
+    vars.newFloatVar("wscale",           wscale);
+
+    vars.newFloatVar("textureScale",     (float)(size));
+    vars.newBoolVar("lighting",          Render.lighting());
+
+    vars.setProgram(program);
+    vars.loadVars();
+
+    GLSLMgr::setFBOReadWritePass();
+
+    return true;
+}
+
+//-------------------------------------------------------------
+// Asteroid::rebuildTree() rebuild
+//-------------------------------------------------------------
+void Asteroid::rebuildTree(){
+	if(tree)
+		delete tree;
+	calibrateNoise();
+	tree = new MCObjTree();
+	field = makeField();
+	tree->init(Point(0, 0, 0),2*size,2.0,field,0,rseed);
+	MCGenerator::resetStats();
+}
+
+//-------------------------------------------------------------
+// Asteroid::adapt_object() adapt mesh
+//-------------------------------------------------------------
+void Asteroid::adapt_object(){
+    if(!tree) {
+        return;
+    }
+
+	switch(TheScene->render_quality){
+	case DRAFT:
+		MCGenerator::csi_hole_patch_threshold=0;
+		maxDepth=14;
+		detail=4;
+		break;
+	default:
+	case NORMAL:
+		MCGenerator::csi_hole_patch_threshold=4;
+		maxDepth=16;
+		detail=3;
+		break;
+	case HIGH:
+		MCGenerator::csi_hole_patch_threshold=5;
+		detail=2.5;
+		maxDepth=18;
+		break;
+	case BEST:
+		detail=2;
+		maxDepth=20;
+		MCGenerator::csi_hole_patch_threshold=6;
+	}
+
+    // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
+    // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
+    // doesn't find stale MapNode* pointers from a previous planet/moon adapt
+    // and crash trying to call theta()/phi() on them.
+    if(TheScene->viewobj == this)
+        Raster.reset_idtbl();
+
+    bool moved = TheScene->moved();
+    bool changed = TheScene->changed_detail()||TheScene->changed_view();
+
+    if(changed){
+        rebuildTree();
+        vboDirty = true;
+    }
+
+    if (shadow_mode && !shadow_start) {
+       moved = false;
+       changed = false;
+    }
+    if(!moved && !vboDirty)
+        return;
+
+    MCGenerator::minDistance = 0;  // reset so this adapt gets a fresh minimum
+    MCGenerator::maxDistance = 0;  // reset so this adapt gets a fresh minimum
+
+    Point xpoint = TheScene->xpoint;
+
+    Point asteroidWorld = this->point;
+    Point up,right, forward;
+	up=xpoint.normalize();
+	if (fabs(up.z) < 0.9)
+		right = Point(up.y, -up.x, 0).normalize();
+	else
+		right = Point(0, up.z, -up.y).normalize();
+	forward = Point(up.y * right.z - up.z * right.y,
+					up.z * right.x - up.x * right.z,
+					up.x * right.y - up.y * right.x);
+    MCObjAdaptFlags::setDirections(asteroidWorld-xpoint,right,forward,up);
+
+    int seed = TheNoise.rseed;
+    TheNoise.rseed=rseed;
+
+#ifdef USE_IDTABLE
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,true);
+
+    bool isInitialBuild = (tree->root && !tree->root->meshValid &&
+                           tree->root->isLeaf());
+    double rsum=0;
+    double asum=0;
+    double t0=0;
+    double t1=0;
+    if (isInitialBuild) {
+        // Progressive loop for initial build: coarse-to-fine with ID readback gating.
+        int startDepth = 2;
+        int max_cycles = maxDepth - startDepth + 1;
+        for (int cycle = 0; cycle < max_cycles; cycle++) {
+            int cycleDepth = startDepth + cycle;
+            t0=clock();
+            tree->render_ids(2.0*size, xpoint);
+            rsum+=clock()-t0;
+            t1=clock();
+            tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
+            asum+=clock()-t1;
+        }
+
+    } else {
+    	t0=clock();
+        tree->render_ids(2.0*size, xpoint);
+        t1=clock();
+        tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+        asum+=clock()-t1;
+    }
+   // cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
+
+
+#else
+    MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
+    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+#endif
+    // Refresh the id table against the FINAL adapted mesh. The render_ids calls
+     // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
+     // subdivision behind and pixelLeaf() resolves stale/freed cells.
+    //MCGenerator::resetStats();
+
+    MCGenerator::maxDepth=maxDepth;
+    tree->render_ids(2.0*size, xpoint);
+    tree->countCells();
+    TheNoise.rseed=seed;
+    minHeight=MCGenerator::minDistance;   // nearest leaf cell distance; scale() uses this directly
+    jumpSeed=false;                       // mesh now rebuilt at the current position
+
+#ifdef PRINT_ASTEROID_STATS
+    MCGenerator::printStats();
+    if(!changed)
+    	MCGenerator::resetStats();
+#endif
+    vboDirty = true;
+ }
+
+//-------------------------------------------------------------
+// Asteroid::render_object() render mesh
+//-------------------------------------------------------------
+void Asteroid::render_object(){
+	static int num_shadows=0;
+	extern int test7;
+    if(!tree || !tree->root)
+        return;
+
+    if(vboDirty)
+    	buildVBO();
+
+    // Capture the render-frame inverse MVP for use in get_focus().
+    // get_focus() runs during GL_SELECT where the matrix state is a pick
+    // matrix — we need the proper perspective matrix for correct unprojection.
+    if(!TheScene->buffers_mode())
+        memcpy(savedInvMVP, TheScene->InvModelViewProjMatrix.values(), 16*sizeof(GLdouble));
+
+    Hscale = hscale;
+    Rscale = size * hscale;
+    Gscale = 1.0 / Rscale;
+
+    if(TheScene->buffers_mode()){
+		if(Render.draw_szvals())
+			render_zvals();         // Step 1: light POV depth
+		else if(Render.draw_normals())
+			render_shadows();       // Step 2: eye POV shadow comparison
+		return;
+	}
+    // top of Asteroid::render_object(), after the !tree early-outs:
+    #ifdef DEBUG_HOLE_PROBE
+        {
+            static Point2D lastProbe(-1,-1);
+            if (TheScene->selp.x != lastProbe.x || TheScene->selp.y != lastProbe.y) {
+                lastProbe = TheScene->selp;
+                if (TheScene->viewobj == this)
+                    holeProbe(TheScene->selp.x, TheScene->selp.y);
+            }
+        }
+    #endif
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+    if(MCGenerator::wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	if(Render.lighting())
+		glEnable(GL_LIGHTING);
+	else
+		glDisable(GL_LIGHTING);
+
+	glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
+   glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    if (Raster.do_shaders) {
+    	Raster.shadow_value = shadow_color.alpha();
+    	Raster.shadow_color = shadow_color;
+    	Raster.shadow_color.set_alpha(1);
+    	Raster.shadow_darkness = 1.0;
+        glEnable(GL_BLEND);
+        set_lighting();
+		setProgram();
+	} else {
+		glDisable(GL_BLEND);
+		glUseProgram(0);
+	}
+
+    drawVBO();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPopAttrib();
+}
+
+Bounds *Asteroid::bounds(){
+	static Bounds asteroid_bounds;
+    double d = TheView->epoint.distance(point);
+    double mh = size * (1.0 + max_height());
+    asteroid_bounds.zn = std::max(d - mh, size * 0.001);
+    asteroid_bounds.zf = d + mh;
+    return &asteroid_bounds;
+}
+
+//-------------------------------------------------------------
+// Asteroid::select()
+// Register this asteroid in the GL selection buffer so it can
+// be picked by mouse click, then also handle the FG (surface)
+// selection pass.  For object-level picking we just draw the
+// VBO; per-surface picking is done via raycast in set_focus().
+//-------------------------------------------------------------
+void Asteroid::select()
+{
+    set_ref();
+    if (!isEnabled()||!included())
+    	return;
+
+    if (vboVertices && uploadedVertexCount > 0) {
+    	TheScene->pushMatrix();
+
+		set_tilt();
+		set_rotation();
+		setMatrix();
+
+        // Reset the Raster ID table so MC node IDs from render_ids() don't
+        // get misinterpreted as MapNode theta/phi in Scene::select()'s
+        // surface_view idvalues() path.
+        Raster.reset_idtbl();
+
+    	int id = Raster.set_id();
+        Raster.set_data((MapNode*)this);
+        glLoadName(id);
+
+        // GL_SELECT is incompatible with GLSL shaders -- the selection
+        // mechanism only works with the fixed-function pipeline.
+        // Disable any active shader program before drawing.
+        glUseProgram(0);
+
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_1D);
+        glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, sizeof(GLVertex),
+                        (void*)offsetof(GLVertex, pos));
+        glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glPopAttrib();
+        TheScene->popMatrix();
+    }
+}
+
+
+//-------------------------------------------------------------
+// Asteroid::get_focus()
+// Resolve a surface pick the way the Map/OctTree do: read back the cell
+// rendered at the cursor pixel (frontmost, from render_ids' id image) and
+// intersect only that cell. This avoids the whole-tree raycast grazing
+// through an LOD-boundary crack to the far side of the body.
+// Returns Point(theta, phi, gndlvl), gndlvl = surfaceR - size.
+//-------------------------------------------------------------
+Point Asteroid::get_focus(void *v)
+{
+    if (!tree || !tree->root)
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
+
+    // If no render frame has completed yet, savedInvMVP is identity — skip pick.
+    bool validMVP = (savedInvMVP[1] != 0.0 || savedInvMVP[4] != 0.0 ||
+                     savedInvMVP[2] != 0.0);
+    if (!validMVP)
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
+
+    double scale = 2.0 * size;
+    Point  cam_w = TheScene->xpoint;
+
+    double sx = TheScene->selp.x;
+    double sy = TheView->viewport[3] - TheScene->selp.y;
+
+    MCObjNode *leaf = tree->pixelLeaf((int)TheScene->selp.x, (int)TheScene->selp.y);
+    if (!leaf || !leaf->meshValid || leaf->mesh.empty())   // off-surface or stale id table
+        return Point(TheScene->theta, TheScene->phi, TheScene->gndlvl);
+
+	// Cells are ~1-2 px, so any vertex of the picked cell is the surface point.
+	// tri.vertices are MC/local ([-0.5,0.5], surface ~0.5); * scale -> world.
+	const MCTriangle& t0 = leaf->mesh[0];
+	Point hit_world = (t0.vertices[0] + t0.vertices[1] + t0.vertices[2]) * (scale / 3.0);
+
+	double sr     = hit_world.length();
+	Point  sph    = hit_world.spherical();
+	double theta  = sph.y - 180.0;
+	double phi    = sph.x;
+	double gndlvl = sr - size;
+	//printf("HIT  theta=%.3f phi=%.3f gnd=%.4f  (screen %.0f,%.0f)\n",
+	//	   theta, phi, gndlvl/MILES, sx, sy);
+	return Point(theta, phi, gndlvl);
+}
+
+//-------------------------------------------------------------
+// Asteroid::set_focus()
+// Called each frame while this object is selected.  Ray-casts
+// the screen-click against the MC mesh, draws a crosshair at
+// the hit point, and displays straight-line distance.
+//-------------------------------------------------------------
+void Asteroid::set_focus(Point &selm)
+{
+	// selm = Point(theta, phi, gndlvl) from get_focus(), same as Spheroid.
+    // Just delegate — Spheroid::set_focus reconstructs world position from
+    // selm using radius() (which returns size) and ModelMatrix, draws crosshair.
+
+    Spheroid::set_focus(selm);
+}
+
+void Asteroid::render_zvals(){
+	if(Raster.shadow_vcnt==0){
+		shadow_start=true;
+	}
+
+	shadow_mode=true;
+
+    Raster.setShadowProgram("asteroid_shadows.vert", 0, 0);
+    Raster.setProgram(Raster.PLACE_SHADOWS);
+
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	int cmask[4];
+	glGetIntegerv(GL_COLOR_WRITEMASK,cmask); // get original color mask (usually all true)
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // disable writing to color buffer
+	glDisable(GL_DITHER);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_BLEND);
+	glDisable(GL_FOG);
+
+    drawVBO();
+
+	glColorMask(cmask[0], cmask[1], cmask[2], cmask[3]); // restore original color mask
+
+	glPopAttrib();
+
+	shadow_start=false;
+	shadow_mode=false;
+}
+
+void Asteroid::render_shadows(){
+	shadow_mode=true;
+	Raster.setShadowProgram("asteroid_shadows.vert",0,0);
+    Raster.setProgram(Raster.PLACE_SHADOWS);
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glDisable(GL_DITHER);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_1D);
+	glDisable(GL_BLEND);
+	glDisable(GL_FOG);
+
+	drawVBO();
+    glPopAttrib();
+	shadow_mode=false;
+}
+
+//-------------------------------------------------------------
+// Asteroid::applyAttributes() set color, vertex disolacement
+//-------------------------------------------------------------
+void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
+    bool setVertexColor = (color && color->isEnabled());
+    bool doDisplace = vnoise;
+    if(!setVertexColor  && !doDisplace) return;
+
+    for(auto& tri : mesh){
+        for(int v=0; v<3; v++){
+        	Point np(tri.vertices[v].x, tri.vertices[v].y, tri.vertices[v].z);
+            TheNoise.set(np);
+            if(doDisplace){
+				SINIT;
+				vnoise->eval();
+				Point dir = tri.vertices[v].normalize();
+				if(S0.pvalid()){
+					Point delta = dir * S0.p * size*hscale;  // scale to asteroid size
+					tri.vertices[v] = tri.vertices[v] - delta;
+				}
+				else if(S0.svalid()){
+					Point delta = dir * S0.s * size*hscale;  // scale to asteroid size
+					tri.vertices[v] = tri.vertices[v] - delta;
+				}
+			}
+            if(setVertexColor){
+                SINIT;
+				color->eval();
+				if(S0.cvalid())
+					tri.colors[v] = S0.c;
+				else
+					tri.colors[v] = Color(1, 0.5, 0);  // fallback orange
+            }
+        }
+    }
+}
+
+//-------------------------------------------------------------
+// Asteroid::buildVBO() build VBO
+//-------------------------------------------------------------
+void Asteroid::buildVBO(){
+    std::vector<MCObjNode*> leaves;
+    tree->collectLeaves(leaves);
+
+    glVertices.clear();
+    Point eyeCenter = this->point - TheScene->xpoint;
+    double scale = 2*size;
+    Point eyeOffset = TheScene->xpoint;
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    {
+        SurfaceFunction& field = tree->field;
+
+        // Quantized weld key: snap templatePos to a grid ~16x finer than the
+        // deepest cell. Identical shared vertices round to the same integer key
+        // and weld; genuinely distinct vertices stay distinct. Unlike a raw
+        // (float) cast, this can't alias neighboring edge vertices into one
+        // bucket at high maxDepth (the source of the linear miscolor streaks).
+        const double wq = double(1ULL << (maxDepth + 4));
+        struct V3Key {
+            long long x, y, z;
+            bool operator==(const V3Key& o) const { return x==o.x && y==o.y && z==o.z; }
+        };
+        struct V3Hash {
+            size_t operator()(const V3Key& k) const {
+                return (size_t)((uint64_t)k.x*2654435761ULL
+                              ^ (uint64_t)k.y*805459861ULL
+                              ^ (uint64_t)k.z*3674653429ULL);
+            }
+        };
+        auto wkey = [wq](const Point& p) -> V3Key {
+            return V3Key{ (long long)llround(p.x*wq),
+                          (long long)llround(p.y*wq),
+                          (long long)llround(p.z*wq) };
+        };
+
+        if(MCGenerator::smooth){
+            bool anyNew = true;
+            for(MCObjNode* leaf : leaves)
+                if(leaf->meshValid && !leaf->mesh.empty() && !leaf->smoothNormalsValid)
+                    { anyNew = true; break; }
+
+            if(anyNew){
+                // Accumulate face normals at shared vertex positions across ALL leaves
+                std::unordered_map<V3Key,Point,V3Hash> vertNormal;
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    for(auto& tri : leaf->mesh)
+                    for(int v=0; v<3; v++){
+                        V3Key k = wkey(tri.templatePos[v]);
+                        vertNormal[k] = vertNormal[k] + tri.faceNormal;
+                    }
+                }
+                // Normalize
+                for(auto& kv : vertNormal){
+                    double len = kv.second.length();
+                    if(len > 1e-10) kv.second = kv.second*(1.0/len);
+                }
+                // Store into ALL leaves (including ones that were already valid)
+                for(MCObjNode* leaf : leaves){
+                    if(!leaf->meshValid || leaf->mesh.empty()) continue;
+                    leaf->smoothNormalsValid = true;
+                    for(auto& tri : leaf->mesh)
+                    for(int v=0; v<3; v++){
+                        V3Key k = wkey(tri.templatePos[v]);
+                        auto it = vertNormal.find(k);
+                        tri.smoothNormal[v] = (it!=vertNormal.end()) ? it->second : tri.faceNormal;
+                    }
+                }
+            }
+        }
+
+        // Apply vertex displacement (only new leaves)
+        for(MCObjNode* leaf : leaves){
+            if(!leaf->meshValid || leaf->mesh.empty()) continue;
+            if(!leaf->attributesApplied){
+                applyAttributes(leaf->mesh);
+                leaf->attributesApplied = true;
+            }
+        }
+
+        // Assemble VBO
+        double bzn = 1e30, bzf = 0.0;        // radial extent from the (build-time) camera
+        for(MCObjNode* leaf : leaves){
+            if(!leaf->meshValid || leaf->mesh.empty()) continue;
+            for(auto& tri : leaf->mesh){
+                for(int v=0; v<3; v++){
+                    GLVertex gv;
+                    Point p = tri.vertices[v] * scale - eyeOffset;
+                    double pd = p.length();
+                    if(pd < bzn) bzn = pd;
+                    if(pd > bzf) bzf = pd;
+                    gv.pos[0]=(float)p.x; gv.pos[1]=(float)p.y; gv.pos[2]=(float)p.z;
+                    Point vn = MCGenerator::smooth ? tri.smoothNormal[v] : tri.faceNormal;
+                    gv.normal[0]=(float)-vn.x; gv.normal[1]=(float)-vn.y; gv.normal[2]=(float)-vn.z;
+                    gv.templatePos[0]=(float)tri.vertices[v].x;
+                    gv.templatePos[1]=(float)tri.vertices[v].y;
+                    gv.templatePos[2]=(float)tri.vertices[v].z;
+                    gv.templatePos[3]=(float)eyeCenter.length();
+                    gv.faceNormal[0]=(float)-tri.faceNormal.x;
+                    gv.faceNormal[1]=(float)-tri.faceNormal.y;
+                    gv.faceNormal[2]=(float)-tri.faceNormal.z;
+                    gv.faceNormal[3]=0.0f;
+                    Color c = tri.colors[v];
+                    gv.color[0]=(float)c.red(); gv.color[1]=(float)c.green(); gv.color[2]=(float)c.blue();
+                    gv.color[3]=(float)clamp(c.alpha(),0.0,1.0);
+                    glVertices.push_back(gv);
+                }
+            }
+        }
+        if(bzf > 0.0){
+            meshBoundsZn    = bzn;
+            meshBoundsZf    = bzf;
+            meshBoundsCam   = eyeOffset;
+            meshBoundsValid = true;
+        }
+    }
+    TheNoise.rseed = seed;
+    //if(meshBoundsValid)
+    //cout<<"bzn:"<<meshBoundsZn/MILES<<" bzf:"<<meshBoundsZf/MILES<<endl;
+
+    // Upload to GPU
+    if(vboVertices) glDeleteBuffers(1,&vboVertices);
+    if(glVertices.empty()){ vboVertices=0; uploadedVertexCount=0; return; }
+
+    glGenBuffers(1,&vboVertices);
+    glBindBuffer(GL_ARRAY_BUFFER,vboVertices);
+    glBufferData(GL_ARRAY_BUFFER,
+                 glVertices.size()*sizeof(GLVertex),
+                 glVertices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    uploadedVertexCount = glVertices.size();
+    glVertices.clear();
+    glVertices.shrink_to_fit();
+    vboDirty = false;
+}
+
+//-------------------------------------------------------------
+// Asteroid::drawVBO() render VBO
+//-------------------------------------------------------------
+void Asteroid::drawVBO(){
+    if(!vboVertices || uploadedVertexCount==0) return;
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, pos));
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, normal));
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(4, GL_FLOAT, sizeof(GLVertex), (void*)offsetof(GLVertex, color));
+
+    // Shader attribs — skipped when no shader active (loc=-1)
+    GLhandleARB program = GLSLMgr::programHandle();
+    GLint locTP = glGetAttribLocation(program, "templatePosition");
+    if(locTP >= 0){
+        glVertexAttribPointer(locTP, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, templatePos));
+        glEnableVertexAttribArray(locTP);
+    }
+    GLint locFN = glGetAttribLocation(program, "faceNormal");
+    if(locFN >= 0){
+        glVertexAttribPointer(locFN, 4, GL_FLOAT, GL_FALSE,
+                              sizeof(GLVertex), (void*)offsetof(GLVertex, faceNormal));
+        glEnableVertexAttribArray(locFN);
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, uploadedVertexCount);
+
+    if(locTP >= 0) glDisableVertexAttribArray(locTP);
+    if(locFN >= 0) glDisableVertexAttribArray(locFN);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+//-------------------------------------------------------------
+// Asteroid::calibrateNoise() calibrate iso noise
+//-------------------------------------------------------------
+void Asteroid::calibrateNoise(){
+    if(!rnoise) return;
+
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    noiseScale = 1.0;
+    noiseOffset = 0.0;
+
+    SurfaceFunction rawField = makeField();
+
+    double minDev=1e10, maxDev=-1e10;
+    int samples=50;
+    double step = 2.0/samples;
+
+    for(int ix=0; ix<=samples; ix++)
+    for(int iy=0; iy<=samples; iy++)
+    for(int iz=0; iz<=samples; iz++){
+        double x = -1.0 + ix*step;
+        double y = -1.0 + iy*step;
+        double z = -1.0 + iz*step;
+
+        double ex=2*x, ey=2*y, ez=2*z;
+        double ellipsoidDist = sqrt(ex*ex+ey*ey+ez*ez);
+        // Only sample near the surface — interior/exterior points have noise
+        // that doesn't affect the isosurface and skews the calibrated range.
+        if(ellipsoidDist < 0.5 || ellipsoidDist > 1.5) continue;
+
+        double baseVal = ellipsoidDist - 1.0;
+        double fieldVal = rawField(x, y, z);
+        double deviation = fieldVal - baseVal;
+        minDev = std::min(minDev, deviation);
+        maxDev = std::max(maxDev, deviation);
+    }
+
+    double range = maxDev - minDev;
+    if(range > 1e-10){
+        noiseScale  = 2.0 * hscale / range;
+        noiseOffset = -hscale - minDev * noiseScale;
+    }
+    TheNoise.rseed = seed;
+//#define SHOW_CALIBRATE
+#ifdef SHOW_CALIBRATE
+    cout << "calibrateNoise: minDev=" << minDev << " maxDev=" << maxDev
+         << " noiseScale=" << noiseScale << " noiseOffset=" << noiseOffset << endl;
+#endif
+}
+
+//-------------------------------------------------------------
+// Asteroid::makeField - Create scalar field from rnoise
+//-------------------------------------------------------------
+SurfaceFunction Asteroid::makeField() {
+    double comp = 1-symmetry;
+    double comp_factor = std::max((1.0 - comp), 0.2);
+    bool useNoisyIsoSurface = this->hscale > 0;
+
+    return [=](double x, double y, double z) -> double {
+        double ex = 2*x;
+        double ey = 2*(y/comp_factor);
+        double ez = 2*(z/comp_factor);
+        double ellipsoidDist = sqrt(ex*ex + ey*ey + ez*ez);
+        double baseEllipsoid = ellipsoidDist - 1.0;
+
+        if (useNoisyIsoSurface && rnoise && rnoise->isEnabled()) {
+        	static int cnt=0;
+        	Point np(2*x, 2*y, 2*z);  // match rock coordinate range [-1,1]
+         	TheNoise.set(np);
+            SINIT;
+            rnoise->eval();
+            double value=S0.s * noiseScale/comp_factor + noiseOffset;
+            baseEllipsoid += value;
+            MCGenerator::ad_field_calls++;
+        }
+         return baseEllipsoid;
+    };
+}
+
+//-------------------------------------------------------------
+// Asteroid::getInstance() called from Scene::makeObject
+// - "this" is the parsed prototype (Asteroid(0.005,40){Surface{}})
+// - hook point for typed generation/randomize later
+//-------------------------------------------------------------
+NodeIF *Asteroid::getInstance(NodeIF *prev,int type){
+	setRseed(getRandValue());
+	setRands();
+	setParent(prev);                    // kept as you have it - see note below
+	if(prev->typeValue()==ID_ASTEROID)
+		orbit_radius=((Asteroid*)prev)->orbit_radius;
+	newInstance(type&GN_TYPES);
+	return this;
+}
+void Asteroid::newInstance(int gtype){
+	if(gtype==GN_RANDOM){
+		if(r[2]<0.65)      gtype=GN_ROCKY;
+		else if(r[2]<0.90) gtype=GN_ICY;
+		else               gtype=GN_METALLIC;
+	}
+	Planetoid::makeLists();
+	Planetoid::planet_cnt++;
+	Planetoid::planet_id=Planetoid::planet_cnt+lastn;
+
+	terrain_type=gtype;
+	size      = 0.0001*(1+4*r[1]);
+	day       = 5+40*r[3];
+	year      = day*(2+8*r[4]);
+	rot_phase = 360*r[5];
+	tilt      = 90*r[8];
+
+	cout<<"Asteroid::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<" s:"<<size<<endl;
+	newAsteroid(this,gtype);
+	hscale    = 0.80+0.30*s[4];
+
+	symmetry=0.5+0.5*r[6];
+	set_geometry();
+	setNewViewObj(true);
+}
+
+void Asteroid::newAsteroid(Asteroid *a,int gtype){
+	a->terrain_type=gtype;
+	gen_type=gtype;
+	a->setColors();
+	Nscale=20;
+	Nrocks=true;
+	std::string str;
+	str+=newAsteroidColor(gtype);
+	str+="+";
+	str+=newAsteroidBands(a,gtype);
+	str+="+";
+	Nscale=pow(2,14);
+	str+=newSurfaceTex(a);
+
+	char buff[10000];
+	strcpy(buff,str.c_str());
+	TNode *root=TheScene->parse_node(buff);
+	if(root){
+		a->terrain.set_root(root);
+		a->terrain.init();
+	}
+	else
+		cout<<"error building asteroid surface"<<endl;
+
+	std::string ns=newShapeNoise(gtype);
+	//std::string vs=newDetailNoise(gtype);
+	a->setRNoiseFunction((char*)ns.c_str());
+	//a->setVNoiseFunction((char*)vs.c_str());
+
+	char nm[64];
+	sprintf(nm,"%s-Asteroid",TheScene->typeSymbol(gtype).c_str());
+	a->setName(nm);
+
+	a->get_vars();
+}
+void Asteroid::setColors(){
+    double hue,sat,val;
+    double f=1;                          // diffuse spread multiplier
+    Planetoid::ncolors=6;
+    Planetoid::mix=Color(0,0,0);
+
+    switch(terrain_type){
+    default:
+    case GN_ROCKY:
+        hue=0.04+0.06*r[3];
+        sat=0.25+0.20*s[4];
+        val=0.22+0.18*s[5];              // low albedo: real asteroids are dark
+        f=1.0;
+        break;
+    case GN_ICY:
+        hue=0.55+0.10*s[3];
+        sat=0.10+0.15*s[4];              // desaturated, not saturated blue
+        val=0.70+0.20*s[5];
+        Planetoid::mix=Color(0.7,0.9,1.0);
+        f=0.7;
+        break;
+    case GN_METALLIC:
+        hue=0.08+0.04*s[3];              // faint warm cast
+        sat=0.05+0.10*s[4];              // near-neutral
+        val=0.42+0.16*s[5];
+        f=0.35;                          // tight diffuse range - reads as metal
+        break;
+    }
+    double d1=0.3+0.2*s[6];
+    double l1=0.3+0.1*s[7];
+    double d2=0.3+0.3*s[8];
+    double l2=0.3+0.3*s[9];
+
+    Planetoid::tc=Color::HSVtoRGB(hue,sat,val);
+    Color tc=Planetoid::tc;
+    Planetoid::colors[0]=Planetoid::mix;
+    Planetoid::colors[1]=tc.darken(f*d1);
+    Planetoid::colors[2]=tc.lighten(f*l1);
+    Planetoid::colors[3]=tc;
+    Planetoid::colors[4]=tc.darken(f*d2);
+    Planetoid::colors[5]=tc.lighten(f*l2);
+}
+
+//-------------------------------------------------------------
+// Asteroid::holeProbe()
+// Diagnose why the pixel at (sx,sy) shows a hole.
+//-------------------------------------------------------------
+void Asteroid::holeProbe(double sx, double sy)
+{
+    if (!tree || !tree->root) { cout << "holeProbe: no tree" << endl; return; }
+
+    double scale = 2.0 * size;                 // world = template * scale
+    int vpw = TheView->viewport[2];
+    int vph = TheView->viewport[3];
+
+    // --- build pick ray via savedInvMVP (same convention as the mesh draw:
+    //     vertices are drawn at template*scale - xpoint, so unprojected points
+    //     are eye-relative; add xpoint to get asteroid-centered world) --------
+    double nx = 2.0 * sx / vpw - 1.0;
+    double ny = 2.0 * (vph - sy) / vph - 1.0;  // selp is top-origin
+
+    auto unproj = [&](double nz, Point& out) -> bool {
+        const GLdouble* m = savedInvMVP;       // column-major (OpenGL)
+        double x = m[0]*nx + m[4]*ny + m[8]*nz  + m[12];
+        double y = m[1]*nx + m[5]*ny + m[9]*nz  + m[13];
+        double z = m[2]*nx + m[6]*ny + m[10]*nz + m[14];
+        double w = m[3]*nx + m[7]*ny + m[11]*nz + m[15];
+        if (fabs(w) < 1e-20) return false;
+        out = Point(x/w, y/w, z/w);
+        return true;
+    };
+    Point pn, pf;
+    if (!unproj(-1.0, pn) || !unproj(1.0, pf)) { cout << "holeProbe: bad InvMVP" << endl; return; }
+
+    Point o_w  = pn + TheScene->xpoint;        // asteroid-centered world
+    Point f_w  = pf + TheScene->xpoint;
+    Point o_t  = o_w / scale;                  // template space ([-1,1], surface ~0.5)
+    Point d_t  = (f_w - o_w);
+    double dl  = d_t.length();
+    if (dl < 1e-20) { cout << "holeProbe: degenerate ray" << endl; return; }
+    d_t = d_t / dl;
+
+    cout << "\n=== HOLE PROBE @ pixel(" << sx << "," << sy << ") maxDepth=" << maxDepth << " ===" << endl;
+    cout << "ray(template)  o=(" << o_t.x << "," << o_t.y << "," << o_t.z
+         << ")  d=(" << d_t.x << "," << d_t.y << "," << d_t.z << ")" << endl;
+
+    // --- march the REAL field along the ray (same rseed context as adapt) ---
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    Td.level = 0;                              // match checkSurface conditions
+    SurfaceFunction& f = tree->field;
+
+    double cellT   = 2.0 / (double)(1 << maxDepth);   // leaf cell size, template units
+    double step    = cellT / 8.0;
+    double tmax    = 4.0;                              // whole tree diameter + margin
+    double prev    = f(o_t.x, o_t.y, o_t.z);
+    double tHit    = -1.0;
+    for (double t = step; t <= tmax; t += step) {
+        Point p = o_t + d_t * t;
+        double v = f(p.x, p.y, p.z);
+        if (prev > 0.0 && v <= 0.0) {                  // outside -> inside
+            double a = t - step, b = t;
+            for (int i = 0; i < 40; i++) {
+                double m2 = 0.5 * (a + b);
+                Point pm = o_t + d_t * m2;
+                if (f(pm.x, pm.y, pm.z) <= 0.0) b = m2; else a = m2;
+            }
+            tHit = 0.5 * (a + b);
+            break;
+        }
+        prev = v;
+    }
+    if (tHit < 0.0) {
+        cout << "field: NO surface along this ray -> not a mesh hole, the field"
+                " genuinely has a gap here (or the ray/unproject is off)." << endl;
+        TheNoise.rseed = seed;
+        return;
+    }
+    Point P_t = o_t + d_t * tHit;                      // true surface point, template
+    Point P_w = P_t * scale;                           // world (tree node space)
+    cout << "field: TRUE surface at t=" << tHit << "  P(template)=("
+         << P_t.x << "," << P_t.y << "," << P_t.z << ")" << endl;
+
+    // --- descend the octree by point location, print each node --------------
+    MCObjNode* n = tree->root;
+    MCObjNode* leaf = nullptr;
+    while (n) {
+        cout << "  depth=" << n->depth
+             << " size=" << n->size
+             << " leaf=" << n->isLeaf()
+             << " surfChecked=" << n->surfaceChecked
+             << " surfPresent=" << n->surfacePresent
+             << " meshValid=" << n->meshValid
+             << " tris=" << n->mesh.size()
+             << " vis=" << n->nodeVisible << "/" << n->nodeMasked
+             << endl;
+        if (n->isLeaf()) { leaf = n; break; }
+        int ci = (P_w.x > n->center.x ? 1 : 0)
+               | (P_w.y > n->center.y ? 2 : 0)
+               | (P_w.z > n->center.z ? 4 : 0);
+        if (!n->children[ci]) {
+            cout << "  !! child " << ci << " is NULL at depth " << n->depth
+                 << " — partial split, structural bug" << endl;
+            leaf = n; break;
+        }
+        n = n->children[ci];
+    }
+    if (!leaf) { TheNoise.rseed = seed; return; }
+
+    // --- verdict checks on the terminal node ---------------------------------
+    Point corners[8];
+    leaf->getCorners(corners, tree->center, tree->radius);
+
+    // (a) cached corner values vs FRESH evaluation — detects field inconsistency
+    double worstDrift = 0; int drifts = 0;
+    for (int i = 0; i < 8; i++) {
+        if (!leaf->cornersEvaluated[i]) continue;
+        double fresh = f(corners[i].x, corners[i].y, corners[i].z);
+        double d = fabs(fresh - leaf->cornerValues[i]);
+        if (d > 1e-9) { drifts++; if (d > worstDrift) worstDrift = d; }
+    }
+    if (drifts)
+        cout << "  !! CORNER CACHE DRIFT: " << drifts << " corners differ from fresh"
+                " field eval, worst delta=" << worstDrift
+             << "  -> field is NOT consistent across evaluations (global noise state)" << endl;
+    else
+        cout << "  corner cache consistent with fresh field evals" << endl;
+
+    // (b) dense 9^3 ground truth for this node
+    double mn = 1e30, mx = -1e30;
+    for (int ix = 0; ix <= 8; ix++)
+    for (int iy = 0; iy <= 8; iy++)
+    for (int iz = 0; iz <= 8; iz++) {
+        double x = corners[0].x + (corners[7].x - corners[0].x) * ix / 8.0;
+        double y = corners[0].y + (corners[7].y - corners[0].y) * iy / 8.0;
+        double z = corners[0].z + (corners[7].z - corners[0].z) * iz / 8.0;
+        double v = f(x, y, z);
+        mn = std::min(mn, v); mx = std::max(mx, v);
+    }
+    bool denseSurface = (mn <= 0.0 && mx >= 0.0);
+    cout << "  dense 9^3: min=" << mn << " max=" << mx
+         << (denseSurface ? "  -> SURFACE PRESENT" : "  -> no surface") << endl;
+
+    // (c) corner sign summary (what single-cube MC sees)
+    int inside = 0;
+    for (int i = 0; i < 8; i++) {
+        double v = leaf->cornersEvaluated[i] ? leaf->cornerValues[i]
+                                             : f(corners[i].x, corners[i].y, corners[i].z);
+        if (v < 0.0) inside++;
+    }
+    cout << "  corner signs: " << inside << "/8 inside"
+         << (inside == 0 || inside == 8 ? "  -> uniform: single-cube MC emits NOTHING" : "") << endl;
+
+    // (d) if the leaf has triangles, does the pick ray actually hit them?
+    if (!leaf->mesh.empty()) {
+        Point hitL;
+        // raycastLeaf expects origin/dir in the same space as tri.vertices
+        bool hit = tree->raycastLeaf(leaf, o_t, d_t, hitL);
+        cout << "  leaf mesh: " << leaf->mesh.size() << " tris, pick ray "
+             << (hit ? "HITS them -> hole is DOWNSTREAM (applyAttributes/VBO/shader)"
+                     : "MISSES them -> partial coverage within cell") << endl;
+    }
+
+    // --- final verdict --------------------------------------------------------
+    if (leaf->surfaceChecked && !leaf->surfacePresent && denseSurface)
+        cout << ">> VERDICT: checkSurface FALSE NEGATIVE at depth " << leaf->depth
+             << (drifts ? " (caused by field inconsistency)" : " (sampling miss)") << endl;
+    else if (leaf->isLeaf() && leaf->surfacePresent && leaf->mesh.empty())
+        cout << ">> VERDICT: MC corner miss — leaf knows surface is present but"
+                " emitted no triangles" << endl;
+    else if (!leaf->mesh.empty())
+        cout << ">> VERDICT: CPU mesh covers this point — investigate"
+                " applyAttributes/buildVBO/render" << endl;
+
+    TheNoise.rseed = seed;
+    cout << "=== END PROBE ===\n" << endl;
+}
+
 //************************************************************
 // Shell class
 //************************************************************

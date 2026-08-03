@@ -1299,7 +1299,7 @@ int TNplant::getChildren(LinkedList<NodeIF*>&l){
 
 void TNplant::setScale(){
 	//dfactor=draw_scale;
-	switch(TheScene->generate_quality){
+	switch(TheScene->render_quality){
 	case DRAFT:
 		min_draw_width=base_draw_width*1.5;
 		break;

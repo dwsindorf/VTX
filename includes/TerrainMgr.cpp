@@ -1164,7 +1164,7 @@ TerrainMgr::~TerrainMgr()
 		delete root;
 	root=0;
 	//Td.init();
-	Td.properties.free();
+	//Td.properties.free();
 }
 
 TNroot::~TNroot()

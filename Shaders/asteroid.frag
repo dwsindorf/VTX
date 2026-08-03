@@ -106,14 +106,18 @@ vec4 setLighting(vec3 BaseColor, vec3 normal) {
 void main() {
 #ifdef COLOR
     vec4 color = Color;
+    float calpha = color.a;
 #else
     vec4 color = vec4(1.0);
+    float calpha = 0.0; 
 #endif
+    vec3  baseRGB = color.rgb;
     vec3 normal = normalize(Normal);
     bump = vec3(0.0);
 
 #if NTEXS > 0
 #include "set_tex.frag"
+    color.rgb = mix(color.rgb, baseRGB, calpha);
 #endif
 
 #if NBUMPS > 0

@@ -838,9 +838,9 @@ void VtxSceneDialog::replaceSelected(NodeIF *newobj){
 		// unchanged views, so set_frame() would restore a stale frame whose
 		// vobj still points at the old (about to be deleted) object
 		TheScene->views->free();
-		TheScene->views->add(TheScene);
 		if(TheScene->vobj==(ObjectNode*)oldobj)
-			TheScene->vobj=TheScene->viewobj;
+		    TheScene->vobj=TheScene->viewobj;
+		TheScene->views->add(TheScene);
 		delete oldobj;             // old subtree is fully detached - reclaim it
 	}
     rebuildObjectTree();

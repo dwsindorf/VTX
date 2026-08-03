@@ -408,7 +408,7 @@ private:
 	    float normal[3]; 
 	    float templatePos[4];
 	    float faceNormal[4];
-	    float color[3];
+	    float color[4];
 	};
 	SurfaceFunction makeField();  // Create field from rnoise expression
 	void rebuildTree();
@@ -448,6 +448,7 @@ public:
 	bool shadow_start;
 	double minHeight;
 	bool   jumpSeed;   // true from move_focus() until adapt_object() rebuilds at the new spot
+	int  terrain_type;
 	Asteroid(Orbital *m, double s, double r);
 	~Asteroid();
 	const char *name()			{ return "Asteroid";}
@@ -481,6 +482,9 @@ public:
 	void  select();
 	void init_render();
 	NodeIF *getInstance(NodeIF *prev,int type);
+	void newInstance(int gtype);
+	void setColors();
+	static void newAsteroid(Asteroid *,int gtype);
 };
 //************************************************************
 // Star class
@@ -858,8 +862,6 @@ public:
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
 	virtual TNplants *newPlants(int g);
-
-	
 };
 
 //************************************************************

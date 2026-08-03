@@ -360,7 +360,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 	wxStaticBoxSizer* modulation = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Modulation"));
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
-	hline->Add(new wxStaticText(panel, -1, "Color", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
+	hline->Add(new wxStaticText(panel, -1, "Coords", wxDefaultPosition, wxSize(50,-1)),5,wxALIGN_LEFT|wxTOP,5);
 
 	//wxStaticBoxSizer* ampl_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Color"));
 	m_amp_expr = new ExprTextCtrl(panel,ID_AMP_EXPR,"",10,LINE_WIDTH-60);
@@ -370,7 +370,7 @@ void VtxTexTabs::AddFilterTab(wxWindow *panel) {
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 
-	hline->Add(new wxStaticText(panel, -1, "Alpha", wxDefaultPosition, wxSize(40,-1)),5,wxALIGN_LEFT|wxTOP,5);
+	hline->Add(new wxStaticText(panel, -1, "Alpha", wxDefaultPosition, wxSize(50,-1)),5,wxALIGN_LEFT|wxTOP,5);
 
 	//wxStaticBoxSizer* alpha_controls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Alpha"));
 	m_alpha_expr = new ExprTextCtrl(panel,ID_ALPHA_EXPR,"",10,LINE_WIDTH-60);
