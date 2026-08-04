@@ -4950,7 +4950,7 @@ void Planetoid::setColors(){
 	double l1=0.3+0.1*s[7];
 	double d2=0.3+0.3*s[8];
 	double l2=0.3+0.3*s[9];
-	if(terrain_type!=GN_ICY && use_theme>0.95){
+	if(gen_type!=GN_ICY && use_theme>0.95){
 		int index=(int)THEMES*r[8];
 		ncolors=4;
 		for(int i=0;i<ncolors;i++){
@@ -4969,7 +4969,7 @@ void Planetoid::setColors(){
 		mix=Color(0,0,0);
 		double hue,sat,val;
         //cout<< UniverseModel::typeSymbol(terrain_type).c_str();
-		switch(terrain_type){
+		switch(gen_type){
 		default:
 			hue=0.2+0.2*s[3];
 			sat=0.3+0.2*s[4];
@@ -5025,12 +5025,18 @@ void Planetoid::setColors(){
 			break;
 		case GN_ROCKY:
 			hue=0.05+0.1*r[3];
-			sat=0.4+0.3*s[4];
+			sat=0.6+0.3*s[4];
 			val=0.4+0.3*s[5];
 			break;
+	    case GN_METALLIC:
+	        hue=0.08+0.04*s[3];              // faint warm cast
+	        sat=0.7+0.10*s[4];
+	        val=0.42+0.16*s[5];
+	        f=0.9;
+	        break;
 		}
 #ifdef DEBUG_GENERATE
-		cout<<TheScene->typeSymbol(terrain_type).c_str()<<" H:"<<hue<<" S:"<<sat<<" V:"<<" "<<val<<endl;
+		cout<<TheScene->typeSymbol(gen_type).c_str()<<" H:"<<hue<<" S:"<<sat<<" V:"<<" "<<val<<endl;
 #endif
 		//Color tv=Color(base+0.1*r[3],0.5+0.2*r[4],0.5+0.3*r[5]);
 		//Color tm =Color(base+0.2*s[3]+0.2,0.5+0.2*s[4],0.5+0.3*s[5]);
@@ -5070,28 +5076,8 @@ void Planetoid::setColors(){
 	}
 	cout<<endl;
 #endif
-
-
 }
 
-void Planetoid::setIceColors(){
-	// bands("neptune",ACHNL,64,0.14286,0.19354,Color(1,1,1,0.192),Color(0.031,0.216,0.251),
-	//Color(0.012,0.38,0.522),Color(0.769,0.933,0.973),Color(1,1,1));
-	colors[0]=Color(0.031,0.216,0.251);
-	colors[1]=Color(0.012,0.38,0.522);
-	colors[2]=Color(0.6,0.8,1);
-	colors[3]=Color(1,1,1);
-	ncolors=4;
-	for(int i=0;i<3;i++){
-		tc=colors[i];
-		tc.set_red(tc.red()+0.2*s[i]);
-		tc.set_green(tc.green()+0.2*s[i+1]);
-		tc.set_blue(tc.blue()+0.2*s[i+2]);
-		colors[i]=tc;
-	}
-	//cout<<"setIceColors "<<endl;
-
-}
 //-------------------------------------------------------------
 // Planetoid::randFeature() return text or random feature
 //-------------------------------------------------------------
@@ -5770,7 +5756,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 			gtype=GN_LARGE;
 	}
 	Nrocks=true;
-	planet->setColors();
+	Planetoid::setColors();
 	char buff[4096];
 	double size=1e-6;
 	int tex_1d_scale=16;
@@ -5835,7 +5821,7 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 
 	Nscale=pow(2,16);
 	pushInstance(planet);
-	planet->setColors();
+	Planetoid::setColors();
 
 	str+=newSurfaceBands(planet);
 	str+="+";
@@ -5926,7 +5912,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 	//cout<<"new Layer "<<layer_cnt<<endl;
 	std::string str;
 	pushInstance(planet);
-	planet->setColors();
+	Planetoid::setColors();
 	tcount=0;
 	layer_cnt++;
 	Lbias=0.05;
@@ -5965,7 +5951,7 @@ std::string Planetoid::newLayer(Planetoid *planet){
 		str+=newDualGlobalTex(planet);
 		str+="+";
 		tcount=1;
-		planet->setColors();
+		Planetoid::setColors();
 		str+=newDualGlobalTex(planet);
 	}
 	for(tcount=-1;tcount<2;tcount+=2){
@@ -6143,7 +6129,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	planet->terrain_type=GN_GASSY;
 	gen_type=GN_GASSY;
-	planet->setColors();
+	Planetoid::setColors();
 	keep_rands=true;
 
 	char buff[4096];
@@ -6273,8 +6259,12 @@ void Moon::set_tilt()
 //************************************************************
 static std::string newAsteroidColor(int gtype){
 	char buff[256];
-	Color c=Planetoid::colors[3];
-	sprintf(buff,"Color(%1.3f,%1.3f,%1.3f,0.0)",c.red(),c.green(),c.blue());
+	Color c=Planetoid::colors[4];
+	Nscale=0;
+	Ampl=1.0;
+	std::string str=rndSurfaceNoise(Planetoid::r[10]);
+	sprintf(buff,"Color(%1.3f,%1.3f,%1.3f,%s)",c.red(),c.green(),c.blue(),str.c_str());
+
 	return std::string(buff);
 }
 
@@ -6290,7 +6280,6 @@ static std::string newAsteroidBands(Asteroid *a,int gtype){
 	char buff[1024];
 	sprintf(buff,"Texture(%s,A|NORM|LINEAR|TEX,0,0.5,2,1,0,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)\n",
 		Planetoid::randFeature(RND_TEXNAME).c_str(),
-		//Planetoid::randFeature(RND_TEX_NOISE).c_str(),
 		0.0,                                    // phi bias - meaningless on a solid body
 		0.0,                 // ht bias
 		0.1*(1+0.5*NodeIF::s[9]),              // bmp bias
@@ -6303,16 +6292,16 @@ static std::string newShapeNoise(int gtype){          // -> noise.expr, drives m
 	switch(gtype){
 	case GN_ICY:        // smoother, rounder - ice relaxes
 		sprintf(buff,"noise(GRADIENT|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
-			10+2*NodeIF::r[1],0.6+0.2*NodeIF::s[2],0.55+0.10*NodeIF::s[3],1.8+0.3*NodeIF::s[4]);
+			13+2*NodeIF::r[1],0.6+0.2*NodeIF::s[2],0.55+0.10*NodeIF::s[3],1.8+0.3*NodeIF::s[4]);
 		break;
 	case GN_METALLIC:   // angular core fragments - fewer orders, harder falloff
 		sprintf(buff,"noise(GRADIENT|SQR|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
-			8+2*NodeIF::r[1],0.3+0.2*NodeIF::s[2],0.40+0.10*NodeIF::s[3],2.4+0.4*NodeIF::s[4]);
+			13+2*NodeIF::r[1],0.3+0.2*NodeIF::s[2],0.40+0.10*NodeIF::s[3],2.4+0.4*NodeIF::s[4]);
 		break;
 	default:
 	case GN_ROCKY:
 		sprintf(buff,"noise(GRADIENT|NLOD,0,%1.0f,%1.2f,%1.2f,%1.2f,1,4)",
-			12+3*NodeIF::r[1],0.4+0.2*NodeIF::s[2],0.50+0.10*NodeIF::s[3],2.0+0.4*NodeIF::s[4]);
+			13+3*NodeIF::r[1],0.4+0.2*NodeIF::s[2],0.50+0.10*NodeIF::s[3],2.0+0.4*NodeIF::s[4]);
 		break;
 	}
 	return TNnoise::randomize(buff,0.3,0.0);
@@ -7328,6 +7317,8 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
     bool setVertexColor = (color && color->isEnabled());
     bool doDisplace = vnoise;
     if(!setVertexColor  && !doDisplace) return;
+    double hs=Hscale;
+    Hscale=0;
 
     for(auto& tri : mesh){
         for(int v=0; v<3; v++){
@@ -7356,6 +7347,8 @@ void Asteroid::applyAttributes(std::vector<MCTriangle>& mesh){
             }
         }
     }
+	Hscale=hs;
+
 }
 
 //-------------------------------------------------------------
@@ -7660,7 +7653,7 @@ void Asteroid::newInstance(int gtype){
 void Asteroid::newAsteroid(Asteroid *a,int gtype){
 	a->terrain_type=gtype;
 	gen_type=gtype;
-	a->setColors();
+	Planetoid::setColors();
 	Nscale=20;
 	Nrocks=true;
 	std::string str;
@@ -7682,57 +7675,17 @@ void Asteroid::newAsteroid(Asteroid *a,int gtype){
 		cout<<"error building asteroid surface"<<endl;
 
 	std::string ns=newShapeNoise(gtype);
-	//std::string vs=newDetailNoise(gtype);
 	a->setRNoiseFunction((char*)ns.c_str());
-	//a->setVNoiseFunction((char*)vs.c_str());
+	if(r[8]>0.7){
+		std::string vs=newDetailNoise(gtype);
+		a->setVNoiseFunction((char*)vs.c_str());
+	}
 
 	char nm[64];
 	sprintf(nm,"%s-Asteroid",TheScene->typeSymbol(gtype).c_str());
 	a->setName(nm);
 
 	a->get_vars();
-}
-void Asteroid::setColors(){
-    double hue,sat,val;
-    double f=1;                          // diffuse spread multiplier
-    Planetoid::ncolors=6;
-    Planetoid::mix=Color(0,0,0);
-
-    switch(terrain_type){
-    default:
-    case GN_ROCKY:
-        hue=0.04+0.06*r[3];
-        sat=0.25+0.20*s[4];
-        val=0.22+0.18*s[5];              // low albedo: real asteroids are dark
-        f=1.0;
-        break;
-    case GN_ICY:
-        hue=0.55+0.10*s[3];
-        sat=0.10+0.15*s[4];              // desaturated, not saturated blue
-        val=0.70+0.20*s[5];
-        Planetoid::mix=Color(0.7,0.9,1.0);
-        f=0.7;
-        break;
-    case GN_METALLIC:
-        hue=0.08+0.04*s[3];              // faint warm cast
-        sat=0.05+0.10*s[4];              // near-neutral
-        val=0.42+0.16*s[5];
-        f=0.35;                          // tight diffuse range - reads as metal
-        break;
-    }
-    double d1=0.3+0.2*s[6];
-    double l1=0.3+0.1*s[7];
-    double d2=0.3+0.3*s[8];
-    double l2=0.3+0.3*s[9];
-
-    Planetoid::tc=Color::HSVtoRGB(hue,sat,val);
-    Color tc=Planetoid::tc;
-    Planetoid::colors[0]=Planetoid::mix;
-    Planetoid::colors[1]=tc.darken(f*d1);
-    Planetoid::colors[2]=tc.lighten(f*l1);
-    Planetoid::colors[3]=tc;
-    Planetoid::colors[4]=tc.darken(f*d2);
-    Planetoid::colors[5]=tc.lighten(f*l2);
 }
 
 //-------------------------------------------------------------

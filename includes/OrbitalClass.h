@@ -483,7 +483,6 @@ public:
 	void init_render();
 	NodeIF *getInstance(NodeIF *prev,int type);
 	void newInstance(int gtype);
-	void setColors();
 	static void newAsteroid(Asteroid *,int gtype);
 };
 //************************************************************
@@ -852,11 +851,8 @@ public:
     static void pushInstance(Planetoid *);
     static void popInstance(Planetoid *);
     static void makeLists();
-	void setColors();
+	static void setColors();
 	void initInstance();
-	
-	void setIceColors();
-
 	virtual Sky *newSky(int g);
 	virtual Sky *newSky() {return newSky(0);}
 	virtual Ring *newRing();
