@@ -436,7 +436,10 @@ private:
 	GLdouble savedInvMVP[16]; // inverse MVP for unproject in set_focus()
 
 	void holeProbe(double sx, double sy);
+
 public:
+	void holeScan(int flags = 0, int maxReport = 20);
+	void meshSpaceCheck(int nLeaves = 6);
 	LinkedList<NodeIF *> texs;
 	TNode   *vnoise;
 	TNode   *rnoise;

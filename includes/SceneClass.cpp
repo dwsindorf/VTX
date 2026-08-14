@@ -1668,9 +1668,8 @@ void Scene::change_view(int v)
 //	if(focusobj && focusobj->type()==ID_GALAXY){
 //		v=GLOBAL;
 //	}
-    if(viewtype!=v){
+    if(viewtype!=v)
         set_changed_view();
-    }
     else
         clr_changed_view();
     reset_stride();

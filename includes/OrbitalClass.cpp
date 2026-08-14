@@ -32,9 +32,17 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_COLORS
 //#define PRINT_ASTEROID_STATS
 //#define DEBUG_HOLE_PROBE
+//#define DEBUG_HOLE_SCAN
 #define USE_IDTABLE
 
 static int debug_temp=DEBUG_TEMP;
+
+// holeScan() flags
+#define HS_RESCUE       0x01   // re-mesh flagged cells now
+#define HS_DEEP         0x02   // sample face interiors in the coverage pass
+#define HS_UNCONFIRMED  0x04   // also list cells the dense resample rejected
+#define HS_HIDDEN       0x08   // also list holes that are occluded / on the far side
+
 
 extern const char *pstg[];
 
@@ -6468,7 +6476,7 @@ void Asteroid::init(){
 void Asteroid::init_view(){
 	// Let Spheroid::init_view() set minh, maxht, zoom, strides etc.
 	Spheroid::init_view();
-	TheScene->minh=1*MILES;
+	TheScene->minh=0.5*MILES;
 
 	if(TheScene->changed_file())
 		return;  // init() already set surfaceR from saved gndlvl
@@ -6483,7 +6491,7 @@ void Asteroid::init_view(){
 		TheScene->height    = 200*MILES;
 	}
 	else{
-		TheScene->height=size * (3.0 + 2*max_height());
+		TheScene->height=size * (4.0 + 2*max_height());
 	}
 	//if(TheScene->changed_view())
 	//	MCGenerator::maxDistance=0;
@@ -6555,8 +6563,19 @@ void Asteroid::move_focus(Point &selm)
 	TheScene->clr_moved();  	     // don't need new gndlvl from Map.set_scene
 	TheScene->set_changed_detail();  // but still need to turn on Map.adapt
 
-	if(dh>0)
-		ht=0.25*dh; // move closer
+	// Scene::change_view() sets changed_position() before calling us -- that is
+	// the "goto" button. Scene::move_selected() explicitly CLEARS it before
+	// calling us -- that is dragging the marker. Only a goto may change the
+	// camera distance, and in ORBITAL it must not close in at all: that is the
+	// SURFACE goto's job. Using the same standoff as init_view() also makes
+	// repeated orbital gotos idempotent instead of creeping closer each press.
+	if(TheScene->viewtype==ORBITAL){
+		if(TheScene->changed_position())
+			ht=size*(4.0 + 2*max_height());
+		// else keep curht -- a marker drag must not zoom either
+	}
+	else if(dh>0)
+		ht=0.25*dh; // surface goto: move closer
 
 	ht=ht<minht?minht:ht;
 	TheScene->height=ht;
@@ -6971,6 +6990,8 @@ void Asteroid::adapt_object(){
 		MCGenerator::csi_hole_patch_threshold=6;
 	}
 
+	MCGenerator::csi_margin_minPixels = detail * 1.33;
+
     // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
     // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
     // doesn't find stale MapNode* pointers from a previous planet/moon adapt
@@ -7085,8 +7106,10 @@ void Asteroid::render_object(){
     // Capture the render-frame inverse MVP for use in get_focus().
     // get_focus() runs during GL_SELECT where the matrix state is a pick
     // matrix — we need the proper perspective matrix for correct unprojection.
-    if(!TheScene->buffers_mode())
+    if(!TheScene->buffers_mode()){
         memcpy(savedInvMVP, TheScene->InvModelViewProjMatrix.values(), 16*sizeof(GLdouble));
+        memcpy(savedMVP,    TheScene->ModelViewProjMatrix.values(),    16*sizeof(GLdouble));
+    }
 
     Hscale = hscale;
     Rscale = size * hscale;
@@ -7109,6 +7132,11 @@ void Asteroid::render_object(){
                     holeProbe(TheScene->selp.x, TheScene->selp.y);
             }
         }
+    #endif
+    #ifdef DEBUG_HOLE_SCAN
+        static int scanned = 0;
+        if (TheScene->viewobj == this && !vboDirty && scanned++ < 1)
+            holeScan(HS_DEEP);
     #endif
     glPushAttrib(GL_ALL_ATTRIB_BITS);
 
@@ -7643,7 +7671,7 @@ void Asteroid::newInstance(int gtype){
 
 	cout<<"Asteroid::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<" s:"<<size<<endl;
 	newAsteroid(this,gtype);
-	hscale    = 0.80+0.30*s[4];
+	hscale    = 0.60+0.30*s[4];
 
 	symmetry=0.5+0.5*r[6];
 	set_geometry();
@@ -7687,11 +7715,739 @@ void Asteroid::newAsteroid(Asteroid *a,int gtype){
 
 	a->get_vars();
 }
+//=============================================================================
+// Asteroid::holeScan() — revision 2
+//
+// Changes from rev 1, all driven by the first scan's output:
+//
+//  * CONFIRMATION GATE. Rev 1 flagged 217 cells, of which only 74 survived
+//    the dense resample. The 143 false positives all came from rim edges
+//    belonging to COARSE leaves ("from depth 3/4"): a rim edge is a straight
+//    chord between two isosurface points, and across a coarse cell that
+//    chord's midpoint can sit deep inside solid or well outside it. Stepping
+//    across the face from there lands in a cell that has no business being
+//    called a hole. Every "(from depth 7)" line was confirmed; every
+//    "(from depth 3/4)" line was not. So: report only confirmed cells, and
+//    additionally reject a rim edge whose midpoint is not near the isosurface
+//    to begin with, which kills the false positives at the source.
+//
+//  * "LOD cracks=115532" was mislabelled. A rim edge continued by geometry in
+//    the neighbour is the NORMAL case, not a crack — that number was just
+//    "correctly continued", which is why it was 99.7% of all rim edges.
+//    True T-junctions (continued, but by a neighbour at a different depth)
+//    are now counted separately.
+//
+//  * COVERAGE PASS (new, the important one). Rev 1 only inspected EMPTY
+//    neighbours, so it structurally could not see the hole you clicked: that
+//    leaf has one triangle, not zero. A cell can be meshed and still be
+//    mostly hole. The new pass asks, for every meshed leaf and every one of
+//    its six faces: does the isosurface cross this face, and does the mesh
+//    have a vertex on it? MC vertices lie on cube edges, so a triangle
+//    reaching a face always puts two vertices on it — "surface crosses, no
+//    vertex there" is an exact test for a mesh that stops short.
+//
+//  * Reports nodeVisible/nodeMasked and projectedSize per cell, and sorts by
+//    projected size, so the holes you can actually see come out first.
+//  REV 3: adds an occlusion test. Rev 2 sorted by projectedSize, which does
+//  not separate a hole you can see from one on the far side -- a depth-2 cell
+//  behind the asteroid projects to 111px just the same. holeScan now marches
+//  the field from each hole to the camera and only lists the ones nothing is
+//  blocking. Add HS_HIDDEN to see the rest.
+//=============================================================================
 
-//-------------------------------------------------------------
-// Asteroid::holeProbe()
-// Diagnose why the pixel at (sx,sy) shows a hole.
-//-------------------------------------------------------------
+#include <cstring>   // memcpy — <map>/<vector> already in scope via MCObjects.h
+
+// Geometry tolerances for the face tests, in fractions of a cell width.
+// See meshSpaceCheck(): leaf->mesh and getCorners() currently disagree by
+// about 5e-4 cell widths, so these have to be well above that.
+#define MCHOLE_FACE_TOL   0.02
+#define MCHOLE_PROBE_OFF  0.05
+
+// HS_* flags live at the top of this file so the call site in render_object()
+// can see them.
+
+namespace {
+
+struct MCVKey {
+    unsigned long long a, b, c;
+    bool operator<(const MCVKey& o) const {
+        if (a != o.a) return a < o.a;
+        if (b != o.b) return b < o.b;
+        return c < o.c;
+    }
+};
+static MCVKey mcVKey(const Point& p)
+{
+    MCVKey k;
+    double x = p.x, y = p.y, z = p.z;
+    memcpy(&k.a, &x, sizeof(double));
+    memcpy(&k.b, &y, sizeof(double));
+    memcpy(&k.c, &z, sizeof(double));
+    return k;
+}
+struct MCEKey {
+    MCVKey v0, v1;
+    bool operator<(const MCEKey& o) const {
+        if (v0 < o.v0) return true;
+        if (o.v0 < v0) return false;
+        return v1 < o.v1;
+    }
+};
+static MCEKey mcEKey(const Point& p, const Point& q)
+{
+    MCVKey a = mcVKey(p), b = mcVKey(q);
+    MCEKey e;
+    if (b < a) { e.v0 = b; e.v1 = a; } else { e.v0 = a; e.v1 = b; }
+    return e;
+}
+
+static void collectAllLeaves(MCObjNode* n, std::vector<MCObjNode*>& out)
+{
+    if (!n) return;
+    if (n->isLeaf()) { out.push_back(n); return; }
+    for (int i = 0; i < 8; i++)
+        if (n->children[i]) collectAllLeaves(n->children[i], out);
+}
+
+static MCObjNode* mcLocateLeaf(MCObjNode* n, const Point& p)
+{
+    if (!n) return 0;
+    while (!n->isLeaf()) {
+        int ci = (p.x > n->center.x ? 1 : 0)
+               | (p.y > n->center.y ? 2 : 0)
+               | (p.z > n->center.z ? 4 : 0);
+        if (!n->children[ci]) return n;
+        n = n->children[ci];
+    }
+    return n;
+}
+
+static void mcDenseRange(SurfaceFunction& f, const Point& lmin, const Point& lmax,
+                         int n, double& mn, double& mx)
+{
+    mn = 1e30; mx = -1e30;
+    for (int ix = 0; ix <= n; ix++)
+    for (int iy = 0; iy <= n; iy++)
+    for (int iz = 0; iz <= n; iz++) {
+        double x = lmin.x + (lmax.x - lmin.x) * ix / (double)n;
+        double y = lmin.y + (lmax.y - lmin.y) * iy / (double)n;
+        double z = lmin.z + (lmax.z - lmin.z) * iz / (double)n;
+        double v = f(x, y, z);
+        if (v < mn) mn = v;
+        if (v > mx) mx = v;
+    }
+}
+
+// Does the isosurface cross face `fa`, and if so how much of that face lies on
+// the minority side? "Open face" on its own says nothing about hole SIZE: a
+// face where the surface clips one corner is a sliver nobody will ever see,
+// while a face cut in half is a real opening. Returns the minority area
+// fraction (0 if the face is not crossed); its sqrt is the opening's linear
+// size as a fraction of the cell.
+// axis = fa>>1, side = fa&1 (0 = min face, 1 = max face)
+static double mcFaceOpenFrac(SurfaceFunction& f, const Point& lmin, const Point& lmax,
+                             int fa, int grid)
+{
+    int axis = fa >> 1, side = fa & 1;
+    int a1 = (axis + 1) % 3, a2 = (axis + 2) % 3;
+    double fixed = side ? lmax[axis] : lmin[axis];
+    double lo1 = lmin[a1], hi1 = lmax[a1];
+    double lo2 = lmin[a2], hi2 = lmax[a2];
+    int nIn = 0, nOut = 0;
+    for (int i = 0; i <= grid; i++)
+    for (int j = 0; j <= grid; j++) {
+        double c[3];
+        c[axis] = fixed;
+        c[a1]   = lo1 + (hi1 - lo1) * i / (double)grid;
+        c[a2]   = lo2 + (hi2 - lo2) * j / (double)grid;
+        double v = f(c[0], c[1], c[2]);
+        if (v <= 0.0) nIn++; else nOut++;
+    }
+    if (!nIn || !nOut) return 0.0;                 // face not crossed
+    int total = (grid + 1) * (grid + 1);
+    int minor = (nIn < nOut) ? nIn : nOut;
+    return (double)minor / (double)total;
+}
+
+// Project a local-space point to screen using the MVP captured at render time.
+// Mesh vertices are drawn at local*scale - xpoint, so match that convention.
+static bool mcProject(const GLdouble* m, const Point& localPos, double scale,
+                      const Point& xpoint, int vpw, int vph, int& sx, int& sy)
+{
+    Point v(localPos.x * scale - xpoint.x,
+            localPos.y * scale - xpoint.y,
+            localPos.z * scale - xpoint.z);
+    double x = m[0]*v.x + m[4]*v.y + m[8]*v.z  + m[12];
+    double y = m[1]*v.x + m[5]*v.y + m[9]*v.z  + m[13];
+    double w = m[3]*v.x + m[7]*v.y + m[11]*v.z + m[15];
+    if (w <= 1e-12) return false;                 // behind the eye
+    sx = (int)((x/w * 0.5 + 0.5) * vpw);
+    sy = (int)(vph - (y/w * 0.5 + 0.5) * vph);    // selp is top-origin
+    return (sx >= 0 && sy >= 0 && sx < vpw && sy < vph);
+}
+
+// Is the straight line from this cell to the camera blocked by solid?
+// Sorting by projectedSize alone is useless: a depth-2 cell on the FAR side
+// of the asteroid projects to 111px too. This marches the field from just
+// outside the cell to the camera and reports whether anything solid is in
+// the way, which folds back-facing, buried and occluded into one test.
+static bool mcOccluded(SurfaceFunction& f, const Point& from, const Point& cam,
+                       double cellSize)
+{
+    Point d = cam - from;
+    double L = d.length();
+    if (L < 1e-12) return false;
+    d = d / L;
+    double t0 = cellSize * 1.5;          // clear the cell itself first
+    if (t0 >= L) return false;
+    const int N = 200;                   // body is thick; coarse is fine
+    double step = (L - t0) / (double)N;
+    for (int i = 0; i <= N; i++) {
+        Point p = from + d * (t0 + step * i);
+        if (f(p.x, p.y, p.z) < 0.0) return true;
+    }
+    return false;
+}
+
+enum { HK_FALSE_NEG = 0, HK_MC_MISS, HK_UNMESHED, HK_PARTIAL, HK_UNKNOWN };
+static const char* hkName(int k)
+{
+    switch (k) {
+    case HK_FALSE_NEG: return "FALSE-NEG (checkSurface said empty)";
+    case HK_MC_MISS:   return "MC-MISS   (surface present, uniform corners)";
+    case HK_UNMESHED:  return "UNMESHED  (generateMesh never ran)";
+    case HK_PARTIAL:   return "PARTIAL   (meshed, but mesh stops short of a crossed face)";
+    }
+    return "UNKNOWN";
+}
+
+struct HoleRec {
+    MCObjNode* cell;
+    int    kind;
+    int    rimDepth;
+    int    rims;
+    int    openFaces;
+    double openFrac;     // minority area fraction of the worst open face
+    double holePx;       // estimated opening size on screen, in pixels
+    Point  at;
+    double dmin, dmax;
+    int    insideCorners;
+    bool   confirmed;
+    bool   visible;      // not blocked by solid on the way to the camera
+    bool   rescued;
+};
+
+} // anonymous namespace
+
+//=============================================================================
+// Asteroid::meshSpaceCheck()
+//
+// holeScan's whole geometry test rests on one assumption: a marching-cubes
+// vertex lies on a cube EDGE, therefore exactly on two of the cell's six face
+// planes. Both "continued" (pass 1) and faceHasVerts (pass 2) test for that,
+// and in a healthy tree essentially 100% of vertices satisfy it.
+//
+// When that assumption fails, both passes fail together in exactly the way the
+// last scan shows: rim edges match no face (continued collapses), and every
+// meshed leaf looks like it has an uncovered face (PARTIAL = 100% of leaves).
+//
+// This prints the actual numbers so the cause is visible rather than guessed.
+//=============================================================================
+void Asteroid::meshSpaceCheck(int nLeaves)
+{
+    if (!tree || !tree->root) { cout << "meshSpaceCheck: no tree" << endl; return; }
+
+    std::vector<MCObjNode*> leaves;
+    collectAllLeaves(tree->root, leaves);
+
+    cout << "\n=== MESH SPACE CHECK ===" << endl;
+    cout << "tree center(" << tree->center.x << "," << tree->center.y << ","
+         << tree->center.z << ")  radius=" << tree->radius << endl;
+
+    long long onFace = 0, onFaceLoose = 0, totalV = 0;
+    double    worstAll = 0.0;
+    double    scaleSum = 0.0, scaleMin = 1e30, scaleMax = -1e30;
+    long long scaleN = 0;
+    int shown = 0;
+
+    for (size_t i = 0; i < leaves.size(); i++) {
+        MCObjNode* L = leaves[i];
+        if (L->mesh.empty()) continue;
+
+        Point c[8];
+        L->getCorners(c, tree->center, tree->radius);
+        Point lmin = c[0], lmax = c[7];
+        double cs = lmax.x - lmin.x;
+        if (cs <= 0.0) continue;
+
+        Point vmin( 1e30,  1e30,  1e30);
+        Point vmax(-1e30, -1e30, -1e30);
+        double leafWorst = 0.0;
+
+        for (size_t t = 0; t < L->mesh.size(); t++)
+        for (int k = 0; k < 3; k++) {
+            Point p = L->mesh[t].vertices[k];
+            if (p.x < vmin.x) vmin.x = p.x;
+            if (p.x > vmax.x) vmax.x = p.x;
+            if (p.y < vmin.y) vmin.y = p.y;
+            if (p.y > vmax.y) vmax.y = p.y;
+            if (p.z < vmin.z) vmin.z = p.z;
+            if (p.z > vmax.z) vmax.z = p.z;
+
+            // distance to the nearest of the six face planes, in cell widths
+            double d = 1e30;
+            for (int a = 0; a < 3; a++) {
+                double da = fabs(p[a] - lmin[a]);
+                double db = fabs(p[a] - lmax[a]);
+                if (da < d) d = da;
+                if (db < d) d = db;
+            }
+            totalV++;
+            if (d <= cs * 1e-6) onFace++;
+            if (d <= cs * MCHOLE_FACE_TOL) onFaceLoose++;
+            if (d / cs > leafWorst) leafWorst = d / cs;
+
+            // Fit the mesh/cell scale from coordinates that should coincide
+            // with a face plane. A single consistent ratio means one global
+            // scale error -- i.e. objRadius differed when the mesh was built.
+            for (int a = 0; a < 3; a++) {
+                double bv = (fabs(p[a] - lmin[a]) < fabs(p[a] - lmax[a]))
+                          ? lmin[a] : lmax[a];
+                if (fabs(p[a] - bv) > cs * MCHOLE_FACE_TOL) continue;
+                if (fabs(bv) < 1e-12) continue;
+                double r = p[a] / bv;
+                scaleSum += r; scaleN++;
+                if (r < scaleMin) scaleMin = r;
+                if (r > scaleMax) scaleMax = r;
+            }
+        }
+        if (leafWorst > worstAll) worstAll = leafWorst;
+
+        if (shown < nLeaves) {
+            cout << "  leaf depth=" << L->depth << " tris=" << L->mesh.size()
+                 << " cellSize=" << cs << endl;
+            cout << "      cell  [" << lmin.x << "," << lmin.y << "," << lmin.z
+                 << "] .. [" << lmax.x << "," << lmax.y << "," << lmax.z << "]" << endl;
+            cout << "      mesh  [" << vmin.x << "," << vmin.y << "," << vmin.z
+                 << "] .. [" << vmax.x << "," << vmax.y << "," << vmax.z << "]" << endl;
+            cout << "      worst vertex-to-face distance = " << leafWorst
+                 << " cell widths"
+                 << (leafWorst < 1e-6 ? "   OK" : "   <-- MISMATCH") << endl;
+            // a pure scale error shows up as a constant ratio here
+            if (fabs(lmax.x) > 1e-30 && fabs(vmax.x) > 1e-30)
+                cout << "      mesh/cell extent ratio x=" << (vmax.x - vmin.x) / cs
+                     << " y=" << (vmax.y - vmin.y) / cs
+                     << " z=" << (vmax.z - vmin.z) / cs << endl;
+            shown++;
+        }
+    }
+
+    cout << "vertices exactly on a cell face: " << onFace << " / " << totalV;
+    if (totalV) cout << "  (" << (100.0 * onFace / totalV) << "%)";
+    cout << endl;
+    cout << "vertices within " << MCHOLE_FACE_TOL << " cell of a face: "
+         << onFaceLoose << " / " << totalV;
+    if (totalV) cout << "  (" << (100.0 * onFaceLoose / totalV) << "%)";
+    cout << endl;
+    if (scaleN) {
+        double sm = scaleSum / scaleN;
+        cout.precision(12);
+        cout << "fitted mesh/cell scale: " << sm
+             << "  [" << scaleMin << " .. " << scaleMax << "]"
+             << "  from " << scaleN << " samples" << endl;
+        cout << "  1 - scale = " << (1.0 - sm) << endl;
+        cout << "  tree->radius now = " << tree->radius
+             << "   implied radius when meshed = " << (tree->radius / sm) << endl;
+        cout.precision(6);
+    }
+    cout << "worst vertex-to-face distance overall: " << worstAll << " cell widths" << endl;
+    cout << "expected: ~100% on-face, worst ~0. Anything else means leaf->mesh and" << endl;
+    cout << "getCorners() no longer agree on a coordinate space." << endl;
+    cout << "=== END CHECK ===\n" << endl;
+}
+
+//-----------------------------------------------------------------------------
+void Asteroid::holeScan(int flags, int maxReport)
+{
+    if (!tree || !tree->root) { cout << "holeScan: no tree" << endl; return; }
+
+    bool rescue      = (flags & HS_RESCUE)      != 0;
+    bool deep        = (flags & HS_DEEP)        != 0;
+    bool showUnconf  = (flags & HS_UNCONFIRMED) != 0;
+    bool showHidden  = (flags & HS_HIDDEN)      != 0;
+
+    // camera in local template space, same convention as the mesh vertices
+    Point camL = (TheScene->xpoint - tree->center) / tree->radius;
+
+    int seed = TheNoise.rseed;
+    TheNoise.rseed = rseed;
+    Td.level = 0;
+    SurfaceFunction& f = tree->field;
+
+    std::vector<MCObjNode*> leaves;
+    collectAllLeaves(tree->root, leaves);
+
+    int nMeshed = 0, nEmpty = 0, nRim = 0, nContinued = 0, nTJunction = 0;
+    // Where does every rim edge actually end up? Without this breakdown a
+    // collapse in "continued" is indistinguishable from a space mismatch,
+    // a failed neighbour lookup, or edges that lie on no face at all.
+    long long nEdgeNoFace = 0, nNbNull = 0, nNbSelf = 0, nNbEmpty = 0;
+    long long nFaceHits = 0;
+    int nChordRejected = 0;
+    int nMasked = 0, nMaskedBig = 0;
+    int deepestLeaf = 0;
+
+    std::map<MCObjNode*, HoleRec> holes;
+
+    for (size_t li = 0; li < leaves.size(); li++) {
+        MCObjNode* leaf = leaves[li];
+        if (leaf->depth > deepestLeaf) deepestLeaf = leaf->depth;
+        if (leaf->nodeMasked && !leaf->nodeVisible) {
+            nMasked++;
+            if (leaf->projectedSize > 8.0) nMaskedBig++;
+        }
+        if (leaf->mesh.empty()) { nEmpty++; continue; }
+        nMeshed++;
+
+        Point lc[8];
+        leaf->getCorners(lc, tree->center, tree->radius);
+        Point lmin = lc[0], lmax = lc[7];
+        double cs  = lmax.x - lmin.x;
+        // Tolerance is 2% of a cell, not 1e-6. MC vertices lie on cube EDGES,
+        // so a vertex is either on a face or a long way inside it -- there is
+        // nothing to confuse at 2%. The tight tolerance assumed leaf->mesh and
+        // getCorners() agree bit-for-bit, which meshSpaceCheck shows they do
+        // not: the mesh sits in a space scaled by about 1.7e-5, roughly
+        // 5e-4 cell widths, which is 34000x the old tolerance.
+        double tol = cs * MCHOLE_FACE_TOL;
+
+        //---------------------------------------------------------------------
+        // PASS 1 — rim edges into empty neighbours
+        //---------------------------------------------------------------------
+        std::map<MCEKey, int> ecount;
+        std::map<MCEKey, std::pair<Point, Point> > everts;
+        bool faceHasVerts[6] = { false, false, false, false, false, false };
+
+        for (size_t t = 0; t < leaf->mesh.size(); t++) {
+            const MCTriangle& tri = leaf->mesh[t];
+            for (int k = 0; k < 3; k++) {
+                Point p = tri.vertices[k];
+                Point q = tri.vertices[(k + 1) % 3];
+                ecount[mcEKey(p, q)]++;
+                everts[mcEKey(p, q)] = std::make_pair(p, q);
+                for (int fa = 0; fa < 6; fa++) {
+                    int axis = fa >> 1;
+                    double bv = (fa & 1) ? lmax[axis] : lmin[axis];
+                    if (fabs(p[axis] - bv) <= tol) faceHasVerts[fa] = true;
+                }
+            }
+        }
+
+        std::map<MCEKey, int>::iterator it;
+        for (it = ecount.begin(); it != ecount.end(); ++it) {
+            if (it->second != 1) continue;
+            nRim++;
+
+            Point p = everts[it->first].first;
+            Point q = everts[it->first].second;
+            Point m((p.x + q.x) * 0.5, (p.y + q.y) * 0.5, (p.z + q.z) * 0.5);
+
+            // A rim edge is a chord between two isosurface points. Across a
+            // coarse cell its midpoint can be nowhere near the surface, and
+            // stepping from there lands in an unrelated cell. Require the
+            // midpoint to actually be close to the isosurface before trusting
+            // it as a probe origin. This is what produced rev 1's 143 bad hits.
+            double fm = f(m.x, m.y, m.z);
+            double h  = cs * 0.05;
+            double gx = (f(m.x + h, m.y, m.z) - fm) / h;
+            double gy = (f(m.x, m.y + h, m.z) - fm) / h;
+            double gz = (f(m.x, m.y, m.z + h) - fm) / h;
+            double g  = sqrt(gx*gx + gy*gy + gz*gz);
+            if (g > 1e-12 && fabs(fm) / g > 0.5 * cs) { nChordRejected++; continue; }
+
+            int facesForThisEdge = 0;
+            for (int fa = 0; fa < 6; fa++) {
+                int axis = fa >> 1;
+                int sgn  = (fa & 1) ? 1 : -1;
+                double bv = (sgn > 0) ? lmax[axis] : lmin[axis];
+                if (fabs(m[axis] - bv) > tol) continue;
+                if (fabs(p[axis] - bv) > tol || fabs(q[axis] - bv) > tol) continue;
+                facesForThisEdge++;
+                nFaceHits++;
+
+                Point probe = m;
+                // 5% of a cell. The old 1e-3 was the same order as the space
+                // drift itself, so the probe could land back on the near side
+                // of the face. Still inside the neighbour unless it is more
+                // than 3 levels finer than this cell.
+                double off = cs * MCHOLE_PROBE_OFF * sgn;
+                if      (axis == 0) probe.x += off;
+                else if (axis == 1) probe.y += off;
+                else                probe.z += off;
+
+                Point tp(probe.x * tree->radius + tree->center.x,
+                         probe.y * tree->radius + tree->center.y,
+                         probe.z * tree->radius + tree->center.z);
+
+                MCObjNode* nb = mcLocateLeaf(tree->root, tp);
+                if (!nb)         { nNbNull++; continue; }
+                if (nb == leaf)  { nNbSelf++; continue; }
+                if (!nb->mesh.empty()) {
+                    nContinued++;
+                    if (nb->depth != leaf->depth) nTJunction++;
+                    continue;
+                }
+                nNbEmpty++;
+
+                std::map<MCObjNode*, HoleRec>::iterator hit = holes.find(nb);
+                if (hit != holes.end()) { hit->second.rims++; continue; }
+
+                HoleRec hr;
+                hr.cell = nb; hr.rimDepth = leaf->depth; hr.rims = 1;
+                hr.openFaces = 0; hr.at = m;
+                hr.openFrac  = 1.0;                    // empty cell: all of it is missing
+                hr.holePx    = nb->projectedSize;
+                hr.dmin = hr.dmax = 0; hr.insideCorners = -1;
+                hr.confirmed = false; hr.visible = false; hr.rescued = false;
+
+                if (nb->surfaceChecked && !nb->surfacePresent) hr.kind = HK_FALSE_NEG;
+                else if (nb->surfacePresent && nb->meshValid)  hr.kind = HK_MC_MISS;
+                else if (!nb->meshValid)                       hr.kind = HK_UNMESHED;
+                else                                           hr.kind = HK_UNKNOWN;
+
+                holes[nb] = hr;
+            }
+            if (facesForThisEdge == 0) nEdgeNoFace++;
+        }
+
+        //---------------------------------------------------------------------
+        // PASS 2 — coverage: surface crosses a face, mesh does not reach it
+        //---------------------------------------------------------------------
+        int openFaces = 0;
+        int firstOpenFace = -1;
+        double maxOpenFrac = 0.0;
+        for (int fa = 0; fa < 6; fa++) {
+            if (faceHasVerts[fa]) continue;
+            int axis = fa >> 1, side = fa & 1;
+
+            // free test first: the four cell corners on this face
+            bool neg = false, pos = false;
+            for (int i = 0; i < 8; i++) {
+                if (((i >> axis) & 1) != side) continue;
+                double v = leaf->cornersEvaluated[i] ? leaf->cornerValues[i]
+                                                     : f(lc[i].x, lc[i].y, lc[i].z);
+                if (v <= 0.0) neg = true;
+                if (v >= 0.0) pos = true;
+            }
+            // Always measure. The corner test says WHETHER, the sample grid
+            // says HOW MUCH, and how much is what decides whether it matters.
+            int g0 = deep ? 6 : 4;
+            double frac = mcFaceOpenFrac(f, lmin, lmax, fa, g0);
+            if (frac <= 0.0 && (neg && pos)) frac = 1.0 / 49.0;   // corners disagree
+
+            // A 7x7 grid cannot resolve an opening smaller than 1/49 of the
+            // face, so a single minority sample puts a floor of cellPx/7 on the
+            // reported size -- that is quantization, not measurement, and on a
+            // 61px cell it manufactures an 8.7px "hole" out of one sample.
+            // Re-measure finely when the count is near that floor and the cell
+            // is big enough for the difference to matter. A few hundred extra
+            // field evals on a handful of faces.
+            double floorFrac = 4.0 / ((g0 + 1.0) * (g0 + 1.0));
+            if (frac > 0.0 && frac <= floorFrac && leaf->projectedSize > 8.0) {
+                double fine = mcFaceOpenFrac(f, lmin, lmax, fa, 20);
+                if (fine > 0.0) frac = fine;
+            }
+            if (frac > 0.0) {
+                openFaces++;
+                if (frac > maxOpenFrac) { maxOpenFrac = frac; firstOpenFace = fa; }
+                else if (firstOpenFace < 0)  firstOpenFace = fa;
+            }
+        }
+        if (openFaces) {
+            std::map<MCObjNode*, HoleRec>::iterator hit = holes.find(leaf);
+            if (hit != holes.end()) {
+                hit->second.openFaces = openFaces;
+                if (maxOpenFrac > hit->second.openFrac) {
+                    hit->second.openFrac = maxOpenFrac;
+                    hit->second.holePx   = leaf->projectedSize * sqrt(maxOpenFrac);
+                }
+            } else {
+                HoleRec hr;
+                hr.cell = leaf; hr.kind = HK_PARTIAL;
+                hr.rimDepth = leaf->depth; hr.rims = 0;
+                hr.openFaces = openFaces;
+                hr.openFrac  = maxOpenFrac;
+                hr.holePx    = leaf->projectedSize * sqrt(maxOpenFrac);
+                // Put the report point on the OPEN FACE rather than at the cell
+                // centre. For a coarse cell the centre can sit far from the
+                // surface, which both mis-projects screen() and lets the
+                // occlusion march start in empty space and wrongly pass.
+                Point fc((lmin.x + lmax.x) * 0.5,
+                         (lmin.y + lmax.y) * 0.5,
+                         (lmin.z + lmax.z) * 0.5);
+                if (firstOpenFace >= 0) {
+                    int axis = firstOpenFace >> 1;
+                    double bv = (firstOpenFace & 1) ? lmax[axis] : lmin[axis];
+                    if      (axis == 0) fc.x = bv;
+                    else if (axis == 1) fc.y = bv;
+                    else                fc.z = bv;
+                }
+                hr.at = fc;
+                hr.dmin = hr.dmax = 0; hr.insideCorners = -1;
+                hr.confirmed = false; hr.visible = false; hr.rescued = false;
+                holes[leaf] = hr;
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    // confirm + optionally repair
+    //-------------------------------------------------------------------------
+    std::map<MCObjNode*, HoleRec>::iterator hi;
+    int confirmed = 0;
+    for (hi = holes.begin(); hi != holes.end(); ++hi) {
+        MCObjNode* nb = hi->second.cell;
+        Point nc[8];
+        nb->getCorners(nc, tree->center, tree->radius);
+        mcDenseRange(f, nc[0], nc[7], 8, hi->second.dmin, hi->second.dmax);
+        int inside = 0;
+        for (int i = 0; i < 8; i++)
+            if (f(nc[i].x, nc[i].y, nc[i].z) < 0.0) inside++;
+        hi->second.insideCorners = inside;
+        hi->second.confirmed = (hi->second.dmin <= 0.0 && hi->second.dmax >= 0.0);
+        if (hi->second.confirmed) confirmed++;
+
+        if (hi->second.confirmed) {
+            // March from h.at -- the rim point or open-face point, which lies on
+            // or near the isosurface. Marching from the cell CENTRE reports a
+            // clear line of sight for coarse cells whose centre sits in empty
+            // space while the surface itself is buried behind nearer geometry.
+            hi->second.visible = !mcOccluded(f, hi->second.at, camL,
+                                            nc[7].x - nc[0].x);
+        }
+
+        if (rescue && hi->second.confirmed && hi->second.visible) {
+            nb->surfaceChecked     = false;
+            nb->surfacePresent     = true;
+            nb->meshValid          = false;
+            nb->attributesApplied  = false;
+            nb->normalsValid       = false;
+            nb->smoothNormalsValid = false;
+            nb->mesh.clear();
+            MCGenerator gen;
+            for (int res = 1; res <= 4 && nb->mesh.empty(); res++)
+                nb->mesh = gen.generateMesh(f, nc[0], nc[7], res);
+            nb->meshValid = true;
+            hi->second.rescued = !nb->mesh.empty();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    // report
+    //-------------------------------------------------------------------------
+    cout << "\n=== HOLE SCAN  maxDepth=" << maxDepth
+         << "  deepest leaf=" << deepestLeaf << " ===" << endl;
+    // Build fingerprint. These four counters live in MCObjects.cpp, so if this
+    // line is missing or all-zero the binary is not running the edited file.
+    cout << "MCObjects build: marginRescued=" << MCGenerator::csi_margin_rescued
+         << " marginForced=" << MCGenerator::csi_margin_forced
+         << " mcRescued=" << MCGenerator::csi_mc_rescued
+         << " marginSafety=" << MCGenerator::csi_margin_safety << endl;
+    cout << "leaves=" << leaves.size() << "  meshed=" << nMeshed
+         << "  empty=" << nEmpty << endl;
+    cout << "rim edge fate: noFace=" << nEdgeNoFace
+         << "  faceHits=" << nFaceHits
+         << "  nbNull=" << nNbNull << "  nbSelf=" << nNbSelf
+         << "  nbEmpty=" << nNbEmpty << endl;
+    cout << "rim edges=" << nRim << "  continued=" << nContinued
+         << " (of which T-junctions=" << nTJunction << ")"
+         << "  chord-rejected=" << nChordRejected << endl;
+    cout << "visibility: " << nMasked << " leaves masked&unseen, "
+         << nMaskedBig << " of them >8px projected"
+         << "   <- coarsening source" << endl;
+    cout << "HOLES: " << confirmed << " confirmed"
+         << "  (" << (int)holes.size() - confirmed << " rejected by dense resample)" << endl;
+
+    int kindCount[5] = { 0, 0, 0, 0, 0 };
+    int visCount[5]  = { 0, 0, 0, 0, 0 };
+    int nVisible = 0, nVisMasked = 0;
+    for (hi = holes.begin(); hi != holes.end(); ++hi) {
+        if (!hi->second.confirmed) continue;
+        kindCount[hi->second.kind]++;
+        if (!hi->second.visible) continue;
+        visCount[hi->second.kind]++;
+        nVisible++;
+        if (hi->second.cell->nodeMasked && !hi->second.cell->nodeVisible) nVisMasked++;
+    }
+    cout << "  of those, " << nVisible << " are actually VISIBLE"
+         << " (rest are far side / buried / occluded)" << endl;
+    {   // how many of the visible ones are big enough to actually see?
+        int over[4] = { 0, 0, 0, 0 };
+        const double lim[4] = { 1.0, 2.0, 4.0, 8.0 };
+        for (hi = holes.begin(); hi != holes.end(); ++hi) {
+            if (!hi->second.confirmed || !hi->second.visible) continue;
+            for (int k = 0; k < 4; k++)
+                if (hi->second.holePx >= lim[k]) over[k]++;
+        }
+        cout << "  visible openings by estimated size:  >1px=" << over[0]
+             << "  >2px=" << over[1] << "  >4px=" << over[2]
+             << "  >8px=" << over[3] << endl;
+    }
+    cout << "  visible holes in masked cells: " << nVisMasked
+         << " of " << nVisible << endl;
+    for (int k = 0; k < 5; k++)
+        if (kindCount[k])
+            cout << "  " << visCount[k] << " visible / " << kindCount[k]
+                 << " total  x " << hkName(k) << endl;
+
+    std::vector<HoleRec> sorted;
+    for (hi = holes.begin(); hi != holes.end(); ++hi)
+        if ((hi->second.confirmed || showUnconf) &&
+            (hi->second.visible   || showHidden)) sorted.push_back(hi->second);
+    // biggest on screen first — those are the ones you can see
+    for (size_t i = 0; i + 1 < sorted.size(); i++)
+        for (size_t j = i + 1; j < sorted.size(); j++)
+            if (sorted[j].holePx > sorted[i].holePx) {
+                HoleRec t = sorted[i]; sorted[i] = sorted[j]; sorted[j] = t;
+            }
+
+    int shown = 0;
+    for (size_t i = 0; i < sorted.size() && shown < maxReport; i++, shown++) {
+        HoleRec& h = sorted[i];
+        cout << "  depth=" << h.cell->depth
+             << " HOLE~" << h.holePx << "px"
+             << " (cell " << h.cell->projectedSize << "px)"
+             << " vis=" << h.cell->nodeVisible << "/" << h.cell->nodeMasked
+             << " tris=" << h.cell->mesh.size()
+             << " meshRes=" << h.cell->meshRes
+             << (h.visible ? " VISIBLE" : " hidden")
+             << "  " << hkName(h.kind) << endl;
+        cout << "      at local(" << h.at.x << "," << h.at.y << "," << h.at.z << ")"
+             << "  dense min=" << h.dmin << " max=" << h.dmax
+             << "  corners inside=" << h.insideCorners << "/8";
+        if (h.rims)      cout << "  rims=" << h.rims << " (from depth " << h.rimDepth << ")";
+        if (h.openFaces) cout << "  openFaces=" << h.openFaces
+                              << " openFrac=" << h.openFrac;
+        if (!h.confirmed) cout << "  [UNCONFIRMED]";
+        if (h.rescued)    cout << "  [RESCUED]";
+        {   // pixel to look at, or to click with holeProbe
+            int sx, sy;
+            if (mcProject(savedMVP, h.at, 2.0 * size, TheScene->xpoint,
+                          TheView->viewport[2], TheView->viewport[3], sx, sy))
+                cout << "  screen(" << sx << "," << sy << ")";
+            else
+                cout << "  offscreen";
+        }
+        cout << endl;
+    }
+    if ((int)sorted.size() > shown)
+        cout << "  ... " << (int)sorted.size() - shown << " more" << endl;
+
+    if (rescue) { vboDirty = true; cout << "rescue: VBO marked dirty" << endl; }
+    cout << "=== END SCAN ===\n" << endl;
+
+    TheNoise.rseed = seed;
+}
 void Asteroid::holeProbe(double sx, double sy)
 {
     if (!tree || !tree->root) { cout << "holeProbe: no tree" << endl; return; }
@@ -7839,14 +8595,23 @@ void Asteroid::holeProbe(double sx, double sy)
          << (inside == 0 || inside == 8 ? "  -> uniform: single-cube MC emits NOTHING" : "") << endl;
 
     // (d) if the leaf has triangles, does the pick ray actually hit them?
+    //     rayHitsMesh is declared out here so the verdict below can use it.
+    bool rayHitsMesh = false;
     if (!leaf->mesh.empty()) {
         Point hitL;
         // raycastLeaf expects origin/dir in the same space as tri.vertices
-        bool hit = tree->raycastLeaf(leaf, o_t, d_t, hitL);
+        rayHitsMesh = tree->raycastLeaf(leaf, o_t, d_t, hitL);
         cout << "  leaf mesh: " << leaf->mesh.size() << " tris, pick ray "
-             << (hit ? "HITS them -> hole is DOWNSTREAM (applyAttributes/VBO/shader)"
-                     : "MISSES them -> partial coverage within cell") << endl;
+             << (rayHitsMesh ? "HITS them" : "MISSES them") << endl;
     }
+
+    // (e) why did this cell stop subdividing? A leaf far above maxDepth that
+    //     is masked was coarsened by the ID-visibility penalty, not by LOD.
+    if (leaf->nodeMasked && !leaf->nodeVisible)
+        cout << "  COARSENED BY VISIBILITY MASK: depth=" << leaf->depth
+             << " of maxDepth=" << maxDepth
+             << ", projectedSize=" << leaf->projectedSize << "px"
+             << " (masked cells leaf at minPixels*cullFactor*2)" << endl;
 
     // --- final verdict --------------------------------------------------------
     if (leaf->surfaceChecked && !leaf->surfacePresent && denseSurface)
@@ -7855,9 +8620,22 @@ void Asteroid::holeProbe(double sx, double sy)
     else if (leaf->isLeaf() && leaf->surfacePresent && leaf->mesh.empty())
         cout << ">> VERDICT: MC corner miss — leaf knows surface is present but"
                 " emitted no triangles" << endl;
-    else if (!leaf->mesh.empty())
+    else if (!leaf->surfaceChecked && leaf->mesh.empty())
+        cout << ">> VERDICT: leaf was NEVER surface-checked (culled or masked)"
+                " and has no mesh" << endl;
+    else if (!leaf->mesh.empty() && !rayHitsMesh)
+        cout << ">> VERDICT: PARTIAL — this cell is meshed but its geometry does"
+                " not cover the crossing. Either the cell is too coarse for the"
+                " surface here, or the guilty cell is a NEIGHBOUR. Run holeScan()."
+             << endl;
+    else if (rayHitsMesh)
         cout << ">> VERDICT: CPU mesh covers this point — investigate"
                 " applyAttributes/buildVBO/render" << endl;
+    else
+        cout << ">> VERDICT: unclassified — tris=" << leaf->mesh.size()
+             << " checked=" << leaf->surfaceChecked
+             << " present=" << leaf->surfacePresent
+             << " meshValid=" << leaf->meshValid << endl;
 
     TheNoise.rseed = seed;
     cout << "=== END PROBE ===\n" << endl;

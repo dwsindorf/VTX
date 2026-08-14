@@ -66,6 +66,16 @@ public:
     static int csi_edge_exits;
     static int csi_hole_patched;
     static int csi_hole_patch_threshold;
+    static int    csi_margin_tests;
+	static int    csi_margin_escalated;
+	static int    csi_margin_forced;
+	static int    csi_margin_rescued;
+	static double csi_margin_safety;
+	static double csi_margin_minPixels;
+	static int    csi_margin_grid;
+	static int    csi_mc_rescued;
+	static double csi_mc_retry_pixels;
+
     static int csi_edge_tests;
     static int csi_cull_calls;
     static int csi_adapt_calls;
@@ -81,6 +91,7 @@ public:
     static double minDistance;
     static double maxDistance;
     static double cullFactor;
+    static double cullMaxPixels;
 
     struct OctreeCell {
         Point center;
@@ -243,6 +254,7 @@ public:
     Point center;
     double size;
     int depth;
+    int meshRes;
 
     // Corner field values — shared with adjacent siblings on split.
     // Avoids re-evaluation when neighbors split or merge.

@@ -9,7 +9,7 @@
 
 #define DEBUG_ADAPTIVE
 #define PRINT_STATS
-#define PATCH_HOLES
+//#define PATCH_HOLES
 //=============================================================================
 // External lookup tables (defined in CubeTables.cpp)
 //=============================================================================
@@ -63,6 +63,30 @@ double MCGenerator::maxDistance=0;
 double MCGenerator::cullFactor=20;
 bool MCGenerator::wireframe=false;
 bool MCGenerator::smooth=false;
+double MCGenerator::cullMaxPixels = 32.0;
+
+// --- distance-margin guard for checkSurface ---------------------------------
+// csi_margin_safety    : multiplier on the proof radius. Higher = more cautious,
+//                        more escalation and more forced subdivision.
+// csi_margin_minPixels : cells smaller than this on screen skip the guard --
+//                        a missed sliver there cannot be seen anyway.
+// csi_margin_grid      : escalation grid when the sparse verdict is unprovable.
+int    MCGenerator::csi_margin_tests     = 0;
+int    MCGenerator::csi_margin_escalated = 0;
+int    MCGenerator::csi_margin_forced    = 0;
+int    MCGenerator::csi_margin_rescued   = 0;
+double MCGenerator::csi_margin_safety    = 0.6;
+double MCGenerator::csi_margin_minPixels = 4.0;
+int    MCGenerator::csi_margin_grid      = 5;
+
+// --- MC resolution escalation ------------------------------------------------
+// csi_mc_rescued      : leaves that emitted nothing at their base resolution
+//                       and had to be re-meshed finer. Each one is a hole that
+//                       would otherwise have appeared.
+// csi_mc_retry_pixels : minimum projected size before an UNCHECKED empty leaf
+//                       is worth retrying. Checked cells retry regardless.
+int    MCGenerator::csi_mc_rescued     = 0;
+double MCGenerator::csi_mc_retry_pixels = 2.0;
 
 Point MCGenerator::interpolateVertex(const Point& p1, const Point& p2,
                                      double val1, double val2, double isolevel) {
@@ -222,6 +246,8 @@ std::vector<MCTriangle> MCGenerator::generateMesh(
 void MCGenerator::resetStats() {
 	cells = leaf_cells = cells_created=cells_deleted=0;
 	csi_calls = csi_early_exit = csi_edge_exits = csi_edge_tests = csi_false = csi_cull_calls=csi_adapt_calls=csi_hole_patched=0;
+	csi_margin_tests = csi_margin_escalated = csi_margin_forced = csi_margin_rescued = 0;
+	csi_mc_rescued = 0;
     tm_field_calls=ad_field_calls = gm_field_calls =0;
     minDistance=1000;
     maxDistance=0;
@@ -237,6 +263,11 @@ void MCGenerator::printStats(){
 			  << " EXITS early:" << csi_early_exit
 			  << " edge:" << csi_edge_exits<<" patched:"<<csi_hole_patched<<" tests:"<<csi_edge_tests
 			  << " empty:" << csi_false
+			  << " MARGIN tests:" << csi_margin_tests
+			  << " esc:" << csi_margin_escalated
+			  << " rescued:" << csi_margin_rescued
+			  << " forced:" << csi_margin_forced
+			  << " MCrescued:" << csi_mc_rescued
 			  << std::endl;
 	// Add depth distribution printout:
 	cout << " CSI: by depth ";
@@ -577,7 +608,7 @@ MCObjNode::MCObjNode()
     : parent(nullptr),
       center(0,0,0), size(0), depth(0),viewDistance(0),
       surfaceChecked(false), surfacePresent(false),
-      meshValid(false), normalsValid(false), smoothNormalsValid(false), attributesApplied(false),
+      meshValid(false), meshRes(0), normalsValid(false), smoothNormalsValid(false), attributesApplied(false),
       inFrustum(false), projectedSize(0),
       nodeVisible(false), nodeMasked(false)
 {
@@ -614,6 +645,7 @@ void MCObjNode::invalidate()
 {
     surfaceChecked  = false;
     meshValid       = false;
+    meshRes         = 0;
     attributesApplied = false;
     normalsValid      = false;
     smoothNormalsValid = false;
@@ -695,6 +727,45 @@ void MCObjNode::split()
     mesh.clear();
     mesh.shrink_to_fit();
 }
+//-----------------------------------------------------------------------------
+// Distance-margin guard.
+//
+// A sign test over samples can prove a surface EXISTS, but never that one is
+// ABSENT -- the isosurface is free to pass entirely between samples. That is
+// the bug: "no sign change" was being read as "no surface", followed by
+// collapse(), and the whole subtree disappeared.
+//
+// Turn it into a real verdict by bounding how far the isosurface can be from
+// the closest sample:            d  >=  |f - iso| / |grad f|
+// If d exceeds the sampling radius (half the diagonal of one sample cell) then
+// no crossing can hide in the gaps and the cell is provably empty. Otherwise
+// the honest answer is "don't know", and the cell must be resampled or refined.
+//
+// Scale free: the sampling radius shrinks with the cell while the distance to
+// the surface does not, so it terminates by itself. That is what a depth
+// cutoff (csi_hole_patch_threshold) cannot do -- risk is not a function of
+// depth, it is a function of how close the field gets to the isolevel relative
+// to the sample spacing.
+//
+// Cost: 3 field evals, only on cells that were about to be declared empty.
+//-----------------------------------------------------------------------------
+static bool mcSurfaceProvablyOutside(SurfaceFunction& field, const Point& p,
+                                     double fval, double isolevel,
+                                     double spacing, double safety)
+{
+    if (spacing <= 0.0) return false;
+    double h  = spacing * 0.05;
+    double gx = (field(p.x + h, p.y, p.z) - fval) / h;
+    double gy = (field(p.x, p.y + h, p.z) - fval) / h;
+    double gz = (field(p.x, p.y, p.z + h) - fval) / h;
+    MCGenerator::csi_edge_tests += 3;
+    double g  = sqrt(gx*gx + gy*gy + gz*gz);
+    if (g < 1e-12) return false;                       // flat: cannot bound
+    double dist  = fabs(fval - isolevel) / g;
+    double reach = 0.8660254 * spacing * safety;       // half diagonal + margin
+    return dist > reach;
+}
+
 bool MCObjNode::checkSurface(SurfaceFunction field,
                               const Point& objCenter, double objRadius, int maxDepth,double isoNoiseAmpl,
                               double isolevel)
@@ -708,12 +779,23 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
 
     double values[8];
     double minVal =  1e15, maxVal = -1e15;
+
+    // Closest approach to the isolevel, and where it was. The margin guard
+    // below needs a point and a value; tracking them here costs nothing.
+    double bestAbs = 1e30, bestVal = 0.0;
+    Point  bestP;
+    auto track = [&](const Point& p, double v) {
+        double a = fabs(v - isolevel);
+        if (a < bestAbs) { bestAbs = a; bestVal = v; bestP = p; }
+    };
+
     // Check center
     Point co = center - objCenter;
     Point localCenter = co / objRadius;
     double cv = field(localCenter.x, localCenter.y, localCenter.z);
     minVal = std::min(minVal, cv);
     maxVal = std::max(maxVal, cv);
+    track(localCenter, cv);
     if (minVal <= isolevel && maxVal >= isolevel) {
         surfacePresent = true;
         MCGenerator::csi_edge_tests++;
@@ -733,6 +815,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         values[i] = cornerValues[i];
         minVal = std::min(minVal, values[i]);
         maxVal = std::max(maxVal, values[i]);
+        track(corners[i], values[i]);
         if (minVal <= isolevel && maxVal >= isolevel){
             surfacePresent = true;
              MCGenerator::csi_early_exit++;
@@ -759,6 +842,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         double v = field(x, y, z);
         minVal = std::min(minVal, v);
         maxVal = std::max(maxVal, v);
+        track(Point(x, y, z), v);
         MCGenerator::csi_edge_tests++;
     }
     if (minVal <= isolevel && maxVal >= isolevel) {
@@ -767,12 +851,9 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         return true;
     }
 #ifdef PATCH_HOLES
-    // Coarse-level false verdicts destroy entire subtrees, and a large cell
-    // can contain a thin sliver of surface that a sparse grid misses
-    // (observed: depth-3 cell with min=-0.034, max=+1.85 declared empty).
-    // Before accepting "no surface" at shallow depth, re-verify densely.
-    // These calls are rare (csi_by_depth: only hundreds at depth<=4), so
-    // even a 12^3 grid here is cheap relative to the cost of a wrong answer.
+    // Superseded by the margin guard below, which applies at EVERY depth
+    // instead of only shallow ones. Left in place but no longer needed:
+    // set csi_hole_patch_threshold to 0, or just leave PATCH_HOLES undefined.
     if (depth <= MCGenerator::csi_hole_patch_threshold) {
         int vN = (depth <= 2) ? 12 : 8;
         for (int ix = 0; ix <= vN && !(minVal<=isolevel && maxVal>=isolevel); ix++)
@@ -784,25 +865,100 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
             double v = field(x, y, z);
             minVal = std::min(minVal, v);
             maxVal = std::max(maxVal, v);
+            track(Point(x, y, z), v);
             MCGenerator::csi_edge_tests++;
         }
         if (minVal <= isolevel && maxVal >= isolevel) {
             surfacePresent = true;
-            MCGenerator::csi_hole_patched++;   // or add a csi_rescued counter
+            MCGenerator::csi_hole_patched++;
             return true;
         }
     }
 #endif
-    MCGenerator::csi_false++;
-    surfacePresent = false;
-    return false;
+
+    // ---- is "empty" actually provable at this sample density? ---------------
+    // Only cells big enough on screen for a hole to be visible pay for the
+    // guard. projectedSize was set by adapt() immediately before this call.
+    if (projectedSize < MCGenerator::csi_margin_minPixels) {
+        MCGenerator::csi_false++;
+        surfacePresent = false;
+        return false;
+    }
+
+    double spacing = (c7.x - c0.x) / gridN;
+    MCGenerator::csi_margin_tests++;
+    if (mcSurfaceProvablyOutside(field, bestP, bestVal, isolevel,
+                                 spacing, MCGenerator::csi_margin_safety)) {
+        MCGenerator::csi_false++;
+        surfacePresent = false;
+        return false;
+    }
+
+    // ---- too close to call: resample densely --------------------------------
+    MCGenerator::csi_margin_escalated++;
+    int vN2 = (depth <= 2) ? 8 : MCGenerator::csi_margin_grid;
+    for (int ix = 0; ix <= vN2 && !(minVal<=isolevel && maxVal>=isolevel); ix++)
+    for (int iy = 0; iy <= vN2 && !(minVal<=isolevel && maxVal>=isolevel); iy++)
+    for (int iz = 0; iz <= vN2 && !(minVal<=isolevel && maxVal>=isolevel); iz++) {
+        double x = c0.x + (c7.x - c0.x) * ix / vN2;
+        double y = c0.y + (c7.y - c0.y) * iy / vN2;
+        double z = c0.z + (c7.z - c0.z) * iz / vN2;
+        double v = field(x, y, z);
+        minVal = std::min(minVal, v);
+        maxVal = std::max(maxVal, v);
+        track(Point(x, y, z), v);
+        MCGenerator::csi_edge_tests++;
+    }
+    if (minVal <= isolevel && maxVal >= isolevel) {
+        surfacePresent = true;
+        MCGenerator::csi_margin_rescued++;   // a hole that would have happened
+        return true;
+    }
+
+    spacing = (c7.x - c0.x) / vN2;
+    if (mcSurfaceProvablyOutside(field, bestP, bestVal, isolevel,
+                                 spacing, MCGenerator::csi_margin_safety)) {
+        MCGenerator::csi_false++;
+        surfacePresent = false;
+        return false;
+    }
+
+    // ---- still unprovable: refine rather than guess --------------------------
+    // The children resample at half the spacing, where the same test becomes
+    // conclusive. This is the branch that used to silently punch a hole.
+    MCGenerator::csi_margin_forced++;
+    surfacePresent = true;
+    return true;
 }
+
 
 void MCObjNode::generateMesh(SurfaceFunction field,
                               const Point& objCenter, double objRadius,
                               double isoNoiseAmpl)
 {
-    if (meshValid) return;
+    // Resolution wanted at the CURRENT screen size. Picked before the
+    // meshValid early-out, because a cell meshed while small keeps that mesh
+    // forever otherwise -- which is how a 60px depth-3 cell ends up holding a
+    // single triangle. Upgrade only; never re-mesh coarser, so a cell can
+    // regenerate at most three times over its life however the camera moves.
+    // An opening is only captured if it crosses a sub-cube edge on the face.
+    // A patch that fits strictly inside one sub-face is missed entirely, so the
+    // sub-face has to be smaller than the openings that matter. Measured
+    // openings on the remaining holes run 13-64% of a face edge, so res 4
+    // (25% sub-faces) is where they start being caught. Only mask-coarsened
+    // cells clear these thresholds -- unmasked leaves stop at minPixels*2.
+    int res = 1;
+    if (projectedSize >  8.0) res = 2;
+    if (projectedSize > 16.0) res = 3;
+    if (projectedSize > 32.0) res = 4;
+
+    if (meshValid && meshRes >= res) return;
+    if (meshValid) {                    // upgrading: the old mesh and anything
+        attributesApplied  = false;     // derived from it must be redone
+        normalsValid       = false;
+        smoothNormalsValid = false;
+    }
+
     Point localCorners[8];
     getCorners(localCorners, objCenter, objRadius);
 
@@ -817,10 +973,28 @@ void MCObjNode::generateMesh(SurfaceFunction field,
         localMax.z = std::max(localMax.z, localCorners[i].z);
     }
     MCGenerator gen;
-    mesh = gen.generateMesh(field, localMin, localMax, 1);
-//    if (mesh.empty() && surfaceChecked && surfacePresent) {
-//        mesh = gen.generateMesh(field, localMin, localMax, 2);
-//    }
+
+    // Base resolution by screen size. Unmasked leaves stop subdividing at
+    // minPixels*2, so any leaf much larger than that got there by being culled,
+    // not by LOD. A single MC cube spanning it cannot represent the surface --
+    // which is exactly what the scan reports as PARTIAL: a face the isosurface
+    // crosses that the mesh never reaches. Few cells qualify, so this is cheap.
+    // res was chosen at the top of the function, before the meshValid check.
+    mesh = gen.generateMesh(field, localMin, localMax, res);
+
+    // An empty result here is not an empty cell. Single-cube MC emits nothing
+    // whenever all 8 corner signs agree, so a sliver or bubble that enters and
+    // leaves through the same face never crosses a corner and vanishes -- even
+    // though checkSurface correctly found surface inside. Escalate instead of
+    // accepting the hole. Only fires on an empty result, so it costs nothing on
+    // the normal path.
+    if (mesh.empty() &&
+        (surfacePresent ||
+         (!surfaceChecked && projectedSize > MCGenerator::csi_mc_retry_pixels))) {
+        for (int r = res + 1; r <= 4 && mesh.empty(); r++)
+            mesh = gen.generateMesh(field, localMin, localMax, r);
+        if (!mesh.empty()) MCGenerator::csi_mc_rescued++;
+    }
     // Compute face normals from field gradient — only when smooth mode is on.
     // In flat mode buildVBO uses cross-product normals from tri.normal.
     // Skipping these field calls in flat mode avoids unnecessary computation.
@@ -840,6 +1014,7 @@ void MCObjNode::generateMesh(SurfaceFunction field,
         }
     }
     meshValid          = true;
+    meshRes            = res;
     normalsValid       = MCGenerator::smooth;  // face normals valid only if computed above
     smoothNormalsValid = false;
 }
@@ -863,16 +1038,25 @@ void MCObjNode::adapt(SurfaceFunction field,
     // ID readback visibility: replaces all heuristic culling tests.
     // Ground truth from pixel readback -- covers frustum, occlusion,
     // backface and burial in one test.
-    if (flags.useVisibility && maxDepth>2) {
-        if (nodeMasked && !nodeVisible) {
-            effectiveMinPixels *= MCGenerator::cullFactor;
-            skipSurfaceCheck = true;
-            culled = true;
-        }
-        // Skip all heuristic tests below regardless — ID test supersedes them
-        goto cull_done;
-    }
-
+	if (nodeMasked && !nodeVisible) {
+		bool trust = true;
+//#define USE_TRUST
+#ifdef USE_TRUST
+		if (projectedSize > MCGenerator::cullMaxPixels) {
+			Point localCenter = (center - objCenter) / objRadius;
+			Point toCam = (cameraPos - center) / objRadius;   // CELL to camera
+			double cl = localCenter.length();
+			double tl = toCam.length();
+			if (cl > 1e-12 && tl > 1e-12)
+				trust = (localCenter.dot(toCam) / (cl * tl) < 0.0);
+		}
+#endif
+		if (trust) {
+			effectiveMinPixels *= MCGenerator::cullFactor;
+			skipSurfaceCheck = true;
+			culled = true;
+		}
+	}
     // ── Burial coarsening — use rock-local up axis ───────────────────────
     if (flags.burialCoarsening) {
         double localUp = (center.z - objCenter.z) / objRadius;
@@ -958,8 +1142,12 @@ void MCObjNode::adapt(SurfaceFunction field,
     if (shouldBeLeaf) {
          if (!isLeaf())
             collapse();
-        if (!meshValid)
-            generateMesh(field, objCenter, objRadius,isoNoiseAmpl);
+        // Call unconditionally: generateMesh() early-outs on its own now, via
+        // (meshValid && meshRes >= res). Guarding on !meshValid here meant a
+        // cell meshed while small could never upgrade its MC resolution as the
+        // mask coarsened it -- which is how a 60px depth-3 cell keeps one
+        // triangle. The function still returns immediately in the common case.
+        generateMesh(field, objCenter, objRadius,isoNoiseAmpl);
         return;
     }
 
