@@ -126,12 +126,14 @@ void main(void) {
  	if(texid>=0){
 		vec2 l_uv=sprite(gl_TexCoord[0].xy);
   		vec4 tcolor=texture2D(samplers2d[texid],l_uv);
-  		if(copt>0){    // new color = blend color and texture where texture.a >0
-  			vec3 ncolor=mix(color.rgb,tcolor.rgb,tcolor.a); // ncolor=tcolor where tcolor.a>0
-  			if(copt>1) // color has alpha
-				color.rgb=mix(ncolor.rgb,color.rgb,color.a); 
-			else // no alpha in color
-				color.rgb=ncolor.rgb;				
+  		if(copt>0){
+  			if(copt>1){ // color has alpha: it modulates texture vs color directly
+   				color.rgb=mix(tcolor.rgb,color.rgb,color.a);
+  			}
+			else{ // no alpha in color: color shows through where texture is clear
+				color.rgb=mix(color.rgb,tcolor.rgb,tcolor.a);
+				//color.rgb=ncolor.rgb;
+			}
   		    //if(aopt) // leaf
   		       color.a=tcolor.a;
 		}

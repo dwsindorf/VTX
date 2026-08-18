@@ -355,10 +355,10 @@ public:
 		cols=image_cols;
 	}
 	void getImageDims(char *s,uint &cols,uint &rows){
-		int i=0,j=0;
+		int i=1,j=1;
 		sscanf(s,"%dx%d",&i,&j);
-		rows=j;
-		cols=i;
+		rows=std::max(j,1);
+		cols=std::max(i,1);
 	}
 	void setImage(char *name);
 	bool getImageFilePath(char*name,char *dir);

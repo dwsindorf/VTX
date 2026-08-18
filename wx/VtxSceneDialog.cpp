@@ -53,6 +53,8 @@
 
 //#define PRINT_TREE
 
+extern void request_redraw();	// force the canvas to repaint now (wx/VtxScene.cpp)
+
 #define FTEST
 
 //#define DEBUG_TREE_ACTIONS
@@ -376,8 +378,13 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		{
 			newobj=deleteSelected();
 			TheScene->regroup();
-			TheScene->rebuild_all();
+			// rebuildObjectTree() must come first: it resyncs "selected" and
+			// each tab's cached object pointer to the post-delete tree.
+			// TheScene->rebuild_all() now forces an immediate repaint, which
+			// would otherwise run VtxSceneDialog::updateTabs() against
+			// dangling pointers into the node we just deleted.
 			rebuildObjectTree();
+			TheScene->rebuild_all();
 			if(newobj)
 				selectObject(newobj);
 		}
@@ -396,8 +403,10 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 			}
 			TheScene->regroup();
 	        obj->invalidate();
-	        TheScene->rebuild_all();
+	        // see TABS_DELETE above: resync the tree/tab state before
+	        // rebuild_all()'s forced repaint can touch it.
 	        rebuildObjectTree();
+	        TheScene->rebuild_all();
 	        selectObject(newobj);
 	       // setNodeName(sym->name());
 		}
@@ -406,6 +415,10 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 	add_list.free();
 	replace_list.free();
 	TheScene->unsuspend();
+	// the DEFAULT/RANDOMIZE/DELETE/ADD branches above call TheScene->rebuild()
+	// or rebuild_all() while still suspended, so their own repaint request was
+	// a no-op; force one now that we're unsuspended again.
+	request_redraw();
 }
 
 void VtxSceneDialog::updateTabs(){
@@ -543,9 +556,11 @@ void VtxSceneDialog::OnEndDrag(wxTreeEvent&event){
 	    TheScene->set_changed_detail();
 		//if(newobj->typeValue() & ID_OBJECT){
 			TheScene->regroup();
-	        TheScene->rebuild_all();
 		//}
+		    // resync tree/tab state before rebuild_all()'s forced repaint
+		    // can touch it (same reasoning as OnTreeMenuSelect above).
 		    rebuildObjectTree();
+	        TheScene->rebuild_all();
 
 		selectObject(newobj);
 		setNodeName(sname);
@@ -891,6 +906,7 @@ void VtxSceneDialog::rebuildObjectTree(){
 
     TheScene->set_changed_detail();
 	TheScene->unsuspend();
+	request_redraw();	// was suspended above, so force the repaint now
     cout<<"rebuildObjectTree end"<<endl;
 
 }

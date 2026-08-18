@@ -233,13 +233,20 @@ void VtxSpritesTabs::AddImageTab(wxWindow *panel){
 	int num_dirs=sprites_mgr.image_dirs.size;
 	//cout<<"VtxSpritesTabs num sprites="<<num_dirs<<endl;
  
-	wxString offsets[num_dirs];
-	for(int i=i;i<num_dirs;i++){
-		offsets[i]=sprites_mgr.image_dirs[i]->name();
-	}
+	// This loop read "for(int i=i;...)": the new i was initialised from itself,
+	// so it started at an indeterminate value and normally skipped the body
+	// entirely. offsets[] stayed as default-constructed EMPTY strings and the
+	// wxChoice below was built from num_dirs blank entries -- a dropdown with
+	// the right number of rows, all of them invisible.
+	// Heap-allocated rather than a VLA so num_dirs==0 is not UB.
+	wxString *offsets = new wxString[num_dirs > 0 ? num_dirs : 1];
+	for(int i=0;i<num_dirs;i++)
+		offsets[i]=wxString(sprites_mgr.image_dirs[i]->name());
 
 	m_dim_choice=new wxChoice(panel, ID_SPRITES_DIM, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
-	m_dim_choice->SetSelection(1);
+	if(num_dirs > 0)                     // index 1 is out of range with one dir
+		m_dim_choice->SetSelection(num_dirs > 1 ? 1 : 0);
+	delete [] offsets;
 	hline->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,0);
 
 	lbl=new wxStaticText(panel,-1,"Center",wxDefaultPosition,wxSize(40,-1));

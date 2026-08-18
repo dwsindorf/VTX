@@ -1,4 +1,3 @@
-
 #include "VtxLeafTabs.h"
 #include "VtxSceneDialog.h"
 #include "AdaptOptions.h"
@@ -329,13 +328,20 @@ void VtxLeafTabs::AddImageTab(wxWindow *panel){
     
     int num_dirs=leaf_mgr.image_dirs.size;
     
-	wxString offsets[num_dirs];
-	for(int i=i;i<num_dirs;i++){
-		offsets[i]=leaf_mgr.image_dirs[i]->name();
-	}
+	// This loop read "for(int i=i;...)": the new i was initialised from itself,
+	// so it started at an indeterminate value and normally skipped the body
+	// entirely. offsets[] stayed as default-constructed EMPTY strings and the
+	// wxChoice below was built from num_dirs blank entries -- a dropdown with
+	// the right number of rows, all of them invisible.
+	// Heap-allocated rather than a VLA so num_dirs==0 is not UB.
+	wxString *offsets = new wxString[num_dirs > 0 ? num_dirs : 1];
+	for(int i=0;i<num_dirs;i++)
+		offsets[i]=wxString(leaf_mgr.image_dirs[i]->name());
 
     m_dim_choice=new wxChoice(panel, ID_DIMLIST, wxDefaultPosition,wxSize(55,-1),num_dirs, offsets);
-    m_dim_choice->SetSelection(0);
+    if(num_dirs > 0)
+		m_dim_choice->SetSelection(0);
+	delete [] offsets;
     image_cntrls->Add(m_dim_choice,0,wxALIGN_LEFT|wxALL,1);
  
     m_tex_enable=new wxCheckBox(panel, ID_TEX_ENABLE, "Enable");
@@ -785,4 +791,3 @@ void VtxLeafTabs::OnChangedColor(wxColourPickerEvent& event){
 	setExprFromColor();
 	setObjAttributes();
 }
-

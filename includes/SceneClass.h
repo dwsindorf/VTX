@@ -1,4 +1,3 @@
-
 //  SceneClass.h
 
 #ifndef _SCENECLASS

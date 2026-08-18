@@ -107,6 +107,30 @@ void select_tree_node(NodeIF *n){
 	sceneDialog->selectObject(n);
 }
 
+//-------------------------------------------------------------
+// request_redraw() called from non-wx scene/render code (SceneClass.cpp)
+// and from VtxSceneDialog.cpp whenever it marks the scene as changed.
+//
+// IMPORTANT: this must NOT call force_render()/Update(). request_redraw()
+// is invoked from deep inside per-tab "value changed" handlers (every
+// TheScene->rebuild()/rebuild_all() call site). Update() pumps a paint
+// synchronously, right there on the calling handler's own stack, which
+// re-enters VtxScene::OnPaint() -> TheScene->render() ->
+// VtxSceneDialog::updateTabs() -> tabs[currentTabs]->updateControls()
+// *before* the original handler has returned - and updateControls() can
+// itself touch the object / controls in a way that triggers another
+// rebuild(), which calls request_redraw() again, and so on. That's the
+// "scene keeps rebuilding over and over" hang. A plain Refresh() only
+// marks the canvas dirty; the paint is delivered on the next pass through
+// the normal event loop (typically within the 20ms timer's own Refresh()
+// cadence anyway), so nothing ever re-enters the handler that's still on
+// the stack.
+//-------------------------------------------------------------
+void request_redraw(){
+	if(vtxScene)
+		vtxScene->Refresh();
+}
+
 
 void setCenterText(char *text){
     wxString  msg("Building ");
@@ -170,6 +194,32 @@ VtxScene::~VtxScene()
     }
     if(m_glRC)
         delete m_glRC;
+}
+
+//-------------------------------------------------------------
+// VtxScene::force_render() render now, don't wait for the timer
+//-------------------------------------------------------------
+void VtxScene::force_render()
+{
+    if(!TheScene)
+        return;
+    // While suspended (e.g. mid Scene::open(), or inside a
+    // VtxSceneDialog suspend()/unsuspend() block), the scene's object tree
+    // and/or sceneDialog's cached selection can be mid-update. render()'s
+    // own update block already skips itself while suspended, but OnPaint()
+    // unconditionally calls sceneDialog->updateTabs() afterward whenever
+    // changed_detail() is set - forcing that to happen here would run it
+    // against stale/dangling object pointers. Skip the forced repaint; the
+    // code that calls unsuspend() is responsible for requesting a redraw
+    // once it's actually safe (see VtxSceneDialog.cpp, VtxScene::rebuild_all()).
+    if(TheScene->suspended())
+        return;
+    // Scene::render() swaps buffers only inside its update_needed block, so
+    // without a flag set the front buffer still shows the previous scene.
+    TheScene->set_changed_detail();
+    TheScene->set_changed_render();
+    Refresh();
+    Update();                    // deliver the paint now rather than queueing it
 }
 
 //-------------------------------------------------------------
@@ -633,8 +683,18 @@ void VtxScene::rebuild_all() {
     noiseDialog->clear();
     imageDialog->Invalidate();
     movieDialog->Invalidate();
-    rebuild();
+    // rebuildObjectTree() must run first: it resyncs sceneDialog's "selected"
+    // TreeNode and each tab's cached object pointer to TheScene's current
+    // object tree. rebuild() (via TheScene->rebuild_all()) marks the canvas
+    // dirty (request_redraw()/Refresh(), not a synchronous Update()), so the
+    // resulting paint happens shortly afterward, once this function has
+    // returned - but if the tree were rebuilt second, there'd be a window
+    // where a paint driven by something else (the timer, another Refresh())
+    // could run VtxSceneDialog::updateTabs() -> updateControls() against
+    // dangling pointers into the old tree that TheScene->open() just freed.
+    // That's what crashed in VtxPlanetTabs::setTemp()'s obj->getTempString().
     sceneDialog->rebuildObjectTree();
+    rebuild();
 }
 
 //-------------------------------------------------------------
@@ -651,6 +711,13 @@ void VtxScene::open_scene(char *path)
     ::setCenterText(filename);
 
     TheScene->open(path);
+    // rebuild_all() (VtxScene's) resyncs the object tree/tabs via
+    // rebuildObjectTree() and then marks the canvas dirty via
+    // request_redraw()/Refresh() - see the comments there. Deliberately not
+    // calling force_render()/Update() here: open_scene() is called from
+    // VtxMovieDialog's button handler as well as VtxFrame::OnSceneOpen, and
+    // forcing a synchronous paint from inside a UI event handler risks the
+    // same reentrant-rebuild hang described in request_redraw() above.
     rebuild_all();
 }
 
@@ -824,7 +891,7 @@ bool  VtxScene::SwapBuffers(){
     if(draw_cnt<2)
         cout << "VtxScene::SwapBuffers()" <<endl;
 #endif
-	wxGLCanvas::SwapBuffers();
+	return wxGLCanvas::SwapBuffers();
 }
 //-------------------------------------------------------------
 // VtxScene::OnKey() key-press event handler

@@ -66,6 +66,7 @@ static double timing_start=0;
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
+extern	void request_redraw();	// force the canvas to repaint now (wx/VtxScene.cpp)
 
 //********* functions called from GLglue.cpp (GLUT) ************
 
@@ -889,6 +890,18 @@ void Scene::save(FILE *fp)
 void Scene::open(char *fn)
 {
 	cout<<"Open"<<endl;
+	// Suspend for the whole parse/rebuild: model->parse() below tears down
+	// and replaces the entire object tree, but sceneDialog's "selected" node
+	// and each tab's cached object pointer aren't resynced to the new tree
+	// until VtxScene::open_scene() calls rebuildObjectTree() after this
+	// returns. This is mostly a defensive belt-and-suspenders measure now
+	// that request_redraw() (called from Renderer::rebuild()/rebuild_all(),
+	// see Renderer.cpp) only does a deferred Refresh() rather than an
+	// immediate repaint - but it still keeps render()'s own update/adapt
+	// work from running against a half-parsed scene if anything triggers a
+	// paint while we're mid-parse. suspend()/unsuspend() nests safely even
+	// if a caller (e.g. VtxFrame::OnSceneOpen) already suspended around us.
+	suspend();
 	PlantMgr::textures=0;
 	reset();
 	rendering=false;
@@ -986,7 +999,14 @@ void Scene::open(char *fn)
 	PlacementMgr::free_htable();
 	Renderer::rebuild_all();
 	views_mark();
+	unsuspend();
 }
+
+// note: Scene doesn't need its own rebuild() override - TheScene->rebuild()
+// (used by the per-tab "value changed" handlers) resolves straight to
+// Renderer::rebuild(), which now calls request_redraw() itself
+// (see Renderer.cpp). Kept out of SceneClass.h/.cpp on purpose: that header
+// is included practically everywhere, so touching it forces a full rebuild.
 
 //-------------------------------------------------------------
 // Scene::rebuild_all() rebuild
@@ -1005,6 +1025,14 @@ void Scene::rebuild_all(){
 	PlacementMgr::free_htable();
 	Renderer::rebuild_all();
 	timing_start=clock();
+	// Every one of the ~50 call sites (per-tab handlers, the "Rebuild All"
+	// menu command, scene-tree actions, etc.) invokes this directly on
+	// TheScene and previously relied on the next 20ms timer tick to notice
+	// changed_detail() and repaint. That's usually fine, but whenever the
+	// canvas is suspended (see VtxSceneDialog::OnTreeMenuSelect) or the
+	// timer is stalled, nothing forces the viewport to catch up until the
+	// user manually clicks in it. Force it here unconditionally instead.
+	request_redraw();
 }
 
 //-------------------------------------------------------------
@@ -2539,7 +2567,17 @@ void Scene::render()
 		output_text(); // on-screen info
 
 		set_action("Ready");
-    	if(/*changed_detail() ||*/ automv())
+    	// Adapt.more_cycles() is set by Map::adapt() (see MapClass.cpp) when
+    	// a terrain/map didn't converge within this frame's cycle budget
+    	// (Adapt.maxcycles()) and needs another pass. A single discrete move
+    	// only sets moved() for one frame; if the adapt work is heavy enough
+    	// that one frame's budget isn't enough to finish, moved() used to get
+    	// cleared here regardless, so the next frame's render() saw
+    	// update_needed==false, skipped its whole block, and the partially
+    	// adapted scene just sat there - "adapt cycle ran but nothing
+    	// changed." Keep moved() set for as many frames as more_cycles()
+    	// keeps coming back true, so adapting continues until it converges.
+    	if(automv() || Adapt.more_cycles())
     		set_moved();
     	else
     		clr_moved();

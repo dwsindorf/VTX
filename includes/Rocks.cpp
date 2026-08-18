@@ -32,7 +32,7 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-#define PRINT_STATS
+//#define PRINT_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS
@@ -234,7 +234,7 @@ int Rock3DMgr::getLODResolution(double pts) {
  	   resScale = remap(cellsize, 3.5, 7, 1.0, 0.5);
     }
 
-	switch(TheScene->generate_quality){
+	switch(TheScene->render_quality){
 	case DRAFT:
 		resScale*=0.75;
 		minPointsize=base_minsize*2;

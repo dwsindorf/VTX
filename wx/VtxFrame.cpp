@@ -633,6 +633,7 @@ void VtxFrame::OnSceneOpen(wxCommandEvent& WXUNUSED(event))
     }
     m_tbar1->ToggleTool(IDM_FILE_SCENE_OPEN, false);
     m_canvas->unsuspend();
+    m_canvas->force_render();
     wxString vtx("VTX-");
     vtx=vtx+filename;
     SetTitle(vtx);

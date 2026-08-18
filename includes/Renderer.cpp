@@ -221,10 +221,18 @@ void Renderer::rebuild_all()
 //-------------------------------------------------------------
 // Renderer::rebuild() build the startup scene
 //-------------------------------------------------------------
+extern void request_redraw();	// wx/VtxScene.cpp - marks the canvas dirty
 void Renderer::rebuild()
 {
 	set_changed_detail();
 	objects->visitAll(&Object3D::rebuild);
+	// Every TheScene->rebuild()/rebuild_all() call site (the ~50 per-tab
+	// handlers, tree add/delete, "Rebuild All", etc.) funnels through here
+	// (rebuild_all() calls this virtually), so this is the one place that
+	// guarantees the canvas actually repaints instead of depending on the
+	// next timer tick to notice changed_detail(). request_redraw() is just
+	// Refresh() - safe to call from anywhere, including reentrantly.
+	request_redraw();
 }
 
 //-------------------------------------------------------------

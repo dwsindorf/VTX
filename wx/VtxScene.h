@@ -70,6 +70,7 @@ public:
     void view_image(char *,int);
     void suspend();
     void unsuspend();
+    void force_render();
     int  can_undo_view();
     int  can_redo_view();
     int  can_move_select();
