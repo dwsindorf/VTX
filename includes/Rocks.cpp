@@ -32,7 +32,7 @@ static int pid=0;
 static int nbumps=0;
 static bool cvalid;
 
-//#define PRINT_STATS
+#define PRINT_STATS
 //#define PRINT_ROCK_CACHE_STATS
 //#define PRINT_LOD_STATS
 //#define PRINT_ROCK_CACHE_STATS

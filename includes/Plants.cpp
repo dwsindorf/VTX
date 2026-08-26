@@ -451,7 +451,7 @@ PlantMgr::PlantMgr(int i,TNplant *p) : PlacementMgr(i)
 	instance=0;
 	first_instance=true;
 	set_ntest(TEST_NEIGHBORS);
-	//set_testpts(1);
+	set_testpts(1);
 	set_testDensity(true);
 #ifdef TEST_PLANTS
 	set_testColor(true);

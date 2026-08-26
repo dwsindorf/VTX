@@ -6038,7 +6038,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
  			str+=newPlant(GN_GRASS);
  		if(r[7]>0.5)
 			str+=newPlant(GN_BUSH);
-		if(r[7]>0.9)
+		if(r[8]>0.7)
 			str+=newPlant(GN_TREE);
 		str+=newOcean(planet);
 		if(sky->pressure >=1){
@@ -6164,7 +6164,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	double ripple=1+0.1*s[4];
      sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,noise_func.c_str());
     double scale=0.5+r[5];
-    double ampl=0.5+0.25*s[5];
+    double ampl=0.7+0.25*s[5];
     double offset=r[7];
     double levels=2+r[8];
     double delf=2.2+s[6];

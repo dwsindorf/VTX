@@ -63,6 +63,16 @@ const char *dflt_movie_name="movie";
 
 int scene_rendered=0;
 static double timing_start=0;
+// See Scene::render(): after any real scene-affecting change (move, goto
+// surface, resize, etc.) a single render+swap cycle isn't enough to make
+// the newly swapped frame actually visible - empirically confirmed that
+// resize, toggling "auto time", or clicking in the window (anything that
+// forces a *second* render/swap cycle) always fixes it, while an unused
+// keypress (which triggers no new render cycle at all) never does. This
+// counter forces a couple of extra automatic render/swap passes after any
+// real change, so the fix happens on its own via the normal timer instead
+// of requiring the user to manually force a second render.
+static int render_settle=0;
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
@@ -2461,9 +2471,21 @@ void Scene::render()
 			||changed_detail()
 			||moved()
 			||changed_render();
+	// a fresh, externally-triggered reason to render, as opposed to one of
+	// the extra automatic passes render_settle adds below - computed here,
+	// before render_settle itself can influence anything, so the two can't
+	// be confused with each other.
+	bool fresh_trigger=update_needed || self;
+	// only moved()/changed_detail() (position, view, or geometry changes -
+	// move, goto surface, resize) are confirmed to need the extra settle
+	// passes below. changed_render()/changed_time()-only triggers (e.g.
+	// toggling a render option checkbox) already display correctly after
+	// a single pass - re-arming render_settle for those just wastes a
+	// couple of full render cycles for no benefit.
+	bool needs_settle=moved() || changed_detail();
 
-	if(!rendering && !suspended() && (update_needed || self)){
-    //printf("update_needed moved:%d changed render:%d detail:%d time:%d\n", moved(),
+	if(!rendering && !suspended() && (fresh_trigger || render_settle>0)){
+	//printf("update_needed moved:%d changed render:%d detail:%d time:%d\n", moved(),
     //		changed_render(),changed_detail(),changed_time());
 	    rendering=true;
 	    double timing_start=clock();
@@ -2510,7 +2532,6 @@ void Scene::render()
 		if(changed_detail() || moved())
 			set_action("Adapting");
 		adapt();
-	
 		set_action("Rendering");
     	adapt_time=(double)(clock() - start)/CLOCKS_PER_SEC;
 
@@ -2581,6 +2602,16 @@ void Scene::render()
     		set_moved();
     	else
     		clr_moved();
+    	// render_settle: see comment near the top of this file. A fresh
+    	// moved()/changed_detail() trigger re-arms the extra-frame
+    	// countdown; a pass that only happened because render_settle was
+    	// already >0 (needs_settle false - moved()/changed_detail() were
+    	// already clear when this pass started) just counts itself down
+    	// instead - otherwise this would never stop re-arming itself.
+    	if(needs_settle)
+    		render_settle=2;
+    	else if(render_settle>0)
+    		render_settle--;
         clr_changed_flags();
         clr_changed_position();
         Render.validate_textures();
