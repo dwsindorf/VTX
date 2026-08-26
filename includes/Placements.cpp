@@ -586,7 +586,7 @@ int PlacementMgr::hashPoint(Point4DL& pc, int lvl, int id) {
 #define LODSIZE       10*size
 void PlacementMgr::eval()
 {
-	if(density <= 0)
+	if(density <= 0 || !hash)
 	   return;  // skip early — was checked in Placement::eval() before calling this
 
     Point4D p;

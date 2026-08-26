@@ -9153,6 +9153,9 @@ void Sky::init_render()
 		Raster.sky_alpha=0;
 		Raster.sky_color.set_alpha(0);
 		Raster.blend_color.set_alpha(0);
+		Raster.blend_factor=0;
+		Raster.darken_factor=0;
+		Raster.haze_value=0;
 	}
 }
 
@@ -9164,6 +9167,8 @@ void Sky::render_object()
 	if(!TheScene->render_mode() || !isEnabled())
 		return;
 	if(Raster.auximage()) // skip surface fog/water effects
+		return;
+	if(TheScene->viewtype==ORBITAL && getParent() !=TheScene->viewobj)
 		return;
 	show_render_state(this);
 
