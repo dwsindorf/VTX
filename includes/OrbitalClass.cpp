@@ -9168,8 +9168,6 @@ void Sky::render_object()
 		return;
 	if(Raster.auximage()) // skip surface fog/water effects
 		return;
-	if(TheScene->viewtype==ORBITAL && getParent() !=TheScene->viewobj)
-		return;
 	show_render_state(this);
 
 	glDepthMask(GL_FALSE);

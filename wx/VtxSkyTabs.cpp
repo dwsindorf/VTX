@@ -289,6 +289,7 @@ void VtxSkyTabs::AddLightingTab(wxWindow *panel){
 }
 
 void VtxSkyTabs::updateControls(){
+
 	Sky *sky=(Sky*)object();
 	double val=(sky->size-parentSize())/MILES;
 	updateSlider(HeightSlider,val);
