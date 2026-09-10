@@ -23,6 +23,7 @@ class VtxFunctDialog : public wxFrame
 	VtxFunctMgrHash   functs;
 
 	wxCheckBox *m_show_symbols;
+	wxCheckBox *m_enabled;
 //	wxCheckBox *m_auto_apply;
 //	wxCheckBox *m_auto_edit;
 
@@ -67,6 +68,11 @@ public:
 	void OnSymbols(wxCommandEvent& event);
 //	void OnAutoApply(wxCommandEvent& event);
 //	void OnAutoEdit(wxCommandEvent& event);
+
+	// controls functs[currentFunct]'s enabled flag (see
+	// VtxFunctMgr::isEnabled()/setEnabled(), TNcraters/NodeIF)
+	void OnUpdateEnabled(wxUpdateUIEvent& event);
+	void OnEnabled(wxCommandEvent& event);
     DECLARE_EVENT_TABLE()
 };
 

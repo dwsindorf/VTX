@@ -96,6 +96,9 @@ enum {		// NTypes
 	V2       = 0x00100000,
 	V4       = 0x00200000,
 	VR       = 0x00400000,
+	DISABLE  = 0x00800000, // disable this node (fractal/erode/noise) - see
+	                        // VtxFunctDialog's "Enabled" checkbox; shared
+	                        // NOpts token, same idea as Placements.h's OFF
 	NOREC    = 0x01000000,
 	NLOD     = 0x02000000,
 	NNORM    = 0x04000000,

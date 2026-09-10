@@ -63,7 +63,7 @@ void show_display_placements()
 
 //#endif
 
-static LongSym popts[]={ 
+static LongSym popts[]={
 	{"MAXHT",		MXHT},
 	{"MAXA",		MAXA},
 	{"MAXB",		MAXB},
@@ -71,7 +71,8 @@ static LongSym popts[]={
 	{"CNORM",		CNORM},
 	{"FLIP",		FLIP},
 	{"NNBRS",		NNBRS},
-	{"MC3D",		MC3D}
+	{"MC3D",		MC3D},
+	{"OFF",			OFF}
 };
 NameList<LongSym*> POpts(popts,sizeof(popts)/sizeof(LongSym));
 

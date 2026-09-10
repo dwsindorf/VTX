@@ -69,6 +69,7 @@ VtxFractalFunct::VtxFractalFunct(wxWindow* parent,
 		const wxString& name)
 		: VtxFunctMgr(parent, id, pos, size,  style,name)
 {
+	m_enabled=true;
 	Create(parent, id, pos,size, style, name);
 }
 
@@ -199,6 +200,7 @@ void VtxFractalFunct::setFunction(wxString f){
 
 	int type=tc->options;
 
+	m_enabled=tc->isEnabled();
 	m_sqr->SetValue((type & SQR)?true:false);
 	m_ss->SetValue((type & SS)?true:false);
 	nargs=numargs((TNarg *)tc->left);
@@ -272,6 +274,12 @@ void VtxFractalFunct::getFunction(){
 			n+="SS";
 		else
 			n+="|SS";
+	}
+	if(!m_enabled){
+		if(n.IsEmpty())
+			n+="DISABLE";
+		else
+			n+="|DISABLE";
 	}
 	if(!n.IsEmpty()){
 		s+=n+",";

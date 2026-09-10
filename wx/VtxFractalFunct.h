@@ -22,6 +22,11 @@ protected:
 	wxCheckBox *m_sqr;
 	wxCheckBox *m_ss;
 
+	// backs the shared "Enabled" checkbox in VtxFunctDialog; reflects/
+	// drives TNfractal's NodeIF enabled flag via the parsed "DISABLE"
+	// ntype option.
+	bool m_enabled;
+
 	int nargs;
 
 public:
@@ -69,6 +74,9 @@ public:
 
 	void setFunction(wxString);
 	void getFunction();
+
+	bool isEnabled(){ return m_enabled;}
+	void setEnabled(bool b){ m_enabled=b;}
 
 	DECLARE_EVENT_TABLE()
 };

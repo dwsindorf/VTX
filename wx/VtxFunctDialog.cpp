@@ -61,6 +61,7 @@ enum {
     ID_REVERT,
     ID_DELETE,
     ID_SYMBOLS,
+    ID_ENABLED,
     ID_AUTO_APPLY,
     ID_AUTO_EDIT,
  };
@@ -77,9 +78,11 @@ IMPLEMENT_CLASS( VtxFunctDialog, wxFrame )
 BEGIN_EVENT_TABLE( VtxFunctDialog, wxFrame )
 
 EVT_CHECKBOX(ID_SYMBOLS,VtxFunctDialog::OnSymbols)
+EVT_CHECKBOX(ID_ENABLED,VtxFunctDialog::OnEnabled)
 //EVT_CHECKBOX(ID_AUTO_APPLY,VtxFunctDialog::OnAutoApply)
 //EVT_CHECKBOX(ID_AUTO_EDIT,VtxFunctDialog::OnAutoEdit)
 EVT_UPDATE_UI(ID_SYMBOLS, VtxFunctDialog::OnUpdateSymbols)
+EVT_UPDATE_UI(ID_ENABLED, VtxFunctDialog::OnUpdateEnabled)
 //EVT_UPDATE_UI(ID_AUTO_APPLY, VtxFunctDialog::OnUpdateAutoApply)
 //EVT_UPDATE_UI(ID_AUTO_EDIT, VtxFunctDialog::OnUpdateAutoEdit)
 //EVT_CHECKBOX(ID_AUTO_EDIT,VtxFunctDialog::OnAutoEdit)
@@ -131,13 +134,17 @@ bool VtxFunctDialog::Create( wxWindow* parent,
 //    wxString edit_str("AutoEdit");
 //    wxString apply_str("AutoSave");
     wxString symbols_str("ShowTokens");
+    wxString enabled_str("Enabled");
 //    int edit_pos=edit_str.Length()*char_width;
 //    int apply_pos=edit_pos+apply_str.Length()*char_width;
     int symbols_pos=symbols_str.Length()*char_width+10;
+    int enabled_pos=symbols_pos+enabled_str.Length()*char_width+10;
 //    m_auto_edit=new wxCheckBox(this, ID_AUTO_EDIT, edit_str,wxPoint(PAGE_WIDTH-edit_pos,5),wxSize(-1,-1));
 //    m_auto_edit->SetValue(true);
 //    m_auto_apply=new wxCheckBox(this, ID_AUTO_APPLY, apply_str,wxPoint(PAGE_WIDTH-apply_pos,5),wxSize(-1,-1));
 //    m_auto_apply->SetValue(true);
+    m_enabled=new wxCheckBox(this, ID_ENABLED, enabled_str,wxPoint(PAGE_WIDTH-enabled_pos,5),wxSize(-1,-1));
+    m_enabled->SetValue(true);
     m_show_symbols=new wxCheckBox(this, ID_SYMBOLS, symbols_str,wxPoint(PAGE_WIDTH-symbols_pos,5),wxSize(-1,-1));
     position=GetScreenPosition();
     Move(position.x+size.GetWidth()+100,position.y+100);
@@ -226,6 +233,24 @@ void VtxFunctDialog::OnSymbols(wxCommandEvent& event){
 	show_symbols=show_symbols?false:true;
 	if(editor)
 		editor->update();
+}
+
+void VtxFunctDialog::OnUpdateEnabled(wxUpdateUIEvent& event){
+	bool enabled=true;
+	if(functs.find(currentFunct) != functs.end())
+		enabled=functs[currentFunct]->isEnabled();
+	event.Check(enabled);
+	// nothing to toggle when no function page is currently being edited
+	event.Enable(currentFunct != ID_NOEDIT);
+}
+void VtxFunctDialog::OnEnabled(wxCommandEvent& event){
+	if(functs.find(currentFunct) == functs.end())
+		return;
+	VtxFunctMgr *mgr=functs[currentFunct];
+	mgr->setEnabled(m_enabled->GetValue());
+	// push the change straight through to the expression editor, same as
+	// any other control on the page (see DEFINE_SLIDER_EVENTS etc.)
+	mgr->getFunction();
 }
 void VtxFunctDialog::OnClose(wxCloseEvent& event){
 	event.Veto(true);

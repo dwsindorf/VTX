@@ -90,6 +90,7 @@ VtxCratersFunct::VtxCratersFunct(wxWindow* parent,
 		const wxString& name)
 		: VtxFunctMgr(parent, id, pos, size,  style,name)
 {
+	m_enabled=true;
 	Create(parent, id, pos,size, style, name);
 }
 
@@ -287,6 +288,11 @@ void VtxCratersFunct::setFunction(wxString f){
 
 	CraterMgr *mgr=(CraterMgr*)tc->mgr;
 
+	// TNcraters' constructor/applyExpr() already fold the parsed "OFF"
+	// ptype option into the generic NodeIF enabled flag - just read it
+	// back here to drive the "Enabled" checkbox.
+	m_enabled=tc->isEnabled();
+
 	// Extract seed from the expression string directly.
 	// Selection 0 = no explicit seed ("--"), selection N = IDN.
 	// tc->get_id() can't be trusted here because the TNplacements constructor
@@ -411,9 +417,20 @@ void VtxCratersFunct::getFunction(){
 	char buff[256];
 	wxString s="craters(";
 	int pid=m_seed->GetSelection();
-	if(pid>0){
-		sprintf(buff,"ID%d",pid);
-		s+=wxString(buff);
+	// ptype grammar: PTYPE | ID | ptype '|' PTYPE - so a seed ID and the
+	// "OFF" flag (see Placements.h) can combine as "ID3|OFF". Only emit
+	// this ptype prefix at all when there's a seed and/or we're disabled;
+	// otherwise fall back to the original ptype-less production.
+	if(pid>0 || !m_enabled){
+		if(pid>0){
+			sprintf(buff,"ID%d",pid);
+			s+=wxString(buff);
+		}
+		if(!m_enabled){
+			if(pid>0)
+				s+="|";
+			s+="OFF";
+		}
 		s+=",";
 	}
 	int orders = m_orders->GetSelection();

@@ -39,7 +39,8 @@ enum {
     FLIP        = 0x00010000,
     MINSIZE     = 0x00020000,
     MC3D  	    = 0x00040000,
-	
+    OFF         = 0x00080000,  // disable this placement function (see VtxFunctDialog's "Enabled" checkbox)
+
 	COLOR_TEST  = 0x00100000,
 	DENSITY_TEST= 0x00200000,
 	

@@ -70,6 +70,14 @@ public:
 			const wxString& name = wxNotebookNameStr);
 	virtual void setFunction(wxString ){}
 	virtual void getFunction(){}
+
+	// Generic hook for the shared "Enabled" checkbox in VtxFunctDialog
+	// (mirrors NodeIF::isEnabled()/setEnabled() on the TNode side - see
+	// TNcraters). Harmless no-op defaults so function pages that don't
+	// (yet) support disabling - VtxNoEditFunct, VtxErodeFunct,
+	// VtxFractalFunct, VtxNoiseFunct - need no changes.
+	virtual bool isEnabled(){return true;}
+	virtual void setEnabled(bool b){}
 };
 
 

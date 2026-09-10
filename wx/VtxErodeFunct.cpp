@@ -33,6 +33,7 @@ VtxErodeFunct::VtxErodeFunct(wxWindow* parent, wxWindowID id,
     FillAmplSlider=FillTransportSlider=FillLevelSlider=FillMarginSlider=0;
     FillChannelsSlider=FillOrdersSlider=FillFalloffSlider=FillFreqSlider=0;
     FillDrAmplSlider=FillDrainMixSlider=0;
+    m_enabled=true;
     Create(parent, id, pos, size, style, name);
 }
 
@@ -127,6 +128,7 @@ void VtxErodeFunct::setFunction(wxString f)
     TNerode *tc = (TNerode*)TheScene->parse_node(f.ToAscii());
     if (!tc) return;
     int type = tc->options;
+    m_enabled = tc->isEnabled();
     m_inv->SetValue((type & NEG) ? true : false);
     m_sqr->SetValue((type & SQR) ? true : false);
     m_ss ->SetValue((type & SS)  ? true : false);
@@ -156,6 +158,7 @@ void VtxErodeFunct::getFunction()
     if (m_inv->GetValue()) n += "NEG";
     if (m_sqr->GetValue()) n += n.IsEmpty() ? "SQR" : "|SQR";
     if (m_ss ->GetValue()) n += n.IsEmpty() ? "SS"  : "|SS";
+    if (!m_enabled) n += n.IsEmpty() ? "DISABLE" : "|DISABLE";
     if (!n.IsEmpty()) s += n + ",";
 
     s += FillAmplSlider->getText()      + ","; // [0] depth

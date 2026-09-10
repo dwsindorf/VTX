@@ -74,7 +74,8 @@ static LongSym nopts[]={
 	{"SS",		    SS},
 	{"V2",		    V2},
 	{"V4",		    V4},
-	{"VR",		    VR}
+	{"VR",		    VR},
+	{"DISABLE",	    DISABLE}
 };
 NameList<LongSym*> NOpts(nopts,sizeof(nopts)/sizeof(LongSym));
 
@@ -1067,6 +1068,14 @@ void TNgloss::eval()
 TNnoise::TNnoise(int t, TNode *a) : TNvector(a)
 {
 	type=t;
+	// DISABLE (parsed as an ntype option, e.g. "noise(GRADIENT|DISABLE,...)")
+	// maps onto the generic NodeIF enabled flag. Unlike Craters/Fractal/
+	// Erode, TNnoise is a plain value-returning leaf (referenced inside
+	// other expressions, not a chained placement/height layer), so eval()
+	// below just forces its amplitude to 0 rather than early-returning -
+	// see VtxFunctDialog's "Enabled" checkbox / VtxNoiseFunct::getTypeStr().
+	if(t & DISABLE)
+		setEnabled(false);
 	mx=0;
 	mn=0;
 	ma=1.0;
@@ -1283,6 +1292,8 @@ void TNnoise::eval()
     	ampl*=args[5];
     if(n>8)
     	offset=args[8];
+    if(!isEnabled())
+    	ampl=0; // disabled - contribute nothing, same as dialing Gain to 0
 	if(norm() && !normalized()){
 		TheNoise.get_minmax(ma,mb,type,n,args);
 		mx=ampl*ma;

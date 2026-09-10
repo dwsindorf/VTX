@@ -31,6 +31,11 @@ protected:
 	wxChoice *m_orders;
 	wxChoice *m_seed;
 
+	// backs the shared "Enabled" checkbox in VtxFunctDialog (see
+	// isEnabled()/setEnabled() below); reflects/drives TNcraters' NodeIF
+	// enabled flag via the parsed "OFF" ptype option.
+	bool m_enabled;
+
 public:
 	VtxCratersFunct(wxWindow* parent,
 			wxWindowID id,
@@ -84,6 +89,9 @@ public:
 
 	void setFunction(wxString);
 	void getFunction();
+
+	bool isEnabled(){ return m_enabled;}
+	void setEnabled(bool b){ m_enabled=b;}
 
 	DECLARE_EVENT_TABLE()
 };

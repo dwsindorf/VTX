@@ -37,6 +37,11 @@ protected:
 	wxCheckBox *m_abs;
 	wxCheckBox *m_animate;
 
+	// backs the shared "Enabled" checkbox in VtxFunctDialog; reflects/
+	// drives TNnoise's NodeIF enabled flag via the parsed "DISABLE"
+	// ntype option (see TNnoise::eval() - forces amplitude to 0).
+	bool m_enabled;
+
 	TNnoise *noise;
 	
 	void getRate();
@@ -72,6 +77,9 @@ public:
 
 	void setFunction(wxString);
 	void getFunction();
+
+	bool isEnabled(){ return m_enabled;}
+	void setEnabled(bool b){ m_enabled=b;}
 
     void OnChangeEvent(wxCommandEvent& event);
 	void OnRateSlider(wxScrollEvent &event) {

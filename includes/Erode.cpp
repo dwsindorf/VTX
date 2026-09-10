@@ -168,9 +168,15 @@ void TNhardness::applyExpr()
 //************************************************************
 // TNerode class
 //************************************************************
-TNerode::TNerode(int t, TNode *l, TNode *r) : TNfunc(l,r) 
+TNerode::TNerode(int t, TNode *l, TNode *r) : TNfunc(l,r)
 {
 	options=t;
+	// DISABLE (parsed as an ntype option) maps onto the generic NodeIF
+	// enabled flag - eval() already checks isEnabled(), this just lets
+	// that state be set from parsed text. See VtxFunctDialog's "Enabled"
+	// checkbox / VtxErodeFunct::getFunction().
+	if(t & DISABLE)
+		setEnabled(false);
 }
 
 //-------------------------------------------------------------
@@ -233,6 +239,7 @@ void TNerode::applyExpr()
 {
     if(expr){
     	options=((TNerode*)expr)->options;
+    	setEnabled(!(options&DISABLE));
         DFREE(left);
         left=expr->left;
         left->setParent(this);

@@ -36,6 +36,13 @@ TNfractal::TNfractal(int t, TNode *l, TNode *r) : TNfunc(l,r)
 {
     options=t;
     chnl=0;
+	// DISABLE (parsed as an ntype option, e.g. "fractal(DISABLE,...)" or
+	// combined "SQR|DISABLE") maps onto the generic NodeIF enabled flag -
+	// eval()/init() already check isEnabled(), this just lets that state
+	// be set from parsed text. See VtxFunctDialog's "Enabled" checkbox /
+	// VtxFractalFunct::getFunction().
+	if(t & DISABLE)
+		setEnabled(false);
 }
 
 void TNfractal::init()
@@ -447,6 +454,7 @@ void TNfractal::applyExpr()
 {
     if(expr){
     	options=((TNfractal*)expr)->options;
+    	setEnabled(!(options&DISABLE));
         DFREE(left);
         left=expr->left;
         left->setParent(this);

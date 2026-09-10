@@ -93,6 +93,7 @@ VtxNoiseFunct::VtxNoiseFunct(wxWindow* parent,
 		const wxString& name)
 		: VtxFunctMgr(parent, id, pos, size,  style,name)
 {
+	m_enabled=true;
 	Create(parent, id, pos,size, style, name);
 }
 
@@ -334,6 +335,7 @@ void VtxNoiseFunct::setFunction(wxString f){
 
 	TNarg &args=*((TNarg *)tn->right);
 
+	m_enabled=tn->isEnabled();
 	StartSlider->setValue(args[0]);
 	OrdersSlider->setValue(args[1]);
 
@@ -479,6 +481,8 @@ wxString VtxNoiseFunct::getTypeStr()
 	switch(mode){
 	case 1: n+="|FS"; break;
 	}
+	if(!m_enabled)
+		n+="|DISABLE";
 	return n;
 }
 

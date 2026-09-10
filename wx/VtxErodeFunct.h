@@ -31,6 +31,11 @@ class VtxErodeFunct : public VtxFunctMgr
     wxCheckBox *m_sqr;
     wxCheckBox *m_ss;
 
+    // backs the shared "Enabled" checkbox in VtxFunctDialog; reflects/
+    // drives TNerode's NodeIF enabled flag via the parsed "DISABLE"
+    // ntype option.
+    bool m_enabled;
+
 public:
     ExprSliderCtrl *FillAmplSlider;
     ExprSliderCtrl *FillTransportSlider;
@@ -57,6 +62,9 @@ public:
 
     void setFunction(wxString f) override;
     void getFunction() override;
+
+    bool isEnabled() override { return m_enabled;}
+    void setEnabled(bool b) override { m_enabled=b;}
 
     void OnChangeEvent(wxCommandEvent&) { getFunction(); }
 

@@ -332,6 +332,12 @@ bool Crater::set_terrain(PlacementMgr &pmgr)
 TNcraters::TNcraters(int t, TNode *l, TNode *r) : TNplacements(t|CRATERS,l,r,0)
 {
     mgr=new CraterMgr(type);
+	// OFF (parsed as the ptype option, e.g. "craters(OFF,...)") maps onto
+	// the generic NodeIF enabled flag - eval() below already short-circuits
+	// via isEnabled(), this just lets that state be set from parsed text.
+	// See VtxFunctDialog's "Enabled" checkbox / VtxCratersFunct::getFunction().
+	if(type&OFF)
+		setEnabled(false);
 	TNarg &args=*((TNarg *)left);
 	TNode *arg=args[3];
 	if(arg && (arg->typeValue() != ID_CONST))
@@ -448,6 +454,10 @@ void TNcraters::applyExpr()
         left->setParent(this);
 		delete mgr;
 		type=ctrs->type;
+		// keep the NodeIF enabled flag in sync with the freshly parsed OFF
+		// bit (mirrors the constructor - see VtxFunctDialog's "Enabled"
+		// checkbox / VtxCratersFunct::getFunction()).
+		setEnabled(!(type&OFF));
 		mgr=ctrs->mgr;
 		ctrs->left=0;
 		ctrs->mgr=0;
