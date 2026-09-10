@@ -5205,7 +5205,8 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_CRATERS:
 		sprintf(buff,"craters(ID%d,%d,%g,%g,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,%1.2f,0.8,0.6,0.05,0,0,%1.2f,%1.2f)",
-		(int)(5+0.5*s[1]), // id
+//		(int)(5+0.5*s[1]), // id
+		0,
 		(int)(8+0.5*s[0]), // levels
 		(Maxs),            // max size
 		(0.3+0.5*s[3]),    // delta size
@@ -5501,11 +5502,11 @@ std::string Planetoid::randFeature(int type) {
 		randFeature(RND_HMAP_TWIST).c_str(),
 		pow(2,1+0.5*s[4]),  // start
 		0.0,//+0.2*s[5],  // bump ampl BUMP causes shader link error
-		5+2*s[6],      // orders
+		7+2*s[6],      // orders
 		2.3+0.2*s[7],  // freq
 		0.5+0.1*r[8],  // orders ampl
-		1+0.25*s[9],   // H ampl
-		0.5+0.25*s[10] // offset
+		0.7+0.25*s[9],   // H ampl
+		0.5+0.1*s[10] // offset
 		);
 		str=buff;
 		PRNT_FEATURE("HMAP_TEX")
@@ -5769,7 +5770,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 	double size=1e-6;
 	int tex_1d_scale=16;
 	int tex_2d_scale=20;
-	Ampl=0.5;
+	Ampl=0.4;
 	Prob=0.1;
 	double sv=1.0;
 	switch(gtype){
@@ -5782,7 +5783,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 		size=0.5e-6;
 		Prob=0.1;
 		sv=0.8;
-		Ampl=0.4;
+		Ampl=0.3;
 		break;
 	case GN_SMALL:
 		size=1e-7;
@@ -5792,7 +5793,7 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 		break;
 	}
 	double comp=0.1+0.1*s[7];
-	double drop=0.1-0.5*comp;
+	double drop=0.3-0.5*comp;
 	int type=m&TN_TYPES;
 	const char *s=(type==TN_ROCKS?"rocks":"rocks3d");
 	sprintf(buff,"%s(3,%g,%g,%g,%g,%g,%g,",s,size,sv,Prob,comp,drop,Ampl);

@@ -2014,7 +2014,8 @@ void Map::adapt()
 	if(ADAPT_NEEDED
 			|| TheScene->changed_render()
 	        || object->typeValue()==ID_SKY
-			|| (TheScene->changed_time() && (object->typeValue()==ID_CLOUD))
+			//|| (TheScene->changed_time() && (object->typeValue()==ID_CLOUD || TheScene->viewtype==ORBITAL))
+			|| (TheScene->changed_time() && (object!=TheScene->viewobj))
 			){
 		clearLists();
 	}
