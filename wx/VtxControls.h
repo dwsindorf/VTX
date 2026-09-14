@@ -19,6 +19,30 @@
 
 class TNode;
 
+// Plain wxTextCtrl that replaces the OS's native right-click context menu
+// with a normal Cut/Copy/Paste/Select All one. On Windows, a stock
+// wxTextCtrl wraps the native Win32 Edit control, whose default context
+// menu can pick up extra items ("Right to left Reading order", "Open
+// IME", "Show/Insert Unicode control character", etc.) depending on
+// what input languages/IMEs are installed on the machine - that's a
+// per-machine OS setting, not something VTX controls. VtxExprEdit next
+// door never shows those because it already does exactly this: catch
+// EVT_RIGHT_DOWN and pop up its own wxMenu instead of letting the native
+// menu fire. This just gives every plain text field (SliderCtrl,
+// TextCtrl) the same treatment.
+class PlainTextCtrl : public wxTextCtrl
+{
+	DECLARE_CLASS(PlainTextCtrl)
+public:
+	PlainTextCtrl(wxWindow *parent, wxWindowID id, const wxString &value,
+			const wxPoint &pos, const wxSize &size, long style)
+		: wxTextCtrl(parent,id,value,pos,size,style)
+	{}
+	void OnRightMouse(wxMouseEvent &event);
+	void OnMenu(wxCommandEvent &event);
+	DECLARE_EVENT_TABLE()
+};
+
 class TextCtrl
 {
 public:
@@ -31,7 +55,7 @@ public:
 			label=new wxStaticText(parent,-1,_label,wxDefaultPosition,wxSize(ls,-1));
 		else
 			label=0;
-	    text=new wxTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(ts,-1),wxTE_PROCESS_ENTER);
+	    text=new PlainTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(ts,-1),wxTE_PROCESS_ENTER);
 	}
 	TextCtrl(wxWindow* parent, wxWindowID id, const wxString& _label, int ls, int ts){
 		Init(parent,id,_label,ls,ts);
@@ -236,12 +260,12 @@ public:
 	SliderCtrl(wxWindow* parent, wxWindowID id, const wxString& _label, int ls, int ts, int ss)
 	 : Slider(parent,id,_label,ls,ts,ss)
 	{
-	    text=new wxTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(ts,-1),wxTE_PROCESS_ENTER);
+	    text=new PlainTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(ts,-1),wxTE_PROCESS_ENTER);
 	}
 	SliderCtrl(wxWindow* parent, wxWindowID id, const wxString& _label)
 	 : Slider(parent,id,_label,-1,35,80)
 	{
-	    text=new wxTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(text_width,-1),wxTE_PROCESS_ENTER);
+	    text=new PlainTextCtrl(parent,text_id,"",wxDefaultPosition,wxSize(text_width,-1),wxTE_PROCESS_ENTER);
 	}
 	void setValue(double x){
 		Slider::setValue(x);

@@ -28,7 +28,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_RENDER
 #define DEBUG_TEMP 0
 //#define DEBUG_AVE_TEMP
-//#define DEBUG_GENERATE
+#define DEBUG_GENERATE
 //#define DEBUG_COLORS
 //#define PRINT_ASTEROID_STATS
 //#define DEBUG_HOLE_PROBE
@@ -4873,6 +4873,7 @@ enum orbital_features{
 	RND_NOISEFUNC2,
 	RND_NOISEFUNC3,
 	RND_NOISEOPTS,
+	RND_NOISEOPTS2,
 	RND_SURFACE_GULLIES,
 	RND_SURFACE_VOLCANOS,
 	RND_SURFACE_RIDGES,
@@ -4906,6 +4907,10 @@ enum orbital_features{
 	RND_GLOBAL_DUAL_TEX,
 	RND_LOCAL_TEX,
 	RND_SURFACE_BANDS,
+	RND_ROCK_BANDS,
+	RND_ROCK_TEX,
+	RND_TEXTURE_S,
+	RND_TEXTURE_A,
 	RND_SURFACE_TEX,
 	RND_LOCAL_IMAGE,
 	RND_OCEAN_EXPR,
@@ -5178,6 +5183,9 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_NOISEOPTS:
 		str=Noise::getNopts(r[9]);
+		break;
+	case RND_NOISEOPTS2:
+		str=Noise::getNopts(r[10]);
 		break;
 	case RND_SNOW:
 		str="snow(";
@@ -5456,7 +5464,45 @@ std::string Planetoid::randFeature(int type) {
 		str+=");\n";
 		keep_rands=false;
 		break;
+	case RND_TEXTURE_S:
+		str="noise(";
+		str+=randFeature(RND_NOISEFUNC);
+		str+=randFeature(RND_NOISEOPTS);
+		str+=","+std::to_string(Nscale-2*r[8]);
+		str+=",2,0.178,0.5,2,0.05)";
+		str=TNnoise::randomize(str.c_str(),0.3,0.0);
+		PRNT_FEATURE("RND_TEXTURE_S")
+		break;
+	case RND_TEXTURE_A:
+		str="noise(";
+		str+=randFeature(RND_NOISEFUNC2);
+		str+=randFeature(RND_NOISEOPTS2);
+		str+=","+std::to_string(Nscale-4*r[9]);
+		str+=",2,1,0.5,2,1,4,0,0.5)";
+		str=TNnoise::randomize(str.c_str(),0.3,0.0);
+		str="1.0-"+str;
+		PRNT_FEATURE("RND_TEXTURE_A")
+		break;
 	case RND_SURFACE_BANDS:
+		keep_rands=true;
+		//noise(GRADIENT,14.73,2,1,0.5,2,1,4,0,0.3,1e-06)
+		sprintf(buff,"Texture(%s,NORM|S|A|TEX%s,%s,%s,%g,2,1,%g,1,2,1,0,%g,%g,%g,%g)",
+		randFeature(RND_TEXNAME).c_str(), // image name
+		linear,
+		randFeature(RND_TEXTURE_S).c_str(), // distortion
+		randFeature(RND_TEXTURE_A).c_str(), // alpha
+		pow(2,Nscale),         // start
+		0.5*s[6],          // offset
+		0.01*s[7],         // phi bias
+		0.01*s[8],         // ht bias
+		0.05*(1+0.25*s[9]), // bmp bias
+		0.01*(1+0.25*s[10])  // slope bias
+		);
+		str=buff;
+		PRNT_FEATURE("SURFACE_BANDS")
+		//keep_rands=false;
+		break;
+	case RND_ROCK_BANDS:
 		//keep_rands=true;
 		sprintf(buff,"Texture(%s,NORM|TEX%s,%g,2,1,%g,1,2,1,0,%g,%g,%g,%g)",
 		randFeature(RND_TEXNAME).c_str(), // image name
@@ -5469,8 +5515,18 @@ std::string Planetoid::randFeature(int type) {
 		0.05*(1+0.25*s[10])  // slope bias
 		);
 		str=buff;
-		PRNT_FEATURE("SURFACE_BANDS")
+		PRNT_FEATURE("ROCK_BANDS")
 		//keep_rands=false;
+		break;
+	case RND_ROCK_TEX:
+		//keep_rands=true;
+		sprintf(buff,"Texture(%s,BUMP%s,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
+		randFeature(RND_ETEXNAME).c_str(), // image name
+		randtex,
+		Nscale
+		);
+		str=buff;
+		PRNT_FEATURE("SURFACE_TEX")
 		break;
 	case RND_ERODE_TEX:
 		//keep_rands=true;
@@ -5490,7 +5546,7 @@ std::string Planetoid::randFeature(int type) {
 		sprintf(buff,"Texture(%s,BUMP%s,%g,1,0,0,12,2,0.5,0,0,0,0,0.1)",
 		randFeature(RND_ETEXNAME).c_str(), // image name
 		randtex,
-		Nscale
+		pow(2,Nscale)
 		);
 		str=buff;
 		PRNT_FEATURE("SURFACE_TEX")
@@ -5620,6 +5676,44 @@ static std::string newErodeTex(Orbital *orbital){
 	}
 	return Planetoid::randFeature(RND_ERODE_TEX);
 }
+static std::string newRockBands(Orbital *orbital){
+	if(TheScene->use_tmps!=ALL_TMPS){
+		//planet->setColors();
+		char buff[2048];
+		std::string str = Planetoid::randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		orbital->add_image(img);
+	}
+	return Planetoid::randFeature(RND_ROCK_BANDS);
+}
+static std::string newRockTex(Orbital *orbital){
+	std::string str;
+	if(TheScene->use_tmps==NO_TMPS){
+		char buff[2048];
+		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
+		strcpy(buff,str.c_str());
+		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
+		himg->init();
+		orbital->add_image(himg);
+	}
+	//return Planetoid::randFeature(RND_ERODE_TEX);
+	return Planetoid::randFeature(RND_ROCK_TEX);
+}
+
+static std::string newSurfaceBands(Orbital *orbital){
+	if(TheScene->use_tmps!=ALL_TMPS){
+		//planet->setColors();
+		char buff[2048];
+		std::string str = Planetoid::randFeature(RND_BANDS);
+		strcpy(buff, str.c_str());
+		TNinode *img = (TNinode*) TheScene->parse_node(buff);
+		img->init();
+		orbital->add_image(img);
+	}
+	return Planetoid::randFeature(RND_SURFACE_BANDS);
+}
 static std::string newSurfaceTex(Orbital *orbital){
 	std::string str;
 	if(TheScene->use_tmps==NO_TMPS){
@@ -5632,18 +5726,6 @@ static std::string newSurfaceTex(Orbital *orbital){
 	}
 	//return Planetoid::randFeature(RND_ERODE_TEX);
 	return Planetoid::randFeature(RND_SURFACE_TEX);
-}
-static std::string newSurfaceBands(Orbital *orbital){
-	if(TheScene->use_tmps!=ALL_TMPS){
-		//planet->setColors();
-		char buff[2048];
-		std::string str = Planetoid::randFeature(RND_BANDS);
-		strcpy(buff, str.c_str());
-		TNinode *img = (TNinode*) TheScene->parse_node(buff);
-		img->init();
-		orbital->add_image(img);
-	}
-	return Planetoid::randFeature(RND_SURFACE_BANDS);
 }
 
 static std::string newDualGlobalTex(Planetoid *planet){
@@ -5805,15 +5887,13 @@ std::string Planetoid::newRocks(Planetoid *planet,int m){
 		str+=rndSurfaceNoise(r[10]);
 	str+=",-0.8)[";
 	Nscale=pow(2,tex_1d_scale);
-	str+=newSurfaceBands(planet);
+	str+=newRockBands(planet);
 	str+="+";
 	Nscale=pow(2,tex_2d_scale);
-	str+=newSurfaceTex(planet);
+	str+=newRockTex(planet);
 	str+="]";
 	Nrocks=false;
 	popInstance(planet);
-	cout<<str<<endl;
-
 	return str;
 }
 std::string Planetoid::newSurfaceDetail(Planetoid *planet){
@@ -5828,7 +5908,8 @@ std::string Planetoid::newSurfaceDetail(Planetoid *planet){
 	if(r[8]>0.5)
 		str+=newRocks(planet,GN_SMALL);
 
-	Nscale=pow(2,16);
+	//Nscale=pow(2,16);
+	Nscale=16;
 	pushInstance(planet);
 	Planetoid::setColors();
 
