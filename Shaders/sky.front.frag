@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "scattering.h"
 #ifndef NLIGHTS
 #define NLIGHTS 1
 #endif
@@ -20,6 +21,14 @@ uniform vec4 Twilite;
 uniform vec4 Night;
 uniform vec4 Sky;
 
+// Physically-derived scattering inputs (see scattering.h) - additive,
+// gated by scatter_mix (Sky::scatter_mix, 0 by default so existing
+// scenes are unaffected until this is dialed in on the Sky tab).
+uniform float pressure;
+uniform float ghg_fraction;
+uniform float scatter_mix;
+uniform float scatter_sharpen;
+
 uniform vec3 pv;
 varying vec4 EyeDirection;
 varying vec4 Normal;
@@ -38,6 +47,13 @@ void main(void) {
 	float a=0.0;
 	vec3 eye = normalize(EyeDirection.xyz);
 	vec3 normal = -normalize(EyeDirection.xyz+center);
+
+	// moved up from below the light loop (was computed just before the
+	// dpEV>dpmin alpha-gradient test) so it's available for the scattering
+	// airmass estimate inside the loop too - 'center' is available from
+	// the start, so this has no effect on the original alpha-gradient math
+	vec3 ec = normalize(center);
+	float dpEV=dot(-eye, ec);
 
 	vec4 color=vec4(1,1,1,1);
 #if NLIGHTS>0	
@@ -81,13 +97,34 @@ void main(void) {
 
 		float pf    = pow(sdp, 10.0*day_grad);
 		color.rgb = mix(color.rgb,Halo.rgb,pf);
+
+		// ---- physically-derived Rayleigh+Mie scattering (additive) ----
+		// dpEV (computed above, before this loop) is the shader's own
+		// existing "looking at the disk center" (dpEV~1, short path) vs
+		// "looking at the limb/beyond" (dpEV<=0, long path) proxy - reused
+		// here as a stand-in for atmospheric path length rather than
+		// deriving new ray/sphere geometry.
+		if(scatter_mix>0.0){
+			float airmass=1.0+8.0*(1.0-clamp(dpEV,0.0,1.0));
+			float cosTheta=dot(-eye,light);
+			// day_grad (the "Halo" Sharpen slider) doubles as scatterColor()'s
+			// tightness control now - see sky.back.frag for the reasoning.
+			vec3 scat=scatterColor(cosTheta,airmass,pressure,ghg_fraction,
+					day_grad,scatter_sharpen,gl_LightSource[i].diffuse.rgb);
+			// scale by 'density' (Sky tab "Opacity") - see sky.back.frag,
+			// same reasoning: scatterColor() alone doesn't know how thin
+			// or thick this particular sky's atmosphere actually is.
+			// also scale by 'ampl' - the same distance/luminosity brightness
+			// factor (Light::getAttenuation(), from the star's temperature
+			// and orbital distance) already used for the specular term just
+			// above, so the scattering glow responds to how close/bright
+			// the star actually is instead of always being full-strength.
+			color.rgb+=scatter_mix*density*ampl*scat;
+		}
 	}
 	color.a=1;
 
-	vec3 ec = normalize(center);                 // eye-center
-	float dpEV=dot(-eye, ec); // angle between center and eye direction
-	
-#if NLIGHTS>0		
+#if NLIGHTS>0
 	if (dpEV>dpmin) // equator to horizon (planet) gradient
 		a=lerp(dpEV, dpmin, 1.0, density, pow(density,10*sky_grad) );		
 	else // horizon to space gradient (top side)

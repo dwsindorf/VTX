@@ -1,0 +1,199 @@
+#ifndef _SCATTERING_H
+#define _SCATTERING_H
+// ########## begin scattering.h #########################
+//
+// Cheap, closed-form (no ray-marching, no precomputed LUT) single-
+// scattering Rayleigh+Mie approximation for the Sky shaders
+// (sky.front.frag / sky.back.frag). This is meant to sit ALONGSIDE the
+// existing hand-tuned Halo/Sky/Twilite/Night/Haze color system, not
+// replace it - callers add scatterColor()'s result into their existing
+// procedural color, scaled by Sky::scatter_mix (0 = no visual change from
+// before this was added, since every existing scene has scatter_mix==0;
+// 1 = full strength). This lets a physically-derived sky be dialed in
+// gradually, or left off entirely, per Sky object.
+//
+// Driven by the Sky object's existing 'pressure' (Sky::pressure, ATM -
+// column density) and 'ghg_fraction' (Sky::ghg_fraction, 0..1) fields -
+// both already exposed on the Sky tab and already used for the surface-
+// temperature calc (Sky::getHeatCalacity()), just not previously
+// connected to how the sky actually renders.
+//
+// COMPOSITION-DRIVEN COLOR: an earlier version of this file used a single
+// fixed Rayleigh-blue color for every planet, so any two atmospheres only
+// differed by how hazy/bright they were, not by hue - every generated sky
+// read as "Earth, more or less foggy." Real non-Earth skies differ in
+// COLOR as much as density: Titan's thick N2/CH4 atmosphere is a deep
+// orange haze from photochemical smog; Venus' thick CO2 atmosphere is a
+// pale yellow-white haze from sulfuric acid clouds; a thin, mostly-clear
+// atmosphere stays close to a faint version of ordinary Rayleigh blue.
+// What these have in common, and what's actually representable without a
+// real particle/chemistry model, is that it's the AEROSOL/HAZE component
+// - not the clear-gas Rayleigh component, whose color ratios stay close
+// to the same for any simple gas mix - that carries most of the color
+// signature. So ghg_fraction is reused here as a proxy for "how much of
+// this atmosphere is heavy/complex/haze-forming molecules (CO2, CH4,
+// sulfur compounds) vs light simple gases (N2, H2, He)": it drives both
+// how hazy the sky gets AND that haze's own warm tint (HAZE_TINT below,
+// independent of the sun's color - previously the Mie term just took on
+// sunColor, i.e. an undifferentiated glow, not a distinct compositional
+// color). 'pressure' scales the strength of both the clear-gas Rayleigh
+// term and the haze term, since a thicker atmosphere has more of both
+// kinds of scatterer - a thin CO2 atmosphere (Mars-like) stays mostly
+// clear despite a high ghg_fraction; a thick one (Venus-like) does not.
+//
+// This is deliberately simple - no multiple-scattering, no curved-
+// atmosphere (Chapman function) path integral, both of which real
+// atmospheres need to look fully correct at grazing/horizon angles, and
+// no attempt at per-gas physical accuracy (this is one continuous "clear
+// <-> hazy/warm" dial, not a gas-mixture simulation). The tuning
+// constants below are reasonable starting points, not derived from first
+// principles - expect to retune them once this can actually be seen
+// rendered; that's what scatter_mix is for.
+//
+// VISIBILITY, RETUNED: the first version of this file used
+// textbook-ish optical depths (tau ~0.15*pressure*airmass). At
+// earth-default composition (pressure=1, ghg_fraction~0.01) and looking
+// anywhere near the zenith (airmass~1) that comes out to an additive
+// term of only a couple percent - real, but far too small to read as
+// "different" against the existing hand-tuned sky color, which is
+// already a similar blue. GAIN, the larger tau scale below, and the
+// HAZE_BASE floor exist purely to make dragging the Scatter slider
+// visibly do something at default composition, not for physical
+// accuracy - turn GAIN down if it starts blowing out/washing out the
+// sky, or up if it's still too subtle.
+const float GAIN = 3.0;
+// Even at ghg_fraction==0 there's a small haze contribution (HAZE_BASE)
+// so the Mie/haze term - and its warm tint - isn't entirely invisible at
+// the composition default; it still grows with ghg_fraction on top of
+// this floor. Push %GHG up on the Sky tab to see the tint shift clearly.
+const float HAZE_BASE = 0.06;
+
+// Relative Rayleigh scattering strength per color channel, from the
+// standard beta ~ 1/lambda^4 law at reference wavelengths R=680nm,
+// G=550nm, B=440nm, normalized so green=1.0:
+//   (550/680)^4 = 0.428   (550/550)^4 = 1.0   (550/440)^4 = 2.441
+// Blue scatters ~2.4x more than green and ~5.7x more than red - this
+// ratio alone is what makes a thick clear atmosphere look blue overhead
+// and red toward the horizon/sunset (blue is scattered out of the direct
+// path fastest over a long grazing path length). This ratio is close to
+// universal for any simple, mostly-nonpolar gas mix (N2/O2/H2/He/CO2
+// alike), so it's kept fixed - composition instead modulates its overall
+// strength and, more visibly, adds the separately-colored haze term below.
+const vec3 BETA_R = vec3(0.428, 1.0, 2.441);
+
+// Color of the Mie/aerosol (haze) component itself, independent of the
+// sun's color - stands in for photochemical or aerosol particles that
+// absorb and forward-scatter selectively rather than just passing
+// incoming light through unchanged, the way Titan's orange smog or
+// Venus' sulfuric-acid clouds do. Warm/orange, tuned to taste rather
+// than measured - retune per scatter_mix testing, not physically derived.
+const vec3 HAZE_TINT = vec3(1.2, 0.82, 0.5);
+
+// Rayleigh phase function: 3/(16*pi) * (1 + cos(theta)^2), where theta is
+// the angle between the view ray (toward the camera) and the direction
+// to the sun. 3/(16*pi) = 0.0596831.
+float rayleighPhase(float cosTheta){
+	return 0.0596831 * (1.0 + cosTheta*cosTheta);
+}
+
+// Henyey-Greenstein phase function for Mie/aerosol (haze) scattering.
+// g in [0,1): 0 = isotropic (like Rayleigh), closer to 1 = a tight
+// forward-scattering glow hugging the sun, typical of larger haze/smog
+// particles (e.g. Titan's photochemical haze). 1/(4*pi) = 0.0795775.
+float miePhase(float cosTheta, float g){
+	float g2 = g*g;
+	float d  = max(1.0 + g2 - 2.0*g*cosTheta, 1e-4);
+	return 0.0795775 * (1.0 - g2) / (d*sqrt(d));
+}
+
+// Single-scattering in-scattered light color for a view ray.
+//   cosTheta  cosine of the angle between the ray toward the camera and
+//             the direction to the sun (the phase-function angle)
+//   airmass   optical path-length multiplier through the atmosphere for
+//             this view ray, roughly 1 at the zenith/sub-solar point and
+//             several times that toward the horizon. There's no single
+//             correct way to derive this from a screen-space sky-dome
+//             shader without a real ray/sphere path integral, so each
+//             call site derives its own approximation from whatever
+//             horizon-vs-zenith gradient it already computes (see the
+//             comment at each call site) rather than this header
+//             re-deriving the view geometry itself.
+//   pressure  Sky::pressure (ATM) - both Rayleigh and haze strength scale
+//             with it (more atmosphere = more of every scatterer)
+//   haze      Sky::ghg_fraction (0..1) - composition proxy: how much of
+//             this atmosphere is heavy/complex/haze-forming vs light and
+//             clear. Drives haze optical depth, its forward-scattering
+//             bias, and (via HAZE_TINT) its own warm color, plus a small
+//             boost to Rayleigh strength (heavier molecules like CO2 are
+//             somewhat more polarizable, and scatter a bit more per
+//             molecule, than light ones like N2/H2 - a modest secondary
+//             effect; the haze tint is what actually carries most of the
+//             color difference between atmosphere types).
+//   sharpen   Sky::shine ("Halo" Sharpen slider, already used elsewhere as
+//             day_grad) - now the SINGLE control for how tight/pinpoint
+//             the glow around the sun looks, shared with the pre-existing
+//             specular highlight (pow(dpLE,100*day_grad)) and haze-mix
+//             (pow(dpLE,10*day_grad)) terms at the call site, instead of
+//             this function picking its own tightness from composition.
+//             See TIGHTNESS VS INTENSITY below.
+//   scatterSharpen  Sky::scatter_sharpen - upper bound on g (how close to
+//             an actual pinpoint 'sharpen' above is allowed to push this
+//             term's forward peak). Separate from 'sharpen' itself: the
+//             pre-existing specular/haze terms have no equivalent ceiling
+//             of their own (they're already governed by MIE_CAP-style
+//             behavior implicitly via pow()'s own shape), but this term's
+//             HG phase function can still get numerically extreme as g
+//             approaches 1, so this is a dedicated, separately-exposed
+//             safety/taste ceiling ("Sharpen" next to Scatter on the Sky
+//             Object tab) rather than a hardcoded constant.
+//   sunColor  light color/intensity to scatter (e.g. gl_LightSource[i].diffuse.rgb)
+// Returns ADDITIVE in-scattered color - callers add scatter_mix*result
+// onto their existing procedural color, they do not replace it outright.
+//
+// TIGHTNESS VS INTENSITY: earlier versions of this function picked its own
+// forward-scattering tightness from composition (ghg_fraction/haze), which
+// meant Halo "Sharpen" (day_grad) controlled how tight the PRE-EXISTING
+// specular/haze glow around the sun was, while this scattering glow had
+// its own separate, uncoordinated tightness - two different dials doing
+// similar jobs. Now 'sharpen' alone drives this function's tightness (g),
+// same input as those other terms, so Sharpen is a single "how tight is
+// everything around the sun" control. That frees 'haze'/composition and
+// scatter_mix to control INTENSITY/COLOR only (that's the interesting
+// part - the composition-tinted color banding) without also fighting to
+// keep the glow from growing in SIZE, since size no longer depends on
+// them - MIE_CAP below was raised accordingly, push scatter_mix/%GHG up
+// for a more intense/colorful effect without it re-inflating the sun.
+vec3 scatterColor(float cosTheta, float airmass, float pressure, float haze, float sharpen, float scatterSharpen, vec3 sunColor){
+	vec3  beta_r = BETA_R * (1.0 + 0.3*haze);
+	float tau    = 0.4 * pressure * airmass;
+	vec3  ext_r  = exp(-tau * beta_r);
+	vec3  inscatter_r = GAIN * beta_r * rayleighPhase(cosTheta) * (1.0 - ext_r);
+
+	// g (forward-scattering tightness) now comes entirely from 'sharpen',
+	// matching the specular/haze terms' own day_grad-driven tightness
+	// instead of picking its own from composition. sharpen/(1+sharpen)
+	// gives a smooth 0->1 ramp that already covers a useful range across
+	// the Sharpen slider's normal 0.1-5 span (g~0.09 at 0.1, g~0.83 at 5)
+	// without needing to type in an out-of-range value like 100 to get a
+	// tight glow - higher values keep approaching (but never quite
+	// reaching) scatterSharpen, the separate ceiling described above.
+	float g     = clamp(sharpen/(1.0+sharpen), 0.0, scatterSharpen);
+	// haze optical depth grows with both how haze-forming the atmosphere
+	// is (haze) and how much atmosphere there is to form it in (pressure);
+	// HAZE_BASE keeps it off zero even when haze==0 (see VISIBILITY note
+	// above) so there's always a floor of haze/tint to see.
+	float tau_m = (HAZE_BASE + haze) * (0.3 + 0.3*pressure) * airmass;
+	float ext_m = exp(-tau_m);
+	vec3  inscatter_m = GAIN * HAZE_TINT * miePhase(cosTheta, g) * (1.0 - ext_m) * (0.5 + 0.5*haze);
+	// Raised now that tightness (size) is pinned to 'sharpen' instead of
+	// riding along with intensity - this cap only bounds how saturated/
+	// colorful the glow gets, not how far it reaches, so it can go higher
+	// without reopening the growing-sun problem. Lower this back down if
+	// pushing scatter_mix/%GHG still visibly widens things.
+	const float MIE_CAP = 1.2;
+	inscatter_m = min(inscatter_m, vec3(MIE_CAP));
+
+	return sunColor * (inscatter_r + inscatter_m);
+}
+// ########## end  scattering.h #########################
+#endif

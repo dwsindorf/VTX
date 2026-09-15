@@ -25,6 +25,10 @@ enum{
     ID_PRESSURE_TEXT,
     ID_FRAC_GHG_SLDR,
     ID_FRAC_GHG_TEXT,
+    ID_SCATTER_SLDR,
+    ID_SCATTER_TEXT,
+    ID_SCATTER_SHARPEN_SLDR,
+    ID_SCATTER_SHARPEN_TEXT,
 
     ID_HAZE_GRAD_SLDR,
     ID_HAZE_GRAD_TEXT,
@@ -73,6 +77,12 @@ EVT_TEXT_ENTER(ID_HEIGHT_TEXT,VtxSkyTabs::OnHeightText)
 
 EVT_COMMAND_SCROLL(ID_DENSITY_SLDR,VtxSkyTabs::OnDensitySlider)
 EVT_TEXT_ENTER(ID_DENSITY_TEXT,VtxSkyTabs::OnDensityText)
+
+EVT_COMMAND_SCROLL(ID_SCATTER_SLDR,VtxSkyTabs::OnScatterSlider)
+EVT_TEXT_ENTER(ID_SCATTER_TEXT,VtxSkyTabs::OnScatterText)
+
+EVT_COMMAND_SCROLL(ID_SCATTER_SHARPEN_SLDR,VtxSkyTabs::OnScatterSharpenSlider)
+EVT_TEXT_ENTER(ID_SCATTER_SHARPEN_TEXT,VtxSkyTabs::OnScatterSharpenText)
 
 EVT_COMMAND_SCROLL(ID_HAZE_SLIDER,VtxSkyTabs::OnHazeSlider)
 EVT_TEXT_ENTER(ID_HAZE_TEXT,VtxSkyTabs::OnHazeText)
@@ -220,6 +230,29 @@ void VtxSkyTabs::AddObjectTab(wxWindow *panel){
 
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	// Blend for the optional physically-derived Rayleigh+Mie scattering
+	// (Sky::scatter_mix) - 0 (default) is the original hand-tuned look,
+	// 100 is fully physically-derived from Pressure/%GHG above.
+	ScatterSlider=new SliderCtrl(panel,ID_SCATTER_SLDR,"Scatter",LABEL2, VALUE2,SLIDER2);
+	ScatterSlider->setRange(0,100);
+	ScatterSlider->setValue(0.0);
+
+	hline->Add(ScatterSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	// Upper clamp on the scattering glow's forward-scattering tightness
+	// (Shaders/scattering.h g, driven by the "Halo" Sharpen slider same as
+	// the specular/haze terms) - keeps that peak from ever quite reaching
+	// a true pinpoint, independent of how far Halo Sharpen itself is pushed.
+	ScatterSharpenSlider=new SliderCtrl(panel,ID_SCATTER_SHARPEN_SLDR,"Sharpen",LABEL2, VALUE2,SLIDER2);
+	ScatterSharpenSlider->setRange(0,0.99);
+	ScatterSharpenSlider->setValue(0.9);
+
+	hline->Add(ScatterSharpenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
 	object_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(object_cntrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -309,6 +342,8 @@ void VtxSkyTabs::updateControls(){
 	updateSlider(CellSizeSlider,sky->detail);
 	updateSlider(PressureSlider,sky->pressure);
 	updateSlider(FracGHGSlider,100*sky->ghg_fraction);
+	updateSlider(ScatterSlider,100*sky->scatter_mix);
+	updateSlider(ScatterSharpenSlider,sky->scatter_sharpen);
 
 	object_name->SetValue(object_node->node->nodeName());
 }

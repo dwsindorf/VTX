@@ -13,6 +13,8 @@ protected:
 	SliderCtrl  *DensitySlider;
 	SliderCtrl  *PressureSlider;
 	SliderCtrl  *FracGHGSlider;
+	SliderCtrl  *ScatterSlider;
+	SliderCtrl  *ScatterSharpenSlider;
 
 	ColorSlider *HazeColor;
 	ColorSlider *SkyColor;
@@ -45,6 +47,8 @@ public:
 		delete DensitySlider;
 		delete PressureSlider;
 		delete FracGHGSlider;
+		delete ScatterSlider;
+		delete ScatterSharpenSlider;
 
 		delete HazeColor;
 		delete SkyColor;
@@ -225,6 +229,33 @@ public:
    // DEFINE_SLIDER_VAR_EVENTS(Pressure,object()->pressure);
 
     //DEFINE_SLIDER_VAR_EVENTS(FracGHG,object()->ghg_fraction);
+
+    // Blend for the optional physically-derived Rayleigh+Mie scattering
+    // (Sky::scatter_mix, see OrbitalClass.h/scattering.h) - pure shading,
+    // not geometry, so this follows the Density pattern (set_changed_render()
+    // only) rather than Pressure/FracGHG's set_changed_detail()+rebuild_all().
+	void OnScatterSlider(wxScrollEvent& event){
+		ScatterSlider->setValueFromSlider();
+		object()->scatter_mix=ScatterSlider->getValue()/100;
+		TheView->set_changed_render();
+	}
+	void OnScatterText(wxCommandEvent& event){
+		ScatterSlider->setValueFromText();
+		object()->scatter_mix=ScatterSlider->getValue()/100;
+		TheView->set_changed_render();
+	}
+
+	// Upper clamp on scatterColor()'s forward-scattering tightness (g) -
+	// see Shaders/scattering.h - stored directly (not /100 like Scatter)
+	// since it's already a 0-1ish clamp value, not a percent.
+	void OnScatterSharpenSlider(wxScrollEvent& event){
+		OnSliderValue(ScatterSharpenSlider, object()->scatter_sharpen);
+		TheView->set_changed_render();
+	}
+	void OnScatterSharpenText(wxCommandEvent& event){
+		OnSliderText(ScatterSharpenSlider, object()->scatter_sharpen);
+		TheView->set_changed_render();
+	}
 
     DECLARE_EVENT_TABLE()
 };

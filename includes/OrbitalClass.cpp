@@ -8913,6 +8913,8 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 	haze_color=def_haze_color;
 	density=0.05;
 	detail=8;
+	scatter_mix=0; // physically-derived scattering off by default - see OrbitalClass.h
+	scatter_sharpen=0.9; // matches scattering.h's previous hardcoded g clamp
 }
 Sky::~Sky()
 {
@@ -9087,6 +9089,8 @@ void Sky::get_vars()
 	VGET("density",density,0.01);
 	VGET("pressure",pressure,1); // earth normal 1ATM
 	VGET("ghg_fraction",ghg_fraction,0.01); //  earth: mostly h2o (20%) co2 (0.03%)
+	VGET("scatter_mix",scatter_mix,0); // physical Rayleigh+Mie blend, off by default
+	VGET("scatter_sharpen",scatter_sharpen,0.9); // scatterColor() g clamp
 
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
@@ -9123,6 +9127,8 @@ void Sky::set_vars()
 	VSET("density",density,0.01);
 	VSET("pressure",pressure,1);
 	VSET("ghg_fraction",ghg_fraction,0.01);
+	VSET("scatter_mix",scatter_mix,0);
+	VSET("scatter_sharpen",scatter_sharpen,0.9);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
@@ -9328,6 +9334,13 @@ bool Sky::setProgram(){
 	vars.newFloatVar("dht",dht);
 	vars.newFloatVar("dpmin",dpmin);
 	vars.newFloatVar("dpmax",dpmax);
+
+	// Physically-derived scattering inputs (see Shaders/scattering.h) -
+	// additive, gated in-shader by scatter_mix (0 by default).
+	vars.newFloatVar("pressure",pressure);
+	vars.newFloatVar("ghg_fraction",ghg_fraction);
+	vars.newFloatVar("scatter_mix",scatter_mix);
+	vars.newFloatVar("scatter_sharpen",scatter_sharpen);
 
 //	double r=parent->size;
 //	double s=size; // radius of shell
