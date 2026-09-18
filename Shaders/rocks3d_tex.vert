@@ -13,6 +13,9 @@ varying vec3 EyeDirection;
 varying vec3 EyePos;
 varying vec3 TemplatePos;
 varying vec3 WorldNormal;
+// Constants1 (varying vec4) and its HT/DENSITY/SFACT macros come from
+// common.h - reused here exactly as terrain does, instead of inventing
+// separate rock-specific varyings.
 attribute vec4 templatePosition;
 attribute vec4 faceNormal;
 
@@ -20,6 +23,8 @@ attribute vec4 faceNormal;
 attribute vec3 rockEyeCenter;
 attribute float rockSize;
 attribute float rockRval;
+attribute float rockHT;
+attribute float rockDensity;
 
 // Per-frame rotation uniforms (same for all rocks)
 uniform vec3 rockRight;
@@ -98,6 +103,7 @@ void main() {
 
     EyePos = normalize(mpoint.xyz);
     WorldNormal = normalize(tp);
+    Constants1 = vec4(rockHT, 0.0, rockDensity, 0.0);  // HT=.x, DENSITY=.z (common.h)
 
 #ifdef COLOR
     Color = gl_Color;

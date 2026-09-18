@@ -24,20 +24,24 @@ Scene() {
 		heading=13;
 		tilt=-7;
 		angle=-3;
-		vstride=0.02;
-		zoom=0.003;
-		minh=5.68182e-10;
-		radius=0.00299666;
 	}
 	View{
 		height=29233.9 ft;
 		tilt=-10;
-		minr=0.00299117;
-		radius=0.00299671;
 	}
 	View{
 		phi=-41.5448;
 		theta=246.023;
+	}
+	View{
+		phi=-41.5511;
+		theta=245.942;
+		height=32898.9 ft;
+		heading=-11;
+	}
+	View{
+		minr=0.00299117;
+		radius=0.0029974;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -66,7 +70,7 @@ Scene() {
 					name="Sol";
 					specular=Color(1,1,1);
 					temperature=6000;
-					bands("star1",ACHNL|CLAMP|DECAL|REPLACE,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					bands("star1",ACHNL|BLEND|CLAMP|DECAL|REPLACE,16,Color(0.976,0.945,0.565),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.294,0.016,0.071),
 						Color(0.137,0.024,0.188),
@@ -96,8 +100,6 @@ Scene() {
 					fog.vmin=-20000 ft;
 					hscale=0.002;
 					name="Venus";
-					ocean.auto=1;
-					ocean.state=0;
 					shadow=Color(0.21,0.17,0.04,0.31);
 					shine=16.4793;
 					specular=Color(1,1,1,0.11);
@@ -107,13 +109,17 @@ Scene() {
 						Color(0.165,0,0),
 						Color(0,0,0));
 					image("eroded",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"calisto");
+					bands("calisto",ACHNL|BLEND|DECAL|REPLACE,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
+						Color(0.522,0.345,0.227),
+						Color(0.753,0.753,0.753),
+						Color(0.502,0.502,0.502,0.773));
 					Surface{
 						terrain=fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
 								Texture("dessert",BORDER|LINEAR|TEX,577315,0.9524,1,2.22224,1,2,1,0,0,1,0.5,-0.44448)+
 								Texture("eroded",BUMP|TEX,683.359,-0.2,2,0,5,2,0.5,0,0,0,0,0)+
 								Texture("rock_stones",BUMP|RANDOMIZE|TEX,4096,-4,1.02776,3.33328,4,2.2,0.93056,0,0,0.33332,0,0)+
-								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|FS|SCALE|SQR,8.5,13,0.2,0.25,2.2,1,0.66,0.45,0,1e-06));
+								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|SCALE|SQR,8.5,13,0.2,0.25,2.2,1,0.66,0.45,0,1e-06));
 					}
 					Clouds(0.00305588) {
 						ambient=Color(1,1,0.5,0.07);
@@ -125,7 +131,7 @@ Scene() {
 						specular=Color(1,1,1,0.07);
 						Surface{
 							terrain=
-									Texture("venus_clouds",BUMP|LINEAR|TEX,1,2,2,0,1,2,0.5,0,0,0,0,0);
+									Texture("venus_clouds",BUMP|LINEAR|TEX,1,2,0.50792,0,1,2,0.5,0,0,0,0,0);
 						}
 					}
 					Sky(0.00308653) {
@@ -141,6 +147,8 @@ Scene() {
 						pressure=92;
 						resolution=4;
 						rseed=1.15592;
+						scatter_mix=0.4762;
+						scatter_sharpen=1;
 						sky.grad=0.299753;
 						specular=Color(1,1,1);
 						tilt=10;

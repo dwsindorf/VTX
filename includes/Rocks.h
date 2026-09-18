@@ -58,7 +58,9 @@ class Rock3DObjMgr : public PlaceObjMgr
 		float eyeCenter[3];
 		float rockSize;
 		float rval;
-		float pad[3];
+		float ht;        // placement elevation * Rscale, for fog (was pad[0])
+		float density;   // placement fog density (TNfog), for fog (was pad[1])
+		float pad[1];
 	};
 
 	// 3. TemplateMeshVBO — uses GLVertex
@@ -150,6 +152,8 @@ class Rock3DObjMgr : public PlaceObjMgr
 	    Point eyeCenter;
 	    float rockSize = 1.0f;
 	    float rval = 0.0f;
+	    float ht = 0.0f;        // placement elevation * Rscale, for fog
+	    float density = 0.0f;   // placement fog density (TNfog), for fog
 	    int instanceId = 0;
 	    
 	    void clear() { vbo.clear(); }

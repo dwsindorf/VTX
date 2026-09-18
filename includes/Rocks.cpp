@@ -19,6 +19,7 @@
 #include <algorithm>
 
 extern double Hscale,Drop, MaxSize;
+extern double Rscale;   // global-units scale factor, for placement HT -> fog HT
 extern int test7, test8;
 
 extern char tabs[];
@@ -508,6 +509,8 @@ bool Rock3DObjMgr::setProgram() {
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),orb->shadow_intensity);
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVec("mpoint",xp.x,xp.y,xp.z,0);
+	vars.newFloatVar("fog_vmin",orb->fog_vmin);
+	vars.newFloatVar("fog_vmax",orb->fog_vmax);
 	
 	//cout<<"orb->point:"<<xp<<" xpoint:"<<TheScene->xpoint<<endl;
 	
@@ -1030,6 +1033,8 @@ void Rock3DObjMgr::render() {
             rockSize = 2*PSCALE * s->radius;
             double dscale = PSCALE*pmgr->drop * (1 - 0.5 * pmgr->comp) * 0.5;
             rockEyeCenter = (s->vertex - up * (s->radius * dscale)) - TheScene->xpoint;
+            float rockHT = (float)(s->ht * Rscale);   // placement elevation, global units - for fog
+            float rockDensity = (float)s->density;    // placement fog density (TNfog), for fog
 
             if (resolution >= Rock3DMgr::adaptThreshold && use_adaptive_grid){          	
                 Point camOffset = TheScene->xpoint - s->vertex;
@@ -1077,6 +1082,8 @@ void Rock3DObjMgr::render() {
                 ab.eyeCenter = rockEyeCenter;
                 ab.rockSize = (float)rockSize;
                 ab.rval = (float)s->rval * 0.001f;
+                ab.ht = rockHT;
+                ab.density = rockDensity;
                 VBOBatch& batch = ab.vbo;
                 
                 /// Reset normals for ALL leaves to face normals
@@ -1171,7 +1178,9 @@ void Rock3DObjMgr::render() {
                     inst.eyeCenter[2] = (float)rockEyeCenter.z;
                     inst.rockSize     = (float)rockSize;
                     inst.rval         = (float)s->rval * 0.001f;
-                    inst.pad[0] = inst.pad[1] = inst.pad[2] = 0;
+                    inst.ht           = rockHT;
+                    inst.density      = rockDensity;
+                    inst.pad[0] = 0;
                     lbatch.instances.push_back(inst);
                 }
 
@@ -1374,13 +1383,17 @@ void Rock3DObjMgr::renderBatch(VBOBatch& batch, GLhandleARB program,
     GLint locEC = glGetAttribLocation(program, "rockEyeCenter");
     GLint locRS = glGetAttribLocation(program, "rockSize");
     GLint locRV = glGetAttribLocation(program, "rockRval");
-            
+    GLint locHT = glGetAttribLocation(program, "rockHT");
+    GLint locDN = glGetAttribLocation(program, "rockDensity");
+
      if (locEC >= 0) glVertexAttrib3f(locEC,
                                      (float)ab.eyeCenter.x,
                                      (float)ab.eyeCenter.y,
                                      (float)ab.eyeCenter.z);
     if (locRS >= 0) glVertexAttrib1f(locRS, ab.rockSize);
     if (locRV >= 0) glVertexAttrib1f(locRV, ab.rval);
+    if (locHT >= 0) glVertexAttrib1f(locHT, ab.ht);
+    if (locDN >= 0) glVertexAttrib1f(locDN, ab.density);
     glDrawArrays(GL_TRIANGLES, 0, batch.uploadedVertexCount);
 
     if (locTP >= 0) glDisableVertexAttribArray(locTP);
@@ -1445,7 +1458,23 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
         glVertexAttribDivisor(locRV, 1);
         glEnableVertexAttribArray(locRV);
     }
-    
+
+    GLint locHT = glGetAttribLocation(program, "rockHT");
+    if (locHT >= 0) {
+        glVertexAttribPointer(locHT, 1, GL_FLOAT, GL_FALSE,
+                              sizeof(RockInstance), (void*)offsetof(RockInstance, ht));
+        glVertexAttribDivisor(locHT, 1);
+        glEnableVertexAttribArray(locHT);
+    }
+
+    GLint locDN = glGetAttribLocation(program, "rockDensity");
+    if (locDN >= 0) {
+        glVertexAttribPointer(locDN, 1, GL_FLOAT, GL_FALSE,
+                              sizeof(RockInstance), (void*)offsetof(RockInstance, density));
+        glVertexAttribDivisor(locDN, 1);
+        glEnableVertexAttribArray(locDN);
+    }
+
     float instData[8];
     glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(instData), instData);
 
@@ -1465,6 +1494,8 @@ void Rock3DObjMgr::renderLODBatch(LODBatch& lbatch, GLhandleARB program) {
     if (locEC >= 0) { glVertexAttribDivisor(locEC, 0); glDisableVertexAttribArray(locEC); }
     if (locRS >= 0) { glVertexAttribDivisor(locRS, 0); glDisableVertexAttribArray(locRS); }
     if (locRV >= 0) { glVertexAttribDivisor(locRV, 0); glDisableVertexAttribArray(locRV); }
+    if (locHT >= 0) { glVertexAttribDivisor(locHT, 0); glDisableVertexAttribArray(locHT); }
+    if (locDN >= 0) { glVertexAttribDivisor(locDN, 0); glDisableVertexAttribArray(locDN); }
     if (locTP >= 0) glDisableVertexAttribArray(locTP);
     if (locFN >= 0) glDisableVertexAttribArray(locFN);
     glDisableClientState(GL_VERTEX_ARRAY);

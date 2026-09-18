@@ -34,11 +34,12 @@ class PlaceObjMgr;
 	    double theta, phi;  // Spherical coordinates
 	    double slope;       // For slope_bias
 	    double height;      // For ht_bias
+	    double density;     // For fog density (TNfog) - 0 when no fog node present
 	    double hardness;    // For hardness_bias (from FBOTex later)
 	    int layerId;        // For layer filtering (from FBOTex later)
 	    bool rock;
-	    
-	    SurfacePoint() : theta(0), phi(0), slope(0), height(0), hardness(0.5), layerId(0), rock(false){}
+
+	    SurfacePoint() : theta(0), phi(0), slope(0), height(0), density(0), hardness(0.5), layerId(0), rock(false){}
 	    void setGlobals() const;
 	};
 

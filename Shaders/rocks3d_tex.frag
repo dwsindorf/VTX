@@ -15,10 +15,14 @@ varying vec4 WorldNormal;
 
 varying vec3 EyeDirection;
 varying vec3 EyePos;
+// HT / DENSITY read from Constants1 via common.h's macros, same as planetoid.frag.
 
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
+
+uniform float fog_vmin;
+uniform float fog_vmax;
 
 uniform float twilite_min;
 uniform float twilite_max;
@@ -101,7 +105,9 @@ void main() {
    // color.rgb=vec3(Tangent.z,0,0);
    
     gl_FragData[0]=vec4(color.xyz,1);
-    gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
+
+    float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
+    gl_FragData[1]=vec4(4,DEPTH,0,vfog);
 
     //gl_FragData[1]=vec4(fcolor2); // pass thru
     

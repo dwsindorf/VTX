@@ -34,7 +34,7 @@ static char THIS_FILE[] = __FILE__;
 static TerrainData Td;
 extern double ptable[];
 extern Point MapPt;
-extern double Hscale,Theta,Phi,Slope,MinHt,MaxHt,Height,Hardness;
+extern double Hscale,Theta,Phi,Slope,MinHt,MaxHt,Height,Density,Hardness;
 
 double MaxSize;
 
@@ -879,6 +879,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	users=0;
 	flags.l=0;
 	ht=0;
+	density=0;
 	dist=1e16;
 	visits=0;
 	//place_hits=0;
@@ -890,6 +891,7 @@ Placement::Placement(PlacementMgr &pmgr,Point4DL &pt, int n) : point(pt)
 	next=0;
 	wtsum=0;
 	aveht=0;
+	avedensity=0;
 	hits=0;
 	vertex=MapPt+TheScene->vpoint;
 	
@@ -1006,13 +1008,16 @@ bool Placement::set_terrain(PlacementMgr &pmgr)
     
  	if(d<dist){
 		ht=Height; // closest to center
+		density=Density;
 		dist=d;
 	}
     if(pmgr.useaveht()){
     	double wt=1/(0.01+pmgr.sval);
-     	aveht+=Height*wt;	
+     	aveht+=Height*wt;
+     	avedensity+=Density*wt;
     	wtsum+=wt;
 		ht=aveht/wtsum;
+		density=avedensity/wtsum;
     }
 
 	hits++;
@@ -1069,6 +1074,7 @@ void Placement::setVertex() {
 PlaceData::PlaceData(Placement *pnt){
 	type=pnt->type;
 	ht=pnt->ht;
+	density=pnt->density;
 	vertex=pnt->vertex;
 	normal=pnt->normal;	
 	radius=pnt->radius;

@@ -246,7 +246,7 @@ void VtxSkyTabs::AddObjectTab(wxWindow *panel){
 	// the specular/haze terms) - keeps that peak from ever quite reaching
 	// a true pinpoint, independent of how far Halo Sharpen itself is pushed.
 	ScatterSharpenSlider=new SliderCtrl(panel,ID_SCATTER_SHARPEN_SLDR,"Sharpen",LABEL2, VALUE2,SLIDER2);
-	ScatterSharpenSlider->setRange(0,0.99);
+	ScatterSharpenSlider->setRange(0,1.0);
 	ScatterSharpenSlider->setValue(0.9);
 
 	hline->Add(ScatterSharpenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);

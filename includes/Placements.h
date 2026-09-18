@@ -162,6 +162,8 @@ public:
 	double 		ht;
 	double 		aveht;
 	double 		wtsum;
+	double 		density;
+	double 		avedensity;
 	double 		dist;
 	double      pts;
 	double      rval;
@@ -197,6 +199,7 @@ public:
 	double dist;
 	double radius;
 	double ht;
+	double density;   // fog density (TNfog) at this placement's location
 	double pts;
 	double rval;
 	int instance;

@@ -1524,6 +1524,7 @@ static void collect_surface_data(MapNode *n)
 	sp.theta = d->theta();
 	sp.phi = d->phi();
 	sp.height = d->Ht();
+	sp.density = d->density();
 	sp.hardness = d->hardness();
 	sp.slope = n->slope();
 	sp.rock=d->rock();
@@ -1551,15 +1552,16 @@ int Map::get_surface_data(){
 }
 
 void SurfacePoint::setGlobals() const {
-	extern double Slope, Theta, Phi, Height, Hardness;
+	extern double Slope, Theta, Phi, Height, Density, Hardness;
 	extern Point MapPt;
 	extern double MaxHt, MinHt;
-	
+
 	MapPt = worldPos; // eye space
 	Theta = theta;
 	Phi = phi;
 	Slope = slope;
 	Height = height;
+	Density = density;
 	Hardness = hardness;
 
 	Point worldPos = MapPt + TheScene->xpoint;
