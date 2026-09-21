@@ -203,6 +203,7 @@ static int cnt=0;
 //************************************************************
 
 extern double MaxSize,Height,Phi,Theta,Level,PLevel,Randval,Srand,Range,Temp,Slope;
+extern double Rscale;  // placement elevation (Height/s->ht) -> global units, for fog (see Rocks.cpp)
 extern Point MapPt;
 extern double  zslope();
 extern char tabs[];
@@ -334,7 +335,8 @@ void BranchVBO::build()
     dirty = false;
 }
 
-void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode)
+void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c, float shaderMode,
+                           float ht1, float ht2, float density)
 {
     BranchVertex v;
     v.common1 = f;
@@ -342,6 +344,10 @@ void BranchVBO::addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Col
     v.common3 = s;
     v.texcoord = Vec4(d.x, d.y, d.z, shaderMode);
     v.color = Vec4(c.red(), c.green(), c.blue(), c.alpha());
+    // Both endpoints carry the same (ht1,ht2,density) - same convention as
+    // common1's r1/r2 taper pair, which is also duplicated across both pushed
+    // vertices and read as a pair by the geometry shader (Constants1[0].xy).
+    v.fogVars = Vec4(ht1, ht2, density, 0.0);
 
     v.pos = p1;
     vertexesObjectSpace.push_back(v);
@@ -387,6 +393,12 @@ void BranchVBO::render()
                          (void*)offsetof(BranchVertex, texcoord));
     glEnableVertexAttribArray(GLSLMgr::TexCoordsID);
 
+    if (GLSLMgr::FogAttribID >= 0) {
+        glVertexAttribPointer(GLSLMgr::FogAttribID, 4, GL_FLOAT, GL_FALSE, stride,
+                             (void*)offsetof(BranchVertex, fogVars));
+        glEnableVertexAttribArray(GLSLMgr::FogAttribID);
+    }
+
     glDrawArrays(GL_LINES, 0, vertCount);
 
     // Cleanup
@@ -395,6 +407,8 @@ void BranchVBO::render()
     glDisableVertexAttribArray(GLSLMgr::CommonID2);
     glDisableVertexAttribArray(GLSLMgr::CommonID3);
     glDisableVertexAttribArray(GLSLMgr::TexCoordsID);
+    if (GLSLMgr::FogAttribID >= 0)
+        glDisableVertexAttribArray(GLSLMgr::FogAttribID);
     glDisableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);  // restore
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -672,6 +686,15 @@ void PlantObjMgr::render()
                 plant->branchVBO.clear();
                 plant->lineVBO.clear();
                 plant->freeLeafs();  // Clears both leafs list AND leafVBO
+
+                // Fog for this instance (same source data as Rocks.cpp's rockHT/
+                // rockDensity): baseline HT at the placement plus, per branch
+                // vertex as it's generated below, height above that base along
+                // the surface normal - see Plant::fogHT().
+                plant->fogBaseHT  = s->ht * Rscale;
+                plant->fogDensity = s->density;
+                plant->fogUp      = s->normal;
+
                 double t1=clock();
                 // Generate in object space
                 tnplant->emit();
@@ -830,6 +853,8 @@ bool PlantObjMgr::setProgram(){
 	vars.newFloatVar("bump_ampl",0.025);
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
+	vars.newFloatVar("fog_vmin",orb->fog_vmin);
+	vars.newFloatVar("fog_vmax",orb->fog_vmax);
 
 	vars.newBoolVar("lighting",Render.lighting());
 	
@@ -901,11 +926,13 @@ bool Plant::setProgram(){
 }
 
 void Plant::collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w));
+    branchVBO.addBranch(p0, p1, p2, f, d, s, c, TNBranch::shaderMode(d.w),
+                         fogHT(p1), fogHT(p2), (float)fogDensity);
 }
 
 void Plant::collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c) {
-    lineVBO.addBranch(p0, p1,p2, f, d, s, c, TNBranch::shaderMode(d.w));
+    lineVBO.addBranch(p0, p1,p2, f, d, s, c, TNBranch::shaderMode(d.w),
+                       fogHT(p1), fogHT(p2), (float)fogDensity);
 }
 
 void Plant::freeBranches() {
@@ -949,7 +976,8 @@ void Plant::sortLeafs() {
 			BranchData *l = leafs[i];
 			leafVBO.addBranch(l->data[0], l->data[1], l->data[2], l->data[3],
 					l->data[4], l->data[5], l->c,
-					TNBranch::shaderMode(l->data[4].w));
+					TNBranch::shaderMode(l->data[4].w),
+					fogHT(l->data[1]), fogHT(l->data[2]), (float)fogDensity);
 		}
 	}
 	sorted = true;

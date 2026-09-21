@@ -84,6 +84,7 @@ public:
 	static GLint CommonID1;
 	static GLint CommonID2;
 	static GLint CommonID3;
+	static GLint FogAttribID;  // "FogAttributes": per-vertex fog HT1/HT2/density (plants - Constants1 is fully packed there)
 	static GLint ColorID;
 	static GLint attributes3ID;
 	static GLint attributes4ID;

@@ -9,6 +9,7 @@ varying in vec4 Constants1[];
 varying in vec4 ImageVars_G[];
 varying in vec4 P0[];
 varying in vec4 TexVars_G[];
+varying in vec4 FogVars_G[];
 
 varying out vec4 Color;
 varying out vec4 TexVars;
@@ -16,8 +17,10 @@ varying out vec4 ImageVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
 varying out vec4 EyeDirection;
+varying out vec2 FogVars;  // x=HT, y=density - consumed by plants.frag as HT/DENSITY
 
 vec4 Pos0,Pos1,Pos2;
+float FogHT1,FogHT2,FogDensity;
 
 #define PI		3.14159265359
 
@@ -78,8 +81,11 @@ void produceTVertex(vec2 tx,vec3 v){
 }
 // draw a line
 void emitLine(){
+    FogVars=vec2(FogHT2,FogDensity);
     emitVertex(Pos2);
-    emitVertex(Pos1); 
+    FogVars=vec2(FogHT1,FogDensity);
+    emitVertex(Pos1);
+    FogVars=vec2(FogHT2,FogDensity);
     emitVertex(Pos2);
  }
 #define MAT_MUL
@@ -123,24 +129,26 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 	Pnorm.w=0.01;//P0[0].w; // bump
      vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
+		FogVars=vec2(FogHT1,FogDensity);
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
 		produceTVertex(vec2(1.0,0.0),Pos1+w*tx); // bot-right
+		FogVars=vec2(FogHT2,FogDensity);
 		produceTVertex(vec2(0.0,1.0),Pos2-w*tx); // top-left
 		produceTVertex(vec2(1.0,1.0),Pos2+w*tx); // top-right
 	}
 	else{ // leaf shape
 	    float taper=Constants1[0].x;
-	    	    	
+
 	    float w1=w;
         float w2=taper*w;
-         
+
         float b1=0.1;
         float b2=0.9;
 
 		w1=w1*1.5;
 		w2=w2*1.5;
         float s=w1*1.4;
-        
+
         int nodes=6;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
@@ -149,24 +157,27 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         vec4 s1m=x1-w1*t1;
         vec4 s2p=x2+w2*t1;
         vec4 s2m=x2-w2*t1;
-        
+
         float dt=1.0/nodes;
         float t=dt;
 
+      FogVars=vec2(FogHT1,FogDensity);
       produceTVertex(vec2(0.5,0.0),Pos1); // bot
       for(int i=0;i<nodes-1;i++){
+          FogVars=vec2(mix(FogHT1,FogHT2,t),FogDensity);
           vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
           produceTVertex(vec2(p.w/s+0.5,t),p);
           p=bezier(t,Pos1,s1m,s2m,Pos2);
           produceTVertex(vec2(p.w/s+0.5,t),p);
           t+=dt;
       }
+      FogVars=vec2(FogHT2,FogDensity);
       produceTVertex(vec2(0.5,1.0),Pos2); // top
 	}
 	EndPrimitive();
 }
 // branches  
-void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
+void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx, float ht1, float ht2){
 	
 	float bot_offset=p1.w;
 	float top_offset=p2.w;
@@ -189,7 +200,8 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
   
     Pnorm.xyz=vec3(v1,0);
     gl_TexCoord[0].xy=vec2(0,tx.w);
-    gl_Position = vec4(p1.xy-bot_left,p1.z,1);  // bot-left 
+    FogVars=vec2(ht1,FogDensity);
+    gl_Position = vec4(p1.xy-bot_left,p1.z,1);  // bot-left
     EmitVertex();
     
     Pnorm.xyz=vec3(-v1,0);
@@ -199,6 +211,7 @@ void emitRectangle(vec4 p1,vec4 p2, vec4 c, vec4 tx){
    
  	Pnorm.xyz=vec3(v2,0);
     gl_TexCoord[0].xy=vec2(0,tx.y);
+    FogVars=vec2(ht2,FogDensity);
     gl_Position = vec4(p2.xy-top_left,p2.z,1); // top-left
     EmitVertex();
    
@@ -244,7 +257,7 @@ void emitBranch(){
    vec4 c=Constants1[0];
    vec4 p0=Pos0;
    vec4 cc=calcOffsets(p0,p1,p2,c);
-   emitRectangle(p1,p2,cc,vec4(0,0,0,1));
+   emitRectangle(p1,p2,cc,vec4(0,0,0,1),FogHT1,FogHT2);
  }
 
 //mat3 m=mat3(2,-3,1,-4,4,0,2,-1,0);
@@ -286,7 +299,7 @@ void emitSpline(){
 		vec4 t1=spline(s,p0,p1,p2);
 		vec4 t2=spline(s+ds,p0,p1,p2);
 		vec4 tx=vec4(0,f1,0,f2);
-		emitRectangle(t1,t2,c,tx);	
+		emitRectangle(t1,t2,c,tx,mix(FogHT1,FogHT2,f1),mix(FogHT1,FogHT2,f2));
 		s+=ds;
 	}	
 
@@ -380,15 +393,17 @@ void main(void) {
 	Normal.xyz=Normal_G[0].xyz;
 	TexVars=TexVars_G[0];
 	ImageVars=ImageVars_G[0];
+	FogHT1=FogVars_G[0].x;
+	FogHT2=FogVars_G[0].y;
+	FogDensity=FogVars_G[0].z;
     int mode=TexVars_G[0].w+0.1;
-    
+
     if(mode==LINE)
     	emitLine();
     else if(mode==LEAF)
     	emitLeaf();
     else if(mode==BRANCH)
-        emitBranch(); 
+        emitBranch();
     else
-        emitSpline(); 
+        emitSpline();
 }
-

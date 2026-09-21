@@ -40,6 +40,7 @@ GLint 			GLSLMgr::TexCoordsID=-1;
 GLint 			GLSLMgr::CommonID1=-1;
 GLint 			GLSLMgr::CommonID2=-1;
 GLint 			GLSLMgr::CommonID3=-1;
+GLint 			GLSLMgr::FogAttribID=-1;
 GLint 			GLSLMgr::ColorID=-1;
 GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
@@ -837,6 +838,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	CommonID1=-1;
 	CommonID2=-1;
 	CommonID3=-1;
+	FogAttribID=-1;
 
 	program=shaders.inlist(tmp);
 
@@ -910,6 +912,7 @@ void GLSLMgr::setProgram(){
  	CommonID1=glGetAttribLocation(program,"CommonAttributes1"); // Constants1
  	CommonID2=glGetAttribLocation(program,"CommonAttributes2"); // Constants2
  	CommonID3=glGetAttribLocation(program,"CommonAttributes3"); // Constants3
+ 	FogAttribID=glGetAttribLocation(program,"FogAttributes");   // per-vertex fog HT1/HT2/density (plants)
  	ColorID=glGetAttribLocation(program,"Color"); // Constants3
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1

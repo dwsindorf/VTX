@@ -101,6 +101,10 @@ struct BranchVertex {
     Vec4 common2;   // -> CommonAttributes2 (location 4)
     Vec4 common3;   // -> CommonAttributes3 (location 5)
     Vec4 texcoord;  // -> TextureAttributes (location 6)
+    Vec4 fogVars;   // -> FogAttributes (x=HT @ p1, y=HT @ p2, z=density, w spare)
+                    // Constants1 is fully packed with branch radius/taper data for
+                    // plants (unlike rocks), so fog gets its own attribute instead
+                    // of hijacking Constants1.
 };
 
 
@@ -132,8 +136,11 @@ public:
     }
 
     // Add branch in object space (no worldpos)
-    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, 
-                   Color c, float shaderMode);
+    // ht1/ht2: fog HT (elevation, global units) at p1/p2, baked in by the caller
+    // from the placement's baseline HT plus this branch point's height above the
+    // plant's base along the surface normal - see Plant::fogHT() in Plants.cpp.
+    void addBranch(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s,
+                   Color c, float shaderMode, float ht1, float ht2, float density);
 
     // Upload vertexesEyeSpace to GPU
     void build();
@@ -174,6 +181,18 @@ public:
 	void collectBranches(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
 	void collectLines(Vec4 p0, Vec4 p1, Vec4 p2, Vec4 f, Vec4 d, Vec4 s, Color c);
     void freeBranches();
+
+	// Fog: set once per instance (in PlantObjMgr::render(), from this plant's
+	// PlaceData) before tnplant->emit() regenerates object-space geometry.
+	// fogUp is the placement's surface normal - "up" for measuring height above
+	// the plant's base. fogBaseHT is the placement's HT (elevation, global units,
+	// i.e. s->ht*Rscale), matching what Rocks.cpp bakes into rockHT.
+	double fogBaseHT = 0.0;
+	double fogDensity = 0.0;
+	Point  fogUp;
+	// HT at an object-space branch point: base elevation + height above the
+	// plant's base (object-space origin) along the surface normal.
+	float fogHT(const Vec4& p) { return (float)(fogBaseHT + fogUp.x*p.x + fogUp.y*p.y + fogUp.z*p.z); }
 
 	ValueList<BranchData*> leafs;
 	void renderBranches();

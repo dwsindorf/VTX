@@ -9,6 +9,7 @@ varying in vec4 Constants1[];
 varying in vec4 ImageVars_G[];
 varying in vec4 P0[];
 varying in vec4 TexVars_G[];
+varying in vec4 FogVars_G[];
 
 varying out vec4 Color;
 varying out vec4 TexVars;
@@ -16,8 +17,10 @@ varying out vec4 ImageVars;
 varying out vec3 Normal;
 varying out vec4 Pnorm;
 varying out vec4 EyeDirection;
+varying out vec2 FogVars;  // x=HT, y=density - consumed by plants.frag as HT/DENSITY
 
 vec4 Pos0,Pos1,Pos2;
+float FogHT1,FogHT2,FogDensity;
 
 #define PI		3.14159265359
 
@@ -101,22 +104,24 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
 	Pnorm.w=0.001;//P0[0].w; // bump
     vec3 ty = cross(v, tx);
 	if(rectmode){ // use a rectangle (for transparent textures){
+		FogVars=vec2(FogHT1,FogDensity);
 		produceTVertex(vec2(0.0,0.0),Pos1-w*tx); // bot-left
 		produceTVertex(vec2(1.0,0.0),Pos1+w*tx); // bot-right
+		FogVars=vec2(FogHT2,FogDensity);
 		produceTVertex(vec2(0.0,1.0),Pos2-w*tx); // top-left
 		produceTVertex(vec2(1.0,1.0),Pos2+w*tx); // top-right
 	}
 	else{ // leaf shape
 	    float taper=Constants1[0].x;
-	    	    	
+
 	    float w1=w;
         float w2=taper*w;
-         
+
         float b1=0.1;
         float b2=0.9;
 
         float s=w1*1.5;
-	        
+
         int nodes=6;
         vec4 t1=vec4(tx,1);
         vec4 x1=mix(Pos1,Pos2,b1);
@@ -125,18 +130,21 @@ void drawLeaf(vec3 p0,vec3 p1, vec3 p2)
         vec4 s1m=x1-w1*t1;
         vec4 s2p=x2+w2*t1;
         vec4 s2m=x2-w2*t1;
-        
+
         float dt=1.0/nodes;
         float t=dt;
 
+      FogVars=vec2(FogHT1,FogDensity);
       produceTVertex(vec2(0.5,0.0),Pos1); // bot
       for(int i=0;i<nodes-1;i++){
+          FogVars=vec2(mix(FogHT1,FogHT2,t),FogDensity);
           vec4 p=bezier(t,Pos1,s1p,s2p,Pos2);
           produceTVertex(vec2(p.w/s+0.5,t),p);
           p=bezier(t,Pos1,s1m,s2m,Pos2);
           produceTVertex(vec2(p.w/s+0.5,t),p);
           t+=dt;
       }
+      FogVars=vec2(FogHT2,FogDensity);
       produceTVertex(vec2(0.5,1.0),Pos2); // top
 	}
 	EndPrimitive();
@@ -185,16 +193,18 @@ void drawCone(vec3 p0, vec3 p1, vec3 p2)
 
       pt1.xyz = p1+r1*n1;
       pt1.w=1;
- 
+
+      FogVars=vec2(FogHT1,FogDensity);
       gl_Position = gl_ModelViewProjectionMatrix * vec4(pt1.xyz, 1.0);
       EmitVertex();
-      
+
       gl_TexCoord[0].xy=vec2(scale*a,t2);
       //Pnorm.xyz=-n2;
       pt2.xyz = p2 + r2*n2;
       pt2.w=1;
+      FogVars=vec2(FogHT2,FogDensity);
       gl_Position = gl_ModelViewProjectionMatrix * vec4(pt2.xyz, 1.0);
-      EmitVertex();     
+      EmitVertex();
    }
 }
 
@@ -215,10 +225,13 @@ void emitLeaf(){
 // draw a line
 void emitLine(){
     gl_TexCoord[0].xy=vec2(0,0);
+    FogVars=vec2(FogHT2,FogDensity);
     emitVertex(Pos2.xyz);
-    gl_TexCoord[0].xy=vec2(0,1);   
-    emitVertex(Pos1.xyz); 
-    gl_TexCoord[0].xy=vec2(1,1);   
+    gl_TexCoord[0].xy=vec2(0,1);
+    FogVars=vec2(FogHT1,FogDensity);
+    emitVertex(Pos1.xyz);
+    gl_TexCoord[0].xy=vec2(1,1);
+    FogVars=vec2(FogHT2,FogDensity);
     emitVertex(Pos2.xyz);
  }
 
@@ -236,13 +249,15 @@ void main(void) {
 	Normal.xyz=Normal_G[0].xyz;
 	TexVars=TexVars_G[0];
 	ImageVars=ImageVars_G[0];
+	FogHT1=FogVars_G[0].x;
+	FogHT2=FogVars_G[0].y;
+	FogDensity=FogVars_G[0].z;
     int mode=TexVars_G[0].w+0.1;
-    
+
     if(mode==LINE)
     	emitLine();
     else if(mode==LEAF)
     	emitLeaf();
  	else
- 		emitBranch(); 
+ 		emitBranch();
 }
-

@@ -1,5 +1,3 @@
-
-
 #include "utils.h"
 
 #if NTEXS >0
@@ -29,6 +27,8 @@ uniform float norm_scale;
 uniform bool lighting;
 uniform float twilite_min;
 uniform float twilite_max;
+uniform float fog_vmin;
+uniform float fog_vmax;
 
 #define DEPTH   gl_FragCoord.z
 #define TEXID   TexVars.z
@@ -44,6 +44,12 @@ varying vec4 Pnorm;
 varying vec3 Normal;
 varying vec4 TexVars;
 varying vec4 ImageVars;
+varying vec2 FogVars;
+// FogVars comes from a dedicated attribute (FogAttributes, see Plants.h/.cpp)
+// rather than Constants1 - Constants1 is fully packed with branch radius/taper
+// data for plants. Macros named to match planetoid.frag/common.h's convention.
+#define HT      FogVars.x
+#define DENSITY FogVars.y
 
 vec3 test;
 
@@ -165,8 +171,9 @@ void main(void) {
 	test=vec3(h,0,0);
 #endif 
  	gl_FragData[0]=color;
-  	gl_FragData[1]=vec4(4,DEPTH,0,color.a); 
-  	//gl_FragData[1]=vec4(0.1,DEPTH,0,1); 
+  	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
+  	gl_FragData[1]=vec4(4,DEPTH,0,vfog);
+  	//gl_FragData[1]=vec4(0.1,DEPTH,0,1);
  	//gl_FragData[1]=vec4(fcolor2); // pass thru
 
 }
