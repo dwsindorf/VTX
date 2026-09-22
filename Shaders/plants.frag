@@ -160,16 +160,10 @@ void main(void) {
      color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
 #endif  
  
-#ifdef HAZE
-	float z=DEPTH; // depth buffer
-	float depth=1.0/(ws2*z+ws1); // distance
-	float d=haze_grad==0.0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0); // same as in effects.frag
-	float h=haze_ampl*Haze.a*pow(d,10.0*haze_grad); // same as in effects.frag
-	color.rgb=mix(color.rgb,Haze.rgb,h);
-	float p=lerp(h,0.0,0.8,1,0.001); // hack !
-	color.a=pow(color.a,p);
-	test=vec3(h,0,0);
-#endif 
+	// Haze is handled once, downstream, by the deferred effects.frag pass
+	// (same as rocks/terrain) - it used to also be applied here per-fragment,
+	// which both double-applied it and (via color.a=pow(color.a,p)) corrupted
+	// this fragment's blended alpha.
  	gl_FragData[0]=color;
   	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
   	gl_FragData[1]=vec4(4,DEPTH,0,vfog);

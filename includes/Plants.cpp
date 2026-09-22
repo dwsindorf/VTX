@@ -761,8 +761,27 @@ void PlantObjMgr::render()
     if (!shadow_mode)
         setProgram();
     glDisable(GL_CULL_FACE);
+
+    // Blend draw buffer 0 (color, FBOTex1) normally for translucent leaves,
+    // but NOT draw buffer 1 (Params: TYPE/DEPTH/RDP/VFOG, FBOTex2) - with a
+    // single non-indexed glBlendFunc, buffer 1 would blend using its OWN
+    // alpha (VFOG, a fog density - not a visual coverage amount), smearing
+    // TYPE/DEPTH toward whatever was underneath (often distant background)
+    // wherever fog density happens to be low. That corrupted DEPTH then fed
+    // effects.frag's haze pass, making haze look like it sits in front of
+    // the vegetation instead of receding behind it. Disabling blending just
+    // for buffer 1 makes TYPE/DEPTH a clean overwrite, like rocks/terrain
+    // (which never blend at all), while VFOG/fog is unaffected.
+    bool indexedBlend = GLEW_EXT_draw_buffers2 && !shadow_mode;
+    if (indexedBlend)
+        glDisableIndexedEXT(GL_BLEND, 1);
+
     renderBranches();
     renderLeafs();
+
+    if (indexedBlend)
+        glEnableIndexedEXT(GL_BLEND, 1);
+
     glEnable(GL_CULL_FACE);
 
     randval = l;
@@ -803,8 +822,9 @@ bool PlantObjMgr::setProgram(){
 		sprintf(defs+strlen(defs),"#define NTEXS 0\n");
 		
 	sprintf(defs+strlen(defs),"#define NLIGHTS %d\n",Lights.size);
-	if(Render.haze())
-		sprintf(defs+strlen(defs),"#define HAZE\n");
+	// Haze is applied once, downstream, by the deferred effects.frag pass
+	// (see PlantObjMgr::render()'s per-drawbuffer blend fix) - plants.frag no
+	// longer does its own inline haze, so no #define HAZE needed here.
 
     bool do_shadows=Raster.shadows();
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
