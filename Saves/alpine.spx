@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.004;
 		minh=5.68182e-10;
-		minr=0.00400161;
 		heading=-69;
 		tilt=-17;
 		angle=6;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00400161;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -51,8 +53,6 @@ Scene() {
 				Planet(0.004,100) {
 					ambient=Color(1,1,1,0.05);
 					day=24;
-					ocean.auto=1;
-					ocean.state=2;
 					rot_phase=58.068;
 					shadow=Color(0,0,0,0.4);
 					shine=6.24298;
@@ -60,7 +60,7 @@ Scene() {
 					year=100;
 					haze.height=0.66;
 					haze.value=0.4;
-					bands("alpine",ACHNL|CLAMP|DECAL|NORM|REPLACE,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
+					bands("alpine",ACHNL|BLEND|CLAMP|DECAL|NORM|REPLACE,64,0.1,0.55556,Color(0,0,0,0.553),Color(0.031,0.243,0.102),
 						Color(0.2,0.4,0.094),
 						Color(0.294,0.494,0),
 						Color(0.549,0.322,0.02),
@@ -80,13 +80,13 @@ Scene() {
 								Texture("DirtPebbles",BUMP|TEX,331696,-1.32072,1,0,6.43408,2.13208,1,0);
 					}
 					Sky(0.00419081) {
-						color=Color(0,0.58,0.89,0.97);
+						color=Color(0,0.58,0.89);
 						day=24;
 						density=0;
 						haze.color=Color(1,1,0.88);
-						haze.grad=0.49316;
+						haze.grad=0.72602;
 						haze.height=0.52;
-						haze.max=15.085 miles;
+						haze.max=17.7557 miles;
 						haze.value=1;
 						resolution=4;
 						shine=0.217207;

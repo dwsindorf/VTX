@@ -146,10 +146,78 @@ void show_raster_specs()
 	}
 	else
 		TheScene->draw_string(DATA_COLOR,"water: disabled");
-	if(Raster.do_vfog)
-		TheScene->draw_string(DATA_COLOR,"vfog:  enabled");
+	if(Raster.do_vfog){
+		// vfog (volumetric ground fog, Fog tab / fog_min-fog_max-fog_value)
+		// is a COMPLETELY SEPARATE effect from haze (Sky tab / haze_min-
+		// haze_max-haze_grad), applied to the pixel BEFORE haze in
+		// applyFog() (do_vfog block runs first, do_haze block runs after
+		// and blends on top of whatever vfog already did). If it's enabled
+		// and strong, it can visually dominate/mask haze changes even
+		// though haze itself is working correctly underneath it - added
+		// its band/strength here too so the two can be told apart.
+		TheScene->draw_string(DATA_COLOR,"vfog:  enabled  min %8.1f ft  max %8.1f ft  value %4.2f",
+				Raster.fog_min/FEET, Raster.fog_max/FEET, Raster.fog_value);
+	}
 	else
 		TheScene->draw_string(DATA_COLOR,"vfog:  disabled");
+	// TEMPORARY diagnostic - remove once haze Min/Depth wiring is confirmed
+	// working. This is what applyFog()'s POW case actually sees each frame -
+	// if "min"/"max" here don't match the Sky tab's Min/Depth sliders (in
+	// feet) as you drag them, the object->Raster sync is the break; if they
+	// DO match but haze still looks unaffected, the break is downstream of
+	// this (the formula itself, or something overriding the pixels after).
+	TheScene->draw_string(DATA_COLOR,"haze:  do_haze %d  type %d (POW=%d)",
+			Raster.do_haze, Render.draw_shaded()?POW:Render.fogmode(), POW);
+	TheScene->draw_string(DATA_COLOR,"haze:  min %8.1f ft  max %8.1f ft  grad %4.2f",
+			Raster.haze_min/FEET, Raster.haze_max/FEET, Raster.haze_grad);
+	// attn is the altitude-based fade (Raster.cpp applyFog():
+	// attn=rampstep(0,r_factor,TheScene->height/TheScene->maxht,1,0)) that
+	// both vfog and haze get multiplied through via hf/vf - if this is ~0
+	// at your current altitude, haze_grad/Min/Depth can all be "working"
+	// exactly as designed and still produce an invisible/near-zero result,
+	// because everything downstream gets scaled by it right before it
+	// reaches the pixels.
+	double f=TheScene->height/TheScene->maxht;
+	double attn=rampstep(0,r_factor,f,1,0);
+	TheScene->draw_string(DATA_COLOR,"haze:  height %6.1f ft  maxht %6.1f ft  attn %5.3f",
+			TheScene->height/FEET, TheScene->maxht/FEET, attn);
+	TheScene->draw_string(DATA_COLOR,"haze:  value %4.2f  Render.haze_value %4.2f",
+			Raster.haze_value, Render.haze_value());
+
+	// Replays applyFog()'s exact POW math across EVERY pixel (not just
+	// screen center, which in a forest view usually lands on sky above
+	// the treeline and never hits terrain at all - reports zero data
+	// either way, which is misleading) and reports the observed z and f1
+	// range over whatever's actually on screen. hf (haze_value *
+	// Render.haze_value() * attn, confirmed 1.0 in your last screenshots)
+	// is a single frame-wide multiplier, not per-pixel, so f1's own range
+	// is what determines whether terrain is getting a real gradient.
+	if(Raster.do_haze && vport[2]>0 && vport[3]>0 && Raster.zbuf1){
+		int n=vport[2]*vport[3];
+		double zmin=1e300, zmax=-1e300, f1min=1e300, f1max=-1e300;
+		int hits=0;
+		double x2c=Raster.haze_max-Raster.haze_min;
+		if(x2c<FEET) x2c=FEET;
+		for(int kk=0; kk<n; kk++){
+			double zc=Raster.zbuf1[kk];
+			if(zc==0 || zc==1) continue;
+			hits++;
+			if(zc<zmin) zmin=zc;
+			if(zc>zmax) zmax=zc;
+			double x1c=(zc-Raster.haze_min)/x2c;
+			x1c=x1c<0.0?0.0:x1c;
+			double f1c=1.0-exp(-6.0*Raster.haze_grad*x1c);
+			f1c=f1c>1.0?1.0:f1c;
+			if(f1c<f1min) f1min=f1c;
+			if(f1c>f1max) f1max=f1c;
+		}
+		double hfc=Raster.haze_value*Render.haze_value()*attn;
+		if(hits==0)
+			TheScene->draw_string(DATA_COLOR,"haze:  no non-background pixels on screen");
+		else
+			TheScene->draw_string(DATA_COLOR,"haze:  z %8.1f-%8.1f ft  f1 %5.3f-%5.3f  hf %5.3f  (%d px)",
+					zmin/FEET, zmax/FEET, f1min, f1max, hfc, hits);
+	}
 	TheScene->draw_string(HDR1_COLOR,"-----------------------------------");
 }
 
@@ -1911,12 +1979,65 @@ void RasterMgr::applyFog()
 					f1*=f1;
 					break;
 				case POW:
-					x1=1.5*z/haze_zfar;
-					//x1=z/z2h;
-					//x1=haze_amp*pow(x1,2*haze_grad);
-					x1=haze_value*pow(x1,2*haze_grad);
-					x1=x1>1.0?1.0:x1;
-					f1=x1;
+					// Beer-Lambert-style extinction - how real suspended
+					// particulates (fog, haze, smoke) actually attenuate
+					// light: transmittance falls off as exp(-k*distance),
+					// so haze fraction grows as 1-exp(-k*distance).
+					//
+					// IMPORTANT: this is now referenced against haze_min/
+					// haze_max directly (NOT z1h/z2h above - z2h divides by
+					// haze_value, the haze Color's alpha, which is a useful
+					// trick for the ramp shape LINEAR/EXP/EXP2 use but would
+					// just make POW's band drift unpredictably as haze_value
+					// changes; haze_value is applied once, uniformly, via
+					// 'hf' below either way) instead of haze_zfar. haze_zfar
+					// is a rough horizon-distance estimate (Sky::scale(),
+					// dominated by a constant ~1-mile pad) that stays many
+					// miles wide no matter how close the camera actually is
+					// to the ground. A first attempt at this fix kept using
+					// haze_zfar and only reworked the exponent -> rate-
+					// constant math; that didn't help, because the real
+					// problem wasn't the formula shape, it was the distance
+					// scale: in a close-to-surface view the entire visible
+					// depth range (tens-hundreds of feet) is a tiny sliver of
+					// haze_zfar (tens of miles), so every visible pixel fell
+					// in the same (near-zero, or - once haze_grad was turned
+					// up enough to show anything at all - near-saturated)
+					// part of the curve. Either way it reads as "uniform".
+					//
+					// haze_min/haze_max ("haze.min"/"haze.max" on the Sky
+					// object, exposed as the Haze box's Min/Max sliders) are
+					// a near/far band the user sets to actually bracket the
+					// scene's visible depth - x1 below is 0 at haze_min and
+					// 1 at haze_max, so distances inside that band always
+					// produce a real gradient regardless of how big or small
+					// the band is in absolute terms.
+					//
+					// haze_grad (0-1) then sets how many "extinction lengths"
+					// fit across that band: 0 = no haze anywhere (k=0), 1 =
+					// haze saturates well before haze_max. Monotonic and
+					// well-behaved across the whole 0-1 range - no more of
+					// the old pow()-exponent-near-zero degeneracy.
+					//
+					// Matches LINEAR/EXP/EXP2 above in NOT folding haze_value
+					// in here - that's applied once, uniformly, via 'hf'
+					// below (folding it in here too used to double it up).
+					x2=haze_max-haze_min;
+					// Guard against haze_max<=haze_min - NOT "<1.0": these
+					// are internal engine units, where 1.0 is astronomically
+					// large (MILES itself is only 1e-6) and haze_min/haze_max
+					// for a close-in band (e.g. 150-6000 feet) land around
+					// 1e-8 to 1e-6. A "<1.0" guard was tripping on every
+					// realistic near-surface band and forcing x2 up to that
+					// same huge 1.0, which swamped x1 to ~0 everywhere - so
+					// Min/Depth had no visible effect no matter what they
+					// were set to. FEET itself (~1.9e-10) is a natural,
+					// scale-correct floor here.
+					if(x2<FEET) x2=FEET;
+					x1=(z-haze_min)/x2;
+					x1=x1<0.0?0.0:x1;
+					f1=1.0-exp(-6.0*haze_grad*x1);
+					f1=f1>1.0?1.0:f1;
 					break;
 				}
 				f1*=hf;

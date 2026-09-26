@@ -1,4 +1,3 @@
-
 //#include "UniverseModel.h"
 #include "VtxSkyTabs.h"
 #include "VtxSceneDialog.h"
@@ -32,6 +31,10 @@ enum{
 
     ID_HAZE_GRAD_SLDR,
     ID_HAZE_GRAD_TEXT,
+    ID_HAZE_MIN_SLDR,
+    ID_HAZE_MIN_TEXT,
+    ID_HAZE_MAX_SLDR,
+    ID_HAZE_MAX_TEXT,
     ID_HAZE_SLIDER,
     ID_HAZE_TEXT,
     ID_HAZE_COLOR,
@@ -112,6 +115,11 @@ EVT_TEXT_ENTER(ID_NIGHT_GRAD_TEXT,VtxSkyTabs::OnNightGradText)
 
 EVT_COMMAND_SCROLL(ID_HAZE_GRAD_SLDR,VtxSkyTabs::OnHazeGradSlider)
 EVT_TEXT_ENTER(ID_HAZE_GRAD_TEXT,VtxSkyTabs::OnHazeGradText)
+
+EVT_COMMAND_SCROLL(ID_HAZE_MIN_SLDR,VtxSkyTabs::OnHazeMinSlider)
+EVT_TEXT_ENTER(ID_HAZE_MIN_TEXT,VtxSkyTabs::OnHazeMinText)
+EVT_COMMAND_SCROLL(ID_HAZE_MAX_SLDR,VtxSkyTabs::OnHazeMaxSlider)
+EVT_TEXT_ENTER(ID_HAZE_MAX_TEXT,VtxSkyTabs::OnHazeMaxText)
 
 EVT_COMMAND_SCROLL(ID_TWILITE_GRAD_SLDR,VtxSkyTabs::OnTwiliteGradSlider)
 EVT_TEXT_ENTER(ID_TWILITE_GRAD_TEXT,VtxSkyTabs::OnTwiliteGradText)
@@ -307,15 +315,34 @@ void VtxSkyTabs::AddLightingTab(wxWindow *panel){
 
 	// Haze controls
 
-	wxBoxSizer* haze_cntrls = new wxStaticBoxSizer(wxHORIZONTAL,panel,wxT("Haze"));
+	wxBoxSizer* haze_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Haze"));
+
+	wxBoxSizer* haze_line1 = new wxBoxSizer(wxHORIZONTAL);
 
 	HazeColor=new ColorSlider(panel,ID_HAZE_SLIDER,"Color",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH,CBOX3);
-	haze_cntrls->Add(HazeColor->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-	haze_cntrls->AddSpacer(10);
+	haze_line1->Add(HazeColor->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+	haze_line1->AddSpacer(10);
 	HazeGrad=new SliderCtrl(panel,ID_HAZE_GRAD_SLDR,"",0, VALUE_WIDTH,SLIDER_WIDTH);
 	HazeGrad->setRange(0,1,0.0,1);
 
-	haze_cntrls->Add(HazeGrad->getSizer(),wxALIGN_LEFT|wxALL);
+	haze_line1->Add(HazeGrad->getSizer(),wxALIGN_LEFT|wxALL);
+	haze_cntrls->Add(haze_line1,0,wxALIGN_LEFT|wxALL,0);
+
+	// Horizontal/Vertical Range sliders.
+	wxBoxSizer* haze_line2 = new wxBoxSizer(wxHORIZONTAL);
+
+	HazeMinSlider=new SliderCtrl(panel,ID_HAZE_MIN_SLDR,"Min",LABEL_WIDTH, VALUE_WIDTH,SLIDER2);
+	HazeMinSlider->setRange(0,5000);
+	HazeMinSlider->setValue(100);
+	haze_line2->Add(HazeMinSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	HazeMaxSlider=new SliderCtrl(panel,ID_HAZE_MAX_SLDR,"Depth",LABEL_WIDTH+15, VALUE_WIDTH,SLIDER2);
+	HazeMaxSlider->setRange(0,100000);
+	HazeMaxSlider->setValue(52700);
+	haze_line2->Add(HazeMaxSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	haze_cntrls->Add(haze_line2,0,wxALIGN_LEFT|wxALL,0);
+
 	haze_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxsizer->Add(haze_cntrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -336,6 +363,8 @@ void VtxSkyTabs::updateControls(){
 	updateColor(NightColor,sky->night_color);
 	updateSlider(NightGrad,sky->twilite_min);
 	updateSlider(HazeGrad,sky->haze_grad);
+	updateSlider(HazeMinSlider,sky->haze_min/FEET);
+	updateSlider(HazeMaxSlider,(sky->haze_max-sky->haze_min)/FEET);
 	updateSlider(DensitySlider,sky->density);
 	updateSlider(TwiliteGrad,sky->twilite_max);
 	updateSlider(SkyGrad,sky->sky_grad);

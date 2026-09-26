@@ -21,17 +21,24 @@ Scene() {
 	}
 	View{
 		height=16882.9 ft;
-		vstride=0.02;
-		zoom=0.0015;
-		minh=5.68182e-10;
-		radius=0.00150248;
 	}
 	View{
 		phi=27.1329;
 		theta=248.574;
 		time=280000;
 		heading=204;
+		vstride=0.02;
+		zoom=0.0015;
+		minh=5.68182e-10;
+		radius=0.00150248;
+	}
+	View{
+		phi=27.1751;
+		theta=248.669;
+		height=30079.2 ft;
+		tilt=-9;
 		minr=0.00149929;
+		radius=0.00150498;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -60,7 +67,7 @@ Scene() {
 					name="Sol";
 					specular=Color(1,1,1);
 					temperature=6000;
-					bands("star1",ACHNL|DECAL|REPLACE,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
+					bands("star1",ACHNL|BLEND|DECAL|REPLACE,64,Color(1,1,1),Color(1,1,0.502),Color(1,0.404,0.275),Color(0.502,0.251,0));
 					Surface{
 						terrain=
 								Texture("star1",BORDER|S,noise(GRADIENT|FS|NABS|SQR,0.9,7,0.3,0.19,2.13,1,1,0,-1.3),1,1.3212,1.05456,2.3,1,2,1,0);
@@ -76,20 +83,18 @@ Scene() {
 					day=58.65;
 					diffuse=Color(0.87,0.89,0.99);
 					name="Mercury";
-					ocean.auto=1;
-					ocean.state=0;
 					shadow=Color(0,0,0,0.36);
 					shine=8.77663;
 					specular=Color(1,0.96,0.86);
 					sunset=0.01;
 					year=87.97;
 					image("craters3",BLEND|DECAL|NORM|REPLACE,256,256,craters(ID1,2,1.3,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2));
-					bands("mercury",ACHNL|CLAMP|DECAL|REPLACE,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
+					bands("mercury",ACHNL|BLEND|CLAMP|DECAL|REPLACE,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 						Color(0.502,0.502,0.502),
 						Color(0.063,0.063,0.063),
 						Color(0.502,0.502,0.502));
 					image("ridges",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4),"grad");
-					bands("grad",ACHNL|DECAL|NORM|REFLECT|REPLACE,16,0.03572,0.40322,Color(0,0,0,0.4),Color(1,0.529,0),
+					bands("grad",ACHNL|BLEND|DECAL|NORM|REFLECT|REPLACE,16,0.03572,0.40322,Color(0,0,0,0.4),Color(1,0.529,0),
 						Color(1,0.863,0.635),
 						Color(0.329,0.18,0.024),
 						Color(0.576,0.537,0.537),

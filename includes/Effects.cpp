@@ -310,7 +310,9 @@ void EffectsMgr::setProgram(int type){
 		//c.print();
 		vars.newFloatVec("Haze",c.red(),c.green(),c.blue(),c.alpha());
 		vars.newFloatVar("haze_grad",haze_grad);
-		vars.newFloatVar("haze_zfar",haze_zfar);
+		vars.newFloatVar("haze_zfar",haze_zfar);	// kept for the shader's now-unused uniform decl; not read by the HAZE block anymore
+		vars.newFloatVar("haze_min",haze_min);
+		vars.newFloatVar("haze_max",haze_max);
 		vars.newFloatVar("haze_ampl",haze_hf);
 		c=fog_color;
 		vars.newFloatVec("Fog",c.red(),c.green(),c.blue(),c.alpha());

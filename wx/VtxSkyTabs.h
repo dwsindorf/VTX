@@ -25,6 +25,8 @@ protected:
 	SliderCtrl  *TwiliteGrad;
 	SliderCtrl  *HaloGrad;
 	SliderCtrl  *HazeGrad;
+	SliderCtrl  *HazeMinSlider;
+	SliderCtrl  *HazeMaxSlider;
 	SliderCtrl  *NightGrad;
 
 	void AddObjectTab(wxWindow *panel);
@@ -59,6 +61,8 @@ public:
 		delete TwiliteGrad;
 		delete HaloGrad;
 		delete HazeGrad;
+		delete HazeMinSlider;
+		delete HazeMaxSlider;
 		delete NightGrad;
 	}
 	bool Create(wxWindow* parent,
@@ -254,6 +258,42 @@ public:
 	}
 	void OnScatterSharpenText(wxCommandEvent& event){
 		OnSliderText(ScatterSharpenSlider, object()->scatter_sharpen);
+		TheView->set_changed_render();
+	}
+
+	// Near/far reference distance band for the CPU-side depth haze
+	// (RasterMgr::applyFog() in Raster.cpp - Sky::haze_min/haze_max,
+	// already-existing scene fields that previously had no slider of
+	// their own). The POW case there ramps haze from ~0 at Min to
+	// ~full (rate set by the Grad slider above) by Max, instead of
+	// against haze_zfar (a horizon-distance estimate that stays many
+	// miles wide regardless of camera altitude, and so couldn't show
+	// any depth gradient in close-to-surface views). Feet, same
+	// Min + Depth-beyond-Min convention (not an absolute Max, so the
+	// UI can't drag Max below Min) as the Fog tab's Min/Depth sliders.
+	// This only feeds the raster post-process (not geometry), so
+	// set_changed_render() like Scatter/Density, not
+	// set_changed_detail()+rebuild_all().
+	void OnHazeMinSlider(wxScrollEvent& event){
+		HazeMinSlider->setValueFromSlider();
+		object()->haze_min=FEET*HazeMinSlider->getValue();
+		object()->haze_max=FEET*(HazeMinSlider->getValue()+HazeMaxSlider->getValue());
+		TheView->set_changed_render();
+	}
+	void OnHazeMinText(wxCommandEvent& event){
+		HazeMinSlider->setValueFromText();
+		object()->haze_min=FEET*HazeMinSlider->getValue();
+		object()->haze_max=FEET*(HazeMinSlider->getValue()+HazeMaxSlider->getValue());
+		TheView->set_changed_render();
+	}
+	void OnHazeMaxSlider(wxScrollEvent& event){
+		HazeMaxSlider->setValueFromSlider();
+		object()->haze_max=FEET*(HazeMinSlider->getValue()+HazeMaxSlider->getValue());
+		TheView->set_changed_render();
+	}
+	void OnHazeMaxText(wxCommandEvent& event){
+		HazeMaxSlider->setValueFromText();
+		object()->haze_max=FEET*(HazeMinSlider->getValue()+HazeMaxSlider->getValue());
 		TheView->set_changed_render();
 	}
 

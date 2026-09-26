@@ -145,13 +145,13 @@ void main(void) {
 #if NTEXS >0
 #include "set_tex.frag"
 #endif
-    float illumination = 0.0;
+    float illumination = 1.0;
 #if NLIGHTS >0
 	color.a=1.0;
     if(lighting){
 		vec4 c=setLighting(color.rgb,normal,bump);
     	color.rgb=c.rgb;
-    	illumination=c.a;
+    	illumination=albedo;//c.a;
     }
 #endif
     float depth=gl_FragCoord.z;

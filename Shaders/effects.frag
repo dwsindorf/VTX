@@ -10,7 +10,9 @@ uniform sampler2DRect FBOTex4;
 
 uniform vec4 Haze;
 uniform float haze_grad;
-uniform float haze_zfar;
+uniform float haze_zfar;	// no longer used by the HAZE block below (see it for why) - left declared in case anything else still binds it
+uniform float haze_min;
+uniform float haze_max;
 uniform float haze_ampl;
 
 uniform vec4 Fog;
@@ -62,8 +64,13 @@ void main(void) {
 		float z=DEPTH;
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
-		d=haze_grad==0?1e-4:lerp(depth,0.0,haze_grad*haze_zfar,0.0,1.0);
-		h=haze_ampl*Haze.a*pow(d,10*haze_grad);
+		// Old formula: d=lerp(depth,0,haze_grad*haze_zfar,0,1);
+		//              h=haze_ampl*Haze.a*pow(d,10*haze_grad);
+		const float HAZE_GRAD_SCALE=0.1;
+		float g=(1.0-haze_grad)*HAZE_GRAD_SCALE;
+		float x1=(depth-haze_min)/max(haze_max-haze_min,feet);
+		x1=max(x1,0.0);
+		h=haze_ampl*Haze.a*(1.0-exp(-6.0*g*x1));
 #endif
 #ifdef WATER
 		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
@@ -160,4 +167,3 @@ void main(void) {
 	
     gl_FragData[1]=fcolor2;
 }
-

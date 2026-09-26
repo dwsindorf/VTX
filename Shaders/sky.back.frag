@@ -158,9 +158,9 @@ void main(void) {
 	color.a=alpha*sa;
 	float ca=length(color.rgb);
 	float da=lerp(density,0.25,1,ca,2.0);
-	
+
 	color.a*=da;
-	
+
 	color.a=clamp(color.a,0.0,1.0);
 	//	color.a=max(ha,alpha*sa); // fade sky alpha with ht
 	//color.rgb=vec3(0.0,0.0,1.0);//
@@ -184,7 +184,19 @@ void main(void) {
 		// - opacity of background objects encoded in fcolor2.g
 		// - luminocity of background objects encoded in fcolor2.b
 		// - reduce shine-through as atmospheric density and haze increases
-
+		//
+		// (1.0-h), reverted back from a wrong attempt at "h" - h's own
+		// comment calls it "transparency," but everywhere else in this
+		// file (see color.rgb=mix(color.rgb,haze.rgb*illumination,h)
+		// above) it's used as haze OPACITY/density: higher h paints in
+		// MORE haze color, i.e. more obscuring. (1.0-h) is "how clear the
+		// air is" - 1 (fully clear) when h=0, 0 (fully hazy) when h=1 -
+		// which is what should gate shine-through: clear air lets a
+		// bright object (moon) punch through fully, thick haze blocks it
+		// entirely. Once the separate illumination=1 fix makes shine_thru
+		// nonzero, this produces the right direction: amp=0 (h=0, no
+		// haze) -> moon visible; amp=1/exp=0 (h=1, full haze) -> moon
+		// hidden.
 		a = Sky.a*color.a*(1.0-shine_thru*(1.0-h)*(1.0-density)); // moons: enhance shine-thru of day side
 		a=clamp(a,0.0,1.0);
 		// This used to force a toward 1.0 (fully opaque) at high density,
@@ -200,9 +212,8 @@ void main(void) {
 		a=lerp(density,0.5,0.9,a,Sky.a);
 		color.rgb=mix(fcolor1.rgb,color.rgb,a);
 		//color.rgb=mix(color.rgb,vec3(1.0,1.0,1.0),shine_thru*luminance);
-		
+
 	//}
 	gl_FragData[0]=vec4(color.rgb,a);//color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)
 }
-
