@@ -82,11 +82,11 @@ vec3 addGrid(vec3 color){
     vec2 g = smoothstep(-df,df , f);
     g *=1.0-g;
     g = min(2.0*g,1.0);
-    	
-  	vec3 rcol=mix(color,theta_color.rgb,g.x);  
+
+  	vec3 rcol=mix(color,theta_color.rgb,g.x);
     rcol=mix(rcol,phi_color.rgb,g.y);
-     
-	return rcol;		
+
+	return rcol;
 }
 #endif
 #ifdef CONTOURS
@@ -126,7 +126,7 @@ vec3 addContours(vec3 color){
 // ########## main section #########################
 void main(void) {
 	amplitude = 1.0;
-	g=0.0; 	
+	g=0.0;
 
 #ifdef NOTILE
     warmup();
@@ -137,7 +137,7 @@ void main(void) {
 	vec4 color=vec4(1.0);
 #endif
     vec3 normal=normalize(Normal.xyz);
-    bump=vec3(0.0); 
+    bump=vec3(0.0);
 #ifdef NCC
 	NOISE_COLOR(NCC);
 #endif
@@ -151,7 +151,14 @@ void main(void) {
     if(lighting){
 		vec4 c=setLighting(color.rgb,normal,bump);
     	color.rgb=c.rgb;
-    	illumination=albedo;//c.a;
+    	// c.a is phase-correct now (see lighting.frag: it accumulates
+    	// base_albedo*horizon*max(LdotN,0.0) per light, the same LdotN/
+    	// horizon terms that already shape this body's own lit/dark
+    	// hemisphere) instead of the flat albedo constant this used to
+    	// read - so shine-through varies across the disc between the
+    	// sunlit and shadowed sides (crescent effect) instead of being
+    	// uniform.
+    	illumination=c.a;
     }
 #endif
     float depth=gl_FragCoord.z;
@@ -165,16 +172,16 @@ void main(void) {
 	vec2 sp=spherical(pm);
 	gl_FragData[2]=vec4((int)(Constants1.g-3+0.1),Tangent.z,180+sp.y,sp.x); // layer id, slope, theta, phi
 #endif
-#else  // moons 
+#else  // moons
 	gl_FragData[1]=vec4(0,illumination,0.05,0.0); // set first component (type) to 0 so reflections work
 #endif
 #ifdef VIEWOBJ
 #ifdef CONTOURS
     color.rgb=addContours(color.rgb);
-#endif 
+#endif
 #ifdef GRID
     color.rgb=addGrid(color.rgb);
-#endif   
+#endif
 #endif
 	gl_FragData[0] = color;
 }

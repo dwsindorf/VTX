@@ -36,7 +36,17 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
     vec3 topcolor=gl_FrontMaterial.ambient.rgb*(top_shading*gl_FrontMaterial.ambient.a);
 	ambient = topcolor;
 	emission = gl_FrontMaterial.emission.rgb;
+	// Base term only (self-emission, 0 for any ordinary reflective body
+	// like a moon/planet) - the phase-dependent reflected-light term is
+	// accumulated per-light below.
 	float illumination = gl_FrontMaterial.emission.a;
+	// Captured BEFORE the water/ice block below reassigns 'albedo' to
+	// water_specular/ice_specular for the specular highlight - shine-
+	// through brightness should reflect the surface's real albedo, not
+	// that specular-reflectivity substitute (mixing the two broke water:
+	// it's tuned for how tight/bright a highlight looks, not for how much
+	// diffuse sunlight the surface reflects overall).
+	float base_albedo = albedo;
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
     float shadow_diffuse=lerp(Shadow.a,0.0,1.0,1,shadow);
@@ -69,6 +79,17 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float lpn       = LdotN*intensity*horizon;
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
 		ambient+=topcolor*(3.0*horizon);
+		// Reflected-light illumination for shine-through (moons/planets
+		// viewed through the sky): unlike 'diffuse' above this has NO
+		// top_shading/ambient floor, so it genuinely falls to ~0 on the
+		// unlit side of the terminator instead of staying visible - that's
+		// what makes a crescent read as a crescent instead of a uniformly
+		// lit disc. Uses base_albedo (the real surface albedo, captured
+		// above before water/ice locally override 'albedo' for specular);
+		// horizon reuses the existing twilight-band falloff so the
+		// shine-through edge softens the same way the visible surface
+		// shading does.
+		illumination += base_albedo*horizon*max(LdotN,0.0);
         if(LdotN>-0.5){
 			float damp = lerp(LdotN,-0.5,0.0,0.0,1.0); // prevents false specular highlites on backfaces
 #if LMODE == 0 // phong-blinn: uses half-vector (this is the openGL light model)
