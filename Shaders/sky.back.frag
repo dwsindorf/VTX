@@ -20,6 +20,7 @@ uniform vec3 viewpoint;
 uniform vec4 Haze;
 uniform vec4 Halo;
 uniform vec4 Twilite;
+uniform vec4 Scatter;
 uniform vec4 Night;
 uniform vec4 Sky;
 
@@ -28,8 +29,8 @@ uniform vec4 Sky;
 // scenes are unaffected until this is dialed in on the Sky tab).
 uniform float pressure;
 uniform float ghg_fraction;
-uniform float scatter_mix;
-uniform float scatter_sharpen;
+//uniform float scatter_mix;
+uniform float scatter_grad;
 
 uniform vec3 pv;
 varying vec4 EyeDirection;
@@ -109,45 +110,15 @@ void main(void) {
 			specular += ampl*pf;
 			color.rgb = mix(color.rgb,Halo.rgb*gl_LightSource[i].specular.rgb,specular*ha);
 			haze=mix(haze.rgb,Halo.rgb,Halo.a*pow(dpLE,10.0*day_grad)*sqrt(haze_grad)); // darken with night
-
+            float scatter_mix=Scatter.a;
 			// ---- physically-derived Rayleigh+Mie scattering (additive) ----
-			// 'aa' (computed above, before this loop) is the shader's own
-			// existing horizon(~0)->space(~1) gradient - reused here as a
-			// stand-in for atmospheric path length instead of deriving new
-			// view/sphere geometry: near the horizon (aa~0) the path is
-			// long (airmass up to ~9x), near the zenith (aa~1) it's short
-			// (airmass~1x).
 			if(scatter_mix>0.0){
-				// This whole block only runs once LdotR crosses twilite_min
-				// (the 'day side only' gate above) - with scatterColor()'s
-				// contribution now strong enough to see, jumping straight
-				// from 0 to full strength right at that boundary showed up
-				// as a visible seam across the sky. dayFade ramps it in
-				// smoothly over a small window past the boundary instead of
-				// stepping, without changing its strength anywhere else.
 				float dayFade=smoothstep(twilite_min,twilite_min+0.05,LdotR);
 				float airmass=1.0+8.0*(1.0-clamp(aa,0.0,1.0));
 				float cosTheta=dot(eye,light);
-				// day_grad (the "Halo" Sharpen slider) is passed through as
-				// scatterColor()'s tightness control too now, so Sharpen is
-				// one dial for "how tight is the glow" across both the
-				// specular highlight above and this scattering term.
+				vec3 scatter_color=mix(Scatter.rgb,gl_LightSource[i].diffuse.rgb,0.5);
 				vec3 scat=scatterColor(cosTheta,airmass,pressure,ghg_fraction,
-						day_grad,scatter_sharpen,gl_LightSource[i].diffuse.rgb);
-				// scale by 'density' (the Sky tab's "Opacity" slider) too -
-				// scatterColor() only knows about pressure/composition, not
-				// how much of this particular sky is actually turned on, so
-				// without this a thin/low-opacity atmosphere showed just as
-				// strong a glow as a thick one.
-				// also scale by 'ampl' - the same distance/luminosity-based
-				// brightness factor (from Light::getAttenuation(), set per-
-				// star from its temperature and orbital distance) that the
-				// specular highlight just above already uses. Without this
-				// the scattering glow was full-strength regardless of how
-				// close or far the star actually is, which is what made it
-				// look wrong ("too large") - it's not really size, it's
-				// that a nearby/bright star's glow wasn't being told it's
-				// nearby/bright, and a distant/dim one wasn't dimmed either.
+						day_grad,scatter_grad,scatter_color);
 				color.rgb+=scatter_mix*dayFade*density*ampl*scat;
 			}
 		}
@@ -170,7 +141,7 @@ void main(void) {
 	float dv=pow(s,2.0*haze_grad);
 	//float dh=1.0;//pow(d,haze_grad);
 	h = Haze.a*dv; // haze transparancy
-	//h=clamp(h,0.0,1.0);
+	h=clamp(h,0.0,1.0);
 	illumination=lerp(density,0.5,0.9,illumination,1);
 	color.rgb=mix(color.rgb,haze.rgb*illumination,h);
 #endif
@@ -185,31 +156,11 @@ void main(void) {
 		// - luminocity of background objects encoded in fcolor2.b
 		// - reduce shine-through as atmospheric density and haze increases
 		//
-		// (1.0-h), reverted back from a wrong attempt at "h" - h's own
-		// comment calls it "transparency," but everywhere else in this
-		// file (see color.rgb=mix(color.rgb,haze.rgb*illumination,h)
-		// above) it's used as haze OPACITY/density: higher h paints in
-		// MORE haze color, i.e. more obscuring. (1.0-h) is "how clear the
-		// air is" - 1 (fully clear) when h=0, 0 (fully hazy) when h=1 -
-		// which is what should gate shine-through: clear air lets a
-		// bright object (moon) punch through fully, thick haze blocks it
-		// entirely. Once the separate illumination=1 fix makes shine_thru
-		// nonzero, this produces the right direction: amp=0 (h=0, no
-		// haze) -> moon visible; amp=1/exp=0 (h=1, full haze) -> moon
-		// hidden.
-		a = Sky.a*color.a*(1.0-shine_thru*(1.0-h)*(1.0-density)); // moons: enhance shine-thru of day side
-		a=clamp(a,0.0,1.0);
-		// This used to force a toward 1.0 (fully opaque) at high density,
-		// regardless of Sky.a - so a dense atmosphere always won out over
-		// the Sky color's own alpha, even when Sky.a was set to 0 for a
-		// deliberately transparent/stars-showing sky. That's what broke
-		// "Sky=0 always shows stars": it wasn't new, just not hit before
-		// at the higher density/opacity values recently being tested.
-		// Blend toward Sky.a itself instead of a hardcoded 1.0, so a dense
-		// atmosphere still asserts full strength up to whatever the Sky
-		// color's own alpha allows, but Sky.a==0 stays fully transparent
-		// no matter how dense/opaque the atmosphere is set.
+		float a0 = Sky.a*color.a*(1.0-shine_thru*(1.0-density)); // moons: enhance shine-thru of day side
+		a = a0;
 		a=lerp(density,0.5,0.9,a,Sky.a);
+		a = mix(a, 1.0, h);
+		a=clamp(a,0.0,1.0);
 		color.rgb=mix(fcolor1.rgb,color.rgb,a);
 		//color.rgb=mix(color.rgb,vec3(1.0,1.0,1.0),shine_thru*luminance);
 

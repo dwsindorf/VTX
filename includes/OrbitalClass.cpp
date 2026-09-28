@@ -8915,8 +8915,7 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 	haze_color=def_haze_color;
 	density=0.05;
 	detail=8;
-	scatter_mix=def_scatter_mix; // physically-derived scattering off by default - see OrbitalClass.h
-	scatter_sharpen=def_scatter_max; // matches scattering.h's previous hardcoded g clamp
+	scatter_grad=def_scatter_max; // matches scattering.h's previous hardcoded g clamp
 }
 Sky::~Sky()
 {
@@ -9091,8 +9090,7 @@ void Sky::get_vars()
 	VGET("density",density,0.01);
 	VGET("pressure",pressure,1); // earth normal 1ATM
 	VGET("ghg_fraction",ghg_fraction,0.01); //  earth: mostly h2o (20%) co2 (0.03%)
-	VGET("scatter_mix",scatter_mix,def_scatter_mix); // physical Rayleigh+Mie blend, off by default
-	VGET("scatter_sharpen",scatter_sharpen,def_scatter_max); // scatterColor() g clamp
+	VGET("scatter_grad",scatter_grad,def_scatter_max); // scatterColor() g clamp
 
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
@@ -9114,6 +9112,10 @@ void Sky::get_vars()
 		halo_color=Td.c;
 	else
 		halo_color=Color(1,1,1,1);
+	if(exprs.get_local("scatter.color",Td))
+		scatter_color=Td.c;
+	else
+		scatter_color=Color(1,1,1,1);
 	specular=Color(1,1,1,1);
 }
 
@@ -9125,12 +9127,12 @@ void Sky::set_vars()
 	Spheroid::set_vars();
 	CSET("night.color",night_color,Color(0,0,0,0));
 	CSET("halo.color",halo_color,Color(1,1,1,1));
+	CSET("scatter.color",scatter_color,Color(1,1,1,1));
 	VSET("resolution",detail,2);
 	VSET("density",density,0.01);
 	VSET("pressure",pressure,1);
 	VSET("ghg_fraction",ghg_fraction,0.01);
-	VSET("scatter_mix",scatter_mix,def_scatter_mix);
-	VSET("scatter_sharpen",scatter_sharpen,def_scatter_max);
+	VSET("scatter_grad",scatter_grad,def_scatter_max);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
@@ -9306,8 +9308,6 @@ bool Sky::setProgram(){
 	double dht,dpmin,dpmax;
 	dpvars(dht,dpmin,dpmax);
 
-	//cout <<"sky dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
-
 	GLSLVarMgr vars;
 	Color c = haze_color;
 	vars.newFloatVec("Haze",c.red(),c.green(),c.blue(),c.alpha());
@@ -9316,8 +9316,9 @@ bool Sky::setProgram(){
 	c = halo_color;
 	vars.newFloatVec("Halo",c.red(),c.green(),c.blue(),c.alpha());
 	c = twilite_color;
-	//c.print();
 	vars.newFloatVec("Twilite",c.red(),c.green(),c.blue(),c.alpha());
+	c = scatter_color;
+	vars.newFloatVec("Scatter",c.red(),c.green(),c.blue(),c.alpha());
 	c = night_color;
 	vars.newFloatVec("Night",c.red(),c.green(),c.blue(),c.alpha());
 
@@ -9337,23 +9338,13 @@ bool Sky::setProgram(){
 	vars.newFloatVar("dpmin",dpmin);
 	vars.newFloatVar("dpmax",dpmax);
 
-	// Physically-derived scattering inputs (see Shaders/scattering.h) -
-	// additive, gated in-shader by scatter_mix (0 by default).
 	vars.newFloatVar("pressure",pressure);
 	vars.newFloatVar("ghg_fraction",ghg_fraction);
-	vars.newFloatVar("scatter_mix",scatter_mix);
-	vars.newFloatVar("scatter_sharpen",scatter_sharpen);
-
-//	double r=parent->size;
-//	double s=size; // radius of shell
-//	double theta=asin(r/s);
-//
-//	double twilite_dph=-cos(theta);
+	vars.newFloatVar("scatter_grad",scatter_grad);
 
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_min",0.5*twilite_min);
-	//cout << twilite_min << " "<< twilite_max << endl;
 
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
@@ -9879,6 +9870,7 @@ bool CloudLayer::setProgram(){
 	Color haze(1,1,1);
 	Color halo(1,1,1);
 	Color twilight(0,0,0);
+	Color scatter(1,1,1);
 
 	double twilite_min=-0.2;
 	double twilite_max=0.2;
@@ -9892,6 +9884,7 @@ bool CloudLayer::setProgram(){
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
 		halo=sky->halo_color;
+		scatter=sky->scatter_color;
 		twilight=sky->twilite_color;
 		if(Render.haze() && parent == TheScene->viewobj){
 			haze=sky->haze_color;
@@ -9924,7 +9917,6 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVec("Haze",haze.red(),haze.green(),haze.blue(),haze.alpha());
 	vars.newFloatVec("Halo",halo.red(),halo.green(),halo.blue(),halo.alpha());
 	vars.newFloatVec("Twilight",twilight.red(),twilight.green(),twilight.blue(),twilight.alpha());
-
 
 	vars.newFloatVar("sky_ht",sky_ht);
 	vars.newFloatVar("eye_ht",TheScene->height);

@@ -13,13 +13,14 @@ protected:
 	SliderCtrl  *DensitySlider;
 	SliderCtrl  *PressureSlider;
 	SliderCtrl  *FracGHGSlider;
-	SliderCtrl  *ScatterSlider;
-	SliderCtrl  *ScatterSharpenSlider;
+	//SliderCtrl  *ScatterSlider;
+	//SliderCtrl  *ScatterSharpenSlider;
 
 	ColorSlider *HazeColor;
 	ColorSlider *SkyColor;
 	ColorSlider *TwiliteColor;
 	ColorSlider *HaloColor;
+	ColorSlider *ScatterColor;
 	ColorSlider *NightColor;
 	SliderCtrl  *SkyGrad;
 	SliderCtrl  *TwiliteGrad;
@@ -28,6 +29,7 @@ protected:
 	SliderCtrl  *HazeMinSlider;
 	SliderCtrl  *HazeMaxSlider;
 	SliderCtrl  *NightGrad;
+	SliderCtrl  *ScatterGrad;
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
@@ -49,8 +51,8 @@ public:
 		delete DensitySlider;
 		delete PressureSlider;
 		delete FracGHGSlider;
-		delete ScatterSlider;
-		delete ScatterSharpenSlider;
+		delete ScatterColor;
+		delete ScatterGrad;
 
 		delete HazeColor;
 		delete SkyColor;
@@ -111,6 +113,7 @@ public:
     	OnSliderText(CellSizeSlider, obj->detail);
     	invalidateObject();
     }
+
     void OnHaloSlider(wxScrollEvent& event){
        	OnColorSlider(HaloColor,object()->halo_color);
     }
@@ -126,6 +129,23 @@ public:
     void OnHaloGradText(wxCommandEvent& event){
 	    OnSliderText(HaloGrad, object()->shine);
     }
+
+    void OnScatterSlider(wxScrollEvent& event){
+       	OnColorSlider(ScatterColor,object()->scatter_color);
+    }
+    void OnScatterText(wxCommandEvent& event){
+      	OnColorText(ScatterColor,object()->scatter_color);
+    }
+    void OnScatterColor(wxColourPickerEvent& WXUNUSED(event)){
+       	OnColorValue(ScatterColor,object()->scatter_color);
+    }
+    void OnScatterGradSlider(wxScrollEvent& event){
+ 	    OnSliderValue(ScatterGrad, object()->scatter_grad);
+    }
+    void OnScatterGradText(wxCommandEvent& event){
+ 	    OnSliderText(ScatterGrad, object()->scatter_grad);
+    }
+
     void OnTwiliteSlider(wxScrollEvent& event){
     	OnColorSlider(TwiliteColor,object()->twilite_color);
     }
@@ -230,36 +250,6 @@ public:
     	TheView->set_changed_detail();
     	TheScene->rebuild_all();
     }
-   // DEFINE_SLIDER_VAR_EVENTS(Pressure,object()->pressure);
-
-    //DEFINE_SLIDER_VAR_EVENTS(FracGHG,object()->ghg_fraction);
-
-    // Blend for the optional physically-derived Rayleigh+Mie scattering
-    // (Sky::scatter_mix, see OrbitalClass.h/scattering.h) - pure shading,
-    // not geometry, so this follows the Density pattern (set_changed_render()
-    // only) rather than Pressure/FracGHG's set_changed_detail()+rebuild_all().
-	void OnScatterSlider(wxScrollEvent& event){
-		ScatterSlider->setValueFromSlider();
-		object()->scatter_mix=ScatterSlider->getValue()/100;
-		TheView->set_changed_render();
-	}
-	void OnScatterText(wxCommandEvent& event){
-		ScatterSlider->setValueFromText();
-		object()->scatter_mix=ScatterSlider->getValue()/100;
-		TheView->set_changed_render();
-	}
-
-	// Upper clamp on scatterColor()'s forward-scattering tightness (g) -
-	// see Shaders/scattering.h - stored directly (not /100 like Scatter)
-	// since it's already a 0-1ish clamp value, not a percent.
-	void OnScatterSharpenSlider(wxScrollEvent& event){
-		OnSliderValue(ScatterSharpenSlider, object()->scatter_sharpen);
-		TheView->set_changed_render();
-	}
-	void OnScatterSharpenText(wxCommandEvent& event){
-		OnSliderText(ScatterSharpenSlider, object()->scatter_sharpen);
-		TheView->set_changed_render();
-	}
 
 	// Near/far reference distance band for the CPU-side depth haze
 	// (RasterMgr::applyFog() in Raster.cpp - Sky::haze_min/haze_max,

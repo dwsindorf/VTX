@@ -577,6 +577,7 @@ public:
 	Color 	   twilite_color;
 	Color 	   halo_color;
 	Color 	   night_color;
+	Color 	   scatter_color;
 	double     twilite_value;
 	double     twilite_max;
 	double     twilite_min;
@@ -592,20 +593,7 @@ public:
 	double     haze_zfar;
 	double     pressure;
 	double     ghg_fraction;
-	// Blend factor for the optional physically-derived Rayleigh+Mie sky
-	// scattering (see Shaders/scattering.h), driven by pressure/
-	// ghg_fraction above: 0 = pure hand-tuned Halo/Sky/Twilite/Night/Haze
-	// colors (the original behavior, and the default so existing scenes
-	// are unaffected), 1 = fully physically-derived. Exposed as "Scatter"
-	// on the Sky Object tab.
-	double     scatter_mix;
-	// Upper clamp on scatterColor()'s forward-scattering tightness (g) in
-	// Shaders/scattering.h - g itself is driven by 'shine' (the "Halo"
-	// Sharpen slider) same as the specular/haze terms, but how close to a
-	// pinpoint it's allowed to get tops out here. Exposed as "Sharpen" next
-	// to Scatter on the Sky Object tab, named to match the other *Grad/
-	// Sharpen controls (HaloGrad, SkyGrad, etc).
-	double     scatter_sharpen;
+	double     scatter_grad;
 
 	Sky(Orbital *m, double s);
 	~Sky();
