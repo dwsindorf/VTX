@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 #define DEBUG_GENERATE
 //#define DEBUG_COLORS
-//#define PRINT_ASTEROID_STATS
+#define PRINT_ASTEROID_STATS
 //#define DEBUG_HOLE_PROBE
 //#define DEBUG_HOLE_SCAN
 #define USE_IDTABLE
@@ -6423,6 +6423,8 @@ Asteroid::Asteroid(Orbital *m, double s, double r):
 	noiseScale=1.0;
 	noiseOffset=0.0;
 	maxDepth=16;
+	adaptDepth=maxDepth;
+	adaptDetail=detail;
 	shadow_mode=false;
 	shadow_start=false;
 	minHeight=size;
@@ -6495,6 +6497,27 @@ int Asteroid::getVNoiseFunction(char *buff){
 	}
 	else
 		return 0;
+}
+//-------------------------------------------------------------
+// Asteroid::get_vars() / set_vars()
+// detail ("resolution") and maxDepth ("maxdepth") are user LOD settings.
+// Orbital defaults resolution to 1 (too fine for MC cells) so override
+// with asteroid defaults, and persist maxdepth (previously never saved).
+//-------------------------------------------------------------
+void Asteroid::get_vars(){
+	Spheroid::get_vars();
+	VGET("resolution",detail,3);
+	double md;
+	VGET("maxdepth",md,16);
+	maxDepth=(int)(md+0.5);
+	if(maxDepth<1)  maxDepth=1;
+	if(maxDepth>20) maxDepth=20;
+}
+void Asteroid::set_vars(){
+	Spheroid::set_vars();
+	VSET("resolution",detail,3);
+	double md=maxDepth;
+	VSET("maxdepth",md,16);
 }
 //-------------------------------------------------------------
 // Asteroid::invalidate() invalidate
@@ -7051,30 +7074,41 @@ void Asteroid::adapt_object(){
         return;
     }
 
+	// maxDepth and detail are the user's settings (MaxDepth choice, Grid slider)
+	// and represent NORMAL quality. render_quality only offsets them -- it must
+	// NOT overwrite them, or the UI values are discarded every adapt.
+	// Offsets match the old hard-coded table relative to NORMAL (16 / 3.0).
+	double detailScale=1.0;
+	int    depthOffset=0;
 	switch(TheScene->render_quality){
 	case DRAFT:
 		MCGenerator::csi_hole_patch_threshold=0;
-		maxDepth=14;
-		detail=4;
+		depthOffset=-2;
+		detailScale=4.0/3.0;
 		break;
 	default:
 	case NORMAL:
 		MCGenerator::csi_hole_patch_threshold=4;
-		maxDepth=16;
-		detail=3;
+		depthOffset=0;
+		detailScale=1.0;
 		break;
 	case HIGH:
 		MCGenerator::csi_hole_patch_threshold=5;
-		detail=2.5;
-		maxDepth=18;
+		depthOffset=2;
+		detailScale=2.5/3.0;
 		break;
 	case BEST:
-		detail=2;
-		maxDepth=20;
 		MCGenerator::csi_hole_patch_threshold=6;
+		depthOffset=5;
+		detailScale=2.0/3.0;
+		break;
 	}
+	adaptDepth  = std::max(2, std::min(26, maxDepth+depthOffset));
+	adaptDetail = detail*detailScale;
+	if(adaptDetail < 0.25)
+		adaptDetail = 0.25;
 
-	MCGenerator::csi_margin_minPixels = detail * 1.33;
+	MCGenerator::csi_margin_minPixels = adaptDetail * 1.33;
 
     // Asteroid uses its own MC id table (mcIdtbl), not Raster.idtbl.
     // Clear Raster.idtbl so Scene::select()'s surface_view idvalues() branch
@@ -7130,14 +7164,14 @@ void Asteroid::adapt_object(){
     if (isInitialBuild) {
         // Progressive loop for initial build: coarse-to-fine with ID readback gating.
         int startDepth = 2;
-        int max_cycles = maxDepth - startDepth + 1;
+        int max_cycles = adaptDepth - startDepth + 1;
         for (int cycle = 0; cycle < max_cycles; cycle++) {
             int cycleDepth = startDepth + cycle;
             t0=clock();
             tree->render_ids(2.0*size, xpoint);
             rsum+=clock()-t0;
             t1=clock();
-            tree->adapt(xpoint, TheScene->wscale, hscale, detail, cycleDepth, flags);
+            tree->adapt(xpoint, TheScene->wscale, hscale, adaptDetail, cycleDepth, flags);
             asum+=clock()-t1;
         }
 
@@ -7145,7 +7179,7 @@ void Asteroid::adapt_object(){
     	t0=clock();
         tree->render_ids(2.0*size, xpoint);
         t1=clock();
-        tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+        tree->adapt(xpoint, TheScene->wscale, hscale, adaptDetail, adaptDepth, flags);
         asum+=clock()-t1;
     }
    // cout<<"rsum:"<<rsum/CLOCKS_PER_SEC<<" asum:"<<asum/CLOCKS_PER_SEC<<endl;
@@ -7153,14 +7187,14 @@ void Asteroid::adapt_object(){
 
 #else
     MCObjAdaptFlags flags=MCObjAdaptFlags(false,true,true,false);
-    tree->adapt(xpoint, TheScene->wscale, hscale, detail, maxDepth, flags);
+    tree->adapt(xpoint, TheScene->wscale, hscale, adaptDetail, adaptDepth, flags);
 #endif
     // Refresh the id table against the FINAL adapted mesh. The render_ids calls
      // above all run BEFORE their adapt, so mcIdtbl/mcPixels otherwise lag one
      // subdivision behind and pixelLeaf() resolves stale/freed cells.
     //MCGenerator::resetStats();
 
-    MCGenerator::maxDepth=maxDepth;
+    MCGenerator::maxDepth=adaptDepth;
     tree->render_ids(2.0*size, xpoint);
     tree->countCells();
     TheNoise.rseed=seed;
@@ -7484,7 +7518,7 @@ void Asteroid::buildVBO(){
         // and weld; genuinely distinct vertices stay distinct. Unlike a raw
         // (float) cast, this can't alias neighboring edge vertices into one
         // bucket at high maxDepth (the source of the linear miscolor streaks).
-        const double wq = double(1ULL << (maxDepth + 4));
+        const double wq = double(1ULL << (adaptDepth + 4));
         struct V3Key {
             long long x, y, z;
             bool operator==(const V3Key& o) const { return x==o.x && y==o.y && z==o.z; }
@@ -8429,7 +8463,7 @@ void Asteroid::holeScan(int flags, int maxReport)
     //-------------------------------------------------------------------------
     // report
     //-------------------------------------------------------------------------
-    cout << "\n=== HOLE SCAN  maxDepth=" << maxDepth
+    cout << "\n=== HOLE SCAN  maxDepth=" << adaptDepth
          << "  deepest leaf=" << deepestLeaf << " ===" << endl;
     // Build fingerprint. These four counters live in MCObjects.cpp, so if this
     // line is missing or all-zero the binary is not running the edited file.
@@ -8567,7 +8601,7 @@ void Asteroid::holeProbe(double sx, double sy)
     if (dl < 1e-20) { cout << "holeProbe: degenerate ray" << endl; return; }
     d_t = d_t / dl;
 
-    cout << "\n=== HOLE PROBE @ pixel(" << sx << "," << sy << ") maxDepth=" << maxDepth << " ===" << endl;
+    cout << "\n=== HOLE PROBE @ pixel(" << sx << "," << sy << ") maxDepth=" << adaptDepth << " ===" << endl;
     cout << "ray(template)  o=(" << o_t.x << "," << o_t.y << "," << o_t.z
          << ")  d=(" << d_t.x << "," << d_t.y << "," << d_t.z << ")" << endl;
 
@@ -8577,7 +8611,7 @@ void Asteroid::holeProbe(double sx, double sy)
     Td.level = 0;                              // match checkSurface conditions
     SurfaceFunction& f = tree->field;
 
-    double cellT   = 2.0 / (double)(1 << maxDepth);   // leaf cell size, template units
+    double cellT   = 2.0 / (double)(1 << adaptDepth);   // leaf cell size, template units
     double step    = cellT / 8.0;
     double tmax    = 4.0;                              // whole tree diameter + margin
     double prev    = f(o_t.x, o_t.y, o_t.z);
@@ -8693,7 +8727,7 @@ void Asteroid::holeProbe(double sx, double sy)
     //     is masked was coarsened by the ID-visibility penalty, not by LOD.
     if (leaf->nodeMasked && !leaf->nodeVisible)
         cout << "  COARSENED BY VISIBILITY MASK: depth=" << leaf->depth
-             << " of maxDepth=" << maxDepth
+             << " of maxDepth=" << adaptDepth
              << ", projectedSize=" << leaf->projectedSize << "px"
              << " (masked cells leaf at minPixels*cullFactor*2)" << endl;
 

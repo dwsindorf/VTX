@@ -43,7 +43,8 @@ enum {
     ID_HT_BIAS_TEXT,
     ID_HARD_BIAS_SLDR,
     ID_HARD_BIAS_TEXT,
-	ID_3D
+	ID_3D,
+	ID_SMOOTH
 
 };
 
@@ -71,6 +72,7 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxRocksTabs::OnNameText)
 EVT_CHOICE(ID_SCALE_MULT, VtxRocksTabs::OnChanged)
 EVT_CHOICE(ID_ORDERS, VtxRocksTabs::OnChanged)
 EVT_CHECKBOX(ID_3D,VtxRocksTabs::OnChangedDim)
+EVT_CHECKBOX(ID_SMOOTH,VtxRocksTabs::OnChangedSmooth)
 
 EVT_MENU_RANGE(TABS_ADD,TABS_ADD+TABS_MAX_IDS,VtxRocksTabs::OnAddItem)
 EVT_MENU(OBJ_DELETE,VtxRocksTabs::OnDelete)
@@ -198,9 +200,13 @@ void VtxRocksTabs::AddPropertiesTab(wxWindow *panel){
 	AmplSlider->setRange(0.0,1.0);
 	hline->Add(AmplSlider->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
 	
-	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,140);
+	NoiseExpr=new ExprTextCtrl(panel,ID_NOISE_EXPR,"Noise",LABEL2S,110);
 	hline->Add(NoiseExpr->getSizer(), 0, wxALIGN_LEFT|wxALL,0);
-	
+
+	m_smooth=new wxCheckBox(panel, ID_SMOOTH, "Smooth");
+	m_smooth->SetToolTip("Smooth normals");
+	hline->Add(m_smooth,5,wxALIGN_LEFT|wxALL,5);
+
 	shape->Add(hline, 0, wxALIGN_LEFT|wxALL,0);
 	
 	hline = new wxBoxSizer(wxHORIZONTAL);
@@ -444,6 +450,11 @@ void VtxRocksTabs::setObjAttributes(){
 		//object_node->node=rocks;
 	changed_model=false;
 	
+}
+
+void VtxRocksTabs::OnChangedSmooth(wxCommandEvent& event){
+	MCGenerator::smooth=event.IsChecked();
+	TheView->set_changed_detail();
 }
 
 void VtxRocksTabs::OnChangedDim(wxCommandEvent& event){

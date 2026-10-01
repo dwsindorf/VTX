@@ -446,7 +446,9 @@ public:
 	TNode   *color;
 	MCObjTree *tree; 
 	SurfaceFunction field;
-	int    maxDepth;
+	int    maxDepth;     // user setting (UI "MaxDepth", saved as "maxdepth") -- NORMAL-quality base
+	int    adaptDepth;   // effective max depth for the current render_quality (set in adapt_object)
+	double adaptDetail;  // effective min cell pixels for the current render_quality
 	bool shadow_mode;
 	bool shadow_start;
 	double minHeight;
@@ -487,6 +489,8 @@ public:
 	NodeIF *getInstance(NodeIF *prev,int type);
 	void newInstance(int gtype);
 	static void newAsteroid(Asteroid *,int gtype);
+	void set_vars();
+	void get_vars();
 };
 //************************************************************
 // Star class

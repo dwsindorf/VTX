@@ -28,7 +28,7 @@ protected:
 	wxChoice *m_orders;
 	
 	wxCheckBox *m_3d;
-	//wxChoice *m_seed;
+	wxCheckBox *m_smooth;
 	
 	bool changed_model;
 
@@ -79,6 +79,7 @@ public:
 	void updateControls();
 	
 	void OnChangedDim(wxCommandEvent& event);
+	void OnChangedSmooth(wxCommandEvent& event);
 	
 	DEFINE_SLIDER_EVENTS(Scale)
 	DEFINE_SLIDER_EVENTS(DeltaSize)

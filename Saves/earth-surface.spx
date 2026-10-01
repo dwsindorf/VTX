@@ -11,13 +11,15 @@ Scene() {
 		astride=1;
 		zoom=0.003;
 		minh=5.68182e-10;
-		minr=0.00300005;
 		heading=-57;
 		tilt=-3;
 		angle=16;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
+	}
+	View{
+		minr=0.00300005;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -61,7 +63,7 @@ Scene() {
 					specular=Color(1,1,1,0.62);
 					tilt=-17;
 					year=365;
-					bands("alpine2",ACHNL|CLAMP|NEAREST|NORM,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
+					bands("alpine2",ACHNL|CLAMP|DECAL|NEAREST|NORM|REPLACE,64,0.30646,1,Color(0,0,0),Color(0.024,0.224,0.102),
 						Color(0.2,0.4,0.075),
 						Color(0.275,0.475,0),
 						Color(0.522,0.322,0.02),
@@ -76,7 +78,7 @@ Scene() {
 								
 								Texture("earth",TEX,1,1.02776,0,0,1,2,0.5,0,0,0,0,0)+
 								Texture("alpine2",BORDER|NORM|TEX,512,1.08332,1,-1,1,2,1,0,0.12,1,1,-1)+
-								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,15,10,0.34,0.45,2.1,0.14,1,1,0))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
+								Texture("colored-rock",BUMP|RANDOMIZE|TEX,8192,2,2,1.55552,5,2,0.75,0,0,0,0,0)+Z(noise(SIMPLEX|NABS|SCALE|SQR,11.64,10,-0.096,0.479,2.1,0.274,0.633,0.26,0,1e-06))+Z(fractal(SS,14,9.1,0.28,0.28,0.5,0.3,0.18,1,0.76,1))+
 								Texture("earth-htmap",HMAP,1,1,1,0,1,2,0.5,0,1,0.5,0,0,0,0);
 					}
 					Sky(0.0032) {
@@ -128,7 +130,6 @@ Scene() {
 						day=24;
 						hscale=0.001;
 						name="MoonMap";
-						ocean.auto=1;
 						phase=139.997;
 						resolution=4;
 						rseed=2.34627;
