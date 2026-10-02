@@ -30,7 +30,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_AVE_TEMP
 #define DEBUG_GENERATE
 //#define DEBUG_COLORS
-#define PRINT_ASTEROID_STATS
+//#define PRINT_ASTEROID_STATS
 //#define DEBUG_HOLE_PROBE
 //#define DEBUG_HOLE_SCAN
 #define USE_IDTABLE
@@ -1578,6 +1578,8 @@ void Galaxy::get_vars()
 //************************************************************
 Point System::galaxy_origin;
 bool System::building_system=false;
+double System::asteroid_prob=0.2;
+int    System::max_asteroids=1;
 System *System::TheSystem=0;
 
 System::System(double s) : Orbital(s)
@@ -1986,8 +1988,29 @@ System *System::newInstance(){
 	building_system=false;
 	double star_radius=system->adjustOrbits();
 	Planetoid::planet_orbit=1.2*star_radius;
+	int asteroids=0;
 	for(int i=0;i<planets;i++){
 		Planet::planet_cnt=i+1;
+
+		// Optionally replace this planet slot with an asteroid.
+		// Never replace the only planet in the system.
+		NodeIF::setRands();
+		double pick=URAND(lastn++);
+		if(planets>1 && asteroids<max_asteroids && pick<asteroid_prob){
+			Asteroid *asteroid=(Asteroid*)TheScene->getPrototype(0,TN_ASTEROID);
+			if(asteroid){
+				asteroid->setRseed(getRandValue());
+				NodeIF::setRands();
+				asteroid->orbit_radius=1.3*(Planetoid::planet_orbit+20+50*r[4]);
+				asteroid->orbit_distance=asteroid->orbit_radius;
+				asteroid->newInstance(GN_RANDOM);
+				Planetoid::planet_orbit=asteroid->orbit_radius;
+				lastn++;
+				system->addChild(asteroid);
+				asteroids++;
+				continue;
+			}
+		}
 		Planet *planet=TheScene->getPrototype(0,ID_PLANET);
 		planet->setRands();
 
@@ -7099,11 +7122,11 @@ void Asteroid::adapt_object(){
 		break;
 	case BEST:
 		MCGenerator::csi_hole_patch_threshold=6;
-		depthOffset=5;
+		depthOffset=4;
 		detailScale=2.0/3.0;
 		break;
 	}
-	adaptDepth  = std::max(2, std::min(26, maxDepth+depthOffset));
+	adaptDepth  = std::max(2, std::min(24, maxDepth+depthOffset));
 	adaptDetail = detail*detailScale;
 	if(adaptDetail < 0.25)
 		adaptDetail = 0.25;
@@ -7782,13 +7805,16 @@ void Asteroid::newInstance(int gtype){
 
 	terrain_type=gtype;
 	size      = 0.0001*(1+4*r[1]);
+
+	cout<<"Asteroid::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<" s:"<<size<<endl;
+	newAsteroid(this,gtype);
+
+	// set AFTER newAsteroid(): it ends with get_vars(), which would reset
+	// these to the prototype's day/year/rot_phase/tilt values
 	day       = 5+40*r[3];
 	year      = day*(2+8*r[4]);
 	rot_phase = 360*r[5];
 	tilt      = 90*r[8];
-
-	cout<<"Asteroid::newInstance "<<TheScene->typeSymbol(gtype).c_str()<<" s:"<<size<<endl;
-	newAsteroid(this,gtype);
 	hscale    = 0.60+0.30*s[4];
 
 	symmetry=0.5+0.5*r[6];

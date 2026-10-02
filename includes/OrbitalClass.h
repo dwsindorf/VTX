@@ -299,6 +299,8 @@ public:
    void set_system(Point p);
     static Point galaxy_origin;
     static bool building_system;
+    static double asteroid_prob;   // per-slot chance a random planet slot becomes an asteroid
+    static int    max_asteroids;   // cap on asteroids per generated system (0 disables)
     static System *TheSystem;
 
 	System(Orbital *m, double s);
