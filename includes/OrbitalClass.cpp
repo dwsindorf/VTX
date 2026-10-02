@@ -1862,10 +1862,11 @@ void System::set_system(Point p)
 	m_stars=1+ps*3;
 	m_stars=m_stars<1?1:m_stars;
 	double pp=pow(URAND(lastn++),2);
+	int orbitals=4*(TheScene->generate_quality+1);
 	if(m_stars==1)
-		m_planets=0.9+pp*5;
+		m_planets=0.9+pp*orbitals;
 	else
-		m_planets=0.5+pp*2;
+		m_planets=0.5+pp*orbitals/2;
 }
 
 NodeIF *System::getInstance(){
@@ -3060,6 +3061,7 @@ Star::Star(Orbital *m, double s, double r) : Spheroid(m,s,r)
 #endif
 	shadows_exclude();
 	temperature=0;
+	settle_adapts=0;
 	startype[0]=0;
 	if(temps==0){
 		make_temps_table();
@@ -3196,6 +3198,20 @@ Star *Star::newInstance(int gtype){
     star->setProtoValid(true);
     star->setRadiance(star->emission);
     star->setName(star->startype);
+
+    // size was changed from the prototype's value (1) above. Push the new
+    // radius into the maps now (Planet/Asteroid::newInstance do the same);
+    // otherwise the star and its shells render with the prototype geometry
+    // until the first adapt_object() calls set_geometry().
+    star->set_geometry();
+    // The first adapt after a new system is generated leaves the star map
+    // incomplete (galaxy stars show through until a move/rebuild re-adapts it).
+    // Force a few extra map adapts at the current view to let it converge.
+    star->settle_adapts=3;
+    star->children.ss();
+    Spheroid *shell;
+    while((shell=(Spheroid*)star->children++))
+    	shell->set_geometry();
     return star;
 }
 
@@ -3415,6 +3431,30 @@ void Star::render_object()
 		map->render();
 	}
 	popSeed();
+}
+
+//-------------------------------------------------------------
+// Star::force_adapt() / adapt_object()
+// settle_adapts>0 forces Map::adapt() to run (ADAPT_NEEDED) even when the
+// view hasn't moved - same effect as the manual move that fixed the map.
+// (force_adapt() is evaluated more than once per Map::adapt(), so the
+// counter is decremented in adapt_object(), not here.)
+//-------------------------------------------------------------
+bool Star::force_adapt()
+{
+	if(settle_adapts>0)
+		return true;
+	return Spheroid::force_adapt();
+}
+void Star::adapt_object()
+{
+	bool settling=settle_adapts>0;
+	Spheroid::adapt_object();
+	if(settling){
+		settle_adapts--;
+		if(settle_adapts>0)
+			Adapt.set_more_cycles(1);  // keep moved() set so the next frame adapts too
+	}
 }
 
 //-------------------------------------------------------------
@@ -4881,6 +4921,11 @@ void Planet::newInstance(int gtype){
 		newRocky(this,gtype);
 		break;
 	}
+	// random starting position in orbit and rotation (day) phase.
+	// set here, after newRocky/newGasGiant, since newRocky's get_vars()
+	// call would reset both to the prototype values (0)
+	orbit_phase = 360*URAND(lastn++);
+	rot_phase   = 360*URAND(lastn++);
 
 	symmetry=1;
 	set_geometry();
@@ -7815,6 +7860,7 @@ void Asteroid::newInstance(int gtype){
 	year      = day*(2+8*r[4]);
 	rot_phase = 360*r[5];
 	tilt      = 90*r[8];
+	orbit_phase = 360*URAND(lastn++);
 	hscale    = 0.60+0.30*s[4];
 
 	symmetry=0.5+0.5*r[6];
@@ -7858,6 +7904,19 @@ void Asteroid::newAsteroid(Asteroid *a,int gtype){
 	a->setName(nm);
 
 	a->get_vars();
+
+	// init() may already have run on the parsed prototype (empty Surface{}),
+	// caching color/texs from the OLD terrain and calibrating the field against
+	// the default rnoise. Refresh that derived state for the new terrain so the
+	// first mesh is colored correctly (previously only a rebuild fixed this).
+	a->texs.reset();
+	a->terrain.getChildren((int)ID_TEXTURE,a->texs);
+	a->terrain.init_render();
+	a->terrain.set_eval_mode(0);
+	a->color=a->terrain.getChild(ID_COLOR);
+	if(a->tree)
+		a->rebuildTree();
+	a->vboDirty=true;
 }
 //=============================================================================
 // Asteroid::holeScan() — revision 2

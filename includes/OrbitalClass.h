@@ -520,6 +520,7 @@ public:
 	static void make_temps_table();
 	double temperature;
 	char startype[3];
+	int  settle_adapts;   // force this many extra map adapts after creation
 
 	Star(Orbital *m, double s, double r);
 	~Star();
@@ -535,6 +536,8 @@ public:
 	bool setProgram();
 	int render_pass();
 	int adapt_pass();
+	bool force_adapt();
+	void adapt_object();
     void render();
     void setRadiance(Color c);
     void getStarData(double *d, char *m);

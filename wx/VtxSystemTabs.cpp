@@ -194,14 +194,13 @@ void VtxSystemTabs::AddViewTab(wxWindow *panel){
 }
 
 void VtxSystemTabs::OnViewObj(wxCommandEvent& event){
-	//if(!is_viewobj()){
-		TheScene->set_viewobj(object());
-		TheScene->selobj=object();
-		TheScene->focusobj=object();
-		TheScene->set_changed_view();
-		TheScene->change_view(ORBITAL);
-		menu_action=TABS_VIEWOBJ;
-	//}
+	// Default "Set View" for a system is the overhead (Top) view.
+	// The old path (focusobj=viewobj + change_view(ORBITAL)) went through
+	// Scene::change_view()'s move_focus branch when already in ORBITAL view,
+	// which is a no-op for a System, so init_view() never ran and the camera
+	// was left wherever it was (nothing visible).
+	OnOverheadView(event);
+	menu_action=TABS_VIEWOBJ;
 }
 void VtxSystemTabs::OnUpdateViewObj(wxUpdateUIEvent& event){
 	event.Check(is_viewobj());
@@ -223,10 +222,11 @@ void VtxSystemTabs::set_view(double v, double t, double p, double r)
 
 	TheScene->viewtype=ORBITAL;
 	TheScene->set_changed_view();
-	system->init_view();
+	system->init_view();      // recomputes system->size from its children
+	size=system->size;        // cached size may be stale (e.g. new random system)
 	TheScene->theta=t;
 	TheScene->phi=p;
-	TheScene->height=TheScene->radius=r;
+	TheScene->height=TheScene->radius=r*size;
 	TheScene->selobj=TheScene->focusobj=0;
 	TheScene->set_viewobj(system);
 	TheScene->views_mark();
@@ -243,11 +243,11 @@ void VtxSystemTabs::set_view(double v, double t, double p, double r)
 }
 
 void VtxSystemTabs::OnOverheadView(wxCommandEvent& event){
-	set_view(-90,0,90,4*size);
+	set_view(-90,0,90,4);   // r is a multiple of system size
 }
 void VtxSystemTabs::OnObliqueView(wxCommandEvent& event){
-	set_view(0,0,45,3*size);
+	set_view(0,0,45,3);
 }
 void VtxSystemTabs::OnEdgeView(wxCommandEvent& event){
-	set_view(0,0,0,4*size);
+	set_view(0,0,0,4);
 }
