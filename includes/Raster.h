@@ -81,6 +81,7 @@ protected:
 
 		DEBUG_SHADOWS	= 0x00100000,
 		SPRITES		    = 0x00200000,
+		CASCADES		= 0x00400000,
 
 		SDEFAULTS       = DPTEST|SOFT_EDGES|BGSHADOWS|MAX_VIEW|SPRITES,
 		NEEDS_AUXBUF    = REFLECTIONS|FOG,
@@ -347,6 +348,9 @@ public:
 
 	void set_sprites(int c)			{ BIT_SET(options,SPRITES,c);}
 	int  sprites()					{ return options & SPRITES?1:0;}
+
+	void set_cascades(int c)		{ BIT_SET(options,CASCADES,c);}
+	int  cascades()					{ return options & CASCADES?1:0;}
 
 	int  reflections()				{ return options & REFLECTIONS?1:0;}
 	void set_reflections(int c)		{ BIT_SET(options,REFLECTIONS,c);}

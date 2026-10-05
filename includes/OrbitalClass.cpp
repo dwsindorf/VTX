@@ -7879,7 +7879,7 @@ void Asteroid::newAsteroid(Asteroid *a,int gtype){
 	str+="+";
 	str+=newAsteroidBands(a,gtype);
 	str+="+";
-	Nscale=pow(2,14);
+	Nscale=14;
 	str+=newSurfaceTex(a);
 
 	char buff[10000];

@@ -95,8 +95,8 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
         TheScene->set_changed_detail();
 		break;
 	case KEY_TEST6:
-		test6=test6?0:1;
-		cout<<"test6="<<test6<<endl;
+		Raster.set_cascades(!Raster.cascades());
+		cout<<"cascades="<<Raster.cascades()<<endl;
 		TheScene->set_moved();
 		TheScene->set_changed_render();
 		break;

@@ -470,6 +470,31 @@ void TNcraters::applyExpr()
 }
 
 //-------------------------------------------------------------
+// TNcraters::setHashcode() set placement hash id
+//
+// The id selects the hash buckets, and through hid the crater jitter,
+// radius and noise offsets, so it must be identical in every pass that
+// evaluates this terrain. It used to be derived from TheNoise.rseed at the
+// moment init_render() ran, but init_render() is called both with the
+// object's seed pushed (adapt) and without it (Spheroid::rebuild/init/
+// render_object/select), so the id could flip between a rebuild and the
+// next move. Nodes adapted after the flip got different craters than
+// their neighbours -> spikes and level drops until the next rebuild.
+// Use the owning object's seed instead (the same value pushSeed() sets),
+// falling back to TheNoise.rseed when there is no owning object (images).
+//-------------------------------------------------------------
+void TNcraters::setHashcode()
+{
+	double seed=TheNoise.rseed;
+	ExprMgr *scope=dynamic_cast<ExprMgr*>(CurrentScope);
+	NodeIF *obj=scope?scope->getParent():0;
+	if(obj && !images.building())
+		seed=obj->getRseed()+TheScene->rseed;
+	double hashcode=(mgr->levels+1/mgr->maxsize+1/mgr->mult);
+	mgr->id=(int)hashcode+mgr->type+mgr->instance+(int)(hashcode*seed);
+}
+
+//-------------------------------------------------------------
 // TNcraters::eval() evaluate the node
 //-------------------------------------------------------------
 void TNcraters::eval()
@@ -480,11 +505,7 @@ void TNcraters::eval()
 		return;
 	}
 	if(CurrentScope->rpass()){
-		double hashcode=(mgr->levels+
-			            1/mgr->maxsize+
-						1/mgr->mult
-						);
-		mgr->id=(int)hashcode+mgr->type+mgr->instance+hashcode*TheNoise.rseed;
+		setHashcode();
 		if(right)
 			right->eval();
 		return;
@@ -531,11 +552,8 @@ void TNcraters::eval()
 		}
 	}
 	TNplacements::eval();  // evaluate common arguments
-	if(images.building()){
-		// Set stable id for deterministic placement in image mode
-		double hashcode=(mgr->levels+1/mgr->maxsize+1/mgr->mult);
-		mgr->id=(int)hashcode+mgr->type+mgr->instance+(int)(hashcode*TheNoise.rseed);
-	}
+	if(images.building())
+		setHashcode();  // stable id for deterministic placement in image mode
 	TNarg *a=args.index(8);
 
 	if(a){                // geometry exprs

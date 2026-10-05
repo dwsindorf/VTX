@@ -590,7 +590,7 @@ void RasterMgr::init_view()
 
 bool RasterMgr::shouldUseCascades()
 {
-    if(test6)
+    if(!cascades())
 		return false;
 
 	extern Map *VisMap;

@@ -600,6 +600,7 @@ protected:
 	int join(TNode *);
 	int joined(TNode *);
 	TNode *next();
+	void setHashcode();
 public:
 	TNcraters(int t, TNode *l, TNode *r);
 	~TNcraters();

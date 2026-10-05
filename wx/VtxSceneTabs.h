@@ -63,6 +63,7 @@ protected:
 	wxCheckBox *m_grid;
 	wxCheckBox *m_contours;
 	wxCheckBox *m_autogrid;
+	wxCheckBox *m_cascades;
 
 	wxCheckBox *m_occlusion;
 	wxCheckBox *m_clip;
@@ -225,6 +226,9 @@ public:
     void OnUpdateShowMask(wxUpdateUIEvent& event) {
     	event.Check(Raster.filter_show());
     }
+    void OnUpdateCascades(wxUpdateUIEvent& event) {
+    	event.Check(Raster.cascades());
+    }
     void OnUpdateWater(wxUpdateUIEvent& event) {
     	event.Check(Render.show_water());
     }
@@ -287,12 +291,17 @@ public:
     void OnShowContours(wxCommandEvent& event){
      	TheScene->enable_contours=event.IsChecked();
         TheScene->set_changed_render();
-     }
+    }
 
     void OnAutogrid(wxCommandEvent& event){
-      	 TheScene->set_autogrid(event.IsChecked());
-         TheScene->set_changed_render();
-      }
+      	TheScene->set_autogrid(event.IsChecked());
+        TheScene->set_changed_render();
+    }
+
+    void OnCascades(wxCommandEvent& event){
+    	Raster.set_cascades(event.IsChecked());
+        TheScene->set_changed_render();
+    }
 
     void OnHDR(wxCommandEvent& event){
         Raster.set_hdr(event.IsChecked());

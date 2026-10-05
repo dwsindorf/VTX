@@ -78,6 +78,7 @@ enum {
 
     ID_CONTOUR_COLOR,
     ID_AUTOGRID,
+    ID_CASCADES,
     ID_TEXT_COLOR,
 	ID_TEMPMODE,
 
@@ -139,6 +140,9 @@ EVT_UPDATE_UI(ID_AA_ENABLE, VtxSceneTabs::OnUpdateAAEnable)
 
 EVT_CHECKBOX(ID_AVE_ENABLE,VtxSceneTabs::OnAveEnable)
 EVT_UPDATE_UI(ID_AVE_ENABLE, VtxSceneTabs::OnUpdateAveEnable)
+
+EVT_CHECKBOX(ID_CASCADES,VtxSceneTabs::OnCascades)
+EVT_UPDATE_UI(ID_CASCADES, VtxSceneTabs::OnUpdateCascades)
 
 EVT_CHECKBOX(ID_BIG_KERNEL,VtxSceneTabs::OnBigEnable)
 
@@ -413,6 +417,10 @@ void VtxSceneTabs::AddRenderTab(wxWindow *panel){
 	shadow_views->SetSelection(3);
 	
 	hline->Add(shadow_views,0,wxALIGN_LEFT|wxALL,0);
+
+	m_cascades=new wxCheckBox(panel, ID_CASCADES, "Cascades");
+	m_cascades->SetToolTip("Use cascades");
+	hline->Add(m_cascades,0,wxALIGN_LEFT|wxALL,5);
 
 	shadow_controls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
