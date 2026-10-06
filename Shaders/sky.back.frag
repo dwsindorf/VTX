@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "scattering.h"
+#include "sunlight.h"
 #ifndef NLIGHTS
 #define NLIGHTS 1
 #endif
@@ -18,6 +19,7 @@ uniform float density;
 uniform vec3 center;
 uniform vec3 viewpoint;
 uniform vec4 Haze;
+uniform vec4 HazeLit;   // Haze rgb darkened for time of day (= terrain haze color)
 uniform vec4 Halo;
 uniform vec4 Twilite;
 uniform vec4 Scatter;
@@ -31,6 +33,8 @@ uniform float pressure;
 uniform float ghg_fraction;
 //uniform float scatter_mix;
 uniform float scatter_grad;
+uniform float sun_tau;     // Sky::sunTau()
+uniform float sun_redden;  // Sky::redden (0 = off)
 
 uniform vec3 pv;
 varying vec4 EyeDirection;
@@ -56,7 +60,7 @@ void main(void) {
 	float illumination = fcolor2.b;
 	float alpha = 0.0;
 	float ha=0.0,sa=0.0,sd=0.0,aa=0.0,a=0.0;
-	vec3 haze=Haze.rgb;
+	vec3 haze=HazeLit.rgb;  // match the terrain haze (effects.frag)
 	vec3 eye = -normalize(EyeDirection.xyz);
 	vec3 radius = -normalize(EyeDirection.xyz+center);
 
@@ -72,6 +76,8 @@ void main(void) {
 	aa=lerp(dp, dpmax+h, 1.5*dpmax, 0.0, 1.0); // horizon to space gradient
 	float d=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//color.a=d;
+	vec4 band=vec4(0.0);  // sunrise/sunset horizon glow (sunsetBand)
+	vec4 core=vec4(0.0);  // sun disk color/weight, re-applied on top of the band
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light = normalize(gl_LightSource[i].position.xyz - EyeDirection.xyz);
 
@@ -102,21 +108,39 @@ void main(void) {
 
 		color.rgb=color.rgb*sd+vec3(0.5*sd);
 		float pf=0.0;
+		// sunlight color after its path through the atmosphere, using the
+		// sun's elevation at the viewer (up = away from the planet center)
+		vec3 up=-ec;                                       // viewer's up
+		vec3 sdir=normalize(gl_LightSource[i].position.xyz);
+		float sunSin=dot(sdir,up);
+		vec3 sun_tint=sunTint(sunSin,sun_tau,sun_redden);
+		{   // horizon band: view and sun directions projected onto the horizon plane
+			float viewSin=dot(eye,up);
+			vec3 eh=eye-up*viewSin;
+			vec3 sh=sdir-up*sunSin;
+			float le=length(eh), ls=length(sh);
+			float cosAz=(le>1e-5 && ls>1e-5)?dot(eh,sh)/(le*ls):1.0;
+			vec4 b=sunsetBand(viewSin,sunSin,cosAz,dot(eye,sdir),sun_tau,sun_redden);
+			if(b.a>band.a)
+				band=b;
+		}
 		light = normalize(gl_LightSource[i].position.xyz-pv);
 		if(LdotR>twilite_min){ // do specular for day side only
 			float dpLE=dot(light, eye); // angle between vertex and light to eye direction
 			dpLE=clamp(dpLE, 0.0, 1.0); // only positive angles
 			pf =0.8*pow(dpLE,2000.0*day_grad);
 			specular += ampl*pf;
-			color.rgb = mix(color.rgb,Halo.rgb*gl_LightSource[i].specular.rgb,specular*ha);
-			haze=mix(haze.rgb,Halo.rgb,Halo.a*pow(dpLE,10.0*day_grad)*sqrt(haze_grad)); // darken with night
+			// sun disk stays bright yellow-white (see sunCoreTint)
+			core = vec4(Halo.rgb*sunCoreTint(sun_tint)*gl_LightSource[i].specular.rgb,clamp(specular*ha,0.0,1.0));
+			color.rgb = mix(color.rgb,core.rgb,core.a);
+			haze=mix(haze.rgb,Halo.rgb*sun_tint,Halo.a*pow(dpLE,10.0*day_grad)*sqrt(haze_grad)); // darken with night
             float scatter_mix=Scatter.a;
 			// ---- physically-derived Rayleigh+Mie scattering (additive) ----
 			if(scatter_mix>0.0){
 				float dayFade=smoothstep(twilite_min,twilite_min+0.05,LdotR);
 				float airmass=1.0+8.0*(1.0-clamp(aa,0.0,1.0));
 				float cosTheta=dot(eye,light);
-				vec3 scatter_color=mix(Scatter.rgb,gl_LightSource[i].diffuse.rgb,0.5);
+				vec3 scatter_color=mix(Scatter.rgb,gl_LightSource[i].diffuse.rgb,0.5)*sun_tint;
 				vec3 scat=scatterColor(cosTheta,airmass,pressure,ghg_fraction,
 						day_grad,scatter_grad,scatter_color);
 				color.rgb+=scatter_mix*dayFade*density*ampl*scat;
@@ -135,6 +159,12 @@ void main(void) {
 	color.a=clamp(color.a,0.0,1.0);
 	//	color.a=max(ha,alpha*sa); // fade sky alpha with ht
 	//color.rgb=vec3(0.0,0.0,1.0);//
+	// sunrise/sunset horizon band and sun disk go in BEFORE haze, so haze
+	// covers them like it covers everything else (haze=1, sharpen=0 must
+	// still give a uniform fog). Applied after color.a is set so they don't
+	// change the sky opacity.
+	color.rgb=mix(color.rgb,band.rgb,band.a);
+	color.rgb=mix(color.rgb,core.rgb,core.a);  // keep the sun disk on top of the band
 #ifdef HAZE
 	float s=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//d=min(DEPTH/haze_zfar,1.0);
@@ -142,8 +172,11 @@ void main(void) {
 	//float dh=1.0;//pow(d,haze_grad);
 	h = Haze.a*dv; // haze transparancy
 	h=clamp(h,0.0,1.0);
-	illumination=lerp(density,0.5,0.9,illumination,1);
-	color.rgb=mix(color.rgb,haze.rgb*illumination,h);
+	// no extra illumination scale: HazeLit already carries the day/night
+	// darkening, and effects.frag applies the same color to the terrain.
+	// (illumination could reach ~2 here, which is why a dense haze sky
+	// went white while the terrain fog stayed gray.)
+	color.rgb=mix(color.rgb,haze.rgb,h);
 #endif
 
 	//if (fbo_read) {

@@ -15,6 +15,10 @@ uniform float twilite_max;
 uniform float twilite_dph; // dot product between point-center light-point at horizon
 uniform float sky_ht;
 uniform float eye_ht;
+uniform float sun_tau;     // Sky::sunTau() - 0 if no sky (no reddening)
+uniform float sun_redden;  // Sky::redden   - 0 = off
+
+#include "sunlight.h"
 
 varying vec4 EyeDirection;
 varying vec4 Normal;
@@ -70,13 +74,15 @@ vec3 setLighting(vec3 BaseColor, vec3 n) {
 		float horizon   = lerp(LdotR,twilite_dph+twilite_min,twilite_dph+twilite_max,0.0,1.0); // twilite band
 		float amplitude = 1.0/gl_LightSource[i].constantAttenuation;
 		float lpn       = LdotN*amplitude*horizon;
-		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
+		vec3 tint       = sunTint(LdotR,sun_tau,sun_redden); // sunrise/sunset reddening
+		// tint only the direct (sunlit) term, not the hemispherical floor
+		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(tint*lpn,vec3(top_shading*gl_FrontMaterial.ambient.a));
 		illumination   += horizon;
 		//if(LdotN>0.0){ // top side
 			vec3 R = reflect(-light,normal);  // normalize(((2.0*normal )*LdotN)-light);
 			float sdp   = max(0.0, dot(R, eye));
 			float pf    = amplitude*horizon*pow(sdp, gl_FrontMaterial.shininess);
-			specular   += gl_LightSource[i].specular.rgb * pf;
+			specular   += gl_LightSource[i].specular.rgb * tint * pf;
 		//}
 #ifdef BACK
 		if(day_grad>0.0 && LdotR>twilite_min){ // mix in star color

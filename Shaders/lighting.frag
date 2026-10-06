@@ -5,6 +5,10 @@ uniform float water_specular;
 uniform float ice_specular;
 uniform float albedo;
 uniform float glow;
+uniform float sun_tau;     // Sky::sunTau() - 0 if no sky (no reddening)
+uniform float sun_redden;  // Sky::redden   - 0 = off
+
+#include "sunlight.h"
 
 
 #ifndef LMODE
@@ -77,7 +81,10 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		float horizon   = lerp(LdotR,twilite_dph+twilite_min,twilite_dph+twilite_max,0.0,1.0); // twilite band
 		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*horizon;
-		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(lpn,top_shading*gl_FrontMaterial.ambient.a);
+		vec3 tint       = sunTint(LdotR,sun_tau,sun_redden); // sunrise/sunset reddening
+		// tint only the direct (sunlit) term, not the hemispherical floor,
+		// so the night side doesn't pick up the horizon red
+		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*max(tint*lpn,vec3(top_shading*gl_FrontMaterial.ambient.a));
 		ambient+=topcolor*(3.0*horizon);
 		// Reflected-light illumination for shine-through (moons/planets
 		// viewed through the sky): unlike 'diffuse' above this has NO
@@ -107,7 +114,8 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #endif
 			float pf        = damp*intensity*horizon*pow(sdp, shine);
 			
-			specular       += gl_LightSource[i].specular.rgb * pf*shadow_specular*albedo;
+			// glints (e.g. sun on water) stay bright yellow like the disk
+			specular       += gl_LightSource[i].specular.rgb * sunCoreTint(tint) * pf*shadow_specular*albedo;
         }
 	}
 	diffuse.rgb=mix(diffuse.rgb,Shadow.rgb,1.0-shadow_diffuse);

@@ -103,6 +103,7 @@ static double  	def_season_factor=0.5;
 static Color 	def_twilite_color=BLACK;
 static double	def_scatter_mix=0.8;
 static double	def_scatter_max=0.9;
+static double	def_redden=1.0;
 static double	def_twilite_value=1;
 static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
@@ -3773,6 +3774,8 @@ bool Planetoid::setProgram(){
 	double twilite_min=-0.2;
 	double twilite_max=0.2;
 	double twilite_dph=0.1;
+	double sun_tau=0;     // no sky -> no sunrise/sunset reddening
+	double sun_redden=0;
 	float haze_zfar = 0.0;
 	float haze_grad = 0.5;
 	Color haze(1,1,1);
@@ -3783,6 +3786,10 @@ bool Planetoid::setProgram(){
 		twilite_min=sky->twilite_min;
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
+		if(sky->isEnabled()){
+			sun_tau=sky->sunTau();
+			sun_redden=sky->redden;
+		}
 	}
 	double clarity=0;
 	if(water()){
@@ -3839,6 +3846,8 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
+	vars.newFloatVar("sun_tau",sun_tau);
+	vars.newFloatVar("sun_redden",sun_redden);
 
 	vars.newFloatVar("hdr_min",Raster.hdr_min);
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
@@ -7879,7 +7888,7 @@ void Asteroid::newAsteroid(Asteroid *a,int gtype){
 	str+="+";
 	str+=newAsteroidBands(a,gtype);
 	str+="+";
-	Nscale=14;
+	Nscale=pow(2,14);
 	str+=newSurfaceTex(a);
 
 	char buff[10000];
@@ -9035,12 +9044,23 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 	density=0.05;
 	detail=8;
 	scatter_grad=def_scatter_max; // matches scattering.h's previous hardcoded g clamp
+	redden=def_redden;
+	haze_lit=haze_color;
 }
 Sky::~Sky()
 {
 #ifdef DEBUG_OBJS
 	printf("~Sky\n");
 #endif
+}
+//-------------------------------------------------------------
+// Sky::sunTau() zenith optical depth used to redden sunlight
+// (sunTint() in sunlight.h). ~0.1 for Earth (Rayleigh at 550nm),
+// scales with pressure; heavier/haze-forming gases scatter a bit more
+// (same 1+0.3*ghg factor scattering.h uses for its Rayleigh term).
+//-------------------------------------------------------------
+double Sky::sunTau() {
+	return 0.1*pressure*(1+0.3*ghg_fraction);
 }
 double Sky::getHeatCalacity() {
 	double g = pow(pressure, 1.5) * ghg_fraction;
@@ -9210,6 +9230,7 @@ void Sky::get_vars()
 	VGET("pressure",pressure,1); // earth normal 1ATM
 	VGET("ghg_fraction",ghg_fraction,0.01); //  earth: mostly h2o (20%) co2 (0.03%)
 	VGET("scatter_grad",scatter_grad,def_scatter_max); // scatterColor() g clamp
+	VGET("redden",redden,def_redden);  // sunrise/sunset sunlight reddening
 
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
@@ -9252,6 +9273,7 @@ void Sky::set_vars()
 	VSET("pressure",pressure,1);
 	VSET("ghg_fraction",ghg_fraction,0.01);
 	VSET("scatter_grad",scatter_grad,def_scatter_max);
+	VSET("redden",redden,def_redden);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
@@ -9350,6 +9372,25 @@ void Sky::init_render()
 		double df=sqrt(Raster.darken_factor);
 		c=haze_color;
 		c=c.darken(df);
+
+		// Haze is lit by the sun: dimmer when the sun is low, full haze color
+		// only when it's well up. darken_factor above only kicks in around
+		// and after sunset, so on its own a dense haze stayed full-bright
+		// (white) right up to the horizon crossing. Sun elevation at the
+		// viewer, same geometry as Planetoid::init_render().
+		double sunSin=-1;
+		{
+			Point pc=parent->point.mm(TheScene->invViewMatrix);
+			Point up=(TheScene->vpoint-pc).normalize();
+			for(int i=0;i<Lights.numLights();i++){
+				Point l=(Lights[i]->point.mm(TheScene->invViewMatrix)-pc).normalize();
+				double s=up.dot(l);
+				sunSin=s>sunSin?s:sunSin;
+			}
+		}
+		double lum=0.25+0.75*smoothstep(0.0,0.4,sunSin,0.0,1.0);
+		c=Color(c.red()*lum,c.green()*lum,c.blue()*lum,c.alpha());
+		haze_lit=c;   // sky.back.frag (HazeLit) and effects.frag (Raster.haze_color) share this
 		//Raster.modulate(c);
 		if(Raster.haze()){
 			Raster.haze_min=haze_min;
@@ -9430,6 +9471,13 @@ bool Sky::setProgram(){
 	GLSLVarMgr vars;
 	Color c = haze_color;
 	vars.newFloatVec("Haze",c.red(),c.green(),c.blue(),c.alpha());
+	// Haze color as lit for the current time of day - the SAME value
+	// Sky::init_render() hands to Raster (Raster.haze_color), which the
+	// terrain haze in effects.frag uses. The sky must use this too, or a
+	// dense haze shows a white sky over a darker (dawn/dusk) or grayer
+	// terrain fog and distant features are silhouetted against it.
+	c = haze_lit;   // set in Sky::init_render()
+	vars.newFloatVec("HazeLit",c.red(),c.green(),c.blue(),c.alpha());
 	c = color();
 	vars.newFloatVec("Sky",c.red(),c.green(),c.blue(),c.alpha());
 	c = halo_color;
@@ -9460,6 +9508,8 @@ bool Sky::setProgram(){
 	vars.newFloatVar("pressure",pressure);
 	vars.newFloatVar("ghg_fraction",ghg_fraction);
 	vars.newFloatVar("scatter_grad",scatter_grad);
+	vars.newFloatVar("sun_tau",sunTau());
+	vars.newFloatVar("sun_redden",redden);
 
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("twilite_max",twilite_max);
@@ -10042,6 +10092,9 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVar("twilite_min", -2.0f);
 	vars.newFloatVar("twilite_max",  2.0f);
 	vars.newFloatVar("twilite_dph",twilite_dph);
+	bool use_sky=sky && sky->isEnabled();
+	vars.newFloatVar("sun_tau",use_sky?sky->sunTau():0.0);
+	vars.newFloatVar("sun_redden",use_sky?sky->redden:0.0);
 
 	Point p=point.mm(TheScene->invViewMatrix);
 	Point center=p.mm(TheScene->viewMatrix);

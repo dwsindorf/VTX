@@ -603,6 +603,9 @@ public:
 	double     pressure;
 	double     ghg_fraction;
 	double     scatter_grad;
+	double     redden;       // sunrise/sunset reddening strength (0=off, 1=physical)
+	Color      haze_lit;     // haze color lit for time of day (sky + terrain haze)
+	double     sunTau();     // zenith optical depth for sunTint() (sunlight.h)
 
 	Sky(Orbital *m, double s);
 	~Sky();

@@ -24,6 +24,8 @@ enum{
     ID_PRESSURE_TEXT,
     ID_FRAC_GHG_SLDR,
     ID_FRAC_GHG_TEXT,
+    ID_REDDEN_SLDR,
+    ID_REDDEN_TEXT,
 
     ID_HAZE_GRAD_SLDR,
     ID_HAZE_GRAD_TEXT,
@@ -73,6 +75,7 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxSkyTabs::OnNameText)
 SET_SLIDER_EVENTS(CELLSIZE,VtxSkyTabs,CellSize)
 SET_SLIDER_EVENTS(PRESSURE,VtxSkyTabs,Pressure)
 SET_SLIDER_EVENTS(FRAC_GHG,VtxSkyTabs,FracGHG)
+SET_SLIDER_EVENTS(REDDEN,VtxSkyTabs,Redden)
 
 EVT_MENU(OBJ_SHOW,VtxSkyTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxSkyTabs::OnUpdateEnable)
@@ -239,6 +242,17 @@ void VtxSkyTabs::AddObjectTab(wxWindow *panel){
 	hline->Add(FracGHGSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+
+	// sunrise/sunset reddening of sunlight (sunlight.h sunTint())
+	// 0=off 1=physical (scaled by pressure) >1 exaggerated
+	ReddenSlider=new SliderCtrl(panel,ID_REDDEN_SLDR,"Redden",LABEL2, VALUE2,SLIDER2);
+	ReddenSlider->setRange(0,4);
+	ReddenSlider->setValue(1);
+	hline->Add(ReddenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
+
+	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	object_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(object_cntrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -357,6 +371,7 @@ void VtxSkyTabs::updateControls(){
 	updateSlider(CellSizeSlider,sky->detail);
 	updateSlider(PressureSlider,sky->pressure);
 	updateSlider(FracGHGSlider,100*sky->ghg_fraction);
+	updateSlider(ReddenSlider,sky->redden);
 	//updateSlider(ScatterSlider,100*sky->scatter_mix);
 	//updateSlider(ScatterSharpenSlider,sky->scatter_sharpen);
 

@@ -13,6 +13,7 @@ protected:
 	SliderCtrl  *DensitySlider;
 	SliderCtrl  *PressureSlider;
 	SliderCtrl  *FracGHGSlider;
+	SliderCtrl  *ReddenSlider;
 	//SliderCtrl  *ScatterSlider;
 	//SliderCtrl  *ScatterSharpenSlider;
 
@@ -51,6 +52,7 @@ public:
 		delete DensitySlider;
 		delete PressureSlider;
 		delete FracGHGSlider;
+		delete ReddenSlider;
 		delete ScatterColor;
 		delete ScatterGrad;
 
@@ -235,6 +237,9 @@ public:
     	TheScene->rebuild_all();
 	}
 	
+	// sunrise/sunset reddening - shader uniform only, no rebuild needed
+	DEFINE_SLIDER_VAR_EVENTS(Redden,object()->redden)
+
 	void OnEndPressureSlider(wxScrollEvent &event){
 		//TheScene->rebuild_all();
 	}
