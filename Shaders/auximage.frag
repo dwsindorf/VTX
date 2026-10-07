@@ -124,7 +124,16 @@ void main(void) {
 		// never reached this shader.)
 		float wshine = mix(water_shine,ice_shine,lerp(type,1.0,2.0,0.0,1.0));
 		float expo   = 2.0+wshine*wshine*0.1;
-		specular    = pow(max(sdp,0.0), expo);
+		// sharp glint (Shine) + a broad sheen. The sheen restores the old
+		// look where open water gets progressively lighter toward the sun:
+		// originally this shader used gl_FrontMaterial.shininess, which was
+		// left at the land's low shininess, so the whole highlight was a
+		// wide lobe. Now Shine controls the glint, and this fixed low-
+		// exponent lobe supplies the gradient (real water does this too -
+		// wave facets spread the sun's reflection over a wide area).
+		const float SHEEN_EXP=8.0;   // width of the sheen (lower = wider)
+		const float SHEEN_AMT=0.35;  // brightness of the sheen vs the glint
+		specular    = pow(max(sdp,0.0), expo) + SHEEN_AMT*pow(max(sdp,0.0), SHEEN_EXP);
 		// no glint once the sun is below the horizon (the twilight band
 		// still lights the water, but the sun itself can't be reflected)
 		float sunUp = smoothstep(-0.01,0.02,LdotR);
@@ -161,31 +170,41 @@ void main(void) {
 	dz=dz<0.0?0.0:dz;
 	float f=fcolor2.r==0?1:lerp(dz,0.0,clarity,0.0,1.0); // f=1 if back surface != land
 	
-	// ---- transmission vs reflection ------------------------------------
-	// Transmit (Color2 + its clarity/"transparency" distance) only FILTERS
-	// light coming up from the bottom; it is not a surface color. Reflect
-	// (Color1 + its amount) is what the surface shows instead.
-	//   f = 0: clear/shallow - the bottom (fcolor1) shows through, tinted
-	//   f = 1: deeper than the clarity distance (or no bottom behind it) -
-	//          nothing is transmitted, the surface shows only reflection
-	// Previously the deep/opaque case showed the Transmit color itself, so
-	// low transparency painted the water in the transmit color (e.g. red).
-	vec3 Lit   = Diffuse+Ambient;                     // light on the surface
-	vec3 Under = fcolor1.rgb*mix(vec3(1.0),Color2.rgb,f)*(1.0-f);
-	vec3 Refl  = Color1.rgb*Lit;                      // reflection color, lit
-	// Fresnel-like: more reflection at grazing view angles (reflect1->0)
-	float rmod = lerp(reflect1,0.0,max(dpr,1e-3),reflection,0.0);
-#if defined(SKY) && !defined(RAYTRACE)
-	// no traced reflection: approximate the reflected sky with its base color
-	// (with RAYTRACE, effects.frag mixes in the actual reflected pixel)
-	Refl = mix(Refl, WaterSky.rgb*Lit, rmod);
-#endif
-	// whatever isn't transmitted is reflected
-	float R = max(rmod, f);
-	vec3 color = mix(Under, Refl, R) + Specular;
+	// Water body shading (restored original model): deep water shows the
+	// Transmit color (Color2) as its body color, blended toward the
+	// Reflect color (Color1) and the sky with view angle (fmix/rmod), which
+	// gives the depth/left-right shading. The "transparency only filters,
+	// opaque water shows only reflection" variant was tried and removed:
+	// it flattened open water to a uniform reflection color.
+	vec3 TopColor=Diffuse*Color1.rgb+Ambient*Color1.rgb;
+	
 #ifdef SKY
-	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
+	vec3 DepthColor=Color2.rgb*horizon;	
+	vec3 color=mix(fcolor1.rgb,DepthColor,f); // add depth color
+	float fmix=lerp(reflect1,dpr,dpm,cmix,0);
+	float rmod=lerp(reflect1,0,dpr,reflection,0);
+	float cmod=(1-rmod)*saturation;
+	fmix*=fmix;
+	float f1=1-fmix; // surface
+	float f2=fmix*cmod;
+	float f3=rmod;
+
+#ifdef RAYTRACE
+	// Real reflections are traced in effects.frag (REFLECT+RAYTRACE): the
+	// water takes the color of the pixel the reflected ray hits. Adding the
+	// constant sky color here as well put a blue cast on every reflection
+	// (e.g. under an orange sunset sky), so leave it out in that case.
+	vec3 SkyColor=vec3(0.0);
+#else
+	// no traced reflection: approximate it with the sky's base color
+	vec3 SkyColor=Diffuse*WaterSky.rgb+Ambient*WaterSky.rgb;
 #endif
+
+	color=color.rgb*f1+TopColor*f2+SkyColor.rgb*f3+Specular;
+	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
+#else
+    vec3 color=mix(fcolor1.rgb,Color2.rgb*(0.25+horizon),f)+Specular; // add depth color 
+#endif	
     //color.rgb=vec3(horizon,0,0);
 	color=clamp(color,0.0,1.0);
 	gl_FragData[0] = vec4(color,1.0);
