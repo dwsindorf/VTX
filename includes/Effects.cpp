@@ -251,6 +251,19 @@ void EffectsMgr::setProgram(int type){
 		c=sky_color;
         
 		vars.newFloatVec("WaterSky",c.red(),c.green(),c.blue(),c.alpha());
+		// traced reflections replace the constant sky-color reflection
+		if(reflections() && Render.raytrace())
+			sprintf(defs+strlen(defs),"#define RAYTRACE\n");
+		{   // sunrise/sunset tint for the sun's glint (sunlight.h)
+			double sun_tau=0, sun_redden=0;
+			Sky *sky=TheScene->viewobj?((Orbital*)TheScene->viewobj)->get_sky():0;
+			if(sky && sky->isEnabled()){
+				sun_tau=sky->sunTau();
+				sun_redden=sky->redden;
+			}
+			vars.newFloatVar("sun_tau",sun_tau);
+			vars.newFloatVar("sun_redden",sun_redden);
+		}
 		//if(do_water)
 		//	sprintf(defs+strlen(defs),"#define WATER\n");
 		GLSLMgr::setDefString(defs);
@@ -277,6 +290,11 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("ice_dpr",water_dpr*ice_color1.alpha());
 		
 		vars.newFloatVar("dpm",water_dpm);
+		// water tab Shine/Albedo for the sun glint (auximage.frag)
+		vars.newFloatVar("water_shine",water_shine);
+		vars.newFloatVar("ice_shine",ice_shine);
+		vars.newFloatVar("water_albedo",water_specular);
+		vars.newFloatVar("ice_albedo",ice_specular);
       
 		vars.newFloatVar("twilite_min",twilite_min);
 		vars.newFloatVar("twilite_max",twilite_max);
@@ -370,6 +388,17 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("normal_ampl",filter_normal_ampl);
 		vars.newFloatVar("hdr_min",hdr_min);
 		vars.newFloatVar("hdr_max",hdr_max);
+		// global exposure (postproc.frag). Uses the HDR Min/Max sliders
+		// (hdr_*_base) directly - the time-of-day deltas in set_ldp() were
+		// a manual stand-in for the adaptation the shader now does itself.
+		//   Min (0-30, default 7): how much dark scenes may be brightened
+		//   Max (0-10, default 3): how much bright scenes may be darkened
+		//   defaults: emax ~2.05x, emin ~0.87x - so a normal daylight frame
+		//   (log-average ~0.5) is left alone, dusk/dawn are lifted, and a
+		//   white-out (dense noon haze) is only dimmed slightly
+		vars.newFloatVar("hdr_key",0.5);
+		vars.newFloatVar("hdr_emax",1.0+0.15*hdr_min_base);
+		vars.newFloatVar("hdr_emin",1.0/(1.0+0.05*hdr_max_base));
 		break;
 	}
 	vars.newFloatVar("fog_znear",fog_min);

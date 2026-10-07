@@ -99,6 +99,10 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 		illumination += base_albedo*horizon*max(LdotN,0.0);
         if(LdotN>-0.5){
 			float damp = lerp(LdotN,-0.5,0.0,0.0,1.0); // prevents false specular highlites on backfaces
+			// water/ice (type < 2.1) always use the half-vector (OGL) model -
+			// it gives the long glitter path of a low sun on water; terrain
+			// follows the Lighting Model setting below
+			bool liquid = (Constants1.g>=0.0 && Constants1.g<2.1);
 #if LMODE == 0 // phong-blinn: uses half-vector (this is the openGL light model)
 			vec3 H = normalize((light + eye)*0.5);
 			float sdp   = max(0.0, dot(normal,H));
@@ -112,7 +116,11 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 			float ogl   = max(0.0, dot(normal,H));
 			float sdp=(0.5*phong+0.5*ogl);
 #endif
+			if(liquid)
+				sdp = max(0.0, dot(normal,normalize((light + eye)*0.5)));
 			float pf        = damp*intensity*horizon*pow(sdp, shine);
+			if(liquid)   // no sun glint on water once the sun has set
+				pf *= smoothstep(-0.01,0.02,LdotR);
 			
 			// glints (e.g. sun on water) stay bright yellow like the disk
 			specular       += gl_LightSource[i].specular.rgb * sunCoreTint(tint) * pf*shadow_specular*albedo;

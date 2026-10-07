@@ -4355,7 +4355,18 @@ void Planetoid::set_lighting(){
 		Raster.ice_specular=ocean->solid->specular;
     }
 	Lights.modDiffuse(Raster.sky_color);
-	Lights.modSpecular(Raster.blend_color);
+	// Legacy twilight tint: adds Raster.blend_color (= the Sky's Twilite
+	// color) into the lights' SPECULAR color. That's what colored the sun's
+	// glint on water (auximage.frag uses gl_LightSource.specular) cyan/red
+	// with the Twilite setting. When the physically based reddening is on
+	// (Sky Redden > 0, sunTint()/sunCoreTint() in sunlight.h) the glint gets
+	// its color from the sun's elevation instead, so leave specular as the
+	// plain light color (modSpecular with a zero-alpha color adds nothing).
+	Sky *sky=get_sky();
+	if(sky && sky->isEnabled() && sky->redden>0)
+		Lights.modSpecular(Color(0,0,0,0));
+	else
+		Lights.modSpecular(Raster.blend_color);
 }
 
 //-------------------------------------------------------------

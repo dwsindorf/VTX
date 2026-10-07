@@ -2,7 +2,7 @@
 #include "SceneClass.h"
 #include "TerrainClass.h"
 
-static char* def_liquid_func="noise(GRADIENT|SCALE,21,3,1,0.5,2,0.02,1,0,0,1e-06)";
+static char* def_liquid_func="noise(GRADIENT|NLOD|SCALE,18,2,1,0.8,2.03,1,1,0,0,1e-06)+noise(GRADIENT|NABS|NLOD|SCALE,21,3,0.97,0.5,2,0.02,1.01,0,0,1e-06)";
 static char* def_solid_func="noise(GRADIENT|NABS|SCALE|SQR,12,12,0.1,0.4,1.84,0.73,-0.2,0,0.002,0)";
 static char* def_ocean_func="noise(GRADIENT,8,14,0.59,0.5,2,0.8,4,1,0,0)";
 static char* def_ocean_color="Color(0,0,0,0)";

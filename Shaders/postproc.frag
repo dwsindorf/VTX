@@ -46,6 +46,49 @@ uniform float zf;
 uniform float zn;
 uniform float hdr_min;
 uniform float hdr_max;
+uniform float dh;         // 1/viewport width  (common uniform)
+uniform float dv;         // 1/viewport height (common uniform)
+uniform float hdr_key;    // target average brightness of the adapted image
+uniform float hdr_emin;   // lowest exposure (darkening limit, bright scenes)
+uniform float hdr_emax;   // highest exposure (brightening limit, dark scenes)
+
+//-------------------------------------------------------------
+// Global eye adaptation + tone curve (replaces the old local HDR)
+//
+// The old HDR exposure was LOCAL - computed from each pixel's own 3x3/5x5
+// neighborhood - so a star (a few bright pixels on black) got a huge boost,
+// and once the sky was excluded to stop that, sky and terrain were no longer
+// mapped the same way (visible as a seam wherever haze should blend them).
+//
+// Human vision adapts to the scene as a whole, so here every pixel gets the
+// SAME exposure, from the log-average brightness of the frame (a fixed
+// 8x8 sample grid - identical for every pixel, so the result is uniform),
+// followed by a highlight roll-off instead of hard clipping.
+//-------------------------------------------------------------
+#define AVG_N 8
+float sceneLogAverage(){
+	vec2 size=vec2(1.0/dh,1.0/dv);
+	float sum=0.0;
+	for(int j=0;j<AVG_N;j++){
+		for(int i=0;i<AVG_N;i++){
+			vec2 p=(vec2(float(i),float(j))+0.5)*size/float(AVG_N);
+			vec3 s=texture2DRect(IMAGE,p).rgb;
+			sum+=log(max(dot(s,vec3(0.2126,0.7152,0.0722)),1e-4));
+		}
+	}
+	return exp(sum/float(AVG_N*AVG_N));
+}
+// Extended Reinhard on luminance: identity when exposure<=1 (W=1), so a
+// scene that needs no brightening looks exactly as it did without HDR;
+// when brightened, values up to the white point W roll off smoothly to 1
+// instead of clipping (bright haze, sun glow, stars).
+vec3 toneMap(vec3 c, float W){
+	float L=dot(c,vec3(0.2126,0.7152,0.0722));
+	if(L<=1e-5)
+		return c;
+	float Ld=L*(1.0+L/(W*W))/(1.0+L);
+	return c*(Ld/L);
+}
 
 void main(void) {
 	vec3 color = texture2DRect(IMAGE, gl_FragCoord.xy).rgb;
@@ -123,17 +166,11 @@ void main(void) {
     }
     c=2*length(delc);  // color diff in adjacent pixels
 #ifdef HDR
-#ifndef BIG_KERNEL
-	float kernelLuminance = dot(ave, vec3(0.3, 0.59, 0.11));
-#else
-	float kernelLuminance = dot(kernelcolor.rgb, vec3(0.3, 0.59, 0.11));
-#endif
-    if(ss>0.5) // bypass HDR for background objects 
-		exposure = sqrt(hdr_max / (2.5*kernelLuminance + 0.1*hdr_min));
-	
-	ave *= exposure;
-	color *= exposure;
-	
+	// same exposure for every pixel (sky, terrain, stars) - see sceneLogAverage()
+	exposure = clamp(hdr_key/sceneLogAverage(), hdr_emin, hdr_emax);
+	float W = max(exposure, 1.0);   // white point: brightest input maps to 1
+	ave   = toneMap(ave*exposure, W);
+	color = toneMap(color*exposure, W);
 #endif
 #ifdef EDGES    
     if(surface>0.6 && surface <1.9) // blur water
