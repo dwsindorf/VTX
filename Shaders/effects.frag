@@ -66,18 +66,11 @@ void main(void) {
 #ifdef HAZE
 		// Old formula: d=lerp(depth,0,haze_grad*haze_zfar,0,1);
 		//              h=haze_ampl*Haze.a*pow(d,10*haze_grad);
-		// Extinction lengths across the Min..Depth band. Previously
-		// 6*0.1*(1-haze_grad), i.e. at most 0.6 even at sharpen=0, so the
-		// terrain could never get more than ~45% hazed at haze_max while
-		// the sky (sky.back.frag: Haze.a*pow(s,2*haze_grad)) is 100% hazed
-		// at sharpen=0. That mismatch is what silhouetted the horizon in
-		// dense haze. Now k grows without bound as sharpen->0 (dense fog
-		// covers everything, like the sky) and is unchanged at sharpen=0.5
-		// (k=0.3 as before); sharpen=1 is still no distance haze.
-		float k=0.33*(1.0-haze_grad)/(haze_grad+0.05);
+		const float HAZE_GRAD_SCALE=0.1;
+		float g=(1.0-haze_grad)*HAZE_GRAD_SCALE;
 		float x1=(depth-haze_min)/max(haze_max-haze_min,feet);
 		x1=max(x1,0.0);
-		h=haze_ampl*Haze.a*(1.0-exp(-k*x1));
+		h=haze_ampl*Haze.a*(1.0-exp(-6.0*g*x1));
 #endif
 #ifdef WATER
 		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
@@ -165,12 +158,7 @@ void main(void) {
 #endif
 
 #ifdef HAZE
-	// Haze (Raster.haze_color) is already darkened for time of day, and the
-	// sky uses the same color (sky.back.frag HazeLit). Scaling by the
-	// surface's own lighting (AMBIENT) made distant haze darker than the sky
-	// behind it, so dense haze silhouetted the horizon - airlight doesn't
-	// depend on which way the surface faces.
-	color=mix(color,Haze.rgb,h);
+	color=mix(color,Haze.rgb*AMBIENT,h);
 #endif
  	}
 		

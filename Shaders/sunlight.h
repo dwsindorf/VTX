@@ -18,17 +18,33 @@
 //             lighting shaders). <=0 is held at the horizon value.
 //   tau       zenith optical depth at green (Sky::sunTau(): ~0.1 for an
 //             Earth-like 1 ATM atmosphere, scaled by pressure)
-//   strength  Sky::redden. 0 = off (white), 1 = physical, >1 exaggerates
+//   strength  Sky::redden. 0 = off (white), 1 = physical (at least
+//             Earth-like for thin skies), >1 exaggerates
 //             (deepens the color and shifts it to higher sun angles)
 //
 // Shaders that don't set sun_tau/sun_redden get 0 -> white (no change).
 
 // Same 1/lambda^4 ratios as scattering.h (R=680nm, G=550nm, B=440nm)
 const vec3 SUN_BETA = vec3(0.428, 1.0, 2.441);
+// largest zenith depth used for the sunlight COLOR (see sunTint)
+const float SUN_TAU_MAX = 0.25;
 
 vec3 sunTint(float sinElev, float tau, float strength){
 	if(strength<=0.0 || tau<=0.0)
 		return vec3(1.0);
+	// thin atmospheres (e.g. pressure 0.005 -> tau ~0.0006) give almost no
+	// reddening physically, so redden had no visible effect there. Give the
+	// path an Earth-like minimum depth scaled by redden, so redden behaves
+	// the same on any planet; thicker skies still use their own tau.
+	tau=max(tau,0.1*min(strength,1.0));
+	// ...and cap it for thick ones. sunTint() is normalized (brightest
+	// channel = 1), so it only carries the HUE of the filtered light, not
+	// its dimming. On Venus (pressure 92 -> tau ~12) the uncapped hue was
+	// pure red until the sun was ~50 deg up, and redden 1 vs 2 flipped the
+	// whole sky between olive and solid red. In a real thick atmosphere
+	// multiple scattering washes the light out rather than saturating it.
+	// 0.25 is ~2.5x Earth, so Earth-like and thin skies are unchanged.
+	tau=min(tau,SUN_TAU_MAX);
 	float s=clamp(sinElev,0.0,1.0);
 	float elev=degrees(asin(s));
 	// Kasten-Young (1989) relative air mass: 1 at zenith, ~38 at horizon
@@ -80,7 +96,12 @@ vec4 sunsetBand(float viewSin, float sunSin, float cosAz, float cosSun, float ta
 	float glow=pow(max(cosSun,0.0),8.0);
 	// color: redder for lower view angles and lower sun
 	vec3 c=sunTint(max(sunSin,0.0)+0.03+0.6*v,tau,strength);
-	float a=clamp(min(strength,1.0)*low*above*(az*w+0.6*glow),0.0,1.0);
+	// weight by how colored the band actually is (c is normalized so red=1,
+	// so 1-c.b measures warmth). A thin atmosphere (small tau) gives a
+	// near-white tint, and painting that at full weight bleached the sky
+	// instead of reddening it. Earth-like tau saturates this to 1.
+	float warm=smoothstep(0.0,0.5,1.0-c.b);
+	float a=clamp(min(strength,1.0)*warm*low*above*(az*w+0.6*glow),0.0,1.0);
 	return vec4(c,a);
 }
 // ########## end sunlight.h #########################

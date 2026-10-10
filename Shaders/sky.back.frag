@@ -164,7 +164,19 @@ void main(void) {
 	// still give a uniform fog). Applied after color.a is set so they don't
 	// change the sky opacity.
 	color.rgb=mix(color.rgb,band.rgb,band.a);
-	color.rgb=mix(color.rgb,core.rgb,core.a);  // keep the sun disk on top of the band
+	// the additive scattering glow can push the sky around the sun past 1,
+	// which clipped to white and left the (<=1) sun disk darker than the
+	// sky next to it. Soft-compress each channel above a knee so the sky
+	// approaches SKY_MAX (headroom for the disk) and very bright sky goes
+	// pale like an overexposed photo. Values below the knee are unchanged.
+	// (Scaling all channels by the max instead kept the hue, which turned
+	// an over-bright sky a dull brown.)
+	const float SKY_KNEE=0.7;
+	const float SKY_MAX=0.92;
+	vec3 over=max(color.rgb-SKY_KNEE,0.0);
+	color.rgb=min(color.rgb,SKY_KNEE)+(SKY_MAX-SKY_KNEE)*(1.0-exp(-over/(SKY_MAX-SKY_KNEE)));
+	// sun disk on top of the band; never darker than the sky behind it
+	color.rgb=mix(color.rgb,max(color.rgb,core.rgb),core.a);
 #ifdef HAZE
 	float s=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//d=min(DEPTH/haze_zfar,1.0);
