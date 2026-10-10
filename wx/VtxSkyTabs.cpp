@@ -24,9 +24,6 @@ enum{
     ID_PRESSURE_TEXT,
     ID_FRAC_GHG_SLDR,
     ID_FRAC_GHG_TEXT,
-    ID_REDDEN_SLDR,
-    ID_REDDEN_TEXT,
-
     ID_HAZE_GRAD_SLDR,
     ID_HAZE_GRAD_TEXT,
     ID_HAZE_MIN_SLDR,
@@ -61,6 +58,11 @@ enum{
     ID_SCATTER_COLOR,
     ID_SCATTER_GRAD_SLDR,
     ID_SCATTER_GRAD_TEXT,
+    ID_REDDEN_SLDR,         // ColorSlider: SLDR, TEXT, COLOR must be consecutive
+    ID_REDDEN_TEXT,
+    ID_REDDEN_COLOR,
+    ID_REDDEN_GRAD_SLDR,
+    ID_REDDEN_GRAD_TEXT,
 
  };
 
@@ -75,7 +77,6 @@ EVT_TEXT_ENTER(ID_NAME_TEXT,VtxSkyTabs::OnNameText)
 SET_SLIDER_EVENTS(CELLSIZE,VtxSkyTabs,CellSize)
 SET_SLIDER_EVENTS(PRESSURE,VtxSkyTabs,Pressure)
 SET_SLIDER_EVENTS(FRAC_GHG,VtxSkyTabs,FracGHG)
-SET_SLIDER_EVENTS(REDDEN,VtxSkyTabs,Redden)
 
 EVT_MENU(OBJ_SHOW,VtxSkyTabs::OnEnable)
 EVT_UPDATE_UI(OBJ_SHOW,VtxSkyTabs::OnUpdateEnable)
@@ -111,6 +112,12 @@ EVT_TEXT_ENTER(ID_SCATTER_TEXT,VtxSkyTabs::OnScatterText)
 EVT_COLOURPICKER_CHANGED(ID_SCATTER_COLOR,VtxSkyTabs::OnScatterColor)
 EVT_COMMAND_SCROLL(ID_SCATTER_GRAD_SLDR,VtxSkyTabs::OnScatterGradSlider)
 EVT_TEXT_ENTER(ID_SCATTER_GRAD_TEXT,VtxSkyTabs::OnScatterGradText)
+
+EVT_COMMAND_SCROLL(ID_REDDEN_SLDR,VtxSkyTabs::OnReddenSlider)
+EVT_TEXT_ENTER(ID_REDDEN_TEXT,VtxSkyTabs::OnReddenText)
+EVT_COLOURPICKER_CHANGED(ID_REDDEN_COLOR,VtxSkyTabs::OnReddenColor)
+EVT_COMMAND_SCROLL(ID_REDDEN_GRAD_SLDR,VtxSkyTabs::OnReddenGradSlider)
+EVT_TEXT_ENTER(ID_REDDEN_GRAD_TEXT,VtxSkyTabs::OnReddenGradText)
 
 EVT_COMMAND_SCROLL(ID_NIGHT_SLDR,VtxSkyTabs::OnNightSlider)
 EVT_TEXT_ENTER(ID_NIGHT_TEXT,VtxSkyTabs::OnNightText)
@@ -242,17 +249,6 @@ void VtxSkyTabs::AddObjectTab(wxWindow *panel){
 	hline->Add(FracGHGSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
 	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
-
-	hline = new wxBoxSizer(wxHORIZONTAL);
-
-	// sunrise/sunset reddening of sunlight (sunlight.h sunTint())
-	// 0=off 1=physical (scaled by pressure) >1 exaggerated
-	ReddenSlider=new SliderCtrl(panel,ID_REDDEN_SLDR,"Redden",LABEL2, VALUE2,SLIDER2);
-	ReddenSlider->setRange(0,4);
-	ReddenSlider->setValue(1);
-	hline->Add(ReddenSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
-
-	object_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	object_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
 	boxSizer->Add(object_cntrls, 0, wxALIGN_LEFT|wxALL,0);
@@ -301,6 +297,19 @@ void VtxSkyTabs::AddLightingTab(wxWindow *panel){
 	ScatterGrad=new SliderCtrl(panel,ID_SCATTER_GRAD_SLDR,"",0, VALUE_WIDTH,SLIDER_WIDTH);
 	grad_cntrls->Add(ScatterGrad->getSizer(),wxALIGN_LEFT|wxALL,0);
 	ScatterGrad->setRange(0,1);
+
+	// sunrise/sunset reddening of sunlight (sunlight.h sunTint/sunsetBand)
+	// slider: strength 0=off 1=physical >1 exaggerated (Sky::redden)
+	// color: what the sunlight turns at the horizon (Sky::redden_color)
+	// sharpen: 1=physical, higher keeps it nearer the horizon and a lower sun
+	ReddenColor=new ColorSlider(panel,ID_REDDEN_SLDR,"Sunset",LABEL_WIDTH, VALUE_WIDTH,SLIDER_WIDTH,CBOX3);
+	ReddenColor->setRange(0,4);
+	ReddenColor->setValue(1);
+	color_cntrls->Add(ReddenColor->getSizer(),wxALIGN_LEFT|wxALL);
+	ReddenGrad=new SliderCtrl(panel,ID_REDDEN_GRAD_SLDR,"",0, VALUE_WIDTH,SLIDER_WIDTH);
+	ReddenGrad->setRange(0.2,5);
+	ReddenGrad->setValue(1);
+	grad_cntrls->Add(ReddenGrad->getSizer(),wxALIGN_LEFT|wxALL,0);
 
 	wxSize size=color_cntrls->GetMinSize();
 
@@ -371,7 +380,9 @@ void VtxSkyTabs::updateControls(){
 	updateSlider(CellSizeSlider,sky->detail);
 	updateSlider(PressureSlider,sky->pressure);
 	updateSlider(FracGHGSlider,100*sky->ghg_fraction);
-	updateSlider(ReddenSlider,sky->redden);
+	updateColor(ReddenColor,sky->redden_color);
+	ReddenColor->setValue(sky->redden);   // slider is strength, not alpha
+	updateSlider(ReddenGrad,sky->redden_grad);
 	//updateSlider(ScatterSlider,100*sky->scatter_mix);
 	//updateSlider(ScatterSharpenSlider,sky->scatter_sharpen);
 

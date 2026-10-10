@@ -9,6 +9,7 @@
 #include "States.h"
 
 class ExprMgr;
+class GLSLVarMgr;
 class TNode;
 class StarTree;
 class DensityTree;
@@ -604,8 +605,13 @@ public:
 	double     ghg_fraction;
 	double     scatter_grad;
 	double     redden;       // sunrise/sunset reddening strength (0=off, 1=physical)
+	Color      redden_color; // color sunlight turns at the horizon (sunlight.h redden_color)
+	double     redden_grad;  // redden "Sharpen": 1=physical, >1 tighter to horizon/low sun
 	Color      haze_lit;     // haze color lit for time of day (sky + terrain haze)
 	double     sunTau();     // zenith optical depth for sunTint() (sunlight.h)
+	// sets sun_tau, sun_redden, redden_color, redden_grad for any shader that
+	// includes sunlight.h; sky may be null or disabled (-> reddening off)
+	static void setSunVars(GLSLVarMgr &vars, Sky *sky);
 
 	Sky(Orbital *m, double s);
 	~Sky();

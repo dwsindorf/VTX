@@ -13,7 +13,6 @@ protected:
 	SliderCtrl  *DensitySlider;
 	SliderCtrl  *PressureSlider;
 	SliderCtrl  *FracGHGSlider;
-	SliderCtrl  *ReddenSlider;
 	//SliderCtrl  *ScatterSlider;
 	//SliderCtrl  *ScatterSharpenSlider;
 
@@ -22,6 +21,7 @@ protected:
 	ColorSlider *TwiliteColor;
 	ColorSlider *HaloColor;
 	ColorSlider *ScatterColor;
+	ColorSlider *ReddenColor;   // rgb = Sky::redden_color, slider = Sky::redden (0-4)
 	ColorSlider *NightColor;
 	SliderCtrl  *SkyGrad;
 	SliderCtrl  *TwiliteGrad;
@@ -31,6 +31,7 @@ protected:
 	SliderCtrl  *HazeMaxSlider;
 	SliderCtrl  *NightGrad;
 	SliderCtrl  *ScatterGrad;
+	SliderCtrl  *ReddenGrad;    // Sky::redden_grad
 
 	void AddObjectTab(wxWindow *panel);
 	void AddLightingTab(wxWindow *panel);
@@ -52,9 +53,10 @@ public:
 		delete DensitySlider;
 		delete PressureSlider;
 		delete FracGHGSlider;
-		delete ReddenSlider;
 		delete ScatterColor;
 		delete ScatterGrad;
+		delete ReddenColor;
+		delete ReddenGrad;
 
 		delete HazeColor;
 		delete SkyColor;
@@ -148,6 +150,29 @@ public:
  	    OnSliderText(ScatterGrad, object()->scatter_grad);
     }
 
+    // sunrise/sunset reddening (sunlight.h) - shader uniforms only, no rebuild.
+    // Unlike the other color rows, the slider is the redden strength (0-4),
+    // not the color's alpha (Color alpha is limited to 0-1).
+    void OnReddenSlider(wxScrollEvent& event){
+    	TheView->set_changed_render();
+    	ReddenColor->setValueFromSlider();
+    	object()->redden=ReddenColor->getValue();
+    }
+    void OnReddenText(wxCommandEvent& event){
+    	TheView->set_changed_render();
+    	ReddenColor->setValueFromText();
+    	object()->redden=ReddenColor->getValue();
+    }
+    void OnReddenColor(wxColourPickerEvent& WXUNUSED(event)){
+    	OnColorValue(ReddenColor,object()->redden_color);
+    }
+    void OnReddenGradSlider(wxScrollEvent& event){
+    	OnSliderValue(ReddenGrad, object()->redden_grad);
+    }
+    void OnReddenGradText(wxCommandEvent& event){
+    	OnSliderText(ReddenGrad, object()->redden_grad);
+    }
+
     void OnTwiliteSlider(wxScrollEvent& event){
     	OnColorSlider(TwiliteColor,object()->twilite_color);
     }
@@ -236,9 +261,7 @@ public:
     	TheView->set_changed_detail();
     	TheScene->rebuild_all();
 	}
-	
-	// sunrise/sunset reddening - shader uniform only, no rebuild needed
-	DEFINE_SLIDER_VAR_EVENTS(Redden,object()->redden)
+
 
 	void OnEndPressureSlider(wxScrollEvent &event){
 		//TheScene->rebuild_all();

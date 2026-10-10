@@ -255,14 +255,8 @@ void EffectsMgr::setProgram(int type){
 		if(reflections() && Render.raytrace())
 			sprintf(defs+strlen(defs),"#define RAYTRACE\n");
 		{   // sunrise/sunset tint for the sun's glint (sunlight.h)
-			double sun_tau=0, sun_redden=0;
 			Sky *sky=TheScene->viewobj?((Orbital*)TheScene->viewobj)->get_sky():0;
-			if(sky && sky->isEnabled()){
-				sun_tau=sky->sunTau();
-				sun_redden=sky->redden;
-			}
-			vars.newFloatVar("sun_tau",sun_tau);
-			vars.newFloatVar("sun_redden",sun_redden);
+			Sky::setSunVars(vars,sky);
 		}
 		//if(do_water)
 		//	sprintf(defs+strlen(defs),"#define WATER\n");

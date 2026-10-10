@@ -104,6 +104,10 @@ static Color 	def_twilite_color=BLACK;
 static double	def_scatter_mix=0.8;
 static double	def_scatter_max=0.9;
 static double	def_redden=1.0;
+// exp(-2*(beta-beta_red)) for the 1/lambda^4 Rayleigh ratios: the sunset color
+// the original hard-coded reddening produced (REDDEN_DEF in sunlight.h)
+static Color	def_redden_color=Color(1.0,0.3185,0.01785);
+static double	def_redden_grad=1.0;
 static double	def_twilite_value=1;
 static double	def_twilite_max=0.2;
 static double	def_twilite_min=-0.2;
@@ -3774,8 +3778,6 @@ bool Planetoid::setProgram(){
 	double twilite_min=-0.2;
 	double twilite_max=0.2;
 	double twilite_dph=0.1;
-	double sun_tau=0;     // no sky -> no sunrise/sunset reddening
-	double sun_redden=0;
 	float haze_zfar = 0.0;
 	float haze_grad = 0.5;
 	Color haze(1,1,1);
@@ -3786,10 +3788,6 @@ bool Planetoid::setProgram(){
 		twilite_min=sky->twilite_min;
 		twilite_max=sky->twilite_max;
 		twilite_dph=sky->twilite_dph;
-		if(sky->isEnabled()){
-			sun_tau=sky->sunTau();
-			sun_redden=sky->redden;
-		}
 	}
 	double clarity=0;
 	if(water()){
@@ -3846,8 +3844,7 @@ bool Planetoid::setProgram(){
 	vars.newFloatVar("twilite_min",twilite_min);
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
-	vars.newFloatVar("sun_tau",sun_tau);
-	vars.newFloatVar("sun_redden",sun_redden);
+	Sky::setSunVars(vars,sky);   // sunrise/sunset reddening (sunlight.h)
 
 	vars.newFloatVar("hdr_min",Raster.hdr_min);
 	vars.newFloatVar("hdr_max",Raster.hdr_max);
@@ -9056,6 +9053,8 @@ Sky::Sky(Orbital *m, double s) : Shell(m,s)
 	detail=8;
 	scatter_grad=def_scatter_max; // matches scattering.h's previous hardcoded g clamp
 	redden=def_redden;
+	redden_color=def_redden_color;
+	redden_grad=def_redden_grad;
 	haze_lit=haze_color;
 }
 Sky::~Sky()
@@ -9072,6 +9071,19 @@ Sky::~Sky()
 //-------------------------------------------------------------
 double Sky::sunTau() {
 	return 0.1*pressure*(1+0.3*ghg_fraction);
+}
+//-------------------------------------------------------------
+// Sky::setSunVars() sunrise/sunset reddening uniforms (sunlight.h)
+// shared by the sky, terrain, cloud and water shaders so they all
+// agree. No sky (or a disabled one) -> tau=redden=0 -> no reddening.
+//-------------------------------------------------------------
+void Sky::setSunVars(GLSLVarMgr &vars, Sky *sky) {
+	bool on=sky && sky->isEnabled();
+	Color c=on?sky->redden_color:def_redden_color;
+	vars.newFloatVar("sun_tau",on?sky->sunTau():0.0);
+	vars.newFloatVar("sun_redden",on?sky->redden:0.0);
+	vars.newFloatVec("redden_color",c.red(),c.green(),c.blue());
+	vars.newFloatVar("redden_grad",on?sky->redden_grad:def_redden_grad);
 }
 double Sky::getHeatCalacity() {
 	double g = pow(pressure, 1.5) * ghg_fraction;
@@ -9242,6 +9254,12 @@ void Sky::get_vars()
 	VGET("ghg_fraction",ghg_fraction,0.01); //  earth: mostly h2o (20%) co2 (0.03%)
 	VGET("scatter_grad",scatter_grad,def_scatter_max); // scatterColor() g clamp
 	VGET("redden",redden,def_redden);  // sunrise/sunset sunlight reddening
+	if(exprs.get_local("redden.color",Td))
+		redden_color=Td.c;
+	else
+		redden_color=def_redden_color;
+	redden_color.set_alpha(1);
+	VGET("redden.grad",redden_grad,def_redden_grad);
 
 	VGET("haze.value",haze_value,def_haze_value);
 	if(exprs.get_local("haze.color",Td)){
@@ -9285,6 +9303,8 @@ void Sky::set_vars()
 	VSET("ghg_fraction",ghg_fraction,0.01);
 	VSET("scatter_grad",scatter_grad,def_scatter_max);
 	VSET("redden",redden,def_redden);
+	CSET("redden.color",redden_color,def_redden_color);
+	VSET("redden.grad",redden_grad,def_redden_grad);
 	CSET("twilight",twilite_color,def_twilite_color);
 	VSET("twilight.value",twilite_value,def_twilite_value);
 	VSET("twilight.min",twilite_min,def_twilite_min);
@@ -9519,8 +9539,7 @@ bool Sky::setProgram(){
 	vars.newFloatVar("pressure",pressure);
 	vars.newFloatVar("ghg_fraction",ghg_fraction);
 	vars.newFloatVar("scatter_grad",scatter_grad);
-	vars.newFloatVar("sun_tau",sunTau());
-	vars.newFloatVar("sun_redden",redden);
+	setSunVars(vars,this);
 
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	vars.newFloatVar("twilite_max",twilite_max);
@@ -10103,9 +10122,7 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVar("twilite_min", -2.0f);
 	vars.newFloatVar("twilite_max",  2.0f);
 	vars.newFloatVar("twilite_dph",twilite_dph);
-	bool use_sky=sky && sky->isEnabled();
-	vars.newFloatVar("sun_tau",use_sky?sky->sunTau():0.0);
-	vars.newFloatVar("sun_redden",use_sky?sky->redden:0.0);
+	Sky::setSunVars(vars,sky);   // sunrise/sunset reddening (sunlight.h)
 
 	Point p=point.mm(TheScene->invViewMatrix);
 	Point center=p.mm(TheScene->viewMatrix);
