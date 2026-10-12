@@ -51,6 +51,157 @@ uniform vec4 Shadow;
 
 #define AMBIENT fcolor1.a
 
+#if defined(WATER) && defined(REFLECT) && defined(RAYTRACE)
+//------------------------------------------------------------------
+// Screen-space reflections
+//
+// auximage.frag (water pass) projects each water pixel's reflected ray
+// and stores the far end of the segment in FBOTex4:
+//   .xy  NDC end point (R's vanishing point)
+//   .z   window depth at the end point
+//   .w   lit sky color, packed 8 bits/channel (needs RGBA32F FBOs)
+// The segment is clipped to the screen and marched in pixel space. Window
+// depth is linear in screen space along a projected line, so the ray's
+// depth at parameter t is mix(zw0,zw1,t), directly comparable to the
+// depth buffer.
+//------------------------------------------------------------------
+#define SSR_MAX_STEPS  96     // coarse steps along the on-screen ray
+#define SSR_MIN_STRIDE 1.0    // minimum step (pixels)
+#define SSR_REFINE     6      // binary search steps after a crossing
+#define SSR_THICK      0.02   // depth slack for the previous step (fraction of depth)
+#define SSR_EPS        0.002  // depth noise tolerance (fraction of depth)
+
+// window depth -> eye distance (for the relative tolerance tests)
+float ssrLin(float zw){
+	float q=ws2*zw+ws1;
+	return q>0.0?1.0/q:1.0e30;   // beyond zfar
+}
+float ssrDepth(vec2 p, out float type){
+	vec4 g=texture2DRect(FBOTex2,p);
+	type=g.r;
+	return ssrLin(g.g);
+}
+vec3 ssrUnpack(float v){
+	float r=floor(v/65536.0); v-=r*65536.0;
+	float g=floor(v/256.0);   v-=g*256.0;
+	return vec3(r,g,v)/255.0;
+}
+// interleaved gradient noise: per-pixel start jitter hides stride banding
+float ssrNoise(vec2 p){
+	return fract(52.9829189*fract(dot(p,vec2(0.06711056,0.00583715))));
+}
+// texel center of a ray point, clamped to the screen (FBO textures are GL_LINEAR)
+vec2 ssrPix(vec2 p, vec2 lo, vec2 hi){
+	return floor(clamp(p,lo,hi))+0.5;
+}
+
+// zw0 = window depth of this water pixel
+vec3 traceReflection(float zw0){
+	vec4 rd=texture2DRect(FBOTex4,gl_FragCoord.xy);
+	vec2 vsize=vec2(1.0/dh,1.0/dv);
+	vec3 skyFallback=ssrUnpack(rd.w);
+	vec2 s0=gl_FragCoord.xy;
+	vec2 s1=(rd.xy*0.5+0.5)*vsize;
+	float zw1=rd.z;
+	vec2 d=s1-s0;
+	float dlen=length(d);
+	if(dlen<1.0)
+		return skyFallback;
+
+	// clip to the screen. Mostly-vertical rays are only ended by the top or
+	// bottom edge: past a side edge x is clamped and the ray slides up the
+	// edge column (rays near the sides lean outward and would otherwise
+	// leave the screen before seeing anything).
+	vec2 lo=vec2(0.5);
+	vec2 hi=vsize-0.5;
+	float tx=1.0;
+	float ty=1.0;
+	if(d.x>0.0)      tx=(hi.x-s0.x)/d.x;
+	else if(d.x<0.0) tx=(lo.x-s0.x)/d.x;
+	if(d.y>0.0)      ty=(hi.y-s0.y)/d.y;
+	else if(d.y<0.0) ty=(lo.y-s0.y)/d.y;
+	bool slide=abs(d.y)>=abs(d.x);
+	float tmax=slide?min(ty,1.0):min(min(tx,ty),1.0);
+	tmax=max(tmax,0.0);
+
+	float stride=max(SSR_MIN_STRIDE,dlen*tmax/float(SSR_MAX_STEPS));
+	float dt=stride/dlen;
+	float t=1.5/dlen+dt*ssrNoise(gl_FragCoord.xy); // skip own pixel, jitter start
+	float tprev=0.0;
+	float zprev=ssrLin(zw0);
+	bool hit=false;
+	bool sawSky=false;
+	vec3 lastSky=skyFallback;
+
+	for(int i=0;i<SSR_MAX_STEPS;i++){
+		if(t>tmax)
+			break;
+		vec2 p=ssrPix(s0+d*t,lo,hi);
+		float type;
+		float zs=ssrDepth(p,type);
+		float zr=ssrLin(mix(zw0,zw1,t));
+		if(type<0.5){         // sky or background (moons etc)
+			lastSky=texture2DRect(FBOTex1,p).rgb;
+			sawSky=true;
+		}
+		else if(type>2.1){    // land (water/ice is never a hit: grazing rays skim it)
+			// hit if the ray crosses the surface during this step: behind it
+			// now, in front of it at the previous step. A ray already farther
+			// than the surface is passing behind it (e.g. a ridge silhouette).
+			if(zr>zs*(1.0+SSR_EPS) && zprev<zs*(1.0+SSR_THICK)){
+				hit=true;
+				break;
+			}
+		}
+		tprev=t;
+		zprev=zr;
+		t+=dt;
+	}
+
+	// Depth along the ray grows like 1/(1-t) toward the vanishing point, so
+	// a distant shore can be crossed after the last sample. The end point is
+	// effectively at infinity: if it is on screen and on land, the crossing
+	// lies in [last sample, end]; if on far water, use that pixel.
+	if(!hit && tmax>=1.0){
+		float type;
+		vec2 pe=ssrPix(s1,lo,hi);
+		ssrDepth(pe,type);
+		if(type>2.1){
+			hit=true;
+			t=1.0;
+		}
+		else if(type>0.5)
+			return texture2DRect(FBOTex1,pe).rgb;
+	}
+
+	if(!hit){
+		// the end point is R's vanishing point, so on screen the last sky pixel
+		// is the reflected sky; off screen, blend toward the lit sky color
+		vec3 sky=skyFallback;
+		if(sawSky){
+			float off=(1.0-tmax)*dlen;   // pixels beyond the screen edge
+			sky=mix(lastSky,skyFallback,clamp(off/(0.5*vsize.y),0.0,1.0));
+		}
+		return sky;
+	}
+
+	// refine the crossing
+	float ta=tprev;
+	float tb=t;
+	for(int j=0;j<SSR_REFINE;j++){
+		float tm=0.5*(ta+tb);
+		float type;
+		float zs=ssrDepth(ssrPix(s0+d*tm,lo,hi),type);
+		float zr=ssrLin(mix(zw0,zw1,tm));
+		if(type>2.1 && zr>zs*(1.0+SSR_EPS))
+			tb=tm;
+		else
+			ta=tm;
+	}
+	return texture2DRect(FBOTex1,ssrPix(s0+d*tb,lo,hi)).rgb;
+}
+#endif
+
 void main(void) {
 	vec4 fcolor1=texture2DRect(FBOTex1, gl_FragCoord.xy); // image
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
@@ -83,52 +234,11 @@ void main(void) {
 			float rmod=lerp(ry,0.0,dpr,1.0,0.0);
 
 #ifdef REFLECT
-			float y1=gl_FragCoord.y*dv;
-			float y=y1+4*ry;
-
-			vec2 lu=vec2(gl_FragCoord.x,y/dv);
-			//vec3 rcolor=texture2DRect(FBOTex1, lu);            // default: pixel at top edge
-			vec3 rcolor=texture2DRect(FBOTex1, gl_FragCoord.xy).rgb; // default: pixel start point
+			vec3 rcolor=fcolor1.rgb; // default: no reflection (pixel itself)
 #ifdef RAYTRACE
-			// TODO: 1. improve speed by creating lut texture for trig. exprs.
-			//       2. fix artifact when row is not sky
-			//       3. fix depth precision artifact
-			//       4. fix ave-normals artifacts
-			//       5. fix striping artifact at low angles
-			//       6. when view is tilted (e.g. turning) reflection is still vertical (should be slanted)
-			float maxy=1-y1-dv;
-			float steps=maxy/dv;
-
-			float z1=depth;
-			y=gl_FragCoord.y+1.0;
-			float astep=dv*fov;
-			float theta=PI-2.0*acos(RDP);
-			int last_water=0;
- 			for(int i=0;i<steps;i++){
-				float alpha=astep*i;
-				float beta=theta-alpha;
-				float t=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).r;
-				if(t>1.5 || t< 0.5)
-				    last_water=i;
-				if(t==0){ // first hit = sky
-					float z2=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i+2)).r;
-					if(z2!=0) //2nd hit !=sky (hole?)
-						continue; // try next higher pixel if 2 hits in a row we're done
-					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+2*last_water)).rgb; // pick a point same distance above horizon
-					break;
-				}
-				float z=texture2DRect(FBOTex2, vec2(gl_FragCoord.x,y+i)).g;
-				float zb=1.0/(ws2*z+ws1);// zbuffer depth at y
-				float zr=z1*(cos(alpha)+sin(alpha)/tan(beta)); // depth of reflected ray at y
-				float dz=zb/zr;
-				if(dz>0 && dz<0.999){
- 					rcolor=texture2DRect(FBOTex1, vec2(gl_FragCoord.x,y+i)).rgb;
-					break;
-				}
-			}
-			
+			rcolor=traceReflection(z);
 #endif // RAYTRACE
-			color=mix(color,rcolor.xyz,reflection*rmod);
+			color=mix(color,rcolor,reflection*rmod);
 #endif // REFLECT
 #ifdef HAZE
 #ifdef FOG

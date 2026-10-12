@@ -40,8 +40,21 @@ Scene() {
 		heading=-11;
 	}
 	View{
-		minr=0.00299117;
+		heading=-4;
+		tilt=-6;
+		vstride=0.02;
+		zoom=0.003;
+		minh=5.68182e-10;
 		radius=0.0029974;
+	}
+	View{
+		height=34563.7 ft;
+		time=2.71663e+06;
+		delt=200;
+		heading=-1;
+		tilt=-4;
+		minr=0.00299117;
+		radius=0.00299771;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -121,17 +134,17 @@ Scene() {
 								Texture("rock_stones",BUMP|RANDOMIZE|TEX,4096,-4,1.02776,3.33328,4,2.2,0.93056,0,0,0.33332,0,0)+
 								Texture("Venus_surface1",HMAP|NORM|TEX,0.5,1.13888,4,0,1,2,0.5,0,1,0,0,0,0,0)+Z(noise(GRADIENT|SCALE|SQR,8.5,13,0.2,0.25,2.2,1,0.66,0.45,0,1e-06));
 					}
-					Clouds(0.00305588) {
-						ambient=Color(1,1,0.5,0.07);
+					Clouds(0.00306516) {
+						ambient=Color(1,1,0.5,0.05);
 						crot=1;
 						day=30;
 						diffuse=Color(1,1,0.88);
 						resolution=4;
-						shine=6.81754;
+						shine=1.07194;
 						specular=Color(1,1,1,0.07);
 						Surface{
 							terrain=
-									Texture("venus_clouds",BUMP|LINEAR|TEX,1,2,0.50792,0,1,2,0.5,0,0,0,0,0);
+									Texture("venus_clouds",A|TEX,noise(GRADIENT|FS|SCALE,6.16,2.87,1,0.5,2,1,4,0,0.5,1e-06),1,1,2.15872,0,1,2,0.5,0,0,0,0,0);
 						}
 					}
 					Sky(0.00308653) {
@@ -145,10 +158,13 @@ Scene() {
 						name="Sky";
 						night.color=Color(0,0,0);
 						pressure=92;
+						redden=4;
+						redden.color=Color(0.5,0.25,0);
+						redden.grad=1.77805;
 						resolution=4;
 						rseed=1.15592;
-						scatter_mix=0.4762;
-						scatter_sharpen=1;
+						scatter.color=Color(1,1,1,0.78);
+						scatter_grad=1;
 						sky.grad=0.299753;
 						specular=Color(1,1,1);
 						tilt=10;
@@ -156,6 +172,8 @@ Scene() {
 						twilight.max=0.166955;
 						twilight.min=-1;
 						year=100;
+						scatter_mix=0.4762;
+						scatter_sharpen=1;
 					}
 				}
 			}

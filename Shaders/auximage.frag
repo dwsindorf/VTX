@@ -46,6 +46,8 @@ uniform float fog_vmin;
 uniform float fog_vmax;
 
 uniform float feet;
+uniform float dh;           // 1/viewport width
+uniform float dv;           // 1/viewport height
 uniform float water_shine;  // water tab Shine (0-100)
 uniform float ice_shine;
 uniform float water_albedo; // water tab Albedo (specular amount 0-1)
@@ -190,17 +192,15 @@ void main(void) {
 	float f3=rmod;
 
 #ifdef RAYTRACE
-	// Real reflections are traced in effects.frag (REFLECT+RAYTRACE): the
-	// water takes the color of the pixel the reflected ray hits. Adding the
-	// constant sky color here as well put a blue cast on every reflection
-	// (e.g. under an orange sunset sky), so leave it out in that case.
-	vec3 SkyColor=vec3(0.0);
+	// reflections are traced in effects.frag; adding the constant sky color
+	// here too would tint every reflection (e.g. blue under a sunset sky)
+	vec3 SkyColor0=vec3(0.0);
 #else
 	// no traced reflection: approximate it with the sky's base color
-	vec3 SkyColor=Diffuse*WaterSky.rgb+Ambient*WaterSky.rgb;
+	vec3 SkyColor0=Diffuse*WaterSky.rgb+Ambient*WaterSky.rgb;
 #endif
 
-	color=color.rgb*f1+TopColor*f2+SkyColor.rgb*f3+Specular;
+	color=color.rgb*f1+TopColor*f2+SkyColor0.rgb*f3+Specular;
 	color.rgb=mix(color.rgb,vec3(0),1-shadow_diffuse);
 #else
     vec3 color=mix(fcolor1.rgb,Color2.rgb*(0.25+horizon),f)+Specular; // add depth color 
@@ -213,5 +213,49 @@ void main(void) {
 	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 	gl_FragData[0].a=1;
 	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
+
+#ifdef RAYTRACE
+	// Screen-space reflection ray setup, consumed by effects.frag.
+	// FBOTex4 (attachment 3, unused until the effects pass overwrites it):
+	//   .xy  NDC end point of the projected reflected ray
+	//   .z   window depth of the end point
+	//   .w   lit sky color, packed 8 bits/channel (exact only in RGBA32F)
+	// The ray is built in camera space from the fragment's window position.
+	// EyeDirection can't be used: View::project() puts the full lookat (eye
+	// translation included) into GL_PROJECTION, so modelview space is not
+	// camera-centered, and its large coordinates lose too much float
+	// precision for grazing views. gl_ProjectionMatrix = Persp*[Rot|t]; only
+	// its rotation/lens terms (xyz of rows 0-3) are used here.
+	{
+		mat4 Pm = gl_ProjectionMatrix;
+		vec3 r0 = vec3(Pm[0][0],Pm[1][0],Pm[2][0]);
+		vec3 r1 = vec3(Pm[0][1],Pm[1][1],Pm[2][1]);
+		vec3 r2 = vec3(Pm[0][2],Pm[1][2],Pm[2][2]);
+		vec3 r3 = vec3(Pm[0][3],Pm[1][3],Pm[2][3]);
+		float fx = length(r0);                // f/aspect
+		float fy = length(r1);                // f
+		float A  = dot(r2,-r3/length(r3));    // Persp[2][2]
+		float w  = 1.0/gl_FragCoord.w;        // clip w = eye depth
+		vec2 ndc = gl_FragCoord.xy*vec2(dh,dv)*2.0-1.0;
+		vec3 Pc  = vec3(ndc.x*w/fx, ndc.y*w/fy, -w);   // camera-space position
+		vec3 V   = normalize(Pc);
+		// face normal of the water surface (mesh normals tilt near coastlines)
+		vec3 N   = normalize(cross(dFdx(Pc),dFdy(Pc)));
+		if(dot(N,V)>0.0)
+			N=-N;
+		vec3 R  = reflect(V,N);
+		vec4 H0 = vec4(ndc*w, (2.0*gl_FragCoord.z-1.0)*w, w);
+		vec4 dH = vec4(fx*R.x, fy*R.y, A*R.z, -R.z);
+		// long ray: the end point converges to R's vanishing point
+		float L = 1.0e4*w;
+		if(dH.w<0.0)                          // turning toward the eye: stay in front of it
+			L=min(L,0.9*H0.w/(-dH.w));
+		vec4 H1 = H0+L*dH;
+		vec3 SkyColor=clamp(Diffuse*WaterSky.rgb+Ambient*WaterSky.rgb,0.0,1.0);
+		vec3 sc = floor(SkyColor*255.0+0.5);
+		float skypack=sc.r*65536.0+sc.g*256.0+sc.b;
+		gl_FragData[2]=vec4(H1.xy/H1.w,0.5*H1.z/H1.w+0.5,skypack);
+	}
+#endif
 }
 

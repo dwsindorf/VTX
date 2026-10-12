@@ -451,8 +451,27 @@ void EffectsMgr::apply(){
 			//set_all();
 			setProgram(RENDERPGM);
 
+			// screen-space reflections: auximage.frag also writes the reflection
+			// ray to gl_FragData[2] -> attachment 3 (FBOTex4), which is free
+			// until the effects pass overwrites it
+			bool ssr=reflections() && Render.raytrace();
+			GLint oldfbo=0;
+			if(ssr){
+				glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT,&oldfbo);
+				glBindFramebuffer(GL_FRAMEBUFFER_EXT,GLSLMgr::fbo_rect);
+				GLenum mrtw[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT3_EXT};
+				glDrawBuffers(3,mrtw);
+				glBindFramebuffer(GL_FRAMEBUFFER_EXT,oldfbo);
+			}
 			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
 			glFlush();
+			if(ssr){
+				glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT,&oldfbo);
+				glBindFramebuffer(GL_FRAMEBUFFER_EXT,GLSLMgr::fbo_rect);
+				GLenum mrt0[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
+				glDrawBuffers(2,mrt0);
+				glBindFramebuffer(GL_FRAMEBUFFER_EXT,oldfbo);
+			}
 			Color ambient=((Planetoid*)TheScene->viewobj)->ambient;
 			Color diffuse=((Planetoid*)TheScene->viewobj)->diffuse;
 			Lights.setAmbient(ambient);
