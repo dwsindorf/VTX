@@ -51,6 +51,17 @@ uniform vec4 Shadow;
 
 #define AMBIENT fcolor1.a
 
+#ifdef HAZE
+// haze amount at eye distance "depth"
+float hazeAmount(float depth){
+	const float HAZE_GRAD_SCALE=0.1;
+	float g=(1.0-haze_grad)*HAZE_GRAD_SCALE;
+	float x1=(depth-haze_min)/max(haze_max-haze_min,feet);
+	x1=max(x1,0.0);
+	return haze_ampl*Haze.a*(1.0-exp(-6.0*g*x1));
+}
+#endif
+
 #if defined(WATER) && defined(REFLECT) && defined(RAYTRACE)
 //------------------------------------------------------------------
 // Screen-space reflections
@@ -59,7 +70,8 @@ uniform vec4 Shadow;
 // and stores the far end of the segment in FBOTex4:
 //   .xy  NDC end point (R's vanishing point)
 //   .z   window depth at the end point
-//   .w   lit sky color, packed 8 bits/channel (needs RGBA32F FBOs)
+//   .w   lit sky color, packed 8 bits/channel (needs RGBA32F FBOs) -
+//        last-resort fallback when no rendered sky can be found
 // The segment is clipped to the screen and marched in pixel space. Window
 // depth is linear in screen space along a projected line, so the ray's
 // depth at parameter t is mix(zw0,zw1,t), directly comparable to the
@@ -70,6 +82,8 @@ uniform vec4 Shadow;
 #define SSR_REFINE     6      // binary search steps after a crossing
 #define SSR_THICK      0.02   // depth slack for the previous step (fraction of depth)
 #define SSR_EPS        0.002  // depth noise tolerance (fraction of depth)
+#define SSR_OCC_STEPS  12     // sideways search steps around an occluded end point
+#define SSR_OCC_STRIDE 3.0    // pixels per search step
 
 // window depth -> eye distance (for the relative tolerance tests)
 float ssrLin(float zw){
@@ -95,8 +109,22 @@ vec2 ssrPix(vec2 p, vec2 lo, vec2 hi){
 	return floor(clamp(p,lo,hi))+0.5;
 }
 
+// color of a reflected pixel, its eye distance (-1 for sky/background,
+// which is never hazed) and its alpha (AMBIENT, used for its haze color)
+vec3 ssrFetch(vec2 p, out float zhit, out float hamb){
+	vec4 c=texture2DRect(FBOTex1,p);
+	float type;
+	float z=ssrDepth(p,type);
+	zhit=type<0.5?-1.0:z;
+	hamb=c.a;
+	return c.rgb;
+}
+
 // zw0 = window depth of this water pixel
-vec3 traceReflection(float zw0){
+// zhit/hamb: see ssrFetch (zhit<0: reflection is sky, no extra haze)
+vec3 traceReflection(float zw0, out float zhit, out float hamb){
+	zhit=-1.0;
+	hamb=1.0;
 	vec4 rd=texture2DRect(FBOTex4,gl_FragCoord.xy);
 	vec2 vsize=vec2(1.0/dh,1.0/dv);
 	vec3 skyFallback=ssrUnpack(rd.w);
@@ -160,29 +188,60 @@ vec3 traceReflection(float zw0){
 
 	// Depth along the ray grows like 1/(1-t) toward the vanishing point, so
 	// a distant shore can be crossed after the last sample. The end point is
-	// effectively at infinity: if it is on screen and on land, the crossing
+	// effectively at infinity: if it is on screen and on land the crossing
 	// lies in [last sample, end]; if on far water, use that pixel.
+	// But the end point may be covered by something in front of the ray
+	// (a tree, a near rock): then what the ray would see is hidden there, so
+	// search sideways (across the ray) for the nearest pixel that isn't -
+	// gaps between branches usually expose the shore or sky behind.
 	if(!hit && tmax>=1.0){
 		float type;
 		vec2 pe=ssrPix(s1,lo,hi);
-		ssrDepth(pe,type);
-		if(type>2.1){
-			hit=true;
-			t=1.0;
+		float zse=ssrDepth(pe,type);
+		bool occluded=type>0.5 && zse*(1.0+SSR_THICK)<zprev;
+		if(!occluded){
+			if(type>2.1){
+				hit=true;
+				t=1.0;
+			}
+			else if(type>0.5)
+				return ssrFetch(pe,zhit,hamb);
 		}
-		else if(type>0.5)
-			return texture2DRect(FBOTex1,pe).rgb;
+		else{
+			vec2 side=normalize(vec2(-d.y,d.x));
+			for(int k=1;k<=SSR_OCC_STEPS;k++){
+				for(int sgn=-1;sgn<=1;sgn+=2){
+					vec2 q=ssrPix(s1+side*(float(sgn*k)*SSR_OCC_STRIDE),lo,hi);
+					float zq=ssrDepth(q,type);
+					if(type<0.5 || zq*(1.0+SSR_THICK)>=zprev)
+						return ssrFetch(q,zhit,hamb);          // sky, or a surface behind the ray
+				}
+			}
+			// nothing visible nearby: fall through to the sky estimate
+		}
 	}
 
 	if(!hit){
-		// the end point is R's vanishing point, so on screen the last sky pixel
-		// is the reflected sky; off screen, blend toward the lit sky color
-		vec3 sky=skyFallback;
-		if(sawSky){
-			float off=(1.0-tmax)*dlen;   // pixels beyond the screen edge
-			sky=mix(lastSky,skyFallback,clamp(off/(0.5*vsize.y),0.0,1.0));
+		// The end point is R's vanishing point: on screen, the last sky pixel
+		// passed is the reflected sky. Off screen the rendered sky nearest the
+		// exit is still a far better match than the lit WaterSky color (which
+		// differs a lot from the real sky, so blending toward it made large
+		// areas of water jump between the two as the view moved).
+		if(sawSky)
+			return lastSky;
+		// nothing but land/plants along the way: look for sky along the top
+		// edge, outward from the column where the ray left
+		vec2 pe=ssrPix(s0+d*tmax,lo,hi);
+		for(int k=0;k<SSR_OCC_STEPS*2;k++){
+			for(int sgn=-1;sgn<=1;sgn+=2){
+				vec2 q=ssrPix(vec2(pe.x+float(sgn*k)*SSR_OCC_STRIDE*2.0,hi.y),lo,hi);
+				float type;
+				ssrDepth(q,type);
+				if(type<0.5)
+					return texture2DRect(FBOTex1,q).rgb;
+			}
 		}
-		return sky;
+		return skyFallback;
 	}
 
 	// refine the crossing
@@ -198,7 +257,7 @@ vec3 traceReflection(float zw0){
 		else
 			ta=tm;
 	}
-	return texture2DRect(FBOTex1,ssrPix(s0+d*tb,lo,hi)).rgb;
+	return ssrFetch(ssrPix(s0+d*tb,lo,hi),zhit,hamb);
 }
 #endif
 
@@ -215,13 +274,7 @@ void main(void) {
 		float z=DEPTH;
 		float depth=1.0/(ws2*z+ws1);
 #ifdef HAZE
-		// Old formula: d=lerp(depth,0,haze_grad*haze_zfar,0,1);
-		//              h=haze_ampl*Haze.a*pow(d,10*haze_grad);
-		const float HAZE_GRAD_SCALE=0.1;
-		float g=(1.0-haze_grad)*HAZE_GRAD_SCALE;
-		float x1=(depth-haze_min)/max(haze_max-haze_min,feet);
-		x1=max(x1,0.0);
-		h=haze_ampl*Haze.a*(1.0-exp(-6.0*g*x1));
+		h=hazeAmount(depth);
 #endif
 #ifdef WATER
 		if(TYPE<2.1){ // TYPE=1 for water, 2 for ice, 3+ for land
@@ -236,7 +289,19 @@ void main(void) {
 #ifdef REFLECT
 			vec3 rcolor=fcolor1.rgb; // default: no reflection (pixel itself)
 #ifdef RAYTRACE
-			rcolor=traceReflection(z);
+			float zhit,hamb;
+			rcolor=traceReflection(z,zhit,hamb);
+#ifdef HAZE
+			// The reflected image is pre-haze, and this pixel is hazed below only
+			// for the eye->water distance. Give a reflected surface the same total
+			// haze as viewing it directly (eye->water->surface ~ its own depth):
+			// layers combine as 1-(1-h1)(1-h), so pre-apply h1 here.
+			if(zhit>0.0){
+				float ht=hazeAmount(zhit);
+				float h1=clamp(1.0-(1.0-ht)/max(1.0-h,1.0e-3),0.0,1.0);
+				rcolor=mix(rcolor,Haze.rgb*hamb,h1);
+			}
+#endif
 #endif // RAYTRACE
 			color=mix(color,rcolor,reflection*rmod);
 #endif // REFLECT
