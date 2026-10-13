@@ -749,17 +749,27 @@ void PlantObjMgr::render()
         PlantMgr::process_time=(clock()-t0)/CLOCKS_PER_SEC-PlantMgr::generate_time; // all other processing
         
         //cout<<"nverts="<<nverts<<endl;
-        
-    } else if (data.size) {
-        // No update needed - just set normal
-        PlaceData *s = data[0];
-        PlantMgr *pmgr = (PlantMgr*)s->mgr;
-        TNplant *tnplant = pmgr->plant;
-        tnplant->setNormal();
+
     }
     t0=clock();
     if (!shadow_mode)
         setProgram();
+
+    // plants.gs.vert/plants.frag use gl_Normal (the *current* GL normal, not a
+    // per-vertex array) as the local "up" vector for day/night and diffuse
+    // lighting. It used to be set only as a side effect of TNplant::emit()
+    // (cache misses) or of the no-update branch above. On a moved() frame
+    // with shadows on, the cache is filled during the first shadow cascade
+    // (shadow_mode, where emit() skips glNormal), so the main pass gets all
+    // cache hits and never set it - plants were lit with whatever normal the
+    // previous draw (terrain/water/rocks) left behind. The following settle
+    // frame took the no-update branch and set the real normal, so lighting
+    // changed between the two cycles (and automove never got the 2nd one).
+    // Set it unconditionally, right before drawing.
+    if (!shadow_mode && data.size) {
+        Point up = data[0]->vertex.normalize();
+        glNormal3dv(up.values());
+    }
     glDisable(GL_CULL_FACE);
 
     // Blend draw buffer 0 (color, FBOTex1) normally for translucent leaves,

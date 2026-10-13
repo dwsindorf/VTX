@@ -98,23 +98,39 @@ vec3 getNormal(float nscale){
 #endif
 	return normal;
 }
+// Low-sun tuning:
+//  WRAP      - wrap (half-Lambert style) lighting: lets the side turned away
+//              from a low sun still get some light (sky fill / scatter)
+//              instead of hard-clamping to ambient-only. 0 = old behavior.
+//  LEAF_XMIT - fraction of light transmitted through backlit leaves.
+#define WRAP      0.35
+#define LEAF_XMIT 0.5
+
 vec3 setLighting(vec3 BaseColor) {
 	vec3 diffuse = vec3(0, 0, 0);
 	float nscale=TexVars.x;
+	vec3 up=normalize(Normal);
  	for(int i=0;i<NLIGHTS;i++){
  		vec3 light= normalize(gl_LightSource[i].position.xyz);
- 		float LdotR= dot(light,Normal);// day side diffuse lighting
-		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band 
-		float day_lighting = lerp(LdotR,twilite_min,twilite_max,1.0,0.5); // reduce branch shadow in daylight
- 		vec3 normal=getNormal(nscale*day_lighting);
+ 		float LdotR= dot(light,up);// sun elevation (horizon gate only)
+		float night_lighting = lerp(LdotR,twilite_min,twilite_max,0.0,1.0); // twilite band
+		// was: getNormal(nscale*day_lighting) with day_lighting -> 0.5 in
+		// daylight, which halved the cylinder (side) normal exactly when the
+		// sun is above the horizon, so at low sun angles the result was
+		// dominated by dot(light,up) ~ sin(elevation) -> dark trunks.
+ 		vec3 normal=normalize(getNormal(nscale));
  		float LdotN= dot(light,normal);// includes fake normal and bumpmap
+		if(MODE==LEAF && LdotN<0.0)
+			LdotN=-LdotN*LEAF_XMIT;   // backlit leaf: light passes through
+		LdotN=(LdotN+WRAP)/(1.0+WRAP); // wrap lighting
  		float intensity = 1.0/gl_LightSource[i].constantAttenuation/NLIGHTS;
 		float lpn       = LdotN*intensity*night_lighting;
-		lpn=clamp(lpn,0,5.0);	
+		lpn=clamp(lpn,0,5.0);
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 	}
-	
-	vec3 TotalDiffuse = BaseColor*diffuse*Diffuse.a+Ambient*Ambient.a;
+	// ambient now modulates the texture (was added as a flat color, which is
+	// why unlit bark rendered as a uniform near-black silhouette)
+	vec3 TotalDiffuse = BaseColor*(diffuse*Diffuse.a+Ambient.rgb*Ambient.a);
 	return TotalDiffuse;
 }
 
