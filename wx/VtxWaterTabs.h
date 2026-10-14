@@ -41,6 +41,7 @@ protected:
 
 	StaticTextCtrl *planet_temp;
 	wxCheckBox     *auto_state;
+	wxCheckBox     *sky_view;    // sky view reflections (Raster.skyview_enable)
 
 	SliderCtrl   *LevelSlider;
 
@@ -114,6 +115,8 @@ public:
     void OnUpdateEnable(wxUpdateUIEvent& event);
     void OnChangeComposition(wxCommandEvent& event);
     void OnAutoState(wxCommandEvent& event);
+    void OnSkyView(wxCommandEvent& event);
+    void OnUpdateSkyView(wxUpdateUIEvent& event);
     void OnSetDefaultMod(wxCommandEvent& event);
     void OnSetDefaultLiquid(wxCommandEvent& event);
     void OnSetDefaultSolid(wxCommandEvent& event);

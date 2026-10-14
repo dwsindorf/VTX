@@ -1200,6 +1200,28 @@ void RasterMgr::setVisibleIDs()
 }
 
 //-------------------------------------------------------------
+// RasterMgr::getVisibleIDs() collect the nodes seen in the id image
+// (without changing their visibility - see Map::vischk sky view pass)
+//-------------------------------------------------------------
+void RasterMgr::getVisibleIDs(std::vector<MapNode*> &nodes)
+{
+	static idu idb;
+	int n = TheScene->viewport[2] * TheScene->viewport[3];
+	std::vector<char> seen(dcnt>0?dcnt:1,0);
+	for(int i=0;i<4*(n-1);i+=4){
+		idb.l=0;
+		idb.c.red=roundf(gdata[i]*255);
+		idb.c.green=roundf(gdata[i+1]*255);
+		idb.c.blue=roundf(gdata[i+2]*255);
+		idb.c.alpha=0;
+		if(idb.l<=0 || invalid_id(idb.l) || seen[idb.l])
+			continue;
+		seen[idb.l]=1;
+		nodes.push_back(idtbl[idb.l]);
+	}
+}
+
+//-------------------------------------------------------------
 // RasterMgr::pixelID()	map ids from pixels
 // note: y is inverted
 //-------------------------------------------------------------

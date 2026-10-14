@@ -48,6 +48,10 @@ NameList<DoubleSym*> Units(units,sizeof(units)/sizeof(DoubleSym));
 
 double View::dflt_fov=35;
 double View::dflt_cellsize=3.0;
+bool   View::sky_view=false;
+double View::sky_tilt=0;
+double View::sky_fx=1;
+double View::sky_fy=1;
 Color  View::syscolor[NUM_SYSCOLORS];
 int    View::stgcolor[MAX_STRINGS]={0};
 int    View::nstrings=0;
@@ -928,7 +932,10 @@ void View::perspective(GLdouble f, GLdouble a, GLdouble zn, GLdouble zf,
 {
 	setMatrixMode(GL_PROJECTION);
     loadIdentity();
-	perspective(f, a, zn, zf);
+	if(sky_view)
+		sky_perspective(zn, zf);
+	else
+		perspective(f, a, zn, zf);
 	lookat(e,c,n);
 	getMatrix(GL_PROJECTION, projMatrix);
 	loadMatrix(1);
@@ -961,6 +968,52 @@ void View::perspective(GLdouble fv, GLdouble a, GLdouble zn, GLdouble zf)
 #ifdef USE_OGL_MATRIX
 	gluPerspective(fv, a, zn, zf);
 #endif
+}
+
+//-------------------------------------------------------------
+// View::sky_perspective() sky view projection (reflections)
+// = Persp(sky_fx,sky_fy,zn,zf) * Rx(-sky_tilt): camera-space points are
+// rotated down by sky_tilt, i.e. the view looks sky_tilt degrees higher.
+// Must be followed by the same lookat() as the normal view.
+//-------------------------------------------------------------
+void View::sky_perspective(GLdouble zn, GLdouble zf)
+{
+	Matrix M;
+	Matrix R;
+	double zm=zn-zf;
+	double zp=zn+zf;
+	double zt=2*zn*zf;
+
+	M[0]=sky_fx; M[4]=0;      M[8]=0;      M[12]=0;
+	M[1]=0;      M[5]=sky_fy; M[9]=0;      M[13]=0;
+	M[2]=0;      M[6]=0;      M[10]=zp/zm; M[14]=zt/zm;
+	M[3]=0;      M[7]=0;      M[11]=-1;    M[15]=0;
+
+	R=M*getMatrixMgr().getMatrix();
+	setMatrix(R);
+	rotate(-sky_tilt,1,0,0);
+}
+
+//-------------------------------------------------------------
+// View::set_sky_projection() switch the current GL projection to the
+// sky view (on) or back to what it was (off) without touching the
+// modelview matrix or projMatrix (used for the sky view ID pass in
+// Map::vischk, which runs with an object modelview loaded)
+//-------------------------------------------------------------
+void View::set_sky_projection(bool on)
+{
+	GLint mode=getMatrixMode();
+	setMatrixMode(GL_PROJECTION);
+	if(on){
+		getMatrix(GL_PROJECTION, sky_saved);
+		loadIdentity();
+		sky_perspective(znear, zfar);
+		lookat(eye,center,normal);
+		loadMatrix(1);
+	}
+	else
+		setMatrix(sky_saved);
+	setMatrixMode(mode);
 }
 
 //-------------------------------------------------------------

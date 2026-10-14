@@ -28,7 +28,7 @@ extern Point MapPt;
 
 #define FORCEMINGLVERSION true
 #define PERLIN_1D_TEX
-static char *TEXNAME[6]={"FBOTex1","FBOTex2","FBOTex3","FBOTex4","FBOTex5","FBOTex6"};
+static char *TEXNAME[NUMFBOTEXS+NUMAUXTEXS]={"FBOTex1","FBOTex2","FBOTex3","FBOTex4","FBOTex5","FBOTex6","FBOTex7"};
 
 char 			GLSLMgr::shader_dir[256]="shaders";
 double 			GLSLMgr::gls_version=0;
@@ -56,6 +56,13 @@ GLSLProgram    *GLSLMgr::program=0;
 GLuint			GLSLMgr::fbotexs[NUMFBOTEXS]={0};
 GLuint			GLSLMgr::fbo_rect=0;
 GLuint			GLSLMgr::dbo_rect=0;
+GLuint			GLSLMgr::fbo_aux=0;
+GLuint			GLSLMgr::dbo_aux=0;
+GLuint			GLSLMgr::auxtexs[NUMAUXTEXS]={0};
+int				GLSLMgr::aux_width=0;
+int				GLSLMgr::aux_height=0;
+bool			GLSLMgr::aux_pass=false;
+GLuint			GLSLMgr::save_fbo_rect=0;
 
 int 			GLSLMgr::width=0;
 int 			GLSLMgr::height=0;
@@ -96,6 +103,7 @@ GLSLMgr::~GLSLMgr(){
 		if(fbotexs[i]>0)
 			glDeleteTextures(1,fbotexs+i);
 	}
+	freeAuxFrameBuffer();
 	if(PerlinTextureID>0)
 		glDeleteTextures(1,&PerlinTextureID);
 	if(permTextureID>0)
@@ -490,8 +498,8 @@ void GLSLMgr::initGL(int w, int h){
     height=h;
     int max_tex_units=maxFragmentTextureUnits();
     int max_tex_id=max_tex_units-1;
-    for(int i=0;i<NUMFBOTEXS;i++)
-    	vars.newIntVar(TEXNAME[NUMFBOTEXS-i-1],max_tex_id--);
+    for(int i=0;i<NUMFBOTEXS+NUMAUXTEXS;i++)
+    	vars.newIntVar(TEXNAME[NUMFBOTEXS+NUMAUXTEXS-i-1],max_tex_id--);
 	vars.newIntVar(PERMTEX,max_tex_id--);
 #ifdef PERLIN_1D_TEX
 	vars.newIntVar(PERLINTEX,max_tex_id--);
@@ -606,6 +614,114 @@ void GLSLMgr::initFrameBuffer()
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT);
 	glActiveTextureARB(GL_TEXTURE0);
+}
+
+//-------------------------------------------------------------
+// Sky view FBO (reflections)
+//
+// A second render of the scene with the view rotated up past the top of
+// the normal frustum (see Scene::render_skyview) goes into fbo_aux. It only
+// needs the image and params attachments (0,1) of the normal FBO.
+//
+// Render-pass shaders read the previous contents of their own targets
+// through FBOTex1/FBOTex2 (sky, clouds, rings blend over the background),
+// so while the aux pass is active the aux textures are bound to the
+// FBOTex1/FBOTex2 units and fbo_rect is redirected to fbo_aux: every
+// existing setFBOWritePass()/setFBOReset() etc. then targets the aux FBO
+// without any change to object render code. The aux textures are also
+// permanently bound to the FBOTex6/FBOTex7 units for effects.frag.
+//-------------------------------------------------------------
+void GLSLMgr::freeAuxFrameBuffer()
+{
+	if(fbo_aux>0)
+		glDeleteFramebuffers(1, &fbo_aux);
+	if(dbo_aux>0)
+		glDeleteRenderbuffers(1, &dbo_aux);
+	for(int i=0;i<NUMAUXTEXS;i++){
+		if(auxtexs[i]>0)
+			glDeleteTextures(1,auxtexs+i);
+		auxtexs[i]=0;
+	}
+	fbo_aux=dbo_aux=0;
+	aux_width=aux_height=0;
+}
+
+void GLSLMgr::initAuxFrameBuffer()
+{
+	if(fbo_aux>0 && aux_width==width && aux_height==height)
+		return;
+	freeAuxFrameBuffer();
+	aux_width=width;
+	aux_height=height;
+
+	GLint oldfbo=0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT,&oldfbo);
+
+	glGenFramebuffers(1, &fbo_aux);
+	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_aux);
+
+	glGenRenderbuffers(1, &dbo_aux);
+	glBindRenderbuffer(GL_RENDERBUFFER_EXT, dbo_aux);
+	glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, dbo_aux);
+
+	for(int i=0;i<NUMAUXTEXS;i++){
+		glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(TEXNAME[NUMFBOTEXS+i]));
+		glGenTextures(1, auxtexs+i);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, auxtexs[i]);
+		glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA32F_ARB,  width, height, 0, GL_RGBA, GL_FLOAT, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT+i, GL_TEXTURE_RECTANGLE_ARB, auxtexs[i], 0);
+	}
+	GLenum mrt[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT};
+	glDrawBuffers(2,mrt);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
+	if(status != GL_FRAMEBUFFER_COMPLETE_EXT)
+		cout << "sky view frameBuffer not valid" << endl;
+
+	float v0[1]={1.0};
+	float v1[4]={0,0,0,1};
+	glClearBufferfv(GL_DEPTH,0,v0);
+	glClearBufferfv(GL_COLOR,0,v1);
+	glClearBufferfv(GL_COLOR,1,v1);
+
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, oldfbo);
+	glActiveTextureARB(GL_TEXTURE0);
+}
+
+void GLSLMgr::beginAuxPass()
+{
+	if(aux_pass)
+		return;
+	initAuxFrameBuffer();
+	save_fbo_rect=fbo_rect;
+	fbo_rect=fbo_aux;
+	// render-pass shaders sample their own targets via FBOTex1/FBOTex2
+	for(int i=0;i<NUMAUXTEXS;i++){
+		glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(TEXNAME[i]));
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, auxtexs[i]);
+	}
+	glActiveTextureARB(GL_TEXTURE0);
+	aux_pass=true;
+}
+
+void GLSLMgr::endAuxPass()
+{
+	if(!aux_pass)
+		return;
+	glFlush();
+	fbo_rect=save_fbo_rect;
+	for(int i=0;i<NUMAUXTEXS;i++){
+		glActiveTextureARB(GL_TEXTURE0+vars.getIntValue(TEXNAME[i]));
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, fbotexs[i]);
+	}
+	glActiveTextureARB(GL_TEXTURE0);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+	aux_pass=false;
 }
 
 //-------------------------------------------------------------
@@ -1085,12 +1201,13 @@ void GLSLMgr::setFBOReset(){
 void GLSLMgr::setFBOFullReset(){
 	glBindFramebuffer(GL_FRAMEBUFFER_EXT, fbo_rect);
 
-	// Clear all 4 attachments — use at scene open/load to flush stale data from
+	// Clear all NUMFBOTEXS attachments — use at scene open/load to flush stale data from
 	// previous scene's shadow/effects rendering.
 	// glClearBufferfv(GL_COLOR, i) clears draw buffer i, not attachment i directly.
 	// Must set all 4 draw buffers first or indices 2 and 3 are GL_NONE (no-op).
 	GLenum mrt_all[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT,
-	                    GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT};
+	                    GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT,
+	                    GL_COLOR_ATTACHMENT4_EXT};
 	glDrawBuffers(NUMFBOTEXS, mrt_all);
 
 	float v0[1]={1.0};

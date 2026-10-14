@@ -132,7 +132,7 @@ public:
 	int    idcnts[TIDS];
 	int     visid(int);
 
-	void    render_ids();
+	void    render_ids(bool clear_flags=true);
 	void    setvis_ids();
 	
 	void set_conv(double f)     {_conv=f;}

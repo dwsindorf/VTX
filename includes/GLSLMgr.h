@@ -6,7 +6,8 @@
 #include <PointClass.h>
 #include <ListClass.h>
 
-#define NUMFBOTEXS 4
+#define NUMFBOTEXS 5   // 0:image 1:params 2:shadows 3:SSR ray end 4:SSR ray dir/depth
+#define NUMAUXTEXS 2   // sky view FBO: 0:image 1:params (sampled as FBOTex6/FBOTex7)
 #define NUMDRAWBUFS 2
 class GLSLMgr {
 	static void makeTexDefsFile();
@@ -72,6 +73,18 @@ public:
 	static GLuint		   fbotexs[NUMFBOTEXS];  // FBO textures
 	static GLuint		   fbo_rect; // FBO texture used as a color array
 	static GLuint		   dbo_rect; // FBO texture used as a data array
+
+	// sky view (reflection) FBO: same size and layout as attachments 0,1 of fbo_rect
+	static GLuint		   fbo_aux;
+	static GLuint		   dbo_aux;
+	static GLuint		   auxtexs[NUMAUXTEXS];
+	static int             aux_width,aux_height;
+	static bool            aux_pass;     // true while rendering into fbo_aux
+	static GLuint          save_fbo_rect;
+	static void initAuxFrameBuffer();
+	static void freeAuxFrameBuffer();
+	static void beginAuxPass();
+	static void endAuxPass();
 
 	static NameList<GLSLProgram*> shaders;
 	static double wscale;

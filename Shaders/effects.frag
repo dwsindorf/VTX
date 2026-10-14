@@ -120,6 +120,182 @@ vec3 ssrFetch(vec2 p, out float zhit, out float hamb){
 	return c.rgb;
 }
 
+#ifdef SKYVIEW
+//------------------------------------------------------------------
+// Sky view: continuation of rays that leave the top of the screen
+//
+// Scene::render_skyview() renders the scene a second time from the same
+// eye with the view rotated up by the sky view tilt about the camera x
+// axis (EffectsMgr::update_skyview), so its bottom edge plane is the top
+// edge plane of the normal view:
+//   FBOTex6  sky view image  (as FBOTex1)
+//   FBOTex7  sky view params (as FBOTex2: type, window depth, ...)
+// auximage.frag stores the camera-space reflected ray in FBOTex5:
+//   .xyz R (unit)   .w eye depth w of the water pixel
+// The ray P0+t*R is clipped to the sky view frustum in its clip space
+// (linear in t) and the clipped segment is marched in sky view pixels.
+// Both views use the same znear/zfar, so ssrLin() gives eye depth along
+// the sky view axis there, and 1/depth is linear in screen space.
+//------------------------------------------------------------------
+uniform sampler2DRect FBOTex5;
+uniform sampler2DRect FBOTex6;
+uniform sampler2DRect FBOTex7;
+uniform vec4 main_lens;  // normal view: fx (f/aspect), fy (f)
+uniform vec4 sky_lens;   // sky view: cos(tilt), sin(tilt), fx, fy
+
+float skyDepth(vec2 p, out float type){
+	vec4 g=texture2DRect(FBOTex7,p);
+	type=g.r;
+	return ssrLin(g.g);
+}
+vec3 skyFetch(vec2 p, out float zhit, out float hamb){
+	vec4 c=texture2DRect(FBOTex6,p);
+	float type;
+	float z=skyDepth(p,type);
+	zhit=type<0.5?-1.0:z;
+	hamb=c.a;
+	return c.rgb;
+}
+// normal view camera space -> sky view clip space (x,y,w) (linear)
+vec3 skyClip(vec3 P){
+	float y= sky_lens.x*P.y+sky_lens.y*P.z;
+	float z=-sky_lens.y*P.y+sky_lens.x*P.z;
+	return vec3(sky_lens.z*P.x,sky_lens.w*y,-z);
+}
+// restrict [t0,t1] to a+b*t >= 0
+void skyPlane(float a, float b, inout float t0, inout float t1){
+	if(abs(b)<1.0e-20){
+		if(a<0.0)
+			t1=-1.0;
+	}
+	else if(b>0.0)
+		t0=max(t0,-a/b);
+	else
+		t1=min(t1,-a/b);
+}
+
+// returns false if the ray can't be resolved in the sky view
+bool traceSky(out vec3 color, out float zhit, out float hamb){
+	color=vec3(0.0);
+	zhit=-1.0;
+	hamb=1.0;
+	vec4 rr=texture2DRect(FBOTex5,gl_FragCoord.xy);
+	float w=rr.w;
+	if(w<=0.0)
+		return false;
+	vec3 R=rr.xyz;
+	vec2 ndc=gl_FragCoord.xy*vec2(dh,dv)*2.0-1.0;
+	vec3 P0=vec3(ndc.x*w/main_lens.x,ndc.y*w/main_lens.y,-w);
+	vec3 h0=skyClip(P0);
+	vec3 hd=skyClip(R);
+	float tfar=1.0e4*w;       // same far end as auximage.frag
+	float t0=0.0;
+	float t1=tfar;
+	skyPlane(h0.z-zn,   hd.z,     t0,t1);  // in front of the sky view eye
+	skyPlane(h0.z-h0.y, hd.z-hd.y,t0,t1);  // top
+	skyPlane(h0.z+h0.y, hd.z+hd.y,t0,t1);  // bottom
+	skyPlane(h0.z-h0.x, hd.z-hd.x,t0,t1);  // right
+	skyPlane(h0.z+h0.x, hd.z+hd.x,t0,t1);  // left
+	if(t1<=t0)
+		return false;
+	bool farEnd=t1>=0.999*tfar; // R's vanishing point is in the sky view
+
+	vec3 ha=h0+t0*hd;
+	vec3 hb=h0+t1*hd;
+	vec2 vsize=vec2(1.0/dh,1.0/dv);
+	vec2 lo=vec2(0.5);
+	vec2 hi=vsize-0.5;
+	vec2 sa=(ha.xy/ha.z*0.5+0.5)*vsize;
+	vec2 sb=(hb.xy/hb.z*0.5+0.5)*vsize;
+	float ia=1.0/ha.z;        // inverse eye depth (linear in screen space)
+	float ib=1.0/hb.z;
+	vec2 d=sb-sa;
+	float dlen=max(length(d),1.0);
+
+	float stride=max(SSR_MIN_STRIDE,dlen/float(SSR_MAX_STEPS));
+	float du=stride/dlen;
+	float u=du*ssrNoise(gl_FragCoord.xy);
+	float uprev=0.0;
+	float zprev=1.0/ia;
+	bool hit=false;
+	bool sawSky=false;
+	vec3 lastSky=vec3(0.0);
+	float type;
+
+	for(int i=0;i<SSR_MAX_STEPS;i++){
+		if(u>1.0)
+			break;
+		vec2 p=ssrPix(sa+d*u,lo,hi);
+		float zs=skyDepth(p,type);
+		float zr=1.0/max(mix(ia,ib,u),1.0e-30);
+		if(type<0.5){
+			lastSky=texture2DRect(FBOTex6,p).rgb;
+			sawSky=true;
+		}
+		else if(type>2.1){
+			if(zr>zs*(1.0+SSR_EPS) && zprev<zs*(1.0+SSR_THICK)){
+				hit=true;
+				break;
+			}
+		}
+		uprev=u;
+		zprev=zr;
+		u+=du;
+	}
+
+	// end point = vanishing point (see traceReflection)
+	if(!hit && farEnd){
+		vec2 pe=ssrPix(sb,lo,hi);
+		float zse=skyDepth(pe,type);
+		bool occluded=type>0.5 && zse*(1.0+SSR_THICK)<zprev;
+		if(!occluded){
+			if(type>2.1){
+				hit=true;
+				u=1.0;
+			}
+			else{                      // sky at the vanishing point, or far water
+				color=skyFetch(pe,zhit,hamb);
+				return true;
+			}
+		}
+		else{
+			vec2 side=length(d)>0.5?normalize(vec2(-d.y,d.x)):vec2(1.0,0.0);
+			for(int k=1;k<=SSR_OCC_STEPS;k++){
+				for(int sgn=-1;sgn<=1;sgn+=2){
+					vec2 q=ssrPix(sb+side*(float(sgn*k)*SSR_OCC_STRIDE),lo,hi);
+					float zq=skyDepth(q,type);
+					if(type<0.5 || zq*(1.0+SSR_THICK)>=zprev){
+						color=skyFetch(q,zhit,hamb);
+						return true;
+					}
+				}
+			}
+		}
+	}
+	if(!hit){
+		if(sawSky){
+			color=lastSky;
+			return true;
+		}
+		return false;
+	}
+	// refine the crossing
+	float ua=uprev;
+	float ub=u;
+	for(int j=0;j<SSR_REFINE;j++){
+		float um=0.5*(ua+ub);
+		float zs=skyDepth(ssrPix(sa+d*um,lo,hi),type);
+		float zr=1.0/max(mix(ia,ib,um),1.0e-30);
+		if(type>2.1 && zr>zs*(1.0+SSR_EPS))
+			ub=um;
+		else
+			ua=um;
+	}
+	color=skyFetch(ssrPix(sa+d*ub,lo,hi),zhit,hamb);
+	return true;
+}
+#endif // SKYVIEW
+
 // zw0 = window depth of this water pixel
 // zhit/hamb: see ssrFetch (zhit<0: reflection is sky, no extra haze)
 vec3 traceReflection(float zw0, out float zhit, out float hamb){
@@ -222,6 +398,17 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 	}
 
 	if(!hit){
+#ifdef SKYVIEW
+		// the ray left the screen without hitting anything: continue it in
+		// the sky view (covers the region above the top of the screen)
+		if(tmax<1.0){
+			vec3 scolor;
+			if(traceSky(scolor,zhit,hamb))
+				return scolor;
+			zhit=-1.0;
+			hamb=1.0;
+		}
+#endif
 		// The end point is R's vanishing point: on screen, the last sky pixel
 		// passed is the reflected sky. Off screen the rendered sky nearest the
 		// exit is still a far better match than the lit WaterSky color (which
@@ -268,6 +455,12 @@ void main(void) {
 	float h,d,q=0,v=0;
 #ifdef SHADOW_TEST
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
+	return;
+#endif
+//#define SKYVIEW_TEST // show the sky view image instead of the scene
+#if defined(SKYVIEW) && defined(SKYVIEW_TEST)
+	gl_FragData[0]=vec4(texture2DRect(FBOTex6, gl_FragCoord.xy).rgb,1.0);
+	gl_FragData[1]=fcolor2;
 	return;
 #endif
 	if(TYPE>0.6) { // TYPE=0 for sky or background

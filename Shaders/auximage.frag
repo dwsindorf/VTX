@@ -255,6 +255,10 @@ void main(void) {
 		vec3 sc = floor(SkyColor*255.0+0.5);
 		float skypack=sc.r*65536.0+sc.g*256.0+sc.b;
 		gl_FragData[2]=vec4(H1.xy/H1.w,0.5*H1.z/H1.w+0.5,skypack);
+		// FBOTex5 (attachment 4): camera-space reflected ray and eye depth,
+		// used by effects.frag to continue the ray in the sky view
+		// (camera-space origin = (ndc.x*w/fx, ndc.y*w/fy, -w))
+		gl_FragData[3]=vec4(R,w);
 	}
 #endif
 }

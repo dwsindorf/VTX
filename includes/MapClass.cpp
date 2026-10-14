@@ -1096,14 +1096,15 @@ bool Map::setProgram(){
 // Map::render_ids()	render using id psuedo-colors
 // note: this call is made for each adapt pass
 //-------------------------------------------------------------
-void Map::render_ids()
+void Map::render_ids(bool clear_flags)
 {
 	GLSLMgr::setFBOReset();
 	GLSLMgr::renderToFrameBuffer=false; // divert output to RTT
 
 	GLSLMgr::setFBOWritePass();
 
-	npole->visit(&MapNode::clr_flags);
+	if(clear_flags)
+		npole->visit(&MapNode::clr_flags);
 	Raster.set_idmode(1);
 	int mode=Render.mode();
 	Render.show_ids();
@@ -2139,10 +2140,36 @@ void Map::vischk(bool idtest)
 
 	vnodes=0;
 	if(idtest){
+		// Sky view (reflections, see Scene::render_skyview): terrain above
+		// the top of the screen is "not visible" to the normal id pass, so
+		// it would be culled (nodraw) and left at hidden detail, leaving
+		// holes in the sky view. Run a second id pass with the sky view
+		// projection and make those nodes visible too. It goes first so the
+		// id table and id image left behind (used for picking) are the
+		// normal view's.
+		std::vector<MapNode*> skyvis;
+		bool skypass=object==TheScene->viewobj && Raster.skyview_ids
+			&& S0.get_flag(WATERFLAG)
+			&& Raster.skyview_wanted() && Raster.skyview_water()
+			&& Raster.update_skyview();
+		if(skypass){
+			glClear(GL_COLOR_BUFFER_BIT);
+			Raster.reset_idtbl();
+			TheScene->set_sky_projection(true);
+			render_ids(true);
+			Raster.getVisibleIDs(skyvis);
+			TheScene->set_sky_projection(false);
+		}
 		glClear(GL_COLOR_BUFFER_BIT);
 	    Raster.reset_idtbl();
-		render_ids();
+		render_ids(!skypass);
 		Raster.setVisibleIDs();
+		for(size_t i=0;i<skyvis.size();i++){
+			if(!skyvis[i]->visible()){
+				skyvis[i]->clr_masked();
+				vnodes++;
+			}
+		}
     	if(Adapt.edges())
 			npole->visit(&MapNode::pvischk);
 	}

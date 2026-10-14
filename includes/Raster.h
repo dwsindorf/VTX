@@ -3,6 +3,7 @@
 #ifndef _RASTER_H
 #define _RASTER_H
 
+#include <vector>
 #include "SceneClass.h"
 #include "GLheaders.h"
 #include <math.h>
@@ -433,6 +434,7 @@ public:
 	void  reset_idtbl();
 	void  read_ids();
 	void  setVisibleIDs();
+	void  getVisibleIDs(std::vector<MapNode*> &nodes); // unique nodes in the id image
 	void  setParams();
 	void  getZLimits(double &zn, double &zf);
 	void  getIDLimits(double &zn, double &zf,double &hmin, double &hmax);

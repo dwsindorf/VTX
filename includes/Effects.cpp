@@ -25,7 +25,8 @@ static const char *pgmnames[]={"RENDER","EFFECTS","POSTPROC","SHADOW_ZVALS","SHA
 //  2. vfog (vertical)
 //     TODO: support shader density distribution functions
 //  3. water (reflection, transparency)
-//     TODO: generate and use "sky map"
+//     sky view: extra render above the top of the screen for reflections
+//     (Scene::render_skyview, update_skyview, effects.frag traceSky)
 //  4. anti-aliasing
 //  5. shadows
 //     TODO: multiple objects (background shadows)
@@ -85,6 +86,15 @@ EffectsMgr::EffectsMgr(){
 	shadow_map_height=0;
 	shadow_map_width=0;
 	shadow_proj=false;
+	skyview_enable=1;
+	skyview_ids=0;   // 0: sky view uses the coarse hidden-level terrain (cheap)
+	skyview_margin=8;
+	skyview_max=120;
+	skyview_valid=false;
+	skyview_minpix=64;
+	water_query=0;
+	water_query_pending=false;
+	water_pixels=WATER_UNKNOWN;
 }
 EffectsMgr::~EffectsMgr(){
 	if(shadowMapFBO>0)
@@ -93,6 +103,142 @@ EffectsMgr::~EffectsMgr(){
 		glDeleteTextures(1,&depthTextureId);
 	if(jitterTextureId>0)
 		glDeleteTextures(1,&jitterTextureId);
+	if(water_query>0)
+		glDeleteQueries(1,&water_query);
+}
+
+//-------------------------------------------------------------
+// EffectsMgr::skyview_wanted() true if traced reflections could use the
+// extended sky view (a render of the scene rotated up past the top of the
+// normal frustum - see Scene::render_skyview and effects.frag)
+//-------------------------------------------------------------
+bool EffectsMgr::skyview_wanted()
+{
+	if(!skyview_enable || !Render.draw_shaded() || !reflections() || !Render.raytrace())
+		return false;
+	if(!TheScene->viewobj || !TheScene->spherical())
+		return false;
+	if(TheScene->light_view() || TheScene->test_view())
+		return false;
+	return true;
+}
+
+//-------------------------------------------------------------
+// EffectsMgr::skyview_water() true if the last water (auximage) pass drew
+// at least skyview_minpix water/ice pixels.
+// The count comes from an occlusion query around render_auximage() in
+// apply(), read back here (one frame late, never stalls: if the result
+// isn't ready yet the previous count is kept). The water pass runs only
+// while the view object has visible water nodes (do_water), so when no
+// water is in view the count drops to 0 and the sky view render and its
+// id pass are skipped. When water comes back into view it starts again
+// one frame later.
+// Until the water pass has produced a count (first frame water is in view,
+// e.g. the first view of a scene) the water is assumed to be visible, so
+// the sky view isn't missing from that frame - which may be the only one
+// rendered until the view changes.
+//-------------------------------------------------------------
+bool EffectsMgr::skyview_water(bool wait)
+{
+	if(water_query_pending && water_query>0){
+		GLuint avail=wait?1:0;   // wait: GL_QUERY_RESULT blocks until ready
+		if(!wait)
+			glGetQueryObjectuiv(water_query,GL_QUERY_RESULT_AVAILABLE,&avail);
+		if(avail){
+			glGetQueryObjectuiv(water_query,GL_QUERY_RESULT,&water_pixels);
+			water_query_pending=false;
+		}
+	}
+	// no count yet (first frame with water in view): assume it's visible
+	if(water_pixels==WATER_UNKNOWN)
+		return true;
+	return water_pixels>=(GLuint)skyview_minpix;
+}
+
+//-------------------------------------------------------------
+// EffectsMgr::update_skyview() set the sky view lens and tilt (View::sky_*)
+//
+// For flat water the reflected rays are the normal view's rays mirrored in
+// the horizon plane, so the sky view only has to span from the top edge of
+// the normal view up to the highest mirrored ray of any pixel below the
+// horizon (+ skyview_margin for wave/shore normals). That is nothing when
+// looking up and up to 2x the downward pitch when looking down.
+// The sky view shares the eye and is rotated about the camera x axis only,
+// so its bottom edge plane coincides with the top edge plane of the
+// normal view and a ray leaving the top of the screen enters it directly.
+// returns false if no part of the reflections can leave the normal view
+//-------------------------------------------------------------
+bool EffectsMgr::update_skyview()
+{
+	View::sky_view=false;
+	double f=RPD*TheScene->fov;
+	double ty=tan(0.5*f);
+	double tx=ty*TheScene->aspect;
+
+	// local "up" in camera space (see View::model_ref, spherical case):
+	// camera elevation = pitch+view_tilt, rolled by view_skew
+	double t=RPD*(TheScene->pitch+TheScene->view_tilt);
+	double s=RPD*TheScene->view_skew;
+	Point up(-sin(s)*cos(t), cos(s)*cos(t), -sin(t));
+
+	const int N=12;
+	static Point Rs[(N+1)*(N+1)];
+	int nr=0;
+	double phimax=-1e9;
+	for(int i=0;i<=N;i++){
+		for(int j=0;j<=N;j++){
+			double x=2.0*i/N-1;
+			double y=2.0*j/N-1;
+			Point V(x*tx,y*ty,-1);
+			V=V.normalize();
+			double e=V.dot(up);
+			if(e>-1e-3)          // above the horizon: can't be (lower) water
+				continue;
+			Point R=V-up*(2*e);  // mirrored in the horizon plane
+			double phi=atan2(R.y,-R.z);
+			phimax=phi>phimax?phi:phimax;
+			Rs[nr++]=R;
+		}
+	}
+	if(nr==0)
+		return false;
+
+	double lo=0.5*f;                       // top edge of the normal view
+	double hi=phimax+RPD*skyview_margin;
+	if(hi<=lo+RPD*1.0)
+		return false;
+	double vmax=RPD*skyview_max;
+	if(hi-lo>vmax)
+		hi=lo+vmax;
+	double ov=2.0*f/(TheScene->viewport[3]>0?TheScene->viewport[3]:512); // ~2 pixel overlap
+	double v=hi-lo+ov;
+	double a=lo-ov+0.5*v;                  // tilt of the sky view center
+
+	// horizontal coverage: the reflected rays in range and the top edge of the normal view
+	double ca=cos(a),sa=sin(a);
+	double txa=0;
+	Point C[2]={Point(-tx,ty,-1),Point(tx,ty,-1)};
+	for(int k=0;k<nr+2;k++){
+		Point R=k<nr?Rs[k]:C[k-nr];
+		double phi=atan2(R.y,-R.z);
+		if(k<nr && (phi<lo-ov || phi>hi))
+			continue;
+		double qx=R.x;
+		double qz=-sa*R.y+ca*R.z;
+		if(-qz<0.05)
+			continue;
+		double w=fabs(qx)/(-qz);
+		txa=w>txa?w:txa;
+	}
+	double txmax=tan(RPD*70.0);
+	txa=txa*1.05;
+	txa=txa<tx?tx:txa;
+	txa=txa>txmax?txmax:txa;
+
+	View::sky_tilt=a/RPD;
+	View::sky_fy=1.0/tan(0.5*v);
+	View::sky_fx=1.0/txa;
+	return true;
 }
 
 //-------------------------------------------------------------
@@ -305,8 +451,11 @@ void EffectsMgr::setProgram(int type){
 			sprintf(defs+strlen(defs),"#define WATER\n");
 			if(reflections()){
 				sprintf(defs+strlen(defs),"#define REFLECT\n");
-				if(Render.raytrace())
+				if(Render.raytrace()){
 					sprintf(defs+strlen(defs),"#define RAYTRACE\n");
+					if(skyview_valid)
+						sprintf(defs+strlen(defs),"#define SKYVIEW\n");
+				}
 			}
 		}
 		if(shadows()){
@@ -337,6 +486,14 @@ void EffectsMgr::setProgram(int type){
 		vars.newFloatVar("ice_dpr",water_dpr*ice_color1.alpha());
 
 		vars.newFloatVec("Shadow",shadow_color.red(),shadow_color.green(),shadow_color.blue(),shadow_value);
+		{
+			// screen-space reflections: camera lens of the normal view and
+			// the sky view (see update_skyview, effects.frag traceSky)
+			double fy=1.0/tan(0.5*RPD*TheScene->fov);
+			vars.newFloatVec("main_lens",fy/TheScene->aspect,fy,0,0);
+			double a=RPD*View::sky_tilt;
+			vars.newFloatVec("sky_lens",cos(a),sin(a),View::sky_fx,View::sky_fy);
+		}
 		break;
 
 	case POSTPROCPGM:
@@ -459,11 +616,26 @@ void EffectsMgr::apply(){
 			if(ssr){
 				glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT,&oldfbo);
 				glBindFramebuffer(GL_FRAMEBUFFER_EXT,GLSLMgr::fbo_rect);
-				GLenum mrtw[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT3_EXT};
-				glDrawBuffers(3,mrtw);
+				// gl_FragData[3] -> attachment 4 (FBOTex5): reflected ray direction + eye depth
+				GLenum mrtw[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT};
+				glDrawBuffers(4,mrtw);
 				glBindFramebuffer(GL_FRAMEBUFFER_EXT,oldfbo);
 			}
+			// count the visible water pixels (EffectsMgr::skyview_water)
+			if(ssr){
+				if(water_query==0)
+					glGenQueries(1,&water_query);
+				glBeginQuery(GL_SAMPLES_PASSED,water_query);
+			}
+			else{
+				water_pixels=WATER_UNKNOWN;
+				water_query_pending=false;
+			}
 			render_auximage(); // render land surface note: calls glDisable(GL_BLEND)
+			if(ssr){
+				glEndQuery(GL_SAMPLES_PASSED);
+				water_query_pending=true;
+			}
 			glFlush();
 			if(ssr){
 				glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT,&oldfbo);
@@ -479,6 +651,10 @@ void EffectsMgr::apply(){
 			glColor4d(1,0,0,1);
 			set_show_water(0);
 			surface=1;
+		}
+		else{ // no water pass: no water in view
+			water_pixels=WATER_UNKNOWN;
+			water_query_pending=false;
 		}
 
 	    // following passes use full screen render (2 triangles)

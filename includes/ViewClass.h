@@ -180,6 +180,18 @@ public:
 
 	static double dflt_fov;
 	static double dflt_cellsize;
+
+	// sky view (reflection) projection: the normal view rotated up about
+	// the camera x axis by sky_tilt degrees, with its own (symmetric) lens.
+	// Set by EffectsMgr::update_skyview(). While sky_view is true every
+	// project()/perspective() call builds the sky view instead.
+	static bool   sky_view;
+	static double sky_tilt;   // degrees
+	static double sky_fx;     // 1/tan(horizontal half angle)
+	static double sky_fy;     // 1/tan(vertical half angle)
+	GLdouble      sky_saved[16];
+	void sky_perspective(GLdouble zn, GLdouble zf);
+	void set_sky_projection(bool on); // swap the current projection in place (keeps modelview)
 	double	aspect;
 	double  znear;
 	double  zfar;

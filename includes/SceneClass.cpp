@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <GLSLMgr.h>
+#include "MapClass.h"
 
 #define JPEG
 
@@ -2677,6 +2678,7 @@ void Scene::shadow_group(int smode)
 //-------------------------------------------------------------
 void Scene::render_shadows()
 {
+	Raster.skyview_valid=false;  // set by render_skyview() when used this frame
 	if(!viewobj || !viewobj->allows_shadows()){
 		Raster.init_render();
 		render_objects();
@@ -2790,6 +2792,8 @@ void Scene::render_shadows()
 	//if(shadow_pass)
 	//	TheScene->clr_moved();
 
+	render_skyview(); // extended view above the screen for reflections (own FBO)
+
 	Raster.render();
 	project();
 	GLSLMgr::clrFBODepthBuffers();  // clear FBO depth: prevents shadows_normals() depth from
@@ -2803,6 +2807,99 @@ void Scene::render_shadows()
 	Raster.apply();
 
 	
+}
+
+//-------------------------------------------------------------
+// Scene::render_skyview() render the reflection sky view
+//
+// Screen-space reflections can only use what is on screen, and a reflected
+// ray that leaves the top of the screen used to fall back to a guess at the
+// sky color. This renders the scene a second time, from the same eye, with
+// the view rotated up so that its bottom edge starts at the top edge of the
+// normal view (lens and tilt from EffectsMgr::update_skyview), into a
+// separate FBO (GLSLMgr::beginAuxPass). effects.frag continues rays that
+// leave the top of the screen in this image (FBOTex6/FBOTex7).
+// Called before the normal render so that the normal view's matrices and
+// ID buffer are what is left in place afterwards.
+//-------------------------------------------------------------
+// Object visibility (Object3D::getvis: OFFSCREEN/OUTSIDE/INSIDE) is set by
+// Object3D::scale() from the current projection, but render_pass() tests the
+// value left by the PREVIOUS scale() call, before pass_group() rescales. So
+// the sky view pass must (a) set visibility for its own projection first
+// (or objects only above the screen, e.g. a moon, are missing from it), and
+// (b) put the normal view's visibility back afterwards (or an object that
+// is on screen but not in the sky view - e.g. a moon low in the sky - is
+// skipped by the normal render).
+static std::vector<std::pair<Object3D*,int> > skyview_vis;
+static void skyview_save_vis(Object3D *obj)
+{
+	skyview_vis.push_back(std::make_pair(obj,obj->getvis()));
+}
+static void skyview_set_vis(Object3D *obj)
+{
+	double zn=1e30,zf=-1e30;
+	obj->scale(zn,zf);
+}
+
+void Scene::render_skyview()
+{
+	Raster.skyview_valid=false;
+//#define DEBUG_SKYVIEW  // print why the sky view isn't rendered
+#ifdef DEBUG_SKYVIEW
+	if(!Raster.do_water)
+		cout<<"skyview: off - no water pass (do_water=0)"<<endl;
+	else if(!Raster.skyview_wanted())
+		cout<<"skyview: off - not wanted (enable/draw_shaded/reflections/raytrace/viewtype)"<<endl;
+	else if(!Raster.skyview_water())
+		cout<<"skyview: off - water pixels "<<Raster.water_pixels<<" < "<<Raster.skyview_minpix<<endl;
+	else if(!Raster.update_skyview())
+		cout<<"skyview: off - reflections stay on screen (view tilt "<<pitch+view_tilt<<")"<<endl;
+	else
+		cout<<"skyview: on  tilt "<<View::sky_tilt<<" water pixels "<<Raster.water_pixels<<endl;
+#endif
+	if(!Raster.do_water || !Raster.skyview_wanted() || !Raster.skyview_water()
+		|| !Raster.update_skyview())
+		return;
+
+	int shadows=Raster.shadows();
+	Raster.set_shadows(0);       // the shadow buffer is in normal view screen space
+
+	// Terrain above the screen is "not visible" to the normal view's id
+	// pass, so its triangles are skipped (DRAW_VIS) and it is adapted only to
+	// the coarse hidden level. Unless the sky view id pass refined it
+	// (Raster.skyview_ids), draw it anyway at that coarse level - like the
+	// shadow passes do. Call lists are compiled with the visibility of the
+	// pass that builds them, so bypass them here (also as the shadow passes
+	// do) to keep the normal view's lists culled.
+	int nvis=Raster.draw_nvis();
+	bool lists=Map::use_call_lists;
+	if(!Raster.skyview_ids){
+		Raster.set_draw_nvis(1);
+		Map::use_call_lists=false;
+	}
+
+	skyview_vis.clear();
+	objects->visitAll(skyview_save_vis);
+
+	GLSLMgr::beginAuxPass();     // fbo_rect -> sky view FBO
+	View::sky_view=true;
+	project();
+	objects->visitAll(skyview_set_vis);  // visibility in the sky view
+	Raster.render();             // clear and bind the (sky view) FBO
+	project();
+	GLSLMgr::clrFBODepthBuffers();
+	render_objects();
+	View::sky_view=false;
+	GLSLMgr::endAuxPass();
+
+	for(size_t i=0;i<skyview_vis.size();i++)  // normal view visibility
+		skyview_vis[i].first->setvis(skyview_vis[i].second);
+
+	Raster.set_draw_nvis(nvis);
+	Map::use_call_lists=lists;
+	Raster.set_shadows(shadows);
+	project();
+	Raster.skyview_valid=true;
 }
 
 //-------------------------------------------------------------

@@ -2,6 +2,7 @@
 #include "VtxWaterTabs.h"
 #include "VtxSceneDialog.h"
 #include "RenderOptions.h"
+#include "Effects.h"
 
 #include <wx/filefn.h>
 #include <wx/dir.h>
@@ -14,6 +15,7 @@ enum{
 	ID_NAME_TEXT,
 	ID_PLANET_TEMP_TEXT,
 	ID_AUTO_STATE,
+	ID_SKY_VIEW,
 	ID_SHOW,
 	ID_COMPOSITION,
 	ID_SHOW_STATE,
@@ -78,6 +80,8 @@ BEGIN_EVENT_TABLE(VtxWaterTabs, VtxTabsMgr)
 EVT_TEXT_ENTER(ID_NAME_TEXT,VtxWaterTabs::OnNameText)
 
 EVT_CHECKBOX(ID_AUTO_STATE,VtxWaterTabs::OnAutoState)
+EVT_CHECKBOX(ID_SKY_VIEW,VtxWaterTabs::OnSkyView)
+EVT_UPDATE_UI(ID_SKY_VIEW,VtxWaterTabs::OnUpdateSkyView)
 
 
 SET_SLIDER_EVENTS(LEVEL,VtxWaterTabs,Level)
@@ -207,6 +211,15 @@ void VtxWaterTabs::AddPropertiesTab(wxWindow *panel){
 	default_state->Add(planet_temp->getSizer(), 0, wxALIGN_LEFT | wxALL, 2);
 	hline->Add(default_state, 0, wxALIGN_LEFT|wxTOP, 0);
 
+    boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
+
+	// sky view reflections: extra render above the top of the screen used by
+	// traced (raytrace) reflections - see Scene::render_skyview. Global, not
+	// per ocean, so the checkbox tracks Raster.skyview_enable.
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	sky_view=new wxCheckBox(panel, ID_SKY_VIEW, "Sky View Reflections");
+	sky_view->SetToolTip("Render an extra view above the screen so reflections of off-screen sky and terrain don't fall back to an estimated sky color");
+	hline->Add(sky_view, 0, wxALIGN_LEFT | wxALL, 5);
     boxSizer->Add(hline, 0, wxALIGN_LEFT | wxALL, 0);
 
 	wxBoxSizer *presets = new wxStaticBoxSizer(wxHORIZONTAL, panel,
@@ -406,6 +419,16 @@ void VtxWaterTabs::OnUpdateState(wxUpdateUIEvent &event) {
 	if(auto_state_enabled && oldstate!=state)
 		State->SetSelection(state);
 	oldstate=state;
+}
+
+void VtxWaterTabs::OnSkyView(wxCommandEvent& event){
+	Raster.skyview_enable=sky_view->IsChecked()?1:0;
+	TheView->set_changed_render();
+}
+void VtxWaterTabs::OnUpdateSkyView(wxUpdateUIEvent& event){
+	bool b=Raster.skyview_enable?true:false;
+	if(sky_view->IsChecked()!=b)
+		sky_view->SetValue(b);
 }
 
 void VtxWaterTabs::getDefaultState() {
