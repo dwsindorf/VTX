@@ -190,6 +190,14 @@ void main(void) {
 	float f1=1-fmix; // surface
 	float f2=fmix*cmod;
 	float f3=rmod;
+#ifndef RAYTRACE
+	// untraced reflection (constant sky color): same Fresnel model as the
+	// traced one in effects.frag. Body shading (cmod) keeps the old ramp.
+	{
+		float R0=mix(0.02,0.018,wf);
+		f3=reflection*(R0+(1.0-R0)*pow(1.0-clamp(reflect1,0.0,1.0),5.0));
+	}
+#endif
 
 #ifdef RAYTRACE
 	// reflections are traced in effects.frag; adding the constant sky color

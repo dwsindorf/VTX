@@ -51,6 +51,17 @@ uniform vec4 Shadow;
 
 #define AMBIENT fcolor1.a
 
+// Reflection strength vs view angle.
+// FRESNEL: Schlick's approximation F = R0 + (1-R0)(1-cos)^5, cos = dot(N,eye)
+//   (R0 = reflectance looking straight down: water ~0.02, ice ~0.018).
+//   Full reflection at grazing angles, ~34% at 11.5 deg below the horizon,
+//   ~5% at 30 deg, 2% straight down. The Reflect slider scales it.
+// Undefined: old linear ramp, full at grazing -> 0 at dot(N,eye)=water_dpr
+//   (no reflection at all once the water is more than ~10 deg below the eye).
+#define FRESNEL
+#define WATER_R0 0.02
+#define ICE_R0   0.018
+
 #ifdef HAZE
 // haze amount at eye distance "depth"
 float hazeAmount(float depth){
@@ -477,7 +488,13 @@ void main(void) {
 			float reflection=mix(water_reflection,ice_reflection,wf);
 			float dpr=mix(water_dpr,ice_dpr,wf);
 			
-			float rmod=lerp(ry,0.0,dpr,1.0,0.0);
+			float rmod=lerp(ry,0.0,dpr,1.0,0.0); // grazing-angle haze blend (below)
+#ifdef FRESNEL
+			float R0=mix(WATER_R0,ICE_R0,wf);
+			float fresnel=R0+(1.0-R0)*pow(1.0-clamp(ry,0.0,1.0),5.0);
+#else
+			float fresnel=rmod;
+#endif
 
 #ifdef REFLECT
 			vec3 rcolor=fcolor1.rgb; // default: no reflection (pixel itself)
@@ -496,7 +513,7 @@ void main(void) {
 			}
 #endif
 #endif // RAYTRACE
-			color=mix(color,rcolor,reflection*rmod);
+			color=mix(color,rcolor,reflection*fresnel);
 #endif // REFLECT
 #ifdef HAZE
 #ifdef FOG
