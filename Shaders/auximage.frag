@@ -248,7 +248,13 @@ void main(void) {
 		vec3 Pc  = vec3(ndc.x*w/fx, ndc.y*w/fy, -w);   // camera-space position
 		vec3 V   = normalize(Pc);
 		// face normal of the water surface (mesh normals tilt near coastlines)
-		vec3 N   = normalize(cross(dFdx(Pc),dFdy(Pc)));
+		// Normalize the derivatives BEFORE the cross product: scene units are
+		// ~1.9e-10 per foot, so near the eye the per-pixel steps are ~1e-11..1e-10
+		// and |cross|^2 ~ 1e-40 is below FLT_MIN (denormals flush to 0 on the
+		// GPU). normalize(0) = NaN -> NaN ray end point in FBOTex4 -> every
+		// sample clamps to the top-right pixel and the trace 'hits' whatever
+		// is there. That gave the hard edge at a fixed eye depth (~300 ft).
+		vec3 N   = normalize(cross(normalize(dFdx(Pc)),normalize(dFdy(Pc))));
 		if(dot(N,V)>0.0)
 			N=-N;
 		vec3 R  = reflect(V,N);
