@@ -1567,6 +1567,8 @@ enum  {
 	SUB_SRAND,
 	SUB_TWIST,
 	SUB_GAUSS,
+	SUB_STORMS,
+	SUB_ZONAL,
 };
 
 static LongSym subtypes[]={
@@ -1591,6 +1593,8 @@ static LongSym subtypes[]={
 	{"srand",		SUB_SRAND},
 	{"twist",		SUB_TWIST},
 	{"gauss",		SUB_GAUSS},
+	{"storms",		SUB_STORMS},
+	{"zonal",		SUB_ZONAL},
 
 };
 NameList<LongSym*> Subs(subtypes,sizeof(subtypes)/sizeof(LongSym));
@@ -1980,6 +1984,104 @@ void TNtwist::valueString(char *s){
 }
 
 //************************************************************
+// Class TNstorms  storms(k,expr) or storms(k,size,expr)
+// evaluate expr with the noise point wound around the storm centers
+// (StormTable in NoiseClass.h). k scales the winding: use ~0.8-1.5 for
+// the large-scale noise and a smaller value (~0.3) for fine detail, or
+// the fine octaves get drawn into thin "hair" lines. size scales the storm
+// radii (default 1; ~1.5-2 gives Earth-like mid-latitude systems).
+// The GLSL form is always storms(k,size,expr).
+// GLSL: macro in noise_funcs.h
+//************************************************************
+class TNstorms : public TNsubr
+{
+public:
+	TNstorms(char* s, TNode *r) :  TNsubr(s, r) {}
+	// args: (k,expr) or (k,size,expr)
+	TNode *exprArg(){
+		TNarg &args=*((TNarg *)right);
+		return args[2]?args[2]:args[1];
+	}
+	TNode *sizeArg(){
+		TNarg &args=*((TNarg *)right);
+		return args[2]?args[1]:0;
+	}
+	void eval(){
+		TNarg &args=*((TNarg *)right);
+		if(args[0]){
+			if(CurrentScope->rpass())
+				Td.set_flag(COMPLEX);
+			double size=1;
+			if(sizeArg()){
+				sizeArg()->eval();
+				size=S0.s;
+			}
+			args[0]->eval();
+			double k=S0.s;
+			StormTable::cur_size=size;
+			Noise::distort(NSTORMS,k);
+			S0.s=0;
+			if(exprArg())
+				exprArg()->eval();
+			S0.set_svalid();
+			Noise::pop();
+		}
+	}
+	void valueString(char *s);
+};
+void TNstorms::valueString(char *s){
+	char arg1[MAXSTR]={0};
+	char sarg[MAXSTR]={0};
+	char arg2[MAXSTR]={0};
+
+	TNarg &args=*((TNarg *)right);
+	args[0]->valueString(arg1);
+	if(sizeArg())
+		sizeArg()->valueString(sarg);
+	if(exprArg())
+		exprArg()->valueString(arg2);
+	if(strlen(sarg)==0)
+		strcpy(sarg,"1");
+	if(strlen(arg1)==0 && strlen(arg2)==0)
+		return;
+	else if(strlen(arg1)==0 )
+		strcpy(s,arg2);
+	else{
+		if(strlen(arg2)==0)
+			strcpy(arg2,"1");
+		// always the 3 argument form (GLSL macro storms(k,size,expr))
+		sprintf(s+strlen(s),"%s(%s,%s,%s)",symbol(),arg1,sarg,arg2);
+	}
+}
+
+//************************************************************
+// Class TNzonal  zonal(itcz,subtrop,midlat)
+// Earth-like latitude bias for cloud cover (add to the cloud density):
+//   +itcz    near 6N   (intertropical convergence zone)
+//   -subtrop near 25 N/S (dry subtropical highs)
+//   +midlat  ramping in from 35 to 55 N/S (storm tracks)
+// GLSL: zonal() in noise_funcs.h (same formula, from Vertex1)
+//************************************************************
+extern double Phi;
+class TNzonal : public TNsubr
+{
+public:
+	TNzonal(char* s, TNode *r) :  TNsubr(s, r) {}
+	void eval(){
+		double arg[3]={0,0,0};
+		SINIT;
+		getargs(right,arg,3);
+		double la=Phi;            // degrees
+		double a=fabs(la);
+		double g1=(la-6)/7, g2=(a-25)/9;
+		double m=(a-35)/20;
+		m=m<0?0:(m>1?1:m);
+		S0.s=arg[0]*exp(-g1*g1)-arg[1]*exp(-g2*g2)+arg[2]*m;
+		S0.set_svalid();
+	}
+};
+
+//************************************************************
 // Class TNclamp
 //************************************************************
 class TNclamp : public TNsubr
@@ -2160,6 +2262,8 @@ TNsubr *subr_node(char *s, TNode *args)
 		case SUB_SRAND:		return new TNsrand(s,args);
 		case SUB_TWIST:		return new TNtwist(s,args);
 		case SUB_GAUSS:   	return new TNgauss(s,args);
+		case SUB_STORMS:	return new TNstorms(s,args);
+		case SUB_ZONAL:   	return new TNzonal(s,args);
 
 		}
 	}

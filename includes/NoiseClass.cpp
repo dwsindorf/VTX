@@ -838,6 +838,78 @@ double Noise::eval(int type,int n, double *args)
 }
 
 //-------------------------------------------------------------
+// StormTable (see NoiseClass.h)
+//-------------------------------------------------------------
+static double storm_rand(unsigned long long &st){
+	// splitmix64 -> [0,1)
+	st+=0x9E3779B97F4A7C15ULL;
+	unsigned long long z=st;
+	z=(z^(z>>30))*0xBF58476D1CE4E5B9ULL;
+	z=(z^(z>>27))*0x94D049BB133111EBULL;
+	z=z^(z>>31);
+	return (double)(z>>11)*(1.0/9007199254740992.0);
+}
+void StormTable::build(double sd){
+	seed=sd;
+	unsigned long long st=(unsigned long long)(fabs(sd)*1.0e6)+0x1234567ULL;
+	n=0;
+	for(int hemi=1;hemi>=-1;hemi-=2){
+		// mid-latitude cyclones: large, moderate winding
+		for(int i=0;i<9 && n<MAX_STORMS;i++,n++){
+			double la=RPD*(35+33*storm_rand(st))*hemi;
+			double lo=2*PI*storm_rand(st);
+			c[n][0]=cos(la)*sin(lo); c[n][1]=sin(la); c[n][2]=cos(la)*cos(lo);
+			R[n]=0.18+0.20*storm_rand(st);
+			s[n]=hemi*(2.0+2.0*storm_rand(st));
+		}
+		// tropical cyclones: small, tightly wound
+		for(int i=0;i<2 && n<MAX_STORMS;i++,n++){
+			double la=RPD*(12+12*storm_rand(st))*hemi;
+			double lo=2*PI*storm_rand(st);
+			c[n][0]=cos(la)*sin(lo); c[n][1]=sin(la); c[n][2]=cos(la)*cos(lo);
+			R[n]=0.07+0.04*storm_rand(st);
+			s[n]=hemi*(4.0+2.0*storm_rand(st));
+		}
+	}
+	valid=true;
+}
+// rotate (x,y,z) about each storm axis (Rodrigues); length is preserved
+thread_local double StormTable::cur_size=1;
+void StormTable::warp(double &x, double &y, double &z, double k, double size) const{
+	double l=sqrt(x*x+y*y+z*z);
+	if(l<=0 || k==0 || size<=0)
+		return;
+	for(int i=0;i<n;i++){
+		double ux=x/l,uy=y/l,uz=z/l;
+		double dx=ux-c[i][0],dy=uy-c[i][1],dz=uz-c[i][2];
+		double d=sqrt(dx*dx+dy*dy+dz*dz);
+		double r=R[i]*size;
+		if(d>=r)
+			continue;
+		double f=1-d/r;
+		double a=k*s[i]*f*f*(3-2*f);
+		double cs=cos(a),sn=sin(a);
+		double cx=c[i][0],cy=c[i][1],cz=c[i][2];
+		double kd=cx*x+cy*y+cz*z;
+		double qx=cy*z-cz*y, qy=cz*x-cx*z, qz=cx*y-cy*x; // c x v
+		x=x*cs+qx*sn+cx*kd*(1-cs);
+		y=y*cs+qy*sn+cy*kd*(1-cs);
+		z=z*cs+qz*sn+cz*kd*(1-cs);
+	}
+}
+StormTable &StormTable::get(double sd){
+	static StormTable table;
+	if(!table.valid || table.seed!=sd){
+#pragma omp critical(storm_table)
+		{
+			if(!table.valid || table.seed!=sd)
+				table.build(sd);
+		}
+	}
+	return table;
+}
+
+//-------------------------------------------------------------
 // Noise::distort()	distort point coordinates
 //-------------------------------------------------------------
 void Noise::distort(int type,double distortion){
@@ -863,6 +935,9 @@ void Noise::distort(int type,double distortion){
 		x=(pt.x*c-pt.y*s);
 		y=(pt.x*s+pt.y*c);
 		z=pt.z;
+		break;
+	case NSTORMS:
+		StormTable::get(rseed).warp(x,y,z,distortion,StormTable::cur_size);
 		break;
 	case NTHETA:
 		p=RPD*P180(phi);

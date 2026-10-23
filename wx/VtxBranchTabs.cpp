@@ -1,5 +1,7 @@
 
 #include "VtxBranchTabs.h"
+// expression component buffers (valueString of user expressions can be long)
+#define EXPR_STR 4096
 #include "VtxSceneDialog.h"
 #include "VtxImageDialog.h"
 
@@ -694,10 +696,10 @@ void VtxBranchTabs::getObjAttributes(){
 	
 	TNcolor *tnode=obj->getTNcolor();
 
-	char red[128]={0};
-	char green[128]={0};
-	char blue[128]={0};
-	char alpha[128]={0};
+	char red[EXPR_STR]={0};
+	char green[EXPR_STR]={0};
+	char blue[EXPR_STR]={0};
+	char alpha[EXPR_STR]={0};
 	if(tnode){
 		TNarg &args=*((TNarg *)tnode->right);
 		args[0]->valueString(red);
@@ -730,11 +732,11 @@ void VtxBranchTabs::getObjAttributes(){
 }
 
 wxString VtxBranchTabs::getColorExpr(){
-	char cstr[MAXSTR]={0};
-	char red[MAXSTR]="0.0";
-	char green[MAXSTR]="0.0";
-	char blue[MAXSTR]="0.0";
-	char alpha[MAXSTR]="1.0";
+	char cstr[4*EXPR_STR+32]={0};
+	char red[EXPR_STR]="0.0";
+	char green[EXPR_STR]="0.0";
+	char blue[EXPR_STR]="0.0";
+	char alpha[EXPR_STR]="1.0";
 	if(strlen(m_r_expr->GetValue().ToAscii()))
 		strcpy(red,m_r_expr->GetValue().ToAscii());
 	if(strlen(m_g_expr->GetValue().ToAscii()))
@@ -776,15 +778,15 @@ void VtxBranchTabs::setColorFromExpr(){
 }
 
 void VtxBranchTabs::restoreLastExpr(){
-	char cstr[MAXSTR];
+	char cstr[4*EXPR_STR+32];
 	strcpy(cstr,m_last_expr.ToAscii());
 	if(strlen(cstr)){
 		TNcolor *tnode=(TNcolor*)TheScene->parse_node(cstr);
 		if(tnode){
-			char red[128]={0};
-			char green[128]={0};
-			char blue[128]={0};
-			char alpha[128]={0};
+			char red[EXPR_STR]={0};
+			char green[EXPR_STR]={0};
+			char blue[EXPR_STR]={0};
+			char alpha[EXPR_STR]={0};
 			TNarg &args=*((TNarg *)tnode->right);
 			args[0]->valueString(red);
 			args[1]->valueString(green);
@@ -803,9 +805,9 @@ void VtxBranchTabs::restoreLastExpr(){
 	setObjAttributes();	
 }
 void VtxBranchTabs::setExprFromColor(){
-	char red[128]={0};
-	char green[128]={0};
-	char blue[128]={0};
+	char red[EXPR_STR]={0};
+	char green[EXPR_STR]={0};
+	char blue[EXPR_STR]={0};
 	wxColor col=m_color_chooser->GetColour();
 	Color c;
 	c.set_rb(col.Red());

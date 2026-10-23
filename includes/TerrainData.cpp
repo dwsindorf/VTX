@@ -405,8 +405,40 @@ int TerrainProperties::passes(){
 	int passes=textures.size/4;
 	return passes;
 }
+//-------------------------------------------------------------
+// storms() shader uniforms (StormTable, NoiseClass.h). Only programs that
+// use storms() declare them (noise_funcs.h); others return at the
+// location check.
+//-------------------------------------------------------------
+static void setStormUniforms(){
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program)
+		return;
+	GLint lc=glGetUniformLocationARB(program,"storm_c");
+	if(lc<0)
+		return;
+	GLint ls=glGetUniformLocationARB(program,"storm_s");
+	GLint ln=glGetUniformLocationARB(program,"storm_n");
+	StormTable &st=StormTable::get(Noise::rseed);
+	float c[4*MAX_STORMS];
+	float s[MAX_STORMS];
+	for(int i=0;i<st.n;i++){
+		c[4*i]=st.c[i][0];
+		c[4*i+1]=st.c[i][1];
+		c[4*i+2]=st.c[i][2];
+		c[4*i+3]=st.R[i];
+		s[i]=st.s[i];
+	}
+	glUniform4fvARB(lc,st.n,c);
+	if(ls>=0)
+		glUniform1fvARB(ls,st.n,s);
+	if(ln>=0)
+		glUniform1iARB(ln,st.n);
+}
+
 void TerrainProperties::setProgram(){
 	GLSLMgr::setProgram();
+	setStormUniforms();
 	for(tid=0;tid<textures.size;tid++){
 		textures[tid]->setProgram();
 	}

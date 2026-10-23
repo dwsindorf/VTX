@@ -1223,7 +1223,49 @@ std::string TNnoise::randomize(char *src,double f,double t){
 	char opts[256];
 	double args[16];
 	opts[0]=0;
-	TNnoise *noise=TheScene->parse_node(src);
+	TNode *node=(TNode*)TheScene->parse_node(src);
+	if(!node)
+		return std::string(src);
+	if(node->typeValue()!=ID_NOISE){
+		// Not a single noise() call (e.g. "noise(..)+noise(..)", the default
+		// liquid function): the code below would read the options and args
+		// of the wrong node and return a malformed noise (e.g. one huge
+		// low-frequency term - water surfaces that end up below the terrain).
+		// Randomize each noise(...) call in the string separately instead.
+		delete node;
+		std::string in(src),out;
+		size_t pos=0;
+		while(true){
+			size_t k=in.find("noise(",pos);
+			if(k==std::string::npos){
+				out+=in.substr(pos);
+				break;
+			}
+			if(k>0 && (isalnum((unsigned char)in[k-1]) || in[k-1]=='_')){ // e.g. Noise1D(
+				out+=in.substr(pos,k+6-pos);
+				pos=k+6;
+				continue;
+			}
+			int depth=0;
+			size_t e=k+5;
+			for(;e<in.size();e++){
+				if(in[e]=='(')
+					depth++;
+				else if(in[e]==')' && --depth==0)
+					break;
+			}
+			if(e>=in.size()){ // unbalanced: leave the rest as is
+				out+=in.substr(pos);
+				break;
+			}
+			out+=in.substr(pos,k-pos);
+			std::string sub=in.substr(k,e-k+1);
+			out+=randomize((char*)sub.c_str(),f,t);
+			pos=e+1;
+		}
+		return out;
+	}
+	TNnoise *noise=(TNnoise*)node;
 	std::string str("noise(");
 	if(t<0.1){
 		noise->optionString(opts);
@@ -1245,10 +1287,13 @@ std::string TNnoise::randomize(char *src,double f,double t){
 	char tmp[64];
 	for(int i=0;i<n;i++){
 		args[i]+=f*s[i]*fabs(args[i]);
-		sprintf(tmp,",%1.2f",args[i]);		
+		// %g, not %1.2f: small args (rate 1e-06, offsets like 0.002) were
+		// rounded to 0
+		sprintf(tmp,",%.4g",args[i]);
 		str+=tmp;
 	}
 	str+=")";
+	delete noise;
 	//cout<<str.c_str()<<endl;
 	return str;
 	

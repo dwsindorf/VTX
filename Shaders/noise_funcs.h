@@ -91,6 +91,58 @@ float corialis(float a){
 
 #define twist(a,b) (corialis(a)+b+reset())
 
+// ---- storms(k,size,expr): wind the noise point around storm centers ----
+// (StormTable in NoiseClass.h; uniforms set in TerrainData.cpp).
+// Rotation about each center c by k*storm_s[i]*smoothstep(f),
+// f=1-d/(size*R) inside the storm radius. TNstorms::valueString always
+// emits the 3 argument form. v1 is restored afterwards (so storms() can be nested
+// around twist(), but not inside it: twist's reset() would undo it).
+// Note: like twist(), only v1 is warped (v2 is the close-range coordinate).
+#ifndef MAX_STORMS
+#define MAX_STORMS 24
+#endif
+uniform vec4  storm_c[MAX_STORMS];   // xyz center (unit), w radius (chord)
+uniform float storm_s[MAX_STORMS];   // signed strength (radians)
+uniform int   storm_n;
+vec3 storm_save;
+float storm_push(){ storm_save=v1; return 0.0; }
+float storm_pop(){ v1=storm_save; return 0.0; }
+float stormwarp(float k, float size){
+	vec3 vt=(v1-0.5)*2.0;
+	float l=length(vt);
+	if(l<=0.0 || k==0.0 || size<=0.0)
+		return 0.0;
+	for(int i=0;i<MAX_STORMS;i++){
+		if(i>=storm_n)
+			break;
+		vec3 c=storm_c[i].xyz;
+		float R=storm_c[i].w*size;
+		float d=length(vt/l-c);
+		if(d<R){
+			float f=1.0-d/R;
+			float a=k*storm_s[i]*f*f*(3.0-2.0*f);
+			float cs=cos(a);
+			float sn=sin(a);
+			vt=vt*cs+cross(c,vt)*sn+c*dot(c,vt)*(1.0-cs);
+		}
+	}
+	v1=vt*0.5+0.5;
+	return 0.0;
+}
+#define storms(k,s,b) (storm_push()+stormwarp(k,s)+(b)+storm_pop())
+
+// ---- zonal(itcz,subtrop,midlat): latitude cloud cover bias ----
+// same formula as TNzonal (TerrainNode.cpp); latitude of the unwarped point
+float zonal(float itcz, float subtrop, float midlat){
+	vec3 vt=normalize((Vertex1.xyz-0.5)*2.0);
+	float la=degrees(asin(clamp(vt.y,-1.0,1.0)));
+	float a=abs(la);
+	float g1=(la-6.0)/7.0;
+	float g2=(a-25.0)/9.0;
+	float m=clamp((a-35.0)/20.0,0.0,1.0);
+	return itcz*exp(-g1*g1)-subtrop*exp(-g2*g2)+midlat*m;
+}
+
 // multi-order procedural 3d noise
 vec4 Noise(int index) {
 	noise_info info=nvars[index];

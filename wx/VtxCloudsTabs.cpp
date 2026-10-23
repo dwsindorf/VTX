@@ -1,5 +1,7 @@
 
 #include "VtxCloudsTabs.h"
+// expression component buffers (valueString of user expressions can be long)
+#define EXPR_STR 4096
 #include "UniverseModel.h"
 #include "TerrainClass.h"
 #include "FileUtil.h"
@@ -600,9 +602,9 @@ void VtxCloudsTabs::makeFileList(int dim,char * name){
 // VtxCloudsTabs::getCloudsExpr() return clouds value string
 //-------------------------------------------------------------
 wxString VtxCloudsTabs::getCloudsExpr(){
-	char top[128]="0.1";
-	char bottom[128]="-0.1";
-	char type[128]="0";
+	char top[EXPR_STR]="0.1";
+	char bottom[EXPR_STR]="-0.1";
+	char type[EXPR_STR]="0";
 
 	if(strlen(top_expr->GetValue().ToAscii()))
 		strcpy(top,top_expr->GetValue().ToAscii());
@@ -610,7 +612,7 @@ wxString VtxCloudsTabs::getCloudsExpr(){
 		strcpy(bottom,bottom_expr->GetValue().ToAscii());
 	if(strlen(type_expr->GetValue().ToAscii()))
 		strcpy(type,type_expr->GetValue().ToAscii());
-	char cstr[256];
+	char cstr[3*EXPR_STR+16];
 	sprintf(cstr,"clouds(%s,%s,%s)",top,bottom,type);
     return wxString(cstr);
 }
@@ -655,10 +657,10 @@ void VtxCloudsTabs::getObjAttributes(){
 	if(!is3D || !tnode)
 		return;
 
-	char top[128]="";
-	char bottom[128]="";
-	char type[128]="";
-	char offset[128]="";
+	char top[EXPR_STR]="";
+	char bottom[EXPR_STR]="";
+	char type[EXPR_STR]="";
+	char offset[EXPR_STR]="";
 
 	TNarg &args=*((TNarg *)tnode->left);
 

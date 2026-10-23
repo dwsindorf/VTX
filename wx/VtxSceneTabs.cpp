@@ -328,7 +328,7 @@ void VtxSceneTabs::AddFilterTab(wxWindow *panel){
 	hline->Add(TexMipSlider->getSizer(), 0, wxALIGN_LEFT | wxALL, 0);
 
 	FreqMipSlider=new SliderCtrl(panel,ID_FREQ_MIP_SLDR,"Freq",LABEL2,VALUE2,SLIDER2);
-	FreqMipSlider->setRange(-1,1.0);
+	FreqMipSlider->setRange(-3,1.0);
 	FreqMipSlider->setValue(0.0);
 	hline->Add(FreqMipSlider->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 

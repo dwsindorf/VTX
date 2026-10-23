@@ -5697,13 +5697,43 @@ std::string Planetoid::randFeature(int type) {
 		str+=std::to_string(layer_cnt);
 		break;
 	case RND_CLOUDS_2D:
-		str="Color(1,1,1,twist(0.1,noise(";
-		str+=randFeature(RND_NOISEFUNC3); // perlin or simplex
-		str+="|FS|NABS|SQR|TA,1,8,1,";
-		str+=std::to_string(0.5+0.4*r[6]);    // offset
-		str+=",";
-		str+=std::to_string(2+r[1]);    // freq
-		str+=",1,1,0,0.4,1e-5)))";
+		// Earth-like 2D clouds (alpha):
+		//   0.85*clamp(gain*(large+detail+fine+zonal),0,1)
+		// large : ridged low-order noise wound into cyclones (storms) and
+		//         sheared by latitude (twist) - fronts, comma systems;
+		//         its offset sets the cloud coverage
+		// detail: mid/high-order fBm, lightly wound - texture in the masses
+		// fine  : ridged high-order noise, barely wound - broken edges
+		// zonal : latitude bias (ITCZ band, clear subtropics, storm tracks)
+		// gain  : opacity (lower = thinner, more translucent cloud) without
+		//         changing coverage
+		// r[] is in [0,1), s[] in [-0.5,0.5)
+		{
+			char buf[2048];
+			double k1   =0.4+0.4*r[11];     // storm winding, large scale
+			double ssize=1.4+0.8*r[12];     // storm size
+			double tw   =0.1+0.4*r[13];     // latitude shear (twist): >0.5 gives Jupiter-like bands
+			double H1   =0.7+0.2*s[11];
+			double L1   =2.5+0.4*s[12];
+			double off1 =0.8+0.2*r[14];     // coverage
+			double off2 =0.8+0.16*r[15];
+			double gain =0.5+0.25*r[7];     // opacity
+			double z1   =0.4*(1+0.6*s[13]); // ITCZ
+			double z2   =0.4*(1+0.6*s[14]); // subtropics (clear)
+			double z3   =0.25*(1+0.6*s[15]);// storm tracks
+			snprintf(buf,sizeof(buf),
+				"Color(1,1,1,0.85*clamp(%.3g*("
+				"storms(%.3g,%.3g,twist(%.3g,noise(SIMPLEX|FS|NABS|SQR|TA,1,4,1,%.3g,%.3g,1.5,1,0,%.3g,1e-05)))"
+				"+storms(%.3g,%.3g,noise(SIMPLEX|FS|TA,3,8,1,0.6,2.2,0.8,1,0,%.3g,1e-05))"
+				"+storms(%.3g,%.3g,noise(SIMPLEX|FS|NABS|TA,6,6,1,0.5,2.2,0.3,1,0,0.35,1e-05))"
+				"+zonal(%.3g,%.3g,%.3g)),0,1))",
+				gain,
+				k1,ssize,tw,H1,L1,off1,
+				0.5*k1,ssize,off2,
+				0.25*k1,ssize,
+				z1,z2,z3);
+			str=buf;
+		}
 		break;
 	case RND_CLOUDS_3D:
 		str="clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)";

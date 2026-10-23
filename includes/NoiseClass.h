@@ -68,6 +68,7 @@ enum {		// distortion opcodes
 	NY,
 	NXY,
 	NHT,
+	NSTORMS,	// storms(): rotate about storm centers (StormTable)
 };
 
 enum {		// NTypes
@@ -317,6 +318,41 @@ public:
     static void resetLimits();
     static void resetStats();
     static void showStats();
+};
+
+//************************************************************
+// StormTable: storm (vortex) centers for the storms() function
+//
+// storms(k,size,expr) evaluates expr with the sample point rotated about
+// each storm center c by  k*strength*g(f)  radians, f=1-d/(size*R) inside
+// the storm's radius (d = chord distance on the unit sphere), 0 outside,
+// g(f)=f*f*(3-2f) (smoothstep: the winding is spread across the storm,
+// giving loose comma-shaped systems, and has zero slope at the edge so
+// there is no visible seam). size scales all storm radii. Rotating
+// the noise domain by an angle that grows toward the center winds the
+// noise into spiral arms (mid-latitude cyclones, tropical storms).
+// Positive strength = counterclockwise seen from outside the planet
+// (northern hemisphere cyclones), negative in the south.
+// The table is a deterministic function of the noise seed (Noise::rseed),
+// so the shader (uniforms storm_c/storm_s/storm_n, see noise_funcs.h) and
+// the CPU path (Noise::distort(NSTORMS)) use the same storms.
+// Frame: unit sphere, polar axis = y (as twist()).
+//************************************************************
+#define MAX_STORMS 24
+class StormTable {
+public:
+	double seed;
+	bool   valid;
+	int    n;
+	double c[MAX_STORMS][3];  // center (unit vector)
+	double R[MAX_STORMS];     // radius (chord length)
+	double s[MAX_STORMS];     // signed strength (radians at the center)
+
+	StormTable() { valid=false; n=0; seed=0;}
+	void build(double seed);
+	void warp(double &x, double &y, double &z, double k, double size=1) const;
+	static StormTable &get(double seed);
+	static thread_local double cur_size; // size arg of the storms() being evaluated (TNstorms)
 };
 
 #endif

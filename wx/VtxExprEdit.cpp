@@ -140,7 +140,7 @@ void VtxExprEdit::symbolsToExpr(){
 // VtxExprEdit::exprToSymbols() create symbol string from value string
 //-------------------------------------------------------------
 void VtxExprEdit::exprToSymbols(){
-	char buff[1024];
+	char buff[2048];
 
 	wxString expr=value_expr;
 	if(expr.IsEmpty()){

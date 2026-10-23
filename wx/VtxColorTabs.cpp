@@ -1,5 +1,7 @@
 
 #include "VtxColorTabs.h"
+// expression component buffers (valueString of user expressions can be long)
+#define EXPR_STR 4096
 #include "FileUtil.h"
 
 #include <wx/filefn.h>
@@ -167,10 +169,10 @@ void VtxColorTabs::saveLastExpr(){
     m_last_expr=getExpr();
 }
 wxString VtxColorTabs::getExpr(){
-	char red[MAXSTR]="0.0";
-	char green[MAXSTR]="0.0";
-	char blue[MAXSTR]="0.0";
-	char alpha[MAXSTR]="1.0";
+	char red[EXPR_STR]="0.0";
+	char green[EXPR_STR]="0.0";
+	char blue[EXPR_STR]="0.0";
+	char alpha[EXPR_STR]="1.0";
 	if(strlen(m_r_expr->GetValue().ToAscii()))
 		strcpy(red,m_r_expr->GetValue().ToAscii());
 	if(strlen(m_g_expr->GetValue().ToAscii()))
@@ -179,21 +181,21 @@ wxString VtxColorTabs::getExpr(){
 		strcpy(blue,m_b_expr->GetValue().ToAscii());
 	if(strlen(m_a_expr->GetValue().ToAscii()))
 		strcpy(alpha,m_a_expr->GetValue().ToAscii());
-	char cstr[MAXSTR];
+	char cstr[4*EXPR_STR+32];
 	sprintf(cstr,"Color(%s,%s,%s,%s)\n",red,green,blue,alpha);
     return wxString(cstr);
 }
 
 void VtxColorTabs::restoreLastExpr(){
-	char cstr[MAXSTR];
+	char cstr[4*EXPR_STR+32];
 	strcpy(cstr,m_last_expr.ToAscii());
 	if(strlen(cstr)){
 		TNcolor *tnode=(TNcolor*)TheScene->parse_node(cstr);
 		if(tnode){
-			char red[128]={0};
-			char green[128]={0};
-			char blue[128]={0};
-			char alpha[128]={0};
+			char red[EXPR_STR]={0};
+			char green[EXPR_STR]={0};
+			char blue[EXPR_STR]={0};
+			char alpha[EXPR_STR]={0};
 			TNarg &args=*((TNarg *)tnode->right);
 			args[0]->valueString(red);
 			args[1]->valueString(green);
@@ -241,9 +243,9 @@ void VtxColorTabs::setColorFromExpr(){
 }
 
 void VtxColorTabs::setExprFromColor(){
-	char red[128]={0};
-	char green[128]={0};
-	char blue[128]={0};
+	char red[EXPR_STR]={0};
+	char green[EXPR_STR]={0};
+	char blue[EXPR_STR]={0};
 	wxColor col=m_chooser->GetColour();
 	Color c;
 	c.set_rb(col.Red());
@@ -282,10 +284,10 @@ void VtxColorTabs::getObjAttributes(){
 		return;
 	TNcolor *tnode=object();
 
-	char red[128]={0};
-	char green[128]={0};
-	char blue[128]={0};
-	char alpha[128]={0};
+	char red[EXPR_STR]={0};
+	char green[EXPR_STR]={0};
+	char blue[EXPR_STR]={0};
+	char alpha[EXPR_STR]={0};
 
 	TNarg &args=*((TNarg *)tnode->right);
 
