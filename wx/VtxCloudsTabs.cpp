@@ -378,12 +378,12 @@ void VtxCloudsTabs::AddGeometryTab(wxWindow *panel){
 
     CminSlider=new SliderCtrl(panel,ID_CMIN_SLDR,"Size",LABEL1, VALUE,SLIDER2);
     CminSlider->setRange(1,128);
-    CminSlider->slider->SetToolTip("Minimum Point Size");
+    CminSlider->slider->SetToolTip("Sprite size: overlap = Size/8 x cloud cell (16 = 2x)");
     hline->Add(CminSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
     CmaxSlider=new SliderCtrl(panel,ID_CMAX_SLDR,"Range",LABEL1, VALUE,SLIDER2);
     CmaxSlider->setRange(1,4);
-    CmaxSlider->slider->SetToolTip("Point Size Range");
+    CmaxSlider->slider->SetToolTip("Random sprite size variation (4 = 40-100%)");
     hline->Add(CmaxSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 
     size_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);

@@ -106,7 +106,7 @@ static double	def_scatter_max=0.9;
 static double	def_redden=1.0;
 // exp(-2*(beta-beta_red)) for the 1/lambda^4 Rayleigh ratios: the sunset color
 // the original hard-coded reddening produced (REDDEN_DEF in sunlight.h)
-static Color	def_redden_color=Color(1.0,0.3185,0.01785);
+static Color	def_redden_color=Color(1.0,0.5,0.01785);
 static double	def_redden_grad=1.0;
 static double	def_twilite_value=1;
 static double	def_twilite_max=0.2;
@@ -5736,8 +5736,8 @@ std::string Planetoid::randFeature(int type) {
 		}
 		break;
 	case RND_CLOUDS_3D:
-		str="clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),2+60*HT)";
-		str+="Z(0.1*noise(GRADIENT|SQR,4.3,12,0.2,0.5,2,1,1,0,0,1e-06))+Color(1+4*HT,RED,RED,1)";
+		str="clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),1+50*HT)";
+		str+="Z(0.1*noise(GRADIENT|SQR,6,10,0.2,0.5,2,1,1,0,-0.2,1e-06))+Color(1+4*HT,RED,RED,1)";
 		break;
 	}
 	return str;
@@ -9733,6 +9733,9 @@ void Sky::map_color(MapData*d,Color &c)
 #define CLOUDS_NO_SHADER   3
 
 int clouds_mode=CLOUDS_GS_SHADER;
+// 3D cloud sprites sized from each triangle's on-screen extent (see
+// CloudLayer::setProgram); comment out for the original fixed-size sprites
+#define SPRITES_FROM_EXTENT
 //int clouds_mode=CLOUDS_POINTS;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
@@ -9754,6 +9757,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	sprites_file[0]=0;
 	sprites_image=0;
 	emission=Color(1,1,1,0.05);
+	ambient=Color(1,1,1,0.15);
 }
 CloudLayer::~CloudLayer()
 {
@@ -9847,13 +9851,17 @@ int CloudLayer::scale(double &zn, double &zf)
 void CloudLayer::get_vars()
 {
  	Spheroid::get_vars();
-	VGET("cmin",cmin,16);
-	VGET("cmax",cmax,4);
-	VGET("smax",smax,3);
+	VGET("cmin",cmin,60);
+	VGET("cmax",cmax,6);
+	VGET("smax",smax,2);
 	VGET("crot",crot,1);
 	VGET("num_sprites",num_sprites,1);
-	VGET("diffusion",diffusion,0.25);
+	VGET("diffusion",diffusion,1.35);
 	VGET("sprites_dim",sprites_dim,4);
+	if(exprs.get_local("ambient",Td))
+		ambient=Td.c;
+	else
+		ambient=Color(1,1,1,0.15);
 
 	if(exprs.get_local("sprites_file",Td))
 		strncpy(sprites_file,Td.string,256);
@@ -9867,13 +9875,14 @@ void CloudLayer::get_vars()
 void CloudLayer::set_vars()
 {
 	Spheroid::set_vars();
-	VSET("cmin",cmin,16);
-	VSET("cmax",cmax,4);
-	VSET("smax",smax,3);
-	VSET("crot",crot,0.5);
+	VSET("cmin",cmin,60);
+	VSET("cmax",cmax,6);
+	VSET("smax",smax,2);
+	VSET("crot",crot,1);
 	VSET("num_sprites",num_sprites,1);
-	VSET("diffusion",diffusion,0.25);
+	VSET("diffusion",diffusion,1.35);
 	VSET("sprites_dim",sprites_dim,4);
+	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
 }
@@ -10284,7 +10293,26 @@ bool CloudLayer::setProgram(){
 				double z=0.5+RAND(2); // random point size
 				double d=triangle->density(); // sprite type
 				double max=lerp(thickness,0,0.1,0.25,1); // increase detail at top-bottom surface boundary
+#ifdef SPRITES_FROM_EXTENT
+				// Size each sprite from its own triangle's on-screen extent
+				// (ext, pixels) instead of a fixed pixel range, so a distant
+				// cloud near the horizon (a few pixels across) isn't drawn with
+				// sprites hundreds of pixels wide. Sprites are larger than their
+				// triangle so neighbours overlap into one cloud (quad side ~=
+				// pts pixels; the view-angle scatter factor is not applied to
+				// the size, see ssize below). Capped at half the screen height.
+				// Sprites tab: Size (cmin, default 16) sets the overlap,
+				// cmin/8 x the triangle (16 -> 2.0); Range (cmax, 1-4, default
+				// 4) sets the random size variation (4: 40-100%, 1: 85-100%).
+				{
+					double overlap=cmin/8.0;
+					double var=0.15*cmax;
+					pts=overlap*ext*max*(1.0-var*(1.0-z));
+				}
+				pts=clamp(pts,1.0,0.5*TheView->viewport[3]);
+#else
 				pts=lerp(z*resolution*max,0,1,cmin,cmin*(1+cmax));
+#endif
 
 				//pts=pts<tsize?tsize:pts;
 				Point viewdir = p.mm(TheScene->viewMatrix);
@@ -10329,6 +10357,14 @@ bool CloudLayer::setProgram(){
 				glNormal3dv(v.values());
 
 				double ts=sqrt(2.0)*pts/TheView->viewport[3];  // center offset
+#ifdef SPRITES_FROM_EXTENT
+				// pts is already the wanted size: don't shrink it again by the
+				// view-angle scatter factor (that made slanted clouds - most of
+				// them seen from the ground - break into small flakes)
+				double ssize=ts;
+#else
+				double ssize=scatter*ts;
+#endif
 
 				glVertexAttrib4d(GLSLMgr::CommonID1, ht, depth,transmission, d); // Constants1
 
@@ -10357,7 +10393,7 @@ bool CloudLayer::setProgram(){
 					glVertex3dv(p.values());
 					break;
 				case CLOUDS_GS_SHADER: // geometry shader
-					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, scatter*ts,0,0);
+					glVertexAttrib4d(GLSLMgr::TexCoordsID,angle*2*PI-PI/4, ssize,0,0);
 					glVertex3d(p.x,p.y,p.z);
 					for(int i=0;i<ns-1;i++){
 						double r1=0.5+RAND(i+3);
@@ -10366,7 +10402,7 @@ bool CloudLayer::setProgram(){
 						double ra=2*PI*(i/ns+r2);
 						double rr=rsize*(1+0.3*r3);
 						//double rr=0.5*ts*(1+r3);
-						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, scatter*ts,ra,scatter*rr);
+						glVertexAttrib4d(GLSLMgr::TexCoordsID,crot*r1*2*PI-PI/4, ssize,ra,scatter*rr);
 						glVertex3d(p.x,p.y,p.z);
 					}
 					break;
