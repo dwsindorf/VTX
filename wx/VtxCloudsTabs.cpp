@@ -86,6 +86,24 @@ enum{
 	ID_SPRITES_DIM,
 	ID_CLOUDS_DIM,
 
+	ID_VBASE_SLDR,
+	ID_VBASE_TEXT,
+	ID_VTOP_SLDR,
+	ID_VTOP_TEXT,
+	ID_VCOVERAGE_SLDR,
+	ID_VCOVERAGE_TEXT,
+	ID_VHVAR_SLDR,
+	ID_VHVAR_TEXT,
+	ID_VFREQ_SLDR,
+	ID_VFREQ_TEXT,
+	ID_VDENSITY_SLDR,
+	ID_VDENSITY_TEXT,
+	ID_VEROSION_SLDR,
+	ID_VEROSION_TEXT,
+	ID_VDARKEN_SLDR,
+	ID_VDARKEN_TEXT,
+	ID_VSTEPS_SLDR,
+	ID_VSTEPS_TEXT,
 };
 
 //########################### VtxCloudsTabs Class ########################
@@ -121,6 +139,16 @@ SET_SLIDER_EVENTS(CMIN,VtxCloudsTabs,Cmin)
 SET_SLIDER_EVENTS(CMAX,VtxCloudsTabs,Cmax)
 SET_SLIDER_EVENTS(SMAX,VtxCloudsTabs,Smax)
 SET_SLIDER_EVENTS(CROT,VtxCloudsTabs,Crot)
+
+SET_SLIDER_EVENTS(VBASE,VtxCloudsTabs,VBase)
+SET_SLIDER_EVENTS(VTOP,VtxCloudsTabs,VTop)
+SET_SLIDER_EVENTS(VCOVERAGE,VtxCloudsTabs,VCoverage)
+SET_SLIDER_EVENTS(VHVAR,VtxCloudsTabs,VHvar)
+SET_SLIDER_EVENTS(VFREQ,VtxCloudsTabs,VFreq)
+SET_SLIDER_EVENTS(VDENSITY,VtxCloudsTabs,VDensity)
+SET_SLIDER_EVENTS(VEROSION,VtxCloudsTabs,VErosion)
+SET_SLIDER_EVENTS(VDARKEN,VtxCloudsTabs,VDarken)
+SET_SLIDER_EVENTS(VSTEPS,VtxCloudsTabs,VSteps)
 
 EVT_CHOICE(ID_SPRITES_DIM,VtxCloudsTabs::OnDimSelect)
 EVT_CHOICE(ID_CLOUDS_DIM,VtxCloudsTabs::OnCloudsDimSelect)
@@ -176,6 +204,15 @@ VtxCloudsTabs::~VtxCloudsTabs(){
 	delete NumSpritesSlider;
 	delete DiffusionSlider;
 
+	delete VBaseSlider;
+	delete VTopSlider;
+	delete VCoverageSlider;
+	delete VHvarSlider;
+	delete VFreqSlider;
+	delete VDensitySlider;
+	delete VErosionSlider;
+	delete VDarkenSlider;
+	delete VStepsSlider;
 }
 int VtxCloudsTabs::showMenu(bool expanded){
 	menu_action=TABS_NONE;
@@ -226,13 +263,42 @@ bool VtxCloudsTabs::Create(wxWindow* parent,
     AddImagesTab(page);
     sprites_page=page;
 
+    page=new wxPanel(this,wxID_ANY);
+    AddVolumeTab(page);
+    volume_page=page;
+    volume_page->Hide();
+
+    page_mode=-1;
     add3DTabs();
     return true;
 }
 
 void VtxCloudsTabs::add3DTabs(){
-    AddPage(geometry_page,wxT("Volume"),false);
-    AddPage(sprites_page,wxT("Images"),false);
+	setPages(1);
+}
+
+//-------------------------------------------------------------
+// VtxCloudsTabs::setPages() show the tabs for 2D, 3D sprite or volume
+// clouds (Object and Lighting are always shown)
+//-------------------------------------------------------------
+void VtxCloudsTabs::setPages(int mode){
+	if(mode==page_mode)
+		return;
+	while(GetPageCount()>2){
+		wxWindow *w=GetPage(2);
+		RemovePage(2);
+		w->Hide();
+	}
+	switch(mode){
+	case 1:
+		AddPage(geometry_page,wxT("Shape"),false);
+		AddPage(sprites_page,wxT("Images"),false);
+		break;
+	case 2:
+		AddPage(volume_page,wxT("Volume"),false);
+		break;
+	}
+	page_mode=mode;
 }
 
 void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
@@ -247,9 +313,10 @@ void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
 	object_name=new TextCtrl(panel,ID_NAME_TEXT,"Name",LABEL2,VALUE2+SLIDER2-40);
 	hline->Add(object_name->getSizer(),0,wxALIGN_LEFT|wxALL,0);
 
-	wxString dims[]={"2D","3D"};
+	wxString dims[]={"2D","3D","Vol"};
 
-	clouds_dim=new wxChoice(panel, ID_CLOUDS_DIM, wxDefaultPosition,wxSize(50,-1),2, dims);
+	clouds_dim=new wxChoice(panel, ID_CLOUDS_DIM, wxDefaultPosition,wxSize(50,-1),3, dims);
+	clouds_dim->SetToolTip("2D: textured layer, 3D: sprites, Vol: ray-marched volume");
 	clouds_dim->SetSelection(0);
 	hline->Add(clouds_dim,0,wxALIGN_LEFT|wxALL,0);
 
@@ -409,6 +476,72 @@ void VtxCloudsTabs::AddGeometryTab(wxWindow *panel){
 
 }
 
+void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    panel->SetSizer(topSizer);
+
+    wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
+    topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
+
+	wxStaticBoxSizer* layer_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Layer"));
+
+	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
+	VBaseSlider=new SliderCtrl(panel,ID_VBASE_SLDR,"Base",LABEL1, VALUE,SLIDER2);
+	VBaseSlider->setRange(0,10);
+	VBaseSlider->slider->SetToolTip("Cloud base height above the ground (km)");
+	hline->Add(VBaseSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	VTopSlider=new SliderCtrl(panel,ID_VTOP_SLDR,"Top",LABEL1, VALUE,SLIDER2);
+	VTopSlider->setRange(0.5,20);
+	VTopSlider->slider->SetToolTip("Highest cloud tops above the ground (km)");
+	hline->Add(VTopSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	VCoverageSlider=new SliderCtrl(panel,ID_VCOVERAGE_SLDR,"Cover",LABEL1, VALUE,SLIDER2);
+	VCoverageSlider->setRange(-1,1);
+	VCoverageSlider->slider->SetToolTip("Coverage bias, added to the Color alpha expression (or built-in coverage noise)");
+	hline->Add(VCoverageSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	VHvarSlider=new SliderCtrl(panel,ID_VHVAR_SLDR,"Ht Var",LABEL1, VALUE,SLIDER2);
+	VHvarSlider->setRange(0,1);
+	VHvarSlider->slider->SetToolTip("Cloud top height variation (0 = all clouds reach Top)");
+	hline->Add(VHvarSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	layer_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(layer_cntrls,0,wxALIGN_LEFT|wxALL,0);
+
+	wxStaticBoxSizer* shape_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Shape"));
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	VFreqSlider=new SliderCtrl(panel,ID_VFREQ_SLDR,"Freq",LABEL1, VALUE,SLIDER2);
+	VFreqSlider->setRange(0.1,3);
+	VFreqSlider->slider->SetToolTip("Cloud shape noise frequency (1/km): larger = smaller billows");
+	hline->Add(VFreqSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	VErosionSlider=new SliderCtrl(panel,ID_VEROSION_SLDR,"Erosion",LABEL1, VALUE,SLIDER2);
+	VErosionSlider->setRange(0,1);
+	VErosionSlider->slider->SetToolTip("Edge detail: billowy tops, wispy bases");
+	hline->Add(VErosionSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	VDensitySlider=new SliderCtrl(panel,ID_VDENSITY_SLDR,"Density",LABEL1, VALUE,SLIDER2);
+	VDensitySlider->setRange(1,60);
+	VDensitySlider->slider->SetToolTip("Extinction (1/km): higher = more opaque, harder edges");
+	hline->Add(VDensitySlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	VDarkenSlider=new SliderCtrl(panel,ID_VDARKEN_SLDR,"Darken",LABEL1, VALUE,SLIDER2);
+	VDarkenSlider->setRange(0,2);
+	VDarkenSlider->slider->SetToolTip("Darker cloud bases (ambient light at the base = 1-Darken/2 of the top)");
+	hline->Add(VDarkenSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	VStepsSlider=new SliderCtrl(panel,ID_VSTEPS_SLDR,"Steps",LABEL1, VALUE,SLIDER2);
+	VStepsSlider->setRange(16,256);
+	VStepsSlider->slider->SetToolTip("Ray march steps: quality vs render time");
+	hline->Add(VStepsSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	shape_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
+	boxSizer->Add(shape_cntrls,0,wxALIGN_LEFT|wxALL,0);
+}
+
 void VtxCloudsTabs::AddImagesTab(wxWindow *panel){
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
     panel->SetSizer(topSizer);
@@ -501,6 +634,13 @@ void VtxCloudsTabs::OnDimSelect(wxCommandEvent& event){
 void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 	GLuint dim=clouds_dim->GetSelection();
 	TNclouds *tnode=object()->getClouds();
+	double vmode=object()->vol_mode;
+	object()->vol_mode=(dim==2)?1:0;
+	if(vmode!=object()->vol_mode){
+		object()->invalidate();
+		TheView->set_changed_detail();
+		TheScene->rebuild_all();
+	}
 	switch(dim){
 	case 0: // 2D selected
 		if(tnode){
@@ -511,6 +651,7 @@ void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 		}
 		break;
 	case 1: // 3d selected
+	case 2: // volume selected (also needs the clouds() node)
 		if(!tnode){
 			cout<< "2D->3D"<<endl;
 			wxString str=getCloudsExpr();
@@ -641,6 +782,16 @@ void VtxCloudsTabs::getObjAttributes(){
 	updateSlider(CrotSlider,obj->crot);
 	updateSlider(NumSpritesSlider,obj->num_sprites);
 
+	updateSlider(VBaseSlider,obj->vol_base);
+	updateSlider(VTopSlider,obj->vol_top);
+	updateSlider(VCoverageSlider,obj->vol_cov);
+	updateSlider(VHvarSlider,obj->vol_hvar);
+	updateSlider(VFreqSlider,obj->vol_freq);
+	updateSlider(VDensitySlider,obj->vol_sigma);
+	updateSlider(VErosionSlider,obj->vol_estr);
+	updateSlider(VDarkenSlider,obj->diffusion);
+	updateSlider(VStepsSlider,obj->vol_steps);
+
 	updateColor(AmbientSlider,obj->ambient);
 	updateColor(EmissionSlider,obj->emission);
 	updateColor(SpecularSlider, obj->specular);
@@ -651,7 +802,7 @@ void VtxCloudsTabs::getObjAttributes(){
 
 	int is3D=obj->threeD()?1:0;
 
-	clouds_dim->SetSelection(is3D);
+	clouds_dim->SetSelection(obj->volume()?2:is3D);
 
 	TNclouds *tnode=obj->getClouds();
 	if(!is3D || !tnode)
@@ -730,18 +881,7 @@ void VtxCloudsTabs::setObjAttributes(){
 //-------------------------------------------------------------
 void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
-	int pages=GetPageCount();
-
-	if(obj->threeD()){
-		if(pages==2){
-			InsertPage(2,geometry_page,"Volume",false,-1);
-			InsertPage(3,sprites_page,"Images",false,-1);
-		}
-	}
-	else if(pages==4){
-		RemovePage(2);
-		RemovePage(2);
-	}
+	setPages(obj->threeD()?(obj->volume()?2:1):0);
 	if(update_needed){
 		getObjAttributes();
 	}

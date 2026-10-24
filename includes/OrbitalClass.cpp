@@ -9731,6 +9731,7 @@ void Sky::map_color(MapData*d,Color &c)
 #define CLOUDS_POINTS      1
 #define CLOUDS_GS_SHADER   2 // use geometry shader for 3d clouds
 #define CLOUDS_NO_SHADER   3
+#define CLOUDS_VOLUME      4 // ray-marched volume (clouds.volume.frag)
 
 int clouds_mode=CLOUDS_GS_SHADER;
 // 3D cloud sprites sized from each triangle's on-screen extent (see
@@ -9758,6 +9759,15 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	sprites_image=0;
 	emission=Color(1,1,1,0.05);
 	ambient=Color(1,1,1,0.15);
+	vol_base=1.5;
+	vol_top=4.0;
+	vol_cov=-0.15;
+	vol_freq=0.55;
+	vol_sigma=15;
+	vol_mode=0;
+	vol_hvar=0.5;
+	vol_estr=0.6;
+	vol_steps=96;
 }
 CloudLayer::~CloudLayer()
 {
@@ -9795,6 +9805,12 @@ int CloudLayer::render_pass()
 
 	if(!view_group() || offscreen()|| !isEnabled())
 	    return 0;
+	if(volume() && getParent()==TheScene->viewobj){
+		// full screen ray-march pass composited over the finished terrain
+		// image: render in the last pass (FG1, after the view object's FG0)
+		clear_pass(FG1);
+		return selected();
+	}
 	if(getParent()==TheScene->viewobj){
 		if(near_group()){
 			if(outside())
@@ -9858,6 +9874,15 @@ void CloudLayer::get_vars()
 	VGET("num_sprites",num_sprites,1);
 	VGET("diffusion",diffusion,1.35);
 	VGET("sprites_dim",sprites_dim,4);
+	VGET("vol_mode",vol_mode,0);
+	VGET("vol_base",vol_base,1.5);
+	VGET("vol_top",vol_top,4.0);
+	VGET("vol_coverage",vol_cov,-0.15);
+	VGET("vol_freq",vol_freq,0.55);
+	VGET("vol_sigma",vol_sigma,15);
+	VGET("vol_hvar",vol_hvar,0.5);
+	VGET("vol_erosion",vol_estr,0.6);
+	VGET("vol_steps",vol_steps,96);
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
@@ -9882,6 +9907,15 @@ void CloudLayer::set_vars()
 	VSET("num_sprites",num_sprites,1);
 	VSET("diffusion",diffusion,1.35);
 	VSET("sprites_dim",sprites_dim,4);
+	VSET("vol_mode",vol_mode,0);
+	VSET("vol_base",vol_base,1.5);
+	VSET("vol_top",vol_top,4.0);
+	VSET("vol_coverage",vol_cov,-0.15);
+	VSET("vol_freq",vol_freq,0.55);
+	VSET("vol_sigma",vol_sigma,15);
+	VSET("vol_hvar",vol_hvar,0.5);
+	VSET("vol_erosion",vol_estr,0.6);
+	VSET("vol_steps",vol_steps,96);
 	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
@@ -10034,6 +10068,33 @@ void CloudLayer::render()
 		set_rotation();
 
 		setMatrix();
+		if(volume() && Render.draw_shaded()){
+			// full screen ray march: doesn't need (or wait for) visible
+			// map cells, so set up what Spheroid::render_object and
+			// Map::render_shaded would and call setProgram directly
+			Raster.surface=1;
+			Raster.set_all();
+			set_lighting();
+			first=1;
+			terrain.init_render();
+			Td.albedo=albedo;
+			Td.shine=shine;
+			Td.ambient=ambient;
+			Td.emission=emission;
+			Td.diffuse=diffuse;
+			Td.specular=specular;
+			map->make_current();
+			map->tid=ID0;
+			map->tp=Td.properties[ID0];
+			Td.tp=map->tp;
+			if(map->tp)
+				setProgram();
+			first=0;
+			TheScene->popMatrix();
+			glDepthMask(GL_TRUE);
+			glUseProgram(0);
+			return;
+		}
 		bool v3d=threeD()&& Render.draw_shaded();
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
@@ -10055,6 +10116,7 @@ void CloudLayer::render()
 		    	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 				break;
 		    case CLOUDS_NO_SHADER:
+		    case CLOUDS_VOLUME:
 		    	glDisable(GL_POINT_SPRITE);
 				break;
 		    }
@@ -10081,7 +10143,8 @@ void CloudLayer::render()
 //-------------------------------------------------------------
 bool CloudLayer::setProgram(){
 	bool v3d=threeD();
-	if(v3d && map->tid!=TOP)
+	bool vol=volume();
+	if(v3d && !vol && map->tid!=TOP)
 		return false;
 	bool texs_enabled=Render.textures();
 
@@ -10186,7 +10249,11 @@ bool CloudLayer::setProgram(){
 	//cout <<"clouds dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
 
 	set_wscale();
-	if(v3d){
+	if(vol){
+		setVolumeVars(vars);
+		GLSLMgr::loadProgram("clouds.volume.vert","clouds.volume.frag");
+	}
+	else if(v3d){
 		switch(clouds_mode){
 		case CLOUDS_BILLBOARDS:
 			glBindTexture(GL_TEXTURE_2D, sprites_image);
@@ -10232,6 +10299,10 @@ bool CloudLayer::setProgram(){
 
 	double resolution= sqrt(map->resolution/16);
 
+	if(vol){
+		renderVolume();
+		return false;
+	}
 	if(v3d){
 		glEnable(GL_BLEND);
 		map->frontface=GL_BACK;
@@ -10437,6 +10508,190 @@ bool CloudLayer::setProgram(){
 }
 
 //-------------------------------------------------------------
+// Volume clouds (clouds_mode CLOUDS_VOLUME)
+//
+// The view rays are built from the GL matrices in effect for this layer
+// (GL_PROJECTION holds the lookat, GL_MODELVIEW the layer's object
+// transform). With A = P*M, the eye is A^-1*(0,0,1,0) (the point that maps
+// to w=0) and a screen corner's ray passes through A^-1*(x,y,1,1). Doing
+// this in double precision gives the eye, the corner rays and the sun
+// direction directly in the layer's object space: planet center at the
+// origin, unscaled. Converted to km for the shader.
+//-------------------------------------------------------------
+static void vol_mmul(const double *A,const double *B,double *C){ // column major C=A*B
+	for(int c=0;c<4;c++)
+		for(int r=0;r<4;r++){
+			double s=0;
+			for(int k=0;k<4;k++)
+				s+=A[k*4+r]*B[c*4+k];
+			C[c*4+r]=s;
+		}
+}
+static void vol_mvec(const double *A,const double *v,double *o){
+	for(int r=0;r<4;r++)
+		o[r]=A[r]*v[0]+A[4+r]*v[1]+A[8+r]*v[2]+A[12+r]*v[3];
+}
+static bool vol_minv(const double *m,double *inv){ // 4x4 Gauss-Jordan
+	double a[4][8];
+	for(int r=0;r<4;r++)
+		for(int c=0;c<4;c++){
+			a[r][c]=m[c*4+r];
+			a[r][c+4]=(r==c)?1:0;
+		}
+	for(int c=0;c<4;c++){
+		int piv=c;
+		for(int r=c+1;r<4;r++)
+			if(fabs(a[r][c])>fabs(a[piv][c]))
+				piv=r;
+		if(fabs(a[piv][c])<1e-300)
+			return false;
+		if(piv!=c)
+			for(int k=0;k<8;k++){ double t=a[c][k]; a[c][k]=a[piv][k]; a[piv][k]=t; }
+		double d=a[c][c];
+		for(int k=0;k<8;k++)
+			a[c][k]/=d;
+		for(int r=0;r<4;r++){
+			if(r==c) continue;
+			double f=a[r][c];
+			if(f!=0)
+				for(int k=0;k<8;k++)
+					a[r][k]-=f*a[c][k];
+		}
+	}
+	for(int r=0;r<4;r++)
+		for(int c=0;c<4;c++)
+			inv[c*4+r]=a[r][c+4];
+	return true;
+}
+//#define DEBUG_VOLUME_CLOUDS
+void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
+	const double KM=1.609344/MILES;      // km per scene unit
+	double M[16],P[16],A[16],Ai[16],Mi[16];
+	TheScene->getMatrix(GL_MODELVIEW,M);
+	TheScene->getMatrix(GL_PROJECTION,P);
+	vol_mmul(P,M,A);
+	if(!vol_minv(A,Ai) || !vol_minv(M,Mi))
+		return;
+	double v[4],e[4];
+	v[0]=0;v[1]=0;v[2]=1;v[3]=0;
+	vol_mvec(Ai,v,e);
+	Point eye(e[0]/e[3],e[1]/e[3],e[2]/e[3]);
+	// The draw frame is eye-relative: MapData::point() returns
+	// point_-TheScene->xpoint when eyeref() is set, so the planet center
+	// is at -xpoint in the draw frame, not at the origin.
+	Point pc(0,0,0);
+	if(TheScene->eyeref())
+		pc=Point(0,0,0)-TheScene->xpoint;   // planet center, draw frame
+	// corner rays to the far plane, NOT normalized: points on the far plane
+	// are linear across the screen, so the shader's bilinear interpolation
+	// of these is exact (it normalizes per pixel). Scaled by the center
+	// ray's length to keep the values near 1.
+	Point ray[5];
+	double ndc[5][2]={{-1,-1},{1,-1},{-1,1},{1,1},{0,0}};
+	for(int i=0;i<5;i++){
+		double f[4];
+		v[0]=ndc[i][0];v[1]=ndc[i][1];v[2]=1;v[3]=1;
+		vol_mvec(Ai,v,f);
+		Point fp(f[0]/f[3],f[1]/f[3],f[2]/f[3]);
+		ray[i]=fp-eye;
+	}
+	double rl=ray[4].length();
+	if(rl<=0)
+		return;
+	for(int i=0;i<4;i++)
+		ray[i]=ray[i]/rl;
+	eye=eye-pc;                             // eye, planet-centered (after rays)
+	// sun: GL light 0 position is in the modelview (eye) frame
+	GLfloat lp[4]={0,0,1,0};
+	glGetLightfv(GL_LIGHT0,GL_POSITION,lp);
+	double l[4]={lp[0],lp[1],lp[2],lp[3]},lo[4];
+	vol_mvec(Mi,l,lo);
+	Point sun=(lp[3]!=0)?Point(lo[0]/lo[3],lo[1]/lo[3],lo[2]/lo[3])-pc:Point(lo[0],lo[1],lo[2]);
+	sun=sun.normalize();
+	GLfloat ld[4]={1,1,1,1};
+	glGetLightfv(GL_LIGHT0,GL_DIFFUSE,ld);
+
+	Sky *sky=((Spheroid*)parent)->get_sky();
+	Color skyc=sky?sky->color():Color(0.45,0.75,0.9);
+
+	double rg=parent->size*KM;
+	eye=eye*KM;
+	double ht=eye.length()-rg;
+	double far_km=ht>vol_top?400:60;         // km: longer rays from above the clouds
+
+#ifdef DEBUG_VOLUME_CLOUDS
+	cout<<"volume clouds: eyeref "<<TheScene->eyeref()<<" pc "<<pc.x*KM<<","<<pc.y*KM<<","<<pc.z*KM
+		<<" eye ht "<<ht<<" km rg "<<rg<<" km sun "<<sun.x<<","<<sun.y<<","<<sun.z
+		<<" ray00 "<<ray[0].x<<","<<ray[0].y<<","<<ray[0].z<<endl;
+#endif
+	vars.newFloatVec("vol_eye",eye.x,eye.y,eye.z);
+	vars.newFloatVec("vol_ray00",ray[0].x,ray[0].y,ray[0].z);
+	vars.newFloatVec("vol_ray10",ray[1].x,ray[1].y,ray[1].z);
+	vars.newFloatVec("vol_ray01",ray[2].x,ray[2].y,ray[2].z);
+	vars.newFloatVec("vol_ray11",ray[3].x,ray[3].y,ray[3].z);
+	vars.newFloatVec("vol_sun",sun.x,sun.y,sun.z);
+	// existing Lighting tab controls:
+	//   Diffuse   sunlight color * strength
+	//   Ambient   sky light color * strength (underside brightness)
+	//   Darken    (diffusion) how much darker the cloud base is than the top
+	//   Specular  alpha: silver lining (forward scattering) strength
+	//   Shine     forward scattering sharpness
+	//   Radiance  (emission) self glow
+	double sunI=3.2*diffuse.alpha();
+	vars.newFloatVec("vol_sun_color",sunI*ld[0]*diffuse.red(),sunI*ld[1]*diffuse.green(),sunI*ld[2]*diffuse.blue());
+	vars.newFloatVec("vol_sky_color",skyc.red(),skyc.green(),skyc.blue());
+	double ambI=6.0*ambient.alpha();       // default alpha 0.15 -> 0.9
+	vars.newFloatVec("vol_amb_color",ambI*ambient.red(),ambI*ambient.green(),ambI*ambient.blue());
+	vars.newFloatVar("vol_amb_base",clamp(1.0-0.5*diffusion,0.0,1.0));
+	double ems=emission.alpha();
+	vars.newFloatVec("vol_emission",ems*emission.red(),ems*emission.green(),ems*emission.blue());
+	vars.newFloatVar("vol_fwd_g",clamp(shine/(shine+3.0),0.0,0.95));
+	vars.newFloatVar("vol_fwd_w",clamp(3.5*specular.alpha(),0.0,1.0));
+	vars.newFloatVar("vol_rg",rg);
+	vars.newFloatVar("vol_rb",rg+vol_base);
+	vars.newFloatVar("vol_rt",rg+vol_top);
+	vars.newFloatVar("vol_far",far_km);
+	vars.newFloatVar("vol_cov",vol_cov);
+	vars.newFloatVar("vol_freq",vol_freq);
+	vars.newFloatVar("vol_wfreq",0.09);
+	vars.newFloatVar("vol_sigma",vol_sigma);
+	vars.newFloatVar("vol_efreq",8.0);
+	vars.newFloatVar("vol_estr",vol_estr);
+	vars.newFloatVar("vol_hvar",vol_hvar);
+	vars.newFloatVar("vol_haze",80.0);
+	vars.newIntVar("vol_steps",(int)clamp(vol_steps,8.0,256.0));
+	// noise level of detail (as GLSLMgr::setVertexAttributes Position1.w):
+	// orders = log2(0.25*wscale/depth), wscale in km
+	double wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
+	vars.newFloatVar("vol_wlog",log2(0.25*wscale*KM));
+	vars.newFloatVar("vol_seed",fmod(fabs(rseed)*137.0,97.0));
+}
+// draw the full screen quad for clouds.volume.frag
+void CloudLayer::renderVolume(){
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+	glDisable(GL_CULL_FACE);
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+		glVertex3f(-1.0f,-1.0f,0.0f);
+		glVertex3f( 1.0f,-1.0f,0.0f);
+		glVertex3f( 1.0f, 1.0f,0.0f);
+		glVertex3f(-1.0f, 1.0f,0.0f);
+	glEnd();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glEnable(GL_DEPTH_TEST);
+}
+
+//-------------------------------------------------------------
 // CloudLayer::threeD() return true for volume clouds
 //-------------------------------------------------------------
 bool CloudLayer::threeD()
@@ -10444,6 +10699,16 @@ bool CloudLayer::threeD()
 	if(clouds/*&& clouds->threeD()*/)
 		return true;
 	return false;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::volume() return true for ray-marched volume clouds
+// (a 3D layer with vol_mode set, or all 3D layers if clouds_mode is
+// CLOUDS_VOLUME)
+//-------------------------------------------------------------
+bool CloudLayer::volume()
+{
+	return threeD() && (vol_mode>0 || clouds_mode==CLOUDS_VOLUME);
 }
 
 //-------------------------------------------------------------
@@ -10588,7 +10853,7 @@ void CloudLayer::adapt_object()
 	}
 
 	terrain.setAdaptMode();
-	if(v3d && Render.draw_shaded()){
+	if(v3d && Render.draw_shaded() && !volume()){
 		map->set_sort(1);
 		map->set_make_lists(1);
 		map->enablelists(false);

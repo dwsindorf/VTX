@@ -37,8 +37,21 @@ protected:
 	SliderCtrl *NumSpritesSlider;
 	SliderCtrl *DiffusionSlider;
 
+	// volume clouds
+	SliderCtrl *VBaseSlider;
+	SliderCtrl *VTopSlider;
+	SliderCtrl *VCoverageSlider;
+	SliderCtrl *VHvarSlider;
+	SliderCtrl *VFreqSlider;
+	SliderCtrl *VDensitySlider;
+	SliderCtrl *VErosionSlider;
+	SliderCtrl *VDarkenSlider;
+	SliderCtrl *VStepsSlider;
+
 	wxNotebookPage *geometry_page;
 	wxNotebookPage *sprites_page;
+	wxNotebookPage *volume_page;
+	int page_mode;   // pages shown: 0=2D, 1=3D sprites, 2=volume
 
 	wxArrayString files;
 	wxChoice *choices;
@@ -56,7 +69,9 @@ protected:
 	void AddLightingTab(wxWindow *panel);
 	void AddGeometryTab(wxWindow *panel);
 	void AddImagesTab(wxWindow *panel);
+	void AddVolumeTab(wxWindow *panel);
 	void add3DTabs();
+	void setPages(int mode);
 
 	CloudLayer *object() 		{ return ((CloudLayer*)(object_node->node));}
 	double parentSize(){
@@ -176,6 +191,15 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Cmax,object()->cmax)
 	DEFINE_SLIDER_VAR_EVENTS(Smax,object()->smax)
 	DEFINE_SLIDER_VAR_EVENTS(Crot,object()->crot)
+	DEFINE_SLIDER_VAR_EVENTS(VBase,object()->vol_base)
+	DEFINE_SLIDER_VAR_EVENTS(VTop,object()->vol_top)
+	DEFINE_SLIDER_VAR_EVENTS(VCoverage,object()->vol_cov)
+	DEFINE_SLIDER_VAR_EVENTS(VHvar,object()->vol_hvar)
+	DEFINE_SLIDER_VAR_EVENTS(VFreq,object()->vol_freq)
+	DEFINE_SLIDER_VAR_EVENTS(VDensity,object()->vol_sigma)
+	DEFINE_SLIDER_VAR_EVENTS(VErosion,object()->vol_estr)
+	DEFINE_SLIDER_VAR_EVENTS(VDarken,object()->diffusion)
+	DEFINE_SLIDER_VAR_EVENTS(VSteps,object()->vol_steps)
 	DEFINE_COLOR_VAR_EVENTS(Ambient,object()->ambient)
 	DEFINE_COLOR_VAR_EVENTS(Specular,object()->specular)
 	DEFINE_COLOR_VAR_EVENTS(Diffuse,object()->diffuse)

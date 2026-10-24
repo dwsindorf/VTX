@@ -719,6 +719,16 @@ public:
 	double     diffusion;
 	bool   	   animation;
 	double     rate;
+	// ray-marched volume clouds (clouds_mode CLOUDS_VOLUME, clouds.volume.frag)
+	double     vol_base;    // cloud base above ground (km)
+	double     vol_top;     // cloud top above ground (km)
+	double     vol_cov;     // coverage bias (-0.5..0.5)
+	double     vol_freq;    // shape noise frequency (1/km)
+	double     vol_sigma;   // extinction (1/km)
+	double     vol_mode;    // 1: this 3D layer is drawn as ray-marched volume clouds
+	double     vol_hvar;    // cloud top height variation (0..1)
+	double     vol_estr;    // erosion (edge detail) strength (0..1)
+	double     vol_steps;   // view ray march steps (quality)
 	CloudLayer(Orbital *m, double s);
 	~CloudLayer();
 	const char *name()			{ return "Clouds";}
@@ -739,6 +749,7 @@ public:
 	bool setProgram();
 	int scale(double&n, double&f);
 	bool threeD();
+	bool volume();
 	TNclouds *getClouds() { return clouds;}
 	void setClouds(TNclouds *c);
 	void deleteClouds();
@@ -753,6 +764,8 @@ public:
 	char *getSpritesFile(GLuint &dim);
 	void getSpritesFilePath(char *);
 	void getSpritesDir(int dim,char *);
+	void setVolumeVars(GLSLVarMgr &vars);
+	void renderVolume();
     NodeIF *getInstance(NodeIF *prev);
     
 	static CloudLayer *newInstance(bool is3d);
