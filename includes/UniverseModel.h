@@ -96,6 +96,9 @@ enum gen_codes{
 	GN_1D           = 0x00800000,
 	GN_2D           = 0x00900000,
 	GN_TEXTURE      = GN_1D|GN_2D,
+	GN_3D           = 0x00a00000,   // clouds: 3D sprites
+	GN_VOL          = 0x00b00000,   // clouds: ray-marched volume
+	GN_CLOUDS       = GN_2D|GN_3D|GN_VOL,
 
 };
 class UniverseModel : public Model

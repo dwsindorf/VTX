@@ -38,7 +38,6 @@ protected:
 	SliderCtrl *DiffusionSlider;
 
 	// volume clouds
-	SliderCtrl *VBaseSlider;
 	SliderCtrl *VTopSlider;
 	SliderCtrl *VCoverageSlider;
 	SliderCtrl *VHvarSlider;
@@ -191,7 +190,6 @@ public:
 	DEFINE_SLIDER_VAR_EVENTS(Cmax,object()->cmax)
 	DEFINE_SLIDER_VAR_EVENTS(Smax,object()->smax)
 	DEFINE_SLIDER_VAR_EVENTS(Crot,object()->crot)
-	DEFINE_SLIDER_VAR_EVENTS(VBase,object()->vol_base)
 	DEFINE_SLIDER_VAR_EVENTS(VTop,object()->vol_top)
 	DEFINE_SLIDER_VAR_EVENTS(VCoverage,object()->vol_cov)
 	DEFINE_SLIDER_VAR_EVENTS(VHvar,object()->vol_hvar)

@@ -302,14 +302,18 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 			// not from replace_list (wrong list when adding)
 			LinkedList<ModelSym*> flist;
 			LinkedList<ModelSym*> cands;
-			TheScene->model->getFileList(sym->value,flist);
-			flist.ss();
-			ModelSym *fs;
-			while(fs=flist++){
-				if(fs->isFile())
-					cands.add(fs);
-				else if(fs->isDir())
-					File.getFileNameList(fs->dir(),"*.spx",cands);
+			if(sym->path[0])   // subdirectory <Random>: that directory only
+				File.getFileNameList(sym->path,"*.spx",cands);
+			else{
+				TheScene->model->getFileList(sym->value,flist);
+				flist.ss();
+				ModelSym *fs;
+				while(fs=flist++){
+					if(fs->isFile())
+						cands.add(fs);
+					else if(fs->isDir())
+						File.getFileNameList(fs->dir(),"*.spx",cands);
+				}
 			}
 			if(cands.size){
 				cands.ss();
@@ -356,7 +360,15 @@ void VtxSceneDialog::OnTreeMenuSelect(wxTreeEvent&event){
 		obj->setRandom(false);
 		obj->setDefault();
 		obj->invalidate();
-        TheScene->rebuild();
+		if(obj->typeValue()==ID_CLOUDS){
+			// the expression was replaced: rebuild its tree nodes and the
+			// layer (as for a replace)
+			rebuildObjectTree();
+			selectObject(obj);
+			TheScene->rebuild_all();
+		}
+		else
+			TheScene->rebuild();
 		break;
 	case TABS_RANDOMIZE:
 		obj->setRandom(true);

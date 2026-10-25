@@ -1,6 +1,7 @@
 varying vec4 WorldNormal;
 
 #include "clouds.lighting.frag"
+#include "cloud_haze.h"
 #define _BUMPS_
 
 #if NVALS >0
@@ -38,6 +39,7 @@ void main(void) {
     	color.rgb=setLighting(color.rgb,normal-bump);
 
      color=clamp(color,0.0,1.0);
+	 color.rgb=mix(color.rgb,ch_color,cloudHaze(length(EyeDirection.xyz)));
 	 gl_FragData[0]=color;
 //#ifdef BACK
 	 vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params

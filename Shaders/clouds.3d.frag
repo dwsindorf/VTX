@@ -1,4 +1,5 @@
 #include "clouds.lighting.frag"
+#include "cloud_haze.h"
 
 #if NVALS >0
 #include "noise_funcs.h"
@@ -34,6 +35,7 @@ void main(void) {
 	    color.a=0;
     if(lighting)
     	color.rgb=setLighting(color.rgb,normal);
+	color.rgb=mix(color.rgb,ch_color,cloudHaze(length(EyeDirection.xyz)));
 
 	gl_FragData[0]=color;
 	gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy); // FBO properties (background)

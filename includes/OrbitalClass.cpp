@@ -4866,10 +4866,7 @@ Ring *Planetoid::newRing(){
 
 CloudLayer *Planetoid::newClouds(bool is3d){
 	CloudLayer *clouds=CloudLayer::newInstance(is3d);
-	if(is3d)
-		clouds->size=1.005*size;
-	else
-		clouds->size=1.01*size;
+	clouds->size=size+CloudLayer::defaultHeight(is3d?GN_3D:GN_2D)*MILES;
 	clouds->ht=clouds->size-size;
 	return clouds;
 }
@@ -5006,6 +5003,7 @@ enum orbital_features{
 	RND_LAYER_VAR,
 	RND_CLOUDS_2D,
 	RND_CLOUDS_3D,
+	RND_CLOUDS_VOL,
 	RND_SKY,
 };
 #define DESSERT_THEME     Color(0.9,0.8,0.7),Color(0.9,0.82,0.68),Color(0.62,0.52,0.44),Color(1,0.9,0.64)
@@ -5738,6 +5736,26 @@ std::string Planetoid::randFeature(int type) {
 	case RND_CLOUDS_3D:
 		str="clouds(HT,-0.2*HT*(1-0.1*noise(GRADIENT|NABS|SQR,9,4,0.1,0.6)),1+50*HT)";
 		str+="Z(0.1*noise(GRADIENT|SQR,6,10,0.2,0.5,2,1,1,0,-0.2,1e-06))+Color(1+4*HT,RED,RED,1)";
+		break;
+	case RND_CLOUDS_VOL:
+		// volume clouds: the Z noise is the cloud shape (clouds.volume.frag),
+		// varied around the default
+		// Z(noise(SIMPLEX|FS|NLOD|SCALE|SQR|TA|UNS,5,8.5,0.9,0.329,2.14,0.2,...))
+		// args: start, orders, bias, H, L, ampl. r[] is in [0,1), s[] in [-0.5,0.5)
+		{
+			char buf[512];
+			// ranges centered on the defaults (r=0.5, s=0: CloudLayer::setDefault)
+			double start=4.25+1.5*r[1];     // feature size (lower = bigger clouds)
+			double orders=8+r[2];
+			double bias=0.8+0.2*r[3];
+			double H=0.329+0.06*s[7];
+			double L=2.14+0.15*s[8];
+			double ampl=0.125+0.15*r[6];    // thickness (CloudLayer::makeType)
+			snprintf(buf,sizeof(buf),
+				"Z(noise(SIMPLEX|FS|NLOD|SCALE|SQR|TA|UNS,%.3g,%.3g,%.3g,%.3g,%.3g,%.3g,1,0,0,1e-05))+Color(1,1,1,1)",
+				start,orders,bias,H,L,ampl);
+			str=buf;
+		}
 		break;
 	}
 	return str;
@@ -9760,14 +9778,14 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	emission=Color(1,1,1,0.05);
 	ambient=Color(1,1,1,0.15);
 	vol_base=1.5;
-	vol_top=4.0;
-	vol_cov=-0.15;
-	vol_freq=0.55;
-	vol_sigma=15;
+	vol_top=10;
+	vol_cov=-0.6;
+	vol_freq=0.3;
+	vol_sigma=1;
 	vol_mode=0;
-	vol_hvar=0.5;
-	vol_estr=0.6;
-	vol_steps=96;
+	vol_hvar=0.25;
+	vol_estr=1;
+	vol_steps=256;
 }
 CloudLayer::~CloudLayer()
 {
@@ -9787,7 +9805,7 @@ int CloudLayer::adapt_pass()
 
 	if(!local_group() || !view_group() || offscreen()|| !isEnabled())
         clear_pass(BG2);
-    else if(threeD())
+    else if(threeD() || volume())
 		clear_pass(FG1);
 		//clear_pass(FG0);
     else
@@ -9849,7 +9867,7 @@ int CloudLayer::scale(double &zn, double &zf)
 	if (!TheScene->render_mode())
 		return t;
 
-	if (map->triangles.size > 10 && threeD() && Render.draw_shaded()) {
+	if (map->triangles.size > 10 && threeD() && !volume() && Render.draw_shaded()) {
 		zn = map->triangles[0]->distance;
 		zf = map->triangles[map->triangles.size - 1]->distance;
 #ifdef DEBUG_CLOUDS
@@ -9876,13 +9894,13 @@ void CloudLayer::get_vars()
 	VGET("sprites_dim",sprites_dim,4);
 	VGET("vol_mode",vol_mode,0);
 	VGET("vol_base",vol_base,1.5);
-	VGET("vol_top",vol_top,4.0);
-	VGET("vol_coverage",vol_cov,-0.15);
-	VGET("vol_freq",vol_freq,0.55);
-	VGET("vol_sigma",vol_sigma,15);
-	VGET("vol_hvar",vol_hvar,0.5);
-	VGET("vol_erosion",vol_estr,0.6);
-	VGET("vol_steps",vol_steps,96);
+	VGET("vol_top",vol_top,10);
+	VGET("vol_coverage",vol_cov,-0.6);
+	VGET("vol_freq",vol_freq,0.3);
+	VGET("vol_sigma",vol_sigma,1);
+	VGET("vol_hvar",vol_hvar,0.25);
+	VGET("vol_erosion",vol_estr,1);
+	VGET("vol_steps",vol_steps,256);
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
@@ -9909,13 +9927,13 @@ void CloudLayer::set_vars()
 	VSET("sprites_dim",sprites_dim,4);
 	VSET("vol_mode",vol_mode,0);
 	VSET("vol_base",vol_base,1.5);
-	VSET("vol_top",vol_top,4.0);
-	VSET("vol_coverage",vol_cov,-0.15);
-	VSET("vol_freq",vol_freq,0.55);
-	VSET("vol_sigma",vol_sigma,15);
-	VSET("vol_hvar",vol_hvar,0.5);
-	VSET("vol_erosion",vol_estr,0.6);
-	VSET("vol_steps",vol_steps,96);
+	VSET("vol_top",vol_top,10);
+	VSET("vol_coverage",vol_cov,-0.6);
+	VSET("vol_freq",vol_freq,0.3);
+	VSET("vol_sigma",vol_sigma,1);
+	VSET("vol_hvar",vol_hvar,0.25);
+	VSET("vol_erosion",vol_estr,1);
+	VSET("vol_steps",vol_steps,256);
 	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
@@ -10076,7 +10094,9 @@ void CloudLayer::render()
 			Raster.set_all();
 			set_lighting();
 			first=1;
+			TerrainData::vol_shader=true;
 			terrain.init_render();
+			TerrainData::vol_shader=false;
 			Td.albedo=albedo;
 			Td.shine=shine;
 			Td.ambient=ambient;
@@ -10201,9 +10221,11 @@ bool CloudLayer::setProgram(){
 	GLSLMgr::setDefString(defs);
 	TerrainProperties *tp=map->tp;
 
+	TerrainData::vol_shader=vol;   // volume: all noise is shader noise
 	tp->initProgram();
-	if(Td.clouds)
+	if(Td.clouds && !vol)
 		Td.clouds->initProgram();
+	TerrainData::vol_shader=false;
 
 	//GLSLMgr::init3DNoiseTexture();
 
@@ -10248,6 +10270,22 @@ bool CloudLayer::setProgram(){
 
 	//cout <<"clouds dpmin:"<<dpmin<<" dpmax:"<<dpmax<<endl;
 
+	// sky haze for the clouds (cloud_haze.h): the effects pass skips sky
+	// pixels, which is where clouds are drawn. Strength: the sky's own haze
+	// (sky.back.frag Haze.a), not the terrain's Raster.haze_hf, which is
+	// attenuated by eye height/LOD - the clouds were then never fully hazed,
+	// which showed at night (sunlit high clouds against a dark haze)
+	{
+		Color hc=Raster.haze_color;
+		double ha=0.0;
+		if(Raster.do_haze && sky)
+			ha=sky->haze_color.alpha()*Render.haze_value();
+		vars.newFloatVec("ch_color",hc.red(),hc.green(),hc.blue());
+		vars.newFloatVar("ch_min",Raster.haze_min);
+		vars.newFloatVar("ch_max",Raster.haze_max);
+		vars.newFloatVar("ch_grad",Raster.haze_grad);
+		vars.newFloatVar("ch_ampl",ha);
+	}
 	set_wscale();
 	if(vol){
 		setVolumeVars(vars);
@@ -10615,9 +10653,16 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	Color skyc=sky?sky->color():Color(0.45,0.75,0.9);
 
 	double rg=parent->size*KM;
+	// cloud base: the layer Height (Object tab); vol_top is the cloud
+	// height above it (Height on the Volume tab), and the tops vary up to
+	// vol_top*(1+vol_hvar)
+	double base_km=(size-parent->size)*KM;
+	if(base_km<=0)
+		base_km=vol_base;
+	double top_km=base_km+vol_top*(1+clamp(vol_hvar,0.0,1.0));
 	eye=eye*KM;
 	double ht=eye.length()-rg;
-	double far_km=ht>vol_top?400:60;         // km: longer rays from above the clouds
+	double far_km=ht>top_km?400:60;          // km: longer rays from above the clouds
 
 #ifdef DEBUG_VOLUME_CLOUDS
 	cout<<"volume clouds: eyeref "<<TheScene->eyeref()<<" pc "<<pc.x*KM<<","<<pc.y*KM<<","<<pc.z*KM
@@ -10640,6 +10685,11 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	double sunI=3.2*diffuse.alpha();
 	vars.newFloatVec("vol_sun_color",sunI*ld[0]*diffuse.red(),sunI*ld[1]*diffuse.green(),sunI*ld[2]*diffuse.blue());
 	vars.newFloatVec("vol_sky_color",skyc.red(),skyc.green(),skyc.blue());
+	// air color for the distance fade (lit for the time of day, dark at
+	// night): distant clouds fade toward this, not the scene pixel behind
+	// them, which has the stars in it
+	Color hazec=sky?sky->haze_lit:skyc;
+	vars.newFloatVec("vol_haze_color",hazec.red(),hazec.green(),hazec.blue());
 	double ambI=6.0*ambient.alpha();       // default alpha 0.15 -> 0.9
 	vars.newFloatVec("vol_amb_color",ambI*ambient.red(),ambI*ambient.green(),ambI*ambient.blue());
 	vars.newFloatVar("vol_amb_base",clamp(1.0-0.5*diffusion,0.0,1.0));
@@ -10648,8 +10698,9 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_fwd_g",clamp(shine/(shine+3.0),0.0,0.95));
 	vars.newFloatVar("vol_fwd_w",clamp(3.5*specular.alpha(),0.0,1.0));
 	vars.newFloatVar("vol_rg",rg);
-	vars.newFloatVar("vol_rb",rg+vol_base);
-	vars.newFloatVar("vol_rt",rg+vol_top);
+	vars.newFloatVar("vol_rb",rg+base_km);
+	vars.newFloatVar("vol_rt",rg+top_km);
+	vars.newFloatVar("vol_depth",vol_top);
 	vars.newFloatVar("vol_far",far_km);
 	vars.newFloatVar("vol_cov",vol_cov);
 	vars.newFloatVar("vol_freq",vol_freq);
@@ -10665,6 +10716,7 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	double wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
 	vars.newFloatVar("vol_wlog",log2(0.25*wscale*KM));
 	vars.newFloatVar("vol_seed",fmod(fabs(rseed)*137.0,97.0));
+	vars.newFloatVar("vol_km2scene",1.0/KM);
 }
 // draw the full screen quad for clouds.volume.frag
 void CloudLayer::renderVolume(){
@@ -10703,12 +10755,14 @@ bool CloudLayer::threeD()
 
 //-------------------------------------------------------------
 // CloudLayer::volume() return true for ray-marched volume clouds
-// (a 3D layer with vol_mode set, or all 3D layers if clouds_mode is
-// CLOUDS_VOLUME)
+// (vol_mode set, or all 3D layers if clouds_mode is CLOUDS_VOLUME).
+// Volume clouds don't need a clouds() node: the shape comes from the
+// Point Z expression and the tint from Color (a clouds() node left over
+// from sprite mode is ignored)
 //-------------------------------------------------------------
 bool CloudLayer::volume()
 {
-	return threeD() && (vol_mode>0 || clouds_mode==CLOUDS_VOLUME);
+	return vol_mode>0 || (clouds_mode==CLOUDS_VOLUME && threeD());
 }
 
 //-------------------------------------------------------------
@@ -10816,7 +10870,9 @@ void CloudLayer::init()
 	set_geometry();
 	terrain.init();
 	clouds = TerrainData::clouds;
+	TerrainData::vol_shader=volume();
 	terrain.init_render();
+	TerrainData::vol_shader=false;
 	terrain.set_eval_mode(0);
 	map->make();
 }
@@ -10835,10 +10891,16 @@ void CloudLayer::adapt_object()
 	terrain.set_init_mode(1);
 	exprs.eval();
 	terrain.init();
+	TerrainData::vol_shader=volume();
 	terrain.init_render();
+	TerrainData::vol_shader=false;
 	terrain.set_eval_mode(0);
 
 	clouds = TerrainData::clouds;
+	// volume clouds are ray-marched in a full screen pass: no map cells
+	// (sprite shells) are needed, only the compiled expression
+	if(volume())
+		return;
 	bool v3d=false;
 
 	if(threeD()){
@@ -10883,32 +10945,103 @@ void CloudLayer::render_object()
 	Shell::render_object();
 }
 
+double CloudLayer::vol_dflt_base=0.5;   // miles
+
 //-------------------------------------------------------------
-// CloudLayer::getInstance()  generate a random instance
+// CloudLayer::defaultHeight() random height for a new layer (miles)
+//   2D (high, thin cloud shell):        20-50 miles
+//   3D sprites and volume (cloud base):  5-10 miles
 //-------------------------------------------------------------
-NodeIF *CloudLayer::getInstance(NodeIF *prev){
-	lastn=getRandValue();//*1271;
-	Orbital::setRands();
-	if(((CloudLayer*)prev)->threeD())
-		return newInstance(true);
-	else
-		return newInstance(false);
+double CloudLayer::defaultHeight(int gtype){
+	if(gtype==GN_3D || gtype==GN_VOL)
+		return 5+5*Rand();
+	return 20+30*Rand();
 }
 
 //-------------------------------------------------------------
-// CloudLayer::newInstance()  generate a random instance
+// CloudLayer::getInstance()  generate a random instance
+// (scene dialog Generate: type has GN_2D, GN_3D, GN_VOL or GN_RANDOM)
+// prev is the layer being replaced, or the planet when adding
 //-------------------------------------------------------------
+NodeIF *CloudLayer::getInstance(NodeIF *prev,int type){
+	lastn=getRandValue();//*1271;
+	Orbital::setRands();
+	int gtype=type&GN_TYPES;
+	if(gtype!=GN_2D && gtype!=GN_3D && gtype!=GN_VOL){
+		double rv=Rand();
+		gtype=rv<0.4?GN_2D:(rv<0.6?GN_3D:GN_VOL);
+	}
+	CloudLayer *clouds=newTypeInstance(gtype);
+
+	// layer height: keep a replaced layer's if it's the same kind,
+	// otherwise the default for the kind
+	CloudLayer *old=0;
+	Orbital *planet=0;
+	if(prev && prev->typeValue()==ID_CLOUDS){
+		old=(CloudLayer*)prev;
+		planet=(Orbital*)old->getParent();
+	}
+	else if(prev && (prev->typeClass()&ID_OBJECT))
+		planet=(Orbital*)prev;
+	if(planet){
+		double psize=planet->size;
+		bool same=false;
+		if(old)
+			same=(old->volume()==clouds->volume()) && (old->threeD()==clouds->threeD());
+		if(same)
+			clouds->size=old->size;
+		else
+			clouds->size=psize+defaultHeight(gtype)*MILES;
+		clouds->ht=clouds->size-psize;
+	}
+	return clouds;
+}
+
 CloudLayer *CloudLayer::newInstance(bool is3d){
+	return newTypeInstance(is3d?GN_3D:GN_2D);
+}
+//-------------------------------------------------------------
+// CloudLayer::newTypeInstance()  generate a random 2D, 3D or volume layer
+//-------------------------------------------------------------
+CloudLayer *CloudLayer::newTypeInstance(int gtype){
 	CloudLayer *clouds=TheScene->getPrototype(0,ID_CLOUDS);
-	clouds->detail=16;
-	if(is3d)
-		clouds->day=-(4+3*s[4]);
+	clouds->makeType(gtype);
+	return clouds;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::makeType()  set the Generate settings and expression for a
+// kind of layer (GN_2D, GN_3D, GN_VOL) from the random values r[] (in
+// [0,1)) and s[] (in [-0.5,0.5)). With r=0.5 and s=0 (setDefault) every
+// value is in the middle of its range; for volume clouds that's exactly
+// the constructor defaults.
+//-------------------------------------------------------------
+void CloudLayer::makeType(int gtype){
+	detail=16;
+	bool is3d=(gtype==GN_3D);
+	bool isvol=(gtype==GN_VOL);
+	if(is3d||isvol)
+		day=-(4+3*s[4]);
 	else
-		clouds->day=(4+3*s[5]);
+		day=(4+3*s[5]);
 	char buff[2048];
 	std::string str;
 
-	if(is3d)
+	vol_mode=isvol?1:0;
+	if(isvol){
+		str=Planetoid::randFeature(RND_CLOUDS_VOL);
+		// around the defaults (vol_* in the constructor); coverage follows
+		// the Z noise amplitude (randFeature) so the sky isn't left empty
+		double ampl=0.125+0.15*r[6];      // same as RND_CLOUDS_VOL
+		emission=Color(1,1,1,0);
+		vol_cov=-3.0*ampl*(0.8+0.4*r[9]);
+		vol_top=7.5+5*r[10];
+		vol_hvar=0.15+0.2*r[11];
+		vol_freq=0.25+0.1*r[12];
+		vol_estr=clamp(0.85+0.3*r[13],0.0,1.0);
+		vol_sigma=0.75+0.5*r[14];
+	}
+	else if(is3d)
 		str=Planetoid::randFeature(RND_CLOUDS_3D);
 	else
 		str=Planetoid::randFeature(RND_CLOUDS_2D);
@@ -10916,12 +11049,75 @@ CloudLayer *CloudLayer::newInstance(bool is3d){
 
 	TNode *root=TheScene->parse_node(buff);
 	if(root){
-	    clouds->terrain.set_root(root);
-	    clouds->terrain.init();
+	    terrain.set_root(root);
+	    terrain.init();
 	}
 	else
 	    cout<<"error building cloudlayer"<<endl;
-	return clouds;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::cloudType() kind of layer: GN_2D, GN_3D or GN_VOL
+//-------------------------------------------------------------
+int CloudLayer::cloudType(){
+	if(volume())
+		return GN_VOL;
+	return threeD()?GN_3D:GN_2D;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::setDefault() scene dialog "Default": the settings Generate
+// makes for this kind of layer, with no randomness (every random value
+// in the middle of its range, seed 0). Keeps the layer height, name and
+// enabled state.
+//-------------------------------------------------------------
+void CloudLayer::setDefault(){
+	int gtype=cloudType();
+
+	// generic settings from a new layer (as Generate starts from)
+	CloudLayer *proto=TheScene->getPrototype(0,ID_CLOUDS);
+	if(proto){
+		tilt=proto->tilt;
+		pitch=proto->pitch;
+		rot_phase=proto->rot_phase;
+		year=proto->year;
+		set_color(proto->color());
+		ambient=proto->ambient;
+		emission=proto->emission;
+		diffuse=proto->diffuse;
+		specular=proto->specular;
+		albedo=proto->albedo;
+		shine=proto->shine;
+		sunset=proto->sunset;
+		shadow_color=proto->shadow_color;
+		symmetry=proto->symmetry;
+		cmin=proto->cmin;
+		cmax=proto->cmax;
+		smax=proto->smax;
+		crot=proto->crot;
+		num_sprites=proto->num_sprites;
+		diffusion=proto->diffusion;
+		setSpritesFile(proto->sprites_file,proto->sprites_dim);
+		vol_base=proto->vol_base;
+		vol_steps=proto->vol_steps;
+		delete proto;
+	}
+
+	// Generate settings and expression, every random value mid range
+	double rsave[RANDS],ssave[RANDS];
+	for(int i=0;i<RANDS;i++){
+		rsave[i]=r[i]; ssave[i]=s[i];
+		r[i]=0.5; s[i]=0.0;
+	}
+	// TerrainData::clouds may point into the expression being replaced;
+	// parsing the new one (terrain.init) sets it again if it has clouds()
+	TerrainData::clouds=0;
+	makeType(gtype);
+	clouds=TerrainData::clouds;
+	for(int i=0;i<RANDS;i++){
+		r[i]=rsave[i]; s[i]=ssave[i];
+	}
+	setSeed(0);
 }
 
 //************************************************************

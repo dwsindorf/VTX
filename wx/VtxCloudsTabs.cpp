@@ -140,7 +140,6 @@ SET_SLIDER_EVENTS(CMAX,VtxCloudsTabs,Cmax)
 SET_SLIDER_EVENTS(SMAX,VtxCloudsTabs,Smax)
 SET_SLIDER_EVENTS(CROT,VtxCloudsTabs,Crot)
 
-SET_SLIDER_EVENTS(VBASE,VtxCloudsTabs,VBase)
 SET_SLIDER_EVENTS(VTOP,VtxCloudsTabs,VTop)
 SET_SLIDER_EVENTS(VCOVERAGE,VtxCloudsTabs,VCoverage)
 SET_SLIDER_EVENTS(VHVAR,VtxCloudsTabs,VHvar)
@@ -204,7 +203,6 @@ VtxCloudsTabs::~VtxCloudsTabs(){
 	delete NumSpritesSlider;
 	delete DiffusionSlider;
 
-	delete VBaseSlider;
 	delete VTopSlider;
 	delete VCoverageSlider;
 	delete VHvarSlider;
@@ -288,6 +286,24 @@ void VtxCloudsTabs::setPages(int mode){
 		wxWindow *w=GetPage(2);
 		RemovePage(2);
 		w->Hide();
+	}
+	// volume clouds: the layer Height is the cloud base (low); otherwise
+	// the sprite/2D layer height
+	if(mode==2){
+		HeightSlider->setRange(0,20);
+		HeightSlider->slider->SetToolTip("Cloud base height (Miles)");
+	}
+	else if(mode==1){
+		HeightSlider->setRange(0,20);
+		HeightSlider->slider->SetToolTip("Layer Height (Miles)");
+	}
+	else{
+		HeightSlider->setRange(10,100);
+		HeightSlider->slider->SetToolTip("Layer Height (Miles)");
+	}
+	if(object_node){
+		double val=(object()->size-parentSize())/MILES;
+		updateSlider(HeightSlider,val);
 	}
 	switch(mode){
 	case 1:
@@ -486,13 +502,9 @@ void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
 	wxStaticBoxSizer* layer_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Layer"));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	VBaseSlider=new SliderCtrl(panel,ID_VBASE_SLDR,"Base",LABEL1, VALUE,SLIDER2);
-	VBaseSlider->setRange(0,10);
-	VBaseSlider->slider->SetToolTip("Cloud base height above the ground (km)");
-	hline->Add(VBaseSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
-	VTopSlider=new SliderCtrl(panel,ID_VTOP_SLDR,"Top",LABEL1, VALUE,SLIDER2);
-	VTopSlider->setRange(0.5,20);
-	VTopSlider->slider->SetToolTip("Highest cloud tops above the ground (km)");
+	VTopSlider=new SliderCtrl(panel,ID_VTOP_SLDR,"Height",LABEL1, VALUE,SLIDER2);
+	VTopSlider->setRange(0.5,15);
+	VTopSlider->slider->SetToolTip("Cloud height above the base (km). The base is the layer Height on the Object tab");
 	hline->Add(VTopSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
@@ -503,7 +515,7 @@ void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
 	hline->Add(VCoverageSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	VHvarSlider=new SliderCtrl(panel,ID_VHVAR_SLDR,"Ht Var",LABEL1, VALUE,SLIDER2);
 	VHvarSlider->setRange(0,1);
-	VHvarSlider->slider->SetToolTip("Cloud top height variation (0 = all clouds reach Top)");
+	VHvarSlider->slider->SetToolTip("Cloud height variation: 0 = all the same Height, 1 = up to twice Height");
 	hline->Add(VHvarSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	layer_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
@@ -523,7 +535,7 @@ void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
 
 	hline = new wxBoxSizer(wxHORIZONTAL);
 	VDensitySlider=new SliderCtrl(panel,ID_VDENSITY_SLDR,"Density",LABEL1, VALUE,SLIDER2);
-	VDensitySlider->setRange(1,60);
+	VDensitySlider->setRange(0.25,2);
 	VDensitySlider->slider->SetToolTip("Extinction (1/km): higher = more opaque, harder edges");
 	hline->Add(VDensitySlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	VDarkenSlider=new SliderCtrl(panel,ID_VDARKEN_SLDR,"Darken",LABEL1, VALUE,SLIDER2);
@@ -650,8 +662,10 @@ void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 			TheView->set_changed_detail();
 		}
 		break;
+	case 2: // volume selected: doesn't need a clouds() node (one left
+	        // from sprite mode is kept for switching back, but ignored)
+		break;
 	case 1: // 3d selected
-	case 2: // volume selected (also needs the clouds() node)
 		if(!tnode){
 			cout<< "2D->3D"<<endl;
 			wxString str=getCloudsExpr();
@@ -782,7 +796,6 @@ void VtxCloudsTabs::getObjAttributes(){
 	updateSlider(CrotSlider,obj->crot);
 	updateSlider(NumSpritesSlider,obj->num_sprites);
 
-	updateSlider(VBaseSlider,obj->vol_base);
 	updateSlider(VTopSlider,obj->vol_top);
 	updateSlider(VCoverageSlider,obj->vol_cov);
 	updateSlider(VHvarSlider,obj->vol_hvar);
@@ -881,7 +894,7 @@ void VtxCloudsTabs::setObjAttributes(){
 //-------------------------------------------------------------
 void VtxCloudsTabs::updateControls(){
 	CloudLayer *obj=object();
-	setPages(obj->threeD()?(obj->volume()?2:1):0);
+	setPages(obj->volume()?2:(obj->threeD()?1:0));
 	if(update_needed){
 		getObjAttributes();
 	}

@@ -128,8 +128,12 @@ int UniverseModel::setPrototype(NodeIF *parent, NodeIF *child)
 
 		break;
 	case TN_CLOUDS:
-		if(!dropping())
-			((CloudLayer*)child)->size=psize*(1+0.01*(1+Rand()));
+		if(!dropping()){
+			// volume clouds: the layer height is the cloud base (low)
+			CloudLayer *cl=(CloudLayer*)child;
+			int g=cl->volume()?GN_VOL:(cl->threeD()?GN_3D:GN_2D);
+			cl->size=psize+CloudLayer::defaultHeight(g)*MILES;
+		}
 		((CloudLayer*)child)->ht=((CloudLayer*)child)->size-psize;
 		break;
 	case TN_SKY:
@@ -469,6 +473,10 @@ ModelSym* UniverseModel::getTypeSymbol(int type){
 		return new ModelSym("1D",type);
 	case GN_2D:
 		return new ModelSym("2D",type);
+	case GN_3D:
+		return new ModelSym("3D",type);
+	case GN_VOL:
+		return new ModelSym("Vol",type);
   }
 }
 std::string UniverseModel::typeSymbol(int type){
@@ -492,6 +500,7 @@ bool UniverseModel::hasTypeList(int type){
 	case TN_ROCKS3D:
 	case TN_TEXTURE:
 	case TN_ASTEROID:
+	case TN_CLOUDS:
 		return true;
 	}
 }
@@ -561,6 +570,12 @@ void UniverseModel::getTypeList(int type,LinkedList<ModelSym*>&list)
 	case TN_TEXTURE:
 		list.add(getTypeSymbol(GN_1D));
 		list.add(getTypeSymbol(GN_2D));
+		break;
+	case TN_CLOUDS:
+		list.add(getTypeSymbol(GN_RANDOM));
+		list.add(getTypeSymbol(GN_2D));
+		list.add(getTypeSymbol(GN_3D));
+		list.add(getTypeSymbol(GN_VOL));
 		break;
 	}
 }

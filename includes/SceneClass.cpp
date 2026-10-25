@@ -312,7 +312,11 @@ int Scene::getGtype(int type,char* name){
 	list.ss();
 	ModelSym *is=list.at();
     while(is=list++){
-    	if(strcmp(is->name(),name)==0){
+    	// case-insensitive: matches type subdirectory names (e.g. "VOL")
+    	const char *a=is->name();
+    	const char *b=name;
+    	while(*a && *b && tolower(*a)==tolower(*b)){ a++; b++;}
+    	if(*a==0 && *b==0){
     		return is->value&GN_TYPES;
     	}
 	}

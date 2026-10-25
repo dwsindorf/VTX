@@ -81,6 +81,7 @@ void TerrainSym::save(FILE *f)
 
 Image *TerrainData::image=0;
 TNclouds *TerrainData::clouds=0;
+bool TerrainData::vol_shader=false;
 TerrainData *TerrainData::data[MAX_TDATA];
 TerrainData  TerrainData::lower;
 TerrainData  TerrainData::zlevel[MAX_TDATA];

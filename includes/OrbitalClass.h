@@ -720,8 +720,8 @@ public:
 	bool   	   animation;
 	double     rate;
 	// ray-marched volume clouds (clouds_mode CLOUDS_VOLUME, clouds.volume.frag)
-	double     vol_base;    // cloud base above ground (km)
-	double     vol_top;     // cloud top above ground (km)
+	double     vol_base;    // cloud base above ground (km), only if the layer size isn't set
+	double     vol_top;     // cloud layer depth (km) above the base (layer Height)
 	double     vol_cov;     // coverage bias (-0.5..0.5)
 	double     vol_freq;    // shape noise frequency (1/km)
 	double     vol_sigma;   // extinction (1/km)
@@ -766,9 +766,15 @@ public:
 	void getSpritesDir(int dim,char *);
 	void setVolumeVars(GLSLVarMgr &vars);
 	void renderVolume();
-    NodeIF *getInstance(NodeIF *prev);
-    
+    NodeIF *getInstance(NodeIF *prev,int type);
+
+	static double vol_dflt_base;   // volume cloud base height if the layer size isn't set (miles)
+	static double defaultHeight(int gtype); // random layer height for a new layer (miles)
 	static CloudLayer *newInstance(bool is3d);
+	static CloudLayer *newTypeInstance(int gtype);
+	void makeType(int gtype);      // Generate settings + expression for a kind
+	int  cloudType();              // GN_2D, GN_3D or GN_VOL
+	void setDefault();             // Generate settings with no randomness
 
 };
 

@@ -591,6 +591,8 @@ bool TNcolor::initProgram(){
 
 	sprintf(defs,"#define NCC vec4(RED=%s,GREEN=%s,BLUE=%s,%s)\n",
 			red,green,blue,alpha);
+	if(shader_noise)
+		strcat(defs,"#define NCC_NOISE\n");
 	strcat(GLSLMgr::defString,defs);
 	CurrentScope->set_shader(0);
 	defs[0]=0;
@@ -635,7 +637,10 @@ void TNcolor::eval()
 				arg->eval(); // alpha
 				Alpha=S0.s;
 			}
-			if(Td.get_flag(SNOISEFLAG))
+			shader_noise=Td.get_flag(SNOISEFLAG)?true:false;
+			// volume clouds evaluate the whole Color expression in the
+			// shader (tint), even without noise
+			if(shader_noise || TerrainData::vol_shader)
 				TerrainData::add_TNcolor(this);
 			else{
 				Td.clr_flag(SNOISEFLAG);
@@ -1208,6 +1213,13 @@ void TNnoise::propertyString(char *s)
 	valueString(s);
 }
 //-------------------------------------------------------------
+// TNnoise::shaderNoise() true if evaluated in the shader
+//-------------------------------------------------------------
+bool TNnoise::shaderNoise()
+{
+	return (type & FS) || TerrainData::vol_shader;
+}
+//-------------------------------------------------------------
 // TNnoise::init() evaluate the node
 //-------------------------------------------------------------
 void TNnoise::init()
@@ -1310,7 +1322,7 @@ void TNnoise::eval()
 	int n;
 	INIT;
 	S0.clr_constant();
-	if(type & FS)
+	if(shaderNoise())
 		Td.set_flag(SNOISEFLAG);
 
 	if(CurrentScope->texture()){
@@ -1319,13 +1331,15 @@ void TNnoise::eval()
 		return;
 	}
 	if(CurrentScope->shader()){
-		if(!(type & FS))
+		if(!shaderNoise())
 			S0.set_inactive();
 		return;
 	}
 	if(CurrentScope->rpass()){
-		if(type & FS)
+		if(shaderNoise())
 			Td.add_TNnoise(this);
+		else
+			id=-1;   // not a shader noise (may have been one for a volume layer)
 		return;
 	}
 

@@ -120,7 +120,8 @@ class TNcolor : public TNvector
 {
 public:
 	static double rand_val;
-	TNcolor(TNode *r) : TNvector(r) {}
+	bool shader_noise;   // has pixel (shader) noise
+	TNcolor(TNode *r) : TNvector(r) { shader_noise=false;}
 	void dump()				{ printf("%s()\n",symbol());}
 	void eval();
 	void init();
@@ -196,6 +197,9 @@ public:
 	void save(FILE*);
 	void eval();
 	void init();
+	// pixel (shader) noise: FS, or any noise while a volume cloud layer is
+	// compiled (TerrainData::vol_shader), so vertex noise works there too
+	bool shaderNoise();
 	int norm() 			        { return flags & TNN_NORM;}
 	int normalized()            { return flags & TNN_NORMALIZED;}
 	void set_normalized()       { BIT_ON(flags,TNN_NORMALIZED);}

@@ -145,6 +145,7 @@ public:
 	static double       level;      // cell size level
     static double       extent;     // cell size extent (pixels)
 	static TNclouds    *clouds;
+	static bool         vol_shader; // volume clouds: Color always goes to the shader
 	static TerrainData  lower;   	// lower surface level
 	static double       texht;	    // height map texture
 	static double       fracval[MAX_FDATA];    // fractal ht
