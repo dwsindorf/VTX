@@ -49,8 +49,15 @@
 //   erosion   high frequency Worley: billowy near the top, wispy near the
 //             base (Erosion; 0 = off)
 //
-// Only sky pixels (FBOTex2.r==0) are marched: clouds in front of terrain
-// are not drawn there yet.
+// Passes (CloudLayer::drawVolume):
+//   default      sky pixels (FBOTex2.r==0) only; terrain pixels are drawn
+//                after the effects pass (haze, fog, water)
+//   VOL_TERRAIN  sky and terrain pixels (no effects pass follows)
+//   VOL_POST     terrain pixels only, over the effects image (FBOTex3/4,
+//                written to attachments 0/1 for postproc)
+// Terrain pixels: the ray stops at the terrain (FBOTex2.g window depth), so
+// clouds are drawn in front of terrain, and terrain inside a cloud is
+// partly hidden.
 
 #include "utils.h"
 #include "sunlight.h"
@@ -71,6 +78,13 @@
 //   3: coverage (weather) at the middle of each ray (grey scale)
 //   4: Color tint (RGB at the cloud mid height); magenta if the Color
 //      expression isn't compiled in (no NCC)
+//   5: terrain pixels (drawn in the pass that handles them): terrain
+//      distance in green (brighter = nearer, 0..50 km), red if the ray
+//      reaches the cloud layer before the terrain (clouds can be in front),
+//      blue if the depth gives no valid distance
+//   6: cloud opacity found along each ray (red = 1-T, before haze) and
+//      green = sky haze amount at the first cloud; terrain and sky pixels
+//      in the passes that draw them
 #define VOL_DEBUG 0
 
 // Point Z value that gives full coverage is 1/VOL_ZGAIN
@@ -91,6 +105,16 @@
 // with Z (NPZ) shape: where Z is weak the base lifts by up to this
 // fraction of the cloud top (dense cores reach the flat base)
 #define VOL_BASE_VAR 0.3
+
+// with Z (NPZ) shape: denser parts reach higher. A point's local cloud top
+// (as a fraction of its column's top) rises from VOL_TOP_MIN where Z just
+// makes cloud to 1 where Z*VOL_ZGAIN+Cover reaches VOL_TOP_CR, so the tops
+// follow the 3D noise (domes) rather than the column top (a flat lid)
+#define VOL_TOP_MIN 0.35
+#define VOL_TOP_CR  2.0
+// density fades in over the top/base band where the height profile is
+// below this (strong Z no longer gives a hard edge at the profile limit)
+#define VOL_EDGE_SOFT 0.3
 
 // saturation of the sky color used for the ambient (sky) light. The light
 // under a cloud is mostly scattered sunlight and ground bounce, much
@@ -173,8 +197,21 @@ uniform float freqmip;
 #endif
 vec3 vol_ctint=vec3(1.0);   // tint from the last column (Color with noise)
 
+#ifdef VOL_POST
+uniform sampler2DRect FBOTex3;   // effects pass image
+uniform sampler2DRect FBOTex4;   // effects pass params (as FBOTex2)
+#define SCENE_TEX FBOTex3
+#define PARAM_TEX FBOTex4
+#else
 uniform sampler2DRect FBOTex1;   // scene image
-uniform sampler2DRect FBOTex2;   // scene params (r = type, 0 = sky)
+uniform sampler2DRect FBOTex2;   // scene params (r = type, 0 = sky; g = window depth)
+#define SCENE_TEX FBOTex1
+#define PARAM_TEX FBOTex2
+#endif
+// terrain distance: eye depth = 1/(ws2*z+ws1) (scene units, as effects.frag)
+uniform float vol_ws1;
+uniform float vol_ws2;
+uniform vec3  vol_fwd;           // view axis (unit), layer frame
 
 // camera (km)
 uniform vec3 vol_eye;
@@ -353,14 +390,18 @@ float cloudDensity(vec3 p, vec2 cw, float dist, bool detail){
 	// (VOL_BASE_ROUND)
 	float lift=VOL_BASE_VAR*top*clamp(1.5-cr,0.0,1.0);
 	float hbase=VOL_BASE_ROUND*top;
-	float g=clamp(remap(h,lift,lift+hbase,0.0,1.0),0.0,1.0)*clamp(remap(h,top*0.3,top,1.0,0.0),0.0,1.0);
+	// local top: denser parts reach higher (domes that follow the noise)
+	float tl=top*mix(VOL_TOP_MIN,1.0,smoothstep(0.0,VOL_TOP_CR,cr));
+	float g=clamp(remap(h,lift,lift+hbase,0.0,1.0),0.0,1.0)*clamp(remap(h,tl*0.3,tl,1.0,0.0),0.0,1.0);
 	if(g<=0.0)
 		return 0.0;
 	g=g*g*(3.0-2.0*g);
 	// shape from Z: density c is needed to survive up to where the profile
-	// is g, so only the densest parts reach the top
+	// is g, so only the densest parts reach the top; near the profile limit
+	// (g < VOL_EDGE_SOFT) the density fades out instead of ending in a hard
+	// edge when c is saturated
 	float c=clamp(cr,0.0,1.0)*wc;
-	float d=clamp(remap(c,1.0-g,1.0,0.0,1.0),0.0,1.0);
+	float d=clamp((c-(1.0-g))/max(g,VOL_EDGE_SOFT),0.0,1.0);
 #else
 	// height profile: flat base, rounded top, taller where coverage is high
 	float top=max(0.45+0.55*wc,0.12);
@@ -407,9 +448,10 @@ float hg(float c,float g){
 float stepT(float x, float L){ return L*(STEP_LIN*x+(1.0-STEP_LIN)*x*x); }
 
 void main(void) {
-	vec4 scene=texture2DRect(FBOTex1,gl_FragCoord.xy);
-	vec4 params=texture2DRect(FBOTex2,gl_FragCoord.xy);
+	vec4 scene=texture2DRect(SCENE_TEX,gl_FragCoord.xy);
+	vec4 params=texture2DRect(PARAM_TEX,gl_FragCoord.xy);
 	gl_FragData[1]=params;
+	bool terrain=params.r>0.5;
 #if VOL_DEBUG==2
 	{
 		float re0=length(vol_eye);
@@ -417,7 +459,13 @@ void main(void) {
 		return;
 	}
 #endif
-	if(params.r>0.5){            // terrain/water: leave as is
+#if defined(VOL_POST)
+	if(!terrain){                // sky: done in the main pass
+		gl_FragData[0]=scene;
+		return;
+	}
+#elif !defined(VOL_TERRAIN)
+	if(terrain){                 // terrain/water: after the effects pass
 #if VOL_DEBUG==1
 		gl_FragData[0]=vec4(0,0,1,1);
 #else
@@ -425,6 +473,7 @@ void main(void) {
 #endif
 		return;
 	}
+#endif
 	vec3 dir=normalize(mix(mix(vol_ray00,vol_ray10,ScreenUV.x),
 	                       mix(vol_ray01,vol_ray11,ScreenUV.x),ScreenUV.y));
 	vec3 o=vol_eye;
@@ -449,6 +498,20 @@ void main(void) {
 	}
 	if(tg.y>0.0 && tg.x>0.0)           // stop at the ground
 		t1=min(t1,tg.x);
+	if(terrain){                       // stop at the terrain
+		float zd=1.0/(vol_ws2*params.g+vol_ws1);   // eye depth (scene units)
+		float tt=(zd/vol_km2scene)/max(dot(dir,vol_fwd),1e-3);
+#if VOL_DEBUG==5
+		{
+			bool ok=(zd>0.0 && tt<1e7);
+			float g=ok?clamp(1.0-tt/50.0,0.0,1.0):0.0;
+			float rr=(ok && to.y>0.0 && max(t0,0.0)<tt && t1>max(t0,0.0))?1.0:0.0;
+			gl_FragData[0]=vec4(rr,g,ok?0.0:1.0,1.0);
+			return;
+		}
+#endif
+		t1=min(t1,tt);
+	}
 	t0=max(t0,0.0);
 	t1=min(t1,t0+vol_far);
 	if(to.y<0.0 || t1<=t0){
@@ -585,6 +648,10 @@ void main(void) {
 		col+=T*S*(1.0-st);
 		T*=st;
 	}
+#if VOL_DEBUG==6
+	gl_FragData[0]=vec4(1.0-T,tfirst>0.0?cloudHaze(tfirst*vol_km2scene):0.0,0.0,1.0);
+	return;
+#endif
 	// aerial perspective: distant clouds fade into the sky behind them.
 	// By day that's the scene pixel; at night the scene has stars in it,
 	// so it's clamped to the air color (the stars only show where the
@@ -592,7 +659,7 @@ void main(void) {
 	if(tfirst>0.0){
 		float f=exp(-tfirst/vol_haze);
 		float eday=smoothstep(-0.1,0.1,dot(normalize(o),vol_sun));
-		vec3 behind=mix(min(scene.rgb,vol_haze_color),scene.rgb,eday);
+		vec3 behind=terrain?scene.rgb:mix(min(scene.rgb,vol_haze_color),scene.rgb,eday);
 		col=mix((1.0-T)*behind,col,f);
 		// sky haze (the terrain haze, effects.frag): the cloud fades into
 		// the haze color as the terrain at that distance does

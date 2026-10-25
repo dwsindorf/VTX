@@ -9786,9 +9786,13 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	vol_hvar=0.25;
 	vol_estr=1;
 	vol_steps=256;
+	vol_pass=VOL_SKY;
+	EffectsMgr::post_effects_hook=CloudLayer::postEffectsHook;
 }
 CloudLayer::~CloudLayer()
 {
+	if(vol_post==this)
+		vol_post=0;
 #ifdef DEBUG_OBJS
 	printf("~CloudLayer\n");
 #endif
@@ -9864,6 +9868,21 @@ int CloudLayer::scale(double &zn, double &zf)
 #ifdef DEBUG_CLOUDS
 	cout <<"zn:"<< zn/MILES << " zf:"<< zf/MILES << " Rz:"<< zf/zn << endl;
 #endif
+	if(volume()){
+		// Object3D::scale() tests the layer's sphere (the cloud base) on
+		// screen from its center: with the eye just above the base and
+		// looking level or up, the planet center is behind the view and the
+		// layer was set OFFSCREEN, so the clouds weren't drawn. The volume
+		// pass is a full screen ray march (rays that miss the clouds exit
+		// early), so it's always drawn: INSIDE while the eye is below the
+		// highest cloud top, OUTSIDE above it.
+		const double KMU=1.609344/MILES;     // km per scene unit
+		double top=size+vol_top*(1+clamp(vol_hvar,0.0,1.0))/KMU;
+		double d=TheView->epoint.distance(point);
+		t=(d<=top)?INSIDE:OUTSIDE;
+		setvis(t);
+		return t;
+	}
 	if (!TheScene->render_mode())
 		return t;
 
@@ -10087,32 +10106,15 @@ void CloudLayer::render()
 
 		setMatrix();
 		if(volume() && Render.draw_shaded()){
-			// full screen ray march: doesn't need (or wait for) visible
-			// map cells, so set up what Spheroid::render_object and
-			// Map::render_shaded would and call setProgram directly
-			Raster.surface=1;
-			Raster.set_all();
-			set_lighting();
-			first=1;
-			TerrainData::vol_shader=true;
-			terrain.init_render();
-			TerrainData::vol_shader=false;
-			Td.albedo=albedo;
-			Td.shine=shine;
-			Td.ambient=ambient;
-			Td.emission=emission;
-			Td.diffuse=diffuse;
-			Td.specular=specular;
-			map->make_current();
-			map->tid=ID0;
-			map->tp=Td.properties[ID0];
-			Td.tp=map->tp;
-			if(map->tp)
-				setProgram();
-			first=0;
+			// clouds in front of the terrain: if an effects pass (haze, fog,
+			// water) follows, those pixels are drawn after it (the hook),
+			// otherwise here with the sky
+			bool post=Raster.do_shaders && (Raster.do_vfog||Raster.do_haze||Raster.do_water);
+			if(post)
+				vol_post=this;
+			drawVolume(post?VOL_SKY:VOL_ALL);
 			TheScene->popMatrix();
 			glDepthMask(GL_TRUE);
-			glUseProgram(0);
 			return;
 		}
 		bool v3d=threeD()&& Render.draw_shaded();
@@ -10182,6 +10184,10 @@ bool CloudLayer::setProgram(){
 	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	if(inside())
 		sprintf(defs+strlen(defs),"#define BACK\n");
+	if(vol && vol_pass==VOL_ALL)
+		sprintf(defs+strlen(defs),"#define VOL_TERRAIN\n");
+	else if(vol && vol_pass==VOL_POST)
+		sprintf(defs+strlen(defs),"#define VOL_POST\n");
 
 	// FIXME: 3d noise textures seem to be broken (7/5/12)
 	//if(!v3d)
@@ -10604,50 +10610,72 @@ static bool vol_minv(const double *m,double *inv){ // 4x4 Gauss-Jordan
 //#define DEBUG_VOLUME_CLOUDS
 void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	const double KM=1.609344/MILES;      // km per scene unit
-	double M[16],P[16],A[16],Ai[16],Mi[16];
-	TheScene->getMatrix(GL_MODELVIEW,M);
-	TheScene->getMatrix(GL_PROJECTION,P);
-	vol_mmul(P,M,A);
-	if(!vol_minv(A,Ai) || !vol_minv(M,Mi))
-		return;
-	double v[4],e[4];
-	v[0]=0;v[1]=0;v[2]=1;v[3]=0;
-	vol_mvec(Ai,v,e);
-	Point eye(e[0]/e[3],e[1]/e[3],e[2]/e[3]);
-	// The draw frame is eye-relative: MapData::point() returns
-	// point_-TheScene->xpoint when eyeref() is set, so the planet center
-	// is at -xpoint in the draw frame, not at the origin.
-	Point pc(0,0,0);
-	if(TheScene->eyeref())
-		pc=Point(0,0,0)-TheScene->xpoint;   // planet center, draw frame
-	// corner rays to the far plane, NOT normalized: points on the far plane
-	// are linear across the screen, so the shader's bilinear interpolation
-	// of these is exact (it normalizes per pixel). Scaled by the center
-	// ray's length to keep the values near 1.
-	Point ray[5];
-	double ndc[5][2]={{-1,-1},{1,-1},{-1,1},{1,1},{0,0}};
-	for(int i=0;i<5;i++){
-		double f[4];
-		v[0]=ndc[i][0];v[1]=ndc[i][1];v[2]=1;v[3]=1;
-		vol_mvec(Ai,v,f);
-		Point fp(f[0]/f[3],f[1]/f[3],f[2]/f[3]);
-		ray[i]=fp-eye;
-	}
-	double rl=ray[4].length();
-	if(rl<=0)
-		return;
-	for(int i=0;i<4;i++)
-		ray[i]=ray[i]/rl;
-	eye=eye-pc;                             // eye, planet-centered (after rays)
-	// sun: GL light 0 position is in the modelview (eye) frame
-	GLfloat lp[4]={0,0,1,0};
-	glGetLightfv(GL_LIGHT0,GL_POSITION,lp);
-	double l[4]={lp[0],lp[1],lp[2],lp[3]},lo[4];
-	vol_mvec(Mi,l,lo);
-	Point sun=(lp[3]!=0)?Point(lo[0]/lo[3],lo[1]/lo[3],lo[2]/lo[3])-pc:Point(lo[0],lo[1],lo[2]);
-	sun=sun.normalize();
+	Point eye,ray[5],fwd,sun;
 	GLfloat ld[4]={1,1,1,1};
-	glGetLightfv(GL_LIGHT0,GL_DIFFUSE,ld);
+	if(vol_pass==VOL_POST){
+		// after the effects pass: GL matrices, lights and scene state
+		// (eyeref, xpoint) have changed, so reuse the main pass's geometry
+		eye=vol_geo[0];
+		for(int i=0;i<4;i++)
+			ray[i]=vol_geo[1+i];
+		fwd=vol_geo[5];
+		sun=vol_geo[6];
+		for(int i=0;i<4;i++)
+			ld[i]=vol_ld[i];
+	}
+	else{
+		double M[16],P[16],A[16],Ai[16],Mi[16];
+		TheScene->getMatrix(GL_MODELVIEW,M);
+		TheScene->getMatrix(GL_PROJECTION,P);
+		vol_mmul(P,M,A);
+		if(!vol_minv(A,Ai) || !vol_minv(M,Mi))
+			return;
+		double v[4],e[4];
+		v[0]=0;v[1]=0;v[2]=1;v[3]=0;
+		vol_mvec(Ai,v,e);
+		eye=Point(e[0]/e[3],e[1]/e[3],e[2]/e[3]);
+		// The draw frame is eye-relative: MapData::point() returns
+		// point_-TheScene->xpoint when eyeref() is set, so the planet center
+		// is at -xpoint in the draw frame, not at the origin.
+		Point pc(0,0,0);
+		if(TheScene->eyeref())
+			pc=Point(0,0,0)-TheScene->xpoint;   // planet center, draw frame
+		// corner rays to the far plane, NOT normalized: points on the far
+		// plane are linear across the screen, so the shader's bilinear
+		// interpolation of these is exact (it normalizes per pixel). Scaled
+		// by the center ray's length to keep the values near 1.
+		double ndc[5][2]={{-1,-1},{1,-1},{-1,1},{1,1},{0,0}};
+		for(int i=0;i<5;i++){
+			double f[4];
+			v[0]=ndc[i][0];v[1]=ndc[i][1];v[2]=1;v[3]=1;
+			vol_mvec(Ai,v,f);
+			Point fp(f[0]/f[3],f[1]/f[3],f[2]/f[3]);
+			ray[i]=fp-eye;
+		}
+		double rl=ray[4].length();
+		if(rl<=0)
+			return;
+		fwd=ray[4]/rl;                      // view axis (unit), layer frame
+		for(int i=0;i<4;i++)
+			ray[i]=ray[i]/rl;
+		eye=eye-pc;                         // eye, planet-centered (after rays)
+		// sun: GL light 0 position is in the modelview (eye) frame
+		GLfloat lp[4]={0,0,1,0};
+		glGetLightfv(GL_LIGHT0,GL_POSITION,lp);
+		glGetLightfv(GL_LIGHT0,GL_DIFFUSE,ld);
+		double l[4]={lp[0],lp[1],lp[2],lp[3]},lo[4];
+		vol_mvec(Mi,l,lo);
+		sun=(lp[3]!=0)?Point(lo[0]/lo[3],lo[1]/lo[3],lo[2]/lo[3])-pc:Point(lo[0],lo[1],lo[2]);
+		sun=sun.normalize();
+		// saved for the VOL_POST pass
+		vol_geo[0]=eye;
+		for(int i=0;i<4;i++)
+			vol_geo[1+i]=ray[i];
+		vol_geo[5]=fwd;
+		vol_geo[6]=sun;
+		for(int i=0;i<4;i++)
+			vol_ld[i]=ld[i];
+	}
 
 	Sky *sky=((Spheroid*)parent)->get_sky();
 	Color skyc=sky?sky->color():Color(0.45,0.75,0.9);
@@ -10717,7 +10745,82 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_wlog",log2(0.25*wscale*KM));
 	vars.newFloatVar("vol_seed",fmod(fabs(rseed)*137.0,97.0));
 	vars.newFloatVar("vol_km2scene",1.0/KM);
+	// terrain pixels: window depth (FBOTex2.g = gl_FragCoord.z) to eye depth
+	// (scene units) as effects.frag: 1/(ws2*z+ws1); then distance along a ray
+	// = depth/dot(ray,view axis)
+	{
+		double zn=TheScene->znear;
+		double zf=TheScene->zfar;
+		vars.newFloatVar("vol_ws1",1/zn);
+		vars.newFloatVar("vol_ws2",(zn-zf)/zf/zn);
+		vars.newFloatVec("vol_fwd",fwd.x,fwd.y,fwd.z);
+	}
 }
+//-------------------------------------------------------------
+// CloudLayer::drawVolume() full screen ray march: doesn't need (or wait
+// for) visible map cells, so set up what Spheroid::render_object and
+// Map::render_shaded would and call setProgram directly. The layer's
+// matrix must be set (render(), postEffectsHook())
+//   VOL_SKY   sky pixels only (terrain pixels: after the effects pass)
+//   VOL_ALL   sky and terrain pixels
+//   VOL_POST  terrain pixels, over the effects image (FBOTex3/4)
+//-------------------------------------------------------------
+void CloudLayer::drawVolume(int pass){
+	vol_pass=pass;
+	// noise seed (TNnoise::setProgram reads TheNoise.rseed): the post pass
+	// must use the main pass's, not whatever object set it last
+	double nseed=TheNoise.rseed;
+	if(pass==VOL_POST)
+		TheNoise.rseed=vol_nseed;
+	else
+		vol_nseed=TheNoise.rseed;
+	Raster.surface=1;
+	Raster.set_all();
+	set_lighting();
+	first=1;
+	TerrainData::vol_shader=true;
+	terrain.init_render();
+	TerrainData::vol_shader=false;
+	Td.albedo=albedo;
+	Td.shine=shine;
+	Td.ambient=ambient;
+	Td.emission=emission;
+	Td.diffuse=diffuse;
+	Td.specular=specular;
+	map->make_current();
+	map->tid=ID0;
+	map->tp=Td.properties[ID0];
+	Td.tp=map->tp;
+	if(map->tp)
+		setProgram();
+	first=0;
+	glUseProgram(0);
+	vol_pass=VOL_SKY;
+	TheNoise.rseed=nseed;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::postEffectsHook() EffectsMgr hook between the effects pass
+// and postproc: draw the volume clouds over the (hazed, fogged, water
+// reflected) terrain. Returns true if attachments 0/1 were written.
+//-------------------------------------------------------------
+CloudLayer *CloudLayer::vol_post=0;
+bool CloudLayer::postEffectsHook(){
+	CloudLayer *c=vol_post;
+	vol_post=0;
+	if(!c || !c->isEnabled() || !c->volume())
+		return false;
+	// the effects pass (GLSLMgr::drawFrameBuffer) left identity matrices
+	// in GL: the view rays and sun come from the main pass's (saved in
+	// setVolumeVars), so no matrices are needed here
+	glMatrixMode(GL_MODELVIEW);
+	c->drawVolume(VOL_POST);
+	glMatrixMode(GL_MODELVIEW);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	return true;
+}
+
 // draw the full screen quad for clouds.volume.frag
 void CloudLayer::renderVolume(){
 	glDisable(GL_BLEND);
@@ -11047,6 +11150,9 @@ void CloudLayer::makeType(int gtype){
 		str=Planetoid::randFeature(RND_CLOUDS_2D);
 	strcpy(buff,str.c_str());
 
+	// TerrainData::clouds may point into an expression being replaced;
+	// parsing the new one (terrain.init) sets it again if it has clouds()
+	TerrainData::clouds=0;
 	TNode *root=TheScene->parse_node(buff);
 	if(root){
 	    terrain.set_root(root);
@@ -11054,6 +11160,32 @@ void CloudLayer::makeType(int gtype){
 	}
 	else
 	    cout<<"error building cloudlayer"<<endl;
+	clouds=TerrainData::clouds;   // so threeD() is right before init()
+}
+
+//-------------------------------------------------------------
+// CloudLayer::replaceNode() replace this layer in the scene tree.
+// Shell::replaceNode() gives the new layer this layer's height. That's
+// right for the same kind of layer, but a different kind keeps its own
+// height (e.g. a generated Vol layer replacing a 2D one at 30 miles)
+//-------------------------------------------------------------
+NodeIF *CloudLayer::replaceNode(NodeIF *n){
+	if(n && n->typeValue()==ID_CLOUDS){
+		CloudLayer *c=(CloudLayer*)n;
+		int g=c->cloudType();
+		if(g!=cloudType()){
+			NodeIF *p=getParent();
+			double psize=((Object3D*)p)->size;
+			double h=c->ht>0?c->ht:defaultHeight(g)*MILES;
+			c->ht=h;
+			c->size=psize+h;
+			c->setParent(p);
+			c->set_geometry();
+			p->replaceChild(this,n);
+			return n;
+		}
+	}
+	return Shell::replaceNode(n);
 }
 
 //-------------------------------------------------------------
@@ -11109,11 +11241,7 @@ void CloudLayer::setDefault(){
 		rsave[i]=r[i]; ssave[i]=s[i];
 		r[i]=0.5; s[i]=0.0;
 	}
-	// TerrainData::clouds may point into the expression being replaced;
-	// parsing the new one (terrain.init) sets it again if it has clouds()
-	TerrainData::clouds=0;
 	makeType(gtype);
-	clouds=TerrainData::clouds;
 	for(int i=0;i<RANDS;i++){
 		r[i]=rsave[i]; s[i]=ssave[i];
 	}

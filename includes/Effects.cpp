@@ -13,6 +13,8 @@
 extern int test3,test5,test7;
 
 EffectsMgr Raster;	// one and only global object
+bool (*EffectsMgr::post_effects_hook)()=0;
+bool EffectsMgr::post_onepass=false;
 
 #define	JITTER_SIZE 16
 #define SMAPTEXID   1
@@ -525,7 +527,7 @@ void EffectsMgr::setProgram(int type){
 //				break;
 //			}
 		}
-		if(!effects)
+		if(!effects || post_onepass)
 			sprintf(defs+strlen(defs),"#define ONEPASS\n");
 		GLSLMgr::setDefString(defs);
 		GLSLMgr::loadProgram("postproc.vert","postproc.frag");
@@ -676,9 +678,18 @@ void EffectsMgr::apply(){
 			GLSLMgr::drawFrameBuffer();
 		    GLenum mrt2[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT}; // restores default case
 			glDrawBuffers(2,mrt2);
+			// post effects pass (volume clouds over the terrain): reads the
+			// effects image (FBOTex3/4), writes attachments 0/1
+			post_onepass=false;
+			if(post_effects_hook){
+				GLSLMgr::setFBOWritePass();
+				post_onepass=post_effects_hook();
+				glDrawBuffers(2,mrt2);
+			}
 			GLSLMgr::setFBOReadPass();
 			setProgram(POSTPROCPGM);
 			GLSLMgr::drawFrameBuffer();
+			post_onepass=false;
 		}
 		else if(shadows()&&shadow_test&&debug_shadows()){
 			GLSLMgr::setFBOReadPass();

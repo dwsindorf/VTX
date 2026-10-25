@@ -16,6 +16,12 @@ class EffectsMgr : public RasterMgr
 	GLuint shadow_map_height;
 	GLuint shadow_map_width;
 public:
+    // called between the effects pass and postproc (EffectsMgr::apply):
+    // reads the effects output (FBOTex3/FBOTex4), writes attachments 0/1;
+    // returns true if it wrote them (postproc then reads FBOTex1/FBOTex2).
+    // Set by CloudLayer (volume clouds drawn over the terrain).
+    static bool (*post_effects_hook)();
+    static bool post_onepass;
     static char *shadow_vert;
     static char *shadow_geom;
     static char *shadow_defs;

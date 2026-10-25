@@ -775,6 +775,20 @@ public:
 	void makeType(int gtype);      // Generate settings + expression for a kind
 	int  cloudType();              // GN_2D, GN_3D or GN_VOL
 	void setDefault();             // Generate settings with no randomness
+	NodeIF *replaceNode(NodeIF *n);
+
+	// volume clouds over the terrain: with an effects pass (haze, fog,
+	// water) they're drawn after it (drawVolume(VOL_POST) from the
+	// EffectsMgr hook), so the terrain's haze/water isn't applied to them
+	enum { VOL_SKY=0, VOL_ALL=1, VOL_POST=2 };
+	int vol_pass;                   // pass being drawn (clouds.volume.frag defines)
+	Point  vol_geo[7];              // main pass eye, corner rays, view axis, sun and
+	double vol_nseed;               // noise seed (TheNoise.rseed), reused by VOL_POST
+	float  vol_ld[4];               // sun color, reused by VOL_POST (GL and scene
+	                                // state are changed by the effects pass)
+	static CloudLayer *vol_post;    // layer to draw over the terrain after the effects pass
+	static bool postEffectsHook();
+	void drawVolume(int pass);
 
 };
 
