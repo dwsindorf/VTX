@@ -6261,7 +6261,7 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		if(r[8]>0.7)
 			str+=newPlant(GN_TREE);
 		str+=newOcean(planet);
-		if(sky->pressure >=0.75){
+		if(sky->pressure >=1){
 			// second (low) cloud layer: ray-marched volume clouds (3D
 			// sprite layers only when asked for in Generate/Replace)
 			clouds = planet->newCloudLayer(GN_VOL);
@@ -9130,6 +9130,29 @@ double Sky::sunTau() {
 // shared by the sky, terrain, cloud and water shaders so they all
 // agree. No sky (or a disabled one) -> tau=redden=0 -> no reddening.
 //-------------------------------------------------------------
+//-------------------------------------------------------------
+// Sky::setSunDiskVars() sun disk size for sky.back.frag and the cloud
+// shaders: the star's angular radius as seen from the eye (first light),
+// and the angular size of a pixel
+//-------------------------------------------------------------
+void Sky::sunDisk(double &srad, double &pix) {
+	srad=0.00465;   // the sun from the earth
+	if(Lights.size>0){
+		Light *l=Lights[0];
+		Point lp=l->point.mm(TheScene->invViewMatrix);
+		double d=lp.distance(TheScene->vpoint);
+		if(l->size>0 && d>l->size)
+			srad=asin(l->size/d);
+	}
+	double vh=TheView->viewport[3]>0?TheView->viewport[3]:600;
+	pix=RPD*TheScene->fov/vh;
+}
+void Sky::setSunDiskVars(GLSLVarMgr &vars) {
+	double srad,pix;
+	sunDisk(srad,pix);
+	vars.newFloatVar("sun_disk",srad);
+	vars.newFloatVar("sun_pix",pix);
+}
 void Sky::setSunVars(GLSLVarMgr &vars, Sky *sky) {
 	bool on=sky && sky->isEnabled();
 	Color c=on?sky->redden_color:def_redden_color;
@@ -9601,6 +9624,8 @@ bool Sky::setProgram(){
 	Point pv=TheScene->xpoint;
 	vars.newFloatVec("pv",pv.x,pv.y,pv.z);
 
+	setSunDiskVars(vars);   // sun disk (sky.back.frag)
+
 	glEnable(GL_BLEND);
  	vars.setProgram(program);
 	vars.loadVars();
@@ -9763,6 +9788,10 @@ int clouds_mode=CLOUDS_GS_SHADER;
 //int clouds_mode=CLOUDS_POINTS;
 
 char *CloudLayer::dflt_sprites_file="CloudSprites";
+// default Shine for cloud layers (volume clouds: the forward scattering
+// "silver lining" sharpness; 5, the default for other objects, made sunset
+// clouds glow too much)
+#define CLOUD_DFLT_SHINE 1.0
 CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 {
 #ifdef DEBUG_OBJS
@@ -9782,6 +9811,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	sprites_image=0;
 	emission=Color(1,1,1,0.05);
 	ambient=Color(1,1,1,0.15);
+	shine=CLOUD_DFLT_SHINE;
 	vol_base=1.5;
 	vol_top=10;
 	vol_cov=-0.6;
@@ -9909,6 +9939,7 @@ int CloudLayer::scale(double &zn, double &zf)
 void CloudLayer::get_vars()
 {
  	Spheroid::get_vars();
+	VGET("shine",shine,CLOUD_DFLT_SHINE);   // clouds: own default (Orbital's is DEFAULT_SHINE)
 	VGET("cmin",cmin,60);
 	VGET("cmax",cmax,6);
 	VGET("smax",smax,2);
@@ -9942,6 +9973,7 @@ void CloudLayer::get_vars()
 void CloudLayer::set_vars()
 {
 	Spheroid::set_vars();
+	VSET("shine",shine,CLOUD_DFLT_SHINE);   // saved only if not the cloud default
 	VSET("cmin",cmin,60);
 	VSET("cmax",cmax,6);
 	VSET("smax",smax,2);
@@ -10258,6 +10290,20 @@ bool CloudLayer::setProgram(){
 	vars.newFloatVar("twilite_max",  2.0f);
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	Sky::setSunVars(vars,sky);   // sunrise/sunset reddening (sunlight.h)
+	// sun elevation at the viewer (clouds.2d.frag: sun disk behind clouds),
+	// as Sky::init_render()
+	{
+		double sunSin=-1;
+		Point pc=parent->point.mm(TheScene->invViewMatrix);
+		Point up=(TheScene->vpoint-pc).normalize();
+		for(int i=0;i<Lights.numLights();i++){
+			Point l=(Lights[i]->point.mm(TheScene->invViewMatrix)-pc).normalize();
+			double s=up.dot(l);
+			sunSin=s>sunSin?s:sunSin;
+		}
+		vars.newFloatVar("sun_sin",sunSin);
+	}
+	Sky::setSunDiskVars(vars);   // sun disk size (clouds.volume.frag)
 
 	Point p=point.mm(TheScene->invViewMatrix);
 	Point center=p.mm(TheScene->viewMatrix);

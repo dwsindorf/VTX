@@ -612,6 +612,8 @@ public:
 	// sets sun_tau, sun_redden, redden_color, redden_grad for any shader that
 	// includes sunlight.h; sky may be null or disabled (-> reddening off)
 	static void setSunVars(GLSLVarMgr &vars, Sky *sky);
+	static void setSunDiskVars(GLSLVarMgr &vars); // sun_disk, sun_pix (sun disk size)
+	static void sunDisk(double &srad, double &pix);  // sun angular radius, pixel size (radians)
 
 	Sky(Orbital *m, double s);
 	~Sky();

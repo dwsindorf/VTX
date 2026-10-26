@@ -1,0 +1,18 @@
+Clouds(0.00156249) {
+	ambient=Color(1,1,1,0.1);
+	day=-5.42532;
+	diffusion=2;
+	name="Stormy";
+	resolution=16;
+	shine=0.25;
+	specular=Color(1,1,1,0.31);
+	vol_coverage=-0.6344;
+	vol_freq=0.287108;
+	vol_hvar=1;
+	vol_mode=1;
+	vol_top=11.2581;
+	Surface{
+		terrain=Z(noise(SIMPLEX|FS|NLOD|SCALE|SQR|TA|UNS,5,8.5,1,0.329,2.172,0.151,1,0,0,1e-05))+Color(1,1,1,1);
+	}
+}
+

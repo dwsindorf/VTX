@@ -61,6 +61,8 @@
 
 #include "utils.h"
 #include "sunlight.h"
+uniform float sun_tau;
+uniform float sun_redden;
 #include "cloud_haze.h"
 
 #ifndef PI
@@ -141,6 +143,12 @@
 #define VOL_AMB_SIGMA 0.25
 // sunlight bounced off the ground onto the cloud base (ground albedo)
 #define VOL_GROUND 0.25
+
+// distance fade (aerial perspective, vol_haze km): distant clouds keep at
+// least this much of their own color, so near the sun they don't turn into
+// the bright sunrise glow behind them (the sky haze, cloud_haze.h, still
+// fades them fully when haze is on)
+#define VOL_FADE_MIN 0.4
 
 varying vec2 ScreenUV;
 
@@ -249,8 +257,6 @@ uniform float vol_seed;          // noise offset (per layer)
 uniform float vol_wlog;          // noise LOD: log2(0.25*wscale) (km)
 uniform float vol_km2scene;      // scene units per km (for the sky haze)
 
-uniform float sun_tau;
-uniform float sun_redden;
 
 // ---------------- noise ----------------
 // octaves are rotated against each other to hide the lattice
@@ -447,6 +453,26 @@ float hg(float c,float g){
 #define STEP_LIN 0.3
 float stepT(float x, float L){ return L*(STEP_LIN*x+(1.0-STEP_LIN)*x*x); }
 
+// the sky around the sun disk (cloud_haze.h): average of a ring of samples
+// just outside the disk that aren't disk
+vec3 skyAroundSun(vec3 c){
+	float rp=max(sun_disk,2.5*sun_pix)/max(sun_pix,1e-6)+3.0;   // disk radius + edge (pixels)
+	float R=2.5*rp;                                              // ring outside the disk
+	vec3 sum=vec3(0.0);
+	float n=0.0;
+	for(int k=0;k<12;k++){
+		float a=6.2831853*float(k)/12.0;
+		vec3 q=texture2DRect(SCENE_TEX,gl_FragCoord.xy+R*vec2(cos(a),sin(a))).rgb;
+		if(sunDiskW(q)<0.5){
+			sum+=q;
+			n+=1.0;
+		}
+	}
+	return n>0.0?sum/n:min(c,vec3(CLOUD_SUN_LUM));
+}
+
+
+
 void main(void) {
 	vec4 scene=texture2DRect(SCENE_TEX,gl_FragCoord.xy);
 	vec4 params=texture2DRect(PARAM_TEX,gl_FragCoord.xy);
@@ -548,6 +574,11 @@ void main(void) {
 		return;
 	}
 #endif
+
+	// sun disk behind this pixel (sky pixels only)
+	float sunw=terrain?0.0:sunDiskW(scene.rgb);
+	vec3 sunsky=sunw>0.0?skyAroundSun(scene.rgb):scene.rgb;
+
 
 	float cosang=dot(dir,vol_sun);
 	// phase function per scattering octave (broader for the later ones)
@@ -657,9 +688,15 @@ void main(void) {
 	// so it's clamped to the air color (the stars only show where the
 	// cloud itself is thin: T*scene below)
 	if(tfirst>0.0){
-		float f=exp(-tfirst/vol_haze);
+		float f=max(exp(-tfirst/vol_haze),VOL_FADE_MIN);
 		float eday=smoothstep(-0.1,0.1,dot(normalize(o),vol_sun));
 		vec3 behind=terrain?scene.rgb:mix(min(scene.rgb,vol_haze_color),scene.rgb,eday);
+		// the HDR sun disk must not come back through the distance fade:
+		// over it, fade into the sky around the disk
+		// the HDR sun disk must not come back through the distance fade:
+		// over it, fade into the sky around the disk
+		if(!terrain && sunw>0.0)
+			behind=mix(behind,sunsky,sunw);
 		col=mix((1.0-T)*behind,col,f);
 		// sky haze (the terrain haze, effects.frag): the cloud fades into
 		// the haze color as the terrain at that distance does
@@ -669,6 +706,11 @@ void main(void) {
 	gl_FragData[0]=vec4(0.3+0.7*clamp(L/vol_far,0.0,1.0),tfirst>0.0?0.8:0.0,0,1);
 	return;
 #endif
-	gl_FragData[0]=vec4(col+T*scene.rgb,scene.a);
+	// sun disk behind the clouds (cloud_haze.h): the disk is HDR bright, so
+	// (cloud opacity 1-T): T^K of the disk, the rest is the sky around it
+	vec3 bg=scene.rgb;
+	if(!terrain && sunw>0.0)
+		bg=mix(bg,pow(T,CLOUD_SUN_K-1.0)*scene.rgb+(1.0-pow(T,CLOUD_SUN_K-1.0))*sunsky,sunw);
+	gl_FragData[0]=vec4(col+T*bg,scene.a);
 }
 // ########## end clouds.volume.frag #########################

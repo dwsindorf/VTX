@@ -21,6 +21,20 @@ uniform vec3 viewpoint;
 uniform vec4 Haze;
 uniform vec4 HazeLit;   // Haze rgb darkened for time of day (= terrain haze color)
 uniform vec4 Halo;
+uniform float sun_disk;   // sun angular radius (radians), Sky::setProgram
+uniform float sun_pix;    // angular size of a pixel (radians)
+
+// Sun disk: a sharp disk at the star's real angular size (at least
+// SUN_DISK_MINPIX pixels radius so a distant star still shows), a soft edge
+// about a pixel wide, slight limb darkening, and HDR brightness so it
+// saturates to white like a photo of the sun. Drawn on top of the soft
+// glow (pf below), after the sky brightness compression, before haze.
+#define SUN_DISK_BRIGHT 6.0
+#define SUN_DISK_MINPIX 2.5
+#define SUN_DISK_LIMB   0.35
+// the disk fades with the sky opacity (Sky tab Opacity = density): full up
+// to SUN_DISK_OPQ0, gone at 1 (an opaque sky hides the sun)
+#define SUN_DISK_OPQ0   0.2
 uniform vec4 Twilite;
 uniform vec4 Scatter;
 uniform vec4 Night;
@@ -78,6 +92,7 @@ void main(void) {
 	//color.a=d;
 	vec4 band=vec4(0.0);  // sunrise/sunset horizon glow (sunsetBand)
 	vec4 core=vec4(0.0);  // sun disk color/weight, re-applied on top of the band
+	vec4 sundisk=vec4(0.0); // sharp HDR sun disk (applied after the compression)
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light = normalize(gl_LightSource[i].position.xyz - EyeDirection.xyz);
 
@@ -133,6 +148,20 @@ void main(void) {
 			// sun disk stays bright yellow-white (see sunCoreTint)
 			core = vec4(Halo.rgb*sunCoreTint(sun_tint)*gl_LightSource[i].specular.rgb,clamp(specular*ha,0.0,1.0));
 			color.rgb = mix(color.rgb,core.rgb,core.a);
+			// sharp sun disk at the star's angular size
+			if(dot(light,eye)>0.0){
+				float th=asin(clamp(length(cross(light,eye)),0.0,1.0)); // angle to the sun center
+				float rd=max(sun_disk,SUN_DISK_MINPIX*sun_pix);
+				float edge=max(0.1*rd,0.75*sun_pix);
+				float disk=1.0-smoothstep(rd-edge,rd+edge,th);
+				if(disk>sundisk.a){
+					float x=clamp(th/rd,0.0,1.0);
+					float limb=1.0-SUN_DISK_LIMB*(1.0-sqrt(1.0-x*x));
+					vec3 lc=gl_LightSource[i].diffuse.rgb;
+					lc/=max(max(lc.r,lc.g),max(lc.b,1e-3));   // light hue, brightest channel 1
+					sundisk=vec4(lc*sunCoreTint(sun_tint)*SUN_DISK_BRIGHT*limb,disk);
+				}
+			}
 			haze=mix(haze.rgb,Halo.rgb*sun_tint,Halo.a*pow(dpLE,10.0*day_grad)*sqrt(haze_grad)); // darken with night
             float scatter_mix=Scatter.a;
 			// ---- physically-derived Rayleigh+Mie scattering (additive) ----
@@ -177,6 +206,11 @@ void main(void) {
 	color.rgb=min(color.rgb,SKY_KNEE)+(SKY_MAX-SKY_KNEE)*(1.0-exp(-over/(SKY_MAX-SKY_KNEE)));
 	// sun disk on top of the band; never darker than the sky behind it
 	color.rgb=mix(color.rgb,max(color.rgb,core.rgb),core.a);
+	// sharp HDR disk on top (not compressed), faded by the sky opacity
+	{
+		float vis=1.0-smoothstep(SUN_DISK_OPQ0,1.0,density);
+		color.rgb=mix(color.rgb,max(color.rgb,sundisk.rgb*vis),sundisk.a*vis);
+	}
 #ifdef HAZE
 	float s=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//d=min(DEPTH/haze_zfar,1.0);
