@@ -753,6 +753,8 @@ public:
 	TNclouds *getClouds() { return clouds;}
 	void setClouds(TNclouds *c);
 	void deleteClouds();
+	void setTypeExpr(int gtype);    // expression changes when switching 2D/3D/Vol
+	static std::string defaultZ(int gtype); // Generate's Z() term, mid range
 	void init();
 	bool force_adapt();
 	void setSpritesTexture();
@@ -913,6 +915,7 @@ public:
 	virtual Sky *newSky() {return newSky(0);}
 	virtual Ring *newRing();
 	virtual CloudLayer *newClouds(bool is3d);
+	CloudLayer *newCloudLayer(int gtype);   // GN_2D, GN_3D or GN_VOL
 	virtual TNplants *newPlants(int g);
 };
 

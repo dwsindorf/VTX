@@ -662,10 +662,26 @@ void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 			TheView->set_changed_detail();
 		}
 		break;
-	case 2: // volume selected: doesn't need a clouds() node (one left
-	        // from sprite mode is kept for switching back, but ignored)
+	case 2: // volume selected: no clouds() node; the Point Z noise becomes
+	        // the volume default (pixel noise, the cloud shape)
+		if(vmode==0){
+			cout<< (tnode?"3D->Vol":"2D->Vol")<<endl;
+			object()->setTypeExpr(GN_VOL);
+			TheView->set_changed_detail();
+			TheScene->rebuild_all();
+			update_needed=true;
+			getObjAttributes();
+			sceneDialog->replaceSelected(object());
+		}
 		break;
 	case 1: // 3d selected
+		if(vmode>0){
+			// from volume: the Point Z noise becomes the 3D default
+			// (vertex noise: sprite stack height)
+			cout<< "Vol->3D"<<endl;
+			object()->setTypeExpr(GN_3D);
+			tnode=object()->getClouds();
+		}
 		if(!tnode){
 			cout<< "2D->3D"<<endl;
 			wxString str=getCloudsExpr();

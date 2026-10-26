@@ -4865,8 +4865,11 @@ Ring *Planetoid::newRing(){
 }
 
 CloudLayer *Planetoid::newClouds(bool is3d){
-	CloudLayer *clouds=CloudLayer::newInstance(is3d);
-	clouds->size=size+CloudLayer::defaultHeight(is3d?GN_3D:GN_2D)*MILES;
+	return newCloudLayer(is3d?GN_3D:GN_2D);
+}
+CloudLayer *Planetoid::newCloudLayer(int gtype){
+	CloudLayer *clouds=CloudLayer::newTypeInstance(gtype);
+	clouds->size=size+CloudLayer::defaultHeight(gtype)*MILES;
 	clouds->ht=clouds->size-size;
 	return clouds;
 }
@@ -5708,9 +5711,9 @@ std::string Planetoid::randFeature(int type) {
 		// r[] is in [0,1), s[] in [-0.5,0.5)
 		{
 			char buf[2048];
-			double k1   =0.4+0.4*r[11];     // storm winding, large scale
+			double k1   =0.3+0.1*r[11];     // storm winding, large scale
 			double ssize=1.4+0.8*r[12];     // storm size
-			double tw   =0.1+0.4*r[13];     // latitude shear (twist): >0.5 gives Jupiter-like bands
+			double tw   =0.1+0.1*r[13];     // latitude shear (twist): >0.5 gives Jupiter-like bands
 			double H1   =0.7+0.2*s[11];
 			double L1   =2.5+0.4*s[12];
 			double off1 =0.8+0.2*r[14];     // coverage
@@ -5752,7 +5755,7 @@ std::string Planetoid::randFeature(int type) {
 			double L=2.14+0.15*s[8];
 			double ampl=0.125+0.15*r[6];    // thickness (CloudLayer::makeType)
 			snprintf(buf,sizeof(buf),
-				"Z(noise(SIMPLEX|FS|NLOD|SCALE|SQR|TA|UNS,%.3g,%.3g,%.3g,%.3g,%.3g,%.3g,1,0,0,1e-05))+Color(1,1,1,1)",
+				"Z(noise(SIMPLEX|FS|NLOD|SCALE|SQR|TA|UNS|NABS,%.3g,%.3g,%.3g,%.3g,%.3g,%.3g,1,0,0,1e-05))+Color(1,1,1,1)",
 				start,orders,bias,H,L,ampl);
 			str=buf;
 		}
@@ -6258,8 +6261,10 @@ void Planetoid::newRocky(Planetoid *planet, int gtype){
 		if(r[8]>0.7)
 			str+=newPlant(GN_TREE);
 		str+=newOcean(planet);
-		if(sky->pressure >=1){
-			clouds = planet->newClouds(true);
+		if(sky->pressure >=0.75){
+			// second (low) cloud layer: ray-marched volume clouds (3D
+			// sprite layers only when asked for in Generate/Replace)
+			clouds = planet->newCloudLayer(GN_VOL);
 			planet->addChild(clouds);
 		}
 		planet->calcAveTemperature();
@@ -9785,7 +9790,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	vol_mode=0;
 	vol_hvar=0.25;
 	vol_estr=1;
-	vol_steps=256;
+	vol_steps=64;
 	vol_pass=VOL_SKY;
 	EffectsMgr::post_effects_hook=CloudLayer::postEffectsHook;
 }
@@ -9919,7 +9924,7 @@ void CloudLayer::get_vars()
 	VGET("vol_sigma",vol_sigma,1);
 	VGET("vol_hvar",vol_hvar,0.25);
 	VGET("vol_erosion",vol_estr,1);
-	VGET("vol_steps",vol_steps,256);
+	VGET("vol_steps",vol_steps,64);
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
@@ -9952,7 +9957,7 @@ void CloudLayer::set_vars()
 	VSET("vol_sigma",vol_sigma,1);
 	VSET("vol_hvar",vol_hvar,0.25);
 	VSET("vol_erosion",vol_estr,1);
-	VSET("vol_steps",vol_steps,256);
+	VSET("vol_steps",vol_steps,64);
 	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
@@ -10738,7 +10743,7 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_estr",vol_estr);
 	vars.newFloatVar("vol_hvar",vol_hvar);
 	vars.newFloatVar("vol_haze",80.0);
-	vars.newIntVar("vol_steps",(int)clamp(vol_steps,8.0,256.0));
+	vars.newIntVar("vol_steps",(int)clamp(vol_steps,8.0,64.0));
 	// noise level of detail (as GLSLMgr::setVertexAttributes Position1.w):
 	// orders = log2(0.25*wscale/depth), wscale in km
 	double wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
@@ -10871,24 +10876,118 @@ bool CloudLayer::volume()
 //-------------------------------------------------------------
 // CloudLayer::setClouds() set clouds expression
 //-------------------------------------------------------------
+#define CLOUD_EXPR_STR 8192
 void CloudLayer::setClouds(TNclouds *c){
-	char t[512];
+	char t[CLOUD_EXPR_STR];
 	t[0]=0;
 	c->valueString(t);
 	TNode *root=terrain.get_root();
-	root->valueString(t);
+	if(root)
+		root->valueString(t);
 	if(clouds){
 		delete clouds;
 		clouds=0;
 	}
 	TNclouds *nc=(TNclouds*)TheScene->parse_node(t);
-	terrain.set_root(nc);
+	terrain.set_root(nc);    // deletes the old root
 	terrain.init();
 	TerrainData::add_TNclouds(nc);
 	clouds = nc;
+	invalidate();
+}
+
+//-------------------------------------------------------------
+// find the Z(...) term in an expression string: returns its start (or
+// npos) and sets len to its length including the parentheses
+//-------------------------------------------------------------
+static size_t findZTerm(const std::string &e,size_t &len){
+	size_t p=0;
+	while((p=e.find("Z(",p))!=std::string::npos){
+		if(p>0 && (isalnum((unsigned char)e[p-1]) || e[p-1]=='_')){
+			p+=2;
+			continue;
+		}
+		int depth=0;
+		for(size_t i=p+1;i<e.size();i++){
+			if(e[i]=='(')
+				depth++;
+			else if(e[i]==')'){
+				depth--;
+				if(depth==0){
+					len=i-p+1;
+					return p;
+				}
+			}
+		}
+		return std::string::npos;
+	}
+	return std::string::npos;
+}
+
+//-------------------------------------------------------------
+// CloudLayer::defaultZ() Generate's Z() term for a kind of layer, with
+// every random value in the middle of its range ("" if none)
+//-------------------------------------------------------------
+std::string CloudLayer::defaultZ(int gtype){
+	double rsave[RANDS],ssave[RANDS];
+	for(int i=0;i<RANDS;i++){
+		rsave[i]=r[i]; ssave[i]=s[i];
+		r[i]=0.5; s[i]=0.0;
+	}
+	std::string e;
+	if(gtype==GN_VOL)
+		e=Planetoid::randFeature(RND_CLOUDS_VOL);
+	else if(gtype==GN_3D)
+		e=Planetoid::randFeature(RND_CLOUDS_3D);
+	for(int i=0;i<RANDS;i++){
+		r[i]=rsave[i]; s[i]=ssave[i];
+	}
+	size_t len=0;
+	size_t p=findZTerm(e,len);
+	if(p==std::string::npos)
+		return std::string("");
+	return e.substr(p,len);
+}
+
+//-------------------------------------------------------------
+// CloudLayer::setTypeExpr() expression changes when the layer is switched
+// to another kind (Object tab 2D/3D/Vol):
+//   Vol  no clouds() wrapper; the Z() term becomes the Vol default (pixel
+//        noise: the cloud shape) - added if there isn't one
+//   3D   the Z() term becomes the 3D default (vertex noise: the sprite
+//        stack height); the caller adds the clouds() wrapper
+// Other terms (Color etc.) are kept.
+//-------------------------------------------------------------
+void CloudLayer::setTypeExpr(int gtype){
+	if(gtype==GN_VOL && clouds)
+		deleteClouds();
+	TNode *root=terrain.get_root();
+	if(!root)
+		return;
+	char t[CLOUD_EXPR_STR];
 	t[0]=0;
 	root->valueString(t);
-	//cout<<t<<endl;
+	std::string e(t);
+	std::string z=defaultZ(gtype);
+	if(z.empty())
+		return;
+	size_t len=0;
+	size_t p=findZTerm(e,len);
+	if(p!=std::string::npos)
+		e.replace(p,len,z);
+	else if(e.empty())
+		e=z;
+	else
+		e=z+"+"+e;
+	TerrainData::clouds=0;
+	TNode *nr=(TNode*)TheScene->parse_node((char*)e.c_str());
+	if(!nr){
+		cout<<"CloudLayer::setTypeExpr error parsing "<<e<<endl;
+		return;
+	}
+	terrain.set_root(nr);    // deletes the old root
+	terrain.init();
+	clouds=TerrainData::clouds;
 	invalidate();
 }
 
@@ -11072,7 +11171,8 @@ NodeIF *CloudLayer::getInstance(NodeIF *prev,int type){
 	int gtype=type&GN_TYPES;
 	if(gtype!=GN_2D && gtype!=GN_3D && gtype!=GN_VOL){
 		double rv=Rand();
-		gtype=rv<0.4?GN_2D:(rv<0.6?GN_3D:GN_VOL);
+		// [Random]: 2D or volume (3D sprites only when picked explicitly)
+		gtype=rv<0.4?GN_2D:GN_VOL;
 	}
 	CloudLayer *clouds=newTypeInstance(gtype);
 
