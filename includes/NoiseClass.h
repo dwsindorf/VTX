@@ -69,6 +69,7 @@ enum {		// distortion opcodes
 	NXY,
 	NHT,
 	NSTORMS,	// storms(): rotate about storm centers (StormTable)
+	NVORTEX,	// vortex(): elliptical rotation about gas giant vortices (VortexTable)
 };
 
 enum {		// NTypes
@@ -353,6 +354,44 @@ public:
 	void warp(double &x, double &y, double &z, double k, double size=1) const;
 	static StormTable &get(double seed);
 	static thread_local double cur_size; // size arg of the storms() being evaluated (TNstorms)
+};
+
+//************************************************************
+// VortexTable: gas giant vortices for vortex() and spots()
+//
+// Like StormTable, but laid out like Jupiter/Neptune: one large "great
+// spot" and many small ovals at band latitudes (to ~65 deg). Each vortex is
+// an ellipse stretched east-west by asp (distance d measured with the east
+// component divided by asp). vortex(k,size,expr) rotates the noise point
+// within each ellipse by k*strength*smoothstep(1-d/(size*R)) in the
+// stretched frame, so the flow follows closed ovals (not spirals).
+// spots(size) returns sum of tone*mask over the ellipses (mask 1 in the
+// core, fading out by the edge): add it to a 1D band texture coordinate
+// to give the ovals their own color (red spot, white ovals, dark spots).
+// Deterministic from the noise seed; the shader gets the same table
+// (uniforms vort_c/vort_e/vort_p/vort_n, noise_funcs.h).
+// Frame: unit sphere, polar axis = y (as StormTable).
+//************************************************************
+#define MAX_VORTS 16
+class VortexTable {
+public:
+	double seed;
+	bool   valid;
+	int    n;
+	double c[MAX_VORTS][3];   // center (unit)
+	double e[MAX_VORTS][3];   // local east (unit)
+	double nn[MAX_VORTS][3];  // local north (unit)
+	double R[MAX_VORTS];      // north-south radius (chord)
+	double asp[MAX_VORTS];    // east-west / north-south
+	double s[MAX_VORTS];      // signed strength (radians at the center)
+	double tone[MAX_VORTS];   // spots() sign/weight: + great spot / dark ovals, - white ovals
+
+	VortexTable() { valid=false; n=0; seed=0;}
+	void build(double seed);
+	void warp(double &x, double &y, double &z, double k, double size=1) const;
+	double spot(double x, double y, double z, double size=1) const;
+	static VortexTable &get(double seed);
+	static thread_local double cur_size;
 };
 
 #endif

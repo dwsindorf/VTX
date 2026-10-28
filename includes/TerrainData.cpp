@@ -437,9 +437,39 @@ static void setStormUniforms(){
 		glUniform1iARB(ln,st.n);
 }
 
+//-------------------------------------------------------------
+// vortex()/spots() shader uniforms (VortexTable, NoiseClass.h)
+//-------------------------------------------------------------
+static void setVortexUniforms(){
+	GLhandleARB program=GLSLMgr::programHandle();
+	if(!program)
+		return;
+	GLint lc=glGetUniformLocationARB(program,"vort_c");
+	if(lc<0)
+		return;
+	GLint le=glGetUniformLocationARB(program,"vort_e");
+	GLint lp=glGetUniformLocationARB(program,"vort_p");
+	GLint ln=glGetUniformLocationARB(program,"vort_n");
+	VortexTable &vt=VortexTable::get(Noise::rseed);
+	float c[4*MAX_VORTS],e[4*MAX_VORTS],p[4*MAX_VORTS];
+	for(int i=0;i<vt.n;i++){
+		c[4*i]=vt.c[i][0]; c[4*i+1]=vt.c[i][1]; c[4*i+2]=vt.c[i][2]; c[4*i+3]=vt.R[i];
+		e[4*i]=vt.e[i][0]; e[4*i+1]=vt.e[i][1]; e[4*i+2]=vt.e[i][2]; e[4*i+3]=vt.asp[i];
+		p[4*i]=vt.s[i]; p[4*i+1]=vt.tone[i]; p[4*i+2]=0; p[4*i+3]=0;
+	}
+	glUniform4fvARB(lc,vt.n,c);
+	if(le>=0)
+		glUniform4fvARB(le,vt.n,e);
+	if(lp>=0)
+		glUniform4fvARB(lp,vt.n,p);
+	if(ln>=0)
+		glUniform1iARB(ln,vt.n);
+}
+
 void TerrainProperties::setProgram(){
 	GLSLMgr::setProgram();
 	setStormUniforms();
+	setVortexUniforms();
 	for(tid=0;tid<textures.size;tid++){
 		textures[tid]->setProgram();
 	}

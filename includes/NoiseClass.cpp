@@ -910,6 +910,111 @@ StormTable &StormTable::get(double sd){
 }
 
 //-------------------------------------------------------------
+// VortexTable (see NoiseClass.h)
+//-------------------------------------------------------------
+void VortexTable::build(double sd){
+	seed=sd;
+	unsigned long long st=(unsigned long long)(fabs(sd)*1.0e6)+0x7654321ULL;
+	n=0;
+	for(int i=0;i<MAX_VORTS;i++){
+		double la,lo;
+		lo=2*PI*storm_rand(st);
+		double hemi=storm_rand(st)<0.5?-1:1;
+		if(i==0){            // great spot: large, near 20 deg
+			la=(17+8*storm_rand(st))*hemi;
+			R[n]=0.08+0.05*storm_rand(st);
+			asp[n]=1.6+0.4*storm_rand(st);
+			s[n]=-hemi*(1.5+1.0*storm_rand(st));   // anticyclone
+			tone[n]=storm_rand(st)<0.8?1:-1;          // colored (red) spot, sometimes white
+		}
+		else{                // small ovals at band latitudes
+			la=(8+57*storm_rand(st))*hemi;
+			R[n]=0.02+0.04*storm_rand(st);
+			asp[n]=1.5+1.2*storm_rand(st);
+			double anti=storm_rand(st)<0.75?-1:1;  // mostly anticyclones
+			s[n]=anti*hemi*(1.5+1.5*storm_rand(st));
+			tone[n]=storm_rand(st)<0.7?-1:0.7;      // mostly white ovals, some dark
+		}
+		la*=RPD;
+		c[n][0]=cos(la)*sin(lo); c[n][1]=sin(la); c[n][2]=cos(la)*cos(lo);
+		// local east = normalize(y x c), north = c x east
+		double ex=c[n][2],ey=0,ez=-c[n][0];
+		double el=sqrt(ex*ex+ez*ez);
+		if(el<1e-9){ ex=1;ez=0;el=1;}
+		e[n][0]=ex/el; e[n][1]=ey; e[n][2]=ez/el;
+		nn[n][0]=c[n][1]*e[n][2]-c[n][2]*e[n][1];
+		nn[n][1]=c[n][2]*e[n][0]-c[n][0]*e[n][2];
+		nn[n][2]=c[n][0]*e[n][1]-c[n][1]*e[n][0];
+		n++;
+	}
+	valid=true;
+}
+thread_local double VortexTable::cur_size=1;
+void VortexTable::warp(double &x, double &y, double &z, double k, double size) const{
+	double l=sqrt(x*x+y*y+z*z);
+	if(l<=0 || k==0 || size<=0)
+		return;
+	double ux=x/l,uy=y/l,uz=z/l;
+	for(int i=0;i<n;i++){
+		double w=ux*c[i][0]+uy*c[i][1]+uz*c[i][2];
+		if(w<=0)
+			continue;
+		double ee=ux*e[i][0]+uy*e[i][1]+uz*e[i][2];
+		double no=ux*nn[i][0]+uy*nn[i][1]+uz*nn[i][2];
+		double es=ee/asp[i];
+		double d=sqrt(es*es+no*no);
+		double r=R[i]*size;
+		if(d>=r)
+			continue;
+		double f=1-d/r;
+		double a=k*s[i]*f*f*(3-2*f);
+		double cs=cos(a),sn=sin(a);
+		double es2=es*cs-no*sn;
+		double no2=es*sn+no*cs;
+		ee=es2*asp[i];
+		no=no2;
+		ux=ee*e[i][0]+no*nn[i][0]+w*c[i][0];
+		uy=ee*e[i][1]+no*nn[i][1]+w*c[i][1];
+		uz=ee*e[i][2]+no*nn[i][2]+w*c[i][2];
+		double ul=sqrt(ux*ux+uy*uy+uz*uz);
+		ux/=ul; uy/=ul; uz/=ul;
+	}
+	x=ux*l; y=uy*l; z=uz*l;
+}
+double VortexTable::spot(double x, double y, double z, double size) const{
+	double l=sqrt(x*x+y*y+z*z);
+	if(l<=0 || size<=0)
+		return 0;
+	double ux=x/l,uy=y/l,uz=z/l;
+	double v=0;
+	for(int i=0;i<n;i++){
+		double w=ux*c[i][0]+uy*c[i][1]+uz*c[i][2];
+		if(w<=0)
+			continue;
+		double ee=(ux*e[i][0]+uy*e[i][1]+uz*e[i][2])/asp[i];
+		double no=ux*nn[i][0]+uy*nn[i][1]+uz*nn[i][2];
+		double d=sqrt(ee*ee+no*no)/(R[i]*size);
+		if(d>=1)
+			continue;
+		double t=(d-0.8)/0.2;    // flat core, narrow rim (as noise_funcs.h)
+		t=t<0?0:t;
+		v+=tone[i]*(1-t*t*(3-2*t));
+	}
+	return v;
+}
+VortexTable &VortexTable::get(double sd){
+	static VortexTable table;
+	if(!table.valid || table.seed!=sd){
+#pragma omp critical(vortex_table)
+		{
+			if(!table.valid || table.seed!=sd)
+				table.build(sd);
+		}
+	}
+	return table;
+}
+
+//-------------------------------------------------------------
 // Noise::distort()	distort point coordinates
 //-------------------------------------------------------------
 void Noise::distort(int type,double distortion){
@@ -938,6 +1043,9 @@ void Noise::distort(int type,double distortion){
 		break;
 	case NSTORMS:
 		StormTable::get(rseed).warp(x,y,z,distortion,StormTable::cur_size);
+		break;
+	case NVORTEX:
+		VortexTable::get(rseed).warp(x,y,z,distortion,VortexTable::cur_size);
 		break;
 	case NTHETA:
 		p=RPD*P180(phi);

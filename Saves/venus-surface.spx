@@ -1,60 +1,22 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-41.5435;
-		theta=246.028;
-		height=29017.9 ft;
+		phi=-41.5511;
+		theta=245.942;
+		height=34563.7 ft;
 		gndlvl=-46631.2 ft;
-		time=2.72297e+06;
-		vstride=1;
+		time=2.71819e+06;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=8;
+		zoom=0.003;
+		minh=5.68182e-10;
+		minr=0.00299117;
 		tilt=-4;
-		angle=-1;
+		angle=-3;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=29000.4 ft;
-		time=2.72299e+06;
-		heading=13;
-		tilt=-7;
-		angle=-3;
-	}
-	View{
-		height=29233.9 ft;
-		tilt=-10;
-	}
-	View{
-		phi=-41.5448;
-		theta=246.023;
-	}
-	View{
-		phi=-41.5511;
-		theta=245.942;
-		height=32898.9 ft;
-		heading=-11;
-	}
-	View{
-		heading=-4;
-		tilt=-6;
-		vstride=0.02;
-		zoom=0.003;
-		minh=5.68182e-10;
-		radius=0.0029974;
-	}
-	View{
-		height=34563.7 ft;
-		time=2.71663e+06;
-		delt=200;
-		heading=-1;
-		tilt=-4;
-		minr=0.00299117;
-		radius=0.00299771;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -136,7 +98,6 @@ Scene() {
 					}
 					Clouds(0.00306516) {
 						ambient=Color(1,1,0.5,0.05);
-						crot=1;
 						day=30;
 						diffuse=Color(1,1,0.88);
 						resolution=4;
@@ -144,13 +105,13 @@ Scene() {
 						specular=Color(1,1,1,0.07);
 						Surface{
 							terrain=
-									Texture("venus_clouds",A|TEX,noise(GRADIENT|FS|SCALE,6.16,2.87,1,0.5,2,1,4,0,0.5,1e-06),1,1,2.15872,0,1,2,0.5,0,0,0,0,0);
+									Texture("venus_clouds",A|TEX,noise(GRADIENT|FS|SCALE,6.16,2.87,1,0.5,2,1,4,0,0.5,1e-06),1,1.26984,2.15872,0,1,2,0.5,0,0,0,0,0);
 						}
 					}
 					Sky(0.00308653) {
 						color=Color(0.98,0.9,0.26);
 						day=30;
-						density=0.56944;
+						density=0.60318;
 						ghg_fraction=0.95;
 						haze.color=Color(0.97,0.83,0.38,0.9);
 						haze.grad=0.23288;

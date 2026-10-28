@@ -84,6 +84,12 @@ uniform float sun_redden;
 //      distance in green (brighter = nearer, 0..50 km), red if the ray
 //      reaches the cloud layer before the terrain (clouds can be in front),
 //      blue if the depth gives no valid distance
+//   7: raw density at one point per ray (the middle of its segment through
+//      the layer), no marching or lighting: stripes here come from the
+//      density/noise itself, not from the ray steps
+//   8: as 7 but the Z noise only (0.5+5*Z), without the height profile
+//   9: lighting only: the light (S) at the first cloud sample on each ray,
+//      no accumulation (stripes here: the lighting; none: the march)
 //   6: cloud opacity found along each ray (red = 1-T, before haze) and
 //      green = sky haze amount at the first cloud; terrain and sky pixels
 //      in the passes that draw them
@@ -149,6 +155,22 @@ uniform float sun_redden;
 // the bright sunrise glow behind them (the sky haze, cloud_haze.h, still
 // fades them fully when haze is on)
 #define VOL_FADE_MIN 0.4
+
+// ---- banding at cloud edges ----
+// VOL_JITTER: per pixel start offset of the view ray samples
+//   0: interleaved gradient noise (smooth, but its regular pattern showed
+//      as fine stripes along cloud edges)
+//   1: hashed white noise (fine grain instead of a pattern; sine-free hash -
+//      fract(sin(x)*43758) loses precision on many GPUs and repeats in rows)
+#define VOL_JITTER 0
+// samples at a cloud edge (entering from clear air, or thin density) are
+// split into VOL_EDGE_SUB density sub-samples over the step interval, so
+// the edge isn't quantized to the step grid (0 or 1: off)
+// VOL_LIGHT_JITTER: random offset of the light march samples per pixel
+// (breaks up light banding, but adds speckle)
+#define VOL_LIGHT_JITTER 0
+#define VOL_EDGE_SUB 4
+#define VOL_EDGE_D   0.3     // density below which a sample counts as edge
 
 varying vec2 ScreenUV;
 
@@ -242,6 +264,7 @@ uniform float vol_rb;            // cloud base radius (km)
 uniform float vol_rt;            // highest cloud top radius (km): base+depth*(1+hvar)
 uniform float vol_depth;         // cloud height above the base (km, Height on the Volume tab)
 uniform float vol_far;           // max ray length (km)
+uniform vec3  vol_hts;           // heights above the ground (km): eye, cloud base, highest top
 
 uniform float vol_cov;           // coverage bias
 uniform float vol_freq;          // shape noise frequency (1/km)
@@ -434,6 +457,24 @@ float cloudDensity(vec3 p, vec2 cw, float dist, bool detail){
 
 // ---------------- ray / sphere ----------------
 // returns (t near, t far); t far < 0 if missed
+// ray from the EYE against the sphere at height hs above the ground. Same
+// as sphere(vol_eye,d,vol_rg+hs) but precise: dot(o,o)-R*R cancels two
+// numbers ~4e7 km^2 (float error ~ +-4 km^2), which shifted the segment
+// ends in steps with the view elevation and showed as horizontal bands.
+// Uses heights from doubles and the stable form of the quadratic.
+vec2 eyeShell(vec3 d, float hs){
+	float he=vol_hts.x;
+	float b=dot(vol_eye,d);
+	float c=(he-hs)*(2.0*vol_rg+he+hs);
+	float disc=b*b-c;
+	if(disc<0.0)
+		return vec2(1.0,-1.0);
+	float s=sqrt(disc);
+	float q=(b>0.0)?-(b+s):(-b+s);   // root of larger magnitude
+	float t1=q;
+	float t2=(abs(q)>1e-12)?c/q:0.0;
+	return vec2(min(t1,t2),max(t1,t2));
+}
 vec2 sphere(vec3 o, vec3 d, float R){
 	float b=dot(o,d);
 	float c=dot(o,o)-R*R;
@@ -452,6 +493,13 @@ float hg(float c,float g){
 // sample spacing: finer near the start of the segment
 #define STEP_LIN 0.3
 float stepT(float x, float L){ return L*(STEP_LIN*x+(1.0-STEP_LIN)*x*x); }
+
+// sine-free hash (Dave Hoskins, "Hash without Sine"): 0..1
+float hash12(vec2 p){
+	vec3 p3=fract(vec3(p.xyx)*0.1031);
+	p3+=dot(p3,p3.yzx+33.33);
+	return fract((p3.x+p3.y)*p3.z);
+}
 
 // the sky around the sun disk (cloud_haze.h): average of a ring of samples
 // just outside the disk that aren't disk
@@ -503,18 +551,18 @@ void main(void) {
 	vec3 dir=normalize(mix(mix(vol_ray00,vol_ray10,ScreenUV.x),
 	                       mix(vol_ray01,vol_ray11,ScreenUV.x),ScreenUV.y));
 	vec3 o=vol_eye;
-	float re=length(o);
+	float he=vol_hts.x;                // eye height above the ground (km)
 
 	// segment of the ray inside the cloud shell (first one in front)
-	vec2 to=sphere(o,dir,vol_rt);
-	vec2 ti=sphere(o,dir,vol_rb);
-	vec2 tg=sphere(o,dir,vol_rg);
+	vec2 to=eyeShell(dir,vol_hts.z);
+	vec2 ti=eyeShell(dir,vol_hts.y);
+	vec2 tg=eyeShell(dir,0.0);
 	float t0,t1;
-	if(re<vol_rb){                     // below the clouds
+	if(he<vol_hts.y){                  // below the clouds
 		t0=ti.y;
 		t1=to.y;
 	}
-	else if(re<=vol_rt){               // inside the cloud layer
+	else if(he<=vol_hts.z){            // inside the cloud layer
 		t0=0.0;
 		t1=(ti.y>0.0 && ti.x>0.0)?ti.x:to.y;
 	}
@@ -550,7 +598,17 @@ void main(void) {
 	}
 	float L=t1-t0;
 	float N=float(vol_steps);
+#if VOL_JITTER==1
+	float jitter=hash12(gl_FragCoord.xy);
+#else
 	float jitter=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));
+#endif
+	bool prevEmpty=true;      // previous sample was clear air (edge sub-samples)
+#if VOL_LIGHT_JITTER
+	float ljit=hash12(gl_FragCoord.yx+17.31);   // light march offset
+#else
+	float ljit=0.5;
+#endif
 
 #if VOL_DEBUG==4
 	{
@@ -563,6 +621,22 @@ void main(void) {
 #else
 		gl_FragData[0]=vec4(1.0,0.0,1.0,1.0);
 #endif
+		return;
+	}
+#endif
+#if VOL_DEBUG==7 || VOL_DEBUG==8
+	{
+		float tm=t0+0.5*L;
+		vec3 pm=o+dir*tm;
+		vec2 cm=column(normalize(pm),tm);
+#if VOL_DEBUG==7
+		float dm=cloudDensity(pm,cm,tm,true);
+#elif defined(VOL_NPZ)
+		float dm=clamp(0.5+5.0*zfield(pm,tm,0.0),0.0,1.0);
+#else
+		float dm=0.0;
+#endif
+		gl_FragData[0]=vec4(dm,dm,dm,1.0);
 		return;
 	}
 #endif
@@ -621,6 +695,18 @@ void main(void) {
 		vec2 cw=mix(cA,cB,float(i-i0)/float(VOL_WSTRIDE));
 		vec3 p=o+dir*t;
 		float d=cloudDensity(p,cw,t,true);
+#if VOL_EDGE_SUB>1
+		// cloud edge: average the density over the step interval
+		if((d>0.003 && (prevEmpty || d<VOL_EDGE_D)) || (d<=0.003 && !prevEmpty)){
+			float ds=0.0;
+			for(int k=0;k<VOL_EDGE_SUB;k++){
+				float tk=t+dt*((float(k)+0.5)/float(VOL_EDGE_SUB)-0.5);
+				ds+=cloudDensity(o+dir*tk,cw,tk,true);
+			}
+			d=ds/float(VOL_EDGE_SUB);
+		}
+#endif
+		prevEmpty=(d<=0.003);
 		if(d<=0.003)
 			continue;
 		if(tfirst<0.0)
@@ -636,7 +722,7 @@ void main(void) {
 		float xp=0.0;
 		for(int j=0;j<VOL_LIGHT_STEPS;j++){
 			float xa=float(j+1)/float(VOL_LIGHT_STEPS);
-			float xm=(float(j)+0.5)/float(VOL_LIGHT_STEPS);
+			float xm=(float(j)+ljit)/float(VOL_LIGHT_STEPS);
 			float x1=Ls*xa*xa;
 			od+=cloudDensity(p+vol_sun*(Ls*xm*xm),cw,t,false)*(x1-xp);
 			xp=x1;
@@ -675,6 +761,10 @@ void main(void) {
 #endif
 #endif
 		vec3 S=tint*(sunc*(ms*VOL_SUN_GAIN)+amb)+vol_emission;
+#if VOL_DEBUG==9
+		gl_FragData[0]=vec4(S,1.0);
+		return;
+#endif
 		float st=exp(-vol_sigma*d*dt);
 		col+=T*S*(1.0-st);
 		T*=st;

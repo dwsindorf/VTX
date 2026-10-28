@@ -1569,6 +1569,9 @@ enum  {
 	SUB_GAUSS,
 	SUB_STORMS,
 	SUB_ZONAL,
+	SUB_VORTEX,
+	SUB_SPOTS,
+	SUB_SPOTMASK,
 };
 
 static LongSym subtypes[]={
@@ -1595,6 +1598,9 @@ static LongSym subtypes[]={
 	{"gauss",		SUB_GAUSS},
 	{"storms",		SUB_STORMS},
 	{"zonal",		SUB_ZONAL},
+	{"vortex",		SUB_VORTEX},
+	{"spots",		SUB_SPOTS},
+	{"spotmask",	SUB_SPOTMASK},
 
 };
 NameList<LongSym*> Subs(subtypes,sizeof(subtypes)/sizeof(LongSym));
@@ -2055,6 +2061,79 @@ void TNstorms::valueString(char *s){
 }
 
 //************************************************************
+// Class TNvortex  vortex(k,expr) or vortex(k,size,expr)
+// gas giant vortices: evaluate expr with the noise point rotated along
+// east-west ovals around the VortexTable centers (NoiseClass.h).
+// The GLSL form is always vortex(k,size,expr) (macro in noise_funcs.h)
+//************************************************************
+class TNvortex : public TNstorms
+{
+public:
+	TNvortex(char* s, TNode *r) :  TNstorms(s, r) {}
+	void eval(){
+		TNarg &args=*((TNarg *)right);
+		if(args[0]){
+			if(CurrentScope->rpass())
+				Td.set_flag(COMPLEX);
+			double size=1;
+			if(sizeArg()){
+				sizeArg()->eval();
+				size=S0.s;
+			}
+			args[0]->eval();
+			double k=S0.s;
+			VortexTable::cur_size=size;
+			Noise::distort(NVORTEX,k);
+			S0.s=0;
+			if(exprArg())
+				exprArg()->eval();
+			S0.set_svalid();
+			Noise::pop();
+		}
+	}
+};
+
+//************************************************************
+// Class TNspots  spots(size), spotmask(size,depth)
+// gas giant ovals (VortexTable, NoiseClass.h); shader only, like pixel
+// (FS) noise: the CPU value is 0 (spots) or 1 (spotmask), and a Color()
+// or Texture A expression using them is compiled into the shader.
+//   spots(size)          sum of the ovals' signed tones, 1 over each oval's
+//                        core falling to 0 at its rim (outer 20%). Use in a
+//                        Color() to color the ovals (positive: great spot /
+//                        dark ovals, negative: white ovals)
+//   spotmask(size,depth) 1-depth*clamp(|spots(size)|,0,1): use as a Texture
+//                        A (alpha) expression so a Color() shows through
+//                        the band texture inside the ovals. A single call
+//                        so the shader form keeps its constant (+/-
+//                        constants are dropped from shader expressions)
+// GLSL: spots(), spotmask() in noise_funcs.h
+//************************************************************
+class TNspots : public TNsubr
+{
+	bool mask;
+public:
+	TNspots(char* s, TNode *r, bool m=false) :  TNsubr(s, r) { mask=m;}
+	void eval(){
+		SINIT;
+		if(CurrentScope->rpass())
+			Td.set_flag(SNOISEFLAG);    // compile the enclosing Color() into the shader
+		if(CurrentScope->texture()){
+			S0.set_inactive();
+			return;
+		}
+		S0.s=mask?1.0:0.0;
+		S0.set_svalid();
+		S0.clr_constant();
+	}
+	void valueString(char *s){
+		if(CurrentScope->texture())      // no CPU texture form (as pixel noise)
+			return;
+		TNsubr::valueString(s);
+	}
+};
+
+//************************************************************
 // Class TNzonal  zonal(itcz,subtrop,midlat)
 // Earth-like latitude bias for cloud cover (add to the cloud density):
 //   +itcz    near 6N   (intertropical convergence zone)
@@ -2264,6 +2343,9 @@ TNsubr *subr_node(char *s, TNode *args)
 		case SUB_GAUSS:   	return new TNgauss(s,args);
 		case SUB_STORMS:	return new TNstorms(s,args);
 		case SUB_ZONAL:   	return new TNzonal(s,args);
+		case SUB_VORTEX:	return new TNvortex(s,args);
+		case SUB_SPOTS:   	return new TNspots(s,args);
+		case SUB_SPOTMASK: 	return new TNspots(s,args,true);
 
 		}
 	}

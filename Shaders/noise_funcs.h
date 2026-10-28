@@ -131,6 +131,77 @@ float stormwarp(float k, float size){
 }
 #define storms(k,s,b) (storm_push()+stormwarp(k,s)+(b)+storm_pop())
 
+// ---- vortex(k,size,expr), spots(size): gas giant vortices ----
+// (VortexTable in NoiseClass.h; uniforms set in TerrainData.cpp)
+// vortex: rotate v1 within east-west ellipses (closed ovals), like storms()
+// spots:  sum of oval tones (1 over the core, falling to 0 over the outer
+//         20%: a sharp rim, so the shift doesn't sweep through several
+//         band colors as rings), unwarped point
+#define MAX_VORTS 16
+uniform vec4 vort_c[MAX_VORTS];   // xyz center (unit), w north-south radius
+uniform vec4 vort_e[MAX_VORTS];   // xyz local east (unit), w east-west aspect
+uniform vec4 vort_p[MAX_VORTS];   // x signed strength, y spot tone
+uniform int  vort_n;
+vec3 vort_save;
+float vort_push(){ vort_save=v1; return 0.0; }
+float vort_pop(){ v1=vort_save; return 0.0; }
+float vortwarp(float k, float size){
+	vec3 vt=(v1-0.5)*2.0;
+	float l=length(vt);
+	if(l<=0.0 || k==0.0 || size<=0.0)
+		return 0.0;
+	vec3 u=vt/l;
+	for(int i=0;i<MAX_VORTS;i++){
+		if(i>=vort_n)
+			break;
+		vec3 c=vort_c[i].xyz;
+		float w=dot(u,c);
+		if(w<=0.0)
+			continue;
+		vec3 e=vort_e[i].xyz;
+		vec3 nn=cross(c,e);
+		float asp=vort_e[i].w;
+		float es=dot(u,e)/asp;
+		float no=dot(u,nn);
+		float d=length(vec2(es,no));
+		float R=vort_c[i].w*size;
+		if(d<R){
+			float f=1.0-d/R;
+			float a=k*vort_p[i].x*f*f*(3.0-2.0*f);
+			float cs=cos(a), sn=sin(a);
+			float es2=es*cs-no*sn;
+			float no2=es*sn+no*cs;
+			u=normalize(es2*asp*e+no2*nn+w*c);
+		}
+	}
+	v1=u*l*0.5+0.5;
+	return 0.0;
+}
+#define vortex(k,s,b) (vort_push()+vortwarp(k,s)+(b)+vort_pop())
+float spots(float size){
+	vec3 u=normalize((Vertex1.xyz-0.5)*2.0);
+	float v=0.0;
+	for(int i=0;i<MAX_VORTS;i++){
+		if(i>=vort_n)
+			break;
+		vec3 c=vort_c[i].xyz;
+		if(dot(u,c)<=0.0)
+			continue;
+		vec3 e=vort_e[i].xyz;
+		vec3 nn=cross(c,e);
+		float es=dot(u,e)/vort_e[i].w;
+		float no=dot(u,nn);
+		float d=length(vec2(es,no))/(vort_c[i].w*size);
+		if(d<1.0)
+			v+=vort_p[i].y*(1.0-smoothstep(0.8,1.0,d));   // flat core, narrow rim
+	}
+	return v;
+}
+// Texture A (alpha) expression: band texture faded out inside the ovals
+float spotmask(float size, float depth){
+	return 1.0-depth*clamp(abs(spots(size)),0.0,1.0);
+}
+
 // ---- zonal(itcz,subtrop,midlat): latitude cloud cover bias ----
 // same formula as TNzonal (TerrainNode.cpp); latitude of the unwarped point
 float zonal(float itcz, float subtrop, float midlat){

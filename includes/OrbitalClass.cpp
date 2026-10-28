@@ -9820,7 +9820,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	vol_mode=0;
 	vol_hvar=0.25;
 	vol_estr=1;
-	vol_steps=64;
+	vol_steps=256;
 	vol_pass=VOL_SKY;
 	EffectsMgr::post_effects_hook=CloudLayer::postEffectsHook;
 }
@@ -9955,7 +9955,7 @@ void CloudLayer::get_vars()
 	VGET("vol_sigma",vol_sigma,1);
 	VGET("vol_hvar",vol_hvar,0.25);
 	VGET("vol_erosion",vol_estr,1);
-	VGET("vol_steps",vol_steps,64);
+	VGET("vol_steps",vol_steps,256);
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
@@ -9989,7 +9989,7 @@ void CloudLayer::set_vars()
 	VSET("vol_sigma",vol_sigma,1);
 	VSET("vol_hvar",vol_hvar,0.25);
 	VSET("vol_erosion",vol_estr,1);
-	VSET("vol_steps",vol_steps,64);
+	VSET("vol_steps",vol_steps,256);
 	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
@@ -10779,6 +10779,9 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_rg",rg);
 	vars.newFloatVar("vol_rb",rg+base_km);
 	vars.newFloatVar("vol_rt",rg+top_km);
+	// heights above the ground (km, from doubles) for the precise ray/shell
+	// intersections in clouds.volume.frag (eye, cloud base, highest top)
+	vars.newFloatVec("vol_hts",ht,base_km,top_km);
 	vars.newFloatVar("vol_depth",vol_top);
 	vars.newFloatVar("vol_far",far_km);
 	vars.newFloatVar("vol_cov",vol_cov);
@@ -10789,7 +10792,7 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_estr",vol_estr);
 	vars.newFloatVar("vol_hvar",vol_hvar);
 	vars.newFloatVar("vol_haze",80.0);
-	vars.newIntVar("vol_steps",(int)clamp(vol_steps,8.0,64.0));
+	vars.newIntVar("vol_steps",(int)vol_steps);
 	// noise level of detail (as GLSLMgr::setVertexAttributes Position1.w):
 	// orders = log2(0.25*wscale/depth), wscale in km
 	double wscale=0.5*TheScene->window_width*size/tan(RPD*TheScene->fov/2);
