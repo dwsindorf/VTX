@@ -46,6 +46,7 @@ GLint 			GLSLMgr::attributes3ID=-1;
 GLint 			GLSLMgr::attributes4ID=-1;
 GLint 			GLSLMgr::position1ID=-1;
 GLint 			GLSLMgr::position2ID=-1;
+GLint 			GLSLMgr::position3ID=-1;
 GLint 			GLSLMgr::modelViewProjMat=-1;
 
 GLuint          GLSLMgr::noise3DTextureID=0;
@@ -298,11 +299,21 @@ void GLSLMgr::makeTexDefsFile(){
 //-------------------------------------------------------------
 // GLSLMgr::setVertexAttributes() set shader position attributes
 //-------------------------------------------------------------
-void GLSLMgr::setVertexAttributes(Point pm,double depth) {
+void GLSLMgr::setVertexAttributes(Point pm,double depth, Point *pivot) {
 	if (position1ID < 0 /*&& position2ID<0*/)
 		return;
 	double dfactor=0.25*wscale/depth;
 	float max_orders =log2(dfactor);
+	// NOISE_DP (planetoid.frag, noise_funcs.h): the shader rebuilds the
+	// noise point in double precision as pivot+offset
+	//   Position3 pivot: the same for every vertex of a fan and rounded to
+	//             float here so it is exact (passed as a flat varying)
+	//   Position2 offset pm-pivot: small, so it interpolates accurately
+	if(pivot && position3ID>=0 && position2ID>=0){
+		float px=(float)pivot->x, py=(float)pivot->y, pz=(float)pivot->z;
+		glVertexAttrib4f(position3ID, px, py, pz, 0.0f);
+		glVertexAttrib4f(position2ID, (float)(pm.x-px), (float)(pm.y-py), (float)(pm.z-pz), 0.0f);
+	}
 	//cout<<max_orders<<endl;
 	// passing in vertex as doubles doesn't work (even if supported by GPU)
 	// because varying doubles (e.g. dvec3) aren't interpolated in fragment shader (flat shading only)
@@ -948,6 +959,7 @@ bool GLSLMgr::buildProgram(char *vshader,char *fshader,char *gshader){
 	GLSLProgram::setKeyStr(tmp);
 	position1ID=-1;
 	position2ID=-1;
+	position3ID=-1;
 	TexCoordsID=-1;
 	modelViewProjMat=-1;
 
@@ -1033,6 +1045,7 @@ void GLSLMgr::setProgram(){
 	TexCoordsID=glGetAttribLocation(program,"TextureAttributes"); // Tangent
 	position1ID=glGetAttribLocation(program,"Position1");  // vertex 1
 	position2ID=glGetAttribLocation(program,"Position2");  // vertex 2
+	position3ID=glGetAttribLocation(program,"Position3");  // NOISE_DP fan pivot
  	attributes3ID=glGetAttribLocation(program,"Attributes3"); // texture attribs
  	attributes4ID=glGetAttribLocation(program,"Attributes4"); // texture attribs
  	//cout<<CommonID1<<" "<<CommonID2<<" "<<CommonID3<<" "<<TexCoordsID<<endl;

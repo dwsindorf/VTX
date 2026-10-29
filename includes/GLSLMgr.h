@@ -103,6 +103,7 @@ public:
 	static GLint attributes4ID;
 	static GLint position1ID;
 	static GLint position2ID;
+	static GLint position3ID;   // NOISE_DP: fan pivot (flat)
 	static GLint modelViewProjMat;
 
 	static int pass;
@@ -111,7 +112,7 @@ public:
 
 	static void loadVars();
 	static void drawFrameBuffer();
-	static void setVertexAttributes(Point pp, double depth);
+	static void setVertexAttributes(Point pp, double depth, Point *pivot=0);
 	static bool loadProgram(char *vshader,char *fshader);
 	static bool loadProgram(char *vshader,char *fshader,char *gshader);
 	static bool buildProgram(char *vshader,char *fshader,char *gshader);

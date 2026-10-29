@@ -34,6 +34,7 @@ extern double Theta,Phi,Radius,Sfact;
 //#define DEBUG_HOLE_PROBE
 //#define DEBUG_HOLE_SCAN
 #define USE_IDTABLE
+#define NOISE_DP     // double precision pixel noise point on planets (not with geometry shader)
 
 static int debug_temp=DEBUG_TEMP;
 
@@ -3808,6 +3809,12 @@ bool Planetoid::setProgram(){
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_indexed.geom");
 	}
 	else{
+#ifdef NOISE_DP
+		// double precision pixel noise point (see noise_funcs.h, GLSLMgr::setVertexAttributes)
+		strcat(GLSLMgr::defString,"#extension GL_ARB_gpu_shader_fp64 : enable\n");
+		strcat(GLSLMgr::defString,"#extension GL_EXT_gpu_shader4 : enable\n");
+		strcat(GLSLMgr::defString,"#define NOISE_DP\n");
+#endif
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
 	}
 	GLhandleARB program=GLSLMgr::programHandle();

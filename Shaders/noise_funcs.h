@@ -254,20 +254,40 @@ vec4 Noise(int index) {
 	if(!info.absval)
 		rmin *=2.0;
 	float clip=info.clamp*VMAX;
+#ifdef NOISE_DP
+	// double precision noise point: pivot + offset + any warp of v1
+	// (v1-Vertex1 is 0 for unwarped noise: warps are still float precision)
+	dvec3 vd=dvec3(VertexO)+dvec3(Vertex2.xyz)+dvec3(v1-Vertex1.xyz)+double(current_seed);
+	// lattice period the scaled point is reduced by (in double) before the
+	// float noise call, so it stays small and keeps its fractional precision
+	//   GRADIENT 256 (permTexture size, GL_REPEAT)
+	//   SIMPLEX  867 (3*289: mod 289 hash, x/3 skew)
+	//   VORONOI  0 (sin() hash isn't periodic: not reduced yet)
+	double period=info.vnoise==SIMPLEX?867.0LF:(info.vnoise==VORONOI?0.0LF:256.0LF);
+#else
 	vec3 v=v1+current_seed;
+#endif
 	for(int i=0;i<n;i++) {
 		float df=f/fmax;
         float m=smoothstep(0.1,1.75,df);
+#ifdef NOISE_DP
+		dvec3 qd=vd*double(f);
+		if(period>0.0LF)
+			qd-=period*floor(qd/period);
+		vec3 vf=vec3(qd);
+#else
+		vec3 vf=v*f;
+#endif
         switch(info.vnoise){
         case SIMPLEX:
-        	P1=simplex3d(v*f);
+        	P1=simplex3d(vf);
 	        break;
         case VORONOI:
-        	P1=voronoi3d(v*f);
+        	P1=voronoi3d(vf);
 	        break;
         case GRADIENT:
         default:
-	        P1=noise3D(v*f);
+	        P1=noise3D(vf);
         }
         nvec=P1;
 

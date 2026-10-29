@@ -13,6 +13,7 @@
 
 extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness,Slope;
 extern Point MapPt;
+static Point dp_pivot; // NOISE_DP: pivot of the current fan/triangle (see setVertexAttributes)
 
 int bounds_valid=0;
 int bounds_invalid=0;
@@ -221,6 +222,7 @@ void Triangle::init(){
 	Phi = d1->phi()/180;
 	Theta = d1->theta()/180.0-1;
     MapPt = d1->mpoint();
+    dp_pivot = MapPt;
 
 	for(int j=0;j<TheMap->tp->textures.size;j++){
 		Texture *t=TheMap->tp->textures[j];
@@ -1807,6 +1809,7 @@ void MapNode::render()
     Phi = d->phi()/180;
     Theta = d->theta()/180.0-1;
     MapPt = d->mpoint();
+    dp_pivot = MapPt;
 	//setSurface();
 
 	for(int i=0;i<TheMap->tp->textures.size;i++){
@@ -1856,6 +1859,7 @@ void MapNode::render_ids()
 	if(!d)
 	   return;
 	MapPt = d->mpoint();
+	dp_pivot = MapPt;
 	set_mchecked();
 	idb.l=Raster.set_id();
 	Raster.set_data(this);
@@ -1899,6 +1903,7 @@ void MapNode::render_vertex()
 	if(!d)
 	   return;
 	MapPt = d->mpoint();
+	dp_pivot = MapPt;
 #ifdef USE_GL_POLYGON
 	glBegin(GL_POLYGON);
 #else
@@ -2204,8 +2209,14 @@ void MapNode::setVertexAttributes(Point pm){
 	pm=pm*0.5+0.5;
 	GLSLMgr::input_type=GL_TRIANGLES;
 	GLSLMgr::output_type=GL_TRIANGLE_STRIP;
-
-	GLSLMgr::setVertexAttributes(pm,depth);
+	// fan pivot for NOISE_DP (same transform as pm)
+#ifndef KEEP_HT
+	Point pivot=dp_pivot.normalize();
+#else
+	Point pivot=dp_pivot*wscale;
+#endif
+	pivot=pivot*0.5+0.5;
+	GLSLMgr::setVertexAttributes(pm,depth,&pivot);
 
 }
 

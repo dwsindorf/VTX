@@ -10,6 +10,9 @@
 //#if NVALS >0
 	Vertex1=Position1;
 	Vertex2=Position2;
+#ifdef NOISE_DP
+	VertexO=Position3.xyz;
+#endif
 //#endif
 	Constants1=CommonAttributes1;
 // ########## end set_common.vert #########################

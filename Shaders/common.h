@@ -9,6 +9,12 @@ varying vec4 Color;
 //#if NVALS >0
 varying vec4 Vertex1;
 varying vec4 Vertex2;
+#ifdef NOISE_DP
+// double precision noise point = VertexO (pivot, the same for the whole
+// fan, so not interpolated) + Vertex2.xyz (small offset, interpolates
+// accurately). Set by GLSLMgr::setVertexAttributes
+flat varying vec3 VertexO;
+#endif
 //#endif
 //#if NTEXS >0
 varying vec4 Tangent;
