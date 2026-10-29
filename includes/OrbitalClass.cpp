@@ -5007,6 +5007,7 @@ enum orbital_features{
 	RND_CLOUDS_2D,
 	RND_CLOUDS_3D,
 	RND_CLOUDS_VOL,
+	RND_GAS_BANDS,
 	RND_SKY,
 };
 #define DESSERT_THEME     Color(0.9,0.8,0.7),Color(0.9,0.82,0.68),Color(0.62,0.52,0.44),Color(1,0.9,0.64)
@@ -5435,6 +5436,57 @@ std::string Planetoid::randFeature(int type) {
 	    str+=buff;
 	    str+=");\n";
 	    break;
+	case RND_GAS_BANDS:
+		// gas giant bands: the setColors() palette (as RND_BANDS: random
+		// intensity delta, random blend toward colors[0]), laid out as many
+		// alternating light (zone) and dark (belt) bands of random width,
+		// instead of a smooth spline through the 5 colors
+		{
+			unsigned long long st=(unsigned long long)(r[0]*1.0e9)+777;
+			auto rnd=[&st](){ st=st*6364136223846793005ULL+1442695040888963407ULL;
+				return (double)(st>>11)*(1.0/9007199254740992.0); };
+			// colors[1..ncolors-1] sorted by brightness (colors[0] is the
+			// blend color)
+			int idx[16];
+			int nc=0;
+			for(int i=1;i<ncolors && nc<16;i++)
+				idx[nc++]=i;
+			for(int i=0;i<nc;i++)
+				for(int j=i+1;j<nc;j++)
+					if(colors[idx[j]].brightness()<colors[idx[i]].brightness()){
+						int t=idx[i]; idx[i]=idx[j]; idx[j]=t;
+					}
+			int ndark=nc/2;                  // darker half: belts
+			double contrast=0.4*rnd();       // extra lighten zones / darken belts
+			int nstops=12+(int)(9*rnd());
+			str="bands(";
+			str+=randFeature(RND_TEXNAME);
+			str+=",TMP|NORM|REFLECT,64,";
+			str+=std::to_string(0.2*r[5]); // random
+			str+=",";
+			str+=std::to_string(0.7*r[6]); // mix
+			buff[0]=0;
+			strcat(buff,",");
+			colors[0].toString(buff+strlen(buff));   // blend color
+			bool belt=rnd()<0.5;
+			int n=0;
+			while(n<nstops){
+				int k=belt?(int)(rnd()*ndark):ndark+(int)(rnd()*(nc-ndark));
+				k=k<0?0:(k>=nc?nc-1:k);
+				Color c=colors[idx[k]];
+				c=belt?c.darken(contrast*rnd()):c.lighten(contrast*rnd());
+				int w=1+(int)(3*rnd());          // band width (stops)
+				for(int j=0;j<w && n<nstops;j++,n++){
+					strcat(buff,",");
+					c.toString(buff+strlen(buff));
+				}
+				if(rnd()<0.75)                   // mostly alternate
+					belt=!belt;
+			}
+			str+=buff;
+			str+=");\n";
+		}
+		break;
 	case RND_GLOBAL_NOISE:
 		str="noise(GRADIENT|SQR,";
 		str+=std::to_string(r[8]); // start
@@ -6372,35 +6424,58 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 		Render.invalidate_textures();
 		planet->add_image(img);
 	}
-	std::string  noise_func=randFeature(RND_NOISEFUNC);
+	// Surface: 1D band texture indexed by latitude (phi_bias*EQU), displaced by
+	//   noise1  band edge curls (mini vortexes): twisted NABS noise
+	//   noise2  spots: Voronoi, more toward the poles and asymmetric
+	//           ((EQU+0.3*PHI)*...); its clamp flattens the spot interiors
+	//   noise3  low frequency distortion
+	// Values are those tuned in temp.spx, with small random changes.
+	// vary(x,rv[,vv]): x*(1+vv*rv), rv=s[n] in [-1,1]
+	//   vv defaults to v; set vv (>=0) to override v for one feature
+	double v=0.0;                         // global random variation (0.15 = +-7.5%)
+	auto vary=[&](double x,double rv,double vv=-1){
+		return x*(1+(vv>=0?vv:v)*rv);
+	};
+	double a0=vary(0.8,s[2]);             // noise1 weight
+	double tw=vary(0.3,s[3]);             // noise1 twist
+	double a1=vary(0.096,s[4]);           // noise1 amplitude
+	double a2=vary(0.5,s[6]);             // noise2 weight
+	double sp=vary(0.3,s[7]);             // noise2 hemisphere asymmetry (*PHI)
+	double f2=vary(2.0,s[8]);             // noise2 start (spot size)
+	double b2=vary(0.452,s[9]);           // noise2 bias
+	double n2=vary(0.2,s[10]);            // noise2 amplitude
+	double a3=vary(0.014,s[11]);          // noise3 amplitude
 
-	char noise_expr1[2048];
-	char noise_expr2[2048];
-	char noise_expr3[2048];
-	double twist=0.2+0.1*r[6];
-	sprintf(noise_expr1,"%g*twist(%g,noise(%s|FS|NABS|SQR|TA|UNS|RO1,2.4,6,1,0.55,2.25,0.3,1,0,0,1e-6))",twist,0.2+0.1*s[2],noise_func.c_str());
-	double storms=0.4+0.1*s[3];
+	char noise_expr[2048];
+	sprintf(noise_expr,
+		"%g*twist(%g,noise(GRADIENT|FS|NABS|SQR|TA|UNS|RO1,2.4,6,1,0.55,2.25,%g,1,0,0,1e-06))"
+		"+%g*max((EQU+%g*PHI)*noise(VORONOI|FS|NEG|NABS|SCALE|UNS|RO1,%g,3,%g,0.5,2,%g,-0.85,0,2,1e-06),0)"
+		"+noise(GRADIENT|FS|SQR|TA|RO1,1,2.5,1,0.5,2,%g,1,0,0,6.61114e-07)",
+		a0,tw,a1,a2,sp,f2,b2,n2,a3);
+	double scale=vary(0.654133,s[12]);
+	double ampl=vary(0.8,s[13],0.1);
+	double offset=1;
+	double levels=vary(2.20076,s[14]);
+	double delf=vary(1.89531,s[15]);
+	double dela=vary(1.20943,s[0]);
+	double phi_bias=vary(0.4,s[1],0.75);
+	// band latitude: belts(offset,power) replaces the Texture's phi_bias*EQU
+	//   offset  moves the band mirror line off the equator so the bands
+	//           differ north and south (0.05 = 9 deg, random sign)
+	//   power   >1 broad bands near the equator, finer toward the poles
+	double boff=vary(0.05,s[5]);
+	if(r[11]>0.5)
+		boff=-boff;
+	double bpow=vary(1.5,2*r[13]-1);
+	char belt_expr[128];
+	double bk=phi_bias/(scale*ampl);      // noise is scaled by scale*ampl in shader
+	sprintf(belt_expr,"+%g*belts(%g,%g)",bk,boff,bpow);
+	strcat(noise_expr,belt_expr);
+	char  *tname=randFeature(RND_TEXNAME).c_str();
 
-	// storms
-	sprintf(noise_expr2,"%g*max((EQU+0.5*PHI)*noise(SIMPLEX|FS|SCALE|SQR|RO1,%g,3,1,0.5,2,0.5,1,0,0.3,1e-06),0)",storms,1+0.25*r[4]);
-	double ripple=1+0.1*s[4];
-     sprintf(noise_expr3,"%g*noise(%s|FS|SQR|TA|RO1,1,2.5,1,0.5,2,0.05,1,0,0,6.61114e-07)",ripple,noise_func.c_str());
-    double scale=0.5+r[5];
-    double ampl=0.7+0.25*s[5];
-    double offset=r[7];
-    double levels=2+r[8];
-    double delf=2.2+s[6];
-    double dela=0.4+r[9];
-    double phi_bias;
-    if(r[10]>0.8)
-    	phi_bias=0.1+0.1*s[3];
-    else
-    	phi_bias=0.6+0.2*s[3];
-    char  *tname=randFeature(RND_TEXNAME).c_str();
-
-    sprintf(buff,"Texture(%s,S|TEX,%s+%s+%s,%g,%g,0,%g,%g,%g,%g,0,%g,0,0,0)",
-    		tname,noise_expr1,noise_expr2,noise_expr3,
-			scale,ampl,offset,levels,delf,dela,phi_bias);
+	sprintf(buff,"Texture(%s,S|TEX,%s,%g,%g,0,%g,%g,%g,%g,0,0,0,0,0)",
+		tname,noise_expr,
+		scale,ampl,offset,levels,delf,dela);  // latitude from belts(), phi_bias 0
 
 	TNtexture *tex=(TNtexture*)TheScene->parse_node(buff);
 	if(tex){

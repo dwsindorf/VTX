@@ -220,6 +220,7 @@ uniform float freqmip;
 #define THETA Vertex1.x
 #define LAT abs(PHI)
 #define EQU abs(PHI-0.5)
+#define HEMI (2.0*smoothstep(-0.15,0.15,PHI-0.5)-1.0)
 #define X Vertex1.x
 #if NVALS>0
 #include "noise_funcs.h"

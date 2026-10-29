@@ -1572,6 +1572,7 @@ enum  {
 	SUB_VORTEX,
 	SUB_SPOTS,
 	SUB_SPOTMASK,
+	SUB_BELTS,
 };
 
 static LongSym subtypes[]={
@@ -1601,6 +1602,7 @@ static LongSym subtypes[]={
 	{"vortex",		SUB_VORTEX},
 	{"spots",		SUB_SPOTS},
 	{"spotmask",	SUB_SPOTMASK},
+	{"belts",		SUB_BELTS},
 
 };
 NameList<LongSym*> Subs(subtypes,sizeof(subtypes)/sizeof(LongSym));
@@ -2133,6 +2135,43 @@ public:
 	}
 };
 
+extern double Phi;
+//************************************************************
+// Class TNbelts  belts(offset,power)
+// gas giant band coordinate: 0.5*(2*|PHI-0.5-offset|)^power
+//   with offset=0, power=1 the same as EQU (0 at the equator, 0.5 at
+//   the poles). offset moves the band mirror line off the equator
+//   (in PHI units, 0.05=9 deg) so the bands differ north and south.
+//   power>1 gives broad bands near the mirror line and finer bands
+//   toward the poles (Jupiter like)
+// Use in place of the Texture latitude bias: phi_bias=0 and add
+//   phi_bias*belts(offset,power)/(scale*ampl) to the Texture expression
+// shader only (as pixel noise): no CPU texture value
+// GLSL: belts() in noise_funcs.h
+//************************************************************
+class TNbelts : public TNsubr
+{
+public:
+	TNbelts(char* s, TNode *r) :  TNsubr(s, r) {}
+	void eval(){
+		double arg[2]={0,1};
+		SINIT;
+		if(CurrentScope->texture()){
+			S0.set_inactive();
+			return;
+		}
+		getargs(right,arg,2);
+		double x=2*fabs(Phi/180-arg[0]);
+		S0.s=0.5*pow(x,arg[1]);
+		S0.set_svalid();
+	}
+	void valueString(char *s){
+		if(CurrentScope->texture())      // no CPU texture form (as pixel noise)
+			return;
+		TNsubr::valueString(s);
+	}
+};
+
 //************************************************************
 // Class TNzonal  zonal(itcz,subtrop,midlat)
 // Earth-like latitude bias for cloud cover (add to the cloud density):
@@ -2346,6 +2385,7 @@ TNsubr *subr_node(char *s, TNode *args)
 		case SUB_VORTEX:	return new TNvortex(s,args);
 		case SUB_SPOTS:   	return new TNspots(s,args);
 		case SUB_SPOTMASK: 	return new TNspots(s,args,true);
+		case SUB_BELTS: 		return new TNbelts(s,args);
 
 		}
 	}

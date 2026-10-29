@@ -105,6 +105,7 @@ enum  {	 // NOTE: must keep same order as in gtypes[] below
 	PHI,
 	LAT,
 	EQU,
+	HEMI,
 	TEMP,
 	TAVE,
 	TSOL,
@@ -165,6 +166,7 @@ static LongSym gtypes[]={
 	{"PHI",			PHI},
 	{"LAT",			LAT},
 	{"EQU",			EQU},
+	{"HEMI",		HEMI},
 	{"TEMP",		TEMP},
 	{"TAVE",		TAVE},
 	{"TSOL",		TSOL},
@@ -349,6 +351,14 @@ void TNglobal::eval()
 	case EQU:
 		S0.s=2*fabs(Phi/180);
 		S0.s=clamp(1-S0.s,0,1);
+		break;
+	case HEMI: // -1 south, +1 north, smooth step across the equator (+-27 deg)
+		if(CurrentScope->texture())
+			S0.set_inactive();
+		{
+			double x=clamp((Phi/180+0.15)/0.3,0,1);
+			S0.s=2*x*x*(3-2*x)-1;
+		}
 		break;
 	case TEMP:
 		if(CurrentScope->texture())

@@ -202,6 +202,13 @@ float spotmask(float size, float depth){
 	return 1.0-depth*clamp(abs(spots(size)),0.0,1.0);
 }
 
+// ---- belts(offset,power): gas giant band coordinate ----
+// same formula as TNbelts (TerrainNode.cpp): 0.5*(2*|PHI-0.5-offset|)^power
+float belts(float offset, float power){
+	float x=2.0*abs(Vertex1.y-0.5-offset);
+	return 0.5*pow(x,power);
+}
+
 // ---- zonal(itcz,subtrop,midlat): latitude cloud cover bias ----
 // same formula as TNzonal (TerrainNode.cpp); latitude of the unwarped point
 float zonal(float itcz, float subtrop, float midlat){

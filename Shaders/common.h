@@ -64,6 +64,7 @@ float ALPHA=1.0;
 #define LAT abs(PHI)
 //#define EQU (1-LAT)
 #define EQU abs(PHI-0.5)
+#define HEMI (2.0*smoothstep(-0.15,0.15,PHI-0.5)-1.0)
 #define X Vertex1.x
 
 // ########## end common.h #########################
