@@ -270,7 +270,11 @@ vec4 voronoi3d(const in vec3 x) {
     for (int j = -1; j <= 1; j++) {
       for (int i = -1; i <= 1; i++) {
         vec3 b = vec3(float(i), float(j), float(k));
+#ifdef NOISE_DP
+        vec3 r = vec3(b) - f + hash(mod(p + b,256.0)); // periodic (Noise() reduces the point mod 256)
+#else
         vec3 r = vec3(b) - f + hash(p + b);
+#endif
         float d = dot(r, r);
 
         float cond = max(sign(res.x - d), 0.0);

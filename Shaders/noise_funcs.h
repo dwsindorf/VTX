@@ -70,10 +70,58 @@ float noise_fade=0.0;
 float last_seed=0;
 float current_seed=0;
 
+#ifdef NOISE_DP
+// ---- double precision noise point (see Noise()) ----
+// dp_on false: the point is DP_BASE+(v1-Vertex1) (unwarped v1, or v1 offset
+//              by a small delta for bump normals)
+// dp_on true:  a warp (twist, storms, vortex) has set the point in vdp
+// warps compute their angles and rotations in double so the warped point
+// keeps the full precision. GLSL has no double sin/cos: dsincos() below
+#define DP_BASE (dvec3(VertexO)+dvec3(Vertex2.xyz))
+dvec3 vdp=dvec3(0.0LF);
+bool dp_on=false;
+dvec3 dp_point(){ return dp_on?vdp:DP_BASE+dvec3(v1-Vertex1.xyz); }
+void dp_set(dvec3 p){ vdp=p; dp_on=true; v1=vec3(p); }
+#define DPI     3.14159265358979323846LF
+#define DPI_2   1.57079632679489661923LF
+// double sin and cos: quadrant reduction + Taylor series (|r|<=pi/4, error ~1e-14)
+void dsincos(double x, out double s, out double c){
+	double q=floor(x/DPI_2+0.5LF);
+	double r=x-q*DPI_2;
+	double r2=r*r;
+	double sr=r*(1.0LF+r2*(-1.0LF/6.0LF+r2*(1.0LF/120.0LF+r2*(-1.0LF/5040.0LF
+			+r2*(1.0LF/362880.0LF+r2*(-1.0LF/39916800.0LF+r2*(1.0LF/6227020800.0LF)))))));
+	double cr=1.0LF+r2*(-0.5LF+r2*(1.0LF/24.0LF+r2*(-1.0LF/720.0LF+r2*(1.0LF/40320.0LF
+			+r2*(-1.0LF/3628800.0LF+r2*(1.0LF/479001600.0LF+r2*(-1.0LF/87178291200.0LF)))))));
+	int iq=int(mod(q,4.0LF));
+	if(iq==0){ s=sr;  c=cr;  }
+	else if(iq==1){ s=cr;  c=-sr; }
+	else if(iq==2){ s=-sr; c=-cr; }
+	else { s=-cr; c=sr; }
+}
+#endif
+
 float reset(){
 	v1=Vertex1.xyz;
+#ifdef NOISE_DP
+	dp_on=false;
+#endif
 	return 0.0;
 }
+#ifdef NOISE_DP
+float corialis(float a){
+	dvec3 vt=(dp_point()-0.5LF)*2.0LF;
+	double x=vt.x;
+	double y=vt.z;
+	double z=vt.y;
+	double r=x*x+y*y;
+	double s,c;
+	dsincos(double(a)*2.0LF*DPI*r,s,c);
+	vt=dvec3(x*c-y*s,x*s+y*c,z);
+	dp_set(vt*0.5LF+0.5LF);
+	return 0.0;
+}
+#else
 float corialis(float a){
     vec3 vt=(v1-0.5)*2.0;
     
@@ -88,6 +136,7 @@ float corialis(float a){
 	v1=vt*0.5+0.5;
 	return 0.0;
 }
+#endif
 
 #define twist(a,b) (corialis(a)+b+reset())
 
@@ -105,6 +154,34 @@ uniform vec4  storm_c[MAX_STORMS];   // xyz center (unit), w radius (chord)
 uniform float storm_s[MAX_STORMS];   // signed strength (radians)
 uniform int   storm_n;
 vec3 storm_save;
+#ifdef NOISE_DP
+dvec3 storm_save_d;
+bool  storm_save_on;
+float storm_push(){ storm_save=v1; storm_save_d=vdp; storm_save_on=dp_on; return 0.0; }
+float storm_pop(){ v1=storm_save; vdp=storm_save_d; dp_on=storm_save_on; return 0.0; }
+float stormwarp(float k, float size){
+	dvec3 vt=(dp_point()-0.5LF)*2.0LF;
+	double l=length(vt);
+	if(l<=0.0LF || k==0.0 || size<=0.0)
+		return 0.0;
+	for(int i=0;i<MAX_STORMS;i++){
+		if(i>=storm_n)
+			break;
+		dvec3 c=dvec3(storm_c[i].xyz);
+		double R=double(storm_c[i].w)*double(size);
+		double d=length(vt/l-c);
+		if(d<R){
+			double f=1.0LF-d/R;
+			double a=double(k)*double(storm_s[i])*f*f*(3.0LF-2.0LF*f);
+			double sn,cs;
+			dsincos(a,sn,cs);
+			vt=vt*cs+cross(c,vt)*sn+c*dot(c,vt)*(1.0LF-cs);
+		}
+	}
+	dp_set(vt*0.5LF+0.5LF);
+	return 0.0;
+}
+#else
 float storm_push(){ storm_save=v1; return 0.0; }
 float storm_pop(){ v1=storm_save; return 0.0; }
 float stormwarp(float k, float size){
@@ -129,6 +206,7 @@ float stormwarp(float k, float size){
 	v1=vt*0.5+0.5;
 	return 0.0;
 }
+#endif
 #define storms(k,s,b) (storm_push()+stormwarp(k,s)+(b)+storm_pop())
 
 // ---- vortex(k,size,expr), spots(size): gas giant vortices ----
@@ -143,6 +221,45 @@ uniform vec4 vort_e[MAX_VORTS];   // xyz local east (unit), w east-west aspect
 uniform vec4 vort_p[MAX_VORTS];   // x signed strength, y spot tone
 uniform int  vort_n;
 vec3 vort_save;
+#ifdef NOISE_DP
+dvec3 vort_save_d;
+bool  vort_save_on;
+float vort_push(){ vort_save=v1; vort_save_d=vdp; vort_save_on=dp_on; return 0.0; }
+float vort_pop(){ v1=vort_save; vdp=vort_save_d; dp_on=vort_save_on; return 0.0; }
+float vortwarp(float k, float size){
+	dvec3 vt=(dp_point()-0.5LF)*2.0LF;
+	double l=length(vt);
+	if(l<=0.0LF || k==0.0 || size<=0.0)
+		return 0.0;
+	dvec3 u=vt/l;
+	for(int i=0;i<MAX_VORTS;i++){
+		if(i>=vort_n)
+			break;
+		dvec3 c=dvec3(vort_c[i].xyz);
+		double w=dot(u,c);
+		if(w<=0.0LF)
+			continue;
+		dvec3 e=dvec3(vort_e[i].xyz);
+		dvec3 nn=cross(c,e);
+		double asp=double(vort_e[i].w);
+		double es=dot(u,e)/asp;
+		double no=dot(u,nn);
+		double d=sqrt(es*es+no*no);
+		double R=double(vort_c[i].w)*double(size);
+		if(d<R){
+			double f=1.0LF-d/R;
+			double a=double(k)*double(vort_p[i].x)*f*f*(3.0LF-2.0LF*f);
+			double sn,cs;
+			dsincos(a,sn,cs);
+			double es2=es*cs-no*sn;
+			double no2=es*sn+no*cs;
+			u=normalize(es2*asp*e+no2*nn+w*c);
+		}
+	}
+	dp_set(u*l*0.5LF+0.5LF);
+	return 0.0;
+}
+#else
 float vort_push(){ vort_save=v1; return 0.0; }
 float vort_pop(){ v1=vort_save; return 0.0; }
 float vortwarp(float k, float size){
@@ -177,6 +294,7 @@ float vortwarp(float k, float size){
 	v1=u*l*0.5+0.5;
 	return 0.0;
 }
+#endif
 #define vortex(k,s,b) (vort_push()+vortwarp(k,s)+(b)+vort_pop())
 float spots(float size){
 	vec3 u=normalize((Vertex1.xyz-0.5)*2.0);
@@ -255,15 +373,14 @@ vec4 Noise(int index) {
 		rmin *=2.0;
 	float clip=info.clamp*VMAX;
 #ifdef NOISE_DP
-	// double precision noise point: pivot + offset + any warp of v1
-	// (v1-Vertex1 is 0 for unwarped noise: warps are still float precision)
-	dvec3 vd=dvec3(VertexO)+dvec3(Vertex2.xyz)+dvec3(v1-Vertex1.xyz)+double(current_seed);
+	// double precision noise point: pivot + offset, or the warped point
+	dvec3 vd=dp_point()+double(current_seed);
 	// lattice period the scaled point is reduced by (in double) before the
 	// float noise call, so it stays small and keeps its fractional precision
 	//   GRADIENT 256 (permTexture size, GL_REPEAT)
 	//   SIMPLEX  867 (3*289: mod 289 hash, x/3 skew)
-	//   VORONOI  0 (sin() hash isn't periodic: not reduced yet)
-	double period=info.vnoise==SIMPLEX?867.0LF:(info.vnoise==VORONOI?0.0LF:256.0LF);
+	//   VORONOI  256 (hash of the cell mod 256 in voronoi3d())
+	double period=info.vnoise==SIMPLEX?867.0LF:256.0LF;
 #else
 	vec3 v=v1+current_seed;
 #endif
