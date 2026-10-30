@@ -695,7 +695,16 @@ void main(void) {
 #endif
 
 	// sun disk behind this pixel (sky pixels only)
+	// only near the sun's direction: a bright sky (e.g. near-white haze at
+	// the horizon) also passes the brightness test, and skyAroundSun's ring
+	// then picked the darker pixels around it (the terrain below), which
+	// gave the clouds there dark rims
 	float sunw=terrain?0.0:sunDiskW(scene.rgb);
+	if(sunw>0.0){
+		float rsun=max(sun_disk,2.5*sun_pix)+3.0*sun_pix;   // disk radius + edge (radians)
+		float ang=acos(clamp(dot(dir,vol_sun),-1.0,1.0));
+		sunw*=1.0-smoothstep(rsun,rsun+2.0*sun_pix,ang);
+	}
 	vec3 sunsky=sunw>0.0?skyAroundSun(scene.rgb):scene.rgb;
 
 
