@@ -85,6 +85,7 @@ enum{
 
 	ID_SPRITES_DIM,
 	ID_CLOUDS_DIM,
+	ID_NOISE_DP,
 
 	ID_VBASE_SLDR,
 	ID_VBASE_TEXT,
@@ -151,6 +152,7 @@ SET_SLIDER_EVENTS(VSTEPS,VtxCloudsTabs,VSteps)
 
 EVT_CHOICE(ID_SPRITES_DIM,VtxCloudsTabs::OnDimSelect)
 EVT_CHOICE(ID_CLOUDS_DIM,VtxCloudsTabs::OnCloudsDimSelect)
+EVT_CHECKBOX(ID_NOISE_DP,VtxCloudsTabs::OnNoiseDP)
 
 EVT_CHOICE(ID_FILELIST,VtxCloudsTabs::OnChangedFile)
 
@@ -336,6 +338,10 @@ void VtxCloudsTabs::AddObjectTab(wxWindow *panel){
 	clouds_dim->SetSelection(0);
 	hline->Add(clouds_dim,0,wxALIGN_LEFT|wxALL,0);
 
+	hline->AddSpacer(5);
+	noise_dp=new wxCheckBox(panel, ID_NOISE_DP, "DP");
+	noise_dp->SetToolTip("Double precision noise: smooth noise in close views (2D, Vol), but much slower for Vol");
+	hline->Add(noise_dp,0,wxALIGN_LEFT|wxALL,3);
 	hline->AddSpacer(5);
 
 	CellSizeSlider=new SliderCtrl(panel,ID_CELLSIZE_SLDR,"Grid",35, VALUE2,SLIDER2);
@@ -643,6 +649,11 @@ void VtxCloudsTabs::OnDimSelect(wxCommandEvent& event){
 	invalidateObject();
 }
 
+void VtxCloudsTabs::OnNoiseDP(wxCommandEvent& event){
+	object()->noise_dp=noise_dp->GetValue()?1:0;
+	TheView->set_changed_render();   // new shader (NOISE_DP define)
+}
+
 void VtxCloudsTabs::OnCloudsDimSelect(wxCommandEvent& event){
 	GLuint dim=clouds_dim->GetSelection();
 	TNclouds *tnode=object()->getClouds();
@@ -820,6 +831,7 @@ void VtxCloudsTabs::getObjAttributes(){
 	updateSlider(VErosionSlider,obj->vol_estr);
 	updateSlider(VDarkenSlider,obj->diffusion);
 	updateSlider(VStepsSlider,obj->vol_steps);
+	noise_dp->SetValue(obj->noise_dp!=0);
 
 	updateColor(AmbientSlider,obj->ambient);
 	updateColor(EmissionSlider,obj->emission);

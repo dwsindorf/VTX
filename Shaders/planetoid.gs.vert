@@ -8,6 +8,10 @@
 // modified from common.h 
 #if NVALS >0
 varying vec4 Vertex1_G;
+#ifdef NOISE_DP
+varying vec3 VertexO_G;   // fan pivot (the same for all 3 vertices)
+varying vec4 Vertex2_G;   // offset from the pivot
+#endif
 #endif
 #if NTEXS >0
 varying vec4 Tangent_G;
@@ -32,6 +36,10 @@ void main(void) {
 
 #if NVALS >0
 	Vertex1_G=Position1;
+#ifdef NOISE_DP
+	VertexO_G=Position3.xyz;
+	Vertex2_G=Position2;
+#endif
 #endif
 	Constants_G=CommonAttributes1;
 	

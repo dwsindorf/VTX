@@ -77,10 +77,13 @@ float current_seed=0;
 // dp_on true:  a warp (twist, storms, vortex) has set the point in vdp
 // warps compute their angles and rotations in double so the warped point
 // keeps the full precision. GLSL has no double sin/cos: dsincos() below
+#ifndef DP_BASE   // (clouds.volume.frag sets its own)
 #define DP_BASE (dvec3(VertexO)+dvec3(Vertex2.xyz))
+#endif
 dvec3 vdp=dvec3(0.0LF);
 bool dp_on=false;
-dvec3 dp_point(){ return dp_on?vdp:DP_BASE+dvec3(v1-Vertex1.xyz); }
+dvec3 dp_off=dvec3(0.0LF);  // exact offset for derivative samples (NPOINT_D)
+dvec3 dp_point(){ return dp_on?vdp:DP_BASE+dp_off+dvec3(v1-Vertex1.xyz); }
 void dp_set(dvec3 p){ vdp=p; dp_on=true; v1=vec3(p); }
 #define DPI     3.14159265358979323846LF
 #define DPI_2   1.57079632679489661923LF
@@ -381,6 +384,8 @@ vec4 Noise(int index) {
 	//   SIMPLEX  867 (3*289: mod 289 hash, x/3 skew)
 	//   VORONOI  256 (hash of the cell mod 256 in voronoi3d())
 	double period=info.vnoise==SIMPLEX?867.0LF:256.0LF;
+	// reciprocal: double division is very slow (emulated) on most GPUs
+	double iperiod=info.vnoise==SIMPLEX?(1.0LF/867.0LF):(1.0LF/256.0LF);
 #else
 	vec3 v=v1+current_seed;
 #endif
@@ -389,8 +394,7 @@ vec4 Noise(int index) {
         float m=smoothstep(0.1,1.75,df);
 #ifdef NOISE_DP
 		dvec3 qd=vd*double(f);
-		if(period>0.0LF)
-			qd-=period*floor(qd/period);
+		qd-=period*floor(qd*iperiod);   // (+-period if rounded: still the same noise)
 		vec3 vf=vec3(qd);
 #else
 		vec3 vf=v*f;
@@ -472,6 +476,17 @@ float Noise1D(int i) {
 	return v.x;
 }
 
+// noise point offset by (dx,dy,dz) for derivative (normal) samples. With
+// NOISE_DP the offset is kept exact in double: Vertex1.x+delta in float
+// rounds delta (1e-6) by up to ~3%, differently from pixel to pixel
+#ifdef NOISE_DP
+#define NPOINT_D(dx,dy,dz) v1=Vertex1.xyz; dp_off=dvec3(dx,dy,dz);
+#define NPOINT_END dp_off=dvec3(0.0LF);
+#else
+#define NPOINT_D(dx,dy,dz) v1=vec3(Vertex1.x+(dx),Vertex1.y+(dy),Vertex1.z+(dz));
+#define NPOINT_END
+#endif
+
 #if NLIGHTS  >0
 #ifdef VNOISE
 #define SET_NOISE(func) \
@@ -492,15 +507,16 @@ float Noise1D(int i) {
  	    float delta=bump_delta; \
 		nbamp = 0.1*noise_fade*bump_ampl/delta; \
 		b = g; \
-		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
+		NPOINT_D(delta,0.0,0.0) \
  		gv = func; \
 		df.x =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
+		NPOINT_D(0.0,delta,0.0) \
  		gv = func; \
 		df.y =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
+		NPOINT_D(0.0,0.0,delta) \
  		gv = func; \
 		df.z =gv.x; \
+		NPOINT_END \
 		df = (df-vec3(b,b,b))*(nbamp); \
 		bump = bump + amplitude*df; \
     }

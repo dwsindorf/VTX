@@ -13,6 +13,53 @@
 #include "Sprites.h"
 #include "Plants.h"
 static bool debug_call_lists=false;
+// adapt oscillation debugging (see also debug_adapt_nodes in MapNode.cpp)
+//   debug_adapt: 0 off
+//                1 an oscillation was detected and stopped (adapt_osc)
+//                2 also: stopped with few, unchanged visible nodes (ADAPT_VSTABLE)
+//                3 everything: per Map::adapt call why it ran, each cycle's
+//                  counts and the result
+static int debug_adapt=1;
+int debug_adapt_frame=0;
+
+// adapt limit cycle detection: some maps never converge but repeat the
+// same sequence of node changes (e.g. period 12 with only ~25 visible
+// nodes, below the vmin convergence floor). Each cycle's (size, created,
+// deleted) is kept; two consecutive cycles matching the cycles P earlier
+// (P=1..ADAPT_OSC_MAX) means it's oscillating: stop and treat as converged
+// (otherwise need_adapt stays set and every frame re-runs max_cycles)
+#define ADAPT_OSC_MAX 64
+// few visible nodes (vnodes<vmin, so the normal convergence test is skipped):
+// converged once vnodes has stayed the same for ADAPT_VSTABLE cycles while
+// the map size stays within ADAPT_VSIZE of its range (not still growing
+// toward the view, as on the first adapt of a new file). The churn is then
+// all in nodes that aren't visible (it may never settle: cells around the
+// visible ones flipping between hidden and normal size). Not used for a new
+// file or detail change
+#define ADAPT_VSTABLE 8
+#define ADAPT_VSIZE   0.15
+static int osc_hist[ADAPT_OSC_MAX+2][3];
+static int osc_n=0;
+static int osc_period=0;
+static void adapt_osc_reset(){ osc_n=0; osc_period=0;}
+static bool adapt_osc(int size,int created,int deleted){
+	int h=ADAPT_OSC_MAX+2;
+	int *c=osc_hist[osc_n%h];
+	c[0]=size; c[1]=created; c[2]=deleted;
+	osc_n++;
+	for(int P=1;P<=ADAPT_OSC_MAX;P++){
+		if(osc_n<P+2)
+			break;
+		int *a=osc_hist[(osc_n-1)%h],  *b=osc_hist[(osc_n-1-P)%h];
+		int *a1=osc_hist[(osc_n-2)%h], *b1=osc_hist[(osc_n-2-P)%h];
+		if(a[0]==b[0] && a[1]==b[1] && a[2]==b[2]
+		&& a1[0]==b1[0] && a1[1]==b1[1] && a1[2]==b1[2]){
+			osc_period=P;
+			return true;
+		}
+	}
+	return false;
+}
 
 static std::vector<SurfacePoint> node_data_list;
 extern double INV2PI;
@@ -1949,6 +1996,34 @@ void Map::make_visbox()
 			pcount++; \
 			pcreated+=created; \
 			pdeleted+=deleted; \
+			if(!converged && (created || deleted) && adapt_osc(size,created,deleted)) { \
+				converged=1; \
+				if(debug_adapt>=1) \
+					cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()<<" cycle:"<<mcount \
+					    <<" oscillating: period "<<osc_period<<" cycles, stopped"<<endl; \
+			} \
+			if(!converged && vnodes<vmin && (created || deleted) && !newfile) { \
+				if(vnodes==vstable_n) { \
+					vstable_cnt++; \
+					vstable_smin=size<vstable_smin?size:vstable_smin; \
+					vstable_smax=size>vstable_smax?size:vstable_smax; \
+				} \
+				else { \
+					vstable_n=vnodes; \
+					vstable_cnt=0; \
+					vstable_smin=vstable_smax=size; \
+				} \
+				if(vstable_cnt>=ADAPT_VSTABLE && vstable_smax-vstable_smin<=ADAPT_VSIZE*size) { \
+					converged=1; \
+					if(debug_adapt>=2) \
+						cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()<<" cycle:"<<mcount \
+						    <<" vnodes:"<<vnodes<<" (<"<<vmin<<") unchanged for "<<vstable_cnt<<" cycles, stopped"<<endl; \
+				} \
+			} \
+			if(debug_adapt>=3) \
+				cout<<"  cycle:"<<mcount<<" created:"<<created<<" deleted:"<<deleted \
+				    <<" size:"<<size<<" vnodes:"<<vnodes<<" dc:"<<(double)created/size \
+				    <<" dd:"<<(double)deleted/size<<" sfact:"<<sfact<<endl; \
 			tcount++; \
 			tcreated+=created; \
 			tdeleted+=deleted; \
@@ -1969,6 +2044,9 @@ void Map::make_visbox()
 void Map::adapt()
 {
 	int created=0,deleted=0,dv=0;
+	int vstable_n=-1,vstable_cnt=0;   // ADAPT_VSTABLE test
+	int vstable_smin=0,vstable_smax=0;
+	bool newfile=TheScene->changed_file()||TheScene->changed_detail();
 	double dc=0,dd=0;
 	int converged=1;
 	make_current();
@@ -2014,6 +2092,19 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
+	if(object==TheScene->viewobj)
+		debug_adapt_frame++;
+	if(debug_adapt>=3){
+		cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()
+			<<" force:"<<(object->force_adapt()?1:0)
+			<<" always:"<<(Adapt.always()?1:0)
+			<<" need:"<<(need_adapt()?1:0)
+			<<" model:"<<(TheScene->view->changed_model()?1:0)
+			<<" render:"<<(TheScene->changed_render()?1:0)
+			<<" time:"<<(TheScene->changed_time()?1:0)
+			<<" file:"<<(TheScene->changed_file()?1:0)
+			<<" detail:"<<(TheScene->changed_detail()?1:0)<<endl;
+	}
 	if(ADAPT_NEEDED
 			|| TheScene->changed_render()
 	        || object->typeValue()==ID_SKY
@@ -2039,6 +2130,7 @@ void Map::adapt()
 		clr_bchecked();
 		//Raster.surface=1;
 		reset();
+		adapt_osc_reset();
 		while(1){
 			if(!fixed_grid()){
 			    int vn=vnodes;
@@ -2061,6 +2153,9 @@ void Map::adapt()
 			idtest=true;
 			clr_vchecked();
 		}
+		if(debug_adapt>=3)
+			cout<<"  done "<<object->name()<<" cycles:"<<mcount<<" converged:"<<converged
+				<<" size:"<<size<<" vnodes:"<<vnodes<<endl;
 		if(!converged)
 		    set_need_adapt();
 		else

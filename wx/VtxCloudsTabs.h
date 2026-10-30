@@ -46,6 +46,7 @@ protected:
 	SliderCtrl *VErosionSlider;
 	SliderCtrl *VDarkenSlider;
 	SliderCtrl *VStepsSlider;
+	wxCheckBox *noise_dp;
 
 	wxNotebookPage *geometry_page;
 	wxNotebookPage *sprites_page;
@@ -83,6 +84,7 @@ protected:
     void OnFileSelect(wxCommandEvent& event);
     void OnDimSelect(wxCommandEvent& event);
     void OnCloudsDimSelect(wxCommandEvent& event);
+    void OnNoiseDP(wxCommandEvent& event);
 
     void makeFileList(int,char*);
 	wxString getCloudsExpr();

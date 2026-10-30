@@ -731,6 +731,7 @@ public:
 	double     vol_hvar;    // cloud top height variation (0..1)
 	double     vol_estr;    // erosion (edge detail) strength (0..1)
 	double     vol_steps;   // view ray march steps (quality)
+	double     noise_dp;    // 1: double precision noise point (2D, Vol; slower)
 	CloudLayer(Orbital *m, double s);
 	~CloudLayer();
 	const char *name()			{ return "Clouds";}
@@ -935,6 +936,8 @@ public:
     NodeIF *getInstance(NodeIF *prev,int m);
     void newInstance(int g);
 	static void newGasGiant(Planet *,int gtype);
+	static void gasGiantClassic(Planet *);   // classic surface
+	static void gasGiantBanded(Planet *);    // banded (zones/belts, ovals)
 	static void newGasGiant(Planet *) {newGasGiant(0);};
 	static void newRocky(Planet *,int gtype);
 	static void newRocky(Planet *) {newRocky(0);};

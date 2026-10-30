@@ -157,6 +157,7 @@ public:
     double  extent();
     void    balance();
     void    set_tests();
+    void    adapt_debug(const char *what);   // debug_adapt_nodes trace
     int     clipchk(Point p);
     double  value();
     MapLink *link;

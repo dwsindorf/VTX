@@ -38,6 +38,16 @@ extern double Theta,Phi,Radius,Sfact;
 
 static int debug_temp=DEBUG_TEMP;
 
+// double precision pixel noise point (see noise_funcs.h,
+// GLSLMgr::setVertexAttributes): add to the shader defines before loadProgram
+static void addNoiseDP(){
+#ifdef NOISE_DP
+	strcat(GLSLMgr::defString,"#extension GL_ARB_gpu_shader_fp64 : enable\n");
+	strcat(GLSLMgr::defString,"#extension GL_EXT_gpu_shader4 : enable\n");
+	strcat(GLSLMgr::defString,"#define NOISE_DP\n");
+#endif
+}
+
 // holeScan() flags
 #define HS_RESCUE       0x01   // re-mesh flagged cells now
 #define HS_DEEP         0x02   // sample face interiors in the coverage pass
@@ -3806,15 +3816,11 @@ bool Planetoid::setProgram(){
 		GLSLMgr::input_type=GL_TRIANGLES;
 		//GLSLMgr::output_type=GL_TRIANGLE_STRIP_ADJACENCY; // this also works without any code changes
 		GLSLMgr::output_type=GL_TRIANGLE_STRIP;
+		addNoiseDP();
 		GLSLMgr::loadProgram("planetoid.gs.vert","planetoid.frag","planetoid_indexed.geom");
 	}
 	else{
-#ifdef NOISE_DP
-		// double precision pixel noise point (see noise_funcs.h, GLSLMgr::setVertexAttributes)
-		strcat(GLSLMgr::defString,"#extension GL_ARB_gpu_shader_fp64 : enable\n");
-		strcat(GLSLMgr::defString,"#extension GL_EXT_gpu_shader4 : enable\n");
-		strcat(GLSLMgr::defString,"#define NOISE_DP\n");
-#endif
+		addNoiseDP();
 		GLSLMgr::loadProgram("planetoid.vert","planetoid.frag");
 	}
 	GLhandleARB program=GLSLMgr::programHandle();
@@ -9903,6 +9909,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	vol_hvar=0.25;
 	vol_estr=1;
 	vol_steps=256;
+	noise_dp=0;
 	vol_pass=VOL_SKY;
 	EffectsMgr::post_effects_hook=CloudLayer::postEffectsHook;
 }
@@ -10038,6 +10045,7 @@ void CloudLayer::get_vars()
 	VGET("vol_hvar",vol_hvar,0.25);
 	VGET("vol_erosion",vol_estr,1);
 	VGET("vol_steps",vol_steps,256);
+	VGET("noise_dp",noise_dp,0);
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
@@ -10072,6 +10080,7 @@ void CloudLayer::set_vars()
 	VSET("vol_hvar",vol_hvar,0.25);
 	VSET("vol_erosion",vol_estr,1);
 	VSET("vol_steps",vol_steps,256);
+	VSET("noise_dp",noise_dp,0);
 	CSET("ambient",ambient,Color(1,1,1,0.15));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
@@ -10428,6 +10437,8 @@ bool CloudLayer::setProgram(){
 	set_wscale();
 	if(vol){
 		setVolumeVars(vars);
+		if(noise_dp)       // option (Object tab "DP"): costly for the ray march
+			addNoiseDP();
 		GLSLMgr::loadProgram("clouds.volume.vert","clouds.volume.frag");
 	}
 	else if(v3d){
@@ -10456,8 +10467,11 @@ bool CloudLayer::setProgram(){
 			break;
 		}
 	}
-	else
+	else{
+		if(noise_dp)
+			addNoiseDP();
 		GLSLMgr::loadProgram("clouds.2d.vert","clouds.2d.frag");
+	}
 
 	GLhandleARB program=GLSLMgr::programHandle();
 

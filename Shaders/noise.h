@@ -45,7 +45,13 @@ float fnoise (in vec2 st){
 // returns classic Perlin noise and derivatives using a 2D texture
 vec4 noise3D(vec3 P){
     vec4 vout=vec4(0.0);
-    vec3 Pi = ONE*(floor(P));
+    // lattice cell mod 256 (the permTexture size, GL_REPEAT: the same
+    // pattern) so the texture lookup coordinates stay small: with large
+    // P (high frequencies, or far from the origin) the GPU's limited
+    // texture coordinate precision picked wrong texels, which showed as
+    // blocks (an exact operation in float, so no cost in precision)
+    vec3 Pc = floor(P);
+    vec3 Pi = ONE*mod(Pc,256.0);
     vec3 Pf = fract(P);
 
     float b00 = texture2D(permTexture, Pi.xy).a;
@@ -96,14 +102,14 @@ vec4 noise3D(vec3 P){
 
 #define DELTA (1.15*ONEHALF)
     
-    vec3 Pid = ONE*floor(P+DELTA);
+    vec3 Pcd = floor(P+DELTA);       // (unreduced: compared with Pc)
     vec3 Pfd = fract(P+DELTA);
 
-    if(Pid.x>Pi.x)
+    if(Pcd.x>Pc.x)
    	 	Pfd.x=1.0;
-    if(Pid.y>Pi.y)
+    if(Pcd.y>Pc.y)
    	 	Pfd.y=1.0;
-    if(Pid.z>Pi.z)
+    if(Pcd.z>Pc.z)
    	 	Pfd.z=1.0;
      
     // estimate x derivative

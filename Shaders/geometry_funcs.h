@@ -59,15 +59,16 @@
     { \
 		float delta=1e-6; \
 		float nbamp = 3e-3; \
-		v1 = vec3(Vertex1.x+delta,Vertex1.y,Vertex1.z);  \
+		NPOINT_D(delta,0.0,0.0) \
 		gv = func; \
 		df.x =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y+delta,Vertex1.z); \
+		NPOINT_D(0.0,delta,0.0) \
 		gv = func; \
 		df.y =gv.x; \
-		v1 = vec3(Vertex1.x,Vertex1.y,Vertex1.z+delta); \
+		NPOINT_D(0.0,0.0,delta) \
 		gv = func; \
 		df.z =gv.x; \
+		NPOINT_END \
 		df = (df-vec3(g,g,g))*nbamp/delta; \
 	    Normal.xyz=normalize(Normal.xyz-nscale*gl_NormalMatrix *df); \
 	    Normal.w=length(df); \

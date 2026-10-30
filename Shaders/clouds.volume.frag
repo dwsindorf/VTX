@@ -223,6 +223,14 @@ uniform float freqmip;
 #define HEMI (2.0*smoothstep(-0.15,0.15,PHI-0.5)-1.0)
 #define X Vertex1.x
 #if NVALS>0
+#ifdef NOISE_DP
+// double precision noise point (noise_funcs.h): set with Vertex1 by
+// volPoint() from the eye relative sample position, so the large eye
+// position doesn't round the noise point (blocks in close views)
+#define VOL_DP
+dvec3 dp_base=dvec3(0.5LF);
+#define DP_BASE dp_base
+#endif
 #include "noise_funcs.h"
 #endif
 #endif
@@ -344,13 +352,33 @@ float remap(float x,float a,float b,float c,float d){
 	return c+(x-a)*(d-c)/max(b-a,1e-5);
 }
 
-// ---------------- coverage (per column) ----------------
-// n: unit direction from the planet center, dist: distance from the eye (km)
-// returns (coverage 0..1, cloud top height above the base in km)
-vec2 column(vec3 n, float dist){
-	float wc;
 #ifdef VOL_NOISE
-	Vertex1=vec4(n*0.5+0.5,vol_wlog-log2(max(dist,0.01)));
+// set the noise point (Vertex1, and its double form for NOISE_DP)
+// v: noise point (0..1 planet frame), w: noise level of detail
+#ifdef VOL_DP
+void volPoint(dvec3 v, float w){
+	dp_base=v;
+	Vertex1=vec4(vec3(v),w);
+}
+#else
+void volPoint(vec3 v, float w){
+	Vertex1=vec4(v,w);
+}
+#endif
+#endif
+
+// ---------------- coverage (per column) ----------------
+// q: sample position relative to the eye (km), dist: distance from the eye (km)
+// returns (coverage 0..1, cloud top height above the base in km)
+vec2 column(vec3 q, float dist){
+	float wc;
+	vec3 n=normalize(vol_eye+q);   // unit direction from the planet center
+#ifdef VOL_NOISE
+#ifdef VOL_DP
+	volPoint(normalize(dvec3(vol_eye)+dvec3(q))*0.5LF+0.5LF,vol_wlog-log2(max(dist,0.01)));
+#else
+	volPoint(n*0.5+0.5,vol_wlog-log2(max(dist,0.01)));
+#endif
 	Constants1=vec4(0.0);
 #endif
 #ifdef VOL_NPZ
@@ -382,13 +410,25 @@ vec2 column(vec3 n, float dist){
 }
 
 #ifdef VOL_NPZ
-// the layer's Point Z expression at a 3D point p (km); dist: distance from
-// the eye (noise level of detail), lod: octaves to drop
-float zfield(vec3 p, float dist, float lod){
+// the layer's Point Z expression at a 3D point (q: relative to the eye, km);
+// dist: distance from the eye (noise level of detail), lod: octaves to drop
+float zfield(vec3 q, float dist, float lod){
 	// measured from the cloud base: the base maps to the ground radius
+	float w=vol_wlog-log2(max(dist,0.01))-lod;
+#ifdef VOL_DP
+	// (no double divisions: they're very slow. The float 0.5/vol_rg is the
+	// same for every sample, so its rounding doesn't matter)
+	dvec3 p=dvec3(vol_eye)+dvec3(q);
+	double ir=inversesqrt(dot(p,p));
+	double r=dot(p,p)*ir;
+	dvec3 pb=p*((double(vol_rg)+(r-double(vol_rb)))*ir);
+	volPoint(pb*double(0.5/vol_rg)+0.5LF,w);
+#else
+	vec3 p=vol_eye+q;
 	float r=length(p);
 	vec3 pb=p*((vol_rg+(r-vol_rb))/r);
-	Vertex1=vec4(pb/(2.0*vol_rg)+0.5,vol_wlog-log2(max(dist,0.01))-lod);
+	volPoint(pb/(2.0*vol_rg)+0.5,w);
+#endif
 	v1=Vertex1.xyz;
 	Constants1=vec4(0.0);
 	vec4 zv=vec4(NPZ);
@@ -397,9 +437,10 @@ float zfield(vec3 p, float dist, float lod){
 #endif
 
 // ---------------- cloud density ----------------
-// p: position (km), cw: column(), dist: distance from the eye (km)
-// returns 0..1
-float cloudDensity(vec3 p, vec2 cw, float dist, bool detail){
+// q: position relative to the eye (km), cw: column(), dist: distance from
+// the eye (km). returns 0..1
+float cloudDensity(vec3 q, vec2 cw, float dist, bool detail){
+	vec3 p=vol_eye+q;
 	float wc=cw.x;
 	if(wc<=0.0)
 		return 0.0;
@@ -412,7 +453,7 @@ float cloudDensity(vec3 p, vec2 cw, float dist, bool detail){
 #ifdef VOL_NPZ
 	// height profile: flat base, rounded top
 	float top=1.0;
-	float z=zfield(p,dist,detail?0.0:VOL_LIGHT_LOD);
+	float z=zfield(q,dist,detail?0.0:VOL_LIGHT_LOD);
 	float cr=VOL_ZGAIN*z+vol_cov;
 	if(cr<=0.0)
 		return 0.0;
@@ -614,7 +655,11 @@ void main(void) {
 #if VOL_DEBUG==4
 	{
 #ifdef VOL_TINT
-		Vertex1=vec4(normalize(o+dir*(t0+0.5*L))*0.5+0.5,vol_wlog);
+#ifdef VOL_DP
+		volPoint(normalize(dvec3(o)+dvec3(dir*(t0+0.5*L)))*0.5LF+0.5LF,vol_wlog);
+#else
+		volPoint(normalize(o+dir*(t0+0.5*L))*0.5+0.5,vol_wlog);
+#endif
 		v1=Vertex1.xyz;
 		Constants1=vec4(0.5/VOL_ZGAIN,0.0,0.0,0.0);
 		RED=1.0;GREEN=1.0;BLUE=1.0;ALPHA=1.0;
@@ -628,8 +673,8 @@ void main(void) {
 #if VOL_DEBUG==7 || VOL_DEBUG==8
 	{
 		float tm=t0+0.5*L;
-		vec3 pm=o+dir*tm;
-		vec2 cm=column(normalize(pm),tm);
+		vec3 pm=dir*tm;
+		vec2 cm=column(pm,tm);
 #if VOL_DEBUG==7
 		float dm=cloudDensity(pm,cm,tm,true);
 #elif defined(VOL_NPZ)
@@ -643,8 +688,7 @@ void main(void) {
 #endif
 #if VOL_DEBUG==3
 	{
-		vec3 pd=o+dir*(t0+0.5*L);
-		float w=column(normalize(pd),t0+0.5*L).x;
+		float w=column(dir*(t0+0.5*L),t0+0.5*L).x;
 		gl_FragData[0]=vec4(w,w,w,1.0);
 		return;
 	}
@@ -678,8 +722,8 @@ void main(void) {
 	int i0=0;
 	float ta=t0+stepT(jitter/N,L);
 	float tb=t0+stepT((float(VOL_WSTRIDE)+jitter)/N,L);
-	vec2 cA=column(normalize(o+dir*ta),ta);
-	vec2 cB=column(normalize(o+dir*tb),tb);
+	vec2 cA=column(dir*ta,ta);
+	vec2 cB=column(dir*tb,tb);
 
 	for(int i=0;i<256;i++){
 		if(i>=vol_steps || T<0.01)
@@ -688,21 +732,22 @@ void main(void) {
 			i0+=VOL_WSTRIDE;
 			cA=cB;
 			float tn=t0+stepT((float(i0+VOL_WSTRIDE)+jitter)/N,L);
-			cB=column(normalize(o+dir*tn),tn);
+			cB=column(dir*tn,tn);
 		}
 		float x=(float(i)+jitter)/N;
 		float t=t0+stepT(x,L);
 		float dt=L*(STEP_LIN+2.0*(1.0-STEP_LIN)*x)/N;
 		vec2 cw=mix(cA,cB,float(i-i0)/float(VOL_WSTRIDE));
-		vec3 p=o+dir*t;
-		float d=cloudDensity(p,cw,t,true);
+		vec3 q=dir*t;                // relative to the eye
+		vec3 p=o+q;
+		float d=cloudDensity(q,cw,t,true);
 #if VOL_EDGE_SUB>1
 		// cloud edge: average the density over the step interval
 		if((d>0.003 && (prevEmpty || d<VOL_EDGE_D)) || (d<=0.003 && !prevEmpty)){
 			float ds=0.0;
 			for(int k=0;k<VOL_EDGE_SUB;k++){
 				float tk=t+dt*((float(k)+0.5)/float(VOL_EDGE_SUB)-0.5);
-				ds+=cloudDensity(o+dir*tk,cw,tk,true);
+				ds+=cloudDensity(dir*tk,cw,tk,true);
 			}
 			d=ds/float(VOL_EDGE_SUB);
 		}
@@ -725,7 +770,7 @@ void main(void) {
 			float xa=float(j+1)/float(VOL_LIGHT_STEPS);
 			float xm=(float(j)+ljit)/float(VOL_LIGHT_STEPS);
 			float x1=Ls*xa*xa;
-			od+=cloudDensity(p+vol_sun*(Ls*xm*xm),cw,t,false)*(x1-xp);
+			od+=cloudDensity(q+vol_sun*(Ls*xm*xm),cw,t,false)*(x1-xp);
 			xp=x1;
 		}
 		// multiple scattering octaves
@@ -740,8 +785,8 @@ void main(void) {
 		}
 		// sky light, occluded by the cloud above
 		float Lu=max(vol_rt-rp,0.0);
-		float odu=0.5*Lu*(cloudDensity(p+pn*(0.25*Lu),cw,t,false)
-		                 +cloudDensity(p+pn*(0.75*Lu),cw,t,false));
+		float odu=0.5*Lu*(cloudDensity(q+pn*(0.25*Lu),cw,t,false)
+		                 +cloudDensity(q+pn*(0.75*Lu),cw,t,false));
 		float ambT=exp(-VOL_AMB_SIGMA*vol_sigma*odu);
 
 		// sunlight color/strength at this point (reddening, night side)

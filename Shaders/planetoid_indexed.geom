@@ -19,6 +19,10 @@ varying in vec4 Constants_G[];
 varying in vec4 Color_G[];
 #if NVALS >0
 varying in vec4 Vertex1_G[];
+#ifdef NOISE_DP
+varying in vec3 VertexO_G[];
+varying in vec4 Vertex2_G[];
+#endif
 #endif
 #if NTEXS >0
 varying in vec4 Tangent_G[];
@@ -36,6 +40,15 @@ float delta=0;
 #define RT2		1.414213562373
 
 #if NVALS >0
+#ifdef NOISE_DP
+// double precision noise point (noise_funcs.h): pivot + tessellated offset
+dvec3 dp_base=dvec3(0.5LF);
+#define DP_BASE dp_base
+// offset from the pivot at tessellation coords s,t (small: interpolates exactly)
+vec4 dpOffset(float s, float t){
+	return s*(Vertex2_G[2]-Vertex2_G[0]) + t*(Vertex2_G[1]-Vertex2_G[0])+Vertex2_G[0];
+}
+#endif
 #include "noise_funcs.h"
 #endif
 
@@ -66,6 +79,10 @@ void ProduceVertex(int i){
 	
 	vec4 p=vdata[i][1];
 	g=vdata[i][2].z;
+#if NVALS >0 && defined(NOISE_DP)
+	VertexO=VertexO_G[0];      // flat: for the fragment shader's noise
+	Vertex2=dpOffset(s,t);
+#endif
 
 	gl_Position=gl_ModelViewProjectionMatrix * p;
     Normal=vdata[i][3];
@@ -103,6 +120,9 @@ void main(void) {
 		for(int is = 0; is < nums; is++,s+=del) { // triangles in strip
 		    Vertex1=s*(Vertex1_G[2]-Vertex1_G[0]) + t*(Vertex1_G[1]-Vertex1_G[0])+Vertex1_G[0];
 			vdata[index][0]=Vertex1;		    
+#if NVALS >0 && defined(NOISE_DP)
+			dp_base=dvec3(VertexO_G[0])+dvec3(dpOffset(s,t).xyz);
+#endif
 			vec4 p=s*(gl_PositionIn[2]-gl_PositionIn[0]) + t*(gl_PositionIn[1]-gl_PositionIn[0])+gl_PositionIn[0];
 			CALC_ZNOISE(NPZ);
 //#if NLIGHTS >0
