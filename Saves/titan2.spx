@@ -26,18 +26,19 @@ Scene() {
 	View{
 		height=3454.1 ft;
 		tilt=2;
-		vstride=0.02;
-		zoom=0.002;
-		minh=5.68182e-10;
-		radius=0.00200081;
 	}
 	View{
 		phi=8.37283;
 		theta=344.071;
 		height=537.748 ft;
 		heading=-14;
-		minr=0.00200015;
+		vstride=0.02;
+		zoom=0.002;
+		minh=5.68182e-10;
 		radius=0.00200026;
+	}
+	View{
+		minr=0.00200015;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -80,8 +81,6 @@ Scene() {
 					day=20;
 					emission=Color(1,1,1,0.79);
 					name="ringed1";
-					ocean.auto=1;
-					ocean.state=2;
 					phase=60;
 					resolution=4;
 					rseed=0.116233;
@@ -109,17 +108,17 @@ Scene() {
 						resolution=3;
 						rseed=0.461239;
 						shadow=Color(0,0,0,0.8);
-						bands("saturn-rings",ACHNL|BLEND|DECAL|REFLECT|REPLACE,128,0.125,0.270588,Color(0.208,0.016,0.016,0.271),Color(0.918,0.827,0.286),
-							Color(0.949,0.722,0.49),
-							Color(0.882,0.882,0.882,0.706),
-							Color(0.976,0.878,0.624),
-							Color(0.949,0.686,0.439),
-							Color(0.557,0.49,0.004,0.69),
-							Color(0.616,0.235,0.016),
-							Color(0.714,0.4,0.043));
+						bands("saturn-ring",ACHNL|BLEND|DECAL|NORM|REFLECT|REPLACE,128,0,0.45098,Color(0.13,0.09,0.09,0.45),Color(0.54,0.47,0.43),
+							Color(0.57,0.51,0.45),
+							Color(0.57,0.51,0.47),
+							Color(0.2,0.14,0.11,0.37),
+							Color(0.37,0.33,0.29),
+							Color(0.36,0.32,0.29),
+							Color(0.57,0.51,0.47),
+							Color(0.35,0.3,0.27,0.22));
 						Surface{
 							terrain=
-									Texture("saturn-rings",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1,8,0,1,2,1,0,0,0,0,0);
+									Texture("saturn-ring",BLEND|DECAL|REPLACE|S|TEX,PHI,0.5,1,8,0,1,2,1,0,0,0,0,0);
 						}
 					}
 					Moon(0.002,0.068) {
@@ -161,7 +160,6 @@ Scene() {
 						}
 						Clouds(0.00205853) {
 							ambient=Color(1,1,1,0.21);
-							crot=1;
 							day=10;
 							resolution=3.40408;
 							shine=23.5064;

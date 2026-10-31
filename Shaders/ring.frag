@@ -26,6 +26,9 @@ varying vec4 EyeDirection;
 varying vec4 Normal;
 //varying vec4 Color;
 uniform vec4 Shadow;
+#ifdef SPHERE_SHADOWS
+#include "sphere_shadow.h"
+#endif
 uniform vec4 Emission;
 uniform vec4 Diffuse;
 
@@ -78,6 +81,15 @@ void main(void) {
 #ifdef SHADOWS
     float shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
     color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));  
+#endif
+#ifdef SPHERE_SHADOWS
+	// shadows of the planet and its moons (analytic, OrbitalClass
+	// analytic_shadows, sphere_shadow.h)
+	{
+		vec3 L=normalize(gl_LightSource[0].position.xyz+EyeDirection.xyz);
+		float shadow=sphereShadow(-EyeDirection.xyz,L);
+		color.rgb=mix(color.rgb,Shadow.rgb,Shadow.a*(1.0-shadow));
+	}
 #endif
 	gl_FragData[0] = color;
 	//gl_FragData[0] = vec4(Constants1.g,0,0,1);

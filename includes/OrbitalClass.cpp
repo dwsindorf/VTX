@@ -40,6 +40,153 @@ static int debug_temp=DEBUG_TEMP;
 
 // double precision pixel noise point (see noise_funcs.h,
 // GLSLMgr::setVertexAttributes): add to the shader defines before loadProgram
+// ---- analytic shadows (shader computed, no shadow map) ----
+// analytic_shadows: 1 (default) rings shadow their planet with their own
+// transparency (planetoid.frag RING_SHADOW: ray to the sun crosses the ring
+// plane, transmittance from the ring's opacity profile) and the planet
+// shadows its ring (ring.frag PLANET_SHADOW: ray/sphere, penumbra from the
+// sun's size). Rings are then left out of the shadow map passes.
+// 0: the old shadow map shadows (solid ring shadows)
+int analytic_shadows=1;
+static int debug_ring_profile=1;  // print the ring opacity profile (once per ring texture)
+#define RING_SUN_ANG 0.0047       // sun angular radius (rad) for the penumbra
+
+// the planet's ring (or 0)
+static Ring *findRing(Spheroid *s){
+	Node<Object3D*> *ptr=s->children.ptr;
+	s->children.ss();
+	Object3D *obj;
+	Ring *ring=0;
+	while((obj=s->children++)){
+		if(obj->type()==ID_RING){
+			ring=(Ring*)obj;
+			break;
+		}
+	}
+	s->children.ptr=ptr;
+	return ring;
+}
+
+// ring opacity at n radii from the inner (0) to the outer (n-1) edge, as
+// the ring shader draws it: the ring's band texture (its Texture, the
+// terrain root) looked up at PHI=0.5+asin(f)/PI (RingMap: radius=inner+
+// width*sin|phi|; the band image is mirrored about 0.5, REFLECT).
+//   bands with alpha:    opacity=texamp*alpha
+//   bands without alpha: the ring only looks see-through where its colors
+//                        are dark (against space), so opacity=texamp*
+//                        brightness (relative to the brightest band): for
+//                        a thin ring, brightness ~ particle density
+// Without a texture: opaque
+static Texture *ringTexture(Ring *ring){
+	TNode *root=ring->terrain.get_root();
+	if(root && root->typeValue()==ID_TEXTURE){
+		Texture *t=((TNtexture*)root)->texture;
+		if(t && t->timage && t->timage->valid())
+			return t;
+	}
+	TerrainProperties *tp=ring->map?ring->map->tp:0;
+	if(tp){
+		for(int i=0;i<tp->textures.size;i++){
+			Texture *t=tp->textures[i];
+			if(t && t->t1d() && t->timage && t->timage->valid())
+				return t;
+		}
+	}
+	return 0;
+}
+static bool ringProfile(Ring *ring, float *op, int n){
+	Texture *tx=ringTexture(ring);
+	bool use_alpha=false;
+	if(!tx){
+		for(int i=0;i<n;i++)
+			op[i]=1.0f;
+	}
+	else{
+		Image *im=tx->timage;
+		bool rgba=(im->type()==RGBA_DATA && im->comps()==4);
+		// band images are 1 x N or N x 1
+		int np=im->width>im->height?im->width:im->height;
+		int w0=np-1;
+		double amin=1,amax=0,lmax=0;
+		double *al=new double[n];
+		double *lu=new double[n];
+		for(int i=0;i<n;i++){
+			double f=(double)i/(n-1);
+			double x=0.5+asin(clamp(f,0.0,1.0))/PI;     // PHI
+			double c=x*np-0.5;
+			int i1=(int)floor(c);
+			double w=c-i1;
+			int a1=i1<0?0:(i1>w0?w0:i1);
+			int a2=i1+1<0?0:(i1+1>w0?w0:i1+1);
+			Color c1=im->p2c(a1),c2=im->p2c(a2);      // (p2c() returns alpha 1)
+			lu[i]=c1.intensity()*(1-w)+c2.intensity()*w;
+			al[i]=1.0;
+			if(rgba){
+				Color *cd=(Color*)im->data;
+				al[i]=cd[a1].alpha()*(1-w)+cd[a2].alpha()*w;
+			}
+			amin=al[i]<amin?al[i]:amin;
+			amax=al[i]>amax?al[i]:amax;
+			lmax=lu[i]>lmax?lu[i]:lmax;
+		}
+		use_alpha=amax-amin>0.02;
+		for(int i=0;i<n;i++){
+			double o=use_alpha?al[i]:(lmax>0?lu[i]/lmax:1.0);
+			op[i]=(float)clamp(tx->texamp*o,0.0,1.0);
+		}
+		delete [] al;
+		delete [] lu;
+	}
+	if(debug_ring_profile){
+		static double last=-1;
+		double sum=0;
+		for(int i=0;i<n;i++)
+			sum+=op[i]*(i+1);
+		if(sum!=last){        // when it changes
+			last=sum;
+			Image *im=tx?tx->timage:0;
+			cout<<"ringProfile: "<<(tx?(use_alpha?"texture alpha":"texture brightness"):"no texture (opaque)");
+			if(im)
+				cout<<" image "<<im->width<<"x"<<im->height<<" texamp "<<tx->texamp;
+			cout<<endl<<"  opacity:";
+			for(int i=0;i<n;i+=n/16)
+				cout<<" "<<op[i];
+			cout<<endl;
+		}
+	}
+	return tx!=0;
+}
+
+// analytic sphere shadows (sphere_shadow.h): the planet and its moons,
+// except 'self' (a receiver doesn't shadow itself this way)
+#define MAX_SHADOW_SPHERES 8
+static void setShadowSpheres(GLSLVarMgr &vars, Spheroid *planet, Object3D *self){
+	float sph[MAX_SHADOW_SPHERES*4];
+	int n=0;
+	auto add=[&](Spheroid *s){
+		if(!s || s==self || n>=MAX_SHADOW_SPHERES || !s->isEnabled())
+			return;
+		Point pc=s->point.mm(TheScene->invViewMatrix);
+		pc=pc.mm(TheScene->viewMatrix);
+		sph[4*n]=pc.x; sph[4*n+1]=pc.y; sph[4*n+2]=pc.z; sph[4*n+3]=s->size;
+		n++;
+	};
+	add(planet);
+	Node<Object3D*> *ptr=planet->children.ptr;
+	planet->children.ss();
+	Object3D *obj;
+	while((obj=planet->children++)){
+		if(obj->type()==ID_MOON)
+			add((Spheroid*)obj);
+	}
+	planet->children.ptr=ptr;
+	for(int i=n*4;i<MAX_SHADOW_SPHERES*4;i++)
+		sph[i]=0;
+	vars.newFloatArray((char*)"shadow_sph",sph,MAX_SHADOW_SPHERES*4);
+	vars.newIntVar("shadow_nsph",n);
+	vars.newFloatVar("shadow_sun",RING_SUN_ANG);
+}
+
 static void addNoiseDP(){
 #ifdef NOISE_DP
 	strcat(GLSLMgr::defString,"#extension GL_ARB_gpu_shader_fp64 : enable\n");
@@ -269,6 +416,42 @@ TNinode  *Orbital::get_image(char *s)
 }
 TNinode  *Orbital::replace_image(TNinode *i, TNinode *r){
 	return exprs.replace_image(i,r);
+}
+
+//-------------------------------------------------------------
+// Orbital::update_image_exprs() replace the image expression "name" (e.g.
+// bands("R123",...)) in every object that has it with "expr", so an edit in
+// the image editor is saved with the scene. Otherwise the object's old
+// expression rebuilt the image when the scene was loaded again (temporary
+// 1D images are deleted at startup and regenerated from the scene).
+// Returns the number of objects updated.
+//-------------------------------------------------------------
+static char *uie_name=0;
+static char *uie_expr=0;
+static int   uie_count=0;
+static void update_image_expr(Object3D *obj){
+	if((obj->type()&ID_ORBITAL)!=ID_ORBITAL)
+		return;
+	Orbital *orb=(Orbital*)obj;
+	TNinode *old=orb->get_image(uie_name);
+	if(!old)
+		return;
+	TNinode *n=(TNinode*)TheScene->parse_node(uie_expr);
+	if(!n)
+		return;
+	orb->replace_image(old,n);
+	n->init();
+	delete old;
+	uie_count++;
+}
+int Orbital::update_image_exprs(char *name, char *expr){
+	if(!name || !expr || !TheScene || !TheScene->objects)
+		return 0;
+	uie_name=name;
+	uie_expr=expr;
+	uie_count=0;
+	TheScene->objects->visitAll(update_image_expr);
+	return uie_count;
 }
 
 TNvar *Orbital::addExprVar(const char *name,const char *expr){
@@ -3783,6 +3966,15 @@ bool Planetoid::setProgram(){
 		sprintf(defs+strlen(defs),"#define CONTOURS\n");
 	if(TheScene->enable_grid)
 		sprintf(defs+strlen(defs),"#define GRID\n");
+	// ring shadow on the planet (analytic_shadows)
+	Ring *shadow_ring=0;
+	if(analytic_shadows && Raster.shadows() && !TheScene->light_view()){
+		shadow_ring=findRing(this);
+		if(shadow_ring && !shadow_ring->isEnabled())
+			shadow_ring=0;
+		if(shadow_ring)
+			sprintf(defs+strlen(defs),"#define RING_SHADOW\n#define RING_NOP %d\n",RING_NOP);
+	}
 
 
 	double twilite_min=-0.2;
@@ -3894,6 +4086,23 @@ bool Planetoid::setProgram(){
 	}
 	vars.newFloatVar("albedo",albedo);
 	vars.newFloatVar("rscale",Rscale);
+	if(shadow_ring){
+		// ring plane: the planet's equator (the ring shares its tilt), pole =
+		// the object y axis in eye space; radii in the same (scene) units
+		Point p0=Point(0,0,0).mm(TheScene->viewMatrix);
+		Point p1=Point(0,1,0).mm(TheScene->viewMatrix);
+		Point pole=(p1-p0).normalize();
+		vars.newFloatVec("ring_pole",pole.x,pole.y,pole.z);
+		vars.newFloatVar("ring_r0",shadow_ring->inner_radius);
+		vars.newFloatVar("ring_r1",shadow_ring->size);
+		vars.newFloatVar("ring_sun",RING_SUN_ANG);
+		// the profile the ring computed when it was last drawn (its band
+		// texture isn't always available when the planet is drawn)
+		float op[RING_NOP];
+		for(int i=0;i<RING_NOP;i++)
+			op[i]=shadow_ring->shadow_op_valid?shadow_ring->shadow_op[i]:1.0f;
+		vars.newFloatArray((char*)"ring_op",op,RING_NOP);
+	}
 
 	tp->setProgram();
 
@@ -12081,6 +12290,7 @@ Ring::Ring(Planet *m, double s, double r) : Shell(m,s)
 	set_cargs(2);
 	width=r;
 	inner_radius=s;
+	shadow_op_valid=false;
 	year=0;
 	day=0;
 	tilt=0;
@@ -12139,6 +12349,8 @@ int Ring::render_pass()
 int Ring::shadow_pass()
 {
 	clr_selected();
+	if(analytic_shadows)     // ring and planet shadows are computed in the shaders
+		return 0;
 
     if(!view_group())
 		return 0;
@@ -12196,7 +12408,11 @@ bool Ring::setProgram(){
 
 	TerrainProperties *tp=map->tp;
 	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
-	if(Raster.shadows()&&Raster.farview())
+	if(analytic_shadows){
+		if(Raster.shadows())
+			sprintf(defs+strlen(defs),"#define SPHERE_SHADOWS\n");
+	}
+	else if(Raster.shadows()&&Raster.farview())
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	GLSLMgr::setDefString(defs);
 	tp->initProgram();
@@ -12207,7 +12423,10 @@ bool Ring::setProgram(){
 		return false;
 	}
     Planetoid *parent=getParent();
-    double alpha=parent->shadow_color.alpha();
+    // shadow intensity on the ring: the ring's own (Lighting tab), so the
+    // planet's shadow on the ring and the ring's shadow on the planet can be
+    // set separately (this used the planet's)
+    double alpha=shadow_color.alpha();
 	GLSLVarMgr vars;
 	//vars.newFloatVar("emission",emission.alpha());
 	vars.newFloatVec("Emission",emission.red(),emission.green(),emission.blue(),emission.alpha());
@@ -12222,6 +12441,18 @@ bool Ring::setProgram(){
 	vars.newFloatVar("twilite_max",twilite_max);
 	vars.newFloatVar("twilite_dph",twilite_dph);
 	//vars.newBoolVar("lighting",Render.lighting());
+	if(analytic_shadows){
+		// opacity profile for the planet's ring shadow (Planetoid::setProgram)
+		float op[RING_NOP];
+		if(ringProfile(this,op,RING_NOP)){
+			for(int i=0;i<RING_NOP;i++)
+				shadow_op[i]=op[i];
+			shadow_op_valid=true;
+		}
+		// shadows of the planet and its moons on the ring (ring.frag
+		// SPHERE_SHADOWS)
+		setShadowSpheres(vars,parent,0);
+	}
 
 	tp->setProgram();
 

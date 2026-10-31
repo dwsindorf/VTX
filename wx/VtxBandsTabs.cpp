@@ -1,6 +1,7 @@
 #include "VtxImageDialog.h"
 
 #include "FileUtil.h"
+#include "OrbitalClass.h"
 #include "RenderOptions.h"
 
 #include <wx/filefn.h>
@@ -419,6 +420,9 @@ void VtxBandsTabs::setObjAttributes(){
 	n->init();
 	images.images.sort();
 	delete n;
+	// the objects using this image (e.g. a ring's bands) save its
+	// expression with the scene: update theirs too
+	Orbital::update_image_exprs((char*)m_name.ToAscii(),buff);
 
 	m_image_window->setImage(m_name.ToAscii(),m_image_window->TILE);
 	setModified(true);
@@ -787,6 +791,7 @@ void VtxBandsTabs::Save(){
 		images.images.sort();
 		delete n;
 	}
+	Orbital::update_image_exprs(name,buff);
 
 	setModified(false);
 	imageDialog->UpdateControls();

@@ -133,6 +133,7 @@ public:
 	virtual TNode    *add_image(TNode *r);
 	virtual TNinode  *get_image(char *r);
 	virtual TNinode  *replace_image(TNinode *i, TNinode *r);
+	static int update_image_exprs(char *name, char *expr); // replace image "name" in all objects
 	virtual TNode *set_terrain(TNode *n);
 	virtual void set_surface(TerrainData&);
 	virtual void set_debug(int d);
@@ -965,12 +966,15 @@ public:
 //************************************************************
 // Ring class
 //************************************************************
+#define RING_NOP 128              // ring opacity profile samples (lighting.frag ring shadow)
 class Ring : public Shell
 {
 public:
 	static int ring_id;
 	double width;
 	double inner_radius;
+	float  shadow_op[RING_NOP];  // opacity profile (inner..outer edge) for the planet's
+	bool   shadow_op_valid;      // ring shadow, set when the ring is drawn (analytic_shadows)
 	Ring(Planet *m, double s, double r);
 	~Ring();
 
