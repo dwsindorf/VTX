@@ -899,6 +899,18 @@ bool  VtxScene::SwapBuffers(){
 void VtxScene::OnKey( wxKeyEvent& event )
 {
 	int key=event.GetKeyCode();
+	// ctrl or alt + u/d or up/down arrow: tilt the view up/down
+	// (with ctrl, u and d arrive as the control codes 0x15 and 0x04)
+	if(event.ControlDown() || event.AltDown()){
+		if(key=='u' || key=='U' || key==0x15 || key==WXK_UP){
+			set_key(KEY_TILT_UP);
+			return;
+		}
+		if(key=='d' || key=='D' || key==0x04 || key==WXK_DOWN){
+			set_key(KEY_TILT_DOWN);
+			return;
+		}
+	}
 //	if(key==' '){
 //		SetCurrent();
 //		SwapBuffers();

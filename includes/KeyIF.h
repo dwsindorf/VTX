@@ -55,6 +55,8 @@ enum standard_keys{
 
 	KEY_UP    		    = 'u',
 	KEY_DOWN  			= 'd',
+	KEY_TILT_UP         = 0x15,  // ctrl-u (also ctrl/alt-u, ctrl/alt-up arrow: VtxScene::OnKey)
+	KEY_TILT_DOWN       = 0x04,  // ctrl-d (also ctrl/alt-d, ctrl/alt-down arrow)
 	KEY_MOVE_SELECT     = 'M',
 	KEY_REWIND_VIEWS    = '_',
 	KEY_DECR_VIEW       = '-',

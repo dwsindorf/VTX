@@ -745,6 +745,16 @@ int KeyIF::standard_key(unsigned &state, unsigned key)
 		if(!TheScene->view->automv())
 		    TheScene->show_status(INFO_POSITION);
   		break;
+	case KEY_TILT_UP:            // tilt the view up (as a right-button drag)
+		TheScene->view->look_up();
+		if(!TheScene->view->automv())
+		    TheScene->show_status(INFO_POSITION);
+  		break;
+	case KEY_TILT_DOWN:          // tilt the view down
+		TheScene->view->look_down();
+		if(!TheScene->view->automv())
+		    TheScene->show_status(INFO_POSITION);
+  		break;
 	default:
 		return 0;
 	}
