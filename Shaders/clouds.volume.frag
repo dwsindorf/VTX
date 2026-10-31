@@ -269,11 +269,11 @@ uniform float vol_fwd_g;         // forward scattering lobe g (Shine)
 uniform float vol_fwd_w;         // forward scattering lobe weight (Specular)
 
 uniform float vol_rg;            // ground radius (km)
-uniform float vol_rb;            // cloud base radius (km)
-uniform float vol_rt;            // highest cloud top radius (km): base+depth*(1+hvar)
-uniform float vol_depth;         // cloud height above the base (km, Height on the Volume tab)
+uniform float vol_rb;            // layer level radius (km): the layer Height (Object tab)
+uniform float vol_rt;            // highest cloud top radius (km): level+depth/2+hvar
+uniform float vol_depth;         // cloud thickness (km, Height on the Volume tab), centered on the level
 uniform float vol_far;           // max ray length (km)
-uniform vec3  vol_hts;           // heights above the ground (km): eye, cloud base, highest top
+uniform vec3  vol_hts;           // heights above the ground (km): eye, lowest cloud base, highest top
 
 uniform float vol_cov;           // coverage bias
 uniform float vol_freq;          // shape noise frequency (1/km)
@@ -281,7 +281,8 @@ uniform float vol_wfreq;         // built-in coverage noise frequency (1/km)
 uniform float vol_sigma;         // extinction (1/km) at density 1
 uniform float vol_efreq;         // erosion frequency multiplier
 uniform float vol_estr;          // erosion strength
-uniform float vol_hvar;          // cloud height variation: tops up to depth*(1+hvar)
+uniform float vol_hvar;          // cloud height variation (km): tops up to hvar higher, bases
+                                 // down to hvar below the level (independently per cloud)
 uniform float vol_haze;          // aerial perspective distance (km)
 uniform vec3 vol_haze_color;     // air color (Sky haze_lit: lit for the time of day)
 uniform int   vol_steps;         // view ray steps
@@ -369,8 +370,8 @@ void volPoint(vec3 v, float w){
 
 // ---------------- coverage (per column) ----------------
 // q: sample position relative to the eye (km), dist: distance from the eye (km)
-// returns (coverage 0..1, cloud top height above the base in km)
-vec2 column(vec3 q, float dist){
+// returns (coverage 0..1, cloud base and top heights above the layer level, km)
+vec3 column(vec3 q, float dist){
 	float wc;
 	vec3 n=normalize(vol_eye+q);   // unit direction from the planet center
 #ifdef VOL_NOISE
@@ -402,11 +403,14 @@ vec2 column(vec3 q, float dist){
 	vec3 wp=n*vol_rg*vol_wfreq;
 	wc=clamp(0.5+vol_cov+0.9*fbm_g(wp+vol_seed*0.37,3),0.0,1.0);
 #endif
-	// cloud top height: Height plus up to HtVar*Height more, varying with
-	// a noise (a few km across)
+	// cloud base and top relative to the layer level (Object tab Height):
+	// centered on it, Height (Volume tab) thick, and Ht Var (km) stretches
+	// each cloud by random amounts (two independent noises a few km
+	// across): the top up to Ht Var higher, the base up to Ht Var lower
 	vec3 hp=n*vol_rg*vol_freq*0.25+vol_seed*0.71;
-	float hn=clamp(0.5+1.2*fbm_g(hp,2),0.0,1.0);
-	return vec2(wc,vol_depth*(1.0+vol_hvar*hn));
+	float ht=clamp(0.5+1.2*fbm_g(hp,2),0.0,1.0);
+	float hb=clamp(0.5+1.2*fbm_g(hp*1.13+17.3,2),0.0,1.0);
+	return vec3(wc,-0.5*vol_depth-vol_hvar*hb,0.5*vol_depth+vol_hvar*ht);
 }
 
 #ifdef VOL_NPZ
@@ -439,16 +443,17 @@ float zfield(vec3 q, float dist, float lod){
 // ---------------- cloud density ----------------
 // q: position relative to the eye (km), cw: column(), dist: distance from
 // the eye (km). returns 0..1
-float cloudDensity(vec3 q, vec2 cw, float dist, bool detail){
+float cloudDensity(vec3 q, vec3 cw, float dist, bool detail){
 	vec3 p=vol_eye+q;
 	float wc=cw.x;
 	if(wc<=0.0)
 		return 0.0;
 	float r=length(p);
-	float hk=r-vol_rb;              // height above the base (km)
-	if(hk<0.0 || hk>=cw.y)
+	float hk=r-vol_rb-cw.y;         // height above this cloud's base (km)
+	float thick=cw.z-cw.y;          // its base to top (km)
+	if(hk<0.0 || hk>=thick)
 		return 0.0;
-	float h=hk/cw.y;                // fraction of this cloud's own top
+	float h=hk/thick;               // fraction of this cloud's own top
 	vec3 ps=p+vol_seed;
 #ifdef VOL_NPZ
 	// height profile: flat base, rounded top
@@ -480,11 +485,11 @@ float cloudDensity(vec3 q, vec2 cw, float dist, bool detail){
 	if(g<=0.0)
 		return 0.0;
 	g=g*g*(3.0-2.0*g);
-	vec3 q=ps*vol_freq;
+	vec3 qf=ps*vol_freq;
 	// base shape: Perlin fBm (with larger scale clustering) shaped by
 	// inverted Worley fBm
-	float pf=0.55*gnoise(q*0.31+3.7)+fbm_g(q,detail?4:3)*1.1+0.5;
-	float wf=1.0-fbm_w(q*1.5,detail?3:2);
+	float pf=0.55*gnoise(qf*0.31+3.7)+fbm_g(qf,detail?4:3)*1.1+0.5;
+	float wf=1.0-fbm_w(qf*1.5,detail?3:2);
 	float base=clamp(remap(pf,-(1.0-wf)*0.6,1.0,0.0,1.0),0.0,1.0);
 	float d=clamp(remap(base*g,1.0-wc,1.0,0.0,1.0),0.0,1.0);
 #endif
@@ -674,7 +679,7 @@ void main(void) {
 	{
 		float tm=t0+0.5*L;
 		vec3 pm=dir*tm;
-		vec2 cm=column(pm,tm);
+		vec3 cm=column(pm,tm);
 #if VOL_DEBUG==7
 		float dm=cloudDensity(pm,cm,tm,true);
 #elif defined(VOL_NPZ)
@@ -731,8 +736,8 @@ void main(void) {
 	int i0=0;
 	float ta=t0+stepT(jitter/N,L);
 	float tb=t0+stepT((float(VOL_WSTRIDE)+jitter)/N,L);
-	vec2 cA=column(dir*ta,ta);
-	vec2 cB=column(dir*tb,tb);
+	vec3 cA=column(dir*ta,ta);
+	vec3 cB=column(dir*tb,tb);
 
 	for(int i=0;i<256;i++){
 		if(i>=vol_steps || T<0.01)
@@ -746,7 +751,7 @@ void main(void) {
 		float x=(float(i)+jitter)/N;
 		float t=t0+stepT(x,L);
 		float dt=L*(STEP_LIN+2.0*(1.0-STEP_LIN)*x)/N;
-		vec2 cw=mix(cA,cB,float(i-i0)/float(VOL_WSTRIDE));
+		vec3 cw=mix(cA,cB,float(i-i0)/float(VOL_WSTRIDE));
 		vec3 q=dir*t;                // relative to the eye
 		vec3 p=o+q;
 		float d=cloudDensity(q,cw,t,true);
@@ -768,7 +773,7 @@ void main(void) {
 			tfirst=t;
 		vec3 pn=normalize(p);
 		float rp=length(p);
-		float h=clamp((rp-vol_rb)/cw.y,0.0,1.0);   // fraction of this cloud's top
+		float h=clamp((rp-vol_rb-cw.y)/(cw.z-cw.y),0.0,1.0);   // fraction of this cloud's top
 
 		// light march toward the sun (same column coverage), out to where
 		// the sun ray leaves the cloud top: thick clouds go dark below

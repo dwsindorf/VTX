@@ -505,23 +505,16 @@ void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
     wxBoxSizer* boxSizer = new wxBoxSizer(wxVERTICAL);
     topSizer->Add(boxSizer, 0, wxALIGN_LEFT|wxALL, 5);
 
-	wxStaticBoxSizer* layer_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Layer"));
+	wxStaticBoxSizer* layer_cntrls = new wxStaticBoxSizer(wxVERTICAL,panel,wxT("Height"));
 
 	wxBoxSizer *hline = new wxBoxSizer(wxHORIZONTAL);
-	VTopSlider=new SliderCtrl(panel,ID_VTOP_SLDR,"Height",LABEL1, VALUE,SLIDER2);
+	VTopSlider=new SliderCtrl(panel,ID_VTOP_SLDR,"Ampl",LABEL1, VALUE,SLIDER2);
 	VTopSlider->setRange(0.5,15);
-	VTopSlider->slider->SetToolTip("Cloud height above the base (km). The base is the layer Height on the Object tab");
+	VTopSlider->slider->SetToolTip("Cloud thickness (km), centered on the layer Height (Object tab)");
 	hline->Add(VTopSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
-	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
-
-	hline = new wxBoxSizer(wxHORIZONTAL);
-	VCoverageSlider=new SliderCtrl(panel,ID_VCOVERAGE_SLDR,"Cover",LABEL1, VALUE,SLIDER2);
-	VCoverageSlider->setRange(-1,1);
-	VCoverageSlider->slider->SetToolTip("Coverage bias, added to the Color alpha expression (or built-in coverage noise)");
-	hline->Add(VCoverageSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
-	VHvarSlider=new SliderCtrl(panel,ID_VHVAR_SLDR,"Ht Var",LABEL1, VALUE,SLIDER2);
-	VHvarSlider->setRange(0,1);
-	VHvarSlider->slider->SetToolTip("Cloud height variation: 0 = all the same Height, 1 = up to twice Height");
+	VHvarSlider=new SliderCtrl(panel,ID_VHVAR_SLDR,"Var",LABEL1, VALUE,SLIDER2);
+	VHvarSlider->setRange(0,15);
+	VHvarSlider->slider->SetToolTip("Cloud height variation (km): each cloud's top reaches up to this much higher and its base up to this much lower, by random amounts");
 	hline->Add(VHvarSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	layer_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	layer_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
@@ -555,6 +548,10 @@ void VtxCloudsTabs::AddVolumeTab(wxWindow *panel){
 	VStepsSlider->setRange(16,256);
 	VStepsSlider->slider->SetToolTip("Ray march steps: quality vs render time");
 	hline->Add(VStepsSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
+	VCoverageSlider=new SliderCtrl(panel,ID_VCOVERAGE_SLDR,"Cover",LABEL1, VALUE,SLIDER2);
+	VCoverageSlider->setRange(-1,1);
+	VCoverageSlider->slider->SetToolTip("Coverage bias, added to the Color alpha expression (or built-in coverage noise)");
+	hline->Add(VCoverageSlider->getSizer(),1,wxALIGN_LEFT|wxALL);
 	shape_cntrls->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 	shape_cntrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 	boxSizer->Add(shape_cntrls,0,wxALIGN_LEFT|wxALL,0);

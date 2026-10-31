@@ -9916,7 +9916,7 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	vol_freq=0.3;
 	vol_sigma=1;
 	vol_mode=0;
-	vol_hvar=0.25;
+	vol_hvar=2.5;      // km (see setVolumeVars)
 	vol_estr=1;
 	vol_steps=256;
 	noise_dp=0;
@@ -10011,7 +10011,7 @@ int CloudLayer::scale(double &zn, double &zf)
 		// early), so it's always drawn: INSIDE while the eye is below the
 		// highest cloud top, OUTSIDE above it.
 		const double KMU=1.609344/MILES;     // km per scene unit
-		double top=size+vol_top*(1+clamp(vol_hvar,0.0,1.0))/KMU;
+		double top=size+(0.5*vol_top+vol_hvar)/KMU;
 		double d=TheView->epoint.distance(point);
 		t=(d<=top)?INSIDE:OUTSIDE;
 		setvis(t);
@@ -10052,7 +10052,14 @@ void CloudLayer::get_vars()
 	VGET("vol_coverage",vol_cov,-0.6);
 	VGET("vol_freq",vol_freq,0.3);
 	VGET("vol_sigma",vol_sigma,1);
-	VGET("vol_hvar",vol_hvar,0.25);
+	// Ht Var: km ("vol_htvar"). Older files saved it as a fraction of
+	// Height ("vol_hvar", tops up to Height*(1+hvar))
+	if(exprs.get_local("vol_htvar",Td))
+		vol_hvar=fabs(Td.s);
+	else if(exprs.get_local("vol_hvar",Td))
+		vol_hvar=Td.s*vol_top;
+	else
+		vol_hvar=2.5;
 	VGET("vol_erosion",vol_estr,1);
 	VGET("vol_steps",vol_steps,256);
 	VGET("noise_dp",noise_dp,0);
@@ -10087,7 +10094,7 @@ void CloudLayer::set_vars()
 	VSET("vol_coverage",vol_cov,-0.6);
 	VSET("vol_freq",vol_freq,0.3);
 	VSET("vol_sigma",vol_sigma,1);
-	VSET("vol_hvar",vol_hvar,0.25);
+	VSET("vol_htvar",vol_hvar,2.5);
 	VSET("vol_erosion",vol_estr,1);
 	VSET("vol_steps",vol_steps,256);
 	VSET("noise_dp",noise_dp,0);
@@ -10838,13 +10845,16 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	Color skyc=sky?sky->color():Color(0.45,0.75,0.9);
 
 	double rg=parent->size*KM;
-	// cloud base: the layer Height (Object tab); vol_top is the cloud
-	// height above it (Height on the Volume tab), and the tops vary up to
-	// vol_top*(1+vol_hvar)
-	double base_km=(size-parent->size)*KM;
-	if(base_km<=0)
-		base_km=vol_base;
-	double top_km=base_km+vol_top*(1+clamp(vol_hvar,0.0,1.0));
+	// layer level: the layer Height (Object tab), like a 2D layer's shell:
+	// the clouds are centered on it (it moves the layer up and down).
+	// vol_top (Height on the Volume tab) is the cloud thickness, and
+	// vol_hvar (Ht Var, km) stretches each cloud by random amounts: its
+	// top up to vol_hvar higher, its base up to vol_hvar lower
+	double level_km=(size-parent->size)*KM;
+	if(level_km<0)
+		level_km=0;
+	double base_km=fmax(level_km-0.5*vol_top-vol_hvar,0.0);   // lowest cloud base (not below the ground)
+	double top_km=level_km+0.5*vol_top+vol_hvar;
 	eye=eye*KM;
 	double ht=eye.length()-rg;
 	double far_km=ht>top_km?400:60;          // km: longer rays from above the clouds
@@ -10883,10 +10893,10 @@ void CloudLayer::setVolumeVars(GLSLVarMgr &vars){
 	vars.newFloatVar("vol_fwd_g",clamp(shine/(shine+3.0),0.0,0.95));
 	vars.newFloatVar("vol_fwd_w",clamp(3.5*specular.alpha(),0.0,1.0));
 	vars.newFloatVar("vol_rg",rg);
-	vars.newFloatVar("vol_rb",rg+base_km);
+	vars.newFloatVar("vol_rb",rg+level_km);
 	vars.newFloatVar("vol_rt",rg+top_km);
 	// heights above the ground (km, from doubles) for the precise ray/shell
-	// intersections in clouds.volume.frag (eye, cloud base, highest top)
+	// intersections in clouds.volume.frag (eye, lowest cloud base, highest top)
 	vars.newFloatVec("vol_hts",ht,base_km,top_km);
 	vars.newFloatVar("vol_depth",vol_top);
 	vars.newFloatVar("vol_far",far_km);
@@ -11394,7 +11404,7 @@ void CloudLayer::makeType(int gtype){
 		emission=Color(1,1,1,0);
 		vol_cov=-3.0*ampl*(0.8+0.4*r[9]);
 		vol_top=7.5+5*r[10];
-		vol_hvar=0.15+0.2*r[11];
+		vol_hvar=(0.15+0.2*r[11])*vol_top;   // km
 		vol_freq=0.25+0.1*r[12];
 		vol_estr=clamp(0.85+0.3*r[13],0.0,1.0);
 		vol_sigma=0.75+0.5*r[14];
