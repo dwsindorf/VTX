@@ -110,6 +110,9 @@ vec3 sunCoreTint(vec3 tint){
 	return vec3(1.0)-(vec3(1.0)-tint)*w;
 }
 
+#ifndef SUNSET_CUT
+#define SUNSET_CUT 0.06
+#endif
 // sunsetBand(): horizon glow around a low sun. Unlike the round halo, the
 // real effect is a band hugging the horizon that spreads far to either
 // side of the sun and grades from red-orange at the horizon through
@@ -132,9 +135,14 @@ vec4 sunsetBand(float viewSin, float sunSin, float cosAz, float cosSun, float ta
 	float low=(1.0-smoothstep(0.0,0.4/sh,sunSin))*smoothstep(-0.2,-0.02,sunSin);
 	if(low<=0.0)
 		return vec4(0.0);
-	// sky only: fade out just below the horizon so the band isn't painted
-	// over terrain/sea pixels behind the sky shell
-	float above=smoothstep(-0.02,0.0,viewSin);
+	// sky only: fade out below the horizon so the band isn't painted over
+	// terrain/sea pixels behind the sky shell. viewSin is measured from the
+	// horizon the caller estimates (sky.back.frag horizon_sin), which can
+	// be off (ground level, terrain, a small planet): the cutoff starting
+	// right at it left a hard-edged strip of plain sky above the real
+	// horizon. SUNSET_CUT (sine, ~3.4 deg) lets the band continue that far
+	// below it; terrain and water in front still cover it
+	float above=smoothstep(-SUNSET_CUT-0.02,-SUNSET_CUT,viewSin);
 	if(above<=0.0)
 		return vec4(0.0);
 	float v=max(viewSin,0.0);

@@ -23,6 +23,7 @@ uniform vec4 HazeLit;   // Haze rgb darkened for time of day (= terrain haze col
 uniform vec4 Halo;
 uniform float sun_disk;   // sun angular radius (radians), Sky::setProgram
 uniform float sun_pix;    // angular size of a pixel (radians)
+uniform float horizon_sin; // sine of the horizon elevation (<=0, ground level under the eye), Sky::setProgram
 
 // Sun disk: a sharp disk at the star's real angular size (at least
 // SUN_DISK_MINPIX pixels radius so a distant star still shows), a soft edge
@@ -35,6 +36,24 @@ uniform float sun_pix;    // angular size of a pixel (radians)
 // the disk fades with the sky opacity (Sky tab Opacity = density): full up
 // to SUN_DISK_OPQ0, gone at 1 (an opaque sky hides the sun)
 #define SUN_DISK_OPQ0   0.2
+
+// sky color phase (twilight/day/night) from the sun's elevation at a point
+// partly toward the viewer: the shell point itself (radius) is far away
+// near the horizon (~1000 km), where the sun can already be up, which gave
+// a sharp blue (day sky) band along the horizon at sunrise/sunset (hidden
+// by haze). 0: the shell point (old), 1: the viewer's own sun elevation.
+// Faded out with height (dht), so the sky seen from space is unchanged
+#define SKY_UP_MIX 0.0   // (0.75 tried for the horizon band: not its cause)
+
+// SKY_DEBUG (0 = normal output): show one part of the sky color
+//   1 day fraction from LdotR (black night, white day; the twilight band between)
+//   2 color after the night/twilight/day mix (before the horizon brightening)
+//   3 sd: horizon brightening factor (color*sd+0.5*sd)
+//   4 color after the brightening, before scattering, band and haze
+//   5 scattering glow added
+//   6 sunrise/sunset band (rgb*a)
+//   7 color before haze (everything else applied)
+#define SKY_DEBUG 0
 uniform vec4 Twilite;
 uniform vec4 Scatter;
 uniform vec4 Night;
@@ -93,10 +112,12 @@ void main(void) {
 	vec4 band=vec4(0.0);  // sunrise/sunset horizon glow (sunsetBand)
 	vec4 core=vec4(0.0);  // sun disk color/weight, re-applied on top of the band
 	vec4 sundisk=vec4(0.0); // sharp HDR sun disk (applied after the compression)
+	vec3 dbg1=vec3(0.0),dbg2=vec3(0.0),dbg3=vec3(0.0),dbg4=vec3(0.0),dbg5=vec3(0.0);
 	for(int i=0;i<NLIGHTS;i++){
 		vec3 light = normalize(gl_LightSource[i].position.xyz - EyeDirection.xyz);
 
-		float LdotR    = dot(light,radius); // for horizon band calculation
+		vec3 rl=normalize(mix(radius,-ec,SKY_UP_MIX*(1.0-clamp(dht,0.0,1.0))));
+		float LdotR    = dot(light,rl); // for horizon band calculation
 		float ampl     = 1.0/gl_LightSource[i].constantAttenuation;
 
 		// mix in twilite color
@@ -115,6 +136,9 @@ void main(void) {
 		// night-side darken all colors
 		mx=lerp(LdotR, twilite_dph+twilite_min,twilite_dph+twilite_max, 1.0-Night.a, 0.0);
 		color.rgb=mix(color.rgb,vec3(0.0),mx);
+		dbg1=vec3(lerp(LdotR, twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0));
+		dbg2=color.rgb;
+		dbg3=vec3(sd);
 
  		illumination+=max(lerp(LdotR,  twilite_dph+twilite_min, twilite_dph+twilite_max, 0.0, 1.0),illumination);
 		alpha=max(lerp(LdotR, twilite_dph+2*twilite_min, twilite_dph+twilite_min, 0.0, 1.0),alpha);
@@ -122,6 +146,7 @@ void main(void) {
 		//alpha=lerp(density,0.3,0.8,alpha,1);
 
 		color.rgb=color.rgb*sd+vec3(0.5*sd);
+		dbg4=color.rgb;
 		float pf=0.0;
 		// sunlight color after its path through the atmosphere, using the
 		// sun's elevation at the viewer (up = away from the planet center)
@@ -135,7 +160,10 @@ void main(void) {
 			vec3 sh=sdir-up*sunSin;
 			float le=length(eh), ls=length(sh);
 			float cosAz=(le>1e-5 && ls>1e-5)?dot(eh,sh)/(le*ls):1.0;
-			vec4 b=sunsetBand(viewSin,sunSin,cosAz,dot(eye,sdir),sun_tau,sun_redden);
+			// band measured from the horizon (ground level under the eye), not eye level:
+			// from a height the horizon is below eye level and the band, cut
+			// off at eye level, left a strip of plain (blue) sky above it
+			vec4 b=sunsetBand(viewSin-horizon_sin,sunSin,cosAz,dot(eye,sdir),sun_tau,sun_redden);
 			if(b.a>band.a)
 				band=b;
 		}
@@ -173,6 +201,7 @@ void main(void) {
 				vec3 scat=scatterColor(cosTheta,airmass,pressure,ghg_fraction,
 						day_grad,scatter_grad,scatter_color);
 				color.rgb+=scatter_mix*dayFade*density*ampl*scat;
+				dbg5=scatter_mix*dayFade*density*ampl*scat;
 			}
 		}
 	}
@@ -211,6 +240,15 @@ void main(void) {
 		float vis=1.0-smoothstep(SUN_DISK_OPQ0,1.0,density);
 		color.rgb=mix(color.rgb,max(color.rgb,sundisk.rgb*vis),sundisk.a*vis);
 	}
+#if SKY_DEBUG>0
+	{
+		vec3 c=SKY_DEBUG==1?dbg1:SKY_DEBUG==2?dbg2:SKY_DEBUG==3?dbg3:SKY_DEBUG==4?dbg4:
+		       SKY_DEBUG==5?dbg5:SKY_DEBUG==6?band.rgb*band.a:color.rgb;
+		gl_FragData[0]=vec4(c,1.0);
+		gl_FragData[1]=texture2DRect(FBOTex2, gl_FragCoord.xy);
+		return;
+	}
+#endif
 #ifdef HAZE
 	float s=lerp(dp, dpmax-2.0*dpmin, dpmax, 0.0, 1.0);
 	//d=min(DEPTH/haze_zfar,1.0);

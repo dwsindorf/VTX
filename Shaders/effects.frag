@@ -95,6 +95,8 @@ float hazeAmount(float depth){
 #define SSR_EPS        0.002  // depth noise tolerance (fraction of depth)
 #define SSR_OCC_STEPS  12     // sideways search steps around an occluded end point
 #define SSR_OCC_STRIDE 3.0    // pixels per search step
+#define SSR_HZ_STEPS   32     // horizon water (no ray): steps up to the sky
+#define SSR_HZ_STRIDE  2.0    // pixels per step
 
 // SSR_DEBUG (water pixels only; 0 = normal output):
 //   1: color = which branch produced the reflection
@@ -339,7 +341,21 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 	vec2 d=s1-s0;
 	float dlen=length(d);
 	if(dlen<1.0){
+		// no ray on screen: the reflected ray's vanishing point is this pixel
+		// (water at the horizon). The reflection is the sky just above the
+		// horizon, so use the nearest sky pixel above. The lit WaterSky
+		// fallback differs a lot from the rendered sky (a sharp cyan band
+		// along the horizon without haze)
 		ssrPath=9;
+		vec2 lo0=vec2(0.5);
+		vec2 hi0=vsize-0.5;
+		for(int k=1;k<=SSR_HZ_STEPS;k++){
+			vec2 q=ssrPix(s0+vec2(0.0,float(k)*SSR_HZ_STRIDE),lo0,hi0);
+			float type;
+			ssrDepth(q,type);
+			if(type<0.5)
+				return texture2DRect(FBOTex1,q).rgb;
+		}
 		return skyFallback;
 	}
 

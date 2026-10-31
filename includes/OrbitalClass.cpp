@@ -291,7 +291,6 @@ void Orbital::setOrbitFrom(Orbital *p){
 	orbit_phase=p->orbit_phase;
 	year=p->year;
 	day=p->day;
-	tilt=p->tilt;
 	pitch=p->pitch;
 	orbit_skew=p->orbit_skew;
 	orbit_eccentricity=p->orbit_eccentricity;
@@ -6420,7 +6419,8 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	planet->day=100+90*r[2];
 	planet->year=planet->day*(1+3*r[3]);
-	planet->detail=4;
+	planet->detail=6;
+	planet->tilt=20*s[3];
 
 	planet->terrain_type=GN_GASSY;
 	gen_type=GN_GASSY;
@@ -6461,7 +6461,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 
 	char noise_expr[2048];
 	sprintf(noise_expr,
-		"%g*twist(%g,noise(GRADIENT|FS|NABS|SQR|TA|UNS|RO1,2.4,6,1,0.55,2.25,%g,1,0,0,1e-06))"
+		"%g*twist(%g,noise(GRADIENT|FS|NABS|SQR|TA|UNS|RO1,2.4,13,1,0.55,2.25,%g,1,0,0,1e-06))"
 		"+%g*max((EQU+%g*PHI)*noise(VORONOI|FS|NEG|NABS|SCALE|UNS|RO1,%g,3,%g,0.5,2,%g,-0.85,0,2,1e-06),0)"
 		"+noise(GRADIENT|FS|SQR|TA|RO1,1,2.5,1,0.5,2,%g,1,0,0,6.61114e-07)",
 		a0,tw,a1,a2,sp,f2,b2,n2,a3);
@@ -6486,7 +6486,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	strcat(noise_expr,belt_expr);
 	char  *tname=randFeature(RND_TEXNAME).c_str();
 
-	sprintf(buff,"Texture(%s,S|TEX,%s,%g,%g,0,%g,%g,%g,%g,0,0,0,0,0)",
+	sprintf(buff,"Texture(%s,BUMP|S|TEX,%s,%g,-0.02,%g,0,%g,%g,%g,%g,0,0,0,0,0)",
 		tname,noise_expr,
 		scale,ampl,offset,levels,delf,dela);  // latitude from belts(), phi_bias 0
 
@@ -9699,6 +9699,16 @@ bool Sky::setProgram(){
 	vars.newFloatVar("dht",dht);
 	vars.newFloatVar("dpmin",dpmin);
 	vars.newFloatVar("dpmax",dpmax);
+	// sine of the horizon's elevation (negative: below eye level from a
+	// height). sky.back.frag measures the sunrise/sunset band from it.
+	// Ground level under the eye, as in dpvars: sea level (parent->size)
+	// doesn't work for a lake below sea level (the eye was below it: 0)
+	{
+		double r=parent->size+TheScene->gndlvl;
+		double d=point.length();
+		double hs=d>r?-sqrt(d*d-r*r)/d:0.0;
+		vars.newFloatVar("horizon_sin",hs);
+	}
 
 	vars.newFloatVar("pressure",pressure);
 	vars.newFloatVar("ghg_fraction",ghg_fraction);
@@ -9897,8 +9907,8 @@ CloudLayer::CloudLayer(Orbital *m, double s) : Shell(m,s)
 	sprites_dim=4;
 	sprites_file[0]=0;
 	sprites_image=0;
-	emission=Color(1,1,1,0.05);
-	ambient=Color(1,1,1,0.15);
+	emission=Color(1,1,1,0.0);
+	ambient=Color(1,1,1,DEFAULT_AMBIENT);
 	shine=CLOUD_DFLT_SHINE;
 	vol_base=1.5;
 	vol_top=10;
@@ -10049,7 +10059,7 @@ void CloudLayer::get_vars()
 	if(exprs.get_local("ambient",Td))
 		ambient=Td.c;
 	else
-		ambient=Color(1,1,1,0.15);
+		ambient=Color(1,1,1,DEFAULT_AMBIENT);
 
 	if(exprs.get_local("sprites_file",Td))
 		strncpy(sprites_file,Td.string,256);
@@ -10081,7 +10091,7 @@ void CloudLayer::set_vars()
 	VSET("vol_erosion",vol_estr,1);
 	VSET("vol_steps",vol_steps,256);
 	VSET("noise_dp",noise_dp,0);
-	CSET("ambient",ambient,Color(1,1,1,0.15));
+	CSET("ambient",ambient,Color(1,1,1,DEFAULT_AMBIENT));
 
 	exprs.set_var("sprites_file",sprites_file,strcmp(sprites_file,dflt_sprites_file));
 }
@@ -11302,7 +11312,7 @@ double CloudLayer::vol_dflt_base=0.5;   // miles
 double CloudLayer::defaultHeight(int gtype){
 	if(gtype==GN_3D || gtype==GN_VOL)
 		return 5+5*Rand();
-	return 20+30*Rand();
+	return 50+30*Rand();
 }
 
 //-------------------------------------------------------------
