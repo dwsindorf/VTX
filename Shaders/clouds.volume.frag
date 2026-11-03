@@ -90,9 +90,10 @@ uniform float sun_redden;
 //   8: as 7 but the Z noise only (0.5+5*Z), without the height profile
 //   9: lighting only: the light (S) at the first cloud sample on each ray,
 //      no accumulation (stripes here: the lighting; none: the march)
-//   6: cloud opacity found along each ray (red = 1-T, before haze) and
-//      green = sky haze amount at the first cloud; terrain and sky pixels
-//      in the passes that draw them
+//   6: cloud opacity found along each ray (red = 1-T, before haze),
+//      green = sky haze amount at the first cloud (the old per-ray haze),
+//      blue = the haze actually applied (opacity weighted along the ray);
+//      terrain and sky pixels in the passes that draw them
 #define VOL_DEBUG 0
 
 // Point Z value that gives full coverage is 1/VOL_ZGAIN
@@ -731,6 +732,19 @@ void main(void) {
 	vec3 col=vec3(0.0);
 	float T=1.0;
 	float tfirst=-1.0;
+#if VOL_DEBUG==6
+	float hzsum=0.0;
+#endif
+
+	// what distant cloud fades into (aerial perspective, below). By day that's
+	// the scene pixel; at night the scene has stars in it, so it's clamped to
+	// the air color (the stars only show where the cloud itself is thin:
+	// T*scene at the end). The HDR sun disk must not come back through the
+	// fade: over it, fade into the sky around the disk
+	float eday=smoothstep(-0.1,0.1,dot(normalize(o),vol_sun));
+	vec3 behind=terrain?scene.rgb:mix(min(scene.rgb,vol_haze_color),scene.rgb,eday);
+	if(!terrain && sunw>0.0)
+		behind=mix(behind,sunsky,sunw);
 
 	// coverage at sample i0 and i0+VOL_WSTRIDE, interpolated in between
 	int i0=0;
@@ -825,33 +839,25 @@ void main(void) {
 		gl_FragData[0]=vec4(S,1.0);
 		return;
 #endif
+		// distance fade and sky haze (the terrain haze, effects.frag), at this
+		// sample's own distance. Not once per ray at the first cloud: a ray
+		// that only grazes a thin wisp would haze everything behind the wisp
+		// at the wisp's distance, and its neighbor at the far cloud's, which
+		// gave a sharp edge across thin clouds
+		float hz=cloudHaze(t*vol_km2scene);
+		S=mix(behind,S,max(exp(-t/vol_haze),VOL_FADE_MIN));
+		S=mix(S,ch_color,hz);
 		float st=exp(-vol_sigma*d*dt);
 		col+=T*S*(1.0-st);
+#if VOL_DEBUG==6
+		hzsum+=T*(1.0-st)*hz;
+#endif
 		T*=st;
 	}
 #if VOL_DEBUG==6
-	gl_FragData[0]=vec4(1.0-T,tfirst>0.0?cloudHaze(tfirst*vol_km2scene):0.0,0.0,1.0);
+	gl_FragData[0]=vec4(1.0-T,tfirst>0.0?cloudHaze(tfirst*vol_km2scene):0.0,T<0.999?hzsum/(1.0-T):0.0,1.0);
 	return;
 #endif
-	// aerial perspective: distant clouds fade into the sky behind them.
-	// By day that's the scene pixel; at night the scene has stars in it,
-	// so it's clamped to the air color (the stars only show where the
-	// cloud itself is thin: T*scene below)
-	if(tfirst>0.0){
-		float f=max(exp(-tfirst/vol_haze),VOL_FADE_MIN);
-		float eday=smoothstep(-0.1,0.1,dot(normalize(o),vol_sun));
-		vec3 behind=terrain?scene.rgb:mix(min(scene.rgb,vol_haze_color),scene.rgb,eday);
-		// the HDR sun disk must not come back through the distance fade:
-		// over it, fade into the sky around the disk
-		// the HDR sun disk must not come back through the distance fade:
-		// over it, fade into the sky around the disk
-		if(!terrain && sunw>0.0)
-			behind=mix(behind,sunsky,sunw);
-		col=mix((1.0-T)*behind,col,f);
-		// sky haze (the terrain haze, effects.frag): the cloud fades into
-		// the haze color as the terrain at that distance does
-		col=mix(col,(1.0-T)*ch_color,cloudHaze(tfirst*vol_km2scene));
-	}
 #if VOL_DEBUG==1
 	gl_FragData[0]=vec4(0.3+0.7*clamp(L/vol_far,0.0,1.0),tfirst>0.0?0.8:0.0,0,1);
 	return;

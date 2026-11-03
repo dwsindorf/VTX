@@ -48,7 +48,7 @@ static int debug_temp=DEBUG_TEMP;
 // sun's size). Rings are then left out of the shadow map passes.
 // 0: the old shadow map shadows (solid ring shadows)
 int analytic_shadows=1;
-static int debug_ring_profile=1;  // print the ring opacity profile (once per ring texture)
+static int debug_ring_profile=0;  // print the ring opacity profile (once per ring texture)
 #define RING_SUN_ANG 0.0047       // sun angular radius (rad) for the penumbra
 
 // the planet's ring (or 0)
@@ -343,7 +343,7 @@ Orbital::~Orbital(){ }
 
 void Orbital::set_defaults()
 {
-	orbit_skew=orbit_angle=orbit_phase=orbit_radius=0.0,orbit_eccentricity=0;
+	orbit_skew=orbit_angle=orbit_phase=orbit_radius=orbit_distance=0.0,orbit_eccentricity=0;
 	year=day=tilt=pitch=rot_angle=rot_phase=0.0;
 	detail=1;
 	set_color(WHITE);
