@@ -732,8 +732,8 @@ void MCObjNode::split()
 //
 // A sign test over samples can prove a surface EXISTS, but never that one is
 // ABSENT -- the isosurface is free to pass entirely between samples. That is
-// the bug: "no sign change" was being read as "no surface", followed by
-// collapse(), and the whole subtree disappeared.
+// so "no sign change" can't be read as "no surface": collapse() would remove
+// the whole subtree.
 //
 // Turn it into a real verdict by bounding how far the isosurface can be from
 // the closest sample:            d  >=  |f - iso| / |grad f|
@@ -851,9 +851,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
         return true;
     }
 #ifdef PATCH_HOLES
-    // Superseded by the margin guard below, which applies at EVERY depth
-    // instead of only shallow ones. Left in place but no longer needed:
-    // set csi_hole_patch_threshold to 0, or just leave PATCH_HOLES undefined.
+    // Superseded by the margin guard below, which applies at every depth.
     if (depth <= MCGenerator::csi_hole_patch_threshold) {
         int vN = (depth <= 2) ? 12 : 8;
         for (int ix = 0; ix <= vN && !(minVal<=isolevel && maxVal>=isolevel); ix++)
@@ -925,7 +923,7 @@ bool MCObjNode::checkSurface(SurfaceFunction field,
 
     // ---- still unprovable: refine rather than guess --------------------------
     // The children resample at half the spacing, where the same test becomes
-    // conclusive. This is the branch that used to silently punch a hole.
+    // conclusive.
     MCGenerator::csi_margin_forced++;
     surfacePresent = true;
     return true;

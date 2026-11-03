@@ -69,36 +69,6 @@ uniform float sun_redden;
 #define PI 3.14159265359
 #endif
 
-// VOL_DEBUG (0 = normal output):
-//   1: which path each pixel takes
-//      blue   not a sky pixel (FBOTex2.r>0.5) - left as is
-//      green  sky pixel, but the ray misses the cloud shell
-//      red    ray segment through the shell found (brighter = longer)
-//      yellow tint added where any cloud density was found on the ray
-//   2: height of the eye in the shell: red=below base, green=inside,
-//      blue=above top (whole screen one color)
-//   3: coverage (weather) at the middle of each ray (grey scale)
-//   4: Color tint (RGB at the cloud mid height); magenta if the Color
-//      expression isn't compiled in (no NCC)
-//   5: terrain pixels (drawn in the pass that handles them): terrain
-//      distance in green (brighter = nearer, 0..50 km), red if the ray
-//      reaches the cloud layer before the terrain (clouds can be in front),
-//      blue if the depth gives no valid distance
-//   7: raw density at one point per ray (the middle of its segment through
-//      the layer), no marching or lighting: stripes here come from the
-//      density/noise itself, not from the ray steps
-//   8: as 7 but the Z noise only (0.5+5*Z), without the height profile
-//   9: lighting only: the light (S) at the first cloud sample on each ray,
-//      no accumulation (stripes here: the lighting; none: the march)
-//   6: cloud opacity found along each ray (red = 1-T, before haze),
-//      green = sky haze amount at the first cloud (the old per-ray haze),
-//      blue = the haze actually applied (opacity weighted along the ray);
-//      terrain and sky pixels in the passes that draw them
-//  10: cloud shadow on the ground: terrain pixels show the light that gets
-//      through the clouds (grey scale, white = fully lit, before
-//      VOL_SHADOW_AMP and the night fade), sky pixels black
-#define VOL_DEBUG 0
-
 // Cloud shadows on the ground (terrain, water, rocks, plants: anything drawn
 // before the clouds, as a darkening of the finished pixel)
 // VOL_SHADOW       0 = off (also off when scene shadows are, VOL_GROUND_SHADOWS)
@@ -138,7 +108,7 @@ uniform float sun_redden;
 #define VOL_TOP_MIN 0.35
 #define VOL_TOP_CR  2.0
 // density fades in over the top/base band where the height profile is
-// below this (strong Z no longer gives a hard edge at the profile limit)
+// below this (no hard edge at the profile limit where Z is strong)
 #define VOL_EDGE_SOFT 0.3
 
 // saturation of the sky color used for the ambient (sky) light. The light
@@ -623,25 +593,6 @@ void main(void) {
 	vec4 params=texture2DRect(PARAM_TEX,gl_FragCoord.xy);
 	gl_FragData[1]=params;
 	bool terrain=params.r>0.5;
-#if VOL_DEBUG==2
-	{
-		float re0=length(vol_eye);
-		gl_FragData[0]=re0<vol_rb?vec4(1,0,0,1):(re0<=vol_rt?vec4(0,1,0,1):vec4(0,0,1,1));
-		return;
-	}
-#endif
-#if VOL_DEBUG==10
-#ifndef VOL_POST
-	{
-		float gl=0.0;
-		if(terrain)
-			gl=groundLight(normalize(mix(mix(vol_ray00,vol_ray10,ScreenUV.x),
-			                             mix(vol_ray01,vol_ray11,ScreenUV.x),ScreenUV.y)),params.g);
-		gl_FragData[0]=vec4(gl,gl,gl,1.0);
-		return;
-	}
-#endif
-#endif
 #if VOL_SHADOW && defined(VOL_GROUND_SHADOWS)
 	// land, rocks, plants: here in the main pass, before the effects pass, so
 	// haze and fog go over the shadow. Water and ice are drawn after that
@@ -674,11 +625,7 @@ void main(void) {
 	}
 #elif !defined(VOL_TERRAIN)
 	if(terrain){                 // terrain/water: after the effects pass
-#if VOL_DEBUG==1
-		gl_FragData[0]=vec4(0,0,1,1);
-#else
 		gl_FragData[0]=scene;
-#endif
 		return;
 	}
 #endif
@@ -709,25 +656,12 @@ void main(void) {
 	if(terrain){                       // stop at the terrain
 		float zd=1.0/(vol_ws2*params.g+vol_ws1);   // eye depth (scene units)
 		float tt=(zd/vol_km2scene)/max(dot(dir,vol_fwd),1e-3);
-#if VOL_DEBUG==5
-		{
-			bool ok=(zd>0.0 && tt<1e7);
-			float g=ok?clamp(1.0-tt/50.0,0.0,1.0):0.0;
-			float rr=(ok && to.y>0.0 && max(t0,0.0)<tt && t1>max(t0,0.0))?1.0:0.0;
-			gl_FragData[0]=vec4(rr,g,ok?0.0:1.0,1.0);
-			return;
-		}
-#endif
 		t1=min(t1,tt);
 	}
 	t0=max(t0,0.0);
 	t1=min(t1,t0+vol_far);
 	if(to.y<0.0 || t1<=t0){
-#if VOL_DEBUG==1
-		gl_FragData[0]=vec4(0,1,0,1);
-#else
 		gl_FragData[0]=scene;
-#endif
 		return;
 	}
 	float L=t1-t0;
@@ -744,47 +678,6 @@ void main(void) {
 	float ljit=0.5;
 #endif
 
-#if VOL_DEBUG==4
-	{
-#ifdef VOL_TINT
-#ifdef VOL_DP
-		volPoint(normalize(dvec3(o)+dvec3(dir*(t0+0.5*L)))*0.5LF+0.5LF,vol_wlog);
-#else
-		volPoint(normalize(o+dir*(t0+0.5*L))*0.5+0.5,vol_wlog);
-#endif
-		v1=Vertex1.xyz;
-		Constants1=vec4(0.5/VOL_ZGAIN,0.0,0.0,0.0);
-		RED=1.0;GREEN=1.0;BLUE=1.0;ALPHA=1.0;
-		gl_FragData[0]=vec4(clamp(vec4(NCC).rgb,0.0,1.0),1.0);
-#else
-		gl_FragData[0]=vec4(1.0,0.0,1.0,1.0);
-#endif
-		return;
-	}
-#endif
-#if VOL_DEBUG==7 || VOL_DEBUG==8
-	{
-		float tm=t0+0.5*L;
-		vec3 pm=dir*tm;
-		vec3 cm=column(pm,tm);
-#if VOL_DEBUG==7
-		float dm=cloudDensity(pm,cm,tm,true);
-#elif defined(VOL_NPZ)
-		float dm=clamp(0.5+5.0*zfield(pm,tm,0.0),0.0,1.0);
-#else
-		float dm=0.0;
-#endif
-		gl_FragData[0]=vec4(dm,dm,dm,1.0);
-		return;
-	}
-#endif
-#if VOL_DEBUG==3
-	{
-		float w=column(dir*(t0+0.5*L),t0+0.5*L).x;
-		gl_FragData[0]=vec4(w,w,w,1.0);
-		return;
-	}
-#endif
 
 	// sun disk behind this pixel (sky pixels only)
 	// only near the sun's direction: a bright sky (e.g. near-white haze at
@@ -817,10 +710,6 @@ void main(void) {
 
 	vec3 col=vec3(0.0);
 	float T=1.0;
-	float tfirst=-1.0;
-#if VOL_DEBUG==6
-	float hzsum=0.0;
-#endif
 
 	// what distant cloud fades into (aerial perspective, below). By day that's
 	// the scene pixel; at night the scene has stars in it, so it's clamped to
@@ -869,8 +758,6 @@ void main(void) {
 		prevEmpty=(d<=0.003);
 		if(d<=0.003)
 			continue;
-		if(tfirst<0.0)
-			tfirst=t;
 		vec3 pn=normalize(p);
 		float rp=length(p);
 		float h=clamp((rp-vol_rb-cw.y)/(cw.z-cw.y),0.0,1.0);   // fraction of this cloud's top
@@ -921,33 +808,16 @@ void main(void) {
 #endif
 #endif
 		vec3 S=tint*(sunc*(ms*VOL_SUN_GAIN)+amb)+vol_emission;
-#if VOL_DEBUG==9
-		gl_FragData[0]=vec4(S,1.0);
-		return;
-#endif
 		// distance fade and sky haze (the terrain haze, effects.frag), at this
-		// sample's own distance. Not once per ray at the first cloud: a ray
-		// that only grazes a thin wisp would haze everything behind the wisp
-		// at the wisp's distance, and its neighbor at the far cloud's, which
-		// gave a sharp edge across thin clouds
+		// sample's own distance: a single per-ray distance would make the haze jump
+		// between neighboring pixels across thin clouds
 		float hz=cloudHaze(t*vol_km2scene);
 		S=mix(behind,S,max(exp(-t/vol_haze),VOL_FADE_MIN));
 		S=mix(S,ch_color,hz);
 		float st=exp(-vol_sigma*d*dt);
 		col+=T*S*(1.0-st);
-#if VOL_DEBUG==6
-		hzsum+=T*(1.0-st)*hz;
-#endif
 		T*=st;
 	}
-#if VOL_DEBUG==6
-	gl_FragData[0]=vec4(1.0-T,tfirst>0.0?cloudHaze(tfirst*vol_km2scene):0.0,T<0.999?hzsum/(1.0-T):0.0,1.0);
-	return;
-#endif
-#if VOL_DEBUG==1
-	gl_FragData[0]=vec4(0.3+0.7*clamp(L/vol_far,0.0,1.0),tfirst>0.0?0.8:0.0,0,1);
-	return;
-#endif
 	// sun disk behind the clouds (cloud_haze.h): the disk is HDR bright, so
 	// (cloud opacity 1-T): T^K of the disk, the rest is the sky around it
 	vec3 bg=scene.rgb;

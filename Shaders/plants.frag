@@ -138,8 +138,7 @@ vec3 setLighting(vec3 BaseColor) {
 		lpn=clamp(lpn,0,5.0);
 		diffuse        += Diffuse.rgb*gl_LightSource[i].diffuse.rgb*lpn;
 	}
-	// ambient now modulates the texture (was added as a flat color, which is
-	// why unlit bark rendered as a uniform near-black silhouette)
+	// ambient modulates the texture, so unlit bark keeps its detail
 	vec3 TotalDiffuse = BaseColor*(diffuse*Diffuse.a+Ambient.rgb*Ambient.a);
 	return TotalDiffuse;
 }
@@ -193,9 +192,7 @@ void main(void) {
 #endif  
  
 	// Haze is handled once, downstream, by the deferred effects.frag pass
-	// (same as rocks/terrain) - it used to also be applied here per-fragment,
-	// which both double-applied it and (via color.a=pow(color.a,p)) corrupted
-	// this fragment's blended alpha.
+	// (same as rocks/terrain).
  	gl_FragData[0]=color;
   	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
   	gl_FragData[1]=vec4(4,DEPTH,0,vfog);

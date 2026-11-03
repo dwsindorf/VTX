@@ -53,12 +53,7 @@ uniform float hdr_emin;   // lowest exposure (darkening limit, bright scenes)
 uniform float hdr_emax;   // highest exposure (brightening limit, dark scenes)
 
 //-------------------------------------------------------------
-// Global eye adaptation + tone curve (replaces the old local HDR)
-//
-// The old HDR exposure was LOCAL - computed from each pixel's own 3x3/5x5
-// neighborhood - so a star (a few bright pixels on black) got a huge boost,
-// and once the sky was excluded to stop that, sky and terrain were no longer
-// mapped the same way (visible as a seam wherever haze should blend them).
+// Global eye adaptation + tone curve
 //
 // Human vision adapts to the scene as a whole, so here every pixel gets the
 // SAME exposure, from the log-average brightness of the frame (a fixed

@@ -66,13 +66,8 @@ int scene_rendered=0;
 static double timing_start=0;
 // See Scene::render(): after any real scene-affecting change (move, goto
 // surface, resize, etc.) a single render+swap cycle isn't enough to make
-// the newly swapped frame actually visible - empirically confirmed that
-// resize, toggling "auto time", or clicking in the window (anything that
-// forces a *second* render/swap cycle) always fixes it, while an unused
-// keypress (which triggers no new render cycle at all) never does. This
-// counter forces a couple of extra automatic render/swap passes after any
-// real change, so the fix happens on its own via the normal timer instead
-// of requiring the user to manually force a second render.
+// the newly swapped frame actually visible, so this counter forces a couple
+// of extra automatic render/swap passes after any real change.
 static int render_settle=0;
 
 extern	void rebuild_scene_tree();
@@ -1040,13 +1035,9 @@ void Scene::rebuild_all(){
 	PlacementMgr::free_htable();
 	Renderer::rebuild_all();
 	timing_start=clock();
-	// Every one of the ~50 call sites (per-tab handlers, the "Rebuild All"
-	// menu command, scene-tree actions, etc.) invokes this directly on
-	// TheScene and previously relied on the next 20ms timer tick to notice
-	// changed_detail() and repaint. That's usually fine, but whenever the
-	// canvas is suspended (see VtxSceneDialog::OnTreeMenuSelect) or the
-	// timer is stalled, nothing forces the viewport to catch up until the
-	// user manually clicks in it. Force it here unconditionally instead.
+	// Force a repaint: called directly from ~50 sites, and the next timer tick
+	// doesn't catch up when the canvas is suspended (see
+	// VtxSceneDialog::OnTreeMenuSelect) or the timer is stalled.
 	request_redraw();
 }
 
@@ -2596,13 +2587,8 @@ void Scene::render()
     	// Adapt.more_cycles() is set by Map::adapt() (see MapClass.cpp) when
     	// a terrain/map didn't converge within this frame's cycle budget
     	// (Adapt.maxcycles()) and needs another pass. A single discrete move
-    	// only sets moved() for one frame; if the adapt work is heavy enough
-    	// that one frame's budget isn't enough to finish, moved() used to get
-    	// cleared here regardless, so the next frame's render() saw
-    	// update_needed==false, skipped its whole block, and the partially
-    	// adapted scene just sat there - "adapt cycle ran but nothing
-    	// changed." Keep moved() set for as many frames as more_cycles()
-    	// keeps coming back true, so adapting continues until it converges.
+    	// only sets moved() for one frame, so keep it set for as many frames as
+    	// more_cycles() keeps coming back true, until adapting converges.
     	if(automv() || Adapt.more_cycles())
     		set_moved();
     	else
@@ -2816,9 +2802,8 @@ void Scene::render_shadows()
 //-------------------------------------------------------------
 // Scene::render_skyview() render the reflection sky view
 //
-// Screen-space reflections can only use what is on screen, and a reflected
-// ray that leaves the top of the screen used to fall back to a guess at the
-// sky color. This renders the scene a second time, from the same eye, with
+// Screen-space reflections can only use what is on screen, so this renders
+// the scene a second time, from the same eye, with
 // the view rotated up so that its bottom edge starts at the top edge of the
 // normal view (lens and tilt from EffectsMgr::update_skyview), into a
 // separate FBO (GLSLMgr::beginAuxPass). effects.frag continues rays that

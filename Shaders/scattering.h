@@ -8,21 +8,16 @@
 // (sky.front.frag / sky.back.frag). This is meant to sit ALONGSIDE the
 // existing hand-tuned Halo/Sky/Twilite/Night/Haze color system, not
 // replace it - callers add scatterColor()'s result into their existing
-// procedural color, scaled by Sky::scatter_mix (0 = no visual change from
-// before this was added, since every existing scene has scatter_mix==0;
+// procedural color, scaled by Sky::scatter_mix (0 = no visual change,
 // 1 = full strength). This lets a physically-derived sky be dialed in
 // gradually, or left off entirely, per Sky object.
 //
 // Driven by the Sky object's existing 'pressure' (Sky::pressure, ATM -
 // column density) and 'ghg_fraction' (Sky::ghg_fraction, 0..1) fields -
-// both already exposed on the Sky tab and already used for the surface-
-// temperature calc (Sky::getHeatCalacity()), just not previously
-// connected to how the sky actually renders.
+// both also exposed on the Sky tab and used for the surface-temperature
+// calc (Sky::getHeatCalacity()).
 //
-// COMPOSITION-DRIVEN COLOR: an earlier version of this file used a single
-// fixed Rayleigh-blue color for every planet, so any two atmospheres only
-// differed by how hazy/bright they were, not by hue - every generated sky
-// read as "Earth, more or less foggy." Real non-Earth skies differ in
+// COMPOSITION-DRIVEN COLOR: real non-Earth skies differ in
 // COLOR as much as density: Titan's thick N2/CH4 atmosphere is a deep
 // orange haze from photochemical smog; Venus' thick CO2 atmosphere is a
 // pale yellow-white haze from sulfuric acid clouds; a thin, mostly-clear
@@ -35,9 +30,7 @@
 // this atmosphere is heavy/complex/haze-forming molecules (CO2, CH4,
 // sulfur compounds) vs light simple gases (N2, H2, He)": it drives both
 // how hazy the sky gets AND that haze's own warm tint (HAZE_TINT below,
-// independent of the sun's color - previously the Mie term just took on
-// sunColor, i.e. an undifferentiated glow, not a distinct compositional
-// color). 'pressure' scales the strength of both the clear-gas Rayleigh
+// independent of the sun's color). 'pressure' scales the strength of both the clear-gas Rayleigh
 // term and the haze term, since a thicker atmosphere has more of both
 // kinds of scatterer - a thin CO2 atmosphere (Mars-like) stays mostly
 // clear despite a high ghg_fraction; a thick one (Venus-like) does not.
@@ -151,19 +144,11 @@ float miePhase(float cosTheta, float g){
 // Returns ADDITIVE in-scattered color - callers add scatter_mix*result
 // onto their existing procedural color, they do not replace it outright.
 //
-// TIGHTNESS VS INTENSITY: earlier versions of this function picked its own
-// forward-scattering tightness from composition (ghg_fraction/haze), which
-// meant Halo "Sharpen" (day_grad) controlled how tight the PRE-EXISTING
-// specular/haze glow around the sun was, while this scattering glow had
-// its own separate, uncoordinated tightness - two different dials doing
-// similar jobs. Now 'sharpen' alone drives this function's tightness (g),
-// same input as those other terms, so Sharpen is a single "how tight is
-// everything around the sun" control. That frees 'haze'/composition and
-// scatter_mix to control INTENSITY/COLOR only (that's the interesting
-// part - the composition-tinted color banding) without also fighting to
-// keep the glow from growing in SIZE, since size no longer depends on
-// them - MIE_CAP below was raised accordingly, push scatter_mix/%GHG up
-// for a more intense/colorful effect without it re-inflating the sun.
+// TIGHTNESS VS INTENSITY: 'sharpen' alone drives this function's tightness
+// (g), the same input as the specular/haze glow around the sun, so Sharpen
+// is a single "how tight is everything around the sun" control. 'haze'/
+// composition and scatter_mix control INTENSITY/COLOR only: push
+// scatter_mix/%GHG up for a more intense/colorful effect.
 vec3 scatterColor(float cosTheta, float airmass, float pressure, float haze, float sharpen, float scatterSharpen, vec3 sunColor){
 	vec3  beta_r = BETA_R * (1.0 + 0.3*haze);
 	float tau    = 0.4 * pressure * airmass;

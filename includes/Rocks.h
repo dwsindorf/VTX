@@ -164,8 +164,8 @@ class Rock3DObjMgr : public PlaceObjMgr
     // frame by TerrainMgr::init_render() (Td.properties.free()), so this state
     // cannot live in instance members - it would be destroyed between the move
     // pass that builds it and the render-only pass that draws it. It stays
-    // static, but is keyed by terrain layer id so that layers no longer
-    // overwrite each other's placements and batches.
+    // static, keyed by terrain layer id so that layers don't overwrite each
+    // other's placements and batches.
     struct LayerState {
         ValueList<PlaceData*>        data;
         std::map<int, AdaptiveBatch> adaptiveBatches;

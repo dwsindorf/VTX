@@ -9,8 +9,7 @@
 // white -> yellow -> orange -> red as the sun drops.
 //
 // sunTint() returns only the HUE change, relative to the sun overhead:
-//  - exactly white when the sun is at the zenith, so midday scenes look
-//    the same as before this was added
+// exactly white when the sun is at the zenith
 //  - normalized so its brightest channel is 1; the existing twilight
 //    band (twilite_min/max/dph) still handles the dimming
 //

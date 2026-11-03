@@ -13,15 +13,6 @@
 #include "Sprites.h"
 #include "Plants.h"
 static bool debug_call_lists=false;
-// adapt oscillation debugging (see also debug_adapt_nodes in MapNode.cpp)
-//   debug_adapt: 0 off
-//                1 an oscillation was detected and stopped (adapt_osc)
-//                2 also: stopped with few, unchanged visible nodes (ADAPT_VSTABLE)
-//                3 everything: per Map::adapt call why it ran, each cycle's
-//                  counts and the result
-static int debug_adapt=1;
-int debug_adapt_frame=0;
-
 // adapt limit cycle detection: some maps never converge but repeat the
 // same sequence of node changes (e.g. period 12 with only ~25 visible
 // nodes, below the vmin convergence floor). Each cycle's (size, created,
@@ -1998,9 +1989,6 @@ void Map::make_visbox()
 			pdeleted+=deleted; \
 			if(!converged && (created || deleted) && adapt_osc(size,created,deleted)) { \
 				converged=1; \
-				if(debug_adapt>=1) \
-					cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()<<" cycle:"<<mcount \
-					    <<" oscillating: period "<<osc_period<<" cycles, stopped"<<endl; \
 			} \
 			if(!converged && vnodes<vmin && (created || deleted) && !newfile) { \
 				if(vnodes==vstable_n) { \
@@ -2015,15 +2003,8 @@ void Map::make_visbox()
 				} \
 				if(vstable_cnt>=ADAPT_VSTABLE && vstable_smax-vstable_smin<=ADAPT_VSIZE*size) { \
 					converged=1; \
-					if(debug_adapt>=2) \
-						cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()<<" cycle:"<<mcount \
-						    <<" vnodes:"<<vnodes<<" (<"<<vmin<<") unchanged for "<<vstable_cnt<<" cycles, stopped"<<endl; \
 				} \
 			} \
-			if(debug_adapt>=3) \
-				cout<<"  cycle:"<<mcount<<" created:"<<created<<" deleted:"<<deleted \
-				    <<" size:"<<size<<" vnodes:"<<vnodes<<" dc:"<<(double)created/size \
-				    <<" dd:"<<(double)deleted/size<<" sfact:"<<sfact<<endl; \
 			tcount++; \
 			tcreated+=created; \
 			tdeleted+=deleted; \
@@ -2092,19 +2073,6 @@ void Map::adapt()
 		max_cycles*=2;
 		//cout<<"new file"<<endl;
 	}
-	if(object==TheScene->viewobj)
-		debug_adapt_frame++;
-	if(debug_adapt>=3){
-		cout<<"Map::adapt f:"<<debug_adapt_frame<<" "<<object->name()
-			<<" force:"<<(object->force_adapt()?1:0)
-			<<" always:"<<(Adapt.always()?1:0)
-			<<" need:"<<(need_adapt()?1:0)
-			<<" model:"<<(TheScene->view->changed_model()?1:0)
-			<<" render:"<<(TheScene->changed_render()?1:0)
-			<<" time:"<<(TheScene->changed_time()?1:0)
-			<<" file:"<<(TheScene->changed_file()?1:0)
-			<<" detail:"<<(TheScene->changed_detail()?1:0)<<endl;
-	}
 	if(ADAPT_NEEDED
 			|| TheScene->changed_render()
 	        || object->typeValue()==ID_SKY
@@ -2153,9 +2121,6 @@ void Map::adapt()
 			idtest=true;
 			clr_vchecked();
 		}
-		if(debug_adapt>=3)
-			cout<<"  done "<<object->name()<<" cycles:"<<mcount<<" converged:"<<converged
-				<<" size:"<<size<<" vnodes:"<<vnodes<<endl;
 		if(!converged)
 		    set_need_adapt();
 		else

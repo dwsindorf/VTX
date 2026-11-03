@@ -151,13 +151,9 @@ void main(void) {
     if(lighting){
 		vec4 c=setLighting(color.rgb,normal,bump);
     	color.rgb=c.rgb;
-    	// c.a is phase-correct now (see lighting.frag: it accumulates
-    	// base_albedo*horizon*max(LdotN,0.0) per light, the same LdotN/
-    	// horizon terms that already shape this body's own lit/dark
-    	// hemisphere) instead of the flat albedo constant this used to
-    	// read - so shine-through varies across the disc between the
-    	// sunlit and shadowed sides (crescent effect) instead of being
-    	// uniform.
+    	// c.a is phase-correct (lighting.frag accumulates base_albedo*horizon*
+    	// max(LdotN,0.0) per light), so shine-through varies across the disc between
+    	// the sunlit and shadowed sides (crescent effect).
     	illumination=c.a;
     }
 #endif

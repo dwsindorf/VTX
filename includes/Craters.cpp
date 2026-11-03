@@ -474,12 +474,10 @@ void TNcraters::applyExpr()
 //
 // The id selects the hash buckets, and through hid the crater jitter,
 // radius and noise offsets, so it must be identical in every pass that
-// evaluates this terrain. It used to be derived from TheNoise.rseed at the
-// moment init_render() ran, but init_render() is called both with the
-// object's seed pushed (adapt) and without it (Spheroid::rebuild/init/
-// render_object/select), so the id could flip between a rebuild and the
-// next move. Nodes adapted after the flip got different craters than
-// their neighbours -> spikes and level drops until the next rebuild.
+// evaluates this terrain, or nodes adapted later get different craters than
+// their neighbours (spikes and level drops). init_render() runs both with
+// the object's seed pushed (adapt) and without it (Spheroid::rebuild/init/
+// render_object/select), so the id can't be derived from TheNoise.rseed there.
 // Use the owning object's seed instead (the same value pushSeed() sets),
 // falling back to TheNoise.rseed when there is no owning object (images).
 //-------------------------------------------------------------

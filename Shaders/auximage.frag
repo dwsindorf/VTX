@@ -121,18 +121,12 @@ void main(void) {
 		vec3 H = normalize((light + eye)*0.5);
 		float sdp   = dot(normal,H);
 		// Shine slider (0-100) -> exponent 2..1000: high values give the
-		// narrow glitter column of a low sun. (gl_FrontMaterial.shininess
-		// was whatever the last land layer set - the water Shine slider
-		// never reached this shader.)
+		// narrow glitter column of a low sun.
 		float wshine = mix(water_shine,ice_shine,lerp(type,1.0,2.0,0.0,1.0));
 		float expo   = 2.0+wshine*wshine*0.1;
-		// sharp glint (Shine) + a broad sheen. The sheen restores the old
-		// look where open water gets progressively lighter toward the sun:
-		// originally this shader used gl_FrontMaterial.shininess, which was
-		// left at the land's low shininess, so the whole highlight was a
-		// wide lobe. Now Shine controls the glint, and this fixed low-
-		// exponent lobe supplies the gradient (real water does this too -
-		// wave facets spread the sun's reflection over a wide area).
+		// sharp glint (Shine) + a broad sheen: a fixed low-exponent lobe makes
+		// open water lighter toward the sun (wave facets spread the sun's
+		// reflection over a wide area).
 		const float SHEEN_EXP=8.0;   // width of the sheen (lower = wider)
 		const float SHEEN_AMT=0.35;  // brightness of the sheen vs the glint
 		specular    = pow(max(sdp,0.0), expo) + SHEEN_AMT*pow(max(sdp,0.0), SHEEN_EXP);
@@ -172,12 +166,9 @@ void main(void) {
 	dz=dz<0.0?0.0:dz;
 	float f=fcolor2.r==0?1:lerp(dz,0.0,clarity,0.0,1.0); // f=1 if back surface != land
 	
-	// Water body shading (restored original model): deep water shows the
-	// Transmit color (Color2) as its body color, blended toward the
-	// Reflect color (Color1) and the sky with view angle (fmix/rmod), which
-	// gives the depth/left-right shading. The "transparency only filters,
-	// opaque water shows only reflection" variant was tried and removed:
-	// it flattened open water to a uniform reflection color.
+	// Water body shading: deep water shows the Transmit color (Color2) as its
+	// body color, blended toward the Reflect color (Color1) and the sky with
+	// view angle (fmix/rmod), which gives the depth/left-right shading.
 	vec3 TopColor=Diffuse*Color1.rgb+Ambient*Color1.rgb;
 	
 #ifdef SKY
@@ -222,7 +213,7 @@ void main(void) {
 	gl_FragData[0].a=1;
 	// type falls below 1 near the shore (land vertices of a water triangle are
 	// ocean=0, interpolated across it), and effects.frag takes TYPE<=0.6 for
-	// sky: those pixels got no haze, fog or reflection (dark shoreline spots)
+	// sky, so keep every water pixel at 1 or above
 	gl_FragData[1] = vec4(max(type,1.0),depth,reflect1,vfog);
 
 #ifdef RAYTRACE
@@ -256,7 +247,7 @@ void main(void) {
 		// and |cross|^2 ~ 1e-40 is below FLT_MIN (denormals flush to 0 on the
 		// GPU). normalize(0) = NaN -> NaN ray end point in FBOTex4 -> every
 		// sample clamps to the top-right pixel and the trace 'hits' whatever
-		// is there. That gave the hard edge at a fixed eye depth (~300 ft).
+		// is there.
 		vec3 N   = normalize(cross(normalize(dFdx(Pc)),normalize(dFdy(Pc))));
 		if(dot(N,V)>0.0)
 			N=-N;

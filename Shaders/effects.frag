@@ -10,7 +10,7 @@ uniform sampler2DRect FBOTex4;
 
 uniform vec4 Haze;
 uniform float haze_grad;
-uniform float haze_zfar;	// no longer used by the HAZE block below (see it for why) - left declared in case anything else still binds it
+uniform float haze_zfar;	// not used by the HAZE block below - declared in case anything else still binds it
 uniform float haze_min;
 uniform float haze_max;
 uniform float haze_ampl;
@@ -98,19 +98,6 @@ float hazeAmount(float depth){
 #define SSR_HZ_STEPS   32     // horizon water (no ray): steps up to the sky
 #define SSR_HZ_STRIDE  2.0    // pixels per step
 
-// SSR_DEBUG (water pixels only; 0 = normal output):
-//   1: color = which branch produced the reflection
-//      red     land hit on screen           yellow  land hit in sky view
-//      green   last sky passed on screen    blue    sky at R's end point, sky view
-//      cyan    end point on screen (sky/far water)  ltblue  sky view occlusion search
-//      white   occlusion side search (screen)       navy    last sky passed, sky view
-//      orange  top-edge sky search          magenta skyFallback (WaterSky)
-//      gray    dlen<1 (no ray)
-//      half brightness: traceSky was called and returned false
-//   2: color = raw traced reflection color (no Fresnel, haze or body color)
-#define SSR_DEBUG 0
-int ssrPath=0;
-bool ssrSkyFail=false;
 
 // window depth -> eye distance (for the relative tolerance tests)
 float ssrLin(float zw){
@@ -282,7 +269,6 @@ bool traceSky(out vec3 color, out float zhit, out float hamb){
 			}
 			else{                      // sky at the vanishing point, or far water
 				color=skyFetch(pe,zhit,hamb);
-				ssrPath=11;
 				return true;
 			}
 		}
@@ -294,7 +280,6 @@ bool traceSky(out vec3 color, out float zhit, out float hamb){
 					float zq=skyDepth(q,type);
 					if(type<0.5 || zq*(1.0+SSR_THICK)>=zprev){
 						color=skyFetch(q,zhit,hamb);
-						ssrPath=12;
 						return true;
 					}
 				}
@@ -304,7 +289,6 @@ bool traceSky(out vec3 color, out float zhit, out float hamb){
 	if(!hit){
 		if(sawSky){
 			color=lastSky;
-			ssrPath=13;
 			return true;
 		}
 		return false;
@@ -322,7 +306,6 @@ bool traceSky(out vec3 color, out float zhit, out float hamb){
 			ua=um;
 	}
 	color=skyFetch(ssrPix(sa+d*ub,lo,hi),zhit,hamb);
-	ssrPath=14;
 	return true;
 }
 #endif // SKYVIEW
@@ -346,7 +329,6 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 		// horizon, so use the nearest sky pixel above. The lit WaterSky
 		// fallback differs a lot from the rendered sky (a sharp cyan band
 		// along the horizon without haze)
-		ssrPath=9;
 		vec2 lo0=vec2(0.5);
 		vec2 hi0=vsize-0.5;
 		for(int k=1;k<=SSR_HZ_STEPS;k++){
@@ -428,7 +410,6 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 				t=1.0;
 			}
 			else if(type>0.5){
-				ssrPath=2;
 				return ssrFetch(pe,zhit,hamb);
 			}
 		}
@@ -439,7 +420,6 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 					vec2 q=ssrPix(s1+side*(float(sgn*k)*SSR_OCC_STRIDE),lo,hi);
 					float zq=ssrDepth(q,type);
 					if(type<0.5 || zq*(1.0+SSR_THICK)>=zprev){
-						ssrPath=3;
 						return ssrFetch(q,zhit,hamb);          // sky, or a surface behind the ray
 					}
 				}
@@ -456,7 +436,6 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 			vec3 scolor;
 			if(traceSky(scolor,zhit,hamb))
 				return scolor;
-			ssrSkyFail=true;
 			zhit=-1.0;
 			hamb=1.0;
 		}
@@ -467,7 +446,6 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 		// differs a lot from the real sky, so blending toward it made large
 		// areas of water jump between the two as the view moved).
 		if(sawSky){
-			ssrPath=5;
 			return lastSky;
 		}
 		// nothing but land/plants along the way: look for sky along the top
@@ -479,12 +457,10 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 				float type;
 				ssrDepth(q,type);
 				if(type<0.5){
-					ssrPath=6;
 					return texture2DRect(FBOTex1,q).rgb;
 				}
 			}
 		}
-		ssrPath=7;
 		return skyFallback;
 	}
 
@@ -501,28 +477,9 @@ vec3 traceReflection(float zw0, out float zhit, out float hamb){
 		else
 			ta=tm;
 	}
-	ssrPath=1;
 	return ssrFetch(ssrPix(s0+d*tb,lo,hi),zhit,hamb);
 }
 
-#if SSR_DEBUG==1
-vec3 ssrPathColor(){
-	vec3 c=vec3(0.5);                                // 9: no ray
-	if(ssrPath==1)       c=vec3(1.0,0.0,0.0);
-	else if(ssrPath==2)  c=vec3(0.0,1.0,1.0);
-	else if(ssrPath==3)  c=vec3(1.0,1.0,1.0);
-	else if(ssrPath==5)  c=vec3(0.0,1.0,0.0);
-	else if(ssrPath==6)  c=vec3(1.0,0.5,0.0);
-	else if(ssrPath==7)  c=vec3(1.0,0.0,1.0);
-	else if(ssrPath==11) c=vec3(0.0,0.0,1.0);
-	else if(ssrPath==12) c=vec3(0.5,0.7,1.0);
-	else if(ssrPath==13) c=vec3(0.0,0.0,0.4);
-	else if(ssrPath==14) c=vec3(1.0,1.0,0.0);
-	if(ssrSkyFail)
-		c*=0.5;
-	return c;
-}
-#endif
 #endif
 
 void main(void) {
@@ -532,12 +489,6 @@ void main(void) {
 	float h,d,q=0,v=0;
 #ifdef SHADOW_TEST
 	gl_FragData[0]=texture2DRect(SHADOWTEX, gl_FragCoord.xy);
-	return;
-#endif
-//#define SKYVIEW_TEST // show the sky view image instead of the scene
-#if defined(SKYVIEW) && defined(SKYVIEW_TEST)
-	gl_FragData[0]=vec4(texture2DRect(FBOTex6, gl_FragCoord.xy).rgb,1.0);
-	gl_FragData[1]=fcolor2;
 	return;
 #endif
 	if(TYPE>0.6) { // TYPE=0 for sky or background
@@ -567,15 +518,6 @@ void main(void) {
 #ifdef RAYTRACE
 			float zhit,hamb;
 			rcolor=traceReflection(z,zhit,hamb);
-#if SSR_DEBUG==1
-			gl_FragData[0]=vec4(ssrPathColor(),1.0);
-			gl_FragData[1]=fcolor2;
-			return;
-#elif SSR_DEBUG==2
-			gl_FragData[0]=vec4(rcolor,1.0);
-			gl_FragData[1]=fcolor2;
-			return;
-#endif
 #ifdef HAZE
 			// The reflected image is pre-haze, and this pixel is hazed below only
 			// for the eye->water distance. Give a reflected surface the same total

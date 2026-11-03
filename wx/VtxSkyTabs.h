@@ -280,13 +280,9 @@ public:
     }
 
 	// Near/far reference distance band for the CPU-side depth haze
-	// (RasterMgr::applyFog() in Raster.cpp - Sky::haze_min/haze_max,
-	// already-existing scene fields that previously had no slider of
-	// their own). The POW case there ramps haze from ~0 at Min to
-	// ~full (rate set by the Grad slider above) by Max, instead of
-	// against haze_zfar (a horizon-distance estimate that stays many
-	// miles wide regardless of camera altitude, and so couldn't show
-	// any depth gradient in close-to-surface views). Feet, same
+	// (RasterMgr::applyFog() in Raster.cpp - Sky::haze_min/haze_max).
+	// The POW case there ramps haze from ~0 at Min to ~full (rate set by the
+	// Grad slider above) by Max. Feet, same
 	// Min + Depth-beyond-Min convention (not an absolute Max, so the
 	// UI can't drag Max below Min) as the Fog tab's Min/Depth sliders.
 	// This only feeds the raster post-process (not geometry), so

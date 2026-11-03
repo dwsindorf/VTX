@@ -10,15 +10,9 @@
 #include "Perlin.h"
 #include "Sprites.h"
 #include "Plants.h"
-#include <unordered_map>
 
 extern double Theta, Phi, Height,Rscale,Gscale,Hscale,Margin,Sfact,Temp,Hardness,Slope;
 extern Point MapPt;
-// adapt oscillation debugging: set debug_adapt_nodes=true to print every
-// split/combine with the values set_tests() decided it from
-bool debug_adapt_nodes=false;
-struct AdaptDbg { float ext,max,min; };
-static std::unordered_map<MapNode*,AdaptDbg> adapt_dbg;
 static Point dp_pivot; // NOISE_DP: pivot of the current fan/triangle (see setVertexAttributes)
 
 int bounds_valid=0;
@@ -523,7 +517,6 @@ void MapNode::adapt()
 
 	if(!link){
 		if(stest()){
-			adapt_debug(cdata?"split":"center");
 			link=split();
 		}
 		return;
@@ -572,7 +565,6 @@ void MapNode::adapt()
 		tmpctr=mdctr; \
 		tmprc=rccnt; \
 		tmpdc=mdcnt; \
-		x->adapt_debug(x->cdata?"force-split":"force-center"); \
 		x->split(); \
 		for(i=0;i<tmprc;i++) \
 			mapdata[i]=tmpmd[i]; \
@@ -939,27 +931,6 @@ static void Maxa(MapNode *n)
 }
 
 //-------------------------------------------------------------
-// MapNode::adapt_debug() print a split/combine (debug_adapt_nodes)
-//   frame: Map::adapt calls, cyc: adapt cycle, lvl/t/p: node key
-//   ext: cell extent (pixels), split if ext>max, combine if ext<min
-//   flags: v visible, i invisible, pv partvis, h hidden, m masked
-//-------------------------------------------------------------
-extern int debug_adapt_frame;
-void MapNode::adapt_debug(const char *what){
-	if(!debug_adapt_nodes || !TheMap)
-		return;
-	cout<<"f:"<<debug_adapt_frame<<" "<<TheMap->object->name()<<" "<<what
-		<<" cyc:"<<TheMap->mcount<<" lvl:"<<alvl()
-		<<" t:"<<data.ltheta()<<" p:"<<data.lphi();
-	std::unordered_map<MapNode*,AdaptDbg>::iterator it=adapt_dbg.find(this);
-	if(it!=adapt_dbg.end())
-		cout<<" ext:"<<it->second.ext<<" max:"<<it->second.max<<" min:"<<it->second.min;
-	cout<<" tlvl:"<<tlevel()
-		<<(visible()?" v":"")<<(invisible()?" i":"")<<(partvis()?" pv":"")
-		<<(hidden()?" h":"")<<(masked()?" m":"")<<endl;
-}
-
-//-------------------------------------------------------------
 // MapNode::set_tests()	set split/combine flags in adapt
 //-------------------------------------------------------------
 void MapNode::set_tests()
@@ -1068,10 +1039,6 @@ void MapNode::set_tests()
 	//else if(ext < min  && size<TheMap->smin)
 	else if(ext < min)
 		set_combine();
-	if(debug_adapt_nodes){
-		AdaptDbg d={(float)ext,(float)max,(float)min};
-		adapt_dbg[this]=d;
-	}
 
 }
 

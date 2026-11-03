@@ -195,10 +195,8 @@ void VtxSystemTabs::AddViewTab(wxWindow *panel){
 
 void VtxSystemTabs::OnViewObj(wxCommandEvent& event){
 	// Default "Set View" for a system is the overhead (Top) view.
-	// The old path (focusobj=viewobj + change_view(ORBITAL)) went through
-	// Scene::change_view()'s move_focus branch when already in ORBITAL view,
-	// which is a no-op for a System, so init_view() never ran and the camera
-	// was left wherever it was (nothing visible).
+	// change_view(ORBITAL) is a no-op for a System when already in ORBITAL view,
+	// so init_view() wouldn't run.
 	OnOverheadView(event);
 	menu_action=TABS_VIEWOBJ;
 }

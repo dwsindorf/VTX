@@ -136,26 +136,10 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	}
 	vec3 TotalEmission = emission.rgb * BaseColor;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
-	// the Shadow color is the color of the light in shadow. (This multiplied
-	// the shadow color by shadow_diffuse too, so it faded out as the shadow
-	// got darker: no color at all at intensity 1.) Same result for black.
+	// the Shadow color is the color of the light in shadow
 	vec3 TotalDiffuse = (diffuse.rgb*shadow_diffuse*shadow_diffuse+Shadow.rgb*(1.0-shadow_diffuse)) * BaseColor*Diffuse.a*glow;
 	vec3 TotalSpecular = specular.rgb;
 
-#ifdef LIGHT_NAN_TEST
-	// debug: NaN or infinite terms show as a color (red diffuse, green
-	// specular, blue ambient/emission, magenta the light intensity)
-	{
-		float li=1.0/gl_LightSource[0].constantAttenuation;
-		if(isnan(li) || isinf(li))
-			return vec4(1.0,0.0,1.0,1.0);
-		vec3 bad=vec3(any(isnan(TotalDiffuse))||any(isinf(TotalDiffuse))?1.0:0.0,
-		              any(isnan(TotalSpecular))||any(isinf(TotalSpecular))?1.0:0.0,
-		              any(isnan(TotalAmbient+TotalEmission))||any(isinf(TotalAmbient+TotalEmission))?1.0:0.0);
-		if(bad!=vec3(0.0))
-			return vec4(bad,1.0);
-	}
-#endif
 	return vec4(TotalAmbient +TotalEmission + TotalDiffuse + TotalSpecular,illumination);
 
 }

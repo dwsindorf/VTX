@@ -176,7 +176,6 @@ void MapLink::adapt()
 	else if(last){
 		TheMap->current=last;
 		if (last->stest()){
-			last->adapt_debug(last->cdata?"split":"center");
 			if(last->cdata)
 				lwr=last->split();
 			else
@@ -191,7 +190,6 @@ void MapLink::adapt()
 		if(!last->ctest())
 			return;
 		if(last->cdata){
-			last->adapt_debug("del-center");
 			last->clr_nflags();
 			delete last->cdata;
 			last->cdata=0;
@@ -206,7 +204,6 @@ void MapLink::adapt()
 			return;
 		if(ctr && !ctr->ctest())
 			return;
-		last->adapt_debug("combine");
 		combine();
 		last->bounds.reset();
 		last->dec_alevel();
