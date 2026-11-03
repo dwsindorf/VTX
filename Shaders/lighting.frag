@@ -134,10 +134,12 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 			specular       += gl_LightSource[i].specular.rgb * sunCoreTint(tint) * pf*shadow_specular*albedo;
         }
 	}
-	diffuse.rgb=mix(diffuse.rgb,Shadow.rgb,1.0-shadow_diffuse);
 	vec3 TotalEmission = emission.rgb * BaseColor;
 	vec3 TotalAmbient = ambient.rgb * BaseColor;
-	vec3 TotalDiffuse = diffuse.rgb * BaseColor*Diffuse.a*shadow_diffuse*glow;
+	// the Shadow color is the color of the light in shadow. (This multiplied
+	// the shadow color by shadow_diffuse too, so it faded out as the shadow
+	// got darker: no color at all at intensity 1.) Same result for black.
+	vec3 TotalDiffuse = (diffuse.rgb*shadow_diffuse*shadow_diffuse+Shadow.rgb*(1.0-shadow_diffuse)) * BaseColor*Diffuse.a*glow;
 	vec3 TotalSpecular = specular.rgb;
 
 #ifdef LIGHT_NAN_TEST

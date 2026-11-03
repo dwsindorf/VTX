@@ -94,7 +94,23 @@ uniform float sun_redden;
 //      green = sky haze amount at the first cloud (the old per-ray haze),
 //      blue = the haze actually applied (opacity weighted along the ray);
 //      terrain and sky pixels in the passes that draw them
+//  10: cloud shadow on the ground: terrain pixels show the light that gets
+//      through the clouds (grey scale, white = fully lit, before
+//      VOL_SHADOW_AMP and the night fade), sky pixels black
 #define VOL_DEBUG 0
+
+// Cloud shadows on the ground (terrain, water, rocks, plants: anything drawn
+// before the clouds, as a darkening of the finished pixel)
+// VOL_SHADOW       0 = off (also off when scene shadows are, VOL_GROUND_SHADOWS)
+// VOL_SHADOW_AMP   scales the planet's or moon's Shadow intensity (color from
+//                  its Lighting tab, vol_shadow)
+// VOL_SHADOW_STEPS samples along the ray to the sun, each with its own cloud
+//                  column (the main cost)
+// VOL_SHADOW_MAX   longest ray through the layer (km), for a low sun
+#define VOL_SHADOW 1
+#define VOL_SHADOW_AMP 1.0
+#define VOL_SHADOW_STEPS 4
+#define VOL_SHADOW_MAX 40.0
 
 // Point Z value that gives full coverage is 1/VOL_ZGAIN
 #define VOL_ZGAIN 10.0
@@ -290,6 +306,7 @@ uniform int   vol_steps;         // view ray steps
 uniform float vol_seed;          // noise offset (per layer)
 uniform float vol_wlog;          // noise LOD: log2(0.25*wscale) (km)
 uniform float vol_km2scene;      // scene units per km (for the sky haze)
+uniform vec4  vol_shadow;        // the planet's or moon's Shadow color, intensity
 
 
 // ---------------- noise ----------------
@@ -569,6 +586,38 @@ vec3 skyAroundSun(vec3 c){
 
 
 
+// light getting through the clouds to the terrain pixel at window depth z
+// along view ray dir (1 = all of it). The ray to the sun can cross many
+// clouds, so each sample gets its own column (a cloud's own light march can
+// use one)
+float groundLight(vec3 dir, float z){
+	float zd=1.0/(vol_ws2*z+vol_ws1);                   // eye depth (scene units)
+	if(zd<=0.0)
+		return 1.0;
+	float tt=(zd/vol_km2scene)/max(dot(dir,vol_fwd),1e-3); // distance (km)
+	if(tt>=1e7)
+		return 1.0;
+	vec3 q=dir*tt;
+	vec3 p=vol_eye+q;
+	float r=length(p);
+	if(r>=vol_rt)                                       // above all the clouds
+		return 1.0;
+	float rl=vol_rg+vol_hts.y;                          // lowest cloud base
+	float ta=r<rl?sphere(p,vol_sun,rl).y:0.0;
+	float tb=sphere(p,vol_sun,vol_rt).y;
+	if(tb<=ta)
+		return 1.0;
+	float len=min(tb-ta,VOL_SHADOW_MAX);
+	float ds=len/float(VOL_SHADOW_STEPS);
+	float od=0.0;
+	for(int k=0;k<VOL_SHADOW_STEPS;k++){
+		vec3 qs=q+vol_sun*(ta+(float(k)+0.5)*ds);
+		float dist=length(qs);
+		od+=cloudDensity(qs,column(qs,dist),dist,false)*ds;
+	}
+	return exp(-vol_sigma*od);
+}
+
 void main(void) {
 	vec4 scene=texture2DRect(SCENE_TEX,gl_FragCoord.xy);
 	vec4 params=texture2DRect(PARAM_TEX,gl_FragCoord.xy);
@@ -579,6 +628,43 @@ void main(void) {
 		float re0=length(vol_eye);
 		gl_FragData[0]=re0<vol_rb?vec4(1,0,0,1):(re0<=vol_rt?vec4(0,1,0,1):vec4(0,0,1,1));
 		return;
+	}
+#endif
+#if VOL_DEBUG==10
+#ifndef VOL_POST
+	{
+		float gl=0.0;
+		if(terrain)
+			gl=groundLight(normalize(mix(mix(vol_ray00,vol_ray10,ScreenUV.x),
+			                             mix(vol_ray01,vol_ray11,ScreenUV.x),ScreenUV.y)),params.g);
+		gl_FragData[0]=vec4(gl,gl,gl,1.0);
+		return;
+	}
+#endif
+#endif
+#if VOL_SHADOW && defined(VOL_GROUND_SHADOWS)
+	// land, rocks, plants: here in the main pass, before the effects pass, so
+	// haze and fog go over the shadow. Water and ice are drawn after that
+	// pass (auximage.frag), over the shadow on the bottom, so they get theirs
+	// in the post pass, on the hazed image: less the haze at that distance
+#ifdef VOL_POST
+	bool shadowed=terrain && params.r<2.1;
+#else
+	bool shadowed=terrain;
+#endif
+	if(shadowed){
+		vec3 sdir=normalize(mix(mix(vol_ray00,vol_ray10,ScreenUV.x),
+		                        mix(vol_ray01,vol_ray11,ScreenUV.x),ScreenUV.y));
+		float sz=params.g;
+		float szd=1.0/(vol_ws2*sz+vol_ws1);                  // eye depth (scene units)
+		float seyed=szd/vol_km2scene;
+		vec3 sn=normalize(vol_eye+sdir*seyed/max(dot(sdir,vol_fwd),1e-3));
+		float samt=VOL_SHADOW_AMP*vol_shadow.a*smoothstep(-0.08,0.12,dot(sn,vol_sun));   // none at night
+#ifdef VOL_POST
+		samt*=1.0-cloudHaze(szd);
+#endif
+		if(samt>0.0)
+			scene.rgb*=mix(vec3(1.0),vol_shadow.rgb,samt*(1.0-groundLight(sdir,sz)));
 	}
 #endif
 #if defined(VOL_POST)

@@ -106,7 +106,7 @@ void main() {
 #ifdef PLANET_SHADOWS
      lit*=planetShadow(-EyeDirection);
 #endif
-     color.rgb=mix(color.rgb,Shadow.rgb,(1.0-lit)*Shadow.a);
+     color.rgb*=mix(vec3(1.0),Shadow.rgb,(1.0-lit)*Shadow.a);  // tint, keeps the texture
 #endif  
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
    // color.rgb=vec3(Tangent.z,0,0);

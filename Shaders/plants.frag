@@ -189,7 +189,7 @@ void main(void) {
 #ifdef PLANET_SHADOWS
      lit*=planetShadow(plantEyePos());
 #endif
-     color.rgb=mix(color.rgb,Shadow.rgb,(1.0-lit)*Shadow.a);
+     color.rgb*=mix(vec3(1.0),Shadow.rgb,(1.0-lit)*Shadow.a);  // tint, keeps the texture
 #endif  
  
 	// Haze is handled once, downstream, by the deferred effects.frag pass

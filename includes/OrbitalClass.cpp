@@ -10571,6 +10571,9 @@ bool CloudLayer::setProgram(){
 	sprintf(defs,"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),Lights.size);
 	if(inside())
 		sprintf(defs+strlen(defs),"#define BACK\n");
+	// cloud shadows on the ground follow the scene's Shadows setting
+	if(vol && Raster.shadows() && !TheScene->light_view() && !TheScene->test_view())
+		sprintf(defs+strlen(defs),"#define VOL_GROUND_SHADOWS\n");
 	if(vol && vol_pass==VOL_ALL)
 		sprintf(defs+strlen(defs),"#define VOL_TERRAIN\n");
 	else if(vol && vol_pass==VOL_POST)
@@ -10692,6 +10695,12 @@ bool CloudLayer::setProgram(){
 		vars.newFloatVar("ch_max",Raster.haze_max);
 		vars.newFloatVar("ch_grad",Raster.haze_grad);
 		vars.newFloatVar("ch_ampl",ha);
+	}
+	if(vol){
+		// cloud shadows on the ground: the planet's or moon's Shadow settings
+		Spheroid *ps=(Spheroid*)parent;
+		Color sc=ps->shadow_color;
+		vars.newFloatVec("vol_shadow",sc.red(),sc.green(),sc.blue(),ps->shadow_intensity);
 	}
 	set_wscale();
 	if(vol){
