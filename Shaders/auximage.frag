@@ -220,7 +220,10 @@ void main(void) {
 	
 	float vfog=DENSITY*lerp(HT,fog_vmin,fog_vmax,1,0);
 	gl_FragData[0].a=1;
-	gl_FragData[1] = vec4(type,depth,reflect1,vfog);
+	// type falls below 1 near the shore (land vertices of a water triangle are
+	// ocean=0, interpolated across it), and effects.frag takes TYPE<=0.6 for
+	// sky: those pixels got no haze, fog or reflection (dark shoreline spots)
+	gl_FragData[1] = vec4(max(type,1.0),depth,reflect1,vfog);
 
 #ifdef RAYTRACE
 	// Screen-space reflection ray setup, consumed by effects.frag.
