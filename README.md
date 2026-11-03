@@ -1,68 +1,67 @@
 # VTX
-<h3>A procedural universe generation program</h3>
 
-VTX stands for "Virtual Terrain EXplorer"
+**Virtual Terrain Explorer: a procedural universe generator and renderer.**
 
-The program is designed to generate an artificial Universe containing galaxies, Stars, Planets, Moons etc.
-with an arbitrary level of detail using primarily procedural techniques.
+VTX generates a universe of galaxies, star systems, planets and moons, then lets you fly from deep space down to a planet's surface. Scenes are built almost entirely from procedural techniques, so detail keeps increasing as you get closer.
 
-The VTX project is based on WxWidgets for the UI, OpenGL for the graphics and C++ for the programming language.
-It was designed to be cross-platform and able to build and run on Windows, Linux and (presumably)
-Apple operating systems (although a port to the Mac has not been tested)
+![Volumetric clouds over a rocky lake](Images/volumetric-clouds-lake.jpg)
 
-The program utilizes a custom text-based description language that allows user generated scenes to be 
-created and modified via a standard text editor or by using the extensive graphical editing 
-interface available in the application
+| | |
+|:---:|:---:|
+| ![A ringed planet rising over a moon's surface](Images/ringed-planet-rise.jpg) | ![A shoreline with rocks and plants](Images/rocky-shoreline.jpg) |
+| ![Spiral galaxy](Images/spiral.jpg) | ![Pine forest with rocks](Images/pines-rocks.jpg) |
 
-Some screenshots of previously generated scenes are available in the Images sub-directory
+More screenshots are in the [Images](Images) directory.
 
-<h2>Getting Started</h2>
-<h3>System Requirements</h3>
-<ol>
-<li>Desktop or laptop computer</li>
-  <ul>
-    <li>memory: 8GB+</li>
-    <li>graphics card: NVIDIA 980(m) or better (note: built in Intel graphics processor will not work)</li>
-  </ul>
-<li>Operating Sytem (tested)</li>
-  <ul>
-    <li>Windows 10 or 11 </li>
-    <li>Ubuntu 18.04</li>
-   </ul>
-<li>Other Software</li>
-  <ul>
-    <li>Gitbash terminal</li>
-  </ul>
-</ol>
-<h3>Running the program(using the files in this repository</h3>
-<ol>
-  <li>Executing VTX</li>
-    <ul>
-      <li>Open a Gitbash shell</li>
-      <li>clone this repository into a computer directory of your choice (e.g. git clone https://github.com/dwsindorf/VTX)
-      <li>"cd" to the "binaries" directory of this project</li>
-      <li>launch the program</li>
-      <ul>
-        <li>Windows: ./vtx</li>
-        <li>Linux: ./vtx-linux</li>
-      </ul>
-      <li>if successful you should see the following program startup window</li>
-      <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/VTX-Startup-window.jpg">
-   </ul>
-  <li>Navigating to a new Random Star system</li>
-  <ul>
-    <li>Select a star in the star field and Press the "goto orbit" button in the menu bar</li>
-    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/select-star-and-go-to-orbit.jpg">
-    <li>open the Scene tree dialog window</li>
-    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/new-star-system-view.jpg">
-    <li>Select a system object to view</li>
-    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/scenetree-dialog-set-view.jpg">
-    <li>View/edit selected object</li>
-    <img src="https://github.com/dwsindorf/VTX/blob/master/Resources/Screenshots/new-random-gas-giant.png">
-    <li>This procedure can be repeated again if desired by selecting a new star from the generated system ..</li>
-  </ul>
-  </ul>
- </ol>
+## Features
 
+- **Objects:** galaxies, stars, planets, moons, rings and asteroids
+- **Terrain:** multiple layers, craters, erosion, oceans and snow
+- **Surface detail:** 3D rocks, plants and sprites
+- **Atmosphere:** sky, haze, fog, and 2D, 3D and ray-marched volumetric clouds
+- **Lighting:** shadows, eclipses, water reflections and HDR
+- **Scene editing:** a graphical editor, or a text-based scene language you can edit by hand
 
+VTX is written in C++ using OpenGL and GLSL for graphics and wxWidgets for the UI.
 
+## Getting started
+
+### Requirements
+
+- Memory: 8 GB or more
+- Graphics: NVIDIA GTX 980 or better (Intel integrated graphics will not work)
+- Operating system: tested on Windows 10 and 11, and Ubuntu 18.04
+- [Git Bash](https://git-scm.com/downloads) on Windows
+
+### Run VTX
+
+```sh
+git clone https://github.com/dwsindorf/VTX
+cd VTX/binaries
+./vtx          # Windows
+./vtx-linux    # Linux
+```
+
+You should see the startup window:
+
+![VTX startup window](Resources/Screenshots/VTX-Startup-window.jpg)
+
+### Visit a new star system
+
+1. Select a star in the star field and press **Go to Orbit** in the toolbar.
+
+   ![Selecting a star](Resources/Screenshots/select-star-and-go-to-orbit.jpg)
+
+2. Open the Scene Tree dialog.
+
+   ![A new star system](Resources/Screenshots/new-star-system-view.jpg)
+
+3. Select an object in the system to view it.
+
+   ![Setting the view in the Scene Tree dialog](Resources/Screenshots/scenetree-dialog-set-view.jpg)
+
+4. View or edit the selected object.
+
+   ![A randomly generated gas giant](Resources/Screenshots/new-random-gas-giant.png)
+
+You can repeat this from any star in the new system.
