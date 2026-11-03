@@ -255,6 +255,7 @@ bool SpriteObjMgr::setProgram(){
     bool do_shadows=Raster.shadows() && (Raster.twilight() || Raster.night());
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()))
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
+	analyticShadowDefs((Spheroid*)TheScene->viewobj,defs);
 
 	GLSLMgr::setDefString(defs);
 	
@@ -274,6 +275,7 @@ bool SpriteObjMgr::setProgram(){
 	GLSLVarMgr vars;
 	
 	Planetoid *orb=(Planetoid*)TheScene->viewobj;
+	analyticShadowVars(orb,vars);
 	Color diffuse=orb->diffuse;
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;

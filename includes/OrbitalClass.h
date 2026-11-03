@@ -995,5 +995,9 @@ public:
     static Ring *newInstance();
 };
 
+// analytic shadows (ring, eclipses), planet_shadows.h: defines before
+// GLSLMgr::setDefString(), uniforms after the program is loaded
+void analyticShadowDefs(Spheroid *s, char *defs);
+void analyticShadowVars(Spheroid *s, GLSLVarMgr &vars);
 
 #endif

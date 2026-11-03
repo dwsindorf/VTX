@@ -25,6 +25,7 @@ uniform float ROWS;
 
 uniform vec4 Diffuse;
 uniform vec4 Shadow;
+#include "planet_shadows.h"
 uniform vec4 Haze;
 uniform float haze_zfar;
 uniform float haze_ampl;
@@ -86,10 +87,15 @@ void main(void) {
   	color=texture2D(samplers2d[i],l_uv);
  	color.rgb=setLighting(color.rgb);
  	//color.rgb=mix(color.rgb,Haze.rgb,gl_FragCoord.z);
+#if defined(SHADOWS) || defined(PLANET_SHADOWS)
+     float lit=1.0;
 #ifdef SHADOWS
-    float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-    float a=shadow*Shadow.a;
-    color.rgb=mix(color.rgb,color.rgb,Shadow.rgb,shadow*Shadow.a);
+     lit=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+#endif
+#ifdef PLANET_SHADOWS
+     lit*=planetShadow(-EyeDirection.xyz);
+#endif
+     color.rgb=mix(color.rgb,Shadow.rgb,(1.0-lit)*Shadow.a);
 #endif  
     //float depth=gl_FragCoord.z;
 

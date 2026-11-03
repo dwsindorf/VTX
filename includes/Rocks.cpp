@@ -467,6 +467,7 @@ bool Rock3DObjMgr::setProgram() {
  	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view())
  		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 
+    analyticShadowDefs((Spheroid*)TheScene->viewobj,defs);
     GLSLMgr::setDefString(defs);
     maxTexs=0;
     if(Render.textures()){
@@ -502,6 +503,7 @@ bool Rock3DObjMgr::setProgram() {
     Color ambient = orb->ambient;
 	Color shadow=orb->shadow_color;
 	Color haze=Raster.haze_color;
+	analyticShadowVars(orb,vars);
 	
     Point xp=orb->point;
     vars.newFloatVec("Diffuse", diffuse.red(), diffuse.green(), diffuse.blue(), diffuse.alpha());

@@ -15,45 +15,7 @@ uniform float sun_redden;  // Sky::redden   - 0 = off
 #define LMODE 0
 #endif
 
-#ifdef RING_SHADOW
-// ---- the planet's ring shadow (analytic, OrbitalClass analytic_shadows) ----
-// the ray from the point toward the sun crosses the ring plane (the
-// planet's equator, through 'center') at radius r; the light passing is
-// 1-opacity there, from the ring's opacity profile (inner..outer edge).
-// The profile is averaged over the sun's size at that distance (penumbra)
-uniform vec3  ring_pole;            // ring plane normal (eye space)
-uniform float ring_r0;              // inner radius
-uniform float ring_r1;              // outer radius
-uniform float ring_sun;             // sun angular radius (radians)
-uniform float ring_op[RING_NOP];    // opacity, inner..outer edge
-float ringOpacity(float f){
-	if(f<=0.0 || f>=1.0)
-		return 0.0;
-	float x=f*float(RING_NOP-1);
-	int i=int(floor(x));
-	int j=min(i+1,RING_NOP-1);
-	return mix(ring_op[i],ring_op[j],x-float(i));
-}
-float ringShadow(vec3 P, vec3 L){
-	float dn=dot(L,ring_pole);
-	if(abs(dn)<1e-6)
-		return 1.0;
-	float t=dot(center-P,ring_pole)/dn;
-	if(t<=0.0)                       // the ring is behind (away from the sun)
-		return 1.0;
-	float r=length(P+t*L-center);
-	float w=ring_r1-ring_r0;
-	float f=(r-ring_r0)/w;
-	float df=t*ring_sun/w;           // sun radius at the ring (fraction of its width)
-	float o=0.25*ringOpacity(f-df)+0.5*ringOpacity(f)+0.25*ringOpacity(f+df);
-	return 1.0-o;
-}
-#endif
-
-#ifdef SPHERE_SHADOWS
-// shadows of other planets and moons (analytic, OrbitalClass analytic_shadows)
-#include "sphere_shadow.h"
-#endif
+#include "planet_shadows.h"
 
 
 vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
@@ -91,18 +53,13 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	// it's tuned for how tight/bright a highlight looks, not for how much
 	// diffuse sunlight the surface reflects overall).
 	float base_albedo = albedo;
-#if defined(SHADOWS) || defined(RING_SHADOW) || defined(SPHERE_SHADOWS)
+#if defined(SHADOWS) || defined(PLANET_SHADOWS)
 	float shadow=1.0;
 #ifdef SHADOWS
     shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
 #endif
-#ifdef RING_SHADOW
-	if(gl_LightSource[0].position.w!=0.0)
-		shadow*=ringShadow(-EyeDirection.xyz,normalize(gl_LightSource[0].position.xyz+EyeDirection.xyz));
-#endif
-#ifdef SPHERE_SHADOWS
-	if(gl_LightSource[0].position.w!=0.0)
-		shadow*=sphereShadow(-EyeDirection.xyz,normalize(gl_LightSource[0].position.xyz+EyeDirection.xyz));
+#ifdef PLANET_SHADOWS
+	shadow*=planetShadow(-EyeDirection.xyz);
 #endif
     float shadow_diffuse=lerp(Shadow.a,0.0,1.0,1,shadow);
     float shadow_specular=shadow;//lerp(shadow,0.2,1.0,0.0,shadow);

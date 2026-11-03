@@ -190,6 +190,56 @@ static void setShadowSpheres(GLSLVarMgr &vars, Spheroid *planet, Object3D *self)
 	vars.newFloatVar("shadow_sun",RING_SUN_ANG);
 }
 
+// ---- analytic shadows on an object and on what's placed on it
+// (planet_shadows.h): rocks, plants and sprites read the shadow map, which
+// no longer has rings and other planets and moons in it
+// not limited to twilight like the map: an eclipse can happen at any time of
+// day. Add the defines before GLSLMgr::setDefString(), the uniforms after
+// the program is loaded.
+static bool analyticShadowsOn(Spheroid *s){
+	return analytic_shadows && s && (s->type()==ID_PLANET || s->type()==ID_MOON)
+		&& Raster.shadows() && !TheScene->light_view() && !TheScene->test_view();
+}
+static Ring *shadowRing(Spheroid *s){
+	Ring *ring=findRing(s);
+	return (ring && ring->isEnabled())?ring:0;
+}
+void analyticShadowDefs(Spheroid *s, char *defs){
+	if(!analyticShadowsOn(s))
+		return;
+	sprintf(defs+strlen(defs),"#define SPHERE_SHADOWS\n");
+	if(shadowRing(s))
+		sprintf(defs+strlen(defs),"#define RING_SHADOW\n#define RING_NOP %d\n",RING_NOP);
+}
+void analyticShadowVars(Spheroid *s, GLSLVarMgr &vars){
+	if(!analyticShadowsOn(s))
+		return;
+	Ring *ring=shadowRing(s);
+	if(ring){
+		// ring plane: the planet's equator (the ring shares its tilt), pole =
+		// the object y axis in eye space; radii in the same (scene) units
+		Point p0=Point(0,0,0).mm(TheScene->viewMatrix);
+		Point p1=Point(0,1,0).mm(TheScene->viewMatrix);
+		Point pole=(p1-p0).normalize();
+		Point pc=s->point.mm(TheScene->invViewMatrix);
+		pc=pc.mm(TheScene->viewMatrix);
+		vars.newFloatVec("ring_center",pc.x,pc.y,pc.z);
+		vars.newFloatVec("ring_pole",pole.x,pole.y,pole.z);
+		vars.newFloatVar("ring_r0",ring->inner_radius);
+		vars.newFloatVar("ring_r1",ring->size);
+		vars.newFloatVar("ring_sun",RING_SUN_ANG);
+		// the profile the ring computed when it was last drawn (its band
+		// texture isn't always available when the planet is drawn)
+		float op[RING_NOP];
+		for(int i=0;i<RING_NOP;i++)
+			op[i]=ring->shadow_op_valid?ring->shadow_op[i]:1.0f;
+		vars.newFloatArray((char*)"ring_op",op,RING_NOP);
+	}
+	// a moon: its planet and the other moons; a planet: its moons
+	Spheroid *root=s->type()==ID_MOON?(Spheroid*)s->getParent():s;
+	setShadowSpheres(vars,root,s);
+}
+
 static void addNoiseDP(){
 #ifdef NOISE_DP
 	strcat(GLSLMgr::defString,"#extension GL_ARB_gpu_shader_fp64 : enable\n");
@@ -3960,11 +4010,6 @@ bool Planetoid::setProgram(){
 	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() && map_shadows){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	}
-	// eclipses (analytic_shadows): not limited to twilight like the map, an
-	// eclipse can happen at any time of day
-	bool sphere_shadows=analytic_shadows && Raster.shadows() && !TheScene->light_view() && !TheScene->test_view();
-	if(sphere_shadows)
-		sprintf(defs+strlen(defs),"#define SPHERE_SHADOWS\n");
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");
 	if(TheScene->viewobj==this)
@@ -3976,16 +4021,8 @@ bool Planetoid::setProgram(){
 		sprintf(defs+strlen(defs),"#define CONTOURS\n");
 	if(TheScene->enable_grid)
 		sprintf(defs+strlen(defs),"#define GRID\n");
-	// ring shadow on the planet (analytic_shadows)
-	Ring *shadow_ring=0;
-	if(analytic_shadows && Raster.shadows() && !TheScene->light_view()){
-		shadow_ring=findRing(this);
-		if(shadow_ring && !shadow_ring->isEnabled())
-			shadow_ring=0;
-		if(shadow_ring)
-			sprintf(defs+strlen(defs),"#define RING_SHADOW\n#define RING_NOP %d\n",RING_NOP);
-	}
-
+	// ring shadow and eclipses (analytic_shadows)
+	analyticShadowDefs(this,defs);
 
 	double twilite_min=-0.2;
 	double twilite_max=0.2;
@@ -4096,28 +4133,7 @@ bool Planetoid::setProgram(){
 	}
 	vars.newFloatVar("albedo",albedo);
 	vars.newFloatVar("rscale",Rscale);
-	if(shadow_ring){
-		// ring plane: the planet's equator (the ring shares its tilt), pole =
-		// the object y axis in eye space; radii in the same (scene) units
-		Point p0=Point(0,0,0).mm(TheScene->viewMatrix);
-		Point p1=Point(0,1,0).mm(TheScene->viewMatrix);
-		Point pole=(p1-p0).normalize();
-		vars.newFloatVec("ring_pole",pole.x,pole.y,pole.z);
-		vars.newFloatVar("ring_r0",shadow_ring->inner_radius);
-		vars.newFloatVar("ring_r1",shadow_ring->size);
-		vars.newFloatVar("ring_sun",RING_SUN_ANG);
-		// the profile the ring computed when it was last drawn (its band
-		// texture isn't always available when the planet is drawn)
-		float op[RING_NOP];
-		for(int i=0;i<RING_NOP;i++)
-			op[i]=shadow_ring->shadow_op_valid?shadow_ring->shadow_op[i]:1.0f;
-		vars.newFloatArray((char*)"ring_op",op,RING_NOP);
-	}
-	if(sphere_shadows){
-		// a moon: its planet and the other moons; a planet: its moons
-		Spheroid *root=type()==ID_MOON?(Spheroid*)getParent():this;
-		setShadowSpheres(vars,root,this);
-	}
+	analyticShadowVars(this,vars);
 
 	tp->setProgram();
 

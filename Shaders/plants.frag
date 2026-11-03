@@ -15,6 +15,16 @@ uniform sampler2DRect FBOTex4;
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
+#include "planet_shadows.h"
+#ifdef PLANET_SHADOWS
+uniform vec4 shadow_vp;   // viewport (x,y,w,h)
+// eye space position, from the window position and depth
+vec3 plantEyePos(){
+	vec3 ndc=vec3(2.0*(gl_FragCoord.xy-shadow_vp.xy)/shadow_vp.zw-1.0,2.0*gl_FragCoord.z-1.0);
+	vec4 e=gl_ProjectionMatrixInverse*vec4(ndc,1.0);
+	return e.xyz/e.w;
+}
+#endif
 uniform vec4 Haze;
 uniform float haze_zfar;
 uniform float haze_ampl;
@@ -171,9 +181,15 @@ void main(void) {
 	//	color.a=1;
 	if(lighting)
     	color.rgb=setLighting(color.rgb);
+#if defined(SHADOWS) || defined(PLANET_SHADOWS)
+     float lit=1.0;
 #ifdef SHADOWS
-     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
+     lit=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+#endif
+#ifdef PLANET_SHADOWS
+     lit*=planetShadow(plantEyePos());
+#endif
+     color.rgb=mix(color.rgb,Shadow.rgb,(1.0-lit)*Shadow.a);
 #endif  
  
 	// Haze is handled once, downstream, by the deferred effects.frag pass

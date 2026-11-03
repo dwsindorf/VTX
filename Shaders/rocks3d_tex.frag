@@ -20,6 +20,7 @@ varying vec3 EyePos;
 uniform vec4 Diffuse;
 uniform vec4 Ambient;
 uniform vec4 Shadow;
+#include "planet_shadows.h"
 
 uniform float fog_vmin;
 uniform float fog_vmax;
@@ -97,9 +98,15 @@ void main() {
     }
 #endif
      
+#if defined(SHADOWS) || defined(PLANET_SHADOWS)
+     float lit=1.0;
 #ifdef SHADOWS
-     float shadow=1.0-texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
-     color.rgb=mix(color.rgb,Shadow.rgb,shadow*Shadow.a); 
+     lit=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r;
+#endif
+#ifdef PLANET_SHADOWS
+     lit*=planetShadow(-EyeDirection);
+#endif
+     color.rgb=mix(color.rgb,Shadow.rgb,(1.0-lit)*Shadow.a);
 #endif  
 	vec4 fcolor2=texture2DRect(FBOTex2, gl_FragCoord.xy); // Params
    // color.rgb=vec3(Tangent.z,0,0);

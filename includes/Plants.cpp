@@ -841,6 +841,7 @@ bool PlantObjMgr::setProgram(){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	if(TheScene->light_view() || TheScene->test_view())
 		sprintf(defs+strlen(defs),"#define TEST_VIEW\n");
+	analyticShadowDefs((Spheroid*)TheScene->viewobj,defs);
 	GLSLMgr::setDefString(defs);
 
 	
@@ -872,6 +873,10 @@ bool PlantObjMgr::setProgram(){
 	Color haze=Raster.haze_color;
 		
 	double shadow_intensity=orb->shadow_intensity;
+	analyticShadowVars(orb,vars);
+	GLint vport[4];  // plants.frag gets the eye position from gl_FragCoord
+	glGetIntegerv(GL_VIEWPORT,vport);
+	vars.newFloatVec("shadow_vp",(float)vport[0],(float)vport[1],(float)vport[2],(float)vport[3]);
 	vars.newFloatVec("Diffuse",diffuse.red(),diffuse.green(),diffuse.blue(),diffuse.alpha());
 	vars.newFloatVec("Ambient",ambient.red(),ambient.green(),ambient.blue(),ambient.alpha());
 	vars.newFloatVec("Shadow",shadow.red(),shadow.green(),shadow.blue(),shadow_intensity);
