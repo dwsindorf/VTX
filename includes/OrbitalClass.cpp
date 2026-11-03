@@ -45,7 +45,10 @@ static int debug_temp=DEBUG_TEMP;
 // transparency (planetoid.frag RING_SHADOW: ray to the sun crosses the ring
 // plane, transmittance from the ring's opacity profile) and the planet
 // shadows its ring (ring.frag PLANET_SHADOW: ray/sphere, penumbra from the
-// sun's size). Rings are then left out of the shadow map passes.
+// sun's size). Planets and moons shadow each other the same way (eclipses,
+// lighting.frag SPHERE_SHADOWS). Rings, and planets and moons other than the
+// view object, are then left out of the shadow map passes: the map only
+// handles the view object's own terrain and what's near it.
 // 0: the old shadow map shadows (solid ring shadows)
 int analytic_shadows=1;
 static int debug_ring_profile=0;  // print the ring opacity profile (once per ring texture)
@@ -3952,9 +3955,16 @@ bool Planetoid::setProgram(){
 	else
 		sprintf(defs+strlen(defs),"#define LMODE %d\n#define NLIGHTS %d\n",Render.light_mode(),0);
     bool do_shadows=Raster.shadows() && Raster.twilight();
-	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() &&(Raster.farview()||TheScene->viewobj==this)){
+	// analytic_shadows: only the view object is in the shadow map (shadow_pass)
+	bool map_shadows=analytic_shadows?TheScene->viewobj==this:(Raster.farview()||TheScene->viewobj==this);
+	if(do_shadows && !TheScene->light_view()&& !TheScene->test_view() && map_shadows){
 		sprintf(defs+strlen(defs),"#define SHADOWS\n");
 	}
+	// eclipses (analytic_shadows): not limited to twilight like the map, an
+	// eclipse can happen at any time of day
+	bool sphere_shadows=analytic_shadows && Raster.shadows() && !TheScene->light_view() && !TheScene->test_view();
+	if(sphere_shadows)
+		sprintf(defs+strlen(defs),"#define SPHERE_SHADOWS\n");
 	if(Raster.hdr())
 		sprintf(defs+strlen(defs),"#define HDR\n");
 	if(TheScene->viewobj==this)
@@ -4103,6 +4113,11 @@ bool Planetoid::setProgram(){
 			op[i]=shadow_ring->shadow_op_valid?shadow_ring->shadow_op[i]:1.0f;
 		vars.newFloatArray((char*)"ring_op",op,RING_NOP);
 	}
+	if(sphere_shadows){
+		// a moon: its planet and the other moons; a planet: its moons
+		Spheroid *root=type()==ID_MOON?(Spheroid*)getParent():this;
+		setShadowSpheres(vars,root,this);
+	}
 
 	tp->setProgram();
 
@@ -4185,6 +4200,8 @@ int Planetoid::shadow_pass()
 	if(TheScene->viewobj==this)
 		select_pass(FGS);
 	else if(type()==ID_MOON || type()==ID_PLANET){
+		if(analytic_shadows)  // eclipses are computed in the shaders
+			return 0;
 		Planetoid *parent=(Planetoid*)getParent();
 		if(TheScene->viewobj==parent){
 			//if(TheScene->radius>0.5*orbit_radius)

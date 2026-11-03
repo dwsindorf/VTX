@@ -50,6 +50,11 @@ float ringShadow(vec3 P, vec3 L){
 }
 #endif
 
+#ifdef SPHERE_SHADOWS
+// shadows of other planets and moons (analytic, OrbitalClass analytic_shadows)
+#include "sphere_shadow.h"
+#endif
+
 
 vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	vec3 bmp  = -gl_NormalMatrix*b;
@@ -86,7 +91,7 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 	// it's tuned for how tight/bright a highlight looks, not for how much
 	// diffuse sunlight the surface reflects overall).
 	float base_albedo = albedo;
-#if defined(SHADOWS) || defined(RING_SHADOW)
+#if defined(SHADOWS) || defined(RING_SHADOW) || defined(SPHERE_SHADOWS)
 	float shadow=1.0;
 #ifdef SHADOWS
     shadow=texture2DRect(SHADOWTEX, gl_FragCoord.xy).r; // data texture
@@ -94,6 +99,10 @@ vec4 setLighting(vec3 BaseColor, vec3 n, vec3 b) {
 #ifdef RING_SHADOW
 	if(gl_LightSource[0].position.w!=0.0)
 		shadow*=ringShadow(-EyeDirection.xyz,normalize(gl_LightSource[0].position.xyz+EyeDirection.xyz));
+#endif
+#ifdef SPHERE_SHADOWS
+	if(gl_LightSource[0].position.w!=0.0)
+		shadow*=sphereShadow(-EyeDirection.xyz,normalize(gl_LightSource[0].position.xyz+EyeDirection.xyz));
 #endif
     float shadow_diffuse=lerp(Shadow.a,0.0,1.0,1,shadow);
     float shadow_specular=shadow;//lerp(shadow,0.2,1.0,0.0,shadow);
