@@ -97,6 +97,8 @@ void main(void) {
 	//gl_FragData[1]=vec4(Constants1.g,pow(color.a,4)*illumination,0.0,0);
 	//gl_FragData[0].a=1;
 
-	gl_FragData[1]=vec4(0,fcolor1.g,0,0);
+	// params.g is the shine-through of what's behind the ring (planet, moon),
+	// which the sky uses to set its opacity: pass it through
+	gl_FragData[1]=vec4(0,texture2DRect(FBOTex2, gl_FragCoord.xy).g,0,0);
 	
 }

@@ -39,8 +39,15 @@ test:;   @cd Release; \
             $(MAKE) test; \
 			cd ..;
 
-distribution:; \
-            tar -cvf binaries/$(PLATFORM)_VTX.tar Release/vtx.exe Resources Shaders Textures Saves
+# Install bundle -> $(DISTDIR)/VTX-win64-<git describe>.zip
+# ships only git-tracked, runtime-used files (see ./mkdist.sh -h)
+#   make dist                          package $(EXE)
+#   make dist EXE=Release/vtx.exe      package a different build
+#   make dist DISTFLAGS="-n -v"        dry run: list what would ship
+EXE           = Release/vtx.exe
+DISTDIR       = dist
+.PHONY: dist distribution
+dist distribution:; ./mkdist.sh -e $(EXE) -o $(DISTDIR) $(DISTFLAGS)
 
 showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 		    @echo "  JAVAINC = $(JAVAINC)"

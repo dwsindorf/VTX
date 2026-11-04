@@ -128,7 +128,7 @@ vtxg:;	    @echo "### Building vtx-glut ...";
 			@echo "### done"
 
 vtxw:;	    @echo "### Building vtx-wxWidgets ...";
-			$(CC) $(CFLAGS) -o $(PROGRAM) *.o  `wx-config --libs --gl_libs`;
+			$(CC) $(CFLAGS) -static -o $(PROGRAM) *.o  `wx-config --libs --gl_libs`;
 			@echo "### done"
 
 showenv:;   @echo "CFLAGS = $(CFLAGS)"
@@ -142,6 +142,12 @@ showenv:;   @echo "CFLAGS = $(CFLAGS)"
 clean:;		rm -f *.class *.o $(NLIB) $(PROGRAM)  ../jni/*.o ../glut/*.o $(PARSER_TMPS) $(NHDRS)
 
 tarfile:;   tar -cf ../vtx.tar.gz --exclude-vcs --xz  -C ../../ vtx/vtx vtx/Release/vtx.exe vtx/Resources vtx/Saves vtx/Textures vtx/Objects vtx/Shaders
+# Windows install bundle: ../dist/VTX-win64-<git describe>.zip
+# (only git-tracked, runtime-used files; see ../mkdist.sh -h)
+#   make dist                     - build the zip from ../bin/vtx.exe
+#   make dist DISTFLAGS="-n -v"   - dry run: list what would be shipped
+dist:;		cd .. && ./mkdist.sh $(DISTFLAGS)
+
 undebug:;   rm ../Shaders/*.debug
 
 #################
