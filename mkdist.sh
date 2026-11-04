@@ -15,6 +15,7 @@
 # Environment:
 #   DLL_PATH  extra ':'-separated dirs searched for runtime DLLs
 #   ISCC      path to Inno Setup's ISCC.exe (if not in a standard location)
+#   SOFFICE   path to LibreOffice soffice(.com/.exe) (if not in a standard location)
 #
 # Rules (see the "selection" section below):
 #   * Only files tracked by git are shipped (git ls-files). Untracked work
@@ -23,7 +24,8 @@
 #   * Shaders: only files reachable from GLSLMgr::loadProgram/setShadowProgram
 #     string literals in the C++ sources, plus everything they #include.
 #     *.debug files and dead shaders are dropped. Computed fresh on each run.
-#   * Docs: the files listed in DOCS below (must be tracked).
+#   * Docs: the files listed in DOCS below (must be tracked). .odt files are
+#     converted to PDF with LibreOffice at packaging time; only the PDF ships.
 #   * Resources: everything tracked except compile-time sources (*.xpm etc.
 #     are #included into VtxFrame.cpp and are not needed at runtime).
 #   * Objects, Textures, Bitmaps: all tracked files, plus the full directory tree from
@@ -51,9 +53,9 @@ INSTALLER=0
 APPNAME=VTX
 
 # Documentation to ship (space-separated, repo-relative; must be tracked)
-DOCS="Docs/VTX-Theory-of-Operation.pdf"
+DOCS="Docs/VTX-Theory-of-Operation.odt"   # .odt -> shipped as .pdf
 
-usage() { sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while getopts "e:o:nkDivh" opt; do
     case $opt in
         e) EXE=$OPTARG ;;
@@ -132,16 +134,46 @@ add_dir()  { echo "$1" >> "$TMP/dirs"; }
 # selection
 #=============================================================================
 
-#--- Docs: explicit list ----------------------------------------------------
+#--- Docs: explicit list (.odt converted to .pdf at staging) -----------------
+: > "$TMP/convert"
 for f in $DOCS; do
-    if is_tracked "$f"; then
-        add_file "$f"
+    if is_tracked "$f" && [ -f "$f" ]; then
+        case "$f" in
+            *.odt) echo "$f" >> "$TMP/convert" ;;
+            *)     add_file "$f" ;;
+        esac
     elif [ -f "$f" ]; then
         warn "$f is not tracked by git - skipped (git add + commit it)"
     else
         warn "$f not found - skipped"
     fi
 done
+
+if [ -s "$TMP/convert" ]; then
+    if [ -z "${SOFFICE:-}" ]; then
+        for c in "$(command -v soffice.com 2>/dev/null || true)" \
+                 "$(command -v soffice 2>/dev/null || true)" \
+                 "/c/Program Files/LibreOffice/program/soffice.com" \
+                 "/c/Program Files (x86)/LibreOffice/program/soffice.com" \
+                 "/cygdrive/c/Program Files/LibreOffice/program/soffice.com" \
+                 "/cygdrive/c/Program Files (x86)/LibreOffice/program/soffice.com"; do
+            [ -n "$c" ] && [ -f "$c" ] && { SOFFICE=$c; break; }
+        done
+    fi
+    if [ -z "${SOFFICE:-}" ] || [ ! -f "$SOFFICE" ]; then
+        # no LibreOffice: fall back to a committed PDF of the same name, if any
+        while read -r f; do
+            pdf="${f%.odt}.pdf"
+            if is_tracked "$pdf" && [ -f "$pdf" ]; then
+                warn "LibreOffice not found - shipping committed $pdf (may be out of date)"
+                add_file "$pdf"
+            else
+                warn "LibreOffice not found - cannot convert $f to PDF; skipped (set SOFFICE=...)"
+            fi
+        done < "$TMP/convert"
+        : > "$TMP/convert"
+    fi
+fi
 
 #--- Saves: tracked *.spx ----------------------------------------------------
 git ls-files -- 'Saves/*.spx' | while read -r f; do add_file "$f"; done
@@ -287,6 +319,7 @@ if [ "$DRYRUN" = 1 ]; then
     echo "$EXE -> bin/$(basename "$EXE")"
     sed 's#.*/#bin/#' "$TMP/dlls"
     cat "$TMP/files"
+    sed 's#\(.*\)\.odt$#\1.odt -> \1.pdf  (converted)#' "$TMP/convert"
     say "$(wc -l < "$TMP/files") data files, $(wc -l < "$TMP/dlls") dlls"
     exit 0
 fi
@@ -302,6 +335,22 @@ while read -r f; do
     cp -p "$f" "$STAGE/$f"
 done < "$TMP/files"
 cp -p "$EXE" "$STAGE/bin/vtx.exe"
+
+# Docs: .odt -> .pdf with headless LibreOffice. A private profile dir lets
+# this run even while LibreOffice is open on the desktop.
+if [ -s "$TMP/convert" ]; then
+    winpath() { if command -v cygpath >/dev/null; then cygpath "$@"; else echo "${@: -1}"; fi; }
+    mkdir -p "$TMP/lo-profile"
+    LO_PROFILE="file:///$(winpath -m "$TMP/lo-profile" | sed 's#^/##')"
+    while read -r f; do
+        out="$STAGE/$(dirname "$f")"; mkdir -p "$out"
+        pdf="$out/$(basename "${f%.odt}").pdf"
+        say "converting $f -> PDF"
+        "$SOFFICE" --headless --norestore "-env:UserInstallation=$LO_PROFILE" \
+            --convert-to pdf --outdir "$(winpath -w "$out")" "$(winpath -w "$ROOT/$f")" >/dev/null 2>&1 || true
+        [ -f "$pdf" ] || die "PDF conversion of $f failed (tried: $SOFFICE)"
+    done < "$TMP/convert"
+fi
 while read -r d; do cp -p "$d" "$STAGE/bin/"; done < "$TMP/dlls"
 
 # Launcher: VtxScene renders with wxSetWorkingDirectory("../Shaders"),
