@@ -32,6 +32,16 @@ static wxChar *sargs[256];
 static int  nargs=0; 
 static int repeat_rate=10;
 
+// Hybrid-graphics laptops: ask the driver for the discrete GPU instead of
+// the integrated one (NVIDIA Optimus / AMD PowerXpress read these exports).
+// An explicit per-app choice in Windows Settings > Display > Graphics wins.
+#ifdef _WIN32
+extern "C" {
+    __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
 
 // `Main program' equivalent, creating windows and returning main app frame
 bool VtxApp::OnInit()

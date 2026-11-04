@@ -39,7 +39,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; everything except files the user may have changed since the last install
-Source: "{#SrcDir}\*"; DestDir: "{app}"; Excludes: "\Saves\*,\Resources\UI\prefs.spx,\VTX.bat"; \
+Source: "{#SrcDir}\*"; DestDir: "{app}"; Excludes: "\Saves\*,\Resources\UI\prefs.spx"; \
     Flags: ignoreversion recursesubdirs createallsubdirs
 ; sample scenes and prefs: install once, never overwrite the user's edits on upgrade
 Source: "{#SrcDir}\Saves\*"; DestDir: "{app}\Saves"; Flags: onlyifdoesntexist uninsneveruninstall recursesubdirs createallsubdirs
@@ -53,10 +53,11 @@ Name: "{app}\Movies"
 Name: "{app}\Textures\Processed"
 
 [Icons]
-; WorkingDir must be bin\ - VtxScene uses wxSetWorkingDirectory("../Shaders")
-Name: "{autoprograms}\VTX"; Filename: "{app}\bin\vtx.exe"; WorkingDir: "{app}\bin"
+; via VTX.bat: sets cwd to bin\ (VtxScene uses wxSetWorkingDirectory("../Shaders"))
+; and reopens Saves\last.spx when it exists. runminimized hides the .bat console.
+Name: "{autoprograms}\VTX"; Filename: "{app}\VTX.bat"; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized
 Name: "{autoprograms}\VTX Theory of Operation"; Filename: "{app}\Docs\VTX-Theory-of-Operation.pdf"
-Name: "{autodesktop}\VTX"; Filename: "{app}\bin\vtx.exe"; WorkingDir: "{app}\bin"; Tasks: desktopicon
+Name: "{autodesktop}\VTX"; Filename: "{app}\VTX.bat"; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\bin\vtx.exe"; WorkingDir: "{app}\bin"; Description: "{cm:LaunchProgram,VTX}"; Flags: nowait postinstall skipifsilent

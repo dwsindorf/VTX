@@ -738,6 +738,10 @@ void VtxScene::make_scene()
 	//glewExperimental = GL_TRUE;
 	glewInit();
 #endif
+	// report which GPU/driver we got (integrated vs discrete is not obvious)
+	cout << "OpenGL: " << (const char*)glGetString(GL_VENDOR)
+	     << " / " << (const char*)glGetString(GL_RENDERER)
+	     << " / " << (const char*)glGetString(GL_VERSION) << endl;
     //SetCurrent();
 
     GetClientSize(&width, &height);

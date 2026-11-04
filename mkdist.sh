@@ -26,7 +26,7 @@
 #   * Docs: the files listed in DOCS below (must be tracked).
 #   * Resources: everything tracked except compile-time sources (*.xpm etc.
 #     are #included into VtxFrame.cpp and are not needed at runtime).
-#   * Objects, Textures: all tracked files, plus the full directory tree from
+#   * Objects, Textures, Bitmaps: all tracked files, plus the full directory tree from
 #     the working copy (so empty category folders exist at runtime).
 #   * bin/vtx.exe plus every non-system DLL it needs (recursive objdump scan).
 #
@@ -148,7 +148,7 @@ git ls-files -- 'Saves/*.spx' | while read -r f; do add_file "$f"; done
 add_dir Saves
 
 #--- Textures, Objects: all tracked files + working-copy dir tree ------------
-for d in Textures Objects; do
+for d in Textures Objects Bitmaps; do
     git ls-files -- "$d/" | while read -r f; do add_file "$f"; done
     if [ -d "$d" ]; then
         find "$d" -type d ! -name '.*' >> "$TMP/dirs"
@@ -306,10 +306,16 @@ while read -r d; do cp -p "$d" "$STAGE/bin/"; done < "$TMP/dlls"
 
 # Launcher: VtxScene renders with wxSetWorkingDirectory("../Shaders"),
 # relative to the *current* directory, so cwd must be bin\ at startup.
+# With no arguments, reopen the last session (Saves\last.spx is written on
+# quit, so it only exists after the first run).
 printf '%s\r\n' \
   '@echo off' \
   'rem VTX launcher - vtx.exe must start with bin\ as its working directory' \
   'cd /d "%~dp0bin"' \
+  'if "%~1"=="" if exist "..\Saves\last.spx" (' \
+  '    start "" vtx.exe --m last.spx' \
+  '    goto :eof' \
+  ')' \
   'start "" vtx.exe %*' > "$STAGE/VTX.bat"
 
 cat > "$STAGE/README.txt" <<EOF
@@ -324,6 +330,7 @@ Run
   Double-click VTX.bat, or make a shortcut to bin\\vtx.exe with
   "Start in" set to the bin folder. Optional arguments:
     VTX.bat [--s|--m|--b|--w|--p] [scene]     (scene = name in Saves\\)
+  With no arguments VTX reopens the last session (Saves\\last.spx).
 
 Requires an OpenGL driver with GLSL + geometry shader support.
 
