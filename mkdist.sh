@@ -8,11 +8,13 @@
 #   -n        dry run: print the manifest, don't stage or archive
 #   -k        keep the staging directory after archiving
 #   -D        don't collect DLL dependencies
+#   -i        also build a Windows installer (needs Inno Setup 6, installer/vtx.iss)
 #   -v        verbose
 #   -h        help
 #
 # Environment:
 #   DLL_PATH  extra ':'-separated dirs searched for runtime DLLs
+#   ISCC      path to Inno Setup's ISCC.exe (if not in a standard location)
 #
 # Rules (see the "selection" section below):
 #   * Only files tracked by git are shipped (git ls-files). Untracked work
@@ -45,19 +47,21 @@ DRYRUN=0
 KEEP=0
 DLLS=1
 VERBOSE=0
+INSTALLER=0
 APPNAME=VTX
 
 # Documentation to ship (space-separated, repo-relative; must be tracked)
 DOCS="Docs/VTX-Theory-of-Operation.pdf"
 
-usage() { sed -n '3,15p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
-while getopts "e:o:nkDvh" opt; do
+usage() { sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+while getopts "e:o:nkDivh" opt; do
     case $opt in
         e) EXE=$OPTARG ;;
         o) OUTDIR=$OPTARG ;;
         n) DRYRUN=1 ;;
         k) KEEP=1 ;;
         D) DLLS=0 ;;
+        i) INSTALLER=1 ;;
         v) VERBOSE=1 ;;
         h) usage 0 ;;
         *) usage 1 ;;
@@ -79,6 +83,26 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$ROOT"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$ROOT is not inside a git work tree"
 [ -f "$EXE" ] || die "executable not found: $ROOT/$EXE (build it first, or use -e)"
+
+if [ "$INSTALLER" = 1 ]; then
+    [ -f installer/vtx.iss ] || die "installer/vtx.iss not found"
+    if [ -z "${ISCC:-}" ]; then
+        for c in "$(command -v ISCC.exe 2>/dev/null || true)" \
+                 "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" \
+                 "/c/Program Files/Inno Setup 6/ISCC.exe" \
+                 "/cygdrive/c/Program Files (x86)/Inno Setup 6/ISCC.exe" \
+                 "/cygdrive/c/Program Files/Inno Setup 6/ISCC.exe"; do
+            [ -n "$c" ] && [ -f "$c" ] && { ISCC=$c; break; }
+        done
+        if [ -z "${ISCC:-}" ] && [ -n "${LOCALAPPDATA:-}" ] && command -v cygpath >/dev/null; then
+            c="$(cygpath -u "$LOCALAPPDATA")/Programs/Inno Setup 6/ISCC.exe"
+            [ -f "$c" ] && ISCC=$c
+        fi
+    fi
+    [ -n "${ISCC:-}" ] && [ -f "$ISCC" ] || \
+        die "Inno Setup ISCC.exe not found - install Inno Setup 6 (winget install JRSoftware.InnoSetup) or set ISCC=/path/to/ISCC.exe"
+    command -v cygpath >/dev/null || die "cygpath not found (needed to pass paths to ISCC.exe)"
+fi
 
 VERSION=$(git describe --tags --always --dirty 2>/dev/null || date +%Y%m%d)
 BUNDLE="$APPNAME-win64-$VERSION"
@@ -318,11 +342,25 @@ if command -v zip >/dev/null; then
     ( cd "$OUTDIR" && zip -qr9 "$ARCHIVE" "$APPNAME" )
 elif command -v 7z >/dev/null; then
     ARCHIVE="$ABS_OUT/$BUNDLE.zip"; rm -f "$ARCHIVE"
-    ( cd "$OUTDIR" && 7z a -tzip -mx=9 "$ARCHIVE" "$APPNAME" >/dev/null )
+    ( cd "$OUTDIR" && 7z a -tzip -mx=9 "$BUNDLE.zip" "$APPNAME" >/dev/null )
+elif WINTAR=$(for t in /c/Windows/System32/tar.exe /cygdrive/c/Windows/System32/tar.exe; do
+                 [ -x "$t" ] && { echo "$t"; break; }; done) && [ -n "$WINTAR" ]; then
+    # Windows 10+ ships bsdtar as tar.exe; -a picks .zip format from the name
+    # (relative names only, so no MSYS/Cygwin path translation is needed)
+    ARCHIVE="$ABS_OUT/$BUNDLE.zip"; rm -f "$ARCHIVE"
+    ( cd "$OUTDIR" && "$WINTAR" -a -c -f "$BUNDLE.zip" "$APPNAME" )
 else
     ARCHIVE="$ABS_OUT/$BUNDLE.tar.gz"
-    warn "zip/7z not found - writing $ARCHIVE instead (Cygwin: install 'zip')"
+    warn "zip/7z/tar.exe not found - writing $ARCHIVE instead"
     tar -czf "$ARCHIVE" -C "$OUTDIR" "$APPNAME"
+fi
+if [ "$INSTALLER" = 1 ]; then
+    say "building installer with $ISCC"
+    "$ISCC" /Q "/DSrcDir=$(cygpath -w "$ABS_OUT/$APPNAME")" "/DAppVersion=$VERSION" \
+        "/O$(cygpath -w "$ABS_OUT")" "$(cygpath -w "$ROOT/installer/vtx.iss")" \
+        || die "ISCC failed"
+    [ -f "$ABS_OUT/$BUNDLE-setup.exe" ] || die "ISCC ran but $ABS_OUT/$BUNDLE-setup.exe was not created"
+    say "wrote $ABS_OUT/$BUNDLE-setup.exe"
 fi
 [ "$KEEP" = 1 ] || rm -rf "$STAGE"
 

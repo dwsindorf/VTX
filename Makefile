@@ -49,6 +49,10 @@ DISTDIR       = dist
 .PHONY: dist distribution
 dist distribution:; ./mkdist.sh -e $(EXE) -o $(DISTDIR) $(DISTFLAGS)
 
+# Windows installer (Inno Setup 6) -> $(DISTDIR)/VTX-win64-<version>-setup.exe
+.PHONY: installer
+installer:; ./mkdist.sh -i -e $(EXE) -o $(DISTDIR) $(DISTFLAGS)
+
 showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 		    @echo "  JAVAINC = $(JAVAINC)"
 		    @echo "    GLIBS = $(GLIBS)"
