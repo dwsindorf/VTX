@@ -4953,6 +4953,18 @@ static NameList<ImageSym*> image_list;
 static NameList<ImageSym*> erode_list;
 static NameList<ImageSym*> surface_list;
 
+// "Reuse" modes pick a random previously generated image by name. With
+// nothing to pick from (fresh install: empty Bitmaps folder) fall back to
+// generating new images instead of indexing an empty list (crash).
+// Name pickers and image creation must use the same test so they agree.
+static bool reuse2D(NameList<ImageSym*> &l){
+	return TheScene->use_tmps!=NO_TMPS && l.size>0;
+}
+static bool reuseAll(){  // metallic falls back to rocky
+	return TheScene->use_tmps==ALL_TMPS
+		&& rocky_list.size>0 && icy_list.size>0 && gassy_list.size>0;
+}
+
 void Planetoid::makeLists(){
 	icy_list.free();
 	rocky_list.free();
@@ -5428,7 +5440,7 @@ std::string Planetoid::randFeature(int type) {
 	switch(type){
 	case RND_TEXNAME:
 		str="\"";
-		if(TheScene->use_tmps==ALL_TMPS){
+		if(reuseAll()){
 			if(gen_type==GN_ICY)
 				str+=getIcyTexName();
 			else if(gen_type==GN_GASSY)
@@ -5453,7 +5465,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_HTEXNAME:
 		str="\"";
-		if(TheScene->use_tmps!=NO_TMPS){
+		if(reuse2D(hmaps_list)){
 			str+=getRandHmapTexName();
 		}
 		else{
@@ -5464,7 +5476,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_ETEXNAME:
 		str="\"";
-		if(TheScene->use_tmps!=NO_TMPS){
+		if(reuse2D(erode_list)){
 			str+=getRandEmapTexName();
 		}
 		else{
@@ -5475,7 +5487,7 @@ std::string Planetoid::randFeature(int type) {
 		break;
 	case RND_LTEXNAME:
 		str="\"";
-		if(TheScene->use_tmps!=NO_TMPS)
+		if(reuse2D(image_list))
 			str+=getRandLayerTexName();
 		else{
 			str+="L";
@@ -6067,7 +6079,7 @@ void Planetoid::popInstance(Planetoid *planet){
 
 static std::string newHmapTex(Planetoid *planet){
 	std::string str;
-	if(TheScene->use_tmps==NO_TMPS){
+	if(!reuse2D(hmaps_list)){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_HMAP_IMAGE);
 		strcpy(buff,str.c_str());
@@ -6083,7 +6095,7 @@ static std::string newHmapTex(Planetoid *planet){
 }
 static std::string newErodeTex(Orbital *orbital){
 	std::string str;
-	if(TheScene->use_tmps==NO_TMPS){
+	if(!reuse2D(erode_list)){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
 		strcpy(buff,str.c_str());
@@ -6094,7 +6106,7 @@ static std::string newErodeTex(Orbital *orbital){
 	return Planetoid::randFeature(RND_ERODE_TEX);
 }
 static std::string newRockBands(Orbital *orbital){
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		//planet->setColors();
 		char buff[2048];
 		std::string str = Planetoid::randFeature(RND_BANDS);
@@ -6107,7 +6119,7 @@ static std::string newRockBands(Orbital *orbital){
 }
 static std::string newRockTex(Orbital *orbital){
 	std::string str;
-	if(TheScene->use_tmps==NO_TMPS){
+	if(!reuse2D(erode_list)){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
 		strcpy(buff,str.c_str());
@@ -6120,7 +6132,7 @@ static std::string newRockTex(Orbital *orbital){
 }
 
 static std::string newSurfaceBands(Orbital *orbital){
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		//planet->setColors();
 		char buff[2048];
 		std::string str = Planetoid::randFeature(RND_BANDS);
@@ -6133,7 +6145,7 @@ static std::string newSurfaceBands(Orbital *orbital){
 }
 static std::string newSurfaceTex(Orbital *orbital){
 	std::string str;
-	if(TheScene->use_tmps==NO_TMPS){
+	if(!reuse2D(erode_list)){
 		char buff[2048];
 		std::string str=Planetoid::randFeature(RND_EMAP_IMAGE);
 		strcpy(buff,str.c_str());
@@ -6149,7 +6161,7 @@ static std::string newDualGlobalTex(Planetoid *planet){
 	char buff[2048];
 	Planetoid::pushInstance(planet);
 	std::string str;
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
@@ -6161,7 +6173,7 @@ static std::string newDualGlobalTex(Planetoid *planet){
 	return str;
 }
 std::string newGlobalTex(Planetoid *planet){
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		char buff[2048];
 		std::string str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());
@@ -6176,14 +6188,14 @@ static std::string newLocalTex(Planetoid *planet){
 	char buff[2048];
 	Planetoid::pushInstance(planet);
 	std::string str;
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		str = Planetoid::randFeature(RND_BANDS);
 		strcpy(buff, str.c_str());
 		TNinode *img = (TNinode*) TheScene->parse_node(buff);
 		img->init();
 		planet->add_image(img);
 	}
-	if(TheScene->use_tmps==NO_TMPS){
+	if(!reuse2D(image_list)){
 		str=Planetoid::randFeature(RND_LOCAL_IMAGE);
 		strcpy(buff,str.c_str());
 		TNinode *himg=(TNinode*)TheScene->parse_node(buff);
@@ -6643,7 +6655,7 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	keep_rands=true;
 
 	char buff[4096];
-	if(TheScene->use_tmps!=ALL_TMPS){
+	if(!reuseAll()){
 		std::string str=randFeature(RND_BANDS);
 		strcpy(buff,str.c_str());
 
@@ -6802,7 +6814,7 @@ static std::string newAsteroidColor(int gtype){
 }
 
 static std::string newAsteroidBands(Asteroid *a,int gtype){
-	if(TheScene->use_tmps!=ALL_TMPS){          // generate the bands image from colors[]
+	if(!reuseAll()){          // generate the bands image from colors[]
 		char b[2048];
 		std::string s=Planetoid::randFeature(RND_BANDS);
 		strcpy(b,s.c_str());
