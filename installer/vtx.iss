@@ -55,9 +55,11 @@ Name: "{app}\Textures\Processed"
 [Icons]
 ; via VTX.bat: sets cwd to bin\ (VtxScene uses wxSetWorkingDirectory("../Shaders"))
 ; and reopens Saves\last.spx when it exists. runminimized hides the .bat console.
-Name: "{autoprograms}\VTX"; Filename: "{app}\VTX.bat"; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized
+; Target is cmd.exe (not the .bat) so Windows allows pinning to the taskbar/Start.
+Name: "{autoprograms}\VTX"; Filename: "{cmd}"; Parameters: "/c ""{app}\VTX.bat"""; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized
+Name: "{autoprograms}\VTX User Manual"; Filename: "{app}\Docs\VTX-User-Manual.pdf"
 Name: "{autoprograms}\VTX Theory of Operation"; Filename: "{app}\Docs\VTX-Theory-of-Operation.pdf"
-Name: "{autodesktop}\VTX"; Filename: "{app}\VTX.bat"; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized; Tasks: desktopicon
+Name: "{autodesktop}\VTX"; Filename: "{cmd}"; Parameters: "/c ""{app}\VTX.bat"""; WorkingDir: "{app}\bin"; IconFilename: "{app}\bin\vtx.exe"; Flags: runminimized; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\bin\vtx.exe"; WorkingDir: "{app}\bin"; Description: "{cm:LaunchProgram,VTX}"; Flags: nowait postinstall skipifsilent

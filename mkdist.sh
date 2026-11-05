@@ -26,6 +26,8 @@
 #     *.debug files and dead shaders are dropped. Computed fresh on each run.
 #   * Docs: the files listed in DOCS below (must be tracked). .odt files are
 #     converted to PDF with LibreOffice at packaging time; only the PDF ships.
+#     The user manual's Part II (reference) is regenerated from the source
+#     first (tools/manual/build.sh), and tables of contents are updated.
 #   * Resources: everything tracked except compile-time sources (*.xpm etc.
 #     are #included into VtxFrame.cpp and are not needed at runtime).
 #   * Objects, Textures, Bitmaps: all tracked files, plus the full directory tree from
@@ -53,7 +55,10 @@ INSTALLER=0
 APPNAME=VTX
 
 # Documentation to ship (space-separated, repo-relative; must be tracked)
-DOCS="Docs/VTX-Theory-of-Operation.odt"   # .odt -> shipped as .pdf
+DOCS="Docs/VTX-User-Manual.odt Docs/VTX-Theory-of-Operation.odt"   # .odt -> shipped as .pdf
+# Manuals whose generated reference section (tools/manual) is refreshed from
+# the current source before conversion. The .odt in the repo isn't modified.
+MANUALS="Docs/VTX-User-Manual.odt"
 
 usage() { sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while getopts "e:o:nkDivh" opt; do
@@ -345,9 +350,17 @@ if [ -s "$TMP/convert" ]; then
     while read -r f; do
         out="$STAGE/$(dirname "$f")"; mkdir -p "$out"
         pdf="$out/$(basename "${f%.odt}").pdf"
-        say "converting $f -> PDF"
-        "$SOFFICE" --headless --norestore "-env:UserInstallation=$LO_PROFILE" \
-            --convert-to pdf --outdir "$(winpath -w "$out")" "$(winpath -w "$ROOT/$f")" >/dev/null 2>&1 || true
+        if [ -x tools/manual/build.sh ] || [ -f tools/manual/build.sh ]; then
+            refresh=""
+            case " $MANUALS " in *" $f "*) refresh=--refresh ;; esac
+            say "converting $f -> PDF${refresh:+ (reference refreshed from source)}"
+            SOFFICE="$SOFFICE" VTX_VERSION="$VERSION" bash tools/manual/build.sh pdf "$ROOT/$f" "$pdf" $refresh </dev/null \
+                || die "PDF conversion of $f failed"
+        else
+            say "converting $f -> PDF"
+            "$SOFFICE" --headless --norestore "-env:UserInstallation=$LO_PROFILE" \
+                --convert-to pdf --outdir "$(winpath -w "$out")" "$(winpath -w "$ROOT/$f")" >/dev/null 2>&1 || true
+        fi
         [ -f "$pdf" ] || die "PDF conversion of $f failed (tried: $SOFFICE)"
     done < "$TMP/convert"
 fi

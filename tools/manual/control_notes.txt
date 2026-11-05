@@ -1,0 +1,24 @@
+# control_notes.txt - descriptions merged into the "Notes" column of the
+# generated reference (Part II of the VTX User Manual).
+#
+# Text inside the manual's reference section is regenerated on every build,
+# so write control descriptions here, not in the .odt.
+#
+# Format, one per line:
+#     Object / Tab / Group / Control: description
+#     Object / Tab / Control: description          (any group)
+#     Object / Control: description                (any tab)
+# Names are the labels shown in the dialog; case doesn't matter.
+# A note here replaces the control's tooltip in the manual.
+#
+# Examples:
+Planet / Object / Object / Size(1e3 ml): Planet size in thousands of miles.
+Planet / Object / Object / Ht(mls): Maximum terrain height in miles.
+Planet / Object / Object / Day(hrs): Length of the planet's day (rotation period) in hours.
+Planet / Object / Object / Tilt: Tilt of the rotation axis in degrees; gives the planet seasons.
+Planet / Object / Orbit / Radius(x1e6): Orbit radius in millions of miles.
+Planet / Object / Orbit / Year(days): Length of the orbit in days.
+Planet / Object / Orbit / Tilt: Inclination of the orbit in degrees.
+Planet / Object / Object / TidalLock: Make the year (orbit) as long as the day and reset the rotation phase, so one side always faces the star.
+Scene / Adapt / Procedural Generation / Reuse: Which saved generated images new worlds reuse (see Generating new worlds).
+Scene / Adapt / Procedural Generation / Keep: Which generated images are kept in the Bitmaps folder.
