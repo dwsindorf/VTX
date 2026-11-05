@@ -76,13 +76,4 @@ You can repeat this from any star in the new system.
 
 ## Building from source
 
-VTX is built on Windows with Cygwin or MSYS2, MinGW and a static build of wxWidgets 3 (see [Docs/wxWidgets3.1.odt](Docs/wxWidgets3.1.odt) for setting up the tools):
-
-```sh
-cd VTX/Release
-make build_wx      # builds Release/vtx.exe
-cd ../bin
-./vtx-last         # runs the new build
-```
-
-`make distribution` (or `make installer`, with [Inno Setup](https://jrsoftware.org/isinfo.php) installed) in the top directory builds the Windows download in *dist/*.
+VTX is built on Windows with Cygwin, its MinGW-w64 cross-compiler and a static build of wxWidgets. [BUILDING.md](BUILDING.md) has the full instructions, including how to package a release.

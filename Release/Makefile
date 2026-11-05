@@ -37,7 +37,7 @@ LFLAGS        = $(GLDFLAGS)
 CFLAGS        = -w $(GCCFLAGS) $(OPTLVL) $(DEFINES) $(GLDEFS) -fopenmp 
 #CFLAGS        = -w $(OPTLVL) $(DEFINES) $(GLDEFS)
 MFLAGS        = -j6 
-CC            = g++
+CC            = $(shell wx-config --cxx 2>/dev/null || echo g++)
 LD	       	  = $(CC)
 
 WXLIBS        = `wx-config --libs  --gl_libs`
@@ -64,7 +64,7 @@ JOBJS         = $(JFILES:.java=.class)
 build_wx:   parsers wx vtxw
 build_jni:  parsers jpeglib jni vtxlib
 build_glut: parsers jpeglib glut includes vtxg
-
+build:      build_wx
 wx:;	    cd  ../wx; \
             make $(MFLAGS) \
 			INCS="-I../includes -I../ -I../Resources/UI" \
