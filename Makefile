@@ -53,6 +53,12 @@ dist distribution:; ./mkdist.sh -e $(EXE) -o $(DISTDIR) $(DISTFLAGS)
 .PHONY: installer
 installer:; ./mkdist.sh -i -e $(EXE) -o $(DISTDIR) $(DISTFLAGS)
 
+# User manual: regenerate Part II (reference) of Docs/VTX-User-Manual.odt from
+# the source, in place, and write a preview PDF to $(DISTDIR)/
+.PHONY: manual
+manual:; bash tools/manual/build.sh refresh Docs/VTX-User-Manual.odt && \
+		  bash tools/manual/build.sh pdf Docs/VTX-User-Manual.odt $(DISTDIR)/VTX-User-Manual.pdf
+
 showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 		    @echo "  JAVAINC = $(JAVAINC)"
 		    @echo "    GLIBS = $(GLIBS)"
@@ -62,3 +68,4 @@ showenv:;   @echo "JAVA_HOME = $(JAVA_HOME)";
 			@echo " PLATFORM = $(PLATFORM)"
 			@echo "  LIBTEST = $(LIBPRE)test$(LIBEXT)"						
 			@echo "PATH:$(PATH)"
+			
