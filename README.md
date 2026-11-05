@@ -30,8 +30,7 @@ VTX is written in C++ using OpenGL and GLSL for graphics and wxWidgets for the U
 
 - Memory: 8 GB or more
 - Graphics: NVIDIA GTX 980 or better (Intel integrated graphics will not work)
-- Operating system: tested on Windows 10 and 11, and Ubuntu 18.04
-- [Git Bash](https://git-scm.com/downloads) on Windows
+- Operating system: Windows 10 or 11 (64-bit); the Linux build was tested on Ubuntu 18.04
 
 ### Run VTX
 
