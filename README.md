@@ -35,12 +35,20 @@ VTX is written in C++ using OpenGL and GLSL for graphics and wxWidgets for the U
 
 ### Run VTX
 
+**Windows:** download the latest release from the [Releases page](https://github.com/dwsindorf/VTX/releases):
+
+- **VTX-win64-*version*-setup.exe** installs VTX for the current user (no administrator rights needed) and adds it to the Start menu.
+- **VTX-win64-*version*.zip** is the same program without an installer. Unzip it into a folder you can write to (not *C:\Program Files*) and run **VTX.bat**.
+
+**Linux:** run the Linux build from a clone of this repository:
+
 ```sh
 git clone https://github.com/dwsindorf/VTX
-cd VTX/binaries
-./vtx          # Windows
-./vtx-linux    # Linux
+cd VTX/bin
+./vtx-last     # reopens your last session, if there is one
 ```
+
+The [User Manual](Docs/VTX-User-Manual.odt) explains how to use VTX, and the [Theory of Operation](Docs/VTX-Theory-of-Operation.odt) explains how it works. Both are included as PDFs in the Windows download.
 
 You should see the startup window:
 
@@ -65,3 +73,16 @@ You should see the startup window:
    ![A randomly generated gas giant](Resources/Screenshots/new-random-gas-giant.png)
 
 You can repeat this from any star in the new system.
+
+## Building from source
+
+VTX is built on Windows with Cygwin or MSYS2, MinGW and a static build of wxWidgets 3 (see [Docs/wxWidgets3.1.odt](Docs/wxWidgets3.1.odt) for setting up the tools):
+
+```sh
+cd VTX/Release
+make build_wx      # builds Release/vtx.exe
+cd ../bin
+./vtx-last         # runs the new build
+```
+
+`make distribution` (or `make installer`, with [Inno Setup](https://jrsoftware.org/isinfo.php) installed) in the top directory builds the Windows download in *dist/*.

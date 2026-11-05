@@ -2,3 +2,6 @@
 
 * text=auto
 
+# shell scripts must keep LF endings or bash/sh fail on them
+*.sh text eol=lf
+bin/vtx-last text eol=lf

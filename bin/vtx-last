@@ -1,2 +1,30 @@
 #!/bin/sh
- ./vtx.exe last
+# vtx-last - start VTX from a clone of the repository, reopening the last
+# session (Saves/last.spx) when there is one. Any arguments are passed to VTX
+# instead, e.g.  ./vtx-last --b alpine
+#
+#   Windows (Git Bash): runs Release/vtx.exe after a build (cd Release && make build_wx)
+#   Linux:              runs bin/vtx-linux
+#
+# VTX must start in the directory that holds the program, one level below
+# the Shaders, Saves, Textures... folders - this script takes care of that.
+cd "$(dirname "$0")" || exit 1
+case "$(uname -s)" in
+    Linux*)
+        exe=./vtx-linux ;;
+    *)
+        if [ -f ./vtx.exe ]; then
+            exe=./vtx.exe
+        elif [ -f ../Release/vtx.exe ]; then
+            cd ../Release || exit 1
+            exe=./vtx.exe
+        else
+            echo "vtx-last: vtx.exe not found - build it (cd Release && make build_wx)," >&2
+            echo "          or download VTX from https://github.com/dwsindorf/VTX/releases" >&2
+            exit 1
+        fi ;;
+esac
+if [ $# -eq 0 ] && [ -f ../Saves/last.spx ]; then
+    set -- --m last
+fi
+exec "$exe" "$@"
