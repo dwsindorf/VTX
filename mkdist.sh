@@ -425,8 +425,11 @@ else
 fi
 if [ "$INSTALLER" = 1 ]; then
     say "building installer with $ISCC"
-    "$ISCC" /Q "/DSrcDir=$(cygpath -w "$ABS_OUT/$APPNAME")" "/DAppVersion=$VERSION" \
-        "/O$(cygpath -w "$ABS_OUT")" "$(cygpath -w "$ROOT/installer/vtx.iss")" \
+    # ISCC accepts -X as well as /X switches; use "-" so Git Bash (MSYS) doesn't
+    # mistake /Q, /D..., /O... for Unix paths and rewrite them
+    MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 \
+    "$ISCC" -Q "-DSrcDir=$(cygpath -w "$ABS_OUT/$APPNAME")" "-DAppVersion=$VERSION" \
+        "-O$(cygpath -w "$ABS_OUT")" "$(cygpath -w "$ROOT/installer/vtx.iss")" \
         || die "ISCC failed"
     [ -f "$ABS_OUT/$BUNDLE-setup.exe" ] || die "ISCC ran but $ABS_OUT/$BUNDLE-setup.exe was not created"
     say "wrote $ABS_OUT/$BUNDLE-setup.exe"
