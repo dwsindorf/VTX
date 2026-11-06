@@ -1,22 +1,21 @@
 Scene() {
 	View{
 		view=ORBITAL;
-		phi=-0.736084;
-		theta=284.019;
-		height=760.41 miles;
-		gndlvl=-876.601 ft;
-		time=791523;
+		phi=5;
+		height=0.006;
+		gndlvl=8.33333 ft;
+		time=6.28271e+06;
 		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=0.000375;
+		zoom=0.003;
 		minh=5.68182e-10;
-		minr=0.000374835;
+		minr=0.003;
 		heading=90;
 		pitch=-90;
 		fov=35;
 		gstride=586570;
-		viewobj=Universe.1.Galaxy.1.System.1.Planet.9.Moon.1;
+		viewobj=Universe.1.Galaxy.1.System.1.Planet.3;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -44,7 +43,7 @@ Scene() {
 					rseed=0.5725;
 					specular=Color(1,1,1);
 					temperature=6000;
-					bands("star1",ACHNL|CLAMP,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
+					bands("star1",ACHNL|CLAMP|DECAL|REPLACE,16,Color(1,0.992,0.871),Color(1,0.769,0.122),Color(1,0.353,0.275),Color(0.702,0.361,0.016),
 						Color(0.467,0,0),
 						Color(0.29,0.016,0.071),
 						Color(0,0,0),
@@ -78,15 +77,14 @@ Scene() {
 					ambient=Color(0.94,0.95,0.95,0);
 					day=58.65;
 					name="Mercury";
-					ocean.auto=1;
 					phase=256.788;
 					shadow=Color(0,0,0,0.95);
 					shine=8.77663;
 					specular=Color(1,0.96,0.86,0.41);
 					sunset=0.01;
 					year=87.97;
-					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
-					image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
+					image("ridges",BLEND|DECAL|INVT|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("craters2",BLEND|DECAL|NORM|REPLACE,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 					Surface{
 						terrain=fractal(12,12,0.28,1.08,2.55,0.91,0,0,1,0)
 								Texture("mercury-map",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,-5,0,0,0,0,0)+
@@ -109,14 +107,13 @@ Scene() {
 					fog.vmin=-20000 ft;
 					hscale=0.002;
 					name="Venus";
-					ocean.auto=1;
 					phase=229.166;
 					shadow=Color(0.21,0.17,0.04,0.52);
 					shine=16.4793;
 					specular=Color(1,1,1,0.31);
 					tilt=10;
 					year=100;
-					bands("jupiter",64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
+					bands("jupiter",DECAL|REPLACE,64,0.2,Color(1,0.9,0.5),0.6,Color(1,0.3,0.1));
 					Surface{
 						terrain=fractal(SQR|SS,15.6,3,0.1,0.1,2,0.1,0,0,1,0)fog(noise(GRADIENT|NABS|SQR|UNS,7.6,4.8,0.44,0.5,2,1,1,0,0))
 								
@@ -127,7 +124,6 @@ Scene() {
 					}
 					Clouds(0.00302) {
 						ambient=Color(1,1,1,0.2);
-						crot=1;
 						day=30;
 						resolution=4;
 						shine=44.1719;
@@ -173,14 +169,12 @@ Scene() {
 					ocean.liquid.color1=Color(0.01,0.11,0.34);
 					ocean.liquid.color2=Color(0.04,0.25,0.47);
 					ocean.liquid.shine=68.056;
-					ocean.state=2;
 					phase=229.166;
 					shadow=Color(0,0,0,0.83);
 					shine=6.97914;
 					specular=Color(1,1,1,0.13);
 					tilt=-17;
 					year=365;
-					ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 					Surface{
 						terrain=ocean(0,noise(GRADIENT|NABS|SCALE|SQR|RO1,15.2,8.6,0.1,0.4,1.84,0.73,-0.34,0,0))
 								fractal(SQR|SS,14,8,0.05,0.5,3,0.1,0,1,1,1)snow(-1.1,0.7,0.25,-0.3,1,0.3)
@@ -207,7 +201,6 @@ Scene() {
 					}
 					Clouds(0.00303) {
 						ambient=Color(1,1,1,0.07);
-						crot=1;
 						emission=Color(1,1,1,0.3);
 						name="Clouds2D";
 						resolution=3.98872;
@@ -219,7 +212,6 @@ Scene() {
 						}
 					}
 					Clouds(0.00304) {
-						crot=1;
 						day=0.5;
 						emission=Color(1,1,1,0.21);
 						name="EarthClouds";
@@ -230,7 +222,7 @@ Scene() {
 						tilt=17;
 						Surface{
 							terrain=
-									Texture("earth_clouds",BORDER|TEX,1,1,-4,0.88896,1,2,0.5,0);
+									Texture("earth_clouds-alpha",TEX,1,1,1,0,1,2,0.5,0,0,0,0,0);
 						}
 					}
 					Moon(0.00108,0.1) {
@@ -240,14 +232,13 @@ Scene() {
 						emission=Color(1,1,1,0.04);
 						hscale=0.008;
 						name="Luna";
-						ocean.auto=1;
 						phase=139.997;
 						rseed=2.41294;
 						shadow=Color(0,0,0,0.93);
 						shine=3.02106;
 						specular=Color(1,1,1,0.28);
 						year=27;
-						image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
+						image("craters2",BLEND|DECAL|NORM|REPLACE,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 						Surface{
 							terrain=fractal(SQR|SS,12.5,10,0,0.4,1.13,0.2,0,0,1,0)
 									Texture("craters2",BUMP|RANDOMIZE,7585.35,-1.5,1,0,4.04752,3.30984,0.61972,0,0,0,0,0)+
@@ -262,15 +253,14 @@ Scene() {
 					diffuse=Color(1,1,1,0.85);
 					hscale=0.01;
 					name="Mars";
-					ocean.auto=1;
 					phase=229.166;
 					shine=8.16616;
 					specular=Color(1,1,1,0.39);
 					tilt=25;
 					year=687;
-					bands("dessert",ACHNL,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
+					bands("dessert",ACHNL|DECAL|REPLACE,16,0.2,0.6,Color(1,0.643,0.094,0.6),Color(1,0.894,0.494),
 						Color(0.302,0.082,0.082));
-					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("ridges",BLEND|DECAL|INVT|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					Surface{
 						terrain=snow(-2.2,1.7,0.49,-0.43,1,-0.14)
 								Z(craters(ID4,6,0.000622518,0.2,0.2,0.05,1,1,1,0.1,1,0.8,0.61,0.42,0))+fractal(SQR|SS,12.5,13,0.05,0.5,2,0.1,0.1,0,0.28,0.1)
@@ -302,7 +292,6 @@ Scene() {
 				Planet(0.0434,460) {
 					albedo=1;
 					name="Jupiter";
-					ocean.auto=1;
 					phase=229.166;
 					resolution=2;
 					rot_phase=180;
@@ -342,17 +331,16 @@ Scene() {
 						fog.vmin=17000 ft;
 						hscale=0.004;
 						name="Io";
-						ocean.auto=1;
 						rot_phase=267;
 						rseed=0.561332;
 						shine=8.56316;
 						skew=10.0008;
 						specular=Color(1,1,1,0.59);
 						year=1.8;
-						bands("yellow-white",ACHNL|NORM,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
+						bands("yellow-white",ACHNL|DECAL|NORM|REPLACE,64,Color(1,1,0.502),Color(1,1,0.235),Color(1,0.58,0.157),Color(1,0.502,0),
 							Color(0.502,0.251,0),
 							Color(0.141,0,0));
-						bands("lava2",ACHNL,256,0.37778,0.53334,Color(0.925,0.616,0.122,0.533),Color(0.055,0.035,0.035),
+						bands("lava2",ACHNL|DECAL|REPLACE,256,0.37778,0.53334,Color(0.925,0.616,0.122,0.533),Color(0.055,0.035,0.035),
 							Color(0.596,0,0));
 						Surface{
 							terrain=fog(noise(GRADIENT,8.8,15,1,0.5,2,1,1,0,0.2))
@@ -360,7 +348,7 @@ Scene() {
 									layer(MESH,0)
 										[fractal(SQR|SS,10.5,10.3,0.1,3,3,0.24,0,1,1,1)
 										Texture("yellow-white",TEX,683.359,0.58332,1,0,1,2,0.5,0,0,0,0.61112,0)+
-										Texture("io",BORDER|HMAP|TEX,1,2,0.2,0,1,1.90568,0.86792,0,2,0.88888,0,0,0,0)+
+										Texture("io",BORDER|HMAP|TEX,0.5,2,0.2,0,1,1.90568,0.86792,0,2,0.88888,0,0,0,0)+
 										Texture("crusty2",BUMP|TEX,3683.85,0.5,0.38888,0,6.33328,2,0.5,0,0,0,0,0)+
 										Texture("rock_stones",BUMP|LINEAR|TEX,61.5847,0.5,2,0,6.33328,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|SCALE,4,2,1,0.5,2,1,1,0,0)+0.2*craters(ID2,7,0.0375783,0.66,0.8,1,1,1,1,0.5,1,0.8,0.6,0.2,0))
 										]
@@ -368,7 +356,7 @@ Scene() {
 										[
 										Texture("lava2",BORDER|TEX,1105.9,2,1,-2.33328,1,2,0.5,0,0,0,-1.61112,0)+gloss(1,1.66064)
 										+
-										Texture("io",BORDER|BUMP,1,0,1.08332,0,1,1.90568,0.86792,0,0,0,0,0)+
+										Texture("io",BORDER|BUMP,0.5,0,1.08332,0,1,1.90568,0.86792,0,0,0,0,0)+
 										Texture("coldlava",BUMP|RANDOMIZE,205.145,1,2,0,4.33312,2,0.5,0,0,0,0,0)+Z(noise(GRADIENT|NABS|SCALE|SQR,19.5,2,1,0.5,2,0.39,1,0,0.4))
 										]
 									;
@@ -396,11 +384,10 @@ Scene() {
 						day=96;
 						hscale=0.002;
 						name="Europa";
-						ocean.auto=1;
 						shine=8.56316;
 						specular=Color(1,1,1,0.38);
 						year=3.5;
-						bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+						bands("neptune",ACHNL|DECAL|REPLACE,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
 						Surface{
 							terrain=fractal(SQR|SS,12,12,0.1,1,3,0.2,0.25,1,0.38,1)
 									Texture("neptune",A|BORDER|BUMP|TEX,noise(GRADIENT|NABS|UNS,0,5.1,0.26,0.5,2,1,4,0,0,1e-06),70.6687,0,0.22224,-1.2064,1,2,0.5,0,0,0.98416,0.53968,-0.79368)+
@@ -429,10 +416,9 @@ Scene() {
 					Moon(0.000816,0.665) {
 						day=168;
 						name="Ganymede";
-						ocean.auto=1;
 						phase=313.256;
 						year=7;
-						bands("mercury",ACHNL|CLAMP,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
+						bands("mercury",ACHNL|CLAMP|DECAL|REPLACE,64,0.35186,0.31482,Color(1,0.502,0.251,0.314),Color(0.875,0.875,0.875),
 							Color(0.502,0.502,0.502),
 							Color(0.063,0.063,0.063),
 							Color(0.502,0.502,0.502));
@@ -462,14 +448,13 @@ Scene() {
 					Moon(0.00232732,1.17) {
 						day=408;
 						name="Calisto";
-						ocean.auto=1;
 						phase=313.256;
 						year=17;
-						bands("calisto",ACHNL,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
+						bands("calisto",ACHNL|DECAL|REPLACE,16,0.33962,0.219608,Color(0,0,0,0.22),Color(0.435,0.435,0.435),
 							Color(0.522,0.345,0.227),
 							Color(0.753,0.753,0.753),
 							Color(0.502,0.502,0.502,0.773));
-						image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+						image("ridges",BLEND|DECAL|INVT|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 						Surface{
 							terrain=Z(craters(ID2,3,0.05,0.2,0.8,1,0.8,1,1,0.5,1,0.8,0.6,0.2,0))+fractal(15,3,0.1,0.5,2,0.2,0,0,1,0)
 									Texture("calisto",TEX,4374.8,0.38096,1,0,1,2,0.5,0,0,0.3,-0.1,-0.1)+
@@ -483,7 +468,6 @@ Scene() {
 					day=20;
 					hscale=0.001;
 					name="Saturn";
-					ocean.auto=1;
 					phase=229.166;
 					shadow=Color(0,0,0,0.24);
 					shine=1.63453;
@@ -503,7 +487,7 @@ Scene() {
 						resolution=3;
 						rseed=0.584485;
 						shadow=Color(0,0,0,0.8);
-						bands("saturn-ring",ACHNL|NORM|REFLECT,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
+						bands("saturn-ring",ACHNL|DECAL|NORM|REFLECT|REPLACE,128,0,0.45162,Color(0.129,0.094,0.094,0.451),Color(0.541,0.475,0.435),
 							Color(0.576,0.514,0.455),
 							Color(0.573,0.506,0.467),
 							Color(0.204,0.141,0.106,0.369),
@@ -544,12 +528,12 @@ Scene() {
 						tilt=-10;
 						year=17;
 						ocean.expr=1;
-						bands("saturn",64,0.5,0.3,RAND,Color(1,0.9,0.3),
+						bands("saturn",DECAL|REPLACE,64,0.5,0.3,RAND,Color(1,0.9,0.3),
 							Color(1,0.6,0),
 							Color(0.7,0.4,0),
 							Color(1,0.9,0.3));
-						bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
-						image("eroded",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"neptune");
+						bands("neptune",ACHNL|DECAL|REPLACE,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+						image("eroded",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"neptune");
 						Surface{
 							terrain=ocean(noise(GRADIENT|NABS|NLOD|SCALE|SQR|UNS,16.5,6,0.5,0.1,2.1,0.01,1,0,0),noise(GRADIENT|NABS|SCALE|SQR,15.2,8.6,0.1,0.4,1.84,1,-0.34,0,0))
 									fractal(SQR|SS,13,3,0.1,0.1,2,0.96,0,0,1,0)fog(noise(GRADIENT|NABS,7,13,0.03,0.5,2,1,1,0.47,0.9,1e-06))
@@ -562,7 +546,6 @@ Scene() {
 						}
 						Clouds(0.00162) {
 							ambient=Color(1,1,1,0.14);
-							crot=1;
 							day=10;
 							resolution=3.40408;
 							shine=18.3107;
@@ -596,19 +579,18 @@ Scene() {
 						ambient=Color(1,1,1,0.05);
 						day=32.9;
 						name="Enceladus";
-						ocean.auto=1;
 						phase=313.256;
 						specular=Color(1,1,1);
 						year=1.37;
-						bands("blue-white-tan",ACHNL|CLAMP,64,0,0.411765,Color(1,1,1,0.412),Color(0.008,0.522,0.824,0.376),
+						bands("blue-white-tan",ACHNL|CLAMP|DECAL|REPLACE,64,0,0.411765,Color(1,1,1,0.412),Color(0.008,0.522,0.824,0.376),
 							Color(0.314,0.675,0.973),
 							Color(0.722,0.875,0.976),
 							Color(0.773,0.925,0.988),
 							Color(1,1,1),
 							Color(0.875,0.875,0.875,0.263),
 							Color(0.502,0.251,0));
-						image("enceladus-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"blue-white-tan");
-						bands("neptune",ACHNL,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
+						image("enceladus-2d",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"blue-white-tan");
+						bands("neptune",ACHNL|DECAL|REPLACE,64,Color(0.027,0.216,0.251,0.506),Color(0.012,0.376,0.522),Color(0.769,0.929,0.973,0.318),Color(1,1,1,0.318));
 						Surface{
 							terrain=fractal(SQR|SS,14,10.5,0.05,1,2,0.1,0,0,1,0)
 									Texture("enceladus-2d",BUMP|TEX,122.488,1.5,1.46032,0,3.28576,2.18312,0.5,0,0,0,0,0)+
@@ -636,14 +618,13 @@ Scene() {
 				Planet(0.0157,1783) {
 					day=17.2;
 					name="Uranus";
-					ocean.auto=1;
 					resolution=4;
 					shine=2.62405;
 					skew=0.8;
 					specular=Color(1,1,1,0.46);
 					tilt=98;
 					year=30687;
-					bands("blue-white",ACHNL|NORM,64,Color(0.502,0.973,1),Color(0.231,0.514,1),Color(1,1,1));
+					bands("blue-white",ACHNL|DECAL|NORM|REPLACE,64,Color(0.502,0.973,1),Color(0.231,0.514,1),Color(1,1,1));
 					Surface{
 						terrain=Z(noise(GRADIENT|NABS|SQR,1,12,0.5,0.5,2))+
 								Texture("blue-white",BORDER|BUMP|S|TEX,twist(0.2,noise(GRADIENT|FS|NABS|NEG|SQR|UNS,0,8.2,0.51,0.55,2.25,0.69,1,0,0)),0.9999,0.02,1.29232,2.33968,1,2,1,0,-0.05552,-0.1,0,0.27776);
@@ -664,7 +645,7 @@ Scene() {
 						name="UranusRings";
 						resolution=4;
 						shadow=Color(0,0,0,0.75);
-						bands("uranus-ring",ACHNL|REFLECT,128,0.15094,0.5283,Color(0.224,0.69,0.678,0.525),Color(0.02,0.573,0.922,0),
+						bands("uranus-ring",ACHNL|DECAL|REFLECT|REPLACE,128,0.15094,0.5283,Color(0.224,0.69,0.678,0.525),Color(0.02,0.573,0.922,0),
 							Color(0.039,0.557,0.973,0.188),
 							Color(0.878,0.973,0.98,0.733),
 							Color(0.922,0.91,1,0.075),
@@ -681,7 +662,6 @@ Scene() {
 					ambient=Color(1,1,1,0.11);
 					day=16.1;
 					name="Neptune";
-					ocean.auto=1;
 					shadow=Color(0,0,0,0.37);
 					skew=1.8;
 					specular=Color(1,1,1);
@@ -714,22 +694,21 @@ Scene() {
 					ambient=Color(1,1,1,0.07);
 					day=-153;
 					name="Pluto";
-					ocean.auto=1;
 					phase=229.166;
 					shadow=Color(0,0,0,0.93);
 					shine=4;
 					skew=17.2;
 					specular=Color(1,1,1,0.93);
 					year=90560;
-					image("pluto-2d",ACHNL|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"pluto");
-					bands("pluto",ACHNL|CLAMP,64,Color(0.133,0.078,0.071),Color(0.792,0.369,0.161),Color(0.859,0.875,0.945),Color(0.745,0.8,0.867,0.89),
+					image("pluto-2d",ACHNL|BLEND|DECAL|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,1,5,0.6,0.1),"pluto");
+					bands("pluto",ACHNL|CLAMP|DECAL|REPLACE,64,Color(0.133,0.078,0.071),Color(0.792,0.369,0.161),Color(0.859,0.875,0.945),Color(0.745,0.8,0.867,0.89),
 						Color(0.522,0.424,0.424),
 						Color(0.875,0.718,0.675),
 						Color(0.992,0.984,0.918),
 						Color(0.973,0.973,0.973),
 						Color(1,1,1),
 						Color(1,1,1));
-					image("ridges",INVT|NORM,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
+					image("ridges",BLEND|DECAL|INVT|NORM|REPLACE,256,256,noise(GRADIENT|NABS|NEG|SQR|UNS,0,5,-0.3,0.1,2.22,1.5,1,0,-0.4));
 					Surface{
 						terrain=
 								Texture("pluto-2d",A|BORDER|BUMP|TEX,noise(SIMPLEX|NABS,9.2,10,1,0.51,2,1,4,0,0,1e-06),3323.53,0.3,2,0,7,2.9,0.5,0,0,0.5,0.05,-0.3)+Z(craters(ID2,8,0.002,0.2,0.6,1,0.5,1,1,0.5,1,0.8,0.6,0.2,0))+
@@ -751,10 +730,9 @@ Scene() {
 					Moon(0.000375,0.0109) {
 						day=30;
 						name="Charon";
-						ocean.auto=1;
 						phase=313.256;
 						year=30;
-						image("craters3",NORM,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
+						image("craters3",BLEND|DECAL|NORM|REPLACE,256,256,craters(ID1,2,1,0.9,0.9,0.9,1,1,1,0.9,0.5,0.75,0.5,0.2,0));
 						Surface{
 							terrain=fractal(SQR|SS,12,7.8,0.1,0.2,2,0.5,0,0,1,0)
 									Texture("usgs10m-1",BUMP|HMAP|LINEAR|NORM|TEX,0.5,0.1,1,0,4,2,0.5,0,6.8252,0,2,-0.28568,1.0476,0.66664)+
