@@ -1484,12 +1484,19 @@ NodeIF *TNplant::getInstance(NodeIF *parent, int type){
  	TNplant *plant=0;
     if(strlen(path)){
     	File.getFileNameList(path,"*.spx",list);
-		int ival=std::rand() % list.size;
-		is=list[ival];
-		strcpy(name,is->name());
-		strcpy(path,is->dir());
-		plant=TheScene->open_node(0,path);
-		
+    	if(list.size){
+			int ival=std::rand() % list.size;
+			is=list[ival];
+			strcpy(name,is->name());
+			strcpy(path,is->dir());
+			plant=(TNplant*)TheScene->open_node(0,path);
+    	}
+    }
+    // no saved plants of this type (empty or missing Objects/Plant/<type>
+    // folder) or the file didn't parse: use the built-in prototype (this)
+    if(!plant){
+    	cout<<"TNplant::getInstance: no usable saved "<<name<<" plants - using default"<<endl;
+    	plant=this;
     }
  	cout<<"TNplant::getInstance{"<<name<<") path:"<<path<<endl;
  	path[0]=0;
