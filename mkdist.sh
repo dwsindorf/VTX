@@ -48,6 +48,7 @@
 #   VTX/
 #     VTX.bat            launcher - sets cwd to bin\ (required, see below)
 #     README.txt, MANIFEST.txt
+#     LICENSE.txt, THIRD-PARTY-NOTICES.txt   (from LICENSE.md, THIRD-PARTY-NOTICES.md)
 #     bin/vtx.exe, bin/*.dll
 #     Docs/ Objects/ Resources/ Saves/ Shaders/ Textures/
 #     Bitmaps/ Images/ Movies/   (empty, written to at runtime)
@@ -115,6 +116,9 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 cd "$ROOT"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$ROOT is not inside a git work tree"
 [ -f "$EXE" ] || die "executable not found: $ROOT/$EXE (build it first, or use -e)"
+for f in LICENSE.md THIRD-PARTY-NOTICES.md; do
+    [ -f "$f" ] || die "$f is missing: the bundle must ship the license and third-party notices"
+done
 
 if [ "$INSTALLER" = 1 ]; then
     [ -f installer/vtx.iss ] || die "installer/vtx.iss not found"
@@ -487,8 +491,19 @@ Run
 Requires an OpenGL driver with GLSL + geometry shader support.
 
 Documentation is in Docs\\.
+
+License
+  Copyright (c) 1996-2026 Dean Sindorf. Free for noncommercial use under
+  the PolyForm Noncommercial License 1.0.0; commercial use requires the
+  author's written permission. Provided as is, without warranty.
+  See LICENSE.txt. Third-party components and their licenses are listed
+  in THIRD-PARTY-NOTICES.txt.
 EOF
-printf 's/$/\r/\n' > "$TMP/crlf.sed"; sed -i -f "$TMP/crlf.sed" "$STAGE/README.txt"
+# UTF-8 with BOM so Notepad and the installer's license page show (c) and dashes correctly
+{ printf '\357\273\277'; cat LICENSE.md; } > "$STAGE/LICENSE.txt"
+{ printf '\357\273\277'; cat THIRD-PARTY-NOTICES.md; } > "$STAGE/THIRD-PARTY-NOTICES.txt"
+printf 's/$/\r/\n' > "$TMP/crlf.sed"
+for f in README.txt LICENSE.txt THIRD-PARTY-NOTICES.txt; do sed -i -f "$TMP/crlf.sed" "$STAGE/$f"; done
 
 ( cd "$STAGE" && find . -type f ! -name MANIFEST.txt | sed 's#^\./##' | sort ) > "$STAGE/MANIFEST.txt"
 

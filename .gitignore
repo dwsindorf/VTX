@@ -25,3 +25,4 @@ LINUX
 Saves/last.spx
 .metadata
 Test*
+__pycache__/

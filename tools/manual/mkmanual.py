@@ -49,7 +49,14 @@ NAVY, HEADBG, RULE, NOTEBG = '#1f3a5f', '#dde6f0', '#b4c2d3', '#eef3f8'
 # ---------------------------------------------------------------------------
 # named styles the manual relies on (added to styles.xml when missing)
 # ---------------------------------------------------------------------------
+# copyright/license notice on the title page (keep in step with LICENSE.md)
+LEGAL_NOTICE = ("Copyright © 1996–2026 Dean Sindorf. VTX and this manual are free for noncommercial use under the PolyForm Noncommercial License 1.0.0; commercial use requires the author's written permission. VTX is provided as is, without warranty. See LICENSE.md (LICENSE.txt in the Windows bundle) for the full terms and THIRD-PARTY-NOTICES.md for components by other authors.")
+
 NAMED_STYLES = {
+    'VTX_20_Legal': f'''<style:style style:name="VTX_20_Legal" style:display-name="VTX Legal" style:family="paragraph" style:parent-style-name="Text_20_body">
+  <style:paragraph-properties fo:text-align="center" fo:margin-left="0.6in" fo:margin-right="0.6in" fo:margin-top="0.35in" fo:margin-bottom="0.25in"/>
+  <style:text-properties fo:font-size="8.5pt" fo:color="#5a6b7d"/>
+</style:style>''',
     'VTX_20_Note': f'''<style:style style:name="VTX_20_Note" style:display-name="VTX Note" style:family="paragraph" style:parent-style-name="Text_20_body">
   <style:paragraph-properties fo:margin-left="0.15in" fo:margin-right="0.15in" fo:margin-top="0.08in" fo:margin-bottom="0.1in" fo:background-color="{NOTEBG}" fo:padding="0.07in" fo:border-left="0.04in solid {NAVY}" fo:border-right="none" fo:border-top="none" fo:border-bottom="none"/>
 </style:style>''',
@@ -575,6 +582,7 @@ def new(path, guide, template, root, notes_path):
     g.p('Exploring and editing a procedural universe with the Virtual Terrain Explorer', 'Subtitle')
     g.p('Dean Sindorf', 'Subtitle')
     g.p(f'Draft, {datetime.date.today():%B %Y}', 'Subtitle')
+    g.p(LEGAL_NOTICE, 'VTX_20_Legal')
     g.parts.append('@@TOC@@')
     g.part('Part I: User guide')
     render_guide(open(guide, encoding='utf-8').read(), g)

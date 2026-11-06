@@ -31,6 +31,8 @@ OutputBaseFilename=VTX-win64-{#AppVersion}-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+; License page: users must accept the PolyForm Noncommercial terms to install
+LicenseFile={#SrcDir}\LICENSE.txt
 UninstallDisplayIcon={app}\bin\vtx.exe
 UninstallDisplayName=VTX
 

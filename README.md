@@ -76,3 +76,11 @@ You can repeat this from any star in the new system.
 ## Building from source
 
 VTX is built on Windows with Cygwin, its MinGW-w64 cross-compiler and a static build of wxWidgets. [BUILDING.md](BUILDING.md) has the full instructions, including how to package a release.
+
+## License
+
+Copyright © 1996–2026 Dean Sindorf.
+
+VTX is free for noncommercial use: personal projects, hobbies, study, teaching and research. You may use, modify and share it for those purposes, but you may not sell it or use it commercially without written permission. The full terms are the [PolyForm Noncommercial License 1.0.0](LICENSE.md). VTX is provided as is, without warranty.
+
+Some included code and libraries are by other authors and are under their own licenses; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
