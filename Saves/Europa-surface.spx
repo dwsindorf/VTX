@@ -3,7 +3,7 @@ Scene() {
 		view=SURFACE;
 		phi=4.74334;
 		theta=349.229;
-		height=4384.42 ft;
+		height=6098.49 ft;
 		gndlvl=-4236.44 ft;
 		time=2.37411e+06;
 		vstride=0.02;
@@ -11,15 +11,13 @@ Scene() {
 		astride=1;
 		zoom=0.000207;
 		minh=5.68182e-10;
-		heading=3;
+		minr=0.000206198;
+		heading=7;
 		tilt=-9;
 		angle=2;
 		fov=25;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1.Moon.1;
-	}
-	View{
-		minr=0.000206198;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -53,8 +51,6 @@ Scene() {
 				Planet(0.0434,484) {
 					albedo=1;
 					day=24;
-					ocean.auto=1;
-					ocean.state=2;
 					phase=24.9984;
 					resolution=2;
 					rot_phase=180;
@@ -88,10 +84,10 @@ Scene() {
 					}
 					Moon(0.000207,0.416) {
 						day=24;
-						hscale=0.00396936;
+						hscale=0.002;
 						name="Europa";
 						ocean.auto=1;
-						ocean.level=-4166.8 ft;
+						ocean.level=-100 ft;
 						ocean.liquid.albedo=41.666;
 						ocean.liquid.clarity=411.489 ft;
 						ocean.liquid.color1=Color(1,1,1,0.92);
@@ -109,7 +105,7 @@ Scene() {
 						specular=Color(1,1,1,0.29);
 						year=100;
 						ocean.expr=noise(GRADIENT|RO1,2,10,1,0.5,2,0.7,1,0,0,1e-06);
-						bands("yellow-black",ACHNL|CLAMP|NORM,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
+						bands("yellow-black",ACHNL|CLAMP|DECAL|NORM|REPLACE,16,Color(0.969,0.91,0.616,0),Color(1,0.875,0.275,0.384),Color(0.925,0.482,0.039),Color(0.675,0.082,0.035),
 							Color(0.173,0,0.055),
 							Color(0.075,0.02,0.02));
 						Surface{

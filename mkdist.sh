@@ -30,10 +30,17 @@
 #     first (tools/manual/build.sh), and tables of contents are updated.
 #   * Resources: everything tracked except compile-time sources (*.xpm etc.
 #     are #included into VtxFrame.cpp and are not needed at runtime).
-#   * Textures/Maps, Textures/Images: only images some shipped scene, object
-#     or the code refers to by name (see TRIM_DIRS); unused ones are skipped.
-#   * Objects, Textures, Bitmaps: all tracked files, plus the full directory tree from
-#     the working copy (so empty category folders exist at runtime).
+#   * Textures/Maps, Textures/Images: everything at the top level (the Image
+#     Editor lists them), except big unused .png/.bmp files - ones no shipped
+#     scene, object or the code names (see TRIM_DIRS). Their subfolders are
+#     skipped (VTX never looks inside them).
+#   * Textures: all tracked files, plus the full directory tree from the
+#     working copy (so empty category folders exist at runtime).
+#   * Objects: the category folders, but saved objects only from OBJECT_DIRS
+#     (default Objects/Plant: Generate picks random plants from Plant/Grass,
+#     Bush and Tree). The rest is a per-user library built with Save..; the
+#     Add menus fall back to built-in defaults when a folder is empty.
+#     SHIP_OBJECTS=1 ships every tracked saved object.
 #   * bin/vtx.exe plus every non-system DLL it needs (recursive objdump scan).
 #
 # Layout of the bundle (matches FileUtil::getBaseDirectory(): base = parent
@@ -67,6 +74,16 @@ MANUALS="Docs/VTX-User-Manual.odt"
 # or the C++ code mentions its name. Other texture folders (Plants, Sprites,
 # Hmaps) are also picked at random by the generators, so they always ship.
 TRIM_DIRS="Textures/Maps Textures/Images"
+# ...but the Image Editor lists every file in them as an example, so an unused
+# file is only dropped when it is one of TRIM_EXTS and bigger than TRIM_MB.
+# Files in their subfolders are never seen by VTX and are always dropped.
+TRIM_EXTS="png bmp"
+TRIM_MB=5
+
+# Saved objects that ship (Generate needs the plants); SHIP_OBJECTS=1 ships all
+OBJECT_DIRS="Objects/Plant"
+SHIP_OBJECTS=${SHIP_OBJECTS:-0}
+[ "$SHIP_OBJECTS" = 1 ] && OBJECT_DIRS="Objects"
 
 usage() { sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while getopts "e:o:nkDivh" opt; do
@@ -194,16 +211,26 @@ add_dir Saves
 
 #--- Textures, Objects: all tracked files + working-copy dir tree ------------
 # names referenced anywhere that ships: quoted strings in tracked .spx files
-# under Saves/Objects/Resources, plus string literals in the C++ sources
-{ git ls-files -z -- 'Saves/*.spx' 'Objects/*.spx' 'Resources/*.spx' | xargs -0 cat 2>/dev/null
+# under Saves (and Objects, if shipped) and Resources, plus C++ string literals
+OBJSPX=; for o in $OBJECT_DIRS; do OBJSPX="$OBJSPX $o/*.spx"; done
+{ git ls-files -z -- 'Saves/*.spx' $OBJSPX 'Resources/*.spx' | xargs -0 cat 2>/dev/null
   git ls-files -z -- '*.cpp' ':!includes/GL/' | xargs -0 cat 2>/dev/null; } \
   | { grep -ohE '"[^"]{1,200}"' || true; } | tr -d '"' | tr 'A-Z' 'a-z' | sort -u > "$TMP/refs"
 : > "$TMP/trimmed"
+nobj=$(git ls-files -- 'Objects/*.spx' | wc -l)
 for d in Textures Objects Bitmaps; do
-    git ls-files -- "$d/" | while read -r f; do
+    { if [ "$d" = Objects ]; then for o in $OBJECT_DIRS; do git ls-files -- "$o/"; done
+      else git ls-files -- "$d/"; fi; } \
+    | while read -r f; do
         for t in $TRIM_DIRS; do
             case "$f" in "$t"/*)
-                base=$(basename "$f"); base=${base%.*}
+                # VTX only scans the top level of these folders (FileUtil::
+                # getFileNameList isn't recursive), so files in subfolders such
+                # as Textures/Images/Plants can never be loaded
+                case "${f#"$t"/}" in */*) echo "$f" >> "$TMP/trimmed"; continue 2 ;; esac
+                base=$(basename "$f"); ext=$(echo "${base##*.}" | tr 'A-Z' 'a-z'); base=${base%.*}
+                case " $TRIM_EXTS " in *" $ext "*) ;; *) break ;; esac
+                [ -f "$f" ] && [ "$(wc -c < "$f")" -gt $((TRIM_MB*1048576)) ] || break
                 if ! grep -Fxq -- "$(echo "$base" | tr 'A-Z' 'a-z')" "$TMP/refs"; then
                     echo "$f" >> "$TMP/trimmed"
                     continue 2
@@ -217,6 +244,11 @@ for d in Textures Objects Bitmaps; do
     fi
 done
 add_dir Textures/Processed      # FileUtil::getProcessedDir() won't create it
+add_dir System                  # scratch files (drag & drop) - not always created first
+if [ "$SHIP_OBJECTS" != 1 ]; then
+    nship=$(for o in $OBJECT_DIRS; do git ls-files -- "$o/*.spx"; done | wc -l)
+    say "objects: $nship of $nobj saved objects shipped (from $OBJECT_DIRS; SHIP_OBJECTS=1 for all)"
+fi
 
 #--- Resources: tracked, minus compile-time-only sources ---------------------
 git ls-files -- 'Resources/' \
@@ -275,9 +307,9 @@ if [ "$VERBOSE" = 1 ]; then
 fi
 
 if [ -s "$TMP/trimmed" ]; then
-    mb=$(while read -r f; do [ -f "$f" ] && wc -c < "$f"; done < "$TMP/trimmed" | awk '{s+=$1} END {printf "%.0f", s/1048576}')
-    say "textures: $(wc -l < "$TMP/trimmed") unused images in $TRIM_DIRS skipped (${mb} MB)"
-    [ "$VERBOSE" = 1 ] && sed 's/^/    - unused: /' "$TMP/trimmed"
+    mb=$(while read -r f; do if [ -f "$f" ]; then wc -c < "$f"; fi; done < "$TMP/trimmed" | awk '{s+=$1} END {printf "%.0f", s/1048576}')
+    say "textures: $(wc -l < "$TMP/trimmed") images skipped (in subfolders, or unused $TRIM_EXTS > ${TRIM_MB} MB) (${mb} MB)"
+    if [ "$VERBOSE" = 1 ]; then sed 's/^/    - unused: /' "$TMP/trimmed"; fi
 fi
 
 #--- runtime-created dirs ----------------------------------------------------
@@ -346,6 +378,33 @@ fi
 
 sort -u -o "$TMP/files" "$TMP/files"
 sort -u -o "$TMP/dirs"  "$TMP/dirs"
+
+#=============================================================================
+# size report: where the bundle's bytes go (uncompressed). Printed on dry runs
+# and with -v, and always written to $OUTDIR/size-report.txt
+#=============================================================================
+size_report() {
+    { echo "$EXE"; cat "$TMP/dlls" "$TMP/files"; } | tr '\n' '\0' \
+      | xargs -0 stat -c '%s	%n' 2>/dev/null > "$TMP/sizes" || true
+    echo "=== size by folder (MB uncompressed, files, folder) ==="
+    awk -F'\t' '{ n=split($2,a,"/"); k=a[1]
+                   if ((a[1]=="Textures" || a[1]=="Objects") && n>2) k=a[1]"/"a[2]
+                   if (n==1) k="(top)"
+                   s[k]+=$1; c[k]++; t+=$1 }
+                 END { for (k in s) printf "%8.1f %6d  %s\n", s[k]/1048576, c[k], k }' "$TMP/sizes" | sort -rn
+    awk -F'\t' '{ t+=$1 } END { printf "%8.1f %6d  TOTAL\n", t/1048576, NR }' "$TMP/sizes"
+    echo "=== largest files (MB) ==="
+    sort -rn "$TMP/sizes" | head -30 | awk -F'\t' '{ printf "%8.1f  %s\n", $1/1048576, $2 }'
+    if [ -s "$TMP/convert" ]; then
+        echo "(plus PDFs converted from: $(tr '\n' ' ' < "$TMP/convert"))"
+    fi
+}
+mkdir -p "$OUTDIR"
+size_report > "$OUTDIR/size-report.txt"
+if [ "$DRYRUN" = 1 ] || [ "$VERBOSE" = 1 ]; then
+    cat "$OUTDIR/size-report.txt"
+fi
+say "size report: $OUTDIR/size-report.txt"
 
 #=============================================================================
 # dry run

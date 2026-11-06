@@ -61,7 +61,7 @@ VTX.bat passes its arguments to vtx.exe:
 | bin | The program |
 | Docs | This manual and the Theory of Operation |
 | Saves | Scene files (*.spx*), including *last.spx* and *Default.spx* |
-| Objects | Saved objects that can be added to scenes, by type |
+| Objects | Saved objects, by type (a new installation includes only plants) |
 | Textures | Image textures, plant images and sprite images |
 | Bitmaps | Textures that VTX generates for new worlds (see Generating new worlds) |
 | Images | Snapshots saved with **File > Save Image** |
@@ -291,6 +291,10 @@ Scene files are plain text that describes the object tree and its expressions, s
 ## Saved objects
 
 Any object can be saved on its own with **Save..** in its tree menu. Saved objects go into the *Objects* folder, organized by type, and then appear in the **Add** and **Replace with..** menus of matching objects. This is the way to build a library of favorite planets, cloud layers, plants or rock types and reuse them across scenes.
+
+A new installation includes only the plants in *Objects\Plant*, which **Generate** draws on when it adds grass, bushes and trees to a world. The other folders are empty, so until you save objects of your own, the **Add** menus offer only the built-in default for those types. Scenes don't depend on the library, because a scene file contains all of its objects.
+
+The VTX repository on GitHub (https://github.com/dwsindorf/VTX) has a collection of example objects in its *Objects* folder. To use them, copy the .spx files you want into the matching subfolder of your installation, for example *Objects\Planet*. Some were saved with earlier versions of VTX, so they may not load, or may look different from when they were made. Some also use textures that VTX generates into the *Bitmaps* folder, which a new installation doesn't have yet.
 
 # Pictures and movies
 
