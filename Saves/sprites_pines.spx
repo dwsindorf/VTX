@@ -1,73 +1,22 @@
 Scene() {
 	View{
 		view=SURFACE;
-		phi=-44.9451;
-		theta=25.7032;
-		height=18.0888 ft;
-		gndlvl=-36528.5 ft;
+		phi=-45.2799;
+		theta=25.753;
+		height=71.2237 ft;
+		gndlvl=-81947.5 ft;
 		time=34168.8;
-		vstride=1;
+		vstride=0.02;
 		hstride=1;
 		astride=1;
-		zoom=1;
-		minh=9.4697e-10;
-		heading=336;
-		tilt=-2;
-		angle=-24;
+		zoom=0.004;
+		minh=5.68182e-10;
+		minr=0.00398448;
+		heading=325;
+		tilt=-9;
 		fov=35;
 		gstride=586570;
 		viewobj=Universe.1.Galaxy.1.System.1.Planet.1;
-	}
-	View{
-		height=86.4499 ft;
-		heading=312;
-		tilt=-4;
-		angle=-35;
-	}
-	View{
-		height=18.1202 ft;
-		heading=317;
-		tilt=1;
-	}
-	View{
-		tilt=-2;
-		angle=-34;
-	}
-	View{
-		tilt=-5;
-	}
-	View{
-		tilt=-9;
-		angle=-35;
-	}
-	View{
-		phi=-45.2747;
-		theta=25.7465;
-		height=1313.6 ft;
-		gndlvl=-82035.2 ft;
-		tilt=-15;
-		angle=0;
-	}
-	View{
-		heading=318;
-	}
-	View{
-		phi=-45.2799;
-		theta=25.753;
-		height=43.3495 ft;
-		gndlvl=-81947.5 ft;
-	}
-	View{
-		height=28.4762 ft;
-		heading=325;
-		tilt=-9;
-		vstride=0.02;
-		zoom=0.004;
-		minh=5.68182e-10;
-		radius=0.00398449;
-	}
-	View{
-		minr=0.00398448;
 	}
 	Universe {
 		Galaxy(20000) {
@@ -119,14 +68,12 @@ Scene() {
 						terrain=
 								Sprite("rocks9x",FLIP|NOLOD,1,1.39343e-06,1,1,0,0,0,0,0,0)
 								Sprite("bushes9x",FLIP|NOLOD,2,3.46414e-07,1.68,1,0,0,0,0,0,0)
-								Sprite("firs2x2",FLIP|NOLOD,1,2.58988e-06,2,1,0,0,0,0,0,0)
+								Sprite("firs2x2",FLIP|NOLOD,1,2.58988e-06,4,0.1,0,0,0,0,0,0,0,0)
 								Texture("alpine2",BORDER|TEX,17.858,0.88888,1,0,1,2,0.5,0,0,0.03176,0,0.73016)+
-								Texture("tallgrass-3",A|NORM|RANDOMIZE|S|TEX,noise(GRADIENT|NABS|SCALE|SQR,16.8,3.6,0.48,0.5,2,1,4,0,0.9,1e-06),noise(GRADIENT|SQR,14.4,9.6,0.89,0.29,2.41,1,4,0,0.5,1e-06),2.09715e+06,1,-0.1,0,3.28576,1.3944,1,0,0,-0.6032,0,-1.36504)+
 								Texture("DirtPebbles",BUMP|TEX,2.09715e+06,0.1,2,0,1,2,0.5,0,0,0,0,0)+Z(noise(SIMPLEX|SQR,4.8,14,0.5,0.5,2,2,1,0,0,1e-06));
 					}
 					Clouds(0.0040629) {
 						ambient=Color(1,1,1,0.6);
-						crot=1;
 						day=0.5;
 						diffuse=Color(1,1,1,0.47);
 						diffusion=0.2096;

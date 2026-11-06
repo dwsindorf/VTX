@@ -184,6 +184,7 @@ int PlacementMgr::bad_active=0;
 int PlacementMgr::new_placements=0;
 int PlacementMgr::bad_pts=0;
 int PlacementMgr::hashsize=HASHSIZE;
+bool PlacementMgr::hash_dirty=true;
 double PlacementMgr::render_ptsize=1;
 double PlacementMgr::adapt_ptsize=1;
 double PlacementMgr::collect_minpts=1;
@@ -264,6 +265,7 @@ void PlacementMgr::free_htable()
         }
         hash[i] = 0;
     }
+    hash_dirty=false;
     resetAll();
 }
 
@@ -275,12 +277,21 @@ void PlacementMgr::reset()
 	index=0;
     if(!hash) 
     	return;
+    // The hash table is shared by all plant, sprite and rock managers and has
+    // HASHSIZE (4M) buckets. Every manager's init() calls reset() on every
+    // frame (via TerrainMgr init), so walking it unconditionally cost ~0.2 s
+    // per call. Placement state only changes in eval() (which sets
+    // hash_dirty), so when nothing was evaluated since the last reset the
+    // walk would only re-clear flags that are already clear - skip it.
+    if(hash_dirty){
     for(int i=0; i<hashsize; i++){
         Placement* h = hash[i];
         while(h){  // ⭐ Loop through chain
             h->reset();
             h = h->next;
         }
+    }
+    hash_dirty=false;
     }
     list.reset();
     cval=0;
@@ -589,6 +600,7 @@ void PlacementMgr::eval()
 {
 	if(density <= 0 || !hash)
 	   return;  // skip early — was checked in Placement::eval() before calling this
+	hash_dirty=true;  // placements may be added or their state changed below
 
     Point4D p;
     Point4D pv=TheNoise.get_point();

@@ -30,6 +30,8 @@
 #     first (tools/manual/build.sh), and tables of contents are updated.
 #   * Resources: everything tracked except compile-time sources (*.xpm etc.
 #     are #included into VtxFrame.cpp and are not needed at runtime).
+#   * Textures/Maps, Textures/Images: only images some shipped scene, object
+#     or the code refers to by name (see TRIM_DIRS); unused ones are skipped.
 #   * Objects, Textures, Bitmaps: all tracked files, plus the full directory tree from
 #     the working copy (so empty category folders exist at runtime).
 #   * bin/vtx.exe plus every non-system DLL it needs (recursive objdump scan).
@@ -59,6 +61,12 @@ DOCS="Docs/VTX-User-Manual.odt Docs/VTX-Theory-of-Operation.odt"   # .odt -> shi
 # Manuals whose generated reference section (tools/manual) is refreshed from
 # the current source before conversion. The .odt in the repo isn't modified.
 MANUALS="Docs/VTX-User-Manual.odt"
+
+# Image folders whose files VTX only ever loads by name, e.g. Texture("mars",..).
+# A file here ships only if a shipped scene/object (Saves, Objects, Resources)
+# or the C++ code mentions its name. Other texture folders (Plants, Sprites,
+# Hmaps) are also picked at random by the generators, so they always ship.
+TRIM_DIRS="Textures/Maps Textures/Images"
 
 usage() { sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 while getopts "e:o:nkDivh" opt; do
@@ -185,8 +193,25 @@ git ls-files -- 'Saves/*.spx' | while read -r f; do add_file "$f"; done
 add_dir Saves
 
 #--- Textures, Objects: all tracked files + working-copy dir tree ------------
+# names referenced anywhere that ships: quoted strings in tracked .spx files
+# under Saves/Objects/Resources, plus string literals in the C++ sources
+{ git ls-files -z -- 'Saves/*.spx' 'Objects/*.spx' 'Resources/*.spx' | xargs -0 cat 2>/dev/null
+  git ls-files -z -- '*.cpp' ':!includes/GL/' | xargs -0 cat 2>/dev/null; } \
+  | { grep -ohE '"[^"]{1,200}"' || true; } | tr -d '"' | tr 'A-Z' 'a-z' | sort -u > "$TMP/refs"
+: > "$TMP/trimmed"
 for d in Textures Objects Bitmaps; do
-    git ls-files -- "$d/" | while read -r f; do add_file "$f"; done
+    git ls-files -- "$d/" | while read -r f; do
+        for t in $TRIM_DIRS; do
+            case "$f" in "$t"/*)
+                base=$(basename "$f"); base=${base%.*}
+                if ! grep -Fxq -- "$(echo "$base" | tr 'A-Z' 'a-z')" "$TMP/refs"; then
+                    echo "$f" >> "$TMP/trimmed"
+                    continue 2
+                fi ;;
+            esac
+        done
+        add_file "$f"
+    done
     if [ -d "$d" ]; then
         find "$d" -type d ! -name '.*' >> "$TMP/dirs"
     fi
@@ -247,6 +272,12 @@ say "shaders: $nsh used, $nskip tracked-but-unused skipped"
 if [ "$VERBOSE" = 1 ]; then
     git ls-files -- 'Shaders/' | sed 's#^Shaders/##' | { grep -Fvxf "$TMP/shaders" || true; } \
         | sed 's/^/    - unused: /'
+fi
+
+if [ -s "$TMP/trimmed" ]; then
+    mb=$(while read -r f; do [ -f "$f" ] && wc -c < "$f"; done < "$TMP/trimmed" | awk '{s+=$1} END {printf "%.0f", s/1048576}')
+    say "textures: $(wc -l < "$TMP/trimmed") unused images in $TRIM_DIRS skipped (${mb} MB)"
+    [ "$VERBOSE" = 1 ] && sed 's/^/    - unused: /' "$TMP/trimmed"
 fi
 
 #--- runtime-created dirs ----------------------------------------------------

@@ -257,6 +257,7 @@ public:
 	static PlacementStats Stats;
 	static int  trys,visits,bad_visits,bad_valid,bad_active,bad_pts,new_placements;
 	static int hashsize;
+	static bool hash_dirty;  // table changed since the last reset() (see reset())
 	static double collect_minpts,adapt_ptsize,render_ptsize;
 	static int min_hits;
 
