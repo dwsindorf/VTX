@@ -14,7 +14,7 @@ Planet(0.0015,30) {
 	image("craters2",NORM,512,512,craters(ID1,1,2,0.9,0.9,0.35,0.9,1,1,0.9,0.5,0.75,0.5,0.2));
 	Surface{
 		terrain=fractal(12,12,0.28,1.08,2.55,0.91,0,0,1,0)
-				Texture("mercury-4k",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,-5,0,0,0,0,0)+
+				Texture("mercury-map",BUMP|HMAP|TEX,1,1,2,0,1,2,0.5,0,-5,0,0,0,0,0)+
 				Texture("ridges",BUMP|RANDOMIZE,65536,-1,1,0,4,2.5,0.53522,0,0,0,0,0)+
 				Texture("craters2",BUMP,93.022,-1,1,0,4,2.5,0.53522,0,0,0,0,0);
 	}

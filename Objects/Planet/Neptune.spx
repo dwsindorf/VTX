@@ -10,7 +10,7 @@ Planet(0.0154,2805) {
 	ocean.expr=noise(GRADIENT|NNORM|SCALE|RO1,5,9.5,1,0.5,2,0.4,1,0,0);
 	Surface{
 		terrain=
-				Texture("neptune-2k",BUMP|LINEAR|TEX,1,0,2,0,1,1.90568,1,0,0,0,0,0);
+				Texture("neptune-map",BUMP|LINEAR|TEX,1,0,2,0,1,1.90568,1,0,0,0,0,0);
 	}
 	Sky(0.0157962) {
 		color=Color(0,0.58,0.89);

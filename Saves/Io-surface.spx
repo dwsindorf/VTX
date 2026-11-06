@@ -170,7 +170,7 @@ Scene() {
 					year=4380;
 					Surface{
 						terrain=
-								Texture("jupiter1",BUMP|TEX,1,0.2,2,0,2.95936,2,0.67346,0,0,0,0,0);
+								Texture("jupiter-map",BUMP|TEX,1,0.2,2,0,2.95936,2,0.67346,0,0,0,0,0);
 					}
 					Sky(0.0444) {
 						color=Color(1,0.98,0);
