@@ -53,6 +53,7 @@ NAVY, HEADBG, RULE, NOTEBG = '#1f3a5f', '#dde6f0', '#b4c2d3', '#eef3f8'
 LEGAL_NOTICE = ("Copyright © 1996–2026 Dean Sindorf. VTX and this manual are free for noncommercial use under the PolyForm Noncommercial License 1.0.0; commercial use requires the author's written permission. VTX is provided as is, without warranty. See LICENSE.md (LICENSE.txt in the Windows bundle) for the full terms and THIRD-PARTY-NOTICES.md for components by other authors.")
 
 NAMED_STYLES = {
+    'VTX_20_Version': '<style:style style:name="VTX_20_Version" style:display-name="VTX Version" style:family="paragraph" style:parent-style-name="Subtitle"/>',
     'VTX_20_Legal': f'''<style:style style:name="VTX_20_Legal" style:display-name="VTX Legal" style:family="paragraph" style:parent-style-name="Text_20_body">
   <style:paragraph-properties fo:text-align="center" fo:margin-left="0.6in" fo:margin-right="0.6in" fo:margin-top="0.35in" fo:margin-bottom="0.25in"/>
   <style:text-properties fo:font-size="8.5pt" fo:color="#5a6b7d"/>
@@ -545,6 +546,23 @@ def version_string(root):
     return v or datetime.date.today().isoformat()
 
 
+def version_line(version):
+    """Title-page version line, e.g. 'Version 1.0, November 2026' from 'v1.0'."""
+    v = re.sub(r'^v(?=\d)', '', version)
+    return f'Version {escape(v)}, {datetime.date.today():%B %Y}'
+
+
+def stamp(path, out):
+    """Set the title page's version line (paragraphs in the VTX Version style)."""
+    files = read_odt(path)
+    content = files['content.xml'].decode('utf-8')
+    content, n = re.subn(r'(<text:p text:style-name="VTX_20_Version">).*?(</text:p>)',
+                         lambda m: m.group(1) + version_line(version_string(ROOT)) + m.group(2), content, flags=re.S)
+    files['content.xml'] = content.encode('utf-8')
+    write_odt(out or path, files)
+    print(f'### version line: {n} paragraph(s) in {out or path}')
+
+
 def replace_auto_styles(content, prefix, new_styles):
     """Drop old prefix* automatic styles, add new ones."""
     content = re.sub(r'<style:style style:name="%s[^"]*"[^>]*?(?:/>|>.*?</style:style>)\s*' % prefix, '', content, flags=re.S)
@@ -583,8 +601,7 @@ def new(path, guide, template, root, notes_path):
     g = Doc('vtx_')
     g.p('VTX User Manual', 'Title')
     g.p('Exploring and editing a procedural universe with the Virtual Terrain Explorer', 'Subtitle')
-    g.p('Dean Sindorf', 'Subtitle')
-    g.p(f'Draft, {datetime.date.today():%B %Y}', 'Subtitle')
+    g.p(version_line(version), 'VTX_20_Version')
     g.p(LEGAL_NOTICE, 'VTX_20_Legal')
     g.parts.append('@@TOC@@')
     g.part('Part I: User guide')
@@ -628,18 +645,21 @@ def new(path, guide, template, root, notes_path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('mode', choices=['update', 'new'])
+    ap.add_argument('mode', choices=['update', 'new', 'stamp'])
     ap.add_argument('odt')
-    ap.add_argument('-o', '--out', help='write here instead of updating ODT in place (update mode)')
+    ap.add_argument('-o', '--out', help='write here instead of updating ODT in place (update and stamp modes)')
     ap.add_argument('--root', default=os.path.join(HERE, '..', '..'), help='VTX source root (default: ../..)')
     ap.add_argument('--notes', default=os.path.join(HERE, 'control_notes.txt'))
     ap.add_argument('--guide', default=os.path.join(HERE, 'guide.md'))
     ap.add_argument('--template', help='ODT whose page and paragraph styles to use (new mode)')
     ap.add_argument('--version', help='version text for the reference (default: git describe)')
     a = ap.parse_args()
-    global VERSION
+    global VERSION, ROOT
     VERSION = a.version
-    if a.mode == 'update':
+    ROOT = a.root
+    if a.mode == 'stamp':
+        stamp(a.odt, a.out)
+    elif a.mode == 'update':
         update(a.odt, a.out, a.root, a.notes)
     else:
         template = a.template or os.path.join(a.root, 'Docs', 'VTX-Theory-of-Operation.odt')

@@ -267,10 +267,18 @@ Most changes appear in the view immediately. Changes that affect terrain shape t
 Expressions in a surface can be long. VTX can show the noise, fractal, crater and erosion functions in an expression as short tokens such as *Noise1*, and edit each one in its own dialog:
 
 1. Double-click a token in an expression field to select it.
-2. Right-click and choose **Edit**. The Noise or Function editor opens with that function's settings.
-3. Change the settings. The expression updates when you apply them.
+2. Right-click and choose **Edit**. The Function Editor opens with that function's settings.
+3. Change the settings. The expression updates as you change them.
 
 To insert a new function, right-click in the field with nothing selected and choose **Add > Noise**, **Fractal**, **Craters** or **Erode**.
+
+[[SCREENSHOT: Right-click an expression field and choose Add .. to insert a function (here the Z field of a surface point)]]
+
+The Function Editor has a tab with the function's main settings, such as **Multi-Noise** for a noise function, and an **Advanced** tab. For noise, the Advanced tab sets the noise type (Perlin, Voronoi or Simplex), the random seed and animation.
+
+Two check boxes at the top work for every function. **Enabled** turns the function off without removing it from the expression. **ShowTokens** switches the expression fields between short tokens such as *Noise1* and the function's full text.
+
+[[SCREENSHOT: The Function Editor for a noise function: the Multi-Noise tab, and the Advanced tab with the noise types listed]]
 
 ## The object menu
 
@@ -301,6 +309,8 @@ Every star you travel to gets a generated planetary system. You can also generat
 - **Randomize** keeps the object's type but gives it new random settings.
 
 If you don't like a result, generate again. Each generation is different.
+
+[[SCREENSHOT: Adding a cloud layer to a planet: Add > Clouds > VOL > Generate. The same menu offers <Random> and saved clouds such as Stormy]]
 
 ## Reusing generated textures
 

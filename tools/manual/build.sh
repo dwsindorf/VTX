@@ -3,7 +3,8 @@
 # tools/manual/build.sh - refresh the VTX User Manual and/or export PDFs
 #
 #   build.sh refresh ODT                  regenerate Part II (reference) in place
-#   build.sh pdf ODT OUT.pdf [--refresh]  export ODT to PDF, updating the table of
+#   build.sh pdf ODT OUT.pdf [--refresh]  export ODT to PDF, stamping the version on
+#                                         the title page and updating the table of
 #                                         contents; with --refresh, Part II is
 #                                         regenerated in a temporary copy first
 #                                         (the ODT itself is not modified)
@@ -11,7 +12,7 @@
 # Uses LibreOffice's own Python (program/python.exe on Windows), so nothing
 # else needs installing. Environment overrides:
 #   SOFFICE  path to soffice(.com/.exe)     LOPY  path to LibreOffice's python
-#   VTX_VERSION  version text for the reference (default: git describe)
+#   VTX_VERSION  version for the title page and reference (default: git describe)
 #=============================================================================
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -79,12 +80,22 @@ case "${1:-}" in
         [ $# -ge 3 ] || die "usage: build.sh pdf ODT OUT.pdf [--refresh]"
         src=$2; out=$3
         mkdir -p "$(dirname "$out")"
+        # work on a copy: the version line on the title page is stamped into
+        # the PDF only, so the ODT itself doesn't change with every build
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        copy="$tmp/$(basename "$src")"
         if [ "${4:-}" = --refresh ]; then
-            tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-            refresh "$src" "$tmp/$(basename "$src")"
-            src="$tmp/$(basename "$src")"
+            refresh "$src" "$copy"
+        else
+            cp "$src" "$copy"
         fi
-        topdf "$src" "$out" ;;
+        if find_lopy; then
+            "$LOPY" "$(winpath "$HERE/mkmanual.py")" stamp "$(winpath "$copy")" \
+                --root "$(winpath "$ROOT")" --version "$(version)" >/dev/null
+        else
+            echo "WARNING: LibreOffice python not found - title page version not updated" >&2
+        fi
+        topdf "$copy" "$out" ;;
     *)
-        sed -n '3,15p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+        sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
