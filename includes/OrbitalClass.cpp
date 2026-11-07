@@ -16,6 +16,9 @@
 #include "Rocks.h"
 #include "Plants.h"
 #include <unordered_map>
+#include <cstdint>
+#include <vector>
+#include <ctime>
 
 extern	void rebuild_scene_tree();
 extern	void select_tree_node(NodeIF *n);
@@ -4952,13 +4955,31 @@ static NameList<ImageSym*> hmaps_list;
 static NameList<ImageSym*> image_list;
 static NameList<ImageSym*> erode_list;
 static NameList<ImageSym*> surface_list;
+static std::vector<ImageSym*> reused_images;   // see embed_reused()
 
 // "Reuse" modes pick a random previously generated image by name. With
 // nothing to pick from (fresh install: empty Bitmaps folder) fall back to
 // generating new images instead of indexing an empty list (crash).
 // Name pickers and image creation must use the same test so they agree.
+//
+// A small collection makes new worlds look alike (with one saved map of a
+// kind, every new world would get that map), so 2D reuse is phased in as the
+// collection grows: with n saved images of a kind, an image is reused with
+// probability n/(n+REUSE_RAMP) and generated new otherwise. The first worlds
+// always get new images, half are reused once REUSE_RAMP are saved, and reuse
+// approaches 100% as Bitmaps fills up (new images keep being added while
+// Keep is on). The choice is a hash of the object's planet_id, the list and
+// a salt set per generate (makeLists), so the two calls for one image (name
+// picker and image creation) always agree.
+#define REUSE_RAMP 10
+static unsigned int reuse_salt=0;
 static bool reuse2D(NameList<ImageSym*> &l){
-	return TheScene->use_tmps!=NO_TMPS && l.size>0;
+	if(TheScene->use_tmps==NO_TMPS || l.size<=0)
+		return false;
+	unsigned int h=(unsigned int)Planetoid::planet_id*2654435761u ^ reuse_salt
+		^ (unsigned int)(uintptr_t)&l;   // each kind of image decides separately
+	h^=h>>16; h*=0x45d9f3bu; h^=h>>16; h*=0x45d9f3bu; h^=h>>16;
+	return h%(unsigned int)(l.size+REUSE_RAMP) < (unsigned int)l.size;
 }
 static bool reuseAll(){  // metallic falls back to rocky
 	return TheScene->use_tmps==ALL_TMPS
@@ -4966,6 +4987,9 @@ static bool reuseAll(){  // metallic falls back to rocky
 }
 
 void Planetoid::makeLists(){
+	static unsigned int ngen=0;
+	reused_images.clear();
+	reuse_salt=(unsigned int)time(0)*2246822519u+(++ngen)*3266489917u;
 	icy_list.free();
 	rocky_list.free();
 	metallic_list.free();
@@ -5033,32 +5057,61 @@ void Planetoid::makeLists(){
 //	}
 }
 
+//-------------------------------------------------------------
+// Reused images: when "Reuse" picks a saved image, only its name goes into the
+// Texture that uses it. The pickers below record each image they pick, and
+// embed_reused() then adds its definition (the .spx text, ImageSym::istring)
+// to the object being generated, as a newly generated image would be. Saved
+// scenes and objects then contain the definition and VTX can rebuild the
+// image if its file in Bitmaps is gone (TNimage::init), instead of depending
+// on that file. The record is cleared by makeLists() at each generate.
+//-------------------------------------------------------------
+static char *picked(NameList<ImageSym*> &l, int index){
+	ImageSym *is=l[index];
+	reused_images.push_back(is);
+	return is->name();
+}
+static void embed_reused(Orbital *orbital){
+	for(size_t i=0;i<reused_images.size();i++){
+		ImageSym *is=reused_images[i];
+		if(!orbital || !is->istring || orbital->get_image(is->name()))
+			continue;   // no definition (e.g. imported map) or already there
+		std::vector<char> buff(is->istring,is->istring+strlen(is->istring)+1);
+		TNinode *img=(TNinode*)TheScene->parse_node(buff.data());
+		if(!img)
+			continue;
+		img->init();     // loads the existing file
+		orbital->add_image(img);
+	}
+	reused_images.clear();
+}
+
 static char *getIcyTexName(){
 	int index=NodeIF::r[5]*icy_list.size;
-	char *name=icy_list[index]->name();
+	char *name=picked(icy_list,index);
 	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<icy_list.size<<endl;
 	return name;
 }
 static char *getGassyTexName(){
 	int index=NodeIF::r[5]*gassy_list.size;
-	char *name=gassy_list[index]->name();
+	char *name=picked(gassy_list,index);
 	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<gassy_list.size<<endl;
 	return name;
 }
 static char *getRockyTexName(){
 	int index=NodeIF::r[5]*rocky_list.size;
-	char *name=rocky_list[index]->name();
+	char *name=picked(rocky_list,index);
 	//cout<<"Tex Name="<<name<<" index="<<index<<":"<<rocky_list.size<<endl;
 	return name;
 }
 static char *getMetallicTexName(){
     if(metallic_list.size==0) return getRockyTexName();
     int index=NodeIF::r[5]*metallic_list.size;
-    return metallic_list[index]->name();
+    return picked(metallic_list,index);
 }
 static char *getRandLayerTexName(){
 	int index=NodeIF::r[6]*image_list.size;
-	char *name=image_list[index]->name();
+	char *name=picked(image_list,index);
 	//cout<<"LTex Name="<<name<<" index="<<index<<":"<<image_list.size<<endl;
 	return name;
 }
@@ -5071,13 +5124,13 @@ static char *getSurfaceTexName(){
 }
 static char *getRandHmapTexName(){
 	int index=NodeIF::r[7]*hmaps_list.size;
-	char *name=hmaps_list[index]->name();
+	char *name=picked(hmaps_list,index);
 	//cout<<"HTex Name="<<name<<" index="<<index<<":"<<hmaps_list.size<<endl;
 	return name;
 }
 static char *getRandEmapTexName(){
 	int index=NodeIF::r[7]*erode_list.size;
-	char *name=erode_list[index]->name();
+	char *name=picked(erode_list,index);
 	//cout<<"HTex Name="<<name<<" index="<<index<<":"<<hmaps_list.size<<endl;
 	return name;
 }
@@ -6091,7 +6144,9 @@ static std::string newHmapTex(Planetoid *planet){
 		Planetoid::r[9]*=2;
 		Planetoid::r[6]*=2;
 	}
-	return Planetoid::randFeature(RND_HMAP_TEX);
+	std::string tex=Planetoid::randFeature(RND_HMAP_TEX);
+	embed_reused(planet);
+	return tex;
 }
 static std::string newErodeTex(Orbital *orbital){
 	std::string str;
@@ -6103,7 +6158,9 @@ static std::string newErodeTex(Orbital *orbital){
 		himg->init();
 		orbital->add_image(himg);
 	}
-	return Planetoid::randFeature(RND_ERODE_TEX);
+	std::string tex=Planetoid::randFeature(RND_ERODE_TEX);
+	embed_reused(orbital);
+	return tex;
 }
 static std::string newRockBands(Orbital *orbital){
 	if(!reuseAll()){
@@ -6115,7 +6172,9 @@ static std::string newRockBands(Orbital *orbital){
 		img->init();
 		orbital->add_image(img);
 	}
-	return Planetoid::randFeature(RND_ROCK_BANDS);
+	std::string tex=Planetoid::randFeature(RND_ROCK_BANDS);
+	embed_reused(orbital);
+	return tex;
 }
 static std::string newRockTex(Orbital *orbital){
 	std::string str;
@@ -6128,7 +6187,9 @@ static std::string newRockTex(Orbital *orbital){
 		orbital->add_image(himg);
 	}
 	//return Planetoid::randFeature(RND_ERODE_TEX);
-	return Planetoid::randFeature(RND_ROCK_TEX);
+	std::string tex=Planetoid::randFeature(RND_ROCK_TEX);
+	embed_reused(orbital);
+	return tex;
 }
 
 static std::string newSurfaceBands(Orbital *orbital){
@@ -6141,7 +6202,9 @@ static std::string newSurfaceBands(Orbital *orbital){
 		img->init();
 		orbital->add_image(img);
 	}
-	return Planetoid::randFeature(RND_SURFACE_BANDS);
+	std::string tex=Planetoid::randFeature(RND_SURFACE_BANDS);
+	embed_reused(orbital);
+	return tex;
 }
 static std::string newSurfaceTex(Orbital *orbital){
 	std::string str;
@@ -6154,7 +6217,9 @@ static std::string newSurfaceTex(Orbital *orbital){
 		orbital->add_image(himg);
 	}
 	//return Planetoid::randFeature(RND_ERODE_TEX);
-	return Planetoid::randFeature(RND_SURFACE_TEX);
+	std::string tex=Planetoid::randFeature(RND_SURFACE_TEX);
+	embed_reused(orbital);
+	return tex;
 }
 
 static std::string newDualGlobalTex(Planetoid *planet){
@@ -6169,6 +6234,7 @@ static std::string newDualGlobalTex(Planetoid *planet){
 		planet->add_image(img);
 	}
 	str=Planetoid::randFeature(RND_GLOBAL_DUAL_TEX);
+	embed_reused(planet);
 	Planetoid::popInstance(planet);
 	return str;
 }
@@ -6181,7 +6247,9 @@ std::string newGlobalTex(Planetoid *planet){
 		img->init();
 		planet->add_image(img);
 	}
-	return Planetoid::randFeature(RND_GLOBAL_TEX);
+	std::string tex=Planetoid::randFeature(RND_GLOBAL_TEX);
+	embed_reused(planet);
+	return tex;
 }
 
 static std::string newLocalTex(Planetoid *planet){
@@ -6203,6 +6271,7 @@ static std::string newLocalTex(Planetoid *planet){
 		planet->add_image(himg);
 	}
     str=Planetoid::randFeature(RND_LOCAL_TEX);
+    embed_reused(planet);
     Planetoid::popInstance(planet);
 	return str;
 }
@@ -6711,7 +6780,9 @@ void Planet::newGasGiant(Planet *planet, int gtype){
 	double bk=phi_bias/(scale*ampl);      // noise is scaled by scale*ampl in shader
 	sprintf(belt_expr,"+%g*belts(%g,%g)",bk,boff,bpow);
 	strcat(noise_expr,belt_expr);
-	char  *tname=randFeature(RND_TEXNAME).c_str();
+	std::string tname_str=randFeature(RND_TEXNAME);
+	const char *tname=tname_str.c_str();
+	embed_reused(planet);
 
 	sprintf(buff,"Texture(%s,BUMP|S|TEX,%s,%g,-0.02,%g,0,%g,%g,%g,%g,0,0,0,0,0)",
 		tname,noise_expr,
@@ -6822,9 +6893,11 @@ static std::string newAsteroidBands(Asteroid *a,int gtype){
 		img->init();
 		a->add_image(img);
 	}
+	std::string tname=Planetoid::randFeature(RND_TEXNAME);
+	embed_reused(a);
 	char buff[1024];
 	sprintf(buff,"Texture(%s,A|NORM|LINEAR|TEX,0,0.5,2,1,0,1,2,1,0,%1.2f,%1.2f,%1.2f,%1.2f)\n",
-		Planetoid::randFeature(RND_TEXNAME).c_str(),
+		tname.c_str(),
 		0.0,                                    // phi bias - meaningless on a solid body
 		0.0,                 // ht bias
 		0.1*(1+0.5*NodeIF::s[9]),              // bmp bias

@@ -319,6 +319,7 @@ public:
 	void show_status(int);
 	void show_info(int);
 	void delete_tmpfiles();
+	int  clear_tmpfiles(int *kept);
 	bool has_tmpfiles();
 
 	double get_expr(char *s);

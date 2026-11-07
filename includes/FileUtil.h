@@ -4,6 +4,8 @@
 #define _FILEUTIL
 
 #include "ListClass.h"
+#include <string>
+#include <vector>
 class ModelSym;
 
 #ifndef MAXSTR
@@ -94,6 +96,7 @@ public:
 	static void getFileNameList(char *dir,const char *ext,LinkedList<ModelSym*>&list);
 	static void getFileNameList(char *dir,const char *ext,NameList<ModelSym*>&list);
 	static void getDirectoryList(char *dir,ValueList<FileData*>&list);
+	static void getFilesRecursive(char *dir,const char *ext,std::vector<std::string>&list);
 
 	static int isEmptyDirectory(char *dir);
 	static void getFileName(char *s,char *d);

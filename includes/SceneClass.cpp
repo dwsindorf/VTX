@@ -1,6 +1,10 @@
 // SceneClass.cpp
 
 #include "SceneClass.h"
+#include <unordered_set>
+#include <cstring>
+#include <vector>
+#include <string>
 #include "TerrainData.h"
 #include "AdaptOptions.h"
 #include "RenderOptions.h"
@@ -1296,6 +1300,177 @@ void Scene::delete_movie_dir(char *s)
 	make_movie_dir(dir);
 	File.addToPath(dir,s);
 	File.deleteDirectory(dir);
+}
+
+//-------------------------------------------------------------
+// delete_tmpimage() delete whichever of a generated image's files exist
+// (.bmp, _alpha.bmp, .spx); returns the number of files deleted
+//-------------------------------------------------------------
+static int delete_tmpimage(std::string base)
+{
+	const char *ext[]={".bmp","_alpha.bmp",".spx"};
+	int deleted=0;
+	for(int i=0;i<3;i++){
+		std::string str=base+ext[i];
+		char *name=(char*)str.c_str();
+		if(!File.fileExists(name))
+			continue;
+		int err=File.deleteFile(name);
+		if(err)
+			cout<<"ERROR deleting "<<name<<" code:"<<err<<endl;
+		else{
+			cout<<"deleting "<<name<<endl;
+			deleted++;
+		}
+	}
+	return deleted;
+}
+
+//-------------------------------------------------------------
+// add_names() add the image names a scene file needs to a set
+//
+// With all=true every "quoted" string is added. Otherwise names the file
+// also defines, with image("name",...) or bands("name",...), are left out:
+// VTX rebuilds a defined image from its definition when its file is missing
+// (TNimage::init), so only names used without a definition are needed.
+//-------------------------------------------------------------
+static void add_names(const char *path, std::unordered_set<std::string> &needed, bool all)
+{
+	FILE *fp=fopen(path,"rb");
+	if(!fp)
+		return;
+	std::string s;
+	char buff[65536];
+	size_t n;
+	while((n=fread(buff,1,sizeof(buff),fp))>0)
+		s.append(buff,n);
+	fclose(fp);
+
+	std::unordered_set<std::string> defined;
+	if(!all){
+		const char *defs[]={"image(\"","bands(\""};
+		for(int k=0;k<2;k++){
+			size_t i=0, m=strlen(defs[k]);
+			while((i=s.find(defs[k],i))!=std::string::npos){
+				i+=m;
+				size_t j=s.find('"',i);
+				if(j==std::string::npos)
+					break;
+				defined.insert(s.substr(i,j-i));
+				i=j+1;
+			}
+		}
+	}
+	size_t i=0;
+	while((i=s.find('"',i))!=std::string::npos){
+		size_t j=s.find('"',i+1);
+		if(j==std::string::npos)
+			break;
+		if(j-i-1<256){
+			std::string name=s.substr(i+1,j-i-1);
+			if(all || !defined.count(name))
+				needed.insert(name);
+		}
+		i=j+1;
+	}
+}
+
+//-------------------------------------------------------------
+// is_generated_name() names VTX gives generated images: a type letter and a
+// number (E1907, H2255, L24403, P17364, G11436, I12871, M0 ...)
+//-------------------------------------------------------------
+static bool is_generated_name(const std::string &n)
+{
+	if(n.size()<2 || !strchr("EHLIPGM",n[0]))
+		return false;
+	for(size_t i=1;i<n.size();i++)
+		if(n[i]<'0' || n[i]>'9')
+			return false;
+	return true;
+}
+
+//-------------------------------------------------------------
+// Scene::clear_tmpfiles() delete generated images that aren't needed
+//
+// Deletes the generated images (TMP) in Bitmaps, keeping those that
+//  - the current scene uses, or
+//  - a saved scene or object (Saves/, Objects/) uses without defining them,
+//    since those references would break.
+// Images that saved files only use together with their definition are
+// deleted: VTX rebuilds them from the definition when the file is opened.
+// Stray generated .bmp files with no .spx are deleted too. Returns the
+// number of images deleted; *kept is set to the number kept.
+//-------------------------------------------------------------
+int Scene::clear_tmpfiles(int *kept)
+{
+	std::unordered_set<std::string> needed;
+	char dir[MAXSTR];
+	char path[MAXSTR];
+
+	*kept=0;
+
+	// the current scene's objects, as they would be saved
+	FileUtil::getSavesDir(dir);
+	sprintf(path,"%s%s%s",dir,FileUtil::separator,"clear-check.tmp");
+	FILE *fp=fopen(path,"wb");
+	if(!fp){
+		cout<<"Scene::clear_tmpfiles: can't write "<<path<<endl;
+		return 0;   // can't tell what the scene uses: delete nothing
+	}
+	exprs.save(fp);
+	objects->save(fp);
+	fclose(fp);
+	add_names(path,needed,true);
+	File.deleteFile(path);
+
+	// saved scenes and objects
+	std::vector<std::string> files;
+	FileUtil::getFilesRecursive(dir,".spx",files);
+	FileUtil::getObjectsDir(dir);
+	FileUtil::getFilesRecursive(dir,".spx",files);
+	for(size_t i=0;i<files.size();i++)
+		add_names(files[i].c_str(),needed,false);
+
+	int deleted=0;
+	LinkedList<ImageSym *> list;
+	images.getImageInfo(TMP|SPX, list);
+	list.ss();
+	ImageSym *is;
+	while((is=list++)){
+		if(needed.count(is->name())){
+			(*kept)++;
+			continue;
+		}
+		if(delete_tmpimage(is->namePath()))
+			deleted++;
+	}
+	list.free();
+
+	// stray generated bitmaps left without their .spx
+	FileUtil::getBitmapsDir(dir);
+	files.clear();
+	FileUtil::getFilesRecursive(dir,".bmp",files);
+	std::string prefix=std::string(dir)+FileUtil::separator;
+	for(size_t i=0;i<files.size();i++){
+		std::string f=files[i];
+		if(f.compare(0,prefix.size(),prefix)!=0 || f.find(FileUtil::separator,prefix.size())!=std::string::npos)
+			continue;   // only files directly in Bitmaps
+		std::string name=f.substr(prefix.size(),f.size()-prefix.size()-4);
+		if(name.size()>6 && name.compare(name.size()-6,6,"_alpha")==0)
+			name=name.substr(0,name.size()-6);
+		if(!is_generated_name(name) || needed.count(name))
+			continue;
+		std::string base=prefix+name;
+		if(File.fileExists((char*)(base+".spx").c_str()))
+			continue;   // has a definition: handled above (or not generated)
+		if(delete_tmpimage(base))
+			deleted++;
+	}
+
+	images.invalidate();
+	images.makeImagelist();
+	cout<<"Scene::clear_tmpfiles: deleted "<<deleted<<" kept "<<*kept<<endl;
+	return deleted;
 }
 
 //-------------------------------------------------------------

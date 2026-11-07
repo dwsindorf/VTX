@@ -277,6 +277,21 @@ public:
     void OnUseTmps(wxCommandEvent& event){
      	TheScene->use_tmps=event.GetSelection();
      }
+    void OnClearTmps(wxCommandEvent& event){
+    	if(wxMessageBox("Delete the generated images in Bitmaps that the current scene doesn't use?\n\n"
+    			"Images that saved scenes or objects need are kept. Saved scenes that contain an "
+    			"image's definition rebuild it when they are opened.\n\nThis can't be undone.",
+    			"Clear generated images",wxYES_NO|wxNO_DEFAULT|wxICON_QUESTION,this)!=wxYES)
+    		return;
+    	int kept=0;
+    	int n;
+    	{
+    		wxBusyCursor wait;
+    		n=TheScene->clear_tmpfiles(&kept);
+    	}
+    	wxMessageBox(wxString::Format("Deleted %d generated images.\nKept %d that are still needed.",n,kept),
+    			"Clear generated images",wxOK|wxICON_INFORMATION,this);
+    }
     void OnForwardTime(wxCommandEvent& event){
     	TheScene->time_direction=event.IsChecked()?1:-1;
     }

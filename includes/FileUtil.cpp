@@ -200,6 +200,15 @@ void FileUtil::getSavesDir(char *dir)
 	makeSubDirectory(base,saves,dir);
 }
 //-------------------------------------------------------------
+// FileUtil::getObjectsDir get saved objects directory
+//-------------------------------------------------------------
+void FileUtil::getObjectsDir(char *dir)
+{
+	char base[MAXSTR];
+  	getBaseDirectory(base);
+	makeSubDirectory(base,objects,dir);
+}
+//-------------------------------------------------------------
 // FileUtil::getShadersDir get shaders directory
 //-------------------------------------------------------------
 void FileUtil::getShadersDir(char *dir)
@@ -468,6 +477,34 @@ void FileUtil::getDirectoryList(char *dir,ValueList<FileData*>&list)
 			list.add(new FileData(c_file.name,path));
 		}
 	}
+	_findclose(hFile);
+}
+
+//-------------------------------------------------------------
+// FileUtil::getFilesRecursive() paths of all files ending in ext (any case)
+// in dir and its subdirectories
+//-------------------------------------------------------------
+void FileUtil::getFilesRecursive(char *dir,const char *xt,std::vector<std::string>&list)
+{
+	char path[MAXSTR];
+	struct _finddata_t c_file;
+	long long hFile;
+
+	sprintf(path,"%s%s%s",dir,separator,"*");
+	if((hFile = _findfirst(path, &c_file)) == -1)
+		return;
+	do{
+		if(c_file.name[0]=='.')
+			continue;
+		sprintf(path,"%s%s%s",dir,separator,c_file.name);
+		if(c_file.attrib & _A_SUBDIR)
+			getFilesRecursive(path,xt,list);
+		else{
+			size_t n=strlen(c_file.name), m=strlen(xt);
+			if(n>=m && _stricmp(c_file.name+n-m,xt)==0)
+				list.push_back(path);
+		}
+	}while(_findnext(hFile, &c_file) == 0);
 	_findclose(hFile);
 }
 
@@ -820,6 +857,35 @@ int FileUtil::fileExists(char *path)
  	int err=stat(path,&file_stat);
 	return err<0?0:1;
 }
+//-------------------------------------------------------------
+// FileUtil::getFilesRecursive() paths of all files ending in ext (any case)
+// in dir and its subdirectories
+//-------------------------------------------------------------
+void FileUtil::getFilesRecursive(char *dir,const char *xt,std::vector<std::string>&list)
+{
+	char path[MAXSTR];
+	DIR *dp=opendir(dir);
+	if(!dp)
+		return;
+	struct dirent *ep;
+	while((ep=readdir(dp))){
+		if(ep->d_name[0]=='.')
+			continue;
+		sprintf(path,"%s%s%s",dir,separator,ep->d_name);
+		struct stat st;
+		if(stat(path,&st)!=0)
+			continue;
+		if(S_ISDIR(st.st_mode))
+			getFilesRecursive(path,xt,list);
+		else{
+			size_t n=strlen(ep->d_name), m=strlen(xt);
+			if(n>=m && strcasecmp(ep->d_name+n-m,xt)==0)
+				list.push_back(path);
+		}
+	}
+	closedir(dp);
+}
+
 #endif // unix
 
 //************************************************************

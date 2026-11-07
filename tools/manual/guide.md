@@ -321,7 +321,11 @@ Generated worlds use texture images: height maps, erosion maps, layer images and
 | Reuse | **All**: reuse saved images for everything. **2D** (default): reuse saved 2D maps, create new color bands. **None**: create every image new. |
 | Keep | Which generated images to keep in *Bitmaps*: **All**, **2D** (default) or **None**. Images that aren't kept are deleted the next time VTX starts. |
 
-With a new installation, *Bitmaps* is empty, so the first worlds you generate create all their own images. As *Bitmaps* fills up, generation gets faster and the 2D maps are drawn from a growing collection.
+With **2D**, reuse is phased in as *Bitmaps* fills up, so that a small collection doesn't make new worlds look alike. The first worlds always get new images. Once about ten images of a kind are saved, about half of new worlds reuse one, and with a hundred saved, about nine in ten do. Generation gets faster as the collection grows, and new images keep being added as long as Keep is on.
+
+**All** reuses saved images whenever there is at least one of each kind, so use it only once *Bitmaps* has a good collection. Set Reuse to **None** if you want every new world to get new images.
+
+The **Clear** button on the same line deletes the generated images in *Bitmaps* that the current scene doesn't use, so you can start a new collection. It keeps any image that a saved scene or object refers to without including its definition, since those would break. Saved scenes that do include an image's definition rebuild the image the next time they are opened, which takes a moment. Clear asks before deleting anything, and then reports how many images it deleted and how many it kept. Scenes and objects saved with this version of VTX include the definition of every generated image they use, including reused ones, so VTX can always rebuild their images.
 
 # Scenes and saved objects
 

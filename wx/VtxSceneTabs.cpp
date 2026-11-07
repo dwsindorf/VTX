@@ -68,6 +68,7 @@ enum {
 	
 	ID_KEEP_TMPS,
 	ID_USE_TMPS,
+	ID_CLEAR_TMPS,
 	ID_SET_LAYERS,
 
     ID_PHI_COLOR,
@@ -210,6 +211,7 @@ EVT_UPDATE_UI(ID_GRID_SPACING_SLDR, VtxSceneTabs::OnUpdateContourSpacing)
 
 EVT_CHOICE(ID_KEEP_TMPS,VtxSceneTabs::OnKeepTmps)
 EVT_CHOICE(ID_USE_TMPS,VtxSceneTabs::OnUseTmps)
+EVT_BUTTON(ID_CLEAR_TMPS,VtxSceneTabs::OnClearTmps)
 
 EVT_RADIOBOX(ID_MERGE_MODE, VtxSceneTabs::OnMergeMode)
 EVT_UPDATE_UI(ID_MERGE_MODE, VtxSceneTabs::OnUpdateMergeMode)
@@ -583,26 +585,31 @@ void VtxSceneTabs::AddAdaptTab(wxWindow *panel){
     quality_options->AddSpacer(5);
     
     wxString lmodes[]={"Auto","1","2","3","4"};
-	quality_options->Add(new wxStaticText(panel,-1,"Layers",wxDefaultPosition,wxSize(50,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
+	quality_options->Add(new wxStaticText(panel,-1,"Layers",wxDefaultPosition,wxSize(44,-1)), 0,wxALIGN_LEFT|wxTOP, 4);
     set_layers=new wxChoice(panel,ID_SET_LAYERS,wxDefaultPosition,wxSize(60,-1),5,lmodes);
     set_layers->SetSelection(0);
     quality_options->Add(set_layers, 0, wxALIGN_LEFT|wxALL,0);
     quality_options->AddSpacer(5);
 
 	wxString tmps[]={"All","2D","None"};
-    quality_options->Add(new wxStaticText(panel, -1, "Reuse", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP,4);
-	use_tmps=new wxChoice(panel, ID_USE_TMPS, wxDefaultPosition,wxSize(60,-1),3, tmps);
+    quality_options->Add(new wxStaticText(panel, -1, "Reuse", wxDefaultPosition, wxSize(36,-1)),0,wxALIGN_LEFT|wxTOP,4);
+	use_tmps=new wxChoice(panel, ID_USE_TMPS, wxDefaultPosition,wxSize(54,-1),3, tmps);
 	use_tmps->SetSelection(1);
 	use_tmps->SetToolTip("ReUse auto-generated Files");
 	quality_options->Add(use_tmps,0,wxALIGN_LEFT||wxTOP,4);
     quality_options->AddSpacer(5);
 
-    quality_options->Add(new wxStaticText(panel, -1, "Keep", wxDefaultPosition, wxSize(40,-1)),0,wxALIGN_LEFT|wxTOP,4);
+    quality_options->Add(new wxStaticText(panel, -1, "Keep", wxDefaultPosition, wxSize(32,-1)),0,wxALIGN_LEFT|wxTOP,4);
 
-	keep_tmps=new wxChoice(panel, ID_KEEP_TMPS, wxDefaultPosition,wxSize(60,-1),3, tmps);
+	keep_tmps=new wxChoice(panel, ID_KEEP_TMPS, wxDefaultPosition,wxSize(54,-1),3, tmps);
 	keep_tmps->SetSelection(1);
 	keep_tmps->SetToolTip("Keep auto-generated Files");
 	quality_options->Add(keep_tmps,0,wxALIGN_LEFT||wxTOP,4);
+    quality_options->AddSpacer(5);
+
+	wxButton *clear_tmps=new wxButton(panel, ID_CLEAR_TMPS, "Clear", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	clear_tmps->SetToolTip("Delete generated images the current scene doesn't use");
+	quality_options->Add(clear_tmps,0,wxALIGN_LEFT|wxALL,0);
 
     quality_options->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
