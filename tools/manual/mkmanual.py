@@ -382,7 +382,10 @@ def render_reference(ui, doc, notes, version):
                 rows.append([f"{it['label']} > {sub['label']}", sub.get('key') or '', sub.get('help', '')])
         doc.table(['Command', 'Key', 'Notes'], rows, [2.2, 1, 2.6], small=True)
     doc.h(2, 'Toolbar')
-    doc.table(['Button', 'Action'], [[t['label'], t['tooltip']] for t in ui['toolbar']], [1.6, 3], small=True)
+    # tooltips read "Name: description"; the name is already in the first column
+    doc.table(['Button', 'Action'],
+              [[t['label'], t['tooltip'].split(': ', 1)[1] if t['tooltip'].startswith(t['label'] + ': ') else t['tooltip']]
+               for t in ui['toolbar']], [1.6, 3], small=True)
 
     # --- keyboard
     doc.h(1, 'Keyboard')

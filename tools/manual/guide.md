@@ -77,15 +77,37 @@ Many laptops have two graphics processors: a power-saving one built into the pro
 
 [[SCREENSHOT: The main window, with the toolbar, a planet in the view and the on-screen key help showing]]
 
-The main window shows the scene, with a menu bar and toolbar above it. Most toolbar buttons repeat menu commands. The buttons on the right open VTX's three dialogs:
+The main window shows the scene, with a menu bar and toolbar above it and a status bar below it.
 
-- **Scene Dialog** opens the Properties dialog, where you edit the objects in the scene. The **Tab** key also opens it.
-- **Image Editor** opens the dialog for creating and editing image textures.
-- **Movie** opens the dialog for recording paths and movies.
+## The toolbar
+
+The toolbar gives one-click access to the commands you use most. Rest the pointer on a button to see its name and what it does. This manual refers to the buttons by the names below.
+
+From left to right, the buttons fall into four groups: files and view history, moving, animation, and help and dialogs.
+
+| Name | What it does | Same as |
+|---|---|---|
+| **Open** | Opens a scene file (.spx) and builds it. Scenes are kept in the *Saves* folder. | File > Open |
+| **Save** | Saves the current scene, including changes made in the Properties dialog, to a scene file (.spx). | File > Save |
+| **View Image** | Shows a saved JPEG or BMP image, such as a snapshot, in the main window. | File > View Image |
+| **Snapshot** | Saves the current view as a JPEG or BMP image. You choose the file name; the *Images* folder is the default. | File > Save Image |
+| **Undo** | Goes back to the previous view in the view history. Grayed out when there is no earlier view. | Edit > Undo, **-** |
+| **Redo** | Goes forward to the next view in the history, after an Undo. Grayed out when there is no later view. | Edit > Redo, **+** |
+| **Orbit** | Moves out to an orbital view of the current object, so you see the whole world. With a star selected, takes you to that star's system. | View > Move to > Orbit, **Shift+U** |
+| **Surface** | Moves down to the surface of the current object. If you have marked a point with the white crosshair, takes you there. | View > Move to > Surface, **Shift+G** |
+| **Selection** | Moves to the point marked with the white crosshair, keeping your current height. Grayed out when nothing is selected. | View > Move to > Selection, **Shift+M** |
+| **Time** | Starts or stops time: planets rotate and orbit and clouds drift. The button stays pressed while time runs. | View > Animate > Time |
+| **Motion** | Starts or stops motion: the view keeps moving at the current speed. The button stays pressed while it is on. | View > Animate > Motion |
+| **Key Help** | Shows or hides the list of keyboard commands over the scene. The button is pressed while the list shows. | Help > key help, **?** |
+| **Properties** | Opens the Properties dialog, where you inspect and edit the objects in the scene. | **Tab** |
+| **Image Editor** | Opens the Image Editor, for creating and editing the images used as textures. | |
+| **Movie Editor** | Opens the Movie Editor, for recording and playing paths and movies. | |
+
+Buttons that turn something on, such as **Time**, **Key Help** and the three dialog buttons, stay pressed while that thing is on or open. Click again to turn it off or close it. **View > Show Toolbar** hides and shows the toolbar.
 
 ## On-screen information and key help
 
-VTX draws status information over the scene. Press **?** (or click the **Key help** toolbar button) to show or hide a list of the keyboard commands available in the current mode.
+VTX draws status information over the scene. Press **?** (or click the **Key Help** toolbar button) to show or hide a list of the keyboard commands available in the current mode.
 
 The function keys **F1** to **F6** switch between modes. Each mode gives the number keys **0** to **9** a different meaning:
 
@@ -106,9 +128,9 @@ The full list for each mode is in Part II, Keyboard.
 
 VTX has three ways of moving, which you choose with **View > Move to**, the toolbar or the keyboard:
 
-- **Orbit** (**U**, that is SHIFT-U). The view circles the current object, typically a planet, at a distance. Use it to look at a whole world.
-- **Surface** (**G**). The view moves over the surface of the current object, as if you were walking or flying above the ground.
-- **Selection** (**M**). The view moves to the object you have selected.
+- **Orbit** (**Shift+U**). The view circles the current object, typically a planet, at a distance. Use it to look at a whole world. If a star is selected, Orbit takes you to that star's system instead (see Traveling to the stars).
+- **Surface** (**Shift+G**). The view moves down to the surface of the current object, as if you were walking or flying above the ground. If you have marked a point with the crosshair, Surface takes you there.
+- **Selection** (**Shift+M**). The view moves to the point marked with the crosshair and keeps its current height.
 
 ## Keyboard movement
 
@@ -134,11 +156,26 @@ In surface view, the F2 (View) mode adds keys to look and turn in fixed steps, a
 | Wheel | Zoom in or out | Lower or raise the viewpoint |
 | Hold middle button | Fly forward while held | Fly forward while held |
 
-## Selecting objects
+## Choosing where to go
 
-Click an object in the view to select it: a star in the star field, a planet or a moon. The selection is shown on screen and in the Properties dialog. Press **Space** to clear the selection.
+Click the surface of a planet or moon, in orbit or surface view, and a white crosshair marks the point you clicked. A line of text at the bottom of the view shows the distance to the point (*dist*) and its elevation (*elev*).
 
-To travel to the selected object, use **View > Move to > Selection** (**SHIFT-M**). Selecting a star and moving to it is how you explore the universe: when you arrive at a star that has never been visited, VTX generates its planetary system on the spot.
+Once a point is marked:
+
+- **Surface** takes you to the crosshair and lowers you to the ground.
+- **Selection** takes you to the crosshair but keeps your current height, so you see the spot from the same altitude.
+
+Both work the same way from orbit view and from surface view. Clicking a planet or moon also selects it in the Properties dialog. Press **Space** to clear the selection.
+
+[[SCREENSHOT: The crosshair marks a point on the surface; its distance and elevation show at the bottom]]
+
+## Traveling to the stars
+
+Click a star in the star field and it turns yellow to show that it is selected. Only the nearer, foreground stars can be selected; the background stars can't. A line of text at the bottom of the view shows the distance to the star's system and how many stars and planets it has, for example *System dist:2.31302 ly Stars:1 Planets:5*.
+
+[[SCREENSHOT: A selected star (yellow, upper right) and its system's distance, stars and planets at the bottom]]
+
+Then click **Orbit** (or press **Shift+U**). VTX transfers you to that system, with the system selected. When you arrive at a star that has never been visited, VTX generates its planetary system on the spot, so you can explore the universe one star at a time.
 
 ## View history
 
@@ -196,9 +233,9 @@ With key help showing (**?**), the F1 list shows which features are on (**[X]**)
 
 Planets and moons rotate and orbit, and clouds drift. Time normally stands still, so you can study a view. To make time run:
 
-- **Toolbar > Animate time** (or **View > Animate > Time**) starts and stops the clock.
+- The **Time** toolbar button (or **View > Animate > Time**) starts and stops the clock.
 - **<** and **>** decrease and increase the time rate. **:** resets it.
-- **Toolbar > Animate motion** (or **View > Animate > Motion**) makes the view keep moving at the current speed, so you can glide over a surface hands-free.
+- The **Motion** toolbar button (or **View > Animate > Motion**) makes the view keep moving at the current speed, so you can glide over a surface hands-free.
 
 The Scene object's **Display** tab shows the time and has a multiplier from x1 to x10^7 for fast-forwarding orbits.
 
@@ -206,7 +243,7 @@ The Scene object's **Display** tab shows the time and has a multiplier from x1 t
 
 [[SCREENSHOT: The Properties dialog, with the object tree on the left and a Planet's Object tab on the right]]
 
-The Properties dialog is where you inspect and change a scene. Open it with the **Scene Dialog** toolbar button or the **Tab** key.
+The Properties dialog is where you inspect and change a scene. Open it with the **Properties** toolbar button or the **Tab** key.
 
 ## The object tree
 
@@ -337,7 +374,7 @@ Press **F3** to switch the number keys to Movie mode:
 | 8 | Record movie frames live, as you move |
 | 0 | Clear the path and movie |
 
-The **Movie** toolbar button opens the Movie dialog, which has the same commands as buttons: **Clear**, **Load**, **Record**, **Rewind**, **Play** and **Save** for paths, and **Record**, **Test**, **Save** and **Play** for movies. Frames are recorded as images in the *Movies* folder.
+The **Movie Editor** toolbar button opens the Movie Editor, which has the same commands as buttons: **Clear**, **Load**, **Record**, **Rewind**, **Play** and **Save** for paths, and **Record**, **Test**, **Save** and **Play** for movies. Frames are recorded as images in the *Movies* folder.
 
 **Save** turns the recorded frames into a video file, and **Play** plays one back. Both use the free FFmpeg tools (*ffmpeg* and *ffplay*), which aren't included with VTX: install FFmpeg and make sure its *bin* folder is on your PATH. In the Play dialog, **Exit at end** closes the player when the video finishes.
 

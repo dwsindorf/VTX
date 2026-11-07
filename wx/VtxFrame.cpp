@@ -10,6 +10,7 @@
 
 #ifndef WX_PRECOMP
 #include "wx/wx.h"
+#include "wx/popupwin.h"
 #endif
 
 #include "VtxFrame.h"
@@ -109,6 +110,7 @@ enum {
 
 BEGIN_EVENT_TABLE(VtxFrame, wxFrame)
     EVT_TIMER(TIMER_ID,             VtxFrame::OnTimer)
+    EVT_TOOL_ENTER(ID_TOOLBAR1,     VtxFrame::OnToolEnter)
     EVT_CLOSE(                      VtxFrame::OnClose)
     EVT_MENU(wxID_EXIT,             VtxFrame::OnExit)
     EVT_MENU(IDM_EDIT_UNDO,         VtxFrame::OnUndo)
@@ -163,6 +165,10 @@ VtxFrame::VtxFrame(wxFrame *frame, const wxString& filename, const wxPoint& pos,
     const wxSize& size, long style)
     : wxFrame(frame, wxID_ANY, filename, pos, size, style)
     , m_timer(this, TIMER_ID)
+    , m_hover_tool(0)
+    , m_hover_start(0)
+    , m_tip(0)
+    , m_tip_text(0)
 {
 	::wxInitAllImageHandlers();
 
@@ -313,7 +319,8 @@ void VtxFrame::make_tbar1()
 
     wxBitmap toolBarBitmaps[TB1_Max];
 
-    long style = wxTB_FLAT|wxTB_HORIZONTAL;
+    // native tooltips don't appear in VTX; see update_tooltip()
+    long style = wxTB_FLAT|wxTB_HORIZONTAL|wxTB_NO_TOOLTIPS;
 
     m_tbar1 =CreateToolBar(style, ID_TOOLBAR1);
 
@@ -326,69 +333,69 @@ void VtxFrame::make_tbar1()
 
     INIT_TB1_BMP(fileopen);
     m_tbar1->AddTool(IDM_FILE_SCENE_OPEN, _T("Open"),
-        toolBarBitmaps[TB1_fileopen], _T("Open"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_fileopen], _T("Open: load a scene file (.spx)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(filesave);
     m_tbar1->AddTool(IDM_FILE_SCENE_SAVE, _T("Save"),
-        toolBarBitmaps[TB1_filesave], _T("Save"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_filesave], _T("Save: save the scene to a file (.spx)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_view_image);
-    m_tbar1->AddTool(IDM_FILE_IMAGE_OPEN, _T("ViewImage"),
-        toolBarBitmaps[TB1_vtx_view_image], _T("View Image"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_FILE_IMAGE_OPEN, _T("View Image"),
+        toolBarBitmaps[TB1_vtx_view_image], _T("View Image: show a saved JPEG or BMP image"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_image);
     m_tbar1->AddTool(IDM_FILE_IMAGE_SAVE, _T("Snapshot"),
-        toolBarBitmaps[TB1_vtx_image], _T("Save Image"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_image], _T("Snapshot: save the current view as an image"), wxITEM_CHECK);
 
     INIT_TB1_BMP(undo);
     m_tbar1->AddTool(IDM_EDIT_UNDO, _T("Undo"),
-        toolBarBitmaps[TB1_undo], _T("Undo"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_undo], _T("Undo: go back to the previous view (-)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(redo);
     m_tbar1->AddTool(IDM_EDIT_REDO, _T("Redo"),
-        toolBarBitmaps[TB1_redo], _T("Redo"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_redo], _T("Redo: go forward to the next view (+)"), wxITEM_CHECK);
 
     m_tbar1->AddSeparator();
 
     INIT_TB1_BMP(vtx_move_orbit);
     m_tbar1->AddTool(IDM_VIEW_ORBIT, _T("Orbit"),
-        toolBarBitmaps[TB1_vtx_move_orbit], _T("Move to Orbit"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_move_orbit], _T("Orbit: view the current object from orbit, or go to the selected star (Shift+U)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_move_surface);
     m_tbar1->AddTool(IDM_VIEW_SURFACE, _T("Surface"),
-        toolBarBitmaps[TB1_vtx_move_surface], _T("Move to Surface"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_move_surface], _T("Surface: go down to the surface, at the crosshair if one is set (Shift+G)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_move_select);
     m_tbar1->AddTool(IDM_VIEW_SELECT, _T("Selection"),
-        toolBarBitmaps[TB1_vtx_move_select], _T("Move to Selection"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_vtx_move_select], _T("Selection: go to the crosshair, keeping the current height (Shift+M)"), wxITEM_CHECK);
 
     m_tbar1->AddSeparator();
 
     INIT_TB1_BMP(vtx_autotm);
-    m_tbar1->AddTool(IDM_VIEW_AUTOTM, _T("Animate time"),
-        toolBarBitmaps[TB1_vtx_autotm], _T("Time animation"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_VIEW_AUTOTM, _T("Time"),
+        toolBarBitmaps[TB1_vtx_autotm], _T("Time: start or stop time animation"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_automv);
-    m_tbar1->AddTool(IDM_VIEW_AUTOMV, _T("Animate motion"),
-        toolBarBitmaps[TB1_vtx_automv], _T("Motion animation"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_VIEW_AUTOMV, _T("Motion"),
+        toolBarBitmaps[TB1_vtx_automv], _T("Motion: start or stop moving at the current speed"), wxITEM_CHECK);
 
     m_tbar1->AddSeparator();
 
     INIT_TB1_BMP(vtx_question);
-    m_tbar1->AddTool(IDM_HELP_FKEYS, _T("Key help"),
-        toolBarBitmaps[TB1_vtx_question], _T("Toggle On-Screen Key help"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_HELP_FKEYS, _T("Key Help"),
+        toolBarBitmaps[TB1_vtx_question], _T("Key Help: show or hide the on-screen key list (?)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(objectdlg);
-    m_tbar1->AddTool(IDM_VIEW_OBJSDLG, _T("Scene Dialog"),
-        toolBarBitmaps[TB1_objectdlg], _T("Open Scene Dialog"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_VIEW_OBJSDLG, _T("Properties"),
+        toolBarBitmaps[TB1_objectdlg], _T("Properties: open the Properties dialog to edit the scene (Tab)"), wxITEM_CHECK);
 
     INIT_TB1_BMP(image_dialog);
     m_tbar1->AddTool(IDM_VIEW_IMAGEDLG, _T("Image Editor"),
-        toolBarBitmaps[TB1_image_dialog], _T("Open Image Editor"), wxITEM_CHECK);
+        toolBarBitmaps[TB1_image_dialog], _T("Image Editor: create and edit image textures"), wxITEM_CHECK);
 
     INIT_TB1_BMP(vtx_movie);
-    m_tbar1->AddTool(IDM_VIEW_MOVIEDLG, _T("Movie"),
-        toolBarBitmaps[TB1_vtx_movie], _T("Edit Movie"), wxITEM_CHECK);
+    m_tbar1->AddTool(IDM_VIEW_MOVIEDLG, _T("Movie Editor"),
+        toolBarBitmaps[TB1_vtx_movie], _T("Movie Editor: record and play paths and movies"), wxITEM_CHECK);
 
 
     m_tbar1->Realize();
@@ -427,13 +434,75 @@ void VtxFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 //-------------------------------------------------------------
 void VtxFrame::OnTimer(wxTimerEvent& event)
 {
+    update_tooltip();
     m_canvas->timer_tick();
+}
+
+//-------------------------------------------------------------
+// VtxFrame::update_tooltip() VTX's own tooltips for the toolbar
+//
+// The native Windows toolbar tooltips never appear in VTX, so the toolbar is
+// created with wxTB_NO_TOOLTIPS and this function, called on every timer
+// tick, shows each button's short help in a small popup instead: after the
+// pointer has rested on a button for TIP_DELAY ms, until it moves to another
+// button or leaves the toolbar, or for at most TIP_SHOW ms. OnToolEnter()
+// tracks which button the pointer is on.
+//-------------------------------------------------------------
+#define TIP_DELAY 500
+#define TIP_SHOW  8000
+void VtxFrame::OnToolEnter(wxCommandEvent& event)
+{
+    int id=event.GetSelection();   // wxID_ANY when the pointer leaves the buttons
+    m_hover_tool=(m_tbar1 && id!=wxID_ANY)?m_tbar1->FindById(id):0;
+    m_hover_start=::wxGetLocalTimeMillis();
+    hide_tooltip();
+    event.Skip();
+}
+void VtxFrame::update_tooltip()
+{
+    wxToolBarToolBase *tool=m_hover_tool;
+    // safety net in case a "pointer left" event is missed (e.g. a dialog opened)
+    if(tool && !(m_tbar1 && IsActive() &&
+       m_tbar1->GetClientRect().Contains(m_tbar1->ScreenToClient(::wxGetMousePosition()))))
+        tool=m_hover_tool=0;
+    if(!tool){
+        hide_tooltip();
+        return;
+    }
+    wxLongLong t=::wxGetLocalTimeMillis()-m_hover_start;
+    if(t>=TIP_SHOW)
+        hide_tooltip();
+    else if(t>=TIP_DELAY && !(m_tip && m_tip->IsShown()) && !tool->GetShortHelp().IsEmpty()){
+        if(!m_tip){
+            m_tip=new wxPopupWindow(this, wxBORDER_SIMPLE);
+            m_tip->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));
+            m_tip_text=new wxStaticText(m_tip, wxID_ANY, wxEmptyString, wxPoint(4,2));
+            m_tip_text->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOTEXT));
+            m_tip_text->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));
+        }
+        m_tip_text->SetLabel(tool->GetShortHelp());
+        wxSize sz=m_tip_text->GetBestSize();
+        m_tip_text->SetSize(sz);
+        m_tip->SetClientSize(sz.x+8, sz.y+4);
+        // just below the toolbar, starting at the pointer
+        wxPoint pos(::wxGetMousePosition().x,
+                    m_tbar1->ClientToScreen(wxPoint(0,m_tbar1->GetClientSize().y)).y+2);
+        m_tip->Move(pos);
+        m_tip->Show();
+    }
+}
+void VtxFrame::hide_tooltip()
+{
+    if(m_tip && m_tip->IsShown())
+        m_tip->Hide();
 }
 //-------------------------------------------------------------
 // VtxFrame::OnShowTB1() Show/Hide toolbar1
 //-------------------------------------------------------------
 void VtxFrame::OnShowTB1(wxCommandEvent& WXUNUSED(event))
 {
+    m_hover_tool = 0;
+    hide_tooltip();
     if (m_tbar1){
         delete m_tbar1;
         m_tbar1 = NULL;

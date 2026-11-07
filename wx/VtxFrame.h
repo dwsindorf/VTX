@@ -5,6 +5,8 @@
 #include "VtxMain.h"
 #include "VtxScene.h"
 
+class wxPopupWindow;
+
 class VtxFrame: public wxFrame
 {
 public:
@@ -16,6 +18,9 @@ public:
 
     void OnClose(wxCloseEvent& event);
     void OnTimer(wxTimerEvent& event);
+    void update_tooltip();
+    void OnToolEnter(wxCommandEvent& event);
+    void hide_tooltip();
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnShowTB1(wxCommandEvent& event);
@@ -65,6 +70,10 @@ public:
     VtxScene *GetCanvas() { return m_canvas; }
 private:
     wxTimer    m_timer;
+    wxToolBarToolBase *m_hover_tool;   // toolbar button under the pointer
+    wxLongLong m_hover_start;          // when the pointer reached it (ms)
+    wxPopupWindow *m_tip;              // toolbar tooltip (see update_tooltip)
+    wxStaticText  *m_tip_text;
     VtxScene  *m_canvas;
     wxToolBar *m_tbar1;
     wxString   m_last_image;
