@@ -78,6 +78,9 @@ public:
 	// VtxFractalFunct, VtxNoiseFunct - need no changes.
 	virtual bool isEnabled(){return true;}
 	virtual void setEnabled(bool b){}
+	// receives changes from a function this page opened in another Function
+	// Editor window (VtxFunctDialog::editFor), e.g. a crater's noise
+	virtual void setNestedFunction(int which, wxString value){}
 };
 
 

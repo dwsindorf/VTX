@@ -21,6 +21,8 @@ protected:
 public:
     static TNode *default_rnoise;
     static TNode *default_vnoise;
+    static const char *defaultRNoiseExpr();   // default radial noise (no newline)
+    static const char *defaultVNoiseExpr();   // default vertical noise
 	double  noise_radial;
 	double  noise_vertical;
 	

@@ -27,6 +27,16 @@ protected:
 	ExprSliderCtrl *NoiseBiasSlider;
 	ExprSliderCtrl *NoiseBiasMinSlider;
 	
+	// radial and vertical noise functions (craters args 16, 17)
+	wxString m_rnoise_expr;
+	wxString m_vnoise_expr;
+	wxButton *m_rnoise_edit, *m_rnoise_default;
+	wxButton *m_vnoise_edit, *m_vnoise_default;
+	void showNoise();
+	void editNoise(int which);
+	void defaultNoise(int which);
+	static wxString noiseText(TNode *n);
+
 	wxChoice *m_scale_exp;
 	wxChoice *m_orders;
 	wxChoice *m_seed;
@@ -86,6 +96,11 @@ public:
     void OnChangeEvent(wxCommandEvent& event){
     	getFunction();
     }
+    void OnEditRNoise(wxCommandEvent& event){ editNoise(1);}
+    void OnEditVNoise(wxCommandEvent& event){ editNoise(0);}
+    void OnDefaultRNoise(wxCommandEvent& event){ defaultNoise(1);}
+    void OnDefaultVNoise(wxCommandEvent& event){ defaultNoise(0);}
+	void setNestedFunction(int which, wxString value);
 
 	void setFunction(wxString);
 	void getFunction();

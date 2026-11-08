@@ -110,6 +110,8 @@ bool VtxFunctDialog::Create( wxWindow* parent,
         return false;
 
     editor=0;
+    owner=0;
+    owner_item=0;
 
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -154,11 +156,49 @@ bool VtxFunctDialog::Create( wxWindow* parent,
 
 bool VtxFunctDialog::setEditor(VtxExprEdit *e){
 	editor = e;
+	if(owner){
+		owner=0;
+		SetTitle(wxT("Function Editor"));
+	}
 	return true;
 }
 void VtxFunctDialog::getFunct(wxString val){
-	if(editor){
+	if(owner)
+		owner->setNestedFunction(owner_item,val);
+	else if(editor){
 		editor->setToken(symbol,val);
+	}
+}
+
+//-------------------------------------------------------------
+// VtxFunctDialog::editFor() edit a function that belongs to another function
+// page (e.g. a crater's noise) rather than to an expression field: changes
+// are sent to page->setNestedFunction(which,...). Returns false if this
+// window can't edit the value.
+//-------------------------------------------------------------
+bool VtxFunctDialog::editFor(VtxFunctMgr *page, int which, wxString title, wxString val){
+	editor=0;
+	owner=page;
+	owner_item=which;
+	if(!setFunct(title,val)){
+		owner=0;
+		return false;
+	}
+	SetTitle(wxT("Function Editor - ")+title);
+	if(!IsShown())
+		Show(true);
+	Raise();
+	return true;
+}
+
+//-------------------------------------------------------------
+// VtxFunctDialog::release() stop sending changes to page
+//-------------------------------------------------------------
+void VtxFunctDialog::release(VtxFunctMgr *page){
+	if(owner && owner==page){
+		owner=0;
+		clear();
+		SetTitle(wxT("Function Editor"));
 	}
 }
 bool VtxFunctDialog::setFunct(wxString token, wxString val){
@@ -195,6 +235,7 @@ bool VtxFunctDialog::setFunct(wxString token, wxString val){
 
 void VtxFunctDialog::clear(){
 	editor=0;
+	owner=0;
 	int t=ID_NOEDIT;
 	VtxFunctMgr* mgr=functs[t];
 	mgr->setFunction(value);

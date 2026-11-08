@@ -38,6 +38,10 @@ public:
 	wxString symbol;
 	wxString value;
 	VtxExprEdit *editor;
+	// when a function page (not an expression field) opened this window
+	// with editFor(), changes go back to that page instead of an editor
+	VtxFunctMgr *owner;
+	int owner_item;
 	VtxFunctDialog(wxWindow *parent,
 			wxWindowID id= wxID_ANY,
 			const wxString &caption= wxT(""),
@@ -57,6 +61,8 @@ public:
 	void OnClose(wxCloseEvent& event);
 	bool Show(const bool show);
 	bool setEditor(VtxExprEdit *);
+	bool editFor(VtxFunctMgr *page, int which, wxString title, wxString value);
+	void release(VtxFunctMgr *page);
 	bool setFunct(wxString, wxString);
 	void getFunct(wxString);
 

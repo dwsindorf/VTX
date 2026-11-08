@@ -1,4 +1,5 @@
 #include "Craters.h"
+#include <string>
 #include "SceneClass.h"
 #include "RenderOptions.h"
 #include "TerrainClass.h"
@@ -70,9 +71,40 @@ static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG|RO1,1,10,0.4,0.5
 //	arg[10] rim			    rim radius
 //	arg[11] flr			    floor radius
 //	arg[12] ctr				center radius
+//	arg[13] offset			height bias
+//	arg[14] noise_bias		noise taper
+//	arg[15] noise_bias_min	noise bias
+//	arg[16] rnoise expr		radial noise function (optional, default
+//	                        def_rnoise_expr); arg[6] then scales it
+//	arg[17] vnoise expr		vertical noise function (optional, default
+//	                        def_vnoise_expr); arg[7] then scales it
+//
+//  Older files may give a noise function in arg[6] or arg[7] instead of a
+//  number; that still works (the function is used with a scale of 1).
 //-------------------------------------------------------------
 TNode *CraterMgr::default_rnoise=0;
 TNode *CraterMgr::default_vnoise=0;
+
+//-------------------------------------------------------------
+// CraterMgr::defaultRNoiseExpr(), defaultVNoiseExpr() default noise
+// functions as text (for the crater editor's Default buttons)
+//-------------------------------------------------------------
+static const char *trimmed(const char *s, std::string &buf){
+	if(buf.empty()){
+		buf=s;
+		while(!buf.empty() && (buf.back()=='\n' || buf.back()=='\r' || buf.back()==' '))
+			buf.pop_back();
+	}
+	return buf.c_str();
+}
+const char *CraterMgr::defaultRNoiseExpr(){
+	static std::string buf;
+	return trimmed(def_rnoise_expr,buf);
+}
+const char *CraterMgr::defaultVNoiseExpr(){
+	static std::string buf;
+	return trimmed(def_vnoise_expr,buf);
+}
 
 CraterMgr::CraterMgr(int i) : PlacementMgr(i)
 {
@@ -536,6 +568,9 @@ void TNcraters::eval()
 			else
 		     	cmgr->rnoise=argexpr;
 		}
+		argexpr=args[16];         // radial noise function
+		if(argexpr && argexpr->typeValue() != ID_CONST)
+			cmgr->rnoise=argexpr;
 	}
 	if(cmgr->vnoise==0){
     	argexpr=args[7];          // vnoise expr
@@ -548,6 +583,9 @@ void TNcraters::eval()
 		 	else
 		     	cmgr->vnoise=argexpr;
 		}
+		argexpr=args[17];         // vertical noise function
+		if(argexpr && argexpr->typeValue() != ID_CONST)
+			cmgr->vnoise=argexpr;
 	}
 	TNplacements::eval();  // evaluate common arguments
 	if(images.building())

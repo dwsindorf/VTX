@@ -278,6 +278,8 @@ The Function Editor has a tab with the function's main settings, such as **Multi
 
 Two check boxes at the top work for every function. **Enabled** turns the function off without removing it from the expression. **ShowTokens** switches the expression fields between short tokens such as *Noise1* and the function's full text.
 
+For craters, the last line of the **Noise** group on the Craters tab gives access to the vertical and radial noise functions that roughen each crater. **Vertical noise..** and **Radial noise..** open that function in the noise editor, a second Function Editor window, where changes apply to the crater as you make them. **Default** puts back the built-in function, and is grayed out while the function is still the default. The Vertical and Radial sliders above set how strongly each function is applied.
+
 [[SCREENSHOT: The Function Editor for a noise function: the Multi-Noise tab, and the Advanced tab with the noise types listed]]
 
 ## The object menu

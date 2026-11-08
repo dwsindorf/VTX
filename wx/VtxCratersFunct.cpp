@@ -54,6 +54,10 @@ enum {
     ID_NOISE_BIAS_TEXT,
     ID_NOISE_BIAS_MIN_SLDR,
     ID_NOISE_BIAS_MIN_TEXT,
+    ID_RNOISE_EDIT,
+    ID_RNOISE_DEFAULT,
+    ID_VNOISE_EDIT,
+    ID_VNOISE_DEFAULT,
 };
 
 IMPLEMENT_CLASS(VtxCratersFunct, wxNotebook )
@@ -79,6 +83,10 @@ SET_SLIDER_EVENTS(NOISE_BIAS_MIN,VtxCratersFunct,NoiseBiasMin)
 EVT_CHOICE(ID_SCALE_MULT, VtxCratersFunct::OnChangeEvent)
 EVT_CHOICE(ID_SEED, VtxCratersFunct::OnChangeEvent)
 EVT_CHOICE(ID_ORDERS, VtxCratersFunct::OnChangeEvent)
+EVT_BUTTON(ID_RNOISE_EDIT, VtxCratersFunct::OnEditRNoise)
+EVT_BUTTON(ID_VNOISE_EDIT, VtxCratersFunct::OnEditVNoise)
+EVT_BUTTON(ID_RNOISE_DEFAULT, VtxCratersFunct::OnDefaultRNoise)
+EVT_BUTTON(ID_VNOISE_DEFAULT, VtxCratersFunct::OnDefaultVNoise)
 
 END_EVENT_TABLE()
 
@@ -91,6 +99,9 @@ VtxCratersFunct::VtxCratersFunct(wxWindow* parent,
 		: VtxFunctMgr(parent, id, pos, size,  style,name)
 {
 	m_enabled=true;
+	m_rnoise_expr=CraterMgr::defaultRNoiseExpr();
+	m_vnoise_expr=CraterMgr::defaultVNoiseExpr();
+	m_rnoise_edit=m_rnoise_default=m_vnoise_edit=m_vnoise_default=0;
 	Create(parent, id, pos,size, style, name);
 }
 
@@ -223,6 +234,32 @@ void VtxCratersFunct::AddCratersTab(wxWindow *panel){
 
 	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
 
+	// noise functions: Edit opens the noise in the noise editor window,
+	// Default puts back the built-in function
+	hline = new wxBoxSizer(wxHORIZONTAL);
+	const char *names[]={"Vertical","Radial"};
+	int edit_ids[]={ID_VNOISE_EDIT,ID_RNOISE_EDIT};
+	int dflt_ids[]={ID_VNOISE_DEFAULT,ID_RNOISE_DEFAULT};
+	for(int i=0;i<2;i++){
+		if(i)
+			hline->AddSpacer(10);
+		wxButton *e=new wxButton(panel,edit_ids[i],wxString(names[i])+" noise..",wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
+		hline->Add(e,0,wxALIGN_LEFT|wxALL,2);
+		wxButton *d=new wxButton(panel,dflt_ids[i],"Default",wxDefaultPosition,wxDefaultSize,wxBU_EXACTFIT);
+		d->SetToolTip(wxString("Set the ")+names[i]+" noise function back to the default");
+		hline->Add(d,0,wxALIGN_LEFT|wxALL,2);
+		if(i==0){
+			m_vnoise_edit=e;
+			m_vnoise_default=d;
+		}
+		else{
+			m_rnoise_edit=e;
+			m_rnoise_default=d;
+		}
+	}
+	shape->Add(hline,0,wxALIGN_LEFT|wxALL,0);
+	showNoise();
+
 	shape->SetMinSize(wxSize(BOX_WIDTH,LINE_HEIGHT+TABS_BORDER));
 	boxSizer->Add(shape,0,wxALIGN_LEFT|wxALL,0);
 }
@@ -285,6 +322,10 @@ void VtxCratersFunct::setFunction(wxString f){
 	TNcraters *tc=(TNcraters*)TheScene->parse_node((char*)f.ToAscii());
 	if(!tc)
 		return;
+
+	// a different (or reloaded) crater: the noise window no longer edits ours
+	if(noiseDialog)
+		noiseDialog->release(this);
 
 	CraterMgr *mgr=(CraterMgr*)tc->mgr;
 
@@ -355,17 +396,37 @@ void VtxCratersFunct::setFunction(wxString f){
 	else
 		ImpactSlider->setValue(mgr->impact);
 
+	// noise: args 6, 7 scale the functions in args 16, 17 (or the defaults).
+	// An older file may have a function in arg 6 or 7 itself: treat it as
+	// the noise function, with a scale of 1.
+	m_rnoise_expr=CraterMgr::defaultRNoiseExpr();
+	m_vnoise_expr=CraterMgr::defaultVNoiseExpr();
 	a=args[6];
-	if(a)
+	if(a && a->typeValue()!=ID_CONST){
+		m_rnoise_expr=noiseText(a);
+		RNoiseSlider->setValue(1.0);
+	}
+	else if(a)
 		RNoiseSlider->setValue(a);
 	else
 		RNoiseSlider->setValue(1.0);
 
 	a=args[7];
-	if(a)
+	if(a && a->typeValue()!=ID_CONST){
+		m_vnoise_expr=noiseText(a);
+		VNoiseSlider->setValue(1.0);
+	}
+	else if(a)
 		VNoiseSlider->setValue(a);
 	else
 		VNoiseSlider->setValue(1.0);
+	a=args[16];
+	if(a && a->typeValue()!=ID_CONST)
+		m_rnoise_expr=noiseText(a);
+	a=args[17];
+	if(a && a->typeValue()!=ID_CONST)
+		m_vnoise_expr=noiseText(a);
+	showNoise();
 
 	a=args[8];
 	if(a)
@@ -472,10 +533,76 @@ void VtxCratersFunct::getFunction(){
 	s+=NoiseBiasSlider->getText()+",";
 	s+=NoiseBiasMinSlider->getText();
 
+	// noise functions, only when one has been changed from the default
+	if(m_rnoise_expr!=CraterMgr::defaultRNoiseExpr() || m_vnoise_expr!=CraterMgr::defaultVNoiseExpr())
+		s+=","+m_rnoise_expr+","+m_vnoise_expr;
 
 	s+=")";
 	//cout << s << endl;
 
 	functDialog->getFunct(s);
 	PlacementMgr::free_htable();
+}
+
+//-------------------------------------------------------------
+// VtxCratersFunct::noiseText() expression text of an argument
+//-------------------------------------------------------------
+wxString VtxCratersFunct::noiseText(TNode *n){
+	char buff[4096]="";
+	n->valueString(buff);
+	return wxString(buff);
+}
+
+//-------------------------------------------------------------
+// VtxCratersFunct::showNoise() Default buttons are active only for a
+// changed function; Edit buttons show the current function as a tooltip
+//-------------------------------------------------------------
+void VtxCratersFunct::showNoise(){
+	if(!m_rnoise_edit)
+		return;
+	bool rdef=m_rnoise_expr==CraterMgr::defaultRNoiseExpr();
+	bool vdef=m_vnoise_expr==CraterMgr::defaultVNoiseExpr();
+	m_rnoise_default->Enable(!rdef);
+	m_vnoise_default->Enable(!vdef);
+	m_rnoise_edit->SetToolTip("Edit the radial noise function"+wxString(rdef?" (default)":"")+":\n"+m_rnoise_expr);
+	m_vnoise_edit->SetToolTip("Edit the vertical noise function"+wxString(vdef?" (default)":"")+":\n"+m_vnoise_expr);
+}
+
+//-------------------------------------------------------------
+// VtxCratersFunct::editNoise() open a noise function in the noise editor
+// window; its changes come back through setNestedFunction()
+//-------------------------------------------------------------
+void VtxCratersFunct::editNoise(int which){
+	wxString title=which?"Crater radial noise":"Crater vertical noise";
+	wxString &expr=which?m_rnoise_expr:m_vnoise_expr;
+	if(!noiseDialog || !noiseDialog->editFor(this,which,title,expr))
+		wxMessageBox("This noise function can't be opened in the noise editor:\n\n"+expr,
+			title,wxOK|wxICON_WARNING,this);
+}
+
+//-------------------------------------------------------------
+// VtxCratersFunct::setNestedFunction() a change from the noise editor
+//-------------------------------------------------------------
+void VtxCratersFunct::setNestedFunction(int which, wxString value){
+	if(which)
+		m_rnoise_expr=value;
+	else
+		m_vnoise_expr=value;
+	showNoise();
+	getFunction();
+}
+
+//-------------------------------------------------------------
+// VtxCratersFunct::defaultNoise() put back a built-in noise function
+//-------------------------------------------------------------
+void VtxCratersFunct::defaultNoise(int which){
+	wxString &expr=which?m_rnoise_expr:m_vnoise_expr;
+	wxString dflt=which?CraterMgr::defaultRNoiseExpr():CraterMgr::defaultVNoiseExpr();
+	if(expr==dflt)
+		return;
+	if(noiseDialog)
+		noiseDialog->release(this);   // it would show the old function
+	expr=dflt;
+	showNoise();
+	getFunction();
 }
