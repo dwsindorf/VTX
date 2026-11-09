@@ -165,7 +165,7 @@ Once a point is marked:
 - **Surface** takes you to the crosshair and lowers you to the ground.
 - **Selection** takes you to the crosshair but keeps your current height, so you see the spot from the same altitude.
 
-Both work the same way from orbit view and from surface view. Clicking a planet or moon also selects it in the Properties dialog. Press **Space** to clear the selection.
+Both work the same way from orbit view and from surface view. Surface leaves you directly above the point, 1% of the distance away by default, so a point 30 miles off puts you about 0.3 miles above it. To approach more gently, lower **Approach** in the View box on the Scene tab of the Properties dialog: at 90, Surface covers 90% of the distance and leaves you 10% of it away. Pressing Surface again with no point marked halves your height. Clicking a planet or moon also selects it in the Properties dialog. Press **Space** to clear the selection.
 
 [[SCREENSHOT: The crosshair marks a point on the surface; its distance and elevation show at the bottom]]
 

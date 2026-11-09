@@ -20,8 +20,8 @@ public:
 	static char *makeGradTexureImage();
 	static char *makeNoise3DTexureImage(int);
 	static void *makeNoise3DVectorTexureImage(int size);
-	static inline int fastfloor(double x) {
-		return x>0 ? (int)x : (int)x-1;
+	static inline long long fastfloor(double x) {
+		return x>0 ? (long long)x : (long long)x-1;
 	}
 	static inline double dot(int g[], double x, double y) {
 		return g[0]*x + g[1]*y;
@@ -40,9 +40,9 @@ public:
 		return (1-t)*a + t*b;
 	}
 	static void iGetIntegerAndFractional(double x, int &i, double &u ){
-		i = fastfloor(x);
-		u = x - i;
-		i = i & 255;
+		long long l = fastfloor(x);
+		u = x - l;
+		i = (int)(l & 255);
 	}
 };
 

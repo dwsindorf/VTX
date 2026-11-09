@@ -45,8 +45,8 @@ static double thresh=1.5;
 
 //static const char *def_rnoise_expr="noise(GRADIENT,0,12,0.5,0.4,1.9873215)\n";
 
-static const char *def_rnoise_expr="noise(GRADIENT|NABS|RO1,0,14,0.5,0.6,2)\n";
-static const char *def_vnoise_expr="noise(GRADIENT|NABS|SQR|NEG|RO1,1,10,0.4,0.5,1.9873215)\n";
+static const char *def_rnoise_expr="noise(GRADIENT|RO1,0,18,0.5,0.5,2)\n";
+static const char *def_vnoise_expr="noise(GRADIENT|SQR|NEG|RO1,1,12,0.4,0.5,1.9873215)\n";
 //************************************************************
 // classes Crater, CraterMgr
 //************************************************************

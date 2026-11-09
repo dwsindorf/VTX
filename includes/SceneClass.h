@@ -141,6 +141,8 @@ public:
 	bool        enable_contours;
 	uint        keep_tmps;
 	uint        use_tmps;
+	double      surface_approach; // part of the distance to a marked point that
+	                              // the Surface button moves (0.1-0.99, pref)
 	bool        enable_grid;
 	int         temp_mode;
 	bool        prefs_mode;

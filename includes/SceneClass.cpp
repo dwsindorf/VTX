@@ -261,6 +261,7 @@ Scene::Scene(Model *m)
 	viewobj=selobj=localobj=groupobj=focusobj=rootobj=0;
 	keep_tmps=ONLY_2D;
 	use_tmps=ONLY_2D;
+	surface_approach=0.99;
 	tmp_files=0;
 }
 
@@ -503,6 +504,7 @@ void Scene::set_prefs(){
 	PVSET("temp_mode",temp_mode,0);
 	PVSET("keep_tmps",keep_tmps,1);
 	PVSET("use_tmps",use_tmps,1);
+	PVSET("surface_approach",surface_approach,0.99);
 }
 
 //-------------------------------------------------------------
@@ -522,6 +524,7 @@ void Scene::get_prefs(){
 	PVGET("temp_mode",temp_mode,0);
 	PVGET("keep_tmps",keep_tmps,1);
 	PVGET("use_tmps",use_tmps,1);
+	PVGET("surface_approach",surface_approach,0.99);
 
     if(prefs.get_local("autogrid",Td))
     	set_autogrid(Td.s);

@@ -24,6 +24,8 @@ enum {
     ID_RATE_TEXT,
     ID_FOV_SLDR,
     ID_FOV_TEXT,
+    ID_APPROACH_SLDR,
+    ID_APPROACH_TEXT,
     ID_LOD_SLDR,
     ID_LOD_TEXT,
     ID_TESSLEVEL,
@@ -129,6 +131,9 @@ EVT_TEXT_ENTER(ID_RATE_TEXT,VtxSceneTabs::OnRateText)
 EVT_COMMAND_SCROLL_THUMBRELEASE(ID_FOV_SLDR,VtxSceneTabs::OnEndFOVSlider)
 EVT_COMMAND_SCROLL(ID_FOV_SLDR,VtxSceneTabs::OnFOVSlider)
 EVT_TEXT_ENTER(ID_FOV_TEXT,VtxSceneTabs::OnFOVText)
+EVT_COMMAND_SCROLL_THUMBRELEASE(ID_APPROACH_SLDR,VtxSceneTabs::OnEndApproachSlider)
+EVT_COMMAND_SCROLL(ID_APPROACH_SLDR,VtxSceneTabs::OnApproachSlider)
+EVT_TEXT_ENTER(ID_APPROACH_TEXT,VtxSceneTabs::OnApproachText)
 
 EVT_COMMAND_SCROLL_THUMBRELEASE(ID_LOD_SLDR,VtxSceneTabs::OnEndLODSlider)
 EVT_COMMAND_SCROLL(ID_LOD_SLDR,VtxSceneTabs::OnLODSlider)
@@ -705,6 +710,12 @@ void VtxSceneTabs::AddDisplayTab(wxWindow *panel){
 	view_ctrls->Add(FOVSlider->getSizer());
 	FOVSlider->setRange(20,75);
 
+	ApproachSlider=new SliderCtrl(panel,ID_APPROACH_SLDR,"Approach",LABEL, VALUE,SLIDER);
+	ApproachSlider->setRange(10,99);
+	ApproachSlider->slider->SetToolTip("How far the Surface button moves toward the point "
+		"marked with the crosshair, in percent of the distance (default 99)");
+	view_ctrls->Add(ApproachSlider->getSizer());
+
 	boxSizer->Add(view_ctrls, 0, wxALIGN_LEFT|wxALL,0);
 	view_ctrls->SetMinSize(wxSize(TABS_WIDTH-TABS_BORDER,-1));
 
@@ -858,6 +869,7 @@ void VtxSceneTabs::updateControls(){
 	BumpMipSlider->setValue(obj->bump_mip);
 	FreqMipSlider->setValue(obj->freq_mip);
 	FOVSlider->setValue(obj->fov);
+	ApproachSlider->setValue(obj->surface_approach*100);
 	LODSlider->setValue(obj->cellsize);
 	updateSlider(ColorAmpSlider,Raster.filter_color_ampl);
 	updateSlider(NormalAmpSlider,Raster.filter_normal_ampl);

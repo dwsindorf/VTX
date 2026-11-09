@@ -85,9 +85,17 @@ static inline double clamp(double x, double l, double m)
 
 #define lerp(t, a, b) ( a + t * (b - a) )
 
+// Lattice index of t, modulo the table size. (int)floor(t) overflows beyond
+// 2^31 (e.g. many octaves of noise at large coordinates): every cell then
+// got the same index and the noise repeated in a square grid. Beyond that
+// range the index is taken modulo the table size in double precision, which
+// gives the same value the int would have.
+#define LATTICE(t) (fabs(t)<2.0e9 ? ((int)floor(t)) & BM : \
+	((int)(floor(t)-(BM+1.0)*floor(floor(t)/(BM+1.0)))) & BM)
+
 #define setup(i,b0,b1,r0,r1)\
 	t = vec[i]; \
-	b0 = ((NLONG)floor(t)) & BM;\
+	b0 = LATTICE(t);\
 	b1 = (b0+1) & BM;\
 	r0 = t - floor(t);\
 	r1 = r0 - 1.0;

@@ -682,20 +682,17 @@ void PlacementMgr::eval()
                 Stats.cchained++;
         }
         
-        // If not found, create new placement
+        // If not found, create new placement. An empty cell (no placement
+        // of its own: not valid, radius 0) is kept in the table too, as
+        // find_neighbors() does: it caches the test, and the neighbor search
+        // below must still run - placements from neighboring cells reach
+        // into this one. Skipping it cut those off at this cell's edges,
+        // leaving square seams in craters, rocks etc.
         if(!found){
             Placement* c = make(pc, n);
-            if(!c->flags.s.valid){
-                delete c;
-                Stats.crejects++;
-                continue;
-            }
-            else{
-				// ⭐ Add to front of chain (no deletion!)
-				c->next = hash[n];
-				hash[n] = c;
-				found = c;
-            }
+            c->next = hash[n];
+            hash[n] = c;
+            found = c;
         }
         if(found->radius > 0.0){        
             if(!found->set_terrain(*this)){

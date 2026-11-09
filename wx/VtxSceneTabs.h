@@ -31,6 +31,7 @@ protected:
 	SliderCtrl *TimeSlider;
 	SliderCtrl *RateSlider;
 	SliderCtrl *FOVSlider;
+	SliderCtrl *ApproachSlider;
 	SliderCtrl *LODSlider;
 	SliderCtrl *GeomSlider;
 
@@ -104,6 +105,7 @@ public:
 		delete TimeSlider;
 		delete RateSlider;
 		delete FOVSlider;
+		delete ApproachSlider;
 		delete LODSlider;
 		delete ColorAmpSlider;
 		delete NormalAmpSlider;
@@ -178,6 +180,18 @@ public:
     void OnFOVText(wxCommandEvent& event){
      	OnSliderText(FOVSlider, TheScene->fov);
      	TheScene->rebuild_all();
+    }
+    // Surface approach, shown in percent
+    void OnEndApproachSlider(wxScrollEvent& event){
+    	ApproachSlider->setValueFromSlider();
+    	TheScene->surface_approach=ApproachSlider->getValue()/100;
+    }
+    void OnApproachSlider(wxScrollEvent& event){
+    	ApproachSlider->setValueFromSlider();
+    }
+    void OnApproachText(wxCommandEvent& event){
+    	ApproachSlider->setValueFromText();
+    	TheScene->surface_approach=ApproachSlider->getValue()/100;
     }
 
     void OnEndLODSlider(wxScrollEvent& event){

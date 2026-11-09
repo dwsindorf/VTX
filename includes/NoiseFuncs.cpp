@@ -16,7 +16,8 @@ int NoiseFunc::initialized=false;
 
 NoiseFunc::NoiseFunc(){}
 
-#define FLOOR(x) (x)>0 ? (int)(x) : (int)((x)-1);
+// long long: (int) overflows for coordinates beyond 2^31 (see Perlin.cpp)
+#define FLOOR(x) (x)>0 ? (long long)(x) : (long long)((x)-1);
 
 //int NoiseFunc::p[256];
 
@@ -388,8 +389,8 @@ double Simplex::noise(double xin, double yin) {
 	// Skew the input space to determine which simplex cell we're in
 	const double F2 = 0.5*(sqrt(3.0)-1.0);
 	double s = (xin+yin)*F2; // Hairy factor for 2D
-	int i = fastfloor(xin+s);
-	int j = fastfloor(yin+s);
+	long long i = fastfloor(xin+s);
+	long long j = fastfloor(yin+s);
 	const double G2 = (3.0-sqrt(3.0))/6.0;
 	double t = (i+j)*G2;
 	double X0 = i-t; // Unskew the cell origin back to (x,y) space
@@ -443,9 +444,9 @@ double Simplex::noise(double x, double y, double z) {
 	// Skew the input space to determine which simplex cell we're in
 	const double F3 = 1.0/3.0;
 	double s = (x+y+z)*F3; // Very nice and simple skew factor for 3D
-	int i = FLOOR(x+s);
-	int j = FLOOR(y+s);
-	int k = FLOOR(z+s);
+	long long i = FLOOR(x+s);
+	long long j = FLOOR(y+s);
+	long long k = FLOOR(z+s);
 	const double G3 = 1.0/6.0; // Very nice and simple unskew factor, too
 	double t = (i+j+k)*G3;
 	double X0 = i-t; // Unskew the cell origin back to (x,y,z) space
@@ -551,10 +552,10 @@ double Simplex::noise(double x, double y, double z, double w) {
 	double n0, n1, n2, n3, n4; // Noise contributions from the five corners
 	// Skew the (x,y,z,w) space to determine which cell of 24 simplices we're in
 	double s = (x + y + z + w) * F4; // Factor for 4D skewing
-	int i = FLOOR(x + s);
-	int j = FLOOR(y + s);
-	int k = FLOOR(z + s);
-	int l = FLOOR(w + s);
+	long long i = FLOOR(x + s);
+	long long j = FLOOR(y + s);
+	long long k = FLOOR(z + s);
+	long long l = FLOOR(w + s);
 	double t = (i + j + k + l) * G4; // Factor for 4D unskewing
 	double X0 = i - t; // Unskew the cell origin back to (x,y,z,w) space
 	double Y0 = j - t;
@@ -749,10 +750,13 @@ double Voronoi::noise(double x, double y) {
 inline Point Voronoi::hashv3(Point p) {
     // Integer hash — replaces 3x lsin() calls (81 per Voronoi eval, ~8us/eval).
     // Produces uniform [0,1) output with good distribution across all axes.
-    int ix = (int)floor(p.x);
-    int iy = (int)floor(p.y);
-    int iz = (int)floor(p.z);
-    unsigned int h = (unsigned int)(ix*1619 + iy*31337 + iz*6971);
+    // cell coordinates via long long: (int) overflows beyond 2^31 and every
+    // cell then hashed the same, repeating the noise in a square grid.
+    // Unsigned arithmetic gives the same hash as before for in-range cells.
+    unsigned int ix = (unsigned int)(long long)floor(p.x);
+    unsigned int iy = (unsigned int)(long long)floor(p.y);
+    unsigned int iz = (unsigned int)(long long)floor(p.z);
+    unsigned int h = ix*1619u + iy*31337u + iz*6971u;
     unsigned int hx = (h ^ 0xB5297A4Du) * 0x68E31DA4u;  hx ^= hx >> 16;
     unsigned int hy = (h ^ 0x1B56C4E9u) * 0x02519623u;  hy ^= hy >> 16;
     unsigned int hz = (h ^ 0x4B02469Fu) * 0x5A7B3E4Du;  hz ^= hz >> 16;
@@ -830,11 +834,12 @@ double Voronoi::edge(double x, double y, double z) {
 	p.w=m.w*v.x+m.z*v.y+m.y*v.z+m.x*v.w;
 
 inline Point4D Voronoi::hashv4(Point4D p) {
-	int ix = (int)floor(p.x);
-	int iy = (int)floor(p.y);
-	int iz = (int)floor(p.z);
-	int iw = (int)floor(p.w);
-	unsigned int h = (unsigned int)(ix*1619 + iy*31337 + iz*6971 + iw*1301);
+	// see hashv3: long long cell coordinates, unsigned arithmetic
+	unsigned int ix = (unsigned int)(long long)floor(p.x);
+	unsigned int iy = (unsigned int)(long long)floor(p.y);
+	unsigned int iz = (unsigned int)(long long)floor(p.z);
+	unsigned int iw = (unsigned int)(long long)floor(p.w);
+	unsigned int h = ix*1619u + iy*31337u + iz*6971u + iw*1301u;
 	unsigned int hx = (h ^ 0xB5297A4Du) * 0x68E31DA4u;  hx ^= hx >> 16;
 	unsigned int hy = (h ^ 0x1B56C4E9u) * 0x02519623u;  hy ^= hy >> 16;
 	unsigned int hz = (h ^ 0x4B02469Fu) * 0x5A7B3E4Du;  hz ^= hz >> 16;

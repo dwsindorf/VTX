@@ -2366,8 +2366,45 @@ void Spheroid::move_focus(Point &selm)
 	    if(TheScene->changed_position()){
 			if(TheScene->viewtype==ORBITAL)
 			 	ht=1.5*radius();
-			else
-			 	ht=rampstep(500*FEET,1000*MILES,dz,5*FEET,10*MILES);
+			else{
+				// Surface: end up directly above the point, at (1-approach)
+				// of the distance to it, from 5 ft up to (1-approach)*1000 mi.
+				// The default approach (0.99) gives 1%: 5 ft to 10 miles.
+				double a=TheScene->surface_approach;
+				a=a<0.1?0.1:(a>0.99?0.99:a);
+				double f=1-a;
+				ht=f*dz;
+				if(ht<5*FEET)
+					ht=5*FEET;
+				if(ht>f*1000*MILES)
+					ht=f*1000*MILES;
+
+				// Tilt the view down so it shows the ground, at most straight
+				// down. At the default approach (0.99) a tilt that already
+				// looks further down is kept; otherwise the tilt is set
+				// fresh, so a steep tilt from one jump doesn't stick:
+				// - near (approach 0.99): the horizon plus 30% of the field of
+				//   view, so from high up the view doesn't show only empty space
+				// - far (approach 0.5 or less): the point, which is straight
+				//   below, sits in the lower part of the picture
+				// - in between: a blend of the two
+				double R=radius()+selm.z;
+				double dip=acos(R/(R+ht))/RPD;        // horizon below level (deg)
+				double need=-(dip+0.3*TheScene->fov);
+				double down=-(90-0.3*TheScene->fov);  // point 0.2 fov above bottom
+				double s=(0.99-a)/(0.99-0.5);
+				s=s<0?0:(s>1?1:s);
+				if(down<need)
+					need+=s*(down-need);
+				double t=TheScene->view_tilt;
+				if(t>180)
+					t-=360;
+				if(a<0.99 || t>need)
+					t=need;
+				if(t<-90)
+					t=-90;
+				TheScene->view_tilt=t;
+			}
 		}
 
  		// called from move_selected
